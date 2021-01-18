@@ -7,9 +7,9 @@ import (
 	"strings"
 
 	"github.com/andygrunwald/go-gerrit"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // SetStatus set build status on Gerrit
@@ -20,7 +20,7 @@ func (c *gerritClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	}
 
 	if eventNR.GerritChange == nil {
-		log.Debug("gerrit.setStatus> no gerrit change provided: %s/%s", eventNR.Status, eventNR.NodeName)
+		log.Debug(ctx, "gerrit.setStatus> no gerrit change provided: %s/%s", eventNR.Status, eventNR.NodeName)
 		return nil
 	}
 

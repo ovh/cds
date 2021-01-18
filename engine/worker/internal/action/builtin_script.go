@@ -15,11 +15,11 @@ import (
 	"strings"
 
 	"github.com/kardianos/osext"
+	"github.com/rockbears/log"
 	"github.com/spf13/afero"
 
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 type script struct {
@@ -30,8 +30,15 @@ type script struct {
 }
 
 func prepareScriptContent(parameters []sdk.Parameter, basedir afero.Fs, workdir afero.File) (*script, error) {
-	var script = script{
-		shell: "/bin/sh",
+	var script = script{}
+
+	// Set default shell based on os
+	if isWindows() {
+		script.shell = "PowerShell"
+		script.opts = []string{"-ExecutionPolicy", "Bypass", "-Command"}
+	} else {
+		script.shell = "/bin/sh"
+		script.opts = []string{"-e"}
 	}
 
 	// Get script content
@@ -39,12 +46,7 @@ func prepareScriptContent(parameters []sdk.Parameter, basedir afero.Fs, workdir 
 	a := sdk.ParameterFind(parameters, "script")
 	scriptContent = a.Value
 
-	// except on windows where it's powershell
-	if isWindows() {
-		script.shell = "PowerShell"
-		script.opts = []string{"-ExecutionPolicy", "Bypass", "-Command"}
-		// on windows, we add ErrorActionPreference just below
-	} else if strings.HasPrefix(scriptContent, "#!") { // If user wants a specific shell, use it
+	if strings.HasPrefix(scriptContent, "#!") { // If user wants a specific shell, use it
 		t := strings.SplitN(scriptContent, "\n", 2)
 		script.shell = strings.TrimPrefix(t[0], "#!")             // Find out the shebang
 		script.shell = strings.TrimRight(script.shell, " \t\r\n") // Remove all the trailing shit
@@ -52,15 +54,15 @@ func prepareScriptContent(parameters []sdk.Parameter, basedir afero.Fs, workdir 
 		script.shell = splittedShell[0]
 		script.opts = splittedShell[1:]
 		// if it's a shell, we add set -e to failed job when a command is failed
-		if isShell(script.shell) && len(splittedShell) == 1 {
-			script.opts = append(script.opts, "-e")
+		if !isWindows() && isShell(script.shell) && len(splittedShell) == 1 {
+			script.opts = []string{"-e"}
+		}
+		if isWindows() && isPowerShell(script.shell) && len(splittedShell) == 1 {
+			script.opts = []string{"-ExecutionPolicy", "Bypass", "-Command"}
 		}
 		if len(t) > 1 {
 			scriptContent = t[1]
 		}
-
-	} else {
-		script.opts = []string{"-e"}
 	}
 
 	script.content = []byte(scriptContent)
@@ -71,7 +73,7 @@ func prepareScriptContent(parameters []sdk.Parameter, basedir afero.Fs, workdir 
 		script.dir = workdir.Name()
 	}
 
-	log.Debug("prepareScriptContent> script.dir is %s", script.dir)
+	log.Debug(context.TODO(), "prepareScriptContent> script.dir is %s", script.dir)
 
 	return &script, nil
 }
@@ -97,30 +99,30 @@ func writeScriptContent(ctx context.Context, script *script, fs afero.Fs, basedi
 		return nil, err
 	}
 	tmpFileName := hex.EncodeToString(bs)[0:16]
-	log.Debug("writeScriptContent> Basedir name is %s (%T)", basedir.Name(), basedir)
+	log.Debug(ctx, "writeScriptContent> Basedir name is %s (%T)", basedir.Name(), basedir)
 
 	if isWindows() {
 		tmpFileName += ".PS1"
-		log.Debug("runScriptAction> renaming powershell script to %s", tmpFileName)
+		log.Debug(ctx, "runScriptAction> renaming powershell script to %s", tmpFileName)
 	}
 
 	scriptPath := filepath.Join(path.Dir(basedir.Name()), tmpFileName)
-	log.Debug("writeScriptContent> Opening file %s", scriptPath)
+	log.Debug(ctx, "writeScriptContent> Opening file %s", scriptPath)
 
 	tmpscript, err := fs.OpenFile(scriptPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0700)
 	if err != nil {
-		log.Warning(ctx, "writeScriptContent> Cannot create tmp file: %s", err)
+		log.Warn(ctx, "writeScriptContent> Cannot create tmp file: %s", err)
 		return nil, fmt.Errorf("cannot create temporary file, aborting: %v", err)
 	}
-	log.Debug("runScriptAction> writeScriptContent> Writing script to %s", tmpscript.Name())
+	log.Debug(ctx, "runScriptAction> writeScriptContent> Writing script to %s", tmpscript.Name())
 
 	// Put script in file
 	n, errw := tmpscript.Write(script.content)
 	if errw != nil || n != len(script.content) {
 		if errw != nil {
-			log.Warning(ctx, "writeScriptContent> cannot write script: %s", errw)
+			log.Warn(ctx, "writeScriptContent> cannot write script: %s", errw)
 		} else {
-			log.Warning(ctx, "writeScriptContent> cannot write all script: %d/%d", n, len(script.content))
+			log.Warn(ctx, "writeScriptContent> cannot write all script: %d/%d", n, len(script.content))
 		}
 		return nil, errors.New("cannot write script in temporary file, aborting")
 	}
@@ -143,20 +145,20 @@ func writeScriptContent(ctx context.Context, script *script, fs afero.Fs, basedi
 		}
 	}
 
-	if isWindows() {
-		//This aims to stop a the very first error and return the right exit code
+	if isWindows() && isPowerShell(script.shell) {
+		// This aims to stop a the very first error and return the right exit code
 		psCommand := fmt.Sprintf("& { $ErrorActionPreference='Stop'; & %s ;exit $LastExitCode}", realScriptPath)
 		script.opts = append(script.opts, psCommand)
 	} else {
 		script.opts = append(script.opts, realScriptPath)
 	}
 
-	log.Debug("writeScriptContent> script realpath is %s", realScriptPath)
-	log.Debug("writeScriptContent> script directory is %s", script.dir)
+	log.Debug(ctx, "writeScriptContent> script realpath is %s", realScriptPath)
+	log.Debug(ctx, "writeScriptContent> script directory is %s", script.dir)
 
 	deferFunc := func() {
 		filename := filepath.Join(path.Dir(basedir.Name()), tmpFileName)
-		log.Debug("writeScriptContent> removing file %s", filename)
+		log.Debug(ctx, "writeScriptContent> removing file %s", filename)
 		if err := fs.Remove(filename); err != nil {
 			log.Error(ctx, "unable to remove %s: %v", filename, err)
 		}
@@ -164,7 +166,7 @@ func writeScriptContent(ctx context.Context, script *script, fs afero.Fs, basedi
 
 	// Chmod file
 	if err := fs.Chmod(tmpscript.Name(), 0755); err != nil {
-		log.Warning(ctx, "runScriptAction> cannot chmod script %s: %s", tmpscript.Name(), err)
+		log.Warn(ctx, "runScriptAction> cannot chmod script %s: %s", tmpscript.Name(), err)
 		return deferFunc, fmt.Errorf("cannot chmod script %s: %v, aborting", tmpscript.Name(), err)
 	}
 
@@ -216,7 +218,7 @@ func RunScriptAction(ctx context.Context, wk workerruntime.Runtime, a sdk.Action
 			return
 		}
 
-		log.Debug("runScriptAction> Worker binary path: %s", path.Dir(workerpath))
+		log.Debug(ctx, "runScriptAction> Worker binary path: %s", path.Dir(workerpath))
 		for i := range cmd.Env {
 			if strings.HasPrefix(cmd.Env[i], "PATH") {
 				cmd.Env[i] = fmt.Sprintf("%s:%s", cmd.Env[i], path.Dir(workerpath))
@@ -307,6 +309,15 @@ func RunScriptAction(ctx context.Context, wk workerruntime.Runtime, a sdk.Action
 
 func isShell(in string) bool {
 	for _, v := range []string{"ksh", "bash", "sh", "zsh"} {
+		if strings.HasSuffix(in, v) {
+			return true
+		}
+	}
+	return false
+}
+
+func isPowerShell(in string) bool {
+	for _, v := range []string{"PowerShell", "pwsh.exe", "powershell.exe"} {
 		if strings.HasSuffix(in, v) {
 			return true
 		}

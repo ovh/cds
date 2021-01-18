@@ -13,11 +13,11 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/rockbears/log"
 	"github.com/spf13/afero"
 
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func cachePushHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
@@ -140,7 +140,7 @@ func cachePullHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 			return
 		}
 
-		log.Debug("cachePullHandler> Start read cache tar")
+		log.Debug(ctx, "cachePullHandler> Start read cache tar")
 
 		tr := tar.NewReader(r)
 		for {
@@ -162,7 +162,7 @@ func cachePullHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 				continue
 			}
 
-			log.Debug("cachePullHandler> Tar contains file %s", header.Name)
+			log.Debug(ctx, "cachePullHandler> Tar contains file %s", header.Name)
 
 			// the target location where the dir/file should be created
 			target := filepath.Join(path, header.Name)
@@ -205,7 +205,7 @@ func cachePullHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 					}
 				}
 
-				log.Debug("cachePullHandler> Create file at %s", target)
+				log.Debug(ctx, "cachePullHandler> Create file at %s", target)
 
 				f, err := os.OpenFile(target, os.O_CREATE|os.O_WRONLY, os.FileMode(header.Mode))
 				if err != nil {

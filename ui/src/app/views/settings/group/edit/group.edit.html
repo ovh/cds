@@ -17,7 +17,7 @@
                         </div>
                         <div class="ui row">
                             <div class="sixteen wide column">
-                                <ng-container *ngIf="currentUser.isAdmin() || currentUserIsAdminOnGroup">
+                                <ng-container *ngIf="currentAuthSummary.isAdmin() || currentUserIsAdminOnGroup">
                                     <button class="ui green right floated button" *ngIf="group.id"
                                         [class.loading]="loading" (click)="saveGroup()">
                                         <i class="save icon"></i>{{ 'btn_save' | translate }}
@@ -35,7 +35,7 @@
                                 <div class="two fields" *ngIf="users">
                                     <div class="field">
                                         <label>{{ 'group_members' | translate }}</label>
-                                        <sm-select *ngIf="currentUser.isAdmin() || currentUserIsAdminOnGroup"
+                                        <sm-select *ngIf="currentAuthSummary.isAdmin() || currentUserIsAdminOnGroup"
                                             class="search" [options]="{'fullTextSearch': true}" [disabled]="loading"
                                             [(model)]="addUserUsername">
                                             <option *ngFor="let user of users" [value]="user.username">
@@ -43,7 +43,7 @@
                                                 {{user.username}}</option>
                                         </sm-select>
                                     </div>
-                                    <div class="buttons" *ngIf="currentUser.isAdmin() || currentUserIsAdminOnGroup">
+                                    <div class="buttons" *ngIf="currentAuthSummary.isAdmin() || currentUserIsAdminOnGroup">
                                         <button class="ui green button" [class.loading]="loading"
                                             (click)="clickAddMember()">
                                             <i class="add icon"></i>{{ 'btn_add' | translate }}
@@ -75,7 +75,7 @@
                                             </td>
                                             <td>
                                                 <ng-container
-                                                    *ngIf="currentUser.isAdmin() || currentUserIsAdminOnGroup">
+                                                    *ngIf="currentAuthSummary.isAdmin() || currentUserIsAdminOnGroup">
                                                     <app-delete-button *ngIf="v?.username" class="ui right floated"
                                                         (event)="clickRemoveMember(v.username)"
                                                         [loading]="deleteLoading"></app-delete-button>

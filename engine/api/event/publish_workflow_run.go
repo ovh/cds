@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 type publishWorkflowRunData struct {
@@ -118,7 +119,7 @@ func PublishWorkflowNodeRun(ctx context.Context, nr sdk.WorkflowNodeRun, w sdk.W
 	// check on workflow data
 	wnode := w.WorkflowData.NodeByID(nr.WorkflowNodeID)
 	if wnode == nil {
-		log.Warning(ctx, "PublishWorkflowNodeRun> Unable to publish event on node %d", nr.WorkflowNodeID)
+		log.Warn(ctx, "PublishWorkflowNodeRun> Unable to publish event on node %d", nr.WorkflowNodeID)
 		return
 	}
 	nodeName = wnode.Name

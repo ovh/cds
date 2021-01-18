@@ -17,6 +17,7 @@ import (
 
 	"github.com/ovh/venom"
 
+	"github.com/rockbears/log"
 	"github.com/sguiheux/go-coverage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -38,7 +39,6 @@ import (
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 type testRunWorkflowCtx struct {
@@ -191,7 +191,7 @@ func testRunWorkflow(t *testing.T, api *API, router *Router, optsF ...testRunWor
 	w1, err := workflow.Load(context.TODO(), db, api.Cache, *proj, w.Name, workflow.LoadOptions{})
 	require.NoError(t, err)
 
-	log.Debug("workflow %d groups: %+v", w1.ID, w1.Groups)
+	log.Debug(context.TODO(), "workflow %d groups: %+v", w1.ID, w1.Groups)
 	require.NoError(t, db.Commit())
 
 	//Prepare request
@@ -1182,7 +1182,7 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 		*consumer, nil)
 	assert.NoError(t, errmr)
 
-	log.Debug("%+v", wrDB.WorkflowNodeRuns)
+	log.Debug(context.TODO(), "%+v", wrDB.WorkflowNodeRuns)
 
 	// Call post coverage report handler
 	// Prepare request
@@ -1499,7 +1499,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	wrr, err := workflow.LoadRunByID(db, wrToTest.ID, workflow.LoadRunOptions{})
 	assert.NoError(t, err)
 
-	log.Warning(context.Background(), "%s", wrr.Status)
+	log.Warn(context.Background(), "%s", wrr.Status)
 	// Call post coverage report handler
 	// Prepare request
 	vars := map[string]string{

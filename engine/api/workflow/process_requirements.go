@@ -6,12 +6,12 @@ import (
 	"strings"
 
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/interpolate"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // processNodeJobRunRequirements returns requirements list interpolated, and true or false if at least

@@ -31,7 +31,7 @@ func (api *API) InitRouter() {
 
 	// Auth
 	r.Handle("/auth/driver", ScopeNone(), r.GET(api.getAuthDriversHandler, service.OverrideAuth(service.NoAuthMiddleware)))
-	r.Handle("/auth/me", Scope(sdk.AuthConsumerScopeAction), r.GET(api.getAuthMe))
+	r.Handle("/auth/me", ScopeNone(), r.GET(api.getAuthMe))
 	r.Handle("/auth/scope", ScopeNone(), r.GET(api.getAuthScopesHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 	r.Handle("/auth/consumer/local/signup", ScopeNone(), r.POST(api.postAuthLocalSignupHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 	r.Handle("/auth/consumer/local/signin", ScopeNone(), r.POST(api.postAuthLocalSigninHandler, service.OverrideAuth(service.NoAuthMiddleware), MaintenanceAware()))
@@ -71,11 +71,11 @@ func (api *API) InitRouter() {
 	r.Handle("/admin/database/migration/unlock/{id}", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.postDatabaseMigrationUnlockedHandler, service.OverrideAuth(api.authAdminMiddleware)))
 	r.Handle("/admin/database/migration", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getDatabaseMigrationHandler, service.OverrideAuth(api.authAdminMiddleware)))
 
-	r.Handle("/admin/debug/profiles", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getDebugProfilesHandler, service.OverrideAuth(api.authAdminMiddleware)))
-	r.Handle("/admin/debug/goroutines", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getDebugGoroutinesHandler, service.OverrideAuth(api.authAdminMiddleware)))
-	r.Handle("/admin/debug/trace", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.getTraceHandler, service.OverrideAuth(api.authAdminMiddleware)), r.GET(api.getTraceHandler, service.OverrideAuth(api.authAdminMiddleware)))
-	r.Handle("/admin/debug/cpu", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.getCPUProfileHandler, service.OverrideAuth(api.authAdminMiddleware)), r.GET(api.getCPUProfileHandler, service.OverrideAuth(api.authAdminMiddleware)))
-	r.Handle("/admin/debug/{name}", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.getProfileHandler, service.OverrideAuth(api.authAdminMiddleware)), r.GET(api.getProfileHandler, service.OverrideAuth(api.authAdminMiddleware)))
+	r.Handle("/admin/debug/profiles", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getDebugProfilesHandler, service.OverrideAuth(api.authMaintainerMiddleware)))
+	r.Handle("/admin/debug/goroutines", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getDebugGoroutinesHandler, service.OverrideAuth(api.authMaintainerMiddleware)))
+	r.Handle("/admin/debug/trace", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.getTraceHandler, service.OverrideAuth(api.authAdminMiddleware)), r.GET(api.getTraceHandler, service.OverrideAuth(api.authMaintainerMiddleware)))
+	r.Handle("/admin/debug/cpu", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.getCPUProfileHandler, service.OverrideAuth(api.authAdminMiddleware)), r.GET(api.getCPUProfileHandler, service.OverrideAuth(api.authMaintainerMiddleware)))
+	r.Handle("/admin/debug/{name}", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.getProfileHandler, service.OverrideAuth(api.authAdminMiddleware)), r.GET(api.getProfileHandler, service.OverrideAuth(api.authMaintainerMiddleware)))
 
 	r.Handle("/admin/plugin", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.postGRPCluginHandler, service.OverrideAuth(api.authAdminMiddleware)), r.GET(api.getAllGRPCluginHandler, service.OverrideAuth(api.authAdminMiddleware)))
 	r.Handle("/admin/plugin/{name}", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getGRPCluginHandler, service.OverrideAuth(api.authAdminMiddleware)), r.PUT(api.putGRPCluginHandler, service.OverrideAuth(api.authAdminMiddleware)), r.DELETE(api.deleteGRPCluginHandler, service.OverrideAuth(api.authAdminMiddleware)))
@@ -84,9 +84,9 @@ func (api *API) InitRouter() {
 	r.Handle("/admin/plugin/{name}/binary/{os}/{arch}/infos", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getGRPCluginBinaryInfosHandler))
 
 	// Admin service
-	r.Handle("/admin/service/{name}", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminServiceHandler, service.OverrideAuth(api.authAdminMiddleware)), r.DELETE(api.deleteAdminServiceHandler, service.OverrideAuth(api.authAdminMiddleware)))
-	r.Handle("/admin/services", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminServicesHandler, service.OverrideAuth(api.authAdminMiddleware)))
-	r.Handle("/admin/services/call", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminServiceCallHandler, service.OverrideAuth(api.authAdminMiddleware)), r.POST(api.postAdminServiceCallHandler, service.OverrideAuth(api.authAdminMiddleware)), r.PUT(api.putAdminServiceCallHandler, service.OverrideAuth(api.authAdminMiddleware)), r.DELETE(api.deleteAdminServiceCallHandler, service.OverrideAuth(api.authAdminMiddleware)))
+	r.Handle("/admin/service/{name}", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminServiceHandler, service.OverrideAuth(api.authMaintainerMiddleware)), r.DELETE(api.deleteAdminServiceHandler, service.OverrideAuth(api.authAdminMiddleware)))
+	r.Handle("/admin/services", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminServicesHandler, service.OverrideAuth(api.authMaintainerMiddleware)))
+	r.Handle("/admin/services/call", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminServiceCallHandler, service.OverrideAuth(api.authMaintainerMiddleware)), r.POST(api.postAdminServiceCallHandler, service.OverrideAuth(api.authAdminMiddleware)), r.PUT(api.putAdminServiceCallHandler, service.OverrideAuth(api.authAdminMiddleware)), r.DELETE(api.deleteAdminServiceCallHandler, service.OverrideAuth(api.authAdminMiddleware)))
 
 	// Admin database
 	r.Handle("/admin/database/signature", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminDatabaseSignatureResume, service.OverrideAuth(api.authAdminMiddleware)))
@@ -136,7 +136,6 @@ func (api *API) InitRouter() {
 	r.Handle("/mon/metrics/all", ScopeNone(), r.GET(service.GetMetricsHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 	r.HandlePrefix("/mon/metrics/detail/", ScopeNone(), r.GET(service.GetMetricHandler("/mon/metrics/detail/"), service.OverrideAuth(service.NoAuthMiddleware)))
 	r.Handle("/mon/errors/{uuid}", ScopeNone(), r.GET(api.getErrorHandler, service.OverrideAuth(api.authAdminMiddleware)))
-	r.Handle("/mon/panic/{uuid}", ScopeNone(), r.GET(api.getPanicDumpHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 
 	r.Handle("/help", ScopeNone(), r.GET(api.getHelpHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 
@@ -325,7 +324,7 @@ func (api *API) InitRouter() {
 	r.Handle("/queue/workflows/{permJobID}/spawn/infos", Scope(sdk.AuthConsumerScopeRunExecution), r.POST(api.postSpawnInfosWorkflowJobHandler, MaintenanceAware()))
 	r.Handle("/queue/workflows/{permJobID}/result", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobResultHandler, MaintenanceAware()))
 	r.Handle("/queue/workflows/{jobID}/log", Scope(sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeService), r.POSTEXECUTE(api.postWorkflowJobLogsHandler, MaintenanceAware()))
-	r.Handle("/queue/workflows/log/service", Scope(sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeService), r.POSTEXECUTE(r.Asynchronous(api.postWorkflowJobServiceLogsHandler, 1, api.GoRoutines), MaintenanceAware()))
+	r.Handle("/queue/workflows/log/service", Scope(sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeService), r.POSTEXECUTE(api.postWorkflowJobServiceLogsHandler, MaintenanceAware()))
 	r.Handle("/queue/workflows/{permJobID}/coverage", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobCoverageResultsHandler, MaintenanceAware()))
 	r.Handle("/queue/workflows/{permJobID}/test", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobTestsResultsHandler, MaintenanceAware()))
 	r.Handle("/queue/workflows/{permJobID}/tag", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobTagsHandler, MaintenanceAware()))

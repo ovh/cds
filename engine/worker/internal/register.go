@@ -4,8 +4,9 @@ import (
 	"context"
 	"errors"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // Workers need to register to main api so they can run actions
@@ -15,11 +16,11 @@ func (w *CurrentWorker) Register(ctx context.Context) error {
 
 	requirements, errR := w.client.Requirements()
 	if errR != nil {
-		log.Warning(ctx, "register> unable to get requirements: %v", errR)
+		log.Warn(ctx, "register> unable to get requirements: %v", errR)
 		return errR
 	}
 
-	log.Debug("Checking %d requirements", len(requirements))
+	log.Debug(ctx, "Checking %d requirements", len(requirements))
 	form.BinaryCapabilities = LoopPath(w, requirements)
 	form.Version = sdk.VERSION
 	form.OS = sdk.GOOS
@@ -55,7 +56,7 @@ func (w *CurrentWorker) Register(ctx context.Context) error {
 	}
 
 	if !uptodate {
-		log.Warning(ctx, "-=-=-=-=- Please update your worker binary - Worker Version %s %s %s -=-=-=-=-", sdk.VERSION, sdk.GOOS, sdk.GOARCH)
+		log.Warn(ctx, "-=-=-=-=- Please update your worker binary - Worker Version %s %s %s -=-=-=-=-", sdk.VERSION, sdk.GOOS, sdk.GOARCH)
 	}
 
 	return nil

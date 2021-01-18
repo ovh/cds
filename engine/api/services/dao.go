@@ -5,11 +5,12 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func getAll(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) ([]sdk.Service, error) {
@@ -185,7 +186,7 @@ func Delete(db gorp.SqlExecutor, s *sdk.Service) error {
 		}
 	}
 	sdb := service{Service: *s}
-	log.Debug("services.Delete> deleting service %s(%d) from database", s.Name, s.ID)
+	log.Debug(context.TODO(), "services.Delete> deleting service %s(%d) from database", s.Name, s.ID)
 	if _, err := db.Delete(&sdb); err != nil {
 		return sdk.WrapError(err, "unable to delete service %s", s.Name)
 	}

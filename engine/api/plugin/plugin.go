@@ -5,11 +5,11 @@ import (
 	"io"
 
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // AddBinary add binary to the plugin, uploading it to objectsore and updates databases

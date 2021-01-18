@@ -8,10 +8,11 @@ import (
 	"net/http"
 	"path/filepath"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/engine/worker/internal/action"
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func uploadHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {

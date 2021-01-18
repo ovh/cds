@@ -10,13 +10,13 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
 	"github.com/ovh/venom"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -567,7 +567,7 @@ func UpdateNodeRunBuildParameters(db gorp.SqlExecutor, nodeID int64, buildParame
 
 //UpdateNodeRun updates in table workflow_node_run
 func UpdateNodeRun(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
-	log.Debug("workflow.UpdateNodeRun> node.id=%d, status=%s", n.ID, n.Status)
+	log.Debug(context.TODO(), "workflow.UpdateNodeRun> node.id=%d, status=%s", n.ID, n.Status)
 	nodeRunDB, err := makeDBNodeRun(*n)
 	if err != nil {
 		return err
@@ -582,19 +582,19 @@ func UpdateNodeRun(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
 func GetNodeRunBuildCommits(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, proj sdk.Project, wf sdk.Workflow, wNodeName string, number int64, nodeRun *sdk.WorkflowNodeRun, app *sdk.Application, env *sdk.Environment) ([]sdk.VCSCommit, sdk.BuildNumberAndHash, error) {
 	var cur sdk.BuildNumberAndHash
 	if app == nil {
-		log.Debug("GetNodeRunBuildCommits> No app linked")
+		log.Debug(ctx, "GetNodeRunBuildCommits> No app linked")
 		return nil, cur, nil
 	}
 
 	if app.VCSServer == "" {
-		log.Debug("GetNodeRunBuildCommits> No repository linked")
+		log.Debug(ctx, "GetNodeRunBuildCommits> No repository linked")
 		return nil, cur, nil
 	}
 	cur.BuildNumber = number
 
 	vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, proj.Key, app.VCSServer)
 	if err != nil {
-		log.Debug("GetNodeRunBuildCommits> No vcsServer found: %v", err)
+		log.Debug(ctx, "GetNodeRunBuildCommits> No vcsServer found: %v", err)
 		return nil, cur, nil
 	}
 
@@ -670,11 +670,11 @@ func GetNodeRunBuildCommits(ctx context.Context, db gorpmapper.SqlExecutorWithTx
 	}
 
 	if prev.Hash == "" {
-		log.Warning(ctx, "GetNodeRunBuildCommits> No previous build was found for branch %s", cur.Branch)
+		log.Warn(ctx, "GetNodeRunBuildCommits> No previous build was found for branch %s", cur.Branch)
 	}
 
 	if prev.Hash != "" && cur.Hash == prev.Hash {
-		log.Debug("GetNodeRunBuildCommits> there is not difference between the previous build and the current build for node %s", nodeRun.WorkflowNodeName)
+		log.Debug(ctx, "GetNodeRunBuildCommits> there is not difference between the previous build and the current build for node %s", nodeRun.WorkflowNodeName)
 	} else if prev.Hash != "" {
 		if cur.Tag == "" {
 			if cur.Hash == "" {
@@ -721,7 +721,7 @@ func GetNodeRunBuildCommits(ctx context.Context, db gorpmapper.SqlExecutorWithTx
 		}
 	} else {
 		//If we only get current node run hash
-		log.Debug("GetNodeRunBuildCommits>  Looking for every commit until %s ", cur.Hash)
+		log.Debug(ctx, "GetNodeRunBuildCommits>  Looking for every commit until %s ", cur.Hash)
 		c, err := client.Commits(ctx, repo, cur.Branch, "", cur.Hash)
 		if err != nil {
 			return nil, cur, sdk.WrapError(err, "Cannot get commits")
@@ -793,7 +793,7 @@ func PreviousNodeRunVCSInfos(ctx context.Context, db gorp.SqlExecutor, projectKe
 
 	errPrev := db.QueryRow(queryPrevious, argPrevious...).Scan(&prevBranch, &prevTag, &prevHash, &prevRepository, &previousBuildNumber)
 	if errPrev == sql.ErrNoRows {
-		log.Warning(ctx, "PreviousNodeRunVCSInfos> no result with previous %d %s , arguments %v", current.BuildNumber, nodeName, argPrevious)
+		log.Warn(ctx, "PreviousNodeRunVCSInfos> no result with previous %d %s , arguments %v", current.BuildNumber, nodeName, argPrevious)
 		return previous, nil
 	}
 	if errPrev != nil {
@@ -820,7 +820,7 @@ func PreviousNodeRunVCSInfos(ctx context.Context, db gorp.SqlExecutor, projectKe
 }
 
 func updateNodeRunCommits(db gorp.SqlExecutor, id int64, commits []sdk.VCSCommit) error {
-	log.Debug("updateNodeRunCommits> Updating %d commits for workflow_node_run #%d", len(commits), id)
+	log.Debug(context.TODO(), "updateNodeRunCommits> Updating %d commits for workflow_node_run #%d", len(commits), id)
 	commitsBtes, errMarshal := json.Marshal(commits)
 	if errMarshal != nil {
 		return sdk.WrapError(errMarshal, "updateNodeRunCommits> Unable to marshal commits")

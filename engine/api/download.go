@@ -7,10 +7,10 @@ import (
 	"path"
 
 	"github.com/gorilla/mux"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (api *API) downloadsHandler() service.Handler {
@@ -34,7 +34,7 @@ func (api *API) downloadHandler() service.Handler {
 		w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment;filename="%s"`, filename))
 
 		path := path.Join(api.Config.Directories.Download, filename)
-		log.Debug("downloading from %s", path)
+		log.Debug(ctx, "downloading from %s", path)
 
 		http.ServeFile(w, r, path)
 		return nil

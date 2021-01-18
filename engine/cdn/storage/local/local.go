@@ -9,12 +9,12 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/cdn/storage/encryption"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 type AbstractLocal struct {
@@ -87,23 +87,23 @@ func (s *AbstractLocal) ItemExists(ctx context.Context, m *gorpmapper.Mapper, db
 	return !os.IsNotExist(err), nil
 }
 
-func (s *AbstractLocal) NewWriter(_ context.Context, i sdk.CDNItemUnit) (io.WriteCloser, error) {
+func (s *AbstractLocal) NewWriter(ctx context.Context, i sdk.CDNItemUnit) (io.WriteCloser, error) {
 	// Open the file from the filesystem according to the locator
 	path, err := s.filename(i)
 	if err != nil {
 		return nil, err
 	}
-	log.Debug("[%T] writing to %s", s, path)
+	log.Debug(ctx, "[%T] writing to %s", s, path)
 	return os.OpenFile(path, os.O_CREATE|os.O_RDWR, os.FileMode(0640))
 }
 
-func (s *AbstractLocal) NewReader(_ context.Context, i sdk.CDNItemUnit) (io.ReadCloser, error) {
+func (s *AbstractLocal) NewReader(ctx context.Context, i sdk.CDNItemUnit) (io.ReadCloser, error) {
 	// Open the file from the filesystem according to the locator
 	path, err := s.filename(i)
 	if err != nil {
 		return nil, sdk.WithStack(err)
 	}
-	log.Debug("[%T] reading from %s", s, path)
+	log.Debug(ctx, "[%T] reading from %s", s, path)
 	f, err := os.Open(path)
 	return f, sdk.WithStack(err)
 }
@@ -173,12 +173,12 @@ func (s *AbstractLocal) dirSize(path string) (int64, error) {
 	return size, err
 }
 
-func (s *AbstractLocal) Remove(_ context.Context, i sdk.CDNItemUnit) error {
+func (s *AbstractLocal) Remove(ctx context.Context, i sdk.CDNItemUnit) error {
 	path, err := s.filename(i)
 	if err != nil {
 		return err
 	}
-	log.Debug("[%T] remove %s", s, path)
+	log.Debug(ctx, "[%T] remove %s", s, path)
 	if err := os.Remove(path); err != nil {
 		if os.IsNotExist(err) {
 			return sdk.ErrNotFound

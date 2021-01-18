@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/integration"
@@ -14,7 +15,6 @@ import (
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (api *API) getIntegrationModelsHandler() service.Handler {
@@ -126,7 +126,7 @@ func (api *API) putIntegrationModelHandler() service.Handler {
 		if m.Public {
 			api.GoRoutines.Exec(ctx, "propagatePublicIntegrationModel", func(ctx context.Context) {
 				propagatePublicIntegrationModel(ctx, api.mustDB(), api.Cache, *m, getAPIConsumer(ctx))
-			}, api.PanicDump())
+			})
 
 			if m.Event {
 				if err := event.ResetPublicIntegrations(ctx, api.mustDB()); err != nil {

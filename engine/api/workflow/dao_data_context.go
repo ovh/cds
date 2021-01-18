@@ -1,13 +1,14 @@
 package workflow
 
 import (
+	"context"
 	"database/sql"
 
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 type sqlNodeContextData struct {
@@ -46,7 +47,7 @@ func insertNodeContextData(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.Node) er
 
 	// If the current node is not the root node, we don't keep the payload
 	if n.Name != w.WorkflowData.Node.Name {
-		log.Debug("resetting payload on node %s", n.Name)
+		log.Debug(context.TODO(), "resetting payload on node %s", n.Name)
 		tempContext.DefaultPayload = sql.NullString{}
 		n.Context.DefaultPayload = nil
 	} else {

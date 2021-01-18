@@ -13,7 +13,6 @@ import (
 
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/vcs/git"
 )
 
@@ -137,7 +136,7 @@ func RunGitTag(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, secr
 		Stdout: stdOut,
 	}
 
-	git.LogFunc = log.InfoWithoutCtx
+	//git.LogFunc = log.InfoWithoutCtx
 
 	if path != nil {
 		tagOpts.Path = path.Value

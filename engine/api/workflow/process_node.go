@@ -7,11 +7,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -254,9 +255,9 @@ func processNode(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cac
 
 	// CONDITION
 	if !checkCondition(ctx, wr, n.Context.Conditions, nr.BuildParameters) {
-		log.Debug("Conditions failed on processNode %d/%d", wr.ID, n.ID)
-		log.Debug("Conditions was: %+v", n.Context.Conditions)
-		log.Debug("BuildParameters was: %+v", nr.BuildParameters)
+		log.Debug(ctx, "Conditions failed on processNode %d/%d", wr.ID, n.ID)
+		log.Debug(ctx, "Conditions was: %+v", n.Context.Conditions)
+		log.Debug(ctx, "BuildParameters was: %+v", nr.BuildParameters)
 		return nil, false, nil
 	}
 
@@ -367,7 +368,7 @@ func processNode(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cac
 			return nil, false, sdk.WrapError(err, "unable to check mutexes")
 		}
 		if nbMutex > 0 {
-			log.Debug("Noderun %s processed but not executed because of mutex", n.Name)
+			log.Debug(ctx, "Noderun %s processed but not executed because of mutex", n.Name)
 			AddWorkflowRunInfo(wr, sdk.SpawnMsgNew(*sdk.MsgWorkflowNodeMutex, n.Name))
 			if err := UpdateWorkflowRun(ctx, db, wr); err != nil {
 				return nil, false, sdk.WrapError(err, "unable to update workflow run")

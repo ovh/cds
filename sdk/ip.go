@@ -4,8 +4,6 @@ import (
 	"context"
 	"net"
 	"strings"
-
-	"github.com/ovh/cds/sdk/log"
 )
 
 // IPinRanges returns a slice of all IP in all given IP ranges
@@ -34,7 +32,6 @@ func IPinRange(ctx context.Context, IPrange string) ([]string, error) {
 
 	var ips []string
 	for ip2 := ip.Mask(ipnet.Mask); ipnet.Contains(ip2); inc(ip2) {
-		log.Info(ctx, "Adding %s to IP pool", ip2)
 		ips = append(ips, ip2.String())
 	}
 

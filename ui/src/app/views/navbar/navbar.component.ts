@@ -1,14 +1,12 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
-import { FormControl } from '@angular/forms';
-import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
+import { NavigationEnd, Router } from '@angular/router';
 import { Store } from '@ngxs/store';
 import { Application } from 'app/model/application.model';
-import { AuthConsumer, AuthSession } from 'app/model/authentication.model';
 import { Broadcast } from 'app/model/broadcast.model';
 import { Help } from 'app/model/help.model';
 import { NavbarProjectData, NavbarRecentData, NavbarSearchItem } from 'app/model/navbar.model';
 import { Project } from 'app/model/project.model';
-import { AuthentifiedUser } from 'app/model/user.model';
+import { AuthSummary } from 'app/model/user.model';
 import { ApplicationStore } from 'app/service/application/application.store';
 import { BroadcastStore } from 'app/service/broadcast/broadcast.store';
 import { NavbarService } from 'app/service/navbar/navbar.service';
@@ -48,15 +46,13 @@ export class NavbarComponent implements OnInit, OnDestroy {
     listWorkflows: List<NavbarRecentData>;
     langSubscription: Subscription;
     navbarSubscription: Subscription;
-    userSubscription: Subscription;
+    authSubscription: Subscription;
     sessionSubcription: Subscription;
     consumerSubcription: Subscription;
     broadcastSubscription: Subscription;
     currentRoute: {};
     recentView = true;
-    currentUser: AuthentifiedUser;
-    currentSession: AuthSession;
-    currentConsumer: AuthConsumer;
+    currentAuthSummary: AuthSummary;
     themeSubscription: Subscription;
     darkActive: boolean;
     searchValue: string;
@@ -70,7 +66,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     workflowsSubscription: Subscription;
 
     constructor(
-        private _activatedRoute: ActivatedRoute,
         private _navbarService: NavbarService,
         private _store: Store,
         private _projectStore: ProjectStore,
@@ -82,19 +77,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
         private _routerService: RouterService,
         private _cd: ChangeDetectorRef
     ) {
-        this.userSubscription = this._store.select(AuthenticationState.user).subscribe(u => {
-            this.currentUser = u;
-            this._cd.markForCheck();
-        });
-
-        this._store.dispatch(new FetchCurrentAuth());
-        this.sessionSubcription =  this._store.select(AuthenticationState.session).subscribe((s) => {
-            this.currentSession = s;
-            this._cd.markForCheck();
-        });
-
-        this.consumerSubcription =  this._store.select(AuthenticationState.consumer).subscribe((c) => {
-            this.currentConsumer = c;
+        this.authSubscription = this._store.select(AuthenticationState.summary).subscribe(s => {
+            this.currentAuthSummary = s;
             this._cd.markForCheck();
         });
 
@@ -104,13 +88,13 @@ export class NavbarComponent implements OnInit, OnDestroy {
         });
 
         this._store.select(HelpState.last)
-        .pipe(
-            filter((help) => help != null),
-        )
-        .subscribe(help => {
-            this.help = help;
-            this._cd.markForCheck();
-        });
+            .pipe(
+                filter((help) => help != null),
+            )
+            .subscribe(help => {
+                this.help = help;
+                this._cd.markForCheck();
+            });
 
         this._router.events.pipe(
             filter(e => e instanceof NavigationEnd),
@@ -119,7 +103,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         });
     }
 
-    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     changeTheme() {
         this.darkActive = !this.darkActive;
@@ -127,14 +111,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this._cd.markForCheck();
     }
 
-    isMFAavailable(): boolean {
-        return this.currentConsumer.support_mfa && !this.currentSession.mfa
-    }
-
     ngOnInit() {
         // Listen list of nav project
-        this._store.selectOnce(AuthenticationState.user).subscribe(user => {
-            if (user) {
+        this._store.selectOnce(AuthenticationState.summary).subscribe(s => {
+            if (s) {
                 this.getData();
             }
         });
@@ -238,14 +218,14 @@ export class NavbarComponent implements OnInit, OnDestroy {
                     if (element.type !== 'project') {
                         continue;
                     }
-                    if (isProjectOnly) { // search end with '/'
+                    if (isProjectOnly) { // search end with '/'
                         if (element.title.toLowerCase() + '/' === this.searchValue.toLowerCase() ||
                             element.projectKey.toLowerCase() + '/' === this.searchValue.toLowerCase()) {
                             projectKey = element.projectKey;
                             break;
                         }
                     } else if ((element.title.toLowerCase() === firstPart) ||
-                               (element.projectKey.toLowerCase() === firstPart)) {
+                        (element.projectKey.toLowerCase() === firstPart)) {
                         projectKey = element.projectKey;
                         break;
                     }
@@ -258,7 +238,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             let toadd = false;
             if (!this.searchValue || this.searchValue === '') { // recent view
                 toadd = true;
-            } else if (isProjectOnly) {
+            } else if (isProjectOnly) {
                 if (element.projectKey === projectKey) {
                     toadd = true;
                 }
@@ -416,18 +396,18 @@ export class NavbarComponent implements OnInit, OnDestroy {
     clickLogout(): void {
         this._store.dispatch(new SignoutCurrentUser()).subscribe(
             () => {
- this._router.navigate(['/auth/signin']);
-}
+                this._router.navigate(['/auth/signin']);
+            }
         );
     }
 
     mfaLogin(): void {
         this._store.dispatch(new SignoutCurrentUser()).subscribe(
             () => {
-                this._router.navigate(['/auth/ask-signin/' + this.currentConsumer.type], {
+                this._router.navigate(['/auth/ask-signin/' + this.currentAuthSummary.consumer.type], {
                     queryParams: {
                         redirect_uri: this._router.url,
-                        require_mfa: true,
+                        require_mfa: true
                     }
                 });
             }

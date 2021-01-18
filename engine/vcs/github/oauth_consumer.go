@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
+	"github.com/rockbears/log"
 )
 
 //Github const
@@ -40,7 +40,7 @@ func (g *githubConsumer) AuthorizeRedirect(ctx context.Context) (string, string,
 //AuthorizeToken returns the authorized token (and its secret)
 //from the request token and the verifier got on authorize url
 func (g *githubConsumer) AuthorizeToken(ctx context.Context, state, code string) (string, string, error) {
-	log.Debug("AuthorizeToken> Github send code %s for state %s", code, state)
+	log.Debug(ctx, "AuthorizeToken> Github send code %s for state %s", code, state)
 	//POST https://github.com/login/oauth/access_token
 	//Parameters:
 	//	client_id

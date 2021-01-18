@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
@@ -12,7 +13,6 @@ import (
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // deleteWorkflowGroupHandler delete permission for a group on the workflow
@@ -64,7 +64,7 @@ func (api *API) deleteWorkflowGroupHandler() service.Handler {
 
 		event.PublishWorkflowPermissionDelete(ctx, key, *wf, oldGp, u)
 
-		log.Warning(ctx, "workflow %+v\n", wf)
+		log.Warn(ctx, "workflow %+v\n", wf)
 
 		return service.WriteJSON(w, wf, http.StatusOK)
 	}

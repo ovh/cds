@@ -9,9 +9,9 @@ import (
 	"strings"
 
 	"github.com/fsamin/go-repo"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (s *Service) processPush(ctx context.Context, op *sdk.Operation) (globalErr error) {
@@ -94,7 +94,7 @@ func (s *Service) processPush(ctx context.Context, op *sdk.Operation) (globalErr
 
 	for k, v := range op.LoadFiles.Results {
 		fname := filepath.Join(path, ".cds", k)
-		log.Debug("Creating %s", fname)
+		log.Debug(ctx, "Creating %s", fname)
 		_ = os.Remove(fname)
 		fi, err := os.Create(fname)
 		if err != nil {
@@ -135,6 +135,6 @@ func (s *Service) processPush(ctx context.Context, op *sdk.Operation) (globalErr
 		return sdk.WrapError(err, "push %s", op.Setup.Push.FromBranch)
 	}
 
-	log.Debug("processPush> %s : files pushed", op.UUID)
+	log.Debug(ctx, "processPush> %s : files pushed", op.UUID)
 	return nil
 }

@@ -1,6 +1,7 @@
 package swarm
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"strings"
@@ -11,11 +12,10 @@ import (
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/api/types/strslice"
 	"github.com/docker/go-connections/nat"
-	context "golang.org/x/net/context"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -23,7 +23,7 @@ import (
 func (h *HatcherySwarm) createNetwork(ctx context.Context, dockerClient *dockerClient, name string) error {
 	ctx, end := telemetry.Span(ctx, "swarm.createNetwork", telemetry.Tag("network", name))
 	defer end()
-	log.Debug("hatchery> swarm> createNetwork> Create network %s", name)
+	log.Debug(ctx, "hatchery> swarm> createNetwork> Create network %s", name)
 	_, err := dockerClient.NetworkCreate(ctx, name, types.NetworkCreate{
 		Driver:         "bridge",
 		Internal:       false,
@@ -44,6 +44,7 @@ type containerArgs struct {
 	cmd, env                           []string
 	labels                             map[string]string
 	memory                             int64
+	memorySwap                         int64
 	dockerOpts                         dockerOpts
 	entryPoint                         strslice.StrSlice
 }
@@ -86,7 +87,7 @@ func (h *HatcherySwarm) createAndStartContainer(ctx context.Context, dockerClien
 	}
 	hostConfig.Resources = container.Resources{
 		Memory:     cArgs.memory * 1024 * 1024, //from MB to B
-		MemorySwap: -1,
+		MemorySwap: cArgs.memorySwap,
 	}
 
 	networkingConfig := &network.NetworkingConfig{
@@ -103,7 +104,7 @@ func (h *HatcherySwarm) createAndStartContainer(ctx context.Context, dockerClien
 	// Check the images to know if we had to pull or not
 	images, errl := dockerClient.ImageList(ctx, types.ImageListOptions{All: true})
 	if errl != nil {
-		log.Warning(ctx, "createAndStartContainer> Unable to list images: %s", errl)
+		log.Warn(ctx, "createAndStartContainer> Unable to list images: %s", errl)
 	}
 	next()
 

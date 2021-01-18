@@ -161,19 +161,19 @@
                                 <input class="ui input" type="text" name="registry_url"
                                     placeholder="https://index.docker.io/v1/"
                                     [(ngModel)]="workerModel.model_docker.registry"
-                                    [disabled]="loading || (!currentUser.isAdmin() && !workerModel.restricted)">
+                                    [disabled]="loading || (!currentAuthSummary.isAdmin() && !workerModel.restricted)">
                             </div>
                             <div class="field">
                                 <label>{{'worker_model_username' | translate}}</label>
                                 <input class="ui input" type="text" name="registry_username"
                                     [(ngModel)]="workerModel.model_docker.username"
-                                    [disabled]="loading || (!currentUser.isAdmin() && !workerModel.restricted)">
+                                    [disabled]="loading || (!currentAuthSummary.isAdmin() && !workerModel.restricted)">
                             </div>
                             <div class="field">
                                 <label>{{'worker_model_password' | translate}}</label>
                                 <input class="ui input" type="password" name="registry_password"
                                     [(ngModel)]="workerModel.model_docker.password"
-                                    [disabled]="loading || (!currentUser.isAdmin() && !workerModel.restricted)">
+                                    [disabled]="loading || (!currentAuthSummary.isAdmin() && !workerModel.restricted)">
                             </div>
                         </ng-container>
                         <div class="field" *ngIf="workerModel.editable">
@@ -191,7 +191,7 @@
                             <label>{{'worker_model_shell_docker' | translate}} *</label>
                             <input class="ui input" type="text" name="shell" placeholder="sh -c"
                                 [(ngModel)]="workerModel.model_docker.shell"
-                                [disabled]="loading || (!currentUser.isAdmin() && !workerModel.restricted)">
+                                [disabled]="loading || (!currentAuthSummary.isAdmin() && !workerModel.restricted)">
                         </div>
                         <div class="field">
                             <label suiPopup [popupText]="'worker_model_cmd_tooltip' | translate"
@@ -200,7 +200,7 @@
                                     class="fa fa-question-circle"></i>
                             </label>
                             <input class="ui input" type="text" name="cmd" [(ngModel)]="workerModel.model_docker.cmd"
-                                [disabled]="loading || (!currentUser.isAdmin() && !workerModel.restricted)">
+                                [disabled]="loading || (!currentAuthSummary.isAdmin() && !workerModel.restricted)">
                         </div>
                         <div class="field">
                             <label suiPopup [popupText]="'worker_model_env_tooltip' | translate"
@@ -270,20 +270,20 @@
                                 <label>{{'worker_model_username' | translate}}</label>
                                 <input class="ui input" type="text" name="registry_username"
                                        [(ngModel)]="workerModel.model_virtual_machine.user"
-                                       [disabled]="loading || !currentUser.isAdmin()">
+                                       [disabled]="loading || !currentAuthSummary.isAdmin()">
                             </div>
                             <div class="field">
                                 <label>{{'worker_model_password' | translate}}</label>
                                 <input class="ui input" type="password" name="registry_password"
                                        [(ngModel)]="workerModel.model_virtual_machine.password"
-                                       [disabled]="loading || !currentUser.isAdmin()">
+                                       [disabled]="loading || !currentAuthSummary.isAdmin()">
                             </div>
                         </ng-container>
                         <div class="field">
                             <label>{{'worker_model_pre_cmd' | translate}}</label>
                             <textarea class="ui input" name="pre_cmd"
                                 [(ngModel)]="workerModel.model_virtual_machine.pre_cmd"
-                                [disabled]="loading || (!currentUser.isAdmin() && !workerModel.restricted)">
+                                [disabled]="loading || (!currentAuthSummary.isAdmin() && !workerModel.restricted)">
                             </textarea>
                         </div>
                         <div class="field">
@@ -294,13 +294,13 @@
                             </label>
                             <input class="ui input" type="text" name="cmd"
                                 [(ngModel)]="workerModel.model_virtual_machine.cmd"
-                                [disabled]="loading || (!currentUser.isAdmin() && !workerModel.restricted)">
+                                [disabled]="loading || (!currentAuthSummary.isAdmin() && !workerModel.restricted)">
                         </div>
                         <div class="field">
                             <label>{{'worker_model_post_cmd' | translate}}</label>
                             <textarea class="ui input" name="post_cmd"
                                 [(ngModel)]="workerModel.model_virtual_machine.post_cmd"
-                                [disabled]="loading || (!currentUser.isAdmin() && !workerModel.restricted)">
+                                [disabled]="loading || (!currentAuthSummary.isAdmin() && !workerModel.restricted)">
                             </textarea>
                         </div>
                     </ng-container>

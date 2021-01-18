@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/cache"
@@ -21,7 +22,6 @@ import (
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/ovh/cds/sdk/log"
 )
 
 const (
@@ -216,7 +216,7 @@ func (s *Service) Serve(c context.Context) error {
 	// Start the http server
 	log.Info(ctx, "CDN> Starting HTTP Server on port %d", s.Cfg.HTTP.Port)
 	if err := server.ListenAndServe(); err != nil {
-		log.Fatalf("CDN> Cannot start cds-cdn: %v", err)
+		log.Fatal(ctx, "CDN> Cannot start cds-cdn: %v", err)
 	}
 	return ctx.Err()
 }

@@ -4,11 +4,12 @@ import (
 	"context"
 	"sync"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -28,7 +29,7 @@ type ImportOptions struct {
 // Parse parse an exportentities.workflow and return the parsed workflow
 func Parse(ctx context.Context, proj sdk.Project, ew exportentities.Workflow) (*sdk.Workflow, error) {
 	log.Info(ctx, "Parse>> Parse workflow %s in project %s", ew.GetName(), proj.Key)
-	log.Debug("Parse>> Workflow: %+v", ew)
+	log.Debug(ctx, "Parse>> Workflow: %+v", ew)
 
 	//Parse workflow
 	w, errW := exportentities.ParseWorkflow(ew)
@@ -120,7 +121,7 @@ func ParseAndImport(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store 
 						)
 						// get only non cofigurable stuff
 						currentRepoWebHook = h
-						log.Debug("workflow.ParseAndImport> keeping the old repository web hook: %+v (%+v)", h, oldRepoWebHook)
+						log.Debug(ctx, "workflow.ParseAndImport> keeping the old repository web hook: %+v (%+v)", h, oldRepoWebHook)
 						break
 					}
 				}

@@ -45,8 +45,6 @@ export class WorkflowNodeRunComponent implements OnInit, OnDestroy {
     nodeRunsHistory = new Array<WorkflowNodeRun>();
     selectedTab: string;
 
-    isAdmin: boolean;
-
     nbVuln = 0;
     deltaVul = 0;
 
@@ -61,7 +59,6 @@ export class WorkflowNodeRunComponent implements OnInit, OnDestroy {
         private _cd: ChangeDetectorRef
     ) {
         this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
-        this.isAdmin = this._store.selectSnapshot(AuthenticationState.user).ring === 'ADMIN';
 
         // Tab selection
         this._activatedRoute.queryParams.subscribe(q => {

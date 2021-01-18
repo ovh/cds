@@ -4,11 +4,11 @@ import (
 	"context"
 
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func getAllLinksGroupUser(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query) (LinksGroupUser, error) {

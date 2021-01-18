@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rockbears/log"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
 
@@ -19,7 +20,6 @@ import (
 	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -182,7 +182,6 @@ func (api *API) computeGlobalStatusByNumbers(s computeGlobalNumbers) string {
 }
 
 func (api *API) initMetrics(ctx context.Context) error {
-
 	log.Info(ctx, "Metrics initialized for %s/%s", api.Type(), api.Name())
 
 	// TODO refactor all the metrics name to replace "cds-api" by "api.Type()"
@@ -313,7 +312,7 @@ func (api *API) computeMetrics(ctx context.Context) {
 func (api *API) countMetric(ctx context.Context, v *stats.Int64Measure, query string) {
 	n, err := api.mustDB().SelectInt(query)
 	if err != nil {
-		log.Warning(ctx, "metrics>Errors while fetching count %s: %v", query, err)
+		log.Warn(ctx, "metrics>Errors while fetching count %s: %v", query, err)
 	}
 	telemetry.Record(ctx, v, n)
 }
@@ -321,7 +320,7 @@ func (api *API) countMetric(ctx context.Context, v *stats.Int64Measure, query st
 func (api *API) countMetricRange(ctx context.Context, status string, timerange string, v *stats.Int64Measure, query string, args ...interface{}) {
 	n, err := api.mustDB().SelectInt(query, args...)
 	if err != nil {
-		log.Warning(ctx, "metrics>Errors while fetching count range %s: %v", query, err)
+		log.Warn(ctx, "metrics>Errors while fetching count range %s: %v", query, err)
 	}
 	ctx, _ = tag.New(ctx, tag.Upsert(tagStatus, status), tag.Upsert(tagRange, timerange))
 	telemetry.Record(ctx, v, n)
@@ -379,7 +378,7 @@ func (api *API) processStatusMetrics(ctx context.Context) {
 		ctx, _ = tag.New(ctx, tag.Upsert(tagServiceName, service), tag.Upsert(tagService, line.Type))
 		v, err := telemetry.FindAndRegisterViewLast(item, tagsService)
 		if err != nil {
-			log.Warning(ctx, "metrics>Errors while FindAndRegisterViewLast %s: %v", item, err)
+			log.Warn(ctx, "metrics>Errors while FindAndRegisterViewLast %s: %v", item, err)
 			continue
 		}
 		telemetry.Record(ctx, v.Measure, number)

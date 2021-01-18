@@ -11,6 +11,7 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/redis"
@@ -18,7 +19,6 @@ import (
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/engine/websocket"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (s *Service) getItemLogsStreamHandler() service.Handler {
@@ -41,7 +41,8 @@ func (s *Service) getItemLogsStreamHandler() service.Handler {
 
 		wsClient.OnMessage(func(m []byte) {
 			if err := wsClientData.UpdateFilter(m); err != nil {
-				log.WarningWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+				ctx = sdk.ContextWithStacktrace(ctx, err)
+				log.Warn(ctx, err.Error())
 				return
 			}
 			// Trigger one update at routine startup
@@ -53,7 +54,7 @@ func (s *Service) getItemLogsStreamHandler() service.Handler {
 		defer cancel()
 
 		s.GoRoutines.Exec(ctx, "getItemLogsStreamHandler."+wsClient.UUID(), func(ctx context.Context) {
-			log.Debug("getItemLogsStreamHandler> start routine for client %s (session %s)", wsClient.UUID(), s.sessionID(ctx))
+			log.Debug(ctx, "getItemLogsStreamHandler> start routine for client %s (session %s)", wsClient.UUID(), s.sessionID(ctx))
 
 			// Create a ticker to periodically send logs if needed
 			sendTicker := time.NewTicker(time.Millisecond * 100)
@@ -61,14 +62,14 @@ func (s *Service) getItemLogsStreamHandler() service.Handler {
 			for {
 				select {
 				case <-ctx.Done():
-					log.Debug("getItemLogsStreamHandler> stop routine for stream client %s", wsClient.UUID())
+					log.Debug(ctx, "getItemLogsStreamHandler> stop routine for stream client %s", wsClient.UUID())
 					return
 				case <-sendTicker.C:
 					if !wsClientData.ConsumeTrigger() {
 						continue
 					}
 					if err := s.sendLogsToWSClient(ctx, wsClient, wsClientData); err != nil {
-						log.Warning(ctx, "getItemLogsStreamHandler> can't send to client %s it will be removed: %+v", wsClient.UUID(), err)
+						log.Warn(ctx, "getItemLogsStreamHandler> can't send to client %s it will be removed: %+v", wsClient.UUID(), err)
 						return
 					}
 				}
@@ -79,7 +80,7 @@ func (s *Service) getItemLogsStreamHandler() service.Handler {
 			return err
 		}
 
-		log.Debug("getItemLogsStreamHandler> stop listenning for client %s", wsClient.UUID())
+		log.Debug(ctx, "getItemLogsStreamHandler> stop listenning for client %s", wsClient.UUID())
 		return nil
 	}
 }
@@ -97,7 +98,7 @@ func (s *Service) sendLogsToWSClient(ctx context.Context, wsClient websocket.Cli
 		if err != nil {
 			// Catch not found error as the item can be created after the client stream subscription
 			if sdk.ErrorIs(err, sdk.ErrNotFound) {
-				log.Debug("sendLogsToWSClient> can't found item with type %s and ref %s for client %s: %+v", wsClientData.itemFilter.ItemType, wsClientData.itemFilter.APIRef, wsClient.UUID(), err)
+				log.Debug(ctx, "sendLogsToWSClient> can't found item with type %s and ref %s for client %s: %+v", wsClientData.itemFilter.ItemType, wsClientData.itemFilter.APIRef, wsClient.UUID(), err)
 				return nil
 			}
 			return nil
@@ -121,7 +122,7 @@ func (s *Service) sendLogsToWSClient(ctx context.Context, wsClient websocket.Cli
 		wsClientData.itemUnit = iu
 	}
 
-	log.Debug("getItemLogsStreamHandler> send log to client %s from %d", wsClient.UUID(), wsClientData.scoreNextLineToSend)
+	log.Debug(ctx, "getItemLogsStreamHandler> send log to client %s from %d", wsClient.UUID(), wsClientData.scoreNextLineToSend)
 
 	rc, err := s.Units.LogsBuffer().NewAdvancedReader(ctx, *wsClientData.itemUnit, sdk.CDNReaderFormatJSON, wsClientData.scoreNextLineToSend, 100, 0)
 	if err != nil {
@@ -137,7 +138,7 @@ func (s *Service) sendLogsToWSClient(ctx context.Context, wsClient websocket.Cli
 		return sdk.WrapError(err, "cannot unmarshal lines from buffer %v", string(buf.Bytes()))
 	}
 
-	log.Debug("getItemLogsStreamHandler> iterate over %d lines to send for client %s", len(lines), wsClient.UUID())
+	log.Debug(ctx, "getItemLogsStreamHandler> iterate over %d lines to send for client %s", len(lines), wsClient.UUID())
 	oldNextLineToSend := wsClientData.scoreNextLineToSend
 	for i := range lines {
 		if wsClientData.scoreNextLineToSend > 0 && wsClientData.scoreNextLineToSend != lines[i].Number {

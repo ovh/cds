@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/rockbears/log"
 	"github.com/xanzy/go-gitlab"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 type statusData struct {
@@ -47,7 +47,7 @@ func getGitlabStateFromStatus(s string) gitlab.BuildStateValue {
 //SetStatus set build status on Gitlab
 func (c *gitlabClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	if c.disableStatus {
-		log.Warning(ctx, "disableStatus.SetStatus>  ⚠ Gitlab statuses are disabled")
+		log.Warn(ctx, "disableStatus.SetStatus>  ⚠ Gitlab statuses are disabled")
 		return nil
 	}
 
@@ -57,7 +57,7 @@ func (c *gitlabClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	case fmt.Sprintf("%T", sdk.EventRunWorkflowNode{}):
 		data, err = processWorkflowNodeRunEvent(event, c.uiURL)
 	default:
-		log.Debug("gitlabClient.SetStatus> Unknown event %v", event)
+		log.Debug(ctx, "gitlabClient.SetStatus> Unknown event %v", event)
 		return nil
 	}
 
@@ -94,7 +94,7 @@ func (c *gitlabClient) SetStatus(ctx context.Context, event sdk.Event) error {
 			s.Description == *opt.Description // Comparing Description as there are the pipelines names inside
 
 		if sameRequest {
-			log.Debug("gitlabClient.SetStatus> Duplicate commit status, ignoring request - repo:%s hash:%s", data.repoFullName, data.hash)
+			log.Debug(ctx, "gitlabClient.SetStatus> Duplicate commit status, ignoring request - repo:%s hash:%s", data.repoFullName, data.hash)
 			found = true
 			break
 		}

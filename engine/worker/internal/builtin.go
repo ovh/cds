@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/engine/worker/internal/action"
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 var mapBuiltinActions = map[string]BuiltInAction{}
@@ -39,7 +40,7 @@ func (w *CurrentWorker) runBuiltin(ctx context.Context, a sdk.Action, secrets []
 		return res
 	}
 
-	log.Debug("running builin action %s %s", a.StepName, a.Name)
+	log.Debug(ctx, "running builin action %s %s", a.StepName, a.Name)
 	res, err := f(ctx, w, a, secrets)
 	if err != nil {
 		res.Status = sdk.StatusFail

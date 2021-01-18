@@ -14,6 +14,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/golang/mock/gomock"
+	"github.com/rockbears/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
@@ -32,7 +33,6 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/exportentities"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func TestPostUpdateWorkflowAsCodeHandler(t *testing.T) {
@@ -818,7 +818,7 @@ version: v1.0`),
 		DoJSONRequest(gomock.Any(), "POST", "/vcs/github/repos/fsamin/go-repo/hooks", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
-				log.Debug("--> %T %+v", in, in)
+				log.Debug(ctx, "--> %T %+v", in, in)
 
 				vcsHooks, ok := in.(*sdk.VCSHook)
 				require.True(t, ok)
@@ -1177,7 +1177,7 @@ hooks:
 		DoJSONRequest(gomock.Any(), "POST", "/vcs/github/repos/fsamin/go-repo/hooks", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
-				log.Debug("--> %T %+v", in, in)
+				log.Debug(ctx, "--> %T %+v", in, in)
 
 				vcsHooks, ok := in.(*sdk.VCSHook)
 				require.True(t, ok)

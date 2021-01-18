@@ -6,8 +6,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // Entry point of the internal scheduler
@@ -62,7 +63,7 @@ func (s *Service) retryTaskExecutionsRoutine(ctx context.Context) error {
 				continue
 			}
 			if size > 20 {
-				log.Warning(ctx, "too many tasks in scheduler for now, skipped this retry ticker. size:%d", size)
+				log.Warn(ctx, "too many tasks in scheduler for now, skipped this retry ticker. size:%d", size)
 				continue
 			}
 
@@ -91,15 +92,15 @@ func (s *Service) retryTaskExecutionsRoutine(ctx context.Context) error {
 					// old hooks
 					if e.ProcessingTimestamp == 0 && e.Timestamp < time.Now().Add(-2*time.Minute).UnixNano() {
 						if e.UUID == "" {
-							log.Warning(ctx, "retryTaskExecutionsRoutine > Very old hook without UUID %d/%d type:%s status:%s timestamp:%d err:%v", e.NbErrors, s.Cfg.RetryError, e.Type, e.Status, e.Timestamp, e.LastError)
+							log.Warn(ctx, "retryTaskExecutionsRoutine > Very old hook without UUID %d/%d type:%s status:%s timestamp:%d err:%v", e.NbErrors, s.Cfg.RetryError, e.Type, e.Status, e.Timestamp, e.LastError)
 							continue
 						}
 						e.Status = TaskExecutionEnqueued
 						if err := s.Dao.SaveTaskExecution(&e); err != nil {
-							log.Warning(ctx, "retryTaskExecutionsRoutine> unable to save task execution for old hook %s: %v", e.UUID, err)
+							log.Warn(ctx, "retryTaskExecutionsRoutine> unable to save task execution for old hook %s: %v", e.UUID, err)
 							continue
 						}
-						log.Warning(ctx, "retryTaskExecutionsRoutine > Enqueing very old hooks %s %d/%d type:%s status:%s timestamp:%d err:%v", e.UUID, e.NbErrors, s.Cfg.RetryError, e.Type, e.Status, e.Timestamp, e.LastError)
+						log.Warn(ctx, "retryTaskExecutionsRoutine > Enqueing very old hooks %s %d/%d type:%s status:%s timestamp:%d err:%v", e.UUID, e.NbErrors, s.Cfg.RetryError, e.Type, e.Status, e.Timestamp, e.LastError)
 						if err := s.Dao.EnqueueTaskExecution(ctx, &e); err != nil {
 							log.Error(ctx, "retryTaskExecutionsRoutine > error on EnqueueTaskExecution: %v", err)
 						}
@@ -108,7 +109,7 @@ func (s *Service) retryTaskExecutionsRoutine(ctx context.Context) error {
 						// avoid re-enqueue if the lastError is about a git branch not found
 						// the branch was deleted from git repository, it will never work
 						if strings.Contains(e.LastError, "branchName parameter must be provided") {
-							log.Warning(ctx, "retryTaskExecutionsRoutine > Do not re-enqueue this taskExecution with lastError %s %d/%d type:%s status:%s len:%d err:%s", e.UUID, e.NbErrors, s.Cfg.RetryError, e.Type, e.Status, len(e.LastError), e.LastError)
+							log.Warn(ctx, "retryTaskExecutionsRoutine > Do not re-enqueue this taskExecution with lastError %s %d/%d type:%s status:%s len:%d err:%s", e.UUID, e.NbErrors, s.Cfg.RetryError, e.Type, e.Status, len(e.LastError), e.LastError)
 							if err := s.Dao.DeleteTaskExecution(&e); err != nil {
 								log.Error(ctx, "retryTaskExecutionsRoutine > error on DeleteTaskExecution: %v", err)
 							}
@@ -116,10 +117,10 @@ func (s *Service) retryTaskExecutionsRoutine(ctx context.Context) error {
 						}
 						e.Status = TaskExecutionEnqueued
 						if err := s.Dao.SaveTaskExecution(&e); err != nil {
-							log.Warning(ctx, "retryTaskExecutionsRoutine> unable to save task execution for %s: %v", e.UUID, err)
+							log.Warn(ctx, "retryTaskExecutionsRoutine> unable to save task execution for %s: %v", e.UUID, err)
 							continue
 						}
-						log.Warning(ctx, "retryTaskExecutionsRoutine > Enqueing with lastError %s %d/%d type:%s status:%s len:%d err:%s", e.UUID, e.NbErrors, s.Cfg.RetryError, e.Type, e.Status, len(e.LastError), e.LastError)
+						log.Warn(ctx, "retryTaskExecutionsRoutine > Enqueing with lastError %s %d/%d type:%s status:%s len:%d err:%s", e.UUID, e.NbErrors, s.Cfg.RetryError, e.Type, e.Status, len(e.LastError), e.LastError)
 						if err := s.Dao.EnqueueTaskExecution(ctx, &e); err != nil {
 							log.Error(ctx, "retryTaskExecutionsRoutine > error on EnqueueTaskExecution: %v", err)
 						}
@@ -249,7 +250,7 @@ func (s *Service) dequeueTaskExecutions(ctx context.Context) error {
 			log.Error(ctx, "dequeueTaskExecutions > Unable to get queueLen: %v", err)
 			continue
 		}
-		log.Debug("dequeueTaskExecutions> current queue size: %d", size)
+		log.Debug(ctx, "dequeueTaskExecutions> current queue size: %d", size)
 
 		if s.Maintenance {
 			log.Info(ctx, "Maintenance enable, wait 1 minute. Queue %d", size)
@@ -311,7 +312,7 @@ func (s *Service) dequeueTaskExecutions(ctx context.Context) error {
 			saveTaskExecution = true
 		} else {
 			saveTaskExecution = true
-			log.Debug("dequeueTaskExecutions> call doTask on taskKey: %s", taskKey)
+			log.Debug(ctx, "dequeueTaskExecutions> call doTask on taskKey: %s", taskKey)
 			var err error
 			restartTask, err = s.doTask(ctx, task, &t)
 			if err != nil {
@@ -323,7 +324,7 @@ func (s *Service) dequeueTaskExecutions(ctx context.Context) error {
 					}
 					continue
 				} else {
-					log.Warning(ctx, "dequeueTaskExecutions> %s failed err[%d]: %v", t.UUID, t.NbErrors, err)
+					log.Warn(ctx, "dequeueTaskExecutions> %s failed err[%d]: %v", t.UUID, t.NbErrors, err)
 					t.LastError = err.Error()
 					t.NbErrors++
 					saveTaskExecution = true

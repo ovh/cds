@@ -4,12 +4,12 @@ import (
 	"context"
 	"time"
 
+	"github.com/rockbears/log"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
 
 	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/storage"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 

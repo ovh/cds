@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/mitchellh/hashstructure"
+	"github.com/rockbears/log"
 	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/cdn/item"
@@ -19,7 +20,6 @@ import (
 	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdn"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/log/hook"
 )
 
@@ -28,7 +28,7 @@ func TestStoreNewStepLog(t *testing.T) {
 	item.InitDBMapping(m)
 	storage.InitDBMapping(m)
 
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 	db, factory, cache, cancel := test.SetupPGToCancel(t, m, sdk.TypeCDN)
 	t.Cleanup(cancel)
 
@@ -111,7 +111,7 @@ func TestStoreLastStepLog(t *testing.T) {
 	item.InitDBMapping(m)
 	storage.InitDBMapping(m)
 
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 	db, factory, cache, cancel := test.SetupPGToCancel(t, m, sdk.TypeCDN)
 	t.Cleanup(cancel)
 
@@ -200,7 +200,7 @@ func TestStoreNewServiceLog(t *testing.T) {
 	item.InitDBMapping(m)
 	storage.InitDBMapping(m)
 
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 	db, factory, cache, cancel := test.SetupPGToCancel(t, m, sdk.TypeCDN)
 	t.Cleanup(cancel)
 

@@ -6,7 +6,7 @@ import { AuthenticationState } from 'app/store/authentication.state';
 import { forkJoin } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { Group } from '../../../../model/group.model';
-import { AuthentifiedUser } from '../../../../model/user.model';
+import { AuthSummary } from '../../../../model/user.model';
 import { ModelPattern, WorkerModel } from '../../../../model/worker-model.model';
 import { GroupService } from '../../../../service/group/group.service';
 import { WorkerModelService } from '../../../../service/worker-model/worker-model.service';
@@ -26,7 +26,7 @@ export class WorkerModelAddComponent implements OnInit {
     groups: Array<Group>;
     patterns: Array<ModelPattern>;
     patternSelected: ModelPattern;
-    currentUser: AuthentifiedUser;
+    currentAuthSummary: AuthSummary;
     path: Array<PathItem>;
 
     constructor(
@@ -51,7 +51,7 @@ export class WorkerModelAddComponent implements OnInit {
 
         this.workerModel = new WorkerModel();
         this.workerModel.editable = true;
-        this.currentUser = this._store.selectSnapshot(AuthenticationState.user);
+        this.currentAuthSummary = this._store.selectSnapshot(AuthenticationState.summary);
         this.getGroups();
         this.getWorkerModelComponents();
     }

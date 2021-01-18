@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdn"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (s *Service) sendToCDS(ctx context.Context, msgs []handledMessage) error {
@@ -106,6 +107,8 @@ func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signa
 		return err
 	}
 
+	ctx = context.WithValue(ctx, storage.FieldAPIRef, it.APIRefHash)
+
 	iu, err := s.loadOrCreateItemUnitBuffer(ctx, it.ID, itemType)
 	if err != nil {
 		return err
@@ -113,7 +116,7 @@ func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signa
 
 	// In case where the item was marked as complete we don't allow append of other logs
 	if it.Status == sdk.CDNStatusItemCompleted {
-		log.WarningWithFields(ctx, log.Fields{"item_apiref": it.APIRefHash}, "cdn:storeLogs: a log was received for item %s but status in already complete", it.ID)
+		log.Warn(ctx, "cdn:storeLogs: a log was received for item %s but status in already complete", it.ID)
 		return nil
 	}
 
@@ -182,13 +185,13 @@ func (s *Service) loadOrCreateItem(ctx context.Context, itemType sdk.CDNItemType
 		}
 		defer tx.Rollback() // nolint
 
+		ctx = context.WithValue(ctx, storage.FieldAPIRef, it.APIRefHash)
+
 		if errInsert := item.Insert(ctx, s.Mapper, tx, it); errInsert == nil {
 			if err := tx.Commit(); err != nil {
 				return nil, sdk.WithStack(err)
 			}
-			log.InfoWithFields(ctx, log.Fields{
-				"item_apiref": it.APIRefHash,
-			}, "storeLogs> new item %s has been stored", it.ID)
+			log.Info(ctx, "storeLogs> new item %s has been stored", it.ID)
 
 			return it, nil
 		} else if !sdk.ErrorIs(errInsert, sdk.ErrConflictData) {

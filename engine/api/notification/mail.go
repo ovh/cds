@@ -5,9 +5,10 @@ import (
 	"context"
 	"regexp"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/engine/api/mail"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 var regexpIsHTML = regexp.MustCompile(`^\w*\n*<[a-z][\s\S]*>`)

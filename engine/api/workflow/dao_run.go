@@ -13,13 +13,13 @@ import (
 	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
+	"github.com/rockbears/log"
 	"go.opencensus.io/stats"
 
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -343,7 +343,7 @@ func LoadRunsSummaries(db gorp.SqlExecutor, projectkey, workflowname string, off
 			tags = append(tags, k+"="+v)
 		}
 
-		log.Debug("tags=%v", tags)
+		log.Debug(context.TODO(), "tags=%v", tags)
 
 		args = append(args, strings.Join(tags, ","))
 	}
@@ -717,7 +717,7 @@ func PurgeWorkflowRun(ctx context.Context, db gorp.SqlExecutor, wf sdk.Workflow)
 	}{}
 
 	if wf.HistoryLength == 0 {
-		log.Debug("PurgeWorkflowRun> history length equals 0, skipping purge")
+		log.Debug(ctx, "PurgeWorkflowRun> history length equals 0, skipping purge")
 		return nil
 	}
 
@@ -862,7 +862,7 @@ func purgeWorkflowRunWithoutTags(ctx context.Context, db gorp.SqlExecutor, wf sd
 
 	lastWfrID, errID := db.SelectInt(qLastSuccess, wf.ID, wf.HistoryLength, sdk.StatusSuccess)
 	if errID != nil && errID != sql.ErrNoRows {
-		log.Warning(ctx, "PurgeWorkflowRun> Unable to last success run for workflow id %d and history length %d : %s", wf.ID, wf.HistoryLength, errID)
+		log.Warn(ctx, "PurgeWorkflowRun> Unable to last success run for workflow id %d and history length %d : %s", wf.ID, wf.HistoryLength, errID)
 		return errID
 	}
 
@@ -882,7 +882,7 @@ func purgeWorkflowRunWithoutTags(ctx context.Context, db gorp.SqlExecutor, wf sd
 		WHERE workflow_run.id = run_to_delete.id
 	`
 	if _, err := db.Exec(qDelete, wf.ID, lastWfrID, sdk.StatusBuilding, sdk.StatusChecking, sdk.StatusWaiting); err != nil {
-		log.Warning(ctx, "PurgeWorkflowRun> Unable to update workflow run for purge without tags for workflow id %d and history length %d : %s", wf.ID, wf.HistoryLength, err)
+		log.Warn(ctx, "PurgeWorkflowRun> Unable to update workflow run for purge without tags for workflow id %d and history length %d : %s", wf.ID, wf.HistoryLength, err)
 		return err
 	}
 
@@ -900,7 +900,7 @@ func CountWorkflowRunsMarkToDelete(ctx context.Context, db gorp.SqlExecutor, wor
 		log.Error(ctx, "countWorkflowRunsMarkToDelete> %v", err)
 		return 0
 	}
-	log.Debug("CountWorkflowRunsMarkToDelete> %d workflow to delete", n)
+	log.Debug(ctx, "CountWorkflowRunsMarkToDelete> %d workflow to delete", n)
 	if workflowRunsMarkToDelete != nil {
 		telemetry.Record(ctx, workflowRunsMarkToDelete, n)
 	}

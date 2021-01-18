@@ -13,7 +13,7 @@ import (
 	ldap "gopkg.in/ldap.v2"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
+	"github.com/rockbears/log"
 )
 
 var _ sdk.AuthDriver = new(AuthDriver)
@@ -94,7 +94,7 @@ func (d AuthDriver) GetUserInfo(ctx context.Context, req sdk.AuthConsumerSigninR
 
 	//If user doesn't exist and search was'nt successful => exist
 	if err != nil {
-		log.Warning(ctx, "LDAP> Search error %s", err)
+		log.Warn(ctx, "LDAP> Search error %s", err)
 		return userInfo, sdk.NewError(sdk.ErrUnauthorized, err)
 	}
 
@@ -174,7 +174,7 @@ func (d *AuthDriver) openLDAP(ctx context.Context, conf Config) error {
 // bind binds
 func (d *AuthDriver) bind(ctx context.Context, term, password string) error {
 	bindRequest := strings.Replace(d.conf.UserSearch, "{0}", ldap.EscapeFilter(term), 1) + "," + d.conf.UserSearchBase + "," + d.conf.RootDN
-	log.Debug("LDAP> bind user %s", bindRequest)
+	log.Debug(ctx, "LDAP> bind user %s", bindRequest)
 
 	if err := d.conn.Bind(bindRequest, password); err != nil {
 		if !shoudRetry(ctx, err) {
@@ -195,7 +195,7 @@ func (d *AuthDriver) search(ctx context.Context, term string, attributes ...stri
 	userSearch := strings.Replace(d.conf.UserSearch, "{0}", ldap.EscapeFilter(term), 1)
 	filter := fmt.Sprintf("(%s)", userSearch)
 
-	log.Debug("LDAP> Search user %s", filter)
+	log.Debug(ctx, "LDAP> Search user %s", filter)
 	// Search for the given username
 	searchRequest := ldap.NewSearchRequest(
 		d.conf.RootDN,

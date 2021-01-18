@@ -1,10 +1,13 @@
 package action
 
 import (
+	"context"
+
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/action"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // CreateBuiltinActions add builtin actions in database if needed
@@ -29,7 +32,7 @@ func checkBuiltinAction(db gorpmapper.SqlExecutorWithTx, a *sdk.Action) error {
 
 	// If the action doesn't exist, let's create
 	if nb == 0 {
-		log.Debug("createBuiltinAction> create builtin action %s", a.Name)
+		log.Debug(context.Background(), "createBuiltinAction> create builtin action %s", a.Name)
 		if err := Insert(db, a); err != nil {
 			return err
 		}

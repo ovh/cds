@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
+	"github.com/rockbears/log"
 )
 
 func StartWorker(ctx context.Context, w *CurrentWorker, bookedJobID int64) (mainError error) {
@@ -49,9 +49,9 @@ func StartWorker(ctx context.Context, w *CurrentWorker, bookedJobID int64) (main
 		stopHTTPServer()
 
 		if err := ctx.Err(); err != nil {
-			log.Warning(ctx, "Exiting worker: %v", err)
+			log.Warn(ctx, "Exiting worker: %v", err)
 		} else {
-			log.Warning(ctx, "Exiting worker")
+			log.Warn(ctx, "Exiting worker")
 		}
 	}
 
@@ -118,10 +118,10 @@ func StartWorker(ctx context.Context, w *CurrentWorker, bookedJobID int64) (main
 			if j.ID == 0 {
 				continue
 			}
-			log.Debug("checkQueue> Receive workflow job %d", j.ID)
+			log.Debug(ctx, "checkQueue> Receive workflow job %d", j.ID)
 
 			//Take the job
-			log.Debug("checkQueue> Try take the job %d", j.ID)
+			log.Debug(ctx, "checkQueue> Try take the job %d", j.ID)
 			if err := w.Take(ctx, j); err != nil {
 				log.Info(ctx, "Unable to run this job  %d. Take info: %v", j.ID, err)
 				errsChan <- err
@@ -140,7 +140,7 @@ func StartWorker(ctx context.Context, w *CurrentWorker, bookedJobID int64) (main
 }
 
 func processBookedWJob(ctx context.Context, w *CurrentWorker, wjobs chan<- sdk.WorkflowNodeJobRun, bookedWJobID int64) error {
-	log.Debug("Try to take the workflow node job %d", bookedWJobID)
+	log.Debug(ctx, "Try to take the workflow node job %d", bookedWJobID)
 	wjob, err := w.Client().QueueJobInfo(ctx, bookedWJobID)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to load workflow node job %d", bookedWJobID)

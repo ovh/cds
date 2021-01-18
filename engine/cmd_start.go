@@ -28,13 +28,15 @@ import (
 	"github.com/ovh/cds/engine/ui"
 	"github.com/ovh/cds/engine/vcs"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
+	cdslog "github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
+	"github.com/rockbears/log"
 
 	"github.com/spf13/cobra"
 )
 
 func init() {
+
 	startCmd.Flags().StringVar(&flagStartConfigFile, "config", "", "config file")
 	startCmd.Flags().StringVar(&flagStartRemoteConfig, "remote-config", "", "(optional) consul configuration store")
 	startCmd.Flags().StringVar(&flagStartRemoteConfigKey, "remote-config-key", "cds/config.api.toml", "(optional) consul configuration store key")
@@ -257,8 +259,9 @@ See $ engine config command for more details.
 		}(ctx)
 
 		//Initialize logs
-		logConf := log.Conf{
+		logConf := cdslog.Conf{
 			Level:                      conf.Log.Level,
+			Format:                     conf.Log.Format,
 			GraylogProtocol:            conf.Log.Graylog.Protocol,
 			GraylogHost:                conf.Log.Graylog.Host,
 			GraylogPort:                fmt.Sprintf("%d", conf.Log.Graylog.Port),
@@ -270,7 +273,7 @@ See $ engine config command for more details.
 			GraylogFieldCDSServiceName: strings.Join(names, "_"),
 			GraylogFieldCDSServiceType: strings.Join(types, "_"),
 		}
-		log.Initialize(ctx, &logConf)
+		cdslog.Initialize(ctx, &logConf)
 
 		// Sort the slice of services we have to start to be sure to start the API au first
 		sort.Slice(serviceConfs, func(i, j int) bool {
@@ -281,6 +284,8 @@ See $ engine config command for more details.
 		//Configure the services
 		for i := range serviceConfs {
 			s := serviceConfs[i]
+
+			ctx := context.WithValue(ctx, cdslog.Service, s.service.Name())
 			if err := s.service.ApplyConfiguration(s.cfg); err != nil {
 				sdk.Exit("Unable to init service %s: %v", s.arg, err)
 			}
@@ -293,7 +298,8 @@ See $ engine config command for more details.
 				}
 			}
 
-			ctx, err := telemetry.Init(ctx, conf.Telemetry, s.service)
+			var err error
+			ctx, err = telemetry.Init(ctx, conf.Telemetry, s.service)
 			if err != nil {
 				sdk.Exit("Unable to start tracing exporter: %v", err)
 			}
@@ -343,6 +349,7 @@ func serve(c context.Context, s service.Service, serviceName string, cfg interfa
 	ctx, cancel := context.WithCancel(c)
 	defer cancel()
 
+	ctx = context.WithValue(ctx, cdslog.Service, serviceName)
 	x, err := s.Init(cfg)
 	if err != nil {
 		return err

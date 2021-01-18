@@ -2,13 +2,13 @@ package purge
 
 import (
 	"context"
-	"fmt"
 	"math"
 	"strconv"
 	"time"
 
 	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
 	"go.opencensus.io/stats"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
@@ -18,7 +18,6 @@ import (
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/luascript"
 )
 
@@ -52,7 +51,8 @@ func markWorkflowRunsToDelete(ctx context.Context, store cache.Store, db *gorp.D
 			continue
 		}
 		if err := ApplyRetentionPolicyOnWorkflow(ctx, store, db, wf, MarkAsDeleteOptions{DryRun: false}, nil); err != nil {
-			log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+			ctx = sdk.ContextWithStacktrace(ctx, err)
+			log.Error(ctx, "%v", err)
 		}
 	}
 	workflow.CountWorkflowRunsMarkToDelete(ctx, db, workflowRunsMarkToDelete)

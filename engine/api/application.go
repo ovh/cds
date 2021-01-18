@@ -152,11 +152,7 @@ func (api *API) getApplicationHandler() service.Handler {
 		}
 
 		if app.FromRepository != "" {
-			proj, err := project.Load(ctx, api.mustDB(), projectKey,
-				project.LoadOptions.WithApplicationWithDeploymentStrategies,
-				project.LoadOptions.WithPipelines,
-				project.LoadOptions.WithEnvironments,
-				project.LoadOptions.WithIntegrations)
+			proj, err := project.Load(ctx, api.mustDB(), projectKey, project.LoadOptions.WithIntegrations)
 			if err != nil {
 				return err
 			}
@@ -559,7 +555,7 @@ func (api *API) updateAsCodeApplicationHandler() service.Handler {
 				OperationUUID: ope.UUID,
 			}
 			ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, api.GoRoutines, *proj, *wkHolder, *rootApp, ed, u)
-		}, api.PanicDump())
+		})
 
 		return service.WriteJSON(w, sdk.Operation{
 			UUID:   ope.UUID,

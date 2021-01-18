@@ -13,11 +13,11 @@ import (
 	"time"
 
 	"github.com/fsamin/go-dump"
+	"github.com/rockbears/log"
 	"golang.org/x/crypto/ssh"
 
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // GerritTaskInfo represents gerrit hook task information and filter
@@ -87,7 +87,7 @@ func (s *Service) stopGerritHookTask(t *sdk.Task) {
 }
 
 func (s *Service) doGerritExecution(e *sdk.TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error) {
-	log.Debug("Hooks> Processing gerrit event %s %s", e.UUID, e.Type)
+	log.Debug(context.TODO(), "Hooks> Processing gerrit event %s %s", e.UUID, e.Type)
 
 	// Prepare a struct to send to CDS API
 	h := sdk.WorkflowNodeRunHookEvent{
@@ -285,7 +285,7 @@ func ListenGerritStreamEvent(ctx context.Context, store cache.Store, goRoutines 
 
 	goRoutines.Exec(ctx, "gerrit-ssh-run", func(ctx context.Context) {
 		// Run command
-		log.Debug("Listening to gerrit event stream %s", v.URL)
+		log.Debug(ctx, "Listening to gerrit event stream %s", v.URL)
 		if err := session.Run("gerrit stream-events"); err != nil {
 			log.Error(ctx, "ListenGerritStreamEvent> unable to run gerrit stream-events command: %v", err)
 		}
@@ -306,7 +306,7 @@ func ListenGerritStreamEvent(ctx context.Context, store cache.Store, goRoutines 
 				continue
 			}
 			if errs != nil {
-				log.Warning(ctx, "ListenGerritStreamEvent> unable to read string")
+				log.Warn(ctx, "ListenGerritStreamEvent> unable to read string")
 				continue
 			}
 			if line == "" {

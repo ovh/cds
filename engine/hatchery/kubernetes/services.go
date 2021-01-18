@@ -7,13 +7,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rockbears/log"
 	"github.com/sirupsen/logrus"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
-	"github.com/ovh/cds/sdk/log"
+	cdslog "github.com/ovh/cds/sdk/log"
 )
 
 func (h *HatcheryKubernetes) getServicesLogs(ctx context.Context) error {
@@ -22,7 +23,7 @@ func (h *HatcheryKubernetes) getServicesLogs(ctx context.Context) error {
 		return err
 	}
 
-	servicesLogs := make([]log.Message, 0, len(pods.Items))
+	servicesLogs := make([]cdslog.Message, 0, len(pods.Items))
 	for _, pod := range pods.Items {
 		podName := pod.GetName()
 		labels := pod.GetLabels()
@@ -56,7 +57,7 @@ func (h *HatcheryKubernetes) getServicesLogs(ctx context.Context) error {
 			// No check on error thanks to the regexp
 			reqServiceID, _ := strconv.ParseInt(subsStr[0][1], 10, 64)
 
-			commonMessage := log.Message{
+			commonMessage := cdslog.Message{
 				Level: logrus.InfoLevel,
 				Signature: cdn.Signature{
 					Service: &cdn.SignatureService{

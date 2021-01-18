@@ -5,26 +5,25 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
-
-	"github.com/ovh/cds/sdk/log"
+	"github.com/rockbears/log"
 )
 
 //Initialize starts goroutine for broadcast
-func Initialize(c context.Context, DBFunc func() *gorp.DbMap) {
+func Initialize(ctx context.Context, DBFunc func() *gorp.DbMap) {
 	tickPurge := time.NewTicker(6 * time.Hour)
 	defer tickPurge.Stop()
 
 	for {
 		select {
-		case <-c.Done():
-			if c.Err() != nil {
-				log.Error(c, "Exiting broadcast.Cleaner: %v", c.Err())
+		case <-ctx.Done():
+			if ctx.Err() != nil {
+				log.Error(ctx, "Exiting broadcast.Cleaner: %v", ctx.Err())
 				return
 			}
 		case <-tickPurge.C:
-			log.Debug("PurgeBroadcast> Deleting all old broadcast...")
+			log.Debug(ctx, "PurgeBroadcast> Deleting all old broadcast...")
 			if err := deleteOldBroadcasts(DBFunc()); err != nil {
-				log.Warning(c, "broadcast.Purge> Error : %s", err)
+				log.Warn(ctx, "broadcast.Purge> Error : %s", err)
 			}
 		}
 	}

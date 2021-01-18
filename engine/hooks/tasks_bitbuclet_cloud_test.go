@@ -4,14 +4,15 @@ import (
 	"context"
 	"testing"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/stretchr/testify/assert"
 )
 
 func Test_doWebHookExecutionBitbucketCloud(t *testing.T) {
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 	s, cancel := setupTestHookService(t)
 	defer cancel()
 	task := &sdk.TaskExecution{

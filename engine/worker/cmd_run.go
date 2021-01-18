@@ -2,17 +2,17 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	"github.com/rockbears/log"
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/engine/worker/internal"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
+	cdslog "github.com/ovh/cds/sdk/log"
 )
 
 func cmdRun() *cobra.Command {
@@ -64,13 +64,9 @@ func runCmd() func(cmd *cobra.Command, args []string) {
 		}()
 		// Start the worker
 		if err := internal.StartWorker(ctx, w, bookedWJobID); err != nil {
-			isErrWithStack := sdk.IsErrorWithStack(err)
-			fields := log.Fields{}
-			if isErrWithStack {
-				fields["stack_trace"] = fmt.Sprintf("%+v", err)
-				fields["request_id"] = sdk.ExtractHTTPError(err).RequestID
-			}
-			log.ErrorWithFields(ctx, fields, "%v", err)
+			ctx := sdk.ContextWithStacktrace(ctx, err)
+			ctx = context.WithValue(ctx, cdslog.RequestID, sdk.ExtractHTTPError(err).RequestID)
+			log.Error(ctx, err.Error())
 			time.Sleep(2 * time.Second)
 			sdk.Exit("error: %v", err)
 		}

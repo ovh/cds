@@ -11,12 +11,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rockbears/log"
 	"github.com/spf13/afero"
 
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/interpolate"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func processVariablesAndParameters(action *sdk.Action, jobParameters []sdk.Parameter, jobSecrets []sdk.Variable) error {
@@ -347,7 +347,7 @@ func (w *CurrentWorker) updateStepStatus(ctx context.Context, buildID int64, ste
 		if ctx.Err() != nil {
 			return fmt.Errorf("updateStepStatus> step:%d job:%d worker is cancelled", stepOrder, buildID)
 		}
-		log.Warning(ctx, "updateStepStatus> Cannot send step %d result: err: %s - try: %d - new try in 15s", stepOrder, lasterr, try)
+		log.Warn(ctx, "updateStepStatus> Cannot send step %d result: err: %s - try: %d - new try in 15s", stepOrder, lasterr, try)
 		time.Sleep(15 * time.Second)
 	}
 	return fmt.Errorf("updateStepStatus> Could not send built result 10 times on step %d, giving up. job: %d", stepOrder, buildID)
@@ -355,7 +355,7 @@ func (w *CurrentWorker) updateStepStatus(ctx context.Context, buildID int64, ste
 
 // creates a working directory in $HOME/PROJECT/APP/PIP/BN
 func setupWorkingDirectory(ctx context.Context, fs afero.Fs, wd string) (afero.File, error) {
-	log.Debug("creating directory %s in Filesystem %s", wd, fs.Name())
+	log.Debug(ctx, "creating directory %s in Filesystem %s", wd, fs.Name())
 	if err := fs.MkdirAll(wd, 0755); err != nil {
 		return nil, err
 	}
@@ -406,7 +406,7 @@ func workingDirectory(ctx context.Context, fs afero.Fs, jobInfo sdk.WorkflowNode
 		return dir, sdk.WithStack(err)
 	}
 
-	log.Debug("defining working directory %s", dir)
+	log.Debug(ctx, "defining working directory %s", dir)
 	return dir, nil
 }
 
@@ -418,13 +418,13 @@ func (w *CurrentWorker) setupWorkingDirectory(ctx context.Context, jobInfo sdk.W
 
 	wdFile, err := setupWorkingDirectory(ctx, w.basedir, wd)
 	if err != nil {
-		log.Debug("processJob> setupWorkingDirectory error:%s", err)
+		log.Debug(ctx, "processJob> setupWorkingDirectory error:%s", err)
 		return nil, "", err
 	}
 
 	wdAbs, err := filepath.Abs(wdFile.Name())
 	if err != nil {
-		log.Debug("processJob> setupWorkingDirectory error:%s", err)
+		log.Debug(ctx, "processJob> setupWorkingDirectory error:%s", err)
 		return nil, "", err
 	}
 
@@ -437,7 +437,7 @@ func (w *CurrentWorker) setupWorkingDirectory(ctx context.Context, jobInfo sdk.W
 
 		wdAbs, err = filepath.Abs(wdAbs)
 		if err != nil {
-			log.Debug("processJob> setupWorkingDirectory error:%s", err)
+			log.Debug(ctx, "processJob> setupWorkingDirectory error:%s", err)
 			return nil, "", err
 		}
 	}
@@ -534,7 +534,7 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (res sdk.
 	ctx = workerruntime.SetJobID(ctx, jobInfo.NodeJobRun.ID)
 	ctx = workerruntime.SetStepOrder(ctx, 0)
 	defer func() {
-		log.Warning(ctx, "processJob> Status: %s | Reason: %s", res.Status, res.Reason)
+		log.Warn(ctx, "processJob> Status: %s | Reason: %s", res.Status, res.Reason)
 	}()
 
 	wdFile, wdAbs, err := w.setupWorkingDirectory(ctx, jobInfo)
@@ -545,7 +545,7 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (res sdk.
 		}
 	}
 	ctx = workerruntime.SetWorkingDirectory(ctx, wdFile)
-	log.Debug("processJob> Setup workspace - %s", wdFile.Name())
+	log.Debug(ctx, "processJob> Setup workspace - %s", wdFile.Name())
 
 	kdFile, _, err := w.setupKeysDirectory(ctx, jobInfo)
 	if err != nil {
@@ -555,7 +555,7 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (res sdk.
 		}
 	}
 	ctx = workerruntime.SetKeysDirectory(ctx, kdFile)
-	log.Debug("processJob> Setup key directory - %s", kdFile.Name())
+	log.Debug(ctx, "processJob> Setup key directory - %s", kdFile.Name())
 
 	tdFile, _, err := w.setupTmpDirectory(ctx, jobInfo)
 	if err != nil {
@@ -565,7 +565,7 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (res sdk.
 		}
 	}
 	ctx = workerruntime.SetTmpDirectory(ctx, tdFile)
-	log.Debug("processJob> Setup tmp directory - %s", tdFile.Name())
+	log.Debug(ctx, "processJob> Setup tmp directory - %s", tdFile.Name())
 
 	w.currentJob.context = ctx
 
@@ -609,7 +609,7 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (res sdk.
 	res = w.runJob(ctx, &jobInfo.NodeJobRun.Job.Action, jobInfo.NodeJobRun.ID, jobInfo.Secrets)
 
 	if len(res.NewVariables) > 0 {
-		log.Debug("processJob> new variables: %v", res.NewVariables)
+		log.Debug(ctx, "processJob> new variables: %v", res.NewVariables)
 	}
 
 	// Delete working directory

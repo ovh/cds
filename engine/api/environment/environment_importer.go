@@ -1,11 +1,13 @@
 package environment
 
 import (
+	"context"
 	"strings"
+
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 //Import import or reuser the provided environment
@@ -64,9 +66,9 @@ func Import(db gorpmapper.SqlExecutorWithTx, proj sdk.Project, env *sdk.Environm
 }
 
 //ImportInto import variables and groups on an existing environment
-func ImportInto(db gorpmapper.SqlExecutorWithTx, env *sdk.Environment, into *sdk.Environment, msgChan chan<- sdk.Message, u sdk.Identifiable) error {
+func ImportInto(ctx context.Context, db gorpmapper.SqlExecutorWithTx, env *sdk.Environment, into *sdk.Environment, msgChan chan<- sdk.Message, u sdk.Identifiable) error {
 	var updateVar = func(v *sdk.EnvironmentVariable) {
-		log.Debug("ImportInto> Updating var %s", v.Name)
+		log.Debug(ctx, "ImportInto> Updating var %s", v.Name)
 
 		varBefore, errV := LoadVariable(db, into.ID, v.Name)
 		if errV != nil {
@@ -82,7 +84,7 @@ func ImportInto(db gorpmapper.SqlExecutorWithTx, env *sdk.Environment, into *sdk
 	}
 
 	var insertVar = func(v *sdk.EnvironmentVariable) {
-		log.Debug("ImportInto> Creating var %s", v.Name)
+		log.Debug(ctx, "ImportInto> Creating var %s", v.Name)
 		if err := InsertVariable(db, into.ID, v, u); err != nil {
 			msgChan <- sdk.NewMessage(sdk.MsgEnvironmentVariableCannotBeCreated, v.Name, into.Name, err)
 			return
@@ -91,10 +93,10 @@ func ImportInto(db gorpmapper.SqlExecutorWithTx, env *sdk.Environment, into *sdk
 	}
 
 	for i := range env.Variables {
-		log.Debug("ImportInto> Checking >> %s", env.Variables[i].Name)
+		log.Debug(ctx, "ImportInto> Checking >> %s", env.Variables[i].Name)
 		var found bool
 		for j := range into.Variables {
-			log.Debug("ImportInto> \t with >> %s", into.Variables[j].Name)
+			log.Debug(ctx, "ImportInto> \t with >> %s", into.Variables[j].Name)
 			if env.Variables[i].Name == into.Variables[j].Name {
 				env.Variables[i].ID = into.Variables[j].ID
 				found = true
@@ -111,7 +113,7 @@ func ImportInto(db gorpmapper.SqlExecutorWithTx, env *sdk.Environment, into *sdk
 		return sdk.WrapError(err, "unable to update environment")
 	}
 
-	log.Debug("ImportInto> Done")
+	log.Debug(ctx, "ImportInto> Done")
 
 	return nil
 }

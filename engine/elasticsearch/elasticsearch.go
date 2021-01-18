@@ -7,12 +7,12 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/rockbears/log"
 	"gopkg.in/olivere/elastic.v6"
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/ovh/cds/sdk/log"
 )
 
 var esClient *elastic.Client
@@ -42,7 +42,7 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 	s.ServiceName = s.Cfg.Name
 	s.ServiceType = sdk.TypeElasticsearch
 	s.MaxHeartbeatFailures = s.Cfg.API.MaxHeartbeatFailures
-	s.ServiceName = "cds-elasticsearch"
+
 	return nil
 }
 

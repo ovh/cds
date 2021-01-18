@@ -1,6 +1,6 @@
 import { ModuleWithProviders } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { AdminGuard } from 'app/guard/admin.guard';
+import { MaintainerGuard } from 'app/guard/admin.guard';
 import { AuthenticationGuard } from 'app/guard/authentication.guard';
 import { AdminModule } from 'app/views/admin/admin.module';
 import { AdminComponent } from './admin.component';
@@ -19,8 +19,8 @@ const routes: Routes = [
     {
         path: '',
         component: AdminComponent,
-        canActivateChild: [AuthenticationGuard, AdminGuard],
-        canActivate: [AuthenticationGuard, AdminGuard],
+        canActivateChild: [AuthenticationGuard, MaintainerGuard],
+        canActivate: [AuthenticationGuard, MaintainerGuard],
         children: [
             {
                 path: 'worker-model-pattern',

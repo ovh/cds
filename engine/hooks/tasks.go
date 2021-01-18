@@ -8,10 +8,10 @@ import (
 	"time"
 
 	"github.com/gorhill/cronexpr"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 //This are all the types
@@ -87,7 +87,7 @@ func (s *Service) synchronizeTasks(ctx context.Context) error {
 		for _, h := range hooks {
 			if h.UUID == t.UUID {
 				found = true
-				log.Debug("Hook> Synchronizing %s task %s", h.HookModelName, t.UUID)
+				log.Debug(ctx, "Hook> Synchronizing %s task %s", h.HookModelName, t.UUID)
 				break
 			}
 		}
@@ -304,7 +304,7 @@ func (s *Service) prepareNextScheduledTaskExecution(ctx context.Context, t *sdk.
 
 	//The last execution has not been executed, let it go
 	if len(execs) > 0 && execs[len(execs)-1].ProcessingTimestamp == 0 {
-		log.Debug("Hooks> Scheduled task %s:%d ready. Next execution already scheduled on %v", t.UUID, execs[len(execs)-1].Timestamp, time.Unix(0, execs[len(execs)-1].Timestamp))
+		log.Debug(ctx, "Hooks> Scheduled task %s:%d ready. Next execution already scheduled on %v", t.UUID, execs[len(execs)-1].Timestamp, time.Unix(0, execs[len(execs)-1].Timestamp))
 		return nil
 	}
 
@@ -360,7 +360,7 @@ func (s *Service) prepareNextScheduledTaskExecution(ctx context.Context, t *sdk.
 	s.Dao.SaveTaskExecution(exec)
 	//We don't push in queue, we will the scheduler to run it
 
-	log.Debug("Hooks> Scheduled task %v:%d ready. Next execution scheduled on %v, len:%d", t.UUID, exec.Timestamp, time.Unix(0, exec.Timestamp), len(execs))
+	log.Debug(ctx, "Hooks> Scheduled task %v:%d ready. Next execution scheduled on %v, len:%d", t.UUID, exec.Timestamp, time.Unix(0, exec.Timestamp), len(execs))
 
 	return nil
 }
@@ -374,11 +374,11 @@ func (s *Service) stopTask(ctx context.Context, t *sdk.Task) error {
 
 	switch t.Type {
 	case TypeWebHook, TypeScheduler, TypeRepoManagerWebHook, TypeRepoPoller, TypeKafka, TypeWorkflowHook:
-		log.Debug("Hooks> Tasks %s has been stopped", t.UUID)
+		log.Debug(ctx, "Hooks> Tasks %s has been stopped", t.UUID)
 		return nil
 	case TypeGerrit:
 		s.stopGerritHookTask(t)
-		log.Debug("Hooks> Gerrit Task %s has been stopped", t.UUID)
+		log.Debug(ctx, "Hooks> Gerrit Task %s has been stopped", t.UUID)
 		return nil
 	default:
 		return fmt.Errorf("Unsupported task type %s", t.Type)
@@ -440,11 +440,11 @@ func (s *Service) doTask(ctx context.Context, t *sdk.Task, e *sdk.TaskExecution)
 		run, err := s.Client.WorkflowRunFromHook(confProj.Value, confWorkflow.Value, hEvent)
 		if err != nil {
 			globalErr = err
-			log.Warning(ctx, "Hooks> %s > unable to run workflow %s/%s : %v", t.UUID, confProj.Value, confWorkflow.Value, err)
+			log.Warn(ctx, "Hooks> %s > unable to run workflow %s/%s : %v", t.UUID, confProj.Value, confWorkflow.Value, err)
 		} else {
 			//Save the run number
 			e.WorkflowRun = run.Number
-			log.Debug("Hooks> workflow %s/%s#%d has been triggered", confProj.Value, confWorkflow.Value, run.Number)
+			log.Debug(ctx, "Hooks> workflow %s/%s#%d has been triggered", confProj.Value, confWorkflow.Value, run.Number)
 		}
 	}
 

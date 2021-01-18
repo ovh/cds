@@ -6,8 +6,9 @@ import (
 	"strings"
 	"sync/atomic"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // workerRegister is called by a ticker.
@@ -35,7 +36,7 @@ loopModels:
 			continue
 		}
 		if h.CanSpawn(ctx, &models[k], 0, nil) && (h.NeedRegistration(ctx, &models[k]) || models[k].CheckRegistration) {
-			log.Debug("hatchery> workerRegister> need register")
+			log.Debug(ctx, "hatchery> workerRegister> need register")
 		} else {
 			continue
 		}
@@ -45,12 +46,12 @@ loopModels:
 			maxRegistration = 2
 		}
 		if atomic.LoadInt64(&nbRegisteringWorkerModels) > maxRegistration {
-			log.Debug("hatchery> workerRegister> max registering worker reached")
+			log.Debug(ctx, "hatchery> workerRegister> max registering worker reached")
 			return nil
 		}
 
 		if !checkCapacities(ctx, h) {
-			log.Debug("hatchery> workerRegister> unable to register now")
+			log.Debug(ctx, "hatchery> workerRegister> unable to register now")
 			return nil
 		}
 
@@ -64,12 +65,12 @@ loopModels:
 
 		// if current hatchery is in same group than worker model -> do not avoid spawn, even if worker model is in error
 		if models[k].NbSpawnErr > 5 {
-			log.Warning(ctx, "hatchery> workerRegister> Too many errors on spawn with model %s, please check this worker model", models[k].Name)
+			log.Warn(ctx, "hatchery> workerRegister> Too many errors on spawn with model %s, please check this worker model", models[k].Name)
 			continue
 		}
 
 		if err := h.CDSClient().WorkerModelBook(models[k].Group.Name, models[k].Name); err != nil {
-			log.Debug("%v", sdk.WrapError(err, "cannot book model %s with id %d", models[k].Path(), models[k].ID))
+			log.Debug(ctx, "%v", sdk.WrapError(err, "cannot book model %s with id %d", models[k].Path(), models[k].ID))
 			continue
 		}
 
@@ -92,15 +93,13 @@ loopModels:
 // CheckWorkerModelRegister checks if a model has been registered, if not it raises an error on the API
 func CheckWorkerModelRegister(h Interface, modelPath string) error {
 	var sendError bool
-	var m *sdk.Model
 	for i := range models {
-		m = &models[i]
-		if m.Group.Name+"/"+m.Name == modelPath {
-			sendError = m.NeedRegistration
+		if models[i].Group.Name+"/"+models[i].Name == modelPath {
+			sendError = models[i].NeedRegistration
 			break
 		}
 	}
-	if m != nil && sendError {
+	if sendError {
 		return sdk.WithStack(sdk.ErrWorkerModelDeploymentFailed)
 	}
 	return nil

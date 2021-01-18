@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/cdn/storage"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/symmecrypt/ciphers/aesgcm"
 	"github.com/ovh/symmecrypt/convergent"
 	"github.com/stretchr/testify/require"
@@ -19,7 +19,7 @@ import (
 )
 
 func TestWebdav(t *testing.T) {
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 	dir, err := ioutil.TempDir("", t.Name()+"-cdn-webdav-*")
 	require.NoError(t, err)
 	srv := &webdav.Handler{
@@ -36,7 +36,7 @@ func TestWebdav(t *testing.T) {
 	http.Handle("/", srv)
 	go func() {
 		if err := http.ListenAndServe(fmt.Sprintf(":%d", 8091), nil); err != nil {
-			log.Fatalf("Error with WebDAV server: %v", err)
+			log.Fatal(context.TODO(), "Error with WebDAV server: %v", err)
 		}
 	}()
 

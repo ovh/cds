@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -17,6 +16,7 @@ import (
 	"github.com/blang/semver"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
+	"github.com/rockbears/log"
 	"go.opencensus.io/stats"
 
 	"github.com/ovh/cds/engine/api/action"
@@ -55,7 +55,6 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/jws"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // Configuration is the configuration structure for CDS API
@@ -352,10 +351,10 @@ func (a *API) CheckConfiguration(config interface{}) error {
 	}
 
 	if aConfig.DefaultArch == "" {
-		log.Warning(context.Background(), `You should add a default architecture in your configuration (example: defaultArch: "amd64"). It means if there is no model and os/arch requirement on your job then spawn on a worker based on this architecture`)
+		log.Warn(context.Background(), `You should add a default architecture in your configuration (example: defaultArch: "amd64"). It means if there is no model and os/arch requirement on your job then spawn on a worker based on this architecture`)
 	}
 	if aConfig.DefaultOS == "" {
-		log.Warning(context.Background(), `You should add a default operating system in your configuration (example: defaultOS: "linux"). It means if there is no model and os/arch requirement on your job then spawn on a worker based on this OS`)
+		log.Warn(context.Background(), `You should add a default operating system in your configuration (example: defaultOS: "linux"). It means if there is no model and os/arch requirement on your job then spawn on a worker based on this OS`)
 	}
 
 	if (aConfig.DefaultOS == "" && aConfig.DefaultArch != "") || (aConfig.DefaultOS != "" && aConfig.DefaultArch == "") {
@@ -657,57 +656,57 @@ func (a *API) Serve(ctx context.Context) error {
 
 	a.GoRoutines.Run(ctx, "event.dequeue", func(ctx context.Context) {
 		event.DequeueEvent(ctx, a.mustDB())
-	}, a.PanicDump())
+	})
 
 	log.Info(ctx, "Initializing internal routines...")
 	a.GoRoutines.Run(ctx, "maintenance.Subscribe", func(ctx context.Context) {
 		if err := a.listenMaintenance(ctx); err != nil {
 			log.Error(ctx, "error while initializing listen maintenance routine: %s", err)
 		}
-	}, a.PanicDump())
+	})
 
 	a.GoRoutines.Exec(ctx, "workermodel.Initialize", func(ctx context.Context) {
 		if err := workermodel.Initialize(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Cache); err != nil {
 			log.Error(ctx, "error while initializing worker models routine: %s", err)
 		}
-	}, a.PanicDump())
+	})
 	a.GoRoutines.Run(ctx, "worker.Initialize", func(ctx context.Context) {
 		if err := worker.Initialize(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Cache); err != nil {
 			log.Error(ctx, "error while initializing workers routine: %s", err)
 		}
-	}, a.PanicDump())
+	})
 	a.GoRoutines.Run(ctx, "action.ComputeAudit", func(ctx context.Context) {
 		chanEvent := make(chan sdk.Event)
 		event.Subscribe(chanEvent)
 		action.ComputeAudit(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), chanEvent)
-	}, a.PanicDump())
+	})
 	a.GoRoutines.Run(ctx, "audit.ComputePipelineAudit", func(ctx context.Context) {
 		audit.ComputePipelineAudit(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper))
-	}, a.PanicDump())
+	})
 	a.GoRoutines.Run(ctx, "audit.ComputeWorkflowAudit", func(ctx context.Context) {
 		audit.ComputeWorkflowAudit(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper))
-	}, a.PanicDump())
+	})
 	a.GoRoutines.Run(ctx, "auditCleanerRoutine(ctx", func(ctx context.Context) {
 		auditCleanerRoutine(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper))
 	})
 	a.GoRoutines.Run(ctx, "repositoriesmanager.ReceiveEvents", func(ctx context.Context) {
 		repositoriesmanager.ReceiveEvents(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Cache)
-	}, a.PanicDump())
+	})
 	a.GoRoutines.Run(ctx, "services.KillDeadServices", func(ctx context.Context) {
 		services.KillDeadServices(ctx, a.mustDB)
-	}, a.PanicDump())
+	})
 	a.GoRoutines.Run(ctx, "broadcast.Initialize", func(ctx context.Context) {
 		broadcast.Initialize(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper))
-	}, a.PanicDump())
+	})
 	a.GoRoutines.Run(ctx, "api.serviceAPIHeartbeat", func(ctx context.Context) {
 		a.serviceAPIHeartbeat(ctx)
-	}, a.PanicDump())
+	})
 	a.GoRoutines.Run(ctx, "authentication.SessionCleaner", func(ctx context.Context) {
 		authentication.SessionCleaner(ctx, a.mustDB, 10*time.Second)
-	}, a.PanicDump())
+	})
 	a.GoRoutines.Run(ctx, "api.WorkflowRunCraft", func(ctx context.Context) {
 		a.WorkflowRunCraft(ctx, 100*time.Millisecond)
-	}, a.PanicDump())
+	})
 
 	migrate.Add(ctx, sdk.Migration{Name: "RunsSecrets", Release: "0.47.0", Blocker: false, Automatic: true, ExecFunc: func(ctx context.Context) error {
 		return migrate.RunsSecrets(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper))
@@ -737,7 +736,7 @@ func (a *API) Serve(ctx context.Context) error {
 		}
 
 		// Run all migrations in several goroutines
-		migrate.Run(ctx, a.mustDB(), a.PanicDump())
+		migrate.Run(ctx, a.mustDB())
 	}
 
 	log.Info(ctx, "Bootstrapping database...")
@@ -768,7 +767,7 @@ func (a *API) Serve(ctx context.Context) error {
 	log.Info(ctx, "API Public Key: \n%s", string(pubKey))
 
 	// Init Services
-	services.Initialize(ctx, a.DBConnectionFactory, a.GoRoutines, a.PanicDump())
+	services.Initialize(ctx, a.DBConnectionFactory, a.GoRoutines)
 
 	externalServices := make([]services.ExternalService, 0, len(a.Config.Services))
 	for _, s := range a.Config.Services {
@@ -797,31 +796,31 @@ func (a *API) Serve(ctx context.Context) error {
 	a.GoRoutines.Run(ctx, "pings-external-services",
 		func(ctx context.Context) {
 			services.Pings(ctx, a.mustDB, externalServices)
-		}, a.PanicDump())
+		})
 	a.GoRoutines.Run(ctx, "workflow.Initialize",
 		func(ctx context.Context) {
 			workflow.Initialize(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Cache, a.Config.URL.UI, a.Config.DefaultOS, a.Config.DefaultArch, a.Config.Log.StepMaxSize, a.Config.Workflow.MaxRuns)
-		}, a.PanicDump())
+		})
 	a.GoRoutines.Run(ctx, "PushInElasticSearch",
 		func(ctx context.Context) {
 			event.PushInElasticSearch(ctx, a.mustDB(), a.Cache)
-		}, a.PanicDump())
+		})
 	a.GoRoutines.Run(ctx, "Metrics.pushInElasticSearch",
 		func(ctx context.Context) {
 			metrics.Init(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper))
-		}, a.PanicDump())
+		})
 	a.GoRoutines.Run(ctx, "Purge-MarkRuns",
 		func(ctx context.Context) {
 			purge.MarkRunsAsDelete(ctx, a.Cache, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Metrics.WorkflowRunsMarkToDelete)
-		}, a.PanicDump())
+		})
 	a.GoRoutines.Run(ctx, "Purge-Runs",
 		func(ctx context.Context) {
 			purge.WorkflowRuns(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.SharedStorage, a.Metrics.WorkflowRunsMarkToDelete, a.Metrics.WorkflowRunsDeleted)
-		}, a.PanicDump())
+		})
 	a.GoRoutines.Run(ctx, "Purge-Workflow",
 		func(ctx context.Context) {
 			purge.Workflow(ctx, a.Cache, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Metrics.WorkflowRunsMarkToDelete)
-		}, a.PanicDump())
+		})
 
 	// Check maintenance on redis
 	if _, err := a.Cache.Get(sdk.MaintenanceAPIKey, &a.Maintenance); err != nil {
@@ -838,7 +837,7 @@ func (a *API) Serve(ctx context.Context) error {
 
 	go func() {
 		<-ctx.Done()
-		log.Warning(ctx, "Cleanup SQL connections")
+		log.Warn(ctx, "Cleanup SQL connections")
 		s.Shutdown(ctx)               // nolint
 		a.DBConnectionFactory.Close() // nolint
 		event.Publish(ctx, sdk.EventEngine{Message: "shutdown"}, nil)
@@ -874,15 +873,6 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 
 	return nil
-}
-
-const panicDumpTTL = 60 * 60 * 24 // 24 hours
-
-func (a *API) PanicDump() func(s string) (io.WriteCloser, error) {
-	return func(s string) (io.WriteCloser, error) {
-		log.Error(context.TODO(), "API Panic stacktrace: %s", s)
-		return cache.NewWriteCloser(a.Cache, cache.Key("api", "panic_dump", s), panicDumpTTL), nil
-	}
 }
 
 // SetCookieSession on given response writter, automatically add domain and path based on api config.

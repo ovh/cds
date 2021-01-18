@@ -8,10 +8,11 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -66,7 +67,7 @@ func (r *ProcessorReport) Add(ctx context.Context, i ...interface{}) {
 		case *sdk.WorkflowRun:
 			r.workflows = append(r.workflows, *x)
 		default:
-			log.Warning(ctx, "ProcessorReport> unknown type %T", w)
+			log.Warn(ctx, "ProcessorReport> unknown type %T", w)
 		}
 	}
 }
@@ -150,7 +151,7 @@ func UpdateNodeJobRunStatus(ctx context.Context, db gorpmapper.SqlExecutorWithTx
 
 	case sdk.StatusFail, sdk.StatusSuccess, sdk.StatusDisabled, sdk.StatusSkipped, sdk.StatusStopped:
 		if currentStatus != sdk.StatusWaiting && currentStatus != sdk.StatusBuilding && status != sdk.StatusDisabled && status != sdk.StatusSkipped {
-			log.Debug("workflow.UpdateNodeJobRunStatus> Status is %s, cannot update %d to %s", currentStatus, job.ID, status)
+			log.Debug(ctx, "workflow.UpdateNodeJobRunStatus> Status is %s, cannot update %d to %s", currentStatus, job.ID, status)
 			// too late, Nate
 			return nil, nil
 		}
@@ -402,7 +403,7 @@ func AppendLog(db gorp.SqlExecutor, jobID, nodeRunID, stepOrder int64, val strin
 
 	// ignore the log if max size already reached
 	if maxReached := truncateLogs(maxLogSize, size, logs); maxReached {
-		log.Debug("truncated logs")
+		log.Debug(context.TODO(), "truncated logs")
 		return nil
 	}
 
@@ -477,7 +478,7 @@ func RestartWorkflowNodeJob(ctx context.Context, db gorp.SqlExecutor, wNodeJob s
 		return sdk.WrapError(err, "error on sync nodeJobRun")
 	}
 	if !sync {
-		log.Warning(ctx, "sync doesn't find a nodeJobRun")
+		log.Warn(ctx, "sync doesn't find a nodeJobRun")
 	}
 
 	if err := UpdateNodeRun(db, nodeRun); err != nil {

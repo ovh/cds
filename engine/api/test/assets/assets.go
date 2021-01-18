@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -34,7 +35,6 @@ import (
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/jws"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // InsertTestProject create a test project.
@@ -224,7 +224,7 @@ func InsertLambdaUser(t *testing.T, db gorpmapper.SqlExecutorWithTx, groups ...*
 
 	btes, err := json.Marshal(u)
 	require.NoError(t, err)
-	log.Debug("lambda user: %s", string(btes))
+	log.Debug(context.TODO(), "lambda user: %s", string(btes))
 
 	consumer, err := local.NewConsumer(context.TODO(), db, u.ID)
 	require.NoError(t, err, "cannot create auth consumer")

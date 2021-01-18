@@ -3,11 +3,11 @@ package purge
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
 	"go.opencensus.io/stats"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
@@ -19,7 +19,6 @@ import (
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -43,7 +42,8 @@ func MarkRunsAsDelete(ctx context.Context, store cache.Store, DBFunc func() *gor
 		case <-tickMark.C:
 			// Mark workflow run to delete
 			if err := markWorkflowRunsToDelete(ctx, store, DBFunc(), workflowRunsMarkToDelete); err != nil {
-				log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+				ctx = sdk.ContextWithStacktrace(ctx, err)
+				log.Error(ctx, "%v", err)
 			}
 		}
 	}
@@ -64,12 +64,12 @@ func WorkflowRuns(ctx context.Context, DBFunc func() *gorp.DbMap, sharedStorage 
 		case <-tickPurge.C:
 			// Check all workflows to mark runs that should be deleted
 			if err := MarkWorkflowRuns(ctx, DBFunc(), workflowRunsMarkToDelete); err != nil {
-				log.Warning(ctx, "purge> Error: %v", err)
+				log.Warn(ctx, "purge> Error: %v", err)
 			}
 
-			log.Debug("purge> Deleting all workflow run marked to delete...")
+			log.Debug(ctx, "purge> Deleting all workflow run marked to delete...")
 			if err := deleteWorkflowRunsHistory(ctx, DBFunc(), sharedStorage, workflowRunsDeleted); err != nil {
-				log.Warning(ctx, "purge> Error on deleteWorkflowRunsHistory : %v", err)
+				log.Warn(ctx, "purge> Error on deleteWorkflowRunsHistory : %v", err)
 			}
 		}
 	}
@@ -88,9 +88,9 @@ func Workflow(ctx context.Context, store cache.Store, DBFunc func() *gorp.DbMap,
 				return
 			}
 		case <-tickPurge.C:
-			log.Debug("purge> Deleting all workflow marked to delete....")
+			log.Debug(ctx, "purge> Deleting all workflow marked to delete....")
 			if err := workflows(ctx, DBFunc(), store, workflowRunsMarkToDelete); err != nil {
-				log.Warning(ctx, "purge> Error on workflows : %v", err)
+				log.Warn(ctx, "purge> Error on workflows : %v", err)
 			}
 		}
 	}
@@ -182,7 +182,7 @@ func workflows(ctx context.Context, db *gorp.DbMap, store cache.Store, workflowR
 
 		w, err := workflow.LoadByID(ctx, db, store, proj, r.ID, workflow.LoadOptions{})
 		if err != nil {
-			log.Warning(ctx, "unable to load workflow %d due to error %v, we try to delete it", r.ID, err)
+			log.Warn(ctx, "unable to load workflow %d due to error %v, we try to delete it", r.ID, err)
 			if _, err := db.Exec("delete from w_node_trigger where child_node_id IN (SELECT id from w_node where workflow_id = $1)", r.ID); err != nil {
 				log.Error(ctx, "Unable to delete from w_node_trigger for workflow %d: %v", r.ID, err)
 			}
@@ -192,7 +192,7 @@ func workflows(ctx context.Context, db *gorp.DbMap, store cache.Store, workflowR
 			if _, err := db.Exec("delete from workflow where id = $1", r.ID); err != nil {
 				log.Error(ctx, "Unable to delete from workflow with id %d: %v", r.ID, err)
 			} else {
-				log.Warning(ctx, "workflow with id %d is deleted", r.ID)
+				log.Warn(ctx, "workflow with id %d is deleted", r.ID)
 			}
 			continue
 		}
@@ -355,7 +355,7 @@ func DeleteArtifacts(ctx context.Context, db gorp.SqlExecutor, sharedStorage obj
 					continue
 				}
 
-				log.Debug("DeleteArtifacts> deleting %+v", art)
+				log.Debug(ctx, "DeleteArtifacts> deleting %+v", art)
 				if err := storageDriver.Delete(ctx, &art); err != nil {
 					log.Error(ctx, "error while deleting container prj:%v wnr:%v name:%v err:%v", proj.Key, wnr.ID, art.GetPath(), err)
 					continue

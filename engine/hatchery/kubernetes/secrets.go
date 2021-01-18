@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/rockbears/log"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (h *HatcheryKubernetes) deleteSecrets(ctx context.Context) error {

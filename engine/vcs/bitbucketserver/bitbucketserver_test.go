@@ -7,8 +7,8 @@ import (
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/pkg/browser"
+	"github.com/rockbears/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -20,7 +20,7 @@ func TestNewClient(t *testing.T) {
 }
 
 func getNewConsumer(t *testing.T) sdk.VCSServer {
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 	cfg := test.LoadTestingConf(t, sdk.TypeAPI)
 	consumerKey := cfg["bitbucketConsumerKey"]
 	consumerPrivateKey := cfg["bitbucketPrivateKey"]
@@ -43,7 +43,7 @@ func getNewConsumer(t *testing.T) sdk.VCSServer {
 }
 
 func getAuthorizedClient(t *testing.T) sdk.VCSAuthorizedClient {
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 	cfg := test.LoadTestingConf(t, sdk.TypeAPI)
 	consumerKey := cfg["bitbucketConsumerKey"]
 	privateKey := cfg["bitbucketPrivateKey"]

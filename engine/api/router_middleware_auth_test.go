@@ -148,6 +148,48 @@ func Test_authAdminMiddleware(t *testing.T) {
 	assert.Equal(t, admin.ID, getAPIConsumer(ctx).AuthentifiedUserID)
 }
 
+func Test_authMaintainerMiddleware(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	_, jwtLambda := assets.InsertLambdaUser(t, db)
+	maintainer, jwtMaintainer := assets.InsertMaintainerUser(t, db)
+	admin, jwtAdmin := assets.InsertAdminUser(t, db)
+
+	config := &service.HandlerConfig{}
+
+	req := assets.NewRequest(t, http.MethodGet, "", nil)
+	w := httptest.NewRecorder()
+	ctx, err := api.jwtMiddleware(context.TODO(), w, req, config)
+	require.NoError(t, err)
+	ctx, err = api.authMaintainerMiddleware(ctx, w, req, config)
+	assert.Error(t, err, "an error should be returned because no jwt was given and maintainer auth is required")
+
+	req = assets.NewJWTAuthentifiedRequest(t, jwtLambda, http.MethodGet, "", nil)
+	w = httptest.NewRecorder()
+	ctx, err = api.jwtMiddleware(context.TODO(), w, req, config)
+	require.NoError(t, err)
+	ctx, err = api.authMaintainerMiddleware(ctx, w, req, config)
+	assert.Error(t, err, "an error should be returned because a jwt was given for a lambda user")
+
+	req = assets.NewJWTAuthentifiedRequest(t, jwtMaintainer, http.MethodGet, "", nil)
+	w = httptest.NewRecorder()
+	ctx, err = api.jwtMiddleware(context.TODO(), w, req, config)
+	require.NoError(t, err)
+	ctx, err = api.authMaintainerMiddleware(ctx, w, req, config)
+	assert.NoError(t, err, "no error should be returned because a jwt was given for an maintainer user")
+	require.NotNil(t, getAPIConsumer(ctx))
+	assert.Equal(t, maintainer.ID, getAPIConsumer(ctx).AuthentifiedUserID)
+
+	req = assets.NewJWTAuthentifiedRequest(t, jwtAdmin, http.MethodGet, "", nil)
+	w = httptest.NewRecorder()
+	ctx, err = api.jwtMiddleware(context.TODO(), w, req, config)
+	require.NoError(t, err)
+	ctx, err = api.authMaintainerMiddleware(ctx, w, req, config)
+	assert.NoError(t, err, "no error should be returned because a jwt was given for an admin user")
+	require.NotNil(t, getAPIConsumer(ctx))
+	assert.Equal(t, admin.ID, getAPIConsumer(ctx).AuthentifiedUserID)
+}
+
 func Test_authMiddleware_WithAuthConsumerScoped(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 

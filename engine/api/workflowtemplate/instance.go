@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
@@ -14,7 +15,6 @@ import (
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
-	"github.com/ovh/cds/sdk/log"
 )
 
 type TemplateRequestModifierFunc func(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, wt sdk.WorkflowTemplate, req *sdk.WorkflowTemplateRequest) error
@@ -75,7 +75,7 @@ func requestModifyDefaultNameAndRepositories(proj sdk.Project, repoURL string) T
 		for _, vcs := range proj.VCSServers {
 			repos, err := repositoriesmanager.GetReposForProjectVCSServer(ctx, db, store, proj, vcs.Name, repositoriesmanager.Options{})
 			if err != nil {
-				log.Warning(ctx, "unable to list repos from %s: %v", vcs.Name, err)
+				log.Warn(ctx, "unable to list repos from %s: %v", vcs.Name, err)
 				continue
 			}
 			for _, r := range repos {
@@ -287,7 +287,7 @@ func UpdateTemplateInstanceWithWorkflow(ctx context.Context, db gorp.SqlExecutor
 	old := sdk.WorkflowTemplateInstance(*wti)
 
 	// set the workflow id on target instance
-	log.Debug("SetTemplateData> setting workflow ID=%d on template instance %d", w.ID, wti.ID)
+	log.Debug(ctx, "SetTemplateData> setting workflow ID=%d on template instance %d", w.ID, wti.ID)
 	wti.WorkflowID = &w.ID
 	if err := UpdateInstance(db, wti); err != nil {
 		return err

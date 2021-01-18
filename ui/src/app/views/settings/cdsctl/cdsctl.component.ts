@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild, } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { AuthentifiedUser } from 'app/model/user.model';
+import { AuthSummary } from 'app/model/user.model';
 import { ConfigService } from 'app/service/config/config.service';
 import { ThemeStore } from 'app/service/theme/theme.store';
 import { PathItem } from 'app/shared/breadcrumb/breadcrumb.component';
@@ -27,7 +27,7 @@ export class CdsctlComponent implements OnInit, OnDestroy {
     @ViewChild('codemirror7') codemirror7: any;
     @ViewChild('codemirror8') codemirror8: any;
 
-    currentUser: AuthentifiedUser;
+    currentAuthSummary: AuthSummary;
     apiURL: string;
     arch: Array<string>;
     os: Array<string>;
@@ -96,7 +96,7 @@ export class CdsctlComponent implements OnInit, OnDestroy {
             this._cd.markForCheck();
         });
 
-        this.currentUser = this._store.selectSnapshot(AuthenticationState.user);
+        this.currentAuthSummary = this._store.selectSnapshot(AuthenticationState.summary);
 
         this.loading = true;
         this._configService.getConfig()
@@ -119,7 +119,7 @@ export class CdsctlComponent implements OnInit, OnDestroy {
         this.tutorials['part1'] = this._translate.instant('cdsctl_part_1',
             { apiURL: this.apiURL, osChoice: this.osChoice, archChoice: this.archChoice, variant });
         this.tutorials['part2'] = this._translate.instant('cdsctl_part_2',
-            { apiURL: this.apiURL, username: this.currentUser.username });
+            { apiURL: this.apiURL, username: this.currentAuthSummary.user.username });
         this.tutorials['part3'] = this._translate.instant('cdsctl_part_3');
         this.tutorials['part4'] = this._translate.instant('cdsctl_part_4');
         this.tutorials['part5'] = this._translate.instant('cdsctl_part_5');

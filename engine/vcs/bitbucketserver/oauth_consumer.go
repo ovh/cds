@@ -6,8 +6,9 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 const oauth1OOB = "oob"
@@ -16,7 +17,7 @@ const oauth1OOB = "oob"
 func (g *bitbucketConsumer) AuthorizeRedirect(ctx context.Context) (string, string, error) {
 	requestToken, err := g.RequestToken()
 	if err != nil {
-		log.Warning(ctx, "requestToken>%s\n", err)
+		log.Warn(ctx, "requestToken>%s\n", err)
 		return "", "", sdk.WrapError(err, "Unable to get request token")
 	}
 

@@ -3,9 +3,8 @@ package ldap
 import (
 	"context"
 
+	"github.com/rockbears/log"
 	"gopkg.in/ldap.v2"
-
-	"github.com/ovh/cds/sdk/log"
 )
 
 func shoudRetry(ctx context.Context, err error) bool {

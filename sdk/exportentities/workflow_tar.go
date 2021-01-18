@@ -9,10 +9,10 @@ import (
 	"io"
 	"strings"
 
+	"github.com/rockbears/log"
 	"gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 type WorkflowComponents struct {
@@ -182,7 +182,7 @@ func UntarWorkflowComponents(ctx context.Context, tr *tar.Reader) (WorkflowCompo
 			return res, sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to read tar file"))
 		}
 
-		log.Debug("ExtractWorkflowFromTar> Reading %s", hdr.Name)
+		log.Debug(ctx, "ExtractWorkflowFromTar> Reading %s", hdr.Name)
 
 		buff := new(bytes.Buffer)
 		if _, err := io.Copy(buff, tr); err != nil {

@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // findProjetKeyForNodeRunJob load the project key from a workflow_node_run_job ID
@@ -24,6 +24,6 @@ func findProjetKeyForNodeRunJob(ctx context.Context, db gorp.SqlExecutor, id int
 	if pkey.Valid {
 		return pkey.String, nil
 	}
-	log.Warning(ctx, "FindProjetKeyForNodeRunJob> project key not found for node run job %d", id)
+	log.Warn(ctx, "FindProjetKeyForNodeRunJob> project key not found for node run job %d", id)
 	return "", nil
 }

@@ -7,6 +7,7 @@ import (
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/services"
@@ -14,7 +15,7 @@ import (
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
+	cdslog "github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -39,8 +40,25 @@ func (api *API) authAdminMiddleware(ctx context.Context, w http.ResponseWriter, 
 		return ctx, err
 	}
 
-	// Excluse consumers not admin or admin that are used for services
+	// Exclude consumers not admin or admin that are used for services
 	if !isAdmin(ctx) || isService(ctx) {
+		return ctx, sdk.WithStack(sdk.ErrForbidden)
+	}
+
+	return ctx, nil
+}
+
+func (api *API) authMaintainerMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig) (context.Context, error) {
+	ctx, end := telemetry.Span(ctx, "router.authMaintainerMiddleware")
+	defer end()
+
+	ctx, err := api.authMiddleware(ctx, w, req, rc)
+	if err != nil {
+		return ctx, err
+	}
+
+	// Excluse consumers not maintainer or admin that are used for services
+	if !isMaintainer(ctx) || isService(ctx) {
 		return ctx, sdk.WithStack(sdk.ErrForbidden)
 	}
 
@@ -57,8 +75,25 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 	}
 
 	// We should have a consumer in the context to validate the auth
-	if getAPIConsumer(ctx) == nil {
+	var apiConsumer = getAPIConsumer(ctx)
+	if apiConsumer == nil {
 		return ctx, sdk.WithStack(sdk.ErrUnauthorized)
+	}
+
+	// Set context values
+	if isService(ctx) {
+		ctx = context.WithValue(ctx, cdslog.AuthServiceName, apiConsumer.Service.Name)
+	} else if isWorker(ctx) {
+		ctx = context.WithValue(ctx, cdslog.AuthWorkerName, apiConsumer.Worker.Name)
+	} else {
+		ctx = context.WithValue(ctx, cdslog.AuthUsername, apiConsumer.AuthentifiedUser.Username)
+	}
+
+	ctx = context.WithValue(ctx, cdslog.AuthUserID, apiConsumer.AuthentifiedUserID)
+	ctx = context.WithValue(ctx, cdslog.AuthConsumerID, apiConsumer.ID)
+	session := getAuthSession(ctx)
+	if session != nil {
+		ctx = context.WithValue(ctx, cdslog.AuthSessionID, session.ID)
 	}
 
 	return ctx, nil
@@ -72,7 +107,7 @@ func (api *API) authOptionalMiddleware(ctx context.Context, w http.ResponseWrite
 	// If a JWT is given, we also checks that there are a valid session and consumer for it
 	jwt, ok := ctx.Value(service.ContextJWT).(*jwt.Token)
 	if !ok {
-		log.Debug("api.authOptionalMiddleware> no jwt token found in context")
+		log.Debug(ctx, "api.authOptionalMiddleware> no jwt token found in context")
 		return ctx, nil
 	}
 	claims := jwt.Claims.(*sdk.AuthSessionJWTClaims)
@@ -81,10 +116,10 @@ func (api *API) authOptionalMiddleware(ctx context.Context, w http.ResponseWrite
 	// Check for session based on jwt from context
 	session, err := authentication.CheckSession(ctx, api.mustDB(), sessionID)
 	if err != nil {
-		log.Warning(ctx, "authMiddleware> cannot find a valid session for given JWT: %v", err)
+		log.Warn(ctx, "authMiddleware> cannot find a valid session for given JWT: %v", err)
 	}
 	if session == nil {
-		log.Debug("api.authOptionalMiddleware> no session found in context")
+		log.Debug(ctx, "api.authOptionalMiddleware> no session found in context")
 		return ctx, nil
 	}
 	ctx = context.WithValue(ctx, contextSession, session)
@@ -123,7 +158,7 @@ func (api *API) authOptionalMiddleware(ctx context.Context, w http.ResponseWrite
 		consumer.Worker = w
 	}
 	if consumer == nil {
-		log.Debug("api.authOptionalMiddleware> no consumer found in context")
+		log.Debug(ctx, "api.authOptionalMiddleware> no consumer found in context")
 		return ctx, nil
 	}
 

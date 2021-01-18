@@ -9,9 +9,10 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 type statusData struct {
@@ -28,7 +29,7 @@ type statusData struct {
 //https://developer.github.com/v3/repos/statuses/#create-a-status
 func (g *githubClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	if g.DisableStatus {
-		log.Warning(ctx, "github.SetStatus>  ⚠ Github statuses are disabled")
+		log.Warn(ctx, "github.SetStatus>  ⚠ Github statuses are disabled")
 		return nil
 	}
 
@@ -46,7 +47,7 @@ func (g *githubClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	}
 
 	if data.status == "" {
-		log.Debug("github.SetStatus> Do not process event for current status: %v", event)
+		log.Debug(ctx, "github.SetStatus> Do not process event for current status: %v", event)
 		return nil
 	}
 
@@ -65,9 +66,9 @@ func (g *githubClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	}
 	buf := bytes.NewBuffer(b)
 
-	log.Debug("SetStatus> github post on %v body:%v", path, string(b))
+	log.Debug(ctx, "SetStatus> github post on %v body:%v", path, string(b))
 
-	res, err := g.post(path, "application/json", buf, nil)
+	res, err := g.post(ctx, path, "application/json", buf, nil)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to post status")
 	}
@@ -79,7 +80,7 @@ func (g *githubClient) SetStatus(ctx context.Context, event sdk.Event) error {
 		return sdk.WrapError(err, "Unable to read body")
 	}
 
-	log.Debug("SetStatus> github response for %v body:%v", path, string(body))
+	log.Debug(ctx, "SetStatus> github response for %v body:%v", path, string(body))
 
 	if res.StatusCode != 201 {
 		return sdk.WrapError(err, "Unable to create status on github. Status code : %d - Body: %s - target:%s", res.StatusCode, body, data.urlPipeline)
@@ -90,7 +91,7 @@ func (g *githubClient) SetStatus(ctx context.Context, event sdk.Event) error {
 		return sdk.WrapError(err, "Unable to unmarshal body")
 	}
 
-	log.Debug("SetStatus> Status %d %s created at %v", s.ID, s.URL, s.CreatedAt)
+	log.Debug(ctx, "SetStatus> Status %d %s created at %v", s.ID, s.URL, s.CreatedAt)
 
 	return nil
 }

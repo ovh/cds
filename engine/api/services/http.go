@@ -15,12 +15,13 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
 	"gopkg.in/spacemonkeygo/httpsig.v0"
 
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/ovh/cds/sdk/log"
+	cdslog "github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -303,11 +304,9 @@ func doRequestFromURL(ctx context.Context, db gorp.SqlExecutor, method string, c
 		}
 	}
 
-	iRequestID := ctx.Value(log.ContextLoggingRequestIDKey)
-	if iRequestID != nil {
-		if requestID, ok := iRequestID.(string); ok {
-			req.Header.Set(log.HeaderRequestID, requestID)
-		}
+	requestID := cdslog.ContextValue(ctx, cdslog.RequestID)
+	if requestID != "" {
+		req.Header.Set(cdslog.HeaderRequestID, requestID)
 	}
 
 	// Sign the http request with API private RSA Key
@@ -315,7 +314,7 @@ func doRequestFromURL(ctx context.Context, db gorp.SqlExecutor, method string, c
 		return nil, nil, 0, sdk.WrapError(err, "request signature failed")
 	}
 
-	log.Debug("services.DoRequest> request %s %v (%s)", req.Method, req.URL, req.Header.Get("Authorization"))
+	log.Debug(ctx, "services.DoRequest> request %s %v (%s)", req.Method, req.URL, req.Header.Get("Authorization"))
 
 	//Do the request
 	resp, err := HTTPClient.Do(req)
@@ -330,7 +329,7 @@ func doRequestFromURL(ctx context.Context, db gorp.SqlExecutor, method string, c
 		return nil, resp.Header, resp.StatusCode, sdk.WrapError(err, "unable to read body")
 	}
 
-	log.Debug("services.DoRequest> response code:%d", resp.StatusCode)
+	log.Debug(ctx, "services.DoRequest> response code:%d", resp.StatusCode)
 
 	// if everything is fine, return body
 	if resp.StatusCode < 400 {

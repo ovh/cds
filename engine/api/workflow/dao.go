@@ -12,6 +12,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"
@@ -23,7 +24,6 @@ import (
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -290,7 +290,7 @@ func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 	if w.WorkflowData.Node.Context != nil && w.WorkflowData.Node.Context.ApplicationID != 0 {
 		var err error
 		if w.WorkflowData.Node.Context.DefaultPayload, err = DefaultPayload(ctx, db, store, proj, w); err != nil {
-			log.Warning(ctx, "postWorkflowHandler> Cannot set default payload : %v", err)
+			log.Warn(ctx, "postWorkflowHandler> Cannot set default payload : %v", err)
 		}
 	}
 
@@ -330,7 +330,7 @@ func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 			return sdk.WrapError(err, "Unable to update workflow")
 		}
 	} else {
-		log.Debug("postWorkflowHandler> inherit permissions from project")
+		log.Debug(ctx, "postWorkflowHandler> inherit permissions from project")
 		for _, gp := range proj.ProjectGroups {
 			if err := group.AddWorkflowGroup(ctx, db, w, gp); err != nil {
 				return sdk.WrapError(err, "Cannot add group %s", gp.Group.Name)
@@ -638,7 +638,7 @@ func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 	if wf.WorkflowData.Node.Context != nil && wf.WorkflowData.Node.Context.ApplicationID != 0 {
 		var err error
 		if wf.WorkflowData.Node.Context.DefaultPayload, err = DefaultPayload(ctx, db, store, proj, wf); err != nil {
-			log.Warning(ctx, "workflow.Update> Cannot set default payload : %v", err)
+			log.Warn(ctx, "workflow.Update> Cannot set default payload : %v", err)
 		}
 	}
 
@@ -1228,13 +1228,13 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 
 	if !isDefaultBranch {
 		_ = tx.Rollback()
-		log.Debug("workflow %s rollbacked because it's not coming from the default branch", wf.Name)
+		log.Debug(ctx, "workflow %s rollbacked because it's not coming from the default branch", wf.Name)
 	} else {
 		if err := tx.Commit(); err != nil {
 			return nil, nil, nil, nil, sdk.WithStack(err)
 		}
 
-		log.Debug("workflow %s updated", wf.Name)
+		log.Debug(ctx, "workflow %s updated", wf.Name)
 	}
 
 	return allMsg, wf, oldWf, &allSecrets, nil

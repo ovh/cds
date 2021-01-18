@@ -7,9 +7,10 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func RunRelease(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, secrets []sdk.Variable) (sdk.Result, error) {

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
+	"github.com/rockbears/log"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 	"gopkg.in/square/go-jose.v2"
@@ -17,7 +18,7 @@ import (
 	"github.com/ovh/cds/sdk/cdn"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/jws"
-	"github.com/ovh/cds/sdk/log"
+	cdslog "github.com/ovh/cds/sdk/log"
 	loghook "github.com/ovh/cds/sdk/log/hook"
 )
 
@@ -105,9 +106,9 @@ func (wk *CurrentWorker) SendTerminatedStepLog(ctx context.Context, level worker
 		return
 	}
 	wk.gelfLogger.logger.
-		WithField(log.ExtraFieldSignature, sign).
-		WithField(log.ExtraFieldLine, wk.stepLogLine).
-		WithField(log.ExtraFieldTerminated, true).
+		WithField(cdslog.ExtraFieldSignature, sign).
+		WithField(cdslog.ExtraFieldLine, wk.stepLogLine).
+		WithField(cdslog.ExtraFieldTerminated, true).
 		Log(msg.Level, msg.Value)
 	wk.stepLogLine++
 }
@@ -119,15 +120,15 @@ func (wk *CurrentWorker) SendLog(ctx context.Context, level workerruntime.Level,
 		return
 	}
 	wk.gelfLogger.logger.
-		WithField(log.ExtraFieldSignature, sign).
-		WithField(log.ExtraFieldLine, wk.stepLogLine).
-		WithField(log.ExtraFieldTerminated, false).
+		WithField(cdslog.ExtraFieldSignature, sign).
+		WithField(cdslog.ExtraFieldLine, wk.stepLogLine).
+		WithField(cdslog.ExtraFieldTerminated, false).
 		Log(msg.Level, msg.Value)
 	wk.stepLogLine++
 }
 
-func (wk *CurrentWorker) prepareLog(ctx context.Context, level workerruntime.Level, s string) (log.Message, string, error) {
-	var res log.Message
+func (wk *CurrentWorker) prepareLog(ctx context.Context, level workerruntime.Level, s string) (cdslog.Message, string, error) {
+	var res cdslog.Message
 
 	if wk.currentJob.wJob == nil {
 		return res, "", sdk.WithStack(fmt.Errorf("job is nill"))

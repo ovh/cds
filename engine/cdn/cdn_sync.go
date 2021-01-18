@@ -6,13 +6,14 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/cdn/storage/cds"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 const (
@@ -51,11 +52,12 @@ func (s *Service) listenCDSSync(ctx context.Context, cdsStorage *cds.CDS) error 
 			}
 			msg, err := pubsub.GetMessage(ctx)
 			if err != nil {
-				log.Warning(ctx, "cdn.listenCDSSync> cannot get message from pubsub %s: %s", msg, err)
+				log.Warn(ctx, "cdn.listenCDSSync> cannot get message from pubsub %s: %s", msg, err)
 				continue
 			}
 			if err := s.SyncLogs(ctx, cdsStorage); err != nil {
-				log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+				ctx = sdk.ContextWithStacktrace(ctx, err)
+				log.Error(ctx, err.Error())
 			}
 		}
 	}
@@ -221,7 +223,7 @@ func (s *Service) syncNodeRunJob(ctx context.Context, cdsStorage *cds.CDS, pKey 
 						continue
 					}
 					if err := s.Cache.ScoredSetAdd(ctx, cache.Key(storage.KeyBackendSync, sto.Name()), itemID, float64(time.Now().AddDate(-1, 0, 0).UnixNano())); err != nil {
-						log.InfoWithFields(ctx, log.Fields{}, "syncNodeRunJob> cannot push item %s into scoredset for unit %s", itemID, sto.Name())
+						log.Info(ctx, "syncNodeRunJob> cannot push item %s into scoredset for unit %s", itemID, sto.Name())
 						continue
 					}
 				}
@@ -239,7 +241,7 @@ func (s *Service) syncNodeRun(ctx context.Context, cdsStorage *cds.CDS, pKey str
 		return nil, err
 	}
 	if !b {
-		log.Debug("cd:syncNodeRun: already lock %d", nodeRunIdentifier.NodeRunID)
+		log.Debug(ctx, "cd:syncNodeRun: already lock %d", nodeRunIdentifier.NodeRunID)
 		return nil, nil
 	}
 	defer s.Cache.Unlock(lockKey) // nolint

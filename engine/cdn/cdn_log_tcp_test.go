@@ -19,8 +19,6 @@ import (
 	"github.com/ovh/cds/sdk/log/hook"
 
 	gocache "github.com/patrickmn/go-cache"
-	"github.com/stretchr/testify/require"
-	"gopkg.in/h2non/gock.v1"
 
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/gorpmapper"
@@ -28,7 +26,9 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/jws"
-	"github.com/ovh/cds/sdk/log"
+	"github.com/rockbears/log"
+	"github.com/stretchr/testify/require"
+	"gopkg.in/h2non/gock.v1"
 )
 
 func TestWorkerLogCDNEnabled(t *testing.T) {
@@ -276,7 +276,7 @@ func TestStoreTruncatedLogs(t *testing.T) {
 	item.InitDBMapping(m)
 	storage.InitDBMapping(m)
 
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 	db, factory, cache, cancel := test.SetupPGToCancel(t, m, sdk.TypeCDN)
 	t.Cleanup(cancel)
 

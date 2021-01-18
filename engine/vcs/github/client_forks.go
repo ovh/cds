@@ -7,9 +7,10 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (g *githubClient) ListForks(ctx context.Context, repo string) ([]sdk.VCSRepo, error) {
@@ -33,7 +34,7 @@ func (g *githubClient) ListForks(ctx context.Context, repo string) ([]sdk.VCSRep
 		attempt++
 		status, body, headers, err := g.get(ctx, nextPage, opt)
 		if err != nil {
-			log.Warning(ctx, "githubClient.ListForks> Error %s", err)
+			log.Warn(ctx, "githubClient.ListForks> Error %s", err)
 			return nil, err
 		}
 		if status >= 400 {
@@ -57,7 +58,7 @@ func (g *githubClient) ListForks(ctx context.Context, repo string) ([]sdk.VCSRep
 			continue
 		} else {
 			if err := json.Unmarshal(body, &nextRepos); err != nil {
-				log.Warning(ctx, "githubClient.ListForks> Unable to parse github repositories: %s", err)
+				log.Warn(ctx, "githubClient.ListForks> Unable to parse github repositories: %s", err)
 				return nil, err
 			}
 		}

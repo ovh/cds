@@ -5,8 +5,9 @@ import (
 	"encoding/json"
 	"strings"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (s *Service) generatePayloadFromBitbucketCloudRequest(ctx context.Context, t *sdk.TaskExecution, event string) ([]map[string]interface{}, error) {
@@ -63,7 +64,7 @@ func getVariableFromBitbucketCloudChange(ctx context.Context, payload map[string
 	} else if change.New.Type == "tag" {
 		payload[GIT_TAG] = strings.TrimPrefix(change.New.Name, "refs/tags/")
 	} else {
-		log.Warning(ctx, "unknown push type: %s", change.New.Type)
+		log.Warn(ctx, "unknown push type: %s", change.New.Type)
 		return
 	}
 	payload[GIT_HASH_BEFORE] = change.Old.Target.Hash

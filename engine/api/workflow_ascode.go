@@ -151,7 +151,7 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 				OperationUUID: ope.UUID,
 			}
 			ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, api.GoRoutines, *p, *wfDB, *rootApp, ed, u)
-		}, api.PanicDump())
+		})
 
 		return service.WriteJSON(w, sdk.Operation{
 			UUID:   ope.UUID,
@@ -216,7 +216,7 @@ func (api *API) migrateWorkflowAsCode(ctx context.Context, w http.ResponseWriter
 			OperationUUID: ope.UUID,
 		}
 		ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, api.GoRoutines, proj, *wf, app, ed, u)
-	}, api.PanicDump())
+	})
 
 	return service.WriteJSON(w, sdk.Operation{
 		UUID:   ope.UUID,

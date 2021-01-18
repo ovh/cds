@@ -9,12 +9,12 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/rockbears/log"
 	"github.com/xanzy/go-gitlab"
 
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/engine/vcs/github"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func muxVar(r *http.Request, s string) string {
@@ -356,7 +356,7 @@ func (s *Service) getTagsHandler() service.Handler {
 		owner := muxVar(r, "owner")
 		repo := muxVar(r, "repo")
 
-		log.Debug("getTagsHandler>")
+		log.Debug(ctx, "getTagsHandler>")
 
 		accessToken, accessTokenSecret, created, ok := getAccessTokens(ctx)
 		if !ok {
@@ -394,7 +394,7 @@ func (s *Service) getCommitsHandler() service.Handler {
 		since := r.URL.Query().Get("since")
 		until := r.URL.Query().Get("until")
 
-		log.Debug("getCommitsHandler>")
+		log.Debug(ctx, "getCommitsHandler>")
 
 		accessToken, accessTokenSecret, created, ok := getAccessTokens(ctx)
 		if !ok {
@@ -431,7 +431,7 @@ func (s *Service) getCommitsBetweenRefsHandler() service.Handler {
 		base := r.URL.Query().Get("base")
 		head := r.URL.Query().Get("head")
 
-		log.Debug("getCommitsBetweenRefsHandler>")
+		log.Debug(ctx, "getCommitsBetweenRefsHandler>")
 
 		accessToken, accessTokenSecret, created, ok := getAccessTokens(ctx)
 		if !ok {

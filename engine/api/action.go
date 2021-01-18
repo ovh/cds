@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
+	"github.com/rockbears/log"
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/action"
@@ -18,7 +19,6 @@ import (
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (api *API) getActionsHandler() service.Handler {

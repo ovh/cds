@@ -10,14 +10,14 @@ import (
 	"strings"
 
 	dump "github.com/fsamin/go-dump"
+	"github.com/rockbears/log"
 	"github.com/xanzy/go-gitlab"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (s *Service) doWebHookExecution(ctx context.Context, e *sdk.TaskExecution) ([]sdk.WorkflowNodeRunHookEvent, error) {
-	log.Debug("Hooks> Processing webhook %s %s", e.UUID, e.Type)
+	log.Debug(ctx, "Hooks> Processing webhook %s %s", e.UUID, e.Type)
 
 	if e.Type == TypeRepoManagerWebHook {
 		return s.executeRepositoryWebHook(ctx, e)
@@ -91,7 +91,7 @@ func (s *Service) executeRepositoryWebHook(ctx context.Context, t *sdk.TaskExecu
 			return nil, errG
 		}
 	default:
-		log.Warning(ctx, "executeRepositoryWebHook> Repository manager not found. Cannot read %s", string(t.WebHook.RequestBody))
+		log.Warn(ctx, "executeRepositoryWebHook> Repository manager not found. Cannot read %s", string(t.WebHook.RequestBody))
 		return nil, fmt.Errorf("Repository manager not found. Cannot read request body")
 	}
 

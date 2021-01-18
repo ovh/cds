@@ -9,11 +9,11 @@ import (
 	"path"
 
 	"github.com/mholt/archiver"
+	"github.com/rockbears/log"
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func init() {

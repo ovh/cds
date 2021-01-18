@@ -3,12 +3,13 @@ package hooks
 import (
 	"context"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (s *Service) doBranchDeletionTaskExecution(t *sdk.TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error) {
-	log.Debug("Hooks> Processing branch deletion task %s", t.UUID)
+	log.Debug(context.TODO(), "Hooks> Processing branch deletion task %s", t.UUID)
 
 	projectKey := t.Config["project"].Value
 	workflowName := t.Config["workflow"].Value

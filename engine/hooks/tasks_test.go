@@ -7,21 +7,22 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
+	"github.com/rockbears/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient/mock_cdsclient"
-	"github.com/ovh/cds/sdk/log"
+	cdslog "github.com/ovh/cds/sdk/log"
 )
 
 func init() {
-	log.Initialize(context.TODO(), &log.Conf{Level: "debug"})
+	cdslog.Initialize(context.TODO(), &cdslog.Conf{Level: "debug"})
 }
 
 func Test_doWebHookExecution(t *testing.T) {
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 	s, cancel := setupTestHookService(t)
 	defer cancel()
 	task := &sdk.TaskExecution{
@@ -44,7 +45,7 @@ func Test_doWebHookExecution(t *testing.T) {
 }
 
 func Test_doWebHookExecutionWithRequestBody(t *testing.T) {
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 	s, cancel := setupTestHookService(t)
 	defer cancel()
 	task := &sdk.TaskExecution{
@@ -53,7 +54,7 @@ func Test_doWebHookExecutionWithRequestBody(t *testing.T) {
 		WebHook: &sdk.WebHookExecution{
 			RequestMethod: string(http.MethodPost),
 			RequestHeader: map[string][]string{
-				"Content-Type": []string{
+				"Content-Type": {
 					"application/json",
 				},
 			},
@@ -74,7 +75,7 @@ func Test_doWebHookExecutionWithRequestBody(t *testing.T) {
 }
 
 func Test_dequeueTaskExecutions_ScheduledTask(t *testing.T) {
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 	s, cancel := setupTestHookService(t)
 	defer cancel()
 

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/cache"
@@ -17,7 +18,6 @@ import (
 	"github.com/ovh/cds/engine/vcs/gitlab"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // New returns a new service
@@ -59,7 +59,6 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 	s.ServiceType = sdk.TypeVCS
 	s.HTTPURL = s.Cfg.URL
 	s.MaxHeartbeatFailures = s.Cfg.API.MaxHeartbeatFailures
-	s.ServiceName = "cds-vcs"
 
 	return nil
 }

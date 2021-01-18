@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/cache"
-	"github.com/ovh/cds/sdk/log"
 )
 
 //Initialize init the package
@@ -25,13 +25,13 @@ func Initialize(c context.Context, DBFunc func() *gorp.DbMap, store cache.Store)
 		case <-tickHeart.C:
 			go func() {
 				if err := DeleteDeadWorkers(c, db); err != nil {
-					log.Warning(c, "worker.deleteDeadWorkers> Error on deleteDeadWorkers : %v", err)
+					log.Warn(c, "worker.deleteDeadWorkers> Error on deleteDeadWorkers : %v", err)
 				}
 			}()
 
 			go func() {
 				if err := DisableDeadWorkers(c, db); err != nil {
-					log.Warning(c, "worker.disableDeadWorkers> Error on disableDeadWorkers : %v", err)
+					log.Warn(c, "worker.disableDeadWorkers> Error on disableDeadWorkers : %v", err)
 				}
 			}()
 		}

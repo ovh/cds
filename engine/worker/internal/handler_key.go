@@ -8,10 +8,10 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func keyInstallHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
@@ -67,7 +67,7 @@ func keyInstallHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc 
 			}
 			return
 		}
-		log.Debug("key %s installed to %s", key.Name, response.PKey)
+		log.Debug(ctx, "key %s installed to %s", key.Name, response.PKey)
 		writeJSON(w, response, 200)
 	}
 }
@@ -77,12 +77,12 @@ func keyInstall(wk workerruntime.Runtime, filename string, key *sdk.Variable) (*
 		return wk.InstallKey(*key)
 	}
 
-	log.Debug("worker.keyInstall> installing key %s to %s", key.Name, filename)
+	log.Debug(context.Background(), "worker.keyInstall> installing key %s to %s", key.Name, filename)
 
 	if !sdk.PathIsAbs(filename) {
 		return nil, fmt.Errorf("unsupported relative path")
 	}
 
-	log.Debug("worker.keyInstall> destination: %s", filename)
+	log.Debug(context.TODO(), "worker.keyInstall> destination: %s", filename)
 	return wk.InstallKeyTo(*key, filename)
 }

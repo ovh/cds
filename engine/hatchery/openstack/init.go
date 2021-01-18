@@ -8,9 +8,9 @@ import (
 	"github.com/gophercloud/gophercloud/openstack"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/tenantnetworks"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // InitHatchery fetch uri from nova
@@ -40,15 +40,15 @@ func (h *HatcheryOpenstack) InitHatchery(ctx context.Context) error {
 	h.openstackClient = openstackClient
 
 	if err := h.initFlavors(); err != nil {
-		log.Warning(ctx, "Error getting flavors: %v", err)
+		log.Warn(ctx, "Error getting flavors: %v", err)
 	}
 
 	if err := h.initNetworks(); err != nil {
-		log.Warning(ctx, "Error getting networks: %v", err)
+		log.Warn(ctx, "Error getting networks: %v", err)
 	}
 
 	if err := h.initIPStatus(ctx); err != nil {
-		log.Warning(ctx, "Error on initIPStatus(): %v", err)
+		log.Warn(ctx, "Error on initIPStatus(): %v", err)
 	}
 
 	if err := h.RefreshServiceLogger(ctx); err != nil {
@@ -93,7 +93,7 @@ func (h HatcheryOpenstack) filterAllowedFlavors(allFlavors []flavors.Flavor) []f
 			}
 		}
 		if !allowed {
-			log.Debug("initFlavors> flavor '%s' is not allowed", allFlavors[i].Name)
+			log.Debug(context.TODO(), "initFlavors> flavor '%s' is not allowed", allFlavors[i].Name)
 			continue
 		}
 		filteredFlavors = append(filteredFlavors, allFlavors[i])
@@ -151,7 +151,7 @@ func (h *HatcheryOpenstack) initIPStatus(ctx context.Context) error {
 						}
 						//we only support IPV4
 						if addr != "" && version == 4 {
-							log.Debug("initIPStatus> server %s - address %s (checking %s)", s.Name, addr, ip)
+							log.Debug(ctx, "initIPStatus> server %s - address %s (checking %s)", s.Name, addr, ip)
 							if addr != "" && addr == ip {
 								log.Info(ctx, "initIPStatus> worker %s - use IP: %s", s.Name, addr)
 								ipsInfos.ips[ip] = ipInfos{workerName: s.Name}

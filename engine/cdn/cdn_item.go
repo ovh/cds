@@ -13,11 +13,12 @@ import (
 	"os"
 	"time"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 var (
@@ -77,7 +78,7 @@ func (s *Service) downloadItemFromUnit(ctx context.Context, t sdk.CDNItemType, a
 }
 
 func (s *Service) downloadItem(ctx context.Context, t sdk.CDNItemType, apiRefHash string, w http.ResponseWriter, opts downloadOpts) error {
-	t0 := time.Now()
+	ctx = context.WithValue(ctx, storage.FieldAPIRef, apiRefHash)
 
 	if !t.IsLog() {
 		return sdk.NewErrorFrom(sdk.ErrNotImplemented, "only log item can be download for now")
@@ -105,12 +106,8 @@ func (s *Service) downloadItem(ctx context.Context, t sdk.CDNItemType, apiRefHas
 	if _, err := io.Copy(w, rc); err != nil {
 		return sdk.WithStack(err)
 	}
-	t1 := time.Now()
 
-	log.InfoWithFields(ctx, log.Fields{
-		"item_apiref":               it.APIRefHash,
-		"duration_milliseconds_num": t1.Sub(t0).Milliseconds(),
-	}, "downloadItem> item %s has been downloaded", it.ID)
+	log.Info(ctx, "downloadItem> item %s has been downloaded", it.ID)
 
 	return nil
 }
@@ -125,6 +122,8 @@ type getItemLogOptions struct {
 }
 
 func (s *Service) getItemLogLinesCount(ctx context.Context, t sdk.CDNItemType, apiRefHash string) (int64, error) {
+	ctx = context.WithValue(ctx, storage.FieldAPIRef, apiRefHash)
+
 	it, err := item.LoadByAPIRefHashAndType(ctx, s.Mapper, s.mustDBWithCtx(ctx), apiRefHash, t)
 	if err != nil {
 		return 0, err
@@ -137,14 +136,14 @@ func (s *Service) getItemLogLinesCount(ctx context.Context, t sdk.CDNItemType, a
 
 	// If item is in Buffer, get from it
 	if itemUnit != nil {
-		log.Debug("getItemLogLines> Getting logs from buffer")
+		log.Debug(ctx, "getItemLogLines> Getting logs from buffer")
 		lines, err := s.Units.LogsBuffer().Card(*itemUnit)
 		return int64(lines), err
 	}
 
 	// Get from cache
 	if ok, _ := s.LogCache.Exist(it.ID); !ok {
-		log.Debug("getItemLogLines> Getting logs from storage and push to cache")
+		log.Debug(ctx, "getItemLogLines> Getting logs from storage and push to cache")
 		// Retrieve item and push it into the cache
 		if err := s.pushItemLogIntoCache(ctx, *it, ""); err != nil {
 			return 0, err
@@ -156,6 +155,8 @@ func (s *Service) getItemLogLinesCount(ctx context.Context, t sdk.CDNItemType, a
 }
 
 func (s *Service) getItemLogValue(ctx context.Context, t sdk.CDNItemType, apiRefHash string, opts getItemLogOptions) (*sdk.CDNItem, int64, io.ReadCloser, string, error) {
+	ctx = context.WithValue(ctx, storage.FieldAPIRef, apiRefHash)
+
 	it, err := item.LoadByAPIRefHashAndType(ctx, s.Mapper, s.mustDBWithCtx(ctx), apiRefHash, t)
 	if err != nil {
 		return nil, 0, nil, "", err
@@ -170,7 +171,7 @@ func (s *Service) getItemLogValue(ctx context.Context, t sdk.CDNItemType, apiRef
 
 	// If item is in Buffer, get from it
 	if itemUnit != nil {
-		log.Debug("getItemLogValue> Getting logs from buffer")
+		log.Debug(ctx, "getItemLogValue> Getting logs from buffer")
 		linesCount, err := s.Units.LogsBuffer().Card(*itemUnit)
 		if err != nil {
 			return nil, 0, nil, "", err
@@ -192,7 +193,7 @@ func (s *Service) getItemLogValue(ctx context.Context, t sdk.CDNItemType, apiRef
 
 	// Get from cache
 	if ok, _ := s.LogCache.Exist(it.ID); !ok {
-		log.Debug("getItemLogValue> Getting logs from storage and push to cache")
+		log.Debug(ctx, "getItemLogValue> Getting logs from storage and push to cache")
 		// Retrieve item and push it into the cache
 		if err := s.pushItemLogIntoCache(ctx, *it, opts.cacheSource); err != nil {
 			return nil, 0, nil, "", err
@@ -204,12 +205,13 @@ func (s *Service) getItemLogValue(ctx context.Context, t sdk.CDNItemType, apiRef
 		return nil, 0, nil, "", err
 	}
 
-	log.Debug("getItemLogValue> Getting logs from cache")
+	log.Debug(ctx, "getItemLogValue> Getting logs from cache")
 	return it, int64(linesCount), s.LogCache.NewReader(it.ID, opts.format, opts.from, opts.size, opts.sort), filename, nil
 }
 
 func (s *Service) pushItemLogIntoCache(ctx context.Context, it sdk.CDNItem, unitName string) error {
-	t0 := time.Now()
+	ctx = context.WithValue(ctx, storage.FieldAPIRef, it.APIRefHash)
+
 	// Search item in a storage unit
 	itemUnits, err := storage.LoadAllItemUnitsByItemIDs(ctx, s.Mapper, s.mustDBWithCtx(ctx), it.ID)
 	if err != nil {
@@ -261,8 +263,6 @@ func (s *Service) pushItemLogIntoCache(ctx context.Context, it sdk.CDNItem, unit
 		return err
 	}
 
-	t1 := time.Now()
-
 	// Create a reader
 	storageReader, err := unitStorage.NewReader(ctx, *selectedItemUnit)
 	if err != nil {
@@ -287,16 +287,12 @@ func (s *Service) pushItemLogIntoCache(ctx context.Context, it sdk.CDNItem, unit
 		return err
 	}
 
-	log.InfoWithFields(ctx, log.Fields{
-		"item_apiref":               it.APIRefHash,
-		"duration_milliseconds_num": t1.Sub(t0).Milliseconds(),
-	}, "item %s has been pushed to cache", it.ID)
+	log.Info(ctx, "item %s has been pushed to cache", it.ID)
 
 	return nil
 }
 
 func (s *Service) completeItem(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, itemUnit sdk.CDNItemUnit) error {
-	t0 := time.Now()
 	// We need to lock the item and set its status to complete and also generate data hash
 	it, err := item.LoadAndLockByID(ctx, s.Mapper, tx, itemUnit.ItemID)
 	if err != nil {
@@ -305,6 +301,8 @@ func (s *Service) completeItem(ctx context.Context, tx gorpmapper.SqlExecutorWit
 		}
 		return err
 	}
+
+	ctx = context.WithValue(ctx, storage.FieldAPIRef, it.APIRefHash)
 
 	// Update item with final data
 	it.Status = sdk.CDNStatusItemCompleted
@@ -363,13 +361,7 @@ func (s *Service) completeItem(ctx context.Context, tx gorpmapper.SqlExecutorWit
 		return err
 	}
 
-	t1 := time.Now()
-
-	log.InfoWithFields(ctx, log.Fields{
-		"item_apiref":               it.APIRefHash,
-		"duration_milliseconds_num": t1.Sub(t0).Milliseconds(),
-		"item_size_num":             it.Size,
-	}, "completeItem> item %s has been completed", it.ID)
+	log.Info(ctx, "completeItem> item %s has been completed", it.ID)
 
 	return nil
 }

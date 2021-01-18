@@ -3,6 +3,8 @@ package workflow
 import (
 	"context"
 
+	"github.com/rockbears/log"
+
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/ascode"
@@ -12,7 +14,6 @@ import (
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -57,7 +58,7 @@ func Import(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 			return err
 		}
 		msgChan <- sdk.NewMessage(sdk.MsgWorkflowDetached, oldW.Name, oldW.FromRepository)
-		log.Debug("workflow.Import>> Force import workflow %s in project %s without fromRepository", oldW.Name, proj.Key)
+		log.Debug(ctx, "workflow.Import>> Force import workflow %s in project %s without fromRepository", oldW.Name, proj.Key)
 	}
 
 	// Retrieve existing hook

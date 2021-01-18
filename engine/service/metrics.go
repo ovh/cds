@@ -17,8 +17,8 @@ import (
 	"go.opencensus.io/tag"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
+	"github.com/rockbears/log"
 )
 
 type NamedService interface {
@@ -233,7 +233,7 @@ func GetMetricHandler(prefix string) func() Handler {
 					tags[k] = formValues.Get(k)
 				}
 			}
-			log.Debug("GetMetricHandler> path: %s - tags: %v", view, tags)
+			log.Debug(ctx, "GetMetricHandler> path: %s - tags: %v", view, tags)
 
 			if view == "" {
 				return writeJSON(w, exporter, http.StatusOK)

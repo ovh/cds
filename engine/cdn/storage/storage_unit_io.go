@@ -7,9 +7,10 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 var (
@@ -71,7 +72,7 @@ func (r RunningStorageUnits) GetSource(ctx context.Context, i *sdk.CDNItem) (Sou
 	}
 
 	if len(itemUnits) == 0 {
-		log.Warning(ctx, "item %s can't be found. No unit knows it...", i.ID)
+		log.Warn(ctx, "item %s can't be found. No unit knows it...", i.ID)
 		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 

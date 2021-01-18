@@ -10,9 +10,9 @@ import (
 
 	"github.com/Shopify/sarama"
 	"github.com/fsamin/go-dump"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 var nbKafkaConsumers int64
@@ -144,7 +144,7 @@ func (h *handler) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama
 }
 
 func (s *Service) doKafkaTaskExecution(t *sdk.TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error) {
-	log.Debug("Hooks> Processing kafka %s %s", t.UUID, t.Type)
+	log.Debug(context.TODO(), "Hooks> Processing kafka %s %s", t.UUID, t.Type)
 
 	// Prepare a struct to send to CDS API
 	h := sdk.WorkflowNodeRunHookEvent{

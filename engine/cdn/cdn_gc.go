@@ -2,13 +2,13 @@ package cdn
 
 import (
 	"context"
-	"fmt"
 	"time"
+
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -28,7 +28,8 @@ func (s *Service) itemPurge(ctx context.Context) {
 			return
 		case <-tickPurge.C:
 			if err := s.cleanItemToDelete(ctx); err != nil {
-				log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+				ctx = sdk.ContextWithStacktrace(ctx, err)
+				log.Error(ctx, err.Error())
 			}
 		}
 	}
@@ -47,10 +48,12 @@ func (s *Service) itemsGC(ctx context.Context) {
 			return
 		case <-tickGC.C:
 			if err := s.cleanBuffer(ctx); err != nil {
-				log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+				ctx = sdk.ContextWithStacktrace(ctx, err)
+				log.Error(ctx, err.Error())
 			}
 			if err := s.cleanWaitingItem(ctx, ItemLogGC); err != nil {
-				log.ErrorWithFields(ctx, log.Fields{"stack_trace": fmt.Sprintf("%+v", err)}, "%s", err)
+				ctx = sdk.ContextWithStacktrace(ctx, err)
+				log.Error(ctx, err.Error())
 			}
 		}
 	}
@@ -108,7 +111,7 @@ func (s *Service) cleanItemToDelete(ctx context.Context) error {
 			}
 
 			if nbItemUnits > 0 {
-				log.Debug("cdn:purge:item: %d unit items to delete for item %s", nbItemUnits, id)
+				log.Debug(ctx, "cdn:purge:item: %d unit items to delete for item %s", nbItemUnits, id)
 			} else {
 				if err := s.LogCache.Remove([]string{id}); err != nil {
 					return err
@@ -116,12 +119,12 @@ func (s *Service) cleanItemToDelete(ctx context.Context) error {
 				if err := item.DeleteByID(s.mustDBWithCtx(ctx), id); err != nil {
 					return err
 				}
-				log.Debug("cdn:purge:item: %s item deleted", id)
+				log.Debug(ctx, "cdn:purge:item: %s item deleted", id)
 			}
 			continue
 		}
 
-		log.Debug("cdn:purge:item: %d unit items to delete for item %s", nbUnitItemToDelete, id)
+		log.Debug(ctx, "cdn:purge:item: %d unit items to delete for item %s", nbUnitItemToDelete, id)
 	}
 	return nil
 }
@@ -133,7 +136,7 @@ func (s *Service) cleanBuffer(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		log.Debug("item to remove from buffer: %d", len(itemIDs))
+		log.Debug(ctx, "item to remove from buffer: %d", len(itemIDs))
 		if len(itemIDs) == 0 {
 			return nil
 		}
@@ -167,7 +170,9 @@ func (s *Service) cleanWaitingItem(ctx context.Context, duration int) error {
 		return err
 	}
 	for _, itemUnit := range itemUnits {
-		log.InfoWithFields(ctx, log.Fields{"item_apiref": itemUnit.Item.APIRef}, "cleanWaitingItem> cleaning item %s", itemUnit.ItemID)
+		ctx = context.WithValue(ctx, storage.FieldAPIRef, itemUnit.Item.APIRef)
+		log.Info(ctx, "cleanWaitingItem> cleaning item %s", itemUnit.ItemID)
+
 		tx, err := s.mustDBWithCtx(ctx).Begin()
 		if err != nil {
 			return sdk.WrapError(err, "unable to start transaction")

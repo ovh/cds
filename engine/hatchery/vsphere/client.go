@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/rockbears/log"
 	"github.com/vmware/govmomi/guest"
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/view"
@@ -17,7 +18,6 @@ import (
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
-	"github.com/ovh/cds/sdk/log"
 )
 
 const reqTimeout = 7 * time.Second
@@ -39,13 +39,13 @@ func (h *HatcheryVSphere) getServers() []mo.VirtualMachine {
 	defer cancelC()
 
 	t := time.Now()
-	defer log.Debug("getServers() : %fs", time.Since(t).Seconds())
+	defer log.Debug(ctx, "getServers() : %fs", time.Since(t).Seconds())
 
 	m := view.NewManager(h.vclient.Client)
 
 	v, errC := m.CreateContainerView(ctxC, h.vclient.ServiceContent.RootFolder, []string{"VirtualMachine"}, true)
 	if errC != nil {
-		log.Warning(ctx, "Unable to create container view for vsphere api %s", errC)
+		log.Warn(ctx, "Unable to create container view for vsphere api %s", errC)
 		return lservers.list
 	}
 	defer v.Destroy(ctx)
@@ -55,7 +55,7 @@ func (h *HatcheryVSphere) getServers() []mo.VirtualMachine {
 	// Retrieve summary property for all machines
 	// Reference: http://pubs.vmware.com/vsphere-60/topic/com.vmware.wssdk.apiref.doc/vim.VirtualMachine.html
 	if err := v.Retrieve(ctxR, []string{"VirtualMachine"}, []string{"name", "summary", "guest", "config"}, &vms); err != nil {
-		log.Warning(ctx, "Unable to retrieve virtual machines from vsphere %s", err)
+		log.Warn(ctx, "Unable to retrieve virtual machines from vsphere %s", err)
 		return lservers.list
 	}
 
@@ -88,7 +88,7 @@ func (h *HatcheryVSphere) getModels(ctx context.Context) []mo.VirtualMachine {
 	models := make([]mo.VirtualMachine, len(srvs))
 
 	if len(srvs) == 0 {
-		log.Warning(ctx, "getModels> no servers found")
+		log.Warn(ctx, "getModels> no servers found")
 		return lmodels.list
 	}
 
@@ -96,7 +96,7 @@ func (h *HatcheryVSphere) getModels(ctx context.Context) []mo.VirtualMachine {
 		var annot annotation
 
 		if srv.Config == nil || srv.Config.Annotation == "" {
-			log.Warning(ctx, "getModels> config or annotation are empty for server %s", srv.Name)
+			log.Warn(ctx, "getModels> config or annotation are empty for server %s", srv.Name)
 			continue
 		}
 		if err := json.Unmarshal([]byte(srv.Config.Annotation), &annot); err == nil {
@@ -214,7 +214,7 @@ func (h *HatcheryVSphere) createVMConfig(vm *object.VirtualMachine, annot annota
 	}
 
 	if card == nil {
-		log.Warning(ctx, "createVMConfig> no network device found")
+		log.Warn(ctx, "createVMConfig> no network device found")
 		return nil, folder, fmt.Errorf("no network device found")
 	}
 
@@ -292,7 +292,7 @@ func (h *HatcheryVSphere) createVMConfig(vm *object.VirtualMachine, annot annota
 		if err != nil {
 			return nil, folder, sdk.WithStack(err)
 		}
-		log.Debug("Found %s as available IP", ip)
+		log.Debug(ctx, "Found %s as available IP", ip)
 		customSpec.NicSettingMap = []types.CustomizationAdapterMapping{
 			{
 				Adapter: types.CustomizationIPSettings{
@@ -307,7 +307,7 @@ func (h *HatcheryVSphere) createVMConfig(vm *object.VirtualMachine, annot annota
 		if h.Config.DNS != "" {
 			customSpec.GlobalIPSettings = types.CustomizationGlobalIPSettings{DnsServerList: []string{h.Config.DNS}}
 		}
-		log.Debug("%s / %+v / %+v", ip, customSpec.NicSettingMap[0].Adapter.Gateway, customSpec.NicSettingMap[0].Adapter.DnsServerList)
+		log.Debug(ctx, "%s / %+v / %+v", ip, customSpec.NicSettingMap[0].Adapter.Gateway, customSpec.NicSettingMap[0].Adapter.DnsServerList)
 	}
 	cloneSpec.Customization = customSpec
 
@@ -337,7 +337,7 @@ func (h *HatcheryVSphere) launchClientOp(vm *object.VirtualMachine, model sdk.Mo
 		return -1, sdk.WrapError(errT, "launchClientOp> cannot fetch if tools are running")
 	}
 	if !running {
-		log.Warning(ctx, "launchClientOp> VmTools is not running")
+		log.Warn(ctx, "launchClientOp> VmTools is not running")
 	}
 
 	opman := guest.NewOperationsManager(h.vclient.Client, vm.Reference())

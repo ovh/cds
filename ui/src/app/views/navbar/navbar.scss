@@ -77,6 +77,14 @@
     }
 
     .details {
+        .ring {
+            height: 100%;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            margin: 0 20px;
+        }
+
         .title {
             font-size: 1.1em;
 
@@ -97,7 +105,7 @@
             }
 
             &.orange {
-                color: $cds_color_orange !important;
+                color: $cds_color_orange !important
             }
         }
 

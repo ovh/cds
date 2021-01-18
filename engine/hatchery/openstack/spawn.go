@@ -11,19 +11,19 @@ import (
 	"time"
 
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // SpawnWorker creates a new cloud instances
 // requirements are not supported
 func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) error {
 	if spawnArgs.JobID > 0 {
-		log.Debug("spawnWorker> spawning worker %s model:%s for job %d", spawnArgs.WorkerName, spawnArgs.Model.Name, spawnArgs.JobID)
+		log.Debug(ctx, "spawnWorker> spawning worker %s model:%s for job %d", spawnArgs.WorkerName, spawnArgs.Model.Name, spawnArgs.JobID)
 	} else {
-		log.Debug("spawnWorker> spawning worker %s model:%s", spawnArgs.WorkerName, spawnArgs.Model.Name)
+		log.Debug(ctx, "spawnWorker> spawning worker %s model:%s", spawnArgs.WorkerName, spawnArgs.Model.Name)
 	}
 
 	if spawnArgs.JobID == 0 && !spawnArgs.RegisterOnly {
@@ -31,12 +31,8 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 	}
 
 	if err := h.checkSpawnLimits(ctx, *spawnArgs.Model); err != nil {
-		isErrWithStack := sdk.IsErrorWithStack(err)
-		fields := log.Fields{}
-		if isErrWithStack {
-			fields["stack_trace"] = fmt.Sprintf("%+v", err)
-		}
-		log.InfoWithFields(ctx, fields, "%s", err)
+		ctx = sdk.ContextWithStacktrace(ctx, err)
+		log.Error(ctx, err.Error())
 		return nil
 	}
 
@@ -56,7 +52,7 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 	if !spawnArgs.Model.NeedRegistration && !spawnArgs.RegisterOnly {
 		start := time.Now()
 		imgs := h.getImages(ctx)
-		log.Debug("spawnWorker> call images.List on openstack took %fs, nbImages:%d", time.Since(start).Seconds(), len(imgs))
+		log.Debug(ctx, "spawnWorker> call images.List on openstack took %fs, nbImages:%d", time.Since(start).Seconds(), len(imgs))
 		for _, img := range imgs {
 			workerModelName := img.Metadata["worker_model_name"] // Temporary check on name for old registred model but new snapshot will only have path
 			workerModelPath := img.Metadata["worker_model_path"]
@@ -125,7 +121,7 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 			if errai != nil {
 				return errai
 			}
-			log.Debug("Found %s as available IP", ip)
+			log.Debug(ctx, "Found %s as available IP", ip)
 		}
 
 		networks := []servers.Network{{UUID: h.networkID, FixedIP: ip}}
@@ -141,12 +137,12 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 		server, err := r.Extract()
 		if err != nil {
 			if strings.Contains(err.Error(), "is already in use on instance") && try < maxTries { // Fixed IP address X.X.X.X is already in use on instance
-				log.Warning(ctx, "SpawnWorker> Unable to create server: name:%s flavor:%s image:%s metadata:%v networks:%s err:%v body:%s - Try %d/%d", spawnArgs.WorkerName, flavor.ID, imageID, meta, networks, err, r.Body, try, maxTries)
+				log.Warn(ctx, "SpawnWorker> Unable to create server: name:%s flavor:%s image:%s metadata:%v networks:%s err:%v body:%s - Try %d/%d", spawnArgs.WorkerName, flavor.ID, imageID, meta, networks, err, r.Body, try, maxTries)
 				continue
 			}
 			return fmt.Errorf("SpawnWorker> Unable to create server: name:%s flavor:%s image:%s metadata:%v networks:%s err:%v body:%s", spawnArgs.WorkerName, flavor.ID, imageID, meta, networks, err, r.Body)
 		}
-		log.Debug("SpawnWorker> Created Server ID: %s", server.ID)
+		log.Debug(ctx, "SpawnWorker> Created Server ID: %s", server.ID)
 		break
 	}
 	return nil
@@ -183,7 +179,7 @@ func (h *HatcheryOpenstack) checkSpawnLimits(ctx context.Context, model sdk.Mode
 	if h.Config.MaxCPUs > 0 && h.Config.CountSmallerFlavorToKeep > 0 {
 		smallerFlavor := h.getSmallerFlavorThan(flavor)
 		// If same id, means that the requested flavor is the smallest one so we want to start it.
-		log.Debug("checkSpawnLimits> smaller flavor found for %s is %s", flavor.Name, smallerFlavor.Name)
+		log.Debug(ctx, "checkSpawnLimits> smaller flavor found for %s is %s", flavor.Name, smallerFlavor.Name)
 		if smallerFlavor.ID != flavor.ID {
 			minCPUsNeededToStart := flavor.VCPUs + h.Config.CountSmallerFlavorToKeep*smallerFlavor.VCPUs
 			countCPUsLeft := int(math.Max(.0, float64(h.Config.MaxCPUs-totalCPUsUsed))) // Set zero as min value in case that the limit changed and count of used greater than max count
@@ -191,7 +187,7 @@ func (h *HatcheryOpenstack) checkSpawnLimits(ctx context.Context, model sdk.Mode
 				return sdk.WithStack(fmt.Errorf("CountSmallerFlavorToKeep limit reached, can't start model %s/%s with flavor %s that requires %d CPUs. Smaller flavor is %s and need %d CPUs. There are currently %d/%d left CPUs",
 					model.Group.Name, model.Name, flavor.Name, flavor.VCPUs, smallerFlavor.Name, smallerFlavor.VCPUs, countCPUsLeft, h.Config.MaxCPUs))
 			}
-			log.Debug("checkSpawnLimits> %d/%d CPUs left is enougth to start model %s/%s with flavor %s that require %d CPUs",
+			log.Debug(ctx, "checkSpawnLimits> %d/%d CPUs left is enougth to start model %s/%s with flavor %s that require %d CPUs",
 				countCPUsLeft, h.Config.MaxCPUs, model.Group.Name, model.Name, flavor.Name, flavor.VCPUs)
 		}
 	}

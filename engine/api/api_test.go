@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/rockbears/log"
 	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/api/authentication/builtin"
@@ -23,6 +24,7 @@ import (
 )
 
 func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *test.FakeTransaction, *Router) {
+	log.Factory = log.NewTestingWrapper(t)
 	bootstrapFunc = append(bootstrapFunc, bootstrap.InitiliazeDB)
 	db, factory, store := apiTest.SetupPGWithFactory(t, bootstrapFunc...)
 	router := newRouter(mux.NewRouter(), "/"+test.GetTestName(t))

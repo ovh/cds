@@ -2,11 +2,11 @@ package repositories
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
+	cdslog "github.com/ovh/cds/sdk/log"
+	"github.com/rockbears/log"
 )
 
 func (s *Service) processor(ctx context.Context) error {
@@ -18,7 +18,7 @@ func (s *Service) processor(ctx context.Context) error {
 		}
 		if uuid != "" {
 			op := s.dao.loadOperation(ctx, uuid)
-			ctx = context.WithValue(ctx, log.ContextLoggingRequestIDKey, op.RequestID)
+			ctx = context.WithValue(ctx, cdslog.RequestID, op.RequestID)
 			if err := s.do(ctx, *op); err != nil {
 				if err == errLockUnavailable {
 					s.GoRoutines.Exec(ctx, "operation "+uuid+" retry", func(ctx context.Context) {
@@ -41,7 +41,7 @@ func (s *Service) processor(ctx context.Context) error {
 }
 
 func (s *Service) do(ctx context.Context, op sdk.Operation) error {
-	log.Debug("repositories > processing > %v", op.UUID)
+	log.Debug(ctx, "repositories > processing > %v", op.UUID)
 
 	r := s.Repo(op)
 	if s.dao.lock(r.ID()) == errLockUnavailable {
@@ -53,13 +53,8 @@ func (s *Service) do(ctx context.Context, op sdk.Operation) error {
 	// Load workflow as code file
 	case op.Setup.Checkout.Branch != "" || op.Setup.Checkout.Tag != "":
 		if err := s.processCheckout(ctx, &op); err != nil {
-			isErrWithStack := sdk.IsErrorWithStack(err)
-			fields := log.Fields{}
-			if isErrWithStack {
-				fields["stack_trace"] = fmt.Sprintf("%+v", err)
-			}
-			log.ErrorWithFields(ctx, fields, "%s", err)
-
+			ctx := sdk.ContextWithStacktrace(ctx, err)
+			log.Error(ctx, err.Error())
 			op.Error = sdk.ToOperationError(err)
 			op.Status = sdk.OperationStatusError
 		} else {
@@ -68,13 +63,8 @@ func (s *Service) do(ctx context.Context, op sdk.Operation) error {
 			switch {
 			case op.LoadFiles.Pattern != "":
 				if err := s.processLoadFiles(ctx, &op); err != nil {
-					isErrWithStack := sdk.IsErrorWithStack(err)
-					fields := log.Fields{}
-					if isErrWithStack {
-						fields["stack_trace"] = fmt.Sprintf("%+v", err)
-					}
-					log.ErrorWithFields(ctx, fields, "%s", err)
-
+					ctx := sdk.ContextWithStacktrace(ctx, err)
+					log.Error(ctx, err.Error())
 					op.Error = sdk.ToOperationError(err)
 					op.Status = sdk.OperationStatusError
 				} else {
@@ -89,13 +79,8 @@ func (s *Service) do(ctx context.Context, op sdk.Operation) error {
 	// Push workflow as code file
 	case op.Setup.Push.FromBranch != "":
 		if err := s.processPush(ctx, &op); err != nil {
-			isErrWithStack := sdk.IsErrorWithStack(err)
-			fields := log.Fields{}
-			if isErrWithStack {
-				fields["stack_trace"] = fmt.Sprintf("%+v", err)
-			}
-			log.ErrorWithFields(ctx, fields, "%s", err)
-
+			ctx := sdk.ContextWithStacktrace(ctx, err)
+			log.Error(ctx, err.Error())
 			op.Error = sdk.ToOperationError(err)
 			op.Status = sdk.OperationStatusError
 		} else {
@@ -107,7 +92,7 @@ func (s *Service) do(ctx context.Context, op sdk.Operation) error {
 		op.Status = sdk.OperationStatusError
 	}
 
-	log.Debug("repositories > operation %s: %+v ", op.UUID, op.Error)
+	log.Debug(ctx, "repositories > operation %s: %+v ", op.UUID, op.Error)
 	log.Info(ctx, "repositories > operation %s status: %v ", op.UUID, op.Status)
 	if op.Status == sdk.OperationStatusError {
 		log.Error(ctx, "repositories> operation %s error %s", op.UUID, op.Error.Message)

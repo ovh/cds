@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
+	"github.com/rockbears/log"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/spacemonkeygo/httpsig.v0"
 
@@ -28,7 +29,7 @@ var (
 )
 
 func init() {
-	log.Initialize(context.TODO(), &log.Conf{Level: "debug"})
+	cdslog.Initialize(context.TODO(), &cdslog.Conf{Level: "debug"})
 }
 
 func newTestService(t *testing.T) (*Service, error) {
@@ -40,7 +41,7 @@ func newTestService(t *testing.T) (*Service, error) {
 		RedisHost = cfg["redisHost"]
 		RedisPassword = cfg["redisPassword"]
 	}
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 
 	//Prepare the configuration
 	cfg := Configuration{}

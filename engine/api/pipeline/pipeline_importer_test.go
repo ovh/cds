@@ -15,7 +15,6 @@ import (
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 type args struct {
@@ -40,12 +39,11 @@ func testImportUpdate(t *testing.T, db gorp.SqlExecutor, store cache.Store, tt t
 
 	go func() {
 		for {
-			msg, ok := <-msgChan
+			_, ok := <-msgChan
 			if !ok {
 				done <- true
 				return
 			}
-			log.Debug("[TEST] %s >>> %s", tt.name, msg.String())
 		}
 	}()
 

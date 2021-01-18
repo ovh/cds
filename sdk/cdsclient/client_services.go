@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (c *client) ServiceHeartbeat(s *sdk.MonitoringStatus) error {
@@ -28,7 +29,7 @@ func (c *client) ServiceRegister(ctx context.Context, s sdk.Service) (*sdk.Servi
 	}
 
 	if !s.Uptodate {
-		log.Warning(ctx, "-=-=-=-=- Please update your cds engine binary - current version:%s -=-=-=-=-", sdk.VersionString())
+		log.Warn(ctx, "-=-=-=-=- Please update your cds engine binary - current version:%s -=-=-=-=-", sdk.VersionString())
 	}
 	return &s, nil
 }

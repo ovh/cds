@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // DeletePipelineActionByStage Delete all action from a stage
@@ -37,7 +37,7 @@ func DeletePipelineActionByStage(ctx context.Context, db gorp.SqlExecutor, stage
 func InsertJob(db gorp.SqlExecutor, job *sdk.Job, stageID int64, pip *sdk.Pipeline) error {
 	// Insert Joined Action
 	job.Action.Type = sdk.JoinedAction
-	log.Debug("InsertJob> Insert Action %s on pipeline %s with %d children", job.Action.Name, pip.Name, len(job.Action.Actions))
+	log.Debug(context.Background(), "InsertJob> Insert Action %s on pipeline %s with %d children", job.Action.Name, pip.Name, len(job.Action.Actions))
 	if err := action.Insert(db, &job.Action); err != nil {
 		return err
 	}
@@ -51,7 +51,7 @@ func InsertJob(db gorp.SqlExecutor, job *sdk.Job, stageID int64, pip *sdk.Pipeli
 			BuildOrder: len(pip.Stages) + 1,
 			Enabled:    true,
 		}
-		log.Debug("InsertJob> Creating stage %s on pipeline %s", stage.Name, pip.Name)
+		log.Debug(context.Background(), "InsertJob> Creating stage %s on pipeline %s", stage.Name, pip.Name)
 		if err := InsertStage(db, stage); err != nil {
 			return sdk.WrapError(err, "cannot insert stage on pipeline %d", pip.ID)
 		}
@@ -62,7 +62,7 @@ func InsertJob(db gorp.SqlExecutor, job *sdk.Job, stageID int64, pip *sdk.Pipeli
 		if errLoad != nil {
 			return errLoad
 		}
-		log.Debug("InsertJob> Load existing stage %s on pipeline %s", stage.Name, pip.Name)
+		log.Debug(context.Background(), "InsertJob> Load existing stage %s on pipeline %s", stage.Name, pip.Name)
 	}
 	job.PipelineStageID = stage.ID
 
@@ -107,13 +107,13 @@ func UpdatePipelineAction(db gorp.SqlExecutor, job sdk.Job) error {
 //CheckJob validate a job
 func CheckJob(ctx context.Context, db gorp.SqlExecutor, job *sdk.Job) error {
 	t := time.Now()
-	log.Debug("CheckJob> Begin")
-	defer log.Debug("CheckJob> End (%d ns)", time.Since(t).Nanoseconds())
+	log.Debug(ctx, "CheckJob> Begin")
+	defer log.Debug(ctx, "CheckJob> End (%d ns)", time.Since(t).Nanoseconds())
 	errs := []sdk.Message{}
 	//Check steps
 	for i := range job.Action.Actions {
 		step := &job.Action.Actions[i]
-		log.Debug("CheckJob> Checking step %s", step.Name)
+		log.Debug(ctx, "CheckJob> Checking step %s", step.Name)
 
 		a, err := action.RetrieveForGroupAndName(ctx, db, step.Group, step.Name)
 		if err != nil {
@@ -128,7 +128,7 @@ func CheckJob(ctx context.Context, db gorp.SqlExecutor, job *sdk.Job) error {
 		// FIXME better check for params
 		for x := range step.Parameters {
 			sp := &step.Parameters[x]
-			log.Debug("CheckJob> Checking step parameter %s = %s", sp.Name, sp.Value)
+			log.Debug(ctx, "CheckJob> Checking step parameter %s = %s", sp.Name, sp.Value)
 			var found bool
 			for y := range a.Parameters {
 				ap := a.Parameters[y]

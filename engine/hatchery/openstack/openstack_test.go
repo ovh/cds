@@ -6,12 +6,12 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
+	"github.com/rockbears/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient/mock_cdsclient"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func TestHatcheryOpenstack_CanSpawn(t *testing.T) {
@@ -35,7 +35,7 @@ func TestHatcheryOpenstack_CanSpawn(t *testing.T) {
 }
 
 func TestHatcheryOpenstack_WorkerModelsEnabled(t *testing.T) {
-	log.SetLogger(t)
+	log.Factory = log.NewTestingWrapper(t)
 
 	h := &HatcheryOpenstack{}
 

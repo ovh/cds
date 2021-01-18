@@ -45,6 +45,7 @@ export class AuthDriverManifest {
 }
 
 export class AuthCurrentConsumerResponse {
+    user: AuthentifiedUser;
     consumer: AuthConsumer;
     session: AuthSession;
 }
@@ -92,7 +93,7 @@ export class AuthSession {
     expire_at: string;
     created: string;
     current: boolean;
-    mfa; boolean;
+    mfa: boolean;
 
     // UI fields
     consumer: AuthConsumer;

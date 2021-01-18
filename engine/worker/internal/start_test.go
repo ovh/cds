@@ -14,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/rockbears/log"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -28,7 +29,7 @@ import (
 )
 
 func init() {
-	log.Initialize(context.TODO(), &log.Conf{Level: "debug"})
+	cdslog.Initialize(context.TODO(), &cdslog.Conf{Level: "debug"})
 }
 
 func TestStartWorkerWithABookedJob(t *testing.T) {
@@ -306,7 +307,7 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 	var w = new(internal.CurrentWorker)
 	fs := afero.NewOsFs()
 	basedir := "test-" + test.GetTestName(t) + "-" + sdk.RandomString(10) + "-" + fmt.Sprintf("%d", time.Now().Unix())
-	log.Debug("creating basedir %s", basedir)
+	log.Debug(context.TODO(), "creating basedir %s", basedir)
 	require.NoError(t, fs.MkdirAll(basedir, os.FileMode(0755)))
 
 	if err := w.Init("test-worker", "test-hatchery", "http://lolcat.host", "xxx-my-token", "", true, afero.NewBasePathFs(fs, basedir)); err != nil {
