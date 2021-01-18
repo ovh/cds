@@ -282,7 +282,7 @@ func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.Han
 			ctx = context.WithValue(ctx, contextDate, dateReq)
 		}
 
-		responseWriter := &trackingResponseWriter{
+		responseWriter := &responseTracker{
 			writer: w,
 		}
 		if req.Body == nil {
@@ -354,6 +354,10 @@ func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.Han
 			ctx = context.WithValue(ctx, cdslog.LatencyNum, latency.Nanoseconds())
 			ctx = context.WithValue(ctx, cdslog.Status, responseWriter.statusCode)
 			ctx = context.WithValue(ctx, cdslog.StatusNum, responseWriter.statusCode)
+
+			for k, v := range responseWriter.fields {
+				ctx = context.WithValue(ctx, k, v)
+			}
 
 			log.Info(ctx, "%s | END   | %s [%s] | [%d]", req.Method, req.URL, rc.Name, responseWriter.statusCode)
 

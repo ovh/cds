@@ -390,6 +390,8 @@ func (api *API) getAuthSession() service.Handler {
 			return sdk.WithStack(sdk.ErrUnauthorized)
 		}
 
+		trackSudo(ctx, w)
+
 		vars := mux.Vars(r)
 		sessionID := vars["sessionID"]
 		s, err := authentication.LoadSessionByID(ctx, api.mustDB(), sessionID)

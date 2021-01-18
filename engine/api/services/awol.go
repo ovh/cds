@@ -20,7 +20,9 @@ func KillDeadServices(ctx context.Context, dbFunc func() *gorp.DbMap) {
 				log.Error(ctx, "KillDeadServices> Unable to find dead services: %v", errdead)
 				continue
 			}
-			log.Debug(ctx, "services.KillDeadServices> %d services to remove", len(services))
+			if len(services) > 0 {
+				log.Debug(ctx, "services.KillDeadServices> %d services to remove", len(services))
+			}
 			for i := range services {
 				tx, err := db.Begin()
 				if err != nil {

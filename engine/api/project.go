@@ -69,7 +69,7 @@ func (api *API) getProjectsHandler_FilterByRepo(ctx context.Context, w http.Resp
 	}
 	opts = append(opts, filterByRepoFunc)
 
-	if isMaintainer(ctx) || isAdmin(ctx) {
+	if isMaintainer(ctx) {
 		projects, err = project.LoadAllByRepo(ctx, api.mustDB(), api.Cache, filterByRepo, opts...)
 		if err != nil {
 			return err
@@ -504,8 +504,12 @@ func (api *API) postProjectHandler() service.Handler {
 			}
 
 			// consumer should be group member to add it on a project
-			if !isGroupMember(ctx, grp) && !isAdmin(ctx) {
-				return sdk.WithStack(sdk.ErrInvalidGroupMember)
+			if !isGroupMember(ctx, grp) {
+				if isAdmin(ctx) {
+					trackSudo(ctx, w)
+				} else {
+					return sdk.WithStack(sdk.ErrInvalidGroupMember)
+				}
 			}
 
 			groupIDs = append(groupIDs, grp.ID)

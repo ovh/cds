@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -11,6 +12,7 @@ import (
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
+	cdslog "github.com/ovh/cds/sdk/log"
 )
 
 // group should have members aggregated and authentified user old user struct should be set.
@@ -98,6 +100,12 @@ func isMFA(ctx context.Context) bool {
 		return false
 	}
 	return s.MFA
+}
+
+func trackSudo(ctx context.Context, w http.ResponseWriter) {
+	if isAdmin(ctx) && !isService(ctx) && !isWorker(ctx) {
+		SetTracker(w, cdslog.Sudo, true)
+	}
 }
 
 func getAPIConsumer(ctx context.Context) *sdk.AuthConsumer {

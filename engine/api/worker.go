@@ -191,6 +191,8 @@ func (api *API) disableWorkerHandler() service.Handler {
 			}
 		}
 
+		trackSudo(ctx, w)
+
 		if err := DisableWorker(ctx, api.mustDB(), id, api.Config.Log.StepMaxSize); err != nil {
 			cause := sdk.Cause(err)
 			if cause == worker.ErrNoWorker || cause == sql.ErrNoRows {
