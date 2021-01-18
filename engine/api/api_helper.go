@@ -43,6 +43,14 @@ func isMaintainer(ctx context.Context) bool {
 	return maintainer || admin
 }
 
+func MFASupport(ctx context.Context) bool {
+	c := getAPIConsumer(ctx)
+	if c == nil {
+		return false
+	}
+	return c.SupportMFA
+}
+
 func isAdmin(ctx context.Context) bool {
 	c := getAPIConsumer(ctx)
 	if c == nil {
@@ -95,7 +103,6 @@ func isMFA(ctx context.Context) bool {
 func getAPIConsumer(ctx context.Context) *sdk.AuthConsumer {
 	i := ctx.Value(contextAPIConsumer)
 	if i == nil {
-		log.Debug(ctx, "api.getAPIConsumer> no auth consumer found in context")
 		return nil
 	}
 	consumer, ok := i.(*sdk.AuthConsumer)
@@ -120,7 +127,6 @@ func getRemoteTime(c context.Context) time.Time {
 func getAuthSession(ctx context.Context) *sdk.AuthSession {
 	i := ctx.Value(contextSession)
 	if i == nil {
-		log.Debug(ctx, "api.getAuthSession> no AuthSession found in context")
 		return nil
 	}
 	u, ok := i.(*sdk.AuthSession)
