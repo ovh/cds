@@ -8,6 +8,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
@@ -17,6 +18,7 @@ import (
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/api/workflowtemplate"
 	"github.com/ovh/cds/engine/cache"
+	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/telemetry"
 )
@@ -100,9 +102,21 @@ func (api *API) checkJobIDPermissions(ctx context.Context, jobID string, perm in
 	return nil
 }
 
+const featureMFARequired = "mfa_required"
+
 func (api *API) checkProjectPermissions(ctx context.Context, projectKey string, requiredPerm int, routeVars map[string]string) error {
 	ctx, end := telemetry.Span(ctx, "api.checkProjectPermissions")
 	defer end()
+
+	if MFASupport(ctx) && !isMFA(ctx) {
+		mapVars := map[string]string{
+			"project_key": projectKey,
+		}
+		requireMFA := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), featureMFARequired, mapVars)
+		if requireMFA {
+			return sdk.WithStack(sdk.ErrMFARequired)
+		}
+	}
 
 	if _, err := project.Load(ctx, api.mustDB(), projectKey); err != nil {
 		return err
@@ -154,6 +168,16 @@ func (api *API) checkWorkflowPermissions(ctx context.Context, workflowName strin
 	}
 	if !has {
 		return sdk.WithStack(sdk.ErrNotFound)
+	}
+
+	if MFASupport(ctx) && !isMFA(ctx) {
+		mapVars := map[string]string{
+			"project_key": projectKey,
+		}
+		requireMFA := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), featureMFARequired, mapVars)
+		if requireMFA {
+			return sdk.WithStack(sdk.ErrMFARequired)
+		}
 	}
 
 	if workflowName == "" {

@@ -186,7 +186,6 @@ func (c *iCache) doListenDatabase(ctx context.Context) {
 			}
 
 		case <-time.After(90 * time.Second):
-			log.Debug(ctx, "Received no events for 90 seconds, checking connection")
 			go func() {
 				listener.Ping() // nolint
 			}()
