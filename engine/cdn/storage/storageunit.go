@@ -85,11 +85,11 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 			// Start by initializing the buffer unit
 			d := GetDriver("redis")
 			if d == nil {
-				return nil, fmt.Errorf("redis driver is not available")
+				return nil, sdk.WithStack(fmt.Errorf("redis driver is not available"))
 			}
 			bd, is := d.(BufferUnit)
 			if !is {
-				return nil, fmt.Errorf("redis driver is not a buffer unit driver")
+				return nil, sdk.WithStack(fmt.Errorf("redis driver is not a buffer unit driver"))
 			}
 			bd.New(gorts, 1, math.MaxFloat64)
 			if err := bd.Init(ctx, bu.Redis, bu.BufferType); err != nil {
@@ -99,11 +99,11 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 		case bu.Local != nil:
 			d := GetDriver("local-buffer")
 			if d == nil {
-				return nil, fmt.Errorf("local driver is not available")
+				return nil, sdk.WithStack(fmt.Errorf("local driver is not available"))
 			}
 			bd, is := d.(BufferUnit)
 			if !is {
-				return nil, fmt.Errorf("local driver is not a buffer unit driver")
+				return nil, sdk.WithStack(fmt.Errorf("local driver is not a buffer unit driver"))
 			}
 			bd.New(gorts, 1, math.MaxFloat64)
 			if err := bd.Init(ctx, bu.Local, bu.BufferType); err != nil {
@@ -249,9 +249,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 func (r *RunningStorageUnits) PushInSyncQueue(ctx context.Context, itemID string, apiRefHash string, created time.Time) {
 	for _, sto := range r.Storages {
 		if err := r.cache.ScoredSetAdd(ctx, cache.Key(KeyBackendSync, sto.Name()), itemID, float64(created.Unix())); err != nil {
-			log.InfoWithFields(ctx, log.Fields{
-				"item_apiref": apiRefHash,
-			}, "storeLogs> cannot push item %s into scoredset for unit %s", itemID, sto.Name())
+			log.Info(ctx, "storeLogs> cannot push item %s into scoredset for unit %s", itemID, sto.Name())
 			continue
 		}
 	}

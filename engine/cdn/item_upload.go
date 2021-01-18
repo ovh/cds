@@ -35,7 +35,7 @@ func (s *Service) postUploadHandler() service.Handler {
 
 		reader, err := r.MultipartReader()
 		if err != nil {
-			return err
+			return sdk.WithStack(err)
 		}
 		for {
 			part, err := reader.NextPart()
@@ -43,7 +43,7 @@ func (s *Service) postUploadHandler() service.Handler {
 				break
 			}
 			if err != nil {
-				return err
+				return sdk.WithStack(err)
 			}
 			if part.FormName() != "file" {
 				continue

@@ -87,6 +87,7 @@ func (s *Service) storeFile(ctx context.Context, sig cdn.Signature, reader io.Re
 	if err != nil {
 		return sdk.WithStack(err)
 	}
+	defer tx.Rollback()
 
 	// Insert Item
 	if err := item.Insert(ctx, s.Mapper, tx, it); err != nil {
