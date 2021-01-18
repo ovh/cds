@@ -13,7 +13,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/gorpmapper"
@@ -373,15 +372,4 @@ func (s *Service) completeItem(ctx context.Context, tx gorpmapper.SqlExecutorWit
 	}, "completeItem> item %s has been completed", it.ID)
 
 	return nil
-}
-
-func (s *Service) PushInSyncQueue(ctx context.Context, itemID string, apiRefHash string, created time.Time) {
-	for _, sto := range s.Units.Storages {
-		if err := s.Cache.ScoredSetAdd(ctx, cache.Key(storage.KeyBackendSync, sto.Name()), itemID, float64(created.Unix())); err != nil {
-			log.InfoWithFields(ctx, log.Fields{
-				"item_apiref": apiRefHash,
-			}, "storeLogs> cannot push item %s into scoredset for unit %s", itemID, sto.Name())
-			continue
-		}
-	}
 }

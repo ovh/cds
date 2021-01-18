@@ -101,6 +101,6 @@ func (s *Service) storeFile(ctx context.Context, sig cdn.Signature, reader io.Re
 		return sdk.WithStack(err)
 	}
 
-	s.PushInSyncQueue(ctx, it.ID, it.APIRefHash, it.Created)
+	s.Units.PushInSyncQueue(ctx, it.ID, it.APIRefHash, it.Created)
 	return nil
 }

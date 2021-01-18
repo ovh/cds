@@ -178,6 +178,11 @@ func (a *CDNLogAPIRef) ToFilename() string {
 	)
 }
 
+func (c CDNItem) GetCDNLogApiRef() (*CDNLogAPIRef, bool) {
+	apiRef, has := c.APIRef.(*CDNLogAPIRef)
+	return apiRef, has
+}
+
 func (a *CDNLogAPIRef) ToHash() (string, error) {
 	hashRefU, err := hashstructure.Hash(a, nil)
 	if err != nil {

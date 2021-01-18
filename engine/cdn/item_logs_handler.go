@@ -105,8 +105,8 @@ func (s *Service) sendLogsToWSClient(ctx context.Context, wsClient websocket.Cli
 
 		if err := s.itemAccessCheck(ctx, *it); err != nil {
 			var projectKey, workflow string
-			logRef, is := it.APIRef.(*sdk.CDNLogAPIRef)
-			if is {
+			logRef, has := it.GetCDNLogApiRef()
+			if has {
 				projectKey = logRef.ProjectKey
 				workflow = logRef.WorkflowName
 			}

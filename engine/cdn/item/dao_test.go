@@ -39,8 +39,8 @@ func TestLoadItem(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, i.ID, res.ID)
 	require.Equal(t, i.Type, res.Type)
-	_, is := res.APIRef.(*sdk.CDNLogAPIRef)
-	require.True(t, is)
+	_, has := res.GetCDNLogApiRef()
+	require.True(t, has)
 
 	_, no := res.APIRef.(*sdk.CDNArtifactAPIRef)
 	require.False(t, no)

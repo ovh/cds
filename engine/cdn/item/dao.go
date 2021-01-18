@@ -117,7 +117,7 @@ func Insert(ctx context.Context, m *gorpmapper.Mapper, db gorpmapper.SqlExecutor
 	i.LastModified = time.Now()
 
 	cdnItem := toItemDB(*i)
-	if err := m.InsertAndSign(ctx, db, cdnItem); err != nil {
+	if err := m.InsertAndSign(ctx, db, &cdnItem); err != nil {
 		return sdk.WrapError(err, "unable to insert item item %s", i.ID)
 	}
 	var err error
@@ -132,7 +132,7 @@ func Insert(ctx context.Context, m *gorpmapper.Mapper, db gorpmapper.SqlExecutor
 func Update(ctx context.Context, m *gorpmapper.Mapper, db gorpmapper.SqlExecutorWithTx, i *sdk.CDNItem) error {
 	i.LastModified = time.Now()
 	cdnItem := toItemDB(*i)
-	if err := m.UpdateAndSign(ctx, db, cdnItem); err != nil {
+	if err := m.UpdateAndSign(ctx, db, &cdnItem); err != nil {
 		return sdk.WrapError(err, "unable to update item item")
 	}
 	var err error

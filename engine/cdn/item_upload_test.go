@@ -211,6 +211,18 @@ func TestPostUploadHandler(t *testing.T) {
 	require.Equal(t, int64(len(fileContent)), its[0].Size)
 	require.Equal(t, sdk.CDNStatusItemCompleted, its[0].Status)
 
+	// Read from Local Buffer
+	localBuffer := s.Units.FileBuffer()
+	iuBuffer, err := storage.LoadItemUnitByUnit(ctx, s.Mapper, db, localBuffer.ID(), its[0].ID, gorpmapper.GetOptions.WithDecryption)
+	require.NoError(t, err)
+	reader, err := localBuffer.NewReader(ctx, *iuBuffer)
+	require.NoError(t, err)
+	buf := &bytes.Buffer{}
+	err = localBuffer.Read(*iuBuffer, reader, buf)
+	require.NoError(t, err)
+	require.Equal(t, string(fileContent), buf.String())
+
+	// Sync in local storage
 	unit, err := storage.LoadUnitByName(ctx, s.Mapper, db, s.Units.Storages[0].Name())
 	require.NoError(t, err)
 	// Waiting FS sync
@@ -236,7 +248,7 @@ func TestPostUploadHandler(t *testing.T) {
 	}
 
 	iu, err := storage.LoadItemUnitByID(ctx, s.Mapper, db, iuID, gorpmapper.GetOptions.WithDecryption)
-	buf := &bytes.Buffer{}
+	buf = &bytes.Buffer{}
 
 	uiRead, err := s.Units.Storages[0].NewReader(ctx, *iu)
 	defer uiRead.Close()

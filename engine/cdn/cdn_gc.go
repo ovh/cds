@@ -180,7 +180,7 @@ func (s *Service) cleanWaitingItem(ctx context.Context, duration int) error {
 			_ = tx.Rollback()
 			return err
 		}
-		s.PushInSyncQueue(ctx, itemUnit.ItemID, itemUnit.Item.APIRefHash, itemUnit.Item.Created)
+		s.Units.PushInSyncQueue(ctx, itemUnit.ItemID, itemUnit.Item.APIRefHash, itemUnit.Item.Created)
 		telemetry.Record(ctx, s.Metrics.itemCompletedByGCCount, 1)
 	}
 	return nil

@@ -56,8 +56,8 @@ func (c *CDS) NewWriter(_ context.Context, _ sdk.CDNItemUnit) (io.WriteCloser, e
 func (c *CDS) NewReader(ctx context.Context, i sdk.CDNItemUnit) (io.ReadCloser, error) {
 	switch i.Item.Type {
 	case sdk.CDNTypeItemStepLog:
-		logApiRef, is := i.Item.APIRef.(*sdk.CDNLogAPIRef)
-		if !is {
+		logApiRef, has := i.Item.GetCDNLogApiRef()
+		if !has {
 			return nil, sdk.WrapError(sdk.ErrInvalidData, "apiRef of step-log item %s is not valid", i.ItemID)
 		}
 		bs, err := c.client.WorkflowNodeRunJobStepLog(ctx, logApiRef.ProjectKey, logApiRef.WorkflowName, logApiRef.NodeRunID, logApiRef.NodeRunJobID, logApiRef.StepOrder)
@@ -67,8 +67,8 @@ func (c *CDS) NewReader(ctx context.Context, i sdk.CDNItemUnit) (io.ReadCloser, 
 		rc := ioutil.NopCloser(bytes.NewReader([]byte(bs.StepLogs.Val)))
 		return rc, nil
 	case sdk.CDNTypeItemServiceLog:
-		logApiRef, is := i.Item.APIRef.(*sdk.CDNLogAPIRef)
-		if !is {
+		logApiRef, has := i.Item.GetCDNLogApiRef()
+		if !has {
 			return nil, sdk.WrapError(sdk.ErrInvalidData, "apiRef of service-log item %s is not valid", i.ItemID)
 		}
 		log, err := c.ServiceLogs(ctx, logApiRef.ProjectKey, logApiRef.WorkflowName, logApiRef.NodeRunID, logApiRef.NodeRunJobID, logApiRef.RequirementServiceName)

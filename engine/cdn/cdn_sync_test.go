@@ -69,7 +69,7 @@ func TestSyncBuffer(t *testing.T) {
 
 	cache.Set("cdn:buffer:my-item", "foo")
 
-	s.SyncBuffer(context.Background())
+	s.Units.SyncBuffer(context.Background())
 
 	b, err := cache.Exist("cdn:buffer:my-item")
 	require.NoError(t, err)

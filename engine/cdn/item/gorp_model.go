@@ -36,14 +36,14 @@ func (c cdnItemDB) ToCDSItem() (sdk.CDNItem, error) {
 	return item, nil
 }
 
-func toItemDB(c sdk.CDNItem) *cdnItemDB {
+func toItemDB(c sdk.CDNItem) cdnItemDB {
 	bts, _ := json.Marshal(c.APIRef)
 	raw := json.RawMessage(bts)
-	return &cdnItemDB{CDNItem: c, APIRefDB: raw}
+	return cdnItemDB{CDNItem: c, APIRefDB: raw}
 }
 
-func (i cdnItemDB) Canonical() gorpmapper.CanonicalForms {
-	_ = []interface{}{i.ID, i.APIRefHash, i.Type} // Checks that fields exists at compilation
+func (c cdnItemDB) Canonical() gorpmapper.CanonicalForms {
+	_ = []interface{}{c.ID, c.APIRefHash, c.Type} // Checks that fields exists at compilation
 	return []gorpmapper.CanonicalForm{
 		"{{.ID}}{{.APIRefHash}}{{.Type}}",
 	}
