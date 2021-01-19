@@ -1,7 +1,3 @@
-export class FetchCurrentUser {
-    static readonly type = '[Authentication] Fetch current user';
-}
-
 export class FetchCurrentAuth {
     static readonly type = '[Authentication] Fetch current auth';
 }
