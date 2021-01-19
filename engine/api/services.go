@@ -36,10 +36,7 @@ func (api *API) getServiceHandler() service.Handler {
 		// Try to load from DB
 		var srvs []sdk.Service
 		var err error
-		if isAdmin(ctx) {
-			trackSudo(ctx, w)
-			srvs, err = services.LoadAllByType(ctx, api.mustDB(), typeService)
-		} else if isMaintainer(ctx) {
+		if isMaintainer(ctx) {
 			srvs, err = services.LoadAllByType(ctx, api.mustDB(), typeService)
 		} else {
 			c := getAPIConsumer(ctx)
