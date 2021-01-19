@@ -32,11 +32,6 @@ export class AuthenticationState {
     ) { }
 
     @Selector()
-    static user(state: AuthenticationStateModel) {
-        return state.user;
-    }
-
-    @Selector()
     static error(state: AuthenticationStateModel) {
         return state.error;
     }
