@@ -30,6 +30,18 @@ type TestWorker struct {
 	logBuffer        bytes.Buffer
 }
 
+func (w *TestWorker) ArtifactSignature(artifactName string) (string, error) {
+	return "mysignature", nil
+}
+
+func (w *TestWorker) FeatureEnabled(featureName string) bool {
+	return false
+}
+
+func (w *TestWorker) CDNHttpURL() string {
+	return "http://cdn.me"
+}
+
 func (w *TestWorker) WorkingDirectory() *afero.BasePathFile {
 	return w.workingDirectory
 }

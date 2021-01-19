@@ -14,6 +14,7 @@ import (
 	"github.com/sguiheux/go-coverage"
 
 	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/metrics"
@@ -25,6 +26,7 @@ import (
 	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/cache"
+	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/jws"
@@ -110,6 +112,14 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 		if err != nil {
 			return err
 		}
+
+		pbji.CDNHttpAddr, err = services.GetCDNPublicHTTPAdress(ctx, api.mustDB())
+
+		featureName := "cdn-artifact"
+		enabled := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), featureName, map[string]string{"project_key": pbji.ProjectKey})
+
+		pbji.Features = make(map[string]bool, 1)
+		pbji.Features[featureName] = enabled
 
 		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, *p, report)
 		go api.WorkflowSendEvent(context.Background(), *p, report)
