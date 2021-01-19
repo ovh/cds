@@ -42,6 +42,8 @@ func (api *API) postAddWorkerModelPatternHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
+		trackSudo(ctx, w)
+
 		var modelPattern sdk.ModelPattern
 		if err := service.UnmarshalBody(r, &modelPattern); err != nil {
 			return err
@@ -84,6 +86,8 @@ func (api *API) putWorkerModelPatternHandler() service.Handler {
 		if !isAdmin(ctx) {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
+
+		trackSudo(ctx, w)
 
 		vars := mux.Vars(r)
 		patternName := vars["name"]
@@ -136,6 +140,8 @@ func (api *API) deleteWorkerModelPatternHandler() service.Handler {
 		if !isAdmin(ctx) {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
+
+		trackSudo(ctx, w)
 
 		vars := mux.Vars(r)
 		patternName := vars["name"]

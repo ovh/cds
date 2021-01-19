@@ -88,6 +88,7 @@ func (api *API) putUserHandler() service.Handler {
 
 		// Only an admin can change the ring of a user
 		if isAdmin(ctx) && oldUser.Ring != data.Ring {
+			trackSudo(ctx, w)
 			// If previous ring was admin, check that the user is not the last admin
 			if oldUser.Ring == sdk.UserRingAdmin {
 				count, err := user.CountAdmin(tx)

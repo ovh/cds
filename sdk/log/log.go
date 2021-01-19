@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
-	"testing"
 
 	"github.com/rockbears/log"
 	"github.com/sirupsen/logrus"
@@ -42,48 +41,6 @@ var (
 	graylogHook *hook.Hook
 )
 
-// Logger defines the logs levels used
-type Logger interface {
-	Logf(fmt string, values ...interface{})
-	Errorf(fmt string, values ...interface{})
-	Fatalf(fmt string, values ...interface{})
-}
-
-type TestingLogger struct {
-	t *testing.T
-}
-
-type Fields logrus.Fields
-
-var _ Logger = new(TestingLogger)
-
-func (t *TestingLogger) Logf(fmt string, values ...interface{}) {
-	defer func() {
-		if r := recover(); r != nil {
-			logrus.StandardLogger().Logf(logrus.InfoLevel, fmt, values...)
-		}
-	}()
-	t.t.Logf(fmt, values...)
-}
-
-func (t *TestingLogger) Errorf(fmt string, values ...interface{}) {
-	defer func() {
-		if r := recover(); r != nil {
-			logrus.StandardLogger().Logf(logrus.ErrorLevel, fmt, values...)
-		}
-	}()
-	t.t.Errorf(fmt, values...)
-}
-
-func (t *TestingLogger) Fatalf(fmt string, values ...interface{}) {
-	defer func() {
-		if r := recover(); r != nil {
-			logrus.StandardLogger().Fatalf(fmt, values...)
-		}
-	}()
-	t.t.Fatalf(fmt, values...)
-}
-
 // Initialize init log level
 func Initialize(ctx context.Context, conf *Conf) {
 	switch conf.Level {
@@ -104,7 +61,7 @@ func Initialize(ctx context.Context, conf *Conf) {
 		logrus.SetOutput(ioutil.Discard)
 	case "json":
 		logrus.SetFormatter(&logrus.JSONFormatter{})
-	case "default":
+	default:
 		logrus.SetFormatter(&CDSFormatter{})
 	}
 

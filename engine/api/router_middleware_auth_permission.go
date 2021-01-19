@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"net/http"
 	"strconv"
 
 	"github.com/rockbears/log"
@@ -24,7 +25,7 @@ import (
 )
 
 // PermCheckFunc defines func call to check permission
-type PermCheckFunc func(ctx context.Context, key string, perm int, routeVars map[string]string) error
+type PermCheckFunc func(ctx context.Context, w http.ResponseWriter, key string, perm int, routeVars map[string]string) error
 
 func permissionFunc(api *API) map[string]PermCheckFunc {
 	return map[string]PermCheckFunc{
@@ -43,10 +44,10 @@ func permissionFunc(api *API) map[string]PermCheckFunc {
 	}
 }
 
-func (api *API) checkPermission(ctx context.Context, routeVar map[string]string, permission int) error {
+func (api *API) checkPermission(ctx context.Context, w http.ResponseWriter, routeVar map[string]string, permission int) error {
 	for key, value := range routeVar {
 		if permFunc, ok := permissionFunc(api)[key]; ok {
-			if err := permFunc(ctx, value, permission, routeVar); err != nil {
+			if err := permFunc(ctx, w, value, permission, routeVar); err != nil {
 				return err
 			}
 		}
@@ -54,7 +55,7 @@ func (api *API) checkPermission(ctx context.Context, routeVar map[string]string,
 	return nil
 }
 
-func (api *API) checkJobIDPermissions(ctx context.Context, jobID string, perm int, routeVars map[string]string) error {
+func (api *API) checkJobIDPermissions(ctx context.Context, w http.ResponseWriter, jobID string, perm int, routeVars map[string]string) error {
 	ctx, end := telemetry.Span(ctx, "api.checkJobIDPermissions")
 	defer end()
 
@@ -95,16 +96,20 @@ func (api *API) checkJobIDPermissions(ctx context.Context, jobID string, perm in
 	}
 
 	// Else we check the exec groups
-	if !runNodeJob.ExecGroups.HasOneOf(getAPIConsumer(ctx).GetGroupIDs()...) && !isAdmin(ctx) {
-		return sdk.WrapError(sdk.ErrForbidden, "not authorized for job %s", jobID)
+	if runNodeJob.ExecGroups.HasOneOf(getAPIConsumer(ctx).GetGroupIDs()...) {
+		return nil
+	}
+	if isAdmin(ctx) {
+		trackSudo(ctx, w)
+		return nil
 	}
 
-	return nil
+	return sdk.WrapError(sdk.ErrForbidden, "not authorized for job %s", jobID)
 }
 
 const featureMFARequired = "mfa_required"
 
-func (api *API) checkProjectPermissions(ctx context.Context, projectKey string, requiredPerm int, routeVars map[string]string) error {
+func (api *API) checkProjectPermissions(ctx context.Context, w http.ResponseWriter, projectKey string, requiredPerm int, routeVars map[string]string) error {
 	ctx, end := telemetry.Span(ctx, "api.checkProjectPermissions")
 	defer end()
 
@@ -151,6 +156,7 @@ func (api *API) checkProjectPermissions(ctx context.Context, projectKey string, 
 		}
 		log.Debug(ctx, "checkProjectPermissions> %s(%s) access granted to %s because is admin", getAPIConsumer(ctx).Name, getAPIConsumer(ctx).ID, projectKey)
 		telemetry.Current(ctx, telemetry.Tag(telemetry.TagPermission, "is_admin"))
+		trackSudo(ctx, w)
 		return nil
 	}
 	log.Debug(ctx, "checkWorkflowPermissions> %s(%s) access granted to %s because has permission (max permission = %d)", getAPIConsumer(ctx).Name, getAPIConsumer(ctx).ID, projectKey, callerPermission)
@@ -158,7 +164,7 @@ func (api *API) checkProjectPermissions(ctx context.Context, projectKey string, 
 	return nil
 }
 
-func (api *API) checkWorkflowPermissions(ctx context.Context, workflowName string, perm int, routeVars map[string]string) error {
+func (api *API) checkWorkflowPermissions(ctx context.Context, w http.ResponseWriter, workflowName string, perm int, routeVars map[string]string) error {
 	ctx, end := telemetry.Span(ctx, "api.checkWorkflowPermissions")
 	defer end()
 
@@ -220,6 +226,7 @@ func (api *API) checkWorkflowPermissions(ctx context.Context, workflowName strin
 		}
 		log.Debug(ctx, "checkWorkflowPermissions> %s access granted to %s/%s because is admin", getAPIConsumer(ctx).ID, projectKey, workflowName)
 		telemetry.Current(ctx, telemetry.Tag(telemetry.TagPermission, "is_admin"))
+		trackSudo(ctx, w)
 		return nil
 
 	}
@@ -228,7 +235,7 @@ func (api *API) checkWorkflowPermissions(ctx context.Context, workflowName strin
 	return nil
 }
 
-func (api *API) checkGroupPermissions(ctx context.Context, groupName string, permissionValue int, routeVars map[string]string) error {
+func (api *API) checkGroupPermissions(ctx context.Context, w http.ResponseWriter, groupName string, permissionValue int, routeVars map[string]string) error {
 	if groupName == "" {
 		return sdk.WrapError(sdk.ErrWrongRequest, "invalid given group name")
 	}
@@ -242,8 +249,12 @@ func (api *API) checkGroupPermissions(ctx context.Context, groupName string, per
 	log.Debug(ctx, "api.checkGroupPermissions> group %d has members %v", g.ID, g.Members)
 
 	if permissionValue > sdk.PermissionRead { // Only group administror or CDS administrator can update a group or its dependencies
-		if !isGroupAdmin(ctx, g) && !isAdmin(ctx) {
-			return sdk.WithStack(sdk.ErrForbidden)
+		if !isGroupAdmin(ctx, g) {
+			if isAdmin(ctx) {
+				trackSudo(ctx, w)
+			} else {
+				return sdk.WithStack(sdk.ErrForbidden)
+			}
 		}
 	} else {
 		if !isGroupMember(ctx, g) && !isMaintainer(ctx) { // Only group member or CDS maintainer can get a group or its dependencies
@@ -254,7 +265,7 @@ func (api *API) checkGroupPermissions(ctx context.Context, groupName string, per
 	return nil
 }
 
-func (api *API) checkWorkerModelPermissions(ctx context.Context, modelName string, perm int, routeVars map[string]string) error {
+func (api *API) checkWorkerModelPermissions(ctx context.Context, w http.ResponseWriter, modelName string, perm int, routeVars map[string]string) error {
 	if modelName == "" {
 		return sdk.WrapError(sdk.ErrWrongRequest, "invalid worker model name")
 	}
@@ -271,7 +282,7 @@ func (api *API) checkWorkerModelPermissions(ctx context.Context, modelName strin
 	return nil
 }
 
-func (api *API) checkActionPermissions(ctx context.Context, actionName string, perm int, routeVars map[string]string) error {
+func (api *API) checkActionPermissions(ctx context.Context, w http.ResponseWriter, actionName string, perm int, routeVars map[string]string) error {
 	if actionName == "" {
 		return sdk.WrapError(sdk.ErrWrongRequest, "invalid action name")
 	}
@@ -292,7 +303,7 @@ func (api *API) checkActionPermissions(ctx context.Context, actionName string, p
 	return nil
 }
 
-func (api *API) checkActionBuiltinPermissions(ctx context.Context, actionName string, perm int, routeVars map[string]string) error {
+func (api *API) checkActionBuiltinPermissions(ctx context.Context, w http.ResponseWriter, actionName string, perm int, routeVars map[string]string) error {
 	if actionName == "" {
 		return sdk.WrapError(sdk.ErrWrongRequest, "invalid given action name")
 	}
@@ -308,7 +319,7 @@ func (api *API) checkActionBuiltinPermissions(ctx context.Context, actionName st
 	return nil
 }
 
-func (api *API) checkTemplateSlugPermissions(ctx context.Context, templateSlug string, permissionValue int, routeVars map[string]string) error {
+func (api *API) checkTemplateSlugPermissions(ctx context.Context, w http.ResponseWriter, templateSlug string, permissionValue int, routeVars map[string]string) error {
 	if templateSlug == "" {
 		return sdk.WrapError(sdk.ErrWrongRequest, "invalid workflow template slug")
 	}
@@ -330,7 +341,7 @@ func (api *API) checkTemplateSlugPermissions(ctx context.Context, templateSlug s
 }
 
 // checkUserPublicPermissions give user R to everyone, RW to itself and RW to admin.
-func (api *API) checkUserPublicPermissions(ctx context.Context, username string, permissionValue int, routeVars map[string]string) error {
+func (api *API) checkUserPublicPermissions(ctx context.Context, w http.ResponseWriter, username string, permissionValue int, routeVars map[string]string) error {
 	if username == "" {
 		return sdk.WrapError(sdk.ErrWrongRequest, "invalid username")
 	}
@@ -365,6 +376,7 @@ func (api *API) checkUserPublicPermissions(ctx context.Context, username string,
 	// If the current user is an admin
 	if isAdmin(ctx) {
 		log.Debug(ctx, "checkUserPermissions> %s read/write access granted to %s because is admin", getAPIConsumer(ctx).ID, u.ID)
+		trackSudo(ctx, w)
 		return nil
 	}
 
@@ -373,7 +385,7 @@ func (api *API) checkUserPublicPermissions(ctx context.Context, username string,
 }
 
 // checkUserPermissions give user RW to itself, R to maintainer and RW to admin.
-func (api *API) checkUserPermissions(ctx context.Context, username string, permissionValue int, routeVars map[string]string) error {
+func (api *API) checkUserPermissions(ctx context.Context, w http.ResponseWriter, username string, permissionValue int, routeVars map[string]string) error {
 	if username == "" {
 		return sdk.WrapError(sdk.ErrWrongRequest, "invalid username")
 	}
@@ -408,6 +420,7 @@ func (api *API) checkUserPermissions(ctx context.Context, username string, permi
 	// If the current user is an admin, gives RW on the user
 	if isAdmin(ctx) {
 		log.Debug(ctx, "checkUserPermissions> %s read/write access granted to %s because is admin", getAPIConsumer(ctx).ID, u.ID)
+		trackSudo(ctx, w)
 		return nil
 	}
 
@@ -415,7 +428,7 @@ func (api *API) checkUserPermissions(ctx context.Context, username string, permi
 	return sdk.WrapError(sdk.ErrForbidden, "not authorized for user %s", username)
 }
 
-func (api *API) checkConsumerPermissions(ctx context.Context, consumerID string, permissionValue int, routeVars map[string]string) error {
+func (api *API) checkConsumerPermissions(ctx context.Context, w http.ResponseWriter, consumerID string, permissionValue int, routeVars map[string]string) error {
 	if consumerID == "" {
 		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given consumer id")
 	}
@@ -441,6 +454,7 @@ func (api *API) checkConsumerPermissions(ctx context.Context, consumerID string,
 	// If the current user is an admin, gives RW on the consumer
 	if isAdmin(ctx) {
 		log.Debug(ctx, "checkConsumerPermissions> %s read/write access granted to %s because is admin", authConsumer.ID, consumer.ID)
+		trackSudo(ctx, w)
 		return nil
 	}
 
@@ -448,7 +462,7 @@ func (api *API) checkConsumerPermissions(ctx context.Context, consumerID string,
 	return sdk.WrapError(sdk.ErrForbidden, "not authorized for consumer %s", consumerID)
 }
 
-func (api *API) checkSessionPermissions(ctx context.Context, sessionID string, permissionValue int, routeVars map[string]string) error {
+func (api *API) checkSessionPermissions(ctx context.Context, w http.ResponseWriter, sessionID string, permissionValue int, routeVars map[string]string) error {
 	if sessionID == "" {
 		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given session id")
 	}
@@ -478,6 +492,7 @@ func (api *API) checkSessionPermissions(ctx context.Context, sessionID string, p
 	// If the current user is an admin, gives RW on the session
 	if isAdmin(ctx) {
 		log.Debug(ctx, "checkSessionPermissions> %s read/write access granted to %s because is admin", authConsumer.ID, session.ID)
+		trackSudo(ctx, w)
 		return nil
 	}
 

@@ -124,8 +124,12 @@ func (api *API) postActionHandler() service.Handler {
 			return err
 		}
 
-		if !isGroupAdmin(ctx, grp) && !isAdmin(ctx) {
-			return sdk.WithStack(sdk.ErrInvalidGroupAdmin)
+		if !isGroupAdmin(ctx, grp) {
+			if isAdmin(ctx) {
+				trackSudo(ctx, w)
+			} else {
+				return sdk.WithStack(sdk.ErrInvalidGroupAdmin)
+			}
 		}
 
 		tx, err := api.mustDB().Begin()
@@ -249,8 +253,12 @@ func (api *API) putActionHandler() service.Handler {
 		}
 
 		if *old.GroupID != *data.GroupID || old.Name != data.Name {
-			if !isGroupAdmin(ctx, grp) && !isAdmin(ctx) {
-				return sdk.WithStack(sdk.ErrInvalidGroupAdmin)
+			if !isGroupAdmin(ctx, grp) {
+				if isAdmin(ctx) {
+					trackSudo(ctx, w)
+				} else {
+					return sdk.WithStack(sdk.ErrInvalidGroupAdmin)
+				}
 			}
 
 			// check that no action already exists for same group/name
@@ -477,8 +485,12 @@ func (api *API) postActionAuditRollbackHandler() service.Handler {
 		}
 
 		if grp.ID != newGrp.ID || old.Name != ea.Name {
-			if !isGroupAdmin(ctx, grp) && !isAdmin(ctx) {
-				return sdk.WithStack(sdk.ErrInvalidGroupAdmin)
+			if !isGroupAdmin(ctx, grp) {
+				if isAdmin(ctx) {
+					trackSudo(ctx, w)
+				} else {
+					return sdk.WithStack(sdk.ErrInvalidGroupAdmin)
+				}
 			}
 
 			// check that no action already exists for same group/name
@@ -655,8 +667,12 @@ func (api *API) importActionHandler() service.Handler {
 			}
 		}
 
-		if !isGroupAdmin(ctx, grp) && !isAdmin(ctx) {
-			return sdk.WithStack(sdk.ErrInvalidGroupAdmin)
+		if !isGroupAdmin(ctx, grp) {
+			if isAdmin(ctx) {
+				trackSudo(ctx, w)
+			} else {
+				return sdk.WithStack(sdk.ErrInvalidGroupAdmin)
+			}
 		}
 
 		data, err := ea.GetAction()

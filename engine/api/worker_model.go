@@ -35,8 +35,12 @@ func (api *API) postWorkerModelHandler() service.Handler {
 		if err != nil {
 			return sdk.NewError(sdk.ErrWrongRequest, err)
 		}
-		if !isGroupAdmin(ctx, grp) && !isAdmin(ctx) {
-			return sdk.NewErrorFrom(sdk.ErrForbidden, "you should be admin of the group to import a worker model")
+		if !isGroupAdmin(ctx, grp) {
+			if isAdmin(ctx) {
+				trackSudo(ctx, w)
+			} else {
+				return sdk.NewErrorFrom(sdk.ErrForbidden, "you should be admin of the group to import a worker model")
+			}
 		}
 
 		if !isAdmin(ctx) {
@@ -105,8 +109,12 @@ func (api *API) putWorkerModelHandler() service.Handler {
 			if err != nil {
 				return sdk.NewError(sdk.ErrWrongRequest, err)
 			}
-			if !isGroupAdmin(ctx, grp) && !isAdmin(ctx) {
-				return sdk.NewErrorFrom(sdk.ErrForbidden, "you should be admin of the group to import a worker model")
+			if !isGroupAdmin(ctx, grp) {
+				if isAdmin(ctx) {
+					trackSudo(ctx, w)
+				} else {
+					return sdk.NewErrorFrom(sdk.ErrForbidden, "you should be admin of the group to import a worker model")
+				}
 			}
 		}
 

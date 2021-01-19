@@ -45,6 +45,8 @@ func (api *API) authAdminMiddleware(ctx context.Context, w http.ResponseWriter, 
 		return ctx, sdk.WithStack(sdk.ErrForbidden)
 	}
 
+	trackSudo(ctx, w)
+
 	return ctx, nil
 }
 
@@ -83,17 +85,25 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 	// Set context values
 	if isService(ctx) {
 		ctx = context.WithValue(ctx, cdslog.AuthServiceName, apiConsumer.Service.Name)
+		SetTracker(w, cdslog.AuthServiceName, apiConsumer.Service.Name)
 	} else if isWorker(ctx) {
 		ctx = context.WithValue(ctx, cdslog.AuthWorkerName, apiConsumer.Worker.Name)
+		SetTracker(w, cdslog.AuthWorkerName, apiConsumer.Worker.Name)
 	} else {
 		ctx = context.WithValue(ctx, cdslog.AuthUsername, apiConsumer.AuthentifiedUser.Username)
+		SetTracker(w, cdslog.AuthUsername, apiConsumer.AuthentifiedUser.Username)
 	}
 
 	ctx = context.WithValue(ctx, cdslog.AuthUserID, apiConsumer.AuthentifiedUserID)
+	SetTracker(w, cdslog.AuthUserID, apiConsumer.AuthentifiedUserID)
+
 	ctx = context.WithValue(ctx, cdslog.AuthConsumerID, apiConsumer.ID)
+	SetTracker(w, cdslog.AuthConsumerID, apiConsumer.ID)
+
 	session := getAuthSession(ctx)
 	if session != nil {
 		ctx = context.WithValue(ctx, cdslog.AuthSessionID, session.ID)
+		SetTracker(w, cdslog.AuthSessionID, session.ID)
 	}
 
 	return ctx, nil
@@ -198,7 +208,7 @@ func (api *API) authOptionalMiddleware(ctx context.Context, w http.ResponseWrite
 	}
 
 	// Check that permission are valid for current route and consumer
-	if err := api.checkPermission(ctx, mux.Vars(req), rc.PermissionLevel); err != nil {
+	if err := api.checkPermission(ctx, w, mux.Vars(req), rc.PermissionLevel); err != nil {
 		return ctx, err
 	}
 
