@@ -15,7 +15,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, secrets []sdk.Variable) (sdk.Result, error) {
+func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, _ []sdk.Variable) (sdk.Result, error) {
 	res := sdk.Result{Status: sdk.StatusSuccess}
 
 	jobID, err := workerruntime.JobID(ctx)

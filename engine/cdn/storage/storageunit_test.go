@@ -92,11 +92,11 @@ func TestRun(t *testing.T) {
 	require.NotNil(t, units)
 	require.NotEmpty(t, units)
 
-	apiRef := sdk.CDNLogAPIRef{
+	apiRef := &sdk.CDNLogAPIRef{
 		ProjectKey: sdk.RandomString(5),
 	}
 
-	apiRefHash, err := item.ComputeApiRef(apiRef)
+	apiRefHash, err := apiRef.ToHash()
 	require.NoError(t, err)
 
 	i := &sdk.CDNItem{

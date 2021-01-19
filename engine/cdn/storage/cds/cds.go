@@ -29,7 +29,7 @@ func (c *CDS) GetClient() cdsclient.Interface {
 	return c.client
 }
 
-func (c *CDS) Init(ctx context.Context, cfg interface{}) error {
+func (c *CDS) Init(_ context.Context, cfg interface{}) error {
 	config, is := cfg.(*storage.CDSStorageConfiguration)
 	if !is {
 		return sdk.WithStack(fmt.Errorf("invalid configuration: %T", cfg))
@@ -45,7 +45,7 @@ func (c *CDS) Init(ctx context.Context, cfg interface{}) error {
 	return nil
 }
 
-func (c *CDS) ItemExists(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, i sdk.CDNItem) (bool, error) {
+func (c *CDS) ItemExists(_ context.Context, _ *gorpmapper.Mapper, _ gorp.SqlExecutor, _ sdk.CDNItem) (bool, error) {
 	return true, nil
 }
 
@@ -56,14 +56,22 @@ func (c *CDS) NewWriter(_ context.Context, _ sdk.CDNItemUnit) (io.WriteCloser, e
 func (c *CDS) NewReader(ctx context.Context, i sdk.CDNItemUnit) (io.ReadCloser, error) {
 	switch i.Item.Type {
 	case sdk.CDNTypeItemStepLog:
-		bs, err := c.client.WorkflowNodeRunJobStepLog(ctx, i.Item.APIRef.ProjectKey, i.Item.APIRef.WorkflowName, i.Item.APIRef.NodeRunID, i.Item.APIRef.NodeRunJobID, i.Item.APIRef.StepOrder)
+		logApiRef, has := i.Item.GetCDNLogApiRef()
+		if !has {
+			return nil, sdk.WrapError(sdk.ErrInvalidData, "apiRef of step-log item %s is not valid", i.ItemID)
+		}
+		bs, err := c.client.WorkflowNodeRunJobStepLog(ctx, logApiRef.ProjectKey, logApiRef.WorkflowName, logApiRef.NodeRunID, logApiRef.NodeRunJobID, logApiRef.StepOrder)
 		if err != nil {
 			return nil, err
 		}
 		rc := ioutil.NopCloser(bytes.NewReader([]byte(bs.StepLogs.Val)))
 		return rc, nil
 	case sdk.CDNTypeItemServiceLog:
-		log, err := c.ServiceLogs(ctx, i.Item.APIRef.ProjectKey, i.Item.APIRef.WorkflowName, i.Item.APIRef.NodeRunID, i.Item.APIRef.NodeRunJobID, i.Item.APIRef.RequirementServiceName)
+		logApiRef, has := i.Item.GetCDNLogApiRef()
+		if !has {
+			return nil, sdk.WrapError(sdk.ErrInvalidData, "apiRef of service-log item %s is not valid", i.ItemID)
+		}
+		log, err := c.ServiceLogs(ctx, logApiRef.ProjectKey, logApiRef.WorkflowName, logApiRef.NodeRunID, logApiRef.NodeRunJobID, logApiRef.RequirementServiceName)
 		if err != nil {
 			return nil, err
 		}
@@ -104,7 +112,7 @@ func (c *CDS) Status(_ context.Context) []sdk.MonitoringStatusLine {
 	}}
 }
 
-func (c *CDS) Remove(ctx context.Context, i sdk.CDNItemUnit) error {
+func (c *CDS) Remove(_ context.Context, _ sdk.CDNItemUnit) error {
 	return nil
 }
 
@@ -113,6 +121,6 @@ func (c *CDS) Read(_ sdk.CDNItemUnit, r io.Reader, w io.Writer) error {
 	return sdk.WithStack(err)
 }
 
-func (c *CDS) Write(_ sdk.CDNItemUnit, r io.Reader, w io.Writer) error {
+func (c *CDS) Write(_ sdk.CDNItemUnit, _ io.Reader, _ io.Writer) error {
 	return nil
 }

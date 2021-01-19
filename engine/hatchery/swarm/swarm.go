@@ -25,6 +25,7 @@ import (
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdn"
 	"github.com/ovh/cds/sdk/hatchery"
 	cdslog "github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
@@ -158,11 +159,12 @@ func (h *HatcherySwarm) InitHatchery(ctx context.Context) error {
 				continue
 			}
 			ctxDocker, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-			defer cancel()
 			if _, errPing := d.Ping(ctxDocker); errPing != nil {
 				log.Error(ctx, "hatchery> swarm> unable to ping docker host:%s", errPing)
+				cancel()
 				continue
 			}
+			cancel()
 			log.Info(ctx, "hatchery> swarm> connected to %s (%s)", hostName, cfg.Host)
 
 			h.dockerClients[hostName] = &dockerClient{
@@ -195,7 +197,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 	defer end()
 
 	if spawnArgs.JobID == 0 && !spawnArgs.RegisterOnly {
-		return sdk.WithStack(fmt.Errorf("unable to spawn worker, no Job ID and no Register."))
+		return sdk.WithStack(fmt.Errorf("unable to spawn worker, no Job ID and no Register"))
 	}
 
 	telemetry.Current(ctx, telemetry.Tag(telemetry.TagWorker, spawnArgs.WorkerName))
@@ -211,13 +213,13 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 	_, next := telemetry.Span(ctx, "swarm.chooseDockerEngine")
 	for dname, dclient := range h.dockerClients {
 		ctxList, cancelList := context.WithTimeout(context.Background(), 3*time.Second)
-		defer cancelList()
-
 		containers, errc := dclient.ContainerList(ctxList, types.ContainerListOptions{All: true})
 		if errc != nil {
 			log.Error(ctx, "hatchery> swarm> SpawnWorker> unable to list containers on %s: %v", dname, errc)
+			cancelList()
 			continue
 		}
+		cancelList()
 
 		if len(containers) == 0 {
 			dockerClient = h.dockerClients[dname]
@@ -756,8 +758,8 @@ func (h *HatcherySwarm) killAwolWorker(ctx context.Context) error {
 			endLog := cdslog.Message{
 				Level: logrus.InfoLevel,
 				Value: string("End of Job"),
-				Signature: cdslog.Signature{
-					Service: &cdslog.SignatureService{
+				Signature: cdn.Signature{
+					Service: &cdn.SignatureService{
 						HatcheryID:      h.Service().ID,
 						HatcheryName:    h.ServiceName(),
 						RequirementID:   jobIdentifiers.ServiceID,

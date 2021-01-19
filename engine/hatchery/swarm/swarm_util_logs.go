@@ -12,6 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdn"
 	"github.com/ovh/cds/sdk/hatchery"
 	cdslog "github.com/ovh/cds/sdk/log"
 )
@@ -42,6 +43,7 @@ func (h *HatcherySwarm) getServicesLogs() error {
 				err = sdk.WrapError(err, "cannot get logs from docker for containers service %s %v", cnt.ID, cnt.Names)
 				ctx := sdk.ContextWithStacktrace(ctx, err)
 				log.Error(ctx, err.Error())
+				cancel()
 				continue
 			}
 
@@ -51,6 +53,7 @@ func (h *HatcherySwarm) getServicesLogs() error {
 				err = sdk.WrapError(err, "cannot read logs for containers service %s %v", cnt.ID, cnt.Names)
 				ctx := sdk.ContextWithStacktrace(ctx, err)
 				log.Error(ctx, err.Error())
+				cancel()
 				continue
 			}
 
@@ -65,8 +68,8 @@ func (h *HatcherySwarm) getServicesLogs() error {
 
 				commonMessage := cdslog.Message{
 					Level: logrus.InfoLevel,
-					Signature: cdslog.Signature{
-						Service: &cdslog.SignatureService{
+					Signature: cdn.Signature{
+						Service: &cdn.SignatureService{
 							HatcheryID:      h.Service().ID,
 							HatcheryName:    h.ServiceName(),
 							RequirementID:   jobIdentifiers.ServiceID,

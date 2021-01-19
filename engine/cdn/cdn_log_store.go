@@ -7,12 +7,11 @@ import (
 
 	"github.com/rockbears/log"
 
-	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	cdslog "github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/cdn"
 )
 
 func (s *Service) sendToCDS(ctx context.Context, msgs []handledMessage) error {
@@ -102,7 +101,7 @@ func (s *Service) sendToBufferWithRetry(ctx context.Context, hms []handledMessag
 	return nil
 }
 
-func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signature cdslog.Signature, terminated bool, content string) error {
+func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signature cdn.Signature, terminated bool, content string) error {
 	it, err := s.loadOrCreateItem(ctx, itemType, signature)
 	if err != nil {
 		return err
@@ -150,38 +149,18 @@ func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signa
 			return sdk.WithStack(err)
 		}
 
-		for _, sto := range s.Units.Storages {
-			if err := s.Cache.ScoredSetAdd(ctx, cache.Key(storage.KeyBackendSync, sto.Name()), it.ID, float64(it.Created.Unix())); err != nil {
-				log.Info(ctx, "storeLogs> cannot push item %s into scoredset for unit %s", it.ID, sto.Name())
-				continue
-			}
-		}
+		s.Units.PushInSyncQueue(ctx, it.ID, it.APIRefHash, it.Created)
 	}
 
 	return nil
 }
 
-func (s *Service) loadOrCreateItem(ctx context.Context, itemType sdk.CDNItemType, signature cdslog.Signature) (*sdk.CDNItem, error) {
+func (s *Service) loadOrCreateItem(ctx context.Context, itemType sdk.CDNItemType, signature cdn.Signature) (*sdk.CDNItem, error) {
 	// Build cds api ref
-	apiRef := sdk.CDNLogAPIRef{
-		ProjectKey:     signature.ProjectKey,
-		WorkflowName:   signature.WorkflowName,
-		WorkflowID:     signature.WorkflowID,
-		RunID:          signature.RunID,
-		NodeRunName:    signature.NodeRunName,
-		NodeRunID:      signature.NodeRunID,
-		NodeRunJobName: signature.JobName,
-		NodeRunJobID:   signature.JobID,
+	apiRef, err := sdk.NewCDNApiRef(itemType, signature)
+	if err != nil {
+		return nil, err
 	}
-	if signature.Worker != nil {
-		apiRef.StepName = signature.Worker.StepName
-		apiRef.StepOrder = signature.Worker.StepOrder
-	}
-	if signature.Service != nil {
-		apiRef.RequirementServiceID = signature.Service.RequirementID
-		apiRef.RequirementServiceName = signature.Service.RequirementName
-	}
-
 	hashRef, err := apiRef.ToHash()
 	if err != nil {
 		return nil, err

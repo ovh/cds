@@ -12,6 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdn"
 	"github.com/ovh/cds/sdk/hatchery"
 	cdslog "github.com/ovh/cds/sdk/log"
 )
@@ -86,9 +87,9 @@ func (h *HatcherySwarm) killAndRemove(ctx context.Context, dockerClient *dockerC
 	for _, cnetwork := range container.NetworkSettings.Networks {
 		//Get the network
 		ctxList, cancelList := context.WithTimeout(context.Background(), 3*time.Second)
-		defer cancelList()
 		network, err := dockerClient.NetworkInspect(ctxList, cnetwork.NetworkID, types.NetworkInspectOptions{})
 		if err != nil {
+			cancelList()
 			if !strings.Contains(err.Error(), "No such network") {
 				return sdk.WrapError(err, "unable to get network for %s on %s", sdk.StringFirstN(ID, 7), dockerClient.name)
 			}
@@ -97,6 +98,7 @@ func (h *HatcherySwarm) killAndRemove(ctx context.Context, dockerClient *dockerC
 
 		//If it's the default docker bridge... skip
 		if network.Driver != bridge || network.Name == docker0 || network.Name == bridge {
+			cancelList()
 			continue
 		}
 
@@ -116,8 +118,8 @@ func (h *HatcherySwarm) killAndRemove(ctx context.Context, dockerClient *dockerC
 					endLog := cdslog.Message{
 						Level: logrus.InfoLevel,
 						Value: string("End of Job"),
-						Signature: cdslog.Signature{
-							Service: &cdslog.SignatureService{
+						Signature: cdn.Signature{
+							Service: &cdn.SignatureService{
 								HatcheryID:      h.Service().ID,
 								HatcheryName:    h.ServiceName(),
 								RequirementID:   jobIdentifiers.ServiceID,
@@ -143,14 +145,15 @@ func (h *HatcherySwarm) killAndRemove(ctx context.Context, dockerClient *dockerC
 				}
 			}
 		}
+		cancelList()
 
 		//Finally remove the network
 		log.Info(ctx, "hatchery> swarm> remove network %s (%s)", network.Name, network.ID)
-		ctxDocker, cancelList := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancelList()
+		ctxDocker, cancelRemove := context.WithTimeout(context.Background(), 10*time.Second)
 		if err := dockerClient.NetworkRemove(ctxDocker, network.ID); err != nil {
 			log.Error(ctx, "hatchery> swarm> killAndRemove> unable to kill and remove network %s from %s err:%s", sdk.StringFirstN(network.ID, 12), dockerClient.name, err)
 		}
+		cancelRemove()
 	}
 	return nil
 }
@@ -181,22 +184,22 @@ func (h *HatcherySwarm) killAwolNetworks(ctx context.Context) error {
 	for _, dockerClient := range h.dockerClients {
 		//Checking networks
 		ctxDocker, cancelList := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancelList()
 		nets, errLN := dockerClient.NetworkList(ctxDocker, types.NetworkListOptions{})
 		if errLN != nil {
 			log.Warn(ctx, "hatchery> swarm> killAwolNetworks> Cannot get networks on %s: %s", dockerClient.name, errLN)
+			cancelList()
 			return errLN
 		}
 
 		for i := range nets {
-			ctxDocker, cancelList := context.WithTimeout(context.Background(), 5*time.Second)
-			defer cancelList()
+			ctxDocker, cancelNet := context.WithTimeout(context.Background(), 5*time.Second)
 			n, err := dockerClient.NetworkInspect(ctxDocker, nets[i].ID, types.NetworkInspectOptions{})
 			if err != nil {
 				log.Warn(ctx, "hatchery> swarm> killAwolNetworks> Unable to get network info: %v", err)
+				cancelNet()
 				continue
 			}
-
+			cancelNet()
 			if n.Driver != bridge || n.Name == docker0 || n.Name == bridge {
 				continue
 			}
@@ -213,14 +216,14 @@ func (h *HatcherySwarm) killAwolNetworks(ctx context.Context) error {
 			if time.Since(n.Created) < 10*time.Minute {
 				continue
 			}
-
 			log.Info(ctx, "hatchery> swarm> killAwolNetworks> remove network[%s] %s on %s (created on %v)", n.ID, n.Name, dockerClient.name, n.Created)
-			ctxDocker2, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-			defer cancel()
+			ctxDocker2, cancelRemove := context.WithTimeout(context.Background(), 5*time.Second)
 			if err := dockerClient.NetworkRemove(ctxDocker2, n.ID); err != nil {
 				log.Warn(ctx, "hatchery> swarm> killAwolNetworks> Unable to delete network %s err:%s", n.Name, err)
 			}
+			cancelRemove()
 		}
+		cancelList()
 	}
 	return nil
 }

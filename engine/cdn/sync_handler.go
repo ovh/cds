@@ -16,7 +16,7 @@ func (s *Service) syncProjectsHandler() service.Handler {
 func (s *Service) syncBufferHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		s.GoRoutines.Exec(context.Background(), "Buffer sync", func(ctx context.Context) {
-			s.SyncBuffer(ctx)
+			s.Units.SyncBuffer(ctx)
 		})
 		return nil
 	}

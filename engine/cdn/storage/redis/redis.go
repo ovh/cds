@@ -16,8 +16,8 @@ import (
 )
 
 var (
-	_         storage.BufferUnit = new(Redis)
-	keyBuffer                    = cache.Key("cdn", "buffer")
+	_         storage.LogBufferUnit = new(Redis)
+	keyBuffer                       = cache.Key("cdn", "buffer")
 )
 
 type Redis struct {
@@ -46,6 +46,10 @@ func (s *Redis) Init(_ context.Context, cfg interface{}, bufferType storage.CDNB
 	return nil
 }
 
+func (s *Redis) BufferType() storage.CDNBufferType {
+	return s.bufferType
+}
+
 func (s *Redis) Keys() ([]string, error) {
 	return s.store.Keys(cache.Key(keyBuffer, "*"))
 }
@@ -67,10 +71,6 @@ func (s *Redis) Add(i sdk.CDNItemUnit, index uint, value string) error {
 
 func (s *Redis) Card(i sdk.CDNItemUnit) (int, error) {
 	return s.store.SetCard(cache.Key(keyBuffer, i.ItemID))
-}
-
-func (s *Redis) IsLogsBuffer() bool {
-	return s.bufferType == storage.CDNBufferTypeLog
 }
 
 // NewReader instanciate a reader that it able to iterate over Redis storage unit

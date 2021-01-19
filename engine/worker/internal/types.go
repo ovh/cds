@@ -15,6 +15,7 @@ import (
 	"gopkg.in/square/go-jose.v2"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdn"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/jws"
 	cdslog "github.com/ovh/cds/sdk/log"
@@ -150,8 +151,8 @@ func (wk *CurrentWorker) prepareLog(ctx context.Context, level workerruntime.Lev
 	stepOrder, _ := workerruntime.StepOrder(ctx)
 	stepName, _ := workerruntime.StepName(ctx)
 
-	res.Signature = cdslog.Signature{
-		Worker: &cdslog.SignatureWorker{
+	res.Signature = cdn.Signature{
+		Worker: &cdn.SignatureWorker{
 			WorkerID:   wk.id,
 			WorkerName: wk.Name(),
 			StepOrder:  int64(stepOrder),

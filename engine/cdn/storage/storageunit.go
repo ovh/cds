@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"strings"
 	"sync"
 	"time"
 
@@ -46,9 +47,13 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 	}
 
 	countLogBuffer := 0
+	countFileBuffer := 0
 	for _, bu := range config.Buffers {
-		if bu.BufferType == CDNBufferTypeLog {
+		switch bu.BufferType {
+		case CDNBufferTypeLog:
 			countLogBuffer++
+		case CDNBufferTypeFile:
+			countFileBuffer++
 		}
 		if bu.Name == "" {
 			return nil, fmt.Errorf("invalid CDN configuration. Missing buffer name")
@@ -56,6 +61,9 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 	}
 	if countLogBuffer == 0 || countLogBuffer > 1 {
 		return nil, fmt.Errorf("missing or too much CDN Buffer for log items")
+	}
+	if countFileBuffer > 1 {
+		return nil, fmt.Errorf("too much CDN Buffer for file items")
 	}
 
 	if len(config.Storages) == 0 {
@@ -77,14 +85,28 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 			// Start by initializing the buffer unit
 			d := GetDriver("redis")
 			if d == nil {
-				return nil, fmt.Errorf("redis driver is not available")
+				return nil, sdk.WithStack(fmt.Errorf("redis driver is not available"))
 			}
 			bd, is := d.(BufferUnit)
 			if !is {
-				return nil, fmt.Errorf("redis driver is not a buffer unit driver")
+				return nil, sdk.WithStack(fmt.Errorf("redis driver is not a buffer unit driver"))
 			}
 			bd.New(gorts, 1, math.MaxFloat64)
 			if err := bd.Init(ctx, bu.Redis, bu.BufferType); err != nil {
+				return nil, err
+			}
+			bufferUnit = bd
+		case bu.Local != nil:
+			d := GetDriver("local-buffer")
+			if d == nil {
+				return nil, sdk.WithStack(fmt.Errorf("local driver is not available"))
+			}
+			bd, is := d.(BufferUnit)
+			if !is {
+				return nil, sdk.WithStack(fmt.Errorf("local driver is not a buffer unit driver"))
+			}
+			bd.New(gorts, 1, math.MaxFloat64)
+			if err := bd.Init(ctx, bu.Local, bu.BufferType); err != nil {
 				return nil, err
 			}
 			bufferUnit = bd
@@ -224,6 +246,15 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 	return &result, nil
 }
 
+func (r *RunningStorageUnits) PushInSyncQueue(ctx context.Context, itemID string, apiRefHash string, created time.Time) {
+	for _, sto := range r.Storages {
+		if err := r.cache.ScoredSetAdd(ctx, cache.Key(KeyBackendSync, sto.Name()), itemID, float64(created.Unix())); err != nil {
+			log.Info(ctx, "storeLogs> cannot push item %s into scoredset for unit %s", itemID, sto.Name())
+			continue
+		}
+	}
+}
+
 func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) {
 	// Get Unknown items
 	for _, s := range r.Storages {
@@ -346,4 +377,42 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 		}
 
 	})
+}
+
+func (r *RunningStorageUnits) SyncBuffer(ctx context.Context) {
+	log.Info(ctx, "[SyncBuffer] Start")
+	keysDeleted := 0
+	bu := r.LogsBuffer()
+
+	keys, err := bu.Keys()
+	if err != nil {
+		log.Error(ctx, "[SyncBuffer] unable to list keys: %v", err)
+		return
+	}
+	log.Info(ctx, "[SyncBuffer] Found %d keys", len(keys))
+
+	for _, k := range keys {
+		keySplitted := strings.Split(k, ":")
+		if len(keySplitted) != 3 {
+			continue
+		}
+		itemID := keySplitted[2]
+		_, err := LoadItemUnitByUnit(ctx, r.m, r.db, bu.ID(), itemID)
+		if err == nil {
+			log.Info(ctx, "[SyncBuffer] Item %s exists in database ", itemID)
+			continue
+		}
+		if sdk.ErrorIs(err, sdk.ErrNotFound) {
+			if err := bu.Remove(ctx, sdk.CDNItemUnit{ItemID: itemID}); err != nil {
+				log.Error(ctx, "[SyncBuffer] unable to remove item %s from buffer: %v", itemID, err)
+				continue
+			}
+			keysDeleted++
+			log.Info(ctx, "[SyncBuffer] item %s remove from redis", itemID)
+		} else {
+			log.Error(ctx, "[SyncBuffer] unable to load item %s: %v", itemID, err)
+		}
+	}
+	log.Info(ctx, "[SyncBuffer] Done - %d keys deleted", keysDeleted)
+
 }

@@ -2,10 +2,9 @@ package item_test
 
 import (
 	"context"
-	"strconv"
+	"github.com/ovh/cds/sdk/cdn"
 	"testing"
 
-	"github.com/mitchellh/hashstructure"
 	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/cdn/item"
@@ -22,12 +21,11 @@ func TestLoadItem(t *testing.T) {
 	db, _ := test.SetupPGWithMapper(t, m, sdk.TypeCDN)
 	cdntest.ClearItem(t, context.TODO(), m, db)
 
-	apiRef := sdk.CDNLogAPIRef{
+	apiRef := sdk.NewCDNLogApiRef(cdn.Signature{
 		ProjectKey: sdk.RandomString(10),
-	}
-	hashRefU, err := hashstructure.Hash(apiRef, nil)
+	})
+	hashRef, err := apiRef.ToHash()
 	require.NoError(t, err)
-	hashRef := strconv.FormatUint(hashRefU, 10)
 
 	i := sdk.CDNItem{
 		APIRef:     apiRef,
@@ -41,4 +39,9 @@ func TestLoadItem(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, i.ID, res.ID)
 	require.Equal(t, i.Type, res.Type)
+	_, has := res.GetCDNLogApiRef()
+	require.True(t, has)
+
+	_, no := res.APIRef.(*sdk.CDNArtifactAPIRef)
+	require.False(t, no)
 }

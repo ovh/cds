@@ -9,7 +9,6 @@ import (
 	"net"
 	"strconv"
 	"strings"
-	"time"
 
 	gocache "github.com/patrickmn/go-cache"
 	"github.com/rockbears/log"
@@ -17,15 +16,11 @@ import (
 
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/ovh/cds/sdk/cdn"
 	"github.com/ovh/cds/sdk/jws"
 	cdslog "github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/log/hook"
 	"github.com/ovh/cds/sdk/telemetry"
-)
-
-var (
-	logCache = gocache.New(20*time.Minute, 20*time.Minute)
 )
 
 var globalRateLimit *rateLimiter
@@ -138,7 +133,7 @@ func (s *Service) handleLogMessage(ctx context.Context, messageReceived []byte) 
 	}
 
 	// Unsafe parse of signature to get datas
-	var signature cdslog.Signature
+	var signature cdn.Signature
 	if err := jws.UnsafeParse(sig.(string), &signature); err != nil {
 		return err
 	}
@@ -157,7 +152,7 @@ func (s *Service) handleLogMessage(ctx context.Context, messageReceived []byte) 
 
 // Handle Message from worker (job logs). Enqueue in Redis
 func (s *Service) handleWorkerLog(ctx context.Context, workerName string, workerID string, sig interface{}, m hook.Message) error {
-	var signature cdslog.Signature
+	var signature cdn.Signature
 
 	// Get worker data from cache
 	workerData, err := s.getWorker(ctx, workerName, GetWorkerOptions{NeedPrivateKey: true})
@@ -253,17 +248,17 @@ func getLevelString(level int32) string {
 
 //
 func (s *Service) handleServiceLog(ctx context.Context, hatcheryID int64, hatcheryName string, workerName string, sig interface{}, m hook.Message) error {
-	var signature cdslog.Signature
+	var signature cdn.Signature
 	var pk *rsa.PublicKey
 
 	// Get hatchery public key from cache
-	cacheData, ok := logCache.Get(fmt.Sprintf("hatchery-key-%d", hatcheryID))
+	cacheData, ok := runCache.Get(fmt.Sprintf("hatchery-key-%d", hatcheryID))
 	if !ok {
 		// Refresh hatcheries cache
 		if err := s.refreshHatcheriesPK(ctx); err != nil {
 			return err
 		}
-		cacheData, ok = logCache.Get(fmt.Sprintf("hatchery-key-%d", hatcheryID))
+		cacheData, ok = runCache.Get(fmt.Sprintf("hatchery-key-%d", hatcheryID))
 		if !ok {
 			return sdk.WrapError(sdk.ErrForbidden, "unable to find hatchery %d/%s", hatcheryID, hatcheryName)
 		}
@@ -306,33 +301,6 @@ func (s *Service) handleServiceLog(ctx context.Context, hatcheryID int64, hatche
 	return nil
 }
 
-func (s *Service) getWorker(ctx context.Context, workerName string, opts GetWorkerOptions) (sdk.Worker, error) {
-	workerKey := fmt.Sprintf("worker-%s", workerName)
-
-	// Get worker from cache
-	cacheData, ok := logCache.Get(workerKey)
-	if ok {
-		w, ok := cacheData.(sdk.Worker)
-		if ok && (!opts.NeedPrivateKey || len(w.PrivateKey) > 0) {
-			return w, nil
-		}
-	}
-
-	// Get worker from API
-	w, err := s.Client.WorkerGet(ctx, workerName, cdsclient.WithQueryParameter("withKey", "true"))
-	if err != nil {
-		return sdk.Worker{}, sdk.WrapError(err, "unable to get worker %s", workerName)
-	}
-	privateKeyDecoded, err := base64.StdEncoding.DecodeString(string(w.PrivateKey))
-	if err != nil {
-		return sdk.Worker{}, sdk.WithStack(err)
-	}
-	w.PrivateKey = privateKeyDecoded
-	logCache.Set(workerKey, *w, gocache.DefaultExpiration)
-
-	return *w, nil
-}
-
 func (s *Service) refreshHatcheriesPK(ctx context.Context) error {
 	srvs, err := s.Client.ServiceConfigurationGet(ctx, sdk.TypeHatchery)
 	if err != nil {
@@ -347,7 +315,7 @@ func (s *Service) refreshHatcheriesPK(ctx context.Context) error {
 		if err != nil {
 			return sdk.WithStack(err)
 		}
-		logCache.Set(fmt.Sprintf("hatchery-key-%d", s.ID), pk, gocache.DefaultExpiration)
+		runCache.Set(fmt.Sprintf("hatchery-key-%d", s.ID), pk, gocache.DefaultExpiration)
 	}
 	return nil
 }

@@ -1,6 +1,8 @@
 package item
 
 import (
+	"encoding/json"
+
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 )
@@ -12,14 +14,36 @@ func InitDBMapping(m *gorpmapper.Mapper) {
 type cdnItemDB struct {
 	gorpmapper.SignedEntity
 	sdk.CDNItem
+	APIRefDB json.RawMessage `json:"-" db:"api_ref"`
 }
 
-func toItemDB(c sdk.CDNItem) *cdnItemDB {
-	return &cdnItemDB{CDNItem: c}
+func (c cdnItemDB) ToCDSItem() (sdk.CDNItem, error) {
+	item := c.CDNItem
+	switch item.Type {
+	case sdk.CDNTypeItemServiceLog, sdk.CDNTypeItemStepLog:
+		var apiRef sdk.CDNLogAPIRef
+		if err := json.Unmarshal(c.APIRefDB, &apiRef); err != nil {
+			return item, sdk.WithStack(err)
+		}
+		item.APIRef = &apiRef
+	case sdk.CDNTypeItemArtifact:
+		var apiRef sdk.CDNArtifactAPIRef
+		if err := json.Unmarshal(c.APIRefDB, &apiRef); err != nil {
+			return item, sdk.WithStack(err)
+		}
+		item.APIRef = &apiRef
+	}
+	return item, nil
 }
 
-func (i cdnItemDB) Canonical() gorpmapper.CanonicalForms {
-	_ = []interface{}{i.ID, i.APIRefHash, i.Type} // Checks that fields exists at compilation
+func toItemDB(c sdk.CDNItem) cdnItemDB {
+	bts, _ := json.Marshal(c.APIRef)
+	raw := json.RawMessage(bts)
+	return cdnItemDB{CDNItem: c, APIRefDB: raw}
+}
+
+func (c cdnItemDB) Canonical() gorpmapper.CanonicalForms {
+	_ = []interface{}{c.ID, c.APIRefHash, c.Type} // Checks that fields exists at compilation
 	return []gorpmapper.CanonicalForm{
 		"{{.ID}}{{.APIRefHash}}{{.Type}}",
 	}

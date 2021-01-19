@@ -20,8 +20,8 @@ import (
 	cdntest "github.com/ovh/cds/engine/cdn/test"
 	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdn"
 	"github.com/ovh/cds/sdk/cdsclient"
-	cdslog "github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/log/hook"
 )
 
@@ -33,7 +33,7 @@ func TestMarkItemToDeleteHandler(t *testing.T) {
 	item1 := sdk.CDNItem{
 		ID:   sdk.UUID(),
 		Type: sdk.CDNTypeItemStepLog,
-		APIRef: sdk.CDNLogAPIRef{
+		APIRef: &sdk.CDNLogAPIRef{
 			RunID:      1,
 			WorkflowID: 1,
 		},
@@ -43,7 +43,7 @@ func TestMarkItemToDeleteHandler(t *testing.T) {
 	item2 := sdk.CDNItem{
 		ID:   sdk.UUID(),
 		Type: sdk.CDNTypeItemStepLog,
-		APIRef: sdk.CDNLogAPIRef{
+		APIRef: &sdk.CDNLogAPIRef{
 			RunID:      2,
 			WorkflowID: 2,
 		},
@@ -54,7 +54,7 @@ func TestMarkItemToDeleteHandler(t *testing.T) {
 	item3 := sdk.CDNItem{
 		ID:   sdk.UUID(),
 		Type: sdk.CDNTypeItemStepLog,
-		APIRef: sdk.CDNLogAPIRef{
+		APIRef: &sdk.CDNLogAPIRef{
 			RunID:      3,
 			WorkflowID: 2,
 		},
@@ -117,7 +117,7 @@ func TestGetItemLogsDownloadHandler(t *testing.T) {
 			Full: "this is a message",
 		},
 		IsTerminated: sdk.StatusTerminated,
-		Signature: cdslog.Signature{
+		Signature: cdn.Signature{
 			ProjectKey:   projectKey,
 			WorkflowID:   1,
 			WorkflowName: "MyWorkflow",
@@ -126,7 +126,7 @@ func TestGetItemLogsDownloadHandler(t *testing.T) {
 			NodeRunName:  "MyPipeline",
 			JobName:      "MyJob",
 			JobID:        1,
-			Worker: &cdslog.SignatureWorker{
+			Worker: &cdn.SignatureWorker{
 				StepName:  "script1",
 				StepOrder: 1,
 			},

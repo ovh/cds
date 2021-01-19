@@ -19,7 +19,7 @@ import (
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
-	cdslog "github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/cdn"
 	"github.com/ovh/cds/sdk/log/hook"
 )
 
@@ -51,7 +51,7 @@ func TestStoreNewStepLog(t *testing.T) {
 		Msg: hook.Message{
 			Full: "this is a message",
 		},
-		Signature: cdslog.Signature{
+		Signature: cdn.Signature{
 			ProjectKey:   sdk.RandomString(10),
 			WorkflowID:   1,
 			WorkflowName: "MyWorklow",
@@ -60,7 +60,7 @@ func TestStoreNewStepLog(t *testing.T) {
 			NodeRunName:  "MyPipeline",
 			JobName:      "MyJob",
 			JobID:        1,
-			Worker: &cdslog.SignatureWorker{
+			Worker: &cdn.SignatureWorker{
 				StepName:  "script1",
 				StepOrder: 1,
 			},
@@ -133,7 +133,7 @@ func TestStoreLastStepLog(t *testing.T) {
 	hm := handledMessage{
 		Msg:          hook.Message{},
 		IsTerminated: sdk.StatusTerminated,
-		Signature: cdslog.Signature{
+		Signature: cdn.Signature{
 			ProjectKey:   sdk.RandomString(10),
 			WorkflowID:   1,
 			WorkflowName: "MyWorklow",
@@ -142,13 +142,13 @@ func TestStoreLastStepLog(t *testing.T) {
 			NodeRunName:  "MyPipeline",
 			JobName:      "MyJob",
 			JobID:        1,
-			Worker: &cdslog.SignatureWorker{
+			Worker: &cdn.SignatureWorker{
 				StepName:  "script1",
 				StepOrder: 1,
 			},
 		},
 	}
-	apiRef := sdk.CDNLogAPIRef{
+	apiRef := &sdk.CDNLogAPIRef{
 		ProjectKey:     hm.Signature.ProjectKey,
 		WorkflowName:   hm.Signature.WorkflowName,
 		WorkflowID:     hm.Signature.WorkflowID,
@@ -223,7 +223,7 @@ func TestStoreNewServiceLog(t *testing.T) {
 		Msg: hook.Message{
 			Full: "this is a message",
 		},
-		Signature: cdslog.Signature{
+		Signature: cdn.Signature{
 			ProjectKey:   sdk.RandomString(10),
 			WorkflowID:   1,
 			WorkflowName: "MyWorklow",

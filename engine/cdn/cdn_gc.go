@@ -6,7 +6,6 @@ import (
 
 	"github.com/rockbears/log"
 
-	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/sdk"
@@ -186,12 +185,7 @@ func (s *Service) cleanWaitingItem(ctx context.Context, duration int) error {
 			_ = tx.Rollback()
 			return err
 		}
-		for _, sto := range s.Units.Storages {
-			if err := s.Cache.ScoredSetAdd(ctx, cache.Key(storage.KeyBackendSync, sto.Name()), itemUnit.ItemID, float64(itemUnit.Item.Created.Unix())); err != nil {
-				log.Info(ctx, "cleanWaitingItem> cannot push item %s into scoredset for unit %s", itemUnit.ItemID, sto.Name())
-				continue
-			}
-		}
+		s.Units.PushInSyncQueue(ctx, itemUnit.ItemID, itemUnit.Item.APIRefHash, itemUnit.Item.Created)
 		telemetry.Record(ctx, s.Metrics.itemCompletedByGCCount, 1)
 	}
 	return nil

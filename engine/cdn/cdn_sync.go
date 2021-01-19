@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/rockbears/log"
@@ -34,44 +33,6 @@ var statusSync struct {
 
 func (s *Service) startCDSSync(ctx context.Context) error {
 	return s.Cache.Publish(ctx, cdsSyncQueue, "true")
-}
-
-func (s *Service) SyncBuffer(ctx context.Context) {
-	log.Info(ctx, "[SyncBuffer] Start")
-	keysDeleted := 0
-
-	for _, bu := range s.Units.Buffers {
-		keys, err := bu.Keys()
-		if err != nil {
-			log.Error(ctx, "[SyncBuffer] unable to list keys: %v", err)
-			return
-		}
-		log.Info(ctx, "[SyncBuffer] Found %d keys", len(keys))
-
-		for _, k := range keys {
-			keySplitted := strings.Split(k, ":")
-			if len(keySplitted) != 3 {
-				continue
-			}
-			itemID := keySplitted[2]
-			_, err := storage.LoadItemUnitByUnit(ctx, s.Mapper, s.mustDBWithCtx(ctx), bu.ID(), itemID)
-			if err == nil {
-				log.Info(ctx, "[SyncBuffer] Item %s exists in database ", itemID)
-				continue
-			}
-			if sdk.ErrorIs(err, sdk.ErrNotFound) {
-				if err := bu.Remove(ctx, sdk.CDNItemUnit{ItemID: itemID}); err != nil {
-					log.Error(ctx, "[SyncBuffer] unable to remove item %s from buffer: %v", itemID, err)
-					continue
-				}
-				keysDeleted++
-				log.Info(ctx, "[SyncBuffer] item %s remove from redis", itemID)
-			} else {
-				log.Error(ctx, "[SyncBuffer] unable to load item %s: %v", itemID, err)
-			}
-		}
-		log.Info(ctx, "[SyncBuffer] Done - %d keys deleted", keysDeleted)
-	}
 }
 
 func (s *Service) listenCDSSync(ctx context.Context, cdsStorage *cds.CDS) error {
@@ -337,7 +298,7 @@ func (s *Service) syncNodeRun(ctx context.Context, cdsStorage *cds.CDS, pKey str
 func (s *Service) syncServiceLogs(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, cdsStorage *cds.CDS, pKey string, nodeRun *sdk.WorkflowNodeRun, nodeRunIdentifier sdk.WorkflowNodeRunIdentifiers, rj sdk.WorkflowNodeJobRun, dict map[string]int64) ([]string, error) {
 	var itemsIDs []string
 	for k, v := range dict {
-		apiRef := sdk.CDNLogAPIRef{
+		apiRef := &sdk.CDNLogAPIRef{
 			NodeRunID:              nodeRun.ID,
 			WorkflowName:           nodeRunIdentifier.WorkflowName,
 			WorkflowID:             nodeRunIdentifier.WorkflowID,
@@ -359,7 +320,7 @@ func (s *Service) syncServiceLogs(ctx context.Context, tx gorpmapper.SqlExecutor
 }
 
 func (s *Service) syncStepLog(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, su storage.Interface, pKey string, nodeRun *sdk.WorkflowNodeRun, nodeRunIdentifier sdk.WorkflowNodeRunIdentifiers, rj sdk.WorkflowNodeJobRun, ss sdk.StepStatus, stepName string) (string, error) {
-	apiRef := sdk.CDNLogAPIRef{
+	apiRef := &sdk.CDNLogAPIRef{
 		StepOrder:      int64(ss.StepOrder),
 		NodeRunID:      nodeRun.ID,
 		WorkflowName:   nodeRunIdentifier.WorkflowName,
@@ -374,7 +335,7 @@ func (s *Service) syncStepLog(ctx context.Context, tx gorpmapper.SqlExecutorWith
 	return s.syncItem(ctx, tx, su, sdk.CDNTypeItemStepLog, apiRef)
 }
 
-func (s *Service) syncItem(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, su storage.Interface, itemType sdk.CDNItemType, apiRef sdk.CDNLogAPIRef) (string, error) {
+func (s *Service) syncItem(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, su storage.Interface, itemType sdk.CDNItemType, apiRef sdk.CDNApiRef) (string, error) {
 	apirefHash, err := apiRef.ToHash()
 	if err != nil {
 		return "", err

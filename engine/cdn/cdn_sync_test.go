@@ -69,7 +69,7 @@ func TestSyncBuffer(t *testing.T) {
 
 	cache.Set("cdn:buffer:my-item", "foo")
 
-	s.SyncBuffer(context.Background())
+	s.Units.SyncBuffer(context.Background())
 
 	b, err := cache.Exist("cdn:buffer:my-item")
 	require.NoError(t, err)
@@ -321,7 +321,7 @@ func TestSyncLog(t *testing.T) {
 	})
 
 	// Insert item for wkf1, 1000
-	apiRef1000 := sdk.CDNLogAPIRef{
+	apiRef1000 := &sdk.CDNLogAPIRef{
 		ProjectKey:     "key2",
 		WorkflowName:   "wkf1",
 		WorkflowID:     1000,

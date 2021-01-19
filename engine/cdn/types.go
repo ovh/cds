@@ -17,12 +17,12 @@ import (
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/engine/websocket"
 	"github.com/ovh/cds/sdk"
-	cdslog "github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/cdn"
 	"github.com/ovh/cds/sdk/log/hook"
 )
 
 type handledMessage struct {
-	Signature    cdslog.Signature
+	Signature    cdn.Signature
 	Msg          hook.Message
 	IsTerminated bool
 }
@@ -101,4 +101,13 @@ func (r *rateLimiter) WaitN(n int) error {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 	return sdk.WithStack(r.limiter.WaitN(r.ctx, n))
+}
+
+type SizeWriter struct {
+	Size int64
+}
+
+func (s *SizeWriter) Write(data []byte) (n int, err error) {
+	s.Size += int64(len(data))
+	return len(data), nil
 }
