@@ -187,9 +187,8 @@
                                                                         labelField="fullname" [isSearchable]="true"
                                                                         #repositorySelect>
                                                                         <sui-select-option
-                                                                            *ngFor="let r of repositorySelect.filteredOptions"
+                                                                            *ngFor="let r of repositorySelect.filteredOptions.slice(0, 100); trackBy: trackRepo"
                                                                             [value]="r">
-
                                                                         </sui-select-option>
                                                                     </sui-select>
                                                                 </ng-container>
@@ -227,8 +226,7 @@
 
                                                             <div class="ui error message"
                                                                 *ngIf="pollingResponse.status === 3 && !loading">
-                                                                {{pollingResponse.error_details.message}} - 
-                                                                {{pollingResponse.error_details.from}}                                                            </div>
+                                                                {{pollingResponse.error_details.message}} - {{pollingResponse.error_details.from}}                                                            </div>
                                                             <ng-container
                                                                 *ngIf="pollingResponse && pollingResponse.load_files && pollingResponse.load_files.results">
                                                                 {{ 'wizard_repo_files' | translate}}

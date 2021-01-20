@@ -95,7 +95,7 @@ workflow:
         };
     }
 
-    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
         this._activatedRoute.data.subscribe(datas => {
@@ -163,6 +163,7 @@ workflow:
 
     fetchRepos(repoMan: string): void {
         this.loadingRepo = true;
+        this._cd.markForCheck();
         this._repoManagerService.getRepositories(this.project.key, repoMan, false).pipe(first(), finalize(() => {
             this.loadingRepo = false;
             this._cd.markForCheck();
@@ -192,9 +193,9 @@ workflow:
 
         let lowerQuery = query.toLowerCase();
         return options.filter(wt => wt.name.toLowerCase().indexOf(lowerQuery) !== -1 ||
-                wt.slug.toLowerCase().indexOf(lowerQuery) !== -1 ||
-                wt.group.name.toLowerCase().indexOf(lowerQuery) !== -1 ||
-                `${wt.group.name}/${wt.slug}`.toLowerCase().indexOf(lowerQuery) !== -1).sort();
+            wt.slug.toLowerCase().indexOf(lowerQuery) !== -1 ||
+            wt.group.name.toLowerCase().indexOf(lowerQuery) !== -1 ||
+            `${wt.group.name}/${wt.slug}`.toLowerCase().indexOf(lowerQuery) !== -1).sort();
     }
 
     createWorkflowFromRepo() {
@@ -290,4 +291,6 @@ workflow:
         this.selectedTemplate = this.templates.find(template => template.group.name + '/' + template.slug === selectedTemplatePath);
         this.descriptionRows = this._sharedService.getTextAreaheight(this.selectedTemplate.description);
     }
+
+    trackRepo(idx: number, r: Repository): string { return r.name; }
 }
