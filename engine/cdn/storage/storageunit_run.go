@@ -118,12 +118,12 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, tx gorpmapper.SqlExec
 	}
 
 	// Check if the content (based on the locator) is already known from the destination unit
-	nbItemUnits, err := x.GetItemUnitByLocatorByUnit(ctx, iu.Locator, dest.ID())
+	has, err := x.GetItemUnitByLocatorByUnit(iu.Locator, dest.ID())
 	if err != nil {
 		return err
 	}
 
-	if nbItemUnits > 0 {
+	if has {
 		log.Info(ctx, "item %s has been pushed to %s with deduplication", item.ID, dest.Name())
 		return nil
 	}

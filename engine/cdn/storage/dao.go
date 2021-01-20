@@ -180,10 +180,11 @@ func LoadItemUnitsByUnit(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlE
 	return getAllItemUnits(ctx, m, db, query, opts...)
 }
 
-func CountItemUnitsByUnitAndHashLocator(db gorp.SqlExecutor, unitID string, hashLocator string, size *int) (int64, error) {
-	query := "SELECT COUNT(*) FROM storage_unit_item WHERE unit_id = $1 AND hash_locator = $2 AND to_delete = false LIMIT $3"
-	nb, err := db.SelectInt(query, unitID, hashLocator, size)
-	return nb, sdk.WithStack(err)
+func HasItemUnitsByUnitAndHashLocator(db gorp.SqlExecutor, unitID string, hashLocator string) (bool, error) {
+	query := "SELECT id FROM storage_unit_item WHERE unit_id = $1 AND hash_locator = $2 AND to_delete = false LIMIT 1"
+	var ids []string
+	_, err := db.Select(&ids, query, unitID, hashLocator)
+	return len(ids) > 0, sdk.WithStack(err)
 }
 
 func LoadItemUnitByID(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, id string, opts ...gorpmapper.GetOptionFunc) (*sdk.CDNItemUnit, error) {
