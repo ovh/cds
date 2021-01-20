@@ -4,11 +4,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { Application } from 'app/model/application.model';
 import { Project } from 'app/model/project.model';
-import { AuthentifiedUser } from 'app/model/user.model';
 import { WarningModalComponent } from 'app/shared/modal/warning/warning.component';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { DeleteApplication, UpdateApplication } from 'app/store/applications.action';
-import { AuthenticationState } from 'app/store/authentication.state';
 import { FetchIntegrationsInProject } from 'app/store/project.action';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { finalize } from 'rxjs/operators';
@@ -26,8 +24,6 @@ export class ApplicationAdminComponent implements OnInit {
     @ViewChild('updateWarning')
     private updateWarningModal: WarningModalComponent;
 
-    user: AuthentifiedUser;
-
     newName: string;
     fileTooLarge = false;
     public loading = false;
@@ -44,7 +40,6 @@ export class ApplicationAdminComponent implements OnInit {
         // Fetch project integration
         this._store.dispatch(new FetchIntegrationsInProject({ projectKey: this.project.key }));
 
-        this.user = this._store.selectSnapshot(AuthenticationState.user);
         this.newName = this.application.name;
         if (!this.project.permissions.writable) {
             this._router.navigate(['/project', this.project.key, 'application', this.application.name],

@@ -1,9 +1,7 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, Output } from '@angular/core';
 import { Store } from '@ngxs/store';
-import { AuthentifiedUser } from 'app/model/user.model';
 import { ModelPattern } from 'app/model/worker-model.model';
 import { WorkerModelService } from 'app/service/worker-model/worker-model.service';
-import { AuthenticationState } from 'app/store/authentication.state';
 import omit from 'lodash-es/omit';
 import { finalize } from 'rxjs/operators';
 
@@ -40,7 +38,6 @@ export class WorkerModelPatternFormComponent {
 
     loadingPatterns: boolean;
     workerModelTypes: Array<string>;
-    currentUser: AuthentifiedUser;
     newEnvName: string;
     newEnvValue: string;
     envNames: Array<string>;
@@ -50,7 +47,6 @@ export class WorkerModelPatternFormComponent {
         private _store: Store,
         private _cd: ChangeDetectorRef
     ) {
-        this.currentUser = this._store.selectSnapshot(AuthenticationState.user);
 
         this.loadingPatterns = true;
         this._cd.markForCheck();

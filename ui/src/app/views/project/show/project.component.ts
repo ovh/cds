@@ -3,13 +3,11 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { LoadOpts, Project } from 'app/model/project.model';
-import { AuthentifiedUser } from 'app/model/user.model';
 import { HelpersService } from 'app/service/helpers/helpers.service';
 import { ProjectStore } from 'app/service/services.module';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { Tab } from 'app/shared/tabs/tabs.component';
 import { ToastService } from 'app/shared/toast/ToastService';
-import { AuthenticationState } from 'app/store/authentication.state';
 import { FetchProject, UpdateFavoriteProject } from 'app/store/project.action';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import cloneDeep from 'lodash-es/cloneDeep';
@@ -24,7 +22,6 @@ import { filter, finalize } from 'rxjs/operators';
 })
 @AutoUnsubscribe()
 export class ProjectShowComponent implements OnInit, OnDestroy {
-    currentUser: AuthentifiedUser;
 
     project: Project;
     projectSubscriber: Subscription;
@@ -49,8 +46,6 @@ export class ProjectShowComponent implements OnInit, OnDestroy {
         private _cd: ChangeDetectorRef,
         private _projectStore: ProjectStore,
     ) {
-        this.currentUser = this._store.selectSnapshot(AuthenticationState.user);
-
         this.projectSubscriber = this._store.select(ProjectState)
             .pipe(filter((projState: ProjectStateModel) => projState && projState.project && projState.project.key !== null && !projState.project.externalChange &&
                     this._route.snapshot.params['key'] === projState.project.key))

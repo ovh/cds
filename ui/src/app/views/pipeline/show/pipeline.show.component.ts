@@ -7,7 +7,6 @@ import { Environment } from 'app/model/environment.model';
 import { AllKeys } from 'app/model/keys.model';
 import { Pipeline } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
-import { AuthentifiedUser } from 'app/model/user.model';
 import { Workflow } from 'app/model/workflow.model';
 import { KeyService } from 'app/service/keys/keys.service';
 import { PipelineCoreService } from 'app/service/pipeline/pipeline.core.service';
@@ -16,7 +15,6 @@ import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { WarningModalComponent } from 'app/shared/modal/warning/warning.component';
 import { ParameterEvent } from 'app/shared/parameter/parameter.event.model';
 import { ToastService } from 'app/shared/toast/ToastService';
-import { AuthenticationState } from 'app/store/authentication.state';
 import {
     AddPipelineParameter, CancelPipelineEdition,
     DeletePipelineParameter,
@@ -52,7 +50,6 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
     applications: Array<Application> = new Array<Application>();
     workflows: Array<Workflow> = new Array<Workflow>();
     environments: Array<Environment> = new Array<Environment>();
-    currentUser: AuthentifiedUser;
     usageCount = 0;
 
     // optional application data
@@ -90,7 +87,6 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
         private _pipCoreService: PipelineCoreService,
         private _cd: ChangeDetectorRef
     ) {
-        this.currentUser = this._store.selectSnapshot(AuthenticationState.user);
         this.project = this._routeActivated.snapshot.data['project'];
         this.application = this._routeActivated.snapshot.data['application'];
         this.workflowName = this._routeActivated.snapshot.queryParams['workflow'];

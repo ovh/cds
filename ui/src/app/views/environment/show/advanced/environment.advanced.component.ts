@@ -4,9 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { Environment } from 'app/model/environment.model';
 import { Project } from 'app/model/project.model';
-import { AuthentifiedUser } from 'app/model/user.model';
 import { ToastService } from 'app/shared/toast/ToastService';
-import { AuthenticationState } from 'app/store/authentication.state';
 import {
     CloneEnvironment,
     DeleteEnvironment,
@@ -24,8 +22,6 @@ export class EnvironmentAdvancedComponent implements OnInit {
     @Input() environment: Environment;
     @Input() project: Project;
 
-    user: AuthentifiedUser;
-
     oldName: string;
     fileTooLarge = false;
     cloneName: string;
@@ -40,7 +36,6 @@ export class EnvironmentAdvancedComponent implements OnInit {
     ) { }
 
     ngOnInit() {
-        this.user = this.store.selectSnapshot(AuthenticationState.user);
         this.oldName = this.environment.name;
         if (!this.project.permissions.writable) {
             this._router.navigate(['/project', this.project.key, 'environment', this.environment.name]);
