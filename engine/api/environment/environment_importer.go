@@ -68,7 +68,7 @@ func Import(db gorpmapper.SqlExecutorWithTx, proj sdk.Project, env *sdk.Environm
 //ImportInto import variables and groups on an existing environment
 func ImportInto(ctx context.Context, db gorpmapper.SqlExecutorWithTx, env *sdk.Environment, into *sdk.Environment, msgChan chan<- sdk.Message, u sdk.Identifiable) error {
 	var updateVar = func(v *sdk.EnvironmentVariable) {
-		log.Debug(ctx, "ImportInto> Updating var %s", v.Name)
+		log.Debug(ctx, "ImportInto> Updating var %q with value %q", v.Name, v.Value)
 
 		varBefore, errV := LoadVariable(db, into.ID, v.Name)
 		if errV != nil {

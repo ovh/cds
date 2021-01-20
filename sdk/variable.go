@@ -6,6 +6,13 @@ import (
 	"time"
 )
 
+type Secret struct {
+	ProjectID int64  `json:"project_id" db:"project_id" cli:"-"`
+	Name      string `json:"name" db:"content_name" cli:"name,key"`
+	Token     string `json:"token" db:"token" cli:"token"`
+	Status    string `json:"status" db:"-" cli:"status"`
+}
+
 // Variable represent a variable for a project or pipeline
 type Variable struct {
 	ID    int64  `json:"id,omitempty" cli:"-"`

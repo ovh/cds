@@ -241,6 +241,7 @@ type ProjectVariablesClient interface {
 	ProjectVariableGet(projectKey string, varName string) (*sdk.Variable, error)
 	ProjectVariableUpdate(projectKey string, variable *sdk.Variable) error
 	VariableEncrypt(projectKey string, varName string, content string) (*sdk.Variable, error)
+	VariableListEncrypt(projectKey string) ([]sdk.Secret, error)
 }
 
 // QueueClient exposes queue related functions
