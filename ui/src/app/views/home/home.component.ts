@@ -4,12 +4,11 @@ import { Broadcast } from 'app/model/broadcast.model';
 import { NavbarProjectData } from 'app/model/navbar.model';
 import { AuthenticationState } from 'app/store/authentication.state';
 import { Subscription } from 'rxjs';
-import { TimelineFilter } from '../../model/timeline.model';
-import { AuthentifiedUser } from '../../model/user.model';
-import { BroadcastStore } from '../../service/broadcast/broadcast.store';
-import { NavbarService } from '../../service/navbar/navbar.service';
-import { TimelineStore } from '../../service/timeline/timeline.store';
-import { AutoUnsubscribe } from '../../shared/decorator/autoUnsubscribe';
+import { TimelineFilter } from 'app/model/timeline.model';
+import { BroadcastStore } from 'app/service/broadcast/broadcast.store';
+import { NavbarService } from 'app/service/navbar/navbar.service';
+import { TimelineStore } from 'app/service/timeline/timeline.store';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 
 @Component({
     selector: 'app-home',
@@ -25,7 +24,6 @@ export class HomeComponent implements OnInit, OnDestroy {
     broadcasts: Array<Broadcast> = [];
     loading = true;
     loadingBroadcasts = true;
-    user: AuthentifiedUser;
 
     filter: TimelineFilter;
     filterSub: Subscription;
@@ -40,7 +38,6 @@ export class HomeComponent implements OnInit, OnDestroy {
         private _timelineStore: TimelineStore,
         private _cd: ChangeDetectorRef
     ) {
-        this.user = this._store.selectSnapshot(AuthenticationState.user);
         this.filter = new TimelineFilter();
         this._navbarSub = this._navbarService.getObservable()
             .subscribe((data) => {

@@ -482,7 +482,7 @@ func (api *API) updateAsCodeApplicationHandler() service.Handler {
 		}
 
 		b, err := client.Branch(ctx, appDB.RepositoryFullname, branch)
-		if err != nil && !sdk.ErrorIs(err, sdk.ErrNoBranch) {
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return err
 		}
 

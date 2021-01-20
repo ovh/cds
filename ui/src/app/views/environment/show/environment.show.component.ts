@@ -60,7 +60,6 @@ export class EnvironmentShowComponent implements OnInit, OnDestroy {
     workflowPipeline: string;
 
     workflows: Array<Workflow> = new Array<Workflow>();
-    currentUser: AuthentifiedUser;
     usageCount = 0;
 
     constructor(
@@ -71,7 +70,6 @@ export class EnvironmentShowComponent implements OnInit, OnDestroy {
         private _store: Store,
         private _cd: ChangeDetectorRef
     ) {
-        this.currentUser = this._store.selectSnapshot(AuthenticationState.user);
         this.project = this._route.snapshot.data['project'];
         this.projectSubscription = this._store.select(ProjectState)// Update data if route change
             .subscribe((projectState: ProjectStateModel) => this.project = projectState.project);

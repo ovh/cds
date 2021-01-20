@@ -82,7 +82,7 @@ export class AppService {
             return;
         }
         if (event.type_event.indexOf(EventType.ASCODE) === 0) {
-            if (event.username === this._store.selectSnapshot(AuthenticationState.user).username) {
+            if (event.username === this._store.selectSnapshot(AuthenticationState.summary).user.username) {
                 this._store.dispatch(new AsCodeEvent(event.payload['as_code_event']));
             }
             return;
@@ -167,7 +167,7 @@ export class AppService {
                 // If working on project or sub resources
                 if (this.routeParams['key'] && this.routeParams['key'] === projectInCache.key) {
                     // if modification from another user, display a notification
-                    if (event.username !== this._store.selectSnapshot(AuthenticationState.user).username) {
+                    if (event.username !== this._store.selectSnapshot(AuthenticationState.summary).user.username) {
                         this._store.dispatch(new projectActions.ExternalChangeProject({ projectKey: projectInCache.key }));
                         this._toast.info('', this._translate.instant('warning_project', { username: event.username }));
                         return;
@@ -227,7 +227,7 @@ export class AppService {
                 // If user is on an application that has been deleted by an other user
                 if (this.routeParams['key'] && this.routeParams['key'] === event.project_key &&
                     this.routeParams['appName'] && this.routeParams['appName'] === event.application_name &&
-                    event.username !== this._store.selectSnapshot(AuthenticationState.user).username) {
+                    event.username !== this._store.selectSnapshot(AuthenticationState.summary).user.username) {
                     this._toast.info('', this._translate.instant('application_deleted_by',
                         { appName: this.routeParams['appName'], username: event.username }));
                     this._router.navigate(['/project'], this.routeParams['key']);
@@ -241,7 +241,7 @@ export class AppService {
             if (this.routeParams['key'] && this.routeParams['key'] === event.project_key
                 && this.routeParams['appName'] === event.application_name) {
                 // modification by another user
-                if (event.username !== this._store.selectSnapshot(AuthenticationState.user).username) {
+                if (event.username !== this._store.selectSnapshot(AuthenticationState.summary).user.username) {
                     this._store.dispatch(new ExternalChangeApplication(payload));
                     this._toast.info('', this._translate.instant('warning_application', { username: event.username }));
                     return;
@@ -279,7 +279,7 @@ export class AppService {
             // update pipeline
             if (this.routeParams['key'] && this.routeParams['key'] === event.project_key
                 && this.routeParams['pipName'] === event.pipeline_name) {
-                if (event.username !== this._store.selectSnapshot(AuthenticationState.user).username) {
+                if (event.username !== this._store.selectSnapshot(AuthenticationState.summary).user.username) {
                     this._store.dispatch(new ExternalChangePipeline({
                         projectKey: event.project_key,
                         pipelineName: event.pipeline_name
@@ -319,7 +319,7 @@ export class AppService {
                 // update workflow
                 if (this.routeParams['key'] && this.routeParams['key'] === event.project_key
                     && this.routeParams['workflowName'] === event.workflow_name) {
-                    if (event.username !== this._store.selectSnapshot(AuthenticationState.user).username) {
+                    if (event.username !== this._store.selectSnapshot(AuthenticationState.summary).user.username) {
                         this._store.dispatch(new ExternalChangeWorkflow({
                             projectKey: event.project_key,
                             workflowName: event.workflow_name

@@ -83,7 +83,7 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 		}
 
 		b, err := client.Branch(ctx, rootApp.RepositoryFullname, branch)
-		if err != nil && !sdk.ErrorIs(err, sdk.ErrNoBranch) {
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return err
 		}
 

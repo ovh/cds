@@ -298,7 +298,7 @@ func (api *API) updateAsCodeEnvironmentHandler() service.Handler {
 		}
 
 		b, err := client.Branch(ctx, rootApp.RepositoryFullname, branch)
-		if err != nil && !sdk.ErrorIs(err, sdk.ErrNoBranch) {
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return err
 		}
 

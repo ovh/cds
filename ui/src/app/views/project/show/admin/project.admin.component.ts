@@ -3,10 +3,8 @@ import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { Project } from 'app/model/project.model';
-import { AuthentifiedUser } from 'app/model/user.model';
 import { WarningModalComponent } from 'app/shared/modal/warning/warning.component';
 import { ToastService } from 'app/shared/toast/ToastService';
-import { AuthenticationState } from 'app/store/authentication.state';
 import { DeleteProject, UpdateProject } from 'app/store/project.action';
 import { finalize } from 'rxjs/operators';
 
@@ -24,7 +22,6 @@ export class ProjectAdminComponent implements OnInit {
 
     loading = false;
     fileTooLarge = false;
-    user: AuthentifiedUser;
 
     constructor(
         private _toast: ToastService,
@@ -38,7 +35,6 @@ export class ProjectAdminComponent implements OnInit {
         if (!this.project.permissions.writable) {
             this._router.navigate(['/project', this.project.key], { queryParams: { tab: 'applications' } });
         }
-        this.user = this._store.selectSnapshot(AuthenticationState.user);
     }
 
     onSubmitProjectUpdate(skip?: boolean) {
