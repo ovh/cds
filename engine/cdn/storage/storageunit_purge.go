@@ -38,16 +38,16 @@ func (x *RunningStorageUnits) Purge(ctx context.Context, s Interface) error {
 			return err
 		}
 		if exists {
-			var nbItemUnits int64
+			var hasItemUnit bool
 			if _, hasLocator := s.(StorageUnitWithLocator); hasLocator {
 				var err error
-				nbItemUnits, err = x.GetItemUnitByLocatorByUnit(ctx, ui.Locator, s.ID())
+				hasItemUnit, err = x.GetItemUnitByLocatorByUnit(ui.Locator, s.ID())
 				if err != nil {
 					return err
 				}
 			}
 
-			if nbItemUnits > 0 {
+			if hasItemUnit {
 				log.Info(ctx, "item %s will not be deleted from %s", ui.ID, s.Name())
 			} else {
 				if err := s.Remove(ctx, ui); err != nil {

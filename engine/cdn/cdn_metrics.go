@@ -86,13 +86,15 @@ func (s *Service) initMetrics(ctx context.Context) error {
 }
 
 func (s *Service) ComputeMetrics(ctx context.Context) {
+	tickPercentil := time.NewTicker(1 * time.Hour)
+	defer tickPercentil.Stop()
+	tickStatsItems := time.NewTicker(10 * time.Minute)
+	defer tickStatsItems.Stop()
 	for {
-		time.Sleep(30 * time.Second)
-
 		select {
 		case <-ctx.Done():
 			return
-		default:
+		case <-tickStatsItems.C:
 			// All Items by type
 			allItemsByType, err := item.CountItems(s.mustDBWithCtx(ctx))
 			if err != nil {
@@ -144,21 +146,6 @@ func (s *Service) ComputeMetrics(ctx context.Context) {
 					}
 				}
 			}
-
-			statsPercentils, err := item.CountItemSizePercentil(s.mustDBWithCtx(ctx))
-			if err != nil {
-				log.Error(ctx, "cdn> Unable to compute metrics: %v", err)
-				continue
-			}
-			for _, stat := range statsPercentils {
-				// Export only 50, 75, 90, 95, 99, 100 percentil
-				switch stat.Percentile {
-				case 50, 75, 90, 95, 99, 100:
-					ctxItem := telemetry.ContextWithTag(ctx, telemetry.TagType, stat.Type, telemetry.TagPercentil, stat.Percentile)
-					telemetry.Record(ctxItem, s.Metrics.ItemSize, stat.Size)
-				}
-			}
-
 			itemsToDelete, err := item.CountItemsToDelete(s.mustDBWithCtx(ctx))
 			if err != nil {
 				log.Error(ctx, "cdn> Unable to compute metrics: %v", err)
@@ -179,6 +166,20 @@ func (s *Service) ComputeMetrics(ctx context.Context) {
 			for _, stat := range storageStats {
 				ctxItem := telemetry.ContextWithTag(ctx, telemetry.TagType, stat.Type, telemetry.TagStorage, stat.StorageName)
 				telemetry.Record(ctxItem, s.Metrics.ItemUnitToDelete, stat.Number)
+			}
+		case <-tickPercentil.C:
+			statsPercentils, err := item.CountItemSizePercentil(s.mustDBWithCtx(ctx))
+			if err != nil {
+				log.Error(ctx, "cdn> Unable to compute metrics: %v", err)
+				continue
+			}
+			for _, stat := range statsPercentils {
+				// Export only 50, 75, 90, 95, 99, 100 percentil
+				switch stat.Percentile {
+				case 50, 75, 90, 95, 99, 100:
+					ctxItem := telemetry.ContextWithTag(ctx, telemetry.TagType, stat.Type, telemetry.TagPercentil, stat.Percentile)
+					telemetry.Record(ctxItem, s.Metrics.ItemSize, stat.Size)
+				}
 			}
 		}
 	}
