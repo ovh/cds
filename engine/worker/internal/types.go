@@ -123,7 +123,7 @@ func (wk *CurrentWorker) SendTerminatedStepLog(ctx context.Context, level worker
 	wk.stepLogLine++
 }
 
-func (wk *CurrentWorker) ArtifactSignature(artifactName string) (string, error) {
+func (wk *CurrentWorker) ArtifactSignature(artifactName string, perm uint32) (string, error) {
 	sig := cdn.Signature{
 		ProjectKey:   wk.currentJob.projectKey,
 		JobID:        wk.currentJob.wJob.ID,
@@ -138,6 +138,7 @@ func (wk *CurrentWorker) ArtifactSignature(artifactName string) (string, error) 
 			WorkerID:     wk.id,
 			WorkerName:   wk.Name(),
 			ArtifactName: artifactName,
+			FilePerm:     perm,
 		},
 	}
 	signature, err := jws.Sign(wk.currentJob.signer, sig)

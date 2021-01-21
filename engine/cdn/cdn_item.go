@@ -80,10 +80,45 @@ func (s *Service) downloadItemFromUnit(ctx context.Context, t sdk.CDNItemType, a
 func (s *Service) downloadItem(ctx context.Context, t sdk.CDNItemType, apiRefHash string, w http.ResponseWriter, opts downloadOpts) error {
 	ctx = context.WithValue(ctx, storage.FieldAPIRef, apiRefHash)
 
-	if !t.IsLog() {
-		return sdk.NewErrorFrom(sdk.ErrNotImplemented, "only log item can be download for now")
+	switch t {
+	case sdk.CDNTypeItemServiceLog, sdk.CDNTypeItemStepLog:
+		if err := s.downloadLog(ctx, t, apiRefHash, w, opts); err != nil {
+			return err
+		}
+	case sdk.CDNTypeItemArtifact:
+		if err := s.downloadFile(ctx, t, apiRefHash, w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *Service) downloadFile(ctx context.Context, t sdk.CDNItemType, apiRefHash string, w http.ResponseWriter) error {
+	iu, unit, rc, err := s.getItemFileValue(ctx, t, apiRefHash, getItemFileOptions{})
+	if err != nil {
+		return err
 	}
 
+	if rc == nil {
+		return sdk.WrapError(sdk.ErrNotFound, "no storage found that contains given item %s", apiRefHash)
+	}
+
+	defer func() {
+		if err := rc.Close(); err != nil {
+			log.Error(ctx, "pushItemLogIntoCache> can't close reader: %+v", err)
+		}
+	}()
+
+	w.Header().Set("Content-Type", "application/octet-stream")
+	w.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", iu.Item.APIRef.ToFilename()))
+
+	if err := unit.Read(*iu, rc, w); err != nil {
+		return sdk.WithStack(err)
+	}
+	return nil
+}
+
+func (s *Service) downloadLog(ctx context.Context, t sdk.CDNItemType, apiRefHash string, w http.ResponseWriter, opts downloadOpts) error {
 	it, _, rc, filename, err := s.getItemLogValue(ctx, t, apiRefHash, getItemLogOptions{
 		format: sdk.CDNReaderFormatText,
 		from:   0,
@@ -108,7 +143,6 @@ func (s *Service) downloadItem(ctx context.Context, t sdk.CDNItemType, apiRefHas
 	}
 
 	log.Info(ctx, "downloadItem> item %s has been downloaded", it.ID)
-
 	return nil
 }
 
@@ -117,6 +151,11 @@ type getItemLogOptions struct {
 	from        int64
 	size        uint
 	sort        int64
+	cacheClean  bool
+	cacheSource string
+}
+
+type getItemFileOptions struct {
 	cacheClean  bool
 	cacheSource string
 }
@@ -152,6 +191,51 @@ func (s *Service) getItemLogLinesCount(ctx context.Context, t sdk.CDNItemType, a
 
 	linesCount, err := s.LogCache.Card(it.ID)
 	return int64(linesCount), err
+}
+
+func (s *Service) getItemFileValue(ctx context.Context, t sdk.CDNItemType, apiRefHash string, opts getItemFileOptions) (*sdk.CDNItemUnit, storage.Unit, io.ReadCloser, error) {
+	ctx = context.WithValue(ctx, storage.FieldAPIRef, apiRefHash)
+	it, err := item.LoadByAPIRefHashAndType(ctx, s.Mapper, s.mustDBWithCtx(ctx), apiRefHash, t)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	// Get from Buffer
+	itemUnit, err := storage.LoadItemUnitByUnit(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.FileBuffer().ID(), it.ID, gorpmapper.GetOptions.WithDecryption)
+	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+		return nil, nil, nil, err
+	}
+	// If item is in Buffer, get from it
+	if itemUnit != nil {
+		log.Error(ctx, "getItemFileValue> Getting file from buffer")
+
+		rc, err := s.Units.FileBuffer().NewReader(ctx, *itemUnit)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		return itemUnit, s.Units.FileBuffer(), rc, nil
+	}
+
+	// Get from storage
+	itemUnitID, unitName, err := s.getRandomItemUnitIDByItemID(ctx, it.ID, opts.cacheSource)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	iu, err := storage.LoadItemUnitByID(ctx, s.Mapper, s.mustDBWithCtx(ctx), itemUnitID, gorpmapper.GetOptions.WithDecryption)
+	if err != nil {
+		return iu, nil, nil, err
+	}
+
+	// Get Storage unit
+	unitStorage := s.Units.Storage(unitName)
+	if unitStorage == nil {
+		return iu, nil, nil, sdk.WithStack(fmt.Errorf("unable to find unit %s", unitName))
+	}
+
+	// Create a reader
+	storageReader, err := unitStorage.NewReader(ctx, *iu)
+	return iu, unitStorage, storageReader, nil
 }
 
 func (s *Service) getItemLogValue(ctx context.Context, t sdk.CDNItemType, apiRefHash string, opts getItemLogOptions) (*sdk.CDNItem, int64, io.ReadCloser, string, error) {
@@ -212,53 +296,15 @@ func (s *Service) getItemLogValue(ctx context.Context, t sdk.CDNItemType, apiRef
 func (s *Service) pushItemLogIntoCache(ctx context.Context, it sdk.CDNItem, unitName string) error {
 	ctx = context.WithValue(ctx, storage.FieldAPIRef, it.APIRefHash)
 
-	// Search item in a storage unit
-	itemUnits, err := storage.LoadAllItemUnitsByItemIDs(ctx, s.Mapper, s.mustDBWithCtx(ctx), it.ID)
-	if err != nil {
-		return err
-	}
-
-	if len(itemUnits) == 0 {
-		return sdk.WithStack(fmt.Errorf("unable to find item units for item with id: %s", it.ID))
-	}
-
-	var unit *sdk.CDNUnit
-	var selectedItemUnit *sdk.CDNItemUnit
-	if unitName != "" {
-		// Try to load the item from given unit
-		unit, err = storage.LoadUnitByName(ctx, s.Mapper, s.mustDBWithCtx(ctx), unitName)
-		if err != nil {
-			return sdk.NewErrorFrom(err, "unit with name %s can't be loaded", unitName)
-		}
-		for i := range itemUnits {
-			if itemUnits[i].UnitID == unit.ID {
-				selectedItemUnit = &itemUnits[i]
-				break
-			}
-		}
-		if selectedItemUnit == nil {
-			return sdk.NewErrorFrom(err, "cannot load item %s from given unit %s", it.ID, unitName)
-		}
-	} else {
-		// Random pick a unit
-		idx := 0
-		if len(itemUnits) > 1 {
-			idx = rnd.Intn(len(itemUnits))
-		}
-		selectedItemUnit = &itemUnits[idx]
-		unit, err = storage.LoadUnitByID(ctx, s.Mapper, s.mustDBWithCtx(ctx), selectedItemUnit.UnitID)
-		if err != nil {
-			return err
-		}
-	}
+	itemUnitID, unitName, err := s.getRandomItemUnitIDByItemID(ctx, it.ID, unitName)
 
 	// Get Storage unit
-	unitStorage := s.Units.Storage(unit.Name)
+	unitStorage := s.Units.Storage(unitName)
 	if unitStorage == nil {
-		return sdk.WithStack(fmt.Errorf("unable to find unit %s", unit.Name))
+		return sdk.WithStack(fmt.Errorf("unable to find unit %s", unitName))
 	}
 
-	selectedItemUnit, err = storage.LoadItemUnitByID(ctx, s.Mapper, s.mustDBWithCtx(ctx), selectedItemUnit.ID, gorpmapper.GetOptions.WithDecryption)
+	selectedItemUnit, err := storage.LoadItemUnitByID(ctx, s.Mapper, s.mustDBWithCtx(ctx), itemUnitID, gorpmapper.GetOptions.WithDecryption)
 	if err != nil {
 		return err
 	}
@@ -290,6 +336,51 @@ func (s *Service) pushItemLogIntoCache(ctx context.Context, it sdk.CDNItem, unit
 	log.Info(ctx, "item %s has been pushed to cache", it.ID)
 
 	return nil
+}
+
+func (s *Service) getRandomItemUnitIDByItemID(ctx context.Context, itemID string, defaultUnitName string) (string, string, error) {
+	// Search item in a storage unit
+	itemUnits, err := storage.LoadAllItemUnitsByItemIDs(ctx, s.Mapper, s.mustDBWithCtx(ctx), itemID)
+	if err != nil {
+		return "", "", err
+	}
+
+	if len(itemUnits) == 0 {
+		return "", "", sdk.WithStack(fmt.Errorf("unable to find item units for item with id: %s", itemID))
+	}
+
+	var unit *sdk.CDNUnit
+	var selectedItemUnit *sdk.CDNItemUnit
+	if defaultUnitName != "" {
+		// Try to load the item from given unit
+		unit, err = storage.LoadUnitByName(ctx, s.Mapper, s.mustDBWithCtx(ctx), defaultUnitName)
+		if err != nil {
+			return "", "", sdk.NewErrorFrom(err, "unit with name %s can't be loaded", defaultUnitName)
+		}
+		for i := range itemUnits {
+			if itemUnits[i].UnitID == unit.ID {
+				selectedItemUnit = &itemUnits[i]
+				break
+			}
+		}
+		if selectedItemUnit == nil {
+			return "", "", sdk.NewErrorFrom(err, "cannot load item %s from given unit %s", itemID, defaultUnitName)
+		}
+		return selectedItemUnit.ID, defaultUnitName, nil
+	}
+
+	// Random pick a unit
+	idx := 0
+	if len(itemUnits) > 1 {
+		idx = rnd.Intn(len(itemUnits))
+	}
+	selectedItemUnit = &itemUnits[idx]
+
+	unit, err = storage.LoadUnitByID(ctx, s.Mapper, s.mustDBWithCtx(ctx), selectedItemUnit.UnitID)
+	if err != nil {
+		return "", "", err
+	}
+	return selectedItemUnit.ID, unit.Name, nil
 }
 
 func (s *Service) completeItem(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, itemUnit sdk.CDNItemUnit) error {

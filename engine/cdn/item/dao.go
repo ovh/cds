@@ -295,3 +295,9 @@ func CountItemSizePercentil(db gorp.SqlExecutor) ([]StatItemPercentil, error) {
 	}
 	return res, sdk.WithStack(err)
 }
+
+func LoadByRunID(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, itemType sdk.CDNItemType, runID string) ([]sdk.CDNItem, error) {
+	query := gorpmapper.NewQuery("SELECT * FROM item WHERE api_ref->>'run_id'::text = $1 AND type = $2").Args(runID, itemType)
+	return getItems(ctx, m, db, query)
+
+}
