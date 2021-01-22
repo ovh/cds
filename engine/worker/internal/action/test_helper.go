@@ -30,7 +30,7 @@ type TestWorker struct {
 	logBuffer        bytes.Buffer
 }
 
-func (w *TestWorker) ArtifactSignature(artifactName string) (string, error) {
+func (w *TestWorker) ArtifactSignature(artifactName string, perm uint32) (string, error) {
 	return "mysignature", nil
 }
 

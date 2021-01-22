@@ -55,8 +55,6 @@ func TestPostUploadHandler(t *testing.T) {
 	tmpDir2, err := ioutil.TempDir("", t.Name()+"-cdn-2-*")
 	require.NoError(t, err)
 
-	t.Logf(tmpDir)
-	t.Logf(tmpDir2)
 	cdnUnits, err := storage.Init(ctx, s.Mapper, s.Cache, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
 		SyncSeconds:     1,
 		SyncNbElements:  1000,

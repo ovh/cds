@@ -149,7 +149,7 @@ func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signa
 			return sdk.WithStack(err)
 		}
 
-		s.Units.PushInSyncQueue(ctx, it.ID, it.APIRefHash, it.Created)
+		s.Units.PushInSyncQueue(ctx, it.ID, it.Created)
 	}
 
 	return nil

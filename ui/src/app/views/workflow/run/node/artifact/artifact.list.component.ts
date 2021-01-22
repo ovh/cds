@@ -1,8 +1,10 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
-import { Select } from '@ngxs/store';
+import { Select, Store } from '@ngxs/store';
 import { WorkflowNodeRun, WorkflowNodeRunArtifact, WorkflowNodeRunStaticFiles } from 'app/model/workflow.run.model';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { Column, ColumnType, Filter } from 'app/shared/table/data-table.component';
+import { FeatureState } from 'app/store/feature.state';
+import { ProjectState } from 'app/store/project.state';
 import { WorkflowState } from 'app/store/workflow.state';
 import { Observable, Subscription } from 'rxjs';
 
@@ -23,12 +25,15 @@ export class WorkflowRunArtifactListComponent implements OnInit, OnDestroy {
     filter: Filter<WorkflowNodeRunArtifact>;
     columns: Array<Column<WorkflowNodeRunArtifact>>;
 
-    constructor(private _cd: ChangeDetectorRef) {
+    constructor(private _cd: ChangeDetectorRef, private _store: Store) {
         this.filter = f => {
             const lowerFilter = f.toLowerCase();
             return d => d.name.toLowerCase().indexOf(lowerFilter) !== -1 ||
                     d.sha512sum.toLowerCase().indexOf(lowerFilter) !== -1
         };
+        let project = this._store.selectSnapshot(ProjectState.projectSnapshot);
+        let featCDN = this._store.selectSnapshot(FeatureState.featureProject('cdn-artifact',
+            JSON.stringify({ project_key: project.key })))
 
         this.columns = [
             <Column<WorkflowNodeRunArtifact>>{
@@ -36,8 +41,12 @@ export class WorkflowRunArtifactListComponent implements OnInit, OnDestroy {
                 name: 'artifact_name',
                 selector: (a: WorkflowNodeRunArtifact) => {
                     let size = this.getHumainFileSize(a.size);
+                    let link = `./cdsapi/workflow/artifact/${a.download_hash}`
+                    if (featCDN.enabled) {
+                        link = `./cdscdn/item/artifact/${a.download_hash}/download`
+                    }
                     return {
-                        link: `./cdsapi/workflow/artifact/${a.download_hash}`,
+                        link,
                         value: `${a.name} (${size})`
                     };
                 }
@@ -48,8 +57,8 @@ export class WorkflowRunArtifactListComponent implements OnInit, OnDestroy {
             },
             <Column<WorkflowNodeRunArtifact>>{
                 type: ColumnType.TEXT_COPY,
-                name: 'artifact_sha512',
-                selector: (a: WorkflowNodeRunArtifact) => a.sha512sum
+                name: 'MD5 Sum',
+                selector: (a: WorkflowNodeRunArtifact) => a.md5sum
             }
         ];
     }

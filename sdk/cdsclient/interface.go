@@ -298,6 +298,7 @@ type WorkerClient interface {
 
 type CDNClient interface {
 	CDNArtifactUpdload(ctx context.Context, cdnAddr string, signature string, path string) (time.Duration, error)
+	CDNArtifactDownload(ctx context.Context, cdnAddr string, hash string, w io.Writer) error
 }
 
 // HookClient exposes functions used for hooks services
@@ -329,6 +330,7 @@ type WorkflowClient interface {
 	WorkflowRunSearch(projectKey string, offset, limit int64, filter ...Filter) ([]sdk.WorkflowRun, error)
 	WorkflowRunList(projectKey string, workflowName string, offset, limit int64) ([]sdk.WorkflowRun, error)
 	WorkflowRunArtifacts(projectKey string, name string, number int64) ([]sdk.WorkflowNodeRunArtifact, error)
+	WorkflowRunArtifactsLinks(projectKey string, name string, number int64) (sdk.CDNItemLinks, error)
 	WorkflowRunFromHook(projectKey string, workflowName string, hook sdk.WorkflowNodeRunHookEvent) (*sdk.WorkflowRun, error)
 	WorkflowRunFromManual(projectKey string, workflowName string, manual sdk.WorkflowNodeRunManual, number, fromNodeID int64) (*sdk.WorkflowRun, error)
 	WorkflowRunNumberGet(projectKey string, workflowName string) (*sdk.WorkflowRunNumber, error)
@@ -341,7 +343,7 @@ type WorkflowClient interface {
 	WorkflowNodeRunJobStepLog(ctx context.Context, projectKey string, workflowName string, nodeRunID, job int64, step int64) (*sdk.BuildState, error)
 	WorkflowNodeRunJobServiceLink(ctx context.Context, projectKey string, workflowName string, nodeRunID, job int64, serviceName string) (*sdk.CDNLogLink, error)
 	WorkflowNodeRunJobServiceLog(ctx context.Context, projectKey string, workflowName string, nodeRunID, job int64, serviceName string) (*sdk.ServiceLog, error)
-	WorkflowLogAccess(ctx context.Context, projectKey, workflowName, sessionID string) error
+	WorkflowAccess(ctx context.Context, projectKey, workflowName, sessionID string, itemType sdk.CDNItemType) error
 	WorkflowLogDownload(ctx context.Context, link sdk.CDNLogLink) ([]byte, error)
 	WorkflowNodeRunRelease(projectKey string, workflowName string, runNumber int64, nodeRunID int64, release sdk.WorkflowNodeRunRelease) error
 	WorkflowAllHooksList() ([]sdk.NodeHook, error)
@@ -420,6 +422,7 @@ type WorkerInterface interface {
 	WorkflowRunList(projectKey string, workflowName string, offset, limit int64) ([]sdk.WorkflowRun, error)
 	WorkflowNodeRunArtifactDownload(projectKey string, name string, a sdk.WorkflowNodeRunArtifact, w io.Writer) error
 	WorkflowNodeRunRelease(projectKey string, workflowName string, runNumber int64, nodeRunID int64, release sdk.WorkflowNodeRunRelease) error
+	WorkflowRunArtifactsLinks(projectKey string, name string, number int64) (sdk.CDNItemLinks, error)
 }
 
 // Raw is a low-level interface exposing HTTP functions

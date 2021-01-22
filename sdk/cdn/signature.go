@@ -20,6 +20,7 @@ type SignatureWorker struct {
 	StepOrder    int64
 	StepName     string
 	ArtifactName string
+	FilePerm     uint32
 }
 
 type SignatureService struct {

@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/rsa"
 	"encoding/json"
+	"github.com/ovh/symmecrypt/keyloader"
 	"io/ioutil"
 	"net/http"
 	"sync"
@@ -115,11 +116,14 @@ func newRunningStorageUnits(t *testing.T, m *gorpmapper.Mapper, dbMap *gorp.DbMa
 	tmpDir, err := ioutil.TempDir("", t.Name()+"-cdn-1-*")
 	require.NoError(t, err)
 
+	tmpDirBuf, err := ioutil.TempDir("", t.Name()+"-cdn-1-buf-*")
+	require.NoError(t, err)
+
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	t.Cleanup(cancel)
 
 	cdnUnits, err := storage.Init(ctx, m, store, dbMap, sdk.NewGoRoutines(), storage.Configuration{
-		SyncSeconds:     10,
+		SyncSeconds:     2,
 		SyncNbElements:  100,
 		HashLocatorSalt: "thisismysalt",
 		Buffers: []storage.BufferConfiguration{
@@ -130,6 +134,20 @@ func newRunningStorageUnits(t *testing.T, m *gorpmapper.Mapper, dbMap *gorp.DbMa
 					Password: cfg["redisPassword"],
 				},
 				BufferType: storage.CDNBufferTypeLog,
+			},
+			{
+				Name: "fs_buffer",
+				Local: &storage.LocalBufferConfiguration{
+					Path: tmpDirBuf,
+					Encryption: []*keyloader.KeyConfig{
+						{
+							Identifier: "fs-buf-id",
+							Cipher:     "aes-gcm",
+							Key:        "12345678901234567890123456789012",
+						},
+					},
+				},
+				BufferType: storage.CDNBufferTypeFile,
 			},
 		},
 		Storages: []storage.StorageConfiguration{

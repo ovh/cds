@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { Action, createSelector, State, StateContext } from '@ngxs/store';
-import { cloneDeep } from 'lodash-es';
 import * as actionFeature from './feature.action';
 
 export class FeatureResults {
