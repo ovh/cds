@@ -73,7 +73,7 @@ func RunArtifactDownload(ctx context.Context, wk workerruntime.Runtime, a sdk.Ac
 	}
 
 	// GET Artifact from CDS API
-	if !wk.FeatureEnabled("cdn-artifact") {
+	if !wk.FeatureEnabled(sdk.FeatureCDNArtifact) {
 		return GetArtifactFromAPI(ctx, wk, project, workflow, n, res, pattern, reg, tag, destPath, wkDirFS)
 	}
 

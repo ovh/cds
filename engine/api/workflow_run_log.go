@@ -332,7 +332,7 @@ func (api *API) getWorkflowAccessHandler() service.Handler {
 				"project_key": projectKey,
 			})
 		case sdk.CDNTypeItemArtifact:
-			enabled = featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), "cdn-artifact", map[string]string{
+			enabled = featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeatureCDNArtifact, map[string]string{
 				"project_key": projectKey,
 			})
 		}

@@ -47,7 +47,7 @@ func workflowArtifactListRun(v cli.Values) (cli.ListResult, error) {
 	projectKey := v.GetString(_ProjectKey)
 	workflowName := v.GetString(_WorkflowName)
 
-	feature, err := client.FeatureEnabled("cdn-artifact", map[string]string{
+	feature, err := client.FeatureEnabled(sdk.FeatureCDNArtifact, map[string]string{
 		"project_key": projectKey,
 	})
 	if err != nil {
@@ -109,7 +109,7 @@ func workflowArtifactDownloadRun(v cli.Values) error {
 		return fmt.Errorf("number parameter have to be an integer")
 	}
 
-	feature, err := client.FeatureEnabled("cdn-artifact", map[string]string{
+	feature, err := client.FeatureEnabled(sdk.FeatureCDNArtifact, map[string]string{
 		"project_key": v.GetString(_ProjectKey),
 	})
 	if err != nil {

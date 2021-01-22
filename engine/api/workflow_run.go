@@ -807,7 +807,7 @@ func (api *API) getWorkflowNodeRunHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to load last workflow run")
 		}
 
-		if featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), "cdn-artifact", map[string]string{"project_key": key}) {
+		if featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeatureCDNArtifact, map[string]string{"project_key": key}) {
 			results, err := workflow.ListArtifacts(ctx, api.mustDB(), nodeRun.WorkflowRunID)
 			if err != nil {
 				return err
