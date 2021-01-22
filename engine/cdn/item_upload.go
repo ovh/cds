@@ -2,7 +2,6 @@ package cdn
 
 import (
 	"context"
-	"io"
 	"net/http"
 
 	"github.com/ovh/cds/engine/service"
@@ -33,25 +32,8 @@ func (s *Service) postUploadHandler() service.Handler {
 			return sdk.WrapError(err, "worker key: %d", len(workerData.PrivateKey))
 		}
 
-		reader, err := r.MultipartReader()
-		if err != nil {
-			return sdk.WithStack(err)
-		}
-		for {
-			part, err := reader.NextPart()
-			if err == io.EOF {
-				break
-			}
-			if err != nil {
-				return sdk.WithStack(err)
-			}
-			if part.FormName() != "file" {
-				continue
-			}
-			if err := s.storeFile(ctx, signature, part); err != nil {
-				return err
-			}
-			break
+		if err := s.storeFile(ctx, signature, r.Body); err != nil {
+			return err
 		}
 		return nil
 	}

@@ -293,6 +293,11 @@ type WorkerClient interface {
 	WorkerModelSecretList(groupName, name string) (sdk.WorkerModelSecrets, error)
 	WorkerRegister(ctx context.Context, authToken string, form sdk.WorkerRegistrationForm) (*sdk.Worker, bool, error)
 	WorkerSetStatus(ctx context.Context, status string) error
+	CDNClient
+}
+
+type CDNClient interface {
+	CDNArtifactUpdload(ctx context.Context, cdnAddr string, signature string, path string) (time.Duration, error)
 }
 
 // HookClient exposes functions used for hooks services

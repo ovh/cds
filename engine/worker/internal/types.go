@@ -41,6 +41,7 @@ type CurrentWorker struct {
 	basedir     afero.Fs
 	manualExit  bool
 	gelfLogger  *logger
+	cdnHttpAddr string
 	stepLogLine int64
 	httpPort    int32
 	register    struct {
@@ -60,6 +61,7 @@ type CurrentWorker struct {
 		workflowID   int64
 		runID        int64
 		nodeRunName  string
+		features     map[string]bool
 	}
 	status struct {
 		Name   string `json:"name"`
@@ -99,6 +101,14 @@ func (wk *CurrentWorker) Parameters() []sdk.Parameter {
 	return wk.currentJob.params
 }
 
+func (wk *CurrentWorker) FeatureEnabled(name string) bool {
+	b, has := wk.currentJob.features[name]
+	if !has {
+		return false
+	}
+	return b
+}
+
 func (wk *CurrentWorker) SendTerminatedStepLog(ctx context.Context, level workerruntime.Level, logLine string) {
 	msg, sign, err := wk.prepareLog(ctx, level, logLine)
 	if err != nil {
@@ -113,6 +123,27 @@ func (wk *CurrentWorker) SendTerminatedStepLog(ctx context.Context, level worker
 	wk.stepLogLine++
 }
 
+func (wk *CurrentWorker) ArtifactSignature(artifactName string) (string, error) {
+	sig := cdn.Signature{
+		ProjectKey:   wk.currentJob.projectKey,
+		JobID:        wk.currentJob.wJob.ID,
+		NodeRunID:    wk.currentJob.wJob.WorkflowNodeRunID,
+		Timestamp:    time.Now().UnixNano(),
+		WorkflowID:   wk.currentJob.workflowID,
+		WorkflowName: wk.currentJob.workflowName,
+		NodeRunName:  wk.currentJob.nodeRunName,
+		RunID:        wk.currentJob.runID,
+		JobName:      wk.currentJob.wJob.Job.Action.Name,
+		Worker: &cdn.SignatureWorker{
+			WorkerID:     wk.id,
+			WorkerName:   wk.Name(),
+			ArtifactName: artifactName,
+		},
+	}
+	signature, err := jws.Sign(wk.currentJob.signer, sig)
+	return signature, sdk.WrapError(err, "cannot sign log message")
+}
+
 func (wk *CurrentWorker) SendLog(ctx context.Context, level workerruntime.Level, logLine string) {
 	msg, sign, err := wk.prepareLog(ctx, level, logLine)
 	if err != nil {
@@ -125,6 +156,10 @@ func (wk *CurrentWorker) SendLog(ctx context.Context, level workerruntime.Level,
 		WithField(cdslog.ExtraFieldTerminated, false).
 		Log(msg.Level, msg.Value)
 	wk.stepLogLine++
+}
+
+func (wk *CurrentWorker) CDNHttpURL() string {
+	return wk.cdnHttpAddr
 }
 
 func (wk *CurrentWorker) prepareLog(ctx context.Context, level workerruntime.Level, s string) (cdslog.Message, string, error) {

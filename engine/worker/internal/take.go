@@ -38,9 +38,12 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 	w.currentJob.workflowID = info.WorkflowID
 	w.currentJob.runID = info.RunID
 	w.currentJob.nodeRunName = info.NodeRunName
+	w.currentJob.features = info.Features
 
 	// Reset build variables
 	w.currentJob.newVariables = nil
+
+	w.cdnHttpAddr = info.CDNHttpAddr
 
 	secretKey := make([]byte, 32)
 	if _, err := base64.StdEncoding.Decode(secretKey, []byte(info.SigningKey)); err != nil {

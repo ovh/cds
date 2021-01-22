@@ -72,26 +72,48 @@ func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Acti
 		}
 	}()
 
+	cdnArtifactEnabled := wk.FeatureEnabled(sdk.FeatureCDNArtifact)
+
 	integrationName := sdk.DefaultIfEmptyStorage(strings.TrimSpace(sdk.ParameterValue(a.Parameters, "destination")))
 	projectKey := sdk.ParameterValue(wk.Parameters(), "cds.project")
 
 	wg.Add(len(filesPath))
 	for _, p := range filesPath {
 		go func(path string) {
-			log.Debug(ctx, "worker.RunArtifactUpload> Uploading %s projectKey:%v integrationName:%v job:%d", path, projectKey, integrationName, jobID)
+			log.Debug(ctx, "uploading %s projectKey:%v integrationName:%v job:%d", path, projectKey, integrationName, jobID)
 			defer wg.Done()
-			throughTempURL, duration, err := wk.Client().QueueArtifactUpload(ctx, projectKey, integrationName, jobID, tag.Value, path)
-			if err != nil {
-				log.Warn(ctx, "worker.RunArtifactUpload> QueueArtifactUpload(%s, %s, %d, %s, %s) failed: %v", projectKey, integrationName, jobID, tag.Value, path, err)
-				chanError <- sdk.WrapError(err, "Error while uploading artifact %s", path)
-				wgErrors.Add(1)
+
+			if !cdnArtifactEnabled {
+				throughTempURL, duration, err := wk.Client().QueueArtifactUpload(ctx, projectKey, integrationName, jobID, tag.Value, path)
+				if err != nil {
+					log.Warn(ctx, "queueArtifactUpload(%s, %s, %d, %s, %s) failed: %v", projectKey, integrationName, jobID, tag.Value, path, err)
+					chanError <- sdk.WrapError(err, "Error while uploading artifact %s", path)
+					wgErrors.Add(1)
+					return
+				}
+				if throughTempURL {
+					wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("File '%s' uploaded in %.2fs to object store", path, duration.Seconds()))
+				} else {
+					wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("File '%s' uploaded in %.2fs to CDS API", path, duration.Seconds()))
+				}
 				return
 			}
-			if throughTempURL {
-				wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("File '%s' uploaded in %.2fs to object store", path, duration.Seconds()))
-			} else {
-				wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("File '%s' uploaded in %.2fs to CDS API", path, duration.Seconds()))
+
+			_, name := filepath.Split(path)
+			signature, err := wk.ArtifactSignature(name)
+			if err != nil {
+				log.Error(ctx, "unable to sign artifact: %v", err)
+				return
 			}
+
+			duration, err := wk.Client().CDNArtifactUpdload(ctx, wk.CDNHttpURL(), signature, path)
+			if err != nil {
+				log.Error(ctx, "upable to upload artifact %q: %v", path, err)
+				chanError <- sdk.WrapError(err, "Error while uploading artifact %s", path)
+				wgErrors.Add(1)
+			}
+			wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("File '%s' uploaded in %.2fs to CDS CDN", path, duration.Seconds()))
+
 		}(p)
 		if len(filesPath) > 1 {
 			//Wait 3 second to get the object storage to set up all the things

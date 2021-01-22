@@ -22,11 +22,11 @@ const (
 	ContextSessionID
 )
 
-func NoAuthMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *HandlerConfig) (context.Context, error) {
+func NoAuthMiddleware(ctx context.Context, _ http.ResponseWriter, _ *http.Request, _ *HandlerConfig) (context.Context, error) {
 	return ctx, nil
 }
 
-func JWTMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *HandlerConfig, keyFunc jwt.Keyfunc) (context.Context, error) {
+func JWTMiddleware(ctx context.Context, _ http.ResponseWriter, req *http.Request, _ *HandlerConfig, keyFunc jwt.Keyfunc) (context.Context, error) {
 	var jwtRaw string
 	var jwtFromCookie bool
 	// Try to get the jwt from the cookie firstly then from the authorization bearer header, a XSRF token with cookie

@@ -230,8 +230,7 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 		var requestError error
 		if rs, ok := body.(io.ReadSeeker); ok {
 			if _, err := rs.Seek(0, 0); err != nil {
-				savederror = sdk.WithStack(err)
-				continue
+				return nil, nil, 0, sdk.WrapError(err, "request failed after %d retries", i)
 			}
 			req, requestError = http.NewRequest(method, url, body)
 		} else {

@@ -1,5 +1,9 @@
 package sdk
 
+const (
+	FeatureCDNArtifact = "cdn-artifact"
+)
+
 type Feature struct {
 	ID   int64  `json:"id" db:"id" cli:"-" yaml:"-"`
 	Name string `json:"name" db:"name" cli:"name" yaml:"name"`

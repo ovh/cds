@@ -192,13 +192,15 @@ func TestPostUploadHandler(t *testing.T) {
 	moreHeaders := map[string]string{
 		"X-CDS-WORKER-SIGNATURE": signature,
 	}
-	req := assets.NewMultipartRequest(t, "POST", uri, path.Join(os.TempDir(), "myartifact"), "file", "myartifact", nil, moreHeaders)
+	f, err = os.Open(path.Join(os.TempDir(), "myartifact"))
+	require.NoError(t, err)
+	req := assets.NewUploadFileRequest(t, "POST", uri, f, moreHeaders)
 	rec := httptest.NewRecorder()
 	s.Router.Mux.ServeHTTP(rec, req)
 	for _, r := range gock.Pending() {
 		t.Logf("PENDING: %s \n", r.Request().URLStruct.String())
 	}
-
+	f.Close()
 	require.Equal(t, 204, rec.Code)
 	require.True(t, gock.IsDone())
 
