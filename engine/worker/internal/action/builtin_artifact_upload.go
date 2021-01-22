@@ -72,7 +72,7 @@ func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Acti
 		}
 	}()
 
-	cdnArtifactEnabled := wk.FeatureEnabled("cdn-artifact")
+	cdnArtifactEnabled := wk.FeatureEnabled(sdk.FeatureCDNArtifact)
 
 	integrationName := sdk.DefaultIfEmptyStorage(strings.TrimSpace(sdk.ParameterValue(a.Parameters, "destination")))
 	projectKey := sdk.ParameterValue(wk.Parameters(), "cds.project")
@@ -80,13 +80,13 @@ func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Acti
 	wg.Add(len(filesPath))
 	for _, p := range filesPath {
 		go func(path string) {
-			log.Debug(ctx, "worker.RunArtifactUpload> Uploading %s projectKey:%v integrationName:%v job:%d", path, projectKey, integrationName, jobID)
+			log.Debug(ctx, "uploading %s projectKey:%v integrationName:%v job:%d", path, projectKey, integrationName, jobID)
 			defer wg.Done()
 
 			if !cdnArtifactEnabled {
 				throughTempURL, duration, err := wk.Client().QueueArtifactUpload(ctx, projectKey, integrationName, jobID, tag.Value, path)
 				if err != nil {
-					log.Warn(ctx, "worker.RunArtifactUpload> QueueArtifactUpload(%s, %s, %d, %s, %s) failed: %v", projectKey, integrationName, jobID, tag.Value, path, err)
+					log.Warn(ctx, "queueArtifactUpload(%s, %s, %d, %s, %s) failed: %v", projectKey, integrationName, jobID, tag.Value, path, err)
 					chanError <- sdk.WrapError(err, "Error while uploading artifact %s", path)
 					wgErrors.Add(1)
 					return
@@ -102,13 +102,13 @@ func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Acti
 			_, name := filepath.Split(path)
 			signature, err := wk.ArtifactSignature(name)
 			if err != nil {
-				log.Error(ctx, "worker.RunArtifactUpload> unable to sign: %v", err)
+				log.Error(ctx, "unable to sign artifact: %v", err)
 				return
 			}
 
 			duration, err := wk.Client().CDNArtifactUpdload(ctx, wk.CDNHttpURL(), signature, path)
 			if err != nil {
-				log.Error(ctx, "worker.RunArtifactUpload> CDNArtifactUpdload failed for %s: %v", path, err)
+				log.Error(ctx, "upable to upload artifact %q: %v", path, err)
 				chanError <- sdk.WrapError(err, "Error while uploading artifact %s", path)
 				wgErrors.Add(1)
 			}

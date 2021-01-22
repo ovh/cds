@@ -115,11 +115,10 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 
 		pbji.CDNHttpAddr, err = services.GetCDNPublicHTTPAdress(ctx, api.mustDB())
 
-		featureName := "cdn-artifact"
-		enabled := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), featureName, map[string]string{"project_key": pbji.ProjectKey})
+		enabled := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeatureCDNArtifact, map[string]string{"project_key": pbji.ProjectKey})
 
 		pbji.Features = make(map[string]bool, 1)
-		pbji.Features[featureName] = enabled
+		pbji.Features[sdk.FeatureCDNArtifact] = enabled
 
 		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, *p, report)
 		go api.WorkflowSendEvent(context.Background(), *p, report)

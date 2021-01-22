@@ -14,6 +14,7 @@ func (c *client) CDNArtifactUpdload(ctx context.Context, cdnAddr string, signatu
 	t0 := time.Now()
 
 	var savedError error
+	// as *File implement io.ReadSeeker, retry in c.Stream will be skipped
 	for i := 0; i < c.config.Retry; i++ {
 		f, err := os.Open(path)
 		if err != nil {
