@@ -28,14 +28,13 @@ func (s *Service) initRouter(ctx context.Context) {
 
 	r.Handle("/item/upload", nil, r.POST(s.postUploadHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 	r.Handle("/item/stream", nil, r.GET(s.getItemLogsStreamHandler, service.OverrideAuth(s.validJWTMiddleware)))
+	r.Handle("/item/{type}", nil, r.GET(s.getItemsHandler))
 	r.Handle("/item/{type}/lines", nil, r.GET(s.getItemsAllLogsLinesHandler, service.OverrideAuth(s.validJWTMiddleware)))
 	r.Handle("/item/{type}/{apiRef}", nil, r.GET(s.getItemHandler, service.OverrideAuth(s.itemAccessMiddleware)), r.DELETE(s.deleteItemHandler))
 	r.Handle("/item/{type}/{apiRef}/checksync", nil, r.GET(s.getItemCheckSyncHandler, service.OverrideAuth(s.itemAccessMiddleware)))
 	r.Handle("/item/{type}/{apiRef}/download", nil, r.GET(s.getItemDownloadHandler, service.OverrideAuth(s.itemAccessMiddleware)))
 	r.Handle("/item/{type}/{apiRef}/download/{unit}", nil, r.GET(s.getItemDownloadInUnitHandler, service.OverrideAuth(s.itemAccessMiddleware)))
 	r.Handle("/item/{type}/{apiRef}/lines", nil, r.GET(s.getItemLogsLinesHandler, service.OverrideAuth(s.itemAccessMiddleware)))
-
-	r.Handle("/service/item/{type}", nil, r.GET(s.getItemsHandler))
 
 	r.Handle("/sync/projects", nil, r.POST(s.syncProjectsHandler))
 	r.Handle("/sync/buffer", nil, r.POST(s.syncBufferHandler))

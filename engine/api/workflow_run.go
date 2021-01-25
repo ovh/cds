@@ -17,6 +17,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/ascode"
 	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/ovh/cds/engine/api/cdn"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/integration"
@@ -808,7 +809,7 @@ func (api *API) getWorkflowNodeRunHandler() service.Handler {
 		}
 
 		if featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeatureCDNArtifact, map[string]string{"project_key": key}) {
-			results, err := workflow.ListArtifacts(ctx, api.mustDB(), nodeRun.WorkflowRunID)
+			results, err := cdn.ListItemsByRunID(ctx, api.mustDB(), sdk.CDNTypeItemArtifact, nodeRun.WorkflowRunID)
 			if err != nil {
 				return err
 			}

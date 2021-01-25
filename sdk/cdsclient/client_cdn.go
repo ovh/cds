@@ -21,7 +21,7 @@ func (c *client) CDNArtifactDownload(ctx context.Context, cdnAddr string, hash s
 	}
 	defer reader.Close()
 	_, err = io.Copy(w, reader)
-	return err
+	return sdk.WithStack(err)
 }
 
 func (c *client) CDNArtifactUpdload(ctx context.Context, cdnAddr string, signature string, path string) (time.Duration, error) {

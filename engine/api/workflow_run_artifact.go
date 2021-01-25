@@ -6,6 +6,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/cdn"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/featureflipping"
@@ -35,7 +36,7 @@ func (api *API) getWorkflowRunArtifactLinksHandler() service.Handler {
 			return err
 		}
 
-		result, err := workflow.ListArtifacts(ctx, api.mustDB(), wr.ID)
+		result, err := cdn.ListItemsByRunID(ctx, api.mustDB(), sdk.CDNTypeItemArtifact, wr.ID)
 		if err != nil {
 			return err
 		}

@@ -1,4 +1,4 @@
-package workflow
+package cdn
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func ListArtifacts(ctx context.Context, db gorp.SqlExecutor, runID int64) (sdk.CDNItemLinks, error) {
+func ListItemsByRunID(ctx context.Context, db gorp.SqlExecutor, itemtype sdk.CDNItemType, runID int64) (sdk.CDNItemLinks, error) {
 	var result sdk.CDNItemLinks
 
 	srvs, err := services.LoadAllByType(ctx, db, sdk.TypeCDN)
@@ -23,7 +23,7 @@ func ListArtifacts(ctx context.Context, db gorp.SqlExecutor, runID int64) (sdk.C
 		return result, sdk.WrapError(sdk.ErrNotFound, "no service found")
 	}
 
-	path := fmt.Sprintf("/service/item/%s?runid=%d", sdk.CDNTypeItemArtifact, runID)
+	path := fmt.Sprintf("/item/%s?runid=%d", itemtype, runID)
 	btes, _, _, err := services.DoRequest(ctx, db, srvs, http.MethodGet, path, nil)
 	if err != nil {
 		return result, err
