@@ -23,7 +23,9 @@ func (x *RunningStorageUnits) FillSyncItemChannel(ctx context.Context, s Storage
 	if err := x.cache.ScoredSetRevRange(ctx, cache.Key(KeyBackendSync, s.Name()), 0, nbItem, &itemIDs); err != nil {
 		return err
 	}
-	log.Info(ctx, "FillSyncItemChannel> Item to sync for %s: %d", s.Name(), len(itemIDs))
+	if len(itemIDs) > 0 {
+		log.Info(ctx, "FillSyncItemChannel> Item to sync for %s: %d", s.Name(), len(itemIDs))
+	}
 	for _, id := range itemIDs {
 		select {
 		case s.SyncItemChannel() <- id:

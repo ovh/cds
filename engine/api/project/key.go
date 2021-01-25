@@ -3,6 +3,7 @@ package project
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"crypto/rand"
 	"database/sql"
 	"encoding/base64"
@@ -18,7 +19,9 @@ import (
 )
 
 func init() {
-	gorpmapping.Register(gorpmapping.New(dbEncryptedData{}, "encrypted_data", false, "token"))
+	gorpmapping.Register(gorpmapping.New(dbEncryptedData{}, "encrypted_data", false, "project_id", "content_name"))
+	gorpmapping.Register(gorpmapping.New(sdk.Secret{}, "encrypted_data", false, "project_id", "content_name"))
+
 }
 
 type dbEncryptedData struct {
@@ -26,6 +29,15 @@ type dbEncryptedData struct {
 	Name            string `db:"content_name"`
 	Token           string `db:"token"`
 	EncyptedContent []byte `db:"encrypted_content"`
+}
+
+func ListEncryptedData(ctx context.Context, db gorp.SqlExecutor, projectID int64) ([]sdk.Secret, error) {
+	var res []sdk.Secret
+	query := gorpmapping.NewQuery("select content_name, token from encrypted_data where project_id = $1").Args(projectID)
+	if err := gorpmapping.GetAll(ctx, db, query, &res); err != nil {
+		return nil, sdk.WithStack(err)
+	}
+	return res, nil
 }
 
 // EncryptWithBuiltinKey encrypt a content with the builtin gpg key encode, compress it and encode with base64

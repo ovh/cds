@@ -13,7 +13,7 @@ import (
 	sdk "github.com/ovh/cds/sdk"
 	cdsclient "github.com/ovh/cds/sdk/cdsclient"
 	venom "github.com/ovh/venom"
-	coverage "github.com/sguiheux/go-coverage"
+	go_coverage "github.com/sguiheux/go-coverage"
 	io "io"
 	http "net/http"
 	reflect "reflect"
@@ -2652,6 +2652,21 @@ func (mr *MockProjectClientMockRecorder) VariableEncrypt(projectKey, varName, co
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VariableEncrypt", reflect.TypeOf((*MockProjectClient)(nil).VariableEncrypt), projectKey, varName, content)
 }
 
+// VariableListEncrypt mocks base method
+func (m *MockProjectClient) VariableListEncrypt(projectKey string) ([]sdk.Secret, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "VariableListEncrypt", projectKey)
+	ret0, _ := ret[0].([]sdk.Secret)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// VariableListEncrypt indicates an expected call of VariableListEncrypt
+func (mr *MockProjectClientMockRecorder) VariableListEncrypt(projectKey interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VariableListEncrypt", reflect.TypeOf((*MockProjectClient)(nil).VariableListEncrypt), projectKey)
+}
+
 // ProjectGroupsImport mocks base method
 func (m *MockProjectClient) ProjectGroupsImport(projectKey string, content io.Reader, mods ...cdsclient.RequestModifier) (sdk.Project, error) {
 	m.ctrl.T.Helper()
@@ -2941,6 +2956,21 @@ func (mr *MockProjectVariablesClientMockRecorder) VariableEncrypt(projectKey, va
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VariableEncrypt", reflect.TypeOf((*MockProjectVariablesClient)(nil).VariableEncrypt), projectKey, varName, content)
 }
 
+// VariableListEncrypt mocks base method
+func (m *MockProjectVariablesClient) VariableListEncrypt(projectKey string) ([]sdk.Secret, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "VariableListEncrypt", projectKey)
+	ret0, _ := ret[0].([]sdk.Secret)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// VariableListEncrypt indicates an expected call of VariableListEncrypt
+func (mr *MockProjectVariablesClientMockRecorder) VariableListEncrypt(projectKey interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VariableListEncrypt", reflect.TypeOf((*MockProjectVariablesClient)(nil).VariableListEncrypt), projectKey)
+}
+
 // MockQueueClient is a mock of QueueClient interface
 type MockQueueClient struct {
 	ctrl     *gomock.Controller
@@ -3086,7 +3116,7 @@ func (mr *MockQueueClientMockRecorder) QueueJobSendSpawnInfo(ctx, id, in interfa
 }
 
 // QueueSendCoverage mocks base method
-func (m *MockQueueClient) QueueSendCoverage(ctx context.Context, id int64, report coverage.Report) error {
+func (m *MockQueueClient) QueueSendCoverage(ctx context.Context, id int64, report go_coverage.Report) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueSendCoverage", ctx, id, report)
 	ret0, _ := ret[0].(error)
@@ -6907,6 +6937,21 @@ func (mr *MockInterfaceMockRecorder) VariableEncrypt(projectKey, varName, conten
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VariableEncrypt", reflect.TypeOf((*MockInterface)(nil).VariableEncrypt), projectKey, varName, content)
 }
 
+// VariableListEncrypt mocks base method
+func (m *MockInterface) VariableListEncrypt(projectKey string) ([]sdk.Secret, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "VariableListEncrypt", projectKey)
+	ret0, _ := ret[0].([]sdk.Secret)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// VariableListEncrypt indicates an expected call of VariableListEncrypt
+func (mr *MockInterfaceMockRecorder) VariableListEncrypt(projectKey interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VariableListEncrypt", reflect.TypeOf((*MockInterface)(nil).VariableListEncrypt), projectKey)
+}
+
 // ProjectGroupsImport mocks base method
 func (m *MockInterface) ProjectGroupsImport(projectKey string, content io.Reader, mods ...cdsclient.RequestModifier) (sdk.Project, error) {
 	m.ctrl.T.Helper()
@@ -7142,7 +7187,7 @@ func (mr *MockInterfaceMockRecorder) QueueJobSendSpawnInfo(ctx, id, in interface
 }
 
 // QueueSendCoverage mocks base method
-func (m *MockInterface) QueueSendCoverage(ctx context.Context, id int64, report coverage.Report) error {
+func (m *MockInterface) QueueSendCoverage(ctx context.Context, id int64, report go_coverage.Report) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueSendCoverage", ctx, id, report)
 	ret0, _ := ret[0].(error)
@@ -8808,7 +8853,7 @@ func (mr *MockWorkerInterfaceMockRecorder) QueueJobSendSpawnInfo(ctx, id, in int
 }
 
 // QueueSendCoverage mocks base method
-func (m *MockWorkerInterface) QueueSendCoverage(ctx context.Context, id int64, report coverage.Report) error {
+func (m *MockWorkerInterface) QueueSendCoverage(ctx context.Context, id int64, report go_coverage.Report) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueSendCoverage", ctx, id, report)
 	ret0, _ := ret[0].(error)

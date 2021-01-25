@@ -59,7 +59,7 @@ my-data: 01234567890987654321`,
 }
 
 func encrypt() *cobra.Command {
-	return cli.NewCommand(encryptCmd, encryptRun, nil, withAllCommandModifiers()...)
+	return cli.NewCommand(encryptCmd, encryptRun, cli.SubCommands{encryptList()}, withAllCommandModifiers()...)
 }
 
 func encryptRun(v cli.Values) error {
@@ -75,4 +75,24 @@ func encryptRun(v cli.Values) error {
 
 	fmt.Printf("%s: %s\n", variable.Name, variable.Value)
 	return nil
+}
+
+var encryptListCmd = cli.Command{
+	Name:  "list",
+	Short: "List all the encrypted variable of your CDS project",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+	},
+}
+
+func encryptList() *cobra.Command {
+	return cli.NewListCommand(encryptListCmd, encryptListRun, nil, withAllCommandModifiers()...)
+}
+
+func encryptListRun(v cli.Values) (cli.ListResult, error) {
+	secrets, err := client.VariableListEncrypt(v.GetString(_ProjectKey))
+	if err != nil {
+		return nil, err
+	}
+	return cli.AsListResult(secrets), nil
 }
