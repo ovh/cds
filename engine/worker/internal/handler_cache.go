@@ -65,9 +65,9 @@ func cachePushHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 			writeError(w, r, err)
 			return
 		}
-		defer tarF.Close() // nolint
 
 		if err := sdk.CreateTarFromPaths(afero.NewOsFs(), c.WorkingDirectory, c.Files, tarF, nil); err != nil {
+			_ = tarF.Close() // nolint
 			err = sdk.Error{
 				Message: fmt.Sprintf("worker cache push > Cannot tar (%+v) : %v", c.Files, err.Error()),
 				Status:  http.StatusBadRequest,
@@ -79,6 +79,7 @@ func cachePushHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 
 		tarInfo, err := tarF.Stat()
 		if err != nil {
+			_ = tarF.Close() // nolint
 			err = sdk.Error{
 				Message: "worker cache push > Cannot get tmp tar file info : " + err.Error(),
 				Status:  http.StatusInternalServerError,
@@ -91,6 +92,7 @@ func cachePushHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 		params := wk.currentJob.wJob.Parameters
 		projectKey := sdk.ParameterValue(params, "cds.project")
 		if projectKey == "" {
+			_ = tarF.Close() // nolint
 			err := sdk.Error{
 				Message: "worker cache push > Cannot find project",
 				Status:  http.StatusInternalServerError,
@@ -100,18 +102,36 @@ func cachePushHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 			return
 		}
 
+		tarPath := tarF.Name()
+
+		if err := tarF.Close(); err != nil {
+			err := sdk.Error{
+				Message: "worker cache push > Cannot close file: " + err.Error(),
+				Status:  http.StatusInternalServerError,
+			}
+			log.Error(ctx, "%v", err)
+			writeError(w, r, err)
+			return
+		}
+
 		var errPush error
 		for i := 0; i < 10; i++ {
-			// Seek to be able to read the content of the file from beginning just after it had been written or in case of retry
-			if _, err := tarF.Seek(0, 0); err != nil {
-				errPush = err
-			} else {
-				if errPush = wk.client.WorkflowCachePush(projectKey, sdk.DefaultIfEmptyStorage(c.IntegrationName), c.Tag, tarF, int(tarInfo.Size())); errPush == nil {
-					return
+			f, err := wk.BaseDir().Open(tarPath)
+			if err != nil {
+				err := sdk.Error{
+					Message: "worker cache push > Cannot open tar file: " + err.Error(),
+					Status:  http.StatusInternalServerError,
 				}
+				log.Error(ctx, "%v", err)
+				writeError(w, r, err)
+				return
 			}
-			time.Sleep(3 * time.Second)
+
+			if errPush = wk.client.WorkflowCachePush(projectKey, sdk.DefaultIfEmptyStorage(c.IntegrationName), c.Tag, f, int(tarInfo.Size())); errPush == nil {
+				return
+			}
 			log.Error(ctx, "worker cache push > cannot push cache (retry x%d) : %v", i, errPush)
+			time.Sleep(3 * time.Second)
 		}
 
 		err = sdk.Error{
