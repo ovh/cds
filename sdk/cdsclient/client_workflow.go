@@ -429,48 +429,36 @@ func (c *client) workflowCachePushIndirectUpload(projectKey, integrationName, re
 		return fmt.Errorf("HTTP Code %d", code)
 	}
 
+	// FIXME temporary fix that will be deprecated with cdn artifacts
+	time.Sleep(2 * time.Second)
+
 	return c.workflowCachePushIndirectUploadPost(cacheObj.TmpURL, tarContent, size)
 }
 
 func (c *client) workflowCachePushIndirectUploadPost(url string, tarContent io.Reader, size int) error {
-	//Post the file to the temporary URL
-	var retry = 10
-	var globalErr error
-	var body []byte
-	for i := 0; i < retry; i++ {
-		req, errRequest := http.NewRequest("PUT", url, tarContent)
-		if errRequest != nil {
-			return errRequest
-		}
-		req.Header.Set("Content-Type", "application/tar")
-		req.ContentLength = int64(size)
+	req, err := http.NewRequest("PUT", url, tarContent)
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+	req.Header.Set("Content-Type", "application/tar")
+	req.ContentLength = int64(size)
 
-		var resp *http.Response
-		resp, globalErr = http.DefaultClient.Do(req)
-
-		if globalErr == nil {
-			defer resp.Body.Close()
-
-			var err error
-			body, err = ioutil.ReadAll(resp.Body)
-			if err != nil {
-				globalErr = err
-				time.Sleep(1 * time.Second)
-				continue
-			}
-
-			if resp.StatusCode >= 300 {
-				globalErr = fmt.Errorf("[%d] Unable to upload cache: (HTTP %d) %s", i, resp.StatusCode, string(body))
-				time.Sleep(1 * time.Second)
-				continue
-			}
-
-			break
-		}
-		time.Sleep(500 * time.Millisecond)
+	resp, err := c.httpSSEClient.Do(req)
+	if err != nil {
+		return sdk.WithStack(err)
 	}
 
-	return globalErr
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+
+	if resp.StatusCode >= 300 {
+		return sdk.WithStack(fmt.Errorf("unable to upload cache: (HTTP %d) %s", resp.StatusCode, string(body)))
+	}
+	return nil
 }
 
 func (c *client) WorkflowCachePull(projectKey, integrationName, ref string) (io.Reader, error) {
