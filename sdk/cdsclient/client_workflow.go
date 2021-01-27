@@ -420,7 +420,7 @@ func (c *client) workflowCachePushIndirectUpload(projectKey, integrationName, re
 		return fmt.Errorf("HTTP Code %d", code)
 	}
 
-	// Ugly but this code will be deprecated with cdn artifacts
+	// FIXME temporary fix that will be deprecated with cdn artifacts
 	time.Sleep(2 * time.Second)
 
 	return c.workflowCachePushIndirectUploadPost(cacheObj.TmpURL, tarContent, size)
