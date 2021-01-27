@@ -431,7 +431,7 @@ func (c *client) workflowCachePushIndirectUploadPost(url string, tarContent io.R
 	for i := 0; i < retry; i++ {
 		req, errRequest := http.NewRequest("PUT", url, tarContent)
 		if errRequest != nil {
-			return errRequest
+			return sdk.WithStack(errRequest)
 		}
 		req.Header.Set("Content-Type", "application/tar")
 		req.ContentLength = int64(size)
@@ -461,7 +461,7 @@ func (c *client) workflowCachePushIndirectUploadPost(url string, tarContent io.R
 		time.Sleep(500 * time.Millisecond)
 	}
 
-	return globalErr
+	return sdk.WithStack(globalErr)
 }
 
 func (c *client) WorkflowCachePull(projectKey, integrationName, ref string) (io.Reader, error) {
