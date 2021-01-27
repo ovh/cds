@@ -141,7 +141,7 @@ func LoadAllSynchronizedItemIDs(db gorp.SqlExecutor, bufferUnitID string, maxSto
 	var itemIDs []string
 	query := `
 	WITH inBuffer as (
-		SELECT item_id 
+		SELECT item_id
 		FROM storage_unit_item
 		WHERE unit_id = $2
 	)
@@ -299,11 +299,11 @@ func getAllItemUnits(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecu
 }
 
 func CountItemCompleted(db gorp.SqlExecutor) (int64, error) {
-	return db.SelectInt("SELECT COUNT(id) from item WHERE item.status = $1 AND to_delete = false", sdk.CDNStatusItemCompleted)
+	return db.SelectInt("SELECT COUNT(status) from item WHERE item.status = $1 AND to_delete = false", sdk.CDNStatusItemCompleted)
 }
 
 func CountItemIncoming(db gorp.SqlExecutor) (int64, error) {
-	return db.SelectInt("SELECT COUNT(id) from item WHERE item.status <> $1", sdk.CDNStatusItemCompleted)
+	return db.SelectInt("SELECT COUNT(status) from item WHERE item.status <> $1", sdk.CDNStatusItemCompleted)
 }
 
 func CountItemUnitByUnit(db gorp.SqlExecutor, unitID string) (int64, error) {
