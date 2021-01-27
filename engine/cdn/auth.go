@@ -89,11 +89,21 @@ func (s *Service) itemAccessCheck(ctx context.Context, item sdk.CDNItem) error {
 		return nil
 	}
 
-	logRef, has := item.GetCDNLogApiRef()
-	if !has {
-		return sdk.WrapError(sdk.ErrInvalidData, "item is not a log")
+	var projectKey, workflowName string
+	switch item.Type {
+	case sdk.CDNTypeItemStepLog, sdk.CDNTypeItemServiceLog:
+		logRef, _ := item.GetCDNLogApiRef()
+		projectKey = logRef.ProjectKey
+		workflowName = logRef.WorkflowName
+	case sdk.CDNTypeItemArtifact:
+		artRef, _ := item.GetCDNArtifactApiRef()
+		projectKey = artRef.ProjectKey
+		workflowName = artRef.WorkflowName
+	default:
+		return sdk.WrapError(sdk.ErrInvalidData, "wrong item type %s", item.Type)
 	}
-	if err := s.Client.WorkflowLogAccess(ctx, logRef.ProjectKey, logRef.WorkflowName, sessionID); err != nil {
+
+	if err := s.Client.WorkflowAccess(ctx, projectKey, workflowName, sessionID, item.Type); err != nil {
 		return sdk.NewErrorWithStack(err, sdk.ErrNotFound)
 	}
 

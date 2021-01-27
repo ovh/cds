@@ -28,7 +28,7 @@ func (s *Service) getItemLogsStreamHandler() service.Handler {
 			service.WriteError(ctx, w, r, sdk.NewErrorWithStack(err, sdk.ErrWebsocketUpgrade))
 			return nil
 		}
-		defer c.Close()
+		defer c.Close() //nolint
 
 		jwt := ctx.Value(service.ContextJWT).(*jwt.Token)
 		claims := jwt.Claims.(*sdk.AuthSessionJWTClaims)

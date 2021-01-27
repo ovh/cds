@@ -14,17 +14,61 @@ import (
 )
 
 type CDNItem struct {
-	ID           string      `json:"id" db:"id"`
-	Created      time.Time   `json:"created" db:"created"`
-	LastModified time.Time   `json:"last_modified" db:"last_modified"`
-	Hash         string      `json:"hash" db:"cipher_hash" gorpmapping:"encrypted,ID,APIRefHash,Type"`
-	APIRef       CDNApiRef   `json:"api_ref" db:"-"`
-	APIRefHash   string      `json:"api_ref_hash" db:"api_ref_hash"`
-	Status       string      `json:"status" db:"status"`
-	Type         CDNItemType `json:"type" db:"type"`
-	Size         int64       `json:"size" db:"size"`
-	MD5          string      `json:"md5" db:"md5"`
-	ToDelete     bool        `json:"to_delete" db:"to_delete"`
+	ID           string          `json:"id" db:"id"`
+	Created      time.Time       `json:"created" db:"created"`
+	LastModified time.Time       `json:"last_modified" db:"last_modified"`
+	Hash         string          `json:"hash" db:"cipher_hash" gorpmapping:"encrypted,ID,APIRefHash,Type"`
+	APIRefRaw    json.RawMessage `json:"api_ref" db:"-"`
+	APIRef       CDNApiRef       `json:"-" db:"-"`
+	APIRefHash   string          `json:"api_ref_hash" db:"api_ref_hash"`
+	Status       string          `json:"status" db:"status"`
+	Type         CDNItemType     `json:"type" db:"type"`
+	Size         int64           `json:"size" db:"size"`
+	MD5          string          `json:"md5" db:"md5"`
+	ToDelete     bool            `json:"to_delete" db:"to_delete"`
+}
+
+type CDNItemLinks struct {
+	CDNHttpURL string    `json:"cdn_http_url"`
+	Items      []CDNItem `json:"items"`
+}
+
+func (c CDNItem) MarshalJSON() ([]byte, error) {
+	type Alias CDNItem
+	itemalias := Alias(c)
+	apiRefBts, err := json.Marshal(itemalias.APIRef)
+	if err != nil {
+		return nil, WithStack(err)
+	}
+	itemalias.APIRefRaw = apiRefBts
+
+	bts, err := json.Marshal(itemalias)
+	return bts, WithStack(err)
+}
+
+func (c *CDNItem) UnmarshalJSON(data []byte) error {
+	type Alias CDNItem // prevent recursion
+	var itemAlias Alias
+	if err := json.Unmarshal(data, &itemAlias); err != nil {
+		return WithStack(err)
+	}
+
+	switch itemAlias.Type {
+	case CDNTypeItemStepLog, CDNTypeItemServiceLog:
+		var apiRef CDNLogAPIRef
+		if err := json.Unmarshal(itemAlias.APIRefRaw, &apiRef); err != nil {
+			return WithStack(err)
+		}
+		itemAlias.APIRef = &apiRef
+	case CDNTypeItemArtifact:
+		var apiRef CDNArtifactAPIRef
+		if err := json.Unmarshal(itemAlias.APIRefRaw, &apiRef); err != nil {
+			return WithStack(err)
+		}
+		itemAlias.APIRef = &apiRef
+	}
+	*c = CDNItem(itemAlias)
+	return nil
 }
 
 type CDNItemUnit struct {
@@ -103,7 +147,8 @@ type CDNArtifactAPIRef struct {
 	RunID          int64  `json:"run_id"`
 	NodeRunJobID   int64  `json:"node_run_job_id"`
 	NodeRunJobName string `json:"node_run_job_name"`
-	ArtifactName   string `json:"artifact_name,omitempty"`
+	ArtifactName   string `json:"artifact_name"`
+	Perm           uint32 `json:"perm"`
 }
 
 func NewCDNApiRef(t CDNItemType, signature cdn.Signature) (CDNApiRef, error) {
@@ -125,8 +170,9 @@ func NewCDNArtifactApiRef(signature cdn.Signature) CDNApiRef {
 		RunID:          signature.RunID,
 		NodeRunJobName: signature.JobName,
 		NodeRunJobID:   signature.JobID,
+		ArtifactName:   signature.Worker.ArtifactName,
+		Perm:           signature.Worker.FilePerm,
 	}
-	apiRef.ArtifactName = signature.Worker.ArtifactName
 	return &apiRef
 }
 
@@ -180,6 +226,11 @@ func (a *CDNLogAPIRef) ToFilename() string {
 
 func (c CDNItem) GetCDNLogApiRef() (*CDNLogAPIRef, bool) {
 	apiRef, has := c.APIRef.(*CDNLogAPIRef)
+	return apiRef, has
+}
+
+func (c CDNItem) GetCDNArtifactApiRef() (*CDNArtifactAPIRef, bool) {
+	apiRef, has := c.APIRef.(*CDNArtifactAPIRef)
 	return apiRef, has
 }
 

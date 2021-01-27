@@ -2,8 +2,12 @@ package cdn
 
 import (
 	"context"
+	"github.com/ovh/cds/engine/cdn/storage"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path"
 	"strconv"
 	"testing"
 	"time"
@@ -106,7 +110,7 @@ func TestGetItemLogsDownloadHandler(t *testing.T) {
 	s, db := newTestService(t)
 	s.Client = cdsclient.New(cdsclient.Config{Host: "http://lolcat.api", InsecureSkipVerifyTLS: false})
 	gock.InterceptClient(s.Client.(cdsclient.Raw).HTTPClient())
-	gock.New("http://lolcat.api").Get("/project/" + projectKey + "/workflows/MyWorkflow/log/access").Reply(http.StatusOK).JSON(nil)
+	gock.New("http://lolcat.api").Get("/project/" + projectKey + "/workflows/MyWorkflow/type/step-log/access").Reply(http.StatusOK).JSON(nil)
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
@@ -205,4 +209,128 @@ func TestGetItemLogsDownloadHandler(t *testing.T) {
 
 	t.Log(rec.Body.String())
 
+}
+
+func TestGetItemArtifactDownloadHandler(t *testing.T) {
+	projectKey := sdk.RandomString(10)
+
+	// Create cdn service with need storage and test item
+	s, db := newTestService(t)
+
+	cdntest.ClearItem(t, context.Background(), s.Mapper, db)
+
+	s.Client = cdsclient.New(cdsclient.Config{Host: "http://lolcat.api", InsecureSkipVerifyTLS: false})
+	gock.InterceptClient(s.Client.(cdsclient.Raw).HTTPClient())
+	gock.New("http://lolcat.api").Get("/project/" + projectKey + "/workflows/WfName/type/artifact/access").Reply(http.StatusOK).JSON(nil)
+
+	ctx, cancel := context.WithCancel(context.TODO())
+	t.Cleanup(cancel)
+	s.Units = newRunningStorageUnits(t, s.Mapper, db.DbMap, ctx, s.Cache)
+
+	fileContent := []byte("Hi, I am foo.")
+	myartifact, errF := os.Create(path.Join(os.TempDir(), "myartifact"))
+	defer os.RemoveAll(path.Join(os.TempDir(), "myartifact"))
+	require.NoError(t, errF)
+	_, errW := myartifact.Write(fileContent)
+	require.NoError(t, errW)
+	myartifact.Close()
+
+	f, err := os.Open(path.Join(os.TempDir(), "myartifact"))
+	require.NoError(t, err)
+
+	sig := cdn.Signature{
+		ProjectKey:   projectKey,
+		WorkflowName: "WfName",
+		WorkflowID:   1,
+		RunID:        2,
+		JobID:        3,
+		JobName:      "JobDownload",
+		Worker: &cdn.SignatureWorker{
+			ArtifactName: "myartifact",
+			WorkerName:   "myworker",
+		},
+	}
+
+	require.NoError(t, s.storeFile(ctx, sig, f))
+
+	signer, err := authentication.NewSigner("cdn-test", test.SigningKey)
+	require.NoError(t, err)
+	s.Common.ParsedAPIPublicKey = signer.GetVerifyKey()
+	authSessionJWTClaims := sdk.AuthSessionJWTClaims{
+		ID: sdk.UUID(),
+		StandardClaims: jwt.StandardClaims{
+			Issuer:    "test",
+			Subject:   sdk.UUID(),
+			Id:        sdk.UUID(),
+			IssuedAt:  time.Now().Unix(),
+			ExpiresAt: time.Now().Add(time.Minute).Unix(),
+		},
+	}
+	jwtToken := jwt.NewWithClaims(jwt.SigningMethodRS512, authSessionJWTClaims)
+	jwtTokenRaw, err := signer.SignJWT(jwtToken)
+	require.NoError(t, err)
+
+	apiRef := sdk.NewCDNArtifactApiRef(sig)
+	refhash, err := apiRef.ToHash()
+	require.NoError(t, err)
+
+	uri := s.Router.GetRoute("GET", s.getItemDownloadHandler, map[string]string{
+		"type":   string(sdk.CDNTypeItemArtifact),
+		"apiRef": refhash,
+	})
+	require.NotEmpty(t, uri)
+	req := assets.NewJWTAuthentifiedRequest(t, jwtTokenRaw, "GET", uri, nil)
+	rec := httptest.NewRecorder()
+	s.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, 200, rec.Code)
+
+	assert.Equal(t, string(fileContent), string(rec.Body.Bytes()))
+
+	its, err := item.LoadAll(ctx, s.Mapper, db, 1, gorpmapper.GetOptions.WithDecryption)
+	require.NoError(t, err)
+
+	// Sync inbackend
+	// Sync in local storage
+	unit, err := storage.LoadUnitByName(ctx, s.Mapper, db, s.Units.Storages[0].Name())
+	require.NoError(t, err)
+	// Waiting FS sync
+	cpt := 0
+	for {
+		ids, err := storage.LoadAllItemUnitsIDsByItemIDsAndUnitID(db, unit.ID, []string{its[0].ID})
+		require.NoError(t, err)
+		if len(ids) == 1 {
+			break
+		}
+		if cpt == 20 {
+			t.Logf("No sync in FS")
+			t.Fail()
+			return
+		}
+		if len(ids) != 1 {
+			cpt++
+			time.Sleep(500 * time.Millisecond)
+			continue
+		}
+	}
+
+	// Delete from buffer
+	iuInBuffers, err := storage.LoadAllItemUnitsIDsByItemIDsAndUnitID(db, s.Units.FileBuffer().ID(), []string{its[0].ID})
+	require.NoError(t, err)
+	require.Equal(t, 1, len(iuInBuffers))
+	iuBuffer, err := storage.LoadItemUnitByID(ctx, s.Mapper, db, iuInBuffers[0])
+	require.NoError(t, err)
+	require.NoError(t, storage.DeleteItemUnit(s.Mapper, db, iuBuffer))
+
+	// Download again
+	uri = s.Router.GetRoute("GET", s.getItemDownloadHandler, map[string]string{
+		"type":   string(sdk.CDNTypeItemArtifact),
+		"apiRef": refhash,
+	})
+	require.NotEmpty(t, uri)
+	req = assets.NewJWTAuthentifiedRequest(t, jwtTokenRaw, "GET", uri, nil)
+	rec = httptest.NewRecorder()
+	s.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, 200, rec.Code)
+
+	assert.Equal(t, string(fileContent), string(rec.Body.Bytes()))
 }

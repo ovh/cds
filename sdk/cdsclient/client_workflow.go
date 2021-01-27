@@ -173,6 +173,15 @@ func (c *client) WorkflowRunArtifacts(projectKey string, workflowName string, nu
 	return arts, nil
 }
 
+func (c *client) WorkflowRunArtifactsLinks(projectKey string, workflowName string, number int64) (sdk.CDNItemLinks, error) {
+	url := fmt.Sprintf("/project/%s/workflows/%s/runs/%d/artifacts/links", projectKey, workflowName, number)
+	var resp sdk.CDNItemLinks
+	if _, err := c.GetJSON(context.Background(), url, &resp); err != nil {
+		return resp, err
+	}
+	return resp, nil
+}
+
 func (c *client) WorkflowNodeRun(projectKey string, workflowName string, number int64, nodeRunID int64) (*sdk.WorkflowNodeRun, error) {
 	url := fmt.Sprintf("/project/%s/workflows/%s/runs/%d/nodes/%d", projectKey, workflowName, number, nodeRunID)
 	run := sdk.WorkflowNodeRun{}
@@ -240,8 +249,8 @@ func (c *client) WorkflowNodeRunJobServiceLink(ctx context.Context, projectKey s
 	return &a, nil
 }
 
-func (c *client) WorkflowLogAccess(ctx context.Context, projectKey, workflowName, sessionID string) error {
-	url := fmt.Sprintf("/project/%s/workflows/%s/log/access", projectKey, workflowName)
+func (c *client) WorkflowAccess(ctx context.Context, projectKey, workflowName, sessionID string, itemType sdk.CDNItemType) error {
+	url := fmt.Sprintf("/project/%s/workflows/%s/type/%s/access", projectKey, workflowName, itemType)
 	if _, err := c.GetJSON(ctx, url, nil, SetHeader("X-CDS-Session-ID", sessionID)); err != nil {
 		return err
 	}

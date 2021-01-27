@@ -3,12 +3,26 @@ package cdsclient
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/ovh/cds/sdk"
 )
+
+func (c *client) CDNArtifactDownload(ctx context.Context, cdnAddr string, hash string, w io.Writer) error {
+	reader, _, _, err := c.Stream(ctx, http.MethodGet, fmt.Sprintf("%s/item/%s/%s/download", cdnAddr, sdk.CDNTypeItemArtifact, hash), nil, true, func(req *http.Request) {
+		auth := "Bearer " + c.config.SessionToken
+		req.Header.Add("Authorization", auth)
+	})
+	if err != nil {
+		return err
+	}
+	defer reader.Close()
+	_, err = io.Copy(w, reader)
+	return sdk.WithStack(err)
+}
 
 func (c *client) CDNArtifactUpdload(ctx context.Context, cdnAddr string, signature string, path string) (time.Duration, error) {
 	t0 := time.Now()

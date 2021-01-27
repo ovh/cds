@@ -17,6 +17,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/ascode"
 	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/ovh/cds/engine/api/cdn"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/integration"
@@ -796,7 +797,7 @@ func (api *API) getWorkflowNodeRunHandler() service.Handler {
 		if err != nil {
 			return err
 		}
-		run, err := workflow.LoadNodeRun(api.mustDB(), key, name, id, workflow.LoadRunOptions{
+		nodeRun, err := workflow.LoadNodeRun(api.mustDB(), key, name, id, workflow.LoadRunOptions{
 			WithTests:           true,
 			WithArtifacts:       true,
 			WithStaticFiles:     true,
@@ -807,8 +808,39 @@ func (api *API) getWorkflowNodeRunHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to load last workflow run")
 		}
 
-		run.Translate()
-		return service.WriteJSON(w, run, http.StatusOK)
+		if featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeatureCDNArtifact, map[string]string{"project_key": key}) {
+			results, err := cdn.ListItemsByRunID(ctx, api.mustDB(), sdk.CDNTypeItemArtifact, nodeRun.WorkflowRunID)
+			if err != nil {
+				return err
+			}
+			var runJobIDs []int64
+			for _, s := range nodeRun.Stages {
+				for _, rj := range s.RunJobs {
+					runJobIDs = append(runJobIDs, rj.ID)
+				}
+			}
+			for _, item := range results.Items {
+				apiRef, _ := item.GetCDNArtifactApiRef()
+				for _, id := range runJobIDs {
+					if id != apiRef.NodeRunJobID {
+						continue
+					}
+					nodeRun.Artifacts = append(nodeRun.Artifacts, sdk.WorkflowNodeRunArtifact{
+						Name:         item.APIRef.ToFilename(),
+						Created:      item.Created,
+						Size:         item.Size,
+						DownloadHash: item.APIRefHash,
+						MD5sum:       item.MD5,
+						TempURL:      fmt.Sprintf("%s/item/%s/%s/download", results.CDNHttpURL, item.Type, item.APIRefHash),
+					})
+					break
+				}
+			}
+
+		}
+
+		nodeRun.Translate()
+		return service.WriteJSON(w, nodeRun, http.StatusOK)
 	}
 }
 

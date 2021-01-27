@@ -3,6 +3,7 @@ package action
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -100,7 +101,15 @@ func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Acti
 			}
 
 			_, name := filepath.Split(path)
-			signature, err := wk.ArtifactSignature(name)
+
+			fileMode, err := os.Stat(path)
+			if err != nil {
+				log.Warn(ctx, "worker.RunArtifactUpload> unable to get file stat %s: %v", path, err)
+				chanError <- sdk.WrapError(err, "unable to get file stat %s", path)
+				wgErrors.Add(1)
+				return
+			}
+			signature, err := wk.ArtifactSignature(name, uint32(fileMode.Mode().Perm()))
 			if err != nil {
 				log.Error(ctx, "unable to sign artifact: %v", err)
 				return

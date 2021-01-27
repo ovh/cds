@@ -70,7 +70,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 		return nil, fmt.Errorf("invalid CDN configuration. Missing storage unit")
 	}
 
-	if config.SyncNbElements < 0 || config.SyncNbElements > 1000 {
+	if config.SyncNbElements <= 0 || config.SyncNbElements > 1000 {
 		config.SyncNbElements = 100
 	}
 
@@ -246,7 +246,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 	return &result, nil
 }
 
-func (r *RunningStorageUnits) PushInSyncQueue(ctx context.Context, itemID string, apiRefHash string, created time.Time) {
+func (r *RunningStorageUnits) PushInSyncQueue(ctx context.Context, itemID string, created time.Time) {
 	for _, sto := range r.Storages {
 		if err := r.cache.ScoredSetAdd(ctx, cache.Key(KeyBackendSync, sto.Name()), itemID, float64(created.Unix())); err != nil {
 			log.Info(ctx, "storeLogs> cannot push item %s into scoredset for unit %s", itemID, sto.Name())
