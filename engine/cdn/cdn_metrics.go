@@ -10,6 +10,7 @@ import (
 
 	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/storage"
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -111,7 +112,7 @@ func (s *Service) ComputeMetrics(ctx context.Context) {
 			for _, bu := range s.Units.Buffers {
 				bufferStats, err := storage.CountItemsForUnit(s.mustDBWithCtx(ctx), bu.ID())
 				if err != nil {
-					log.Error(ctx, "cdn> Unable to compute CountItemsByUnit for %s: %v", bu.Name(), err)
+					log.Error(ctx, "cdn> Unable to compute CountItemsForUnit for %s: %v", bu.Name(), err)
 					continue
 				}
 				for i := range bufferStats {
@@ -124,7 +125,7 @@ func (s *Service) ComputeMetrics(ctx context.Context) {
 			for _, su := range s.Units.Storages {
 				suStats, err := storage.CountItemsForUnit(s.mustDBWithCtx(ctx), su.ID())
 				if err != nil {
-					log.Error(ctx, "cdn> Unable to compute CountItemsByUnit for %s: %v", su.Name(), err)
+					log.Error(ctx, "cdn> Unable to compute CountItemsForUnit for %s: %v", su.Name(), err)
 					continue
 				}
 				for i := range suStats {
@@ -139,7 +140,7 @@ func (s *Service) ComputeMetrics(ctx context.Context) {
 
 				// to synchronized
 				for _, allItems := range allItemsByType {
-					if allItems.Type == stat.Type {
+					if allItems.Type == stat.Type && allItems.Status == sdk.CDNStatusItemCompleted {
 						ctxItem := telemetry.ContextWithTag(ctx, telemetry.TagStorage, stat.StorageName, telemetry.TagType, stat.Type)
 						telemetry.Record(ctxItem, s.Metrics.ItemToSyncCount, allItems.Number-stat.Number)
 						break

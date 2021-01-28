@@ -298,18 +298,6 @@ func getAllItemUnits(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecu
 	return itemUnits, nil
 }
 
-func CountItemCompleted(db gorp.SqlExecutor) (int64, error) {
-	return db.SelectInt("SELECT COUNT(status) from item WHERE item.status = $1 AND to_delete = false", sdk.CDNStatusItemCompleted)
-}
-
-func CountItemIncoming(db gorp.SqlExecutor) (int64, error) {
-	return db.SelectInt("SELECT COUNT(status) from item WHERE item.status <> $1", sdk.CDNStatusItemCompleted)
-}
-
-func CountItemUnitByUnit(db gorp.SqlExecutor, unitID string) (int64, error) {
-	return db.SelectInt("SELECT COUNT(unit_id) from storage_unit_item WHERE unit_id = $1", unitID)
-}
-
 func LoadAllItemIDUnknownByUnit(db gorp.SqlExecutor, unitID string, offset int64, limit int64) ([]ItemToSync, error) {
 	var res []ItemToSync
 
