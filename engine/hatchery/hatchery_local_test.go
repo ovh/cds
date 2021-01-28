@@ -54,8 +54,7 @@ func TestHatcheryLocal(t *testing.T) {
 	privKeyPEM, _ := jws.ExportPrivateKey(privKey)
 	cfg.RSAPrivateKey = string(privKeyPEM)
 
-	err := h.ApplyConfiguration(cfg)
-	require.NoError(t, err)
+	require.NoError(t, h.ApplyConfiguration(cfg))
 
 	srvCfg, err := h.Init(cfg)
 	require.NotNil(t, srvCfg)
@@ -68,25 +67,23 @@ func TestHatcheryLocal(t *testing.T) {
 		return nil
 	}
 
-	err = h.Start(context.TODO(), srvCfg)
-	require.NoError(t, err)
+	require.NoError(t, h.Start(context.TODO(), srvCfg))
 
 	var srvConfig sdk.ServiceConfig
 	b, _ := json.Marshal(cfg)
 	json.Unmarshal(b, &srvConfig) // nolint
 
-	err = h.Register(context.Background(), srvConfig)
-	require.NoError(t, err)
+	require.NoError(t, h.Register(context.Background(), srvConfig))
 
-	heartbeatCtx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
+	heartbeatCtx, cancel := context.WithTimeout(context.TODO(), 1*time.Second)
 	defer cancel()
 	err = h.Heartbeat(heartbeatCtx, h.Status)
-	require.Contains(t, "context deadline exceeded", err.Error())
+	require.Contains(t, err.Error(), "context deadline exceeded")
 
 	serveCtx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
 	defer cancel()
 	err = h.Serve(serveCtx)
-	require.Contains(t, "context deadline exceeded", err.Error())
+	require.Contains(t, err.Error(), "context deadline exceeded")
 
 	// Mock assertions
 
