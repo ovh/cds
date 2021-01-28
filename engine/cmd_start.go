@@ -316,11 +316,8 @@ See $ engine config command for more details.
 			}
 		}
 
+		// Wait for all services to stop
 		wg.Wait()
-
-		//Wait for the end
-		<-ctx.Done()
-
 	},
 }
 
@@ -328,20 +325,20 @@ func unregisterServices(ctx context.Context, serviceConfs []serviceConf) {
 	// unregister all services
 	for i := range serviceConfs {
 		s := serviceConfs[i]
-		fmt.Printf("Unregister (%v)\n", s.service.Name())
+		fmt.Printf("%s> Unregister\n", s.service.Name())
 		if err := s.service.Unregister(ctx); err != nil {
 			log.Error(ctx, "%s> Unable to unregister: %v", s.service.Name(), err)
 		}
 	}
 
 	if ctx.Err() != nil {
-		fmt.Printf("Exiting (%v)\n", ctx.Err())
+		fmt.Printf("Exiting: %+v\n", ctx.Err())
 	}
 }
 
-func start(c context.Context, s service.Service, cfg interface{}, serviceName string) {
-	if err := serve(c, s, serviceName, cfg); err != nil {
-		fmt.Printf("Service has been stopped: %s %+v", serviceName, err)
+func start(ctx context.Context, s service.Service, cfg interface{}, serviceName string) {
+	if err := serve(ctx, s, serviceName, cfg); err != nil {
+		fmt.Printf("%s> Service has been stopped: %+v\n", serviceName, err)
 	}
 }
 
@@ -357,7 +354,7 @@ func serve(c context.Context, s service.Service, serviceName string, cfg interfa
 
 	// first signin
 	if err := s.Start(ctx, x); err != nil {
-		log.Error(ctx, "%s> Unable to start service: %v", serviceName, err)
+		log.Error(ctx, "%s> Unable to start service: %+v", serviceName, err)
 		return err
 	}
 
@@ -375,14 +372,14 @@ func serve(c context.Context, s service.Service, serviceName string, cfg interfa
 	// finally start the heartbeat goroutine
 	go func() {
 		if err := s.Heartbeat(ctx, s.Status); err != nil {
-			log.Error(ctx, "%v", err)
+			log.Error(ctx, "%s> Error heartbeat: %+v", err)
 			cancel()
 		}
 	}()
 
 	go func() {
 		if err := s.Serve(ctx); err != nil {
-			log.Error(ctx, "%s> Serve: %+v", serviceName, err)
+			log.Error(ctx, "%s> Error serve: %+v", serviceName, err)
 			cancel()
 		}
 	}()

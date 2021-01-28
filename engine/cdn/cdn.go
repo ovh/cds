@@ -105,8 +105,11 @@ func (s *Service) CheckConfiguration(config interface{}) error {
 	return nil
 }
 
-// Serve will start the http api server
-func (s *Service) Serve(c context.Context) error {
+func (s *Service) Start(c context.Context, cfg cdsclient.ServiceConfig) error {
+	if err := s.Common.Start(c, cfg); err != nil {
+		return err
+	}
+
 	ctx, cancel := context.WithCancel(c)
 	defer cancel()
 
@@ -114,7 +117,7 @@ func (s *Service) Serve(c context.Context) error {
 	log.Info(ctx, "Initializing redis cache on %s...", s.Cfg.Cache.Redis.Host)
 	s.Cache, err = cache.New(s.Cfg.Cache.Redis.Host, s.Cfg.Cache.Redis.Password, s.Cfg.Cache.TTL)
 	if err != nil {
-		return fmt.Errorf("cannot connect to redis instance : %v", err)
+		return sdk.WrapError(err, "cannot connect to redis instance")
 	}
 
 	if s.Cfg.EnableLogProcessing {
@@ -134,7 +137,7 @@ func (s *Service) Serve(c context.Context) error {
 			s.Cfg.Database.Timeout,
 			s.Cfg.Database.MaxConn)
 		if err != nil {
-			return fmt.Errorf("cannot connect to database: %v", err)
+			return sdk.WrapError(err, "cannot connect to database")
 		}
 
 		log.Info(ctx, "Setting up database keys...")
@@ -142,13 +145,24 @@ func (s *Service) Serve(c context.Context) error {
 		encryptionKeyConfig := s.Cfg.Database.EncryptionKey.GetKeys(gorpmapper.KeyEcnryptionIdentifier)
 		signatureKeyConfig := s.Cfg.Database.SignatureKey.GetKeys(gorpmapper.KeySignIdentifier)
 		if err := s.Mapper.ConfigureKeys(&signatureKeyConfig, &encryptionKeyConfig); err != nil {
-			return fmt.Errorf("cannot setup database keys: %v", err)
+			return sdk.WrapError(err, "cannot setup database keys")
 		}
 
 		// Init dao packages
 		item.InitDBMapping(s.Mapper)
 		storage.InitDBMapping(s.Mapper)
+	}
 
+	return nil
+}
+
+// Serve will start the http api server
+func (s *Service) Serve(c context.Context) error {
+	ctx, cancel := context.WithCancel(c)
+	defer cancel()
+
+	if s.Cfg.EnableLogProcessing {
+		var err error
 		s.LogCache, err = lru.NewRedisLRU(s.mustDBWithCtx(ctx), s.Cfg.Cache.LruSize, s.Cfg.Cache.Redis.Host, s.Cfg.Cache.Redis.Password)
 		if err != nil {
 			return sdk.WrapError(err, "cannot connect to redis instance for lru")

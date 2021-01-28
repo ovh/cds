@@ -4,10 +4,8 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"os/signal"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 
 	cache "github.com/patrickmn/go-cache"
@@ -29,9 +27,6 @@ var (
 
 // Create creates hatchery
 func Create(ctx context.Context, h Interface) error {
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-
 	ctx = telemetry.ContextWithTag(ctx,
 		telemetry.TagServiceName, h.Name(),
 		telemetry.TagServiceType, h.Type(),
@@ -40,24 +35,6 @@ func Create(ctx context.Context, h Interface) error {
 	if err := initMetrics(ctx); err != nil {
 		return err
 	}
-
-	// Gracefully shutdown connections
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-	defer func() {
-		signal.Stop(c)
-		cancel()
-	}()
-
-	go func() {
-		select {
-		case <-c:
-			defer cancel()
-			return
-		case <-ctx.Done():
-			return
-		}
-	}()
 
 	// Init call hatchery.Register()
 	if err := h.InitHatchery(ctx); err != nil {
@@ -95,7 +72,6 @@ func Create(ctx context.Context, h Interface) error {
 		func(ctx context.Context) {
 			if err := h.CDSClient().QueuePolling(ctx, h.GetGoRoutines(), wjobs, errs, 20*time.Second, modelType, h.Configuration().Provision.RatioService); err != nil {
 				log.Error(ctx, "Queues polling stopped: %v", err)
-				cancel()
 			}
 		},
 	)
@@ -119,7 +95,7 @@ func Create(ctx context.Context, h Interface) error {
 	for {
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
+			return sdk.WrapError(ctx.Err(), "cancel hatchery main routine")
 
 		case <-chanGetModels:
 			var errwm error

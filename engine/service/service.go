@@ -160,25 +160,40 @@ func (c *Common) Heartbeat(ctx context.Context, status func(ctx context.Context)
 		return nil
 	}
 
-	ticker := time.NewTicker(30 * time.Second)
-
 	var heartbeatFailures int
+	execHeartbeat := func(ctx context.Context) error {
+		if err := c.Client.ServiceHeartbeat(status(ctx)); err != nil {
+			if sdk.ErrorIs(err, sdk.ErrForbidden) {
+				return sdk.WrapError(err, "%s> Heartbeat failed with forbidden error", c.Name())
+			}
+			heartbeatFailures++
+			log.Warn(ctx, "%s> Heartbeat failure %d/%d: %v", c.Name(), heartbeatFailures, c.MaxHeartbeatFailures, err)
+
+			// if register failed too many time, stop heartbeat
+			if heartbeatFailures > c.MaxHeartbeatFailures {
+				return sdk.WithStack(fmt.Errorf("%s> Heartbeat failed excedeed", c.Name()))
+			}
+			return nil
+		}
+		heartbeatFailures = 0
+		return nil
+	}
+
+	// exec first heartbeat immediately
+	if err := execHeartbeat(ctx); err != nil {
+		return err
+	}
+
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
 	for {
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
+			return sdk.WrapError(ctx.Err(), "%s> Heartbeat> Cancelled", c.Name())
 		case <-ticker.C:
-			if err := c.Client.ServiceHeartbeat(status(ctx)); err != nil {
-				log.Warn(ctx, "%s> Heartbeat failure: %v", c.Name(), err)
-				heartbeatFailures++
-
-				// if register failed too many time, stop heartbeat
-				if heartbeatFailures > c.MaxHeartbeatFailures {
-					return fmt.Errorf("%s> Heartbeat> Register failed excedeed", c.Name())
-				}
-				continue
+			if err := execHeartbeat(ctx); err != nil {
+				return err
 			}
-			heartbeatFailures = 0
 		}
 	}
 }

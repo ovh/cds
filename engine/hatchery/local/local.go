@@ -236,7 +236,7 @@ func (h *HatcheryLocal) InitHatchery(ctx context.Context) error {
 	if err := h.RefreshServiceLogger(ctx); err != nil {
 		log.Error(ctx, "Hatchery> local> Cannot get cdn configuration : %v", err)
 	}
-	h.GoRoutines.Run(context.Background(), "hatchery locale routines", func(ctx context.Context) {
+	h.GoRoutines.Run(ctx, "hatchery locale routines", func(ctx context.Context) {
 		h.routines(ctx)
 	})
 	return nil
