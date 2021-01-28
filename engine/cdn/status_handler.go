@@ -46,28 +46,32 @@ func (s *Service) Status(ctx context.Context) *sdk.MonitoringStatus {
 		m.AddLine(st.Status(ctx)...)
 	}
 
-	s.storageUnitLags.Range(func(key, value interface{}) bool {
-		previousLag, ok := s.storageUnitLags.Load(key)
-		if !ok {
-			return true
-		}
-		currentLag := previousLag.(int64) - value.(int64)
+	s.storageUnitLags.Range(func(key, cl interface{}) bool {
+		currentLag := cl.(int64)
 
-		previousSize, ok := s.storageUnitSizes.Load(key)
+		pl, ok := s.storageUnitLags.Load(key)
 		if !ok {
 			return true
 		}
+		previousLag := pl.(int64)
 
-		currentSize, ok := s.storageUnitSizes.Load(key)
+		ps, ok := s.storageUnitPreviousSizes.Load(key)
 		if !ok {
 			return true
 		}
+		previousSize := ps.(int64)
+
+		cs, ok := s.storageUnitSizes.Load(key)
+		if !ok {
+			return true
+		}
+		currentSize := cs.(int64)
 
 		// if we have less lag than previous compute or if the currentSize is greater than previous compute, it's OK
-		if currentLag == 0 || (currentLag > 0 && currentLag < previousLag.(int64) || currentSize.(int64) > previousSize.(int64)) {
-			m.AddLine(addMonitoringLine(currentLag, key.(string), nil, sdk.MonitoringStatusOK))
+		if currentLag == 0 || (currentLag > 0 && currentLag < previousLag || currentSize > previousSize) {
+			m.AddLine(addMonitoringLine(currentLag, key.(string)+"/lag", nil, sdk.MonitoringStatusOK))
 		} else {
-			m.AddLine(addMonitoringLine(currentLag, key.(string), nil, sdk.MonitoringStatusWarn))
+			m.AddLine(addMonitoringLine(currentLag, key.(string)+"/lag", nil, sdk.MonitoringStatusWarn))
 		}
 		return true
 	})

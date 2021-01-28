@@ -129,11 +129,11 @@ func (s *Service) ComputeMetrics(ctx context.Context) {
 				ctxItem := telemetry.ContextWithTag(ctx, telemetry.TagType, stat.Type, telemetry.TagStorage, stat.StorageName)
 				telemetry.Record(ctxItem, s.Metrics.itemPerStorageUnitCount, stat.Number)
 
-				k := fmt.Sprintf("backend/%s/%s/size", stat.StorageName, stat.Type)
-				if previous, ok := s.storageUnitSizes.Load(k); ok {
-					s.storageUnitPreviousSizes.Store(k, previous)
+				key := fmt.Sprintf("backend/%s/%s", stat.StorageName, stat.Type)
+				if previous, ok := s.storageUnitSizes.Load(key); ok {
+					s.storageUnitPreviousSizes.Store(key, previous)
 				}
-				s.storageUnitSizes.Store(k, stat.Number)
+				s.storageUnitSizes.Store(key, stat.Number)
 
 				// to synchronized
 				for _, allItems := range allItemsByType {
@@ -141,11 +141,10 @@ func (s *Service) ComputeMetrics(ctx context.Context) {
 						ctxItem := telemetry.ContextWithTag(ctx, telemetry.TagStorage, stat.StorageName, telemetry.TagType, stat.Type)
 						lag := allItems.Number - stat.Number
 						telemetry.Record(ctxItem, s.Metrics.ItemToSyncCount, lag)
-						k := fmt.Sprintf("backend/%s/%s/lag", stat.StorageName, stat.Type)
-						if previous, ok := s.storageUnitLags.Load(k); ok {
-							s.storageUnitPreviousLags.Store(k, previous)
+						if previous, ok := s.storageUnitLags.Load(key); ok {
+							s.storageUnitPreviousLags.Store(key, previous)
 						}
-						s.storageUnitLags.Store(k, lag)
+						s.storageUnitLags.Store(key, lag)
 						break
 					}
 				}
