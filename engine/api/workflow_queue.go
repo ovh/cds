@@ -4,18 +4,19 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"github.com/gorilla/mux"
-	"github.com/ovh/cds/engine/api/cdn"
+
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/gorilla/mux"
 	"github.com/ovh/venom"
 	"github.com/rockbears/log"
 	"github.com/sguiheux/go-coverage"
 
 	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/ovh/cds/engine/api/cdn"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"

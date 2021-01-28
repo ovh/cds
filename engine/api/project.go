@@ -3,9 +3,6 @@ package api
 import (
 	"context"
 	"database/sql"
-	"github.com/ovh/cds/engine/api/authentication"
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
-	"github.com/ovh/cds/engine/featureflipping"
 	"net/http"
 	"regexp"
 	"strings"
@@ -14,6 +11,8 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/rockbears/log"
 
+	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/integration"
@@ -22,6 +21,7 @@ import (
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/slug"
