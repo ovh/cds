@@ -329,11 +329,11 @@ type Stat struct {
 	Number      int64  `db:"number"`
 }
 
-func CountItemsForUnit(db gorp.SqlExecutor, unitID string) (res []Stat, err error) {
-	_, err = db.Select(&res, `select type, count(id) as "number"
+func CountItemsForUnit(db gorp.SqlExecutor, unitID, stype string) (res []Stat, err error) {
+	_, err = db.Select(&res, `select count(type) as "number"
 	from storage_unit_item
 	where unit_id = $1
-	group by type`, unitID)
+	and type = $2`, unitID, stype)
 	return res, sdk.WithStack(err)
 }
 

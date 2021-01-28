@@ -56,6 +56,10 @@ type Service struct {
 		ItemToDelete             *stats.Int64Measure
 		ItemUnitToDelete         *stats.Int64Measure
 	}
+	storageUnitLags          sync.Map
+	storageUnitPreviousLags  sync.Map
+	storageUnitSizes         sync.Map
+	storageUnitPreviousSizes sync.Map
 }
 
 // Configuration is the hooks configuration structure

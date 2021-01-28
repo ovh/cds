@@ -77,24 +77,22 @@ func Init(ctx context.Context, cfg Configuration, s Service) (context.Context, e
 		ctx = context.WithValue(ctx, contextTraceExporter, e)
 	}
 
-	if cfg.MetricsEnabled {
-		if cfg.Exporters.Prometheus.ReporteringPeriod == 0 {
-			cfg.Exporters.Prometheus.ReporteringPeriod = 10
-		}
-		view.SetReportingPeriod(time.Duration(cfg.Exporters.Prometheus.ReporteringPeriod) * time.Second)
-
-		log.Info(ctx, "observability> initializing prometheus exporter for %s/%s", s.Type(), s.Name())
-
-		e, err := prometheus.NewExporter(prometheus.Options{})
-		if err != nil {
-			return ctx, sdk.WithStack(err)
-		}
-		view.RegisterExporter(e)
-		he := new(HTTPExporter)
-		he.Exporter = e
-		view.RegisterExporter(he)
-		ctx = context.WithValue(ctx, contextStatsExporter, he)
+	if cfg.Exporters.Prometheus.ReporteringPeriod == 0 {
+		cfg.Exporters.Prometheus.ReporteringPeriod = 10
 	}
+	view.SetReportingPeriod(time.Duration(cfg.Exporters.Prometheus.ReporteringPeriod) * time.Second)
+
+	log.Info(ctx, "observability> initializing prometheus exporter for %s/%s", s.Type(), s.Name())
+
+	e, err := prometheus.NewExporter(prometheus.Options{})
+	if err != nil {
+		return ctx, sdk.WithStack(err)
+	}
+	view.RegisterExporter(e)
+	he := new(HTTPExporter)
+	he.Exporter = e
+	view.RegisterExporter(he)
+	ctx = context.WithValue(ctx, contextStatsExporter, he)
 
 	return ctx, nil
 }
