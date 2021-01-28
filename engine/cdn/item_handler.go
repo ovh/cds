@@ -208,13 +208,13 @@ func (s *Service) getItemCheckSyncHandler() service.Handler {
 		}
 
 		var lastContent string
-		for storage, buffer := range contents {
+		for st, buffer := range contents {
 			if lastContent == "" {
 				lastContent = hex.EncodeToString(buffer.Bytes())
 				continue
 			}
 			if lastContent != hex.EncodeToString(buffer.Bytes()) {
-				return sdk.NewErrorFrom(sdk.ErrInvalidData, "content of %s on %s doesn't match", apiRef, storage)
+				return sdk.NewErrorFrom(sdk.ErrInvalidData, "content of %s on %s doesn't match", apiRef, st)
 			}
 		}
 
@@ -232,4 +232,46 @@ func (s *Service) getItemCheckSyncHandler() service.Handler {
 
 		return service.WriteJSON(w, result, http.StatusOK)
 	}
+}
+
+func (s *Service) getItemsHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		itemType := sdk.CDNItemType(vars["type"])
+
+		switch itemType {
+		case sdk.CDNTypeItemArtifact:
+			return s.getArtifacts(ctx, r, w)
+		case sdk.CDNTypeItemWorkerCache:
+			return s.getWorkerCache(ctx, r, w)
+		}
+
+		return sdk.WrapError(sdk.ErrInvalidData, "this type of items cannot be get")
+	}
+}
+
+func (s *Service) getArtifacts(ctx context.Context, r *http.Request, w http.ResponseWriter) error {
+	runID := r.FormValue("runid")
+	if runID == "" {
+		return sdk.WrapError(sdk.ErrWrongRequest, "invalid workflow run")
+	}
+	items, err := item.LoadByRunID(ctx, s.Mapper, s.mustDBWithCtx(ctx), sdk.CDNTypeItemArtifact, runID)
+	if err != nil {
+		return err
+	}
+	return service.WriteJSON(w, items, http.StatusOK)
+}
+
+func (s *Service) getWorkerCache(ctx context.Context, r *http.Request, w http.ResponseWriter) error {
+	projectKey := r.FormValue("projectkey")
+	cachetag := r.FormValue("cachetag")
+
+	if projectKey == "" || cachetag == "" {
+		return sdk.WrapError(sdk.ErrWrongRequest, "invalid data to get worker cache")
+	}
+	item, err := item.LoadFileByProjectAndCacheTag(ctx, s.Mapper, s.mustDBWithCtx(ctx), sdk.CDNTypeItemWorkerCache, projectKey, cachetag)
+	if err != nil {
+		return err
+	}
+	return service.WriteJSON(w, []sdk.CDNItem{*item}, http.StatusOK)
 }

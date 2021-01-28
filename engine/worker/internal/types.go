@@ -123,6 +123,19 @@ func (wk *CurrentWorker) SendTerminatedStepLog(ctx context.Context, level worker
 	wk.stepLogLine++
 }
 
+func (wk *CurrentWorker) WorkerCacheSignature(tag string) (string, error) {
+	sig := cdn.Signature{
+		ProjectKey: wk.currentJob.projectKey,
+		Worker: &cdn.SignatureWorker{
+			WorkerID:   wk.id,
+			WorkerName: wk.Name(),
+			CacheTag:   tag,
+		},
+	}
+	signature, err := jws.Sign(wk.currentJob.signer, sig)
+	return signature, sdk.WrapError(err, "cannot sign log message")
+}
+
 func (wk *CurrentWorker) ArtifactSignature(artifactName string, perm uint32) (string, error) {
 	sig := cdn.Signature{
 		ProjectKey:   wk.currentJob.projectKey,

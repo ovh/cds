@@ -21,6 +21,7 @@ type SignatureWorker struct {
 	StepName     string
 	ArtifactName string
 	FilePerm     uint32
+	CacheTag     string
 }
 
 type SignatureService struct {

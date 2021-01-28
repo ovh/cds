@@ -3,6 +3,9 @@ package api
 import (
 	"context"
 	"database/sql"
+	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/featureflipping"
 	"net/http"
 	"regexp"
 	"strings"
@@ -652,5 +655,61 @@ func (api *API) deleteProjectHandler() service.Handler {
 
 		event.PublishDeleteProject(ctx, p, getAPIConsumer(ctx))
 		return nil
+	}
+}
+
+func (api *API) getProjectAccessHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+
+		projectKey := vars["key"]
+		itemType := vars["type"]
+
+		var enabled bool
+		switch sdk.CDNItemType(itemType) {
+		case sdk.CDNTypeItemWorkerCache:
+			enabled = featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeatureCDNArtifact, map[string]string{
+				"project_key": projectKey,
+			})
+		}
+
+		if !enabled {
+			return sdk.WrapError(sdk.ErrForbidden, "cdn is not enabled for project %s", projectKey)
+		}
+
+		if !isCDN(ctx) {
+			return sdk.WrapError(sdk.ErrForbidden, "only CDN can call this route")
+		}
+
+		sessionID := r.Header.Get("X-CDS-Session-ID")
+		if sessionID == "" {
+			return sdk.WrapError(sdk.ErrForbidden, "missing session id header")
+		}
+
+		session, err := authentication.LoadSessionByID(ctx, api.mustDBWithCtx(ctx), sessionID)
+		if err != nil {
+			return err
+		}
+		consumer, err := authentication.LoadConsumerByID(ctx, api.mustDB(), session.ConsumerID,
+			authentication.LoadConsumerOptions.WithAuthentifiedUser)
+		if err != nil {
+			return sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
+		}
+		if consumer.Disabled {
+			return sdk.WrapError(sdk.ErrUnauthorized, "consumer (%s) is disabled", consumer.ID)
+		}
+
+		maintainerOrAdmin := consumer.Maintainer() || consumer.Admin()
+
+		perms, err := permission.LoadProjectMaxLevelPermission(ctx, api.mustDB(), []string{projectKey}, consumer.GetGroupIDs())
+		if err != nil {
+			return sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
+		}
+		maxLevelPermission := perms.Level(projectKey)
+		if maxLevelPermission < sdk.PermissionRead && !maintainerOrAdmin {
+			return sdk.WrapError(sdk.ErrUnauthorized, "not authorized for project %s", projectKey)
+		}
+
+		return service.WriteJSON(w, nil, http.StatusOK)
 	}
 }

@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"github.com/gorilla/mux"
+	"github.com/ovh/cds/engine/api/cdn"
 	"net/http"
 	"strconv"
 	"time"
@@ -625,6 +627,32 @@ func (api *API) postWorkflowJobServiceLogsHandler() service.Handler {
 		}
 
 		return nil
+	}
+}
+
+func (api *API) getWorkerCacheLinkHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+
+		id, err := requestVarInt(r, "permJobID")
+		if err != nil {
+			return err
+		}
+		workerTag := vars["tag"]
+
+		p, err := project.LoadProjectByNodeJobRunID(ctx, api.mustDBWithCtx(ctx), api.Cache, id)
+		if err != nil {
+			return err
+		}
+
+		itemsLinks, err := cdn.ListItems(ctx, api.mustDBWithCtx(ctx), sdk.CDNTypeItemWorkerCache, map[string]string{
+			cdn.ParamProjectKey: p.Key,
+			cdn.ParamCacheTag:   string(workerTag),
+		})
+		if err != nil {
+			return err
+		}
+		return service.WriteJSON(w, itemsLinks, http.StatusOK)
 	}
 }
 

@@ -22,6 +22,7 @@ import (
 
 func cachePushHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		cdnArtifact := wk.FeatureEnabled(sdk.FeatureCDNArtifact)
 		data, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			err = sdk.Error{
@@ -114,32 +115,55 @@ func cachePushHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 			return
 		}
 
-		var errPush error
-		for i := 0; i < 10; i++ {
-			f, err := wk.BaseDir().Open(tarPath)
-			if err != nil {
-				err := sdk.Error{
-					Message: "worker cache push > Cannot open tar file: " + err.Error(),
+		if !cdnArtifact {
+			var errPush error
+			for i := 0; i < 10; i++ {
+				f, err := wk.BaseDir().Open(tarPath)
+				if err != nil {
+					err := sdk.Error{
+						Message: "worker cache push > Cannot open tar file: " + err.Error(),
+						Status:  http.StatusInternalServerError,
+					}
+					log.Error(ctx, "%v", err)
+					writeError(w, r, err)
+					return
+				}
+				if errPush = wk.client.WorkflowCachePush(projectKey, sdk.DefaultIfEmptyStorage(c.IntegrationName), c.Tag, f, int(tarInfo.Size())); errPush == nil {
+					return
+				}
+				log.Error(ctx, "worker cache push > cannot push cache (retry x%d) : %v", i, errPush)
+				err = sdk.Error{
+					Message: "worker cache push > Cannot push cache: " + errPush.Error(),
 					Status:  http.StatusInternalServerError,
 				}
-				log.Error(ctx, "%v", err)
-				writeError(w, r, err)
-				return
+				time.Sleep(3 * time.Second)
 			}
-
-			if errPush = wk.client.WorkflowCachePush(projectKey, sdk.DefaultIfEmptyStorage(c.IntegrationName), c.Tag, f, int(tarInfo.Size())); errPush == nil {
-				return
-			}
-			log.Error(ctx, "worker cache push > cannot push cache (retry x%d) : %v", i, errPush)
-			time.Sleep(3 * time.Second)
+			log.Error(ctx, "%v", err)
+			writeError(w, r, err)
+			return
 		}
 
-		err = sdk.Error{
-			Message: "worker cache push > Cannot push cache: " + errPush.Error(),
-			Status:  http.StatusInternalServerError,
+		sig, err := wk.WorkerCacheSignature(c.Tag)
+		if err != nil {
+			err := sdk.Error{
+				Message: "worker cache push > Cannot create signature",
+				Status:  http.StatusInternalServerError,
+			}
+			log.Error(ctx, "%v", err)
+			writeError(w, r, err)
+			return
 		}
-		log.Error(ctx, "%v", err)
-		writeError(w, r, err)
+		duration, err := wk.client.CDNItemUpload(ctx, wk.cdnHttpAddr, sig, wk.BaseDir(), tarF.Name())
+		if err != nil {
+			err := sdk.Error{
+				Message: "worker cache push > Cannot upload cache: %v" + err.Error(),
+				Status:  http.StatusInternalServerError,
+			}
+			log.Error(ctx, "%v", err)
+			writeError(w, r, err)
+			return
+		}
+		wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("Cache '%s' uploaded in %.2fs to CDS CDN", c.Tag, duration.Seconds()))
 	}
 }
 
@@ -147,17 +171,53 @@ func cachePullHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		vars := mux.Vars(req)
 		path := req.FormValue("path")
-		integrationName := sdk.DefaultIfEmptyStorage(req.FormValue("integration"))
+
+		cdnArtifact := wk.FeatureEnabled(sdk.FeatureCDNArtifact)
 		params := wk.currentJob.wJob.Parameters
 		projectKey := sdk.ParameterValue(params, "cds.project")
-		r, err := wk.client.WorkflowCachePull(projectKey, integrationName, vars["ref"])
-		if err != nil {
-			err = sdk.Error{
-				Message: "worker cache pull > Cannot pull cache: " + err.Error(),
-				Status:  http.StatusNotFound,
+
+		var r io.Reader
+		if cdnArtifact {
+			// Get cache link
+			items, err := wk.client.QueueWorkerCacheLink(ctx, wk.currentJob.wJob.ID, vars["ref"])
+			if err != nil {
+				err = sdk.Error{
+					Message: "worker cache pull > Cannot get cache links: " + err.Error(),
+					Status:  http.StatusNotFound,
+				}
+				writeError(w, req, err)
+				return
 			}
-			writeError(w, req, err)
-			return
+			if len(items.Items) != 1 {
+				err := sdk.Error{
+					Message: "worker cache pull > No unique link found",
+					Status:  http.StatusNotFound,
+				}
+				writeError(w, req, err)
+				return
+			}
+			// Download cache
+			r, err = wk.client.CDNItemDownload(ctx, wk.cdnHttpAddr, items.Items[0].APIRefHash, sdk.CDNTypeItemWorkerCache)
+			if err != nil {
+				err = sdk.Error{
+					Message: "worker cache pull > Cannot pull cache: " + err.Error(),
+					Status:  http.StatusNotFound,
+				}
+				writeError(w, req, err)
+				return
+			}
+		} else {
+			integrationName := sdk.DefaultIfEmptyStorage(req.FormValue("integration"))
+			var err error
+			r, err = wk.client.WorkflowCachePull(projectKey, integrationName, vars["ref"])
+			if err != nil {
+				err = sdk.Error{
+					Message: "worker cache pull > Cannot pull cache: " + err.Error(),
+					Status:  http.StatusNotFound,
+				}
+				writeError(w, req, err)
+				return
+			}
 		}
 
 		log.Debug(ctx, "cachePullHandler> Start read cache tar")

@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
 
@@ -36,7 +37,7 @@ func (api *API) getWorkflowRunArtifactLinksHandler() service.Handler {
 			return err
 		}
 
-		result, err := cdn.ListItemsByRunID(ctx, api.mustDB(), sdk.CDNTypeItemArtifact, wr.ID)
+		result, err := cdn.ListItems(ctx, api.mustDB(), sdk.CDNTypeItemArtifact, map[string]string{cdn.ParamRunID: strconv.Itoa(int(wr.ID))})
 		if err != nil {
 			return err
 		}

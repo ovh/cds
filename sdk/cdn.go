@@ -66,6 +66,12 @@ func (c *CDNItem) UnmarshalJSON(data []byte) error {
 			return WithStack(err)
 		}
 		itemAlias.APIRef = &apiRef
+	case CDNTypeItemWorkerCache:
+		var apiRef CDNWorkerCacheAPIRef
+		if err := json.Unmarshal(itemAlias.APIRefRaw, &apiRef); err != nil {
+			return WithStack(err)
+		}
+		itemAlias.APIRef = &apiRef
 	}
 	*c = CDNItem(itemAlias)
 	return nil
@@ -151,14 +157,31 @@ type CDNArtifactAPIRef struct {
 	Perm           uint32 `json:"perm"`
 }
 
+type CDNWorkerCacheAPIRef struct {
+	ProjectKey string    `json:"project_key"`
+	CacheTag   string    `json:"cache_tag"`
+	ExpireAt   time.Time `json:"expire_at"`
+}
+
 func NewCDNApiRef(t CDNItemType, signature cdn.Signature) (CDNApiRef, error) {
 	switch t {
 	case CDNTypeItemStepLog, CDNTypeItemServiceLog:
 		return NewCDNLogApiRef(signature), nil
 	case CDNTypeItemArtifact:
 		return NewCDNArtifactApiRef(signature), nil
+	case CDNTypeItemWorkerCache:
+		return NewCDNWorkerCacheApiRef(signature), nil
 	}
 	return nil, WrapError(ErrInvalidData, "item type unknown")
+}
+
+func NewCDNWorkerCacheApiRef(signature cdn.Signature) CDNApiRef {
+	apiRef := CDNWorkerCacheAPIRef{
+		ProjectKey: signature.ProjectKey,
+		ExpireAt:   time.Now().AddDate(0, 6, 0),
+		CacheTag:   signature.Worker.CacheTag,
+	}
+	return &apiRef
 }
 
 func NewCDNArtifactApiRef(signature cdn.Signature) CDNApiRef {
@@ -234,6 +257,28 @@ func (c CDNItem) GetCDNArtifactApiRef() (*CDNArtifactAPIRef, bool) {
 	return apiRef, has
 }
 
+func (c CDNItem) GetCDNWorkerCacheApiRef() (*CDNWorkerCacheAPIRef, bool) {
+	apiRef, has := c.APIRef.(*CDNWorkerCacheAPIRef)
+	return apiRef, has
+}
+
+func (a *CDNWorkerCacheAPIRef) ToHash() (string, error) {
+	m := make(map[string]string, 7)
+	m["project_key"] = a.ProjectKey
+	m["cache_tag"] = a.CacheTag
+	m["expireAt"] = a.ExpireAt.String()
+
+	hashRefU, err := hashstructure.Hash(m, nil)
+	if err != nil {
+		return "", WithStack(err)
+	}
+	return strconv.FormatUint(hashRefU, 10), nil
+}
+
+func (a *CDNWorkerCacheAPIRef) ToFilename() string {
+	return a.CacheTag
+}
+
 func (a *CDNLogAPIRef) ToHash() (string, error) {
 	hashRefU, err := hashstructure.Hash(a, nil)
 	if err != nil {
@@ -285,7 +330,7 @@ type CDNItemType string
 
 func (t CDNItemType) Validate() error {
 	switch t {
-	case CDNTypeItemStepLog, CDNTypeItemServiceLog, CDNTypeItemArtifact:
+	case CDNTypeItemStepLog, CDNTypeItemServiceLog, CDNTypeItemArtifact, CDNTypeItemWorkerCache:
 		return nil
 	}
 	return NewErrorFrom(ErrWrongRequest, "invalid item type")
@@ -303,6 +348,7 @@ const (
 	CDNTypeItemStepLog     CDNItemType = "step-log"
 	CDNTypeItemServiceLog  CDNItemType = "service-log"
 	CDNTypeItemArtifact    CDNItemType = "artifact"
+	CDNTypeItemWorkerCache CDNItemType = "worker-cache"
 	CDNStatusItemIncoming              = "Incoming"
 	CDNStatusItemCompleted             = "Completed"
 )

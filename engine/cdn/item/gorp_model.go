@@ -32,6 +32,12 @@ func (c cdnItemDB) ToCDSItem() (sdk.CDNItem, error) {
 			return item, sdk.WithStack(err)
 		}
 		item.APIRef = &apiRef
+	case sdk.CDNTypeItemWorkerCache:
+		var apiRef sdk.CDNWorkerCacheAPIRef
+		if err := json.Unmarshal(c.APIRefDB, &apiRef); err != nil {
+			return item, sdk.WithStack(err)
+		}
+		item.APIRef = &apiRef
 	}
 	return item, nil
 }
