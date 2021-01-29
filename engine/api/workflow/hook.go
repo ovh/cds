@@ -39,7 +39,7 @@ func hookUnregistration(ctx context.Context, db gorpmapper.SqlExecutorWithTx, st
 
 	// Delete from vcs configuration if needed
 	for _, h := range hookToDelete {
-		if h.HookModelName == sdk.RepositoryWebHookModelName {
+		if h.HookModelName == sdk.RepositoryWebHookModelName || h.HookModelName == sdk.GerritHookModelName {
 			// Call VCS to know if repository allows webhook and get the configuration fields
 			projectVCSServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, proj.Key, h.Config["vcsServer"].Value)
 			if err == nil {
@@ -116,6 +116,20 @@ func hookRegistration(ctx context.Context, db gorpmapper.SqlExecutorWithTx, stor
 			Configurable: false,
 		}
 
+		if h.IsRepositoryWebHook() || h.HookModelName == sdk.GitPollerModelName || h.HookModelName == sdk.GerritHookModelName {
+			if wf.WorkflowData.Node.Context.ApplicationID == 0 || wf.Applications[wf.WorkflowData.Node.Context.ApplicationID].RepositoryFullname == "" || wf.Applications[wf.WorkflowData.Node.Context.ApplicationID].VCSServer == "" {
+				return sdk.NewErrorFrom(sdk.ErrForbidden, "cannot create a git poller or repository webhook on an application without a repository")
+			}
+			h.Config[sdk.HookConfigVCSServer] = sdk.WorkflowNodeHookConfigValue{
+				Value:        wf.Applications[wf.WorkflowData.Node.Context.ApplicationID].VCSServer,
+				Configurable: false,
+			}
+			h.Config[sdk.HookConfigRepoFullName] = sdk.WorkflowNodeHookConfigValue{
+				Value:        wf.Applications[wf.WorkflowData.Node.Context.ApplicationID].RepositoryFullname,
+				Configurable: false,
+			}
+		}
+
 		if h.UUID == "" && oldHooksByRef != nil {
 			// search previous hook configuration by ref
 			previousHook, has := oldHooksByRef[h.Ref()]
@@ -141,24 +155,8 @@ func hookRegistration(ctx context.Context, db gorpmapper.SqlExecutorWithTx, stor
 			}
 
 		}
-		// initialize a UUID is there no uuid
-		if h.UUID == "" {
-			h.UUID = sdk.UUID()
-		}
-
-		if h.IsRepositoryWebHook() || h.HookModelName == sdk.GitPollerModelName || h.HookModelName == sdk.GerritHookModelName {
-			if wf.WorkflowData.Node.Context.ApplicationID == 0 || wf.Applications[wf.WorkflowData.Node.Context.ApplicationID].RepositoryFullname == "" || wf.Applications[wf.WorkflowData.Node.Context.ApplicationID].VCSServer == "" {
-				return sdk.NewErrorFrom(sdk.ErrForbidden, "cannot create a git poller or repository webhook on an application without a repository")
-			}
-			h.Config[sdk.HookConfigVCSServer] = sdk.WorkflowNodeHookConfigValue{
-				Value:        wf.Applications[wf.WorkflowData.Node.Context.ApplicationID].VCSServer,
-				Configurable: false,
-			}
-			h.Config[sdk.HookConfigRepoFullName] = sdk.WorkflowNodeHookConfigValue{
-				Value:        wf.Applications[wf.WorkflowData.Node.Context.ApplicationID].RepositoryFullname,
-				Configurable: false,
-			}
-		}
+		// Create a new UUID when hook has been updated
+		h.UUID = sdk.UUID()
 
 		if err := updateSchedulerPayload(ctx, db, store, proj, wf, h); err != nil {
 			return err
