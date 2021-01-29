@@ -30,7 +30,7 @@ func InitWebsocketTestServer(t *testing.T) *httptest.Server {
 		t.Logf("WebsocketTestServer> %s", r.URL.String())
 
 		switch r.URL.String() {
-		case "/download/worker/darwin/amd64?variant=":
+		case "/download/worker/darwin/amd64?variant=", "/download/worker/linux/amd64?variant=":
 			w.Header().Add("Content-Type", "application/octet-stream")
 			w.Write([]byte("foo"))
 			w.WriteHeader(200)
