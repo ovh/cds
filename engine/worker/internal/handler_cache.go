@@ -22,6 +22,10 @@ import (
 
 func cachePushHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := workerruntime.SetJobID(ctx, wk.currentJob.wJob.ID)
+		ctx = workerruntime.SetStepOrder(ctx, wk.currentJob.currentStepIndex)
+		ctx = workerruntime.SetStepName(ctx, wk.currentJob.currentStepName)
+
 		data, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			err = sdk.Error{
@@ -145,6 +149,10 @@ func cachePushHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 
 func cachePullHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
+		ctx := workerruntime.SetJobID(ctx, wk.currentJob.wJob.ID)
+		ctx = workerruntime.SetStepOrder(ctx, wk.currentJob.currentStepIndex)
+		ctx = workerruntime.SetStepName(ctx, wk.currentJob.currentStepName)
+
 		vars := mux.Vars(req)
 		path := req.FormValue("path")
 		integrationName := sdk.DefaultIfEmptyStorage(req.FormValue("integration"))

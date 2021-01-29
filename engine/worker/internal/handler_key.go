@@ -16,6 +16,10 @@ import (
 
 func keyInstallHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := workerruntime.SetJobID(ctx, wk.currentJob.wJob.ID)
+		ctx = workerruntime.SetStepOrder(ctx, wk.currentJob.currentStepIndex)
+		ctx = workerruntime.SetStepName(ctx, wk.currentJob.currentStepName)
+
 		vars := mux.Vars(r)
 		keyName := vars["key"]
 

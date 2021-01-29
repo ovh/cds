@@ -3,6 +3,7 @@ package internal
 import (
 	"context"
 	"encoding/json"
+	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"io/ioutil"
 	"net/http"
 
@@ -13,6 +14,10 @@ import (
 
 func addBuildVarHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := workerruntime.SetJobID(ctx, wk.currentJob.wJob.ID)
+		ctx = workerruntime.SetStepOrder(ctx, wk.currentJob.currentStepIndex)
+		ctx = workerruntime.SetStepName(ctx, wk.currentJob.currentStepName)
+
 		// Get body
 		data, errra := ioutil.ReadAll(r.Body)
 		if errra != nil {

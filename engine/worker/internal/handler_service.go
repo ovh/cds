@@ -3,6 +3,7 @@ package internal
 import (
 	"context"
 	"fmt"
+	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -11,6 +12,10 @@ import (
 
 func serviceHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := workerruntime.SetJobID(ctx, wk.currentJob.wJob.ID)
+		ctx = workerruntime.SetStepOrder(ctx, wk.currentJob.currentStepIndex)
+		ctx = workerruntime.SetStepName(ctx, wk.currentJob.currentStepName)
+
 		vars := mux.Vars(r)
 		serviceType := vars["type"]
 

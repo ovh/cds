@@ -16,6 +16,10 @@ import (
 
 func artifactsHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := workerruntime.SetJobID(ctx, wk.currentJob.wJob.ID)
+		ctx = workerruntime.SetStepOrder(ctx, wk.currentJob.currentStepIndex)
+		ctx = workerruntime.SetStepName(ctx, wk.currentJob.currentStepName)
+
 		data, errRead := ioutil.ReadAll(r.Body)
 		if errRead != nil {
 			newError := sdk.NewError(sdk.ErrWrongRequest, errRead)

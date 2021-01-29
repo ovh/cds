@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"net/http"
 	"time"
 
@@ -10,6 +11,10 @@ import (
 
 func tagHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := workerruntime.SetJobID(ctx, wk.currentJob.wJob.ID)
+		ctx = workerruntime.SetStepOrder(ctx, wk.currentJob.currentStepIndex)
+		ctx = workerruntime.SetStepName(ctx, wk.currentJob.currentStepName)
+
 		if err := r.ParseForm(); err != nil {
 			writeError(w, r, err)
 			return

@@ -17,6 +17,10 @@ import (
 
 func uploadHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := workerruntime.SetJobID(ctx, wk.currentJob.wJob.ID)
+		ctx = workerruntime.SetStepOrder(ctx, wk.currentJob.currentStepIndex)
+		ctx = workerruntime.SetStepName(ctx, wk.currentJob.currentStepName)
+
 		// Get body
 		data, errRead := ioutil.ReadAll(r.Body)
 		if errRead != nil {
@@ -55,7 +59,6 @@ func uploadHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 			},
 		}
 
-		ctx := workerruntime.SetJobID(ctx, wk.currentJob.wJob.ID)
 		workingDir, err := workerruntime.WorkingDirectory(wk.currentJob.context)
 		if err != nil {
 			wk.SendLog(ctx, workerruntime.LevelError, fmt.Sprintf("Artifact upload failed: %v", err))
@@ -75,7 +78,7 @@ func uploadHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 		if result.Status != sdk.StatusSuccess {
 			wk.SendLog(ctx, workerruntime.LevelError, fmt.Sprintf("Artifact upload failed: %s", result.Reason))
 			log.Error(ctx, "Artifact upload failed: %v", result)
-			writeError(w, r, fmt.Errorf("Artifact upload failed: %s", result.Reason))
+			writeError(w, r, fmt.Errorf("artifact upload failed: %s", result.Reason))
 			return
 		}
 	}

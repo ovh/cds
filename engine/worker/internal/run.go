@@ -134,10 +134,13 @@ func (w *CurrentWorker) runJob(ctx context.Context, a *sdk.Action, jobID int64, 
 		// Reset step log line to 0
 		w.stepLogLine = 0
 
+		w.currentJob.currentStepIndex = jobStepIndex
 		ctx = workerruntime.SetStepOrder(ctx, jobStepIndex)
 		if step.StepName != "" {
+			w.currentJob.currentStepName = step.StepName
 			ctx = workerruntime.SetStepName(ctx, step.StepName)
 		} else {
+			w.currentJob.currentStepName = step.Name
 			ctx = workerruntime.SetStepName(ctx, step.Name)
 		}
 
