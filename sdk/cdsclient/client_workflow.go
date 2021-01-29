@@ -278,7 +278,7 @@ func (c *client) WorkflowNodeRunArtifactDownload(projectKey string, workflowName
 		url = a.TempURL
 	}
 
-	reader, _, _, err = c.Stream(context.Background(), "GET", url, nil, true)
+	reader, _, _, err = c.Stream(context.Background(), c.HTTPNoTimeoutClient(), "GET", url, nil)
 	if err != nil {
 		return err
 	}
@@ -291,7 +291,7 @@ func (c *client) WorkflowNodeRunArtifactDownload(projectKey string, workflowName
 func (c *client) WorkflowNodeRunRelease(projectKey string, workflowName string, runNumber int64, nodeRunID int64, release sdk.WorkflowNodeRunRelease) error {
 	url := fmt.Sprintf("/project/%s/workflows/%s/runs/%d/nodes/%d/release", projectKey, workflowName, runNumber, nodeRunID)
 	btes, _ := json.Marshal(release)
-	res, _, code, err := c.Stream(context.Background(), "POST", url, bytes.NewReader(btes), true)
+	res, _, code, err := c.Stream(context.Background(), c.HTTPNoTimeoutClient(), "POST", url, bytes.NewReader(btes))
 	if err != nil {
 		return err
 	}
@@ -405,7 +405,7 @@ func (c *client) workflowCachePushDirectUpload(projectKey, integrationName, ref 
 	}
 
 	uri := fmt.Sprintf("/project/%s/storage/%s/cache/%s", projectKey, integrationName, ref)
-	_, _, code, err := c.Stream(context.Background(), "POST", uri, tarContent, true, mods...)
+	_, _, code, err := c.Stream(context.Background(), c.HTTPNoTimeoutClient(), "POST", uri, tarContent, mods...)
 	if err != nil {
 		return err
 	}
@@ -443,7 +443,7 @@ func (c *client) workflowCachePushIndirectUploadPost(url string, tarContent io.R
 	req.Header.Set("Content-Type", "application/tar")
 	req.ContentLength = int64(size)
 
-	resp, err := c.httpSSEClient.Do(req)
+	resp, err := c.HTTPNoTimeoutClient().Do(req)
 	if err != nil {
 		return sdk.WithStack(err)
 	}
@@ -487,7 +487,7 @@ func (c *client) WorkflowCachePull(projectKey, integrationName, ref string) (io.
 		}),
 	}
 
-	res, _, code, err := c.Stream(context.Background(), "GET", downloadURL, nil, true, mods...)
+	res, _, code, err := c.Stream(context.Background(), c.HTTPNoTimeoutClient(), "GET", downloadURL, nil, mods...)
 	if err != nil {
 		return nil, err
 	}

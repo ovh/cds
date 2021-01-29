@@ -21,7 +21,7 @@ var _ Interface = new(client)
 
 type client struct {
 	httpClient          *http.Client
-	httpSSEClient       *http.Client
+	httpNoTimeoutClient *http.Client
 	httpWebsocketClient *websocket.Dialer
 	config              *Config
 	name                string
@@ -69,7 +69,7 @@ func New(c Config) Interface {
 	cli.config = &c
 	cli.config.Mutex = new(sync.Mutex)
 	cli.httpClient = NewHTTPClient(time.Second*60, c.InsecureSkipVerifyTLS)
-	cli.httpSSEClient = NewHTTPClient(0, c.InsecureSkipVerifyTLS)
+	cli.httpNoTimeoutClient = NewHTTPClient(0, c.InsecureSkipVerifyTLS)
 	cli.httpWebsocketClient = NewWebsocketDialer(c.InsecureSkipVerifyTLS)
 	cli.init()
 	return cli
@@ -90,7 +90,7 @@ func NewWorker(endpoint string, name string, c *http.Client) WorkerInterface {
 	} else {
 		cli.httpClient = c
 	}
-	cli.httpSSEClient = NewHTTPClient(0, false)
+	cli.httpNoTimeoutClient = NewHTTPClient(0, false)
 	cli.httpWebsocketClient = NewWebsocketDialer(false)
 
 	cli.name = name
@@ -115,7 +115,7 @@ func NewProviderClient(cfg ProviderConfig) ProviderClient {
 	cli.config = &conf
 	cli.config.Mutex = new(sync.Mutex)
 	cli.httpClient = NewHTTPClient(time.Duration(cfg.RequestSecondsTimeout)*time.Second, conf.InsecureSkipVerifyTLS)
-	cli.httpSSEClient = NewHTTPClient(0, conf.InsecureSkipVerifyTLS)
+	cli.httpNoTimeoutClient = NewHTTPClient(0, conf.InsecureSkipVerifyTLS)
 	cli.httpWebsocketClient = NewWebsocketDialer(conf.InsecureSkipVerifyTLS)
 	cli.init()
 	return cli
@@ -138,7 +138,7 @@ func NewServiceClient(cfg ServiceConfig) (Interface, []byte, error) {
 	cli.config = &conf
 	cli.config.Mutex = new(sync.Mutex)
 	cli.httpClient = NewHTTPClient(time.Duration(cfg.RequestSecondsTimeout)*time.Second, conf.InsecureSkipVerifyTLS)
-	cli.httpSSEClient = NewHTTPClient(0, conf.InsecureSkipVerifyTLS)
+	cli.httpNoTimeoutClient = NewHTTPClient(0, conf.InsecureSkipVerifyTLS)
 	cli.httpWebsocketClient = NewWebsocketDialer(conf.InsecureSkipVerifyTLS)
 	cli.config.Verbose = cfg.Verbose
 	cli.init()
@@ -184,8 +184,8 @@ func (c *client) APIURL() string {
 func (c *client) HTTPClient() *http.Client {
 	return c.httpClient
 }
-func (c *client) HTTPSSEClient() *http.Client {
-	return c.httpSSEClient
+func (c *client) HTTPNoTimeoutClient() *http.Client {
+	return c.httpNoTimeoutClient
 }
 func (c *client) HTTPWebsocketClient() *websocket.Dialer {
 	return c.httpWebsocketClient

@@ -134,7 +134,7 @@ func (c *client) RequestJSON(ctx context.Context, method, path string, in interf
 
 // Request executes an authentificated HTTP request on $path given $method and $args
 func (c *client) Request(ctx context.Context, method string, path string, body io.Reader, mods ...RequestModifier) ([]byte, http.Header, int, error) {
-	respBody, respHeader, code, err := c.Stream(ctx, method, path, body, false, mods...)
+	respBody, respHeader, code, err := c.Stream(ctx, c.httpClient, method, path, body, mods...)
 	if err != nil {
 		return nil, nil, 0, sdk.WithStack(err)
 	}
@@ -180,7 +180,7 @@ func extractBodyErrorFromResponse(r *http.Response) error {
 }
 
 // Stream makes an authenticated http request and return io.ReadCloser
-func (c *client) Stream(ctx context.Context, method string, path string, body io.Reader, noTimeout bool, mods ...RequestModifier) (io.ReadCloser, http.Header, int, error) {
+func (c *client) Stream(ctx context.Context, httpClient HTTPClient, method string, path string, body io.Reader, mods ...RequestModifier) (io.ReadCloser, http.Header, int, error) {
 	// Checks that current session_token is still valid
 	// If not, challenge a new one against the authenticationToken
 	var checkToken = !strings.Contains(path, "/auth/consumer/builtin/signin") &&
@@ -284,15 +284,9 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 			log.Println(cli.Green("**************************"))
 		}
 
-		var errDo error
-		var resp *http.Response
-		if noTimeout {
-			resp, errDo = c.httpSSEClient.Do(req)
-		} else {
-			resp, errDo = c.httpClient.Do(req)
-		}
-		if errDo != nil {
-			savederror = sdk.WithStack(errDo)
+		resp, err := c.httpClient.Do(req)
+		if err != nil {
+			savederror = sdk.WithStack(err)
 			continue
 		}
 
@@ -361,7 +355,7 @@ func (c *client) UploadMultiPart(method string, path string, body *bytes.Buffer,
 		}
 	}
 
-	resp, err := c.httpSSEClient.Do(req)
+	resp, err := c.HTTPNoTimeoutClient().Do(req)
 	if err != nil {
 		return nil, 0, err
 	}
