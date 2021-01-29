@@ -39,7 +39,7 @@ func TestRunArtifactDownload(t *testing.T) {
 		Reply(200).Body(f1)
 
 	gock.InterceptClient(wk.Client().(cdsclient.Raw).HTTPClient())
-	gock.InterceptClient(wk.Client().(cdsclient.Raw).HTTPSSEClient())
+	gock.InterceptClient(wk.Client().(cdsclient.Raw).HTTPNoTimeoutClient())
 
 	wk.Params = append(wk.Params, []sdk.Parameter{
 		{
@@ -105,7 +105,7 @@ func TestRunArtifactDownloadOutsideWorkspace(t *testing.T) {
 		Reply(200).Body(f1)
 
 	gock.InterceptClient(wk.Client().(cdsclient.Raw).HTTPClient())
-	gock.InterceptClient(wk.Client().(cdsclient.Raw).HTTPSSEClient())
+	gock.InterceptClient(wk.Client().(cdsclient.Raw).HTTPNoTimeoutClient())
 
 	wk.Params = append(wk.Params, []sdk.Parameter{
 		{
