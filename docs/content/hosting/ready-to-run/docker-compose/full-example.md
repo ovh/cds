@@ -195,6 +195,7 @@ docker pull ovhcom/cds-engine:latest
 docker-compose up --no-recreate -d cds-db cds-cache elasticsearch dockerhost
 sleep 3
 docker-compose logs| grep 'database system is ready to accept connections'
+docker-compose up --no-recreate cds-db-init
 docker-compose up --no-recreate cds-migrate
 sleep 3
 docker-compose up cds-prepare
