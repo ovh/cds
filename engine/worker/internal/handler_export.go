@@ -3,12 +3,12 @@ package internal
 import (
 	"context"
 	"encoding/json"
-	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"io/ioutil"
 	"net/http"
 
 	"github.com/rockbears/log"
 
+	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
 )
 

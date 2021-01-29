@@ -3,11 +3,12 @@ package internal
 import (
 	"context"
 	"fmt"
-	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"net/http"
 
 	"github.com/gorilla/mux"
 	"github.com/rockbears/log"
+
+	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 )
 
 func serviceHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {

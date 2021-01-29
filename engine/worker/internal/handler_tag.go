@@ -2,10 +2,10 @@ package internal
 
 import (
 	"context"
-	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"net/http"
 	"time"
 
+	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
 )
 
