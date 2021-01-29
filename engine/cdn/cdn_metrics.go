@@ -99,7 +99,7 @@ func (s *Service) ComputeMetrics(ctx context.Context) {
 		case <-tickStatsItems.C:
 			start := time.Now()
 			// All Items by type
-			allItemsByType, err := item.CountItems(s.mustDBWithCtx(ctx)) // 308.852 ms
+			allItemsByType, err := item.CountItems(s.mustDBWithCtx(ctx))
 			if err != nil {
 				log.Error(ctx, "cdn> Unable to compute metrics: %v", err)
 				continue
@@ -112,7 +112,7 @@ func (s *Service) ComputeMetrics(ctx context.Context) {
 			// Count all unit_item by type
 			var storageStatsBuffer []storage.Stat
 			for _, bu := range s.Units.Buffers {
-				storageStatsBuffer = append(storageStatsBuffer, s.countItemsForUnit(ctx, bu)...) // 0.066 ms
+				storageStatsBuffer = append(storageStatsBuffer, s.countItemsForUnit(ctx, bu)...)
 			}
 
 			for _, stat := range storageStatsBuffer {
@@ -122,7 +122,7 @@ func (s *Service) ComputeMetrics(ctx context.Context) {
 
 			var storageStats []storage.Stat
 			for _, su := range s.Units.Storages {
-				storageStats = append(storageStats, s.countItemsForUnit(ctx, su)...) // 0.066 ms
+				storageStats = append(storageStats, s.countItemsForUnit(ctx, su)...)
 			}
 
 			for _, stat := range storageStats {
@@ -149,7 +149,7 @@ func (s *Service) ComputeMetrics(ctx context.Context) {
 					}
 				}
 			}
-			itemsToDelete, err := item.CountItemsToDelete(s.mustDBWithCtx(ctx)) // 27.004 ms
+			itemsToDelete, err := item.CountItemsToDelete(s.mustDBWithCtx(ctx))
 			if err != nil {
 				log.Error(ctx, "cdn> Unable to compute metrics: %v", err)
 				continue
@@ -160,7 +160,7 @@ func (s *Service) ComputeMetrics(ctx context.Context) {
 				telemetry.Record(ctxItem, s.Metrics.ItemToDelete, stat.Number)
 			}
 
-			storageStats, err = storage.CountItemUnitToDelete(s.mustDBWithCtx(ctx)) // 93.706 ms
+			storageStats, err = storage.CountItemUnitToDelete(s.mustDBWithCtx(ctx))
 			if err != nil {
 				log.Error(ctx, "cdn> Unable to compute metrics: %v", err)
 				continue
@@ -199,7 +199,7 @@ func (s *Service) countItemsForUnit(ctx context.Context, storageUnit storage.Int
 	types := []sdk.CDNItemType{sdk.CDNTypeItemStepLog, sdk.CDNTypeItemServiceLog, sdk.CDNTypeItemArtifact}
 	var storageStats []storage.Stat
 	for _, typ := range types {
-		suStats, err := storage.CountItemsForUnit(s.mustDBWithCtx(ctx), storageUnit.ID(), string(typ)) // 0.033 ms
+		suStats, err := storage.CountItemsForUnit(s.mustDBWithCtx(ctx), storageUnit.ID(), string(typ))
 		if err != nil {
 			log.Error(ctx, "cdn> Unable to compute CountItemsForUnit for %s: %v", storageUnit.Name(), err)
 			return nil
