@@ -29,6 +29,11 @@ func Test_tmplHandler(t *testing.T) {
 	if err := wk.Init("test-worker", "test-hatchery", "http://lolcat.host", "xxx-my-token", "", true, afero.NewBasePathFs(fs, basedir)); err != nil {
 		t.Fatalf("worker init failed: %v", err)
 	}
+	wk.currentJob.wJob = &sdk.WorkflowNodeJobRun{
+		ID: 1,
+	}
+	wk.currentJob.currentStepName = "MyStep"
+	wk.currentJob.currentStepIndex = 1
 	wk.currentJob.params = []sdk.Parameter{
 		{
 			Name:  "cds.stuff",
