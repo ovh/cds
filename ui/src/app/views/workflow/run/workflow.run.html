@@ -26,6 +26,7 @@
                                 </p>
                                 <p *ngIf="errorsMap[info.message.id] && errorsMap[info.message.id].link">
                                     <i class="book open icon"></i>{{'common_find_help' | translate}} <a target="_blank"
+                                        rel="noopener noreferrer"
                                         [href]="errorsMap[info.message.id].link">{{'common_here' |
                                         translate}}</a>.
                                 </p>
@@ -57,6 +58,7 @@
                                 </p>
                                 <p *ngIf="warningsMap[info.message.id]">
                                     <i class="book open icon"></i>{{'common_find_help' | translate}} <a target="_blank"
+                                        rel="noopener noreferrer"
                                         [href]="warningsMap[info.message.id].link">{{'common_here' |
                                         translate}}</a>
                                 </p>
