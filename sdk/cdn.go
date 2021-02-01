@@ -13,6 +13,10 @@ import (
 	"github.com/ovh/cds/sdk/cdn"
 )
 
+const (
+	CDSSessionID = "X-CDS-Session-ID"
+)
+
 type CDNItem struct {
 	ID           string          `json:"id" db:"id"`
 	Created      time.Time       `json:"created" db:"created"`

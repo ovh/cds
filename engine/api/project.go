@@ -681,7 +681,7 @@ func (api *API) getProjectAccessHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrForbidden, "only CDN can call this route")
 		}
 
-		sessionID := r.Header.Get("X-CDS-Session-ID")
+		sessionID := r.Header.Get(sdk.CDSSessionID)
 		if sessionID == "" {
 			return sdk.WrapError(sdk.ErrForbidden, "missing session id header")
 		}
@@ -695,11 +695,16 @@ func (api *API) getProjectAccessHandler() service.Handler {
 		if err != nil {
 			return sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 		}
+
 		if consumer.Disabled {
 			return sdk.WrapError(sdk.ErrUnauthorized, "consumer (%s) is disabled", consumer.ID)
 		}
 
-		maintainerOrAdmin := consumer.Maintainer() || consumer.Admin()
+		if consumer.Worker == nil {
+			return sdk.WrapError(sdk.ErrForbidden, "consumer (%s) is not a worker", consumer.ID)
+		}
+
+		maintainerOrAdmin := consumer.Maintainer()
 
 		perms, err := permission.LoadProjectMaxLevelPermission(ctx, api.mustDB(), []string{projectKey}, consumer.GetGroupIDs())
 		if err != nil {

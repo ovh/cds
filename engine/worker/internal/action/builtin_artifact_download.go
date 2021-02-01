@@ -125,7 +125,7 @@ func RunArtifactDownload(ctx context.Context, wk workerruntime.Runtime, a sdk.Ac
 			if _, err := io.Copy(f, r); err != nil {
 				res.Status = sdk.StatusFail
 				res.Reason = err.Error()
-				log.Warn(ctx, "Cannot download artifact %s: %s", destFile, err)
+				log.Warn(ctx, "cannot download artifact %s: %s", destFile, sdk.WithStack(err))
 				wk.SendLog(ctx, workerruntime.LevelError, res.Reason)
 			}
 			if err := f.Close(); err != nil {

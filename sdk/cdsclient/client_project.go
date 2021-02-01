@@ -82,7 +82,7 @@ func (c *client) ProjectGroupsImport(projectKey string, content io.Reader, mods 
 
 func (c *client) ProjectAccess(ctx context.Context, projectKey, sessionID string, itemType sdk.CDNItemType) error {
 	url := fmt.Sprintf("/project/%s/type/%s/access", projectKey, itemType)
-	if _, err := c.GetJSON(ctx, url, nil, SetHeader("X-CDS-Session-ID", sessionID)); err != nil {
+	if _, err := c.GetJSON(ctx, url, nil, SetHeader(sdk.CDSSessionID, sessionID)); err != nil {
 		return err
 	}
 	return nil
