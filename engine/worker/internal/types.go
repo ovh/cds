@@ -50,18 +50,20 @@ type CurrentWorker struct {
 		model       string
 	}
 	currentJob struct {
-		wJob         *sdk.WorkflowNodeJobRun
-		newVariables []sdk.Variable
-		params       []sdk.Parameter
-		secrets      []sdk.Variable
-		context      context.Context
-		signer       jose.Signer
-		projectKey   string
-		workflowName string
-		workflowID   int64
-		runID        int64
-		nodeRunName  string
-		features     map[string]bool
+		wJob             *sdk.WorkflowNodeJobRun
+		newVariables     []sdk.Variable
+		params           []sdk.Parameter
+		secrets          []sdk.Variable
+		context          context.Context
+		signer           jose.Signer
+		projectKey       string
+		workflowName     string
+		workflowID       int64
+		runID            int64
+		nodeRunName      string
+		features         map[string]bool
+		currentStepIndex int
+		currentStepName  string
 	}
 	status struct {
 		Name   string `json:"name"`

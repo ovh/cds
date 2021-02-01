@@ -7,10 +7,16 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/rockbears/log"
+
+	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 )
 
 func serviceHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := workerruntime.SetJobID(ctx, wk.currentJob.wJob.ID)
+		ctx = workerruntime.SetStepOrder(ctx, wk.currentJob.currentStepIndex)
+		ctx = workerruntime.SetStepName(ctx, wk.currentJob.currentStepName)
+
 		vars := mux.Vars(r)
 		serviceType := vars["type"]
 
