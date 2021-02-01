@@ -41,6 +41,7 @@ $ docker-compose up --no-recreate -d cds-db cds-cache elasticsearch dockerhost
 $ docker-compose logs| grep 'database system is ready to accept connections'
 # you should have this line after few seconds: cds-db_1 | LOG:  database system is ready to accept connections
 
+$ docker-compose up --no-recreate cds-db-init
 $ docker-compose up --no-recreate cds-migrate
 # You should have this log: "cdstest_cds-migrate_1 exited with code 0"
 

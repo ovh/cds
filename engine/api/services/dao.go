@@ -161,7 +161,7 @@ func UpsertStatus(db gorpmapper.SqlExecutorWithTx, s sdk.Service, authSessionID 
 	var sessionID *string
 	if authSessionID == "" {
 		// no sessionID : we can delete service_status to keep only one status
-		// example: each api has a consumerID and no authSessionID -> so only on status per service
+		// example: each api has a consumerID and no authSessionID -> so only one status per service
 		query := "delete from service_status where service_id = $1"
 		if _, err := db.Exec(query, s.ID); err != nil {
 			return sdk.WithStack(err)
@@ -175,7 +175,6 @@ func UpsertStatus(db gorpmapper.SqlExecutorWithTx, s sdk.Service, authSessionID 
 	ON CONFLICT (service_id, auth_session_id) DO UPDATE SET monitoring_status = $1, service_id = $2, auth_session_id = $3`
 	_, err := db.Exec(query, s.MonitoringStatus, s.ID, sessionID)
 	return sdk.WithStack(err)
-
 }
 
 // Delete a service.

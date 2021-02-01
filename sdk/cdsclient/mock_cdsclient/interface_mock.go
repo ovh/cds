@@ -4748,18 +4748,18 @@ func (mr *MockInterfaceMockRecorder) HTTPClient() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HTTPClient", reflect.TypeOf((*MockInterface)(nil).HTTPClient))
 }
 
-// HTTPSSEClient mocks base method
-func (m *MockInterface) HTTPSSEClient() *http.Client {
+// HTTPNoTimeoutClient mocks base method
+func (m *MockInterface) HTTPNoTimeoutClient() *http.Client {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "HTTPSSEClient")
+	ret := m.ctrl.Call(m, "HTTPNoTimeoutClient")
 	ret0, _ := ret[0].(*http.Client)
 	return ret0
 }
 
-// HTTPSSEClient indicates an expected call of HTTPSSEClient
-func (mr *MockInterfaceMockRecorder) HTTPSSEClient() *gomock.Call {
+// HTTPNoTimeoutClient indicates an expected call of HTTPNoTimeoutClient
+func (mr *MockInterfaceMockRecorder) HTTPNoTimeoutClient() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HTTPSSEClient", reflect.TypeOf((*MockInterface)(nil).HTTPSSEClient))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HTTPNoTimeoutClient", reflect.TypeOf((*MockInterface)(nil).HTTPNoTimeoutClient))
 }
 
 // HTTPWebsocketClient mocks base method
@@ -9707,18 +9707,18 @@ func (mr *MockRawMockRecorder) HTTPClient() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HTTPClient", reflect.TypeOf((*MockRaw)(nil).HTTPClient))
 }
 
-// HTTPSSEClient mocks base method
-func (m *MockRaw) HTTPSSEClient() *http.Client {
+// HTTPNoTimeoutClient mocks base method
+func (m *MockRaw) HTTPNoTimeoutClient() *http.Client {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "HTTPSSEClient")
+	ret := m.ctrl.Call(m, "HTTPNoTimeoutClient")
 	ret0, _ := ret[0].(*http.Client)
 	return ret0
 }
 
-// HTTPSSEClient indicates an expected call of HTTPSSEClient
-func (mr *MockRawMockRecorder) HTTPSSEClient() *gomock.Call {
+// HTTPNoTimeoutClient indicates an expected call of HTTPNoTimeoutClient
+func (mr *MockRawMockRecorder) HTTPNoTimeoutClient() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HTTPSSEClient", reflect.TypeOf((*MockRaw)(nil).HTTPSSEClient))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HTTPNoTimeoutClient", reflect.TypeOf((*MockRaw)(nil).HTTPNoTimeoutClient))
 }
 
 // HTTPWebsocketClient mocks base method

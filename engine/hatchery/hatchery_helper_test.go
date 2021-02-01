@@ -27,6 +27,17 @@ import (
 func InitWebsocketTestServer(t *testing.T) *httptest.Server {
 	upgrader := websocket.Upgrader{}
 	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Logf("WebsocketTestServer> %s", r.URL.String())
+
+		switch r.URL.String() {
+		case "/download/worker/darwin/amd64?variant=", "/download/worker/linux/amd64?variant=":
+			w.Header().Add("Content-Type", "application/octet-stream")
+			w.Write([]byte("foo"))
+			w.WriteHeader(200)
+			t.Log("done")
+			return
+		}
+
 		c, err := upgrader.Upgrade(w, r, nil)
 		require.NoError(t, err)
 		defer c.Close()

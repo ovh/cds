@@ -3,16 +3,17 @@ package cdsclient
 import (
 	"context"
 	"fmt"
-	"github.com/spf13/afero"
 	"io"
 	"net/http"
 	"time"
+
+	"github.com/spf13/afero"
 
 	"github.com/ovh/cds/sdk"
 )
 
 func (c *client) CDNItemDownload(ctx context.Context, cdnAddr string, hash string, itemType sdk.CDNItemType) (io.Reader, error) {
-	reader, _, _, err := c.Stream(ctx, http.MethodGet, fmt.Sprintf("%s/item/%s/%s/download", cdnAddr, itemType, hash), nil, true, func(req *http.Request) {
+	reader, _, _, err := c.Stream(ctx, c.HTTPNoTimeoutClient(), http.MethodGet, fmt.Sprintf("%s/item/%s/%s/download", cdnAddr, itemType, hash), nil, func(req *http.Request) {
 		auth := "Bearer " + c.config.SessionToken
 		req.Header.Add("Authorization", auth)
 	})

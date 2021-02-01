@@ -195,10 +195,11 @@ docker pull ovhcom/cds-engine:latest
 docker-compose up --no-recreate -d cds-db cds-cache elasticsearch dockerhost
 sleep 3
 docker-compose logs| grep 'database system is ready to accept connections'
+docker-compose up --no-recreate cds-db-init
 docker-compose up --no-recreate cds-migrate
 sleep 3
 docker-compose up cds-prepare
-export CDS_EDIT_CONFIG="api.smtp.disable=true telemetry.metricsEnabled=true"
+export CDS_EDIT_CONFIG="api.smtp.disable=true"
 docker-compose up cds-edit-config
 export CDS_EDIT_CONFIG="vcs.servers.github.github.clientId=${CDS_GITHUB_CLIENT_ID} vcs.servers.github.github.clientSecret=${CDS_GITHUB_CLIENT_SECRET} "
 docker-compose up cds-edit-config

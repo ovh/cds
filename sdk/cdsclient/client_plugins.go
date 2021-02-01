@@ -65,7 +65,7 @@ func (c client) PluginGetBinary(name, os, arch string, w io.Writer) error {
 	var reader io.ReadCloser
 	var err error
 
-	reader, _, _, err = c.Stream(context.Background(), "GET", path, nil, true)
+	reader, _, _, err = c.Stream(context.Background(), c.HTTPNoTimeoutClient(), "GET", path, nil)
 	if err != nil {
 		return err
 	}

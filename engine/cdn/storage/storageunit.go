@@ -43,7 +43,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 	}
 
 	if len(config.HashLocatorSalt) < 8 {
-		return nil, fmt.Errorf("invalid CDN configuration. HashLocatorSalt is too short")
+		return nil, sdk.WithStack(fmt.Errorf("invalid CDN configuration. HashLocatorSalt is too short"))
 	}
 
 	countLogBuffer := 0
@@ -56,18 +56,18 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 			countFileBuffer++
 		}
 		if bu.Name == "" {
-			return nil, fmt.Errorf("invalid CDN configuration. Missing buffer name")
+			return nil, sdk.WithStack(fmt.Errorf("invalid CDN configuration. Missing buffer name"))
 		}
 	}
 	if countLogBuffer == 0 || countLogBuffer > 1 {
-		return nil, fmt.Errorf("missing or too much CDN Buffer for log items")
+		return nil, sdk.WithStack(fmt.Errorf("missing or too much CDN Buffer for log items"))
 	}
 	if countFileBuffer > 1 {
-		return nil, fmt.Errorf("too much CDN Buffer for file items")
+		return nil, sdk.WithStack(fmt.Errorf("too much CDN Buffer for file items"))
 	}
 
 	if len(config.Storages) == 0 {
-		return nil, fmt.Errorf("invalid CDN configuration. Missing storage unit")
+		return nil, sdk.WithStack(fmt.Errorf("invalid CDN configuration. Missing storage unit"))
 	}
 
 	if config.SyncNbElements <= 0 || config.SyncNbElements > 1000 {

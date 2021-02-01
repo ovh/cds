@@ -3,6 +3,7 @@ package local
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
@@ -139,12 +140,24 @@ func (h *HatcheryLocal) downloadWorker() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
 
-	body, headers, _, err := h.Client.(cdsclient.Raw).Request(ctx, http.MethodGet, urlBinary, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, urlBinary, nil)
+	if err != nil {
+		return nil
+	}
+
+	resp, err := h.Client.HTTPNoTimeoutClient().Do(req)
 	if err != nil {
 		return sdk.WrapError(err, "error while getting binary from CDS API")
 	}
 
-	if contentType := headers.Get("Content-Type"); contentType != "application/octet-stream" {
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return sdk.WrapError(err, "error while getting binary from CDS API")
+	}
+
+	defer resp.Body.Close() // nolint
+
+	if contentType := resp.Header.Get("Content-Type"); contentType != "application/octet-stream" {
 		return fmt.Errorf("invalid Binary (Content-Type: %s). Please try again or download it manually from %s", contentType, sdk.URLGithubReleases)
 	}
 
@@ -236,7 +249,7 @@ func (h *HatcheryLocal) InitHatchery(ctx context.Context) error {
 	if err := h.RefreshServiceLogger(ctx); err != nil {
 		log.Error(ctx, "Hatchery> local> Cannot get cdn configuration : %v", err)
 	}
-	h.GoRoutines.Run(context.Background(), "hatchery locale routines", func(ctx context.Context) {
+	h.GoRoutines.Run(ctx, "hatchery locale routines", func(ctx context.Context) {
 		h.routines(ctx)
 	})
 	return nil

@@ -67,29 +67,33 @@ func (c *Common) Start(ctx context.Context, cfg cdsclient.ServiceConfig) error {
 
 	ctxTimeout, cancel := context.WithTimeout(ctx, 5*time.Minute)
 	defer cancel()
-	var err error
-	var firstAttempt = true
-loop:
-	for {
-		select {
-		case <-ctxTimeout.Done():
-			fmt.Println()
-			return err
-		default:
-			c.Client, c.APIPublicKey, err = cdsclient.NewServiceClient(cfg)
-			if err == nil {
-				fmt.Println()
-				break loop
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
+
+	initClient := func(ctx context.Context) error {
+		var err error
+		c.Client, c.APIPublicKey, err = cdsclient.NewServiceClient(ctx, cfg)
+		if err != nil {
+			fmt.Println("Waiting for CDS API...")
+		}
+		return err
+	}
+
+	if err := initClient(ctxTimeout); err != nil {
+	loop:
+		for {
+			select {
+			case <-ctxTimeout.Done():
+				return ctxTimeout.Err()
+			case <-ticker.C:
+				if err := initClient(ctxTimeout); err == nil {
+					break loop
+				}
 			}
-			if firstAttempt {
-				fmt.Print("Waiting for CDS API..")
-				firstAttempt = false
-			}
-			fmt.Print(".")
-			time.Sleep(10 * time.Second)
 		}
 	}
 
+	var err error
 	c.ParsedAPIPublicKey, err = jws.NewPublicKeyFromPEM(c.APIPublicKey)
 	if err != nil {
 		return sdk.WithStack(err)
@@ -128,14 +132,14 @@ func (c *Common) Register(ctx context.Context, cfg sdk.ServiceConfig) error {
 	if c.PrivateKey != nil {
 		pubKeyPEM, err := jws.ExportPublicKey(c.PrivateKey)
 		if err != nil {
-			return fmt.Errorf("unable get public key from private key: %v", err)
+			return sdk.WrapError(err, "unable get public key from private key")
 		}
 		srv.PublicKey = pubKeyPEM
 	}
 
 	srv2, err := c.Client.ServiceRegister(ctx, srv)
 	if err != nil {
-		return sdk.WrapError(err, "Register>")
+		return sdk.WithStack(err)
 	}
 	c.ServiceInstance = srv2
 
@@ -146,6 +150,11 @@ func (c *Common) Register(ctx context.Context, cfg sdk.ServiceConfig) error {
 func (c *Common) Unregister(ctx context.Context) error {
 	// no logout needed for api
 	if c.ServiceType == "api" {
+		return nil
+	}
+
+	// check if client not nil, can happen when service is waiting for api
+	if c.Client == nil {
 		return nil
 	}
 
@@ -160,25 +169,40 @@ func (c *Common) Heartbeat(ctx context.Context, status func(ctx context.Context)
 		return nil
 	}
 
-	ticker := time.NewTicker(30 * time.Second)
-
 	var heartbeatFailures int
+	execHeartbeat := func(ctx context.Context) error {
+		if err := c.Client.ServiceHeartbeat(status(ctx)); err != nil {
+			if sdk.ErrorIs(err, sdk.ErrForbidden) {
+				return sdk.WrapError(err, "%s> Heartbeat failed with forbidden error", c.Name())
+			}
+			heartbeatFailures++
+			log.Warn(ctx, "%s> Heartbeat failure %d/%d: %v", c.Name(), heartbeatFailures, c.MaxHeartbeatFailures, err)
+
+			// if register failed too many time, stop heartbeat
+			if heartbeatFailures > c.MaxHeartbeatFailures {
+				return sdk.WithStack(fmt.Errorf("%s> Heartbeat failed excedeed", c.Name()))
+			}
+			return nil
+		}
+		heartbeatFailures = 0
+		return nil
+	}
+
+	// exec first heartbeat immediately
+	if err := execHeartbeat(ctx); err != nil {
+		return err
+	}
+
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
 	for {
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
+			return sdk.WrapError(ctx.Err(), "%s> Heartbeat> Cancelled", c.Name())
 		case <-ticker.C:
-			if err := c.Client.ServiceHeartbeat(status(ctx)); err != nil {
-				log.Warn(ctx, "%s> Heartbeat failure: %v", c.Name(), err)
-				heartbeatFailures++
-
-				// if register failed too many time, stop heartbeat
-				if heartbeatFailures > c.MaxHeartbeatFailures {
-					return fmt.Errorf("%s> Heartbeat> Register failed excedeed", c.Name())
-				}
-				continue
+			if err := execHeartbeat(ctx); err != nil {
+				return err
 			}
-			heartbeatFailures = 0
 		}
 	}
 }

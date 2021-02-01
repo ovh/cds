@@ -41,6 +41,7 @@ minio_reset_bucket:
 test-docker-compose:
 	docker-compose up --no-recreate -d cds-db cds-cache elasticsearch smtpmocksrv && \
 	sleep 5	&& \
+	docker-compose up --no-recreate cds-db-init && \
 	docker-compose up --no-recreate cds-migrate && \
 	docker-compose up cds-prepare && \
 	docker-compose up -d cds-api && \

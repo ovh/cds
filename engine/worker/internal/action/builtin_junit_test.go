@@ -75,7 +75,7 @@ func TestRunParseJunitTestResultAction_Absolute(t *testing.T) {
 	gock.Observe(checkRequest)
 
 	gock.InterceptClient(wk.Client().(cdsclient.Raw).HTTPClient())
-	gock.InterceptClient(wk.Client().(cdsclient.Raw).HTTPSSEClient())
+	gock.InterceptClient(wk.Client().(cdsclient.Raw).HTTPNoTimeoutClient())
 	res, err := RunParseJunitTestResultAction(ctx, wk,
 		sdk.Action{
 			Parameters: []sdk.Parameter{
@@ -140,7 +140,7 @@ func TestRunParseJunitTestResultAction_Relative(t *testing.T) {
 	gock.Observe(checkRequest)
 
 	gock.InterceptClient(wk.Client().(cdsclient.Raw).HTTPClient())
-	gock.InterceptClient(wk.Client().(cdsclient.Raw).HTTPSSEClient())
+	gock.InterceptClient(wk.Client().(cdsclient.Raw).HTTPNoTimeoutClient())
 	res, err := RunParseJunitTestResultAction(ctx, wk,
 		sdk.Action{
 			Parameters: []sdk.Parameter{

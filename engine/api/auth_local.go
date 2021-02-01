@@ -127,17 +127,17 @@ func initBuiltinConsumersFromStartupConfig(ctx context.Context, tx gorpmapper.Sq
 		case StartupConfigConsumerTypeHatchery:
 			scopes = sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeWorkerModel)
 		case StartupConfigConsumerTypeHooks:
-			scopes = sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeHooks, sdk.AuthConsumerScopeProject, sdk.AuthConsumerScopeRun)
+			scopes = sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeProject, sdk.AuthConsumerScopeRun, sdk.AuthConsumerScopeHooks)
 		case StartupConfigConsumerTypeCDN:
 			scopes = sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeWorker, sdk.AuthConsumerScopeRunExecution)
 		case StartupConfigConsumerTypeCDNStorageCDS:
 			scopes = sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeWorker, sdk.AuthConsumerScopeRunExecution)
 		case StartupConfigConsumerTypeVCS:
-			scopes = sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject, sdk.AuthConsumerScopeRun, sdk.AuthConsumerScopeService)
+			scopes = sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeProject, sdk.AuthConsumerScopeRun)
 		case StartupConfigConsumerTypeRepositories:
-			scopes = sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject, sdk.AuthConsumerScopeRun, sdk.AuthConsumerScopeService)
+			scopes = sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeProject, sdk.AuthConsumerScopeRun)
 		default:
-			scopes = sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject, sdk.AuthConsumerScopeRun)
+			scopes = sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeService)
 		}
 
 		var c = sdk.AuthConsumer{

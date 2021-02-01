@@ -50,7 +50,7 @@ func TestRunRelease(t *testing.T) {
 	gock.Observe(checkRequest)
 
 	gock.InterceptClient(wk.Client().(cdsclient.Raw).HTTPClient())
-	gock.InterceptClient(wk.Client().(cdsclient.Raw).HTTPSSEClient())
+	gock.InterceptClient(wk.Client().(cdsclient.Raw).HTTPNoTimeoutClient())
 
 	wk.Params = append(wk.Params, []sdk.Parameter{
 		{

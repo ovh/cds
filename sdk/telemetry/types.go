@@ -24,7 +24,6 @@ var DefaultFormat propagation.HTTPFormat = &b3.HTTPFormat{}
 
 // Configuration is the global tracing configuration
 type Configuration struct {
-	MetricsEnabled bool `toml:"metricsEnabled" json:"metricsEnabled"`
 	TracingEnabled bool `toml:"tracingEnabled" json:"tracingEnabled"`
 	Exporters      struct {
 		Jaeger struct {
