@@ -1,4 +1,4 @@
-<div *ngIf="ready" class="workflowSidebar">
+<ng-container *ngIf="ready">
     <sui-multi-select class="selection" [(ngModel)]="selectedTags" [options]="tagsSelectable" [isSearchable]="true"
         (ngModelChange)="filterRuns()" [optionsFilter]="filterTags" #multiSelect>
         <sui-select-option *ngFor="let option of multiSelect.filteredOptions" [value]="option">
@@ -45,10 +45,9 @@
                             </ng-container>
                         </div>
                     </div>
-                    <div class="loader"
-                        *ngIf="r.status === pipelineStatusEnum.BUILDING || r.status === pipelineStatusEnum.WAITING">
-                        <app-status-icon [status]="pipelineStatusEnum.BUILDING"></app-status-icon>
-                    </div>
+                    <app-status-icon
+                        *ngIf="r.status === pipelineStatusEnum.BUILDING || r.status === pipelineStatusEnum.WAITING"
+                        [status]="pipelineStatusEnum.BUILDING"></app-status-icon>
                 </div>
                 <div class="foot">
                     <div class="duration">
@@ -62,7 +61,7 @@
             {{'workflow_no_run_found' | translate}}
         </div>
     </div>
-</div>
-<div *ngIf="!ready" class="ui text active loader">
-    {{ 'workflow_run_loading' | translate }}
+</ng-container>
+<div *ngIf="!ready" class="ui text active inline loader">
+    Loading runs...
 </div>

@@ -93,7 +93,10 @@
         ],
         "brace-style": [
           "error",
-          "1tbs"
+          "1tbs",
+          {
+            "allowSingleLine": true
+          }
         ],
         "id-blacklist": "off",
         "id-match": "off",

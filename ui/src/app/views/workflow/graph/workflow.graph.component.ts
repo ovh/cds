@@ -45,8 +45,8 @@ export class WorkflowGraphComponent implements AfterViewInit, OnDestroy {
         this.changeDisplay();
     }
     get direction() {
- return this._direction;
-}
+        return this._direction;
+    }
 
     @Output() deleteJoinSrcEvent = new EventEmitter<{ source: any, target: any }>();
 
@@ -77,12 +77,20 @@ export class WorkflowGraphComponent implements AfterViewInit, OnDestroy {
 
     ngAfterViewInit(): void {
         this.ready = true;
+        this._cd.detectChanges();
         this.changeDisplay();
-        this._cd.markForCheck();
+    }
+
+    @HostListener('window:resize')
+    onResize() {
+        if (!this.svg) { return; }
+        const element = this.svgContainer.element.nativeElement;
+        this.svg.attr('width', element.offsetWidth);
+        this.svg.attr('height', element.offsetHeight);
     }
 
     changeDisplay(): void {
-        if (!this.ready && this.workflow) {
+        if (!this.ready) {
             return;
         }
         this.initWorkflow();
@@ -105,9 +113,8 @@ export class WorkflowGraphComponent implements AfterViewInit, OnDestroy {
         }
 
         const element = this.svgContainer.element.nativeElement;
-        this.svg = d3.select(element).append('svg')
-            .attr('width', element.offsetWidth)
-            .attr('height', element.offsetHeight);
+        d3.select(element).selectAll('svg').remove();
+        this.svg = d3.select(element).append('svg');
 
         let g = this.svg.append('g');
         this.render(g, this.g);
@@ -129,6 +136,7 @@ export class WorkflowGraphComponent implements AfterViewInit, OnDestroy {
     }
 
     clickOrigin() {
+        this.onResize();
         if (!this.svgContainer?.element?.nativeElement?.offsetWidth || !this.svgContainer?.element?.nativeElement?.offsetHeight) {
             return;
         }
