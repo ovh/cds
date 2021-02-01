@@ -12,6 +12,14 @@ services:
       POSTGRES_USER: cds
       POSTGRES_DB: cds
 
+  cds-db-init:
+    image: postgres:9.6
+    command: >
+        sh -exc "
+        PGPASSWORD=cds psql -h cds-db -p 5432 -U cds -d cds -c \"CREATE SCHEMA IF NOT EXISTS cdn AUTHORIZATION cds;\";"
+    links:
+       - cds-db
+
   cds-cache:
     image: redis:alpine
     command: redis-server --requirepass cds

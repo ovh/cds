@@ -67,6 +67,8 @@ $(GO_XUTOOLS):
 default: build
 
 clean:
+	$(MAKE) clean -C sql
+	$(MAKE) clean -C worker
 	@rm -rf $(TARGET_DIR)
 	@for TST in `find ./ -name "tests.log"`; do \
 		rm $$TST; \

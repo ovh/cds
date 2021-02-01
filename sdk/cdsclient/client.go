@@ -122,7 +122,7 @@ func NewProviderClient(cfg ProviderConfig) ProviderClient {
 }
 
 // NewServiceClient returns client for a service
-func NewServiceClient(cfg ServiceConfig) (Interface, []byte, error) {
+func NewServiceClient(ctx context.Context, cfg ServiceConfig) (Interface, []byte, error) {
 	conf := Config{
 		Host:                              cfg.Host,
 		Retry:                             2,
@@ -152,7 +152,7 @@ func NewServiceClient(cfg ServiceConfig) (Interface, []byte, error) {
 	var nbError int
 retry:
 	var res sdk.AuthConsumerSigninResponse
-	_, headers, code, err := cli.RequestJSON(context.Background(), "POST", "/auth/consumer/"+string(sdk.ConsumerBuiltin)+"/signin", sdk.AuthConsumerSigninRequest{"token": cfg.Token}, &res)
+	_, headers, code, err := cli.RequestJSON(ctx, "POST", "/auth/consumer/"+string(sdk.ConsumerBuiltin)+"/signin", sdk.AuthConsumerSigninRequest{"token": cfg.Token}, &res)
 	if err != nil {
 		if code == 401 {
 			nbError++

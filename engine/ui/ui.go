@@ -145,7 +145,7 @@ func (s *Service) Serve(ctx context.Context) error {
 	<-ctx.Done()
 	log.Info(ctx, "ui> Shutdown HTTP Server")
 	if err := s.Server.Shutdown(ctx); err != nil {
-		return fmt.Errorf("unable to shutdown server: %v", err)
+		return sdk.WrapError(err, "unable to shutdown server")
 	}
 
 	return ctx.Err()
