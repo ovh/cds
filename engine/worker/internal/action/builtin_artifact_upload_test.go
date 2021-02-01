@@ -67,7 +67,7 @@ func TestRunArtifactUpload_Absolute(t *testing.T) {
 	gock.Observe(checkRequest)
 
 	gock.InterceptClient(wk.Client().(cdsclient.Raw).HTTPClient())
-	gock.InterceptClient(wk.Client().(cdsclient.Raw).HTTPSSEClient())
+	gock.InterceptClient(wk.Client().(cdsclient.Raw).HTTPNoTimeoutClient())
 
 	res, err := RunArtifactUpload(ctx, wk,
 		sdk.Action{
@@ -131,7 +131,7 @@ func TestRunArtifactUpload_Relative(t *testing.T) {
 	gock.Observe(checkRequest)
 
 	gock.InterceptClient(wk.Client().(cdsclient.Raw).HTTPClient())
-	gock.InterceptClient(wk.Client().(cdsclient.Raw).HTTPSSEClient())
+	gock.InterceptClient(wk.Client().(cdsclient.Raw).HTTPNoTimeoutClient())
 
 	res, err := RunArtifactUpload(ctx, wk,
 		sdk.Action{

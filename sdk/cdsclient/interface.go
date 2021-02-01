@@ -435,7 +435,7 @@ type Raw interface {
 	RequestJSON(ctx context.Context, method, path string, in interface{}, out interface{}, mods ...RequestModifier) ([]byte, http.Header, int, error)
 	Request(ctx context.Context, method string, path string, body io.Reader, mods ...RequestModifier) ([]byte, http.Header, int, error)
 	HTTPClient() *http.Client
-	HTTPSSEClient() *http.Client
+	HTTPNoTimeoutClient() *http.Client
 	HTTPWebsocketClient() *websocket.Dialer
 }
 

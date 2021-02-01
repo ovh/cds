@@ -24,7 +24,7 @@ import (
 	"github.com/ovh/cds/engine/worker/internal"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/ovh/cds/sdk/log"
+	cdslog "github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/log/hook"
 )
 
@@ -314,7 +314,7 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 		t.Fatalf("worker init failed: %v", err)
 	}
 	gock.InterceptClient(w.Client().(cdsclient.Raw).HTTPClient())
-	gock.InterceptClient(w.Client().(cdsclient.Raw).HTTPSSEClient())
+	gock.InterceptClient(w.Client().(cdsclient.Raw).HTTPNoTimeoutClient())
 
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()

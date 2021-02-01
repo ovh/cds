@@ -12,7 +12,7 @@ import (
 )
 
 func (c *client) CDNArtifactDownload(ctx context.Context, cdnAddr string, hash string, w io.Writer) error {
-	reader, _, _, err := c.Stream(ctx, http.MethodGet, fmt.Sprintf("%s/item/%s/%s/download", cdnAddr, sdk.CDNTypeItemArtifact, hash), nil, true, func(req *http.Request) {
+	reader, _, _, err := c.Stream(ctx, c.HTTPNoTimeoutClient(), http.MethodGet, fmt.Sprintf("%s/item/%s/%s/download", cdnAddr, sdk.CDNTypeItemArtifact, hash), nil, func(req *http.Request) {
 		auth := "Bearer " + c.config.SessionToken
 		req.Header.Add("Authorization", auth)
 	})
