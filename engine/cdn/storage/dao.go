@@ -298,18 +298,6 @@ func getAllItemUnits(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecu
 	return itemUnits, nil
 }
 
-func CountItemCompleted(db gorp.SqlExecutor) (int64, error) {
-	return db.SelectInt("SELECT COUNT(status) from item WHERE item.status = $1 AND to_delete = false", sdk.CDNStatusItemCompleted)
-}
-
-func CountItemIncoming(db gorp.SqlExecutor) (int64, error) {
-	return db.SelectInt("SELECT COUNT(status) from item WHERE item.status <> $1", sdk.CDNStatusItemCompleted)
-}
-
-func CountItemUnitByUnit(db gorp.SqlExecutor, unitID string) (int64, error) {
-	return db.SelectInt("SELECT COUNT(unit_id) from storage_unit_item WHERE unit_id = $1", unitID)
-}
-
 func LoadAllItemIDUnknownByUnit(db gorp.SqlExecutor, unitID string, offset int64, limit int64) ([]ItemToSync, error) {
 	var res []ItemToSync
 
@@ -341,11 +329,11 @@ type Stat struct {
 	Number      int64  `db:"number"`
 }
 
-func CountItemsForUnit(db gorp.SqlExecutor, unitID string) (res []Stat, err error) {
-	_, err = db.Select(&res, `select type, count(id) as "number"
+func CountItemsForUnit(db gorp.SqlExecutor, unitID, stype string) (res []Stat, err error) {
+	_, err = db.Select(&res, `select count(type) as "number"
 	from storage_unit_item
 	where unit_id = $1
-	group by type`, unitID)
+	and type = $2`, unitID, stype)
 	return res, sdk.WithStack(err)
 }
 

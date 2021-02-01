@@ -31,7 +31,7 @@ func deepFields(iface interface{}) []reflect.StructField {
 		v := ifv.Field(i)
 		dbTag, hasDBTag := ift.Field(i).Tag.Lookup("db")
 		tagValues := strings.Split(dbTag, ",")
-		if len(tagValues) >= 0 && tagValues[0] == "-" {
+		if len(tagValues) > 0 && tagValues[0] == "-" {
 			continue
 		}
 
