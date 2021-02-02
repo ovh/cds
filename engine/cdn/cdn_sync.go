@@ -22,7 +22,6 @@ const (
 )
 
 var statusSync struct {
-	currentProjectSync  string
 	nbProjects          int
 	nbProjectsDone      int
 	nbProjectsFailed    int
@@ -83,14 +82,12 @@ func (s *Service) SyncLogs(ctx context.Context, cdsStorage *cds.CDS) error {
 	// Browse Project
 	for _, p := range projects {
 		log.Info(ctx, "cdn:cds:sync:log: project done %d/%d (+%d failed)", statusSync.nbProjectsDone, len(projects), statusSync.nbProjectsFailed)
-		statusSync.currentProjectSync = p.Key
 		if err := s.syncProjectLogs(ctx, cdsStorage, p.Key); err != nil {
 			statusSync.nbProjectsFailed++
 			log.Error(ctx, "cdn:cds:sync:log  failed to sync project %s: %+v", p.Key, err)
 			continue
 		}
 		statusSync.nbProjectsDone++
-		statusSync.currentProjectSync = ""
 	}
 	log.Info(ctx, "cdn:cds:sync:log: project done %d/%d (+%d failed)", statusSync.nbProjectsDone, len(projects), statusSync.nbProjectsFailed)
 	if statusSync.nbProjectsFailed > 0 {
