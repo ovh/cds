@@ -20,6 +20,7 @@ import (
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/user"
+	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/engine/service"
@@ -700,9 +701,15 @@ func (api *API) getProjectAccessHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrUnauthorized, "consumer (%s) is disabled", consumer.ID)
 		}
 
-		if consumer.Worker == nil {
+		// Add worker for consumer if exists
+		worker, err := worker.LoadByConsumerID(ctx, api.mustDB(), consumer.ID)
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return err
+		}
+		if err != nil && sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return sdk.WrapError(sdk.ErrForbidden, "consumer (%s) is not a worker", consumer.ID)
 		}
+		consumer.Worker = worker
 
 		maintainerOrAdmin := consumer.Maintainer()
 

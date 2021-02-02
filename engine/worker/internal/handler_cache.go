@@ -194,6 +194,7 @@ func cachePullHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 					Message: "worker cache pull > Cannot get cache links: " + err.Error(),
 					Status:  http.StatusNotFound,
 				}
+				log.Error(ctx, "%v", err)
 				writeError(w, req, err)
 				return
 			}
@@ -202,6 +203,7 @@ func cachePullHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 					Message: "worker cache pull > No unique link found",
 					Status:  http.StatusNotFound,
 				}
+				log.Error(ctx, "%v", err)
 				writeError(w, req, err)
 				return
 			}
@@ -212,6 +214,7 @@ func cachePullHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 					Message: "worker cache pull > Cannot pull cache: " + err.Error(),
 					Status:  http.StatusNotFound,
 				}
+				log.Error(ctx, "%v", err)
 				writeError(w, req, err)
 				return
 			}
@@ -224,6 +227,7 @@ func cachePullHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 					Message: "worker cache pull > Cannot pull cache: " + err.Error(),
 					Status:  http.StatusNotFound,
 				}
+				log.Error(ctx, "%v", err)
 				writeError(w, req, err)
 				return
 			}
@@ -243,6 +247,7 @@ func cachePullHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 					Message: "worker cache pull > Unable to read tar file: " + errH.Error(),
 					Status:  http.StatusBadRequest,
 				}
+				log.Error(ctx, "%v", errH)
 				writeJSON(w, errH, http.StatusBadRequest)
 				return
 			}
@@ -266,6 +271,7 @@ func cachePullHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 							Message: "worker cache pull > Unable to mkdir all files : " + err.Error(),
 							Status:  http.StatusInternalServerError,
 						}
+						log.Error(ctx, "%v", err)
 						writeJSON(w, err, http.StatusInternalServerError)
 						return
 					}
@@ -276,6 +282,7 @@ func cachePullHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 						Message: "worker cache pull > Unable to create symlink: " + err.Error(),
 						Status:  http.StatusInternalServerError,
 					}
+					log.Error(ctx, "%v", err)
 					writeJSON(w, err, http.StatusInternalServerError)
 					return
 				}
@@ -289,6 +296,7 @@ func cachePullHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 							Message: "worker cache pull > Unable to mkdir all files : " + err.Error(),
 							Status:  http.StatusInternalServerError,
 						}
+						log.Error(ctx, "%v", err)
 						writeJSON(w, err, http.StatusInternalServerError)
 						return
 					}
@@ -302,6 +310,7 @@ func cachePullHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 						Message: "worker cache pull > Unable to open file: " + err.Error(),
 						Status:  http.StatusInternalServerError,
 					}
+					log.Error(ctx, "%v", err)
 					writeJSON(w, sdkErr, sdkErr.Status)
 					return
 				}
@@ -313,6 +322,7 @@ func cachePullHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 						Message: "worker cache pull > Cannot copy content file: " + err.Error(),
 						Status:  http.StatusInternalServerError,
 					}
+					log.Error(ctx, "%v", err)
 					writeJSON(w, sdkErr, sdkErr.Status)
 					return
 				}

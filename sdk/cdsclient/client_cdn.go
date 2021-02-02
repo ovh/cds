@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -13,10 +14,17 @@ import (
 )
 
 func (c *client) CDNItemDownload(ctx context.Context, cdnAddr string, hash string, itemType sdk.CDNItemType) (io.Reader, error) {
-	reader, _, _, err := c.Stream(ctx, c.HTTPNoTimeoutClient(), http.MethodGet, fmt.Sprintf("%s/item/%s/%s/download", cdnAddr, itemType, hash), nil, func(req *http.Request) {
+	reader, _, code, err := c.Stream(ctx, c.HTTPNoTimeoutClient(), http.MethodGet, fmt.Sprintf("%s/item/%s/%s/download", cdnAddr, itemType, hash), nil, func(req *http.Request) {
 		auth := "Bearer " + c.config.SessionToken
 		req.Header.Add("Authorization", auth)
 	})
+	if code >= 400 {
+		body, _ := ioutil.ReadAll(reader)
+		if err := sdk.DecodeError(body); err != nil {
+			return nil, sdk.WithStack(err)
+		}
+		return nil, sdk.WithStack(fmt.Errorf("HTTP %d: %s", code, string(body)))
+	}
 	return reader, err
 }
 
