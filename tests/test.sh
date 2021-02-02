@@ -80,8 +80,8 @@ check_failure() {
 
 mv_results() {
     tsuite_file=$1
-    mv test_results.xml ${tsuite_file}-test_results.xml
-    mv venom.log ${tsuite_file}-venom.log
+    mv ./results/test_results.xml ./results/${tsuite_file}-test_results.xml
+    mv ./results/venom.log ./results/${tsuite_file}-venom.log
 }
 
 smoke_tests_api() {
