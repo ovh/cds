@@ -226,15 +226,17 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
 
         let links = await this._workflowService
             .getAllStepsLinks(projectKey, workflowName, this.nodeJobRun.workflow_node_run_id, this.nodeJobRun.id).toPromise();
-        let results = await this._workflowService.getLogsLinesCount(links, this.initLoadLinesCount).toPromise();
+        links.datas.forEach(d => {
+            this.steps[d.step_order + 1].link = <CDNLogLink>{ api_ref: d.api_ref, item_type: links.item_type };
+        });
 
+        let results = await this._workflowService.getLogsLinesCount(links, this.initLoadLinesCount).toPromise();
         if (results) {
             results.forEach(r => {
                 let steporder = links?.datas?.find(d => d.api_ref === r.api_ref)?.step_order + 1;
                 if (!steporder) {
                     return
                 }
-                this.steps[steporder].link = <CDNLogLink>{ api_ref: r.api_ref, item_type: links.item_type }
                 this.steps[steporder].totalLinesCount = r.lines_count;
                 this.steps[steporder].open = false;
                 this.steps[steporder].loading = false;
@@ -291,10 +293,10 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
     }
 
     computeStepFirstLineNumbers(): void {
-        let nestFirstLineNumber = 1;
+        let nextFirstLineNumber = 1;
         for (let i = 0; i < this.steps.length; i++) {
-            this.steps[i].firstDisplayedLineNumber = nestFirstLineNumber;
-            nestFirstLineNumber += this.steps[i].totalLinesCount + 1; // add one more line for step name
+            this.steps[i].firstDisplayedLineNumber = nextFirstLineNumber;
+            nextFirstLineNumber += this.steps[i].totalLinesCount + 1; // add one more line for step name
         }
     }
 

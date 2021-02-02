@@ -1,10 +1,14 @@
 @import "../../../../../common";
 
-.workflowSidebar {
+:host {
     height: 100%;
     width: 255px;
     display: flex;
     flex-direction: column;
+
+    .loader {
+        margin-top: 40px;
+    }
 
     .selection {
         margin: 6px 0 6px 4px;
@@ -16,7 +20,7 @@
         flex: 1;
         overflow: hidden;
 
-        :host-context(.night) & {
+        .night & {
             color: $darkTheme_grey_5;
         }
 
@@ -65,13 +69,13 @@
                             display: none;
                             text-decoration: none;
                             color: $polar_grey_1;
-                            :host-context(.night) & {
+                            .night & {
                                 color: $darkTheme_grey_5;
                             }
 
                             &:hover {
                                 color: $polar_grey_3;
-                                :host-context(.night) & {
+                                .night & {
                                     color: $polar_grey_5;
                                 }
                             }
@@ -94,7 +98,7 @@
                                 font-size: 1.3em;
                                 line-height: 1em;
 
-                                :host-context(.night) & {
+                                .night & {
                                     &.success {
                                         color: $darkTheme_green;
                                     }
@@ -135,7 +139,7 @@
                     }
                 }
 
-                .loader {
+                app-status-icon {
                     margin-top: 2px;
                 }
             }
@@ -180,7 +184,7 @@
                 border-color: $cds_color_teal;
             }
 
-            :host-context(.night) & {
+            .night & {
                 background-color: $darkTheme_grey_2;
 
                 &.active {
