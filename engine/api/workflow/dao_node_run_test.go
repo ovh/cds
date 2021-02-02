@@ -64,7 +64,7 @@ func TestLoadNodeRunIDs(t *testing.T) {
 
 	require.NoError(t, workflow.AppendLog(db, 1, nr1.ID, 0, "mylog", 10000000))
 
-	ids, err := workflow.LoadNodeRunIDs(db, []int64{w.ID}, []string{sdk.StatusFail, sdk.StatusStopped, sdk.StatusSuccess})
+	ids, err := workflow.LoadNodeRunIDsWithLogs(db, []int64{w.ID}, []string{sdk.StatusFail, sdk.StatusStopped, sdk.StatusSuccess})
 	require.NoError(t, err)
 
 	require.Equal(t, 1, len(ids))

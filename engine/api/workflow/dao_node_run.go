@@ -58,7 +58,7 @@ workflow_node_run.callback
 const nodeRunTestsField string = ", workflow_node_run.tests"
 const withLightNodeRunTestsField string = ", json_build_object('ko', workflow_node_run.tests->'ko', 'ok', workflow_node_run.tests->'ok', 'skipped', workflow_node_run.tests->'skipped', 'total', workflow_node_run.tests->'total') AS tests"
 
-func LoadNodeRunIDs(db gorp.SqlExecutor, wIDs []int64, status []string) ([]sdk.WorkflowNodeRunIdentifiers, error) {
+func LoadNodeRunIDsWithLogs(db gorp.SqlExecutor, wIDs []int64, status []string) ([]sdk.WorkflowNodeRunIdentifiers, error) {
 	query := `
 		WITH noderun as (
 			SELECT distinct workflow_node_run_id as id, workflow_node_run.workflow_run_id, status  
