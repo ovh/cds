@@ -105,13 +105,10 @@ func (s *Service) CheckConfiguration(config interface{}) error {
 	return nil
 }
 
-func (s *Service) Start(c context.Context, cfg cdsclient.ServiceConfig) error {
-	if err := s.Common.Start(c, cfg); err != nil {
+func (s *Service) Start(ctx context.Context, cfg cdsclient.ServiceConfig) error {
+	if err := s.Common.Start(ctx, cfg); err != nil {
 		return err
 	}
-
-	ctx, cancel := context.WithCancel(c)
-	defer cancel()
 
 	var err error
 	log.Info(ctx, "Initializing redis cache on %s...", s.Cfg.Cache.Redis.Host)
@@ -151,23 +148,14 @@ func (s *Service) Start(c context.Context, cfg cdsclient.ServiceConfig) error {
 		// Init dao packages
 		item.InitDBMapping(s.Mapper)
 		storage.InitDBMapping(s.Mapper)
-	}
 
-	return nil
-}
-
-// Serve will start the http api server
-func (s *Service) Serve(c context.Context) error {
-	ctx, cancel := context.WithCancel(c)
-	defer cancel()
-
-	if s.Cfg.EnableLogProcessing {
-		var err error
+		log.Info(ctx, "Initializing lru connection...")
 		s.LogCache, err = lru.NewRedisLRU(s.mustDBWithCtx(ctx), s.Cfg.Cache.LruSize, s.Cfg.Cache.Redis.Host, s.Cfg.Cache.Redis.Password)
 		if err != nil {
 			return sdk.WrapError(err, "cannot connect to redis instance for lru")
 		}
 
+		var err error
 		// Init storage units
 		s.Units, err = storage.Init(ctx, s.Mapper, s.Cache, s.mustDBWithCtx(ctx), s.GoRoutines, s.Cfg.Units)
 		if err != nil {
@@ -200,6 +188,14 @@ func (s *Service) Serve(c context.Context) error {
 			s.LogCache.Evict(ctx)
 		})
 	}
+
+	return nil
+}
+
+// Serve will start the http api server
+func (s *Service) Serve(c context.Context) error {
+	ctx, cancel := context.WithCancel(c)
+	defer cancel()
 
 	if err := s.initMetrics(ctx); err != nil {
 		return err
