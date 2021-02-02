@@ -78,12 +78,19 @@ check_failure() {
     fi
 }
 
+mv_results() {
+    tsuite_file=$1
+    mv test_results.xml ${tsuite_file}-test_results.xml
+    mv venom.log ${tsuite_file}-venom.log
+}
+
 smoke_tests_api() {
     echo "Running smoke tests api:"
     for f in $(ls -1 00_*.yml); do
         CMD="${VENOM} run ${VENOM_OPTS} ${f} --var cdsctl=${CDSCTL} --var api.url=${CDS_API_URL}"
         echo -e "  ${YELLOW}${f} ${DARKGRAY}[${CMD}]${NOCOLOR}"
         ${CMD} >${f}.output 2>&1
+        mv_results ${f}
         check_failure $? ${f}.output
     done
 }
@@ -93,17 +100,20 @@ initialization_tests() {
     CMD="${VENOM} run ${VENOM_OPTS} 01_signup.yml --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}_admin --var api.url=${CDS_API_URL} --var username=cds.integration.tests.rw --var email=it-user-rw@localhost.local --var fullname=IT_User_RW --var smtpmock.url=${SMTP_MOCK_URL} --var ring=ADMIN"
     echo -e "  ${YELLOW}01_signup.yml (admin) ${DARKGRAY}[${CMD}]${NOCOLOR}"
     ${CMD} >01_signup_admin.yml.output 2>&1
+    mv_results ${f}
     check_failure $? 01_signup_admin.yml.output
 
     CMD="${VENOM} run ${VENOM_OPTS} 01_signup.yml --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}_user --var api.url=${CDS_API_URL} --var username=cds.integration.tests.ro --var email=it-user-ro@localhost.local --var fullname=IT_User_RO --var smtpmock.url=${SMTP_MOCK_URL} --var ring=USER"
     echo -e "  ${YELLOW}01_signup.yml (user) ${DARKGRAY}[${CMD}]${NOCOLOR}"
     ${CMD} >01_signup_user.yml.output 2>&1
 
+mv_results ${f}
     check_failure $? 01_signup_user.yml.output
 
     CMD="${VENOM} run ${VENOM_OPTS} 01_queue_stopall.yml --var cdsctl.config=${CDSCTL_CONFIG}_admin --var cdsctl=${CDSCTL} --var api.url=${CDS_API_URL}"
     echo -e "  ${YELLOW}01_queue_stopall.yml ${DARKGRAY}[${CMD}]${NOCOLOR}"
     ${CMD} >01_queue_stopall.yml.output 2>&1
+    mv_results ${f}
     check_failure $? 01_queue_stopall.yml.output
 }
 
@@ -113,6 +123,7 @@ smoke_tests_services() {
         CMD="${VENOM} run ${VENOM_OPTS} ${f} --var cdsctl=${CDSCTL}--var ui.url=${CDS_UI_URL} --var hatchery.url=${CDS_HATCHERY_URL} --var hooks.url=${CDS_HOOKS_URL}"
         echo -e "  ${YELLOW}${f} ${DARKGRAY}[${CMD}]${NOCOLOR}"
         ${CMD} >${f}.output 2>&1
+        mv_results ${f}
         check_failure $? ${f}.output
     done
 }
@@ -123,6 +134,7 @@ cli_tests() {
         CMD="${VENOM} run ${VENOM_OPTS} ${f} --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}_admin --var engine.ctl=${CDS_ENGINE_CTL} --var api.url=${CDS_API_URL} --var ui.url=${CDS_UI_URL}  --var smtpmock.url=${SMTP_MOCK_URL}"
         echo -e "  ${YELLOW}${f} ${DARKGRAY}[${CMD}]${NOCOLOR}"
         ${CMD} >${f}.output 2>&1
+        mv_results ${f}
         check_failure $? ${f}.output
     done
 }
@@ -133,6 +145,7 @@ workflow_tests() {
         CMD="${VENOM} run ${VENOM_OPTS} ${f} --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}_admin --var api.url=${CDS_API_URL} --var ui.url=${CDS_UI_URL} --var smtpmock.url=${SMTP_MOCK_URL} --var ro_username=cds.integration.tests.ro --var cdsctl.config_ro_user=${CDSCTL_CONFIG}_user"
         echo -e "  ${YELLOW}${f} ${DARKGRAY}[${CMD}]${NOCOLOR}"
         ${CMD} >${f}.output 2>&1
+        mv_results ${f}
         check_failure $? ${f}.output
     done
 }
@@ -148,6 +161,7 @@ workflow_with_integration_tests() {
         CMD="${VENOM} run ${VENOM_OPTS} ${f} --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}_admin --var api.url=${CDS_API_URL} --var ui.url=${CDS_UI_URL} --var smtpmock.url=${SMTP_MOCK_URL}"
         echo -e "  ${YELLOW}${f} ${DARKGRAY}[${CMD}]${NOCOLOR}"
         ${CMD} >${f}.output 2>&1
+        mv_results ${f}
         check_failure $? ${f}.output
     done
 }
@@ -157,6 +171,7 @@ workflow_with_third_parties() {
     CMD="${VENOM} run ${VENOM_OPTS} 01_queue_stopall.yml --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}"
     echo -e "  ${YELLOW}01_queue_stopall.yml ${DARKGRAY}[${CMD}]${NOCOLOR}"
     ${CMD} >01_queue_stopall.yml.output 2>&1
+    mv_results ${f}
     check_failure $? 01_queue_stopall.yml.output
 
     if [ -z "$CDS_MODEL_REQ" ]; then echo "missing CDS_MODEL_REQ variable"; exit 1; fi
@@ -166,6 +181,7 @@ workflow_with_third_parties() {
         CMD="${VENOM} run ${VENOM_OPTS} ${f} --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}"
         echo -e "  ${YELLOW}${f} ${DARKGRAY}[${CMD}]${NOCOLOR}"
         ${CMD} >${f}.output 2>&1
+        mv_results ${f}
         check_failure $? ${f}.output
     done
 }
