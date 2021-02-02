@@ -63,43 +63,6 @@ func (s *Service) listenCDSSync(ctx context.Context, cdsStorage *cds.CDS) error 
 	}
 }
 
-// getStatusSyncLogs returns the monitoring of the sync CDS to CDN
-func (s *Service) getStatusSyncLogs() []sdk.MonitoringStatusLine {
-	lines := []sdk.MonitoringStatusLine{
-		{
-			Status:    sdk.MonitoringStatusOK,
-			Component: "sync/cds2cdn/current_project",
-			Value:     statusSync.currentProjectSync,
-		},
-	}
-
-	statusProject := sdk.MonitoringStatusOK
-	if statusSync.nbProjectsFailed > 0 {
-		statusProject = sdk.MonitoringStatusWarn
-	}
-
-	lines = append(lines, sdk.MonitoringStatusLine{
-		Status:    statusProject,
-		Component: "sync/cds2cdn/projects",
-		Value:     fmt.Sprintf("done:%d failed:%d total:%d", statusSync.nbProjectsDone, statusSync.nbProjectsFailed, statusSync.nbProjects),
-	})
-
-	for key := range statusSync.runPerProjectTotal {
-		status := sdk.MonitoringStatusOK
-		if statusSync.runPerProjectFailed[key] > 0 {
-			status = sdk.MonitoringStatusWarn
-		}
-
-		lines = append(lines, sdk.MonitoringStatusLine{
-			Status:    status,
-			Component: "sync/cds2cdn/project/" + key,
-			Value:     fmt.Sprintf("done:%d failed:%d total:%d", statusSync.runPerProjectDone[key], statusSync.runPerProjectFailed[key], statusSync.runPerProjectTotal[key]),
-		})
-	}
-
-	return lines
-}
-
 // SyncLogs syncs logs from CDS to CDN
 func (s *Service) SyncLogs(ctx context.Context, cdsStorage *cds.CDS) error {
 	log.Info(ctx, "cdn: Start CDS sync")
