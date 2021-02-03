@@ -87,7 +87,7 @@ type Configuration struct {
 	Log    storage.LogConfig               `toml:"log" json:"log" comment:"###########################\n Log settings.\n##########################"`
 	Units  storage.Configuration           `toml:"storageUnits" json:"storageUnits" mapstructure:"storageUnits" comment:"###########################\n Storage Units settings.\n##########################"`
 	Metrics struct {
-		Period int64 `toml:"period" default:"30" json:"period"`
+		Period int64 `toml:"period" default:"30" json:"period" comment:"each 30s, metrics are computed"`
 	} `toml:"metrics" comment:"######################\n CDN Metrics Settings \n######################" json:"metrics"`
 }
 
