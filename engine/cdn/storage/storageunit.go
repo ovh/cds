@@ -248,6 +248,9 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 }
 
 func (r *RunningStorageUnits) PushInSyncQueue(ctx context.Context, itemID string, created time.Time) {
+	if itemID == "" {
+		return
+	}
 	for _, sto := range r.Storages {
 		if err := r.cache.ScoredSetAdd(ctx, cache.Key(KeyBackendSync, sto.Name()), itemID, float64(created.Unix())); err != nil {
 			log.Info(ctx, "storeLogs> cannot push item %s into scoredset for unit %s", itemID, sto.Name())
@@ -280,6 +283,9 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 								continue
 							}
 							break
+						}
+						if id == "" {
+							r.RemoveFromRedisSyncQueue(ctx, s, id)
 						}
 						// Check if item exists
 						_, err := item.LoadByID(ctx, r.m, r.db, id)
