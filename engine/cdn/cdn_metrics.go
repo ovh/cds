@@ -90,7 +90,7 @@ func (s *Service) initMetrics(ctx context.Context) error {
 func (s *Service) ComputeMetrics(ctx context.Context) {
 	tickPercentil := time.NewTicker(1 * time.Hour)
 	defer tickPercentil.Stop()
-	tickStatsItems := time.NewTicker(time.Duration(s.Cfg.Metric.Period) * time.Second)
+	tickStatsItems := time.NewTicker(time.Duration(s.Cfg.Metrics.Period) * time.Second)
 	defer tickStatsItems.Stop()
 	for {
 		select {

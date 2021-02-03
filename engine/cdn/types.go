@@ -86,9 +86,9 @@ type Configuration struct {
 	API    service.APIServiceConfiguration `toml:"api" comment:"######################\n CDS API Settings \n######################" json:"api"`
 	Log    storage.LogConfig               `toml:"log" json:"log" comment:"###########################\n Log settings.\n##########################"`
 	Units  storage.Configuration           `toml:"storageUnits" json:"storageUnits" mapstructure:"storageUnits" comment:"###########################\n Storage Units settings.\n##########################"`
-	Metric struct {
+	Metrics struct {
 		Period int64 `toml:"period" default:"30" json:"period"`
-	} `toml:"metric" comment:"######################\n CDN Metrics Settings \n######################" json:"metric"`
+	} `toml:"metrics" comment:"######################\n CDN Metrics Settings \n######################" json:"metrics"`
 }
 
 type rateLimiter struct {
