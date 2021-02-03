@@ -261,6 +261,10 @@ func TestPurgeItem(t *testing.T) {
 	}
 	s.GoRoutines = sdk.NewGoRoutines()
 
+	ctx, cancel := context.WithCancel(context.TODO())
+	t.Cleanup(cancel)
+	s.Units = newRunningStorageUnits(t, m, s.DBConnectionFactory.GetDBMap(m)(), ctx, cache)
+
 	var err error
 	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
 	s.LogCache, err = lru.NewRedisLRU(db.DbMap, 1000, cfg["redisHost"], cfg["redisPassword"])
