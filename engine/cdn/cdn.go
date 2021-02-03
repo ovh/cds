@@ -84,6 +84,9 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 	if s.Cfg.TCP.GlobalTCPRateLimit == 0 {
 		s.Cfg.TCP.GlobalTCPRateLimit = defaultGlobalTCPRateLimit
 	}
+	if s.Cfg.Metric.Period <= 0 {
+		s.Cfg.Metric.Period = 30
+	}
 
 	return nil
 }

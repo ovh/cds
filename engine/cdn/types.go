@@ -83,9 +83,12 @@ type Configuration struct {
 			Password string `toml:"password" json:"-"`
 		} `toml:"redis" json:"redis"`
 	} `toml:"cache" comment:"######################\n CDN Cache Settings \n######################" json:"cache"`
-	API   service.APIServiceConfiguration `toml:"api" comment:"######################\n CDS API Settings \n######################" json:"api"`
-	Log   storage.LogConfig               `toml:"log" json:"log" comment:"###########################\n Log settings.\n##########################"`
-	Units storage.Configuration           `toml:"storageUnits" json:"storageUnits" mapstructure:"storageUnits" comment:"###########################\n Storage Units settings.\n##########################"`
+	API    service.APIServiceConfiguration `toml:"api" comment:"######################\n CDS API Settings \n######################" json:"api"`
+	Log    storage.LogConfig               `toml:"log" json:"log" comment:"###########################\n Log settings.\n##########################"`
+	Units  storage.Configuration           `toml:"storageUnits" json:"storageUnits" mapstructure:"storageUnits" comment:"###########################\n Storage Units settings.\n##########################"`
+	Metric struct {
+		Period int64 `toml:"period" default:"30" json:"period"`
+	} `toml:"metric" comment:"######################\n CDN Metrics Settings \n######################" json:"metric"`
 }
 
 type rateLimiter struct {
