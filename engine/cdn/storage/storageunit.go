@@ -295,6 +295,8 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 								ctx = sdk.ContextWithStacktrace(ctx, err)
 								ctx = context.WithValue(ctx, cdslog.Duration, t1.Sub(t0).Milliseconds())
 								log.Error(ctx, "error processing item id=%q: %v", id, err)
+							} else {
+								log.Info(ctx, "item id=%q is locked", id)
 							}
 							_ = tx.Rollback()
 							continue
