@@ -270,7 +270,7 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 			gorts.Run(ctx, fmt.Sprintf("RunningStorageUnits.process.%s.%d", s.Name(), x),
 				func(ctx context.Context) {
 					for id := range s.SyncItemChannel() {
-						log.Debug(ctx, "processItem: %s", id)
+						log.Info(ctx, "processItem: %s", id)
 						for {
 							lockKey := cache.Key("cdn", "backend", "lock", "sync", s.Name())
 							if b, err := r.cache.Exist(lockKey); err != nil || b {
@@ -295,6 +295,8 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 								ctx = sdk.ContextWithStacktrace(ctx, err)
 								ctx = context.WithValue(ctx, cdslog.Duration, t1.Sub(t0).Milliseconds())
 								log.Error(ctx, "error processing item id=%q: %v", id, err)
+							} else {
+								log.Info(ctx, "item id=%q is locked", id)
 							}
 							_ = tx.Rollback()
 							continue
