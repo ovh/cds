@@ -119,6 +119,10 @@ func (s *Service) cleanItemToDelete(ctx context.Context) error {
 				if err := item.DeleteByID(s.mustDBWithCtx(ctx), id); err != nil {
 					return err
 				}
+				for _, sto := range s.Units.Storages {
+					s.Units.RemoveFromRedisSyncQueue(ctx, sto, id)
+				}
+
 				log.Debug(ctx, "cdn:purge:item: %s item deleted", id)
 			}
 			continue

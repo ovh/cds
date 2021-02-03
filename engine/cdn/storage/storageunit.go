@@ -14,6 +14,7 @@ import (
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/cache"
+	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	cdslog "github.com/ovh/cds/sdk/log"
@@ -280,6 +281,20 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 							}
 							break
 						}
+						// Check if item exists
+						_, err := item.LoadByID(ctx, r.m, r.db, id)
+						if err != nil {
+							if sdk.ErrorIs(err, sdk.ErrNotFound) {
+								// Item has been deleted
+								r.RemoveFromRedisSyncQueue(ctx, s, id)
+							} else {
+								err = sdk.WrapError(err, "unable to load item")
+								ctx = sdk.ContextWithStacktrace(ctx, err)
+								log.Error(ctx, "%v", err)
+							}
+							continue
+						}
+
 						t0 := time.Now()
 						tx, err := r.db.Begin()
 						if err != nil {
@@ -310,14 +325,7 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 							continue
 						}
 
-						// Remove from redis
-						k := cache.Key(KeyBackendSync, s.Name())
-						bts, _ := json.Marshal(id)
-						if err := r.cache.ScoredSetRem(ctx, k, string(bts)); err != nil {
-							err = sdk.WrapError(err, "unable to remove sync item %s from redis %s", id, k)
-							ctx = sdk.ContextWithStacktrace(ctx, err)
-							log.Error(ctx, "%v", err)
-						}
+						r.RemoveFromRedisSyncQueue(ctx, s, id)
 					}
 				},
 			)
@@ -379,6 +387,17 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 		}
 
 	})
+}
+
+func (r *RunningStorageUnits) RemoveFromRedisSyncQueue(ctx context.Context, s StorageUnit, id string) {
+	// Remove from redis
+	k := cache.Key(KeyBackendSync, s.Name())
+	bts, _ := json.Marshal(id)
+	if err := r.cache.ScoredSetRem(ctx, k, string(bts)); err != nil {
+		err = sdk.WrapError(err, "unable to remove sync item %s from redis %s", id, k)
+		ctx = sdk.ContextWithStacktrace(ctx, err)
+		log.Error(ctx, "%v", err)
+	}
 }
 
 func (r *RunningStorageUnits) SyncBuffer(ctx context.Context) {
