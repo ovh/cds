@@ -104,6 +104,10 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 	if session != nil {
 		ctx = context.WithValue(ctx, cdslog.AuthSessionID, session.ID)
 		SetTracker(w, cdslog.AuthSessionID, session.ID)
+		ctx = context.WithValue(ctx, cdslog.AuthSessionIAT, session.Created.Unix())
+		SetTracker(w, cdslog.AuthSessionIAT, session.Created.Unix())
+		ctx = context.WithValue(ctx, cdslog.AuthSessionTokenID, session.TokenID)
+		SetTracker(w, cdslog.AuthSessionTokenID, session.TokenID)
 	}
 
 	return ctx, nil
@@ -132,7 +136,9 @@ func (api *API) authOptionalMiddleware(ctx context.Context, w http.ResponseWrite
 		log.Debug(ctx, "api.authOptionalMiddleware> no session found in context")
 		return ctx, nil
 	}
+	session.TokenID = claims.TokenID
 	ctx = context.WithValue(ctx, contextSession, session)
+	ctx = context.WithValue(ctx, cdslog.AuthSessionTokenID, session.TokenID)
 
 	// Load auth consumer for current session in database with authentified user and contacts
 	consumer, err := authentication.LoadConsumerByID(ctx, api.mustDB(), session.ConsumerID,

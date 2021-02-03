@@ -250,11 +250,12 @@ type AuthConsumerCreateResponse struct {
 
 // AuthDriverUserInfo struct discribed a user returns by a auth driver.
 type AuthDriverUserInfo struct {
-	ExternalID string
-	Username   string
-	Fullname   string
-	Email      string
-	MFA        bool
+	ExternalID      string
+	Username        string
+	Fullname        string
+	Email           string
+	MFA             bool
+	ExternalTokenID string
 }
 
 // AuthCurrentConsumerResponse describe the current consumer and the current session
@@ -494,12 +495,14 @@ type AuthSession struct {
 	Consumer *AuthConsumer `json:"consumer,omitempty" db:"-"`
 	Groups   []Group       `json:"groups,omitempty" db:"-"`
 	Current  bool          `json:"current,omitempty" cli:"current" db:"-"`
+	TokenID  string        `json:"token_id" cli:"-" db:"-"`
 }
 
 // AuthSessionJWTClaims is the specific claims format for JWT session.
 type AuthSessionJWTClaims struct {
-	ID  string
-	MFA bool
+	ID      string
+	MFA     bool
+	TokenID string
 	jwt.StandardClaims
 }
 
