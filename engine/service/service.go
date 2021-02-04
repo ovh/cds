@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"time"
@@ -59,11 +60,27 @@ func (c *Common) Name() string {
 	return c.ServiceName
 }
 
-func (c *Common) Start(ctx context.Context, cfg cdsclient.ServiceConfig) error {
-	// no register for api
+func (c *Common) Start(ctx context.Context) error {
 	if c.ServiceType == "api" {
 		return nil
 	}
+
+	ctx = telemetry.ContextWithTag(ctx,
+		telemetry.TagServiceType, c.Type(),
+		telemetry.TagServiceName, c.Name(),
+	)
+	c.RegisterCommonMetricsView(ctx)
+
+	return nil
+}
+
+// Signin a new service on API
+func (c *Common) Signin(ctx context.Context, cfg cdsclient.ServiceConfig) error {
+	if c.ServiceType == "api" {
+		return nil
+	}
+
+	log.Info(ctx, "Init CDS client for service %s(%T) %s", c.Type(), c, c.Name())
 
 	ctxTimeout, cancel := context.WithTimeout(ctx, 5*time.Minute)
 	defer cancel()
@@ -98,32 +115,32 @@ func (c *Common) Start(ctx context.Context, cfg cdsclient.ServiceConfig) error {
 	if err != nil {
 		return sdk.WithStack(err)
 	}
-
-	ctx = telemetry.ContextWithTag(ctx,
-		telemetry.TagServiceType, c.Type(),
-		telemetry.TagServiceName, c.Name(),
-	)
-
-	c.RegisterCommonMetricsView(ctx)
-
 	return nil
 }
 
 // Register registers a new service on API
-func (c *Common) Register(ctx context.Context, cfg sdk.ServiceConfig) error {
-	log.Info(ctx, "Registing service %s(%T) %s", c.Type(), c, c.Name())
-
-	// no register for api
+func (c *Common) Register(ctx context.Context, cfg interface{}) error {
 	if c.ServiceType == "api" {
 		return nil
 	}
+
+	var sdkConfig sdk.ServiceConfig
+	b, err := json.Marshal(cfg)
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+	if err := json.Unmarshal(b, &sdkConfig); err != nil {
+		return sdk.WithStack(err)
+	}
+
+	log.Info(ctx, "Registing service %s(%T) %s", c.Type(), c, c.Name())
 
 	var srv = sdk.Service{
 		CanonicalService: sdk.CanonicalService{
 			Name:    c.ServiceName,
 			HTTPURL: c.HTTPURL,
 			Type:    c.ServiceType,
-			Config:  cfg,
+			Config:  sdkConfig,
 		},
 		LastHeartbeat: time.Time{},
 		Version:       sdk.VERSION,

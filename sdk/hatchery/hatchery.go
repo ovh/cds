@@ -38,7 +38,7 @@ func Create(ctx context.Context, h Interface) error {
 
 	// Init call hatchery.Register()
 	if err := h.InitHatchery(ctx); err != nil {
-		return fmt.Errorf("Create> Init error: %v", err)
+		return sdk.WrapError(err, "init error")
 	}
 
 	var chanRegister, chanGetModels <-chan time.Time
@@ -68,20 +68,18 @@ func Create(ctx context.Context, h Interface) error {
 	// purges expired items every minute
 	spawnIDs := cache.New(10*time.Second, 60*time.Second)
 
-	h.GetGoRoutines().Run(ctx, "queuePolling",
-		func(ctx context.Context) {
-			if err := h.CDSClient().QueuePolling(ctx, h.GetGoRoutines(), wjobs, errs, 20*time.Second, modelType, h.Configuration().Provision.RatioService); err != nil {
-				log.Error(ctx, "Queues polling stopped: %v", err)
-			}
-		},
-	)
+	h.GetGoRoutines().Run(ctx, "queuePolling", func(ctx context.Context) {
+		if err := h.CDSClient().QueuePolling(ctx, h.GetGoRoutines(), wjobs, errs, 20*time.Second, modelType, h.Configuration().Provision.RatioService); err != nil {
+			log.Error(ctx, "Queues polling stopped: %v", err)
+		}
+	})
 
 	// run the starters pool
 	workersStartChan := startWorkerStarters(ctx, h)
 
-	hostname, errh := os.Hostname()
-	if errh != nil {
-		return fmt.Errorf("Create> Cannot retrieve hostname: %s", errh)
+	hostname, err := os.Hostname()
+	if err != nil {
+		return sdk.WrapError(err, "cannot retrieve hostname")
 	}
 
 	// read the errs channel in another goroutine too
@@ -91,7 +89,6 @@ func Create(ctx context.Context, h Interface) error {
 		}
 	})
 
-	// the main goroutine
 	for {
 		select {
 		case <-ctx.Done():
@@ -109,7 +106,7 @@ func Create(ctx context.Context, h Interface) error {
 				continue
 			}
 			if h.GetLogger() == nil {
-				log.Error(ctx, "Logger not found, don't spawn workers")
+				log.Error(ctx, "logger not found, don't spawn workers")
 				continue
 			}
 
@@ -245,7 +242,8 @@ func Create(ctx context.Context, h Interface) error {
 
 				// Interpolate model secrets
 				if err := ModelInterpolateSecrets(hWithModels, chosenModel); err != nil {
-					return err
+					log.Error(ctx, "%v", err)
+					continue
 				}
 			}
 
@@ -255,7 +253,7 @@ func Create(ctx context.Context, h Interface) error {
 
 		case <-chanRegister:
 			if err := workerRegister(ctx, hWithModels, workersStartChan); err != nil {
-				log.Warn(ctx, "Error on workerRegister: %s", err)
+				log.Warn(ctx, "error on workerRegister: %v", err)
 			}
 		}
 	}

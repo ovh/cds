@@ -105,8 +105,8 @@ func (s *Service) CheckConfiguration(config interface{}) error {
 	return nil
 }
 
-func (s *Service) Start(ctx context.Context, cfg cdsclient.ServiceConfig) error {
-	if err := s.Common.Start(ctx, cfg); err != nil {
+func (s *Service) Start(ctx context.Context) error {
+	if err := s.Common.Start(ctx); err != nil {
 		return err
 	}
 
