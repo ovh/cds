@@ -79,7 +79,7 @@ func (c *Common) CommonServe(ctx context.Context, h hatchery.Interface) error {
 		return sdk.WrapError(err, "listen and serve failed: %s", c.Name())
 	}
 
-	return ctx.Err()
+	return nil
 }
 
 func (c *Common) initRouter(ctx context.Context, h hatchery.Interface) {
