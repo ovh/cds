@@ -83,7 +83,7 @@ export class WorkflowNodeRunParamComponent implements AfterViewInit, OnDestroy {
         };
     }
 
-    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngAfterViewInit() {
         this.themeSubscription = this._theme.get()
@@ -204,11 +204,11 @@ export class WorkflowNodeRunParamComponent implements AfterViewInit, OnDestroy {
 
         this.modal = this._modalService.open(config);
         this.modal.onApprove(() => {
- this.open = false;
-});
+            this.open = false;
+        });
         this.modal.onDeny(() => {
- this.open = false;
-});
+            this.open = false;
+        });
 
         this.codeMirrorConfig = Object.assign({}, this.codeMirrorConfig, { readOnly: this.readOnly });
 
@@ -367,15 +367,11 @@ export class WorkflowNodeRunParamComponent implements AfterViewInit, OnDestroy {
             request.number = this.num;
         }
 
-
-        this._workflowRunService.runWorkflow(this.projectKey, this.workflow.name, request).pipe(finalize(() => {
+        this._workflowRunService.runWorkflow(this.projectKey, this.workflow.name, request).subscribe(wr => {
             this.loading = false;
-            this._cd.markForCheck();
-        })).subscribe(wr => {
+            this._cd.detectChanges();
             this.modal.approve(true);
-            this._router.navigate(['/project', this.projectKey, 'workflow', this.workflow.name, 'run', wr.num],
-                { queryParams: { subnum: wr.last_subnumber } });
-            wr.force_update = true;
+            this._router.navigate(['/project', this.projectKey, 'workflow', this.workflow.name, 'run', wr.num]);
         });
     }
 

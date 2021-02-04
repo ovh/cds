@@ -58,16 +58,22 @@ workflow_node_run.callback
 const nodeRunTestsField string = ", workflow_node_run.tests"
 const withLightNodeRunTestsField string = ", json_build_object('ko', workflow_node_run.tests->'ko', 'ok', workflow_node_run.tests->'ok', 'skipped', workflow_node_run.tests->'skipped', 'total', workflow_node_run.tests->'total') AS tests"
 
-func LoadNodeRunIDs(db gorp.SqlExecutor, wIDs []int64, status []string) ([]sdk.WorkflowNodeRunIdentifiers, error) {
+func LoadNodeRunIDsWithLogs(db gorp.SqlExecutor, wIDs []int64, status []string) ([]sdk.WorkflowNodeRunIdentifiers, error) {
 	query := `
-		SELECT workflow_run.id, workflow_run.workflow_id, workflow.name, workflow_run.num, workflow_node_run.id as node_run_id
+		WITH noderun as (
+			SELECT distinct workflow_node_run_id as id, workflow_node_run.workflow_run_id, status  
+			FROM workflow_node_run_job_logs
+    		JOIN workflow_node_run ON workflow_node_run.id = workflow_node_run_id
+    		WHERE  workflow_node_run.workflow_id = ANY($1)
+		)
+
+		SELECT workflow_run.id, workflow_run.workflow_id, workflow.name, workflow_run.num, noderun.id as node_run_id
 		FROM workflow_run
 		JOIN workflow ON workflow.id = workflow_run.workflow_id
-		JOIN workflow_node_run ON workflow_node_run.workflow_run_id = workflow_run.id
-		WHERE workflow_run.workflow_id = ANY($1) AND workflow_node_run.status = ANY($2)
+		JOIN noderun ON noderun.workflow_run_id = workflow_run.id
+		WHERE workflow_run.workflow_id = ANY($1) AND noderun.status = ANY($2)
 		ORDER BY workflow_id, id, node_run_id;
 	`
-
 	var ids []sdk.WorkflowNodeRunIdentifiers
 	if _, err := db.Select(&ids, query, pq.Int64Array(wIDs), pq.StringArray(status)); err != nil {
 		return nil, err
