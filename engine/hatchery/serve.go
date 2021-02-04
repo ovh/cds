@@ -66,23 +66,17 @@ func (c *Common) CommonServe(ctx context.Context, h hatchery.Interface) error {
 		MaxHeaderBytes: 1 << 20,
 	}
 
-	h.GetGoRoutines().Exec(ctx, "hatchery.httpserver", func(ctx context.Context) {
-		// Gracefully shutdown the http server
-		h.GetGoRoutines().Exec(ctx, "hatchery.httpserver-shutdown", func(ctx context.Context) {
-			<-ctx.Done()
-			log.Info(ctx, "%s> Shutdown HTTP Server", c.Name())
-			_ = server.Shutdown(ctx)
-		})
-
-		// Start the http server
-		log.Info(ctx, "%s> Starting HTTP Server on port %d", c.Name(), h.Configuration().HTTP.Port)
-		if err := server.ListenAndServe(); err != nil {
-			log.Error(ctx, "%s> Listen and serve failed: %v", c.Name(), err)
-		}
+	// Gracefully shutdown the http server
+	h.GetGoRoutines().Exec(ctx, "hatchery.httpserver-shutdown", func(ctx context.Context) {
+		<-ctx.Done()
+		log.Info(ctx, "%s> Shutdown HTTP Server", c.Name())
+		_ = server.Shutdown(ctx)
 	})
 
-	if err := hatchery.Create(ctx, h); err != nil {
-		return err
+	// Start the http server
+	log.Info(ctx, "%s> Starting HTTP Server on port %d", c.Name(), h.Configuration().HTTP.Port)
+	if err := server.ListenAndServe(); err != nil {
+		return sdk.WrapError(err, "listen and serve failed: %s", c.Name())
 	}
 
 	return ctx.Err()

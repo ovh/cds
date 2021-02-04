@@ -142,6 +142,11 @@ func (h *HatcheryMarathon) CheckConfiguration(cfg interface{}) error {
 	return nil
 }
 
+// Start inits client and routines for hatchery
+func (h *HatcheryMarathon) Start(ctx context.Context) error {
+	return hatchery.Create(ctx, h)
+}
+
 // Serve start the hatchery server
 func (h *HatcheryMarathon) Serve(ctx context.Context) error {
 	return h.CommonServe(ctx, h)

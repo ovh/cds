@@ -22,6 +22,7 @@ import (
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/ovh/cds/sdk/hatchery"
 )
 
 // New instanciates a new hatchery local
@@ -112,6 +113,11 @@ func (h *HatcheryLocal) CheckConfiguration(cfg interface{}) error {
 		return fmt.Errorf("Invalid basedir: %v", err)
 	}
 	return nil
+}
+
+// Start inits client and routines for hatchery
+func (h *HatcheryLocal) Start(ctx context.Context) error {
+	return hatchery.Create(ctx, h)
 }
 
 // Serve start the hatchery server

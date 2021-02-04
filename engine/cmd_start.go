@@ -373,7 +373,7 @@ func start(c context.Context, s service.Service, serviceName string, cfg interfa
 	// finally start the heartbeat goroutine
 	go func() {
 		if err := s.Heartbeat(ctx, s.Status); err != nil {
-			log.Error(ctx, "%s> Error heartbeat: %+v", err)
+			log.Error(ctx, "%s> Error heartbeat: %+v", serviceName, err)
 			cancel()
 		}
 	}()

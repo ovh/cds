@@ -202,6 +202,11 @@ func (h *HatcheryKubernetes) CheckConfiguration(cfg interface{}) error {
 	return nil
 }
 
+// Start inits client and routines for hatchery
+func (h *HatcheryKubernetes) Start(ctx context.Context) error {
+	return hatchery.Create(ctx, h)
+}
+
 // Serve start the hatchery server
 func (h *HatcheryKubernetes) Serve(ctx context.Context) error {
 	return h.CommonServe(ctx, h)
