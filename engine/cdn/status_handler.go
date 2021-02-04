@@ -40,7 +40,6 @@ func (s *Service) Status(ctx context.Context) *sdk.MonitoringStatus {
 	}
 
 	m.AddLine(s.LogCache.Status(ctx)...)
-	m.AddLine(s.getStatusSyncLogs()...)
 
 	for _, st := range s.Units.Storages {
 		m.AddLine(st.Status(ctx)...)
