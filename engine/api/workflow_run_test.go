@@ -1636,16 +1636,26 @@ func Test_postWorkflowRunHandlerWithoutRightConditionsOnHook(t *testing.T) {
 
 			switch r.URL.String() {
 			case "/task/bulk":
-				hooks := map[string]sdk.NodeHook{}
-				hooks["1cbf3792-126b-4111-884f-077bdee9523c"] = sdk.NodeHook{
-					Conditions: sdk.WorkflowNodeConditions{
-						LuaScript: "return false",
-					},
-					HookModelName: sdk.WebHookModel.Name,
-					Config:        sdk.WebHookModel.DefaultConfig.Clone(),
-					UUID:          "1cbf3792-126b-4111-884f-077bdee9523c",
+				var req map[string]sdk.NodeHook
+				bdy, err := ioutil.ReadAll(r.Body)
+				if err != nil {
+					return writeError(w, err)
 				}
-				if err := enc.Encode(hooks); err != nil {
+				if err := json.Unmarshal(bdy, &req); err != nil {
+					return writeError(w, err)
+				}
+
+				for k, _ := range req {
+					req[k] = sdk.NodeHook{
+						Conditions: sdk.WorkflowNodeConditions{
+							LuaScript: "return false",
+						},
+						HookModelName: sdk.WebHookModel.Name,
+						Config:        sdk.WebHookModel.DefaultConfig.Clone(),
+						UUID:          "1cbf3792-126b-4111-884f-077bdee9523c",
+					}
+				}
+				if err := enc.Encode(req); err != nil {
 					return writeError(w, err)
 				}
 			default:
@@ -1715,7 +1725,7 @@ func Test_postWorkflowRunHandlerWithoutRightConditionsOnHook(t *testing.T) {
 	opts := &sdk.WorkflowRunPostHandlerOption{
 		Hook: &sdk.WorkflowNodeRunHookEvent{
 			Payload:              nil,
-			WorkflowNodeHookUUID: "1cbf3792-126b-4111-884f-077bdee9523c",
+			WorkflowNodeHookUUID: w1.WorkflowData.Node.Hooks[0].UUID,
 		},
 	}
 	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, opts)
