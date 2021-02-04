@@ -490,6 +490,13 @@ func (c *client) queueDirectArtifactUpload(projectKey, integrationName string, n
 	return fmt.Errorf("x%d: %v", c.config.Retry, err)
 }
 
+func (c *client) QueueWorkerCacheLink(ctx context.Context, jobID int64, tag string) (sdk.CDNItemLinks, error) {
+	var result sdk.CDNItemLinks
+	path := fmt.Sprintf("/queue/workflows/%d/cache/%s/links", jobID, tag)
+	_, err := c.GetJSON(ctx, path, &result, nil)
+	return result, err
+}
+
 func (c *client) QueueJobTag(ctx context.Context, jobID int64, tags []sdk.WorkflowRunTag) error {
 	path := fmt.Sprintf("/queue/workflows/%d/tag", jobID)
 	_, err := c.PostJSON(ctx, path, tags, nil)

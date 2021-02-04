@@ -251,7 +251,7 @@ func (c *client) WorkflowNodeRunJobServiceLink(ctx context.Context, projectKey s
 
 func (c *client) WorkflowAccess(ctx context.Context, projectKey, workflowName, sessionID string, itemType sdk.CDNItemType) error {
 	url := fmt.Sprintf("/project/%s/workflows/%s/type/%s/access", projectKey, workflowName, itemType)
-	if _, err := c.GetJSON(ctx, url, nil, SetHeader("X-CDS-Session-ID", sessionID)); err != nil {
+	if _, err := c.GetJSON(ctx, url, nil, SetHeader(sdk.CDSSessionID, sessionID)); err != nil {
 		return err
 	}
 	return nil

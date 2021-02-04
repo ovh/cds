@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"regexp"
 	"strconv"
@@ -181,8 +182,12 @@ func workflowArtifactDownloadRun(v cli.Values) error {
 				return err
 			}
 			fmt.Printf("Downloading %s...\n", item.APIRef.ToFilename())
-			if err := client.CDNArtifactDownload(context.Background(), cdnLinks.CDNHttpURL, item.APIRefHash, f); err != nil {
+			r, err := client.CDNItemDownload(context.Background(), cdnLinks.CDNHttpURL, item.APIRefHash, sdk.CDNTypeItemArtifact)
+			if err != nil {
 				return err
+			}
+			if _, err := io.Copy(f, r); err != nil {
+				return sdk.WrapError(err, "unable to write file")
 			}
 			if err := f.Close(); err != nil {
 				return err

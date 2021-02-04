@@ -4,33 +4,37 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
-	"os"
 	"time"
+
+	"github.com/spf13/afero"
 
 	"github.com/ovh/cds/sdk"
 )
 
-func (c *client) CDNArtifactDownload(ctx context.Context, cdnAddr string, hash string, w io.Writer) error {
-	reader, _, _, err := c.Stream(ctx, c.HTTPNoTimeoutClient(), http.MethodGet, fmt.Sprintf("%s/item/%s/%s/download", cdnAddr, sdk.CDNTypeItemArtifact, hash), nil, func(req *http.Request) {
+func (c *client) CDNItemDownload(ctx context.Context, cdnAddr string, hash string, itemType sdk.CDNItemType) (io.Reader, error) {
+	reader, _, code, err := c.Stream(ctx, c.HTTPNoTimeoutClient(), http.MethodGet, fmt.Sprintf("%s/item/%s/%s/download", cdnAddr, itemType, hash), nil, func(req *http.Request) {
 		auth := "Bearer " + c.config.SessionToken
 		req.Header.Add("Authorization", auth)
 	})
-	if err != nil {
-		return err
+	if code >= 400 {
+		body, _ := ioutil.ReadAll(reader)
+		if err := sdk.DecodeError(body); err != nil {
+			return nil, sdk.WithStack(err)
+		}
+		return nil, sdk.WithStack(fmt.Errorf("HTTP %d: %s", code, string(body)))
 	}
-	defer reader.Close()
-	_, err = io.Copy(w, reader)
-	return sdk.WithStack(err)
+	return reader, err
 }
 
-func (c *client) CDNArtifactUpdload(ctx context.Context, cdnAddr string, signature string, path string) (time.Duration, error) {
+func (c *client) CDNItemUpload(ctx context.Context, cdnAddr string, signature string, fs afero.Fs, path string) (time.Duration, error) {
 	t0 := time.Now()
 
 	var savedError error
 	// as *File implement io.ReadSeeker, retry in c.Stream will be skipped
 	for i := 0; i < c.config.Retry; i++ {
-		f, err := os.Open(path)
+		f, err := fs.Open(path)
 		if err != nil {
 			return time.Since(t0), sdk.WithStack(err)
 		}

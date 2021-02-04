@@ -115,7 +115,7 @@ func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Acti
 				return
 			}
 
-			duration, err := wk.Client().CDNArtifactUpdload(ctx, wk.CDNHttpURL(), signature, path)
+			duration, err := wk.Client().CDNItemUpload(ctx, wk.CDNHttpURL(), signature, afero.NewOsFs(), path)
 			if err != nil {
 				log.Error(ctx, "upable to upload artifact %q: %v", path, err)
 				chanError <- sdk.WrapError(err, "Error while uploading artifact %s", path)

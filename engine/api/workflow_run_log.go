@@ -345,7 +345,7 @@ func (api *API) getWorkflowAccessHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrForbidden, "only CDN can call this route")
 		}
 
-		sessionID := r.Header.Get("X-CDS-Session-ID")
+		sessionID := r.Header.Get(sdk.CDSSessionID)
 		if sessionID == "" {
 			return sdk.WrapError(sdk.ErrForbidden, "missing session id header")
 		}
@@ -373,7 +373,7 @@ func (api *API) getWorkflowAccessHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrUnauthorized, "consumer (%s) is disabled", consumer.ID)
 		}
 
-		maintainerOrAdmin := consumer.Maintainer() || consumer.Admin()
+		maintainerOrAdmin := consumer.Maintainer()
 
 		perms, err := permission.LoadWorkflowMaxLevelPermission(ctx, api.mustDB(), projectKey, []string{workflowName}, consumer.GetGroupIDs())
 		if err != nil {

@@ -85,7 +85,7 @@ func (s *Service) downloadItem(ctx context.Context, t sdk.CDNItemType, apiRefHas
 		if err := s.downloadLog(ctx, t, apiRefHash, w, opts); err != nil {
 			return err
 		}
-	case sdk.CDNTypeItemArtifact:
+	case sdk.CDNTypeItemArtifact, sdk.CDNTypeItemWorkerCache:
 		if err := s.downloadFile(ctx, t, apiRefHash, w); err != nil {
 			return err
 		}
@@ -205,6 +205,7 @@ func (s *Service) getItemFileValue(ctx context.Context, t sdk.CDNItemType, apiRe
 	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 		return nil, nil, nil, err
 	}
+
 	// If item is in Buffer, get from it
 	if itemUnit != nil {
 		log.Error(ctx, "getItemFileValue> Getting file from buffer")

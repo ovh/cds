@@ -13,7 +13,8 @@ import (
 	sdk "github.com/ovh/cds/sdk"
 	cdsclient "github.com/ovh/cds/sdk/cdsclient"
 	venom "github.com/ovh/venom"
-	go_coverage "github.com/sguiheux/go-coverage"
+	coverage "github.com/sguiheux/go-coverage"
+	afero "github.com/spf13/afero"
 	io "io"
 	http "net/http"
 	reflect "reflect"
@@ -2780,6 +2781,20 @@ func (mr *MockProjectClientMockRecorder) ProjectRepositoryManagerDelete(projectK
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryManagerDelete", reflect.TypeOf((*MockProjectClient)(nil).ProjectRepositoryManagerDelete), projectKey, repoManagerName, force)
 }
 
+// ProjectAccess mocks base method
+func (m *MockProjectClient) ProjectAccess(ctx context.Context, projectKey, sessionID string, itemType sdk.CDNItemType) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectAccess", ctx, projectKey, sessionID, itemType)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectAccess indicates an expected call of ProjectAccess
+func (mr *MockProjectClientMockRecorder) ProjectAccess(ctx, projectKey, sessionID, itemType interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectAccess", reflect.TypeOf((*MockProjectClient)(nil).ProjectAccess), ctx, projectKey, sessionID, itemType)
+}
+
 // MockProjectKeysClient is a mock of ProjectKeysClient interface
 type MockProjectKeysClient struct {
 	ctrl     *gomock.Controller
@@ -3116,7 +3131,7 @@ func (mr *MockQueueClientMockRecorder) QueueJobSendSpawnInfo(ctx, id, in interfa
 }
 
 // QueueSendCoverage mocks base method
-func (m *MockQueueClient) QueueSendCoverage(ctx context.Context, id int64, report go_coverage.Report) error {
+func (m *MockQueueClient) QueueSendCoverage(ctx context.Context, id int64, report coverage.Report) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueSendCoverage", ctx, id, report)
 	ret0, _ := ret[0].(error)
@@ -3272,6 +3287,21 @@ func (m *MockQueueClient) QueueJobSetVersion(ctx context.Context, jobID int64, v
 func (mr *MockQueueClientMockRecorder) QueueJobSetVersion(ctx, jobID, version interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueJobSetVersion", reflect.TypeOf((*MockQueueClient)(nil).QueueJobSetVersion), ctx, jobID, version)
+}
+
+// QueueWorkerCacheLink mocks base method
+func (m *MockQueueClient) QueueWorkerCacheLink(ctx context.Context, jobID int64, tag string) (sdk.CDNItemLinks, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "QueueWorkerCacheLink", ctx, jobID, tag)
+	ret0, _ := ret[0].(sdk.CDNItemLinks)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// QueueWorkerCacheLink indicates an expected call of QueueWorkerCacheLink
+func (mr *MockQueueClientMockRecorder) QueueWorkerCacheLink(ctx, jobID, tag interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueWorkerCacheLink", reflect.TypeOf((*MockQueueClient)(nil).QueueWorkerCacheLink), ctx, jobID, tag)
 }
 
 // MockUserClient is a mock of UserClient interface
@@ -3634,33 +3664,34 @@ func (mr *MockWorkerClientMockRecorder) WorkerSetStatus(ctx, status interface{})
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkerSetStatus", reflect.TypeOf((*MockWorkerClient)(nil).WorkerSetStatus), ctx, status)
 }
 
-// CDNArtifactUpdload mocks base method
-func (m *MockWorkerClient) CDNArtifactUpdload(ctx context.Context, cdnAddr, signature, path string) (time.Duration, error) {
+// CDNItemUpload mocks base method
+func (m *MockWorkerClient) CDNItemUpload(ctx context.Context, cdnAddr, signature string, fs afero.Fs, path string) (time.Duration, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CDNArtifactUpdload", ctx, cdnAddr, signature, path)
+	ret := m.ctrl.Call(m, "CDNItemUpload", ctx, cdnAddr, signature, fs, path)
 	ret0, _ := ret[0].(time.Duration)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// CDNArtifactUpdload indicates an expected call of CDNArtifactUpdload
-func (mr *MockWorkerClientMockRecorder) CDNArtifactUpdload(ctx, cdnAddr, signature, path interface{}) *gomock.Call {
+// CDNItemUpload indicates an expected call of CDNItemUpload
+func (mr *MockWorkerClientMockRecorder) CDNItemUpload(ctx, cdnAddr, signature, fs, path interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CDNArtifactUpdload", reflect.TypeOf((*MockWorkerClient)(nil).CDNArtifactUpdload), ctx, cdnAddr, signature, path)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CDNItemUpload", reflect.TypeOf((*MockWorkerClient)(nil).CDNItemUpload), ctx, cdnAddr, signature, fs, path)
 }
 
-// CDNArtifactDownload mocks base method
-func (m *MockWorkerClient) CDNArtifactDownload(ctx context.Context, cdnAddr, hash string, w io.Writer) error {
+// CDNItemDownload mocks base method
+func (m *MockWorkerClient) CDNItemDownload(ctx context.Context, cdnAddr, hash string, itemType sdk.CDNItemType) (io.Reader, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CDNArtifactDownload", ctx, cdnAddr, hash, w)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret := m.ctrl.Call(m, "CDNItemDownload", ctx, cdnAddr, hash, itemType)
+	ret0, _ := ret[0].(io.Reader)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
-// CDNArtifactDownload indicates an expected call of CDNArtifactDownload
-func (mr *MockWorkerClientMockRecorder) CDNArtifactDownload(ctx, cdnAddr, hash, w interface{}) *gomock.Call {
+// CDNItemDownload indicates an expected call of CDNItemDownload
+func (mr *MockWorkerClientMockRecorder) CDNItemDownload(ctx, cdnAddr, hash, itemType interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CDNArtifactDownload", reflect.TypeOf((*MockWorkerClient)(nil).CDNArtifactDownload), ctx, cdnAddr, hash, w)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CDNItemDownload", reflect.TypeOf((*MockWorkerClient)(nil).CDNItemDownload), ctx, cdnAddr, hash, itemType)
 }
 
 // MockCDNClient is a mock of CDNClient interface
@@ -3686,33 +3717,34 @@ func (m *MockCDNClient) EXPECT() *MockCDNClientMockRecorder {
 	return m.recorder
 }
 
-// CDNArtifactUpdload mocks base method
-func (m *MockCDNClient) CDNArtifactUpdload(ctx context.Context, cdnAddr, signature, path string) (time.Duration, error) {
+// CDNItemUpload mocks base method
+func (m *MockCDNClient) CDNItemUpload(ctx context.Context, cdnAddr, signature string, fs afero.Fs, path string) (time.Duration, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CDNArtifactUpdload", ctx, cdnAddr, signature, path)
+	ret := m.ctrl.Call(m, "CDNItemUpload", ctx, cdnAddr, signature, fs, path)
 	ret0, _ := ret[0].(time.Duration)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// CDNArtifactUpdload indicates an expected call of CDNArtifactUpdload
-func (mr *MockCDNClientMockRecorder) CDNArtifactUpdload(ctx, cdnAddr, signature, path interface{}) *gomock.Call {
+// CDNItemUpload indicates an expected call of CDNItemUpload
+func (mr *MockCDNClientMockRecorder) CDNItemUpload(ctx, cdnAddr, signature, fs, path interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CDNArtifactUpdload", reflect.TypeOf((*MockCDNClient)(nil).CDNArtifactUpdload), ctx, cdnAddr, signature, path)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CDNItemUpload", reflect.TypeOf((*MockCDNClient)(nil).CDNItemUpload), ctx, cdnAddr, signature, fs, path)
 }
 
-// CDNArtifactDownload mocks base method
-func (m *MockCDNClient) CDNArtifactDownload(ctx context.Context, cdnAddr, hash string, w io.Writer) error {
+// CDNItemDownload mocks base method
+func (m *MockCDNClient) CDNItemDownload(ctx context.Context, cdnAddr, hash string, itemType sdk.CDNItemType) (io.Reader, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CDNArtifactDownload", ctx, cdnAddr, hash, w)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret := m.ctrl.Call(m, "CDNItemDownload", ctx, cdnAddr, hash, itemType)
+	ret0, _ := ret[0].(io.Reader)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
-// CDNArtifactDownload indicates an expected call of CDNArtifactDownload
-func (mr *MockCDNClientMockRecorder) CDNArtifactDownload(ctx, cdnAddr, hash, w interface{}) *gomock.Call {
+// CDNItemDownload indicates an expected call of CDNItemDownload
+func (mr *MockCDNClientMockRecorder) CDNItemDownload(ctx, cdnAddr, hash, itemType interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CDNArtifactDownload", reflect.TypeOf((*MockCDNClient)(nil).CDNArtifactDownload), ctx, cdnAddr, hash, w)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CDNItemDownload", reflect.TypeOf((*MockCDNClient)(nil).CDNItemDownload), ctx, cdnAddr, hash, itemType)
 }
 
 // MockHookClient is a mock of HookClient interface
@@ -7108,6 +7140,20 @@ func (mr *MockInterfaceMockRecorder) ProjectRepositoryManagerDelete(projectKey, 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryManagerDelete", reflect.TypeOf((*MockInterface)(nil).ProjectRepositoryManagerDelete), projectKey, repoManagerName, force)
 }
 
+// ProjectAccess mocks base method
+func (m *MockInterface) ProjectAccess(ctx context.Context, projectKey, sessionID string, itemType sdk.CDNItemType) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectAccess", ctx, projectKey, sessionID, itemType)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectAccess indicates an expected call of ProjectAccess
+func (mr *MockInterfaceMockRecorder) ProjectAccess(ctx, projectKey, sessionID, itemType interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectAccess", reflect.TypeOf((*MockInterface)(nil).ProjectAccess), ctx, projectKey, sessionID, itemType)
+}
+
 // QueueWorkflowNodeJobRun mocks base method
 func (m *MockInterface) QueueWorkflowNodeJobRun(status ...string) ([]sdk.WorkflowNodeJobRun, error) {
 	m.ctrl.T.Helper()
@@ -7230,7 +7276,7 @@ func (mr *MockInterfaceMockRecorder) QueueJobSendSpawnInfo(ctx, id, in interface
 }
 
 // QueueSendCoverage mocks base method
-func (m *MockInterface) QueueSendCoverage(ctx context.Context, id int64, report go_coverage.Report) error {
+func (m *MockInterface) QueueSendCoverage(ctx context.Context, id int64, report coverage.Report) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueSendCoverage", ctx, id, report)
 	ret0, _ := ret[0].(error)
@@ -7386,6 +7432,21 @@ func (m *MockInterface) QueueJobSetVersion(ctx context.Context, jobID int64, ver
 func (mr *MockInterfaceMockRecorder) QueueJobSetVersion(ctx, jobID, version interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueJobSetVersion", reflect.TypeOf((*MockInterface)(nil).QueueJobSetVersion), ctx, jobID, version)
+}
+
+// QueueWorkerCacheLink mocks base method
+func (m *MockInterface) QueueWorkerCacheLink(ctx context.Context, jobID int64, tag string) (sdk.CDNItemLinks, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "QueueWorkerCacheLink", ctx, jobID, tag)
+	ret0, _ := ret[0].(sdk.CDNItemLinks)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// QueueWorkerCacheLink indicates an expected call of QueueWorkerCacheLink
+func (mr *MockInterfaceMockRecorder) QueueWorkerCacheLink(ctx, jobID, tag interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueWorkerCacheLink", reflect.TypeOf((*MockInterface)(nil).QueueWorkerCacheLink), ctx, jobID, tag)
 }
 
 // Navbar mocks base method
@@ -7791,33 +7852,34 @@ func (mr *MockInterfaceMockRecorder) WorkerSetStatus(ctx, status interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkerSetStatus", reflect.TypeOf((*MockInterface)(nil).WorkerSetStatus), ctx, status)
 }
 
-// CDNArtifactUpdload mocks base method
-func (m *MockInterface) CDNArtifactUpdload(ctx context.Context, cdnAddr, signature, path string) (time.Duration, error) {
+// CDNItemUpload mocks base method
+func (m *MockInterface) CDNItemUpload(ctx context.Context, cdnAddr, signature string, fs afero.Fs, path string) (time.Duration, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CDNArtifactUpdload", ctx, cdnAddr, signature, path)
+	ret := m.ctrl.Call(m, "CDNItemUpload", ctx, cdnAddr, signature, fs, path)
 	ret0, _ := ret[0].(time.Duration)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// CDNArtifactUpdload indicates an expected call of CDNArtifactUpdload
-func (mr *MockInterfaceMockRecorder) CDNArtifactUpdload(ctx, cdnAddr, signature, path interface{}) *gomock.Call {
+// CDNItemUpload indicates an expected call of CDNItemUpload
+func (mr *MockInterfaceMockRecorder) CDNItemUpload(ctx, cdnAddr, signature, fs, path interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CDNArtifactUpdload", reflect.TypeOf((*MockInterface)(nil).CDNArtifactUpdload), ctx, cdnAddr, signature, path)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CDNItemUpload", reflect.TypeOf((*MockInterface)(nil).CDNItemUpload), ctx, cdnAddr, signature, fs, path)
 }
 
-// CDNArtifactDownload mocks base method
-func (m *MockInterface) CDNArtifactDownload(ctx context.Context, cdnAddr, hash string, w io.Writer) error {
+// CDNItemDownload mocks base method
+func (m *MockInterface) CDNItemDownload(ctx context.Context, cdnAddr, hash string, itemType sdk.CDNItemType) (io.Reader, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CDNArtifactDownload", ctx, cdnAddr, hash, w)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret := m.ctrl.Call(m, "CDNItemDownload", ctx, cdnAddr, hash, itemType)
+	ret0, _ := ret[0].(io.Reader)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
-// CDNArtifactDownload indicates an expected call of CDNArtifactDownload
-func (mr *MockInterfaceMockRecorder) CDNArtifactDownload(ctx, cdnAddr, hash, w interface{}) *gomock.Call {
+// CDNItemDownload indicates an expected call of CDNItemDownload
+func (mr *MockInterfaceMockRecorder) CDNItemDownload(ctx, cdnAddr, hash, itemType interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CDNArtifactDownload", reflect.TypeOf((*MockInterface)(nil).CDNArtifactDownload), ctx, cdnAddr, hash, w)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CDNItemDownload", reflect.TypeOf((*MockInterface)(nil).CDNItemDownload), ctx, cdnAddr, hash, itemType)
 }
 
 // WorkflowSearch mocks base method
@@ -8925,7 +8987,7 @@ func (mr *MockWorkerInterfaceMockRecorder) QueueJobSendSpawnInfo(ctx, id, in int
 }
 
 // QueueSendCoverage mocks base method
-func (m *MockWorkerInterface) QueueSendCoverage(ctx context.Context, id int64, report go_coverage.Report) error {
+func (m *MockWorkerInterface) QueueSendCoverage(ctx context.Context, id int64, report coverage.Report) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueSendCoverage", ctx, id, report)
 	ret0, _ := ret[0].(error)
@@ -9081,6 +9143,21 @@ func (m *MockWorkerInterface) QueueJobSetVersion(ctx context.Context, jobID int6
 func (mr *MockWorkerInterfaceMockRecorder) QueueJobSetVersion(ctx, jobID, version interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueJobSetVersion", reflect.TypeOf((*MockWorkerInterface)(nil).QueueJobSetVersion), ctx, jobID, version)
+}
+
+// QueueWorkerCacheLink mocks base method
+func (m *MockWorkerInterface) QueueWorkerCacheLink(ctx context.Context, jobID int64, tag string) (sdk.CDNItemLinks, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "QueueWorkerCacheLink", ctx, jobID, tag)
+	ret0, _ := ret[0].(sdk.CDNItemLinks)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// QueueWorkerCacheLink indicates an expected call of QueueWorkerCacheLink
+func (mr *MockWorkerInterfaceMockRecorder) QueueWorkerCacheLink(ctx, jobID, tag interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueWorkerCacheLink", reflect.TypeOf((*MockWorkerInterface)(nil).QueueWorkerCacheLink), ctx, jobID, tag)
 }
 
 // Requirements mocks base method
@@ -9337,33 +9414,34 @@ func (mr *MockWorkerInterfaceMockRecorder) WorkerSetStatus(ctx, status interface
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkerSetStatus", reflect.TypeOf((*MockWorkerInterface)(nil).WorkerSetStatus), ctx, status)
 }
 
-// CDNArtifactUpdload mocks base method
-func (m *MockWorkerInterface) CDNArtifactUpdload(ctx context.Context, cdnAddr, signature, path string) (time.Duration, error) {
+// CDNItemUpload mocks base method
+func (m *MockWorkerInterface) CDNItemUpload(ctx context.Context, cdnAddr, signature string, fs afero.Fs, path string) (time.Duration, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CDNArtifactUpdload", ctx, cdnAddr, signature, path)
+	ret := m.ctrl.Call(m, "CDNItemUpload", ctx, cdnAddr, signature, fs, path)
 	ret0, _ := ret[0].(time.Duration)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// CDNArtifactUpdload indicates an expected call of CDNArtifactUpdload
-func (mr *MockWorkerInterfaceMockRecorder) CDNArtifactUpdload(ctx, cdnAddr, signature, path interface{}) *gomock.Call {
+// CDNItemUpload indicates an expected call of CDNItemUpload
+func (mr *MockWorkerInterfaceMockRecorder) CDNItemUpload(ctx, cdnAddr, signature, fs, path interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CDNArtifactUpdload", reflect.TypeOf((*MockWorkerInterface)(nil).CDNArtifactUpdload), ctx, cdnAddr, signature, path)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CDNItemUpload", reflect.TypeOf((*MockWorkerInterface)(nil).CDNItemUpload), ctx, cdnAddr, signature, fs, path)
 }
 
-// CDNArtifactDownload mocks base method
-func (m *MockWorkerInterface) CDNArtifactDownload(ctx context.Context, cdnAddr, hash string, w io.Writer) error {
+// CDNItemDownload mocks base method
+func (m *MockWorkerInterface) CDNItemDownload(ctx context.Context, cdnAddr, hash string, itemType sdk.CDNItemType) (io.Reader, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CDNArtifactDownload", ctx, cdnAddr, hash, w)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret := m.ctrl.Call(m, "CDNItemDownload", ctx, cdnAddr, hash, itemType)
+	ret0, _ := ret[0].(io.Reader)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
-// CDNArtifactDownload indicates an expected call of CDNArtifactDownload
-func (mr *MockWorkerInterfaceMockRecorder) CDNArtifactDownload(ctx, cdnAddr, hash, w interface{}) *gomock.Call {
+// CDNItemDownload indicates an expected call of CDNItemDownload
+func (mr *MockWorkerInterfaceMockRecorder) CDNItemDownload(ctx, cdnAddr, hash, itemType interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CDNArtifactDownload", reflect.TypeOf((*MockWorkerInterface)(nil).CDNArtifactDownload), ctx, cdnAddr, hash, w)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CDNItemDownload", reflect.TypeOf((*MockWorkerInterface)(nil).CDNItemDownload), ctx, cdnAddr, hash, itemType)
 }
 
 // WorkflowRunArtifacts mocks base method

@@ -809,7 +809,7 @@ func (api *API) getWorkflowNodeRunHandler() service.Handler {
 		}
 
 		if featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeatureCDNArtifact, map[string]string{"project_key": key}) {
-			results, err := cdn.ListItemsByRunID(ctx, api.mustDB(), sdk.CDNTypeItemArtifact, nodeRun.WorkflowRunID)
+			results, err := cdn.ListItems(ctx, api.mustDB(), sdk.CDNTypeItemArtifact, map[string]string{cdn.ParamRunID: strconv.Itoa(int(nodeRun.WorkflowRunID))})
 			if err != nil {
 				return err
 			}

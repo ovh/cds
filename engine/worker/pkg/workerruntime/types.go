@@ -74,6 +74,7 @@ type Runtime interface {
 	ProcessJob(job sdk.WorkflowNodeJobRunData) sdk.Result
 	SendLog(ctx context.Context, level Level, format string)
 	ArtifactSignature(artifactName string, perm uint32) (string, error)
+	WorkerCacheSignature(tag string) (string, error)
 	FeatureEnabled(featureName string) bool
 	CDNHttpURL() string
 	InstallKey(key sdk.Variable) (*KeyResponse, error)

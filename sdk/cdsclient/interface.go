@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"context"
 	"encoding/json"
+	"github.com/spf13/afero"
 	"io"
 	"net/http"
 	"net/url"
@@ -224,6 +225,7 @@ type ProjectClient interface {
 	ProjectIntegrationDelete(projectKey string, integrationName string) error
 	ProjectRepositoryManagerList(projectKey string) ([]sdk.ProjectVCSServer, error)
 	ProjectRepositoryManagerDelete(projectKey string, repoManagerName string, force bool) error
+	ProjectAccess(ctx context.Context, projectKey, sessionID string, itemType sdk.CDNItemType) error
 }
 
 // ProjectKeysClient exposes project keys related functions
@@ -265,6 +267,7 @@ type QueueClient interface {
 	QueueJobTag(ctx context.Context, jobID int64, tags []sdk.WorkflowRunTag) error
 	QueueServiceLogs(ctx context.Context, logs []sdk.ServiceLog) error
 	QueueJobSetVersion(ctx context.Context, jobID int64, version sdk.WorkflowRunVersion) error
+	QueueWorkerCacheLink(ctx context.Context, jobID int64, tag string) (sdk.CDNItemLinks, error)
 }
 
 // UserClient exposes users functions
@@ -298,8 +301,8 @@ type WorkerClient interface {
 }
 
 type CDNClient interface {
-	CDNArtifactUpdload(ctx context.Context, cdnAddr string, signature string, path string) (time.Duration, error)
-	CDNArtifactDownload(ctx context.Context, cdnAddr string, hash string, w io.Writer) error
+	CDNItemUpload(ctx context.Context, cdnAddr string, signature string, fs afero.Fs, path string) (time.Duration, error)
+	CDNItemDownload(ctx context.Context, cdnAddr string, hash string, itemType sdk.CDNItemType) (io.Reader, error)
 }
 
 // HookClient exposes functions used for hooks services

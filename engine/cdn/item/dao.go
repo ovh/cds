@@ -151,6 +151,32 @@ func MarkToDeleteByRunIDs(db gorpmapper.SqlExecutorWithTx, runID int64) error {
 	return sdk.WrapError(err, "unable to mark item to delete for run %d", runID)
 }
 
+func LoadFileByProjectAndCacheTag(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, itemType sdk.CDNItemType, projKey string, cacheTag string) (*sdk.CDNItem, error) {
+	query := gorpmapper.NewQuery(`
+		SELECT *
+		FROM item
+		WHERE type = $1
+		AND (api_ref->>'project_key')::text = $2
+		AND (api_ref->>'cache_tag')::text = $3
+		AND to_delete = false
+
+	`).Args(itemType, projKey, cacheTag)
+	return getItem(ctx, m, db, query)
+}
+
+func LoadFileByRunAndArtifactName(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, itemType sdk.CDNItemType, runID int64, artifactName string) (*sdk.CDNItem, error) {
+	query := gorpmapper.NewQuery(`
+		SELECT *
+		FROM item
+		WHERE type = $1
+		AND (api_ref->>'run_id')::int = $2
+		AND (api_ref->>'artifact_name')::text = $3
+		AND to_delete = false
+
+	`).Args(itemType, runID, artifactName)
+	return getItem(ctx, m, db, query)
+}
+
 // LoadByAPIRefHashAndType load an item by his job id, step order and type
 func LoadByAPIRefHashAndType(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, hash string, itemType sdk.CDNItemType, opts ...gorpmapper.GetOptionFunc) (*sdk.CDNItem, error) {
 	query := gorpmapper.NewQuery(`
@@ -297,7 +323,7 @@ func CountItemSizePercentil(db gorp.SqlExecutor) ([]StatItemPercentil, error) {
 }
 
 func LoadByRunID(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, itemType sdk.CDNItemType, runID string) ([]sdk.CDNItem, error) {
-	query := gorpmapper.NewQuery("SELECT * FROM item WHERE api_ref->>'run_id'::text = $1 AND type = $2").Args(runID, itemType)
+	query := gorpmapper.NewQuery("SELECT * FROM item WHERE api_ref->>'run_id'::text = $1 AND type = $2 AND to_delete = false").Args(runID, itemType)
 	return getItems(ctx, m, db, query)
 
 }

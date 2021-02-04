@@ -11,6 +11,7 @@ import (
 
 	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/storage"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdn"
 )
@@ -20,6 +21,8 @@ func (s *Service) storeFile(ctx context.Context, sig cdn.Signature, reader io.Re
 	switch {
 	case sig.Worker.ArtifactName != "":
 		itemType = sdk.CDNTypeItemArtifact
+	case sig.Worker.CacheTag != "":
+		itemType = sdk.CDNTypeItemWorkerCache
 	default:
 		return sdk.WrapError(sdk.ErrWrongRequest, "invalid item type")
 	}
@@ -34,12 +37,14 @@ func (s *Service) storeFile(ctx context.Context, sig cdn.Signature, reader io.Re
 	if err != nil {
 		return err
 	}
+
 	it := &sdk.CDNItem{
 		APIRef:     apiRef,
 		Type:       itemType,
 		APIRefHash: hashRef,
 		Status:     sdk.CDNStatusItemIncoming,
 	}
+
 	iu, err := s.Units.NewItemUnit(ctx, bufferUnit, it)
 	if err != nil {
 		return err
@@ -89,10 +94,16 @@ func (s *Service) storeFile(ctx context.Context, sig cdn.Signature, reader io.Re
 	}
 	defer tx.Rollback()
 
+	// Check and Clean file with same ref
+	if err := s.cleanPreviousFileItem(ctx, tx, sig, itemType, apiRef.ToFilename()); err != nil {
+		return err
+	}
+
 	// Insert Item
 	if err := item.Insert(ctx, s.Mapper, tx, it); err != nil {
 		return err
 	}
+
 	// Insert Item Unit
 	iu.ItemID = iu.Item.ID
 	if err := storage.InsertItemUnit(ctx, s.Mapper, tx, iu); err != nil {
@@ -103,5 +114,33 @@ func (s *Service) storeFile(ctx context.Context, sig cdn.Signature, reader io.Re
 	}
 
 	s.Units.PushInSyncQueue(ctx, it.ID, it.Created)
+	return nil
+}
+
+func (s *Service) cleanPreviousFileItem(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, sig cdn.Signature, itemType sdk.CDNItemType, name string) error {
+	switch itemType {
+	case sdk.CDNTypeItemArtifact:
+		// Check if item already exist
+		existingItem, err := item.LoadFileByRunAndArtifactName(ctx, s.Mapper, tx, itemType, sig.RunID, name)
+		if err != nil {
+			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return err
+			}
+			return nil
+		}
+		existingItem.ToDelete = true
+		return item.Update(ctx, s.Mapper, tx, existingItem)
+	case sdk.CDNTypeItemWorkerCache:
+		// Check if item already exist
+		existingItem, err := item.LoadFileByProjectAndCacheTag(ctx, s.Mapper, tx, itemType, sig.ProjectKey, name)
+		if err != nil {
+			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return err
+			}
+			return nil
+		}
+		existingItem.ToDelete = true
+		return item.Update(ctx, s.Mapper, tx, existingItem)
+	}
 	return nil
 }

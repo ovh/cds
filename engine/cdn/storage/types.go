@@ -237,10 +237,10 @@ func (x RunningStorageUnits) LogsBuffer() LogBufferUnit {
 
 func (x RunningStorageUnits) GetBuffer(bufferType sdk.CDNItemType) BufferUnit {
 	switch bufferType {
-	case sdk.CDNTypeItemArtifact:
-		return x.FileBuffer()
-	default:
+	case sdk.CDNTypeItemStepLog, sdk.CDNTypeItemServiceLog:
 		return x.LogsBuffer()
+	default:
+		return x.FileBuffer()
 	}
 }
 
