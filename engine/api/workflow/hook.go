@@ -152,11 +152,20 @@ func hookRegistration(ctx context.Context, db gorpmapper.SqlExecutorWithTx, stor
 					h.Config[sdk.HookConfigEventFilter] = previousHook.Config[sdk.HookConfigEventFilter]
 				}
 				continue
+			} else if has {
+				// If repository change, force new UUID to be able to delete the previous one
+				if h.IsRepositoryWebHook() || h.HookModelName == sdk.GitPollerModelName || h.HookModelName == sdk.GerritHookModelName {
+					if h.Config[sdk.HookConfigVCSServer].Value != previousHook.Config[sdk.HookConfigVCSServer].Value ||
+						h.Config[sdk.HookConfigRepoFullName].Value != previousHook.Config[sdk.HookConfigRepoFullName].Value {
+						h.UUID = sdk.UUID()
+					}
+				}
 			}
 
 		}
-		// Create a new UUID when hook has been updated
-		h.UUID = sdk.UUID()
+		if h.UUID == "" {
+			h.UUID = sdk.UUID()
+		}
 
 		if err := updateSchedulerPayload(ctx, db, store, proj, wf, h); err != nil {
 			return err
