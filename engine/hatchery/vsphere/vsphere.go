@@ -145,6 +145,11 @@ func (h *HatcheryVSphere) CanSpawn(ctx context.Context, model *sdk.Model, jobID 
 	return true
 }
 
+// Start inits client and routines for hatchery
+func (h *HatcheryVSphere) Start(ctx context.Context) error {
+	return hatchery.Create(ctx, h)
+}
+
 // Serve start the hatchery server
 func (h *HatcheryVSphere) Serve(ctx context.Context) error {
 	return h.CommonServe(ctx, h)

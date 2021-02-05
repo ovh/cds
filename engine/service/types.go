@@ -113,13 +113,15 @@ type Common struct {
 }
 
 // Service is the interface for a engine service
+// Lifecycle: ApplyConfiguration->?BeforeStart->Init->Signin->Register->Start->Serve->Heartbeat
 type Service interface {
 	ApplyConfiguration(cfg interface{}) error
 	Serve(ctx context.Context) error
 	CheckConfiguration(cfg interface{}) error
-	Start(ctx context.Context, cfg cdsclient.ServiceConfig) error
+	Start(ctx context.Context) error
 	Init(cfg interface{}) (cdsclient.ServiceConfig, error)
-	Register(ctx context.Context, cfg sdk.ServiceConfig) error
+	Signin(ctx context.Context, cfg cdsclient.ServiceConfig) error
+	Register(ctx context.Context, cfg interface{}) error
 	Unregister(ctx context.Context) error
 	Heartbeat(ctx context.Context, status func(ctx context.Context) *sdk.MonitoringStatus) error
 	Status(ctx context.Context) *sdk.MonitoringStatus

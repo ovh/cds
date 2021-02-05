@@ -22,6 +22,7 @@ import (
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/ovh/cds/sdk/hatchery"
 )
 
 // New instanciates a new hatchery local
@@ -114,20 +115,25 @@ func (h *HatcheryLocal) CheckConfiguration(cfg interface{}) error {
 	return nil
 }
 
+// Start inits client and routines for hatchery
+func (h *HatcheryLocal) Start(ctx context.Context) error {
+	return hatchery.Create(ctx, h)
+}
+
 // Serve start the hatchery server
 func (h *HatcheryLocal) Serve(ctx context.Context) error {
 	h.BasedirDedicated = filepath.Dir(filepath.Join(h.Config.Basedir, h.Configuration().Name))
 	if ok, err := sdk.DirectoryExists(h.BasedirDedicated); !ok {
 		log.Debug(ctx, "creating directory %s", h.BasedirDedicated)
 		if err := os.MkdirAll(h.BasedirDedicated, 0700); err != nil {
-			return sdk.WrapError(err, "error while creating directory %s", h.BasedirDedicated)
+			return sdk.NewErrorFrom(err, "error while creating directory %s", h.BasedirDedicated)
 		}
 	} else if err != nil {
-		return fmt.Errorf("Invalid basedir: %v", err)
+		return sdk.NewErrorFrom(err, "invalid basedir")
 	}
 
 	if err := h.downloadWorker(); err != nil {
-		return fmt.Errorf("Cannot download worker binary from api: %v", err)
+		return sdk.NewErrorFrom(err, "cannot download worker binary from api")
 	}
 
 	return h.CommonServe(ctx, h)

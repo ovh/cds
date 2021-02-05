@@ -38,7 +38,7 @@ func Create(ctx context.Context, h Interface) error {
 
 	// Init call hatchery.Register()
 	if err := h.InitHatchery(ctx); err != nil {
-		return fmt.Errorf("Create> Init error: %v", err)
+		return sdk.WrapError(err, "init error")
 	}
 
 	var chanRegister, chanGetModels <-chan time.Time
@@ -68,20 +68,18 @@ func Create(ctx context.Context, h Interface) error {
 	// purges expired items every minute
 	spawnIDs := cache.New(10*time.Second, 60*time.Second)
 
-	h.GetGoRoutines().Run(ctx, "queuePolling",
-		func(ctx context.Context) {
-			if err := h.CDSClient().QueuePolling(ctx, h.GetGoRoutines(), wjobs, errs, 20*time.Second, modelType, h.Configuration().Provision.RatioService); err != nil {
-				log.Error(ctx, "Queues polling stopped: %v", err)
-			}
-		},
-	)
+	h.GetGoRoutines().Run(ctx, "queuePolling", func(ctx context.Context) {
+		if err := h.CDSClient().QueuePolling(ctx, h.GetGoRoutines(), wjobs, errs, 20*time.Second, modelType, h.Configuration().Provision.RatioService); err != nil {
+			log.Error(ctx, "Queues polling stopped: %v", err)
+		}
+	})
 
 	// run the starters pool
 	workersStartChan := startWorkerStarters(ctx, h)
 
-	hostname, errh := os.Hostname()
-	if errh != nil {
-		return fmt.Errorf("Create> Cannot retrieve hostname: %s", errh)
+	hostname, err := os.Hostname()
+	if err != nil {
+		return sdk.WrapError(err, "cannot retrieve hostname")
 	}
 
 	// read the errs channel in another goroutine too
@@ -91,174 +89,178 @@ func Create(ctx context.Context, h Interface) error {
 		}
 	})
 
-	// the main goroutine
-	for {
-		select {
-		case <-ctx.Done():
-			return sdk.WrapError(ctx.Err(), "cancel hatchery main routine")
+	h.GetGoRoutines().Run(ctx, "mainRoutine", func(ctx context.Context) {
+		for {
+			select {
+			case <-ctx.Done():
+				log.Error(ctx, "cancel hatchery main routine: %v", ctx.Err())
+				return
 
-		case <-chanGetModels:
-			var errwm error
-			models, errwm = hWithModels.WorkerModelsEnabled()
-			if errwm != nil {
-				log.Error(ctx, "error on h.WorkerModelsEnabled(): %v", errwm)
-			}
-		case j := <-wjobs:
-			t0 := time.Now()
-			if j.ID == 0 {
-				continue
-			}
-			if h.GetLogger() == nil {
-				log.Error(ctx, "Logger not found, don't spawn workers")
-				continue
-			}
+			case <-chanGetModels:
+				var errwm error
+				models, errwm = hWithModels.WorkerModelsEnabled()
+				if errwm != nil {
+					log.Error(ctx, "error on h.WorkerModelsEnabled(): %v", errwm)
+				}
+			case j := <-wjobs:
+				t0 := time.Now()
+				if j.ID == 0 {
+					continue
+				}
+				if h.GetLogger() == nil {
+					log.Error(ctx, "logger not found, don't spawn workers")
+					continue
+				}
 
-			var traceEnded *struct{}
-			currentCtx, currentCancel := context.WithTimeout(ctx, 10*time.Minute)
-			if val, has := j.Header.Get(telemetry.SampledHeader); has && val == "1" {
-				currentCtx, _ = telemetry.New(currentCtx, h, "hatchery.JobReceive", trace.AlwaysSample(), trace.SpanKindServer)
+				var traceEnded *struct{}
+				currentCtx, currentCancel := context.WithTimeout(ctx, 10*time.Minute)
+				if val, has := j.Header.Get(telemetry.SampledHeader); has && val == "1" {
+					currentCtx, _ = telemetry.New(currentCtx, h, "hatchery.JobReceive", trace.AlwaysSample(), trace.SpanKindServer)
 
-				r, _ := j.Header.Get(sdk.WorkflowRunHeader)
-				w, _ := j.Header.Get(sdk.WorkflowHeader)
-				p, _ := j.Header.Get(sdk.ProjectKeyHeader)
+					r, _ := j.Header.Get(sdk.WorkflowRunHeader)
+					w, _ := j.Header.Get(sdk.WorkflowHeader)
+					p, _ := j.Header.Get(sdk.ProjectKeyHeader)
 
-				telemetry.Current(currentCtx,
-					telemetry.Tag(telemetry.TagWorkflow, w),
-					telemetry.Tag(telemetry.TagWorkflowRun, r),
-					telemetry.Tag(telemetry.TagProjectKey, p),
-					telemetry.Tag(telemetry.TagWorkflowNodeJobRun, j.ID),
-				)
+					telemetry.Current(currentCtx,
+						telemetry.Tag(telemetry.TagWorkflow, w),
+						telemetry.Tag(telemetry.TagWorkflowRun, r),
+						telemetry.Tag(telemetry.TagProjectKey, p),
+						telemetry.Tag(telemetry.TagWorkflowNodeJobRun, j.ID),
+					)
+
+					if _, ok := j.Header["WS"]; ok {
+						log.Debug(ctx, "hatchery> received job from WS")
+						telemetry.Current(currentCtx,
+							telemetry.Tag("from", "ws"),
+						)
+					}
+				}
+				endTrace := func(reason string) {
+					if reason != "" {
+						telemetry.Current(currentCtx,
+							telemetry.Tag("reason", reason),
+						)
+					}
+					telemetry.End(currentCtx, nil, nil) // nolint
+					var T struct{}
+					traceEnded = &T
+					currentCancel()
+				}
+				go func() {
+					<-currentCtx.Done()
+					if traceEnded == nil {
+						endTrace(currentCtx.Err().Error())
+					}
+				}()
+
+				stats.Record(currentCtx, GetMetrics().Jobs.M(1))
 
 				if _, ok := j.Header["WS"]; ok {
-					log.Debug(ctx, "hatchery> received job from WS")
-					telemetry.Current(currentCtx,
-						telemetry.Tag("from", "ws"),
-					)
+					stats.Record(currentCtx, GetMetrics().JobsWebsocket.M(1))
 				}
-			}
-			endTrace := func(reason string) {
-				if reason != "" {
-					telemetry.Current(currentCtx,
-						telemetry.Tag("reason", reason),
-					)
+
+				//Check if the jobs is concerned by a pending worker creation
+				if _, exist := spawnIDs.Get(strconv.FormatInt(j.ID, 10)); exist {
+					log.Debug(ctx, "job %d already spawned in previous routine", j.ID)
+					endTrace("already spawned")
+					continue
 				}
-				telemetry.End(currentCtx, nil, nil) // nolint
-				var T struct{}
-				traceEnded = &T
-				currentCancel()
-			}
-			go func() {
-				<-currentCtx.Done()
-				if traceEnded == nil {
-					endTrace(currentCtx.Err().Error())
+
+				//Before doing anything, push in cache
+				spawnIDs.SetDefault(strconv.FormatInt(j.ID, 10), j.ID)
+
+				//Check bookedBy current hatchery
+				if j.BookedBy.ID != 0 {
+					log.Debug(ctx, "hatchery> job %d is booked by someone", j.ID)
+					endTrace("booked by someone")
+					continue
 				}
-			}()
 
-			stats.Record(currentCtx, GetMetrics().Jobs.M(1))
-
-			if _, ok := j.Header["WS"]; ok {
-				stats.Record(currentCtx, GetMetrics().JobsWebsocket.M(1))
-			}
-
-			//Check if the jobs is concerned by a pending worker creation
-			if _, exist := spawnIDs.Get(strconv.FormatInt(j.ID, 10)); exist {
-				log.Debug(ctx, "job %d already spawned in previous routine", j.ID)
-				endTrace("already spawned")
-				continue
-			}
-
-			//Before doing anything, push in cache
-			spawnIDs.SetDefault(strconv.FormatInt(j.ID, 10), j.ID)
-
-			//Check bookedBy current hatchery
-			if j.BookedBy.ID != 0 {
-				log.Debug(ctx, "hatchery> job %d is booked by someone", j.ID)
-				endTrace("booked by someone")
-				continue
-			}
-
-			//Check if hatchery if able to start a new worker
-			if !checkCapacities(ctx, h) {
-				log.Info(ctx, "hatchery %s is not able to provision new worker", h.Service().Name)
-				endTrace("no capacities")
-				continue
-			}
-
-			workerRequest := workerStarterRequest{
-				ctx:               currentCtx,
-				cancel:            endTrace,
-				id:                j.ID,
-				execGroups:        j.ExecGroups,
-				requirements:      j.Job.Action.Requirements,
-				hostname:          hostname,
-				timestamp:         time.Now().Unix(),
-				workflowNodeRunID: j.WorkflowNodeRunID,
-			}
-
-			// Check at least one worker model can match
-			var chosenModel *sdk.Model
-			var canTakeJob bool
-
-			var containsRegionRequirement bool
-			for _, r := range workerRequest.requirements {
-				switch r.Type {
-				case sdk.RegionRequirement:
-					containsRegionRequirement = true
-					break
+				//Check if hatchery if able to start a new worker
+				if !checkCapacities(ctx, h) {
+					log.Info(ctx, "hatchery %s is not able to provision new worker", h.Service().Name)
+					endTrace("no capacities")
+					continue
 				}
-			}
 
-			if !containsRegionRequirement && h.Configuration().Provision.IgnoreJobWithNoRegion {
-				log.Debug(ctx, "cannot launch this job because it does not contains a region prerequisite and IgnoreJobWithNoRegion=true in hatchery configuration")
-				canTakeJob = false
-			} else if isWithModels {
-				for i := range models {
-					if canRunJobWithModel(ctx, hWithModels, workerRequest, &models[i]) {
-						chosenModel = &models[i]
-						canTakeJob = true
+				workerRequest := workerStarterRequest{
+					ctx:               currentCtx,
+					cancel:            endTrace,
+					id:                j.ID,
+					execGroups:        j.ExecGroups,
+					requirements:      j.Job.Action.Requirements,
+					hostname:          hostname,
+					timestamp:         time.Now().Unix(),
+					workflowNodeRunID: j.WorkflowNodeRunID,
+				}
+
+				// Check at least one worker model can match
+				var chosenModel *sdk.Model
+				var canTakeJob bool
+
+				var containsRegionRequirement bool
+				for _, r := range workerRequest.requirements {
+					switch r.Type {
+					case sdk.RegionRequirement:
+						containsRegionRequirement = true
 						break
 					}
 				}
 
-				// No model has been found, let's send a failing result
-				if chosenModel == nil {
-					log.Debug(ctx, "hatchery> no model")
-					endTrace("no model")
+				if !containsRegionRequirement && h.Configuration().Provision.IgnoreJobWithNoRegion {
+					log.Debug(ctx, "cannot launch this job because it does not contains a region prerequisite and IgnoreJobWithNoRegion=true in hatchery configuration")
+					canTakeJob = false
+				} else if isWithModels {
+					for i := range models {
+						if canRunJobWithModel(ctx, hWithModels, workerRequest, &models[i]) {
+							chosenModel = &models[i]
+							canTakeJob = true
+							break
+						}
+					}
+
+					// No model has been found, let's send a failing result
+					if chosenModel == nil {
+						log.Debug(ctx, "hatchery> no model")
+						endTrace("no model")
+						continue
+					}
+				} else {
+					if canRunJob(ctx, h, workerRequest) {
+						log.Debug(ctx, "hatchery %s can try to spawn a worker for job %d", h.Name(), j.ID)
+						canTakeJob = true
+					}
+				}
+
+				if !canTakeJob {
+					log.Info(ctx, "hatchery %s is not able to run the job %d", h.Name(), j.ID)
+					endTrace("cannot run job")
 					continue
 				}
-			} else {
-				if canRunJob(ctx, h, workerRequest) {
-					log.Debug(ctx, "hatchery %s can try to spawn a worker for job %d", h.Name(), j.ID)
-					canTakeJob = true
+
+				if chosenModel != nil {
+					// We got a model, let's start a worker
+					workerRequest.model = chosenModel
+
+					// Interpolate model secrets
+					if err := ModelInterpolateSecrets(hWithModels, chosenModel); err != nil {
+						log.Error(ctx, "%v", err)
+						continue
+					}
 				}
-			}
 
-			if !canTakeJob {
-				log.Info(ctx, "hatchery %s is not able to run the job %d", h.Name(), j.ID)
-				endTrace("cannot run job")
-				continue
-			}
+				//Ask to start
+				log.Debug(ctx, "hatchery> Request a worker for job %d (%.3f seconds elapsed)", j.ID, time.Since(t0).Seconds())
+				workersStartChan <- workerRequest
 
-			if chosenModel != nil {
-				// We got a model, let's start a worker
-				workerRequest.model = chosenModel
-
-				// Interpolate model secrets
-				if err := ModelInterpolateSecrets(hWithModels, chosenModel); err != nil {
-					return err
+			case <-chanRegister:
+				if err := workerRegister(ctx, hWithModels, workersStartChan); err != nil {
+					log.Warn(ctx, "error on workerRegister: %v", err)
 				}
-			}
-
-			//Ask to start
-			log.Debug(ctx, "hatchery> Request a worker for job %d (%.3f seconds elapsed)", j.ID, time.Since(t0).Seconds())
-			workersStartChan <- workerRequest
-
-		case <-chanRegister:
-			if err := workerRegister(ctx, hWithModels, workersStartChan); err != nil {
-				log.Warn(ctx, "Error on workerRegister: %s", err)
 			}
 		}
-	}
+	})
+	return nil
 }
 
 func canRunJob(ctx context.Context, h Interface, j workerStarterRequest) bool {

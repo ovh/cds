@@ -2,7 +2,6 @@ package hatchery_test
 
 import (
 	"context"
-	"encoding/json"
 	"os"
 	"os/exec"
 	"strings"
@@ -57,6 +56,7 @@ func TestHatcheryLocal(t *testing.T) {
 	require.NoError(t, h.ApplyConfiguration(cfg))
 
 	srvCfg, err := h.Init(cfg)
+	require.NoError(t, err)
 	require.NotNil(t, srvCfg)
 	t.Logf("service config: %+v", srvCfg)
 
@@ -67,22 +67,19 @@ func TestHatcheryLocal(t *testing.T) {
 		return nil
 	}
 
-	require.NoError(t, h.Start(context.TODO(), srvCfg))
+	require.NoError(t, h.Signin(context.TODO(), srvCfg))
+	require.NoError(t, h.Register(context.TODO(), cfg))
+	require.NoError(t, h.Start(context.TODO()))
 
-	var srvConfig sdk.ServiceConfig
-	b, _ := json.Marshal(cfg)
-	json.Unmarshal(b, &srvConfig) // nolint
-
-	require.NoError(t, h.Register(context.Background(), srvConfig))
+	// Wait 30 sec to let the queue polling exec run one time
+	serveCtx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
+	defer cancel()
+	err = h.Serve(serveCtx)
+	require.Contains(t, err.Error(), "Server closed")
 
 	heartbeatCtx, cancel := context.WithTimeout(context.TODO(), 1*time.Second)
 	defer cancel()
 	err = h.Heartbeat(heartbeatCtx, h.Status)
-	require.Contains(t, err.Error(), "context deadline exceeded")
-
-	serveCtx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
-	defer cancel()
-	err = h.Serve(serveCtx)
 	require.Contains(t, err.Error(), "context deadline exceeded")
 
 	// Mock assertions

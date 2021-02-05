@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"os/signal"
@@ -306,7 +305,9 @@ See $ engine config command for more details.
 
 			wg.Add(1)
 			go func(srv serviceConf) {
-				start(ctx, srv.service, srv.cfg, srv.arg)
+				if err := start(ctx, srv.service, srv.arg, srv.cfg); err != nil {
+					log.Error(ctx, "%s> service has been stopped: %+v", srv.arg, err)
+				}
 				wg.Done()
 			}(s)
 
@@ -336,50 +337,43 @@ func unregisterServices(ctx context.Context, serviceConfs []serviceConf) {
 	}
 }
 
-func start(ctx context.Context, s service.Service, cfg interface{}, serviceName string) {
-	if err := serve(ctx, s, serviceName, cfg); err != nil {
-		fmt.Printf("%s> Service has been stopped: %+v\n", serviceName, err)
-	}
-}
-
-func serve(c context.Context, s service.Service, serviceName string, cfg interface{}) error {
+func start(c context.Context, s service.Service, serviceName string, cfg interface{}) error {
 	ctx, cancel := context.WithCancel(c)
 	defer cancel()
 
 	ctx = context.WithValue(ctx, cdslog.Service, serviceName)
-	x, err := s.Init(cfg)
+	srvConfig, err := s.Init(cfg)
 	if err != nil {
 		return err
 	}
 
-	// first signin
-	if err := s.Start(ctx, x); err != nil {
-		log.Error(ctx, "%s> Unable to start service: %+v", serviceName, err)
-		return err
+	// Signin and register to CDS api
+	if err := s.Signin(c, srvConfig); err != nil {
+		return sdk.WrapError(err, "unable to signin: %s", serviceName)
 	}
+	log.Info(ctx, "%s> Service signed in", serviceName)
 
-	var srvConfig sdk.ServiceConfig
-	b, _ := json.Marshal(cfg)
-	json.Unmarshal(b, &srvConfig) // nolint
-
-	// then register
-	if err := s.Register(c, srvConfig); err != nil {
-		log.Error(ctx, "%s> Unable to register: %v", serviceName, err)
-		return err
+	// Signin and register to CDS api
+	if err := s.Register(c, cfg); err != nil {
+		return sdk.WrapError(err, "unable to register: %s", serviceName)
 	}
 	log.Info(ctx, "%s> Service registered", serviceName)
 
-	// finally start the heartbeat goroutine
-	go func() {
-		if err := s.Heartbeat(ctx, s.Status); err != nil {
-			log.Error(ctx, "%s> Error heartbeat: %+v", err)
-			cancel()
-		}
-	}()
+	if err := s.Start(ctx); err != nil {
+		return sdk.WrapError(err, "unable to start service: %s", serviceName)
+	}
 
 	go func() {
 		if err := s.Serve(ctx); err != nil {
 			log.Error(ctx, "%s> Error serve: %+v", serviceName, err)
+			cancel()
+		}
+	}()
+
+	// finally start the heartbeat goroutine
+	go func() {
+		if err := s.Heartbeat(ctx, s.Status); err != nil {
+			log.Error(ctx, "%s> Error heartbeat: %+v", serviceName, err)
 			cancel()
 		}
 	}()
