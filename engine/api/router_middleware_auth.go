@@ -137,8 +137,12 @@ func (api *API) authOptionalMiddleware(ctx context.Context, w http.ResponseWrite
 		return ctx, nil
 	}
 	session.TokenID = claims.TokenID
+	session.MFA = session.MFA && time.Now().Unix() <= claims.MFAExpireAt
 	ctx = context.WithValue(ctx, contextSession, session)
 	ctx = context.WithValue(ctx, cdslog.AuthSessionTokenID, session.TokenID)
+	if session.MFA && time.Now().Unix() <= claims.ExpiresAt {
+		log.Warn(ctx, "session MFA has expired")
+	}
 
 	// Load auth consumer for current session in database with authentified user and contacts
 	consumer, err := authentication.LoadConsumerByID(ctx, api.mustDB(), session.ConsumerID,

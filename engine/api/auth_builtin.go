@@ -53,13 +53,13 @@ func (api *API) postAuthBuiltinSigninHandler() service.Handler {
 		}
 
 		// Generate a new session for consumer
-		session, err := authentication.NewSession(ctx, tx, consumer, driver.GetSessionDuration(userInfo, *consumer), false)
+		session, _, err := authentication.NewSession(ctx, tx, consumer, driver.GetSessionDuration(userInfo, *consumer), false)
 		if err != nil {
 			return err
 		}
 
 		// Generate a jwt for current session
-		jwt, err := authentication.NewSessionJWT(session)
+		jwt, err := authentication.NewSessionJWT(session, 0)
 		if err != nil {
 			return err
 		}
