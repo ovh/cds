@@ -268,6 +268,11 @@ func (api *API) postAuthSigninHandler() service.Handler {
 			return err
 		}
 
+		// If the auth driver is giving a tokenID, let's keep it
+		if userInfo.ExternalTokenID != "" {
+			session.TokenID = userInfo.ExternalTokenID
+		}
+
 		log.Debug(ctx, "postAuthSigninHandler> new session %s created for %.2f seconds: %+v", session.ID, sessionDuration.Seconds(), session)
 
 		// Generate a jwt for current session

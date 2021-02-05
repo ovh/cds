@@ -1,14 +1,12 @@
 package api
 
 import (
-	"bytes"
 	"compress/gzip"
 	"context"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"net/http"
 	"reflect"
+	"regexp"
 	"runtime"
 	"runtime/pprof"
 	"strings"
@@ -247,6 +245,8 @@ func (r *Router) HandlePrefix(uri string, scope HandlerScope, handlers ...*servi
 	r.Mux.PathPrefix(uri).HandlerFunc(r.pprofLabel(config, r.compress(r.setRequestID(r.recoverWrap(f)))))
 }
 
+var uriActionMetadataRegex = regexp.MustCompile("({[A-Za-z]+})")
+
 // Handle adds all handler for their specific verb in gorilla router for given uri
 func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.HandlerConfig) (map[string]*service.HandlerConfig, http.HandlerFunc) {
 	cfg := &service.RouterConfig{
@@ -267,6 +267,17 @@ func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.Han
 		name = strings.Replace(name, "github.com/ovh/cds/engine/", "", 1)
 		handlers[i].Name = name
 		cfg.Config[handlers[i].Method] = handlers[i]
+	}
+
+	// Search for all "fields" in the given URI
+	var actionMetadataFields = uriActionMetadataRegex.FindAllString(uri, -1)
+	for _, s := range actionMetadataFields {
+		s = strings.ReplaceAll(s, "{", "")
+		s = strings.ReplaceAll(s, "}", "")
+		s = doc.CleanURLParameter(s)
+		s = strings.ReplaceAll(s, "-", "_")
+		var f = log.Field("action_metadata_" + doc.CleanURLParameter(s))
+		log.RegisterField(f)
 	}
 
 	f := func(w http.ResponseWriter, req *http.Request) {
@@ -335,6 +346,18 @@ func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.Han
 		ctx = context.WithValue(ctx, cdslog.RequestURI, req.RequestURI)
 		ctx = context.WithValue(ctx, cdslog.Deprecated, rc.IsDeprecated)
 		ctx = context.WithValue(ctx, cdslog.Handler, rc.Name)
+		ctx = context.WithValue(ctx, cdslog.Action, rc.Name)
+
+		var fields = mux.Vars(req)
+		for k, v := range fields {
+			var s = doc.CleanURLParameter(k)
+			s = strings.ReplaceAll(s, "-", "_")
+			var f = log.Field("action_metadata_" + s)
+			ctx = context.WithValue(ctx, f, v)
+		}
+
+		// By default track all request as not sudo, TrackSudo will be enabled when required
+		SetTracker(responseWriter, cdslog.Sudo, false)
 
 		// Log request start
 		start := time.Now()
@@ -435,33 +458,6 @@ func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.Han
 	}
 
 	return cfg.Config, f
-}
-
-type asynchronousRequest struct {
-	nbErrors      int
-	err           error
-	contextValues map[interface{}]interface{}
-	vars          map[string]string
-	request       http.Request
-	body          io.Reader
-}
-
-func (r *asynchronousRequest) do(ctx context.Context, h service.AsynchronousHandler) error {
-	for k, v := range r.contextValues {
-		ctx = context.WithValue(ctx, k, v)
-	}
-	req := &r.request
-
-	var buf bytes.Buffer
-	tee := io.TeeReader(r.body, &buf)
-	r.body = &buf
-	//Recreate a new buffer from the bytes stores in memory
-	req.Body = ioutil.NopCloser(tee)
-	r.err = h(ctx, req)
-	if r.err != nil {
-		r.nbErrors++
-	}
-	return r.err
 }
 
 // DEPRECATED marks the handler as deprecated

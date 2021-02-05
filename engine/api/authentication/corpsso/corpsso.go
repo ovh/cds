@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rockbears/log"
 	jose "gopkg.in/square/go-jose.v2"
 
 	"github.com/ovh/cds/sdk"
@@ -222,10 +223,13 @@ func (d authDriver) GetUserInfo(ctx context.Context, req sdk.AuthConsumerSigninR
 		return u, sdk.NewErrorFrom(sdk.ErrWrongRequest, "expired JWT %s/%s", itk.RemoteUser, itk.TokenID)
 	}
 
+	log.Info(ctx, "new session created for remote_user: %v, iat: %v, token_id: %v, mfa: %v", itk.RemoteUser, itk.IAT, itk.TokenID, itk.MFA)
+
 	u.Username = itk.RemoteUser
 	u.ExternalID = itk.RemoteUser
 	u.MFA = itk.MFA
 	u.Email = itk.RemoteUser + "@" + d.Config.MailDomain
+	u.ExternalTokenID = itk.TokenID
 
 	return u, nil
 }

@@ -45,8 +45,9 @@ func CheckSession(ctx context.Context, db gorp.SqlExecutor, sessionID string) (*
 // NewSessionJWT generate a signed token for given auth session.
 func NewSessionJWT(s *sdk.AuthSession) (string, error) {
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodRS512, sdk.AuthSessionJWTClaims{
-		ID:  s.ID,
-		MFA: s.MFA,
+		ID:      s.ID,
+		MFA:     s.MFA,
+		TokenID: s.TokenID,
 		StandardClaims: jwt.StandardClaims{
 			Issuer:    GetIssuerName(),
 			Subject:   s.ConsumerID,
