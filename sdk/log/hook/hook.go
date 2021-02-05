@@ -252,8 +252,7 @@ func (hook *Hook) Levels() []logrus.Level {
 }
 
 func (hook *Hook) messageFromEntry(entry *logrus.Entry, file string, line int) *Message {
-	// remove trailing and leading whitespace
-	p := strings.TrimSpace(entry.Message)
+	p := entry.Message
 
 	// If there are newlines in the message, use the first line
 	// for the short message and set the full message to the

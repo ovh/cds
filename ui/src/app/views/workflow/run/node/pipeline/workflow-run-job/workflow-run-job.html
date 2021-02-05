@@ -44,8 +44,8 @@
             <ng-container *ngIf="step.open">
                 <div class="line" *ngFor="let line of step.lines; trackBy: trackLineElement; let j = index">
                     <div class="number">{{step.firstDisplayedLineNumber + j + 1}}</div>
-                    <div class="value"
-                        [innerHTML]="line.value | ansi: (this.mode !== displayModes.ANSI) | safeHtml: false">
+                    <div class="value">
+                        <pre [innerHTML]="line.value | ansi: (this.mode !== displayModes.ANSI) | safeHtml: false"></pre>
                     </div>
                     <div class="extra" *ngIf="line.extra">
                         <div *ngFor="let extra of line.extra">{{extra}}</div>
@@ -70,8 +70,8 @@
                     <div class="number">
                         {{((step.firstDisplayedLineNumber + step.totalLinesCount) - step.endLines.length) + j + 1}}
                     </div>
-                    <div class="value"
-                        [innerHTML]="line.value | ansi:(this.mode !== displayModes.ANSI) | safeHtml : false">
+                    <div class="value">
+                        <pre [innerHTML]="line.value | ansi: (this.mode !== displayModes.ANSI) | safeHtml: false"></pre>
                     </div>
                     <div class="extra" *ngIf="line.extra">
                         <div *ngFor="let extra of line.extra">{{extra}}</div>
@@ -85,7 +85,8 @@
         <div class="line"
             *ngFor="let line of services[currentTabIndex-1].lines; trackBy: trackLineElement; let j = index">
             <div class="number">{{j + 1}}</div>
-            <div class="value" [innerHTML]="line.value | ansi:(this.mode !== displayModes.ANSI) | safeHtml: false">
+            <div class="value">
+                <pre [innerHTML]="line.value | ansi: (this.mode !== displayModes.ANSI) | safeHtml: false"></pre>
             </div>
         </div>
         <div class="line expand"
@@ -109,7 +110,8 @@
                 {{((services[currentTabIndex-1].totalLinesCount) - services[currentTabIndex-1].endLines.length) + j +
                 1}}
             </div>
-            <div class="value" [innerHTML]="line.value | ansi:(this.mode !== displayModes.ANSI) | safeHtml: false">
+            <div class="value">
+                <pre [innerHTML]="line.value | ansi: (this.mode !== displayModes.ANSI) | safeHtml: false"></pre>
             </div>
         </div>
     </div>
