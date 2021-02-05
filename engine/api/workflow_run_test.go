@@ -2851,10 +2851,10 @@ func Test_deleteWorkflowRunsBranchHandler(t *testing.T) {
 	serviceConsumer, err := authentication.LoadConsumerByID(context.TODO(), db, *mockHookService.ConsumerID)
 	require.NoError(t, err)
 
-	session, err := authentication.NewSession(context.TODO(), db, serviceConsumer, 5*time.Minute, false)
+	session, _, err := authentication.NewSession(context.TODO(), db, serviceConsumer, 5*time.Minute, false)
 	require.NoError(t, err)
 
-	jwt, err := authentication.NewSessionJWT(session)
+	jwt, err := authentication.NewSessionJWT(session, 0)
 	require.NoError(t, err)
 
 	//Prepare request
