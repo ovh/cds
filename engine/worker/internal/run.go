@@ -154,7 +154,7 @@ func (w *CurrentWorker) runJob(ctx context.Context, a *sdk.Action, jobID int64, 
 			BuildID: jobID,
 		}
 		if nCriticalFailed == 0 || step.AlwaysExecuted {
-			stepResult = w.runAction(ctx, step, jobID, secrets, step.Name)
+			stepResult = w.runRootAction(ctx, step, jobID, secrets, step.Name)
 
 			// Check if all newVariables are in currentJob.params
 			// variable can be add in w.currentJob.newVariables by worker command export
@@ -204,15 +204,27 @@ func (w *CurrentWorker) runJob(ctx context.Context, a *sdk.Action, jobID int64, 
 	return jobResult
 }
 
-func (w *CurrentWorker) runAction(ctx context.Context, a sdk.Action, jobID int64, secrets []sdk.Variable, actionName string) sdk.Result {
-	log.Info(ctx, "runAction> start action %s %s %d", a.StepName, actionName, jobID)
-	defer func() { log.Info(ctx, "runAction> end action %s %s run %d", a.StepName, actionName, jobID) }()
-
+func (w *CurrentWorker) runRootAction(ctx context.Context, a sdk.Action, jobID int64, secrets []sdk.Variable, actionName string) sdk.Result {
 	w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("Starting step %q", actionName))
 	defer func() {
 		w.SendTerminatedStepLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("End of step %q", actionName))
 		w.gelfLogger.hook.Flush()
 	}()
+	return w.runAction(ctx, a, jobID, secrets, actionName)
+}
+
+func (w *CurrentWorker) runSubAction(ctx context.Context, a sdk.Action, jobID int64, secrets []sdk.Variable, actionName string) sdk.Result {
+	w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("Starting sub step %q", actionName))
+	defer func() {
+		w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("End of sub step %q", actionName))
+		w.gelfLogger.hook.Flush()
+	}()
+	return w.runAction(ctx, a, jobID, secrets, actionName)
+}
+
+func (w *CurrentWorker) runAction(ctx context.Context, a sdk.Action, jobID int64, secrets []sdk.Variable, actionName string) sdk.Result {
+	log.Info(ctx, "runAction> start action %s %s %d", a.StepName, actionName, jobID)
+	defer func() { log.Info(ctx, "runAction> end action %s %s run %d", a.StepName, actionName, jobID) }()
 
 	//If the action is disabled; skip it
 	if !a.Enabled || w.manualExit {
@@ -296,7 +308,7 @@ func (w *CurrentWorker) runSteps(ctx context.Context, steps []sdk.Action, a sdk.
 		}
 
 		if !criticalStepFailed || child.AlwaysExecuted {
-			r = w.runAction(ctx, child, jobID, secrets, childName)
+			r = w.runSubAction(ctx, child, jobID, secrets, childName)
 			if r.Status != sdk.StatusSuccess && !child.Optional {
 				criticalStepFailed = true
 			}
