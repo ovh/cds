@@ -157,7 +157,7 @@ func Test_postConsumerRegenByUserHandler(t *testing.T) {
 	require.NoError(t, err)
 	session, _, err := authentication.NewSession(context.TODO(), db, builtinConsumer, 5*time.Minute, false)
 	require.NoError(t, err, "cannot create session")
-	jwt2, err := authentication.NewSessionJWT(session, 0)
+	jwt2, err := authentication.NewSessionJWT(session, time.Now())
 	require.NoError(t, err, "cannot create jwt")
 
 	uri = api.Router.GetRoute(http.MethodGet, api.getUserHandler, map[string]string{
@@ -195,7 +195,7 @@ func Test_postConsumerRegenByUserHandler(t *testing.T) {
 
 	session, _, err = authentication.NewSession(context.TODO(), db, builtinConsumer, 5*time.Minute, false)
 	require.NoError(t, err)
-	jwt3, err := authentication.NewSessionJWT(session, 0)
+	jwt3, err := authentication.NewSessionJWT(session, time.Now())
 	require.NoError(t, err)
 
 	uri = api.Router.GetRoute(http.MethodGet, api.getUserHandler, map[string]string{

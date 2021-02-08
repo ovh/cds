@@ -61,7 +61,7 @@ func Test_authMiddleware_WithAuthConsumerDisabled(t *testing.T) {
 	require.NoError(t, err)
 	builtinSession, _, err := authentication.NewSession(context.TODO(), db, builtinConsumer, time.Second*5, false)
 	require.NoError(t, err)
-	jwt, err := authentication.NewSessionJWT(builtinSession, 0)
+	jwt, err := authentication.NewSessionJWT(builtinSession, time.Now())
 	require.NoError(t, err)
 
 	config := &service.HandlerConfig{}

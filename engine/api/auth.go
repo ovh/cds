@@ -263,7 +263,7 @@ func (api *API) postAuthSigninHandler() service.Handler {
 
 		// Generate a new session for consumer
 		sessionDuration := driver.GetSessionDuration(userInfo, *consumer)
-		session, mfaDuration, err := authentication.NewSession(ctx, tx, consumer, sessionDuration, userInfo.MFA)
+		session, mfaExpiration, err := authentication.NewSession(ctx, tx, consumer, sessionDuration, userInfo.MFA)
 		if err != nil {
 			return err
 		}
@@ -276,7 +276,7 @@ func (api *API) postAuthSigninHandler() service.Handler {
 		log.Debug(ctx, "postAuthSigninHandler> new session %s created for %.2f seconds: %+v", session.ID, sessionDuration.Seconds(), session)
 
 		// Generate a jwt for current session
-		jwt, err := authentication.NewSessionJWT(session, mfaDuration)
+		jwt, err := authentication.NewSessionJWT(session, mfaExpiration)
 		if err != nil {
 			return err
 		}

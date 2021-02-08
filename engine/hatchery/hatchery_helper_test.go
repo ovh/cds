@@ -83,7 +83,7 @@ func InitMock(t *testing.T, url string) {
 		ID:         id,
 		ConsumerID: consumerID,
 		ExpireAt:   time.Now().Add(time.Hour),
-	}, 0)
+	}, time.Now())
 
 	var checkRequest gock.ObserverFunc = func(request *http.Request, mock gock.Mock) {
 		if request.Body == nil {

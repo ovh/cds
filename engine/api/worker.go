@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
@@ -98,7 +99,7 @@ func (api *API) postRegisterWorkerHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		jwt, err = authentication.NewSessionJWT(workerSession, 0)
+		jwt, err = authentication.NewSessionJWT(workerSession, time.Time{})
 		if err != nil {
 			return sdk.NewErrorWithStack(
 				sdk.WrapError(err, "[%s] Registering failed", workerTokenFromHatchery.Worker.WorkerName),
