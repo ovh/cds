@@ -145,10 +145,10 @@ func InsertAdminUser(t *testing.T, db gorpmapper.SqlExecutorWithTx) (*sdk.Authen
 	consumer, err := local.NewConsumer(context.TODO(), db, u.ID)
 	require.NoError(t, err, "cannot create auth consumer")
 
-	session, err := authentication.NewSession(context.TODO(), db, consumer, 5*time.Minute, false)
+	session, _, err := authentication.NewSession(context.TODO(), db, consumer, 5*time.Minute, false)
 	require.NoError(t, err, "cannot create auth session")
 
-	jwt, err := authentication.NewSessionJWT(session)
+	jwt, err := authentication.NewSessionJWT(session, time.Now())
 	require.NoError(t, err, "cannot create jwt")
 
 	return u, jwt
@@ -184,10 +184,10 @@ func InsertMaintainerUser(t *testing.T, db gorpmapper.SqlExecutorWithTx) (*sdk.A
 	consumer, err := local.NewConsumer(context.TODO(), db, u.ID)
 	require.NoError(t, err, "cannot create auth consumer")
 
-	session, err := authentication.NewSession(context.TODO(), db, consumer, 5*time.Minute, false)
+	session, _, err := authentication.NewSession(context.TODO(), db, consumer, 5*time.Minute, false)
 	require.NoError(t, err, "cannot create auth session")
 
-	jwt, err := authentication.NewSessionJWT(session)
+	jwt, err := authentication.NewSessionJWT(session, time.Now())
 	require.NoError(t, err, "cannot create jwt")
 
 	return u, jwt
@@ -229,10 +229,10 @@ func InsertLambdaUser(t *testing.T, db gorpmapper.SqlExecutorWithTx, groups ...*
 	consumer, err := local.NewConsumer(context.TODO(), db, u.ID)
 	require.NoError(t, err, "cannot create auth consumer")
 
-	session, err := authentication.NewSession(context.TODO(), db, consumer, 5*time.Minute, false)
+	session, _, err := authentication.NewSession(context.TODO(), db, consumer, 5*time.Minute, false)
 	require.NoError(t, err, "cannot create session")
 
-	jwt, err := authentication.NewSessionJWT(session)
+	jwt, err := authentication.NewSessionJWT(session, time.Now())
 	require.NoError(t, err, "cannot create jwt")
 
 	return u, jwt
@@ -481,10 +481,10 @@ func InsertHatchery(t *testing.T, db gorpmapper.SqlExecutorWithTx, grp sdk.Group
 
 	require.NoError(t, services.Insert(context.TODO(), db, &srv))
 
-	session, err := authentication.NewSession(context.TODO(), db, hConsumer, 5*time.Minute, false)
+	session, _, err := authentication.NewSession(context.TODO(), db, hConsumer, 5*time.Minute, false)
 	require.NoError(t, err)
 
-	jwt, err := authentication.NewSessionJWT(session)
+	jwt, err := authentication.NewSessionJWT(session, time.Now())
 	require.NoError(t, err)
 
 	return &srv, privateKey, hConsumer, jwt

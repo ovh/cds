@@ -59,9 +59,9 @@ func Test_authMiddleware_WithAuthConsumerDisabled(t *testing.T) {
 	builtinConsumer, _, err := builtin.NewConsumer(context.TODO(), db, "builtin", "", localConsumer, []int64{g.ID},
 		sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopes...))
 	require.NoError(t, err)
-	builtinSession, err := authentication.NewSession(context.TODO(), db, builtinConsumer, time.Second*5, false)
+	builtinSession, _, err := authentication.NewSession(context.TODO(), db, builtinConsumer, time.Second*5, false)
 	require.NoError(t, err)
-	jwt, err := authentication.NewSessionJWT(builtinSession)
+	jwt, err := authentication.NewSessionJWT(builtinSession, time.Now())
 	require.NoError(t, err)
 
 	config := &service.HandlerConfig{}
@@ -216,9 +216,9 @@ func Test_authMiddleware_WithAuthConsumerScoped(t *testing.T) {
 		},
 	})
 	require.NoError(t, err)
-	builtinSession, err := authentication.NewSession(context.TODO(), db, builtinConsumer, time.Second*5, false)
+	builtinSession, _, err := authentication.NewSession(context.TODO(), db, builtinConsumer, time.Second*5, false)
 	require.NoError(t, err)
-	jwt, err := authentication.NewSessionJWT(builtinSession)
+	jwt, err := authentication.NewSessionJWT(builtinSession, time.Now())
 	require.NoError(t, err)
 
 	// GET /my-handler1 is forbidden (scope AccessToken required)

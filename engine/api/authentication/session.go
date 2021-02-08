@@ -12,19 +12,29 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-// NewSession returns a new session for a given auth consumer.
-func NewSession(ctx context.Context, db gorpmapper.SqlExecutorWithTx, c *sdk.AuthConsumer, duration time.Duration, mfaEnable bool) (*sdk.AuthSession, error) {
+const (
+	MFADuration = 15 * time.Minute
+)
+
+// NewSession returns a new session for a given auth consumer, and a duration for MFA validity
+func NewSession(ctx context.Context, db gorpmapper.SqlExecutorWithTx, c *sdk.AuthConsumer, duration time.Duration, mfaEnable bool) (*sdk.AuthSession, time.Time, error) {
+	var now = time.Now()
 	s := sdk.AuthSession{
 		ConsumerID: c.ID,
-		ExpireAt:   time.Now().Add(duration),
+		ExpireAt:   now.Add(duration),
 		MFA:        mfaEnable,
 	}
 
-	if err := InsertSession(ctx, db, &s); err != nil {
-		return nil, err
+	var mfaDuration time.Duration
+	if mfaEnable {
+		mfaDuration = MFADuration
 	}
 
-	return &s, nil
+	if err := InsertSession(ctx, db, &s); err != nil {
+		return nil, now, err
+	}
+
+	return &s, now.Add(mfaDuration), nil
 }
 
 // CheckSession returns the session if valid for given id.
@@ -43,16 +53,17 @@ func CheckSession(ctx context.Context, db gorp.SqlExecutor, sessionID string) (*
 }
 
 // NewSessionJWT generate a signed token for given auth session.
-func NewSessionJWT(s *sdk.AuthSession) (string, error) {
+func NewSessionJWT(s *sdk.AuthSession, mfaExpiration time.Time) (string, error) {
+	now := time.Now()
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodRS512, sdk.AuthSessionJWTClaims{
-		ID:      s.ID,
-		MFA:     s.MFA,
-		TokenID: s.TokenID,
+		ID:          s.ID,
+		MFAExpireAt: mfaExpiration.Unix(),
+		TokenID:     s.TokenID,
 		StandardClaims: jwt.StandardClaims{
 			Issuer:    GetIssuerName(),
 			Subject:   s.ConsumerID,
 			Id:        s.ID,
-			IssuedAt:  time.Now().Unix(),
+			IssuedAt:  now.Unix(),
 			ExpiresAt: s.ExpireAt.Unix(),
 		},
 	})
