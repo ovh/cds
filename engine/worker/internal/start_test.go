@@ -16,6 +16,7 @@ import (
 
 	"github.com/rockbears/log"
 	"github.com/spf13/afero"
+	"github.com/spf13/cast"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/h2non/gock.v1"
@@ -142,7 +143,8 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 												Value: "#!/bin/bash\nset -ex\nsleep 10\necho my password should not be displayed here: {{.cds.myPassword}}\necho $CDS_EXPORT_PORT\nworker export newvar newval",
 											},
 										},
-									}, {
+									},
+									{
 										Name:     sdk.GitCloneAction,
 										Type:     sdk.BuiltinAction,
 										Enabled:  true,
@@ -223,7 +225,7 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 		Reply(200).
 		JSON(nil)
 
-	var logBuffer = new(bytes.Buffer)
+	var logMessages []hook.Message
 	listener, err := net.Listen("tcp", "localhost:8090")
 	require.NoError(t, err)
 	defer listener.Close()
@@ -241,9 +243,8 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 			bytes = bytes[:len(bytes)-1]
 			m := hook.Message{}
 			require.NoError(t, m.UnmarshalJSON(bytes))
-			logBuffer.WriteString(m.Full + "\n")
+			logMessages = append(logMessages, m)
 		}
-
 	}()
 
 	var checkRequest gock.ObserverFunc = func(request *http.Request, mock gock.Mock) {
@@ -346,6 +347,28 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 			}
 		}
 	}
+
+	var logBuffer = new(bytes.Buffer)
+	var countTerminatedEndStepLog int
+	for i := range logMessages {
+		logBuffer.WriteString(logMessages[i].Full + "\n")
+		terminatedI := logMessages[i].Extra["_"+cdslog.ExtraFieldTerminated]
+		if cast.ToBool(terminatedI) {
+			countTerminatedEndStepLog++
+		}
+	}
+
+	require.Equal(t, 4, countTerminatedEndStepLog, "Only root steps should send end log with terminated state")
+	t.Logf("%v", logBuffer.String())
+
+	assert.Equal(t, 2, strings.Count(logBuffer.String(), "Starting step \"Script\""))
+	assert.Equal(t, 2, strings.Count(logBuffer.String(), "End of step \"Script\""))
+	assert.Equal(t, 1, strings.Count(logBuffer.String(), "Starting step \"GitClone\""))
+	assert.Equal(t, 1, strings.Count(logBuffer.String(), "End of step \"GitClone\""))
+	assert.Equal(t, 1, strings.Count(logBuffer.String(), "Starting step \"my-default-action\""))
+	assert.Equal(t, 1, strings.Count(logBuffer.String(), "Starting sub step \"/change directory\""))
+	assert.Equal(t, 1, strings.Count(logBuffer.String(), "End of sub step \"/change directory\""))
+	assert.Equal(t, 1, strings.Count(logBuffer.String(), "End of step \"my-default-action\""))
 
 	assert.Equal(t, 2, strings.Count(logBuffer.String(), "my password should not be displayed here: **********\n"))
 	assert.Equal(t, 1, strings.Count(logBuffer.String(), "CDS_BUILD_NEWVAR=newval"))

@@ -103,6 +103,11 @@
             .value {
                 flex: 1;
                 overflow-wrap: anywhere;
+                pre {
+                    margin: 0;
+                    white-space: pre-wrap;
+                    word-break: break-all;
+                }
             }
 
             &.info {
