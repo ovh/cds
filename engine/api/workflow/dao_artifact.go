@@ -2,7 +2,6 @@ package workflow
 
 import (
 	"github.com/go-gorp/gorp"
-
 	"github.com/ovh/cds/sdk"
 )
 

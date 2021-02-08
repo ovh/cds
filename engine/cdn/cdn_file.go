@@ -59,7 +59,7 @@ func (s *Service) storeFile(ctx context.Context, sig cdn.Signature, reader io.Re
 	case sdk.CDNTypeItemArtifact:
 		// CALL CDS API to CHECK IF WE CAN UPLOAD ARTIFACT
 		artiApiRef, _ := it.GetCDNArtifactApiRef()
-		if err := s.Client.WorkflowRunResultsCheck(ctx, sig.ProjectKey, sig.WorkflowName, sig.RunNumber, *artiApiRef); err != nil {
+		if err := s.Client.WorkflowRunArtifactCheck(ctx, sig.ProjectKey, sig.WorkflowName, sig.RunNumber, *artiApiRef); err != nil {
 			return err
 		}
 	}

@@ -335,7 +335,7 @@ type WorkflowClient interface {
 	WorkflowRunList(projectKey string, workflowName string, offset, limit int64) ([]sdk.WorkflowRun, error)
 	WorkflowRunArtifacts(projectKey string, name string, number int64) ([]sdk.WorkflowNodeRunArtifact, error)
 	WorkflowRunArtifactsLinks(projectKey string, name string, number int64) (sdk.CDNItemLinks, error)
-	WorkflowRunResultsCheck(ctx context.Context, projectKey string, name string, number int64, artifactRef sdk.CDNArtifactAPIRef) error
+	WorkflowRunArtifactCheck(ctx context.Context, projectKey string, name string, number int64, artifactRef sdk.CDNArtifactAPIRef) error
 	WorkflowRunResultsAdd(ctx context.Context, projectKey string, name string, number int64, addRequest sdk.WorkflowRunResult) error
 	WorkflowRunFromHook(projectKey string, workflowName string, hook sdk.WorkflowNodeRunHookEvent) (*sdk.WorkflowRun, error)
 	WorkflowRunFromManual(projectKey string, workflowName string, manual sdk.WorkflowNodeRunManual, number, fromNodeID int64) (*sdk.WorkflowRun, error)

@@ -932,7 +932,7 @@ func syncNodeRuns(db gorp.SqlExecutor, wr *sdk.WorkflowRun, loadOpts LoadRunOpti
 		}
 		wnr.CanBeRun = CanBeRun(wr, wnr)
 		if loadOpts.WithArtifacts {
-			arts, errA := loadArtifactByNodeRunID(db, wnr.ID)
+			arts, errA := loadArtifactByNodeRunID(db, wnr.ID, wnr.SubNumber)
 			if errA != nil {
 				return sdk.WrapError(errA, "syncNodeRuns>Error loading artifacts for node run %d", wnr.ID)
 			}

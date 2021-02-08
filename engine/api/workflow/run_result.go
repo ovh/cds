@@ -68,6 +68,7 @@ func verifyAddResultArtifact(runResult *sdk.WorkflowRunResult, wr sdk.WorkflowRu
 				return sdk.WrapError(sdk.ErrConflictData, "this artifact has already been uploaded %s", art.Name)
 			}
 		}
+		runResult.SubNum = nr.SubNumber
 		break
 	}
 	if !nodeFound {
@@ -84,4 +85,16 @@ func insertResult(tx gorpmapper.SqlExecutorWithTx, runResult *sdk.WorkflowRunRes
 		return sdk.WithStack(err)
 	}
 	return nil
+}
+
+func LoadRunResults(db gorp.SqlExecutor, nodeRunID int64, subNum int64, t sdk.WorkflowRunResultType) ([]sdk.WorkflowRunResult, error) {
+	var dbResults []dbRunResult
+	if _, err := db.Select(&dbResults, "SELECT * FROM workflow_run_result where workflow_node_run_id = $1 AND sub_num = $2 AND type = $3", nodeRunID, subNum, t); err != nil {
+		return nil, err
+	}
+	results := make([]sdk.WorkflowRunResult, 0, len(dbResults))
+	for _, r := range dbResults {
+		results = append(results, sdk.WorkflowRunResult(r))
+	}
+	return results, nil
 }

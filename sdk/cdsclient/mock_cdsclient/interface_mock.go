@@ -4129,18 +4129,18 @@ func (mr *MockWorkflowClientMockRecorder) WorkflowRunArtifactsLinks(projectKey, 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowRunArtifactsLinks", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowRunArtifactsLinks), projectKey, name, number)
 }
 
-// WorkflowRunResultsCheck mocks base method
-func (m *MockWorkflowClient) WorkflowRunResultsCheck(ctx context.Context, projectKey, name string, number int64, artifactRef sdk.CDNArtifactAPIRef) error {
+// WorkflowRunArtifactCheck mocks base method
+func (m *MockWorkflowClient) WorkflowRunArtifactCheck(ctx context.Context, projectKey, name string, number int64, artifactRef sdk.CDNArtifactAPIRef) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WorkflowRunResultsCheck", ctx, projectKey, name, number, artifactRef)
+	ret := m.ctrl.Call(m, "WorkflowRunArtifactCheck", ctx, projectKey, name, number, artifactRef)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// WorkflowRunResultsCheck indicates an expected call of WorkflowRunResultsCheck
-func (mr *MockWorkflowClientMockRecorder) WorkflowRunResultsCheck(ctx, projectKey, name, number, artifactRef interface{}) *gomock.Call {
+// WorkflowRunArtifactCheck indicates an expected call of WorkflowRunArtifactCheck
+func (mr *MockWorkflowClientMockRecorder) WorkflowRunArtifactCheck(ctx, projectKey, name, number, artifactRef interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowRunResultsCheck", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowRunResultsCheck), ctx, projectKey, name, number, artifactRef)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowRunArtifactCheck", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowRunArtifactCheck), ctx, projectKey, name, number, artifactRef)
 }
 
 // WorkflowRunResultsAdd mocks base method
@@ -8177,18 +8177,18 @@ func (mr *MockInterfaceMockRecorder) WorkflowRunArtifactsLinks(projectKey, name,
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowRunArtifactsLinks", reflect.TypeOf((*MockInterface)(nil).WorkflowRunArtifactsLinks), projectKey, name, number)
 }
 
-// WorkflowRunResultsCheck mocks base method
-func (m *MockInterface) WorkflowRunResultsCheck(ctx context.Context, projectKey, name string, number int64, artifactRef sdk.CDNArtifactAPIRef) error {
+// WorkflowRunArtifactCheck mocks base method
+func (m *MockInterface) WorkflowRunArtifactCheck(ctx context.Context, projectKey, name string, number int64, artifactRef sdk.CDNArtifactAPIRef) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WorkflowRunResultsCheck", ctx, projectKey, name, number, artifactRef)
+	ret := m.ctrl.Call(m, "WorkflowRunArtifactCheck", ctx, projectKey, name, number, artifactRef)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// WorkflowRunResultsCheck indicates an expected call of WorkflowRunResultsCheck
-func (mr *MockInterfaceMockRecorder) WorkflowRunResultsCheck(ctx, projectKey, name, number, artifactRef interface{}) *gomock.Call {
+// WorkflowRunArtifactCheck indicates an expected call of WorkflowRunArtifactCheck
+func (mr *MockInterfaceMockRecorder) WorkflowRunArtifactCheck(ctx, projectKey, name, number, artifactRef interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowRunResultsCheck", reflect.TypeOf((*MockInterface)(nil).WorkflowRunResultsCheck), ctx, projectKey, name, number, artifactRef)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowRunArtifactCheck", reflect.TypeOf((*MockInterface)(nil).WorkflowRunArtifactCheck), ctx, projectKey, name, number, artifactRef)
 }
 
 // WorkflowRunResultsAdd mocks base method
