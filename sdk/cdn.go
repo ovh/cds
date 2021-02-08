@@ -151,14 +151,15 @@ type CDNLogAPIRef struct {
 }
 
 type CDNArtifactAPIRef struct {
-	ProjectKey     string `json:"project_key"`
-	WorkflowName   string `json:"workflow_name"`
-	WorkflowID     int64  `json:"workflow_id"`
-	RunID          int64  `json:"run_id"`
-	NodeRunJobID   int64  `json:"node_run_job_id"`
-	NodeRunJobName string `json:"node_run_job_name"`
-	ArtifactName   string `json:"artifact_name"`
-	Perm           uint32 `json:"perm"`
+	ProjectKey   string `json:"project_key"`
+	WorkflowName string `json:"workflow_name"`
+	WorkflowID   int64  `json:"workflow_id"`
+	RunID        int64  `json:"run_id"`
+	RunJobID     int64  `json:"run_job_id"`
+	RunJobName   string `json:"run_job_name"`
+	RunNodeID    int64  `json:"run_node_id"`
+	ArtifactName string `json:"artifact_name"`
+	Perm         uint32 `json:"perm"`
 }
 
 type CDNWorkerCacheAPIRef struct {
@@ -191,14 +192,14 @@ func NewCDNWorkerCacheApiRef(signature cdn.Signature) CDNApiRef {
 func NewCDNArtifactApiRef(signature cdn.Signature) CDNApiRef {
 	// Build cds api ref
 	apiRef := CDNArtifactAPIRef{
-		ProjectKey:     signature.ProjectKey,
-		WorkflowName:   signature.WorkflowName,
-		WorkflowID:     signature.WorkflowID,
-		RunID:          signature.RunID,
-		NodeRunJobName: signature.JobName,
-		NodeRunJobID:   signature.JobID,
-		ArtifactName:   signature.Worker.ArtifactName,
-		Perm:           signature.Worker.FilePerm,
+		ProjectKey:   signature.ProjectKey,
+		WorkflowName: signature.WorkflowName,
+		WorkflowID:   signature.WorkflowID,
+		RunID:        signature.RunID,
+		RunJobName:   signature.JobName,
+		RunJobID:     signature.JobID,
+		ArtifactName: signature.Worker.ArtifactName,
+		Perm:         signature.Worker.FilePerm,
 	}
 	return &apiRef
 }
@@ -301,8 +302,8 @@ func (a *CDNArtifactAPIRef) ToHash() (string, error) {
 	m["workflow_name"] = a.WorkflowName
 	m["workflow_id"] = strconv.Itoa(int(a.WorkflowID))
 	m["run_id"] = strconv.Itoa(int(a.RunID))
-	m["node_run_job_id"] = strconv.Itoa(int(a.NodeRunJobID))
-	m["node_run_job_name"] = a.NodeRunJobName
+	m["run_job_id"] = strconv.Itoa(int(a.RunJobID))
+	m["run_job_name"] = a.RunJobName
 	m["artifact_name"] = a.ArtifactName
 
 	hashRefU, err := hashstructure.Hash(m, nil)

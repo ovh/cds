@@ -461,6 +461,22 @@ func (c *client) workflowCachePushIndirectUploadPost(url string, tarContent io.R
 	return nil
 }
 
+func (c *client) WorkflowRunResultsAdd(ctx context.Context, projectKey string, name string, number int64, addRequest sdk.WorkflowRunResult) error {
+	uri := fmt.Sprintf("/project/%s/workflows/%s/runs/%d/results/add", projectKey, name, number)
+	if _, err := c.PostJSON(ctx, uri, addRequest, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *client) WorkflowRunResultsCheck(ctx context.Context, projectKey string, name string, number int64, artifactRef sdk.CDNArtifactAPIRef) error {
+	uri := fmt.Sprintf("/project/%s/workflows/%s/runs/%d/artifacts/check", projectKey, name, number)
+	if _, err := c.PostJSON(ctx, uri, artifactRef, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (c *client) WorkflowCachePull(projectKey, integrationName, ref string) (io.Reader, error) {
 	uri := fmt.Sprintf("/project/%s/storage/%s", projectKey, integrationName)
 	store := new(sdk.ArtifactsStore)

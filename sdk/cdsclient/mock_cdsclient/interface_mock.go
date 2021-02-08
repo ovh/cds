@@ -4129,6 +4129,34 @@ func (mr *MockWorkflowClientMockRecorder) WorkflowRunArtifactsLinks(projectKey, 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowRunArtifactsLinks", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowRunArtifactsLinks), projectKey, name, number)
 }
 
+// WorkflowRunResultsCheck mocks base method
+func (m *MockWorkflowClient) WorkflowRunResultsCheck(ctx context.Context, projectKey, name string, number int64, artifactRef sdk.CDNArtifactAPIRef) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowRunResultsCheck", ctx, projectKey, name, number, artifactRef)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WorkflowRunResultsCheck indicates an expected call of WorkflowRunResultsCheck
+func (mr *MockWorkflowClientMockRecorder) WorkflowRunResultsCheck(ctx, projectKey, name, number, artifactRef interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowRunResultsCheck", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowRunResultsCheck), ctx, projectKey, name, number, artifactRef)
+}
+
+// WorkflowRunResultsAdd mocks base method
+func (m *MockWorkflowClient) WorkflowRunResultsAdd(ctx context.Context, projectKey, name string, number int64, addRequest sdk.WorkflowRunResult) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowRunResultsAdd", ctx, projectKey, name, number, addRequest)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WorkflowRunResultsAdd indicates an expected call of WorkflowRunResultsAdd
+func (mr *MockWorkflowClientMockRecorder) WorkflowRunResultsAdd(ctx, projectKey, name, number, addRequest interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowRunResultsAdd", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowRunResultsAdd), ctx, projectKey, name, number, addRequest)
+}
+
 // WorkflowRunFromHook mocks base method
 func (m *MockWorkflowClient) WorkflowRunFromHook(projectKey, workflowName string, hook sdk.WorkflowNodeRunHookEvent) (*sdk.WorkflowRun, error) {
 	m.ctrl.T.Helper()
@@ -8147,6 +8175,34 @@ func (m *MockInterface) WorkflowRunArtifactsLinks(projectKey, name string, numbe
 func (mr *MockInterfaceMockRecorder) WorkflowRunArtifactsLinks(projectKey, name, number interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowRunArtifactsLinks", reflect.TypeOf((*MockInterface)(nil).WorkflowRunArtifactsLinks), projectKey, name, number)
+}
+
+// WorkflowRunResultsCheck mocks base method
+func (m *MockInterface) WorkflowRunResultsCheck(ctx context.Context, projectKey, name string, number int64, artifactRef sdk.CDNArtifactAPIRef) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowRunResultsCheck", ctx, projectKey, name, number, artifactRef)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WorkflowRunResultsCheck indicates an expected call of WorkflowRunResultsCheck
+func (mr *MockInterfaceMockRecorder) WorkflowRunResultsCheck(ctx, projectKey, name, number, artifactRef interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowRunResultsCheck", reflect.TypeOf((*MockInterface)(nil).WorkflowRunResultsCheck), ctx, projectKey, name, number, artifactRef)
+}
+
+// WorkflowRunResultsAdd mocks base method
+func (m *MockInterface) WorkflowRunResultsAdd(ctx context.Context, projectKey, name string, number int64, addRequest sdk.WorkflowRunResult) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowRunResultsAdd", ctx, projectKey, name, number, addRequest)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WorkflowRunResultsAdd indicates an expected call of WorkflowRunResultsAdd
+func (mr *MockInterfaceMockRecorder) WorkflowRunResultsAdd(ctx, projectKey, name, number, addRequest interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowRunResultsAdd", reflect.TypeOf((*MockInterface)(nil).WorkflowRunResultsAdd), ctx, projectKey, name, number, addRequest)
 }
 
 // WorkflowRunFromHook mocks base method

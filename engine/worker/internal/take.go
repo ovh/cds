@@ -38,6 +38,7 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 	w.currentJob.workflowID = info.WorkflowID
 	w.currentJob.runID = info.RunID
 	w.currentJob.nodeRunName = info.NodeRunName
+	w.currentJob.runNumber = info.Number
 	w.currentJob.features = info.Features
 
 	// Reset build variables
