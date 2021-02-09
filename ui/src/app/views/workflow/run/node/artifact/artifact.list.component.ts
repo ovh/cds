@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { Select, Store } from '@ngxs/store';
 import { WorkflowNodeRun, WorkflowNodeRunArtifact, WorkflowNodeRunStaticFiles } from 'app/model/workflow.run.model';
+import { FeatureNames } from 'app/service/feature/feature.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { Column, ColumnType, Filter } from 'app/shared/table/data-table.component';
 import { FeatureState } from 'app/store/feature.state';
@@ -29,10 +30,10 @@ export class WorkflowRunArtifactListComponent implements OnInit, OnDestroy {
         this.filter = f => {
             const lowerFilter = f.toLowerCase();
             return d => d.name.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                    d.sha512sum.toLowerCase().indexOf(lowerFilter) !== -1
+                d.sha512sum.toLowerCase().indexOf(lowerFilter) !== -1
         };
         let project = this._store.selectSnapshot(ProjectState.projectSnapshot);
-        let featCDN = this._store.selectSnapshot(FeatureState.featureProject('cdn-artifact',
+        let featCDN = this._store.selectSnapshot(FeatureState.featureProject(FeatureNames.CDNArtifact,
             JSON.stringify({ project_key: project.key })))
 
         this.columns = [
@@ -63,19 +64,19 @@ export class WorkflowRunArtifactListComponent implements OnInit, OnDestroy {
         ];
     }
 
-    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
         this.nodeRunSubs = this.nodeRun$.subscribe(nr => {
             if (!nr) {
                 return;
             }
-            if ( (!this.artifacts && nr.artifacts) || (this.artifacts && nr.artifacts && this.artifacts.length !== nr.artifacts.length)) {
+            if ((!this.artifacts && nr.artifacts) || (this.artifacts && nr.artifacts && this.artifacts.length !== nr.artifacts.length)) {
                 this.artifacts = nr.artifacts;
                 this._cd.markForCheck();
             }
-            if ( (!this.staticFiles && nr.static_files) ||
-                (this.staticFiles && nr.static_files && this.staticFiles.length !== nr.static_files.length )) {
+            if ((!this.staticFiles && nr.static_files) ||
+                (this.staticFiles && nr.static_files && this.staticFiles.length !== nr.static_files.length)) {
                 this.staticFiles = nr.static_files;
                 this._cd.markForCheck();
             }

@@ -19,8 +19,9 @@ func TestIsEnabled(t *testing.T) {
 
 	db, _ := test.SetupPGWithMapper(t, m, sdk.TypeAPI)
 
+	featureName := sdk.FeatureName(sdk.RandomString(10))
 	var f = sdk.Feature{
-		Name: sdk.RandomString(10),
+		Name: featureName,
 		Rule: `return my_var == "true"`,
 	}
 	require.NoError(t, featureflipping.Insert(m, db, &f))

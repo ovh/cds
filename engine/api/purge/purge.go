@@ -22,11 +22,6 @@ import (
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
-const (
-	FeaturePurgeName = "workflow-retention-policy"
-	FeatureMaxRuns   = "workflow-retention-maxruns"
-)
-
 // MarkRunsAsDelete mark workflow run as delete
 func MarkRunsAsDelete(ctx context.Context, store cache.Store, DBFunc func() *gorp.DbMap, workflowRunsMarkToDelete *stats.Int64Measure) {
 	tickMark := time.NewTicker(15 * time.Minute)
@@ -105,7 +100,7 @@ func MarkWorkflowRuns(ctx context.Context, db *gorp.DbMap, workflowRunsMarkToDel
 		return err
 	}
 	for _, wf := range wfs {
-		enabled := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, db, FeaturePurgeName, map[string]string{"project_key": wf.ProjectKey})
+		enabled := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, db, sdk.FeaturePurgeName, map[string]string{"project_key": wf.ProjectKey})
 		if enabled {
 			continue
 		}

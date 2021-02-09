@@ -79,7 +79,7 @@ func TemplateEnvs(args WorkerArgs, envs map[string]string) (map[string]string, e
 type WorkflowNodeJobRunData struct {
 	NodeJobRun      WorkflowNodeJobRun
 	Secrets         []Variable
-	Features        map[string]bool
+	Features        map[FeatureName]bool
 	Number          int64
 	SubNumber       int64
 	SigningKey      string

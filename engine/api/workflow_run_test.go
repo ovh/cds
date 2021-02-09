@@ -23,7 +23,6 @@ import (
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/plugin"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/purge"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/test"
@@ -1210,7 +1209,7 @@ func Test_workflowRunCraft(t *testing.T) {
 	require.NoError(t, err)
 
 	f := sdk.Feature{
-		Name: purge.FeatureMaxRuns,
+		Name: sdk.FeaturePurgeMaxRuns,
 		Rule: "return true",
 	}
 	require.NoError(t, featureflipping.Insert(gorpmapping.Mapper, api.mustDB(), &f))

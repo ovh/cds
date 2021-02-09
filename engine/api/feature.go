@@ -15,7 +15,7 @@ import (
 func (api *API) isFeatureEnabledHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		name := vars["name"]
+		name := sdk.FeatureName(vars["name"])
 
 		var params map[string]string
 		if err := service.UnmarshalBody(r, &params); err != nil {

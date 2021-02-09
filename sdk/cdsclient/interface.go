@@ -4,11 +4,12 @@ import (
 	"archive/tar"
 	"context"
 	"encoding/json"
-	"github.com/spf13/afero"
 	"io"
 	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/spf13/afero"
 
 	"github.com/gorilla/websocket"
 	"github.com/sguiheux/go-coverage"
@@ -52,8 +53,8 @@ type Admin interface {
 	AdminWorkflowUpdateMaxRuns(projectKey string, workflowName string, maxRuns int64) error
 	Features() ([]sdk.Feature, error)
 	FeatureCreate(f sdk.Feature) error
-	FeatureDelete(name string) error
-	FeatureGet(name string) (sdk.Feature, error)
+	FeatureDelete(name sdk.FeatureName) error
+	FeatureGet(name sdk.FeatureName) (sdk.Feature, error)
 	FeatureUpdate(f sdk.Feature) error
 	Services() ([]sdk.Service, error)
 	ServicesByName(name string) (*sdk.Service, error)
@@ -388,7 +389,7 @@ type Interface interface {
 	EnvironmentClient
 	EventsClient
 	ExportImportInterface
-	FeatureEnabled(name string, params map[string]string) (sdk.FeatureEnabledResponse, error)
+	FeatureEnabled(name sdk.FeatureName, params map[string]string) (sdk.FeatureEnabledResponse, error)
 	GroupClient
 	GRPCPluginsClient
 	BroadcastClient

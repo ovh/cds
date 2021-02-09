@@ -93,7 +93,7 @@ func (c *CDS) ListNodeRunIdentifiers(pKey string) ([]sdk.WorkflowNodeRunIdentifi
 	return c.client.WorkflowRunsAndNodesIDs(pKey)
 }
 
-func (c *CDS) FeatureEnabled(name string, params map[string]string) (sdk.FeatureEnabledResponse, error) {
+func (c *CDS) FeatureEnabled(name sdk.FeatureName, params map[string]string) (sdk.FeatureEnabledResponse, error) {
 	return c.client.FeatureEnabled(name, params)
 }
 

@@ -61,7 +61,7 @@ type CurrentWorker struct {
 		workflowID       int64
 		runID            int64
 		nodeRunName      string
-		features         map[string]bool
+		features         map[sdk.FeatureName]bool
 		currentStepIndex int
 		currentStepName  string
 	}
@@ -103,7 +103,7 @@ func (wk *CurrentWorker) Parameters() []sdk.Parameter {
 	return wk.currentJob.params
 }
 
-func (wk *CurrentWorker) FeatureEnabled(name string) bool {
+func (wk *CurrentWorker) FeatureEnabled(name sdk.FeatureName) bool {
 	b, has := wk.currentJob.features[name]
 	if !has {
 		return false

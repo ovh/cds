@@ -15,6 +15,7 @@ import { EventService } from 'app/event.service';
 import { Project } from 'app/model/project.model';
 import { RunToKeep } from 'app/model/purge.model';
 import { Workflow } from 'app/model/workflow.model';
+import { FeatureNames } from 'app/service/feature/feature.service';
 import { ThemeStore } from 'app/service/theme/theme.store';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
@@ -196,7 +197,7 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
 
         this.initDryRunSubscription();
 
-        let featMaxRunsResult = this.store.selectSnapshot(FeatureState.featureProject('workflow-retention-maxruns',
+        let featMaxRunsResult = this.store.selectSnapshot(FeatureState.featureProject(FeatureNames.WorkflowRetentionMaxRuns,
             JSON.stringify({ project_key: this.project.key })))
         this.maxRunsEnabled = featMaxRunsResult?.enabled;
 
