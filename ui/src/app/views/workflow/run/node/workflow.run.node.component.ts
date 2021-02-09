@@ -7,7 +7,6 @@ import { Project } from 'app/model/project.model';
 import { WorkflowNodeRun } from 'app/model/workflow.run.model';
 import { RouterService } from 'app/service/router/router.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
-import { AuthenticationState } from 'app/store/authentication.state';
 import { ProjectState } from 'app/store/project.state';
 import { GetWorkflowNodeRun, GetWorkflowRun } from 'app/store/workflow.action';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
@@ -124,8 +123,18 @@ export class WorkflowNodeRunComponent implements OnInit, OnDestroy {
                     this.commitsLength = nr.commits.length;
                     refresh = true;
                 }
-                if (nr.artifacts && nr.artifacts.length !== this.artifactLength) {
-                    this.artifactLength = nr.artifacts.length;
+
+                let artiResults = nr?.results?.filter(r => r.type === 'artifact');
+                let artiResultsLength = 0;
+                if (artiResults) {
+                    artiResultsLength = artiResults.length
+                }
+                let oldArtiLength = 0;
+                if (nr.artifacts) {
+                    oldArtiLength = nr.artifacts.length;
+                }
+                if ((nr.artifacts || artiResults) && (oldArtiLength + artiResultsLength) !== this.artifactLength) {
+                    this.artifactLength = oldArtiLength + artiResultsLength;
                     refresh = true;
                 }
                 if (nr.tests && nr.tests.total !== this.nodeRunTests?.total) {

@@ -17,7 +17,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/ascode"
 	"github.com/ovh/cds/engine/api/authentication"
-	"github.com/ovh/cds/engine/api/cdn"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/integration"
@@ -808,37 +807,6 @@ func (api *API) getWorkflowNodeRunHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to load last workflow run")
 		}
 
-		if featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeatureCDNArtifact, map[string]string{"project_key": key}) {
-			results, err := cdn.ListItems(ctx, api.mustDB(), sdk.CDNTypeItemArtifact, map[string]string{cdn.ParamRunID: strconv.Itoa(int(nodeRun.WorkflowRunID))})
-			if err != nil {
-				return err
-			}
-			var runJobIDs []int64
-			for _, s := range nodeRun.Stages {
-				for _, rj := range s.RunJobs {
-					runJobIDs = append(runJobIDs, rj.ID)
-				}
-			}
-			for _, item := range results.Items {
-				apiRef, _ := item.GetCDNArtifactApiRef()
-				for _, id := range runJobIDs {
-					if id != apiRef.RunJobID {
-						continue
-					}
-					nodeRun.Artifacts = append(nodeRun.Artifacts, sdk.WorkflowNodeRunArtifact{
-						Name:         item.APIRef.ToFilename(),
-						Created:      item.Created,
-						Size:         item.Size,
-						DownloadHash: item.APIRefHash,
-						MD5sum:       item.MD5,
-						TempURL:      fmt.Sprintf("%s/item/%s/%s/download", results.CDNHttpURL, item.Type, item.APIRefHash),
-					})
-					break
-				}
-			}
-
-		}
-
 		nodeRun.Translate()
 		return service.WriteJSON(w, nodeRun, http.StatusOK)
 	}
@@ -1419,7 +1387,38 @@ func (api *API) getDownloadArtifactHandler() service.Handler {
 	}
 }
 
-func (api *API) WorkflowRunResultsAdd() service.Handler {
+func (api *API) getWorkflowNodeRunResults() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars["key"]
+		name := vars["permWorkflowName"]
+
+		number, err := requestVarInt(r, "number")
+		if err != nil {
+			return err
+		}
+
+		nodeRunID, err := requestVarInt(r, "nodeRunID")
+		if err != nil {
+			return sdk.NewErrorFrom(err, "invalid node run id")
+		}
+
+		wnr, err := workflow.LoadNodeRun(api.mustDB(), key, name, nodeRunID, workflow.LoadRunOptions{
+			DisableDetailledNodeRun: true,
+		})
+		if err != nil {
+			return sdk.WrapError(err, "unable to load workflow node run with id %d for workflow %s and run with number %d", nodeRunID, name, number)
+		}
+
+		results, err := workflow.LoadRunResultsByNodeRunID(api.mustDB(), wnr.ID)
+		if err != nil {
+			return err
+		}
+		return service.WriteJSON(w, results, http.StatusOK)
+	}
+}
+
+func (api *API) workflowRunResultsAdd() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -1476,7 +1475,7 @@ func (api *API) WorkflowRunResultsAdd() service.Handler {
 	}
 }
 
-func (api *API) WorkflowRunArtifactCheckUpload() service.Handler {
+func (api *API) workflowRunArtifactCheckUpload() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]

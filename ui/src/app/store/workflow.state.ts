@@ -4,13 +4,14 @@ import { Router } from '@angular/router';
 import { Action, createSelector, Selector, State, StateContext } from '@ngxs/store';
 import { RunToKeep } from 'app/model/purge.model';
 import { WNode, WNodeHook, WNodeTrigger, Workflow } from 'app/model/workflow.model';
-import { WorkflowNodeJobRun, WorkflowNodeRun, WorkflowRun, WorkflowRunSummary } from 'app/model/workflow.run.model';
+import { WorkflowNodeJobRun, WorkflowNodeRun, WorkflowRun, WorkflowRunResult, WorkflowRunSummary } from 'app/model/workflow.run.model';
 import { NavbarService } from 'app/service/navbar/navbar.service';
 import { RouterService } from 'app/service/router/router.service';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import * as actionAsCode from 'app/store/ascode.action';
 import cloneDeep from 'lodash-es/cloneDeep';
+import { forkJoin } from 'rxjs';
 import { finalize, first, tap } from 'rxjs/operators';
 import * as ActionProject from './project.action';
 import * as actionWorkflow from './workflow.action';
@@ -1208,39 +1209,49 @@ export class WorkflowState {
             ...state,
             loadingWorkflowNodeRun: true,
         });
-        return this._workflowRunService
-            .getWorkflowNodeRun(action.payload.projectKey, action.payload.workflowName,
-                action.payload.num, action.payload.nodeRunID)
-            .pipe(first(), finalize(() => {
-                const stateFin = ctx.getState();
-                ctx.setState({
-                    ...stateFin,
-                    loadingWorkflowNodeRun: false
-                });
-            }), tap((wnr: WorkflowNodeRun) => {
-                let routeParams = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root);
-                if (action.payload.projectKey !== routeParams['key'] || action.payload.workflowName !== routeParams['workflowName']) {
-                    return;
-                }
-                if (!routeParams['number'] || routeParams['number'] !== action.payload.num.toString()) {
-                    return;
-                }
-                if (!routeParams['nodeId'] || routeParams['nodeId'] !== action.payload.nodeRunID.toString()) {
-                    return;
-                }
 
-                const stateNR = ctx.getState();
-                let node = Workflow.getNodeByID(wnr.workflow_node_id, stateNR.workflowRun.workflow);
-                ctx.setState({
-                    ...stateNR,
-                    projectKey: action.payload.projectKey,
-                    workflowNodeRun: wnr,
-                    node,
-                });
-                if (stateNR.workflowNodeJobRun) {
-                    ctx.dispatch(new SelectWorkflowNodeRunJob({ jobID: stateNR.workflowNodeJobRun.job.pipeline_action_id }));
-                }
-            }));
+        forkJoin([
+            this._workflowRunService
+                .getWorkflowNodeRun(action.payload.projectKey, action.payload.workflowName,
+                    action.payload.num, action.payload.nodeRunID),
+            this._workflowRunService
+                .getWorkflowNodeRunResults(action.payload.projectKey, action.payload.workflowName,
+                    action.payload.num, action.payload.nodeRunID)
+        ]).pipe(first(), finalize(() => {
+            const stateFin = ctx.getState();
+            ctx.setState({
+                ...stateFin,
+                loadingWorkflowNodeRun: false
+            });
+        })).subscribe(partial => {
+
+            let wnr = partial[0];
+            let runResults = partial[1];
+
+            let routeParams = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root);
+            if (action.payload.projectKey !== routeParams['key'] || action.payload.workflowName !== routeParams['workflowName']) {
+                return;
+            }
+            if (!routeParams['number'] || routeParams['number'] !== action.payload.num.toString()) {
+                return;
+            }
+            if (!routeParams['nodeId'] || routeParams['nodeId'] !== action.payload.nodeRunID.toString()) {
+                return;
+            }
+
+            wnr.results = runResults;
+            const stateNR = ctx.getState();
+            let node = Workflow.getNodeByID(wnr.workflow_node_id, stateNR.workflowRun.workflow);
+            ctx.setState({
+                ...stateNR,
+                projectKey: action.payload.projectKey,
+                workflowNodeRun: wnr,
+                node,
+            });
+            if (stateNR.workflowNodeJobRun) {
+                ctx.dispatch(new SelectWorkflowNodeRunJob({ jobID: stateNR.workflowNodeJobRun.job.pipeline_action_id }));
+            }
+        })
     }
 
     @Action(actionWorkflow.CleanWorkflowRun)
