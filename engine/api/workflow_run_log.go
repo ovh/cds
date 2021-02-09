@@ -119,13 +119,6 @@ func (api *API) getWorkflowNodeRunJobStepLinksHandler() service.Handler {
 		vars := mux.Vars(r)
 
 		projectKey := vars["key"]
-		enabled := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeatureCDNJobLogs, map[string]string{
-			"project_key": projectKey,
-		})
-		if !enabled {
-			return sdk.NewErrorFrom(sdk.ErrNotFound, "cdn is not enable for project %s", projectKey)
-		}
-
 		workflowName := vars["permWorkflowName"]
 		nodeRunID, err := requestVarInt(r, "nodeRunID")
 		if err != nil {
@@ -215,13 +208,6 @@ func (api *API) getWorkflowNodeRunJobLogLinkHandler(ctx context.Context, w http.
 	vars := mux.Vars(r)
 
 	projectKey := vars["key"]
-	enabled := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeatureCDNJobLogs, map[string]string{
-		"project_key": projectKey,
-	})
-	if !enabled {
-		return sdk.NewErrorFrom(sdk.ErrNotFound, "cdn is not enable for project %s", projectKey)
-	}
-
 	workflowName := vars["permWorkflowName"]
 	nodeRunID, err := requestVarInt(r, "nodeRunID")
 	if err != nil {
@@ -328,11 +314,9 @@ func (api *API) getWorkflowAccessHandler() service.Handler {
 		var enabled bool
 		switch sdk.CDNItemType(itemType) {
 		case sdk.CDNTypeItemStepLog, sdk.CDNTypeItemServiceLog:
-			enabled = featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeatureCDNJobLogs, map[string]string{
-				"project_key": projectKey,
-			})
+			enabled = true
 		case sdk.CDNTypeItemArtifact:
-			enabled = featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeatureCDNArtifact, map[string]string{
+			_, enabled = featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeatureCDNArtifact, map[string]string{
 				"project_key": projectKey,
 			})
 		}

@@ -112,10 +112,9 @@ func (api *API) checkProjectPermissions(ctx context.Context, w http.ResponseWrit
 	defer end()
 
 	if MFASupport(ctx) && !isMFA(ctx) {
-		mapVars := map[string]string{
+		_, requireMFA := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeatureMFARequired, map[string]string{
 			"project_key": projectKey,
-		}
-		requireMFA := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeatureMFARequired, mapVars)
+		})
 		if requireMFA {
 			return sdk.WithStack(sdk.ErrMFARequired)
 		}
@@ -175,10 +174,9 @@ func (api *API) checkWorkflowPermissions(ctx context.Context, w http.ResponseWri
 	}
 
 	if MFASupport(ctx) && !isMFA(ctx) {
-		mapVars := map[string]string{
+		_, requireMFA := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeatureMFARequired, map[string]string{
 			"project_key": projectKey,
-		}
-		requireMFA := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeatureMFARequired, mapVars)
+		})
 		if requireMFA {
 			return sdk.WithStack(sdk.ErrMFARequired)
 		}

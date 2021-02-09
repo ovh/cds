@@ -34,9 +34,6 @@ func TestSyncBuffer(t *testing.T) {
 		DBConnectionFactory: factory,
 		Cache:               cache,
 		Mapper:              m,
-		Cfg: Configuration{
-			EnableLogProcessing: true,
-		},
 		Common: service.Common{
 			GoRoutines: sdk.NewGoRoutines(),
 		},
@@ -91,9 +88,6 @@ func TestSyncLog(t *testing.T) {
 		DBConnectionFactory: factory,
 		Cache:               cache,
 		Mapper:              m,
-		Cfg: Configuration{
-			EnableLogProcessing: true,
-		},
 		Common: service.Common{
 			GoRoutines: sdk.NewGoRoutines(),
 		},

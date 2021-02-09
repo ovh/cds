@@ -102,7 +102,8 @@ export class WorkflowComponent implements OnInit, OnDestroy {
                     key: f.name,
                     result: {
                         paramString: JSON.stringify(data),
-                        enabled: f.enabled
+                        enabled: f.enabled,
+                        exists: f.exists
                     }
                 }));
             });
@@ -111,16 +112,8 @@ export class WorkflowComponent implements OnInit, OnDestroy {
                     key: f.name,
                     result: {
                         paramString: JSON.stringify(data),
-                        enabled: f.enabled
-                    }
-                }));
-            });
-            this._featureService.isEnabled(FeatureNames.WorkflowRetentionPolicy, data).subscribe(f => {
-                this._store.dispatch(new AddFeatureResult(<FeaturePayload>{
-                    key: f.name,
-                    result: {
-                        paramString: JSON.stringify(data),
-                        enabled: f.enabled
+                        enabled: f.enabled,
+                        exists: f.exists
                     }
                 }));
             });
@@ -129,7 +122,8 @@ export class WorkflowComponent implements OnInit, OnDestroy {
                     key: f.name,
                     result: {
                         paramString: JSON.stringify(data),
-                        enabled: f.enabled
+                        enabled: f.enabled,
+                        exists: f.exists
                     }
                 }));
             });

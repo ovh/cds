@@ -120,77 +120,74 @@ func (s *Service) Start(ctx context.Context) error {
 		return sdk.WrapError(err, "cannot connect to redis instance")
 	}
 
-	if s.Cfg.EnableLogProcessing {
-		log.Info(ctx, "Initializing database connection...")
-		// Intialize database
-		s.DBConnectionFactory, err = database.Init(
-			ctx,
-			s.Cfg.Database.User,
-			s.Cfg.Database.Role,
-			s.Cfg.Database.Password,
-			s.Cfg.Database.Name,
-			s.Cfg.Database.Schema,
-			s.Cfg.Database.Host,
-			s.Cfg.Database.Port,
-			s.Cfg.Database.SSLMode,
-			s.Cfg.Database.ConnectTimeout,
-			s.Cfg.Database.Timeout,
-			s.Cfg.Database.MaxConn)
-		if err != nil {
-			return sdk.WrapError(err, "cannot connect to database")
+	log.Info(ctx, "Initializing database connection...")
+	// Intialize database
+	s.DBConnectionFactory, err = database.Init(
+		ctx,
+		s.Cfg.Database.User,
+		s.Cfg.Database.Role,
+		s.Cfg.Database.Password,
+		s.Cfg.Database.Name,
+		s.Cfg.Database.Schema,
+		s.Cfg.Database.Host,
+		s.Cfg.Database.Port,
+		s.Cfg.Database.SSLMode,
+		s.Cfg.Database.ConnectTimeout,
+		s.Cfg.Database.Timeout,
+		s.Cfg.Database.MaxConn)
+	if err != nil {
+		return sdk.WrapError(err, "cannot connect to database")
+	}
+
+	log.Info(ctx, "Setting up database keys...")
+	s.Mapper = gorpmapper.New()
+	encryptionKeyConfig := s.Cfg.Database.EncryptionKey.GetKeys(gorpmapper.KeyEcnryptionIdentifier)
+	signatureKeyConfig := s.Cfg.Database.SignatureKey.GetKeys(gorpmapper.KeySignIdentifier)
+	if err := s.Mapper.ConfigureKeys(&signatureKeyConfig, &encryptionKeyConfig); err != nil {
+		return sdk.WrapError(err, "cannot setup database keys")
+	}
+
+	// Init dao packages
+	item.InitDBMapping(s.Mapper)
+	storage.InitDBMapping(s.Mapper)
+
+	log.Info(ctx, "Initializing lru connection...")
+	s.LogCache, err = lru.NewRedisLRU(s.mustDBWithCtx(ctx), s.Cfg.Cache.LruSize, s.Cfg.Cache.Redis.Host, s.Cfg.Cache.Redis.Password)
+	if err != nil {
+		return sdk.WrapError(err, "cannot connect to redis instance for lru")
+	}
+
+	// Init storage units
+	s.Units, err = storage.Init(ctx, s.Mapper, s.Cache, s.mustDBWithCtx(ctx), s.GoRoutines, s.Cfg.Units)
+	if err != nil {
+		return err
+	}
+
+	s.Units.Start(ctx, s.GoRoutines)
+
+	s.GoRoutines.Run(ctx, "service.cdn-gc-items", func(ctx context.Context) {
+		s.itemsGC(ctx)
+	})
+	s.GoRoutines.Run(ctx, "service.cdn-purge-items", func(ctx context.Context) {
+		s.itemPurge(ctx)
+	})
+
+	// Start CDS Backend migration
+	for _, st := range s.Units.Storages {
+		cdsStorage, ok := st.(*cds.CDS)
+		if !ok {
+			continue
 		}
-
-		log.Info(ctx, "Setting up database keys...")
-		s.Mapper = gorpmapper.New()
-		encryptionKeyConfig := s.Cfg.Database.EncryptionKey.GetKeys(gorpmapper.KeyEcnryptionIdentifier)
-		signatureKeyConfig := s.Cfg.Database.SignatureKey.GetKeys(gorpmapper.KeySignIdentifier)
-		if err := s.Mapper.ConfigureKeys(&signatureKeyConfig, &encryptionKeyConfig); err != nil {
-			return sdk.WrapError(err, "cannot setup database keys")
-		}
-
-		// Init dao packages
-		item.InitDBMapping(s.Mapper)
-		storage.InitDBMapping(s.Mapper)
-
-		log.Info(ctx, "Initializing lru connection...")
-		s.LogCache, err = lru.NewRedisLRU(s.mustDBWithCtx(ctx), s.Cfg.Cache.LruSize, s.Cfg.Cache.Redis.Host, s.Cfg.Cache.Redis.Password)
-		if err != nil {
-			return sdk.WrapError(err, "cannot connect to redis instance for lru")
-		}
-
-		var err error
-		// Init storage units
-		s.Units, err = storage.Init(ctx, s.Mapper, s.Cache, s.mustDBWithCtx(ctx), s.GoRoutines, s.Cfg.Units)
-		if err != nil {
-			return err
-		}
-
-		s.Units.Start(ctx, s.GoRoutines)
-
-		s.GoRoutines.Run(ctx, "service.cdn-gc-items", func(ctx context.Context) {
-			s.itemsGC(ctx)
-		})
-		s.GoRoutines.Run(ctx, "service.cdn-purge-items", func(ctx context.Context) {
-			s.itemPurge(ctx)
-		})
-
-		// Start CDS Backend migration
-		for _, st := range s.Units.Storages {
-			cdsStorage, ok := st.(*cds.CDS)
-			if !ok {
-				continue
+		s.GoRoutines.Exec(ctx, "cdn-cds-backend-migration", func(ctx context.Context) {
+			if err := s.listenCDSSync(ctx, cdsStorage); err != nil {
+				log.Error(ctx, "unable to listen pubsub for cds sync: %v", err)
 			}
-			s.GoRoutines.Exec(ctx, "cdn-cds-backend-migration", func(ctx context.Context) {
-				if err := s.listenCDSSync(ctx, cdsStorage); err != nil {
-					log.Error(ctx, "unable to listen pubsub for cds sync: %v", err)
-				}
-			})
-		}
-
-		s.GoRoutines.Run(ctx, "service.log-cache-eviction", func(ctx context.Context) {
-			s.LogCache.Evict(ctx)
 		})
 	}
+
+	s.GoRoutines.Run(ctx, "service.log-cache-eviction", func(ctx context.Context) {
+		s.LogCache.Evict(ctx)
+	})
 
 	return nil
 }

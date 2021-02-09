@@ -51,9 +51,10 @@ func Start(ctx context.Context, s telemetry.Service, w http.ResponseWriter, req 
 		telemetry.UserAgentAttribute: req.UserAgent(),
 	}
 
+	_, tracingEnabled := featureflipping.IsEnabled(ctx, m, db, sdk.FeatureTracing, mapVars)
 	var sampler trace.Sampler
 	switch {
-	case featureflipping.IsEnabled(ctx, m, db, sdk.FeatureTracing, mapVars):
+	case tracingEnabled:
 		sampler = trace.AlwaysSample()
 	case hasSpanContext && rootSpanContext.IsSampled():
 		sampler = trace.AlwaysSample()

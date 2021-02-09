@@ -332,6 +332,8 @@ func (api *API) putAdminFeatureFlipping() service.Handler {
 			return err
 		}
 
+		featureflipping.InvalidateCache(ctx, f.Name)
+
 		return service.WriteJSON(w, f, http.StatusOK)
 	}
 }
@@ -341,14 +343,16 @@ func (api *API) deleteAdminFeatureFlipping() service.Handler {
 		vars := mux.Vars(r)
 		name := sdk.FeatureName(vars["name"])
 
-		oldF, err := featureflipping.LoadByName(ctx, gorpmapping.Mapper, api.mustDB(), name)
+		feature, err := featureflipping.LoadByName(ctx, gorpmapping.Mapper, api.mustDB(), name)
 		if err != nil {
 			return err
 		}
 
-		if err := featureflipping.Delete(api.mustDB(), oldF.ID); err != nil {
+		if err := featureflipping.Delete(api.mustDB(), feature.ID); err != nil {
 			return err
 		}
+
+		featureflipping.InvalidateCache(ctx, feature.Name)
 
 		return nil
 	}

@@ -20,7 +20,7 @@ func (api *API) getWorkflowRunArtifactLinksHandler() service.Handler {
 		vars := mux.Vars(r)
 
 		projectKey := vars["key"]
-		enabled := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeatureCDNArtifact, map[string]string{
+		_, enabled := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeatureCDNArtifact, map[string]string{
 			"project_key": projectKey,
 		})
 		if !enabled {

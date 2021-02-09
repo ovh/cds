@@ -102,7 +102,7 @@ func (s *Service) syncProjectLogs(ctx context.Context, cdsStorage *cds.CDS, pKey
 	if err != nil {
 		return err
 	}
-	if !resp.Enabled || !s.Cfg.EnableLogProcessing {
+	if resp.Exists && !resp.Enabled {
 		return nil
 	}
 
