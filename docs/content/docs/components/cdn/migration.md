@@ -5,13 +5,10 @@ weight: 1
 
 # Prepare CDN service configuration
 * Init CDN configuration using "engine" binary.
-
-Depending your needs you can change the default configuration to use a different storage unit, the default configuration is using a local encrypted one.
 ```sh
 $ engine config new cdn > cdn.toml
 ```
-
-
+Depending your needs you can change the default configuration to use a different storage unit (see: cdn.storageUnits.storages), the default configuration is using a local unit with encryption.
 
 * Generate a auth consumer for your new CDN service.
 ```sh
@@ -29,8 +26,6 @@ $ engine config edit --output cdn.toml cdn.toml cdn.api.token=xxxxxxxx.xxxxxxx.4
 ```
 
 * Generate a auth consumer for CDS unit for CDN
-
-This unit will be useful to migrate logs from CDS database to CDN.
 ```sh
 $ cdsctl consumer new me \
 --scopes=Project,Run \
@@ -45,16 +40,26 @@ xxxxxxxx.xxxxxxx.4Bd9XJMIWrfe8Lwb-Au68TKUqflPorY2Fmcuw5vIoUs5gQyCLuxxxxxxxxxxxxx
 $ engine config edit --output cdn.toml cdn.toml cdn.storageUnits.storages.cds.token=xxxxxxxx.xxxxxxx.4Bd9XJMIWrfe8Lwb-Au68TKUqflPorY2Fmcuw5vIoUs5gQyCLuxxxxxxxxxxxxxx
 ```
 
+The CDS unit will be useful to migrate logs from CDS database to CDN.
+
+# Init CDN database
+CDN service will require a Postgres database, you can use the same database for CDS API and CDN with different schema or use two distinct databases.
+To init the database please follow the database management guide [here]({{< relref "/hosting/database.md" >}}).
+
 # Start CDN service
 By default CDN log processing and migration is active for all projects and you'll have to start the migration process manually. 
 
-Migration will be executed in two steps, the first one will populate the CDN database from known log items and log data will be accessible through the temporary CDS unit. Then CDN will start to sync your storage unit with CDS unit.
+Migration will be executed in two steps, the first one will populate the CDN database from known log items. Then log content will be accessible through the temporary CDS unit and CDN will start to sync your storage unit with CDS unit.
 
 If your CDS instance manage a lot of workflow the migration can take a long time, thanks to feature flipping you will be able to manually set the list of CDS project that should use CDN to gradually migrate your projects to CDN.
 
 * (Optional) Set feature flipping for CDN logs to migrate only some projects.
 ```sh
-
+cat <<EOF > feature.yaml
+name: cdn-job-logs
+rule: return project_key == "PROJECT1" or project_key == "PROJECT2"
+EOF
+cdsctl admin feature import feature.yaml
 ```
 
 * Start CDN service and migration.
@@ -65,7 +70,7 @@ Start migration using the command line:
 ```sh
 $ cdsctl admin cdn migrate
 ```
-This will only migrate activated project, if your are using feature flipping to gradually migrate your projects, you will have to reexecute this command each time you change this projects list.
+This will only migrate activated projects. If you are using feature flipping to gradually migrate your projects, you will have to reexecute this command each time you change this projects list.
 
 You can follow the migration from CDN logs or with the CDS command line:
 ```sh

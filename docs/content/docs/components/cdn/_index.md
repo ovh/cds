@@ -13,8 +13,13 @@ This backends are call units and there are two types of units in CDN:
 
 * Storage Unit: to store complete job's logs and artifact.
 
+When logs or file are received by CDN, it will first store this items in its buffer. Then when the item is fully received, it will be moved to one of configured storage unit.
+If CDN is setup with multiple storage units, each unit will periodically checks for missing item and sync this items from other units.
+
+
 ## Configuration
 Like any other CDS service, CDN requires to be authenticated with a consumer. The required scope are Service, Worker and RunExecution.
+
 You must have at least one storage unit, one file buffer and one log buffer to be able to run CDN.
 
 ## Supported units
