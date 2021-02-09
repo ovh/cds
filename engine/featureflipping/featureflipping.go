@@ -18,20 +18,20 @@ var (
 	cacheFeature = gocache.New(time.Minute, time.Minute)
 )
 
-func Exists(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, name string) bool {
+func Exists(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, name sdk.FeatureName) bool {
 	f, _ := LoadByName(ctx, m, db, name)
 	return f.ID != 0
 }
 
-func IsEnabled(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, name string, vars map[string]string) bool {
-	cachedFeatureI, has := cacheFeature.Get(name)
+func IsEnabled(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, name sdk.FeatureName, vars map[string]string) bool {
+	cachedFeatureI, has := cacheFeature.Get(string(name))
 	if !has {
 		f, err := LoadByName(ctx, m, db, name)
 		if err != nil {
 			log.Info(ctx, "featureflipping.IsEnabled> error: unable to load Feature '%s' from database: %v", name, err)
 			return false
 		}
-		cacheFeature.SetDefault(name, f)
+		cacheFeature.SetDefault(string(name), f)
 		cachedFeatureI = f
 	} else {
 		log.Debug(ctx, "featureflipping.IsEnabled> feature_flipping '%s' loaded from cache", name)

@@ -75,7 +75,7 @@ type Runtime interface {
 	SendLog(ctx context.Context, level Level, format string)
 	ArtifactSignature(artifactName string, perm uint32) (string, error)
 	WorkerCacheSignature(tag string) (string, error)
-	FeatureEnabled(featureName string) bool
+	FeatureEnabled(featureName sdk.FeatureName) bool
 	CDNHttpURL() string
 	InstallKey(key sdk.Variable) (*KeyResponse, error)
 	InstallKeyTo(key sdk.Variable, destinationPath string) (*KeyResponse, error)

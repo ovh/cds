@@ -24,8 +24,9 @@ func TestDAO(t *testing.T) {
 		require.NoError(t, featureflipping.Delete(db, f.ID))
 	}
 
+	featureName := sdk.FeatureName(sdk.RandomString(10))
 	var f = sdk.Feature{
-		Name: sdk.RandomString(10),
+		Name: featureName,
 		Rule: sdk.RandomString(10),
 	}
 

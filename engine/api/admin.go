@@ -284,7 +284,7 @@ func (api *API) getAdminFeatureFlipping() service.Handler {
 func (api *API) getAdminFeatureFlippingByName() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		name := vars["name"]
+		name := sdk.FeatureName(vars["name"])
 
 		f, err := featureflipping.LoadByName(ctx, gorpmapping.Mapper, api.mustDB(), name)
 		if err != nil {
@@ -311,7 +311,7 @@ func (api *API) postAdminFeatureFlipping() service.Handler {
 func (api *API) putAdminFeatureFlipping() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		name := vars["name"]
+		name := sdk.FeatureName(vars["name"])
 
 		var f sdk.Feature
 		if err := service.UnmarshalBody(r, &f); err != nil {
@@ -339,7 +339,7 @@ func (api *API) putAdminFeatureFlipping() service.Handler {
 func (api *API) deleteAdminFeatureFlipping() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		name := vars["name"]
+		name := sdk.FeatureName(vars["name"])
 
 		oldF, err := featureflipping.LoadByName(ctx, gorpmapping.Mapper, api.mustDB(), name)
 		if err != nil {

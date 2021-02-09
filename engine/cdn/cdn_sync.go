@@ -98,7 +98,7 @@ func (s *Service) SyncLogs(ctx context.Context, cdsStorage *cds.CDS) error {
 
 func (s *Service) syncProjectLogs(ctx context.Context, cdsStorage *cds.CDS, pKey string) error {
 	// Check feature enable
-	resp, err := cdsStorage.FeatureEnabled("cdn-job-logs", map[string]string{"project_key": pKey})
+	resp, err := cdsStorage.FeatureEnabled(sdk.FeatureCDNJobLogs, map[string]string{"project_key": pKey})
 	if err != nil {
 		return err
 	}

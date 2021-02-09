@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Action, createSelector, State, StateContext } from '@ngxs/store';
+import { FeatureNames } from 'app/service/feature/feature.service';
 import * as actionFeature from './feature.action';
 
 export class FeatureResults {
@@ -25,11 +26,11 @@ export class FeatureStateModel {
 export class FeatureState {
     constructor() { }
 
-    static feature(key: string) {
+    static feature(key: FeatureNames) {
         return createSelector([FeatureState], (state: FeatureStateModel) => state.features.filter(f => f.key === key));
     }
 
-    static featureProject(key: string, params: string) {
+    static featureProject(key: FeatureNames, params: string) {
         return createSelector([FeatureState], (state: FeatureStateModel) => state.features.find(f => f.key === key)?.results.find(r => r.paramString === params));
     }
 

@@ -286,7 +286,7 @@ func workflowLogDownloadRun(v cli.Values) error {
 		}
 	}
 
-	feature, err := client.FeatureEnabled("cdn-job-logs", map[string]string{
+	feature, err := client.FeatureEnabled(sdk.FeatureCDNJobLogs, map[string]string{
 		"project_key": projectKey,
 	})
 	if err != nil {
@@ -370,7 +370,7 @@ func workflowLogStreamRun(v cli.Values) error {
 	projectKey := v.GetString(_ProjectKey)
 	workflowName := v.GetString(_WorkflowName)
 
-	feature, err := client.FeatureEnabled("cdn-job-logs", map[string]string{
+	feature, err := client.FeatureEnabled(sdk.FeatureCDNJobLogs, map[string]string{
 		"project_key": projectKey,
 	})
 	if err != nil {

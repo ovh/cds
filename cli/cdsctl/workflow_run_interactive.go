@@ -19,7 +19,7 @@ func workflowRunInteractive(v cli.Values, w *sdk.WorkflowRun, baseURL string) er
 	projectKey := v.GetString(_ProjectKey)
 	workflowName := v.GetString(_WorkflowName)
 
-	feature, err := client.FeatureEnabled("cdn-job-logs", map[string]string{
+	feature, err := client.FeatureEnabled(sdk.FeatureCDNJobLogs, map[string]string{
 		"project_key": projectKey,
 	})
 	if err != nil {

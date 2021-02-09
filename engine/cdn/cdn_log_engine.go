@@ -199,7 +199,7 @@ func (s *Service) cdnEnabled(ctx context.Context, projectKey string) bool {
 	if !has {
 		m := make(map[string]string, 1)
 		m["project_key"] = projectKey
-		resp, err := s.Client.FeatureEnabled("cdn-job-logs", m)
+		resp, err := s.Client.FeatureEnabled(sdk.FeatureCDNJobLogs, m)
 		if err != nil {
 			log.Error(ctx, "unable to get job logs feature for project %s: %v", projectKey, err)
 			return false

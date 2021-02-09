@@ -107,8 +107,6 @@ func (api *API) checkJobIDPermissions(ctx context.Context, w http.ResponseWriter
 	return sdk.WrapError(sdk.ErrForbidden, "not authorized for job %s", jobID)
 }
 
-const featureMFARequired = "mfa_required"
-
 func (api *API) checkProjectPermissions(ctx context.Context, w http.ResponseWriter, projectKey string, requiredPerm int, routeVars map[string]string) error {
 	ctx, end := telemetry.Span(ctx, "api.checkProjectPermissions")
 	defer end()
@@ -117,7 +115,7 @@ func (api *API) checkProjectPermissions(ctx context.Context, w http.ResponseWrit
 		mapVars := map[string]string{
 			"project_key": projectKey,
 		}
-		requireMFA := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), featureMFARequired, mapVars)
+		requireMFA := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeatureMFARequired, mapVars)
 		if requireMFA {
 			return sdk.WithStack(sdk.ErrMFARequired)
 		}
@@ -180,7 +178,7 @@ func (api *API) checkWorkflowPermissions(ctx context.Context, w http.ResponseWri
 		mapVars := map[string]string{
 			"project_key": projectKey,
 		}
-		requireMFA := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), featureMFARequired, mapVars)
+		requireMFA := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeatureMFARequired, mapVars)
 		if requireMFA {
 			return sdk.WithStack(sdk.ErrMFARequired)
 		}

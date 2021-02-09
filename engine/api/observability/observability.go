@@ -14,6 +14,7 @@ import (
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/engine/gorpmapper"
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -52,7 +53,7 @@ func Start(ctx context.Context, s telemetry.Service, w http.ResponseWriter, req 
 
 	var sampler trace.Sampler
 	switch {
-	case featureflipping.IsEnabled(ctx, m, db, "tracing", mapVars):
+	case featureflipping.IsEnabled(ctx, m, db, sdk.FeatureTracing, mapVars):
 		sampler = trace.AlwaysSample()
 	case hasSpanContext && rootSpanContext.IsSampled():
 		sampler = trace.AlwaysSample()

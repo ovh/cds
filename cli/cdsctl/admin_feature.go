@@ -55,7 +55,7 @@ var adminFeatureExportCmd = cli.Command{
 }
 
 func adminFeatureExportRun(v cli.Values) error {
-	name := v.GetString("name")
+	name := sdk.FeatureName(v.GetString("name"))
 	f, err := client.FeatureGet(name)
 	if err != nil {
 		return err
@@ -116,6 +116,6 @@ var adminFeatureDeleteCmd = cli.Command{
 }
 
 func adminFeatureDeleteRun(v cli.Values) error {
-	name := v.GetString("name")
+	name := sdk.FeatureName(v.GetString("name"))
 	return client.FeatureDelete(name)
 }
