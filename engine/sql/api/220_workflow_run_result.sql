@@ -4,7 +4,7 @@ CREATE TABLE "workflow_run_result" (
     created TIMESTAMP WITH TIME ZONE, -- creation date
     workflow_run_id BIGINT NOT NULL,
     workflow_node_run_id BIGINT NOT NULL,
-    workflow_node_run_job_id BIGINT NOT NULL,
+    workflow_run_job_id BIGINT NOT NULL,
     sub_num BIGINT NOT NULL,
     type VARCHAR(255) NOT NULL,
     data JSONB NOT NULL

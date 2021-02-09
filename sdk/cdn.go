@@ -196,6 +196,7 @@ func NewCDNArtifactApiRef(signature cdn.Signature) CDNApiRef {
 		WorkflowName: signature.WorkflowName,
 		WorkflowID:   signature.WorkflowID,
 		RunID:        signature.RunID,
+		RunNodeID:    signature.NodeRunID,
 		RunJobName:   signature.JobName,
 		RunJobID:     signature.JobID,
 		ArtifactName: signature.Worker.ArtifactName,

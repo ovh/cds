@@ -145,7 +145,7 @@ func (s *Service) storeFile(ctx context.Context, sig cdn.Signature, reader io.Re
 		wrResult := sdk.WorkflowRunResult{
 			WorkflowRunID:     sig.RunID,
 			WorkflowNodeRunID: sig.NodeRunID,
-			WorkflowJobID:     sig.JobID,
+			WorkflowRunJobID:  sig.JobID,
 			Type:              sdk.WorkflowRunResultTypeArtifact,
 			DataRaw:           json.RawMessage(bts),
 		}

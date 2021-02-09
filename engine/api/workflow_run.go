@@ -56,7 +56,7 @@ func (api *API) getWorkflowsRunsAndNodesIDshandler() service.Handler {
 	}
 }
 
-func (api *API) searchWorkflowRun(ctx context.Context, w http.ResponseWriter, r *http.Request, route, key, name string) error {
+func (api *API) searchWorkflowRun(_ context.Context, w http.ResponseWriter, r *http.Request, route, key, name string) error {
 	// About pagination: [FR] http://blog.octo.com/designer-une-api-rest/#pagination
 	var limit, offset int
 
@@ -1142,11 +1142,11 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 		// Purge workflow run
 		api.GoRoutines.Exec(ctx, "workflow.PurgeWorkflowRun", func(ctx context.Context) {
 			tx, err := api.mustDB().Begin()
-			defer tx.Rollback() // nolint
 			if err != nil {
 				log.Error(ctx, "workflow.PurgeWorkflowRun> error %v", err)
 				return
 			}
+			defer tx.Rollback() // nolint
 			if err := workflow.PurgeWorkflowRun(ctx, tx, *wf); err != nil {
 				log.Error(ctx, "workflow.PurgeWorkflowRun> error %v", err)
 				return
@@ -1455,7 +1455,20 @@ func (api *API) WorkflowRunResultsAdd() service.Handler {
 			return err
 		}
 
-		if err := workflow.AddResult(ctx, api.mustDBWithCtx(ctx), api.Cache, *wr, &runResult); err != nil {
+		if wr.ID != runResult.WorkflowRunID {
+			return sdk.WrapError(sdk.ErrInvalidData, "unable to add artifact on this run: %d", runResult.ID)
+		}
+
+		nr, err := workflow.LoadNodeRunByID(api.mustDB(), runResult.WorkflowNodeRunID, workflow.LoadRunOptions{})
+		if err != nil {
+			return err
+		}
+		if nr.WorkflowRunID != wr.ID {
+			return sdk.WrapError(sdk.ErrInvalidData, "invalid node run %d", runResult.WorkflowNodeRunID)
+		}
+		runResult.SubNum = nr.SubNumber
+
+		if err := workflow.AddResult(api.mustDBWithCtx(ctx), api.Cache, &runResult); err != nil {
 			return err
 		}
 
@@ -1494,17 +1507,22 @@ func (api *API) WorkflowRunArtifactCheckUpload() service.Handler {
 			return sdk.WrapError(sdk.ErrInvalidData, "unable to read artifact api ref")
 		}
 
-		wr, err := workflow.LoadRun(ctx, api.mustDB(), key, name, number, workflow.LoadRunOptions{WithArtifacts: true})
+		wr, err := workflow.LoadRun(ctx, api.mustDB(), key, name, number, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
 		if err != nil {
 			return err
 		}
 
-		b, err := workflow.CheckArtifact(ctx, api.mustDBWithCtx(ctx), api.Cache, *wr, apiRef)
+		b, err := workflow.CanUploadArtifact(ctx, api.mustDBWithCtx(ctx), api.Cache, *wr, apiRef)
 		if err != nil {
 			return err
 		}
 		if !b {
 			return sdk.WrapError(sdk.ErrInvalidData, "unable to duplicate an artifact")
+		}
+
+		// Save check
+		if err := api.Cache.SetWithTTL(workflow.GetArtifactResultKey(apiRef.RunID, apiRef.ArtifactName), true, 600); err != nil {
+			return sdk.WrapError(err, "unable to cache result artifact check %s ", apiRef.ToFilename())
 		}
 		return nil
 	}
