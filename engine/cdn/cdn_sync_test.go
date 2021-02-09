@@ -72,6 +72,7 @@ func TestSyncBuffer(t *testing.T) {
 	require.NoError(t, err)
 	require.False(t, b)
 }
+
 func TestSyncLog(t *testing.T) {
 	m := gorpmapper.New()
 	item.InitDBMapping(m)
@@ -150,13 +151,19 @@ func TestSyncLog(t *testing.T) {
 
 	// Mock feature enable
 	gock.New("http://lolcat.host:8081").Post("/feature/enabled/cdn-job-logs").BodyString(`{"project_key": "key1"}`).Reply(200).JSON(sdk.FeatureEnabledResponse{
+		Name:    sdk.FeatureCDNJobLogs,
 		Enabled: false,
+		Exists:  true,
 	})
 	gock.New("http://lolcat.host:8081").Post("/feature/enabled/cdn-job-logs").BodyString(`{"project_key": "key2"}`).Reply(200).JSON(sdk.FeatureEnabledResponse{
+		Name:    sdk.FeatureCDNJobLogs,
 		Enabled: true,
+		Exists:  true,
 	})
 	gock.New("http://lolcat.host:8081").Post("/feature/enabled/cdn-job-logs").BodyString(`{"project_key": "key3"}`).Reply(200).JSON(sdk.FeatureEnabledResponse{
+		Name:    sdk.FeatureCDNJobLogs,
 		Enabled: true,
+		Exists:  true,
 	})
 
 	// List node run identifiers for project 2

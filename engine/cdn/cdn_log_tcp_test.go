@@ -120,7 +120,11 @@ func TestWorkerLogCDNEnabled(t *testing.T) {
 	gock.InterceptClient(s.Client.(cdsclient.Raw).HTTPClient())
 
 	gock.New("http://lolcat.host").Post("/queue/workflows/1/log").Reply(200)
-	gock.New("http://lolcat.host").Post("/feature/enabled/cdn-job-logs").Reply(200).JSON(sdk.FeatureEnabledResponse{Name: sdk.FeatureCDNJobLogs, Enabled: true, Exists: true})
+	gock.New("http://lolcat.host").Post("/feature/enabled/cdn-job-logs").Reply(200).JSON(sdk.FeatureEnabledResponse{
+		Name:    sdk.FeatureCDNJobLogs,
+		Enabled: true,
+		Exists:  true,
+	})
 
 	ctx, cancel := context.WithTimeout(context.TODO(), 3*time.Second)
 	t.Cleanup(cancel)
@@ -242,7 +246,11 @@ func TestServiceLogCDNDisabled(t *testing.T) {
 	gock.InterceptClient(s.Client.(cdsclient.Raw).HTTPClient())
 
 	gock.New("http://lolcat.host").Post("/queue/workflows/log/service").Reply(200)
-	gock.New("http://lolcat.host").Post("/feature/enabled/cdn-job-logs").Reply(200).JSON(sdk.FeatureEnabledResponse{Name: sdk.FeatureCDNJobLogs, Enabled: false, Exists: true})
+	gock.New("http://lolcat.host").Post("/feature/enabled/cdn-job-logs").Reply(200).JSON(sdk.FeatureEnabledResponse{
+		Name:    sdk.FeatureCDNJobLogs,
+		Enabled: false,
+		Exists:  true,
+	})
 
 	t0 := time.Now()
 	require.NoError(t, s.handleLogMessage(context.TODO(), []byte(message)))
