@@ -225,6 +225,9 @@ func TestGetItemArtifactDownloadHandler(t *testing.T) {
 	gock.InterceptClient(s.Client.(cdsclient.Raw).HTTPClient())
 	gock.New("http://lolcat.api").Get("/project/" + projectKey + "/workflows/WfName/type/artifact/access").Reply(http.StatusOK).JSON(nil)
 
+	gock.New("http://lolcat.api").Post("/project/" + projectKey + "/workflows/WfName/runs/0/artifacts/check").Reply(http.StatusNoContent)
+	gock.New("http://lolcat.api").Post("/project/" + projectKey + "/workflows/WfName/runs/0/results/add").Reply(http.StatusNoContent)
+
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
 	s.Units = newRunningStorageUnits(t, s.Mapper, db.DbMap, ctx, s.Cache)
@@ -335,6 +338,7 @@ func TestGetItemArtifactDownloadHandler(t *testing.T) {
 	require.Equal(t, 200, rec.Code)
 
 	assert.Equal(t, string(fileContent), string(rec.Body.Bytes()))
+	assert.True(t, gock.IsDone())
 }
 
 func TestGetItemsArtefactHandler(t *testing.T) {

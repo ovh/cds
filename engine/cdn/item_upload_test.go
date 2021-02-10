@@ -14,13 +14,11 @@ import (
 	"net/http/httptest"
 	"os"
 	"path"
-	"strings"
 	"testing"
 	"time"
 
 	"github.com/ovh/symmecrypt/ciphers/aesgcm"
 	"github.com/ovh/symmecrypt/convergent"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/h2non/gock.v1"
 
@@ -121,18 +119,9 @@ func TestPostUploadHandler(t *testing.T) {
 		PrivateKey: []byte(base64.StdEncoding.EncodeToString(workerKey)),
 	}
 
-	// Mock get worker
-	gock.New("http://lolcat.api").AddMatcher(func(r *http.Request, rr *gock.Request) (bool, error) {
-		b, err := gock.MatchPath(r, rr)
-		assert.NoError(t, err)
-		if r.Method == http.MethodGet && strings.HasPrefix(r.URL.String(), "http://lolcat.api/worker/myworker?withKey=true") {
-			if b {
-				return true, nil
-			}
-			return false, nil
-		}
-		return false, nil
-	}).Reply(http.StatusOK).JSON(worker)
+	gock.New("http://lolcat.api").Post("/project/projKey/workflows/myworkflow/runs/0/artifacts/check").Reply(http.StatusNoContent)
+	gock.New("http://lolcat.api").Post("/project/projKey/workflows/myworkflow/runs/0/results/add").Reply(http.StatusNoContent)
+	gock.New("http://lolcat.api").Get("/worker/myworker").MatchParam("withKey", "true").Reply(200).JSON(worker)
 
 	workerSignature := cdn.Signature{
 		Timestamp:    time.Now().Unix(),
@@ -141,7 +130,7 @@ func TestPostUploadHandler(t *testing.T) {
 		JobID:        1,
 		JobName:      "my job",
 		RunID:        1,
-		WorkflowName: "my workflow",
+		WorkflowName: "myworkflow",
 		Worker: &cdn.SignatureWorker{
 			WorkerID:     worker.ID,
 			WorkerName:   worker.Name,
