@@ -131,12 +131,14 @@ func (s *Service) storeFile(ctx context.Context, sig cdn.Signature, reader io.Re
 
 	switch itemType {
 	case sdk.CDNTypeItemArtifact:
+		artiApiRef, _ := it.GetCDNArtifactApiRef()
 		// Call CDS to insert workflow run result
 		artiResult := sdk.WorkflowRunResultArtifact{
 			Name:       apiRef.ToFilename(),
 			Size:       it.Size,
 			MD5:        it.MD5,
 			CDNRefHash: it.APIRefHash,
+			Perm:       artiApiRef.Perm,
 		}
 		bts, err := json.Marshal(artiResult)
 		if err != nil {

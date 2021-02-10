@@ -36,6 +36,7 @@ type WorkflowRunResultArtifact struct {
 	Size       int64  `json:"size"`
 	MD5        string `json:"md5"`
 	CDNRefHash string `json:"cdn_hash"`
+	Perm       uint32 `json:"perm"`
 }
 
 func (a *WorkflowRunResultArtifact) IsValid() error {
@@ -50,6 +51,9 @@ func (a *WorkflowRunResultArtifact) IsValid() error {
 	}
 	if a.CDNRefHash == "" {
 		return WrapError(ErrInvalidData, "missing cdn item hash")
+	}
+	if a.Perm == 0 {
+		return WrapError(ErrInvalidData, "missing file permission")
 	}
 	return nil
 }

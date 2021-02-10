@@ -93,5 +93,6 @@ type ServiceConfiguration struct {
 }
 
 type CDNConfig struct {
-	TCPURL string `json:"tcp_url"`
+	TCPURL  string `json:"tcp_url"`
+	HTTPURL string `json:"http_url"`
 }
