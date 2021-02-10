@@ -154,6 +154,18 @@ func insertResult(tx gorpmapper.SqlExecutorWithTx, runResult *sdk.WorkflowRunRes
 	return nil
 }
 
+func LoadRunResultsByRunID(db gorp.SqlExecutor, runID int64) ([]sdk.WorkflowRunResult, error) {
+	var dbResults []dbRunResult
+	if _, err := db.Select(&dbResults, "SELECT * FROM workflow_run_result where workflow_run_id = $1", runID); err != nil {
+		return nil, err
+	}
+	results := make([]sdk.WorkflowRunResult, 0, len(dbResults))
+	for _, r := range dbResults {
+		results = append(results, sdk.WorkflowRunResult(r))
+	}
+	return results, nil
+}
+
 func LoadRunResultsByNodeRunID(db gorp.SqlExecutor, nodeRunID int64) ([]sdk.WorkflowRunResult, error) {
 	var dbResults []dbRunResult
 	if _, err := db.Select(&dbResults, "SELECT * FROM workflow_run_result where workflow_node_run_id = $1", nodeRunID); err != nil {

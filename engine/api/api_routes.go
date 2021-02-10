@@ -270,6 +270,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/artifacts", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowRunArtifactsHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/artifacts/check", Scope(sdk.AuthConsumerScopeRunExecution), r.POST(api.workflowRunArtifactCheckUpload))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/artifacts/links", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowRunArtifactLinksHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/results", Scope(sdk.AuthConsumerScopeRunExecution), r.GET(api.getWorkflowRunResults))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/results/add", Scope(sdk.AuthConsumerScopeRunExecution), r.POST(api.workflowRunResultsAdd))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowNodeRunHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}/results", Scope(sdk.AuthConsumerScopeRunExecution), r.GET(api.getWorkflowNodeRunResults))

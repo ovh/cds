@@ -461,6 +461,15 @@ func (c *client) workflowCachePushIndirectUploadPost(url string, tarContent io.R
 	return nil
 }
 
+func (c *client) WorkflowRunResultsList(ctx context.Context, projectKey string, name string, number int64) ([]sdk.WorkflowRunResult, error) {
+	var results []sdk.WorkflowRunResult
+	uri := fmt.Sprintf("/project/%s/workflows/%s/runs/%d/results", projectKey, name, number)
+	if _, err := c.GetJSON(ctx, uri, &results); err != nil {
+		return nil, err
+	}
+	return results, nil
+}
+
 func (c *client) WorkflowRunResultsAdd(ctx context.Context, projectKey string, name string, number int64, addRequest sdk.WorkflowRunResult) error {
 	uri := fmt.Sprintf("/project/%s/workflows/%s/runs/%d/results/add", projectKey, name, number)
 	if _, err := c.PostJSON(ctx, uri, addRequest, nil); err != nil {

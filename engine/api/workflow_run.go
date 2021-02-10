@@ -1387,6 +1387,32 @@ func (api *API) getDownloadArtifactHandler() service.Handler {
 	}
 }
 
+func (api *API) getWorkflowRunResults() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars["key"]
+		name := vars["permWorkflowName"]
+
+		number, err := requestVarInt(r, "number")
+		if err != nil {
+			return err
+		}
+
+		wr, err := workflow.LoadRun(ctx, api.mustDB(), key, name, number, workflow.LoadRunOptions{
+			DisableDetailledNodeRun: true,
+		})
+		if err != nil {
+			return sdk.WrapError(err, "unable to load workflow run for workflow %s and number %d", name, number)
+		}
+
+		results, err := workflow.LoadRunResultsByRunID(api.mustDB(), wr.ID)
+		if err != nil {
+			return err
+		}
+		return service.WriteJSON(w, results, http.StatusOK)
+	}
+}
+
 func (api *API) getWorkflowNodeRunResults() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)

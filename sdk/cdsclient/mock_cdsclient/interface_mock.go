@@ -4157,6 +4157,21 @@ func (mr *MockWorkflowClientMockRecorder) WorkflowRunResultsAdd(ctx, projectKey,
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowRunResultsAdd", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowRunResultsAdd), ctx, projectKey, name, number, addRequest)
 }
 
+// WorkflowRunResultsList mocks base method
+func (m *MockWorkflowClient) WorkflowRunResultsList(ctx context.Context, projectKey, name string, number int64) ([]sdk.WorkflowRunResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowRunResultsList", ctx, projectKey, name, number)
+	ret0, _ := ret[0].([]sdk.WorkflowRunResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowRunResultsList indicates an expected call of WorkflowRunResultsList
+func (mr *MockWorkflowClientMockRecorder) WorkflowRunResultsList(ctx, projectKey, name, number interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowRunResultsList", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowRunResultsList), ctx, projectKey, name, number)
+}
+
 // WorkflowRunFromHook mocks base method
 func (m *MockWorkflowClient) WorkflowRunFromHook(projectKey, workflowName string, hook sdk.WorkflowNodeRunHookEvent) (*sdk.WorkflowRun, error) {
 	m.ctrl.T.Helper()
@@ -8203,6 +8218,21 @@ func (m *MockInterface) WorkflowRunResultsAdd(ctx context.Context, projectKey, n
 func (mr *MockInterfaceMockRecorder) WorkflowRunResultsAdd(ctx, projectKey, name, number, addRequest interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowRunResultsAdd", reflect.TypeOf((*MockInterface)(nil).WorkflowRunResultsAdd), ctx, projectKey, name, number, addRequest)
+}
+
+// WorkflowRunResultsList mocks base method
+func (m *MockInterface) WorkflowRunResultsList(ctx context.Context, projectKey, name string, number int64) ([]sdk.WorkflowRunResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowRunResultsList", ctx, projectKey, name, number)
+	ret0, _ := ret[0].([]sdk.WorkflowRunResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowRunResultsList indicates an expected call of WorkflowRunResultsList
+func (mr *MockInterfaceMockRecorder) WorkflowRunResultsList(ctx, projectKey, name, number interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowRunResultsList", reflect.TypeOf((*MockInterface)(nil).WorkflowRunResultsList), ctx, projectKey, name, number)
 }
 
 // WorkflowRunFromHook mocks base method

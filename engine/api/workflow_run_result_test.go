@@ -19,7 +19,7 @@ import (
 	"testing"
 )
 
-func Test_getWorkflowNodeRunResults(t *testing.T) {
+func Test_getWorkflowRunAndNodeRunResults(t *testing.T) {
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	u, pass := assets.InsertAdminUser(t, db)
@@ -83,6 +83,33 @@ func Test_getWorkflowNodeRunResults(t *testing.T) {
 	art, err := results[0].GetArtifact()
 	require.NoError(t, err)
 	require.Equal(t, art.Name, artiData.Name)
+
+	//Prepare request for RUN
+	varsRun := map[string]string{
+		"key":              proj.Key,
+		"permWorkflowName": w.Name,
+		"number":           fmt.Sprintf("%d", wrDB.Number),
+	}
+
+	uriRun := router.GetRoute("GET", api.getWorkflowRunResults, varsRun)
+	test.NotEmpty(t, uri)
+	reqRun := assets.NewAuthentifiedRequest(t, u, pass, "GET", uriRun, nil)
+
+	//Do the request
+	recRun := httptest.NewRecorder()
+	router.Mux.ServeHTTP(recRun, reqRun)
+
+	// Can't work because check has not be done
+	assert.Equal(t, 200, recRun.Code)
+
+	var resultsRun []sdk.WorkflowRunResult
+	require.NoError(t, json.Unmarshal(recRun.Body.Bytes(), &resultsRun))
+
+	require.Equal(t, 1, len(resultsRun))
+
+	artRun, err := results[0].GetArtifact()
+	require.NoError(t, err)
+	require.Equal(t, artRun.Name, artiData.Name)
 }
 
 func Test_workflowRunResultsAdd(t *testing.T) {
