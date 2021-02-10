@@ -286,6 +286,7 @@ func getAllItemUnits(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecu
 		return nil, err
 	}
 
+	itemUnitsValid := make([]sdk.CDNItemUnit, 0)
 	for x := range itemUnits {
 		for y := range items {
 			if itemUnits[x].ItemID == items[y].ID {
@@ -293,9 +294,14 @@ func getAllItemUnits(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecu
 				break
 			}
 		}
+		// we could have no item found in some case, it this item is purged
+		// between the first select from storage_unit_item and the LoadByIDs
+		if itemUnits[x].Item != nil {
+			itemUnitsValid = append(itemUnitsValid, itemUnits[x])
+		}
 	}
 
-	return itemUnits, nil
+	return itemUnitsValid, nil
 }
 
 func LoadAllItemIDUnknownByUnit(db gorp.SqlExecutor, unitID string, offset int64, limit int64) ([]ItemToSync, error) {

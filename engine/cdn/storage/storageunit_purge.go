@@ -30,16 +30,12 @@ func (x *RunningStorageUnits) Purge(ctx context.Context, s Interface) error {
 	}
 
 	for _, ui := range unitItems {
-		var exists bool
-		// here, item could be nil if there are many cdn instances purging the same item
-		if ui.Item != nil {
-			ctx = context.WithValue(ctx, FieldAPIRef, ui.Item.APIRefHash)
-			ctx = context.WithValue(ctx, FieldSize, ui.Item.Size)
-			var err error
-			exists, err = s.ItemExists(ctx, x.m, x.db, *ui.Item)
-			if err != nil {
-				return err
-			}
+		ctx = context.WithValue(ctx, FieldAPIRef, ui.Item.APIRefHash)
+		ctx = context.WithValue(ctx, FieldSize, ui.Item.Size)
+		var err error
+		exists, err := s.ItemExists(ctx, x.m, x.db, *ui.Item)
+		if err != nil {
+			return err
 		}
 
 		if exists {
