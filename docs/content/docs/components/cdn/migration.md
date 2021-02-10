@@ -4,7 +4,7 @@ weight: 1
 ---
 
 # Prepare CDN service configuration
-* Init CDN configuration using "engine" binary.
+* Init CDN configuration using `engine` binary.
 ```sh
 $ engine config new cdn > cdn.toml
 ```
@@ -51,7 +51,7 @@ By default CDN log processing and migration is active for all projects and you'l
 
 Migration will be executed in two steps, the first one will populate the CDN database from known log items. Then log content will be accessible through the temporary CDS unit and CDN will start to sync your storage unit with CDS unit.
 
-If your CDS instance manage a lot of workflow the migration can take a long time, thanks to feature flipping you will be able to manually set the list of CDS project that should use CDN to gradually migrate your projects to CDN.
+If your CDS instance handles a lot of workflows, the migration may take a long time, thanks to the feature flip, you will be able to manually define the list of CDS projects that should use CDN to gradually migrate your projects to CDN.
 
 * (Optional) Set feature flipping for CDN logs to migrate only some projects.
 ```sh
@@ -64,13 +64,13 @@ cdsctl admin feature import feature.yaml
 
 * Start CDN service and migration.
 
-At this steps you will be able to start CDN service. It will start to process logs for activated projects. 
+At this step, you will be able to start the CDN service. It will start processing logs for activated projects. 
 
 Start migration using the command line:
 ```sh
 $ cdsctl admin cdn migrate
 ```
-This will only migrate activated projects. If you are using feature flipping to gradually migrate your projects, you will have to reexecute this command each time you change this projects list.
+This will only migrate activated projects. If you are using feature flipping to gradually migrate your projects, you will need to rerun this command each time you change this list of projects.
 
 You can follow the migration from CDN logs or with the CDS command line:
 ```sh

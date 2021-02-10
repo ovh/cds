@@ -4,12 +4,12 @@ weight: 3
 ---
 
 ## What's CDN
-CDN is a service dedicated to receive and store CDS's logs. In a near future it will also be able to manage artifacts and cache used by your jobs. 
+CDN is a service dedicated to receive and store CDS's logs. In a near future, it will also be able to manage artifacts and cache used by your jobs. 
 
-CDN stores the list of all known log or artifact items in a Postgres database and communicate with storage backends to store the content of this items.
-This backends are call units and there are two types of units in CDN:
+CDN stores the list of all known log or artifact items in a Postgres database and communicates with storage backends to store the contents of those items.
+These backends are call units and there are two types of units in CDN:
 
-* Buffer Unit: to store incoming job's logs and artifact, this units are designed to be fast for read/write operations but with a limited capacity.
+* Buffer unit: To store logs and artifacts of incoming jobs, these units are designed to be fast for read / write operations, but with limited capacity.
 
 * Storage Unit: to store complete job's logs and artifact.
 
@@ -18,7 +18,7 @@ If CDN is setup with multiple storage units, each unit will periodically checks 
 
 
 ## Configuration
-Like any other CDS service, CDN requires to be authenticated with a consumer. The required scope are Service, Worker and RunExecution.
+Like any other CDS service, CDN requires to be authenticated with a consumer. The required scopes are Service, Worker and RunExecution.
 
 You must have at least one storage unit, one file buffer and one log buffer to be able to run CDN.
 
