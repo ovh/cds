@@ -17,7 +17,7 @@ import (
 )
 
 func (h *HatcheryKubernetes) killAwolWorkers(ctx context.Context) error {
-	pods, err := h.k8sClient.CoreV1().Pods(h.Config.Namespace).List(metav1.ListOptions{LabelSelector: LABEL_WORKER})
+	pods, err := h.kubeClient.PodList(ctx, h.Config.Namespace, metav1.ListOptions{LabelSelector: LABEL_WORKER})
 	if err != nil {
 		return err
 	}
@@ -35,7 +35,7 @@ func (h *HatcheryKubernetes) killAwolWorkers(ctx context.Context) error {
 		}
 
 		// If no job identifiers, no services on pod
-		jobIdentifiers := h.getJobIdentiers(labels)
+		jobIdentifiers := getJobIdentiers(labels)
 		if jobIdentifiers != nil {
 			// Browse container to send end log for each service
 			servicesLogs := make([]cdslog.Message, 0)
@@ -97,9 +97,8 @@ func (h *HatcheryKubernetes) killAwolWorkers(ctx context.Context) error {
 						log.Error(ctx, "killAndRemove> error on call client.WorkerModelSpawnError on worker model %s for register: %s", modelPath, err)
 					}
 				}
-
 			}
-			if err := h.k8sClient.CoreV1().Pods(pod.Namespace).Delete(pod.Name, nil); err != nil {
+			if err := h.kubeClient.PodDelete(ctx, pod.Namespace, pod.Name, nil); err != nil {
 				globalErr = err
 				log.Error(ctx, "hatchery:kubernetes> killAwolWorkers> Cannot delete pod %s (%s)", pod.Name, err)
 			}

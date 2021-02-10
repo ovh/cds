@@ -12,12 +12,13 @@ import (
 )
 
 func (h *HatcheryKubernetes) deleteSecrets(ctx context.Context) error {
-	pods, err := h.k8sClient.CoreV1().Pods(h.Config.Namespace).List(metav1.ListOptions{LabelSelector: LABEL_SECRET})
+	pods, err := h.kubeClient.PodList(ctx, h.Config.Namespace, metav1.ListOptions{LabelSelector: LABEL_SECRET})
 	if err != nil {
 		return sdk.WrapError(err, "cannot get pods with secret")
 	}
-	secrets, errS := h.k8sClient.CoreV1().Secrets(h.Config.Namespace).List(metav1.ListOptions{LabelSelector: LABEL_SECRET})
-	if errS != nil {
+
+	secrets, err := h.kubeClient.SecretList(ctx, h.Config.Namespace, metav1.ListOptions{LabelSelector: LABEL_SECRET})
+	if err != nil {
 		return sdk.WrapError(err, "cannot get secrets")
 	}
 
@@ -31,7 +32,7 @@ func (h *HatcheryKubernetes) deleteSecrets(ctx context.Context) error {
 			}
 		}
 		if !found {
-			if err := h.k8sClient.CoreV1().Secrets(h.Config.Namespace).Delete(secret.Name, nil); err != nil {
+			if err := h.kubeClient.SecretDelete(ctx, h.Config.Namespace, secret.Name, nil); err != nil {
 				log.Error(ctx, "deleteSecrets> Cannot delete secret %s : %v", secret.Name, err)
 			}
 		}
@@ -40,10 +41,8 @@ func (h *HatcheryKubernetes) deleteSecrets(ctx context.Context) error {
 	return nil
 }
 
-func (h *HatcheryKubernetes) createSecret(secretName string, model sdk.Model) error {
-	h.k8sClient.CoreV1().Secrets(h.Config.Namespace)
-	_, err := h.k8sClient.CoreV1().Secrets(h.Config.Namespace).Get(secretName, metav1.GetOptions{})
-	if err != nil {
+func (h *HatcheryKubernetes) createSecret(ctx context.Context, secretName string, model sdk.Model) error {
+	if _, err := h.kubeClient.SecretGet(ctx, h.Config.Namespace, secretName, &metav1.GetOptions{}); err != nil {
 		registry := "https://index.docker.io/v1/"
 		if model.ModelDocker.Registry != "" {
 			registry = model.ModelDocker.Registry
@@ -62,9 +61,8 @@ func (h *HatcheryKubernetes) createSecret(secretName string, model sdk.Model) er
 				apiv1.DockerConfigJsonKey: dockerCfg,
 			},
 		}
-		_, errCreate := h.k8sClient.CoreV1().Secrets(h.Config.Namespace).Create(&wmSecret)
-		if errCreate != nil {
-			return sdk.WrapError(errCreate, "Cannot create secret %s", secretName)
+		if _, err := h.kubeClient.SecretCreate(ctx, h.Config.Namespace, &wmSecret); err != nil {
+			return sdk.WrapError(err, "Cannot create secret %s", secretName)
 		}
 	}
 

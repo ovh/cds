@@ -20,8 +20,8 @@ func NewHatcheryKubernetesTest(t *testing.T) *HatcheryKubernetes {
 	clientSet, errCl := kubernetes.NewForConfig(&rest.Config{Host: "http://lolcat.kube"})
 	require.NoError(t, errCl)
 
-	h.k8sClient = clientSet
-	gock.InterceptClient(h.k8sClient.CoreV1().RESTClient().(*rest.RESTClient).Client)
+	h.kubeClient = &kubernetesClient{clientSet}
+	gock.InterceptClient(clientSet.CoreV1().RESTClient().(*rest.RESTClient).Client)
 
 	h.Config.Name = "kyubi"
 	h.Config.Namespace = "hachibi"

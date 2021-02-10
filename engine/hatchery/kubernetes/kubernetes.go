@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"html/template"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -14,14 +13,11 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/rockbears/log"
 	"github.com/sirupsen/logrus"
+
 	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
-	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/service"
@@ -80,71 +76,16 @@ func (h *HatcheryKubernetes) ApplyConfiguration(cfg interface{}) error {
 		return fmt.Errorf("Invalid configuration")
 	}
 
-	var errCl error
-	var clientSet *kubernetes.Clientset
-	k8sTimeout := time.Second * 10
-
-	if h.Config.KubernetesConfigFile != "" {
-		cfg, err := clientcmd.BuildConfigFromFlags(h.Config.KubernetesMasterURL, h.Config.KubernetesConfigFile)
-		if err != nil {
-			return sdk.WrapError(err, "Cannot build config from flags")
-		}
-		cfg.Timeout = k8sTimeout
-
-		clientSet, errCl = kubernetes.NewForConfig(cfg)
-		if errCl != nil {
-			return sdk.WrapError(errCl, "Cannot create client with newForConfig")
-		}
-	} else if h.Config.KubernetesMasterURL != "" {
-		configK8s, err := clientcmd.BuildConfigFromKubeconfigGetter(h.Config.KubernetesMasterURL, h.getStartingConfig)
-		if err != nil {
-			return sdk.WrapError(err, "Cannot build config from config getter")
-		}
-		configK8s.Timeout = k8sTimeout
-
-		if h.Config.KubernetesCertAuthData != "" {
-			configK8s.TLSClientConfig = rest.TLSClientConfig{
-				CAData:   []byte(h.Config.KubernetesCertAuthData),
-				CertData: []byte(h.Config.KubernetesClientCertData),
-				KeyData:  []byte(h.Config.KubernetesClientKeyData),
-			}
-		}
-
-		// creates the clientset
-		clientSet, errCl = kubernetes.NewForConfig(configK8s)
-		if errCl != nil {
-			return sdk.WrapError(errCl, "Cannot create new config")
-		}
-	} else {
-		config, err := rest.InClusterConfig()
-		if err != nil {
-			return sdk.WrapError(err, "Unable to configure k8s InClusterConfig")
-		}
-
-		clientSet, errCl = kubernetes.NewForConfig(config)
-		if errCl != nil {
-			return sdk.WrapError(errCl, "Unable to configure k8s client with InClusterConfig")
-		}
-
-	}
-
-	h.k8sClient = clientSet
-
-	if h.Config.Namespace != apiv1.NamespaceDefault {
-		if _, err := clientSet.CoreV1().Namespaces().Get(h.Config.Namespace, metav1.GetOptions{}); err != nil {
-			ns := apiv1.Namespace{}
-			ns.SetName(h.Config.Namespace)
-			if _, errC := clientSet.CoreV1().Namespaces().Create(&ns); errC != nil {
-				return sdk.WrapError(errC, "Cannot create namespace %s in kubernetes", h.Config.Namespace)
-			}
-		}
+	var err error
+	h.kubeClient, err = initKubeClient(h.Config)
+	if err != nil {
+		return err
 	}
 
 	h.Common.Common.ServiceName = h.Config.Name
 	h.Common.Common.ServiceType = sdk.TypeHatchery
 	h.HTTPURL = h.Config.URL
 	h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
-	var err error
 	h.Common.Common.PrivateKey, err = jwt.ParseRSAPrivateKeyFromPEM([]byte(h.Config.RSAPrivateKey))
 	if err != nil {
 		return fmt.Errorf("unable to parse RSA private Key: %v", err)
@@ -161,42 +102,19 @@ func (h *HatcheryKubernetes) Status(ctx context.Context) *sdk.MonitoringStatus {
 	return m
 }
 
-// getStartingConfig implements ConfigAccess
-func (h *HatcheryKubernetes) getStartingConfig() (*clientcmdapi.Config, error) {
-	defaultClientConfigRules := clientcmd.NewDefaultClientConfigLoadingRules()
-	overrideCfg := clientcmd.ConfigOverrides{
-		AuthInfo: clientcmdapi.AuthInfo{
-			Username: h.Config.KubernetesUsername,
-			Password: h.Config.KubernetesPassword,
-			Token:    h.Config.KubernetesToken,
-		},
-	}
-
-	clientConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(defaultClientConfigRules, &overrideCfg)
-	rawConfig, err := clientConfig.RawConfig()
-	if os.IsNotExist(err) {
-		return clientcmdapi.NewConfig(), nil
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	return &rawConfig, nil
-}
-
 // CheckConfiguration checks the validity of the configuration object
 func (h *HatcheryKubernetes) CheckConfiguration(cfg interface{}) error {
 	hconfig, ok := cfg.(HatcheryConfiguration)
 	if !ok {
-		return fmt.Errorf("Invalid hatchery kubernetes configuration")
+		return sdk.WithStack(fmt.Errorf("invalid hatchery kubernetes configuration"))
 	}
 
 	if err := hconfig.Check(); err != nil {
-		return fmt.Errorf("Invalid hatchery kubernetes configuration: %v", err)
+		return sdk.WithStack(fmt.Errorf("invalid hatchery kubernetes configuration: %v", err))
 	}
 
 	if hconfig.Namespace == "" {
-		return fmt.Errorf("please enter a valid kubernetes namespace")
+		return sdk.WithStack(fmt.Errorf("missing valid kubernetes namespace"))
 	}
 
 	return nil
@@ -391,7 +309,7 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 	// Check here to add secret if needed
 	secretName := "cds-credreg-" + spawnArgs.Model.Name
 	if spawnArgs.Model.ModelDocker.Private {
-		if err := h.createSecret(secretName, *spawnArgs.Model); err != nil {
+		if err := h.createSecret(ctx, secretName, *spawnArgs.Model); err != nil {
 			return sdk.WrapError(err, "cannot create secret for model %s", spawnArgs.Model.Path())
 		}
 		podSchema.Spec.ImagePullSecrets = []apiv1.LocalObjectReference{{Name: secretName}}
@@ -447,10 +365,8 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 		podSchema.Spec.HostAliases[0].Hostnames[i+1] = strings.ToLower(serv.Name)
 	}
 
-	_, err := h.k8sClient.CoreV1().Pods(h.Config.Namespace).Create(&podSchema)
-
+	_, err := h.kubeClient.PodCreate(ctx, h.Config.Namespace, &podSchema)
 	log.Debug(ctx, "hatchery> kubernetes> SpawnWorker> %s > Pod created", spawnArgs.WorkerName)
-
 	return err
 }
 
@@ -461,7 +377,7 @@ func (h *HatcheryKubernetes) GetLogger() *logrus.Logger {
 // WorkersStarted returns the number of instances started but
 // not necessarily register on CDS yet
 func (h *HatcheryKubernetes) WorkersStarted(ctx context.Context) []string {
-	list, err := h.k8sClient.CoreV1().Pods(h.Config.Namespace).List(metav1.ListOptions{LabelSelector: LABEL_HATCHERY_NAME})
+	list, err := h.kubeClient.PodList(ctx, h.Config.Namespace, metav1.ListOptions{LabelSelector: LABEL_HATCHERY_NAME})
 	if err != nil {
 		log.Warn(ctx, "WorkersStarted> unable to list pods on namespace %s", h.Config.Namespace)
 		return nil
@@ -479,7 +395,7 @@ func (h *HatcheryKubernetes) WorkersStarted(ctx context.Context) []string {
 // WorkersStartedByModel returns the number of instances of given model started but
 // not necessarily register on CDS yet
 func (h *HatcheryKubernetes) WorkersStartedByModel(ctx context.Context, model *sdk.Model) int {
-	list, err := h.k8sClient.CoreV1().Pods(h.Config.Namespace).List(metav1.ListOptions{LabelSelector: LABEL_WORKER_MODEL})
+	list, err := h.kubeClient.PodList(ctx, h.Config.Namespace, metav1.ListOptions{LabelSelector: LABEL_WORKER_MODEL})
 	if err != nil {
 		log.Error(ctx, "WorkersStartedByModel> Cannot get list of workers started (%s)", err)
 		return 0
