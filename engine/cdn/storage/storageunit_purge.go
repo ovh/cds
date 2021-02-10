@@ -32,6 +32,7 @@ func (x *RunningStorageUnits) Purge(ctx context.Context, s Interface) error {
 	for _, ui := range unitItems {
 		ctx = context.WithValue(ctx, FieldAPIRef, ui.Item.APIRefHash)
 		ctx = context.WithValue(ctx, FieldSize, ui.Item.Size)
+
 		exists, err := s.ItemExists(ctx, x.m, x.db, *ui.Item)
 		if err != nil {
 			return err
