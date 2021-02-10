@@ -45,25 +45,12 @@ func workflowArtifactListRun(v cli.Values) (cli.ListResult, error) {
 		return nil, fmt.Errorf("number parameter have to be an integer")
 	}
 
-	projectKey := v.GetString(_ProjectKey)
-	workflowName := v.GetString(_WorkflowName)
-
-	feature, err := client.FeatureEnabled(sdk.FeatureCDNArtifact, map[string]string{
-		"project_key": projectKey,
-	})
+	workflowArtifacts, err := client.WorkflowRunArtifacts(v.GetString(_ProjectKey), v.GetString(_WorkflowName), number)
 	if err != nil {
 		return nil, err
 	}
 
-	if !feature.Enabled {
-		workflowArtifacts, err := client.WorkflowRunArtifacts(v.GetString(_ProjectKey), v.GetString(_WorkflowName), number)
-		if err != nil {
-			return nil, err
-		}
-		return cli.AsListResult(workflowArtifacts), nil
-	}
-
-	cdnLinks, err := client.WorkflowRunArtifactsLinks(projectKey, workflowName, number)
+	results, err := client.WorkflowRunResultsList(context.Background(), v.GetString(_ProjectKey), v.GetString(_WorkflowName), number)
 	if err != nil {
 		return nil, err
 	}
@@ -72,14 +59,23 @@ func workflowArtifactListRun(v cli.Values) (cli.ListResult, error) {
 		Name string `cli:"name"`
 		Md5  string `cli:"md5"`
 	}
-	arts := make([]Artifact, 0, len(cdnLinks.Items))
-	for _, item := range cdnLinks.Items {
-		arts = append(arts, Artifact{
-			Name: item.APIRef.ToFilename(),
-			Md5:  item.MD5,
-		})
+
+	artifacts := make([]Artifact, 0, len(workflowArtifacts))
+	for _, art := range workflowArtifacts {
+		artifacts = append(artifacts, Artifact{Name: art.Name, Md5: art.MD5sum})
 	}
-	return cli.AsListResult(arts), nil
+	for _, runResult := range results {
+		if runResult.Type != sdk.WorkflowRunResultTypeArtifact {
+			continue
+		}
+		artiData, err := runResult.GetArtifact()
+		if err != nil {
+			return nil, err
+		}
+		artifacts = append(artifacts, Artifact{Name: artiData.Name, Md5: artiData.MD5})
+	}
+
+	return cli.AsListResult(artifacts), nil
 }
 
 var workflowArtifactDownloadCmd = cli.Command{
