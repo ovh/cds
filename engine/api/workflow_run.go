@@ -1455,7 +1455,7 @@ func (api *API) workflowRunResultsAdd() service.Handler {
 		}
 
 		if wr.ID != runResult.WorkflowRunID {
-			return sdk.WrapError(sdk.ErrInvalidData, "unable to add artifact on this run: %d", runResult.ID)
+			return sdk.WrapError(sdk.ErrInvalidData, "unable to add artifact on this run: %s", runResult.ID)
 		}
 
 		nr, err := workflow.LoadNodeRunByID(api.mustDB(), runResult.WorkflowNodeRunID, workflow.LoadRunOptions{})

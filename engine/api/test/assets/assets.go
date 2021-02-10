@@ -521,7 +521,7 @@ func InsertService(t *testing.T, db gorpmapper.SqlExecutorWithTx, name, serviceT
 	return &srv, privateKey
 }
 
-func InitCDNService(t *testing.T, db gorpmapper.SqlExecutorWithTx, scopes ...sdk.AuthConsumerScope) (*sdk.Service, *rsa.PrivateKey) {
+func InitCDNService(t *testing.T, db gorpmapper.SqlExecutorWithTx, scopes ...sdk.AuthConsumerScope) (*sdk.Service, *rsa.PrivateKey, string) {
 	usr1, _ := InsertAdminUser(t, db)
 
 	consumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, usr1.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
@@ -530,7 +530,7 @@ func InitCDNService(t *testing.T, db gorpmapper.SqlExecutorWithTx, scopes ...sdk
 	sharedGroup, err := group.LoadByName(context.TODO(), db, sdk.SharedInfraGroupName)
 	require.NoError(t, err)
 	hConsumer, _, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), "", consumer, []int64{sharedGroup.ID},
-		sdk.NewAuthConsumerScopeDetails(append(scopes, sdk.AuthConsumerScopeProject)...))
+		sdk.NewAuthConsumerScopeDetails(append(scopes, sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeWorker)...))
 	require.NoError(t, err)
 
 	privateKey, err := jws.NewRandomRSAKey()
@@ -553,7 +553,13 @@ func InitCDNService(t *testing.T, db gorpmapper.SqlExecutorWithTx, scopes ...sdk
 
 	require.NoError(t, services.Insert(context.TODO(), db, &srv))
 
-	return &srv, privateKey
+	session, err := authentication.NewSession(context.TODO(), db, hConsumer, 5*time.Minute, false)
+	require.NoError(t, err)
+
+	jwt, err := authentication.NewSessionJWT(session)
+	require.NoError(t, err)
+
+	return &srv, privateKey, jwt
 }
 
 func InsertTestWorkflow(t *testing.T, db gorpmapper.SqlExecutorWithTx, store cache.Store, proj *sdk.Project, name string) *sdk.Workflow {
@@ -599,6 +605,7 @@ func InsertTestWorkflow(t *testing.T, db gorpmapper.SqlExecutorWithTx, store cac
 				},
 			},
 		},
+		MaxRuns: 255,
 	}
 
 	require.NoError(t, workflow.Insert(context.TODO(), db, store, *proj, &w))

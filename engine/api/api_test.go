@@ -45,7 +45,12 @@ func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *test.Fak
 	api.GoRoutines = sdk.NewGoRoutines()
 
 	api.InitRouter()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	go workflow.Initialize(ctx, api.mustDB, api.Cache, "", "", "", 300000, 255)
+
 	t.Cleanup(func() {
+		cancel()
 		// Clean all the pending crafting workflow runs
 		lockKey := cache.Key("api:workflowRunCraft")
 		require.NoError(t, store.DeleteAll(lockKey))

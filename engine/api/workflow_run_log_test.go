@@ -81,7 +81,7 @@ func Test_getWorkflowNodeRunJobLinkHandler(t *testing.T) {
 		Rule: fmt.Sprintf("return project_key == \"%s\"", proj.Key),
 	}))
 
-	mockCDNService, _ := assets.InitCDNService(t, db)
+	mockCDNService, _, _ := assets.InitCDNService(t, db)
 	t.Cleanup(func() { _ = services.Delete(db, mockCDNService) })
 
 	uri := router.GetRoute("GET", api.getWorkflowNodeRunJobStepLinkHandler, map[string]string{

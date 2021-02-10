@@ -25,7 +25,7 @@ func Test_releaseApplicationWorkflowHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	mockVCSSservice, _ := assets.InsertService(t, db, "Test_releaseApplicationWorkflowHandlerVCS", sdk.TypeVCS)
-	mockCDNService, _ := assets.InitCDNService(t, db)
+	mockCDNService, _, _ := assets.InitCDNService(t, db)
 	defer func() {
 		_ = services.Delete(db, mockCDNService)
 		_ = services.Delete(db, mockVCSSservice)

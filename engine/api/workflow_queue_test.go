@@ -454,7 +454,7 @@ func Test_postTakeWorkflowJobHandler(t *testing.T) {
 	}
 
 	// Prepare VCS Mock
-	mockVCSSservice, _ := assets.InitCDNService(t, db)
+	mockVCSSservice, _, _ := assets.InitCDNService(t, db)
 	defer func() {
 		_ = services.Delete(db, mockVCSSservice) // nolint
 	}()
@@ -493,7 +493,7 @@ func Test_postTakeWorkflowJobHandler(t *testing.T) {
 func Test_postTakeWorkflowInvalidJobHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	s, _ := assets.InitCDNService(t, db)
+	s, _, _ := assets.InitCDNService(t, db)
 	defer func() {
 		_ = services.Delete(db, s)
 	}()
@@ -560,7 +560,7 @@ func Test_postBookWorkflowJobHandler(t *testing.T) {
 func Test_postWorkflowJobResultHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	s, _ := assets.InitCDNService(t, db)
+	s, _, _ := assets.InitCDNService(t, db)
 	defer func() {
 		_ = services.Delete(db, s)
 	}()
@@ -644,7 +644,7 @@ func Test_postWorkflowJobResultHandler(t *testing.T) {
 func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	s, _ := assets.InitCDNService(t, db)
+	s, _, _ := assets.InitCDNService(t, db)
 	defer func() {
 		_ = services.Delete(db, s)
 	}()
@@ -753,7 +753,7 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	s, _ := assets.InitCDNService(t, db)
+	s, _, _ := assets.InitCDNService(t, db)
 	defer func() {
 		_ = services.Delete(db, s)
 	}()
@@ -904,7 +904,7 @@ func fileExists(filename string) bool {
 func Test_postWorkflowJobStaticFilesHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	s, _ := assets.InitCDNService(t, db)
+	s, _, _ := assets.InitCDNService(t, db)
 	defer func() {
 		_ = services.Delete(db, s)
 	}()
@@ -1542,7 +1542,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 func Test_postWorkflowJobSetVersionHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	s, _ := assets.InitCDNService(t, db)
+	s, _, _ := assets.InitCDNService(t, db)
 	defer func() {
 		_ = services.Delete(db, s)
 	}()
