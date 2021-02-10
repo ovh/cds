@@ -373,7 +373,7 @@ func (api *API) getWorkflowAccessHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrUnauthorized, "consumer (%s) is disabled", consumer.ID)
 		}
 
-		maintainerOrAdmin := consumer.Maintainer()
+		maintainerOrAdmin := consumer.Maintainer() || consumer.Admin()
 
 		perms, err := permission.LoadWorkflowMaxLevelPermission(ctx, api.mustDB(), projectKey, []string{workflowName}, consumer.GetGroupIDs())
 		if err != nil {

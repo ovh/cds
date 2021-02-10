@@ -711,7 +711,7 @@ func (api *API) getProjectAccessHandler() service.Handler {
 		}
 		consumer.Worker = worker
 
-		maintainerOrAdmin := consumer.Maintainer()
+		maintainerOrAdmin := consumer.Maintainer() || consumer.Admin()
 
 		perms, err := permission.LoadProjectMaxLevelPermission(ctx, api.mustDB(), []string{projectKey}, consumer.GetGroupIDs())
 		if err != nil {
