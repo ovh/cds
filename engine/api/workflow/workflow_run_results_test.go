@@ -136,6 +136,7 @@ func TestCanUploadArtifactAlreadyExist(t *testing.T) {
 		CDNRefHash: "123",
 		MD5:        "123",
 		Size:       1,
+		Perm:       0777,
 	}
 	bts, err := json.Marshal(artiData)
 	result.DataRaw = bts
@@ -182,6 +183,7 @@ func TestCanUploadArtifactAlreadyExistInMoreRecentSubNum(t *testing.T) {
 		CDNRefHash: "123",
 		MD5:        "123",
 		Size:       1,
+		Perm:       0777,
 	}
 	bts, err := json.Marshal(artiData)
 	result.DataRaw = bts
@@ -242,6 +244,7 @@ func TestCanUploadArtifactAlreadyExistInAPreviousSubNum(t *testing.T) {
 		CDNRefHash: "123",
 		MD5:        "123",
 		Size:       1,
+		Perm:       0777,
 	}
 	bts, err := json.Marshal(artiData)
 	result.DataRaw = bts

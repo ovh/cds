@@ -43,6 +43,7 @@ func Test_getWorkflowRunAndNodeRunResults(t *testing.T) {
 		CDNRefHash: "123",
 		MD5:        "123",
 		Size:       1,
+		Perm:       0777,
 	}
 	bts, err := json.Marshal(&artiData)
 	require.NoError(t, err)
@@ -164,6 +165,7 @@ func Test_workflowRunResultsAdd(t *testing.T) {
 		MD5:        "AA",
 		CDNRefHash: "AA",
 		Name:       "myartifact",
+		Perm:       0777,
 	}
 	bts, err := json.Marshal(artiData)
 	addResultRequest := sdk.WorkflowRunResult{
