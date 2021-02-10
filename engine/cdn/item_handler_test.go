@@ -338,6 +338,9 @@ func TestGetItemArtifactDownloadHandler(t *testing.T) {
 	require.Equal(t, 200, rec.Code)
 
 	assert.Equal(t, string(fileContent), string(rec.Body.Bytes()))
+	for _, r := range gock.Pending() {
+		t.Logf("Pending call: %s", r.Request().URLStruct.String())
+	}
 	assert.True(t, gock.IsDone())
 }
 
