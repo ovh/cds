@@ -13,8 +13,8 @@ These backends are call units and there are two types of units in CDN:
 
 * Storage Unit: to store complete job's logs and artifact.
 
-When logs or file are received by CDN, it will first store this items in its buffer. Then when the item is fully received, it will be moved to one of configured storage unit.
-If CDN is setup with multiple storage units, each unit will periodically checks for missing item and sync this items from other units.
+When logs or file are received by CDN, it will first store these items in its buffer. Then, when the item is fully received, it will be moved to one of the configured storage units.
+If the CDN service is configured with multiple storage units, each unit periodically checks for missing items and synchronizes these items from other units.
 
 
 ## Configuration
