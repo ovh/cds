@@ -190,7 +190,7 @@ func Execute(wt sdk.WorkflowTemplate, instance sdk.WorkflowTemplateInstance) (ex
 	}
 	result.Workflow, err = exportentities.UnmarshalWorkflow([]byte(workflowYaml), exportentities.FormatYAML)
 	if err != nil {
-		return result, sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "cannot parse generated workflow"))
+		return result, sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("cannot parse generated workflow: %v", err))
 	}
 
 	for i := range parsedTemplate.Pipelines {
@@ -199,7 +199,7 @@ func Execute(wt sdk.WorkflowTemplate, instance sdk.WorkflowTemplateInstance) (ex
 			return result, err
 		}
 		if err := yaml.Unmarshal([]byte(pipelineYaml), &result.Pipelines[i]); err != nil {
-			return result, sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "cannot parse generated pipeline"))
+			return result, sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("cannot parse generated pipeline: %v", err))
 		}
 	}
 
@@ -209,7 +209,7 @@ func Execute(wt sdk.WorkflowTemplate, instance sdk.WorkflowTemplateInstance) (ex
 			return result, err
 		}
 		if err := yaml.Unmarshal([]byte(applicationYaml), &result.Applications[i]); err != nil {
-			return result, sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "cannot parse generated application"))
+			return result, sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("cannot parse generated application: %v", err))
 		}
 	}
 
@@ -219,7 +219,7 @@ func Execute(wt sdk.WorkflowTemplate, instance sdk.WorkflowTemplateInstance) (ex
 			return result, err
 		}
 		if err := yaml.Unmarshal([]byte(environmentYaml), &result.Environments[i]); err != nil {
-			return result, sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "cannot parse generated environment"))
+			return result, sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("cannot parse generated environment: %v", err))
 		}
 	}
 
