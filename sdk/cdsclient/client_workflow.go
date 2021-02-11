@@ -471,7 +471,7 @@ func (c *client) WorkflowRunResultsList(ctx context.Context, projectKey string, 
 }
 
 func (c *client) WorkflowRunResultsAdd(ctx context.Context, projectKey string, name string, number int64, addRequest sdk.WorkflowRunResult) error {
-	uri := fmt.Sprintf("/project/%s/workflows/%s/runs/%d/results/add", projectKey, name, number)
+	uri := fmt.Sprintf("/project/%s/workflows/%s/runs/%d/results", projectKey, name, number)
 	if _, err := c.PostJSON(ctx, uri, addRequest, nil); err != nil {
 		return err
 	}

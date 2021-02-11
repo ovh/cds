@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
@@ -62,7 +63,7 @@ func CanUploadArtifact(ctx context.Context, db *gorp.DbMap, store cache.Store, w
 	}
 
 	// Check artifact name
-	runResults, err := LoadRunResultsByRunIDAndType(db, artifactRef.RunID, sdk.WorkflowRunResultTypeArtifact)
+	runResults, err := LoadRunResultsByRunIDAndType(ctx, db, artifactRef.RunID, sdk.WorkflowRunResultTypeArtifact)
 	for _, result := range runResults {
 		refArt, err := result.GetArtifact()
 		if err != nil {
@@ -148,15 +149,15 @@ func insertResult(tx gorpmapper.SqlExecutorWithTx, runResult *sdk.WorkflowRunRes
 	runResult.ID = sdk.UUID()
 	runResult.Created = time.Now()
 	dbRunResult := dbRunResult(*runResult)
-	if err := tx.Insert(&dbRunResult); err != nil {
+	if err := gorpmapping.Insert(tx, &dbRunResult); err != nil {
 		return sdk.WithStack(err)
 	}
 	return nil
 }
 
-func LoadRunResultsByRunID(db gorp.SqlExecutor, runID int64) ([]sdk.WorkflowRunResult, error) {
+func getAll(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query) ([]sdk.WorkflowRunResult, error) {
 	var dbResults []dbRunResult
-	if _, err := db.Select(&dbResults, "SELECT * FROM workflow_run_result where workflow_run_id = $1", runID); err != nil {
+	if err := gorpmapping.GetAll(ctx, db, query, &dbResults); err != nil {
 		return nil, err
 	}
 	results := make([]sdk.WorkflowRunResult, 0, len(dbResults))
@@ -166,26 +167,18 @@ func LoadRunResultsByRunID(db gorp.SqlExecutor, runID int64) ([]sdk.WorkflowRunR
 	return results, nil
 }
 
-func LoadRunResultsByNodeRunID(db gorp.SqlExecutor, nodeRunID int64) ([]sdk.WorkflowRunResult, error) {
-	var dbResults []dbRunResult
-	if _, err := db.Select(&dbResults, "SELECT * FROM workflow_run_result where workflow_node_run_id = $1", nodeRunID); err != nil {
-		return nil, err
-	}
-	results := make([]sdk.WorkflowRunResult, 0, len(dbResults))
-	for _, r := range dbResults {
-		results = append(results, sdk.WorkflowRunResult(r))
-	}
-	return results, nil
+func LoadRunResultsByRunID(ctx context.Context, db gorp.SqlExecutor, runID int64) ([]sdk.WorkflowRunResult, error) {
+	query := gorpmapping.NewQuery("SELECT * FROM workflow_run_result where workflow_run_id = $1").Args(runID)
+	return getAll(ctx, db, query)
 }
 
-func LoadRunResultsByRunIDAndType(db gorp.SqlExecutor, runID int64, t sdk.WorkflowRunResultType) ([]sdk.WorkflowRunResult, error) {
-	var dbResults []dbRunResult
-	if _, err := db.Select(&dbResults, "SELECT * FROM workflow_run_result where workflow_run_id = $1 AND type = $2", runID, t); err != nil {
-		return nil, err
-	}
-	results := make([]sdk.WorkflowRunResult, 0, len(dbResults))
-	for _, r := range dbResults {
-		results = append(results, sdk.WorkflowRunResult(r))
-	}
-	return results, nil
+func LoadRunResultsByNodeRunID(ctx context.Context, db gorp.SqlExecutor, nodeRunID int64) ([]sdk.WorkflowRunResult, error) {
+	query := gorpmapping.NewQuery("SELECT * FROM workflow_run_result where workflow_node_run_id = $1").Args(nodeRunID)
+	return getAll(ctx, db, query)
+}
+
+func LoadRunResultsByRunIDAndType(ctx context.Context, db gorp.SqlExecutor, runID int64, t sdk.WorkflowRunResultType) ([]sdk.WorkflowRunResult, error) {
+	query := gorpmapping.NewQuery("SELECT * FROM workflow_run_result where workflow_run_id = $1 AND type = $2").Args(runID, t)
+	return getAll(ctx, db, query)
+
 }

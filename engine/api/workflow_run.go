@@ -1387,7 +1387,7 @@ func (api *API) getDownloadArtifactHandler() service.Handler {
 	}
 }
 
-func (api *API) getWorkflowRunResults() service.Handler {
+func (api *API) getWorkflowRunResultsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -1405,7 +1405,7 @@ func (api *API) getWorkflowRunResults() service.Handler {
 			return sdk.WrapError(err, "unable to load workflow run for workflow %s and number %d", name, number)
 		}
 
-		results, err := workflow.LoadRunResultsByRunID(api.mustDB(), wr.ID)
+		results, err := workflow.LoadRunResultsByRunID(ctx, api.mustDB(), wr.ID)
 		if err != nil {
 			return err
 		}
@@ -1413,7 +1413,7 @@ func (api *API) getWorkflowRunResults() service.Handler {
 	}
 }
 
-func (api *API) getWorkflowNodeRunResults() service.Handler {
+func (api *API) getWorkflowNodeRunResultsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -1436,7 +1436,7 @@ func (api *API) getWorkflowNodeRunResults() service.Handler {
 			return sdk.WrapError(err, "unable to load workflow node run with id %d for workflow %s and run with number %d", nodeRunID, name, number)
 		}
 
-		results, err := workflow.LoadRunResultsByNodeRunID(api.mustDB(), wnr.ID)
+		results, err := workflow.LoadRunResultsByNodeRunID(ctx, api.mustDB(), wnr.ID)
 		if err != nil {
 			return err
 		}
@@ -1444,7 +1444,7 @@ func (api *API) getWorkflowNodeRunResults() service.Handler {
 	}
 }
 
-func (api *API) workflowRunResultsAdd() service.Handler {
+func (api *API) postWorkflowRunResultsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -1501,7 +1501,7 @@ func (api *API) workflowRunResultsAdd() service.Handler {
 	}
 }
 
-func (api *API) workflowRunArtifactCheckUpload() service.Handler {
+func (api *API) workflowRunArtifactCheckUploadHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]

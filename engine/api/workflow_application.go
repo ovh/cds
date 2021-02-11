@@ -122,7 +122,7 @@ func (api *API) releaseApplicationWorkflowHandler() service.Handler {
 			}
 		}
 
-		results, err := workflow.LoadRunResultsByRunIDAndType(api.mustDB(), workflowRun.ID, sdk.WorkflowRunResultTypeArtifact)
+		results, err := workflow.LoadRunResultsByRunIDAndType(ctx, api.mustDB(), workflowRun.ID, sdk.WorkflowRunResultTypeArtifact)
 		if err != nil {
 			return err
 		}
