@@ -159,6 +159,7 @@ type StorageConfiguration struct {
 	Local         *LocalStorageConfiguration  `toml:"local" json:"local,omitempty" mapstructure:"local"`
 	Swift         *SwiftStorageConfiguration  `toml:"swift" json:"swift,omitempty" mapstructure:"swift"`
 	Webdav        *WebdavStorageConfiguration `toml:"webdav" json:"webdav,omitempty" mapstructure:"webdav"`
+	S3            *S3StorageConfiguration     `toml:"s3" json:"s3,omitempty" mapstructure:"s3"`
 	CDS           *CDSStorageConfiguration    `toml:"cds" json:"cds,omitempty" mapstructure:"cds"`
 }
 
@@ -182,6 +183,22 @@ type SwiftStorageConfiguration struct {
 	Region          string                                  `toml:"region" json:"region"`
 	ContainerPrefix string                                  `toml:"container_prefix" json:"container_prefix"`
 	Encryption      []convergent.ConvergentEncryptionConfig `toml:"encryption" json:"-" mapstructure:"encryption"`
+}
+
+type S3StorageConfiguration struct {
+	Region              string                                  `toml:"region" json:"region"`
+	BucketName          string                                  `toml:"bucket_name" json:"bucket_name"`
+	Prefix              string                                  `toml:"prefix" json:"prefix"`
+	AuthFromEnvironment bool                                    `toml:"auth_from_env" json:"auth_from_env"`
+	SharedCredsFile     string                                  `toml:"shared_creds_file" json:"shared_creds_file"`
+	Profile             string                                  `toml:"profile" json:"profile"`
+	AccessKeyID         string                                  `toml:"access_key_id" json:"access_key_id"`
+	SecretAccessKey     string                                  `toml:"secret_access_key" json:"secret_access_key"`
+	SessionToken        string                                  `toml:"session_token" json:"session_token"`
+	Endpoint            string                                  `toml:"endpoint" json:"endpoint"`                 //optional
+	DisableSSL          bool                                    `toml:"disable_ssl" json:"disable_ssl"`           //optional
+	ForcePathStyle      bool                                    `toml:"force_path_style" json:"force_path_style"` //optional
+	Encryption          []convergent.ConvergentEncryptionConfig `toml:"encryption" json:"-" mapstructure:"encryption"`
 }
 
 type WebdavStorageConfiguration struct {
