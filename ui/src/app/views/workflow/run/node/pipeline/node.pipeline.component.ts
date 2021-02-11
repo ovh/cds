@@ -67,9 +67,9 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
-        let featCDN = this._store.selectSnapshot(FeatureState.featureProject(FeatureNames.CDNJobLogs,
+        const featCDN = this._store.selectSnapshot(FeatureState.featureProject(FeatureNames.CDNJobLogs,
             JSON.stringify({ project_key: this.project.key })))
-        this.cdnEnabled = featCDN?.enabled;
+        this.cdnEnabled = featCDN && (!featCDN?.exists || featCDN.enabled);
 
         this.nodeJobRunSubs = this.nodeJobRun$.subscribe(rj => {
             if (!rj && !this.currentJob) {

@@ -669,7 +669,7 @@ func (api *API) getProjectAccessHandler() service.Handler {
 		var enabled bool
 		switch sdk.CDNItemType(itemType) {
 		case sdk.CDNTypeItemWorkerCache:
-			enabled = featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeatureCDNArtifact, map[string]string{
+			_, enabled = featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeatureCDNArtifact, map[string]string{
 				"project_key": projectKey,
 			})
 		}

@@ -110,7 +110,7 @@ func (api *API) workflowRunCraft(ctx context.Context, id int64) error {
 		return sdk.WrapError(err, "unable to load workflow %d", run.WorkflowID)
 	}
 
-	enabled := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeaturePurgeMaxRuns, map[string]string{"project_key": wf.ProjectKey})
+	_, enabled := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeaturePurgeMaxRuns, map[string]string{"project_key": wf.ProjectKey})
 	if enabled {
 		countRuns, err := workflow.CountNotPendingWorkflowRunsByWorkflowID(api.mustDB(), run.WorkflowID)
 		if err != nil {

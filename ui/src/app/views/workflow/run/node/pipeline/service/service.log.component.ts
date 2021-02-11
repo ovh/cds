@@ -101,7 +101,9 @@ export class WorkflowServiceLogComponent implements OnInit, OnDestroy {
         let nodeRunId = (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowNodeRun.id;
         let runJobId = this.currentRunJobID;
 
-        const cdnEnabled = !!this._store.selectSnapshot(FeatureState.feature(FeatureNames.CDNJobLogs)).find(f => !!f.results.find(r => r.enabled && r.paramString === JSON.stringify({ project_key: projectKey })));
+        const featCDN = this._store.selectSnapshot(FeatureState.featureProject(FeatureNames.CDNJobLogs,
+            JSON.stringify({ project_key: projectKey })))
+        const cdnEnabled = featCDN && (!featCDN?.exists || featCDN.enabled);
 
         let logLink: CDNLogLink;
         if (cdnEnabled) {

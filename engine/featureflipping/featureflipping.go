@@ -23,13 +23,13 @@ func Exists(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, name
 	return f.ID != 0
 }
 
-func IsEnabled(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, name sdk.FeatureName, vars map[string]string) bool {
+func IsEnabled(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, name sdk.FeatureName, vars map[string]string) (exists bool, enabled bool) {
 	cachedFeatureI, has := cacheFeature.Get(string(name))
 	if !has {
 		f, err := LoadByName(ctx, m, db, name)
 		if err != nil {
 			log.Info(ctx, "featureflipping.IsEnabled> error: unable to load Feature '%s' from database: %v", name, err)
-			return false
+			return
 		}
 		cacheFeature.SetDefault(string(name), f)
 		cachedFeatureI = f
@@ -37,18 +37,26 @@ func IsEnabled(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, n
 		log.Debug(ctx, "featureflipping.IsEnabled> feature_flipping '%s' loaded from cache", name)
 	}
 
+	exists = true
+
 	cachedFeature := cachedFeatureI.(sdk.Feature)
 
 	luaRule, err := luascript.NewCheck()
 	if err != nil {
 		log.Error(ctx, "featureflipping.IsEnabled> error: unable to create new lua check: %v", err)
-		return false
+		return
 	}
 	luaRule.SetVariables(vars)
 	if err := luaRule.Perform(cachedFeature.Rule); err != nil {
 		log.Error(ctx, "featureflipping.IsEnabled> error: unable to perform lua check '%s': %v", name, err)
-		return false
+		return
 	}
 
-	return luaRule.Result
+	enabled = luaRule.Result
+	return
+}
+
+func InvalidateCache(ctx context.Context, name sdk.FeatureName) {
+	cacheFeature.Delete(string(name))
+	log.Debug(ctx, "featureflipping.InvalidateCache> clear cache for '%s' feature", name)
 }

@@ -17,9 +17,6 @@ import (
 
 func (s *Service) bulkDeleteItemsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if !s.Cfg.EnableLogProcessing {
-			return nil
-		}
 		var req sdk.CDNMarkDelete
 		if err := service.UnmarshalBody(r, &req); err != nil {
 			return err

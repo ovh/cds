@@ -7,7 +7,6 @@ import (
 	"crypto/sha512"
 	"encoding/base64"
 	"encoding/hex"
-	"github.com/ovh/symmecrypt/keyloader"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -17,6 +16,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/ovh/symmecrypt/keyloader"
 
 	"github.com/ovh/symmecrypt/ciphers/aesgcm"
 	"github.com/ovh/symmecrypt/convergent"
@@ -38,7 +39,6 @@ import (
 
 func TestPostUploadHandler(t *testing.T) {
 	s, db := newTestService(t)
-	s.Cfg.EnableLogProcessing = true
 
 	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
 

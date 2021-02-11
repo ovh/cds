@@ -10,14 +10,12 @@ import (
 	"github.com/rockbears/log"
 	"go.opencensus.io/stats"
 
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/cache"
-	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/telemetry"
 )
@@ -100,10 +98,6 @@ func MarkWorkflowRuns(ctx context.Context, db *gorp.DbMap, workflowRunsMarkToDel
 		return err
 	}
 	for _, wf := range wfs {
-		enabled := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, db, sdk.FeaturePurgeName, map[string]string{"project_key": wf.ProjectKey})
-		if enabled {
-			continue
-		}
 		tx, err := db.Begin()
 		if err != nil {
 			log.Error(ctx, "workflow.PurgeWorkflowRuns> error %v", err)

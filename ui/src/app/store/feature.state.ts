@@ -11,6 +11,7 @@ export class FeatureResults {
 export class FeatureResult {
     paramString: string;
     enabled: boolean;
+    exists: boolean;
 }
 
 export class FeatureStateModel {
@@ -26,14 +27,9 @@ export class FeatureStateModel {
 export class FeatureState {
     constructor() { }
 
-    static feature(key: FeatureNames) {
-        return createSelector([FeatureState], (state: FeatureStateModel) => state.features.filter(f => f.key === key));
-    }
-
     static featureProject(key: FeatureNames, params: string) {
         return createSelector([FeatureState], (state: FeatureStateModel) => state.features.find(f => f.key === key)?.results.find(r => r.paramString === params));
     }
-
 
     @Action(actionFeature.AddFeatureResult)
     addFeatureResult(ctx: StateContext<FeatureStateModel>, action: actionFeature.AddFeatureResult) {
@@ -44,7 +40,6 @@ export class FeatureState {
         let existingFeature = state.features.find(f => f.key === action.payload.key);
         if (existingFeature) {
             feature.results = existingFeature.results.filter(r => r.paramString !== action.payload.result.paramString);
-
         }
         feature.results.push(action.payload.result)
 

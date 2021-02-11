@@ -6,7 +6,6 @@ const (
 	FeatureCDNArtifact  FeatureName = "cdn-artifact"
 	FeatureCDNJobLogs   FeatureName = "cdn-job-logs"
 	FeatureMFARequired  FeatureName = "mfa_required"
-	FeaturePurgeName    FeatureName = "workflow-retention-policy"
 	FeaturePurgeMaxRuns FeatureName = "workflow-retention-maxruns"
 	FeatureTracing      FeatureName = "tracing"
 )
@@ -20,4 +19,5 @@ type Feature struct {
 type FeatureEnabledResponse struct {
 	Name    FeatureName `json:"name"`
 	Enabled bool        `json:"enabled"`
+	Exists  bool        `json:"exists"`
 }
