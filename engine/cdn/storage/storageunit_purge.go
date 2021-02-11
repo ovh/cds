@@ -37,6 +37,7 @@ func (x *RunningStorageUnits) Purge(ctx context.Context, s Interface) error {
 		if err != nil {
 			return err
 		}
+
 		if exists {
 			var hasItemUnit bool
 			if _, hasLocator := s.(StorageUnitWithLocator); hasLocator {
