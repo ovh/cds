@@ -120,7 +120,7 @@ func TestPostUploadHandler(t *testing.T) {
 	}
 
 	gock.New("http://lolcat.api").Post("/project/projKey/workflows/myworkflow/runs/0/artifacts/check").Reply(http.StatusNoContent)
-	gock.New("http://lolcat.api").Post("/project/projKey/workflows/myworkflow/runs/0/results/add").Reply(http.StatusNoContent)
+	gock.New("http://lolcat.api").Post("/project/projKey/workflows/myworkflow/runs/0/results").Reply(http.StatusNoContent)
 	gock.New("http://lolcat.api").Get("/worker/myworker").MatchParam("withKey", "true").Reply(200).JSON(worker)
 
 	workerSignature := cdn.Signature{

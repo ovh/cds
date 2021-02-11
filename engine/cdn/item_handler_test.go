@@ -217,7 +217,7 @@ func TestGetItemArtifactDownloadHandler(t *testing.T) {
 	gock.New("http://lolcat.api").Get("/project/" + projectKey + "/workflows/WfName/type/artifact/access").Reply(http.StatusOK).JSON(nil)
 
 	gock.New("http://lolcat.api").Post("/project/" + projectKey + "/workflows/WfName/runs/0/artifacts/check").Reply(http.StatusNoContent)
-	gock.New("http://lolcat.api").Post("/project/" + projectKey + "/workflows/WfName/runs/0/results/add").Reply(http.StatusNoContent)
+	gock.New("http://lolcat.api").Post("/project/" + projectKey + "/workflows/WfName/runs/0/results").Reply(http.StatusNoContent)
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
