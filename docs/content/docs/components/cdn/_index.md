@@ -25,7 +25,7 @@ You must have at least one storage unit, one file buffer and one log buffer to b
 ## Supported units
 * Buffer (type: log): Redis.
 * Buffer (type: file): Local.
-* Storage: Local, Swift, Webdav, CDS (cds unit is used for migration purpose and will be removed in future release).
+* Storage: Local, Swift, S3, Webdav, CDS (cds unit is used for migration purpose and will be removed in future release).
 
 
 ## Use case

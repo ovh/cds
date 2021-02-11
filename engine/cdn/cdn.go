@@ -17,6 +17,7 @@ import (
 	"github.com/ovh/cds/engine/cdn/storage/cds"
 	_ "github.com/ovh/cds/engine/cdn/storage/local"
 	_ "github.com/ovh/cds/engine/cdn/storage/redis"
+	_ "github.com/ovh/cds/engine/cdn/storage/s3"
 	_ "github.com/ovh/cds/engine/cdn/storage/swift"
 	"github.com/ovh/cds/engine/database"
 	"github.com/ovh/cds/engine/gorpmapper"

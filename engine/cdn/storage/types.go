@@ -186,18 +186,18 @@ type SwiftStorageConfiguration struct {
 }
 
 type S3StorageConfiguration struct {
-	Region              string                                  `toml:"region" json:"region"`
-	BucketName          string                                  `toml:"bucket_name" json:"bucket_name"`
-	Prefix              string                                  `toml:"prefix" json:"prefix"`
-	AuthFromEnvironment bool                                    `toml:"auth_from_env" json:"auth_from_env"`
-	SharedCredsFile     string                                  `toml:"shared_creds_file" json:"shared_creds_file"`
-	Profile             string                                  `toml:"profile" json:"profile"`
-	AccessKeyID         string                                  `toml:"access_key_id" json:"access_key_id"`
-	SecretAccessKey     string                                  `toml:"secret_access_key" json:"secret_access_key"`
-	SessionToken        string                                  `toml:"session_token" json:"session_token"`
-	Endpoint            string                                  `toml:"endpoint" json:"endpoint"`                 //optional
-	DisableSSL          bool                                    `toml:"disable_ssl" json:"disable_ssl"`           //optional
-	ForcePathStyle      bool                                    `toml:"force_path_style" json:"force_path_style"` //optional
+	BucketName          string                                  `toml:"bucketName" json:"bucketName" comment:"Name of the S3 bucket to use when storing artifacts"`
+	Region              string                                  `toml:"region" json:"region" default:"us-east-1" comment:"The AWS region"`
+	Prefix              string                                  `toml:"prefix" json:"prefix" comment:"A subfolder of the bucket to store objects in, if left empty will store at the root of the bucket"`
+	AuthFromEnvironment bool                                    `toml:"authFromEnv" json:"authFromEnv" default:"false" comment:"Pull S3 auth information from env vars AWS_SECRET_ACCESS_KEY and AWS_SECRET_KEY_ID"`
+	SharedCredsFile     string                                  `toml:"sharedCredsFile" json:"sharedCredsFile" comment:"The path for the AWS credential file, used with profile"`
+	Profile             string                                  `toml:"profile" json:"profile" comment:"The profile within the AWS credentials file to use"`
+	AccessKeyID         string                                  `toml:"accessKeyId" json:"accessKeyId" comment:"A static AWS Secret Key ID"`
+	SecretAccessKey     string                                  `toml:"secretAccessKey" json:"-" comment:"A static AWS Secret Access Key"`
+	SessionToken        string                                  `toml:"sessionToken" json:"-" comment:"A static AWS session token"`
+	Endpoint            string                                  `toml:"endpoint" json:"endpoint" comment:"S3 API Endpoint (optional)" commented:"true"` //optional
+	DisableSSL          bool                                    `toml:"disableSSL" json:"disableSSL" commented:"true"`                                  //optional
+	ForcePathStyle      bool                                    `toml:"forcePathStyle" json:"forcePathStyle" commented:"true"`                          //optional
 	Encryption          []convergent.ConvergentEncryptionConfig `toml:"encryption" json:"-" mapstructure:"encryption"`
 }
 
