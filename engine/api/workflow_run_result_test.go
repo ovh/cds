@@ -65,7 +65,7 @@ func Test_getWorkflowRunAndNodeRunResults(t *testing.T) {
 		"nodeRunID":        fmt.Sprintf("%d", wrDB.WorkflowNodeRuns[wrDB.Workflow.WorkflowData.Node.ID][0].ID),
 	}
 
-	uri := router.GetRoute("GET", api.getWorkflowNodeRunResults, vars)
+	uri := router.GetRoute("GET", api.getWorkflowNodeRunResultsHandler, vars)
 	test.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
 
@@ -92,7 +92,7 @@ func Test_getWorkflowRunAndNodeRunResults(t *testing.T) {
 		"number":           fmt.Sprintf("%d", wrDB.Number),
 	}
 
-	uriRun := router.GetRoute("GET", api.getWorkflowRunResults, varsRun)
+	uriRun := router.GetRoute("GET", api.getWorkflowRunResultsHandler, varsRun)
 	test.NotEmpty(t, uri)
 	reqRun := assets.NewAuthentifiedRequest(t, u, pass, "GET", uriRun, nil)
 
@@ -176,7 +176,7 @@ func Test_workflowRunResultsAdd(t *testing.T) {
 		DataRaw:           bts,
 	}
 
-	uri := router.GetRoute("POST", api.workflowRunResultsAdd, vars)
+	uri := router.GetRoute("POST", api.postWorkflowRunResultsHandler, vars)
 	test.NotEmpty(t, uri)
 	req := assets.NewJWTAuthentifiedRequest(t, jwtCDN, "POST", uri, addResultRequest)
 
@@ -259,7 +259,7 @@ func Test_workflowRunArtifactCheckUpload(t *testing.T) {
 		ProjectKey:   key,
 	}
 
-	uri := router.GetRoute("POST", api.workflowRunArtifactCheckUpload, vars)
+	uri := router.GetRoute("POST", api.workflowRunArtifactCheckUploadHandler, vars)
 	test.NotEmpty(t, uri)
 	req := assets.NewJWTAuthentifiedRequest(t, jwtCDN, "POST", uri, checkRequest)
 
