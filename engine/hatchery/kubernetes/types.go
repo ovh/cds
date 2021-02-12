@@ -1,17 +1,11 @@
 package kubernetes
 
 import (
-	"os/exec"
 	"regexp"
-	"sync"
-	"time"
 
 	"github.com/ovh/cds/engine/service"
 
 	hatcheryCommon "github.com/ovh/cds/engine/hatchery"
-	"github.com/ovh/cds/sdk/cdsclient"
-
-	"k8s.io/client-go/kubernetes"
 )
 
 const (
@@ -53,16 +47,6 @@ type HatcheryConfiguration struct {
 // HatcheryKubernetes implements HatcheryMode interface for local usage
 type HatcheryKubernetes struct {
 	hatcheryCommon.Common
-	Config HatcheryConfiguration
-	sync.Mutex
-	workers   map[string]workerCmd
-	client    cdsclient.Interface
-	os        string
-	arch      string
-	k8sClient *kubernetes.Clientset
-}
-
-type workerCmd struct {
-	cmd     *exec.Cmd
-	created time.Time
+	Config     HatcheryConfiguration
+	kubeClient KubernetesClient
 }
