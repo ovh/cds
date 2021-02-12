@@ -1,14 +1,15 @@
 package vsphere
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"time"
 )
 
 // for each ip in the range, look for the first free ones
-func (h *HatcheryVSphere) findAvailableIP(workerName string) (string, error) {
-	srvs := h.getServers()
+func (h *HatcheryVSphere) findAvailableIP(ctx context.Context, workerName string) (string, error) {
+	srvs := h.getServers(ctx)
 
 	ipsInfos.mu.Lock()
 	defer ipsInfos.mu.Unlock()

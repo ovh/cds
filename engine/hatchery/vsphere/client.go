@@ -20,7 +20,7 @@ import (
 	"github.com/ovh/cds/sdk/hatchery"
 )
 
-const reqTimeout = 7 * time.Second
+const reqTimeout = 20 * time.Second
 
 //This a embedded cache for servers list
 var lservers = struct {
@@ -32,9 +32,8 @@ var lservers = struct {
 }
 
 // get all servers on our host
-func (h *HatcheryVSphere) getServers() []mo.VirtualMachine {
+func (h *HatcheryVSphere) getServers(ctx context.Context) []mo.VirtualMachine {
 	var vms []mo.VirtualMachine
-	ctx := context.Background()
 	ctxC, cancelC := context.WithTimeout(ctx, reqTimeout)
 	defer cancelC()
 
@@ -84,7 +83,7 @@ var lmodels = struct {
 
 // get all servers tagged with model on our host
 func (h *HatcheryVSphere) getModels(ctx context.Context) []mo.VirtualMachine {
-	srvs := h.getServers()
+	srvs := h.getServers(ctx)
 	models := make([]mo.VirtualMachine, len(srvs))
 
 	if len(srvs) == 0 {
@@ -189,8 +188,7 @@ func (h *HatcheryVSphere) deleteServer(s mo.VirtualMachine) error {
 }
 
 // createVMConfig create a basic configuration in order to create a vm
-func (h *HatcheryVSphere) createVMConfig(vm *object.VirtualMachine, annot annotation, workerName string) (*types.VirtualMachineCloneSpec, *object.Folder, error) {
-	ctx := context.Background()
+func (h *HatcheryVSphere) createVMConfig(ctx context.Context, vm *object.VirtualMachine, annot annotation, workerName string) (*types.VirtualMachineCloneSpec, *object.Folder, error) {
 	ctxC, cancelC := context.WithTimeout(ctx, reqTimeout)
 	defer cancelC()
 
@@ -198,6 +196,7 @@ func (h *HatcheryVSphere) createVMConfig(vm *object.VirtualMachine, annot annota
 	if errF != nil {
 		return nil, folder, sdk.WrapError(errF, "createVMConfig> cannot find folder")
 	}
+
 	ctxC, cancelC = context.WithTimeout(ctx, reqTimeout)
 	defer cancelC()
 	devices, errD := vm.Device(ctxC)
@@ -215,7 +214,7 @@ func (h *HatcheryVSphere) createVMConfig(vm *object.VirtualMachine, annot annota
 
 	if card == nil {
 		log.Warn(ctx, "createVMConfig> no network device found")
-		return nil, folder, fmt.Errorf("no network device found")
+		return nil, folder, sdk.WithStack(fmt.Errorf("no network device found"))
 	}
 
 	ctxC, cancelC = context.WithTimeout(ctx, reqTimeout)
@@ -288,7 +287,7 @@ func (h *HatcheryVSphere) createVMConfig(vm *object.VirtualMachine, annot annota
 	// Ip len(ipsInfos.ips) > 0, specify one of those
 	if len(ipsInfos.ips) > 0 {
 		var err error
-		ip, err := h.findAvailableIP(workerName)
+		ip, err := h.findAvailableIP(ctx, workerName)
 		if err != nil {
 			return nil, folder, sdk.WithStack(err)
 		}
@@ -327,8 +326,7 @@ func (h *HatcheryVSphere) createVMConfig(vm *object.VirtualMachine, annot annota
 }
 
 // launchClientOp launch a script on the virtual machine given in parameters
-func (h *HatcheryVSphere) launchClientOp(vm *object.VirtualMachine, model sdk.ModelVirtualMachine, script string, env []string) (int64, error) {
-	ctx := context.Background()
+func (h *HatcheryVSphere) launchClientOp(ctx context.Context, vm *object.VirtualMachine, model sdk.ModelVirtualMachine, script string, env []string) (int64, error) {
 	ctxC, cancelC := context.WithTimeout(ctx, reqTimeout)
 	defer cancelC()
 

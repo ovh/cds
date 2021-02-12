@@ -69,6 +69,7 @@ func workerStarter(ctx context.Context, h Interface, workerNum string, jobs <-ch
 			// Get a JWT to authentified the worker
 			jwt, err := NewWorkerToken(h.Service().Name, h.GetPrivateKey(), time.Now().Add(1*time.Hour), arg)
 			if err != nil {
+				ctx = sdk.ContextWithStacktrace(ctx, err)
 				var spawnError = sdk.SpawnErrorForm{
 					Error: fmt.Sprintf("cannot spawn worker for register: %v", err),
 				}
@@ -80,6 +81,7 @@ func workerStarter(ctx context.Context, h Interface, workerNum string, jobs <-ch
 			arg.WorkerToken = jwt
 
 			if err := h.SpawnWorker(ctx, arg); err != nil {
+				ctx = sdk.ContextWithStacktrace(ctx, err)
 				log.Warn(ctx, "workerRegister> cannot spawn worker for register:%s err:%v", m.Name, err)
 				var spawnError = sdk.SpawnErrorForm{
 					Error: fmt.Sprintf("cannot spawn worker for register: %v", err),
@@ -176,6 +178,7 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 	// Get a JWT to authentified the worker
 	jwt, err := NewWorkerToken(h.Service().Name, h.GetPrivateKey(), time.Now().Add(1*time.Hour), arg)
 	if err != nil {
+		ctx = sdk.ContextWithStacktrace(ctx, err)
 		var spawnError = sdk.SpawnErrorForm{
 			Error: fmt.Sprintf("cannot spawn worker for register: %v", err),
 		}
@@ -190,6 +193,7 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 	errSpawn := h.SpawnWorker(ctx, arg)
 	next()
 	if errSpawn != nil {
+		ctx = sdk.ContextWithStacktrace(ctx, errSpawn)
 		ctxSendSpawnInfo, next = telemetry.Span(ctxJob, "hatchery.QueueJobSendSpawnInfo", telemetry.Tag("status", "errSpawn"), telemetry.Tag("msg", sdk.MsgSpawnInfoHatcheryErrorSpawn.ID))
 		SendSpawnInfo(ctxSendSpawnInfo, h, j.id, sdk.SpawnMsg{
 			ID:   sdk.MsgSpawnInfoHatcheryErrorSpawn.ID,
