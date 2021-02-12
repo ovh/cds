@@ -116,10 +116,10 @@ func (s *Service) cleanItemToDelete(ctx context.Context) error {
 				log.Debug(ctx, "cdn:purge:item: %d unit items to delete for item %q", nbItemUnits, id)
 			} else {
 				if err := s.LogCache.Remove([]string{id}); err != nil {
-					return sdk.WrapError(err, "cdn:purge:item: unable to remove from logCache for item %q")
+					return sdk.WrapError(err, "cdn:purge:item: unable to remove from logCache for item %q", id)
 				}
 				if err := item.DeleteByID(s.mustDBWithCtx(ctx), id); err != nil {
-					return sdk.WrapError(err, "cdn:purge:item: unable to delete from item with id %q")
+					return sdk.WrapError(err, "cdn:purge:item: unable to delete from item with id %q", id)
 				}
 				for _, sto := range s.Units.Storages {
 					s.Units.RemoveFromRedisSyncQueue(ctx, sto, id)
