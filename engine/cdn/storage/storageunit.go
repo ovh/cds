@@ -208,6 +208,18 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 				return nil, err
 			}
 			storageUnit = sd
+		case cfg.S3 != nil:
+			d := GetDriver("s3")
+			sd, is := d.(StorageUnit)
+			if !is {
+				return nil, sdk.WithStack(fmt.Errorf("s3 driver is not a storage unit driver"))
+			}
+			sd.New(gorts, cfg.SyncParallel, float64(cfg.SyncBandwidth)*1024*1024) // convert from MBytes to Bytes
+
+			if err := sd.Init(ctx, cfg.S3); err != nil {
+				return nil, err
+			}
+			storageUnit = sd
 		default:
 			return nil, sdk.WithStack(errors.New("unsupported storage unit"))
 		}

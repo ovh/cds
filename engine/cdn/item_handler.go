@@ -95,11 +95,9 @@ func (s *Service) getItemHandler() service.Handler {
 			if err != nil {
 				return err
 			}
-
 			if data.Consumer.AuthentifiedUser.Ring != sdk.UserRingAdmin {
 				return sdk.WithStack(sdk.ErrUnauthorized)
 			}
-
 			opts = append(opts, gorpmapper.GetOptions.WithDecryption)
 		}
 
@@ -120,7 +118,6 @@ func (s *Service) getItemHandler() service.Handler {
 				return err
 			}
 		}
-
 		if iu != nil {
 			res.Location[bufferUnit.Name()] = *iu
 		}

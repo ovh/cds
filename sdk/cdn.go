@@ -38,7 +38,7 @@ type CDNItemLinks struct {
 }
 
 func (c CDNItem) MarshalJSON() ([]byte, error) {
-	type Alias CDNItem
+	type Alias CDNItem // prevent recursion
 	itemalias := Alias(c)
 	apiRefBts, err := json.Marshal(itemalias.APIRef)
 	if err != nil {
@@ -227,8 +227,8 @@ func NewCDNLogApiRef(signature cdn.Signature) CDNApiRef {
 }
 
 type CDNItemResume struct {
-	CDNItem
-	Location map[string]CDNItemUnit `json:"location,omitempty"`
+	CDNItem  CDNItem                `json:"item"` // Here we can't use nested struct because of the custom CDNItem marshaller
+	Location map[string]CDNItemUnit `json:"item_units"`
 }
 
 func (a *CDNLogAPIRef) ToFilename() string {
