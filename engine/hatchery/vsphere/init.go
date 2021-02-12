@@ -73,7 +73,7 @@ func (h *HatcheryVSphere) newClient(ctx context.Context) (*govmomi.Client, error
 // add workername on ip belong to openstack-ip-range
 // this func is called once, when hatchery is starting
 func (h *HatcheryVSphere) initIPStatus(ctx context.Context) error {
-	srvs := h.getServers()
+	srvs := h.getServers(ctx)
 	log.Info(ctx, "initIPStatus> %d srvs", len(srvs))
 ipLoop:
 	for ip := range ipsInfos.ips {
