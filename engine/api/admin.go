@@ -284,7 +284,7 @@ func (api *API) getAdminFeatureFlipping() service.Handler {
 func (api *API) getAdminFeatureFlippingByName() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		name := vars["name"]
+		name := sdk.FeatureName(vars["name"])
 
 		f, err := featureflipping.LoadByName(ctx, gorpmapping.Mapper, api.mustDB(), name)
 		if err != nil {
@@ -311,7 +311,7 @@ func (api *API) postAdminFeatureFlipping() service.Handler {
 func (api *API) putAdminFeatureFlipping() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		name := vars["name"]
+		name := sdk.FeatureName(vars["name"])
 
 		var f sdk.Feature
 		if err := service.UnmarshalBody(r, &f); err != nil {
@@ -332,6 +332,8 @@ func (api *API) putAdminFeatureFlipping() service.Handler {
 			return err
 		}
 
+		featureflipping.InvalidateCache(ctx, f.Name)
+
 		return service.WriteJSON(w, f, http.StatusOK)
 	}
 }
@@ -339,16 +341,18 @@ func (api *API) putAdminFeatureFlipping() service.Handler {
 func (api *API) deleteAdminFeatureFlipping() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		name := vars["name"]
+		name := sdk.FeatureName(vars["name"])
 
-		oldF, err := featureflipping.LoadByName(ctx, gorpmapping.Mapper, api.mustDB(), name)
+		feature, err := featureflipping.LoadByName(ctx, gorpmapping.Mapper, api.mustDB(), name)
 		if err != nil {
 			return err
 		}
 
-		if err := featureflipping.Delete(api.mustDB(), oldF.ID); err != nil {
+		if err := featureflipping.Delete(api.mustDB(), feature.ID); err != nil {
 			return err
 		}
+
+		featureflipping.InvalidateCache(ctx, feature.Name)
 
 		return nil
 	}

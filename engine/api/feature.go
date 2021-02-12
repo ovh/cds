@@ -15,18 +15,19 @@ import (
 func (api *API) isFeatureEnabledHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		name := vars["name"]
+		name := sdk.FeatureName(vars["name"])
 
 		var params map[string]string
 		if err := service.UnmarshalBody(r, &params); err != nil {
 			return err
 		}
 
-		enabled := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), name, params)
+		exists, enabled := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), name, params)
 
 		return service.WriteJSON(w, sdk.FeatureEnabledResponse{
 			Name:    name,
 			Enabled: enabled,
+			Exists:  exists,
 		}, http.StatusOK)
 	}
 }

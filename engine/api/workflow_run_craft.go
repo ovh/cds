@@ -12,7 +12,6 @@ import (
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/purge"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/featureflipping"
@@ -111,7 +110,7 @@ func (api *API) workflowRunCraft(ctx context.Context, id int64) error {
 		return sdk.WrapError(err, "unable to load workflow %d", run.WorkflowID)
 	}
 
-	enabled := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), purge.FeatureMaxRuns, map[string]string{"project_key": wf.ProjectKey})
+	_, enabled := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeaturePurgeMaxRuns, map[string]string{"project_key": wf.ProjectKey})
 	if enabled {
 		countRuns, err := workflow.CountNotPendingWorkflowRunsByWorkflowID(api.mustDB(), run.WorkflowID)
 		if err != nil {

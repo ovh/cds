@@ -131,7 +131,7 @@ func initBuiltinConsumersFromStartupConfig(ctx context.Context, tx gorpmapper.Sq
 		case StartupConfigConsumerTypeCDN:
 			scopes = sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeWorker, sdk.AuthConsumerScopeRunExecution)
 		case StartupConfigConsumerTypeCDNStorageCDS:
-			scopes = sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeWorker, sdk.AuthConsumerScopeRunExecution)
+			scopes = sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject, sdk.AuthConsumerScopeRun)
 		case StartupConfigConsumerTypeVCS:
 			scopes = sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeProject, sdk.AuthConsumerScopeRun)
 		case StartupConfigConsumerTypeRepositories:
@@ -209,13 +209,13 @@ func (api *API) postAuthLocalSigninHandler() service.Handler {
 		}
 
 		// Generate a new session for consumer
-		session, err := authentication.NewSession(ctx, tx, consumer, driver.GetSessionDuration(userInfo, *consumer), false)
+		session, mfaExpiration, err := authentication.NewSession(ctx, tx, consumer, driver.GetSessionDuration(userInfo, *consumer), false)
 		if err != nil {
 			return err
 		}
 
 		// Generate a jwt for current session
-		jwt, err := authentication.NewSessionJWT(session)
+		jwt, err := authentication.NewSessionJWT(session, mfaExpiration)
 		if err != nil {
 			return err
 		}
@@ -340,13 +340,13 @@ func (api *API) postAuthLocalVerifyHandler() service.Handler {
 		}
 
 		// Generate a new session for consumer
-		session, err := authentication.NewSession(ctx, tx, consumer, driver.GetSessionDuration(userInfo, *consumer), false)
+		session, mfaExpiration, err := authentication.NewSession(ctx, tx, consumer, driver.GetSessionDuration(userInfo, *consumer), false)
 		if err != nil {
 			return err
 		}
 
 		// Generate a jwt for current session
-		jwt, err := authentication.NewSessionJWT(session)
+		jwt, err := authentication.NewSessionJWT(session, mfaExpiration)
 		if err != nil {
 			return err
 		}
@@ -513,13 +513,13 @@ func (api *API) postAuthLocalResetHandler() service.Handler {
 		}
 
 		// Generate a new session for consumer
-		session, err := authentication.NewSession(ctx, tx, consumer, driver.GetSessionDuration(userInfo, *consumer), false)
+		session, mfaExpiration, err := authentication.NewSession(ctx, tx, consumer, driver.GetSessionDuration(userInfo, *consumer), false)
 		if err != nil {
 			return err
 		}
 
 		// Generate a jwt for current session
-		jwt, err := authentication.NewSessionJWT(session)
+		jwt, err := authentication.NewSessionJWT(session, mfaExpiration)
 		if err != nil {
 			return err
 		}

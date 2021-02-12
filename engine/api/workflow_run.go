@@ -23,7 +23,6 @@ import (
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/purge"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/featureflipping"
@@ -1104,28 +1103,6 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 		return
 	}
 	workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, *p, report)
-
-	enabled := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), purge.FeaturePurgeName, map[string]string{"project_key": wf.ProjectKey})
-	if !enabled {
-		// Purge workflow run
-		api.GoRoutines.Exec(ctx, "workflow.PurgeWorkflowRun", func(ctx context.Context) {
-			tx, err := api.mustDB().Begin()
-			if err != nil {
-				log.Error(ctx, "workflow.PurgeWorkflowRun> error %v", err)
-				return
-			}
-			defer tx.Rollback() // nolint
-			if err := workflow.PurgeWorkflowRun(ctx, tx, *wf); err != nil {
-				log.Error(ctx, "workflow.PurgeWorkflowRun> error %v", err)
-				return
-			}
-			if err := tx.Commit(); err != nil {
-				log.Error(ctx, "workflow.PurgeWorkflowRun> unable to commit transaction:  %v", err)
-				return
-			}
-			workflow.CountWorkflowRunsMarkToDelete(ctx, api.mustDB(), api.Metrics.WorkflowRunsMarkToDelete)
-		})
-	}
 
 	// Update parent
 	for i := range report.WorkflowRuns() {

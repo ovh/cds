@@ -286,7 +286,7 @@ func workflowLogDownloadRun(v cli.Values) error {
 		}
 	}
 
-	feature, err := client.FeatureEnabled("cdn-job-logs", map[string]string{
+	feature, err := client.FeatureEnabled(sdk.FeatureCDNJobLogs, map[string]string{
 		"project_key": projectKey,
 	})
 	if err != nil {
@@ -301,7 +301,7 @@ func workflowLogDownloadRun(v cli.Values) error {
 
 		// If cdn logs is enabled for current project, first check if logs can be downloaded from it
 		var link *sdk.CDNLogLink
-		if feature.Enabled {
+		if !feature.Exists || feature.Enabled {
 			if log.detailType == workflowLogDetailTypeService {
 				link, err = client.WorkflowNodeRunJobServiceLink(context.Background(), projectKey, workflowName, log.runID, log.jobID, log.serviceName)
 			} else {
@@ -369,16 +369,6 @@ var workflowLogStreamCmd = cli.Command{
 func workflowLogStreamRun(v cli.Values) error {
 	projectKey := v.GetString(_ProjectKey)
 	workflowName := v.GetString(_WorkflowName)
-
-	feature, err := client.FeatureEnabled("cdn-job-logs", map[string]string{
-		"project_key": projectKey,
-	})
-	if err != nil {
-		return err
-	}
-	if !feature.Enabled {
-		return sdk.WithStack(fmt.Errorf("cdn log processing is not active for given project"))
-	}
 
 	runNumber, err := workflowLogSearchNumber(v)
 	if err != nil {

@@ -1,4 +1,6 @@
+import { FeatureNames } from 'app/service/feature/feature.service';
 export class FeatureEnabledResponse {
-    name: string;
+    name: FeatureNames;
     enabled: boolean;
+    exists: boolean;
 }

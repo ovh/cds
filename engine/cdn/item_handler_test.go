@@ -33,7 +33,6 @@ import (
 
 func TestMarkItemToDeleteHandler(t *testing.T) {
 	s, db := newTestService(t)
-	s.Cfg.EnableLogProcessing = true
 	cdntest.ClearItem(t, context.TODO(), s.Mapper, db)
 
 	item1 := sdk.CDNItem{
@@ -337,7 +336,6 @@ func TestGetItemArtifactDownloadHandler(t *testing.T) {
 
 func TestGetItemsArtefactHandler(t *testing.T) {
 	s, db := newTestService(t)
-	s.Cfg.EnableLogProcessing = true
 
 	cdntest.ClearItem(t, context.TODO(), s.Mapper, db)
 	cdntest.ClearItem(t, context.TODO(), s.Mapper, db)

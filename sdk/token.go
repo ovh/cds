@@ -500,9 +500,9 @@ type AuthSession struct {
 
 // AuthSessionJWTClaims is the specific claims format for JWT session.
 type AuthSessionJWTClaims struct {
-	ID      string
-	MFA     bool
-	TokenID string
+	ID          string
+	MFAExpireAt int64
+	TokenID     string
 	jwt.StandardClaims
 }
 

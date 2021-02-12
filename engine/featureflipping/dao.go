@@ -18,7 +18,7 @@ func LoadAll(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor) ([]
 	return result, nil
 }
 
-func LoadByName(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, name string) (sdk.Feature, error) {
+func LoadByName(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, name sdk.FeatureName) (sdk.Feature, error) {
 	query := gorpmapper.NewQuery("SELECT * FROM feature_flipping WHERE name = $1").Args(name).Limit(1)
 	var f sdk.Feature
 	found, err := m.Get(ctx, db, query, &f)

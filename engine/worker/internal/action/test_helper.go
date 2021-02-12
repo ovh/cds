@@ -38,7 +38,7 @@ func (w *TestWorker) ArtifactSignature(artifactName string, perm uint32) (string
 	return "mysignature", nil
 }
 
-func (w *TestWorker) FeatureEnabled(featureName string) bool {
+func (w *TestWorker) FeatureEnabled(featureName sdk.FeatureName) bool {
 	return false
 }
 

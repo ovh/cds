@@ -91,9 +91,6 @@ func (d authDriver) GetSigninURI(state sdk.AuthSigninConsumerToken) (sdk.AuthDri
 }
 
 func (d authDriver) GetSessionDuration(req sdk.AuthDriverUserInfo, c sdk.AuthConsumer) time.Duration {
-	if d.Config.MFASupportEnabled && req.MFA {
-		return time.Hour
-	}
 	return 24 * time.Hour
 }
 

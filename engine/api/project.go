@@ -669,7 +669,7 @@ func (api *API) getProjectAccessHandler() service.Handler {
 		var enabled bool
 		switch sdk.CDNItemType(itemType) {
 		case sdk.CDNTypeItemWorkerCache:
-			enabled = featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeatureCDNArtifact, map[string]string{
+			_, enabled = featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeatureCDNArtifact, map[string]string{
 				"project_key": projectKey,
 			})
 		}
@@ -711,7 +711,7 @@ func (api *API) getProjectAccessHandler() service.Handler {
 		}
 		consumer.Worker = worker
 
-		maintainerOrAdmin := consumer.Maintainer()
+		maintainerOrAdmin := consumer.Maintainer() || consumer.Admin()
 
 		perms, err := permission.LoadProjectMaxLevelPermission(ctx, api.mustDB(), []string{projectKey}, consumer.GetGroupIDs())
 		if err != nil {

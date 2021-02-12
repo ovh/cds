@@ -29,7 +29,7 @@ func (s *Service) itemPurge(ctx context.Context) {
 		case <-tickPurge.C:
 			if err := s.cleanItemToDelete(ctx); err != nil {
 				ctx = sdk.ContextWithStacktrace(ctx, err)
-				log.Error(ctx, err.Error())
+				log.Error(ctx, "cdn:ItemPurge: error on cleanItemToDelete: %v", err)
 			}
 		}
 	}
@@ -49,11 +49,11 @@ func (s *Service) itemsGC(ctx context.Context) {
 		case <-tickGC.C:
 			if err := s.cleanBuffer(ctx); err != nil {
 				ctx = sdk.ContextWithStacktrace(ctx, err)
-				log.Error(ctx, err.Error())
+				log.Error(ctx, "cdn:CompleteWaitingItems: cleanBuffer err: %v", err)
 			}
 			if err := s.cleanWaitingItem(ctx, ItemLogGC); err != nil {
 				ctx = sdk.ContextWithStacktrace(ctx, err)
-				log.Error(ctx, err.Error())
+				log.Error(ctx, "cdn:CompleteWaitingItems: ContextWithStacktrace err: %v", err)
 			}
 		}
 	}
@@ -97,27 +97,29 @@ func (s *Service) cleanItemToDelete(ctx context.Context) error {
 	for _, id := range ids {
 		nbUnitItemToDelete, err := s.markUnitItemToDeleteByItemID(ctx, id)
 		if err != nil {
-			log.Error(ctx, "unable to mark unit item %q to delete: %v", id, err)
+			log.Error(ctx, "cdn:purge:item: unable to mark unit item %q to delete: %v", id, err)
 			continue
 		}
+
+		log.Debug(ctx, "cdn:purge:item: %d unit items to delete for item %q", nbUnitItemToDelete, id)
 
 		// If and only If there is not more unit item to mark as delete,
 		// let's delete the item in database
 		if nbUnitItemToDelete == 0 {
 			nbItemUnits, err := storage.CountItemUnitsToDeleteByItemID(s.mustDBWithCtx(ctx), id)
 			if err != nil {
-				log.Error(ctx, "unable to count unit item %q to delete: %v", id, err)
+				log.Error(ctx, "cdn:purge:item: unable to count unit item %q to delete: %v", id, err)
 				continue
 			}
 
 			if nbItemUnits > 0 {
-				log.Debug(ctx, "cdn:purge:item: %d unit items to delete for item %s", nbItemUnits, id)
+				log.Debug(ctx, "cdn:purge:item: %d unit items to delete for item %q", nbItemUnits, id)
 			} else {
 				if err := s.LogCache.Remove([]string{id}); err != nil {
-					return err
+					return sdk.WrapError(err, "cdn:purge:item: unable to remove from logCache for item %q")
 				}
 				if err := item.DeleteByID(s.mustDBWithCtx(ctx), id); err != nil {
-					return err
+					return sdk.WrapError(err, "cdn:purge:item: unable to delete from item with id %q")
 				}
 				for _, sto := range s.Units.Storages {
 					s.Units.RemoveFromRedisSyncQueue(ctx, sto, id)
@@ -125,10 +127,7 @@ func (s *Service) cleanItemToDelete(ctx context.Context) error {
 
 				log.Debug(ctx, "cdn:purge:item: %s item deleted", id)
 			}
-			continue
 		}
-
-		log.Debug(ctx, "cdn:purge:item: %d unit items to delete for item %s", nbUnitItemToDelete, id)
 	}
 	return nil
 }

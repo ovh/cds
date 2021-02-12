@@ -12,7 +12,7 @@ import { Select, Store } from '@ngxs/store';
 import { SuiPopup } from '@richardlt/ng2-semantic-ui';
 import { Project } from 'app/model/project.model';
 import { Workflow } from 'app/model/workflow.model';
-import { FeatureService } from 'app/service/feature/feature.service';
+import { FeatureNames, FeatureService } from 'app/service/feature/feature.service';
 import { WorkflowCoreService } from 'app/service/workflow/workflow.core.service';
 import { AsCodeSaveModalComponent } from 'app/shared/ascode/save-modal/ascode.save-modal.component';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
@@ -97,39 +97,33 @@ export class WorkflowComponent implements OnInit, OnDestroy {
             }
 
             let data = { project_key: this.project.key };
-            this._featureService.isEnabled('cdn-artifact', data).subscribe(f => {
+            this._featureService.isEnabled(FeatureNames.CDNArtifact, data).subscribe(f => {
                 this._store.dispatch(new AddFeatureResult(<FeaturePayload>{
                     key: f.name,
                     result: {
                         paramString: JSON.stringify(data),
-                        enabled: f.enabled
+                        enabled: f.enabled,
+                        exists: f.exists
                     }
                 }));
             });
-            this._featureService.isEnabled('cdn-job-logs', data).subscribe(f => {
+            this._featureService.isEnabled(FeatureNames.CDNJobLogs, data).subscribe(f => {
                 this._store.dispatch(new AddFeatureResult(<FeaturePayload>{
                     key: f.name,
                     result: {
                         paramString: JSON.stringify(data),
-                        enabled: f.enabled
+                        enabled: f.enabled,
+                        exists: f.exists
                     }
                 }));
             });
-            this._featureService.isEnabled('workflow-retention-policy', data).subscribe(f => {
+            this._featureService.isEnabled(FeatureNames.WorkflowRetentionMaxRuns, data).subscribe(f => {
                 this._store.dispatch(new AddFeatureResult(<FeaturePayload>{
                     key: f.name,
                     result: {
                         paramString: JSON.stringify(data),
-                        enabled: f.enabled
-                    }
-                }));
-            });
-            this._featureService.isEnabled('workflow-retention-maxruns', data).subscribe(f => {
-                this._store.dispatch(new AddFeatureResult(<FeaturePayload>{
-                    key: f.name,
-                    result: {
-                        paramString: JSON.stringify(data),
-                        enabled: f.enabled
+                        enabled: f.enabled,
+                        exists: f.exists
                     }
                 }));
             });

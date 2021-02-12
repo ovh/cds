@@ -35,10 +35,6 @@ func addMonitoringLine(nb int64, text string, err error, status string) sdk.Moni
 func (s *Service) Status(ctx context.Context) *sdk.MonitoringStatus {
 	m := s.NewMonitoringStatus()
 
-	if !s.Cfg.EnableLogProcessing {
-		return m
-	}
-
 	m.AddLine(s.LogCache.Status(ctx)...)
 
 	for _, st := range s.Units.Storages {

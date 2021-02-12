@@ -2,6 +2,7 @@ package cdsclient
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -14,16 +15,16 @@ func (c *client) Features() ([]sdk.Feature, error) {
 	return res, nil
 }
 
-func (c *client) FeatureGet(name string) (sdk.Feature, error) {
+func (c *client) FeatureGet(name sdk.FeatureName) (sdk.Feature, error) {
 	var res sdk.Feature
-	if _, err := c.GetJSON(context.Background(), "/admin/features/"+name, &res); err != nil {
+	if _, err := c.GetJSON(context.Background(), fmt.Sprintf("/admin/features/%s", name), &res); err != nil {
 		return sdk.Feature{}, err
 	}
 	return res, nil
 }
 
 func (c *client) FeatureUpdate(f sdk.Feature) error {
-	if _, err := c.PutJSON(context.Background(), "/admin/features/"+f.Name, f, nil); err != nil {
+	if _, err := c.PutJSON(context.Background(), fmt.Sprintf("/admin/features/%s", f.Name), f, nil); err != nil {
 		return err
 	}
 	return nil
@@ -36,9 +37,9 @@ func (c *client) FeatureCreate(f sdk.Feature) error {
 	return nil
 }
 
-func (c *client) FeatureDelete(name string) error {
+func (c *client) FeatureDelete(name sdk.FeatureName) error {
 	var res sdk.Feature
-	if _, err := c.DeleteJSON(context.Background(), "/admin/features/"+name, &res); err != nil {
+	if _, err := c.DeleteJSON(context.Background(), fmt.Sprintf("/admin/features/%s", name), &res); err != nil {
 		return err
 	}
 	return nil

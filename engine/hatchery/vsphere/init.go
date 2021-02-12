@@ -3,6 +3,7 @@ package vsphere
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/rockbears/log"
 	"github.com/vmware/govmomi"
@@ -21,6 +22,7 @@ func (h *HatcheryVSphere) InitHatchery(ctx context.Context) error {
 	}
 	h.vclient = c
 
+	log.Info(ctx, "connecting datacenter %s...", h.Config.VSphereDatacenterString)
 	finder := find.NewFinder(h.vclient.Client, false)
 	h.finder = finder
 
@@ -28,6 +30,7 @@ func (h *HatcheryVSphere) InitHatchery(ctx context.Context) error {
 		return fmt.Errorf("unable to find datacenter %s: %v", h.Config.VSphereDatacenterString, err)
 	}
 	finder.SetDatacenter(h.datacenter)
+	log.Info(ctx, "connected to datacenter %v", h.datacenter)
 
 	if h.network, err = finder.NetworkOrDefault(ctx, h.Config.VSphereNetworkString); err != nil {
 		return fmt.Errorf("unable to find network %s: %v", h.Config.VSphereNetworkString, err)
@@ -41,19 +44,26 @@ func (h *HatcheryVSphere) InitHatchery(ctx context.Context) error {
 		return fmt.Errorf("hatchery> vsphere> Cannot get cdn configuration : %v", err)
 	}
 	h.GoRoutines.Run(ctx, "hatchery vsphere main", func(ctx context.Context) {
+		log.Debug(ctx, "entering main loop")
 		h.main(ctx)
 	})
+
+	log.Info(ctx, "vSphere hatchery initialized")
 
 	return nil
 }
 
 // newClient creates a govmomi.Client for use in the examples
 func (h *HatcheryVSphere) newClient(ctx context.Context) (*govmomi.Client, error) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
 	// Parse URL from string
 	u, err := soap.ParseURL("https://" + h.Config.VSphereUser + ":" + h.Config.VSpherePassword + "@" + h.Config.VSphereEndpoint)
 	if err != nil {
 		return nil, sdk.WrapError(err, "cannot parse url")
 	}
+
+	log.Info(ctx, "initializing connection to %v...", u)
 
 	// Connect and log in to ESX or vCenter
 	return govmomi.NewClient(ctx, u, false)

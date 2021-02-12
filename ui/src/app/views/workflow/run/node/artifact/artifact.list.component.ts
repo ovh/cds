@@ -6,10 +6,9 @@ import {
     WorkflowNodeRunStaticFiles,
     WorkflowRunResultArtifact
 } from 'app/model/workflow.run.model';
+
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { Column, ColumnType, Filter } from 'app/shared/table/data-table.component';
-import { FeatureState } from 'app/store/feature.state';
-import { ProjectState } from 'app/store/project.state';
 import { WorkflowState } from 'app/store/workflow.state';
 import { Observable, Subscription } from 'rxjs';
 
@@ -34,9 +33,8 @@ export class WorkflowRunArtifactListComponent implements OnInit, OnDestroy {
         this.filter = f => {
             const lowerFilter = f.toLowerCase();
             return d => d.name.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                    d.sha512sum.toLowerCase().indexOf(lowerFilter) !== -1
+                d.sha512sum.toLowerCase().indexOf(lowerFilter) !== -1
         };
-
         this.columns = [
             <Column<WorkflowNodeRunArtifact>>{
                 type: ColumnType.LINK,
@@ -65,7 +63,7 @@ export class WorkflowRunArtifactListComponent implements OnInit, OnDestroy {
         ];
     }
 
-    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
         this.nodeRunSubs = this.nodeRun$.subscribe(nr => {
@@ -84,8 +82,8 @@ export class WorkflowRunArtifactListComponent implements OnInit, OnDestroy {
                 this.artifacts.push(...this.toWorkflowNodeRunArtifacts(resultArtifacts));
                 this._cd.markForCheck();
             }
-            if ( (!this.staticFiles && nr.static_files) ||
-                (this.staticFiles && nr.static_files && this.staticFiles.length !== nr.static_files.length )) {
+            if ((!this.staticFiles && nr.static_files) ||
+                (this.staticFiles && nr.static_files && this.staticFiles.length !== nr.static_files.length)) {
                 this.staticFiles = nr.static_files;
                 this._cd.markForCheck();
             }

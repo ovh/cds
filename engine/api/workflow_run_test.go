@@ -23,7 +23,6 @@ import (
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/plugin"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/purge"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/test"
@@ -1210,7 +1209,7 @@ func Test_workflowRunCraft(t *testing.T) {
 	require.NoError(t, err)
 
 	f := sdk.Feature{
-		Name: purge.FeatureMaxRuns,
+		Name: sdk.FeaturePurgeMaxRuns,
 		Rule: "return true",
 	}
 	require.NoError(t, featureflipping.Insert(gorpmapping.Mapper, api.mustDB(), &f))
@@ -2851,10 +2850,10 @@ func Test_deleteWorkflowRunsBranchHandler(t *testing.T) {
 	serviceConsumer, err := authentication.LoadConsumerByID(context.TODO(), db, *mockHookService.ConsumerID)
 	require.NoError(t, err)
 
-	session, err := authentication.NewSession(context.TODO(), db, serviceConsumer, 5*time.Minute, false)
+	session, _, err := authentication.NewSession(context.TODO(), db, serviceConsumer, 5*time.Minute, false)
 	require.NoError(t, err)
 
-	jwt, err := authentication.NewSessionJWT(session)
+	jwt, err := authentication.NewSessionJWT(session, time.Now())
 	require.NoError(t, err)
 
 	//Prepare request

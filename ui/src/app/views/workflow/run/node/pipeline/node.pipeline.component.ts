@@ -6,6 +6,7 @@ import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { Stage } from 'app/model/stage.model';
 import { WorkflowNodeJobRun, WorkflowNodeRun } from 'app/model/workflow.run.model';
+import { FeatureNames } from 'app/service/feature/feature.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { DurationService } from 'app/shared/duration/duration.service';
 import { FeatureState } from 'app/store/feature.state';
@@ -66,9 +67,9 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
-        let featCDN = this._store.selectSnapshot(FeatureState.featureProject('cdn-job-logs',
+        const featCDN = this._store.selectSnapshot(FeatureState.featureProject(FeatureNames.CDNJobLogs,
             JSON.stringify({ project_key: this.project.key })))
-        this.cdnEnabled = featCDN?.enabled;
+        this.cdnEnabled = featCDN && (!featCDN?.exists || featCDN.enabled);
 
         this.nodeJobRunSubs = this.nodeJobRun$.subscribe(rj => {
             if (!rj && !this.currentJob) {

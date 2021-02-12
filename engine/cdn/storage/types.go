@@ -159,6 +159,7 @@ type StorageConfiguration struct {
 	Local         *LocalStorageConfiguration  `toml:"local" json:"local,omitempty" mapstructure:"local"`
 	Swift         *SwiftStorageConfiguration  `toml:"swift" json:"swift,omitempty" mapstructure:"swift"`
 	Webdav        *WebdavStorageConfiguration `toml:"webdav" json:"webdav,omitempty" mapstructure:"webdav"`
+	S3            *S3StorageConfiguration     `toml:"s3" json:"s3,omitempty" mapstructure:"s3"`
 	CDS           *CDSStorageConfiguration    `toml:"cds" json:"cds,omitempty" mapstructure:"cds"`
 }
 
@@ -182,6 +183,22 @@ type SwiftStorageConfiguration struct {
 	Region          string                                  `toml:"region" json:"region"`
 	ContainerPrefix string                                  `toml:"container_prefix" json:"container_prefix"`
 	Encryption      []convergent.ConvergentEncryptionConfig `toml:"encryption" json:"-" mapstructure:"encryption"`
+}
+
+type S3StorageConfiguration struct {
+	BucketName          string                                  `toml:"bucketName" json:"bucketName" comment:"Name of the S3 bucket to use when storing artifacts"`
+	Region              string                                  `toml:"region" json:"region" default:"us-east-1" comment:"The AWS region"`
+	Prefix              string                                  `toml:"prefix" json:"prefix" comment:"A subfolder of the bucket to store objects in, if left empty will store at the root of the bucket"`
+	AuthFromEnvironment bool                                    `toml:"authFromEnv" json:"authFromEnv" default:"false" comment:"Pull S3 auth information from env vars AWS_SECRET_ACCESS_KEY and AWS_SECRET_KEY_ID"`
+	SharedCredsFile     string                                  `toml:"sharedCredsFile" json:"sharedCredsFile" comment:"The path for the AWS credential file, used with profile"`
+	Profile             string                                  `toml:"profile" json:"profile" comment:"The profile within the AWS credentials file to use"`
+	AccessKeyID         string                                  `toml:"accessKeyId" json:"accessKeyId" comment:"A static AWS Secret Key ID"`
+	SecretAccessKey     string                                  `toml:"secretAccessKey" json:"-" comment:"A static AWS Secret Access Key"`
+	SessionToken        string                                  `toml:"sessionToken" json:"-" comment:"A static AWS session token"`
+	Endpoint            string                                  `toml:"endpoint" json:"endpoint" comment:"S3 API Endpoint (optional)" commented:"true"` //optional
+	DisableSSL          bool                                    `toml:"disableSSL" json:"disableSSL" commented:"true"`                                  //optional
+	ForcePathStyle      bool                                    `toml:"forcePathStyle" json:"forcePathStyle" commented:"true"`                          //optional
+	Encryption          []convergent.ConvergentEncryptionConfig `toml:"encryption" json:"-" mapstructure:"encryption"`
 }
 
 type WebdavStorageConfiguration struct {

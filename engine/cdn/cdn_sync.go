@@ -84,7 +84,7 @@ func (s *Service) SyncLogs(ctx context.Context, cdsStorage *cds.CDS) error {
 		log.Info(ctx, "cdn:cds:sync:log: project done %d/%d (+%d failed)", statusSync.nbProjectsDone, len(projects), statusSync.nbProjectsFailed)
 		if err := s.syncProjectLogs(ctx, cdsStorage, p.Key); err != nil {
 			statusSync.nbProjectsFailed++
-			log.Error(ctx, "cdn:cds:sync:log  failed to sync project %s: %+v", p.Key, err)
+			log.Error(ctx, "cdn:cds:sync:log: failed to sync project %s: %+v", p.Key, err)
 			continue
 		}
 		statusSync.nbProjectsDone++
@@ -98,11 +98,11 @@ func (s *Service) SyncLogs(ctx context.Context, cdsStorage *cds.CDS) error {
 
 func (s *Service) syncProjectLogs(ctx context.Context, cdsStorage *cds.CDS, pKey string) error {
 	// Check feature enable
-	resp, err := cdsStorage.FeatureEnabled("cdn-job-logs", map[string]string{"project_key": pKey})
+	resp, err := cdsStorage.FeatureEnabled(sdk.FeatureCDNJobLogs, map[string]string{"project_key": pKey})
 	if err != nil {
 		return err
 	}
-	if !resp.Enabled || !s.Cfg.EnableLogProcessing {
+	if resp.Exists && !resp.Enabled {
 		return nil
 	}
 
@@ -160,7 +160,7 @@ func (s *Service) syncProjectLogs(ctx context.Context, cdsStorage *cds.CDS, pKey
 		err := <-results
 		if err != nil {
 			statusSync.runPerProjectFailed[pKey]++
-			log.Error(ctx, "cdn:cds:sync:log: unable to sync node runs: %v", err)
+			log.Error(ctx, "cdn:cds:sync:log: unable to sync node runs: %+v", err)
 		} else {
 			statusSync.runPerProjectDone[pKey]++
 		}

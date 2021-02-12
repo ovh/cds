@@ -11,6 +11,7 @@ import (
 
 	"github.com/fsamin/go-dump"
 	defaults "github.com/mcuadros/go-defaults"
+	"github.com/ovh/symmecrypt/convergent"
 	"github.com/ovh/symmecrypt/keyloader"
 	"github.com/spf13/viper"
 
@@ -175,6 +176,12 @@ func configBootstrap(args []string) Configuration {
 					SyncParallel:  2,
 					Local: &storage.LocalStorageConfiguration{
 						Path: "/var/lib/cds-engine/cdn",
+						Encryption: []convergent.ConvergentEncryptionConfig{{
+							Cipher:      "aes-gcm",
+							Identifier:  "cdn-storage-local",
+							LocatorSalt: sdk.RandomString(9),
+							SecretValue: sdk.RandomString(17),
+						}},
 					},
 				},
 				{

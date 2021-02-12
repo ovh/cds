@@ -18,6 +18,7 @@ import { Action } from 'app/model/action.model';
 import { Job, StepStatus } from 'app/model/job.model';
 import { BuildResult, CDNLogLink, Log, PipelineStatus } from 'app/model/pipeline.model';
 import { WorkflowNodeJobRun } from 'app/model/workflow.run.model';
+import { FeatureNames } from 'app/service/feature/feature.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { DurationService } from 'app/shared/duration/duration.service';
@@ -180,7 +181,9 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         }
         let stepOrder = this.stepOrder < this.job.step_status.length ? this.stepOrder : this.job.step_status.length - 1;
 
-        const cdnEnabled = !!this._store.selectSnapshot(FeatureState.feature('cdn-job-logs')).find(f => !!f.results.find(r => r.enabled && r.paramString === JSON.stringify({ project_key: projectKey })));
+        const featCDN = this._store.selectSnapshot(FeatureState.featureProject(FeatureNames.CDNJobLogs,
+            JSON.stringify({ project_key: projectKey })))
+        const cdnEnabled = featCDN && (!featCDN?.exists || featCDN.enabled);
 
         let logLink: CDNLogLink;
         if (cdnEnabled) {

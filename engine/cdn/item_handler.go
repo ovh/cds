@@ -17,9 +17,6 @@ import (
 
 func (s *Service) bulkDeleteItemsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if !s.Cfg.EnableLogProcessing {
-			return nil
-		}
 		var req sdk.CDNMarkDelete
 		if err := service.UnmarshalBody(r, &req); err != nil {
 			return err
@@ -98,11 +95,9 @@ func (s *Service) getItemHandler() service.Handler {
 			if err != nil {
 				return err
 			}
-
 			if data.Consumer.AuthentifiedUser.Ring != sdk.UserRingAdmin {
 				return sdk.WithStack(sdk.ErrUnauthorized)
 			}
-
 			opts = append(opts, gorpmapper.GetOptions.WithDecryption)
 		}
 
@@ -123,7 +118,6 @@ func (s *Service) getItemHandler() service.Handler {
 				return err
 			}
 		}
-
 		if iu != nil {
 			res.Location[bufferUnit.Name()] = *iu
 		}

@@ -19,17 +19,31 @@ func TestIsEnabled(t *testing.T) {
 
 	db, _ := test.SetupPGWithMapper(t, m, sdk.TypeAPI)
 
-	var f = sdk.Feature{
-		Name: sdk.RandomString(10),
-		Rule: `return my_var == "true"`,
-	}
-	require.NoError(t, featureflipping.Insert(m, db, &f))
+	featureName := sdk.FeatureName(sdk.RandomString(10))
 
-	assert.True(t, featureflipping.Exists(context.TODO(), m, db, f.Name))
-
-	vars := map[string]string{
+	assert.False(t, featureflipping.Exists(context.TODO(), m, db, featureName))
+	exists, enabled := featureflipping.IsEnabled(context.TODO(), m, db, featureName, map[string]string{
 		"my_var": "true",
-	}
-	assert.True(t, featureflipping.IsEnabled(context.TODO(), m, db, f.Name, vars))
-	assert.True(t, featureflipping.IsEnabled(context.TODO(), m, db, f.Name, vars)) // this should display a log "featureflipping.IsEnabled> feature_flipping '2qhp3jesa0' loaded from cache"
+	})
+	assert.False(t, exists)
+	assert.False(t, enabled)
+
+	require.NoError(t, featureflipping.Insert(m, db, &sdk.Feature{
+		Name: featureName,
+		Rule: `return my_var == "true"`,
+	}))
+
+	assert.True(t, featureflipping.Exists(context.TODO(), m, db, featureName))
+	exists, enabled = featureflipping.IsEnabled(context.TODO(), m, db, featureName, map[string]string{
+		"my_var": "true",
+	})
+	assert.True(t, exists)
+	assert.True(t, enabled)
+
+	assert.True(t, featureflipping.Exists(context.TODO(), m, db, featureName))
+	exists, enabled = featureflipping.IsEnabled(context.TODO(), m, db, featureName, map[string]string{
+		"my_var": "false",
+	})
+	assert.True(t, exists)
+	assert.False(t, enabled)
 }
