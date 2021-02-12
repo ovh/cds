@@ -1432,7 +1432,7 @@ func (api *API) postWorkflowRunResultsHandler() service.Handler {
 			return err
 		}
 
-		enabled := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeatureCDNArtifact, map[string]string{
+		_, enabled := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeatureCDNArtifact, map[string]string{
 			"project_key": key,
 		})
 		if !enabled {
@@ -1489,7 +1489,7 @@ func (api *API) workflowRunArtifactCheckUploadHandler() service.Handler {
 			return err
 		}
 
-		enabled := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeatureCDNArtifact, map[string]string{
+		_, enabled := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeatureCDNArtifact, map[string]string{
 			"project_key": key,
 		})
 		if !enabled {

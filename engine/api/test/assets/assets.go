@@ -553,10 +553,10 @@ func InitCDNService(t *testing.T, db gorpmapper.SqlExecutorWithTx, scopes ...sdk
 
 	require.NoError(t, services.Insert(context.TODO(), db, &srv))
 
-	session, err := authentication.NewSession(context.TODO(), db, hConsumer, 5*time.Minute, false)
+	session, d, err := authentication.NewSession(context.TODO(), db, hConsumer, 5*time.Minute, false)
 	require.NoError(t, err)
 
-	jwt, err := authentication.NewSessionJWT(session)
+	jwt, err := authentication.NewSessionJWT(session, d)
 	require.NoError(t, err)
 
 	return &srv, privateKey, jwt
