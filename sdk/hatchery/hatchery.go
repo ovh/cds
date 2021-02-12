@@ -69,6 +69,7 @@ func Create(ctx context.Context, h Interface) error {
 	spawnIDs := cache.New(10*time.Second, 60*time.Second)
 
 	h.GetGoRoutines().Run(ctx, "queuePolling", func(ctx context.Context) {
+		log.Debug(ctx, "starting queue polling")
 		if err := h.CDSClient().QueuePolling(ctx, h.GetGoRoutines(), wjobs, errs, 20*time.Second, modelType, h.Configuration().Provision.RatioService); err != nil {
 			log.Error(ctx, "Queues polling stopped: %v", err)
 		}
