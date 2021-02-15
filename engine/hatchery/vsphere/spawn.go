@@ -144,9 +144,9 @@ func (h *HatcheryVSphere) createVMModel(ctx context.Context, model sdk.Model, wo
 
 	log.Debug(ctx, "waiting for IP...")
 
-	ip, errW := vm.WaitForIP(ctx, true)
-	if errW != nil {
-		return vm, sdk.WrapError(errW, "createVMModel> cannot get an ip")
+	ip, err := vm.WaitForIP(ctx, true)
+	if err != nil {
+		return vm, sdk.WrapError(err, "createVMModel> cannot get an ip")
 	}
 
 	log.Info(ctx, "virtual machine %q has IP %q", name, ip)
