@@ -34,9 +34,8 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 	}
 
 	var vm *object.VirtualMachine
-	_, err := h.getModelByName(ctx, spawnArgs.Model.Name)
 
-	if err != nil || spawnArgs.Model.NeedRegistration {
+	if _, err := h.getModelByName(ctx, spawnArgs.Model.Name); err != nil || spawnArgs.Model.NeedRegistration {
 		// Generate worker model vm
 		log.Info(ctx, "creating virtual machine model %q", spawnArgs.Model.Name)
 		vm, err = h.createVMModel(ctx, *spawnArgs.Model, spawnArgs.WorkerName)
@@ -47,6 +46,7 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 	}
 
 	if vm == nil {
+		var err error
 		log.Info(ctx, "creating virtual machine %q", spawnArgs.Model.Name)
 		if vm, err = h.finder.VirtualMachine(ctx, spawnArgs.Model.Name); err != nil {
 			return sdk.WrapError(err, "cannot find virtual machine with this model")
@@ -92,7 +92,7 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 
 // createVMModel create a model for a specific worker model
 func (h *HatcheryVSphere) createVMModel(ctx context.Context, model sdk.Model, workerName string) (vm *object.VirtualMachine, err error) {
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Minute)
+	ctx, cancel := context.WithTimeout(ctx, 15*time.Minute)
 	defer cancel()
 
 	log.Info(ctx, "Create vm model %q from %q", model.Name, model.ModelVirtualMachine.Image)
@@ -123,9 +123,10 @@ func (h *HatcheryVSphere) createVMModel(ctx context.Context, model sdk.Model, wo
 		return vm, sdk.WrapError(err, "createVMModel> cannot create VM configuration")
 	}
 
-	log.Info(ctx, "creating worker %q by cloning vm to %q ", workerName, model.Name+"-tmp")
+	name := model.Name + "-tmp"
+	log.Info(ctx, "creating worker %q by cloning vm to %q ", workerName, name)
 
-	task, err := vm.Clone(ctx, folder, model.Name+"-tmp", *cloneSpec)
+	task, err := vm.Clone(ctx, folder, name, *cloneSpec)
 	if err != nil {
 		return vm, sdk.WrapError(err, "createVMModel> cannot clone VM")
 	}
@@ -148,10 +149,11 @@ func (h *HatcheryVSphere) createVMModel(ctx context.Context, model sdk.Model, wo
 		return vm, sdk.WrapError(errW, "createVMModel> cannot get an ip")
 	}
 
-	log.Info(ctx, "virtual machine %q has IP %q", vm.Name(), ip)
+	log.Info(ctx, "virtual machine %q has IP %q", name, ip)
 
-	if _, errS := h.launchClientOp(ctx, vm, model.ModelVirtualMachine, model.ModelVirtualMachine.PostCmd, nil); errS != nil {
-		log.Warn(ctx, "createVMModel> cannot start program %s", errS)
+	res, err := h.launchClientOp(ctx, vm, model.ModelVirtualMachine, model.ModelVirtualMachine.PostCmd, nil)
+	if err != nil {
+		log.Warn(ctx, "createVMModel> cannot start program %s", err)
 		annot := annotation{ToDelete: true}
 		if annotStr, err := json.Marshal(annot); err == nil {
 			vm.Reconfigure(ctx, types.VirtualMachineConfigSpec{
@@ -160,10 +162,12 @@ func (h *HatcheryVSphere) createVMModel(ctx context.Context, model sdk.Model, wo
 		}
 	}
 
+	log.Debug(ctx, "post model %q register script result: %+v", name, res)
+
 	ctxTo, cancel := context.WithTimeout(ctx, 10*time.Minute)
 	defer cancel()
 
-	log.Debug(ctx, "waiting virtual machine %q to be powered off...", vm.Name())
+	log.Debug(ctx, "waiting virtual machine %q to be powered off...", name)
 	if err := vm.WaitForPowerState(ctxTo, types.VirtualMachinePowerStatePoweredOff); err != nil {
 		return nil, sdk.WrapError(err, "cannot wait for power state result")
 	}
@@ -177,7 +181,7 @@ func (h *HatcheryVSphere) createVMModel(ctx context.Context, model sdk.Model, wo
 
 	ctxTo, cancel = context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()
-	log.Debug(ctx, "renaming virtual machine %q to %q...", vm.Name(), model.Name)
+	log.Debug(ctx, "renaming virtual machine %q to %q...", name, model.Name)
 
 	task, errR := vm.Rename(ctxTo, model.Name)
 	if errR != nil {
