@@ -311,4 +311,4 @@ Several types of hatchery are available:
 
 ## License
 
-[3-clause BSD](./LICENSE)
+[3-clause BSD](./LICENCE)
