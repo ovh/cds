@@ -199,7 +199,7 @@ func getEncryptedData(m *Mapper, db gorp.SqlExecutor, i interface{}) error {
 
 	query := fmt.Sprintf("SELECT %s FROM %s WHERE %s = $1", strings.Join(encryptedColumnsSlice, ","), table, key)
 	if err := db.QueryRow(query, id).Scan(encryptedContents...); err != nil {
-		return sdk.WithStack(err)
+		return sdk.WrapError(err, "query: %s", query)
 	}
 
 	// Loop over the loaded encrypted content
