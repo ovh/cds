@@ -164,7 +164,7 @@ ${HOME}/.cds/cdn.tests.cfg.json:
 #	$(MAKE) test-coverage
 #	$(MAKE) test-xunit-report
 
-TEST_COMPONENTS = $(addprefix test-component-,$(filter-out dist,$(filter-out .,$(shell find . -type d -maxdepth 1 -exec basename {} \;))))
+TEST_COMPONENTS = $(addprefix test-component-,$(filter-out sql,$(filter-out dist,$(filter-out .,$(shell find . -type d -maxdepth 1 -exec basename {} \;)))))
 $(TEST_COMPONENTS):
 	$(info ... testing package $(subst test-component-,,$@))
 	@for PKG_NAME in $(subst test-component-,,$@); do \
