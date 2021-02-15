@@ -2,23 +2,24 @@ package kubernetes
 
 import (
 	"context"
-	"github.com/ovh/cds/sdk/cdn"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/rockbears/log"
 	"github.com/sirupsen/logrus"
+
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdn"
 	"github.com/ovh/cds/sdk/hatchery"
 	cdslog "github.com/ovh/cds/sdk/log"
 )
 
 func (h *HatcheryKubernetes) getServicesLogs(ctx context.Context) error {
-	pods, err := h.k8sClient.CoreV1().Pods(h.Config.Namespace).List(metav1.ListOptions{LabelSelector: hatchery.LabelServiceJobID})
+	pods, err := h.kubeClient.PodList(ctx, h.Config.Namespace, metav1.ListOptions{LabelSelector: hatchery.LabelServiceJobID})
 	if err != nil {
 		return err
 	}
@@ -33,7 +34,7 @@ func (h *HatcheryKubernetes) getServicesLogs(ctx context.Context) error {
 		}
 
 		// If no job identifier, no service on the pod
-		jobIdentifiers := h.getJobIdentiers(labels)
+		jobIdentifiers := getJobIdentiers(labels)
 		if jobIdentifiers == nil {
 			continue
 		}
@@ -49,9 +50,10 @@ func (h *HatcheryKubernetes) getServicesLogs(ctx context.Context) error {
 				continue
 			}
 			logsOpts := apiv1.PodLogOptions{SinceSeconds: &sinceSeconds, Container: container.Name, Timestamps: true}
-			logs, errLogs := h.k8sClient.CoreV1().Pods(h.Config.Namespace).GetLogs(podName, &logsOpts).DoRaw()
-			if errLogs != nil {
-				log.Error(ctx, "getServicesLogs> cannot get logs for container %s in pod %s, err : %v", container.Name, podName, errLogs)
+
+			logs, err := h.kubeClient.PodGetRawLogs(ctx, h.Config.Namespace, podName, &logsOpts)
+			if err != nil {
+				log.Error(ctx, "getServicesLogs> cannot get logs for container %s in pod %s, err : %v", container.Name, podName, err)
 				continue
 			}
 			// No check on error thanks to the regexp
@@ -99,9 +101,9 @@ func (h *HatcheryKubernetes) getServicesLogs(ctx context.Context) error {
 	return nil
 }
 
-func (h *HatcheryKubernetes) getJobIdentiers(labels map[string]string) *hatchery.JobIdentifiers {
-	serviceJobID, errPj := strconv.ParseInt(labels[hatchery.LabelServiceJobID], 10, 64)
-	if errPj != nil {
+func getJobIdentiers(labels map[string]string) *hatchery.JobIdentifiers {
+	serviceJobID, err := strconv.ParseInt(labels[hatchery.LabelServiceJobID], 10, 64)
+	if err != nil {
 		return nil
 	}
 

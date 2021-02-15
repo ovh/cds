@@ -116,10 +116,10 @@ func (s *Service) cleanItemToDelete(ctx context.Context) error {
 				log.Debug(ctx, "cdn:purge:item: %d unit items to delete for item %q", nbItemUnits, id)
 			} else {
 				if err := s.LogCache.Remove([]string{id}); err != nil {
-					return sdk.WrapError(err, "cdn:purge:item: unable to remove from logCache for item %q")
+					return sdk.WrapError(err, "cdn:purge:item: unable to remove from logCache for item %q", id)
 				}
 				if err := item.DeleteByID(s.mustDBWithCtx(ctx), id); err != nil {
-					return sdk.WrapError(err, "cdn:purge:item: unable to delete from item with id %q")
+					return sdk.WrapError(err, "cdn:purge:item: unable to delete from item with id %q", id)
 				}
 				for _, sto := range s.Units.Storages {
 					s.Units.RemoveFromRedisSyncQueue(ctx, sto, id)
@@ -173,7 +173,7 @@ func (s *Service) cleanWaitingItem(ctx context.Context, duration int) error {
 		return err
 	}
 	for _, itemUnit := range itemUnits {
-		ctx = context.WithValue(ctx, storage.FieldAPIRef, itemUnit.Item.APIRef)
+		ctx = context.WithValue(ctx, storage.FieldAPIRef, itemUnit.Item.APIRefHash)
 		log.Info(ctx, "cleanWaitingItem> cleaning item %s", itemUnit.ItemID)
 
 		tx, err := s.mustDBWithCtx(ctx).Begin()

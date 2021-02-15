@@ -38,7 +38,8 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 
 	if err != nil || spawnArgs.Model.NeedRegistration {
 		// Generate worker model vm
-		vm, err = h.createVMModel(*spawnArgs.Model, spawnArgs.WorkerName)
+		log.Info(ctx, "creating virtual machine model %q", spawnArgs.Model.Name)
+		vm, err = h.createVMModel(ctx, *spawnArgs.Model, spawnArgs.WorkerName)
 		if err != nil {
 			log.Error(ctx, "Unable to create VM Model: %v", err)
 			return err
@@ -46,6 +47,7 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 	}
 
 	if vm == nil {
+		log.Info(ctx, "creating virtual machine %q", spawnArgs.Model.Name)
 		if vm, err = h.finder.VirtualMachine(ctx, spawnArgs.Model.Name); err != nil {
 			return sdk.WrapError(err, "cannot find virtual machine with this model")
 		}
@@ -60,7 +62,7 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 		Created:                 time.Now(),
 	}
 
-	cloneSpec, folder, err := h.createVMConfig(vm, annot, spawnArgs.WorkerName)
+	cloneSpec, folder, err := h.createVMConfig(ctx, vm, annot, spawnArgs.WorkerName)
 	if err != nil {
 		return sdk.WrapError(err, "cannot create VM configuration")
 	}
@@ -85,12 +87,11 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 	}
 	log.Debug(ctx, "SpawnWorker>  New IP: %s", ip)
 
-	return h.launchScriptWorker(spawnArgs.WorkerName, spawnArgs.JobID, spawnArgs.WorkerToken, *spawnArgs.Model, spawnArgs.RegisterOnly, vmWorker)
+	return h.launchScriptWorker(ctx, spawnArgs.WorkerName, spawnArgs.JobID, spawnArgs.WorkerToken, *spawnArgs.Model, spawnArgs.RegisterOnly, vmWorker)
 }
 
 // createVMModel create a model for a specific worker model
-func (h *HatcheryVSphere) createVMModel(model sdk.Model, workerName string) (*object.VirtualMachine, error) {
-	ctx := context.Background()
+func (h *HatcheryVSphere) createVMModel(ctx context.Context, model sdk.Model, workerName string) (*object.VirtualMachine, error) {
 	log.Info(ctx, "Create vm model %s from %s", model.Name, model.ModelVirtualMachine.Image)
 	defer func() {
 		log.Info(ctx, "Create vm model %s from %s DONE", model.Name, model.ModelVirtualMachine.Image)
@@ -109,10 +110,12 @@ func (h *HatcheryVSphere) createVMModel(model sdk.Model, workerName string) (*ob
 		Created:                 time.Now(),
 	}
 
-	cloneSpec, folder, errCfg := h.createVMConfig(vm, annot, workerName)
+	cloneSpec, folder, errCfg := h.createVMConfig(ctx, vm, annot, workerName)
 	if errCfg != nil {
 		return vm, sdk.WrapError(errCfg, "createVMModel> cannot create VM configuration")
 	}
+
+	log.Info(ctx, "cloning %q to %s", workerName, model.Name+"-tmp")
 
 	task, errC := vm.Clone(ctx, folder, model.Name+"-tmp", *cloneSpec)
 	if errC != nil {
@@ -126,12 +129,14 @@ func (h *HatcheryVSphere) createVMModel(model sdk.Model, workerName string) (*ob
 
 	vm = object.NewVirtualMachine(h.vclient.Client, info.Result.(types.ManagedObjectReference))
 
-	_, errW := vm.WaitForIP(ctx, true)
+	ip, errW := vm.WaitForIP(ctx, true)
 	if errW != nil {
 		return vm, sdk.WrapError(errW, "createVMModel> cannot get an ip")
 	}
 
-	if _, errS := h.launchClientOp(vm, model.ModelVirtualMachine, model.ModelVirtualMachine.PostCmd, nil); errS != nil {
+	log.Info(ctx, "virtual machine %q has IP %q", vm.Name(), ip)
+
+	if _, errS := h.launchClientOp(ctx, vm, model.ModelVirtualMachine, model.ModelVirtualMachine.PostCmd, nil); errS != nil {
 		log.Warn(ctx, "createVMModel> cannot start program %s", errS)
 		annot := annotation{ToDelete: true}
 		if annotStr, err := json.Marshal(annot); err == nil {
@@ -141,7 +146,7 @@ func (h *HatcheryVSphere) createVMModel(model sdk.Model, workerName string) (*ob
 		}
 	}
 
-	ctxTo, cancel := context.WithTimeout(ctx, 4*time.Minute)
+	ctxTo, cancel := context.WithTimeout(ctx, 10*time.Minute)
 	defer cancel()
 	if err := vm.WaitForPowerState(ctxTo, types.VirtualMachinePowerStatePoweredOff); err != nil {
 		return nil, sdk.WrapError(err, "cannot wait for power state result")
@@ -175,9 +180,7 @@ func (h *HatcheryVSphere) createVMModel(model sdk.Model, workerName string) (*ob
 }
 
 // launchScriptWorker launch a script on the worker
-func (h *HatcheryVSphere) launchScriptWorker(name string, jobID int64, token string, model sdk.Model, registerOnly bool, vm *object.VirtualMachine) error {
-	ctx := context.Background()
-
+func (h *HatcheryVSphere) launchScriptWorker(ctx context.Context, name string, jobID int64, token string, model sdk.Model, registerOnly bool, vm *object.VirtualMachine) error {
 	ctxTo, cancel := context.WithTimeout(ctx, 2*time.Minute)
 	defer cancel()
 
@@ -222,7 +225,7 @@ func (h *HatcheryVSphere) launchScriptWorker(name string, jobID int64, token str
 		return err
 	}
 
-	if _, errS := h.launchClientOp(vm, model.ModelVirtualMachine, buffer.String(), env); errS != nil {
+	if _, errS := h.launchClientOp(ctx, vm, model.ModelVirtualMachine, buffer.String(), env); errS != nil {
 		log.Warn(ctx, "launchScript> cannot start program %s", errS)
 
 		// tag vm to delete

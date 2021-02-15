@@ -189,7 +189,7 @@ func (h *HatcheryVSphere) WorkerModelSecretList(m sdk.Model) (sdk.WorkerModelSec
 // not necessarily register on CDS yet
 func (h *HatcheryVSphere) WorkersStartedByModel(ctx context.Context, model *sdk.Model) int {
 	var x int
-	for _, s := range h.getServers() {
+	for _, s := range h.getServers(ctx) {
 		if strings.Contains(strings.ToLower(s.Name), strings.ToLower(model.Name)) {
 			x++
 		}
@@ -202,7 +202,7 @@ func (h *HatcheryVSphere) WorkersStartedByModel(ctx context.Context, model *sdk.
 // WorkersStarted returns the number of instances started but
 // not necessarily register on CDS yet
 func (h *HatcheryVSphere) WorkersStarted(ctx context.Context) []string {
-	srvs := h.getServers()
+	srvs := h.getServers(ctx)
 	res := make([]string, len(srvs))
 	for i, s := range srvs {
 		if strings.Contains(strings.ToLower(s.Name), "worker") {
@@ -226,11 +226,11 @@ func (h *HatcheryVSphere) main(ctx context.Context) {
 	for {
 		select {
 		case <-serverListTick:
-			h.updateServerList()
+			h.updateServerList(ctx)
 		case <-killAwolServersTick:
-			h.killAwolServers()
+			h.killAwolServers(ctx)
 		case <-killDisabledWorkersTick:
-			h.killDisabledWorkers()
+			h.killDisabledWorkers(ctx)
 		case <-cdnConfTick:
 			if err := h.RefreshServiceLogger(ctx); err != nil {
 				log.Error(ctx, "Hatchery> vsphere> Cannot get cdn configuration : %v", err)
@@ -244,12 +244,12 @@ func (h *HatcheryVSphere) main(ctx context.Context) {
 	}
 }
 
-func (h *HatcheryVSphere) updateServerList() {
+func (h *HatcheryVSphere) updateServerList(ctx context.Context) {
 	var out string
 	var total int
 	status := map[string]int{}
 
-	for _, s := range h.getServers() {
+	for _, s := range h.getServers(ctx) {
 		out += fmt.Sprintf("- [%s] %s ", s.Summary.Config.Name, s.Summary.Runtime.PowerState)
 		if _, ok := status[string(s.Summary.Runtime.PowerState)]; !ok {
 			status[string(s.Summary.Runtime.PowerState)] = 0
@@ -268,7 +268,7 @@ func (h *HatcheryVSphere) updateServerList() {
 }
 
 // killDisabledWorkers kill workers which are disabled
-func (h *HatcheryVSphere) killDisabledWorkers() {
+func (h *HatcheryVSphere) killDisabledWorkers(ctx context.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -278,7 +278,7 @@ func (h *HatcheryVSphere) killDisabledWorkers() {
 		return
 	}
 
-	srvs := h.getServers()
+	srvs := h.getServers(ctx)
 	for _, w := range workerPoolDisabled {
 		for _, s := range srvs {
 			if s.Name == w.Name {
@@ -291,8 +291,8 @@ func (h *HatcheryVSphere) killDisabledWorkers() {
 }
 
 // killAwolServers kill unused servers
-func (h *HatcheryVSphere) killAwolServers() {
-	srvs := h.getServers()
+func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
+	srvs := h.getServers(ctx)
 
 	for _, s := range srvs {
 		var annot annotation
