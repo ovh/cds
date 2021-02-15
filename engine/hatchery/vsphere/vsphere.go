@@ -269,7 +269,7 @@ func (h *HatcheryVSphere) updateServerList(ctx context.Context) {
 
 // killDisabledWorkers kill workers which are disabled
 func (h *HatcheryVSphere) killDisabledWorkers(ctx context.Context) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
 	workerPoolDisabled, err := hatchery.WorkerPool(ctx, h, sdk.StatusDisabled)
