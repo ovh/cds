@@ -85,10 +85,12 @@ func (s *Service) markUnitItemToDeleteByItemID(ctx context.Context, itemID strin
 }
 
 func (s *Service) cleanItemToDelete(ctx context.Context) error {
-	ids, err := item.LoadIDsToDelete(s.mustDBWithCtx(ctx), 100)
+	idsSrc, err := item.LoadIDsToDelete(s.mustDBWithCtx(ctx), 1000)
 	if err != nil {
 		return err
 	}
+
+	ids := sdk.ShuffleArrayString(idsSrc)
 
 	if len(ids) > 0 {
 		log.Info(ctx, "cdn:purge:item: %d items to delete", len(ids))

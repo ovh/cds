@@ -62,3 +62,14 @@ func StringFirstN(s string, i int) string {
 	}
 	return s[:i]
 }
+
+// ShuffleArrayString shuffles an array of string
+func ShuffleArrayString(src []string) []string {
+	final := make([]string, len(src))
+	rand.Seed(time.Now().UTC().UnixNano())
+	perm := rand.Perm(len(src))
+	for i, v := range perm {
+		final[v] = src[i]
+	}
+	return final
+}
