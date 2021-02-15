@@ -161,7 +161,7 @@ $(TEST_COMPONENTS):
 		if [ ! -z "$$TEMP" ]; then \
 			$(TEST_CMD) -coverpkg $$TEMP > ${GOPATH}/src/$$PKG/tests.log; \
 		else \
-			(TEST_CMD) > ${GOPATH}/src/$$PKG/tests.log; \
+			$(TEST_CMD) > ${GOPATH}/src/$$PKG/tests.log; \
 		fi; \
 	done;
 
