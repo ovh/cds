@@ -28,7 +28,7 @@ For the go templating you have few variables you can use/iterate over.
     - `.TotalKO`: total number of KO tests
     - `.TotalSkipped`: total number of skipped tests
 
-If you need to know about other variable you can check data structure [here](https://github.com/ovh/cds/blob/master/sdk/workflow_run.go#L40).
+If you need to know about other variable you can check `WorkflowNodeRun` data structure [here](https://github.com/ovh/cds/blob/{{< param "version" >}}/sdk/workflow_run.go).
 
 For example by default the template of pull-request comment is:
 
@@ -72,4 +72,4 @@ And displayed on GitHub:
 ![example_pr_comment.png](../images/example_pr_comment.png?height=200px)
 ## Events
 
-If you need to trigger some specific actions on the technical side, like for example use a microservice which listens to all events in your workflow (updates, launch, stop, etc.), you can add an event integration like, for example, [Kafka]({{< relref "/docs/integrations/kafka/kafka_events.md">}}) and listen to the kafka topic to trigger some actions on your side. Events are more like sending notifications to machines instead of user notifications which are made for users. The see structure of sent events, you can look [here](https://github.com/ovh/cds/blob/master/sdk/event.go) and [here](https://github.com/ovh/cds/blob/master/sdk/event_workflow.go).
+If you need to trigger some specific actions on the technical side, like for example use a microservice which listens to all events in your workflow (updates, launch, stop, etc.), you can add an event integration like, for example, [Kafka]({{< relref "/docs/integrations/kafka/kafka_events.md">}}) and listen to the kafka topic to trigger some actions on your side. Events are more like sending notifications to machines instead of user notifications which are made for users. The see structure of sent events, you can look [here](https://github.com/ovh/cds/blob/{{< param "version" >}}/sdk/event.go) and [here](https://github.com/ovh/cds/blob/{{< param "version" >}}/sdk/event_workflow.go).

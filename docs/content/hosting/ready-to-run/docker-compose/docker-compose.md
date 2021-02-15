@@ -7,7 +7,7 @@ card:
 
 ## Run with Docker-Compose
 
-The [docker-compose.yml](https://github.com/ovh/cds/blob/master/docker-compose.yml) contains:
+The [docker-compose.yml](https://github.com/ovh/cds/blob/{{< param "version" >}}/docker-compose.yml) contains:
 
 - cds-db service with a PostgreSQL
 - cds-cache service with a Redis

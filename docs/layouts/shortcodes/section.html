@@ -1,3 +1,4 @@
+{{ $_hugo_config := `{ "version": 1 }` }}
 {{- $class := .Get "class" -}}
 {{- $style := .Get "style" -}}
 {{- $id := .Get "id" | default (printf "section-%d" .Ordinal) -}}

@@ -1,4 +1,4 @@
-baseURL = ""
+baseURL = "/"
 title = "CDS - Continuous Delivery Service"
 
 languageCode = "en-us"
@@ -12,3 +12,6 @@ relativeURLs = true
 
 [outputs]
 home = [ "HTML", "RSS", "JSON"]
+
+[params]
+#  version = "" # Optional (default: master), overrides GH links with given release version.
