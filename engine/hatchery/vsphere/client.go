@@ -327,10 +327,9 @@ func (h *HatcheryVSphere) createVMConfig(ctx context.Context, vm *object.Virtual
 
 // launchClientOp launch a script on the virtual machine given in parameters
 func (h *HatcheryVSphere) launchClientOp(ctx context.Context, vm *object.VirtualMachine, model sdk.ModelVirtualMachine, script string, env []string) (int64, error) {
-	ctx, cancel := context.WithTimeout(ctx, reqTimeout)
+	ctxA, cancel := context.WithTimeout(ctx, reqTimeout)
 	defer cancel()
-
-	running, err := vm.IsToolsRunning(ctx)
+	running, err := vm.IsToolsRunning(ctxA)
 	if err != nil {
 		return -1, sdk.WrapError(err, "launchClientOp> cannot fetch if tools are running")
 	}
@@ -364,10 +363,16 @@ func (h *HatcheryVSphere) launchClientOp(ctx context.Context, vm *object.Virtual
 	}
 
 	log.Debug(ctx, "starting program %+v in guest...", guestspec)
+	ctxB, cancel := context.WithTimeout(ctx, reqTimeout)
+	defer cancel()
 
-	res, err := methods.StartProgramInGuest(ctx, procman.Client(), &req)
+	res, err := methods.StartProgramInGuest(ctxB, procman.Client(), &req)
+	if res != nil {
+		log.Debug(ctx, "program result: %+v", res)
+	}
 	if err != nil {
 		return 0, sdk.WrapError(err, "unable to start program %+v in guest", guestspec)
 	}
+
 	return res.Returnval, nil
 }

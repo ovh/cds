@@ -151,8 +151,7 @@ func (h *HatcheryVSphere) createVMModel(ctx context.Context, model sdk.Model, wo
 
 	log.Info(ctx, "virtual machine %q has IP %q", name, ip)
 
-	res, err := h.launchClientOp(ctx, vm, model.ModelVirtualMachine, model.ModelVirtualMachine.PostCmd, nil)
-	if err != nil {
+	if _, err := h.launchClientOp(ctx, vm, model.ModelVirtualMachine, model.ModelVirtualMachine.PostCmd, nil); err != nil {
 		log.Warn(ctx, "createVMModel> cannot start program %s", err)
 		annot := annotation{ToDelete: true}
 		if annotStr, err := json.Marshal(annot); err == nil {
@@ -161,8 +160,6 @@ func (h *HatcheryVSphere) createVMModel(ctx context.Context, model sdk.Model, wo
 			})
 		}
 	}
-
-	log.Debug(ctx, "post model %q register script result: %+v", name, res)
 
 	ctxTo, cancel := context.WithTimeout(ctx, 10*time.Minute)
 	defer cancel()
