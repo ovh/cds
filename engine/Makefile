@@ -150,8 +150,25 @@ ${HOME}/.cds/cdn.tests.cfg.json:
 		@mkdir -p ${HOME}/.cds
 		@echo "{\"dbDriver\": \"postgres\", \"dbUser\" :\"$(TEST_DB_USER)\", \"dbPassword\" :\"$(TEST_DB_PASS)\" ,\"dbName\": \"$(TEST_DB_NAME)\", \"dbSchema\": \"$(TEST_CDN_DB_SCHEMA)\", \"dbHost\": \"$(TEST_DB_HOST)\", \"dbPort\" : \"$(TEST_DB_PORT)\", \"sslMode\": \"disable\", \"redisHost\" : \"$(TEST_REDIS_HOST)\", \"redisPassword\" : \"$(TEST_REDIS_PASSWORD)\"}" > ${HOME}/.cds/cdn.tests.cfg.json
 
-test: test-config clean
-	@for PKG in $(TEST_PKGS); do \
+#test: test-config clean
+#	@for PKG in $(TEST_PKGS); do \
+#		echo "Running tests in package $$PKG"; \
+#		cd ${GOPATH}/src/$$PKG; \
+#		TEMP=`$(PKGS_COMMA_SEP)`; \
+#		if [ ! -z "$$TEMP" ]; then \
+#			$(TEST_CMD) -coverpkg $$TEMP > ${GOPATH}/src/$$PKG/tests.log; \
+#		else \
+#			$(TEST_CMD) > ${GOPATH}/src/$$PKG/tests.log; \
+#		fi; \
+#	done;
+#	$(MAKE) test-coverage
+#	$(MAKE) test-xunit-report
+
+TEST_COMPONENTS = $(addprefix test-component-,$(filter-out dist,$(filter-out .,$(shell find . -type d -maxdepth 1 -exec basename {} \;))))
+$(TEST_COMPONENTS):
+	$(info ... testing package $(subst test-component-,,$@))
+	@for PKG_NAME in $(subst test-component-,,$@); do \
+		PKG=$$(go list ./... | grep $$PKG_NAME | head -1); \
 		echo "Running tests in package $$PKG"; \
 		cd ${GOPATH}/src/$$PKG; \
 		TEMP=`$(PKGS_COMMA_SEP)`; \
@@ -161,7 +178,9 @@ test: test-config clean
 			$(TEST_CMD) > ${GOPATH}/src/$$PKG/tests.log; \
 		fi; \
 	done;
-	$(MAKE) test-coverage
+
+test: $(TEST_COMPONENTS)
+	$(MAKE) test-coverage	
 	$(MAKE) test-xunit-report
 
 test-coverage: $(GO_COV_MERGE) $(TARGET_DIR) $(GO_COBERTURA)
