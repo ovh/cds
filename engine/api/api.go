@@ -911,7 +911,6 @@ func (a *API) setCookie(w http.ResponseWriter, c *http.Cookie) {
 			c.Path = "/"
 		}
 	}
-
 	http.SetCookie(w, c)
 }
 
