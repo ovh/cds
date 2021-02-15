@@ -139,9 +139,7 @@ func (h *HatcheryVSphere) createVMModel(ctx context.Context, model sdk.Model, wo
 	}
 
 	log.Debug(ctx, "new virtual machine...")
-
 	vm = object.NewVirtualMachine(h.vclient.Client, info.Result.(types.ManagedObjectReference))
-
 	log.Debug(ctx, "waiting for IP...")
 
 	ip, err := vm.WaitForIP(ctx, true)
