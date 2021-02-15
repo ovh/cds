@@ -82,7 +82,7 @@ func (x *RunningStorageUnits) processItem(ctx context.Context, tx gorpmapper.Sql
 	if err != nil {
 		return err
 	}
-	ctx = context.WithValue(ctx, FieldAPIRef, it.APIRef)
+	ctx = context.WithValue(ctx, FieldAPIRef, it.APIRefHash)
 	ctx = context.WithValue(ctx, FieldSize, it.Size)
 	log.Info(ctx, "processing item %s on %s", it.ID, s.Name())
 	if _, err = LoadItemUnitByUnit(ctx, x.m, tx, s.ID(), id); err == nil {

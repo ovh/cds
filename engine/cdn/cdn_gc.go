@@ -173,7 +173,7 @@ func (s *Service) cleanWaitingItem(ctx context.Context, duration int) error {
 		return err
 	}
 	for _, itemUnit := range itemUnits {
-		ctx = context.WithValue(ctx, storage.FieldAPIRef, itemUnit.Item.APIRef)
+		ctx = context.WithValue(ctx, storage.FieldAPIRef, itemUnit.Item.APIRefHash)
 		log.Info(ctx, "cleanWaitingItem> cleaning item %s", itemUnit.ItemID)
 
 		tx, err := s.mustDBWithCtx(ctx).Begin()

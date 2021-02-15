@@ -196,7 +196,7 @@ func getItemUnit(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor,
 	var i itemUnitDB
 	found, err := m.Get(ctx, db, q, &i, opts...)
 	if err != nil {
-		return nil, sdk.WrapError(err, "cannot get storage_unit item")
+		return nil, sdk.WrapError(err, "cannot get storage_unit item with query: %v", q.Query)
 	}
 	if !found {
 		return nil, sdk.WithStack(sdk.ErrNotFound)
