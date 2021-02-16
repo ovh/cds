@@ -242,13 +242,12 @@ func CountItems(db gorp.SqlExecutor) (res []Stat, err error) {
 	return res, sdk.WithStack(err)
 }
 
-func CountItemsToDelete(db gorp.SqlExecutor) (res []Stat, err error) {
-	_, err = db.Select(&res, `
-	SELECT type, count(id) as "number" 
+func CountItemsToDelete(db gorp.SqlExecutor) (int64, error) {
+	query := `SELECT count(id) as "number"
 	FROM item 
-	WHERE to_delete = true 
-	GROUP BY type`)
-	return res, sdk.WithStack(err)
+	WHERE to_delete = true`
+	nb, err := db.SelectInt(query)
+	return nb, sdk.WithStack(err)
 }
 
 type StatItemPercentil struct {
