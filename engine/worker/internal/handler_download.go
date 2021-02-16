@@ -95,12 +95,13 @@ func downloadHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 			reqArgs.Destination = "."
 		}
 
-		workdir, err := workerruntime.WorkingDirectory(ctx)
+		workdir, err := workerruntime.WorkingDirectory(wk.currentJob.context)
 		if err != nil {
 			newError := sdk.NewError(sdk.ErrInvalidData, fmt.Errorf("unable to get working directory: %v", err))
 			writeError(w, r, newError)
 			return
 		}
+		ctx = workerruntime.SetWorkingDirectory(ctx, workdir)
 
 		var abs string
 		if x, ok := wk.BaseDir().(*afero.BasePathFs); ok {
