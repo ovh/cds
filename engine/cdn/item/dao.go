@@ -243,7 +243,7 @@ func CountItems(db gorp.SqlExecutor) (res []Stat, err error) {
 }
 
 func CountItemsToDelete(db gorp.SqlExecutor) (int64, error) {
-	query := `SELECT count(id) as "number"
+	query := `SELECT count(1) as "number"
 	FROM item 
 	WHERE to_delete = true`
 	nb, err := db.SelectInt(query)
