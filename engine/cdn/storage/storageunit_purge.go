@@ -35,7 +35,8 @@ func (x *RunningStorageUnits) Purge(ctx context.Context, s Interface) error {
 
 		exists, err := s.ItemExists(ctx, x.m, x.db, *ui.Item)
 		if err != nil {
-			return err
+			log.Error(ctx, "error on ItemExists: err:%s", err)
+			continue
 		}
 
 		if exists {

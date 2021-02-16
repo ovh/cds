@@ -66,7 +66,6 @@ func LoadIDsToDelete(db gorp.SqlExecutor, size int) ([]string, error) {
 		SELECT id
 		FROM item
 		WHERE to_delete = true
-		ORDER BY last_modified ASC
 		LIMIT $1
 	`
 	var ids []string

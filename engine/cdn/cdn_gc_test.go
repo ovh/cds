@@ -6,11 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ovh/symmecrypt/ciphers/aesgcm"
-	"github.com/ovh/symmecrypt/convergent"
-	"github.com/rockbears/log"
-	"github.com/stretchr/testify/require"
-
 	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/lru"
 	"github.com/ovh/cds/engine/cdn/storage"
@@ -18,6 +13,10 @@ import (
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/symmecrypt/ciphers/aesgcm"
+	"github.com/ovh/symmecrypt/convergent"
+	"github.com/rockbears/log"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCleanSynchronizedItem(t *testing.T) {

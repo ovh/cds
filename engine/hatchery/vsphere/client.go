@@ -327,12 +327,11 @@ func (h *HatcheryVSphere) createVMConfig(ctx context.Context, vm *object.Virtual
 
 // launchClientOp launch a script on the virtual machine given in parameters
 func (h *HatcheryVSphere) launchClientOp(ctx context.Context, vm *object.VirtualMachine, model sdk.ModelVirtualMachine, script string, env []string) (int64, error) {
-	ctxC, cancelC := context.WithTimeout(ctx, reqTimeout)
-	defer cancelC()
-
-	running, errT := vm.IsToolsRunning(ctxC)
-	if errT != nil {
-		return -1, sdk.WrapError(errT, "launchClientOp> cannot fetch if tools are running")
+	ctxA, cancel := context.WithTimeout(ctx, reqTimeout)
+	defer cancel()
+	running, err := vm.IsToolsRunning(ctxA)
+	if err != nil {
+		return -1, sdk.WrapError(err, "launchClientOp> cannot fetch if tools are running")
 	}
 	if !running {
 		log.Warn(ctx, "launchClientOp> VmTools is not running")
@@ -340,7 +339,7 @@ func (h *HatcheryVSphere) launchClientOp(ctx context.Context, vm *object.Virtual
 
 	opman := guest.NewOperationsManager(h.vclient.Client, vm.Reference())
 
-	procman, errPr := opman.ProcessManager(ctxC)
+	procman, errPr := opman.ProcessManager(ctx)
 	if errPr != nil {
 		return -1, sdk.WrapError(errPr, "launchClientOp> cannot create processManager")
 	}
@@ -351,10 +350,9 @@ func (h *HatcheryVSphere) launchClientOp(ctx context.Context, vm *object.Virtual
 	}
 
 	guestspec := types.GuestProgramSpec{
-		ProgramPath:      "/bin/echo",
-		Arguments:        "-n ;" + script,
-		WorkingDirectory: "/root",
-		EnvVariables:     env,
+		ProgramPath:  "/bin/bash",
+		Arguments:    "-c " + script,
+		EnvVariables: env,
 	}
 
 	req := types.StartProgramInGuest{
@@ -364,9 +362,17 @@ func (h *HatcheryVSphere) launchClientOp(ctx context.Context, vm *object.Virtual
 		Spec: &guestspec,
 	}
 
-	res, err := methods.StartProgramInGuest(ctx, procman.Client(), &req)
-	if err != nil {
-		return 0, err
+	log.Debug(ctx, "starting program %+v in guest...", guestspec)
+	ctxB, cancel := context.WithTimeout(ctx, reqTimeout)
+	defer cancel()
+
+	res, err := methods.StartProgramInGuest(ctxB, procman.Client(), &req)
+	if res != nil {
+		log.Debug(ctx, "program result: %+v", res)
 	}
+	if err != nil {
+		return 0, sdk.WrapError(err, "unable to start program %+v in guest", guestspec)
+	}
+
 	return res.Returnval, nil
 }

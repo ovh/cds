@@ -2,6 +2,7 @@ package cdn
 
 import (
 	"context"
+	"math/rand"
 	"time"
 
 	"github.com/rockbears/log"
@@ -85,10 +86,13 @@ func (s *Service) markUnitItemToDeleteByItemID(ctx context.Context, itemID strin
 }
 
 func (s *Service) cleanItemToDelete(ctx context.Context) error {
-	ids, err := item.LoadIDsToDelete(s.mustDBWithCtx(ctx), 100)
+	ids, err := item.LoadIDsToDelete(s.mustDBWithCtx(ctx), 1000)
 	if err != nil {
 		return err
 	}
+
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	r.Shuffle(len(ids), func(i, j int) { ids[i], ids[j] = ids[j], ids[i] })
 
 	if len(ids) > 0 {
 		log.Info(ctx, "cdn:purge:item: %d items to delete", len(ids))
