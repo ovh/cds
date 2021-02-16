@@ -55,11 +55,6 @@ func WorkflowRuns(ctx context.Context, DBFunc func() *gorp.DbMap, sharedStorage 
 				return
 			}
 		case <-tickPurge.C:
-			// Check all workflows to mark runs that should be deleted
-			if err := MarkWorkflowRuns(ctx, DBFunc(), workflowRunsMarkToDelete); err != nil {
-				log.Warn(ctx, "purge> Error: %v", err)
-			}
-
 			log.Debug(ctx, "purge> Deleting all workflow run marked to delete...")
 			if err := deleteWorkflowRunsHistory(ctx, DBFunc(), sharedStorage, workflowRunsDeleted); err != nil {
 				log.Warn(ctx, "purge> Error on deleteWorkflowRunsHistory : %v", err)
@@ -87,37 +82,6 @@ func Workflow(ctx context.Context, store cache.Store, DBFunc func() *gorp.DbMap,
 			}
 		}
 	}
-}
-
-// Deprecated: old method to mark runs to delete
-func MarkWorkflowRuns(ctx context.Context, db *gorp.DbMap, workflowRunsMarkToDelete *stats.Int64Measure) error {
-	dao := new(workflow.WorkflowDAO)
-	dao.Filters.DisableFilterDeletedWorkflow = false
-	wfs, err := dao.LoadAll(ctx, db)
-	if err != nil {
-		return err
-	}
-	for _, wf := range wfs {
-		tx, err := db.Begin()
-		if err != nil {
-			log.Error(ctx, "workflow.PurgeWorkflowRuns> error %v", err)
-			tx.Rollback() // nolint
-			continue
-		}
-		if err := workflow.PurgeWorkflowRun(ctx, tx, wf); err != nil {
-			log.Error(ctx, "workflow.PurgeWorkflowRuns> error %v", err)
-			tx.Rollback() // nolint
-			continue
-		}
-		if err := tx.Commit(); err != nil {
-			log.Error(ctx, "workflow.PurgeWorkflowRuns> unable to commit transaction:  %v", err)
-			_ = tx.Rollback()
-			continue
-		}
-	}
-
-	workflow.CountWorkflowRunsMarkToDelete(ctx, db, workflowRunsMarkToDelete)
-	return nil
 }
 
 // workflows purges all marked workflows
