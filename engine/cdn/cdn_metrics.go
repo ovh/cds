@@ -149,16 +149,14 @@ func (s *Service) ComputeMetrics(ctx context.Context) {
 					}
 				}
 			}
-			itemsToDelete, err := item.CountItemsToDelete(s.mustDBWithCtx(ctx))
+
+			nbItemsToDelete, err := item.CountItemsToDelete(s.mustDBWithCtx(ctx))
 			if err != nil {
 				log.Error(ctx, "cdn> Unable to compute metrics: %v", err)
 				continue
 			}
 
-			for _, stat := range itemsToDelete {
-				ctxItem := telemetry.ContextWithTag(ctx, telemetry.TagType, stat.Type)
-				telemetry.Record(ctxItem, s.Metrics.ItemToDelete, stat.Number)
-			}
+			telemetry.Record(ctx, s.Metrics.ItemToDelete, nbItemsToDelete)
 
 			storageStats, err = storage.CountItemUnitToDelete(s.mustDBWithCtx(ctx))
 			if err != nil {
