@@ -223,8 +223,7 @@ func (h *HatcheryVSphere) launchScriptWorker(ctx context.Context, name string, j
 		"CDS_FROM_WORKER_IMAGE=true",
 	}
 
-	env = append(env, h.getGraylogGrpcEnv(model)...)
-
+	env = append(env, h.getGraylogEnv(model)...)
 	udata := model.ModelVirtualMachine.PreCmd + "\n" + model.ModelVirtualMachine.Cmd
 
 	if registerOnly {
@@ -256,18 +255,15 @@ func (h *HatcheryVSphere) launchScriptWorker(ctx context.Context, name string, j
 		return err
 	}
 
-	if _, errS := h.launchClientOp(ctx, vm, model.ModelVirtualMachine, buffer.String(), env); errS != nil {
-		log.Warn(ctx, "launchScript> cannot start program %s", errS)
-
-		// tag vm to delete
+	if _, err := h.launchClientOp(ctx, vm, model.ModelVirtualMachine, buffer.String(), env); err != nil {
+		log.Warn(ctx, "launchScript> cannot start program %s", err)
 		annot := annotation{ToDelete: true}
 		if annotStr, err := json.Marshal(annot); err == nil {
 			vm.Reconfigure(ctx, types.VirtualMachineConfigSpec{
 				Annotation: string(annotStr),
 			})
 		}
-
-		return errS
+		return err
 	}
 
 	return nil

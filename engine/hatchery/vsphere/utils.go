@@ -6,8 +6,8 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-// getGraylogGrpcEnv fetch the graylog and grpc configuration from viper and return environement variable in a slice
-func (h *HatcheryVSphere) getGraylogGrpcEnv(model sdk.Model) []string {
+// getGraylogEnv fetch the graylog aconfiguration from viper and return environement variable in a slice
+func (h *HatcheryVSphere) getGraylogEnv(model sdk.Model) []string {
 	env := []string{}
 
 	if h.Configuration().Provision.WorkerLogsOptions.Graylog.Host != "" {

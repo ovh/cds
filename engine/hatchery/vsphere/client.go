@@ -371,7 +371,7 @@ func (h *HatcheryVSphere) launchClientOp(ctx context.Context, vm *object.Virtual
 		log.Debug(ctx, "program result: %+v", res)
 	}
 	if err != nil {
-		return 0, sdk.WrapError(err, "unable to start program %+v in guest", guestspec)
+		return 0, sdk.WrapError(err, "unable to start program in guest")
 	}
 
 	return res.Returnval, nil
