@@ -13,8 +13,8 @@ TARGET_OS := $(if ${OS},${OS}, linux/% darwin/% windows/% freebsd/% openbsd/%)
 TARGET_ARCH := $(if ${ARCH}, ${ARCH}, %/amd64 %/arm %/386 %/arm64)
 TARGET_DISTS := $(filter $(TARGET_OS), $(filter $(TARGET_ARCH), $(shell go tool dist list)))
 isWindows = $(filter $1,windows)
-TARGET_BINARIES := $(foreach DIST, $(filter-out darwin/arm% darwin/386,$(TARGET_DISTS)), $(TARGET_DIR)/cdsctl-$(call split,$(DIST),1)-$(call split,$(DIST),2)$(if $(call isWindows, $(call split,$(DIST),1)),.exe))
-TARGET_BINARIES_VARIANT := $(addsuffix -nokeychain, $(filter %linux-amd64 %darwin-amd64,$(TARGET_BINARIES)))
+TARGET_BINARIES := $(foreach DIST, $(filter-out darwin/386,$(TARGET_DISTS)), $(TARGET_DIR)/cdsctl-$(call split,$(DIST),1)-$(call split,$(DIST),2)$(if $(call isWindows, $(call split,$(DIST),1)),.exe))
+TARGET_BINARIES_VARIANT := $(addsuffix -nokeychain, $(filter %linux-amd64 %darwin-amd64 %darwin-arm64,$(TARGET_BINARIES)))
 
 GO_BUILD = go build
 GO_LINT = ${GOPATH}/bin/gometalinter
