@@ -153,7 +153,7 @@ ${HOME}/.cds/cdn.tests.cfg.json:
 # Build a list of the first level of package in the 'engine' package, then remove the '.', 'dist' and 'sql'
 TEST_COMPONENTS = $(addprefix test-component-,$(filter-out sql,$(filter-out dist,$(filter-out .,$(shell find . -type d -maxdepth 1 -exec basename {} \;)))))
 $(TEST_COMPONENTS):
-	@TEST_PKGS=$$(go list ./... | grep $(subst test-component-,,$@)); \
+	@TEST_PKGS=$$(cd $(subst test-component-,,$@) && go list ./...); \
 	for PKG in $$TEST_PKGS; do \
 		echo "Running tests in package $$PKG"; \
 		cd ${GOPATH}/src/$$PKG; \
