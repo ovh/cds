@@ -151,7 +151,7 @@ ${HOME}/.cds/cdn.tests.cfg.json:
 		@echo "{\"dbDriver\": \"postgres\", \"dbUser\" :\"$(TEST_DB_USER)\", \"dbPassword\" :\"$(TEST_DB_PASS)\" ,\"dbName\": \"$(TEST_DB_NAME)\", \"dbSchema\": \"$(TEST_CDN_DB_SCHEMA)\", \"dbHost\": \"$(TEST_DB_HOST)\", \"dbPort\" : \"$(TEST_DB_PORT)\", \"sslMode\": \"disable\", \"redisHost\" : \"$(TEST_REDIS_HOST)\", \"redisPassword\" : \"$(TEST_REDIS_PASSWORD)\"}" > ${HOME}/.cds/cdn.tests.cfg.json
 
 # Build a list of the first level of package in the 'engine' package, then remove the '.', 'dist' and 'sql'
-TEST_COMPONENTS = $(addprefix test-component-,$(filter-out sql,$(filter-out dist,$(filter-out .,$(shell find . -type d -maxdepth 1 -exec basename {} \;)))))
+TEST_COMPONENTS = $(addprefix test-component-,$(filter-out sql,$(filter-out dist,$(filter-out .,$(shell find . -maxdepth 1 -type d -exec basename {} \;)))))
 $(TEST_COMPONENTS):
 	@TEST_PKGS=$$(cd $(subst test-component-,,$@) && go list ./...); \
 	for PKG in $$TEST_PKGS; do \
