@@ -47,7 +47,7 @@ func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *test.Fak
 	api.InitRouter()
 
 	ctx, cancel := context.WithCancel(context.Background())
-	go workflow.Initialize(ctx, api.mustDB, api.Cache, "", "", "", 300000, 255)
+	go workflow.Initialize(ctx, api.mustDB, api.Cache, "", "", "", 300000)
 
 	t.Cleanup(func() {
 		cancel()

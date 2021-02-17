@@ -13,12 +13,19 @@ import (
 var baseUIURL, defaultOS, defaultArch string
 var maxRuns int64
 
+func SetMaxRuns(confMaxRuns int64) {
+	maxRuns = confMaxRuns
+	if maxRuns == 0 {
+		maxRuns = 255
+	}
+}
+
 //Initialize starts goroutines for workflows
-func Initialize(ctx context.Context, DBFunc func() *gorp.DbMap, store cache.Store, uiURL, confDefaultOS, confDefaultArch string, maxLogSize int64, confMaxRuns int64) {
+func Initialize(ctx context.Context, DBFunc func() *gorp.DbMap, store cache.Store, uiURL, confDefaultOS, confDefaultArch string, maxLogSize int64) {
 	baseUIURL = uiURL
 	defaultOS = confDefaultOS
 	defaultArch = confDefaultArch
-	maxRuns = confMaxRuns
+
 	tickStop := time.NewTicker(30 * time.Minute)
 	tickHeart := time.NewTicker(10 * time.Second)
 	defer tickHeart.Stop()
