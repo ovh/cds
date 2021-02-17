@@ -111,6 +111,20 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 				return nil, err
 			}
 			bufferUnit = bd
+		case bu.Nfs != nil:
+			d := GetDriver("nfs-buffer")
+			if d == nil {
+				return nil, sdk.WithStack(fmt.Errorf("nfs buffer driver is not available"))
+			}
+			bd, is := d.(BufferUnit)
+			if !is {
+				return nil, sdk.WithStack(fmt.Errorf("nfs buffer driver is not a buffer unit driver"))
+			}
+			bd.New(gorts, 1, math.MaxFloat64)
+			if err := bd.Init(ctx, bu.Nfs, bu.BufferType); err != nil {
+				return nil, err
+			}
+			bufferUnit = bd
 		default:
 			return nil, sdk.WithStack(errors.New("unsupported buffer units"))
 		}
