@@ -124,7 +124,7 @@ func (s *Redis) Status(_ context.Context) []sdk.MonitoringStatusLine {
 		{
 			Component: fmt.Sprintf("storage/%s/ping", s.Name()),
 			Value:     "connect OK",
-			Status:    sdk.MonitoringStatusAlert,
+			Status:    sdk.MonitoringStatusOK,
 		},
 		{
 			Component: fmt.Sprintf("storage/%s/redis_dbsize", s.Name()),

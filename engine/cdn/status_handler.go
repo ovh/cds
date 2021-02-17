@@ -36,7 +36,9 @@ func (s *Service) Status(ctx context.Context) *sdk.MonitoringStatus {
 	m := s.NewMonitoringStatus()
 
 	m.AddLine(s.LogCache.Status(ctx)...)
-
+	for _, bf := range s.Units.Buffers {
+		m.AddLine(bf.Status(ctx)...)
+	}
 	for _, st := range s.Units.Storages {
 		m.AddLine(st.Status(ctx)...)
 	}

@@ -25,6 +25,7 @@ type Buffer struct {
 	config     storage.NFSBufferConfiguration
 	bufferType storage.CDNBufferType
 	size       int64
+	pingStatus string
 }
 
 var (
@@ -171,8 +172,17 @@ func (n *Buffer) ItemExists(ctx context.Context, m *gorpmapper.Mapper, db gorp.S
 }
 
 func (n *Buffer) Status(_ context.Context) []sdk.MonitoringStatusLine {
-	var lines []sdk.MonitoringStatusLine
-	return lines
+	return []sdk.MonitoringStatusLine{
+		{
+			Component: fmt.Sprintf("storage/%s/ping", n.Name()),
+			Value:     "connect OK",
+			Status:    n.pingStatus,
+		},
+		{
+			Component: fmt.Sprintf("storage/%s/redis_dbsize", n.Name()),
+			Value:     fmt.Sprintf("%d keys", n.size),
+			Status:    sdk.MonitoringStatusOK,
+		}}
 }
 
 func (n *Buffer) Remove(ctx context.Context, i sdk.CDNItemUnit) error {
@@ -277,10 +287,12 @@ func (n *Buffer) computeSize(ctx context.Context) {
 func (n *Buffer) dirSize() (int64, error) {
 	dial, target, err := n.Connect()
 	if err != nil {
+		n.pingStatus = sdk.MonitoringStatusAlert
 		return 0, err
 	}
 	defer dial.Close()   // nolint
 	defer target.Close() //
+	n.pingStatus = sdk.MonitoringStatusOK
 	return n.computeDirSizeRecursive(target, ".")
 }
 
