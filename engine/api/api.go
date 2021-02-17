@@ -799,7 +799,8 @@ func (a *API) Serve(ctx context.Context) error {
 		})
 	a.GoRoutines.Run(ctx, "workflow.Initialize",
 		func(ctx context.Context) {
-			workflow.Initialize(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Cache, a.Config.URL.UI, a.Config.DefaultOS, a.Config.DefaultArch, a.Config.Log.StepMaxSize, a.Config.Workflow.MaxRuns)
+			workflow.SetMaxRuns(a.Config.Workflow.MaxRuns)
+			workflow.Initialize(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Cache, a.Config.URL.UI, a.Config.DefaultOS, a.Config.DefaultArch, a.Config.Log.StepMaxSize)
 		})
 	a.GoRoutines.Run(ctx, "PushInElasticSearch",
 		func(ctx context.Context) {

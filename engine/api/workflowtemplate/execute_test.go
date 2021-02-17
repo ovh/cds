@@ -190,7 +190,7 @@ name: Environment-[[if .id]]`)),
 	}, {
 		Type:    "application",
 		Line:    3,
-		Message: "unexpected unclosed action in command",
+		Message: "unclosed action",
 	}, {
 		Type:    "environment",
 		Line:    2,

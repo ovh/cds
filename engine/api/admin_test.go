@@ -194,17 +194,14 @@ func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKey(t *testing.T) {
 
 func Test_postWorkflowMaxRunHandler(t *testing.T) {
 	api, db, _ := newTestAPI(t)
-	api.Config.Workflow.MaxRuns = 10
-	ctx, cancel := context.WithCancel(context.Background())
-	t.Cleanup(cancel)
+	workflow.SetMaxRuns(15)
 
-	go workflow.Initialize(ctx, api.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), api.Cache, "", "", "", 15, api.Config.Workflow.MaxRuns)
 	_, jwt := assets.InsertAdminUser(t, db)
 
 	p := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	w := assets.InsertTestWorkflow(t, db, api.Cache, p, sdk.RandomString(10))
 
-	require.Equal(t, w.MaxRuns, api.Config.Workflow.MaxRuns)
+	require.Equal(t, int64(15), w.MaxRuns)
 
 	uri := api.Router.GetRoute("POST", api.postWorkflowMaxRunHandler, map[string]string{"key": p.Key, "permWorkflowName": w.Name})
 	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, sdk.UpdateMaxRunRequest{MaxRuns: 5})
@@ -225,5 +222,4 @@ func Test_postWorkflowMaxRunHandler(t *testing.T) {
 	wfDb2, err := workflow.Load(context.TODO(), db, api.Cache, *p, w.Name, workflow.LoadOptions{})
 	require.NoError(t, err)
 	require.Equal(t, int64(5), wfDb2.MaxRuns)
-
 }

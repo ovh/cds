@@ -159,14 +159,14 @@ $(TEST_COMPONENTS):
 		cd ${GOPATH}/src/$$PKG; \
 		TEMP=`$(PKGS_COMMA_SEP)`; \
 		if [ ! -z "$$TEMP" ]; then \
-			$(TEST_CMD) -coverpkg $$TEMP > ${GOPATH}/src/$$PKG/tests.log; \
+			($(TEST_CMD) -coverpkg $$TEMP > ${GOPATH}/src/$$PKG/tests.log) || true; \
 		else \
-			$(TEST_CMD) > ${GOPATH}/src/$$PKG/tests.log; \
+			($(TEST_CMD) > ${GOPATH}/src/$$PKG/tests.log) || true; \
 		fi; \
 	done;
 
 test: $(TEST_COMPONENTS)
-	$(MAKE) test-coverage	
+	$(MAKE) test-coverage
 	$(MAKE) test-xunit-report
 
 test-coverage: $(GO_COV_MERGE) $(TARGET_DIR) $(GO_COBERTURA)
