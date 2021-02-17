@@ -431,6 +431,7 @@ type WorkerInterface interface {
 	WorkflowNodeRunArtifactDownload(projectKey string, name string, a sdk.WorkflowNodeRunArtifact, w io.Writer) error
 	WorkflowNodeRunRelease(projectKey string, workflowName string, runNumber int64, nodeRunID int64, release sdk.WorkflowNodeRunRelease) error
 	WorkflowRunArtifactsLinks(projectKey string, name string, number int64) (sdk.CDNItemLinks, error)
+	WorkflowRunResultsList(ctx context.Context, projectKey string, name string, number int64) ([]sdk.WorkflowRunResult, error)
 }
 
 // Raw is a low-level interface exposing HTTP functions
