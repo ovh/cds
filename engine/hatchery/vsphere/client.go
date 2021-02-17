@@ -350,8 +350,8 @@ func (h *HatcheryVSphere) launchClientOp(ctx context.Context, vm *object.Virtual
 	}
 
 	guestspec := types.GuestProgramSpec{
-		ProgramPath:  "/bin/bash",
-		Arguments:    "-c " + script,
+		ProgramPath:  "/bin/echo",
+		Arguments:    "-n ;" + script,
 		EnvVariables: env,
 	}
 
