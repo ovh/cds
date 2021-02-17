@@ -19,7 +19,7 @@ func sendMailNotif(ctx context.Context, notif sdk.EventNotif) {
 	for _, recipient := range notif.Recipients {
 		isHTML := regexpIsHTML.MatchString(notif.Body)
 		if err := mail.SendEmail(ctx, notif.Subject, bytes.NewBufferString(notif.Body), recipient, isHTML); err != nil {
-			log.Error(ctx, "sendMailNotif>error while sending mail: %v", err.Error())
+			log.Error(ctx, "sendMailNotif>error while sending mail: %v to recipients:%+v and subject:%v", err, notif.Recipients, notif.Subject)
 		}
 	}
 }
