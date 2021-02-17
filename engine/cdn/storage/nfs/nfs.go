@@ -46,16 +46,16 @@ func (r *Reader) Close() error {
 	var firstError error
 	if err := r.reader.Close(); err != nil {
 		firstError = err
-		log.Error(r.ctx, "reader: unable to close file")
+		log.Error(r.ctx, "reader: unable to close file: %v", err)
 	}
 	if err := r.target.Close(); err != nil {
-		log.Error(r.ctx, "reader: unable to close mount")
+		log.Error(r.ctx, "reader: unable to close mount: %v", err)
 		if firstError == nil {
 			firstError = err
 		}
 	}
 	if err := r.dialMount.Close(); err != nil {
-		log.Error(r.ctx, "reader: unable to close DialMount ")
+		log.Error(r.ctx, "reader: unable to close DialMount: %v", err)
 		if firstError == nil {
 			firstError = err
 		}
@@ -78,16 +78,16 @@ func (w *Writer) Close() error {
 	var firstError error
 	if err := w.writer.Close(); err != nil {
 		firstError = err
-		log.Error(w.ctx, "writer: unable to close file")
+		log.Error(w.ctx, "writer: unable to close file: %v", err)
 	}
 	if err := w.target.Close(); err != nil {
-		log.Error(w.ctx, "writer: unable to close mount")
+		log.Error(w.ctx, "writer: unable to close mount: %v", err)
 		if firstError == nil {
 			firstError = err
 		}
 	}
 	if err := w.dialMount.Close(); err != nil {
-		log.Error(w.ctx, "writer: unable to close DialMount ")
+		log.Error(w.ctx, "writer: unable to close DialMount: %v", err)
 		if firstError == nil {
 			firstError = err
 		}
@@ -167,7 +167,7 @@ func (n *Buffer) ItemExists(ctx context.Context, m *gorpmapper.Mapper, db gorp.S
 	if err != nil {
 		return false, sdk.WithStack(err)
 	}
-	return finfo.Name() != "", nil
+	return finfo != nil && finfo.Name() != "", nil
 }
 
 func (n *Buffer) Status(_ context.Context) []sdk.MonitoringStatusLine {
