@@ -133,7 +133,7 @@ func (api *API) authOptionalMiddleware(ctx context.Context, w http.ResponseWrite
 
 	// Check for session based on jwt from context
 	sessionID := claims.StandardClaims.Id
-	session, err := authentication.CheckSession(ctx, api.mustDB(), sessionID)
+	session, err := authentication.CheckSession(ctx, api.mustDB(), api.Cache, sessionID)
 	if err != nil {
 		log.Warn(ctx, "authMiddleware> cannot find a valid session for given JWT: %v", err)
 	}

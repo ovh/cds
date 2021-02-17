@@ -31,6 +31,7 @@ func Test_checkWorkflowPermissions(t *testing.T) {
 	ctx := context.Background()
 
 	consumer := &sdk.AuthConsumer{}
+	consumer.DriverManifest = &sdk.AuthDriverManifest{}
 
 	// test case: has enough permission
 	consumer.AuthentifiedUser = user
@@ -97,6 +98,7 @@ func Test_checkProjectPermissions(t *testing.T) {
 
 	var consumer sdk.AuthConsumer
 	consumer.AuthentifiedUser = authUser
+	consumer.DriverManifest = &sdk.AuthDriverManifest{}
 	ctx := context.Background()
 
 	// test case: has enough permission
@@ -199,6 +201,7 @@ func Test_checkUserPermissions(t *testing.T) {
 				AuthentifiedUserID: c.ConsumerAuthentifiedUser.ID,
 				AuthentifiedUser:   c.ConsumerAuthentifiedUser,
 				IssuedAt:           time.Now(),
+				DriverManifest:     &sdk.AuthDriverManifest{},
 			})
 			err := api.checkUserPermissions(ctx, &responseTracker{}, c.TargetAuthentifiedUser.Username, c.Permission, nil)
 			if c.Granted {
@@ -281,6 +284,7 @@ func Test_checkUserPublicPermissions(t *testing.T) {
 				AuthentifiedUserID: c.ConsumerAuthentifiedUser.ID,
 				AuthentifiedUser:   c.ConsumerAuthentifiedUser,
 				IssuedAt:           time.Now(),
+				DriverManifest:     &sdk.AuthDriverManifest{},
 			})
 			err := api.checkUserPublicPermissions(ctx, &responseTracker{}, c.TargetAuthentifiedUser.Username, c.Permission, nil)
 			if c.Granted {
@@ -367,6 +371,7 @@ func Test_checkConsumerPermissions(t *testing.T) {
 				AuthentifiedUserID: c.ConsumerAuthentifiedUser.ID,
 				AuthentifiedUser:   c.ConsumerAuthentifiedUser,
 				IssuedAt:           time.Now(),
+				DriverManifest:     &sdk.AuthDriverManifest{},
 			})
 			err := api.checkConsumerPermissions(ctx, &responseTracker{}, c.TargetConsumer.ID, c.Permission, nil)
 			if c.Granted {
@@ -384,12 +389,12 @@ func Test_checkSessionPermissions(t *testing.T) {
 	authUser, _ := assets.InsertLambdaUser(t, db)
 	authUserConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, authUser.ID)
 	require.NoError(t, err)
-	authUserSession, err := authentication.NewSession(context.TODO(), db, authUserConsumer, 10*time.Second, false)
+	authUserSession, err := authentication.NewSession(context.TODO(), db, authUserConsumer, 10*time.Second)
 	require.NoError(t, err)
 	authUserMaintainer, _ := assets.InsertMaintainerUser(t, db)
 	authUserMaintainerConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, authUserMaintainer.ID)
 	require.NoError(t, err)
-	authUserMaintainerSession, err := authentication.NewSession(context.TODO(), db, authUserMaintainerConsumer, 10*time.Second, false)
+	authUserMaintainerSession, err := authentication.NewSession(context.TODO(), db, authUserMaintainerConsumer, 10*time.Second)
 	require.NoError(t, err)
 	authUserAdmin, _ := assets.InsertAdminUser(t, db)
 
@@ -457,6 +462,7 @@ func Test_checkSessionPermissions(t *testing.T) {
 				AuthentifiedUserID: c.ConsumerAuthentifiedUser.ID,
 				AuthentifiedUser:   c.ConsumerAuthentifiedUser,
 				IssuedAt:           time.Now(),
+				DriverManifest:     &sdk.AuthDriverManifest{},
 			})
 			err := api.checkSessionPermissions(ctx, &responseTracker{}, c.TargetSession.ID, c.Permission, nil)
 			if c.Granted {
@@ -679,7 +685,7 @@ func Test_checkWorkflowPermissionsByUser(t *testing.T) {
 
 		cons, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, usr.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 		require.NoError(t, err)
-
+		cons.DriverManifest = &sdk.AuthDriverManifest{}
 		ctx := context.WithValue(context.TODO(), contextAPIConsumer, cons)
 
 		m := map[string]string{}
@@ -887,7 +893,6 @@ func Test_checkGroupPermissions(t *testing.T) {
 					}
 					require.NoError(t, user.Insert(context.TODO(), db, uAdm))
 					defer assert.NoError(t, user.DeleteByID(api.mustDB(), uAdm.ID))
-
 				}
 				uAdm, _ = user.LoadByID(context.TODO(), api.mustDB(), uAdm.ID)
 
@@ -923,6 +928,7 @@ func Test_checkGroupPermissions(t *testing.T) {
 			require.NoError(t, err)
 			consumer, err = authentication.LoadConsumerByID(context.TODO(), api.mustDB(), consumer.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 			require.NoError(t, err)
+			consumer.DriverManifest = &sdk.AuthDriverManifest{}
 
 			ctx := context.TODO()
 			ctx = context.WithValue(ctx, contextAPIConsumer, consumer)

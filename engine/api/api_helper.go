@@ -47,7 +47,7 @@ func isMaintainer(ctx context.Context) bool {
 
 func MFASupport(ctx context.Context) bool {
 	c := getAPIConsumer(ctx)
-	if c == nil {
+	if c == nil || c.DriverManifest == nil {
 		return false
 	}
 	return c.DriverManifest.SupportMFA

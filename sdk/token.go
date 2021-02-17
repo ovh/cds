@@ -14,7 +14,7 @@ import (
 // AuthDriver interface.
 type AuthDriver interface {
 	GetManifest() AuthDriverManifest
-	GetSessionDuration(AuthDriverUserInfo, AuthConsumer) time.Duration
+	GetSessionDuration() time.Duration
 	CheckSigninRequest(AuthConsumerSigninRequest) error
 	GetUserInfo(context.Context, AuthConsumerSigninRequest) (AuthDriverUserInfo, error)
 }

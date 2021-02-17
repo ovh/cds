@@ -203,13 +203,8 @@ func (api *API) postAuthLocalSigninHandler() service.Handler {
 			return sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 		}
 
-		userInfo, err := driver.GetUserInfo(ctx, nil) // local auth driver doens't handle signinRequest
-		if err != nil {
-			return err
-		}
-
 		// Generate a new session for consumer
-		session, err := authentication.NewSession(ctx, tx, consumer, driver.GetSessionDuration(userInfo, *consumer), false)
+		session, err := authentication.NewSession(ctx, tx, consumer, driver.GetSessionDuration())
 		if err != nil {
 			return err
 		}
@@ -334,13 +329,8 @@ func (api *API) postAuthLocalVerifyHandler() service.Handler {
 			}
 		}
 
-		userInfo, err := driver.GetUserInfo(ctx, nil) // local auth driver doens't handle signinRequest
-		if err != nil {
-			return err
-		}
-
 		// Generate a new session for consumer
-		session, err := authentication.NewSession(ctx, tx, consumer, driver.GetSessionDuration(userInfo, *consumer), false)
+		session, err := authentication.NewSession(ctx, tx, consumer, driver.GetSessionDuration())
 		if err != nil {
 			return err
 		}
@@ -507,13 +497,8 @@ func (api *API) postAuthLocalResetHandler() service.Handler {
 			return err
 		}
 
-		userInfo, err := driver.GetUserInfo(ctx, nil) // local auth driver doens't handle signinRequest
-		if err != nil {
-			return err
-		}
-
 		// Generate a new session for consumer
-		session, err := authentication.NewSession(ctx, tx, consumer, driver.GetSessionDuration(userInfo, *consumer), false)
+		session, err := authentication.NewSession(ctx, tx, consumer, driver.GetSessionDuration())
 		if err != nil {
 			return err
 		}

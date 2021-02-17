@@ -262,8 +262,13 @@ func (api *API) postAuthSigninHandler() service.Handler {
 		}
 
 		// Generate a new session for consumer
-		sessionDuration := driver.GetSessionDuration(userInfo, *consumer)
-		session, err := authentication.NewSession(ctx, tx, consumer, sessionDuration, userInfo.MFA)
+		sessionDuration := driver.GetSessionDuration()
+		var session *sdk.AuthSession
+		if userInfo.MFA {
+			session, err = authentication.NewSessionWithMFA(ctx, tx, api.Cache, consumer, sessionDuration)
+		} else {
+			session, err = authentication.NewSession(ctx, tx, consumer, sessionDuration)
+		}
 		if err != nil {
 			return err
 		}

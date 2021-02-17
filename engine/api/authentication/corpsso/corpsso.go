@@ -91,7 +91,7 @@ func (d authDriver) GetSigninURI(state sdk.AuthSigninConsumerToken) (sdk.AuthDri
 	return result, nil
 }
 
-func (d authDriver) GetSessionDuration(req sdk.AuthDriverUserInfo, c sdk.AuthConsumer) time.Duration {
+func (d authDriver) GetSessionDuration() time.Duration {
 	return 24 * time.Hour
 }
 
@@ -225,7 +225,7 @@ func (d authDriver) GetUserInfo(ctx context.Context, req sdk.AuthConsumerSigninR
 
 	u.Username = itk.RemoteUser
 	u.ExternalID = itk.RemoteUser
-	u.MFA = itk.MFA
+	u.MFA = itk.MFA && d.Config.MFASupportEnabled
 	u.Email = itk.RemoteUser + "@" + d.Config.MailDomain
 	u.ExternalTokenID = itk.TokenID
 
