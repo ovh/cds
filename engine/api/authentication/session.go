@@ -17,48 +17,53 @@ const (
 )
 
 // NewSession returns a new session for a given auth consumer, and a duration for MFA validity
-func NewSession(ctx context.Context, db gorpmapper.SqlExecutorWithTx, c *sdk.AuthConsumer, duration time.Duration, mfaEnable bool) (*sdk.AuthSession, time.Time, error) {
-	var now = time.Now()
+func NewSession(ctx context.Context, db gorpmapper.SqlExecutorWithTx, c *sdk.AuthConsumer, duration time.Duration, mfaEnable bool) (*sdk.AuthSession, error) {
 	s := sdk.AuthSession{
 		ConsumerID: c.ID,
-		ExpireAt:   now.Add(duration),
+		ExpireAt:   time.Now().Add(duration),
 		MFA:        mfaEnable,
 	}
 
-	var mfaDuration time.Duration
-	if mfaEnable {
-		mfaDuration = MFADuration
-	}
-
 	if err := InsertSession(ctx, db, &s); err != nil {
-		return nil, now, err
+		return nil, err
 	}
 
-	return &s, now.Add(mfaDuration), nil
+	return &s, nil
 }
 
 // CheckSession returns the session if valid for given id.
 func CheckSession(ctx context.Context, db gorp.SqlExecutor, sessionID string) (*sdk.AuthSession, error) {
 	// Load the session from the id read in the claim
-	session, err := LoadSessionByID(ctx, db, sessionID)
+	s, err := LoadSessionByID(ctx, db, sessionID)
 	if err != nil {
 		return nil, sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrUnauthorized, "cannot load session for id: %s", sessionID))
 	}
-	if session == nil {
+	if s == nil {
 		log.Debug(ctx, "authentication.sessionMiddleware> no session found for id: %s", sessionID)
 		return nil, sdk.WithStack(sdk.ErrUnauthorized)
 	}
+	if s.MFA {
+		lastUsage := time.Now() // TODO get last session activity datetime
+		now := time.Now()
+		if now.Sub(lastUsage) > MFADuration {
+			log.Debug(ctx, "authentication.sessionMiddleware> MFA session expired due to inactivity for id: %s", sessionID)
+			if err := DeleteSessionByID(db, s.ID); err != nil {
+				log.Error(ctx, "CheckSession> unable to delete session %s: %v", s.ID, err)
+			}
+			log.Debug(ctx, "CheckSession> MFA session %s deleted due to inactivity", s.ID)
+			return nil, sdk.WithStack(sdk.ErrUnauthorized)
+		}
+	}
 
-	return session, nil
+	return s, nil
 }
 
 // NewSessionJWT generate a signed token for given auth session.
-func NewSessionJWT(s *sdk.AuthSession, mfaExpiration time.Time) (string, error) {
+func NewSessionJWT(s *sdk.AuthSession, externalSessionID string) (string, error) {
 	now := time.Now()
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodRS512, sdk.AuthSessionJWTClaims{
-		ID:          s.ID,
-		MFAExpireAt: mfaExpiration.Unix(),
-		TokenID:     s.TokenID,
+		ID:      s.ID,
+		TokenID: externalSessionID,
 		StandardClaims: jwt.StandardClaims{
 			Issuer:    GetIssuerName(),
 			Subject:   s.ConsumerID,

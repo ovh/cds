@@ -65,6 +65,7 @@ func (a AuthDriverManifests) ExistsConsumerType(consumerType AuthConsumerType) b
 type AuthDriverManifest struct {
 	Type           AuthConsumerType `json:"type"`
 	SignupDisabled bool             `json:"signup_disabled"`
+	SupportMFA     bool             `json:"support_mfa"`
 }
 
 // AuthConsumerScope alias type for string.
@@ -397,9 +398,10 @@ type AuthConsumer struct {
 	// aggregates
 	AuthentifiedUser *AuthentifiedUser `json:"user,omitempty" db:"-"`
 	Groups           Groups            `json:"groups,omitempty" db:"-"`
-	Service          *Service          `json:"-" db:"-"`
-	Worker           *Worker           `json:"-" db:"-"`
-	SupportMFA       bool              `json:"support_mfa" db:"-"`
+	// aggregates by router auth middleware
+	Service        *Service            `json:"-" db:"-"`
+	Worker         *Worker             `json:"-" db:"-"`
+	DriverManifest *AuthDriverManifest `json:"-" db:"-"`
 }
 
 // IsValid returns validity for auth consumer.
@@ -495,14 +497,12 @@ type AuthSession struct {
 	Consumer *AuthConsumer `json:"consumer,omitempty" db:"-"`
 	Groups   []Group       `json:"groups,omitempty" db:"-"`
 	Current  bool          `json:"current,omitempty" cli:"current" db:"-"`
-	TokenID  string        `json:"token_id" cli:"-" db:"-"`
 }
 
 // AuthSessionJWTClaims is the specific claims format for JWT session.
 type AuthSessionJWTClaims struct {
-	ID          string
-	MFAExpireAt int64
-	TokenID     string
+	ID      string
+	TokenID string
 	jwt.StandardClaims
 }
 

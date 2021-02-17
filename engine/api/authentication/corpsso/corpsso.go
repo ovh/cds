@@ -59,6 +59,7 @@ func (d authDriver) GetManifest() sdk.AuthDriverManifest {
 	return sdk.AuthDriverManifest{
 		Type:           sdk.ConsumerCorporateSSO,
 		SignupDisabled: false,
+		SupportMFA:     d.Config.MFASupportEnabled,
 	}
 }
 

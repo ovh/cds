@@ -28,7 +28,7 @@ func Test_CheckSessionJWT(t *testing.T) {
 		ExpireAt:   now.Add(3 * time.Second),
 	}
 
-	jwtRaw, err := authentication.NewSessionJWT(session, now)
+	jwtRaw, err := authentication.NewSessionJWT(session, "")
 	require.NoError(t, err)
 
 	_, _, err = service.CheckSessionJWT(jwtRaw, authentication.VerifyJWT)

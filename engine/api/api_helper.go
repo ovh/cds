@@ -50,7 +50,7 @@ func MFASupport(ctx context.Context) bool {
 	if c == nil {
 		return false
 	}
-	return c.SupportMFA
+	return c.DriverManifest.SupportMFA
 }
 
 func isAdmin(ctx context.Context) bool {
@@ -58,7 +58,7 @@ func isAdmin(ctx context.Context) bool {
 	if c == nil {
 		return false
 	}
-	var dontNeedMFA = !c.SupportMFA
+	var dontNeedMFA = !c.DriverManifest.SupportMFA
 	return c.Admin() && (dontNeedMFA || isMFA(ctx))
 }
 
@@ -137,12 +137,25 @@ func getAuthSession(ctx context.Context) *sdk.AuthSession {
 	if i == nil {
 		return nil
 	}
-	u, ok := i.(*sdk.AuthSession)
+	s, ok := i.(*sdk.AuthSession)
 	if !ok {
 		log.Debug(ctx, "api.getAuthSession> AuthSession type in context is invalid")
 		return nil
 	}
-	return u
+	return s
+}
+
+func getAuthClaims(ctx context.Context) *sdk.AuthSessionJWTClaims {
+	i := ctx.Value(contextClaims)
+	if i == nil {
+		return nil
+	}
+	c, ok := i.(*sdk.AuthSessionJWTClaims)
+	if !ok {
+		log.Debug(ctx, "api.getAuthClaims> AuthSessionJWTClaims type in context is invalid")
+		return nil
+	}
+	return c
 }
 
 func (a *API) mustDB() *gorp.DbMap {

@@ -263,20 +263,15 @@ func (api *API) postAuthSigninHandler() service.Handler {
 
 		// Generate a new session for consumer
 		sessionDuration := driver.GetSessionDuration(userInfo, *consumer)
-		session, mfaExpiration, err := authentication.NewSession(ctx, tx, consumer, sessionDuration, userInfo.MFA)
+		session, err := authentication.NewSession(ctx, tx, consumer, sessionDuration, userInfo.MFA)
 		if err != nil {
 			return err
-		}
-
-		// If the auth driver is giving a tokenID, let's keep it
-		if userInfo.ExternalTokenID != "" {
-			session.TokenID = userInfo.ExternalTokenID
 		}
 
 		log.Debug(ctx, "postAuthSigninHandler> new session %s created for %.2f seconds: %+v", session.ID, sessionDuration.Seconds(), session)
 
 		// Generate a jwt for current session
-		jwt, err := authentication.NewSessionJWT(session, mfaExpiration)
+		jwt, err := authentication.NewSessionJWT(session, userInfo.ExternalTokenID)
 		if err != nil {
 			return err
 		}

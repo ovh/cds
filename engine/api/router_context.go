@@ -3,7 +3,8 @@ package api
 type contextKey int
 
 const (
-	contextSession contextKey = iota
+	contextClaims contextKey = iota
+	contextSession
 	contextAPIConsumer
 	contextDate
 )

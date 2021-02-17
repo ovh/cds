@@ -106,8 +106,12 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 		SetTracker(w, cdslog.AuthSessionID, session.ID)
 		ctx = context.WithValue(ctx, cdslog.AuthSessionIAT, session.Created.Unix())
 		SetTracker(w, cdslog.AuthSessionIAT, session.Created.Unix())
-		ctx = context.WithValue(ctx, cdslog.AuthSessionTokenID, session.TokenID)
-		SetTracker(w, cdslog.AuthSessionTokenID, session.TokenID)
+	}
+
+	claims := getAuthClaims(ctx)
+	if claims != nil {
+		ctx = context.WithValue(ctx, cdslog.AuthSessionTokenID, claims.TokenID)
+		SetTracker(w, cdslog.AuthSessionTokenID, claims.TokenID)
 	}
 
 	return ctx, nil
@@ -125,9 +129,10 @@ func (api *API) authOptionalMiddleware(ctx context.Context, w http.ResponseWrite
 		return ctx, nil
 	}
 	claims := jwt.Claims.(*sdk.AuthSessionJWTClaims)
-	sessionID := claims.StandardClaims.Id
+	ctx = context.WithValue(ctx, contextClaims, claims)
 
 	// Check for session based on jwt from context
+	sessionID := claims.StandardClaims.Id
 	session, err := authentication.CheckSession(ctx, api.mustDB(), sessionID)
 	if err != nil {
 		log.Warn(ctx, "authMiddleware> cannot find a valid session for given JWT: %v", err)
@@ -136,13 +141,7 @@ func (api *API) authOptionalMiddleware(ctx context.Context, w http.ResponseWrite
 		log.Debug(ctx, "api.authOptionalMiddleware> no session found in context")
 		return ctx, nil
 	}
-	session.TokenID = claims.TokenID
-	session.MFA = session.MFA && time.Now().Unix() <= claims.MFAExpireAt
 	ctx = context.WithValue(ctx, contextSession, session)
-	ctx = context.WithValue(ctx, cdslog.AuthSessionTokenID, session.TokenID)
-	if session.MFA && time.Now().Unix() <= claims.ExpiresAt {
-		log.Warn(ctx, "session MFA has expired")
-	}
 
 	// Load auth consumer for current session in database with authentified user and contacts
 	consumer, err := authentication.LoadConsumerByID(ctx, api.mustDB(), session.ConsumerID,
@@ -176,14 +175,14 @@ func (api *API) authOptionalMiddleware(ctx context.Context, w http.ResponseWrite
 			return ctx, err
 		}
 		consumer.Worker = w
+
+		// Add driver manifest for consumer
+		driverManifest := authDriver.GetManifest()
+		consumer.DriverManifest = &driverManifest
 	}
 	if consumer == nil {
 		log.Debug(ctx, "api.authOptionalMiddleware> no consumer found in context")
 		return ctx, nil
-	}
-
-	if authDriver != nil && consumer.Type == sdk.ConsumerCorporateSSO {
-		consumer.SupportMFA = api.Config.Auth.CorporateSSO.MFASupportEnabled
 	}
 
 	ctx = context.WithValue(ctx, contextAPIConsumer, consumer)
