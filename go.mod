@@ -1,6 +1,6 @@
 module github.com/ovh/cds
 
-go 1.14
+go 1.16
 
 require (
 	contrib.go.opencensus.io/exporter/jaeger v0.1.0
@@ -127,7 +127,6 @@ require (
 	github.com/yuin/gluare v0.0.0-20170607022532-d7c94f1a80ed
 	github.com/yuin/gopher-lua v0.0.0-20170901023928-8c2befcd3908
 	github.com/ziutek/mymysql v1.5.4 // indirect
-	go.etcd.io/bbolt v1.3.3 // indirect
 	go.opencensus.io v0.22.0
 	golang.org/x/crypto v0.0.0-20200709230013-948cd5f35899
 	golang.org/x/net v0.0.0-20200528225125-3c3fba18258b

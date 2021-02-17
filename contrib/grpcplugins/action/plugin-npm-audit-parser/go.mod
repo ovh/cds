@@ -2,7 +2,7 @@ module github.com/ovh/cds/contrib/grpcplugins/action/npm-audit-parser
 
 replace github.com/ovh/cds => ../../../../
 
-go 1.14
+go 1.16
 
 require (
 	github.com/golang/protobuf v1.3.2
