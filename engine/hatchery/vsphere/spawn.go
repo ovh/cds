@@ -28,7 +28,16 @@ type annotation struct {
 }
 
 // SpawnWorker creates a new vm instance
-func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) error {
+func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) (err error) {
+	defer func() {
+		if err != nil {
+			ctx = sdk.ContextWithStacktrace(ctx, err)
+			log.Error(ctx, "HatcheryVSphere> SpawnWorker %q from model %q: ERROR: %v", spawnArgs.WorkerName, spawnArgs.ModelName(), err)
+		} else {
+			log.Info(ctx, "HatcheryVSphere> SpawnWorker %q from model %q: DONE", spawnArgs.WorkerName, spawnArgs.ModelName())
+		}
+	}()
+
 	if spawnArgs.JobID == 0 && !spawnArgs.RegisterOnly {
 		return sdk.WithStack(fmt.Errorf("no job ID and no register"))
 	}
@@ -67,8 +76,9 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 		return sdk.WrapError(err, "cannot create VM configuration")
 	}
 
-	log.Info(ctx, "Create vm to exec worker %s", spawnArgs.WorkerName)
+	log.Info(ctx, "Create vm to execute worker %q, cloneSpec: %+v", spawnArgs.WorkerName, *cloneSpec)
 	defer log.Info(ctx, "Terminate to create vm for worker %s", spawnArgs.WorkerName)
+
 	task, errC := vm.Clone(ctx, folder, spawnArgs.WorkerName, *cloneSpec)
 	if errC != nil {
 		return sdk.WrapError(errC, "cannot clone VM")
@@ -99,9 +109,9 @@ func (h *HatcheryVSphere) createVMModel(ctx context.Context, model sdk.Model, wo
 	defer func() {
 		if err != nil {
 			ctx = sdk.ContextWithStacktrace(ctx, err)
-			log.Error(ctx, "Create vm model %s from %s ERROR: %v", model.Name, model.ModelVirtualMachine.Image, err)
+			log.Error(ctx, "Create vm model %q from %q ERROR: %v", model.Name, model.ModelVirtualMachine.Image, err)
 		} else {
-			log.Info(ctx, "Create vm model %s from %s DONE", model.Name, model.ModelVirtualMachine.Image)
+			log.Info(ctx, "Create vm model %q from %q DONE", model.Name, model.ModelVirtualMachine.Image)
 		}
 	}()
 
@@ -109,6 +119,8 @@ func (h *HatcheryVSphere) createVMModel(ctx context.Context, model sdk.Model, wo
 	if err != nil {
 		return vm, sdk.WrapError(err, "createVMModel> Cannot find virtual machine")
 	}
+
+	log.Debug(ctx, "found virtual machine %q: %+v", model.ModelVirtualMachine.Image, vm)
 
 	annot := annotation{
 		HatcheryName:            h.Name(),
@@ -188,9 +200,9 @@ func (h *HatcheryVSphere) createVMModel(ctx context.Context, model sdk.Model, wo
 		return vm, sdk.WrapError(err, "error on waiting result for vm renaming %s", model.Name)
 	}
 
-	log.Debug(ctx, "renaming virtual machine %q to %q DONE", vm.Name(), model.Name)
+	log.Debug(ctx, "renaming virtual machine %q to %q DONE", name, model.Name)
 
-	log.Info(ctx, "mark virtual machine %q as template", vm.Name(), model.Name)
+	log.Info(ctx, "mark virtual machine %q as template", name, model.Name)
 	if err := vm.MarkAsTemplate(ctx); err != nil {
 		return vm, sdk.WrapError(err, "unable to mark vm as template")
 	}

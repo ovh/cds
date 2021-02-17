@@ -36,8 +36,9 @@ func startWorkerStarters(ctx context.Context, h Interface) chan<- workerStarterR
 		maxProv = defaultMaxProvisioning
 	}
 	for workerNum := 0; workerNum < maxProv; workerNum++ {
-		h.GetGoRoutines().Run(ctx, "workerStarter", func(ctx context.Context) {
-			workerStarter(ctx, h, fmt.Sprintf("%d", workerNum), jobs)
+		workerNumStr := fmt.Sprintf("%d", workerNum)
+		h.GetGoRoutines().Run(ctx, "workerStarter-"+workerNumStr, func(ctx context.Context) {
+			workerStarter(ctx, h, workerNumStr, jobs)
 		})
 	}
 	return jobs

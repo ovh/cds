@@ -45,12 +45,6 @@ type HatcheryConfiguration struct {
 
 	// WorkerTTL Worker TTL (minutes)
 	WorkerTTL int `mapstructure:"workerTTL" toml:"workerTTL" default:"30" commented:"false" comment:"Worker TTL (minutes)" json:"workerTTL"`
-
-	// DisableCreateImage if true: hatchery does not create vsphere image when a worker model is updated
-	DisableCreateImage bool `mapstructure:"disableCreateImage" toml:"disableCreateImage" default:"false" commented:"false" comment:"if true: hatchery does not create vsphere image when a worker model is updated" json:"disableCreateImage"`
-
-	// CreateImageTimeout max wait for create a vsphere image (in seconds)
-	CreateImageTimeout int `mapstructure:"createImageTimeout" toml:"createImageTimeout" default:"180" commented:"false" comment:"max wait for create a vsphere image (in seconds)" json:"createImageTimeout"`
 }
 
 // HatcheryVSphere spawns vm
