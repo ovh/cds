@@ -6,6 +6,7 @@ import (
 	"crypto/md5"
 	"crypto/sha512"
 	"encoding/hex"
+	"encoding/json"
 	"io"
 	"os"
 
@@ -38,11 +39,29 @@ func (s *Service) storeFile(ctx context.Context, sig cdn.Signature, reader io.Re
 		return err
 	}
 
+	// Check Item unicity
+	_, err = item.LoadByAPIRefHashAndType(ctx, s.Mapper, s.mustDBWithCtx(ctx), hashRef, itemType)
+	if err == nil {
+		return sdk.WrapError(sdk.ErrConflictData, "cannot upload the same artifact twice")
+	}
+	if !sdk.ErrorIs(err, sdk.ErrNotFound) {
+		return err
+	}
+
 	it := &sdk.CDNItem{
 		APIRef:     apiRef,
 		Type:       itemType,
 		APIRefHash: hashRef,
 		Status:     sdk.CDNStatusItemIncoming,
+	}
+
+	switch itemType {
+	case sdk.CDNTypeItemArtifact:
+		// CALL CDS API to CHECK IF WE CAN UPLOAD ARTIFACT
+		artiApiRef, _ := it.GetCDNArtifactApiRef()
+		if err := s.Client.WorkflowRunArtifactCheck(ctx, sig.ProjectKey, sig.WorkflowName, sig.RunNumber, *artiApiRef); err != nil {
+			return err
+		}
 	}
 
 	iu, err := s.Units.NewItemUnit(ctx, bufferUnit, it)
@@ -109,6 +128,34 @@ func (s *Service) storeFile(ctx context.Context, sig cdn.Signature, reader io.Re
 	if err := storage.InsertItemUnit(ctx, s.Mapper, tx, iu); err != nil {
 		return err
 	}
+
+	switch itemType {
+	case sdk.CDNTypeItemArtifact:
+		artiApiRef, _ := it.GetCDNArtifactApiRef()
+		// Call CDS to insert workflow run result
+		artiResult := sdk.WorkflowRunResultArtifact{
+			Name:       apiRef.ToFilename(),
+			Size:       it.Size,
+			MD5:        it.MD5,
+			CDNRefHash: it.APIRefHash,
+			Perm:       artiApiRef.Perm,
+		}
+		bts, err := json.Marshal(artiResult)
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		wrResult := sdk.WorkflowRunResult{
+			WorkflowRunID:     sig.RunID,
+			WorkflowNodeRunID: sig.NodeRunID,
+			WorkflowRunJobID:  sig.JobID,
+			Type:              sdk.WorkflowRunResultTypeArtifact,
+			DataRaw:           json.RawMessage(bts),
+		}
+		if err := s.Client.WorkflowRunResultsAdd(ctx, sig.ProjectKey, sig.WorkflowName, sig.RunNumber, wrResult); err != nil {
+			return err
+		}
+	}
+
 	if err := tx.Commit(); err != nil {
 		return sdk.WithStack(err)
 	}
@@ -119,17 +166,6 @@ func (s *Service) storeFile(ctx context.Context, sig cdn.Signature, reader io.Re
 
 func (s *Service) cleanPreviousFileItem(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, sig cdn.Signature, itemType sdk.CDNItemType, name string) error {
 	switch itemType {
-	case sdk.CDNTypeItemArtifact:
-		// Check if item already exist
-		existingItem, err := item.LoadFileByRunAndArtifactName(ctx, s.Mapper, tx, itemType, sig.RunID, name)
-		if err != nil {
-			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
-				return err
-			}
-			return nil
-		}
-		existingItem.ToDelete = true
-		return item.Update(ctx, s.Mapper, tx, existingItem)
 	case sdk.CDNTypeItemWorkerCache:
 		// Check if item already exist
 		existingItem, err := item.LoadFileByProjectAndCacheTag(ctx, s.Mapper, tx, itemType, sig.ProjectKey, name)

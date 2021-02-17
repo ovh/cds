@@ -9,6 +9,7 @@ type Signature struct {
 	WorkflowName string
 	WorkflowID   int64
 	RunID        int64
+	RunNumber    int64
 	NodeRunName  string
 	NodeRunID    int64
 	Timestamp    int64

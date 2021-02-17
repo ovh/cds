@@ -215,6 +215,7 @@ type dbNodeTriggerData sdk.NodeTrigger
 type dbNodeOutGoingHookData sdk.NodeOutGoingHook
 type dbNodeJoinData sdk.NodeJoin
 type dbNodeHookData sdk.NodeHook
+type dbRunResult sdk.WorkflowRunResult
 
 type dbWorkflowRunSecret struct {
 	gorpmapper.SignedEntity
@@ -252,4 +253,5 @@ func init() {
 	gorpmapping.Register(gorpmapping.New(dbNodeJoinData{}, "w_node_join", true, "id"))
 	gorpmapping.Register(gorpmapping.New(dbAsCodeEvents{}, "as_code_events", true, "id"))
 	gorpmapping.Register(gorpmapping.New(dbWorkflowRunSecret{}, "workflow_run_secret", false, "id"))
+	gorpmapping.Register(gorpmapping.New(dbRunResult{}, "workflow_run_result", false, "id"))
 }

@@ -187,16 +187,6 @@ func TestGetItemLogsDownloadHandler(t *testing.T) {
 
 	assert.Equal(t, "[EMERGENCY] this is a message\n", string(rec.Body.Bytes()))
 
-	// Test getItemHandler route
-	gock.New("http://lolcat.api").Get("/auth/session/" + authSessionJWTClaims.ID).Reply(http.StatusOK).JSON(
-		sdk.AuthCurrentConsumerResponse{
-			Consumer: sdk.AuthConsumer{
-				AuthentifiedUser: &sdk.AuthentifiedUser{
-					Ring: sdk.UserRingAdmin,
-				},
-			},
-		},
-	)
 	uri = s.Router.GetRoute("GET", s.getItemHandler, map[string]string{
 		"type":   string(sdk.CDNTypeItemStepLog),
 		"apiRef": apiRefHash,
@@ -222,7 +212,11 @@ func TestGetItemArtifactDownloadHandler(t *testing.T) {
 
 	s.Client = cdsclient.New(cdsclient.Config{Host: "http://lolcat.api", InsecureSkipVerifyTLS: false})
 	gock.InterceptClient(s.Client.(cdsclient.Raw).HTTPClient())
+	t.Cleanup(gock.OffAll)
 	gock.New("http://lolcat.api").Get("/project/" + projectKey + "/workflows/WfName/type/artifact/access").Reply(http.StatusOK).JSON(nil)
+
+	gock.New("http://lolcat.api").Post("/project/" + projectKey + "/workflows/WfName/runs/0/artifacts/check").Reply(http.StatusNoContent)
+	gock.New("http://lolcat.api").Post("/project/" + projectKey + "/workflows/WfName/runs/0/results").Reply(http.StatusNoContent)
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
@@ -334,6 +328,10 @@ func TestGetItemArtifactDownloadHandler(t *testing.T) {
 	require.Equal(t, 200, rec.Code)
 
 	assert.Equal(t, string(fileContent), string(rec.Body.Bytes()))
+	for _, r := range gock.Pending() {
+		t.Logf("Pending call: %s", r.Request().URLStruct.String())
+	}
+	assert.True(t, gock.IsDone())
 }
 
 func TestGetItemsArtefactHandler(t *testing.T) {

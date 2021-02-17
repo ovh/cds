@@ -127,9 +127,31 @@ export class WorkflowNodeRun implements WithKey {
     callback: WorkflowNodeOutgoingHookRunCallback;
     static_files: Array<WorkflowNodeRunStaticFiles>;
 
+    // ui data
+    results: Array<WorkflowRunResult>;
+
     key(): string {
         return `${this.id}-${this.num}.${this.subnumber}`;
     }
+}
+
+export class WorkflowRunResult {
+    id: string;
+    created: string;
+    workflow_run_id: number;
+    workflow_node_run_id: number;
+    workflow_run_job_id: number;
+    sub_num: number;
+    type: string;
+    data: any;
+}
+
+
+export class WorkflowRunResultArtifact {
+    name: string
+    size: number;
+    md5: string;
+    cdn_hash: string;
 }
 
 export class WorkflowNodeOutgoingHookRunCallback {

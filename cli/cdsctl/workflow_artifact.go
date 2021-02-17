@@ -45,25 +45,12 @@ func workflowArtifactListRun(v cli.Values) (cli.ListResult, error) {
 		return nil, fmt.Errorf("number parameter have to be an integer")
 	}
 
-	projectKey := v.GetString(_ProjectKey)
-	workflowName := v.GetString(_WorkflowName)
-
-	feature, err := client.FeatureEnabled(sdk.FeatureCDNArtifact, map[string]string{
-		"project_key": projectKey,
-	})
+	workflowArtifacts, err := client.WorkflowRunArtifacts(v.GetString(_ProjectKey), v.GetString(_WorkflowName), number)
 	if err != nil {
 		return nil, err
 	}
 
-	if !feature.Enabled {
-		workflowArtifacts, err := client.WorkflowRunArtifacts(v.GetString(_ProjectKey), v.GetString(_WorkflowName), number)
-		if err != nil {
-			return nil, err
-		}
-		return cli.AsListResult(workflowArtifacts), nil
-	}
-
-	cdnLinks, err := client.WorkflowRunArtifactsLinks(projectKey, workflowName, number)
+	results, err := client.WorkflowRunResultsList(context.Background(), v.GetString(_ProjectKey), v.GetString(_WorkflowName), number)
 	if err != nil {
 		return nil, err
 	}
@@ -72,14 +59,23 @@ func workflowArtifactListRun(v cli.Values) (cli.ListResult, error) {
 		Name string `cli:"name"`
 		Md5  string `cli:"md5"`
 	}
-	arts := make([]Artifact, 0, len(cdnLinks.Items))
-	for _, item := range cdnLinks.Items {
-		arts = append(arts, Artifact{
-			Name: item.APIRef.ToFilename(),
-			Md5:  item.MD5,
-		})
+
+	artifacts := make([]Artifact, 0, len(workflowArtifacts))
+	for _, art := range workflowArtifacts {
+		artifacts = append(artifacts, Artifact{Name: art.Name, Md5: art.MD5sum})
 	}
-	return cli.AsListResult(arts), nil
+	for _, runResult := range results {
+		if runResult.Type != sdk.WorkflowRunResultTypeArtifact {
+			continue
+		}
+		artiData, err := runResult.GetArtifact()
+		if err != nil {
+			return nil, err
+		}
+		artifacts = append(artifacts, Artifact{Name: artiData.Name, Md5: artiData.MD5})
+	}
+
+	return cli.AsListResult(artifacts), nil
 }
 
 var workflowArtifactDownloadCmd = cli.Command{
@@ -110,25 +106,20 @@ func workflowArtifactDownloadRun(v cli.Values) error {
 		return fmt.Errorf("number parameter have to be an integer")
 	}
 
-	feature, err := client.FeatureEnabled(sdk.FeatureCDNArtifact, map[string]string{
-		"project_key": v.GetString(_ProjectKey),
-	})
+	confCDN, err := client.ConfigCDN()
 	if err != nil {
 		return err
 	}
-
-	if !feature.Enabled {
-		ok, err := downloadFromCDSAPI(v, number)
-		if err != nil {
-			return err
-		}
-		if !ok {
-			return fmt.Errorf("No artifact downloaded")
-		}
+	ok, err := downloadFromCDSAPI(v, number)
+	if err != nil {
+		return err
+	}
+	if ok {
 		return nil
 	}
 
-	cdnLinks, err := client.WorkflowRunArtifactsLinks(v.GetString(_ProjectKey), v.GetString(_WorkflowName), number)
+	// Search in result
+	results, err := client.WorkflowRunResultsList(context.Background(), v.GetString(_ProjectKey), v.GetString(_WorkflowName), number)
 	if err != nil {
 		return err
 	}
@@ -141,48 +132,51 @@ func workflowArtifactDownloadRun(v cli.Values) error {
 			return fmt.Errorf("exclude parameter is not valid: %v", err)
 		}
 	}
-
-	var ok bool
-
-	for _, item := range cdnLinks.Items {
-		if v.GetString("artifact-name") != "" && v.GetString("artifact-name") != item.APIRef.ToFilename() {
+	for _, runResult := range results {
+		if runResult.Type != sdk.WorkflowRunResultTypeArtifact {
 			continue
 		}
-		if v.GetString("exclude") != "" && reg.MatchString(item.APIRef.ToFilename()) {
-			fmt.Printf("File %s is excluded from download\n", item.APIRef.ToFilename())
+		artifactData, err := runResult.GetArtifact()
+		if err != nil {
+			return err
+		}
+		if v.GetString("artifact-name") != "" && v.GetString("artifact-name") != artifactData.Name {
 			continue
 		}
-		apiRef, _ := item.GetCDNArtifactApiRef()
+		if v.GetString("exclude") != "" && reg.MatchString(artifactData.Name) {
+			fmt.Printf("File %s is excluded from download\n", artifactData.Name)
+			continue
+		}
 		var f *os.File
 		var toDownload bool
-		if _, err := os.Stat(item.APIRef.ToFilename()); os.IsNotExist(err) {
+		if _, err := os.Stat(artifactData.Name); os.IsNotExist(err) {
 			toDownload = true
 		} else {
 
 			// file exists, check sha512
 			var errf error
-			f, errf = os.OpenFile(item.APIRef.ToFilename(), os.O_RDWR|os.O_CREATE, os.FileMode(apiRef.Perm))
+			f, errf = os.OpenFile(artifactData.Name, os.O_RDWR|os.O_CREATE, os.FileMode(artifactData.Perm))
 			if errf != nil {
 				return errf
 			}
-			md5Sum, err := sdk.FileMd5sum(item.APIRef.ToFilename())
+			md5Sum, err := sdk.FileMd5sum(artifactData.Name)
 			if err != nil {
 				return err
 			}
 
-			if md5Sum != item.MD5 {
+			if md5Sum != artifactData.MD5 {
 				toDownload = true
 			}
 		}
 
 		if toDownload {
 			var err error
-			f, err = os.OpenFile(item.APIRef.ToFilename(), os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.FileMode(apiRef.Perm))
+			f, err = os.OpenFile(artifactData.Name, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.FileMode(artifactData.Perm))
 			if err != nil {
 				return err
 			}
-			fmt.Printf("Downloading %s...\n", item.APIRef.ToFilename())
-			r, err := client.CDNItemDownload(context.Background(), cdnLinks.CDNHttpURL, item.APIRefHash, sdk.CDNTypeItemArtifact)
+			fmt.Printf("Downloading %s...\n", artifactData.Name)
+			r, err := client.CDNItemDownload(context.Background(), confCDN.HTTPURL, artifactData.CDNRefHash, sdk.CDNTypeItemArtifact)
 			if err != nil {
 				return err
 			}
@@ -194,13 +188,13 @@ func workflowArtifactDownloadRun(v cli.Values) error {
 			}
 		}
 
-		md5Sum, err := sdk.FileMd5sum(item.APIRef.ToFilename())
+		md5Sum, err := sdk.FileMd5sum(artifactData.Name)
 		if err != nil {
 			return err
 		}
 
-		if md5Sum != item.MD5 {
-			return fmt.Errorf("Invalid sha512sum \ndownloaded file:%s\n%s:%s", md5Sum, f.Name(), item.MD5)
+		if md5Sum != artifactData.MD5 {
+			return fmt.Errorf("Invalid md5Sum \ndownloaded file:%s\n%s:%s", md5Sum, f.Name(), artifactData.MD5)
 		}
 
 		if toDownload {

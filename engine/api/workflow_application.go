@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"regexp"
 	"sort"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -116,6 +118,47 @@ func (api *API) releaseApplicationWorkflowHandler() service.Handler {
 			}
 
 			if err := client.UploadReleaseFile(ctx, app.RepositoryFullname, fmt.Sprintf("%d", release.ID), release.UploadURL, a.Name, f); err != nil {
+				return sdk.WrapError(err, "releaseApplicationWorkflowHandler")
+			}
+		}
+
+		results, err := workflow.LoadRunResultsByRunIDAndType(ctx, api.mustDB(), workflowRun.ID, sdk.WorkflowRunResultTypeArtifact)
+		if err != nil {
+			return err
+		}
+		var resultToUpload []sdk.WorkflowRunResultArtifact
+		for _, r := range results {
+			artiData, err := r.GetArtifact()
+			if err != nil {
+				return err
+			}
+			for _, aToUp := range req.Artifacts {
+				if len(aToUp) > 0 {
+					ok, err := regexp.Match(aToUp, []byte(artiData.Name))
+					if err != nil {
+						return sdk.WrapError(err, "releaseApplicationWorkflowHandler> %s is not a valid regular expression", aToUp)
+					}
+					if ok {
+						resultToUpload = append(resultToUpload, artiData)
+						break
+					}
+				}
+			}
+		}
+
+		if len(resultToUpload) == 0 {
+			return nil
+		}
+		cdnHTTP, err := services.GetCDNPublicHTTPAdress(ctx, api.mustDB())
+		if err != nil {
+			return err
+		}
+		for _, r := range resultToUpload {
+			reader, err := api.Client.CDNItemDownload(ctx, cdnHTTP, r.CDNRefHash, sdk.CDNTypeItemArtifact)
+			if err != nil {
+				return err
+			}
+			if err := client.UploadReleaseFile(ctx, app.RepositoryFullname, fmt.Sprintf("%d", release.ID), release.UploadURL, r.Name, ioutil.NopCloser(reader)); err != nil {
 				return sdk.WrapError(err, "releaseApplicationWorkflowHandler")
 			}
 		}

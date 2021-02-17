@@ -79,6 +79,34 @@ func artifactsHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 			artifactsJSON = append(artifactsJSON, *a)
 		}
 
+		workflowRunResults, err := wk.client.WorkflowRunResultsList(ctx, projectKey, reqArgs.Workflow, reqArgs.Number)
+		if err != nil {
+			newError := sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("cannot list workflow run result: %s", err))
+			writeError(w, r, newError)
+			return
+		}
+		for _, result := range workflowRunResults {
+			if result.Type != sdk.WorkflowRunResultTypeArtifact {
+				continue
+			}
+			artData, err := result.GetArtifact()
+			if err != nil {
+				newError := sdk.NewError(sdk.ErrUnknownError, fmt.Errorf("item is not an artifact: %s", err))
+				writeError(w, r, newError)
+				return
+			}
+			if reqArgs.Pattern != "" && !regexp.MatchString(artData.Name) {
+				continue
+			}
+			artifactsJSON = append(artifactsJSON, sdk.WorkflowNodeRunArtifact{
+				MD5sum:  artData.MD5,
+				Name:    artData.Name,
+				Size:    artData.Size,
+				Created: result.Created,
+				Perm:    artData.Perm,
+			})
+		}
+
 		writeJSON(w, artifactsJSON, http.StatusOK)
 	}
 }

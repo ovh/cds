@@ -2,7 +2,14 @@ import {HttpClient, HttpParams} from '@angular/common/http';
 import {Injectable} from '@angular/core';
 import {Commit} from 'app/model/repositories.model';
 import {Workflow} from 'app/model/workflow.model';
-import { RunNumber, WorkflowNodeRun, WorkflowRun, WorkflowRunRequest, WorkflowRunSummary } from 'app/model/workflow.run.model';
+import {
+    RunNumber,
+    WorkflowNodeRun,
+    WorkflowRun,
+    WorkflowRunRequest,
+    WorkflowRunResult,
+    WorkflowRunSummary
+} from 'app/model/workflow.run.model';
 import {Observable} from 'rxjs';
 import {map} from 'rxjs/operators';
 
@@ -77,6 +84,19 @@ export class WorkflowRunService {
     getWorkflowNodeRun(key: string, workflowName: string, number: number, nodeRunID): Observable<WorkflowNodeRun> {
         return this._http.get<WorkflowNodeRun>('/project/' + key + '/workflows/' + workflowName +
             '/runs/' + number + '/nodes/' + nodeRunID);
+    }
+
+    /**
+     * Get all result for the given workflow node run
+     *
+     * @param key Project unique key
+     * @param workflowName Workflow name
+     * @param number Run number
+     * @param nodeRunID Node run Identifier
+     */
+    getWorkflowNodeRunResults(key: string, workflowName: string, number: number, nodeRunID: number): Observable<Array<WorkflowRunResult>> {
+        return this._http.get<Array<WorkflowRunResult>>(
+            `/project/${key}/workflows/${workflowName}/runs/${number}/nodes/${nodeRunID}/results`);
     }
 
     /**

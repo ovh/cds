@@ -60,6 +60,7 @@ type CurrentWorker struct {
 		workflowName     string
 		workflowID       int64
 		runID            int64
+		runNumber        int64
 		nodeRunName      string
 		features         map[sdk.FeatureName]bool
 		currentStepIndex int
@@ -148,6 +149,7 @@ func (wk *CurrentWorker) ArtifactSignature(artifactName string, perm uint32) (st
 		WorkflowName: wk.currentJob.workflowName,
 		NodeRunName:  wk.currentJob.nodeRunName,
 		RunID:        wk.currentJob.runID,
+		RunNumber:    wk.currentJob.runNumber,
 		JobName:      wk.currentJob.wJob.Job.Action.Name,
 		Worker: &cdn.SignatureWorker{
 			WorkerID:     wk.id,
@@ -217,6 +219,7 @@ func (wk *CurrentWorker) prepareLog(ctx context.Context, level workerruntime.Lev
 		WorkflowName: wk.currentJob.workflowName,
 		NodeRunName:  wk.currentJob.nodeRunName,
 		RunID:        wk.currentJob.runID,
+		RunNumber:    wk.currentJob.runNumber,
 		JobName:      wk.currentJob.wJob.Job.Action.Name,
 	}
 

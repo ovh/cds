@@ -1,11 +1,14 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { Select, Store } from '@ngxs/store';
-import { WorkflowNodeRun, WorkflowNodeRunArtifact, WorkflowNodeRunStaticFiles } from 'app/model/workflow.run.model';
-import { FeatureNames } from 'app/service/feature/feature.service';
+import {
+    WorkflowNodeRun,
+    WorkflowNodeRunArtifact,
+    WorkflowNodeRunStaticFiles,
+    WorkflowRunResultArtifact
+} from 'app/model/workflow.run.model';
+
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { Column, ColumnType, Filter } from 'app/shared/table/data-table.component';
-import { FeatureState } from 'app/store/feature.state';
-import { ProjectState } from 'app/store/project.state';
 import { WorkflowState } from 'app/store/workflow.state';
 import { Observable, Subscription } from 'rxjs';
 
@@ -32,10 +35,6 @@ export class WorkflowRunArtifactListComponent implements OnInit, OnDestroy {
             return d => d.name.toLowerCase().indexOf(lowerFilter) !== -1 ||
                 d.sha512sum.toLowerCase().indexOf(lowerFilter) !== -1
         };
-        let project = this._store.selectSnapshot(ProjectState.projectSnapshot);
-        let featCDN = this._store.selectSnapshot(FeatureState.featureProject(FeatureNames.CDNArtifact,
-            JSON.stringify({ project_key: project.key })))
-
         this.columns = [
             <Column<WorkflowNodeRunArtifact>>{
                 type: ColumnType.LINK,
@@ -43,7 +42,7 @@ export class WorkflowRunArtifactListComponent implements OnInit, OnDestroy {
                 selector: (a: WorkflowNodeRunArtifact) => {
                     let size = this.getHumainFileSize(a.size);
                     let link = `./cdsapi/workflow/artifact/${a.download_hash}`
-                    if (featCDN.enabled) {
+                    if (!a.id) {
                         link = `./cdscdn/item/artifact/${a.download_hash}/download`
                     }
                     return {
@@ -71,8 +70,16 @@ export class WorkflowRunArtifactListComponent implements OnInit, OnDestroy {
             if (!nr) {
                 return;
             }
-            if ((!this.artifacts && nr.artifacts) || (this.artifacts && nr.artifacts && this.artifacts.length !== nr.artifacts.length)) {
-                this.artifacts = nr.artifacts;
+            let resultArtifacts = nr?.results.filter(r => r.type === 'artifact').map(r => <WorkflowRunResultArtifact>r.data);
+            if (!resultArtifacts) {
+                resultArtifacts = new Array<WorkflowRunResultArtifact>();
+            }
+            if ( (!this.artifacts && (nr.artifacts || resultArtifacts.length > 0)) || (this.artifacts && nr.artifacts && this.artifacts.length !== (nr.artifacts.length + resultArtifacts.length))) {
+                this.artifacts = new Array<WorkflowNodeRunArtifact>();
+                if (nr.artifacts) {
+                    this.artifacts.push(...nr.artifacts);
+                }
+                this.artifacts.push(...this.toWorkflowNodeRunArtifacts(resultArtifacts));
                 this._cd.markForCheck();
             }
             if ((!this.staticFiles && nr.static_files) ||
@@ -81,6 +88,19 @@ export class WorkflowRunArtifactListComponent implements OnInit, OnDestroy {
                 this._cd.markForCheck();
             }
         });
+    }
+
+    toWorkflowNodeRunArtifacts(results: Array<WorkflowRunResultArtifact>): Array<WorkflowNodeRunArtifact> {
+        let arts = new Array<WorkflowNodeRunArtifact>();
+        results.forEach(r => {
+            let a = new WorkflowNodeRunArtifact();
+            a.download_hash = r.cdn_hash;
+            a.md5sum = r.md5;
+            a.size =  r.size;
+            a.name = r.name;
+            arts.push(a);
+        })
+        return arts;
     }
 
     getHumainFileSize(size: number): string {

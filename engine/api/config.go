@@ -33,13 +33,14 @@ func (api *API) ConfigVCShandler() service.Handler {
 
 func (api *API) ConfigCDNHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if !isHatchery(ctx) {
-			return sdk.WithStack(sdk.ErrForbidden)
-		}
 		tcpURL, err := services.GetCDNPublicTCPAdress(ctx, api.mustDB())
 		if err != nil {
 			return err
 		}
-		return service.WriteJSON(w, sdk.CDNConfig{TCPURL: tcpURL}, http.StatusOK)
+		httpURL, err := services.GetCDNPublicHTTPAdress(ctx, api.mustDB())
+		if err != nil {
+			return err
+		}
+		return service.WriteJSON(w, sdk.CDNConfig{TCPURL: tcpURL, HTTPURL: httpURL}, http.StatusOK)
 	}
 }

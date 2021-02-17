@@ -20,7 +20,7 @@ func TestServicesHandlers(t *testing.T) {
 	admin, jwtAdmin := assets.InsertAdminUser(t, db)
 	_, jwtLambda := assets.InsertLambdaUser(t, db)
 
-	s, _ := assets.InitCDNService(t, db)
+	s, _, _ := assets.InitCDNService(t, db)
 	t.Cleanup(func() { _ = services.Delete(db, s) })
 
 	// Admin create a consumer for a new service

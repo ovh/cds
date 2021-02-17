@@ -76,7 +76,13 @@ func Test_getWorkflowNodeRunJobLinkHandler(t *testing.T) {
 
 	u, pass, proj, w1, lastRun, jobRun := initGetWorkflowNodeRunJobTest(t, api, db)
 
-	mockCDNService, _ := assets.InitCDNService(t, db)
+	require.NoError(t, featureflipping.Insert(gorpmapping.Mapper, db, &sdk.Feature{
+		Name: "cdn-job-logs",
+		Rule: fmt.Sprintf("return project_key == \"%s\"", proj.Key),
+	}))
+
+	mockCDNService, _, _ := assets.InitCDNService(t, db)
+
 	t.Cleanup(func() { _ = services.Delete(db, mockCDNService) })
 
 	uri := router.GetRoute("GET", api.getWorkflowNodeRunJobStepLinkHandler, map[string]string{
