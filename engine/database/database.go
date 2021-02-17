@@ -17,7 +17,6 @@ import (
 
 // DBConnectionFactory is a database connection factory on postgres with gorp
 type DBConnectionFactory struct {
-	DBDriver         string
 	DBRole           string
 	DBUser           string
 	DBPassword       string
@@ -75,7 +74,6 @@ func Init(ctx context.Context, user, role, password, name, schema, host string, 
 	}
 
 	f := &DBConnectionFactory{
-		DBDriver:         "postgres",
 		DBRole:           role,
 		DBUser:           user,
 		DBPassword:       password,
@@ -121,7 +119,13 @@ func Init(ctx context.Context, user, role, password, name, schema, host string, 
 	// connect_timeout in seconds
 	// statement_timeout in milliseconds
 	dsn := f.dsn()
-	f.Database, err = sql.Open(f.DBDriver, dsn)
+	connector, err := pq.NewConnector(dsn)
+	if err != nil {
+		log.Error(ctx, "cannot open database: %s", err)
+		return nil, sdk.WithStack(err)
+	}
+	f.Database = sql.OpenDB(connector)
+
 	if err != nil {
 		f.Database = nil
 		log.Error(ctx, "cannot open database: %s", err)
@@ -154,7 +158,7 @@ func Init(ctx context.Context, user, role, password, name, schema, host string, 
 }
 
 func (f *DBConnectionFactory) dsn() string {
-	dsn := fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%d sslmode=%s connect_timeout=%d", f.DBUser, f.DBPassword, f.DBName, f.DBHost, f.DBPort, f.DBSSLMode, f.DBConnectTimeout)
+	dsn := fmt.Sprintf("user=%s password='%s' dbname=%s host=%s port=%d sslmode=%s connect_timeout=%d", f.DBUser, f.DBPassword, f.DBName, f.DBHost, f.DBPort, f.DBSSLMode, f.DBConnectTimeout)
 	if f.DBSchema != "public" {
 		dsn += fmt.Sprintf(" search_path=%s", f.DBSchema)
 	}

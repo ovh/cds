@@ -66,7 +66,7 @@ require (
 	github.com/keybase/go.dbus v0.0.0-20190710215703-a33a09c8a604
 	github.com/kr/pty v1.1.8 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
-	github.com/lib/pq v1.0.0
+	github.com/lib/pq v1.9.0
 	github.com/mailru/easyjson v0.0.0-20171120080333-32fa128f234d // indirect
 	github.com/maruel/panicparse v1.3.0
 	github.com/mattn/go-runewidth v0.0.1 // indirect
