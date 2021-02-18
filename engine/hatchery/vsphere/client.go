@@ -296,7 +296,7 @@ func (h *HatcheryVSphere) createVMConfig(ctx context.Context, vm *object.Virtual
 			{
 				Adapter: types.CustomizationIPSettings{
 					Ip:         &types.CustomizationFixedIp{IpAddress: ip},
-					SubnetMask: "255.255.255.0",
+					SubnetMask: h.Config.SubnetMask,
 				},
 			},
 		}
