@@ -35,7 +35,6 @@ import (
 )
 
 func init() {
-
 	startCmd.Flags().StringVar(&flagStartConfigFile, "config", "", "config file")
 	startCmd.Flags().StringVar(&flagStartRemoteConfig, "remote-config", "", "(optional) consul configuration store")
 	startCmd.Flags().StringVar(&flagStartRemoteConfigKey, "remote-config-key", "cds/config.api.toml", "(optional) consul configuration store key")
