@@ -135,28 +135,7 @@ pre {
     tbody tr td.border {
         border-top: 1px solid rgba(34, 36, 38, 0.15);
     }
-
-    tbody tr:not(:hover) {
-
-        input,
-        select,
-        textarea,
-        .ui.dropdown {
-            border-color: transparent;
-        }
-    }
-
-    tbody tr.ui.form:not(:hover) {
-
-        input,
-        select,
-        textarea,
-        .ui.dropdown {
-            border-color: transparent;
-        }
-    }
 }
-
 .ui.table th.center {
     text-align: center;
 }
