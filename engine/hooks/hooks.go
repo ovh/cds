@@ -147,7 +147,7 @@ func (s *Service) Serve(c context.Context) error {
 	//Start the http server
 	log.Info(ctx, "Hooks> Starting HTTP Server on port %d", s.Cfg.HTTP.Port)
 	if err := server.ListenAndServe(); err != nil {
-		log.Fatal(ctx, "Hooks> Cannot start cds-hooks: %s", err)
+		log.Error(ctx, "Hooks> Cannot start cds-hooks: %s", err)
 	}
 
 	return ctx.Err()

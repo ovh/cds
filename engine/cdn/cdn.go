@@ -227,8 +227,9 @@ func (s *Service) Serve(c context.Context) error {
 	// Start the http server
 	log.Info(ctx, "CDN> Starting HTTP Server on port %d", s.Cfg.HTTP.Port)
 	if err := server.ListenAndServe(); err != nil {
-		log.Fatal(ctx, "CDN> Cannot start cds-cdn: %v", err)
+		log.Error(ctx, "CDN> Cannot start cds-cdn: %v", err)
 	}
+
 	return ctx.Err()
 }
 
