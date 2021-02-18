@@ -32,7 +32,7 @@ var lservers = struct {
 }
 
 // get all servers on our host
-func (h *HatcheryVSphere) getServers(ctx context.Context) []mo.VirtualMachine {
+func (h *HatcheryVSphere) getAllServers(ctx context.Context) []mo.VirtualMachine {
 	var vms []mo.VirtualMachine
 	ctxC, cancelC := context.WithTimeout(ctx, reqTimeout)
 	defer cancelC()
@@ -69,6 +69,32 @@ func (h *HatcheryVSphere) getServers(ctx context.Context) []mo.VirtualMachine {
 	return lservers.list
 }
 
+func (h *HatcheryVSphere) getVirtualMachines(ctx context.Context) []mo.VirtualMachine {
+	vms := h.getAllServers(ctx)
+	var result = make([]mo.VirtualMachine, 0, len(vms))
+	for i := range vms {
+		isNotTemplate := !vms[i].Summary.Config.Template
+		if isNotTemplate {
+			result = append(result, vms[i])
+		}
+
+	}
+	return result
+}
+
+func (h *HatcheryVSphere) getTemplates(ctx context.Context) []mo.VirtualMachine {
+	vms := h.getAllServers(ctx)
+	var result = make([]mo.VirtualMachine, 0, len(vms))
+	for i := range vms {
+		isTemplate := vms[i].Summary.Config.Template
+		if isTemplate {
+			result = append(result, vms[i])
+		}
+
+	}
+	return result
+}
+
 //This a embedded cache for images list
 var lmodels = struct {
 	mu   sync.RWMutex
@@ -80,7 +106,7 @@ var lmodels = struct {
 
 // get all servers tagged with model on our host
 func (h *HatcheryVSphere) getModels(ctx context.Context) []mo.VirtualMachine {
-	srvs := h.getServers(ctx)
+	srvs := h.getTemplates(ctx)
 	models := make([]mo.VirtualMachine, len(srvs))
 
 	if len(srvs) == 0 {

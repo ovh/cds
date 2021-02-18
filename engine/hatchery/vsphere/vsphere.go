@@ -189,7 +189,7 @@ func (h *HatcheryVSphere) WorkerModelSecretList(m sdk.Model) (sdk.WorkerModelSec
 // not necessarily register on CDS yet
 func (h *HatcheryVSphere) WorkersStartedByModel(ctx context.Context, model *sdk.Model) int {
 	var x int
-	for _, s := range h.getServers(ctx) {
+	for _, s := range h.getVirtualMachines(ctx) {
 		if strings.Contains(strings.ToLower(s.Name), strings.ToLower(model.Name)) {
 			x++
 		}
@@ -202,7 +202,7 @@ func (h *HatcheryVSphere) WorkersStartedByModel(ctx context.Context, model *sdk.
 // WorkersStarted returns the number of instances started but
 // not necessarily register on CDS yet
 func (h *HatcheryVSphere) WorkersStarted(ctx context.Context) []string {
-	srvs := h.getServers(ctx)
+	srvs := h.getVirtualMachines(ctx)
 	res := make([]string, len(srvs))
 	for i, s := range srvs {
 		if strings.Contains(strings.ToLower(s.Name), "worker") {
@@ -252,7 +252,7 @@ func (h *HatcheryVSphere) killDisabledWorkers(ctx context.Context) {
 		return
 	}
 
-	srvs := h.getServers(ctx)
+	srvs := h.getVirtualMachines(ctx)
 	for _, w := range workerPoolDisabled {
 		for _, s := range srvs {
 			if s.Name == w.Name {
@@ -266,7 +266,7 @@ func (h *HatcheryVSphere) killDisabledWorkers(ctx context.Context) {
 
 // killAwolServers kill unused servers
 func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
-	srvs := h.getServers(ctx)
+	srvs := h.getVirtualMachines(ctx)
 
 	for _, s := range srvs {
 		var annot annotation

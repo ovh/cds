@@ -9,7 +9,7 @@ import (
 
 // for each ip in the range, look for the first free ones
 func (h *HatcheryVSphere) findAvailableIP(ctx context.Context, workerName string) (string, error) {
-	srvs := h.getServers(ctx)
+	srvs := h.getVirtualMachines(ctx)
 
 	ipsInfos.mu.Lock()
 	defer ipsInfos.mu.Unlock()
