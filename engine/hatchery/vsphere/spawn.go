@@ -172,7 +172,7 @@ func (h *HatcheryVSphere) createVMModel(ctx context.Context, model sdk.Model, wo
 		}
 	}
 
-	ctxTo, cancel := context.WithTimeout(ctx, 10*time.Minute)
+	ctxTo, cancel := context.WithTimeout(ctx, 5*time.Minute)
 	defer cancel()
 
 	log.Debug(ctx, "waiting virtual machine %q to be powered off...", name)
