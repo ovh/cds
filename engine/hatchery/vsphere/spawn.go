@@ -97,6 +97,8 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 	}
 	log.Debug(ctx, "SpawnWorker>  New IP: %s", ip)
 
+	time.Sleep(10 * time.Second)
+
 	return h.launchScriptWorker(ctx, spawnArgs.WorkerName, spawnArgs.JobID, spawnArgs.WorkerToken, *spawnArgs.Model, spawnArgs.RegisterOnly, vmWorker)
 }
 
