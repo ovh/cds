@@ -10,7 +10,7 @@ If you are a CDS Administrator, you can configue this integration to be availabl
 
 An example of use case could be that you want to generate some svg badge. Then you can just add an event
 integration for your workflow and plug the
-[badge microservice](https://github.com/ovh/cds/tree/master/contrib/uservices/badge) on this kafka topic.
+[badge microservice](https://github.com/ovh/cds/tree/{{< param "version" >}}/contrib/uservices/badge) on this kafka topic.
 
 Notice that Kafka communication is done using SASL and TLS enable only.
 

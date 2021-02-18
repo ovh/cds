@@ -1,3 +1,4 @@
+{{ $_hugo_config := `{ "version": 1 }` }}
 {{- $linkMore := $.Get "linkMore" | default "" -}}
 {{- $title := $.Get "title" | default "" -}}
 <main>
@@ -5,7 +6,7 @@
 	{{ if  $title }}
 	<h2>{{ $title}}</h2>
 	{{ end }}
-	
+
 	<div id="matrix">
 			<table>
 					<thead>
@@ -213,7 +214,7 @@
 					</tr>
 					</tbody>
 					</table>
-					
+
 		{{ $.Inner }}
 	</div>
 </main>
