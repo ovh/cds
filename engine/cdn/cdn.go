@@ -162,6 +162,7 @@ func (s *Service) Start(ctx context.Context) error {
 	// Init storage units
 	s.Units, err = storage.Init(ctx, s.Mapper, s.Cache, s.mustDBWithCtx(ctx), s.GoRoutines, s.Cfg.Units)
 	if err != nil {
+		log.Error(ctx, "unable to init storage unit: %v", err)
 		return err
 	}
 
