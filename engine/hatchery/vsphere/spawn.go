@@ -122,7 +122,7 @@ func (h *HatcheryVSphere) createVMModel(ctx context.Context, model sdk.Model, wo
 		return vm, sdk.WrapError(err, "createVMModel> Cannot find virtual machine")
 	}
 
-	log.Debug(ctx, "found virtual machine %q: %+v", model.ModelVirtualMachine.Image, vm)
+	log.Debug(ctx, "found virtual machine image %q: %+v", model.ModelVirtualMachine.Image, vm)
 
 	annot := annotation{
 		HatcheryName:            h.Name(),
