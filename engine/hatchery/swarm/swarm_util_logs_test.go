@@ -21,13 +21,16 @@ import (
 var loggerCall = 0
 
 func Test_serviceLogs(t *testing.T) {
-	defer gock.Off()
+	t.Cleanup(gock.Off)
+
 	h := InitTestHatcherySwarm(t)
 	reader := rand.Reader
 	bitSize := 2048
 	key, err := rsa.GenerateKey(reader, bitSize)
 	require.NoError(t, err)
 	h.Common.PrivateKey = key
+
+	gock.New("https://lolcat.api").Get("/worker").Reply(http.StatusOK).JSON([]sdk.Worker{{Name: "swarmy-model1-w1"}})
 
 	gock.New("https://lolcat.api").Get("/config/cdn").Reply(http.StatusOK).JSON(sdk.CDNConfig{TCPURL: "tcphost:8090"})
 	require.NoError(t, h.RefreshServiceLogger(context.TODO()))
@@ -46,7 +49,7 @@ func Test_serviceLogs(t *testing.T) {
 			Names: []string{"swarmy-model1-w1"},
 			Labels: map[string]string{
 				"hatchery":                        "swarmy",
-				"worker_name":                     "swarmy-model1-w1",
+				"service_worker":                  "swarmy-model1-w1",
 				hatchery.LabelServiceNodeRunID:    "999",
 				hatchery.LabelServiceJobID:        "666",
 				hatchery.LabelServiceID:           "1",
@@ -72,7 +75,7 @@ func Test_serviceLogs(t *testing.T) {
 			return false, nil
 		}
 		return true, nil
-	}).Reply(http.StatusOK).Body(strings.NewReader("Je suis le log"))
+	}).Reply(http.StatusOK).Body(strings.NewReader("This is the log"))
 
 	h.ServiceLogger = GetMockLogger()
 

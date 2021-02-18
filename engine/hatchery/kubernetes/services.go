@@ -19,6 +19,18 @@ import (
 )
 
 func (h *HatcheryKubernetes) getServicesLogs(ctx context.Context) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	apiWorkers, err := h.CDSClient().WorkerList(ctx)
+	if err != nil {
+		return sdk.WrapError(err, "cannot get worker list from CDS api")
+	}
+	apiWorkerNames := make(map[string]struct{}, len(apiWorkers))
+	for i := range apiWorkers {
+		apiWorkerNames[apiWorkers[i].Name] = struct{}{}
+	}
+
 	pods, err := h.kubeClient.PodList(ctx, h.Config.Namespace, metav1.ListOptions{LabelSelector: hatchery.LabelServiceJobID})
 	if err != nil {
 		return err
@@ -36,6 +48,14 @@ func (h *HatcheryKubernetes) getServicesLogs(ctx context.Context) error {
 		// If no job identifier, no service on the pod
 		jobIdentifiers := getJobIdentiers(labels)
 		if jobIdentifiers == nil {
+			continue
+		}
+
+		workerName := pod.ObjectMeta.Name
+		// Check if there is a known worker in CDS api results for given worker name
+		// If not we skip sending logs as the worker is not ready.
+		// This will avoid problems validating log signature by the CDN service.
+		if _, ok := apiWorkerNames[workerName]; !ok {
 			continue
 		}
 
@@ -67,7 +87,7 @@ func (h *HatcheryKubernetes) getServicesLogs(ctx context.Context) error {
 						HatcheryName:    h.ServiceName(),
 						RequirementID:   reqServiceID,
 						RequirementName: subsStr[0][2],
-						WorkerName:      pod.ObjectMeta.Name,
+						WorkerName:      workerName,
 					},
 					ProjectKey:   labels[hatchery.LabelServiceProjectKey],
 					WorkflowName: labels[hatchery.LabelServiceWorkflowName],

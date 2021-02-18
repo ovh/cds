@@ -18,6 +18,18 @@ import (
 )
 
 func (h *HatcherySwarm) getServicesLogs() error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	apiWorkers, err := h.CDSClient().WorkerList(ctx)
+	if err != nil {
+		return sdk.WrapError(err, "cannot get worker list from CDS api")
+	}
+	apiWorkerNames := make(map[string]struct{}, len(apiWorkers))
+	for i := range apiWorkers {
+		apiWorkerNames[apiWorkers[i].Name] = struct{}{}
+	}
+
 	for _, dockerClient := range h.dockerClients {
 		containers, err := h.getContainers(dockerClient, types.ContainerListOptions{All: true})
 		if err != nil {
@@ -31,6 +43,13 @@ func (h *HatcherySwarm) getServicesLogs() error {
 			}
 
 			workerName := cnt.Labels["service_worker"]
+			// Check if there is a known worker in CDS api results for given worker name
+			// If not we skip sending logs as the worker is not ready.
+			// This will avoid problems validating log signature by the CDN service.
+			if _, ok := apiWorkerNames[workerName]; !ok {
+				continue
+			}
+
 			ctx, cancel := context.WithTimeout(context.Background(), time.Minute*2)
 			logsOpts := types.ContainerLogsOptions{
 				Details:    true,
