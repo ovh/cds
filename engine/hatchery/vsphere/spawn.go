@@ -156,9 +156,26 @@ func (h *HatcheryVSphere) createVMModel(ctx context.Context, model sdk.Model, wo
 	vm = object.NewVirtualMachine(h.vclient.Client, info.Result.(types.ManagedObjectReference))
 	log.Debug(ctx, "waiting for IP...")
 
-	ip, err := vm.WaitForIP(ctx, true)
-	if err != nil {
-		return vm, sdk.WrapError(err, "createVMModel> cannot get an ip")
+	ctxIP, cancelIP := context.WithTimeout(ctx, 3*time.Minute)
+	defer cancelIP()
+	var hasIP bool
+	var ip string
+	for !hasIP && ctxIP.Err() == nil {
+		ip, err = vm.WaitForIP(ctxIP, true)
+		if err != nil {
+			return vm, sdk.WrapError(err, "createVMModel> cannot get an ip")
+		}
+		if len(cloneSpec.Customization.NicSettingMap) == 0 {
+			break
+		}
+		customFixedIP, ok := cloneSpec.Customization.NicSettingMap[0].Adapter.Ip.(*types.CustomizationFixedIp)
+		if !ok {
+			break
+		}
+		expectedIP := customFixedIP.IpAddress
+		if ip == expectedIP {
+			break
+		}
 	}
 	log.Info(ctx, "virtual machine %q has IP %q", name, ip)
 
