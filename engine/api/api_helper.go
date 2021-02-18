@@ -45,12 +45,12 @@ func isMaintainer(ctx context.Context) bool {
 	return maintainer || admin
 }
 
-func MFASupport(ctx context.Context) bool {
-	c := getAPIConsumer(ctx)
-	if c == nil || c.DriverManifest == nil {
+func supportMFA(ctx context.Context) bool {
+	m := getAuthDriverManifest(ctx)
+	if m == nil {
 		return false
 	}
-	return c.DriverManifest.SupportMFA
+	return m.SupportMFA
 }
 
 func isAdmin(ctx context.Context) bool {
@@ -58,7 +58,11 @@ func isAdmin(ctx context.Context) bool {
 	if c == nil {
 		return false
 	}
-	var dontNeedMFA = !c.DriverManifest.SupportMFA
+	m := getAuthDriverManifest(ctx)
+	if m == nil {
+		return false
+	}
+	var dontNeedMFA = !m.SupportMFA
 	return c.Admin() && (dontNeedMFA || isMFA(ctx))
 }
 
@@ -109,7 +113,7 @@ func trackSudo(ctx context.Context, w http.ResponseWriter) {
 }
 
 func getAPIConsumer(ctx context.Context) *sdk.AuthConsumer {
-	i := ctx.Value(contextAPIConsumer)
+	i := ctx.Value(contextConsumer)
 	if i == nil {
 		return nil
 	}
@@ -143,6 +147,19 @@ func getAuthSession(ctx context.Context) *sdk.AuthSession {
 		return nil
 	}
 	return s
+}
+
+func getAuthDriverManifest(ctx context.Context) *sdk.AuthDriverManifest {
+	i := ctx.Value(contextDriverManifest)
+	if i == nil {
+		return nil
+	}
+	m, ok := i.(*sdk.AuthDriverManifest)
+	if !ok {
+		log.Debug(ctx, "api.getDriverManifest> AuthDriverManifest type in context is invalid")
+		return nil
+	}
+	return m
 }
 
 func getAuthClaims(ctx context.Context) *sdk.AuthSessionJWTClaims {

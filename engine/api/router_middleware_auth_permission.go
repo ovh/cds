@@ -111,7 +111,7 @@ func (api *API) checkProjectPermissions(ctx context.Context, w http.ResponseWrit
 	ctx, end := telemetry.Span(ctx, "api.checkProjectPermissions")
 	defer end()
 
-	if MFASupport(ctx) && !isMFA(ctx) {
+	if supportMFA(ctx) && !isMFA(ctx) {
 		_, requireMFA := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeatureMFARequired, map[string]string{
 			"project_key": projectKey,
 		})
@@ -173,7 +173,7 @@ func (api *API) checkWorkflowPermissions(ctx context.Context, w http.ResponseWri
 		return sdk.WithStack(sdk.ErrNotFound)
 	}
 
-	if MFASupport(ctx) && !isMFA(ctx) {
+	if supportMFA(ctx) && !isMFA(ctx) {
 		_, requireMFA := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeatureMFARequired, map[string]string{
 			"project_key": projectKey,
 		})

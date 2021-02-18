@@ -37,6 +37,11 @@ func NewSession(ctx context.Context, db gorpmapper.SqlExecutorWithTx, c *sdk.Aut
 
 // NewSessionWithMFA returns a new session for a given auth consumer with MFA.
 func NewSessionWithMFA(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, c *sdk.AuthConsumer, duration time.Duration) (*sdk.AuthSession, error) {
+	return NewSessionWithMFACustomDuration(ctx, db, store, c, duration, sessionMFAActivityDuration)
+}
+
+// NewSessionWithMFACustomDuration returns a new session for a given auth consumer with MFA and custom MFA duration.
+func NewSessionWithMFACustomDuration(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, c *sdk.AuthConsumer, duration, durationMFA time.Duration) (*sdk.AuthSession, error) {
 	s := newSession(c, duration)
 	s.MFA = true
 
@@ -45,15 +50,15 @@ func NewSessionWithMFA(ctx context.Context, db gorpmapper.SqlExecutorWithTx, sto
 	}
 
 	// Initialy set activity for new session
-	if err := SetSessionActivity(store, s.ID); err != nil {
+	if err := SetSessionActivity(store, durationMFA, s.ID); err != nil {
 		return nil, err
 	}
 
 	return &s, nil
 }
 
-// CheckSession returns the session if valid for given id.
-func CheckSession(ctx context.Context, db gorp.SqlExecutor, store cache.Store, sessionID string) (*sdk.AuthSession, error) {
+// CheckSessionWithCustomMFADuration returns the session if valid for given id.
+func CheckSessionWithCustomMFADuration(ctx context.Context, db gorp.SqlExecutor, store cache.Store, sessionID string, durationMFA time.Duration) (*sdk.AuthSession, error) {
 	// Load the session from the id read in the claim
 	s, err := LoadSessionByID(ctx, db, sessionID)
 	if err != nil {
@@ -77,12 +82,17 @@ func CheckSession(ctx context.Context, db gorp.SqlExecutor, store cache.Store, s
 			return nil, sdk.WithStack(sdk.ErrUnauthorized)
 		}
 		// If the session is valid we can update its activity
-		if err := SetSessionActivity(store, s.ID); err != nil {
+		if err := SetSessionActivity(store, durationMFA, s.ID); err != nil {
 			return nil, err
 		}
 	}
 
 	return s, nil
+}
+
+// CheckSession returns the session if valid for given id.
+func CheckSession(ctx context.Context, db gorp.SqlExecutor, store cache.Store, sessionID string) (*sdk.AuthSession, error) {
+	return CheckSessionWithCustomMFADuration(ctx, db, store, sessionID, sessionMFAActivityDuration)
 }
 
 // NewSessionJWT generate a signed token for given auth session.
@@ -146,9 +156,9 @@ func SessionCleaner(ctx context.Context, dbFunc func() *gorp.DbMap, tickerDurati
 }
 
 // SetSessionActivity store activity in cache for given session.
-func SetSessionActivity(store cache.Store, sessionID string) error {
+func SetSessionActivity(store cache.Store, durationMFA time.Duration, sessionID string) error {
 	k := cache.Key("api", "session", "mfa", "activity", sessionID)
-	if err := store.SetWithTTL(k, true, int(sessionMFAActivityDuration.Seconds())); err != nil {
+	if err := store.SetWithTTL(k, true, int(durationMFA.Seconds())); err != nil {
 		return err
 	}
 	return nil

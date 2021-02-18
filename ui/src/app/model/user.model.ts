@@ -1,14 +1,15 @@
-import { AuthConsumer, AuthSession } from './authentication.model';
+import { AuthConsumer, AuthDriverManifest, AuthSession } from './authentication.model';
 
 export class AuthSummary {
     user: AuthentifiedUser;
     consumer: AuthConsumer;
     session: AuthSession;
+    driverManifest: AuthDriverManifest;
 
     constructor() { }
 
     isAdmin(): boolean {
-        const dontNeedMFA = !this.consumer.support_mfa;
+        const dontNeedMFA = !this.driverManifest.support_mfa;
         return this.user.ring === 'ADMIN' && (dontNeedMFA || this.session.mfa);
     }
 

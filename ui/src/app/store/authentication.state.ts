@@ -54,6 +54,7 @@ export class AuthenticationState {
                 s.user = res.user;
                 s.consumer = res.consumer;
                 s.session = res.session;
+                s.driverManifest = res.driver_manifest;
                 ctx.patchState({
                     summary: s,
                     error: null

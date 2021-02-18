@@ -365,9 +365,10 @@ func (api *API) postAuthDetachHandler() service.Handler {
 
 func (api *API) getAuthMe() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		m := getAuthDriverManifest(ctx)
 		c := getAPIConsumer(ctx)
 		s := getAuthSession(ctx)
-		if c == nil || s == nil {
+		if m == nil || c == nil || s == nil {
 			return sdk.WithStack(sdk.ErrUnauthorized)
 		}
 
@@ -377,9 +378,10 @@ func (api *API) getAuthMe() service.Handler {
 		c.AuthentifiedUser = nil
 
 		return service.WriteJSON(w, sdk.AuthCurrentConsumerResponse{
-			User:     u,
-			Consumer: *c,
-			Session:  *s,
+			User:           u,
+			Consumer:       *c,
+			Session:        *s,
+			DriverManifest: *m,
 		}, http.StatusOK)
 	}
 }

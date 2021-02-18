@@ -261,9 +261,10 @@ type AuthDriverUserInfo struct {
 
 // AuthCurrentConsumerResponse describe the current consumer and the current session
 type AuthCurrentConsumerResponse struct {
-	User     AuthentifiedUser `json:"user"`
-	Consumer AuthConsumer     `json:"consumer"`
-	Session  AuthSession      `json:"session"`
+	User           AuthentifiedUser   `json:"user"`
+	Consumer       AuthConsumer       `json:"consumer"`
+	Session        AuthSession        `json:"session"`
+	DriverManifest AuthDriverManifest `json:"driver_manifest"`
 }
 
 // AuthConsumerType constant to identify what is the driver used to create a consumer.
@@ -399,9 +400,8 @@ type AuthConsumer struct {
 	AuthentifiedUser *AuthentifiedUser `json:"user,omitempty" db:"-"`
 	Groups           Groups            `json:"groups,omitempty" db:"-"`
 	// aggregates by router auth middleware
-	Service        *Service            `json:"-" db:"-"`
-	Worker         *Worker             `json:"-" db:"-"`
-	DriverManifest *AuthDriverManifest `json:"-" db:"-"`
+	Service *Service `json:"-" db:"-"`
+	Worker  *Worker  `json:"-" db:"-"`
 }
 
 // IsValid returns validity for auth consumer.

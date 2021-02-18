@@ -155,37 +155,36 @@ func (api *API) authOptionalMiddleware(ctx context.Context, w http.ResponseWrite
 	}
 
 	// If the driver was disabled for the consumer that was found, ignore it
-	authDriver, ok := api.AuthenticationDrivers[consumer.Type]
-	if ok {
-		// Add contacts for consumer's user
-		if err := user.LoadOptions.WithContacts(ctx, api.mustDB(), consumer.AuthentifiedUser); err != nil {
-			return ctx, err
-		}
-
-		// Add service for consumer if exists
-		s, err := services.LoadByConsumerID(ctx, api.mustDB(), consumer.ID)
-		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
-			return ctx, err
-		}
-		consumer.Service = s
-
-		// Add worker for consumer if exists
-		w, err := worker.LoadByConsumerID(ctx, api.mustDB(), consumer.ID)
-		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
-			return ctx, err
-		}
-		consumer.Worker = w
-
-		// Add driver manifest for consumer
-		driverManifest := authDriver.GetManifest()
-		consumer.DriverManifest = &driverManifest
+	var driverManifest *sdk.AuthDriverManifest
+	if authDriver, ok := api.AuthenticationDrivers[consumer.Type]; ok {
+		m := authDriver.GetManifest()
+		driverManifest = &m
 	}
-	if consumer == nil {
-		log.Debug(ctx, "api.authOptionalMiddleware> no consumer found in context")
-		return ctx, nil
+	if driverManifest == nil {
+		return ctx, sdk.WrapError(sdk.ErrUnauthorized, "consumer driver (%s) was not found", consumer.Type)
+	}
+	ctx = context.WithValue(ctx, contextDriverManifest, driverManifest)
+
+	// Add contacts for consumer's user
+	if err := user.LoadOptions.WithContacts(ctx, api.mustDB(), consumer.AuthentifiedUser); err != nil {
+		return ctx, err
 	}
 
-	ctx = context.WithValue(ctx, contextAPIConsumer, consumer)
+	// Add service for consumer if exists
+	s, err := services.LoadByConsumerID(ctx, api.mustDB(), consumer.ID)
+	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+		return ctx, err
+	}
+	consumer.Service = s
+
+	// Add worker for consumer if exists
+	wk, err := worker.LoadByConsumerID(ctx, api.mustDB(), consumer.ID)
+	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+		return ctx, err
+	}
+	consumer.Worker = wk
+
+	ctx = context.WithValue(ctx, contextConsumer, consumer)
 
 	// Checks scopes, one of expected scopes should be in actual scopes
 	// Actual scope empty list means wildcard scope, we don't need to check scopes
