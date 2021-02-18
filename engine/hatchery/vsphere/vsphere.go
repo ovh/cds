@@ -218,15 +218,12 @@ func (*HatcheryVSphere) ModelType() string {
 }
 
 func (h *HatcheryVSphere) main(ctx context.Context) {
-	serverListTick := time.NewTicker(10 * time.Second).C
 	cdnConfTick := time.NewTicker(10 * time.Second).C
 	killAwolServersTick := time.NewTicker(20 * time.Second).C
 	killDisabledWorkersTick := time.NewTicker(60 * time.Second).C
 
 	for {
 		select {
-		case <-serverListTick:
-			h.updateServerList(ctx)
 		case <-killAwolServersTick:
 			h.killAwolServers(ctx)
 		case <-killDisabledWorkersTick:
@@ -241,29 +238,6 @@ func (h *HatcheryVSphere) main(ctx context.Context) {
 			}
 			return
 		}
-	}
-}
-
-func (h *HatcheryVSphere) updateServerList(ctx context.Context) {
-	var out string
-	var total int
-	status := map[string]int{}
-
-	for _, s := range h.getServers(ctx) {
-		out += fmt.Sprintf("- [%s] %s ", s.Summary.Config.Name, s.Summary.Runtime.PowerState)
-		if _, ok := status[string(s.Summary.Runtime.PowerState)]; !ok {
-			status[string(s.Summary.Runtime.PowerState)] = 0
-		}
-		status[string(s.Summary.Runtime.PowerState)]++
-		total++
-	}
-	var st string
-	for k, s := range status {
-		st += fmt.Sprintf("%d %s ", s, k)
-	}
-	log.Debug(context.TODO(), "Got %d servers %s", total, st)
-	if total > 0 {
-		log.Debug(context.TODO(), out)
 	}
 }
 
@@ -283,7 +257,7 @@ func (h *HatcheryVSphere) killDisabledWorkers(ctx context.Context) {
 		for _, s := range srvs {
 			if s.Name == w.Name {
 				log.Info(ctx, "killDisabledWorkers> killDisabledWorkers %v", s.Name)
-				_ = h.deleteServer(s)
+				_ = h.deleteServer(ctx, s)
 				break
 			}
 		}
@@ -304,7 +278,7 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 		}
 
 		if annot.ToDelete || (s.Summary.Runtime.PowerState != types.VirtualMachinePowerStatePoweredOn && (!annot.Model || annot.RegisterOnly)) {
-			if err := h.deleteServer(s); err != nil {
+			if err := h.deleteServer(ctx, s); err != nil {
 				log.Warn(context.Background(), "killAwolServers> cannot delete server %s", s.Name)
 			}
 		}

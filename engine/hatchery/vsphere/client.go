@@ -37,24 +37,21 @@ func (h *HatcheryVSphere) getServers(ctx context.Context) []mo.VirtualMachine {
 	ctxC, cancelC := context.WithTimeout(ctx, reqTimeout)
 	defer cancelC()
 
-	t := time.Now()
-	defer log.Debug(ctx, "getServers() : %fs", time.Since(t).Seconds())
-
 	m := view.NewManager(h.vclient.Client)
 
-	v, errC := m.CreateContainerView(ctxC, h.vclient.ServiceContent.RootFolder, []string{"VirtualMachine"}, true)
-	if errC != nil {
-		log.Warn(ctx, "Unable to create container view for vsphere api %s", errC)
+	v, err := m.CreateContainerView(ctxC, h.vclient.ServiceContent.RootFolder, []string{"VirtualMachine"}, true)
+	if err != nil {
+		log.Warn(ctx, "Unable to create container view for vsphere api: %v", err)
 		return lservers.list
 	}
 	defer v.Destroy(ctx)
 
-	ctxR, cancelR := context.WithTimeout(context.Background(), reqTimeout)
+	ctxR, cancelR := context.WithTimeout(ctx, reqTimeout)
 	defer cancelR()
 	// Retrieve summary property for all machines
 	// Reference: http://pubs.vmware.com/vsphere-60/topic/com.vmware.wssdk.apiref.doc/vim.VirtualMachine.html
 	if err := v.Retrieve(ctxR, []string{"VirtualMachine"}, []string{"name", "summary", "guest", "config"}, &vms); err != nil {
-		log.Warn(ctx, "Unable to retrieve virtual machines from vsphere %s", err)
+		log.Warn(ctx, "Unable to retrieve virtual machines from vsphere: %v", err)
 		return lservers.list
 	}
 
@@ -141,8 +138,7 @@ func (h *HatcheryVSphere) getModelByName(ctx context.Context, name string) (mo.V
 }
 
 // Shutdown and delete a specific server
-func (h *HatcheryVSphere) deleteServer(s mo.VirtualMachine) error {
-	ctx := context.Background()
+func (h *HatcheryVSphere) deleteServer(ctx context.Context, s mo.VirtualMachine) error {
 	vms, errVml := h.finder.VirtualMachineList(ctx, s.Name)
 	if errVml != nil {
 		return errVml
@@ -167,21 +163,24 @@ func (h *HatcheryVSphere) deleteServer(s mo.VirtualMachine) error {
 			}
 		}
 
+		log.Info(ctx, "shuting down server %v", s.Name)
+
 		ctxC, cancelC := context.WithTimeout(ctx, reqTimeout)
 		defer cancelC()
 		task, errOff := vm.PowerOff(ctxC)
 		if errOff != nil {
-			return errOff
+			return sdk.WithStack(errOff)
 		}
 		task.Wait(ctx)
 
 		var errD error
+		log.Info(ctx, "destroying server %v", s.Name)
 		task, errD = vm.Destroy(ctx)
 		if errD != nil {
 			return errD
 		}
 
-		return task.Wait(ctx)
+		return sdk.WithStack(task.Wait(ctx))
 	}
 
 	return nil

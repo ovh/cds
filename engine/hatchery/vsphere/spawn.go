@@ -180,7 +180,7 @@ func (h *HatcheryVSphere) createVMModel(ctx context.Context, model sdk.Model, wo
 
 	modelFound, err := h.getModelByName(ctx, model.Name)
 	if err == nil {
-		if err := h.deleteServer(modelFound); err != nil {
+		if err := h.deleteServer(ctx, modelFound); err != nil {
 			log.Warn(ctx, "createVMModel> Cannot delete previous model %s : %s", model.Name, err)
 		}
 	}
