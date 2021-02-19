@@ -105,6 +105,9 @@ $(TARGET_ENGINE_BINARIES): $(TARGET_DIR)
 
 build_all_engine: $(TARGET_ENGINE_BINARIES)
 
+build_test_engine:
+	CGO_ENABLED=1 go test -race -coverpkg="./..." -c . -o $(TARGET_DIR)/$(TARGET_ENGINE).test -tags testbincover
+
 test-redis-start-docker:
 	$(TEST_REDIS_START_DOCKER)
 
