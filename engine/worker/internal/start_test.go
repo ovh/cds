@@ -101,7 +101,7 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 					ID: 42,
 					Parameters: []sdk.Parameter{
 						{
-							Name:  "cds.version", // used to compute cds.semver
+							Name:  "cds.run.number", // used to compute cds.semver
 							Value: "1",
 						},
 						{
