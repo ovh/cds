@@ -16,6 +16,7 @@ import (
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/cdn/storage/cds"
 	_ "github.com/ovh/cds/engine/cdn/storage/local"
+	_ "github.com/ovh/cds/engine/cdn/storage/nfs"
 	_ "github.com/ovh/cds/engine/cdn/storage/redis"
 	_ "github.com/ovh/cds/engine/cdn/storage/s3"
 	_ "github.com/ovh/cds/engine/cdn/storage/swift"
@@ -161,6 +162,7 @@ func (s *Service) Start(ctx context.Context) error {
 	// Init storage units
 	s.Units, err = storage.Init(ctx, s.Mapper, s.Cache, s.mustDBWithCtx(ctx), s.GoRoutines, s.Cfg.Units)
 	if err != nil {
+		log.Error(ctx, "unable to init storage unit: %v", err)
 		return err
 	}
 

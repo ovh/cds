@@ -102,6 +102,7 @@ require (
 	github.com/pquerna/cachecontrol v0.0.0-20200819021114-67c6ae64274f // indirect
 	github.com/prometheus/client_golang v1.1.0 // indirect
 	github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4 // indirect
+	github.com/rasky/go-xdr v0.0.0-20170124162913-1a41d1a06c93 // indirect
 	github.com/rockbears/log v0.3.0
 	github.com/rubenv/sql-migrate v0.0.0-20160620083229-6f4757563362
 	github.com/satori/go.uuid v1.2.0
@@ -120,6 +121,7 @@ require (
 	github.com/ugorji/go v1.1.7 // indirect
 	github.com/ulikunitz/xz v0.5.4 // indirect
 	github.com/urfave/cli v1.20.0
+	github.com/vmware/go-nfs-client v0.0.0-20190605212624-d43b92724c1b
 	github.com/vmware/govmomi v0.23.0
 	github.com/whilp/git-urls v0.0.0-20160530060445-31bac0d230fa
 	github.com/xanzy/go-gitlab v0.15.0

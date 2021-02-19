@@ -140,7 +140,6 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, tx gorpmapper.SqlExec
 	if writer == nil {
 		return nil
 	}
-
 	rateLimitWriter := shapeio.NewWriter(writer)
 	rateLimitWriter.SetRateLimit(dest.SyncBandwidth())
 	log.Debug(ctx, "%s write ratelimit: %v", dest.Name(), dest.SyncBandwidth())

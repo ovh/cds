@@ -142,6 +142,7 @@ type BufferConfiguration struct {
 	Name       string                    `toml:"name" default:"redis" json:"name"`
 	Redis      *RedisBufferConfiguration `toml:"redis" json:"redis" mapstructure:"redis"`
 	Local      *LocalBufferConfiguration `toml:"local" json:"local" mapstructure:"local"`
+	Nfs        *NFSBufferConfiguration   `toml:"nfs" json:"nfs,omitempty" mapstructure:"nfs"`
 	BufferType CDNBufferType             `toml:"bufferType" json:"bufferType" comment:"it can be 'log' to receive logs or 'file' to receive artifacts"`
 }
 
@@ -217,6 +218,14 @@ type RedisBufferConfiguration struct {
 type LocalBufferConfiguration struct {
 	Path       string                 `toml:"path" json:"path"`
 	Encryption []*keyloader.KeyConfig `toml:"encryption" json:"-" mapstructure:"encryption"`
+}
+
+type NFSBufferConfiguration struct {
+	Host            string                 `toml:"host" json:"host"`
+	TargetPartition string                 `toml:"targetPartition" json:"targetPartition"`
+	UserID          uint32                 `toml:"userID" json:"userID"`
+	GroupID         uint32                 `toml:"groupID" json:"groupID"`
+	Encryption      []*keyloader.KeyConfig `toml:"encryption" json:"-" mapstructure:"encryption"`
 }
 
 type RunningStorageUnits struct {

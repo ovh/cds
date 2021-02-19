@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { Action, createSelector, Selector, State, StateContext } from '@ngxs/store';
 import { RunToKeep } from 'app/model/purge.model';
 import { WNode, WNodeHook, WNodeTrigger, Workflow } from 'app/model/workflow.model';
-import { WorkflowNodeJobRun, WorkflowNodeRun, WorkflowRun, WorkflowRunResult, WorkflowRunSummary } from 'app/model/workflow.run.model';
+import { WorkflowNodeJobRun, WorkflowNodeRun, WorkflowRun, WorkflowRunSummary } from 'app/model/workflow.run.model';
 import { NavbarService } from 'app/service/navbar/navbar.service';
 import { RouterService } from 'app/service/router/router.service';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';

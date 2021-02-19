@@ -83,6 +83,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 		var bufferUnit BufferUnit
 		switch {
 		case bu.Redis != nil:
+			log.Info(ctx, "Initializing redis buffer...")
 			// Start by initializing the buffer unit
 			d := GetDriver("redis")
 			if d == nil {
@@ -98,6 +99,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 			}
 			bufferUnit = bd
 		case bu.Local != nil:
+			log.Info(ctx, "Initializing local buffer...")
 			d := GetDriver("local-buffer")
 			if d == nil {
 				return nil, sdk.WithStack(fmt.Errorf("local driver is not available"))
@@ -108,6 +110,21 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 			}
 			bd.New(gorts, 1, math.MaxFloat64)
 			if err := bd.Init(ctx, bu.Local, bu.BufferType); err != nil {
+				return nil, err
+			}
+			bufferUnit = bd
+		case bu.Nfs != nil:
+			log.Info(ctx, "Initializing nfs buffer...")
+			d := GetDriver("nfs-buffer")
+			if d == nil {
+				return nil, sdk.WithStack(fmt.Errorf("nfs buffer driver is not available"))
+			}
+			bd, is := d.(BufferUnit)
+			if !is {
+				return nil, sdk.WithStack(fmt.Errorf("nfs buffer driver is not a buffer unit driver"))
+			}
+			bd.New(gorts, 1, math.MaxFloat64)
+			if err := bd.Init(ctx, bu.Nfs, bu.BufferType); err != nil {
 				return nil, err
 			}
 			bufferUnit = bd
@@ -155,6 +172,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 		var storageUnit StorageUnit
 		switch {
 		case cfg.CDS != nil:
+			log.Info(ctx, "Initializing cds backend...")
 			d := GetDriver("cds")
 			if d == nil {
 				return nil, sdk.WithStack(fmt.Errorf("cds driver is not available"))
@@ -170,6 +188,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 			}
 			storageUnit = sd
 		case cfg.Local != nil:
+			log.Info(ctx, "Initializing local backend...")
 			d := GetDriver("local")
 			if d == nil {
 				return nil, sdk.WithStack(fmt.Errorf("local driver is not available"))
@@ -185,6 +204,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 			}
 			storageUnit = sd
 		case cfg.Swift != nil:
+			log.Info(ctx, "Initializing swift backend...")
 			d := GetDriver("swift")
 			sd, is := d.(StorageUnit)
 			if !is {
@@ -197,6 +217,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 			}
 			storageUnit = sd
 		case cfg.Webdav != nil:
+			log.Info(ctx, "Initializing webdav backend...")
 			d := GetDriver("webdav")
 			sd, is := d.(StorageUnit)
 			if !is {
@@ -209,6 +230,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 			}
 			storageUnit = sd
 		case cfg.S3 != nil:
+			log.Info(ctx, "Initializing s3 backend...")
 			d := GetDriver("s3")
 			sd, is := d.(StorageUnit)
 			if !is {
