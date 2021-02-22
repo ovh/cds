@@ -32,9 +32,11 @@ func workerRegister(ctx context.Context, h InterfaceWithModels, startWorkerChan 
 	atomic.StoreInt64(&nbRegisteringWorkerModels, int64(len(currentRegistering)))
 loopModels:
 	for k := range models {
+		log.Info(ctx, "checking for worker model %q registration")
 		if models[k].Type != h.ModelType() {
 			continue
 		}
+		log.Info(ctx, "checking for worker model %q registration (%+v)", models[k].Name, models[k])
 		if h.CanSpawn(ctx, &models[k], 0, nil) && (h.NeedRegistration(ctx, &models[k]) || models[k].CheckRegistration) {
 			log.Debug(ctx, "hatchery> workerRegister> need register")
 		} else {
