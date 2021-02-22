@@ -122,9 +122,6 @@ func (h *HatcheryVSphere) CheckConfiguration(cfg interface{}) error {
 // CanSpawn return wether or not hatchery can spawn model
 // requirements are not supported
 func (h *HatcheryVSphere) CanSpawn(ctx context.Context, model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
-	if len(requirements) == 0 {
-		return false
-	}
 	if model.Type != sdk.VSphere {
 		return false
 	}

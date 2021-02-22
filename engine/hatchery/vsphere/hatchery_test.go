@@ -33,7 +33,6 @@ func TestHatcheryVSphere_CanSpawn(t *testing.T) {
 		Cmd: "cmd",
 	}}
 
-	assert.False(t, h.CanSpawn(ctx, &invalidModel, -1, []sdk.Requirement{}), "without requirements, it should return False")
 	assert.False(t, h.CanSpawn(ctx, &invalidModel, -1, []sdk.Requirement{{Type: sdk.ModelRequirement}}), "without a model VSphere, it should return False")
 	assert.False(t, h.CanSpawn(ctx, &validModel, -1, []sdk.Requirement{{Type: sdk.ServiceRequirement}}), "without a service requirement, it should return False")
 	assert.False(t, h.CanSpawn(ctx, &validModel, -1, []sdk.Requirement{{Type: sdk.MemoryRequirement}}), "without a memory requirement, it should return False")
