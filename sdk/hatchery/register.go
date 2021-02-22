@@ -32,7 +32,6 @@ func workerRegister(ctx context.Context, h InterfaceWithModels, startWorkerChan 
 	atomic.StoreInt64(&nbRegisteringWorkerModels, int64(len(currentRegistering)))
 loopModels:
 	for k := range models {
-		log.Info(ctx, "checking for worker model %q registration")
 		if models[k].Type != h.ModelType() {
 			continue
 		}
