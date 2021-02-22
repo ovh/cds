@@ -284,7 +284,7 @@ func (c *client) Stream(ctx context.Context, httpClient HTTPClient, method strin
 			log.Println(cli.Green("**************************"))
 		}
 
-		resp, err := c.httpClient.Do(req)
+		resp, err := httpClient.Do(req)
 		if err != nil {
 			savederror = sdk.WithStack(err)
 			continue
