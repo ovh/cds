@@ -156,7 +156,7 @@ func (h *HatcheryVSphere) createVirtualMachineTemplate(ctx context.Context, mode
 		return nil, err
 	}
 
-	if err := h.vSphereClient.ShutdownVirtualMachine(ctx, clonedVM); err != nil {
+	if err := h.vSphereClient.WaitForVirtualMachineShutdown(ctx, clonedVM); err != nil {
 		return nil, err
 	}
 
@@ -172,7 +172,7 @@ func (h *HatcheryVSphere) createVirtualMachineTemplate(ctx context.Context, mode
 	}
 	log.Debug(ctx, "renaming virtual machine %q to %q: DONE", clonedVM.String(), model.Name)
 
-	log.Info(ctx, "mark virtual machine %q as template", name, model.Name)
+	log.Info(ctx, "mark virtual machine %q as template %q", name, model.Name)
 	if err := h.vSphereClient.MarkVirtualMachineAsTemplate(ctx, clonedVM); err != nil {
 		return nil, err
 	}
@@ -182,11 +182,8 @@ func (h *HatcheryVSphere) createVirtualMachineTemplate(ctx context.Context, mode
 
 // launchScriptWorker launch a script on the worker
 func (h *HatcheryVSphere) launchScriptWorker(ctx context.Context, name string, jobID int64, token string, model sdk.Model, registerOnly bool, vm *object.VirtualMachine) error {
-	ctxTo, cancel := context.WithTimeout(ctx, 2*time.Minute)
-	defer cancel()
-
-	if _, errW := vm.WaitForIP(ctxTo); errW != nil {
-		return sdk.WrapError(errW, "createVMModel> error on waiting ip")
+	if err := h.vSphereClient.WaitForVirtualMachineIP(ctx, vm); err != nil {
+		return err
 	}
 
 	env := []string{

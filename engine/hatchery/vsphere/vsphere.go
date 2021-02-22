@@ -28,6 +28,8 @@ type VSphereClient interface {
 	RenameVirtualMachine(ctx context.Context, vm *object.VirtualMachine, newName string) error
 	ReconfigureVirtualMachine(ctx context.Context, vm *object.VirtualMachine, config types.VirtualMachineConfigSpec) error
 	MarkVirtualMachineAsTemplate(ctx context.Context, vm *object.VirtualMachine) error
+	WaitForVirtualMachineShutdown(ctx context.Context, vm *object.VirtualMachine) error
+	WaitForVirtualMachineIP(ctx context.Context, vm *object.VirtualMachine) error
 	LoadFolder(ctx context.Context) (*object.Folder, error)
 	SetupEthernetCard(ctx context.Context, card *types.VirtualEthernetCard, ethernetCardName string, network object.NetworkReference) error
 	LoadNetwork(ctx context.Context, name string) (object.NetworkReference, error)
@@ -316,7 +318,7 @@ func (c *vSphereClient) WaitVirtualMachineForShutdown(ctx context.Context, vm *o
 		return sdk.WrapError(err, "cannot wait for power state result")
 	}
 
-	return ctxTo.Err()
+	return sdk.WithStack(ctxTo.Err())
 }
 
 func (c *vSphereClient) RenameVirtualMachine(ctx context.Context, vm *object.VirtualMachine, newName string) error {
@@ -335,7 +337,7 @@ func (c *vSphereClient) RenameVirtualMachine(ctx context.Context, vm *object.Vir
 		return sdk.WrapError(err, "error on waiting result for vm renaming %q to %q", vm.String(), newName)
 	}
 
-	return ctxTo.Err()
+	return sdk.WithStack(ctxTo.Err())
 }
 
 func (c *vSphereClient) ReconfigureVirtualMachine(ctx context.Context, vm *object.VirtualMachine, config types.VirtualMachineConfigSpec) error {
@@ -353,7 +355,7 @@ func (c *vSphereClient) ReconfigureVirtualMachine(ctx context.Context, vm *objec
 		return sdk.WrapError(err, "error on waiting result for vm %q reconfigure", vm.String())
 	}
 
-	return ctxTo.Err()
+	return sdk.WithStack(ctxTo.Err())
 }
 
 func (c *vSphereClient) MarkVirtualMachineAsTemplate(ctx context.Context, vm *object.VirtualMachine) error {
@@ -364,5 +366,28 @@ func (c *vSphereClient) MarkVirtualMachineAsTemplate(ctx context.Context, vm *ob
 		return sdk.WrapError(err, "unable to mark vm as template")
 	}
 
-	return ctxTo.Err()
+	return sdk.WithStack(ctxTo.Err())
+}
+
+func (c *vSphereClient) WaitForVirtualMachineShutdown(ctx context.Context, vm *object.VirtualMachine) error {
+	ctxTo, cancel := context.WithTimeout(ctx, c.requestTimeout)
+	defer cancel()
+
+	log.Debug(ctx, "waiting virtual machine %q to be powered off...", vm.Name())
+	if err := vm.WaitForPowerState(ctxTo, types.VirtualMachinePowerStatePoweredOff); err != nil {
+		return sdk.WrapError(err, "error while waiting for power state off")
+	}
+
+	return sdk.WithStack(ctxTo.Err())
+}
+
+func (c *vSphereClient) WaitForVirtualMachineIP(ctx context.Context, vm *object.VirtualMachine) error {
+	ctxTo, cancel := context.WithTimeout(ctx, 2*time.Minute)
+	defer cancel()
+
+	if _, err := vm.WaitForIP(ctxTo); err != nil {
+		return sdk.WrapError(err, "error while waiting for IP")
+	}
+
+	return sdk.WithStack(ctxTo.Err())
 }
