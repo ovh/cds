@@ -32,7 +32,7 @@ func Create(ctx context.Context, h Interface) error {
 		telemetry.TagServiceType, h.Type(),
 	)
 
-	if err := initMetrics(ctx); err != nil {
+	if err := InitMetrics(ctx); err != nil {
 		return err
 	}
 
