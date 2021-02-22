@@ -20,6 +20,7 @@ import (
 func (h *HatcheryVSphere) getAllServers(ctx context.Context) []mo.VirtualMachine {
 	h.cacheVirtualMachines.mu.Lock()
 	if len(h.cacheVirtualMachines.list) > 0 {
+		h.cacheVirtualMachines.mu.Unlock()
 		return h.cacheVirtualMachines.list
 	}
 

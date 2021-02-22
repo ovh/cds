@@ -29,6 +29,7 @@ type annotation struct {
 
 // SpawnWorker creates a new vm instance
 func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) (err error) {
+	log.Info(ctx, "SpawnWorker %q", spawnArgs.WorkerName)
 	defer func() {
 		if err != nil {
 			ctx = sdk.ContextWithStacktrace(ctx, err)

@@ -34,11 +34,11 @@ type HatcheryVSphere struct {
 	availableIPAddresses []string
 	reservedIPAddresses  []string
 	cacheVirtualMachines struct {
-		mu   sync.RWMutex
+		mu   sync.Mutex
 		list []mo.VirtualMachine
 	}
 	cacheTemplates struct {
-		mu   sync.RWMutex
+		mu   sync.Mutex
 		list []mo.VirtualMachine
 	}
 }
