@@ -370,7 +370,7 @@ func (c *vSphereClient) MarkVirtualMachineAsTemplate(ctx context.Context, vm *ob
 }
 
 func (c *vSphereClient) WaitForVirtualMachineShutdown(ctx context.Context, vm *object.VirtualMachine) error {
-	ctxTo, cancel := context.WithTimeout(ctx, c.requestTimeout)
+	ctxTo, cancel := context.WithTimeout(ctx, 10*time.Minute)
 	defer cancel()
 
 	log.Debug(ctx, "waiting virtual machine %q to be powered off...", vm.Name())
