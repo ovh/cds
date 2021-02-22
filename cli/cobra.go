@@ -481,9 +481,14 @@ func listItem(i interface{}, filters map[string]string, quiet bool, fields []str
 				}
 
 				var isKey bool
-				if strings.HasSuffix(tag, ",key") {
+				if strings.Contains(tag, ",key") {
 					isKey = true
 					tag = strings.Replace(tag, ",key", "", -1)
+				}
+				var omitEmpty bool
+				if strings.Contains(tag, ",omitempty") {
+					omitEmpty = true
+					tag = strings.Replace(tag, ",omitempty", "", -1)
 				}
 				if !verbose && tag == "" {
 					continue
@@ -538,6 +543,8 @@ func listItem(i interface{}, filters map[string]string, quiet bool, fields []str
 				// if not quiet mode add the key:value to result else if quiet add only the key
 				if !quiet {
 					if !f.IsValid() {
+						res[tag] = ""
+					} else if omitEmpty && f.IsZero() {
 						res[tag] = ""
 					} else {
 						res[tag] = fmt.Sprintf("%v", f.Interface())

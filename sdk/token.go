@@ -494,9 +494,10 @@ type AuthSession struct {
 	Created    time.Time `json:"created" cli:"created" db:"created"`
 	MFA        bool      `json:"mfa" cli:"mfa" db:"mfa"`
 	// aggregates
-	Consumer *AuthConsumer `json:"consumer,omitempty" db:"-"`
-	Groups   []Group       `json:"groups,omitempty" db:"-"`
-	Current  bool          `json:"current,omitempty" cli:"current" db:"-"`
+	Consumer     *AuthConsumer `json:"consumer,omitempty" db:"-"`
+	Groups       []Group       `json:"groups,omitempty" db:"-"`
+	Current      bool          `json:"current,omitempty" cli:"current" db:"-"`
+	LastActivity *time.Time    `json:"last_activity,omitempty" cli:"last_activity,omitempty" db:"-"`
 }
 
 // AuthSessionJWTClaims is the specific claims format for JWT session.

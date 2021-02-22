@@ -144,16 +144,6 @@ func InsertSession(ctx context.Context, db gorpmapper.SqlExecutorWithTx, as *sdk
 	return nil
 }
 
-// UpdateSession in database.
-func UpdateSession(ctx context.Context, db gorpmapper.SqlExecutorWithTx, as *sdk.AuthSession) error {
-	s := authSession{AuthSession: *as}
-	if err := gorpmapping.UpdateAndSign(ctx, db, &s); err != nil {
-		return sdk.WrapError(err, "unable to update auth session with id: %s", s.ID)
-	}
-	*as = s.AuthSession
-	return nil
-}
-
 // DeleteSessionByID removes a auth session in database for given id.
 func DeleteSessionByID(db gorp.SqlExecutor, id string) error {
 	_, err := db.Exec("DELETE FROM auth_session WHERE id = $1", id)

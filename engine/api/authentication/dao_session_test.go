@@ -77,28 +77,6 @@ func TestInsertSession(t *testing.T) {
 	test.Equal(t, s, res)
 }
 
-func TestUpdateSession(t *testing.T) {
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
-
-	u := sdk.AuthentifiedUser{
-		Username: sdk.RandomString(10),
-	}
-	test.NoError(t, user.Insert(context.TODO(), db, &u))
-
-	c, err := local.NewConsumer(context.TODO(), db, u.ID)
-	test.NoError(t, err)
-
-	s, err := authentication.NewSession(context.TODO(), db, c, time.Second)
-	test.NoError(t, err)
-
-	s.MFA = true
-	test.NoError(t, authentication.UpdateSession(context.TODO(), db, s))
-
-	res, err := authentication.LoadSessionByID(context.TODO(), db, s.ID)
-	test.NoError(t, err)
-	test.Equal(t, s, res)
-}
-
 func TestDeleteSession(t *testing.T) {
 	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 

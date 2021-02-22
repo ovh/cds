@@ -6,6 +6,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/ovh/cds/sdk"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/authentication/builtin"
@@ -216,6 +217,16 @@ func (api *API) getSessionsByUserHandler() service.Handler {
 		for i := range ss {
 			if ss[i].ID == currentSession.ID {
 				ss[i].Current = true
+			}
+			if ss[i].MFA {
+				active, lastActivity, err := authentication.GetSessionActivity(api.Cache, ss[i].ID)
+				if err != nil {
+					log.Warn(ctx, "getSessionsByUserHandler> cannot get session activity for %s", ss[i].ID)
+					continue
+				}
+				if active {
+					ss[i].LastActivity = &lastActivity
+				}
 			}
 		}
 

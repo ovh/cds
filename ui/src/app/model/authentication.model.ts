@@ -93,8 +93,9 @@ export class AuthSession {
     consumer_id: string;
     expire_at: string;
     created: string;
-    current: boolean;
     mfa: boolean;
+    current: boolean;
+    last_activity: string;
 
     // UI fields
     consumer: AuthConsumer;

@@ -65,7 +65,6 @@ var (
 	ErrInvalidSecretFormat                           = Error{ID: 50, Status: http.StatusInternalServerError}
 	ErrNoPreviousSuccess                             = Error{ID: 52, Status: http.StatusNotFound}
 	ErrNoPermExecution                               = Error{ID: 53, Status: http.StatusForbidden}
-	ErrSessionNotFound                               = Error{ID: 54, Status: http.StatusUnauthorized}
 	ErrInvalidSecretValue                            = Error{ID: 55, Status: http.StatusBadRequest}
 	ErrPipelineHasApplication                        = Error{ID: 56, Status: http.StatusBadRequest}
 	ErrNoDirectSecretUse                             = Error{ID: 57, Status: http.StatusForbidden}
@@ -254,7 +253,6 @@ var errorsAmericanEnglish = map[int]string{
 	ErrCommitsFetchFailed.ID:                            "unable to retrieves commits",
 	ErrInvalidGoPath.ID:                                 "invalid gopath",
 	ErrInvalidSecretFormat.ID:                           "cannot decrypt secret, invalid format",
-	ErrSessionNotFound.ID:                               "invalid session",
 	ErrNoPreviousSuccess.ID:                             "there is no previous success version for this pipeline",
 	ErrNoPermExecution.ID:                               "you don't have execution right",
 	ErrInvalidSecretValue.ID:                            "secret value not specified",
