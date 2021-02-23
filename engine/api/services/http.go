@@ -6,9 +6,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"golang.org/x/exp/rand"
 	"io"
 	"io/ioutil"
+	"math/rand"
 	"mime/multipart"
 	"net/http"
 	"net/textproto"
@@ -196,7 +196,7 @@ func _doJSONRequest(ctx context.Context, srv *sdk.Service, method, path string, 
 // PostBinary
 func PostBinary(ctx context.Context, srvs []sdk.Service, path string, r io.Reader, out interface{}, mods ...cdsclient.RequestModifier) (int, error) {
 	// No retry because if http call failed, reader is closed
-	seed := rand.NewSource(uint64(time.Now().UnixNano()))
+	seed := rand.NewSource(time.Now().UnixNano())
 	ra := rand.New(seed)
 	srv := &srvs[ra.Intn(len(srvs))]
 	callURL, err := url.ParseRequestURI(srv.HTTPURL + path)

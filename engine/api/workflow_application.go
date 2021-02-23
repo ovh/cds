@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"regexp"
 	"sort"
@@ -124,7 +123,7 @@ func (api *API) releaseApplicationWorkflowHandler() service.Handler {
 
 				if err := client.UploadReleaseFile(ctx, app.RepositoryFullname, fmt.Sprintf("%d", release.ID), release.UploadURL, a.Name, f, int(a.Size)); err != nil {
 					lastErr = err
-					if attempt >= 3 {
+					if attempt >= 5 {
 						break
 					}
 					continue
@@ -169,13 +168,28 @@ func (api *API) releaseApplicationWorkflowHandler() service.Handler {
 			return err
 		}
 		for _, r := range resultToUpload {
-			reader, err := api.Client.CDNItemDownload(ctx, cdnHTTP, r.CDNRefHash, sdk.CDNTypeItemArtifact)
-			if err != nil {
+			// Do manual retry because if http call failed, reader is closed
+			attempt := 0
+			var lastErr error
+			for {
+				attempt++
+				reader, err := api.Client.CDNItemDownload(ctx, cdnHTTP, r.CDNRefHash, sdk.CDNTypeItemArtifact)
+				if err != nil {
+					return err
+				}
+				if err := client.UploadReleaseFile(ctx, app.RepositoryFullname, fmt.Sprintf("%d", release.ID), release.UploadURL, r.Name, reader, int(r.Size)); err != nil {
+					lastErr = err
+					if attempt >= 5 {
+						break
+					}
+					continue
+				}
+				break
+			}
+			if lastErr != nil {
 				return err
 			}
-			if err := client.UploadReleaseFile(ctx, app.RepositoryFullname, fmt.Sprintf("%d", release.ID), release.UploadURL, r.Name, ioutil.NopCloser(reader), int(r.Size)); err != nil {
-				return sdk.WrapError(err, "releaseApplicationWorkflowHandler")
-			}
+
 		}
 
 		return nil
