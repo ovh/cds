@@ -60,7 +60,7 @@ func (h *HatcheryVSphere) ApplyConfiguration(cfg interface{}) error {
 	var ok bool
 	h.Config, ok = cfg.(HatcheryConfiguration)
 	if !ok {
-		return fmt.Errorf("Invalid configuration")
+		return sdk.WithStack(fmt.Errorf("Invalid configuration"))
 	}
 
 	h.Common.Common.ServiceName = h.Config.Name
