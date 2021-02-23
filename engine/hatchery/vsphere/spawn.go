@@ -210,17 +210,17 @@ func (h *HatcheryVSphere) launchScriptWorker(ctx context.Context, name string, j
 		return errt
 	}
 	udataParam := sdk.WorkerArgs{
-		API:               h.Configuration().API.HTTP.URL,
+		API:               h.Config.API.HTTP.URL,
 		Name:              name,
 		Token:             token,
 		Model:             model.Group.Name + "/" + model.Name,
 		HatcheryName:      h.Name(),
 		TTL:               h.Config.WorkerTTL,
 		FromWorkerImage:   true,
-		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
-		GraylogPort:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Port,
-		GraylogExtraKey:   h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey,
-		GraylogExtraValue: h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue,
+		GraylogHost:       h.Config.Provision.WorkerLogsOptions.Graylog.Host,
+		GraylogPort:       h.Config.Provision.WorkerLogsOptions.Graylog.Port,
+		GraylogExtraKey:   h.Config.Provision.WorkerLogsOptions.Graylog.ExtraKey,
+		GraylogExtraValue: h.Config.Provision.WorkerLogsOptions.Graylog.ExtraValue,
 		WorkflowJobID:     jobID,
 	}
 
