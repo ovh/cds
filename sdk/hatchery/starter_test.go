@@ -14,29 +14,29 @@ func Test_generateWorkerName(t *testing.T) {
 		model        string
 	}
 	tests := []struct {
-		name string
-		args args
-		want string
+		name       string
+		args       args
+		wantPrefix string
 	}{
 		{
-			name: "simple",
-			args: args{hatcheryName: "p999-prod", isRegister: true, model: "rust-official-1.41"},
-			want: "register-rust-official-1-41-",
+			name:       "simple",
+			args:       args{hatcheryName: "p999-prod", isRegister: true, model: "rust-official-1.41"},
+			wantPrefix: "register-rust-official-1-41-",
 		},
 		{
-			name: "simple special char",
-			args: args{hatcheryName: "p999/prod", isRegister: true, model: "shared.infra-rust-official-1.41"},
-			want: "register-shared-infra-rust-official-1-41-",
+			name:       "simple special char",
+			args:       args{hatcheryName: "p999/prod", isRegister: true, model: "shared.infra-rust-official-1.41"},
+			wantPrefix: "register-shared-infra-rust-official-1-41-",
 		},
 		{
-			name: "long hatchery name",
-			args: args{hatcheryName: "p999-prod-xxxx-xxxx-xxxx-xxxx-xxxx", isRegister: true, model: "shared.infra-rust-official-1.41"},
-			want: "register-shared-infra-rust-official-1-41-",
+			name:       "long hatchery name",
+			args:       args{hatcheryName: "p999-prod-xxxx-xxxx-xxxx-xxxx-xxxx", isRegister: true, model: "shared.infra-rust-official-1.41"},
+			wantPrefix: "register-shared-infra-rust-official-1-41-",
 		},
 		{
-			name: "long model name",
-			args: args{hatcheryName: "hname", isRegister: true, model: "shared.infra-rust-official-1.41-xxx-xxx-xxx-xxx"},
-			want: "register-shared-infra-rust-official-1-41-xxx-xxx-xxx-xxx-",
+			name:       "long model name",
+			args:       args{hatcheryName: "hname", isRegister: true, model: "shared.infra-rust-official-1.41-xxx-xxx-xxx-xxx"},
+			wantPrefix: "register-shared-infra-rust-official-1-41-xxx-xxx-xxx-xxx-",
 		},
 	}
 	for _, tt := range tests {
@@ -47,8 +47,8 @@ func Test_generateWorkerName(t *testing.T) {
 				t.Errorf("len must be < 64() = %d - got:%s", len(got), got)
 			}
 
-			if !strings.HasPrefix(got, tt.want) {
-				t.Errorf("generateWorkerName() = %v, want prefix : %v", got, tt.want)
+			if !strings.HasPrefix(got, tt.wantPrefix) {
+				t.Errorf("generateWorkerName() = %v, want prefix : %v", got, tt.wantPrefix)
 			}
 		})
 	}
