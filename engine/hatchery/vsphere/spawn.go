@@ -10,6 +10,7 @@ import (
 
 	"github.com/rockbears/log"
 	"github.com/vmware/govmomi/object"
+	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/types"
 
 	"github.com/ovh/cds/sdk"
@@ -155,7 +156,10 @@ func (h *HatcheryVSphere) createVirtualMachineTemplate(ctx context.Context, mode
 
 	if _, err := h.launchClientOp(ctx, clonedVM, model.ModelVirtualMachine, model.ModelVirtualMachine.PostCmd, nil); err != nil {
 		log.Warn(ctx, "createVMModel> cannot start program %s", err)
-		h.markToDelete(ctx, vm)
+		if err := h.markToDelete(ctx, vm); err != nil {
+			ctx = sdk.ContextWithStacktrace(ctx, err)
+			log.Error(ctx, "createVMModel> unable to mark vm %q to delete: %v", model.Name, err)
+		}
 		return nil, err
 	}
 
@@ -227,20 +231,50 @@ func (h *HatcheryVSphere) launchScriptWorker(ctx context.Context, name string, j
 
 	if _, err := h.launchClientOp(ctx, vm, model.ModelVirtualMachine, buffer.String(), env); err != nil {
 		log.Warn(ctx, "launchScript> cannot start program %s", err)
-		h.markToDelete(ctx, vm)
+		if err := h.markToDelete(ctx, vm); err != nil {
+			ctx = sdk.ContextWithStacktrace(ctx, err)
+			log.Error(ctx, "unable to mark vm %q to delete: %v", model.Name, err)
+		}
 		return err
 	}
 
 	return nil
 }
 
-func (h *HatcheryVSphere) markToDelete(ctx context.Context, vm *object.VirtualMachine) {
-	annot := annotation{ToDelete: true}
+func (h *HatcheryVSphere) markToDelete(ctx context.Context, vm *object.VirtualMachine) error {
+
+	// Reload the vm ref to get the annotation
+	allVMRef, err := h.vSphereClient.ListVirtualMachines(ctx)
+	if err != nil {
+		return err
+	}
+
+	var vmRef *mo.VirtualMachine
+	for i := range allVMRef {
+		if allVMRef[i].Name == vm.Name() {
+			vmRef = &allVMRef[i]
+			break
+		}
+	}
+
+	if vmRef == nil {
+		return sdk.WithStack(fmt.Errorf("virtual machine ref %q not found", vm.Name()))
+	}
+
+	var annot = getVirtualMachineCDSAnnotation(ctx, *vmRef)
+	if annot == nil {
+		return sdk.WithStack(fmt.Errorf("not allowed to mark virtual machine %q to detele", vm.Name()))
+	}
+
+	annot.ToDelete = true
+
 	if annotStr, err := json.Marshal(annot); err == nil {
 		if err := h.vSphereClient.ReconfigureVirtualMachine(ctx, vm, types.VirtualMachineConfigSpec{
 			Annotation: string(annotStr),
 		}); err != nil {
-			log.Error(ctx, "unable to mark %q as delete", vm.String())
+			return fmt.Errorf("unable to mark %q as delete", vm.String())
 		}
 	}
+
+	return nil
 }

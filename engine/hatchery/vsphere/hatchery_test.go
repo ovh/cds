@@ -255,6 +255,22 @@ func TestHatcheryVSphere_killAwolServers(t *testing.T) {
 			return []mo.VirtualMachine{
 				{
 					ManagedEntity: mo.ManagedEntity{
+						Name: "worker0",
+					},
+					Summary: types.VirtualMachineSummary{
+						Config: types.VirtualMachineConfigSummary{
+							Template: false,
+						},
+						Runtime: types.VirtualMachineRuntimeInfo{
+							PowerState: types.VirtualMachinePowerStatePoweredOn,
+						},
+					},
+					Config: &types.VirtualMachineConfigInfo{
+						Annotation: `{"model": false, "to_delete": false, "worker_model_path": "someting"}`,
+					},
+				},
+				{
+					ManagedEntity: mo.ManagedEntity{
 						Name: "worker1",
 					},
 					Summary: types.VirtualMachineSummary{
@@ -268,25 +284,45 @@ func TestHatcheryVSphere_killAwolServers(t *testing.T) {
 				},
 			}, nil
 		},
-	)
+	).Times(2)
 
-	var vm = object.VirtualMachine{
+	var vm0 = object.VirtualMachine{
+		Common: object.Common{
+			InventoryPath: "worker0",
+		},
+	}
+
+	var vm1 = object.VirtualMachine{
 		Common: object.Common{},
 	}
 
-	c.EXPECT().LoadVirtualMachine(gomock.Any(), "worker1").DoAndReturn(
+	c.EXPECT().LoadVirtualMachine(gomock.Any(), "worker0").DoAndReturn(
 		func(ctx context.Context, name string) (*object.VirtualMachine, error) {
-			return &vm, nil
+			return &vm0, nil
 		},
 	)
 
-	c.EXPECT().ShutdownVirtualMachine(gomock.Any(), &vm).DoAndReturn(
+	c.EXPECT().ReconfigureVirtualMachine(gomock.Any(), &vm0, gomock.Any()).DoAndReturn(
+		func(ctx context.Context, vm *object.VirtualMachine, config types.VirtualMachineConfigSpec) error {
+			t.Logf("config: %+v", config)
+			assert.Equal(t, `{"worker_model_path":"someting","to_delete":true,"created":"0001-01-01T00:00:00Z"}`, config.Annotation)
+			return nil
+		},
+	)
+
+	c.EXPECT().LoadVirtualMachine(gomock.Any(), "worker1").DoAndReturn(
+		func(ctx context.Context, name string) (*object.VirtualMachine, error) {
+			return &vm1, nil
+		},
+	)
+
+	c.EXPECT().ShutdownVirtualMachine(gomock.Any(), &vm1).DoAndReturn(
 		func(ctx context.Context, vm *object.VirtualMachine) error {
 			return nil
 		},
 	)
 
-	c.EXPECT().DestroyVirtualMachine(gomock.Any(), &vm).DoAndReturn(
+	c.EXPECT().DestroyVirtualMachine(gomock.Any(), &vm1).DoAndReturn(
 		func(ctx context.Context, vm *object.VirtualMachine) error {
 			return nil
 		},

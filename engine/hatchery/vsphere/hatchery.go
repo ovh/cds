@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
@@ -281,11 +282,30 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 		}
 
 		var isPoweredOff = s.Summary.Runtime.PowerState != types.VirtualMachinePowerStatePoweredOn
+
+		// If the VM is still ON but is older that the WorkerTTL config, let's mark it as delete
+		if !isPoweredOff && !annot.ToDelete && annot.Created.Before(time.Now().Add(time.Duration(-1.0*float64(h.Config.WorkerTTL))*time.Minute)) {
+			vm, err := h.vSphereClient.LoadVirtualMachine(ctx, s.Name)
+			if err != nil {
+				ctx = sdk.ContextWithStacktrace(ctx, err)
+				log.Error(ctx, "unable to load vm %s: %v", s.Name, err)
+				continue
+			}
+			log.Info(ctx, "virtual machine %q as been created on %q, it has to be deleted", s.Name, annot.Created)
+			if err := h.markToDelete(ctx, vm); err != nil {
+				ctx = sdk.ContextWithStacktrace(ctx, err)
+				log.Error(ctx, "unable to mark vm %q to delete: %v", s.Name, err)
+				continue
+			}
+		}
+
+		// If the VM is mark as delete or is OFF and is not a model or a register-only VM, let's delete it
 		if annot.ToDelete || (isPoweredOff && (!annot.Model || annot.RegisterOnly)) {
 			if err := h.deleteServer(ctx, s); err != nil {
 				ctx = sdk.ContextWithStacktrace(ctx, err)
 				log.Error(ctx, "killAwolServers> cannot delete server %s", s.Name)
 			}
 		}
+
 	}
 }
