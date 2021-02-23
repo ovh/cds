@@ -875,6 +875,7 @@ func (s *Service) postReleaseHandler() service.Handler {
 
 func (s *Service) postUploadReleaseFileHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		defer r.Body.Close() // nolint
 		name := muxVar(r, "name")
 		owner := muxVar(r, "owner")
 		repo := muxVar(r, "repo")
@@ -883,11 +884,16 @@ func (s *Service) postUploadReleaseFileHandler() service.Handler {
 
 		uploadURL, err := url.QueryUnescape(r.URL.Query().Get("upload_url"))
 		if err != nil {
-			return err
+			return sdk.WithStack(err)
+		}
+
+		contentLength, err := strconv.Atoi(r.Header.Get("Content-Length"))
+		if err != nil {
+			return sdk.WithStack(err)
 		}
 
 		if _, err := url.Parse(uploadURL); err != nil {
-			return err
+			return sdk.WithStack(err)
 		}
 
 		accessToken, accessTokenSecret, created, ok := getAccessTokens(ctx)
@@ -909,11 +915,10 @@ func (s *Service) postUploadReleaseFileHandler() service.Handler {
 			w.Header().Set(sdk.HeaderXAccessToken, client.GetAccessToken(ctx))
 		}
 
-		if err := client.UploadReleaseFile(ctx, fmt.Sprintf("%s/%s", owner, repo), release, uploadURL, artifactName, r.Body); err != nil {
+		if err := client.UploadReleaseFile(ctx, fmt.Sprintf("%s/%s", owner, repo), release, uploadURL, artifactName, r.Body, contentLength); err != nil {
 			return sdk.WrapError(err, "Unable to upload release file %s %s/%s", name, owner, repo)
 		}
-
-		return nil
+		return sdk.WithStack(r.Body.Close())
 	}
 }
 

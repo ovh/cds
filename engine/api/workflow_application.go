@@ -112,14 +112,29 @@ func (api *API) releaseApplicationWorkflowHandler() service.Handler {
 		}
 
 		for _, a := range artifactToUpload {
-			f, err := api.SharedStorage.Fetch(ctx, &a)
-			if err != nil {
-				return sdk.WrapError(err, "Cannot fetch artifact")
+			// Do manual retry because if http call failed, reader is closed
+			attempt := 0
+			var lastErr error
+			for {
+				attempt++
+				f, err := api.SharedStorage.Fetch(ctx, &a)
+				if err != nil {
+					return sdk.WrapError(err, "Cannot fetch artifact")
+				}
+
+				if err := client.UploadReleaseFile(ctx, app.RepositoryFullname, fmt.Sprintf("%d", release.ID), release.UploadURL, a.Name, f, int(a.Size)); err != nil {
+					lastErr = err
+					if attempt >= 3 {
+						break
+					}
+					continue
+				}
+				break
+			}
+			if lastErr != nil {
+				return err
 			}
 
-			if err := client.UploadReleaseFile(ctx, app.RepositoryFullname, fmt.Sprintf("%d", release.ID), release.UploadURL, a.Name, f); err != nil {
-				return sdk.WrapError(err, "releaseApplicationWorkflowHandler")
-			}
 		}
 
 		results, err := workflow.LoadRunResultsByRunIDAndType(ctx, api.mustDB(), workflowRun.ID, sdk.WorkflowRunResultTypeArtifact)
@@ -158,7 +173,7 @@ func (api *API) releaseApplicationWorkflowHandler() service.Handler {
 			if err != nil {
 				return err
 			}
-			if err := client.UploadReleaseFile(ctx, app.RepositoryFullname, fmt.Sprintf("%d", release.ID), release.UploadURL, r.Name, ioutil.NopCloser(reader)); err != nil {
+			if err := client.UploadReleaseFile(ctx, app.RepositoryFullname, fmt.Sprintf("%d", release.ID), release.UploadURL, r.Name, ioutil.NopCloser(reader), int(r.Size)); err != nil {
 				return sdk.WrapError(err, "releaseApplicationWorkflowHandler")
 			}
 		}

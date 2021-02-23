@@ -6,12 +6,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"golang.org/x/exp/rand"
 	"io"
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"net/textproto"
 	"net/url"
+	"strconv"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -59,11 +61,11 @@ func NewDefaultClient(db gorp.SqlExecutor, srvs []sdk.Service) Client {
 }
 
 func (s *defaultServiceClient) DoMultiPartRequest(ctx context.Context, method, path string, multiPartData *MultiPartData, in interface{}, out interface{}, mods ...cdsclient.RequestModifier) (int, error) {
-	return doMultiPartRequest(ctx, s.db, s.srvs, method, path, multiPartData, in, out, mods...)
+	return doMultiPartRequest(ctx, s.srvs, method, path, multiPartData, in, out, mods...)
 }
 
 // doMultiPartRequest performs an http request on a service with multipart  tar file + json field
-func doMultiPartRequest(ctx context.Context, db gorp.SqlExecutor, srvs []sdk.Service, method, path string, multiPartData *MultiPartData, in interface{}, out interface{}, mods ...cdsclient.RequestModifier) (int, error) {
+func doMultiPartRequest(ctx context.Context, srvs []sdk.Service, method, path string, multiPartData *MultiPartData, in interface{}, out interface{}, mods ...cdsclient.RequestModifier) (int, error) {
 	ctx, end := telemetry.Span(ctx, "services.doMultiPartRequest",
 		telemetry.Tag("http.method", method),
 		telemetry.Tag("http.path", path),
@@ -108,7 +110,7 @@ func doMultiPartRequest(ctx context.Context, db gorp.SqlExecutor, srvs []sdk.Ser
 		attempt++
 		for i := range srvs {
 			srv := &srvs[i]
-			res, _, code, err := doRequest(ctx, db, srv, method, path, bodyToSend, mods...)
+			res, _, code, err := doRequest(ctx, srv, method, path, bodyToSend, mods...)
 			if err != nil {
 				lastErr = err
 				lastCode = code
@@ -137,17 +139,17 @@ func (s *defaultServiceClient) DoJSONRequest(ctx context.Context, method, path s
 	)
 	defer end()
 
-	return doJSONRequest(ctx, s.db, s.srvs, method, path, in, out, mods...)
+	return doJSONRequest(ctx, s.srvs, method, path, in, out, mods...)
 }
 
 // doJSONRequest performs an http request on a service
-func doJSONRequest(ctx context.Context, db gorp.SqlExecutor, srvs []sdk.Service, method, path string, in interface{}, out interface{}, mods ...cdsclient.RequestModifier) (http.Header, int, error) {
+func doJSONRequest(ctx context.Context, srvs []sdk.Service, method, path string, in interface{}, out interface{}, mods ...cdsclient.RequestModifier) (http.Header, int, error) {
 	var lastErr = sdk.WithStack(errors.New("unable to call service: service not found"))
 	var lastCode int
 	for attempt := 0; attempt < 5; attempt++ {
 		for i := range srvs {
 			srv := &srvs[i]
-			headers, code, err := _doJSONRequest(ctx, db, srv, method, path, in, out, mods...)
+			headers, code, err := _doJSONRequest(ctx, srv, method, path, in, out, mods...)
 			if err != nil {
 				lastErr = err
 				lastCode = code
@@ -165,7 +167,7 @@ func doJSONRequest(ctx context.Context, db gorp.SqlExecutor, srvs []sdk.Service,
 }
 
 // _doJSONRequest is a low level function that performs an http request on service
-func _doJSONRequest(ctx context.Context, db gorp.SqlExecutor, srv *sdk.Service, method, path string, in interface{}, out interface{}, mods ...cdsclient.RequestModifier) (http.Header, int, error) {
+func _doJSONRequest(ctx context.Context, srv *sdk.Service, method, path string, in interface{}, out interface{}, mods ...cdsclient.RequestModifier) (http.Header, int, error) {
 	var b = []byte{}
 	var err error
 
@@ -177,7 +179,7 @@ func _doJSONRequest(ctx context.Context, db gorp.SqlExecutor, srv *sdk.Service, 
 	}
 
 	mods = append(mods, cdsclient.SetHeader("Content-Type", "application/json"))
-	res, headers, code, err := doRequest(ctx, db, srv, method, path, b, mods...)
+	res, headers, code, err := doRequest(ctx, srv, method, path, b, mods...)
 	if err != nil {
 		return headers, code, sdk.ErrorWithFallback(err, sdk.ErrUnknownError, "unable to perform request on service %s (%s)", srv.Name, srv.Type)
 	}
@@ -191,53 +193,30 @@ func _doJSONRequest(ctx context.Context, db gorp.SqlExecutor, srv *sdk.Service, 
 	return headers, code, nil
 }
 
-// PostMultipart post a file content through multipart upload
-func PostMultipart(ctx context.Context, db gorp.SqlExecutor, srvs []sdk.Service, path string, filename string, fileContents []byte, out interface{}, mods ...cdsclient.RequestModifier) (int, error) {
-	body := new(bytes.Buffer)
-	writer := multipart.NewWriter(body)
-	part, err := writer.CreateFormFile("file", filename)
+// PostBinary
+func PostBinary(ctx context.Context, srvs []sdk.Service, path string, r io.Reader, out interface{}, mods ...cdsclient.RequestModifier) (int, error) {
+	// No retry because if http call failed, reader is closed
+	seed := rand.NewSource(uint64(time.Now().UnixNano()))
+	ra := rand.New(seed)
+	srv := &srvs[ra.Intn(len(srvs))]
+	callURL, err := url.ParseRequestURI(srv.HTTPURL + path)
 	if err != nil {
 		return 0, sdk.WithStack(err)
 	}
-	if _, err := part.Write(fileContents); err != nil {
-		return 0, sdk.WithStack(err)
+	res, _, code, err := doRequestFromURL(ctx, "POST", callURL, r, mods...)
+	if err != nil {
+		return code, err
 	}
-	if err := writer.Close(); err != nil {
-		return 0, sdk.WithStack(err)
-	}
-
-	mods = append(mods, cdsclient.SetHeader("Content-Type", "multipart/form-data"))
-
-	var lastErr error
-	var lastCode int
-	var attempt int
-	for {
-		attempt++
-		for i := range srvs {
-			srv := &srvs[i]
-			res, _, code, err := doRequest(ctx, db, srv, "POST", path, body.Bytes(), mods...)
-			lastCode = code
-			lastErr = err
-
-			if err == nil {
-				return code, nil
-			}
-
-			if out != nil {
-				if err := json.Unmarshal(res, out); err != nil {
-					return code, err
-				}
-			}
-		}
-		if lastErr == nil {
-			break
+	if out != nil {
+		if err := json.Unmarshal(res, out); err != nil {
+			return code, sdk.WithStack(err)
 		}
 	}
-	return lastCode, lastErr
+	return code, nil
 }
 
 // DoRequest performs an http request on a service
-func DoRequest(ctx context.Context, db gorp.SqlExecutor, srvs []sdk.Service, method, path string, args []byte, mods ...cdsclient.RequestModifier) ([]byte, http.Header, int, error) {
+func DoRequest(ctx context.Context, srvs []sdk.Service, method, path string, args []byte, mods ...cdsclient.RequestModifier) ([]byte, http.Header, int, error) {
 	var lastErr error
 	var lastCode int
 	var attempt int
@@ -245,7 +224,7 @@ func DoRequest(ctx context.Context, db gorp.SqlExecutor, srvs []sdk.Service, met
 		attempt++
 		for i := range srvs {
 			srv := &srvs[i]
-			btes, headers, code, err := doRequest(ctx, db, srv, method, path, args, mods...)
+			btes, headers, code, err := doRequest(ctx, srv, method, path, args, mods...)
 			if err == nil {
 				return btes, headers, code, nil
 			}
@@ -260,15 +239,19 @@ func DoRequest(ctx context.Context, db gorp.SqlExecutor, srvs []sdk.Service, met
 }
 
 // doRequest performs an http request on service
-func doRequest(ctx context.Context, db gorp.SqlExecutor, srv *sdk.Service, method, path string, args []byte, mods ...cdsclient.RequestModifier) ([]byte, http.Header, int, error) {
+func doRequest(ctx context.Context, srv *sdk.Service, method, path string, args []byte, mods ...cdsclient.RequestModifier) ([]byte, http.Header, int, error) {
 	callURL, err := url.ParseRequestURI(srv.HTTPURL + path)
 	if err != nil {
-		return nil, nil, 0, err
+		return nil, nil, 0, sdk.WithStack(err)
 	}
-	return doRequestFromURL(ctx, db, method, callURL, args, mods...)
+	var r io.Reader
+	if args != nil {
+		r = bytes.NewReader(args)
+	}
+	return doRequestFromURL(ctx, method, callURL, r, mods...)
 }
 
-func doRequestFromURL(ctx context.Context, db gorp.SqlExecutor, method string, callURL *url.URL, args []byte, mods ...cdsclient.RequestModifier) ([]byte, http.Header, int, error) {
+func doRequestFromURL(ctx context.Context, method string, callURL *url.URL, reader io.Reader, mods ...cdsclient.RequestModifier) ([]byte, http.Header, int, error) {
 	if HTTPClient == nil {
 		HTTPClient = &http.Client{
 			Timeout: 60 * time.Second,
@@ -279,15 +262,9 @@ func doRequestFromURL(ctx context.Context, db gorp.SqlExecutor, method string, c
 		HTTPSigner = httpsig.NewRSASHA256Signer(authentication.GetIssuerName(), authentication.GetSigningKey(), []string{"(request-target)", "host", "date"})
 	}
 
-	var requestError error
-	var req *http.Request
-	if args != nil {
-		req, requestError = http.NewRequest(method, callURL.String(), bytes.NewReader(args))
-	} else {
-		req, requestError = http.NewRequest(method, callURL.String(), nil)
-	}
+	req, requestError := http.NewRequest(method, callURL.String(), reader)
 	if requestError != nil {
-		return nil, nil, 0, requestError
+		return nil, nil, 0, sdk.WithStack(requestError)
 	}
 
 	req = req.WithContext(ctx)
@@ -307,6 +284,14 @@ func doRequestFromURL(ctx context.Context, db gorp.SqlExecutor, method string, c
 	requestID := cdslog.ContextValue(ctx, cdslog.RequestID)
 	if requestID != "" {
 		req.Header.Set(cdslog.HeaderRequestID, requestID)
+	}
+
+	if req.Header.Get("Content-Length") != "" {
+		s, err := strconv.Atoi(req.Header.Get("Content-Length"))
+		if err != nil {
+			return nil, nil, 0, sdk.WithStack(err)
+		}
+		req.ContentLength = int64(s)
 	}
 
 	// Sign the http request with API private RSA Key

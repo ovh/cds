@@ -181,7 +181,7 @@ func (g *githubClient) PullRequestComment(ctx context.Context, repo string, prRe
 		"body": prReq.Message,
 	}
 	values, _ := json.Marshal(payload)
-	res, err := g.post(ctx, path, "application/json", bytes.NewReader(values), &postOptions{skipDefaultBaseURL: false, asUser: true})
+	res, err := g.post(ctx, path, "application/json", bytes.NewReader(values), nil, &postOptions{skipDefaultBaseURL: false, asUser: true})
 	if err != nil {
 		return sdk.WrapError(err, "Unable to post status")
 	}
@@ -220,7 +220,7 @@ func (g *githubClient) PullRequestCreate(ctx context.Context, repo string, pr sd
 		"base":  pr.Base.Branch.DisplayID,
 	}
 	values, _ := json.Marshal(payload)
-	res, err := g.post(ctx, path, "application/json", bytes.NewReader(values), &postOptions{skipDefaultBaseURL: false, asUser: true})
+	res, err := g.post(ctx, path, "application/json", bytes.NewReader(values), nil, &postOptions{skipDefaultBaseURL: false, asUser: true})
 	if err != nil {
 		return sdk.VCSPullRequest{}, sdk.WrapError(err, "Unable to post status")
 	}

@@ -42,7 +42,7 @@ func (g *githubClient) CreateHook(ctx context.Context, repo string, hook *sdk.VC
 	if err != nil {
 		return sdk.WrapError(err, "Cannot marshal body %+v", r)
 	}
-	res, err := g.post(ctx, url, "application/json", bytes.NewBuffer(b), nil)
+	res, err := g.post(ctx, url, "application/json", bytes.NewBuffer(b), nil, nil)
 	if err != nil {
 		return sdk.WrapError(err, "github.CreateHook")
 	}

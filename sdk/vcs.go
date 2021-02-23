@@ -245,7 +245,7 @@ type VCSAuthorizedClientCommon interface {
 
 	// Release
 	Release(ctx context.Context, repo, tagName, releaseTitle, releaseDescription string) (*VCSRelease, error)
-	UploadReleaseFile(ctx context.Context, repo string, releaseName string, uploadURL string, artifactName string, r io.ReadCloser) error
+	UploadReleaseFile(ctx context.Context, repo string, releaseName string, uploadURL string, artifactName string, r io.Reader, length int) error
 
 	// Forks
 	ListForks(ctx context.Context, repo string) ([]VCSRepo, error)

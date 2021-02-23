@@ -45,7 +45,7 @@ func ListItems(ctx context.Context, db gorp.SqlExecutor, itemtype sdk.CDNItemTyp
 		}
 
 	}
-	btes, _, _, err := services.DoRequest(ctx, db, srvs, http.MethodGet, path, nil)
+	btes, _, _, err := services.DoRequest(ctx, srvs, http.MethodGet, path, nil)
 	if err != nil {
 		return result, err
 	}

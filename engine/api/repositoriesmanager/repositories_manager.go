@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -247,10 +246,12 @@ func (c *vcsClient) doJSONRequest(ctx context.Context, method, path string, in i
 	return code, sdk.WithStack(err)
 }
 
-func (c *vcsClient) postMultipart(ctx context.Context, path string, fileContent []byte, out interface{}) (int, error) {
-	return services.PostMultipart(ctx, c.db, c.srvs, "POST", path, fileContent, out, func(req *http.Request) {
+func (c *vcsClient) postBinary(ctx context.Context, path string, fileLength int, r io.Reader, out interface{}) (int, error) {
+	return services.PostBinary(ctx, c.srvs, path, r, out, func(req *http.Request) {
 		req.Header.Set(sdk.HeaderXAccessToken, base64.StdEncoding.EncodeToString([]byte(c.token)))
 		req.Header.Set(sdk.HeaderXAccessTokenSecret, base64.StdEncoding.EncodeToString([]byte(c.secret)))
+		req.Header.Set("Content-Type", "application/octet-stream")
+		req.Header.Set("Content-Length", strconv.Itoa(fileLength))
 	})
 }
 
@@ -559,16 +560,9 @@ func (c *vcsClient) Release(ctx context.Context, fullname, tagName, releaseTitle
 	return &release, nil
 }
 
-func (c *vcsClient) UploadReleaseFile(ctx context.Context, fullname string, releaseName, uploadURL string, artifactName string, r io.ReadCloser) error {
-	path := fmt.Sprintf("/vcs/%s/repos/%s/releases/%s/artifacts/%s", c.name, fullname, releaseName, artifactName)
-	defer r.Close()
-
-	fileContent, err := ioutil.ReadAll(r)
-	if err != nil {
-		return sdk.WithStack(err)
-	}
-
-	if _, err := c.postMultipart(ctx, path, fileContent, nil); err != nil {
+func (c *vcsClient) UploadReleaseFile(ctx context.Context, fullname string, releaseName, uploadURL string, artifactName string, r io.Reader, fileLength int) error {
+	path := fmt.Sprintf("/vcs/%s/repos/%s/releases/%s/artifacts/%s?upload_url=%s", c.name, fullname, releaseName, artifactName, url.QueryEscape(uploadURL))
+	if _, err := c.postBinary(ctx, path, fileLength, r, nil); err != nil {
 		return sdk.WithStack(err)
 	}
 	return nil
