@@ -57,7 +57,7 @@ func workerStarter(ctx context.Context, h Interface, workerNum string, jobs <-ch
 				continue
 			}
 
-			workerName, err := generateWorkerName(h.Service().Name, false, m.Name)
+			workerName, err := generateWorkerName(h.Service().Name, true, m.Name)
 			if err != nil {
 				ctx = sdk.ContextWithStacktrace(ctx, err)
 				log.Error(ctx, "unable to generate worker name for model %s: %v", m.Name, err)
