@@ -132,9 +132,6 @@ Then, open a browser on http://localhost:8080/ .
 
 ## Launch CDS cdn
 
-<b style="color: red">⚠ Do not activate CDN log processing in production yet. It's in active development.
-Be sure that config flag 'enableLogProcessing' is set to false</b>
-
 ```bash
 ./cds-engine start cdn --config $HOME/cds/conf.toml
 ```
@@ -152,21 +149,17 @@ Start the local hatchery:
 
 ## Note about CDS Engine
 
-It is possible to start all services as a single process `$ ./cds-engine start api ui hooks hatchery:local --config config.toml`.
+It is possible to start all services as a single process `$ ./cds-engine start api ui cdn hooks hatchery:local --config config.toml`.
 
 ```bash
 $ ./cds-engine start api hooks hatchery:local --config config.toml
 Reading configuration file config.toml
 Starting service api
-...
 Starting service ui
-...
+Starting service cdn
 Starting service hooks
-...
 Starting service vcs
-...
 Starting service hatchery:local
-...
 ```
 
 For serious deployment, we strongly suggest to run each service as a dedicated process.
@@ -174,11 +167,9 @@ For serious deployment, we strongly suggest to run each service as a dedicated p
 ```bash
 
 $ ./cds-engine start api --config config.toml
-
+$ ./cds-engine start cdn --config config.toml
 $ ./cds-engine start ui --config config.toml
-
 $ ./cds-engine start hooks --config config.toml
-
 $ ./cds-engine start vcs --config config.toml
 
 $ ./cds-engine start hatchery:local --config config.toml
