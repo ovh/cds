@@ -33,11 +33,40 @@ func TestHatcheryVSphere_CanSpawn(t *testing.T) {
 		Cmd: "cmd",
 	}}
 
-	assert.False(t, h.CanSpawn(ctx, &invalidModel, -1, []sdk.Requirement{{Type: sdk.ModelRequirement}}), "without a model VSphere, it should return False")
-	assert.False(t, h.CanSpawn(ctx, &validModel, -1, []sdk.Requirement{{Type: sdk.ServiceRequirement}}), "without a service requirement, it should return False")
-	assert.False(t, h.CanSpawn(ctx, &validModel, -1, []sdk.Requirement{{Type: sdk.MemoryRequirement}}), "without a memory requirement, it should return False")
-	assert.False(t, h.CanSpawn(ctx, &validModel, -1, []sdk.Requirement{{Type: sdk.HostnameRequirement}}), "without a hostname requirement, it should return False")
-	assert.True(t, h.CanSpawn(ctx, &validModel, -1, []sdk.Requirement{}), "it should return True")
+	assert.False(t, h.CanSpawn(ctx, &invalidModel, 1, []sdk.Requirement{{Type: sdk.ModelRequirement}}), "without a model VSphere, it should return False")
+	assert.False(t, h.CanSpawn(ctx, &validModel, 1, []sdk.Requirement{{Type: sdk.ServiceRequirement}}), "without a service requirement, it should return False")
+	assert.False(t, h.CanSpawn(ctx, &validModel, 1, []sdk.Requirement{{Type: sdk.MemoryRequirement}}), "without a memory requirement, it should return False")
+	assert.False(t, h.CanSpawn(ctx, &validModel, 1, []sdk.Requirement{{Type: sdk.HostnameRequirement}}), "without a hostname requirement, it should return False")
+	assert.True(t, h.CanSpawn(ctx, &validModel, 1, []sdk.Requirement{}), "it should return True")
+
+	c.EXPECT().ListVirtualMachines(gomock.Any()).DoAndReturn(func(ctx context.Context) ([]mo.VirtualMachine, error) {
+		return []mo.VirtualMachine{}, nil
+	})
+	assert.True(t, h.CanSpawn(ctx, &validModel, 0, []sdk.Requirement{}), "it should return True")
+
+	c.EXPECT().ListVirtualMachines(gomock.Any()).DoAndReturn(func(ctx context.Context) ([]mo.VirtualMachine, error) {
+		return []mo.VirtualMachine{
+			{
+				ManagedEntity: mo.ManagedEntity{
+					Name: validModel.Name + "-tmp",
+				},
+			},
+		}, nil
+	})
+	assert.False(t, h.CanSpawn(ctx, &validModel, 0, []sdk.Requirement{}), "with a 'tmp' vm, it should return False")
+
+	h.cacheVirtualMachines.list = []mo.VirtualMachine{}
+
+	c.EXPECT().ListVirtualMachines(gomock.Any()).DoAndReturn(func(ctx context.Context) ([]mo.VirtualMachine, error) {
+		return []mo.VirtualMachine{
+			{
+				ManagedEntity: mo.ManagedEntity{
+					Name: "register-" + validModel.Name + "-blabla",
+				},
+			},
+		}, nil
+	})
+	assert.False(t, h.CanSpawn(ctx, &validModel, 0, []sdk.Requirement{}), "with a 'register' vm, it should return False")
 
 }
 

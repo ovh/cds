@@ -3,6 +3,8 @@ package hatchery
 import (
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func Test_generateWorkerName(t *testing.T) {
@@ -18,28 +20,29 @@ func Test_generateWorkerName(t *testing.T) {
 	}{
 		{
 			name: "simple",
-			args: args{hatcheryName: "p999-prod", isRegister: true, model: "shared.infra-rust-official-1.41"},
-			want: "register-p999-prod-shared-infra-ru",
+			args: args{hatcheryName: "p999-prod", isRegister: true, model: "rust-official-1.41"},
+			want: "register-rust-official-1-41-",
 		},
 		{
 			name: "simple special char",
 			args: args{hatcheryName: "p999/prod", isRegister: true, model: "shared.infra-rust-official-1.41"},
-			want: "register-p999-prod-shared-infra-ru",
+			want: "register-shared-infra-rust-official-1-41-",
 		},
 		{
 			name: "long hatchery name",
 			args: args{hatcheryName: "p999-prod-xxxx-xxxx-xxxx-xxxx-xxxx", isRegister: true, model: "shared.infra-rust-official-1.41"},
-			want: "register-shared-infra-ru",
+			want: "register-shared-infra-rust-official-1-41-",
 		},
 		{
 			name: "long model name",
 			args: args{hatcheryName: "hname", isRegister: true, model: "shared.infra-rust-official-1.41-xxx-xxx-xxx-xxx"},
-			want: "register-hname-shared-infra-ru",
+			want: "register-shared-infra-rust-official-1-41-xxx-xxx-xxx-xxx-",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := generateWorkerName(tt.args.hatcheryName, tt.args.isRegister, tt.args.model)
+			got, err := generateWorkerName(tt.args.hatcheryName, tt.args.isRegister, tt.args.model)
+			require.NoError(t, err)
 			if len(got) > 64 {
 				t.Errorf("len must be < 64() = %d - got:%s", len(got), got)
 			}

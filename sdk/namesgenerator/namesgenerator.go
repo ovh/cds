@@ -864,3 +864,19 @@ func GetRandomNameCDS(retry int) string {
 	}
 	return name
 }
+
+func GetRandomNameCDSWithMaxLength(maxLength int) string {
+	if maxLength < 10 {
+		var s = right[rand.Intn(len(right))]
+		if len(s) <= maxLength {
+			return s
+		}
+		return s[:maxLength]
+	}
+	for {
+		var s = GetRandomNameCDS(0)
+		if len(s) <= maxLength {
+			return s
+		}
+	}
+}

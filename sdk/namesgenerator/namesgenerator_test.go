@@ -25,3 +25,35 @@ func TestNameRetries(t *testing.T) {
 		t.Fatalf("Generated name doesn't contain a number")
 	}
 }
+
+func TestGetRandomNameCDSWithMaxLength(t *testing.T) {
+	type args struct {
+		maxLength int
+	}
+	tests := []struct {
+		name string
+		args args
+	}{
+		{
+			name: "nominal_case",
+			args: args{maxLength: 20},
+		},
+		{
+			name: "with_short_length",
+			args: args{maxLength: 9},
+		},
+		{
+			name: "with_very_short_length",
+			args: args{maxLength: 2},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := GetRandomNameCDSWithMaxLength(tt.args.maxLength)
+			t.Logf("got: %v", got)
+			if len(got) > tt.args.maxLength {
+				t.Errorf("GetRandomNameCDSWithMaxLength() = %v", got)
+			}
+		})
+	}
+}

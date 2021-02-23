@@ -18,6 +18,7 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
+	"github.com/ovh/cds/sdk/slug"
 )
 
 // New instanciates a new Hatchery vsphere
@@ -133,6 +134,26 @@ func (h *HatcheryVSphere) CanSpawn(ctx context.Context, model *sdk.Model, jobID 
 			return false
 		}
 	}
+
+	if jobID > 0 {
+		return true
+	}
+
+	// If jobID <= 0, it means that it's a call for a registration
+	// So we have to check if there is no pending registration at this time
+	// ie. virtual machine with name "<model>-tmp" or "register-<model>"
+
+	for _, vm := range h.getVirtualMachines(ctx) {
+		switch {
+		case vm.Name == model.Name+"-tmp":
+			log.Warn(ctx, "can't span worker for model %q registration because, there is a temporary machine %q", model.Name, vm.Name)
+			return false
+		case strings.HasPrefix(vm.Name, "register-"+slug.Convert(model.Name)):
+			log.Warn(ctx, "can't span worker for model %q registration because, there is a registering worker %q", model.Name, vm.Name)
+			return false
+		}
+	}
+
 	return true
 }
 
@@ -253,7 +274,6 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 		}
 
 		var isPoweredOff = s.Summary.Runtime.PowerState != types.VirtualMachinePowerStatePoweredOn
-
 		if annot.ToDelete || (isPoweredOff && (!annot.Model || annot.RegisterOnly)) {
 			if err := h.deleteServer(ctx, s); err != nil {
 				ctx = sdk.ContextWithStacktrace(ctx, err)
