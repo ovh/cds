@@ -236,7 +236,7 @@ func (h *HatcheryVSphere) WorkersStartedByModel(ctx context.Context, model *sdk.
 	return x
 }
 
-// WorkersStarted returns the number of instances started but
+// WorkersStarted returns the list of workers started but
 // not necessarily register on CDS yet
 func (h *HatcheryVSphere) WorkersStarted(ctx context.Context) []string {
 	srvs := h.getVirtualMachines(ctx)
