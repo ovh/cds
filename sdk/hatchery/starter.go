@@ -2,7 +2,6 @@ package hatchery
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"sync/atomic"
 	"time"
@@ -57,12 +56,7 @@ func workerStarter(ctx context.Context, h Interface, workerNum string, jobs <-ch
 				continue
 			}
 
-			workerName, err := generateWorkerName(h.Service().Name, true, m.Name)
-			if err != nil {
-				ctx = sdk.ContextWithStacktrace(ctx, err)
-				log.Error(ctx, "unable to generate worker name for model %s: %v", m.Name, err)
-				continue
-			}
+			workerName := generateWorkerName(h.Service().Name, true, m.Name)
 
 			atomic.AddInt64(&nbWorkerToStart, 1)
 			// increment nbRegisteringWorkerModels, but no decrement.
@@ -167,12 +161,7 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 	})
 	next()
 
-	workerName, err := generateWorkerName(h.Service().Name, false, modelName)
-	if err != nil {
-		ctx = sdk.ContextWithStacktrace(ctx, err)
-		log.Error(ctx, "unable to generate worker name for model %s: %v", modelName, err)
-		return false
-	}
+	workerName := generateWorkerName(h.Service().Name, false, modelName)
 
 	_, next = telemetry.Span(ctxJob, "hatchery.SpawnWorker")
 	arg := SpawnArguments{
@@ -245,28 +234,20 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 // a worker name must be 60 char max, without '.' and '_', "/" -> replaced by '-'
 const maxLength = 64
 
-func generateWorkerName(hatcheryName string, isRegister bool, modelName string) (string, error) {
+func generateWorkerName(hatcheryName string, isRegister bool, modelName string) string {
 	prefix := ""
 	if isRegister {
 		prefix = "register-"
 	}
 
 	var nameFirstPart = fmt.Sprintf("%s%s", prefix, modelName)
+	if len(nameFirstPart) > maxLength-10 {
+		nameFirstPart = nameFirstPart[:maxLength-10]
+	}
 	var remainingLength = maxLength - len(nameFirstPart) - 1
 
-	if remainingLength <= 5 {
-		return "", errors.New("modelName too long")
-	}
-
 	random := namesgenerator.GetRandomNameCDSWithMaxLength(remainingLength)
-	workerName := fmt.Sprintf("%s-%s-%s", nameFirstPart, random, hatcheryName)
+	workerName := fmt.Sprintf("%s-%s", nameFirstPart, random)
 
-	if len(workerName) <= maxLength {
-		return slug.Convert(workerName), nil
-	}
-
-	workerName = fmt.Sprintf("%s-%s", nameFirstPart, random)
-
-	return slug.Convert(workerName), nil
-
+	return slug.Convert(workerName)
 }

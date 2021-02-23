@@ -18,7 +18,6 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
-	"github.com/ovh/cds/sdk/slug"
 )
 
 // New instanciates a new Hatchery vsphere
@@ -141,11 +140,16 @@ func (h *HatcheryVSphere) CanSpawn(ctx context.Context, model *sdk.Model, jobID 
 		// ie. virtual machine with name "<model>-tmp" or "register-<model>"
 
 		for _, vm := range h.getVirtualMachines(ctx) {
+			var vmAnnotation = getVirtualMachineCDSAnnotation(ctx, vm)
+			if vmAnnotation == nil {
+				continue
+			}
+
 			switch {
 			case vm.Name == model.Name+"-tmp":
 				log.Warn(ctx, "can't span worker for model %q registration because there is a temporary machine %q", model.Name, vm.Name)
 				return false
-			case strings.HasPrefix(vm.Name, "register-"+slug.Convert(model.Name)):
+			case strings.HasPrefix(vm.Name, "register-") && model.Name == vmAnnotation.WorkerModelPath:
 				log.Warn(ctx, "can't span worker for model %q registration because there is a registering worker %q", model.Name, vm.Name)
 				return false
 			}
@@ -185,6 +189,12 @@ func (h *HatcheryVSphere) Configuration() service.HatcheryCommonConfiguration {
 }
 
 func getVirtualMachineCDSAnnotation(ctx context.Context, srv mo.VirtualMachine) *annotation {
+	if srv.Config == nil {
+		return nil
+	}
+	if srv.Config.Annotation == "" {
+		return nil
+	}
 	var annot annotation
 	if err := json.Unmarshal([]byte(srv.Config.Annotation), &annot); err != nil {
 		log.Warn(ctx, "unable to parse annotations %q on %q: %v", srv.Config.Annotation, srv.Name, err)

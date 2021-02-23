@@ -29,9 +29,12 @@ func TestHatcheryVSphere_CanSpawn(t *testing.T) {
 
 	var ctx = context.Background()
 	var invalidModel = sdk.Model{}
-	var validModel = sdk.Model{Type: sdk.VSphere, ModelVirtualMachine: sdk.ModelVirtualMachine{
-		Cmd: "cmd",
-	}}
+	var validModel = sdk.Model{
+		Name: "model",
+		Type: sdk.VSphere,
+		ModelVirtualMachine: sdk.ModelVirtualMachine{
+			Cmd: "cmd",
+		}}
 
 	assert.False(t, h.CanSpawn(ctx, &invalidModel, 1, []sdk.Requirement{{Type: sdk.ModelRequirement}}), "without a model VSphere, it should return False")
 	assert.False(t, h.CanSpawn(ctx, &validModel, 1, []sdk.Requirement{{Type: sdk.ServiceRequirement}}), "without a service requirement, it should return False")
@@ -90,6 +93,9 @@ func TestHatcheryVSphere_CanSpawn(t *testing.T) {
 				ManagedEntity: mo.ManagedEntity{
 					Name: validModel.Name + "-tmp",
 				},
+				Config: &types.VirtualMachineConfigInfo{
+					Annotation: fmt.Sprintf(`{"worker_model_path": "%s"}`, validModel.Name),
+				},
 			},
 		}, nil
 	})
@@ -101,6 +107,9 @@ func TestHatcheryVSphere_CanSpawn(t *testing.T) {
 			{
 				ManagedEntity: mo.ManagedEntity{
 					Name: "register-" + validModel.Name + "-blabla",
+				},
+				Config: &types.VirtualMachineConfigInfo{
+					Annotation: fmt.Sprintf(`{"worker_model_path": "%s"}`, validModel.Name),
 				},
 			},
 		}, nil

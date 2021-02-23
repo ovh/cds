@@ -3,8 +3,6 @@ package hatchery
 import (
 	"strings"
 	"testing"
-
-	"github.com/stretchr/testify/require"
 )
 
 func Test_generateWorkerName(t *testing.T) {
@@ -36,13 +34,12 @@ func Test_generateWorkerName(t *testing.T) {
 		{
 			name:       "long model name",
 			args:       args{hatcheryName: "hname", isRegister: true, model: "shared.infra-rust-official-1.41-xxx-xxx-xxx-xxx"},
-			wantPrefix: "register-shared-infra-rust-official-1-41-xxx-xxx-xxx-xxx-",
+			wantPrefix: "register-shared-infra-rust-official-1-41-xxx-xxx-xxx-x-",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := generateWorkerName(tt.args.hatcheryName, tt.args.isRegister, tt.args.model)
-			require.NoError(t, err)
+			got := generateWorkerName(tt.args.hatcheryName, tt.args.isRegister, tt.args.model)
 			if len(got) > 64 {
 				t.Errorf("len must be < 64() = %d - got:%s", len(got), got)
 			}
