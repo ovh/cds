@@ -152,6 +152,10 @@ func (c *githubClient) post(ctx context.Context, path string, bodyType string, b
 	for k, v := range headers {
 		req.Header.Set(k, v)
 	}
+
+	// If body is not *bytes.Buffer, *bytes.Reader or *strings.Reader Content-Length is not set. (
+	// Here we force Content-Length.
+	// cf net/http/request.go  NewRequestWithContext
 	if req.Header.Get("Content-Length") != "" {
 		s, err := strconv.Atoi(req.Header.Get("Content-Length"))
 		if err != nil {
