@@ -42,7 +42,7 @@ func TestHatcheryVSphere_getAllServers(t *testing.T) {
 	})
 
 	ctx := context.Background()
-	vms := h.getAllServers(ctx)
+	vms := h.getRawVMs(ctx)
 	require.Len(t, vms, 2)
 }
 

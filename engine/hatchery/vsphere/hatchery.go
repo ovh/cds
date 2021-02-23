@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/rockbears/log"
 	"github.com/sirupsen/logrus"
+	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/types"
 
 	"github.com/ovh/cds/engine/api"
@@ -155,13 +156,8 @@ func (h *HatcheryVSphere) CanSpawn(ctx context.Context, model *sdk.Model, jobID 
 
 	// Check if there is a pending virtual machine with the same jobId in annotation - we want to avoid duplicates
 	for _, vm := range h.getVirtualMachines(ctx) {
-		if vm.Config == nil || vm.Config.Annotation == "" {
-			log.Warn(ctx, "config or annotation are empty for server %q", vm.Name)
-			continue
-		}
-		var annot annotation
-		if err := json.Unmarshal([]byte(vm.Config.Annotation), &annot); err != nil {
-			log.Warn(ctx, "unable to parse annotation for server %q", vm.Name)
+		var annot = getVirtualMachineCDSAnnotation(ctx, vm)
+		if annot == nil {
 			continue
 		}
 		if annot.JobID == jobID {
@@ -188,27 +184,30 @@ func (h *HatcheryVSphere) Configuration() service.HatcheryCommonConfiguration {
 	return h.Config.HatcheryCommonConfiguration
 }
 
+func getVirtualMachineCDSAnnotation(ctx context.Context, srv mo.VirtualMachine) *annotation {
+	var annot annotation
+	if err := json.Unmarshal([]byte(srv.Config.Annotation), &annot); err != nil {
+		log.Warn(ctx, "unable to parse annotations %q on %q: %v", srv.Config.Annotation, srv.Name, err)
+		return nil
+	}
+	return &annot
+}
+
 // NeedRegistration return true if worker model need regsitration
 func (h *HatcheryVSphere) NeedRegistration(ctx context.Context, m *sdk.Model) bool {
 	model, err := h.getVirtualMachineTemplateByName(ctx, m.Name)
 	if err != nil {
 		ctx = sdk.ContextWithStacktrace(ctx, err)
-		log.Error(ctx, "unable to get get vm template %q: %v", m.Name, err)
-		return true
-	}
-	if model.Config == nil || model.Config.Annotation == "" {
+		log.Warn(ctx, "unable to find vm template %q: %v", m.Name, err)
 		return true
 	}
 
-	var annot annotation
-	if err := json.Unmarshal([]byte(model.Config.Annotation), &annot); err != nil {
+	var annot = getVirtualMachineCDSAnnotation(ctx, model)
+	if annot == nil {
 		return true
 	}
 
 	isTemplateOutdated := fmt.Sprintf("%d", m.UserLastModified.Unix()) != annot.WorkerModelLastModified
-
-	log.Debug(ctx, "%v %v %v", annot.ToDelete, m.NeedRegistration, isTemplateOutdated)
-
 	return !annot.ToDelete && (m.NeedRegistration || isTemplateOutdated)
 }
 
@@ -220,20 +219,6 @@ func (h *HatcheryVSphere) WorkerModelsEnabled() ([]sdk.Model, error) {
 // WorkerModelSecretList returns secret for given model.
 func (h *HatcheryVSphere) WorkerModelSecretList(m sdk.Model) (sdk.WorkerModelSecrets, error) {
 	return h.CDSClient().WorkerModelSecretList(m.Group.Name, m.Name)
-}
-
-// WorkersStartedByModel returns the number of instances of given model started but
-// not necessarily register on CDS yet
-func (h *HatcheryVSphere) WorkersStartedByModel(ctx context.Context, model *sdk.Model) int {
-	var x int
-	for _, s := range h.getVirtualMachines(ctx) {
-		if strings.Contains(strings.ToLower(s.Name), strings.ToLower(model.Name)) {
-			x++
-		}
-	}
-	log.Debug(ctx, "WorkersStartedByModel> %s : %d", model.Name, x)
-
-	return x
 }
 
 // WorkersStarted returns the list of workers started but
@@ -280,12 +265,8 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 	srvs := h.getVirtualMachines(ctx)
 
 	for _, s := range srvs {
-		var annot annotation
-		if s.Config == nil || s.Config.Annotation == "" {
-			continue
-		}
-		if err := json.Unmarshal([]byte(s.Config.Annotation), &annot); err != nil {
-			log.Warn(ctx, "unable to parse annotations %q on %q: %v", s.Config.Annotation, s.Name, err)
+		var annot = getVirtualMachineCDSAnnotation(ctx, s)
+		if annot == nil {
 			continue
 		}
 

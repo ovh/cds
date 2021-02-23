@@ -10,7 +10,6 @@ import (
 // i.e 72.44.1.240/28,72.42.1.23/27
 func IPinRanges(ctx context.Context, IPranges string) ([]string, error) {
 	var ips []string
-
 	ranges := strings.Split(IPranges, ",")
 	for _, r := range ranges {
 		i, err := IPinRange(ctx, r)

@@ -156,60 +156,6 @@ func TestHatcheryVSphere_NeedRegistration(t *testing.T) {
 
 }
 
-func TestHatcheryVSphere_WorkersStartedByModel(t *testing.T) {
-	log.Factory = log.NewTestingWrapper(t)
-
-	c := NewVSphereClientTest(t)
-	h := HatcheryVSphere{
-		vSphereClient: c,
-	}
-
-	var ctx = context.Background()
-	var now = time.Now()
-	var validModel = sdk.Model{
-		Name: "model",
-		Type: sdk.VSphere,
-		ModelVirtualMachine: sdk.ModelVirtualMachine{
-			Cmd: "cmd",
-		},
-		UserLastModified: now,
-	}
-
-	// vSphere returns a VM Template maching to te model, it should return False
-	c.EXPECT().ListVirtualMachines(gomock.Any()).DoAndReturn(func(ctx context.Context) ([]mo.VirtualMachine, error) {
-		return []mo.VirtualMachine{
-			{
-				ManagedEntity: mo.ManagedEntity{
-					Name: "model",
-				},
-				Summary: types.VirtualMachineSummary{
-					Config: types.VirtualMachineConfigSummary{
-						Template: true,
-					},
-				},
-				Config: &types.VirtualMachineConfigInfo{
-					Annotation: fmt.Sprintf(`{"worker_model_last_modified": "%d", "model": true}`, now.Unix()),
-				},
-			},
-			{
-				ManagedEntity: mo.ManagedEntity{
-					Name: "model-1",
-				},
-				Summary: types.VirtualMachineSummary{
-					Config: types.VirtualMachineConfigSummary{
-						Template: false,
-					},
-				},
-				Config: &types.VirtualMachineConfigInfo{
-					Annotation: `{"model": false}`,
-				},
-			},
-		}, nil
-	})
-
-	assert.Equal(t, 1, h.WorkersStartedByModel(ctx, &validModel))
-}
-
 func TestHatcheryVSphere_killDisabledWorkers(t *testing.T) {
 	log.Factory = log.NewTestingWrapper(t)
 
@@ -255,7 +201,7 @@ func TestHatcheryVSphere_killDisabledWorkers(t *testing.T) {
 						},
 					},
 					Config: &types.VirtualMachineConfigInfo{
-						Annotation: `{model": false}`,
+						Annotation: `{"model": false}`,
 					},
 				},
 			}, nil

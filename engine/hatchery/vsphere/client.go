@@ -17,7 +17,7 @@ import (
 )
 
 // get all servers on our host
-func (h *HatcheryVSphere) getAllServers(ctx context.Context) []mo.VirtualMachine {
+func (h *HatcheryVSphere) getRawVMs(ctx context.Context) []mo.VirtualMachine {
 	h.cacheVirtualMachines.mu.Lock()
 	if len(h.cacheVirtualMachines.list) > 0 {
 		h.cacheVirtualMachines.mu.Unlock()
@@ -46,7 +46,7 @@ func (h *HatcheryVSphere) getAllServers(ctx context.Context) []mo.VirtualMachine
 }
 
 func (h *HatcheryVSphere) getVirtualMachines(ctx context.Context) []mo.VirtualMachine {
-	vms := h.getAllServers(ctx)
+	vms := h.getRawVMs(ctx)
 	var result = make([]mo.VirtualMachine, 0, len(vms))
 	for i := range vms {
 		isNotTemplate := !vms[i].Summary.Config.Template
@@ -59,7 +59,7 @@ func (h *HatcheryVSphere) getVirtualMachines(ctx context.Context) []mo.VirtualMa
 }
 
 func (h *HatcheryVSphere) getRawTemplates(ctx context.Context) []mo.VirtualMachine {
-	vms := h.getAllServers(ctx)
+	vms := h.getRawVMs(ctx)
 	var result = make([]mo.VirtualMachine, 0, len(vms))
 	for i := range vms {
 		isTemplate := vms[i].Summary.Config.Template
@@ -86,15 +86,13 @@ func (h *HatcheryVSphere) getVirtualMachineTemplates(ctx context.Context) []mo.V
 			log.Warn(ctx, "getModels> config or annotation are empty for server %s", srv.Name)
 			continue
 		}
-		var annot annotation
-		err := json.Unmarshal([]byte(srv.Config.Annotation), &annot)
-		if err == nil {
+		var annot = getVirtualMachineCDSAnnotation(ctx, srv)
+		if annot != nil {
 			if annot.Model {
 				models = append(models, srv)
 			}
 			continue
 		}
-		log.Warn(ctx, "unable to parse annotations %q on %q: %v", srv.Config.Annotation, srv.Name, err)
 	}
 
 	h.cacheTemplates.mu.Lock()
@@ -120,14 +118,13 @@ func (h *HatcheryVSphere) getVirtualMachineTemplateByName(ctx context.Context, n
 	}
 
 	for _, m := range models {
-		if m.Config == nil || m.Config.Annotation == "" || m.Name != name {
+		if m.Name != name {
 			log.Debug(ctx, "%q (%+v) doens't match  with %q", m.Name, m.Config, name)
 			continue
 		}
 
-		var annot annotation
-		if err := json.Unmarshal([]byte(m.Config.Annotation), &annot); err != nil {
-			log.Warn(ctx, "unable to parse annotations %q on %q: %v", m.Config.Annotation, m.Name, err)
+		var annot = getVirtualMachineCDSAnnotation(ctx, m)
+		if annot == nil {
 			continue
 		}
 
@@ -147,19 +144,19 @@ func (h *HatcheryVSphere) deleteServer(ctx context.Context, s mo.VirtualMachine)
 		return err
 	}
 
-	var annot = annotation{}
-	if err := json.Unmarshal([]byte(s.Config.Annotation), &annot); err != nil {
-		log.Error(ctx, "deleteServer> unable to get server annotation")
-	} else {
-		if strings.HasPrefix(s.Name, "register-") {
-			if err := hatchery.CheckWorkerModelRegister(h, annot.WorkerModelPath); err != nil {
-				var spawnErr = sdk.SpawnErrorForm{
-					Error: err.Error(),
-				}
-				tuple := strings.SplitN(annot.WorkerModelPath, "/", 2)
-				if err := h.CDSClient().WorkerModelSpawnError(tuple[0], tuple[1], spawnErr); err != nil {
-					log.Error(ctx, "CheckWorkerModelRegister> error on call client.WorkerModelSpawnError on worker model %s for register: %v", annot.WorkerModelPath, err)
-				}
+	var annot = getVirtualMachineCDSAnnotation(ctx, s)
+	if annot == nil {
+		return nil
+	}
+
+	if strings.HasPrefix(s.Name, "register-") {
+		if err := hatchery.CheckWorkerModelRegister(h, annot.WorkerModelPath); err != nil {
+			var spawnErr = sdk.SpawnErrorForm{
+				Error: err.Error(),
+			}
+			tuple := strings.SplitN(annot.WorkerModelPath, "/", 2)
+			if err := h.CDSClient().WorkerModelSpawnError(tuple[0], tuple[1], spawnErr); err != nil {
+				log.Error(ctx, "CheckWorkerModelRegister> error on call client.WorkerModelSpawnError on worker model %s for register: %v", annot.WorkerModelPath, err)
 			}
 		}
 	}
