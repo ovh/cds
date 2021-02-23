@@ -131,7 +131,7 @@ func TestRunGitCloneInSSHWithPrivateKeyAndExtractInfo(t *testing.T) {
 			Value: "git@github.com:fsamin/dummy-empty-repo.git",
 		},
 		{
-			Name:  "cds.version",
+			Name:  "cds.run.number",
 			Value: "1",
 		},
 	}...)
@@ -184,7 +184,7 @@ func TestRunGitCloneInSSHWithApplicationVCSStrategy(t *testing.T) {
 			Value: string(test.TestKey),
 		},
 		{
-			Name:  "cds.version",
+			Name:  "cds.run.number",
 			Value: "1",
 		},
 	}...)

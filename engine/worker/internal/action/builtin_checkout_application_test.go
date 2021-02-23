@@ -30,7 +30,7 @@ func TestRunCheckoutApplication(t *testing.T) {
 			Value: string(test.TestKey),
 		},
 		{
-			Name:  "cds.version",
+			Name:  "cds.run.number",
 			Value: "1",
 		},
 	}...)

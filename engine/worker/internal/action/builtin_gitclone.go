@@ -232,9 +232,9 @@ func extractInfo(ctx context.Context, w workerruntime.Runtime, basedir, dir stri
 		return nil, err
 	}
 
-	cdsVersion := sdk.ParameterFind(params, "cds.version")
-	if cdsVersion == nil || cdsVersion.Value == "" {
-		return nil, fmt.Errorf("cds.version is empty")
+	cdsRunNumber := sdk.ParameterFind(params, "cds.run.number")
+	if cdsRunNumber == nil || cdsRunNumber.Value == "" {
+		return nil, fmt.Errorf("cds.run.number is empty")
 	}
 
 	var cdsSemver string
@@ -247,14 +247,14 @@ func extractInfo(ctx context.Context, w workerruntime.Runtime, basedir, dir stri
 		res = append(res, gitDescribe)
 
 		var errS error
-		cdsSemver, errS = computeSemver(info.GitDescribe, cdsVersion.Value)
+		cdsSemver, errS = computeSemver(info.GitDescribe, cdsRunNumber.Value)
 		if errS != nil {
 			w.SendLog(ctx, workerruntime.LevelError, errS.Error())
 		}
 
 	} else {
 		// default value if there is no tag on repository
-		cdsSemver = fmt.Sprintf("0.0.1+cds.%s", cdsVersion.Value)
+		cdsSemver = fmt.Sprintf("0.0.1+cds.%s", cdsRunNumber.Value)
 	}
 
 	if cdsSemver != "" {
@@ -359,7 +359,7 @@ func extractInfo(ctx context.Context, w workerruntime.Runtime, basedir, dir stri
 	return res, nil
 }
 
-func computeSemver(gitDescribe, cdsVersionValue string) (string, error) {
+func computeSemver(gitDescribe, cdsRunNumberValue string) (string, error) {
 	var cdsSemver string
 	smver, errT := semver.ParseTolerant(gitDescribe)
 	if errT != nil {
@@ -377,7 +377,7 @@ func computeSemver(gitDescribe, cdsVersionValue string) (string, error) {
 				smver.Patch,
 				tuple[0],
 				tuple[1],
-				cdsVersionValue,
+				cdsRunNumberValue,
 			)
 		} else if len(tuple) == 1 {
 			cdsSemver = fmt.Sprintf("%d.%d.%d-%s+cds.%s",
@@ -385,7 +385,7 @@ func computeSemver(gitDescribe, cdsVersionValue string) (string, error) {
 				smver.Minor,
 				smver.Patch,
 				tuple[0],
-				cdsVersionValue,
+				cdsRunNumberValue,
 			)
 		}
 	}
@@ -396,7 +396,7 @@ func computeSemver(gitDescribe, cdsVersionValue string) (string, error) {
 			smver.Major,
 			smver.Minor,
 			smver.Patch,
-			cdsVersionValue,
+			cdsRunNumberValue,
 		)
 	}
 
