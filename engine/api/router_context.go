@@ -3,7 +3,9 @@ package api
 type contextKey int
 
 const (
-	contextSession contextKey = iota
-	contextAPIConsumer
+	contextClaims contextKey = iota
+	contextSession
+	contextConsumer
+	contextDriverManifest
 	contextDate
 )

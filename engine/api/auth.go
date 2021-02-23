@@ -262,21 +262,21 @@ func (api *API) postAuthSigninHandler() service.Handler {
 		}
 
 		// Generate a new session for consumer
-		sessionDuration := driver.GetSessionDuration(userInfo, *consumer)
-		session, mfaExpiration, err := authentication.NewSession(ctx, tx, consumer, sessionDuration, userInfo.MFA)
+		sessionDuration := driver.GetSessionDuration()
+		var session *sdk.AuthSession
+		if userInfo.MFA {
+			session, err = authentication.NewSessionWithMFA(ctx, tx, api.Cache, consumer, sessionDuration)
+		} else {
+			session, err = authentication.NewSession(ctx, tx, consumer, sessionDuration)
+		}
 		if err != nil {
 			return err
-		}
-
-		// If the auth driver is giving a tokenID, let's keep it
-		if userInfo.ExternalTokenID != "" {
-			session.TokenID = userInfo.ExternalTokenID
 		}
 
 		log.Debug(ctx, "postAuthSigninHandler> new session %s created for %.2f seconds: %+v", session.ID, sessionDuration.Seconds(), session)
 
 		// Generate a jwt for current session
-		jwt, err := authentication.NewSessionJWT(session, mfaExpiration)
+		jwt, err := authentication.NewSessionJWT(session, userInfo.ExternalTokenID)
 		if err != nil {
 			return err
 		}
@@ -365,9 +365,10 @@ func (api *API) postAuthDetachHandler() service.Handler {
 
 func (api *API) getAuthMe() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		m := getAuthDriverManifest(ctx)
 		c := getAPIConsumer(ctx)
 		s := getAuthSession(ctx)
-		if c == nil || s == nil {
+		if m == nil || c == nil || s == nil {
 			return sdk.WithStack(sdk.ErrUnauthorized)
 		}
 
@@ -377,9 +378,10 @@ func (api *API) getAuthMe() service.Handler {
 		c.AuthentifiedUser = nil
 
 		return service.WriteJSON(w, sdk.AuthCurrentConsumerResponse{
-			User:     u,
-			Consumer: *c,
-			Session:  *s,
+			User:           u,
+			Consumer:       *c,
+			Session:        *s,
+			DriverManifest: *m,
 		}, http.StatusOK)
 	}
 }

@@ -268,6 +268,15 @@ export class UserEditComponent implements OnInit {
                         icons.push(icon);
                     }
 
+                    if (s.mfa) {
+                        const lastActivity = s.last_activity ? `Last activity: ${s.last_activity}.` : 'Expired.';
+                        icons.push({
+                            label: `MFA. ${lastActivity}`,
+                            title: `MFA. ${lastActivity}`,
+                            class: ['key', 'icon']
+                        });
+                    }
+
                     return {
                         value: s.consumer.name,
                         icons

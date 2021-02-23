@@ -24,14 +24,14 @@ func TestLoadSession(t *testing.T) {
 	c1, err := local.NewConsumer(context.TODO(), db, u.ID)
 	require.NoError(t, err)
 
-	s1, _, err := authentication.NewSession(context.TODO(), db, c1, time.Second, false)
+	s1, err := authentication.NewSession(context.TODO(), db, c1, time.Second)
 	require.NoError(t, err)
-	s2, _, err := authentication.NewSession(context.TODO(), db, c1, time.Second, false)
+	s2, err := authentication.NewSession(context.TODO(), db, c1, time.Second)
 	require.NoError(t, err)
 
 	c2, err := local.NewConsumer(context.TODO(), db, u.ID)
 	require.NoError(t, err)
-	s3, _, err := authentication.NewSession(context.TODO(), db, c2, time.Second, false)
+	s3, err := authentication.NewSession(context.TODO(), db, c2, time.Second)
 	require.NoError(t, err)
 
 	// LoadSessionByID
@@ -68,34 +68,12 @@ func TestInsertSession(t *testing.T) {
 	c, err := local.NewConsumer(context.TODO(), db, u.ID)
 	test.NoError(t, err)
 
-	s, _, err := authentication.NewSession(context.TODO(), db, c, time.Second, false)
+	s, err := authentication.NewSession(context.TODO(), db, c, time.Second)
 	test.NoError(t, err)
 
 	res, err := authentication.LoadSessionByID(context.TODO(), db, s.ID)
 	test.NoError(t, err)
 	test.NotNil(t, res)
-	test.Equal(t, s, res)
-}
-
-func TestUpdateSession(t *testing.T) {
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
-
-	u := sdk.AuthentifiedUser{
-		Username: sdk.RandomString(10),
-	}
-	test.NoError(t, user.Insert(context.TODO(), db, &u))
-
-	c, err := local.NewConsumer(context.TODO(), db, u.ID)
-	test.NoError(t, err)
-
-	s, _, err := authentication.NewSession(context.TODO(), db, c, time.Second, false)
-	test.NoError(t, err)
-
-	s.MFA = true
-	test.NoError(t, authentication.UpdateSession(context.TODO(), db, s))
-
-	res, err := authentication.LoadSessionByID(context.TODO(), db, s.ID)
-	test.NoError(t, err)
 	test.Equal(t, s, res)
 }
 
@@ -110,7 +88,7 @@ func TestDeleteSession(t *testing.T) {
 	c, err := local.NewConsumer(context.TODO(), db, u.ID)
 	require.NoError(t, err)
 
-	s, _, err := authentication.NewSession(context.TODO(), db, c, time.Second, false)
+	s, err := authentication.NewSession(context.TODO(), db, c, time.Second)
 	require.NoError(t, err)
 
 	res, err := authentication.LoadSessionByID(context.TODO(), db, s.ID)

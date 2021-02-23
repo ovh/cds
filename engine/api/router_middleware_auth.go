@@ -106,8 +106,12 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 		SetTracker(w, cdslog.AuthSessionID, session.ID)
 		ctx = context.WithValue(ctx, cdslog.AuthSessionIAT, session.Created.Unix())
 		SetTracker(w, cdslog.AuthSessionIAT, session.Created.Unix())
-		ctx = context.WithValue(ctx, cdslog.AuthSessionTokenID, session.TokenID)
-		SetTracker(w, cdslog.AuthSessionTokenID, session.TokenID)
+	}
+
+	claims := getAuthClaims(ctx)
+	if claims != nil {
+		ctx = context.WithValue(ctx, cdslog.AuthSessionTokenID, claims.TokenID)
+		SetTracker(w, cdslog.AuthSessionTokenID, claims.TokenID)
 	}
 
 	return ctx, nil
@@ -125,10 +129,11 @@ func (api *API) authOptionalMiddleware(ctx context.Context, w http.ResponseWrite
 		return ctx, nil
 	}
 	claims := jwt.Claims.(*sdk.AuthSessionJWTClaims)
-	sessionID := claims.StandardClaims.Id
+	ctx = context.WithValue(ctx, contextClaims, claims)
 
 	// Check for session based on jwt from context
-	session, err := authentication.CheckSession(ctx, api.mustDB(), sessionID)
+	sessionID := claims.StandardClaims.Id
+	session, err := authentication.CheckSession(ctx, api.mustDB(), api.Cache, sessionID)
 	if err != nil {
 		log.Warn(ctx, "authMiddleware> cannot find a valid session for given JWT: %v", err)
 	}
@@ -136,13 +141,7 @@ func (api *API) authOptionalMiddleware(ctx context.Context, w http.ResponseWrite
 		log.Debug(ctx, "api.authOptionalMiddleware> no session found in context")
 		return ctx, nil
 	}
-	session.TokenID = claims.TokenID
-	session.MFA = session.MFA && time.Now().Unix() <= claims.MFAExpireAt
 	ctx = context.WithValue(ctx, contextSession, session)
-	ctx = context.WithValue(ctx, cdslog.AuthSessionTokenID, session.TokenID)
-	if session.MFA && time.Now().Unix() <= claims.ExpiresAt {
-		log.Warn(ctx, "session MFA has expired")
-	}
 
 	// Load auth consumer for current session in database with authentified user and contacts
 	consumer, err := authentication.LoadConsumerByID(ctx, api.mustDB(), session.ConsumerID,
@@ -156,37 +155,36 @@ func (api *API) authOptionalMiddleware(ctx context.Context, w http.ResponseWrite
 	}
 
 	// If the driver was disabled for the consumer that was found, ignore it
-	authDriver, ok := api.AuthenticationDrivers[consumer.Type]
-	if ok {
-		// Add contacts for consumer's user
-		if err := user.LoadOptions.WithContacts(ctx, api.mustDB(), consumer.AuthentifiedUser); err != nil {
-			return ctx, err
-		}
-
-		// Add service for consumer if exists
-		s, err := services.LoadByConsumerID(ctx, api.mustDB(), consumer.ID)
-		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
-			return ctx, err
-		}
-		consumer.Service = s
-
-		// Add worker for consumer if exists
-		w, err := worker.LoadByConsumerID(ctx, api.mustDB(), consumer.ID)
-		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
-			return ctx, err
-		}
-		consumer.Worker = w
+	var driverManifest *sdk.AuthDriverManifest
+	if authDriver, ok := api.AuthenticationDrivers[consumer.Type]; ok {
+		m := authDriver.GetManifest()
+		driverManifest = &m
 	}
-	if consumer == nil {
-		log.Debug(ctx, "api.authOptionalMiddleware> no consumer found in context")
-		return ctx, nil
+	if driverManifest == nil {
+		return ctx, sdk.WrapError(sdk.ErrUnauthorized, "consumer driver (%s) was not found", consumer.Type)
+	}
+	ctx = context.WithValue(ctx, contextDriverManifest, driverManifest)
+
+	// Add contacts for consumer's user
+	if err := user.LoadOptions.WithContacts(ctx, api.mustDB(), consumer.AuthentifiedUser); err != nil {
+		return ctx, err
 	}
 
-	if authDriver != nil && consumer.Type == sdk.ConsumerCorporateSSO {
-		consumer.SupportMFA = api.Config.Auth.CorporateSSO.MFASupportEnabled
+	// Add service for consumer if exists
+	s, err := services.LoadByConsumerID(ctx, api.mustDB(), consumer.ID)
+	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+		return ctx, err
 	}
+	consumer.Service = s
 
-	ctx = context.WithValue(ctx, contextAPIConsumer, consumer)
+	// Add worker for consumer if exists
+	wk, err := worker.LoadByConsumerID(ctx, api.mustDB(), consumer.ID)
+	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+		return ctx, err
+	}
+	consumer.Worker = wk
+
+	ctx = context.WithValue(ctx, contextConsumer, consumer)
 
 	// Checks scopes, one of expected scopes should be in actual scopes
 	// Actual scope empty list means wildcard scope, we don't need to check scopes

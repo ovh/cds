@@ -38,11 +38,11 @@ func authSessionListRun(v cli.Values) (cli.ListResult, error) {
 		username = "me"
 	}
 
-	consumers, err := client.AuthSessionListByUser(username)
+	sessions, err := client.AuthSessionListByUser(username)
 	if err != nil {
 		return nil, err
 	}
-	return cli.AsListResult(consumers), nil
+	return cli.AsListResult(sessions), nil
 }
 
 var authSessionDeleteCmd = cli.Command{

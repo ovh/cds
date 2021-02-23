@@ -39,6 +39,7 @@ export class AuthDriverSigningRedirect {
 export class AuthDriverManifest {
     type: string;
     signup_disabled: boolean;
+    support_mfa: boolean;
 
     // ui fields
     icon: string;
@@ -48,6 +49,7 @@ export class AuthCurrentConsumerResponse {
     user: AuthentifiedUser;
     consumer: AuthConsumer;
     session: AuthSession;
+    driver_manifest: AuthDriverManifest;
 }
 
 export class AuthConsumerSigninResponse {
@@ -79,7 +81,6 @@ export class AuthConsumer {
     groups: Array<Group>;
     disabled: boolean;
     warnings: Array<AuthConsumerWarning>;
-    support_mfa: boolean;
 
     // UI fields
     parent: AuthConsumer;
@@ -92,8 +93,9 @@ export class AuthSession {
     consumer_id: string;
     expire_at: string;
     created: string;
-    current: boolean;
     mfa: boolean;
+    current: boolean;
+    last_activity: string;
 
     // UI fields
     consumer: AuthConsumer;

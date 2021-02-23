@@ -115,6 +115,8 @@ func (s *Service) itemAccessCheck(ctx context.Context, item sdk.CDNItem) error {
 		if err := s.Client.ProjectAccess(ctx, projectKey, sessionID, item.Type); err != nil {
 			return sdk.NewErrorWithStack(err, sdk.ErrNotFound)
 		}
+	default:
+		return sdk.NewErrorWithStack(err, sdk.ErrNotFound)
 	}
 
 	if err := s.Cache.SetWithTTL(keyPermissionForSession, true, 3600); err != nil {

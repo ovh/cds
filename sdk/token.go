@@ -14,7 +14,7 @@ import (
 // AuthDriver interface.
 type AuthDriver interface {
 	GetManifest() AuthDriverManifest
-	GetSessionDuration(AuthDriverUserInfo, AuthConsumer) time.Duration
+	GetSessionDuration() time.Duration
 	CheckSigninRequest(AuthConsumerSigninRequest) error
 	GetUserInfo(context.Context, AuthConsumerSigninRequest) (AuthDriverUserInfo, error)
 }
@@ -65,6 +65,7 @@ func (a AuthDriverManifests) ExistsConsumerType(consumerType AuthConsumerType) b
 type AuthDriverManifest struct {
 	Type           AuthConsumerType `json:"type"`
 	SignupDisabled bool             `json:"signup_disabled"`
+	SupportMFA     bool             `json:"support_mfa"`
 }
 
 // AuthConsumerScope alias type for string.
@@ -260,9 +261,10 @@ type AuthDriverUserInfo struct {
 
 // AuthCurrentConsumerResponse describe the current consumer and the current session
 type AuthCurrentConsumerResponse struct {
-	User     AuthentifiedUser `json:"user"`
-	Consumer AuthConsumer     `json:"consumer"`
-	Session  AuthSession      `json:"session"`
+	User           AuthentifiedUser   `json:"user"`
+	Consumer       AuthConsumer       `json:"consumer"`
+	Session        AuthSession        `json:"session"`
+	DriverManifest AuthDriverManifest `json:"driver_manifest"`
 }
 
 // AuthConsumerType constant to identify what is the driver used to create a consumer.
@@ -397,9 +399,9 @@ type AuthConsumer struct {
 	// aggregates
 	AuthentifiedUser *AuthentifiedUser `json:"user,omitempty" db:"-"`
 	Groups           Groups            `json:"groups,omitempty" db:"-"`
-	Service          *Service          `json:"-" db:"-"`
-	Worker           *Worker           `json:"-" db:"-"`
-	SupportMFA       bool              `json:"support_mfa" db:"-"`
+	// aggregates by router auth middleware
+	Service *Service `json:"-" db:"-"`
+	Worker  *Worker  `json:"-" db:"-"`
 }
 
 // IsValid returns validity for auth consumer.
@@ -492,17 +494,16 @@ type AuthSession struct {
 	Created    time.Time `json:"created" cli:"created" db:"created"`
 	MFA        bool      `json:"mfa" cli:"mfa" db:"mfa"`
 	// aggregates
-	Consumer *AuthConsumer `json:"consumer,omitempty" db:"-"`
-	Groups   []Group       `json:"groups,omitempty" db:"-"`
-	Current  bool          `json:"current,omitempty" cli:"current" db:"-"`
-	TokenID  string        `json:"token_id" cli:"-" db:"-"`
+	Consumer     *AuthConsumer `json:"consumer,omitempty" db:"-"`
+	Groups       []Group       `json:"groups,omitempty" db:"-"`
+	Current      bool          `json:"current,omitempty" cli:"current" db:"-"`
+	LastActivity *time.Time    `json:"last_activity,omitempty" cli:"last_activity,omitempty" db:"-"`
 }
 
 // AuthSessionJWTClaims is the specific claims format for JWT session.
 type AuthSessionJWTClaims struct {
-	ID          string
-	MFAExpireAt int64
-	TokenID     string
+	ID      string
+	TokenID string
 	jwt.StandardClaims
 }
 
