@@ -134,7 +134,7 @@ func (h *HatcheryVSphere) getVirtualMachineTemplateByName(ctx context.Context, n
 		}
 	}
 
-	return mo.VirtualMachine{}, fmt.Errorf("template not found")
+	return mo.VirtualMachine{}, fmt.Errorf("template %q not found", name)
 }
 
 // Shutdown and delete a specific server
