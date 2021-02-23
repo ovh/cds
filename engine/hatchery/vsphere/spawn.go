@@ -17,14 +17,15 @@ import (
 )
 
 type annotation struct {
-	HatcheryName            string    `json:"hatchery_name"`
-	WorkerName              string    `json:"worker_name"`
-	RegisterOnly            bool      `json:"register_only"`
-	WorkerModelPath         string    `json:"worker_model_path"`
-	WorkerModelLastModified string    `json:"worker_model_last_modified"`
-	Model                   bool      `json:"model"`
-	ToDelete                bool      `json:"to_delete"`
-	Created                 time.Time `json:"created"`
+	HatcheryName            string    `json:"hatchery_name,omitempty"`
+	WorkerName              string    `json:"worker_name,omitempty"`
+	RegisterOnly            bool      `json:"register_only,omitempty"`
+	WorkerModelPath         string    `json:"worker_model_path,omitempty"`
+	WorkerModelLastModified string    `json:"worker_model_last_modified,omitempty"`
+	Model                   bool      `json:"model,omitempty"`
+	ToDelete                bool      `json:"to_delete,omitempty"`
+	Created                 time.Time `json:"created,omitempty"`
+	JobID                   int64     `json:"job_id,omitempty"`
 }
 
 // SpawnWorker creates a new vm instance
@@ -43,23 +44,23 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 		return sdk.WithStack(fmt.Errorf("no job ID and no register"))
 	}
 
-	var vm *object.VirtualMachine
+	var vmTemplate *object.VirtualMachine
 
 	if _, err := h.getVirtualMachineTemplateByName(ctx, spawnArgs.Model.Name); err != nil || spawnArgs.Model.NeedRegistration {
 		// Generate worker model vm
 		log.Info(ctx, "creating virtual machine model %q", spawnArgs.Model.Name)
-		vm, err = h.createVirtualMachineTemplate(ctx, *spawnArgs.Model, spawnArgs.WorkerName)
+		vmTemplate, err = h.createVirtualMachineTemplate(ctx, *spawnArgs.Model, spawnArgs.WorkerName)
 		if err != nil {
 			log.Error(ctx, "Unable to create VM Model: %v", err)
 			return err
 		}
 	}
 
-	if vm == nil {
+	if vmTemplate == nil {
 		var err error
-		log.Info(ctx, "creating virtual machine %q", spawnArgs.Model.Name)
-		if vm, err = h.vSphereClient.LoadVirtualMachine(ctx, spawnArgs.Model.Name); err != nil {
-			return sdk.WrapError(err, "cannot find virtual machine with this model")
+		log.Info(ctx, "loading virtual machine template %q", spawnArgs.Model.Name)
+		if vmTemplate, err = h.vSphereClient.LoadVirtualMachine(ctx, spawnArgs.Model.Name); err != nil {
+			return sdk.WrapError(err, "cannot find virtual machine template with this model")
 		}
 	}
 
@@ -70,9 +71,10 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 		WorkerModelLastModified: fmt.Sprintf("%d", spawnArgs.Model.UserLastModified.Unix()),
 		WorkerModelPath:         spawnArgs.ModelName(),
 		Created:                 time.Now(),
+		JobID:                   spawnArgs.JobID,
 	}
 
-	cloneSpec, err := h.prepareCloneSpec(ctx, vm, annot, spawnArgs.WorkerName)
+	cloneSpec, err := h.prepareCloneSpec(ctx, vmTemplate, annot, spawnArgs.WorkerName)
 	if err != nil {
 		return err
 	}
@@ -85,7 +87,7 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 	log.Info(ctx, "Create vm to execute worker %q, cloneSpec: %+v", spawnArgs.WorkerName, *cloneSpec)
 	defer log.Info(ctx, "Terminate to create vm for worker %s", spawnArgs.WorkerName)
 
-	cloneRef, err := h.vSphereClient.CloneVirtualMachine(ctx, vm, folder, spawnArgs.WorkerName, cloneSpec)
+	cloneRef, err := h.vSphereClient.CloneVirtualMachine(ctx, vmTemplate, folder, spawnArgs.WorkerName, cloneSpec)
 	if err != nil {
 		return err
 	}

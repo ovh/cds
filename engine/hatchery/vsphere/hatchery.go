@@ -135,21 +135,38 @@ func (h *HatcheryVSphere) CanSpawn(ctx context.Context, model *sdk.Model, jobID 
 		}
 	}
 
-	if jobID > 0 {
+	if jobID <= 0 {
+		// If jobID <= 0, it means that it's a call for a registration
+		// So we have to check if there is no pending registration at this time
+		// ie. virtual machine with name "<model>-tmp" or "register-<model>"
+
+		for _, vm := range h.getVirtualMachines(ctx) {
+			switch {
+			case vm.Name == model.Name+"-tmp":
+				log.Warn(ctx, "can't span worker for model %q registration because there is a temporary machine %q", model.Name, vm.Name)
+				return false
+			case strings.HasPrefix(vm.Name, "register-"+slug.Convert(model.Name)):
+				log.Warn(ctx, "can't span worker for model %q registration because there is a registering worker %q", model.Name, vm.Name)
+				return false
+			}
+		}
+
 		return true
 	}
 
-	// If jobID <= 0, it means that it's a call for a registration
-	// So we have to check if there is no pending registration at this time
-	// ie. virtual machine with name "<model>-tmp" or "register-<model>"
-
+	// Check if there is a pending virtual machine with the same jobId in annotation - we want to avoid duplicates
 	for _, vm := range h.getVirtualMachines(ctx) {
-		switch {
-		case vm.Name == model.Name+"-tmp":
-			log.Warn(ctx, "can't span worker for model %q registration because, there is a temporary machine %q", model.Name, vm.Name)
-			return false
-		case strings.HasPrefix(vm.Name, "register-"+slug.Convert(model.Name)):
-			log.Warn(ctx, "can't span worker for model %q registration because, there is a registering worker %q", model.Name, vm.Name)
+		if vm.Config == nil || vm.Config.Annotation == "" {
+			log.Warn(ctx, "config or annotation are empty for server %q", vm.Name)
+			continue
+		}
+		var annot annotation
+		if err := json.Unmarshal([]byte(vm.Config.Annotation), &annot); err != nil {
+			log.Warn(ctx, "unable to parse annotation for server %q", vm.Name)
+			continue
+		}
+		if annot.JobID == jobID {
+			log.Info(ctx, "can't span worker for job %d because there is a registering worker %q for the same job", model.Name, vm.Name)
 			return false
 		}
 	}

@@ -200,11 +200,12 @@ func Create(ctx context.Context, h Interface) error {
 				var canTakeJob bool
 
 				var containsRegionRequirement bool
+			loopRequirements:
 				for _, r := range workerRequest.requirements {
 					switch r.Type {
 					case sdk.RegionRequirement:
 						containsRegionRequirement = true
-						break
+						break loopRequirements
 					}
 				}
 

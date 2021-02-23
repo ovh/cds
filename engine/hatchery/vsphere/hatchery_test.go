@@ -37,13 +37,53 @@ func TestHatcheryVSphere_CanSpawn(t *testing.T) {
 	assert.False(t, h.CanSpawn(ctx, &validModel, 1, []sdk.Requirement{{Type: sdk.ServiceRequirement}}), "without a service requirement, it should return False")
 	assert.False(t, h.CanSpawn(ctx, &validModel, 1, []sdk.Requirement{{Type: sdk.MemoryRequirement}}), "without a memory requirement, it should return False")
 	assert.False(t, h.CanSpawn(ctx, &validModel, 1, []sdk.Requirement{{Type: sdk.HostnameRequirement}}), "without a hostname requirement, it should return False")
+
+	c.EXPECT().ListVirtualMachines(gomock.Any()).DoAndReturn(func(ctx context.Context) ([]mo.VirtualMachine, error) {
+		return []mo.VirtualMachine{
+			{
+				ManagedEntity: mo.ManagedEntity{
+					Name: "worker1",
+				},
+				Summary: types.VirtualMachineSummary{
+					Config: types.VirtualMachineConfigSummary{
+						Template: false,
+					},
+				},
+				Config: &types.VirtualMachineConfigInfo{
+					Annotation: `{"job_id": 1}`,
+				},
+			},
+		}, nil
+	})
+	assert.False(t, h.CanSpawn(ctx, &validModel, 1, []sdk.Requirement{}), "it should return False, because there is a worker for the same job")
+
+	h.cacheVirtualMachines.list = []mo.VirtualMachine{} // flush the cache for the next call
+	c.EXPECT().ListVirtualMachines(gomock.Any()).DoAndReturn(func(ctx context.Context) ([]mo.VirtualMachine, error) {
+		return []mo.VirtualMachine{
+			{
+				ManagedEntity: mo.ManagedEntity{
+					Name: "worker1",
+				},
+				Summary: types.VirtualMachineSummary{
+					Config: types.VirtualMachineConfigSummary{
+						Template: false,
+					},
+				},
+				Config: &types.VirtualMachineConfigInfo{
+					Annotation: `{"job_id": 2}`,
+				},
+			},
+		}, nil
+	})
 	assert.True(t, h.CanSpawn(ctx, &validModel, 1, []sdk.Requirement{}), "it should return True")
 
+	h.cacheVirtualMachines.list = []mo.VirtualMachine{} // flush the cache for the next call
 	c.EXPECT().ListVirtualMachines(gomock.Any()).DoAndReturn(func(ctx context.Context) ([]mo.VirtualMachine, error) {
 		return []mo.VirtualMachine{}, nil
 	})
 	assert.True(t, h.CanSpawn(ctx, &validModel, 0, []sdk.Requirement{}), "it should return True")
 
+	h.cacheVirtualMachines.list = []mo.VirtualMachine{} // flush the cache for the next call
 	c.EXPECT().ListVirtualMachines(gomock.Any()).DoAndReturn(func(ctx context.Context) ([]mo.VirtualMachine, error) {
 		return []mo.VirtualMachine{
 			{
@@ -55,8 +95,7 @@ func TestHatcheryVSphere_CanSpawn(t *testing.T) {
 	})
 	assert.False(t, h.CanSpawn(ctx, &validModel, 0, []sdk.Requirement{}), "with a 'tmp' vm, it should return False")
 
-	h.cacheVirtualMachines.list = []mo.VirtualMachine{}
-
+	h.cacheVirtualMachines.list = []mo.VirtualMachine{} // flush the cache for the next call
 	c.EXPECT().ListVirtualMachines(gomock.Any()).DoAndReturn(func(ctx context.Context) ([]mo.VirtualMachine, error) {
 		return []mo.VirtualMachine{
 			{
