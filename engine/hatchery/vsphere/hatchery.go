@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-
 	"strings"
 
 	"github.com/dgrijalva/jwt-go"
@@ -71,7 +70,7 @@ func (h *HatcheryVSphere) ApplyConfiguration(cfg interface{}) error {
 	var err error
 	h.Common.Common.PrivateKey, err = jwt.ParseRSAPrivateKeyFromPEM([]byte(h.Config.RSAPrivateKey))
 	if err != nil {
-		return fmt.Errorf("unable to parse RSA private Key: %v", err)
+		return sdk.WithStack(fmt.Errorf("unable to parse RSA private Key: %v", err))
 	}
 
 	return nil
@@ -88,33 +87,33 @@ func (h *HatcheryVSphere) Status(ctx context.Context) *sdk.MonitoringStatus {
 func (h *HatcheryVSphere) CheckConfiguration(cfg interface{}) error {
 	hconfig, ok := cfg.(HatcheryConfiguration)
 	if !ok {
-		return fmt.Errorf("Invalid hatchery vsphere configuration")
+		return sdk.WithStack(fmt.Errorf("Invalid hatchery vsphere configuration"))
 	}
 
 	if err := hconfig.Check(); err != nil {
-		return fmt.Errorf("Invalid hatchery vsphere configuration: %v", err)
+		return sdk.WithStack(fmt.Errorf("Invalid hatchery vsphere configuration: %v", err))
 	}
 
 	if hconfig.VSphereUser == "" {
-		return fmt.Errorf("vsphere-user is mandatory")
+		return sdk.WithStack(fmt.Errorf("vsphere-user is mandatory"))
 	}
 
 	if hconfig.VSphereEndpoint == "" {
-		return fmt.Errorf("vsphere-endpoint is mandatory")
+		return sdk.WithStack(fmt.Errorf("vsphere-endpoint is mandatory"))
 	}
 
 	if hconfig.VSpherePassword == "" {
-		return fmt.Errorf("vsphere-password is mandatory")
+		return sdk.WithStack(fmt.Errorf("vsphere-password is mandatory"))
 	}
 
 	if hconfig.VSphereDatacenterString == "" {
-		return fmt.Errorf("vsphere-datacenter is mandatory")
+		return sdk.WithStack(fmt.Errorf("vsphere-datacenter is mandatory"))
 	}
 
 	if hconfig.IPRange != "" {
 		_, err := sdk.IPinRanges(context.Background(), hconfig.IPRange)
 		if err != nil {
-			return fmt.Errorf("flag or environment variable openstack-ip-range error: %v", err)
+			return sdk.WithStack(fmt.Errorf("flag or environment variable ip-range error: %v", err))
 		}
 	}
 	return nil
