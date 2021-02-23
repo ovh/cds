@@ -14,11 +14,11 @@ import { PermissionEvent } from 'app/shared/permission/permission.event.model';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { WorkflowNodeRunParamComponent } from 'app/shared/workflow/node/run/node.run.param.component';
 import * as actionsWorkflow from 'app/store/workflow.action';
-import { CancelWorkflowEditMode } from 'app/store/workflow.action';
+import { CancelWorkflowEditMode, SelectWorkflowNode } from 'app/store/workflow.action';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
-import { finalize } from 'rxjs/operators';
+import { finalize, first, tap } from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow',
@@ -187,8 +187,10 @@ export class WorkflowShowComponent implements OnInit, OnDestroy {
     }
 
     runWithParameter(): void {
-        if (this.runWithParamComponent) {
-            this.runWithParamComponent.show();
+        if (this.runWithParamComponent && this.detailedWorkflow?.workflow_data?.node) {
+            this._store.dispatch(new SelectWorkflowNode({
+                node: this.detailedWorkflow.workflow_data.node
+            })).pipe(first()).subscribe(() => this.runWithParamComponent.show());
         }
     }
 
