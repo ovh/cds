@@ -153,6 +153,14 @@ func TestHatcheryVSphere_createVirtualMachineTemplate(t *testing.T) {
 		func(ctx context.Context, vm *object.VirtualMachine) (*guest.ProcessManager, error) {
 			return &procman, nil
 		},
+	).AnyTimes()
+
+	c.EXPECT().StartProgramInGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
+		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (int64, error) {
+			assert.Equal(t, "/bin/echo", req.Spec.GetGuestProgramSpec().ProgramPath)
+			assert.Equal(t, "-n ;env", req.Spec.GetGuestProgramSpec().Arguments)
+			return 1, nil
+		},
 	)
 
 	c.EXPECT().StartProgramInGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
@@ -221,6 +229,14 @@ func TestHatcheryVSphere_launchScriptWorker(t *testing.T) {
 	c.EXPECT().ProcessManager(gomock.Any(), &vm).DoAndReturn(
 		func(ctx context.Context, vm *object.VirtualMachine) (*guest.ProcessManager, error) {
 			return &procman, nil
+		},
+	).AnyTimes()
+
+	c.EXPECT().StartProgramInGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
+		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (int64, error) {
+			assert.Equal(t, "/bin/echo", req.Spec.GetGuestProgramSpec().ProgramPath)
+			assert.Equal(t, "-n ;env", req.Spec.GetGuestProgramSpec().Arguments)
+			return 1, nil
 		},
 	)
 
@@ -371,6 +387,14 @@ func TestHatcheryVSphere_SpawnWorker(t *testing.T) {
 	c.EXPECT().ProcessManager(gomock.Any(), &workerVM).DoAndReturn(
 		func(ctx context.Context, vm *object.VirtualMachine) (*guest.ProcessManager, error) {
 			return &procman, nil
+		},
+	).AnyTimes()
+
+	c.EXPECT().StartProgramInGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
+		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (int64, error) {
+			assert.Equal(t, "/bin/echo", req.Spec.GetGuestProgramSpec().ProgramPath)
+			assert.Equal(t, "-n ;env", req.Spec.GetGuestProgramSpec().Arguments)
+			return 1, nil
 		},
 	)
 

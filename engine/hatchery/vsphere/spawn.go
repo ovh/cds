@@ -167,6 +167,20 @@ func (h *HatcheryVSphere) createVirtualMachineTemplate(ctx context.Context, mode
 		return nil, err
 	}
 
+	if err := h.checkVirtualMachineIsReady(ctx, model, clonedVM); err != nil {
+		log.Error(ctx, "virtual machine %q is not ready: %v", clonedVM.Name(), err)
+		log.Warn(ctx, "shutdown virtual machine %q", clonedVM.Name())
+		if err := h.vSphereClient.ShutdownVirtualMachine(ctx, clonedVM); err != nil {
+			ctx = sdk.ContextWithStacktrace(ctx, err)
+			log.Error(ctx, "createVMModel> unable to shutdown vm %q: %v", model.Name, err)
+		}
+		if err := h.markToDelete(ctx, vm); err != nil {
+			ctx = sdk.ContextWithStacktrace(ctx, err)
+			log.Error(ctx, "createVMModel> unable to mark vm %q to delete: %v", model.Name, err)
+		}
+		return nil, err
+	}
+
 	if _, err := h.launchClientOp(ctx, clonedVM, model.ModelVirtualMachine, model.ModelVirtualMachine.PostCmd, nil); err != nil {
 		log.Error(ctx, "cannot start program on virtual machine %q: %v", clonedVM.Name(), err)
 		log.Warn(ctx, "shutdown virtual machine %q", clonedVM.Name())
@@ -203,6 +217,29 @@ func (h *HatcheryVSphere) createVirtualMachineTemplate(ctx context.Context, mode
 	}
 
 	return vm, nil
+}
+
+func (h *HatcheryVSphere) checkVirtualMachineIsReady(ctx context.Context, model sdk.Model, vm *object.VirtualMachine) error {
+	ctx, cancel := context.WithTimeout(ctx, time.Minute)
+	defer cancel()
+
+	var latestError error
+	for {
+		if ctx.Err() != nil {
+			return sdk.WithStack(fmt.Errorf("vm %q is not ready: %v - %v", vm.Name(), latestError, ctx.Err()))
+		}
+		// Try to run a script
+		_, err := h.launchClientOp(ctx, vm, model.ModelVirtualMachine, "env", nil)
+		if err != nil {
+			log.Warn(ctx, "virtual machine %q is not ready: %v", vm.Name(), err)
+			latestError = err
+			time.Sleep(time.Second)
+			continue // If it failing, wait and retry
+		}
+		break // else it means that it is ready
+	}
+
+	return nil
 }
 
 // launchScriptWorker launch a script on the worker
@@ -244,6 +281,20 @@ func (h *HatcheryVSphere) launchScriptWorker(ctx context.Context, name string, j
 
 	var buffer bytes.Buffer
 	if err := tmpl.Execute(&buffer, udataParam); err != nil {
+		return err
+	}
+
+	if err := h.checkVirtualMachineIsReady(ctx, model, vm); err != nil {
+		log.Error(ctx, "virtual machine %q is not ready: %v", vm.Name(), err)
+		log.Warn(ctx, "shutdown virtual machine %q", vm.Name())
+		if err := h.vSphereClient.ShutdownVirtualMachine(ctx, vm); err != nil {
+			ctx = sdk.ContextWithStacktrace(ctx, err)
+			log.Error(ctx, "createVMModel> unable to shutdown vm %q: %v", model, err)
+		}
+		if err := h.markToDelete(ctx, vm); err != nil {
+			ctx = sdk.ContextWithStacktrace(ctx, err)
+			log.Error(ctx, "createVMModel> unable to mark vm %q to delete: %v", model, err)
+		}
 		return err
 	}
 
