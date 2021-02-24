@@ -294,10 +294,10 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 
 		// If the VM is still ON but is older that the WorkerTTL config, let's mark it as delete
 		if !isPoweredOff && !annot.ToDelete {
-			expire := time.Now().Add(time.Duration(-1.0*float64(h.Config.WorkerTTL)) * time.Minute)
+			expire := annot.Created.Add(time.Duration(h.Config.WorkerTTL) * time.Minute)
 			log.Debug(ctx, "checking if %v is outdated. Created on :%v. Expires on %v", s.Name, annot.Created, expire)
 
-			if annot.Created.Before(expire) {
+			if time.Now().After(expire) {
 				vm, err := h.vSphereClient.LoadVirtualMachine(ctx, s.Name)
 				if err != nil {
 					ctx = sdk.ContextWithStacktrace(ctx, err)
