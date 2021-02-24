@@ -166,7 +166,7 @@ func (h *HatcheryVSphere) CanSpawn(ctx context.Context, model *sdk.Model, jobID 
 			continue
 		}
 		if annot.JobID == jobID {
-			log.Info(ctx, "can't span worker for job %d because there is a registering worker %q for the same job", model.Name, vm.Name)
+			log.Info(ctx, "can't span worker for job %d because there is a registering worker %q for the same job", jobID, vm.Name)
 			return false
 		}
 	}

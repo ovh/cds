@@ -2,6 +2,7 @@ package vsphere
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/rockbears/log"
@@ -16,6 +17,8 @@ import (
 
 	"github.com/ovh/cds/sdk"
 )
+
+var properties = []string{"name", "summary", "guest", "config"}
 
 type VSphereClient interface {
 	ListVirtualMachines(ctx context.Context) ([]mo.VirtualMachine, error)
@@ -81,7 +84,7 @@ func (c *vSphereClient) ListVirtualMachines(ctx context.Context) ([]mo.VirtualMa
 	ctxR, cancelR := context.WithTimeout(ctx, c.requestTimeout)
 	defer cancelR()
 	// Retrieve summary property for all machines
-	if err := v.Retrieve(ctxR, []string{"VirtualMachine"}, []string{"name", "summary", "guest", "config"}, &vms); err != nil {
+	if err := v.Retrieve(ctxR, []string{"VirtualMachine"}, properties, &vms); err != nil {
 		return nil, sdk.WrapError(err, "unable to retrieve virtual machines from vsphere")
 	}
 
@@ -279,11 +282,35 @@ func (c *vSphereClient) StartProgramInGuest(ctx context.Context, procman *guest.
 }
 
 func (c *vSphereClient) NewVirtualMachine(ctx context.Context, cloneSpec *types.VirtualMachineCloneSpec, ref *types.ManagedObjectReference) (*object.VirtualMachine, error) {
-	// Wait for IP
 	vm := object.NewVirtualMachine(c.vclient.Client, *ref)
+
+	log.Info(ctx, "new virtual machine %q is nearly ready...", vm.Name())
+
+	ctxReady, cancelReady := context.WithTimeout(ctx, 3*time.Minute)
+	defer cancelReady()
+
+	var isGuestReady bool
+	for !isGuestReady {
+		if ctxReady.Err() != nil {
+			return nil, sdk.WithStack(fmt.Errorf("vm %q guest operation is not ready: %v", vm.Name(), ctxReady.Err()))
+		}
+
+		var o mo.VirtualMachine
+		if err := vm.Properties(ctx, *ref, properties, &o); err != nil {
+			return nil, sdk.WrapError(err, "unable to get vm %q properties", vm.Name())
+		}
+
+		var operationReady = o.Guest.GuestOperationsReady
+		if operationReady != nil && *operationReady {
+			isGuestReady = true
+		}
+		log.Debug(ctx, "vm %q guest operation is not ready", vm.Name())
+		time.Sleep(1 * time.Second)
+	}
 
 	ctxIP, cancelIP := context.WithTimeout(ctx, 3*time.Minute)
 	defer cancelIP()
+
 	var hasIP bool
 	var ip string
 	for !hasIP && ctxIP.Err() == nil {
