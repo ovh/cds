@@ -252,10 +252,10 @@ func (h *HatcheryVSphere) WorkerModelSecretList(m sdk.Model) (sdk.WorkerModelSec
 // not necessarily register on CDS yet
 func (h *HatcheryVSphere) WorkersStarted(ctx context.Context) []string {
 	srvs := h.getVirtualMachines(ctx)
-	res := make([]string, len(srvs))
-	for i, s := range srvs {
+	res := make([]string, 0, len(srvs))
+	for _, s := range srvs {
 		if strings.Contains(strings.ToLower(s.Name), "worker") {
-			res[i] = s.Name
+			res = append(res, s.Name)
 		}
 	}
 	return res
