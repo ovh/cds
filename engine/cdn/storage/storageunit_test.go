@@ -45,9 +45,8 @@ func TestRun(t *testing.T) {
 		SyncSeconds:     10,
 		SyncNbElements:  100,
 		HashLocatorSalt: "thisismysalt",
-		Buffers: []storage.BufferConfiguration{
-			{
-				Name: "redis_buffer",
+		Buffers: map[string]storage.BufferConfiguration{
+			"redis_buffer": {
 				Redis: &storage.RedisBufferConfiguration{
 					Host:     cfg["redisHost"],
 					Password: cfg["redisPassword"],
@@ -55,9 +54,8 @@ func TestRun(t *testing.T) {
 				BufferType: storage.CDNBufferTypeLog,
 			},
 		},
-		Storages: []storage.StorageConfiguration{
-			{
-				Name: "local_storage",
+		Storages: map[string]storage.StorageConfiguration{
+			"local_storage": {
 				Local: &storage.LocalStorageConfiguration{
 					Path: tmpDir,
 					Encryption: []convergent.ConvergentEncryptionConfig{
@@ -68,8 +66,8 @@ func TestRun(t *testing.T) {
 						},
 					},
 				},
-			}, {
-				Name: "local_storage_2",
+			},
+			"local_storage_2": {
 				Local: &storage.LocalStorageConfiguration{
 					Path: tmpDir2,
 					Encryption: []convergent.ConvergentEncryptionConfig{

@@ -35,9 +35,8 @@ func TestLoadOldItemUnitByItemStatusAndDuration(t *testing.T) {
 
 	cdnUnits, err := storage.Init(ctx, m, store, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
 		HashLocatorSalt: "thisismysalt",
-		Buffers: []storage.BufferConfiguration{
-			{
-				Name: "redis_buffer",
+		Buffers: map[string]storage.BufferConfiguration{
+			"redis_buffer": {
 				Redis: &storage.RedisBufferConfiguration{
 					Host:     cfg["redisHost"],
 					Password: cfg["redisPassword"],
@@ -45,9 +44,8 @@ func TestLoadOldItemUnitByItemStatusAndDuration(t *testing.T) {
 				BufferType: storage.CDNBufferTypeLog,
 			},
 		},
-		Storages: []storage.StorageConfiguration{
-			{
-				Name: "local_storage",
+		Storages: map[string]storage.StorageConfiguration{
+			"local_storage": {
 				Local: &storage.LocalStorageConfiguration{
 					Path: tmpDir,
 				},
@@ -136,9 +134,8 @@ func TestLoadAllItemIDUnknownByUnit(t *testing.T) {
 
 	cdnUnits, err := storage.Init(ctx, m, store, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
 		HashLocatorSalt: "thisismysalt",
-		Buffers: []storage.BufferConfiguration{
-			{
-				Name: "redis_buffer",
+		Buffers: map[string]storage.BufferConfiguration{
+			"redis_buffer": {
 				Redis: &storage.RedisBufferConfiguration{
 					Host:     cfg["redisHost"],
 					Password: cfg["redisPassword"],
@@ -146,9 +143,8 @@ func TestLoadAllItemIDUnknownByUnit(t *testing.T) {
 				BufferType: storage.CDNBufferTypeLog,
 			},
 		},
-		Storages: []storage.StorageConfiguration{
-			{
-				Name: "local_storage",
+		Storages: map[string]storage.StorageConfiguration{
+			"local_storage": {
 				Local: &storage.LocalStorageConfiguration{
 					Path: tmpDir,
 					Encryption: []convergent.ConvergentEncryptionConfig{
@@ -160,8 +156,7 @@ func TestLoadAllItemIDUnknownByUnit(t *testing.T) {
 					},
 				},
 			},
-			{
-				Name: "local_storage2",
+			"local_storage2": {
 				Local: &storage.LocalStorageConfiguration{
 					Path: tmpDir,
 					Encryption: []convergent.ConvergentEncryptionConfig{
