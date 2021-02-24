@@ -407,6 +407,6 @@ func SendSpawnInfo(ctx context.Context, h Interface, jobID int64, spawnMsg sdk.S
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 	if err := h.CDSClient().QueueJobSendSpawnInfo(ctx, jobID, infos); err != nil {
-		log.Warn(ctx, "spawnWorkerForJob> cannot client.sendSpawnInfo for job %d: %s", jobID, err)
+		log.Warn(ctx, "SendSpawnInfo> cannot client.sendSpawnInfo for job %d: %s", jobID, err)
 	}
 }

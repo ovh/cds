@@ -41,4 +41,8 @@ type HatcheryVSphere struct {
 		mu   sync.Mutex
 		list []mo.VirtualMachine
 	}
+	cachePendingJobID struct {
+		mu   sync.Mutex
+		list []int64
+	}
 }

@@ -116,6 +116,13 @@ func TestHatcheryVSphere_CanSpawn(t *testing.T) {
 	})
 	assert.False(t, h.CanSpawn(ctx, &validModel, 0, []sdk.Requirement{}), "with a 'register' vm, it should return False")
 
+	h.cacheVirtualMachines.list = []mo.VirtualMachine{} // flush the cache for the next call
+	h.cachePendingJobID.list = append(h.cachePendingJobID.list, 666)
+	c.EXPECT().ListVirtualMachines(gomock.Any()).DoAndReturn(func(ctx context.Context) ([]mo.VirtualMachine, error) {
+		return []mo.VirtualMachine{}, nil
+	})
+	assert.False(t, h.CanSpawn(ctx, &validModel, 666, []sdk.Requirement{}), "it should return False because the jobID is still in the local cache")
+
 }
 
 func TestHatcheryVSphere_NeedRegistration(t *testing.T) {
@@ -329,4 +336,58 @@ func TestHatcheryVSphere_killAwolServers(t *testing.T) {
 	)
 
 	h.killAwolServers(context.Background())
+}
+
+func TestHatcheryVSphere_Status(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+
+	c := NewVSphereClientTest(t)
+	h := HatcheryVSphere{
+		vSphereClient: c,
+		Common: hatchery.Common{
+			Common: service.Common{
+				GoRoutines: sdk.NewGoRoutines(),
+			},
+		},
+	}
+
+	c.EXPECT().ListVirtualMachines(gomock.Any()).DoAndReturn(
+		func(ctx context.Context) ([]mo.VirtualMachine, error) {
+			return []mo.VirtualMachine{
+				{
+					ManagedEntity: mo.ManagedEntity{
+						Name: "worker0",
+					},
+					Summary: types.VirtualMachineSummary{
+						Config: types.VirtualMachineConfigSummary{
+							Template: false,
+						},
+						Runtime: types.VirtualMachineRuntimeInfo{
+							PowerState: types.VirtualMachinePowerStatePoweredOn,
+						},
+					},
+					Config: &types.VirtualMachineConfigInfo{
+						Annotation: `{"model": false, "to_delete": false, "worker_model_path": "someting"}`,
+					},
+				},
+				{
+					ManagedEntity: mo.ManagedEntity{
+						Name: "worker1",
+					},
+					Summary: types.VirtualMachineSummary{
+						Config: types.VirtualMachineConfigSummary{
+							Template: false,
+						},
+					},
+					Config: &types.VirtualMachineConfigInfo{
+						Annotation: `{"model": false, "to_delete": true}`,
+					},
+				},
+			}, nil
+		},
+	)
+
+	s := h.Status(context.Background())
+	t.Logf("status: %+v", s)
+	assert.NotNil(t, s)
 }

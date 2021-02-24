@@ -45,6 +45,19 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 		return sdk.WithStack(fmt.Errorf("no job ID and no register"))
 	}
 
+	if spawnArgs.JobID != 0 {
+		h.cachePendingJobID.mu.Lock()
+		h.cachePendingJobID.list = append(h.cachePendingJobID.list, spawnArgs.JobID)
+		defer h.cachePendingJobID.mu.Unlock()
+
+		go func() {
+			time.Sleep(3 * time.Minute)
+			h.cachePendingJobID.mu.Lock()
+			h.cachePendingJobID.list = sdk.DeleteFromInt64Array(h.cachePendingJobID.list, spawnArgs.JobID)
+			defer h.cachePendingJobID.mu.Unlock()
+		}()
+	}
+
 	var vmTemplate *object.VirtualMachine
 
 	if _, err := h.getVirtualMachineTemplateByName(ctx, spawnArgs.Model.Name); err != nil || spawnArgs.Model.NeedRegistration {

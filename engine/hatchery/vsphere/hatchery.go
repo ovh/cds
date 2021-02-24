@@ -171,6 +171,15 @@ func (h *HatcheryVSphere) CanSpawn(ctx context.Context, model *sdk.Model, jobID 
 		}
 	}
 
+	// Check in the local cache of pending StartingVM
+	h.cachePendingJobID.mu.Lock()
+	defer h.cachePendingJobID.mu.Unlock()
+	for _, id := range h.cachePendingJobID.list {
+		if id == jobID {
+			return false
+		}
+	}
+
 	return true
 }
 

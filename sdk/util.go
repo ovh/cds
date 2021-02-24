@@ -58,6 +58,17 @@ func DeleteFromArray(array []string, el string) []string {
 	return out
 }
 
+// DeleteFromArray deletes value from an array of int64
+func DeleteFromInt64Array(array []int64, el int64) []int64 {
+	out := make([]int64, 0, len(array))
+	for _, str := range array {
+		if str != el {
+			out = append(out, str)
+		}
+	}
+	return out
+}
+
 // IntMapToSlice converts a map struct to a slice for int64 keys
 func IntMapToSlice(m map[int64]struct{}) []int64 {
 	slice := make([]int64, 0, len(m))
