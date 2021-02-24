@@ -120,5 +120,5 @@ cdsctl worker model import ./cds-docker-package.yml
 Or with a remote file:
 
 ```bash
-cdsctl action import https://raw.githubusercontent.com/ovh/cds/master/contrib/actions/cds-docker-package.yml
+cdsctl action import https://raw.githubusercontent.com/ovh/cds/{{< param "version" "master" >}}/contrib/actions/cds-docker-package.yml
 ```

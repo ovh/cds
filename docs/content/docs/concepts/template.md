@@ -64,7 +64,7 @@ cdsctl template bulk -f instances.yml
 With cdsctl you can import/export a template from/to yaml files, you can also create a template in the UI from the **settings** menu:
 ```sh
 cdsctl template push ./my-template/*.yml #from local files
-cdsctl template push https://raw.githubusercontent.com/ovh/cds/master/tests/fixtures/template/simple/example-simple.yml #from remote files
+cdsctl template push https://raw.githubusercontent.com/ovh/cds/{{< param "version" "master" >}}/tests/fixtures/template/simple/example-simple.yml #from remote files
 
 cdsctl template pull shared.infra/my-template --output-dir ./my-template
 ```

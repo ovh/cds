@@ -53,7 +53,7 @@ services:
         sh -c "
         /app/cds-engine-linux-amd64 config new > /app/conf/conf.toml;
         mkdir -p /app/artifacts /app/repositories /app/hatchery-local;
-        chown -R cds:cds /app/conf /app/artifacts /app/repositories /app/hatchery-local;
+        chown -R cds:cds /app/conf /app/artifacts /app/repositories /app/hatchery-local /app/cdn-buffer /app/cdn-storage;
         /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml \
             api.artifact.local.baseDirectory=/app/artifacts \
             api.cache.redis.host=cds-cache:6379 \
@@ -68,8 +68,13 @@ services:
             api.smtp.host=smtpmocksrv \
             cdn.cache.redis.host=cds-cache:6379 \
             cdn.cache.redis.password=cds \
+            cdn.storageUnits.buffers.redis.redis.host=cds-cache:6379 \
+            cdn.storageUnits.buffers.redis.redis.password=cds \
+            cdn.storageUnits.buffers.local-buffer.local.path=/app/cdn-buffer \
+            cdn.storageUnits.storages.local.local.path=/app/cdn-storage \
+            cdn.storageUnits.storages.cds.cds.host=http://cds-api:8081 \
             cdn.database.host=cds-db \
-            cdn.publicTCP=cds-cdn:8090 \
+            cdn.publicTCP=${HOSTNAME}:8090 \
             cdn.api.http.url=http://cds-api:8081 \
             cdn.url=http://cds-cdn:8089 \
             hatchery.local.commonConfiguration.url=http://cds-hatchery-local:8086 \
@@ -101,7 +106,8 @@ services:
             elasticsearch.elasticsearch.url=http://elasticsearch:9200 \
             ui.url=http://${HOSTNAME}:8080 \
             ui.api.http.url=http://cds-api:8081 \
-            ui.hooksURL=http://cds-hooks:8083;
+            ui.hooksURL=http://cds-hooks:8083; \
+            ui.cdnURL=http://cds-cdn:8083;
             echo '';
             echo '/!\ Please run the export command BELOW, this will be useful to create admin user';
             echo '';
@@ -116,6 +122,8 @@ services:
       - cds-artifacts-volume:/app/artifacts
       - cds-repositories-volume:/app/repositories
       - cds-hatchery-local-volume:/app/hatchery-local
+      - cds-cdn-buffer-volume:/app/cdn-buffer
+      - cds-cdn-storage-volume:/app/cdn-storage
 
   cds-api:
     image: ${CDS_DOCKER_IMAGE:-ovhcom/cds-engine:latest}
@@ -144,6 +152,7 @@ services:
     links:
        - cds-api
        - cds-hooks
+       - cds-cdn
     healthcheck:
       test: ["CMD", "curl", "-f", "http://127.0.0.1:8080/mon/version"]
       interval: 30s
@@ -166,12 +175,15 @@ services:
     command: sh -c "/app/cds-engine-linux-amd64 start cdn --config /app/conf/conf.toml"
     volumes:
       - cds-conf-volume:/app/conf
+      - cds-cdn-buffer-volume:/app/cdn-buffer
+      - cds-cdn-storage-volume:/app/cdn-storage
     ports:
       - "8089:8089"
       - "8090:8090"
     links:
        - cds-db
        - cds-cache
+       - cds-api
     healthcheck:
       test: ["CMD", "curl", "-f", "http://127.0.0.1:8089/mon/version"]
       interval: 30s
@@ -290,3 +302,5 @@ volumes:
   cds-hatchery-local-volume:
   cds-conf-volume:
   cds-elasticsearch-volume:
+  cds-cdn-buffer-volume:
+  cds-cdn-storage-volume:
