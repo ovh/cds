@@ -49,9 +49,8 @@ func TestCleanSynchronizedItem(t *testing.T) {
 
 	cdnUnits, err := storage.Init(ctx, m, cache, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
 		HashLocatorSalt: "thisismysalt",
-		Buffers: []storage.BufferConfiguration{
-			{
-				Name: "redis_buffer",
+		Buffers: map[string]storage.BufferConfiguration{
+			"redis_buffer": {
 				Redis: &storage.RedisBufferConfiguration{
 					Host:     cfg["redisHost"],
 					Password: cfg["redisPassword"],
@@ -59,9 +58,8 @@ func TestCleanSynchronizedItem(t *testing.T) {
 				BufferType: storage.CDNBufferTypeLog,
 			},
 		},
-		Storages: []storage.StorageConfiguration{
-			{
-				Name: "fs-backend",
+		Storages: map[string]storage.StorageConfiguration{
+			"fs-backend": {
 				Local: &storage.LocalStorageConfiguration{
 					Path: tmpDir,
 					Encryption: []convergent.ConvergentEncryptionConfig{
@@ -73,8 +71,7 @@ func TestCleanSynchronizedItem(t *testing.T) {
 					},
 				},
 			},
-			{
-				Name: "cds-backend",
+			"cds-backend": {
 				CDS: &storage.CDSStorageConfiguration{
 					Host:  "lolcat.host",
 					Token: "mytoken",

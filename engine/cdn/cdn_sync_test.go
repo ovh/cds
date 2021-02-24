@@ -44,9 +44,8 @@ func TestSyncBuffer(t *testing.T) {
 	}
 	cdnUnits, err := storage.Init(context.Background(), m, cache, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
 		HashLocatorSalt: "thisismysalt",
-		Buffers: []storage.BufferConfiguration{
-			{
-				Name: "redis_buffer",
+		Buffers: map[string]storage.BufferConfiguration{
+			"redis_buffer": {
 				Redis: &storage.RedisBufferConfiguration{
 					Host:     cfg["redisHost"],
 					Password: cfg["redisPassword"],
@@ -54,10 +53,9 @@ func TestSyncBuffer(t *testing.T) {
 				BufferType: storage.CDNBufferTypeLog,
 			},
 		},
-		Storages: []storage.StorageConfiguration{
-			{
-				Name: "test-cds-backend.TestSyncBuffer",
-				CDS:  cdsConfig,
+		Storages: map[string]storage.StorageConfiguration{
+			"test-cds-backend.TestSyncBuffer": {
+				CDS: cdsConfig,
 			},
 		},
 	})
@@ -107,9 +105,8 @@ func TestSyncLog(t *testing.T) {
 		SyncNbElements:  100,
 		SyncSeconds:     1,
 
-		Buffers: []storage.BufferConfiguration{
-			{
-				Name: "redis_buffer",
+		Buffers: map[string]storage.BufferConfiguration{
+			"redis_buffer": {
 				Redis: &storage.RedisBufferConfiguration{
 					Host:     cfg["redisHost"],
 					Password: cfg["redisPassword"],
@@ -117,10 +114,9 @@ func TestSyncLog(t *testing.T) {
 				BufferType: storage.CDNBufferTypeLog,
 			},
 		},
-		Storages: []storage.StorageConfiguration{
-			{
-				Name: "test-cds-backend.TestSyncLog",
-				CDS:  cdsConfig,
+		Storages: map[string]storage.StorageConfiguration{
+			"test-cds-backend.TestSyncLog": {
+				CDS: cdsConfig,
 			},
 		},
 	})

@@ -57,17 +57,15 @@ func TestPostUploadHandler(t *testing.T) {
 		SyncSeconds:     1,
 		SyncNbElements:  1000,
 		HashLocatorSalt: "thisismysalt",
-		Buffers: []storage.BufferConfiguration{
-			{
-				Name: "refis_buffer",
+		Buffers: map[string]storage.BufferConfiguration{
+			"refis_buffer": {
 				Redis: &storage.RedisBufferConfiguration{
 					Host:     cfg["redisHost"],
 					Password: cfg["redisPassword"],
 				},
 				BufferType: storage.CDNBufferTypeLog,
 			},
-			{
-				Name: "local_buffer",
+			"local_buffer": {
 				Local: &storage.LocalBufferConfiguration{
 					Path: tmpDir,
 					Encryption: []*keyloader.KeyConfig{
@@ -81,9 +79,8 @@ func TestPostUploadHandler(t *testing.T) {
 				BufferType: storage.CDNBufferTypeFile,
 			},
 		},
-		Storages: []storage.StorageConfiguration{
-			{
-				Name:          "local_storage",
+		Storages: map[string]storage.StorageConfiguration{
+			"local_storage": {
 				SyncParallel:  10,
 				SyncBandwidth: int64(1024 * 1024),
 				Local: &storage.LocalStorageConfiguration{

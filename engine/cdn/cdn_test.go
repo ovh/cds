@@ -5,12 +5,13 @@ import (
 	"context"
 	"crypto/rsa"
 	"encoding/json"
-	"github.com/ovh/symmecrypt/keyloader"
 	"io/ioutil"
 	"net/http"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/ovh/symmecrypt/keyloader"
 
 	"github.com/ovh/cds/engine/cache"
 
@@ -126,17 +127,15 @@ func newRunningStorageUnits(t *testing.T, m *gorpmapper.Mapper, dbMap *gorp.DbMa
 		SyncSeconds:     2,
 		SyncNbElements:  100,
 		HashLocatorSalt: "thisismysalt",
-		Buffers: []storage.BufferConfiguration{
-			{
-				Name: "redis_buffer",
+		Buffers: map[string]storage.BufferConfiguration{
+			"redis_buffer": {
 				Redis: &storage.RedisBufferConfiguration{
 					Host:     cfg["redisHost"],
 					Password: cfg["redisPassword"],
 				},
 				BufferType: storage.CDNBufferTypeLog,
 			},
-			{
-				Name: "fs_buffer",
+			"fs_buffer": {
 				Local: &storage.LocalBufferConfiguration{
 					Path: tmpDirBuf,
 					Encryption: []*keyloader.KeyConfig{
@@ -150,9 +149,8 @@ func newRunningStorageUnits(t *testing.T, m *gorpmapper.Mapper, dbMap *gorp.DbMa
 				BufferType: storage.CDNBufferTypeFile,
 			},
 		},
-		Storages: []storage.StorageConfiguration{
-			{
-				Name:         "local_storage",
+		Storages: map[string]storage.StorageConfiguration{
+			"local_storage": {
 				SyncParallel: 10,
 				Local: &storage.LocalStorageConfiguration{
 					Path: tmpDir,
