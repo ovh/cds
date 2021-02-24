@@ -74,6 +74,13 @@ func (h *HatcheryVSphere) ApplyConfiguration(cfg interface{}) error {
 		return sdk.WithStack(fmt.Errorf("unable to parse RSA private Key: %v", err))
 	}
 
+	if h.Config.WorkerTTL == 0 {
+		h.Config.WorkerTTL = 120
+	}
+	if h.Config.WorkerRegistrationTTL == 0 {
+		h.Config.WorkerRegistrationTTL = 10
+	}
+
 	return nil
 }
 
@@ -282,6 +289,15 @@ func (h *HatcheryVSphere) killDisabledWorkers(ctx context.Context) {
 
 // killAwolServers kill unused servers
 func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
+
+	allWorkers, err := hatchery.WorkerPool(ctx, h)
+	if err != nil {
+		ctx := sdk.ContextWithStacktrace(ctx, err)
+		log.Error(ctx, "unable to load workers from CDS: %v", err)
+		return
+	}
+
+	log.Debug(ctx, "checking all workers: %+v", allWorkers)
 	srvs := h.getVirtualMachines(ctx)
 
 	for _, s := range srvs {
@@ -292,9 +308,19 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 
 		var isPoweredOff = s.Summary.Runtime.PowerState != types.VirtualMachinePowerStatePoweredOn
 
-		// If the VM is still ON but is older that the WorkerTTL config, let's mark it as delete
 		if !isPoweredOff && !annot.ToDelete {
-			expire := annot.Created.Add(time.Duration(h.Config.WorkerTTL) * time.Minute)
+			// If the worker is not registered on CDS API the TTL is WorkerRegistrationTTL (default 10 minutes)
+			var expire = annot.Created.Add(time.Duration(h.Config.WorkerRegistrationTTL) * time.Minute)
+			// Else it's WorkerTTL (default 120 minutes)
+			for _, w := range allWorkers {
+				if w.Name == s.Name {
+					expire = annot.Created.Add(time.Duration(h.Config.WorkerTTL) * time.Minute)
+					break
+				}
+			}
+
+			// If the VM is older that the WorkerTTL config, let's mark it as delete
+
 			log.Debug(ctx, "checking if %v is outdated. Created on :%v. Expires on %v", s.Name, annot.Created, expire)
 
 			if time.Now().After(expire) {

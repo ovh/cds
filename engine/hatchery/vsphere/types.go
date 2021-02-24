@@ -22,7 +22,8 @@ type HatcheryConfiguration struct {
 	Gateway                             string `mapstructure:"gateway" toml:"gateway" default:"" commented:"false" comment:"Optional. Gateway IP for spawned workers." json:"gateway,omitempty"`
 	DNS                                 string `mapstructure:"dns" toml:"dns" default:"" commented:"false" comment:"Optional. DNS IP" json:"dns,omitempty"`
 	SubnetMask                          string `mapstructure:"subnetMask" toml:"subnetMask" default:"255.255.255.0" commented:"false" comment:"Subnet Mask" json:"subnetMask"`
-	WorkerTTL                           int    `mapstructure:"workerTTL" toml:"workerTTL" default:"30" commented:"false" comment:"Worker TTL (minutes)" json:"workerTTL"`
+	WorkerTTL                           int    `mapstructure:"workerTTL" toml:"workerTTL" default:"120" commented:"false" comment:"Worker TTL (minutes)" json:"workerTTL"`
+	WorkerRegistrationTTL               int    `mapstructure:"workerRegistrationTTL" toml:"workerRegistrationTTL" default:"10" commented:"false" comment:"Worker Registration TTL (minutes)" json:"workerRegistrationTTL"`
 }
 
 // HatcheryVSphere spawns vm

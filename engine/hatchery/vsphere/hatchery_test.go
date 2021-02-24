@@ -253,9 +253,33 @@ func TestHatcheryVSphere_killAwolServers(t *testing.T) {
 	log.Factory = log.NewTestingWrapper(t)
 
 	c := NewVSphereClientTest(t)
+	sdkhatchery.InitMetrics(context.Background())
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	cdsclient := mock_cdsclient.NewMockInterface(ctrl)
+
 	h := HatcheryVSphere{
 		vSphereClient: c,
+		Common: hatchery.Common{
+			Common: service.Common{
+				Client: cdsclient,
+			},
+		},
 	}
+
+	cdsclient.EXPECT().WorkerList(gomock.Any()).DoAndReturn(
+		func(ctx context.Context) ([]sdk.Worker, error) {
+			var un int64 = 1
+			return []sdk.Worker{
+				{
+					Name:    "worker1",
+					ModelID: &un,
+					Status:  sdk.StatusDisabled,
+				},
+			}, nil
+		},
+	)
 
 	c.EXPECT().ListVirtualMachines(gomock.Any()).DoAndReturn(
 		func(ctx context.Context) ([]mo.VirtualMachine, error) {
