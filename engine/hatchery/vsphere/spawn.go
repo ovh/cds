@@ -168,7 +168,12 @@ func (h *HatcheryVSphere) createVirtualMachineTemplate(ctx context.Context, mode
 	}
 
 	if _, err := h.launchClientOp(ctx, clonedVM, model.ModelVirtualMachine, model.ModelVirtualMachine.PostCmd, nil); err != nil {
-		log.Warn(ctx, "createVMModel> cannot start program %s", err)
+		log.Error(ctx, "cannot start program on virtual machine %q: %v", clonedVM.Name(), err)
+		log.Warn(ctx, "shutdown virtual machine %q", clonedVM.Name())
+		if err := h.vSphereClient.ShutdownVirtualMachine(ctx, clonedVM); err != nil {
+			ctx = sdk.ContextWithStacktrace(ctx, err)
+			log.Error(ctx, "createVMModel> unable to shutdown vm %q: %v", model.Name, err)
+		}
 		if err := h.markToDelete(ctx, vm); err != nil {
 			ctx = sdk.ContextWithStacktrace(ctx, err)
 			log.Error(ctx, "createVMModel> unable to mark vm %q to delete: %v", model.Name, err)
@@ -244,6 +249,12 @@ func (h *HatcheryVSphere) launchScriptWorker(ctx context.Context, name string, j
 
 	if _, err := h.launchClientOp(ctx, vm, model.ModelVirtualMachine, buffer.String(), env); err != nil {
 		log.Warn(ctx, "launchScript> cannot start program %s", err)
+		log.Error(ctx, "cannot start program on virtual machine %q: %v", vm.Name(), err)
+		log.Warn(ctx, "shutdown virtual machine %q", vm.Name())
+		if err := h.vSphereClient.ShutdownVirtualMachine(ctx, vm); err != nil {
+			ctx = sdk.ContextWithStacktrace(ctx, err)
+			log.Error(ctx, "createVMModel> unable to shutdown vm %q: %v", model.Name, err)
+		}
 		if err := h.markToDelete(ctx, vm); err != nil {
 			ctx = sdk.ContextWithStacktrace(ctx, err)
 			log.Error(ctx, "unable to mark vm %q to delete: %v", model.Name, err)
