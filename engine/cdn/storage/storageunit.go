@@ -30,9 +30,10 @@ func (r RunningStorageUnits) Storage(name string) StorageUnit {
 }
 
 func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp.DbMap, gorts *sdk.GoRoutines, config Configuration) (*RunningStorageUnits, error) {
-	for i := range config.Storages {
-		if config.Storages[i].SyncParallel <= 0 {
-			config.Storages[i].SyncParallel = 1
+	for k, v := range config.Storages {
+		if v.SyncParallel <= 0 {
+			v.SyncParallel = 1
+			config.Storages[k] = v
 		}
 	}
 
@@ -56,9 +57,6 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 		case CDNBufferTypeFile:
 			countFileBuffer++
 		}
-		if bu.Name == "" {
-			return nil, sdk.WithStack(fmt.Errorf("invalid CDN configuration. Missing buffer name"))
-		}
 	}
 	if countLogBuffer == 0 || countLogBuffer > 1 {
 		return nil, sdk.WithStack(fmt.Errorf("missing or too much CDN Buffer for log items"))
@@ -79,7 +77,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 		config.SyncSeconds = 30
 	}
 
-	for _, bu := range config.Buffers {
+	for name, bu := range config.Buffers {
 		var bufferUnit BufferUnit
 		switch {
 		case bu.Redis != nil:
@@ -139,7 +137,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 		}
 		defer tx.Rollback() // nolint
 
-		u, err := LoadUnitByName(ctx, m, tx, bu.Name)
+		u, err := LoadUnitByName(ctx, m, tx, name)
 		if sdk.ErrorIs(err, sdk.ErrNotFound) {
 			var srvConfig sdk.ServiceConfig
 			b, _ := json.Marshal(bu)
@@ -147,7 +145,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 			u = &sdk.CDNUnit{
 				ID:      sdk.UUID(),
 				Created: time.Now(),
-				Name:    bu.Name,
+				Name:    name,
 				Config:  srvConfig,
 			}
 			if err := InsertUnit(ctx, m, tx, u); err != nil {
@@ -164,11 +162,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 	}
 
 	// Then initialize the storages unit
-	for _, cfg := range config.Storages {
-		if cfg.Name == "" {
-			return nil, sdk.WithStack(fmt.Errorf("invalid CDN configuration. Missing storage name"))
-		}
-
+	for name, cfg := range config.Storages {
 		var storageUnit StorageUnit
 		switch {
 		case cfg.CDS != nil:
@@ -251,7 +245,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 			return nil, sdk.WithStack(err)
 		}
 
-		u, err := LoadUnitByName(ctx, m, tx, cfg.Name)
+		u, err := LoadUnitByName(ctx, m, tx, name)
 		if sdk.ErrorIs(err, sdk.ErrNotFound) {
 			var srvConfig sdk.ServiceConfig
 			b, _ := json.Marshal(cfg)
@@ -260,7 +254,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 			u = &sdk.CDNUnit{
 				ID:      sdk.UUID(),
 				Created: time.Now(),
-				Name:    cfg.Name,
+				Name:    name,
 				Config:  srvConfig,
 			}
 			err = InsertUnit(ctx, m, tx, u)
