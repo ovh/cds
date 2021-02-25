@@ -85,7 +85,7 @@ $ ./cdsctl user me
 #username  admin
 
 # run others services
-$ docker-compose up -d cds-ui cds-hooks cds-elasticsearch cds-hatchery-swarm
+$ docker-compose up -d cds-ui cds-cdn cds-hooks cds-elasticsearch cds-hatchery-swarm
 
 # create first worker model
 $ ./cdsctl worker model import https://raw.githubusercontent.com/ovh/cds/{{< param "version" "master" >}}/contrib/worker-models/go-official-1.13.yml
