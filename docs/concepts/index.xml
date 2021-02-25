@@ -1,21 +1,17 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Concepts on CDS - Continuous Delivery Service</title>
-    <link>https://ovh.github.io/cds/docs/concepts/</link>
+    <link>/docs/concepts/</link>
     <description>Recent content in Concepts on CDS - Continuous Delivery Service</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language>
-    
-	<atom:link href="https://ovh.github.io/cds/docs/concepts/index.xml" rel="self" type="application/rss+xml" />
-    
-    
+    <language>en-us</language><atom:link href="/docs/concepts/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Authentication</title>
-      <link>https://ovh.github.io/cds/docs/concepts/authentication/</link>
+      <link>/docs/concepts/authentication/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/concepts/authentication/</guid>
+      <guid>/docs/concepts/authentication/</guid>
       <description>Consumer Two type of consumer:
  first level: GitLab, GitHub, CorporateSSO, LDAP, Local. n level: Builtin.  A builtin consumer can be created by a user. Every builtin consumer should have a parent consumer that can also be another builtin consumer. Using a child consumer you can give permission for all or a part of what its parent can access.
 Groups A consumer includes a list of groups. Wildcard for a first level.</description>
@@ -23,10 +19,10 @@ Groups A consumer includes a list of groups. Wildcard for a first level.</descri
     
     <item>
       <title>Job</title>
-      <link>https://ovh.github.io/cds/docs/concepts/job/</link>
+      <link>/docs/concepts/job/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/concepts/job/</guid>
+      <guid>/docs/concepts/job/</guid>
       <description>A job is composed of steps, which will be run sequentially. A job is executed in a dedicated workspace (i.e. filesystem). A new workspace is assigned for each new run of a job.
 A standard build job looks like this:
 You can use « built-in » actions, such as checkoutApplication, script, jUnit, artifact upload/download.
@@ -35,10 +31,10 @@ You can use « built-in » actions, such as checkoutApplication, script, jUnit, 
     
     <item>
       <title>Project</title>
-      <link>https://ovh.github.io/cds/docs/concepts/project/</link>
+      <link>/docs/concepts/project/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/concepts/project/</guid>
+      <guid>/docs/concepts/project/</guid>
       <description>A CDS Project brings together several entities such as pipelines, applications, workflows, environments. A project also allows to link one or more repository manager such as github, bitbucket, gitlab&amp;hellip;
 A project is often associated with one or more groups with differents ACLs.
 Metadata In a company, a project is a collection of a team&amp;rsquo;s workflows. This allows to release some statistics of use with metadata.
@@ -47,10 +43,10 @@ A metadata is composed by a key and a value.</description>
     
     <item>
       <title>Permissions - ACLs</title>
-      <link>https://ovh.github.io/cds/docs/concepts/permissions/</link>
+      <link>/docs/concepts/permissions/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/concepts/permissions/</guid>
+      <guid>/docs/concepts/permissions/</guid>
       <description>There are 3 types of permissions:
  Read (as code value: 4) Read / Execute (as code value: 5) Read / Write / Execute (as code value: 7)  These permissions can be attached to different objects:
  Project Workflow Workflow node      Project Workflow Workflow node     Create a workflow RWX - -   Edit a workflow (change run conditions, add nodes, edit payload, notifications, &amp;hellip;) RO RWX -   Create/edit an environment/pipeline/application RWX - -   Manage permissions on project RWX - -   Manage permissions on a workflow RO RWX    Run a workflow RO RX / - OR RX (if there is some groups on node)    Permissions cannot be attached directly to users, they need to be attached to groups of users.</description>
@@ -58,10 +54,10 @@ A metadata is composed by a key and a value.</description>
     
     <item>
       <title>Pipeline</title>
-      <link>https://ovh.github.io/cds/docs/concepts/pipeline/</link>
+      <link>/docs/concepts/pipeline/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/concepts/pipeline/</guid>
+      <guid>/docs/concepts/pipeline/</guid>
       <description>A pipeline describes how things need to be executed in order to obtain the expected result. In CDS, a pipeline belongs to a single project and can be used with the applications of that project.
 A pipeline is structured in sequential stages containing one or multiple concurrent jobs.
 CDS pipelines can be parametrized. This allows you to reuse the same pipeline when you have similar workloads. For example, you could use the same pipeline to deploy in your pre-production environment first and then to your production environment.</description>
@@ -69,10 +65,10 @@ CDS pipelines can be parametrized. This allows you to reuse the same pipeline wh
     
     <item>
       <title>Variables</title>
-      <link>https://ovh.github.io/cds/docs/concepts/variables/</link>
+      <link>/docs/concepts/variables/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/concepts/variables/</guid>
+      <guid>/docs/concepts/variables/</guid>
       <description>In CDS, it is possible to define variables at different levels:
  Project Environment Application  Variable types Existing variable types:
  String Text Boolean Number Password Key  Placeholder format All variables in CDS can be invoked using the simple {{.VAR}} format. To simplify the use between all the variable sources, we have defined the following prefixes:
@@ -81,10 +77,10 @@ CDS pipelines can be parametrized. This allows you to reuse the same pipeline wh
     
     <item>
       <title>Workflow Template</title>
-      <link>https://ovh.github.io/cds/docs/concepts/template/</link>
+      <link>/docs/concepts/template/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/concepts/template/</guid>
+      <guid>/docs/concepts/template/</guid>
       <description>What is a workflow template? A workflow template is useful to easily create a new workflow for a project. Also if you need to manage multiple workflows, you can use a template to create one unique and generic workflow then apply it on each workflow.
 Templates are versioned, so you can easily improve your template then re-apply it on a workflow.
 A template contains a workflow, pipelines, applications, environments in yaml format.</description>

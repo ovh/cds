@@ -4,63 +4,61 @@
 	<meta charset="utf-8">
 <title>user - CDS - Continuous Delivery Service</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="shortcut icon" type="image/png" href="https://ovh.github.io/cds/images/favicon.png">
+<link rel="shortcut icon" type="image/png" href="../../../images/favicon.png">
 
 
 
 
-<link rel="stylesheet" href="https://ovh.github.io/cds/sass/styles.css" integrity="" media="screen">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/callouts.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/auto-complete.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/fontawesome.min.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/asciinema-player.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
+<link rel="stylesheet" href="../../../sass/styles.css" integrity="" media="screen">
+<link rel="stylesheet" href="../../../css/callouts.css">
+<link rel="stylesheet" href="../../../css/auto-complete.css">
+<link rel="stylesheet" href="../../../css/fontawesome.min.css">
+<link rel="stylesheet" href="../../../css/asciinema-player.css">
+<link rel="stylesheet" href="../../../css/solarized-light.css">
 
 <meta name="description"
-    content=" DELETE /user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;    URL /user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;     Method DELETE   Permissions Auth: true   Scopes AccessToken   Code deleteConsumerByUserHandler    DELETE /user/&lt;username&gt;/auth/session/&lt;session-id&gt;    URL /user/&lt;username&gt;/auth/session/&lt;session-id&gt;     Method DELETE   Permissions Auth: true   Scopes AccessToken   Code deleteSessionByUserHandler    DELETE /user/&lt;username&gt;    URL /user/&lt;username&gt;     Method DELETE   Permissions Auth: true   Scopes User   Code deleteUserHandler    GET /user/&lt;username&gt;/auth/consumer    URL /user/&lt;username&gt;/auth/consumer     Method GET   Permissions Auth: true   Scopes AccessToken   Code getConsumersByUserHandler    GET /user/&lt;username&gt;/auth/session    URL /user/&lt;username&gt;/auth/session     Method GET   Permissions Auth: true   Scopes AccessToken   Code getSessionsByUserHandler    GET /user/&lt;username&gt;/contact    URL /user/&lt;username&gt;/contact     Method GET   Permissions Auth: true   Scopes User   Code getUserContactsHandler    GET /user/&lt;username&gt;/group    URL /user/&lt;username&gt;/group     Method GET   Permissions Auth: true   Scopes User   Code getUserGroupsHandler    GET /user/&lt;username&gt;    URL /user/&lt;username&gt;     Method GET   Permissions Auth: true   Scopes User   Code getUserHandler    GET /user/schema    URL /user/schema     Method GET   Permissions Auth: true   Scopes User   Code getUserJSONSchema    GET /user/timeline/filter    URL /user/timeline/filter     Method GET   Permissions Auth: true   Scopes User   Code getTimelineFilterHandler    GET /user/timeline    URL /user/timeline     Method GET   Permissions Auth: true   Scopes User   Code getTimelineHandler    GET /user    URL /user     Method GET   Permissions Auth: true   Scopes User   Code getUsersHandler    POST /user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;/regen    URL /user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;/regen     Method POST   Permissions Auth: true   Scopes AccessToken   Code postConsumerRegenByUserHandler    POST /user/&lt;username&gt;/auth/consumer    URL /user/&lt;username&gt;/auth/consumer     Method POST   Permissions Auth: true   Scopes AccessToken   Code postConsumerByUserHandler    POST /user/favorite    URL /user/favorite     Method POST   Permissions Auth: true   Scopes User   Code postUserFavoriteHandler    POST /user/timeline/filter    URL /user/timeline/filter     Method POST   Permissions Auth: true   Scopes User   Code postTimelineFilterHandler    PUT /user/&lt;username&gt;    URL /user/&lt;username&gt;     Method PUT   Permissions Auth: true   Scopes User   Code putUserHandler    ">
+    content="DELETE /user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;    URL /user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;     Method DELETE   Permissions Auth: true   Scopes AccessToken   Code deleteConsumerByUserHandler    DELETE /user/&lt;username&gt;/auth/session/&lt;session-id&gt;    URL /user/&lt;username&gt;/auth/session/&lt;session-id&gt;     Method DELETE   Permissions Auth: true   Scopes AccessToken   Code deleteSessionByUserHandler    DELETE /user/&lt;username&gt;    URL /user/&lt;username&gt;     Method DELETE   Permissions Auth: true   Scopes User   Code deleteUserHandler    GET /user/&lt;username&gt;/auth/consumer    URL /user/&lt;username&gt;/auth/consumer     Method GET   Permissions Auth: true   Scopes AccessToken   Code getConsumersByUserHandler    GET /user/&lt;username&gt;/auth/session    URL /user/&lt;username&gt;/auth/session     Method GET   Permissions Auth: true   Scopes AccessToken   Code getSessionsByUserHandler    GET /user/&lt;username&gt;/contact    URL /user/&lt;username&gt;/contact     Method GET   Permissions Auth: true   Scopes User   Code getUserContactsHandler    GET /user/&lt;username&gt;/group    URL /user/&lt;username&gt;/group     Method GET   Permissions Auth: true   Scopes User   Code getUserGroupsHandler    GET /user/&lt;username&gt;    URL /user/&lt;username&gt;     Method GET   Permissions Auth: true   Scopes User   Code getUserHandler    GET /user/schema    URL /user/schema     Method GET   Permissions Auth: true   Scopes User   Code getUserJSONSchema    GET /user/timeline/filter    URL /user/timeline/filter     Method GET   Permissions Auth: true   Scopes User   Code getTimelineFilterHandler    GET /user/timeline    URL /user/timeline     Method GET   Permissions Auth: true   Scopes User   Code getTimelineHandler    GET /user    URL /user     Method GET   Permissions Auth: true   Scopes User   Code getUsersHandler    POST /user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;/regen    URL /user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;/regen     Method POST   Permissions Auth: true   Scopes AccessToken   Code postConsumerRegenByUserHandler    POST /user/&lt;username&gt;/auth/consumer    URL /user/&lt;username&gt;/auth/consumer     Method POST   Permissions Auth: true   Scopes AccessToken   Code postConsumerByUserHandler    POST /user/favorite    URL /user/favorite     Method POST   Permissions Auth: true   Scopes User   Code postUserFavoriteHandler    POST /user/timeline/filter    URL /user/timeline/filter     Method POST   Permissions Auth: true   Scopes User   Code postTimelineFilterHandler    PUT /user/&lt;username&gt;    URL /user/&lt;username&gt;     Method PUT   Permissions Auth: true   Scopes User   Code putUserHandler    ">
 <meta property="og:description"
-    content=" DELETE /user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;    URL /user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;     Method DELETE   Permissions Auth: true   Scopes AccessToken   Code deleteConsumerByUserHandler    DELETE /user/&lt;username&gt;/auth/session/&lt;session-id&gt;    URL /user/&lt;username&gt;/auth/session/&lt;session-id&gt;     Method DELETE   Permissions Auth: true   Scopes AccessToken   Code deleteSessionByUserHandler    DELETE /user/&lt;username&gt;    URL /user/&lt;username&gt;     Method DELETE   Permissions Auth: true   Scopes User   Code deleteUserHandler    GET /user/&lt;username&gt;/auth/consumer    URL /user/&lt;username&gt;/auth/consumer     Method GET   Permissions Auth: true   Scopes AccessToken   Code getConsumersByUserHandler    GET /user/&lt;username&gt;/auth/session    URL /user/&lt;username&gt;/auth/session     Method GET   Permissions Auth: true   Scopes AccessToken   Code getSessionsByUserHandler    GET /user/&lt;username&gt;/contact    URL /user/&lt;username&gt;/contact     Method GET   Permissions Auth: true   Scopes User   Code getUserContactsHandler    GET /user/&lt;username&gt;/group    URL /user/&lt;username&gt;/group     Method GET   Permissions Auth: true   Scopes User   Code getUserGroupsHandler    GET /user/&lt;username&gt;    URL /user/&lt;username&gt;     Method GET   Permissions Auth: true   Scopes User   Code getUserHandler    GET /user/schema    URL /user/schema     Method GET   Permissions Auth: true   Scopes User   Code getUserJSONSchema    GET /user/timeline/filter    URL /user/timeline/filter     Method GET   Permissions Auth: true   Scopes User   Code getTimelineFilterHandler    GET /user/timeline    URL /user/timeline     Method GET   Permissions Auth: true   Scopes User   Code getTimelineHandler    GET /user    URL /user     Method GET   Permissions Auth: true   Scopes User   Code getUsersHandler    POST /user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;/regen    URL /user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;/regen     Method POST   Permissions Auth: true   Scopes AccessToken   Code postConsumerRegenByUserHandler    POST /user/&lt;username&gt;/auth/consumer    URL /user/&lt;username&gt;/auth/consumer     Method POST   Permissions Auth: true   Scopes AccessToken   Code postConsumerByUserHandler    POST /user/favorite    URL /user/favorite     Method POST   Permissions Auth: true   Scopes User   Code postUserFavoriteHandler    POST /user/timeline/filter    URL /user/timeline/filter     Method POST   Permissions Auth: true   Scopes User   Code postTimelineFilterHandler    PUT /user/&lt;username&gt;    URL /user/&lt;username&gt;     Method PUT   Permissions Auth: true   Scopes User   Code putUserHandler    ">
+    content="DELETE /user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;    URL /user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;     Method DELETE   Permissions Auth: true   Scopes AccessToken   Code deleteConsumerByUserHandler    DELETE /user/&lt;username&gt;/auth/session/&lt;session-id&gt;    URL /user/&lt;username&gt;/auth/session/&lt;session-id&gt;     Method DELETE   Permissions Auth: true   Scopes AccessToken   Code deleteSessionByUserHandler    DELETE /user/&lt;username&gt;    URL /user/&lt;username&gt;     Method DELETE   Permissions Auth: true   Scopes User   Code deleteUserHandler    GET /user/&lt;username&gt;/auth/consumer    URL /user/&lt;username&gt;/auth/consumer     Method GET   Permissions Auth: true   Scopes AccessToken   Code getConsumersByUserHandler    GET /user/&lt;username&gt;/auth/session    URL /user/&lt;username&gt;/auth/session     Method GET   Permissions Auth: true   Scopes AccessToken   Code getSessionsByUserHandler    GET /user/&lt;username&gt;/contact    URL /user/&lt;username&gt;/contact     Method GET   Permissions Auth: true   Scopes User   Code getUserContactsHandler    GET /user/&lt;username&gt;/group    URL /user/&lt;username&gt;/group     Method GET   Permissions Auth: true   Scopes User   Code getUserGroupsHandler    GET /user/&lt;username&gt;    URL /user/&lt;username&gt;     Method GET   Permissions Auth: true   Scopes User   Code getUserHandler    GET /user/schema    URL /user/schema     Method GET   Permissions Auth: true   Scopes User   Code getUserJSONSchema    GET /user/timeline/filter    URL /user/timeline/filter     Method GET   Permissions Auth: true   Scopes User   Code getTimelineFilterHandler    GET /user/timeline    URL /user/timeline     Method GET   Permissions Auth: true   Scopes User   Code getTimelineHandler    GET /user    URL /user     Method GET   Permissions Auth: true   Scopes User   Code getUsersHandler    POST /user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;/regen    URL /user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;/regen     Method POST   Permissions Auth: true   Scopes AccessToken   Code postConsumerRegenByUserHandler    POST /user/&lt;username&gt;/auth/consumer    URL /user/&lt;username&gt;/auth/consumer     Method POST   Permissions Auth: true   Scopes AccessToken   Code postConsumerByUserHandler    POST /user/favorite    URL /user/favorite     Method POST   Permissions Auth: true   Scopes User   Code postUserFavoriteHandler    POST /user/timeline/filter    URL /user/timeline/filter     Method POST   Permissions Auth: true   Scopes User   Code postTimelineFilterHandler    PUT /user/&lt;username&gt;    URL /user/&lt;username&gt;     Method PUT   Permissions Auth: true   Scopes User   Code putUserHandler    ">
 <meta name="twitter:description"
-    content=" DELETE /user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;    URL /user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;     Method DELETE   Permissions Auth: true   Scopes AccessToken   Code deleteConsumerByUserHandler    DELETE /user/&lt;username&gt;/auth/session/&lt;session-id&gt;    URL /user/&lt;username&gt;/auth/session/&lt;session-id&gt;     Method DELETE   Permissions Auth: true   Scopes AccessToken   Code deleteSessionByUserHandler    DELETE /user/&lt;username&gt;    URL /user/&lt;username&gt;     Method DELETE   Permissions Auth: true   Scopes User   Code deleteUserHandler    GET /user/&lt;username&gt;/auth/consumer    URL /user/&lt;username&gt;/auth/consumer     Method GET   Permissions Auth: true   Scopes AccessToken   Code getConsumersByUserHandler    GET /user/&lt;username&gt;/auth/session    URL /user/&lt;username&gt;/auth/session     Method GET   Permissions Auth: true   Scopes AccessToken   Code getSessionsByUserHandler    GET /user/&lt;username&gt;/contact    URL /user/&lt;username&gt;/contact     Method GET   Permissions Auth: true   Scopes User   Code getUserContactsHandler    GET /user/&lt;username&gt;/group    URL /user/&lt;username&gt;/group     Method GET   Permissions Auth: true   Scopes User   Code getUserGroupsHandler    GET /user/&lt;username&gt;    URL /user/&lt;username&gt;     Method GET   Permissions Auth: true   Scopes User   Code getUserHandler    GET /user/schema    URL /user/schema     Method GET   Permissions Auth: true   Scopes User   Code getUserJSONSchema    GET /user/timeline/filter    URL /user/timeline/filter     Method GET   Permissions Auth: true   Scopes User   Code getTimelineFilterHandler    GET /user/timeline    URL /user/timeline     Method GET   Permissions Auth: true   Scopes User   Code getTimelineHandler    GET /user    URL /user     Method GET   Permissions Auth: true   Scopes User   Code getUsersHandler    POST /user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;/regen    URL /user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;/regen     Method POST   Permissions Auth: true   Scopes AccessToken   Code postConsumerRegenByUserHandler    POST /user/&lt;username&gt;/auth/consumer    URL /user/&lt;username&gt;/auth/consumer     Method POST   Permissions Auth: true   Scopes AccessToken   Code postConsumerByUserHandler    POST /user/favorite    URL /user/favorite     Method POST   Permissions Auth: true   Scopes User   Code postUserFavoriteHandler    POST /user/timeline/filter    URL /user/timeline/filter     Method POST   Permissions Auth: true   Scopes User   Code postTimelineFilterHandler    PUT /user/&lt;username&gt;    URL /user/&lt;username&gt;     Method PUT   Permissions Auth: true   Scopes User   Code putUserHandler    ">
-<meta property="og:url" content="https://ovh.github.io/cds/development/rest/user/">
+    content="DELETE /user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;    URL /user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;     Method DELETE   Permissions Auth: true   Scopes AccessToken   Code deleteConsumerByUserHandler    DELETE /user/&lt;username&gt;/auth/session/&lt;session-id&gt;    URL /user/&lt;username&gt;/auth/session/&lt;session-id&gt;     Method DELETE   Permissions Auth: true   Scopes AccessToken   Code deleteSessionByUserHandler    DELETE /user/&lt;username&gt;    URL /user/&lt;username&gt;     Method DELETE   Permissions Auth: true   Scopes User   Code deleteUserHandler    GET /user/&lt;username&gt;/auth/consumer    URL /user/&lt;username&gt;/auth/consumer     Method GET   Permissions Auth: true   Scopes AccessToken   Code getConsumersByUserHandler    GET /user/&lt;username&gt;/auth/session    URL /user/&lt;username&gt;/auth/session     Method GET   Permissions Auth: true   Scopes AccessToken   Code getSessionsByUserHandler    GET /user/&lt;username&gt;/contact    URL /user/&lt;username&gt;/contact     Method GET   Permissions Auth: true   Scopes User   Code getUserContactsHandler    GET /user/&lt;username&gt;/group    URL /user/&lt;username&gt;/group     Method GET   Permissions Auth: true   Scopes User   Code getUserGroupsHandler    GET /user/&lt;username&gt;    URL /user/&lt;username&gt;     Method GET   Permissions Auth: true   Scopes User   Code getUserHandler    GET /user/schema    URL /user/schema     Method GET   Permissions Auth: true   Scopes User   Code getUserJSONSchema    GET /user/timeline/filter    URL /user/timeline/filter     Method GET   Permissions Auth: true   Scopes User   Code getTimelineFilterHandler    GET /user/timeline    URL /user/timeline     Method GET   Permissions Auth: true   Scopes User   Code getTimelineHandler    GET /user    URL /user     Method GET   Permissions Auth: true   Scopes User   Code getUsersHandler    POST /user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;/regen    URL /user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;/regen     Method POST   Permissions Auth: true   Scopes AccessToken   Code postConsumerRegenByUserHandler    POST /user/&lt;username&gt;/auth/consumer    URL /user/&lt;username&gt;/auth/consumer     Method POST   Permissions Auth: true   Scopes AccessToken   Code postConsumerByUserHandler    POST /user/favorite    URL /user/favorite     Method POST   Permissions Auth: true   Scopes User   Code postUserFavoriteHandler    POST /user/timeline/filter    URL /user/timeline/filter     Method POST   Permissions Auth: true   Scopes User   Code postTimelineFilterHandler    PUT /user/&lt;username&gt;    URL /user/&lt;username&gt;     Method PUT   Permissions Auth: true   Scopes User   Code putUserHandler    ">
+<meta property="og:url" content="/development/rest/user/">
 <meta property="og:title" content="user">
 <meta name="twitter:title" content="user">
 <meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
 <meta property="og:image" content="/images/cds-transparent.png">
-<script type="text/javascript" src="https://ovh.github.io/cds/js/anchor-4.1.1.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-3.2.1.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-ui-1.12.1.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/bootstrap-3.3.7.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/highlight.pack.js"></script>
+<script type="text/javascript" src="../../../js/anchor-4.1.1.min.js"></script>
+<script type="text/javascript" src="../../../js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="../../../js/jquery-ui-1.12.1.min.js"></script>
+<script type="text/javascript" src="../../../js/bootstrap-3.3.7.min.js"></script>
+<script type="text/javascript" src="../../../js/highlight.pack.js"></script>
 <script>
     hljs.initHighlightingOnLoad();
 
 </script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/script.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/lunr.min.js"></script>
-<script type="text/javascript">
-    var baseurl = "https:\/\/ovh.github.io\/cds";
+<script type="text/javascript" src="../../../js/script.js"></script>
+<script type="text/javascript" src="../../../js/lunr.min.js"></script>
+<a id="indexJSON" href="../../../index.json"></a>
 
-</script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/auto-complete.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/search.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/asciinema-player.js"></script>
+<script type="text/javascript" src="../../../js/auto-complete.js"></script>
+<script type="text/javascript" src="../../../js/search.js"></script>
+<script type="text/javascript" src="../../../js/asciinema-player.js"></script>
 
 	</head>
 	<body>
 		<section id="hero" class="light-text no-sub">
-			<a href="https://ovh.github.io/cds/" class="logo"></a>
+			<a href="../../../" class="logo"></a>
 				<i id="tocburger" class="fa fa-bars" onclick='$("#toc").toggle()'></i><div class="nav-buttons" data-auto-burger="primary">
 				<ul class="global-nav">
 					
 					
-					<li><a href="https://ovh.github.io/cds/docs/">Documentation</a></li>
+					<li><a href="../../../docs/">Documentation</a></li>
 					
-					<li><a href="https://ovh.github.io/cds/hosting/">Hosting your own instance</a></li>
+					<li><a href="../../../hosting/">Hosting your own instance</a></li>
 					
-					<li><a href="https://ovh.github.io/cds/development/" class="active">CDS Developer Manual</a></li>
+					<li><a href="../../../development/" class="active">CDS Developer Manual</a></li>
 					
-					<li><a href="https://ovh.github.io/cds/about/">About</a></li>
+					<li><a href="../../../about/">About</a></li>
 					
 					<li><i class="fa fa-search" onclick='$("#searchbox").toggle(); $("#search-query").focus().select()'></i></li>
 					<li>
@@ -106,13 +104,13 @@
 			
 			
 				
-				<li><a href="https://ovh.github.io/cds/development/rest/" class="menuSelected">REST API</a></li>
+				<li><a href="../../../development/rest/" class="menuSelected">REST API</a></li>
 			
 				
-				<li><a href="https://ovh.github.io/cds/development/sdk/">SDK</a></li>
+				<li><a href="../../../development/sdk/">SDK</a></li>
 			
 				
-				<li><a href="https://ovh.github.io/cds/development/contribute/">Contributing</a></li>
+				<li><a href="../../../development/contribute/">Contributing</a></li>
 			
 		</ul>
 		
@@ -171,6 +169,10 @@
                             
                         
                     
+                        
+                            
+                        
+                    
                 
             
         
@@ -199,7 +201,7 @@
         
         
         <i class="fa fa-bars" id="tocburger" onclick='$("#toc").toggle()'></i> 
-<a class="item" data-title="REST API" href="https://ovh.github.io/cds/development/rest/"></a>
+<a class="item" data-title="REST API" href="../../../development/rest/"></a>
 
 	
 	
@@ -207,163 +209,169 @@
 	
 		
 			
-<a class="item" data-title="action" href="https://ovh.github.io/cds/development/rest/action/"></a>
+<a class="item" data-title="action" href="../../../development/rest/action/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="actionBuiltin" href="https://ovh.github.io/cds/development/rest/actionbuiltin/"></a>
+<a class="item" data-title="actionBuiltin" href="../../../development/rest/actionbuiltin/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="admin" href="https://ovh.github.io/cds/development/rest/admin/"></a>
+<a class="item" data-title="admin" href="../../../development/rest/admin/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="auth" href="https://ovh.github.io/cds/development/rest/auth/"></a>
+<a class="item" data-title="auth" href="../../../development/rest/auth/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="bookmarks" href="https://ovh.github.io/cds/development/rest/bookmarks/"></a>
+<a class="item" data-title="bookmarks" href="../../../development/rest/bookmarks/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="broadcast" href="https://ovh.github.io/cds/development/rest/broadcast/"></a>
+<a class="item" data-title="broadcast" href="../../../development/rest/broadcast/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="config" href="https://ovh.github.io/cds/development/rest/config/"></a>
+<a class="item" data-title="config" href="../../../development/rest/config/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="download" href="https://ovh.github.io/cds/development/rest/download/"></a>
+<a class="item" data-title="download" href="../../../development/rest/download/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="group" href="https://ovh.github.io/cds/development/rest/group/"></a>
+<a class="item" data-title="feature" href="../../../development/rest/feature/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="hook" href="https://ovh.github.io/cds/development/rest/hook/"></a>
+<a class="item" data-title="group" href="../../../development/rest/group/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="import" href="https://ovh.github.io/cds/development/rest/import/"></a>
+<a class="item" data-title="hook" href="../../../development/rest/hook/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="integration" href="https://ovh.github.io/cds/development/rest/integration/"></a>
+<a class="item" data-title="import" href="../../../development/rest/import/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="mon" href="https://ovh.github.io/cds/development/rest/mon/"></a>
+<a class="item" data-title="integration" href="../../../development/rest/integration/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="notification" href="https://ovh.github.io/cds/development/rest/notification/"></a>
+<a class="item" data-title="notification" href="../../../development/rest/notification/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="parameter" href="https://ovh.github.io/cds/development/rest/parameter/"></a>
+<a class="item" data-title="parameter" href="../../../development/rest/parameter/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="project" href="https://ovh.github.io/cds/development/rest/project/"></a>
+<a class="item" data-title="project" href="../../../development/rest/project/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="queue" href="https://ovh.github.io/cds/development/rest/queue/"></a>
+<a class="item" data-title="queue" href="../../../development/rest/queue/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="repositories_manager" href="https://ovh.github.io/cds/development/rest/repositories_manager/"></a>
+<a class="item" data-title="repositories_manager" href="../../../development/rest/repositories_manager/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="requirement" href="https://ovh.github.io/cds/development/rest/requirement/"></a>
+<a class="item" data-title="requirement" href="../../../development/rest/requirement/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="services" href="https://ovh.github.io/cds/development/rest/services/"></a>
+<a class="item" data-title="services" href="../../../development/rest/services/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="suggest" href="https://ovh.github.io/cds/development/rest/suggest/"></a>
+<a class="item" data-title="suggest" href="../../../development/rest/suggest/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="template" href="https://ovh.github.io/cds/development/rest/template/"></a>
+<a class="item" data-title="template" href="../../../development/rest/template/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="ui" href="https://ovh.github.io/cds/development/rest/ui/"></a>
+<a class="item" data-title="ui" href="../../../development/rest/ui/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="user" href="https://ovh.github.io/cds/development/rest/user/"></a>
+<a class="item" data-title="user" href="../../../development/rest/user/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="variable" href="https://ovh.github.io/cds/development/rest/variable/"></a>
+<a class="item" data-title="variable" href="../../../development/rest/variable/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="worker" href="https://ovh.github.io/cds/development/rest/worker/"></a>
+<a class="item" data-title="worker" href="../../../development/rest/worker/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="workflow" href="https://ovh.github.io/cds/development/rest/workflow/"></a>
+<a class="item" data-title="workflow" href="../../../development/rest/workflow/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="ws" href="../../../development/rest/ws/"></a>
 
 		
 	
@@ -384,34 +392,28 @@
 
 
 <nav id="TableOfContents">
-<ul>
-<li>
-<ul>
-<li><a href="#delete-user-username-auth-consumer-consumer-id">DELETE <code>/user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;</code></a></li>
-<li><a href="#delete-user-username-auth-session-session-id">DELETE <code>/user/&lt;username&gt;/auth/session/&lt;session-id&gt;</code></a></li>
-<li><a href="#delete-user-username">DELETE <code>/user/&lt;username&gt;</code></a></li>
-<li><a href="#get-user-username-auth-consumer">GET <code>/user/&lt;username&gt;/auth/consumer</code></a></li>
-<li><a href="#get-user-username-auth-session">GET <code>/user/&lt;username&gt;/auth/session</code></a></li>
-<li><a href="#get-user-username-contact">GET <code>/user/&lt;username&gt;/contact</code></a></li>
-<li><a href="#get-user-username-group">GET <code>/user/&lt;username&gt;/group</code></a></li>
-<li><a href="#get-user-username">GET <code>/user/&lt;username&gt;</code></a></li>
-<li><a href="#get-user-schema">GET <code>/user/schema</code></a></li>
-<li><a href="#get-user-timeline-filter">GET <code>/user/timeline/filter</code></a></li>
-<li><a href="#get-user-timeline">GET <code>/user/timeline</code></a></li>
-<li><a href="#get-user">GET <code>/user</code></a></li>
-<li><a href="#post-user-username-auth-consumer-consumer-id-regen">POST <code>/user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;/regen</code></a></li>
-<li><a href="#post-user-username-auth-consumer">POST <code>/user/&lt;username&gt;/auth/consumer</code></a></li>
-<li><a href="#post-user-favorite">POST <code>/user/favorite</code></a></li>
-<li><a href="#post-user-timeline-filter">POST <code>/user/timeline/filter</code></a></li>
-<li><a href="#put-user-username">PUT <code>/user/&lt;username&gt;</code></a></li>
-</ul></li>
-</ul>
+  <ul>
+    <li><a href="#delete-userusernameauthconsumerconsumer-id">DELETE <code>/user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;</code></a></li>
+    <li><a href="#delete-userusernameauthsessionsession-id">DELETE <code>/user/&lt;username&gt;/auth/session/&lt;session-id&gt;</code></a></li>
+    <li><a href="#delete-userusername">DELETE <code>/user/&lt;username&gt;</code></a></li>
+    <li><a href="#get-userusernameauthconsumer">GET <code>/user/&lt;username&gt;/auth/consumer</code></a></li>
+    <li><a href="#get-userusernameauthsession">GET <code>/user/&lt;username&gt;/auth/session</code></a></li>
+    <li><a href="#get-userusernamecontact">GET <code>/user/&lt;username&gt;/contact</code></a></li>
+    <li><a href="#get-userusernamegroup">GET <code>/user/&lt;username&gt;/group</code></a></li>
+    <li><a href="#get-userusername">GET <code>/user/&lt;username&gt;</code></a></li>
+    <li><a href="#get-userschema">GET <code>/user/schema</code></a></li>
+    <li><a href="#get-usertimelinefilter">GET <code>/user/timeline/filter</code></a></li>
+    <li><a href="#get-usertimeline">GET <code>/user/timeline</code></a></li>
+    <li><a href="#get-user">GET <code>/user</code></a></li>
+    <li><a href="#post-userusernameauthconsumerconsumer-idregen">POST <code>/user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;/regen</code></a></li>
+    <li><a href="#post-userusernameauthconsumer">POST <code>/user/&lt;username&gt;/auth/consumer</code></a></li>
+    <li><a href="#post-userfavorite">POST <code>/user/favorite</code></a></li>
+    <li><a href="#post-usertimelinefilter">POST <code>/user/timeline/filter</code></a></li>
+    <li><a href="#put-userusername">PUT <code>/user/&lt;username&gt;</code></a></li>
+  </ul>
 </nav>
 
-
-
-<h2 id="delete-user-username-auth-consumer-consumer-id">DELETE <code>/user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;</code></h2>
-
+<h2 id="delete-userusernameauthconsumerconsumer-id">DELETE <code>/user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;</code></h2>
 <table>
 <thead>
 <tr>
@@ -419,32 +421,26 @@
 <th><strong><code>/user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;</code></strong></th>
 </tr>
 </thead>
-
 <tbody>
 <tr>
 <td>Method</td>
 <td>DELETE</td>
 </tr>
-
 <tr>
 <td>Permissions</td>
 <td>Auth: true</td>
 </tr>
-
 <tr>
 <td>Scopes</td>
 <td>AccessToken</td>
 </tr>
-
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteConsumerByUserHandler%22">deleteConsumerByUserHandler</a></td>
 </tr>
 </tbody>
 </table>
-
-<h2 id="delete-user-username-auth-session-session-id">DELETE <code>/user/&lt;username&gt;/auth/session/&lt;session-id&gt;</code></h2>
-
+<h2 id="delete-userusernameauthsessionsession-id">DELETE <code>/user/&lt;username&gt;/auth/session/&lt;session-id&gt;</code></h2>
 <table>
 <thead>
 <tr>
@@ -452,32 +448,26 @@
 <th><strong><code>/user/&lt;username&gt;/auth/session/&lt;session-id&gt;</code></strong></th>
 </tr>
 </thead>
-
 <tbody>
 <tr>
 <td>Method</td>
 <td>DELETE</td>
 </tr>
-
 <tr>
 <td>Permissions</td>
 <td>Auth: true</td>
 </tr>
-
 <tr>
 <td>Scopes</td>
 <td>AccessToken</td>
 </tr>
-
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteSessionByUserHandler%22">deleteSessionByUserHandler</a></td>
 </tr>
 </tbody>
 </table>
-
-<h2 id="delete-user-username">DELETE <code>/user/&lt;username&gt;</code></h2>
-
+<h2 id="delete-userusername">DELETE <code>/user/&lt;username&gt;</code></h2>
 <table>
 <thead>
 <tr>
@@ -485,32 +475,26 @@
 <th><strong><code>/user/&lt;username&gt;</code></strong></th>
 </tr>
 </thead>
-
 <tbody>
 <tr>
 <td>Method</td>
 <td>DELETE</td>
 </tr>
-
 <tr>
 <td>Permissions</td>
 <td>Auth: true</td>
 </tr>
-
 <tr>
 <td>Scopes</td>
 <td>User</td>
 </tr>
-
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteUserHandler%22">deleteUserHandler</a></td>
 </tr>
 </tbody>
 </table>
-
-<h2 id="get-user-username-auth-consumer">GET <code>/user/&lt;username&gt;/auth/consumer</code></h2>
-
+<h2 id="get-userusernameauthconsumer">GET <code>/user/&lt;username&gt;/auth/consumer</code></h2>
 <table>
 <thead>
 <tr>
@@ -518,32 +502,26 @@
 <th><strong><code>/user/&lt;username&gt;/auth/consumer</code></strong></th>
 </tr>
 </thead>
-
 <tbody>
 <tr>
 <td>Method</td>
 <td>GET</td>
 </tr>
-
 <tr>
 <td>Permissions</td>
 <td>Auth: true</td>
 </tr>
-
 <tr>
 <td>Scopes</td>
 <td>AccessToken</td>
 </tr>
-
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getConsumersByUserHandler%22">getConsumersByUserHandler</a></td>
 </tr>
 </tbody>
 </table>
-
-<h2 id="get-user-username-auth-session">GET <code>/user/&lt;username&gt;/auth/session</code></h2>
-
+<h2 id="get-userusernameauthsession">GET <code>/user/&lt;username&gt;/auth/session</code></h2>
 <table>
 <thead>
 <tr>
@@ -551,32 +529,26 @@
 <th><strong><code>/user/&lt;username&gt;/auth/session</code></strong></th>
 </tr>
 </thead>
-
 <tbody>
 <tr>
 <td>Method</td>
 <td>GET</td>
 </tr>
-
 <tr>
 <td>Permissions</td>
 <td>Auth: true</td>
 </tr>
-
 <tr>
 <td>Scopes</td>
 <td>AccessToken</td>
 </tr>
-
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getSessionsByUserHandler%22">getSessionsByUserHandler</a></td>
 </tr>
 </tbody>
 </table>
-
-<h2 id="get-user-username-contact">GET <code>/user/&lt;username&gt;/contact</code></h2>
-
+<h2 id="get-userusernamecontact">GET <code>/user/&lt;username&gt;/contact</code></h2>
 <table>
 <thead>
 <tr>
@@ -584,32 +556,26 @@
 <th><strong><code>/user/&lt;username&gt;/contact</code></strong></th>
 </tr>
 </thead>
-
 <tbody>
 <tr>
 <td>Method</td>
 <td>GET</td>
 </tr>
-
 <tr>
 <td>Permissions</td>
 <td>Auth: true</td>
 </tr>
-
 <tr>
 <td>Scopes</td>
 <td>User</td>
 </tr>
-
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getUserContactsHandler%22">getUserContactsHandler</a></td>
 </tr>
 </tbody>
 </table>
-
-<h2 id="get-user-username-group">GET <code>/user/&lt;username&gt;/group</code></h2>
-
+<h2 id="get-userusernamegroup">GET <code>/user/&lt;username&gt;/group</code></h2>
 <table>
 <thead>
 <tr>
@@ -617,32 +583,26 @@
 <th><strong><code>/user/&lt;username&gt;/group</code></strong></th>
 </tr>
 </thead>
-
 <tbody>
 <tr>
 <td>Method</td>
 <td>GET</td>
 </tr>
-
 <tr>
 <td>Permissions</td>
 <td>Auth: true</td>
 </tr>
-
 <tr>
 <td>Scopes</td>
 <td>User</td>
 </tr>
-
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getUserGroupsHandler%22">getUserGroupsHandler</a></td>
 </tr>
 </tbody>
 </table>
-
-<h2 id="get-user-username">GET <code>/user/&lt;username&gt;</code></h2>
-
+<h2 id="get-userusername">GET <code>/user/&lt;username&gt;</code></h2>
 <table>
 <thead>
 <tr>
@@ -650,32 +610,26 @@
 <th><strong><code>/user/&lt;username&gt;</code></strong></th>
 </tr>
 </thead>
-
 <tbody>
 <tr>
 <td>Method</td>
 <td>GET</td>
 </tr>
-
 <tr>
 <td>Permissions</td>
 <td>Auth: true</td>
 </tr>
-
 <tr>
 <td>Scopes</td>
 <td>User</td>
 </tr>
-
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getUserHandler%22">getUserHandler</a></td>
 </tr>
 </tbody>
 </table>
-
-<h2 id="get-user-schema">GET <code>/user/schema</code></h2>
-
+<h2 id="get-userschema">GET <code>/user/schema</code></h2>
 <table>
 <thead>
 <tr>
@@ -683,32 +637,26 @@
 <th><strong><code>/user/schema</code></strong></th>
 </tr>
 </thead>
-
 <tbody>
 <tr>
 <td>Method</td>
 <td>GET</td>
 </tr>
-
 <tr>
 <td>Permissions</td>
 <td>Auth: true</td>
 </tr>
-
 <tr>
 <td>Scopes</td>
 <td>User</td>
 </tr>
-
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getUserJSONSchema%22">getUserJSONSchema</a></td>
 </tr>
 </tbody>
 </table>
-
-<h2 id="get-user-timeline-filter">GET <code>/user/timeline/filter</code></h2>
-
+<h2 id="get-usertimelinefilter">GET <code>/user/timeline/filter</code></h2>
 <table>
 <thead>
 <tr>
@@ -716,32 +664,26 @@
 <th><strong><code>/user/timeline/filter</code></strong></th>
 </tr>
 </thead>
-
 <tbody>
 <tr>
 <td>Method</td>
 <td>GET</td>
 </tr>
-
 <tr>
 <td>Permissions</td>
 <td>Auth: true</td>
 </tr>
-
 <tr>
 <td>Scopes</td>
 <td>User</td>
 </tr>
-
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getTimelineFilterHandler%22">getTimelineFilterHandler</a></td>
 </tr>
 </tbody>
 </table>
-
-<h2 id="get-user-timeline">GET <code>/user/timeline</code></h2>
-
+<h2 id="get-usertimeline">GET <code>/user/timeline</code></h2>
 <table>
 <thead>
 <tr>
@@ -749,32 +691,26 @@
 <th><strong><code>/user/timeline</code></strong></th>
 </tr>
 </thead>
-
 <tbody>
 <tr>
 <td>Method</td>
 <td>GET</td>
 </tr>
-
 <tr>
 <td>Permissions</td>
 <td>Auth: true</td>
 </tr>
-
 <tr>
 <td>Scopes</td>
 <td>User</td>
 </tr>
-
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getTimelineHandler%22">getTimelineHandler</a></td>
 </tr>
 </tbody>
 </table>
-
 <h2 id="get-user">GET <code>/user</code></h2>
-
 <table>
 <thead>
 <tr>
@@ -782,32 +718,26 @@
 <th><strong><code>/user</code></strong></th>
 </tr>
 </thead>
-
 <tbody>
 <tr>
 <td>Method</td>
 <td>GET</td>
 </tr>
-
 <tr>
 <td>Permissions</td>
 <td>Auth: true</td>
 </tr>
-
 <tr>
 <td>Scopes</td>
 <td>User</td>
 </tr>
-
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getUsersHandler%22">getUsersHandler</a></td>
 </tr>
 </tbody>
 </table>
-
-<h2 id="post-user-username-auth-consumer-consumer-id-regen">POST <code>/user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;/regen</code></h2>
-
+<h2 id="post-userusernameauthconsumerconsumer-idregen">POST <code>/user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;/regen</code></h2>
 <table>
 <thead>
 <tr>
@@ -815,32 +745,26 @@
 <th><strong><code>/user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;/regen</code></strong></th>
 </tr>
 </thead>
-
 <tbody>
 <tr>
 <td>Method</td>
 <td>POST</td>
 </tr>
-
 <tr>
 <td>Permissions</td>
 <td>Auth: true</td>
 </tr>
-
 <tr>
 <td>Scopes</td>
 <td>AccessToken</td>
 </tr>
-
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postConsumerRegenByUserHandler%22">postConsumerRegenByUserHandler</a></td>
 </tr>
 </tbody>
 </table>
-
-<h2 id="post-user-username-auth-consumer">POST <code>/user/&lt;username&gt;/auth/consumer</code></h2>
-
+<h2 id="post-userusernameauthconsumer">POST <code>/user/&lt;username&gt;/auth/consumer</code></h2>
 <table>
 <thead>
 <tr>
@@ -848,32 +772,26 @@
 <th><strong><code>/user/&lt;username&gt;/auth/consumer</code></strong></th>
 </tr>
 </thead>
-
 <tbody>
 <tr>
 <td>Method</td>
 <td>POST</td>
 </tr>
-
 <tr>
 <td>Permissions</td>
 <td>Auth: true</td>
 </tr>
-
 <tr>
 <td>Scopes</td>
 <td>AccessToken</td>
 </tr>
-
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postConsumerByUserHandler%22">postConsumerByUserHandler</a></td>
 </tr>
 </tbody>
 </table>
-
-<h2 id="post-user-favorite">POST <code>/user/favorite</code></h2>
-
+<h2 id="post-userfavorite">POST <code>/user/favorite</code></h2>
 <table>
 <thead>
 <tr>
@@ -881,32 +799,26 @@
 <th><strong><code>/user/favorite</code></strong></th>
 </tr>
 </thead>
-
 <tbody>
 <tr>
 <td>Method</td>
 <td>POST</td>
 </tr>
-
 <tr>
 <td>Permissions</td>
 <td>Auth: true</td>
 </tr>
-
 <tr>
 <td>Scopes</td>
 <td>User</td>
 </tr>
-
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postUserFavoriteHandler%22">postUserFavoriteHandler</a></td>
 </tr>
 </tbody>
 </table>
-
-<h2 id="post-user-timeline-filter">POST <code>/user/timeline/filter</code></h2>
-
+<h2 id="post-usertimelinefilter">POST <code>/user/timeline/filter</code></h2>
 <table>
 <thead>
 <tr>
@@ -914,32 +826,26 @@
 <th><strong><code>/user/timeline/filter</code></strong></th>
 </tr>
 </thead>
-
 <tbody>
 <tr>
 <td>Method</td>
 <td>POST</td>
 </tr>
-
 <tr>
 <td>Permissions</td>
 <td>Auth: true</td>
 </tr>
-
 <tr>
 <td>Scopes</td>
 <td>User</td>
 </tr>
-
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postTimelineFilterHandler%22">postTimelineFilterHandler</a></td>
 </tr>
 </tbody>
 </table>
-
-<h2 id="put-user-username">PUT <code>/user/&lt;username&gt;</code></h2>
-
+<h2 id="put-userusername">PUT <code>/user/&lt;username&gt;</code></h2>
 <table>
 <thead>
 <tr>
@@ -947,23 +853,19 @@
 <th><strong><code>/user/&lt;username&gt;</code></strong></th>
 </tr>
 </thead>
-
 <tbody>
 <tr>
 <td>Method</td>
 <td>PUT</td>
 </tr>
-
 <tr>
 <td>Permissions</td>
 <td>Auth: true</td>
 </tr>
-
 <tr>
 <td>Scopes</td>
 <td>User</td>
 </tr>
-
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putUserHandler%22">putUserHandler</a></td>

@@ -1,57 +1,53 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>consumer on CDS - Continuous Delivery Service</title>
-    <link>https://ovh.github.io/cds/docs/components/cdsctl/consumer/</link>
+    <link>/docs/components/cdsctl/consumer/</link>
     <description>Recent content in consumer on CDS - Continuous Delivery Service</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language>
-    
-	<atom:link href="https://ovh.github.io/cds/docs/components/cdsctl/consumer/index.xml" rel="self" type="application/rss+xml" />
-    
-    
+    <language>en-us</language><atom:link href="/docs/components/cdsctl/consumer/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>delete</title>
-      <link>https://ovh.github.io/cds/docs/components/cdsctl/consumer/delete/</link>
+      <link>/docs/components/cdsctl/consumer/delete/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/components/cdsctl/consumer/delete/</guid>
-      <description> cdsctl consumer delete Delete an auth consumer
+      <guid>/docs/components/cdsctl/consumer/delete/</guid>
+      <description>cdsctl consumer delete Delete an auth consumer
 Synopsis Delete an auth consumer
-cdsctl consumer delete CONSUMER-ID [USERNAME]  Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -n, --no-interactive Set to disable interaction with ctl --verbose Enable verbose output  SEE ALSO  cdsctl consumer - Manage CDS auth consumers  </description>
+cdsctl consumer delete CONSUMER-ID [USERNAME] Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -n, --no-interactive Set to disable interaction with ctl --verbose Enable verbose output SEE ALSO  cdsctl consumer	- Manage CDS auth consumers  </description>
     </item>
     
     <item>
       <title>list</title>
-      <link>https://ovh.github.io/cds/docs/components/cdsctl/consumer/list/</link>
+      <link>/docs/components/cdsctl/consumer/list/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/components/cdsctl/consumer/list/</guid>
+      <guid>/docs/components/cdsctl/consumer/list/</guid>
       <description>cdsctl consumer list List your auth consumers for given user
 Synopsis List your auth consumers for given user
-cdsctl consumer list [USERNAME] [flags]  Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -g, --group strings filter by group -q, --quiet Only display object&#39;s key  Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+cdsctl consumer list [USERNAME] [flags] Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -g, --group strings filter by group -q, --quiet Only display object&#39;s key Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
     </item>
     
     <item>
       <title>new</title>
-      <link>https://ovh.github.io/cds/docs/components/cdsctl/consumer/new/</link>
+      <link>/docs/components/cdsctl/consumer/new/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/components/cdsctl/consumer/new/</guid>
+      <guid>/docs/components/cdsctl/consumer/new/</guid>
       <description>cdsctl consumer new Create a new auth consumer for current user
 Synopsis Create a new auth consumer for current user
-cdsctl consumer new [USERNAME] [flags]  Options  --description string What is the purpose of this consumer --groups strings Define the list of groups for the consumer --name string What is the name of this consumer --scopes strings Define the list of scopes for the consumer  Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+cdsctl consumer new [USERNAME] [flags] Options  --description string What is the purpose of this consumer --groups strings Define the list of groups for the consumer --name string What is the name of this consumer --scopes strings Define the list of scopes for the consumer Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
     </item>
     
     <item>
       <title>regen</title>
-      <link>https://ovh.github.io/cds/docs/components/cdsctl/consumer/regen/</link>
+      <link>/docs/components/cdsctl/consumer/regen/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/components/cdsctl/consumer/regen/</guid>
-      <description> cdsctl consumer regen Regenerate an existing auth consumer
+      <guid>/docs/components/cdsctl/consumer/regen/</guid>
+      <description>cdsctl consumer regen Regenerate an existing auth consumer
 Synopsis Regenerate an existing auth consumer
-cdsctl consumer regen CONSUMER-ID [USERNAME]  Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -n, --no-interactive Set to disable interaction with ctl --verbose Enable verbose output  SEE ALSO  cdsctl consumer - Manage CDS auth consumers  </description>
+cdsctl consumer regen CONSUMER-ID [USERNAME] Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -n, --no-interactive Set to disable interaction with ctl --verbose Enable verbose output SEE ALSO  cdsctl consumer	- Manage CDS auth consumers  </description>
     </item>
     
   </channel>

@@ -4,78 +4,76 @@
 	<meta charset="utf-8">
 <title>Configuration - CDS - Continuous Delivery Service</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="shortcut icon" type="image/png" href="https://ovh.github.io/cds/images/favicon.png">
+<link rel="shortcut icon" type="image/png" href="../../images/favicon.png">
 
 
 
 
-<link rel="stylesheet" href="https://ovh.github.io/cds/sass/styles.css" integrity="" media="screen">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/callouts.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/auto-complete.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/fontawesome.min.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/asciinema-player.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
+<link rel="stylesheet" href="../../sass/styles.css" integrity="" media="screen">
+<link rel="stylesheet" href="../../css/callouts.css">
+<link rel="stylesheet" href="../../css/auto-complete.css">
+<link rel="stylesheet" href="../../css/fontawesome.min.css">
+<link rel="stylesheet" href="../../css/asciinema-player.css">
+<link rel="stylesheet" href="../../css/solarized-light.css">
 
 <meta name="description"
     content="The toml configuration can be provided by a file, via consul k/v store or via vault.
 Start CDS with local configuration file You can also generate a configuration file template with the following command.
-$ $PATH_TO_CDS/engine config new &gt; my_conf_file.toml  Edit this file.
+$ $PATH_TO_CDS/engine config new &gt; my_conf_file.toml Edit this file.
 Check your configuration file with
-$ $PATH_TO_CDS/engine config check my_conf_file.toml Reading configuration file my_new_file.toml Configuration file OK  Create your database relations
-$ $PATH_TO_CDS/engine database upgrade --db-host &lt;host&gt; --db-port &lt;port&gt; --db-user &lt;user&gt; --db-password &lt;password&gt; --db-name &lt;database&gt; --migrate-dir $PATH_TO_CDS/engine/sql --limit 0  Download workers binaries">
+$ $PATH_TO_CDS/engine config check my_conf_file.toml Reading configuration file my_new_file.toml Configuration file OK Create your database relations
+$ $PATH_TO_CDS/engine database upgrade --db-host &lt;host&gt; --db-port &lt;port&gt; --db-user &lt;user&gt; --db-password &lt;password&gt; --db-name &lt;database&gt; --db-schema=public --migrate-dir $PATH_TO_CDS/engine/sql/api --limit 0 $ PGPASSWORD=&lt;password&gt; psql -h &lt;host&gt; -p &lt;port&gt; -U &lt;user&gt; -d &lt;database&gt; -c &#34;CREATE SCHEMA IF NOT EXISTS cdn AUTHORIZATION &lt;user&gt;;&#34; $ $PATH_TO_CDS/engine database upgrade --db-host &lt;host&gt; --db-port &lt;port&gt; --db-user &lt;user&gt; --db-password &lt;password&gt; --db-name &lt;database&gt; --db-schema=cdn --migrate-dir $PATH_TO_CDS/engine/sql/cdn --limit 0 Download workers binaries">
 <meta property="og:description"
     content="The toml configuration can be provided by a file, via consul k/v store or via vault.
 Start CDS with local configuration file You can also generate a configuration file template with the following command.
-$ $PATH_TO_CDS/engine config new &gt; my_conf_file.toml  Edit this file.
+$ $PATH_TO_CDS/engine config new &gt; my_conf_file.toml Edit this file.
 Check your configuration file with
-$ $PATH_TO_CDS/engine config check my_conf_file.toml Reading configuration file my_new_file.toml Configuration file OK  Create your database relations
-$ $PATH_TO_CDS/engine database upgrade --db-host &lt;host&gt; --db-port &lt;port&gt; --db-user &lt;user&gt; --db-password &lt;password&gt; --db-name &lt;database&gt; --migrate-dir $PATH_TO_CDS/engine/sql --limit 0  Download workers binaries">
+$ $PATH_TO_CDS/engine config check my_conf_file.toml Reading configuration file my_new_file.toml Configuration file OK Create your database relations
+$ $PATH_TO_CDS/engine database upgrade --db-host &lt;host&gt; --db-port &lt;port&gt; --db-user &lt;user&gt; --db-password &lt;password&gt; --db-name &lt;database&gt; --db-schema=public --migrate-dir $PATH_TO_CDS/engine/sql/api --limit 0 $ PGPASSWORD=&lt;password&gt; psql -h &lt;host&gt; -p &lt;port&gt; -U &lt;user&gt; -d &lt;database&gt; -c &#34;CREATE SCHEMA IF NOT EXISTS cdn AUTHORIZATION &lt;user&gt;;&#34; $ $PATH_TO_CDS/engine database upgrade --db-host &lt;host&gt; --db-port &lt;port&gt; --db-user &lt;user&gt; --db-password &lt;password&gt; --db-name &lt;database&gt; --db-schema=cdn --migrate-dir $PATH_TO_CDS/engine/sql/cdn --limit 0 Download workers binaries">
 <meta name="twitter:description"
     content="The toml configuration can be provided by a file, via consul k/v store or via vault.
 Start CDS with local configuration file You can also generate a configuration file template with the following command.
-$ $PATH_TO_CDS/engine config new &gt; my_conf_file.toml  Edit this file.
+$ $PATH_TO_CDS/engine config new &gt; my_conf_file.toml Edit this file.
 Check your configuration file with
-$ $PATH_TO_CDS/engine config check my_conf_file.toml Reading configuration file my_new_file.toml Configuration file OK  Create your database relations
-$ $PATH_TO_CDS/engine database upgrade --db-host &lt;host&gt; --db-port &lt;port&gt; --db-user &lt;user&gt; --db-password &lt;password&gt; --db-name &lt;database&gt; --migrate-dir $PATH_TO_CDS/engine/sql --limit 0  Download workers binaries">
-<meta property="og:url" content="https://ovh.github.io/cds/hosting/configuration/">
+$ $PATH_TO_CDS/engine config check my_conf_file.toml Reading configuration file my_new_file.toml Configuration file OK Create your database relations
+$ $PATH_TO_CDS/engine database upgrade --db-host &lt;host&gt; --db-port &lt;port&gt; --db-user &lt;user&gt; --db-password &lt;password&gt; --db-name &lt;database&gt; --db-schema=public --migrate-dir $PATH_TO_CDS/engine/sql/api --limit 0 $ PGPASSWORD=&lt;password&gt; psql -h &lt;host&gt; -p &lt;port&gt; -U &lt;user&gt; -d &lt;database&gt; -c &#34;CREATE SCHEMA IF NOT EXISTS cdn AUTHORIZATION &lt;user&gt;;&#34; $ $PATH_TO_CDS/engine database upgrade --db-host &lt;host&gt; --db-port &lt;port&gt; --db-user &lt;user&gt; --db-password &lt;password&gt; --db-name &lt;database&gt; --db-schema=cdn --migrate-dir $PATH_TO_CDS/engine/sql/cdn --limit 0 Download workers binaries">
+<meta property="og:url" content="/hosting/configuration/">
 <meta property="og:title" content="Configuration">
 <meta name="twitter:title" content="Configuration">
 <meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
 <meta property="og:image" content="/images/cds-transparent.png">
-<script type="text/javascript" src="https://ovh.github.io/cds/js/anchor-4.1.1.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-3.2.1.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-ui-1.12.1.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/bootstrap-3.3.7.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/highlight.pack.js"></script>
+<script type="text/javascript" src="../../js/anchor-4.1.1.min.js"></script>
+<script type="text/javascript" src="../../js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="../../js/jquery-ui-1.12.1.min.js"></script>
+<script type="text/javascript" src="../../js/bootstrap-3.3.7.min.js"></script>
+<script type="text/javascript" src="../../js/highlight.pack.js"></script>
 <script>
     hljs.initHighlightingOnLoad();
 
 </script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/script.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/lunr.min.js"></script>
-<script type="text/javascript">
-    var baseurl = "https:\/\/ovh.github.io\/cds";
+<script type="text/javascript" src="../../js/script.js"></script>
+<script type="text/javascript" src="../../js/lunr.min.js"></script>
+<a id="indexJSON" href="../../index.json"></a>
 
-</script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/auto-complete.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/search.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/asciinema-player.js"></script>
+<script type="text/javascript" src="../../js/auto-complete.js"></script>
+<script type="text/javascript" src="../../js/search.js"></script>
+<script type="text/javascript" src="../../js/asciinema-player.js"></script>
 
 	</head>
 	<body>
 		<section id="hero" class="light-text no-sub">
-			<a href="https://ovh.github.io/cds/" class="logo"></a>
+			<a href="../../" class="logo"></a>
 				<i id="tocburger" class="fa fa-bars" onclick='$("#toc").toggle()'></i><div class="nav-buttons" data-auto-burger="primary">
 				<ul class="global-nav">
 					
 					
-					<li><a href="https://ovh.github.io/cds/docs/">Documentation</a></li>
+					<li><a href="../../docs/">Documentation</a></li>
 					
-					<li><a href="https://ovh.github.io/cds/hosting/" class="active">Hosting your own instance</a></li>
+					<li><a href="../../hosting/" class="active">Hosting your own instance</a></li>
 					
-					<li><a href="https://ovh.github.io/cds/development/">CDS Developer Manual</a></li>
+					<li><a href="../../development/">CDS Developer Manual</a></li>
 					
-					<li><a href="https://ovh.github.io/cds/about/">About</a></li>
+					<li><a href="../../about/">About</a></li>
 					
 					<li><i class="fa fa-search" onclick='$("#searchbox").toggle(); $("#search-query").focus().select()'></i></li>
 					<li>
@@ -177,6 +175,10 @@ $ $PATH_TO_CDS/engine database upgrade --db-host &lt;host&gt; --db-port &lt;port
                             
                         
                     
+                        
+                            
+                        
+                    
                 
             
         
@@ -206,7 +208,7 @@ $ $PATH_TO_CDS/engine database upgrade --db-host &lt;host&gt; --db-port &lt;port
         
         
         <i class="fa fa-bars" id="tocburger" onclick='$("#toc").toggle()'></i> 
-<a class="item" data-title="Hosting your own instance" href="https://ovh.github.io/cds/hosting/"></a>
+<a class="item" data-title="Hosting your own instance" href="../../hosting/"></a>
 
 	
 	
@@ -214,19 +216,19 @@ $ $PATH_TO_CDS/engine database upgrade --db-host &lt;host&gt; --db-port &lt;port
 	
 		
 			
-<a class="item" data-title="Requirements" href="https://ovh.github.io/cds/hosting/requirements/"></a>
+<a class="item" data-title="Requirements" href="../../hosting/requirements/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Understand the CDS µServices" href="https://ovh.github.io/cds/hosting/cds_services/"></a>
+<a class="item" data-title="Understand the CDS µServices" href="../../hosting/cds_services/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Download" href="https://ovh.github.io/cds/hosting/download/"></a>
+<a class="item" data-title="Download" href="../../hosting/download/"></a>
 
 		
 	
@@ -242,7 +244,7 @@ $ $PATH_TO_CDS/engine database upgrade --db-host &lt;host&gt; --db-port &lt;port
 	
 		
 			
-<a class="item" data-title="Run with binaries" href="https://ovh.github.io/cds/hosting/ready-to-run/from-binaries/"></a>
+<a class="item" data-title="Run with binaries" href="../../hosting/ready-to-run/from-binaries/"></a>
 
 		
 	
@@ -258,13 +260,13 @@ $ $PATH_TO_CDS/engine database upgrade --db-host &lt;host&gt; --db-port &lt;port
 	
 		
 			
-<a class="item" data-title="Docker Compose" href="https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/docker-compose/"></a>
+<a class="item" data-title="Docker Compose" href="../../hosting/ready-to-run/docker-compose/docker-compose/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Docker Compose Full Tutorial" href="https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/full-example/"></a>
+<a class="item" data-title="Docker Compose Full Tutorial" href="../../hosting/ready-to-run/docker-compose/full-example/"></a>
 
 		
 	
@@ -282,31 +284,49 @@ $ $PATH_TO_CDS/engine database upgrade --db-host &lt;host&gt; --db-port &lt;port
 	
 		
 			
-<a class="item" data-title="Configuration" href="https://ovh.github.io/cds/hosting/configuration/"></a>
+<a class="item" data-title="Configuration" href="../../hosting/configuration/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Database Management" href="https://ovh.github.io/cds/hosting/database/"></a>
+<a class="item" data-title="Database Management" href="../../hosting/database/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Monitoring" href="https://ovh.github.io/cds/hosting/monitoring/"></a>
+<a class="item" data-title="Monitoring" href="../../hosting/monitoring/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Upgrade your CDS Instance" href="https://ovh.github.io/cds/hosting/upgrade/"></a>
+<div class="item" data-title="Upgrade your CDS Instance">
+	<div class="container">
+		
+		<a class="item" data-title="Upgrade your CDS Instance" href="../../hosting/upgrade/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Migrate 0.48.0" href="../../hosting/upgrade/migrate_0.48.0/"></a>
+
+		
+	
+
+	</div>
+</div>
 
 		
 	
 		
 			
-<a class="item" data-title="User Authentication" href="https://ovh.github.io/cds/hosting/user_authentication/"></a>
+<a class="item" data-title="User Authentication" href="../../hosting/user_authentication/"></a>
 
 		
 	
@@ -327,90 +347,57 @@ $ $PATH_TO_CDS/engine database upgrade --db-host &lt;host&gt; --db-port &lt;port
 
 
 <nav id="TableOfContents">
-<ul>
-<li>
-<ul>
-<li><a href="#start-cds-with-local-configuration-file">Start CDS with local configuration file</a></li>
-<li><a href="#start-cds-with-consul">Start CDS with Consul</a></li>
-<li><a href="#start-cds-with-vault">Start CDS with Vault</a></li>
-</ul></li>
-</ul>
+  <ul>
+    <li><a href="#start-cds-with-local-configuration-file">Start CDS with local configuration file</a></li>
+    <li><a href="#start-cds-with-consul">Start CDS with Consul</a></li>
+    <li><a href="#start-cds-with-vault">Start CDS with Vault</a></li>
+  </ul>
 </nav>
 
-
-
 <p>The toml configuration can be provided by a file, via <a href="https://www.consul.io">consul k/v store</a> or via <a href="https://www.vaultproject.io/">vault</a>.</p>
-
 <h2 id="start-cds-with-local-configuration-file">Start CDS with local configuration file</h2>
-
 <p>You can also generate a configuration file template with the following command.</p>
-
-<pre><code class="language-bash">$ $PATH_TO_CDS/engine config new &gt; my_conf_file.toml
-</code></pre>
-
-<p>Edit this file.</p>
-
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ $PATH_TO_CDS/engine config new &gt; my_conf_file.toml
+</code></pre></div><p>Edit this file.</p>
 <p>Check your configuration file with</p>
-
-<pre><code class="language-bash">$ $PATH_TO_CDS/engine config check my_conf_file.toml
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ $PATH_TO_CDS/engine config check my_conf_file.toml
 Reading configuration file my_new_file.toml
 Configuration file OK
-</code></pre>
-
-<p>Create your database relations</p>
-
-<pre><code class="language-bash">$ $PATH_TO_CDS/engine database upgrade --db-host &lt;host&gt; --db-port &lt;port&gt; --db-user &lt;user&gt; --db-password &lt;password&gt; --db-name &lt;database&gt; --migrate-dir $PATH_TO_CDS/engine/sql --limit 0
-</code></pre>
-
-<p>Download workers binaries</p>
-
-<pre><code class="language-bash">$ $PATH_TO_CDS/engine download workers --config my_conf_file.toml
+</code></pre></div><p>Create your database relations</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ $PATH_TO_CDS/engine database upgrade --db-host &lt;host&gt; --db-port &lt;port&gt; --db-user &lt;user&gt; --db-password &lt;password&gt; --db-name &lt;database&gt; --db-schema<span style="color:#f92672">=</span>public --migrate-dir $PATH_TO_CDS/engine/sql/api --limit <span style="color:#ae81ff">0</span>
+$ PGPASSWORD<span style="color:#f92672">=</span>&lt;password&gt; psql -h &lt;host&gt; -p &lt;port&gt; -U &lt;user&gt; -d &lt;database&gt; -c <span style="color:#e6db74">&#34;CREATE SCHEMA IF NOT EXISTS cdn AUTHORIZATION &lt;user&gt;;&#34;</span>
+$ $PATH_TO_CDS/engine database upgrade --db-host &lt;host&gt; --db-port &lt;port&gt; --db-user &lt;user&gt; --db-password &lt;password&gt; --db-name &lt;database&gt; --db-schema<span style="color:#f92672">=</span>cdn --migrate-dir $PATH_TO_CDS/engine/sql/cdn --limit <span style="color:#ae81ff">0</span>
+</code></pre></div><p>Download workers binaries</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ $PATH_TO_CDS/engine download workers --config my_conf_file.toml
 Reading configuration file my_conf_file.toml
-Downloading worker for os windows and arch amd64 into /tmp/cds/download...
-Downloading worker for os windows and arch 386 into /tmp/cds/download...
+Downloading worker <span style="color:#66d9ef">for</span> os windows and arch amd64 into /tmp/cds/download...
+Downloading worker <span style="color:#66d9ef">for</span> os windows and arch <span style="color:#ae81ff">386</span> into /tmp/cds/download...
 ...
-</code></pre>
-
-<p>Run CDS</p>
-
-<pre><code class="language-bash">$ $PATH_TO_CDS/engine start api --config my_conf_file.toml
+</code></pre></div><p>Run CDS</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ $PATH_TO_CDS/engine start api --config my_conf_file.toml
 Reading configuration file my_new_file.toml
-2017/04/04 16:33:17 [NOTICE]   Starting CDS server...
+2017/04/04 16:33:17 <span style="color:#f92672">[</span>NOTICE<span style="color:#f92672">]</span>   Starting CDS server...
 ...
-</code></pre>
-
-<h2 id="start-cds-with-consul">Start CDS with Consul</h2>
-
+</code></pre></div><h2 id="start-cds-with-consul">Start CDS with Consul</h2>
 <p>Upload your <code>toml</code> configuration to consul</p>
-
-<pre><code class="language-bash">$ consul kv put cds/config.api.toml -
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ consul kv put cds/config.api.toml -
 &lt;PASTE YOUR CONFIGURATION&gt;
 &lt;ENDS WITH CTRL-D&gt;
 Success! Data written to: cds/config.api.toml
-</code></pre>
-
-<p>Run CDS</p>
-
-<pre><code class="language-bash">$ $PATH_TO_CDS/engine start api --remote-config localhost:8500 --remote-config-key cds/config.api.toml
+</code></pre></div><p>Run CDS</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ $PATH_TO_CDS/engine start api --remote-config localhost:8500 --remote-config-key cds/config.api.toml
 Reading configuration from localhost:8500
-2017/04/04 16:11:25 [NOTICE]   Starting CDS server...
+2017/04/04 16:11:25 <span style="color:#f92672">[</span>NOTICE<span style="color:#f92672">]</span>   Starting CDS server...
 ...
-</code></pre>
-
-<h2 id="start-cds-with-vault">Start CDS with Vault</h2>
-
+</code></pre></div><h2 id="start-cds-with-vault">Start CDS with Vault</h2>
 <p>You have to put your configuration in a TOML format like above with good values into a secret named <code>/secret/cds/conf</code> in your vault.
 For example if you use the vault CLI:</p>
-
-<pre><code class="language-bash">$ myConfig=`cat conf.toml`
-$ vault write secret/cds/conf data=$myConfig
-</code></pre>
-
-<pre><code class="language-bash">$ $PATH_TO_CDS/engine start api --vault-addr=http://myvault.com  --vault-token=XXXX
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ myConfig<span style="color:#f92672">=</span><span style="color:#e6db74">`</span>cat conf.toml<span style="color:#e6db74">`</span>
+$ vault write secret/cds/conf data<span style="color:#f92672">=</span>$myConfig
+</code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ $PATH_TO_CDS/engine start api --vault-addr<span style="color:#f92672">=</span>http://myvault.com  --vault-token<span style="color:#f92672">=</span>XXXX
 Reading configuration from vault @http://myvault.com
-2017/04/04 16:33:17 [NOTICE]   Starting CDS server...
-</code></pre>
-
+2017/04/04 16:33:17 <span style="color:#f92672">[</span>NOTICE<span style="color:#f92672">]</span>   Starting CDS server...
+</code></pre></div>
 
 
 

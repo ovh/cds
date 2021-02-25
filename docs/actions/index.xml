@@ -1,21 +1,17 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Actions on CDS - Continuous Delivery Service</title>
-    <link>https://ovh.github.io/cds/docs/actions/</link>
+    <link>/docs/actions/</link>
     <description>Recent content in Actions on CDS - Continuous Delivery Service</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language>
-    
-	<atom:link href="https://ovh.github.io/cds/docs/actions/index.xml" rel="self" type="application/rss+xml" />
-    
-    
+    <language>en-us</language><atom:link href="/docs/actions/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Artifact Download</title>
-      <link>https://ovh.github.io/cds/docs/actions/builtin-artifact-download/</link>
+      <link>/docs/actions/builtin-artifact-download/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/actions/builtin-artifact-download/</guid>
+      <guid>/docs/actions/builtin-artifact-download/</guid>
       <description>Artifact Download is a builtin action, you can&amp;rsquo;t modify it.
 This action can be used to retrieve an artifact previously uploaded by an Artifact Upload.
 Parameters  path: Path where artifacts will be downloaded. pattern: (optional) Empty: download all files. Otherwise, enter regexp pattern to choose file: (fileA|fileB). tag: Artifact are uploaded with a tag, generally {{.cds.version}}.  Requirements No Requirement
@@ -24,33 +20,122 @@ YAML example Example of a pipeline using Artifact Download action:</description>
     
     <item>
       <title>Artifact Upload</title>
-      <link>https://ovh.github.io/cds/docs/actions/builtin-artifact-upload/</link>
+      <link>/docs/actions/builtin-artifact-upload/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/actions/builtin-artifact-upload/</guid>
+      <guid>/docs/actions/builtin-artifact-upload/</guid>
       <description>Artifact Upload is a builtin action, you can&amp;rsquo;t modify it.
 This action can be used to upload artifacts in CDS. This is the recommended way to share files between pipelines or stages.
 Parameters  destination: (optional) Destination of this artifact. Use the name of integration attached on your project. path: Path of file to upload, example: ./src/yourFile.json. tag: Artifact will be uploaded with a tag, generally {{.cds.version}}.  Requirements No Requirement</description>
     </item>
     
     <item>
-      <title>CheckoutApplication</title>
-      <link>https://ovh.github.io/cds/docs/actions/builtin-checkoutapplication/</link>
+      <title>cds-docker-package</title>
+      <link>/docs/actions/cds-docker-package/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/actions/builtin-checkoutapplication/</guid>
+      <guid>/docs/actions/cds-docker-package/</guid>
+      <description>Build image and push it to docker repository
+Parameters  dockerOpts: Docker options, Enter &amp;ndash;no-cache &amp;ndash;pull if you want for example dockerRegistry: Docker Registry. Enter myregistry for build image myregistry/myimage:mytag dockerRegistryPassword: Docker Registry Password. Enter password to connect on your docker registry. dockerRegistryUsername: Docker Registry Username. Enter username to connect on your docker registry. dockerfileDirectory: Directory which contains your Dockerfile. imageName: Name of your docker image, without tag. Enter myimage for build image myregistry/myimage:mytag imageTag: Tag og your docker image.</description>
+    </item>
+    
+    <item>
+      <title>cds-go-build</title>
+      <link>/docs/actions/cds-go-build/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/actions/cds-go-build/</guid>
+      <description>Go Build: compile a go program
+Parameters  architecture: GOARCH artifactUpload: Upload Binary as CDS Artifact binary: Binary name: Put foo for go build -o foo cgoDisabled: detectRaceCondition: Enable data race detection. It&amp;rsquo;s flag -race flags: flags for go build. Put -ldflags &amp;ldquo;-X main.xyz=abc&amp;rdquo; for go build -ldflags &amp;ldquo;-X main.xyz=abc&amp;rdquo; os: GOOS package: go package to compile. Put host.ext/foo/bar for go build host.ext/foo/bar preRun: Pre-command. Example: export CGO_ENABLED=0 runGoGet: Run go get -u before go build  Requirements  bash: type: binary Value: bash go: type: binary Value: go  More documentation on GitHub</description>
+    </item>
+    
+    <item>
+      <title>cds-nexus-upload</title>
+      <link>/docs/actions/cds-nexus-upload/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/actions/cds-nexus-upload/</guid>
+      <description>Upload file on Nexus
+Parameters  artifactId: Artifact id of the artifact extension: Extension of the artifact files: Regex of files you want to upload groupId: Group id of the artifact login: Login for nexus packaging: Packaging type of the artifact password: Password for nexus repository: Nexus repository that the artifact is contained in url: Nexus URL version: Version of the artifact. Supports resolving of &amp;lsquo;LATEST&amp;rsquo;, &amp;lsquo;RELEASE&amp;rsquo; and snapshot versions (&amp;lsquo;1.</description>
+    </item>
+    
+    <item>
+      <title>cds-perl-test</title>
+      <link>/docs/actions/cds-perl-test/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/actions/cds-perl-test/</guid>
+      <description>Parameters  perllib: PERL_LIB, added to $PERL5LIB proveOptions: Options passed to prove testDirectory:  Requirements  bash: type: binary Value: bash perl: type: binary Value: perl prove: type: binary Value: prove  More documentation on GitHub</description>
+    </item>
+    
+    <item>
+      <title>cds-publish-ovh-metrics</title>
+      <link>/docs/actions/cds-publish-ovh-metrics/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/actions/cds-publish-ovh-metrics/</guid>
+      <description>Publish a metric on OVH Metrics. See https://www.ovh.com/fr/data-platforms/metrics/ and doc on https://docs.ovh.com/gb/en/cloud/metrics/
+Parameters  file: Metrics file to push (optional) See: http://www.warp10.io/apis/ingress/ labels: Labels of your metric (one K/V per line separated by a space) name: Name of you metric (optional) region: Metrics region token: Metrics write token value: Value of your metric (T=true) See: http://www.warp10.io/apis/ingress/  Requirements  bash: type: binary Value: bash curl: type: binary Value: curl  More documentation on GitHub</description>
+    </item>
+    
+    <item>
+      <title>cds-python-pylint</title>
+      <link>/docs/actions/cds-python-pylint/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/actions/cds-python-pylint/</guid>
+      <description>Run pylint. By default, each pylint recommendation will be displayed as a Junit test. The short errors are fully contained inside the test title, an arrow (-&amp;gt;) will be present if a part of the recommendation is displayed in the test body.
+Parameters  extra_options: Extra options to pass during pylint invocation. ignore: List of ignored files / directory (base name, not path), separated by a ; module_path: List of modules paths (absolute or relative) to launch pylint into, separated by a ;.</description>
+    </item>
+    
+    <item>
+      <title>cds-sonar-scanner</title>
+      <link>/docs/actions/cds-sonar-scanner/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/actions/cds-sonar-scanner/</guid>
+      <description>Run Sonar analysis. You must have a file sonar-project.properties in your source directory.
+Parameters  sonar-project.properties: sonar-project.properties file sonarBranch: The Sonar branch (e.g. master) sonarDownloadURL: The download URL of Sonar CLI sonarPassword: The Sonar server&amp;rsquo;s password sonarURL: The URL of the Sonar server sonarUsername: The Sonar server&amp;rsquo;s username sonarVersion: SonarScanner&amp;rsquo;s version to use workspace: The directory where your project is (e.g. /go/src/github.com/ovh/cds)  Requirements  bash: type: binary Value: bash plugin-archive: type: plugin Value: plugin-archive plugin-download: type: plugin Value: plugin-download  More documentation on GitHub</description>
+    </item>
+    
+    <item>
+      <title>cds-split-download</title>
+      <link>/docs/actions/cds-split-download/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/actions/cds-split-download/</guid>
+      <description>Download Artifacts which were uploaded using CDS_SplitUploadArtifact action.
+Parameters  destinationFile: Destination File to save the file. (Mandatory). (like dist.tar.gz) pattern: Prefix pattern to identify files to be downloaded. (Mandatory). (like bigfile-*) prefixHandle: Prefix of the Artifacts uploaded. (Mandatory). tag: Tag to identify uploaded artifacts. Default tag value is CDS run version number. (Optional)  Requirements  bash: type: binary Value: bash  More documentation on GitHub</description>
+    </item>
+    
+    <item>
+      <title>cds-split-upload</title>
+      <link>/docs/actions/cds-split-upload/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/actions/cds-split-upload/</guid>
+      <description>Split and Upload Artifact with size greater than 500 MB.
+Parameters  numericSuffixes: Use numeric suffixes instead of alphabetic. Default suffix is set to be Numeric. (Optional) prefixHandle: Prefix to be added to destination files after split. (Mandatory) sourceFile: Artifact File to be split and uploaded. (Mandatory). splitSize: Size of each split files. Default size is 200MB. (Optional) tag: Tag to identify uploaded artifacts. Default tag value is CDS run version number.</description>
+    </item>
+    
+    <item>
+      <title>CheckoutApplication</title>
+      <link>/docs/actions/builtin-checkoutapplication/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/actions/builtin-checkoutapplication/</guid>
       <description>CheckoutApplication is a builtin action, you can&amp;rsquo;t modify it.
 CDS Builtin Action. Checkout a repository into a new directory.
 This action use the configuration from application vcs strategy to git clone the repository. The clone will be done with a depth of 50 and with submodules. If you want to modify theses options, you have to use gitClone action.
-Parameters  directory: The name of a directory to clone into.</description>
+Parameters  directory: The name of a directory to clone into.  Requirements  git: type: binary Value: git  YAML example Example of a pipeline using CheckoutApplication action:</description>
     </item>
     
     <item>
       <title>Coverage</title>
-      <link>https://ovh.github.io/cds/docs/actions/builtin-coverage/</link>
+      <link>/docs/actions/builtin-coverage/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/actions/builtin-coverage/</guid>
+      <guid>/docs/actions/builtin-coverage/</guid>
       <description>Coverage is a builtin action, you can&amp;rsquo;t modify it.
 CDS Builtin Action. Parse given file to extract coverage results.
 Coverage report will be linked to the application from the pipeline context. You will be able to see the coverage history in the application home page.
@@ -59,24 +144,24 @@ Parameters  format: Coverage report format. minimum: Minimum percentage of cover
     
     <item>
       <title>DeployApplication</title>
-      <link>https://ovh.github.io/cds/docs/actions/builtin-deployapplication/</link>
+      <link>/docs/actions/builtin-deployapplication/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/actions/builtin-deployapplication/</guid>
+      <guid>/docs/actions/builtin-deployapplication/</guid>
       <description>DeployApplication is a builtin action, you can&amp;rsquo;t modify it.
 Deploy an application, useful only if you have a Deployment Plaftorm associated to your current application.
 Parameters No Parameter
 Requirements No Requirement
 YAML example Example of a pipeline using DeployApplication action:
-version: v1.0 name: Pipeline1 stages: - Stage1 jobs: - job: Job1 stage: Stage1 steps: - deploy: &#39;{{.cds.application}}&#39;  Example  Add a deployment platform on your application.   Create a workflow, add a pipeline and an application linked to a platform.</description>
+version: v1.0 name: Pipeline1 stages: - Stage1 jobs: - job: Job1 stage: Stage1 steps: - deploy: &amp;#39;{{.cds.application}}&amp;#39; Example  Add a deployment platform on your application.   Create a workflow, add a pipeline and an application linked to a platform.</description>
     </item>
     
     <item>
       <title>GitClone</title>
-      <link>https://ovh.github.io/cds/docs/actions/builtin-gitclone/</link>
+      <link>/docs/actions/builtin-gitclone/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/actions/builtin-gitclone/</guid>
+      <guid>/docs/actions/builtin-gitclone/</guid>
       <description>GitClone is a builtin action, you can&amp;rsquo;t modify it.
 Clone a repository into a new directory.
 Parameters  branch: (optional) Instead of pointing the newly created HEAD to the branch pointed to by the cloned repository’s HEAD, point to {{.git.branch}} branch instead. commit: (optional) Set the current branch head (HEAD) to the commit. depth: (optional) Clone with a depth of 50 by default. You can remove &amp;ndash;depth with the value &amp;lsquo;false&amp;rsquo;.</description>
@@ -84,10 +169,10 @@ Parameters  branch: (optional) Instead of pointing the newly created HEAD to the
     
     <item>
       <title>GitTag</title>
-      <link>https://ovh.github.io/cds/docs/actions/builtin-gittag/</link>
+      <link>/docs/actions/builtin-gittag/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/actions/builtin-gittag/</guid>
+      <guid>/docs/actions/builtin-gittag/</guid>
       <description>GitTag is a builtin action, you can&amp;rsquo;t modify it.
 Tag the current branch and push it. Use vcs config from your application. Semver used if fully compatible with https://semver.org.
 Parameters  path: (optional) The path to your git directory. prefix: (optional) Add a prefix for tag name. tagLevel: Set the level of the tag. Must be &amp;lsquo;major&amp;rsquo; or &amp;lsquo;minor&amp;rsquo; or &amp;lsquo;patch&amp;rsquo;. tagMessage: (optional) Set a message for the tag. tagMetadata: (optional) Metadata of the tag.</description>
@@ -95,187 +180,63 @@ Parameters  path: (optional) The path to your git directory. prefix: (optional) 
     
     <item>
       <title>JUnit</title>
-      <link>https://ovh.github.io/cds/docs/actions/builtin-junit/</link>
+      <link>/docs/actions/builtin-junit/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/actions/builtin-junit/</guid>
-      <description> JUnit is a builtin action, you can&amp;rsquo;t modify it.
+      <guid>/docs/actions/builtin-junit/</guid>
+      <description>JUnit is a builtin action, you can&amp;rsquo;t modify it.
 This action parses a given Junit formatted XML file to extract its test results.
 Parameters  path: Path to junit xml file.  Requirements No Requirement
 YAML example Example of a pipeline using JUnit action:
-version: v1.0 name: Pipeline1 stages: - Stage1 jobs: - job: Job1 stage: Stage1 steps: - jUnitReport: &#39;{{.cds.workspace}}/report.xml&#39;  Example  Job Configuration.   Launch pipeline, check XUnit Result   And view details:  </description>
-    </item>
-    
-    <item>
-      <title>Release</title>
-      <link>https://ovh.github.io/cds/docs/actions/builtin-release/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/docs/actions/builtin-release/</guid>
-      <description>Release is a builtin action, you can&amp;rsquo;t modify it.
-This action creates a release on the git repository linked to the application, if repository manager implements it.
-Parameters  artifacts: (optional) Set a list of artifacts, separate by &amp;lsquo;,&amp;rsquo;. You can also use regexp. releaseNote: (optional) Set a release note for the release. tag: Tag attached to the release. title: Set a title for the release.  Requirements No Requirement</description>
-    </item>
-    
-    <item>
-      <title>Script</title>
-      <link>https://ovh.github.io/cds/docs/actions/builtin-script/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/docs/actions/builtin-script/</guid>
-      <description>Script is a builtin action, you can&amp;rsquo;t modify it.
-This action executes a given script with a given interpreter.
-Parameters  script: Content of your script. You can put #!/bin/bash, or #!/bin/perl at first line. Make sure that the binary used is in the pre-requisites of action.  Requirements No Requirement
-YAML example Example of a pipeline using Script action:
-version: v1.0 name: Pipeline1 stages: - Stage1 jobs: - job: Job1 stage: Stage1 steps: - script: - &#39;#!</description>
-    </item>
-    
-    <item>
-      <title>Serve Static Files</title>
-      <link>https://ovh.github.io/cds/docs/actions/builtin-serve-static-files/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/docs/actions/builtin-serve-static-files/</guid>
-      <description>Serve Static Files is a builtin action, you can&amp;rsquo;t modify it.
-This action can be used to upload static files and serve them. For example your HTML report about coverage, tests, performances, &amp;hellip;
-Parameters  destination: (optional) Destination of uploading. Use the name of integration attached on your project. entrypoint: (optional) Filename (and not path) for the entrypoint when serving static files (default: if empty it would be index.html). name: Name to display in CDS UI and identify your static files.</description>
-    </item>
-    
-    <item>
-      <title>cds-docker-package</title>
-      <link>https://ovh.github.io/cds/docs/actions/cds-docker-package/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/docs/actions/cds-docker-package/</guid>
-      <description>Build image and push it to docker repository
-Parameters  dockerOpts: Docker options, Enter &amp;ndash;no-cache &amp;ndash;pull if you want for example dockerRegistry: Docker Registry. Enter myregistry for build image myregistry/myimage:mytag dockerRegistryPassword: Docker Registry Password. Enter password to connect on your docker registry. dockerRegistryUsername: Docker Registry Username. Enter username to connect on your docker registry. dockerfileDirectory: Directory which contains your Dockerfile. imageName: Name of your docker image, without tag. Enter myimage for build image myregistry/myimage:mytag imageTag: Tag og your docker image.</description>
-    </item>
-    
-    <item>
-      <title>cds-go-build</title>
-      <link>https://ovh.github.io/cds/docs/actions/cds-go-build/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/docs/actions/cds-go-build/</guid>
-      <description>Go Build: compile a go program
-Parameters  architecture: GOARCH artifactUpload: Upload Binary as CDS Artifact binary: Binary name: Put foo for go build -o foo cgoDisabled: detectRaceCondition: Enable data race detection. It&amp;rsquo;s flag -race flags: flags for go build. Put -ldflags &amp;ldquo;-X main.xyz=abc&amp;rdquo; for go build -ldflags &amp;ldquo;-X main.xyz=abc&amp;rdquo; os: GOOS package: go package to compile. Put host.ext/foo/bar for go build host.ext/foo/bar preRun: Pre-command. Example: export CGO_ENABLED=0 runGoGet: Run go get -u before go build  Requirements  bash: type: binary Value: bash go: type: binary Value: go  More documentation on GitHub</description>
-    </item>
-    
-    <item>
-      <title>cds-nexus-upload</title>
-      <link>https://ovh.github.io/cds/docs/actions/cds-nexus-upload/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/docs/actions/cds-nexus-upload/</guid>
-      <description>Upload file on Nexus
-Parameters  artifactId: Artifact id of the artifact extension: Extension of the artifact files: Regex of files you want to upload groupId: Group id of the artifact login: Login for nexus packaging: Packaging type of the artifact password: Password for nexus repository: Nexus repository that the artifact is contained in url: Nexus URL version: Version of the artifact. Supports resolving of &amp;lsquo;LATEST&amp;rsquo;, &amp;lsquo;RELEASE&amp;rsquo; and snapshot versions (&amp;lsquo;1.</description>
-    </item>
-    
-    <item>
-      <title>cds-perl-test</title>
-      <link>https://ovh.github.io/cds/docs/actions/cds-perl-test/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/docs/actions/cds-perl-test/</guid>
-      <description>Parameters  perllib: PERL_LIB, added to $PERL5LIB proveOptions: Options passed to prove testDirectory:  Requirements  bash: type: binary Value: bash perl: type: binary Value: perl prove: type: binary Value: prove  More documentation on GitHub</description>
-    </item>
-    
-    <item>
-      <title>cds-publish-ovh-metrics</title>
-      <link>https://ovh.github.io/cds/docs/actions/cds-publish-ovh-metrics/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/docs/actions/cds-publish-ovh-metrics/</guid>
-      <description>Publish a metric on OVH Metrics. See https://www.ovh.com/fr/data-platforms/metrics/ and doc on https://docs.ovh.com/gb/en/cloud/metrics/
-Parameters  file: Metrics file to push (optional) See: http://www.warp10.io/apis/ingress/ labels: Labels of your metric (one K/V per line separated by a space) name: Name of you metric (optional) region: Metrics region token: Metrics write token value: Value of your metric (T=true) See: http://www.warp10.io/apis/ingress/  Requirements  bash: type: binary Value: bash curl: type: binary Value: curl  More documentation on GitHub</description>
-    </item>
-    
-    <item>
-      <title>cds-python-pylint</title>
-      <link>https://ovh.github.io/cds/docs/actions/cds-python-pylint/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/docs/actions/cds-python-pylint/</guid>
-      <description>Run pylint. By default, each pylint recommendation will be displayed as a Junit test. The short errors are fully contained inside the test title, an arrow (-&amp;gt;) will be present if a part of the recommendation is displayed in the test body.
-Parameters  extra_options: Extra options to pass during pylint invocation. ignore: List of ignored files / directory (base name, not path), separated by a ; module_path: List of modules paths (absolute or relative) to launch pylint into, separated by a ;.</description>
-    </item>
-    
-    <item>
-      <title>cds-sonar-scanner</title>
-      <link>https://ovh.github.io/cds/docs/actions/cds-sonar-scanner/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/docs/actions/cds-sonar-scanner/</guid>
-      <description>Run Sonar analysis. You must have a file sonar-project.properties in your source directory.
-Parameters  sonar-project.properties: sonar-project.properties file sonarBranch: The Sonar branch (e.g. master) sonarDownloadURL: The download URL of Sonar CLI sonarPassword: The Sonar server&amp;rsquo;s password sonarURL: The URL of the Sonar server sonarUsername: The Sonar server&amp;rsquo;s username sonarVersion: SonarScanner&amp;rsquo;s version to use workspace: The directory where your project is (e.g. /go/src/github.com/ovh/cds)  Requirements  bash: type: binary Value: bash plugin-archive: type: plugin Value: plugin-archive plugin-download: type: plugin Value: plugin-download  More documentation on GitHub</description>
-    </item>
-    
-    <item>
-      <title>cds-split-download</title>
-      <link>https://ovh.github.io/cds/docs/actions/cds-split-download/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/docs/actions/cds-split-download/</guid>
-      <description>Download Artifacts which were uploaded using CDS_SplitUploadArtifact action.
-Parameters  destinationFile: Destination File to save the file. (Mandatory). (like dist.tar.gz) pattern: Prefix pattern to identify files to be downloaded. (Mandatory). (like bigfile-*) prefixHandle: Prefix of the Artifacts uploaded. (Mandatory). tag: Tag to identify uploaded artifacts. Default tag value is CDS run version number. (Optional)  Requirements  bash: type: binary Value: bash  More documentation on GitHub</description>
-    </item>
-    
-    <item>
-      <title>cds-split-upload</title>
-      <link>https://ovh.github.io/cds/docs/actions/cds-split-upload/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/docs/actions/cds-split-upload/</guid>
-      <description>Split and Upload Artifact with size greater than 500 MB.
-Parameters  numericSuffixes: Use numeric suffixes instead of alphabetic. Default suffix is set to be Numeric. (Optional) prefixHandle: Prefix to be added to destination files after split. (Mandatory) sourceFile: Artifact File to be split and uploaded. (Mandatory). splitSize: Size of each split files. Default size is 200MB. (Optional) tag: Tag to identify uploaded artifacts. Default tag value is CDS run version number.</description>
+version: v1.0 name: Pipeline1 stages: - Stage1 jobs: - job: Job1 stage: Stage1 steps: - jUnitReport: &amp;#39;{{.cds.workspace}}/report.xml&amp;#39; Example  Job Configuration.   Launch pipeline, check XUnit Result   And view details:  </description>
     </item>
     
     <item>
       <title>plugin-archive</title>
-      <link>https://ovh.github.io/cds/docs/actions/plugin-archive/</link>
+      <link>/docs/actions/plugin-archive/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/actions/plugin-archive/</guid>
-      <description> This is a plugin to compress or uncompress an archive. Supported formats: .zip, .tar, .tar.gz, .tar.bz2, .tar.xz, .tar.lz4, .tar.sz, and .rar (extract-only)
+      <guid>/docs/actions/plugin-archive/</guid>
+      <description>This is a plugin to compress or uncompress an archive. Supported formats: .zip, .tar, .tar.gz, .tar.bz2, .tar.xz, .tar.lz4, .tar.sz, and .rar (extract-only)
 Parameters  action: &amp;ldquo;compress&amp;rdquo; or &amp;ldquo;uncompress&amp;rdquo; an archive destination: The destination path source: The source path  </description>
     </item>
     
     <item>
       <title>plugin-clair</title>
-      <link>https://ovh.github.io/cds/docs/actions/plugin-clair/</link>
+      <link>/docs/actions/plugin-clair/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/actions/plugin-clair/</guid>
-      <description> This is a plugin to run clair analysis
+      <guid>/docs/actions/plugin-clair/</guid>
+      <description>This is a plugin to run clair analysis
 Parameters  image: Image to analyze  </description>
     </item>
     
     <item>
       <title>plugin-download</title>
-      <link>https://ovh.github.io/cds/docs/actions/plugin-download/</link>
+      <link>/docs/actions/plugin-download/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/actions/plugin-download/</guid>
-      <description> This is a plugin to download file from URL
+      <guid>/docs/actions/plugin-download/</guid>
+      <description>This is a plugin to download file from URL
 Parameters  filepath: The destination of your file to be copied headers: Specific headers to add to your request (&amp;ldquo;headerName&amp;rdquo;=&amp;ldquo;value&amp;rdquo; newline separated list) url: The url of your file  </description>
     </item>
     
     <item>
       <title>plugin-group-tmpl</title>
-      <link>https://ovh.github.io/cds/docs/actions/plugin-group-tmpl/</link>
+      <link>/docs/actions/plugin-group-tmpl/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/actions/plugin-group-tmpl/</guid>
-      <description> This actions helps you generate a marathon group application file. It takes a config template file as a single application, and creates the group with the variables specified for each application in the applications files. Check documentation on text/template for more information https://golang.org/pkg/text/template.
+      <guid>/docs/actions/plugin-group-tmpl/</guid>
+      <description>This actions helps you generate a marathon group application file. It takes a config template file as a single application, and creates the group with the variables specified for each application in the applications files. Check documentation on text/template for more information https://golang.org/pkg/text/template.
 Parameters  applications: Applications file variables config: Template file to use output: Output path for generated file (default to .out or just trimming .tpl extension)  </description>
     </item>
     
     <item>
       <title>plugin-kafka-publish</title>
-      <link>https://ovh.github.io/cds/docs/actions/plugin-kafka-publish/</link>
+      <link>/docs/actions/plugin-kafka-publish/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/actions/plugin-kafka-publish/</guid>
+      <guid>/docs/actions/plugin-kafka-publish/</guid>
       <description>This action helps you to send data through Kafka across every network.
 You are able to send a custom &amp;ldquo;message&amp;rdquo; file and all the artifacts you want: there is no file size limit. To improve security, you can encrypt the files content with a GPG Key. From the consumer side, you will need to decrypt files content with you GPG private key and your passphrase.
 This action is a CDS Plugin packaged as a single binary file you can download and use to listen and consume data coming from CDS through Kafka.</description>
@@ -283,10 +244,10 @@ This action is a CDS Plugin packaged as a single binary file you can download an
     
     <item>
       <title>plugin-marathon</title>
-      <link>https://ovh.github.io/cds/docs/actions/plugin-marathon/</link>
+      <link>/docs/actions/plugin-marathon/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/actions/plugin-marathon/</guid>
+      <guid>/docs/actions/plugin-marathon/</guid>
       <description>This action helps you to deploy on Mesos/Marathon. Provide a marathon.json file to configure deployment.
 Your marathon.json file can be templated with cds variables &amp;ldquo;{{.cds.variables}}&amp;rdquo;. Enable &amp;ldquo;waitForDeployment&amp;rdquo; option to ensure deployment is successful.
 Parameters  configuration: Marathon application configuration file (json format) insecureSkipVerify: Skip SSL Verify if you want to use self-signed certificate password: Marathon Password (please use project, application or environment variables) timeout: Marathon deployment timeout (seconds). Used only if &amp;ldquo;waitForDeployment&amp;rdquo; is true.</description>
@@ -294,44 +255,79 @@ Parameters  configuration: Marathon application configuration file (json format)
     
     <item>
       <title>plugin-npm-audit-parser</title>
-      <link>https://ovh.github.io/cds/docs/actions/plugin-npm-audit-parser/</link>
+      <link>/docs/actions/plugin-npm-audit-parser/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/actions/plugin-npm-audit-parser/</guid>
-      <description> This is a plugin to parse npm audit report
+      <guid>/docs/actions/plugin-npm-audit-parser/</guid>
+      <description>This is a plugin to parse npm audit report
 Parameters  file: Path to audit file (generally generated by npm audit &amp;ndash;json &amp;gt;{{.cds.workspace}}/audit.json for example)  </description>
     </item>
     
     <item>
       <title>plugin-ssh-cmd</title>
-      <link>https://ovh.github.io/cds/docs/actions/plugin-ssh-cmd/</link>
+      <link>/docs/actions/plugin-ssh-cmd/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/actions/plugin-ssh-cmd/</guid>
-      <description> This plugin helps you to run cmd on remote server over ssh.
+      <guid>/docs/actions/plugin-ssh-cmd/</guid>
+      <description>This plugin helps you to run cmd on remote server over ssh.
 Parameters  command: Command commandTimeout: Command Timeout (seconds) hostnames: Hostnames (comma separated values) privateKey: SSH RSA private key timeout: Timeout (seconds) username: Username  </description>
     </item>
     
     <item>
       <title>plugin-tmpl</title>
-      <link>https://ovh.github.io/cds/docs/actions/plugin-tmpl/</link>
+      <link>/docs/actions/plugin-tmpl/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/actions/plugin-tmpl/</guid>
-      <description> This action helps you generates a file using a template file and text/template golang package.
+      <guid>/docs/actions/plugin-tmpl/</guid>
+      <description>This action helps you generates a file using a template file and text/template golang package.
 Check documentation on text/template for more information https://golang.org/pkg/text/template.
 Parameters  file: Template file to use output: Output path for generated file (default to .out or just trimming .tpl extension) params: Parameters to pass on the template file (key=value newline separated list)  </description>
     </item>
     
     <item>
       <title>plugin-venom</title>
-      <link>https://ovh.github.io/cds/docs/actions/plugin-venom/</link>
+      <link>/docs/actions/plugin-venom/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/actions/plugin-venom/</guid>
+      <guid>/docs/actions/plugin-venom/</guid>
       <description>This plugin helps you to run venom. Venom: https://github.com/ovh/venom.
 Add an extra step of type junit on your job to view tests results on CDS UI.
 Parameters  exclude: Exclude some files, one file per line loglevel: Log Level: debug, info, warn or error output: Directory where output xunit result file parallel: Launch Test Suites in parallel. Enter here number of routines path: Path containers yml venom files. Format: adirectory/, .</description>
+    </item>
+    
+    <item>
+      <title>Release</title>
+      <link>/docs/actions/builtin-release/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/actions/builtin-release/</guid>
+      <description>Release is a builtin action, you can&amp;rsquo;t modify it.
+This action creates a release on the git repository linked to the application, if repository manager implements it.
+Parameters  artifacts: (optional) Set a list of artifacts, separate by &amp;lsquo;,&amp;rsquo;. You can also use regexp. releaseNote: (optional) Set a release note for the release. tag: Tag attached to the release. title: Set a title for the release.  Requirements No Requirement</description>
+    </item>
+    
+    <item>
+      <title>Script</title>
+      <link>/docs/actions/builtin-script/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/actions/builtin-script/</guid>
+      <description>Script is a builtin action, you can&amp;rsquo;t modify it.
+This action executes a given script with a given interpreter.
+Parameters  script: Content of your script. You can put #!/bin/bash, or #!/bin/perl at first line. Make sure that the binary used is in the pre-requisites of action.  Requirements No Requirement
+YAML example Example of a pipeline using Script action:
+version: v1.0 name: Pipeline1 stages: - Stage1 jobs: - job: Job1 stage: Stage1 steps: - script: - &amp;#39;#!</description>
+    </item>
+    
+    <item>
+      <title>Serve Static Files</title>
+      <link>/docs/actions/builtin-serve-static-files/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/actions/builtin-serve-static-files/</guid>
+      <description>Serve Static Files is a builtin action, you can&amp;rsquo;t modify it.
+This action can be used to upload static files and serve them. For example your HTML report about coverage, tests, performances, &amp;hellip;
+Parameters  destination: (optional) Destination of uploading. Use the name of integration attached on your project. entrypoint: (optional) Filename (and not path) for the entrypoint when serving static files (default: if empty it would be index.html). name: Name to display in CDS UI and identify your static files.</description>
     </item>
     
   </channel>

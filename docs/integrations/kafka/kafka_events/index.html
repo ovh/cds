@@ -4,69 +4,67 @@
 	<meta charset="utf-8">
 <title>Kafka CDS Events - CDS - Continuous Delivery Service</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="shortcut icon" type="image/png" href="https://ovh.github.io/cds/images/favicon.png">
+<link rel="shortcut icon" type="image/png" href="../../../../images/favicon.png">
 
 
 
 
-<link rel="stylesheet" href="https://ovh.github.io/cds/sass/styles.css" integrity="" media="screen">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/callouts.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/auto-complete.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/fontawesome.min.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/asciinema-player.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
+<link rel="stylesheet" href="../../../../sass/styles.css" integrity="" media="screen">
+<link rel="stylesheet" href="../../../../css/callouts.css">
+<link rel="stylesheet" href="../../../../css/auto-complete.css">
+<link rel="stylesheet" href="../../../../css/fontawesome.min.css">
+<link rel="stylesheet" href="../../../../css/asciinema-player.css">
+<link rel="stylesheet" href="../../../../css/solarized-light.css">
 
 <meta name="description"
     content="The Kafka Integration is a Self-Service integration that can be configured on a CDS Project. If you are a CDS Administrator, you can configue this integration to be available on all CDS Projects.
 An example of use case could be that you want to generate some svg badge. Then you can just add an event integration for your workflow and plug the badge microservice on this kafka topic.
-Configure with WebUI You can add a Kafka Integration on your CDS Project.">
+Notice that Kafka communication is done using SASL and TLS enable only.">
 <meta property="og:description"
     content="The Kafka Integration is a Self-Service integration that can be configured on a CDS Project. If you are a CDS Administrator, you can configue this integration to be available on all CDS Projects.
 An example of use case could be that you want to generate some svg badge. Then you can just add an event integration for your workflow and plug the badge microservice on this kafka topic.
-Configure with WebUI You can add a Kafka Integration on your CDS Project.">
+Notice that Kafka communication is done using SASL and TLS enable only.">
 <meta name="twitter:description"
     content="The Kafka Integration is a Self-Service integration that can be configured on a CDS Project. If you are a CDS Administrator, you can configue this integration to be available on all CDS Projects.
 An example of use case could be that you want to generate some svg badge. Then you can just add an event integration for your workflow and plug the badge microservice on this kafka topic.
-Configure with WebUI You can add a Kafka Integration on your CDS Project.">
-<meta property="og:url" content="https://ovh.github.io/cds/docs/integrations/kafka/kafka_events/">
+Notice that Kafka communication is done using SASL and TLS enable only.">
+<meta property="og:url" content="/docs/integrations/kafka/kafka_events/">
 <meta property="og:title" content="Kafka CDS Events">
 <meta name="twitter:title" content="Kafka CDS Events">
 <meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
 <meta property="og:image" content="/images/cds-transparent.png">
-<script type="text/javascript" src="https://ovh.github.io/cds/js/anchor-4.1.1.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-3.2.1.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-ui-1.12.1.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/bootstrap-3.3.7.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/highlight.pack.js"></script>
+<script type="text/javascript" src="../../../../js/anchor-4.1.1.min.js"></script>
+<script type="text/javascript" src="../../../../js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="../../../../js/jquery-ui-1.12.1.min.js"></script>
+<script type="text/javascript" src="../../../../js/bootstrap-3.3.7.min.js"></script>
+<script type="text/javascript" src="../../../../js/highlight.pack.js"></script>
 <script>
     hljs.initHighlightingOnLoad();
 
 </script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/script.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/lunr.min.js"></script>
-<script type="text/javascript">
-    var baseurl = "https:\/\/ovh.github.io\/cds";
+<script type="text/javascript" src="../../../../js/script.js"></script>
+<script type="text/javascript" src="../../../../js/lunr.min.js"></script>
+<a id="indexJSON" href="../../../../index.json"></a>
 
-</script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/auto-complete.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/search.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/asciinema-player.js"></script>
+<script type="text/javascript" src="../../../../js/auto-complete.js"></script>
+<script type="text/javascript" src="../../../../js/search.js"></script>
+<script type="text/javascript" src="../../../../js/asciinema-player.js"></script>
 
 	</head>
 	<body>
 		<section id="hero" class="light-text no-sub">
-			<a href="https://ovh.github.io/cds/" class="logo"></a>
+			<a href="../../../../" class="logo"></a>
 				<i id="tocburger" class="fa fa-bars" onclick='$("#toc").toggle()'></i><div class="nav-buttons" data-auto-burger="primary">
 				<ul class="global-nav">
 					
 					
-					<li><a href="https://ovh.github.io/cds/docs/" class="active">Documentation</a></li>
+					<li><a href="../../../../docs/" class="active">Documentation</a></li>
 					
-					<li><a href="https://ovh.github.io/cds/hosting/">Hosting your own instance</a></li>
+					<li><a href="../../../../hosting/">Hosting your own instance</a></li>
 					
-					<li><a href="https://ovh.github.io/cds/development/">CDS Developer Manual</a></li>
+					<li><a href="../../../../development/">CDS Developer Manual</a></li>
 					
-					<li><a href="https://ovh.github.io/cds/about/">About</a></li>
+					<li><a href="../../../../about/">About</a></li>
 					
 					<li><i class="fa fa-search" onclick='$("#searchbox").toggle(); $("#search-query").focus().select()'></i></li>
 					<li>
@@ -96,23 +94,23 @@ Configure with WebUI You can add a Kafka Integration on your CDS Project.">
 			
 			
 			
-			<li><a href="https://ovh.github.io/cds/docs/">Home</a></li>
+			<li><a href="../../../../docs/">Home</a></li>
 			
 			
 				
-				<li><a href="https://ovh.github.io/cds/docs/concepts/">Concepts</a></li>
+				<li><a href="../../../../docs/concepts/">Concepts</a></li>
 			
 				
-				<li><a href="https://ovh.github.io/cds/docs/actions/">Actions</a></li>
+				<li><a href="../../../../docs/actions/">Actions</a></li>
 			
 				
-				<li><a href="https://ovh.github.io/cds/docs/components/">Components</a></li>
+				<li><a href="../../../../docs/components/">Components</a></li>
 			
 				
-				<li><a href="https://ovh.github.io/cds/docs/integrations/" class="menuSelected">Integrations</a></li>
+				<li><a href="../../../../docs/integrations/" class="menuSelected">Integrations</a></li>
 			
 				
-				<li><a href="https://ovh.github.io/cds/docs/tutorials/">Tutorials</a></li>
+				<li><a href="../../../../docs/tutorials/">Tutorials</a></li>
 			
 		</ul>
 		
@@ -184,6 +182,8 @@ Configure with WebUI You can add a Kafka Integration on your CDS Project.">
                     
                         
                     
+                        
+                    
                 
             
         
@@ -207,7 +207,7 @@ Configure with WebUI You can add a Kafka Integration on your CDS Project.">
         
         
         <i class="fa fa-bars" id="tocburger" onclick='$("#toc").toggle()'></i> 
-<a class="item" data-title="Integrations" href="https://ovh.github.io/cds/docs/integrations/"></a>
+<a class="item" data-title="Integrations" href="../../../../docs/integrations/"></a>
 
 	
 	
@@ -225,7 +225,7 @@ Configure with WebUI You can add a Kafka Integration on your CDS Project.">
 	
 		
 			
-<a class="item" data-title="AWS S3" href="https://ovh.github.io/cds/docs/integrations/aws/aws_s3/"></a>
+<a class="item" data-title="AWS S3" href="../../../../docs/integrations/aws/aws_s3/"></a>
 
 		
 	
@@ -237,25 +237,25 @@ Configure with WebUI You can add a Kafka Integration on your CDS Project.">
 	
 		
 			
-<a class="item" data-title="Bitbucket Cloud" href="https://ovh.github.io/cds/docs/integrations/bitbucketcloud/"></a>
+<a class="item" data-title="Bitbucket Cloud" href="../../../../docs/integrations/bitbucketcloud/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Bitbucket Server" href="https://ovh.github.io/cds/docs/integrations/bitbucket/"></a>
+<a class="item" data-title="Bitbucket Server" href="../../../../docs/integrations/bitbucket/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Docker Swarm" href="https://ovh.github.io/cds/docs/integrations/swarm/"></a>
+<a class="item" data-title="Docker Swarm" href="../../../../docs/integrations/swarm/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Gerrit Repository Manager" href="https://ovh.github.io/cds/docs/integrations/gerrit/"></a>
+<a class="item" data-title="Gerrit Repository Manager" href="../../../../docs/integrations/gerrit/"></a>
 
 		
 	
@@ -271,13 +271,13 @@ Configure with WebUI You can add a Kafka Integration on your CDS Project.">
 	
 		
 			
-<a class="item" data-title="GitHub Authentication" href="https://ovh.github.io/cds/docs/integrations/github/github_authentication/"></a>
+<a class="item" data-title="GitHub Authentication" href="../../../../docs/integrations/github/github_authentication/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="GitHub Repository Manager" href="https://ovh.github.io/cds/docs/integrations/github/github_repository_manager/"></a>
+<a class="item" data-title="GitHub Repository Manager" href="../../../../docs/integrations/github/github_repository_manager/"></a>
 
 		
 	
@@ -299,13 +299,13 @@ Configure with WebUI You can add a Kafka Integration on your CDS Project.">
 	
 		
 			
-<a class="item" data-title="GitLab Authentication" href="https://ovh.github.io/cds/docs/integrations/gitlab/gitlab_authentication/"></a>
+<a class="item" data-title="GitLab Authentication" href="../../../../docs/integrations/gitlab/gitlab_authentication/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="GitLab Repository Manager" href="https://ovh.github.io/cds/docs/integrations/gitlab/gitlab_repository_manager/"></a>
+<a class="item" data-title="GitLab Repository Manager" href="../../../../docs/integrations/gitlab/gitlab_repository_manager/"></a>
 
 		
 	
@@ -327,13 +327,13 @@ Configure with WebUI You can add a Kafka Integration on your CDS Project.">
 	
 		
 			
-<a class="item" data-title="Kafka CDS Events" href="https://ovh.github.io/cds/docs/integrations/kafka/kafka_events/"></a>
+<a class="item" data-title="Kafka CDS Events" href="../../../../docs/integrations/kafka/kafka_events/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Kafka Hooks" href="https://ovh.github.io/cds/docs/integrations/kafka/kafka_hooks/"></a>
+<a class="item" data-title="Kafka Hooks" href="../../../../docs/integrations/kafka/kafka_hooks/"></a>
 
 		
 	
@@ -355,13 +355,13 @@ Configure with WebUI You can add a Kafka Integration on your CDS Project.">
 	
 		
 			
-<a class="item" data-title="Kubernetes Compute" href="https://ovh.github.io/cds/docs/integrations/kubernetes/kubernetes_compute/"></a>
+<a class="item" data-title="Kubernetes Compute" href="../../../../docs/integrations/kubernetes/kubernetes_compute/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Kubernetes Deployment" href="https://ovh.github.io/cds/docs/integrations/kubernetes/kubernetes_deployment/"></a>
+<a class="item" data-title="Kubernetes Deployment" href="../../../../docs/integrations/kubernetes/kubernetes_deployment/"></a>
 
 		
 	
@@ -373,13 +373,19 @@ Configure with WebUI You can add a Kafka Integration on your CDS Project.">
 	
 		
 			
-<a class="item" data-title="LDAP Authentication" href="https://ovh.github.io/cds/docs/integrations/ldap/"></a>
+<a class="item" data-title="LDAP Authentication" href="../../../../docs/integrations/ldap/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Mesos/Marathon" href="https://ovh.github.io/cds/docs/integrations/marathon/"></a>
+<a class="item" data-title="Mesos/Marathon" href="../../../../docs/integrations/marathon/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="OpenID-Connect Authentication" href="../../../../docs/integrations/openid-connect/"></a>
 
 		
 	
@@ -395,13 +401,13 @@ Configure with WebUI You can add a Kafka Integration on your CDS Project.">
 	
 		
 			
-<a class="item" data-title="OpenStack Swift" href="https://ovh.github.io/cds/docs/integrations/openstack/openstack_swift/"></a>
+<a class="item" data-title="Openstack Compute" href="../../../../docs/integrations/openstack/openstack_compute/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Openstack Compute" href="https://ovh.github.io/cds/docs/integrations/openstack/openstack_compute/"></a>
+<a class="item" data-title="OpenStack Swift" href="../../../../docs/integrations/openstack/openstack_swift/"></a>
 
 		
 	
@@ -413,13 +419,13 @@ Configure with WebUI You can add a Kafka Integration on your CDS Project.">
 	
 		
 			
-<a class="item" data-title="RabbitMQ" href="https://ovh.github.io/cds/docs/integrations/rabbitmq/"></a>
+<a class="item" data-title="RabbitMQ" href="../../../../docs/integrations/rabbitmq/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="vSphere" href="https://ovh.github.io/cds/docs/integrations/vsphere/"></a>
+<a class="item" data-title="vSphere" href="../../../../docs/integrations/vsphere/"></a>
 
 		
 	
@@ -440,108 +446,111 @@ Configure with WebUI You can add a Kafka Integration on your CDS Project.">
 
 
 <nav id="TableOfContents">
-<ul>
-<li>
-<ul>
-<li><a href="#configure-with-webui">Configure with WebUI</a></li>
-<li><a href="#configure-with-cdsctl">Configure with cdsctl</a>
-<ul>
-<li><a href="#import-a-kafka-integration-on-your-cds-project">Import a Kafka Integration on your CDS Project</a></li>
-<li><a href="#create-a-public-kafka-integration-for-whole-cds-projects">Create a Public Kafka Integration for whole CDS Projects</a></li>
-<li><a href="#one-integration-two-use-case">One Integration, two use case</a></li>
-</ul></li>
-</ul></li>
-</ul>
+  <ul>
+    <li><a href="#configure-with-webui">Configure with WebUI</a></li>
+    <li><a href="#configure-with-cdsctl">Configure with cdsctl</a>
+      <ul>
+        <li><a href="#import-a-kafka-integration-on-your-cds-project">Import a Kafka Integration on your CDS Project</a></li>
+        <li><a href="#create-a-public-kafka-integration-for-whole-cds-projects">Create a Public Kafka Integration for whole CDS Projects</a></li>
+        <li><a href="#one-integration-two-use-case">One Integration, two use case</a></li>
+        <li><a href="#sasl--tls">SASL / TLS</a></li>
+        <li><a href="#kafka-version">Kafka Version</a></li>
+      </ul>
+    </li>
+  </ul>
 </nav>
-
-
 
 <p>The Kafka Integration is a Self-Service integration that can be configured on a CDS Project.
 If you are a CDS Administrator, you can configue this integration to be available on all CDS Projects.</p>
-
 <p>An example of use case could be that you want to generate some svg badge. Then you can just add an event
 integration for your workflow and plug the
-<a href="https://github.com/ovh/cds/tree/master/contrib/uservices/badge">badge microservice</a> on this kafka topic.</p>
-
+<a href="https://github.com/ovh/cds/tree/0.48.0/contrib/uservices/badge">badge microservice</a> on this kafka topic.</p>
+<p>Notice that Kafka communication is done using SASL and TLS enable only.</p>
 <h2 id="configure-with-webui">Configure with WebUI</h2>
-
 <p>You can add a Kafka Integration on your CDS Project.</p>
-
-<p><img src="../images/kafka-integration-webui.png" alt="Integration" /></p>
-
+<p><img src="../images/kafka-integration-webui.png" alt="Integration"></p>
 <h2 id="configure-with-cdsctl">Configure with cdsctl</h2>
-
 <h3 id="import-a-kafka-integration-on-your-cds-project">Import a Kafka Integration on your CDS Project</h3>
-
 <p>Create a file <code>project-configuration.yml</code>:</p>
-
-<pre><code class="language-yml">name: your-kafka-integration
-model:
-  name: Kafka
-  identifier: github.com/ovh/cds/integration/builtin/kafka
-  event: true
-config:
-  broker url:
-    value: n1.o1.your-broker:9093,n2.o1.n1.o1.your-broker:9093,n3.o1.n1.o1.your-broker:9093
-    type: string
-  password:
-    value: '**********'
-    type: password
-  username:
-    value: kafka-username
-    type: string
-</code></pre>
-
-<p>Import the integration on your CDS Project with:</p>
-
-<pre><code class="language-bash">cdsctl project integration import PROJECT_KEY project-configuration.yml
-</code></pre>
-
-<p>Then, as a standard user, you can add a <a href="https://ovh.github.io/cds/docs/concepts/workflow/hooks/kafka-hook/">Kafka Hook</a> on your workflow.</p>
-
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yml" data-lang="yml"><span style="color:#f92672">name</span>: <span style="color:#ae81ff">your-kafka-integration</span>
+<span style="color:#f92672">model</span>:
+  <span style="color:#f92672">name</span>: <span style="color:#ae81ff">Kafka</span>
+  <span style="color:#f92672">identifier</span>: <span style="color:#ae81ff">github.com/ovh/cds/integration/builtin/kafka</span>
+  <span style="color:#f92672">event</span>: <span style="color:#66d9ef">true</span>
+<span style="color:#f92672">config</span>:
+  <span style="color:#f92672">broker url</span>:
+    <span style="color:#f92672">value</span>: <span style="color:#ae81ff">n1.o1.your-broker:9093,n2.o1.n1.o1.your-broker:9093,n3.o1.n1.o1.your-broker:9093</span>
+    <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
+  <span style="color:#f92672">password</span>:
+    <span style="color:#f92672">value</span>: <span style="color:#e6db74">&#34;**********&#34;</span>
+    <span style="color:#f92672">type</span>: <span style="color:#ae81ff">password</span>
+  <span style="color:#f92672">username</span>:
+    <span style="color:#f92672">value</span>: <span style="color:#ae81ff">kafka-username</span>
+    <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
+  <span style="color:#f92672">topic</span>:
+    <span style="color:#f92672">value</span>: <span style="color:#ae81ff">your-topic</span>
+    <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
+  <span style="color:#f92672">version</span>:
+    <span style="color:#f92672">value</span>: <span style="color:#e6db74">&#34;2.1.1&#34;</span>
+    <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
+</code></pre></div><p>Import the integration on your CDS Project with:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">cdsctl project integration import PROJECT_KEY project-configuration.yml
+</code></pre></div><p>Then, as a standard user, you can add a <a href="../../../../docs/concepts/workflow/hooks/kafka-hook/">Kafka Hook</a> on your workflow.</p>
 <h3 id="create-a-public-kafka-integration-for-whole-cds-projects">Create a Public Kafka Integration for whole CDS Projects</h3>
-
 <p>You can also add a Kafka Integration with cdsctl. As a CDS Administrator,
 this allows you to propose a Public Kafka Integration, available on all CDS Projects.</p>
-
 <p>Create a file <code>public-configuration.yml</code>:</p>
-
-<pre><code class="language-yml">name: your-kafka-integration
-event: true
-public: true
-public_configurations:
-  name-of-integration:
-    &quot;broker url&quot;:
-      type: string
-      value: &quot;n1.o1.your-broker:9093,n2.o1.n1.o1.your-broker:9093,n3.o1.n1.o1.your-broker:9093&quot;
-    &quot;topic&quot;:
-      type: string
-      value: &quot;your-topic.events&quot;
-    &quot;username&quot;:
-      type: string
-      value: &quot;your-topic.cds-reader&quot;
-    &quot;password&quot;:
-      type: password
-      value: xxxxxxxx
-</code></pre>
-
-<p>Import the integration with :</p>
-
-<pre><code class="language-bash">cdsctl admin integration-model import public-configuration.yml
-</code></pre>
-
-<p>Then, as a standard user, you can add a <a href="https://ovh.github.io/cds/docs/concepts/workflow/hooks/kafka-hook/">Kafka Hook</a> on your workflow.</p>
-
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yml" data-lang="yml"><span style="color:#f92672">name</span>: <span style="color:#ae81ff">your-kafka-integration</span>
+<span style="color:#f92672">event</span>: <span style="color:#66d9ef">true</span>
+<span style="color:#f92672">public</span>: <span style="color:#66d9ef">true</span>
+<span style="color:#f92672">public_configurations</span>:
+  <span style="color:#f92672">name-of-integration</span>:
+    <span style="color:#e6db74">&#34;broker url&#34;</span>:
+      <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
+      <span style="color:#f92672">value</span>: <span style="color:#e6db74">&#34;n1.o1.your-broker:9093,n2.o1.n1.o1.your-broker:9093,n3.o1.n1.o1.your-broker:9093&#34;</span>
+    <span style="color:#e6db74">&#34;topic&#34;</span>:
+      <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
+      <span style="color:#f92672">value</span>: <span style="color:#e6db74">&#34;your-topic.events&#34;</span>
+    <span style="color:#e6db74">&#34;username&#34;</span>:
+      <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
+      <span style="color:#f92672">value</span>: <span style="color:#e6db74">&#34;your-topic.cds-reader&#34;</span>
+    <span style="color:#e6db74">&#34;password&#34;</span>:
+      <span style="color:#f92672">type</span>: <span style="color:#ae81ff">password</span>
+      <span style="color:#f92672">value</span>: <span style="color:#ae81ff">xxxxxxxx</span>
+</code></pre></div><p>Import the integration with :</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">cdsctl admin integration-model import public-configuration.yml
+</code></pre></div><p>Then, as a standard user, you can add a <a href="../../../../docs/concepts/workflow/hooks/kafka-hook/">Kafka Hook</a> on your workflow.</p>
 <h3 id="one-integration-two-use-case">One Integration, two use case</h3>
-
-<p>You can use an integration kafka for two use cases: <a href="https://ovh.github.io/cds/docs/integrations/kafka/kafka_events/">Event</a> and <a href="https://ovh.github.io/cds/docs/integrations/kafka/kafka_hooks/">Hooks</a>. Example of file <code>public-configuration.yml</code>:</p>
-
-<pre><code class="language-yml">name: your-kafka-integration
-event: true
-hook: true
-public: true
-...
-</code></pre>
+<p>You can use an integration kafka for two use cases: <a href="../../../../docs/integrations/kafka/kafka_events/">Event</a> and <a href="../../../../docs/integrations/kafka/kafka_hooks/">Hooks</a>. Example of file <code>public-configuration.yml</code>:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yml" data-lang="yml"><span style="color:#f92672">name</span>: <span style="color:#ae81ff">your-kafka-integration</span>
+<span style="color:#f92672">event</span>: <span style="color:#66d9ef">true</span>
+<span style="color:#f92672">hook</span>: <span style="color:#66d9ef">true</span>
+<span style="color:#f92672">public</span>: <span style="color:#66d9ef">true</span>
+</code></pre></div><h3 id="sasl--tls">SASL / TLS</h3>
+<p>For testing purpose only, you can disable TLS / SASL with the <code>disableTLS</code> and <code>disableSASL</code> attributes.</p>
+<p>Example of Public Integration with TLS and SASL disabled:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yml" data-lang="yml"><span style="color:#f92672">name</span>: <span style="color:#ae81ff">myPublicKafkaIntegration</span>
+<span style="color:#f92672">event</span>: <span style="color:#66d9ef">true</span>
+<span style="color:#f92672">public</span>: <span style="color:#66d9ef">true</span>
+<span style="color:#f92672">public_configurations</span>:
+  <span style="color:#f92672">myPublicKafkaIntegration</span>:
+    <span style="color:#e6db74">&#34;broker url&#34;</span>:
+      <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
+      <span style="color:#f92672">value</span>: <span style="color:#e6db74">&#34;localhost:9092&#34;</span>
+    <span style="color:#e6db74">&#34;topic&#34;</span>:
+      <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
+      <span style="color:#f92672">value</span>: <span style="color:#e6db74">&#34;test.eventspublic&#34;</span>
+    <span style="color:#e6db74">&#34;disableTLS&#34;</span>:
+      <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
+      <span style="color:#f92672">value</span>: <span style="color:#e6db74">&#34;true&#34;</span>
+    <span style="color:#e6db74">&#34;disableSASL&#34;</span>:
+      <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
+      <span style="color:#f92672">value</span>: <span style="color:#e6db74">&#34;true&#34;</span>
+    <span style="color:#f92672">version</span>:
+      <span style="color:#f92672">value</span>: <span style="color:#e6db74">&#34;2.1.1&#34;</span>
+      <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
+</code></pre></div><h3 id="kafka-version">Kafka Version</h3>
+<p>If the attribute version could be not defined, default value is <code>0.10.0.1</code></p>
 
 
 

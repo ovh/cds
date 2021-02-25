@@ -4,17 +4,17 @@
 	<meta charset="utf-8">
 <title>SDK - CDS - Continuous Delivery Service</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="shortcut icon" type="image/png" href="https://ovh.github.io/cds/images/favicon.png">
+<link rel="shortcut icon" type="image/png" href="../../images/favicon.png">
 
 
 
 
-<link rel="stylesheet" href="https://ovh.github.io/cds/sass/styles.css" integrity="" media="screen">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/callouts.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/auto-complete.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/fontawesome.min.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/asciinema-player.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
+<link rel="stylesheet" href="../../sass/styles.css" integrity="" media="screen">
+<link rel="stylesheet" href="../../css/callouts.css">
+<link rel="stylesheet" href="../../css/auto-complete.css">
+<link rel="stylesheet" href="../../css/fontawesome.min.css">
+<link rel="stylesheet" href="../../css/asciinema-player.css">
+<link rel="stylesheet" href="../../css/solarized-light.css">
 
 <meta name="description"
     content="">
@@ -22,45 +22,43 @@
     content="">
 <meta name="twitter:description"
     content="">
-<meta property="og:url" content="https://ovh.github.io/cds/development/sdk/">
+<meta property="og:url" content="/development/sdk/">
 <meta property="og:title" content="SDK">
 <meta name="twitter:title" content="SDK">
 <meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
 <meta property="og:image" content="/images/cds-transparent.png">
-<script type="text/javascript" src="https://ovh.github.io/cds/js/anchor-4.1.1.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-3.2.1.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-ui-1.12.1.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/bootstrap-3.3.7.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/highlight.pack.js"></script>
+<script type="text/javascript" src="../../js/anchor-4.1.1.min.js"></script>
+<script type="text/javascript" src="../../js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="../../js/jquery-ui-1.12.1.min.js"></script>
+<script type="text/javascript" src="../../js/bootstrap-3.3.7.min.js"></script>
+<script type="text/javascript" src="../../js/highlight.pack.js"></script>
 <script>
     hljs.initHighlightingOnLoad();
 
 </script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/script.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/lunr.min.js"></script>
-<script type="text/javascript">
-    var baseurl = "https:\/\/ovh.github.io\/cds";
+<script type="text/javascript" src="../../js/script.js"></script>
+<script type="text/javascript" src="../../js/lunr.min.js"></script>
+<a id="indexJSON" href="../../index.json"></a>
 
-</script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/auto-complete.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/search.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/asciinema-player.js"></script>
+<script type="text/javascript" src="../../js/auto-complete.js"></script>
+<script type="text/javascript" src="../../js/search.js"></script>
+<script type="text/javascript" src="../../js/asciinema-player.js"></script>
 
 	</head>
 	<body>
 		<section id="hero" class="light-text no-sub">
-			<a href="https://ovh.github.io/cds/" class="logo"></a>
+			<a href="../../" class="logo"></a>
 				<i id="tocburger" class="fa fa-bars" onclick='$("#toc").toggle()'></i><div class="nav-buttons" data-auto-burger="primary">
 				<ul class="global-nav">
 					
 					
-					<li><a href="https://ovh.github.io/cds/docs/">Documentation</a></li>
+					<li><a href="../../docs/">Documentation</a></li>
 					
-					<li><a href="https://ovh.github.io/cds/hosting/">Hosting your own instance</a></li>
+					<li><a href="../../hosting/">Hosting your own instance</a></li>
 					
-					<li><a href="https://ovh.github.io/cds/development/" class="active">CDS Developer Manual</a></li>
+					<li><a href="../../development/" class="active">CDS Developer Manual</a></li>
 					
-					<li><a href="https://ovh.github.io/cds/about/">About</a></li>
+					<li><a href="../../about/">About</a></li>
 					
 					<li><i class="fa fa-search" onclick='$("#searchbox").toggle(); $("#search-query").focus().select()'></i></li>
 					<li>
@@ -106,13 +104,13 @@
 			
 			
 				
-				<li><a href="https://ovh.github.io/cds/development/rest/">REST API</a></li>
+				<li><a href="../../development/rest/">REST API</a></li>
 			
 				
-				<li><a href="https://ovh.github.io/cds/development/sdk/" class="menuSelected">SDK</a></li>
+				<li><a href="../../development/sdk/" class="menuSelected">SDK</a></li>
 			
 				
-				<li><a href="https://ovh.github.io/cds/development/contribute/">Contributing</a></li>
+				<li><a href="../../development/contribute/">Contributing</a></li>
 			
 		</ul>
 		
@@ -171,6 +169,10 @@
                             
                         
                     
+                        
+                            
+                        
+                    
                 
             
         
@@ -201,7 +203,7 @@
         
         
         <i class="fa fa-bars" id="tocburger" onclick='$("#toc").toggle()'></i> 
-<a class="item" data-title="SDK" href="https://ovh.github.io/cds/development/sdk/"></a>
+<a class="item" data-title="SDK" href="../../development/sdk/"></a>
 
 	
 	
@@ -209,19 +211,19 @@
 	
 		
 			
-<a class="item" data-title="Token creation" href="https://ovh.github.io/cds/development/sdk/token/"></a>
+<a class="item" data-title="Token creation" href="../../development/sdk/token/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="SDK Golang" href="https://ovh.github.io/cds/development/sdk/golang/"></a>
+<a class="item" data-title="SDK Golang" href="../../development/sdk/golang/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="SDK Rust" href="https://ovh.github.io/cds/development/sdk/rust/"></a>
+<a class="item" data-title="SDK Rust" href="../../development/sdk/rust/"></a>
 
 		
 	
@@ -245,85 +247,66 @@
 
 
 <nav id="TableOfContents">
-<ul>
-<li>
-<ul>
-<li><a href="#generate-a-sign-in-token">Generate a sign-in token</a>
-<ul>
-<li><a href="#with-the-web-ui">With the WEB UI</a></li>
-<li><a href="#with-cds-command-line">With CDS command line</a></li>
-</ul></li>
-<li><a href="#generate-a-session-token">Generate a session token</a></li>
-</ul></li>
-</ul>
+  <ul>
+    <li><a href="#generate-a-sign-in-token">Generate a sign-in token</a>
+      <ul>
+        <li><a href="#with-the-web-ui">With the WEB UI</a></li>
+        <li><a href="#with-cds-command-line">With CDS command line</a></li>
+      </ul>
+    </li>
+    <li><a href="#generate-a-session-token">Generate a session token</a></li>
+  </ul>
 </nav>
 
-
-
 <p>There are two types of token in CDS:</p>
-
 <ul>
-<li><p><strong>signin token</strong>: can also be named &ldquo;token&rdquo; when using CDS command line. This token is like a scoped &ldquo;password&rdquo; and can be used to sign-in to CDS. You can generate a sign-in token with the web ui or with CDS command line.</p></li>
-
-<li><p><strong>session token</strong>: you should not manipulate it directly as its life is limited. This token is used to authenticate an API call and will be created when you successfully sign-in to CDS.</p></li>
+<li>
+<p><strong>signin token</strong>: can also be named &ldquo;token&rdquo; when using CDS command line. This token is like a scoped &ldquo;password&rdquo; and can be used to sign-in to CDS. You can generate a sign-in token with the web ui or with CDS command line.</p>
+</li>
+<li>
+<p><strong>session token</strong>: you should not manipulate it directly as its life is limited. This token is used to authenticate an API call and will be created when you successfully sign-in to CDS.</p>
+</li>
 </ul>
-
 <h2 id="generate-a-sign-in-token">Generate a sign-in token</h2>
-
 <p>You will be able to generate a new sign-in token for a builtin consumer with the web UI or the command line.</p>
-
 <h3 id="with-the-web-ui">With the WEB UI</h3>
-
 <ul>
 <li>Go in Settings &gt; Profile &gt; Authentication</li>
 </ul>
-
-<p><img src="https://ovh.github.io/cds/images/ui_profile_page.png" alt="cds ui profile page" /></p>
-
+<p><img src="../../images/ui_profile_page.png" alt="cds ui profile page"></p>
 <ul>
 <li>Then click on <code>+</code> at the right of <code>My consumers</code> to open modal, then click create to obtain a sign-in token.</li>
 </ul>
-
-<p><img src="https://ovh.github.io/cds/images/ui_create_consumer.png" alt="cds ui consumer creation" /></p>
-
+<p><img src="../../images/ui_create_consumer.png" alt="cds ui consumer creation"></p>
 <h3 id="with-cds-command-line">With CDS command line</h3>
 
 <blockquote class="note">
     <div><strong></strong> To create a builtin consumer you should first be signed into CDS using local authentication for example.</div>
 </blockquote>
 
-
-<pre><code class="language-txt">$ cdsctl consumer new
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-txt" data-lang="txt">$ cdsctl consumer new
 ? Name my-bot
 ? Description A bot consumer to import my templates
 ? Select groups availables for the new consumer my-group
 ? Select scopes availables for the new consumer Template
 Builtin consumer successfully created, use the following token to sign in:
 &lt;signin-token-value&gt;
-</code></pre>
-
-<h2 id="generate-a-session-token">Generate a session token</h2>
-
+</code></pre></div><h2 id="generate-a-session-token">Generate a session token</h2>
 <p>Sometimes if you want to call CDS through its APIs you will have to sign-in to obtain a session token like the following:</p>
-
-<pre><code class="language-sh">curl -X POST -d '{&quot;token&quot;:&quot;&lt;signin-token-value&gt;&quot;}' http://my-cds/auth/consumer/builtin/signin
-</code></pre>
-
-<p>You will get a response that contains a session token, the session token is also set as a cookie in the response.</p>
-
-<pre><code class="language-json">{
-  &quot;api_url&quot;:&quot;http://my-cds&quot;,
-  &quot;token&quot;:&quot;&lt;session-token-value&gt;&quot;,
-  &quot;user&quot;: {
-    &quot;id&quot;:&quot;my-user-uuid&quot;,
-    &quot;created&quot;:&quot;...&quot;,
-    &quot;username&quot;:&quot;my-username&quot;,
-    &quot;fullname&quot;:&quot;My Fullname&quot;,
-    &quot;ring&quot;:&quot;USER&quot;
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">curl -X POST -d <span style="color:#e6db74">&#39;{&#34;token&#34;:&#34;&lt;signin-token-value&gt;&#34;}&#39;</span> http://my-cds/auth/consumer/builtin/signin
+</code></pre></div><p>You will get a response that contains a session token, the session token is also set as a cookie in the response.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json">{
+  <span style="color:#f92672">&#34;api_url&#34;</span>:<span style="color:#e6db74">&#34;http://my-cds&#34;</span>,
+  <span style="color:#f92672">&#34;token&#34;</span>:<span style="color:#e6db74">&#34;&lt;session-token-value&gt;&#34;</span>,
+  <span style="color:#f92672">&#34;user&#34;</span>: {
+    <span style="color:#f92672">&#34;id&#34;</span>:<span style="color:#e6db74">&#34;my-user-uuid&#34;</span>,
+    <span style="color:#f92672">&#34;created&#34;</span>:<span style="color:#e6db74">&#34;...&#34;</span>,
+    <span style="color:#f92672">&#34;username&#34;</span>:<span style="color:#e6db74">&#34;my-username&#34;</span>,
+    <span style="color:#f92672">&#34;fullname&#34;</span>:<span style="color:#e6db74">&#34;My Fullname&#34;</span>,
+    <span style="color:#f92672">&#34;ring&#34;</span>:<span style="color:#e6db74">&#34;USER&#34;</span>
   }
 }
-</code></pre>
-
+</code></pre></div>
 
 
     

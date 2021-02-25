@@ -1,32 +1,28 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>GitHub on CDS - Continuous Delivery Service</title>
-    <link>https://ovh.github.io/cds/docs/integrations/github/</link>
+    <link>/docs/integrations/github/</link>
     <description>Recent content in GitHub on CDS - Continuous Delivery Service</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language>
-    
-	<atom:link href="https://ovh.github.io/cds/docs/integrations/github/index.xml" rel="self" type="application/rss+xml" />
-    
-    
+    <language>en-us</language><atom:link href="/docs/integrations/github/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>GitHub Authentication</title>
-      <link>https://ovh.github.io/cds/docs/integrations/github/github_authentication/</link>
+      <link>/docs/integrations/github/github_authentication/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/integrations/github/github_authentication/</guid>
+      <guid>/docs/integrations/github/github_authentication/</guid>
       <description>The GitHub Authentication Integration have to be configured on your CDS by a CDS Administrator.
 This integration allows you to authenticate user with the GitHub Authentication.
-Resume on what you have to do before using the GitHub Authentication Integration  As a CDS Administrator:  Create a CDS application on GitHub Complete CDS Configuration File   How to configure GitHub Authentication integration Create a CDS application on GitHub As a CDS Administrator</description>
+Resume on what you have to do before using the GitHub Authentication Integration  As a CDS Administrator: Create a CDS application on GitHub Complete CDS Configuration File  How to configure GitHub Authentication integration Create a CDS application on GitHub As a CDS Administrator</description>
     </item>
     
     <item>
       <title>GitHub Repository Manager</title>
-      <link>https://ovh.github.io/cds/docs/integrations/github/github_repository_manager/</link>
+      <link>/docs/integrations/github/github_repository_manager/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/integrations/github/github_repository_manager/</guid>
+      <guid>/docs/integrations/github/github_repository_manager/</guid>
       <description>The GitHub Repository Manager Integration have to be configured on your CDS by a CDS Administrator.
 This integration allows you to link a Git Repository hosted by GitHub to a CDS Application.
 This integration enables some features:

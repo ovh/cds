@@ -1,14 +1,20 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Components on CDS - Continuous Delivery Service</title>
-    <link>https://ovh.github.io/cds/docs/components/</link>
+    <link>/docs/components/</link>
     <description>Recent content in Components on CDS - Continuous Delivery Service</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language>
-    
-	<atom:link href="https://ovh.github.io/cds/docs/components/index.xml" rel="self" type="application/rss+xml" />
-    
+    <language>en-us</language><atom:link href="/docs/components/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>CDN</title>
+      <link>/docs/components/cdn/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdn/</guid>
+      <description>What&amp;rsquo;s CDN CDN is a service dedicated to receive and store CDS&amp;rsquo;s logs. In a near future, it will also be able to manage artifacts and cache used by your jobs.
+CDN stores the list of all known log or artifact items in a Postgres database and communicates with storage backends to store the contents of those items. These backends are call units and there are two types of units in CDN:</description>
+    </item>
     
   </channel>
 </rss>

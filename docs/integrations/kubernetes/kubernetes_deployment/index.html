@@ -4,72 +4,70 @@
 	<meta charset="utf-8">
 <title>Kubernetes Deployment - CDS - Continuous Delivery Service</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="shortcut icon" type="image/png" href="https://ovh.github.io/cds/images/favicon.png">
+<link rel="shortcut icon" type="image/png" href="../../../../images/favicon.png">
 
 
 
 
-<link rel="stylesheet" href="https://ovh.github.io/cds/sass/styles.css" integrity="" media="screen">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/callouts.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/auto-complete.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/fontawesome.min.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/asciinema-player.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
+<link rel="stylesheet" href="../../../../sass/styles.css" integrity="" media="screen">
+<link rel="stylesheet" href="../../../../css/callouts.css">
+<link rel="stylesheet" href="../../../../css/auto-complete.css">
+<link rel="stylesheet" href="../../../../css/fontawesome.min.css">
+<link rel="stylesheet" href="../../../../css/asciinema-player.css">
+<link rel="stylesheet" href="../../../../css/solarized-light.css">
 
 <meta name="description"
     content="The Kubernetes Deployment Integration is a Self-Service integration that can be configured on a CDS Project.
 This integration enables the DeployApplication action
 Create Integration Model Create a file kubernetes-model-configuration.yml:
-name: Kubernetes default_config: api_url: type: string ca_certificate: type: text description: Certificate Authority bundle (PEM format) token: type: password deployment: true deployment_default_config: timeout: type: string value: 180 description: timeout in seconds for v2 or duration for v3 (ex: 3m) namespace: type: string value: default description: Kubernetes namespace in which you want to deploy your components (OPTIONAL) deployment_files: type: string description: Glob to yaml filepaths helm_chart: type: string description: &quot;Keep empty if you don&#39;t use helm.">
+name: Kubernetes default_config: api_url: type: string ca_certificate: type: text description: Certificate Authority bundle (PEM format) token: type: password deployment: true deployment_default_config: timeout: type: string value: 180 description: timeout in seconds for v2 or duration for v3 (ex: 3m) namespace: type: string value: default description: Kubernetes namespace in which you want to deploy your components (OPTIONAL) deployment_files: type: string description: Glob to yaml filepaths helm_chart: type: string description: &#34;Keep empty if you don&#39;t use helm.">
 <meta property="og:description"
     content="The Kubernetes Deployment Integration is a Self-Service integration that can be configured on a CDS Project.
 This integration enables the DeployApplication action
 Create Integration Model Create a file kubernetes-model-configuration.yml:
-name: Kubernetes default_config: api_url: type: string ca_certificate: type: text description: Certificate Authority bundle (PEM format) token: type: password deployment: true deployment_default_config: timeout: type: string value: 180 description: timeout in seconds for v2 or duration for v3 (ex: 3m) namespace: type: string value: default description: Kubernetes namespace in which you want to deploy your components (OPTIONAL) deployment_files: type: string description: Glob to yaml filepaths helm_chart: type: string description: &quot;Keep empty if you don&#39;t use helm.">
+name: Kubernetes default_config: api_url: type: string ca_certificate: type: text description: Certificate Authority bundle (PEM format) token: type: password deployment: true deployment_default_config: timeout: type: string value: 180 description: timeout in seconds for v2 or duration for v3 (ex: 3m) namespace: type: string value: default description: Kubernetes namespace in which you want to deploy your components (OPTIONAL) deployment_files: type: string description: Glob to yaml filepaths helm_chart: type: string description: &#34;Keep empty if you don&#39;t use helm.">
 <meta name="twitter:description"
     content="The Kubernetes Deployment Integration is a Self-Service integration that can be configured on a CDS Project.
 This integration enables the DeployApplication action
 Create Integration Model Create a file kubernetes-model-configuration.yml:
-name: Kubernetes default_config: api_url: type: string ca_certificate: type: text description: Certificate Authority bundle (PEM format) token: type: password deployment: true deployment_default_config: timeout: type: string value: 180 description: timeout in seconds for v2 or duration for v3 (ex: 3m) namespace: type: string value: default description: Kubernetes namespace in which you want to deploy your components (OPTIONAL) deployment_files: type: string description: Glob to yaml filepaths helm_chart: type: string description: &quot;Keep empty if you don&#39;t use helm.">
-<meta property="og:url" content="https://ovh.github.io/cds/docs/integrations/kubernetes/kubernetes_deployment/">
+name: Kubernetes default_config: api_url: type: string ca_certificate: type: text description: Certificate Authority bundle (PEM format) token: type: password deployment: true deployment_default_config: timeout: type: string value: 180 description: timeout in seconds for v2 or duration for v3 (ex: 3m) namespace: type: string value: default description: Kubernetes namespace in which you want to deploy your components (OPTIONAL) deployment_files: type: string description: Glob to yaml filepaths helm_chart: type: string description: &#34;Keep empty if you don&#39;t use helm.">
+<meta property="og:url" content="/docs/integrations/kubernetes/kubernetes_deployment/">
 <meta property="og:title" content="Kubernetes Deployment">
 <meta name="twitter:title" content="Kubernetes Deployment">
 <meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
 <meta property="og:image" content="/images/cds-transparent.png">
-<script type="text/javascript" src="https://ovh.github.io/cds/js/anchor-4.1.1.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-3.2.1.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-ui-1.12.1.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/bootstrap-3.3.7.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/highlight.pack.js"></script>
+<script type="text/javascript" src="../../../../js/anchor-4.1.1.min.js"></script>
+<script type="text/javascript" src="../../../../js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="../../../../js/jquery-ui-1.12.1.min.js"></script>
+<script type="text/javascript" src="../../../../js/bootstrap-3.3.7.min.js"></script>
+<script type="text/javascript" src="../../../../js/highlight.pack.js"></script>
 <script>
     hljs.initHighlightingOnLoad();
 
 </script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/script.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/lunr.min.js"></script>
-<script type="text/javascript">
-    var baseurl = "https:\/\/ovh.github.io\/cds";
+<script type="text/javascript" src="../../../../js/script.js"></script>
+<script type="text/javascript" src="../../../../js/lunr.min.js"></script>
+<a id="indexJSON" href="../../../../index.json"></a>
 
-</script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/auto-complete.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/search.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/asciinema-player.js"></script>
+<script type="text/javascript" src="../../../../js/auto-complete.js"></script>
+<script type="text/javascript" src="../../../../js/search.js"></script>
+<script type="text/javascript" src="../../../../js/asciinema-player.js"></script>
 
 	</head>
 	<body>
 		<section id="hero" class="light-text no-sub">
-			<a href="https://ovh.github.io/cds/" class="logo"></a>
+			<a href="../../../../" class="logo"></a>
 				<i id="tocburger" class="fa fa-bars" onclick='$("#toc").toggle()'></i><div class="nav-buttons" data-auto-burger="primary">
 				<ul class="global-nav">
 					
 					
-					<li><a href="https://ovh.github.io/cds/docs/" class="active">Documentation</a></li>
+					<li><a href="../../../../docs/" class="active">Documentation</a></li>
 					
-					<li><a href="https://ovh.github.io/cds/hosting/">Hosting your own instance</a></li>
+					<li><a href="../../../../hosting/">Hosting your own instance</a></li>
 					
-					<li><a href="https://ovh.github.io/cds/development/">CDS Developer Manual</a></li>
+					<li><a href="../../../../development/">CDS Developer Manual</a></li>
 					
-					<li><a href="https://ovh.github.io/cds/about/">About</a></li>
+					<li><a href="../../../../about/">About</a></li>
 					
 					<li><i class="fa fa-search" onclick='$("#searchbox").toggle(); $("#search-query").focus().select()'></i></li>
 					<li>
@@ -99,23 +97,23 @@ name: Kubernetes default_config: api_url: type: string ca_certificate: type: tex
 			
 			
 			
-			<li><a href="https://ovh.github.io/cds/docs/">Home</a></li>
+			<li><a href="../../../../docs/">Home</a></li>
 			
 			
 				
-				<li><a href="https://ovh.github.io/cds/docs/concepts/">Concepts</a></li>
+				<li><a href="../../../../docs/concepts/">Concepts</a></li>
 			
 				
-				<li><a href="https://ovh.github.io/cds/docs/actions/">Actions</a></li>
+				<li><a href="../../../../docs/actions/">Actions</a></li>
 			
 				
-				<li><a href="https://ovh.github.io/cds/docs/components/">Components</a></li>
+				<li><a href="../../../../docs/components/">Components</a></li>
 			
 				
-				<li><a href="https://ovh.github.io/cds/docs/integrations/" class="menuSelected">Integrations</a></li>
+				<li><a href="../../../../docs/integrations/" class="menuSelected">Integrations</a></li>
 			
 				
-				<li><a href="https://ovh.github.io/cds/docs/tutorials/">Tutorials</a></li>
+				<li><a href="../../../../docs/tutorials/">Tutorials</a></li>
 			
 		</ul>
 		
@@ -187,6 +185,8 @@ name: Kubernetes default_config: api_url: type: string ca_certificate: type: tex
                     
                         
                     
+                        
+                    
                 
             
         
@@ -210,7 +210,7 @@ name: Kubernetes default_config: api_url: type: string ca_certificate: type: tex
         
         
         <i class="fa fa-bars" id="tocburger" onclick='$("#toc").toggle()'></i> 
-<a class="item" data-title="Integrations" href="https://ovh.github.io/cds/docs/integrations/"></a>
+<a class="item" data-title="Integrations" href="../../../../docs/integrations/"></a>
 
 	
 	
@@ -228,7 +228,7 @@ name: Kubernetes default_config: api_url: type: string ca_certificate: type: tex
 	
 		
 			
-<a class="item" data-title="AWS S3" href="https://ovh.github.io/cds/docs/integrations/aws/aws_s3/"></a>
+<a class="item" data-title="AWS S3" href="../../../../docs/integrations/aws/aws_s3/"></a>
 
 		
 	
@@ -240,25 +240,25 @@ name: Kubernetes default_config: api_url: type: string ca_certificate: type: tex
 	
 		
 			
-<a class="item" data-title="Bitbucket Cloud" href="https://ovh.github.io/cds/docs/integrations/bitbucketcloud/"></a>
+<a class="item" data-title="Bitbucket Cloud" href="../../../../docs/integrations/bitbucketcloud/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Bitbucket Server" href="https://ovh.github.io/cds/docs/integrations/bitbucket/"></a>
+<a class="item" data-title="Bitbucket Server" href="../../../../docs/integrations/bitbucket/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Docker Swarm" href="https://ovh.github.io/cds/docs/integrations/swarm/"></a>
+<a class="item" data-title="Docker Swarm" href="../../../../docs/integrations/swarm/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Gerrit Repository Manager" href="https://ovh.github.io/cds/docs/integrations/gerrit/"></a>
+<a class="item" data-title="Gerrit Repository Manager" href="../../../../docs/integrations/gerrit/"></a>
 
 		
 	
@@ -274,13 +274,13 @@ name: Kubernetes default_config: api_url: type: string ca_certificate: type: tex
 	
 		
 			
-<a class="item" data-title="GitHub Authentication" href="https://ovh.github.io/cds/docs/integrations/github/github_authentication/"></a>
+<a class="item" data-title="GitHub Authentication" href="../../../../docs/integrations/github/github_authentication/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="GitHub Repository Manager" href="https://ovh.github.io/cds/docs/integrations/github/github_repository_manager/"></a>
+<a class="item" data-title="GitHub Repository Manager" href="../../../../docs/integrations/github/github_repository_manager/"></a>
 
 		
 	
@@ -302,13 +302,13 @@ name: Kubernetes default_config: api_url: type: string ca_certificate: type: tex
 	
 		
 			
-<a class="item" data-title="GitLab Authentication" href="https://ovh.github.io/cds/docs/integrations/gitlab/gitlab_authentication/"></a>
+<a class="item" data-title="GitLab Authentication" href="../../../../docs/integrations/gitlab/gitlab_authentication/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="GitLab Repository Manager" href="https://ovh.github.io/cds/docs/integrations/gitlab/gitlab_repository_manager/"></a>
+<a class="item" data-title="GitLab Repository Manager" href="../../../../docs/integrations/gitlab/gitlab_repository_manager/"></a>
 
 		
 	
@@ -330,13 +330,13 @@ name: Kubernetes default_config: api_url: type: string ca_certificate: type: tex
 	
 		
 			
-<a class="item" data-title="Kafka CDS Events" href="https://ovh.github.io/cds/docs/integrations/kafka/kafka_events/"></a>
+<a class="item" data-title="Kafka CDS Events" href="../../../../docs/integrations/kafka/kafka_events/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Kafka Hooks" href="https://ovh.github.io/cds/docs/integrations/kafka/kafka_hooks/"></a>
+<a class="item" data-title="Kafka Hooks" href="../../../../docs/integrations/kafka/kafka_hooks/"></a>
 
 		
 	
@@ -358,13 +358,13 @@ name: Kubernetes default_config: api_url: type: string ca_certificate: type: tex
 	
 		
 			
-<a class="item" data-title="Kubernetes Compute" href="https://ovh.github.io/cds/docs/integrations/kubernetes/kubernetes_compute/"></a>
+<a class="item" data-title="Kubernetes Compute" href="../../../../docs/integrations/kubernetes/kubernetes_compute/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Kubernetes Deployment" href="https://ovh.github.io/cds/docs/integrations/kubernetes/kubernetes_deployment/"></a>
+<a class="item" data-title="Kubernetes Deployment" href="../../../../docs/integrations/kubernetes/kubernetes_deployment/"></a>
 
 		
 	
@@ -376,13 +376,19 @@ name: Kubernetes default_config: api_url: type: string ca_certificate: type: tex
 	
 		
 			
-<a class="item" data-title="LDAP Authentication" href="https://ovh.github.io/cds/docs/integrations/ldap/"></a>
+<a class="item" data-title="LDAP Authentication" href="../../../../docs/integrations/ldap/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Mesos/Marathon" href="https://ovh.github.io/cds/docs/integrations/marathon/"></a>
+<a class="item" data-title="Mesos/Marathon" href="../../../../docs/integrations/marathon/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="OpenID-Connect Authentication" href="../../../../docs/integrations/openid-connect/"></a>
 
 		
 	
@@ -398,13 +404,13 @@ name: Kubernetes default_config: api_url: type: string ca_certificate: type: tex
 	
 		
 			
-<a class="item" data-title="OpenStack Swift" href="https://ovh.github.io/cds/docs/integrations/openstack/openstack_swift/"></a>
+<a class="item" data-title="Openstack Compute" href="../../../../docs/integrations/openstack/openstack_compute/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Openstack Compute" href="https://ovh.github.io/cds/docs/integrations/openstack/openstack_compute/"></a>
+<a class="item" data-title="OpenStack Swift" href="../../../../docs/integrations/openstack/openstack_swift/"></a>
 
 		
 	
@@ -416,13 +422,13 @@ name: Kubernetes default_config: api_url: type: string ca_certificate: type: tex
 	
 		
 			
-<a class="item" data-title="RabbitMQ" href="https://ovh.github.io/cds/docs/integrations/rabbitmq/"></a>
+<a class="item" data-title="RabbitMQ" href="../../../../docs/integrations/rabbitmq/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="vSphere" href="https://ovh.github.io/cds/docs/integrations/vsphere/"></a>
+<a class="item" data-title="vSphere" href="../../../../docs/integrations/vsphere/"></a>
 
 		
 	
@@ -443,249 +449,204 @@ name: Kubernetes default_config: api_url: type: string ca_certificate: type: tex
 
 
 <nav id="TableOfContents">
-<ul>
-<li>
-<ul>
-<li><a href="#create-integration-model">Create Integration Model</a></li>
-<li><a href="#import-kubernetes-plugin">Import Kubernetes Plugin</a></li>
-<li><a href="#configure-with-webui">Configure with WebUI</a></li>
-<li><a href="#import-a-kubernetes-integration-on-your-cds-project">Import a Kubernetes Integration on your CDS Project</a>
-<ul>
-<li><a href="#create-a-public-kubernetes-integration-for-whole-cds-projects">Create a Public Kubernetes Integration for whole CDS Projects</a></li>
-</ul></li>
-<li><a href="#use-deployapplication-action">Use DeployApplication Action</a></li>
-</ul></li>
-</ul>
+  <ul>
+    <li><a href="#create-integration-model">Create Integration Model</a></li>
+    <li><a href="#import-kubernetes-plugin">Import Kubernetes Plugin</a></li>
+    <li><a href="#configure-with-webui">Configure with WebUI</a></li>
+    <li><a href="#import-a-kubernetes-integration-on-your-cds-project">Import a Kubernetes Integration on your CDS Project</a>
+      <ul>
+        <li><a href="#create-a-public-kubernetes-integration-for-whole-cds-projects">Create a Public Kubernetes Integration for whole CDS Projects</a></li>
+      </ul>
+    </li>
+    <li><a href="#use-deployapplication-action">Use DeployApplication Action</a></li>
+  </ul>
 </nav>
 
-
-
 <p>The Kubernetes Deployment Integration is a Self-Service integration that can be configured on a CDS Project.</p>
-
-<p>This integration enables the <a href="https://ovh.github.io/cds/docs/actions/builtin-deployapplication/">DeployApplication</a> action</p>
-
+<p>This integration enables the <a href="../../../../docs/actions/builtin-deployapplication/">DeployApplication</a> action</p>
 <h2 id="create-integration-model">Create Integration Model</h2>
-
 <p>Create a file <code>kubernetes-model-configuration.yml</code>:</p>
-
-<pre><code class="language-yml">name: Kubernetes
-default_config:
-  api_url:
-    type: string
-  ca_certificate:
-    type: text
-    description: Certificate Authority bundle (PEM format)
-  token:
-    type: password
-deployment: true
-deployment_default_config:
-  timeout:
-    type: string
-    value: 180
-    description: timeout in seconds for v2 or duration for v3 (ex: 3m)
-  namespace:
-    type: string
-    value: default
-    description: Kubernetes namespace in which you want to deploy your components (OPTIONAL)
-  deployment_files:
-    type: string
-    description: Glob to yaml filepaths
-  helm_chart:
-    type: string
-    description: &quot;Keep empty if you don't use helm. Indicate a chart reference by chart reference himself (stable/mariadb), absolute URL (https://example.com/charts/nginx-1.2.3.tgz), path to a packaged chart (./nginx-1.2.3.tgz), path to an unpacked chart directory (./nginx) or even by your chart reference and repo URL (https://example.com/charts/ nginx).&quot;
-  helm_values:
-    type: string
-    description: specify helm values in a YAML file or a URL to configure/override your helm chart
-  helm_version:
-    type: string
-    description: specify helm version to use (default: v2.12.2)
-</code></pre>
-
-<p>Import the integration with :</p>
-
-<pre><code class="language-bash">cdsctl admin integration-model import kubernetes-model-configuration.yml
-</code></pre>
-
-<h2 id="import-kubernetes-plugin">Import Kubernetes Plugin</h2>
-
-<p>The goal of this integration is to use the <a href="https://ovh.github.io/cds/docs/actions/builtin-deployapplication/">DeployApplication</a> action in a Job.
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yml" data-lang="yml"><span style="color:#f92672">name</span>: <span style="color:#ae81ff">Kubernetes</span>
+<span style="color:#f92672">default_config</span>:
+  <span style="color:#f92672">api_url</span>:
+    <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
+  <span style="color:#f92672">ca_certificate</span>:
+    <span style="color:#f92672">type</span>: <span style="color:#ae81ff">text</span>
+    <span style="color:#f92672">description</span>: <span style="color:#ae81ff">Certificate Authority bundle (PEM format)</span>
+  <span style="color:#f92672">token</span>:
+    <span style="color:#f92672">type</span>: <span style="color:#ae81ff">password</span>
+<span style="color:#f92672">deployment</span>: <span style="color:#66d9ef">true</span>
+<span style="color:#f92672">deployment_default_config</span>:
+  <span style="color:#f92672">timeout</span>:
+    <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
+    <span style="color:#f92672">value</span>: <span style="color:#ae81ff">180</span>
+    <span style="color:#f92672">description: timeout in seconds for v2 or duration for v3 (ex</span>: <span style="color:#ae81ff">3m)</span>
+  <span style="color:#f92672">namespace</span>:
+    <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
+    <span style="color:#f92672">value</span>: <span style="color:#ae81ff">default</span>
+    <span style="color:#f92672">description</span>: <span style="color:#ae81ff">Kubernetes namespace in which you want to deploy your components (OPTIONAL)</span>
+  <span style="color:#f92672">deployment_files</span>:
+    <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
+    <span style="color:#f92672">description</span>: <span style="color:#ae81ff">Glob to yaml filepaths</span>
+  <span style="color:#f92672">helm_chart</span>:
+    <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
+    <span style="color:#f92672">description</span>: <span style="color:#e6db74">&#34;Keep empty if you don&#39;t use helm. Indicate a chart reference by chart reference himself (stable/mariadb), absolute URL (https://example.com/charts/nginx-1.2.3.tgz), path to a packaged chart (./nginx-1.2.3.tgz), path to an unpacked chart directory (./nginx) or even by your chart reference and repo URL (https://example.com/charts/ nginx).&#34;</span>
+  <span style="color:#f92672">helm_values</span>:
+    <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
+    <span style="color:#f92672">description</span>: <span style="color:#ae81ff">specify helm values in a YAML file or a URL to configure/override your helm chart</span>
+  <span style="color:#f92672">helm_version</span>:
+    <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
+    <span style="color:#f92672">description: specify helm version to use (default</span>: <span style="color:#ae81ff">v2.12.2)</span>
+</code></pre></div><p>Import the integration with :</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">cdsctl admin integration-model import kubernetes-model-configuration.yml
+</code></pre></div><h2 id="import-kubernetes-plugin">Import Kubernetes Plugin</h2>
+<p>The goal of this integration is to use the <a href="../../../../docs/actions/builtin-deployapplication/">DeployApplication</a> action in a Job.
 This action use a dedicated plugin for each integration, you need to import the plugin-kubernetes.</p>
-
 <p>You will find on CDS Release the plugin-kubernetes with associated yml file.</p>
-
 <p>How to import the linux/amd64 version:</p>
-
-<pre><code class="language-bash"># download plugin-kubernetes-deployment.yml file
-# download plugin-kubernetes-deployment-linux-amd64.yml file
-# download plugin-kubernetes-deployment-linux-amd64 file
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#75715e"># download plugin-kubernetes-deployment.yml file</span>
+<span style="color:#75715e"># download plugin-kubernetes-deployment-linux-amd64.yml file</span>
+<span style="color:#75715e"># download plugin-kubernetes-deployment-linux-amd64 file</span>
 $ cdsctl admin plugins import plugin-kubernetes-deployment.yml
 $ cdsctl admin plugins binary-add plugin-kubernetes-deployment plugin-kubernetes-deployment-linux-amd64.yml plugin-kubernetes-deployment-linux-amd64
-</code></pre>
-
-<p>If you can build and publish all os/arch:</p>
-
-<pre><code class="language-bash">$ cd $GOHOME/src/github.com/ovh
+</code></pre></div><p>If you can build and publish all os/arch:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ cd $GOHOME/src/github.com/ovh
 $ git clone git@github.com:ovh/cds.git
 $ cd contrib/integrations/kubernetes/plugin-kubernetes
-# make build will compile the plugin in all os and arch
-# all binaries are under the dist/ directory
+<span style="color:#75715e"># make build will compile the plugin in all os and arch</span>
+<span style="color:#75715e"># all binaries are under the dist/ directory</span>
 $ make build
-# make publish create a yml file for each os/arch
-# then call cdsctl to upload the plugin on your CDS Instance
+<span style="color:#75715e"># make publish create a yml file for each os/arch</span>
+<span style="color:#75715e"># then call cdsctl to upload the plugin on your CDS Instance</span>
 $ make publish
-</code></pre>
-
-<h2 id="configure-with-webui">Configure with WebUI</h2>
-
+</code></pre></div><h2 id="configure-with-webui">Configure with WebUI</h2>
 <p>You can add a Kubernetes Integration on your CDS Project.</p>
-
-<p><img src="../images/kubernetes-integration-webui.png" alt="Integration" /></p>
-
+<p><img src="../images/kubernetes-integration-webui.png" alt="Integration"></p>
 <h2 id="import-a-kubernetes-integration-on-your-cds-project">Import a Kubernetes Integration on your CDS Project</h2>
-
 <p>Create a file <code>project-configuration.yml</code>:</p>
-
-<pre><code class="language-yml">name: myk8s
-model:
-  name: Kubernetes
-  deployment: true
-  default_config:
-    api_url:
-      value: &quot;&quot;
-      type: string
-    ca_certificate:
-      value: &quot;&quot;
-      type: text
-      description: Certificate Authority bundle (PEM format)
-    token:
-      value: &quot;&quot;
-      type: password
-  deployment_default_config:
-    deployment_files:
-      value: &quot;&quot;
-      type: string
-      description: Glob to yaml filepaths
-    helm_chart:
-      value: &quot;&quot;
-      type: string
-      description: Keep empty if you don't use helm. Indicate a chart reference by
-        chart reference himself (stable/mariadb), absolute URL (https://example.com/charts/nginx-1.2.3.tgz),
-        path to a packaged chart (./nginx-1.2.3.tgz), path to an unpacked chart directory
-        (./nginx) or even by your chart reference and repo URL (https://example.com/charts/
-        nginx).
-    helm_values:
-      value: &quot;&quot;
-      type: string
-      description: specify helm values in a YAML file or a URL to configure/override
-        your helm chart
-    helm_version:
-      value: &quot;&quot;
-      type: string
-      description: specify helm version to use (default: v2.12.2)
-    namespace:
-      value: default
-      type: string
-      description: Kubernetes namespace in which you want to deploy your components
-        (OPTIONAL)
-    timeout:
-      value: &quot;180&quot;
-      type: string
-      description: timeout in seconds
-config:
-  api_url:
-    value: https://your-k8s.localhost.local
-    type: string
-  ca_certificate:
-    value: |-
-      -----BEGIN CERTIFICATE-----
-      XXX
-      -----END CERTIFICATE-----
-    type: text
-    description: Certificate Authority bundle (PEM format)
-  token:
-    value: XXX
-    type: string
-</code></pre>
-
-<p>Import the integration on your CDS Project with:</p>
-
-<pre><code class="language-bash">cdsctl project integration import PROJECT_KEY project-configuration.yml
-</code></pre>
-
-<h3 id="create-a-public-kubernetes-integration-for-whole-cds-projects">Create a Public Kubernetes Integration for whole CDS Projects</h3>
-
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yml" data-lang="yml"><span style="color:#f92672">name</span>: <span style="color:#ae81ff">myk8s</span>
+<span style="color:#f92672">model</span>:
+  <span style="color:#f92672">name</span>: <span style="color:#ae81ff">Kubernetes</span>
+  <span style="color:#f92672">deployment</span>: <span style="color:#66d9ef">true</span>
+  <span style="color:#f92672">default_config</span>:
+    <span style="color:#f92672">api_url</span>:
+      <span style="color:#f92672">value</span>: <span style="color:#e6db74">&#34;&#34;</span>
+      <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
+    <span style="color:#f92672">ca_certificate</span>:
+      <span style="color:#f92672">value</span>: <span style="color:#e6db74">&#34;&#34;</span>
+      <span style="color:#f92672">type</span>: <span style="color:#ae81ff">text</span>
+      <span style="color:#f92672">description</span>: <span style="color:#ae81ff">Certificate Authority bundle (PEM format)</span>
+    <span style="color:#f92672">token</span>:
+      <span style="color:#f92672">value</span>: <span style="color:#e6db74">&#34;&#34;</span>
+      <span style="color:#f92672">type</span>: <span style="color:#ae81ff">password</span>
+  <span style="color:#f92672">deployment_default_config</span>:
+    <span style="color:#f92672">deployment_files</span>:
+      <span style="color:#f92672">value</span>: <span style="color:#e6db74">&#34;&#34;</span>
+      <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
+      <span style="color:#f92672">description</span>: <span style="color:#ae81ff">Glob to yaml filepaths</span>
+    <span style="color:#f92672">helm_chart</span>:
+      <span style="color:#f92672">value</span>: <span style="color:#e6db74">&#34;&#34;</span>
+      <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
+      <span style="color:#f92672">description</span>: <span style="color:#ae81ff">Keep empty if you don&#39;t use helm. Indicate a chart reference by</span>
+        <span style="color:#ae81ff">chart reference himself (stable/mariadb), absolute URL (https://example.com/charts/nginx-1.2.3.tgz),</span>
+        <span style="color:#ae81ff">path to a packaged chart (./nginx-1.2.3.tgz), path to an unpacked chart directory</span>
+        <span style="color:#ae81ff">(./nginx) or even by your chart reference and repo URL (https://example.com/charts/</span>
+        <span style="color:#ae81ff">nginx).</span>
+    <span style="color:#f92672">helm_values</span>:
+      <span style="color:#f92672">value</span>: <span style="color:#e6db74">&#34;&#34;</span>
+      <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
+      <span style="color:#f92672">description</span>: <span style="color:#ae81ff">specify helm values in a YAML file or a URL to configure/override</span>
+        <span style="color:#ae81ff">your helm chart</span>
+    <span style="color:#f92672">helm_version</span>:
+      <span style="color:#f92672">value</span>: <span style="color:#e6db74">&#34;&#34;</span>
+      <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
+      <span style="color:#f92672">description: specify helm version to use (default</span>: <span style="color:#ae81ff">v2.12.2)</span>
+    <span style="color:#f92672">namespace</span>:
+      <span style="color:#f92672">value</span>: <span style="color:#ae81ff">default</span>
+      <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
+      <span style="color:#f92672">description</span>: <span style="color:#ae81ff">Kubernetes namespace in which you want to deploy your components</span>
+        <span style="color:#ae81ff">(OPTIONAL)</span>
+    <span style="color:#f92672">timeout</span>:
+      <span style="color:#f92672">value</span>: <span style="color:#e6db74">&#34;180&#34;</span>
+      <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
+      <span style="color:#f92672">description</span>: <span style="color:#ae81ff">timeout in seconds</span>
+<span style="color:#f92672">config</span>:
+  <span style="color:#f92672">api_url</span>:
+    <span style="color:#f92672">value</span>: <span style="color:#ae81ff">https://your-k8s.localhost.local</span>
+    <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
+  <span style="color:#f92672">ca_certificate</span>:
+    <span style="color:#f92672">value</span>: |-<span style="color:#e6db74">
+</span><span style="color:#e6db74">      -----BEGIN CERTIFICATE-----
+</span><span style="color:#e6db74">      XXX
+</span><span style="color:#e6db74">      -----END CERTIFICATE-----</span>      
+    <span style="color:#f92672">type</span>: <span style="color:#ae81ff">text</span>
+    <span style="color:#f92672">description</span>: <span style="color:#ae81ff">Certificate Authority bundle (PEM format)</span>
+  <span style="color:#f92672">token</span>:
+    <span style="color:#f92672">value</span>: <span style="color:#ae81ff">XXX</span>
+    <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
+</code></pre></div><p>Import the integration on your CDS Project with:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">cdsctl project integration import PROJECT_KEY project-configuration.yml
+</code></pre></div><h3 id="create-a-public-kubernetes-integration-for-whole-cds-projects">Create a Public Kubernetes Integration for whole CDS Projects</h3>
 <p>You can also add a Kubernetes Integration with cdsctl. As a CDS Administrator,
 this allows you to propose a Public Kubernetes Integration, available on all CDS Projects.</p>
-
 <p>Create a file <code>public-configuration.yml</code>:</p>
-
-<pre><code class="language-yml">name: Kubernetes-Public
-hook: true
-deployment: true
-deployment_default_config:
-  deployment_files:
-    value: &quot;&quot;
-    type: string
-    description: Glob to yaml filepaths
-  helm_chart:
-    value: &quot;&quot;
-    type: string
-    description: Keep empty if you don't use helm. Indicate a chart reference by
-      chart reference himself (stable/mariadb), absolute URL (https://example.com/charts/nginx-1.2.3.tgz),
-      path to a packaged chart (./nginx-1.2.3.tgz), path to an unpacked chart directory
-      (./nginx) or even by your chart reference and repo URL (https://example.com/charts/
-      nginx).
-  helm_values:
-    value: &quot;&quot;
-    type: string
-    description: specify helm values in a YAML file or a URL to configure/override your helm chart
-  helm_version:
-    value: &quot;&quot;
-    type: string
-    description: specify helm version to use (default: v2.12.2)
-  namespace:
-    value: default
-    type: string
-    description: Kubernetes namespace in which you want to deploy your components (OPTIONAL)
-  timeout:
-    value: &quot;180&quot;
-    type: string
-    description: timeout in seconds
-public_configurations:
-  your-public-myk8s-integration:
-    &quot;api_url&quot;:
-      value: https://your-k8s.localhost.local
-      type: string
-    &quot;ca_certificate&quot;:
-      value: |-
-        -----BEGIN CERTIFICATE-----
-        XXX
-        -----END CERTIFICATE-----
-      type: text
-      description: Certificate Authority bundle (PEM format)
-    &quot;token&quot;:
-      value: XXX
-      type: string
-</code></pre>
-
-<p>Import the integration with :</p>
-
-<pre><code class="language-bash">cdsctl admin integration-model import public-configuration.yml
-</code></pre>
-
-<h2 id="use-deployapplication-action">Use DeployApplication Action</h2>
-
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yml" data-lang="yml"><span style="color:#f92672">name</span>: <span style="color:#ae81ff">Kubernetes-Public</span>
+<span style="color:#f92672">hook</span>: <span style="color:#66d9ef">true</span>
+<span style="color:#f92672">deployment</span>: <span style="color:#66d9ef">true</span>
+<span style="color:#f92672">deployment_default_config</span>:
+  <span style="color:#f92672">deployment_files</span>:
+    <span style="color:#f92672">value</span>: <span style="color:#e6db74">&#34;&#34;</span>
+    <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
+    <span style="color:#f92672">description</span>: <span style="color:#ae81ff">Glob to yaml filepaths</span>
+  <span style="color:#f92672">helm_chart</span>:
+    <span style="color:#f92672">value</span>: <span style="color:#e6db74">&#34;&#34;</span>
+    <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
+    <span style="color:#f92672">description</span>: <span style="color:#ae81ff">Keep empty if you don&#39;t use helm. Indicate a chart reference by</span>
+      <span style="color:#ae81ff">chart reference himself (stable/mariadb), absolute URL (https://example.com/charts/nginx-1.2.3.tgz),</span>
+      <span style="color:#ae81ff">path to a packaged chart (./nginx-1.2.3.tgz), path to an unpacked chart directory</span>
+      <span style="color:#ae81ff">(./nginx) or even by your chart reference and repo URL (https://example.com/charts/</span>
+      <span style="color:#ae81ff">nginx).</span>
+  <span style="color:#f92672">helm_values</span>:
+    <span style="color:#f92672">value</span>: <span style="color:#e6db74">&#34;&#34;</span>
+    <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
+    <span style="color:#f92672">description</span>: <span style="color:#ae81ff">specify helm values in a YAML file or a URL to configure/override your helm chart</span>
+  <span style="color:#f92672">helm_version</span>:
+    <span style="color:#f92672">value</span>: <span style="color:#e6db74">&#34;&#34;</span>
+    <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
+    <span style="color:#f92672">description: specify helm version to use (default</span>: <span style="color:#ae81ff">v2.12.2)</span>
+  <span style="color:#f92672">namespace</span>:
+    <span style="color:#f92672">value</span>: <span style="color:#ae81ff">default</span>
+    <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
+    <span style="color:#f92672">description</span>: <span style="color:#ae81ff">Kubernetes namespace in which you want to deploy your components (OPTIONAL)</span>
+  <span style="color:#f92672">timeout</span>:
+    <span style="color:#f92672">value</span>: <span style="color:#e6db74">&#34;180&#34;</span>
+    <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
+    <span style="color:#f92672">description</span>: <span style="color:#ae81ff">timeout in seconds</span>
+<span style="color:#f92672">public_configurations</span>:
+  <span style="color:#f92672">your-public-myk8s-integration</span>:
+    <span style="color:#e6db74">&#34;api_url&#34;</span>:
+      <span style="color:#f92672">value</span>: <span style="color:#ae81ff">https://your-k8s.localhost.local</span>
+      <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
+    <span style="color:#e6db74">&#34;ca_certificate&#34;</span>:
+      <span style="color:#f92672">value</span>: |-<span style="color:#e6db74">
+</span><span style="color:#e6db74">        -----BEGIN CERTIFICATE-----
+</span><span style="color:#e6db74">        XXX
+</span><span style="color:#e6db74">        -----END CERTIFICATE-----</span>        
+      <span style="color:#f92672">type</span>: <span style="color:#ae81ff">text</span>
+      <span style="color:#f92672">description</span>: <span style="color:#ae81ff">Certificate Authority bundle (PEM format)</span>
+    <span style="color:#e6db74">&#34;token&#34;</span>:
+      <span style="color:#f92672">value</span>: <span style="color:#ae81ff">XXX</span>
+      <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
+</code></pre></div><p>Import the integration with :</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">cdsctl admin integration-model import public-configuration.yml
+</code></pre></div><h2 id="use-deployapplication-action">Use DeployApplication Action</h2>
 <p>Add the deployment configuration on your application.</p>
-
 <p>Parameters <code>deployement_files</code>, <code>helm_chart</code> and <code>helm_values</code> contain
 path of the files in your CDS Job.</p>
-
 <p><code>contrib/helm/cds/</code> is the same as <code>{{.cds.workspace}}/contrib/helm/cds/</code></p>
-
-<p><img src="../images/link_kubernetes_to_application.png" alt="Add To Application" /></p>
-
-<p>Then, as a standard user, you can use the <a href="https://ovh.github.io/cds/docs/actions/builtin-deployapplication/">DeployApplication</a> action in a Job.
-Before using this action, you probably want to use <a href="https://ovh.github.io/cds/docs/actions/builtin-checkoutapplication/">CheckoutApplication</a> to git clone the kubernetes or helm files from your git repository.</p>
+<p><img src="../images/link_kubernetes_to_application.png" alt="Add To Application"></p>
+<p>Then, as a standard user, you can use the <a href="../../../../docs/actions/builtin-deployapplication/">DeployApplication</a> action in a Job.
+Before using this action, you probably want to use <a href="../../../../docs/actions/builtin-checkoutapplication/">CheckoutApplication</a> to git clone the kubernetes or helm files from your git repository.</p>
 
 
 

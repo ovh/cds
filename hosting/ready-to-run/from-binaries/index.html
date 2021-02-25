@@ -4,66 +4,64 @@
 	<meta charset="utf-8">
 <title>Run with binaries - CDS - Continuous Delivery Service</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="shortcut icon" type="image/png" href="https://ovh.github.io/cds/images/favicon.png">
+<link rel="shortcut icon" type="image/png" href="../../../images/favicon.png">
 
 
 
 
-<link rel="stylesheet" href="https://ovh.github.io/cds/sass/styles.css" integrity="" media="screen">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/callouts.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/auto-complete.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/fontawesome.min.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/asciinema-player.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
+<link rel="stylesheet" href="../../../sass/styles.css" integrity="" media="screen">
+<link rel="stylesheet" href="../../../css/callouts.css">
+<link rel="stylesheet" href="../../../css/auto-complete.css">
+<link rel="stylesheet" href="../../../css/fontawesome.min.css">
+<link rel="stylesheet" href="../../../css/asciinema-player.css">
+<link rel="stylesheet" href="../../../css/solarized-light.css">
 
 <meta name="description"
     content="This article contains the steps to start CDS locally, with API, UI and a local Hatchery.
- Download CDS from GitHub Prepare Database Launch CDS API, CDS UI and a Local Hatchery  Prerequisite  a Redis a PostgreSQL 9.6 min  Get the latest release from GitHub mkdir $HOME/cds cd cds LAST_RELEASE=0.47.0 OS=linux # could be linux, darwin, windows, freebsd, openbsd ARCH=amd64 # could be 386, arm, amd64, arm64, ppc64le # GET Binaries from GitHub curl -L https://github.">
+ Download CDS from GitHub Prepare Database Launch CDS API, CDS UI and a Local Hatchery  Prerequisite  a Redis a PostgreSQL 9.6 min  Get the latest release from GitHub mkdir $HOME/cds cd cds LAST_RELEASE=$(curl -s https://api.github.com/repos/ovh/cds/releases | grep tag_name | head -n 1 | cut -d &#39;&#34;&#39; -f 4) OS=linux # could be linux, darwin, windows, freebsd, openbsd ARCH=amd64 # could be 386, arm, amd64, arm64, ppc64le # GET Binaries from GitHub curl -L https://github.">
 <meta property="og:description"
     content="This article contains the steps to start CDS locally, with API, UI and a local Hatchery.
- Download CDS from GitHub Prepare Database Launch CDS API, CDS UI and a Local Hatchery  Prerequisite  a Redis a PostgreSQL 9.6 min  Get the latest release from GitHub mkdir $HOME/cds cd cds LAST_RELEASE=0.47.0 OS=linux # could be linux, darwin, windows, freebsd, openbsd ARCH=amd64 # could be 386, arm, amd64, arm64, ppc64le # GET Binaries from GitHub curl -L https://github.">
+ Download CDS from GitHub Prepare Database Launch CDS API, CDS UI and a Local Hatchery  Prerequisite  a Redis a PostgreSQL 9.6 min  Get the latest release from GitHub mkdir $HOME/cds cd cds LAST_RELEASE=$(curl -s https://api.github.com/repos/ovh/cds/releases | grep tag_name | head -n 1 | cut -d &#39;&#34;&#39; -f 4) OS=linux # could be linux, darwin, windows, freebsd, openbsd ARCH=amd64 # could be 386, arm, amd64, arm64, ppc64le # GET Binaries from GitHub curl -L https://github.">
 <meta name="twitter:description"
     content="This article contains the steps to start CDS locally, with API, UI and a local Hatchery.
- Download CDS from GitHub Prepare Database Launch CDS API, CDS UI and a Local Hatchery  Prerequisite  a Redis a PostgreSQL 9.6 min  Get the latest release from GitHub mkdir $HOME/cds cd cds LAST_RELEASE=0.47.0 OS=linux # could be linux, darwin, windows, freebsd, openbsd ARCH=amd64 # could be 386, arm, amd64, arm64, ppc64le # GET Binaries from GitHub curl -L https://github.">
-<meta property="og:url" content="https://ovh.github.io/cds/hosting/ready-to-run/from-binaries/">
+ Download CDS from GitHub Prepare Database Launch CDS API, CDS UI and a Local Hatchery  Prerequisite  a Redis a PostgreSQL 9.6 min  Get the latest release from GitHub mkdir $HOME/cds cd cds LAST_RELEASE=$(curl -s https://api.github.com/repos/ovh/cds/releases | grep tag_name | head -n 1 | cut -d &#39;&#34;&#39; -f 4) OS=linux # could be linux, darwin, windows, freebsd, openbsd ARCH=amd64 # could be 386, arm, amd64, arm64, ppc64le # GET Binaries from GitHub curl -L https://github.">
+<meta property="og:url" content="/hosting/ready-to-run/from-binaries/">
 <meta property="og:title" content="Run with binaries">
 <meta name="twitter:title" content="Run with binaries">
 <meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
 <meta property="og:image" content="/images/cds-transparent.png">
-<script type="text/javascript" src="https://ovh.github.io/cds/js/anchor-4.1.1.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-3.2.1.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-ui-1.12.1.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/bootstrap-3.3.7.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/highlight.pack.js"></script>
+<script type="text/javascript" src="../../../js/anchor-4.1.1.min.js"></script>
+<script type="text/javascript" src="../../../js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="../../../js/jquery-ui-1.12.1.min.js"></script>
+<script type="text/javascript" src="../../../js/bootstrap-3.3.7.min.js"></script>
+<script type="text/javascript" src="../../../js/highlight.pack.js"></script>
 <script>
     hljs.initHighlightingOnLoad();
 
 </script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/script.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/lunr.min.js"></script>
-<script type="text/javascript">
-    var baseurl = "https:\/\/ovh.github.io\/cds";
+<script type="text/javascript" src="../../../js/script.js"></script>
+<script type="text/javascript" src="../../../js/lunr.min.js"></script>
+<a id="indexJSON" href="../../../index.json"></a>
 
-</script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/auto-complete.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/search.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/asciinema-player.js"></script>
+<script type="text/javascript" src="../../../js/auto-complete.js"></script>
+<script type="text/javascript" src="../../../js/search.js"></script>
+<script type="text/javascript" src="../../../js/asciinema-player.js"></script>
 
 	</head>
 	<body>
 		<section id="hero" class="light-text no-sub">
-			<a href="https://ovh.github.io/cds/" class="logo"></a>
+			<a href="../../../" class="logo"></a>
 				<i id="tocburger" class="fa fa-bars" onclick='$("#toc").toggle()'></i><div class="nav-buttons" data-auto-burger="primary">
 				<ul class="global-nav">
 					
 					
-					<li><a href="https://ovh.github.io/cds/docs/">Documentation</a></li>
+					<li><a href="../../../docs/">Documentation</a></li>
 					
-					<li><a href="https://ovh.github.io/cds/hosting/" class="active">Hosting your own instance</a></li>
+					<li><a href="../../../hosting/" class="active">Hosting your own instance</a></li>
 					
-					<li><a href="https://ovh.github.io/cds/development/">CDS Developer Manual</a></li>
+					<li><a href="../../../development/">CDS Developer Manual</a></li>
 					
-					<li><a href="https://ovh.github.io/cds/about/">About</a></li>
+					<li><a href="../../../about/">About</a></li>
 					
 					<li><i class="fa fa-search" onclick='$("#searchbox").toggle(); $("#search-query").focus().select()'></i></li>
 					<li>
@@ -168,6 +166,8 @@
                             
                         
                     
+                        
+                    
                 
             
         
@@ -191,7 +191,7 @@
         
         
         <i class="fa fa-bars" id="tocburger" onclick='$("#toc").toggle()'></i> 
-<a class="item" data-title="Ready to RUN" href="https://ovh.github.io/cds/hosting/ready-to-run/"></a>
+<a class="item" data-title="Ready to RUN" href="../../../hosting/ready-to-run/"></a>
 
 	
 	
@@ -199,7 +199,7 @@
 	
 		
 			
-<a class="item" data-title="Run with binaries" href="https://ovh.github.io/cds/hosting/ready-to-run/from-binaries/"></a>
+<a class="item" data-title="Run with binaries" href="../../../hosting/ready-to-run/from-binaries/"></a>
 
 		
 	
@@ -215,13 +215,13 @@
 	
 		
 			
-<a class="item" data-title="Docker Compose" href="https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/docker-compose/"></a>
+<a class="item" data-title="Docker Compose" href="../../../hosting/ready-to-run/docker-compose/docker-compose/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Docker Compose Full Tutorial" href="https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/full-example/"></a>
+<a class="item" data-title="Docker Compose Full Tutorial" href="../../../hosting/ready-to-run/docker-compose/full-example/"></a>
 
 		
 	
@@ -248,177 +248,119 @@
 
 
 <nav id="TableOfContents">
-<ul>
-<li>
-<ul>
-<li><a href="#prerequisite">Prerequisite</a></li>
-<li><a href="#get-the-latest-release-from-github">Get the latest release from GitHub</a></li>
-<li><a href="#generate-configuration">Generate configuration</a></li>
-<li><a href="#prepare-cache">Prepare Cache</a></li>
-<li><a href="#prepare-database">Prepare Database</a></li>
-<li><a href="#launch-cds-api">Launch CDS API</a></li>
-<li><a href="#launch-signup-cds-ui">Launch Signup &amp; CDS UI</a></li>
-<li><a href="#launch-cds-local-hatchery">Launch CDS Local Hatchery</a></li>
-<li><a href="#note-about-cds-engine">Note about CDS Engine</a></li>
-<li><a href="#go-further">Go further</a></li>
-</ul></li>
-</ul>
+  <ul>
+    <li><a href="#prerequisite">Prerequisite</a></li>
+    <li><a href="#get-the-latest-release-from-github">Get the latest release from GitHub</a></li>
+    <li><a href="#generate-configuration">Generate configuration</a></li>
+    <li><a href="#prepare-cache">Prepare Cache</a></li>
+    <li><a href="#prepare-database">Prepare Database</a></li>
+    <li><a href="#launch-cds-api">Launch CDS API</a></li>
+    <li><a href="#launch-signup--cds-ui">Launch Signup &amp; CDS UI</a></li>
+    <li><a href="#launch-cds-cdn">Launch CDS cdn</a></li>
+    <li><a href="#launch-cds-local-hatchery">Launch CDS Local Hatchery</a></li>
+    <li><a href="#note-about-cds-engine">Note about CDS Engine</a></li>
+    <li><a href="#go-further">Go further</a></li>
+  </ul>
 </nav>
 
-
-
 <p>This article contains the steps to start CDS locally, with API, UI and a local Hatchery.</p>
-
 <ul>
 <li>Download CDS from GitHub</li>
 <li>Prepare Database</li>
 <li>Launch CDS API, CDS UI and a Local Hatchery</li>
 </ul>
-
 <h2 id="prerequisite">Prerequisite</h2>
-
 <ul>
 <li>a Redis</li>
 <li>a PostgreSQL 9.6 min</li>
 </ul>
-
 <h2 id="get-the-latest-release-from-github">Get the latest release from GitHub</h2>
-
-<pre><code class="language-bash">mkdir $HOME/cds
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">mkdir $HOME/cds
 cd cds
 
-LAST_RELEASE=0.47.0
-OS=linux # could be linux, darwin, windows, freebsd, openbsd
-ARCH=amd64 # could be 386, arm, amd64, arm64, ppc64le
+LAST_RELEASE<span style="color:#f92672">=</span><span style="color:#66d9ef">$(</span>curl -s https://api.github.com/repos/ovh/cds/releases | grep tag_name | head -n <span style="color:#ae81ff">1</span> | cut -d <span style="color:#e6db74">&#39;&#34;&#39;</span> -f 4<span style="color:#66d9ef">)</span>
+OS<span style="color:#f92672">=</span>linux <span style="color:#75715e"># could be linux, darwin, windows, freebsd, openbsd</span>
+ARCH<span style="color:#f92672">=</span>amd64 <span style="color:#75715e"># could be 386, arm, amd64, arm64, ppc64le</span>
 
-# GET Binaries from GitHub
+<span style="color:#75715e"># GET Binaries from GitHub</span>
 curl -L https://github.com/ovh/cds/releases/download/$LAST_RELEASE/cds-engine-$OS-$ARCH -o cds-engine
 curl -L https://github.com/ovh/cds/releases/download/$LAST_RELEASE/cdsctl-$OS-$ARCH -o cdsctl
-# if you don't want to use the your keychain, you have to use this:
-# curl -L https://github.com/ovh/cds/releases/download/$LAST_RELEASE/cdsctl-$OS-$ARCH-nokeychain -o cdsctl
+<span style="color:#75715e"># if you don&#39;t want to use the your keychain, you have to use this:</span>
+<span style="color:#75715e"># curl -L https://github.com/ovh/cds/releases/download/$LAST_RELEASE/cdsctl-$OS-$ARCH-nokeychain -o cdsctl</span>
 chmod +x cds-engine cdsctl
 
-</code></pre>
-
-<h2 id="generate-configuration">Generate configuration</h2>
-
-<p>Generate a <strong><a href="https://ovh.github.io/cds/hosting/configuration/">Configuration File</a></strong></p>
-
-<pre><code class="language-bash">cd $HOME/cds
+</code></pre></div><h2 id="generate-configuration">Generate configuration</h2>
+<p>Generate a <strong><a href="../../../hosting/configuration/">Configuration File</a></strong></p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">cd $HOME/cds
 
 ./cds-engine config new &gt; conf.toml
-</code></pre>
-
-<p>You will probably need to update some values in this file. If you need to automatize some update, you
+</code></pre></div><p>You will probably need to update some values in this file. If you need to automatize some update, you
 can use the <code>./cds-engine config edit</code> command.</p>
-
 <p>Example:</p>
-
-<pre><code class="language-bash">mkdir -p $HOME/cds/download $HOME/cds/download $HOME/cds/hatchery-basedir
-./cds-engine config edit conf.toml --output conf.toml \
-  api.artifact.local.baseDirectory=$HOME/cds/artifacts \
-  api.directories.download=$HOME/cds/download \
-  hatchery.local.basedir=$HOME/cds/hatchery-basedir
-</code></pre>
-
-<h2 id="prepare-cache">Prepare Cache</h2>
-
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">mkdir -p $HOME/cds/download $HOME/cds/download $HOME/cds/hatchery-basedir
+./cds-engine config edit conf.toml --output conf.toml <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>  api.artifact.local.baseDirectory<span style="color:#f92672">=</span>$HOME/cds/artifacts <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>  api.directories.download<span style="color:#f92672">=</span>$HOME/cds/download <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>  hatchery.local.basedir<span style="color:#f92672">=</span>$HOME/cds/hatchery-basedir
+</code></pre></div><h2 id="prepare-cache">Prepare Cache</h2>
 <p>For this example, we consider that the redis is installed on <code>localhost</code>, port <code>6379</code> with no password.
 You can edit the section <code>api.cache.redis</code> in <code>conf.toml</code> file if needed.</p>
-
 <p>If it&rsquo;s just for test purpose, you can start a redis with docker, as:</p>
-
-<pre><code class="language-bash">docker run --name cds-cache -p 127.0.0.1:6379:6379 -d redis:5
-</code></pre>
-
-<h2 id="prepare-database">Prepare Database</h2>
-
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">docker run --name cds-cache -p 127.0.0.1:6379:6379 -d redis:5
+</code></pre></div><h2 id="prepare-database">Prepare Database</h2>
 <p>For this example, we consider that the database is installed on <code>localhost</code>,
 port <code>5432</code>, with an existing empty database and user named <code>cds</code> and a password &lsquo;cds&rsquo;.</p>
-
 <p>You can edit the section <code>api.database</code> in <code>conf.toml</code> file if needed.</p>
-
 <p>If it&rsquo;s just for test purpose, you can start a postgreSQL database with docker, as:</p>
-
-<pre><code class="language-bash">docker run --name cds-db -e POSTGRES_PASSWORD=cds -e POSTGRES_USER=cds -e POSTGRES_DB=cds -p 127.0.0.1:5432:5432 -d postgres:9.6
-</code></pre>
-
-<pre><code class="language-bash">cd $HOME/cds
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">docker run --name cds-db -e POSTGRES_PASSWORD<span style="color:#f92672">=</span>cds -e POSTGRES_USER<span style="color:#f92672">=</span>cds -e POSTGRES_DB<span style="color:#f92672">=</span>cds -p 127.0.0.1:5432:5432 -d postgres:9.6
+</code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">cd $HOME/cds
 ./cds-engine download sql --config conf.toml
-./cds-engine database upgrade --db-host localhost --db-user cds --db-password cds --db-name cds --db-sslmode disable --db-port 5432 --migrate-dir sql
-</code></pre>
-
-<h2 id="launch-cds-api">Launch CDS API</h2>
-
-<p>Generate a <strong><a href="https://ovh.github.io/cds/hosting/configuration/">Configuration File</a></strong></p>
-
-<pre><code class="language-bash">cd $HOME/cds
+./cds-engine database upgrade --db-host localhost --db-user cds --db-password cds --db-name cds --dh-schema public --db-sslmode disable --db-port <span style="color:#ae81ff">5432</span> --migrate-dir sql/api
+PGPASSWORD<span style="color:#f92672">=</span>cds psql -h localhost -U cds -d cds -c <span style="color:#e6db74">&#34;CREATE SCHEMA IF NOT EXISTS cdn AUTHORIZATION cds;&#34;</span>
+./cds-engine database upgrade --db-host localhost --db-user cds --db-password cds --db-name cds --dh-schema cdn --db-sslmode disable --db-port <span style="color:#ae81ff">5432</span> --migrate-dir sql/cdn
+</code></pre></div><h2 id="launch-cds-api">Launch CDS API</h2>
+<p>Generate a <strong><a href="../../../hosting/configuration/">Configuration File</a></strong></p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">cd $HOME/cds
 
 ./cds-engine download workers --config conf.toml
 ./cds-engine start api --config conf.toml
-</code></pre>
-
-<p>Check that CDS is up and running:</p>
-
-<pre><code class="language-bash">curl http://localhost:8081/mon/version
+</code></pre></div><p>Check that CDS is up and running:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">curl http://localhost:8081/mon/version
 curl http://localhost:8081/mon/status
-</code></pre>
-
-<h2 id="launch-signup-cds-ui">Launch Signup &amp; CDS UI</h2>
-
+</code></pre></div><h2 id="launch-signup--cds-ui">Launch Signup &amp; CDS UI</h2>
 <p>Signup with cdsctl. <code>INIT_TOKEN</code> is used to validate the user as an administrator.</p>
-
-<pre><code class="language-bash">export INIT_TOKEN=`./cds-engine config init-token --config conf.toml`
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">export INIT_TOKEN<span style="color:#f92672">=</span><span style="color:#e6db74">`</span>./cds-engine config init-token --config conf.toml<span style="color:#e6db74">`</span>
 ./cdsctl signup --api-url http://localhost:8081 --email admin@localhost.local --username admin --fullname admin
-</code></pre>
-
-<p>If you don&rsquo;t have email service configured you just have to check your CDS API logs to get the <code>cdsctl signup verify...</code> command to run.</p>
-
-<pre><code class="language-bash">cd $HOME/cds
-./cdsctl signup verify --api-url ... # Get this command from the API Logs
+</code></pre></div><p>If you don&rsquo;t have email service configured you just have to check your CDS API logs to get the <code>cdsctl signup verify...</code> command to run.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">cd $HOME/cds
+./cdsctl signup verify --api-url ... <span style="color:#75715e"># Get this command from the API Logs</span>
 ./cds-engine download ui --config conf.toml
 ./cds-engine start ui --config conf.toml
-</code></pre>
-
-<p>Then, open a browser on <a href="http://localhost:8080/">http://localhost:8080/</a> .</p>
-
-<h2 id="launch-cds-local-hatchery">Launch CDS Local Hatchery</h2>
-
+</code></pre></div><p>Then, open a browser on http://localhost:8080/ .</p>
+<h2 id="launch-cds-cdn">Launch CDS cdn</h2>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">./cds-engine start cdn --config $HOME/cds/conf.toml
+</code></pre></div><h2 id="launch-cds-local-hatchery">Launch CDS Local Hatchery</h2>
 <p>Start the local hatchery:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">./cds-engine start hatchery:local --config $HOME/cds/conf.toml
 
-<pre><code class="language-bash">./cds-engine start hatchery:local --config $HOME/cds/conf.toml
-
-# notice that you can run api and hatchery with one common only:
-# ./cds-engine start api hatchery:local --config $HOME/cds/conf.toml
-</code></pre>
-
-<h2 id="note-about-cds-engine">Note about CDS Engine</h2>
-
-<p>It is possible to start all services as a single process <code>$ ./cds-engine start api ui hooks hatchery:local --config config.toml</code>.</p>
-
-<pre><code class="language-bash">$ ./cds-engine start api hooks hatchery:local --config config.toml
+<span style="color:#75715e"># notice that you can run api, ui, cdn and hatchery with one common only:</span>
+<span style="color:#75715e"># ./cds-engine start api ui cdn hatchery:local --config $HOME/cds/conf.toml</span>
+</code></pre></div><h2 id="note-about-cds-engine">Note about CDS Engine</h2>
+<p>It is possible to start all services as a single process <code>$ ./cds-engine start api ui cdn hooks hatchery:local --config config.toml</code>.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ ./cds-engine start api hooks hatchery:local --config config.toml
 Reading configuration file config.toml
 Starting service api
-...
 Starting service ui
-...
+Starting service cdn
 Starting service hooks
-...
 Starting service vcs
-...
 Starting service hatchery:local
-...
-</code></pre>
-
-<p>For serious deployment, we strongly suggest to run each service as a dedicated process.</p>
-
-<pre><code class="language-bash">
+</code></pre></div><p>For serious deployment, we strongly suggest to run each service as a dedicated process.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">
 $ ./cds-engine start api --config config.toml
-
+$ ./cds-engine start cdn --config config.toml
 $ ./cds-engine start ui --config config.toml
-
 $ ./cds-engine start hooks --config config.toml
-
 $ ./cds-engine start vcs --config config.toml
 
 $ ./cds-engine start hatchery:local --config config.toml
@@ -428,11 +370,8 @@ $ ./cds-engine start hatchery:marathon --config config.toml
 $ ./cds-engine start hatchery:openstack --config config.toml
 $ ./cds-engine start hatchery:vsphere --config config.toml
 
-</code></pre>
-
-<p>You can scale as you want each of this component, you probably will have to create a configuration for each instance of each service expect the API.</p>
-
-<pre><code class="language-bash">$ ./cds-engine config new &gt; config.api.toml # All API instance can share the same configuration.
+</code></pre></div><p>You can scale as you want each of this component, you probably will have to create a configuration for each instance of each service expect the API.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ ./cds-engine config new &gt; config.api.toml <span style="color:#75715e"># All API instance can share the same configuration.</span>
 
 $ cp config.api.toml config.hatchery.swarm-1.toml
 $ cp config.api.toml config.hatchery.swarm-2.toml
@@ -440,25 +379,25 @@ $ cp config.api.toml config.hatchery.swarm-3.toml
 $ cp config.api.toml config.hooks.toml
 $ cp config.api.toml config.vcs.toml
 
-$ vi config.hatchery.local.toml # Edit the file and keep only the [logs] and [hatchery]/[hatchery.local] sections
-$ vi config.hatchery.docker.toml # Edit the file and keep only the [logs] and [hatchery]/[hatchery.docker] sections
-$ vi config.hatchery.swarm-1.toml # Edit the file and keep only the [logs] and [hatchery]/[hatchery.swarm] sections
-$ vi config.hatchery.swarm-2.toml # Edit the file and keep only the [logs] and [hatchery]/[hatchery.swarm] sections
-$ vi config.hatchery.swarm-3.toml # Edit the file and keep only the [logs] and [hatchery]/[hatchery.swarm] sections
-$ vi config.hooks.toml # Edit the file and keep only the [logs] and [hooks] sections
-$ vi config.vcs.toml # Edit the file and keep only the [logs] and [vcs] sections
+$ vi config.hatchery.local.toml <span style="color:#75715e"># Edit the file and keep only the [logs] and [hatchery]/[hatchery.local] sections</span>
+$ vi config.hatchery.docker.toml <span style="color:#75715e"># Edit the file and keep only the [logs] and [hatchery]/[hatchery.docker] sections</span>
+$ vi config.hatchery.swarm-1.toml <span style="color:#75715e"># Edit the file and keep only the [logs] and [hatchery]/[hatchery.swarm] sections</span>
+$ vi config.hatchery.swarm-2.toml <span style="color:#75715e"># Edit the file and keep only the [logs] and [hatchery]/[hatchery.swarm] sections</span>
+$ vi config.hatchery.swarm-3.toml <span style="color:#75715e"># Edit the file and keep only the [logs] and [hatchery]/[hatchery.swarm] sections</span>
+$ vi config.hooks.toml <span style="color:#75715e"># Edit the file and keep only the [logs] and [hooks] sections</span>
+$ vi config.vcs.toml <span style="color:#75715e"># Edit the file and keep only the [logs] and [vcs] sections</span>
 
 ...
-</code></pre>
-
-<p>If you decide to use consul or vault to store your configuration, you will have to use different key/secrets to store each piece of the configuration</p>
-
+</code></pre></div><p>If you decide to use consul or vault to store your configuration, you will have to use different key/secrets to store each piece of the configuration</p>
 <h2 id="go-further">Go further</h2>
-
 <ul>
-<li>How to use OpenStack infrastructure to spawn CDS container <a href="https://ovh.github.io/cds/docs/integrations/openstack/openstack_compute/">read more</a></li>
-<li>Link CDS to a Repository Manager as <a href="https://ovh.github.io/cds/docs/integrations/github/">GitHub</a>, <a href="https://ovh.github.io/cds/docs/integrations/bitbucket/">Bitbucket Server</a> or <a href="https://ovh.github.io/cds/docs/integrations/gitlab/">GitLab</a> setted up on your CDS Instance.</li>
-<li>Learn more about CDS variables <a href="https://ovh.github.io/cds/docs/concepts/variables/">read more</a></li>
+<li>How to use OpenStack infrastructure to spawn CDS container <a href="../../../docs/integrations/openstack/openstack_compute/">read more</a></li>
+</ul>
+<ul>
+<li>Link CDS to a Repository Manager as <a href="../../../docs/integrations/github/">GitHub</a>, <a href="../../../docs/integrations/bitbucket/">Bitbucket Server</a> or <a href="../../../docs/integrations/gitlab/">GitLab</a> setted up on your CDS Instance.</li>
+</ul>
+<ul>
+<li>Learn more about CDS variables <a href="../../../docs/concepts/variables/">read more</a></li>
 </ul>
 
 

@@ -4,69 +4,64 @@
 	<meta charset="utf-8">
 <title>Import a CDS Workflow from a repository - CDS - Continuous Delivery Service</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="shortcut icon" type="image/png" href="https://ovh.github.io/cds/images/favicon.png">
+<link rel="shortcut icon" type="image/png" href="../../../images/favicon.png">
 
 
 
 
-<link rel="stylesheet" href="https://ovh.github.io/cds/sass/styles.css" integrity="" media="screen">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/callouts.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/auto-complete.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/fontawesome.min.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/asciinema-player.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
+<link rel="stylesheet" href="../../../sass/styles.css" integrity="" media="screen">
+<link rel="stylesheet" href="../../../css/callouts.css">
+<link rel="stylesheet" href="../../../css/auto-complete.css">
+<link rel="stylesheet" href="../../../css/fontawesome.min.css">
+<link rel="stylesheet" href="../../../css/asciinema-player.css">
+<link rel="stylesheet" href="../../../css/solarized-light.css">
 
 <meta name="description"
     content="In this tutorial, you will create a CDS Workflow from an existing git repository.
- The repository have to add .cds/ directory. With the web UI, on will create a CDS Workflow &lsquo;as code&rsquo;.   Prerequisites  Have an account on your CDS instance Have a Repository manager as GitHub, Bitbucket Server or GitLab setted up on your CDS Instance.
-Prepare your git repository  The easiest way to initialize cds files in your repository is to follow first tutorial">
+ The repository have to add .cds/ directory. With the web UI, on will create a CDS Workflow &lsquo;as code&rsquo;.   Prerequisites  Have an account on your CDS instance Have a Repository manager as GitHub, Bitbucket Server or GitLab setted up on your CDS Instance.  Prepare your git repository The easiest way to initialize cds files in your repository is to follow first tutorial">
 <meta property="og:description"
     content="In this tutorial, you will create a CDS Workflow from an existing git repository.
- The repository have to add .cds/ directory. With the web UI, on will create a CDS Workflow &lsquo;as code&rsquo;.   Prerequisites  Have an account on your CDS instance Have a Repository manager as GitHub, Bitbucket Server or GitLab setted up on your CDS Instance.
-Prepare your git repository  The easiest way to initialize cds files in your repository is to follow first tutorial">
+ The repository have to add .cds/ directory. With the web UI, on will create a CDS Workflow &lsquo;as code&rsquo;.   Prerequisites  Have an account on your CDS instance Have a Repository manager as GitHub, Bitbucket Server or GitLab setted up on your CDS Instance.  Prepare your git repository The easiest way to initialize cds files in your repository is to follow first tutorial">
 <meta name="twitter:description"
     content="In this tutorial, you will create a CDS Workflow from an existing git repository.
- The repository have to add .cds/ directory. With the web UI, on will create a CDS Workflow &lsquo;as code&rsquo;.   Prerequisites  Have an account on your CDS instance Have a Repository manager as GitHub, Bitbucket Server or GitLab setted up on your CDS Instance.
-Prepare your git repository  The easiest way to initialize cds files in your repository is to follow first tutorial">
-<meta property="og:url" content="https://ovh.github.io/cds/docs/tutorials/import_workflow_with_webui/">
+ The repository have to add .cds/ directory. With the web UI, on will create a CDS Workflow &lsquo;as code&rsquo;.   Prerequisites  Have an account on your CDS instance Have a Repository manager as GitHub, Bitbucket Server or GitLab setted up on your CDS Instance.  Prepare your git repository The easiest way to initialize cds files in your repository is to follow first tutorial">
+<meta property="og:url" content="/docs/tutorials/import_workflow_with_webui/">
 <meta property="og:title" content="Import a CDS Workflow from a repository">
 <meta name="twitter:title" content="Import a CDS Workflow from a repository">
 <meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
 <meta property="og:image" content="/images/cds-transparent.png">
-<script type="text/javascript" src="https://ovh.github.io/cds/js/anchor-4.1.1.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-3.2.1.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-ui-1.12.1.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/bootstrap-3.3.7.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/highlight.pack.js"></script>
+<script type="text/javascript" src="../../../js/anchor-4.1.1.min.js"></script>
+<script type="text/javascript" src="../../../js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="../../../js/jquery-ui-1.12.1.min.js"></script>
+<script type="text/javascript" src="../../../js/bootstrap-3.3.7.min.js"></script>
+<script type="text/javascript" src="../../../js/highlight.pack.js"></script>
 <script>
     hljs.initHighlightingOnLoad();
 
 </script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/script.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/lunr.min.js"></script>
-<script type="text/javascript">
-    var baseurl = "https:\/\/ovh.github.io\/cds";
+<script type="text/javascript" src="../../../js/script.js"></script>
+<script type="text/javascript" src="../../../js/lunr.min.js"></script>
+<a id="indexJSON" href="../../../index.json"></a>
 
-</script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/auto-complete.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/search.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/asciinema-player.js"></script>
+<script type="text/javascript" src="../../../js/auto-complete.js"></script>
+<script type="text/javascript" src="../../../js/search.js"></script>
+<script type="text/javascript" src="../../../js/asciinema-player.js"></script>
 
 	</head>
 	<body>
 		<section id="hero" class="light-text no-sub">
-			<a href="https://ovh.github.io/cds/" class="logo"></a>
+			<a href="../../../" class="logo"></a>
 				<i id="tocburger" class="fa fa-bars" onclick='$("#toc").toggle()'></i><div class="nav-buttons" data-auto-burger="primary">
 				<ul class="global-nav">
 					
 					
-					<li><a href="https://ovh.github.io/cds/docs/" class="active">Documentation</a></li>
+					<li><a href="../../../docs/" class="active">Documentation</a></li>
 					
-					<li><a href="https://ovh.github.io/cds/hosting/">Hosting your own instance</a></li>
+					<li><a href="../../../hosting/">Hosting your own instance</a></li>
 					
-					<li><a href="https://ovh.github.io/cds/development/">CDS Developer Manual</a></li>
+					<li><a href="../../../development/">CDS Developer Manual</a></li>
 					
-					<li><a href="https://ovh.github.io/cds/about/">About</a></li>
+					<li><a href="../../../about/">About</a></li>
 					
 					<li><i class="fa fa-search" onclick='$("#searchbox").toggle(); $("#search-query").focus().select()'></i></li>
 					<li>
@@ -96,23 +91,23 @@ Prepare your git repository  The easiest way to initialize cds files in your rep
 			
 			
 			
-			<li><a href="https://ovh.github.io/cds/docs/">Home</a></li>
+			<li><a href="../../../docs/">Home</a></li>
 			
 			
 				
-				<li><a href="https://ovh.github.io/cds/docs/concepts/">Concepts</a></li>
+				<li><a href="../../../docs/concepts/">Concepts</a></li>
 			
 				
-				<li><a href="https://ovh.github.io/cds/docs/actions/">Actions</a></li>
+				<li><a href="../../../docs/actions/">Actions</a></li>
 			
 				
-				<li><a href="https://ovh.github.io/cds/docs/components/">Components</a></li>
+				<li><a href="../../../docs/components/">Components</a></li>
 			
 				
-				<li><a href="https://ovh.github.io/cds/docs/integrations/">Integrations</a></li>
+				<li><a href="../../../docs/integrations/">Integrations</a></li>
 			
 				
-				<li><a href="https://ovh.github.io/cds/docs/tutorials/" class="menuSelected">Tutorials</a></li>
+				<li><a href="../../../docs/tutorials/" class="menuSelected">Tutorials</a></li>
 			
 		</ul>
 		
@@ -186,6 +181,8 @@ Prepare your git repository  The easiest way to initialize cds files in your rep
                     
                         
                     
+                        
+                    
                 
             
         
@@ -209,7 +206,7 @@ Prepare your git repository  The easiest way to initialize cds files in your rep
         
         
         <i class="fa fa-bars" id="tocburger" onclick='$("#toc").toggle()'></i> 
-<a class="item" data-title="Tutorials" href="https://ovh.github.io/cds/docs/tutorials/"></a>
+<a class="item" data-title="Tutorials" href="../../../docs/tutorials/"></a>
 
 	
 	
@@ -217,43 +214,43 @@ Prepare your git repository  The easiest way to initialize cds files in your rep
 	
 		
 			
-<a class="item" data-title="Check npm vulnerabilities" href="https://ovh.github.io/cds/docs/tutorials/step_by_step_npm_vulnerabilities/"></a>
+<a class="item" data-title="Check npm vulnerabilities" href="../../../docs/tutorials/step_by_step_npm_vulnerabilities/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Init a CDS Workflow from a repository" href="https://ovh.github.io/cds/docs/tutorials/init_workflow_with_cdsctl/"></a>
+<a class="item" data-title="Init a CDS Workflow from a repository" href="../../../docs/tutorials/init_workflow_with_cdsctl/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Import a CDS Workflow from a repository" href="https://ovh.github.io/cds/docs/tutorials/import_workflow_with_webui/"></a>
+<a class="item" data-title="Import a CDS Workflow from a repository" href="../../../docs/tutorials/import_workflow_with_webui/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Service Requirement NGINX" href="https://ovh.github.io/cds/docs/tutorials/service-requirement-nginx/"></a>
+<a class="item" data-title="Service Requirement NGINX" href="../../../docs/tutorials/service-requirement-nginx/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Build &amp; Deploy a standard application" href="https://ovh.github.io/cds/docs/tutorials/step_by_step_build_deploy/"></a>
+<a class="item" data-title="Build &amp; Deploy a standard application" href="../../../docs/tutorials/step_by_step_build_deploy/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Service Requirement PostgreSQL" href="https://ovh.github.io/cds/docs/tutorials/service-requirement-pg/"></a>
+<a class="item" data-title="Service Requirement PostgreSQL" href="../../../docs/tutorials/service-requirement-pg/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Build, tag and release an application" href="https://ovh.github.io/cds/docs/tutorials/step_by_step_build_tag_release/"></a>
+<a class="item" data-title="Build, tag and release an application" href="../../../docs/tutorials/step_by_step_build_tag_release/"></a>
 
 		
 	
@@ -262,7 +259,7 @@ Prepare your git repository  The easiest way to initialize cds files in your rep
 <div class="item" data-title="Worker Model Docker">
 	<div class="container">
 		
-		<a class="item" data-title="Worker Model Docker" href="https://ovh.github.io/cds/docs/tutorials/worker_model-docker/"></a>
+		<a class="item" data-title="Worker Model Docker" href="../../../docs/tutorials/worker_model-docker/"></a>
 		
 		
 	
@@ -271,7 +268,7 @@ Prepare your git repository  The easiest way to initialize cds files in your rep
 	
 		
 			
-<a class="item" data-title="With your own Docker image" href="https://ovh.github.io/cds/docs/tutorials/worker_model-docker/docker-customized/"></a>
+<a class="item" data-title="With your own Docker image" href="../../../docs/tutorials/worker_model-docker/docker-customized/"></a>
 
 		
 	
@@ -283,13 +280,13 @@ Prepare your git repository  The easiest way to initialize cds files in your rep
 	
 		
 			
-<a class="item" data-title="Worker Model OpenStack" href="https://ovh.github.io/cds/docs/tutorials/worker_model-openstack/"></a>
+<a class="item" data-title="Worker Model OpenStack" href="../../../docs/tutorials/worker_model-openstack/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Worker Model vSphere" href="https://ovh.github.io/cds/docs/tutorials/worker_model-vsphere/"></a>
+<a class="item" data-title="Worker Model vSphere" href="../../../docs/tutorials/worker_model-vsphere/"></a>
 
 		
 	
@@ -310,121 +307,87 @@ Prepare your git repository  The easiest way to initialize cds files in your rep
 
 
 <nav id="TableOfContents">
-<ul>
-<li>
-<ul>
-<li><a href="#prerequisites">Prerequisites</a></li>
-<li><a href="#prepare-your-git-repository">Prepare your git repository</a></li>
-<li><a href="#create-workflow-from-ui">Create workflow from UI</a></li>
-</ul></li>
-</ul>
+  <ul>
+    <li><a href="#prerequisites">Prerequisites</a></li>
+    <li><a href="#prepare-your-git-repository">Prepare your git repository</a></li>
+    <li><a href="#create-workflow-from-ui">Create workflow from UI</a></li>
+  </ul>
 </nav>
 
 
-
 <div class="notices note" ><span></span><div><p>In this tutorial, you will create a CDS Workflow from an existing git repository.</p>
-
 <ul>
 <li>The repository have to add <code>.cds/</code> directory.</li>
 <li>With the web UI, on will create a CDS Workflow &lsquo;as code&rsquo;.</li>
 </ul>
 </div></div>
 
-
 <h2 id="prerequisites">Prerequisites</h2>
-
 <ul>
 <li>Have an account on your CDS instance</li>
-
-<li><p>Have a Repository manager as <a href="https://ovh.github.io/cds/docs/integrations/github/">GitHub</a>, <a href="https://ovh.github.io/cds/docs/integrations/bitbucket/">Bitbucket Server</a> or <a href="https://ovh.github.io/cds/docs/integrations/gitlab/">GitLab</a> setted up on your CDS Instance.</p>
-
-<h2 id="prepare-your-git-repository">Prepare your git repository</h2></li>
+<li>Have a Repository manager as <a href="../../../docs/integrations/github/">GitHub</a>, <a href="../../../docs/integrations/bitbucket/">Bitbucket Server</a> or <a href="../../../docs/integrations/gitlab/">GitLab</a> setted up on your CDS Instance.</li>
 </ul>
-
-<p>The easiest way to initialize cds files in your repository is to follow <a href="https://ovh.github.io/cds/docs/tutorials/init_workflow_with_cdsctl/">first tutorial</a></p>
-
+<h2 id="prepare-your-git-repository">Prepare your git repository</h2>
+<p>The easiest way to initialize cds files in your repository is to follow <a href="../../../docs/tutorials/init_workflow_with_cdsctl/">first tutorial</a></p>
 <p>Create the pipeline file <code>.cds/build.pip.yml</code></p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yml" data-lang="yml"><span style="color:#f92672">version</span>: <span style="color:#ae81ff">v1.0</span>
+<span style="color:#f92672">name</span>: <span style="color:#ae81ff">build-pipeline</span>
+<span style="color:#f92672">jobs</span>:
+- <span style="color:#f92672">job</span>: <span style="color:#ae81ff">First job</span>
+  <span style="color:#f92672">steps</span>:
+  - <span style="color:#f92672">checkout</span>: <span style="color:#e6db74">&#39;{{.cds.workspace}}&#39;</span>
+  - <span style="color:#f92672">script</span>: <span style="color:#ae81ff">mvn package</span>
+  - <span style="color:#f92672">artifactUpload</span>: <span style="color:#ae81ff">target/*.jar</span>
+  <span style="color:#f92672">requirements</span>:
+  - <span style="color:#f92672">binary</span>: <span style="color:#ae81ff">git</span>
+</code></pre></div><p>Create the application file <code>.cds/cdsdemo.app.yml</code></p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yml" data-lang="yml"><span style="color:#f92672">version</span>: <span style="color:#ae81ff">v1.0</span>
+<span style="color:#f92672">name</span>: <span style="color:#ae81ff">cdsdemo</span>
+<span style="color:#f92672">vcs_server</span>: <span style="color:#ae81ff">github</span>
+<span style="color:#f92672">repo</span>: <span style="color:#ae81ff">your-orga/cdsdemo</span>
+<span style="color:#f92672">vcs_branch</span>: <span style="color:#e6db74">&#39;{{.git.branch}}&#39;</span>
+<span style="color:#f92672">vcs_default_branch</span>: <span style="color:#ae81ff">master</span>
+<span style="color:#f92672">vcs_pgp_key</span>: <span style="color:#ae81ff">app-pgp-github</span>
 
-<pre><code class="language-yml">version: v1.0
-name: build-pipeline
-jobs:
-- job: First job
-  steps:
-  - checkout: '{{.cds.workspace}}'
-  - script: mvn package
-  - artifactUpload: target/*.jar
-  requirements:
-  - binary: git
-</code></pre>
-
-<p>Create the application file <code>.cds/cdsdemo.app.yml</code></p>
-
-<pre><code class="language-yml">version: v1.0
-name: cdsdemo
-vcs_server: github
-repo: your-orga/cdsdemo
-vcs_branch: '{{.git.branch}}'
-vcs_default_branch: master
-vcs_pgp_key: app-pgp-github
-
-</code></pre>
-
-<p>Create the workflow file <code>.cds/cdsdemo.yml</code></p>
-
-<pre><code class="language-yml">name: cdsdemo
-version: v1.0
-pipeline: build-pipeline
-payload:
-  git.branch: &quot;master&quot;
-  git.repository: yesnault/cdsdemo
-application: cdsdemo  
-pipeline_hooks:
-- type: Git Repository Poller
-</code></pre>
-
-<h2 id="create-workflow-from-ui">Create workflow from UI</h2>
-
+</code></pre></div><p>Create the workflow file <code>.cds/cdsdemo.yml</code></p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yml" data-lang="yml"><span style="color:#f92672">name</span>: <span style="color:#ae81ff">cdsdemo</span>
+<span style="color:#f92672">version</span>: <span style="color:#ae81ff">v1.0</span>
+<span style="color:#f92672">pipeline</span>: <span style="color:#ae81ff">build-pipeline</span>
+<span style="color:#f92672">payload</span>:
+  <span style="color:#f92672">git.branch</span>: <span style="color:#e6db74">&#34;master&#34;</span>
+  <span style="color:#f92672">git.repository</span>: <span style="color:#ae81ff">yesnault/cdsdemo</span>
+<span style="color:#f92672">application</span>: <span style="color:#ae81ff">cdsdemo  </span>
+<span style="color:#f92672">pipeline_hooks</span>:
+- <span style="color:#f92672">type</span>: <span style="color:#ae81ff">Git Repository Poller</span>
+</code></pre></div><h2 id="create-workflow-from-ui">Create workflow from UI</h2>
 <ul>
 <li>Attach a repository manager on your CDS Project - Advanced tab</li>
 </ul>
-
-<p><img src="https://ovh.github.io/cds/images/getting_started_create_wf_ascode_ui_0_repo.png?height=400px&amp;classes=shadow" alt="Attach repo manager" /></p>
-
+<p><img src="../../../images/getting_started_create_wf_ascode_ui_0_repo.png?height=400px&amp;classes=shadow" alt="Attach repo manager"></p>
 <ul>
 <li>Go on Workflows tab, then click on &lsquo;Create Workflow&rsquo;</li>
 </ul>
-
-<p><img src="https://ovh.github.io/cds/images/getting_started_create_wf_ascode_ui_1_wf_tab.png?height=400px&amp;classes=shadow" alt="Workflow tab" /></p>
-
+<p><img src="../../../images/getting_started_create_wf_ascode_ui_1_wf_tab.png?height=400px&amp;classes=shadow" alt="Workflow tab"></p>
 <ul>
 <li>Click on &lsquo;From repository&rsquo;, then choose a repository manager</li>
 </ul>
-
-<p><img src="https://ovh.github.io/cds/images/getting_started_create_wf_ascode_ui_2_from_repo.png?height=400px&amp;classes=shadow" alt="Choose a repo manager - create workflow" /></p>
-
+<p><img src="../../../images/getting_started_create_wf_ascode_ui_2_from_repo.png?height=400px&amp;classes=shadow" alt="Choose a repo manager - create workflow"></p>
 <ul>
 <li>Choose a git repository describe how to clone it, then click on &lsquo;Inspect repository&rsquo;</li>
 </ul>
-
-<p><img src="https://ovh.github.io/cds/images/getting_started_create_wf_ascode_ui_3_choose_repo.png?height=400px&amp;classes=shadow" alt="Choose repo" /></p>
-
+<p><img src="../../../images/getting_started_create_wf_ascode_ui_3_choose_repo.png?height=400px&amp;classes=shadow" alt="Choose repo"></p>
 <ul>
 <li>Files found are display, then click on &lsquo;Create workflow&rsquo; button</li>
 </ul>
-
-<p><img src="https://ovh.github.io/cds/images/getting_started_create_wf_ascode_ui_4_create_wf.png?height=400px&amp;classes=shadow" alt="Create workflow" /></p>
-
+<p><img src="../../../images/getting_started_create_wf_ascode_ui_4_create_wf.png?height=400px&amp;classes=shadow" alt="Create workflow"></p>
 <ul>
 <li>A resume page is displayed, click on &lsquo;See workflow&rsquo;</li>
 </ul>
-
-<p><img src="https://ovh.github.io/cds/images/getting_started_create_wf_ascode_ui_5_resume.png?height=400px&amp;classes=shadow" alt="Resume page" /></p>
-
+<p><img src="../../../images/getting_started_create_wf_ascode_ui_5_resume.png?height=400px&amp;classes=shadow" alt="Resume page"></p>
 <ul>
 <li>View workflow</li>
 </ul>
-
-<p><img src="https://ovh.github.io/cds/images/getting_started_create_wf_ascode_ui_6_see_workflow.png?height=400px&amp;classes=shadow" alt="See Workflow" /></p>
+<p><img src="../../../images/getting_started_create_wf_ascode_ui_6_see_workflow.png?height=400px&amp;classes=shadow" alt="See Workflow"></p>
 
 
 

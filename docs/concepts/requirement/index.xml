@@ -1,33 +1,29 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Requirement on CDS - Continuous Delivery Service</title>
-    <link>https://ovh.github.io/cds/docs/concepts/requirement/</link>
+    <link>/docs/concepts/requirement/</link>
     <description>Recent content in Requirement on CDS - Continuous Delivery Service</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language>
-    
-	<atom:link href="https://ovh.github.io/cds/docs/concepts/requirement/index.xml" rel="self" type="application/rss+xml" />
-    
-    
+    <language>en-us</language><atom:link href="/docs/concepts/requirement/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Region Requirement</title>
-      <link>https://ovh.github.io/cds/docs/concepts/requirement/requirement_region/</link>
+      <link>/docs/concepts/requirement/requirement_region/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/concepts/requirement/requirement_region/</guid>
+      <guid>/docs/concepts/requirement/requirement_region/</guid>
       <description>The Region prerequisite allows you to require a worker to have access to a specific region.
 A Region can be configured on each hatchery. With a free text as myregion in hatchery configuration, user can set a prerequisite &amp;lsquo;region&amp;rsquo; with value myregion on CDS Job.
 Example of job configuration:
-jobs: - job: build requirements: - region: myregion steps: ...  </description>
+jobs: - job: build requirements: - region: myregion steps: ... </description>
     </item>
     
     <item>
       <title>Service Link</title>
-      <link>https://ovh.github.io/cds/docs/concepts/requirement/requirement_service/</link>
+      <link>/docs/concepts/requirement/requirement_service/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/concepts/requirement/requirement_service/</guid>
+      <guid>/docs/concepts/requirement/requirement_service/</guid>
       <description>The Service Link prerequisite allow you to use any Docker image as a dependency of a job.
 This is useful when you want to make some tests with a real database, or put your built application as a job prerequisite for doing some tests.
 How to use service requirement When editing a pipeline job, choose your model as usual, then add a new service requirement (the name you set will be the service&amp;rsquo;s hostname) and set the Docker image for the service as the value.</description>
@@ -35,20 +31,20 @@ How to use service requirement When editing a pipeline job, choose your model as
     
     <item>
       <title>Memory</title>
-      <link>https://ovh.github.io/cds/docs/concepts/requirement/requirement_memory/</link>
+      <link>/docs/concepts/requirement/requirement_memory/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/concepts/requirement/requirement_memory/</guid>
+      <guid>/docs/concepts/requirement/requirement_memory/</guid>
       <description>The Memory requirement allows you to require a worker to have a specific number of MiB of RAM.
 For example if you need 2 GiB of RAM for your worker you can put 2048 in your memory requirement.</description>
     </item>
     
     <item>
       <title>OS &amp; Architecture</title>
-      <link>https://ovh.github.io/cds/docs/concepts/requirement/requirement_os_arch/</link>
+      <link>/docs/concepts/requirement/requirement_os_arch/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/concepts/requirement/requirement_os_arch/</guid>
+      <guid>/docs/concepts/requirement/requirement_os_arch/</guid>
       <description>The OS-Architecture prerequisite allow you to require a worker with a specific OS &amp;amp; Architecture.
 Beware about default value: there is a default value for OS &amp;amp; Architecture, it&amp;rsquo;s specified in CDS API Configuration.
 If user does not specify a prerequisite os-architecture, the default value is applied when the job is in CDS Queue.

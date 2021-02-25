@@ -1,23 +1,19 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Ready to RUN on CDS - Continuous Delivery Service</title>
-    <link>https://ovh.github.io/cds/hosting/ready-to-run/</link>
+    <link>/hosting/ready-to-run/</link>
     <description>Recent content in Ready to RUN on CDS - Continuous Delivery Service</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language>
-    
-	<atom:link href="https://ovh.github.io/cds/hosting/ready-to-run/index.xml" rel="self" type="application/rss+xml" />
-    
-    
+    <language>en-us</language><atom:link href="/hosting/ready-to-run/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Run with binaries</title>
-      <link>https://ovh.github.io/cds/hosting/ready-to-run/from-binaries/</link>
+      <link>/hosting/ready-to-run/from-binaries/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/hosting/ready-to-run/from-binaries/</guid>
+      <guid>/hosting/ready-to-run/from-binaries/</guid>
       <description>This article contains the steps to start CDS locally, with API, UI and a local Hatchery.
- Download CDS from GitHub Prepare Database Launch CDS API, CDS UI and a Local Hatchery  Prerequisite  a Redis a PostgreSQL 9.6 min  Get the latest release from GitHub mkdir $HOME/cds cd cds LAST_RELEASE=0.47.0 OS=linux # could be linux, darwin, windows, freebsd, openbsd ARCH=amd64 # could be 386, arm, amd64, arm64, ppc64le # GET Binaries from GitHub curl -L https://github.</description>
+ Download CDS from GitHub Prepare Database Launch CDS API, CDS UI and a Local Hatchery  Prerequisite  a Redis a PostgreSQL 9.6 min  Get the latest release from GitHub mkdir $HOME/cds cd cds LAST_RELEASE=$(curl -s https://api.github.com/repos/ovh/cds/releases | grep tag_name | head -n 1 | cut -d &amp;#39;&amp;#34;&amp;#39; -f 4) OS=linux # could be linux, darwin, windows, freebsd, openbsd ARCH=amd64 # could be 386, arm, amd64, arm64, ppc64le # GET Binaries from GitHub curl -L https://github.</description>
     </item>
     
   </channel>

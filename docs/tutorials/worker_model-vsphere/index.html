@@ -4,17 +4,17 @@
 	<meta charset="utf-8">
 <title>Worker Model vSphere - CDS - Continuous Delivery Service</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="shortcut icon" type="image/png" href="https://ovh.github.io/cds/images/favicon.png">
+<link rel="shortcut icon" type="image/png" href="../../../images/favicon.png">
 
 
 
 
-<link rel="stylesheet" href="https://ovh.github.io/cds/sass/styles.css" integrity="" media="screen">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/callouts.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/auto-complete.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/fontawesome.min.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/asciinema-player.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
+<link rel="stylesheet" href="../../../sass/styles.css" integrity="" media="screen">
+<link rel="stylesheet" href="../../../css/callouts.css">
+<link rel="stylesheet" href="../../../css/auto-complete.css">
+<link rel="stylesheet" href="../../../css/fontawesome.min.css">
+<link rel="stylesheet" href="../../../css/asciinema-player.css">
+<link rel="stylesheet" href="../../../css/solarized-light.css">
 
 <meta name="description"
     content="CDS build using vSphere infrastructure
@@ -34,45 +34,43 @@ Add vSphere worker model We need to define a vSphere worker model to have vSpher
 We will create a worker model called debian8-docker:
  On Debian 8 With Docker ready to use Git installed  You need to configure:
  The image is the name of your virtual machine that you have created before on your host to clone (See Advanced) Pattern If you aren&rsquo;t an administrator you have to choose a configuration pattern in order to fill pre command, worker command and post command with a pattern that an administrator have already fill for you.">
-<meta property="og:url" content="https://ovh.github.io/cds/docs/tutorials/worker_model-vsphere/">
+<meta property="og:url" content="/docs/tutorials/worker_model-vsphere/">
 <meta property="og:title" content="Worker Model vSphere">
 <meta name="twitter:title" content="Worker Model vSphere">
 <meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
 <meta property="og:image" content="/images/cds-transparent.png">
-<script type="text/javascript" src="https://ovh.github.io/cds/js/anchor-4.1.1.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-3.2.1.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-ui-1.12.1.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/bootstrap-3.3.7.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/highlight.pack.js"></script>
+<script type="text/javascript" src="../../../js/anchor-4.1.1.min.js"></script>
+<script type="text/javascript" src="../../../js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="../../../js/jquery-ui-1.12.1.min.js"></script>
+<script type="text/javascript" src="../../../js/bootstrap-3.3.7.min.js"></script>
+<script type="text/javascript" src="../../../js/highlight.pack.js"></script>
 <script>
     hljs.initHighlightingOnLoad();
 
 </script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/script.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/lunr.min.js"></script>
-<script type="text/javascript">
-    var baseurl = "https:\/\/ovh.github.io\/cds";
+<script type="text/javascript" src="../../../js/script.js"></script>
+<script type="text/javascript" src="../../../js/lunr.min.js"></script>
+<a id="indexJSON" href="../../../index.json"></a>
 
-</script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/auto-complete.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/search.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/asciinema-player.js"></script>
+<script type="text/javascript" src="../../../js/auto-complete.js"></script>
+<script type="text/javascript" src="../../../js/search.js"></script>
+<script type="text/javascript" src="../../../js/asciinema-player.js"></script>
 
 	</head>
 	<body>
 		<section id="hero" class="light-text no-sub">
-			<a href="https://ovh.github.io/cds/" class="logo"></a>
+			<a href="../../../" class="logo"></a>
 				<i id="tocburger" class="fa fa-bars" onclick='$("#toc").toggle()'></i><div class="nav-buttons" data-auto-burger="primary">
 				<ul class="global-nav">
 					
 					
-					<li><a href="https://ovh.github.io/cds/docs/" class="active">Documentation</a></li>
+					<li><a href="../../../docs/" class="active">Documentation</a></li>
 					
-					<li><a href="https://ovh.github.io/cds/hosting/">Hosting your own instance</a></li>
+					<li><a href="../../../hosting/">Hosting your own instance</a></li>
 					
-					<li><a href="https://ovh.github.io/cds/development/">CDS Developer Manual</a></li>
+					<li><a href="../../../development/">CDS Developer Manual</a></li>
 					
-					<li><a href="https://ovh.github.io/cds/about/">About</a></li>
+					<li><a href="../../../about/">About</a></li>
 					
 					<li><i class="fa fa-search" onclick='$("#searchbox").toggle(); $("#search-query").focus().select()'></i></li>
 					<li>
@@ -102,23 +100,23 @@ We will create a worker model called debian8-docker:
 			
 			
 			
-			<li><a href="https://ovh.github.io/cds/docs/">Home</a></li>
+			<li><a href="../../../docs/">Home</a></li>
 			
 			
 				
-				<li><a href="https://ovh.github.io/cds/docs/concepts/">Concepts</a></li>
+				<li><a href="../../../docs/concepts/">Concepts</a></li>
 			
 				
-				<li><a href="https://ovh.github.io/cds/docs/actions/">Actions</a></li>
+				<li><a href="../../../docs/actions/">Actions</a></li>
 			
 				
-				<li><a href="https://ovh.github.io/cds/docs/components/">Components</a></li>
+				<li><a href="../../../docs/components/">Components</a></li>
 			
 				
-				<li><a href="https://ovh.github.io/cds/docs/integrations/">Integrations</a></li>
+				<li><a href="../../../docs/integrations/">Integrations</a></li>
 			
 				
-				<li><a href="https://ovh.github.io/cds/docs/tutorials/" class="menuSelected">Tutorials</a></li>
+				<li><a href="../../../docs/tutorials/" class="menuSelected">Tutorials</a></li>
 			
 		</ul>
 		
@@ -192,6 +190,8 @@ We will create a worker model called debian8-docker:
                     
                         
                     
+                        
+                    
                 
             
         
@@ -215,7 +215,7 @@ We will create a worker model called debian8-docker:
         
         
         <i class="fa fa-bars" id="tocburger" onclick='$("#toc").toggle()'></i> 
-<a class="item" data-title="Tutorials" href="https://ovh.github.io/cds/docs/tutorials/"></a>
+<a class="item" data-title="Tutorials" href="../../../docs/tutorials/"></a>
 
 	
 	
@@ -223,43 +223,43 @@ We will create a worker model called debian8-docker:
 	
 		
 			
-<a class="item" data-title="Check npm vulnerabilities" href="https://ovh.github.io/cds/docs/tutorials/step_by_step_npm_vulnerabilities/"></a>
+<a class="item" data-title="Check npm vulnerabilities" href="../../../docs/tutorials/step_by_step_npm_vulnerabilities/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Init a CDS Workflow from a repository" href="https://ovh.github.io/cds/docs/tutorials/init_workflow_with_cdsctl/"></a>
+<a class="item" data-title="Init a CDS Workflow from a repository" href="../../../docs/tutorials/init_workflow_with_cdsctl/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Import a CDS Workflow from a repository" href="https://ovh.github.io/cds/docs/tutorials/import_workflow_with_webui/"></a>
+<a class="item" data-title="Import a CDS Workflow from a repository" href="../../../docs/tutorials/import_workflow_with_webui/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Service Requirement NGINX" href="https://ovh.github.io/cds/docs/tutorials/service-requirement-nginx/"></a>
+<a class="item" data-title="Service Requirement NGINX" href="../../../docs/tutorials/service-requirement-nginx/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Build &amp; Deploy a standard application" href="https://ovh.github.io/cds/docs/tutorials/step_by_step_build_deploy/"></a>
+<a class="item" data-title="Build &amp; Deploy a standard application" href="../../../docs/tutorials/step_by_step_build_deploy/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Service Requirement PostgreSQL" href="https://ovh.github.io/cds/docs/tutorials/service-requirement-pg/"></a>
+<a class="item" data-title="Service Requirement PostgreSQL" href="../../../docs/tutorials/service-requirement-pg/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Build, tag and release an application" href="https://ovh.github.io/cds/docs/tutorials/step_by_step_build_tag_release/"></a>
+<a class="item" data-title="Build, tag and release an application" href="../../../docs/tutorials/step_by_step_build_tag_release/"></a>
 
 		
 	
@@ -268,7 +268,7 @@ We will create a worker model called debian8-docker:
 <div class="item" data-title="Worker Model Docker">
 	<div class="container">
 		
-		<a class="item" data-title="Worker Model Docker" href="https://ovh.github.io/cds/docs/tutorials/worker_model-docker/"></a>
+		<a class="item" data-title="Worker Model Docker" href="../../../docs/tutorials/worker_model-docker/"></a>
 		
 		
 	
@@ -277,7 +277,7 @@ We will create a worker model called debian8-docker:
 	
 		
 			
-<a class="item" data-title="With your own Docker image" href="https://ovh.github.io/cds/docs/tutorials/worker_model-docker/docker-customized/"></a>
+<a class="item" data-title="With your own Docker image" href="../../../docs/tutorials/worker_model-docker/docker-customized/"></a>
 
 		
 	
@@ -289,13 +289,13 @@ We will create a worker model called debian8-docker:
 	
 		
 			
-<a class="item" data-title="Worker Model OpenStack" href="https://ovh.github.io/cds/docs/tutorials/worker_model-openstack/"></a>
+<a class="item" data-title="Worker Model OpenStack" href="../../../docs/tutorials/worker_model-openstack/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Worker Model vSphere" href="https://ovh.github.io/cds/docs/tutorials/worker_model-vsphere/"></a>
+<a class="item" data-title="Worker Model vSphere" href="../../../docs/tutorials/worker_model-vsphere/"></a>
 
 		
 	
@@ -316,108 +316,89 @@ We will create a worker model called debian8-docker:
 
 
 <nav id="TableOfContents">
-<ul>
-<li>
-<ul>
-<li><a href="#add-vsphere-worker-model">Add vSphere worker model</a></li>
-</ul></li>
-</ul>
+  <ul>
+    <li><a href="#add-vsphere-worker-model">Add vSphere worker model</a></li>
+  </ul>
 </nav>
 
-
-
 <p>CDS build using vSphere infrastructure</p>
-
 <h2 id="add-vsphere-worker-model">Add vSphere worker model</h2>
-
 <p>We need to define a vSphere worker model to have vSphere hatchery booting workers.</p>
-
 <p>We will create a worker model called debian8-docker:</p>
-
 <ul>
 <li>On Debian 8</li>
 <li>With Docker ready to use</li>
 <li>Git installed</li>
 </ul>
-
 <p>You need to configure:</p>
-
 <ul>
-<li><strong>The image</strong> is the name of your virtual machine that you have created before on your host to clone (See <a href="https://ovh.github.io/cds/docs/integrations/vsphere/">Advanced</a>)</li>
-<li><strong>Pattern</strong> If you aren&rsquo;t an administrator you have to choose a configuration pattern in order to fill pre command, worker command and post command with a <a href="https://ovh.github.io/cds/docs/concepts/worker-model/patterns/">pattern that an administrator have already fill for you</a>.</li>
+<li><strong>The image</strong> is the name of your virtual machine that you have created before on your host to clone (See <a href="../../../docs/integrations/vsphere/">Advanced</a>)</li>
+<li><strong>Pattern</strong> If you aren&rsquo;t an administrator you have to choose a configuration pattern in order to fill pre command, worker command and post command with a <a href="../../../docs/concepts/worker-model/patterns/">pattern that an administrator have already fill for you</a>.</li>
 <li>If you are an administrator:
-
 <ul>
 <li><strong>pre worker command</strong>: all scripts that need to be run before execute the worker binary (for example: set the right environment variables, install curl and other tools you need like Docker, &hellip;)</li>
-<li><strong>main worker command</strong>: the command launched to run the worker with right flags thanks to the interpolate variables that CDS fill for you <a href="https://ovh.github.io/cds/docs/concepts/worker-model/variables/">(more informations click here)</a>.</li>
+<li><strong>main worker command</strong>: the command launched to run the worker with right flags thanks to the interpolate variables that CDS fill for you <a href="../../../docs/concepts/worker-model/variables/">(more informations click here)</a>.</li>
 <li><strong>post worker command</strong>: the command launched after the execution of your worker. If you need to clean something and then shutdown the VM.</li>
-</ul></li>
 </ul>
-
+</li>
+</ul>
 <p>Via UI (inside settings section &ndash;&gt; worker models):</p>
-
 <p>For example:</p>
-
-<p><img src="https://ovh.github.io/cds/images/worker_model_vsphere.png" alt="Worker Model UI vSphere" /></p>
-
+<p><img src="../../../images/worker_model_vsphere.png" alt="Worker Model UI vSphere"></p>
 <p>Or via CLI with a yaml file:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ cds worker model import my_worker_model.yml
+</code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#f92672">name</span>: <span style="color:#ae81ff">testvsphere</span>
+<span style="color:#f92672">type</span>: <span style="color:#ae81ff">vsphere</span>
+<span style="color:#f92672">description</span>: <span style="color:#e6db74">&#34;my worker model&#34;</span>
+<span style="color:#f92672">group</span>: <span style="color:#ae81ff">shared.infra</span>
+<span style="color:#f92672">image</span>: <span style="color:#ae81ff">debian8</span>
+<span style="color:#f92672">pre_cmd</span>: |<span style="color:#e6db74">
+</span><span style="color:#e6db74">  #!/bin/bash
+</span><span style="color:#e6db74">  set +e
+</span><span style="color:#e6db74">  export CDS_FROM_WORKER_IMAGE={{.FromWorkerImage}}
+</span><span style="color:#e6db74">  export CDS_SINGLE_USE=1
+</span><span style="color:#e6db74">  export CDS_API={{.API}}
+</span><span style="color:#e6db74">  export CDS_TOKEN={{.Token}}
+</span><span style="color:#e6db74">  export CDS_NAME={{.Name}}
+</span><span style="color:#e6db74">  export CDS_MODEL={{.Model}}
+</span><span style="color:#e6db74">  export CDS_HATCHERY={{.Hatchery}}
+</span><span style="color:#e6db74">  export CDS_HATCHERY_NAME={{.HatcheryName}}
+</span><span style="color:#e6db74">  export CDS_BOOKED_PB_JOB_ID={{.PipelineBuildJobID}}
+</span><span style="color:#e6db74">  export CDS_BOOKED_WORKFLOW_JOB_ID={{.WorkflowJobID}}
+</span><span style="color:#e6db74">  export CDS_TTL={{.TTL}}
+</span><span style="color:#e6db74">  export CDS_INSECURE={{.HTTPInsecure}}
+</span><span style="color:#e6db74">
+</span><span style="color:#e6db74">  # Basic build binaries
+</span><span style="color:#e6db74">  cd $HOME
+</span><span style="color:#e6db74">  apt-get -y --force-yes update &gt;&gt; /tmp/user_data 2&gt;&amp;1
+</span><span style="color:#e6db74">  apt-get -y --force-yes install curl git &gt;&gt; /tmp/user_data 2&gt;&amp;1
+</span><span style="color:#e6db74">  apt-get -y --force-yes install binutils &gt;&gt; /tmp/user_data 2&gt;&amp;1
+</span><span style="color:#e6db74">  # Docker installation (FOR DEBIAN)
+</span><span style="color:#e6db74">  if [[ &#34;x{{.FromWorkerImage}}&#34; = &#34;xtrue&#34; ]]; then
+</span><span style="color:#e6db74">    echo &#34;$(date) - CDS_FROM_WORKER_IMAGE == true - no install docker required &#34;
+</span><span style="color:#e6db74">  else
+</span><span style="color:#e6db74">    # Install Docker
+</span><span style="color:#e6db74">    apt-get install -y --force-yes apt-transport-https ca-certificates &gt;&gt; /tmp/user_data 2&gt;&amp;1
+</span><span style="color:#e6db74">    apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D
+</span><span style="color:#e6db74">    mkdir -p /etc/apt/sources.list.d
+</span><span style="color:#e6db74">    sh -c &#34;echo deb https://apt.dockerproject.org/repo debian-jessie main &gt; /etc/apt/sources.list.d/docker.list&#34;
+</span><span style="color:#e6db74">    apt-get -y --force-yes update &gt;&gt; /tmp/user_data 2&gt;&amp;1
+</span><span style="color:#e6db74">    apt-cache policy docker-engine &gt;&gt; /tmp/user_data 2&gt;&amp;1
+</span><span style="color:#e6db74">    apt-get install -y --force-yes docker-engine &gt;&gt; /tmp/user_data 2&gt;&amp;1
+</span><span style="color:#e6db74">    service docker start &gt;&gt; /tmp/user_data 2&gt;&amp;1
+</span><span style="color:#e6db74">    # Non-root access
+</span><span style="color:#e6db74">    groupadd docker &gt;&gt; /tmp/user_data 2&gt;&amp;1
+</span><span style="color:#e6db74">    gpasswd -a ${USER} docker &gt;&gt; /tmp/user_data 2&gt;&amp;1
+</span><span style="color:#e6db74">    service docker restart &gt;&gt; /tmp/user_data 2&gt;&amp;1
+</span><span style="color:#e6db74">  fi;
+</span><span style="color:#e6db74">  curl -L &#34;{{.API}}/download/worker/linux/$(uname -m)&#34; -o worker --retry 10 --retry-max-time 120 -C - &gt;&gt; /tmp/user_data 2&gt;&amp;1
+</span><span style="color:#e6db74">  chmod +x worker</span>  
 
-<pre><code class="language-bash"> $ cds worker model import my_worker_model.yml
-</code></pre>
+<span style="color:#f92672">cmd</span>: <span style="color:#e6db74">&#34;PATH=$PATH ./worker&#34;</span>
 
-<pre><code class="language-yaml"> name: testvsphere
- type: vsphere
- description: &quot;my worker model&quot;
- group: shared.infra
- image: debian8
- pre_cmd: |
-   #!/bin/bash
-   set +e
-   export CDS_FROM_WORKER_IMAGE={{.FromWorkerImage}}
-   export CDS_SINGLE_USE=1
-   export CDS_API={{.API}}
-   export CDS_TOKEN={{.Token}}
-   export CDS_NAME={{.Name}}
-   export CDS_MODEL={{.Model}}
-   export CDS_HATCHERY={{.Hatchery}}
-   export CDS_HATCHERY_NAME={{.HatcheryName}}
-   export CDS_BOOKED_PB_JOB_ID={{.PipelineBuildJobID}}
-   export CDS_BOOKED_WORKFLOW_JOB_ID={{.WorkflowJobID}}
-   export CDS_TTL={{.TTL}}
-   export CDS_INSECURE={{.HTTPInsecure}}
+<span style="color:#f92672">post_cmd</span>: <span style="color:#ae81ff">sudo shutdown -h now</span>
 
-   # Basic build binaries
-   cd $HOME
-   apt-get -y --force-yes update &gt;&gt; /tmp/user_data 2&gt;&amp;1
-   apt-get -y --force-yes install curl git &gt;&gt; /tmp/user_data 2&gt;&amp;1
-   apt-get -y --force-yes install binutils &gt;&gt; /tmp/user_data 2&gt;&amp;1
-   # Docker installation (FOR DEBIAN)
-   if [[ &quot;x{{.FromWorkerImage}}&quot; = &quot;xtrue&quot; ]]; then
-     echo &quot;$(date) - CDS_FROM_WORKER_IMAGE == true - no install docker required &quot;
-   else
-     # Install Docker
-     apt-get install -y --force-yes apt-transport-https ca-certificates &gt;&gt; /tmp/user_data 2&gt;&amp;1
-     apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D
-     mkdir -p /etc/apt/sources.list.d
-     sh -c &quot;echo deb https://apt.dockerproject.org/repo debian-jessie main &gt; /etc/apt/sources.list.d/docker.list&quot;
-     apt-get -y --force-yes update &gt;&gt; /tmp/user_data 2&gt;&amp;1
-     apt-cache policy docker-engine &gt;&gt; /tmp/user_data 2&gt;&amp;1
-     apt-get install -y --force-yes docker-engine &gt;&gt; /tmp/user_data 2&gt;&amp;1
-     service docker start &gt;&gt; /tmp/user_data 2&gt;&amp;1
-     # Non-root access
-     groupadd docker &gt;&gt; /tmp/user_data 2&gt;&amp;1
-     gpasswd -a ${USER} docker &gt;&gt; /tmp/user_data 2&gt;&amp;1
-     service docker restart &gt;&gt; /tmp/user_data 2&gt;&amp;1
-   fi;
-   curl -L &quot;{{.API}}/download/worker/linux/$(uname -m)&quot; -o worker --retry 10 --retry-max-time 120 -C - &gt;&gt; /tmp/user_data 2&gt;&amp;1
-   chmod +x worker
-
- cmd: &quot;PATH=$PATH ./worker&quot;
-
- post_cmd: sudo shutdown -h now
-
-</code></pre>
-
+</code></pre></div>
 
 
 

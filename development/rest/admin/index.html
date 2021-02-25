@@ -4,63 +4,61 @@
 	<meta charset="utf-8">
 <title>admin - CDS - Continuous Delivery Service</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="shortcut icon" type="image/png" href="https://ovh.github.io/cds/images/favicon.png">
+<link rel="shortcut icon" type="image/png" href="../../../images/favicon.png">
 
 
 
 
-<link rel="stylesheet" href="https://ovh.github.io/cds/sass/styles.css" integrity="" media="screen">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/callouts.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/auto-complete.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/fontawesome.min.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/asciinema-player.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
+<link rel="stylesheet" href="../../../sass/styles.css" integrity="" media="screen">
+<link rel="stylesheet" href="../../../css/callouts.css">
+<link rel="stylesheet" href="../../../css/auto-complete.css">
+<link rel="stylesheet" href="../../../css/fontawesome.min.css">
+<link rel="stylesheet" href="../../../css/asciinema-player.css">
+<link rel="stylesheet" href="../../../css/solarized-light.css">
 
 <meta name="description"
-    content=" DELETE /admin/database/migration/delete/&lt;id&gt;    URL /admin/database/migration/delete/&lt;id&gt;     Method DELETE   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code deleteDatabaseMigrationHandler    DELETE /admin/plugin/&lt;name&gt;/binary/&lt;os&gt;/&lt;arch&gt;    URL /admin/plugin/&lt;name&gt;/binary/&lt;os&gt;/&lt;arch&gt;     Method DELETE   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code deleteGRPCluginBinaryHandler    DELETE /admin/plugin/&lt;name&gt;    URL /admin/plugin/&lt;name&gt;     Method DELETE   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code deleteGRPCluginHandler    DELETE /admin/service/&lt;name&gt;    URL /admin/service/&lt;name&gt;     Method DELETE   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code deleteAdminServiceHandler    DELETE /admin/services/call    URL /admin/services/call     Method DELETE   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code deleteAdminServiceCallHandler    GET /admin/cds/migration    URL /admin/cds/migration     Method GET   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code getAdminMigrationsHandler    GET /admin/database/encryption/&lt;entity&gt;    URL /admin/database/encryption/&lt;entity&gt;     Method GET   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code getAdminDatabaseEncryptedTuplesByEntity    GET /admin/database/encryption    URL /admin/database/encryption     Method GET   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code getAdminDatabaseEncryptedEntities    GET /admin/database/migration    URL /admin/database/migration     Method GET   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code getDatabaseMigrationHandler    GET /admin/database/signature/&lt;entity&gt;/&lt;signer&gt;    URL /admin/database/signature/&lt;entity&gt;/&lt;signer&gt;     Method GET   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code getAdminDatabaseSignatureTuplesBySigner    GET /admin/database/signature    URL /admin/database/signature     Method GET   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code getAdminDatabaseSignatureResume    GET /admin/debug/&lt;name&gt;    URL /admin/debug/&lt;name&gt;     Method GET   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code getProfileHandler    GET /admin/debug/cpu    URL /admin/debug/cpu     Method GET   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code getCPUProfileHandler    GET /admin/debug/goroutines    URL /admin/debug/goroutines     Method GET   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code getDebugGoroutinesHandler    GET /admin/debug/profiles    URL /admin/debug/profiles     Method GET   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code getDebugProfilesHandler    GET /admin/debug/trace    URL /admin/debug/trace     Method GET   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code getTraceHandler    GET /admin/plugin/&lt;name&gt;    URL /admin/plugin/&lt;name&gt;     Method GET   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code getGRPCluginHandler    GET /admin/plugin    URL /admin/plugin     Method GET   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code getAllGRPCluginHandler    GET /admin/service/&lt;name&gt;    URL /admin/service/&lt;name&gt;     Method GET   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code getAdminServiceHandler    GET /admin/services/call    URL /admin/services/call     Method GET   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code getAdminServiceCallHandler    GET /admin/services    URL /admin/services     Method GET   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code getAdminServicesHandler    POST /admin/cds/migration/&lt;id&gt;/cancel    URL /admin/cds/migration/&lt;id&gt;/cancel     Method POST   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code postAdminMigrationCancelHandler    POST /admin/cds/migration/&lt;id&gt;/todo    URL /admin/cds/migration/&lt;id&gt;/todo     Method POST   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code postAdminMigrationTodoHandler    POST /admin/database/encryption/&lt;entity&gt;/roll/&lt;pk&gt;    URL /admin/database/encryption/&lt;entity&gt;/roll/&lt;pk&gt;     Method POST   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code postAdminDatabaseRollEncryptedEntityByPrimaryKey    POST /admin/database/migration/unlock/&lt;id&gt;    URL /admin/database/migration/unlock/&lt;id&gt;     Method POST   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code postDatabaseMigrationUnlockedHandler    POST /admin/database/signature/&lt;entity&gt;/roll/&lt;pk&gt;    URL /admin/database/signature/&lt;entity&gt;/roll/&lt;pk&gt;     Method POST   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code postAdminDatabaseSignatureRollEntityByPrimaryKey    POST /admin/maintenance    URL /admin/maintenance     Method POST   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code postMaintenanceHandler    POST /admin/plugin/&lt;name&gt;/binary    URL /admin/plugin/&lt;name&gt;/binary     Method POST   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code postGRPCluginBinaryHandler    POST /admin/plugin    URL /admin/plugin     Method POST   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code postGRPCluginHandler    POST /admin/services/call    URL /admin/services/call     Method POST   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code postAdminServiceCallHandler    PUT /admin/plugin/&lt;name&gt;    URL /admin/plugin/&lt;name&gt;     Method PUT   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code putGRPCluginHandler    PUT /admin/services/call    URL /admin/services/call     Method PUT   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code putAdminServiceCallHandler    ">
+    content="GET /admin/services/call    URL /admin/services/call     Method GET   Permissions Auth: true   Scopes Admin   Code authMaintainerMiddleware    ">
 <meta property="og:description"
-    content=" DELETE /admin/database/migration/delete/&lt;id&gt;    URL /admin/database/migration/delete/&lt;id&gt;     Method DELETE   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code deleteDatabaseMigrationHandler    DELETE /admin/plugin/&lt;name&gt;/binary/&lt;os&gt;/&lt;arch&gt;    URL /admin/plugin/&lt;name&gt;/binary/&lt;os&gt;/&lt;arch&gt;     Method DELETE   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code deleteGRPCluginBinaryHandler    DELETE /admin/plugin/&lt;name&gt;    URL /admin/plugin/&lt;name&gt;     Method DELETE   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code deleteGRPCluginHandler    DELETE /admin/service/&lt;name&gt;    URL /admin/service/&lt;name&gt;     Method DELETE   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code deleteAdminServiceHandler    DELETE /admin/services/call    URL /admin/services/call     Method DELETE   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code deleteAdminServiceCallHandler    GET /admin/cds/migration    URL /admin/cds/migration     Method GET   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code getAdminMigrationsHandler    GET /admin/database/encryption/&lt;entity&gt;    URL /admin/database/encryption/&lt;entity&gt;     Method GET   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code getAdminDatabaseEncryptedTuplesByEntity    GET /admin/database/encryption    URL /admin/database/encryption     Method GET   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code getAdminDatabaseEncryptedEntities    GET /admin/database/migration    URL /admin/database/migration     Method GET   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code getDatabaseMigrationHandler    GET /admin/database/signature/&lt;entity&gt;/&lt;signer&gt;    URL /admin/database/signature/&lt;entity&gt;/&lt;signer&gt;     Method GET   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code getAdminDatabaseSignatureTuplesBySigner    GET /admin/database/signature    URL /admin/database/signature     Method GET   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code getAdminDatabaseSignatureResume    GET /admin/debug/&lt;name&gt;    URL /admin/debug/&lt;name&gt;     Method GET   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code getProfileHandler    GET /admin/debug/cpu    URL /admin/debug/cpu     Method GET   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code getCPUProfileHandler    GET /admin/debug/goroutines    URL /admin/debug/goroutines     Method GET   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code getDebugGoroutinesHandler    GET /admin/debug/profiles    URL /admin/debug/profiles     Method GET   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code getDebugProfilesHandler    GET /admin/debug/trace    URL /admin/debug/trace     Method GET   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code getTraceHandler    GET /admin/plugin/&lt;name&gt;    URL /admin/plugin/&lt;name&gt;     Method GET   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code getGRPCluginHandler    GET /admin/plugin    URL /admin/plugin     Method GET   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code getAllGRPCluginHandler    GET /admin/service/&lt;name&gt;    URL /admin/service/&lt;name&gt;     Method GET   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code getAdminServiceHandler    GET /admin/services/call    URL /admin/services/call     Method GET   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code getAdminServiceCallHandler    GET /admin/services    URL /admin/services     Method GET   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code getAdminServicesHandler    POST /admin/cds/migration/&lt;id&gt;/cancel    URL /admin/cds/migration/&lt;id&gt;/cancel     Method POST   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code postAdminMigrationCancelHandler    POST /admin/cds/migration/&lt;id&gt;/todo    URL /admin/cds/migration/&lt;id&gt;/todo     Method POST   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code postAdminMigrationTodoHandler    POST /admin/database/encryption/&lt;entity&gt;/roll/&lt;pk&gt;    URL /admin/database/encryption/&lt;entity&gt;/roll/&lt;pk&gt;     Method POST   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code postAdminDatabaseRollEncryptedEntityByPrimaryKey    POST /admin/database/migration/unlock/&lt;id&gt;    URL /admin/database/migration/unlock/&lt;id&gt;     Method POST   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code postDatabaseMigrationUnlockedHandler    POST /admin/database/signature/&lt;entity&gt;/roll/&lt;pk&gt;    URL /admin/database/signature/&lt;entity&gt;/roll/&lt;pk&gt;     Method POST   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code postAdminDatabaseSignatureRollEntityByPrimaryKey    POST /admin/maintenance    URL /admin/maintenance     Method POST   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code postMaintenanceHandler    POST /admin/plugin/&lt;name&gt;/binary    URL /admin/plugin/&lt;name&gt;/binary     Method POST   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code postGRPCluginBinaryHandler    POST /admin/plugin    URL /admin/plugin     Method POST   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code postGRPCluginHandler    POST /admin/services/call    URL /admin/services/call     Method POST   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code postAdminServiceCallHandler    PUT /admin/plugin/&lt;name&gt;    URL /admin/plugin/&lt;name&gt;     Method PUT   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code putGRPCluginHandler    PUT /admin/services/call    URL /admin/services/call     Method PUT   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code putAdminServiceCallHandler    ">
+    content="GET /admin/services/call    URL /admin/services/call     Method GET   Permissions Auth: true   Scopes Admin   Code authMaintainerMiddleware    ">
 <meta name="twitter:description"
-    content=" DELETE /admin/database/migration/delete/&lt;id&gt;    URL /admin/database/migration/delete/&lt;id&gt;     Method DELETE   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code deleteDatabaseMigrationHandler    DELETE /admin/plugin/&lt;name&gt;/binary/&lt;os&gt;/&lt;arch&gt;    URL /admin/plugin/&lt;name&gt;/binary/&lt;os&gt;/&lt;arch&gt;     Method DELETE   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code deleteGRPCluginBinaryHandler    DELETE /admin/plugin/&lt;name&gt;    URL /admin/plugin/&lt;name&gt;     Method DELETE   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code deleteGRPCluginHandler    DELETE /admin/service/&lt;name&gt;    URL /admin/service/&lt;name&gt;     Method DELETE   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code deleteAdminServiceHandler    DELETE /admin/services/call    URL /admin/services/call     Method DELETE   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code deleteAdminServiceCallHandler    GET /admin/cds/migration    URL /admin/cds/migration     Method GET   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code getAdminMigrationsHandler    GET /admin/database/encryption/&lt;entity&gt;    URL /admin/database/encryption/&lt;entity&gt;     Method GET   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code getAdminDatabaseEncryptedTuplesByEntity    GET /admin/database/encryption    URL /admin/database/encryption     Method GET   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code getAdminDatabaseEncryptedEntities    GET /admin/database/migration    URL /admin/database/migration     Method GET   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code getDatabaseMigrationHandler    GET /admin/database/signature/&lt;entity&gt;/&lt;signer&gt;    URL /admin/database/signature/&lt;entity&gt;/&lt;signer&gt;     Method GET   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code getAdminDatabaseSignatureTuplesBySigner    GET /admin/database/signature    URL /admin/database/signature     Method GET   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code getAdminDatabaseSignatureResume    GET /admin/debug/&lt;name&gt;    URL /admin/debug/&lt;name&gt;     Method GET   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code getProfileHandler    GET /admin/debug/cpu    URL /admin/debug/cpu     Method GET   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code getCPUProfileHandler    GET /admin/debug/goroutines    URL /admin/debug/goroutines     Method GET   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code getDebugGoroutinesHandler    GET /admin/debug/profiles    URL /admin/debug/profiles     Method GET   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code getDebugProfilesHandler    GET /admin/debug/trace    URL /admin/debug/trace     Method GET   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code getTraceHandler    GET /admin/plugin/&lt;name&gt;    URL /admin/plugin/&lt;name&gt;     Method GET   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code getGRPCluginHandler    GET /admin/plugin    URL /admin/plugin     Method GET   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code getAllGRPCluginHandler    GET /admin/service/&lt;name&gt;    URL /admin/service/&lt;name&gt;     Method GET   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code getAdminServiceHandler    GET /admin/services/call    URL /admin/services/call     Method GET   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code getAdminServiceCallHandler    GET /admin/services    URL /admin/services     Method GET   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code getAdminServicesHandler    POST /admin/cds/migration/&lt;id&gt;/cancel    URL /admin/cds/migration/&lt;id&gt;/cancel     Method POST   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code postAdminMigrationCancelHandler    POST /admin/cds/migration/&lt;id&gt;/todo    URL /admin/cds/migration/&lt;id&gt;/todo     Method POST   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code postAdminMigrationTodoHandler    POST /admin/database/encryption/&lt;entity&gt;/roll/&lt;pk&gt;    URL /admin/database/encryption/&lt;entity&gt;/roll/&lt;pk&gt;     Method POST   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code postAdminDatabaseRollEncryptedEntityByPrimaryKey    POST /admin/database/migration/unlock/&lt;id&gt;    URL /admin/database/migration/unlock/&lt;id&gt;     Method POST   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code postDatabaseMigrationUnlockedHandler    POST /admin/database/signature/&lt;entity&gt;/roll/&lt;pk&gt;    URL /admin/database/signature/&lt;entity&gt;/roll/&lt;pk&gt;     Method POST   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code postAdminDatabaseSignatureRollEntityByPrimaryKey    POST /admin/maintenance    URL /admin/maintenance     Method POST   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code postMaintenanceHandler    POST /admin/plugin/&lt;name&gt;/binary    URL /admin/plugin/&lt;name&gt;/binary     Method POST   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code postGRPCluginBinaryHandler    POST /admin/plugin    URL /admin/plugin     Method POST   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code postGRPCluginHandler    POST /admin/services/call    URL /admin/services/call     Method POST   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code postAdminServiceCallHandler    PUT /admin/plugin/&lt;name&gt;    URL /admin/plugin/&lt;name&gt;     Method PUT   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code putGRPCluginHandler    PUT /admin/services/call    URL /admin/services/call     Method PUT   Permissions NeedAdmin: true - Auth: true   Scopes Admin   Code putAdminServiceCallHandler    ">
-<meta property="og:url" content="https://ovh.github.io/cds/development/rest/admin/">
+    content="GET /admin/services/call    URL /admin/services/call     Method GET   Permissions Auth: true   Scopes Admin   Code authMaintainerMiddleware    ">
+<meta property="og:url" content="/development/rest/admin/">
 <meta property="og:title" content="admin">
 <meta name="twitter:title" content="admin">
 <meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
 <meta property="og:image" content="/images/cds-transparent.png">
-<script type="text/javascript" src="https://ovh.github.io/cds/js/anchor-4.1.1.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-3.2.1.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-ui-1.12.1.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/bootstrap-3.3.7.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/highlight.pack.js"></script>
+<script type="text/javascript" src="../../../js/anchor-4.1.1.min.js"></script>
+<script type="text/javascript" src="../../../js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="../../../js/jquery-ui-1.12.1.min.js"></script>
+<script type="text/javascript" src="../../../js/bootstrap-3.3.7.min.js"></script>
+<script type="text/javascript" src="../../../js/highlight.pack.js"></script>
 <script>
     hljs.initHighlightingOnLoad();
 
 </script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/script.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/lunr.min.js"></script>
-<script type="text/javascript">
-    var baseurl = "https:\/\/ovh.github.io\/cds";
+<script type="text/javascript" src="../../../js/script.js"></script>
+<script type="text/javascript" src="../../../js/lunr.min.js"></script>
+<a id="indexJSON" href="../../../index.json"></a>
 
-</script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/auto-complete.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/search.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/asciinema-player.js"></script>
+<script type="text/javascript" src="../../../js/auto-complete.js"></script>
+<script type="text/javascript" src="../../../js/search.js"></script>
+<script type="text/javascript" src="../../../js/asciinema-player.js"></script>
 
 	</head>
 	<body>
 		<section id="hero" class="light-text no-sub">
-			<a href="https://ovh.github.io/cds/" class="logo"></a>
+			<a href="../../../" class="logo"></a>
 				<i id="tocburger" class="fa fa-bars" onclick='$("#toc").toggle()'></i><div class="nav-buttons" data-auto-burger="primary">
 				<ul class="global-nav">
 					
 					
-					<li><a href="https://ovh.github.io/cds/docs/">Documentation</a></li>
+					<li><a href="../../../docs/">Documentation</a></li>
 					
-					<li><a href="https://ovh.github.io/cds/hosting/">Hosting your own instance</a></li>
+					<li><a href="../../../hosting/">Hosting your own instance</a></li>
 					
-					<li><a href="https://ovh.github.io/cds/development/" class="active">CDS Developer Manual</a></li>
+					<li><a href="../../../development/" class="active">CDS Developer Manual</a></li>
 					
-					<li><a href="https://ovh.github.io/cds/about/">About</a></li>
+					<li><a href="../../../about/">About</a></li>
 					
 					<li><i class="fa fa-search" onclick='$("#searchbox").toggle(); $("#search-query").focus().select()'></i></li>
 					<li>
@@ -106,13 +104,13 @@
 			
 			
 				
-				<li><a href="https://ovh.github.io/cds/development/rest/" class="menuSelected">REST API</a></li>
+				<li><a href="../../../development/rest/" class="menuSelected">REST API</a></li>
 			
 				
-				<li><a href="https://ovh.github.io/cds/development/sdk/">SDK</a></li>
+				<li><a href="../../../development/sdk/">SDK</a></li>
 			
 				
-				<li><a href="https://ovh.github.io/cds/development/contribute/">Contributing</a></li>
+				<li><a href="../../../development/contribute/">Contributing</a></li>
 			
 		</ul>
 		
@@ -171,6 +169,10 @@
                             
                         
                     
+                        
+                            
+                        
+                    
                 
             
         
@@ -199,7 +201,7 @@
         
         
         <i class="fa fa-bars" id="tocburger" onclick='$("#toc").toggle()'></i> 
-<a class="item" data-title="REST API" href="https://ovh.github.io/cds/development/rest/"></a>
+<a class="item" data-title="REST API" href="../../../development/rest/"></a>
 
 	
 	
@@ -207,163 +209,169 @@
 	
 		
 			
-<a class="item" data-title="action" href="https://ovh.github.io/cds/development/rest/action/"></a>
+<a class="item" data-title="action" href="../../../development/rest/action/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="actionBuiltin" href="https://ovh.github.io/cds/development/rest/actionbuiltin/"></a>
+<a class="item" data-title="actionBuiltin" href="../../../development/rest/actionbuiltin/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="admin" href="https://ovh.github.io/cds/development/rest/admin/"></a>
+<a class="item" data-title="admin" href="../../../development/rest/admin/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="auth" href="https://ovh.github.io/cds/development/rest/auth/"></a>
+<a class="item" data-title="auth" href="../../../development/rest/auth/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="bookmarks" href="https://ovh.github.io/cds/development/rest/bookmarks/"></a>
+<a class="item" data-title="bookmarks" href="../../../development/rest/bookmarks/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="broadcast" href="https://ovh.github.io/cds/development/rest/broadcast/"></a>
+<a class="item" data-title="broadcast" href="../../../development/rest/broadcast/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="config" href="https://ovh.github.io/cds/development/rest/config/"></a>
+<a class="item" data-title="config" href="../../../development/rest/config/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="download" href="https://ovh.github.io/cds/development/rest/download/"></a>
+<a class="item" data-title="download" href="../../../development/rest/download/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="group" href="https://ovh.github.io/cds/development/rest/group/"></a>
+<a class="item" data-title="feature" href="../../../development/rest/feature/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="hook" href="https://ovh.github.io/cds/development/rest/hook/"></a>
+<a class="item" data-title="group" href="../../../development/rest/group/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="import" href="https://ovh.github.io/cds/development/rest/import/"></a>
+<a class="item" data-title="hook" href="../../../development/rest/hook/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="integration" href="https://ovh.github.io/cds/development/rest/integration/"></a>
+<a class="item" data-title="import" href="../../../development/rest/import/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="mon" href="https://ovh.github.io/cds/development/rest/mon/"></a>
+<a class="item" data-title="integration" href="../../../development/rest/integration/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="notification" href="https://ovh.github.io/cds/development/rest/notification/"></a>
+<a class="item" data-title="notification" href="../../../development/rest/notification/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="parameter" href="https://ovh.github.io/cds/development/rest/parameter/"></a>
+<a class="item" data-title="parameter" href="../../../development/rest/parameter/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="project" href="https://ovh.github.io/cds/development/rest/project/"></a>
+<a class="item" data-title="project" href="../../../development/rest/project/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="queue" href="https://ovh.github.io/cds/development/rest/queue/"></a>
+<a class="item" data-title="queue" href="../../../development/rest/queue/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="repositories_manager" href="https://ovh.github.io/cds/development/rest/repositories_manager/"></a>
+<a class="item" data-title="repositories_manager" href="../../../development/rest/repositories_manager/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="requirement" href="https://ovh.github.io/cds/development/rest/requirement/"></a>
+<a class="item" data-title="requirement" href="../../../development/rest/requirement/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="services" href="https://ovh.github.io/cds/development/rest/services/"></a>
+<a class="item" data-title="services" href="../../../development/rest/services/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="suggest" href="https://ovh.github.io/cds/development/rest/suggest/"></a>
+<a class="item" data-title="suggest" href="../../../development/rest/suggest/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="template" href="https://ovh.github.io/cds/development/rest/template/"></a>
+<a class="item" data-title="template" href="../../../development/rest/template/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="ui" href="https://ovh.github.io/cds/development/rest/ui/"></a>
+<a class="item" data-title="ui" href="../../../development/rest/ui/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="user" href="https://ovh.github.io/cds/development/rest/user/"></a>
+<a class="item" data-title="user" href="../../../development/rest/user/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="variable" href="https://ovh.github.io/cds/development/rest/variable/"></a>
+<a class="item" data-title="variable" href="../../../development/rest/variable/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="worker" href="https://ovh.github.io/cds/development/rest/worker/"></a>
+<a class="item" data-title="worker" href="../../../development/rest/worker/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="workflow" href="https://ovh.github.io/cds/development/rest/workflow/"></a>
+<a class="item" data-title="workflow" href="../../../development/rest/workflow/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="ws" href="../../../development/rest/ws/"></a>
 
 		
 	
@@ -384,181 +392,12 @@
 
 
 <nav id="TableOfContents">
-<ul>
-<li>
-<ul>
-<li><a href="#delete-admin-database-migration-delete-id">DELETE <code>/admin/database/migration/delete/&lt;id&gt;</code></a></li>
-<li><a href="#delete-admin-plugin-name-binary-os-arch">DELETE <code>/admin/plugin/&lt;name&gt;/binary/&lt;os&gt;/&lt;arch&gt;</code></a></li>
-<li><a href="#delete-admin-plugin-name">DELETE <code>/admin/plugin/&lt;name&gt;</code></a></li>
-<li><a href="#delete-admin-service-name">DELETE <code>/admin/service/&lt;name&gt;</code></a></li>
-<li><a href="#delete-admin-services-call">DELETE <code>/admin/services/call</code></a></li>
-<li><a href="#get-admin-cds-migration">GET <code>/admin/cds/migration</code></a></li>
-<li><a href="#get-admin-database-encryption-entity">GET <code>/admin/database/encryption/&lt;entity&gt;</code></a></li>
-<li><a href="#get-admin-database-encryption">GET <code>/admin/database/encryption</code></a></li>
-<li><a href="#get-admin-database-migration">GET <code>/admin/database/migration</code></a></li>
-<li><a href="#get-admin-database-signature-entity-signer">GET <code>/admin/database/signature/&lt;entity&gt;/&lt;signer&gt;</code></a></li>
-<li><a href="#get-admin-database-signature">GET <code>/admin/database/signature</code></a></li>
-<li><a href="#get-admin-debug-name">GET <code>/admin/debug/&lt;name&gt;</code></a></li>
-<li><a href="#get-admin-debug-cpu">GET <code>/admin/debug/cpu</code></a></li>
-<li><a href="#get-admin-debug-goroutines">GET <code>/admin/debug/goroutines</code></a></li>
-<li><a href="#get-admin-debug-profiles">GET <code>/admin/debug/profiles</code></a></li>
-<li><a href="#get-admin-debug-trace">GET <code>/admin/debug/trace</code></a></li>
-<li><a href="#get-admin-plugin-name">GET <code>/admin/plugin/&lt;name&gt;</code></a></li>
-<li><a href="#get-admin-plugin">GET <code>/admin/plugin</code></a></li>
-<li><a href="#get-admin-service-name">GET <code>/admin/service/&lt;name&gt;</code></a></li>
-<li><a href="#get-admin-services-call">GET <code>/admin/services/call</code></a></li>
-<li><a href="#get-admin-services">GET <code>/admin/services</code></a></li>
-<li><a href="#post-admin-cds-migration-id-cancel">POST <code>/admin/cds/migration/&lt;id&gt;/cancel</code></a></li>
-<li><a href="#post-admin-cds-migration-id-todo">POST <code>/admin/cds/migration/&lt;id&gt;/todo</code></a></li>
-<li><a href="#post-admin-database-encryption-entity-roll-pk">POST <code>/admin/database/encryption/&lt;entity&gt;/roll/&lt;pk&gt;</code></a></li>
-<li><a href="#post-admin-database-migration-unlock-id">POST <code>/admin/database/migration/unlock/&lt;id&gt;</code></a></li>
-<li><a href="#post-admin-database-signature-entity-roll-pk">POST <code>/admin/database/signature/&lt;entity&gt;/roll/&lt;pk&gt;</code></a></li>
-<li><a href="#post-admin-maintenance">POST <code>/admin/maintenance</code></a></li>
-<li><a href="#post-admin-plugin-name-binary">POST <code>/admin/plugin/&lt;name&gt;/binary</code></a></li>
-<li><a href="#post-admin-plugin">POST <code>/admin/plugin</code></a></li>
-<li><a href="#post-admin-services-call">POST <code>/admin/services/call</code></a></li>
-<li><a href="#put-admin-plugin-name">PUT <code>/admin/plugin/&lt;name&gt;</code></a></li>
-<li><a href="#put-admin-services-call">PUT <code>/admin/services/call</code></a></li>
-</ul></li>
-</ul>
+  <ul>
+    <li><a href="#get-adminservicescall">GET <code>/admin/services/call</code></a></li>
+  </ul>
 </nav>
 
-
-
-<h2 id="delete-admin-database-migration-delete-id">DELETE <code>/admin/database/migration/delete/&lt;id&gt;</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/admin/database/migration/delete/&lt;id&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>DELETE</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true - Auth: true</td>
-</tr>
-
-<tr>
-<td>Scopes</td>
-<td>Admin</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteDatabaseMigrationHandler%22">deleteDatabaseMigrationHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="delete-admin-plugin-name-binary-os-arch">DELETE <code>/admin/plugin/&lt;name&gt;/binary/&lt;os&gt;/&lt;arch&gt;</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/admin/plugin/&lt;name&gt;/binary/&lt;os&gt;/&lt;arch&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>DELETE</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true - Auth: true</td>
-</tr>
-
-<tr>
-<td>Scopes</td>
-<td>Admin</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteGRPCluginBinaryHandler%22">deleteGRPCluginBinaryHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="delete-admin-plugin-name">DELETE <code>/admin/plugin/&lt;name&gt;</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/admin/plugin/&lt;name&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>DELETE</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true - Auth: true</td>
-</tr>
-
-<tr>
-<td>Scopes</td>
-<td>Admin</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteGRPCluginHandler%22">deleteGRPCluginHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="delete-admin-service-name">DELETE <code>/admin/service/&lt;name&gt;</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/admin/service/&lt;name&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>DELETE</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true - Auth: true</td>
-</tr>
-
-<tr>
-<td>Scopes</td>
-<td>Admin</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteAdminServiceHandler%22">deleteAdminServiceHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="delete-admin-services-call">DELETE <code>/admin/services/call</code></h2>
-
+<h2 id="get-adminservicescall">GET <code>/admin/services/call</code></h2>
 <table>
 <thead>
 <tr>
@@ -566,917 +405,22 @@
 <th><strong><code>/admin/services/call</code></strong></th>
 </tr>
 </thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>DELETE</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true - Auth: true</td>
-</tr>
-
-<tr>
-<td>Scopes</td>
-<td>Admin</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteAdminServiceCallHandler%22">deleteAdminServiceCallHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="get-admin-cds-migration">GET <code>/admin/cds/migration</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/admin/cds/migration</code></strong></th>
-</tr>
-</thead>
-
 <tbody>
 <tr>
 <td>Method</td>
 <td>GET</td>
 </tr>
-
 <tr>
 <td>Permissions</td>
-<td>NeedAdmin: true - Auth: true</td>
+<td>Auth: true</td>
 </tr>
-
 <tr>
 <td>Scopes</td>
 <td>Admin</td>
 </tr>
-
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getAdminMigrationsHandler%22">getAdminMigrationsHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="get-admin-database-encryption-entity">GET <code>/admin/database/encryption/&lt;entity&gt;</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/admin/database/encryption/&lt;entity&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true - Auth: true</td>
-</tr>
-
-<tr>
-<td>Scopes</td>
-<td>Admin</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getAdminDatabaseEncryptedTuplesByEntity%22">getAdminDatabaseEncryptedTuplesByEntity</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="get-admin-database-encryption">GET <code>/admin/database/encryption</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/admin/database/encryption</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true - Auth: true</td>
-</tr>
-
-<tr>
-<td>Scopes</td>
-<td>Admin</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getAdminDatabaseEncryptedEntities%22">getAdminDatabaseEncryptedEntities</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="get-admin-database-migration">GET <code>/admin/database/migration</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/admin/database/migration</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true - Auth: true</td>
-</tr>
-
-<tr>
-<td>Scopes</td>
-<td>Admin</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getDatabaseMigrationHandler%22">getDatabaseMigrationHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="get-admin-database-signature-entity-signer">GET <code>/admin/database/signature/&lt;entity&gt;/&lt;signer&gt;</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/admin/database/signature/&lt;entity&gt;/&lt;signer&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true - Auth: true</td>
-</tr>
-
-<tr>
-<td>Scopes</td>
-<td>Admin</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getAdminDatabaseSignatureTuplesBySigner%22">getAdminDatabaseSignatureTuplesBySigner</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="get-admin-database-signature">GET <code>/admin/database/signature</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/admin/database/signature</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true - Auth: true</td>
-</tr>
-
-<tr>
-<td>Scopes</td>
-<td>Admin</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getAdminDatabaseSignatureResume%22">getAdminDatabaseSignatureResume</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="get-admin-debug-name">GET <code>/admin/debug/&lt;name&gt;</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/admin/debug/&lt;name&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true - Auth: true</td>
-</tr>
-
-<tr>
-<td>Scopes</td>
-<td>Admin</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getProfileHandler%22">getProfileHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="get-admin-debug-cpu">GET <code>/admin/debug/cpu</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/admin/debug/cpu</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true - Auth: true</td>
-</tr>
-
-<tr>
-<td>Scopes</td>
-<td>Admin</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getCPUProfileHandler%22">getCPUProfileHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="get-admin-debug-goroutines">GET <code>/admin/debug/goroutines</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/admin/debug/goroutines</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true - Auth: true</td>
-</tr>
-
-<tr>
-<td>Scopes</td>
-<td>Admin</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getDebugGoroutinesHandler%22">getDebugGoroutinesHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="get-admin-debug-profiles">GET <code>/admin/debug/profiles</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/admin/debug/profiles</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true - Auth: true</td>
-</tr>
-
-<tr>
-<td>Scopes</td>
-<td>Admin</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getDebugProfilesHandler%22">getDebugProfilesHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="get-admin-debug-trace">GET <code>/admin/debug/trace</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/admin/debug/trace</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true - Auth: true</td>
-</tr>
-
-<tr>
-<td>Scopes</td>
-<td>Admin</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getTraceHandler%22">getTraceHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="get-admin-plugin-name">GET <code>/admin/plugin/&lt;name&gt;</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/admin/plugin/&lt;name&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true - Auth: true</td>
-</tr>
-
-<tr>
-<td>Scopes</td>
-<td>Admin</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getGRPCluginHandler%22">getGRPCluginHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="get-admin-plugin">GET <code>/admin/plugin</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/admin/plugin</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true - Auth: true</td>
-</tr>
-
-<tr>
-<td>Scopes</td>
-<td>Admin</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getAllGRPCluginHandler%22">getAllGRPCluginHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="get-admin-service-name">GET <code>/admin/service/&lt;name&gt;</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/admin/service/&lt;name&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true - Auth: true</td>
-</tr>
-
-<tr>
-<td>Scopes</td>
-<td>Admin</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getAdminServiceHandler%22">getAdminServiceHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="get-admin-services-call">GET <code>/admin/services/call</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/admin/services/call</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true - Auth: true</td>
-</tr>
-
-<tr>
-<td>Scopes</td>
-<td>Admin</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getAdminServiceCallHandler%22">getAdminServiceCallHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="get-admin-services">GET <code>/admin/services</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/admin/services</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true - Auth: true</td>
-</tr>
-
-<tr>
-<td>Scopes</td>
-<td>Admin</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getAdminServicesHandler%22">getAdminServicesHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="post-admin-cds-migration-id-cancel">POST <code>/admin/cds/migration/&lt;id&gt;/cancel</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/admin/cds/migration/&lt;id&gt;/cancel</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>POST</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true - Auth: true</td>
-</tr>
-
-<tr>
-<td>Scopes</td>
-<td>Admin</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postAdminMigrationCancelHandler%22">postAdminMigrationCancelHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="post-admin-cds-migration-id-todo">POST <code>/admin/cds/migration/&lt;id&gt;/todo</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/admin/cds/migration/&lt;id&gt;/todo</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>POST</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true - Auth: true</td>
-</tr>
-
-<tr>
-<td>Scopes</td>
-<td>Admin</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postAdminMigrationTodoHandler%22">postAdminMigrationTodoHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="post-admin-database-encryption-entity-roll-pk">POST <code>/admin/database/encryption/&lt;entity&gt;/roll/&lt;pk&gt;</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/admin/database/encryption/&lt;entity&gt;/roll/&lt;pk&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>POST</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true - Auth: true</td>
-</tr>
-
-<tr>
-<td>Scopes</td>
-<td>Admin</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postAdminDatabaseRollEncryptedEntityByPrimaryKey%22">postAdminDatabaseRollEncryptedEntityByPrimaryKey</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="post-admin-database-migration-unlock-id">POST <code>/admin/database/migration/unlock/&lt;id&gt;</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/admin/database/migration/unlock/&lt;id&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>POST</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true - Auth: true</td>
-</tr>
-
-<tr>
-<td>Scopes</td>
-<td>Admin</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postDatabaseMigrationUnlockedHandler%22">postDatabaseMigrationUnlockedHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="post-admin-database-signature-entity-roll-pk">POST <code>/admin/database/signature/&lt;entity&gt;/roll/&lt;pk&gt;</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/admin/database/signature/&lt;entity&gt;/roll/&lt;pk&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>POST</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true - Auth: true</td>
-</tr>
-
-<tr>
-<td>Scopes</td>
-<td>Admin</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postAdminDatabaseSignatureRollEntityByPrimaryKey%22">postAdminDatabaseSignatureRollEntityByPrimaryKey</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="post-admin-maintenance">POST <code>/admin/maintenance</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/admin/maintenance</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>POST</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true - Auth: true</td>
-</tr>
-
-<tr>
-<td>Scopes</td>
-<td>Admin</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postMaintenanceHandler%22">postMaintenanceHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="post-admin-plugin-name-binary">POST <code>/admin/plugin/&lt;name&gt;/binary</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/admin/plugin/&lt;name&gt;/binary</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>POST</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true - Auth: true</td>
-</tr>
-
-<tr>
-<td>Scopes</td>
-<td>Admin</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postGRPCluginBinaryHandler%22">postGRPCluginBinaryHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="post-admin-plugin">POST <code>/admin/plugin</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/admin/plugin</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>POST</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true - Auth: true</td>
-</tr>
-
-<tr>
-<td>Scopes</td>
-<td>Admin</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postGRPCluginHandler%22">postGRPCluginHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="post-admin-services-call">POST <code>/admin/services/call</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/admin/services/call</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>POST</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true - Auth: true</td>
-</tr>
-
-<tr>
-<td>Scopes</td>
-<td>Admin</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postAdminServiceCallHandler%22">postAdminServiceCallHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="put-admin-plugin-name">PUT <code>/admin/plugin/&lt;name&gt;</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/admin/plugin/&lt;name&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>PUT</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true - Auth: true</td>
-</tr>
-
-<tr>
-<td>Scopes</td>
-<td>Admin</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putGRPCluginHandler%22">putGRPCluginHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="put-admin-services-call">PUT <code>/admin/services/call</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/admin/services/call</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>PUT</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true - Auth: true</td>
-</tr>
-
-<tr>
-<td>Scopes</td>
-<td>Admin</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putAdminServiceCallHandler%22">putAdminServiceCallHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+authMaintainerMiddleware%22">authMaintainerMiddleware</a></td>
 </tr>
 </tbody>
 </table>

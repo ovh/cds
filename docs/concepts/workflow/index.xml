@@ -1,31 +1,27 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Workflow on CDS - Continuous Delivery Service</title>
-    <link>https://ovh.github.io/cds/docs/concepts/workflow/</link>
+    <link>/docs/concepts/workflow/</link>
     <description>Recent content in Workflow on CDS - Continuous Delivery Service</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language>
-    
-	<atom:link href="https://ovh.github.io/cds/docs/concepts/workflow/index.xml" rel="self" type="application/rss+xml" />
-    
-    
+    <language>en-us</language><atom:link href="/docs/concepts/workflow/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Payload</title>
-      <link>https://ovh.github.io/cds/docs/concepts/workflow/payload/</link>
+      <link>/docs/concepts/workflow/payload/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/concepts/workflow/payload/</guid>
+      <guid>/docs/concepts/workflow/payload/</guid>
       <description>A CDS Workflow can be launched:
  manually, user can enter a Payload by webhooks / repository webhooks, payload contains the value sent by initiator of the hook scheduler, the payload contains the value of the default payload. You can edit the default payload on the root pipeline (on roadmap) listener, as a Kafka listener. The payload will contain the content of the Kafka message  A payload is a JSON value.</description>
     </item>
     
     <item>
       <title>Pipeline Context</title>
-      <link>https://ovh.github.io/cds/docs/concepts/workflow/pipeline-context/</link>
+      <link>/docs/concepts/workflow/pipeline-context/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/concepts/workflow/pipeline-context/</guid>
+      <guid>/docs/concepts/workflow/pipeline-context/</guid>
       <description>After adding the pipeline, you can &amp;ldquo;Edit the pipeline Context&amp;rdquo; (sidebar).
 Then, you can:
  add or remove application. Jobs can use cds.app.* configuration and or remove an environment. Jobs can use cds.env.* configuration enable / disable Pipeline Mutex  </description>
@@ -33,10 +29,10 @@ Then, you can:
     
     <item>
       <title>Run conditions on pipeline</title>
-      <link>https://ovh.github.io/cds/docs/concepts/workflow/run-conditions/</link>
+      <link>/docs/concepts/workflow/run-conditions/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/concepts/workflow/run-conditions/</guid>
+      <guid>/docs/concepts/workflow/run-conditions/</guid>
       <description>In CDS if you want to launch a pipeline in your workflow only in specific cases you can add conditions. For example, if you want to run a pipeline automatically only if the value of git.branch is master.
 To edit your pipeline condition on the user interface, you have to select a node under edition mode of your workflow and click on Edit run conditions like this:
 There are 2 types of conditions:</description>
@@ -44,32 +40,33 @@ There are 2 types of conditions:</description>
     
     <item>
       <title>Join</title>
-      <link>https://ovh.github.io/cds/docs/concepts/workflow/join/</link>
+      <link>/docs/concepts/workflow/join/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/concepts/workflow/join/</guid>
+      <guid>/docs/concepts/workflow/join/</guid>
       <description>A join lets workflow to await the end of two or more parent pipelines.
 You can trigger one or many pipelines after a join.</description>
     </item>
     
     <item>
       <title>Mutex</title>
-      <link>https://ovh.github.io/cds/docs/concepts/workflow/mutex/</link>
+      <link>/docs/concepts/workflow/mutex/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/concepts/workflow/mutex/</guid>
+      <guid>/docs/concepts/workflow/mutex/</guid>
       <description>By default, the same pipeline can be run multiple times at once.
 In a CDS Workflow, you can limit running a pipeline to one at a time.
 Click on the pipeline → Edit the pipeline context → enable &amp;ldquo;Limit one run at run time&amp;rdquo;
-Examplary use case: run an integration test once on a particular environment.</description>
+Examplary use case: run an integration test once on a particular environment.
+To configure a Mutex with the configuration as code, use the boolean property one_at_a_time in the workflow definition file, in a pipeline context section: Mutex configuration as code example.</description>
     </item>
     
     <item>
       <title>Sidebar</title>
-      <link>https://ovh.github.io/cds/docs/concepts/workflow/sidebar/</link>
+      <link>/docs/concepts/workflow/sidebar/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/concepts/workflow/sidebar/</guid>
+      <guid>/docs/concepts/workflow/sidebar/</guid>
       <description>On the left sidebar, there is only one select box for filter on CDS Tags.
 So, what&amp;rsquo;s a tag? A tag is a CDS Variable, exported as a tag. There are default tags as git.branch, git.hash, tiggered_by and environment. For example, if you want to know on which branch the build was launched, you just have to filter on a specific CDS tag (in this case git.branch)
 Inside a job, a user can add a Tag with the worker command</description>
@@ -77,22 +74,34 @@ Inside a job, a user can add a Tag with the worker command</description>
     
     <item>
       <title>Run Number</title>
-      <link>https://ovh.github.io/cds/docs/concepts/workflow/run-number/</link>
+      <link>/docs/concepts/workflow/run-number/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/concepts/workflow/run-number/</guid>
+      <guid>/docs/concepts/workflow/run-number/</guid>
       <description>workflow -&amp;gt; advanced section. You can edit the run number to set you old cds.version value.
 {{cds.version}} is always usable, and equals to {{.cds.run.number}}</description>
     </item>
     
     <item>
       <title>Notifications</title>
-      <link>https://ovh.github.io/cds/docs/concepts/workflow/notifications/</link>
+      <link>/docs/concepts/workflow/notifications/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/concepts/workflow/notifications/</guid>
+      <guid>/docs/concepts/workflow/notifications/</guid>
       <description>On a workflow you can have 2 kinds of notifications:
  User notifications: they are useful to notify users by email or with a message of an event on your workflow (success, fail, change, etc&amp;hellip;). Events: linked to event integrations to let you write microservices which can interact with these events plugged on your event integrations.  User notifications You can configure user notifications to send email or a message on jabber with different parameters.</description>
+    </item>
+    
+    <item>
+      <title>Retention</title>
+      <link>/docs/concepts/workflow/retention/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/concepts/workflow/retention/</guid>
+      <description>You can configure the workflow run retention in the workflow advanced section on the CDS UI.
+  The first line defines the number maximum of runs that CDS can keep for this workflow. Only a CDS administrator can update this value.
+  On the second line, you will be able to define your retention policy through a lua condition. You will be able to use these variables:
+ run_days_before: to identify runs older than x days git_branch_exist: to identify if the git branch used for this run still exists on the git repository run_status: to identidy run status gerrit_change_merged: to identify if the gerrit change has been merged gerrit_change_abandoned: to identify if the gerrit change has been abandoned gerrit_change_days_before: to identify gerrit change older than x days and all variables defined in your workflow payload    For example, the rule defined above means:</description>
     </item>
     
   </channel>

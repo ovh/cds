@@ -554,8 +554,6 @@ dd {
   #docsContent code {
     display: inline-block;
     box-sizing: border-box;
-    background-color: #f7f7f7;
-    color: #333;
     font-family: 'Open Sans Mono', monospace;
     vertical-align: baseline;
     font-size: 14px;
@@ -569,8 +567,6 @@ dd {
     padding: 0; }
   #docsContent .highlight code span, #docsContent code, #docsContent pre code {
     font-family: "Open Sans Mono", monospace; }
-  #docsContent code, #docsContent pre code {
-    color: #303030; }
   #docsContent pre code {
     padding: 0; }
   #docsContent .asciinema-terminal .line span {
@@ -578,7 +574,6 @@ dd {
   #docsContent .asciinema-player-wrapper pre {
     background-color: #121314 !important; }
   #docsContent pre {
-    background-color: #f7f7f7;
     display: block;
     margin: 20px 0;
     padding: 15px;

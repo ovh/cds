@@ -1,32 +1,29 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>GitLab on CDS - Continuous Delivery Service</title>
-    <link>https://ovh.github.io/cds/docs/integrations/gitlab/</link>
+    <link>/docs/integrations/gitlab/</link>
     <description>Recent content in GitLab on CDS - Continuous Delivery Service</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language>
-    
-	<atom:link href="https://ovh.github.io/cds/docs/integrations/gitlab/index.xml" rel="self" type="application/rss+xml" />
-    
-    
+    <language>en-us</language><atom:link href="/docs/integrations/gitlab/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>GitLab Authentication</title>
-      <link>https://ovh.github.io/cds/docs/integrations/gitlab/gitlab_authentication/</link>
+      <link>/docs/integrations/gitlab/gitlab_authentication/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/integrations/gitlab/gitlab_authentication/</guid>
+      <guid>/docs/integrations/gitlab/gitlab_authentication/</guid>
       <description>The GitHub Authentication Integration have to be configured on your CDS by a CDS Administrator.
 This integration allows you to authenticate user with the GitHub Authentication.
-Resume on what you have to do before using the GitHub Authentication Integration  As a CDS Administrator:  Create a CDS application on GitLab Complete CDS Configuration File   How to configure GitLab integration What you need to perform the following steps:</description>
+Resume on what you have to do before using the GitHub Authentication Integration  As a CDS Administrator: Create a CDS application on GitLab Complete CDS Configuration File  How to configure GitLab integration What you need to perform the following steps:
+ GitLab admin privileges  Create a CDS application on GitLab Notice: if you have already a CDS Application in GitLab for Repository Manager, you can&amp;rsquo;t reuse it for Authentication.</description>
     </item>
     
     <item>
       <title>GitLab Repository Manager</title>
-      <link>https://ovh.github.io/cds/docs/integrations/gitlab/gitlab_repository_manager/</link>
+      <link>/docs/integrations/gitlab/gitlab_repository_manager/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/integrations/gitlab/gitlab_repository_manager/</guid>
+      <guid>/docs/integrations/gitlab/gitlab_repository_manager/</guid>
       <description>The GitLab Repository Manager Integration have to be configured on your CDS by a CDS Administrator.
 This integration allows you to link a Git Repository hosted by GitLab to a CDS Application.
 This integration enables some features:

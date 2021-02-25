@@ -1,21 +1,17 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>cache on CDS - Continuous Delivery Service</title>
-    <link>https://ovh.github.io/cds/docs/components/worker/cache/</link>
+    <link>/docs/components/worker/cache/</link>
     <description>Recent content in cache on CDS - Continuous Delivery Service</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language>
-    
-	<atom:link href="https://ovh.github.io/cds/docs/components/worker/cache/index.xml" rel="self" type="application/rss+xml" />
-    
-    
+    <language>en-us</language><atom:link href="/docs/components/worker/cache/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>pull</title>
-      <link>https://ovh.github.io/cds/docs/components/worker/cache/pull/</link>
+      <link>/docs/components/worker/cache/pull/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/components/worker/cache/pull/</guid>
+      <guid>/docs/components/worker/cache/pull/</guid>
       <description>worker cache pull worker cache pull tagValue
 Synopsis Inside a project, you can fetch a cache from your worker with a tag
 worker cache pull &amp;lt;tagValue&amp;gt;  If you push a cache with:
@@ -27,14 +23,14 @@ worker cache push latest --from=MyStorageIntegration {{.</description>
     
     <item>
       <title>push</title>
-      <link>https://ovh.github.io/cds/docs/components/worker/cache/push/</link>
+      <link>/docs/components/worker/cache/push/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/components/worker/cache/push/</guid>
-      <description> worker cache push worker cache push tagValue {{.cds.workspace}}/pathToUpload
-Synopsis Inside a project, you can create a cache from your worker with a tag (useful for vendors for example) worker cache push  dir/file
-You can use you storage integration: worker cache push &amp;ndash;destination=MyStorageIntegration  dir/file
-worker cache push [flags]  Examples worker cache push {{.cds.workflow}}-{{.cds.version}} ./pathToUpload  Options  --destination string optional. Your storage integration name  SEE ALSO  worker cache -  </description>
+      <guid>/docs/components/worker/cache/push/</guid>
+      <description>worker cache push worker cache push tagValue {{.cds.workspace}}/pathToUpload
+Synopsis Inside a project, you can create a cache from your worker with a tag (useful for vendors for example) worker cache push dir/file
+You can use you storage integration: worker cache push &amp;ndash;destination=MyStorageIntegration dir/file
+worker cache push [flags] Examples worker cache push {{.cds.workflow}}-{{.cds.version}} ./pathToUpload Options  --destination string optional. Your storage integration name SEE ALSO  worker cache	-  </description>
     </item>
     
   </channel>

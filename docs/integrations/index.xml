@@ -1,33 +1,29 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Integrations on CDS - Continuous Delivery Service</title>
-    <link>https://ovh.github.io/cds/docs/integrations/</link>
+    <link>/docs/integrations/</link>
     <description>Recent content in Integrations on CDS - Continuous Delivery Service</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language>
-    
-	<atom:link href="https://ovh.github.io/cds/docs/integrations/index.xml" rel="self" type="application/rss+xml" />
-    
-    
+    <language>en-us</language><atom:link href="/docs/integrations/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Bitbucket Cloud</title>
-      <link>https://ovh.github.io/cds/docs/integrations/bitbucketcloud/</link>
+      <link>/docs/integrations/bitbucketcloud/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/integrations/bitbucketcloud/</guid>
+      <guid>/docs/integrations/bitbucketcloud/</guid>
       <description>The Bitbucket Cloud Integration have to be configured on your CDS by a CDS Administrator.
 This integration allows you to link a Git Repository hosted by your Bitbucket Cloud to a CDS Application.
 This integration enables some features:
- Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on Bitbucket Cloud. More informations  How to configure Bitbucket Cloud integration  Go on Bitbucket.</description>
+ Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on Bitbucket Cloud. More informations  How to configure Bitbucket Cloud integration  Follow documentation on https://support.</description>
     </item>
     
     <item>
       <title>Bitbucket Server</title>
-      <link>https://ovh.github.io/cds/docs/integrations/bitbucket/</link>
+      <link>/docs/integrations/bitbucket/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/integrations/bitbucket/</guid>
+      <guid>/docs/integrations/bitbucket/</guid>
       <description>The Bitbucket Server Integration have to be configured on your CDS by a CDS Administrator.
 This integration allows you to link a Git Repository hosted by your Bitbucket Server to a CDS Application.
 This integration enables some features:
@@ -36,73 +32,85 @@ This integration enables some features:
     
     <item>
       <title>Docker Swarm</title>
-      <link>https://ovh.github.io/cds/docs/integrations/swarm/</link>
+      <link>/docs/integrations/swarm/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/integrations/swarm/</guid>
+      <guid>/docs/integrations/swarm/</guid>
       <description>The Docker Swarm integration have to be configured by CDS administrator.
 This integration allows you to run the Swarm Hatchery to start CDS Workers.
 As an end-users, this integration allows:
  to use Worker Models of type &amp;ldquo;Docker&amp;rdquo; to use Service Prerequisite on your CDS Jobs.  Start Swarm hatchery Generate a token:
-$ cdsctl consumer new me \ --scopes=Hatchery,RunExecution,Service,WorkerModel \ --name=&amp;quot;hatchery.swarm&amp;quot; \ --description=&amp;quot;Consumer token for swarm hatchery&amp;quot; \ --groups=&amp;quot;&amp;quot; \ --no-interactive Builtin consumer successfully created, use the following token to sign in: xxxxxxxx.</description>
+$ cdsctl consumer new me \ --scopes=Hatchery,RunExecution,Service,WorkerModel \ --name=&amp;#34;hatchery.swarm&amp;#34; \ --description=&amp;#34;Consumer token for swarm hatchery&amp;#34; \ --groups=&amp;#34;&amp;#34; \ --no-interactive Builtin consumer successfully created, use the following token to sign in: xxxxxxxx.</description>
     </item>
     
     <item>
       <title>Gerrit Repository Manager</title>
-      <link>https://ovh.github.io/cds/docs/integrations/gerrit/</link>
+      <link>/docs/integrations/gerrit/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/integrations/gerrit/</guid>
+      <guid>/docs/integrations/gerrit/</guid>
       <description>The Gerrit Repository Manager integration have to be configured on your CDS by a CDS Administrator.
 This integration allows you to link a Git Repository hosted by Gerrit to a CDS application.
 This integration enables some features:
- Gerrit Hooks Easy to use action CheckoutApplication and GitClone for advanced usage Send comments on your Pull-Requests when a workflow is failed Add a vote -1/+1 on a change  How to configure Gerrit integration You will have to create 2 users on gerrit: [How to]</description>
+ Gerrit Hooks Easy to use action CheckoutApplication and GitClone for advanced usage Send comments on your Pull-Requests when a workflow is failed Add a vote -1/+1 on a change  How to configure Gerrit integration You will have to create 2 users on gerrit: [How to] An Administrator User ( with SSH KEY ), to get event from Gerrit Server An User on gerrit ( with httpPassword ), to comment changes with workflow result  Complete CDS Configuration File [vcs.</description>
     </item>
     
     <item>
       <title>LDAP Authentication</title>
-      <link>https://ovh.github.io/cds/docs/integrations/ldap/</link>
+      <link>/docs/integrations/ldap/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/integrations/ldap/</guid>
+      <guid>/docs/integrations/ldap/</guid>
       <description>The LDAP Integration have to be configured on your CDS by a CDS Administrator.
 This integration allows you to authenticate users.
 How to configure LDAP Authentication integration Edit the toml file:
- section [api.auth.ldap]  enable the signin with enabled = true if you want to disable signup, set signupDisabled = true   [api.auth.ldap] enabled = false host = &amp;quot;&amp;quot; # Define it if ldapsearch need to be authenticated managerDN = &amp;quot;cn=admin,dc=myorganization,dc=com&amp;quot; # Define it if ldapsearch need to be authenticated managerPassword = &amp;quot;SECRET_PASSWORD_MANAGER&amp;quot; port = 636 rootDN = &amp;quot;dc=myorganization,dc=com&amp;quot; signupDisabled = false ssl = true userFullname = &amp;quot;{{.</description>
+ section [api.auth.ldap]  enable the signin with enabled = true if you want to disable signup, set signupDisabled = true    [api.auth.ldap] enabled = false host = &amp;#34;&amp;#34; # Define it if ldapsearch need to be authenticated managerDN = &amp;#34;cn=admin,dc=myorganization,dc=com&amp;#34; # Define it if ldapsearch need to be authenticated managerPassword = &amp;#34;SECRET_PASSWORD_MANAGER&amp;#34; port = 636 rootDN = &amp;#34;dc=myorganization,dc=com&amp;#34; signupDisabled = false ssl = true userFullname = &amp;#34;{{.</description>
     </item>
     
     <item>
       <title>Mesos/Marathon</title>
-      <link>https://ovh.github.io/cds/docs/integrations/marathon/</link>
+      <link>/docs/integrations/marathon/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/integrations/marathon/</guid>
+      <guid>/docs/integrations/marathon/</guid>
       <description>The Mesos/Marathon integration have to be configured by CDS administrator.
 This integration allows you to run the Marathon Hatchery to start CDS Workers.
 As an end-users, this integration allows to use Worker Models of type &amp;ldquo;Docker&amp;rdquo;
 Start Marathon hatchery Generate a token:
-$ cdsctl consumer new me \ --scopes=Hatchery,RunExecution,Service,WorkerModel \ --name=&amp;quot;hatchery.marathon&amp;quot; \ --description=&amp;quot;Consumer token for marathon hatchery&amp;quot; \ --groups=&amp;quot;&amp;quot; \ --no-interactive Builtin consumer successfully created, use the following token to sign in: xxxxxxxx.</description>
+$ cdsctl consumer new me \ --scopes=Hatchery,RunExecution,Service,WorkerModel \ --name=&amp;#34;hatchery.marathon&amp;#34; \ --description=&amp;#34;Consumer token for marathon hatchery&amp;#34; \ --groups=&amp;#34;&amp;#34; \ --no-interactive Builtin consumer successfully created, use the following token to sign in: xxxxxxxx.</description>
+    </item>
+    
+    <item>
+      <title>OpenID-Connect Authentication</title>
+      <link>/docs/integrations/openid-connect/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/integrations/openid-connect/</guid>
+      <description>The OpenID-Connect Integration have to be configured on your CDS by a CDS Administrator.
+This integration allows you to delegate users authetication to an OpenID-Connect third party like Keycloak or Hydra
+How to configure OpenID-Connect Authentication integration Edit the toml file:
+ section [api.auth.oidc]  enable the signin with enabled = true if you want to disable signup, set signupDisabled = true    [api.auth.oidc] clientId = &amp;#34;YOUR CLIENT ID&amp;#34; clientSecret = &amp;#34;YOUR CLIENT SECRET&amp;#34; enabled = true signupDisabled = false url = &amp;#34;http[s]://&amp;lt;OIDC HOST&amp;gt;:&amp;lt;PORT&amp;gt;/auth/realms/&amp;lt;YOUR REALM&amp;gt;&amp;#34; For example :</description>
     </item>
     
     <item>
       <title>RabbitMQ</title>
-      <link>https://ovh.github.io/cds/docs/integrations/rabbitmq/</link>
+      <link>/docs/integrations/rabbitmq/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/integrations/rabbitmq/</guid>
+      <guid>/docs/integrations/rabbitmq/</guid>
       <description>The RabbitMQ Integration is a Self-Service integration that can be configured on a CDS Project.
 This integration enables the RabbitMQ Hook feature:
 Configure with WebUI You can add a RabbitMQ Integration on your CDS Project.
 Configure with cdsctl Import a RabbitMQ Integration on your CDS Project Create a file project-configuration.yml:
-name: my-rabbitmq-integration model: name: RabbitMQ identifier: github.com/ovh/cds/integration/builtin/rabbitmq hook: true config: password: value: &#39;**********&#39; type: password uri: value: your-rabbit:5672 type: string username: value: your-username type: string  Import the integration on your CDS Project with:</description>
+name: my-rabbitmq-integration model: name: RabbitMQ identifier: github.com/ovh/cds/integration/builtin/rabbitmq hook: true config: password: value: &amp;#39;**********&amp;#39; type: password uri: value: your-rabbit:5672 type: string username: value: your-username type: string Import the integration on your CDS Project with:</description>
     </item>
     
     <item>
       <title>vSphere</title>
-      <link>https://ovh.github.io/cds/docs/integrations/vsphere/</link>
+      <link>/docs/integrations/vsphere/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/integrations/vsphere/</guid>
+      <guid>/docs/integrations/vsphere/</guid>
       <description>CDS build using VMware vSphere infrastructure to spawn each CDS Workers inside dedicated VM.
 Pre-requisites This hatchery spawns VM which obtains IP from DHCP. So first you have to create a DHCP server on your host with NAT if you want to access to the internet. In order to create you have multiple possibilities like create your own VM with a DHCP server configured or if you are comfortable with the VMware tools you can use the NSX system.</description>
     </item>

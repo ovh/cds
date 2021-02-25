@@ -1,54 +1,49 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>config on CDS - Continuous Delivery Service</title>
-    <link>https://ovh.github.io/cds/docs/components/engine/config/</link>
+    <link>/docs/components/engine/config/</link>
     <description>Recent content in config on CDS - Continuous Delivery Service</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language>
-    
-	<atom:link href="https://ovh.github.io/cds/docs/components/engine/config/index.xml" rel="self" type="application/rss+xml" />
-    
-    
+    <language>en-us</language><atom:link href="/docs/components/engine/config/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>check</title>
-      <link>https://ovh.github.io/cds/docs/components/engine/config/check/</link>
+      <link>/docs/components/engine/config/check/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/components/engine/config/check/</guid>
-      <description> engine config check Check CDS configuration file
-Synopsis $ engine config check 
-engine config check  SEE ALSO  engine config - Manage CDS Configuration  </description>
+      <guid>/docs/components/engine/config/check/</guid>
+      <description>engine config check Check CDS configuration file
+Synopsis $ engine config check engine config check SEE ALSO  engine config	- Manage CDS Configuration  </description>
     </item>
     
     <item>
       <title>edit</title>
-      <link>https://ovh.github.io/cds/docs/components/engine/config/edit/</link>
+      <link>/docs/components/engine/config/edit/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/components/engine/config/edit/</guid>
-      <description> engine config edit Edit a CDS configuration file
-Synopsis $ engine config edit  key=value key=value
-engine config edit [flags]  Examples $ engine config edit conf.toml log.level=debug hatchery.swarm.commonConfiguration.name=hatchery-swarm-name  Options  --env Print configuration as environment variable --output string output file  SEE ALSO  engine config - Manage CDS Configuration  </description>
+      <guid>/docs/components/engine/config/edit/</guid>
+      <description>engine config edit Edit a CDS configuration file
+Synopsis $ engine config edit key=value key=value
+engine config edit [flags] Examples $ engine config edit conf.toml log.level=debug hatchery.swarm.commonConfiguration.name=hatchery-swarm-name Options  --env Print configuration as environment variable --output string output file SEE ALSO  engine config	- Manage CDS Configuration  </description>
     </item>
     
     <item>
       <title>init-token</title>
-      <link>https://ovh.github.io/cds/docs/components/engine/config/init-token/</link>
+      <link>/docs/components/engine/config/init-token/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/components/engine/config/init-token/</guid>
-      <description> engine config init-token Generate/Regenerate an init token for a given CDS configuration file
+      <guid>/docs/components/engine/config/init-token/</guid>
+      <description>engine config init-token Generate/Regenerate an init token for a given CDS configuration file
 Synopsis $ engine config init-token
-engine config init-token [flags]  Options  --config string config file --remote-config string (optional) consul configuration store --remote-config-key string (optional) consul configuration store key (default &amp;quot;cds/config.api.toml&amp;quot;) --vault-addr string (optional) Vault address to fetch secrets from vault (example: https://vault.mydomain.net:8200) --vault-token string (optional) Vault token to fetch secrets from vault  SEE ALSO  engine config - Manage CDS Configuration  </description>
+engine config init-token [flags] Options  --config string config file --remote-config string (optional) consul configuration store --remote-config-key string (optional) consul configuration store key (default &amp;quot;cds/config.api.toml&amp;quot;) --vault-addr string (optional) Vault address to fetch secrets from vault (example: https://vault.mydomain.net:8200) --vault-token string (optional) Vault token to fetch secrets from vault SEE ALSO  engine config	- Manage CDS Configuration  </description>
     </item>
     
     <item>
       <title>new</title>
-      <link>https://ovh.github.io/cds/docs/components/engine/config/new/</link>
+      <link>/docs/components/engine/config/new/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/components/engine/config/new/</guid>
+      <guid>/docs/components/engine/config/new/</guid>
       <description>engine config new CDS configuration file assistant
 Synopsis Generate the whole configuration file $ engine config new &amp;gt; conf.toml
 you can compose your file configuration this will generate a file configuration containing api and hatchery:local µService $ engine config new api hatchery:local
@@ -58,13 +53,12 @@ All options $ engine config new [debug] [tracing] [api] [hatchery:local] [hatche
     
     <item>
       <title>regen</title>
-      <link>https://ovh.github.io/cds/docs/components/engine/config/regen/</link>
+      <link>/docs/components/engine/config/regen/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/components/engine/config/regen/</guid>
-      <description> engine config regen Regen tokens and keys for given CDS configuration file
-Synopsis $ engine config regen  
-engine config regen [flags]  Options  --env Print configuration as environment variable  SEE ALSO  engine config - Manage CDS Configuration  </description>
+      <guid>/docs/components/engine/config/regen/</guid>
+      <description>engine config regen Regen tokens and keys for given CDS configuration file
+Synopsis $ engine config regen engine config regen [flags] Options  --env Print configuration as environment variable SEE ALSO  engine config	- Manage CDS Configuration  </description>
     </item>
     
   </channel>

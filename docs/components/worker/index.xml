@@ -1,94 +1,101 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>worker on CDS - Continuous Delivery Service</title>
-    <link>https://ovh.github.io/cds/docs/components/worker/</link>
+    <link>/docs/components/worker/</link>
     <description>Recent content in worker on CDS - Continuous Delivery Service</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language>
-    
-	<atom:link href="https://ovh.github.io/cds/docs/components/worker/index.xml" rel="self" type="application/rss+xml" />
-    
-    
+    <language>en-us</language><atom:link href="/docs/components/worker/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>artifacts</title>
-      <link>https://ovh.github.io/cds/docs/components/worker/artifacts/</link>
+      <link>/docs/components/worker/artifacts/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/components/worker/artifacts/</guid>
+      <guid>/docs/components/worker/artifacts/</guid>
       <description>worker artifacts worker artifacts [--workflow=&amp;lt;workflow-name&amp;gt;] [--number=&amp;lt;run-number&amp;gt;] [--tag=&amp;lt;tag&amp;gt;] [--pattern=&amp;lt;pattern&amp;gt;]
 Synopsis Inside a job, you can list artifacts of a workflow:
-worker artifacts --pattern=&amp;quot;files.*.yml&amp;quot; #theses two commands have the same result: worker artifacts worker artifacts --workflow={{.cds.workflow}} --number={{.cds.run.number}}  worker artifacts [flags]  Options  --number string Workflow Number. Optional, default: current workflow run --pattern string Pattern matching files to list. Optional, default: * --tag string Tag matching files to list. Optional --workflow string Workflow name.</description>
+worker artifacts --pattern=&amp;quot;files.*.yml&amp;quot; #theses two commands have the same result: worker artifacts worker artifacts --workflow={{.cds.workflow}} --number={{.cds.run.number}}  worker artifacts [flags] Options  --number string Workflow Number. Optional, default: current workflow run --pattern string Pattern matching files to list. Optional, default: * --tag string Tag matching files to list. Optional --workflow string Workflow name.</description>
     </item>
     
     <item>
       <title>check-secret</title>
-      <link>https://ovh.github.io/cds/docs/components/worker/check-secret/</link>
+      <link>/docs/components/worker/check-secret/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/components/worker/check-secret/</guid>
+      <guid>/docs/components/worker/check-secret/</guid>
       <description>worker check-secret worker check-secret fileA fileB
 Synopsis Inside a step script (https://ovh.github.io/cds/docs/actions/builtin-script/), you can add check if a file contains a CDS variable of type password or private key:
-#!/bin/bash set -ex # create a file cat &amp;lt;&amp;lt; EOF &amp;gt; myFile this a a line in the file, with a CDS variable of type password {{.cds.app.password}} EOF # worker check-secret myFile worker check-secret {{.cds.workspace}}/myFile  This command will exit 1 and a log is displayed, as:</description>
+#!/bin/bash  set -ex # create a file cat &amp;lt;&amp;lt; EOF &amp;gt; myFile this a a line in the file, with a CDS variable of type password {{.cds.app.password}} EOF # worker check-secret myFile worker check-secret {{.cds.workspace}}/myFile This command will exit 1 and a log is displayed, as:</description>
     </item>
     
     <item>
       <title>download</title>
-      <link>https://ovh.github.io/cds/docs/components/worker/download/</link>
+      <link>/docs/components/worker/download/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/components/worker/download/</guid>
+      <guid>/docs/components/worker/download/</guid>
       <description>worker download worker download [--workflow=&amp;lt;workflow-name&amp;gt;] [--number=&amp;lt;run-number&amp;gt;] [--tag=&amp;lt;tag&amp;gt;] [--pattern=&amp;lt;pattern&amp;gt;]
 Synopsis Inside a job, there are two ways to download an artifact:
  with a step using action Download Artifacts with a step script (https://ovh.github.io/cds/docs/actions/builtin-script/), using the worker command.  Worker Command:
 worker download --tag=&amp;lt;tag&amp;gt; &amp;lt;path&amp;gt;  Example:
 worker download --pattern=&amp;quot;files.*.yml&amp;quot;  Theses two commands have the same result:
-worker download worker download --workflow={{.cds.workflow}} --number={{.cds.run.number}}  worker download [flags]  Options  --number string Workflow Number to download from.</description>
+worker download worker download --workflow={{.cds.workflow}} --number={{.cds.run.number}}  worker download [flags] Options  --number string Workflow Number to download from.</description>
     </item>
     
     <item>
       <title>exit</title>
-      <link>https://ovh.github.io/cds/docs/components/worker/exit/</link>
+      <link>/docs/components/worker/exit/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/components/worker/exit/</guid>
-      <description> worker exit worker exit
+      <guid>/docs/components/worker/exit/</guid>
+      <description>worker exit worker exit
 Synopsis worker exit command lets job finish current step and disabled all further steps
-worker exit  SEE ALSO  worker - CDS Worker  </description>
+worker exit SEE ALSO  worker	- CDS Worker  </description>
     </item>
     
     <item>
       <title>export</title>
-      <link>https://ovh.github.io/cds/docs/components/worker/export/</link>
+      <link>/docs/components/worker/export/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/components/worker/export/</guid>
-      <description> worker export worker export &amp;lt;varname&amp;gt; &amp;lt;value&amp;gt;
+      <guid>/docs/components/worker/export/</guid>
+      <description>worker export worker export &amp;lt;varname&amp;gt; &amp;lt;value&amp;gt;
 Synopsis Inside a step script (https://ovh.github.io/cds/docs/actions/builtin-script/), you can create a build variable with the worker command:
 worker export foo bar  then, you can use new build variable:
 echo &amp;quot;{{.cds.build.foo}}&amp;quot;  Scope You can use the build variable in :
- another step of the current job with {{.cds.build.varname}} the next stages in same pipeline {{.cds.build.varname}} the next pipelines {{.workflow.pipelineName.build.varname}} with pipelineName the name of the pipeline in your workflow   worker export  SEE ALSO  worker - CDS Worker  </description>
+ another step of the current job with {{.cds.build.varname}} the next stages in same pipeline {{.cds.build.varname}} the next pipelines {{.workflow.pipelineName.build.varname}} with pipelineName the name of the pipeline in your workflow  worker export SEE ALSO  worker	- CDS Worker  </description>
     </item>
     
     <item>
       <title>junit-parser</title>
-      <link>https://ovh.github.io/cds/docs/components/worker/junit-parser/</link>
+      <link>/docs/components/worker/junit-parser/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/components/worker/junit-parser/</guid>
-      <description> worker junit-parser worker junit-parser
+      <guid>/docs/components/worker/junit-parser/</guid>
+      <description>worker junit-parser worker junit-parser
 Synopsis worker junit-parser command helps you to parse junit files and print a summary.
 It displays the number of tests, the number of passed tests, the number of failed tests and the number of skipped tests.
-Examples: $ ls result1.xml result2.xml $ worker junit-parser result1.xml 10 10 0 0 $ worker junit-parser *.xml 20 20 0 0
-worker junit-parser  SEE ALSO  worker - CDS Worker  </description>
+Examples: $ ls result1.xml	result2.xml $ worker junit-parser result1.xml 10 10 0 0 $ worker junit-parser *.xml 20 20 0 0
+worker junit-parser SEE ALSO  worker	- CDS Worker  </description>
+    </item>
+    
+    <item>
+      <title>set-version</title>
+      <link>/docs/components/worker/set-version/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/worker/set-version/</guid>
+      <description>worker set-version Override {{.cds.version}} value with given string. This value should be unique for the workflow and can&#39;t be changed when set.
+Synopsis Override {{.cds.version}} value with given string. This value should be unique for the workflow and can&#39;t be changed when set.
+worker set-version SEE ALSO  worker	- CDS Worker  </description>
     </item>
     
     <item>
       <title>tag</title>
-      <link>https://ovh.github.io/cds/docs/components/worker/tag/</link>
+      <link>/docs/components/worker/tag/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/components/worker/tag/</guid>
+      <guid>/docs/components/worker/tag/</guid>
       <description>worker tag worker tag key=value key=value
 Synopsis On the workflow view, the sidebar on the left displays a select box to filter on CDS Tags.
 So, what&amp;rsquo;s a tag? A tag is a CDS Variable, exported as a tag. There are default tags as git.branch, git.hash, tiggered_by and environment.
@@ -98,10 +105,10 @@ Inside a job, you can add a Tag with the worker command:
     
     <item>
       <title>tmpl</title>
-      <link>https://ovh.github.io/cds/docs/components/worker/tmpl/</link>
+      <link>/docs/components/worker/tmpl/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/components/worker/tmpl/</guid>
+      <guid>/docs/components/worker/tmpl/</guid>
       <description>worker tmpl worker tmpl inputFile outputFile
 Synopsis Inside a step script (https://ovh.github.io/cds/docs/actions/builtin-script/), you can add a replace CDS variables with the real value into a file:
 # create a file cat &amp;lt;&amp;lt; EOF &amp;gt; myFile this a a line in the file, with a CDS variable {{.cds.version}} EOF # worker tmpl &amp;lt;input file&amp;gt; &amp;lt;output file&amp;gt; worker tmpl {{.cds.workspace}}/myFile {{.cds.workspace}}/outputFile  The file outputFile will contain the string:
@@ -110,26 +117,26 @@ this a a line in the file, with a CDS variable 2  if it&amp;rsquo;s the RUN n°2
     
     <item>
       <title>upload</title>
-      <link>https://ovh.github.io/cds/docs/components/worker/upload/</link>
+      <link>/docs/components/worker/upload/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/components/worker/upload/</guid>
-      <description> worker upload worker upload --tag=tagValue {{.cds.workspace}}/fileToUpload
+      <guid>/docs/components/worker/upload/</guid>
+      <description>worker upload worker upload --tag=tagValue {{.cds.workspace}}/fileToUpload
 Synopsis Inside a job, there are two ways to upload an artifact:
  with a step using action Upload Artifacts with a step script (https://ovh.github.io/cds/docs/actions/builtin-script/), using the worker command: worker upload &amp;lt;path&amp;gt;  worker upload --tag={{.cds.version}} {{.cds.workspace}}/files*.yml
 You can use you storage integration: worker upload &amp;ndash;destination=&amp;ldquo;yourStorageIntegrationName&amp;rdquo;
-worker upload [flags]  Options  --destination string optional. Your storage integration name --tag string Tag for artifact Upload - Tag is mandatory  SEE ALSO  worker - CDS Worker  </description>
+worker upload [flags] Options  --destination string optional. Your storage integration name --tag string Tag for artifact Upload - Tag is mandatory SEE ALSO  worker	- CDS Worker  </description>
     </item>
     
     <item>
       <title>version</title>
-      <link>https://ovh.github.io/cds/docs/components/worker/version/</link>
+      <link>/docs/components/worker/version/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/components/worker/version/</guid>
-      <description> worker version Print the version of the worker binary
+      <guid>/docs/components/worker/version/</guid>
+      <description>worker version Print the version of the worker binary
 Synopsis Print the version of the worker binary
-worker version  SEE ALSO  worker - CDS Worker  </description>
+worker version SEE ALSO  worker	- CDS Worker  </description>
     </item>
     
   </channel>

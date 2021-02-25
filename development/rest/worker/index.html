@@ -4,63 +4,61 @@
 	<meta charset="utf-8">
 <title>worker - CDS - Continuous Delivery Service</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="shortcut icon" type="image/png" href="https://ovh.github.io/cds/images/favicon.png">
+<link rel="shortcut icon" type="image/png" href="../../../images/favicon.png">
 
 
 
 
-<link rel="stylesheet" href="https://ovh.github.io/cds/sass/styles.css" integrity="" media="screen">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/callouts.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/auto-complete.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/fontawesome.min.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/asciinema-player.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
+<link rel="stylesheet" href="../../../sass/styles.css" integrity="" media="screen">
+<link rel="stylesheet" href="../../../css/callouts.css">
+<link rel="stylesheet" href="../../../css/auto-complete.css">
+<link rel="stylesheet" href="../../../css/fontawesome.min.css">
+<link rel="stylesheet" href="../../../css/asciinema-player.css">
+<link rel="stylesheet" href="../../../css/solarized-light.css">
 
 <meta name="description"
-    content="DELETE /worker/model/&lt;group-name&gt;/&lt;model-name&gt;    URL /worker/model/&lt;group-name&gt;/&lt;model-name&gt;     Method DELETE   Permissions Auth: true   Scopes WorkerModel   Code deleteWorkerModelHandler    DELETE /worker/model/pattern/&lt;type&gt;/&lt;name&gt;    URL /worker/model/pattern/&lt;type&gt;/&lt;name&gt;     Method DELETE   Permissions NeedAdmin: true - Auth: true   Scopes WorkerModel   Code deleteWorkerModelPatternHandler    GET /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/export    URL /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/export     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelExportHandler    GET /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/secret    URL /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/secret     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelSecretHandler    GET /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/usage    URL /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/usage     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelUsageHandler    GET /worker/model/&lt;group-name&gt;/&lt;model-name&gt;    URL /worker/model/&lt;group-name&gt;/&lt;model-name&gt;     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelHandler    GET /worker/model/capability/type    URL /worker/model/capability/type     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getRequirementTypesHandler    GET /worker/model/enabled    URL /worker/model/enabled     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelsEnabledHandler    GET /worker/model/pattern/&lt;type&gt;/&lt;name&gt;    URL /worker/model/pattern/&lt;type&gt;/&lt;name&gt;     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelPatternHandler    GET /worker/model/pattern    URL /worker/model/pattern     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelPatternsHandler    GET /worker/model/type    URL /worker/model/type     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelTypesHandler    GET /worker/model    URL /worker/model     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelsHandler    GET /worker    URL /worker     Method GET   Permissions Auth: true   Scopes Admin, Worker, Hatchery   Code getWorkersHandler    POST /worker/&lt;id&gt;/disable    URL /worker/&lt;id&gt;/disable     Method POST   Permissions Auth: true   Scopes Admin, Hatchery   Code disableWorkerHandler    POST /worker/model/pattern    URL /worker/model/pattern     Method POST   Permissions NeedAdmin: true - Auth: true   Scopes WorkerModel   Code postAddWorkerModelPatternHandler    POST /worker/model    URL /worker/model     Method POST   Permissions Auth: true   Scopes WorkerModel   Code postWorkerModelHandler    POST /worker/refresh    URL /worker/refresh     Method POST   Permissions Auth: true   Scopes Worker   Code postRefreshWorkerHandler    POST /worker/waiting    URL /worker/waiting     Method POST   Permissions Auth: true   Scopes Worker   Code workerWaitingHandler    PUT /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/book    URL /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/book     Method PUT   Permissions Auth: true   Scopes WorkerModel   Code putBookWorkerModelHandler    PUT /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/error    URL /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/error     Method PUT   Permissions Auth: true   Scopes WorkerModel   Code putSpawnErrorWorkerModelHandler    PUT /worker/model/&lt;group-name&gt;/&lt;model-name&gt;    URL /worker/model/&lt;group-name&gt;/&lt;model-name&gt;     Method PUT   Permissions Auth: true   Scopes WorkerModel   Code putWorkerModelHandler    PUT /worker/model/pattern/&lt;type&gt;/&lt;name&gt;    URL /worker/model/pattern/&lt;type&gt;/&lt;name&gt;     Method PUT   Permissions NeedAdmin: true - Auth: true   Scopes WorkerModel   Code putWorkerModelPatternHandler    import a worker model yml/json file    URL /worker/model/import     Method POST   Query Parameter force=true or false.">
+    content="DELETE /worker/model/&lt;group-name&gt;/&lt;model-name&gt;    URL /worker/model/&lt;group-name&gt;/&lt;model-name&gt;     Method DELETE   Permissions Auth: true   Scopes WorkerModel   Code deleteWorkerModelHandler    GET /worker/&lt;name&gt;    URL /worker/&lt;name&gt;     Method GET   Permissions Auth: true   Scopes Worker   Code getWorkerHandler    GET /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/export    URL /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/export     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelExportHandler    GET /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/secret    URL /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/secret     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelSecretHandler    GET /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/usage    URL /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/usage     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelUsageHandler    GET /worker/model/&lt;group-name&gt;/&lt;model-name&gt;    URL /worker/model/&lt;group-name&gt;/&lt;model-name&gt;     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelHandler    GET /worker/model/capability/type    URL /worker/model/capability/type     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getRequirementTypesHandler    GET /worker/model/enabled    URL /worker/model/enabled     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelsEnabledHandler    GET /worker/model/pattern/&lt;type&gt;/&lt;name&gt;    URL /worker/model/pattern/&lt;type&gt;/&lt;name&gt;     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelPatternHandler    GET /worker/model/pattern    URL /worker/model/pattern     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelPatternsHandler    GET /worker/model/type    URL /worker/model/type     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelTypesHandler    GET /worker/model    URL /worker/model     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelsHandler    GET /worker    URL /worker     Method GET   Permissions Auth: true   Scopes Admin, Worker, Hatchery   Code getWorkersHandler    POST /worker/&lt;id&gt;/disable    URL /worker/&lt;id&gt;/disable     Method POST   Permissions Auth: true   Scopes Admin, Hatchery   Code disableWorkerHandler    POST /worker/model    URL /worker/model     Method POST   Permissions Auth: true   Scopes WorkerModel   Code postWorkerModelHandler    POST /worker/refresh    URL /worker/refresh     Method POST   Permissions Auth: true   Scopes Worker   Code postRefreshWorkerHandler    POST /worker/waiting    URL /worker/waiting     Method POST   Permissions Auth: true   Scopes Worker   Code workerWaitingHandler    PUT /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/book    URL /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/book     Method PUT   Permissions Auth: true   Scopes WorkerModel   Code putBookWorkerModelHandler    PUT /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/error    URL /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/error     Method PUT   Permissions Auth: true   Scopes WorkerModel   Code putSpawnErrorWorkerModelHandler    PUT /worker/model/&lt;group-name&gt;/&lt;model-name&gt;    URL /worker/model/&lt;group-name&gt;/&lt;model-name&gt;     Method PUT   Permissions Auth: true   Scopes WorkerModel   Code putWorkerModelHandler    import a worker model yml/json file    URL /worker/model/import     Method POST   Query Parameter force=true or false.">
 <meta property="og:description"
-    content="DELETE /worker/model/&lt;group-name&gt;/&lt;model-name&gt;    URL /worker/model/&lt;group-name&gt;/&lt;model-name&gt;     Method DELETE   Permissions Auth: true   Scopes WorkerModel   Code deleteWorkerModelHandler    DELETE /worker/model/pattern/&lt;type&gt;/&lt;name&gt;    URL /worker/model/pattern/&lt;type&gt;/&lt;name&gt;     Method DELETE   Permissions NeedAdmin: true - Auth: true   Scopes WorkerModel   Code deleteWorkerModelPatternHandler    GET /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/export    URL /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/export     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelExportHandler    GET /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/secret    URL /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/secret     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelSecretHandler    GET /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/usage    URL /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/usage     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelUsageHandler    GET /worker/model/&lt;group-name&gt;/&lt;model-name&gt;    URL /worker/model/&lt;group-name&gt;/&lt;model-name&gt;     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelHandler    GET /worker/model/capability/type    URL /worker/model/capability/type     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getRequirementTypesHandler    GET /worker/model/enabled    URL /worker/model/enabled     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelsEnabledHandler    GET /worker/model/pattern/&lt;type&gt;/&lt;name&gt;    URL /worker/model/pattern/&lt;type&gt;/&lt;name&gt;     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelPatternHandler    GET /worker/model/pattern    URL /worker/model/pattern     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelPatternsHandler    GET /worker/model/type    URL /worker/model/type     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelTypesHandler    GET /worker/model    URL /worker/model     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelsHandler    GET /worker    URL /worker     Method GET   Permissions Auth: true   Scopes Admin, Worker, Hatchery   Code getWorkersHandler    POST /worker/&lt;id&gt;/disable    URL /worker/&lt;id&gt;/disable     Method POST   Permissions Auth: true   Scopes Admin, Hatchery   Code disableWorkerHandler    POST /worker/model/pattern    URL /worker/model/pattern     Method POST   Permissions NeedAdmin: true - Auth: true   Scopes WorkerModel   Code postAddWorkerModelPatternHandler    POST /worker/model    URL /worker/model     Method POST   Permissions Auth: true   Scopes WorkerModel   Code postWorkerModelHandler    POST /worker/refresh    URL /worker/refresh     Method POST   Permissions Auth: true   Scopes Worker   Code postRefreshWorkerHandler    POST /worker/waiting    URL /worker/waiting     Method POST   Permissions Auth: true   Scopes Worker   Code workerWaitingHandler    PUT /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/book    URL /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/book     Method PUT   Permissions Auth: true   Scopes WorkerModel   Code putBookWorkerModelHandler    PUT /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/error    URL /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/error     Method PUT   Permissions Auth: true   Scopes WorkerModel   Code putSpawnErrorWorkerModelHandler    PUT /worker/model/&lt;group-name&gt;/&lt;model-name&gt;    URL /worker/model/&lt;group-name&gt;/&lt;model-name&gt;     Method PUT   Permissions Auth: true   Scopes WorkerModel   Code putWorkerModelHandler    PUT /worker/model/pattern/&lt;type&gt;/&lt;name&gt;    URL /worker/model/pattern/&lt;type&gt;/&lt;name&gt;     Method PUT   Permissions NeedAdmin: true - Auth: true   Scopes WorkerModel   Code putWorkerModelPatternHandler    import a worker model yml/json file    URL /worker/model/import     Method POST   Query Parameter force=true or false.">
+    content="DELETE /worker/model/&lt;group-name&gt;/&lt;model-name&gt;    URL /worker/model/&lt;group-name&gt;/&lt;model-name&gt;     Method DELETE   Permissions Auth: true   Scopes WorkerModel   Code deleteWorkerModelHandler    GET /worker/&lt;name&gt;    URL /worker/&lt;name&gt;     Method GET   Permissions Auth: true   Scopes Worker   Code getWorkerHandler    GET /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/export    URL /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/export     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelExportHandler    GET /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/secret    URL /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/secret     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelSecretHandler    GET /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/usage    URL /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/usage     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelUsageHandler    GET /worker/model/&lt;group-name&gt;/&lt;model-name&gt;    URL /worker/model/&lt;group-name&gt;/&lt;model-name&gt;     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelHandler    GET /worker/model/capability/type    URL /worker/model/capability/type     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getRequirementTypesHandler    GET /worker/model/enabled    URL /worker/model/enabled     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelsEnabledHandler    GET /worker/model/pattern/&lt;type&gt;/&lt;name&gt;    URL /worker/model/pattern/&lt;type&gt;/&lt;name&gt;     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelPatternHandler    GET /worker/model/pattern    URL /worker/model/pattern     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelPatternsHandler    GET /worker/model/type    URL /worker/model/type     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelTypesHandler    GET /worker/model    URL /worker/model     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelsHandler    GET /worker    URL /worker     Method GET   Permissions Auth: true   Scopes Admin, Worker, Hatchery   Code getWorkersHandler    POST /worker/&lt;id&gt;/disable    URL /worker/&lt;id&gt;/disable     Method POST   Permissions Auth: true   Scopes Admin, Hatchery   Code disableWorkerHandler    POST /worker/model    URL /worker/model     Method POST   Permissions Auth: true   Scopes WorkerModel   Code postWorkerModelHandler    POST /worker/refresh    URL /worker/refresh     Method POST   Permissions Auth: true   Scopes Worker   Code postRefreshWorkerHandler    POST /worker/waiting    URL /worker/waiting     Method POST   Permissions Auth: true   Scopes Worker   Code workerWaitingHandler    PUT /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/book    URL /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/book     Method PUT   Permissions Auth: true   Scopes WorkerModel   Code putBookWorkerModelHandler    PUT /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/error    URL /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/error     Method PUT   Permissions Auth: true   Scopes WorkerModel   Code putSpawnErrorWorkerModelHandler    PUT /worker/model/&lt;group-name&gt;/&lt;model-name&gt;    URL /worker/model/&lt;group-name&gt;/&lt;model-name&gt;     Method PUT   Permissions Auth: true   Scopes WorkerModel   Code putWorkerModelHandler    import a worker model yml/json file    URL /worker/model/import     Method POST   Query Parameter force=true or false.">
 <meta name="twitter:description"
-    content="DELETE /worker/model/&lt;group-name&gt;/&lt;model-name&gt;    URL /worker/model/&lt;group-name&gt;/&lt;model-name&gt;     Method DELETE   Permissions Auth: true   Scopes WorkerModel   Code deleteWorkerModelHandler    DELETE /worker/model/pattern/&lt;type&gt;/&lt;name&gt;    URL /worker/model/pattern/&lt;type&gt;/&lt;name&gt;     Method DELETE   Permissions NeedAdmin: true - Auth: true   Scopes WorkerModel   Code deleteWorkerModelPatternHandler    GET /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/export    URL /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/export     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelExportHandler    GET /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/secret    URL /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/secret     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelSecretHandler    GET /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/usage    URL /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/usage     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelUsageHandler    GET /worker/model/&lt;group-name&gt;/&lt;model-name&gt;    URL /worker/model/&lt;group-name&gt;/&lt;model-name&gt;     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelHandler    GET /worker/model/capability/type    URL /worker/model/capability/type     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getRequirementTypesHandler    GET /worker/model/enabled    URL /worker/model/enabled     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelsEnabledHandler    GET /worker/model/pattern/&lt;type&gt;/&lt;name&gt;    URL /worker/model/pattern/&lt;type&gt;/&lt;name&gt;     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelPatternHandler    GET /worker/model/pattern    URL /worker/model/pattern     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelPatternsHandler    GET /worker/model/type    URL /worker/model/type     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelTypesHandler    GET /worker/model    URL /worker/model     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelsHandler    GET /worker    URL /worker     Method GET   Permissions Auth: true   Scopes Admin, Worker, Hatchery   Code getWorkersHandler    POST /worker/&lt;id&gt;/disable    URL /worker/&lt;id&gt;/disable     Method POST   Permissions Auth: true   Scopes Admin, Hatchery   Code disableWorkerHandler    POST /worker/model/pattern    URL /worker/model/pattern     Method POST   Permissions NeedAdmin: true - Auth: true   Scopes WorkerModel   Code postAddWorkerModelPatternHandler    POST /worker/model    URL /worker/model     Method POST   Permissions Auth: true   Scopes WorkerModel   Code postWorkerModelHandler    POST /worker/refresh    URL /worker/refresh     Method POST   Permissions Auth: true   Scopes Worker   Code postRefreshWorkerHandler    POST /worker/waiting    URL /worker/waiting     Method POST   Permissions Auth: true   Scopes Worker   Code workerWaitingHandler    PUT /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/book    URL /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/book     Method PUT   Permissions Auth: true   Scopes WorkerModel   Code putBookWorkerModelHandler    PUT /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/error    URL /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/error     Method PUT   Permissions Auth: true   Scopes WorkerModel   Code putSpawnErrorWorkerModelHandler    PUT /worker/model/&lt;group-name&gt;/&lt;model-name&gt;    URL /worker/model/&lt;group-name&gt;/&lt;model-name&gt;     Method PUT   Permissions Auth: true   Scopes WorkerModel   Code putWorkerModelHandler    PUT /worker/model/pattern/&lt;type&gt;/&lt;name&gt;    URL /worker/model/pattern/&lt;type&gt;/&lt;name&gt;     Method PUT   Permissions NeedAdmin: true - Auth: true   Scopes WorkerModel   Code putWorkerModelPatternHandler    import a worker model yml/json file    URL /worker/model/import     Method POST   Query Parameter force=true or false.">
-<meta property="og:url" content="https://ovh.github.io/cds/development/rest/worker/">
+    content="DELETE /worker/model/&lt;group-name&gt;/&lt;model-name&gt;    URL /worker/model/&lt;group-name&gt;/&lt;model-name&gt;     Method DELETE   Permissions Auth: true   Scopes WorkerModel   Code deleteWorkerModelHandler    GET /worker/&lt;name&gt;    URL /worker/&lt;name&gt;     Method GET   Permissions Auth: true   Scopes Worker   Code getWorkerHandler    GET /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/export    URL /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/export     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelExportHandler    GET /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/secret    URL /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/secret     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelSecretHandler    GET /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/usage    URL /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/usage     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelUsageHandler    GET /worker/model/&lt;group-name&gt;/&lt;model-name&gt;    URL /worker/model/&lt;group-name&gt;/&lt;model-name&gt;     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelHandler    GET /worker/model/capability/type    URL /worker/model/capability/type     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getRequirementTypesHandler    GET /worker/model/enabled    URL /worker/model/enabled     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelsEnabledHandler    GET /worker/model/pattern/&lt;type&gt;/&lt;name&gt;    URL /worker/model/pattern/&lt;type&gt;/&lt;name&gt;     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelPatternHandler    GET /worker/model/pattern    URL /worker/model/pattern     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelPatternsHandler    GET /worker/model/type    URL /worker/model/type     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelTypesHandler    GET /worker/model    URL /worker/model     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelsHandler    GET /worker    URL /worker     Method GET   Permissions Auth: true   Scopes Admin, Worker, Hatchery   Code getWorkersHandler    POST /worker/&lt;id&gt;/disable    URL /worker/&lt;id&gt;/disable     Method POST   Permissions Auth: true   Scopes Admin, Hatchery   Code disableWorkerHandler    POST /worker/model    URL /worker/model     Method POST   Permissions Auth: true   Scopes WorkerModel   Code postWorkerModelHandler    POST /worker/refresh    URL /worker/refresh     Method POST   Permissions Auth: true   Scopes Worker   Code postRefreshWorkerHandler    POST /worker/waiting    URL /worker/waiting     Method POST   Permissions Auth: true   Scopes Worker   Code workerWaitingHandler    PUT /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/book    URL /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/book     Method PUT   Permissions Auth: true   Scopes WorkerModel   Code putBookWorkerModelHandler    PUT /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/error    URL /worker/model/&lt;group-name&gt;/&lt;model-name&gt;/error     Method PUT   Permissions Auth: true   Scopes WorkerModel   Code putSpawnErrorWorkerModelHandler    PUT /worker/model/&lt;group-name&gt;/&lt;model-name&gt;    URL /worker/model/&lt;group-name&gt;/&lt;model-name&gt;     Method PUT   Permissions Auth: true   Scopes WorkerModel   Code putWorkerModelHandler    import a worker model yml/json file    URL /worker/model/import     Method POST   Query Parameter force=true or false.">
+<meta property="og:url" content="/development/rest/worker/">
 <meta property="og:title" content="worker">
 <meta name="twitter:title" content="worker">
 <meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
 <meta property="og:image" content="/images/cds-transparent.png">
-<script type="text/javascript" src="https://ovh.github.io/cds/js/anchor-4.1.1.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-3.2.1.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-ui-1.12.1.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/bootstrap-3.3.7.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/highlight.pack.js"></script>
+<script type="text/javascript" src="../../../js/anchor-4.1.1.min.js"></script>
+<script type="text/javascript" src="../../../js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="../../../js/jquery-ui-1.12.1.min.js"></script>
+<script type="text/javascript" src="../../../js/bootstrap-3.3.7.min.js"></script>
+<script type="text/javascript" src="../../../js/highlight.pack.js"></script>
 <script>
     hljs.initHighlightingOnLoad();
 
 </script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/script.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/lunr.min.js"></script>
-<script type="text/javascript">
-    var baseurl = "https:\/\/ovh.github.io\/cds";
+<script type="text/javascript" src="../../../js/script.js"></script>
+<script type="text/javascript" src="../../../js/lunr.min.js"></script>
+<a id="indexJSON" href="../../../index.json"></a>
 
-</script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/auto-complete.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/search.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/asciinema-player.js"></script>
+<script type="text/javascript" src="../../../js/auto-complete.js"></script>
+<script type="text/javascript" src="../../../js/search.js"></script>
+<script type="text/javascript" src="../../../js/asciinema-player.js"></script>
 
 	</head>
 	<body>
 		<section id="hero" class="light-text no-sub">
-			<a href="https://ovh.github.io/cds/" class="logo"></a>
+			<a href="../../../" class="logo"></a>
 				<i id="tocburger" class="fa fa-bars" onclick='$("#toc").toggle()'></i><div class="nav-buttons" data-auto-burger="primary">
 				<ul class="global-nav">
 					
 					
-					<li><a href="https://ovh.github.io/cds/docs/">Documentation</a></li>
+					<li><a href="../../../docs/">Documentation</a></li>
 					
-					<li><a href="https://ovh.github.io/cds/hosting/">Hosting your own instance</a></li>
+					<li><a href="../../../hosting/">Hosting your own instance</a></li>
 					
-					<li><a href="https://ovh.github.io/cds/development/" class="active">CDS Developer Manual</a></li>
+					<li><a href="../../../development/" class="active">CDS Developer Manual</a></li>
 					
-					<li><a href="https://ovh.github.io/cds/about/">About</a></li>
+					<li><a href="../../../about/">About</a></li>
 					
 					<li><i class="fa fa-search" onclick='$("#searchbox").toggle(); $("#search-query").focus().select()'></i></li>
 					<li>
@@ -106,13 +104,13 @@
 			
 			
 				
-				<li><a href="https://ovh.github.io/cds/development/rest/" class="menuSelected">REST API</a></li>
+				<li><a href="../../../development/rest/" class="menuSelected">REST API</a></li>
 			
 				
-				<li><a href="https://ovh.github.io/cds/development/sdk/">SDK</a></li>
+				<li><a href="../../../development/sdk/">SDK</a></li>
 			
 				
-				<li><a href="https://ovh.github.io/cds/development/contribute/">Contributing</a></li>
+				<li><a href="../../../development/contribute/">Contributing</a></li>
 			
 		</ul>
 		
@@ -171,6 +169,10 @@
                             
                         
                     
+                        
+                            
+                        
+                    
                 
             
         
@@ -199,7 +201,7 @@
         
         
         <i class="fa fa-bars" id="tocburger" onclick='$("#toc").toggle()'></i> 
-<a class="item" data-title="REST API" href="https://ovh.github.io/cds/development/rest/"></a>
+<a class="item" data-title="REST API" href="../../../development/rest/"></a>
 
 	
 	
@@ -207,163 +209,169 @@
 	
 		
 			
-<a class="item" data-title="action" href="https://ovh.github.io/cds/development/rest/action/"></a>
+<a class="item" data-title="action" href="../../../development/rest/action/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="actionBuiltin" href="https://ovh.github.io/cds/development/rest/actionbuiltin/"></a>
+<a class="item" data-title="actionBuiltin" href="../../../development/rest/actionbuiltin/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="admin" href="https://ovh.github.io/cds/development/rest/admin/"></a>
+<a class="item" data-title="admin" href="../../../development/rest/admin/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="auth" href="https://ovh.github.io/cds/development/rest/auth/"></a>
+<a class="item" data-title="auth" href="../../../development/rest/auth/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="bookmarks" href="https://ovh.github.io/cds/development/rest/bookmarks/"></a>
+<a class="item" data-title="bookmarks" href="../../../development/rest/bookmarks/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="broadcast" href="https://ovh.github.io/cds/development/rest/broadcast/"></a>
+<a class="item" data-title="broadcast" href="../../../development/rest/broadcast/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="config" href="https://ovh.github.io/cds/development/rest/config/"></a>
+<a class="item" data-title="config" href="../../../development/rest/config/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="download" href="https://ovh.github.io/cds/development/rest/download/"></a>
+<a class="item" data-title="download" href="../../../development/rest/download/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="group" href="https://ovh.github.io/cds/development/rest/group/"></a>
+<a class="item" data-title="feature" href="../../../development/rest/feature/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="hook" href="https://ovh.github.io/cds/development/rest/hook/"></a>
+<a class="item" data-title="group" href="../../../development/rest/group/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="import" href="https://ovh.github.io/cds/development/rest/import/"></a>
+<a class="item" data-title="hook" href="../../../development/rest/hook/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="integration" href="https://ovh.github.io/cds/development/rest/integration/"></a>
+<a class="item" data-title="import" href="../../../development/rest/import/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="mon" href="https://ovh.github.io/cds/development/rest/mon/"></a>
+<a class="item" data-title="integration" href="../../../development/rest/integration/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="notification" href="https://ovh.github.io/cds/development/rest/notification/"></a>
+<a class="item" data-title="notification" href="../../../development/rest/notification/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="parameter" href="https://ovh.github.io/cds/development/rest/parameter/"></a>
+<a class="item" data-title="parameter" href="../../../development/rest/parameter/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="project" href="https://ovh.github.io/cds/development/rest/project/"></a>
+<a class="item" data-title="project" href="../../../development/rest/project/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="queue" href="https://ovh.github.io/cds/development/rest/queue/"></a>
+<a class="item" data-title="queue" href="../../../development/rest/queue/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="repositories_manager" href="https://ovh.github.io/cds/development/rest/repositories_manager/"></a>
+<a class="item" data-title="repositories_manager" href="../../../development/rest/repositories_manager/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="requirement" href="https://ovh.github.io/cds/development/rest/requirement/"></a>
+<a class="item" data-title="requirement" href="../../../development/rest/requirement/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="services" href="https://ovh.github.io/cds/development/rest/services/"></a>
+<a class="item" data-title="services" href="../../../development/rest/services/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="suggest" href="https://ovh.github.io/cds/development/rest/suggest/"></a>
+<a class="item" data-title="suggest" href="../../../development/rest/suggest/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="template" href="https://ovh.github.io/cds/development/rest/template/"></a>
+<a class="item" data-title="template" href="../../../development/rest/template/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="ui" href="https://ovh.github.io/cds/development/rest/ui/"></a>
+<a class="item" data-title="ui" href="../../../development/rest/ui/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="user" href="https://ovh.github.io/cds/development/rest/user/"></a>
+<a class="item" data-title="user" href="../../../development/rest/user/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="variable" href="https://ovh.github.io/cds/development/rest/variable/"></a>
+<a class="item" data-title="variable" href="../../../development/rest/variable/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="worker" href="https://ovh.github.io/cds/development/rest/worker/"></a>
+<a class="item" data-title="worker" href="../../../development/rest/worker/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="workflow" href="https://ovh.github.io/cds/development/rest/workflow/"></a>
+<a class="item" data-title="workflow" href="../../../development/rest/workflow/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="ws" href="../../../development/rest/ws/"></a>
 
 		
 	
@@ -384,43 +392,36 @@
 
 
 <nav id="TableOfContents">
-<ul>
-<li>
-<ul>
-<li><a href="#delete-worker-model-group-name-model-name">DELETE <code>/worker/model/&lt;group-name&gt;/&lt;model-name&gt;</code></a></li>
-<li><a href="#delete-worker-model-pattern-type-name">DELETE <code>/worker/model/pattern/&lt;type&gt;/&lt;name&gt;</code></a></li>
-<li><a href="#get-worker-model-group-name-model-name-export">GET <code>/worker/model/&lt;group-name&gt;/&lt;model-name&gt;/export</code></a></li>
-<li><a href="#get-worker-model-group-name-model-name-secret">GET <code>/worker/model/&lt;group-name&gt;/&lt;model-name&gt;/secret</code></a></li>
-<li><a href="#get-worker-model-group-name-model-name-usage">GET <code>/worker/model/&lt;group-name&gt;/&lt;model-name&gt;/usage</code></a></li>
-<li><a href="#get-worker-model-group-name-model-name">GET <code>/worker/model/&lt;group-name&gt;/&lt;model-name&gt;</code></a></li>
-<li><a href="#get-worker-model-capability-type">GET <code>/worker/model/capability/type</code></a></li>
-<li><a href="#get-worker-model-enabled">GET <code>/worker/model/enabled</code></a></li>
-<li><a href="#get-worker-model-pattern-type-name">GET <code>/worker/model/pattern/&lt;type&gt;/&lt;name&gt;</code></a></li>
-<li><a href="#get-worker-model-pattern">GET <code>/worker/model/pattern</code></a></li>
-<li><a href="#get-worker-model-type">GET <code>/worker/model/type</code></a></li>
-<li><a href="#get-worker-model">GET <code>/worker/model</code></a></li>
-<li><a href="#get-worker">GET <code>/worker</code></a></li>
-<li><a href="#post-worker-id-disable">POST <code>/worker/&lt;id&gt;/disable</code></a></li>
-<li><a href="#post-worker-model-pattern">POST <code>/worker/model/pattern</code></a></li>
-<li><a href="#post-worker-model">POST <code>/worker/model</code></a></li>
-<li><a href="#post-worker-refresh">POST <code>/worker/refresh</code></a></li>
-<li><a href="#post-worker-waiting">POST <code>/worker/waiting</code></a></li>
-<li><a href="#put-worker-model-group-name-model-name-book">PUT <code>/worker/model/&lt;group-name&gt;/&lt;model-name&gt;/book</code></a></li>
-<li><a href="#put-worker-model-group-name-model-name-error">PUT <code>/worker/model/&lt;group-name&gt;/&lt;model-name&gt;/error</code></a></li>
-<li><a href="#put-worker-model-group-name-model-name">PUT <code>/worker/model/&lt;group-name&gt;/&lt;model-name&gt;</code></a></li>
-<li><a href="#put-worker-model-pattern-type-name">PUT <code>/worker/model/pattern/&lt;type&gt;/&lt;name&gt;</code></a></li>
-<li><a href="#import-a-worker-model-yml-json-file">import a worker model yml/json file</a>
-<ul>
-<li><a href="#description">Description</a></li>
-</ul></li>
-</ul></li>
-</ul>
+  <ul>
+    <li><a href="#delete-workermodelgroup-namemodel-name">DELETE <code>/worker/model/&lt;group-name&gt;/&lt;model-name&gt;</code></a></li>
+    <li><a href="#get-workername">GET <code>/worker/&lt;name&gt;</code></a></li>
+    <li><a href="#get-workermodelgroup-namemodel-nameexport">GET <code>/worker/model/&lt;group-name&gt;/&lt;model-name&gt;/export</code></a></li>
+    <li><a href="#get-workermodelgroup-namemodel-namesecret">GET <code>/worker/model/&lt;group-name&gt;/&lt;model-name&gt;/secret</code></a></li>
+    <li><a href="#get-workermodelgroup-namemodel-nameusage">GET <code>/worker/model/&lt;group-name&gt;/&lt;model-name&gt;/usage</code></a></li>
+    <li><a href="#get-workermodelgroup-namemodel-name">GET <code>/worker/model/&lt;group-name&gt;/&lt;model-name&gt;</code></a></li>
+    <li><a href="#get-workermodelcapabilitytype">GET <code>/worker/model/capability/type</code></a></li>
+    <li><a href="#get-workermodelenabled">GET <code>/worker/model/enabled</code></a></li>
+    <li><a href="#get-workermodelpatterntypename">GET <code>/worker/model/pattern/&lt;type&gt;/&lt;name&gt;</code></a></li>
+    <li><a href="#get-workermodelpattern">GET <code>/worker/model/pattern</code></a></li>
+    <li><a href="#get-workermodeltype">GET <code>/worker/model/type</code></a></li>
+    <li><a href="#get-workermodel">GET <code>/worker/model</code></a></li>
+    <li><a href="#get-worker">GET <code>/worker</code></a></li>
+    <li><a href="#post-workeriddisable">POST <code>/worker/&lt;id&gt;/disable</code></a></li>
+    <li><a href="#post-workermodel">POST <code>/worker/model</code></a></li>
+    <li><a href="#post-workerrefresh">POST <code>/worker/refresh</code></a></li>
+    <li><a href="#post-workerwaiting">POST <code>/worker/waiting</code></a></li>
+    <li><a href="#put-workermodelgroup-namemodel-namebook">PUT <code>/worker/model/&lt;group-name&gt;/&lt;model-name&gt;/book</code></a></li>
+    <li><a href="#put-workermodelgroup-namemodel-nameerror">PUT <code>/worker/model/&lt;group-name&gt;/&lt;model-name&gt;/error</code></a></li>
+    <li><a href="#put-workermodelgroup-namemodel-name">PUT <code>/worker/model/&lt;group-name&gt;/&lt;model-name&gt;</code></a></li>
+    <li><a href="#import-a-worker-model-ymljson-file">import a worker model yml/json file</a>
+      <ul>
+        <li><a href="#description">Description</a></li>
+      </ul>
+    </li>
+  </ul>
 </nav>
 
-
-
-<h2 id="delete-worker-model-group-name-model-name">DELETE <code>/worker/model/&lt;group-name&gt;/&lt;model-name&gt;</code></h2>
-
+<h2 id="delete-workermodelgroup-namemodel-name">DELETE <code>/worker/model/&lt;group-name&gt;/&lt;model-name&gt;</code></h2>
 <table>
 <thead>
 <tr>
@@ -428,65 +429,53 @@
 <th><strong><code>/worker/model/&lt;group-name&gt;/&lt;model-name&gt;</code></strong></th>
 </tr>
 </thead>
-
 <tbody>
 <tr>
 <td>Method</td>
 <td>DELETE</td>
 </tr>
-
 <tr>
 <td>Permissions</td>
 <td>Auth: true</td>
 </tr>
-
 <tr>
 <td>Scopes</td>
 <td>WorkerModel</td>
 </tr>
-
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteWorkerModelHandler%22">deleteWorkerModelHandler</a></td>
 </tr>
 </tbody>
 </table>
-
-<h2 id="delete-worker-model-pattern-type-name">DELETE <code>/worker/model/pattern/&lt;type&gt;/&lt;name&gt;</code></h2>
-
+<h2 id="get-workername">GET <code>/worker/&lt;name&gt;</code></h2>
 <table>
 <thead>
 <tr>
 <th>URL</th>
-<th><strong><code>/worker/model/pattern/&lt;type&gt;/&lt;name&gt;</code></strong></th>
+<th><strong><code>/worker/&lt;name&gt;</code></strong></th>
 </tr>
 </thead>
-
 <tbody>
 <tr>
 <td>Method</td>
-<td>DELETE</td>
+<td>GET</td>
 </tr>
-
 <tr>
 <td>Permissions</td>
-<td>NeedAdmin: true - Auth: true</td>
+<td>Auth: true</td>
 </tr>
-
 <tr>
 <td>Scopes</td>
-<td>WorkerModel</td>
+<td>Worker</td>
 </tr>
-
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteWorkerModelPatternHandler%22">deleteWorkerModelPatternHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkerHandler%22">getWorkerHandler</a></td>
 </tr>
 </tbody>
 </table>
-
-<h2 id="get-worker-model-group-name-model-name-export">GET <code>/worker/model/&lt;group-name&gt;/&lt;model-name&gt;/export</code></h2>
-
+<h2 id="get-workermodelgroup-namemodel-nameexport">GET <code>/worker/model/&lt;group-name&gt;/&lt;model-name&gt;/export</code></h2>
 <table>
 <thead>
 <tr>
@@ -494,32 +483,26 @@
 <th><strong><code>/worker/model/&lt;group-name&gt;/&lt;model-name&gt;/export</code></strong></th>
 </tr>
 </thead>
-
 <tbody>
 <tr>
 <td>Method</td>
 <td>GET</td>
 </tr>
-
 <tr>
 <td>Permissions</td>
 <td>Auth: true</td>
 </tr>
-
 <tr>
 <td>Scopes</td>
 <td>WorkerModel</td>
 </tr>
-
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkerModelExportHandler%22">getWorkerModelExportHandler</a></td>
 </tr>
 </tbody>
 </table>
-
-<h2 id="get-worker-model-group-name-model-name-secret">GET <code>/worker/model/&lt;group-name&gt;/&lt;model-name&gt;/secret</code></h2>
-
+<h2 id="get-workermodelgroup-namemodel-namesecret">GET <code>/worker/model/&lt;group-name&gt;/&lt;model-name&gt;/secret</code></h2>
 <table>
 <thead>
 <tr>
@@ -527,32 +510,26 @@
 <th><strong><code>/worker/model/&lt;group-name&gt;/&lt;model-name&gt;/secret</code></strong></th>
 </tr>
 </thead>
-
 <tbody>
 <tr>
 <td>Method</td>
 <td>GET</td>
 </tr>
-
 <tr>
 <td>Permissions</td>
 <td>Auth: true</td>
 </tr>
-
 <tr>
 <td>Scopes</td>
 <td>WorkerModel</td>
 </tr>
-
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkerModelSecretHandler%22">getWorkerModelSecretHandler</a></td>
 </tr>
 </tbody>
 </table>
-
-<h2 id="get-worker-model-group-name-model-name-usage">GET <code>/worker/model/&lt;group-name&gt;/&lt;model-name&gt;/usage</code></h2>
-
+<h2 id="get-workermodelgroup-namemodel-nameusage">GET <code>/worker/model/&lt;group-name&gt;/&lt;model-name&gt;/usage</code></h2>
 <table>
 <thead>
 <tr>
@@ -560,32 +537,26 @@
 <th><strong><code>/worker/model/&lt;group-name&gt;/&lt;model-name&gt;/usage</code></strong></th>
 </tr>
 </thead>
-
 <tbody>
 <tr>
 <td>Method</td>
 <td>GET</td>
 </tr>
-
 <tr>
 <td>Permissions</td>
 <td>Auth: true</td>
 </tr>
-
 <tr>
 <td>Scopes</td>
 <td>WorkerModel</td>
 </tr>
-
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkerModelUsageHandler%22">getWorkerModelUsageHandler</a></td>
 </tr>
 </tbody>
 </table>
-
-<h2 id="get-worker-model-group-name-model-name">GET <code>/worker/model/&lt;group-name&gt;/&lt;model-name&gt;</code></h2>
-
+<h2 id="get-workermodelgroup-namemodel-name">GET <code>/worker/model/&lt;group-name&gt;/&lt;model-name&gt;</code></h2>
 <table>
 <thead>
 <tr>
@@ -593,32 +564,26 @@
 <th><strong><code>/worker/model/&lt;group-name&gt;/&lt;model-name&gt;</code></strong></th>
 </tr>
 </thead>
-
 <tbody>
 <tr>
 <td>Method</td>
 <td>GET</td>
 </tr>
-
 <tr>
 <td>Permissions</td>
 <td>Auth: true</td>
 </tr>
-
 <tr>
 <td>Scopes</td>
 <td>WorkerModel</td>
 </tr>
-
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkerModelHandler%22">getWorkerModelHandler</a></td>
 </tr>
 </tbody>
 </table>
-
-<h2 id="get-worker-model-capability-type">GET <code>/worker/model/capability/type</code></h2>
-
+<h2 id="get-workermodelcapabilitytype">GET <code>/worker/model/capability/type</code></h2>
 <table>
 <thead>
 <tr>
@@ -626,32 +591,26 @@
 <th><strong><code>/worker/model/capability/type</code></strong></th>
 </tr>
 </thead>
-
 <tbody>
 <tr>
 <td>Method</td>
 <td>GET</td>
 </tr>
-
 <tr>
 <td>Permissions</td>
 <td>Auth: true</td>
 </tr>
-
 <tr>
 <td>Scopes</td>
 <td>WorkerModel</td>
 </tr>
-
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getRequirementTypesHandler%22">getRequirementTypesHandler</a></td>
 </tr>
 </tbody>
 </table>
-
-<h2 id="get-worker-model-enabled">GET <code>/worker/model/enabled</code></h2>
-
+<h2 id="get-workermodelenabled">GET <code>/worker/model/enabled</code></h2>
 <table>
 <thead>
 <tr>
@@ -659,32 +618,26 @@
 <th><strong><code>/worker/model/enabled</code></strong></th>
 </tr>
 </thead>
-
 <tbody>
 <tr>
 <td>Method</td>
 <td>GET</td>
 </tr>
-
 <tr>
 <td>Permissions</td>
 <td>Auth: true</td>
 </tr>
-
 <tr>
 <td>Scopes</td>
 <td>WorkerModel</td>
 </tr>
-
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkerModelsEnabledHandler%22">getWorkerModelsEnabledHandler</a></td>
 </tr>
 </tbody>
 </table>
-
-<h2 id="get-worker-model-pattern-type-name">GET <code>/worker/model/pattern/&lt;type&gt;/&lt;name&gt;</code></h2>
-
+<h2 id="get-workermodelpatterntypename">GET <code>/worker/model/pattern/&lt;type&gt;/&lt;name&gt;</code></h2>
 <table>
 <thead>
 <tr>
@@ -692,32 +645,26 @@
 <th><strong><code>/worker/model/pattern/&lt;type&gt;/&lt;name&gt;</code></strong></th>
 </tr>
 </thead>
-
 <tbody>
 <tr>
 <td>Method</td>
 <td>GET</td>
 </tr>
-
 <tr>
 <td>Permissions</td>
 <td>Auth: true</td>
 </tr>
-
 <tr>
 <td>Scopes</td>
 <td>WorkerModel</td>
 </tr>
-
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkerModelPatternHandler%22">getWorkerModelPatternHandler</a></td>
 </tr>
 </tbody>
 </table>
-
-<h2 id="get-worker-model-pattern">GET <code>/worker/model/pattern</code></h2>
-
+<h2 id="get-workermodelpattern">GET <code>/worker/model/pattern</code></h2>
 <table>
 <thead>
 <tr>
@@ -725,32 +672,26 @@
 <th><strong><code>/worker/model/pattern</code></strong></th>
 </tr>
 </thead>
-
 <tbody>
 <tr>
 <td>Method</td>
 <td>GET</td>
 </tr>
-
 <tr>
 <td>Permissions</td>
 <td>Auth: true</td>
 </tr>
-
 <tr>
 <td>Scopes</td>
 <td>WorkerModel</td>
 </tr>
-
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkerModelPatternsHandler%22">getWorkerModelPatternsHandler</a></td>
 </tr>
 </tbody>
 </table>
-
-<h2 id="get-worker-model-type">GET <code>/worker/model/type</code></h2>
-
+<h2 id="get-workermodeltype">GET <code>/worker/model/type</code></h2>
 <table>
 <thead>
 <tr>
@@ -758,32 +699,26 @@
 <th><strong><code>/worker/model/type</code></strong></th>
 </tr>
 </thead>
-
 <tbody>
 <tr>
 <td>Method</td>
 <td>GET</td>
 </tr>
-
 <tr>
 <td>Permissions</td>
 <td>Auth: true</td>
 </tr>
-
 <tr>
 <td>Scopes</td>
 <td>WorkerModel</td>
 </tr>
-
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkerModelTypesHandler%22">getWorkerModelTypesHandler</a></td>
 </tr>
 </tbody>
 </table>
-
-<h2 id="get-worker-model">GET <code>/worker/model</code></h2>
-
+<h2 id="get-workermodel">GET <code>/worker/model</code></h2>
 <table>
 <thead>
 <tr>
@@ -791,32 +726,26 @@
 <th><strong><code>/worker/model</code></strong></th>
 </tr>
 </thead>
-
 <tbody>
 <tr>
 <td>Method</td>
 <td>GET</td>
 </tr>
-
 <tr>
 <td>Permissions</td>
 <td>Auth: true</td>
 </tr>
-
 <tr>
 <td>Scopes</td>
 <td>WorkerModel</td>
 </tr>
-
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkerModelsHandler%22">getWorkerModelsHandler</a></td>
 </tr>
 </tbody>
 </table>
-
 <h2 id="get-worker">GET <code>/worker</code></h2>
-
 <table>
 <thead>
 <tr>
@@ -824,32 +753,26 @@
 <th><strong><code>/worker</code></strong></th>
 </tr>
 </thead>
-
 <tbody>
 <tr>
 <td>Method</td>
 <td>GET</td>
 </tr>
-
 <tr>
 <td>Permissions</td>
 <td>Auth: true</td>
 </tr>
-
 <tr>
 <td>Scopes</td>
 <td>Admin, Worker, Hatchery</td>
 </tr>
-
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkersHandler%22">getWorkersHandler</a></td>
 </tr>
 </tbody>
 </table>
-
-<h2 id="post-worker-id-disable">POST <code>/worker/&lt;id&gt;/disable</code></h2>
-
+<h2 id="post-workeriddisable">POST <code>/worker/&lt;id&gt;/disable</code></h2>
 <table>
 <thead>
 <tr>
@@ -857,65 +780,26 @@
 <th><strong><code>/worker/&lt;id&gt;/disable</code></strong></th>
 </tr>
 </thead>
-
 <tbody>
 <tr>
 <td>Method</td>
 <td>POST</td>
 </tr>
-
 <tr>
 <td>Permissions</td>
 <td>Auth: true</td>
 </tr>
-
 <tr>
 <td>Scopes</td>
 <td>Admin, Hatchery</td>
 </tr>
-
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+disableWorkerHandler%22">disableWorkerHandler</a></td>
 </tr>
 </tbody>
 </table>
-
-<h2 id="post-worker-model-pattern">POST <code>/worker/model/pattern</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/worker/model/pattern</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>POST</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true - Auth: true</td>
-</tr>
-
-<tr>
-<td>Scopes</td>
-<td>WorkerModel</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postAddWorkerModelPatternHandler%22">postAddWorkerModelPatternHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="post-worker-model">POST <code>/worker/model</code></h2>
-
+<h2 id="post-workermodel">POST <code>/worker/model</code></h2>
 <table>
 <thead>
 <tr>
@@ -923,32 +807,26 @@
 <th><strong><code>/worker/model</code></strong></th>
 </tr>
 </thead>
-
 <tbody>
 <tr>
 <td>Method</td>
 <td>POST</td>
 </tr>
-
 <tr>
 <td>Permissions</td>
 <td>Auth: true</td>
 </tr>
-
 <tr>
 <td>Scopes</td>
 <td>WorkerModel</td>
 </tr>
-
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postWorkerModelHandler%22">postWorkerModelHandler</a></td>
 </tr>
 </tbody>
 </table>
-
-<h2 id="post-worker-refresh">POST <code>/worker/refresh</code></h2>
-
+<h2 id="post-workerrefresh">POST <code>/worker/refresh</code></h2>
 <table>
 <thead>
 <tr>
@@ -956,32 +834,26 @@
 <th><strong><code>/worker/refresh</code></strong></th>
 </tr>
 </thead>
-
 <tbody>
 <tr>
 <td>Method</td>
 <td>POST</td>
 </tr>
-
 <tr>
 <td>Permissions</td>
 <td>Auth: true</td>
 </tr>
-
 <tr>
 <td>Scopes</td>
 <td>Worker</td>
 </tr>
-
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postRefreshWorkerHandler%22">postRefreshWorkerHandler</a></td>
 </tr>
 </tbody>
 </table>
-
-<h2 id="post-worker-waiting">POST <code>/worker/waiting</code></h2>
-
+<h2 id="post-workerwaiting">POST <code>/worker/waiting</code></h2>
 <table>
 <thead>
 <tr>
@@ -989,32 +861,26 @@
 <th><strong><code>/worker/waiting</code></strong></th>
 </tr>
 </thead>
-
 <tbody>
 <tr>
 <td>Method</td>
 <td>POST</td>
 </tr>
-
 <tr>
 <td>Permissions</td>
 <td>Auth: true</td>
 </tr>
-
 <tr>
 <td>Scopes</td>
 <td>Worker</td>
 </tr>
-
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+workerWaitingHandler%22">workerWaitingHandler</a></td>
 </tr>
 </tbody>
 </table>
-
-<h2 id="put-worker-model-group-name-model-name-book">PUT <code>/worker/model/&lt;group-name&gt;/&lt;model-name&gt;/book</code></h2>
-
+<h2 id="put-workermodelgroup-namemodel-namebook">PUT <code>/worker/model/&lt;group-name&gt;/&lt;model-name&gt;/book</code></h2>
 <table>
 <thead>
 <tr>
@@ -1022,32 +888,26 @@
 <th><strong><code>/worker/model/&lt;group-name&gt;/&lt;model-name&gt;/book</code></strong></th>
 </tr>
 </thead>
-
 <tbody>
 <tr>
 <td>Method</td>
 <td>PUT</td>
 </tr>
-
 <tr>
 <td>Permissions</td>
 <td>Auth: true</td>
 </tr>
-
 <tr>
 <td>Scopes</td>
 <td>WorkerModel</td>
 </tr>
-
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putBookWorkerModelHandler%22">putBookWorkerModelHandler</a></td>
 </tr>
 </tbody>
 </table>
-
-<h2 id="put-worker-model-group-name-model-name-error">PUT <code>/worker/model/&lt;group-name&gt;/&lt;model-name&gt;/error</code></h2>
-
+<h2 id="put-workermodelgroup-namemodel-nameerror">PUT <code>/worker/model/&lt;group-name&gt;/&lt;model-name&gt;/error</code></h2>
 <table>
 <thead>
 <tr>
@@ -1055,32 +915,26 @@
 <th><strong><code>/worker/model/&lt;group-name&gt;/&lt;model-name&gt;/error</code></strong></th>
 </tr>
 </thead>
-
 <tbody>
 <tr>
 <td>Method</td>
 <td>PUT</td>
 </tr>
-
 <tr>
 <td>Permissions</td>
 <td>Auth: true</td>
 </tr>
-
 <tr>
 <td>Scopes</td>
 <td>WorkerModel</td>
 </tr>
-
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putSpawnErrorWorkerModelHandler%22">putSpawnErrorWorkerModelHandler</a></td>
 </tr>
 </tbody>
 </table>
-
-<h2 id="put-worker-model-group-name-model-name">PUT <code>/worker/model/&lt;group-name&gt;/&lt;model-name&gt;</code></h2>
-
+<h2 id="put-workermodelgroup-namemodel-name">PUT <code>/worker/model/&lt;group-name&gt;/&lt;model-name&gt;</code></h2>
 <table>
 <thead>
 <tr>
@@ -1088,65 +942,26 @@
 <th><strong><code>/worker/model/&lt;group-name&gt;/&lt;model-name&gt;</code></strong></th>
 </tr>
 </thead>
-
 <tbody>
 <tr>
 <td>Method</td>
 <td>PUT</td>
 </tr>
-
 <tr>
 <td>Permissions</td>
 <td>Auth: true</td>
 </tr>
-
 <tr>
 <td>Scopes</td>
 <td>WorkerModel</td>
 </tr>
-
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putWorkerModelHandler%22">putWorkerModelHandler</a></td>
 </tr>
 </tbody>
 </table>
-
-<h2 id="put-worker-model-pattern-type-name">PUT <code>/worker/model/pattern/&lt;type&gt;/&lt;name&gt;</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/worker/model/pattern/&lt;type&gt;/&lt;name&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>PUT</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true - Auth: true</td>
-</tr>
-
-<tr>
-<td>Scopes</td>
-<td>WorkerModel</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putWorkerModelPatternHandler%22">putWorkerModelPatternHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="import-a-worker-model-yml-json-file">import a worker model yml/json file</h2>
-
+<h2 id="import-a-worker-model-ymljson-file">import a worker model yml/json file</h2>
 <table>
 <thead>
 <tr>
@@ -1154,37 +969,30 @@
 <th><strong><code>/worker/model/import</code></strong></th>
 </tr>
 </thead>
-
 <tbody>
 <tr>
 <td>Method</td>
 <td>POST</td>
 </tr>
-
 <tr>
 <td>Query Parameter</td>
 <td>force=true or false. If false and if the worker model already exists, raise an error</td>
 </tr>
-
 <tr>
 <td>Permissions</td>
 <td>Auth: true</td>
 </tr>
-
 <tr>
 <td>Scopes</td>
 <td>WorkerModel</td>
 </tr>
-
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postWorkerModelImportHandler%22">postWorkerModelImportHandler</a></td>
 </tr>
 </tbody>
 </table>
-
 <h3 id="description">Description</h3>
-
 <p>import a worker model yml/json file with <code>cdsctl worker model import mywm.yml</code></p>
 
 

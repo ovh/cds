@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html id="docs" lang="en" class="">
+	<head>
+	<meta charset="utf-8">
+<title>OpenID-Connect Authentication - CDS - Continuous Delivery Service</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="shortcut icon" type="image/png" href="../../../images/favicon.png">
+
+
+
+
+<link rel="stylesheet" href="../../../sass/styles.css" integrity="" media="screen">
+<link rel="stylesheet" href="../../../css/callouts.css">
+<link rel="stylesheet" href="../../../css/auto-complete.css">
+<link rel="stylesheet" href="../../../css/fontawesome.min.css">
+<link rel="stylesheet" href="../../../css/asciinema-player.css">
+<link rel="stylesheet" href="../../../css/solarized-light.css">
+
+<meta name="description"
+    content="The OpenID-Connect Integration have to be configured on your CDS by a CDS Administrator.
+This integration allows you to delegate users authetication to an OpenID-Connect third party like Keycloak or Hydra
+How to configure OpenID-Connect Authentication integration Edit the toml file:
+ section [api.auth.oidc]  enable the signin with enabled = true if you want to disable signup, set signupDisabled = true    [api.auth.oidc] clientId = &#34;YOUR CLIENT ID&#34; clientSecret = &#34;YOUR CLIENT SECRET&#34; enabled = true signupDisabled = false url = &#34;http[s]://&lt;OIDC HOST&gt;:&lt;PORT&gt;/auth/realms/&lt;YOUR REALM&gt;&#34; For example :">
+<meta property="og:description"
+    content="The OpenID-Connect Integration have to be configured on your CDS by a CDS Administrator.
+This integration allows you to delegate users authetication to an OpenID-Connect third party like Keycloak or Hydra
+How to configure OpenID-Connect Authentication integration Edit the toml file:
+ section [api.auth.oidc]  enable the signin with enabled = true if you want to disable signup, set signupDisabled = true    [api.auth.oidc] clientId = &#34;YOUR CLIENT ID&#34; clientSecret = &#34;YOUR CLIENT SECRET&#34; enabled = true signupDisabled = false url = &#34;http[s]://&lt;OIDC HOST&gt;:&lt;PORT&gt;/auth/realms/&lt;YOUR REALM&gt;&#34; For example :">
+<meta name="twitter:description"
+    content="The OpenID-Connect Integration have to be configured on your CDS by a CDS Administrator.
+This integration allows you to delegate users authetication to an OpenID-Connect third party like Keycloak or Hydra
+How to configure OpenID-Connect Authentication integration Edit the toml file:
+ section [api.auth.oidc]  enable the signin with enabled = true if you want to disable signup, set signupDisabled = true    [api.auth.oidc] clientId = &#34;YOUR CLIENT ID&#34; clientSecret = &#34;YOUR CLIENT SECRET&#34; enabled = true signupDisabled = false url = &#34;http[s]://&lt;OIDC HOST&gt;:&lt;PORT&gt;/auth/realms/&lt;YOUR REALM&gt;&#34; For example :">
+<meta property="og:url" content="/docs/integrations/openid-connect/">
+<meta property="og:title" content="OpenID-Connect Authentication">
+<meta name="twitter:title" content="OpenID-Connect Authentication">
+<meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
+<meta property="og:image" content="/images/cds-transparent.png">
+<script type="text/javascript" src="../../../js/anchor-4.1.1.min.js"></script>
+<script type="text/javascript" src="../../../js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="../../../js/jquery-ui-1.12.1.min.js"></script>
+<script type="text/javascript" src="../../../js/bootstrap-3.3.7.min.js"></script>
+<script type="text/javascript" src="../../../js/highlight.pack.js"></script>
+<script>
+    hljs.initHighlightingOnLoad();
+
+</script>
+<script type="text/javascript" src="../../../js/script.js"></script>
+<script type="text/javascript" src="../../../js/lunr.min.js"></script>
+<a id="indexJSON" href="../../../index.json"></a>
+
+<script type="text/javascript" src="../../../js/auto-complete.js"></script>
+<script type="text/javascript" src="../../../js/search.js"></script>
+<script type="text/javascript" src="../../../js/asciinema-player.js"></script>
+
+	</head>
+	<body>
+		<section id="hero" class="light-text no-sub">
+			<a href="../../../" class="logo"></a>
+				<i id="tocburger" class="fa fa-bars" onclick='$("#toc").toggle()'></i><div class="nav-buttons" data-auto-burger="primary">
+				<ul class="global-nav">
+					
+					
+					<li><a href="../../../docs/" class="active">Documentation</a></li>
+					
+					<li><a href="../../../hosting/">Hosting your own instance</a></li>
+					
+					<li><a href="../../../development/">CDS Developer Manual</a></li>
+					
+					<li><a href="../../../about/">About</a></li>
+					
+					<li><i class="fa fa-search" onclick='$("#searchbox").toggle(); $("#search-query").focus().select()'></i></li>
+					<li>
+						<div id="btn-gh">
+							<a class="github-button" href="https://github.com/ovh/cds" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star CDS on GitHub">Star</a>
+							<script async defer src="https://buttons.github.io/buttons.js"></script>
+						</div>
+					</li>
+				</ul>
+				<div id="searchbox">
+					<input data-search-input id="search-query" type="text" placeholder="search...">
+					<span data-search-clear=""><i class="fa fa-close"></i></span>
+				</div>
+			</div>
+
+<div id="headSubMenu" class="light-text">
+
+
+
+
+	
+
+		
+
+		
+		<ul>
+			
+			
+			
+			<li><a href="../../../docs/">Home</a></li>
+			
+			
+				
+				<li><a href="../../../docs/concepts/">Concepts</a></li>
+			
+				
+				<li><a href="../../../docs/actions/">Actions</a></li>
+			
+				
+				<li><a href="../../../docs/components/">Components</a></li>
+			
+				
+				<li><a href="../../../docs/integrations/" class="menuSelected">Integrations</a></li>
+			
+				
+				<li><a href="../../../docs/tutorials/">Tutorials</a></li>
+			
+		</ul>
+		
+	
+
+	
+
+		
+
+		
+	
+
+	
+
+		
+
+		
+	
+
+	
+
+		
+
+		
+	
+
+</div>
+
+
+		</section>
+		<section id="page-content-with-menu">
+			
+<div id="toc">
+     <div class="toc-container">
+        
+        
+        
+        
+        
+            
+                
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                                    
+                                    
+                            
+                        
+                    
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                        
+                    
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                
+            
+        
+        
+        <i class="fa fa-bars" id="tocburger" onclick='$("#toc").toggle()'></i> 
+<a class="item" data-title="Integrations" href="../../../docs/integrations/"></a>
+
+	
+	
+	
+	
+		
+			
+<div class="item" data-title="AWS">
+	<div class="container">
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="AWS S3" href="../../../docs/integrations/aws/aws_s3/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<a class="item" data-title="Bitbucket Cloud" href="../../../docs/integrations/bitbucketcloud/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Bitbucket Server" href="../../../docs/integrations/bitbucket/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Docker Swarm" href="../../../docs/integrations/swarm/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Gerrit Repository Manager" href="../../../docs/integrations/gerrit/"></a>
+
+		
+	
+		
+			
+<div class="item" data-title="GitHub">
+	<div class="container">
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="GitHub Authentication" href="../../../docs/integrations/github/github_authentication/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="GitHub Repository Manager" href="../../../docs/integrations/github/github_repository_manager/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<div class="item" data-title="GitLab">
+	<div class="container">
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="GitLab Authentication" href="../../../docs/integrations/gitlab/gitlab_authentication/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="GitLab Repository Manager" href="../../../docs/integrations/gitlab/gitlab_repository_manager/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<div class="item" data-title="Kafka">
+	<div class="container">
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Kafka CDS Events" href="../../../docs/integrations/kafka/kafka_events/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Kafka Hooks" href="../../../docs/integrations/kafka/kafka_hooks/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<div class="item" data-title="Kubernetes">
+	<div class="container">
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Kubernetes Compute" href="../../../docs/integrations/kubernetes/kubernetes_compute/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Kubernetes Deployment" href="../../../docs/integrations/kubernetes/kubernetes_deployment/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<a class="item" data-title="LDAP Authentication" href="../../../docs/integrations/ldap/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Mesos/Marathon" href="../../../docs/integrations/marathon/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="OpenID-Connect Authentication" href="../../../docs/integrations/openid-connect/"></a>
+
+		
+	
+		
+			
+<div class="item" data-title="Openstack">
+	<div class="container">
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Openstack Compute" href="../../../docs/integrations/openstack/openstack_compute/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="OpenStack Swift" href="../../../docs/integrations/openstack/openstack_swift/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<a class="item" data-title="RabbitMQ" href="../../../docs/integrations/rabbitmq/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="vSphere" href="../../../docs/integrations/vsphere/"></a>
+
+		
+	
+
+
+
+
+
+     </div>
+</div>
+
+
+			<div id="docsContent">
+        		
+
+<h1>OpenID-Connect Authentication</h1>
+
+
+
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#how-to-configure-openid-connect-authentication-integration">How to configure OpenID-Connect Authentication integration</a></li>
+  </ul>
+</nav>
+
+<p>The OpenID-Connect Integration have to be configured on your CDS by a CDS Administrator.</p>
+<p>This integration allows you to delegate users authetication to an OpenID-Connect third party like <a href="https://www.keycloak.org/getting-started">Keycloak</a> or <a href="https://github.com/ory/hydra">Hydra</a></p>
+<h2 id="how-to-configure-openid-connect-authentication-integration">How to configure OpenID-Connect Authentication integration</h2>
+<p>Edit the toml file:</p>
+<ul>
+<li>section <code>[api.auth.oidc]</code>
+<ul>
+<li>enable the signin with <code>enabled = true</code></li>
+<li>if you want to disable signup, set <code>signupDisabled = true</code></li>
+</ul>
+</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-toml" data-lang="toml">[<span style="color:#a6e22e">api</span>.<span style="color:#a6e22e">auth</span>.<span style="color:#a6e22e">oidc</span>]
+      <span style="color:#a6e22e">clientId</span> = <span style="color:#e6db74">&#34;YOUR CLIENT ID&#34;</span>
+      <span style="color:#a6e22e">clientSecret</span> = <span style="color:#e6db74">&#34;YOUR CLIENT SECRET&#34;</span>
+      <span style="color:#a6e22e">enabled</span> = <span style="color:#66d9ef">true</span>
+      <span style="color:#a6e22e">signupDisabled</span> = <span style="color:#66d9ef">false</span>
+      <span style="color:#a6e22e">url</span> = <span style="color:#e6db74">&#34;http[s]://&lt;OIDC HOST&gt;:&lt;PORT&gt;/auth/realms/&lt;YOUR REALM&gt;&#34;</span>
+</code></pre></div><p>For example :</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-toml" data-lang="toml">[<span style="color:#a6e22e">api</span>.<span style="color:#a6e22e">auth</span>.<span style="color:#a6e22e">oidc</span>]
+      <span style="color:#a6e22e">clientId</span> = <span style="color:#e6db74">&#34;cds_client&#34;</span>
+      <span style="color:#a6e22e">clientSecret</span> = <span style="color:#e6db74">&#34;6ebf3c3f-6f0b-4326-bebd-05fd472a90ec&#34;</span>
+      <span style="color:#a6e22e">enabled</span> = <span style="color:#66d9ef">true</span>
+      <span style="color:#a6e22e">signupDisabled</span> = <span style="color:#66d9ef">false</span>
+      <span style="color:#a6e22e">url</span> = <span style="color:#e6db74">&#34;http://openid-connect.myorg.com:8080/auth/realms/cds&#34;</span>
+</code></pre></div>
+
+
+
+			</div>
+		</section><footer>
+			<main>
+			<a href="https://www.ovh.com"><img src="https://ovh.github.io/cds/images/logo-ovh-white-72DPI.png"></a>
+			<div>
+				The CDS logos are copyrighted.
+				Icons made by <a href="https://www.flaticon.com/authors/eucalyp">Eucalyp</a> 
+				from <a href="https://www.flaticon.com/">www.flaticon.com</a>
+			</div>
+			</main>
+		</footer>
+
+	</body>
+</html>

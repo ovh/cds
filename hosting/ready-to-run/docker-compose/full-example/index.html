@@ -4,17 +4,17 @@
 	<meta charset="utf-8">
 <title>Docker Compose Full Tutorial - CDS - Continuous Delivery Service</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="shortcut icon" type="image/png" href="https://ovh.github.io/cds/images/favicon.png">
+<link rel="shortcut icon" type="image/png" href="../../../../images/favicon.png">
 
 
 
 
-<link rel="stylesheet" href="https://ovh.github.io/cds/sass/styles.css" integrity="" media="screen">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/callouts.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/auto-complete.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/fontawesome.min.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/asciinema-player.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
+<link rel="stylesheet" href="../../../../sass/styles.css" integrity="" media="screen">
+<link rel="stylesheet" href="../../../../css/callouts.css">
+<link rel="stylesheet" href="../../../../css/auto-complete.css">
+<link rel="stylesheet" href="../../../../css/fontawesome.min.css">
+<link rel="stylesheet" href="../../../../css/asciinema-player.css">
+<link rel="stylesheet" href="../../../../css/solarized-light.css">
 
 <meta name="description"
     content="Run with Docker-Compose - Full Tutorial This page will help you to create a public instance of CDS:
@@ -28,45 +28,43 @@ At the end of this tutorial, you will have a CDS running with all CDS Services a
     content="Run with Docker-Compose - Full Tutorial This page will help you to create a public instance of CDS:
  installed on a Virtual Machine with a Public Cloud Instance on Openstack with a domain name and SSL configured installed with docker-compose  The whole tutorial of docker-compose is duplicated here. This article contains additional details on HAPRoxy, SSL configuration, IP Restriction.
 At the end of this tutorial, you will have a CDS running with all CDS Services and a Swarm Hatchery.">
-<meta property="og:url" content="https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/full-example/">
+<meta property="og:url" content="/hosting/ready-to-run/docker-compose/full-example/">
 <meta property="og:title" content="Docker Compose Full Tutorial">
 <meta name="twitter:title" content="Docker Compose Full Tutorial">
 <meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
 <meta property="og:image" content="/images/cds-transparent.png">
-<script type="text/javascript" src="https://ovh.github.io/cds/js/anchor-4.1.1.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-3.2.1.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-ui-1.12.1.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/bootstrap-3.3.7.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/highlight.pack.js"></script>
+<script type="text/javascript" src="../../../../js/anchor-4.1.1.min.js"></script>
+<script type="text/javascript" src="../../../../js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="../../../../js/jquery-ui-1.12.1.min.js"></script>
+<script type="text/javascript" src="../../../../js/bootstrap-3.3.7.min.js"></script>
+<script type="text/javascript" src="../../../../js/highlight.pack.js"></script>
 <script>
     hljs.initHighlightingOnLoad();
 
 </script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/script.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/lunr.min.js"></script>
-<script type="text/javascript">
-    var baseurl = "https:\/\/ovh.github.io\/cds";
+<script type="text/javascript" src="../../../../js/script.js"></script>
+<script type="text/javascript" src="../../../../js/lunr.min.js"></script>
+<a id="indexJSON" href="../../../../index.json"></a>
 
-</script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/auto-complete.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/search.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/asciinema-player.js"></script>
+<script type="text/javascript" src="../../../../js/auto-complete.js"></script>
+<script type="text/javascript" src="../../../../js/search.js"></script>
+<script type="text/javascript" src="../../../../js/asciinema-player.js"></script>
 
 	</head>
 	<body>
 		<section id="hero" class="light-text no-sub">
-			<a href="https://ovh.github.io/cds/" class="logo"></a>
+			<a href="../../../../" class="logo"></a>
 				<i id="tocburger" class="fa fa-bars" onclick='$("#toc").toggle()'></i><div class="nav-buttons" data-auto-burger="primary">
 				<ul class="global-nav">
 					
 					
-					<li><a href="https://ovh.github.io/cds/docs/">Documentation</a></li>
+					<li><a href="../../../../docs/">Documentation</a></li>
 					
-					<li><a href="https://ovh.github.io/cds/hosting/" class="active">Hosting your own instance</a></li>
+					<li><a href="../../../../hosting/" class="active">Hosting your own instance</a></li>
 					
-					<li><a href="https://ovh.github.io/cds/development/">CDS Developer Manual</a></li>
+					<li><a href="../../../../development/">CDS Developer Manual</a></li>
 					
-					<li><a href="https://ovh.github.io/cds/about/">About</a></li>
+					<li><a href="../../../../about/">About</a></li>
 					
 					<li><i class="fa fa-search" onclick='$("#searchbox").toggle(); $("#search-query").focus().select()'></i></li>
 					<li>
@@ -171,6 +169,8 @@ At the end of this tutorial, you will have a CDS running with all CDS Services a
                             
                         
                     
+                        
+                    
                 
             
         
@@ -194,7 +194,7 @@ At the end of this tutorial, you will have a CDS running with all CDS Services a
         
         
         <i class="fa fa-bars" id="tocburger" onclick='$("#toc").toggle()'></i> 
-<a class="item" data-title="Ready to RUN" href="https://ovh.github.io/cds/hosting/ready-to-run/"></a>
+<a class="item" data-title="Ready to RUN" href="../../../../hosting/ready-to-run/"></a>
 
 	
 	
@@ -202,7 +202,7 @@ At the end of this tutorial, you will have a CDS running with all CDS Services a
 	
 		
 			
-<a class="item" data-title="Run with binaries" href="https://ovh.github.io/cds/hosting/ready-to-run/from-binaries/"></a>
+<a class="item" data-title="Run with binaries" href="../../../../hosting/ready-to-run/from-binaries/"></a>
 
 		
 	
@@ -218,13 +218,13 @@ At the end of this tutorial, you will have a CDS running with all CDS Services a
 	
 		
 			
-<a class="item" data-title="Docker Compose" href="https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/docker-compose/"></a>
+<a class="item" data-title="Docker Compose" href="../../../../hosting/ready-to-run/docker-compose/docker-compose/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Docker Compose Full Tutorial" href="https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/full-example/"></a>
+<a class="item" data-title="Docker Compose Full Tutorial" href="../../../../hosting/ready-to-run/docker-compose/full-example/"></a>
 
 		
 	
@@ -251,110 +251,86 @@ At the end of this tutorial, you will have a CDS running with all CDS Services a
 
 
 <nav id="TableOfContents">
-<ul>
-<li>
-<ul>
-<li><a href="#run-with-docker-compose-full-tutorial">Run with Docker-Compose - Full Tutorial</a></li>
-<li><a href="#create-the-virtual-machine-with-openstack">Create the Virtual Machine with OpenStack</a></li>
-<li><a href="#install-docker-on-your-vm">Install Docker on your VM</a></li>
-<li><a href="#configure-ssl">Configure SSL</a></li>
-<li><a href="#configure-haproxy">Configure HAProxy</a></li>
-<li><a href="#register-new-oauth-application-on-github">Register new OAuth Application on GitHub</a></li>
-<li><a href="#install-cds-initialize-everything">Install CDS, initialize everything</a></li>
-<li><a href="#tips">Tips</a>
-<ul>
-<li><a href="#limit-access-to-some-ip-only">Limit access to some IP only</a></li>
-<li><a href="#disable-signup-on-you-cds-instance">Disable Signup on you CDS Instance</a></li>
-<li><a href="#reinstall-all-cds-on-the-same-vm">Reinstall all CDS on the same VM</a></li>
-</ul></li>
-</ul></li>
-</ul>
+  <ul>
+    <li><a href="#run-with-docker-compose---full-tutorial">Run with Docker-Compose - Full Tutorial</a></li>
+    <li><a href="#create-the-virtual-machine-with-openstack">Create the Virtual Machine with OpenStack</a></li>
+    <li><a href="#install-docker-on-your-vm">Install Docker on your VM</a></li>
+    <li><a href="#configure-ssl">Configure SSL</a></li>
+    <li><a href="#configure-haproxy">Configure HAProxy</a></li>
+    <li><a href="#register-new-oauth-application-on-github">Register new OAuth Application on GitHub</a></li>
+    <li><a href="#install-cds-initialize-everything">Install CDS, initialize everything</a></li>
+    <li><a href="#tips">Tips</a>
+      <ul>
+        <li><a href="#limit-access-to-some-ip-only">Limit access to some IP only</a></li>
+        <li><a href="#disable-signup-on-you-cds-instance">Disable Signup on you CDS Instance</a></li>
+        <li><a href="#reinstall-all-cds-on-the-same-vm">Reinstall all CDS on the same VM</a></li>
+      </ul>
+    </li>
+  </ul>
 </nav>
 
-
-
-<h2 id="run-with-docker-compose-full-tutorial">Run with Docker-Compose - Full Tutorial</h2>
-
+<h2 id="run-with-docker-compose---full-tutorial">Run with Docker-Compose - Full Tutorial</h2>
 <p>This page will help you to create a public instance of CDS:</p>
-
 <ul>
 <li>installed on a Virtual Machine with a Public Cloud Instance on Openstack</li>
 <li>with a domain name and SSL configured</li>
 <li>installed with docker-compose</li>
 </ul>
-
-<p>The whole tutorial of <a href="https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/docker-compose/">docker-compose</a> is duplicated here.
+<p>The whole tutorial of <a href="../../../../hosting/ready-to-run/docker-compose/docker-compose/">docker-compose</a> is duplicated here.
 This article contains additional details on HAPRoxy, SSL configuration, IP Restriction.</p>
-
 <p>At the end of this tutorial, you will have a CDS running with all CDS Services and a Swarm Hatchery. This CDS is fully functional with GitHub.
-A CDS installed with this tutorial should only be used for demonstration only. Please read <a href="https://ovh.github.io/cds/hosting/ready-to-run/from-binaries/">this article</a> for a production installation.</p>
-
+A CDS installed with this tutorial should only be used for demonstration only. Please read <a href="../../../../hosting/ready-to-run/from-binaries/">this article</a> for a production installation.</p>
 <h2 id="create-the-virtual-machine-with-openstack">Create the Virtual Machine with OpenStack</h2>
-
 <p>Create an OpenStack project on OVHcloud Public Cloud: <a href="https://www.ovh.com/manager/public-cloud/#/pci/projects/onboarding">https://www.ovh.com/manager/public-cloud/#/pci/projects/onboarding</a></p>
-
 <p>Export Openstack Variables:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">export OS_AUTH_URL<span style="color:#f92672">=</span>https://auth.cloud.ovh.net/v3/
+export OS_IDENTITY_API_VERSION<span style="color:#f92672">=</span><span style="color:#ae81ff">3</span>
+export OS_TENANT_ID<span style="color:#f92672">=</span>your-tenant-id
+export OS_TENANT_NAME<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;your-tenant-name&#34;</span>
+export OS_USERNAME<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;your-openstack-username&#34;</span>
+export OS_PASSWORD<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;your-openstack-password&#34;</span>
+export OS_REGION_NAME<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;opentack-region&#34;</span>
 
-<pre><code class="language-bash">export OS_AUTH_URL=https://auth.cloud.ovh.net/v3/
-export OS_IDENTITY_API_VERSION=3
-export OS_TENANT_ID=your-tenant-id
-export OS_TENANT_NAME=&quot;your-tenant-name&quot;
-export OS_USERNAME=&quot;your-openstack-username&quot;
-export OS_PASSWORD=&quot;your-openstack-password&quot;
-export OS_REGION_NAME=&quot;opentack-region&quot;
-
-# create virtual machine.
-openstack server create --flavor b2-15-flex --image &quot;Debian 10&quot; --key-name=&quot;your-key-name&quot; --nic net-id=Ext-Net cdsdemo
-</code></pre>
-
-<p>This new virtual machime is attached to the <code>default</code> security group. This group should allows ingress for port 22 and port 443 (from your remote IP). It must also allow the port 80 for SSL configuration.</p>
-
+<span style="color:#75715e"># create virtual machine.</span>
+openstack server create --flavor b2-15-flex --image <span style="color:#e6db74">&#34;Debian 10&#34;</span> --key-name<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;your-key-name&#34;</span> --nic net-id<span style="color:#f92672">=</span>Ext-Net cdsdemo
+</code></pre></div><p>This new virtual machime is attached to the <code>default</code> security group. This group should allows ingress for port 22 and port 443 (from your remote IP). It must also allow the port 80 for SSL configuration.</p>
 <h2 id="install-docker-on-your-vm">Install Docker on your VM</h2>
-
-<pre><code class="language-bash"># get server public IP
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#75715e"># get server public IP</span>
 openstack server list
 
-# connect to the vm with
+<span style="color:#75715e"># connect to the vm with</span>
 ssh debian@ip-of-your-virtual-machine
 
-# go to root
+<span style="color:#75715e"># go to root</span>
 sudo su
 
-# then install docker
-apt-get update &amp;&amp; \
-apt-get install -y apt-transport-https ca-certificates software-properties-common curl git netcat make binutils bzip2 gnupg haproxy telnet htop &amp;&amp; \
-curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add -  &amp;&amp; \
-add-apt-repository &quot;deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable&quot;  &amp;&amp; \
-apt-get -y update &amp;&amp; \
-apt-get -y upgrade &amp;&amp; \
-apt-get install -y --allow-unauthenticated docker-ce docker-ce-cli containerd.io  &amp;&amp; \
-curl -L https://github.com/docker/compose/releases/download/1.14.0/docker-compose-`uname -s`-`uname -m` &gt; /usr/local/bin/docker-compose &amp;&amp; \
-chmod +x /usr/local/bin/docker-compose &amp;&amp; \
-usermod -aG docker debian &amp;&amp; \
-echo &quot;127.0.0.11 cdsdemo cdsdemo&quot; &gt;&gt; /etc/hosts
-</code></pre>
-
-<h2 id="configure-ssl">Configure SSL</h2>
-
+<span style="color:#75715e"># then install docker</span>
+apt-get update <span style="color:#f92672">&amp;&amp;</span> <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>apt-get install -y apt-transport-https ca-certificates software-properties-common curl git netcat make binutils bzip2 gnupg haproxy telnet htop <span style="color:#f92672">&amp;&amp;</span> <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add -  <span style="color:#f92672">&amp;&amp;</span> <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>add-apt-repository <span style="color:#e6db74">&#34;deb [arch=amd64] https://download.docker.com/linux/debian </span><span style="color:#66d9ef">$(</span>lsb_release -cs<span style="color:#66d9ef">)</span><span style="color:#e6db74"> stable&#34;</span>  <span style="color:#f92672">&amp;&amp;</span> <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>apt-get -y update <span style="color:#f92672">&amp;&amp;</span> <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>apt-get -y upgrade <span style="color:#f92672">&amp;&amp;</span> <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>apt-get install -y --allow-unauthenticated docker-ce docker-ce-cli containerd.io  <span style="color:#f92672">&amp;&amp;</span> <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>curl -L https://github.com/docker/compose/releases/download/1.14.0/docker-compose-<span style="color:#e6db74">`</span>uname -s<span style="color:#e6db74">`</span>-<span style="color:#e6db74">`</span>uname -m<span style="color:#e6db74">`</span> &gt; /usr/local/bin/docker-compose <span style="color:#f92672">&amp;&amp;</span> <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>chmod +x /usr/local/bin/docker-compose <span style="color:#f92672">&amp;&amp;</span> <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>usermod -aG docker debian <span style="color:#f92672">&amp;&amp;</span> <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>echo <span style="color:#e6db74">&#34;127.0.0.11 cdsdemo cdsdemo&#34;</span> &gt;&gt; /etc/hosts
+</code></pre></div><h2 id="configure-ssl">Configure SSL</h2>
 <p>With <code>root</code> user:</p>
-
-<pre><code class="language-bash">export DOMAIN='your-cdsdemo.domain'
-export YOUR_MAIL='admin@localhost.local'
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">export DOMAIN<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;your-cdsdemo.domain&#39;</span>
+export YOUR_MAIL<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;admin@localhost.local&#39;</span>
 
 apt-get install certbot
-certbot certonly --standalone -d ${DOMAIN} --non-interactive --agree-tos --email ${YOUR_MAIL} --http-01-port=80
+certbot certonly --standalone -d <span style="color:#e6db74">${</span>DOMAIN<span style="color:#e6db74">}</span> --non-interactive --agree-tos --email <span style="color:#e6db74">${</span>YOUR_MAIL<span style="color:#e6db74">}</span> --http-01-port<span style="color:#f92672">=</span><span style="color:#ae81ff">80</span>
 
-# then generate pem file
+<span style="color:#75715e"># then generate pem file</span>
 mkdir /etc/haproxy/certs/
 cat /etc/letsencrypt/live/$DOMAIN/fullchain.pem /etc/letsencrypt/live/$DOMAIN/privkey.pem &gt; /etc/haproxy/certs/$DOMAIN.pem
 chmod -R go-rwx /etc/haproxy/certs
 
-</code></pre>
-
-<h2 id="configure-haproxy">Configure HAProxy</h2>
-
+</code></pre></div><h2 id="configure-haproxy">Configure HAProxy</h2>
 <p>In the content below, replace <code>your-cdsdemo.domain</code> by your domain name, then create the file <code>/etc/haproxy/haproxy.cfg</code> with the <code>root</code> user.</p>
-
 <pre><code>global
 	log /dev/log	local0
 	log /dev/log	local1 notice
@@ -411,15 +387,9 @@ backend cdsdemo_ui
 	mode http
 	balance roundrobin
 	server cdsui 127.0.0.1:8080 check
-</code></pre>
-
-<p>Then restart HAProxy</p>
-
-<pre><code class="language-bash">service haproxy restart
-</code></pre>
-
-<h2 id="register-new-oauth-application-on-github">Register new OAuth Application on GitHub</h2>
-
+</code></pre><p>Then restart HAProxy</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">service haproxy restart
+</code></pre></div><h2 id="register-new-oauth-application-on-github">Register new OAuth Application on GitHub</h2>
 <ul>
 <li>go on <a href="https://github.com/settings/applications/new">https://github.com/settings/applications/new</a></li>
 <li>Application name: <code>cds-demo</code></li>
@@ -427,83 +397,75 @@ backend cdsdemo_ui
 <li>Authorization callback: <code>https://your-cdsdemo.domain/cdsapi/repositories_manager/oauth2/callback</code></li>
 <li>Click on <code>Register application</code>.</li>
 </ul>
-
 <p>Notice that you can create a new OAuth Application on a GitHub organization:
 <code>https://github.com/organizations/your-organization/settings/applications/new</code></p>
-
 <p>You will have the <code>CientID</code> and <code>ClientSecret</code></p>
-
 <h2 id="install-cds-initialize-everything">Install CDS, initialize everything</h2>
-
 <p>In the content below, replace the value of</p>
-
 <ul>
 <li>CDS_DOMAIN_NAME</li>
 <li>CDS_GITHUB_CLIENT_ID</li>
 <li>CDS_GITHUB_CLIENT_SECRET</li>
 </ul>
-
 <p>then create the file <code>/home/debian/boot.sh</code> with the user <code>debian</code>.</p>
-
-<pre><code class="language-bash">#!/bin/bash
-
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#75715e">#!/bin/bash
+</span><span style="color:#75715e"></span>
 set -ex
 
-export CDS_DOMAIN_NAME=&quot;your-cdsdemo.domain&quot;
-export CDS_GITHUB_CLIENT_ID=&quot;xxxxxxxxxxx&quot;
-export CDS_GITHUB_CLIENT_SECRET=&quot;xxxxxxxxxxx&quot;
+export CDS_DOMAIN_NAME<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;your-cdsdemo.domain&#34;</span>
+export CDS_GITHUB_CLIENT_ID<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;xxxxxxxxxxx&#34;</span>
+export CDS_GITHUB_CLIENT_SECRET<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;xxxxxxxxxxx&#34;</span>
 
 mkdir -p tools/smtpmock
 
-curl https://raw.githubusercontent.com/ovh/cds/0.47.0/docker-compose.yml -o docker-compose.yml
-export HOSTNAME=$(hostname)
+curl https://raw.githubusercontent.com/ovh/cds/0.48.0/docker-compose.yml -o docker-compose.yml
+export HOSTNAME<span style="color:#f92672">=</span><span style="color:#66d9ef">$(</span>hostname<span style="color:#66d9ef">)</span>
+export CDS_DOCKER_IMAGE<span style="color:#f92672">=</span>ovhcom/cds-engine:0.48.0
 
 docker pull ovhcom/cds-engine:latest
 docker-compose up --no-recreate -d cds-db cds-cache elasticsearch dockerhost
-sleep 3
-docker-compose logs| grep 'database system is ready to accept connections'
+sleep <span style="color:#ae81ff">3</span>
+docker-compose logs| grep <span style="color:#e6db74">&#39;database system is ready to accept connections&#39;</span>
+docker-compose up --no-recreate cds-db-init
 docker-compose up --no-recreate cds-migrate
-sleep 3
+sleep <span style="color:#ae81ff">3</span>
 docker-compose up cds-prepare
-export CDS_EDIT_CONFIG=&quot;api.smtp.disable=true telemetry.metricsEnabled=true&quot;
+export CDS_EDIT_CONFIG<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;api.smtp.disable=true&#34;</span>
 docker-compose up cds-edit-config
-export CDS_EDIT_CONFIG=&quot;vcs.servers.github.github.clientId=${CDS_GITHUB_CLIENT_ID} vcs.servers.github.github.clientSecret=${CDS_GITHUB_CLIENT_SECRET} &quot;
+export CDS_EDIT_CONFIG<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;vcs.servers.github.github.clientId=</span><span style="color:#e6db74">${</span>CDS_GITHUB_CLIENT_ID<span style="color:#e6db74">}</span><span style="color:#e6db74"> vcs.servers.github.github.clientSecret=</span><span style="color:#e6db74">${</span>CDS_GITHUB_CLIENT_SECRET<span style="color:#e6db74">}</span><span style="color:#e6db74"> &#34;</span>
 docker-compose up cds-edit-config
-export CDS_EDIT_CONFIG=&quot;api.url.api=http://localhost:8081 api.url.ui=https://${CDS_DOMAIN_NAME} hatchery.swarm.commonConfiguration.api.http.url=http://cds-api:8081&quot;
+export CDS_EDIT_CONFIG<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;api.url.api=http://localhost:8081 api.url.ui=https://</span><span style="color:#e6db74">${</span>CDS_DOMAIN_NAME<span style="color:#e6db74">}</span><span style="color:#e6db74"> hatchery.swarm.commonConfiguration.api.http.url=http://cds-api:8081&#34;</span>
 docker-compose up cds-edit-config
-export CDS_EDIT_CONFIG=&quot;hatchery.swarm.commonConfiguration.api.http.url=https://${CDS_DOMAIN_NAME}/cdsapi hooks.urlPublic=https://${CDS_DOMAIN_NAME}/cdshooks ui.hooksURL=http://cds-hooks:8083&quot;
+export CDS_EDIT_CONFIG<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;hatchery.swarm.commonConfiguration.api.http.url=https://</span><span style="color:#e6db74">${</span>CDS_DOMAIN_NAME<span style="color:#e6db74">}</span><span style="color:#e6db74">/cdsapi hooks.urlPublic=https://</span><span style="color:#e6db74">${</span>CDS_DOMAIN_NAME<span style="color:#e6db74">}</span><span style="color:#e6db74">/cdshooks ui.hooksURL=http://cds-hooks:8083&#34;</span>
 docker-compose up cds-edit-config
 docker-compose up -d cds-api
-sleep 3
-TOKEN_CMD=$(docker logs debian_cds-prepare_1|grep TOKEN) &amp;&amp; $TOKEN_CMD
-curl 'http://localhost:8081/download/cdsctl/linux/amd64?variant=nokeychain' -o cdsctl
+sleep <span style="color:#ae81ff">3</span>
+TOKEN_CMD<span style="color:#f92672">=</span><span style="color:#66d9ef">$(</span>docker logs debian_cds-prepare_1|grep TOKEN<span style="color:#66d9ef">)</span> <span style="color:#f92672">&amp;&amp;</span> $TOKEN_CMD
+curl <span style="color:#e6db74">&#39;http://localhost:8081/download/cdsctl/linux/amd64?variant=nokeychain&#39;</span> -o cdsctl
 chmod +x cdsctl
-# this line will ask a password for admin user
+<span style="color:#75715e"># this line will ask a password for admin user</span>
 ./cdsctl signup --api-url http://localhost:8081 --email admin@localhost.local --username admin --fullname admin
-VERIFY_CMD=$(docker-compose logs cds-api|grep 'cdsctl signup verify'|cut -d '$' -f2|xargs) &amp;&amp; ./$VERIFY_CMD
-# this line returns the RING of user, must be ADMIN
+VERIFY_CMD<span style="color:#f92672">=</span><span style="color:#66d9ef">$(</span>docker-compose logs cds-api|grep <span style="color:#e6db74">&#39;cdsctl signup verify&#39;</span>|cut -d <span style="color:#e6db74">&#39;$&#39;</span> -f2|xargs<span style="color:#66d9ef">)</span> <span style="color:#f92672">&amp;&amp;</span> ./$VERIFY_CMD
+<span style="color:#75715e"># this line returns the RING of user, must be ADMIN</span>
 ./cdsctl user me
 
-export CDS_EDIT_CONFIG=&quot;api.url.api=https://${CDS_DOMAIN_NAME}/cdsapi api.url.ui=https://${CDS_DOMAIN_NAME}&quot;
+export CDS_EDIT_CONFIG<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;api.url.api=https://</span><span style="color:#e6db74">${</span>CDS_DOMAIN_NAME<span style="color:#e6db74">}</span><span style="color:#e6db74">/cdsapi api.url.ui=https://</span><span style="color:#e6db74">${</span>CDS_DOMAIN_NAME<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>
 docker-compose up cds-edit-config
 docker-compose stop cds-api
 docker-compose rm -f cds-api
 docker-compose up -d cds-api
-sleep 3
-docker-compose up -d cds-ui cds-hooks cds-elasticsearch cds-hatchery-swarm cds-vcs cds-repositories
-sleep 5
+sleep <span style="color:#ae81ff">3</span>
+docker-compose up -d cds-ui cds-cdn cds-hooks cds-elasticsearch cds-hatchery-swarm cds-vcs cds-repositories
+sleep <span style="color:#ae81ff">5</span>
 
-./cdsctl worker model import https://raw.githubusercontent.com/ovh/cds/0.47.0/contrib/worker-models/maven3-jdk10-official.yml
+./cdsctl worker model import https://raw.githubusercontent.com/ovh/cds/0.48.0/contrib/worker-models/maven3-jdk10-official.yml
 
-./cdsctl template push https://raw.githubusercontent.com/ovh/cds/0.47.0/contrib/workflow-templates/demo-workflow-hello-world/demo-workflow-hello-world.yml
+./cdsctl template push https://raw.githubusercontent.com/ovh/cds/0.48.0/contrib/workflow-templates/demo-workflow-hello-world/demo-workflow-hello-world.yml
 ./cdsctl project create DEMO FirstProject
 ./cdsctl template apply DEMO MyFirstWorkflow shared.infra/demo-workflow-hello-world --force --import-push --quiet
 ./cdsctl workflow run DEMO MyFirstWorkflow
 
-</code></pre>
-
-<p>With user debian</p>
-
+</code></pre></div><p>With user debian</p>
 <pre><code># be sure that you have group docker
 groups
 # you should have these groups:
@@ -513,21 +475,13 @@ groups
 cd /home/debian
 chmod +x boot.sh
 ./boot.sh
-</code></pre>
-
-<p>The <code>boot.sh</code> will ask you the password for <code>admin</code> user, you have to enter a strong password.
+</code></pre><p>The <code>boot.sh</code> will ask you the password for <code>admin</code> user, you have to enter a strong password.
 The script will also ask you the context name for cdsctl, you can choose the default context <code>default</code>.</p>
-
 <p>At the end, you should have to log:</p>
-
-<pre><code class="language-bash">Workflow MyFirstWorkflow #1 has been launched
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">Workflow MyFirstWorkflow <span style="color:#75715e">#1 has been launched</span>
 https://your-cdsdemo.domain/project/DEMO/workflow/MyFirstWorkflow/run/1
-</code></pre>
-
-<p>This url should be accessible at the moment, since your have configured the SSL and haproxy.</p>
-
+</code></pre></div><p>This url should be accessible at the moment, since your have configured the SSL and haproxy.</p>
 <p>The <code>docker ps</code> should returns this:</p>
-
 <pre><code>
 $ docker ps
 CONTAINER ID        IMAGE                                                 COMMAND                  CREATED             STATUS                    PORTS                      NAMES
@@ -538,42 +492,31 @@ fe2fcbee96aa        ovhcom/cds-engine:latest                              &quot;
 f2eb7b8c4329        ovhcom/cds-engine:latest                              &quot;sh -c '/app/cds-eng…&quot;   35 seconds ago      Up 33 seconds (healthy)                              debian_cds-elasticsearch_1
 22dc66a1b2a2        ovhcom/cds-engine:latest                              &quot;sh -c '/app/cds-eng…&quot;   35 seconds ago      Up 33 seconds (healthy)                              debian_cds-hatchery-swarm_1
 958ab1703f16        ovhcom/cds-engine:latest                              &quot;sh -c '/app/cds-eng…&quot;   39 seconds ago      Up 39 seconds (healthy)   0.0.0.0:8081-&gt;8081/tcp     debian_cds-api_1
-9223395500ab        postgres:9.6.2                                        &quot;docker-entrypoint.s…&quot;   2 minutes ago       Up About a minute         5432/tcp                   debian_cds-db_1
+9223395500ab        postgres:9.6                                        &quot;docker-entrypoint.s…&quot;   2 minutes ago       Up About a minute         5432/tcp                   debian_cds-db_1
 c9b58ce83003        docker.elastic.co/elasticsearch/elasticsearch:6.7.2   &quot;/usr/local/bin/dock…&quot;   2 minutes ago       Up About a minute         9200/tcp, 9300/tcp         debian_elasticsearch_1
 08cfe15c3e2c        bobrik/socat                                          &quot;socat TCP4-LISTEN:2…&quot;   2 minutes ago       Up About a minute         127.0.0.1:2375-&gt;2375/tcp   debian_dockerhost_1
 fc2ac075c000        redis:alpine                                          &quot;docker-entrypoint.s…&quot;   2 minutes ago       Up About a minute         6379/tcp                   debian_cds-cache_1
-</code></pre>
-
-<h2 id="tips">Tips</h2>
-
+</code></pre><h2 id="tips">Tips</h2>
 <h3 id="limit-access-to-some-ip-only">Limit access to some IP only</h3>
-
 <p>Limit access to your current IP:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#75715e"># get your the current IP - from your desk</span>
+export MY_IP<span style="color:#f92672">=</span><span style="color:#66d9ef">$(</span>curl ipaddr.ovh<span style="color:#66d9ef">)</span>
+<span style="color:#75715e"># Allow your IP to call the 443 port</span>
+openstack security group rule create default --protocol tcp --dst-port 443:443 --remote-ip <span style="color:#e6db74">${</span>MY_IP<span style="color:#e6db74">}</span>/32
+<span style="color:#75715e"># Allow your IP to call the 22 port</span>
+openstack security group rule create default --protocol tcp --dst-port 22:22 --remote-ip <span style="color:#e6db74">${</span>MY_IP<span style="color:#e6db74">}</span>/32
 
-<pre><code class="language-bash"># get your the current IP - from your desk
-export MY_IP=$(curl ipaddr.ovh)
-# Allow your IP to call the 443 port
-openstack security group rule create default --protocol tcp --dst-port 443:443 --remote-ip ${MY_IP}/32
-# Allow your IP to call the 22 port
-openstack security group rule create default --protocol tcp --dst-port 22:22 --remote-ip ${MY_IP}/32
-
-# check if new rules are applied
+<span style="color:#75715e"># check if new rules are applied</span>
 openstack security group rule list default
-</code></pre>
+</code></pre></div><p>Allow GitHub to call your CDS</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#75715e"># Check GitHub IP Hooks on https://api.github.com/meta</span>
 
-<p>Allow GitHub to call your CDS</p>
-
-<pre><code class="language-bash"># Check GitHub IP Hooks on https://api.github.com/meta
-
-# replace $RANGE_GITHUB with the range of GitHub Hooks.
+<span style="color:#75715e"># replace $RANGE_GITHUB with the range of GitHub Hooks.</span>
 openstack security group rule create default --protocol tcp --dst-port 443:443 --remote-ip $RANGE_GITHUB
 
-# check if new rules are applied
+<span style="color:#75715e"># check if new rules are applied</span>
 openstack security group rule list default
-</code></pre>
-
-<h3 id="disable-signup-on-you-cds-instance">Disable Signup on you CDS Instance</h3>
-
+</code></pre></div><h3 id="disable-signup-on-you-cds-instance">Disable Signup on you CDS Instance</h3>
 <pre><code># to run from user debian, from directory /home/debian/
 export CDS_EDIT_CONFIG=&quot;api.auth.local.signupDisabled=true&quot;
 docker-compose up cds-edit-config
@@ -581,18 +524,14 @@ docker-compose up cds-edit-config
 # theh, restart api
 export HOSTNAME=$(hostname)
 docker-compose restart cds-api
-</code></pre>
+</code></pre><h3 id="reinstall-all-cds-on-the-same-vm">Reinstall all CDS on the same VM</h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#75715e"># with user debian</span>
+<span style="color:#75715e"># delete all containers and volumes</span>
+docker rm -f <span style="color:#e6db74">`</span>docker ps -aq<span style="color:#e6db74">`</span> <span style="color:#f92672">&amp;&amp;</span> docker volume prune
 
-<h3 id="reinstall-all-cds-on-the-same-vm">Reinstall all CDS on the same VM</h3>
-
-<pre><code class="language-bash"># with user debian
-# delete all containers and volumes
-docker rm -f `docker ps -aq` &amp;&amp; docker volume prune
-
-# run boot.sh file
+<span style="color:#75715e"># run boot.sh file</span>
 ./boot.sh
-</code></pre>
-
+</code></pre></div>
 
 
 

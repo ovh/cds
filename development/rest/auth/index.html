@@ -4,63 +4,61 @@
 	<meta charset="utf-8">
 <title>auth - CDS - Continuous Delivery Service</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="shortcut icon" type="image/png" href="https://ovh.github.io/cds/images/favicon.png">
+<link rel="shortcut icon" type="image/png" href="../../../images/favicon.png">
 
 
 
 
-<link rel="stylesheet" href="https://ovh.github.io/cds/sass/styles.css" integrity="" media="screen">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/callouts.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/auto-complete.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/fontawesome.min.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/asciinema-player.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
+<link rel="stylesheet" href="../../../sass/styles.css" integrity="" media="screen">
+<link rel="stylesheet" href="../../../css/callouts.css">
+<link rel="stylesheet" href="../../../css/auto-complete.css">
+<link rel="stylesheet" href="../../../css/fontawesome.min.css">
+<link rel="stylesheet" href="../../../css/asciinema-player.css">
+<link rel="stylesheet" href="../../../css/solarized-light.css">
 
 <meta name="description"
-    content=" GET /auth/consumer/&lt;consumer-type&gt;/askSignin    URL /auth/consumer/&lt;consumer-type&gt;/askSignin     Method GET   Permissions Auth: false   Code getAuthAskSigninHandler    GET /auth/driver    URL /auth/driver     Method GET   Permissions Auth: false   Code getAuthDriversHandler    GET /auth/me    URL /auth/me     Method GET   Permissions Auth: true   Scopes Action   Code getAuthMe    GET /auth/scope    URL /auth/scope     Method GET   Permissions Auth: false   Code getAuthScopesHandler    POST /auth/consumer/&lt;consumer-type&gt;/detach    URL /auth/consumer/&lt;consumer-type&gt;/detach     Method POST   Permissions Auth: true   Scopes AccessToken   Code postAuthDetachHandler    POST /auth/consumer/&lt;consumer-type&gt;/signin    URL /auth/consumer/&lt;consumer-type&gt;/signin     Method POST   Permissions Auth: false   Scopes AccessToken   Code postAuthSigninHandler    POST /auth/consumer/builtin/signin    URL /auth/consumer/builtin/signin     Method POST   Permissions Auth: false   Code postAuthBuiltinSigninHandler    POST /auth/consumer/local/askReset    URL /auth/consumer/local/askReset     Method POST   Permissions Auth: false   Code postAuthLocalAskResetHandler    POST /auth/consumer/local/reset    URL /auth/consumer/local/reset     Method POST   Permissions Auth: false   Code postAuthLocalResetHandler    POST /auth/consumer/local/signin    URL /auth/consumer/local/signin     Method POST   Permissions Auth: false   Code postAuthLocalSigninHandler    POST /auth/consumer/local/signup    URL /auth/consumer/local/signup     Method POST   Permissions Auth: false   Code postAuthLocalSignupHandler    POST /auth/consumer/local/verify    URL /auth/consumer/local/verify     Method POST   Permissions Auth: false   Code postAuthLocalVerifyHandler    POST /auth/consumer/signout    URL /auth/consumer/signout     Method POST   Permissions Auth: true   Code postAuthSignoutHandler    POST /auth/consumer/worker/signin    URL /auth/consumer/worker/signin     Method POST   Permissions Auth: false   Code postRegisterWorkerHandler    POST /auth/consumer/worker/signout    URL /auth/consumer/worker/signout     Method POST   Permissions Auth: true   Code postUnregisterWorkerHandler    ">
+    content="GET /auth/me    URL /auth/me     Method GET   Permissions Auth: true   Code getAuthMe    GET /auth/session/&lt;session-id&gt;    URL /auth/session/&lt;session-id&gt;     Method GET   Permissions Auth: true   Code getAuthSession    POST /auth/consumer/&lt;consumer-type&gt;/detach    URL /auth/consumer/&lt;consumer-type&gt;/detach     Method POST   Permissions Auth: true   Scopes AccessToken   Code postAuthDetachHandler    POST /auth/consumer/&lt;consumer-type&gt;/signin    URL /auth/consumer/&lt;consumer-type&gt;/signin     Method POST   Permissions Auth: true   Scopes AccessToken   Code authOptionalMiddleware    POST /auth/consumer/signout    URL /auth/consumer/signout     Method POST   Permissions Auth: true   Code postAuthSignoutHandler    POST /auth/consumer/worker/signout    URL /auth/consumer/worker/signout     Method POST   Permissions Auth: true   Code postUnregisterWorkerHandler    ">
 <meta property="og:description"
-    content=" GET /auth/consumer/&lt;consumer-type&gt;/askSignin    URL /auth/consumer/&lt;consumer-type&gt;/askSignin     Method GET   Permissions Auth: false   Code getAuthAskSigninHandler    GET /auth/driver    URL /auth/driver     Method GET   Permissions Auth: false   Code getAuthDriversHandler    GET /auth/me    URL /auth/me     Method GET   Permissions Auth: true   Scopes Action   Code getAuthMe    GET /auth/scope    URL /auth/scope     Method GET   Permissions Auth: false   Code getAuthScopesHandler    POST /auth/consumer/&lt;consumer-type&gt;/detach    URL /auth/consumer/&lt;consumer-type&gt;/detach     Method POST   Permissions Auth: true   Scopes AccessToken   Code postAuthDetachHandler    POST /auth/consumer/&lt;consumer-type&gt;/signin    URL /auth/consumer/&lt;consumer-type&gt;/signin     Method POST   Permissions Auth: false   Scopes AccessToken   Code postAuthSigninHandler    POST /auth/consumer/builtin/signin    URL /auth/consumer/builtin/signin     Method POST   Permissions Auth: false   Code postAuthBuiltinSigninHandler    POST /auth/consumer/local/askReset    URL /auth/consumer/local/askReset     Method POST   Permissions Auth: false   Code postAuthLocalAskResetHandler    POST /auth/consumer/local/reset    URL /auth/consumer/local/reset     Method POST   Permissions Auth: false   Code postAuthLocalResetHandler    POST /auth/consumer/local/signin    URL /auth/consumer/local/signin     Method POST   Permissions Auth: false   Code postAuthLocalSigninHandler    POST /auth/consumer/local/signup    URL /auth/consumer/local/signup     Method POST   Permissions Auth: false   Code postAuthLocalSignupHandler    POST /auth/consumer/local/verify    URL /auth/consumer/local/verify     Method POST   Permissions Auth: false   Code postAuthLocalVerifyHandler    POST /auth/consumer/signout    URL /auth/consumer/signout     Method POST   Permissions Auth: true   Code postAuthSignoutHandler    POST /auth/consumer/worker/signin    URL /auth/consumer/worker/signin     Method POST   Permissions Auth: false   Code postRegisterWorkerHandler    POST /auth/consumer/worker/signout    URL /auth/consumer/worker/signout     Method POST   Permissions Auth: true   Code postUnregisterWorkerHandler    ">
+    content="GET /auth/me    URL /auth/me     Method GET   Permissions Auth: true   Code getAuthMe    GET /auth/session/&lt;session-id&gt;    URL /auth/session/&lt;session-id&gt;     Method GET   Permissions Auth: true   Code getAuthSession    POST /auth/consumer/&lt;consumer-type&gt;/detach    URL /auth/consumer/&lt;consumer-type&gt;/detach     Method POST   Permissions Auth: true   Scopes AccessToken   Code postAuthDetachHandler    POST /auth/consumer/&lt;consumer-type&gt;/signin    URL /auth/consumer/&lt;consumer-type&gt;/signin     Method POST   Permissions Auth: true   Scopes AccessToken   Code authOptionalMiddleware    POST /auth/consumer/signout    URL /auth/consumer/signout     Method POST   Permissions Auth: true   Code postAuthSignoutHandler    POST /auth/consumer/worker/signout    URL /auth/consumer/worker/signout     Method POST   Permissions Auth: true   Code postUnregisterWorkerHandler    ">
 <meta name="twitter:description"
-    content=" GET /auth/consumer/&lt;consumer-type&gt;/askSignin    URL /auth/consumer/&lt;consumer-type&gt;/askSignin     Method GET   Permissions Auth: false   Code getAuthAskSigninHandler    GET /auth/driver    URL /auth/driver     Method GET   Permissions Auth: false   Code getAuthDriversHandler    GET /auth/me    URL /auth/me     Method GET   Permissions Auth: true   Scopes Action   Code getAuthMe    GET /auth/scope    URL /auth/scope     Method GET   Permissions Auth: false   Code getAuthScopesHandler    POST /auth/consumer/&lt;consumer-type&gt;/detach    URL /auth/consumer/&lt;consumer-type&gt;/detach     Method POST   Permissions Auth: true   Scopes AccessToken   Code postAuthDetachHandler    POST /auth/consumer/&lt;consumer-type&gt;/signin    URL /auth/consumer/&lt;consumer-type&gt;/signin     Method POST   Permissions Auth: false   Scopes AccessToken   Code postAuthSigninHandler    POST /auth/consumer/builtin/signin    URL /auth/consumer/builtin/signin     Method POST   Permissions Auth: false   Code postAuthBuiltinSigninHandler    POST /auth/consumer/local/askReset    URL /auth/consumer/local/askReset     Method POST   Permissions Auth: false   Code postAuthLocalAskResetHandler    POST /auth/consumer/local/reset    URL /auth/consumer/local/reset     Method POST   Permissions Auth: false   Code postAuthLocalResetHandler    POST /auth/consumer/local/signin    URL /auth/consumer/local/signin     Method POST   Permissions Auth: false   Code postAuthLocalSigninHandler    POST /auth/consumer/local/signup    URL /auth/consumer/local/signup     Method POST   Permissions Auth: false   Code postAuthLocalSignupHandler    POST /auth/consumer/local/verify    URL /auth/consumer/local/verify     Method POST   Permissions Auth: false   Code postAuthLocalVerifyHandler    POST /auth/consumer/signout    URL /auth/consumer/signout     Method POST   Permissions Auth: true   Code postAuthSignoutHandler    POST /auth/consumer/worker/signin    URL /auth/consumer/worker/signin     Method POST   Permissions Auth: false   Code postRegisterWorkerHandler    POST /auth/consumer/worker/signout    URL /auth/consumer/worker/signout     Method POST   Permissions Auth: true   Code postUnregisterWorkerHandler    ">
-<meta property="og:url" content="https://ovh.github.io/cds/development/rest/auth/">
+    content="GET /auth/me    URL /auth/me     Method GET   Permissions Auth: true   Code getAuthMe    GET /auth/session/&lt;session-id&gt;    URL /auth/session/&lt;session-id&gt;     Method GET   Permissions Auth: true   Code getAuthSession    POST /auth/consumer/&lt;consumer-type&gt;/detach    URL /auth/consumer/&lt;consumer-type&gt;/detach     Method POST   Permissions Auth: true   Scopes AccessToken   Code postAuthDetachHandler    POST /auth/consumer/&lt;consumer-type&gt;/signin    URL /auth/consumer/&lt;consumer-type&gt;/signin     Method POST   Permissions Auth: true   Scopes AccessToken   Code authOptionalMiddleware    POST /auth/consumer/signout    URL /auth/consumer/signout     Method POST   Permissions Auth: true   Code postAuthSignoutHandler    POST /auth/consumer/worker/signout    URL /auth/consumer/worker/signout     Method POST   Permissions Auth: true   Code postUnregisterWorkerHandler    ">
+<meta property="og:url" content="/development/rest/auth/">
 <meta property="og:title" content="auth">
 <meta name="twitter:title" content="auth">
 <meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
 <meta property="og:image" content="/images/cds-transparent.png">
-<script type="text/javascript" src="https://ovh.github.io/cds/js/anchor-4.1.1.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-3.2.1.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-ui-1.12.1.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/bootstrap-3.3.7.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/highlight.pack.js"></script>
+<script type="text/javascript" src="../../../js/anchor-4.1.1.min.js"></script>
+<script type="text/javascript" src="../../../js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="../../../js/jquery-ui-1.12.1.min.js"></script>
+<script type="text/javascript" src="../../../js/bootstrap-3.3.7.min.js"></script>
+<script type="text/javascript" src="../../../js/highlight.pack.js"></script>
 <script>
     hljs.initHighlightingOnLoad();
 
 </script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/script.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/lunr.min.js"></script>
-<script type="text/javascript">
-    var baseurl = "https:\/\/ovh.github.io\/cds";
+<script type="text/javascript" src="../../../js/script.js"></script>
+<script type="text/javascript" src="../../../js/lunr.min.js"></script>
+<a id="indexJSON" href="../../../index.json"></a>
 
-</script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/auto-complete.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/search.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/asciinema-player.js"></script>
+<script type="text/javascript" src="../../../js/auto-complete.js"></script>
+<script type="text/javascript" src="../../../js/search.js"></script>
+<script type="text/javascript" src="../../../js/asciinema-player.js"></script>
 
 	</head>
 	<body>
 		<section id="hero" class="light-text no-sub">
-			<a href="https://ovh.github.io/cds/" class="logo"></a>
+			<a href="../../../" class="logo"></a>
 				<i id="tocburger" class="fa fa-bars" onclick='$("#toc").toggle()'></i><div class="nav-buttons" data-auto-burger="primary">
 				<ul class="global-nav">
 					
 					
-					<li><a href="https://ovh.github.io/cds/docs/">Documentation</a></li>
+					<li><a href="../../../docs/">Documentation</a></li>
 					
-					<li><a href="https://ovh.github.io/cds/hosting/">Hosting your own instance</a></li>
+					<li><a href="../../../hosting/">Hosting your own instance</a></li>
 					
-					<li><a href="https://ovh.github.io/cds/development/" class="active">CDS Developer Manual</a></li>
+					<li><a href="../../../development/" class="active">CDS Developer Manual</a></li>
 					
-					<li><a href="https://ovh.github.io/cds/about/">About</a></li>
+					<li><a href="../../../about/">About</a></li>
 					
 					<li><i class="fa fa-search" onclick='$("#searchbox").toggle(); $("#search-query").focus().select()'></i></li>
 					<li>
@@ -106,13 +104,13 @@
 			
 			
 				
-				<li><a href="https://ovh.github.io/cds/development/rest/" class="menuSelected">REST API</a></li>
+				<li><a href="../../../development/rest/" class="menuSelected">REST API</a></li>
 			
 				
-				<li><a href="https://ovh.github.io/cds/development/sdk/">SDK</a></li>
+				<li><a href="../../../development/sdk/">SDK</a></li>
 			
 				
-				<li><a href="https://ovh.github.io/cds/development/contribute/">Contributing</a></li>
+				<li><a href="../../../development/contribute/">Contributing</a></li>
 			
 		</ul>
 		
@@ -171,6 +169,10 @@
                             
                         
                     
+                        
+                            
+                        
+                    
                 
             
         
@@ -199,7 +201,7 @@
         
         
         <i class="fa fa-bars" id="tocburger" onclick='$("#toc").toggle()'></i> 
-<a class="item" data-title="REST API" href="https://ovh.github.io/cds/development/rest/"></a>
+<a class="item" data-title="REST API" href="../../../development/rest/"></a>
 
 	
 	
@@ -207,163 +209,169 @@
 	
 		
 			
-<a class="item" data-title="action" href="https://ovh.github.io/cds/development/rest/action/"></a>
+<a class="item" data-title="action" href="../../../development/rest/action/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="actionBuiltin" href="https://ovh.github.io/cds/development/rest/actionbuiltin/"></a>
+<a class="item" data-title="actionBuiltin" href="../../../development/rest/actionbuiltin/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="admin" href="https://ovh.github.io/cds/development/rest/admin/"></a>
+<a class="item" data-title="admin" href="../../../development/rest/admin/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="auth" href="https://ovh.github.io/cds/development/rest/auth/"></a>
+<a class="item" data-title="auth" href="../../../development/rest/auth/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="bookmarks" href="https://ovh.github.io/cds/development/rest/bookmarks/"></a>
+<a class="item" data-title="bookmarks" href="../../../development/rest/bookmarks/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="broadcast" href="https://ovh.github.io/cds/development/rest/broadcast/"></a>
+<a class="item" data-title="broadcast" href="../../../development/rest/broadcast/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="config" href="https://ovh.github.io/cds/development/rest/config/"></a>
+<a class="item" data-title="config" href="../../../development/rest/config/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="download" href="https://ovh.github.io/cds/development/rest/download/"></a>
+<a class="item" data-title="download" href="../../../development/rest/download/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="group" href="https://ovh.github.io/cds/development/rest/group/"></a>
+<a class="item" data-title="feature" href="../../../development/rest/feature/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="hook" href="https://ovh.github.io/cds/development/rest/hook/"></a>
+<a class="item" data-title="group" href="../../../development/rest/group/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="import" href="https://ovh.github.io/cds/development/rest/import/"></a>
+<a class="item" data-title="hook" href="../../../development/rest/hook/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="integration" href="https://ovh.github.io/cds/development/rest/integration/"></a>
+<a class="item" data-title="import" href="../../../development/rest/import/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="mon" href="https://ovh.github.io/cds/development/rest/mon/"></a>
+<a class="item" data-title="integration" href="../../../development/rest/integration/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="notification" href="https://ovh.github.io/cds/development/rest/notification/"></a>
+<a class="item" data-title="notification" href="../../../development/rest/notification/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="parameter" href="https://ovh.github.io/cds/development/rest/parameter/"></a>
+<a class="item" data-title="parameter" href="../../../development/rest/parameter/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="project" href="https://ovh.github.io/cds/development/rest/project/"></a>
+<a class="item" data-title="project" href="../../../development/rest/project/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="queue" href="https://ovh.github.io/cds/development/rest/queue/"></a>
+<a class="item" data-title="queue" href="../../../development/rest/queue/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="repositories_manager" href="https://ovh.github.io/cds/development/rest/repositories_manager/"></a>
+<a class="item" data-title="repositories_manager" href="../../../development/rest/repositories_manager/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="requirement" href="https://ovh.github.io/cds/development/rest/requirement/"></a>
+<a class="item" data-title="requirement" href="../../../development/rest/requirement/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="services" href="https://ovh.github.io/cds/development/rest/services/"></a>
+<a class="item" data-title="services" href="../../../development/rest/services/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="suggest" href="https://ovh.github.io/cds/development/rest/suggest/"></a>
+<a class="item" data-title="suggest" href="../../../development/rest/suggest/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="template" href="https://ovh.github.io/cds/development/rest/template/"></a>
+<a class="item" data-title="template" href="../../../development/rest/template/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="ui" href="https://ovh.github.io/cds/development/rest/ui/"></a>
+<a class="item" data-title="ui" href="../../../development/rest/ui/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="user" href="https://ovh.github.io/cds/development/rest/user/"></a>
+<a class="item" data-title="user" href="../../../development/rest/user/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="variable" href="https://ovh.github.io/cds/development/rest/variable/"></a>
+<a class="item" data-title="variable" href="../../../development/rest/variable/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="worker" href="https://ovh.github.io/cds/development/rest/worker/"></a>
+<a class="item" data-title="worker" href="../../../development/rest/worker/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="workflow" href="https://ovh.github.io/cds/development/rest/workflow/"></a>
+<a class="item" data-title="workflow" href="../../../development/rest/workflow/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="ws" href="../../../development/rest/ws/"></a>
 
 		
 	
@@ -384,88 +392,17 @@
 
 
 <nav id="TableOfContents">
-<ul>
-<li>
-<ul>
-<li><a href="#get-auth-consumer-consumer-type-asksignin">GET <code>/auth/consumer/&lt;consumer-type&gt;/askSignin</code></a></li>
-<li><a href="#get-auth-driver">GET <code>/auth/driver</code></a></li>
-<li><a href="#get-auth-me">GET <code>/auth/me</code></a></li>
-<li><a href="#get-auth-scope">GET <code>/auth/scope</code></a></li>
-<li><a href="#post-auth-consumer-consumer-type-detach">POST <code>/auth/consumer/&lt;consumer-type&gt;/detach</code></a></li>
-<li><a href="#post-auth-consumer-consumer-type-signin">POST <code>/auth/consumer/&lt;consumer-type&gt;/signin</code></a></li>
-<li><a href="#post-auth-consumer-builtin-signin">POST <code>/auth/consumer/builtin/signin</code></a></li>
-<li><a href="#post-auth-consumer-local-askreset">POST <code>/auth/consumer/local/askReset</code></a></li>
-<li><a href="#post-auth-consumer-local-reset">POST <code>/auth/consumer/local/reset</code></a></li>
-<li><a href="#post-auth-consumer-local-signin">POST <code>/auth/consumer/local/signin</code></a></li>
-<li><a href="#post-auth-consumer-local-signup">POST <code>/auth/consumer/local/signup</code></a></li>
-<li><a href="#post-auth-consumer-local-verify">POST <code>/auth/consumer/local/verify</code></a></li>
-<li><a href="#post-auth-consumer-signout">POST <code>/auth/consumer/signout</code></a></li>
-<li><a href="#post-auth-consumer-worker-signin">POST <code>/auth/consumer/worker/signin</code></a></li>
-<li><a href="#post-auth-consumer-worker-signout">POST <code>/auth/consumer/worker/signout</code></a></li>
-</ul></li>
-</ul>
+  <ul>
+    <li><a href="#get-authme">GET <code>/auth/me</code></a></li>
+    <li><a href="#get-authsessionsession-id">GET <code>/auth/session/&lt;session-id&gt;</code></a></li>
+    <li><a href="#post-authconsumerconsumer-typedetach">POST <code>/auth/consumer/&lt;consumer-type&gt;/detach</code></a></li>
+    <li><a href="#post-authconsumerconsumer-typesignin">POST <code>/auth/consumer/&lt;consumer-type&gt;/signin</code></a></li>
+    <li><a href="#post-authconsumersignout">POST <code>/auth/consumer/signout</code></a></li>
+    <li><a href="#post-authconsumerworkersignout">POST <code>/auth/consumer/worker/signout</code></a></li>
+  </ul>
 </nav>
 
-
-
-<h2 id="get-auth-consumer-consumer-type-asksignin">GET <code>/auth/consumer/&lt;consumer-type&gt;/askSignin</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/auth/consumer/&lt;consumer-type&gt;/askSignin</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: false</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getAuthAskSigninHandler%22">getAuthAskSigninHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="get-auth-driver">GET <code>/auth/driver</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/auth/driver</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: false</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getAuthDriversHandler%22">getAuthDriversHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="get-auth-me">GET <code>/auth/me</code></h2>
-
+<h2 id="get-authme">GET <code>/auth/me</code></h2>
 <table>
 <thead>
 <tr>
@@ -473,60 +410,45 @@
 <th><strong><code>/auth/me</code></strong></th>
 </tr>
 </thead>
-
 <tbody>
 <tr>
 <td>Method</td>
 <td>GET</td>
 </tr>
-
 <tr>
 <td>Permissions</td>
 <td>Auth: true</td>
 </tr>
-
-<tr>
-<td>Scopes</td>
-<td>Action</td>
-</tr>
-
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getAuthMe%22">getAuthMe</a></td>
 </tr>
 </tbody>
 </table>
-
-<h2 id="get-auth-scope">GET <code>/auth/scope</code></h2>
-
+<h2 id="get-authsessionsession-id">GET <code>/auth/session/&lt;session-id&gt;</code></h2>
 <table>
 <thead>
 <tr>
 <th>URL</th>
-<th><strong><code>/auth/scope</code></strong></th>
+<th><strong><code>/auth/session/&lt;session-id&gt;</code></strong></th>
 </tr>
 </thead>
-
 <tbody>
 <tr>
 <td>Method</td>
 <td>GET</td>
 </tr>
-
 <tr>
 <td>Permissions</td>
-<td>Auth: false</td>
+<td>Auth: true</td>
 </tr>
-
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getAuthScopesHandler%22">getAuthScopesHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getAuthSession%22">getAuthSession</a></td>
 </tr>
 </tbody>
 </table>
-
-<h2 id="post-auth-consumer-consumer-type-detach">POST <code>/auth/consumer/&lt;consumer-type&gt;/detach</code></h2>
-
+<h2 id="post-authconsumerconsumer-typedetach">POST <code>/auth/consumer/&lt;consumer-type&gt;/detach</code></h2>
 <table>
 <thead>
 <tr>
@@ -534,32 +456,26 @@
 <th><strong><code>/auth/consumer/&lt;consumer-type&gt;/detach</code></strong></th>
 </tr>
 </thead>
-
 <tbody>
 <tr>
 <td>Method</td>
 <td>POST</td>
 </tr>
-
 <tr>
 <td>Permissions</td>
 <td>Auth: true</td>
 </tr>
-
 <tr>
 <td>Scopes</td>
 <td>AccessToken</td>
 </tr>
-
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postAuthDetachHandler%22">postAuthDetachHandler</a></td>
 </tr>
 </tbody>
 </table>
-
-<h2 id="post-auth-consumer-consumer-type-signin">POST <code>/auth/consumer/&lt;consumer-type&gt;/signin</code></h2>
-
+<h2 id="post-authconsumerconsumer-typesignin">POST <code>/auth/consumer/&lt;consumer-type&gt;/signin</code></h2>
 <table>
 <thead>
 <tr>
@@ -567,200 +483,26 @@
 <th><strong><code>/auth/consumer/&lt;consumer-type&gt;/signin</code></strong></th>
 </tr>
 </thead>
-
 <tbody>
 <tr>
 <td>Method</td>
 <td>POST</td>
 </tr>
-
 <tr>
 <td>Permissions</td>
-<td>Auth: false</td>
+<td>Auth: true</td>
 </tr>
-
 <tr>
 <td>Scopes</td>
 <td>AccessToken</td>
 </tr>
-
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postAuthSigninHandler%22">postAuthSigninHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+authOptionalMiddleware%22">authOptionalMiddleware</a></td>
 </tr>
 </tbody>
 </table>
-
-<h2 id="post-auth-consumer-builtin-signin">POST <code>/auth/consumer/builtin/signin</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/auth/consumer/builtin/signin</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>POST</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: false</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postAuthBuiltinSigninHandler%22">postAuthBuiltinSigninHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="post-auth-consumer-local-askreset">POST <code>/auth/consumer/local/askReset</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/auth/consumer/local/askReset</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>POST</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: false</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postAuthLocalAskResetHandler%22">postAuthLocalAskResetHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="post-auth-consumer-local-reset">POST <code>/auth/consumer/local/reset</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/auth/consumer/local/reset</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>POST</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: false</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postAuthLocalResetHandler%22">postAuthLocalResetHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="post-auth-consumer-local-signin">POST <code>/auth/consumer/local/signin</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/auth/consumer/local/signin</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>POST</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: false</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postAuthLocalSigninHandler%22">postAuthLocalSigninHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="post-auth-consumer-local-signup">POST <code>/auth/consumer/local/signup</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/auth/consumer/local/signup</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>POST</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: false</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postAuthLocalSignupHandler%22">postAuthLocalSignupHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="post-auth-consumer-local-verify">POST <code>/auth/consumer/local/verify</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/auth/consumer/local/verify</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>POST</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: false</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postAuthLocalVerifyHandler%22">postAuthLocalVerifyHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="post-auth-consumer-signout">POST <code>/auth/consumer/signout</code></h2>
-
+<h2 id="post-authconsumersignout">POST <code>/auth/consumer/signout</code></h2>
 <table>
 <thead>
 <tr>
@@ -768,55 +510,22 @@
 <th><strong><code>/auth/consumer/signout</code></strong></th>
 </tr>
 </thead>
-
 <tbody>
 <tr>
 <td>Method</td>
 <td>POST</td>
 </tr>
-
 <tr>
 <td>Permissions</td>
 <td>Auth: true</td>
 </tr>
-
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postAuthSignoutHandler%22">postAuthSignoutHandler</a></td>
 </tr>
 </tbody>
 </table>
-
-<h2 id="post-auth-consumer-worker-signin">POST <code>/auth/consumer/worker/signin</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/auth/consumer/worker/signin</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>POST</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: false</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postRegisterWorkerHandler%22">postRegisterWorkerHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="post-auth-consumer-worker-signout">POST <code>/auth/consumer/worker/signout</code></h2>
-
+<h2 id="post-authconsumerworkersignout">POST <code>/auth/consumer/worker/signout</code></h2>
 <table>
 <thead>
 <tr>
@@ -824,18 +533,15 @@
 <th><strong><code>/auth/consumer/worker/signout</code></strong></th>
 </tr>
 </thead>
-
 <tbody>
 <tr>
 <td>Method</td>
 <td>POST</td>
 </tr>
-
 <tr>
 <td>Permissions</td>
 <td>Auth: true</td>
 </tr>
-
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postUnregisterWorkerHandler%22">postUnregisterWorkerHandler</a></td>

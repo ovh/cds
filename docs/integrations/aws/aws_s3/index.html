@@ -4,17 +4,17 @@
 	<meta charset="utf-8">
 <title>AWS S3 - CDS - Continuous Delivery Service</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="shortcut icon" type="image/png" href="https://ovh.github.io/cds/images/favicon.png">
+<link rel="shortcut icon" type="image/png" href="../../../../images/favicon.png">
 
 
 
 
-<link rel="stylesheet" href="https://ovh.github.io/cds/sass/styles.css" integrity="" media="screen">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/callouts.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/auto-complete.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/fontawesome.min.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/asciinema-player.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
+<link rel="stylesheet" href="../../../../sass/styles.css" integrity="" media="screen">
+<link rel="stylesheet" href="../../../../css/callouts.css">
+<link rel="stylesheet" href="../../../../css/auto-complete.css">
+<link rel="stylesheet" href="../../../../css/fontawesome.min.css">
+<link rel="stylesheet" href="../../../../css/asciinema-player.css">
+<link rel="stylesheet" href="../../../../css/solarized-light.css">
 
 <meta name="description"
     content="The AWS S3 Integration is a Self-Service integration that can be configured on a CDS Project.
@@ -31,45 +31,43 @@ Configure with WebUI You can add a AWS S3 on your CDS Project.">
 With this integration, you can use a dedicated AWS S3 Bucket Storage on :
  action Artifact Upload action Artifact Download worker cache command  Notice: by default, the storage is configured in CDS Configuration. This integration allows user to use their own AWS S3 Storage and not use the shared storage.
 Configure with WebUI You can add a AWS S3 on your CDS Project.">
-<meta property="og:url" content="https://ovh.github.io/cds/docs/integrations/aws/aws_s3/">
+<meta property="og:url" content="/docs/integrations/aws/aws_s3/">
 <meta property="og:title" content="AWS S3">
 <meta name="twitter:title" content="AWS S3">
 <meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
 <meta property="og:image" content="/images/cds-transparent.png">
-<script type="text/javascript" src="https://ovh.github.io/cds/js/anchor-4.1.1.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-3.2.1.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-ui-1.12.1.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/bootstrap-3.3.7.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/highlight.pack.js"></script>
+<script type="text/javascript" src="../../../../js/anchor-4.1.1.min.js"></script>
+<script type="text/javascript" src="../../../../js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="../../../../js/jquery-ui-1.12.1.min.js"></script>
+<script type="text/javascript" src="../../../../js/bootstrap-3.3.7.min.js"></script>
+<script type="text/javascript" src="../../../../js/highlight.pack.js"></script>
 <script>
     hljs.initHighlightingOnLoad();
 
 </script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/script.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/lunr.min.js"></script>
-<script type="text/javascript">
-    var baseurl = "https:\/\/ovh.github.io\/cds";
+<script type="text/javascript" src="../../../../js/script.js"></script>
+<script type="text/javascript" src="../../../../js/lunr.min.js"></script>
+<a id="indexJSON" href="../../../../index.json"></a>
 
-</script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/auto-complete.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/search.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/asciinema-player.js"></script>
+<script type="text/javascript" src="../../../../js/auto-complete.js"></script>
+<script type="text/javascript" src="../../../../js/search.js"></script>
+<script type="text/javascript" src="../../../../js/asciinema-player.js"></script>
 
 	</head>
 	<body>
 		<section id="hero" class="light-text no-sub">
-			<a href="https://ovh.github.io/cds/" class="logo"></a>
+			<a href="../../../../" class="logo"></a>
 				<i id="tocburger" class="fa fa-bars" onclick='$("#toc").toggle()'></i><div class="nav-buttons" data-auto-burger="primary">
 				<ul class="global-nav">
 					
 					
-					<li><a href="https://ovh.github.io/cds/docs/" class="active">Documentation</a></li>
+					<li><a href="../../../../docs/" class="active">Documentation</a></li>
 					
-					<li><a href="https://ovh.github.io/cds/hosting/">Hosting your own instance</a></li>
+					<li><a href="../../../../hosting/">Hosting your own instance</a></li>
 					
-					<li><a href="https://ovh.github.io/cds/development/">CDS Developer Manual</a></li>
+					<li><a href="../../../../development/">CDS Developer Manual</a></li>
 					
-					<li><a href="https://ovh.github.io/cds/about/">About</a></li>
+					<li><a href="../../../../about/">About</a></li>
 					
 					<li><i class="fa fa-search" onclick='$("#searchbox").toggle(); $("#search-query").focus().select()'></i></li>
 					<li>
@@ -99,23 +97,23 @@ Configure with WebUI You can add a AWS S3 on your CDS Project.">
 			
 			
 			
-			<li><a href="https://ovh.github.io/cds/docs/">Home</a></li>
+			<li><a href="../../../../docs/">Home</a></li>
 			
 			
 				
-				<li><a href="https://ovh.github.io/cds/docs/concepts/">Concepts</a></li>
+				<li><a href="../../../../docs/concepts/">Concepts</a></li>
 			
 				
-				<li><a href="https://ovh.github.io/cds/docs/actions/">Actions</a></li>
+				<li><a href="../../../../docs/actions/">Actions</a></li>
 			
 				
-				<li><a href="https://ovh.github.io/cds/docs/components/">Components</a></li>
+				<li><a href="../../../../docs/components/">Components</a></li>
 			
 				
-				<li><a href="https://ovh.github.io/cds/docs/integrations/" class="menuSelected">Integrations</a></li>
+				<li><a href="../../../../docs/integrations/" class="menuSelected">Integrations</a></li>
 			
 				
-				<li><a href="https://ovh.github.io/cds/docs/tutorials/">Tutorials</a></li>
+				<li><a href="../../../../docs/tutorials/">Tutorials</a></li>
 			
 		</ul>
 		
@@ -187,6 +185,8 @@ Configure with WebUI You can add a AWS S3 on your CDS Project.">
                     
                         
                     
+                        
+                    
                 
             
         
@@ -210,7 +210,7 @@ Configure with WebUI You can add a AWS S3 on your CDS Project.">
         
         
         <i class="fa fa-bars" id="tocburger" onclick='$("#toc").toggle()'></i> 
-<a class="item" data-title="Integrations" href="https://ovh.github.io/cds/docs/integrations/"></a>
+<a class="item" data-title="Integrations" href="../../../../docs/integrations/"></a>
 
 	
 	
@@ -228,7 +228,7 @@ Configure with WebUI You can add a AWS S3 on your CDS Project.">
 	
 		
 			
-<a class="item" data-title="AWS S3" href="https://ovh.github.io/cds/docs/integrations/aws/aws_s3/"></a>
+<a class="item" data-title="AWS S3" href="../../../../docs/integrations/aws/aws_s3/"></a>
 
 		
 	
@@ -240,25 +240,25 @@ Configure with WebUI You can add a AWS S3 on your CDS Project.">
 	
 		
 			
-<a class="item" data-title="Bitbucket Cloud" href="https://ovh.github.io/cds/docs/integrations/bitbucketcloud/"></a>
+<a class="item" data-title="Bitbucket Cloud" href="../../../../docs/integrations/bitbucketcloud/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Bitbucket Server" href="https://ovh.github.io/cds/docs/integrations/bitbucket/"></a>
+<a class="item" data-title="Bitbucket Server" href="../../../../docs/integrations/bitbucket/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Docker Swarm" href="https://ovh.github.io/cds/docs/integrations/swarm/"></a>
+<a class="item" data-title="Docker Swarm" href="../../../../docs/integrations/swarm/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Gerrit Repository Manager" href="https://ovh.github.io/cds/docs/integrations/gerrit/"></a>
+<a class="item" data-title="Gerrit Repository Manager" href="../../../../docs/integrations/gerrit/"></a>
 
 		
 	
@@ -274,13 +274,13 @@ Configure with WebUI You can add a AWS S3 on your CDS Project.">
 	
 		
 			
-<a class="item" data-title="GitHub Authentication" href="https://ovh.github.io/cds/docs/integrations/github/github_authentication/"></a>
+<a class="item" data-title="GitHub Authentication" href="../../../../docs/integrations/github/github_authentication/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="GitHub Repository Manager" href="https://ovh.github.io/cds/docs/integrations/github/github_repository_manager/"></a>
+<a class="item" data-title="GitHub Repository Manager" href="../../../../docs/integrations/github/github_repository_manager/"></a>
 
 		
 	
@@ -302,13 +302,13 @@ Configure with WebUI You can add a AWS S3 on your CDS Project.">
 	
 		
 			
-<a class="item" data-title="GitLab Authentication" href="https://ovh.github.io/cds/docs/integrations/gitlab/gitlab_authentication/"></a>
+<a class="item" data-title="GitLab Authentication" href="../../../../docs/integrations/gitlab/gitlab_authentication/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="GitLab Repository Manager" href="https://ovh.github.io/cds/docs/integrations/gitlab/gitlab_repository_manager/"></a>
+<a class="item" data-title="GitLab Repository Manager" href="../../../../docs/integrations/gitlab/gitlab_repository_manager/"></a>
 
 		
 	
@@ -330,13 +330,13 @@ Configure with WebUI You can add a AWS S3 on your CDS Project.">
 	
 		
 			
-<a class="item" data-title="Kafka CDS Events" href="https://ovh.github.io/cds/docs/integrations/kafka/kafka_events/"></a>
+<a class="item" data-title="Kafka CDS Events" href="../../../../docs/integrations/kafka/kafka_events/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Kafka Hooks" href="https://ovh.github.io/cds/docs/integrations/kafka/kafka_hooks/"></a>
+<a class="item" data-title="Kafka Hooks" href="../../../../docs/integrations/kafka/kafka_hooks/"></a>
 
 		
 	
@@ -358,13 +358,13 @@ Configure with WebUI You can add a AWS S3 on your CDS Project.">
 	
 		
 			
-<a class="item" data-title="Kubernetes Compute" href="https://ovh.github.io/cds/docs/integrations/kubernetes/kubernetes_compute/"></a>
+<a class="item" data-title="Kubernetes Compute" href="../../../../docs/integrations/kubernetes/kubernetes_compute/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Kubernetes Deployment" href="https://ovh.github.io/cds/docs/integrations/kubernetes/kubernetes_deployment/"></a>
+<a class="item" data-title="Kubernetes Deployment" href="../../../../docs/integrations/kubernetes/kubernetes_deployment/"></a>
 
 		
 	
@@ -376,13 +376,19 @@ Configure with WebUI You can add a AWS S3 on your CDS Project.">
 	
 		
 			
-<a class="item" data-title="LDAP Authentication" href="https://ovh.github.io/cds/docs/integrations/ldap/"></a>
+<a class="item" data-title="LDAP Authentication" href="../../../../docs/integrations/ldap/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Mesos/Marathon" href="https://ovh.github.io/cds/docs/integrations/marathon/"></a>
+<a class="item" data-title="Mesos/Marathon" href="../../../../docs/integrations/marathon/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="OpenID-Connect Authentication" href="../../../../docs/integrations/openid-connect/"></a>
 
 		
 	
@@ -398,13 +404,13 @@ Configure with WebUI You can add a AWS S3 on your CDS Project.">
 	
 		
 			
-<a class="item" data-title="OpenStack Swift" href="https://ovh.github.io/cds/docs/integrations/openstack/openstack_swift/"></a>
+<a class="item" data-title="Openstack Compute" href="../../../../docs/integrations/openstack/openstack_compute/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Openstack Compute" href="https://ovh.github.io/cds/docs/integrations/openstack/openstack_compute/"></a>
+<a class="item" data-title="OpenStack Swift" href="../../../../docs/integrations/openstack/openstack_swift/"></a>
 
 		
 	
@@ -416,13 +422,13 @@ Configure with WebUI You can add a AWS S3 on your CDS Project.">
 	
 		
 			
-<a class="item" data-title="RabbitMQ" href="https://ovh.github.io/cds/docs/integrations/rabbitmq/"></a>
+<a class="item" data-title="RabbitMQ" href="../../../../docs/integrations/rabbitmq/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="vSphere" href="https://ovh.github.io/cds/docs/integrations/vsphere/"></a>
+<a class="item" data-title="vSphere" href="../../../../docs/integrations/vsphere/"></a>
 
 		
 	
@@ -443,155 +449,120 @@ Configure with WebUI You can add a AWS S3 on your CDS Project.">
 
 
 <nav id="TableOfContents">
-<ul>
-<li>
-<ul>
-<li><a href="#configure-with-webui">Configure with WebUI</a></li>
-<li><a href="#configure-with-cdsctl">Configure with cdsctl</a>
-<ul>
-<li><a href="#import-a-aws-s3-on-your-cds-project">Import a AWS S3 on your CDS Project</a></li>
-<li><a href="#create-a-public-aws-s3-for-whole-cds-projects">Create a Public AWS S3 for whole CDS Projects</a></li>
-<li><a href="#using-min-io-as-an-alternative">Using min.io as an alternative</a></li>
-</ul></li>
-</ul></li>
-</ul>
+  <ul>
+    <li><a href="#configure-with-webui">Configure with WebUI</a></li>
+    <li><a href="#configure-with-cdsctl">Configure with cdsctl</a>
+      <ul>
+        <li><a href="#import-a-aws-s3-on-your-cds-project">Import a AWS S3 on your CDS Project</a></li>
+        <li><a href="#create-a-public-aws-s3-for-whole-cds-projects">Create a Public AWS S3 for whole CDS Projects</a></li>
+        <li><a href="#using-minio-as-an-alternative">Using min.io as an alternative</a></li>
+      </ul>
+    </li>
+  </ul>
 </nav>
 
-
-
 <p>The AWS S3 Integration is a Self-Service integration that can be configured on a CDS Project.</p>
-
 <p>With this integration, you can use a dedicated AWS S3 Bucket Storage on :</p>
-
 <ul>
-<li>action <a href="https://ovh.github.io/cds/docs/actions/builtin-artifact-upload/">Artifact Upload</a></li>
-<li>action <a href="https://ovh.github.io/cds/docs/actions/builtin-artifact-download/">Artifact Download</a></li>
-<li><a href="https://ovh.github.io/cds/docs/components/worker/cache/">worker cache command</a></li>
+<li>action <a href="../../../../docs/actions/builtin-artifact-upload/">Artifact Upload</a></li>
+<li>action <a href="../../../../docs/actions/builtin-artifact-download/">Artifact Download</a></li>
+<li><a href="../../../../docs/components/worker/cache/">worker cache command</a></li>
 </ul>
-
 <p>Notice: by default, the storage is configured in CDS Configuration. This integration
 allows user to use their own AWS S3 Storage and not use the shared storage.</p>
-
 <h2 id="configure-with-webui">Configure with WebUI</h2>
-
 <p>You can add a AWS S3 on your CDS Project.</p>
-
-<p><img src="../images/aws-s3-integration-webui.png" alt="Integration" /></p>
-
+<p><img src="../images/aws-s3-integration-webui.png" alt="Integration"></p>
 <h2 id="configure-with-cdsctl">Configure with cdsctl</h2>
-
 <h3 id="import-a-aws-s3-on-your-cds-project">Import a AWS S3 on your CDS Project</h3>
-
 <p>Create a file project-configuration.yml:</p>
-
-<pre><code class="language-yml">name: MyAWS
-model:
-  name: AWS
-config:
-  region:
-    value: your-region
-    type: string
-  bucket_name:
-    value: your-bucket-name
-    type: string
-  prefix:
-    value: cds-prefix-
-    type: string
-  access_key_id:
-    value: your-access-key
-    type: string
-  secret_access_key:
-    value: 'your-secret-access-key'
-    type: password
-</code></pre>
-
-<p>Import the integration on your CDS Project with:</p>
-
-<pre><code class="language-bash">cdsctl project integration import PROJECT_KEY project-configuration.yml
-</code></pre>
-
-<h3 id="create-a-public-aws-s3-for-whole-cds-projects">Create a Public AWS S3 for whole CDS Projects</h3>
-
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yml" data-lang="yml"><span style="color:#f92672">name</span>: <span style="color:#ae81ff">MyAWS</span>
+<span style="color:#f92672">model</span>:
+  <span style="color:#f92672">name</span>: <span style="color:#ae81ff">AWS</span>
+<span style="color:#f92672">config</span>:
+  <span style="color:#f92672">region</span>:
+    <span style="color:#f92672">value</span>: <span style="color:#ae81ff">your-region</span>
+    <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
+  <span style="color:#f92672">bucket_name</span>:
+    <span style="color:#f92672">value</span>: <span style="color:#ae81ff">your-bucket-name</span>
+    <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
+  <span style="color:#f92672">prefix</span>:
+    <span style="color:#f92672">value</span>: <span style="color:#ae81ff">cds-prefix-</span>
+    <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
+  <span style="color:#f92672">access_key_id</span>:
+    <span style="color:#f92672">value</span>: <span style="color:#ae81ff">your-access-key</span>
+    <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
+  <span style="color:#f92672">secret_access_key</span>:
+    <span style="color:#f92672">value</span>: <span style="color:#e6db74">&#39;your-secret-access-key&#39;</span>
+    <span style="color:#f92672">type</span>: <span style="color:#ae81ff">password</span>
+</code></pre></div><p>Import the integration on your CDS Project with:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">cdsctl project integration import PROJECT_KEY project-configuration.yml
+</code></pre></div><h3 id="create-a-public-aws-s3-for-whole-cds-projects">Create a Public AWS S3 for whole CDS Projects</h3>
 <p>You can also add a AWS S3 with cdsctl. As a CDS Administrator,
 this allows you to propose a Public AWS S3, available on all CDS Projects.</p>
-
 <p>Create a file public-configuration.yml:</p>
-
-<pre><code class="language-yml">name: AWS
-storage: true
-public: true
-public_configurations:
-  your-public-aws-s3-integration:
-    &quot;region&quot;:
-      value: your-region
-      type: string
-    &quot;bucket_name&quot;:
-      value: your-bucket-name
-      type: string
-    &quot;prefix&quot;:
-      value: cds-prefix-
-      type: string
-    &quot;access_key_id&quot;:
-      value: your-access-key
-      type: string
-    &quot;secret_access_key&quot;:
-      value: 'your-secret-access-key'
-      type: password
-</code></pre>
-
-<p>Import the integration with :</p>
-
-<pre><code class="language-bash">cdsctl admin integration-model import public-configuration.yml
-</code></pre>
-
-<h3 id="using-min-io-as-an-alternative">Using min.io as an alternative</h3>
-
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yml" data-lang="yml"><span style="color:#f92672">name</span>: <span style="color:#ae81ff">AWS</span>
+<span style="color:#f92672">storage</span>: <span style="color:#66d9ef">true</span>
+<span style="color:#f92672">public</span>: <span style="color:#66d9ef">true</span>
+<span style="color:#f92672">public_configurations</span>:
+  <span style="color:#f92672">your-public-aws-s3-integration</span>:
+    <span style="color:#e6db74">&#34;region&#34;</span>:
+      <span style="color:#f92672">value</span>: <span style="color:#ae81ff">your-region</span>
+      <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
+    <span style="color:#e6db74">&#34;bucket_name&#34;</span>:
+      <span style="color:#f92672">value</span>: <span style="color:#ae81ff">your-bucket-name</span>
+      <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
+    <span style="color:#e6db74">&#34;prefix&#34;</span>:
+      <span style="color:#f92672">value</span>: <span style="color:#ae81ff">cds-prefix-</span>
+      <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
+    <span style="color:#e6db74">&#34;access_key_id&#34;</span>:
+      <span style="color:#f92672">value</span>: <span style="color:#ae81ff">your-access-key</span>
+      <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
+    <span style="color:#e6db74">&#34;secret_access_key&#34;</span>:
+      <span style="color:#f92672">value</span>: <span style="color:#e6db74">&#39;your-secret-access-key&#39;</span>
+      <span style="color:#f92672">type</span>: <span style="color:#ae81ff">password</span>
+</code></pre></div><p>Import the integration with :</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">cdsctl admin integration-model import public-configuration.yml
+</code></pre></div><h3 id="using-minio-as-an-alternative">Using min.io as an alternative</h3>
 <p><a href="https://min.io">Minio</a> is a Open Source, Enterprise-Grade, Amazon S3 Compatible Object Storage.</p>
-
-<p>According to <a href="https://docs.min.io/docs/how-to-use-aws-sdk-for-go-with-minio-server.html">https://docs.min.io/docs/how-to-use-aws-sdk-for-go-with-minio-server.html</a>, you can define <code>endpoint</code>, <code>disable_ssl</code>, <code>force_path_style</code> to link CDS to a Minio server.</p>
-
+<p>According to <a href="https://docs.min.io/docs/how-to-use-aws-sdk-for-go-with-minio-server.html,">https://docs.min.io/docs/how-to-use-aws-sdk-for-go-with-minio-server.html,</a> you can define <code>endpoint</code>, <code>disable_ssl</code>, <code>force_path_style</code> to link CDS to a Minio server.</p>
 <p>For example, you can run a minio local server with the following docker command.</p>
-
-<pre><code class="language-bash">docker run -p 9000:9000 --name minio1 \
-  -e &quot;MINIO_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE&quot; \
-  -e &quot;MINIO_SECRET_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY&quot; \
-  -v /mnt/data:/data \
-  minio/minio server /data
-</code></pre>
-
-<p>Then you can import the following content to you project with the <code>cdsctl project integration import</code> command.</p>
-
-<pre><code class="language-yaml">name: local min.io
-model:
-  name: AWS
-storage: true
-config:
-  region:
-    value: us-east-1
-    type: string
-  bucket_name:
-    value: cds-storage
-    type: string
-  prefix:
-    value: cds-prefix-
-    type: string
-  access_key_id:
-    value: 'AKIAIOSFODNN7EXAMPLE'
-    type: string
-  secret_access_key:
-    value: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'
-    type: password
-  endpoint:
-    value: 'http://localhost:9000'
-    type: string
-  disable_ssl:
-    value: 'true'
-    type: boolean
-  force_path_style:
-    value: 'true'
-    type: boolean
-</code></pre>
-
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">docker run -p 9000:9000 --name minio1 <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>  -e <span style="color:#e6db74">&#34;MINIO_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE&#34;</span> <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>  -e <span style="color:#e6db74">&#34;MINIO_SECRET_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY&#34;</span> <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>  -v /mnt/data:/data <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>  minio/minio server /data
+</code></pre></div><p>Then you can import the following content to you project with the <code>cdsctl project integration import</code> command.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#f92672">name</span>: <span style="color:#ae81ff">local min.io</span>
+<span style="color:#f92672">model</span>:
+  <span style="color:#f92672">name</span>: <span style="color:#ae81ff">AWS</span>
+<span style="color:#f92672">storage</span>: <span style="color:#66d9ef">true</span>
+<span style="color:#f92672">config</span>:
+  <span style="color:#f92672">region</span>:
+    <span style="color:#f92672">value</span>: <span style="color:#ae81ff">us-east-1</span>
+    <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
+  <span style="color:#f92672">bucket_name</span>:
+    <span style="color:#f92672">value</span>: <span style="color:#ae81ff">cds-storage</span>
+    <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
+  <span style="color:#f92672">prefix</span>:
+    <span style="color:#f92672">value</span>: <span style="color:#ae81ff">cds-prefix-</span>
+    <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
+  <span style="color:#f92672">access_key_id</span>:
+    <span style="color:#f92672">value</span>: <span style="color:#e6db74">&#39;AKIAIOSFODNN7EXAMPLE&#39;</span>
+    <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
+  <span style="color:#f92672">secret_access_key</span>:
+    <span style="color:#f92672">value</span>: <span style="color:#e6db74">&#39;wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY&#39;</span>
+    <span style="color:#f92672">type</span>: <span style="color:#ae81ff">password</span>
+  <span style="color:#f92672">endpoint</span>:
+    <span style="color:#f92672">value</span>: <span style="color:#e6db74">&#39;http://localhost:9000&#39;</span>
+    <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
+  <span style="color:#f92672">disable_ssl</span>:
+    <span style="color:#f92672">value</span>: <span style="color:#e6db74">&#39;true&#39;</span>
+    <span style="color:#f92672">type</span>: <span style="color:#ae81ff">boolean</span>
+  <span style="color:#f92672">force_path_style</span>:
+    <span style="color:#f92672">value</span>: <span style="color:#e6db74">&#39;true&#39;</span>
+    <span style="color:#f92672">type</span>: <span style="color:#ae81ff">boolean</span>
+</code></pre></div>
 
 
 

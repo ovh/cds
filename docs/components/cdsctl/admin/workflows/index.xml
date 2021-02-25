@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>workflows on CDS - Continuous Delivery Service</title>
+    <link>/docs/components/cdsctl/admin/workflows/</link>
+    <description>Recent content in workflows on CDS - Continuous Delivery Service</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language><atom:link href="/docs/components/cdsctl/admin/workflows/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>maxrun</title>
+      <link>/docs/components/cdsctl/admin/workflows/maxrun/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/admin/workflows/maxrun/</guid>
+      <description>cdsctl admin workflows maxrun Update the maximum number of workflow executions
+Synopsis Update the maximum number of workflow executions
+cdsctl admin workflows maxrun PROJECTKEY WORKFLOWNAME MAXRUNS Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -n, --no-interactive Set to disable interaction with ctl --verbose Enable verbose output SEE ALSO  cdsctl admin workflows	- Manage CDS workflows  </description>
+    </item>
+    
+  </channel>
+</rss>

@@ -4,72 +4,70 @@
 	<meta charset="utf-8">
 <title>SDK Rust - CDS - Continuous Delivery Service</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="shortcut icon" type="image/png" href="https://ovh.github.io/cds/images/favicon.png">
+<link rel="shortcut icon" type="image/png" href="../../../images/favicon.png">
 
 
 
 
-<link rel="stylesheet" href="https://ovh.github.io/cds/sass/styles.css" integrity="" media="screen">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/callouts.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/auto-complete.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/fontawesome.min.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/asciinema-player.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
+<link rel="stylesheet" href="../../../sass/styles.css" integrity="" media="screen">
+<link rel="stylesheet" href="../../../css/callouts.css">
+<link rel="stylesheet" href="../../../css/auto-complete.css">
+<link rel="stylesheet" href="../../../css/fontawesome.min.css">
+<link rel="stylesheet" href="../../../css/asciinema-player.css">
+<link rel="stylesheet" href="../../../css/solarized-light.css">
 
 <meta name="description"
     content="Prerequisites Rust CDS SDK uses async/await from Rust stable version so you need a compatible version with async/await.
 How to use it? You have to initialize a cdsclient:
-use std::env; use sdk_cds::Client; fn main() { let cds_host = &quot;http://localhost:8081&quot;; let cds_token = &quot;mytoken&quot;; let client = Client::new(cds_host, cds_token); }  and then, you can use it:
+use std::env; use sdk_cds::Client; fn main() { let cds_host = &#34;http://localhost:8081&#34;; let cds_token = &#34;mytoken&#34;; let client = Client::new(cds_host, cds_token); } and then, you can use it:
 // list projects let projects = client.projects().await.unwrap(); // list applications of project with key TEST let applications = client.">
 <meta property="og:description"
     content="Prerequisites Rust CDS SDK uses async/await from Rust stable version so you need a compatible version with async/await.
 How to use it? You have to initialize a cdsclient:
-use std::env; use sdk_cds::Client; fn main() { let cds_host = &quot;http://localhost:8081&quot;; let cds_token = &quot;mytoken&quot;; let client = Client::new(cds_host, cds_token); }  and then, you can use it:
+use std::env; use sdk_cds::Client; fn main() { let cds_host = &#34;http://localhost:8081&#34;; let cds_token = &#34;mytoken&#34;; let client = Client::new(cds_host, cds_token); } and then, you can use it:
 // list projects let projects = client.projects().await.unwrap(); // list applications of project with key TEST let applications = client.">
 <meta name="twitter:description"
     content="Prerequisites Rust CDS SDK uses async/await from Rust stable version so you need a compatible version with async/await.
 How to use it? You have to initialize a cdsclient:
-use std::env; use sdk_cds::Client; fn main() { let cds_host = &quot;http://localhost:8081&quot;; let cds_token = &quot;mytoken&quot;; let client = Client::new(cds_host, cds_token); }  and then, you can use it:
+use std::env; use sdk_cds::Client; fn main() { let cds_host = &#34;http://localhost:8081&#34;; let cds_token = &#34;mytoken&#34;; let client = Client::new(cds_host, cds_token); } and then, you can use it:
 // list projects let projects = client.projects().await.unwrap(); // list applications of project with key TEST let applications = client.">
-<meta property="og:url" content="https://ovh.github.io/cds/development/sdk/rust/">
+<meta property="og:url" content="/development/sdk/rust/">
 <meta property="og:title" content="SDK Rust">
 <meta name="twitter:title" content="SDK Rust">
 <meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
 <meta property="og:image" content="/images/cds-transparent.png">
-<script type="text/javascript" src="https://ovh.github.io/cds/js/anchor-4.1.1.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-3.2.1.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-ui-1.12.1.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/bootstrap-3.3.7.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/highlight.pack.js"></script>
+<script type="text/javascript" src="../../../js/anchor-4.1.1.min.js"></script>
+<script type="text/javascript" src="../../../js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="../../../js/jquery-ui-1.12.1.min.js"></script>
+<script type="text/javascript" src="../../../js/bootstrap-3.3.7.min.js"></script>
+<script type="text/javascript" src="../../../js/highlight.pack.js"></script>
 <script>
     hljs.initHighlightingOnLoad();
 
 </script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/script.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/lunr.min.js"></script>
-<script type="text/javascript">
-    var baseurl = "https:\/\/ovh.github.io\/cds";
+<script type="text/javascript" src="../../../js/script.js"></script>
+<script type="text/javascript" src="../../../js/lunr.min.js"></script>
+<a id="indexJSON" href="../../../index.json"></a>
 
-</script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/auto-complete.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/search.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/asciinema-player.js"></script>
+<script type="text/javascript" src="../../../js/auto-complete.js"></script>
+<script type="text/javascript" src="../../../js/search.js"></script>
+<script type="text/javascript" src="../../../js/asciinema-player.js"></script>
 
 	</head>
 	<body>
 		<section id="hero" class="light-text no-sub">
-			<a href="https://ovh.github.io/cds/" class="logo"></a>
+			<a href="../../../" class="logo"></a>
 				<i id="tocburger" class="fa fa-bars" onclick='$("#toc").toggle()'></i><div class="nav-buttons" data-auto-burger="primary">
 				<ul class="global-nav">
 					
 					
-					<li><a href="https://ovh.github.io/cds/docs/">Documentation</a></li>
+					<li><a href="../../../docs/">Documentation</a></li>
 					
-					<li><a href="https://ovh.github.io/cds/hosting/">Hosting your own instance</a></li>
+					<li><a href="../../../hosting/">Hosting your own instance</a></li>
 					
-					<li><a href="https://ovh.github.io/cds/development/" class="active">CDS Developer Manual</a></li>
+					<li><a href="../../../development/" class="active">CDS Developer Manual</a></li>
 					
-					<li><a href="https://ovh.github.io/cds/about/">About</a></li>
+					<li><a href="../../../about/">About</a></li>
 					
 					<li><i class="fa fa-search" onclick='$("#searchbox").toggle(); $("#search-query").focus().select()'></i></li>
 					<li>
@@ -115,13 +113,13 @@ use std::env; use sdk_cds::Client; fn main() { let cds_host = &quot;http://local
 			
 			
 				
-				<li><a href="https://ovh.github.io/cds/development/rest/">REST API</a></li>
+				<li><a href="../../../development/rest/">REST API</a></li>
 			
 				
-				<li><a href="https://ovh.github.io/cds/development/sdk/" class="menuSelected">SDK</a></li>
+				<li><a href="../../../development/sdk/" class="menuSelected">SDK</a></li>
 			
 				
-				<li><a href="https://ovh.github.io/cds/development/contribute/">Contributing</a></li>
+				<li><a href="../../../development/contribute/">Contributing</a></li>
 			
 		</ul>
 		
@@ -180,6 +178,10 @@ use std::env; use sdk_cds::Client; fn main() { let cds_host = &quot;http://local
                             
                         
                     
+                        
+                            
+                        
+                    
                 
             
         
@@ -210,7 +212,7 @@ use std::env; use sdk_cds::Client; fn main() { let cds_host = &quot;http://local
         
         
         <i class="fa fa-bars" id="tocburger" onclick='$("#toc").toggle()'></i> 
-<a class="item" data-title="SDK" href="https://ovh.github.io/cds/development/sdk/"></a>
+<a class="item" data-title="SDK" href="../../../development/sdk/"></a>
 
 	
 	
@@ -218,19 +220,19 @@ use std::env; use sdk_cds::Client; fn main() { let cds_host = &quot;http://local
 	
 		
 			
-<a class="item" data-title="Token creation" href="https://ovh.github.io/cds/development/sdk/token/"></a>
+<a class="item" data-title="Token creation" href="../../../development/sdk/token/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="SDK Golang" href="https://ovh.github.io/cds/development/sdk/golang/"></a>
+<a class="item" data-title="SDK Golang" href="../../../development/sdk/golang/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="SDK Rust" href="https://ovh.github.io/cds/development/sdk/rust/"></a>
+<a class="item" data-title="SDK Rust" href="../../../development/sdk/rust/"></a>
 
 		
 	
@@ -251,110 +253,89 @@ use std::env; use sdk_cds::Client; fn main() { let cds_host = &quot;http://local
 
 
 <nav id="TableOfContents">
-<ul>
-<li>
-<ul>
-<li><a href="#prerequisites">Prerequisites</a></li>
-<li><a href="#how-to-use-it">How to use it?</a></li>
-<li><a href="#example">Example</a></li>
-</ul></li>
-</ul>
+  <ul>
+    <li><a href="#prerequisites">Prerequisites</a></li>
+    <li><a href="#how-to-use-it">How to use it?</a></li>
+    <li><a href="#example">Example</a></li>
+  </ul>
 </nav>
 
-
-
 <h2 id="prerequisites">Prerequisites</h2>
-
 <p>Rust CDS SDK uses async/await from Rust stable version so you need a compatible version with async/await.</p>
-
 <h2 id="how-to-use-it">How to use it?</h2>
-
 <p>You have to initialize a cdsclient:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-rust" data-lang="rust"><span style="color:#66d9ef">use</span> std::env;
 
-<pre><code class="language-rust">use std::env;
+<span style="color:#66d9ef">use</span> sdk_cds::Client;
 
-use sdk_cds::Client;
+<span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">main</span>() {
+    <span style="color:#66d9ef">let</span> cds_host <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;http://localhost:8081&#34;</span>;
+    <span style="color:#66d9ef">let</span> cds_token <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;mytoken&#34;</span>;
 
-fn main() {
-    let cds_host = &quot;http://localhost:8081&quot;;
-    let cds_token = &quot;mytoken&quot;;
-
-    let client = Client::new(cds_host, cds_token);
+    <span style="color:#66d9ef">let</span> client <span style="color:#f92672">=</span> Client::new(cds_host, cds_token);
 }
-</code></pre>
+</code></pre></div><p>and then, you can use it:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-rust" data-lang="rust"><span style="color:#75715e">// list projects
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">let</span> projects <span style="color:#f92672">=</span> client.projects().<span style="color:#66d9ef">await</span>.unwrap();
 
-<p>and then, you can use it:</p>
+<span style="color:#75715e">// list applications of project with key TEST
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">let</span> applications <span style="color:#f92672">=</span> client.applications(<span style="color:#e6db74">&#34;TEST&#34;</span>).<span style="color:#66d9ef">await</span>.unwrap();
 
-<pre><code class="language-rust">// list projects
-let projects = client.projects().await.unwrap();
-
-// list applications of project with key TEST
-let applications = client.applications(&quot;TEST&quot;).await.unwrap();
-
-// list workflows
-let workflows = client.workflows(&quot;TEST&quot;, &quot;test&quot;).await.unwrap();
-</code></pre>
-
-<p>Go on <a href="https://docs.rs/sdk-cds/latest/sdk_cds/">https://docs.rs/sdk-cds/latest/sdk_cds/</a> to see all available funcs and documentations.</p>
-
+<span style="color:#75715e">// list workflows
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">let</span> workflows <span style="color:#f92672">=</span> client.workflows(<span style="color:#e6db74">&#34;TEST&#34;</span>, <span style="color:#e6db74">&#34;test&#34;</span>).<span style="color:#66d9ef">await</span>.unwrap();
+</code></pre></div><p>Go on <a href="https://docs.rs/sdk-cds/latest/sdk_cds/">https://docs.rs/sdk-cds/latest/sdk_cds/</a> to see all available funcs and documentations.</p>
 <h2 id="example">Example</h2>
-
 <ul>
 <li>Create a file <code>main.rs</code> with this content:</li>
 </ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-rust" data-lang="rust"><span style="color:#66d9ef">use</span> std::env;
 
-<pre><code class="language-rust">use std::env;
+<span style="color:#66d9ef">use</span> async_std::task;
+<span style="color:#66d9ef">use</span> sdk_cds::Client;
 
-use async_std::task;
-use sdk_cds::Client;
+<span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">main</span>() {
+    <span style="color:#66d9ef">let</span> cds_host <span style="color:#f92672">=</span>
+        env::var(<span style="color:#e6db74">&#34;CDS_HOST&#34;</span>).expect(<span style="color:#e6db74">&#34;You must export environment variable named CDS_HOST&#34;</span>);
+    <span style="color:#66d9ef">let</span> cds_token <span style="color:#f92672">=</span>
+        env::var(<span style="color:#e6db74">&#34;CDS_TOKEN&#34;</span>).expect(<span style="color:#e6db74">&#34;You must export environment variable named CDS_TOKEN&#34;</span>);
+    <span style="color:#66d9ef">let</span> my_client <span style="color:#f92672">=</span> Client::new(cds_host.as_str(), cds_token.as_str());
 
-fn main() {
-    let cds_host =
-        env::var(&quot;CDS_HOST&quot;).expect(&quot;You must export environment variable named CDS_HOST&quot;);
-    let cds_token =
-        env::var(&quot;CDS_TOKEN&quot;).expect(&quot;You must export environment variable named CDS_TOKEN&quot;);
-    let my_client = Client::new(cds_host.as_str(), cds_token.as_str());
-
-    println!(
-        &quot;Hello, world! {:?}&quot;,
+    println<span style="color:#f92672">!</span>(
+        <span style="color:#e6db74">&#34;Hello, world! {:?}&#34;</span>,
         task::block_on(my_client.status()).unwrap()
     );
-    println!(&quot;Me : {:?}&quot;, task::block_on(my_client.me()).unwrap());
-    println!(
-        &quot;projects : {:?}&quot;,
+    println<span style="color:#f92672">!</span>(<span style="color:#e6db74">&#34;Me : {:?}&#34;</span>, task::block_on(my_client.me()).unwrap());
+    println<span style="color:#f92672">!</span>(
+        <span style="color:#e6db74">&#34;projects : {:?}&#34;</span>,
         task::block_on(my_client.projects()).unwrap()
     );
-    println!(
-        &quot;applications : {:?}&quot;,
-        task::block_on(my_client.applications(&quot;TEST&quot;)).unwrap()[0].name
+    println<span style="color:#f92672">!</span>(
+        <span style="color:#e6db74">&#34;applications : {:?}&#34;</span>,
+        task::block_on(my_client.applications(<span style="color:#e6db74">&#34;TEST&#34;</span>)).unwrap()[<span style="color:#ae81ff">0</span>].name
     );
-    println!(
-        &quot;application name : {:?}&quot;,
-        task::block_on(my_client.application(&quot;TEST&quot;, &quot;test&quot;))
+    println<span style="color:#f92672">!</span>(
+        <span style="color:#e6db74">&#34;application name : {:?}&#34;</span>,
+        task::block_on(my_client.application(<span style="color:#e6db74">&#34;TEST&#34;</span>, <span style="color:#e6db74">&#34;test&#34;</span>))
             .unwrap()
             .icon
     );
-    println!(
-        &quot;workflows : {:?}&quot;,
-        task::block_on(my_client.workflows(&quot;TEST&quot;)).unwrap()
+    println<span style="color:#f92672">!</span>(
+        <span style="color:#e6db74">&#34;workflows : {:?}&#34;</span>,
+        task::block_on(my_client.workflows(<span style="color:#e6db74">&#34;TEST&#34;</span>)).unwrap()
     );
-    println!(
-        &quot;workflow test : {:?}&quot;,
-        task::block_on(my_client.workflow(&quot;TEST&quot;, &quot;test&quot;)).unwrap()
+    println<span style="color:#f92672">!</span>(
+        <span style="color:#e6db74">&#34;workflow test : {:?}&#34;</span>,
+        task::block_on(my_client.workflow(<span style="color:#e6db74">&#34;TEST&#34;</span>, <span style="color:#e6db74">&#34;test&#34;</span>)).unwrap()
     );
 }
 
-</code></pre>
-
-<ul>
+</code></pre></div><ul>
 <li>Build &amp; run it:</li>
 </ul>
-
-<pre><code class="language-bash">$ export CDS_HOST=http://localhost:8081
-$ export CDS_TOKEN=mytoken
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ export CDS_HOST<span style="color:#f92672">=</span>http://localhost:8081
+$ export CDS_TOKEN<span style="color:#f92672">=</span>mytoken
 $ cargo run
-</code></pre>
-
+</code></pre></div>
 
 
 

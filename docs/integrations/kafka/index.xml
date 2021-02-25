@@ -1,37 +1,33 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Kafka on CDS - Continuous Delivery Service</title>
-    <link>https://ovh.github.io/cds/docs/integrations/kafka/</link>
+    <link>/docs/integrations/kafka/</link>
     <description>Recent content in Kafka on CDS - Continuous Delivery Service</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language>
-    
-	<atom:link href="https://ovh.github.io/cds/docs/integrations/kafka/index.xml" rel="self" type="application/rss+xml" />
-    
-    
+    <language>en-us</language><atom:link href="/docs/integrations/kafka/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Kafka CDS Events</title>
-      <link>https://ovh.github.io/cds/docs/integrations/kafka/kafka_events/</link>
+      <link>/docs/integrations/kafka/kafka_events/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/integrations/kafka/kafka_events/</guid>
+      <guid>/docs/integrations/kafka/kafka_events/</guid>
       <description>The Kafka Integration is a Self-Service integration that can be configured on a CDS Project. If you are a CDS Administrator, you can configue this integration to be available on all CDS Projects.
 An example of use case could be that you want to generate some svg badge. Then you can just add an event integration for your workflow and plug the badge microservice on this kafka topic.
-Configure with WebUI You can add a Kafka Integration on your CDS Project.</description>
+Notice that Kafka communication is done using SASL and TLS enable only.</description>
     </item>
     
     <item>
       <title>Kafka Hooks</title>
-      <link>https://ovh.github.io/cds/docs/integrations/kafka/kafka_hooks/</link>
+      <link>/docs/integrations/kafka/kafka_hooks/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/integrations/kafka/kafka_hooks/</guid>
+      <guid>/docs/integrations/kafka/kafka_hooks/</guid>
       <description>The Kafka Integration is a Self-Service integration that can be configured on a CDS Project. If you are a CDS Administrator, you can configue this integration to be available on all CDS Projects.
-This integration enables the Kafka Hook feature:
+This integration enables the Kafka Hook feature.
+Notice that Kafka communication is done using SASL and TLS enable only.
 Configure with WebUI You can add a Kafka Integration on your CDS Project.
-Configure with cdsctl Import a Kafka Integration on your CDS Project Create a file project-configuration.yml:
-name: your-kafka-integration model: name: Kafka identifier: github.</description>
+Configure with cdsctl Import a Kafka Integration on your CDS Project Create a file project-configuration.</description>
     </item>
     
   </channel>

@@ -4,72 +4,70 @@
 	<meta charset="utf-8">
 <title>Update your hatchery - CDS - Continuous Delivery Service</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="shortcut icon" type="image/png" href="https://ovh.github.io/cds/images/favicon.png">
+<link rel="shortcut icon" type="image/png" href="../../../../images/favicon.png">
 
 
 
 
-<link rel="stylesheet" href="https://ovh.github.io/cds/sass/styles.css" integrity="" media="screen">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/callouts.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/auto-complete.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/fontawesome.min.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/asciinema-player.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
+<link rel="stylesheet" href="../../../../sass/styles.css" integrity="" media="screen">
+<link rel="stylesheet" href="../../../../css/callouts.css">
+<link rel="stylesheet" href="../../../../css/auto-complete.css">
+<link rel="stylesheet" href="../../../../css/fontawesome.min.css">
+<link rel="stylesheet" href="../../../../css/asciinema-player.css">
+<link rel="stylesheet" href="../../../../css/solarized-light.css">
 
 <meta name="description"
     content="If you run manually a Hatchery, you probably want to update it when CDS Engine is updated with a new release.
 Update your hatchery from CDS API:
-./engine update --api https://your.cds.instance  Update your hatchery from latest Release from GitHub:
-./engine update --from-github  ">
+./engine update --api https://your.cds.instance Update your hatchery from latest Release from GitHub:
+./engine update --from-github ">
 <meta property="og:description"
     content="If you run manually a Hatchery, you probably want to update it when CDS Engine is updated with a new release.
 Update your hatchery from CDS API:
-./engine update --api https://your.cds.instance  Update your hatchery from latest Release from GitHub:
-./engine update --from-github  ">
+./engine update --api https://your.cds.instance Update your hatchery from latest Release from GitHub:
+./engine update --from-github ">
 <meta name="twitter:description"
     content="If you run manually a Hatchery, you probably want to update it when CDS Engine is updated with a new release.
 Update your hatchery from CDS API:
-./engine update --api https://your.cds.instance  Update your hatchery from latest Release from GitHub:
-./engine update --from-github  ">
-<meta property="og:url" content="https://ovh.github.io/cds/docs/components/hatchery/update/">
+./engine update --api https://your.cds.instance Update your hatchery from latest Release from GitHub:
+./engine update --from-github ">
+<meta property="og:url" content="/docs/components/hatchery/update/">
 <meta property="og:title" content="Update your hatchery">
 <meta name="twitter:title" content="Update your hatchery">
 <meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
 <meta property="og:image" content="/images/cds-transparent.png">
-<script type="text/javascript" src="https://ovh.github.io/cds/js/anchor-4.1.1.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-3.2.1.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-ui-1.12.1.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/bootstrap-3.3.7.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/highlight.pack.js"></script>
+<script type="text/javascript" src="../../../../js/anchor-4.1.1.min.js"></script>
+<script type="text/javascript" src="../../../../js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="../../../../js/jquery-ui-1.12.1.min.js"></script>
+<script type="text/javascript" src="../../../../js/bootstrap-3.3.7.min.js"></script>
+<script type="text/javascript" src="../../../../js/highlight.pack.js"></script>
 <script>
     hljs.initHighlightingOnLoad();
 
 </script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/script.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/lunr.min.js"></script>
-<script type="text/javascript">
-    var baseurl = "https:\/\/ovh.github.io\/cds";
+<script type="text/javascript" src="../../../../js/script.js"></script>
+<script type="text/javascript" src="../../../../js/lunr.min.js"></script>
+<a id="indexJSON" href="../../../../index.json"></a>
 
-</script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/auto-complete.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/search.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/asciinema-player.js"></script>
+<script type="text/javascript" src="../../../../js/auto-complete.js"></script>
+<script type="text/javascript" src="../../../../js/search.js"></script>
+<script type="text/javascript" src="../../../../js/asciinema-player.js"></script>
 
 	</head>
 	<body>
 		<section id="hero" class="light-text no-sub">
-			<a href="https://ovh.github.io/cds/" class="logo"></a>
+			<a href="../../../../" class="logo"></a>
 				<i id="tocburger" class="fa fa-bars" onclick='$("#toc").toggle()'></i><div class="nav-buttons" data-auto-burger="primary">
 				<ul class="global-nav">
 					
 					
-					<li><a href="https://ovh.github.io/cds/docs/" class="active">Documentation</a></li>
+					<li><a href="../../../../docs/" class="active">Documentation</a></li>
 					
-					<li><a href="https://ovh.github.io/cds/hosting/">Hosting your own instance</a></li>
+					<li><a href="../../../../hosting/">Hosting your own instance</a></li>
 					
-					<li><a href="https://ovh.github.io/cds/development/">CDS Developer Manual</a></li>
+					<li><a href="../../../../development/">CDS Developer Manual</a></li>
 					
-					<li><a href="https://ovh.github.io/cds/about/">About</a></li>
+					<li><a href="../../../../about/">About</a></li>
 					
 					<li><i class="fa fa-search" onclick='$("#searchbox").toggle(); $("#search-query").focus().select()'></i></li>
 					<li>
@@ -99,23 +97,23 @@ Update your hatchery from CDS API:
 			
 			
 			
-			<li><a href="https://ovh.github.io/cds/docs/">Home</a></li>
+			<li><a href="../../../../docs/">Home</a></li>
 			
 			
 				
-				<li><a href="https://ovh.github.io/cds/docs/concepts/">Concepts</a></li>
+				<li><a href="../../../../docs/concepts/">Concepts</a></li>
 			
 				
-				<li><a href="https://ovh.github.io/cds/docs/actions/">Actions</a></li>
+				<li><a href="../../../../docs/actions/">Actions</a></li>
 			
 				
-				<li><a href="https://ovh.github.io/cds/docs/components/" class="menuSelected">Components</a></li>
+				<li><a href="../../../../docs/components/" class="menuSelected">Components</a></li>
 			
 				
-				<li><a href="https://ovh.github.io/cds/docs/integrations/">Integrations</a></li>
+				<li><a href="../../../../docs/integrations/">Integrations</a></li>
 			
 				
-				<li><a href="https://ovh.github.io/cds/docs/tutorials/">Tutorials</a></li>
+				<li><a href="../../../../docs/tutorials/">Tutorials</a></li>
 			
 		</ul>
 		
@@ -185,6 +183,8 @@ Update your hatchery from CDS API:
                     
                         
                     
+                        
+                    
                 
             
         
@@ -208,18 +208,24 @@ Update your hatchery from CDS API:
         
         
         <i class="fa fa-bars" id="tocburger" onclick='$("#toc").toggle()'></i> 
-<a class="item" data-title="Components" href="https://ovh.github.io/cds/docs/components/"></a>
+<a class="item" data-title="Components" href="../../../../docs/components/"></a>
 
 	
 	
 	
+	
+		
+			
+<a class="item" data-title="CDN" href="../../../../docs/components/cdn/"></a>
+
+		
 	
 		
 			
 <div class="item" data-title="Hatchery">
 	<div class="container">
 		
-		<a class="item" data-title="Hatchery" href="https://ovh.github.io/cds/docs/components/hatchery/"></a>
+		<a class="item" data-title="Hatchery" href="../../../../docs/components/hatchery/"></a>
 		
 		
 	
@@ -228,13 +234,13 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="Hatchery Local" href="https://ovh.github.io/cds/docs/components/hatchery/local/"></a>
+<a class="item" data-title="Hatchery Local" href="../../../../docs/components/hatchery/local/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Update your hatchery" href="https://ovh.github.io/cds/docs/components/hatchery/update/"></a>
+<a class="item" data-title="Update your hatchery" href="../../../../docs/components/hatchery/update/"></a>
 
 		
 	
@@ -249,7 +255,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="cdsctl">
 	<div class="container">
 		
-		<a class="item" data-title="cdsctl" href="https://ovh.github.io/cds/docs/components/cdsctl/"></a>
+		<a class="item" data-title="cdsctl" href="../../../../docs/components/cdsctl/"></a>
 		
 		
 	
@@ -261,7 +267,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="action">
 	<div class="container">
 		
-		<a class="item" data-title="action" href="https://ovh.github.io/cds/docs/components/cdsctl/action/"></a>
+		<a class="item" data-title="action" href="../../../../docs/components/cdsctl/action/"></a>
 		
 		
 	
@@ -273,7 +279,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="builtin">
 	<div class="container">
 		
-		<a class="item" data-title="builtin" href="https://ovh.github.io/cds/docs/components/cdsctl/action/builtin/"></a>
+		<a class="item" data-title="builtin" href="../../../../docs/components/cdsctl/action/builtin/"></a>
 		
 		
 	
@@ -282,19 +288,19 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="doc" href="https://ovh.github.io/cds/docs/components/cdsctl/action/builtin/doc/"></a>
+<a class="item" data-title="doc" href="../../../../docs/components/cdsctl/action/builtin/doc/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="list" href="https://ovh.github.io/cds/docs/components/cdsctl/action/builtin/list/"></a>
+<a class="item" data-title="list" href="../../../../docs/components/cdsctl/action/builtin/list/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="show" href="https://ovh.github.io/cds/docs/components/cdsctl/action/builtin/show/"></a>
+<a class="item" data-title="show" href="../../../../docs/components/cdsctl/action/builtin/show/"></a>
 
 		
 	
@@ -306,43 +312,43 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="delete" href="https://ovh.github.io/cds/docs/components/cdsctl/action/delete/"></a>
+<a class="item" data-title="delete" href="../../../../docs/components/cdsctl/action/delete/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="doc" href="https://ovh.github.io/cds/docs/components/cdsctl/action/doc/"></a>
+<a class="item" data-title="doc" href="../../../../docs/components/cdsctl/action/doc/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="export" href="https://ovh.github.io/cds/docs/components/cdsctl/action/export/"></a>
+<a class="item" data-title="export" href="../../../../docs/components/cdsctl/action/export/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="import" href="https://ovh.github.io/cds/docs/components/cdsctl/action/import/"></a>
+<a class="item" data-title="import" href="../../../../docs/components/cdsctl/action/import/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="list" href="https://ovh.github.io/cds/docs/components/cdsctl/action/list/"></a>
+<a class="item" data-title="list" href="../../../../docs/components/cdsctl/action/list/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="show" href="https://ovh.github.io/cds/docs/components/cdsctl/action/show/"></a>
+<a class="item" data-title="show" href="../../../../docs/components/cdsctl/action/show/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="usage" href="https://ovh.github.io/cds/docs/components/cdsctl/action/usage/"></a>
+<a class="item" data-title="usage" href="../../../../docs/components/cdsctl/action/usage/"></a>
 
 		
 	
@@ -357,7 +363,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="admin">
 	<div class="container">
 		
-		<a class="item" data-title="admin" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/"></a>
+		<a class="item" data-title="admin" href="../../../../docs/components/cdsctl/admin/"></a>
 		
 		
 	
@@ -369,7 +375,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="broadcasts">
 	<div class="container">
 		
-		<a class="item" data-title="broadcasts" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/broadcasts/"></a>
+		<a class="item" data-title="broadcasts" href="../../../../docs/components/cdsctl/admin/broadcasts/"></a>
 		
 		
 	
@@ -378,25 +384,25 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="create" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/broadcasts/create/"></a>
+<a class="item" data-title="create" href="../../../../docs/components/cdsctl/admin/broadcasts/create/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="delete" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/broadcasts/delete/"></a>
+<a class="item" data-title="delete" href="../../../../docs/components/cdsctl/admin/broadcasts/delete/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="list" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/broadcasts/list/"></a>
+<a class="item" data-title="list" href="../../../../docs/components/cdsctl/admin/broadcasts/list/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="show" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/broadcasts/show/"></a>
+<a class="item" data-title="show" href="../../../../docs/components/cdsctl/admin/broadcasts/show/"></a>
 
 		
 	
@@ -408,7 +414,97 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="curl" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/curl/"></a>
+<div class="item" data-title="cdn">
+	<div class="container">
+		
+		<a class="item" data-title="cdn" href="../../../../docs/components/cdsctl/admin/cdn/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<div class="item" data-title="cache">
+	<div class="container">
+		
+		<a class="item" data-title="cache" href="../../../../docs/components/cdsctl/admin/cdn/cache/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="clear" href="../../../../docs/components/cdsctl/admin/cdn/cache/clear/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="status" href="../../../../docs/components/cdsctl/admin/cdn/cache/status/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<div class="item" data-title="item">
+	<div class="container">
+		
+		<a class="item" data-title="item" href="../../../../docs/components/cdsctl/admin/cdn/item/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="projectsize" href="../../../../docs/components/cdsctl/admin/cdn/item/projectsize/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<a class="item" data-title="migrate" href="../../../../docs/components/cdsctl/admin/cdn/migrate/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="status" href="../../../../docs/components/cdsctl/admin/cdn/status/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="sync-buffer" href="../../../../docs/components/cdsctl/admin/cdn/sync-buffer/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<a class="item" data-title="curl" href="../../../../docs/components/cdsctl/admin/curl/"></a>
 
 		
 	
@@ -417,7 +513,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="database">
 	<div class="container">
 		
-		<a class="item" data-title="database" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/database/"></a>
+		<a class="item" data-title="database" href="../../../../docs/components/cdsctl/admin/database/"></a>
 		
 		
 	
@@ -426,43 +522,43 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="delete" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/database/delete/"></a>
+<a class="item" data-title="delete" href="../../../../docs/components/cdsctl/admin/database/delete/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="list" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/database/list/"></a>
+<a class="item" data-title="list" href="../../../../docs/components/cdsctl/admin/database/list/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="list-encrypted-data" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/database/list-encrypted-data/"></a>
+<a class="item" data-title="list-encrypted-data" href="../../../../docs/components/cdsctl/admin/database/list-encrypted-data/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="list-signed-data" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/database/list-signed-data/"></a>
+<a class="item" data-title="list-signed-data" href="../../../../docs/components/cdsctl/admin/database/list-signed-data/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="roll-encrypteddata" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/database/roll-encrypteddata/"></a>
+<a class="item" data-title="roll-encrypteddata" href="../../../../docs/components/cdsctl/admin/database/roll-encrypteddata/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="roll-signed-data" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/database/roll-signed-data/"></a>
+<a class="item" data-title="roll-signed-data" href="../../../../docs/components/cdsctl/admin/database/roll-signed-data/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="unlock" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/database/unlock/"></a>
+<a class="item" data-title="unlock" href="../../../../docs/components/cdsctl/admin/database/unlock/"></a>
 
 		
 	
@@ -477,7 +573,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="errors">
 	<div class="container">
 		
-		<a class="item" data-title="errors" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/errors/"></a>
+		<a class="item" data-title="errors" href="../../../../docs/components/cdsctl/admin/errors/"></a>
 		
 		
 	
@@ -486,7 +582,49 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="get" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/errors/get/"></a>
+<a class="item" data-title="get" href="../../../../docs/components/cdsctl/admin/errors/get/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<div class="item" data-title="features">
+	<div class="container">
+		
+		<a class="item" data-title="features" href="../../../../docs/components/cdsctl/admin/features/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="delete" href="../../../../docs/components/cdsctl/admin/features/delete/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="export" href="../../../../docs/components/cdsctl/admin/features/export/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="import" href="../../../../docs/components/cdsctl/admin/features/import/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="list" href="../../../../docs/components/cdsctl/admin/features/list/"></a>
 
 		
 	
@@ -501,7 +639,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="hooks">
 	<div class="container">
 		
-		<a class="item" data-title="hooks" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/hooks/"></a>
+		<a class="item" data-title="hooks" href="../../../../docs/components/cdsctl/admin/hooks/"></a>
 		
 		
 	
@@ -510,43 +648,43 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="executions" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/hooks/executions/"></a>
+<a class="item" data-title="executions" href="../../../../docs/components/cdsctl/admin/hooks/executions/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="list" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/hooks/list/"></a>
+<a class="item" data-title="list" href="../../../../docs/components/cdsctl/admin/hooks/list/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="purge" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/hooks/purge/"></a>
+<a class="item" data-title="purge" href="../../../../docs/components/cdsctl/admin/hooks/purge/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="start" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/hooks/start/"></a>
+<a class="item" data-title="start" href="../../../../docs/components/cdsctl/admin/hooks/start/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="startall" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/hooks/startall/"></a>
+<a class="item" data-title="startall" href="../../../../docs/components/cdsctl/admin/hooks/startall/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="stop" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/hooks/stop/"></a>
+<a class="item" data-title="stop" href="../../../../docs/components/cdsctl/admin/hooks/stop/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="stopall" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/hooks/stopall/"></a>
+<a class="item" data-title="stopall" href="../../../../docs/components/cdsctl/admin/hooks/stopall/"></a>
 
 		
 	
@@ -561,7 +699,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="integration-model">
 	<div class="container">
 		
-		<a class="item" data-title="integration-model" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/integration-model/"></a>
+		<a class="item" data-title="integration-model" href="../../../../docs/components/cdsctl/admin/integration-model/"></a>
 		
 		
 	
@@ -570,31 +708,31 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="delete" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/integration-model/delete/"></a>
+<a class="item" data-title="delete" href="../../../../docs/components/cdsctl/admin/integration-model/delete/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="export" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/integration-model/export/"></a>
+<a class="item" data-title="export" href="../../../../docs/components/cdsctl/admin/integration-model/export/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="import" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/integration-model/import/"></a>
+<a class="item" data-title="import" href="../../../../docs/components/cdsctl/admin/integration-model/import/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="list" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/integration-model/list/"></a>
+<a class="item" data-title="list" href="../../../../docs/components/cdsctl/admin/integration-model/list/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="show" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/integration-model/show/"></a>
+<a class="item" data-title="show" href="../../../../docs/components/cdsctl/admin/integration-model/show/"></a>
 
 		
 	
@@ -609,7 +747,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="maintenance">
 	<div class="container">
 		
-		<a class="item" data-title="maintenance" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/maintenance/"></a>
+		<a class="item" data-title="maintenance" href="../../../../docs/components/cdsctl/admin/maintenance/"></a>
 		
 		
 	
@@ -618,13 +756,13 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="disable" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/maintenance/disable/"></a>
+<a class="item" data-title="disable" href="../../../../docs/components/cdsctl/admin/maintenance/disable/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="enable" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/maintenance/enable/"></a>
+<a class="item" data-title="enable" href="../../../../docs/components/cdsctl/admin/maintenance/enable/"></a>
 
 		
 	
@@ -639,7 +777,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="metadata">
 	<div class="container">
 		
-		<a class="item" data-title="metadata" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/metadata/"></a>
+		<a class="item" data-title="metadata" href="../../../../docs/components/cdsctl/admin/metadata/"></a>
 		
 		
 	
@@ -651,7 +789,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="application">
 	<div class="container">
 		
-		<a class="item" data-title="application" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/metadata/application/"></a>
+		<a class="item" data-title="application" href="../../../../docs/components/cdsctl/admin/metadata/application/"></a>
 		
 		
 	
@@ -660,13 +798,13 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="export" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/metadata/application/export/"></a>
+<a class="item" data-title="export" href="../../../../docs/components/cdsctl/admin/metadata/application/export/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="import" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/metadata/application/import/"></a>
+<a class="item" data-title="import" href="../../../../docs/components/cdsctl/admin/metadata/application/import/"></a>
 
 		
 	
@@ -681,7 +819,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="project">
 	<div class="container">
 		
-		<a class="item" data-title="project" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/metadata/project/"></a>
+		<a class="item" data-title="project" href="../../../../docs/components/cdsctl/admin/metadata/project/"></a>
 		
 		
 	
@@ -690,13 +828,13 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="export" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/metadata/project/export/"></a>
+<a class="item" data-title="export" href="../../../../docs/components/cdsctl/admin/metadata/project/export/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="import" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/metadata/project/import/"></a>
+<a class="item" data-title="import" href="../../../../docs/components/cdsctl/admin/metadata/project/import/"></a>
 
 		
 	
@@ -711,7 +849,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="workflow">
 	<div class="container">
 		
-		<a class="item" data-title="workflow" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/metadata/workflow/"></a>
+		<a class="item" data-title="workflow" href="../../../../docs/components/cdsctl/admin/metadata/workflow/"></a>
 		
 		
 	
@@ -720,7 +858,7 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="export" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/metadata/workflow/export/"></a>
+<a class="item" data-title="export" href="../../../../docs/components/cdsctl/admin/metadata/workflow/export/"></a>
 
 		
 	
@@ -741,7 +879,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="migration">
 	<div class="container">
 		
-		<a class="item" data-title="migration" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/migration/"></a>
+		<a class="item" data-title="migration" href="../../../../docs/components/cdsctl/admin/migration/"></a>
 		
 		
 	
@@ -750,19 +888,19 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="cancel" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/migration/cancel/"></a>
+<a class="item" data-title="cancel" href="../../../../docs/components/cdsctl/admin/migration/cancel/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="list" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/migration/list/"></a>
+<a class="item" data-title="list" href="../../../../docs/components/cdsctl/admin/migration/list/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="reset" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/migration/reset/"></a>
+<a class="item" data-title="reset" href="../../../../docs/components/cdsctl/admin/migration/reset/"></a>
 
 		
 	
@@ -777,7 +915,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="plugins">
 	<div class="container">
 		
-		<a class="item" data-title="plugins" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/plugins/"></a>
+		<a class="item" data-title="plugins" href="../../../../docs/components/cdsctl/admin/plugins/"></a>
 		
 		
 	
@@ -786,37 +924,37 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="binary-add" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/plugins/binary-add/"></a>
+<a class="item" data-title="binary-add" href="../../../../docs/components/cdsctl/admin/plugins/binary-add/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="delete" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/plugins/delete/"></a>
+<a class="item" data-title="delete" href="../../../../docs/components/cdsctl/admin/plugins/delete/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="doc" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/plugins/doc/"></a>
+<a class="item" data-title="doc" href="../../../../docs/components/cdsctl/admin/plugins/doc/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="export" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/plugins/export/"></a>
+<a class="item" data-title="export" href="../../../../docs/components/cdsctl/admin/plugins/export/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="import" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/plugins/import/"></a>
+<a class="item" data-title="import" href="../../../../docs/components/cdsctl/admin/plugins/import/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="list" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/plugins/list/"></a>
+<a class="item" data-title="list" href="../../../../docs/components/cdsctl/admin/plugins/list/"></a>
 
 		
 	
@@ -831,7 +969,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="services">
 	<div class="container">
 		
-		<a class="item" data-title="services" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/services/"></a>
+		<a class="item" data-title="services" href="../../../../docs/components/cdsctl/admin/services/"></a>
 		
 		
 	
@@ -840,25 +978,49 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="delete" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/services/delete/"></a>
+<a class="item" data-title="delete" href="../../../../docs/components/cdsctl/admin/services/delete/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="list" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/services/list/"></a>
+<a class="item" data-title="list" href="../../../../docs/components/cdsctl/admin/services/list/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="request" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/services/request/"></a>
+<a class="item" data-title="request" href="../../../../docs/components/cdsctl/admin/services/request/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="status" href="https://ovh.github.io/cds/docs/components/cdsctl/admin/services/status/"></a>
+<a class="item" data-title="status" href="../../../../docs/components/cdsctl/admin/services/status/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<div class="item" data-title="workflows">
+	<div class="container">
+		
+		<a class="item" data-title="workflows" href="../../../../docs/components/cdsctl/admin/workflows/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="maxrun" href="../../../../docs/components/cdsctl/admin/workflows/maxrun/"></a>
 
 		
 	
@@ -879,7 +1041,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="application">
 	<div class="container">
 		
-		<a class="item" data-title="application" href="https://ovh.github.io/cds/docs/components/cdsctl/application/"></a>
+		<a class="item" data-title="application" href="../../../../docs/components/cdsctl/application/"></a>
 		
 		
 	
@@ -888,25 +1050,25 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="create" href="https://ovh.github.io/cds/docs/components/cdsctl/application/create/"></a>
+<a class="item" data-title="create" href="../../../../docs/components/cdsctl/application/create/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="delete" href="https://ovh.github.io/cds/docs/components/cdsctl/application/delete/"></a>
+<a class="item" data-title="delete" href="../../../../docs/components/cdsctl/application/delete/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="export" href="https://ovh.github.io/cds/docs/components/cdsctl/application/export/"></a>
+<a class="item" data-title="export" href="../../../../docs/components/cdsctl/application/export/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="import" href="https://ovh.github.io/cds/docs/components/cdsctl/application/import/"></a>
+<a class="item" data-title="import" href="../../../../docs/components/cdsctl/application/import/"></a>
 
 		
 	
@@ -915,7 +1077,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="keys">
 	<div class="container">
 		
-		<a class="item" data-title="keys" href="https://ovh.github.io/cds/docs/components/cdsctl/application/keys/"></a>
+		<a class="item" data-title="keys" href="../../../../docs/components/cdsctl/application/keys/"></a>
 		
 		
 	
@@ -924,19 +1086,19 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="add" href="https://ovh.github.io/cds/docs/components/cdsctl/application/keys/add/"></a>
+<a class="item" data-title="add" href="../../../../docs/components/cdsctl/application/keys/add/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="delete" href="https://ovh.github.io/cds/docs/components/cdsctl/application/keys/delete/"></a>
+<a class="item" data-title="delete" href="../../../../docs/components/cdsctl/application/keys/delete/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="list" href="https://ovh.github.io/cds/docs/components/cdsctl/application/keys/list/"></a>
+<a class="item" data-title="list" href="../../../../docs/components/cdsctl/application/keys/list/"></a>
 
 		
 	
@@ -948,19 +1110,19 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="list" href="https://ovh.github.io/cds/docs/components/cdsctl/application/list/"></a>
+<a class="item" data-title="list" href="../../../../docs/components/cdsctl/application/list/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="show" href="https://ovh.github.io/cds/docs/components/cdsctl/application/show/"></a>
+<a class="item" data-title="show" href="../../../../docs/components/cdsctl/application/show/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="usage" href="https://ovh.github.io/cds/docs/components/cdsctl/application/usage/"></a>
+<a class="item" data-title="usage" href="../../../../docs/components/cdsctl/application/usage/"></a>
 
 		
 	
@@ -969,7 +1131,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="variable">
 	<div class="container">
 		
-		<a class="item" data-title="variable" href="https://ovh.github.io/cds/docs/components/cdsctl/application/variable/"></a>
+		<a class="item" data-title="variable" href="../../../../docs/components/cdsctl/application/variable/"></a>
 		
 		
 	
@@ -978,31 +1140,31 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="add" href="https://ovh.github.io/cds/docs/components/cdsctl/application/variable/add/"></a>
+<a class="item" data-title="add" href="../../../../docs/components/cdsctl/application/variable/add/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="delete" href="https://ovh.github.io/cds/docs/components/cdsctl/application/variable/delete/"></a>
+<a class="item" data-title="delete" href="../../../../docs/components/cdsctl/application/variable/delete/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="list" href="https://ovh.github.io/cds/docs/components/cdsctl/application/variable/list/"></a>
+<a class="item" data-title="list" href="../../../../docs/components/cdsctl/application/variable/list/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="show" href="https://ovh.github.io/cds/docs/components/cdsctl/application/variable/show/"></a>
+<a class="item" data-title="show" href="../../../../docs/components/cdsctl/application/variable/show/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="update" href="https://ovh.github.io/cds/docs/components/cdsctl/application/variable/update/"></a>
+<a class="item" data-title="update" href="../../../../docs/components/cdsctl/application/variable/update/"></a>
 
 		
 	
@@ -1023,7 +1185,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="consumer">
 	<div class="container">
 		
-		<a class="item" data-title="consumer" href="https://ovh.github.io/cds/docs/components/cdsctl/consumer/"></a>
+		<a class="item" data-title="consumer" href="../../../../docs/components/cdsctl/consumer/"></a>
 		
 		
 	
@@ -1032,25 +1194,25 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="delete" href="https://ovh.github.io/cds/docs/components/cdsctl/consumer/delete/"></a>
+<a class="item" data-title="delete" href="../../../../docs/components/cdsctl/consumer/delete/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="list" href="https://ovh.github.io/cds/docs/components/cdsctl/consumer/list/"></a>
+<a class="item" data-title="list" href="../../../../docs/components/cdsctl/consumer/list/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="new" href="https://ovh.github.io/cds/docs/components/cdsctl/consumer/new/"></a>
+<a class="item" data-title="new" href="../../../../docs/components/cdsctl/consumer/new/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="regen" href="https://ovh.github.io/cds/docs/components/cdsctl/consumer/regen/"></a>
+<a class="item" data-title="regen" href="../../../../docs/components/cdsctl/consumer/regen/"></a>
 
 		
 	
@@ -1065,7 +1227,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="context">
 	<div class="container">
 		
-		<a class="item" data-title="context" href="https://ovh.github.io/cds/docs/components/cdsctl/context/"></a>
+		<a class="item" data-title="context" href="../../../../docs/components/cdsctl/context/"></a>
 		
 		
 	
@@ -1074,13 +1236,13 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="current" href="https://ovh.github.io/cds/docs/components/cdsctl/context/current/"></a>
+<a class="item" data-title="current" href="../../../../docs/components/cdsctl/context/current/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="list" href="https://ovh.github.io/cds/docs/components/cdsctl/context/list/"></a>
+<a class="item" data-title="list" href="../../../../docs/components/cdsctl/context/list/"></a>
 
 		
 	
@@ -1092,7 +1254,25 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="encrypt" href="https://ovh.github.io/cds/docs/components/cdsctl/encrypt/"></a>
+<div class="item" data-title="encrypt">
+	<div class="container">
+		
+		<a class="item" data-title="encrypt" href="../../../../docs/components/cdsctl/encrypt/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="list" href="../../../../docs/components/cdsctl/encrypt/list/"></a>
+
+		
+	
+
+	</div>
+</div>
 
 		
 	
@@ -1101,7 +1281,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="environment">
 	<div class="container">
 		
-		<a class="item" data-title="environment" href="https://ovh.github.io/cds/docs/components/cdsctl/environment/"></a>
+		<a class="item" data-title="environment" href="../../../../docs/components/cdsctl/environment/"></a>
 		
 		
 	
@@ -1110,25 +1290,25 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="create" href="https://ovh.github.io/cds/docs/components/cdsctl/environment/create/"></a>
+<a class="item" data-title="create" href="../../../../docs/components/cdsctl/environment/create/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="delete" href="https://ovh.github.io/cds/docs/components/cdsctl/environment/delete/"></a>
+<a class="item" data-title="delete" href="../../../../docs/components/cdsctl/environment/delete/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="export" href="https://ovh.github.io/cds/docs/components/cdsctl/environment/export/"></a>
+<a class="item" data-title="export" href="../../../../docs/components/cdsctl/environment/export/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="import" href="https://ovh.github.io/cds/docs/components/cdsctl/environment/import/"></a>
+<a class="item" data-title="import" href="../../../../docs/components/cdsctl/environment/import/"></a>
 
 		
 	
@@ -1137,7 +1317,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="keys">
 	<div class="container">
 		
-		<a class="item" data-title="keys" href="https://ovh.github.io/cds/docs/components/cdsctl/environment/keys/"></a>
+		<a class="item" data-title="keys" href="../../../../docs/components/cdsctl/environment/keys/"></a>
 		
 		
 	
@@ -1146,19 +1326,19 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="add" href="https://ovh.github.io/cds/docs/components/cdsctl/environment/keys/add/"></a>
+<a class="item" data-title="add" href="../../../../docs/components/cdsctl/environment/keys/add/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="delete" href="https://ovh.github.io/cds/docs/components/cdsctl/environment/keys/delete/"></a>
+<a class="item" data-title="delete" href="../../../../docs/components/cdsctl/environment/keys/delete/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="list" href="https://ovh.github.io/cds/docs/components/cdsctl/environment/keys/list/"></a>
+<a class="item" data-title="list" href="../../../../docs/components/cdsctl/environment/keys/list/"></a>
 
 		
 	
@@ -1170,7 +1350,7 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="list" href="https://ovh.github.io/cds/docs/components/cdsctl/environment/list/"></a>
+<a class="item" data-title="list" href="../../../../docs/components/cdsctl/environment/list/"></a>
 
 		
 	
@@ -1179,7 +1359,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="variable">
 	<div class="container">
 		
-		<a class="item" data-title="variable" href="https://ovh.github.io/cds/docs/components/cdsctl/environment/variable/"></a>
+		<a class="item" data-title="variable" href="../../../../docs/components/cdsctl/environment/variable/"></a>
 		
 		
 	
@@ -1188,31 +1368,31 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="add" href="https://ovh.github.io/cds/docs/components/cdsctl/environment/variable/add/"></a>
+<a class="item" data-title="add" href="../../../../docs/components/cdsctl/environment/variable/add/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="delete" href="https://ovh.github.io/cds/docs/components/cdsctl/environment/variable/delete/"></a>
+<a class="item" data-title="delete" href="../../../../docs/components/cdsctl/environment/variable/delete/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="list" href="https://ovh.github.io/cds/docs/components/cdsctl/environment/variable/list/"></a>
+<a class="item" data-title="list" href="../../../../docs/components/cdsctl/environment/variable/list/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="show" href="https://ovh.github.io/cds/docs/components/cdsctl/environment/variable/show/"></a>
+<a class="item" data-title="show" href="../../../../docs/components/cdsctl/environment/variable/show/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="update" href="https://ovh.github.io/cds/docs/components/cdsctl/environment/variable/update/"></a>
+<a class="item" data-title="update" href="../../../../docs/components/cdsctl/environment/variable/update/"></a>
 
 		
 	
@@ -1233,7 +1413,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="events">
 	<div class="container">
 		
-		<a class="item" data-title="events" href="https://ovh.github.io/cds/docs/components/cdsctl/events/"></a>
+		<a class="item" data-title="events" href="../../../../docs/components/cdsctl/events/"></a>
 		
 		
 	
@@ -1242,7 +1422,7 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="listen" href="https://ovh.github.io/cds/docs/components/cdsctl/events/listen/"></a>
+<a class="item" data-title="listen" href="../../../../docs/components/cdsctl/events/listen/"></a>
 
 		
 	
@@ -1257,7 +1437,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="group">
 	<div class="container">
 		
-		<a class="item" data-title="group" href="https://ovh.github.io/cds/docs/components/cdsctl/group/"></a>
+		<a class="item" data-title="group" href="../../../../docs/components/cdsctl/group/"></a>
 		
 		
 	
@@ -1266,25 +1446,25 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="create" href="https://ovh.github.io/cds/docs/components/cdsctl/group/create/"></a>
+<a class="item" data-title="create" href="../../../../docs/components/cdsctl/group/create/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="delete" href="https://ovh.github.io/cds/docs/components/cdsctl/group/delete/"></a>
+<a class="item" data-title="delete" href="../../../../docs/components/cdsctl/group/delete/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="grant" href="https://ovh.github.io/cds/docs/components/cdsctl/group/grant/"></a>
+<a class="item" data-title="grant" href="../../../../docs/components/cdsctl/group/grant/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="list" href="https://ovh.github.io/cds/docs/components/cdsctl/group/list/"></a>
+<a class="item" data-title="list" href="../../../../docs/components/cdsctl/group/list/"></a>
 
 		
 	
@@ -1293,7 +1473,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="member">
 	<div class="container">
 		
-		<a class="item" data-title="member" href="https://ovh.github.io/cds/docs/components/cdsctl/group/member/"></a>
+		<a class="item" data-title="member" href="../../../../docs/components/cdsctl/group/member/"></a>
 		
 		
 	
@@ -1302,19 +1482,19 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="add" href="https://ovh.github.io/cds/docs/components/cdsctl/group/member/add/"></a>
+<a class="item" data-title="add" href="../../../../docs/components/cdsctl/group/member/add/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="delete" href="https://ovh.github.io/cds/docs/components/cdsctl/group/member/delete/"></a>
+<a class="item" data-title="delete" href="../../../../docs/components/cdsctl/group/member/delete/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="list" href="https://ovh.github.io/cds/docs/components/cdsctl/group/member/list/"></a>
+<a class="item" data-title="list" href="../../../../docs/components/cdsctl/group/member/list/"></a>
 
 		
 	
@@ -1326,19 +1506,19 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="rename" href="https://ovh.github.io/cds/docs/components/cdsctl/group/rename/"></a>
+<a class="item" data-title="rename" href="../../../../docs/components/cdsctl/group/rename/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="revoke" href="https://ovh.github.io/cds/docs/components/cdsctl/group/revoke/"></a>
+<a class="item" data-title="revoke" href="../../../../docs/components/cdsctl/group/revoke/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="show" href="https://ovh.github.io/cds/docs/components/cdsctl/group/show/"></a>
+<a class="item" data-title="show" href="../../../../docs/components/cdsctl/group/show/"></a>
 
 		
 	
@@ -1353,7 +1533,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="health">
 	<div class="container">
 		
-		<a class="item" data-title="health" href="https://ovh.github.io/cds/docs/components/cdsctl/health/"></a>
+		<a class="item" data-title="health" href="../../../../docs/components/cdsctl/health/"></a>
 		
 		
 	
@@ -1362,13 +1542,13 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="dbmigrate" href="https://ovh.github.io/cds/docs/components/cdsctl/health/dbmigrate/"></a>
+<a class="item" data-title="dbmigrate" href="../../../../docs/components/cdsctl/health/dbmigrate/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="status" href="https://ovh.github.io/cds/docs/components/cdsctl/health/status/"></a>
+<a class="item" data-title="status" href="../../../../docs/components/cdsctl/health/status/"></a>
 
 		
 	
@@ -1380,7 +1560,7 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="login" href="https://ovh.github.io/cds/docs/components/cdsctl/login/"></a>
+<a class="item" data-title="login" href="../../../../docs/components/cdsctl/login/"></a>
 
 		
 	
@@ -1389,7 +1569,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="pipeline">
 	<div class="container">
 		
-		<a class="item" data-title="pipeline" href="https://ovh.github.io/cds/docs/components/cdsctl/pipeline/"></a>
+		<a class="item" data-title="pipeline" href="../../../../docs/components/cdsctl/pipeline/"></a>
 		
 		
 	
@@ -1398,31 +1578,31 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="delete" href="https://ovh.github.io/cds/docs/components/cdsctl/pipeline/delete/"></a>
+<a class="item" data-title="delete" href="../../../../docs/components/cdsctl/pipeline/delete/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="export" href="https://ovh.github.io/cds/docs/components/cdsctl/pipeline/export/"></a>
+<a class="item" data-title="export" href="../../../../docs/components/cdsctl/pipeline/export/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="import" href="https://ovh.github.io/cds/docs/components/cdsctl/pipeline/import/"></a>
+<a class="item" data-title="import" href="../../../../docs/components/cdsctl/pipeline/import/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="list" href="https://ovh.github.io/cds/docs/components/cdsctl/pipeline/list/"></a>
+<a class="item" data-title="list" href="../../../../docs/components/cdsctl/pipeline/list/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="usage" href="https://ovh.github.io/cds/docs/components/cdsctl/pipeline/usage/"></a>
+<a class="item" data-title="usage" href="../../../../docs/components/cdsctl/pipeline/usage/"></a>
 
 		
 	
@@ -1437,7 +1617,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="project">
 	<div class="container">
 		
-		<a class="item" data-title="project" href="https://ovh.github.io/cds/docs/components/cdsctl/project/"></a>
+		<a class="item" data-title="project" href="../../../../docs/components/cdsctl/project/"></a>
 		
 		
 	
@@ -1446,19 +1626,19 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="create" href="https://ovh.github.io/cds/docs/components/cdsctl/project/create/"></a>
+<a class="item" data-title="create" href="../../../../docs/components/cdsctl/project/create/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="delete" href="https://ovh.github.io/cds/docs/components/cdsctl/project/delete/"></a>
+<a class="item" data-title="delete" href="../../../../docs/components/cdsctl/project/delete/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="favorite" href="https://ovh.github.io/cds/docs/components/cdsctl/project/favorite/"></a>
+<a class="item" data-title="favorite" href="../../../../docs/components/cdsctl/project/favorite/"></a>
 
 		
 	
@@ -1467,7 +1647,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="group">
 	<div class="container">
 		
-		<a class="item" data-title="group" href="https://ovh.github.io/cds/docs/components/cdsctl/project/group/"></a>
+		<a class="item" data-title="group" href="../../../../docs/components/cdsctl/project/group/"></a>
 		
 		
 	
@@ -1476,7 +1656,7 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="import" href="https://ovh.github.io/cds/docs/components/cdsctl/project/group/import/"></a>
+<a class="item" data-title="import" href="../../../../docs/components/cdsctl/project/group/import/"></a>
 
 		
 	
@@ -1491,7 +1671,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="integration">
 	<div class="container">
 		
-		<a class="item" data-title="integration" href="https://ovh.github.io/cds/docs/components/cdsctl/project/integration/"></a>
+		<a class="item" data-title="integration" href="../../../../docs/components/cdsctl/project/integration/"></a>
 		
 		
 	
@@ -1500,25 +1680,25 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="delete" href="https://ovh.github.io/cds/docs/components/cdsctl/project/integration/delete/"></a>
+<a class="item" data-title="delete" href="../../../../docs/components/cdsctl/project/integration/delete/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="export" href="https://ovh.github.io/cds/docs/components/cdsctl/project/integration/export/"></a>
+<a class="item" data-title="export" href="../../../../docs/components/cdsctl/project/integration/export/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="import" href="https://ovh.github.io/cds/docs/components/cdsctl/project/integration/import/"></a>
+<a class="item" data-title="import" href="../../../../docs/components/cdsctl/project/integration/import/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="list" href="https://ovh.github.io/cds/docs/components/cdsctl/project/integration/list/"></a>
+<a class="item" data-title="list" href="../../../../docs/components/cdsctl/project/integration/list/"></a>
 
 		
 	
@@ -1533,7 +1713,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="keys">
 	<div class="container">
 		
-		<a class="item" data-title="keys" href="https://ovh.github.io/cds/docs/components/cdsctl/project/keys/"></a>
+		<a class="item" data-title="keys" href="../../../../docs/components/cdsctl/project/keys/"></a>
 		
 		
 	
@@ -1542,19 +1722,19 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="add" href="https://ovh.github.io/cds/docs/components/cdsctl/project/keys/add/"></a>
+<a class="item" data-title="add" href="../../../../docs/components/cdsctl/project/keys/add/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="delete" href="https://ovh.github.io/cds/docs/components/cdsctl/project/keys/delete/"></a>
+<a class="item" data-title="delete" href="../../../../docs/components/cdsctl/project/keys/delete/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="list" href="https://ovh.github.io/cds/docs/components/cdsctl/project/keys/list/"></a>
+<a class="item" data-title="list" href="../../../../docs/components/cdsctl/project/keys/list/"></a>
 
 		
 	
@@ -1566,7 +1746,7 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="list" href="https://ovh.github.io/cds/docs/components/cdsctl/project/list/"></a>
+<a class="item" data-title="list" href="../../../../docs/components/cdsctl/project/list/"></a>
 
 		
 	
@@ -1575,7 +1755,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="repository-manager">
 	<div class="container">
 		
-		<a class="item" data-title="repository-manager" href="https://ovh.github.io/cds/docs/components/cdsctl/project/repository-manager/"></a>
+		<a class="item" data-title="repository-manager" href="../../../../docs/components/cdsctl/project/repository-manager/"></a>
 		
 		
 	
@@ -1584,13 +1764,13 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="delete" href="https://ovh.github.io/cds/docs/components/cdsctl/project/repository-manager/delete/"></a>
+<a class="item" data-title="delete" href="../../../../docs/components/cdsctl/project/repository-manager/delete/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="list" href="https://ovh.github.io/cds/docs/components/cdsctl/project/repository-manager/list/"></a>
+<a class="item" data-title="list" href="../../../../docs/components/cdsctl/project/repository-manager/list/"></a>
 
 		
 	
@@ -1602,7 +1782,7 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="show" href="https://ovh.github.io/cds/docs/components/cdsctl/project/show/"></a>
+<a class="item" data-title="show" href="../../../../docs/components/cdsctl/project/show/"></a>
 
 		
 	
@@ -1611,7 +1791,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="variable">
 	<div class="container">
 		
-		<a class="item" data-title="variable" href="https://ovh.github.io/cds/docs/components/cdsctl/project/variable/"></a>
+		<a class="item" data-title="variable" href="../../../../docs/components/cdsctl/project/variable/"></a>
 		
 		
 	
@@ -1620,31 +1800,31 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="add" href="https://ovh.github.io/cds/docs/components/cdsctl/project/variable/add/"></a>
+<a class="item" data-title="add" href="../../../../docs/components/cdsctl/project/variable/add/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="delete" href="https://ovh.github.io/cds/docs/components/cdsctl/project/variable/delete/"></a>
+<a class="item" data-title="delete" href="../../../../docs/components/cdsctl/project/variable/delete/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="list" href="https://ovh.github.io/cds/docs/components/cdsctl/project/variable/list/"></a>
+<a class="item" data-title="list" href="../../../../docs/components/cdsctl/project/variable/list/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="show" href="https://ovh.github.io/cds/docs/components/cdsctl/project/variable/show/"></a>
+<a class="item" data-title="show" href="../../../../docs/components/cdsctl/project/variable/show/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="update" href="https://ovh.github.io/cds/docs/components/cdsctl/project/variable/update/"></a>
+<a class="item" data-title="update" href="../../../../docs/components/cdsctl/project/variable/update/"></a>
 
 		
 	
@@ -1665,7 +1845,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="queue">
 	<div class="container">
 		
-		<a class="item" data-title="queue" href="https://ovh.github.io/cds/docs/components/cdsctl/queue/"></a>
+		<a class="item" data-title="queue" href="../../../../docs/components/cdsctl/queue/"></a>
 		
 		
 	
@@ -1674,7 +1854,13 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="interactive" href="https://ovh.github.io/cds/docs/components/cdsctl/queue/interactive/"></a>
+<a class="item" data-title="interactive" href="../../../../docs/components/cdsctl/queue/interactive/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="stopall" href="../../../../docs/components/cdsctl/queue/stopall/"></a>
 
 		
 	
@@ -1689,7 +1875,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="reset-password">
 	<div class="container">
 		
-		<a class="item" data-title="reset-password" href="https://ovh.github.io/cds/docs/components/cdsctl/reset-password/"></a>
+		<a class="item" data-title="reset-password" href="../../../../docs/components/cdsctl/reset-password/"></a>
 		
 		
 	
@@ -1698,7 +1884,7 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="confirm" href="https://ovh.github.io/cds/docs/components/cdsctl/reset-password/confirm/"></a>
+<a class="item" data-title="confirm" href="../../../../docs/components/cdsctl/reset-password/confirm/"></a>
 
 		
 	
@@ -1713,7 +1899,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="session">
 	<div class="container">
 		
-		<a class="item" data-title="session" href="https://ovh.github.io/cds/docs/components/cdsctl/session/"></a>
+		<a class="item" data-title="session" href="../../../../docs/components/cdsctl/session/"></a>
 		
 		
 	
@@ -1722,13 +1908,13 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="delete" href="https://ovh.github.io/cds/docs/components/cdsctl/session/delete/"></a>
+<a class="item" data-title="delete" href="../../../../docs/components/cdsctl/session/delete/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="list" href="https://ovh.github.io/cds/docs/components/cdsctl/session/list/"></a>
+<a class="item" data-title="list" href="../../../../docs/components/cdsctl/session/list/"></a>
 
 		
 	
@@ -1740,7 +1926,7 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="shell" href="https://ovh.github.io/cds/docs/components/cdsctl/shell/"></a>
+<a class="item" data-title="shell" href="../../../../docs/components/cdsctl/shell/"></a>
 
 		
 	
@@ -1749,7 +1935,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="signup">
 	<div class="container">
 		
-		<a class="item" data-title="signup" href="https://ovh.github.io/cds/docs/components/cdsctl/signup/"></a>
+		<a class="item" data-title="signup" href="../../../../docs/components/cdsctl/signup/"></a>
 		
 		
 	
@@ -1758,7 +1944,7 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="verify" href="https://ovh.github.io/cds/docs/components/cdsctl/signup/verify/"></a>
+<a class="item" data-title="verify" href="../../../../docs/components/cdsctl/signup/verify/"></a>
 
 		
 	
@@ -1773,7 +1959,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="template">
 	<div class="container">
 		
-		<a class="item" data-title="template" href="https://ovh.github.io/cds/docs/components/cdsctl/template/"></a>
+		<a class="item" data-title="template" href="../../../../docs/components/cdsctl/template/"></a>
 		
 		
 	
@@ -1782,49 +1968,67 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="apply" href="https://ovh.github.io/cds/docs/components/cdsctl/template/apply/"></a>
+<a class="item" data-title="apply" href="../../../../docs/components/cdsctl/template/apply/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="bulk" href="https://ovh.github.io/cds/docs/components/cdsctl/template/bulk/"></a>
+<a class="item" data-title="bulk" href="../../../../docs/components/cdsctl/template/bulk/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="delete" href="https://ovh.github.io/cds/docs/components/cdsctl/template/delete/"></a>
+<a class="item" data-title="delete" href="../../../../docs/components/cdsctl/template/delete/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="detach" href="https://ovh.github.io/cds/docs/components/cdsctl/template/detach/"></a>
+<a class="item" data-title="detach" href="../../../../docs/components/cdsctl/template/detach/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="instances" href="https://ovh.github.io/cds/docs/components/cdsctl/template/instances/"></a>
+<div class="item" data-title="instances">
+	<div class="container">
+		
+		<a class="item" data-title="instances" href="../../../../docs/components/cdsctl/template/instances/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="export" href="../../../../docs/components/cdsctl/template/instances/export/"></a>
+
+		
+	
+
+	</div>
+</div>
 
 		
 	
 		
 			
-<a class="item" data-title="list" href="https://ovh.github.io/cds/docs/components/cdsctl/template/list/"></a>
+<a class="item" data-title="list" href="../../../../docs/components/cdsctl/template/list/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="pull" href="https://ovh.github.io/cds/docs/components/cdsctl/template/pull/"></a>
+<a class="item" data-title="pull" href="../../../../docs/components/cdsctl/template/pull/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="push" href="https://ovh.github.io/cds/docs/components/cdsctl/template/push/"></a>
+<a class="item" data-title="push" href="../../../../docs/components/cdsctl/template/push/"></a>
 
 		
 	
@@ -1839,7 +2043,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="tools">
 	<div class="container">
 		
-		<a class="item" data-title="tools" href="https://ovh.github.io/cds/docs/components/cdsctl/tools/"></a>
+		<a class="item" data-title="tools" href="../../../../docs/components/cdsctl/tools/"></a>
 		
 		
 	
@@ -1848,7 +2052,7 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="yaml-schema" href="https://ovh.github.io/cds/docs/components/cdsctl/tools/yaml-schema/"></a>
+<a class="item" data-title="yaml-schema" href="../../../../docs/components/cdsctl/tools/yaml-schema/"></a>
 
 		
 	
@@ -1860,7 +2064,7 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="update" href="https://ovh.github.io/cds/docs/components/cdsctl/update/"></a>
+<a class="item" data-title="update" href="../../../../docs/components/cdsctl/update/"></a>
 
 		
 	
@@ -1869,7 +2073,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="user">
 	<div class="container">
 		
-		<a class="item" data-title="user" href="https://ovh.github.io/cds/docs/components/cdsctl/user/"></a>
+		<a class="item" data-title="user" href="../../../../docs/components/cdsctl/user/"></a>
 		
 		
 	
@@ -1878,25 +2082,25 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="favorite" href="https://ovh.github.io/cds/docs/components/cdsctl/user/favorite/"></a>
+<a class="item" data-title="favorite" href="../../../../docs/components/cdsctl/user/favorite/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="list" href="https://ovh.github.io/cds/docs/components/cdsctl/user/list/"></a>
+<a class="item" data-title="list" href="../../../../docs/components/cdsctl/user/list/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="me" href="https://ovh.github.io/cds/docs/components/cdsctl/user/me/"></a>
+<a class="item" data-title="me" href="../../../../docs/components/cdsctl/user/me/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="show" href="https://ovh.github.io/cds/docs/components/cdsctl/user/show/"></a>
+<a class="item" data-title="show" href="../../../../docs/components/cdsctl/user/show/"></a>
 
 		
 	
@@ -1908,7 +2112,7 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="version" href="https://ovh.github.io/cds/docs/components/cdsctl/version/"></a>
+<a class="item" data-title="version" href="../../../../docs/components/cdsctl/version/"></a>
 
 		
 	
@@ -1917,7 +2121,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="worker">
 	<div class="container">
 		
-		<a class="item" data-title="worker" href="https://ovh.github.io/cds/docs/components/cdsctl/worker/"></a>
+		<a class="item" data-title="worker" href="../../../../docs/components/cdsctl/worker/"></a>
 		
 		
 	
@@ -1926,13 +2130,13 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="disable" href="https://ovh.github.io/cds/docs/components/cdsctl/worker/disable/"></a>
+<a class="item" data-title="disable" href="../../../../docs/components/cdsctl/worker/disable/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="list" href="https://ovh.github.io/cds/docs/components/cdsctl/worker/list/"></a>
+<a class="item" data-title="list" href="../../../../docs/components/cdsctl/worker/list/"></a>
 
 		
 	
@@ -1941,7 +2145,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="model">
 	<div class="container">
 		
-		<a class="item" data-title="model" href="https://ovh.github.io/cds/docs/components/cdsctl/worker/model/"></a>
+		<a class="item" data-title="model" href="../../../../docs/components/cdsctl/worker/model/"></a>
 		
 		
 	
@@ -1950,31 +2154,31 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="delete" href="https://ovh.github.io/cds/docs/components/cdsctl/worker/model/delete/"></a>
+<a class="item" data-title="delete" href="../../../../docs/components/cdsctl/worker/model/delete/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="export" href="https://ovh.github.io/cds/docs/components/cdsctl/worker/model/export/"></a>
+<a class="item" data-title="export" href="../../../../docs/components/cdsctl/worker/model/export/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="import" href="https://ovh.github.io/cds/docs/components/cdsctl/worker/model/import/"></a>
+<a class="item" data-title="import" href="../../../../docs/components/cdsctl/worker/model/import/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="list" href="https://ovh.github.io/cds/docs/components/cdsctl/worker/model/list/"></a>
+<a class="item" data-title="list" href="../../../../docs/components/cdsctl/worker/model/list/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="show" href="https://ovh.github.io/cds/docs/components/cdsctl/worker/model/show/"></a>
+<a class="item" data-title="show" href="../../../../docs/components/cdsctl/worker/model/show/"></a>
 
 		
 	
@@ -1995,7 +2199,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="workflow">
 	<div class="container">
 		
-		<a class="item" data-title="workflow" href="https://ovh.github.io/cds/docs/components/cdsctl/workflow/"></a>
+		<a class="item" data-title="workflow" href="../../../../docs/components/cdsctl/workflow/"></a>
 		
 		
 	
@@ -2007,7 +2211,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="advanced">
 	<div class="container">
 		
-		<a class="item" data-title="advanced" href="https://ovh.github.io/cds/docs/components/cdsctl/workflow/advanced/"></a>
+		<a class="item" data-title="advanced" href="../../../../docs/components/cdsctl/workflow/advanced/"></a>
 		
 		
 	
@@ -2016,7 +2220,7 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="delete" href="https://ovh.github.io/cds/docs/components/cdsctl/workflow/advanced/delete/"></a>
+<a class="item" data-title="delete" href="../../../../docs/components/cdsctl/workflow/advanced/delete/"></a>
 
 		
 	
@@ -2025,7 +2229,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="number">
 	<div class="container">
 		
-		<a class="item" data-title="number" href="https://ovh.github.io/cds/docs/components/cdsctl/workflow/advanced/number/"></a>
+		<a class="item" data-title="number" href="../../../../docs/components/cdsctl/workflow/advanced/number/"></a>
 		
 		
 	
@@ -2034,13 +2238,13 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="set" href="https://ovh.github.io/cds/docs/components/cdsctl/workflow/advanced/number/set/"></a>
+<a class="item" data-title="set" href="../../../../docs/components/cdsctl/workflow/advanced/number/set/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="show" href="https://ovh.github.io/cds/docs/components/cdsctl/workflow/advanced/number/show/"></a>
+<a class="item" data-title="show" href="../../../../docs/components/cdsctl/workflow/advanced/number/show/"></a>
 
 		
 	
@@ -2058,7 +2262,7 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="applyTemplate" href="https://ovh.github.io/cds/docs/components/cdsctl/workflow/applytemplate/"></a>
+<a class="item" data-title="applyTemplate" href="../../../../docs/components/cdsctl/workflow/applytemplate/"></a>
 
 		
 	
@@ -2067,7 +2271,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="artifact">
 	<div class="container">
 		
-		<a class="item" data-title="artifact" href="https://ovh.github.io/cds/docs/components/cdsctl/workflow/artifact/"></a>
+		<a class="item" data-title="artifact" href="../../../../docs/components/cdsctl/workflow/artifact/"></a>
 		
 		
 	
@@ -2076,13 +2280,13 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="download" href="https://ovh.github.io/cds/docs/components/cdsctl/workflow/artifact/download/"></a>
+<a class="item" data-title="download" href="../../../../docs/components/cdsctl/workflow/artifact/download/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="list" href="https://ovh.github.io/cds/docs/components/cdsctl/workflow/artifact/list/"></a>
+<a class="item" data-title="list" href="../../../../docs/components/cdsctl/workflow/artifact/list/"></a>
 
 		
 	
@@ -2094,37 +2298,37 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="ascode" href="https://ovh.github.io/cds/docs/components/cdsctl/workflow/ascode/"></a>
+<a class="item" data-title="ascode" href="../../../../docs/components/cdsctl/workflow/ascode/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="export" href="https://ovh.github.io/cds/docs/components/cdsctl/workflow/export/"></a>
+<a class="item" data-title="export" href="../../../../docs/components/cdsctl/workflow/export/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="favorite" href="https://ovh.github.io/cds/docs/components/cdsctl/workflow/favorite/"></a>
+<a class="item" data-title="favorite" href="../../../../docs/components/cdsctl/workflow/favorite/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="history" href="https://ovh.github.io/cds/docs/components/cdsctl/workflow/history/"></a>
+<a class="item" data-title="history" href="../../../../docs/components/cdsctl/workflow/history/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="import" href="https://ovh.github.io/cds/docs/components/cdsctl/workflow/import/"></a>
+<a class="item" data-title="import" href="../../../../docs/components/cdsctl/workflow/import/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="init" href="https://ovh.github.io/cds/docs/components/cdsctl/workflow/init/"></a>
+<a class="item" data-title="init" href="../../../../docs/components/cdsctl/workflow/init/"></a>
 
 		
 	
@@ -2133,7 +2337,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="label">
 	<div class="container">
 		
-		<a class="item" data-title="label" href="https://ovh.github.io/cds/docs/components/cdsctl/workflow/label/"></a>
+		<a class="item" data-title="label" href="../../../../docs/components/cdsctl/workflow/label/"></a>
 		
 		
 	
@@ -2142,19 +2346,19 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="add" href="https://ovh.github.io/cds/docs/components/cdsctl/workflow/label/add/"></a>
+<a class="item" data-title="add" href="../../../../docs/components/cdsctl/workflow/label/add/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="delete" href="https://ovh.github.io/cds/docs/components/cdsctl/workflow/label/delete/"></a>
+<a class="item" data-title="delete" href="../../../../docs/components/cdsctl/workflow/label/delete/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="list" href="https://ovh.github.io/cds/docs/components/cdsctl/workflow/label/list/"></a>
+<a class="item" data-title="list" href="../../../../docs/components/cdsctl/workflow/label/list/"></a>
 
 		
 	
@@ -2166,7 +2370,7 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="list" href="https://ovh.github.io/cds/docs/components/cdsctl/workflow/list/"></a>
+<a class="item" data-title="list" href="../../../../docs/components/cdsctl/workflow/list/"></a>
 
 		
 	
@@ -2175,7 +2379,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="logs">
 	<div class="container">
 		
-		<a class="item" data-title="logs" href="https://ovh.github.io/cds/docs/components/cdsctl/workflow/logs/"></a>
+		<a class="item" data-title="logs" href="../../../../docs/components/cdsctl/workflow/logs/"></a>
 		
 		
 	
@@ -2184,13 +2388,19 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="download" href="https://ovh.github.io/cds/docs/components/cdsctl/workflow/logs/download/"></a>
+<a class="item" data-title="download" href="../../../../docs/components/cdsctl/workflow/logs/download/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="list" href="https://ovh.github.io/cds/docs/components/cdsctl/workflow/logs/list/"></a>
+<a class="item" data-title="list" href="../../../../docs/components/cdsctl/workflow/logs/list/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="stream" href="../../../../docs/components/cdsctl/workflow/logs/stream/"></a>
 
 		
 	
@@ -2202,37 +2412,37 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="pull" href="https://ovh.github.io/cds/docs/components/cdsctl/workflow/pull/"></a>
+<a class="item" data-title="pull" href="../../../../docs/components/cdsctl/workflow/pull/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="push" href="https://ovh.github.io/cds/docs/components/cdsctl/workflow/push/"></a>
+<a class="item" data-title="push" href="../../../../docs/components/cdsctl/workflow/push/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="run" href="https://ovh.github.io/cds/docs/components/cdsctl/workflow/run/"></a>
+<a class="item" data-title="run" href="../../../../docs/components/cdsctl/workflow/run/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="show" href="https://ovh.github.io/cds/docs/components/cdsctl/workflow/show/"></a>
+<a class="item" data-title="show" href="../../../../docs/components/cdsctl/workflow/show/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="status" href="https://ovh.github.io/cds/docs/components/cdsctl/workflow/status/"></a>
+<a class="item" data-title="status" href="../../../../docs/components/cdsctl/workflow/status/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="stop" href="https://ovh.github.io/cds/docs/components/cdsctl/workflow/stop/"></a>
+<a class="item" data-title="stop" href="../../../../docs/components/cdsctl/workflow/stop/"></a>
 
 		
 	
@@ -2253,7 +2463,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="engine">
 	<div class="container">
 		
-		<a class="item" data-title="engine" href="https://ovh.github.io/cds/docs/components/engine/"></a>
+		<a class="item" data-title="engine" href="../../../../docs/components/engine/"></a>
 		
 		
 	
@@ -2265,7 +2475,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="config">
 	<div class="container">
 		
-		<a class="item" data-title="config" href="https://ovh.github.io/cds/docs/components/engine/config/"></a>
+		<a class="item" data-title="config" href="../../../../docs/components/engine/config/"></a>
 		
 		
 	
@@ -2274,31 +2484,31 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="check" href="https://ovh.github.io/cds/docs/components/engine/config/check/"></a>
+<a class="item" data-title="check" href="../../../../docs/components/engine/config/check/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="edit" href="https://ovh.github.io/cds/docs/components/engine/config/edit/"></a>
+<a class="item" data-title="edit" href="../../../../docs/components/engine/config/edit/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="init-token" href="https://ovh.github.io/cds/docs/components/engine/config/init-token/"></a>
+<a class="item" data-title="init-token" href="../../../../docs/components/engine/config/init-token/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="new" href="https://ovh.github.io/cds/docs/components/engine/config/new/"></a>
+<a class="item" data-title="new" href="../../../../docs/components/engine/config/new/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="regen" href="https://ovh.github.io/cds/docs/components/engine/config/regen/"></a>
+<a class="item" data-title="regen" href="../../../../docs/components/engine/config/regen/"></a>
 
 		
 	
@@ -2313,7 +2523,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="database">
 	<div class="container">
 		
-		<a class="item" data-title="database" href="https://ovh.github.io/cds/docs/components/engine/database/"></a>
+		<a class="item" data-title="database" href="../../../../docs/components/engine/database/"></a>
 		
 		
 	
@@ -2322,19 +2532,19 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="downgrade" href="https://ovh.github.io/cds/docs/components/engine/database/downgrade/"></a>
+<a class="item" data-title="downgrade" href="../../../../docs/components/engine/database/downgrade/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="status" href="https://ovh.github.io/cds/docs/components/engine/database/status/"></a>
+<a class="item" data-title="status" href="../../../../docs/components/engine/database/status/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="upgrade" href="https://ovh.github.io/cds/docs/components/engine/database/upgrade/"></a>
+<a class="item" data-title="upgrade" href="../../../../docs/components/engine/database/upgrade/"></a>
 
 		
 	
@@ -2349,7 +2559,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="download">
 	<div class="container">
 		
-		<a class="item" data-title="download" href="https://ovh.github.io/cds/docs/components/engine/download/"></a>
+		<a class="item" data-title="download" href="../../../../docs/components/engine/download/"></a>
 		
 		
 	
@@ -2358,19 +2568,19 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="sql" href="https://ovh.github.io/cds/docs/components/engine/download/sql/"></a>
+<a class="item" data-title="sql" href="../../../../docs/components/engine/download/sql/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="ui" href="https://ovh.github.io/cds/docs/components/engine/download/ui/"></a>
+<a class="item" data-title="ui" href="../../../../docs/components/engine/download/ui/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="workers" href="https://ovh.github.io/cds/docs/components/engine/download/workers/"></a>
+<a class="item" data-title="workers" href="../../../../docs/components/engine/download/workers/"></a>
 
 		
 	
@@ -2382,25 +2592,25 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="start" href="https://ovh.github.io/cds/docs/components/engine/start/"></a>
+<a class="item" data-title="start" href="../../../../docs/components/engine/start/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="update" href="https://ovh.github.io/cds/docs/components/engine/update/"></a>
+<a class="item" data-title="update" href="../../../../docs/components/engine/update/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="uptodate" href="https://ovh.github.io/cds/docs/components/engine/uptodate/"></a>
+<a class="item" data-title="uptodate" href="../../../../docs/components/engine/uptodate/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="version" href="https://ovh.github.io/cds/docs/components/engine/version/"></a>
+<a class="item" data-title="version" href="../../../../docs/components/engine/version/"></a>
 
 		
 	
@@ -2415,7 +2625,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="worker">
 	<div class="container">
 		
-		<a class="item" data-title="worker" href="https://ovh.github.io/cds/docs/components/worker/"></a>
+		<a class="item" data-title="worker" href="../../../../docs/components/worker/"></a>
 		
 		
 	
@@ -2424,7 +2634,7 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="artifacts" href="https://ovh.github.io/cds/docs/components/worker/artifacts/"></a>
+<a class="item" data-title="artifacts" href="../../../../docs/components/worker/artifacts/"></a>
 
 		
 	
@@ -2433,7 +2643,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="cache">
 	<div class="container">
 		
-		<a class="item" data-title="cache" href="https://ovh.github.io/cds/docs/components/worker/cache/"></a>
+		<a class="item" data-title="cache" href="../../../../docs/components/worker/cache/"></a>
 		
 		
 	
@@ -2442,13 +2652,13 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="pull" href="https://ovh.github.io/cds/docs/components/worker/cache/pull/"></a>
+<a class="item" data-title="pull" href="../../../../docs/components/worker/cache/pull/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="push" href="https://ovh.github.io/cds/docs/components/worker/cache/push/"></a>
+<a class="item" data-title="push" href="../../../../docs/components/worker/cache/push/"></a>
 
 		
 	
@@ -2460,31 +2670,31 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="check-secret" href="https://ovh.github.io/cds/docs/components/worker/check-secret/"></a>
+<a class="item" data-title="check-secret" href="../../../../docs/components/worker/check-secret/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="download" href="https://ovh.github.io/cds/docs/components/worker/download/"></a>
+<a class="item" data-title="download" href="../../../../docs/components/worker/download/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="exit" href="https://ovh.github.io/cds/docs/components/worker/exit/"></a>
+<a class="item" data-title="exit" href="../../../../docs/components/worker/exit/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="export" href="https://ovh.github.io/cds/docs/components/worker/export/"></a>
+<a class="item" data-title="export" href="../../../../docs/components/worker/export/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="junit-parser" href="https://ovh.github.io/cds/docs/components/worker/junit-parser/"></a>
+<a class="item" data-title="junit-parser" href="../../../../docs/components/worker/junit-parser/"></a>
 
 		
 	
@@ -2493,7 +2703,7 @@ Update your hatchery from CDS API:
 <div class="item" data-title="key">
 	<div class="container">
 		
-		<a class="item" data-title="key" href="https://ovh.github.io/cds/docs/components/worker/key/"></a>
+		<a class="item" data-title="key" href="../../../../docs/components/worker/key/"></a>
 		
 		
 	
@@ -2502,7 +2712,7 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="install" href="https://ovh.github.io/cds/docs/components/worker/key/install/"></a>
+<a class="item" data-title="install" href="../../../../docs/components/worker/key/install/"></a>
 
 		
 	
@@ -2514,25 +2724,31 @@ Update your hatchery from CDS API:
 	
 		
 			
-<a class="item" data-title="tag" href="https://ovh.github.io/cds/docs/components/worker/tag/"></a>
+<a class="item" data-title="set-version" href="../../../../docs/components/worker/set-version/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="tmpl" href="https://ovh.github.io/cds/docs/components/worker/tmpl/"></a>
+<a class="item" data-title="tag" href="../../../../docs/components/worker/tag/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="upload" href="https://ovh.github.io/cds/docs/components/worker/upload/"></a>
+<a class="item" data-title="tmpl" href="../../../../docs/components/worker/tmpl/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="version" href="https://ovh.github.io/cds/docs/components/worker/version/"></a>
+<a class="item" data-title="upload" href="../../../../docs/components/worker/upload/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="version" href="../../../../docs/components/worker/version/"></a>
 
 		
 	
@@ -2558,20 +2774,14 @@ Update your hatchery from CDS API:
 
 
 
-
+<nav id="TableOfContents"></nav>
 
 <p>If you run manually a Hatchery, you probably want to update it when CDS Engine is updated with a new release.</p>
-
 <p>Update your hatchery from CDS API:</p>
-
-<pre><code class="language-bash">./engine update --api https://your.cds.instance
-</code></pre>
-
-<p>Update your hatchery from latest Release from GitHub:</p>
-
-<pre><code class="language-bash">./engine update --from-github
-</code></pre>
-
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">./engine update --api https://your.cds.instance
+</code></pre></div><p>Update your hatchery from latest Release from GitHub:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">./engine update --from-github
+</code></pre></div>
 
 
 

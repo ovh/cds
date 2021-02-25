@@ -4,72 +4,70 @@
 	<meta charset="utf-8">
 <title>Gerrit Repository Manager - CDS - Continuous Delivery Service</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="shortcut icon" type="image/png" href="https://ovh.github.io/cds/images/favicon.png">
+<link rel="shortcut icon" type="image/png" href="../../../images/favicon.png">
 
 
 
 
-<link rel="stylesheet" href="https://ovh.github.io/cds/sass/styles.css" integrity="" media="screen">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/callouts.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/auto-complete.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/fontawesome.min.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/asciinema-player.css">
-<link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
+<link rel="stylesheet" href="../../../sass/styles.css" integrity="" media="screen">
+<link rel="stylesheet" href="../../../css/callouts.css">
+<link rel="stylesheet" href="../../../css/auto-complete.css">
+<link rel="stylesheet" href="../../../css/fontawesome.min.css">
+<link rel="stylesheet" href="../../../css/asciinema-player.css">
+<link rel="stylesheet" href="../../../css/solarized-light.css">
 
 <meta name="description"
     content="The Gerrit Repository Manager integration have to be configured on your CDS by a CDS Administrator.
 This integration allows you to link a Git Repository hosted by Gerrit to a CDS application.
 This integration enables some features:
- Gerrit Hooks Easy to use action CheckoutApplication and GitClone for advanced usage Send comments on your Pull-Requests when a workflow is failed Add a vote -1/&#43;1 on a change  How to configure Gerrit integration You will have to create 2 users on gerrit: [How to]">
+ Gerrit Hooks Easy to use action CheckoutApplication and GitClone for advanced usage Send comments on your Pull-Requests when a workflow is failed Add a vote -1/&#43;1 on a change  How to configure Gerrit integration You will have to create 2 users on gerrit: [How to] An Administrator User ( with SSH KEY ), to get event from Gerrit Server An User on gerrit ( with httpPassword ), to comment changes with workflow result  Complete CDS Configuration File [vcs.">
 <meta property="og:description"
     content="The Gerrit Repository Manager integration have to be configured on your CDS by a CDS Administrator.
 This integration allows you to link a Git Repository hosted by Gerrit to a CDS application.
 This integration enables some features:
- Gerrit Hooks Easy to use action CheckoutApplication and GitClone for advanced usage Send comments on your Pull-Requests when a workflow is failed Add a vote -1/&#43;1 on a change  How to configure Gerrit integration You will have to create 2 users on gerrit: [How to]">
+ Gerrit Hooks Easy to use action CheckoutApplication and GitClone for advanced usage Send comments on your Pull-Requests when a workflow is failed Add a vote -1/&#43;1 on a change  How to configure Gerrit integration You will have to create 2 users on gerrit: [How to] An Administrator User ( with SSH KEY ), to get event from Gerrit Server An User on gerrit ( with httpPassword ), to comment changes with workflow result  Complete CDS Configuration File [vcs.">
 <meta name="twitter:description"
     content="The Gerrit Repository Manager integration have to be configured on your CDS by a CDS Administrator.
 This integration allows you to link a Git Repository hosted by Gerrit to a CDS application.
 This integration enables some features:
- Gerrit Hooks Easy to use action CheckoutApplication and GitClone for advanced usage Send comments on your Pull-Requests when a workflow is failed Add a vote -1/&#43;1 on a change  How to configure Gerrit integration You will have to create 2 users on gerrit: [How to]">
-<meta property="og:url" content="https://ovh.github.io/cds/docs/integrations/gerrit/">
+ Gerrit Hooks Easy to use action CheckoutApplication and GitClone for advanced usage Send comments on your Pull-Requests when a workflow is failed Add a vote -1/&#43;1 on a change  How to configure Gerrit integration You will have to create 2 users on gerrit: [How to] An Administrator User ( with SSH KEY ), to get event from Gerrit Server An User on gerrit ( with httpPassword ), to comment changes with workflow result  Complete CDS Configuration File [vcs.">
+<meta property="og:url" content="/docs/integrations/gerrit/">
 <meta property="og:title" content="Gerrit Repository Manager">
 <meta name="twitter:title" content="Gerrit Repository Manager">
 <meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
 <meta property="og:image" content="/images/cds-transparent.png">
-<script type="text/javascript" src="https://ovh.github.io/cds/js/anchor-4.1.1.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-3.2.1.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-ui-1.12.1.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/bootstrap-3.3.7.min.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/highlight.pack.js"></script>
+<script type="text/javascript" src="../../../js/anchor-4.1.1.min.js"></script>
+<script type="text/javascript" src="../../../js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="../../../js/jquery-ui-1.12.1.min.js"></script>
+<script type="text/javascript" src="../../../js/bootstrap-3.3.7.min.js"></script>
+<script type="text/javascript" src="../../../js/highlight.pack.js"></script>
 <script>
     hljs.initHighlightingOnLoad();
 
 </script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/script.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/lunr.min.js"></script>
-<script type="text/javascript">
-    var baseurl = "https:\/\/ovh.github.io\/cds";
+<script type="text/javascript" src="../../../js/script.js"></script>
+<script type="text/javascript" src="../../../js/lunr.min.js"></script>
+<a id="indexJSON" href="../../../index.json"></a>
 
-</script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/auto-complete.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/search.js"></script>
-<script type="text/javascript" src="https://ovh.github.io/cds/js/asciinema-player.js"></script>
+<script type="text/javascript" src="../../../js/auto-complete.js"></script>
+<script type="text/javascript" src="../../../js/search.js"></script>
+<script type="text/javascript" src="../../../js/asciinema-player.js"></script>
 
 	</head>
 	<body>
 		<section id="hero" class="light-text no-sub">
-			<a href="https://ovh.github.io/cds/" class="logo"></a>
+			<a href="../../../" class="logo"></a>
 				<i id="tocburger" class="fa fa-bars" onclick='$("#toc").toggle()'></i><div class="nav-buttons" data-auto-burger="primary">
 				<ul class="global-nav">
 					
 					
-					<li><a href="https://ovh.github.io/cds/docs/" class="active">Documentation</a></li>
+					<li><a href="../../../docs/" class="active">Documentation</a></li>
 					
-					<li><a href="https://ovh.github.io/cds/hosting/">Hosting your own instance</a></li>
+					<li><a href="../../../hosting/">Hosting your own instance</a></li>
 					
-					<li><a href="https://ovh.github.io/cds/development/">CDS Developer Manual</a></li>
+					<li><a href="../../../development/">CDS Developer Manual</a></li>
 					
-					<li><a href="https://ovh.github.io/cds/about/">About</a></li>
+					<li><a href="../../../about/">About</a></li>
 					
 					<li><i class="fa fa-search" onclick='$("#searchbox").toggle(); $("#search-query").focus().select()'></i></li>
 					<li>
@@ -99,23 +97,23 @@ This integration enables some features:
 			
 			
 			
-			<li><a href="https://ovh.github.io/cds/docs/">Home</a></li>
+			<li><a href="../../../docs/">Home</a></li>
 			
 			
 				
-				<li><a href="https://ovh.github.io/cds/docs/concepts/">Concepts</a></li>
+				<li><a href="../../../docs/concepts/">Concepts</a></li>
 			
 				
-				<li><a href="https://ovh.github.io/cds/docs/actions/">Actions</a></li>
+				<li><a href="../../../docs/actions/">Actions</a></li>
 			
 				
-				<li><a href="https://ovh.github.io/cds/docs/components/">Components</a></li>
+				<li><a href="../../../docs/components/">Components</a></li>
 			
 				
-				<li><a href="https://ovh.github.io/cds/docs/integrations/" class="menuSelected">Integrations</a></li>
+				<li><a href="../../../docs/integrations/" class="menuSelected">Integrations</a></li>
 			
 				
-				<li><a href="https://ovh.github.io/cds/docs/tutorials/">Tutorials</a></li>
+				<li><a href="../../../docs/tutorials/">Tutorials</a></li>
 			
 		</ul>
 		
@@ -187,6 +185,8 @@ This integration enables some features:
                     
                         
                     
+                        
+                    
                 
             
         
@@ -210,7 +210,7 @@ This integration enables some features:
         
         
         <i class="fa fa-bars" id="tocburger" onclick='$("#toc").toggle()'></i> 
-<a class="item" data-title="Integrations" href="https://ovh.github.io/cds/docs/integrations/"></a>
+<a class="item" data-title="Integrations" href="../../../docs/integrations/"></a>
 
 	
 	
@@ -228,7 +228,7 @@ This integration enables some features:
 	
 		
 			
-<a class="item" data-title="AWS S3" href="https://ovh.github.io/cds/docs/integrations/aws/aws_s3/"></a>
+<a class="item" data-title="AWS S3" href="../../../docs/integrations/aws/aws_s3/"></a>
 
 		
 	
@@ -240,25 +240,25 @@ This integration enables some features:
 	
 		
 			
-<a class="item" data-title="Bitbucket Cloud" href="https://ovh.github.io/cds/docs/integrations/bitbucketcloud/"></a>
+<a class="item" data-title="Bitbucket Cloud" href="../../../docs/integrations/bitbucketcloud/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Bitbucket Server" href="https://ovh.github.io/cds/docs/integrations/bitbucket/"></a>
+<a class="item" data-title="Bitbucket Server" href="../../../docs/integrations/bitbucket/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Docker Swarm" href="https://ovh.github.io/cds/docs/integrations/swarm/"></a>
+<a class="item" data-title="Docker Swarm" href="../../../docs/integrations/swarm/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Gerrit Repository Manager" href="https://ovh.github.io/cds/docs/integrations/gerrit/"></a>
+<a class="item" data-title="Gerrit Repository Manager" href="../../../docs/integrations/gerrit/"></a>
 
 		
 	
@@ -274,13 +274,13 @@ This integration enables some features:
 	
 		
 			
-<a class="item" data-title="GitHub Authentication" href="https://ovh.github.io/cds/docs/integrations/github/github_authentication/"></a>
+<a class="item" data-title="GitHub Authentication" href="../../../docs/integrations/github/github_authentication/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="GitHub Repository Manager" href="https://ovh.github.io/cds/docs/integrations/github/github_repository_manager/"></a>
+<a class="item" data-title="GitHub Repository Manager" href="../../../docs/integrations/github/github_repository_manager/"></a>
 
 		
 	
@@ -302,13 +302,13 @@ This integration enables some features:
 	
 		
 			
-<a class="item" data-title="GitLab Authentication" href="https://ovh.github.io/cds/docs/integrations/gitlab/gitlab_authentication/"></a>
+<a class="item" data-title="GitLab Authentication" href="../../../docs/integrations/gitlab/gitlab_authentication/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="GitLab Repository Manager" href="https://ovh.github.io/cds/docs/integrations/gitlab/gitlab_repository_manager/"></a>
+<a class="item" data-title="GitLab Repository Manager" href="../../../docs/integrations/gitlab/gitlab_repository_manager/"></a>
 
 		
 	
@@ -330,13 +330,13 @@ This integration enables some features:
 	
 		
 			
-<a class="item" data-title="Kafka CDS Events" href="https://ovh.github.io/cds/docs/integrations/kafka/kafka_events/"></a>
+<a class="item" data-title="Kafka CDS Events" href="../../../docs/integrations/kafka/kafka_events/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Kafka Hooks" href="https://ovh.github.io/cds/docs/integrations/kafka/kafka_hooks/"></a>
+<a class="item" data-title="Kafka Hooks" href="../../../docs/integrations/kafka/kafka_hooks/"></a>
 
 		
 	
@@ -358,13 +358,13 @@ This integration enables some features:
 	
 		
 			
-<a class="item" data-title="Kubernetes Compute" href="https://ovh.github.io/cds/docs/integrations/kubernetes/kubernetes_compute/"></a>
+<a class="item" data-title="Kubernetes Compute" href="../../../docs/integrations/kubernetes/kubernetes_compute/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Kubernetes Deployment" href="https://ovh.github.io/cds/docs/integrations/kubernetes/kubernetes_deployment/"></a>
+<a class="item" data-title="Kubernetes Deployment" href="../../../docs/integrations/kubernetes/kubernetes_deployment/"></a>
 
 		
 	
@@ -376,13 +376,19 @@ This integration enables some features:
 	
 		
 			
-<a class="item" data-title="LDAP Authentication" href="https://ovh.github.io/cds/docs/integrations/ldap/"></a>
+<a class="item" data-title="LDAP Authentication" href="../../../docs/integrations/ldap/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Mesos/Marathon" href="https://ovh.github.io/cds/docs/integrations/marathon/"></a>
+<a class="item" data-title="Mesos/Marathon" href="../../../docs/integrations/marathon/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="OpenID-Connect Authentication" href="../../../docs/integrations/openid-connect/"></a>
 
 		
 	
@@ -398,13 +404,13 @@ This integration enables some features:
 	
 		
 			
-<a class="item" data-title="OpenStack Swift" href="https://ovh.github.io/cds/docs/integrations/openstack/openstack_swift/"></a>
+<a class="item" data-title="Openstack Compute" href="../../../docs/integrations/openstack/openstack_compute/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Openstack Compute" href="https://ovh.github.io/cds/docs/integrations/openstack/openstack_compute/"></a>
+<a class="item" data-title="OpenStack Swift" href="../../../docs/integrations/openstack/openstack_swift/"></a>
 
 		
 	
@@ -416,13 +422,13 @@ This integration enables some features:
 	
 		
 			
-<a class="item" data-title="RabbitMQ" href="https://ovh.github.io/cds/docs/integrations/rabbitmq/"></a>
+<a class="item" data-title="RabbitMQ" href="../../../docs/integrations/rabbitmq/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="vSphere" href="https://ovh.github.io/cds/docs/integrations/vsphere/"></a>
+<a class="item" data-title="vSphere" href="../../../docs/integrations/vsphere/"></a>
 
 		
 	
@@ -443,83 +449,66 @@ This integration enables some features:
 
 
 <nav id="TableOfContents">
-<ul>
-<li>
-<ul>
-<li><a href="#how-to-configure-gerrit-integration">How to configure Gerrit integration</a>
-<ul>
-<li><a href="#complete-cds-configuration-file">Complete CDS Configuration File</a></li>
-</ul></li>
-<li><a href="#start-the-vcs-µservice">Start the vcs µService</a></li>
-</ul></li>
-</ul>
+  <ul>
+    <li><a href="#how-to-configure-gerrit-integration">How to configure Gerrit integration</a>
+      <ul>
+        <li><a href="#complete-cds-configuration-file">Complete CDS Configuration File</a></li>
+      </ul>
+    </li>
+    <li><a href="#start-the-vcs-µservice">Start the vcs µService</a></li>
+  </ul>
 </nav>
 
-
-
 <p>The Gerrit Repository Manager integration have to be configured on your CDS by a CDS Administrator.</p>
-
 <p>This integration allows you to link a Git Repository hosted by Gerrit
 to a CDS application.</p>
-
 <p>This integration enables some features:</p>
-
 <ul>
-<li><a href="https://ovh.github.io/cds/docs/concepts/workflow/hooks/gerrit/">Gerrit Hooks</a></li>
-<li>Easy to use action <a href="https://ovh.github.io/cds/docs/actions/builtin-checkoutapplication/">CheckoutApplication</a> and <a href="https://ovh.github.io/cds/docs/actions/builtin-gitclone/">GitClone</a> for advanced usage</li>
+<li><a href="../../../docs/concepts/workflow/hooks/gerrit/">Gerrit Hooks</a></li>
+<li>Easy to use action <a href="../../../docs/actions/builtin-checkoutapplication/">CheckoutApplication</a> and <a href="../../../docs/actions/builtin-gitclone/">GitClone</a> for advanced usage</li>
 <li>Send comments on your Pull-Requests when a workflow is failed</li>
 <li>Add a vote -1/+1 on a change</li>
 </ul>
-
 <h2 id="how-to-configure-gerrit-integration">How to configure Gerrit integration</h2>
-
-<p>You will have to create 2 users on gerrit: <a href="https://gerrit-review.googlesource.com/Documentation/cmd-create-account.html" target="_blank">[How to]</a></p>
-
+<p>You will have to create 2 users on gerrit: <!-- raw HTML omitted -->[How to]<!-- raw HTML omitted --></p>
 <ul>
 <li>An Administrator User ( with SSH KEY ), to get event from Gerrit Server</li>
 <li>An User on gerrit ( with httpPassword ), to comment changes with workflow result</li>
 </ul>
-
 <h3 id="complete-cds-configuration-file">Complete CDS Configuration File</h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"> [<span style="color:#ae81ff">vcs.servers]</span>
+     [<span style="color:#ae81ff">vcs.servers.gerrit]</span>
+       <span style="color:#75715e"># URL of Gerrit</span>
+       <span style="color:#ae81ff">url = &#34;http://localhost:9080&#34;</span>
+ 
+       [<span style="color:#ae81ff">vcs.servers.gerrit.gerrit]</span>
+         <span style="color:#75715e"># Disable event listener</span>
+         <span style="color:#ae81ff">disableGerritEvent = false</span>
+ 
+         <span style="color:#75715e"># SSH port of gerrit</span>
+         <span style="color:#ae81ff">sshport = 29418</span>
+ 
+         [<span style="color:#ae81ff">vcs.servers.gerrit.gerrit.EventStream]</span>
+           <span style="color:#75715e"># Private key of the user who access to gerrit event stream</span>
+           <span style="color:#ae81ff">privateKey = &#34;XXXXXXX&#34;</span>
+ 
+           <span style="color:#75715e"># User to access to gerrit event stream</span>
+           <span style="color:#ae81ff">user = &#34;admin&#34;</span>
+ 
+         [<span style="color:#ae81ff">vcs.servers.gerrit.gerrit.Reviewer]</span>
+           <span style="color:#75715e"># Http Password of the user that comment changes</span>
+           <span style="color:#ae81ff">token = &#34;XXXXXXXXXX&#34;</span>
+ 
+           <span style="color:#75715e"># User that review changes</span>
+           <span style="color:#ae81ff">user = &#34;Verifier&#34;</span>
 
-<pre><code class="language-yaml"> [vcs.servers]
-     [vcs.servers.gerrit]
-       # URL of Gerrit
-       url = &quot;http://localhost:9080&quot;
- 
-       [vcs.servers.gerrit.gerrit]
-         # Disable event listener
-         disableGerritEvent = false
- 
-         # SSH port of gerrit
-         sshport = 29418
- 
-         [vcs.servers.gerrit.gerrit.EventStream]
-           # Private key of the user who access to gerrit event stream
-           privateKey = &quot;XXXXXXX&quot;
- 
-           # User to access to gerrit event stream
-           user = &quot;admin&quot;
- 
-         [vcs.servers.gerrit.gerrit.Reviewer]
-           # Http Password of the user that comment changes
-           token = &quot;XXXXXXXXXX&quot;
- 
-           # User that review changes
-           user = &quot;Verifier&quot;
-
-</code></pre>
-
-<p>See how to generate <strong><a href="https://ovh.github.io/cds/hosting/configuration/">Configuration File</a></strong></p>
-
+</code></pre></div><p>See how to generate <strong><a href="../../../hosting/configuration/">Configuration File</a></strong></p>
 <h2 id="start-the-vcs-µservice">Start the vcs µService</h2>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ engine start vcs
 
-<pre><code class="language-bash">$ engine start vcs
-
-# you can also start CDS api and vcs in the same process:
+<span style="color:#75715e"># you can also start CDS api and vcs in the same process:</span>
 $ engine start api vcs
-</code></pre>
-
+</code></pre></div>
 
 
 
