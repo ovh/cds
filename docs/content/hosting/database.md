@@ -31,4 +31,4 @@ $ $PATH_TO_CDS/engine database upgrade --db-host <host> --db-port <port> --db-us
 
 ## More details
 
-[Read more about CDS Database Management](https://github.com/ovh/cds/blob/{{< param "version" >}}/engine/sql/README.md)
+[Read more about CDS Database Management](https://github.com/ovh/cds/blob/{{< param "version" "master" >}}/engine/sql/README.md)

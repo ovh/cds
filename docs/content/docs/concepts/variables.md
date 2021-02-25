@@ -221,5 +221,5 @@ You can use many helpers:
 
 ### Deep in code
 
-Are you a Go developer? See all helpers on https://github.com/ovh/cds/blob/{{< param "version" >}}/sdk/interpolate/interpolate_helper.go#L23
-and some unit tests on https://github.com/ovh/cds/blob/{{< param "version" >}}/sdk/interpolate/interpolate_test.go#L72 
+Are you a Go developer? See all helpers on https://github.com/ovh/cds/blob/{{< param "version" "master" >}}/sdk/interpolate/interpolate_helper.go#L23
+and some unit tests on https://github.com/ovh/cds/blob/{{< param "version" "master" >}}/sdk/interpolate/interpolate_test.go#L72 

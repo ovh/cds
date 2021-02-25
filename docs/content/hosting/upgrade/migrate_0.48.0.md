@@ -1,7 +1,13 @@
 ---
-title: "Migrate logs into CDN"
+title: "Migrate 0.48.0"
 weight: 1
 ---
+
+The release 0.48.0 introduced a new CDS service called CDN. This service is dedicated to receive and store CDS’s job logs.
+
+We created this service to be able to move out job's logs from CDS database to an object storage provider (more information about this list of providers [here]({{< relref "/docs/components/cdn.md">}})).
+
+In this release, logs are stored both in CDN storage units and CDS database to facilitate migration. Old log data and database table will be removed in a future release.
 
 # Prepare CDN service configuration
 * Init CDN configuration using `engine` binary.
