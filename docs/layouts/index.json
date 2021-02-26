@@ -2,7 +2,7 @@
 {{- if ne $page.Type "json" -}}
 {{- if and $index (gt $index 0) -}},{{- end }}
 {
-	"uri": "{{ $page.Permalink }}",
+	"uri": "{{ $page.RelPermalink }}",
 	"title": "{{ htmlEscape $page.Title}}",
 	"tags": [{{ range $tindex, $tag := $page.Params.tags }}{{ if $tindex }}, {{ end }}"{{ $tag| htmlEscape }}"{{ end }}],
 	"description": "{{ htmlEscape .Description}}",
