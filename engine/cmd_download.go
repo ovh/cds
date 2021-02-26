@@ -78,6 +78,9 @@ var downloadUICmd = &cobra.Command{
 		if conf.API == nil {
 			sdk.Exit("Invalid configuration file")
 		}
+		if conf.UI == nil {
+			sdk.Exit("Invalid configuration file - missing ui section")
+		}
 		downloadTarGzFromGithub(conf.UI.Staticdir, "ui.tar.gz")
 	},
 }
@@ -91,6 +94,9 @@ var downloadSQLCmd = &cobra.Command{
 		conf := configImport(nil, flagDownloadConfigFile, flagDownloadRemoteConfig, flagDownloadRemoteConfigKey, "", "", false)
 		if conf.API == nil {
 			sdk.Exit("Invalid configuration file")
+		}
+		if conf.DatabaseMigrate == nil {
+			sdk.Exit("Invalid configuration file - missing databaseMigrate section")
 		}
 		downloadTarGzFromGithub(conf.DatabaseMigrate.Directory, "sql.tar.gz")
 	},
