@@ -228,7 +228,7 @@ func RunScriptAction(ctx context.Context, wk workerruntime.Runtime, a sdk.Action
 
 		stdout, err := cmd.StdoutPipe()
 		if err != nil {
-			chanErr <- fmt.Errorf("Failure due to internal error: unable to capture stdout: %v", err)
+			chanErr <- fmt.Errorf("failure due to internal error: unable to capture stdout: %v", err)
 			res.Status = sdk.StatusFail
 			chanRes <- res
 			return
@@ -236,7 +236,7 @@ func RunScriptAction(ctx context.Context, wk workerruntime.Runtime, a sdk.Action
 
 		stderr, err := cmd.StderrPipe()
 		if err != nil {
-			chanErr <- fmt.Errorf("Failure due to internal error: unable to capture stderr: %v", err)
+			chanErr <- fmt.Errorf("failure due to internal error: unable to capture stderr: %v", err)
 			res.Status = sdk.StatusFail
 			chanRes <- res
 			return
@@ -303,7 +303,7 @@ func RunScriptAction(ctx context.Context, wk workerruntime.Runtime, a sdk.Action
 	case globalErr = <-chanErr:
 	}
 
-	log.Info(ctx, "runScriptAction> %s %s", res.Status, res.Reason)
+	log.Info(ctx, "runScriptAction> %s %s %v", res.Status, res.Reason, globalErr)
 	return res, globalErr
 }
 

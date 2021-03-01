@@ -25,7 +25,7 @@ cdsctl worker model import ./go-official-1.13.yml
 or with a remote file:
 
 ```bash
-cdsctl worker model import https://raw.githubusercontent.com/ovh/cds/master/contrib/worker-models/go-official-1.13.yml
+cdsctl worker model import https://raw.githubusercontent.com/ovh/cds/{{< param "version" "master" >}}/contrib/worker-models/go-official-1.13.yml
 ```
 
 {{< note >}}

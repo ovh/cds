@@ -125,7 +125,7 @@ type postOptions struct {
 	asUser             bool
 }
 
-func (c *githubClient) post(ctx context.Context, path string, bodyType string, body io.Reader, opts *postOptions) (*http.Response, error) {
+func (c *githubClient) post(ctx context.Context, path string, bodyType string, body io.Reader, headers map[string]string, opts *postOptions) (*http.Response, error) {
 	if opts == nil {
 		opts = new(postOptions)
 	}
@@ -147,6 +147,21 @@ func (c *githubClient) post(ctx context.Context, path string, bodyType string, b
 	} else {
 		req.Header.Add("Authorization", fmt.Sprintf("token %s", c.OAuthToken))
 		log.Debug(ctx, "Github API>> Request URL %s with Authorization", req.URL.String())
+	}
+
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
+
+	// If body is not *bytes.Buffer, *bytes.Reader or *strings.Reader Content-Length is not set. (
+	// Here we force Content-Length.
+	// cf net/http/request.go  NewRequestWithContext
+	if req.Header.Get("Content-Length") != "" {
+		s, err := strconv.Atoi(req.Header.Get("Content-Length"))
+		if err != nil {
+			return nil, sdk.WithStack(err)
+		}
+		req.ContentLength = int64(s)
 	}
 
 	return httpClient.Do(req)

@@ -7,7 +7,7 @@ card:
 
 ## Run with Docker-Compose
 
-The [docker-compose.yml](https://github.com/ovh/cds/blob/{{< param "version" >}}/docker-compose.yml) contains:
+The [docker-compose.yml](https://github.com/ovh/cds/blob/{{< param "version" "master" >}}/docker-compose.yml) contains:
 
 - cds-db service with a PostgreSQL
 - cds-cache service with a Redis
@@ -28,8 +28,9 @@ Docker compose is very convenient to launch CDS for testing it. But this is not 
 
 ```bash
 $ mkdir /tmp/cdstest && cd /tmp/cdstest && mkdir -p tools/smtpmock
-$ curl https://raw.githubusercontent.com/ovh/cds/master/docker-compose.yml -o docker-compose.yml
+$ curl https://raw.githubusercontent.com/ovh/cds/{{< param "version" "master" >}}/docker-compose.yml -o docker-compose.yml
 $ export HOSTNAME=$(hostname)
+$ export CDS_DOCKER_IMAGE=ovhcom/cds-engine:{{< param "version" "latest" >}}
 
 # Get the latest version
 $ docker pull ovhcom/cds-engine:latest
@@ -84,13 +85,13 @@ $ ./cdsctl user me
 #username  admin
 
 # run others services
-$ docker-compose up -d cds-ui cds-hooks cds-elasticsearch cds-hatchery-swarm
+$ docker-compose up -d cds-ui cds-cdn cds-hooks cds-elasticsearch cds-hatchery-swarm
 
 # create first worker model
-$ ./cdsctl worker model import https://raw.githubusercontent.com/ovh/cds/master/contrib/worker-models/go-official-1.13.yml
+$ ./cdsctl worker model import https://raw.githubusercontent.com/ovh/cds/{{< param "version" "master" >}}/contrib/worker-models/go-official-1.13.yml
 
 # import Import a workflow template
-$ ./cdsctl template push https://raw.githubusercontent.com/ovh/cds/master/contrib/workflow-templates/demo-workflow-hello-world/demo-workflow-hello-world.yml
+$ ./cdsctl template push https://raw.githubusercontent.com/ovh/cds/{{< param "version" "master" >}}/contrib/workflow-templates/demo-workflow-hello-world/demo-workflow-hello-world.yml
 Workflow template shared.infra/demo-workflow-hello-world has been created
 Template successfully pushed !
 
@@ -152,7 +153,7 @@ Users can store CDS Files on their repositories. This service clones user reposi
 - Import actions, example:
 
 ```bash
-$ ./cdsctl action import https://raw.githubusercontent.com/ovh/cds/master/contrib/actions/cds-docker-package.yml
+$ ./cdsctl action import https://raw.githubusercontent.com/ovh/cds/{{< param "version" "master" >}}/contrib/actions/cds-docker-package.yml
 ```
 
 ## Go further

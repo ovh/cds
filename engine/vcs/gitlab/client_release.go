@@ -15,6 +15,6 @@ func (c *gitlabClient) Release(ctx context.Context, repo string, tagName string,
 }
 
 // UploadReleaseFile upload a release file project
-func (c *gitlabClient) UploadReleaseFile(ctx context.Context, repo string, releaseName string, uploadURL string, artifactName string, r io.ReadCloser) error {
+func (c *gitlabClient) UploadReleaseFile(ctx context.Context, repo string, releaseName string, uploadURL string, artifactName string, r io.Reader, fileLength int) error {
 	return fmt.Errorf("not implemented")
 }

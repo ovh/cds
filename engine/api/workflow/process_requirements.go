@@ -136,6 +136,9 @@ func processNodeJobRunRequirementsGetModel(ctx context.Context, db gorp.SqlExecu
 
 		wm, err = workermodel.LoadByNameAndGroupID(ctx, db, modelPath[1], g.ID, workermodel.LoadOptions.Default)
 		if err != nil {
+			if sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return nil, sdk.NewErrorFrom(sdk.ErrNotFound, "could not find a worker model that match %s", modelName)
+			}
 			return nil, err
 		}
 	} else {

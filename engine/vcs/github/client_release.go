@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"strconv"
 	"strings"
 
 	"github.com/ovh/cds/sdk"
@@ -26,7 +27,7 @@ func (g *githubClient) Release(ctx context.Context, fullname string, tagName str
 		return nil, sdk.WrapError(err, "Cannot marshal body %+v", req)
 	}
 
-	res, err := g.post(ctx, url, "application/json", bytes.NewBuffer(b), nil)
+	res, err := g.post(ctx, url, "application/json", bytes.NewBuffer(b), nil, nil)
 	if err != nil {
 		return nil, sdk.WrapError(err, "Cannot create release on github")
 	}
@@ -56,17 +57,21 @@ func (g *githubClient) Release(ctx context.Context, fullname string, tagName str
 }
 
 // UploadReleaseFile Attach a file into the release
-func (g *githubClient) UploadReleaseFile(ctx context.Context, repo string, releaseName string, uploadURL string, artifactName string, r io.ReadCloser) error {
+func (g *githubClient) UploadReleaseFile(ctx context.Context, _ string, _ string, uploadURL string, artifactName string, r io.Reader, fileLength int) error {
 	var url = strings.Split(uploadURL, "{")[0] + "?name=" + artifactName
-	res, err := g.post(ctx, url, "application/octet-stream", r, &postOptions{skipDefaultBaseURL: true})
+	headers := map[string]string{
+		"Content-Length": strconv.Itoa(fileLength),
+	}
+
+	res, err := g.post(ctx, url, "application/octet-stream", r, headers, &postOptions{skipDefaultBaseURL: true})
 	if err != nil {
 		return err
 	}
-	defer r.Close()
 	defer res.Body.Close()
 
 	if res.StatusCode != 201 {
-		return sdk.WrapError(fmt.Errorf("github.Release >Unable to upload file on release. Url : %s - Status code : %d", url, res.StatusCode), "")
+		errorMsg, _ := ioutil.ReadAll(res.Body)
+		return sdk.WrapError(fmt.Errorf("github.Release >Unable to upload file on release. Url : %s - Status code : %d: %s", url, res.StatusCode, string(errorMsg)), "")
 	}
 
 	return nil

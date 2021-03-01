@@ -30,8 +30,10 @@ You must have at least one storage unit, one file buffer and one log buffer to b
 
 ## Use case
 
-Workers and hatcheries communicate with CDN, sending step logs and service log
-![CDN_RECEIVE](/images/cdn_receive.png)
+Workers and hatcheries communicate with CDN, sending step logs and service log.
 
-CDS UI and CLI communicate with CDN to get entire logs, or stream them
-![CDN_GET](/images/cdn_get.png)
+![CDN_RECEIVE](/images/cdn_logs_receive.png?width=600px)
+
+CDS UI and CLI communicate with CDN to get entire logs, or stream them.
+
+![CDN_GET](/images/cdn_logs_get.png?width=600px)

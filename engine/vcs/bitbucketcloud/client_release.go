@@ -13,6 +13,6 @@ func (client *bitbucketcloudClient) Release(ctx context.Context, fullname string
 }
 
 // UploadReleaseFile Attach a file into the release
-func (client *bitbucketcloudClient) UploadReleaseFile(ctx context.Context, repo string, releaseName string, uploadURL string, artifactName string, r io.ReadCloser) error {
+func (client *bitbucketcloudClient) UploadReleaseFile(ctx context.Context, repo string, releaseName string, uploadURL string, artifactName string, r io.Reader, fileLength int) error {
 	return sdk.WithStack(sdk.ErrNotImplemented)
 }

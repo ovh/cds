@@ -94,7 +94,7 @@ func ping(ctx context.Context, db gorpmapper.SqlExecutorWithTx, s ExternalServic
 
 	log.Debug(ctx, "services.ping> Checking service %s (%v)", s.Name, u.String())
 
-	_, _, code, err := doRequestFromURL(context.Background(), db, "GET", u, nil)
+	_, _, code, err := doRequestFromURL(context.Background(), "GET", u, nil)
 	if err != nil || code >= 400 {
 		mon.Lines[0].Status = sdk.MonitoringStatusWarn
 		mon.Lines[0].Value = "Health: KO"

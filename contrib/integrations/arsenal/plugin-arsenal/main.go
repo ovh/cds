@@ -162,6 +162,11 @@ func (e *arsenalDeploymentPlugin) Deploy(ctx context.Context, q *integrationplug
 		defer res.Body.Close()
 
 		body, _ := ioutil.ReadAll(res.Body)
+		if res.StatusCode == http.StatusServiceUnavailable {
+			retry++
+			fmt.Println("Arsenal service unavailable, waiting for next retry")
+			continue
+		}
 		if res.StatusCode != http.StatusOK {
 			fmt.Println("Body: ", string(body))
 			return fail("deployment failure")

@@ -131,15 +131,14 @@ type StorageUnitWithLocator interface {
 }
 
 type Configuration struct {
-	HashLocatorSalt string                 `toml:"hashLocatorSalt" json:"hash_locator_salt" mapstructure:"hashLocatorSalt"`
-	Buffers         []BufferConfiguration  `toml:"buffers" json:"buffers" mapstructure:"buffers"`
-	Storages        []StorageConfiguration `toml:"storages" json:"storages" mapstructure:"storages"`
-	SyncSeconds     int                    `toml:"syncSeconds" default:"30" json:"syncSeconds" comment:"each n seconds, all storage backends will have to start a synchronization with the buffer"`
-	SyncNbElements  int64                  `toml:"syncNbElements" default:"100" json:"syncNbElements" comment:"nb items to synchronize from the buffer"`
+	HashLocatorSalt string                          `toml:"hashLocatorSalt" json:"hash_locator_salt" mapstructure:"hashLocatorSalt"`
+	Buffers         map[string]BufferConfiguration  `toml:"buffers" json:"buffers" mapstructure:"buffers"`
+	Storages        map[string]StorageConfiguration `toml:"storages" json:"storages" mapstructure:"storages"`
+	SyncSeconds     int                             `toml:"syncSeconds" default:"30" json:"syncSeconds" comment:"each n seconds, all storage backends will have to start a synchronization with the buffer"`
+	SyncNbElements  int64                           `toml:"syncNbElements" default:"100" json:"syncNbElements" comment:"nb items to synchronize from the buffer"`
 }
 
 type BufferConfiguration struct {
-	Name       string                    `toml:"name" default:"redis" json:"name"`
 	Redis      *RedisBufferConfiguration `toml:"redis" json:"redis" mapstructure:"redis"`
 	Local      *LocalBufferConfiguration `toml:"local" json:"local" mapstructure:"local"`
 	Nfs        *NFSBufferConfiguration   `toml:"nfs" json:"nfs,omitempty" mapstructure:"nfs"`
@@ -154,7 +153,6 @@ const (
 )
 
 type StorageConfiguration struct {
-	Name          string                      `toml:"name" json:"name"`
 	SyncParallel  int64                       `toml:"syncParallel" json:"sync_parallel" comment:"number of parallel sync processes"`
 	SyncBandwidth int64                       `toml:"syncBandwidth" json:"sync_bandwidth" comment:"global bandwith shared by the sync processes (in Mb)"`
 	Local         *LocalStorageConfiguration  `toml:"local" json:"local,omitempty" mapstructure:"local"`

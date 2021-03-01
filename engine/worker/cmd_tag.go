@@ -78,9 +78,8 @@ func tagCmd() func(cmd *cobra.Command, args []string) {
 
 		resp, errDo := client.Do(req)
 		if errDo != nil {
-			sdk.Exit("command failed: %v\n", errDo)
+			sdk.Exit("http call failed: %v\n", errDo)
 		}
-
 		if resp.StatusCode >= 300 {
 			body, err := ioutil.ReadAll(resp.Body)
 			if err != nil {
