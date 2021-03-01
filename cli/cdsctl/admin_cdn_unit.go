@@ -21,9 +21,9 @@ func adminCdnUnit() *cobra.Command {
 }
 
 var adminCdnUnitItemDeleteCdm = cli.Command{
-	Name:    "delete-item",
+	Name:    "delete-items",
 	Short:   "mark item as delete for given unit",
-	Example: "cdsctl admin cdn unit delete <unit_id>",
+	Example: "cdsctl admin cdn unit delete-items <unit_id>",
 	Args: []cli.Arg{
 		{
 			Name: "unit_id",
