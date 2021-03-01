@@ -33,7 +33,7 @@ const (
 	RunChangeDayBefore = "gerrit_change_days_before"
 )
 
-func GetRetetionPolicyVariables() []string {
+func GetRetentionPolicyVariables() []string {
 	return []string{RunDaysBefore, RunStatus, RunGitBranchExist, RunChangeMerged, RunChangeAbandoned, RunChangeDayBefore, RunChangeExist}
 }
 
@@ -135,20 +135,31 @@ func applyRetentionPolicyOnRun(ctx context.Context, db *gorp.DbMap, wf sdk.Workf
 		}
 		return false, nil
 	}
-	luacheck, err := luascript.NewCheck()
+
+	luaCheck, err := luascript.NewCheck()
 	if err != nil {
 		return true, sdk.WithStack(err)
 	}
 
-	if err := purgeComputeVariables(ctx, luacheck, run, branchesMap, app, vcsClient); err != nil {
+	if err := purgeComputeVariables(ctx, luaCheck, run, branchesMap, app, vcsClient); err != nil {
 		return true, err
 	}
 
-	if err := luacheck.Perform(wf.RetentionPolicy); err != nil {
+	retentionPolicy := defaultRunRetentionPolicy
+	if wf.RetentionPolicy != "" {
+		retentionPolicy = wf.RetentionPolicy
+	}
+
+	// Enabling strict checks on variables to prevent errors on rule definition
+	if err := luaCheck.EnableStrict(); err != nil {
+		return true, sdk.WithStack(err)
+	}
+
+	if err := luaCheck.Perform(retentionPolicy); err != nil {
 		return true, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to apply retention policy on workflow %s/%s: %v", wf.ProjectKey, wf.Name, err)
 	}
 
-	if luacheck.Result {
+	if luaCheck.Result {
 		return true, nil
 	}
 	if !opts.DryRun {

@@ -85,6 +85,28 @@ func (c *Check) SetFloatVariables(vars map[string]float64) {
 	}
 }
 
+func (c *Check) EnableStrict() error {
+	// This code will override __index lua func that is called when reading a variable.
+	// If the variable is not define we want to return an error.
+	code := `
+    local mt = getmetatable(_G)
+    if mt == nil then
+      mt = {}
+      setmetatable(_G, mt)
+    end
+    mt.__index = function (t, n)
+      if n ~= "C" then
+        error("variable '"..n.."' is not declared", 2)
+      end
+      return rawget(t, n)
+    end
+  `
+	if err := c.state.DoString(code); err != nil {
+		return err
+	}
+	return nil
+}
+
 //Perform the lua script
 func (c *Check) Perform(script string) error {
 	var ok bool

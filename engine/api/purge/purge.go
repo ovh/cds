@@ -3,6 +3,7 @@ package purge
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -19,6 +20,16 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/telemetry"
 )
+
+var defaultRunRetentionPolicy string
+
+func SetDefaultRunRetentionPolicy(rule string) error {
+	if rule == "" {
+		return sdk.WithStack(fmt.Errorf("invalid empty rule for default workflow run retention policy"))
+	}
+	defaultRunRetentionPolicy = rule
+	return nil
+}
 
 // MarkRunsAsDelete mark workflow run as delete
 func MarkRunsAsDelete(ctx context.Context, store cache.Store, DBFunc func() *gorp.DbMap, workflowRunsMarkToDelete *stats.Int64Measure) {
