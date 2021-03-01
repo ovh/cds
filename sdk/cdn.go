@@ -98,7 +98,7 @@ type CDNUnit struct {
 	Created  time.Time     `json:"created" db:"created"`
 	Name     string        `json:"name" db:"name"`
 	Config   ServiceConfig `json:"config" db:"config"`
-	ToDelete bool          `json:"to_delete" db:"config"`
+	ToDelete bool          `json:"to_delete" db:"to_delete"`
 }
 
 type CDNLogsLines struct {
