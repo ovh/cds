@@ -7,7 +7,6 @@ import (
 
 	"github.com/rockbears/log"
 
-	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/sdk"
@@ -16,10 +15,6 @@ import (
 
 const (
 	ItemLogGC = 24 * 3600
-)
-
-var (
-	CleanUnitLockKey = cache.Key("cdn", "clean", "unit", "lock")
 )
 
 func (s *Service) itemPurge(ctx context.Context) {

@@ -368,11 +368,6 @@ func CountItemUnitToDelete(db gorp.SqlExecutor) (res []Stat, err error) {
 	return res, sdk.WithStack(err)
 }
 
-func MarkUnitToDelete(db gorpmapper.SqlExecutorWithTx, id string) error {
-	_, err := db.Exec(`UPDATE storage_unit SET to_delete = true WHERE id = $1`, id)
-	return sdk.WithStack(err)
-}
-
 func DeleteUnit(m *gorpmapper.Mapper, db gorp.SqlExecutor, u *sdk.CDNUnit) error {
 	return m.Delete(db, u)
 }

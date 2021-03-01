@@ -2,16 +2,17 @@ package cdn
 
 import (
 	"context"
-	"github.com/gorilla/mux"
-	"github.com/ovh/cds/engine/cdn/storage"
-	"github.com/rockbears/log"
 	"net/http"
 
+	"github.com/gorilla/mux"
+	"github.com/rockbears/log"
+
+	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
 
-func (s *Service) markUnitAsDeletehandler() service.Handler {
+func (s *Service) deleteUnitHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		unitID := vars["id"]

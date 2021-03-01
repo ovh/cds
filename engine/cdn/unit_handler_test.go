@@ -26,7 +26,7 @@ func TestMarkItemUnitAsDeleteHandler(t *testing.T) {
 	unit := sdk.CDNUnit{
 		Name:    "cds-backend",
 		Created: time.Now(),
-		Config:  sdk.ServiceConfig{CleanUnitLockKey: 1},
+		Config:  sdk.ServiceConfig{},
 	}
 	require.NoError(t, storage.InsertUnit(ctx, s.Mapper, db, &unit))
 
@@ -54,7 +54,7 @@ func TestMarkItemUnitAsDeleteHandler(t *testing.T) {
 	vars := map[string]string{
 		"id": unit.ID,
 	}
-	uri := s.Router.GetRoute("DELETE", s.markUnitAsDeletehandler, vars)
+	uri := s.Router.GetRoute("DELETE", s.deleteUnitHandler, vars)
 	require.NotEmpty(t, uri)
 	req := newRequest(t, "DELETE", uri, nil)
 	rec := httptest.NewRecorder()
@@ -87,7 +87,7 @@ func TestMarkItemUnitAsDeleteHandler(t *testing.T) {
 		break
 	}
 
-	uriDel := s.Router.GetRoute("DELETE", s.markUnitAsDeletehandler, vars)
+	uriDel := s.Router.GetRoute("DELETE", s.deleteUnitHandler, vars)
 	require.NotEmpty(t, uri)
 	reqDel := newRequest(t, "DELETE", uriDel, nil)
 	recDel := httptest.NewRecorder()
