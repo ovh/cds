@@ -248,10 +248,10 @@ func LoadAllItemUnitsIDsByItemID(db gorp.SqlExecutor, itemID string) ([]string, 
 	return IDs, nil
 }
 
-func LoadAllItemUnitsIDsByUnitID(db gorp.SqlExecutor, offset, limit int64) ([]string, error) {
+func LoadAllItemUnitsIDsByUnitID(db gorp.SqlExecutor, unitID string, offset, limit int64) ([]string, error) {
 	var IDs []string
-	query := "SELECT id FROM storage_unit_item WHERE to_delete = false ORDER BY id ASC OFFSET $1 LIMIT $2"
-	if _, err := db.Select(&IDs, query, offset, limit); err != nil {
+	query := "SELECT id FROM storage_unit_item WHERE unit_id = $1 to_delete = false ORDER BY id ASC OFFSET $2 LIMIT $3"
+	if _, err := db.Select(&IDs, query, unitID, offset, limit); err != nil {
 		return nil, sdk.WithStack(err)
 	}
 	return IDs, nil

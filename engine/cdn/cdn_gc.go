@@ -131,7 +131,7 @@ func (s *Service) cleanStorageUnit(ctx context.Context) error {
 		offset := int64(0)
 		limit := int64(1000)
 		for {
-			ids, err := storage.LoadAllItemUnitsIDsByUnitID(s.mustDBWithCtx(ctx), offset, limit)
+			ids, err := storage.LoadAllItemUnitsIDsByUnitID(s.mustDBWithCtx(ctx), unit.ID, offset, limit)
 			if err != nil {
 				return err
 			}
