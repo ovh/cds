@@ -68,7 +68,7 @@ func (g *githubClient) SetStatus(ctx context.Context, event sdk.Event) error {
 
 	log.Debug(ctx, "SetStatus> github post on %v body:%v", path, string(b))
 
-	res, err := g.post(ctx, path, "application/json", buf, nil)
+	res, err := g.post(ctx, path, "application/json", buf, nil, nil)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to post status")
 	}

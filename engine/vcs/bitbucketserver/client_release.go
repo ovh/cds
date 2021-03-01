@@ -11,6 +11,6 @@ import (
 func (b *bitbucketClient) Release(ctx context.Context, repo, tagName, releaseTitle, releaseDescription string) (*sdk.VCSRelease, error) {
 	return nil, fmt.Errorf("Not yet implemented")
 }
-func (b *bitbucketClient) UploadReleaseFile(ctx context.Context, repo string, releaseName string, uploadURL string, artifactName string, r io.ReadCloser) error {
+func (b *bitbucketClient) UploadReleaseFile(ctx context.Context, repo string, releaseName string, uploadURL string, artifactName string, r io.Reader, fileLength int) error {
 	return fmt.Errorf("Not yet implemented")
 }
