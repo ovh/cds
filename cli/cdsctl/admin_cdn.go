@@ -19,6 +19,7 @@ func adminCdn() *cobra.Command {
 	return cli.NewCommand(adminCdnCmd, nil, []*cobra.Command{
 		adminCdnCache(),
 		adminCdnItem(),
+		adminCdnUnit(),
 		cli.NewListCommand(adminCdnStatusCmd, adminCdnStatusRun, nil),
 		cli.NewCommand(adminCdnMigFromCDSCmd, adminCdnMigFromCDS, nil),
 		cli.NewCommand(adminCdnSyncBufferCmd, adminCdnSyncBuffer, nil),
@@ -44,7 +45,7 @@ var adminCdnMigFromCDSCmd = cli.Command{
 	Example: "cdsctl admin cdn migrate",
 }
 
-func adminCdnStatusRun(v cli.Values) (cli.ListResult, error) {
+func adminCdnStatusRun(_ cli.Values) (cli.ListResult, error) {
 	services, err := client.ServicesByType(sdk.TypeCDN)
 	if err != nil {
 		return nil, err
@@ -88,7 +89,7 @@ var adminCdnCacheLogClearCmd = cli.Command{
 	Example: "cdsctl admin cdn cache clear",
 }
 
-func adminCdnCacheLogClearRun(v cli.Values) error {
+func adminCdnCacheLogClearRun(_ cli.Values) error {
 	return client.ServiceCallDELETE(sdk.TypeCDN, "/cache")
 }
 
@@ -98,7 +99,7 @@ var adminCdnCacheLogStatusCmd = cli.Command{
 	Example: "cdsctl admin cdn cache status",
 }
 
-func adminCdnCacheLogStatusRun(v cli.Values) (cli.ListResult, error) {
+func adminCdnCacheLogStatusRun(_ cli.Values) (cli.ListResult, error) {
 	btes, err := client.ServiceCallGET(sdk.TypeCDN, "/cache/status")
 	if err != nil {
 		return nil, err
