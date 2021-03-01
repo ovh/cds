@@ -33,7 +33,7 @@ $ export HOSTNAME=$(hostname)
 $ export CDS_DOCKER_IMAGE=ovhcom/cds-engine:{{< param "version" "latest" >}}
 
 # Get the latest version
-$ docker pull ovhcom/cds-engine:latest
+$ docker pull ovhcom/cds-engine:{{< param "version" "latest" >}}
 
 # Create PostgreSQL database, redis and elasticsearch
 $ docker-compose up --no-recreate -d cds-db cds-cache elasticsearch dockerhost

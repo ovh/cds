@@ -192,7 +192,7 @@ curl https://raw.githubusercontent.com/ovh/cds/{{< param "version" "master" >}}/
 export HOSTNAME=$(hostname)
 export CDS_DOCKER_IMAGE=ovhcom/cds-engine:{{< param "version" "latest" >}}
 
-docker pull ovhcom/cds-engine:latest
+docker pull ovhcom/cds-engine:{{< param "version" "latest" >}}
 docker-compose up --no-recreate -d cds-db cds-cache elasticsearch dockerhost
 sleep 3
 docker-compose logs| grep 'database system is ready to accept connections'

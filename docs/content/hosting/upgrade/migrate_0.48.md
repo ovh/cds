@@ -1,9 +1,11 @@
 ---
-title: "Migrate 0.48.0"
+title: "Migrate 0.48"
 weight: 1
 ---
 
-The release 0.48.0 introduced a new CDS service called CDN. This service is dedicated to receive and store CDS’s job logs.
+## CDN service
+
+The release 0.48 introduced a new CDS service called CDN. This service is dedicated to receive and store CDS’s job logs.
 
 We created this service to be able to move out job's logs from CDS database to an object storage provider (more information about this list of providers [here]({{< relref "/docs/components/cdn.md">}})).
 
@@ -84,3 +86,16 @@ $ cdsctl admin cdn status
 ```
 
 ![CDN_STATUS](/images/cdn_status.png)
+
+## Other changes
+- The CDS migrate service is now able to manage SQL migrations on both API and CDN databases. Its configuration file format changed to add CDN database config.
+Please use the following command to generate a config example and update your existing one to this new format.
+```sh
+$ engine config new migrate
+```
+- Workflow Run will now contains a snapshot of required secrets when starting. This allows changing a secret on CDS entities without breaking existing runs. A migration script will generate this snapshot for recent Workflow Runs (< 3 Months), others will be set to read only mode.
+- CDS UI service will now proxy both API and CDN calls, please add the following lines in your existing config.
+```sh
+# CDN µService URL
+cdnURL = "http://localhost:8089" # change this URL if needed to match CDN address
+```
