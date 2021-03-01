@@ -29,7 +29,6 @@ func TestMarkItemUnitAsDeleteHandler(t *testing.T) {
 		Config:  sdk.ServiceConfig{},
 	}
 	require.NoError(t, storage.InsertUnit(ctx, s.Mapper, db, &unit))
-
 	// Add Item
 	for i := 0; i < 10; i++ {
 		it := sdk.CDNItem{

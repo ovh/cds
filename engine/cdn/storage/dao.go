@@ -369,5 +369,6 @@ func CountItemUnitToDelete(db gorp.SqlExecutor) (res []Stat, err error) {
 }
 
 func DeleteUnit(m *gorpmapper.Mapper, db gorp.SqlExecutor, u *sdk.CDNUnit) error {
-	return m.Delete(db, u)
+	unitDB := toUnitDB(*u)
+	return m.Delete(db, unitDB)
 }
