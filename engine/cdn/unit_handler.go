@@ -12,6 +12,28 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+func (s *Service) getUnitsHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		units, err := storage.LoadAllUnits(ctx, s.Mapper, s.mustDBWithCtx(ctx))
+		if err != nil {
+			return err
+		}
+
+		response := make([]sdk.CDNUnitHandlerRequest, 0, len(units))
+		for _, u := range units {
+			nb, err := storage.CountItemsForUnit(s.mustDBWithCtx(ctx), u.ID)
+			if err != nil {
+				return err
+			}
+			response = append(response, sdk.CDNUnitHandlerRequest{
+				ID:      u.ID,
+				Name:    u.Name,
+				NbItems: nb,
+			})
+		}
+		return service.WriteJSON(w, response, http.StatusOK)
+	}
+}
 func (s *Service) deleteUnitHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)

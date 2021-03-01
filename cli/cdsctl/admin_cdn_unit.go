@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/spf13/cobra"
 
@@ -15,12 +16,31 @@ var adminCdnUnitCmd = cli.Command{
 
 func adminCdnUnit() *cobra.Command {
 	return cli.NewCommand(adminCdnUnitCmd, nil, []*cobra.Command{
-		cli.NewCommand(adminCdnUnitItemDeleteCdm, adminCdnItemUnitDelete, nil),
-		cli.NewCommand(adminCdnUnitDeleteCdm, adminCdnUnitDelete, nil),
+		cli.NewCommand(adminCdnUnitItemDeleteCmd, adminCdnItemUnitDelete, nil),
+		cli.NewCommand(adminCdnUnitDeleteCmd, adminCdnUnitDelete, nil),
+		cli.NewListCommand(adminCdnUnitListCmd, adminCdnUnitList, nil),
 	})
 }
 
-var adminCdnUnitItemDeleteCdm = cli.Command{
+var adminCdnUnitListCmd = cli.Command{
+	Name:    "list",
+	Short:   "list storage unit",
+	Example: "cdsctl admin cdn unit list",
+}
+
+func adminCdnUnitList(_ cli.Values) (cli.ListResult, error) {
+	bts, err := client.ServiceCallGET(sdk.TypeCDN, "/unit")
+	if err != nil {
+		return nil, err
+	}
+	var result []sdk.CDNUnitHandlerRequest
+	if err := json.Unmarshal(bts, &result); err != nil {
+		return nil, err
+	}
+	return cli.AsListResult(result), nil
+}
+
+var adminCdnUnitItemDeleteCmd = cli.Command{
 	Name:    "delete-items",
 	Short:   "mark item as delete for given unit",
 	Example: "cdsctl admin cdn unit delete-items <unit_id>",
@@ -39,7 +59,7 @@ func adminCdnItemUnitDelete(v cli.Values) error {
 	return nil
 }
 
-var adminCdnUnitDeleteCdm = cli.Command{
+var adminCdnUnitDeleteCmd = cli.Command{
 	Name:    "delete",
 	Short:   "delete the given unit",
 	Example: "cdsctl admin cdn unit delete <unit_id>",
