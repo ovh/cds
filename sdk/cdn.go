@@ -94,11 +94,10 @@ type CDNItemUnit struct {
 }
 
 type CDNUnit struct {
-	ID       string        `json:"id" db:"id"`
-	Created  time.Time     `json:"created" db:"created"`
-	Name     string        `json:"name" db:"name"`
-	Config   ServiceConfig `json:"config" db:"config"`
-	ToDelete bool          `json:"to_delete" db:"to_delete"`
+	ID      string        `json:"id" db:"id"`
+	Created time.Time     `json:"created" db:"created"`
+	Name    string        `json:"name" db:"name"`
+	Config  ServiceConfig `json:"config" db:"config"`
 }
 
 type CDNLogsLines struct {

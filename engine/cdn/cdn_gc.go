@@ -24,9 +24,7 @@ var (
 
 func (s *Service) itemPurge(ctx context.Context) {
 	tickPurge := time.NewTicker(1 * time.Minute)
-	tickPurgeStorageUnit := time.NewTicker(1 * time.Hour)
 	defer tickPurge.Stop()
-	defer tickPurgeStorageUnit.Stop()
 	for {
 		select {
 		case <-ctx.Done():
@@ -39,12 +37,6 @@ func (s *Service) itemPurge(ctx context.Context) {
 				ctx = sdk.ContextWithStacktrace(ctx, err)
 				log.Error(ctx, "cdn:ItemPurge: error on cleanItemToDelete: %v", err)
 			}
-		case <-tickPurgeStorageUnit.C:
-			if err := s.cleanStorageUnit(ctx); err != nil {
-				ctx = sdk.ContextWithStacktrace(ctx, err)
-				log.Error(ctx, "cdn:ItemPurge: error on cleanStorageUnit: %v", err)
-			}
-
 		}
 	}
 }
@@ -96,63 +88,6 @@ func (s *Service) markUnitItemToDeleteByItemID(ctx context.Context, itemID strin
 	}
 
 	return n, sdk.WithStack(tx.Commit())
-}
-
-func (s *Service) cleanStorageUnit(ctx context.Context) error {
-	units, err := storage.LoadAllUnits(ctx, s.Mapper, s.mustDBWithCtx(ctx))
-	if err != nil {
-		return err
-	}
-	for _, unit := range units {
-		if !unit.ToDelete {
-			continue
-		}
-		// Take a lock, 1 unit manage by 1 cdn instance
-		b, err := s.Cache.Lock(cache.Key(CleanUnitLockKey, unit.ID), 10*time.Minute, 0, 1)
-		if err != nil {
-			return err
-		}
-		if !b {
-			continue
-		}
-		log.Info(ctx, "cdn:cleanStorageUnit start cleaning storage unit")
-
-		nb, err := storage.CountItemsForUnit(s.mustDBWithCtx(ctx), unit.ID)
-		if err != nil {
-			return err
-		}
-		if nb == 0 {
-			if err := storage.DeleteUnit(s.Mapper, s.mustDBWithCtx(ctx), &unit); err != nil {
-				return err
-			}
-			return nil
-		}
-
-		offset := int64(0)
-		limit := int64(1000)
-		for {
-			ids, err := storage.LoadAllItemUnitsIDsByUnitID(s.mustDBWithCtx(ctx), unit.ID, offset, limit)
-			if err != nil {
-				return err
-			}
-			tx, err := s.mustDBWithCtx(ctx).Begin()
-			if err != nil {
-				return sdk.WithStack(err)
-			}
-			if _, err := storage.MarkItemUnitToDelete(tx, ids); err != nil {
-				_ = tx.Rollback()
-				return err
-			}
-			if err := tx.Commit(); err != nil {
-				_ = tx.Rollback()
-				return sdk.WithStack(err)
-			}
-			if int64(len(ids)) < limit {
-				return nil
-			}
-		}
-	}
-	return nil
 }
 
 func (s *Service) cleanItemToDelete(ctx context.Context) error {

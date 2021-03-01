@@ -250,7 +250,7 @@ func LoadAllItemUnitsIDsByItemID(db gorp.SqlExecutor, itemID string) ([]string, 
 
 func LoadAllItemUnitsIDsByUnitID(db gorp.SqlExecutor, unitID string, offset, limit int64) ([]string, error) {
 	var IDs []string
-	query := "SELECT id FROM storage_unit_item WHERE unit_id = $1 to_delete = false ORDER BY id ASC OFFSET $2 LIMIT $3"
+	query := "SELECT id FROM storage_unit_item WHERE unit_id = $1 AND to_delete = false ORDER BY id ASC OFFSET $2 LIMIT $3"
 	if _, err := db.Select(&IDs, query, unitID, offset, limit); err != nil {
 		return nil, sdk.WithStack(err)
 	}

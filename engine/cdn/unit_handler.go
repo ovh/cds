@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/gorilla/mux"
 	"github.com/ovh/cds/engine/cdn/storage"
+	"github.com/rockbears/log"
 	"net/http"
 
 	"github.com/ovh/cds/engine/service"
@@ -15,18 +16,72 @@ func (s *Service) markUnitAsDeletehandler() service.Handler {
 		vars := mux.Vars(r)
 		unitID := vars["id"]
 
-		_, err := storage.LoadUnitByID(ctx, s.Mapper, s.mustDBWithCtx(ctx), unitID)
+		unit, err := storage.LoadUnitByID(ctx, s.Mapper, s.mustDBWithCtx(ctx), unitID)
 		if err != nil {
 			return err
 		}
+		nbItem, err := storage.CountItemsForUnit(s.mustDBWithCtx(ctx), unit.ID)
+		if err != nil {
+			return err
+		}
+
+		if nbItem > 0 {
+			return sdk.NewErrorFrom(sdk.ErrForbidden, "unable to delete unit %s because there are still item units", unit.Name)
+		}
+
 		tx, err := s.mustDBWithCtx(ctx).Begin()
 		if err != nil {
 			return sdk.WithStack(err)
 		}
 		defer tx.Rollback() // nolint
-		if err := storage.MarkUnitToDelete(tx, unitID); err != nil {
+		if err := storage.DeleteUnit(s.Mapper, tx, unit); err != nil {
 			return err
 		}
 		return sdk.WithStack(tx.Commit())
+	}
+}
+
+func (s *Service) markItemUnitAsDeleteHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		unitID := vars["id"]
+
+		unit, err := storage.LoadUnitByID(ctx, s.Mapper, s.mustDBWithCtx(ctx), unitID)
+		if err != nil {
+			return err
+		}
+
+		go func() {
+			ctx = context.Background()
+			offset := int64(0)
+			limit := int64(1000)
+			for {
+				ids, err := storage.LoadAllItemUnitsIDsByUnitID(s.mustDBWithCtx(ctx), unit.ID, offset, limit)
+				if err != nil {
+					log.Error(ctx, "unable to load item unit: %v", err)
+					return
+				}
+				tx, err := s.mustDBWithCtx(ctx).Begin()
+				if err != nil {
+					log.Error(ctx, "unable to start transaction: %v", err)
+					return
+				}
+				if _, err := storage.MarkItemUnitToDelete(tx, ids); err != nil {
+					_ = tx.Rollback()
+					log.Error(ctx, "unable to mark item unit to delete: %v", err)
+					return
+				}
+				if err := tx.Commit(); err != nil {
+					_ = tx.Rollback()
+					log.Error(ctx, "unable to commit transaction: %v", err)
+					return
+				}
+				if int64(len(ids)) < limit {
+					log.Info(ctx, "All items unit have been marked as delete for unit %d: %v", unit.ID, err)
+					return
+				}
+			}
+		}()
+		return nil
 	}
 }
