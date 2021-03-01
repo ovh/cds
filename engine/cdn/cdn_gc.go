@@ -197,6 +197,7 @@ func (s *Service) cleanWaitingItem(ctx context.Context, duration int) error {
 			it.Status = sdk.CDNStatusItemCompleted
 			it.ToDelete = true
 			if err := item.Update(ctx, s.Mapper, tx, &it); err != nil {
+				_ = tx.Rollback()
 				return err
 			}
 		} else {
