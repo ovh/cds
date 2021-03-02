@@ -49,14 +49,17 @@
                 <div class="field">
                     <label>
                         {{ 'workflow_sidebar_tag_zone' | translate }}
-                        <i class="circle outline question icon" suiPopup [popupText]="'workflow_tag_dragdrop' | translate"></i>
+                        <i class="circle outline question icon" suiPopup
+                            [popupText]="'workflow_tag_dragdrop' | translate"></i>
                     </label>
                     <ng-container *ngIf="selectedTags && selectedTags.length > 0">
-                        <div class="ui horizontal list dragula-container" [dragula]="'bag-tag'" [(dragulaModel)]="selectedTags">
+                        <div class="ui horizontal list dragula-container" [dragula]="'bag-tag'"
+                            [(dragulaModel)]="selectedTags">
                             <div class="item" *ngFor="let t of selectedTags; let i = index">
                                 <div class="ui label">
-                                    {{t + '  '}}
-                                    <i class="close icon" *ngIf="workflow.permissions.writable" (click)="removeFromSelectedTags(i)"></i>
+                                    {{t + ' '}}
+                                    <i class="close icon" *ngIf="workflow.permissions.writable"
+                                        (click)="removeFromSelectedTags(i)"></i>
                                 </div>
                             </div>
                         </div>
@@ -68,17 +71,15 @@
                     </ng-container>
                     <div class="ui inline fields" *ngIf="existingTags.length > 0">
                         <div class="ui twelve wide field">
-                            <sui-multi-select name="sidebartagzone" class="fluid selection"
-                                        [isDisabled]="loading"
-                                        [options]="existingTags" [isSearchable]="true"
-                                        [(ngModel)]="tagsToAdd"
-                                         #tagSelect>
+                            <sui-multi-select name="sidebartagzone" class="fluid selection" [isDisabled]="loading"
+                                [options]="existingTags" [isSearchable]="true" [(ngModel)]="tagsToAdd" #tagSelect>
                                 <sui-select-option *ngFor="let i of tagSelect.filteredOptions" [value]="i">
                                 </sui-select-option>
                             </sui-multi-select>
                         </div>
                         <div class="ui four wide field">
-                            <div class="ui icon blue button" [class.disabled]="!tagsToAdd" (click)="updateTagMetadata()">
+                            <div class="ui icon blue button" [class.disabled]="!tagsToAdd"
+                                (click)="updateTagMetadata()">
                                 <i class="plus icon"></i>
                             </div>
                         </div>
@@ -88,20 +89,34 @@
                     <label>
                         {{ 'workflow_retention_maxruns' | translate }}
                         {{workflow.max_runs}}
-                        <i class="circle outline question icon" suiPopup [popupText]="'workflow_retention_maxruns_admin' | translate"></i>
+                        <i class="circle outline question icon" suiPopup
+                            [popupText]="'workflow_retention_maxruns_admin' | translate"></i>
                     </label>
                 </div>
-                <div class="field">
+                <div class="field" *ngIf="apiConfig">
                     <label>
                         {{ 'workflow_retention_policy' | translate }}
-                        <i class="circle outline question icon" suiPopup [popupText]="'workflow_retention_variables' | translate: {vars: availableStringVariables}"></i>
+                        <i class="circle outline question icon" suiPopup [popupTemplate]="popupRetention"
+                            popupTrigger="outsideClick"></i>
                     </label>
-                    <codemirror name="policy" (change)="changeCodeMirror(codemirrorRetentionPolicy)" [(ngModel)]="workflow.retention_policy" [config]="codeMirrorConfig" #codemirrorRetentionPolicy></codemirror>
+                    <ng-template #popupRetention>
+                        You can set a custom retention policy for this workflow, default value is:
+                        <pre>{{apiConfig.default_run_retention_policy}}</pre>
+                        Available variables are: {{availableStringVariables}}.
+                        <br />
+                        <br />
+                        More informations and examples in CDS documentation
+                        <a class="item" target="_blank" rel="noopener noreferrer" href="#"
+                            [routerLink]="['/docs', 'docs', 'concepts', 'workflow', 'retention']">
+                            here</a>.
+                    </ng-template>
+                    <codemirror name="policy" [placeholder]="apiConfig.default_run_retention_policy"
+                        (change)="changeCodeMirror(codemirrorRetentionPolicy)" [(ngModel)]="workflow.retention_policy"
+                        [config]="codeMirrorConfig" #codemirrorRetentionPolicy></codemirror>
                 </div>
                 <div class="field">
-                    <button class="ui blue button" type="button" name="dryrun"
-                            [class.loading]="loading" [disabled]="loading"
-                            (click)="retentionPolicyDryRun()">
+                    <button class="ui blue button" type="button" name="dryrun" [class.loading]="loading"
+                        [disabled]="loading" (click)="retentionPolicyDryRun()">
                         <span>{{'btn_dry_run' | translate}}</span>
                     </button>
                     <ng-template let-context let-modal="modal" #modalDryRun>
@@ -118,9 +133,9 @@
                                     <ng-container *ngIf="dryRunStatus === 'DONE'">
                                         <i class="check green icon"></i>
                                     </ng-container>
-                                    {{dryRunAnalyzedRuns + ' / ' + dryRunMaxDatas + ' run analyzed ( ' + dryRunDatas.length + ' runs kept )'}}
+                                    {{dryRunAnalyzedRuns + ' / ' + dryRunMaxDatas + ' run analyzed ( ' +
+                                    dryRunDatas.length + ' runs kept )'}}
                                 </div>
-
                             </ng-container>
                             <ng-container *ngIf="dryRunStatus === 'DONE' && (!dryRunDatas || dryRunDatas.length === 0)">
                                 <div class="ui info message">All runs would be deleted</div>
@@ -128,12 +143,14 @@
                             <ng-container *ngIf="dryRunDatas?.length > 0">
                                 <div class="dryrun">
                                     <h4>{{'workflow_retention_result_title' | translate }}</h4>
-                                    <app-data-table [withFilter]="" [columns]="dryRunColumns" [data]="dryRunDatas" [withPagination]="10"></app-data-table>
+                                    <app-data-table [withFilter]="" [columns]="dryRunColumns" [data]="dryRunDatas"
+                                        [withPagination]="10"></app-data-table>
                                 </div>
                             </ng-container>
                         </div>
                         <div class="actions">
-                            <button class="ui green button" (click)="modal.approve('')" autofocus>{{'btn_close' | translate }}</button>
+                            <button class="ui green button" (click)="modal.approve('')" autofocus>{{'btn_close' |
+                                translate }}</button>
                         </div>
                     </ng-template>
                 </div>
@@ -144,11 +161,11 @@
                         #formWorkflowRunNumUpdateNumber="ngModel">
                 </div>
                 <div class="submitbutton">
-                        <button class="ui green right floated button" type="submit" name="savebtn"
-                            [class.loading]="loading" [disabled]="loading">
-                            <span *ngIf="!editMode">{{'btn_save' | translate}}</span>
-                            <span *ngIf="editMode">{{'btn_apply' | translate}}</span>
-                        </button>
+                    <button class="ui green right floated button" type="submit" name="savebtn" [class.loading]="loading"
+                        [disabled]="loading">
+                        <span *ngIf="!editMode">{{'btn_save' | translate}}</span>
+                        <span *ngIf="editMode">{{'btn_apply' | translate}}</span>
+                    </button>
                 </div>
                 <app-warning-modal [title]="_translate.instant('warning_modal_title')"
                     [msg]="_translate.instant('warning_modal_body')" (event)="onSubmitWorkflowUpdate(true)"

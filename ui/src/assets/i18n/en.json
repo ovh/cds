@@ -899,7 +899,6 @@
   "workflow_retention_maxruns": "Maximum number of workflow runs: ",
   "workflow_retention_maxruns_admin": "You can contact a CDS administrator to customize this value",
   "workflow_retention_policy": "Workflow run retention policy",
-  "workflow_retention_variables": "Available variables: {{vars}}",
   "workflow_retention_result_title": "The following runs will be kept",
   "workflow_run_delayed": "Workflow run has been delayed",
   "workflow_event_explanation": "_Here you can configure one or more integrations of type `Event`. This allows you to send all technical data in a backend to make it accessible by third-party applications such as Kafka or ElasticSearch. See the [Event Notifications] (https://ovh.github.io/cds/docs/concepts/workflow/notifications/) documentation for more information._",

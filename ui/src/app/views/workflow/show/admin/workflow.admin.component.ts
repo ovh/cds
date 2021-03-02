@@ -12,10 +12,12 @@ import { TranslateService } from '@ngx-translate/core';
 import { Select, Store } from '@ngxs/store';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { EventService } from 'app/event.service';
+import { APIConfig } from 'app/model/config.model';
 import { Project } from 'app/model/project.model';
 import { RunToKeep } from 'app/model/purge.model';
 import { Workflow } from 'app/model/workflow.model';
 import { FeatureNames } from 'app/service/feature/feature.service';
+import { ConfigService } from 'app/service/services.module';
 import { ThemeStore } from 'app/service/theme/theme.store';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
@@ -42,7 +44,6 @@ declare let CodeMirror: any;
 })
 @AutoUnsubscribe()
 export class WorkflowAdminComponent implements OnInit, OnDestroy {
-
     @Input() project: Project;
 
     _workflow: Workflow;
@@ -53,8 +54,8 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
         }
     }
     get workflow() {
- return this._workflow
-}
+        return this._workflow
+    }
 
     @Input() editMode: boolean;
 
@@ -73,12 +74,13 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
     tagsToAddPurge = new Array<string>();
     maxRunsEnabled = false;
     codeMirrorConfig: any;
+    codeMirrorConfigPlaceHolder: any;
+    apiConfig: APIConfig;
 
     @ViewChild('updateWarning')
     private warningUpdateModal: WarningModalComponent;
     @ViewChild('codemirrorRetentionPolicy') codemirror: CodemirrorComponent;
     themeSubscription: Subscription;
-
 
     // Dry run datas
     @Select(WorkflowState.getRetentionDryRunResults()) dryRunResults$: Observable<Array<RunToKeep>>;
@@ -97,7 +99,6 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
     availableStringVariables: string;
     _keyUpListener: any;
     modal: SuiActiveModal<boolean, boolean, void>;
-    //
 
     loading = false;
     fileTooLarge = false;
@@ -114,7 +115,8 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
         private _dragularService: DragulaService,
         private _theme: ThemeStore,
         private _modalService: SuiModalService,
-        private _eventService: EventService
+        private _eventService: EventService,
+        private _configService: ConfigService
     ) {
         this._dragularService.createGroup('bag-tag', {
             accepts(el, target, source, sibling) {
@@ -122,7 +124,7 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
             }
         });
 
-        this.dragulaSubscription = this._dragularService.drop('bag-tag').subscribe(({}) => {
+        this.dragulaSubscription = this._dragularService.drop('bag-tag').subscribe(({ }) => {
             setTimeout(() => {
                 this.updateTagMetadata();
             });
@@ -201,6 +203,11 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
             JSON.stringify({ project_key: this.project.key })))
         this.maxRunsEnabled = featMaxRunsResult?.enabled;
 
+        this._configService.getAPIConfig().subscribe(c => {
+            this.apiConfig = c;
+            this._cd.markForCheck();
+        });
+
         this._cd.markForCheck();
     }
 
@@ -257,7 +264,7 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
             }
             this.dryRunStatus = s;
             if (this.dryRunStatus === 'DONE') {
-               this._eventService.unsubscribeWorkflowRetention();
+                this._eventService.unsubscribeWorkflowRetention();
             }
             this._cd.markForCheck();
         })

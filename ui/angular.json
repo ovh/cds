@@ -58,6 +58,7 @@
               "node_modules/codemirror/mode/lua/lua.js",
               "node_modules/codemirror/addon/edit/matchbrackets.js",
               "node_modules/codemirror/addon/display/autorefresh.js",
+              "node_modules/codemirror/addon/display/placeholder.js",
               "node_modules/js-yaml/dist/js-yaml.js",
               "resources/cds-hint.js",
               "node_modules/ansi_up/ansi_up.js",
