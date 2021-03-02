@@ -64,6 +64,9 @@ func CanUploadArtifact(ctx context.Context, db *gorp.DbMap, store cache.Store, w
 
 	// Check artifact name
 	runResults, err := LoadRunResultsByRunIDAndType(ctx, db, artifactRef.RunID, sdk.WorkflowRunResultTypeArtifact)
+	if err != nil {
+		return false, sdk.WrapError(err, "unable to load run results for run %d", artifactRef.RunID)
+	}
 	for _, result := range runResults {
 		refArt, err := result.GetArtifact()
 		if err != nil {
