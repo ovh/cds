@@ -236,6 +236,51 @@ func TestCleanWaitingItem(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, sdk.CDNStatusItemCompleted, itemDB.Status)
+	require.False(t, itemDB.ToDelete)
+}
+
+func TestCleanWaitingItemWithoutItemUnit(t *testing.T) {
+	m := gorpmapper.New()
+	item.InitDBMapping(m)
+	storage.InitDBMapping(m)
+
+	log.Factory = log.NewTestingWrapper(t)
+	db, factory, cache, cancel := test.SetupPGToCancel(t, m, sdk.TypeCDN)
+	t.Cleanup(cancel)
+
+	cdntest.ClearItem(t, context.TODO(), m, db)
+
+	// Create cdn service
+	s := Service{
+		DBConnectionFactory: factory,
+		Cache:               cache,
+		Mapper:              m,
+	}
+	s.GoRoutines = sdk.NewGoRoutines()
+
+	ctx, cancel := context.WithCancel(context.TODO())
+	t.Cleanup(cancel)
+	s.Units = newRunningStorageUnits(t, m, s.DBConnectionFactory.GetDBMap(m)(), ctx, cache)
+
+	it := sdk.CDNItem{
+		ID:     sdk.UUID(),
+		Size:   12,
+		Type:   sdk.CDNTypeItemStepLog,
+		Status: sdk.CDNStatusItemIncoming,
+
+		APIRefHash: sdk.RandomString(10),
+	}
+	require.NoError(t, item.Insert(context.TODO(), s.Mapper, db, &it))
+
+	time.Sleep(2 * time.Second)
+
+	require.NoError(t, s.cleanWaitingItem(context.TODO(), 1))
+
+	itemDB, err := item.LoadByID(context.TODO(), s.Mapper, db, it.ID)
+	require.NoError(t, err)
+
+	require.Equal(t, sdk.CDNStatusItemCompleted, itemDB.Status)
+	require.True(t, itemDB.ToDelete)
 }
 
 func TestPurgeItem(t *testing.T) {

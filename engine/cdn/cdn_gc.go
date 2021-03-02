@@ -172,27 +172,51 @@ func (s *Service) cleanBuffer(ctx context.Context) error {
 }
 
 func (s *Service) cleanWaitingItem(ctx context.Context, duration int) error {
-	itemUnits, err := storage.LoadOldItemUnitByItemStatusAndDuration(ctx, s.Mapper, s.mustDBWithCtx(ctx), sdk.CDNStatusItemIncoming, duration)
+	items, err := item.LoadOldItemByStatusAndDuration(ctx, s.Mapper, s.mustDBWithCtx(ctx), sdk.CDNStatusItemIncoming, duration)
 	if err != nil {
 		return err
 	}
-	for _, itemUnit := range itemUnits {
-		ctx = context.WithValue(ctx, storage.FieldAPIRef, itemUnit.Item.APIRefHash)
-		log.Info(ctx, "cleanWaitingItem> cleaning item %s", itemUnit.ItemID)
+	for _, it := range items {
+		ctx = context.WithValue(ctx, storage.FieldAPIRef, it.APIRefHash)
+		log.Info(ctx, "cleanWaitingItem> cleaning item %s", it.ID)
+
+		// Load Item Unit
+		itemUnits, err := storage.LoadAllItemUnitsByItemIDs(ctx, s.Mapper, s.mustDBWithCtx(ctx), it.ID)
+		if err != nil {
+			log.Error(ctx, "cleanWaitingItem> unable to load storage unit: %v", err)
+			continue
+		}
 
 		tx, err := s.mustDBWithCtx(ctx).Begin()
 		if err != nil {
 			return sdk.WrapError(err, "unable to start transaction")
 		}
-		if err := s.completeItem(ctx, tx, itemUnit); err != nil {
-			_ = tx.Rollback()
-			return err
+
+		// If there is no item unit, mark item as delete
+		if len(itemUnits) == 0 {
+			it.Status = sdk.CDNStatusItemCompleted
+			it.ToDelete = true
+			if err := item.Update(ctx, s.Mapper, tx, &it); err != nil {
+				_ = tx.Rollback()
+				return err
+			}
+		} else {
+			// Else complete item
+			if err := s.completeItem(ctx, tx, itemUnits[0]); err != nil {
+				_ = tx.Rollback()
+				return err
+			}
 		}
+
 		if err := tx.Commit(); err != nil {
 			_ = tx.Rollback()
 			return err
 		}
-		s.Units.PushInSyncQueue(ctx, itemUnit.ItemID, itemUnit.Item.Created)
+
+		// Push item ID to run backend sync
+		if len(itemUnits) > 0 {
+			s.Units.PushInSyncQueue(ctx, it.ID, it.Created)
+		}
 		telemetry.Record(ctx, s.Metrics.itemCompletedByGCCount, 1)
 	}
 	return nil

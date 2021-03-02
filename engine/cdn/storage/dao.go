@@ -157,19 +157,6 @@ func LoadAllSynchronizedItemIDs(db gorp.SqlExecutor, bufferUnitID string, maxSto
 	return itemIDs, nil
 }
 
-func LoadOldItemUnitByItemStatusAndDuration(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, status string, duration int, opts ...gorpmapper.GetOptionFunc) ([]sdk.CDNItemUnit, error) {
-	query := gorpmapper.NewQuery(`
-		SELECT storage_unit_item.*
-		FROM storage_unit_item
-		LEFT JOIN item ON item.id = storage_unit_item.item_id
-		WHERE
-			item.status = $1 AND
-            item.last_modified < NOW() - $2 * INTERVAL '1 second'
-		ORDER BY item.last_modified ASC
-	`).Args(status, duration)
-	return getAllItemUnits(ctx, m, db, query, opts...)
-}
-
 func LoadItemUnitByUnit(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, unitID string, itemID string, opts ...gorpmapper.GetOptionFunc) (*sdk.CDNItemUnit, error) {
 	query := gorpmapper.NewQuery("SELECT * FROM storage_unit_item WHERE unit_id = $1 and item_id = $2 AND to_delete = false LIMIT 1").Args(unitID, itemID)
 	return getItemUnit(ctx, m, db, query, opts...)
