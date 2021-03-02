@@ -2,6 +2,7 @@ package luascript
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/yuin/gluare"
@@ -117,6 +118,10 @@ func (c *Check) Perform(script string) error {
 	}
 
 	lv := c.state.Get(-1) // get the value at the top of the stack
+	if lv.Type() != lua.LTBool {
+		c.IsError = true
+		return fmt.Errorf("invalid result of type %s expected boolean", lv.Type().String())
+	}
 	if lua.LVAsBool(lv) { // lv is neither nil nor false
 		ok = true
 	}

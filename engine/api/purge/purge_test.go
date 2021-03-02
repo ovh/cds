@@ -95,3 +95,37 @@ func Test_applyRetentionPolicyOnRun(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, keep)
 }
+
+func Test_applyRetentionPolicyOnRunWithError(t *testing.T) {
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+
+	defaultRunRetentionPolicy = "" // check empty rule
+	keep, err := applyRetentionPolicyOnRun(context.TODO(), db.DbMap, sdk.Workflow{}, sdk.WorkflowRunSummary{}, nil, sdk.Application{}, nil, MarkAsDeleteOptions{DryRun: true})
+	require.Error(t, err)
+	require.True(t, keep)
+
+	defaultRunRetentionPolicy = "unknown == 'true'" // check no return
+	keep, err = applyRetentionPolicyOnRun(context.TODO(), db.DbMap, sdk.Workflow{}, sdk.WorkflowRunSummary{}, nil, sdk.Application{}, nil, MarkAsDeleteOptions{DryRun: true})
+	require.Error(t, err)
+	require.True(t, keep)
+
+	defaultRunRetentionPolicy = "return unknown == 'true'" // check unknown variable
+	keep, err = applyRetentionPolicyOnRun(context.TODO(), db.DbMap, sdk.Workflow{}, sdk.WorkflowRunSummary{}, nil, sdk.Application{}, nil, MarkAsDeleteOptions{DryRun: true})
+	require.Error(t, err)
+	require.True(t, keep)
+
+	defaultRunRetentionPolicy = "return nil" // check return nil
+	keep, err = applyRetentionPolicyOnRun(context.TODO(), db.DbMap, sdk.Workflow{}, sdk.WorkflowRunSummary{}, nil, sdk.Application{}, nil, MarkAsDeleteOptions{DryRun: true})
+	require.Error(t, err)
+	require.True(t, keep)
+
+	defaultRunRetentionPolicy = "return git_branch_exist == 'false'"
+	keep, err = applyRetentionPolicyOnRun(context.TODO(), db.DbMap, sdk.Workflow{}, sdk.WorkflowRunSummary{}, nil, sdk.Application{}, nil, MarkAsDeleteOptions{DryRun: true})
+	require.NoError(t, err)
+	require.True(t, keep)
+
+	defaultRunRetentionPolicy = "return git_branch_exist == 'true'"
+	keep, err = applyRetentionPolicyOnRun(context.TODO(), db.DbMap, sdk.Workflow{}, sdk.WorkflowRunSummary{}, nil, sdk.Application{}, nil, MarkAsDeleteOptions{DryRun: true})
+	require.NoError(t, err)
+	require.False(t, keep)
+}

@@ -18,6 +18,20 @@ func TestLuaCheck(t *testing.T) {
 	assert.True(t, l.Result)
 }
 
+func TestLuaPerformErrorNoBoolReturn(t *testing.T) {
+	l1, err := NewCheck()
+	require.NoError(t, err)
+	require.Error(t, l1.Perform(""))
+	require.True(t, l1.IsError)
+	require.False(t, l1.Result)
+
+	l2, err := NewCheck()
+	require.NoError(t, err)
+	require.Error(t, l2.Perform("return nil"))
+	require.True(t, l2.IsError)
+	require.False(t, l2.Result)
+}
+
 func TestLuaCheckStrings(t *testing.T) {
 	l, err := NewCheck()
 	require.NoError(t, err)
