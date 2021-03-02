@@ -10,7 +10,6 @@ import (
 	"github.com/rockbears/log"
 	"github.com/stretchr/testify/require"
 	"io/ioutil"
-	"math"
 	"os"
 	"testing"
 	"time"
@@ -64,7 +63,7 @@ func TestNFSReadWrite(t *testing.T) {
 	require.NotNil(t, d)
 	bd, is := d.(storage.BufferUnit)
 	require.True(t, is)
-	bd.New(sdk.NewGoRoutines(), 1, math.MaxFloat64)
+	bd.New(sdk.NewGoRoutines(), storage.AbstractUnitConfig{})
 	err := bd.Init(ctx, &storage.NFSBufferConfiguration{
 		Host:            nfsHost,
 		TargetPartition: nfsTargetPath,
