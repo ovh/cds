@@ -496,19 +496,6 @@ func (h *HatcheryOpenstack) WorkersStarted(ctx context.Context) []string {
 	return res
 }
 
-// WorkersStartedByModel returns the number of instances of given model started but
-// not necessarily register on CDS yet
-func (h *HatcheryOpenstack) WorkersStartedByModel(ctx context.Context, model *sdk.Model) int {
-	var x int
-	for _, s := range h.getServers(ctx) {
-		if strings.Contains(strings.ToLower(s.Name), strings.ToLower(model.Name)) {
-			x++
-		}
-	}
-	log.Debug(ctx, "WorkersStartedByModel> %s : %d", model.Name, x)
-	return x
-}
-
 // NeedRegistration return true if worker model need regsitration
 func (h *HatcheryOpenstack) NeedRegistration(ctx context.Context, m *sdk.Model) bool {
 	if m.NeedRegistration {

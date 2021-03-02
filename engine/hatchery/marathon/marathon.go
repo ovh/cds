@@ -452,24 +452,6 @@ func (h *HatcheryMarathon) WorkersStarted(ctx context.Context) []string {
 	return res
 }
 
-// WorkersStartedByModel returns the number of instances of given model started but
-// not necessarily register on CDS yet
-func (h *HatcheryMarathon) WorkersStartedByModel(ctx context.Context, model *sdk.Model) int {
-	apps, err := h.listApplications(h.Config.MarathonIDPrefix)
-	if err != nil {
-		return 0
-	}
-
-	var x int
-	for _, app := range apps {
-		if strings.Contains(app, strings.ToLower(model.Name)) {
-			x++
-		}
-	}
-
-	return x
-}
-
 // InitHatchery only starts killing routine of worker not registered
 func (h *HatcheryMarathon) InitHatchery(ctx context.Context) error {
 	if err := h.RefreshServiceLogger(ctx); err != nil {

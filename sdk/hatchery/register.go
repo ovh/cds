@@ -35,6 +35,7 @@ loopModels:
 		if models[k].Type != h.ModelType() {
 			continue
 		}
+		log.Info(ctx, "worker model %q registration", models[k].Name)
 		if h.CanSpawn(ctx, &models[k], 0, nil) && (h.NeedRegistration(ctx, &models[k]) || models[k].CheckRegistration) {
 			log.Debug(ctx, "hatchery> workerRegister> need register")
 		} else {

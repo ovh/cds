@@ -86,7 +86,6 @@ type Interface interface {
 
 type InterfaceWithModels interface {
 	Interface
-	WorkersStartedByModel(ctx context.Context, model *sdk.Model) int
 	ModelType() string
 	NeedRegistration(ctx context.Context, model *sdk.Model) bool
 	WorkerModelsEnabled() ([]sdk.Model, error)

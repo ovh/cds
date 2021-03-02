@@ -32,7 +32,7 @@ func Create(ctx context.Context, h Interface) error {
 		telemetry.TagServiceType, h.Type(),
 	)
 
-	if err := initMetrics(ctx); err != nil {
+	if err := InitMetrics(ctx); err != nil {
 		return err
 	}
 
@@ -200,11 +200,12 @@ func Create(ctx context.Context, h Interface) error {
 				var canTakeJob bool
 
 				var containsRegionRequirement bool
+			loopRequirements:
 				for _, r := range workerRequest.requirements {
 					switch r.Type {
 					case sdk.RegionRequirement:
 						containsRegionRequirement = true
-						break
+						break loopRequirements
 					}
 				}
 
@@ -406,6 +407,6 @@ func SendSpawnInfo(ctx context.Context, h Interface, jobID int64, spawnMsg sdk.S
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 	if err := h.CDSClient().QueueJobSendSpawnInfo(ctx, jobID, infos); err != nil {
-		log.Warn(ctx, "spawnWorkerForJob> cannot client.sendSpawnInfo for job %d: %s", jobID, err)
+		log.Warn(ctx, "SendSpawnInfo> cannot client.sendSpawnInfo for job %d: %s", jobID, err)
 	}
 }

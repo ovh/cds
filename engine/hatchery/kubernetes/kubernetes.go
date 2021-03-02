@@ -392,25 +392,6 @@ func (h *HatcheryKubernetes) WorkersStarted(ctx context.Context) []string {
 	return workerNames
 }
 
-// WorkersStartedByModel returns the number of instances of given model started but
-// not necessarily register on CDS yet
-func (h *HatcheryKubernetes) WorkersStartedByModel(ctx context.Context, model *sdk.Model) int {
-	list, err := h.kubeClient.PodList(ctx, h.Config.Namespace, metav1.ListOptions{LabelSelector: LABEL_WORKER_MODEL})
-	if err != nil {
-		log.Error(ctx, "WorkersStartedByModel> Cannot get list of workers started (%s)", err)
-		return 0
-	}
-	workersLen := 0
-	for _, pod := range list.Items {
-		labels := pod.GetLabels()
-		if labels[LABEL_WORKER_MODEL] == model.Name {
-			workersLen++
-		}
-	}
-
-	return workersLen
-}
-
 // NeedRegistration return true if worker model need regsitration
 func (h *HatcheryKubernetes) NeedRegistration(ctx context.Context, m *sdk.Model) bool {
 	if m.NeedRegistration || m.LastRegistration.Unix() < m.UserLastModified.Unix() {

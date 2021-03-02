@@ -36,8 +36,9 @@ func startWorkerStarters(ctx context.Context, h Interface) chan<- workerStarterR
 		maxProv = defaultMaxProvisioning
 	}
 	for workerNum := 0; workerNum < maxProv; workerNum++ {
-		h.GetGoRoutines().Run(ctx, "workerStarter", func(ctx context.Context) {
-			workerStarter(ctx, h, fmt.Sprintf("%d", workerNum), jobs)
+		workerNumStr := fmt.Sprintf("%d", workerNum)
+		h.GetGoRoutines().Run(ctx, "workerStarter-"+workerNumStr, func(ctx context.Context) {
+			workerStarter(ctx, h, workerNumStr, jobs)
 		})
 	}
 	return jobs
@@ -55,12 +56,14 @@ func workerStarter(ctx context.Context, h Interface, workerNum string, jobs <-ch
 				continue
 			}
 
+			workerName := generateWorkerName(h.Service().Name, true, m.Name)
+
 			atomic.AddInt64(&nbWorkerToStart, 1)
 			// increment nbRegisteringWorkerModels, but no decrement.
 			// this counter is reset with func workerRegister
 			atomic.AddInt64(&nbRegisteringWorkerModels, 1)
 			arg := SpawnArguments{
-				WorkerName:   generateWorkerName(h.Service().Name, true, m.Name),
+				WorkerName:   workerName,
 				Model:        m,
 				RegisterOnly: true,
 				HatcheryName: h.Service().Name,
@@ -138,6 +141,7 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 	if err != nil {
 		next()
 		// perhaps already booked by another hatchery
+		ctx = sdk.ContextWithStacktrace(ctx, err)
 		log.Info(ctx, "hatchery> spawnWorkerForJob> %d - cannot book job %d: %s", j.timestamp, j.id, err)
 		cancel()
 		return false
@@ -157,9 +161,11 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 	})
 	next()
 
+	workerName := generateWorkerName(h.Service().Name, false, modelName)
+
 	_, next = telemetry.Span(ctxJob, "hatchery.SpawnWorker")
 	arg := SpawnArguments{
-		WorkerName:   generateWorkerName(h.Service().Name, false, modelName),
+		WorkerName:   workerName,
 		Model:        j.model,
 		JobID:        j.id,
 		NodeRunID:    j.workflowNodeRunID,
@@ -226,28 +232,22 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 }
 
 // a worker name must be 60 char max, without '.' and '_', "/" -> replaced by '-'
+const maxLength = 64
+
 func generateWorkerName(hatcheryName string, isRegister bool, modelName string) string {
 	prefix := ""
 	if isRegister {
 		prefix = "register-"
 	}
 
-	maxLength := 63
-	hName := hatcheryName + "-"
-	random := namesgenerator.GetRandomNameCDS(0)
-	workerName := fmt.Sprintf("%s%s-%s-%s", prefix, hatcheryName, modelName, random)
+	var nameFirstPart = fmt.Sprintf("%s%s", prefix, modelName)
+	if len(nameFirstPart) > maxLength-10 {
+		nameFirstPart = nameFirstPart[:maxLength-10]
+	}
+	var remainingLength = maxLength - len(nameFirstPart) - 1
 
-	if len(workerName) <= maxLength {
-		return slug.Convert(workerName)
-	}
-	if len(hName) > 10 {
-		hName = ""
-	}
-	workerName = fmt.Sprintf("%s%s%s-%s", prefix, hName, modelName, random)
-	if len(workerName) <= maxLength {
-		return slug.Convert(workerName)
-	}
-	modelName = sdk.StringFirstN(modelName, 15)
-	workerName = fmt.Sprintf("%s%s%s-%s", prefix, hName, modelName, random)
-	return slug.Convert(sdk.StringFirstN(workerName, maxLength))
+	random := namesgenerator.GetRandomNameCDSWithMaxLength(remainingLength)
+	workerName := fmt.Sprintf("%s-%s", nameFirstPart, random)
+
+	return slug.Convert(workerName)
 }
