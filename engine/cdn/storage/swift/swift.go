@@ -21,7 +21,8 @@ type Swift struct {
 	client swift.Connection
 	storage.AbstractUnit
 	encryption.ConvergentEncryption
-	config storage.SwiftStorageConfiguration
+	config      storage.SwiftStorageConfiguration
+	disableSync bool
 }
 
 var (
@@ -32,7 +33,7 @@ func init() {
 	storage.RegisterDriver("swift", new(Swift))
 }
 
-func (s *Swift) Init(_ context.Context, cfg interface{}) error {
+func (s *Swift) Init(_ context.Context, cfg interface{}, disableSync bool) error {
 	config, is := cfg.(*storage.SwiftStorageConfiguration)
 	if !is {
 		return sdk.WithStack(fmt.Errorf("invalid configuration: %T", cfg))
@@ -47,7 +48,12 @@ func (s *Swift) Init(_ context.Context, cfg interface{}) error {
 		UserName: config.Username,
 		ApiKey:   config.Password,
 	}
+	s.disableSync = disableSync
 	return sdk.WithStack(s.client.Authenticate())
+}
+
+func (s *Swift) CanSync() bool {
+	return !s.disableSync
 }
 
 func (s *Swift) ItemExists(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, i sdk.CDNItem) (bool, error) {

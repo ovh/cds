@@ -20,8 +20,9 @@ import (
 type Webdav struct {
 	storage.AbstractUnit
 	encryption.ConvergentEncryption
-	config storage.WebdavStorageConfiguration
-	client *gowebdav.Client
+	config      storage.WebdavStorageConfiguration
+	client      *gowebdav.Client
+	disableSync bool
 }
 
 var (
@@ -32,7 +33,7 @@ func init() {
 	storage.RegisterDriver("webdav", new(Webdav))
 }
 
-func (s *Webdav) Init(ctx context.Context, cfg interface{}) error {
+func (s *Webdav) Init(ctx context.Context, cfg interface{}, disableSync bool) error {
 	config, is := cfg.(*storage.WebdavStorageConfiguration)
 	if !is {
 		return sdk.WithStack(fmt.Errorf("invalid configuration: %T", cfg))
@@ -44,7 +45,12 @@ func (s *Webdav) Init(ctx context.Context, cfg interface{}) error {
 		return err
 	}
 
+	s.disableSync = disableSync
 	return s.client.MkdirAll(config.Path, os.FileMode(0600))
+}
+
+func (s *Webdav) CanSync() bool {
+	return !s.disableSync
 }
 
 func (s *Webdav) filename(i sdk.CDNItemUnit) (string, error) {

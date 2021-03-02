@@ -177,7 +177,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 			}
 			sd.New(gorts, cfg.SyncParallel, float64(cfg.SyncBandwidth)*1024*1024) // convert from MBytes to Bytes
 
-			if err := sd.Init(ctx, cfg.CDS); err != nil {
+			if err := sd.Init(ctx, cfg.CDS, cfg.DisableSync); err != nil {
 				return nil, err
 			}
 			storageUnit = sd
@@ -193,7 +193,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 			}
 			sd.New(gorts, cfg.SyncParallel, float64(cfg.SyncBandwidth)*1024*1024) // convert from MBytes to Bytes
 
-			if err := sd.Init(ctx, cfg.Local); err != nil {
+			if err := sd.Init(ctx, cfg.Local, cfg.DisableSync); err != nil {
 				return nil, err
 			}
 			storageUnit = sd
@@ -206,7 +206,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 			}
 			sd.New(gorts, cfg.SyncParallel, float64(cfg.SyncBandwidth)*1024*1024) // convert from MBytes to Bytes
 
-			if err := sd.Init(ctx, cfg.Swift); err != nil {
+			if err := sd.Init(ctx, cfg.Swift, cfg.DisableSync); err != nil {
 				return nil, err
 			}
 			storageUnit = sd
@@ -219,7 +219,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 			}
 			sd.New(gorts, cfg.SyncParallel, float64(cfg.SyncBandwidth)*1024*1024) // convert from MBytes to Bytes
 
-			if err := sd.Init(ctx, cfg.Webdav); err != nil {
+			if err := sd.Init(ctx, cfg.Webdav, cfg.DisableSync); err != nil {
 				return nil, err
 			}
 			storageUnit = sd
@@ -232,7 +232,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 			}
 			sd.New(gorts, cfg.SyncParallel, float64(cfg.SyncBandwidth)*1024*1024) // convert from MBytes to Bytes
 
-			if err := sd.Init(ctx, cfg.S3); err != nil {
+			if err := sd.Init(ctx, cfg.S3, cfg.DisableSync); err != nil {
 				return nil, err
 			}
 			storageUnit = sd
@@ -280,6 +280,9 @@ func (r *RunningStorageUnits) PushInSyncQueue(ctx context.Context, itemID string
 		return
 	}
 	for _, sto := range r.Storages {
+		if !sto.CanSync() {
+			continue
+		}
 		if err := r.cache.ScoredSetAdd(ctx, cache.Key(KeyBackendSync, sto.Name()), itemID, float64(created.Unix())); err != nil {
 			log.Info(ctx, "storeLogs> cannot push item %s into scoredset for unit %s", itemID, sto.Name())
 			continue
@@ -290,6 +293,9 @@ func (r *RunningStorageUnits) PushInSyncQueue(ctx context.Context, itemID string
 func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) {
 	// Get Unknown items
 	for _, s := range r.Storages {
+		if !s.CanSync() {
+			continue
+		}
 		if err := r.FillWithUnknownItems(ctx, s, r.config.SyncNbElements); err != nil {
 			log.Error(ctx, "Start> unable to get unknown items: %v", err)
 		}
@@ -298,6 +304,9 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 	// Start the sync processes
 	for i := range r.Storages {
 		s := r.Storages[i]
+		if !s.CanSync() {
+			continue
+		}
 		for x := 0; x < cap(s.SyncItemChannel()); x++ {
 			gorts.Run(ctx, fmt.Sprintf("RunningStorageUnits.process.%s.%d", s.Name(), x),
 				func(ctx context.Context) {
@@ -381,6 +390,9 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 				wg := sync.WaitGroup{}
 				for i := range r.Storages {
 					s := r.Storages[i]
+					if !s.CanSync() {
+						continue
+					}
 					gorts.Exec(ctx, "RunningStorageUnits.run."+s.Name(),
 						func(ctx context.Context) {
 							wg.Add(1)

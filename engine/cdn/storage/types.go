@@ -119,10 +119,11 @@ type FileBufferUnit interface {
 type StorageUnit interface {
 	Interface
 	Unit
-	Init(ctx context.Context, cfg interface{}) error
+	Init(ctx context.Context, cfg interface{}, disableSync bool) error
 	SyncItemChannel() chan string
 	NewWriter(ctx context.Context, i sdk.CDNItemUnit) (io.WriteCloser, error)
 	Write(i sdk.CDNItemUnit, r io.Reader, w io.Writer) error
+	CanSync() bool
 }
 
 type StorageUnitWithLocator interface {
@@ -155,6 +156,7 @@ const (
 type StorageConfiguration struct {
 	SyncParallel  int64                       `toml:"syncParallel" json:"sync_parallel" comment:"number of parallel sync processes"`
 	SyncBandwidth int64                       `toml:"syncBandwidth" json:"sync_bandwidth" comment:"global bandwith shared by the sync processes (in Mb)"`
+	DisableSync   bool                        `toml:"disableSync" json:"disable_sync" comment:"flag to disabled backend synchronization"`
 	Local         *LocalStorageConfiguration  `toml:"local" json:"local,omitempty" mapstructure:"local"`
 	Swift         *SwiftStorageConfiguration  `toml:"swift" json:"swift,omitempty" mapstructure:"swift"`
 	Webdav        *WebdavStorageConfiguration `toml:"webdav" json:"webdav,omitempty" mapstructure:"webdav"`

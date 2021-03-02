@@ -27,7 +27,8 @@ type S3 struct {
 	client *s3session.Session
 	storage.AbstractUnit
 	encryption.ConvergentEncryption
-	config storage.S3StorageConfiguration
+	config      storage.S3StorageConfiguration
+	disableSync bool
 }
 
 var (
@@ -38,7 +39,7 @@ func init() {
 	storage.RegisterDriver("s3", new(S3))
 }
 
-func (s *S3) Init(_ context.Context, cfg interface{}) error {
+func (s *S3) Init(_ context.Context, cfg interface{}, disableSync bool) error {
 	config, is := cfg.(*storage.S3StorageConfiguration)
 	if !is {
 		return sdk.WithStack(fmt.Errorf("invalid configuration: %T", cfg))
@@ -75,7 +76,13 @@ func (s *S3) Init(_ context.Context, cfg interface{}) error {
 		Prefix: aws.String(s.config.Prefix),
 	})
 
+	s.disableSync = disableSync
+
 	return sdk.WithStack(err)
+}
+
+func (s *S3) CanSync() bool {
+	return !s.disableSync
 }
 
 func (s *S3) ItemExists(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, i sdk.CDNItem) (bool, error) {
