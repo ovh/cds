@@ -284,7 +284,7 @@ func (c *vSphereClient) StartProgramInGuest(ctx context.Context, procman *guest.
 func (c *vSphereClient) NewVirtualMachine(ctx context.Context, cloneSpec *types.VirtualMachineCloneSpec, ref *types.ManagedObjectReference) (*object.VirtualMachine, error) {
 	vm := object.NewVirtualMachine(c.vclient.Client, *ref)
 
-	log.Info(ctx, "new virtual machine %q is nearly ready...", vm.Name())
+	log.Debug(ctx, "new virtual machine %q is nearly ready...", vm.Name())
 
 	ctxReady, cancelReady := context.WithTimeout(ctx, 3*time.Minute)
 	defer cancelReady()
@@ -304,7 +304,6 @@ func (c *vSphereClient) NewVirtualMachine(ctx context.Context, cloneSpec *types.
 		if operationReady != nil && *operationReady {
 			isGuestReady = true
 		}
-		log.Debug(ctx, "vm %q guest operation is not ready", vm.Name())
 		time.Sleep(1 * time.Second)
 	}
 
