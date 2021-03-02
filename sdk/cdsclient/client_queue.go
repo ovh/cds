@@ -244,7 +244,7 @@ func (c *client) QueueSendResult(ctx context.Context, id int64, res sdk.Result) 
 	}
 	defer result.Close()
 	if code >= 300 {
-		return fmt.Errorf("unable to send job result. HTTP code error : %d", code)
+		return sdk.WithStack(fmt.Errorf("unable to send job result. HTTP code error : %d", code))
 	}
 	return nil
 }
