@@ -236,7 +236,7 @@ func (s *Service) getItemFileValue(ctx context.Context, t sdk.CDNItemType, apiRe
 
 	// Create a reader
 	storageReader, err := unitStorage.NewReader(ctx, *iu)
-	return iu, unitStorage, storageReader, nil
+	return iu, unitStorage, storageReader, sdk.WrapError(err, "unable to open new reader for item unit %v", iu.ID)
 }
 
 func (s *Service) getItemLogValue(ctx context.Context, t sdk.CDNItemType, apiRefHash string, opts getItemLogOptions) (*sdk.CDNItem, int64, io.ReadCloser, string, error) {
@@ -298,6 +298,9 @@ func (s *Service) pushItemLogIntoCache(ctx context.Context, it sdk.CDNItem, unit
 	ctx = context.WithValue(ctx, storage.FieldAPIRef, it.APIRefHash)
 
 	itemUnitID, unitName, err := s.getRandomItemUnitIDByItemID(ctx, it.ID, unitName)
+	if err != nil {
+		return sdk.WrapError(err, "unable to get random item unit for item unit %q and item %q", unitName, it.ID)
+	}
 
 	// Get Storage unit
 	unitStorage := s.Units.Storage(unitName)
