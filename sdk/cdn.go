@@ -386,3 +386,9 @@ func (f CDNStreamFilter) Validate() error {
 	}
 	return nil
 }
+
+type CDNUnitHandlerRequest struct {
+	ID      string `json:"id" cli:"id"`
+	Name    string `json:"name" cli:"name"`
+	NbItems int64  `json:"nb_items" cli:"nb_items"`
+}

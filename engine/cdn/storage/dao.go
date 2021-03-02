@@ -235,6 +235,15 @@ func LoadAllItemUnitsIDsByItemID(db gorp.SqlExecutor, itemID string) ([]string, 
 	return IDs, nil
 }
 
+func LoadAllItemUnitsIDsByUnitID(db gorp.SqlExecutor, unitID string, offset, limit int64) ([]string, error) {
+	var IDs []string
+	query := "SELECT id FROM storage_unit_item WHERE unit_id = $1 AND to_delete = false ORDER BY id ASC OFFSET $2 LIMIT $3"
+	if _, err := db.Select(&IDs, query, unitID, offset, limit); err != nil {
+		return nil, sdk.WithStack(err)
+	}
+	return IDs, nil
+}
+
 func LoadAllItemUnitsByItemIDs(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, itemID string, opts ...gorpmapper.GetOptionFunc) ([]sdk.CDNItemUnit, error) {
 	query := gorpmapper.NewQuery("SELECT * FROM storage_unit_item WHERE item_id = $1 AND to_delete = false").Args(itemID)
 	allItemUnits, err := getAllItemUnits(ctx, m, db, query, opts...)
@@ -322,7 +331,14 @@ type Stat struct {
 	Number      int64  `db:"number"`
 }
 
-func CountItemsForUnit(db gorp.SqlExecutor, unitID, stype string) (res []Stat, err error) {
+func CountItemsForUnit(db gorp.SqlExecutor, unitID string) (int64, error) {
+	nb, err := db.SelectInt(`select count(id)
+	from storage_unit_item
+	where unit_id = $1`, unitID)
+	return nb, sdk.WithStack(err)
+}
+
+func CountItemsForUnitByType(db gorp.SqlExecutor, unitID, stype string) (res []Stat, err error) {
 	_, err = db.Select(&res, `select count(type) as "number"
 	from storage_unit_item
 	where unit_id = $1
@@ -337,4 +353,9 @@ func CountItemUnitToDelete(db gorp.SqlExecutor) (res []Stat, err error) {
 	join storage_unit on storage_unit.id = storage_unit_item.unit_id AND storage_unit_item.to_delete = true
 	group by storage_unit.name, item.type`)
 	return res, sdk.WithStack(err)
+}
+
+func DeleteUnit(m *gorpmapper.Mapper, db gorp.SqlExecutor, u *sdk.CDNUnit) error {
+	unitDB := toUnitDB(*u)
+	return m.Delete(db, unitDB)
 }

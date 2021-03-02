@@ -197,7 +197,7 @@ func (s *Service) countItemsForUnit(ctx context.Context, storageUnit storage.Int
 	types := []sdk.CDNItemType{sdk.CDNTypeItemStepLog, sdk.CDNTypeItemServiceLog, sdk.CDNTypeItemArtifact}
 	var storageStats []storage.Stat
 	for _, typ := range types {
-		suStats, err := storage.CountItemsForUnit(s.mustDBWithCtx(ctx), storageUnit.ID(), string(typ))
+		suStats, err := storage.CountItemsForUnitByType(s.mustDBWithCtx(ctx), storageUnit.ID(), string(typ))
 		if err != nil {
 			log.Error(ctx, "cdn> Unable to compute CountItemsForUnit for %s: %v", storageUnit.Name(), err)
 			return nil
