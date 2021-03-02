@@ -18,8 +18,7 @@ import (
 type CDS struct {
 	client cdsclient.Interface
 	storage.AbstractUnit
-	config      storage.CDSStorageConfiguration
-	disableSync bool
+	config storage.CDSStorageConfiguration
 }
 
 func init() {
@@ -30,11 +29,7 @@ func (c *CDS) GetClient() cdsclient.Interface {
 	return c.client
 }
 
-func (c *CDS) CanSync() bool {
-	return !c.disableSync
-}
-
-func (c *CDS) Init(_ context.Context, cfg interface{}, disableSync bool) error {
+func (c *CDS) Init(_ context.Context, cfg interface{}) error {
 	config, is := cfg.(*storage.CDSStorageConfiguration)
 	if !is {
 		return sdk.WithStack(fmt.Errorf("invalid configuration: %T", cfg))
@@ -46,7 +41,6 @@ func (c *CDS) Init(_ context.Context, cfg interface{}, disableSync bool) error {
 		InsecureSkipVerifyTLS:             config.InsecureSkipVerifyTLS,
 		BuitinConsumerAuthenticationToken: config.Token,
 	})
-	c.disableSync = disableSync
 
 	return nil
 }

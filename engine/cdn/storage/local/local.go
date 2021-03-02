@@ -28,14 +28,13 @@ type Local struct {
 	AbstractLocal
 	config storage.LocalStorageConfiguration
 	encryption.ConvergentEncryption
-	disableSync bool
 }
 
 func init() {
 	storage.RegisterDriver("local", new(Local))
 }
 
-func (s *Local) Init(ctx context.Context, cfg interface{}, disableSync bool) error {
+func (s *Local) Init(ctx context.Context, cfg interface{}) error {
 	config, is := cfg.(*storage.LocalStorageConfiguration)
 	if !is {
 		return sdk.WithStack(fmt.Errorf("invalid configuration: %T", cfg))
@@ -51,13 +50,8 @@ func (s *Local) Init(ctx context.Context, cfg interface{}, disableSync bool) err
 	s.GoRoutines.Run(ctx, "cdn-local-compute-size", func(ctx context.Context) {
 		s.computeSize(ctx)
 	})
-	s.disableSync = disableSync
 
 	return nil
-}
-
-func (s *Local) CanSync() bool {
-	return !s.disableSync
 }
 
 func (s *AbstractLocal) filename(i sdk.CDNItemUnit) (string, error) {

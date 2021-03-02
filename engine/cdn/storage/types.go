@@ -43,7 +43,7 @@ var (
 type Interface interface {
 	Name() string
 	ID() string
-	New(gorts *sdk.GoRoutines, syncParrallel int64, syncBandwidth float64)
+	New(gorts *sdk.GoRoutines, config AbstractUnitConfig)
 	Set(u sdk.CDNUnit)
 	ItemExists(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, i sdk.CDNItem) (bool, error)
 	Status(ctx context.Context) []sdk.MonitoringStatusLine
@@ -56,11 +56,16 @@ type AbstractUnit struct {
 	u             sdk.CDNUnit
 	syncChan      chan string
 	syncBandwidth float64
+	disableSync   bool
 }
 
 func (a *AbstractUnit) ExistsInDatabase(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, id string) (*sdk.CDNItemUnit, error) {
 	query := gorpmapper.NewQuery("SELECT * FROM storage_unit_item WHERE unit_id = $1 and item_id = $2 LIMIT 1").Args(a.ID(), id)
 	return getItemUnit(ctx, m, db, query, gorpmapper.GetOptions.WithDecryption)
+}
+
+func (a *AbstractUnit) CanSync() bool {
+	return !a.disableSync
 }
 
 func (a *AbstractUnit) Name() string {
@@ -73,13 +78,14 @@ func (a *AbstractUnit) ID() string {
 
 func (a *AbstractUnit) Set(u sdk.CDNUnit) { a.u = u }
 
-func (a *AbstractUnit) New(gorts *sdk.GoRoutines, syncParrallel int64, syncBandwidth float64) {
+func (a *AbstractUnit) New(gorts *sdk.GoRoutines, config AbstractUnitConfig) {
 	a.GoRoutines = gorts
-	a.syncChan = make(chan string, syncParrallel)
-	if syncBandwidth <= 0 {
-		syncBandwidth = math.MaxFloat64
+	a.syncChan = make(chan string, config.syncParrallel)
+	if config.syncBandwidth <= 0 {
+		config.syncBandwidth = math.MaxFloat64
 	}
-	a.syncBandwidth = syncBandwidth / float64(syncParrallel)
+	a.syncBandwidth = config.syncBandwidth / float64(config.syncParrallel)
+	a.disableSync = config.disableSync
 }
 
 func (a *AbstractUnit) SyncItemChannel() chan string { return a.syncChan }
@@ -116,10 +122,16 @@ type FileBufferUnit interface {
 	Write(i sdk.CDNItemUnit, r io.Reader, w io.Writer) error
 }
 
+type AbstractUnitConfig struct {
+	syncParrallel int64
+	syncBandwidth float64
+	disableSync   bool
+}
+
 type StorageUnit interface {
 	Interface
 	Unit
-	Init(ctx context.Context, cfg interface{}, disableSync bool) error
+	Init(ctx context.Context, cfg interface{}) error
 	SyncItemChannel() chan string
 	NewWriter(ctx context.Context, i sdk.CDNItemUnit) (io.WriteCloser, error)
 	Write(i sdk.CDNItemUnit, r io.Reader, w io.Writer) error
