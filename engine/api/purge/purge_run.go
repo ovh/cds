@@ -26,6 +26,7 @@ type MarkAsDeleteOptions struct {
 const (
 	RunStatus          = "run_status"
 	RunDaysBefore      = "run_days_before"
+	RunHasGitBranch    = "has_git_branch"
 	RunGitBranchExist  = "git_branch_exist"
 	RunChangeExist     = "gerrit_change_exist"
 	RunChangeMerged    = "gerrit_change_merged"
@@ -34,7 +35,7 @@ const (
 )
 
 func GetRetentionPolicyVariables() []string {
-	return []string{RunDaysBefore, RunStatus, RunGitBranchExist, RunChangeMerged, RunChangeAbandoned, RunChangeDayBefore, RunChangeExist}
+	return []string{RunDaysBefore, RunStatus, RunHasGitBranch, RunGitBranchExist, RunChangeMerged, RunChangeAbandoned, RunChangeDayBefore, RunChangeExist}
 }
 
 func markWorkflowRunsToDelete(ctx context.Context, store cache.Store, db *gorp.DbMap, workflowRunsMarkToDelete *stats.Int64Measure) error {
@@ -218,10 +219,14 @@ func purgeComputeVariables(ctx context.Context, luaCheck *luascript.Check, run s
 	}
 
 	// If we have a branch in payload, check if it exists on repository branches list
-	if b, has := vars["git.branch"]; has {
-		_, exist := branchesMap[b]
-		vars[RunGitBranchExist] = strconv.FormatBool(exist)
+	b, has := vars["git.branch"]
+	var exist bool
+	if has {
+		_, exist = branchesMap[b]
 	}
+	vars[RunHasGitBranch] = strconv.FormatBool(has)
+	vars[RunGitBranchExist] = strconv.FormatBool(exist)
+
 	vars[RunStatus] = run.Status
 
 	varsFloats[RunDaysBefore] = math.Floor(time.Now().Sub(run.LastModified).Hours() / 24)
