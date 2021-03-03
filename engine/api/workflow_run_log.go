@@ -315,7 +315,7 @@ func (api *API) getWorkflowAccessHandler() service.Handler {
 		switch sdk.CDNItemType(itemType) {
 		case sdk.CDNTypeItemStepLog, sdk.CDNTypeItemServiceLog:
 			enabled = true
-		case sdk.CDNTypeItemArtifact:
+		case sdk.CDNTypeItemRunResult:
 			_, enabled = featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeatureCDNArtifact, map[string]string{
 				"project_key": projectKey,
 			})

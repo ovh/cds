@@ -478,9 +478,9 @@ func (c *client) WorkflowRunResultsAdd(ctx context.Context, projectKey string, n
 	return nil
 }
 
-func (c *client) WorkflowRunArtifactCheck(ctx context.Context, projectKey string, name string, number int64, artifactRef sdk.CDNArtifactAPIRef) error {
-	uri := fmt.Sprintf("/project/%s/workflows/%s/runs/%d/artifacts/check", projectKey, name, number)
-	if _, err := c.PostJSON(ctx, uri, artifactRef, nil); err != nil {
+func (c *client) WorkflowRunResultCheck(ctx context.Context, projectKey string, name string, number int64, apiRef sdk.CDNRunResultAPIRef) error {
+	uri := fmt.Sprintf("/project/%s/workflows/%s/runs/%d/results/check", projectKey, name, number)
+	if _, err := c.PostJSON(ctx, uri, apiRef, nil); err != nil {
 		return err
 	}
 	return nil

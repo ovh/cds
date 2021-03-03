@@ -241,8 +241,8 @@ func TestGetItemArtifactDownloadHandler(t *testing.T) {
 		JobID:        3,
 		JobName:      "JobDownload",
 		Worker: &cdn.SignatureWorker{
-			ArtifactName: "myartifact",
-			WorkerName:   "myworker",
+			FileName:   "myartifact",
+			WorkerName: "myworker",
 		},
 	}
 
@@ -265,12 +265,12 @@ func TestGetItemArtifactDownloadHandler(t *testing.T) {
 	jwtTokenRaw, err := signer.SignJWT(jwtToken)
 	require.NoError(t, err)
 
-	apiRef := sdk.NewCDNArtifactApiRef(sig)
+	apiRef := sdk.NewCDNRunResultApiRef(sig)
 	refhash, err := apiRef.ToHash()
 	require.NoError(t, err)
 
 	uri := s.Router.GetRoute("GET", s.getItemDownloadHandler, map[string]string{
-		"type":   string(sdk.CDNTypeItemArtifact),
+		"type":   string(sdk.CDNTypeItemRunResult),
 		"apiRef": refhash,
 	})
 	require.NotEmpty(t, uri)
@@ -318,7 +318,7 @@ func TestGetItemArtifactDownloadHandler(t *testing.T) {
 
 	// Download again
 	uri = s.Router.GetRoute("GET", s.getItemDownloadHandler, map[string]string{
-		"type":   string(sdk.CDNTypeItemArtifact),
+		"type":   string(sdk.CDNTypeItemRunResult),
 		"apiRef": refhash,
 	})
 	require.NotEmpty(t, uri)
@@ -350,16 +350,16 @@ func TestGetItemsArtefactHandler(t *testing.T) {
 		RunID:        1,
 		WorkflowName: "my workflow",
 		Worker: &cdn.SignatureWorker{
-			WorkerID:     "1",
-			WorkerName:   "workername",
-			ArtifactName: "myartifact",
+			WorkerID:   "1",
+			WorkerName: "workername",
+			FileName:   "myartifact",
 		},
 	}
 
 	item1 := sdk.CDNItem{
-		Type:   sdk.CDNTypeItemArtifact,
+		Type:   sdk.CDNTypeItemRunResult,
 		Status: sdk.CDNStatusItemCompleted,
-		APIRef: sdk.NewCDNArtifactApiRef(workerSignature),
+		APIRef: sdk.NewCDNRunResultApiRef(workerSignature),
 	}
 	refhash, err := item1.APIRef.ToHash()
 	require.NoError(t, err)
@@ -377,7 +377,7 @@ func TestGetItemsArtefactHandler(t *testing.T) {
 	require.NoError(t, item.Insert(context.Background(), s.Mapper, db, &item2))
 
 	vars := map[string]string{
-		"type": string(sdk.CDNTypeItemArtifact),
+		"type": string(sdk.CDNTypeItemRunResult),
 	}
 	uri := s.Router.GetRoute("GET", s.getItemsHandler, vars)
 	require.NotEmpty(t, uri)

@@ -81,10 +81,10 @@ func TestNFSReadWrite(t *testing.T) {
 	}, storage.CDNBufferTypeFile)
 	require.NoError(t, err, "unable to initialiaze nfs driver")
 	itemUnit := sdk.CDNItemUnit{
-		Type:    sdk.CDNTypeItemArtifact,
+		Type:    sdk.CDNTypeItemRunResult,
 		Locator: sdk.RandomString(10),
 		Item: &sdk.CDNItem{
-			Type:       sdk.CDNTypeItemArtifact,
+			Type:       sdk.CDNTypeItemRunResult,
 			APIRefHash: sdk.RandomString(10),
 		},
 	}

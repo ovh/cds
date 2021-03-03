@@ -234,7 +234,7 @@ func (s *Service) getItemsHandler() service.Handler {
 		itemType := sdk.CDNItemType(vars["type"])
 
 		switch itemType {
-		case sdk.CDNTypeItemArtifact:
+		case sdk.CDNTypeItemRunResult:
 			return s.getArtifacts(ctx, r, w)
 		case sdk.CDNTypeItemWorkerCache:
 			return s.getWorkerCache(ctx, r, w)
@@ -249,7 +249,7 @@ func (s *Service) getArtifacts(ctx context.Context, r *http.Request, w http.Resp
 	if runID == "" {
 		return sdk.WrapError(sdk.ErrWrongRequest, "invalid workflow run")
 	}
-	items, err := item.LoadByRunID(ctx, s.Mapper, s.mustDBWithCtx(ctx), sdk.CDNTypeItemArtifact, runID)
+	items, err := item.LoadByRunID(ctx, s.Mapper, s.mustDBWithCtx(ctx), sdk.CDNTypeItemRunResult, runID)
 	if err != nil {
 		return err
 	}

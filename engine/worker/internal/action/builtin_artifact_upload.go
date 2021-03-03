@@ -109,7 +109,7 @@ func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Acti
 				wgErrors.Add(1)
 				return
 			}
-			signature, err := wk.ArtifactSignature(name, uint32(fileMode.Mode().Perm()))
+			signature, err := wk.RunResultSignature(name, uint32(fileMode.Mode().Perm()), sdk.WorkflowRunResultTypeArtifact)
 			if err != nil {
 				log.Error(ctx, "unable to sign artifact: %v", err)
 				return

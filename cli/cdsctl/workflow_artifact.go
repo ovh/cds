@@ -176,7 +176,7 @@ func workflowArtifactDownloadRun(v cli.Values) error {
 				return err
 			}
 			fmt.Printf("Downloading %s...\n", artifactData.Name)
-			r, err := client.CDNItemDownload(context.Background(), confCDN.HTTPURL, artifactData.CDNRefHash, sdk.CDNTypeItemArtifact)
+			r, err := client.CDNItemDownload(context.Background(), confCDN.HTTPURL, artifactData.CDNRefHash, sdk.CDNTypeItemRunResult)
 			if err != nil {
 				return err
 			}

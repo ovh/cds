@@ -139,7 +139,7 @@ func (wk *CurrentWorker) WorkerCacheSignature(tag string) (string, error) {
 	return signature, sdk.WrapError(err, "cannot sign log message")
 }
 
-func (wk *CurrentWorker) ArtifactSignature(artifactName string, perm uint32) (string, error) {
+func (wk *CurrentWorker) RunResultSignature(artifactName string, perm uint32, t sdk.WorkflowRunResultType) (string, error) {
 	sig := cdn.Signature{
 		ProjectKey:   wk.currentJob.projectKey,
 		JobID:        wk.currentJob.wJob.ID,
@@ -152,10 +152,11 @@ func (wk *CurrentWorker) ArtifactSignature(artifactName string, perm uint32) (st
 		RunNumber:    wk.currentJob.runNumber,
 		JobName:      wk.currentJob.wJob.Job.Action.Name,
 		Worker: &cdn.SignatureWorker{
-			WorkerID:     wk.id,
-			WorkerName:   wk.Name(),
-			ArtifactName: artifactName,
-			FilePerm:     perm,
+			WorkerID:      wk.id,
+			WorkerName:    wk.Name(),
+			FileName:      artifactName,
+			FilePerm:      perm,
+			RunResultType: string(t),
 		},
 	}
 	signature, err := jws.Sign(wk.currentJob.signer, sig)

@@ -67,7 +67,7 @@ func TestCanUploadArtifactTerminatedJob(t *testing.T) {
 
 	proj, wk, workflowRun, nodeRun, jobRun := createRunNodeRunAndJob(t, db, store)
 
-	artifactRef := sdk.CDNArtifactAPIRef{
+	artifactRef := sdk.CDNRunResultAPIRef{
 		ProjectKey:   proj.Name,
 		WorkflowName: wk.Name,
 		WorkflowID:   wk.ID,
@@ -91,7 +91,7 @@ func TestCanUploadArtifactWrongNodeRun(t *testing.T) {
 
 	proj, wk, workflowRun, nodeRun, jobRun := createRunNodeRunAndJob(t, db, store)
 
-	artifactRef := sdk.CDNArtifactAPIRef{
+	artifactRef := sdk.CDNRunResultAPIRef{
 		ProjectKey:   proj.Key,
 		WorkflowName: wk.Name,
 		WorkflowID:   wk.ID,
@@ -112,7 +112,7 @@ func TestCanUploadArtifactAlreadyExist(t *testing.T) {
 
 	proj, wk, workflowRun, nodeRun, jobRun := createRunNodeRunAndJob(t, db, store)
 
-	artifactRef := sdk.CDNArtifactAPIRef{
+	artifactRef := sdk.CDNRunResultAPIRef{
 		ProjectKey:   proj.Key,
 		WorkflowName: wk.Name,
 		WorkflowID:   wk.ID,
@@ -159,7 +159,7 @@ func TestCanUploadArtifactAlreadyExistInMoreRecentSubNum(t *testing.T) {
 
 	proj, wk, workflowRun, nodeRun, jobRun := createRunNodeRunAndJob(t, db, store)
 
-	artifactRef := sdk.CDNArtifactAPIRef{
+	artifactRef := sdk.CDNRunResultAPIRef{
 		ProjectKey:   proj.Key,
 		WorkflowName: wk.Name,
 		WorkflowID:   wk.ID,
@@ -220,7 +220,7 @@ func TestCanUploadArtifactAlreadyExistInAPreviousSubNum(t *testing.T) {
 	require.NoError(t, err)
 	workflowRun = *run2
 
-	artifactRef := sdk.CDNArtifactAPIRef{
+	artifactRef := sdk.CDNRunResultAPIRef{
 		ProjectKey:   proj.Key,
 		WorkflowName: wk.Name,
 		WorkflowID:   wk.ID,

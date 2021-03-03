@@ -131,7 +131,7 @@ func downloadHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 		wg.Add(len(cdnItems.Items))
 		for i := range cdnItems.Items {
 			item := cdnItems.Items[i]
-			apiRef, is := item.GetCDNArtifactApiRef()
+			apiRef, is := item.GetCDNRunResultApiRef()
 			if !is {
 				newError := sdk.NewError(sdk.ErrInvalidData, fmt.Errorf("item is not an artifact: %v", err))
 				writeError(w, r, newError)
@@ -154,7 +154,7 @@ func downloadHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 				}
 				wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("Downloading artifact %s from workflow %s/%s on run %d...", destFile, projectKey, reqArgs.Workflow, reqArgs.Number))
 
-				reader, err := wk.Client().CDNItemDownload(ctx, wk.CDNHttpURL(), item.APIRefHash, sdk.CDNTypeItemArtifact)
+				reader, err := wk.Client().CDNItemDownload(ctx, wk.CDNHttpURL(), item.APIRefHash, sdk.CDNTypeItemRunResult)
 				if err != nil {
 					newError := sdk.NewError(sdk.ErrUnknownError, fmt.Errorf("cannot download artifact %s: %s", destFile, err))
 					writeError(w, r, newError)

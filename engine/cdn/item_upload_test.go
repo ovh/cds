@@ -129,9 +129,9 @@ func TestPostUploadHandler(t *testing.T) {
 		RunID:        1,
 		WorkflowName: "myworkflow",
 		Worker: &cdn.SignatureWorker{
-			WorkerID:     worker.ID,
-			WorkerName:   worker.Name,
-			ArtifactName: "myartifact",
+			WorkerID:   worker.ID,
+			WorkerName: worker.Name,
+			FileName:   "myartifact",
 		},
 	}
 	signer, err := jws.NewHMacSigner(workerKey)

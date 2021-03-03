@@ -7,6 +7,7 @@ import (
 
 const (
 	WorkflowRunResultTypeArtifact WorkflowRunResultType = "artifact"
+	WorkflowRunResultTypeCoverage WorkflowRunResultType = "coverage"
 )
 
 type WorkflowRunResultType string
@@ -25,6 +26,14 @@ type WorkflowRunResult struct {
 
 func (r *WorkflowRunResult) GetArtifact() (WorkflowRunResultArtifact, error) {
 	var data WorkflowRunResultArtifact
+	if err := json.Unmarshal(r.DataRaw, &data); err != nil {
+		return data, WithStack(err)
+	}
+	return data, nil
+}
+
+func (r *WorkflowRunResult) GetCoverage() (WorkflowRunResultCoverage, error) {
+	var data WorkflowRunResultCoverage
 	if err := json.Unmarshal(r.DataRaw, &data); err != nil {
 		return data, WithStack(err)
 	}
@@ -54,6 +63,29 @@ func (a *WorkflowRunResultArtifact) IsValid() error {
 	}
 	if a.Perm == 0 {
 		return WrapError(ErrInvalidData, "missing file permission")
+	}
+	return nil
+}
+
+type WorkflowRunResultCoverage struct {
+	Name       string `json:"name"`
+	Size       int64  `json:"size"`
+	MD5        string `json:"md5"`
+	CDNRefHash string `json:"cdn_hash"`
+}
+
+func (a *WorkflowRunResultCoverage) IsValid() error {
+	if a.Name == "" {
+		return WrapError(ErrInvalidData, "missing file name")
+	}
+	if a.Size == 0 {
+		return WrapError(ErrInvalidData, "missing file size")
+	}
+	if a.MD5 == "" {
+		return WrapError(ErrInvalidData, "missing md5Sum")
+	}
+	if a.CDNRefHash == "" {
+		return WrapError(ErrInvalidData, "missing cdn item hash")
 	}
 	return nil
 }

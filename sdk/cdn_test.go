@@ -41,10 +41,10 @@ func TestCDNItemLogJSON(t *testing.T) {
 
 func TestCDNItemArtefactJSON(t *testing.T) {
 	item := CDNItem{
-		APIRef: NewCDNArtifactApiRef(cdn.Signature{
+		APIRef: NewCDNRunResultApiRef(cdn.Signature{
 			Worker: &cdn.SignatureWorker{
-				WorkerName:   "workername",
-				ArtifactName: "myartifact",
+				WorkerName: "workername",
+				FileName:   "myartifact",
 			},
 			ProjectKey:   "KEY",
 			WorkflowName: "NAME",
@@ -54,7 +54,7 @@ func TestCDNItemArtefactJSON(t *testing.T) {
 			WorkflowID:   1,
 		}),
 		ID:   "AAA",
-		Type: CDNTypeItemArtifact,
+		Type: CDNTypeItemRunResult,
 	}
 	bts, err := json.Marshal(item)
 	require.NoError(t, err)
@@ -62,7 +62,7 @@ func TestCDNItemArtefactJSON(t *testing.T) {
 	var itemU CDNItem
 	require.NoError(t, json.Unmarshal(bts, &itemU))
 
-	_, is := itemU.GetCDNArtifactApiRef()
+	_, is := itemU.GetCDNRunResultApiRef()
 	require.True(t, is)
 	require.Equal(t, "myartifact", itemU.APIRef.ToFilename())
 }

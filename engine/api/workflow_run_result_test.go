@@ -249,7 +249,7 @@ func Test_workflowRunArtifactCheckUpload(t *testing.T) {
 		"number":           fmt.Sprintf("%d", wrCreate.Number),
 		"nodeID":           fmt.Sprintf("%d", wrCreate.Workflow.WorkflowData.Node.ID),
 	}
-	checkRequest := sdk.CDNArtifactAPIRef{
+	checkRequest := sdk.CDNRunResultAPIRef{
 		ArtifactName: "myArtifact",
 		RunID:        wrCreate.ID,
 		RunNodeID:    nr.ID,

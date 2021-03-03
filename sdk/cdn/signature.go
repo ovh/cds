@@ -16,13 +16,14 @@ type Signature struct {
 }
 
 type SignatureWorker struct {
-	WorkerID     string
-	WorkerName   string
-	StepOrder    int64
-	StepName     string
-	ArtifactName string
-	FilePerm     uint32
-	CacheTag     string
+	WorkerID      string
+	WorkerName    string
+	StepOrder     int64
+	StepName      string
+	FileName      string
+	FilePerm      uint32
+	CacheTag      string
+	RunResultType string
 }
 
 type SignatureService struct {
