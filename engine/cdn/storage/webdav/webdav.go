@@ -32,7 +32,7 @@ func init() {
 	storage.RegisterDriver("webdav", new(Webdav))
 }
 
-func (s *Webdav) Init(ctx context.Context, cfg interface{}) error {
+func (s *Webdav) Init(_ context.Context, cfg interface{}) error {
 	config, is := cfg.(*storage.WebdavStorageConfiguration)
 	if !is {
 		return sdk.WithStack(fmt.Errorf("invalid configuration: %T", cfg))
