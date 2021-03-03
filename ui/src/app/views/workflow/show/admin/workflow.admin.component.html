@@ -85,6 +85,48 @@
                         </div>
                     </div>
                 </div>
+                <div class="field" *ngIf="!retentionRunsPolicyEnabled">
+                    <label>{{ 'workflow_history_length_title' | translate }}</label>
+                    <div class="three wide field">
+                        <input type="number" name="formWorkflowUpdateHistory"
+                            placeholder="{{ 'workflow_history_length' | translate}}" [disabled]="loading"
+                            [(ngModel)]="_workflow.history_length" [disabled]="loading" required
+                            #formWorkflowUpdateHistory="ngModel" min="1" max="500">
+                    </div>
+                    <ng-container *ngIf="!selectedTagsPurge || selectedTagsPurge.length === 0">
+                        <div class="field three wide ui info message">
+                            {{ 'workfow_tag_no' | translate }}
+                        </div>
+                    </ng-container>
+                    <ng-container *ngIf="selectedTagsPurge && selectedTagsPurge.length > 0">
+                        <div class="field ui horizontal list dragula-container" [dragula]="'bag-tag'"
+                            [(dragulaModel)]="selectedTagsPurge">
+                            <div class="item" *ngFor="let t of selectedTagsPurge; let i = index">
+                                <div class="ui label">
+                                    {{t + ' '}}
+                                    <i class="close icon" *ngIf="workflow.permissions.writable"
+                                        (click)="removeFromSelectedTagsPurge(i)"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </ng-container>
+                    <div class="ui inline fields" *ngIf="existingTagsPurge.length > 0">
+                        <div class="ui twelve wide field">
+                            <sui-multi-select name="sidebartagzonehistory" class="fluid selection"
+                                [isDisabled]="loading" [options]="existingTagsPurge" [isSearchable]="true"
+                                [(ngModel)]="tagsToAddPurge" #tagSelectPurge>
+                                <sui-select-option *ngFor="let i of tagSelectPurge.filteredOptions" [value]="i">
+                                </sui-select-option>
+                            </sui-multi-select>
+                        </div>
+                        <div class="ui four wide field">
+                            <div class="ui icon blue button" [class.disabled]="!tagsToAddPurge"
+                                (click)="updateTagPurge()">
+                                <i class="plus icon"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <div class="field" *ngIf="maxRunsEnabled">
                     <label>
                         {{ 'workflow_retention_maxruns' | translate }}
@@ -93,7 +135,7 @@
                             [popupText]="'workflow_retention_maxruns_admin' | translate"></i>
                     </label>
                 </div>
-                <div class="field" *ngIf="apiConfig">
+                <div class="field" *ngIf="retentionRunsPolicyEnabled && apiConfig">
                     <label>
                         {{ 'workflow_retention_policy' | translate }}
                         <i class="circle outline question icon" suiPopup [popupTemplate]="popupRetention"

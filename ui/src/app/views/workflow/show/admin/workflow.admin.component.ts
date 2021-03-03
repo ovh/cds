@@ -72,6 +72,7 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
     iconUpdated = false;
     tagsToAdd = new Array<string>();
     tagsToAddPurge = new Array<string>();
+    retentionRunsPolicyEnabled = false;
     maxRunsEnabled = false;
     codeMirrorConfig: any;
     codeMirrorConfigPlaceHolder: any;
@@ -199,6 +200,9 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
 
         this.initDryRunSubscription();
 
+        let featRetentionRunsPolicyResult = this.store.selectSnapshot(FeatureState.featureProject(FeatureNames.WorkflowRetentionPolicy,
+            JSON.stringify({ project_key: this.project.key })))
+        this.retentionRunsPolicyEnabled = featRetentionRunsPolicyResult?.enabled;
         let featMaxRunsResult = this.store.selectSnapshot(FeatureState.featureProject(FeatureNames.WorkflowRetentionMaxRuns,
             JSON.stringify({ project_key: this.project.key })))
         this.maxRunsEnabled = featMaxRunsResult?.enabled;

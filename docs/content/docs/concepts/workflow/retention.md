@@ -13,6 +13,18 @@ The dry run button allows you to test your lua expression. The result is a table
 
 ## Workflow run retention policy
 
+{{% notice note %}}
+This feature is not currently enabled by default. However, you can try this feature on a CDS project using the feature flipping.
+To activate the feature you can create a file like the following:
+```sh
+cat <<EOF > workflow-retention-policy.yml
+name: workflow-retention-policy
+rule: return project_key == "KEY_FOR_PROJECT_THAT_YOU_WANT_TO_ACTIVATE"
+EOF
+cdsctl admin feature import workflow-retention-policy.yml
+```
+{{% /notice %}}
+
 Retention policy is defined through a lua condition. This condition should be evaluated as **true** to keep a Workflow Run.
 
 You can define a custom condition on a Workflow, if not set it will fallback to the default one from CDS API configuration file (key: api.workflow.defaultRetentionPolicy).
