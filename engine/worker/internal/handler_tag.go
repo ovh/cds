@@ -3,7 +3,6 @@ package internal
 import (
 	"context"
 	"net/http"
-	"time"
 
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
@@ -27,8 +26,6 @@ func tagHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 			})
 		}
 
-		ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-		defer cancel()
 		if err := wk.client.QueueJobTag(ctx, wk.currentJob.wJob.ID, tags); err != nil {
 			newError := sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to create tag on CDS: %v", err)
 			writeError(w, r, newError)

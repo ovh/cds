@@ -15,9 +15,7 @@ import (
 )
 
 func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) error {
-	ctxQueueTakeJob, cancelQueueTakeJob := context.WithTimeout(ctx, 20*time.Second)
-	defer cancelQueueTakeJob()
-	info, err := w.client.QueueTakeJob(ctxQueueTakeJob, job)
+	info, err := w.client.QueueTakeJob(ctx, job)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to take job %d", job.ID)
 	}
@@ -150,14 +148,11 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 	var lasterr error
 	for try := 1; try <= 10; try++ {
 		log.Info(ctx, "takeWorkflowJob> Sending build result...")
-		ctxSendResult, cancelSendResult := context.WithTimeout(ctx, 120*time.Second)
-		lasterr = w.client.QueueSendResult(ctxSendResult, job.ID, res)
+		lasterr = w.client.QueueSendResult(ctx, job.ID, res)
 		if lasterr == nil {
 			log.Info(ctx, "takeWorkflowJob> Send build result OK")
-			cancelSendResult()
 			return nil
 		}
-		cancelSendResult()
 		if ctx.Err() != nil {
 			log.Info(ctx, "takeWorkflowJob> Cannot send build result: HTTP %v - worker cancelled - giving up", lasterr)
 			return nil
