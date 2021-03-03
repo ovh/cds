@@ -234,8 +234,19 @@ func (c *client) QueueJobRelease(ctx context.Context, id int64) error {
 
 func (c *client) QueueSendResult(ctx context.Context, id int64, res sdk.Result) error {
 	path := fmt.Sprintf("/queue/workflows/%d/result", id)
-	_, err := c.PostJSON(ctx, path, res, nil)
-	return err
+	b, err := json.Marshal(res)
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+	result, _, code, err := c.Stream(ctx, c.HTTPNoTimeoutClient(), "POST", path, bytes.NewBuffer(b), nil)
+	if err != nil {
+		return err
+	}
+	defer result.Close()
+	if code >= 300 {
+		return sdk.WithStack(fmt.Errorf("unable to send job result. HTTP code error : %d", code))
+	}
+	return nil
 }
 
 func (c *client) QueueSendCoverage(ctx context.Context, id int64, report coverage.Report) error {

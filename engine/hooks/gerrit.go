@@ -341,7 +341,7 @@ func ListenGerritStreamEvent(ctx context.Context, store cache.Store, goRoutines 
 
 			// release lock
 			if locked {
-				if err := store.Unlock(lockKey); err == nil {
+				if err := store.Unlock(lockKey); err != nil {
 					log.Error(ctx, "unable to unlock %s: %v", lockKey, err)
 				}
 			}

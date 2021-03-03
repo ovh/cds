@@ -2,311 +2,418 @@ package vsphere
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"sync"
-
-	"strings"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
-	"github.com/gorilla/mux"
 	"github.com/rockbears/log"
-	"github.com/sirupsen/logrus"
+	"github.com/vmware/govmomi"
+	"github.com/vmware/govmomi/find"
+	"github.com/vmware/govmomi/guest"
+	"github.com/vmware/govmomi/object"
+	"github.com/vmware/govmomi/view"
+	"github.com/vmware/govmomi/vim25/methods"
+	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/types"
 
-	"github.com/ovh/cds/engine/api"
-	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/ovh/cds/sdk/hatchery"
 )
 
-var (
-	ipsInfos = struct {
-		mu  sync.RWMutex
-		ips map[string]ipInfos
-	}{
-		mu:  sync.RWMutex{},
-		ips: map[string]ipInfos{},
-	}
-)
+var properties = []string{"name", "summary", "guest", "config"}
 
-// New instanciates a new Hatchery vsphere
-func New() *HatcheryVSphere {
-	s := new(HatcheryVSphere)
-	s.GoRoutines = sdk.NewGoRoutines()
-	s.Router = &api.Router{
-		Mux: mux.NewRouter(),
-	}
-	return s
+type VSphereClient interface {
+	ListVirtualMachines(ctx context.Context) ([]mo.VirtualMachine, error)
+	LoadVirtualMachine(ctx context.Context, name string) (*object.VirtualMachine, error)
+	LoadVirtualMachineDevices(ctx context.Context, vm *object.VirtualMachine) (object.VirtualDeviceList, error)
+	ShutdownVirtualMachine(ctx context.Context, vm *object.VirtualMachine) error
+	DestroyVirtualMachine(ctx context.Context, vm *object.VirtualMachine) error
+	CloneVirtualMachine(ctx context.Context, vm *object.VirtualMachine, folder *object.Folder, name string, config *types.VirtualMachineCloneSpec) (*types.ManagedObjectReference, error)
+	NewVirtualMachine(ctx context.Context, cloneSpec *types.VirtualMachineCloneSpec, ref *types.ManagedObjectReference) (*object.VirtualMachine, error)
+	RenameVirtualMachine(ctx context.Context, vm *object.VirtualMachine, newName string) error
+	ReconfigureVirtualMachine(ctx context.Context, vm *object.VirtualMachine, config types.VirtualMachineConfigSpec) error
+	MarkVirtualMachineAsTemplate(ctx context.Context, vm *object.VirtualMachine) error
+	WaitForVirtualMachineShutdown(ctx context.Context, vm *object.VirtualMachine) error
+	WaitForVirtualMachineIP(ctx context.Context, vm *object.VirtualMachine) error
+	LoadFolder(ctx context.Context) (*object.Folder, error)
+	SetupEthernetCard(ctx context.Context, card *types.VirtualEthernetCard, ethernetCardName string, network object.NetworkReference) error
+	LoadNetwork(ctx context.Context, name string) (object.NetworkReference, error)
+	LoadResourcePool(ctx context.Context) (*object.ResourcePool, error)
+	LoadDatastore(ctx context.Context, name string) (*object.Datastore, error)
+	ProcessManager(ctx context.Context, vm *object.VirtualMachine) (*guest.ProcessManager, error)
+	StartProgramInGuest(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (int64, error)
 }
 
-var _ hatchery.InterfaceWithModels = new(HatcheryVSphere)
-
-// Init cdsclient config.
-func (h *HatcheryVSphere) Init(config interface{}) (cdsclient.ServiceConfig, error) {
-	var cfg cdsclient.ServiceConfig
-	sConfig, ok := config.(HatcheryConfiguration)
-	if !ok {
-		return cfg, sdk.WithStack(fmt.Errorf("invalid vsphere hatchery configuration"))
+func NewVSphereClient(vclient *govmomi.Client, datacenter string) VSphereClient {
+	return &vSphereClient{
+		vclient:        vclient,
+		requestTimeout: 15 * time.Second,
+		datacenter:     datacenter,
 	}
-
-	cfg.Host = sConfig.API.HTTP.URL
-	cfg.Token = sConfig.API.Token
-	cfg.InsecureSkipVerifyTLS = sConfig.API.HTTP.Insecure
-	cfg.RequestSecondsTimeout = sConfig.API.RequestTimeout
-	return cfg, nil
 }
 
-func (h *HatcheryVSphere) GetLogger() *logrus.Logger {
-	return h.ServiceLogger
+type vSphereClient struct {
+	datacenter     string
+	vclient        *govmomi.Client
+	requestTimeout time.Duration
 }
 
-// ApplyConfiguration apply an object of type HatcheryConfiguration after checking it
-func (h *HatcheryVSphere) ApplyConfiguration(cfg interface{}) error {
-	if err := h.CheckConfiguration(cfg); err != nil {
-		return err
-	}
+func (c *vSphereClient) finder(ctx context.Context) (*find.Finder, error) {
+	finder := find.NewFinder(c.vclient.Client, false)
 
-	var ok bool
-	h.Config, ok = cfg.(HatcheryConfiguration)
-	if !ok {
-		return fmt.Errorf("Invalid configuration")
-	}
-
-	h.Common.Common.ServiceName = h.Config.Name
-	h.Common.Common.ServiceType = sdk.TypeHatchery
-	h.HTTPURL = h.Config.URL
-	h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
-	var err error
-	h.Common.Common.PrivateKey, err = jwt.ParseRSAPrivateKeyFromPEM([]byte(h.Config.RSAPrivateKey))
+	datacenter, err := finder.DatacenterOrDefault(ctx, c.datacenter)
 	if err != nil {
-		return fmt.Errorf("unable to parse RSA private Key: %v", err)
+		return nil, sdk.WrapError(err, "unable to find datacenter %q", err)
 	}
+	finder.SetDatacenter(datacenter)
+
+	return finder, nil
+}
+
+func (c *vSphereClient) ListVirtualMachines(ctx context.Context) ([]mo.VirtualMachine, error) {
+	var vms []mo.VirtualMachine
+	var m = view.NewManager(c.vclient.Client)
+
+	ctxC, cancelC := context.WithTimeout(ctx, c.requestTimeout)
+	defer cancelC()
+
+	v, err := m.CreateContainerView(ctxC, c.vclient.ServiceContent.RootFolder, []string{"VirtualMachine"}, true)
+	if err != nil {
+		return nil, sdk.WrapError(err, "unable to create container view for vsphere api")
+	}
+	defer v.Destroy(ctx) // nolint
+
+	ctxR, cancelR := context.WithTimeout(ctx, c.requestTimeout)
+	defer cancelR()
+	// Retrieve summary property for all machines
+	if err := v.Retrieve(ctxR, []string{"VirtualMachine"}, properties, &vms); err != nil {
+		return nil, sdk.WrapError(err, "unable to retrieve virtual machines from vsphere")
+	}
+
+	return vms, nil
+}
+
+func (c *vSphereClient) LoadVirtualMachine(ctx context.Context, name string) (*object.VirtualMachine, error) {
+	finder, err := c.finder(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	vm, err := finder.VirtualMachine(ctx, name)
+	if err != nil {
+		return nil, sdk.WrapError(err, "unable to find virtual machine %q", name)
+	}
+
+	return vm, nil
+}
+
+func (c *vSphereClient) LoadVirtualMachineDevices(ctx context.Context, vm *object.VirtualMachine) (object.VirtualDeviceList, error) {
+	ctxC, cancelC := context.WithTimeout(ctx, c.requestTimeout)
+	defer cancelC()
+
+	devices, err := vm.Device(ctxC)
+	if err != nil {
+		return nil, sdk.WrapError(err, "unable to get vm devices")
+	}
+
+	return devices, nil
+}
+
+func (c *vSphereClient) ShutdownVirtualMachine(ctx context.Context, vm *object.VirtualMachine) error {
+	log.Info(ctx, "shutdown server %v", vm.Name)
+
+	ctxC, cancelC := context.WithTimeout(ctx, c.requestTimeout)
+	defer cancelC()
+
+	task, err := vm.PowerOff(ctxC)
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+	return sdk.WithStack(task.Wait(ctx))
+}
+
+func (c *vSphereClient) DestroyVirtualMachine(ctx context.Context, vm *object.VirtualMachine) error {
+	log.Info(ctx, "destroying server %v", vm.Name)
+
+	ctxD, cancelD := context.WithTimeout(ctx, c.requestTimeout)
+	defer cancelD()
+
+	task, err := vm.Destroy(ctxD)
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+
+	return sdk.WithStack(task.Wait(ctx))
+}
+
+func (c *vSphereClient) LoadFolder(ctx context.Context) (*object.Folder, error) {
+	finder, err := c.finder(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	ctxC, cancelC := context.WithTimeout(ctx, c.requestTimeout)
+	defer cancelC()
+
+	folder, err := finder.FolderOrDefault(ctxC, "")
+	if err != nil {
+		return nil, sdk.WrapError(err, "cannot find folder")
+	}
+
+	return folder, nil
+}
+
+func (c *vSphereClient) LoadNetwork(ctx context.Context, name string) (object.NetworkReference, error) {
+	finder, err := c.finder(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	ctxC, cancelC := context.WithTimeout(ctx, c.requestTimeout)
+	defer cancelC()
+
+	network, err := finder.NetworkOrDefault(ctxC, name)
+	if err != nil {
+		return nil, sdk.WrapError(err, "unable to find network %s", err)
+	}
+
+	return network, nil
+}
+
+func (c *vSphereClient) SetupEthernetCard(ctx context.Context, card *types.VirtualEthernetCard, ethernetCardName string, network object.NetworkReference) error {
+	ctxC, cancelC := context.WithTimeout(ctx, c.requestTimeout)
+	defer cancelC()
+
+	backing, err := network.EthernetCardBackingInfo(ctxC)
+	if err != nil {
+		return sdk.WrapError(err, "cannot have ethernet backing info")
+	}
+
+	device, err := object.EthernetCardTypes().CreateEthernetCard(ethernetCardName, backing)
+	if err != nil {
+		return sdk.WrapError(err, "cannot create ethernet card")
+	}
+
+	//set backing info
+	card.Backing = device.(types.BaseVirtualEthernetCard).GetVirtualEthernetCard().Backing
 
 	return nil
 }
 
-// Status returns sdk.MonitoringStatus, implements interface service.Service
-func (h *HatcheryVSphere) Status(ctx context.Context) *sdk.MonitoringStatus {
-	m := h.NewMonitoringStatus()
-	m.AddLine(sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", len(h.WorkersStarted(ctx)), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
-	return m
+func (c *vSphereClient) LoadResourcePool(ctx context.Context) (*object.ResourcePool, error) {
+	finder, err := c.finder(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	pool, err := finder.DefaultResourcePool(ctx)
+	if err != nil {
+		return nil, sdk.WrapError(err, "unable to get default resource pool")
+	}
+	return pool, nil
 }
 
-// CheckConfiguration checks the validity of the configuration object
-func (h *HatcheryVSphere) CheckConfiguration(cfg interface{}) error {
-	hconfig, ok := cfg.(HatcheryConfiguration)
-	if !ok {
-		return fmt.Errorf("Invalid hatchery vsphere configuration")
+func (c *vSphereClient) LoadDatastore(ctx context.Context, name string) (*object.Datastore, error) {
+	finder, err := c.finder(ctx)
+	if err != nil {
+		return nil, err
 	}
 
-	if err := hconfig.Check(); err != nil {
-		return fmt.Errorf("Invalid hatchery vsphere configuration: %v", err)
+	ctxC, cancelC := context.WithTimeout(ctx, c.requestTimeout)
+	defer cancelC()
+
+	datastore, err := finder.DatastoreOrDefault(ctxC, name)
+	if err != nil {
+		return nil, sdk.WrapError(err, "cannot find datastore %q", name)
 	}
 
-	if hconfig.VSphereUser == "" {
-		return fmt.Errorf("vsphere-user is mandatory")
-	}
-
-	if hconfig.VSphereEndpoint == "" {
-		return fmt.Errorf("vsphere-endpoint is mandatory")
-	}
-
-	if hconfig.VSpherePassword == "" {
-		return fmt.Errorf("vsphere-password is mandatory")
-	}
-
-	if hconfig.VSphereDatacenterString == "" {
-		return fmt.Errorf("vsphere-datacenter is mandatory")
-	}
-
-	if hconfig.IPRange != "" {
-		ips, err := sdk.IPinRanges(context.Background(), hconfig.IPRange)
-		if err != nil {
-			return fmt.Errorf("flag or environment variable openstack-ip-range error: %v", err)
-		}
-		for _, ip := range ips {
-			ipsInfos.ips[ip] = ipInfos{}
-		}
-	}
-	return nil
+	return datastore, nil
 }
 
-// CanSpawn return wether or not hatchery can spawn model
-// requirements are not supported
-func (h *HatcheryVSphere) CanSpawn(ctx context.Context, model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
-	for _, r := range requirements {
-		if r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement || r.Type == sdk.HostnameRequirement {
-			return false
-		}
-	}
-	return true
-}
-
-// Start inits client and routines for hatchery
-func (h *HatcheryVSphere) Start(ctx context.Context) error {
-	return hatchery.Create(ctx, h)
-}
-
-// Serve start the hatchery server
-func (h *HatcheryVSphere) Serve(ctx context.Context) error {
-	return h.CommonServe(ctx, h)
-}
-
-//Configuration returns Hatchery CommonConfiguration
-func (h *HatcheryVSphere) Configuration() service.HatcheryCommonConfiguration {
-	return h.Config.HatcheryCommonConfiguration
-}
-
-// NeedRegistration return true if worker model need regsitration
-func (h *HatcheryVSphere) NeedRegistration(ctx context.Context, m *sdk.Model) bool {
-	model, errG := h.getModelByName(ctx, m.Name)
-	if errG != nil || model.Config == nil || model.Config.Annotation == "" {
-		return true
+func (c *vSphereClient) CloneVirtualMachine(ctx context.Context, vm *object.VirtualMachine, folder *object.Folder, name string, config *types.VirtualMachineCloneSpec) (*types.ManagedObjectReference, error) {
+	task, err := vm.Clone(ctx, folder, name, *config)
+	if err != nil {
+		return nil, sdk.WrapError(err, "cannot clone VM")
 	}
 
-	var annot annotation
-	if err := json.Unmarshal([]byte(model.Config.Annotation), &annot); err != nil {
-		return true
+	info, err := task.WaitForResult(ctx, nil)
+	if err != nil || info.State == types.TaskInfoStateError {
+		return nil, sdk.WrapError(err, "state in error")
 	}
 
-	return !annot.ToDelete && (m.NeedRegistration || fmt.Sprintf("%d", m.UserLastModified.Unix()) != annot.WorkerModelLastModified)
+	res := info.Result.(types.ManagedObjectReference)
+
+	return &res, nil
 }
 
-// WorkerModelsEnabled returns Worker model enabled
-func (h *HatcheryVSphere) WorkerModelsEnabled() ([]sdk.Model, error) {
-	return h.CDSClient().WorkerModelEnabledList()
-}
-
-// WorkerModelSecretList returns secret for given model.
-func (h *HatcheryVSphere) WorkerModelSecretList(m sdk.Model) (sdk.WorkerModelSecrets, error) {
-	return h.CDSClient().WorkerModelSecretList(m.Group.Name, m.Name)
-}
-
-// WorkersStartedByModel returns the number of instances of given model started but
-// not necessarily register on CDS yet
-func (h *HatcheryVSphere) WorkersStartedByModel(ctx context.Context, model *sdk.Model) int {
-	var x int
-	for _, s := range h.getServers(ctx) {
-		if strings.Contains(strings.ToLower(s.Name), strings.ToLower(model.Name)) {
-			x++
-		}
-	}
-	log.Debug(ctx, "WorkersStartedByModel> %s : %d", model.Name, x)
-
-	return x
-}
-
-// WorkersStarted returns the number of instances started but
-// not necessarily register on CDS yet
-func (h *HatcheryVSphere) WorkersStarted(ctx context.Context) []string {
-	srvs := h.getServers(ctx)
-	res := make([]string, len(srvs))
-	for i, s := range srvs {
-		if strings.Contains(strings.ToLower(s.Name), "worker") {
-			res[i] = s.Name
-		}
-	}
-	return res
-}
-
-// ModelType returns type of hatchery
-func (*HatcheryVSphere) ModelType() string {
-	return sdk.VSphere
-}
-
-func (h *HatcheryVSphere) main(ctx context.Context) {
-	serverListTick := time.NewTicker(10 * time.Second).C
-	cdnConfTick := time.NewTicker(10 * time.Second).C
-	killAwolServersTick := time.NewTicker(20 * time.Second).C
-	killDisabledWorkersTick := time.NewTicker(60 * time.Second).C
-
-	for {
-		select {
-		case <-serverListTick:
-			h.updateServerList(ctx)
-		case <-killAwolServersTick:
-			h.killAwolServers(ctx)
-		case <-killDisabledWorkersTick:
-			h.killDisabledWorkers(ctx)
-		case <-cdnConfTick:
-			if err := h.RefreshServiceLogger(ctx); err != nil {
-				log.Error(ctx, "Hatchery> vsphere> Cannot get cdn configuration : %v", err)
-			}
-		case <-ctx.Done():
-			if ctx.Err() != nil {
-				log.Error(ctx, "Hatchery> vsphereq> Exiting routines")
-			}
-			return
-		}
-	}
-}
-
-func (h *HatcheryVSphere) updateServerList(ctx context.Context) {
-	var out string
-	var total int
-	status := map[string]int{}
-
-	for _, s := range h.getServers(ctx) {
-		out += fmt.Sprintf("- [%s] %s ", s.Summary.Config.Name, s.Summary.Runtime.PowerState)
-		if _, ok := status[string(s.Summary.Runtime.PowerState)]; !ok {
-			status[string(s.Summary.Runtime.PowerState)] = 0
-		}
-		status[string(s.Summary.Runtime.PowerState)]++
-		total++
-	}
-	var st string
-	for k, s := range status {
-		st += fmt.Sprintf("%d %s ", s, k)
-	}
-	log.Debug(context.TODO(), "Got %d servers %s", total, st)
-	if total > 0 {
-		log.Debug(context.TODO(), out)
-	}
-}
-
-// killDisabledWorkers kill workers which are disabled
-func (h *HatcheryVSphere) killDisabledWorkers(ctx context.Context) {
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+func (c *vSphereClient) ProcessManager(ctx context.Context, vm *object.VirtualMachine) (*guest.ProcessManager, error) {
+	ctxA, cancel := context.WithTimeout(ctx, c.requestTimeout)
 	defer cancel()
 
-	workerPoolDisabled, err := hatchery.WorkerPool(ctx, h, sdk.StatusDisabled)
+	running, err := vm.IsToolsRunning(ctxA)
 	if err != nil {
-		log.Error(ctx, "killDisabledWorkers> Pool> Error: %v", err)
-		return
+		return nil, sdk.WrapError(err, "unable to fetch if VmTools are running on %q", vm.String())
+	}
+	if !running {
+		log.Warn(ctx, "VmTools is not running")
 	}
 
-	srvs := h.getServers(ctx)
-	for _, w := range workerPoolDisabled {
-		for _, s := range srvs {
-			if s.Name == w.Name {
-				log.Info(ctx, "killDisabledWorkers> killDisabledWorkers %v", s.Name)
-				_ = h.deleteServer(s)
-				break
-			}
-		}
+	opman := guest.NewOperationsManager(c.vclient.Client, vm.Reference())
+
+	procman, err := opman.ProcessManager(ctx)
+	if err != nil {
+		return nil, sdk.WrapError(err, "cannot create processManager")
 	}
+
+	return procman, nil
 }
 
-// killAwolServers kill unused servers
-func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
-	srvs := h.getServers(ctx)
+func (c *vSphereClient) StartProgramInGuest(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (int64, error) {
+	ctxB, cancel := context.WithTimeout(ctx, c.requestTimeout)
+	defer cancel()
 
-	for _, s := range srvs {
-		var annot annotation
-		if s.Config == nil || s.Config.Annotation == "" {
-			continue
-		}
-		if err := json.Unmarshal([]byte(s.Config.Annotation), &annot); err != nil {
-			continue
+	res, err := methods.StartProgramInGuest(ctxB, procman.Client(), req)
+	if res != nil {
+		log.Debug(ctx, "program result: %+v", res)
+	}
+	if err != nil {
+		return 0, sdk.WrapError(err, "unable to start program in guest")
+	}
+
+	return res.Returnval, nil
+}
+
+func (c *vSphereClient) NewVirtualMachine(ctx context.Context, cloneSpec *types.VirtualMachineCloneSpec, ref *types.ManagedObjectReference) (*object.VirtualMachine, error) {
+	vm := object.NewVirtualMachine(c.vclient.Client, *ref)
+
+	log.Debug(ctx, "new virtual machine %q is nearly ready...", vm.Name())
+
+	ctxReady, cancelReady := context.WithTimeout(ctx, 3*time.Minute)
+	defer cancelReady()
+
+	var isGuestReady bool
+	for !isGuestReady {
+		if ctxReady.Err() != nil {
+			return nil, sdk.WithStack(fmt.Errorf("vm %q guest operation is not ready: %v", vm.Name(), ctxReady.Err()))
 		}
 
-		if annot.ToDelete || (s.Summary.Runtime.PowerState != types.VirtualMachinePowerStatePoweredOn && (!annot.Model || annot.RegisterOnly)) {
-			if err := h.deleteServer(s); err != nil {
-				log.Warn(context.Background(), "killAwolServers> cannot delete server %s", s.Name)
-			}
+		var o mo.VirtualMachine
+		if err := vm.Properties(ctx, *ref, properties, &o); err != nil {
+			return nil, sdk.WrapError(err, "unable to get vm %q properties", vm.Name())
+		}
+
+		var operationReady = o.Guest.GuestOperationsReady
+		if operationReady != nil && *operationReady {
+			isGuestReady = true
+		}
+		time.Sleep(1 * time.Second)
+	}
+
+	ctxIP, cancelIP := context.WithTimeout(ctx, 3*time.Minute)
+	defer cancelIP()
+
+	var hasIP bool
+	var ip string
+	for !hasIP && ctxIP.Err() == nil {
+		var err error
+		ip, err = vm.WaitForIP(ctxIP, true)
+		if err != nil {
+			return nil, sdk.WrapError(err, "createVMModel> cannot get an ip")
+		}
+		if len(cloneSpec.Customization.NicSettingMap) == 0 {
+			break
+		}
+		customFixedIP, ok := cloneSpec.Customization.NicSettingMap[0].Adapter.Ip.(*types.CustomizationFixedIp)
+		if !ok {
+			break
+		}
+		expectedIP := customFixedIP.IpAddress
+		if ip == expectedIP {
+			break
 		}
 	}
+	log.Info(ctx, "virtual machine %q has IP %q", vm.String(), ip)
+
+	return vm, ctxIP.Err()
+}
+
+func (c *vSphereClient) WaitVirtualMachineForShutdown(ctx context.Context, vm *object.VirtualMachine) error {
+	ctxTo, cancel := context.WithTimeout(ctx, 5*time.Minute)
+	defer cancel()
+
+	log.Debug(ctx, "waiting virtual machine %q to be powered off...", vm.String())
+	if err := vm.WaitForPowerState(ctxTo, types.VirtualMachinePowerStatePoweredOff); err != nil {
+		return sdk.WrapError(err, "cannot wait for power state result")
+	}
+
+	return sdk.WithStack(ctxTo.Err())
+}
+
+func (c *vSphereClient) RenameVirtualMachine(ctx context.Context, vm *object.VirtualMachine, newName string) error {
+	ctxTo, cancel := context.WithTimeout(ctx, c.requestTimeout)
+	defer cancel()
+	log.Debug(ctx, "renaming virtual machine %q to %q...", vm.String(), newName)
+
+	task, errR := vm.Rename(ctxTo, newName)
+	if errR != nil {
+		return sdk.WrapError(errR, "unable to rename model %s", newName)
+	}
+
+	ctxTo, cancel = context.WithTimeout(ctx, time.Minute)
+	defer cancel()
+	if _, err := task.WaitForResult(ctxTo, nil); err != nil {
+		return sdk.WrapError(err, "error on waiting result for vm renaming %q to %q", vm.String(), newName)
+	}
+
+	return sdk.WithStack(ctxTo.Err())
+}
+
+func (c *vSphereClient) ReconfigureVirtualMachine(ctx context.Context, vm *object.VirtualMachine, config types.VirtualMachineConfigSpec) error {
+	ctxTo, cancel := context.WithTimeout(ctx, c.requestTimeout)
+	defer cancel()
+
+	task, err := vm.Reconfigure(ctxTo, config)
+	if err != nil {
+		return sdk.WrapError(err, "unable to reconfigure %q", vm.String())
+	}
+
+	ctxTo, cancel = context.WithTimeout(ctx, time.Minute)
+	defer cancel()
+	if _, err := task.WaitForResult(ctxTo, nil); err != nil {
+		return sdk.WrapError(err, "error on waiting result for vm %q reconfigure", vm.String())
+	}
+
+	return sdk.WithStack(ctxTo.Err())
+}
+
+func (c *vSphereClient) MarkVirtualMachineAsTemplate(ctx context.Context, vm *object.VirtualMachine) error {
+	ctxTo, cancel := context.WithTimeout(ctx, c.requestTimeout)
+	defer cancel()
+
+	if err := vm.MarkAsTemplate(ctxTo); err != nil {
+		return sdk.WrapError(err, "unable to mark vm as template")
+	}
+
+	return sdk.WithStack(ctxTo.Err())
+}
+
+func (c *vSphereClient) WaitForVirtualMachineShutdown(ctx context.Context, vm *object.VirtualMachine) error {
+	ctxTo, cancel := context.WithTimeout(ctx, 10*time.Minute)
+	defer cancel()
+
+	log.Debug(ctx, "waiting virtual machine %q to be powered off...", vm.Name())
+	if err := vm.WaitForPowerState(ctxTo, types.VirtualMachinePowerStatePoweredOff); err != nil {
+		return sdk.WrapError(err, "error while waiting for power state off")
+	}
+
+	return sdk.WithStack(ctxTo.Err())
+}
+
+func (c *vSphereClient) WaitForVirtualMachineIP(ctx context.Context, vm *object.VirtualMachine) error {
+	ctxTo, cancel := context.WithTimeout(ctx, 2*time.Minute)
+	defer cancel()
+
+	if _, err := vm.WaitForIP(ctxTo); err != nil {
+		return sdk.WrapError(err, "error while waiting for IP")
+	}
+
+	return sdk.WithStack(ctxTo.Err())
 }

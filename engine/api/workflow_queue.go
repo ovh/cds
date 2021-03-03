@@ -117,7 +117,9 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 		}
 
 		pbji.CDNHttpAddr, err = services.GetCDNPublicHTTPAdress(ctx, api.mustDB())
-
+		if err != nil {
+			return err
+		}
 		_, enabled := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeatureCDNArtifact, map[string]string{
 			"project_key": pbji.ProjectKey,
 		})

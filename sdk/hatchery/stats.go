@@ -21,7 +21,7 @@ func GetMetrics() *Metrics {
 	return &metrics
 }
 
-func initMetrics(ctx context.Context) error {
+func InitMetrics(ctx context.Context) error {
 	log.Debug(ctx, "hatchery> initializing metrics")
 	var err error
 	onceMetrics.Do(func() {

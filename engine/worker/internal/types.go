@@ -82,7 +82,7 @@ func (wk *CurrentWorker) Init(name, hatcheryName, apiEndpoint, token string, mod
 	wk.register.model = model
 	wk.register.token = token
 	wk.register.apiEndpoint = apiEndpoint
-	wk.client = cdsclient.NewWorker(apiEndpoint, name, cdsclient.NewHTTPClient(time.Second*360, insecure))
+	wk.client = cdsclient.NewWorker(apiEndpoint, name, cdsclient.NewHTTPClient(time.Second*10, insecure))
 	return nil
 }
 

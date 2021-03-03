@@ -572,33 +572,6 @@ func (h *HatcherySwarm) WorkersStarted(ctx context.Context) []string {
 	return res
 }
 
-// WorkersStartedByModel returns the number of started workers
-func (h *HatcherySwarm) WorkersStartedByModel(ctx context.Context, model *sdk.Model) int {
-	list := []string{}
-	for _, dockerClient := range h.dockerClients {
-		// get only started containers
-		containers, errList := h.getContainers(dockerClient, types.ContainerListOptions{All: true})
-		if errList != nil {
-			log.Error(ctx, "hatchery> swarm> WorkersStartedByModel> Unable to list containers: %s", errList)
-			return 0
-		}
-		workers, errList := h.getWorkerContainers(containers, types.ContainerListOptions{})
-		if errList != nil {
-			log.Error(ctx, "hatchery> swarm> WorkersStartedByModel> Unable to list containers: %s", errList)
-			return 0
-		}
-
-		for _, c := range workers {
-			log.Debug(ctx, "Container : %s %s [%s]", c.ID, c.Image, c.Status)
-			if c.Image == model.ModelDocker.Image {
-				list = append(list, c.ID)
-			}
-		}
-	}
-	log.Debug(ctx, "hatchery> swarm> WorkersStartedByModel> %s \t %d", model.Name, len(list))
-	return len(list)
-}
-
 func (h *HatcherySwarm) GetLogger() *logrus.Logger {
 	return h.ServiceLogger
 }
