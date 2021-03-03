@@ -38,13 +38,13 @@ func (h *HatcheryVSphere) InitHatchery(ctx context.Context) error {
 	cdnConfTick := time.NewTicker(60 * time.Second)
 	killAwolServersTick := time.NewTicker(20 * time.Second)
 	killDisabledWorkersTick := time.NewTicker(60 * time.Second)
-	provisionningTick := time.NewTicker(2 * time.Minute)
+	provisioningTick := time.NewTicker(2 * time.Minute)
 
-	h.GoRoutines.Run(ctx, "hatchery-vsphere-provisionning",
+	h.GoRoutines.Run(ctx, "hatchery-vsphere-provisioning",
 		func(ctx context.Context) {
-			defer provisionningTick.Stop()
-			for range provisionningTick.C {
-				h.provisionning(ctx)
+			defer provisioningTick.Stop()
+			for range provisioningTick.C {
+				h.provisioning(ctx)
 			}
 		},
 	)

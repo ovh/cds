@@ -21,7 +21,7 @@ type annotation struct {
 	HatcheryName            string    `json:"hatchery_name,omitempty"`
 	WorkerName              string    `json:"worker_name,omitempty"`
 	RegisterOnly            bool      `json:"register_only,omitempty"`
-	Provisionning           bool      `json:"provisionning,omitempty"`
+	Provisioning            bool      `json:"provisioning,omitempty"`
 	WorkerModelPath         string    `json:"worker_model_path,omitempty"`
 	WorkerModelLastModified string    `json:"worker_model_last_modified,omitempty"`
 	Model                   bool      `json:"model,omitempty"`
@@ -390,7 +390,7 @@ func (h *HatcheryVSphere) ProvisionWorker(ctx context.Context, m sdk.Model, work
 		HatcheryName:            h.Name(),
 		WorkerName:              workerName,
 		RegisterOnly:            false,
-		Provisionning:           true,
+		Provisioning:            true,
 		WorkerModelLastModified: fmt.Sprintf("%d", m.UserLastModified.Unix()),
 		WorkerModelPath:         m.Group.Name + "/" + m.Name,
 		Created:                 time.Now(),
@@ -406,7 +406,7 @@ func (h *HatcheryVSphere) ProvisionWorker(ctx context.Context, m sdk.Model, work
 		return err
 	}
 
-	log.Info(ctx, "provisionning %q by cloning %q", workerName, vmTemplate.Name())
+	log.Info(ctx, "provisioning %q by cloning %q", workerName, vmTemplate.Name())
 
 	cloneRef, err := h.vSphereClient.CloneVirtualMachine(ctx, vmTemplate, folder, workerName, cloneSpec)
 	if err != nil {
@@ -440,7 +440,7 @@ func (h *HatcheryVSphere) FindProvisionnedWorker(ctx context.Context, m sdk.Mode
 			continue
 		}
 		// Provisionned machines are powered off
-		if annot.Provisionning &&
+		if annot.Provisioning &&
 			machine.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOff &&
 			m.Path() == annot.WorkerModelPath {
 			return h.vSphereClient.LoadVirtualMachine(ctx, machine.Name)

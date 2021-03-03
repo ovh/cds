@@ -418,7 +418,7 @@ func TestHatcheryVSphere_Status(t *testing.T) {
 	assert.NotNil(t, s)
 }
 
-func TestHatcheryVSphere_provisionning_do_nothing(t *testing.T) {
+func TestHatcheryVSphere_provisioning_do_nothing(t *testing.T) {
 	log.Factory = log.NewTestingWrapper(t)
 
 	var validModel = sdk.Model{
@@ -448,7 +448,7 @@ func TestHatcheryVSphere_provisionning_do_nothing(t *testing.T) {
 			},
 		},
 		Config: HatcheryConfiguration{
-			WorkerProvisionning: map[string]int{
+			WorkerProvisioning: map[string]int{
 				sdk.SharedInfraGroupName + "/" + validModel.Name: 1,
 			},
 		},
@@ -481,7 +481,7 @@ func TestHatcheryVSphere_provisionning_do_nothing(t *testing.T) {
 						},
 					},
 					Config: &types.VirtualMachineConfigInfo{
-						Annotation: fmt.Sprintf(`{"worker_model_last_modified": "%d", "model": false, "worker_model_path": "%s", "provisionning": true}`, now.Unix(), sdk.SharedInfraGroupName+"/"+validModel.Name),
+						Annotation: fmt.Sprintf(`{"worker_model_last_modified": "%d", "model": false, "worker_model_path": "%s", "provisioning": true}`, now.Unix(), sdk.SharedInfraGroupName+"/"+validModel.Name),
 					},
 					Runtime: types.VirtualMachineRuntimeInfo{
 						PowerState: types.VirtualMachinePowerStatePoweredOff,
@@ -497,10 +497,10 @@ func TestHatcheryVSphere_provisionning_do_nothing(t *testing.T) {
 		},
 	)
 
-	h.provisionning(context.Background())
+	h.provisioning(context.Background())
 }
 
-func TestHatcheryVSphere_provisionning_start_one(t *testing.T) {
+func TestHatcheryVSphere_provisioning_start_one(t *testing.T) {
 	log.Factory = log.NewTestingWrapper(t)
 
 	var validModel = sdk.Model{
@@ -530,7 +530,7 @@ func TestHatcheryVSphere_provisionning_start_one(t *testing.T) {
 			},
 		},
 		Config: HatcheryConfiguration{
-			WorkerProvisionning: map[string]int{
+			WorkerProvisioning: map[string]int{
 				sdk.SharedInfraGroupName + "/" + validModel.Name: 1,
 			},
 		},
@@ -658,5 +658,5 @@ func TestHatcheryVSphere_provisionning_start_one(t *testing.T) {
 		},
 	)
 
-	h.provisionning(context.Background())
+	h.provisioning(context.Background())
 }

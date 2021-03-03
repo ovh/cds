@@ -342,7 +342,7 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 		}
 
 		// If the VM is mark as delete or is OFF and is not a model or a register-only VM, let's delete it
-		if annot.ToDelete || (isPoweredOff && (!annot.Model || annot.RegisterOnly) && !annot.Provisionning) {
+		if annot.ToDelete || (isPoweredOff && (!annot.Model || annot.RegisterOnly) && !annot.Provisioning) {
 			if err := h.deleteServer(ctx, s); err != nil {
 				ctx = sdk.ContextWithStacktrace(ctx, err)
 				log.Error(ctx, "killAwolServers> cannot delete server %s", s.Name)
@@ -352,16 +352,16 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 	}
 }
 
-func (h *HatcheryVSphere) provisionning(ctx context.Context) {
-	if len(h.Config.WorkerProvisionning) == 0 {
-		log.Debug(ctx, "provisionning is disabled")
+func (h *HatcheryVSphere) provisioning(ctx context.Context) {
+	if len(h.Config.WorkerProvisioning) == 0 {
+		log.Debug(ctx, "provisioning is disabled")
 		return
 	}
 
-	h.cacheProvisionning.mu.Lock()
+	h.cacheProvisioning.mu.Lock()
 
-	if len(h.cacheProvisionning.list) > 0 {
-		log.Debug(ctx, "provisionning is still on going")
+	if len(h.cacheProvisioning.list) > 0 {
+		log.Debug(ctx, "provisioning is still on going")
 		return
 	}
 
@@ -373,14 +373,14 @@ func (h *HatcheryVSphere) provisionning(ctx context.Context) {
 			continue
 		}
 		// Provisionned machines are powered off
-		if annot.Provisionning && machine.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOff {
+		if annot.Provisioning && machine.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOff {
 			mapAlreadyProvisionned[annot.WorkerModelPath] = mapAlreadyProvisionned[annot.WorkerModelPath] + 1
 		}
 	}
 
-	h.cacheProvisionning.mu.Unlock()
+	h.cacheProvisioning.mu.Unlock()
 
-	for modelname, number := range h.Config.WorkerProvisionning {
+	for modelname, number := range h.Config.WorkerProvisioning {
 		tuple := strings.Split(modelname, "/")
 		if len(tuple) != 2 {
 			log.Error(ctx, "invalid model name %q", modelname)
@@ -395,7 +395,7 @@ func (h *HatcheryVSphere) provisionning(ctx context.Context) {
 		}
 		modelPath := model.Group.Name + "/" + model.Name
 
-		log.Info(ctx, "model %q provisionning: %d/%d", modelPath, mapAlreadyProvisionned[modelPath], number)
+		log.Info(ctx, "model %q provisioning: %d/%d", modelPath, mapAlreadyProvisionned[modelPath], number)
 
 		for i := 0; i < number-mapAlreadyProvisionned[modelPath]; i++ {
 			var nameFirstPart = modelPath
@@ -406,14 +406,14 @@ func (h *HatcheryVSphere) provisionning(ctx context.Context) {
 			random := namesgenerator.GetRandomNameCDSWithMaxLength(remainingLength)
 			workerName := slug.Convert(fmt.Sprintf("%s-%s", nameFirstPart, random))
 
-			h.cacheProvisionning.list = append(h.cacheProvisionning.list, workerName)
+			h.cacheProvisioning.list = append(h.cacheProvisioning.list, workerName)
 
 			if err := h.ProvisionWorker(ctx, model, workerName); err != nil {
 				log.Error(ctx, "unable to provision model %q: %v", modelname, err)
 			}
-			h.cacheProvisionning.mu.Lock()
-			sdk.DeleteFromArray(h.cacheProvisionning.list, workerName)
-			h.cacheProvisionning.mu.Unlock()
+			h.cacheProvisioning.mu.Lock()
+			sdk.DeleteFromArray(h.cacheProvisioning.list, workerName)
+			h.cacheProvisioning.mu.Unlock()
 		}
 	}
 }

@@ -24,7 +24,7 @@ type HatcheryConfiguration struct {
 	SubnetMask                          string         `mapstructure:"subnetMask" toml:"subnetMask" default:"255.255.255.0" commented:"false" comment:"Subnet Mask" json:"subnetMask"`
 	WorkerTTL                           int            `mapstructure:"workerTTL" toml:"workerTTL" default:"120" commented:"false" comment:"Worker TTL (minutes)" json:"workerTTL"`
 	WorkerRegistrationTTL               int            `mapstructure:"workerRegistrationTTL" toml:"workerRegistrationTTL" default:"10" commented:"false" comment:"Worker Registration TTL (minutes)" json:"workerRegistrationTTL"`
-	WorkerProvisionning                 map[string]int `mapstructure:"workerProvisionning" toml:"workerProvisionning" commented:"false" comment:"Worker Provisionning per model name" json:"workerProvisionning"`
+	WorkerProvisioning                  map[string]int `mapstructure:"workerProvisioning" toml:"workerProvisioning" commented:"false" comment:"Worker Provisioning per model name" json:"workerProvisioning"`
 }
 
 // HatcheryVSphere spawns vm
@@ -47,7 +47,7 @@ type HatcheryVSphere struct {
 		mu   sync.Mutex
 		list []int64
 	}
-	cacheProvisionning struct {
+	cacheProvisioning struct {
 		mu   sync.Mutex
 		list []string
 	}

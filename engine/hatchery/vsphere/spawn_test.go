@@ -426,7 +426,7 @@ func TestHatcheryVSphere_SpawnWorker(t *testing.T) {
 
 }
 
-func TestHatcheryVSphere_SpawnWorkerFromProvisionning(t *testing.T) {
+func TestHatcheryVSphere_SpawnWorkerFromProvisioning(t *testing.T) {
 	log.Factory = log.NewTestingWrapper(t)
 
 	c := NewVSphereClientTest(t)
@@ -487,7 +487,7 @@ func TestHatcheryVSphere_SpawnWorkerFromProvisionning(t *testing.T) {
 					PowerState: types.VirtualMachinePowerStatePoweredOff,
 				},
 				Config: &types.VirtualMachineConfigInfo{
-					Annotation: fmt.Sprintf(`{"worker_model_last_modified": "%d", "provisionning": true, "worker_model_path": "%s"}`, now.Unix(), validModel.Path()),
+					Annotation: fmt.Sprintf(`{"worker_model_last_modified": "%d", "provisioning": true, "worker_model_path": "%s"}`, now.Unix(), validModel.Path()),
 				},
 			},
 		}, nil
