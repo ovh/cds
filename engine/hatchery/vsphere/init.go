@@ -43,8 +43,13 @@ func (h *HatcheryVSphere) InitHatchery(ctx context.Context) error {
 	h.GoRoutines.Run(ctx, "hatchery-vsphere-provisioning",
 		func(ctx context.Context) {
 			defer provisioningTick.Stop()
-			for range provisioningTick.C {
-				h.provisioning(ctx)
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-provisioningTick.C:
+					h.provisioning(ctx)
+				}
 			}
 		},
 	)
@@ -52,8 +57,13 @@ func (h *HatcheryVSphere) InitHatchery(ctx context.Context) error {
 	h.GoRoutines.Run(ctx, "hatchery-vsphere-kill-awol-servers",
 		func(ctx context.Context) {
 			defer killAwolServersTick.Stop()
-			for range killAwolServersTick.C {
-				h.killAwolServers(ctx)
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-killAwolServersTick.C:
+					h.killAwolServers(ctx)
+				}
 			}
 		},
 	)
@@ -61,8 +71,13 @@ func (h *HatcheryVSphere) InitHatchery(ctx context.Context) error {
 	h.GoRoutines.Run(ctx, "hatchery-vsphere-kill-disable-workers",
 		func(ctx context.Context) {
 			defer killDisabledWorkersTick.Stop()
-			for range killDisabledWorkersTick.C {
-				h.killDisabledWorkers(ctx)
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-killDisabledWorkersTick.C:
+					h.killDisabledWorkers(ctx)
+				}
 			}
 		},
 	)
@@ -70,10 +85,15 @@ func (h *HatcheryVSphere) InitHatchery(ctx context.Context) error {
 	h.GoRoutines.Run(ctx, "hatchery-vsphere-refresh-service-logger",
 		func(ctx context.Context) {
 			defer cdnConfTick.Stop()
-			for range cdnConfTick.C {
-				if err := h.RefreshServiceLogger(ctx); err != nil {
-					ctx = sdk.ContextWithStacktrace(ctx, err)
-					log.Error(ctx, "unable to get cdn configuration : %v", err)
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-cdnConfTick.C:
+					if err := h.RefreshServiceLogger(ctx); err != nil {
+						ctx = sdk.ContextWithStacktrace(ctx, err)
+						log.Error(ctx, "unable to get cdn configuration : %v", err)
+					}
 				}
 			}
 		},
