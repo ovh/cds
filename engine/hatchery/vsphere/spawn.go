@@ -21,6 +21,7 @@ type annotation struct {
 	HatcheryName            string    `json:"hatchery_name,omitempty"`
 	WorkerName              string    `json:"worker_name,omitempty"`
 	RegisterOnly            bool      `json:"register_only,omitempty"`
+	Provisionning           bool      `json:"provisionning,omitempty"`
 	WorkerModelPath         string    `json:"worker_model_path,omitempty"`
 	WorkerModelLastModified string    `json:"worker_model_last_modified,omitempty"`
 	Model                   bool      `json:"model,omitempty"`
@@ -76,6 +77,29 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 		if vmTemplate, err = h.vSphereClient.LoadVirtualMachine(ctx, spawnArgs.Model.Name); err != nil {
 			return sdk.WrapError(err, "cannot find virtual machine template with this model")
 		}
+	}
+
+	// Try to find a provisionned worker
+	if !spawnArgs.RegisterOnly {
+		provisionnedVMWorker, err := h.FindProvisionnedWorker(ctx, *spawnArgs.Model)
+		if err != nil {
+			return err
+		}
+
+		if provisionnedVMWorker != nil {
+			log.Info(ctx, "starting worker %q with provisionned machine %q", spawnArgs.Model.Name, provisionnedVMWorker.Name())
+
+			if err := h.vSphereClient.RenameVirtualMachine(ctx, provisionnedVMWorker, spawnArgs.WorkerName); err != nil {
+				return sdk.WrapError(err, "unable to rename VM %q", provisionnedVMWorker.Name())
+			}
+
+			if err := h.vSphereClient.StartVirtualMachine(ctx, provisionnedVMWorker); err != nil {
+				return sdk.WrapError(err, "unable to start VM %q", provisionnedVMWorker.Name())
+			}
+
+			return h.launchScriptWorker(ctx, spawnArgs.WorkerName, spawnArgs.JobID, spawnArgs.WorkerToken, *spawnArgs.Model, false, provisionnedVMWorker)
+		}
+
 	}
 
 	annot := annotation{
@@ -352,4 +376,75 @@ func (h *HatcheryVSphere) markToDelete(ctx context.Context, vm *object.VirtualMa
 	}
 
 	return nil
+}
+
+const maxLength = 63
+
+func (h *HatcheryVSphere) ProvisionWorker(ctx context.Context, m sdk.Model, workerName string) (err error) {
+	vmTemplate, err := h.vSphereClient.LoadVirtualMachine(ctx, m.Name)
+	if err != nil {
+		return sdk.WrapError(err, "cannot find virtual machine template with this model")
+	}
+
+	annot := annotation{
+		HatcheryName:            h.Name(),
+		WorkerName:              workerName,
+		RegisterOnly:            false,
+		Provisionning:           true,
+		WorkerModelLastModified: fmt.Sprintf("%d", m.UserLastModified.Unix()),
+		WorkerModelPath:         m.Group.Name + "/" + m.Name,
+		Created:                 time.Now(),
+	}
+
+	cloneSpec, err := h.prepareCloneSpec(ctx, vmTemplate, annot, workerName)
+	if err != nil {
+		return err
+	}
+
+	folder, err := h.vSphereClient.LoadFolder(ctx)
+	if err != nil {
+		return err
+	}
+
+	log.Info(ctx, "provisionning %q by cloning %q", workerName, vmTemplate.Name())
+
+	cloneRef, err := h.vSphereClient.CloneVirtualMachine(ctx, vmTemplate, folder, workerName, cloneSpec)
+	if err != nil {
+		return err
+	}
+
+	clonedVM, err := h.vSphereClient.NewVirtualMachine(ctx, cloneSpec, cloneRef)
+	if err != nil {
+		return err
+	}
+
+	if err := h.vSphereClient.WaitForVirtualMachineIP(ctx, clonedVM); err != nil {
+		return err
+	}
+
+	// the provisionned workers are shutdown when they are created
+	if err := h.vSphereClient.ShutdownVirtualMachine(ctx, clonedVM); err != nil {
+		return err
+	}
+
+	log.Info(ctx, "vm %q has been provisionned", workerName)
+
+	return nil
+}
+
+func (h *HatcheryVSphere) FindProvisionnedWorker(ctx context.Context, m sdk.Model) (*object.VirtualMachine, error) {
+	machines := h.getVirtualMachines(ctx)
+	for _, machine := range machines {
+		annot := getVirtualMachineCDSAnnotation(ctx, machine)
+		if annot == nil {
+			continue
+		}
+		// Provisionned machines are powered off
+		if annot.Provisionning &&
+			machine.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOff &&
+			m.Path() == annot.WorkerModelPath {
+			return h.vSphereClient.LoadVirtualMachine(ctx, machine.Name)
+		}
+	}
+	return nil, nil
 }

@@ -82,6 +82,20 @@ func (mr *MockVSphereClientMockRecorder) LoadVirtualMachineDevices(ctx, vm inter
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadVirtualMachineDevices", reflect.TypeOf((*MockVSphereClient)(nil).LoadVirtualMachineDevices), ctx, vm)
 }
 
+// StartVirtualMachine mocks base method
+func (m *MockVSphereClient) StartVirtualMachine(ctx context.Context, vm *object.VirtualMachine) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "StartVirtualMachine", ctx, vm)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// StartVirtualMachine indicates an expected call of StartVirtualMachine
+func (mr *MockVSphereClientMockRecorder) StartVirtualMachine(ctx, vm interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StartVirtualMachine", reflect.TypeOf((*MockVSphereClient)(nil).StartVirtualMachine), ctx, vm)
+}
+
 // ShutdownVirtualMachine mocks base method
 func (m *MockVSphereClient) ShutdownVirtualMachine(ctx context.Context, vm *object.VirtualMachine) error {
 	m.ctrl.T.Helper()

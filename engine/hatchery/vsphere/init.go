@@ -31,35 +31,53 @@ func (h *HatcheryVSphere) InitHatchery(ctx context.Context) error {
 	}
 
 	if err := h.RefreshServiceLogger(ctx); err != nil {
-		return fmt.Errorf("hatchery> vsphere> Cannot get cdn configuration : %v", err)
+		ctx = sdk.ContextWithStacktrace(ctx, err)
+		log.Error(ctx, "unable get cdn configuration : %v", err)
 	}
 
-	h.GoRoutines.Run(ctx, "hatchery-vsphere-main", func(ctx context.Context) {
-		if err := h.RefreshServiceLogger(ctx); err != nil {
-			ctx = sdk.ContextWithStacktrace(ctx, err)
-			log.Error(ctx, "unable get cdn configuration : %v", err)
-		}
+	cdnConfTick := time.NewTicker(60 * time.Second)
+	killAwolServersTick := time.NewTicker(20 * time.Second)
+	killDisabledWorkersTick := time.NewTicker(60 * time.Second)
+	provisionningTick := time.NewTicker(2 * time.Minute)
 
-		cdnConfTick := time.NewTicker(60 * time.Second).C
-		killAwolServersTick := time.NewTicker(20 * time.Second).C
-		killDisabledWorkersTick := time.NewTicker(60 * time.Second).C
+	h.GoRoutines.Run(ctx, "hatchery-vsphere-provisionning",
+		func(ctx context.Context) {
+			defer provisionningTick.Stop()
+			for range provisionningTick.C {
+				h.provisionning(ctx)
+			}
+		},
+	)
 
-		for {
-			select {
-			case <-killAwolServersTick:
+	h.GoRoutines.Run(ctx, "hatchery-vsphere-kill-awol-servers",
+		func(ctx context.Context) {
+			defer killAwolServersTick.Stop()
+			for range killAwolServersTick.C {
 				h.killAwolServers(ctx)
-			case <-killDisabledWorkersTick:
+			}
+		},
+	)
+
+	h.GoRoutines.Run(ctx, "hatchery-vsphere-kill-disable-workers",
+		func(ctx context.Context) {
+			defer killDisabledWorkersTick.Stop()
+			for range killDisabledWorkersTick.C {
 				h.killDisabledWorkers(ctx)
-			case <-cdnConfTick:
+			}
+		},
+	)
+
+	h.GoRoutines.Run(ctx, "hatchery-vsphere-refresh-service-logger",
+		func(ctx context.Context) {
+			defer cdnConfTick.Stop()
+			for range cdnConfTick.C {
 				if err := h.RefreshServiceLogger(ctx); err != nil {
 					ctx = sdk.ContextWithStacktrace(ctx, err)
 					log.Error(ctx, "unable to get cdn configuration : %v", err)
 				}
-			case <-ctx.Done():
-				return
 			}
-		}
-	})
+		},
+	)
 
 	log.Info(ctx, "vSphere hatchery initialized")
 

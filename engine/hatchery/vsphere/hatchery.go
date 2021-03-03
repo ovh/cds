@@ -19,6 +19,8 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
+	"github.com/ovh/cds/sdk/namesgenerator"
+	"github.com/ovh/cds/sdk/slug"
 )
 
 // New instanciates a new Hatchery vsphere
@@ -340,12 +342,78 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 		}
 
 		// If the VM is mark as delete or is OFF and is not a model or a register-only VM, let's delete it
-		if annot.ToDelete || (isPoweredOff && (!annot.Model || annot.RegisterOnly)) {
+		if annot.ToDelete || (isPoweredOff && (!annot.Model || annot.RegisterOnly) && !annot.Provisionning) {
 			if err := h.deleteServer(ctx, s); err != nil {
 				ctx = sdk.ContextWithStacktrace(ctx, err)
 				log.Error(ctx, "killAwolServers> cannot delete server %s", s.Name)
 			}
 		}
 
+	}
+}
+
+func (h *HatcheryVSphere) provisionning(ctx context.Context) {
+	if len(h.Config.WorkerProvisionning) == 0 {
+		log.Debug(ctx, "provisionning is disabled")
+		return
+	}
+
+	h.cacheProvisionning.mu.Lock()
+
+	if len(h.cacheProvisionning.list) > 0 {
+		log.Debug(ctx, "provisionning is still on going")
+		return
+	}
+
+	var mapAlreadyProvisionned = make(map[string]int)
+	machines := h.getVirtualMachines(ctx)
+	for _, machine := range machines {
+		annot := getVirtualMachineCDSAnnotation(ctx, machine)
+		if annot == nil {
+			continue
+		}
+		// Provisionned machines are powered off
+		if annot.Provisionning && machine.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOff {
+			mapAlreadyProvisionned[annot.WorkerModelPath] = mapAlreadyProvisionned[annot.WorkerModelPath] + 1
+		}
+	}
+
+	h.cacheProvisionning.mu.Unlock()
+
+	for modelname, number := range h.Config.WorkerProvisionning {
+		tuple := strings.Split(modelname, "/")
+		if len(tuple) != 2 {
+			log.Error(ctx, "invalid model name %q", modelname)
+			continue
+		}
+
+		model, err := h.Client.WorkerModelGet(tuple[0], tuple[1])
+		if err != nil {
+			ctx = sdk.ContextWithStacktrace(ctx, err)
+			log.Error(ctx, "unable to get model name %q: %v", modelname, err)
+			continue
+		}
+		modelPath := model.Group.Name + "/" + model.Name
+
+		log.Info(ctx, "model %q provisionning: %d/%d", modelPath, mapAlreadyProvisionned[modelPath], number)
+
+		for i := 0; i < number-mapAlreadyProvisionned[modelPath]; i++ {
+			var nameFirstPart = modelPath
+			if len(nameFirstPart) > maxLength-10 {
+				nameFirstPart = nameFirstPart[:maxLength-10]
+			}
+			var remainingLength = maxLength - len(nameFirstPart) - 1
+			random := namesgenerator.GetRandomNameCDSWithMaxLength(remainingLength)
+			workerName := slug.Convert(fmt.Sprintf("%s-%s", nameFirstPart, random))
+
+			h.cacheProvisionning.list = append(h.cacheProvisionning.list, workerName)
+
+			if err := h.ProvisionWorker(ctx, model, workerName); err != nil {
+				log.Error(ctx, "unable to provision model %q: %v", modelname, err)
+			}
+			h.cacheProvisionning.mu.Lock()
+			sdk.DeleteFromArray(h.cacheProvisionning.list, workerName)
+			h.cacheProvisionning.mu.Unlock()
+		}
 	}
 }

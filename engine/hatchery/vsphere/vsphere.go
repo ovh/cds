@@ -24,6 +24,7 @@ type VSphereClient interface {
 	ListVirtualMachines(ctx context.Context) ([]mo.VirtualMachine, error)
 	LoadVirtualMachine(ctx context.Context, name string) (*object.VirtualMachine, error)
 	LoadVirtualMachineDevices(ctx context.Context, vm *object.VirtualMachine) (object.VirtualDeviceList, error)
+	StartVirtualMachine(ctx context.Context, vm *object.VirtualMachine) error
 	ShutdownVirtualMachine(ctx context.Context, vm *object.VirtualMachine) error
 	DestroyVirtualMachine(ctx context.Context, vm *object.VirtualMachine) error
 	CloneVirtualMachine(ctx context.Context, vm *object.VirtualMachine, folder *object.Folder, name string, config *types.VirtualMachineCloneSpec) (*types.ManagedObjectReference, error)
@@ -115,6 +116,19 @@ func (c *vSphereClient) LoadVirtualMachineDevices(ctx context.Context, vm *objec
 	}
 
 	return devices, nil
+}
+
+func (c *vSphereClient) StartVirtualMachine(ctx context.Context, vm *object.VirtualMachine) error {
+	log.Info(ctx, "starting server %v", vm.Name)
+
+	ctxC, cancelC := context.WithTimeout(ctx, c.requestTimeout)
+	defer cancelC()
+
+	task, err := vm.PowerOn(ctxC)
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+	return sdk.WithStack(task.Wait(ctx))
 }
 
 func (c *vSphereClient) ShutdownVirtualMachine(ctx context.Context, vm *object.VirtualMachine) error {

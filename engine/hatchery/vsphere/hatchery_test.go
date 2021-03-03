@@ -2,7 +2,9 @@ package vsphere
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -414,4 +416,247 @@ func TestHatcheryVSphere_Status(t *testing.T) {
 	s := h.Status(context.Background())
 	t.Logf("status: %+v", s)
 	assert.NotNil(t, s)
+}
+
+func TestHatcheryVSphere_provisionning_do_nothing(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+
+	var validModel = sdk.Model{
+		Name: "model",
+		Type: sdk.VSphere,
+		ModelVirtualMachine: sdk.ModelVirtualMachine{
+			Cmd:     "./worker",
+			Image:   "model",
+			PostCmd: "shutdown -h now",
+		},
+		Group: &sdk.Group{
+			Name: sdk.SharedInfraGroupName,
+		},
+	}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	cdsclient := mock_cdsclient.NewMockInterface(ctrl)
+
+	c := NewVSphereClientTest(t)
+	h := HatcheryVSphere{
+		vSphereClient: c,
+		Common: hatchery.Common{
+			Common: service.Common{
+				GoRoutines: sdk.NewGoRoutines(),
+				Client:     cdsclient,
+			},
+		},
+		Config: HatcheryConfiguration{
+			WorkerProvisionning: map[string]int{
+				sdk.SharedInfraGroupName + "/" + validModel.Name: 1,
+			},
+		},
+	}
+
+	var now = time.Now()
+
+	c.EXPECT().ListVirtualMachines(gomock.Any()).DoAndReturn(
+		func(ctx context.Context) ([]mo.VirtualMachine, error) {
+			return []mo.VirtualMachine{
+				{
+					ManagedEntity: mo.ManagedEntity{
+						Name: validModel.Name,
+					},
+					Summary: types.VirtualMachineSummary{
+						Config: types.VirtualMachineConfigSummary{
+							Template: true,
+						},
+					},
+					Config: &types.VirtualMachineConfigInfo{
+						Annotation: fmt.Sprintf(`{"worker_model_last_modified": "%d", "model": true}`, now.Unix()),
+					},
+				}, {
+					ManagedEntity: mo.ManagedEntity{
+						Name: "provisionned_worker",
+					},
+					Summary: types.VirtualMachineSummary{
+						Config: types.VirtualMachineConfigSummary{
+							Template: false,
+						},
+					},
+					Config: &types.VirtualMachineConfigInfo{
+						Annotation: fmt.Sprintf(`{"worker_model_last_modified": "%d", "model": false, "worker_model_path": "%s", "provisionning": true}`, now.Unix(), sdk.SharedInfraGroupName+"/"+validModel.Name),
+					},
+					Runtime: types.VirtualMachineRuntimeInfo{
+						PowerState: types.VirtualMachinePowerStatePoweredOff,
+					},
+				},
+			}, nil
+		},
+	)
+
+	cdsclient.EXPECT().WorkerModelGet(sdk.SharedInfraGroupName, validModel.Name).DoAndReturn(
+		func(groupName, name string) (sdk.Model, error) {
+			return validModel, nil
+		},
+	)
+
+	h.provisionning(context.Background())
+}
+
+func TestHatcheryVSphere_provisionning_start_one(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+
+	var validModel = sdk.Model{
+		Name: "model",
+		Type: sdk.VSphere,
+		ModelVirtualMachine: sdk.ModelVirtualMachine{
+			Cmd:     "./worker",
+			Image:   "model",
+			PostCmd: "shutdown -h now",
+		},
+		Group: &sdk.Group{
+			Name: sdk.SharedInfraGroupName,
+		},
+	}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	cdsclient := mock_cdsclient.NewMockInterface(ctrl)
+
+	c := NewVSphereClientTest(t)
+	h := HatcheryVSphere{
+		vSphereClient: c,
+		Common: hatchery.Common{
+			Common: service.Common{
+				GoRoutines: sdk.NewGoRoutines(),
+				Client:     cdsclient,
+			},
+		},
+		Config: HatcheryConfiguration{
+			WorkerProvisionning: map[string]int{
+				sdk.SharedInfraGroupName + "/" + validModel.Name: 1,
+			},
+		},
+	}
+
+	h.Config.VSphereNetworkString = "vbox-net"
+	h.Config.VSphereCardName = "ethernet-card"
+	h.Config.VSphereDatastoreString = "datastore"
+	h.availableIPAddresses = []string{"192.168.0.1", "192.168.0.2", "192.168.0.3"}
+	h.Config.Gateway = "192.168.0.254"
+	h.Config.DNS = "192.168.0.253"
+
+	var now = time.Now()
+
+	c.EXPECT().ListVirtualMachines(gomock.Any()).DoAndReturn(
+		func(ctx context.Context) ([]mo.VirtualMachine, error) {
+			return []mo.VirtualMachine{
+				{
+					ManagedEntity: mo.ManagedEntity{
+						Name: validModel.Name,
+					},
+					Summary: types.VirtualMachineSummary{
+						Config: types.VirtualMachineConfigSummary{
+							Template: true,
+						},
+					},
+					Config: &types.VirtualMachineConfigInfo{
+						Annotation: fmt.Sprintf(`{"worker_model_last_modified": "%d", "model": true}`, now.Unix()),
+					},
+				},
+			}, nil
+		},
+	)
+
+	cdsclient.EXPECT().WorkerModelGet(sdk.SharedInfraGroupName, validModel.Name).DoAndReturn(
+		func(groupName, name string) (sdk.Model, error) {
+			return validModel, nil
+		},
+	)
+
+	var vmTemplate = object.VirtualMachine{
+		Common: object.Common{},
+	}
+
+	c.EXPECT().LoadVirtualMachine(gomock.Any(), validModel.Name).DoAndReturn(
+		func(ctx context.Context, name string) (*object.VirtualMachine, error) {
+			return &vmTemplate, nil
+		},
+	)
+
+	c.EXPECT().LoadVirtualMachineDevices(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, vm *object.VirtualMachine) (object.VirtualDeviceList, error) {
+			card := types.VirtualEthernetCard{}
+			return object.VirtualDeviceList{
+				&card,
+			}, nil
+		},
+	)
+
+	c.EXPECT().LoadNetwork(gomock.Any(), "vbox-net").DoAndReturn(
+		func(ctx context.Context, s string) (object.NetworkReference, error) {
+			return &object.Network{}, nil
+		},
+	)
+
+	c.EXPECT().SetupEthernetCard(gomock.Any(), gomock.Any(), "ethernet-card", gomock.Any()).DoAndReturn(
+		func(ctx context.Context, card *types.VirtualEthernetCard, ethernetCardName string, network object.NetworkReference) error {
+			return nil
+		},
+	)
+
+	c.EXPECT().LoadResourcePool(gomock.Any()).DoAndReturn(
+		func(ctx context.Context) (*object.ResourcePool, error) {
+			return &object.ResourcePool{}, nil
+		},
+	)
+
+	c.EXPECT().LoadDatastore(gomock.Any(), "datastore").DoAndReturn(
+		func(ctx context.Context, name string) (*object.Datastore, error) {
+			return &object.Datastore{}, nil
+		},
+	)
+
+	var folder object.Folder
+
+	c.EXPECT().LoadFolder(gomock.Any()).DoAndReturn(
+		func(ctx context.Context) (*object.Folder, error) {
+			return &folder, nil
+		},
+	)
+
+	var workerRef types.ManagedObjectReference
+
+	c.EXPECT().CloneVirtualMachine(gomock.Any(), &vmTemplate, &folder, gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, vm *object.VirtualMachine, folder *object.Folder, name string, config *types.VirtualMachineCloneSpec) (*types.ManagedObjectReference, error) {
+			assert.True(t, strings.HasPrefix(name, "shared-infra-model"))
+			return &workerRef, nil
+		},
+	)
+
+	var workerVM object.VirtualMachine
+
+	c.EXPECT().NewVirtualMachine(gomock.Any(), gomock.Any(), &workerRef).DoAndReturn(
+		func(ctx context.Context, cloneSpec *types.VirtualMachineCloneSpec, ref *types.ManagedObjectReference) (*object.VirtualMachine, error) {
+			assert.False(t, cloneSpec.Template)
+			assert.True(t, cloneSpec.PowerOn)
+			var givenAnnotation annotation
+			json.Unmarshal([]byte(cloneSpec.Config.Annotation), &givenAnnotation)
+			assert.Equal(t, "shared.infra/model", givenAnnotation.WorkerModelPath)
+			assert.False(t, givenAnnotation.Model)
+			assert.Equal(t, "192.168.0.1", (cloneSpec.Customization.NicSettingMap[0].Adapter.Ip.(*types.CustomizationFixedIp).IpAddress))
+			return &workerVM, nil
+		},
+	)
+
+	c.EXPECT().WaitForVirtualMachineIP(gomock.Any(), &workerVM).DoAndReturn(
+		func(ctx context.Context, vm *object.VirtualMachine) error {
+			return nil
+		},
+	)
+
+	c.EXPECT().ShutdownVirtualMachine(gomock.Any(), &workerVM).DoAndReturn(
+		func(ctx context.Context, vm *object.VirtualMachine) error {
+			return nil
+		},
+	)
+
+	h.provisionning(context.Background())
 }
