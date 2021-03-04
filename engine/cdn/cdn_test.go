@@ -126,6 +126,8 @@ func newRunningStorageUnits(t *testing.T, m *gorpmapper.Mapper, dbMap *gorp.DbMa
 	cdnUnits, err := storage.Init(ctx, m, store, dbMap, sdk.NewGoRoutines(), storage.Configuration{
 		SyncSeconds:     2,
 		SyncNbElements:  100,
+		PurgeSeconds:    30,
+		PurgeNbElements: 100,
 		HashLocatorSalt: "thisismysalt",
 		Buffers: map[string]storage.BufferConfiguration{
 			"redis_buffer": {

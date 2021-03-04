@@ -56,6 +56,8 @@ func TestPostUploadHandler(t *testing.T) {
 	cdnUnits, err := storage.Init(ctx, s.Mapper, s.Cache, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
 		SyncSeconds:     1,
 		SyncNbElements:  1000,
+		PurgeNbElements: 1000,
+		PurgeSeconds:    30,
 		HashLocatorSalt: "thisismysalt",
 		Buffers: map[string]storage.BufferConfiguration{
 			"refis_buffer": {
