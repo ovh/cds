@@ -213,9 +213,9 @@ func TestGetItemArtifactDownloadHandler(t *testing.T) {
 	s.Client = cdsclient.New(cdsclient.Config{Host: "http://lolcat.api", InsecureSkipVerifyTLS: false})
 	gock.InterceptClient(s.Client.(cdsclient.Raw).HTTPClient())
 	t.Cleanup(gock.OffAll)
-	gock.New("http://lolcat.api").Get("/project/" + projectKey + "/workflows/WfName/type/artifact/access").Reply(http.StatusOK).JSON(nil)
+	gock.New("http://lolcat.api").Get("/project/" + projectKey + "/workflows/WfName/type/run-result/access").Reply(http.StatusOK).JSON(nil)
 
-	gock.New("http://lolcat.api").Post("/project/" + projectKey + "/workflows/WfName/runs/0/artifacts/check").Reply(http.StatusNoContent)
+	gock.New("http://lolcat.api").Post("/project/" + projectKey + "/workflows/WfName/runs/0/results/check").Reply(http.StatusNoContent)
 	gock.New("http://lolcat.api").Post("/project/" + projectKey + "/workflows/WfName/runs/0/results").Reply(http.StatusNoContent)
 
 	ctx, cancel := context.WithCancel(context.TODO())
@@ -241,8 +241,9 @@ func TestGetItemArtifactDownloadHandler(t *testing.T) {
 		JobID:        3,
 		JobName:      "JobDownload",
 		Worker: &cdn.SignatureWorker{
-			FileName:   "myartifact",
-			WorkerName: "myworker",
+			FileName:      "myartifact",
+			WorkerName:    "myworker",
+			RunResultType: string(sdk.WorkflowRunResultTypeArtifact),
 		},
 	}
 
@@ -350,9 +351,10 @@ func TestGetItemsArtefactHandler(t *testing.T) {
 		RunID:        1,
 		WorkflowName: "my workflow",
 		Worker: &cdn.SignatureWorker{
-			WorkerID:   "1",
-			WorkerName: "workername",
-			FileName:   "myartifact",
+			WorkerID:      "1",
+			WorkerName:    "workername",
+			FileName:      "myartifact",
+			RunResultType: string(sdk.WorkflowRunResultTypeArtifact),
 		},
 	}
 
