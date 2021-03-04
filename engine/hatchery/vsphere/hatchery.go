@@ -311,19 +311,23 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 		var isPoweredOff = s.Summary.Runtime.PowerState != types.VirtualMachinePowerStatePoweredOn
 
 		if !isPoweredOff && !annot.ToDelete {
+			var bootTime = annot.Created
+			if s.Runtime.BootTime != nil {
+				bootTime = *s.Runtime.BootTime
+			}
+
 			// If the worker is not registered on CDS API the TTL is WorkerRegistrationTTL (default 10 minutes)
-			var expire = annot.Created.Add(time.Duration(h.Config.WorkerRegistrationTTL) * time.Minute)
+			var expire = bootTime.Add(time.Duration(h.Config.WorkerRegistrationTTL) * time.Minute)
 			// Else it's WorkerTTL (default 120 minutes)
 			for _, w := range allWorkers {
 				if w.Name == s.Name {
-					expire = annot.Created.Add(time.Duration(h.Config.WorkerTTL) * time.Minute)
+					expire = bootTime.Add(time.Duration(h.Config.WorkerTTL) * time.Minute)
 					break
 				}
 			}
 
+			log.Debug(ctx, "checking if %v is outdated. Created on :%v. Expires on %v", s.Name, bootTime, expire)
 			// If the VM is older that the WorkerTTL config, let's mark it as delete
-
-			log.Debug(ctx, "checking if %v is outdated. Created on :%v. Expires on %v", s.Name, annot.Created, expire)
 
 			if time.Now().After(expire) {
 				vm, err := h.vSphereClient.LoadVirtualMachine(ctx, s.Name)
@@ -332,7 +336,8 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 					log.Error(ctx, "unable to load vm %s: %v", s.Name, err)
 					continue
 				}
-				log.Info(ctx, "virtual machine %q as been created on %q, it has to be deleted", s.Name, annot.Created)
+
+				log.Info(ctx, "virtual machine %q as been created on %q, it has to be deleted", s.Name, bootTime)
 				if err := h.markToDelete(ctx, vm); err != nil {
 					ctx = sdk.ContextWithStacktrace(ctx, err)
 					log.Error(ctx, "unable to mark vm %q to delete: %v", s.Name, err)
