@@ -80,7 +80,7 @@ func TestCanUploadArtifactTerminatedJob(t *testing.T) {
 	jobRun.Status = sdk.StatusSuccess
 	require.NoError(t, workflow.UpdateNodeJobRun(ctx, db, &jobRun))
 
-	_, err := workflow.CanUploadArtifact(ctx, db.DbMap, store, workflowRun, artifactRef)
+	_, err := workflow.CanUploadRunResult(ctx, db.DbMap, store, workflowRun, artifactRef)
 	require.True(t, sdk.ErrorIs(err, sdk.ErrInvalidData))
 	require.Contains(t, err.Error(), "unable to upload artifact on a terminated job")
 }
@@ -101,7 +101,7 @@ func TestCanUploadArtifactWrongNodeRun(t *testing.T) {
 		ArtifactName: "myartifact",
 	}
 
-	_, err := workflow.CanUploadArtifact(ctx, db.DbMap, store, workflowRun, artifactRef)
+	_, err := workflow.CanUploadRunResult(ctx, db.DbMap, store, workflowRun, artifactRef)
 	require.True(t, sdk.ErrorIs(err, sdk.ErrNotFound))
 	require.Contains(t, err.Error(), "unable to find node run")
 }
@@ -113,13 +113,14 @@ func TestCanUploadArtifactAlreadyExist(t *testing.T) {
 	proj, wk, workflowRun, nodeRun, jobRun := createRunNodeRunAndJob(t, db, store)
 
 	artifactRef := sdk.CDNRunResultAPIRef{
-		ProjectKey:   proj.Key,
-		WorkflowName: wk.Name,
-		WorkflowID:   wk.ID,
-		RunJobID:     jobRun.ID,
-		RunNodeID:    nodeRun.ID,
-		RunID:        workflowRun.ID,
-		ArtifactName: "myartifact",
+		ProjectKey:    proj.Key,
+		WorkflowName:  wk.Name,
+		WorkflowID:    wk.ID,
+		RunJobID:      jobRun.ID,
+		RunNodeID:     nodeRun.ID,
+		RunID:         workflowRun.ID,
+		ArtifactName:  "myartifact",
+		RunResultType: sdk.WorkflowRunResultTypeArtifact,
 	}
 
 	result := sdk.WorkflowRunResult{
@@ -141,14 +142,14 @@ func TestCanUploadArtifactAlreadyExist(t *testing.T) {
 	bts, err := json.Marshal(artiData)
 	result.DataRaw = bts
 
-	cacheKey := workflow.GetArtifactResultKey(result.WorkflowRunID, artiData.Name)
+	cacheKey := workflow.GetRunResultKey(result.WorkflowRunID, sdk.WorkflowRunResultTypeArtifact, artiData.Name)
 	require.NoError(t, store.SetWithTTL(cacheKey, true, 60))
 	require.NoError(t, workflow.AddResult(db.DbMap, store, &result))
 	b, err := store.Exist(cacheKey)
 	require.NoError(t, err)
 	require.False(t, b)
 
-	_, err = workflow.CanUploadArtifact(ctx, db.DbMap, store, workflowRun, artifactRef)
+	_, err = workflow.CanUploadRunResult(ctx, db.DbMap, store, workflowRun, artifactRef)
 	require.True(t, sdk.ErrorIs(err, sdk.ErrConflictData))
 	require.Contains(t, err.Error(), "artifact myartifact has already been uploaded")
 }
@@ -160,13 +161,14 @@ func TestCanUploadArtifactAlreadyExistInMoreRecentSubNum(t *testing.T) {
 	proj, wk, workflowRun, nodeRun, jobRun := createRunNodeRunAndJob(t, db, store)
 
 	artifactRef := sdk.CDNRunResultAPIRef{
-		ProjectKey:   proj.Key,
-		WorkflowName: wk.Name,
-		WorkflowID:   wk.ID,
-		RunJobID:     jobRun.ID,
-		RunNodeID:    nodeRun.ID,
-		RunID:        workflowRun.ID,
-		ArtifactName: "myartifact",
+		ProjectKey:    proj.Key,
+		WorkflowName:  wk.Name,
+		WorkflowID:    wk.ID,
+		RunJobID:      jobRun.ID,
+		RunNodeID:     nodeRun.ID,
+		RunID:         workflowRun.ID,
+		ArtifactName:  "myartifact",
+		RunResultType: sdk.WorkflowRunResultTypeArtifact,
 	}
 
 	result := sdk.WorkflowRunResult{
@@ -188,14 +190,14 @@ func TestCanUploadArtifactAlreadyExistInMoreRecentSubNum(t *testing.T) {
 	bts, err := json.Marshal(artiData)
 	result.DataRaw = bts
 
-	cacheKey := workflow.GetArtifactResultKey(result.WorkflowRunID, artiData.Name)
+	cacheKey := workflow.GetRunResultKey(result.WorkflowRunID, sdk.WorkflowRunResultTypeArtifact, artiData.Name)
 	require.NoError(t, store.SetWithTTL(cacheKey, true, 60))
 	require.NoError(t, workflow.AddResult(db.DbMap, store, &result))
 	b, err := store.Exist(cacheKey)
 	require.NoError(t, err)
 	require.False(t, b)
 
-	_, err = workflow.CanUploadArtifact(ctx, db.DbMap, store, workflowRun, artifactRef)
+	_, err = workflow.CanUploadRunResult(ctx, db.DbMap, store, workflowRun, artifactRef)
 	require.True(t, sdk.ErrorIs(err, sdk.ErrConflictData))
 	require.Contains(t, err.Error(), "artifact myartifact cannot be uploaded into a previous run")
 }
@@ -249,13 +251,13 @@ func TestCanUploadArtifactAlreadyExistInAPreviousSubNum(t *testing.T) {
 	bts, err := json.Marshal(artiData)
 	result.DataRaw = bts
 
-	cacheKey := workflow.GetArtifactResultKey(result.WorkflowRunID, artiData.Name)
+	cacheKey := workflow.GetRunResultKey(result.WorkflowRunID, sdk.WorkflowRunResultTypeArtifact, artiData.Name)
 	require.NoError(t, store.SetWithTTL(cacheKey, true, 60))
 	require.NoError(t, workflow.AddResult(db.DbMap, store, &result))
 	b, err := store.Exist(cacheKey)
 	require.NoError(t, err)
 	require.False(t, b)
 
-	_, err = workflow.CanUploadArtifact(ctx, db.DbMap, store, workflowRun, artifactRef)
+	_, err = workflow.CanUploadRunResult(ctx, db.DbMap, store, workflowRun, artifactRef)
 	require.NoError(t, err)
 }
