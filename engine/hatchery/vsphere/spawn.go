@@ -93,6 +93,17 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 				return sdk.WrapError(err, "unable to rename VM %q", provisionnedVMWorker.Name())
 			}
 
+			// Before restart it, keep it in the cache for a few minutes to avoid the "killAwolServer" to delete it
+			h.cacheProvisioning.mu.Lock()
+			h.cacheProvisioning.restarting = append(h.cacheProvisioning.restarting, spawnArgs.WorkerName)
+			h.cacheProvisioning.mu.Unlock()
+			go func() {
+				time.Sleep(time.Duration(h.Config.WorkerTTL) * time.Minute)
+				h.cacheProvisioning.mu.Lock()
+				sdk.DeleteFromArray(h.cacheProvisioning.restarting, spawnArgs.WorkerName)
+				h.cacheProvisioning.mu.Unlock()
+			}()
+
 			if err := h.vSphereClient.StartVirtualMachine(ctx, provisionnedVMWorker); err != nil {
 				return sdk.WrapError(err, "unable to start VM %q", provisionnedVMWorker.Name())
 			}

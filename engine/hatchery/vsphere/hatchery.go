@@ -326,6 +326,14 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 				}
 			}
 
+			h.cacheProvisioning.mu.Lock()
+			var provisionedWorkerStarting = sdk.IsInArray(s.Name, h.cacheProvisioning.restarting)
+			h.cacheProvisioning.mu.Unlock()
+
+			if provisionedWorkerStarting {
+				continue
+			}
+
 			log.Debug(ctx, "checking if %v is outdated. Created on :%v. Expires on %v", s.Name, bootTime, expire)
 			// If the VM is older that the WorkerTTL config, let's mark it as delete
 
@@ -365,7 +373,7 @@ func (h *HatcheryVSphere) provisioning(ctx context.Context) {
 
 	h.cacheProvisioning.mu.Lock()
 
-	if len(h.cacheProvisioning.list) > 0 {
+	if len(h.cacheProvisioning.pending) > 0 {
 		log.Debug(ctx, "provisioning is still on going")
 		return
 	}
@@ -413,13 +421,13 @@ func (h *HatcheryVSphere) provisioning(ctx context.Context) {
 			random := namesgenerator.GetRandomNameCDSWithMaxLength(remainingLength)
 			workerName := slug.Convert(fmt.Sprintf("%s-%s", nameFirstPart, random))
 
-			h.cacheProvisioning.list = append(h.cacheProvisioning.list, workerName)
+			h.cacheProvisioning.pending = append(h.cacheProvisioning.pending, workerName)
 
 			if err := h.ProvisionWorker(ctx, model, workerName); err != nil {
 				log.Error(ctx, "unable to provision model %q: %v", modelPath, err)
 			}
 			h.cacheProvisioning.mu.Lock()
-			sdk.DeleteFromArray(h.cacheProvisioning.list, workerName)
+			sdk.DeleteFromArray(h.cacheProvisioning.pending, workerName)
 			h.cacheProvisioning.mu.Unlock()
 		}
 	}

@@ -53,7 +53,8 @@ type HatcheryVSphere struct {
 		list []int64
 	}
 	cacheProvisioning struct {
-		mu   sync.Mutex
-		list []string
+		mu         sync.Mutex
+		pending    []string
+		restarting []string
 	}
 }
