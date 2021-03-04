@@ -380,24 +380,26 @@ func (h *HatcheryVSphere) provisioning(ctx context.Context) {
 
 	h.cacheProvisioning.mu.Unlock()
 
-	for modelname, number := range h.Config.WorkerProvisioning {
-		tuple := strings.Split(modelname, "/")
+	for i := range h.Config.WorkerProvisioning {
+		modelPath := h.Config.WorkerProvisioning[i].ModelPath
+		number := h.Config.WorkerProvisioning[i].Number
+
+		tuple := strings.Split(modelPath, "/")
 		if len(tuple) != 2 {
-			log.Error(ctx, "invalid model name %q", modelname)
+			log.Error(ctx, "invalid model name %q", modelPath)
 			continue
 		}
 
 		model, err := h.Client.WorkerModelGet(tuple[0], tuple[1])
 		if err != nil {
 			ctx = sdk.ContextWithStacktrace(ctx, err)
-			log.Error(ctx, "unable to get model name %q: %v", modelname, err)
+			log.Warn(ctx, "unable to get model name %q: %v", modelPath, err)
 			continue
 		}
-		modelPath := model.Group.Name + "/" + model.Name
 
 		log.Info(ctx, "model %q provisioning: %d/%d", modelPath, mapAlreadyProvisionned[modelPath], number)
 
-		for i := 0; i < number-mapAlreadyProvisionned[modelPath]; i++ {
+		for i := 0; i < int(number)-mapAlreadyProvisionned[modelPath]; i++ {
 			var nameFirstPart = modelPath
 			if len(nameFirstPart) > maxLength-10 {
 				nameFirstPart = nameFirstPart[:maxLength-10]
@@ -409,7 +411,7 @@ func (h *HatcheryVSphere) provisioning(ctx context.Context) {
 			h.cacheProvisioning.list = append(h.cacheProvisioning.list, workerName)
 
 			if err := h.ProvisionWorker(ctx, model, workerName); err != nil {
-				log.Error(ctx, "unable to provision model %q: %v", modelname, err)
+				log.Error(ctx, "unable to provision model %q: %v", modelPath, err)
 			}
 			h.cacheProvisioning.mu.Lock()
 			sdk.DeleteFromArray(h.cacheProvisioning.list, workerName)

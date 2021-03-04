@@ -448,8 +448,11 @@ func TestHatcheryVSphere_provisioning_do_nothing(t *testing.T) {
 			},
 		},
 		Config: HatcheryConfiguration{
-			WorkerProvisioning: map[string]int{
-				sdk.SharedInfraGroupName + "/" + validModel.Name: 1,
+			WorkerProvisioning: []WorkerProvisioningConfig{
+				{
+					ModelPath: sdk.SharedInfraGroupName + "/" + validModel.Name,
+					Number:    1,
+				},
 			},
 		},
 	}
@@ -530,8 +533,11 @@ func TestHatcheryVSphere_provisioning_start_one(t *testing.T) {
 			},
 		},
 		Config: HatcheryConfiguration{
-			WorkerProvisioning: map[string]int{
-				sdk.SharedInfraGroupName + "/" + validModel.Name: 1,
+			WorkerProvisioning: []WorkerProvisioningConfig{
+				{
+					ModelPath: sdk.SharedInfraGroupName + "/" + validModel.Name,
+					Number:    1,
+				},
 			},
 		},
 	}
