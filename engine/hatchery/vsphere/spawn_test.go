@@ -487,7 +487,7 @@ func TestHatcheryVSphere_SpawnWorkerFromProvisioning(t *testing.T) {
 					PowerState: types.VirtualMachinePowerStatePoweredOff,
 				},
 				Config: &types.VirtualMachineConfigInfo{
-					Annotation: fmt.Sprintf(`{"worker_model_last_modified": "%d", "provisioning": true, "worker_model_path": "%s"}`, now.Unix(), validModel.Path()),
+					Annotation: fmt.Sprintf(`{"worker_model_last_modified": "%d", "provisioning": true, "worker_model_path": "%s/%s"}`, now.Unix(), validModel.Group.Name, validModel.Name),
 				},
 			},
 		}, nil

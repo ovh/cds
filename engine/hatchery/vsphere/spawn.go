@@ -433,6 +433,10 @@ func (h *HatcheryVSphere) ProvisionWorker(ctx context.Context, m sdk.Model, work
 }
 
 func (h *HatcheryVSphere) FindProvisionnedWorker(ctx context.Context, m sdk.Model) (*object.VirtualMachine, error) {
+	var expectedModelPath = m.Group.Name + "/" + m.Name
+
+	log.Debug(ctx, "searching for provisionned VM for model %q", expectedModelPath)
+
 	machines := h.getVirtualMachines(ctx)
 	for _, machine := range machines {
 		annot := getVirtualMachineCDSAnnotation(ctx, machine)
@@ -441,10 +445,12 @@ func (h *HatcheryVSphere) FindProvisionnedWorker(ctx context.Context, m sdk.Mode
 		}
 		// Provisionned machines are powered off
 		if annot.Provisioning &&
-			machine.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOff &&
-			m.Path() == annot.WorkerModelPath {
+			machine.Runtime.PowerState != types.VirtualMachinePowerStatePoweredOn &&
+			expectedModelPath == annot.WorkerModelPath {
 			return h.vSphereClient.LoadVirtualMachine(ctx, machine.Name)
 		}
 	}
+
+	log.Debug(ctx, "unable to find  provisionned VM for model %q", expectedModelPath)
 	return nil, nil
 }
