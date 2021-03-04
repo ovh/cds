@@ -439,11 +439,23 @@ func (h *HatcheryVSphere) FindProvisionnedWorker(ctx context.Context, m sdk.Mode
 		if annot == nil {
 			continue
 		}
+
+		vm, err := h.vSphereClient.LoadVirtualMachine(ctx, machine.Name)
+		if err != nil {
+			return nil, sdk.WrapError(err, "unable to load vm %q", machine.Name)
+		}
+
+		powerstate, err := h.vSphereClient.GetVirtualMachinePowerState(ctx, vm)
+		if err != nil {
+			return nil, sdk.WrapError(err, "unable to get vm %q powerstate", machine.Name)
+		}
+
 		// Provisionned machines are powered off
 		if annot.Provisioning &&
 			machine.Runtime.PowerState != types.VirtualMachinePowerStatePoweredOn &&
+			powerstate != types.VirtualMachinePowerStatePoweredOn &&
 			expectedModelPath == annot.WorkerModelPath {
-			return h.vSphereClient.LoadVirtualMachine(ctx, machine.Name)
+			return vm, nil
 		}
 	}
 

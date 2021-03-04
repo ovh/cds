@@ -28,6 +28,7 @@ type VSphereClient interface {
 	ShutdownVirtualMachine(ctx context.Context, vm *object.VirtualMachine) error
 	DestroyVirtualMachine(ctx context.Context, vm *object.VirtualMachine) error
 	CloneVirtualMachine(ctx context.Context, vm *object.VirtualMachine, folder *object.Folder, name string, config *types.VirtualMachineCloneSpec) (*types.ManagedObjectReference, error)
+	GetVirtualMachinePowerState(ctx context.Context, vm *object.VirtualMachine) (types.VirtualMachinePowerState, error)
 	NewVirtualMachine(ctx context.Context, cloneSpec *types.VirtualMachineCloneSpec, ref *types.ManagedObjectReference) (*object.VirtualMachine, error)
 	RenameVirtualMachine(ctx context.Context, vm *object.VirtualMachine, newName string) error
 	MarkVirtualMachineAsTemplate(ctx context.Context, vm *object.VirtualMachine) error
@@ -411,4 +412,15 @@ func (c *vSphereClient) WaitForVirtualMachineIP(ctx context.Context, vm *object.
 	}
 
 	return sdk.WithStack(ctxTo.Err())
+}
+
+func (c *vSphereClient) GetVirtualMachinePowerState(ctx context.Context, vm *object.VirtualMachine) (types.VirtualMachinePowerState, error) {
+	ctxTo, cancel := context.WithTimeout(ctx, 2*time.Minute)
+	defer cancel()
+
+	if ps, err := vm.PowerState(ctxTo); err != nil {
+		return ps, sdk.WrapError(err, "error while getting vm powerstate")
+	}
+
+	return types.VirtualMachinePowerState(""), sdk.WithStack(ctxTo.Err())
 }

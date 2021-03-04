@@ -139,6 +139,21 @@ func (mr *MockVSphereClientMockRecorder) CloneVirtualMachine(ctx, vm, folder, na
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CloneVirtualMachine", reflect.TypeOf((*MockVSphereClient)(nil).CloneVirtualMachine), ctx, vm, folder, name, config)
 }
 
+// GetVirtualMachinePowerState mocks base method
+func (m *MockVSphereClient) GetVirtualMachinePowerState(ctx context.Context, vm *object.VirtualMachine) (types.VirtualMachinePowerState, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetVirtualMachinePowerState", ctx, vm)
+	ret0, _ := ret[0].(types.VirtualMachinePowerState)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetVirtualMachinePowerState indicates an expected call of GetVirtualMachinePowerState
+func (mr *MockVSphereClientMockRecorder) GetVirtualMachinePowerState(ctx, vm interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVirtualMachinePowerState", reflect.TypeOf((*MockVSphereClient)(nil).GetVirtualMachinePowerState), ctx, vm)
+}
+
 // NewVirtualMachine mocks base method
 func (m *MockVSphereClient) NewVirtualMachine(ctx context.Context, cloneSpec *types.VirtualMachineCloneSpec, ref *types.ManagedObjectReference) (*object.VirtualMachine, error) {
 	m.ctrl.T.Helper()
