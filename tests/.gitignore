@@ -4,3 +4,6 @@ results
 *.exported
 *.csv
 cdsctl
+*.args.file
+cdsctl.test
+*.cover.out
