@@ -77,6 +77,14 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 		config.SyncSeconds = 30
 	}
 
+	if config.PurgeSeconds <= 0 {
+		config.PurgeSeconds = 30
+	}
+
+	if config.PurgeNbElements <= 0 {
+		config.PurgeNbElements = 1000
+	}
+
 	for name, bu := range config.Buffers {
 		var bufferUnit BufferUnit
 		switch {
@@ -378,7 +386,7 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 	// 	Feed the sync processes with a ticker
 	gorts.Run(ctx, "RunningStorageUnits.Start", func(ctx context.Context) {
 		tickr := time.NewTicker(time.Duration(r.config.SyncSeconds) * time.Second)
-		tickrPurge := time.NewTicker(5 * time.Second)
+		tickrPurge := time.NewTicker(time.Duration(r.config.PurgeSeconds) * time.Second)
 
 		defer tickr.Stop()
 		defer tickrPurge.Stop()

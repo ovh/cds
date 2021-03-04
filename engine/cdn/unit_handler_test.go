@@ -72,7 +72,7 @@ func TestMarkItemUnitAsDeleteHandler(t *testing.T) {
 		if cpt >= 10 {
 			t.FailNow()
 		}
-		uis, err := storage.LoadAllItemUnitsToDeleteByUnit(ctx, s.Mapper, db, unit.ID)
+		uis, err := storage.LoadAllItemUnitsToDeleteByUnit(ctx, s.Mapper, db, unit.ID, 100)
 		require.NoError(t, err)
 		if len(uis) != 10 {
 			time.Sleep(250 * time.Millisecond)

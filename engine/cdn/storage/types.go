@@ -149,6 +149,8 @@ type Configuration struct {
 	Storages        map[string]StorageConfiguration `toml:"storages" json:"storages" mapstructure:"storages"`
 	SyncSeconds     int                             `toml:"syncSeconds" default:"30" json:"syncSeconds" comment:"each n seconds, all storage backends will have to start a synchronization with the buffer"`
 	SyncNbElements  int64                           `toml:"syncNbElements" default:"100" json:"syncNbElements" comment:"nb items to synchronize from the buffer"`
+	PurgeSeconds    int                             `toml:"purgeSeconds" default:"5" json:"purgeSeconds" comment:"each n seconds, all storage backends will have to start to delete storage unit item with deleted flag"`
+	PurgeNbElements int                             `toml:"purgeNbElements" default:"1000" json:"purgeNbElements" comment:"nb items to delete in each purge loop"`
 }
 
 type BufferConfiguration struct {
