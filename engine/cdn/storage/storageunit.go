@@ -65,7 +65,13 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 		return nil, sdk.WithStack(fmt.Errorf("too much CDN Buffer for file items"))
 	}
 
-	if len(config.Storages) == 0 {
+	activeStorage := 0
+	for _, s := range config.Storages {
+		if !s.DisableSync {
+			activeStorage++
+		}
+	}
+	if activeStorage == 0 {
 		return nil, sdk.WithStack(fmt.Errorf("invalid CDN configuration. Missing storage unit"))
 	}
 
