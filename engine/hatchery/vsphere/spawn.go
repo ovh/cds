@@ -97,6 +97,7 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 			h.cacheProvisioning.mu.Lock()
 			h.cacheProvisioning.restarting = append(h.cacheProvisioning.restarting, spawnArgs.WorkerName)
 			h.cacheProvisioning.mu.Unlock()
+
 			go func() {
 				time.Sleep(time.Duration(h.Config.WorkerTTL) * time.Minute)
 				h.cacheProvisioning.mu.Lock()

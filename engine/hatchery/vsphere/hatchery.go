@@ -371,12 +371,12 @@ func (h *HatcheryVSphere) provisioning(ctx context.Context) {
 		return
 	}
 
-	h.cacheProvisioning.mu.Lock()
-
 	if len(h.cacheProvisioning.pending) > 0 {
 		log.Debug(ctx, "provisioning is still on going")
 		return
 	}
+
+	h.cacheProvisioning.mu.Lock()
 
 	var mapAlreadyProvisionned = make(map[string]int)
 	machines := h.getVirtualMachines(ctx)
@@ -421,11 +421,14 @@ func (h *HatcheryVSphere) provisioning(ctx context.Context) {
 			random := namesgenerator.GetRandomNameCDSWithMaxLength(remainingLength)
 			workerName := slug.Convert(fmt.Sprintf("%s-%s", nameFirstPart, random))
 
+			h.cacheProvisioning.mu.Lock()
 			h.cacheProvisioning.pending = append(h.cacheProvisioning.pending, workerName)
+			h.cacheProvisioning.mu.Unlock()
 
 			if err := h.ProvisionWorker(ctx, model, workerName); err != nil {
 				log.Error(ctx, "unable to provision model %q: %v", modelPath, err)
 			}
+
 			h.cacheProvisioning.mu.Lock()
 			sdk.DeleteFromArray(h.cacheProvisioning.pending, workerName)
 			h.cacheProvisioning.mu.Unlock()
