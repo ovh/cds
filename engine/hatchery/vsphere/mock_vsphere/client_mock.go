@@ -168,20 +168,6 @@ func (mr *MockVSphereClientMockRecorder) RenameVirtualMachine(ctx, vm, newName i
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RenameVirtualMachine", reflect.TypeOf((*MockVSphereClient)(nil).RenameVirtualMachine), ctx, vm, newName)
 }
 
-// ReconfigureVirtualMachine mocks base method
-func (m *MockVSphereClient) ReconfigureVirtualMachine(ctx context.Context, vm *object.VirtualMachine, config types.VirtualMachineConfigSpec) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ReconfigureVirtualMachine", ctx, vm, config)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// ReconfigureVirtualMachine indicates an expected call of ReconfigureVirtualMachine
-func (mr *MockVSphereClientMockRecorder) ReconfigureVirtualMachine(ctx, vm, config interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReconfigureVirtualMachine", reflect.TypeOf((*MockVSphereClient)(nil).ReconfigureVirtualMachine), ctx, vm, config)
-}
-
 // MarkVirtualMachineAsTemplate mocks base method
 func (m *MockVSphereClient) MarkVirtualMachineAsTemplate(ctx context.Context, vm *object.VirtualMachine) error {
 	m.ctrl.T.Helper()

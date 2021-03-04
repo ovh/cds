@@ -335,14 +335,6 @@ func TestHatcheryVSphere_killAwolServers(t *testing.T) {
 		},
 	)
 
-	c.EXPECT().ReconfigureVirtualMachine(gomock.Any(), &vm0, gomock.Any()).DoAndReturn(
-		func(ctx context.Context, vm *object.VirtualMachine, config types.VirtualMachineConfigSpec) error {
-			t.Logf("config: %+v", config)
-			assert.Equal(t, `{"worker_model_path":"someting","to_delete":true,"created":"0001-01-01T00:00:00Z"}`, config.Annotation)
-			return nil
-		},
-	)
-
 	c.EXPECT().LoadVirtualMachine(gomock.Any(), "worker1").DoAndReturn(
 		func(ctx context.Context, name string) (*object.VirtualMachine, error) {
 			return &vm1, nil

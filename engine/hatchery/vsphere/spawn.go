@@ -3,7 +3,6 @@ package vsphere
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"html/template"
 	"time"
@@ -25,7 +24,6 @@ type annotation struct {
 	WorkerModelPath         string    `json:"worker_model_path,omitempty"`
 	WorkerModelLastModified string    `json:"worker_model_last_modified,omitempty"`
 	Model                   bool      `json:"model,omitempty"`
-	ToDelete                bool      `json:"to_delete,omitempty"`
 	Created                 time.Time `json:"created,omitempty"`
 	JobID                   int64     `json:"job_id,omitempty"`
 }
@@ -106,7 +104,9 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 			}()
 
 			if err := h.vSphereClient.StartVirtualMachine(ctx, provisionnedVMWorker); err != nil {
-				return sdk.WrapError(err, "unable to start VM %q", provisionnedVMWorker.Name())
+				_ = h.vSphereClient.ShutdownVirtualMachine(ctx, provisionnedVMWorker)
+				h.markToDelete(ctx, provisionnedVMWorker)
+				return sdk.WrapError(err, "unable to start VM %q", spawnArgs.WorkerName)
 			}
 
 			return h.launchScriptWorker(ctx, spawnArgs.WorkerName, spawnArgs.JobID, spawnArgs.WorkerToken, *spawnArgs.Model, false, provisionnedVMWorker)
@@ -210,10 +210,7 @@ func (h *HatcheryVSphere) createVirtualMachineTemplate(ctx context.Context, mode
 			ctx = sdk.ContextWithStacktrace(ctx, err)
 			log.Error(ctx, "createVMModel> unable to shutdown vm %q: %v", model.Name, err)
 		}
-		if err := h.markToDelete(ctx, vm); err != nil {
-			ctx = sdk.ContextWithStacktrace(ctx, err)
-			log.Error(ctx, "createVMModel> unable to mark vm %q to delete: %v", model.Name, err)
-		}
+		h.markToDelete(ctx, clonedVM)
 		return nil, err
 	}
 
@@ -224,10 +221,7 @@ func (h *HatcheryVSphere) createVirtualMachineTemplate(ctx context.Context, mode
 			ctx = sdk.ContextWithStacktrace(ctx, err)
 			log.Error(ctx, "createVMModel> unable to shutdown vm %q: %v", model.Name, err)
 		}
-		if err := h.markToDelete(ctx, vm); err != nil {
-			ctx = sdk.ContextWithStacktrace(ctx, err)
-			log.Error(ctx, "createVMModel> unable to mark vm %q to delete: %v", model.Name, err)
-		}
+		h.markToDelete(ctx, clonedVM)
 		return nil, err
 	}
 
@@ -327,10 +321,7 @@ func (h *HatcheryVSphere) launchScriptWorker(ctx context.Context, name string, j
 			ctx = sdk.ContextWithStacktrace(ctx, err)
 			log.Error(ctx, "createVMModel> unable to shutdown vm %q: %v", model, err)
 		}
-		if err := h.markToDelete(ctx, vm); err != nil {
-			ctx = sdk.ContextWithStacktrace(ctx, err)
-			log.Error(ctx, "createVMModel> unable to mark vm %q to delete: %v", model, err)
-		}
+		h.markToDelete(ctx, vm)
 		return err
 	}
 
@@ -342,22 +333,22 @@ func (h *HatcheryVSphere) launchScriptWorker(ctx context.Context, name string, j
 			ctx = sdk.ContextWithStacktrace(ctx, err)
 			log.Error(ctx, "createVMModel> unable to shutdown vm %q: %v", model.Name, err)
 		}
-		if err := h.markToDelete(ctx, vm); err != nil {
-			ctx = sdk.ContextWithStacktrace(ctx, err)
-			log.Error(ctx, "unable to mark vm %q to delete: %v", model.Name, err)
-		}
+		h.markToDelete(ctx, vm)
 		return err
 	}
 
 	return nil
 }
 
-func (h *HatcheryVSphere) markToDelete(ctx context.Context, vm *object.VirtualMachine) error {
+func (h *HatcheryVSphere) markToDelete(ctx context.Context, vm *object.VirtualMachine) {
+	h.cacheToDelete.mu.Lock()
+	defer h.cacheToDelete.mu.Unlock()
 
 	// Reload the vm ref to get the annotation
 	allVMRef, err := h.vSphereClient.ListVirtualMachines(ctx)
 	if err != nil {
-		return err
+		log.Error(ctx, "unable to get virtual machines: %v", err)
+		return
 	}
 
 	var vmRef *mo.VirtualMachine
@@ -369,25 +360,18 @@ func (h *HatcheryVSphere) markToDelete(ctx context.Context, vm *object.VirtualMa
 	}
 
 	if vmRef == nil {
-		return sdk.WithStack(fmt.Errorf("virtual machine ref %q not found", vm.Name()))
+		err := sdk.WithStack(fmt.Errorf("virtual machine ref %q not found", vm.Name()))
+		ctx = sdk.ContextWithStacktrace(ctx, err)
+		log.Error(ctx, "unable to get virtual machines: %v", err)
+		return
 	}
 
 	var annot = getVirtualMachineCDSAnnotation(ctx, *vmRef)
 	if annot == nil {
-		return sdk.WithStack(fmt.Errorf("not allowed to mark virtual machine %q to detele", vm.Name()))
+		return
 	}
 
-	annot.ToDelete = true
-
-	if annotStr, err := json.Marshal(annot); err == nil {
-		if err := h.vSphereClient.ReconfigureVirtualMachine(ctx, vm, types.VirtualMachineConfigSpec{
-			Annotation: string(annotStr),
-		}); err != nil {
-			return fmt.Errorf("unable to mark %q as delete", vm.String())
-		}
-	}
-
-	return nil
+	h.cacheToDelete.list = append(h.cacheToDelete.list, vmRef.Name)
 }
 
 const maxLength = 63

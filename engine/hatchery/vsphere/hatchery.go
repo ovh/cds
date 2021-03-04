@@ -237,7 +237,7 @@ func (h *HatcheryVSphere) NeedRegistration(ctx context.Context, m *sdk.Model) bo
 	}
 
 	isTemplateOutdated := fmt.Sprintf("%d", m.UserLastModified.Unix()) != annot.WorkerModelLastModified
-	return !annot.ToDelete && (m.NeedRegistration || isTemplateOutdated)
+	return !h.isMarkedToDelete(model) && (m.NeedRegistration || isTemplateOutdated)
 }
 
 // WorkerModelsEnabled returns Worker model enabled
@@ -289,6 +289,13 @@ func (h *HatcheryVSphere) killDisabledWorkers(ctx context.Context) {
 	}
 }
 
+func (h *HatcheryVSphere) isMarkedToDelete(s mo.VirtualMachine) bool {
+	h.cacheToDelete.mu.Lock()
+	var isMarkToDelete = sdk.IsInArray(s.Name, h.cacheToDelete.list)
+	h.cacheToDelete.mu.Unlock()
+	return isMarkToDelete
+}
+
 // killAwolServers kill unused servers
 func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 
@@ -308,9 +315,10 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 			continue
 		}
 
+		var isMarkToDelete = h.isMarkedToDelete(s)
 		var isPoweredOff = s.Summary.Runtime.PowerState != types.VirtualMachinePowerStatePoweredOn
 
-		if !isPoweredOff && !annot.ToDelete {
+		if !isPoweredOff && !isMarkToDelete {
 			var bootTime = annot.Created
 			if s.Runtime.BootTime != nil {
 				bootTime = *s.Runtime.BootTime
@@ -344,18 +352,13 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 					log.Error(ctx, "unable to load vm %s: %v", s.Name, err)
 					continue
 				}
-
 				log.Info(ctx, "virtual machine %q as been created on %q, it has to be deleted", s.Name, bootTime)
-				if err := h.markToDelete(ctx, vm); err != nil {
-					ctx = sdk.ContextWithStacktrace(ctx, err)
-					log.Error(ctx, "unable to mark vm %q to delete: %v", s.Name, err)
-					continue
-				}
+				h.markToDelete(ctx, vm)
 			}
 		}
 
 		// If the VM is mark as delete or is OFF and is not a model or a register-only VM, let's delete it
-		if annot.ToDelete || (isPoweredOff && (!annot.Model || annot.RegisterOnly) && !annot.Provisioning) {
+		if isMarkToDelete || (isPoweredOff && (!annot.Model || annot.RegisterOnly) && !annot.Provisioning) {
 			if err := h.deleteServer(ctx, s); err != nil {
 				ctx = sdk.ContextWithStacktrace(ctx, err)
 				log.Error(ctx, "killAwolServers> cannot delete server %s", s.Name)

@@ -30,7 +30,6 @@ type VSphereClient interface {
 	CloneVirtualMachine(ctx context.Context, vm *object.VirtualMachine, folder *object.Folder, name string, config *types.VirtualMachineCloneSpec) (*types.ManagedObjectReference, error)
 	NewVirtualMachine(ctx context.Context, cloneSpec *types.VirtualMachineCloneSpec, ref *types.ManagedObjectReference) (*object.VirtualMachine, error)
 	RenameVirtualMachine(ctx context.Context, vm *object.VirtualMachine, newName string) error
-	ReconfigureVirtualMachine(ctx context.Context, vm *object.VirtualMachine, config types.VirtualMachineConfigSpec) error
 	MarkVirtualMachineAsTemplate(ctx context.Context, vm *object.VirtualMachine) error
 	WaitForVirtualMachineShutdown(ctx context.Context, vm *object.VirtualMachine) error
 	WaitForVirtualMachineIP(ctx context.Context, vm *object.VirtualMachine) error
@@ -375,24 +374,6 @@ func (c *vSphereClient) RenameVirtualMachine(ctx context.Context, vm *object.Vir
 	defer cancel()
 	if _, err := task.WaitForResult(ctxTo, nil); err != nil {
 		return sdk.WrapError(err, "error on waiting result for vm renaming %q to %q", vm.String(), newName)
-	}
-
-	return sdk.WithStack(ctxTo.Err())
-}
-
-func (c *vSphereClient) ReconfigureVirtualMachine(ctx context.Context, vm *object.VirtualMachine, config types.VirtualMachineConfigSpec) error {
-	ctxTo, cancel := context.WithTimeout(ctx, c.requestTimeout)
-	defer cancel()
-
-	task, err := vm.Reconfigure(ctxTo, config)
-	if err != nil {
-		return sdk.WrapError(err, "unable to reconfigure %q", vm.String())
-	}
-
-	ctxTo, cancel = context.WithTimeout(ctx, time.Minute)
-	defer cancel()
-	if _, err := task.WaitForResult(ctxTo, nil); err != nil {
-		return sdk.WrapError(err, "error on waiting result for vm %q reconfigure", vm.String())
 	}
 
 	return sdk.WithStack(ctxTo.Err())
