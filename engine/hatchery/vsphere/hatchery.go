@@ -216,7 +216,6 @@ func getVirtualMachineCDSAnnotation(ctx context.Context, srv mo.VirtualMachine) 
 	}
 	var annot annotation
 	if err := json.Unmarshal([]byte(srv.Config.Annotation), &annot); err != nil {
-		log.Warn(ctx, "unable to parse annotations %q on %q: %v", srv.Config.Annotation, srv.Name, err)
 		return nil
 	}
 	return &annot
@@ -256,7 +255,9 @@ func (h *HatcheryVSphere) WorkersStarted(ctx context.Context) []string {
 	srvs := h.getVirtualMachines(ctx)
 	res := make([]string, 0, len(srvs))
 	for _, s := range srvs {
-		if strings.Contains(strings.ToLower(s.Name), "worker") {
+		var annotations = getVirtualMachineCDSAnnotation(ctx, s)
+		if annotations != nil && !annotations.RegisterOnly &&
+			s.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOn {
 			res = append(res, s.Name)
 		}
 	}
@@ -306,7 +307,6 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 		return
 	}
 
-	log.Debug(ctx, "checking all workers: %+v", allWorkers)
 	srvs := h.getVirtualMachines(ctx)
 
 	for _, s := range srvs {

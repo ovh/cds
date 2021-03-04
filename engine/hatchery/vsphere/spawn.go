@@ -35,6 +35,10 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 		if err != nil {
 			ctx = sdk.ContextWithStacktrace(ctx, err)
 			log.Error(ctx, "HatcheryVSphere> SpawnWorker %q from model %q: ERROR: %v", spawnArgs.WorkerName, spawnArgs.ModelName(), err)
+
+			h.cachePendingJobID.mu.Lock()
+			h.cachePendingJobID.list = sdk.DeleteFromInt64Array(h.cachePendingJobID.list, spawnArgs.JobID)
+			h.cachePendingJobID.mu.Unlock()
 		} else {
 			log.Info(ctx, "HatcheryVSphere> SpawnWorker %q from model %q: DONE", spawnArgs.WorkerName, spawnArgs.ModelName())
 		}
@@ -53,7 +57,7 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 			time.Sleep(3 * time.Minute)
 			h.cachePendingJobID.mu.Lock()
 			h.cachePendingJobID.list = sdk.DeleteFromInt64Array(h.cachePendingJobID.list, spawnArgs.JobID)
-			defer h.cachePendingJobID.mu.Unlock()
+			h.cachePendingJobID.mu.Unlock()
 		}()
 	}
 
@@ -95,6 +99,8 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 			h.cacheProvisioning.mu.Lock()
 			h.cacheProvisioning.restarting = append(h.cacheProvisioning.restarting, spawnArgs.WorkerName)
 			h.cacheProvisioning.mu.Unlock()
+
+			time.Sleep(2 * time.Second)
 
 			go func() {
 				time.Sleep(time.Duration(h.Config.WorkerTTL) * time.Minute)

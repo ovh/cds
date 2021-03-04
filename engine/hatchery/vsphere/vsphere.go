@@ -119,7 +119,7 @@ func (c *vSphereClient) LoadVirtualMachineDevices(ctx context.Context, vm *objec
 }
 
 func (c *vSphereClient) StartVirtualMachine(ctx context.Context, vm *object.VirtualMachine) error {
-	log.Info(ctx, "starting server %v", vm.Name)
+	log.Info(ctx, "starting server %v", vm.Name())
 
 	ctxC, cancelC := context.WithTimeout(ctx, c.requestTimeout)
 	defer cancelC()
@@ -285,9 +285,6 @@ func (c *vSphereClient) StartProgramInGuest(ctx context.Context, procman *guest.
 	defer cancel()
 
 	res, err := methods.StartProgramInGuest(ctxB, procman.Client(), req)
-	if res != nil {
-		log.Debug(ctx, "program result: %+v", res)
-	}
 	if err != nil {
 		return 0, sdk.WrapError(err, "unable to start program in guest")
 	}
@@ -364,7 +361,7 @@ func (c *vSphereClient) WaitVirtualMachineForShutdown(ctx context.Context, vm *o
 func (c *vSphereClient) RenameVirtualMachine(ctx context.Context, vm *object.VirtualMachine, newName string) error {
 	ctxTo, cancel := context.WithTimeout(ctx, c.requestTimeout)
 	defer cancel()
-	log.Debug(ctx, "renaming virtual machine %q to %q...", vm.String(), newName)
+	log.Debug(ctx, "renaming virtual machine %q to %q...", vm.Name(), newName)
 
 	task, errR := vm.Rename(ctxTo, newName)
 	if errR != nil {
@@ -377,7 +374,14 @@ func (c *vSphereClient) RenameVirtualMachine(ctx context.Context, vm *object.Vir
 		return sdk.WrapError(err, "error on waiting result for vm renaming %q to %q", vm.String(), newName)
 	}
 
-	return sdk.WithStack(ctxTo.Err())
+	vm2, err := c.LoadVirtualMachine(ctx, newName)
+	if err != nil {
+		return sdk.WrapError(err, "unable to reload VM %q", newName)
+	}
+
+	*vm = *vm2
+
+	return nil
 }
 
 func (c *vSphereClient) MarkVirtualMachineAsTemplate(ctx context.Context, vm *object.VirtualMachine) error {
