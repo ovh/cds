@@ -378,7 +378,7 @@ func (h *HatcheryVSphere) provisioning(ctx context.Context) {
 			continue
 		}
 		// Provisionned machines are powered off
-		if annot.Provisioning && machine.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOff {
+		if annot.Provisioning && machine.Runtime.PowerState != types.VirtualMachinePowerStatePoweredOn {
 			mapAlreadyProvisionned[annot.WorkerModelPath] = mapAlreadyProvisionned[annot.WorkerModelPath] + 1
 		}
 	}
