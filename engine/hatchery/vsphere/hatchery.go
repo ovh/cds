@@ -433,7 +433,7 @@ func (h *HatcheryVSphere) provisioning(ctx context.Context) {
 			}
 
 			h.cacheProvisioning.mu.Lock()
-			sdk.DeleteFromArray(h.cacheProvisioning.pending, workerName)
+			h.cacheProvisioning.pending = sdk.DeleteFromArray(h.cacheProvisioning.pending, workerName)
 			h.cacheProvisioning.mu.Unlock()
 		}
 	}
