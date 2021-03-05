@@ -37,6 +37,7 @@ func workflow() *cobra.Command {
 		workflowArtifact(),
 		workflowLog(),
 		workflowAdvanced(),
+		workflowRunResult(),
 	})
 }
 

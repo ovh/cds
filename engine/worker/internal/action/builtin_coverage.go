@@ -3,17 +3,18 @@ package action
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strconv"
 
-	coverage "github.com/sguiheux/go-coverage"
+	"github.com/sguiheux/go-coverage"
 	"github.com/spf13/afero"
 
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
 )
 
-func RunParseCoverageResultAction(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, secrets []sdk.Variable) (sdk.Result, error) {
+func RunParseCoverageResultAction(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, _ []sdk.Variable) (sdk.Result, error) {
 	var res sdk.Result
 	res.Status = sdk.StatusFail
 	p := sdk.ParameterValue(a.Parameters, "path")
@@ -82,6 +83,24 @@ func RunParseCoverageResultAction(ctx context.Context, wk workerruntime.Runtime,
 
 	if err := wk.Client().QueueSendCoverage(ctx, jobID, report); err != nil {
 		return res, fmt.Errorf("coverage parser: failed to send coverage details: %s", err)
+	}
+
+	if wk.FeatureEnabled(sdk.FeatureCDNArtifact) {
+		_, name := filepath.Split(fpath)
+		fileMode, err := os.Stat(fpath)
+		if err != nil {
+			return res, fmt.Errorf("coverage parser: failed to get file stat: %v", err)
+		}
+		sig, err := wk.RunResultSignature(name, uint32(fileMode.Mode().Perm()), sdk.WorkflowRunResultTypeCoverage)
+		if err != nil {
+			return res, fmt.Errorf("coverage parser: unable to create signature: %v", err)
+		}
+		duration, err := wk.Client().CDNItemUpload(ctx, wk.CDNHttpURL(), sig, afero.NewOsFs(), fpath)
+		if err != nil {
+			return res, fmt.Errorf("coverage parser: unable to upload coverage report: %v", err)
+		}
+		wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("File '%s' uploaded in %.2fs to CDS CDN", name, duration.Seconds()))
+
 	}
 
 	if minReq > 0 {

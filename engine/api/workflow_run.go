@@ -1448,10 +1448,6 @@ func (api *API) postWorkflowRunResultsHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		if runResult.Type != sdk.WorkflowRunResultTypeArtifact {
-			return sdk.WrapError(sdk.ErrForbidden, "unable to manage non artifact result")
-		}
-
 		wr, err := workflow.LoadRun(ctx, api.mustDB(), key, name, number, workflow.LoadRunOptions{WithArtifacts: true})
 		if err != nil {
 			return err
