@@ -212,8 +212,8 @@ func CountItemUnitsToDeleteByItemID(db gorp.SqlExecutor, itemID string) (int64, 
 	return nb, sdk.WithStack(err)
 }
 
-func LoadAllItemUnitsToDeleteByUnit(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, unitID string, opts ...gorpmapper.GetOptionFunc) ([]sdk.CDNItemUnit, error) {
-	query := gorpmapper.NewQuery("SELECT * FROM storage_unit_item WHERE unit_id = $1 AND to_delete = true ORDER BY last_modified ASC").Args(unitID)
+func LoadAllItemUnitsToDeleteByUnit(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, unitID string, limit int, opts ...gorpmapper.GetOptionFunc) ([]sdk.CDNItemUnit, error) {
+	query := gorpmapper.NewQuery("SELECT * FROM storage_unit_item WHERE unit_id = $1 AND to_delete = true ORDER BY last_modified ASC LIMIT $2").Args(unitID, limit)
 	return getAllItemUnits(ctx, m, db, query, opts...)
 }
 

@@ -65,7 +65,13 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 		return nil, sdk.WithStack(fmt.Errorf("too much CDN Buffer for file items"))
 	}
 
-	if len(config.Storages) == 0 {
+	activeStorage := 0
+	for _, s := range config.Storages {
+		if !s.DisableSync {
+			activeStorage++
+		}
+	}
+	if activeStorage == 0 {
 		return nil, sdk.WithStack(fmt.Errorf("invalid CDN configuration. Missing storage unit"))
 	}
 
@@ -75,6 +81,14 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 
 	if config.SyncSeconds <= 0 {
 		config.SyncSeconds = 30
+	}
+
+	if config.PurgeSeconds <= 0 {
+		config.PurgeSeconds = 30
+	}
+
+	if config.PurgeNbElements <= 0 {
+		config.PurgeNbElements = 1000
 	}
 
 	for name, bu := range config.Buffers {
@@ -378,7 +392,7 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 	// 	Feed the sync processes with a ticker
 	gorts.Run(ctx, "RunningStorageUnits.Start", func(ctx context.Context) {
 		tickr := time.NewTicker(time.Duration(r.config.SyncSeconds) * time.Second)
-		tickrPurge := time.NewTicker(30 * time.Second)
+		tickrPurge := time.NewTicker(time.Duration(r.config.PurgeSeconds) * time.Second)
 
 		defer tickr.Stop()
 		defer tickrPurge.Stop()

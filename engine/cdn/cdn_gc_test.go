@@ -188,6 +188,152 @@ func TestCleanSynchronizedItem(t *testing.T) {
 	require.Equal(t, 3, len(iusCDSAfter))
 }
 
+func TestCleanSynchronizedItemWithDisabledStorage(t *testing.T) {
+	m := gorpmapper.New()
+	item.InitDBMapping(m)
+	storage.InitDBMapping(m)
+
+	log.Factory = log.NewTestingWrapper(t)
+	db, factory, cache, cancel := test.SetupPGToCancel(t, m, sdk.TypeCDN)
+	t.Cleanup(cancel)
+
+	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
+
+	cdntest.ClearItem(t, context.TODO(), m, db)
+	cdntest.ClearUnits(t, context.TODO(), m, db)
+
+	// Create cdn service
+	s := Service{
+		DBConnectionFactory: factory,
+		Cache:               cache,
+		Mapper:              m,
+	}
+	s.GoRoutines = sdk.NewGoRoutines()
+
+	tmpDir, err := ioutil.TempDir("", t.Name()+"-cdn-1-*")
+	require.NoError(t, err)
+
+	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Second)
+	t.Cleanup(cancel)
+
+	cdnUnits, err := storage.Init(ctx, m, cache, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
+		HashLocatorSalt: "thisismysalt",
+		Buffers: map[string]storage.BufferConfiguration{
+			"redis_buffer": {
+				Redis: &storage.RedisBufferConfiguration{
+					Host:     cfg["redisHost"],
+					Password: cfg["redisPassword"],
+				},
+				BufferType: storage.CDNBufferTypeLog,
+			},
+		},
+		Storages: map[string]storage.StorageConfiguration{
+			"fs-backend": {
+				Local: &storage.LocalStorageConfiguration{
+					Path: tmpDir,
+					Encryption: []convergent.ConvergentEncryptionConfig{
+						{
+							Cipher:      aesgcm.CipherName,
+							LocatorSalt: "secret_locator_salt",
+							SecretValue: "secret_value",
+						},
+					},
+				},
+			},
+			"cds-backend": {
+				DisableSync: true,
+				CDS: &storage.CDSStorageConfiguration{
+					Host:  "lolcat.host",
+					Token: "mytoken",
+				},
+			},
+		},
+	})
+	require.NoError(t, err)
+	s.Units = cdnUnits
+
+	// Add item in redis and CDS -- Stay in redis
+	item1RedisCDS := sdk.CDNItem{
+		ID:         sdk.UUID(),
+		Type:       sdk.CDNTypeItemStepLog,
+		Status:     sdk.CDNStatusItemCompleted,
+		APIRefHash: sdk.RandomString(10),
+	}
+	require.NoError(t, item.Insert(context.TODO(), s.Mapper, db, &item1RedisCDS))
+	iu1CDS := sdk.CDNItemUnit{UnitID: s.Units.Storages[1].ID(), ItemID: item1RedisCDS.ID, Type: item1RedisCDS.Type}
+	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu1CDS))
+	iu1Redis := sdk.CDNItemUnit{UnitID: s.Units.LogsBuffer().ID(), ItemID: item1RedisCDS.ID, Type: item1RedisCDS.Type}
+	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu1Redis))
+
+	// Add Item in Redis and FS  -- Must be sync
+	item2RedisFs := sdk.CDNItem{
+		ID:         sdk.UUID(),
+		Type:       sdk.CDNTypeItemStepLog,
+		Status:     sdk.CDNStatusItemCompleted,
+		APIRefHash: sdk.RandomString(10),
+	}
+	require.NoError(t, item.Insert(context.TODO(), s.Mapper, db, &item2RedisFs))
+	iu2Redis := sdk.CDNItemUnit{UnitID: s.Units.LogsBuffer().ID(), ItemID: item2RedisFs.ID, Type: item2RedisFs.Type}
+	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu2Redis))
+	iu2FS := sdk.CDNItemUnit{UnitID: s.Units.Storages[0].ID(), ItemID: item2RedisFs.ID, Type: item2RedisFs.Type}
+	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu2FS))
+
+	// Add Item in redis only - have to stay in redis
+	item4Redis := sdk.CDNItem{
+		ID:         sdk.UUID(),
+		Type:       sdk.CDNTypeItemStepLog,
+		Status:     sdk.CDNStatusItemCompleted,
+		APIRefHash: sdk.RandomString(10),
+	}
+	require.NoError(t, item.Insert(context.TODO(), s.Mapper, db, &item4Redis))
+	iu4Redis := sdk.CDNItemUnit{UnitID: s.Units.LogsBuffer().ID(), ItemID: item4Redis.ID, Type: item4Redis.Type}
+	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu4Redis))
+
+	// Add Item in redis / fs/ cds  -- Must be sync
+	item6RedisFSCDS := sdk.CDNItem{
+		ID:         sdk.UUID(),
+		Type:       sdk.CDNTypeItemStepLog,
+		Status:     sdk.CDNStatusItemCompleted,
+		APIRefHash: sdk.RandomString(10),
+	}
+	require.NoError(t, item.Insert(context.TODO(), s.Mapper, db, &item6RedisFSCDS))
+	iu6CDS := sdk.CDNItemUnit{UnitID: s.Units.Storages[1].ID(), ItemID: item6RedisFSCDS.ID, Type: item6RedisFSCDS.Type}
+	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu6CDS))
+	iu6Redis := sdk.CDNItemUnit{UnitID: s.Units.LogsBuffer().ID(), ItemID: item6RedisFSCDS.ID, Type: item6RedisFSCDS.Type}
+	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu6Redis))
+	iu6FS := sdk.CDNItemUnit{UnitID: s.Units.Storages[0].ID(), ItemID: item6RedisFSCDS.ID, Type: item6RedisFSCDS.Type}
+	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu6FS))
+
+	oneHundred := 100
+
+	iusFS, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, s.Units.Storages[0].ID(), &oneHundred)
+	require.NoError(t, err)
+	require.Equal(t, 2, len(iusFS))
+
+	iusCDS, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, s.Units.Storages[1].ID(), &oneHundred)
+	require.NoError(t, err)
+	require.Equal(t, 2, len(iusCDS))
+
+	// RUN TEST
+	iusRedisBefore, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, s.Units.LogsBuffer().ID(), &oneHundred)
+	require.NoError(t, err)
+	require.Equal(t, 4, len(iusRedisBefore))
+
+	require.NoError(t, s.cleanBuffer(context.TODO()))
+
+	iusRedisAfter, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, s.Units.LogsBuffer().ID(), &oneHundred)
+	require.NoError(t, err)
+	require.Equal(t, 2, len(iusRedisAfter))
+
+	iusFS2After, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, s.Units.Storages[0].ID(), &oneHundred)
+	require.NoError(t, err)
+	require.Equal(t, 2, len(iusFS2After))
+
+	iusCDSAfter, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, s.Units.Storages[1].ID(), &oneHundred)
+	require.NoError(t, err)
+	require.Equal(t, 2, len(iusCDSAfter))
+}
+
 func TestCleanWaitingItem(t *testing.T) {
 	m := gorpmapper.New()
 	item.InitDBMapping(m)
