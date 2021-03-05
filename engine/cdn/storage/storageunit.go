@@ -37,11 +37,20 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 		}
 	}
 
-	var result = RunningStorageUnits{
-		m:      m,
-		db:     db,
-		cache:  store,
-		config: config,
+	if config.SyncNbElements <= 0 || config.SyncNbElements > 1000 {
+		config.SyncNbElements = 100
+	}
+
+	if config.SyncSeconds <= 0 {
+		config.SyncSeconds = 30
+	}
+
+	if config.PurgeSeconds <= 0 {
+		config.PurgeSeconds = 30
+	}
+
+	if config.PurgeNbElements <= 0 {
+		config.PurgeNbElements = 1000
 	}
 
 	if len(config.HashLocatorSalt) < 8 {
@@ -75,20 +84,11 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 		return nil, sdk.WithStack(fmt.Errorf("invalid CDN configuration. Missing storage unit"))
 	}
 
-	if config.SyncNbElements <= 0 || config.SyncNbElements > 1000 {
-		config.SyncNbElements = 100
-	}
-
-	if config.SyncSeconds <= 0 {
-		config.SyncSeconds = 30
-	}
-
-	if config.PurgeSeconds <= 0 {
-		config.PurgeSeconds = 30
-	}
-
-	if config.PurgeNbElements <= 0 {
-		config.PurgeNbElements = 1000
+	var result = RunningStorageUnits{
+		m:      m,
+		db:     db,
+		cache:  store,
+		config: config,
 	}
 
 	for name, bu := range config.Buffers {
@@ -144,12 +144,10 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 			return nil, sdk.WithStack(errors.New("unsupported buffer units"))
 		}
 
-		result.Buffers = append(result.Buffers, bufferUnit)
 		tx, err := db.Begin()
 		if err != nil {
-			return nil, err
+			return nil, sdk.WithStack(err)
 		}
-		defer tx.Rollback() // nolint
 
 		u, err := LoadUnitByName(ctx, m, tx, name)
 		if sdk.ErrorIs(err, sdk.ErrNotFound) {
@@ -162,17 +160,20 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 				Name:    name,
 				Config:  srvConfig,
 			}
-			if err := InsertUnit(ctx, m, tx, u); err != nil {
-				return nil, err
-			}
-		} else if err != nil {
+			err = InsertUnit(ctx, m, tx, u)
+		}
+		if err != nil {
+			_ = tx.Rollback() // nolint
 			return nil, err
 		}
 		bufferUnit.Set(*u)
 
 		if err := tx.Commit(); err != nil {
-			return nil, err
+			_ = tx.Rollback() // nolint
+			return nil, sdk.WithStack(err)
 		}
+
+		result.Buffers = append(result.Buffers, bufferUnit)
 	}
 
 	// Then initialize the storages unit
@@ -264,7 +265,6 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 			var srvConfig sdk.ServiceConfig
 			b, _ := json.Marshal(cfg)
 			_ = json.Unmarshal(b, &srvConfig) // nolint
-
 			u = &sdk.CDNUnit{
 				ID:      sdk.UUID(),
 				Created: time.Now(),
@@ -279,11 +279,12 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 		}
 		storageUnit.Set(*u)
 
-		result.Storages = append(result.Storages, storageUnit)
 		if err := tx.Commit(); err != nil {
 			_ = tx.Rollback() // nolint
 			return nil, sdk.WithStack(err)
 		}
+
+		result.Storages = append(result.Storages, storageUnit)
 	}
 
 	return &result, nil
