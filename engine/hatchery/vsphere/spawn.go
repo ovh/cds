@@ -112,6 +112,26 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 				return sdk.WrapError(err, "unable to start VM %q", spawnArgs.WorkerName)
 			}
 
+			if err := h.vSphereClient.WaitForVirtualMachineIP(ctx, provisionnedVMWorker); err != nil {
+				h.cacheProvisioning.mu.Lock()
+				h.cacheProvisioning.restarting = sdk.DeleteFromArray(h.cacheProvisioning.restarting, spawnArgs.WorkerName)
+				h.cacheProvisioning.mu.Unlock()
+
+				_ = h.vSphereClient.ShutdownVirtualMachine(ctx, provisionnedVMWorker)
+				h.markToDelete(ctx, provisionnedVMWorker)
+				return sdk.WrapError(err, "unable to get VM %q IP Address", spawnArgs.WorkerName)
+			}
+
+			if err := h.checkVirtualMachineIsReady(ctx, *spawnArgs.Model, provisionnedVMWorker); err != nil {
+				h.cacheProvisioning.mu.Lock()
+				h.cacheProvisioning.restarting = sdk.DeleteFromArray(h.cacheProvisioning.restarting, spawnArgs.WorkerName)
+				h.cacheProvisioning.mu.Unlock()
+
+				_ = h.vSphereClient.ShutdownVirtualMachine(ctx, provisionnedVMWorker)
+				h.markToDelete(ctx, provisionnedVMWorker)
+				return sdk.WrapError(err, "unable to get VM %q Ready", spawnArgs.WorkerName)
+			}
+
 			h.cacheProvisioning.mu.Lock()
 			h.cacheProvisioning.restarting = sdk.DeleteFromArray(h.cacheProvisioning.restarting, spawnArgs.WorkerName)
 			h.cacheProvisioning.mu.Unlock()
