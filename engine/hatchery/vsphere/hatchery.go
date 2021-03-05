@@ -299,7 +299,7 @@ func (h *HatcheryVSphere) isMarkedToDelete(s mo.VirtualMachine) bool {
 // killAwolServers kill unused servers
 func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 
-	allWorkers, err := hatchery.WorkerPool(ctx, h)
+	allWorkers, err := h.CDSClient().WorkerList(ctx)
 	if err != nil {
 		ctx := sdk.ContextWithStacktrace(ctx, err)
 		log.Error(ctx, "unable to load workers from CDS: %v", err)
