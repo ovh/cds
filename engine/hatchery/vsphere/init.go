@@ -36,8 +36,8 @@ func (h *HatcheryVSphere) InitHatchery(ctx context.Context) error {
 	}
 
 	cdnConfTick := time.NewTicker(60 * time.Second)
-	killAwolServersTick := time.NewTicker(20 * time.Second)
-	killDisabledWorkersTick := time.NewTicker(60 * time.Second)
+	killAwolServersTick := time.NewTicker(2 * time.Minute)
+	killDisabledWorkersTick := time.NewTicker(2 * time.Minute)
 	provisioningTick := time.NewTicker(2 * time.Minute)
 
 	h.GoRoutines.Run(ctx, "hatchery-vsphere-provisioning",
