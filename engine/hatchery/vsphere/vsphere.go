@@ -132,7 +132,7 @@ func (c *vSphereClient) StartVirtualMachine(ctx context.Context, vm *object.Virt
 }
 
 func (c *vSphereClient) ShutdownVirtualMachine(ctx context.Context, vm *object.VirtualMachine) error {
-	log.Info(ctx, "shutdown server %v", vm.Name)
+	log.Info(ctx, "shutdown server %v", vm.Name())
 
 	ctxC, cancelC := context.WithTimeout(ctx, c.requestTimeout)
 	defer cancelC()
@@ -145,7 +145,7 @@ func (c *vSphereClient) ShutdownVirtualMachine(ctx context.Context, vm *object.V
 }
 
 func (c *vSphereClient) DestroyVirtualMachine(ctx context.Context, vm *object.VirtualMachine) error {
-	log.Info(ctx, "destroying server %v", vm.Name)
+	log.Info(ctx, "destroying server %v", vm.Name())
 
 	ctxD, cancelD := context.WithTimeout(ctx, c.requestTimeout)
 	defer cancelD()

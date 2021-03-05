@@ -255,12 +255,11 @@ func (h *HatcheryVSphere) WorkersStarted(ctx context.Context) []string {
 	srvs := h.getVirtualMachines(ctx)
 	res := make([]string, 0, len(srvs))
 	for _, s := range srvs {
-		var annotations = getVirtualMachineCDSAnnotation(ctx, s)
-		if annotations != nil && !annotations.RegisterOnly &&
-			s.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOn {
-			res = append(res, s.Name)
-		}
+		res = append(res, s.Name)
 	}
+
+	log.Debug(ctx, "started workers: "+strings.Join(res, ","))
+
 	return res
 }
 

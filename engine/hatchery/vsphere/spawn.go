@@ -102,7 +102,7 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 
 			time.Sleep(2 * time.Second)
 
-			go func() {
+			defer func() {
 				time.Sleep(time.Duration(h.Config.WorkerTTL) * time.Minute)
 				h.cacheProvisioning.mu.Lock()
 				h.cacheProvisioning.restarting = sdk.DeleteFromArray(h.cacheProvisioning.restarting, spawnArgs.WorkerName)
@@ -445,6 +445,13 @@ func (h *HatcheryVSphere) FindProvisionnedWorker(ctx context.Context, m sdk.Mode
 		if annot == nil {
 			continue
 		}
+
+		h.cacheProvisioning.mu.Lock()
+		if sdk.IsInArray(machine.Name, h.cacheProvisioning.pending) {
+			h.cacheProvisioning.mu.Unlock()
+			continue
+		}
+		h.cacheProvisioning.mu.Unlock()
 
 		vm, err := h.vSphereClient.LoadVirtualMachine(ctx, machine.Name)
 		if err != nil {
