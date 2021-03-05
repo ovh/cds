@@ -619,7 +619,7 @@ func TestHatcheryVSphere_provisioning_start_one(t *testing.T) {
 
 	c.EXPECT().CloneVirtualMachine(gomock.Any(), &vmTemplate, &folder, gomock.Any(), gomock.Any()).DoAndReturn(
 		func(ctx context.Context, vm *object.VirtualMachine, folder *object.Folder, name string, config *types.VirtualMachineCloneSpec) (*types.ManagedObjectReference, error) {
-			assert.True(t, strings.HasPrefix(name, "shared-infra-model"))
+			assert.True(t, strings.HasPrefix(name, "provision-shared-infra-model"))
 			return &workerRef, nil
 		},
 	)

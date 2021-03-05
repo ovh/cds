@@ -481,7 +481,7 @@ func TestHatcheryVSphere_SpawnWorkerFromProvisioning(t *testing.T) {
 				},
 			}, {
 				ManagedEntity: mo.ManagedEntity{
-					Name: "provisionned-worker",
+					Name: "provision-worker",
 				},
 				Runtime: types.VirtualMachineRuntimeInfo{
 					PowerState: types.VirtualMachinePowerStatePoweredOff,
@@ -499,7 +499,7 @@ func TestHatcheryVSphere_SpawnWorkerFromProvisioning(t *testing.T) {
 		},
 	)
 
-	c.EXPECT().LoadVirtualMachine(gomock.Any(), "provisionned-worker").DoAndReturn(
+	c.EXPECT().LoadVirtualMachine(gomock.Any(), "provision-worker").DoAndReturn(
 		func(ctx context.Context, name string) (*object.VirtualMachine, error) {
 			return &vmProvisionned, nil
 		},

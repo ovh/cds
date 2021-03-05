@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"html/template"
+	"strings"
 	"time"
 
 	"github.com/rockbears/log"
@@ -462,6 +463,10 @@ func (h *HatcheryVSphere) FindProvisionnedWorker(ctx context.Context, m sdk.Mode
 
 	machines := h.getVirtualMachines(ctx)
 	for _, machine := range machines {
+		if !strings.HasPrefix(machine.Name, "provision-") {
+			continue
+		}
+
 		annot := getVirtualMachineCDSAnnotation(ctx, machine)
 		if annot == nil {
 			continue
@@ -472,7 +477,20 @@ func (h *HatcheryVSphere) FindProvisionnedWorker(ctx context.Context, m sdk.Mode
 			h.cacheProvisioning.mu.Unlock()
 			continue
 		}
+
+		if sdk.IsInArray(machine.Name, h.cacheProvisioning.restarting) {
+			h.cacheProvisioning.mu.Unlock()
+			continue
+		}
+
 		h.cacheProvisioning.mu.Unlock()
+
+		h.cacheToDelete.mu.Lock()
+		if sdk.IsInArray(machine.Name, h.cacheToDelete.list) {
+			h.cacheToDelete.mu.Unlock()
+			continue
+		}
+		h.cacheToDelete.mu.Unlock()
 
 		vm, err := h.vSphereClient.LoadVirtualMachine(ctx, machine.Name)
 		if err != nil {

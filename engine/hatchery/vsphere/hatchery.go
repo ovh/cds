@@ -411,7 +411,7 @@ func (h *HatcheryVSphere) provisioning(ctx context.Context) {
 		log.Info(ctx, "model %q provisioning: %d/%d", modelPath, mapAlreadyProvisionned[modelPath], number)
 
 		for i := 0; i < int(number)-mapAlreadyProvisionned[modelPath]; i++ {
-			var nameFirstPart = modelPath
+			var nameFirstPart = "provision-" + modelPath
 			if len(nameFirstPart) > maxLength-10 {
 				nameFirstPart = nameFirstPart[:maxLength-10]
 			}
