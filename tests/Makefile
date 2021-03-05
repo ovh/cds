@@ -12,6 +12,8 @@ MINIO_CONTAINER_ID = $(shell docker ps -f name=minio1 -q)
 UNAME_S := $(shell uname -s| tr A-Z a-z)
 VERSION := $(if ${CDS_VERSION},${CDS_VERSION},snapshot)
 
+COVER_FILES = $(shell find . -name "*.coverprofile")
+
 clean:
 	@rm -f $(MINIO_CONTAINER_ID) $(MINIO_RC)
 	@docker kill minio1 || true && docker rm minio1 || true
@@ -21,8 +23,8 @@ minio_start: $(MINIO_RC)
 		docker rm minio1 >/dev/null 2>&1 || true; \
 		echo "starting minio container"; \
 		docker run -d -p 9000:9000 --name minio1 \
-  			-e "MINIO_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE" \
-  			-e "MINIO_SECRET_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY" minio/minio server /data; \
+				-e "MINIO_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE" \
+				-e "MINIO_SECRET_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY" minio/minio server /data; \
 	fi; \
 	$(info # Here are the minio configuration variables)
 	$(info $(MINIO_CONFIG))
@@ -36,7 +38,6 @@ minio_reset_bucket:
 		mc rm -r --force myminio/cds-it  || true && \
 		mc mb myminio/cds-it || true \
 		"
-
 
 test-docker-compose:
 	docker-compose up --no-recreate -d cds-db cds-cache elasticsearch smtpmocksrv && \
@@ -57,3 +58,10 @@ test-docker-compose:
 	docker-compose up -d cds-cdn cds-ui cds-hooks cds-hatchery-local cds-elasticsearch && \
 	echo "waiting 5s to let services start.." && sleep 5 && \
 	./test.sh smoke_services cli;
+
+merge-coverage:
+	@docker run -v `pwd`:/workspace golang:1.16 sh -c "\
+			go get -u github.com/wadey/gocovmerge && \
+			cd /workspace && \
+      gocovmerge $(COVER_FILES) > /workspace/cdsctl.cover.out \
+		"

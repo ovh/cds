@@ -71,6 +71,9 @@ gobuild:
 
 build: $(TARGET_DIR) $(TARGET_BINARIES_VARIANT) $(TARGET_BINARIES)
 
+build_test_cdsctl:
+	CGO_ENABLED=1 go test -coverpkg="./..." -c . -o $(TARGET_DIR)/$(TARGET_BINARY).test -tags testbincover,nokeychain
+
 test: clean
 	@for PKG in $(TEST_PKGS); do \
 		echo "Running tests in package $$PKG"; \
