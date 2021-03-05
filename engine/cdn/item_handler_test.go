@@ -213,9 +213,9 @@ func TestGetItemArtifactDownloadHandler(t *testing.T) {
 	s.Client = cdsclient.New(cdsclient.Config{Host: "http://lolcat.api", InsecureSkipVerifyTLS: false})
 	gock.InterceptClient(s.Client.(cdsclient.Raw).HTTPClient())
 	t.Cleanup(gock.OffAll)
-	gock.New("http://lolcat.api").Get("/project/" + projectKey + "/workflows/WfName/type/artifact/access").Reply(http.StatusOK).JSON(nil)
+	gock.New("http://lolcat.api").Get("/project/" + projectKey + "/workflows/WfName/type/run-result/access").Reply(http.StatusOK).JSON(nil)
 
-	gock.New("http://lolcat.api").Post("/project/" + projectKey + "/workflows/WfName/runs/0/artifacts/check").Reply(http.StatusNoContent)
+	gock.New("http://lolcat.api").Post("/project/" + projectKey + "/workflows/WfName/runs/0/results/check").Reply(http.StatusNoContent)
 	gock.New("http://lolcat.api").Post("/project/" + projectKey + "/workflows/WfName/runs/0/results").Reply(http.StatusNoContent)
 
 	ctx, cancel := context.WithCancel(context.TODO())
@@ -241,8 +241,9 @@ func TestGetItemArtifactDownloadHandler(t *testing.T) {
 		JobID:        3,
 		JobName:      "JobDownload",
 		Worker: &cdn.SignatureWorker{
-			ArtifactName: "myartifact",
-			WorkerName:   "myworker",
+			FileName:      "myartifact",
+			WorkerName:    "myworker",
+			RunResultType: string(sdk.WorkflowRunResultTypeArtifact),
 		},
 	}
 
@@ -265,12 +266,12 @@ func TestGetItemArtifactDownloadHandler(t *testing.T) {
 	jwtTokenRaw, err := signer.SignJWT(jwtToken)
 	require.NoError(t, err)
 
-	apiRef := sdk.NewCDNArtifactApiRef(sig)
+	apiRef := sdk.NewCDNRunResultApiRef(sig)
 	refhash, err := apiRef.ToHash()
 	require.NoError(t, err)
 
 	uri := s.Router.GetRoute("GET", s.getItemDownloadHandler, map[string]string{
-		"type":   string(sdk.CDNTypeItemArtifact),
+		"type":   string(sdk.CDNTypeItemRunResult),
 		"apiRef": refhash,
 	})
 	require.NotEmpty(t, uri)
@@ -318,7 +319,7 @@ func TestGetItemArtifactDownloadHandler(t *testing.T) {
 
 	// Download again
 	uri = s.Router.GetRoute("GET", s.getItemDownloadHandler, map[string]string{
-		"type":   string(sdk.CDNTypeItemArtifact),
+		"type":   string(sdk.CDNTypeItemRunResult),
 		"apiRef": refhash,
 	})
 	require.NotEmpty(t, uri)
@@ -350,16 +351,17 @@ func TestGetItemsArtefactHandler(t *testing.T) {
 		RunID:        1,
 		WorkflowName: "my workflow",
 		Worker: &cdn.SignatureWorker{
-			WorkerID:     "1",
-			WorkerName:   "workername",
-			ArtifactName: "myartifact",
+			WorkerID:      "1",
+			WorkerName:    "workername",
+			FileName:      "myartifact",
+			RunResultType: string(sdk.WorkflowRunResultTypeArtifact),
 		},
 	}
 
 	item1 := sdk.CDNItem{
-		Type:   sdk.CDNTypeItemArtifact,
+		Type:   sdk.CDNTypeItemRunResult,
 		Status: sdk.CDNStatusItemCompleted,
-		APIRef: sdk.NewCDNArtifactApiRef(workerSignature),
+		APIRef: sdk.NewCDNRunResultApiRef(workerSignature),
 	}
 	refhash, err := item1.APIRef.ToHash()
 	require.NoError(t, err)
@@ -377,7 +379,7 @@ func TestGetItemsArtefactHandler(t *testing.T) {
 	require.NoError(t, item.Insert(context.Background(), s.Mapper, db, &item2))
 
 	vars := map[string]string{
-		"type": string(sdk.CDNTypeItemArtifact),
+		"type": string(sdk.CDNTypeItemRunResult),
 	}
 	uri := s.Router.GetRoute("GET", s.getItemsHandler, vars)
 	require.NotEmpty(t, uri)

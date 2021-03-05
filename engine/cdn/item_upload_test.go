@@ -118,7 +118,7 @@ func TestPostUploadHandler(t *testing.T) {
 		PrivateKey: []byte(base64.StdEncoding.EncodeToString(workerKey)),
 	}
 
-	gock.New("http://lolcat.api").Post("/project/projKey/workflows/myworkflow/runs/0/artifacts/check").Reply(http.StatusNoContent)
+	gock.New("http://lolcat.api").Post("/project/projKey/workflows/myworkflow/runs/0/results/check").Reply(http.StatusNoContent)
 	gock.New("http://lolcat.api").Post("/project/projKey/workflows/myworkflow/runs/0/results").Reply(http.StatusNoContent)
 	gock.New("http://lolcat.api").Get("/worker/myworker").MatchParam("withKey", "true").Reply(200).JSON(worker)
 
@@ -131,9 +131,10 @@ func TestPostUploadHandler(t *testing.T) {
 		RunID:        1,
 		WorkflowName: "myworkflow",
 		Worker: &cdn.SignatureWorker{
-			WorkerID:     worker.ID,
-			WorkerName:   worker.Name,
-			ArtifactName: "myartifact",
+			WorkerID:      worker.ID,
+			WorkerName:    worker.Name,
+			FileName:      "myartifact",
+			RunResultType: string(sdk.WorkflowRunResultTypeArtifact),
 		},
 	}
 	signer, err := jws.NewHMacSigner(workerKey)

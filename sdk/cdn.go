@@ -64,8 +64,8 @@ func (c *CDNItem) UnmarshalJSON(data []byte) error {
 			return WithStack(err)
 		}
 		itemAlias.APIRef = &apiRef
-	case CDNTypeItemArtifact:
-		var apiRef CDNArtifactAPIRef
+	case CDNTypeItemRunResult:
+		var apiRef CDNRunResultAPIRef
 		if err := json.Unmarshal(itemAlias.APIRefRaw, &apiRef); err != nil {
 			return WithStack(err)
 		}
@@ -150,16 +150,17 @@ type CDNLogAPIRef struct {
 	RequirementServiceName string `json:"service_name,omitempty"`
 }
 
-type CDNArtifactAPIRef struct {
-	ProjectKey   string `json:"project_key"`
-	WorkflowName string `json:"workflow_name"`
-	WorkflowID   int64  `json:"workflow_id"`
-	RunID        int64  `json:"run_id"`
-	RunJobID     int64  `json:"run_job_id"`
-	RunJobName   string `json:"run_job_name"`
-	RunNodeID    int64  `json:"run_node_id"`
-	ArtifactName string `json:"artifact_name"`
-	Perm         uint32 `json:"perm"`
+type CDNRunResultAPIRef struct {
+	ProjectKey    string                `json:"project_key"`
+	WorkflowName  string                `json:"workflow_name"`
+	WorkflowID    int64                 `json:"workflow_id"`
+	RunID         int64                 `json:"run_id"`
+	RunJobID      int64                 `json:"run_job_id"`
+	RunJobName    string                `json:"run_job_name"`
+	RunNodeID     int64                 `json:"run_node_id"`
+	ArtifactName  string                `json:"artifact_name"`
+	Perm          uint32                `json:"perm"`
+	RunResultType WorkflowRunResultType `json:"type"`
 }
 
 type CDNWorkerCacheAPIRef struct {
@@ -172,8 +173,8 @@ func NewCDNApiRef(t CDNItemType, signature cdn.Signature) (CDNApiRef, error) {
 	switch t {
 	case CDNTypeItemStepLog, CDNTypeItemServiceLog:
 		return NewCDNLogApiRef(signature), nil
-	case CDNTypeItemArtifact:
-		return NewCDNArtifactApiRef(signature), nil
+	case CDNTypeItemRunResult:
+		return NewCDNRunResultApiRef(signature), nil
 	case CDNTypeItemWorkerCache:
 		return NewCDNWorkerCacheApiRef(signature), nil
 	}
@@ -189,18 +190,19 @@ func NewCDNWorkerCacheApiRef(signature cdn.Signature) CDNApiRef {
 	return &apiRef
 }
 
-func NewCDNArtifactApiRef(signature cdn.Signature) CDNApiRef {
+func NewCDNRunResultApiRef(signature cdn.Signature) CDNApiRef {
 	// Build cds api ref
-	apiRef := CDNArtifactAPIRef{
-		ProjectKey:   signature.ProjectKey,
-		WorkflowName: signature.WorkflowName,
-		WorkflowID:   signature.WorkflowID,
-		RunID:        signature.RunID,
-		RunNodeID:    signature.NodeRunID,
-		RunJobName:   signature.JobName,
-		RunJobID:     signature.JobID,
-		ArtifactName: signature.Worker.ArtifactName,
-		Perm:         signature.Worker.FilePerm,
+	apiRef := CDNRunResultAPIRef{
+		ProjectKey:    signature.ProjectKey,
+		WorkflowName:  signature.WorkflowName,
+		WorkflowID:    signature.WorkflowID,
+		RunID:         signature.RunID,
+		RunNodeID:     signature.NodeRunID,
+		RunJobName:    signature.JobName,
+		RunJobID:      signature.JobID,
+		ArtifactName:  signature.Worker.FileName,
+		Perm:          signature.Worker.FilePerm,
+		RunResultType: WorkflowRunResultType(signature.Worker.RunResultType),
 	}
 	return &apiRef
 }
@@ -258,8 +260,8 @@ func (c CDNItem) GetCDNLogApiRef() (*CDNLogAPIRef, bool) {
 	return apiRef, has
 }
 
-func (c CDNItem) GetCDNArtifactApiRef() (*CDNArtifactAPIRef, bool) {
-	apiRef, has := c.APIRef.(*CDNArtifactAPIRef)
+func (c CDNItem) GetCDNRunResultApiRef() (*CDNRunResultAPIRef, bool) {
+	apiRef, has := c.APIRef.(*CDNRunResultAPIRef)
 	return apiRef, has
 }
 
@@ -293,11 +295,11 @@ func (a *CDNLogAPIRef) ToHash() (string, error) {
 	return strconv.FormatUint(hashRefU, 10), nil
 }
 
-func (a *CDNArtifactAPIRef) ToFilename() string {
+func (a *CDNRunResultAPIRef) ToFilename() string {
 	return a.ArtifactName
 }
 
-func (a *CDNArtifactAPIRef) ToHash() (string, error) {
+func (a *CDNRunResultAPIRef) ToHash() (string, error) {
 	m := make(map[string]string, 7)
 	m["project_key"] = a.ProjectKey
 	m["workflow_name"] = a.WorkflowName
@@ -336,7 +338,7 @@ type CDNItemType string
 
 func (t CDNItemType) Validate() error {
 	switch t {
-	case CDNTypeItemStepLog, CDNTypeItemServiceLog, CDNTypeItemArtifact, CDNTypeItemWorkerCache:
+	case CDNTypeItemStepLog, CDNTypeItemServiceLog, CDNTypeItemRunResult, CDNTypeItemWorkerCache:
 		return nil
 	}
 	return NewErrorFrom(ErrWrongRequest, "invalid item type")
@@ -353,7 +355,7 @@ func (t CDNItemType) IsLog() bool {
 const (
 	CDNTypeItemStepLog     CDNItemType = "step-log"
 	CDNTypeItemServiceLog  CDNItemType = "service-log"
-	CDNTypeItemArtifact    CDNItemType = "artifact"
+	CDNTypeItemRunResult   CDNItemType = "run-result"
 	CDNTypeItemWorkerCache CDNItemType = "worker-cache"
 	CDNStatusItemIncoming              = "Incoming"
 	CDNStatusItemCompleted             = "Completed"

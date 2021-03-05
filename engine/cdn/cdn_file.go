@@ -20,8 +20,8 @@ import (
 func (s *Service) storeFile(ctx context.Context, sig cdn.Signature, reader io.ReadCloser) error {
 	var itemType sdk.CDNItemType
 	switch {
-	case sig.Worker.ArtifactName != "":
-		itemType = sdk.CDNTypeItemArtifact
+	case sig.Worker.FileName != "":
+		itemType = sdk.CDNTypeItemRunResult
 	case sig.Worker.CacheTag != "":
 		itemType = sdk.CDNTypeItemWorkerCache
 	default:
@@ -42,7 +42,7 @@ func (s *Service) storeFile(ctx context.Context, sig cdn.Signature, reader io.Re
 	// Check Item unicity
 	_, err = item.LoadByAPIRefHashAndType(ctx, s.Mapper, s.mustDBWithCtx(ctx), hashRef, itemType)
 	if err == nil {
-		return sdk.WrapError(sdk.ErrConflictData, "cannot upload the same artifact twice")
+		return sdk.WrapError(sdk.ErrConflictData, "cannot upload the same file twice")
 	}
 	if !sdk.ErrorIs(err, sdk.ErrNotFound) {
 		return err
@@ -56,10 +56,10 @@ func (s *Service) storeFile(ctx context.Context, sig cdn.Signature, reader io.Re
 	}
 
 	switch itemType {
-	case sdk.CDNTypeItemArtifact:
-		// CALL CDS API to CHECK IF WE CAN UPLOAD ARTIFACT
-		artiApiRef, _ := it.GetCDNArtifactApiRef()
-		if err := s.Client.WorkflowRunArtifactCheck(ctx, sig.ProjectKey, sig.WorkflowName, sig.RunNumber, *artiApiRef); err != nil {
+	case sdk.CDNTypeItemRunResult:
+		// Call CDS API to check if we can upload the run result
+		runResultApiRef, _ := it.GetCDNRunResultApiRef()
+		if err := s.Client.WorkflowRunResultCheck(ctx, sig.ProjectKey, sig.WorkflowName, sig.RunNumber, *runResultApiRef); err != nil {
 			return err
 		}
 	}
@@ -130,8 +130,8 @@ func (s *Service) storeFile(ctx context.Context, sig cdn.Signature, reader io.Re
 	}
 
 	switch itemType {
-	case sdk.CDNTypeItemArtifact:
-		artiApiRef, _ := it.GetCDNArtifactApiRef()
+	case sdk.CDNTypeItemRunResult:
+		artiApiRef, _ := it.GetCDNRunResultApiRef()
 		// Call CDS to insert workflow run result
 		artiResult := sdk.WorkflowRunResultArtifact{
 			Name:       apiRef.ToFilename(),

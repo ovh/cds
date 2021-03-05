@@ -17,13 +17,13 @@ var (
 	KeyResult = cache.Key("run", "result")
 )
 
-func GetArtifactResultKey(runID int64, artifactName string) string {
-	return cache.Key(KeyResult, string(sdk.WorkflowRunResultTypeArtifact), strconv.Itoa(int(runID)), artifactName)
+func GetRunResultKey(runID int64, t sdk.WorkflowRunResultType, fileName string) string {
+	return cache.Key(KeyResult, string(t), strconv.Itoa(int(runID)), fileName)
 }
 
-func CanUploadArtifact(ctx context.Context, db *gorp.DbMap, store cache.Store, wr sdk.WorkflowRun, artifactRef sdk.CDNArtifactAPIRef) (bool, error) {
+func CanUploadRunResult(ctx context.Context, db *gorp.DbMap, store cache.Store, wr sdk.WorkflowRun, apiRef sdk.CDNRunResultAPIRef) (bool, error) {
 	// Check run
-	if wr.ID != artifactRef.RunID {
+	if wr.ID != apiRef.RunID {
 		return false, sdk.WrapError(sdk.ErrInvalidData, "unable to upload and artifact for this run")
 	}
 	if sdk.StatusIsTerminated(wr.Status) {
@@ -36,9 +36,9 @@ func CanUploadArtifact(ctx context.Context, db *gorp.DbMap, store cache.Store, w
 		if len(nodeRuns) < 1 {
 			continue
 		}
-		// get last noderun
+		// Get last noderun
 		nodeRun := nodeRuns[0]
-		if nodeRun.ID != artifactRef.RunNodeID {
+		if nodeRun.ID != apiRef.RunNodeID {
 			continue
 		}
 		nrs = nodeRuns
@@ -47,36 +47,48 @@ func CanUploadArtifact(ctx context.Context, db *gorp.DbMap, store cache.Store, w
 		}
 	}
 	if len(nrs) == 0 {
-		return false, sdk.WrapError(sdk.ErrNotFound, "unable to find node run: %d", artifactRef.RunNodeID)
+		return false, sdk.WrapError(sdk.ErrNotFound, "unable to find node run: %d", apiRef.RunNodeID)
 	}
 
 	// Check job data
-	nodeRunJob, err := LoadNodeJobRun(ctx, db, store, artifactRef.RunJobID)
+	nodeRunJob, err := LoadNodeJobRun(ctx, db, store, apiRef.RunJobID)
 	if err != nil {
 		return false, err
 	}
-	if nodeRunJob.WorkflowNodeRunID != artifactRef.RunNodeID {
-		return false, sdk.WrapError(sdk.ErrInvalidData, "invalid node run %d", artifactRef.RunNodeID)
+	if nodeRunJob.WorkflowNodeRunID != apiRef.RunNodeID {
+		return false, sdk.WrapError(sdk.ErrInvalidData, "invalid node run %d", apiRef.RunNodeID)
 	}
 	if sdk.StatusIsTerminated(nodeRunJob.Status) {
 		return false, sdk.WrapError(sdk.ErrInvalidData, "unable to upload artifact on a terminated job")
 	}
 
-	// Check artifact name
-	runResults, err := LoadRunResultsByRunIDAndType(ctx, db, artifactRef.RunID, sdk.WorkflowRunResultTypeArtifact)
+	// Check File Name
+	runResults, err := LoadRunResultsByRunIDAndType(ctx, db, apiRef.RunID, apiRef.RunResultType)
 	if err != nil {
-		return false, sdk.WrapError(err, "unable to load run results for run %d", artifactRef.RunID)
+		return false, sdk.WrapError(err, "unable to load run results for run %d", apiRef.RunID)
 	}
 	for _, result := range runResults {
-		refArt, err := result.GetArtifact()
-		if err != nil {
-			return false, err
+		var fileName string
+		switch apiRef.RunResultType {
+		case sdk.WorkflowRunResultTypeArtifact:
+			refArt, err := result.GetArtifact()
+			if err != nil {
+				return false, err
+			}
+			fileName = refArt.Name
+		case sdk.WorkflowRunResultTypeCoverage:
+			refCov, err := result.GetCoverage()
+			if err != nil {
+				return false, err
+			}
+			fileName = refCov.Name
 		}
-		if refArt.Name != artifactRef.ToFilename() {
+
+		if fileName != apiRef.ToFilename() {
 			continue
 		}
 
-		// find artifact in node run history
+		// If we find a run result with same check, check subnumber
 		var previousNodeRunUpload *sdk.WorkflowNodeRun
 		for _, nr := range nrs {
 			if nr.ID != result.WorkflowNodeRunID {
@@ -86,15 +98,15 @@ func CanUploadArtifact(ctx context.Context, db *gorp.DbMap, store cache.Store, w
 			break
 		}
 		if previousNodeRunUpload == nil {
-			return false, sdk.WrapError(sdk.ErrConflictData, "artifact %s has already been uploaded from another pipeline", artifactRef.ArtifactName)
+			return false, sdk.WrapError(sdk.ErrConflictData, "artifact %s has already been uploaded from another pipeline", apiRef.ArtifactName)
 		}
 
 		// Check Sub num
 		if result.SubNum == nrs[0].SubNumber {
-			return false, sdk.WrapError(sdk.ErrConflictData, "artifact %s has already been uploaded", artifactRef.ArtifactName)
+			return false, sdk.WrapError(sdk.ErrConflictData, "artifact %s has already been uploaded", apiRef.ArtifactName)
 		}
 		if result.SubNum > nrs[0].SubNumber {
-			return false, sdk.WrapError(sdk.ErrConflictData, "artifact %s cannot be uploaded into a previous run", artifactRef.ArtifactName)
+			return false, sdk.WrapError(sdk.ErrConflictData, "artifact %s cannot be uploaded into a previous run", apiRef.ArtifactName)
 		}
 	}
 	return true, nil
@@ -137,7 +149,7 @@ func verifyAddResultArtifact(store cache.Store, runResult *sdk.WorkflowRunResult
 		return "", err
 	}
 
-	cacheKey := GetArtifactResultKey(runResult.WorkflowRunID, artifactRunResult.Name)
+	cacheKey := GetRunResultKey(runResult.WorkflowRunID, runResult.Type, artifactRunResult.Name)
 	b, err := store.Exist(cacheKey)
 	if err != nil {
 		return cacheKey, err

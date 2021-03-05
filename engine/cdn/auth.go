@@ -95,8 +95,8 @@ func (s *Service) itemAccessCheck(ctx context.Context, item sdk.CDNItem) error {
 		logRef, _ := item.GetCDNLogApiRef()
 		projectKey = logRef.ProjectKey
 		workflowName = logRef.WorkflowName
-	case sdk.CDNTypeItemArtifact:
-		artRef, _ := item.GetCDNArtifactApiRef()
+	case sdk.CDNTypeItemRunResult:
+		artRef, _ := item.GetCDNRunResultApiRef()
 		projectKey = artRef.ProjectKey
 		workflowName = artRef.WorkflowName
 	case sdk.CDNTypeItemWorkerCache:
@@ -107,7 +107,7 @@ func (s *Service) itemAccessCheck(ctx context.Context, item sdk.CDNItem) error {
 	}
 
 	switch item.Type {
-	case sdk.CDNTypeItemStepLog, sdk.CDNTypeItemServiceLog, sdk.CDNTypeItemArtifact:
+	case sdk.CDNTypeItemStepLog, sdk.CDNTypeItemServiceLog, sdk.CDNTypeItemRunResult:
 		if err := s.Client.WorkflowAccess(ctx, projectKey, workflowName, sessionID, item.Type); err != nil {
 			return sdk.NewErrorWithStack(err, sdk.ErrNotFound)
 		}

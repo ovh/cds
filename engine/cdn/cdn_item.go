@@ -85,7 +85,7 @@ func (s *Service) downloadItem(ctx context.Context, t sdk.CDNItemType, apiRefHas
 		if err := s.downloadLog(ctx, t, apiRefHash, w, opts); err != nil {
 			return err
 		}
-	case sdk.CDNTypeItemArtifact, sdk.CDNTypeItemWorkerCache:
+	case sdk.CDNTypeItemRunResult, sdk.CDNTypeItemWorkerCache:
 		if err := s.downloadFile(ctx, t, apiRefHash, w); err != nil {
 			return err
 		}

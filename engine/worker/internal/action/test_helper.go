@@ -34,7 +34,7 @@ func (w *TestWorker) WorkerCacheSignature(tag string) (string, error) {
 	return "mysig", nil
 }
 
-func (w *TestWorker) ArtifactSignature(artifactName string, perm uint32) (string, error) {
+func (w *TestWorker) RunResultSignature(artifactName string, perm uint32, t sdk.WorkflowRunResultType) (string, error) {
 	return "mysignature", nil
 }
 

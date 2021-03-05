@@ -54,7 +54,7 @@ func Test_getWorkflowRunAndNodeRunResults(t *testing.T) {
 		WorkflowRunID:     wrDB.ID,
 		DataRaw:           bts,
 	}
-	api.Cache.SetWithTTL(workflow.GetArtifactResultKey(wrCreate.ID, artiData.Name), true, 60)
+	api.Cache.SetWithTTL(workflow.GetRunResultKey(wrCreate.ID, sdk.WorkflowRunResultTypeArtifact, artiData.Name), true, 60)
 	require.NoError(t, workflow.AddResult(db.DbMap, api.Cache, &result))
 
 	//Prepare request
@@ -188,7 +188,7 @@ func Test_workflowRunResultsAdd(t *testing.T) {
 	assert.Equal(t, 403, rec.Code)
 
 	// add check
-	require.NoError(t, api.Cache.SetWithTTL(workflow.GetArtifactResultKey(wrCreate.ID, artiData.Name), true, 60))
+	require.NoError(t, api.Cache.SetWithTTL(workflow.GetRunResultKey(wrCreate.ID, sdk.WorkflowRunResultTypeArtifact, artiData.Name), true, 60))
 
 	//Do the request
 	reqOK := assets.NewJWTAuthentifiedRequest(t, jwtCDN, "POST", uri, addResultRequest)
@@ -196,13 +196,13 @@ func Test_workflowRunResultsAdd(t *testing.T) {
 	router.Mux.ServeHTTP(recOK, reqOK)
 	assert.Equal(t, 204, recOK.Code)
 
-	b, err := api.Cache.Exist(workflow.GetArtifactResultKey(wrCreate.ID, artiData.Name))
+	b, err := api.Cache.Exist(workflow.GetRunResultKey(wrCreate.ID, sdk.WorkflowRunResultTypeArtifact, artiData.Name))
 	require.NoError(t, err)
 	require.False(t, b)
 
 }
 
-func Test_workflowRunArtifactCheckUpload(t *testing.T) {
+func Test_workflowRunResultCheckUpload(t *testing.T) {
 	featureflipping.Init(gorpmapping.Mapper)
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
@@ -249,7 +249,7 @@ func Test_workflowRunArtifactCheckUpload(t *testing.T) {
 		"number":           fmt.Sprintf("%d", wrCreate.Number),
 		"nodeID":           fmt.Sprintf("%d", wrCreate.Workflow.WorkflowData.Node.ID),
 	}
-	checkRequest := sdk.CDNArtifactAPIRef{
+	checkRequest := sdk.CDNRunResultAPIRef{
 		ArtifactName: "myArtifact",
 		RunID:        wrCreate.ID,
 		RunNodeID:    nr.ID,
@@ -259,7 +259,7 @@ func Test_workflowRunArtifactCheckUpload(t *testing.T) {
 		ProjectKey:   key,
 	}
 
-	uri := router.GetRoute("POST", api.workflowRunArtifactCheckUploadHandler, vars)
+	uri := router.GetRoute("POST", api.workflowRunResultCheckUploadHandler, vars)
 	test.NotEmpty(t, uri)
 	req := assets.NewJWTAuthentifiedRequest(t, jwtCDN, "POST", uri, checkRequest)
 

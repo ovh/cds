@@ -73,7 +73,7 @@ type Runtime interface {
 	Take(ctx context.Context, job sdk.WorkflowNodeJobRun) error
 	ProcessJob(job sdk.WorkflowNodeJobRunData) sdk.Result
 	SendLog(ctx context.Context, level Level, format string)
-	ArtifactSignature(artifactName string, perm uint32) (string, error)
+	RunResultSignature(fileName string, perm uint32, t sdk.WorkflowRunResultType) (string, error)
 	WorkerCacheSignature(tag string) (string, error)
 	FeatureEnabled(featureName sdk.FeatureName) bool
 	CDNHttpURL() string

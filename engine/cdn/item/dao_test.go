@@ -42,6 +42,6 @@ func TestLoadItem(t *testing.T) {
 	_, has := res.GetCDNLogApiRef()
 	require.True(t, has)
 
-	_, no := res.APIRef.(*sdk.CDNArtifactAPIRef)
+	_, no := res.APIRef.(*sdk.CDNRunResultAPIRef)
 	require.False(t, no)
 }

@@ -194,7 +194,7 @@ func (s *Service) ComputeMetrics(ctx context.Context) {
 }
 
 func (s *Service) countItemsForUnit(ctx context.Context, storageUnit storage.Interface) []storage.Stat {
-	types := []sdk.CDNItemType{sdk.CDNTypeItemStepLog, sdk.CDNTypeItemServiceLog, sdk.CDNTypeItemArtifact}
+	types := []sdk.CDNItemType{sdk.CDNTypeItemStepLog, sdk.CDNTypeItemServiceLog, sdk.CDNTypeItemRunResult}
 	var storageStats []storage.Stat
 	for _, typ := range types {
 		suStats, err := storage.CountItemsForUnitByType(s.mustDBWithCtx(ctx), storageUnit.ID(), string(typ))

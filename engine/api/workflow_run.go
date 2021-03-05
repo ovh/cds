@@ -1478,7 +1478,7 @@ func (api *API) postWorkflowRunResultsHandler() service.Handler {
 	}
 }
 
-func (api *API) workflowRunArtifactCheckUploadHandler() service.Handler {
+func (api *API) workflowRunResultCheckUploadHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -1500,13 +1500,13 @@ func (api *API) workflowRunArtifactCheckUploadHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrForbidden, "only CDN can call this route")
 		}
 
-		var apiRef sdk.CDNArtifactAPIRef
+		var apiRef sdk.CDNRunResultAPIRef
 		if err := service.UnmarshalBody(r, &apiRef); err != nil {
 			return sdk.WithStack(err)
 		}
 
 		if apiRef.ToFilename() == "" {
-			return sdk.WrapError(sdk.ErrInvalidData, "unable to read artifact api ref")
+			return sdk.WrapError(sdk.ErrInvalidData, "unable to read run result api ref")
 		}
 
 		wr, err := workflow.LoadRun(ctx, api.mustDB(), key, name, number, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
@@ -1514,7 +1514,7 @@ func (api *API) workflowRunArtifactCheckUploadHandler() service.Handler {
 			return err
 		}
 
-		b, err := workflow.CanUploadArtifact(ctx, api.mustDBWithCtx(ctx), api.Cache, *wr, apiRef)
+		b, err := workflow.CanUploadRunResult(ctx, api.mustDBWithCtx(ctx), api.Cache, *wr, apiRef)
 		if err != nil {
 			return err
 		}
@@ -1523,7 +1523,7 @@ func (api *API) workflowRunArtifactCheckUploadHandler() service.Handler {
 		}
 
 		// Save check
-		if err := api.Cache.SetWithTTL(workflow.GetArtifactResultKey(apiRef.RunID, apiRef.ArtifactName), true, 600); err != nil {
+		if err := api.Cache.SetWithTTL(workflow.GetRunResultKey(apiRef.RunID, apiRef.RunResultType, apiRef.ArtifactName), true, 600); err != nil {
 			return sdk.WrapError(err, "unable to cache result artifact check %s ", apiRef.ToFilename())
 		}
 		return nil
