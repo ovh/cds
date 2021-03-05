@@ -67,16 +67,18 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 			countFileBuffer++
 		}
 	}
-	if countLogBuffer == 0 || countLogBuffer > 1 {
+	if countLogBuffer != 1 {
 		return nil, sdk.WithStack(fmt.Errorf("missing or too much CDN Buffer for log items"))
 	}
+	// TODO set file buffer as required when CDN will be use by default for files
 	if countFileBuffer > 1 {
 		return nil, sdk.WithStack(fmt.Errorf("too much CDN Buffer for file items"))
 	}
 
+	// We should have at least one storage backend that is not of type cds to store logs and artifacts
 	activeStorage := 0
 	for _, s := range config.Storages {
-		if !s.DisableSync {
+		if !s.DisableSync && s.CDS == nil {
 			activeStorage++
 		}
 	}

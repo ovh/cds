@@ -2,6 +2,7 @@ package cdn
 
 import (
 	"context"
+	"io/ioutil"
 	"testing"
 	"time"
 
@@ -29,6 +30,9 @@ func TestSyncBuffer(t *testing.T) {
 	cdntest.ClearItem(t, context.Background(), m, db)
 	cdntest.ClearUnits(t, context.Background(), m, db)
 
+	tmpDir, err := ioutil.TempDir("", t.Name()+"-cdn-*")
+	require.NoError(t, err)
+
 	// Create cdn service
 	s := Service{
 		DBConnectionFactory: factory,
@@ -37,10 +41,6 @@ func TestSyncBuffer(t *testing.T) {
 		Common: service.Common{
 			GoRoutines: sdk.NewGoRoutines(),
 		},
-	}
-	cdsConfig := &storage.CDSStorageConfiguration{
-		Host:  "http://lolcat.host:8081",
-		Token: "mytoken",
 	}
 	cdnUnits, err := storage.Init(context.Background(), m, cache, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
 		HashLocatorSalt: "thisismysalt",
@@ -55,7 +55,15 @@ func TestSyncBuffer(t *testing.T) {
 		},
 		Storages: map[string]storage.StorageConfiguration{
 			"test-cds-backend.TestSyncBuffer": {
-				CDS: cdsConfig,
+				CDS: &storage.CDSStorageConfiguration{
+					Host:  "http://lolcat.host:8081",
+					Token: "mytoken",
+				},
+			},
+			"test-local.TestSyncBuffer": {
+				Local: &storage.LocalStorageConfiguration{
+					Path: tmpDir,
+				},
 			},
 		},
 	})
@@ -92,13 +100,11 @@ func TestSyncLog(t *testing.T) {
 		},
 	}
 
-	cdsConfig := &storage.CDSStorageConfiguration{
-		Host:  "http://lolcat.host:8081",
-		Token: "mytoken",
-	}
-
 	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Second)
 	t.Cleanup(cancel)
+
+	tmpDir, err := ioutil.TempDir("", t.Name()+"-cdn-*")
+	require.NoError(t, err)
 
 	cdnUnits, err := storage.Init(ctx, m, cache, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
 		HashLocatorSalt: "thisismysalt",
@@ -116,7 +122,15 @@ func TestSyncLog(t *testing.T) {
 		},
 		Storages: map[string]storage.StorageConfiguration{
 			"test-cds-backend.TestSyncLog": {
-				CDS: cdsConfig,
+				CDS: &storage.CDSStorageConfiguration{
+					Host:  "http://lolcat.host:8081",
+					Token: "mytoken",
+				},
+			},
+			"test-local.TestSyncLog": {
+				Local: &storage.LocalStorageConfiguration{
+					Path: tmpDir,
+				},
 			},
 		},
 	})
