@@ -102,18 +102,19 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 
 			time.Sleep(2 * time.Second)
 
-			go func() {
-				time.Sleep(time.Duration(h.Config.WorkerTTL) * time.Minute)
+			if err := h.vSphereClient.StartVirtualMachine(ctx, provisionnedVMWorker); err != nil {
 				h.cacheProvisioning.mu.Lock()
 				h.cacheProvisioning.restarting = sdk.DeleteFromArray(h.cacheProvisioning.restarting, spawnArgs.WorkerName)
 				h.cacheProvisioning.mu.Unlock()
-			}()
 
-			if err := h.vSphereClient.StartVirtualMachine(ctx, provisionnedVMWorker); err != nil {
 				_ = h.vSphereClient.ShutdownVirtualMachine(ctx, provisionnedVMWorker)
 				h.markToDelete(ctx, provisionnedVMWorker)
 				return sdk.WrapError(err, "unable to start VM %q", spawnArgs.WorkerName)
 			}
+
+			h.cacheProvisioning.mu.Lock()
+			h.cacheProvisioning.restarting = sdk.DeleteFromArray(h.cacheProvisioning.restarting, spawnArgs.WorkerName)
+			h.cacheProvisioning.mu.Unlock()
 
 			return h.launchScriptWorker(ctx, spawnArgs.WorkerName, spawnArgs.JobID, spawnArgs.WorkerToken, *spawnArgs.Model, false, provisionnedVMWorker)
 		}
