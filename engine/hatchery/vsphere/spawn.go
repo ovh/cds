@@ -102,7 +102,7 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 
 			time.Sleep(2 * time.Second)
 
-			defer func() {
+			go func() {
 				time.Sleep(time.Duration(h.Config.WorkerTTL) * time.Minute)
 				h.cacheProvisioning.mu.Lock()
 				h.cacheProvisioning.restarting = sdk.DeleteFromArray(h.cacheProvisioning.restarting, spawnArgs.WorkerName)
