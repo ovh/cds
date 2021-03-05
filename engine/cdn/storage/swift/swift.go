@@ -28,8 +28,14 @@ var (
 	_ storage.StorageUnit = new(Swift)
 )
 
+const driverName = "swift"
+
 func init() {
-	storage.RegisterDriver("swift", new(Swift))
+	storage.RegisterDriver(driverName, new(Swift))
+}
+
+func (s *Swift) GetDriverName() string {
+	return driverName
 }
 
 func (s *Swift) Init(_ context.Context, cfg interface{}) error {

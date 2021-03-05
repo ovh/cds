@@ -21,8 +21,14 @@ type Buffer struct {
 	bufferType storage.CDNBufferType
 }
 
+const driverBufferName = "local-buffer"
+
 func init() {
-	storage.RegisterDriver("local-buffer", new(Buffer))
+	storage.RegisterDriver(driverBufferName, new(Buffer))
+}
+
+func (b *Buffer) GetDriverName() string {
+	return driverBufferName
 }
 
 func (b *Buffer) Init(ctx context.Context, cfg interface{}, bufferType storage.CDNBufferType) error {

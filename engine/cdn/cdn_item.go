@@ -353,6 +353,8 @@ func (s *Service) getRandomItemUnitIDByItemID(ctx context.Context, itemID string
 		return "", "", sdk.WithStack(fmt.Errorf("unable to find item units for item with id: %s", itemID))
 	}
 
+	itemUnits = s.Units.FilterItemUnitReaderByType(itemUnits)
+
 	var unit *sdk.CDNUnit
 	var selectedItemUnit *sdk.CDNItemUnit
 	if defaultUnitName != "" {

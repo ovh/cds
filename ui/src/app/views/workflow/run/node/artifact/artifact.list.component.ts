@@ -43,7 +43,7 @@ export class WorkflowRunArtifactListComponent implements OnInit, OnDestroy {
                     let size = this.getHumainFileSize(a.size);
                     let link = `./cdsapi/workflow/artifact/${a.download_hash}`
                     if (!a.id) {
-                        link = `./cdscdn/item/artifact/${a.download_hash}/download`
+                        link = `./cdscdn/item/run-result/${a.download_hash}/download`
                     }
                     return {
                         link,

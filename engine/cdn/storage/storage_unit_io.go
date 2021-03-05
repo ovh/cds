@@ -76,6 +76,8 @@ func (r RunningStorageUnits) GetSource(ctx context.Context, i *sdk.CDNItem) (Sou
 		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 
+	itemUnits = r.FilterItemUnitReaderByType(itemUnits)
+
 	// Random pick a unit
 	idx := 0
 	if len(itemUnits) > 1 {

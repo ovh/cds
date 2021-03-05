@@ -34,8 +34,14 @@ var (
 	_ storage.StorageUnit = new(S3)
 )
 
+const driverName = "s3"
+
 func init() {
-	storage.RegisterDriver("s3", new(S3))
+	storage.RegisterDriver(driverName, new(S3))
+}
+
+func (s *S3) GetDriverName() string {
+	return driverName
 }
 
 func (s *S3) Init(_ context.Context, cfg interface{}) error {
