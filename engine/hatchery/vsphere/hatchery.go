@@ -333,11 +333,7 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 				}
 			}
 
-			h.cacheProvisioning.mu.Lock()
-			var provisionedWorkerStarting = sdk.IsInArray(s.Name, h.cacheProvisioning.restarting)
-			h.cacheProvisioning.mu.Unlock()
-
-			if provisionedWorkerStarting {
+			if sdk.IsInArray(s.Name, h.cacheProvisioning.restarting) {
 				continue
 			}
 

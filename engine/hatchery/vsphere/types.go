@@ -5,7 +5,6 @@ import (
 
 	hatcheryCommon "github.com/ovh/cds/engine/hatchery"
 	"github.com/ovh/cds/engine/service"
-	"github.com/vmware/govmomi/vim25/mo"
 )
 
 // HatcheryConfiguration is the configuration for hatchery
@@ -40,15 +39,7 @@ type HatcheryVSphere struct {
 	IpAddressesMutex     sync.Mutex
 	availableIPAddresses []string
 	reservedIPAddresses  []string
-	cacheVirtualMachines struct {
-		mu   sync.Mutex
-		list []mo.VirtualMachine
-	}
-	cacheTemplates struct {
-		mu   sync.Mutex
-		list []mo.VirtualMachine
-	}
-	cachePendingJobID struct {
+	cachePendingJobID    struct {
 		mu   sync.Mutex
 		list []int64
 	}

@@ -39,7 +39,7 @@ func TestHatcheryVSphere_getAllServers(t *testing.T) {
 				},
 			},
 		}, nil
-	})
+	}).AnyTimes()
 
 	ctx := context.Background()
 	vms := h.getRawVMs(ctx)
@@ -70,7 +70,7 @@ func TestHatcheryVSphere_getVirtualMachines(t *testing.T) {
 				},
 			},
 		}, nil
-	})
+	}).AnyTimes()
 
 	ctx := context.Background()
 	vms := h.getVirtualMachines(ctx)
@@ -101,7 +101,7 @@ func TestHatcheryVSphere_getTemplates(t *testing.T) {
 				},
 			},
 		}, nil
-	})
+	}).AnyTimes()
 
 	ctx := context.Background()
 	vms := h.getRawTemplates(ctx)
@@ -138,7 +138,7 @@ func TestHatcheryVSphere_getVirtualMachineTemplates(t *testing.T) {
 				},
 			},
 		}, nil
-	})
+	}).AnyTimes()
 
 	ctx := context.Background()
 	tmpls := h.getVirtualMachineTemplates(ctx)
@@ -175,7 +175,7 @@ func TestHatcheryVSphere_getVirtualMachineTemplateByName(t *testing.T) {
 				},
 			},
 		}, nil
-	})
+	}).AnyTimes()
 
 	ctx := context.Background()
 	tmpl, err := h.getVirtualMachineTemplateByName(ctx, "foo")
@@ -293,7 +293,7 @@ func TestHatcheryVSphere_prepareCloneSpec(t *testing.T) {
 				},
 			}, nil
 		},
-	)
+	).AnyTimes()
 
 	ctx := context.Background()
 	cloneSpec, err := h.prepareCloneSpec(ctx, &object.VirtualMachine{}, annotation{}, "foo")

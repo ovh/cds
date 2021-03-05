@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/rockbears/log"
 	"github.com/vmware/govmomi/object"
@@ -18,31 +17,13 @@ import (
 
 // get all servers on our host
 func (h *HatcheryVSphere) getRawVMs(ctx context.Context) []mo.VirtualMachine {
-	h.cacheVirtualMachines.mu.Lock()
-	if len(h.cacheVirtualMachines.list) > 0 {
-		h.cacheVirtualMachines.mu.Unlock()
-		return h.cacheVirtualMachines.list
-	}
-
 	vms, err := h.vSphereClient.ListVirtualMachines(ctx)
 	if err != nil {
 		ctx = sdk.ContextWithStacktrace(ctx, err)
 		log.Error(ctx, "unable to list virtual machines: %v", err)
-		return h.cacheVirtualMachines.list
+		return nil
 	}
-
-	h.cacheVirtualMachines.list = vms
-	h.cacheVirtualMachines.mu.Unlock()
-
-	//Remove data from the cache after 2 seconds
-	go func() {
-		time.Sleep(2 * time.Second)
-		h.cacheVirtualMachines.mu.Lock()
-		h.cacheVirtualMachines.list = []mo.VirtualMachine{}
-		h.cacheVirtualMachines.mu.Unlock()
-	}()
-
-	return h.cacheVirtualMachines.list
+	return vms
 }
 
 func (h *HatcheryVSphere) getVirtualMachines(ctx context.Context) []mo.VirtualMachine {
@@ -78,7 +59,7 @@ func (h *HatcheryVSphere) getVirtualMachineTemplates(ctx context.Context) []mo.V
 
 	if len(srvs) == 0 {
 		log.Warn(ctx, "getModels> no servers found")
-		return h.cacheTemplates.list
+		return nil
 	}
 
 	for _, srv := range srvs {
@@ -94,17 +75,6 @@ func (h *HatcheryVSphere) getVirtualMachineTemplates(ctx context.Context) []mo.V
 			continue
 		}
 	}
-
-	h.cacheTemplates.mu.Lock()
-	h.cacheTemplates.list = models
-	h.cacheTemplates.mu.Unlock()
-	//Remove data from the cache after 2 seconds
-	go func() {
-		time.Sleep(2 * time.Second)
-		h.cacheTemplates.mu.Lock()
-		h.cacheTemplates.list = []mo.VirtualMachine{}
-		h.cacheTemplates.mu.Unlock()
-	}()
 
 	return models
 }

@@ -113,7 +113,7 @@ func TestHatcheryVSphere_createVirtualMachineTemplate(t *testing.T) {
 				},
 			}, nil
 		},
-	)
+	).AnyTimes()
 
 	var folder object.Folder
 
@@ -303,7 +303,7 @@ func TestHatcheryVSphere_SpawnWorker(t *testing.T) {
 				},
 			},
 		}, nil
-	})
+	}).AnyTimes()
 
 	c.EXPECT().LoadVirtualMachine(gomock.Any(), validModel.Name).DoAndReturn(
 		func(ctx context.Context, name string) (*object.VirtualMachine, error) {
@@ -491,7 +491,7 @@ func TestHatcheryVSphere_SpawnWorkerFromProvisioning(t *testing.T) {
 				},
 			},
 		}, nil
-	})
+	}).Times(2)
 
 	c.EXPECT().LoadVirtualMachine(gomock.Any(), validModel.Name).DoAndReturn(
 		func(ctx context.Context, name string) (*object.VirtualMachine, error) {

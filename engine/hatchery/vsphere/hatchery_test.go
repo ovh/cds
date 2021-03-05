@@ -62,7 +62,6 @@ func TestHatcheryVSphere_CanSpawn(t *testing.T) {
 	})
 	assert.False(t, h.CanSpawn(ctx, &validModel, 1, []sdk.Requirement{}), "it should return False, because there is a worker for the same job")
 
-	h.cacheVirtualMachines.list = []mo.VirtualMachine{} // flush the cache for the next call
 	c.EXPECT().ListVirtualMachines(gomock.Any()).DoAndReturn(func(ctx context.Context) ([]mo.VirtualMachine, error) {
 		return []mo.VirtualMachine{
 			{
@@ -82,13 +81,11 @@ func TestHatcheryVSphere_CanSpawn(t *testing.T) {
 	})
 	assert.True(t, h.CanSpawn(ctx, &validModel, 1, []sdk.Requirement{}), "it should return True")
 
-	h.cacheVirtualMachines.list = []mo.VirtualMachine{} // flush the cache for the next call
 	c.EXPECT().ListVirtualMachines(gomock.Any()).DoAndReturn(func(ctx context.Context) ([]mo.VirtualMachine, error) {
 		return []mo.VirtualMachine{}, nil
 	})
 	assert.True(t, h.CanSpawn(ctx, &validModel, 0, []sdk.Requirement{}), "it should return True")
 
-	h.cacheVirtualMachines.list = []mo.VirtualMachine{} // flush the cache for the next call
 	c.EXPECT().ListVirtualMachines(gomock.Any()).DoAndReturn(func(ctx context.Context) ([]mo.VirtualMachine, error) {
 		return []mo.VirtualMachine{
 			{
@@ -100,10 +97,9 @@ func TestHatcheryVSphere_CanSpawn(t *testing.T) {
 				},
 			},
 		}, nil
-	})
+	}).AnyTimes()
 	assert.False(t, h.CanSpawn(ctx, &validModel, 0, []sdk.Requirement{}), "with a 'tmp' vm, it should return False")
 
-	h.cacheVirtualMachines.list = []mo.VirtualMachine{} // flush the cache for the next call
 	c.EXPECT().ListVirtualMachines(gomock.Any()).DoAndReturn(func(ctx context.Context) ([]mo.VirtualMachine, error) {
 		return []mo.VirtualMachine{
 			{
@@ -115,14 +111,13 @@ func TestHatcheryVSphere_CanSpawn(t *testing.T) {
 				},
 			},
 		}, nil
-	})
+	}).AnyTimes()
 	assert.False(t, h.CanSpawn(ctx, &validModel, 0, []sdk.Requirement{}), "with a 'register' vm, it should return False")
 
-	h.cacheVirtualMachines.list = []mo.VirtualMachine{} // flush the cache for the next call
 	h.cachePendingJobID.list = append(h.cachePendingJobID.list, 666)
 	c.EXPECT().ListVirtualMachines(gomock.Any()).DoAndReturn(func(ctx context.Context) ([]mo.VirtualMachine, error) {
 		return []mo.VirtualMachine{}, nil
-	})
+	}).AnyTimes()
 	assert.False(t, h.CanSpawn(ctx, &validModel, 666, []sdk.Requirement{}), "it should return False because the jobID is still in the local cache")
 
 }
@@ -169,7 +164,7 @@ func TestHatcheryVSphere_NeedRegistration(t *testing.T) {
 				},
 			},
 		}, nil
-	})
+	}).AnyTimes()
 	assert.False(t, h.NeedRegistration(ctx, &validModel), "vSphere returns a VM Template maching to te model, it should return False")
 
 }
@@ -224,7 +219,7 @@ func TestHatcheryVSphere_killDisabledWorkers(t *testing.T) {
 				},
 			}, nil
 		},
-	)
+	).AnyTimes()
 
 	var vm = object.VirtualMachine{
 		Common: object.Common{},
@@ -561,7 +556,7 @@ func TestHatcheryVSphere_provisioning_start_one(t *testing.T) {
 				},
 			}, nil
 		},
-	)
+	).AnyTimes()
 
 	cdsclient.EXPECT().WorkerModelGet(sdk.SharedInfraGroupName, validModel.Name).DoAndReturn(
 		func(groupName, name string) (sdk.Model, error) {
