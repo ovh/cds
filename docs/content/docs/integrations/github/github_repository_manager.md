@@ -128,10 +128,10 @@ xxxxxxxx.xxxxxxx.4Bd9XJMIWrfe8Lwb-Au68TKUqflPorY2Fmcuw5vIoUs5gQyCLuxxxxxxxxxxxxx
         #######
         # CDS <-> Github. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/github/
         ########
-        # Github OAuth Application Client ID
+        # GitHub OAuth Application Client ID
         clientId = "xxxx"
 
-        # Github OAuth Application Client Secret
+        # GitHub OAuth Application Client Secret
         clientSecret = "xxxx"
 
         # Does polling is supported by VCS Server
@@ -143,10 +143,10 @@ xxxxxxxx.xxxxxxx.4Bd9XJMIWrfe8Lwb-Au68TKUqflPorY2Fmcuw5vIoUs5gQyCLuxxxxxxxxxxxxx
         # If you want to have a reverse proxy url for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK
         # proxyWebhook = ""
 
-        # optional, Github Token associated to username, used to add comment on Pull Request
+        # optional, GitHub Token associated to username, used to add comment on Pull Request
         token = ""
 
-        # optional. Github username, used to add comment on Pull Request on failed build.
+        # optional. GitHub username, used to add comment on Pull Request on failed build.
         username = ""
 
         [vcs.servers.Github.github.Status]

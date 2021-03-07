@@ -54,8 +54,8 @@ type ServerConfiguration struct {
 
 // GithubServerConfiguration represents the github configuration
 type GithubServerConfiguration struct {
-	ClientID     string `toml:"clientId" json:"-" default:"xxxxx" comment:"Github OAuth Application Client ID"`
-	ClientSecret string `toml:"clientSecret" json:"-" default:"xxxxx" comment:"Github OAuth Application Client Secret"`
+	ClientID     string `toml:"clientId" json:"-" default:"xxxxx" comment:"GitHub OAuth Application Client ID"`
+	ClientSecret string `toml:"clientSecret" json:"-" default:"xxxxx" comment:"GitHub OAuth Application Client Secret"`
 	APIURL       string `toml:"apiUrl" json:"-" default:"https://api.github.com" comment:"The URL for the GitHub API."`
 	Status       struct {
 		Disable    bool `toml:"disable" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push statuses on the VCS server" json:"disable"`
@@ -64,8 +64,8 @@ type GithubServerConfiguration struct {
 	DisableWebHooks bool   `toml:"disableWebHooks" comment:"Does webhooks are supported by VCS Server" json:"disable_web_hook"`
 	DisablePolling  bool   `toml:"disablePolling" comment:"Does polling is supported by VCS Server" json:"disable_polling"`
 	ProxyWebhook    string `toml:"proxyWebhook" default:"" commented:"true" comment:"If you want to have a reverse proxy url for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK" json:"proxy_webhook"`
-	Username        string `toml:"username" comment:"optional. Github username, used to create pull-request for ascode workflow and to add comment on Pull Request on failed build." json:"username"`
-	Token           string `toml:"token" comment:"optional, Github Token associated to username, used to create pull-request for ascode workflow and to add comment on Pull Request" json:"-"`
+	Username        string `toml:"username" comment:"optional. GitHub username, used to create pull-request for ascode workflow and to add comment on Pull Request on failed build." json:"username"`
+	Token           string `toml:"token" comment:"optional, GitHub Token associated to username, used to create pull-request for ascode workflow and to add comment on Pull Request" json:"-"`
 }
 
 func (s GithubServerConfiguration) check() error {

@@ -127,7 +127,7 @@ The build pipeline contains two stages, with only one job in each stage
 ## Setup connection with a VCS
 
 ```bash
-# READ THE section https://ovh.github.io/cds/docs/integrations/github/#create-a-cds-application-on-github to generate the clientId and clientSecret.
+# READ THE section https://ovh.github.io/cds/docs/integrations/github/github_repository_manager/#create-a-cds-application-on-github to generate the clientId and clientSecret.
 # Short version: 
 # go on https://github.com/settings/applications/new
 # Application name: cds-test-docker-compose

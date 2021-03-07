@@ -50,19 +50,19 @@ Edit the toml file:
 [api.auth.github]
 
       #######
-      # Github API URL
+      # GitHub API URL
       apiUrl = "https://api.github.com"
 
       #######
-      # Github OAuth Client ID
+      # GitHub OAuth Client ID
       clientId = "xxxx"
 
-      # Github OAuth Client Secret
+      # GitHub OAuth Client Secret
       clientSecret = "xxxx"
       enabled = true
       signupDisabled = false
 
       #######
-      # Github URL
+      # GitHub URL
       url = "https://github.com"
 ```

@@ -126,10 +126,10 @@ type Configuration struct {
 		Github struct {
 			Enabled        bool   `toml:"enabled" default:"false" json:"enabled"`
 			SignupDisabled bool   `toml:"signupDisabled" default:"false" json:"signupDisabled"`
-			URL            string `toml:"url" json:"url" default:"https://github.com" comment:"Github URL"`
-			APIURL         string `toml:"apiUrl" json:"apiUrl" default:"https://api.github.com" comment:"Github API URL"`
-			ClientID       string `toml:"clientId" json:"-" comment:"Github OAuth Client ID"`
-			ClientSecret   string `toml:"clientSecret" json:"-" comment:"Github OAuth Client Secret"`
+			URL            string `toml:"url" json:"url" default:"https://github.com" comment:"GitHub URL"`
+			APIURL         string `toml:"apiUrl" json:"apiUrl" default:"https://api.github.com" comment:"GitHub API URL"`
+			ClientID       string `toml:"clientId" json:"-" comment:"GitHub OAuth Client ID"`
+			ClientSecret   string `toml:"clientSecret" json:"-" comment:"GitHub OAuth Client Secret"`
 		} `toml:"github" json:"github" comment:"#######\n CDS <-> GitHub Auth. Documentation on https://ovh.github.io/cds/docs/integrations/github/github_authentication/ \n######"`
 		Gitlab struct {
 			Enabled        bool   `toml:"enabled" default:"false" json:"enabled"`
