@@ -212,17 +212,17 @@ func (mr *MockVSphereClientMockRecorder) WaitForVirtualMachineShutdown(ctx, vm i
 }
 
 // WaitForVirtualMachineIP mocks base method
-func (m *MockVSphereClient) WaitForVirtualMachineIP(ctx context.Context, vm *object.VirtualMachine) error {
+func (m *MockVSphereClient) WaitForVirtualMachineIP(ctx context.Context, vm *object.VirtualMachine, IPAddress *string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WaitForVirtualMachineIP", ctx, vm)
+	ret := m.ctrl.Call(m, "WaitForVirtualMachineIP", ctx, vm, IPAddress)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // WaitForVirtualMachineIP indicates an expected call of WaitForVirtualMachineIP
-func (mr *MockVSphereClientMockRecorder) WaitForVirtualMachineIP(ctx, vm interface{}) *gomock.Call {
+func (mr *MockVSphereClientMockRecorder) WaitForVirtualMachineIP(ctx, vm, IPAddress interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitForVirtualMachineIP", reflect.TypeOf((*MockVSphereClient)(nil).WaitForVirtualMachineIP), ctx, vm)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitForVirtualMachineIP", reflect.TypeOf((*MockVSphereClient)(nil).WaitForVirtualMachineIP), ctx, vm, IPAddress)
 }
 
 // LoadFolder mocks base method

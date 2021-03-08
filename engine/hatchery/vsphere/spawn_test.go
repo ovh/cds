@@ -217,8 +217,8 @@ func TestHatcheryVSphere_launchScriptWorker(t *testing.T) {
 		},
 	}
 
-	c.EXPECT().WaitForVirtualMachineIP(gomock.Any(), &vm).DoAndReturn(
-		func(ctx context.Context, vm *object.VirtualMachine) error {
+	c.EXPECT().WaitForVirtualMachineIP(gomock.Any(), &vm, gomock.Any()).DoAndReturn(
+		func(ctx context.Context, vm *object.VirtualMachine, _ *string) error {
 			return nil
 		},
 	)
@@ -375,8 +375,8 @@ func TestHatcheryVSphere_SpawnWorker(t *testing.T) {
 		},
 	)
 
-	c.EXPECT().WaitForVirtualMachineIP(gomock.Any(), &workerVM).DoAndReturn(
-		func(ctx context.Context, vm *object.VirtualMachine) error {
+	c.EXPECT().WaitForVirtualMachineIP(gomock.Any(), &workerVM, gomock.Any()).DoAndReturn(
+		func(ctx context.Context, vm *object.VirtualMachine, _ *string) error {
 			return nil
 		},
 	)
@@ -449,7 +449,9 @@ func TestHatcheryVSphere_SpawnWorkerFromProvisioning(t *testing.T) {
 	}
 
 	var vmProvisionned = object.VirtualMachine{
-		Common: object.Common{},
+		Common: object.Common{
+			InventoryPath: "worker-name",
+		},
 	}
 
 	var validModel = sdk.Model{
@@ -523,8 +525,36 @@ func TestHatcheryVSphere_SpawnWorkerFromProvisioning(t *testing.T) {
 		},
 	)
 
-	c.EXPECT().WaitForVirtualMachineIP(gomock.Any(), &vmProvisionned).DoAndReturn(
-		func(ctx context.Context, vm *object.VirtualMachine) error {
+	c.EXPECT().ListVirtualMachines(gomock.Any()).DoAndReturn(func(ctx context.Context) ([]mo.VirtualMachine, error) {
+		return []mo.VirtualMachine{
+			{
+				ManagedEntity: mo.ManagedEntity{
+					Name: validModel.Name,
+				},
+				Summary: types.VirtualMachineSummary{
+					Config: types.VirtualMachineConfigSummary{
+						Template: true,
+					},
+				},
+				Config: &types.VirtualMachineConfigInfo{
+					Annotation: fmt.Sprintf(`{"worker_model_last_modified": "%d", "model": true}`, now.Unix()),
+				},
+			}, {
+				ManagedEntity: mo.ManagedEntity{
+					Name: "worker-name",
+				},
+				Runtime: types.VirtualMachineRuntimeInfo{
+					PowerState: types.VirtualMachinePowerStatePoweredOn,
+				},
+				Config: &types.VirtualMachineConfigInfo{
+					Annotation: fmt.Sprintf(`{"worker_model_last_modified": "%d", "provisioning": true, "worker_model_path": "%s/%s"}`, now.Unix(), validModel.Group.Name, validModel.Name),
+				},
+			},
+		}, nil
+	})
+
+	c.EXPECT().WaitForVirtualMachineIP(gomock.Any(), &vmProvisionned, gomock.Any()).DoAndReturn(
+		func(ctx context.Context, vm *object.VirtualMachine, _ *string) error {
 			return nil
 		},
 	).Times(2)
@@ -536,14 +566,6 @@ func TestHatcheryVSphere_SpawnWorkerFromProvisioning(t *testing.T) {
 			return &procman, nil
 		},
 	).AnyTimes()
-
-	c.EXPECT().StartProgramInGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
-		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (int64, error) {
-			assert.Equal(t, "/bin/echo", req.Spec.GetGuestProgramSpec().ProgramPath)
-			assert.Equal(t, "-n ;env", req.Spec.GetGuestProgramSpec().Arguments)
-			return 1, nil
-		},
-	)
 
 	c.EXPECT().StartProgramInGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
 		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (int64, error) {
@@ -705,8 +727,8 @@ func TestHatcheryVSphere_ProvisionWorker(t *testing.T) {
 		},
 	)
 
-	c.EXPECT().WaitForVirtualMachineIP(gomock.Any(), &workerVM).DoAndReturn(
-		func(ctx context.Context, vm *object.VirtualMachine) error {
+	c.EXPECT().WaitForVirtualMachineIP(gomock.Any(), &workerVM, gomock.Any()).DoAndReturn(
+		func(ctx context.Context, vm *object.VirtualMachine, _ *string) error {
 			return nil
 		},
 	)

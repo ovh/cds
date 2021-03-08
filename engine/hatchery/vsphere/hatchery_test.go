@@ -639,8 +639,8 @@ func TestHatcheryVSphere_provisioning_start_one(t *testing.T) {
 		},
 	)
 
-	c.EXPECT().WaitForVirtualMachineIP(gomock.Any(), &workerVM).DoAndReturn(
-		func(ctx context.Context, vm *object.VirtualMachine) error {
+	c.EXPECT().WaitForVirtualMachineIP(gomock.Any(), &workerVM, gomock.Any()).DoAndReturn(
+		func(ctx context.Context, vm *object.VirtualMachine, _ *string) error {
 			return nil
 		},
 	)

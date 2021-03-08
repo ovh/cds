@@ -296,7 +296,7 @@ func TestHatcheryVSphere_prepareCloneSpec(t *testing.T) {
 	).AnyTimes()
 
 	ctx := context.Background()
-	cloneSpec, err := h.prepareCloneSpec(ctx, &object.VirtualMachine{}, annotation{}, "foo")
+	cloneSpec, err := h.prepareCloneSpec(ctx, &object.VirtualMachine{}, &annotation{}, "foo")
 	require.NoError(t, err)
 	require.NotNil(t, cloneSpec)
 

@@ -17,6 +17,13 @@ func (h *HatcheryVSphere) findAvailableIP(ctx context.Context, workerName string
 
 	var usedIPAddresses = make(map[string]struct{}, len(srvs))
 	for _, s := range srvs {
+		var annots = getVirtualMachineCDSAnnotation(ctx, s)
+		if annots != nil {
+			var ip = annots.IPAddress
+			if ip != "" {
+				usedIPAddresses[ip] = struct{}{}
+			}
+		}
 		if s.Guest == nil {
 			continue
 		}

@@ -27,6 +27,7 @@ type annotation struct {
 	Model                   bool      `json:"model,omitempty"`
 	Created                 time.Time `json:"created,omitempty"`
 	JobID                   int64     `json:"job_id,omitempty"`
+	IPAddress               string    `json:"ip_address,omitempty"`
 }
 
 // SpawnWorker creates a new vm instance
@@ -113,7 +114,16 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 				return sdk.WrapError(err, "unable to start VM %q", spawnArgs.WorkerName)
 			}
 
-			if err := h.vSphereClient.WaitForVirtualMachineIP(ctx, provisionnedVMWorker); err != nil {
+			// wait for the right IP, probably keep track of the IP address in the server annotations
+			// to avoid having two provisionned VM with the same IP address
+			// so we if to peek a random IP address by considering already provisionned IP addresses
+			moProvisionnedVMWorker, err := h.getVirtualMachineByName(ctx, provisionnedVMWorker.Name())
+			if err != nil {
+				return sdk.WrapError(err, "unable to find VM %q", spawnArgs.WorkerName)
+			}
+			var annot = getVirtualMachineCDSAnnotation(ctx, *moProvisionnedVMWorker)
+
+			if err := h.vSphereClient.WaitForVirtualMachineIP(ctx, provisionnedVMWorker, &annot.IPAddress); err != nil {
 				h.cacheProvisioning.mu.Lock()
 				h.cacheProvisioning.restarting = sdk.DeleteFromArray(h.cacheProvisioning.restarting, spawnArgs.WorkerName)
 				h.cacheProvisioning.mu.Unlock()
@@ -121,16 +131,6 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 				_ = h.vSphereClient.ShutdownVirtualMachine(ctx, provisionnedVMWorker)
 				h.markToDelete(ctx, provisionnedVMWorker)
 				return sdk.WrapError(err, "unable to get VM %q IP Address", spawnArgs.WorkerName)
-			}
-
-			if err := h.checkVirtualMachineIsReady(ctx, *spawnArgs.Model, provisionnedVMWorker); err != nil {
-				h.cacheProvisioning.mu.Lock()
-				h.cacheProvisioning.restarting = sdk.DeleteFromArray(h.cacheProvisioning.restarting, spawnArgs.WorkerName)
-				h.cacheProvisioning.mu.Unlock()
-
-				_ = h.vSphereClient.ShutdownVirtualMachine(ctx, provisionnedVMWorker)
-				h.markToDelete(ctx, provisionnedVMWorker)
-				return sdk.WrapError(err, "unable to get VM %q Ready", spawnArgs.WorkerName)
 			}
 
 			h.cacheProvisioning.mu.Lock()
@@ -152,7 +152,7 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 		JobID:                   spawnArgs.JobID,
 	}
 
-	cloneSpec, err := h.prepareCloneSpec(ctx, vmTemplate, annot, spawnArgs.WorkerName)
+	cloneSpec, err := h.prepareCloneSpec(ctx, vmTemplate, &annot, spawnArgs.WorkerName)
 	if err != nil {
 		return err
 	}
@@ -208,7 +208,7 @@ func (h *HatcheryVSphere) createVirtualMachineTemplate(ctx context.Context, mode
 		Created:                 time.Now(),
 	}
 
-	cloneSpec, err := h.prepareCloneSpec(ctx, vm, annot, workerName)
+	cloneSpec, err := h.prepareCloneSpec(ctx, vm, &annot, workerName)
 	if err != nil {
 		return nil, sdk.WrapError(err, "createVMModel> cannot create VM configuration")
 	}
@@ -302,7 +302,7 @@ func (h *HatcheryVSphere) checkVirtualMachineIsReady(ctx context.Context, model 
 
 // launchScriptWorker launch a script on the worker
 func (h *HatcheryVSphere) launchScriptWorker(ctx context.Context, name string, jobID int64, token string, model sdk.Model, registerOnly bool, vm *object.VirtualMachine) error {
-	if err := h.vSphereClient.WaitForVirtualMachineIP(ctx, vm); err != nil {
+	if err := h.vSphereClient.WaitForVirtualMachineIP(ctx, vm, nil); err != nil {
 		return err
 	}
 
@@ -420,7 +420,7 @@ func (h *HatcheryVSphere) ProvisionWorker(ctx context.Context, m sdk.Model, work
 		Created:                 time.Now(),
 	}
 
-	cloneSpec, err := h.prepareCloneSpec(ctx, vmTemplate, annot, workerName)
+	cloneSpec, err := h.prepareCloneSpec(ctx, vmTemplate, &annot, workerName)
 	if err != nil {
 		return err
 	}
@@ -442,7 +442,7 @@ func (h *HatcheryVSphere) ProvisionWorker(ctx context.Context, m sdk.Model, work
 		return err
 	}
 
-	if err := h.vSphereClient.WaitForVirtualMachineIP(ctx, clonedVM); err != nil {
+	if err := h.vSphereClient.WaitForVirtualMachineIP(ctx, clonedVM, &annot.IPAddress); err != nil {
 		return err
 	}
 

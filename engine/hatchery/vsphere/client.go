@@ -79,6 +79,35 @@ func (h *HatcheryVSphere) getVirtualMachineTemplates(ctx context.Context) []mo.V
 	return models
 }
 
+func (h *HatcheryVSphere) getVirtualMachineByName(ctx context.Context, name string) (*mo.VirtualMachine, error) {
+	// Reload the vm ref to get the annotation
+	allVMRef, err := h.vSphereClient.ListVirtualMachines(ctx)
+	if err != nil {
+		return nil, sdk.WrapError(err, "unable to get virtual machines")
+	}
+
+	var vmRef *mo.VirtualMachine
+	for i := range allVMRef {
+		if allVMRef[i].Name == name {
+			vmRef = &allVMRef[i]
+			break
+		}
+	}
+
+	if vmRef == nil {
+		err := sdk.WithStack(fmt.Errorf("virtual machine ref %q not found", name))
+		return nil, sdk.WrapError(err, "unable to get virtual machine")
+	}
+
+	var annot = getVirtualMachineCDSAnnotation(ctx, *vmRef)
+	if annot == nil {
+		err := sdk.WithStack(fmt.Errorf("virtual machine ref %q not found", name))
+		return nil, sdk.WrapError(err, "unable to get virtual machine")
+	}
+
+	return vmRef, nil
+}
+
 // Get a model by name
 func (h *HatcheryVSphere) getVirtualMachineTemplateByName(ctx context.Context, name string) (mo.VirtualMachine, error) {
 	models := h.getVirtualMachineTemplates(ctx)
@@ -147,7 +176,7 @@ func (h *HatcheryVSphere) deleteServer(ctx context.Context, s mo.VirtualMachine)
 }
 
 // prepareCloneSpec create a basic configuration in order to create a vm
-func (h *HatcheryVSphere) prepareCloneSpec(ctx context.Context, vm *object.VirtualMachine, annot annotation, workerName string) (*types.VirtualMachineCloneSpec, error) {
+func (h *HatcheryVSphere) prepareCloneSpec(ctx context.Context, vm *object.VirtualMachine, annot *annotation, workerName string) (*types.VirtualMachineCloneSpec, error) {
 	devices, err := h.vSphereClient.LoadVirtualMachineDevices(ctx, vm)
 	if err != nil {
 		return nil, err
@@ -199,26 +228,6 @@ func (h *HatcheryVSphere) prepareCloneSpec(ctx context.Context, vm *object.Virtu
 	}
 	datastoreref := datastore.Reference()
 
-	annotStr, err := json.Marshal(annot)
-	if err != nil {
-		return nil, sdk.WrapError(err, "unable to marshal annotation")
-	}
-
-	cloneSpec := &types.VirtualMachineCloneSpec{
-		Location: relocateSpec,
-		PowerOn:  true,
-		Template: false,
-		Config: &types.VirtualMachineConfigSpec{
-			RepConfig: &types.ReplicationConfigSpec{
-				QuiesceGuestEnabled: false,
-			},
-			Annotation: string(annotStr),
-			Tools: &types.ToolsConfigInfo{
-				AfterPowerOn: &sdk.True,
-			},
-		},
-	}
-
 	customSpec := &types.CustomizationSpec{
 		Identity: &types.CustomizationLinuxPrep{
 			HostName: new(types.CustomizationVirtualMachineName),
@@ -250,8 +259,32 @@ func (h *HatcheryVSphere) prepareCloneSpec(ctx context.Context, vm *object.Virtu
 		if h.Config.DNS != "" {
 			customSpec.GlobalIPSettings = types.CustomizationGlobalIPSettings{DnsServerList: []string{h.Config.DNS}}
 		}
+
+		annot.IPAddress = ip
+
 		log.Debug(ctx, "IP: %s; Gateway: %v; DNS: %v", ip, customSpec.NicSettingMap[0].Adapter.Gateway, customSpec.GlobalIPSettings.DnsServerList)
 	}
+
+	annotStr, err := json.Marshal(annot)
+	if err != nil {
+		return nil, sdk.WrapError(err, "unable to marshal annotation")
+	}
+
+	cloneSpec := &types.VirtualMachineCloneSpec{
+		Location: relocateSpec,
+		PowerOn:  true,
+		Template: false,
+		Config: &types.VirtualMachineConfigSpec{
+			RepConfig: &types.ReplicationConfigSpec{
+				QuiesceGuestEnabled: false,
+			},
+			Annotation: string(annotStr),
+			Tools: &types.ToolsConfigInfo{
+				AfterPowerOn: &sdk.True,
+			},
+		},
+	}
+
 	cloneSpec.Customization = customSpec
 
 	// Set the destination datastore
