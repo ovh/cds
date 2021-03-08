@@ -92,7 +92,7 @@ loopModels:
 }
 
 // CheckWorkerModelRegister checks if a model has been registered, if not it raises an error on the API
-func CheckWorkerModelRegister(h Interface, modelPath string) error {
+func CheckWorkerModelRegister(ctx context.Context, h Interface, modelPath string) error {
 	var sendError bool
 	for i := range models {
 		if models[i].Group.Name+"/"+models[i].Name == modelPath {
@@ -100,7 +100,32 @@ func CheckWorkerModelRegister(h Interface, modelPath string) error {
 			break
 		}
 	}
+	if !sendError {
+		// need registration is false, no error to return
+		return nil
+	}
+
+	// it's need registration = true ->
+	// perhaps that the models list is not up to date
+	// so, we call a fresh model list to re-check the flag need registration kwowned by the api
+	hWithModels, isWithModels := h.(InterfaceWithModels)
+	if isWithModels {
+		modelsFresh, errwm := hWithModels.WorkerModelsEnabled()
+		if errwm != nil {
+			log.Error(ctx, "error on h.CheckWorkerModelRegister(): %v", errwm)
+			return errwm
+		}
+
+		for i := range modelsFresh {
+			if modelsFresh[i].Group.Name+"/"+modelsFresh[i].Name == modelPath {
+				sendError = modelsFresh[i].NeedRegistration
+				break
+			}
+		}
+	}
+
 	if sendError {
+		// need registration stay to true, even after a fresh call to api -> error
 		return sdk.WithStack(sdk.ErrWorkerModelDeploymentFailed)
 	}
 	return nil

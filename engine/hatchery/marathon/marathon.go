@@ -578,7 +578,7 @@ func (h *HatcheryMarathon) killAwolWorkers() error {
 			// If its a worker "register", check registration before deleting it
 			if strings.HasPrefix(app.ID, "register-") && app.Env != nil {
 				model := (*app.Env)["CDS_MODEL_PATH"]
-				if err := hatchery.CheckWorkerModelRegister(h, model); err != nil {
+				if err := hatchery.CheckWorkerModelRegister(ctx, h, model); err != nil {
 					var spawnErr = sdk.SpawnErrorForm{
 						Error: err.Error(),
 					}

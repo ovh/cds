@@ -88,7 +88,7 @@ func (h *HatcheryKubernetes) killAwolWorkers(ctx context.Context) error {
 					}
 				}
 
-				if err := hatchery.CheckWorkerModelRegister(h, modelPath); err != nil {
+				if err := hatchery.CheckWorkerModelRegister(ctx, h, modelPath); err != nil {
 					var spawnErr = sdk.SpawnErrorForm{
 						Error: err.Error(),
 					}
