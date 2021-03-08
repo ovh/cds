@@ -97,6 +97,7 @@ func (a *AbstractUnit) SyncBandwidth() float64 {
 type Unit interface {
 	Read(i sdk.CDNItemUnit, r io.Reader, w io.Writer) error
 	NewReader(ctx context.Context, i sdk.CDNItemUnit) (io.ReadCloser, error)
+	GetDriverName() string
 }
 
 type BufferUnit interface {
@@ -282,6 +283,27 @@ func (x RunningStorageUnits) GetBuffer(bufferType sdk.CDNItemType) BufferUnit {
 	default:
 		return x.FileBuffer()
 	}
+}
+
+func (x *RunningStorageUnits) FilterItemUnitReaderByType(ius []sdk.CDNItemUnit) []sdk.CDNItemUnit {
+	// Remove cds backend from getting something that is not a log
+	if ius[0].Type != sdk.CDNTypeItemStepLog && ius[0].Type != sdk.CDNTypeItemServiceLog {
+		var cdsBackendID string
+		for _, unit := range x.Storages {
+			if unit.GetDriverName() == "cds" {
+				cdsBackendID = unit.ID()
+				break
+			}
+		}
+
+		for i, s := range ius {
+			if s.UnitID == cdsBackendID {
+				ius = append(ius[:i], ius[i+1:]...)
+				break
+			}
+		}
+	}
+	return ius
 }
 
 type LogConfig struct {

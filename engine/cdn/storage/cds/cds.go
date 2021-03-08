@@ -21,8 +21,14 @@ type CDS struct {
 	config storage.CDSStorageConfiguration
 }
 
+const driverName = "cds"
+
 func init() {
-	storage.RegisterDriver("cds", new(CDS))
+	storage.RegisterDriver(driverName, new(CDS))
+}
+
+func (c *CDS) GetDriverName() string {
+	return driverName
 }
 
 func (c *CDS) GetClient() cdsclient.Interface {

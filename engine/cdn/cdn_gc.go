@@ -151,27 +151,35 @@ func (s *Service) cleanBuffer(ctx context.Context) error {
 		}
 		log.Debug(ctx, "item to remove from buffer: %d", len(itemIDs))
 		if len(itemIDs) == 0 {
-			return nil
+			continue
 		}
 
 		itemUnitsIDs, err := storage.LoadAllItemUnitsIDsByItemIDsAndUnitID(s.mustDBWithCtx(ctx), bu.ID(), itemIDs)
 		if err != nil {
-			return err
+			ctx := sdk.ContextWithStacktrace(ctx, err)
+			log.Error(ctx, "unable to load item units: %v", err)
+			continue
 		}
 
 		tx, err := s.mustDBWithCtx(ctx).Begin()
 		if err != nil {
-			return sdk.WrapError(err, "unable to start transaction")
+			ctx := sdk.ContextWithStacktrace(ctx, err)
+			log.Error(ctx, "unable to start transaction: %v", err)
+			continue
 		}
 
 		if _, err := storage.MarkItemUnitToDelete(tx, itemUnitsIDs); err != nil {
 			_ = tx.Rollback()
-			return err
+			ctx := sdk.ContextWithStacktrace(ctx, err)
+			log.Error(ctx, "unable to mark item as delete: %v", err)
+			continue
 		}
 
 		if err := tx.Commit(); err != nil {
 			_ = tx.Rollback()
-			return sdk.WithStack(err)
+			ctx := sdk.ContextWithStacktrace(ctx, err)
+			log.Error(ctx, "unable to commit transaction: %v", err)
+			continue
 		}
 	}
 	return nil

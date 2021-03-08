@@ -28,8 +28,14 @@ var (
 	_ storage.StorageUnit = new(Webdav)
 )
 
+const driverName = "webdav"
+
 func init() {
-	storage.RegisterDriver("webdav", new(Webdav))
+	storage.RegisterDriver(driverName, new(Webdav))
+}
+
+func (s *Webdav) GetDriverName() string {
+	return driverName
 }
 
 func (s *Webdav) Init(_ context.Context, cfg interface{}) error {
