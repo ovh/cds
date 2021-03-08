@@ -13,6 +13,7 @@ import (
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 )
 
 var workflowStatusCmd = cli.Command{
@@ -30,6 +31,11 @@ var workflowStatusCmd = cli.Command{
 			Name:  "track",
 			Type:  cli.FlagBool,
 			Usage: "Wait the workflow to be over",
+		},
+		{
+			Name:  "commit",
+			Type:  cli.FlagString,
+			Usage: "Specify the git commit of the run you want",
 		},
 	},
 }
@@ -131,32 +137,60 @@ func workflowRunFormatDisplay(run *sdk.WorkflowRun, commit repo.Commit, currentD
 }
 
 func workflowStatusRunWithoutTrack(v cli.Values) (interface{}, error) {
-	var runNumber int64
-	var errRunNumber error
-	// if no run number, get the latest
-	runNumberStr := v.GetString("run-number")
-	if runNumberStr != "" {
-		runNumber, errRunNumber = strconv.ParseInt(runNumberStr, 10, 64)
-	} else {
-		runNumber, errRunNumber = workflowNodeForCurrentRepo(v.GetString(_ProjectKey), v.GetString(_WorkflowName))
-	}
-	if errRunNumber != nil {
-		return nil, errRunNumber
-	}
-	if runNumber == 0 {
-		runs, err := client.WorkflowRunList(v.GetString(_ProjectKey), v.GetString(_WorkflowName), 0, 1)
+	var run *sdk.WorkflowRun
+
+	// Search by commit if provided
+	gitHash := v.GetString("commit")
+	if gitHash != "" {
+		filters := []cdsclient.Filter{
+			{
+				Name:  "workflow",
+				Value: v.GetString(_WorkflowName),
+			},
+			{
+				Name:  "git.hash",
+				Value: gitHash,
+			},
+		}
+		//Searching workflow
+		runs, err := client.WorkflowRunSearch(v.GetString(_ProjectKey), 0, 0, filters...)
 		if err != nil {
 			return nil, err
 		}
-		if len(runs) != 1 {
+		if len(runs) < 1 {
 			return 0, fmt.Errorf("workflow run not found")
 		}
-		runNumber = runs[0].Number
-	}
+		run = &runs[0]
+	} else {
+		// else search by run number
+		var runNumber int64
+		var errRunNumber error
+		// if no run number, get the latest
+		runNumberStr := v.GetString("run-number")
+		if runNumberStr != "" {
+			runNumber, errRunNumber = strconv.ParseInt(runNumberStr, 10, 64)
+		} else {
+			runNumber, errRunNumber = workflowNodeForCurrentRepo(v.GetString(_ProjectKey), v.GetString(_WorkflowName))
+		}
+		if errRunNumber != nil {
+			return nil, errRunNumber
+		}
+		if runNumber == 0 {
+			runs, err := client.WorkflowRunList(v.GetString(_ProjectKey), v.GetString(_WorkflowName), 0, 1)
+			if err != nil {
+				return nil, err
+			}
+			if len(runs) != 1 {
+				return 0, fmt.Errorf("workflow run not found")
+			}
+			runNumber = runs[0].Number
+		}
 
-	run, err := client.WorkflowRunGet(v.GetString(_ProjectKey), v.GetString(_WorkflowName), runNumber)
-	if err != nil {
-		return nil, err
+		var err error
+		run, err = client.WorkflowRunGet(v.GetString(_ProjectKey), v.GetString(_WorkflowName), runNumber)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	var tags []string
