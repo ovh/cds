@@ -129,18 +129,30 @@ func (s *Service) storeFile(ctx context.Context, sig cdn.Signature, reader io.Re
 		return err
 	}
 
+	runResultApiRef, _ := it.GetCDNRunResultApiRef()
 	switch itemType {
 	case sdk.CDNTypeItemRunResult:
-		artiApiRef, _ := it.GetCDNRunResultApiRef()
-		// Call CDS to insert workflow run result
-		artiResult := sdk.WorkflowRunResultArtifact{
-			Name:       apiRef.ToFilename(),
-			Size:       it.Size,
-			MD5:        it.MD5,
-			CDNRefHash: it.APIRefHash,
-			Perm:       artiApiRef.Perm,
+		var result interface{}
+		switch runResultApiRef.RunResultType {
+		case sdk.WorkflowRunResultTypeArtifact:
+			result = sdk.WorkflowRunResultArtifact{
+				Name:       apiRef.ToFilename(),
+				Size:       it.Size,
+				MD5:        it.MD5,
+				CDNRefHash: it.APIRefHash,
+				Perm:       runResultApiRef.Perm,
+			}
+		case sdk.WorkflowRunResultTypeCoverage:
+			result = sdk.WorkflowRunResultCoverage{
+				Name:       apiRef.ToFilename(),
+				Size:       it.Size,
+				MD5:        it.MD5,
+				CDNRefHash: it.APIRefHash,
+				Perm:       runResultApiRef.Perm,
+			}
 		}
-		bts, err := json.Marshal(artiResult)
+
+		bts, err := json.Marshal(result)
 		if err != nil {
 			return sdk.WithStack(err)
 		}
@@ -148,7 +160,7 @@ func (s *Service) storeFile(ctx context.Context, sig cdn.Signature, reader io.Re
 			WorkflowRunID:     sig.RunID,
 			WorkflowNodeRunID: sig.NodeRunID,
 			WorkflowRunJobID:  sig.JobID,
-			Type:              sdk.WorkflowRunResultTypeArtifact,
+			Type:              runResultApiRef.RunResultType,
 			DataRaw:           json.RawMessage(bts),
 		}
 		if err := s.Client.WorkflowRunResultsAdd(ctx, sig.ProjectKey, sig.WorkflowName, sig.RunNumber, wrResult); err != nil {

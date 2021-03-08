@@ -121,6 +121,12 @@ func AddResult(db *gorp.DbMap, store cache.Store, runResult *sdk.WorkflowRunResu
 		if err != nil {
 			return err
 		}
+	case sdk.WorkflowRunResultTypeCoverage:
+		var err error
+		cacheKey, err = verifyAddResultCoverage(store, runResult)
+		if err != nil {
+			return err
+		}
 	default:
 		return sdk.WrapError(sdk.ErrInvalidData, "unkonwn result type %s", runResult.Type)
 	}
@@ -138,6 +144,26 @@ func AddResult(db *gorp.DbMap, store cache.Store, runResult *sdk.WorkflowRunResu
 		return err
 	}
 	return sdk.WithStack(store.Delete(cacheKey))
+}
+
+func verifyAddResultCoverage(store cache.Store, runResult *sdk.WorkflowRunResult) (string, error) {
+	coverageRunResult, err := runResult.GetCoverage()
+	if err != nil {
+		return "", err
+	}
+	if err := coverageRunResult.IsValid(); err != nil {
+		return "", err
+	}
+
+	cacheKey := GetRunResultKey(runResult.WorkflowRunID, runResult.Type, coverageRunResult.Name)
+	b, err := store.Exist(cacheKey)
+	if err != nil {
+		return cacheKey, err
+	}
+	if !b {
+		return cacheKey, sdk.WrapError(sdk.ErrForbidden, "unable to upload an unchecked coverage")
+	}
+	return cacheKey, nil
 }
 
 func verifyAddResultArtifact(store cache.Store, runResult *sdk.WorkflowRunResult) (string, error) {
