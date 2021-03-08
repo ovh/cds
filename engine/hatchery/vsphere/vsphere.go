@@ -315,35 +315,19 @@ func (c *vSphereClient) NewVirtualMachine(ctx context.Context, cloneSpec *types.
 		if operationReady != nil && *operationReady {
 			isGuestReady = true
 		}
-		time.Sleep(1 * time.Second)
 	}
 
-	ctxIP, cancelIP := context.WithTimeout(ctx, 3*time.Minute)
-	defer cancelIP()
-
-	var hasIP bool
-	var ip string
-	for !hasIP && ctxIP.Err() == nil { //TODO extract this part of the code to
-		var err error
-		ip, err = vm.WaitForIP(ctxIP, true)
-		if err != nil {
-			return nil, sdk.WrapError(err, "createVMModel> cannot get an ip")
-		}
-		if len(cloneSpec.Customization.NicSettingMap) == 0 {
-			break
-		}
-		customFixedIP, ok := cloneSpec.Customization.NicSettingMap[0].Adapter.Ip.(*types.CustomizationFixedIp)
-		if !ok {
-			break
-		}
-		expectedIP := customFixedIP.IpAddress
-		if ip == expectedIP {
-			break
-		}
+	var expectedIP *string
+	customFixedIP, ok := cloneSpec.Customization.NicSettingMap[0].Adapter.Ip.(*types.CustomizationFixedIp)
+	if ok {
+		expectedIP = &customFixedIP.IpAddress
 	}
-	log.Info(ctx, "virtual machine %q has IP %q", vm.String(), ip)
 
-	return vm, ctxIP.Err()
+	if err := c.WaitForVirtualMachineIP(ctx, vm, expectedIP); err != nil {
+		return vm, err
+	}
+
+	return vm, nil
 }
 
 func (c *vSphereClient) WaitVirtualMachineForShutdown(ctx context.Context, vm *object.VirtualMachine) error {
@@ -413,21 +397,29 @@ func (c *vSphereClient) WaitForVirtualMachineIP(ctx context.Context, vm *object.
 
 	var hasIP bool
 	var ip string
+
 	for !hasIP && ctxIP.Err() == nil { //TODO extract this part of the code to
 		var err error
 		ip, err = vm.WaitForIP(ctxIP, true)
 		if err != nil {
 			return sdk.WrapError(err, "cannot get an ip")
 		}
+
+		log.Debug(ctx, "checking virtual machine %q IP address %q (expected: %v)", vm.Name(), ip, IPAddress)
 		if IPAddress != nil && *IPAddress != "" {
-			if ip == *IPAddress && *IPAddress != "" {
+			if ip == *IPAddress {
 				break
 			}
 		}
 	}
+
+	if ctxIP.Err() != nil {
+		return sdk.WithStack(ctxIP.Err())
+	}
+
 	log.Info(ctx, "virtual machine %q has IP %q", vm.String(), ip)
 
-	return sdk.WithStack(ctxIP.Err())
+	return nil
 }
 
 func (c *vSphereClient) GetVirtualMachinePowerState(ctx context.Context, vm *object.VirtualMachine) (types.VirtualMachinePowerState, error) {
