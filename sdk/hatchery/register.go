@@ -107,7 +107,7 @@ func CheckWorkerModelRegister(ctx context.Context, h Interface, modelPath string
 
 	// it's need registration = true ->
 	// perhaps that the models list is not up to date
-	// so, we call a fresh model list to re-check the flag need registration kwowned by the api
+	// so, we call a fresh model list to re-check the flag need registration known by the api
 	hWithModels, isWithModels := h.(InterfaceWithModels)
 	if isWithModels {
 		modelsFresh, errwm := hWithModels.WorkerModelsEnabled()
