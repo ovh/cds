@@ -440,6 +440,7 @@ func configSetStartupData(conf *Configuration) (string, error) {
 			privateKey, _ := jws.NewRandomRSAKey()
 			privateKeyPEM, _ := jws.ExportPrivateKey(privateKey)
 			h.VSphere.RSAPrivateKey = string(privateKeyPEM)
+			h.VSphere.WorkerProvisioning = append(h.VSphere.WorkerProvisioning, vsphere.WorkerProvisioningConfig{ModelPath: "my/model", Number: 10})
 		}
 
 		if h.Swarm != nil {

@@ -31,35 +31,73 @@ func (h *HatcheryVSphere) InitHatchery(ctx context.Context) error {
 	}
 
 	if err := h.RefreshServiceLogger(ctx); err != nil {
-		return fmt.Errorf("hatchery> vsphere> Cannot get cdn configuration : %v", err)
+		ctx = sdk.ContextWithStacktrace(ctx, err)
+		log.Error(ctx, "unable get cdn configuration : %v", err)
 	}
 
-	h.GoRoutines.Run(ctx, "hatchery-vsphere-main", func(ctx context.Context) {
-		if err := h.RefreshServiceLogger(ctx); err != nil {
-			ctx = sdk.ContextWithStacktrace(ctx, err)
-			log.Error(ctx, "unable get cdn configuration : %v", err)
-		}
+	cdnConfTick := time.NewTicker(60 * time.Second)
+	killAwolServersTick := time.NewTicker(2 * time.Minute)
+	killDisabledWorkersTick := time.NewTicker(2 * time.Minute)
+	provisioningTick := time.NewTicker(2 * time.Minute)
 
-		cdnConfTick := time.NewTicker(60 * time.Second).C
-		killAwolServersTick := time.NewTicker(20 * time.Second).C
-		killDisabledWorkersTick := time.NewTicker(60 * time.Second).C
-
-		for {
-			select {
-			case <-killAwolServersTick:
-				h.killAwolServers(ctx)
-			case <-killDisabledWorkersTick:
-				h.killDisabledWorkers(ctx)
-			case <-cdnConfTick:
-				if err := h.RefreshServiceLogger(ctx); err != nil {
-					ctx = sdk.ContextWithStacktrace(ctx, err)
-					log.Error(ctx, "unable to get cdn configuration : %v", err)
+	h.GoRoutines.Run(ctx, "hatchery-vsphere-provisioning",
+		func(ctx context.Context) {
+			defer provisioningTick.Stop()
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-provisioningTick.C:
+					h.provisioning(ctx)
 				}
-			case <-ctx.Done():
-				return
 			}
-		}
-	})
+		},
+	)
+
+	h.GoRoutines.Run(ctx, "hatchery-vsphere-kill-awol-servers",
+		func(ctx context.Context) {
+			defer killAwolServersTick.Stop()
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-killAwolServersTick.C:
+					h.killAwolServers(ctx)
+				}
+			}
+		},
+	)
+
+	h.GoRoutines.Run(ctx, "hatchery-vsphere-kill-disable-workers",
+		func(ctx context.Context) {
+			defer killDisabledWorkersTick.Stop()
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-killDisabledWorkersTick.C:
+					h.killDisabledWorkers(ctx)
+				}
+			}
+		},
+	)
+
+	h.GoRoutines.Run(ctx, "hatchery-vsphere-refresh-service-logger",
+		func(ctx context.Context) {
+			defer cdnConfTick.Stop()
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-cdnConfTick.C:
+					if err := h.RefreshServiceLogger(ctx); err != nil {
+						ctx = sdk.ContextWithStacktrace(ctx, err)
+						log.Error(ctx, "unable to get cdn configuration : %v", err)
+					}
+				}
+			}
+		},
+	)
 
 	log.Info(ctx, "vSphere hatchery initialized")
 

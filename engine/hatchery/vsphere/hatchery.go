@@ -19,6 +19,8 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
+	"github.com/ovh/cds/sdk/namesgenerator"
+	"github.com/ovh/cds/sdk/slug"
 )
 
 // New instanciates a new Hatchery vsphere
@@ -214,7 +216,6 @@ func getVirtualMachineCDSAnnotation(ctx context.Context, srv mo.VirtualMachine) 
 	}
 	var annot annotation
 	if err := json.Unmarshal([]byte(srv.Config.Annotation), &annot); err != nil {
-		log.Warn(ctx, "unable to parse annotations %q on %q: %v", srv.Config.Annotation, srv.Name, err)
 		return nil
 	}
 	return &annot
@@ -235,7 +236,7 @@ func (h *HatcheryVSphere) NeedRegistration(ctx context.Context, m *sdk.Model) bo
 	}
 
 	isTemplateOutdated := fmt.Sprintf("%d", m.UserLastModified.Unix()) != annot.WorkerModelLastModified
-	return !annot.ToDelete && (m.NeedRegistration || isTemplateOutdated)
+	return !h.isMarkedToDelete(model) && (m.NeedRegistration || isTemplateOutdated)
 }
 
 // WorkerModelsEnabled returns Worker model enabled
@@ -254,10 +255,11 @@ func (h *HatcheryVSphere) WorkersStarted(ctx context.Context) []string {
 	srvs := h.getVirtualMachines(ctx)
 	res := make([]string, 0, len(srvs))
 	for _, s := range srvs {
-		if strings.Contains(strings.ToLower(s.Name), "worker") {
-			res = append(res, s.Name)
-		}
+		res = append(res, s.Name)
 	}
+
+	log.Debug(ctx, "started workers: "+strings.Join(res, ","))
+
 	return res
 }
 
@@ -287,17 +289,23 @@ func (h *HatcheryVSphere) killDisabledWorkers(ctx context.Context) {
 	}
 }
 
+func (h *HatcheryVSphere) isMarkedToDelete(s mo.VirtualMachine) bool {
+	h.cacheToDelete.mu.Lock()
+	var isMarkToDelete = sdk.IsInArray(s.Name, h.cacheToDelete.list)
+	h.cacheToDelete.mu.Unlock()
+	return isMarkToDelete
+}
+
 // killAwolServers kill unused servers
 func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 
-	allWorkers, err := hatchery.WorkerPool(ctx, h)
+	allWorkers, err := h.CDSClient().WorkerList(ctx)
 	if err != nil {
 		ctx := sdk.ContextWithStacktrace(ctx, err)
 		log.Error(ctx, "unable to load workers from CDS: %v", err)
 		return
 	}
 
-	log.Debug(ctx, "checking all workers: %+v", allWorkers)
 	srvs := h.getVirtualMachines(ctx)
 
 	for _, s := range srvs {
@@ -306,22 +314,31 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 			continue
 		}
 
+		var isMarkToDelete = h.isMarkedToDelete(s)
 		var isPoweredOff = s.Summary.Runtime.PowerState != types.VirtualMachinePowerStatePoweredOn
 
-		if !isPoweredOff && !annot.ToDelete {
+		if !isPoweredOff && !isMarkToDelete {
+			var bootTime = annot.Created
+			if s.Runtime.BootTime != nil {
+				bootTime = *s.Runtime.BootTime
+			}
+
 			// If the worker is not registered on CDS API the TTL is WorkerRegistrationTTL (default 10 minutes)
-			var expire = annot.Created.Add(time.Duration(h.Config.WorkerRegistrationTTL) * time.Minute)
+			var expire = bootTime.Add(time.Duration(h.Config.WorkerRegistrationTTL) * time.Minute)
 			// Else it's WorkerTTL (default 120 minutes)
 			for _, w := range allWorkers {
 				if w.Name == s.Name {
-					expire = annot.Created.Add(time.Duration(h.Config.WorkerTTL) * time.Minute)
+					expire = bootTime.Add(time.Duration(h.Config.WorkerTTL) * time.Minute)
 					break
 				}
 			}
 
-			// If the VM is older that the WorkerTTL config, let's mark it as delete
+			if sdk.IsInArray(s.Name, h.cacheProvisioning.restarting) {
+				continue
+			}
 
-			log.Debug(ctx, "checking if %v is outdated. Created on :%v. Expires on %v", s.Name, annot.Created, expire)
+			log.Debug(ctx, "checking if %v is outdated. Created on :%v. Expires on %v", s.Name, bootTime, expire)
+			// If the VM is older that the WorkerTTL config, let's mark it as delete
 
 			if time.Now().After(expire) {
 				vm, err := h.vSphereClient.LoadVirtualMachine(ctx, s.Name)
@@ -330,22 +347,89 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 					log.Error(ctx, "unable to load vm %s: %v", s.Name, err)
 					continue
 				}
-				log.Info(ctx, "virtual machine %q as been created on %q, it has to be deleted", s.Name, annot.Created)
-				if err := h.markToDelete(ctx, vm); err != nil {
-					ctx = sdk.ContextWithStacktrace(ctx, err)
-					log.Error(ctx, "unable to mark vm %q to delete: %v", s.Name, err)
-					continue
-				}
+				log.Info(ctx, "virtual machine %q as been created on %q, it has to be deleted", s.Name, bootTime)
+				h.markToDelete(ctx, vm)
 			}
 		}
 
 		// If the VM is mark as delete or is OFF and is not a model or a register-only VM, let's delete it
-		if annot.ToDelete || (isPoweredOff && (!annot.Model || annot.RegisterOnly)) {
+		if isMarkToDelete || (isPoweredOff && (!annot.Model || annot.RegisterOnly) && !annot.Provisioning) {
 			if err := h.deleteServer(ctx, s); err != nil {
 				ctx = sdk.ContextWithStacktrace(ctx, err)
 				log.Error(ctx, "killAwolServers> cannot delete server %s", s.Name)
 			}
 		}
 
+	}
+}
+
+func (h *HatcheryVSphere) provisioning(ctx context.Context) {
+	if len(h.Config.WorkerProvisioning) == 0 {
+		log.Debug(ctx, "provisioning is disabled")
+		return
+	}
+
+	if len(h.cacheProvisioning.pending) > 0 {
+		log.Debug(ctx, "provisioning is still on going")
+		return
+	}
+
+	h.cacheProvisioning.mu.Lock()
+
+	var mapAlreadyProvisionned = make(map[string]int)
+	machines := h.getVirtualMachines(ctx)
+	for _, machine := range machines {
+		annot := getVirtualMachineCDSAnnotation(ctx, machine)
+		if annot == nil {
+			continue
+		}
+		// Provisionned machines are powered off
+		if annot.Provisioning && machine.Runtime.PowerState != types.VirtualMachinePowerStatePoweredOn {
+			mapAlreadyProvisionned[annot.WorkerModelPath] = mapAlreadyProvisionned[annot.WorkerModelPath] + 1
+		}
+	}
+
+	h.cacheProvisioning.mu.Unlock()
+
+	for i := range h.Config.WorkerProvisioning {
+		modelPath := h.Config.WorkerProvisioning[i].ModelPath
+		number := h.Config.WorkerProvisioning[i].Number
+
+		tuple := strings.Split(modelPath, "/")
+		if len(tuple) != 2 {
+			log.Error(ctx, "invalid model name %q", modelPath)
+			continue
+		}
+
+		model, err := h.Client.WorkerModelGet(tuple[0], tuple[1])
+		if err != nil {
+			ctx = sdk.ContextWithStacktrace(ctx, err)
+			log.Warn(ctx, "unable to get model name %q: %v", modelPath, err)
+			continue
+		}
+
+		log.Info(ctx, "model %q provisioning: %d/%d", modelPath, mapAlreadyProvisionned[modelPath], number)
+
+		for i := 0; i < int(number)-mapAlreadyProvisionned[modelPath]; i++ {
+			var nameFirstPart = "provision-" + modelPath
+			if len(nameFirstPart) > maxLength-10 {
+				nameFirstPart = nameFirstPart[:maxLength-10]
+			}
+			var remainingLength = maxLength - len(nameFirstPart) - 1
+			random := namesgenerator.GetRandomNameCDSWithMaxLength(remainingLength)
+			workerName := slug.Convert(fmt.Sprintf("%s-%s", nameFirstPart, random))
+
+			h.cacheProvisioning.mu.Lock()
+			h.cacheProvisioning.pending = append(h.cacheProvisioning.pending, workerName)
+			h.cacheProvisioning.mu.Unlock()
+
+			if err := h.ProvisionWorker(ctx, model, workerName); err != nil {
+				log.Error(ctx, "unable to provision model %q: %v", modelPath, err)
+			}
+
+			h.cacheProvisioning.mu.Lock()
+			h.cacheProvisioning.pending = sdk.DeleteFromArray(h.cacheProvisioning.pending, workerName)
+			h.cacheProvisioning.mu.Unlock()
+		}
 	}
 }

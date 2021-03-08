@@ -24,15 +24,16 @@ type VSphereClient interface {
 	ListVirtualMachines(ctx context.Context) ([]mo.VirtualMachine, error)
 	LoadVirtualMachine(ctx context.Context, name string) (*object.VirtualMachine, error)
 	LoadVirtualMachineDevices(ctx context.Context, vm *object.VirtualMachine) (object.VirtualDeviceList, error)
+	StartVirtualMachine(ctx context.Context, vm *object.VirtualMachine) error
 	ShutdownVirtualMachine(ctx context.Context, vm *object.VirtualMachine) error
 	DestroyVirtualMachine(ctx context.Context, vm *object.VirtualMachine) error
 	CloneVirtualMachine(ctx context.Context, vm *object.VirtualMachine, folder *object.Folder, name string, config *types.VirtualMachineCloneSpec) (*types.ManagedObjectReference, error)
+	GetVirtualMachinePowerState(ctx context.Context, vm *object.VirtualMachine) (types.VirtualMachinePowerState, error)
 	NewVirtualMachine(ctx context.Context, cloneSpec *types.VirtualMachineCloneSpec, ref *types.ManagedObjectReference) (*object.VirtualMachine, error)
 	RenameVirtualMachine(ctx context.Context, vm *object.VirtualMachine, newName string) error
-	ReconfigureVirtualMachine(ctx context.Context, vm *object.VirtualMachine, config types.VirtualMachineConfigSpec) error
 	MarkVirtualMachineAsTemplate(ctx context.Context, vm *object.VirtualMachine) error
 	WaitForVirtualMachineShutdown(ctx context.Context, vm *object.VirtualMachine) error
-	WaitForVirtualMachineIP(ctx context.Context, vm *object.VirtualMachine) error
+	WaitForVirtualMachineIP(ctx context.Context, vm *object.VirtualMachine, IPAddress *string) error
 	LoadFolder(ctx context.Context) (*object.Folder, error)
 	SetupEthernetCard(ctx context.Context, card *types.VirtualEthernetCard, ethernetCardName string, network object.NetworkReference) error
 	LoadNetwork(ctx context.Context, name string) (object.NetworkReference, error)
@@ -117,8 +118,21 @@ func (c *vSphereClient) LoadVirtualMachineDevices(ctx context.Context, vm *objec
 	return devices, nil
 }
 
+func (c *vSphereClient) StartVirtualMachine(ctx context.Context, vm *object.VirtualMachine) error {
+	log.Info(ctx, "starting server %v", vm.Name())
+
+	ctxC, cancelC := context.WithTimeout(ctx, c.requestTimeout)
+	defer cancelC()
+
+	task, err := vm.PowerOn(ctxC)
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+	return sdk.WithStack(task.Wait(ctx))
+}
+
 func (c *vSphereClient) ShutdownVirtualMachine(ctx context.Context, vm *object.VirtualMachine) error {
-	log.Info(ctx, "shutdown server %v", vm.Name)
+	log.Info(ctx, "shutdown server %v", vm.Name())
 
 	ctxC, cancelC := context.WithTimeout(ctx, c.requestTimeout)
 	defer cancelC()
@@ -131,7 +145,7 @@ func (c *vSphereClient) ShutdownVirtualMachine(ctx context.Context, vm *object.V
 }
 
 func (c *vSphereClient) DestroyVirtualMachine(ctx context.Context, vm *object.VirtualMachine) error {
-	log.Info(ctx, "destroying server %v", vm.Name)
+	log.Info(ctx, "destroying server %v", vm.Name())
 
 	ctxD, cancelD := context.WithTimeout(ctx, c.requestTimeout)
 	defer cancelD()
@@ -271,9 +285,6 @@ func (c *vSphereClient) StartProgramInGuest(ctx context.Context, procman *guest.
 	defer cancel()
 
 	res, err := methods.StartProgramInGuest(ctxB, procman.Client(), req)
-	if res != nil {
-		log.Debug(ctx, "program result: %+v", res)
-	}
 	if err != nil {
 		return 0, sdk.WrapError(err, "unable to start program in guest")
 	}
@@ -304,35 +315,19 @@ func (c *vSphereClient) NewVirtualMachine(ctx context.Context, cloneSpec *types.
 		if operationReady != nil && *operationReady {
 			isGuestReady = true
 		}
-		time.Sleep(1 * time.Second)
 	}
 
-	ctxIP, cancelIP := context.WithTimeout(ctx, 3*time.Minute)
-	defer cancelIP()
-
-	var hasIP bool
-	var ip string
-	for !hasIP && ctxIP.Err() == nil {
-		var err error
-		ip, err = vm.WaitForIP(ctxIP, true)
-		if err != nil {
-			return nil, sdk.WrapError(err, "createVMModel> cannot get an ip")
-		}
-		if len(cloneSpec.Customization.NicSettingMap) == 0 {
-			break
-		}
-		customFixedIP, ok := cloneSpec.Customization.NicSettingMap[0].Adapter.Ip.(*types.CustomizationFixedIp)
-		if !ok {
-			break
-		}
-		expectedIP := customFixedIP.IpAddress
-		if ip == expectedIP {
-			break
-		}
+	var expectedIP *string
+	customFixedIP, ok := cloneSpec.Customization.NicSettingMap[0].Adapter.Ip.(*types.CustomizationFixedIp)
+	if ok {
+		expectedIP = &customFixedIP.IpAddress
 	}
-	log.Info(ctx, "virtual machine %q has IP %q", vm.String(), ip)
 
-	return vm, ctxIP.Err()
+	if err := c.WaitForVirtualMachineIP(ctx, vm, expectedIP); err != nil {
+		return vm, err
+	}
+
+	return vm, nil
 }
 
 func (c *vSphereClient) WaitVirtualMachineForShutdown(ctx context.Context, vm *object.VirtualMachine) error {
@@ -350,7 +345,7 @@ func (c *vSphereClient) WaitVirtualMachineForShutdown(ctx context.Context, vm *o
 func (c *vSphereClient) RenameVirtualMachine(ctx context.Context, vm *object.VirtualMachine, newName string) error {
 	ctxTo, cancel := context.WithTimeout(ctx, c.requestTimeout)
 	defer cancel()
-	log.Debug(ctx, "renaming virtual machine %q to %q...", vm.String(), newName)
+	log.Debug(ctx, "renaming virtual machine %q to %q...", vm.Name(), newName)
 
 	task, errR := vm.Rename(ctxTo, newName)
 	if errR != nil {
@@ -363,25 +358,14 @@ func (c *vSphereClient) RenameVirtualMachine(ctx context.Context, vm *object.Vir
 		return sdk.WrapError(err, "error on waiting result for vm renaming %q to %q", vm.String(), newName)
 	}
 
-	return sdk.WithStack(ctxTo.Err())
-}
-
-func (c *vSphereClient) ReconfigureVirtualMachine(ctx context.Context, vm *object.VirtualMachine, config types.VirtualMachineConfigSpec) error {
-	ctxTo, cancel := context.WithTimeout(ctx, c.requestTimeout)
-	defer cancel()
-
-	task, err := vm.Reconfigure(ctxTo, config)
+	vm2, err := c.LoadVirtualMachine(ctx, newName)
 	if err != nil {
-		return sdk.WrapError(err, "unable to reconfigure %q", vm.String())
+		return sdk.WrapError(err, "unable to reload VM %q", newName)
 	}
 
-	ctxTo, cancel = context.WithTimeout(ctx, time.Minute)
-	defer cancel()
-	if _, err := task.WaitForResult(ctxTo, nil); err != nil {
-		return sdk.WrapError(err, "error on waiting result for vm %q reconfigure", vm.String())
-	}
+	*vm = *vm2
 
-	return sdk.WithStack(ctxTo.Err())
+	return nil
 }
 
 func (c *vSphereClient) MarkVirtualMachineAsTemplate(ctx context.Context, vm *object.VirtualMachine) error {
@@ -407,13 +391,46 @@ func (c *vSphereClient) WaitForVirtualMachineShutdown(ctx context.Context, vm *o
 	return sdk.WithStack(ctxTo.Err())
 }
 
-func (c *vSphereClient) WaitForVirtualMachineIP(ctx context.Context, vm *object.VirtualMachine) error {
+func (c *vSphereClient) WaitForVirtualMachineIP(ctx context.Context, vm *object.VirtualMachine, IPAddress *string) error {
+	ctxIP, cancelIP := context.WithTimeout(ctx, 3*time.Minute)
+	defer cancelIP()
+
+	var hasIP bool
+	var ip string
+
+	for !hasIP && ctxIP.Err() == nil { //TODO extract this part of the code to
+		var err error
+		ip, err = vm.WaitForIP(ctxIP, true)
+		if err != nil {
+			return sdk.WrapError(err, "cannot get an ip")
+		}
+
+		log.Debug(ctx, "checking virtual machine %q IP address %q (expected: %v)", vm.Name(), ip, IPAddress)
+		if IPAddress != nil && *IPAddress != "" {
+			if ip == *IPAddress {
+				break
+			}
+			continue
+		}
+		break
+	}
+
+	if ctxIP.Err() != nil {
+		return sdk.WithStack(ctxIP.Err())
+	}
+
+	log.Info(ctx, "virtual machine %q has IP %q", vm.String(), ip)
+
+	return nil
+}
+
+func (c *vSphereClient) GetVirtualMachinePowerState(ctx context.Context, vm *object.VirtualMachine) (types.VirtualMachinePowerState, error) {
 	ctxTo, cancel := context.WithTimeout(ctx, 2*time.Minute)
 	defer cancel()
 
-	if _, err := vm.WaitForIP(ctxTo); err != nil {
-		return sdk.WrapError(err, "error while waiting for IP")
+	if ps, err := vm.PowerState(ctxTo); err != nil {
+		return ps, sdk.WrapError(err, "error while getting vm powerstate")
 	}
 
-	return sdk.WithStack(ctxTo.Err())
+	return types.VirtualMachinePowerState(""), sdk.WithStack(ctxTo.Err())
 }

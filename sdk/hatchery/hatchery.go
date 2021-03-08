@@ -172,7 +172,7 @@ func Create(ctx context.Context, h Interface) error {
 
 				//Check bookedBy current hatchery
 				if j.BookedBy.ID != 0 {
-					log.Debug(ctx, "hatchery> job %d is booked by someone", j.ID)
+					log.Debug(ctx, "hatchery> job %d is already booked", j.ID)
 					endTrace("booked by someone")
 					continue
 				}
