@@ -27,8 +27,14 @@ type Redis struct {
 	bufferType storage.CDNBufferType
 }
 
+const driverName = "redis"
+
 func init() {
-	storage.RegisterDriver("redis", new(Redis))
+	storage.RegisterDriver(driverName, new(Redis))
+}
+
+func (s *Redis) GetDriverName() string {
+	return driverName
 }
 
 func (s *Redis) Init(_ context.Context, cfg interface{}, bufferType storage.CDNBufferType) error {

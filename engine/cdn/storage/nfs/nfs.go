@@ -32,8 +32,14 @@ var (
 	_ storage.FileBufferUnit = new(Buffer)
 )
 
+const driverBufferName = "nfs-buffer"
+
 func init() {
-	storage.RegisterDriver("nfs-buffer", new(Buffer))
+	storage.RegisterDriver(driverBufferName, new(Buffer))
+}
+
+func (n *Buffer) GetDriverName() string {
+	return driverBufferName
 }
 
 type Reader struct {

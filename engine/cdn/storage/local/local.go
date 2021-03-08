@@ -30,8 +30,14 @@ type Local struct {
 	encryption.ConvergentEncryption
 }
 
+const driverName = "local"
+
 func init() {
-	storage.RegisterDriver("local", new(Local))
+	storage.RegisterDriver(driverName, new(Local))
+}
+
+func (s *Local) GetDriverName() string {
+	return driverName
 }
 
 func (s *Local) Init(ctx context.Context, cfg interface{}) error {
