@@ -154,12 +154,19 @@ func (api *API) getWorkflowNodeRunJobStepLinksHandler() service.Handler {
 			return sdk.NewErrorFrom(sdk.ErrNotFound, "cannot find run job for id %d", runJobID)
 		}
 
+		jobRun, err := workflow.LoadRunByID(api.mustDB(), nodeRun.WorkflowRunID, workflow.LoadRunOptions{
+			DisableDetailledNodeRun: true,
+		})
+		if err != nil {
+			return err
+		}
+
 		refs := make([]sdk.CDNLogAPIRef, 0)
 		apiRef := sdk.CDNLogAPIRef{
 			ProjectKey:     projectKey,
-			WorkflowName:   workflowName,
-			WorkflowID:     nodeRun.WorkflowID,
-			RunID:          nodeRun.WorkflowRunID,
+			WorkflowName:   jobRun.Workflow.Name,
+			WorkflowID:     jobRun.WorkflowID,
+			RunID:          jobRun.ID,
 			NodeRunName:    nodeRun.WorkflowNodeName,
 			NodeRunID:      nodeRun.ID,
 			NodeRunJobName: runJob.Job.Action.Name,
@@ -243,11 +250,18 @@ func (api *API) getWorkflowNodeRunJobLogLinkHandler(ctx context.Context, w http.
 		return sdk.NewErrorFrom(sdk.ErrNotFound, "cannot find run job for id %d", runJobID)
 	}
 
+	jobRun, err := workflow.LoadRunByID(api.mustDB(), nodeRun.WorkflowRunID, workflow.LoadRunOptions{
+		DisableDetailledNodeRun: true,
+	})
+	if err != nil {
+		return err
+	}
+
 	apiRef := sdk.CDNLogAPIRef{
 		ProjectKey:     projectKey,
-		WorkflowName:   workflowName,
-		WorkflowID:     nodeRun.WorkflowID,
-		RunID:          nodeRun.WorkflowRunID,
+		WorkflowName:   jobRun.Workflow.Name,
+		WorkflowID:     jobRun.WorkflowID,
+		RunID:          jobRun.ID,
 		NodeRunName:    nodeRun.WorkflowNodeName,
 		NodeRunID:      nodeRun.ID,
 		NodeRunJobName: runJob.Job.Action.Name,

@@ -249,8 +249,8 @@ func (c *client) WorkflowNodeRunJobServiceLink(ctx context.Context, projectKey s
 	return &a, nil
 }
 
-func (c *client) WorkflowAccess(ctx context.Context, projectKey, workflowName, sessionID string, itemType sdk.CDNItemType) error {
-	url := fmt.Sprintf("/project/%s/workflows/%s/type/%s/access", projectKey, workflowName, itemType)
+func (c *client) WorkflowAccess(ctx context.Context, projectKey string, workflowID int64, sessionID string, itemType sdk.CDNItemType) error {
+	url := fmt.Sprintf("/project/%s/workflows/%d/type/%s/access", projectKey, workflowID, itemType)
 	if _, err := c.GetJSON(ctx, url, nil, SetHeader(sdk.CDSSessionID, sessionID)); err != nil {
 		return err
 	}

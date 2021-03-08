@@ -89,16 +89,17 @@ func (s *Service) itemAccessCheck(ctx context.Context, item sdk.CDNItem) error {
 		return nil
 	}
 
-	var projectKey, workflowName string
+	var projectKey string
+	var workflowID int64
 	switch item.Type {
 	case sdk.CDNTypeItemStepLog, sdk.CDNTypeItemServiceLog:
 		logRef, _ := item.GetCDNLogApiRef()
 		projectKey = logRef.ProjectKey
-		workflowName = logRef.WorkflowName
+		workflowID = logRef.WorkflowID
 	case sdk.CDNTypeItemRunResult:
 		artRef, _ := item.GetCDNRunResultApiRef()
 		projectKey = artRef.ProjectKey
-		workflowName = artRef.WorkflowName
+		workflowID = artRef.WorkflowID
 	case sdk.CDNTypeItemWorkerCache:
 		artRef, _ := item.GetCDNWorkerCacheApiRef()
 		projectKey = artRef.ProjectKey
@@ -108,7 +109,7 @@ func (s *Service) itemAccessCheck(ctx context.Context, item sdk.CDNItem) error {
 
 	switch item.Type {
 	case sdk.CDNTypeItemStepLog, sdk.CDNTypeItemServiceLog, sdk.CDNTypeItemRunResult:
-		if err := s.Client.WorkflowAccess(ctx, projectKey, workflowName, sessionID, item.Type); err != nil {
+		if err := s.Client.WorkflowAccess(ctx, projectKey, workflowID, sessionID, item.Type); err != nil {
 			return sdk.NewErrorWithStack(err, sdk.ErrNotFound)
 		}
 	case sdk.CDNTypeItemWorkerCache:

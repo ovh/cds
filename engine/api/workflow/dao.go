@@ -79,6 +79,21 @@ func Exists(db gorp.SqlExecutor, key string, name string) (bool, error) {
 	return count > 0, nil
 }
 
+// ExistsID checks if a workflow exists for given ID and project
+func ExistsID(db gorp.SqlExecutor, key string, id int64) (bool, error) {
+	query := `
+		select count(1)
+		from workflow
+		join project on project.id = workflow.project_id
+		where project.projectkey = $1
+		and workflow.id = $2`
+	count, err := db.SelectInt(query, key, id)
+	if err != nil {
+		return false, sdk.WithStack(err)
+	}
+	return count > 0, nil
+}
+
 func LoadByRepo(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, repo string, opts LoadOptions) (*sdk.Workflow, error) {
 	ctx, end := telemetry.Span(ctx, "workflow.Load")
 	defer end()
