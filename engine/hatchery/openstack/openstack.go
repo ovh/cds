@@ -465,7 +465,7 @@ func (h *HatcheryOpenstack) deleteServer(ctx context.Context, s servers.Server) 
 		if err != nil {
 			log.Error(ctx, "killAndRemove> unable to get console log from registering server %s: %v", s.Name, err)
 		}
-		if err := hatchery.CheckWorkerModelRegister(h, modelPath); err != nil {
+		if err := hatchery.CheckWorkerModelRegister(ctx, h, modelPath); err != nil {
 			var spawnErr = sdk.SpawnErrorForm{
 				Error: err.Error(),
 				Logs:  []byte(consoleLog),

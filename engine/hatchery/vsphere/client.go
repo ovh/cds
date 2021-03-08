@@ -150,7 +150,7 @@ func (h *HatcheryVSphere) deleteServer(ctx context.Context, s mo.VirtualMachine)
 	}
 
 	if strings.HasPrefix(s.Name, "register-") {
-		if err := hatchery.CheckWorkerModelRegister(h, annot.WorkerModelPath); err != nil {
+		if err := hatchery.CheckWorkerModelRegister(ctx, h, annot.WorkerModelPath); err != nil {
 			var spawnErr = sdk.SpawnErrorForm{
 				Error: err.Error(),
 			}

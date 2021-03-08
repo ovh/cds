@@ -38,7 +38,7 @@ func (h *HatcherySwarm) killAndRemove(ctx context.Context, dockerClient *dockerC
 		if strings.HasPrefix(container.Name, "/register-") {
 			modelPath := container.Config.Labels["worker_model_path"]
 
-			if err := hatchery.CheckWorkerModelRegister(h, modelPath); err != nil {
+			if err := hatchery.CheckWorkerModelRegister(ctx, h, modelPath); err != nil {
 				ctx, cancel := context.WithTimeout(context.Background(), time.Minute*2)
 				defer cancel()
 				logsOpts := types.ContainerLogsOptions{
