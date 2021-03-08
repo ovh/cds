@@ -410,7 +410,9 @@ func (c *vSphereClient) WaitForVirtualMachineIP(ctx context.Context, vm *object.
 			if ip == *IPAddress {
 				break
 			}
+			continue
 		}
+		break
 	}
 
 	if ctxIP.Err() != nil {
