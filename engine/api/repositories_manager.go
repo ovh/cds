@@ -97,8 +97,8 @@ func (api *API) repositoriesManagerAuthorizeHandler() service.Handler {
 		}
 
 		keyr := cache.Key("reposmanager", "oauth", token)
-		if err := api.Cache.Set(keyr, data); err != nil {
-			log.Error(ctx, "unable to cache set %v: %v", keyr, err)
+		if err := api.Cache.SetWithTTL(keyr, data, int(time.Duration(5*time.Minute).Seconds())); err != nil {
+			return sdk.WrapError(err, "unable to store oauth state in cache")
 		}
 		return service.WriteJSON(w, data, http.StatusOK)
 	}
@@ -126,8 +126,9 @@ func (api *API) repositoriesManagerOAuthCallbackHandler() service.Handler {
 			log.Error(ctx, "cannot get from cache %s: %v", key, err)
 		}
 		if !find {
-			return sdk.WrapError(sdk.ErrForbidden, "repositoriesManagerAuthorizeCallback> Error")
+			return sdk.WrapError(sdk.ErrForbidden, "no matching oauth state in cache")
 		}
+
 		projectKey := data["project_key"]
 		rmName := data["repositories_manager"]
 		username := data["username"]
@@ -136,12 +137,12 @@ func (api *API) repositoriesManagerOAuthCallbackHandler() service.Handler {
 		authConsumer, err := authentication.LoadConsumerByID(ctx, api.mustDB(), consumerID,
 			authentication.LoadConsumerOptions.WithAuthentifiedUser)
 		if err != nil {
-			return sdk.WrapError(sdk.ErrForbidden, "repositoriesManagerAuthorizeCallback> Error")
+			return sdk.WrapError(sdk.ErrForbidden, "cannot load consumer with id: %s", consumerID)
 		}
 
-		proj, errP := project.Load(ctx, api.mustDB(), projectKey)
-		if errP != nil {
-			return sdk.WrapError(errP, "repositoriesManagerAuthorizeCallback> Cannot load project")
+		proj, err := project.Load(ctx, api.mustDB(), projectKey)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load project")
 		}
 
 		// initialize a tx, but this tx is only used to READ.
@@ -152,23 +153,23 @@ func (api *API) repositoriesManagerOAuthCallbackHandler() service.Handler {
 		}
 		defer txRead.Rollback() // nolint
 
-		vcsServer, errVCSServer := repositoriesmanager.NewVCSServerConsumer(txRead, api.Cache, rmName)
-		if errVCSServer != nil {
-			return sdk.WrapError(errVCSServer, "repositoriesManagerAuthorizeCallback> Cannot load project")
+		vcsServer, err := repositoriesmanager.NewVCSServerConsumer(txRead, api.Cache, rmName)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load vcs server with name %s", rmName)
 		}
 
 		token, secret, err := vcsServer.AuthorizeToken(ctx, state, code)
 		if err != nil {
-			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "repositoriesManagerAuthorizeCallback> Error with AuthorizeToken: %s", err)
+			return sdk.NewErrorWithStack(err, sdk.ErrNoReposManagerClientAuth)
 		}
 
 		if token == "" || secret == "" {
-			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "repositoriesManagerAuthorizeCallback> token or secret is empty")
+			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "token or secret is empty")
 		}
 
-		tx, errT := api.mustDB().Begin()
-		if errT != nil {
-			return sdk.WrapError(errT, "repositoriesManagerAuthorizeCallback> Cannot start transaction")
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WrapError(err, "cannot start transaction")
 		}
 		defer tx.Rollback() // nolint
 
@@ -182,11 +183,11 @@ func (api *API) repositoriesManagerOAuthCallbackHandler() service.Handler {
 		vcsServerForProject.Set("created", strconv.FormatInt(time.Now().Unix(), 10))
 
 		if err := repositoriesmanager.InsertProjectVCSServerLink(ctx, tx, vcsServerForProject); err != nil {
-			return sdk.WrapError(err, "Error with InsertForProject")
+			return sdk.WrapError(err, "error inserting vcs server link")
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(errT, "repositoriesManagerAuthorizeCallback> Cannot commit transaction")
+			return sdk.WrapError(err, "cannot commit transaction")
 		}
 
 		event.PublishAddVCSServer(ctx, proj, vcsServerForProject.Name, authConsumer)
@@ -222,14 +223,14 @@ func (api *API) repositoriesManagerAuthorizeBasicHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrWrongRequest, "cannot get token nor verifier from data")
 		}
 
-		proj, errP := project.Load(ctx, api.mustDB(), projectKey)
-		if errP != nil {
-			return sdk.WrapError(errP, "cannot load project %s", projectKey)
+		proj, err := project.Load(ctx, api.mustDB(), projectKey)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load project %s", projectKey)
 		}
 
-		tx, errT := api.mustDB().Begin()
-		if errT != nil {
-			return sdk.WrapError(errT, "cannot start transaction")
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WrapError(err, "cannot start transaction")
 		}
 		defer tx.Rollback() // nolint
 
@@ -243,12 +244,12 @@ func (api *API) repositoriesManagerAuthorizeBasicHandler() service.Handler {
 		vcsServerForProject.Set("created", strconv.FormatInt(time.Now().Unix(), 10))
 
 		if err := repositoriesmanager.InsertProjectVCSServerLink(ctx, tx, vcsServerForProject); err != nil {
-			return sdk.WrapError(err, "Error with InsertForProject")
+			return sdk.WrapError(err, "error inserting vcs server link")
 		}
 
 		client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, proj.Key, *vcsServerForProject)
 		if err != nil {
-			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "cannot get client for project %s: %v", proj.Key, err)
+			return sdk.NewErrorWithStack(sdk.WrapError(err, "cannot get client for project %s", proj.Key), sdk.ErrNoReposManagerClientAuth)
 		}
 
 		if _, err = client.Repos(ctx); err != nil {
@@ -262,7 +263,6 @@ func (api *API) repositoriesManagerAuthorizeBasicHandler() service.Handler {
 		event.PublishAddVCSServer(ctx, proj, vcsServerForProject.Name, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, proj, http.StatusOK)
-
 	}
 }
 

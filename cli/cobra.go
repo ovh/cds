@@ -248,7 +248,6 @@ func newCommand(c Command, run interface{}, subCommands SubCommands, mods ...Com
 				OSExit(0)
 			}
 			ExitOnError(f(vals))
-			OSExit(0)
 		case RunGetFunc:
 			if f == nil {
 				cmd.Help() // nolint
