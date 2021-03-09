@@ -155,7 +155,7 @@ func (api *API) getRetentionPolicySuggestionHandler() service.Handler {
 			}
 		}
 
-		retentionPolicySuggestion := purge.GetRetetionPolicyVariables()
+		retentionPolicySuggestion := purge.GetRetentionPolicyVariables()
 		for k := range varsPayload {
 			retentionPolicySuggestion = append(retentionPolicySuggestion, k)
 		}
