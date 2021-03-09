@@ -119,7 +119,7 @@ test-db-stop-docker:
 
 test-db-start-docker:
 	$(TEST_DB_START_DOCKER)
-	@sleep 5
+	@sleep 10
 	$(MAKE) test-api-db-create
 	$(MAKE) test-cdn-db-create
 

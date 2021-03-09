@@ -4351,17 +4351,17 @@ func (mr *MockWorkflowClientMockRecorder) WorkflowNodeRunJobServiceLog(ctx, proj
 }
 
 // WorkflowAccess mocks base method
-func (m *MockWorkflowClient) WorkflowAccess(ctx context.Context, projectKey, workflowName, sessionID string, itemType sdk.CDNItemType) error {
+func (m *MockWorkflowClient) WorkflowAccess(ctx context.Context, projectKey string, workflowID int64, sessionID string, itemType sdk.CDNItemType) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WorkflowAccess", ctx, projectKey, workflowName, sessionID, itemType)
+	ret := m.ctrl.Call(m, "WorkflowAccess", ctx, projectKey, workflowID, sessionID, itemType)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // WorkflowAccess indicates an expected call of WorkflowAccess
-func (mr *MockWorkflowClientMockRecorder) WorkflowAccess(ctx, projectKey, workflowName, sessionID, itemType interface{}) *gomock.Call {
+func (mr *MockWorkflowClientMockRecorder) WorkflowAccess(ctx, projectKey, workflowID, sessionID, itemType interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowAccess", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowAccess), ctx, projectKey, workflowName, sessionID, itemType)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowAccess", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowAccess), ctx, projectKey, workflowID, sessionID, itemType)
 }
 
 // WorkflowLogDownload mocks base method
@@ -8414,17 +8414,17 @@ func (mr *MockInterfaceMockRecorder) WorkflowNodeRunJobServiceLog(ctx, projectKe
 }
 
 // WorkflowAccess mocks base method
-func (m *MockInterface) WorkflowAccess(ctx context.Context, projectKey, workflowName, sessionID string, itemType sdk.CDNItemType) error {
+func (m *MockInterface) WorkflowAccess(ctx context.Context, projectKey string, workflowID int64, sessionID string, itemType sdk.CDNItemType) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WorkflowAccess", ctx, projectKey, workflowName, sessionID, itemType)
+	ret := m.ctrl.Call(m, "WorkflowAccess", ctx, projectKey, workflowID, sessionID, itemType)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // WorkflowAccess indicates an expected call of WorkflowAccess
-func (mr *MockInterfaceMockRecorder) WorkflowAccess(ctx, projectKey, workflowName, sessionID, itemType interface{}) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) WorkflowAccess(ctx, projectKey, workflowID, sessionID, itemType interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowAccess", reflect.TypeOf((*MockInterface)(nil).WorkflowAccess), ctx, projectKey, workflowName, sessionID, itemType)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowAccess", reflect.TypeOf((*MockInterface)(nil).WorkflowAccess), ctx, projectKey, workflowID, sessionID, itemType)
 }
 
 // WorkflowLogDownload mocks base method

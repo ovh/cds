@@ -111,7 +111,7 @@ func TestGetItemLogsDownloadHandler(t *testing.T) {
 	s, db := newTestService(t)
 	s.Client = cdsclient.New(cdsclient.Config{Host: "http://lolcat.api", InsecureSkipVerifyTLS: false})
 	gock.InterceptClient(s.Client.(cdsclient.Raw).HTTPClient())
-	gock.New("http://lolcat.api").Get("/project/" + projectKey + "/workflows/MyWorkflow/type/step-log/access").Reply(http.StatusOK).JSON(nil)
+	gock.New("http://lolcat.api").Get("/project/" + projectKey + "/workflows/1/type/step-log/access").Reply(http.StatusOK).JSON(nil)
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
@@ -213,7 +213,7 @@ func TestGetItemArtifactDownloadHandler(t *testing.T) {
 	s.Client = cdsclient.New(cdsclient.Config{Host: "http://lolcat.api", InsecureSkipVerifyTLS: false})
 	gock.InterceptClient(s.Client.(cdsclient.Raw).HTTPClient())
 	t.Cleanup(gock.OffAll)
-	gock.New("http://lolcat.api").Get("/project/" + projectKey + "/workflows/WfName/type/run-result/access").Reply(http.StatusOK).JSON(nil)
+	gock.New("http://lolcat.api").Get("/project/" + projectKey + "/workflows/1/type/run-result/access").Reply(http.StatusOK).JSON(nil)
 
 	gock.New("http://lolcat.api").Post("/project/" + projectKey + "/workflows/WfName/runs/0/results/check").Reply(http.StatusNoContent)
 	gock.New("http://lolcat.api").Post("/project/" + projectKey + "/workflows/WfName/runs/0/results").Reply(http.StatusNoContent)

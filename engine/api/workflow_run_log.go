@@ -154,12 +154,19 @@ func (api *API) getWorkflowNodeRunJobStepLinksHandler() service.Handler {
 			return sdk.NewErrorFrom(sdk.ErrNotFound, "cannot find run job for id %d", runJobID)
 		}
 
+		jobRun, err := workflow.LoadRunByID(api.mustDB(), nodeRun.WorkflowRunID, workflow.LoadRunOptions{
+			DisableDetailledNodeRun: true,
+		})
+		if err != nil {
+			return err
+		}
+
 		refs := make([]sdk.CDNLogAPIRef, 0)
 		apiRef := sdk.CDNLogAPIRef{
 			ProjectKey:     projectKey,
-			WorkflowName:   workflowName,
-			WorkflowID:     nodeRun.WorkflowID,
-			RunID:          nodeRun.WorkflowRunID,
+			WorkflowName:   jobRun.Workflow.Name,
+			WorkflowID:     jobRun.WorkflowID,
+			RunID:          jobRun.ID,
 			NodeRunName:    nodeRun.WorkflowNodeName,
 			NodeRunID:      nodeRun.ID,
 			NodeRunJobName: runJob.Job.Action.Name,
@@ -243,11 +250,18 @@ func (api *API) getWorkflowNodeRunJobLogLinkHandler(ctx context.Context, w http.
 		return sdk.NewErrorFrom(sdk.ErrNotFound, "cannot find run job for id %d", runJobID)
 	}
 
+	jobRun, err := workflow.LoadRunByID(api.mustDB(), nodeRun.WorkflowRunID, workflow.LoadRunOptions{
+		DisableDetailledNodeRun: true,
+	})
+	if err != nil {
+		return err
+	}
+
 	apiRef := sdk.CDNLogAPIRef{
 		ProjectKey:     projectKey,
-		WorkflowName:   workflowName,
-		WorkflowID:     nodeRun.WorkflowID,
-		RunID:          nodeRun.WorkflowRunID,
+		WorkflowName:   jobRun.Workflow.Name,
+		WorkflowID:     jobRun.WorkflowID,
+		RunID:          jobRun.ID,
 		NodeRunName:    nodeRun.WorkflowNodeName,
 		NodeRunID:      nodeRun.ID,
 		NodeRunJobName: runJob.Job.Action.Name,
@@ -334,9 +348,12 @@ func (api *API) getWorkflowAccessHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrForbidden, "missing session id header")
 		}
 
-		workflowName := vars["workflowName"]
+		workflowID, err := requestVarInt(r, "workflowID")
+		if err != nil {
+			return err
+		}
 
-		exists, err := workflow.Exists(api.mustDB(), projectKey, workflowName)
+		exists, err := workflow.ExistsID(api.mustDB(), projectKey, workflowID)
 		if err != nil {
 			return err
 		}
@@ -359,13 +376,14 @@ func (api *API) getWorkflowAccessHandler() service.Handler {
 
 		maintainerOrAdmin := consumer.Maintainer() || consumer.Admin()
 
-		perms, err := permission.LoadWorkflowMaxLevelPermission(ctx, api.mustDB(), projectKey, []string{workflowName}, consumer.GetGroupIDs())
+		perms, err := permission.LoadWorkflowMaxLevelPermissionByWorkflowIDs(ctx, api.mustDB(), []int64{workflowID}, consumer.GetGroupIDs())
 		if err != nil {
 			return sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 		}
-		maxLevelPermission := perms.Level(workflowName)
+		workflowIDString := strconv.FormatInt(workflowID, 10)
+		maxLevelPermission := perms.Level(workflowIDString)
 		if maxLevelPermission < sdk.PermissionRead && !maintainerOrAdmin {
-			return sdk.WrapError(sdk.ErrUnauthorized, "not authorized for workflow %s/%s", projectKey, workflowName)
+			return sdk.WrapError(sdk.ErrUnauthorized, "not authorized for workflow %s/%s", projectKey, workflowIDString)
 		}
 
 		return service.WriteJSON(w, nil, http.StatusOK)

@@ -45,7 +45,7 @@ func Test_itemAccessMiddleware(t *testing.T) {
 	sessionID := sdk.UUID()
 	mockClient.EXPECT().
 		WorkflowAccess(gomock.Any(), gomock.Any(), gomock.Any(), sessionID, gomock.Any()).
-		DoAndReturn(func(ctx context.Context, projectKey, workflowName, sessionID string, itemItem sdk.CDNItemType) error {
+		DoAndReturn(func(ctx context.Context, projectKey string, workflowName int64, sessionID string, itemItem sdk.CDNItemType) error {
 			return nil
 		}).
 		Times(1)
