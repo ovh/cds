@@ -372,6 +372,7 @@ func (api *API) InitRouter() {
 	r.Handle("/config/user", ScopeNone(), r.GET(api.ConfigUserHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 	r.Handle("/config/vcs", ScopeNone(), r.GET(api.ConfigVCShandler))
 	r.Handle("/config/cdn", ScopeNone(), r.GET(api.ConfigCDNHandler))
+	r.Handle("/config/api", ScopeNone(), r.GET(api.ConfigAPIHandler))
 
 	// Users
 	r.Handle("/user", Scope(sdk.AuthConsumerScopeUser), r.GET(api.getUsersHandler))

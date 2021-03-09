@@ -49,6 +49,10 @@ a.disabled:hover {
     overflow: hidden !important;
 }
 
+.CodeMirror-empty {
+    color: $polar_grey_2 !important;
+}
+
 .fullheight {
     .CodeMirror {
         height: 100% !important;

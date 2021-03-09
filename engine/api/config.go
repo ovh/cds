@@ -41,6 +41,17 @@ func (api *API) ConfigCDNHandler() service.Handler {
 		if err != nil {
 			return err
 		}
-		return service.WriteJSON(w, sdk.CDNConfig{TCPURL: tcpURL, HTTPURL: httpURL}, http.StatusOK)
+		return service.WriteJSON(w, sdk.CDNConfig{
+			TCPURL:  tcpURL,
+			HTTPURL: httpURL,
+		}, http.StatusOK)
+	}
+}
+
+func (api *API) ConfigAPIHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		return service.WriteJSON(w, sdk.APIConfig{
+			DefaultRunRetentionPolicy: api.Config.Workflow.DefaultRetentionPolicy,
+		}, http.StatusOK)
 	}
 }

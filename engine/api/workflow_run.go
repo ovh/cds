@@ -1104,6 +1104,28 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 	}
 	workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, *p, report)
 
+	_, enabled := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeaturePurgeName, map[string]string{"project_key": wf.ProjectKey})
+	if !enabled {
+		// Purge workflow run
+		api.GoRoutines.Exec(ctx, "workflow.PurgeWorkflowRun", func(ctx context.Context) {
+			tx, err := api.mustDB().Begin()
+			defer tx.Rollback() // nolint
+			if err != nil {
+				log.Error(ctx, "workflow.PurgeWorkflowRun> error %v", err)
+				return
+			}
+			if err := workflow.PurgeWorkflowRun(ctx, tx, *wf); err != nil {
+				log.Error(ctx, "workflow.PurgeWorkflowRun> error %v", err)
+				return
+			}
+			if err := tx.Commit(); err != nil {
+				log.Error(ctx, "workflow.PurgeWorkflowRun> unable to commit transaction:  %v", err)
+				return
+			}
+			workflow.CountWorkflowRunsMarkToDelete(ctx, api.mustDB(), api.Metrics.WorkflowRunsMarkToDelete)
+		})
+	}
+
 	// Update parent
 	for i := range report.WorkflowRuns() {
 		run := &report.WorkflowRuns()[i]
