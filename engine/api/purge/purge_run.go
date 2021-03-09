@@ -135,20 +135,26 @@ func applyRetentionPolicyOnRun(ctx context.Context, db *gorp.DbMap, wf sdk.Workf
 		}
 		return false, nil
 	}
-	luacheck, err := luascript.NewCheck()
+
+	luaCheck, err := luascript.NewCheck()
 	if err != nil {
 		return true, sdk.WithStack(err)
 	}
 
-	if err := purgeComputeVariables(ctx, luacheck, run, branchesMap, app, vcsClient); err != nil {
+	if err := purgeComputeVariables(ctx, luaCheck, run, branchesMap, app, vcsClient); err != nil {
 		return true, err
 	}
 
-	if err := luacheck.Perform(wf.RetentionPolicy); err != nil {
+	// Enabling strict checks on variables to prevent errors on rule definition
+	if err := luaCheck.EnableStrict(); err != nil {
+		return true, sdk.WithStack(err)
+	}
+
+	if err := luaCheck.Perform(wf.RetentionPolicy); err != nil {
 		return true, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to apply retention policy on workflow %s/%s: %v", wf.ProjectKey, wf.Name, err)
 	}
 
-	if luacheck.Result {
+	if luaCheck.Result {
 		return true, nil
 	}
 	if !opts.DryRun {
@@ -203,7 +209,6 @@ func purgeComputeVariables(ctx context.Context, luaCheck *luascript.Check, run s
 			vars[RunChangeAbandoned] = strconv.FormatBool(ch.Closed)
 			varsFloats[RunChangeDayBefore] = math.Floor(time.Now().Sub(ch.Updated).Hours())
 		}
-
 	}
 
 	// If we have a branch in payload, check if it exists on repository branches list
