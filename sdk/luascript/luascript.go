@@ -2,7 +2,6 @@ package luascript
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/yuin/gluare"
@@ -86,28 +85,6 @@ func (c *Check) SetFloatVariables(vars map[string]float64) {
 	}
 }
 
-func (c *Check) EnableStrict() error {
-	// This code will override __index lua func that is called when reading a variable.
-	// If the variable is not define we want to return an error.
-	code := `
-    local mt = getmetatable(_G)
-    if mt == nil then
-      mt = {}
-      setmetatable(_G, mt)
-    end
-    mt.__index = function (t, n)
-      if n ~= "C" then
-        error("variable '"..n.."' is not declared", 2)
-      end
-      return rawget(t, n)
-    end
-  `
-	if err := c.state.DoString(code); err != nil {
-		return err
-	}
-	return nil
-}
-
 //Perform the lua script
 func (c *Check) Perform(script string) error {
 	var ok bool
@@ -118,10 +95,6 @@ func (c *Check) Perform(script string) error {
 	}
 
 	lv := c.state.Get(-1) // get the value at the top of the stack
-	if lv.Type() != lua.LTBool {
-		c.IsError = true
-		return fmt.Errorf("invalid result of type %s expected boolean", lv.Type().String())
-	}
 	if lua.LVAsBool(lv) { // lv is neither nil nor false
 		ok = true
 	}
