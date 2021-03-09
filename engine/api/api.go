@@ -203,7 +203,8 @@ type Configuration struct {
 		Error   string `toml:"error" comment:"Help displayed to user on each error. Warning: this message could be view by anonymous user. Markdown accepted." json:"error" default:""`
 	} `toml:"help" comment:"######################\n 'Help' informations \n######################" json:"help"`
 	Workflow struct {
-		MaxRuns int64 `toml:"maxRuns" comment:"Maximum of runs by workflow" json:"maxRuns" default:"255"`
+		MaxRuns                int64  `toml:"maxRuns" comment:"Maximum of runs by workflow" json:"maxRuns" default:"255"`
+		DefaultRetentionPolicy string `toml:"defaultRetentionPolicy" comment:"Default rule for workflow run retention policy, this rule will be set on new workflows.\n Example: 'return run_days_before < 365' keeps runs for one year." json:"defaultRetentionPolicy" default:"return run_days_before < 365"`
 	} `toml:"workflow" comment:"######################\n 'Workflow' global configuration \n######################" json:"workflow"`
 }
 
@@ -649,6 +650,11 @@ func (a *API) Serve(ctx context.Context) error {
 		a.AuthenticationDrivers[sdk.ConsumerCorporateSSO] = corpsso.NewDriver(driverConfig)
 	}
 
+	// Init workflow retention policy default config
+	if err := workflow.SetDefaultRunRetentionPolicy(a.Config.Workflow.DefaultRetentionPolicy); err != nil {
+		return err
+	}
+
 	log.Info(ctx, "Initializing event broker...")
 	if err := event.Initialize(ctx, a.mustDB(), a.Cache); err != nil {
 		log.Error(ctx, "error while initializing event system: %s", err)
@@ -712,9 +718,9 @@ func (a *API) Serve(ctx context.Context) error {
 		return migrate.RunsSecrets(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper))
 	}})
 
-	isFreshInstall, errF := version.IsFreshInstall(a.mustDB())
-	if errF != nil {
-		return sdk.WrapError(errF, "Unable to check if it's a fresh installation of CDS")
+	isFreshInstall, err := version.IsFreshInstall(a.mustDB())
+	if err != nil {
+		return sdk.WrapError(err, "Unable to check if it's a fresh installation of CDS")
 	}
 
 	if isFreshInstall {

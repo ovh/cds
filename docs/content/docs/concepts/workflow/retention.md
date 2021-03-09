@@ -27,8 +27,11 @@ cdsctl admin feature import workflow-retention-policy.yml
 
 Retention policy is defined through a lua condition. This condition should be evaluated as **true** to keep a Workflow Run.
 
+You can define a condition on an existing Workflow. For new ones or if given rule is empty, the default one from CDS API configuration file will be applied (key: api.workflow.defaultRetentionPolicy).
+
 You will be able to use these variables in conditions:
   * **run_days_before** (number): count of days between Workflow creation date and now.
+  * **has_git_branch** (string: true|false): True if a *git.branch* variable is set **(added in 0.48.1)**.
   * **git_branch_exist** (string: true|false): True if a *git.branch* variable is set and branch still exists on the git repository.
   * **run_status** (string: Success|Fail|...): the Workflow Run status.
   * **gerrit_change_merged** (string: true|false): to identify if the gerrit change has been merged.
@@ -41,6 +44,19 @@ Examples:
   -- Keep Run for 365 days
   return run_days_before < 365
 ````
+```lua
+  -- Keep Run for 365 days if git_branch is set and exists in VCS or only 2 days for removed branches
+  -- Else keep Run for 365 days if no git_branch info is set
+  if(has_git_branch == "true") then
+    if(git_branch_exist == "true") then
+      return run_days_before < 365
+    else
+      return run_days_before < 2
+    end
+  else 
+    return run_days_before < 365
+  end
+```
 ```lua
   -- Keep Run for ever
   return true

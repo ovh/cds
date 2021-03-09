@@ -27,9 +27,15 @@ import (
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
-const (
-	DefaultRetentionRule = "return (git_branch_exist == \"false\" and run_days_before < 2) or run_days_before < 365"
-)
+var defaultRunRetentionPolicy string
+
+func SetDefaultRunRetentionPolicy(rule string) error {
+	if rule == "" {
+		return sdk.WithStack(fmt.Errorf("invalid empty rule for default workflow run retention policy"))
+	}
+	defaultRunRetentionPolicy = rule
+	return nil
+}
 
 type PushSecrets struct {
 	ApplicationsSecrets map[int64][]sdk.Variable
@@ -313,7 +319,7 @@ func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 		w.HistoryLength = sdk.DefaultHistoryLength
 	}
 	w.MaxRuns = maxRuns
-	w.RetentionPolicy = DefaultRetentionRule
+	w.RetentionPolicy = defaultRunRetentionPolicy
 
 	w.LastModified = time.Now()
 	if err := db.QueryRow(`INSERT INTO workflow (
@@ -612,7 +618,7 @@ func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 	}
 
 	if wf.RetentionPolicy == "" {
-		wf.RetentionPolicy = DefaultRetentionRule
+		wf.RetentionPolicy = defaultRunRetentionPolicy
 	}
 
 	if err := CheckValidity(ctx, db, wf); err != nil {
