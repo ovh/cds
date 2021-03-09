@@ -46,6 +46,8 @@ func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *test.Fak
 
 	api.InitRouter()
 
+	workflow.SetDefaultRunRetentionPolicy("return run_days_before < 365")
+
 	ctx, cancel := context.WithCancel(context.Background())
 	go workflow.Initialize(ctx, api.mustDB, api.Cache, "", "", "", 300000)
 
