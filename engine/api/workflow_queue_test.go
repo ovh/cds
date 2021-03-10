@@ -1736,10 +1736,7 @@ func Test_workflowRunResultCheckUpload(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": w.Name,
-		"number":           fmt.Sprintf("%d", wrCreate.Number),
-		"nodeID":           fmt.Sprintf("%d", wrCreate.Workflow.WorkflowData.Node.ID),
+		"permJobID": fmt.Sprintf("%d", nrj.ID),
 	}
 	checkRequest := sdk.CDNRunResultAPIRef{
 		ArtifactName: "myArtifact",
