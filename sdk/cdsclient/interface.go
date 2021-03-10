@@ -269,6 +269,8 @@ type QueueClient interface {
 	QueueServiceLogs(ctx context.Context, logs []sdk.ServiceLog) error
 	QueueJobSetVersion(ctx context.Context, jobID int64, version sdk.WorkflowRunVersion) error
 	QueueWorkerCacheLink(ctx context.Context, jobID int64, tag string) (sdk.CDNItemLinks, error)
+	QueueWorkflowRunResultsAdd(ctx context.Context, jobID int64, addRequest sdk.WorkflowRunResult) error
+	QueueWorkflowRunResultCheck(ctx context.Context, jobID int64, apiRef sdk.CDNRunResultAPIRef) error
 }
 
 // UserClient exposes users functions
@@ -336,8 +338,6 @@ type WorkflowClient interface {
 	WorkflowRunList(projectKey string, workflowName string, offset, limit int64) ([]sdk.WorkflowRun, error)
 	WorkflowRunArtifacts(projectKey string, name string, number int64) ([]sdk.WorkflowNodeRunArtifact, error)
 	WorkflowRunArtifactsLinks(projectKey string, name string, number int64) (sdk.CDNItemLinks, error)
-	WorkflowRunResultCheck(ctx context.Context, projectKey string, name string, number int64, apiRef sdk.CDNRunResultAPIRef) error
-	WorkflowRunResultsAdd(ctx context.Context, projectKey string, name string, number int64, addRequest sdk.WorkflowRunResult) error
 	WorkflowRunResultsList(ctx context.Context, projectKey string, name string, number int64) ([]sdk.WorkflowRunResult, error)
 	WorkflowRunFromHook(projectKey string, workflowName string, hook sdk.WorkflowNodeRunHookEvent) (*sdk.WorkflowRun, error)
 	WorkflowRunFromManual(projectKey string, workflowName string, manual sdk.WorkflowNodeRunManual, number, fromNodeID int64) (*sdk.WorkflowRun, error)

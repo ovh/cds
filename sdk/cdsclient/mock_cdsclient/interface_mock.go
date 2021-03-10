@@ -3304,6 +3304,34 @@ func (mr *MockQueueClientMockRecorder) QueueWorkerCacheLink(ctx, jobID, tag inte
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueWorkerCacheLink", reflect.TypeOf((*MockQueueClient)(nil).QueueWorkerCacheLink), ctx, jobID, tag)
 }
 
+// QueueWorkflowRunResultsAdd mocks base method
+func (m *MockQueueClient) QueueWorkflowRunResultsAdd(ctx context.Context, jobID int64, addRequest sdk.WorkflowRunResult) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "QueueWorkflowRunResultsAdd", ctx, jobID, addRequest)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// QueueWorkflowRunResultsAdd indicates an expected call of QueueWorkflowRunResultsAdd
+func (mr *MockQueueClientMockRecorder) QueueWorkflowRunResultsAdd(ctx, jobID, addRequest interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueWorkflowRunResultsAdd", reflect.TypeOf((*MockQueueClient)(nil).QueueWorkflowRunResultsAdd), ctx, jobID, addRequest)
+}
+
+// QueueWorkflowRunResultCheck mocks base method
+func (m *MockQueueClient) QueueWorkflowRunResultCheck(ctx context.Context, jobID int64, apiRef sdk.CDNRunResultAPIRef) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "QueueWorkflowRunResultCheck", ctx, jobID, apiRef)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// QueueWorkflowRunResultCheck indicates an expected call of QueueWorkflowRunResultCheck
+func (mr *MockQueueClientMockRecorder) QueueWorkflowRunResultCheck(ctx, jobID, apiRef interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueWorkflowRunResultCheck", reflect.TypeOf((*MockQueueClient)(nil).QueueWorkflowRunResultCheck), ctx, jobID, apiRef)
+}
+
 // MockUserClient is a mock of UserClient interface
 type MockUserClient struct {
 	ctrl     *gomock.Controller
@@ -4127,34 +4155,6 @@ func (m *MockWorkflowClient) WorkflowRunArtifactsLinks(projectKey, name string, 
 func (mr *MockWorkflowClientMockRecorder) WorkflowRunArtifactsLinks(projectKey, name, number interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowRunArtifactsLinks", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowRunArtifactsLinks), projectKey, name, number)
-}
-
-// WorkflowRunResultCheck mocks base method
-func (m *MockWorkflowClient) WorkflowRunResultCheck(ctx context.Context, projectKey, name string, number int64, apiRef sdk.CDNRunResultAPIRef) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WorkflowRunResultCheck", ctx, projectKey, name, number, apiRef)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// WorkflowRunResultCheck indicates an expected call of WorkflowRunResultCheck
-func (mr *MockWorkflowClientMockRecorder) WorkflowRunResultCheck(ctx, projectKey, name, number, apiRef interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowRunResultCheck", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowRunResultCheck), ctx, projectKey, name, number, apiRef)
-}
-
-// WorkflowRunResultsAdd mocks base method
-func (m *MockWorkflowClient) WorkflowRunResultsAdd(ctx context.Context, projectKey, name string, number int64, addRequest sdk.WorkflowRunResult) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WorkflowRunResultsAdd", ctx, projectKey, name, number, addRequest)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// WorkflowRunResultsAdd indicates an expected call of WorkflowRunResultsAdd
-func (mr *MockWorkflowClientMockRecorder) WorkflowRunResultsAdd(ctx, projectKey, name, number, addRequest interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowRunResultsAdd", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowRunResultsAdd), ctx, projectKey, name, number, addRequest)
 }
 
 // WorkflowRunResultsList mocks base method
@@ -7492,6 +7492,34 @@ func (mr *MockInterfaceMockRecorder) QueueWorkerCacheLink(ctx, jobID, tag interf
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueWorkerCacheLink", reflect.TypeOf((*MockInterface)(nil).QueueWorkerCacheLink), ctx, jobID, tag)
 }
 
+// QueueWorkflowRunResultsAdd mocks base method
+func (m *MockInterface) QueueWorkflowRunResultsAdd(ctx context.Context, jobID int64, addRequest sdk.WorkflowRunResult) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "QueueWorkflowRunResultsAdd", ctx, jobID, addRequest)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// QueueWorkflowRunResultsAdd indicates an expected call of QueueWorkflowRunResultsAdd
+func (mr *MockInterfaceMockRecorder) QueueWorkflowRunResultsAdd(ctx, jobID, addRequest interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueWorkflowRunResultsAdd", reflect.TypeOf((*MockInterface)(nil).QueueWorkflowRunResultsAdd), ctx, jobID, addRequest)
+}
+
+// QueueWorkflowRunResultCheck mocks base method
+func (m *MockInterface) QueueWorkflowRunResultCheck(ctx context.Context, jobID int64, apiRef sdk.CDNRunResultAPIRef) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "QueueWorkflowRunResultCheck", ctx, jobID, apiRef)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// QueueWorkflowRunResultCheck indicates an expected call of QueueWorkflowRunResultCheck
+func (mr *MockInterfaceMockRecorder) QueueWorkflowRunResultCheck(ctx, jobID, apiRef interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueWorkflowRunResultCheck", reflect.TypeOf((*MockInterface)(nil).QueueWorkflowRunResultCheck), ctx, jobID, apiRef)
+}
+
 // Navbar mocks base method
 func (m *MockInterface) Navbar() ([]sdk.NavbarProjectData, error) {
 	m.ctrl.T.Helper()
@@ -8190,34 +8218,6 @@ func (m *MockInterface) WorkflowRunArtifactsLinks(projectKey, name string, numbe
 func (mr *MockInterfaceMockRecorder) WorkflowRunArtifactsLinks(projectKey, name, number interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowRunArtifactsLinks", reflect.TypeOf((*MockInterface)(nil).WorkflowRunArtifactsLinks), projectKey, name, number)
-}
-
-// WorkflowRunResultCheck mocks base method
-func (m *MockInterface) WorkflowRunResultCheck(ctx context.Context, projectKey, name string, number int64, apiRef sdk.CDNRunResultAPIRef) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WorkflowRunResultCheck", ctx, projectKey, name, number, apiRef)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// WorkflowRunResultCheck indicates an expected call of WorkflowRunResultCheck
-func (mr *MockInterfaceMockRecorder) WorkflowRunResultCheck(ctx, projectKey, name, number, apiRef interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowRunResultCheck", reflect.TypeOf((*MockInterface)(nil).WorkflowRunResultCheck), ctx, projectKey, name, number, apiRef)
-}
-
-// WorkflowRunResultsAdd mocks base method
-func (m *MockInterface) WorkflowRunResultsAdd(ctx context.Context, projectKey, name string, number int64, addRequest sdk.WorkflowRunResult) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WorkflowRunResultsAdd", ctx, projectKey, name, number, addRequest)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// WorkflowRunResultsAdd indicates an expected call of WorkflowRunResultsAdd
-func (mr *MockInterfaceMockRecorder) WorkflowRunResultsAdd(ctx, projectKey, name, number, addRequest interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowRunResultsAdd", reflect.TypeOf((*MockInterface)(nil).WorkflowRunResultsAdd), ctx, projectKey, name, number, addRequest)
 }
 
 // WorkflowRunResultsList mocks base method
@@ -9244,6 +9244,34 @@ func (m *MockWorkerInterface) QueueWorkerCacheLink(ctx context.Context, jobID in
 func (mr *MockWorkerInterfaceMockRecorder) QueueWorkerCacheLink(ctx, jobID, tag interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueWorkerCacheLink", reflect.TypeOf((*MockWorkerInterface)(nil).QueueWorkerCacheLink), ctx, jobID, tag)
+}
+
+// QueueWorkflowRunResultsAdd mocks base method
+func (m *MockWorkerInterface) QueueWorkflowRunResultsAdd(ctx context.Context, jobID int64, addRequest sdk.WorkflowRunResult) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "QueueWorkflowRunResultsAdd", ctx, jobID, addRequest)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// QueueWorkflowRunResultsAdd indicates an expected call of QueueWorkflowRunResultsAdd
+func (mr *MockWorkerInterfaceMockRecorder) QueueWorkflowRunResultsAdd(ctx, jobID, addRequest interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueWorkflowRunResultsAdd", reflect.TypeOf((*MockWorkerInterface)(nil).QueueWorkflowRunResultsAdd), ctx, jobID, addRequest)
+}
+
+// QueueWorkflowRunResultCheck mocks base method
+func (m *MockWorkerInterface) QueueWorkflowRunResultCheck(ctx context.Context, jobID int64, apiRef sdk.CDNRunResultAPIRef) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "QueueWorkflowRunResultCheck", ctx, jobID, apiRef)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// QueueWorkflowRunResultCheck indicates an expected call of QueueWorkflowRunResultCheck
+func (mr *MockWorkerInterfaceMockRecorder) QueueWorkflowRunResultCheck(ctx, jobID, apiRef interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueWorkflowRunResultCheck", reflect.TypeOf((*MockWorkerInterface)(nil).QueueWorkflowRunResultCheck), ctx, jobID, apiRef)
 }
 
 // Requirements mocks base method

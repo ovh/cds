@@ -17,7 +17,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/ascode"
 	"github.com/ovh/cds/engine/api/authentication"
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/objectstore"
@@ -25,7 +24,6 @@ import (
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/workflow"
-	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/luascript"
@@ -1418,111 +1416,6 @@ func (api *API) getWorkflowNodeRunResultsHandler() service.Handler {
 			return err
 		}
 		return service.WriteJSON(w, results, http.StatusOK)
-	}
-}
-
-func (api *API) postWorkflowRunResultsHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		key := vars["key"]
-		name := vars["permWorkflowName"]
-
-		number, err := requestVarInt(r, "number")
-		if err != nil {
-			return err
-		}
-
-		_, enabled := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeatureCDNArtifact, map[string]string{
-			"project_key": key,
-		})
-		if !enabled {
-			return sdk.WrapError(sdk.ErrForbidden, "cdn is not enabled for project %s", key)
-		}
-
-		if !isCDN(ctx) {
-			return sdk.WrapError(sdk.ErrForbidden, "only CDN can call this route")
-		}
-
-		var runResult sdk.WorkflowRunResult
-		if err := service.UnmarshalBody(r, &runResult); err != nil {
-			return sdk.WithStack(err)
-		}
-
-		wr, err := workflow.LoadRun(ctx, api.mustDB(), key, name, number, workflow.LoadRunOptions{WithArtifacts: true})
-		if err != nil {
-			return err
-		}
-
-		if wr.ID != runResult.WorkflowRunID {
-			return sdk.WrapError(sdk.ErrInvalidData, "unable to add artifact on this run: %s", runResult.ID)
-		}
-
-		nr, err := workflow.LoadNodeRunByID(api.mustDB(), runResult.WorkflowNodeRunID, workflow.LoadRunOptions{})
-		if err != nil {
-			return err
-		}
-		if nr.WorkflowRunID != wr.ID {
-			return sdk.WrapError(sdk.ErrInvalidData, "invalid node run %d", runResult.WorkflowNodeRunID)
-		}
-		runResult.SubNum = nr.SubNumber
-
-		if err := workflow.AddResult(api.mustDBWithCtx(ctx), api.Cache, &runResult); err != nil {
-			return err
-		}
-
-		return nil
-	}
-}
-
-func (api *API) workflowRunResultCheckUploadHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		key := vars["key"]
-		name := vars["permWorkflowName"]
-
-		number, err := requestVarInt(r, "number")
-		if err != nil {
-			return err
-		}
-
-		_, enabled := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeatureCDNArtifact, map[string]string{
-			"project_key": key,
-		})
-		if !enabled {
-			return sdk.WrapError(sdk.ErrForbidden, "cdn is not enabled for project %s", key)
-		}
-
-		if !isCDN(ctx) {
-			return sdk.WrapError(sdk.ErrForbidden, "only CDN can call this route")
-		}
-
-		var apiRef sdk.CDNRunResultAPIRef
-		if err := service.UnmarshalBody(r, &apiRef); err != nil {
-			return sdk.WithStack(err)
-		}
-
-		if apiRef.ToFilename() == "" {
-			return sdk.WrapError(sdk.ErrInvalidData, "unable to read run result api ref")
-		}
-
-		wr, err := workflow.LoadRun(ctx, api.mustDB(), key, name, number, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
-		if err != nil {
-			return err
-		}
-
-		b, err := workflow.CanUploadRunResult(ctx, api.mustDBWithCtx(ctx), api.Cache, *wr, apiRef)
-		if err != nil {
-			return err
-		}
-		if !b {
-			return sdk.WrapError(sdk.ErrInvalidData, "unable to duplicate an artifact")
-		}
-
-		// Save check
-		if err := api.Cache.SetWithTTL(workflow.GetRunResultKey(apiRef.RunID, apiRef.RunResultType, apiRef.ArtifactName), true, 600); err != nil {
-			return sdk.WrapError(err, "unable to cache result artifact check %s ", apiRef.ToFilename())
-		}
-		return nil
 	}
 }
 

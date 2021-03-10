@@ -225,6 +225,22 @@ func (c *client) QueueJobBook(ctx context.Context, id int64) (sdk.WorkflowNodeJo
 	return resp, err
 }
 
+func (c *client) QueueWorkflowRunResultsAdd(ctx context.Context, jobID int64, addRequest sdk.WorkflowRunResult) error {
+	uri := fmt.Sprintf("/queue/workflows/%d/run/results", jobID)
+	if _, err := c.PostJSON(ctx, uri, addRequest, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *client) QueueWorkflowRunResultCheck(ctx context.Context, jobID int64, apiRef sdk.CDNRunResultAPIRef) error {
+	uri := fmt.Sprintf("/queue/workflows/%d/run/results/check", jobID)
+	if _, err := c.PostJSON(ctx, uri, apiRef, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
 // QueueJobRelease release a job for a worker
 func (c *client) QueueJobRelease(ctx context.Context, id int64) error {
 	path := fmt.Sprintf("/queue/workflows/%d/book", id)
