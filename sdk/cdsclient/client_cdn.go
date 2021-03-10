@@ -19,11 +19,15 @@ func (c *client) CDNItemDownload(ctx context.Context, cdnAddr string, hash strin
 		req.Header.Add("Authorization", auth)
 	})
 	if code >= 400 {
-		body, _ := ioutil.ReadAll(reader)
-		if err := sdk.DecodeError(body); err != nil {
-			return nil, sdk.WithStack(err)
+		var stringBody string
+		if reader != nil {
+			body, _ := ioutil.ReadAll(reader)
+			if err := sdk.DecodeError(body); err != nil {
+				return nil, sdk.WithStack(err)
+			}
+			stringBody = string(body)
 		}
-		return nil, sdk.WithStack(fmt.Errorf("HTTP %d: %s", code, string(body)))
+		return nil, sdk.WithStack(fmt.Errorf("HTTP %d: %s", code, stringBody))
 	}
 	return reader, err
 }
