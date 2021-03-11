@@ -157,6 +157,8 @@ require (
 	sigs.k8s.io/yaml v1.1.0 // indirect
 )
 
+replace github.com/vmware/go-nfs-client => github.com/sguiheux/go-nfs-client v0.0.0-20210311091651-4f075a6103cc
+
 replace github.com/alecthomas/jsonschema => github.com/sguiheux/jsonschema v0.2.0
 
 replace github.com/go-gorp/gorp => github.com/yesnault/gorp v2.0.1-0.20200325154225-2dc6d8c2da37+incompatible
