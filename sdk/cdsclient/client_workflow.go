@@ -222,6 +222,15 @@ func (c *client) WorkflowNodeRunJobStepLog(ctx context.Context, projectKey strin
 	return &buildState, nil
 }
 
+func (c *client) WorkflowNodeRunJobStepLinks(ctx context.Context, projectKey string, workflowName string, nodeRunID, job int64) (*sdk.CDNLogLink, error) {
+	url := fmt.Sprintf("/project/%s/workflows/%s/nodes/%d/job/%d/links", projectKey, workflowName, nodeRunID, job)
+	var a sdk.CDNLogLink
+	if _, err := c.GetJSON(ctx, url, &a); err != nil {
+		return nil, err
+	}
+	return &a, nil
+}
+
 func (c *client) WorkflowNodeRunJobStepLink(ctx context.Context, projectKey string, workflowName string, nodeRunID, job int64, step int64) (*sdk.CDNLogLink, error) {
 	url := fmt.Sprintf("/project/%s/workflows/%s/nodes/%d/job/%d/step/%d/link", projectKey, workflowName, nodeRunID, job, step)
 	var a sdk.CDNLogLink
