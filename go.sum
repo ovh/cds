@@ -14,7 +14,6 @@ cloud.google.com/go/firestore v1.1.0 h1:9x7Bx0A9R5/M9jibeJeZWqjeVEIxYW9fZYqB9a70
 cloud.google.com/go/firestore v1.1.0/go.mod h1:ulACoGHTpvq5r8rxGJ4ddJZBZqakUQqClKRT5SZwBmk=
 cloud.google.com/go/pubsub v1.0.1 h1:W9tAK3E57P75u0XLLR82LZyw8VpAnhmyTOxW9qzmyj8=
 cloud.google.com/go/pubsub v1.0.1/go.mod h1:R0Gpsv3s54REJCy4fxDixWD93lHJMoZTyQ2kNxGRt3I=
-cloud.google.com/go/storage v1.0.0 h1:VV2nUM3wwLLGh9lSABFgZMjInyUbJeaRSE64WuAIQ+4=
 cloud.google.com/go/storage v1.0.0/go.mod h1:IhtSnM/ZTZV8YYJWCY8RULGVqBDmpoyjwiyrjsg+URw=
 contrib.go.opencensus.io/exporter/jaeger v0.1.0 h1:WNc9HbA38xEQmsI40Tjd/MNU/g8byN2Of7lwIjv0Jdc=
 contrib.go.opencensus.io/exporter/jaeger v0.1.0/go.mod h1:VYianECmuFPwU37O699Vc1GOcy+y8kOsfaxHRImmjbA=
@@ -195,7 +194,6 @@ github.com/google/go-querystring v1.0.0 h1:Xkwi/a1rcvNg1PPYe5vI8GbeBY/jrVuDX5ASu
 github.com/google/go-querystring v1.0.0/go.mod h1:odCYkC5MyYFN7vkCjXpyrEuKhc/BUO6wN/zVPAxq5ck=
 github.com/google/gofuzz v1.0.0 h1:A8PeW59pxE9IoFRqBp37U+mSNaQoZ46F1f0f863XSXw=
 github.com/google/gofuzz v1.0.0/go.mod h1:dBl0BpW6vV/+mYPU4Po3pmUjxk6FQPldtuIdl/M65Eg=
-github.com/google/martian v2.1.0+incompatible h1:/CP5g8u/VJHijgedC/Legn3BAbAaWPgecwXBIDzw5no=
 github.com/google/martian v2.1.0+incompatible/go.mod h1:9I4somxYTbIHy5NJKHRl3wXiIaQGbYVAs8BPL6v8lEs=
 github.com/google/pprof v0.0.0-20181206194817-3ea8567a2e57/go.mod h1:zfwlbNMJ+OItoe0UupaVj+oy1omPYYDuagoSzA8v9mc=
 github.com/google/pprof v0.0.0-20190515194954-54271f7e092f/go.mod h1:zfwlbNMJ+OItoe0UupaVj+oy1omPYYDuagoSzA8v9mc=
@@ -507,6 +505,8 @@ github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 h1:nn5Wsu0esKSJiIVhscUt
 github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529/go.mod h1:DxrIzT+xaE7yg65j358z/aeFdxmN0P9QXhEzd20vsDc=
 github.com/sguiheux/go-coverage v0.0.0-20190710153556-287b082a7197 h1:qu90yDtRE5WEfRT5mn9v0Xz9RaopLguhbPwZKx4dHq8=
 github.com/sguiheux/go-coverage v0.0.0-20190710153556-287b082a7197/go.mod h1:0hhKrsUsoT7yvxwNGKa+TSYNA26DNWMqReeZEQq/9FI=
+github.com/sguiheux/go-nfs-client v0.0.0-20210311091651-4f075a6103cc h1:2hQK9ZA+R4QK6YSeI6J8h40fv1pQVmsoLwdn0omv4NE=
+github.com/sguiheux/go-nfs-client v0.0.0-20210311091651-4f075a6103cc/go.mod h1:JWMmlL5pWPL6DVIvix8TwfsDIfw8Cu1uyvid9Js3nyE=
 github.com/sguiheux/jsonschema v0.2.0 h1:hFHEPxudR6sNcsg50/iuJzHT5d3h3KOvtcg2Hrshs2k=
 github.com/sguiheux/jsonschema v0.2.0/go.mod h1:/n6+1/DWPltRLWL/VKyUxg6tzsl5kHUCcraimt4vr60=
 github.com/shirou/gopsutil v0.0.0-20170406131756-e49a95f3d5f8 h1:05R1OwSk31dkzqf2Jf27n2IOoF9zkK9LcPgPsEm8U7U=
@@ -565,8 +565,6 @@ github.com/ulikunitz/xz v0.5.4 h1:zATC2OoZ8H1TZll3FpbX+ikwmadbO699PE06cIkm9oU=
 github.com/ulikunitz/xz v0.5.4/go.mod h1:2bypXElzHzzJZwzH67Y6wb67pO62Rzfn7BSiF4ABRW8=
 github.com/urfave/cli v1.20.0 h1:fDqGv3UG/4jbVl/QkFwEdddtEDjh/5Ov6X+0B/3bPaw=
 github.com/urfave/cli v1.20.0/go.mod h1:70zkFmudgCuE/ngEzBv17Jvp/497gISqfk5gWijbERA=
-github.com/vmware/go-nfs-client v0.0.0-20190605212624-d43b92724c1b h1:RUrsc0B9xF8iC8WXrva+ULeOwN/X+zqe0FdWcDxPt/M=
-github.com/vmware/go-nfs-client v0.0.0-20190605212624-d43b92724c1b/go.mod h1:psQdhrCc+fimC/8/U+PboPiIMcdmKgRdAtcMnhXhjzI=
 github.com/vmware/govmomi v0.23.0 h1:DC97v1FdSr3cPfq3eBKD5C1O4JtYxo+NTcbGTKe2k48=
 github.com/vmware/govmomi v0.23.0/go.mod h1:Y+Wq4lst78L85Ge/F8+ORXIWiKYqaro1vhAulACy9Lc=
 github.com/vmware/vmw-guestinfo v0.0.0-20170707015358-25eff159a728/go.mod h1:x9oS4Wk2s2u4tS29nEaDLdzvuHdB19CvSGJjPgkZJNk=
@@ -594,7 +592,6 @@ github.com/yuin/gopher-lua v0.0.0-20170901023928-8c2befcd3908 h1:D1Gc3nOtLEadaHI
 github.com/yuin/gopher-lua v0.0.0-20170901023928-8c2befcd3908/go.mod h1:aEV29XrmTYFr3CiRxZeGHpkvbwq+prZduBqMaascyCU=
 github.com/ziutek/mymysql v1.5.4 h1:GB0qdRGsTwQSBVYuVShFBKaXSnSnYYC2d9knnE1LHFs=
 github.com/ziutek/mymysql v1.5.4/go.mod h1:LMSpPZ6DbqWFxNCHW77HeMg9I646SAhApZ/wKdgO/C0=
-go.etcd.io/bbolt v1.3.2 h1:Z/90sZLPOeCy2PwprqkFa25PdkusRzaj9P8zm/KNyvk=
 go.etcd.io/bbolt v1.3.2/go.mod h1:IbVyRI1SCnLcuJnV2u8VeU0CEYM7e686BmAb1XKL+uU=
 go.opencensus.io v0.20.1/go.mod h1:6WKK9ahsWS3RSO+PY9ZHZUfv2irvY6gN279GOPZjmmk=
 go.opencensus.io v0.21.0/go.mod h1:mSImk1erAIZhrmZN+AvHh14ztQfjbGwt4TtuofqLduU=
