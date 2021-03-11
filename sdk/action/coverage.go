@@ -20,7 +20,7 @@ You will be able to see the coverage history in the application home page for lc
 				Name:        "format",
 				Description: `Coverage report format.`,
 				Type:        sdk.ListParameter,
-				Value:       "lcov;cobertura;clover;others",
+				Value:       "lcov;cobertura;clover;other",
 			},
 			{
 				Name:        "path",
