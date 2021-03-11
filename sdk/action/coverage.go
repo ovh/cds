@@ -10,16 +10,17 @@ var Coverage = Manifest{
 	Action: sdk.Action{
 		Name: sdk.CoverageAction,
 		Description: `CDS Builtin Action.
-Parse given file to extract coverage results.
-
-Coverage report will be linked to the application from the pipeline context.
-You will be able to see the coverage history in the application home page.`,
+Parse given file to extract coverage results for lcov, cobertura and clover format.
+Then the coverage report is uploaded in CDN.
+Coverage report will be linked to the application from the pipeline context for lcov, cobertura and clover format.
+You will be able to see the coverage history in the application home page for lcov, cobertura and clover format.
+`,
 		Parameters: []sdk.Parameter{
 			{
 				Name:        "format",
 				Description: `Coverage report format.`,
 				Type:        sdk.ListParameter,
-				Value:       "lcov;cobertura;clover",
+				Value:       "lcov;cobertura;clover;others",
 			},
 			{
 				Name:        "path",
