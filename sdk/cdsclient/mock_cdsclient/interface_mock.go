@@ -4290,6 +4290,21 @@ func (mr *MockWorkflowClientMockRecorder) WorkflowNodeRunArtifactDownload(projec
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowNodeRunArtifactDownload", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowNodeRunArtifactDownload), projectKey, name, a, w)
 }
 
+// WorkflowNodeRunJobStepLinks mocks base method
+func (m *MockWorkflowClient) WorkflowNodeRunJobStepLinks(ctx context.Context, projectKey, workflowName string, nodeRunID, job int64) (*sdk.CDNLogLink, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowNodeRunJobStepLinks", ctx, projectKey, workflowName, nodeRunID, job)
+	ret0, _ := ret[0].(*sdk.CDNLogLink)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowNodeRunJobStepLinks indicates an expected call of WorkflowNodeRunJobStepLinks
+func (mr *MockWorkflowClientMockRecorder) WorkflowNodeRunJobStepLinks(ctx, projectKey, workflowName, nodeRunID, job interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowNodeRunJobStepLinks", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowNodeRunJobStepLinks), ctx, projectKey, workflowName, nodeRunID, job)
+}
+
 // WorkflowNodeRunJobStepLink mocks base method
 func (m *MockWorkflowClient) WorkflowNodeRunJobStepLink(ctx context.Context, projectKey, workflowName string, nodeRunID, job, step int64) (*sdk.CDNLogLink, error) {
 	m.ctrl.T.Helper()
@@ -8351,6 +8366,21 @@ func (m *MockInterface) WorkflowNodeRunArtifactDownload(projectKey, name string,
 func (mr *MockInterfaceMockRecorder) WorkflowNodeRunArtifactDownload(projectKey, name, a, w interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowNodeRunArtifactDownload", reflect.TypeOf((*MockInterface)(nil).WorkflowNodeRunArtifactDownload), projectKey, name, a, w)
+}
+
+// WorkflowNodeRunJobStepLinks mocks base method
+func (m *MockInterface) WorkflowNodeRunJobStepLinks(ctx context.Context, projectKey, workflowName string, nodeRunID, job int64) (*sdk.CDNLogLink, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowNodeRunJobStepLinks", ctx, projectKey, workflowName, nodeRunID, job)
+	ret0, _ := ret[0].(*sdk.CDNLogLink)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowNodeRunJobStepLinks indicates an expected call of WorkflowNodeRunJobStepLinks
+func (mr *MockInterfaceMockRecorder) WorkflowNodeRunJobStepLinks(ctx, projectKey, workflowName, nodeRunID, job interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowNodeRunJobStepLinks", reflect.TypeOf((*MockInterface)(nil).WorkflowNodeRunJobStepLinks), ctx, projectKey, workflowName, nodeRunID, job)
 }
 
 // WorkflowNodeRunJobStepLink mocks base method
