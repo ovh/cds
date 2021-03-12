@@ -47,6 +47,7 @@ func RunParseCoverageResultAction(ctx context.Context, wk workerruntime.Runtime,
 		parserMode = coverage.LCOV
 	case string(coverage.CLOVER):
 		parserMode = coverage.CLOVER
+	case "other":
 	default:
 		return res, fmt.Errorf("coverage parser: unknown format %s", mode)
 	}
@@ -70,21 +71,6 @@ func RunParseCoverageResultAction(ctx context.Context, wk workerruntime.Runtime,
 		fpath = p
 	}
 
-	parser := coverage.New(fpath, parserMode)
-	report, errR := parser.Parse()
-	if errR != nil {
-		return res, fmt.Errorf("coverage parser: unable to parse report: %v", errR)
-	}
-
-	jobID, err := workerruntime.JobID(ctx)
-	if err != nil {
-		return res, err
-	}
-
-	if err := wk.Client().QueueSendCoverage(ctx, jobID, report); err != nil {
-		return res, fmt.Errorf("coverage parser: failed to send coverage details: %s", err)
-	}
-
 	if wk.FeatureEnabled(sdk.FeatureCDNArtifact) {
 		_, name := filepath.Split(fpath)
 		fileMode, err := os.Stat(fpath)
@@ -103,10 +89,26 @@ func RunParseCoverageResultAction(ctx context.Context, wk workerruntime.Runtime,
 
 	}
 
-	if minReq > 0 {
-		covPercent := (float64(report.CoveredLines) / float64(report.TotalLines)) * 100
-		if covPercent < minReq {
-			return res, fmt.Errorf("coverage: minimum coverage failed: %.2f%% < %.2f%%", covPercent, minReq)
+	if parserMode != "" {
+		parser := coverage.New(fpath, parserMode)
+		report, err := parser.Parse()
+		if err != nil {
+			return res, fmt.Errorf("coverage parser: unable to parse report: %v", err)
+		}
+
+		jobID, err := workerruntime.JobID(ctx)
+		if err != nil {
+			return res, err
+		}
+
+		if err := wk.Client().QueueSendCoverage(ctx, jobID, report); err != nil {
+			return res, fmt.Errorf("coverage parser: failed to send coverage details: %s", err)
+		}
+		if parserMode != "" && minReq > 0 {
+			covPercent := (float64(report.CoveredLines) / float64(report.TotalLines)) * 100
+			if covPercent < minReq {
+				return res, fmt.Errorf("coverage: minimum coverage failed: %.2f%% < %.2f%%", covPercent, minReq)
+			}
 		}
 	}
 
