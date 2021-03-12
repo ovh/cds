@@ -3,6 +3,7 @@ package internal
 import (
 	"context"
 	"errors"
+	"os"
 
 	"github.com/rockbears/log"
 
@@ -20,7 +21,7 @@ func (w *CurrentWorker) Register(ctx context.Context) error {
 		return errR
 	}
 
-	log.Debug(ctx, "Checking %d requirements", len(requirements))
+	log.Debug(ctx, "Checking %d requirements for current PATH: %s", len(requirements), os.Getenv("PATH"))
 	form.BinaryCapabilities = LoopPath(w, requirements)
 	form.Version = sdk.VERSION
 	form.OS = sdk.GOOS
