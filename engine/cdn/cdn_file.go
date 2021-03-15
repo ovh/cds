@@ -59,7 +59,7 @@ func (s *Service) storeFile(ctx context.Context, sig cdn.Signature, reader io.Re
 	case sdk.CDNTypeItemRunResult:
 		// Call CDS API to check if we can upload the run result
 		runResultApiRef, _ := it.GetCDNRunResultApiRef()
-		if err := s.Client.WorkflowRunResultCheck(ctx, sig.ProjectKey, sig.WorkflowName, sig.RunNumber, *runResultApiRef); err != nil {
+		if err := s.Client.QueueWorkflowRunResultCheck(ctx, sig.JobID, *runResultApiRef); err != nil {
 			return err
 		}
 	}
@@ -163,7 +163,7 @@ func (s *Service) storeFile(ctx context.Context, sig cdn.Signature, reader io.Re
 			Type:              runResultApiRef.RunResultType,
 			DataRaw:           json.RawMessage(bts),
 		}
-		if err := s.Client.WorkflowRunResultsAdd(ctx, sig.ProjectKey, sig.WorkflowName, sig.RunNumber, wrResult); err != nil {
+		if err := s.Client.QueueWorkflowRunResultsAdd(ctx, sig.JobID, wrResult); err != nil {
 			return err
 		}
 	}

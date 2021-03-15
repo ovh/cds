@@ -118,8 +118,8 @@ func TestPostUploadHandler(t *testing.T) {
 		PrivateKey: []byte(base64.StdEncoding.EncodeToString(workerKey)),
 	}
 
-	gock.New("http://lolcat.api").Post("/project/projKey/workflows/myworkflow/runs/0/results/check").Reply(http.StatusNoContent)
-	gock.New("http://lolcat.api").Post("/project/projKey/workflows/myworkflow/runs/0/results").Reply(http.StatusNoContent)
+	gock.New("http://lolcat.api").Post("/queue/workflows/1/run/results/check").Reply(http.StatusNoContent)
+	gock.New("http://lolcat.api").Post("/queue/workflows/1/run/results").Reply(http.StatusNoContent)
 	gock.New("http://lolcat.api").Get("/worker/myworker").MatchParam("withKey", "true").Reply(200).JSON(worker)
 
 	workerSignature := cdn.Signature{

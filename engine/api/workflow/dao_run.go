@@ -235,6 +235,16 @@ func LoadAndLockRunByID(db gorp.SqlExecutor, id int64, loadOpts LoadRunOptions) 
 	return loadRun(db, loadOpts, query, id)
 }
 
+// LoadRunByJobID loads a run by a job id
+func LoadRunByJobID(db gorp.SqlExecutor, id int64, loadOpts LoadRunOptions) (*sdk.WorkflowRun, error) {
+	query := fmt.Sprintf(`select %s
+	from workflow_run
+	join workflow_node_run on workflow_run.id = workflow_node_run.workflow_run_id
+	join workflow_node_run_job on workflow_node_run.id = workflow_node_run_job.workflow_node_run_id
+	where workflow_node_run_job.id = $1`, wfRunfields)
+	return loadRun(db, loadOpts, query, id)
+}
+
 // LoadAndLockRunByJobID loads a run by a job id
 func LoadAndLockRunByJobID(db gorp.SqlExecutor, id int64, loadOpts LoadRunOptions) (*sdk.WorkflowRun, error) {
 	query := fmt.Sprintf(`select %s
