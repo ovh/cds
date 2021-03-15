@@ -205,8 +205,6 @@ func (w Workflow) GetWorkflow() (*sdk.Workflow, error) {
 	}
 	if w.HistoryLength != nil && *w.HistoryLength > 0 {
 		wf.HistoryLength = *w.HistoryLength
-	} else {
-		wf.HistoryLength = sdk.DefaultHistoryLength
 	}
 
 	rand.Seed(time.Now().Unix())

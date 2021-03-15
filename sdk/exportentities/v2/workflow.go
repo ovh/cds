@@ -26,7 +26,7 @@ type Workflow struct {
 	Permissions     map[string]int      `json:"permissions,omitempty" yaml:"permissions,omitempty" jsonschema_description:"The permissions for the workflow (ex: myGroup: 7).\nhttps://ovh.github.io/cds/docs/concepts/permissions"`
 	Metadata        map[string]string   `json:"metadata,omitempty" yaml:"metadata,omitempty"`
 	PurgeTags       []string            `json:"purge_tags,omitempty" yaml:"purge_tags,omitempty"`
-	RetentionPolicy string              `json:"retention_policy,omitempty" yaml:"retention_policy,omitempty"`
+	RetentionPolicy *string             `json:"retention_policy,omitempty" yaml:"retention_policy,omitempty"`
 	Notifications   []NotificationEntry `json:"notifications,omitempty" yaml:"notifications,omitempty"` // This is used when the workflow have only one pipeline
 	HistoryLength   *int64              `json:"history_length,omitempty" yaml:"history_length,omitempty"`
 }
@@ -104,7 +104,7 @@ func NewWorkflow(ctx context.Context, w sdk.Workflow, version string, opts ...Ex
 	exportedWorkflow.Version = version
 	exportedWorkflow.Workflow = map[string]NodeEntry{}
 	exportedWorkflow.Hooks = map[string][]HookEntry{}
-	exportedWorkflow.RetentionPolicy = w.RetentionPolicy
+
 	if len(w.Metadata) > 0 {
 		exportedWorkflow.Metadata = make(map[string]string, len(w.Metadata))
 		for k, v := range w.Metadata {
@@ -117,6 +117,10 @@ func NewWorkflow(ctx context.Context, w sdk.Workflow, version string, opts ...Ex
 
 	if w.HistoryLength > 0 && w.HistoryLength != sdk.DefaultHistoryLength {
 		exportedWorkflow.HistoryLength = &w.HistoryLength
+	}
+
+	if w.RetentionPolicy != "" && w.RetentionPolicy != sdk.DefaultRetentionRule {
+		exportedWorkflow.RetentionPolicy = &w.RetentionPolicy
 	}
 
 	exportedWorkflow.PurgeTags = w.PurgeTags
@@ -371,7 +375,6 @@ func (w Workflow) GetWorkflow() (*sdk.Workflow, error) {
 	wf.Pipelines = make(map[int64]sdk.Pipeline)
 	wf.Environments = make(map[int64]sdk.Environment)
 	wf.ProjectIntegrations = make(map[int64]sdk.ProjectIntegration)
-	wf.RetentionPolicy = w.RetentionPolicy
 
 	if err := w.CheckValidity(); err != nil {
 		return nil, sdk.WrapError(err, "unable to check validity")
@@ -388,8 +391,9 @@ func (w Workflow) GetWorkflow() (*sdk.Workflow, error) {
 	}
 	if w.HistoryLength != nil && *w.HistoryLength > 0 {
 		wf.HistoryLength = *w.HistoryLength
-	} else {
-		wf.HistoryLength = sdk.DefaultHistoryLength
+	}
+	if w.RetentionPolicy != nil && *w.RetentionPolicy != "" {
+		wf.RetentionPolicy = *w.RetentionPolicy
 	}
 
 	r := rand.New(rand.NewSource(time.Now().Unix()))
