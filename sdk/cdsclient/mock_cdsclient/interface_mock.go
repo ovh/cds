@@ -4291,10 +4291,10 @@ func (mr *MockWorkflowClientMockRecorder) WorkflowNodeRunArtifactDownload(projec
 }
 
 // WorkflowNodeRunJobStepLinks mocks base method
-func (m *MockWorkflowClient) WorkflowNodeRunJobStepLinks(ctx context.Context, projectKey, workflowName string, nodeRunID, job int64) (*sdk.CDNLogLink, error) {
+func (m *MockWorkflowClient) WorkflowNodeRunJobStepLinks(ctx context.Context, projectKey, workflowName string, nodeRunID, job int64) (*sdk.CDNLogLinks, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "WorkflowNodeRunJobStepLinks", ctx, projectKey, workflowName, nodeRunID, job)
-	ret0, _ := ret[0].(*sdk.CDNLogLink)
+	ret0, _ := ret[0].(*sdk.CDNLogLinks)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -8369,10 +8369,10 @@ func (mr *MockInterfaceMockRecorder) WorkflowNodeRunArtifactDownload(projectKey,
 }
 
 // WorkflowNodeRunJobStepLinks mocks base method
-func (m *MockInterface) WorkflowNodeRunJobStepLinks(ctx context.Context, projectKey, workflowName string, nodeRunID, job int64) (*sdk.CDNLogLink, error) {
+func (m *MockInterface) WorkflowNodeRunJobStepLinks(ctx context.Context, projectKey, workflowName string, nodeRunID, job int64) (*sdk.CDNLogLinks, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "WorkflowNodeRunJobStepLinks", ctx, projectKey, workflowName, nodeRunID, job)
-	ret0, _ := ret[0].(*sdk.CDNLogLink)
+	ret0, _ := ret[0].(*sdk.CDNLogLinks)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
