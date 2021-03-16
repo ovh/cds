@@ -224,7 +224,7 @@ for target in $@; do
         workflow_with_third_parties)
             export CDS_MODEL_REQ
             export CDS_REGION_REQ
-            workflow_with_third_parties
+            workflow_with_third_parties;;
         admin)
             admin_tests;;
         *) echo -e "${RED}Error: unknown target: $target${NOCOLOR}"
