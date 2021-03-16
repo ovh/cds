@@ -3,7 +3,7 @@
 # script usage definition
 usage() { 
     echo "Usage: ./test.sh <target...>" 
-    echo "   Available targets: smoke_api, smoke_services, initialization, cli, workflow, workflow_with_integration, workflow_with_third_parties"
+    echo "   Available targets: smoke_api, smoke_services, initialization, cli, workflow, workflow_with_integration, workflow_with_third_parties, admin"
 } 
 
 # Arguments are mandatory
@@ -186,6 +186,18 @@ workflow_with_third_parties() {
     done
 }
 
+admin_tests() {
+    echo "Running Workflow tests:"
+    for f in $(ls -1 07_*.yml); do
+        CMD="${VENOM} run ${VENOM_OPTS} ${f} --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}_admin --var api.url=${CDS_API_URL} --var ui.url=${CDS_UI_URL} --var smtpmock.url=${SMTP_MOCK_URL} --var ro_username=cds.integration.tests.ro --var cdsctl.config_ro_user=${CDSCTL_CONFIG}_user"
+        echo -e "  ${YELLOW}${f} ${DARKGRAY}[${CMD}]${NOCOLOR}"
+        ${CMD} >${f}.output 2>&1
+        check_failure $? ${f}.output
+        mv_results ${f}
+    done
+}
+
+
 rm -rf ./results
 mkdir results
 
@@ -211,7 +223,10 @@ for target in $@; do
         workflow_with_third_parties)
             export CDS_MODEL_REQ
             export CDS_REGION_REQ
-            workflow_with_third_parties;;
+            workflow_with_third_parties
+            admin_tests;;
+        admin)
+            admin_tests;;
         *) echo -e "${RED}Error: unknown target: $target${NOCOLOR}"
             usage
             exit 1;;

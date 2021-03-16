@@ -41,12 +41,12 @@ type Admin interface {
 	AdminDatabaseMigrationDelete(id string) error
 	AdminDatabaseMigrationUnlock(id string) error
 	AdminDatabaseMigrationsList() ([]sdk.DatabaseMigrationStatus, error)
-	AdminDatabaseSignaturesResume() (sdk.CanonicalFormUsageResume, error)
-	AdminDatabaseSignaturesRollEntity(e string) error
-	AdminDatabaseSignaturesRollAllEntities() error
-	AdminDatabaseListEncryptedEntities() ([]string, error)
-	AdminDatabaseRollEncryptedEntity(e string) error
-	AdminDatabaseRollAllEncryptedEntities() error
+	AdminDatabaseSignaturesResume(service string) (sdk.CanonicalFormUsageResume, error)
+	AdminDatabaseSignaturesRollEntity(service string, e string) error
+	AdminDatabaseSignaturesRollAllEntities(service string) error
+	AdminDatabaseListEncryptedEntities(service string) ([]string, error)
+	AdminDatabaseRollEncryptedEntity(service string, e string) error
+	AdminDatabaseRollAllEncryptedEntities(service string) error
 	AdminCDSMigrationList() ([]sdk.Migration, error)
 	AdminCDSMigrationCancel(id int64) error
 	AdminCDSMigrationReset(id int64) error

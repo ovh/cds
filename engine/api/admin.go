@@ -182,93 +182,27 @@ func putPostAdminServiceCallHandler(api *API, method string) service.Handler {
 }
 
 func (api *API) getAdminDatabaseSignatureResume() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		var entities = gorpmapping.Mapper.ListSignedEntities()
-		var resume = make(sdk.CanonicalFormUsageResume, len(entities))
-
-		for _, e := range entities {
-			data, err := gorpmapping.Mapper.ListCanonicalFormsByEntity(api.mustDB(), e)
-			if err != nil {
-				return err
-			}
-			resume[e] = data
-		}
-
-		return service.WriteJSON(w, resume, http.StatusOK)
-	}
+	return AdminDatabaseSignatureResume(api.mustDB, gorpmapping.Mapper)
 }
 
 func (api *API) getAdminDatabaseSignatureTuplesBySigner() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		entity := vars["entity"]
-		signer := vars["signer"]
-
-		pks, err := gorpmapping.Mapper.ListTupleByCanonicalForm(api.mustDB(), entity, signer)
-		if err != nil {
-			return err
-		}
-
-		return service.WriteJSON(w, pks, http.StatusOK)
-	}
+	return AdminDatabaseSignatureTuplesBySigner(api.mustDB, gorpmapping.Mapper)
 }
 
 func (api *API) postAdminDatabaseSignatureRollEntityByPrimaryKey() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		entity := vars["entity"]
-		pk := vars["pk"]
-
-		tx, err := api.mustDBWithCtx(ctx).Begin()
-		if err != nil {
-			return sdk.WithStack(err)
-		}
-		defer tx.Rollback() // nolint
-
-		if err := gorpmapping.Mapper.RollSignedTupleByPrimaryKey(ctx, tx, entity, pk); err != nil {
-			return err
-		}
-
-		if err := tx.Commit(); err != nil {
-			return sdk.WithStack(err)
-		}
-
-		return nil
-	}
+	return AdminDatabaseSignatureRollEntityByPrimaryKey(api.mustDB, gorpmapping.Mapper)
 }
 
 func (api *API) getAdminDatabaseEncryptedEntities() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return service.WriteJSON(w, gorpmapping.Mapper.ListEncryptedEntities(), http.StatusOK)
-	}
+	return AdminDatabaseEncryptedEntities(api.mustDB, gorpmapping.Mapper)
 }
 
 func (api *API) getAdminDatabaseEncryptedTuplesByEntity() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		entity := vars["entity"]
-
-		pks, err := gorpmapping.Mapper.ListTuplesByEntity(api.mustDB(), entity)
-		if err != nil {
-			return err
-		}
-
-		return service.WriteJSON(w, pks, http.StatusOK)
-	}
+	return AdminDatabaseEncryptedTuplesByEntity(api.mustDB, gorpmapping.Mapper)
 }
 
 func (api *API) postAdminDatabaseRollEncryptedEntityByPrimaryKey() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		entity := vars["entity"]
-		pk := vars["pk"]
-
-		if err := gorpmapping.Mapper.RollEncryptedTupleByPrimaryKey(api.mustDB(), entity, pk); err != nil {
-			return err
-		}
-
-		return nil
-	}
+	return AdminDatabaseRollEncryptedEntityByPrimaryKey(api.mustDB, gorpmapping.Mapper)
 }
 
 func (api *API) getAdminFeatureFlipping() service.Handler {

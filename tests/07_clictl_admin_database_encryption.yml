@@ -1,0 +1,22 @@
+name: Database Encryption Commands TestSuite
+
+testcases:
+- name: API_signature_key_rollover
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database list-signed-data api
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database roll-signed-data api
+
+- name: API_encryption_key_rollover
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database list-encrypted-data api
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database roll-encrypted-data api
+
+- name: CDN_signature_key_rollover
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database list-signed-data cdn
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database roll-signed-data cdn
+
+- name: CDN_encryption_key_rollover
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database list-encrypted-data cdn
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database roll-encrypted-data cdn

@@ -260,89 +260,89 @@ func (mr *MockAdminMockRecorder) AdminDatabaseMigrationsList() *gomock.Call {
 }
 
 // AdminDatabaseSignaturesResume mocks base method
-func (m *MockAdmin) AdminDatabaseSignaturesResume() (sdk.CanonicalFormUsageResume, error) {
+func (m *MockAdmin) AdminDatabaseSignaturesResume(service string) (sdk.CanonicalFormUsageResume, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AdminDatabaseSignaturesResume")
+	ret := m.ctrl.Call(m, "AdminDatabaseSignaturesResume", service)
 	ret0, _ := ret[0].(sdk.CanonicalFormUsageResume)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // AdminDatabaseSignaturesResume indicates an expected call of AdminDatabaseSignaturesResume
-func (mr *MockAdminMockRecorder) AdminDatabaseSignaturesResume() *gomock.Call {
+func (mr *MockAdminMockRecorder) AdminDatabaseSignaturesResume(service interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseSignaturesResume", reflect.TypeOf((*MockAdmin)(nil).AdminDatabaseSignaturesResume))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseSignaturesResume", reflect.TypeOf((*MockAdmin)(nil).AdminDatabaseSignaturesResume), service)
 }
 
 // AdminDatabaseSignaturesRollEntity mocks base method
-func (m *MockAdmin) AdminDatabaseSignaturesRollEntity(e string) error {
+func (m *MockAdmin) AdminDatabaseSignaturesRollEntity(service, e string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AdminDatabaseSignaturesRollEntity", e)
+	ret := m.ctrl.Call(m, "AdminDatabaseSignaturesRollEntity", service, e)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // AdminDatabaseSignaturesRollEntity indicates an expected call of AdminDatabaseSignaturesRollEntity
-func (mr *MockAdminMockRecorder) AdminDatabaseSignaturesRollEntity(e interface{}) *gomock.Call {
+func (mr *MockAdminMockRecorder) AdminDatabaseSignaturesRollEntity(service, e interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseSignaturesRollEntity", reflect.TypeOf((*MockAdmin)(nil).AdminDatabaseSignaturesRollEntity), e)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseSignaturesRollEntity", reflect.TypeOf((*MockAdmin)(nil).AdminDatabaseSignaturesRollEntity), service, e)
 }
 
 // AdminDatabaseSignaturesRollAllEntities mocks base method
-func (m *MockAdmin) AdminDatabaseSignaturesRollAllEntities() error {
+func (m *MockAdmin) AdminDatabaseSignaturesRollAllEntities(service string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AdminDatabaseSignaturesRollAllEntities")
+	ret := m.ctrl.Call(m, "AdminDatabaseSignaturesRollAllEntities", service)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // AdminDatabaseSignaturesRollAllEntities indicates an expected call of AdminDatabaseSignaturesRollAllEntities
-func (mr *MockAdminMockRecorder) AdminDatabaseSignaturesRollAllEntities() *gomock.Call {
+func (mr *MockAdminMockRecorder) AdminDatabaseSignaturesRollAllEntities(service interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseSignaturesRollAllEntities", reflect.TypeOf((*MockAdmin)(nil).AdminDatabaseSignaturesRollAllEntities))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseSignaturesRollAllEntities", reflect.TypeOf((*MockAdmin)(nil).AdminDatabaseSignaturesRollAllEntities), service)
 }
 
 // AdminDatabaseListEncryptedEntities mocks base method
-func (m *MockAdmin) AdminDatabaseListEncryptedEntities() ([]string, error) {
+func (m *MockAdmin) AdminDatabaseListEncryptedEntities(service string) ([]string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AdminDatabaseListEncryptedEntities")
+	ret := m.ctrl.Call(m, "AdminDatabaseListEncryptedEntities", service)
 	ret0, _ := ret[0].([]string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // AdminDatabaseListEncryptedEntities indicates an expected call of AdminDatabaseListEncryptedEntities
-func (mr *MockAdminMockRecorder) AdminDatabaseListEncryptedEntities() *gomock.Call {
+func (mr *MockAdminMockRecorder) AdminDatabaseListEncryptedEntities(service interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseListEncryptedEntities", reflect.TypeOf((*MockAdmin)(nil).AdminDatabaseListEncryptedEntities))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseListEncryptedEntities", reflect.TypeOf((*MockAdmin)(nil).AdminDatabaseListEncryptedEntities), service)
 }
 
 // AdminDatabaseRollEncryptedEntity mocks base method
-func (m *MockAdmin) AdminDatabaseRollEncryptedEntity(e string) error {
+func (m *MockAdmin) AdminDatabaseRollEncryptedEntity(service, e string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AdminDatabaseRollEncryptedEntity", e)
+	ret := m.ctrl.Call(m, "AdminDatabaseRollEncryptedEntity", service, e)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // AdminDatabaseRollEncryptedEntity indicates an expected call of AdminDatabaseRollEncryptedEntity
-func (mr *MockAdminMockRecorder) AdminDatabaseRollEncryptedEntity(e interface{}) *gomock.Call {
+func (mr *MockAdminMockRecorder) AdminDatabaseRollEncryptedEntity(service, e interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseRollEncryptedEntity", reflect.TypeOf((*MockAdmin)(nil).AdminDatabaseRollEncryptedEntity), e)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseRollEncryptedEntity", reflect.TypeOf((*MockAdmin)(nil).AdminDatabaseRollEncryptedEntity), service, e)
 }
 
 // AdminDatabaseRollAllEncryptedEntities mocks base method
-func (m *MockAdmin) AdminDatabaseRollAllEncryptedEntities() error {
+func (m *MockAdmin) AdminDatabaseRollAllEncryptedEntities(service string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AdminDatabaseRollAllEncryptedEntities")
+	ret := m.ctrl.Call(m, "AdminDatabaseRollAllEncryptedEntities", service)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // AdminDatabaseRollAllEncryptedEntities indicates an expected call of AdminDatabaseRollAllEncryptedEntities
-func (mr *MockAdminMockRecorder) AdminDatabaseRollAllEncryptedEntities() *gomock.Call {
+func (mr *MockAdminMockRecorder) AdminDatabaseRollAllEncryptedEntities(service interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseRollAllEncryptedEntities", reflect.TypeOf((*MockAdmin)(nil).AdminDatabaseRollAllEncryptedEntities))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseRollAllEncryptedEntities", reflect.TypeOf((*MockAdmin)(nil).AdminDatabaseRollAllEncryptedEntities), service)
 }
 
 // AdminCDSMigrationList mocks base method
@@ -5241,89 +5241,89 @@ func (mr *MockInterfaceMockRecorder) AdminDatabaseMigrationsList() *gomock.Call 
 }
 
 // AdminDatabaseSignaturesResume mocks base method
-func (m *MockInterface) AdminDatabaseSignaturesResume() (sdk.CanonicalFormUsageResume, error) {
+func (m *MockInterface) AdminDatabaseSignaturesResume(service string) (sdk.CanonicalFormUsageResume, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AdminDatabaseSignaturesResume")
+	ret := m.ctrl.Call(m, "AdminDatabaseSignaturesResume", service)
 	ret0, _ := ret[0].(sdk.CanonicalFormUsageResume)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // AdminDatabaseSignaturesResume indicates an expected call of AdminDatabaseSignaturesResume
-func (mr *MockInterfaceMockRecorder) AdminDatabaseSignaturesResume() *gomock.Call {
+func (mr *MockInterfaceMockRecorder) AdminDatabaseSignaturesResume(service interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseSignaturesResume", reflect.TypeOf((*MockInterface)(nil).AdminDatabaseSignaturesResume))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseSignaturesResume", reflect.TypeOf((*MockInterface)(nil).AdminDatabaseSignaturesResume), service)
 }
 
 // AdminDatabaseSignaturesRollEntity mocks base method
-func (m *MockInterface) AdminDatabaseSignaturesRollEntity(e string) error {
+func (m *MockInterface) AdminDatabaseSignaturesRollEntity(service, e string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AdminDatabaseSignaturesRollEntity", e)
+	ret := m.ctrl.Call(m, "AdminDatabaseSignaturesRollEntity", service, e)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // AdminDatabaseSignaturesRollEntity indicates an expected call of AdminDatabaseSignaturesRollEntity
-func (mr *MockInterfaceMockRecorder) AdminDatabaseSignaturesRollEntity(e interface{}) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) AdminDatabaseSignaturesRollEntity(service, e interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseSignaturesRollEntity", reflect.TypeOf((*MockInterface)(nil).AdminDatabaseSignaturesRollEntity), e)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseSignaturesRollEntity", reflect.TypeOf((*MockInterface)(nil).AdminDatabaseSignaturesRollEntity), service, e)
 }
 
 // AdminDatabaseSignaturesRollAllEntities mocks base method
-func (m *MockInterface) AdminDatabaseSignaturesRollAllEntities() error {
+func (m *MockInterface) AdminDatabaseSignaturesRollAllEntities(service string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AdminDatabaseSignaturesRollAllEntities")
+	ret := m.ctrl.Call(m, "AdminDatabaseSignaturesRollAllEntities", service)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // AdminDatabaseSignaturesRollAllEntities indicates an expected call of AdminDatabaseSignaturesRollAllEntities
-func (mr *MockInterfaceMockRecorder) AdminDatabaseSignaturesRollAllEntities() *gomock.Call {
+func (mr *MockInterfaceMockRecorder) AdminDatabaseSignaturesRollAllEntities(service interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseSignaturesRollAllEntities", reflect.TypeOf((*MockInterface)(nil).AdminDatabaseSignaturesRollAllEntities))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseSignaturesRollAllEntities", reflect.TypeOf((*MockInterface)(nil).AdminDatabaseSignaturesRollAllEntities), service)
 }
 
 // AdminDatabaseListEncryptedEntities mocks base method
-func (m *MockInterface) AdminDatabaseListEncryptedEntities() ([]string, error) {
+func (m *MockInterface) AdminDatabaseListEncryptedEntities(service string) ([]string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AdminDatabaseListEncryptedEntities")
+	ret := m.ctrl.Call(m, "AdminDatabaseListEncryptedEntities", service)
 	ret0, _ := ret[0].([]string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // AdminDatabaseListEncryptedEntities indicates an expected call of AdminDatabaseListEncryptedEntities
-func (mr *MockInterfaceMockRecorder) AdminDatabaseListEncryptedEntities() *gomock.Call {
+func (mr *MockInterfaceMockRecorder) AdminDatabaseListEncryptedEntities(service interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseListEncryptedEntities", reflect.TypeOf((*MockInterface)(nil).AdminDatabaseListEncryptedEntities))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseListEncryptedEntities", reflect.TypeOf((*MockInterface)(nil).AdminDatabaseListEncryptedEntities), service)
 }
 
 // AdminDatabaseRollEncryptedEntity mocks base method
-func (m *MockInterface) AdminDatabaseRollEncryptedEntity(e string) error {
+func (m *MockInterface) AdminDatabaseRollEncryptedEntity(service, e string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AdminDatabaseRollEncryptedEntity", e)
+	ret := m.ctrl.Call(m, "AdminDatabaseRollEncryptedEntity", service, e)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // AdminDatabaseRollEncryptedEntity indicates an expected call of AdminDatabaseRollEncryptedEntity
-func (mr *MockInterfaceMockRecorder) AdminDatabaseRollEncryptedEntity(e interface{}) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) AdminDatabaseRollEncryptedEntity(service, e interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseRollEncryptedEntity", reflect.TypeOf((*MockInterface)(nil).AdminDatabaseRollEncryptedEntity), e)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseRollEncryptedEntity", reflect.TypeOf((*MockInterface)(nil).AdminDatabaseRollEncryptedEntity), service, e)
 }
 
 // AdminDatabaseRollAllEncryptedEntities mocks base method
-func (m *MockInterface) AdminDatabaseRollAllEncryptedEntities() error {
+func (m *MockInterface) AdminDatabaseRollAllEncryptedEntities(service string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AdminDatabaseRollAllEncryptedEntities")
+	ret := m.ctrl.Call(m, "AdminDatabaseRollAllEncryptedEntities", service)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // AdminDatabaseRollAllEncryptedEntities indicates an expected call of AdminDatabaseRollAllEncryptedEntities
-func (mr *MockInterfaceMockRecorder) AdminDatabaseRollAllEncryptedEntities() *gomock.Call {
+func (mr *MockInterfaceMockRecorder) AdminDatabaseRollAllEncryptedEntities(service interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseRollAllEncryptedEntities", reflect.TypeOf((*MockInterface)(nil).AdminDatabaseRollAllEncryptedEntities))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseRollAllEncryptedEntities", reflect.TypeOf((*MockInterface)(nil).AdminDatabaseRollAllEncryptedEntities), service)
 }
 
 // AdminCDSMigrationList mocks base method
