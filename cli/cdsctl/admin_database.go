@@ -94,7 +94,8 @@ var adminDatabaseSignatureRoll = cli.Command{
 		},
 	},
 	VariadicArgs: cli.Arg{
-		Name: "entity",
+		Name:       "entity",
+		AllowEmpty: true,
 	},
 }
 
@@ -146,7 +147,8 @@ var adminDatabaseEncryptionRoll = cli.Command{
 		},
 	},
 	VariadicArgs: cli.Arg{
-		Name: "entity",
+		Name:       "entity",
+		AllowEmpty: true,
 	},
 }
 
