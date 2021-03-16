@@ -221,8 +221,8 @@ func newCommand(c Command, run interface{}, subCommands SubCommands, mods ...Com
 			ExitOnError(ErrWrongUsage, cmd.Help)
 			return
 		}
-		//If there is a variadic arg, we condider at least one arg mandatory
-		if c.VariadicArgs.Name != "" && (len(args) < len(c.Args)+len(c.Ctx)+1) {
+		//If there is a variadic arg, check if it is mandatory
+		if c.VariadicArgs.Name != "" && (len(args) < len(c.Args)+len(c.Ctx)+1) && !c.VariadicArgs.AllowEmpty {
 			ExitOnError(ErrWrongUsage, cmd.Help)
 			return
 		}
