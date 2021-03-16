@@ -219,12 +219,12 @@ for target in $@; do
             export AWS_ACCESS_KEY_ID
             export AWS_SECRET_ACCESS_KEY
             export AWS_ENDPOINT_URL
-            workflow_with_integration_tests;;
+            workflow_with_integration_tests
+            admin_tests;;
         workflow_with_third_parties)
             export CDS_MODEL_REQ
             export CDS_REGION_REQ
             workflow_with_third_parties
-            admin_tests;;
         admin)
             admin_tests;;
         *) echo -e "${RED}Error: unknown target: $target${NOCOLOR}"
