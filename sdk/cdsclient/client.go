@@ -190,3 +190,36 @@ func (c *client) HTTPNoTimeoutClient() *http.Client {
 func (c *client) HTTPWebsocketClient() *websocket.Dialer {
 	return c.httpWebsocketClient
 }
+
+var _ error = new(Error)
+
+type Error struct {
+	sdkError       error
+	transportError error
+	apiError       error
+}
+
+func (e *Error) Error() string {
+	if e.apiError != nil {
+		return "API Error: %v" + e.apiError.Error()
+	}
+	if e.transportError != nil {
+		return "Transport Error: %v" + e.transportError.Error()
+	}
+	if e.sdkError != nil {
+		return e.sdkError.Error()
+	}
+	panic("unknow error")
+}
+
+func newAPIError(e error) error {
+	return sdk.WithStack(&Error{apiError: e})
+}
+
+func newTransportError(e error) error {
+	return sdk.WithStack(&Error{transportError: e})
+}
+
+func newError(e error) error {
+	return sdk.WithStack(&Error{sdkError: e})
+}

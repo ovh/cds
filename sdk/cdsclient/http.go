@@ -136,7 +136,7 @@ func (c *client) RequestJSON(ctx context.Context, method, path string, in interf
 func (c *client) Request(ctx context.Context, method string, path string, body io.Reader, mods ...RequestModifier) ([]byte, http.Header, int, error) {
 	respBody, respHeader, code, err := c.Stream(ctx, c.httpClient, method, path, body, mods...)
 	if err != nil {
-		return nil, nil, 0, sdk.WithStack(err)
+		return nil, nil, 0, err
 	}
 	defer func() {
 		// Drain and close the body to let the Transport reuse the connection
@@ -147,7 +147,7 @@ func (c *client) Request(ctx context.Context, method string, path string, body i
 	var bodyBtes []byte
 	bodyBtes, err = ioutil.ReadAll(respBody)
 	if err != nil {
-		return nil, nil, code, sdk.WithStack(err)
+		return nil, nil, code, newTransportError(err)
 	}
 
 	if c.config.Verbose {
@@ -158,9 +158,9 @@ func (c *client) Request(ctx context.Context, method string, path string, body i
 
 	if code >= 400 {
 		if err := sdk.DecodeError(bodyBtes); err != nil {
-			return bodyBtes, nil, code, sdk.WithStack(err)
+			return bodyBtes, nil, code, newAPIError(err)
 		}
-		return bodyBtes, nil, code, sdk.WithStack(fmt.Errorf("HTTP %d", code))
+		return bodyBtes, nil, code, newAPIError(fmt.Errorf("HTTP %d", code))
 	}
 
 	return bodyBtes, respHeader, code, nil
@@ -174,9 +174,9 @@ func extractBodyErrorFromResponse(r *http.Response) error {
 	body, _ := ioutil.ReadAll(r.Body)
 	r.Body.Close() // nolint
 	if err := sdk.DecodeError(body); err != nil {
-		return sdk.WithStack(err)
+		return newAPIError(err)
 	}
-	return sdk.WithStack(fmt.Errorf("HTTP %d", r.StatusCode))
+	return newAPIError(fmt.Errorf("HTTP %d", r.StatusCode))
 }
 
 // Stream makes an authenticated http request and return io.ReadCloser
@@ -195,7 +195,7 @@ func (c *client) Stream(ctx context.Context, httpClient HTTPClient, method strin
 		}
 		resp, err := c.AuthConsumerSignin(sdk.ConsumerBuiltin, sdk.AuthConsumerSigninRequest{"token": c.config.BuitinConsumerAuthenticationToken})
 		if err != nil {
-			return nil, nil, -1, sdk.WithStack(err)
+			return nil, nil, -1, err
 		}
 		if c.config.Verbose {
 			log.Println("jwt: ", sdk.StringFirstN(resp.Token, 12))
@@ -213,7 +213,7 @@ func (c *client) Stream(ctx context.Context, httpClient HTTPClient, method strin
 	if _, ok := body.(io.ReadSeeker); !ok && body != nil {
 		bodyBytes, err = ioutil.ReadAll(body)
 		if err != nil {
-			return nil, nil, 0, sdk.WithStack(err)
+			return nil, nil, 0, newTransportError(err)
 		}
 	}
 
@@ -237,7 +237,7 @@ func (c *client) Stream(ctx context.Context, httpClient HTTPClient, method strin
 			req, requestError = http.NewRequest(method, url, bytes.NewBuffer(bodyBytes))
 		}
 		if requestError != nil {
-			savederror = sdk.WithStack(requestError)
+			savederror = newError(requestError)
 			continue
 		}
 
@@ -286,7 +286,7 @@ func (c *client) Stream(ctx context.Context, httpClient HTTPClient, method strin
 
 		resp, err := httpClient.Do(req)
 		if err != nil {
-			savederror = sdk.WithStack(err)
+			savederror = newError(err)
 			continue
 		}
 
@@ -334,7 +334,7 @@ func (c *client) UploadMultiPart(method string, path string, body *bytes.Buffer,
 	var req *http.Request
 	req, errRequest := http.NewRequest(method, c.config.Host+path, body)
 	if errRequest != nil {
-		return nil, 0, errRequest
+		return nil, 0, newError(errRequest)
 	}
 
 	req.Header.Set("Content-Type", "application/octet-stream")
@@ -357,7 +357,7 @@ func (c *client) UploadMultiPart(method string, path string, body *bytes.Buffer,
 
 	resp, err := c.HTTPNoTimeoutClient().Do(req)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, newTransportError(err)
 	}
 	defer resp.Body.Close()
 
@@ -375,7 +375,7 @@ func (c *client) UploadMultiPart(method string, path string, body *bytes.Buffer,
 	var respBody []byte
 	respBody, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, resp.StatusCode, err
+		return nil, resp.StatusCode, newTransportError(err)
 	}
 
 	if c.config.Verbose {

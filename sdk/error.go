@@ -408,8 +408,13 @@ func (e Error) Error() string {
 		message = errorsAmericanEnglish[ErrUnknownError.ID]
 	}
 	if e.From != "" {
-		message = fmt.Sprintf("%s (from: %s)", message, e.From)
+		if e.RequestID != "" {
+			message = fmt.Sprintf("%s (from: %s, request_id: %s)", message, e.From, e.RequestID)
+		} else {
+			message = fmt.Sprintf("%s (from: %s)", message, e.From)
+		}
 	}
+
 	return message
 }
 
