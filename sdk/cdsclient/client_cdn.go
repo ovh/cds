@@ -23,11 +23,11 @@ func (c *client) CDNItemDownload(ctx context.Context, cdnAddr string, hash strin
 		if reader != nil {
 			body, _ := ioutil.ReadAll(reader)
 			if err := sdk.DecodeError(body); err != nil {
-				return nil, sdk.WithStack(err)
+				return nil, err
 			}
 			stringBody = string(body)
 		}
-		return nil, sdk.WithStack(fmt.Errorf("HTTP %d: %s", code, stringBody))
+		return nil, newAPIError(fmt.Errorf("HTTP %d: %s", code, stringBody))
 	}
 	return reader, err
 }

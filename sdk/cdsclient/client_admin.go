@@ -107,44 +107,57 @@ func (c *client) ServiceCallDELETE(stype string, query string) error {
 func (c *client) ServiceGetJSON(ctx context.Context, stype, path string, out interface{}) (int, error) {
 	btes, _, code, err := c.Request(ctx, "GET", "/admin/services/call?type="+stype+"&query="+url.QueryEscape(path), nil)
 	if err != nil {
-		return code, sdk.WithStack(err)
+		return code, err
 	}
 	if err := json.Unmarshal(btes, out); err != nil {
-		return code, sdk.WithStack(err)
+		return code, newError(err)
 	}
 	return code, nil
 }
 
 func (c *client) ServicePostJSON(ctx context.Context, stype, path string, in, out interface{}) (int, error) {
-	var inBtes, err = json.Marshal(in)
-	if err != nil {
-		return 0, sdk.WithStack(err)
+	var inBtes []byte
+	if in != nil {
+		var err error
+		inBtes, err = json.Marshal(in)
+		if err != nil {
+			return 0, newError(err)
+		}
 	}
 
 	btes, _, code, err := c.Request(ctx, "POST", "/admin/services/call?type="+stype+"&query="+url.QueryEscape(path), bytes.NewReader(inBtes))
 	if err != nil {
-		return code, sdk.WithStack(err)
+		return code, err
 	}
 
-	if err := json.Unmarshal(btes, out); err != nil {
-		return code, sdk.WithStack(err)
+	if len(btes) > 0 {
+		if err := json.Unmarshal(btes, out); err != nil {
+			return code, newError(err)
+		}
 	}
+
 	return code, nil
 }
 
 func (c *client) ServicePutJSON(ctx context.Context, stype, path string, in, out interface{}) (int, error) {
-	var inBtes, err = json.Marshal(in)
-	if err != nil {
-		return 0, sdk.WithStack(err)
+	var inBtes []byte
+	if in != nil {
+		var err error
+		inBtes, err = json.Marshal(in)
+		if err != nil {
+			return 0, newError(err)
+		}
 	}
 
 	btes, _, code, err := c.Request(ctx, "PUT", "/admin/services/call?type="+stype+"&query="+url.QueryEscape(path), bytes.NewReader(inBtes))
 	if err != nil {
-		return code, sdk.WithStack(err)
+		return code, err
 	}
 
-	if err := json.Unmarshal(btes, out); err != nil {
-		return code, sdk.WithStack(err)
+	if len(btes) > 0 {
+		if err := json.Unmarshal(btes, out); err != nil {
+			return code, newError(err)
+		}
 	}
 	return code, nil
 }
@@ -152,11 +165,11 @@ func (c *client) ServicePutJSON(ctx context.Context, stype, path string, in, out
 func (c *client) ServiceDeleteJSON(ctx context.Context, stype, path string, out interface{}) (int, error) {
 	btes, _, code, err := c.Request(ctx, "DELETE", "/admin/services/call?type="+stype+"&query="+url.QueryEscape(path), nil)
 	if err != nil {
-		return code, sdk.WithStack(err)
+		return code, err
 	}
 
 	if err := json.Unmarshal(btes, out); err != nil {
-		return code, sdk.WithStack(err)
+		return code, newError(err)
 	}
 	return code, nil
 }
