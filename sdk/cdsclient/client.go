@@ -229,13 +229,13 @@ func (e *Error) Error() string {
 }
 
 func newAPIError(e error) error {
-	return sdk.WithStack(&Error{apiError: e})
+	return &Error{apiError: e}
 }
 
 func newTransportError(e error) error {
-	return sdk.WithStack(&Error{transportError: e})
+	return &Error{transportError: e}
 }
 
 func newError(e error) error {
-	return sdk.WithStack(&Error{sdkError: e})
+	return &Error{sdkError: e}
 }
