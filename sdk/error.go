@@ -743,13 +743,18 @@ func DecodeError(data []byte) error {
 	return e
 }
 
+type errorWithCause interface {
+	Cause() error
+}
+
 // ErrorIs returns true if error match the target error.
 func ErrorIs(err error, target Error) bool {
 	if err == nil {
 		return false
 	}
-
 	switch e := err.(type) {
+	case errorWithCause:
+		return ErrorIs(e.Cause(), target)
 	case errorWithStack:
 		return e.httpError.ID == target.ID
 	case Error:

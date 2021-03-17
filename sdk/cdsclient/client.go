@@ -199,12 +199,28 @@ type Error struct {
 	apiError       error
 }
 
-func (e *Error) Error() string {
+func (e *Error) Cause() error {
+	if e == nil {
+		return nil
+	}
 	if e.apiError != nil {
-		return "API Error: %v" + e.apiError.Error()
+		return e.apiError
 	}
 	if e.transportError != nil {
-		return "Transport Error: %v" + e.transportError.Error()
+		return e.transportError
+	}
+	if e.sdkError != nil {
+		return e.sdkError
+	}
+	return nil
+}
+
+func (e *Error) Error() string {
+	if e.apiError != nil {
+		return "API Error: " + e.apiError.Error()
+	}
+	if e.transportError != nil {
+		return "Transport Error: " + e.transportError.Error()
 	}
 	if e.sdkError != nil {
 		return e.sdkError.Error()
