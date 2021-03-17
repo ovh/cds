@@ -298,7 +298,6 @@ func (h *HatcheryVSphere) isMarkedToDelete(s mo.VirtualMachine) bool {
 
 // killAwolServers kill unused servers
 func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
-
 	allWorkers, err := h.CDSClient().WorkerList(ctx)
 	if err != nil {
 		ctx := sdk.ContextWithStacktrace(ctx, err)
@@ -353,13 +352,14 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 		}
 
 		// If the VM is mark as delete or is OFF and is not a model or a register-only VM, let's delete it
-		if isMarkToDelete || (isPoweredOff && (!annot.Model || annot.RegisterOnly) && !annot.Provisioning) {
+		// We also exclude not used provisionned VM from deletion
+		isNotUsedProvisionned := annot.Provisioning && annot.WorkerName == s.Name
+		if isMarkToDelete || (isPoweredOff && (!annot.Model || annot.RegisterOnly) && !isNotUsedProvisionned) {
 			if err := h.deleteServer(ctx, s); err != nil {
 				ctx = sdk.ContextWithStacktrace(ctx, err)
 				log.Error(ctx, "killAwolServers> cannot delete server %s", s.Name)
 			}
 		}
-
 	}
 }
 
