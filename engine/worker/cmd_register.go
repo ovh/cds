@@ -4,7 +4,9 @@ import (
 	"context"
 
 	"github.com/ovh/cds/engine/worker/internal"
+	cdslog "github.com/ovh/cds/sdk/log"
 	"github.com/rockbears/log"
+	"github.com/sirupsen/logrus"
 
 	"github.com/spf13/cobra"
 )
@@ -23,13 +25,17 @@ func cmdRegister() *cobra.Command {
 func cmdRegisterRun() func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
 		var w = new(internal.CurrentWorker)
-		initFromFlags(cmd, w)
 
-		if err := w.Register(context.Background()); err != nil {
-			log.Error(context.TODO(), "Unable to register worker %v", err)
+		ctx := context.Background()
+
+		initFromFlags(cmd, w)
+		defer cdslog.Flush(ctx, logrus.StandardLogger())
+
+		if err := w.Register(ctx); err != nil {
+			log.Error(ctx, "Unable to register worker %v", err)
 		}
-		if err := w.Unregister(context.Background()); err != nil {
-			log.Error(context.TODO(), "Unable to unregister worker %v", err)
+		if err := w.Unregister(ctx); err != nil {
+			log.Error(ctx, "Unable to unregister worker %v", err)
 		}
 	}
 }

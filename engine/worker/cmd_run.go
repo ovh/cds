@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/rockbears/log"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/engine/worker/internal"
@@ -30,11 +31,12 @@ func runCmd() func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
 		var w = new(internal.CurrentWorker)
 
-		//Initialize  context
-		ctx := context.Background()
+		// Initialize context
+		ctx, cancel := context.WithCancel(context.Background())
 
 		// Setup workerfrom commandline flags or env variables
 		initFromFlags(cmd, w)
+		defer cdslog.Flush(ctx, logrus.StandardLogger())
 
 		// Get the booked job ID
 		bookedWJobID := FlagInt64(cmd, flagBookedWorkflowJobID)
@@ -43,7 +45,6 @@ func runCmd() func(cmd *cobra.Command, args []string) {
 			sdk.Exit("flag --booked-workflow-job-id is mandatory")
 		}
 
-		ctx, cancel := context.WithCancel(ctx)
 		// Gracefully shutdown connections
 		c := make(chan os.Signal, 1)
 		signal.Notify(c, os.Interrupt, syscall.SIGTERM)

@@ -172,3 +172,15 @@ func ReplaceAllHooks(ctx context.Context, l *logrus.Logger, graylogcfg *hook.Con
 	l.AddHook(hook)
 	return nil
 }
+
+// For given logrus logger, try to flush hooks
+func Flush(ctx context.Context, l *logrus.Logger) {
+	for _, hs := range logrus.StandardLogger().Hooks {
+		for _, h := range hs {
+			if graylogHook, ok := h.(*hook.Hook); ok {
+				log.Info(ctx, "Draining logs...")
+				graylogHook.Flush()
+			}
+		}
+	}
+}
