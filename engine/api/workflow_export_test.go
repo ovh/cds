@@ -145,9 +145,7 @@ workflow:
     depends_on:
     - fork
     pipeline: pip1
-retention_policy: return (git_branch_exist == "false" and run_days_before < 2) or run_days_before < 365
 `, rec.Body.String())
-
 }
 
 func Test_getWorkflowExportHandlerWithPermissions(t *testing.T) {
@@ -209,10 +207,11 @@ func Test_getWorkflowExportHandlerWithPermissions(t *testing.T) {
 	}))
 
 	w := sdk.Workflow{
-		Name:          "test_1",
-		ProjectID:     proj.ID,
-		ProjectKey:    proj.Key,
-		HistoryLength: 25,
+		Name:            "test_1",
+		ProjectID:       proj.ID,
+		ProjectKey:      proj.Key,
+		RetentionPolicy: "return true",
+		HistoryLength:   25,
 		Groups: []sdk.GroupPermission{
 			{
 				Group:      *group2,
@@ -279,10 +278,9 @@ workflow:
     pipeline: pip1
 permissions:
   Test_getWorkflowExportHandlerWithPermissions-Group2: 7
-retention_policy: return (git_branch_exist == "false" and run_days_before < 2) or run_days_before < 365
+retention_policy: return true
 history_length: 25
 `, rec.Body.String())
-
 }
 
 func Test_getWorkflowPullHandler(t *testing.T) {

@@ -229,8 +229,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			},
 			wantErr: false,
 			want: sdk.Workflow{
-				Name:          "myworkflow",
-				HistoryLength: sdk.DefaultHistoryLength,
+				Name: "myworkflow",
 				WorkflowData: sdk.WorkflowData{
 					Node: sdk.Node{
 						Name: "pipeline",
@@ -266,9 +265,8 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			},
 			wantErr: false,
 			want: sdk.Workflow{
-				Name:          "myworkflow",
-				HistoryLength: sdk.DefaultHistoryLength,
-				Description:   "this is my description",
+				Name:        "myworkflow",
+				Description: "this is my description",
 				WorkflowData: sdk.WorkflowData{
 					Node: sdk.Node{
 						Name: "pipeline",
@@ -331,8 +329,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			},
 			wantErr: false,
 			want: sdk.Workflow{
-				Name:          "myworkflow",
-				HistoryLength: sdk.DefaultHistoryLength,
+				Name: "myworkflow",
 				WorkflowData: sdk.WorkflowData{
 					Node: sdk.Node{
 						Name: "root",
@@ -396,8 +393,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			},
 			wantErr: false,
 			want: sdk.Workflow{
-				Name:          "myworkflow",
-				HistoryLength: sdk.DefaultHistoryLength,
+				Name: "myworkflow",
 				WorkflowData: sdk.WorkflowData{
 					Node: sdk.Node{
 						Name: "root",
@@ -511,8 +507,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			},
 			wantErr: false,
 			want: sdk.Workflow{
-				Name:          "myworkflow",
-				HistoryLength: sdk.DefaultHistoryLength,
+				Name: "myworkflow",
 				WorkflowData: sdk.WorkflowData{
 					Node: sdk.Node{
 						Name: "root",
@@ -601,8 +596,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			},
 			wantErr: false,
 			want: sdk.Workflow{
-				Name:          "myworkflow",
-				HistoryLength: sdk.DefaultHistoryLength,
+				Name: "myworkflow",
 				WorkflowData: sdk.WorkflowData{
 					Node: sdk.Node{
 						Name: "A",
@@ -732,8 +726,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			},
 			wantErr: false,
 			want: sdk.Workflow{
-				Name:          "myworkflow",
-				HistoryLength: sdk.DefaultHistoryLength,
+				Name: "myworkflow",
 				WorkflowData: sdk.WorkflowData{
 					Node: sdk.Node{
 						Name: "pipeline",
@@ -767,8 +760,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			},
 			wantErr: false,
 			want: sdk.Workflow{
-				Name:          "myworkflow",
-				HistoryLength: sdk.DefaultHistoryLength,
+				Name: "myworkflow",
 				WorkflowData: sdk.WorkflowData{
 					Node: sdk.Node{
 						Name: "A",
@@ -838,17 +830,17 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			got.Environments = nil
 			got.ProjectIntegrations = nil
 
-			expextedValues, _ := dump.ToStringMap(tt.want)
+			expectedValues, _ := dump.ToStringMap(tt.want)
 			actualValues, _ := dump.ToStringMap(got)
 
-			var keysExpextedValues []string
-			for k := range expextedValues {
-				keysExpextedValues = append(keysExpextedValues, k)
+			var keysExpectedValues []string
+			for k := range expectedValues {
+				keysExpectedValues = append(keysExpectedValues, k)
 			}
-			sort.Strings(keysExpextedValues)
+			sort.Strings(keysExpectedValues)
 
-			for _, expectedKey := range keysExpextedValues {
-				expectedValue := expextedValues[expectedKey]
+			for _, expectedKey := range keysExpectedValues {
+				expectedValue := expectedValues[expectedKey]
 				actualValue, ok := actualValues[expectedKey]
 				if strings.Contains(expectedKey, ".Ref") {
 					assert.NotEmpty(t, actualValue, "value %s is empty but shoud not be empty", expectedKey)
@@ -859,7 +851,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			}
 
 			for actualKey := range actualValues {
-				_, ok := expextedValues[actualKey]
+				_, ok := expectedValues[actualKey]
 				assert.True(t, ok, "got %s, but not found is expected workflow", actualKey)
 			}
 		})

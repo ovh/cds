@@ -25,11 +25,6 @@ func Import(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 	w.ProjectKey = proj.Key
 	w.ProjectID = proj.ID
 
-	// Default value of history length is 20
-	if w.HistoryLength == 0 {
-		w.HistoryLength = 20
-	}
-
 	if w.WorkflowData.Node.Context == nil {
 		w.WorkflowData.Node.Context = &sdk.NodeContext{}
 	}

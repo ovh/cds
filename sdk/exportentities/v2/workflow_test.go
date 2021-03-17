@@ -188,8 +188,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			},
 			wantErr: false,
 			want: sdk.Workflow{
-				Name:          "myWorkflow",
-				HistoryLength: sdk.DefaultHistoryLength,
+				Name: "myWorkflow",
 				WorkflowData: sdk.WorkflowData{
 					Node: sdk.Node{
 						Name: "root",
@@ -254,8 +253,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			},
 			wantErr: false,
 			want: sdk.Workflow{
-				Name:          "myWorkflow",
-				HistoryLength: sdk.DefaultHistoryLength,
+				Name: "myWorkflow",
 				WorkflowData: sdk.WorkflowData{
 					Node: sdk.Node{
 						Name: "root",
@@ -317,12 +315,14 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 						PipelineName: "pipeline-root",
 					},
 				},
-				HistoryLength: 25,
+				HistoryLength:   25,
+				RetentionPolicy: "return true",
 			},
 			wantErr: false,
 			want: sdk.Workflow{
-				Name:          "myWorkflow",
-				HistoryLength: 25,
+				Name:            "myWorkflow",
+				HistoryLength:   25,
+				RetentionPolicy: "return true",
 				WorkflowData: sdk.WorkflowData{
 					Node: sdk.Node{
 						Name: "root",
@@ -369,8 +369,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			},
 			wantErr: false,
 			want: sdk.Workflow{
-				Name:          "myWorkflow",
-				HistoryLength: sdk.DefaultHistoryLength,
+				Name: "myWorkflow",
 				WorkflowData: sdk.WorkflowData{
 					Node: sdk.Node{
 						Name: "root",
@@ -459,8 +458,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			},
 			wantErr: false,
 			want: sdk.Workflow{
-				Name:          "myWorkflow",
-				HistoryLength: sdk.DefaultHistoryLength,
+				Name: "myWorkflow",
 				WorkflowData: sdk.WorkflowData{
 					Node: sdk.Node{
 						Name: "A",
@@ -600,8 +598,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			},
 			wantErr: false,
 			want: sdk.Workflow{
-				Name:          "myWorkflow",
-				HistoryLength: sdk.DefaultHistoryLength,
+				Name: "myWorkflow",
 				WorkflowData: sdk.WorkflowData{
 					Node: sdk.Node{
 						Name: "A",
@@ -643,7 +640,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 				Hooks:           tt.fields.Hooks,
 				Permissions:     tt.fields.Permissions,
 				HistoryLength:   &tt.fields.HistoryLength,
-				RetentionPolicy: tt.fields.RetentionPolicy,
+				RetentionPolicy: &tt.fields.RetentionPolicy,
 			}
 			got, err := exportentities.ParseWorkflow(w)
 			if (err != nil) != tt.wantErr {
@@ -663,17 +660,17 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			got.Environments = nil
 			got.ProjectIntegrations = nil
 
-			expextedValues, _ := dump.ToStringMap(tt.want)
+			expectedValues, _ := dump.ToStringMap(tt.want)
 			actualValues, _ := dump.ToStringMap(got)
 
-			var keysExpextedValues []string
-			for k := range expextedValues {
-				keysExpextedValues = append(keysExpextedValues, k)
+			var keysExpectedValues []string
+			for k := range expectedValues {
+				keysExpectedValues = append(keysExpectedValues, k)
 			}
-			sort.Strings(keysExpextedValues)
+			sort.Strings(keysExpectedValues)
 
-			for _, expectedKey := range keysExpextedValues {
-				expectedValue := expextedValues[expectedKey]
+			for _, expectedKey := range keysExpectedValues {
+				expectedValue := expectedValues[expectedKey]
 				actualValue, ok := actualValues[expectedKey]
 				if strings.Contains(expectedKey, ".Ref") {
 					assert.NotEmpty(t, actualValue, "value %s is empty but shoud not be empty", expectedKey)
@@ -684,7 +681,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			}
 
 			for actualKey := range actualValues {
-				_, ok := expextedValues[actualKey]
+				_, ok := expectedValues[actualKey]
 				assert.True(t, ok, "got %s, but not found is expected workflow", actualKey)
 			}
 		})
@@ -1133,7 +1130,7 @@ workflow:
         script: return cds_manual == "true"
       one_at_a_time: true
 metadata:
-    default_tags: git.branch,git.author 
+    default_tags: git.branch,git.author
 notifications:
 - type: vcs
   settings:

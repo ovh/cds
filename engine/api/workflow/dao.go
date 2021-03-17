@@ -27,10 +27,6 @@ import (
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
-const (
-	DefaultRetentionRule = "return (git_branch_exist == \"false\" and run_days_before < 2) or run_days_before < 365"
-)
-
 type PushSecrets struct {
 	ApplicationsSecrets map[int64][]sdk.Variable
 	EnvironmentdSecrets map[int64][]sdk.Variable
@@ -312,8 +308,10 @@ func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 	if w.HistoryLength == 0 {
 		w.HistoryLength = sdk.DefaultHistoryLength
 	}
+	if w.RetentionPolicy == "" {
+		w.RetentionPolicy = sdk.DefaultRetentionRule
+	}
 	w.MaxRuns = maxRuns
-	w.RetentionPolicy = DefaultRetentionRule
 
 	w.LastModified = time.Now()
 	if err := db.QueryRow(`INSERT INTO workflow (
@@ -611,10 +609,6 @@ func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 		return err
 	}
 
-	if wf.RetentionPolicy == "" {
-		wf.RetentionPolicy = DefaultRetentionRule
-	}
-
 	if err := CheckValidity(ctx, db, wf); err != nil {
 		return err
 	}
@@ -631,6 +625,24 @@ func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 	oldWf, err := LoadByID(ctx, db, store, proj, wf.ID, LoadOptions{Minimal: true})
 	if err != nil {
 		return sdk.WrapError(err, "Unable to load existing workflow with proj:%s ID:%d", proj.Key, wf.ID)
+	}
+
+	// Set or keep HistoryLength
+	if wf.HistoryLength == 0 {
+		if oldWf.HistoryLength == 0 {
+			wf.HistoryLength = sdk.DefaultHistoryLength
+		} else {
+			wf.HistoryLength = oldWf.HistoryLength
+		}
+	}
+
+	// Set or keep RetentionPolicy
+	if wf.RetentionPolicy == "" {
+		if oldWf.RetentionPolicy == "" {
+			wf.RetentionPolicy = sdk.DefaultRetentionRule
+		} else {
+			wf.RetentionPolicy = oldWf.RetentionPolicy
+		}
 	}
 
 	// Keep MaxRun
