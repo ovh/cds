@@ -15,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/database"
 	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -182,27 +183,27 @@ func putPostAdminServiceCallHandler(api *API, method string) service.Handler {
 }
 
 func (api *API) getAdminDatabaseSignatureResume() service.Handler {
-	return AdminDatabaseSignatureResume(api.mustDB, gorpmapping.Mapper)
+	return database.AdminDatabaseSignatureResume(api.mustDB, gorpmapping.Mapper)
 }
 
 func (api *API) getAdminDatabaseSignatureTuplesBySigner() service.Handler {
-	return AdminDatabaseSignatureTuplesBySigner(api.mustDB, gorpmapping.Mapper)
+	return database.AdminDatabaseSignatureTuplesBySigner(api.mustDB, gorpmapping.Mapper)
 }
 
 func (api *API) postAdminDatabaseSignatureRollEntityByPrimaryKey() service.Handler {
-	return AdminDatabaseSignatureRollEntityByPrimaryKey(api.mustDB, gorpmapping.Mapper)
+	return database.AdminDatabaseSignatureRollEntityByPrimaryKey(api.mustDB, gorpmapping.Mapper)
 }
 
 func (api *API) getAdminDatabaseEncryptedEntities() service.Handler {
-	return AdminDatabaseEncryptedEntities(api.mustDB, gorpmapping.Mapper)
+	return database.AdminDatabaseEncryptedEntities(api.mustDB, gorpmapping.Mapper)
 }
 
 func (api *API) getAdminDatabaseEncryptedTuplesByEntity() service.Handler {
-	return AdminDatabaseEncryptedTuplesByEntity(api.mustDB, gorpmapping.Mapper)
+	return database.AdminDatabaseEncryptedTuplesByEntity(api.mustDB, gorpmapping.Mapper)
 }
 
 func (api *API) postAdminDatabaseRollEncryptedEntityByPrimaryKey() service.Handler {
-	return AdminDatabaseRollEncryptedEntityByPrimaryKey(api.mustDB, gorpmapping.Mapper)
+	return database.AdminDatabaseRollEncryptedEntityByPrimaryKey(api.mustDB, gorpmapping.Mapper)
 }
 
 func (api *API) getAdminFeatureFlipping() service.Handler {
