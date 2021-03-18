@@ -110,7 +110,7 @@ forLoop:
 	}
 	switch ope.Status {
 	case sdk.OperationStatusError:
-		return nil, cli.WrapError(err, "cannot perform operation", ope.Error)
+		return nil, cli.WrapError(err, "cannot perform operation")
 	}
 	return response, nil
 }
