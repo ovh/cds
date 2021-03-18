@@ -757,7 +757,7 @@ func ErrorIs(err error, target Error) bool {
 		return false
 	}
 	switch e := err.(type) {
-	case errorWithCause:
+	case errorWithCause: // Fetch the root error with the stacktrace from errors.WithStack
 		return ErrorIs(e.Cause(), target)
 	case errorWithStack:
 		return e.httpError.ID == target.ID

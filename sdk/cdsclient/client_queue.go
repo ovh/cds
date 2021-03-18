@@ -598,7 +598,7 @@ func (c *client) queueDirectStaticFilesUpload(projectKey, integrationName string
 			SetHeader("Content-Type", writer.FormDataContentType()))
 		if err == nil && code < 300 {
 			if err := json.Unmarshal(respBody, &staticFileResp); err != nil {
-				return "", fmt.Errorf("Cannot unmarshal body: %v: %v", string(respBody), err)
+				return "", newError(fmt.Errorf("unable to unmarshal body: %v: %v", string(respBody), err))
 			}
 			fmt.Printf("Files uploaded with public URL: %s\n", staticFileResp.PublicURL)
 			return staticFileResp.PublicURL, nil
