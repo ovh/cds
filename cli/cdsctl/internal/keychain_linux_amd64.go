@@ -38,7 +38,7 @@ func storeTokens(contextName string, tokens ContextTokens) error {
 	}
 
 	if err = srv.Unlock([]dbus.ObjectPath{collection}); err != nil {
-		return fmt.Errorf("failed to unlock secret service")
+		return cli.NewError("failed to unlock secret service")
 	}
 
 	_, err = srv.CreateItem(collection, secretservice.NewSecretProperties(fmt.Sprintf("CDS-cdsctl/%s", contextName), map[string]string{"context-name": contextName}), secret, secretservice.ReplaceBehaviorReplace)
@@ -69,7 +69,7 @@ func (c CDSContext) getTokens(contextName string) (*ContextTokens, error) {
 	}
 
 	if len(items) != 1 {
-		return nil, fmt.Errorf("context not found in keychain")
+		return nil, cli.NewError("context not found in keychain")
 	}
 
 	gotItem := items[0]

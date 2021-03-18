@@ -41,7 +41,7 @@ func updateRun(v cli.Values) error {
 		var errGH error
 		urlBinary, errGH = client.DownloadURLFromGithub(sdk.GetArtifactFilename("cdsctl", sdk.GOOS, sdk.GOARCH, variant))
 		if errGH != nil {
-			return fmt.Errorf("Error while getting URL from GitHub url:%s err:%s", urlBinary, errGH)
+			return cli.NewError("Error while getting URL from GitHub url:%s err:%s", urlBinary, errGH)
 		}
 		fmt.Printf("Updating binary from GitHub on %s...\n", urlBinary)
 	} else {
@@ -56,15 +56,15 @@ func updateRun(v cli.Values) error {
 	defer resp.Body.Close()
 
 	if err := sdk.CheckContentTypeBinary(resp); err != nil {
-		return fmt.Errorf(err.Error())
+		return cli.NewError(err.Error())
 	}
 
 	if resp.StatusCode != 200 {
-		return fmt.Errorf("Error http code: %d, url called: %s", resp.StatusCode, urlBinary)
+		return cli.NewError("Error http code: %d, url called: %s", resp.StatusCode, urlBinary)
 	}
 
 	if err := goUpdate.Apply(resp.Body, goUpdate.Options{}); err != nil {
-		return fmt.Errorf("Error while updating binary from CDS API: %s", err)
+		return cli.WrapError(err, "Error while updating binary from CDS API")
 	}
 	fmt.Println("Update cdsctl done.")
 	return nil

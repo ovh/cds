@@ -78,10 +78,10 @@ func loadConfig(cmd *cobra.Command) (string, *cdsclient.Config, error) {
 
 		if contextName != "" {
 			if cdsctx, err = internal.GetContext(f, contextName); err != nil {
-				return "", nil, fmt.Errorf("unable to load the current context from %s", contextName)
+				return "", nil, cli.NewError("unable to load the current context from %s", contextName)
 			}
 		} else if cdsctx, err = internal.GetCurrentContext(f); err != nil {
-			return "", nil, fmt.Errorf("unable to load the current context from %s", configFile)
+			return "", nil, cli.NewError("unable to load the current context from %s", configFile)
 		}
 
 		if verbose {
@@ -115,7 +115,7 @@ func loadConfig(cmd *cobra.Command) (string, *cdsclient.Config, error) {
 	cdsctx.Verbose = verbose
 
 	if cdsctx.Host == "" {
-		return "", nil, fmt.Errorf("invalid cdsctl configuration to reach a CDS API")
+		return "", nil, cli.NewError("invalid cdsctl configuration to reach a CDS API")
 	}
 
 	config := &cdsclient.Config{
@@ -144,7 +144,7 @@ func recreateSessionToken(configFile string, cdsctx internal.CDSContext, context
 		return nil, cli.WrapError(err, "cannot signin")
 	}
 	if res.Token == "" || res.User == nil {
-		return nil, fmt.Errorf("invalid username or token returned by sign in token")
+		return nil, cli.NewError("invalid username or token returned by sign in token")
 	}
 	cdsctx.Session = res.Token
 	// resave session token

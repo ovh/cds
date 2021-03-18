@@ -77,7 +77,7 @@ forLoop:
 	for {
 		select {
 		case <-ctx.Done():
-			return nil, fmt.Errorf("timeout waiting operation to complete")
+			return nil, cli.NewError("timeout waiting operation to complete")
 		case err := <-chanErrorReceived:
 			fmt.Printf("Error: %v\n", err)
 		case evt := <-chanMessageReceived:

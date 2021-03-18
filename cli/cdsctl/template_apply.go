@@ -104,7 +104,7 @@ func suggestTemplate() (*sdk.WorkflowTemplate, error) {
 		return nil, err
 	}
 	if len(wts) == 0 {
-		return nil, fmt.Errorf("no existing template found from CDS")
+		return nil, cli.NewError("no existing template found from CDS")
 	}
 	opts := make([]string, len(wts))
 	for i := range wts {
@@ -145,7 +145,7 @@ func templateApplyRun(v cli.Values) error {
 	// if no template found for workflow or no instance, suggest one
 	if wt == nil {
 		if v.GetBool("no-interactive") {
-			return fmt.Errorf("you should give a template path")
+			return cli.NewError("you should give a template path")
 		}
 		wt, err = suggestTemplate()
 		if err != nil {
@@ -168,7 +168,7 @@ func templateApplyRun(v cli.Values) error {
 	for _, p := range paramPairs {
 		ps := strings.Split(p, "=")
 		if len(ps) < 2 {
-			return fmt.Errorf("Invalid given param %s", ps[0])
+			return cli.NewError("Invalid given param %s", ps[0])
 		}
 		params[ps[0]] = strings.Join(ps[1:], "=")
 	}
@@ -314,7 +314,7 @@ func templateApplyRun(v cli.Values) error {
 	}
 
 	if importAsCode && localRepoURL == "" {
-		return fmt.Errorf("Can't import current workflow because no local repository was found")
+		return cli.NewError("Can't import current workflow because no local repository was found")
 	}
 
 	dir := strings.TrimSpace(v.GetString("output-dir"))
@@ -399,17 +399,17 @@ func teeTarReader(r *tar.Reader, buf io.Writer) (*tar.Reader, error) {
 		if n, err := io.Copy(&bs, r); err != nil {
 			return nil, err
 		} else if n == 0 {
-			return nil, fmt.Errorf("Nothing to read")
+			return nil, cli.NewError("Nothing to read")
 		}
 		if n, err := tw1.Write(bs.Bytes()); err != nil {
 			return nil, err
 		} else if n == 0 {
-			return nil, fmt.Errorf("Nothing to write")
+			return nil, cli.NewError("Nothing to write")
 		}
 		if n, err := tw2.Write(bs.Bytes()); err != nil {
 			return nil, err
 		} else if n == 0 {
-			return nil, fmt.Errorf("Nothing to write")
+			return nil, cli.NewError("Nothing to write")
 		}
 	}
 

@@ -66,14 +66,14 @@ func workflowPushRun(c cli.Values) error {
 			dir = filepath.Dir(file)
 		}
 		if dir != filepath.Dir(file) {
-			return fmt.Errorf("files must be ine the same directory")
+			return cli.NewError("files must be ine the same directory")
 		}
 
 		filesToRead = append(filesToRead, file)
 	}
 
 	if len(filesToRead) == 0 {
-		return fmt.Errorf("wrong usage: you should specify your workflow YAML files. See %s workflow push --help for more details", os.Args[0])
+		return cli.NewError("wrong usage: you should specify your workflow YAML files. See %s workflow push --help for more details", os.Args[0])
 	}
 
 	if err := workflowFilesToTarWriter(filesToRead, buf); err != nil {
@@ -124,7 +124,7 @@ func workflowFilesToTarWriter(files []string, buf io.Writer) error {
 		if n, err := tw.Write(filBuf); err != nil {
 			return err
 		} else if n == 0 {
-			return fmt.Errorf("nothing to write")
+			return cli.NewError("nothing to write")
 		}
 	}
 

@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"fmt"
 	"io"
 	"strconv"
 	"strings"
@@ -47,7 +46,7 @@ func GetCurrentContextName(reader io.Reader) (string, error) {
 	}
 
 	if tomlConf.Current == "" {
-		return "", fmt.Errorf("no current context")
+		return "", cli.NewError("no current context")
 	}
 	return tomlConf.Current, nil
 }
@@ -65,7 +64,7 @@ func GetCurrentContext(reader io.Reader) (*CDSContext, error) {
 	}
 
 	if tomlConf.Current == "" {
-		return nil, fmt.Errorf("no current context")
+		return nil, cli.NewError("no current context")
 	}
 	return getContext(tomlConf, tomlConf.Current)
 }
@@ -85,7 +84,7 @@ func SetCurrentContext(reader io.Reader, writer io.Writer, contextName string) e
 		}
 	}
 	if !found {
-		return fmt.Errorf("context %s does not exist", contextName)
+		return cli.NewError("context %s does not exist", contextName)
 	}
 	tomlConf.Current = contextName
 

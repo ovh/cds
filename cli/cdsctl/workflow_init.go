@@ -103,7 +103,7 @@ func interactiveChooseVCSServer(proj *sdk.Project, gitRepo repo.Repo) (string, e
 	switch len(proj.VCSServers) {
 	case 0:
 		//TODO ask to link the project
-		return "", fmt.Errorf("your CDS project must be linked to a repositories manager to perform this operation")
+		return "", cli.NewError("your CDS project must be linked to a repositories manager to perform this operation")
 	case 1:
 		return proj.VCSServers[0].Name, nil
 	default:
@@ -162,7 +162,7 @@ func interactiveChooseApplication(pkey, repoFullname, repoName string) (string, 
 			fmt.Printf(" * application %s/%s found in CDS.\n", cli.Magenta(a.ProjectKey), cli.Magenta(a.Name))
 			fmt.Println(cli.Red(" * but it's not linked to repository"), cli.Red(repoFullname))
 			if !cli.AskConfirm(cli.Red("Do you want to overwrite it?")) {
-				return "", nil, fmt.Errorf("operation aborted")
+				return "", nil, cli.NewError("operation aborted")
 			}
 			return a.Name, nil, nil
 		}
@@ -195,7 +195,7 @@ func searchRepository(pkey, repoManagerName, repoFullname string) (string, error
 		}
 		resync = true
 	}
-	return "", fmt.Errorf("unable to find repository %s from %s: please check your credentials", repoFullname, repoManagerName)
+	return "", cli.NewError("unable to find repository %s from %s: please check your credentials", repoFullname, repoManagerName)
 }
 
 // Check for given repo URL that it exists in project vcs.
@@ -221,7 +221,7 @@ func checkRepositoryExists(proj sdk.Project, repoURL string) error {
 			resync = true
 		}
 	}
-	return fmt.Errorf("unable to find repository %s for project: please check project vcs configuration", repoURL)
+	return cli.NewError("unable to find repository %s for project: please check project vcs configuration", repoURL)
 }
 
 func interactiveChoosePipeline(pkey, defaultPipeline string) (string, *sdk.Pipeline, error) {
@@ -261,7 +261,7 @@ func interactiveChoosePipeline(pkey, defaultPipeline string) (string, *sdk.Pipel
 		pipName := cli.ReadLine()
 		regexp := sdk.NamePatternRegex
 		if !regexp.MatchString(pipName) {
-			return "", nil, fmt.Errorf("Pipeline name '%s' do not respect pattern %s", pipName, sdk.NamePattern)
+			return "", nil, cli.NewError("Pipeline name '%s' do not respect pattern %s", pipName, sdk.NamePattern)
 		}
 		return pipName, nil, nil
 	}

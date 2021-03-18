@@ -87,7 +87,7 @@ func contextRun(v cli.Values) error {
 	if v.GetBool("no-interactive") {
 		if v.GetString("context-name") == "" {
 			fi.Close() // nolint
-			return fmt.Errorf("you must use a context name with no-interactive flag. Example: cdsctl context --context-name my-context")
+			return cli.NewError("you must use a context name with no-interactive flag. Example: cdsctl context --context-name my-context")
 		}
 		wdata := &bytes.Buffer{}
 		if err := internal.SetCurrentContext(fi, wdata, v.GetString("context-name")); err != nil {

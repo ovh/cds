@@ -204,7 +204,7 @@ var adminPluginsDocCmd = cli.Command{
 func adminPluginsDocFunc(v cli.Values) error {
 	btes, errRead := ioutil.ReadFile(v.GetString("path"))
 	if errRead != nil {
-		return fmt.Errorf("Error while reading file: %s", errRead)
+		return cli.NewError("error while reading file: %s", errRead)
 	}
 
 	var expGPRCPlugin exportentities.GRPCPlugin

@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 
 	repo "github.com/fsamin/go-repo"
 	"github.com/spf13/cobra"
@@ -71,7 +70,7 @@ func workflowNodeForCurrentRepo(projectKey, workflowName string) (int64, error) 
 		return 0, err
 	}
 	if len(runs) < 1 {
-		return 0, fmt.Errorf("workflow run not found")
+		return 0, cli.NewError("workflow run not found")
 	}
 
 	if runs[0].Number > 0 {

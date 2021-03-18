@@ -102,7 +102,7 @@ func workflowRunResultGet(v cli.Values) error {
 			perm = cov.Perm
 			md5 = cov.MD5
 		default:
-			return fmt.Errorf("cannot get result of type %s", r.Type)
+			return cli.NewError("cannot get result of type %s", r.Type)
 		}
 
 		var f *os.File
@@ -150,7 +150,7 @@ func workflowRunResultGet(v cli.Values) error {
 		}
 
 		if md5Sum != md5 {
-			return fmt.Errorf("Invalid md5Sum \ndownloaded file:%s\n%s:%s", md5Sum, f.Name(), md5)
+			return cli.NewError("Invalid md5Sum \ndownloaded file:%s\n%s:%s", md5Sum, f.Name(), md5)
 		}
 
 		if toDownload {

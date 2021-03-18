@@ -64,7 +64,7 @@ func loginRun(v cli.Values) error {
 
 	// Env param is not valid for windows users
 	if v.GetBool("env") && sdk.GOOS == "windows" {
-		return fmt.Errorf("Env option is not supported on windows yet")
+		return cli.NewError("Env option is not supported on windows yet")
 	}
 
 	// Checks that an URL is given
@@ -84,7 +84,7 @@ func loginRun(v cli.Values) error {
 		return cli.WrapError(err, "Cannot list auth drivers")
 	}
 	if len(drivers.Drivers) == 0 {
-		return fmt.Errorf("No authentication driver configured")
+		return cli.NewError("No authentication driver configured")
 	}
 
 	// Check driver type validity or ask for one
@@ -98,7 +98,7 @@ func loginRun(v cli.Values) error {
 		driverType = drivers.Drivers[selected].Type
 	}
 	if !driverType.IsValid() || !drivers.Drivers.ExistsConsumerType(driverType) {
-		return fmt.Errorf("Invalid given consumer type")
+		return cli.NewError("Invalid given consumer type")
 	}
 
 	var req sdk.AuthConsumerSigninRequest
@@ -111,7 +111,7 @@ func loginRun(v cli.Values) error {
 		req, err = loginRunBuiltin(v)
 	default:
 		if noInteractive {
-			return fmt.Errorf("Cannot signin with %s driver in no interactive mode", driverType)
+			return cli.NewError("Cannot signin with %s driver in no interactive mode", driverType)
 		}
 		return loginRunExternal(v, driverType, apiURL)
 	}
@@ -151,7 +151,7 @@ func loginRunLocal(v cli.Values) (sdk.AuthConsumerSigninRequest, error) {
 		req["password"] = cli.AskPassword("Password")
 	}
 	if req["username"] == "" || req["password"] == "" {
-		return req, fmt.Errorf("Invalid given username or password")
+		return req, cli.NewError("Invalid given username or password")
 	}
 
 	return req, nil
@@ -172,7 +172,7 @@ func loginRunLDAP(v cli.Values) (sdk.AuthConsumerSigninRequest, error) {
 		req["password"] = cli.AskPassword("Password")
 	}
 	if req["bind"] == "" || req["password"] == "" {
-		return req, fmt.Errorf("Invalid given LDAP bind or password")
+		return req, cli.NewError("Invalid given LDAP bind or password")
 	}
 
 	return req, nil
@@ -187,7 +187,7 @@ func loginRunBuiltin(v cli.Values) (sdk.AuthConsumerSigninRequest, error) {
 		req["token"] = cli.AskPassword("Sign in token")
 	}
 	if req["token"] == "" {
-		return req, fmt.Errorf("Invalid given signin token")
+		return req, cli.NewError("Invalid given signin token")
 	}
 
 	return req, nil
@@ -336,7 +336,7 @@ func doAfterLogin(client cdsclient.Interface, v cli.Values, apiURL string, drive
 func createOrRegenConsumer(apiURL, username, sessionToken string, v cli.Values) (string, string, error) {
 	hostname, err := os.Hostname()
 	if err != nil {
-		return "", "", fmt.Errorf("cdsctl: cannot retrieve hostname: %s", err)
+		return "", "", cli.WrapError(err, "cannot retrieve hostname")
 	}
 
 	client := cdsclient.New(cdsclient.Config{
@@ -403,7 +403,7 @@ func createOrRegenConsumer(apiURL, username, sessionToken string, v cli.Values) 
 
 func writeConfigFile(configFile string, content *bytes.Buffer) error {
 	if errre := os.Remove(configFile); errre != nil {
-		return fmt.Errorf("Error while removing old file %s: %s", configFile, errre)
+		return cli.NewError("Error while removing old file %s: %s", configFile, errre)
 	}
 	fi, err := os.OpenFile(configFile, os.O_WRONLY|os.O_CREATE, 0600)
 	if err != nil {
@@ -454,18 +454,18 @@ func loginVerifyFunc(v cli.Values) error {
 		return cli.WrapError(err, "Cannot list auth drivers")
 	}
 	if len(drivers.Drivers) == 0 {
-		return fmt.Errorf("No authentication driver configured")
+		return cli.NewError("No authentication driver configured")
 	}
 
 	driverType := sdk.AuthConsumerType(v.GetString("driver-type"))
 	if !driverType.IsValidExternal() {
-		return fmt.Errorf("Invalid given driver type: %s", driverType)
+		return cli.NewError("Invalid given driver type: %s", driverType)
 	}
 
 	token := v.GetString("token")
 	splittedToken := strings.Split(token, ":")
 	if len(splittedToken) != 2 {
-		return fmt.Errorf("Invalid given token")
+		return cli.NewError("Invalid given token")
 	}
 
 	req := sdk.AuthConsumerSigninRequest{

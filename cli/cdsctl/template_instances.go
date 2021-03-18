@@ -107,7 +107,7 @@ func templateInstancesExportRun(v cli.Values) error {
 	for _, p := range filterParamPairs {
 		ps := strings.Split(p, "=")
 		if len(ps) < 2 {
-			return fmt.Errorf("Invalid given param %s", ps[0])
+			return cli.NewError("Invalid given param %s", ps[0])
 		}
 		filterParams[ps[0]] = strings.Join(ps[1:], "=")
 	}

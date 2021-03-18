@@ -42,7 +42,7 @@ var workflowArtifactListCmd = cli.Command{
 func workflowArtifactListRun(v cli.Values) (cli.ListResult, error) {
 	number, err := strconv.ParseInt(v.GetString("number"), 10, 64)
 	if err != nil {
-		return nil, fmt.Errorf("number parameter have to be an integer")
+		return nil, cli.NewError("number parameter have to be an integer")
 	}
 
 	workflowArtifacts, err := client.WorkflowRunArtifacts(v.GetString(_ProjectKey), v.GetString(_WorkflowName), number)
@@ -103,7 +103,7 @@ var workflowArtifactDownloadCmd = cli.Command{
 func workflowArtifactDownloadRun(v cli.Values) error {
 	number, err := strconv.ParseInt(v.GetString("number"), 10, 64)
 	if err != nil {
-		return fmt.Errorf("number parameter have to be an integer")
+		return cli.NewError("number parameter have to be an integer")
 	}
 
 	confCDN, err := client.ConfigCDN()
@@ -194,7 +194,7 @@ func workflowArtifactDownloadRun(v cli.Values) error {
 		}
 
 		if md5Sum != artifactData.MD5 {
-			return fmt.Errorf("Invalid md5Sum \ndownloaded file:%s\n%s:%s", md5Sum, f.Name(), artifactData.MD5)
+			return cli.NewError("Invalid md5Sum \ndownloaded file:%s\n%s:%s", md5Sum, f.Name(), artifactData.MD5)
 		}
 
 		if toDownload {
@@ -207,7 +207,7 @@ func workflowArtifactDownloadRun(v cli.Values) error {
 	}
 
 	if !ok {
-		return fmt.Errorf("no artifact downloaded")
+		return cli.NewError("no artifact downloaded")
 	}
 	return nil
 }
@@ -280,7 +280,7 @@ func downloadFromCDSAPI(v cli.Values, number int64) (bool, error) {
 		}
 
 		if sha512sum != a.SHA512sum {
-			return ok, fmt.Errorf("Invalid sha512sum \ndownloaded file:%s\n%s:%s", sha512sum, f.Name(), a.SHA512sum)
+			return ok, cli.NewError("Invalid sha512sum \ndownloaded file:%s\n%s:%s", sha512sum, f.Name(), a.SHA512sum)
 		}
 
 		md5sum, errmd5 := sdk.FileMd5sum(a.Name)
@@ -289,7 +289,7 @@ func downloadFromCDSAPI(v cli.Values, number int64) (bool, error) {
 		}
 
 		if md5sum != a.MD5sum {
-			return ok, fmt.Errorf("Invalid md5sum \ndownloaded file:%s\n%s:%s", md5sum, f.Name(), a.MD5sum)
+			return ok, cli.NewError("Invalid md5sum \ndownloaded file:%s\n%s:%s", md5sum, f.Name(), a.MD5sum)
 		}
 
 		if toDownload {

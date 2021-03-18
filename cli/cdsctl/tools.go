@@ -83,19 +83,19 @@ func toolsYamlSchemaRun(v cli.Values) error {
 	case "vscode":
 		installer = &yamlSchemaVSCodeInstaller{}
 	default:
-		return fmt.Errorf("Invalid given IDE name")
+		return cli.NewError("Invalid given IDE name")
 	}
 
 	home, err := os.UserHomeDir()
 	targetFolder := home + "/" + targetFolderName
 	if err != nil {
-		return fmt.Errorf("Cannot get user home directory info: %s", err)
+		return cli.WrapError(err, "Cannot get user home directory info")
 	}
 	if err := os.RemoveAll(targetFolder); err != nil {
-		return fmt.Errorf("Cannot remove folder %s: %s", targetFolder, err)
+		return cli.WrapError(err, "Cannot remove folder %s", targetFolder)
 	}
 	if err := os.MkdirAll(targetFolder, 0775); err != nil {
-		return fmt.Errorf("Cannot create folder %s: %s", targetFolder, err)
+		return cli.WrapError(err, "Cannot create folder %s", targetFolder)
 	}
 
 	paths := yamlSchemaPath{
@@ -106,22 +106,22 @@ func toolsYamlSchemaRun(v cli.Values) error {
 	}
 
 	if err := ioutil.WriteFile(paths.Workflow, []byte(res.Workflow), 0775); err != nil {
-		return fmt.Errorf("Cannot write file at %s: %s", paths.Workflow, err)
+		return cli.WrapError(err, "Cannot write file at %s", paths.Workflow)
 	}
 	fmt.Printf("File %s successfully written.\n", paths.Workflow)
 
 	if err := ioutil.WriteFile(paths.Pipeline, []byte(res.Pipeline), 0775); err != nil {
-		return fmt.Errorf("Cannot write file at %s: %s", paths.Pipeline, err)
+		return cli.WrapError(err, "Cannot write file at %s", paths.Pipeline)
 	}
 	fmt.Printf("File %s successfully written.\n", paths.Pipeline)
 
 	if err := ioutil.WriteFile(paths.Application, []byte(res.Application), 0775); err != nil {
-		return fmt.Errorf("Cannot write file at %s: %s", paths.Application, err)
+		return cli.WrapError(err, "Cannot write file at %s", paths.Application)
 	}
 	fmt.Printf("File %s successfully written.\n", paths.Application)
 
 	if err := ioutil.WriteFile(paths.Environment, []byte(res.Environment), 0775); err != nil {
-		return fmt.Errorf("Cannot write file at %s: %s", paths.Environment, err)
+		return cli.WrapError(err, "Cannot write file at %s", paths.Environment)
 	}
 	fmt.Printf("File %s successfully written.\n", paths.Environment)
 

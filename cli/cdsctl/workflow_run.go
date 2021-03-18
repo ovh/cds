@@ -91,20 +91,20 @@ var workflowRunManualCmd = cli.Command{
 
 func workflowRunManualRun(v cli.Values) error {
 	if v.GetBool("sync") && v.GetString("run-number") == "" {
-		return fmt.Errorf("could not use flag --sync without flag --run-number")
+		return cli.NewError("could not use flag --sync without flag --run-number")
 	}
 
 	manual := sdk.WorkflowNodeRunManual{}
 	if strings.TrimSpace(v.GetString("data")) != "" {
 		data := map[string]interface{}{}
 		if err := json.Unmarshal([]byte(v.GetString("data")), &data); err != nil {
-			return fmt.Errorf("error payload isn't a valid json")
+			return cli.NewError("error payload isn't a valid json")
 		}
 		manual.Payload = data
 	} else {
 		dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
 		if err != nil {
-			return fmt.Errorf("Unable to get current path: %s", err)
+			return cli.WrapError(err, "Unable to get current path")
 		}
 		var gitBranch, currentBranch, remoteURL string
 		ctx := context.Background()
@@ -157,7 +157,7 @@ func workflowRunManualRun(v cli.Values) error {
 		var errp error
 		runNumber, errp = strconv.ParseInt(v.GetString("run-number"), 10, 64)
 		if errp != nil {
-			return fmt.Errorf("run-number invalid: not a integer")
+			return cli.NewError("run-number invalid: not a integer")
 		}
 	}
 
@@ -169,7 +169,7 @@ func workflowRunManualRun(v cli.Values) error {
 
 	if v.GetString("node-name") != "" {
 		if runNumber <= 0 {
-			return fmt.Errorf("You can use flag node-name without flag run-number")
+			return cli.NewError("You can use flag node-name without flag run-number")
 		}
 		wr, err := client.WorkflowRunGet(v.GetString(_ProjectKey), v.GetString(_WorkflowName), runNumber)
 		if err != nil {
@@ -183,7 +183,7 @@ func workflowRunManualRun(v cli.Values) error {
 		}
 
 		if fromNodeID == 0 {
-			return fmt.Errorf("--node-name %v node found", v.GetString("node-name"))
+			return cli.NewError("--node-name %v node found", v.GetString("node-name"))
 		}
 	}
 

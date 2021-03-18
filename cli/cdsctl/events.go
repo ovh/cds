@@ -85,7 +85,7 @@ func eventsListenRun(v cli.Values) error {
 			Type: sdk.WebsocketFilterTypeGlobal,
 		}}
 	default:
-		return fmt.Errorf("invalid given parameters")
+		return cli.NewError("invalid given parameters")
 	}
 
 	for {

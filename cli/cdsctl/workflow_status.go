@@ -76,7 +76,7 @@ func workflowStatusRunWithTrack(v cli.Values) (interface{}, error) {
 			return nil, err
 		}
 		if len(runs) != 1 {
-			return nil, fmt.Errorf("workflow run not found")
+			return nil, cli.NewError("workflow run not found")
 		}
 		runNumber = runs[0].Number
 	}
@@ -158,7 +158,7 @@ func workflowStatusRunWithoutTrack(v cli.Values) (interface{}, error) {
 			return nil, err
 		}
 		if len(runs) < 1 {
-			return 0, fmt.Errorf("workflow run not found")
+			return 0, cli.NewError("workflow run not found")
 		}
 		run = &runs[0]
 	} else {
@@ -181,7 +181,7 @@ func workflowStatusRunWithoutTrack(v cli.Values) (interface{}, error) {
 				return nil, err
 			}
 			if len(runs) != 1 {
-				return 0, fmt.Errorf("workflow run not found")
+				return 0, cli.NewError("workflow run not found")
 			}
 			runNumber = runs[0].Number
 		}

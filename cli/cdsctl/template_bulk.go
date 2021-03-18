@@ -89,7 +89,7 @@ func templateExtractAndValidateInstances(instanceKeys []string) (map[string]temp
 		// instance path should be formatted like MYPROJ/myWorkflow
 		instancePath := strings.Split(instanceKeys[i], "/")
 		if len(instancePath) != 2 {
-			return nil, fmt.Errorf("invalid given instance path %s", instanceKeys[i])
+			return nil, cli.NewError("invalid given instance path %s", instanceKeys[i])
 		}
 
 		minstances[instanceKeys[i]] = templateBulkInstancePath{
@@ -104,7 +104,7 @@ func templateExtractAndValidateInstances(instanceKeys []string) (map[string]temp
 func templateExtractAndValidateParams(rawParams []string) ([]templateBulkParameter, error) {
 	var params []templateBulkParameter
 	for i := range rawParams {
-		err := fmt.Errorf("invalid given parameter %s", rawParams[i])
+		err := cli.NewError("invalid given parameter %s", rawParams[i])
 
 		// instance path should be formatted like MYPROJ/myWorkflow:myParameterKey=myValue
 		param := strings.Split(rawParams[i], "=")
@@ -146,12 +146,12 @@ func templateExtractAndValidateFileParams(filePath string) (*sdk.WorkflowTemplat
 
 	buf := new(bytes.Buffer)
 	if _, err := buf.ReadFrom(contentFile); err != nil {
-		return nil, nil, fmt.Errorf("cannot read from given file")
+		return nil, nil, cli.NewError("cannot read from given file")
 	}
 
 	var f templateBulkFile
 	if err := exportentities.Unmarshal(buf.Bytes(), format, &f); err != nil {
-		return nil, nil, fmt.Errorf("cannot unmarshal given file %v", err)
+		return nil, nil, cli.WrapError(err, "cannot unmarshal given file")
 	}
 
 	groupName, templateSlug, err := cli.ParsePath(f.TemplatePath)
@@ -170,7 +170,7 @@ func templateExtractAndValidateFileParams(filePath string) (*sdk.WorkflowTemplat
 		// instance path should be formatted like MYPROJ/myWorkflow
 		instancePath := strings.Split(instance.WorkflowPath, "/")
 		if len(instancePath) != 2 {
-			return nil, nil, fmt.Errorf("invalid given instance path %s", instance.WorkflowPath)
+			return nil, nil, cli.NewError("invalid given instance path %s", instance.WorkflowPath)
 		}
 
 		operation := sdk.WorkflowTemplateBulkOperation{
@@ -185,7 +185,7 @@ func templateExtractAndValidateFileParams(filePath string) (*sdk.WorkflowTemplat
 			// instance path should be formatted like myParameterKey=myValue
 			param := strings.Split(value, "=")
 			if len(param) != 2 {
-				return nil, nil, fmt.Errorf("invalid given parameter value")
+				return nil, nil, cli.NewError("invalid given parameter value")
 			}
 			operation.Request.Parameters[param[0]] = param[1]
 		}
@@ -326,7 +326,7 @@ func templateBulkRun(v cli.Values) error {
 	// if no template found for workflow or no instance, suggest one
 	if wt == nil {
 		if v.GetBool("no-interactive") {
-			return fmt.Errorf("you should give a template path")
+			return cli.NewError("you should give a template path")
 		}
 		wt, err = suggestTemplate()
 		if err != nil {
