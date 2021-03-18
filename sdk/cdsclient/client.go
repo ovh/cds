@@ -242,13 +242,22 @@ func (e *Error) StackTrace() string {
 }
 
 func newAPIError(e error) error {
+	if e == nil {
+		return nil
+	}
 	return &Error{apiError: errors.WithStack(e)}
 }
 
 func newTransportError(e error) error {
+	if e == nil {
+		return nil
+	}
 	return &Error{transportError: errors.WithStack(e)}
 }
 
 func newError(e error) error {
+	if e == nil {
+		return nil
+	}
 	return &Error{sdkError: errors.WithStack(e)}
 }
