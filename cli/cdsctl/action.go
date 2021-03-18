@@ -344,7 +344,7 @@ func actionBuiltinDocRun(v cli.Values) error {
 		}
 	}
 	if !found {
-		return fmt.Errorf("Invalid given action name %s", n)
+		return cli.NewError("Invalid given action name %s", n)
 	}
 
 	fmt.Println(m.Markdown())

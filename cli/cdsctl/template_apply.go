@@ -322,7 +322,7 @@ func templateApplyRun(v cli.Values) error {
 		dir = "."
 	}
 	if err := os.MkdirAll(dir, os.FileMode(0744)); err != nil {
-		return fmt.Errorf("Unable to create directory %s: %v", v.GetString("output-dir"), err)
+		return cli.WrapError(err, "Unable to create directory %s", v.GetString("output-dir"))
 	}
 
 	// Check request before submit

@@ -98,7 +98,7 @@ func (c *client) RequestJSON(ctx context.Context, method, path string, in interf
 	if in != nil {
 		b, err = json.Marshal(in)
 		if err != nil {
-			return nil, nil, 0, sdk.WithStack(err)
+			return nil, nil, 0, newError(err)
 		}
 	}
 
@@ -109,14 +109,14 @@ func (c *client) RequestJSON(ctx context.Context, method, path string, in interf
 
 	res, header, code, err := c.Request(ctx, method, path, body, mods...)
 	if err != nil {
-		return nil, nil, code, sdk.WithStack(err)
+		return nil, nil, code, err
 	}
 
 	if code >= 400 {
 		if err := sdk.DecodeError(res); err != nil {
 			return res, nil, code, err
 		}
-		return res, nil, code, sdk.WithStack(fmt.Errorf("HTTP %d", code))
+		return res, nil, code, newAPIError(fmt.Errorf("HTTP %d", code))
 	}
 
 	if code == 204 {
@@ -125,7 +125,7 @@ func (c *client) RequestJSON(ctx context.Context, method, path string, in interf
 
 	if out != nil {
 		if err := json.Unmarshal(res, out); err != nil {
-			return res, nil, code, sdk.WithStack(err)
+			return res, nil, code, newError(err)
 		}
 	}
 
@@ -230,7 +230,7 @@ func (c *client) Stream(ctx context.Context, httpClient HTTPClient, method strin
 		var requestError error
 		if rs, ok := body.(io.ReadSeeker); ok {
 			if _, err := rs.Seek(0, 0); err != nil {
-				return nil, nil, 0, sdk.WrapError(savederror, "request failed after %d retries: %v", i, err)
+				return nil, nil, 0, newError(fmt.Errorf("request failed after %d retries: %v", i, err))
 			}
 			req, requestError = http.NewRequest(method, url, body)
 		} else {
@@ -316,7 +316,7 @@ func (c *client) Stream(ctx context.Context, httpClient HTTPClient, method strin
 		return resp.Body, resp.Header, resp.StatusCode, nil
 	}
 
-	return nil, nil, 0, sdk.WrapError(savederror, "request failed after %d retries", c.config.Retry)
+	return nil, nil, 0, newError(fmt.Errorf("request failed after %d retries: %v", c.config.Retry, savederror))
 }
 
 // UploadMultiPart upload multipart

@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
 	toml "github.com/pelletier/go-toml"
 )
@@ -155,7 +156,7 @@ func writeToml(writer io.Writer, cdsConfigFile *CDSConfigFile) error {
 
 	t, err := toml.TreeFromMap(values)
 	if err != nil {
-		return fmt.Errorf("error while decoding file content: %v", err)
+		return cli.WrapError(err, "error while decoding file content")
 	}
 
 	_, err = t.WriteTo(writer)
@@ -165,7 +166,7 @@ func writeToml(writer io.Writer, cdsConfigFile *CDSConfigFile) error {
 func read(reader io.Reader) (*CDSConfigFile, error) {
 	tree, err := toml.LoadReader(reader)
 	if err != nil {
-		return nil, fmt.Errorf("error while decoding config file: %v", err)
+		return nil, cli.WrapError(err, "error while decoding config file")
 	}
 
 	m := tree.ToMap()

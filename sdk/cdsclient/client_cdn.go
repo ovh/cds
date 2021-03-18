@@ -40,16 +40,16 @@ func (c *client) CDNItemUpload(ctx context.Context, cdnAddr string, signature st
 	for i := 0; i < c.config.Retry; i++ {
 		f, err := fs.Open(path)
 		if err != nil {
-			return time.Since(t0), sdk.WithStack(err)
+			return time.Since(t0), err
 		}
 		_, _, _, err = c.Request(ctx, http.MethodPost, fmt.Sprintf("%s/item/upload", cdnAddr), f, SetHeader("X-CDS-WORKER-SIGNATURE", signature))
 		if err != nil {
-			savedError = sdk.WrapError(err, "unable to upload file, try %d", i+1)
+			savedError = fmt.Errorf("unable to upload file, try %d: %v", i+1, err)
 			time.Sleep(1 * time.Second)
 			continue
 		}
 		savedError = nil
 		break
 	}
-	return time.Since(t0), sdk.WithStack(savedError)
+	return time.Since(t0), savedError
 }

@@ -109,24 +109,24 @@ func interactiveChooseVCSServer(proj *sdk.Project, gitRepo repo.Repo) (string, e
 	default:
 		fetchURL, err := gitRepo.FetchURL(context.Background())
 		if err != nil {
-			return "", fmt.Errorf("Unable to get remote URL: %v", err)
+			return "", cli.WrapError(err, "Unable to get remote URL")
 		}
 
 		originURL, err := giturls.Parse(fetchURL)
 		if err != nil {
-			return "", fmt.Errorf("Unable to parse remote URL: %v", err)
+			return "", cli.WrapError(err, "Unable to parse remote URL")
 		}
 		originHost := strings.TrimSpace(strings.SplitN(originURL.Host, ":", 2)[0])
 
 		vcsConf, err := client.VCSConfiguration()
 		if err != nil {
-			return "", fmt.Errorf("Unable to get VCS Configuration: %v", err)
+			return "", cli.WrapError(err, "Unable to get VCS Configuration")
 		}
 
 		for rmName, cfg := range vcsConf {
 			rmURL, err := url.Parse(cfg.URL)
 			if err != nil {
-				return "", fmt.Errorf("Unable to get VCS Configuration: %v", err)
+				return "", cli.WrapError(err, "Unable to get VCS Configuration")
 			}
 			rmHost := strings.TrimSpace(strings.SplitN(rmURL.Host, ":", 2)[0])
 			if originHost == rmHost {
@@ -151,7 +151,7 @@ func interactiveChooseApplication(pkey, repoFullname, repoName string) (string, 
 	// Try to find application or create a new one from the repo
 	apps, err := client.ApplicationList(pkey)
 	if err != nil {
-		return "", nil, fmt.Errorf("unable to list applications: %v", err)
+		return "", nil, cli.WrapError(err, "unable to list applications")
 	}
 
 	for i, a := range apps {
@@ -177,7 +177,7 @@ func searchRepository(pkey, repoManagerName, repoFullname string) (string, error
 		// Get repositories from the repository manager
 		repos, err := client.RepositoriesList(pkey, repoManagerName, resync)
 		if err != nil {
-			return "", fmt.Errorf("unable to list repositories from %s: %v", repoManagerName, err)
+			return "", cli.WrapError(err, "unable to list repositories from %s", repoManagerName)
 		}
 
 		// Check it the project with it's delegated oauth knows the current repo
@@ -228,7 +228,7 @@ func interactiveChoosePipeline(pkey, defaultPipeline string) (string, *sdk.Pipel
 	// Try to find pipeline or create a new pipeline
 	pips, err := client.PipelineList(pkey)
 	if err != nil {
-		return "", nil, fmt.Errorf("unable to list pipelines: %v", err)
+		return "", nil, cli.WrapError(err, "unable to list pipelines")
 	}
 	if len(pips) == 0 {
 		// If the project doesn't have any pipeline, lets return
@@ -273,12 +273,12 @@ func craftWorkflowFile(workflowName, appName, pipName, destinationDir string) (s
 	wkflw := exportentities.InitWorkflow(workflowName, appName, pipName)
 	b, err := exportentities.Marshal(wkflw, exportentities.FormatYAML)
 	if err != nil {
-		return "", fmt.Errorf("Unable to write workflow file format: %v", err)
+		return "", cli.WrapError(err, "Unable to write workflow file format")
 	}
 
 	wFilePath := filepath.Join(destinationDir, workflowName+".yml")
 	if err := ioutil.WriteFile(wFilePath, b, os.FileMode(0644)); err != nil {
-		return "", fmt.Errorf("Unable to write workflow file: %v", err)
+		return "", cli.WrapError(err, "Unable to write workflow file")
 	}
 
 	fmt.Printf("File %s has been created\n", cli.Cyan(wFilePath))
@@ -404,12 +404,12 @@ func craftApplicationFile(proj *sdk.Project, existingApp *sdk.Application, fetch
 
 	b, err := exportentities.Marshal(app, exportentities.FormatYAML)
 	if err != nil {
-		return "", fmt.Errorf("Unable to write application file format: %v", err)
+		return "", cli.WrapError(err, "Unable to write application file format")
 	}
 
 	appFilePath := filepath.Join(destinationDir, fmt.Sprintf(exportentities.PullApplicationName, appName))
 	if err := ioutil.WriteFile(appFilePath, b, os.FileMode(0644)); err != nil {
-		return "", fmt.Errorf("Unable to write application file: %v", err)
+		return "", cli.WrapError(err, "Unable to write application file")
 	}
 
 	fmt.Printf("File %s has been created\n", cli.Cyan(appFilePath))
@@ -440,12 +440,12 @@ func craftPipelineFile(proj *sdk.Project, existingPip *sdk.Pipeline, pipName, de
 
 	b, err := exportentities.Marshal(pip, exportentities.FormatYAML)
 	if err != nil {
-		return pipName, fmt.Errorf("Unable to write pipeline file format: %v", err)
+		return pipName, cli.WrapError(err, "Unable to write pipeline file format")
 	}
 
 	pipFilePath := filepath.Join(destinationDir, fmt.Sprintf(exportentities.PullPipelineName, pipName))
 	if err := ioutil.WriteFile(pipFilePath, b, os.FileMode(0644)); err != nil {
-		return pipName, fmt.Errorf("Unable to write application file: %v", err)
+		return pipName, cli.WrapError(err, "Unable to write application file")
 	}
 
 	fmt.Printf("File %s has been created\n", cli.Cyan(pipFilePath))
@@ -468,14 +468,14 @@ func workflowInitRun(c cli.Values) error {
 	// Check if the project is linked to a repository
 	proj, err := client.ProjectGet(pkey, cdsclient.WithKeys())
 	if err != nil {
-		return fmt.Errorf("unable to get project: %v", err)
+		return cli.WrapError(err, "unable to get project")
 	}
 
 	repoFullname := c.GetString("repository-fullname")
 	if repoFullname == "" {
 		repoFullname, err = gitRepo.Name(ctx)
 		if err != nil {
-			return fmt.Errorf("unable to retrieve repository name: %v", err)
+			return cli.WrapError(err, "unable to retrieve repository name")
 		}
 	}
 
@@ -486,7 +486,7 @@ func workflowInitRun(c cli.Values) error {
 	if fetchURL == "" {
 		fetchURL, err = gitRepo.FetchURL(ctx)
 		if err != nil {
-			return fmt.Errorf("unable to retrieve origin URL: %v", err)
+			return cli.WrapError(err, "unable to retrieve origin URL")
 		}
 	}
 
@@ -516,7 +516,7 @@ func workflowInitRun(c cli.Values) error {
 	if len(files) == 0 {
 		repoManagerName, err := interactiveChooseVCSServer(proj, gitRepo)
 		if err != nil {
-			return fmt.Errorf("unable to get vcs server: %v", err)
+			return cli.WrapError(err, "unable to get vcs server")
 		}
 
 		repoFullname, err = searchRepository(pkey, repoManagerName, repoFullname)

@@ -53,7 +53,7 @@ func workflowPullRun(c cli.Values) error {
 		dir = "."
 	}
 	if err := os.MkdirAll(dir, os.FileMode(0744)); err != nil {
-		return fmt.Errorf("Unable to create directory %s: %v", c.GetString("output-dir"), err)
+		return cli.WrapError(err, "Unable to create directory %s", c.GetString("output-dir"))
 	}
 
 	var mods []cdsclient.RequestModifier

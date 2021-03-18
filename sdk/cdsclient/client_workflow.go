@@ -273,7 +273,7 @@ func (c *client) WorkflowLogDownload(ctx context.Context, link sdk.CDNLogLink) (
 		req.Header.Add("Authorization", auth)
 	})
 	if err != nil {
-		return nil, sdk.WrapError(err, "can't download log from: %s", downloadURL)
+		return nil, fmt.Errorf("can't download log from: %s: %v", downloadURL, err)
 	}
 	return data, nil
 }
@@ -321,7 +321,7 @@ func (c *client) WorkflowRunFromHook(projectKey string, workflowName string, hoo
 	hooks := w.WorkflowData.GetHooks()
 	if _, has := hooks[hook.WorkflowNodeHookUUID]; !has {
 		// If the hook doesn't exist, raise an error
-		return nil, sdk.WithStack(sdk.ErrHookNotFound)
+		return nil, sdk.ErrHookNotFound
 	}
 
 	if c.config.Verbose {
@@ -336,7 +336,7 @@ func (c *client) WorkflowRunFromHook(projectKey string, workflowName string, hoo
 		return nil, err
 	}
 	if code >= 300 {
-		return nil, fmt.Errorf("Cannot create workflow node run release. HTTP code error : %d", code)
+		return nil, newAPIError(fmt.Errorf("Cannot create workflow node run release. HTTP code error : %d", code))
 	}
 	return run, nil
 }
@@ -447,25 +447,25 @@ func (c *client) workflowCachePushIndirectUpload(projectKey, integrationName, re
 func (c *client) workflowCachePushIndirectUploadPost(url string, tarContent io.Reader, size int) error {
 	req, err := http.NewRequest("PUT", url, tarContent)
 	if err != nil {
-		return sdk.WithStack(err)
+		return newError(err)
 	}
 	req.Header.Set("Content-Type", "application/tar")
 	req.ContentLength = int64(size)
 
 	resp, err := c.HTTPNoTimeoutClient().Do(req)
 	if err != nil {
-		return sdk.WithStack(err)
+		return newTransportError(err)
 	}
 
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return sdk.WithStack(err)
+		return newError(err)
 	}
 
 	if resp.StatusCode >= 300 {
-		return sdk.WithStack(fmt.Errorf("unable to upload cache: (HTTP %d) %s", resp.StatusCode, string(body)))
+		return newAPIError(fmt.Errorf("unable to upload cache: (HTTP %d) %s", resp.StatusCode, string(body)))
 	}
 	return nil
 }

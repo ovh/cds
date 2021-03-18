@@ -55,11 +55,11 @@ func workflowStatusRunWithTrack(v cli.Values) (interface{}, error) {
 	ctx := context.Background()
 	r, err := repo.New(ctx, ".")
 	if err != nil {
-		return nil, fmt.Errorf("unable to get latest commit: %v", err)
+		return nil, cli.WrapError(err, "unable to get latest commit")
 	}
 	latestCommit, err := r.LatestCommit(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("unable to get latest commit: %v", err)
+		return nil, cli.WrapError(err, "unable to get latest commit")
 	}
 
 	currentDisplay.Printf("Looking for %s...\n", cli.Magenta(latestCommit.LongHash))

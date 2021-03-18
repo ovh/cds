@@ -151,12 +151,12 @@ func groupGrantRun(v cli.Values) error {
 
 	if workflow != "" {
 		if err := client.WorkflowGroupAdd(project, workflow, groupName, int(permission)); err != nil {
-			return sdk.WrapError(err, "cannot add group %s workflow %s/%s", groupName, project, workflow)
+			return cli.WrapError(err, "cannot add group %s workflow %s/%s", groupName, project, workflow)
 		}
 		fmt.Printf("Group '%s' added on workflow '%s/%s' with success\n", groupName, project, workflow)
 	} else {
 		if err := client.ProjectGroupAdd(project, groupName, int(permission), v.GetBool("only-project")); err != nil {
-			return sdk.WrapError(err, "cannot add group %s on project %s", groupName, project)
+			return cli.WrapError(err, "cannot add group %s on project %s", groupName, project)
 		}
 		fmt.Printf("Group '%s' added on project '%s' with success\n", groupName, project)
 	}
@@ -190,12 +190,12 @@ func groupRevokeRun(v cli.Values) error {
 
 	if workflow != "" {
 		if err := client.WorkflowGroupDelete(project, workflow, groupName); err != nil {
-			return sdk.WrapError(err, "cannot delete group %s in workflow %s/%s", groupName, project, workflow)
+			return cli.WrapError(err, "cannot delete group %s in workflow %s/%s", groupName, project, workflow)
 		}
 		fmt.Printf("Group '%s' deleted on workflow '%s/%s' with success\n", groupName, project, workflow)
 	} else {
 		if err := client.ProjectGroupDelete(project, groupName); err != nil {
-			return sdk.WrapError(err, "cannot delete group %s on project %s", groupName, project)
+			return cli.WrapError(err, "cannot delete group %s on project %s", groupName, project)
 		}
 		fmt.Printf("Group '%s' deleted on project '%s' with success\n", groupName, project)
 	}

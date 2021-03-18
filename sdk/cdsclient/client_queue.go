@@ -124,7 +124,7 @@ func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, j
 				urlSuffix = "?" + urlSuffix
 			}
 			if _, err := c.GetJSON(ctxt, "/queue/workflows"+urlSuffix, &queue, nil); err != nil && !sdk.ErrorIs(err, sdk.ErrUnauthorized) {
-				errs <- sdk.WrapError(err, "Unable to load jobs")
+				errs <- fmt.Errorf("unable to load jobs: %v", err)
 				cancel()
 				continue
 			} else if sdk.ErrorIs(err, sdk.ErrUnauthorized) {
@@ -252,7 +252,7 @@ func (c *client) QueueSendResult(ctx context.Context, id int64, res sdk.Result) 
 	path := fmt.Sprintf("/queue/workflows/%d/result", id)
 	b, err := json.Marshal(res)
 	if err != nil {
-		return sdk.WithStack(err)
+		return newError(err)
 	}
 	result, _, code, err := c.Stream(ctx, c.HTTPNoTimeoutClient(), "POST", path, bytes.NewBuffer(b), nil)
 	if err != nil {
@@ -260,7 +260,7 @@ func (c *client) QueueSendResult(ctx context.Context, id int64, res sdk.Result) 
 	}
 	defer result.Close()
 	if code >= 300 {
-		return sdk.WithStack(fmt.Errorf("unable to send job result. HTTP code error : %d", code))
+		return newError(fmt.Errorf("unable to send job result. HTTP code error : %d", code))
 	}
 	return nil
 }
@@ -597,8 +597,8 @@ func (c *client) queueDirectStaticFilesUpload(projectKey, integrationName string
 			SetHeader("Content-Disposition", "attachment; filename=archive.tar"),
 			SetHeader("Content-Type", writer.FormDataContentType()))
 		if err == nil && code < 300 {
-			if errU := json.Unmarshal(respBody, &staticFileResp); errU != nil {
-				return "", sdk.WrapError(errU, "Cannot unmarshal body: %v", string(respBody))
+			if err := json.Unmarshal(respBody, &staticFileResp); err != nil {
+				return "", fmt.Errorf("Cannot unmarshal body: %v: %v", string(respBody), err)
 			}
 			fmt.Printf("Files uploaded with public URL: %s\n", staticFileResp.PublicURL)
 			return staticFileResp.PublicURL, nil
@@ -610,5 +610,5 @@ func (c *client) queueDirectStaticFilesUpload(projectKey, integrationName string
 	}
 
 	fmt.Printf("Files uploaded after retries with public URL: %s\n", staticFileResp.PublicURL)
-	return staticFileResp.PublicURL, sdk.WrapError(err, "Cannot upload static files after %d retry", c.config.Retry)
+	return staticFileResp.PublicURL, fmt.Errorf("cannot upload static files after %d retry: %v", c.config.Retry, err)
 }

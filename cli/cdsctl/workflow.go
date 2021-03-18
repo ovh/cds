@@ -51,7 +51,7 @@ func workflowNodeForCurrentRepo(projectKey, workflowName string) (int64, error) 
 
 	latestCommit, err := r.LatestCommit(ctx)
 	if err != nil {
-		return 0, fmt.Errorf("unable to get latest commit: %v", err)
+		return 0, cli.WrapError(err, "unable to get latest commit")
 	}
 
 	filters := []cdsclient.Filter{

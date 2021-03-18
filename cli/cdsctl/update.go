@@ -51,7 +51,7 @@ func updateRun(v cli.Values) error {
 
 	resp, err := http.Get(urlBinary)
 	if err != nil {
-		return fmt.Errorf("error while getting binary from CDS API: %v", err)
+		return cli.WrapError(err, "error while getting binary from CDS API")
 	}
 	defer resp.Body.Close()
 

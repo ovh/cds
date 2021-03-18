@@ -93,7 +93,7 @@ func workflowLogSearchNumber(v cli.Values) (int64, error) {
 		return 0, err
 	}
 	if len(runs) < 1 {
-		return 0, sdk.WithStack(fmt.Errorf("no run found for workflow %s/%s", projectKey, workflowName))
+		return 0, fmt.Errorf("no run found for workflow %s/%s", projectKey, workflowName)
 	}
 	return runs[0].Number, nil
 }
@@ -343,7 +343,7 @@ func workflowLogDownloadRun(v cli.Values) error {
 	}
 
 	if !ok {
-		return sdk.WithStack(fmt.Errorf("no log downloaded"))
+		return fmt.Errorf("no log downloaded")
 	}
 	return nil
 }
@@ -452,7 +452,7 @@ func workflowLogStreamRun(v cli.Values) error {
 		APIRef:   link.APIRef,
 	})
 	if err != nil {
-		return sdk.WithStack(err)
+		return cli.WrapError(err, "unable to marshal streamFilter")
 	}
 	chanMessageToSend <- buf
 

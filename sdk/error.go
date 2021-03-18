@@ -413,6 +413,10 @@ func (e Error) Error() string {
 		} else {
 			message = fmt.Sprintf("%s (from: %s)", message, e.From)
 		}
+	} else {
+		if e.RequestID != "" {
+			message = fmt.Sprintf("%s (request_id: %s)", message, e.RequestID)
+		}
 	}
 
 	return message

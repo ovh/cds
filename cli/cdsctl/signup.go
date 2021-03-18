@@ -80,7 +80,7 @@ func signupFunc(v cli.Values) error {
 	})
 	drivers, err := client.AuthDriverList()
 	if err != nil {
-		return fmt.Errorf("Cannot list auth drivers: %v", err)
+		return cli.WrapError(err, "Cannot list auth drivers")
 	}
 	if len(drivers.Drivers) == 0 {
 		return fmt.Errorf("No authentication driver configured")

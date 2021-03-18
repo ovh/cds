@@ -129,7 +129,7 @@ func workflowArtifactDownloadRun(v cli.Values) error {
 		var err error
 		reg, err = regexp.Compile(v.GetString("exclude"))
 		if err != nil {
-			return fmt.Errorf("exclude parameter is not valid: %v", err)
+			return cli.WrapError(err, "exclude parameter is not valid")
 		}
 	}
 	for _, runResult := range results {
@@ -181,10 +181,10 @@ func workflowArtifactDownloadRun(v cli.Values) error {
 				return err
 			}
 			if _, err := io.Copy(f, r); err != nil {
-				return sdk.WrapError(err, "unable to write file")
+				return cli.WrapError(err, "unable to write file")
 			}
 			if err := f.Close(); err != nil {
-				return err
+				return cli.WrapError(err, "unable to close file")
 			}
 		}
 
@@ -223,7 +223,7 @@ func downloadFromCDSAPI(v cli.Values, number int64) (bool, error) {
 		var err error
 		reg, err = regexp.Compile(v.GetString("exclude"))
 		if err != nil {
-			return false, fmt.Errorf("exclude parameter is not valid: %v", err)
+			return false, cli.WrapError(err, "exclude parameter is not valid")
 		}
 	}
 

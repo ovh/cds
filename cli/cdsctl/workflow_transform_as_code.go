@@ -83,7 +83,7 @@ forLoop:
 		case evt := <-chanMessageReceived:
 			if evt.Event.EventType == fmt.Sprintf("%T", sdk.EventOperation{}) {
 				if err := json.Unmarshal(evt.Event.Payload, &ope); err != nil {
-					return nil, fmt.Errorf("cannot parse operation from received event: %v", err)
+					return nil, cli.WrapError(err, "cannot parse operation from received event")
 				}
 				if ope.Status > sdk.OperationStatusProcessing {
 					break forLoop
@@ -99,7 +99,7 @@ forLoop:
 	urlSplitted := strings.Split(ope.Setup.Push.PRLink, "/")
 	id, err := strconv.Atoi(urlSplitted[len(urlSplitted)-1])
 	if err != nil {
-		return nil, fmt.Errorf("cannot read id from pull request URL %s: %v", ope.Setup.Push.PRLink, err)
+		return nil, cli.WrapError(err, "cannot read id from pull request URL %s", ope.Setup.Push.PRLink)
 	}
 	response := struct {
 		URL string `cli:"url" json:"url"`
@@ -110,7 +110,7 @@ forLoop:
 	}
 	switch ope.Status {
 	case sdk.OperationStatusError:
-		return nil, fmt.Errorf("cannot perform operation: %v", ope.Error)
+		return nil, cli.WrapError(err, "cannot perform operation", ope.Error)
 	}
 	return response, nil
 }

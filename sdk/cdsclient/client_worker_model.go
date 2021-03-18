@@ -19,10 +19,10 @@ type WorkerModelFilter struct {
 func (c *client) WorkerModelBook(groupName, name string) error {
 	code, err := c.PutJSON(context.Background(), fmt.Sprintf("/worker/model/%s/%s/book", groupName, name), nil, nil)
 	if err != nil {
-		return sdk.WithStack(err)
+		return err
 	}
 	if code > 300 {
-		return sdk.WithStack(fmt.Errorf("HTTP %d", code))
+		return newError(fmt.Errorf("HTTP %d", code))
 	}
 	return nil
 }
@@ -66,7 +66,7 @@ func (c *client) WorkerModelSpawnError(groupName, name string, data sdk.SpawnErr
 	if code > 300 && err == nil {
 		return fmt.Errorf("WorkerModelSpawnError> HTTP %d", code)
 	} else if err != nil {
-		return sdk.WithStack(err)
+		return err
 	}
 	return nil
 }

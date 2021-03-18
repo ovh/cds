@@ -113,13 +113,13 @@ func workflowRunManualRun(v cli.Values) error {
 			currentBranch, _ = r.CurrentBranch(ctx)
 			remoteURL, err = r.FetchURL(ctx)
 			if err != nil {
-				return sdk.WrapError(err, "cannot fetch the remote url")
+				return cli.WrapError(err, "cannot get the remote url")
 			}
 		}
 
 		wf, err := client.WorkflowGet(v.GetString(_ProjectKey), v.GetString(_WorkflowName))
 		if err != nil {
-			return sdk.WrapError(err, "cannot load workflow")
+			return cli.WrapError(err, "cannot load workflow")
 		}
 
 		// Check if we are on the same repository and if we have a git.branch in the default payload
@@ -163,7 +163,7 @@ func workflowRunManualRun(v cli.Values) error {
 
 	if v.GetBool("sync") {
 		if _, err := client.WorkflowRunResync(v.GetString(_ProjectKey), v.GetString(_WorkflowName), runNumber); err != nil {
-			return fmt.Errorf("Cannot resync your workflow run %d : %v", runNumber, err)
+			return cli.WrapError(err, "Cannot resync your workflow run %d ", runNumber)
 		}
 	}
 

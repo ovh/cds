@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/pkg/errors"
+
 	"github.com/ovh/cds/sdk"
 )
 
@@ -204,17 +206,37 @@ func CommandWithPreRun(f func(c *Command, args *[]string) error) func(c *Command
 }
 
 // ErrWrongUsage is a common error
-var ErrWrongUsage = &Error{1, fmt.Errorf("Wrong usage")}
+var ErrWrongUsage = &Error{Code: 1, Err: fmt.Errorf("Wrong usage")}
 
 // Error implements error
 type Error struct {
-	Code int
-	Err  error
+	Message string
+	Code    int
+	Err     error
 }
 
 // Error implements error
 func (e *Error) Error() string {
-	return e.Err.Error()
+	if e.Message == "" {
+		return e.Err.Error()
+	}
+	return e.Message + ": " + e.Err.Error()
+}
+
+func NewError(format string, args ...interface{}) error {
+	return &Error{
+		Code: 50,
+		Err:  errors.WithStack(fmt.Errorf(format, args...)),
+	}
+}
+
+func WrapError(err error, format string, args ...interface{}) error {
+	msg := fmt.Sprintf(format, args...)
+	return &Error{
+		Code:    50,
+		Message: msg,
+		Err:     errors.WithStack(err),
+	}
 }
 
 // ListResult is the result type for command function which returns list. Use AsListResult to compute this

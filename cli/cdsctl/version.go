@@ -54,7 +54,7 @@ func versionRun(v cli.Values) error {
 		var err error
 		versionAPI, err = client.Version()
 		if err != nil {
-			return fmt.Errorf("error while getting API version: %v", err)
+			return cli.WrapError(err, "error while getting API version")
 		}
 	}
 

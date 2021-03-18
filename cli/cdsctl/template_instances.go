@@ -139,7 +139,7 @@ func templateInstancesExportRun(v cli.Values) error {
 
 	b, err := yaml.Marshal(f)
 	if err != nil {
-		return fmt.Errorf("unable to marshal: %v", err)
+		return cli.WrapError(err, "unable to marshal")
 	}
 
 	fmt.Println(string(b))

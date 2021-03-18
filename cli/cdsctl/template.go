@@ -110,7 +110,7 @@ func templatePullRun(v cli.Values) error {
 		dir = "."
 	}
 	if err := os.MkdirAll(dir, os.FileMode(0744)); err != nil {
-		return fmt.Errorf("unable to create directory %s: %v", v.GetString("output-dir"), err)
+		return cli.WrapError(err, "unable to create directory %s", v.GetString("output-dir"))
 	}
 
 	t, err := client.TemplatePull(wt.Group.Name, wt.Slug)

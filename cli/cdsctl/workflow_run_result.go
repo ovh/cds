@@ -137,10 +137,10 @@ func workflowRunResultGet(v cli.Values) error {
 				return err
 			}
 			if _, err := io.Copy(f, r); err != nil {
-				return sdk.WrapError(err, "unable to write file")
+				return cli.WrapError(err, "unable to write file")
 			}
 			if err := f.Close(); err != nil {
-				return err
+				return cli.WrapError(err, "unable to close file")
 			}
 		}
 
