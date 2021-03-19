@@ -237,20 +237,9 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 	instance := 1
 	forcePull := strings.HasSuffix(spawnArgs.Model.ModelDocker.Image, ":latest")
 
-	udataParam := sdk.WorkerArgs{
-		API:               h.Configuration().API.HTTP.URL,
-		Token:             spawnArgs.WorkerToken,
-		HTTPInsecure:      h.Config.API.HTTP.Insecure,
-		Name:              spawnArgs.WorkerName,
-		TTL:               h.Config.WorkerTTL,
-		Model:             spawnArgs.Model.Path(),
-		HatcheryName:      h.Name(),
-		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
-		GraylogPort:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Port,
-		GraylogExtraKey:   h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey,
-		GraylogExtraValue: h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue,
-		WorkflowJobID:     spawnArgs.JobID,
-	}
+	udataParam := h.GenerateWorkerArgs(h, spawnArgs)
+	udataParam.TTL = h.Config.WorkerTTL
+	udataParam.WorkflowJobID = spawnArgs.JobID
 
 	tmpl, errt := template.New("cmd").Parse(spawnArgs.Model.ModelDocker.Cmd)
 	if errt != nil {

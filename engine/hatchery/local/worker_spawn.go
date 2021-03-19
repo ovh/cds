@@ -71,21 +71,10 @@ func (h *HatcheryLocal) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 
 	log.Info(ctx, "HatcheryLocal.SpawnWorker> basedir: %s", basedir)
 
-	udataParam := sdk.WorkerArgs{
-		API:               h.Configuration().API.HTTP.URL,
-		Token:             spawnArgs.WorkerToken,
-		BaseDir:           basedir,
-		HTTPInsecure:      h.Config.API.HTTP.Insecure,
-		Name:              spawnArgs.WorkerName,
-		Model:             spawnArgs.ModelName(),
-		HatcheryName:      h.Name(),
-		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
-		GraylogPort:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Port,
-		GraylogExtraKey:   h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey,
-		GraylogExtraValue: h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue,
-		WorkerBinary:      path.Join(h.BasedirDedicated, h.getWorkerBinaryName()),
-		WorkflowJobID:     spawnArgs.JobID,
-	}
+	udataParam := h.GenerateWorkerArgs(h, spawnArgs)
+	udataParam.BaseDir = basedir
+	udataParam.WorkerBinary = path.Join(h.BasedirDedicated, h.getWorkerBinaryName())
+	udataParam.WorkflowJobID = spawnArgs.JobID
 
 	tmpl, errt := template.New("cmd").Parse(workerCmdTmpl)
 	if errt != nil {

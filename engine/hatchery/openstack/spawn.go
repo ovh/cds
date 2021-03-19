@@ -76,20 +76,10 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 	if err != nil {
 		return err
 	}
-	udataParam := sdk.WorkerArgs{
-		API:               h.Configuration().API.HTTP.URL,
-		Name:              spawnArgs.WorkerName,
-		Token:             spawnArgs.WorkerToken,
-		Model:             spawnArgs.Model.Group.Name + "/" + spawnArgs.Model.Name,
-		HatcheryName:      h.Name(),
-		TTL:               h.Config.WorkerTTL,
-		FromWorkerImage:   withExistingImage,
-		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
-		GraylogPort:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Port,
-		GraylogExtraKey:   h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey,
-		GraylogExtraValue: h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue,
-	}
 
+	udataParam := h.GenerateWorkerArgs(h, spawnArgs)
+	udataParam.TTL = h.Config.WorkerTTL
+	udataParam.FromWorkerImage = withExistingImage
 	udataParam.WorkflowJobID = spawnArgs.JobID
 
 	var buffer bytes.Buffer

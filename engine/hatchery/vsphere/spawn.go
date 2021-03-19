@@ -322,20 +322,15 @@ func (h *HatcheryVSphere) launchScriptWorker(ctx context.Context, name string, j
 	if errt != nil {
 		return errt
 	}
-	udataParam := sdk.WorkerArgs{
-		API:               h.Config.API.HTTP.URL,
-		Name:              name,
-		Token:             token,
-		Model:             model.Group.Name + "/" + model.Name,
-		HatcheryName:      h.Name(),
-		TTL:               h.Config.WorkerTTL,
-		FromWorkerImage:   true,
-		GraylogHost:       h.Config.Provision.WorkerLogsOptions.Graylog.Host,
-		GraylogPort:       h.Config.Provision.WorkerLogsOptions.Graylog.Port,
-		GraylogExtraKey:   h.Config.Provision.WorkerLogsOptions.Graylog.ExtraKey,
-		GraylogExtraValue: h.Config.Provision.WorkerLogsOptions.Graylog.ExtraValue,
-		WorkflowJobID:     jobID,
-	}
+
+	udataParam := h.GenerateWorkerArgs(h, hatchery.SpawnArguments{
+		WorkerToken: token,
+		WorkerName:  name,
+		Model:       &model,
+	})
+	udataParam.TTL = h.Config.WorkerTTL
+	udataParam.FromWorkerImage = true
+	udataParam.WorkflowJobID = jobID
 
 	var buffer bytes.Buffer
 	if err := tmpl.Execute(&buffer, udataParam); err != nil {
