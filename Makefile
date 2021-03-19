@@ -15,7 +15,7 @@ doc:
 ifndef GEN_PATH
 	$(error GEN_PATH is undefined)
 endif
-  # GEN_PATH=./docs/content/docs/components
+	# GEN_PATH=./docs/content/docs/components
 	$(TARGET_CDSCTL) doc $(GEN_PATH)
 	$(TARGET_WORKER) doc $(GEN_PATH)
 	$(TARGET_ENGINE) doc $(GEN_PATH) ./
@@ -110,3 +110,13 @@ tar: target/cds-engine.tar.gz
 target/cds-engine.tar.gz: $(TARGET_DIR)/config.toml.sample $(TARGET_DIR)/tmpl-config
 	mkdir -p target
 	tar -czvf target/cds-engine.tar.gz -C $(TARGET_DIR) .
+
+PLUGINS := `ls -d contrib/grpcplugins/action/plugin-*`
+
+tidy:
+	@echo "Running tidy on cds main project"
+	@go mod tidy
+	@for P in $(PLUGINS); do \
+		echo "Running tidy on $$P"; \
+		(cd $$P && go mod tidy); \
+	done;
