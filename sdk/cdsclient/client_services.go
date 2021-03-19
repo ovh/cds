@@ -21,7 +21,7 @@ func (c *client) ServiceRegister(ctx context.Context, s sdk.Service) (*sdk.Servi
 	code, err := c.PostJSON(context.Background(), "/services/register", &s, &s)
 	if code != 201 && code != 200 {
 		if err == nil {
-			return nil, fmt.Errorf("HTTP Code %d", code)
+			return nil, newAPIError(fmt.Errorf("HTTP Code %d", code))
 		}
 	}
 	if err != nil {

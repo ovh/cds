@@ -208,7 +208,7 @@ func (c *client) WorkflowRunNumberSet(projectKey string, workflowName string, nu
 		return err
 	}
 	if code >= 300 {
-		return fmt.Errorf("Cannot update workflow run number. HTTP code error : %d", code)
+		return newAPIError(fmt.Errorf("Cannot update workflow run number. HTTP code error : %d", code))
 	}
 	return nil
 }
@@ -273,7 +273,7 @@ func (c *client) WorkflowLogDownload(ctx context.Context, link sdk.CDNLogLink) (
 		req.Header.Add("Authorization", auth)
 	})
 	if err != nil {
-		return nil, fmt.Errorf("can't download log from: %s: %v", downloadURL, err)
+		return nil, newError(fmt.Errorf("can't download log from: %s: %v", downloadURL, err))
 	}
 	return data, nil
 }
@@ -306,7 +306,7 @@ func (c *client) WorkflowNodeRunRelease(projectKey string, workflowName string, 
 	}
 	defer res.Close()
 	if code >= 300 {
-		return fmt.Errorf("Cannot create workflow node run release. HTTP code error : %d", code)
+		return newAPIError(fmt.Errorf("Cannot create workflow node run release. HTTP code error : %d", code))
 	}
 	return nil
 }
@@ -360,7 +360,7 @@ func (c *client) WorkflowRunFromManual(projectKey string, workflowName string, m
 		return nil, err
 	}
 	if code >= 300 {
-		return nil, fmt.Errorf("Cannot run workflow node. HTTP code error: %d", code)
+		return nil, newAPIError(fmt.Errorf("Cannot run workflow node. HTTP code error: %d", code))
 	}
 
 	return run, nil
@@ -375,7 +375,7 @@ func (c *client) WorkflowStop(projectKey string, workflowName string, number int
 		return nil, err
 	}
 	if code >= 300 {
-		return nil, fmt.Errorf("Cannot stop workflow %s. HTTP code error: %d", workflowName, code)
+		return nil, newAPIError(fmt.Errorf("Cannot stop workflow %s. HTTP code error: %d", workflowName, code))
 	}
 
 	return run, nil
@@ -390,7 +390,7 @@ func (c *client) WorkflowNodeStop(projectKey string, workflowName string, number
 		return nil, err
 	}
 	if code >= 300 {
-		return nil, fmt.Errorf("Cannot stop workflow node %d. HTTP code error: %d", fromNodeID, code)
+		return nil, newAPIError(fmt.Errorf("Cannot stop workflow node %d. HTTP code error: %d", fromNodeID, code))
 	}
 
 	return nodeRun, nil
@@ -420,7 +420,7 @@ func (c *client) workflowCachePushDirectUpload(projectKey, integrationName, ref 
 	}
 
 	if code >= 400 {
-		return fmt.Errorf("HTTP Code %d", code)
+		return newAPIError(fmt.Errorf("HTTP Code %d", code))
 	}
 
 	return nil
@@ -435,7 +435,7 @@ func (c *client) workflowCachePushIndirectUpload(projectKey, integrationName, re
 	}
 
 	if code >= 400 {
-		return fmt.Errorf("HTTP Code %d", code)
+		return newAPIError(fmt.Errorf("HTTP Code %d", code))
 	}
 
 	// FIXME temporary fix that will be deprecated with cdn artifacts
@@ -494,7 +494,7 @@ func (c *client) WorkflowCachePull(projectKey, integrationName, ref string) (io.
 			return nil, err
 		}
 		if code >= 400 {
-			return nil, fmt.Errorf("HTTP Code %d", code)
+			return nil, newAPIError(fmt.Errorf("HTTP Code %d", code))
 		}
 		downloadURL = cacheObj.TmpURL
 	}
@@ -512,9 +512,9 @@ func (c *client) WorkflowCachePull(projectKey, integrationName, ref string) (io.
 
 	if code >= 400 {
 		if code == 404 {
-			return nil, fmt.Errorf("Cache not found")
+			return nil, newError(fmt.Errorf("Cache not found"))
 		}
-		return nil, fmt.Errorf("HTTP Code %d", code)
+		return nil, newAPIError(fmt.Errorf("HTTP Code %d", code))
 	}
 
 	return res, nil

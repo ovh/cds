@@ -59,7 +59,7 @@ func (c *client) WorkerModelImport(content io.Reader, mods ...RequestModifier) (
 		return nil, err
 	}
 	if code >= 400 {
-		return nil, fmt.Errorf("HTTP Status code %d", code)
+		return nil, newAPIError(fmt.Errorf("HTTP Status code %d", code))
 	}
 
 	var wm sdk.Model
@@ -91,7 +91,7 @@ func (c *client) WorkflowPush(projectKey string, tarContent io.Reader, mods ...R
 		return nil, nil, err
 	}
 	if code >= 400 {
-		return nil, nil, fmt.Errorf("HTTP Status code %d", code)
+		return nil, nil, newAPIError(fmt.Errorf("HTTP Status code %d", code))
 	}
 
 	messages := []string{}

@@ -44,7 +44,7 @@ func (c *client) CDNItemUpload(ctx context.Context, cdnAddr string, signature st
 		}
 		_, _, _, err = c.Request(ctx, http.MethodPost, fmt.Sprintf("%s/item/upload", cdnAddr), f, SetHeader("X-CDS-WORKER-SIGNATURE", signature))
 		if err != nil {
-			savedError = fmt.Errorf("unable to upload file, try %d: %v", i+1, err)
+			savedError = newAPIError(fmt.Errorf("unable to upload file, try %d: %v", i+1, err))
 			time.Sleep(1 * time.Second)
 			continue
 		}

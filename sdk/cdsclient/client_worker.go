@@ -93,7 +93,7 @@ func (c *client) WorkerSetStatus(ctx context.Context, status string) error {
 	case sdk.StatusWaiting:
 		uri = fmt.Sprintf("/worker/waiting")
 	default:
-		return fmt.Errorf("Unsupported status: %s", status)
+		return newError(fmt.Errorf("Unsupported status: %s", status))
 	}
 
 	code, err := c.PostJSON(ctx, uri, nil, nil)
@@ -102,7 +102,7 @@ func (c *client) WorkerSetStatus(ctx context.Context, status string) error {
 	}
 
 	if code >= 300 {
-		return fmt.Errorf("cds: api error (%d)", code)
+		return newAPIError(fmt.Errorf("cds: api error (%d)", code))
 	}
 
 	return nil

@@ -59,7 +59,7 @@ func (c *client) ActionImport(content io.Reader, mods ...RequestModifier) error 
 		return err
 	}
 	if code > 400 {
-		return fmt.Errorf("HTTP Code %d", code)
+		return newAPIError(fmt.Errorf("HTTP Code %d", code))
 	}
 	return nil
 }

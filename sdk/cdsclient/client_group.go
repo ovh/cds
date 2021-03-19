@@ -11,7 +11,7 @@ func (c *client) GroupCreate(group *sdk.Group) error {
 	code, err := c.PostJSON(context.Background(), "/group", group, nil)
 	if code != 201 {
 		if err == nil {
-			return fmt.Errorf("HTTP Code %d", code)
+			return newAPIError(fmt.Errorf("HTTP Code %d", code))
 		}
 	}
 	return err
@@ -48,7 +48,7 @@ func (c *client) GroupRename(oldGroupname, newGroupname string) error {
 	code, err := c.PutJSON(context.Background(), "/group/"+oldGroupname, group, nil)
 	if code > 400 {
 		if err == nil {
-			return fmt.Errorf("HTTP Code %d", code)
+			return newAPIError(fmt.Errorf("HTTP Code %d", code))
 		}
 	}
 	return err
