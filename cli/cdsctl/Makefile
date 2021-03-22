@@ -21,6 +21,8 @@ GO_LINT = ${GOPATH}/bin/gometalinter
 GO_COV_MERGE = ${GOPATH}/bin/gocovmerge
 GO_GO2XUNIT = ${GOPATH}/bin/go2xunit
 
+PKGS_COMMA_SEP = go list -f '{{ join .Deps "\n" }}{{"\n"}}{{.ImportPath}}' . | grep github.com/ovh/cds | grep -v vendor | tr '\n' ',' | sed 's/,$$//'
+
 define get_os_from_binary_file
 $(strip $(shell echo $(1) | cut -d'-' -f 2))
 endef
@@ -72,7 +74,8 @@ gobuild:
 build: $(TARGET_DIR) $(TARGET_BINARIES_VARIANT) $(TARGET_BINARIES)
 
 build_test_cdsctl:
-	CGO_ENABLED=1 go test -coverpkg="./..." -c . -o $(TARGET_DIR)/$(TARGET_BINARY).test -tags testbincover,nokeychain
+	TEMP=`$(PKGS_COMMA_SEP)`; \
+	CGO_ENABLED=1 go test -coverpkg $$TEMP -c . -o $(TARGET_DIR)/$(TARGET_BINARY).test -tags testbincover,nokeychain;
 
 test: clean
 	@for PKG in $(TEST_PKGS); do \
