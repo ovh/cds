@@ -326,7 +326,7 @@ export class WorkflowNodeRunParamComponent implements AfterViewInit, OnDestroy {
 
     private updateDefaultPipelineParameters() {
         if (this.nodeToRun) {
-            let pipToRun = Workflow.getPipeline(this.workflow, this.nodeToRun);
+            let pipToRun = Workflow.getPipeline(this.currentWorkflowRun ? this.currentWorkflowRun.workflow : this.workflow, this.nodeToRun);
             if (!pipToRun) {
                 return;
             }
