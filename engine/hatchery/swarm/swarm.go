@@ -379,20 +379,8 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 		return errDockerOpts
 	}
 
-	udataParam := sdk.WorkerArgs{
-		API:               h.Config.API.HTTP.URL,
-		Token:             spawnArgs.WorkerToken,
-		HTTPInsecure:      h.Config.API.HTTP.Insecure,
-		Name:              spawnArgs.WorkerName,
-		Model:             spawnArgs.Model.Group.Name + "/" + spawnArgs.Model.Name,
-		TTL:               h.Config.WorkerTTL,
-		HatcheryName:      h.Name(),
-		GraylogHost:       h.Config.Provision.WorkerLogsOptions.Graylog.Host,
-		GraylogPort:       h.Config.Provision.WorkerLogsOptions.Graylog.Port,
-		GraylogExtraKey:   h.Config.Provision.WorkerLogsOptions.Graylog.ExtraKey,
-		GraylogExtraValue: h.Config.Provision.WorkerLogsOptions.Graylog.ExtraValue,
-	}
-
+	udataParam := h.GenerateWorkerArgs(h, spawnArgs)
+	udataParam.TTL = h.Config.WorkerTTL
 	udataParam.WorkflowJobID = spawnArgs.JobID
 
 	tmpl, errt := template.New("cmd").Parse(spawnArgs.Model.ModelDocker.Cmd)

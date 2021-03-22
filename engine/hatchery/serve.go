@@ -231,3 +231,25 @@ func getStatusHandler(h hatchery.Interface) service.HandlerFunc {
 		}
 	}
 }
+
+func (c *Common) GenerateWorkerArgs(h hatchery.Interface, spawnArgs hatchery.SpawnArguments) sdk.WorkerArgs {
+	apiURL := h.Configuration().Provision.WorkerAPIHTTP.URL
+	httpInsecure := h.Configuration().Provision.WorkerAPIHTTP.Insecure
+	if apiURL == "" {
+		apiURL = h.Configuration().API.HTTP.URL
+		httpInsecure = h.Configuration().API.HTTP.Insecure
+	}
+
+	return sdk.WorkerArgs{
+		API:               apiURL,
+		HTTPInsecure:      httpInsecure,
+		Token:             spawnArgs.WorkerToken,
+		Name:              spawnArgs.WorkerName,
+		Model:             spawnArgs.ModelName(),
+		HatcheryName:      h.Name(),
+		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
+		GraylogPort:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Port,
+		GraylogExtraKey:   h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey,
+		GraylogExtraValue: h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue,
+	}
+}

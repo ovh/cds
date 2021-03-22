@@ -191,19 +191,8 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 		}
 	}
 
-	udataParam := sdk.WorkerArgs{
-		API:               h.Configuration().API.HTTP.URL,
-		Token:             spawnArgs.WorkerToken,
-		HTTPInsecure:      h.Config.API.HTTP.Insecure,
-		Name:              spawnArgs.WorkerName,
-		Model:             spawnArgs.Model.Group.Name + "/" + spawnArgs.Model.Name,
-		HatcheryName:      h.Name(),
-		TTL:               h.Config.WorkerTTL,
-		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
-		GraylogPort:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Port,
-		GraylogExtraKey:   h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey,
-		GraylogExtraValue: h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue,
-	}
+	udataParam := h.GenerateWorkerArgs(h, spawnArgs)
+	udataParam.TTL = h.Config.WorkerTTL
 
 	udataParam.WorkflowJobID = spawnArgs.JobID
 
