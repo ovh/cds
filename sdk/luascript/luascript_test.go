@@ -105,6 +105,45 @@ func TestLuaCheckRegularExpression(t *testing.T) {
 	assert.False(t, l.Result)
 }
 
+func TestLuaCheckJSON(t *testing.T) {
+	l, err := NewCheck()
+	require.NoError(t, err)
+	l.SetVariables(map[string]string{
+		"cds.payload": "{\"key1\":\"value1\",\"key2\":2,\"key3\":true}",
+	})
+	require.NoError(t, l.Perform(`
+		local json = require("json")
+    local jsonObj = json.decode(cds_payload)
+		return jsonObj.key1 == "value1"
+	`))
+	assert.False(t, l.IsError)
+	assert.True(t, l.Result)
+
+	require.NoError(t, l.Perform(`
+    local json = require("json")
+    local jsonObj = json.decode(cds_payload)
+    return jsonObj.key1 ~= "value1"
+  `))
+	assert.False(t, l.IsError)
+	assert.False(t, l.Result)
+
+	require.NoError(t, l.Perform(`
+    local json = require("json")
+    local jsonObj = json.decode(cds_payload)
+    return jsonObj.key2 <= 2
+  `))
+	assert.False(t, l.IsError)
+	assert.True(t, l.Result)
+
+	require.NoError(t, l.Perform(`
+    local json = require("json")
+    local jsonObj = json.decode(cds_payload)
+    return jsonObj.key3
+  `))
+	assert.False(t, l.IsError)
+	assert.True(t, l.Result)
+}
+
 func Test_luaPerformStrictCheckOnVariable(t *testing.T) {
 	luaCheck, err := NewCheck()
 	require.NoError(t, err)

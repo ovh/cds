@@ -7,6 +7,7 @@ import (
 
 	"github.com/yuin/gluare"
 	lua "github.com/yuin/gopher-lua"
+	luajson "layeh.com/gopher-json"
 )
 
 // Check is a type which helps to call a lua script with variables to check something.
@@ -52,6 +53,7 @@ func NewCheck() (*Check, error) {
 
 	//Open gluare module
 	state.PreloadModule("re", gluare.Loader)
+	state.PreloadModule("json", luajson.Loader)
 
 	// Sandboxing lua engine
 	if err := state.DoString("coroutine=nil;debug=nil;io=nil;open=nil;os.rename=nil;os.remove=nil;os.exit=nil;os.clock=nil;os.execute=nil;os.getenv=nil;os.setlocale=nil;os.tmpname=nil"); err != nil {
