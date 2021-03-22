@@ -55,11 +55,11 @@ func workflowStatusRunWithTrack(v cli.Values) (interface{}, error) {
 	ctx := context.Background()
 	r, err := repo.New(ctx, ".")
 	if err != nil {
-		return nil, fmt.Errorf("unable to get latest commit: %v", err)
+		return nil, cli.WrapError(err, "unable to get latest commit")
 	}
 	latestCommit, err := r.LatestCommit(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("unable to get latest commit: %v", err)
+		return nil, cli.WrapError(err, "unable to get latest commit")
 	}
 
 	currentDisplay.Printf("Looking for %s...\n", cli.Magenta(latestCommit.LongHash))
@@ -76,7 +76,7 @@ func workflowStatusRunWithTrack(v cli.Values) (interface{}, error) {
 			return nil, err
 		}
 		if len(runs) != 1 {
-			return nil, fmt.Errorf("workflow run not found")
+			return nil, cli.NewError("workflow run not found")
 		}
 		runNumber = runs[0].Number
 	}
@@ -158,7 +158,7 @@ func workflowStatusRunWithoutTrack(v cli.Values) (interface{}, error) {
 			return nil, err
 		}
 		if len(runs) < 1 {
-			return 0, fmt.Errorf("workflow run not found")
+			return 0, cli.NewError("workflow run not found")
 		}
 		run = &runs[0]
 	} else {
@@ -181,7 +181,7 @@ func workflowStatusRunWithoutTrack(v cli.Values) (interface{}, error) {
 				return nil, err
 			}
 			if len(runs) != 1 {
-				return 0, fmt.Errorf("workflow run not found")
+				return 0, cli.NewError("workflow run not found")
 			}
 			runNumber = runs[0].Number
 		}

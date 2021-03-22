@@ -43,12 +43,12 @@ var contextCurrentCmd = cli.Command{
 func contextListRun(v cli.Values) (cli.ListResult, error) {
 	fi, err := os.Open(configFilePath)
 	if err != nil {
-		return nil, fmt.Errorf("error while opening config file %s: %v", configFilePath, err)
+		return nil, cli.WrapError(err, "error while opening config file %s", configFilePath)
 	}
 	defer fi.Close() // nolint
 	cdsConfigFile, err := internal.GetConfigFile(fi)
 	if err != nil {
-		return nil, fmt.Errorf("error while reading config file %s: %v", configFilePath, err)
+		return nil, cli.WrapError(err, "error while reading config file %s", configFilePath)
 	}
 	m := make([]internal.CDSContext, len(cdsConfigFile.Contexts))
 	var i int
@@ -63,12 +63,12 @@ func contextListRun(v cli.Values) (cli.ListResult, error) {
 func contextCurrentRun(v cli.Values) error {
 	fi, err := os.Open(configFilePath)
 	if err != nil {
-		return fmt.Errorf("error while opening config file %s: %v", configFilePath, err)
+		return cli.WrapError(err, "error while opening config file %s", configFilePath)
 	}
 	defer fi.Close() // nolint
 	current, err := internal.GetCurrentContextName(fi)
 	if err != nil {
-		return fmt.Errorf("error while getting current context: %v", err)
+		return cli.WrapError(err, "error while getting current context")
 	}
 	fmt.Println(current)
 	return nil
@@ -77,17 +77,17 @@ func contextCurrentRun(v cli.Values) error {
 func contextRun(v cli.Values) error {
 	fi, err := os.Open(configFilePath)
 	if err != nil {
-		return fmt.Errorf("error while opening config file %s: %v", configFilePath, err)
+		return cli.WrapError(err, "error while opening config file %s", configFilePath)
 	}
 	cdsConfigFile, err := internal.GetConfigFile(fi)
 	if err != nil {
-		return fmt.Errorf("error while reading config file %s: %v", configFilePath, err)
+		return cli.WrapError(err, "error while reading config file %s", configFilePath)
 	}
 
 	if v.GetBool("no-interactive") {
 		if v.GetString("context-name") == "" {
 			fi.Close() // nolint
-			return fmt.Errorf("you must use a context name with no-interactive flag. Example: cdsctl context --context-name my-context")
+			return cli.NewError("you must use a context name with no-interactive flag. Example: cdsctl context --context-name my-context")
 		}
 		wdata := &bytes.Buffer{}
 		if err := internal.SetCurrentContext(fi, wdata, v.GetString("context-name")); err != nil {
@@ -95,7 +95,7 @@ func contextRun(v cli.Values) error {
 			return err
 		}
 		if err := fi.Close(); err != nil {
-			return fmt.Errorf("Error while closing file %s: %v", configFilePath, err)
+			return cli.WrapError(err, "Error while closing file %s", configFilePath)
 		}
 		if err := writeConfigFile(configFilePath, wdata); err != nil {
 			return err
@@ -115,7 +115,7 @@ func contextRun(v cli.Values) error {
 		selected := cli.AskChoice(fmt.Sprintf("%s - Choose a context", configFilePath), opts...)
 		fi, err = os.OpenFile(configFilePath, os.O_RDONLY, 0600)
 		if err != nil {
-			return fmt.Errorf("Error while opening file %s: %v", configFilePath, err)
+			return cli.WrapError(err, "Error while opening file %s", configFilePath)
 		}
 
 		wdata := &bytes.Buffer{}
@@ -124,7 +124,7 @@ func contextRun(v cli.Values) error {
 			return err
 		}
 		if err := fi.Close(); err != nil {
-			return fmt.Errorf("Error while closing file %s: %v", configFilePath, err)
+			return cli.WrapError(err, "Error while closing file %s", configFilePath)
 		}
 		if err := writeConfigFile(configFilePath, wdata); err != nil {
 			return err

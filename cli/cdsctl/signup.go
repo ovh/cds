@@ -54,11 +54,11 @@ func getAPIURL(v cli.Values) (string, error) {
 		apiURL = cli.AskValue("api-url")
 	}
 	if apiURL == "" {
-		return "", fmt.Errorf("Please set api url")
+		return "", cli.NewError("Please set api url")
 	}
 	match, _ := regexp.MatchString(`http[s]?:\/\/(.*)`, apiURL)
 	if !match {
-		return "", fmt.Errorf("Invalid given api url")
+		return "", cli.NewError("Invalid given api url")
 	}
 	apiURL = strings.TrimSuffix(apiURL, "/")
 	return apiURL, nil
@@ -80,10 +80,10 @@ func signupFunc(v cli.Values) error {
 	})
 	drivers, err := client.AuthDriverList()
 	if err != nil {
-		return fmt.Errorf("Cannot list auth drivers: %v", err)
+		return cli.WrapError(err, "Cannot list auth drivers")
 	}
 	if len(drivers.Drivers) == 0 {
-		return fmt.Errorf("No authentication driver configured")
+		return cli.NewError("No authentication driver configured")
 	}
 
 	var localConsumerDriverEnable bool
@@ -95,7 +95,7 @@ func signupFunc(v cli.Values) error {
 	}
 
 	if !localConsumerDriverEnable {
-		return fmt.Errorf("No authentication driver configured")
+		return cli.NewError("No authentication driver configured")
 	}
 
 	signupRequest, err := loginRunLocal(v)

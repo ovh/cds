@@ -3,6 +3,7 @@ package cdsclient
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/ovh/cds/sdk"
@@ -18,14 +19,14 @@ func (c *client) WebsocketEventsListen(ctx context.Context, goRoutines *sdk.GoRo
 			case f := <-chanFilterToSend:
 				m, err := json.Marshal(f)
 				if err != nil {
-					chanErrorReceived <- sdk.WrapError(err, "unable to marshal message: %s", string(m))
+					chanErrorReceived <- newError(fmt.Errorf("unable to marshal message: %s: %v", string(m), err))
 					continue
 				}
 				chanMsgToSend <- m
 			case m := <-chanMsgReceived:
 				var wsEvent sdk.WebsocketEvent
 				if err := json.Unmarshal(m, &wsEvent); err != nil {
-					chanErrorReceived <- sdk.WrapError(err, "unable to unmarshal message: %s", string(m))
+					chanErrorReceived <- newError(fmt.Errorf("unable to unmarshal message: %s: %v", string(m), err))
 					continue
 				}
 				chanEventReceived <- wsEvent
@@ -35,7 +36,7 @@ func (c *client) WebsocketEventsListen(ctx context.Context, goRoutines *sdk.GoRo
 
 	for ctx.Err() == nil {
 		if err := c.RequestWebsocket(ctx, goRoutines, "/ws", chanMsgToSend, chanMsgReceived, chanErrorReceived); err != nil {
-			chanErrorReceived <- sdk.WrapError(err, "websocket error")
+			chanErrorReceived <- newError(fmt.Errorf("websocket error: %v", err))
 		}
 		time.Sleep(1 * time.Second)
 	}

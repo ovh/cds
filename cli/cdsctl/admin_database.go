@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
+	"github.com/ovh/cds/sdk"
 )
 
 var adminDatabaseCmd = cli.Command{
@@ -62,31 +63,50 @@ func adminDatabaseMigrationsListFunc(_ cli.Values) (cli.ListResult, error) {
 	return cli.AsListResult(migrations), nil
 }
 
+const argServiceName = "service"
+
 var adminDatabaseSignatureResume = cli.Command{
 	Name:  "list-signed-data",
 	Short: "List all signed data in database",
+	Args: []cli.Arg{
+		{
+			Name: argServiceName,
+			IsValid: func(s string) bool {
+				return s == sdk.TypeCDN || s == sdk.TypeAPI
+			},
+		},
+	},
 }
 
-func adminDatabaseSignatureResumeFunc(_ cli.Values) (interface{}, error) {
-	return client.AdminDatabaseSignaturesResume()
+func adminDatabaseSignatureResumeFunc(args cli.Values) (interface{}, error) {
+	return client.AdminDatabaseSignaturesResume(args.GetString(argServiceName))
 }
 
 var adminDatabaseSignatureRoll = cli.Command{
 	Name:  "roll-signed-data",
 	Short: "Roll a signed data in database",
+	Args: []cli.Arg{
+		{
+			Name: argServiceName,
+			IsValid: func(s string) bool {
+				return s == sdk.TypeCDN || s == sdk.TypeAPI
+			},
+		},
+	},
 	VariadicArgs: cli.Arg{
-		Name: "entity",
+		Name:       "entity",
+		AllowEmpty: true,
 	},
 }
 
 func adminDatabaseSignatureRollFunc(args cli.Values) error {
 	entities := args.GetStringSlice("entity")
 	if len(entities) == 0 {
-		return client.AdminDatabaseSignaturesRollAllEntities()
+		return client.AdminDatabaseSignaturesRollAllEntities(args.GetString(argServiceName))
 	}
 
 	for _, e := range entities {
-		if err := client.AdminDatabaseSignaturesRollEntity(e); err != nil {
+		if err := client.AdminDatabaseSignaturesRollEntity(args.GetString(argServiceName), e); err != nil {
 			return err
 		}
 	}
@@ -97,10 +117,18 @@ func adminDatabaseSignatureRollFunc(args cli.Values) error {
 var adminDatabaseEncryptionResume = cli.Command{
 	Name:  "list-encrypted-data",
 	Short: "List all encrypted data in database",
+	Args: []cli.Arg{
+		{
+			Name: argServiceName,
+			IsValid: func(s string) bool {
+				return s == sdk.TypeCDN || s == sdk.TypeAPI
+			},
+		},
+	},
 }
 
-func adminDatabaseEncryptionResumeFunc(_ cli.Values) error {
-	entities, err := client.AdminDatabaseListEncryptedEntities()
+func adminDatabaseEncryptionResumeFunc(args cli.Values) error {
+	entities, err := client.AdminDatabaseListEncryptedEntities(args.GetString(argServiceName))
 	for _, e := range entities {
 		fmt.Println(e)
 	}
@@ -108,21 +136,30 @@ func adminDatabaseEncryptionResumeFunc(_ cli.Values) error {
 }
 
 var adminDatabaseEncryptionRoll = cli.Command{
-	Name:  "roll-encrypteddata",
+	Name:  "roll-encrypted-data",
 	Short: "Roll a encrypted data in database",
+	Args: []cli.Arg{
+		{
+			Name: argServiceName,
+			IsValid: func(s string) bool {
+				return s == sdk.TypeCDN || s == sdk.TypeAPI
+			},
+		},
+	},
 	VariadicArgs: cli.Arg{
-		Name: "entity",
+		Name:       "entity",
+		AllowEmpty: true,
 	},
 }
 
 func adminDatabaseEncryptionRollFunc(args cli.Values) error {
 	entities := args.GetStringSlice("entity")
 	if len(entities) == 0 {
-		return client.AdminDatabaseRollAllEncryptedEntities()
+		return client.AdminDatabaseRollAllEncryptedEntities(args.GetString(argServiceName))
 	}
 
 	for _, e := range entities {
-		if err := client.AdminDatabaseRollEncryptedEntity(e); err != nil {
+		if err := client.AdminDatabaseRollEncryptedEntity(args.GetString(argServiceName), e); err != nil {
 			return err
 		}
 	}

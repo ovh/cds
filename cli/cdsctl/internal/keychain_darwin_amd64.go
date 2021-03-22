@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	keychain "github.com/keybase/go-keychain"
+	"github.com/ovh/cds/cli"
 )
 
 var keychainEnabled = true
@@ -26,7 +27,7 @@ func storeTokens(contextName string, tokens ContextTokens) error {
 
 	b, err := json.Marshal(tokens)
 	if err != nil {
-		return fmt.Errorf("error while encoding tokens into keychain: %v", err)
+		return cli.WrapError(err, "error while encoding tokens into keychain")
 	}
 
 	item.SetData(b)
@@ -34,7 +35,7 @@ func storeTokens(contextName string, tokens ContextTokens) error {
 	item.SetAccessible(keychain.AccessibleAccessibleAlwaysThisDeviceOnly)
 
 	if err := keychain.AddItem(item); err != nil {
-		return fmt.Errorf("error while add item '%s' into keychain: %v", label, err)
+		return cli.WrapError(err, "error while add item '%s' into keychain", label)
 	}
 	return nil
 }
@@ -49,15 +50,15 @@ func (c CDSContext) getTokens(contextName string) (*ContextTokens, error) {
 	item.SetReturnData(true)
 	results, err := keychain.QueryItem(item)
 	if err != nil {
-		return nil, fmt.Errorf("error while retreiving context: %s", err)
+		return nil, cli.WrapError(err, "error while retreiving context")
 	}
 	if len(results) != 1 {
-		return nil, fmt.Errorf("context not found in keychain")
+		return nil, cli.NewError("context not found in keychain")
 	}
 
 	tokens := &ContextTokens{}
 	if err := json.Unmarshal(results[0].Data, &tokens); err != nil {
-		return nil, fmt.Errorf("error while unmarshal tokens from keychain: %v", err)
+		return nil, cli.WrapError(err, "error while unmarshal tokens from keychain")
 	}
 	return tokens, nil
 }

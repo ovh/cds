@@ -6,6 +6,7 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/base64"
+	"fmt"
 	"net"
 	"net/http"
 	"os"
@@ -13,6 +14,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/pkg/errors"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -145,7 +147,7 @@ func NewServiceClient(ctx context.Context, cfg ServiceConfig) (Interface, []byte
 
 	if cfg.Hook != nil {
 		if err := cfg.Hook(cli); err != nil {
-			return nil, nil, sdk.WithStack(err)
+			return nil, nil, newError(err)
 		}
 	}
 
@@ -161,14 +163,14 @@ retry:
 				goto retry
 			}
 		}
-		return nil, nil, sdk.WithStack(err)
+		return nil, nil, err
 	}
 	cli.config.SessionToken = res.Token
 
 	base64EncodedPubKey := headers.Get("X-Api-Pub-Signing-Key")
 	pubKey, err := base64.StdEncoding.DecodeString(base64EncodedPubKey)
 
-	return cli, pubKey, sdk.WithStack(err)
+	return cli, pubKey, newError(err)
 }
 
 func (c *client) init() {
@@ -189,4 +191,73 @@ func (c *client) HTTPNoTimeoutClient() *http.Client {
 }
 func (c *client) HTTPWebsocketClient() *websocket.Dialer {
 	return c.httpWebsocketClient
+}
+
+var _ error = new(Error)
+
+type Error struct {
+	sdkError       error
+	transportError error
+	apiError       error
+}
+
+func (e *Error) Cause() error {
+	if e == nil {
+		return nil
+	}
+	if e.apiError != nil {
+		return e.apiError
+	}
+	if e.transportError != nil {
+		return e.transportError
+	}
+	if e.sdkError != nil {
+		return e.sdkError
+	}
+	return nil
+}
+
+func (e *Error) Error() string {
+	if e.apiError != nil {
+		return "API Error: " + e.apiError.Error()
+	}
+	if e.transportError != nil {
+		return "Transport Error: " + e.transportError.Error()
+	}
+	if e.sdkError != nil {
+		return e.sdkError.Error()
+	}
+	panic("unknow error")
+}
+
+type stackTracer interface {
+	StackTrace() errors.StackTrace
+}
+
+func (e *Error) StackTrace() string {
+	if err, ok := e.Cause().(stackTracer); ok {
+		return fmt.Sprintf("%+v", err)
+	}
+	return ""
+}
+
+func newAPIError(e error) error {
+	if e == nil {
+		return nil
+	}
+	return &Error{apiError: errors.WithStack(e)}
+}
+
+func newTransportError(e error) error {
+	if e == nil {
+		return nil
+	}
+	return &Error{transportError: errors.WithStack(e)}
+}
+
+func newError(e error) error {
+	if e == nil {
+		return nil
+	}
+	return &Error{sdkError: errors.WithStack(e)}
 }

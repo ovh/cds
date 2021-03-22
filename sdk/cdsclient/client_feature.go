@@ -13,8 +13,8 @@ func (c *client) FeatureEnabled(name sdk.FeatureName, params map[string]string) 
 	code, err := c.PostJSON(context.Background(), fmt.Sprintf("/feature/enabled/%s", name), params, &response)
 	if code != http.StatusOK {
 		if err == nil {
-			return response, sdk.WithStack(fmt.Errorf("HTTP Code %d", code))
+			return response, newAPIError(fmt.Errorf("HTTP Code %d", code))
 		}
 	}
-	return response, sdk.WithStack(err)
+	return response, err
 }

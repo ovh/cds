@@ -1,11 +1,11 @@
 package internal
 
 import (
-	"fmt"
 	"io"
 	"strconv"
 	"strings"
 
+	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
 	toml "github.com/pelletier/go-toml"
 )
@@ -46,7 +46,7 @@ func GetCurrentContextName(reader io.Reader) (string, error) {
 	}
 
 	if tomlConf.Current == "" {
-		return "", fmt.Errorf("no current context")
+		return "", cli.NewError("no current context")
 	}
 	return tomlConf.Current, nil
 }
@@ -64,7 +64,7 @@ func GetCurrentContext(reader io.Reader) (*CDSContext, error) {
 	}
 
 	if tomlConf.Current == "" {
-		return nil, fmt.Errorf("no current context")
+		return nil, cli.NewError("no current context")
 	}
 	return getContext(tomlConf, tomlConf.Current)
 }
@@ -84,7 +84,7 @@ func SetCurrentContext(reader io.Reader, writer io.Writer, contextName string) e
 		}
 	}
 	if !found {
-		return fmt.Errorf("context %s does not exist", contextName)
+		return cli.NewError("context %s does not exist", contextName)
 	}
 	tomlConf.Current = contextName
 
@@ -155,7 +155,7 @@ func writeToml(writer io.Writer, cdsConfigFile *CDSConfigFile) error {
 
 	t, err := toml.TreeFromMap(values)
 	if err != nil {
-		return fmt.Errorf("error while decoding file content: %v", err)
+		return cli.WrapError(err, "error while decoding file content")
 	}
 
 	_, err = t.WriteTo(writer)
@@ -165,7 +165,7 @@ func writeToml(writer io.Writer, cdsConfigFile *CDSConfigFile) error {
 func read(reader io.Reader) (*CDSConfigFile, error) {
 	tree, err := toml.LoadReader(reader)
 	if err != nil {
-		return nil, fmt.Errorf("error while decoding config file: %v", err)
+		return nil, cli.WrapError(err, "error while decoding config file")
 	}
 
 	m := tree.ToMap()

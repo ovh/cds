@@ -295,7 +295,7 @@ func adminMetadataWorkflowExportRun(c cli.Values) error {
 			currentDisplay.Printf("%d/%d - %d/%d - fetching workflow %s/%s...", i, len(projects), j, len(proj.WorkflowNames), proj.Key, name.Name)
 			w, err := client.WorkflowGet(proj.Key, name.Name, modsWfs...)
 			if err != nil {
-				return fmt.Errorf("Error while getting %s/%s", proj.Key, name.Name)
+				return cli.NewError("error while getting %s/%s", proj.Key, name.Name)
 			}
 
 			m := sdk.Metadata{}
@@ -431,7 +431,7 @@ func processMetadata(path string, nbColumnsToIgnore int, updateFunc func(key, na
 
 		for index := 0; index < len(metadataKeys); index++ {
 			if index > len(metadataKeys) || nbColumnsToIgnore+index >= len(columns) {
-				return fmt.Errorf("CSV File invalid. Please check number of columns on %s;%s", pkey, name)
+				return cli.NewError("CSV File invalid. Please check number of columns on %s;%s", pkey, name)
 			}
 			metadata[metadataKeys[index]] = columns[nbColumnsToIgnore+index]
 		}

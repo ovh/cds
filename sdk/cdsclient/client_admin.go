@@ -3,8 +3,10 @@ package cdsclient
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 
 	"github.com/ovh/cds/sdk"
@@ -102,14 +104,135 @@ func (c *client) ServiceCallDELETE(stype string, query string) error {
 	return err
 }
 
-func (c *client) AdminDatabaseSignaturesResume() (sdk.CanonicalFormUsageResume, error) {
+func (c *client) ServiceGetJSON(ctx context.Context, stype, path string, out interface{}) (int, error) {
+	btes, _, code, err := c.Request(ctx, "GET", "/admin/services/call?type="+stype+"&query="+url.QueryEscape(path), nil)
+	if err != nil {
+		return code, err
+	}
+	if err := json.Unmarshal(btes, out); err != nil {
+		return code, newError(err)
+	}
+	return code, nil
+}
+
+func (c *client) ServicePostJSON(ctx context.Context, stype, path string, in, out interface{}) (int, error) {
+	var inBtes []byte
+	if in != nil {
+		var err error
+		inBtes, err = json.Marshal(in)
+		if err != nil {
+			return 0, newError(err)
+		}
+	}
+
+	btes, _, code, err := c.Request(ctx, "POST", "/admin/services/call?type="+stype+"&query="+url.QueryEscape(path), bytes.NewReader(inBtes))
+	if err != nil {
+		return code, err
+	}
+
+	if len(btes) > 0 {
+		if err := json.Unmarshal(btes, out); err != nil {
+			return code, newError(err)
+		}
+	}
+
+	return code, nil
+}
+
+func (c *client) ServicePutJSON(ctx context.Context, stype, path string, in, out interface{}) (int, error) {
+	var inBtes []byte
+	if in != nil {
+		var err error
+		inBtes, err = json.Marshal(in)
+		if err != nil {
+			return 0, newError(err)
+		}
+	}
+
+	btes, _, code, err := c.Request(ctx, "PUT", "/admin/services/call?type="+stype+"&query="+url.QueryEscape(path), bytes.NewReader(inBtes))
+	if err != nil {
+		return code, err
+	}
+
+	if len(btes) > 0 {
+		if err := json.Unmarshal(btes, out); err != nil {
+			return code, newError(err)
+		}
+	}
+	return code, nil
+}
+
+func (c *client) ServiceDeleteJSON(ctx context.Context, stype, path string, out interface{}) (int, error) {
+	btes, _, code, err := c.Request(ctx, "DELETE", "/admin/services/call?type="+stype+"&query="+url.QueryEscape(path), nil)
+	if err != nil {
+		return code, err
+	}
+
+	if err := json.Unmarshal(btes, out); err != nil {
+		return code, newError(err)
+	}
+	return code, nil
+}
+
+func (c *client) switchServiceCallFunc(service string, method, path string, in, out interface{}) func() (int, error) {
+	switch method {
+	case http.MethodGet:
+		switch service {
+		case sdk.TypeAPI:
+			return func() (int, error) {
+				return c.GetJSON(context.Background(), path, out)
+			}
+		default:
+			return func() (int, error) {
+				return c.ServiceGetJSON(context.Background(), service, path, out)
+			}
+		}
+	case http.MethodPost:
+		switch service {
+		case sdk.TypeAPI:
+			return func() (int, error) {
+				return c.PostJSON(context.Background(), path, in, out)
+			}
+		default:
+			return func() (int, error) {
+				return c.ServicePostJSON(context.Background(), service, path, in, out)
+			}
+		}
+	case http.MethodPut:
+		switch service {
+		case sdk.TypeAPI:
+			return func() (int, error) {
+				return c.PutJSON(context.Background(), path, in, out)
+			}
+		default:
+			return func() (int, error) {
+				return c.ServicePutJSON(context.Background(), service, path, in, out)
+			}
+		}
+	case http.MethodDelete:
+		switch service {
+		case sdk.TypeAPI:
+			return func() (int, error) {
+				return c.DeleteJSON(context.Background(), path, out)
+			}
+		default:
+			return func() (int, error) {
+				return c.ServiceDeleteJSON(context.Background(), service, path, out)
+			}
+		}
+	}
+	return nil
+}
+
+func (c *client) AdminDatabaseSignaturesResume(service string) (sdk.CanonicalFormUsageResume, error) {
 	var res = sdk.CanonicalFormUsageResume{}
-	_, err := c.GetJSON(context.Background(), "/admin/database/signature", &res)
+	var f = c.switchServiceCallFunc(service, http.MethodGet, "/admin/database/signature", nil, &res)
+	_, err := f()
 	return res, err
 }
 
-func (c *client) AdminDatabaseSignaturesRollEntity(e string) error {
-	resume, err := c.AdminDatabaseSignaturesResume()
+func (c *client) AdminDatabaseSignaturesRollEntity(service string, e string) error {
+	resume, err := c.AdminDatabaseSignaturesResume(service)
 	if err != nil {
 		return err
 	}
@@ -121,13 +244,15 @@ func (c *client) AdminDatabaseSignaturesRollEntity(e string) error {
 	for _, s := range resume[e] {
 		url := fmt.Sprintf("/admin/database/signature/%s/%s", e, s.Signer)
 		var pks []string
-		if _, err := c.GetJSON(context.Background(), url, &pks); err != nil {
+		var f = c.switchServiceCallFunc(service, http.MethodGet, url, nil, &pks)
+		if _, err := f(); err != nil {
 			return err
 		}
 
 		for _, pk := range pks {
 			url := fmt.Sprintf("/admin/database/signature/%s/roll/%s", e, pk)
-			if _, err := c.PostJSON(context.Background(), url, nil, nil); err != nil {
+			var f = c.switchServiceCallFunc(service, http.MethodPost, url, nil, nil)
+			if _, err := f(); err != nil {
 				return err
 			}
 		}
@@ -135,36 +260,40 @@ func (c *client) AdminDatabaseSignaturesRollEntity(e string) error {
 	return nil
 }
 
-func (c *client) AdminDatabaseSignaturesRollAllEntities() error {
-	resume, err := c.AdminDatabaseSignaturesResume()
+func (c *client) AdminDatabaseSignaturesRollAllEntities(service string) error {
+	resume, err := c.AdminDatabaseSignaturesResume(service)
 	if err != nil {
 		return err
 	}
 
 	for e := range resume {
-		if err := c.AdminDatabaseSignaturesRollEntity(e); err != nil {
+		if err := c.AdminDatabaseSignaturesRollEntity(service, e); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (c *client) AdminDatabaseListEncryptedEntities() ([]string, error) {
+func (c *client) AdminDatabaseListEncryptedEntities(service string) ([]string, error) {
 	var res []string
-	_, err := c.GetJSON(context.Background(), "/admin/database/encryption", &res)
+	var f = c.switchServiceCallFunc(service, http.MethodGet, "/admin/database/encryption", nil, &res)
+	_, err := f()
 	return res, err
 }
 
-func (c *client) AdminDatabaseRollEncryptedEntity(e string) error {
+func (c *client) AdminDatabaseRollEncryptedEntity(service string, e string) error {
 	url := fmt.Sprintf("/admin/database/encryption/%s", e)
 	var pks []string
-	if _, err := c.GetJSON(context.Background(), url, &pks); err != nil {
+
+	var f = c.switchServiceCallFunc(service, http.MethodGet, url, nil, &pks)
+	if _, err := f(); err != nil {
 		return err
 	}
 
 	for _, pk := range pks {
 		url := fmt.Sprintf("/admin/database/encryption/%s/roll/%s", e, pk)
-		if _, err := c.PostJSON(context.Background(), url, nil, nil); err != nil {
+		var f = c.switchServiceCallFunc(service, http.MethodPost, url, nil, nil)
+		if _, err := f(); err != nil {
 			return err
 		}
 	}
@@ -172,13 +301,13 @@ func (c *client) AdminDatabaseRollEncryptedEntity(e string) error {
 	return nil
 }
 
-func (c *client) AdminDatabaseRollAllEncryptedEntities() error {
-	entities, err := c.AdminDatabaseListEncryptedEntities()
+func (c *client) AdminDatabaseRollAllEncryptedEntities(service string) error {
+	entities, err := c.AdminDatabaseListEncryptedEntities(service)
 	if err != nil {
 		return err
 	}
 	for _, e := range entities {
-		if err := c.AdminDatabaseRollEncryptedEntity(e); err != nil {
+		if err := c.AdminDatabaseRollEncryptedEntity(service, e); err != nil {
 			return err
 		}
 	}

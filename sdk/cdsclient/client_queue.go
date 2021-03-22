@@ -80,7 +80,7 @@ func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, j
 			if wsEvent.Event.EventType == "sdk.EventRunWorkflowJob" && wsEvent.Event.Status == sdk.StatusWaiting {
 				var jobEvent sdk.EventRunWorkflowJob
 				if err := json.Unmarshal(wsEvent.Event.Payload, &jobEvent); err != nil {
-					errs <- fmt.Errorf("unable to unmarshal job %v: %v", wsEvent.Event.Payload, err)
+					errs <- newError(fmt.Errorf("unable to unmarshal job %v: %v", wsEvent.Event.Payload, err))
 					continue
 				}
 				job, err := c.QueueJobInfo(ctx, jobEvent.ID)
@@ -90,7 +90,7 @@ func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, j
 				}
 
 				if err != nil {
-					errs <- fmt.Errorf("unable to get job %v info: %v", jobEvent.ID, err)
+					errs <- newError(fmt.Errorf("unable to get job %v info: %v", jobEvent.ID, err))
 					continue
 				}
 				// push the job in the channel
@@ -124,7 +124,7 @@ func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, j
 				urlSuffix = "?" + urlSuffix
 			}
 			if _, err := c.GetJSON(ctxt, "/queue/workflows"+urlSuffix, &queue, nil); err != nil && !sdk.ErrorIs(err, sdk.ErrUnauthorized) {
-				errs <- sdk.WrapError(err, "Unable to load jobs")
+				errs <- newError(fmt.Errorf("unable to load jobs: %v", err))
 				cancel()
 				continue
 			} else if sdk.ErrorIs(err, sdk.ErrUnauthorized) {
@@ -252,7 +252,7 @@ func (c *client) QueueSendResult(ctx context.Context, id int64, res sdk.Result) 
 	path := fmt.Sprintf("/queue/workflows/%d/result", id)
 	b, err := json.Marshal(res)
 	if err != nil {
-		return sdk.WithStack(err)
+		return newError(err)
 	}
 	result, _, code, err := c.Stream(ctx, c.HTTPNoTimeoutClient(), "POST", path, bytes.NewBuffer(b), nil)
 	if err != nil {
@@ -260,7 +260,7 @@ func (c *client) QueueSendResult(ctx context.Context, id int64, res sdk.Result) 
 	}
 	defer result.Close()
 	if code >= 300 {
-		return sdk.WithStack(fmt.Errorf("unable to send job result. HTTP code error : %d", code))
+		return newError(fmt.Errorf("unable to send job result. HTTP code error : %d", code))
 	}
 	return nil
 }
@@ -353,7 +353,7 @@ func (c *client) queueIndirectArtifactTempURLPost(url string, content []byte) er
 			}
 
 			if resp.StatusCode >= 300 {
-				globalErr = fmt.Errorf("[%d] Unable to upload artifact: (HTTP %d) %s", i, resp.StatusCode, string(body))
+				globalErr = newError(fmt.Errorf("[%d] Unable to upload artifact: (HTTP %d) %s", i, resp.StatusCode, string(body)))
 				time.Sleep(1 * time.Second)
 				continue
 			}
@@ -509,12 +509,12 @@ func (c *client) queueDirectArtifactUpload(projectKey, integrationName string, n
 			if code < 400 {
 				return nil
 			}
-			err = fmt.Errorf("Error: HTTP code status %d", code)
+			err = newAPIError(fmt.Errorf("Error: HTTP code status %d", code))
 		}
 		time.Sleep(3 * time.Second)
 	}
 
-	return fmt.Errorf("x%d: %v", c.config.Retry, err)
+	return newError(fmt.Errorf("x%d: %v", c.config.Retry, err))
 }
 
 func (c *client) QueueWorkerCacheLink(ctx context.Context, jobID int64, tag string) (sdk.CDNItemLinks, error) {
@@ -539,7 +539,7 @@ func (c *client) QueueJobSetVersion(ctx context.Context, jobID int64, version sd
 func (c *client) QueueServiceLogs(ctx context.Context, logs []sdk.ServiceLog) error {
 	status, err := c.PostJSON(ctx, "/queue/workflows/log/service", logs, nil)
 	if status >= 400 {
-		return fmt.Errorf("Error: HTTP code %d", status)
+		return newAPIError(fmt.Errorf("Error: HTTP code %d", status))
 	}
 	return err
 }
@@ -597,8 +597,8 @@ func (c *client) queueDirectStaticFilesUpload(projectKey, integrationName string
 			SetHeader("Content-Disposition", "attachment; filename=archive.tar"),
 			SetHeader("Content-Type", writer.FormDataContentType()))
 		if err == nil && code < 300 {
-			if errU := json.Unmarshal(respBody, &staticFileResp); errU != nil {
-				return "", sdk.WrapError(errU, "Cannot unmarshal body: %v", string(respBody))
+			if err := json.Unmarshal(respBody, &staticFileResp); err != nil {
+				return "", newError(fmt.Errorf("unable to unmarshal body: %v: %v", string(respBody), err))
 			}
 			fmt.Printf("Files uploaded with public URL: %s\n", staticFileResp.PublicURL)
 			return staticFileResp.PublicURL, nil
@@ -610,5 +610,8 @@ func (c *client) queueDirectStaticFilesUpload(projectKey, integrationName string
 	}
 
 	fmt.Printf("Files uploaded after retries with public URL: %s\n", staticFileResp.PublicURL)
-	return staticFileResp.PublicURL, sdk.WrapError(err, "Cannot upload static files after %d retry", c.config.Retry)
+	if err != nil {
+		return "", newError(fmt.Errorf("cannot upload static files after %d retry: %v", c.config.Retry, err))
+	}
+	return staticFileResp.PublicURL, nil
 }

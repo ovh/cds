@@ -139,7 +139,7 @@ var adminServiceDeleteCmd = cli.Command{
 
 func adminServiceDeleteRun(v cli.Values) error {
 	if v.GetString("name") == "" {
-		return fmt.Errorf("name for service is mandatory")
+		return cli.NewError("name for service is mandatory")
 	}
 	for _, n := range strings.Split(v.GetString("name"), ",") {
 		if err := client.ServiceDelete(n); err != nil {

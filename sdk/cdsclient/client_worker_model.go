@@ -19,10 +19,10 @@ type WorkerModelFilter struct {
 func (c *client) WorkerModelBook(groupName, name string) error {
 	code, err := c.PutJSON(context.Background(), fmt.Sprintf("/worker/model/%s/%s/book", groupName, name), nil, nil)
 	if err != nil {
-		return sdk.WithStack(err)
+		return err
 	}
 	if code > 300 {
-		return sdk.WithStack(fmt.Errorf("HTTP %d", code))
+		return newError(fmt.Errorf("HTTP %d", code))
 	}
 	return nil
 }
@@ -64,9 +64,9 @@ func (c *client) WorkerModelList(filter *WorkerModelFilter) ([]sdk.Model, error)
 func (c *client) WorkerModelSpawnError(groupName, name string, data sdk.SpawnErrorForm) error {
 	code, err := c.PutJSON(context.Background(), fmt.Sprintf("/worker/model/%s/%s/error", groupName, name), &data, nil)
 	if code > 300 && err == nil {
-		return fmt.Errorf("WorkerModelSpawnError> HTTP %d", code)
+		return newAPIError(fmt.Errorf("WorkerModelSpawnError> HTTP %d", code))
 	} else if err != nil {
-		return sdk.WithStack(err)
+		return err
 	}
 	return nil
 }
@@ -82,18 +82,18 @@ func (c *client) WorkerModelAdd(name, modelType, patternName string, dockerModel
 	}
 
 	if dockerModel == nil && vmModel == nil {
-		return model, fmt.Errorf("You have to choose 1 model minimum: docker or vm model")
+		return model, newError(fmt.Errorf("You have to choose 1 model minimum: docker or vm model"))
 	}
 
 	switch modelType {
 	case sdk.Docker:
 		if dockerModel == nil {
-			return model, fmt.Errorf("with model %s then dockerModel parameter could not be nil", modelType)
+			return model, newError(fmt.Errorf("with model %s then dockerModel parameter could not be nil", modelType))
 		}
 		model.ModelDocker = *dockerModel
 	default:
 		if vmModel == nil {
-			return model, fmt.Errorf("with model %s then vmModel parameter could not be nil", modelType)
+			return model, newError(fmt.Errorf("with model %s then vmModel parameter could not be nil", modelType))
 		}
 		model.ModelVirtualMachine = *vmModel
 	}
@@ -104,7 +104,7 @@ func (c *client) WorkerModelAdd(name, modelType, patternName string, dockerModel
 		return modelCreated, err
 	}
 	if code >= 300 {
-		return modelCreated, fmt.Errorf("WorkerModelAdd> HTTP %d", code)
+		return modelCreated, newAPIError(fmt.Errorf("WorkerModelAdd> HTTP %d", code))
 	}
 
 	return modelCreated, nil

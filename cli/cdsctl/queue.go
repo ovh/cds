@@ -107,7 +107,7 @@ func queueStopAllRun(v cli.Values) error {
 
 		runNumber, err := strconv.ParseInt(run, 10, 64)
 		if err != nil {
-			return fmt.Errorf("%s invalid: not a integer for a workflow run. err: %v", run, err)
+			return cli.WrapError(err, "%s invalid: not a integer for a workflow run. err", run)
 		}
 
 		w, err := client.WorkflowStop(projectKey, workflowName, runNumber)

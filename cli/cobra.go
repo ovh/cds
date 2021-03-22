@@ -15,12 +15,17 @@ import (
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
-
-	"github.com/ovh/cds/sdk"
 )
 
 // ShellMode will os.Exit if false, display only exit code if true
 var ShellMode bool
+
+//  If Verbose is set to true, ExitOnError will try to disply more detail about the potential errors
+var Verbose bool
+
+type stackTracer interface {
+	StackTrace() string
+}
 
 //ExitOnError if the error is not nil; exit the process with printing help functions and the error
 func ExitOnError(err error, helpFunc ...func() error) {
@@ -31,17 +36,21 @@ func ExitOnError(err error, helpFunc ...func() error) {
 	code := 50 // default error code
 
 	switch e := err.(type) {
-	case sdk.Error:
-		fmt.Printf("Error(request_id:%s): %s\n", e.RequestID, e.Message)
 	case *Error:
 		code = e.Code
-		fmt.Println("Error:", e.Error())
-	default:
-		fmt.Println("Error:", err.Error())
 	}
 
 	for _, f := range helpFunc {
 		f()
+	}
+
+	fmt.Println(err.Error())
+
+	if Verbose {
+		if err, ok := err.(stackTracer); ok {
+			fmt.Println("StackTrace:")
+			fmt.Println(err.StackTrace())
+		}
 	}
 
 	OSExit(code)
@@ -221,8 +230,8 @@ func newCommand(c Command, run interface{}, subCommands SubCommands, mods ...Com
 			ExitOnError(ErrWrongUsage, cmd.Help)
 			return
 		}
-		//If there is a variadic arg, we condider at least one arg mandatory
-		if c.VariadicArgs.Name != "" && (len(args) < len(c.Args)+len(c.Ctx)+1) {
+		//If there is a variadic arg, check if it is mandatory
+		if c.VariadicArgs.Name != "" && (len(args) < len(c.Args)+len(c.Ctx)+1) && !c.VariadicArgs.AllowEmpty {
 			ExitOnError(ErrWrongUsage, cmd.Help)
 			return
 		}

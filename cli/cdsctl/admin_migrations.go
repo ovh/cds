@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 
-	"github.com/ovh/cds/sdk"
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
@@ -53,7 +52,7 @@ var adminMigrationsCancel = cli.Command{
 func adminMigrationsCancelFunc(v cli.Values) error {
 	id, err := v.GetInt64("id")
 	if err != nil {
-		return sdk.WrapError(err, "Bad id format")
+		return cli.WrapError(err, "bad id format")
 	}
 
 	if err := client.AdminCDSMigrationCancel(id); err != nil {
@@ -74,7 +73,7 @@ var adminMigrationsReset = cli.Command{
 func adminMigrationsResetFunc(v cli.Values) error {
 	id, err := v.GetInt64("id")
 	if err != nil {
-		return sdk.WrapError(err, "Bad id format")
+		return cli.WrapError(err, "bad id format")
 	}
 
 	if err := client.AdminCDSMigrationReset(id); err != nil {

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"strconv"
 
 	"github.com/spf13/cobra"
@@ -63,7 +62,7 @@ func workflowRunNumberShowRun(v cli.Values) (interface{}, error) {
 func workflowRunNumberSetRun(v cli.Values) error {
 	number, err := strconv.ParseInt(v.GetString("number"), 10, 64)
 	if err != nil {
-		return fmt.Errorf("number parameter have to be an integer")
+		return cli.NewError("number parameter have to be an integer")
 	}
 
 	return client.WorkflowRunNumberSet(v.GetString(_ProjectKey), v.GetString(_WorkflowName), number)

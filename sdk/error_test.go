@@ -135,6 +135,24 @@ func TestNewAdvancedError(t *testing.T) {
 	assert.Equal(t, "TestNewAdvancedError: resource not found (from: can't found this) (caused by: Something no visible for http error: this is an error generated from vendor)", err.Error())
 	httpErr = ExtractHTTPError(err)
 	assert.Equal(t, "resource not found (from: can't found this)", httpErr.Error())
+
+	err = &Error{
+		ID:        ErrNotFound.ID,
+		Status:    ErrNotFound.Status,
+		Message:   "this is an error",
+		RequestID: "request-id",
+	}
+	assert.Equal(t, "this is an error (request_id: request-id)", err.Error())
+
+	err = &Error{
+		ID:        ErrNotFound.ID,
+		Status:    ErrNotFound.Status,
+		Message:   "this is an error",
+		RequestID: "request-id",
+		From:      "from",
+	}
+	assert.Equal(t, "this is an error (from: from, request_id: request-id)", err.Error())
+
 }
 
 func TestMultiError(t *testing.T) {

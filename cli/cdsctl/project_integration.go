@@ -72,7 +72,7 @@ var projectIntegrationImportCmd = cli.Command{
 func projectIntegrationImportFunc(v cli.Values) error {
 	f, err := os.Open(v.GetString("filename"))
 	if err != nil {
-		return fmt.Errorf("unable to open file %s: %v", v.GetString("filename"), err)
+		return cli.WrapError(err, "unable to open file %s", v.GetString("filename"))
 	}
 	defer f.Close()
 

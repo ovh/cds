@@ -64,7 +64,7 @@ func loginRun(v cli.Values) error {
 
 	// Env param is not valid for windows users
 	if v.GetBool("env") && sdk.GOOS == "windows" {
-		return fmt.Errorf("Env option is not supported on windows yet")
+		return cli.NewError("Env option is not supported on windows yet")
 	}
 
 	// Checks that an URL is given
@@ -81,10 +81,10 @@ func loginRun(v cli.Values) error {
 	})
 	drivers, err := client.AuthDriverList()
 	if err != nil {
-		return fmt.Errorf("Cannot list auth drivers: %v", err)
+		return cli.WrapError(err, "Cannot list auth drivers")
 	}
 	if len(drivers.Drivers) == 0 {
-		return fmt.Errorf("No authentication driver configured")
+		return cli.NewError("No authentication driver configured")
 	}
 
 	// Check driver type validity or ask for one
@@ -98,7 +98,7 @@ func loginRun(v cli.Values) error {
 		driverType = drivers.Drivers[selected].Type
 	}
 	if !driverType.IsValid() || !drivers.Drivers.ExistsConsumerType(driverType) {
-		return fmt.Errorf("Invalid given consumer type")
+		return cli.NewError("Invalid given consumer type")
 	}
 
 	var req sdk.AuthConsumerSigninRequest
@@ -111,7 +111,7 @@ func loginRun(v cli.Values) error {
 		req, err = loginRunBuiltin(v)
 	default:
 		if noInteractive {
-			return fmt.Errorf("Cannot signin with %s driver in no interactive mode", driverType)
+			return cli.NewError("Cannot signin with %s driver in no interactive mode", driverType)
 		}
 		return loginRunExternal(v, driverType, apiURL)
 	}
@@ -130,7 +130,7 @@ func loginRun(v cli.Values) error {
 	// Send signin request
 	res, err := client.AuthConsumerSignin(driverType, req)
 	if err != nil {
-		return fmt.Errorf("cannot signin: %v", err)
+		return cli.WrapError(err, "cannot signin")
 	}
 
 	return doAfterLogin(client, v, apiURL, driverType, res)
@@ -151,7 +151,7 @@ func loginRunLocal(v cli.Values) (sdk.AuthConsumerSigninRequest, error) {
 		req["password"] = cli.AskPassword("Password")
 	}
 	if req["username"] == "" || req["password"] == "" {
-		return req, fmt.Errorf("Invalid given username or password")
+		return req, cli.NewError("Invalid given username or password")
 	}
 
 	return req, nil
@@ -172,7 +172,7 @@ func loginRunLDAP(v cli.Values) (sdk.AuthConsumerSigninRequest, error) {
 		req["password"] = cli.AskPassword("Password")
 	}
 	if req["bind"] == "" || req["password"] == "" {
-		return req, fmt.Errorf("Invalid given LDAP bind or password")
+		return req, cli.NewError("Invalid given LDAP bind or password")
 	}
 
 	return req, nil
@@ -187,7 +187,7 @@ func loginRunBuiltin(v cli.Values) (sdk.AuthConsumerSigninRequest, error) {
 		req["token"] = cli.AskPassword("Sign in token")
 	}
 	if req["token"] == "" {
-		return req, fmt.Errorf("Invalid given signin token")
+		return req, cli.NewError("Invalid given signin token")
 	}
 
 	return req, nil
@@ -206,7 +206,7 @@ func loginRunExternal(v cli.Values, consumerType sdk.AuthConsumerType, apiURL st
 
 	askSigninURI, err := url.Parse(config.URLUI + "/auth/ask-signin/" + string(consumerType) + "?origin=cdsctl")
 	if err != nil {
-		return fmt.Errorf("cannot parse given api uri: %v", err)
+		return cli.WrapError(err, "cannot parse given api uri")
 	}
 
 	fmt.Println("cdsctl: Opening the browser to login or control-c to abort")
@@ -265,7 +265,7 @@ func doAfterLogin(client cdsclient.Interface, v cli.Values, apiURL string, drive
 	if _, err := os.Stat(configFile); os.IsNotExist(err) {
 		fi, err := os.Create(configFile)
 		if err != nil {
-			return fmt.Errorf("Error while creating file %s: %v", configFile, err)
+			return cli.WrapError(err, "Error while creating file %s", configFile)
 		}
 		fi.Close()
 		if !noInteractive && contextName == "" {
@@ -274,11 +274,11 @@ func doAfterLogin(client cdsclient.Interface, v cli.Values, apiURL string, drive
 	} else {
 		fi, err := os.Open(configFile)
 		if err != nil {
-			return fmt.Errorf("Error while opening file %s: %v", configFile, err)
+			return cli.WrapError(err, "Error while opening file %s", configFile)
 		}
 		cdsConfigFile, err := internal.GetConfigFile(fi)
 		if err != nil {
-			return fmt.Errorf("Error while reading config file %s: %v", configFile, err)
+			return cli.WrapError(err, "Error while reading config file %s", configFile)
 		} else if !noInteractive && contextName == "" {
 			opts := []string{}
 			for _, c := range cdsConfigFile.Contexts {
@@ -303,7 +303,7 @@ func doAfterLogin(client cdsclient.Interface, v cli.Values, apiURL string, drive
 
 	fi, err := os.OpenFile(configFile, os.O_RDONLY, 0600)
 	if err != nil {
-		return fmt.Errorf("Error while opening file %s: %v", configFile, err)
+		return cli.WrapError(err, "Error while opening file %s", configFile)
 	}
 	defer fi.Close()
 
@@ -324,7 +324,7 @@ func doAfterLogin(client cdsclient.Interface, v cli.Values, apiURL string, drive
 		return err
 	}
 	if err := fi.Close(); err != nil {
-		return fmt.Errorf("Error while closing file %s: %v", configFile, err)
+		return cli.WrapError(err, "Error while closing file %s", configFile)
 	}
 	if err := writeConfigFile(configFile, wdata); err != nil {
 		return err
@@ -336,7 +336,7 @@ func doAfterLogin(client cdsclient.Interface, v cli.Values, apiURL string, drive
 func createOrRegenConsumer(apiURL, username, sessionToken string, v cli.Values) (string, string, error) {
 	hostname, err := os.Hostname()
 	if err != nil {
-		return "", "", fmt.Errorf("cdsctl: cannot retrieve hostname: %s", err)
+		return "", "", cli.WrapError(err, "cannot retrieve hostname")
 	}
 
 	client := cdsclient.New(cdsclient.Config{
@@ -348,7 +348,7 @@ func createOrRegenConsumer(apiURL, username, sessionToken string, v cli.Values) 
 
 	consumers, err := client.AuthConsumerListByUser(username)
 	if err != nil {
-		return "", "", fmt.Errorf("cdsctl: cannot retrieve consumer list: %v", err)
+		return "", "", cli.WrapError(err, "cdsctl: cannot retrieve consumer list")
 	}
 
 	consumerName := fmt.Sprintf("cdsctl/%s", hostname)
@@ -365,7 +365,7 @@ func createOrRegenConsumer(apiURL, username, sessionToken string, v cli.Values) 
 		if consumerID != "" {
 			consumer, err := client.AuthConsumerRegen(username, consumerID)
 			if err != nil {
-				return "", "", fmt.Errorf("cdsctl: cannot regenerate consumer: %v", err)
+				return "", "", cli.WrapError(err, "cdsctl: cannot regenerate consumer")
 			}
 			signinToken = consumer.Token
 		}
@@ -379,7 +379,7 @@ func createOrRegenConsumer(apiURL, username, sessionToken string, v cli.Values) 
 			ScopeDetails: sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopes...),
 		})
 		if err != nil {
-			return "", "", fmt.Errorf("cdsctl: failed to create consumer: %v", err)
+			return "", "", cli.WrapError(err, "cdsctl: failed to create consumer")
 		}
 
 		signinToken = resCreate.Token
@@ -391,27 +391,27 @@ func createOrRegenConsumer(apiURL, username, sessionToken string, v cli.Values) 
 	}
 	res, err := client.AuthConsumerSignin(sdk.ConsumerBuiltin, req)
 	if err != nil {
-		return "", "", fmt.Errorf("cannot signin: %v", err)
+		return "", "", cli.WrapError(err, "cannot signin")
 	}
 
 	// then logout sessionToken from "local" consumer
 	if err := client.AuthConsumerSignout(); err != nil {
-		return "", "", fmt.Errorf("cdsctl: error while signout local session: %v", err)
+		return "", "", cli.WrapError(err, "cdsctl: error while signout local session")
 	}
 	return signinToken, res.Token, nil
 }
 
 func writeConfigFile(configFile string, content *bytes.Buffer) error {
 	if errre := os.Remove(configFile); errre != nil {
-		return fmt.Errorf("Error while removing old file %s: %s", configFile, errre)
+		return cli.NewError("Error while removing old file %s: %s", configFile, errre)
 	}
 	fi, err := os.OpenFile(configFile, os.O_WRONLY|os.O_CREATE, 0600)
 	if err != nil {
-		return fmt.Errorf("Error while opening file %s: %v", configFile, err)
+		return cli.WrapError(err, "Error while opening file %s", configFile)
 	}
 	defer fi.Close()
 	if _, err := fi.Write(content.Bytes()); err != nil {
-		return fmt.Errorf("Error while writing file %s: %v", configFile, err)
+		return cli.WrapError(err, "Error while writing file %s", configFile)
 	}
 	return nil
 }
@@ -451,21 +451,21 @@ func loginVerifyFunc(v cli.Values) error {
 	})
 	drivers, err := client.AuthDriverList()
 	if err != nil {
-		return fmt.Errorf("Cannot list auth drivers: %v", err)
+		return cli.WrapError(err, "Cannot list auth drivers")
 	}
 	if len(drivers.Drivers) == 0 {
-		return fmt.Errorf("No authentication driver configured")
+		return cli.NewError("No authentication driver configured")
 	}
 
 	driverType := sdk.AuthConsumerType(v.GetString("driver-type"))
 	if !driverType.IsValidExternal() {
-		return fmt.Errorf("Invalid given driver type: %s", driverType)
+		return cli.NewError("Invalid given driver type: %s", driverType)
 	}
 
 	token := v.GetString("token")
 	splittedToken := strings.Split(token, ":")
 	if len(splittedToken) != 2 {
-		return fmt.Errorf("Invalid given token")
+		return cli.NewError("Invalid given token")
 	}
 
 	req := sdk.AuthConsumerSigninRequest{
@@ -484,7 +484,7 @@ func loginVerifyFunc(v cli.Values) error {
 	// Send signin request
 	res, err := client.AuthConsumerSignin(driverType, req)
 	if err != nil {
-		return fmt.Errorf("cannot signin: %v", err)
+		return cli.WrapError(err, "cannot signin")
 	}
 
 	return doAfterLogin(client, v, apiURL, driverType, res)

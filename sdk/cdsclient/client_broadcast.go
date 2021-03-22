@@ -16,7 +16,7 @@ func (c *client) BroadcastCreate(broadcast *sdk.Broadcast) error {
 	code, err := c.PostJSON(context.Background(), "/broadcast", broadcast, nil)
 	if code != 201 {
 		if err == nil {
-			return fmt.Errorf("HTTP Code %d", code)
+			return newAPIError(fmt.Errorf("HTTP Code %d", code))
 		}
 	}
 	return err

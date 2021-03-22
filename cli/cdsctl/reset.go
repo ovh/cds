@@ -45,10 +45,10 @@ func resetFunc(v cli.Values) error {
 	})
 	drivers, err := client.AuthDriverList()
 	if err != nil {
-		return fmt.Errorf("Cannot list auth drivers: %v", err)
+		return cli.WrapError(err, "Cannot list auth drivers")
 	}
 	if len(drivers.Drivers) == 0 {
-		return fmt.Errorf("No authentication driver configured")
+		return cli.NewError("No authentication driver configured")
 	}
 
 	var localConsumerDriverEnable bool
@@ -60,7 +60,7 @@ func resetFunc(v cli.Values) error {
 	}
 
 	if !localConsumerDriverEnable {
-		return fmt.Errorf("No authentication driver configured")
+		return cli.NewError("No authentication driver configured")
 	}
 
 	email := v.GetString("email")
@@ -111,7 +111,7 @@ var resetConfirmCmd = cli.Command{
 func resetConfirmFunc(v cli.Values) error {
 	token := v.GetString("token")
 	if token == "" {
-		return fmt.Errorf("Invalid given token")
+		return cli.NewError("Invalid given token")
 	}
 
 	noInteractive := v.GetBool("no-interactive")
@@ -133,7 +133,7 @@ func resetConfirmFunc(v cli.Values) error {
 	}
 
 	if password == "" {
-		return fmt.Errorf("Invalid given password")
+		return cli.NewError("Invalid given password")
 	}
 
 	signupresponse, err := client.AuthConsumerLocalResetPassword(token, password)

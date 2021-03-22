@@ -157,7 +157,7 @@ For admin:
 
 func workerModelImportRun(c cli.Values) error {
 	if c.GetString("path") == "" {
-		return fmt.Errorf("path for worker model is mandatory")
+		return cli.NewError("path for worker model is mandatory")
 	}
 	files := strings.Split(c.GetString("path"), ",")
 

@@ -78,7 +78,7 @@ func adminIntegrationModelExportRun(v cli.Values) error {
 
 	b, err := yaml.Marshal(model)
 	if err != nil {
-		return fmt.Errorf("unable to marshal: %v", err)
+		return cli.WrapError(err, "unable to marshal content")
 	}
 
 	fmt.Println(string(b))
@@ -99,12 +99,12 @@ var adminIntegrationModelImportCmd = cli.Command{
 func adminIntegrationModelImportRun(v cli.Values) error {
 	b, err := ioutil.ReadFile(v.GetString("file"))
 	if err != nil {
-		return fmt.Errorf("unable to read file %s: %v", v.GetString("file"), err)
+		return cli.WrapError(err, "unable to read file %s", v.GetString("file"))
 	}
 
 	m := new(sdk.IntegrationModel)
 	if err := yaml.Unmarshal(b, m); err != nil {
-		return fmt.Errorf("unable to load file: %v", err)
+		return cli.WrapError(err, "unable to load file")
 	}
 
 	//Try to load the model to know if we have to add it or update it

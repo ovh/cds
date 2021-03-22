@@ -235,6 +235,14 @@ func (s *Service) Serve(c context.Context) error {
 	return ctx.Err()
 }
 
+func (s *Service) mustDB() *gorp.DbMap {
+	db := s.DBConnectionFactory.GetDBMap(s.Mapper)()
+	if db == nil {
+		panic(fmt.Errorf("database unavailable"))
+	}
+	return db
+}
+
 func (s *Service) mustDBWithCtx(ctx context.Context) *gorp.DbMap {
 	db := s.DBConnectionFactory.GetDBMap(s.Mapper)()
 	db = db.WithContext(ctx).(*gorp.DbMap)

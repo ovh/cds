@@ -408,8 +408,17 @@ func (e Error) Error() string {
 		message = errorsAmericanEnglish[ErrUnknownError.ID]
 	}
 	if e.From != "" {
-		message = fmt.Sprintf("%s (from: %s)", message, e.From)
+		if e.RequestID != "" {
+			message = fmt.Sprintf("%s (from: %s, request_id: %s)", message, e.From, e.RequestID)
+		} else {
+			message = fmt.Sprintf("%s (from: %s)", message, e.From)
+		}
+	} else {
+		if e.RequestID != "" {
+			message = fmt.Sprintf("%s (request_id: %s)", message, e.RequestID)
+		}
 	}
+
 	return message
 }
 
@@ -738,13 +747,18 @@ func DecodeError(data []byte) error {
 	return e
 }
 
+type errorWithCause interface {
+	Cause() error
+}
+
 // ErrorIs returns true if error match the target error.
 func ErrorIs(err error, target Error) bool {
 	if err == nil {
 		return false
 	}
-
 	switch e := err.(type) {
+	case errorWithCause: // Fetch the root error with the stacktrace from errors.WithStack
+		return ErrorIs(e.Cause(), target)
 	case errorWithStack:
 		return e.httpError.ID == target.ID
 	case Error:

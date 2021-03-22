@@ -39,7 +39,6 @@ func JWTMiddleware(ctx context.Context, _ http.ResponseWriter, req *http.Request
 	}
 	// If no jwt is given, simply return empty context without error
 	if jwtRaw == "" {
-		log.Debug(ctx, "service.JWTMiddleware> no jwt token found in request")
 		return ctx, nil
 	}
 

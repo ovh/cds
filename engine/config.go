@@ -178,6 +178,7 @@ func configBootstrap(args []string) Configuration {
 							Identifier:  "cdn-storage-local",
 							LocatorSalt: sdk.RandomString(9),
 							SecretValue: sdk.RandomString(17),
+							Timestamp:   time.Now().Unix(),
 						}},
 					},
 				},

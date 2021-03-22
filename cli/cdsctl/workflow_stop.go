@@ -41,7 +41,7 @@ func workflowStopRun(v cli.Values) error {
 	var fromNodeID int64
 	if v.GetString("node-name") != "" {
 		if runNumber <= 0 {
-			return fmt.Errorf("You can use flag node-name without flag run-number")
+			return cli.NewError("You can use flag node-name without flag run-number")
 		}
 		wr, err := client.WorkflowRunGet(v.GetString(_ProjectKey), v.GetString(_WorkflowName), runNumber)
 		if err != nil {
@@ -54,7 +54,7 @@ func workflowStopRun(v cli.Values) error {
 			}
 		}
 		if fromNodeID == 0 {
-			return fmt.Errorf("Node not found")
+			return cli.NewError("Node not found")
 		}
 	}
 

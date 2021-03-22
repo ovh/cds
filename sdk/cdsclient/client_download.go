@@ -49,7 +49,7 @@ func (c *client) DownloadURLFromGithub(filename string) (string, error) {
 	text := fmt.Sprintf("Invalid Artifacts on latest release (%s). Please try again in few minutes.\n", filename)
 	text += fmt.Sprintf("If the problem persists, please open an issue on %s\n", sdk.URLGithubIssues)
 	text += fmt.Sprintf("You can manually download binary from latest release: %s\n", sdk.URLGithubReleases)
-	return "", fmt.Errorf(text)
+	return "", newError(fmt.Errorf(text))
 }
 
 // code below is from https://github.com/google/go-github/tree/master/github

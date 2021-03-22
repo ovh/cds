@@ -44,4 +44,12 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Handle("/sync/buffer", nil, r.POST(s.syncBufferHandler))
 
 	r.Handle("/size/item/project/{projectKey}", nil, r.GET(s.getSizeByProjectHandler))
+
+	r.Handle("/admin/database/signature", nil, r.GET(s.getAdminDatabaseSignatureResume))
+	r.Handle("/admin/database/signature/{entity}/roll/{pk}", nil, r.POST(s.postAdminDatabaseSignatureRollEntityByPrimaryKey))
+	r.Handle("/admin/database/signature/{entity}/{signer}", nil, r.GET(s.getAdminDatabaseSignatureTuplesBySigner))
+	r.Handle("/admin/database/encryption", nil, r.GET(s.getAdminDatabaseEncryptedEntities))
+	r.Handle("/admin/database/encryption/{entity}", nil, r.GET(s.getAdminDatabaseEncryptedTuplesByEntity))
+	r.Handle("/admin/database/encryption/{entity}/roll/{pk}", nil, r.POST(s.postAdminDatabaseRollEncryptedEntityByPrimaryKey))
+
 }

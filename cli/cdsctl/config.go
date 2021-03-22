@@ -40,6 +40,7 @@ func loadConfig(cmd *cobra.Command) (string, *cdsclient.Config, error) {
 	}
 	var verbose, _ = cmd.Flags().GetBool("verbose")
 	verbose = verbose || os.Getenv("CDS_VERBOSE") == "true"
+	cli.Verbose = verbose
 	var insecureSkipVerifyTLS, _ = cmd.Flags().GetBool("insecure")
 	insecureSkipVerifyTLS = insecureSkipVerifyTLS || os.Getenv("CDS_INSECURE") == "true"
 	var contextName, _ = cmd.Flags().GetString("context")
@@ -71,16 +72,16 @@ func loadConfig(cmd *cobra.Command) (string, *cdsclient.Config, error) {
 	if _, err := os.Stat(configFile); !os.IsNotExist(err) {
 		f, err := os.Open(configFile)
 		if err != nil {
-			return "", nil, fmt.Errorf("unable to read file %s: %v", configFile, err)
+			return "", nil, cli.WrapError(err, "unable to read file %s", configFile)
 		}
 		defer f.Close()
 
 		if contextName != "" {
 			if cdsctx, err = internal.GetContext(f, contextName); err != nil {
-				return "", nil, fmt.Errorf("unable to load the current context from %s", contextName)
+				return "", nil, cli.NewError("unable to load the current context from %s", contextName)
 			}
 		} else if cdsctx, err = internal.GetCurrentContext(f); err != nil {
-			return "", nil, fmt.Errorf("unable to load the current context from %s", configFile)
+			return "", nil, cli.NewError("unable to load the current context from %s", configFile)
 		}
 
 		if verbose {
@@ -114,7 +115,7 @@ func loadConfig(cmd *cobra.Command) (string, *cdsclient.Config, error) {
 	cdsctx.Verbose = verbose
 
 	if cdsctx.Host == "" {
-		return "", nil, fmt.Errorf("invalid cdsctl configuration to reach a CDS API")
+		return "", nil, cli.NewError("invalid cdsctl configuration to reach a CDS API")
 	}
 
 	config := &cdsclient.Config{
@@ -140,10 +141,10 @@ func recreateSessionToken(configFile string, cdsctx internal.CDSContext, context
 	})
 	res, err := client.AuthConsumerSignin(sdk.ConsumerBuiltin, req)
 	if err != nil {
-		return nil, fmt.Errorf("cannot signin: %v", err)
+		return nil, cli.WrapError(err, "cannot signin")
 	}
 	if res.Token == "" || res.User == nil {
-		return nil, fmt.Errorf("invalid username or token returned by sign in token")
+		return nil, cli.NewError("invalid username or token returned by sign in token")
 	}
 	cdsctx.Session = res.Token
 	// resave session token
@@ -153,7 +154,7 @@ func recreateSessionToken(configFile string, cdsctx internal.CDSContext, context
 
 	fi, err := os.OpenFile(configFile, os.O_RDONLY, 0600)
 	if err != nil {
-		return nil, fmt.Errorf("Error while opening file %s: %v", configFile, err)
+		return nil, cli.WrapError(err, "Error while opening file %s", configFile)
 	}
 	wdata := &bytes.Buffer{}
 	if err := internal.StoreContext(fi, wdata, cdsctx); err != nil {
@@ -162,7 +163,7 @@ func recreateSessionToken(configFile string, cdsctx internal.CDSContext, context
 	}
 
 	if err := fi.Close(); err != nil {
-		return nil, fmt.Errorf("Error while closing file %s: %v", configFile, err)
+		return nil, cli.WrapError(err, "Error while closing file %s", configFile)
 	}
 	if err := writeConfigFile(configFile, wdata); err != nil {
 		return nil, err

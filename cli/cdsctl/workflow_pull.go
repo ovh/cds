@@ -53,7 +53,7 @@ func workflowPullRun(c cli.Values) error {
 		dir = "."
 	}
 	if err := os.MkdirAll(dir, os.FileMode(0744)); err != nil {
-		return fmt.Errorf("Unable to create directory %s: %v", c.GetString("output-dir"), err)
+		return cli.WrapError(err, "Unable to create directory %s", c.GetString("output-dir"))
 	}
 
 	var mods []cdsclient.RequestModifier
@@ -74,7 +74,7 @@ func workflowTarReaderToFiles(v cli.Values, dir string, tr *tar.Reader) error {
 	yes := v.GetBool("yes")
 	quiet := v.GetBool("quiet")
 	if tr == nil {
-		return fmt.Errorf("unable to read workflow")
+		return cli.NewError("unable to read workflow")
 	}
 	// Iterate through the files in the archive.
 	for {
@@ -83,7 +83,7 @@ func workflowTarReaderToFiles(v cli.Values, dir string, tr *tar.Reader) error {
 			break
 		}
 		if err != nil {
-			return fmt.Errorf("Error while reading the tar archive err:%v", err)
+			return cli.WrapError(err, "Error while reading the tar archive err")
 		}
 
 		fname := filepath.Join(dir, hdr.Name)
@@ -100,13 +100,13 @@ func workflowTarReaderToFiles(v cli.Values, dir string, tr *tar.Reader) error {
 		}
 		fi, err := os.Create(fname)
 		if err != nil {
-			return fmt.Errorf("Error while creating file %s err:%v", fname, err)
+			return cli.WrapError(err, "Error while creating file %s", fname)
 		}
 		if _, err := io.Copy(fi, tr); err != nil {
-			return fmt.Errorf("Error while writing file %s err:%v", fname, err)
+			return cli.WrapError(err, "Error while writing file %s", fname)
 		}
 		if err := fi.Close(); err != nil {
-			return fmt.Errorf("Error while closing file %s err:%v", fname, err)
+			return cli.WrapError(err, "Error while closing file %s", fname)
 		}
 		if !quiet {
 			fmt.Println(fname)

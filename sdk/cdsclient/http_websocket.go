@@ -40,7 +40,7 @@ func (c *client) RequestWebsocket(ctx context.Context, goRoutines *sdk.GoRoutine
 	}
 	uHost, err := url.Parse(host)
 	if err != nil {
-		return sdk.WrapError(err, "wrong Host configuration")
+		return newError(fmt.Errorf("wrong host configuration: %v", err))
 	}
 	urlWebsocket := url.URL{
 		Scheme:   strings.Replace(uHost.Scheme, "http", "ws", -1),
@@ -57,7 +57,7 @@ func (c *client) RequestWebsocket(ctx context.Context, goRoutines *sdk.GoRoutine
 	headers["Authorization"] = []string{auth}
 	con, _, err := c.httpWebsocketClient.Dial(urlWebsocket.String(), headers)
 	if err != nil {
-		return sdk.WithStack(err)
+		return newTransportError(err)
 	}
 	defer con.Close() // nolint
 
@@ -69,7 +69,7 @@ func (c *client) RequestWebsocket(ctx context.Context, goRoutines *sdk.GoRoutine
 				return
 			case m := <-msgToSend:
 				if err := con.WriteJSON(m); err != nil {
-					errorReceived <- sdk.WrapError(err, "unable to send message")
+					errorReceived <- newTransportError(fmt.Errorf("unable to send message: %v", err))
 				}
 			}
 		}
@@ -84,7 +84,7 @@ func (c *client) RequestWebsocket(ctx context.Context, goRoutines *sdk.GoRoutine
 			if websocket.IsCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				return err
 			}
-			errorReceived <- sdk.WrapError(err, "unable to send message")
+			errorReceived <- newTransportError(fmt.Errorf("unable to send message: %v", err))
 			continue
 		}
 		msgReceived <- message
