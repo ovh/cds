@@ -53,7 +53,7 @@ type HatcheryCommonConfiguration struct {
 		WorkerAPIHTTP             struct {
 			URL      string `toml:"url" default:"http://localhost:8081" commented:"true" comment:"CDS API URL for worker, let empty or commented to use the same URL that is used by the Hatchery" json:"url"`
 			Insecure bool   `toml:"insecure" default:"false" commented:"true" comment:"sslInsecureSkipVerify, set to true if you use a self-signed SSL on CDS API" json:"insecure"`
-		} `toml:"http" json:"http"`
+		} `toml:"workerApiHttp" json:"workerApiHttp"`
 		WorkerLogsOptions struct {
 			Graylog struct {
 				Host       string `toml:"host" comment:"Example: thot.ovh.com" json:"host"`
