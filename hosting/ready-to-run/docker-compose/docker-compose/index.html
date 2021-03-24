@@ -258,7 +258,7 @@
 </nav>
 
 <h2 id="run-with-docker-compose">Run with Docker-Compose</h2>
-<p>The <a href="https://github.com/ovh/cds/blob/0.48.0/docker-compose.yml">docker-compose.yml</a> contains:</p>
+<p>The <a href="https://github.com/ovh/cds/blob/0.48.1/docker-compose.yml">docker-compose.yml</a> contains:</p>
 <ul>
 <li>cds-db service with a PostgreSQL</li>
 <li>cds-cache service with a Redis</li>
@@ -276,12 +276,12 @@
 <p>Docker compose is very convenient to launch CDS for testing it. But this is not recommended for a Production Installation.</p>
 <h2 id="how-to-run">How to run</h2>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ mkdir /tmp/cdstest <span style="color:#f92672">&amp;&amp;</span> cd /tmp/cdstest <span style="color:#f92672">&amp;&amp;</span> mkdir -p tools/smtpmock
-$ curl https://raw.githubusercontent.com/ovh/cds/0.48.0/docker-compose.yml -o docker-compose.yml
+$ curl https://raw.githubusercontent.com/ovh/cds/0.48.1/docker-compose.yml -o docker-compose.yml
 $ export HOSTNAME<span style="color:#f92672">=</span><span style="color:#66d9ef">$(</span>hostname<span style="color:#66d9ef">)</span>
-$ export CDS_DOCKER_IMAGE<span style="color:#f92672">=</span>ovhcom/cds-engine:0.48.0
+$ export CDS_DOCKER_IMAGE<span style="color:#f92672">=</span>ovhcom/cds-engine:0.48.1
 
 <span style="color:#75715e"># Get the latest version</span>
-$ docker pull ovhcom/cds-engine:latest
+$ docker pull ovhcom/cds-engine:0.48.1
 
 <span style="color:#75715e"># Create PostgreSQL database, redis and elasticsearch</span>
 $ docker-compose up --no-recreate -d cds-db cds-cache elasticsearch dockerhost
@@ -336,10 +336,10 @@ $ ./cdsctl user me
 $ docker-compose up -d cds-ui cds-cdn cds-hooks cds-elasticsearch cds-hatchery-swarm
 
 <span style="color:#75715e"># create first worker model</span>
-$ ./cdsctl worker model import https://raw.githubusercontent.com/ovh/cds/0.48.0/contrib/worker-models/go-official-1.13.yml
+$ ./cdsctl worker model import https://raw.githubusercontent.com/ovh/cds/0.48.1/contrib/worker-models/go-official-1.13.yml
 
 <span style="color:#75715e"># import Import a workflow template</span>
-$ ./cdsctl template push https://raw.githubusercontent.com/ovh/cds/0.48.0/contrib/workflow-templates/demo-workflow-hello-world/demo-workflow-hello-world.yml
+$ ./cdsctl template push https://raw.githubusercontent.com/ovh/cds/0.48.1/contrib/workflow-templates/demo-workflow-hello-world/demo-workflow-hello-world.yml
 Workflow template shared.infra/demo-workflow-hello-world has been created
 Template successfully pushed !
 
@@ -366,7 +366,7 @@ There is a Run Condition on it <code>cds.manual = true</code>:</p>
 <p>The build pipeline contains two stages, with only one job in each stage</p>
 <p><img src="../../../../images/ready_to_run_docker_compose_build_pipeline.png" alt="Build Pipeline"></p>
 <h2 id="setup-connection-with-a-vcs">Setup connection with a VCS</h2>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#75715e"># READ THE section https://ovh.github.io/cds/docs/integrations/github/#create-a-cds-application-on-github to generate the clientId and clientSecret.</span>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#75715e"># READ THE section https://ovh.github.io/cds/docs/integrations/github/github_repository_manager/#create-a-cds-application-on-github to generate the clientId and clientSecret.</span>
 <span style="color:#75715e"># Short version: </span>
 <span style="color:#75715e"># go on https://github.com/settings/applications/new</span>
 <span style="color:#75715e"># Application name: cds-test-docker-compose</span>
@@ -385,7 +385,7 @@ Users can store CDS Files on their repositories. This service clones user reposi
 <ul>
 <li>Import actions, example:</li>
 </ul>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ ./cdsctl action import https://raw.githubusercontent.com/ovh/cds/0.48.0/contrib/actions/cds-docker-package.yml
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ ./cdsctl action import https://raw.githubusercontent.com/ovh/cds/0.48.1/contrib/actions/cds-docker-package.yml
 </code></pre></div><h2 id="go-further">Go further</h2>
 <ul>
 <li>How to use OpenStack infrastructure to spawn CDS Workers <a href="../../../../docs/integrations/openstack/openstack_compute/">read more</a></li>

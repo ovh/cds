@@ -17,20 +17,14 @@
 <link rel="stylesheet" href="../../../../css/solarized-light.css">
 
 <meta name="description"
-    content="You can configure the workflow run retention in the workflow advanced section on the CDS UI.
-  The first line defines the number maximum of runs that CDS can keep for this workflow. Only a CDS administrator can update this value.
-  On the second line, you will be able to define your retention policy through a lua condition. You will be able to use these variables:
- run_days_before: to identify runs older than x days git_branch_exist: to identify if the git branch used for this run still exists on the git repository run_status: to identidy run status gerrit_change_merged: to identify if the gerrit change has been merged gerrit_change_abandoned: to identify if the gerrit change has been abandoned gerrit_change_days_before: to identify gerrit change older than x days and all variables defined in your workflow payload    For example, the rule defined above means:">
+    content="You can configure two options in Workflow advanced section on the CDS UI:
+ Workflow run retention policy. A lua rule to check if a run should be kept or not. Maximum number of Workflow Runs. The maximum number of run to keep for the Workflow.  The dry run button allows you to test your lua expression. The result is a table filled with all runs that would be kept">
 <meta property="og:description"
-    content="You can configure the workflow run retention in the workflow advanced section on the CDS UI.
-  The first line defines the number maximum of runs that CDS can keep for this workflow. Only a CDS administrator can update this value.
-  On the second line, you will be able to define your retention policy through a lua condition. You will be able to use these variables:
- run_days_before: to identify runs older than x days git_branch_exist: to identify if the git branch used for this run still exists on the git repository run_status: to identidy run status gerrit_change_merged: to identify if the gerrit change has been merged gerrit_change_abandoned: to identify if the gerrit change has been abandoned gerrit_change_days_before: to identify gerrit change older than x days and all variables defined in your workflow payload    For example, the rule defined above means:">
+    content="You can configure two options in Workflow advanced section on the CDS UI:
+ Workflow run retention policy. A lua rule to check if a run should be kept or not. Maximum number of Workflow Runs. The maximum number of run to keep for the Workflow.  The dry run button allows you to test your lua expression. The result is a table filled with all runs that would be kept">
 <meta name="twitter:description"
-    content="You can configure the workflow run retention in the workflow advanced section on the CDS UI.
-  The first line defines the number maximum of runs that CDS can keep for this workflow. Only a CDS administrator can update this value.
-  On the second line, you will be able to define your retention policy through a lua condition. You will be able to use these variables:
- run_days_before: to identify runs older than x days git_branch_exist: to identify if the git branch used for this run still exists on the git repository run_status: to identidy run status gerrit_change_merged: to identify if the gerrit change has been merged gerrit_change_abandoned: to identify if the gerrit change has been abandoned gerrit_change_days_before: to identify gerrit change older than x days and all variables defined in your workflow payload    For example, the rule defined above means:">
+    content="You can configure two options in Workflow advanced section on the CDS UI:
+ Workflow run retention policy. A lua rule to check if a run should be kept or not. Maximum number of Workflow Runs. The maximum number of run to keep for the Workflow.  The dry run button allows you to test your lua expression. The result is a table filled with all runs that would be kept">
 <meta property="og:url" content="/docs/concepts/workflow/retention/">
 <meta property="og:title" content="Retention">
 <meta name="twitter:title" content="Retention">
@@ -526,33 +520,72 @@
 
 
 
-<nav id="TableOfContents"></nav>
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#workflow-run-retention-policy">Workflow run retention policy</a></li>
+    <li><a href="#maximum-number-of-workflow-runs">Maximum number of Workflow Runs</a></li>
+  </ul>
+</nav>
 
-<p>You can configure the workflow run retention in the workflow advanced section on the CDS UI.</p>
+<p>You can configure two options in Workflow advanced section on the CDS UI:</p>
+<ul>
+<li>Workflow run retention policy. A lua rule to check if a run should be kept or not.</li>
+<li>Maximum number of Workflow Runs. The maximum number of run to keep for the Workflow.</li>
+</ul>
 <p><img src="../images/workflow_retention.png" alt="retention.png"></p>
+<p>The dry run button allows you to test your lua expression. The result is a table filled with all runs that would be kept</p>
+<h2 id="workflow-run-retention-policy">Workflow run retention policy</h2>
+
+<div class="notices note" ><span></span><div><p>This feature is not currently enabled by default. However, you can try this feature on a CDS project using the feature flipping.
+To activate the feature you can create a file like the following:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">cat <span style="color:#e6db74">&lt;&lt;EOF &gt; workflow-retention-policy.yml
+</span><span style="color:#e6db74">name: workflow-retention-policy
+</span><span style="color:#e6db74">rule: return project_key == &#34;KEY_FOR_PROJECT_THAT_YOU_WANT_TO_ACTIVATE&#34;
+</span><span style="color:#e6db74">EOF</span>
+cdsctl admin feature import workflow-retention-policy.yml
+</code></pre></div></div></div>
+
+<p>Retention policy is defined through a lua condition. This condition should be evaluated as <strong>true</strong> to keep a Workflow Run.</p>
+<p>You will be able to use these variables in conditions:</p>
 <ul>
-<li>
-<p>The first line defines the number maximum of runs that CDS can keep for this workflow. Only a CDS administrator can update this value.</p>
-</li>
-<li>
-<p>On the second line, you will be able to define your retention policy through a lua condition.
-You will be able to use these variables:</p>
-<ul>
-<li><!-- raw HTML omitted -->run_days_before<!-- raw HTML omitted -->: to identify runs older than x days</li>
-<li><!-- raw HTML omitted -->git_branch_exist<!-- raw HTML omitted -->: to identify if the git branch used for this run still exists on the git repository</li>
-<li><!-- raw HTML omitted -->run_status<!-- raw HTML omitted -->: to identidy run status</li>
-<li><!-- raw HTML omitted -->gerrit_change_merged<!-- raw HTML omitted -->: to identify if the gerrit change has been merged</li>
-<li><!-- raw HTML omitted -->gerrit_change_abandoned<!-- raw HTML omitted -->: to identify if the gerrit change has been abandoned</li>
-<li><!-- raw HTML omitted -->gerrit_change_days_before<!-- raw HTML omitted -->: to identify gerrit change older than x days</li>
-<li>and all variables defined in your workflow payload</li>
+<li><strong>run_days_before</strong> (number): count of days between Workflow creation date and now.</li>
+<li><strong>has_git_branch</strong> (string: true|false): True if a <em>git.branch</em> variable is set <strong>(added in 0.48.1)</strong>.</li>
+<li><strong>git_branch_exist</strong> (string: true|false): True if a <em>git.branch</em> variable is set and branch still exists on the git repository.</li>
+<li><strong>run_status</strong> (string: Success|Fail|&hellip;): the Workflow Run status.</li>
+<li><strong>gerrit_change_merged</strong> (string: true|false): to identify if the gerrit change has been merged.</li>
+<li><strong>gerrit_change_abandoned</strong> (string: true|false): to identify if the gerrit change has been abandoned.</li>
+<li><strong>gerrit_change_days_before</strong> (number): to identify gerrit change older than x days.</li>
+<li>All other variables from the Workflow Run payload (ex: cds_triggered_by_username, git_branch&hellip;).</li>
 </ul>
-</li>
-</ul>
-<p>For example, the rule defined above means:</p>
-<p>Keep workflow run for 365 days, but if branch does not exist on repository, only keep the run for 2 days.</p>
-<ul>
-<li>The dry run button allows you to test your lua expression. The result is a table filled with all runs that would be kept</li>
-</ul>
+<p>Examples:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-lua" data-lang="lua">  <span style="color:#75715e">-- Keep Run for 365 days</span>
+  <span style="color:#66d9ef">return</span> run_days_before <span style="color:#f92672">&lt;</span> <span style="color:#ae81ff">365</span>
+</code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-lua" data-lang="lua">  <span style="color:#75715e">-- Keep Run for 365 days if git_branch is set and exists in VCS or only 2 days for removed branches</span>
+  <span style="color:#75715e">-- Else keep Run for 365 days if no git_branch info is set</span>
+  <span style="color:#66d9ef">if</span>(has_git_branch <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;true&#34;</span>) <span style="color:#66d9ef">then</span>
+    <span style="color:#66d9ef">if</span>(git_branch_exist <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;true&#34;</span>) <span style="color:#66d9ef">then</span>
+      <span style="color:#66d9ef">return</span> run_days_before <span style="color:#f92672">&lt;</span> <span style="color:#ae81ff">365</span>
+    <span style="color:#66d9ef">else</span>
+      <span style="color:#66d9ef">return</span> run_days_before <span style="color:#f92672">&lt;</span> <span style="color:#ae81ff">2</span>
+    <span style="color:#66d9ef">end</span>
+  <span style="color:#66d9ef">else</span> 
+    <span style="color:#66d9ef">return</span> run_days_before <span style="color:#f92672">&lt;</span> <span style="color:#ae81ff">365</span>
+  <span style="color:#66d9ef">end</span>
+</code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-lua" data-lang="lua">  <span style="color:#75715e">-- Keep Run for ever</span>
+  <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">true</span>
+</code></pre></div><h2 id="maximum-number-of-workflow-runs">Maximum number of Workflow Runs</h2>
+
+<div class="notices note" ><span></span><div><p>This feature is not currently enabled by default. However, you can try this feature on a CDS project using the feature flipping.
+To activate the feature you can create a file like the following:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">cat <span style="color:#e6db74">&lt;&lt;EOF &gt; workflow-retention-maxruns.yml
+</span><span style="color:#e6db74">name: workflow-retention-maxruns
+</span><span style="color:#e6db74">rule: return project_key == &#34;KEY_FOR_PROJECT_THAT_YOU_WANT_TO_ACTIVATE&#34;
+</span><span style="color:#e6db74">EOF</span>
+cdsctl admin feature import workflow-retention-maxruns.yml
+</code></pre></div></div></div>
+
+<p>This value can be set only by a CDS administrator. In some case it prevent a Workflow to keep a lot of runs.
+When this feature is active, you&rsquo;ll not be able to start new Runs on a Workflow if the maximum count was reached.</p>
 
 
 

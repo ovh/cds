@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>unit on CDS - Continuous Delivery Service</title>
+    <link>/docs/components/cdsctl/admin/cdn/unit/</link>
+    <description>Recent content in unit on CDS - Continuous Delivery Service</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language><atom:link href="/docs/components/cdsctl/admin/cdn/unit/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>delete</title>
+      <link>/docs/components/cdsctl/admin/cdn/unit/delete/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/admin/cdn/unit/delete/</guid>
+      <description>cdsctl admin cdn unit delete delete the given unit
+Synopsis delete the given unit
+cdsctl admin cdn unit delete UNIT_ID Examples cdsctl admin cdn unit delete &amp;lt;unit_id&amp;gt; Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -n, --no-interactive Set to disable interaction with ctl --verbose Enable verbose output SEE ALSO  cdsctl admin cdn unit	- Manage CDS CDN unit  </description>
+    </item>
+    
+    <item>
+      <title>delete-items</title>
+      <link>/docs/components/cdsctl/admin/cdn/unit/delete-items/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/admin/cdn/unit/delete-items/</guid>
+      <description>cdsctl admin cdn unit delete-items mark item as delete for given unit
+Synopsis mark item as delete for given unit
+cdsctl admin cdn unit delete-items UNIT_ID Examples cdsctl admin cdn unit delete-items &amp;lt;unit_id&amp;gt; Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -n, --no-interactive Set to disable interaction with ctl --verbose Enable verbose output SEE ALSO  cdsctl admin cdn unit	- Manage CDS CDN unit  </description>
+    </item>
+    
+    <item>
+      <title>list</title>
+      <link>/docs/components/cdsctl/admin/cdn/unit/list/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/admin/cdn/unit/list/</guid>
+      <description>cdsctl admin cdn unit list list storage unit
+Synopsis list storage unit
+cdsctl admin cdn unit list [flags] Examples cdsctl admin cdn unit list Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -q, --quiet Only display object&#39;s key Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+  </channel>
+</rss>

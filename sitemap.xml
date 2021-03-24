@@ -18,7 +18,7 @@
   </url><url>
     <loc>/docs/concepts/job/</loc>
   </url><url>
-    <loc>/hosting/upgrade/migrate_0.48.0/</loc>
+    <loc>/hosting/upgrade/migrate_0.48/</loc>
   </url><url>
     <loc>/docs/concepts/workflow/payload/</loc>
   </url><url>
@@ -324,6 +324,8 @@
   </url><url>
     <loc>/docs/components/cdsctl/admin/broadcasts/delete/</loc>
   </url><url>
+    <loc>/docs/components/cdsctl/admin/cdn/unit/delete/</loc>
+  </url><url>
     <loc>/docs/components/cdsctl/admin/database/delete/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/admin/features/delete/</loc>
@@ -374,6 +376,8 @@
   </url><url>
     <loc>/docs/components/cdsctl/workflow/label/delete/</loc>
   </url><url>
+    <loc>/docs/components/cdsctl/admin/cdn/unit/delete-items/</loc>
+  </url><url>
     <loc>/docs/actions/builtin-deployapplication/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/template/detach/</loc>
@@ -397,6 +401,8 @@
     <loc>/docs/components/cdsctl/workflow/artifact/download/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/workflow/logs/download/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/workflow/result/download/</loc>
   </url><url>
     <loc>/docs/components/engine/download/</loc>
   </url><url>
@@ -578,6 +584,8 @@
   </url><url>
     <loc>/docs/components/cdsctl/admin/broadcasts/list/</loc>
   </url><url>
+    <loc>/docs/components/cdsctl/admin/cdn/unit/list/</loc>
+  </url><url>
     <loc>/docs/components/cdsctl/admin/database/list/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/admin/features/list/</loc>
@@ -643,6 +651,8 @@
     <loc>/docs/components/cdsctl/workflow/list/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/workflow/logs/list/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/workflow/result/list/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/admin/database/list-encrypted-data/</loc>
   </url><url>
@@ -762,9 +772,13 @@
   </url><url>
     <loc>/docs/components/cdsctl/reset-password/</loc>
   </url><url>
+    <loc>/docs/components/cdsctl/workflow/result/</loc>
+  </url><url>
     <loc>/docs/components/cdsctl/group/revoke/</loc>
   </url><url>
     <loc>/about/roadmap/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/admin/database/roll-encrypted-data/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/admin/database/roll-encrypteddata/</loc>
   </url><url>
@@ -869,6 +883,8 @@
     <loc>/development/rest/ui/</loc>
   </url><url>
     <loc>/docs/components/engine/download/ui/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/admin/cdn/unit/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/admin/database/unlock/</loc>
   </url><url>

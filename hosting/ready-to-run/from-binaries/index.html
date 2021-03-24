@@ -315,9 +315,9 @@ port <code>5432</code>, with an existing empty database and user named <code>cds
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">docker run --name cds-db -e POSTGRES_PASSWORD<span style="color:#f92672">=</span>cds -e POSTGRES_USER<span style="color:#f92672">=</span>cds -e POSTGRES_DB<span style="color:#f92672">=</span>cds -p 127.0.0.1:5432:5432 -d postgres:9.6
 </code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">cd $HOME/cds
 ./cds-engine download sql --config conf.toml
-./cds-engine database upgrade --db-host localhost --db-user cds --db-password cds --db-name cds --dh-schema public --db-sslmode disable --db-port <span style="color:#ae81ff">5432</span> --migrate-dir sql/api
+./cds-engine database upgrade --db-host localhost --db-user cds --db-password cds --db-name cds --db-schema public --db-sslmode disable --db-port <span style="color:#ae81ff">5432</span> --migrate-dir sql/api
 PGPASSWORD<span style="color:#f92672">=</span>cds psql -h localhost -U cds -d cds -c <span style="color:#e6db74">&#34;CREATE SCHEMA IF NOT EXISTS cdn AUTHORIZATION cds;&#34;</span>
-./cds-engine database upgrade --db-host localhost --db-user cds --db-password cds --db-name cds --dh-schema cdn --db-sslmode disable --db-port <span style="color:#ae81ff">5432</span> --migrate-dir sql/cdn
+./cds-engine database upgrade --db-host localhost --db-user cds --db-password cds --db-name cds --db-schema cdn --db-sslmode disable --db-port <span style="color:#ae81ff">5432</span> --migrate-dir sql/cdn
 </code></pre></div><h2 id="launch-cds-api">Launch CDS API</h2>
 <p>Generate a <strong><a href="../../../hosting/configuration/">Configuration File</a></strong></p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">cd $HOME/cds
@@ -338,8 +338,17 @@ curl http://localhost:8081/mon/status
 ./cds-engine start ui --config conf.toml
 </code></pre></div><p>Then, open a browser on http://localhost:8080/ .</p>
 <h2 id="launch-cds-cdn">Launch CDS cdn</h2>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">./cds-engine start cdn --config $HOME/cds/conf.toml
+<p>CDN is a service dedicated to receive and retrieve logs. Doc: <a href="https://ovh.github.io/cds/docs/components/cdn/">https://ovh.github.io/cds/docs/components/cdn/</a></p>
+<p>Start the cdn service:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">cd $HOME/cds
+mkdir -p storage/cdn-buffer storage/cdn
+./cds-engine config edit conf.toml --output conf.toml <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>  cdn.storageUnits.storages.local.local.path<span style="color:#f92672">=</span>$HOME/cds/storage/cdn <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>  cdn.storageUnits.buffers.local-buffer.local.path<span style="color:#f92672">=</span>$HOME/cds/storage/cdn-buffer
+
+./cds-engine start cdn --config $HOME/cds/conf.toml
 </code></pre></div><h2 id="launch-cds-local-hatchery">Launch CDS Local Hatchery</h2>
+<p>A Hatchery is a service dedicated to spawn and kill worker in accordance with build queue needs.</p>
 <p>Start the local hatchery:</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">./cds-engine start hatchery:local --config $HOME/cds/conf.toml
 

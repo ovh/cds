@@ -137,9 +137,7 @@ Parameters  directory: The name of a directory to clone into.  Requirements  git
       
       <guid>/docs/actions/builtin-coverage/</guid>
       <description>Coverage is a builtin action, you can&amp;rsquo;t modify it.
-CDS Builtin Action. Parse given file to extract coverage results.
-Coverage report will be linked to the application from the pipeline context. You will be able to see the coverage history in the application home page.
-Parameters  format: Coverage report format. minimum: Minimum percentage of coverage required (-1 means no minimum). path: Path of the coverage report file.  Requirements No Requirement</description>
+CDS Builtin Action. Parse given file to extract coverage results for lcov, cobertura and clover format. Then the coverage report is uploaded in CDN. Coverage report will be linked to the application from the pipeline context for lcov, cobertura and clover format. You will be able to see the coverage history in the application home page for lcov, cobertura and clover format.</description>
     </item>
     
     <item>
