@@ -253,9 +253,7 @@ func doRequest(ctx context.Context, srv *sdk.Service, method, path string, args 
 
 func doRequestFromURL(ctx context.Context, method string, callURL *url.URL, reader io.Reader, mods ...cdsclient.RequestModifier) ([]byte, http.Header, int, error) {
 	if HTTPClient == nil {
-		HTTPClient = &http.Client{
-			Timeout: 60 * time.Second,
-		}
+		HTTPClient = cdsclient.NewHTTPClient(60*time.Second, false)
 	}
 
 	if HTTPSigner == nil {

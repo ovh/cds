@@ -185,15 +185,15 @@ func GetArtifactFromAPI(ctx context.Context, wk *CurrentWorker, projectKey strin
 		return newError
 	}
 
-	regexp, errp := regexp.Compile(reqArgs.Pattern)
-	if errp != nil {
-		newError := sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Invalid pattern %s : %s", reqArgs.Pattern, errp))
+	regexp, err := regexp.Compile(reqArgs.Pattern)
+	if err != nil {
+		newError := sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("invalid pattern %s : %v", reqArgs.Pattern, err))
 		return newError
 	}
 	wg := new(sync.WaitGroup)
 	wg.Add(len(artifacts))
 
-	wk.SendLog(ctx, workerruntime.LevelInfo, "Downloading artifacts from into current directory")
+	wk.SendLog(ctx, workerruntime.LevelInfo, "Downloading artifacts into current directory")
 
 	var isInError bool
 	for i := range artifacts {
