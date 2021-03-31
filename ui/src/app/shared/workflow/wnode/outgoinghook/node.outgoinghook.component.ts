@@ -33,7 +33,11 @@ export class WorkflowWNodeOutGoingHookComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
-        this.model = this.workflow.outgoing_hook_models[this.node.outgoing_hook.hook_model_id] || this.node.outgoing_hook.model;
+        if (this.workflow.outgoing_hook_models && this.workflow.outgoing_hook_models[this.node.outgoing_hook.hook_model_id]) {
+            this.model = this.workflow.outgoing_hook_models[this.node.outgoing_hook.hook_model_id];
+        } else {
+            this.model = this.node.outgoing_hook.model;
+        }
         if (this.node && this.node.outgoing_hook.config['hookIcon'] && this.node.outgoing_hook.config['hookIcon'].value) {
             this.icon = (<WorkflowNodeHookConfigValue>this.node.outgoing_hook.config['hookIcon']).value.toLowerCase();
         } else {
