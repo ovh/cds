@@ -57,6 +57,7 @@ func (b *bitbucketClient) Branches(ctx context.Context, fullname string) ([]sdk.
 
 	return branches, nil
 }
+
 func (b *bitbucketClient) Branch(ctx context.Context, fullname string, filter string) (*sdk.VCSBranch, error) {
 	t := strings.Split(fullname, "/")
 	if len(t) != 2 {

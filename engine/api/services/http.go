@@ -146,7 +146,8 @@ func (s *defaultServiceClient) DoJSONRequest(ctx context.Context, method, path s
 func doJSONRequest(ctx context.Context, srvs []sdk.Service, method, path string, in interface{}, out interface{}, mods ...cdsclient.RequestModifier) (http.Header, int, error) {
 	var lastErr = sdk.WithStack(errors.New("unable to call service: service not found"))
 	var lastCode int
-	for attempt := 0; attempt < 5; attempt++ {
+	var attempts int64
+	for attempts = 0; attempts < 5; attempts++ {
 		for i := range srvs {
 			srv := &srvs[i]
 			headers, code, err := _doJSONRequest(ctx, srv, method, path, in, out, mods...)
@@ -162,7 +163,7 @@ func doJSONRequest(ctx context.Context, srvs []sdk.Service, method, path string,
 		}
 	}
 
-	log.Error(ctx, "unable to call service: maximum attempt exceed : %+v", lastErr)
+	log.Error(ctx, "unable to call service: maximum attempt exceed: %+v lastCode:%d attempts:%d", lastErr, lastCode, attempts)
 	return nil, lastCode, sdk.WithStack(lastErr)
 }
 
@@ -305,7 +306,10 @@ func doRequestFromURL(ctx context.Context, method string, callURL *url.URL, read
 	//Do the request
 	resp, err := HTTPClient.Do(req)
 	if err != nil {
-		return nil, nil, 0, sdk.WrapError(err, "request failed")
+		if resp != nil {
+			return nil, nil, resp.StatusCode, sdk.WrapError(err, "request failed with resp status code: %d", resp.StatusCode)
+		}
+		return nil, nil, 500, sdk.WrapError(err, "request failed - use code 500")
 	}
 	defer resp.Body.Close()
 
@@ -327,5 +331,5 @@ func doRequestFromURL(ctx context.Context, method string, callURL *url.URL, read
 		return nil, resp.Header, resp.StatusCode, cdserr
 	}
 
-	return nil, resp.Header, resp.StatusCode, sdk.WithStack(fmt.Errorf("request failed"))
+	return nil, resp.Header, resp.StatusCode, sdk.WithStack(fmt.Errorf("request failed with status code: %d", resp.StatusCode))
 }
