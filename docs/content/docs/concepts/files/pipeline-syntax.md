@@ -13,6 +13,12 @@ Consider the following Pipeline which implements a basic two-stage continuous de
 ```yaml
 version: v1.0
 name: build
+
+parameters:
+  param_name:
+    type: string
+    default: default_value
+    
 stages:
 - Compile
 - Package
@@ -28,6 +34,7 @@ jobs:
       directory: cds
       url: '{{.git.url}}'
   - script:
+    - echo {{.cds.pip.param_name}}  
     - cd cds/ui
     - npm set registry https://registry.npmjs.org
     - npm install
