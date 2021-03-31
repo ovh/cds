@@ -28,7 +28,7 @@ LIGHTCYAN='\033[1;36m'
 WHITE='\033[1;37m'
 
 VENOM="${VENOM:-`which venom`}"
-VENOM_OPTS="${VENOM_OPTS:--vv --output-dir ./results --stop-on-failure}"
+VENOM_OPTS="${VENOM_OPTS:--vv --format xml --output-dir ./results --stop-on-failure}"
 
 CDS_API_URL="${CDS_API_URL:-http://localhost:8081}"
 CDS_UI_URL="${CDS_UI_URL:-http://localhost:8080}"
