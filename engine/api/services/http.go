@@ -306,7 +306,7 @@ func doRequestFromURL(ctx context.Context, method string, callURL *url.URL, read
 	//Do the request
 	resp, err := HTTPClient.Do(req)
 	if err != nil {
-		if resp != nil {
+		if resp != nil && resp.StatusCode > 0 {
 			return nil, nil, resp.StatusCode, sdk.WrapError(err, "request failed with resp status code: %d", resp.StatusCode)
 		}
 		return nil, nil, 500, sdk.WrapError(err, "request failed - use code 500")
