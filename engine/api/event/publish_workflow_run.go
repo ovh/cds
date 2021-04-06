@@ -73,7 +73,7 @@ func PublishWorkflowRun(ctx context.Context, wr sdk.WorkflowRun, projectKey stri
 		workflowRunSubNum: wr.LastSubNumber,
 		status:            wr.Status,
 		workflowRunTags:   wr.Tags,
-		eventIntegrations: wr.Workflow.EventIntegrations,
+		eventIntegrations: wr.Workflow.GetEventIntegration(),
 	}
 	publishRunWorkflow(ctx, e, data)
 }
@@ -190,7 +190,7 @@ func PublishWorkflowNodeRun(ctx context.Context, nr sdk.WorkflowNodeRun, w sdk.W
 		workflowRunNum:    nr.Number,
 		workflowRunSubNum: nr.SubNumber,
 		status:            nr.Status,
-		eventIntegrations: w.EventIntegrations,
+		eventIntegrations: w.GetEventIntegration(),
 		workflowNodeRunID: nr.ID,
 	}
 	publishRunWorkflow(ctx, e, data)
@@ -214,7 +214,7 @@ func PublishWorkflowNodeJobRun(ctx context.Context, pkey string, wr sdk.Workflow
 		workflowRunSubNum: wr.LastSubNumber,
 		status:            jr.Status,
 		workflowRunTags:   wr.Tags,
-		eventIntegrations: wr.Workflow.EventIntegrations,
+		eventIntegrations: wr.Workflow.GetEventIntegration(),
 		workflowNodeRunID: jr.WorkflowNodeRunID,
 	}
 	publishRunWorkflow(ctx, e, data)

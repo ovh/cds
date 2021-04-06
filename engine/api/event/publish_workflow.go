@@ -39,7 +39,7 @@ func PublishWorkflowAdd(ctx context.Context, projKey string, w sdk.Workflow, u s
 	e := sdk.EventWorkflowAdd{
 		Workflow: w,
 	}
-	publishWorkflowEvent(ctx, e, projKey, w.Name, w.EventIntegrations, u)
+	publishWorkflowEvent(ctx, e, projKey, w.Name, w.GetEventIntegration(), u)
 }
 
 // PublishWorkflowUpdate publishes an event for the update of the given Workflow
@@ -48,7 +48,7 @@ func PublishWorkflowUpdate(ctx context.Context, projKey string, w sdk.Workflow, 
 		NewWorkflow: w,
 		OldWorkflow: oldw,
 	}
-	publishWorkflowEvent(ctx, e, projKey, w.Name, w.EventIntegrations, u)
+	publishWorkflowEvent(ctx, e, projKey, w.Name, w.GetEventIntegration(), u)
 }
 
 // PublishWorkflowDelete publishes an event for the deletion of the given Workflow
@@ -56,7 +56,7 @@ func PublishWorkflowDelete(ctx context.Context, projKey string, w sdk.Workflow, 
 	e := sdk.EventWorkflowDelete{
 		Workflow: w,
 	}
-	publishWorkflowEvent(ctx, e, projKey, w.Name, w.EventIntegrations, u)
+	publishWorkflowEvent(ctx, e, projKey, w.Name, w.GetEventIntegration(), u)
 }
 
 // PublishWorkflowPermissionAdd publishes an event when adding a permission on a workflow
@@ -65,7 +65,7 @@ func PublishWorkflowPermissionAdd(ctx context.Context, projKey string, w sdk.Wor
 		WorkflowID: w.ID,
 		Permission: gp,
 	}
-	publishWorkflowEvent(ctx, e, projKey, w.Name, w.EventIntegrations, u)
+	publishWorkflowEvent(ctx, e, projKey, w.Name, w.GetEventIntegration(), u)
 }
 
 // PublishWorkflowPermissionUpdate publishes an event when updating a permission on a workflow
@@ -75,7 +75,7 @@ func PublishWorkflowPermissionUpdate(ctx context.Context, projKey string, w sdk.
 		NewPermission: gp,
 		OldPermission: gpOld,
 	}
-	publishWorkflowEvent(ctx, e, projKey, w.Name, w.EventIntegrations, u)
+	publishWorkflowEvent(ctx, e, projKey, w.Name, w.GetEventIntegration(), u)
 }
 
 // PublishWorkflowPermissionDelete publishes an event when deleting a permission on a workflow
@@ -84,7 +84,7 @@ func PublishWorkflowPermissionDelete(ctx context.Context, projKey string, w sdk.
 		WorkflowID: w.ID,
 		Permission: gp,
 	}
-	publishWorkflowEvent(ctx, e, projKey, w.Name, w.EventIntegrations, u)
+	publishWorkflowEvent(ctx, e, projKey, w.Name, w.GetEventIntegration(), u)
 }
 
 func PublishWorkflowRetentionDryRun(ctx context.Context, projKey string, workflowName string, status string, error string, runsToKeep []sdk.WorkflowRunToKeep, nbRunsAnalyzed int64, u sdk.Identifiable) {

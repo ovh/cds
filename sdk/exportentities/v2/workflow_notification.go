@@ -100,7 +100,7 @@ func craftNotifications(ctx context.Context, w sdk.Workflow, exportedWorkflow *W
 		}
 		exportedWorkflow.Notifications[i] = notifEntry
 	}
-	for _, e := range w.EventIntegrations {
+	for _, e := range w.Integrations {
 		entry := NotificationEntry{
 			Integration: e.Name,
 			Type:        sdk.EventsNotification,
@@ -189,7 +189,7 @@ func (w *Workflow) processNotifications(wrkflw *sdk.Workflow) error {
 			if notif.Integration == "" {
 				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "notification of type event must be linked to an integration")
 			}
-			wrkflw.EventIntegrations = append(wrkflw.EventIntegrations, sdk.ProjectIntegration{Name: notif.Integration})
+			wrkflw.Integrations = append(wrkflw.Integrations, sdk.ProjectIntegration{Name: notif.Integration})
 			continue
 		}
 		n, err := ProcessNotificationValues(notif)
