@@ -38,7 +38,7 @@ func Resync(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sd
 	wr.Workflow.Applications = wf.Applications
 	wr.Workflow.Environments = wf.Environments
 	wr.Workflow.ProjectIntegrations = wf.ProjectIntegrations
-	wr.Workflow.EventIntegrations = wf.EventIntegrations
+	wr.Workflow.Integrations = wf.Integrations
 	wr.Workflow.HookModels = wf.HookModels
 	wr.Workflow.OutGoingHookModels = wf.OutGoingHookModels
 

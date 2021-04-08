@@ -60,7 +60,7 @@ type Workflow struct {
 	ToDelete                bool                         `json:"to_delete" db:"to_delete" cli:"-"`
 	Favorite                bool                         `json:"favorite" db:"-" cli:"favorite"`
 	WorkflowData            WorkflowData                 `json:"workflow_data" db:"workflow_data" cli:"-"`
-	EventIntegrations       []ProjectIntegration         `json:"event_integrations,omitempty" db:"-" cli:"-"`
+	Integrations            []ProjectIntegration         `json:"event_integrations,omitempty" db:"-" cli:"-"`
 	AsCodeEvent             []AsCodeEvent                `json:"as_code_events,omitempty" db:"-" cli:"-"`
 	// aggregates
 	TemplateInstance *WorkflowTemplateInstance `json:"template_instance,omitempty" db:"-" cli:"-"`
@@ -367,6 +367,16 @@ func (w *Workflow) ValidateType() error {
 		return NewErrorFrom(ErrWrongRequest, "wrong type for nodes %v", namesInError)
 	}
 	return nil
+}
+
+func (w *Workflow) GetEventIntegration() []ProjectIntegration {
+	eventsIntegrations := make([]ProjectIntegration, 0)
+	for _, i := range w.Integrations {
+		if i.Model.Event {
+			eventsIntegrations = append(eventsIntegrations, i)
+		}
+	}
+	return eventsIntegrations
 }
 
 //WorkflowNodeConditions is either an array of WorkflowNodeCondition or a lua script
