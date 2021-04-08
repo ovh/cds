@@ -107,7 +107,7 @@ const deployData = `{
 func (e *helloDeploymentPlugin) Deploy(ctx context.Context, q *integrationplugin.DeployQuery) (*integrationplugin.DeployResult, error) {
 	var application = q.GetOptions()["cds.application"]
 	var helloHost = q.GetOptions()["cds.integration.deployment.host"]
-	var deploymentToken = q.GetOptions()["cds.integration.deployment.token"]
+	var deploymentToken = q.GetOptions()["cds.integration.deployment.deployment.token"]
 	var maxRetryStr = q.GetOptions()["cds.integration.deployment.retry.max"]
 	var delayRetryStr = q.GetOptions()["cds.integration.deployment.retry.delay"]
 	maxRetry, err := strconv.Atoi(maxRetryStr)

@@ -140,9 +140,9 @@ func (wk *CurrentWorker) WorkerCacheSignature(tag string) (string, error) {
 }
 
 func (wk *CurrentWorker) GetPlugin(pluginType string) *sdk.GRPCPlugin {
-	for _, p := range wk.currentJob.wJob.IntegrationPlugins {
-		if p.Type == pluginType {
-			return &p
+	for i := range wk.currentJob.wJob.IntegrationPlugins {
+		if wk.currentJob.wJob.IntegrationPlugins[i].Type == pluginType {
+			return &wk.currentJob.wJob.IntegrationPlugins[i]
 		}
 	}
 	return nil

@@ -21,7 +21,7 @@ func RunDeployApplication(ctx context.Context, wk workerruntime.Runtime, _ sdk.A
 	}
 
 	plugin := wk.GetPlugin(sdk.GRPCPluginDeploymentIntegration)
-	if plugin != nil {
+	if plugin == nil {
 		return sdk.Result{}, sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find plugin of type %s", sdk.GRPCPluginDeploymentIntegration)
 	}
 
