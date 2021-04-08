@@ -843,7 +843,7 @@ func Test_putWorkflowHandler(t *testing.T) {
 				},
 			},
 		},
-		EventIntegrations: []sdk.ProjectIntegration{projInt},
+		Integrations: []sdk.ProjectIntegration{projInt},
 	}
 	workflow1.WorkflowData.Node.Hooks[0].Config[sdk.HookConfigEventFilter] = sdk.WorkflowNodeHookConfigValue{
 		Value:        "push;create",
@@ -865,7 +865,7 @@ func Test_putWorkflowHandler(t *testing.T) {
 
 	assert.NotEqual(t, 0, workflow1.WorkflowData.Node.Context.ApplicationID)
 	assert.NotNil(t, workflow1.WorkflowData.Node.Context.DefaultPayload)
-	assert.NotNil(t, workflow1.EventIntegrations)
+	assert.NotNil(t, workflow1.Integrations)
 
 	payload, err := workflow1.WorkflowData.Node.Context.DefaultPayloadToMap()
 	test.NoError(t, err)
@@ -965,7 +965,7 @@ func Test_deleteWorkflowEventIntegrationHandler(t *testing.T) {
 				},
 			},
 		},
-		EventIntegrations: []sdk.ProjectIntegration{projInt},
+		Integrations: []sdk.ProjectIntegration{projInt},
 	}
 
 	req = assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, &workflow1)
@@ -982,8 +982,8 @@ func Test_deleteWorkflowEventIntegrationHandler(t *testing.T) {
 
 	assert.NotEqual(t, 0, workflow1.WorkflowData.Node.Context.ApplicationID)
 	assert.NotNil(t, workflow1.WorkflowData.Node.Context.DefaultPayload)
-	assert.NotNil(t, workflow1.EventIntegrations)
-	assert.Equal(t, len(workflow1.EventIntegrations), 1)
+	assert.NotNil(t, workflow1.Integrations)
+	assert.Equal(t, len(workflow1.Integrations), 1)
 
 	vars["integrationID"] = fmt.Sprintf("%d", projInt.ID)
 	uri = router.GetRoute("DELETE", api.deleteWorkflowEventsIntegrationHandler, vars)
@@ -997,7 +997,7 @@ func Test_deleteWorkflowEventIntegrationHandler(t *testing.T) {
 	wfUpdated, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, *proj, wf.Name, workflow.LoadOptions{WithIntegrations: true})
 	test.NoError(t, err, "cannot load workflow")
 
-	test.Equal(t, 0, len(wfUpdated.EventIntegrations))
+	test.Equal(t, 0, len(wfUpdated.Integrations))
 }
 
 func Test_postWorkflowHandlerWithError(t *testing.T) {

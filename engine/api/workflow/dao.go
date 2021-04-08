@@ -187,7 +187,7 @@ func (w *Workflow) PreUpdate(db gorp.SqlExecutor) error {
 
 // PostUpdate is a db hook
 func (w *Workflow) PostUpdate(db gorp.SqlExecutor) error {
-	for _, integ := range w.EventIntegrations {
+	for _, integ := range w.Integrations {
 		if err := integration.AddOnWorkflow(db, w.ID, integ.ID); err != nil {
 			return sdk.WrapError(err, "cannot add project event integration (%d) on workflow (%d)", integ.ID, w.ID)
 		}
@@ -984,13 +984,13 @@ func checkProjectIntegration(proj sdk.Project, w *sdk.Workflow, n *sdk.Node) err
 
 // checkEventIntegration checks event integration data
 func checkEventIntegration(proj sdk.Project, w *sdk.Workflow) error {
-	for i := range w.EventIntegrations {
-		eventIntegration := w.EventIntegrations[i]
+	for i := range w.Integrations {
+		eventIntegration := w.Integrations[i]
 		found := false
 		for _, projInt := range proj.Integrations {
 			if eventIntegration.Name == projInt.Name {
 				eventIntegration.ID = projInt.ID
-				w.EventIntegrations[i] = eventIntegration
+				w.Integrations[i] = eventIntegration
 				found = true
 				break
 			}
