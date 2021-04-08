@@ -186,11 +186,11 @@ func uploadArtifactByIntegrationPlugin(path string, ctx context.Context, wk work
 
 	opts := sdk.ParametersToMap(wk.Parameters())
 	opts["cds.integration.artifact_manager.upload.path"] = path
-	query := integrationplugin.DeployQuery{
+	query := integrationplugin.RunQuery{
 		Options: opts,
 	}
 
-	res, err := integrationPluginClient.Deploy(ctx, &query)
+	res, err := integrationPluginClient.Run(ctx, &query)
 	if err != nil {
 		return fmt.Errorf("error deploying application: %v", err)
 	}
