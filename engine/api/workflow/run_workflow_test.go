@@ -677,7 +677,8 @@ queueRun:
 			assert.Equal(t, 2, len(takenJob.ExecGroups))
 			// this pipeline is attached to an deployment integration
 			// so, we check IntegrationPluginBinaries
-			assert.Equal(t, 1, len(takenJob.IntegrationPluginBinaries))
+			assert.Equal(t, 1, len(takenJob.IntegrationPlugins))
+			assert.Equal(t, 1, len(takenJob.IntegrationPlugins[0].Binaries))
 
 			// Check ExecGroups
 			var g0Found bool

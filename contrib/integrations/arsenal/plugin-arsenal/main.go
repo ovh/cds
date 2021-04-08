@@ -70,7 +70,7 @@ func (e *arsenalDeploymentPlugin) Manifest(ctx context.Context, _ *empty.Empty) 
 }
 
 const deployData = `{
-	"version": "{{.cds.integration.version}}",
+	"version": "{{.cds.integration.deployment.version}}",
 	"metadata": {
 		"CDS_APPLICATION": "{{.cds.application}}",
 		"CDS_RUN": "{{.cds.run}}",
@@ -87,18 +87,18 @@ const deployData = `{
 
 func (e *arsenalDeploymentPlugin) Deploy(ctx context.Context, q *integrationplugin.DeployQuery) (*integrationplugin.DeployResult, error) {
 	var application = q.GetOptions()["cds.application"]
-	var arsenalHost = q.GetOptions()["cds.integration.host"]
+	var arsenalHost = q.GetOptions()["cds.integration.deployment.host"]
 	var arsenalDeploymentToken = q.GetOptions()["cds.integration.deployment.token"]
-	var maxRetryStr = q.GetOptions()["cds.integration.retry.max"]
-	var delayRetryStr = q.GetOptions()["cds.integration.retry.delay"]
+	var maxRetryStr = q.GetOptions()["cds.integration.deployment.retry.max"]
+	var delayRetryStr = q.GetOptions()["cds.integration.deployment.retry.delay"]
 	maxRetry, err := strconv.Atoi(maxRetryStr)
 	if err != nil {
-		fmt.Printf("Error parsing cds.integration.retry.max: %v. Default value will be used\n", err)
+		fmt.Printf("Error parsing cds.integration.deployment.retry.max: %v. Default value will be used\n", err)
 		maxRetry = 10
 	}
 	delayRetry, err := strconv.Atoi(delayRetryStr)
 	if err != nil {
-		fmt.Printf("Error parsing cds.integration.retry.max: %v. Default value will be used\n", err)
+		fmt.Printf("Error parsing cds.integration.deployment.retry.max: %v. Default value will be used\n", err)
 		delayRetry = 5
 	}
 

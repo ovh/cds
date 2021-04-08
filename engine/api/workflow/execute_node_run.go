@@ -424,8 +424,8 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 		stage.Status = sdk.StatusDisabled
 	}
 
-	_, next = telemetry.Span(ctx, "workflow.getIntegrationPluginBinaries")
-	integrationPluginBinaries, err := getIntegrationPluginBinaries(db, wr, nr)
+	_, next = telemetry.Span(ctx, "workflow.getIntegrationPlugins")
+	integrationPlugins, err := getIntegrationPlugins(db, wr, nr)
 	if err != nil {
 		return report, sdk.WrapError(err, "unable to get integration plugins requirement")
 	}
@@ -466,7 +466,7 @@ jobLoop:
 		}
 
 		_, next = telemetry.Span(ctx, "workflow.processNodeJobRunRequirements")
-		jobRequirements, containsService, wm, err := processNodeJobRunRequirements(ctx, db, *job, nr, sdk.Groups(groups).ToIDs(), integrationPluginBinaries)
+		jobRequirements, containsService, wm, err := processNodeJobRunRequirements(ctx, db, *job, nr, sdk.Groups(groups).ToIDs(), integrationPlugins)
 		next()
 		if err != nil {
 			spawnErrs.Join(*err)
@@ -484,14 +484,14 @@ jobLoop:
 
 		//Create the job run
 		wjob := sdk.WorkflowNodeJobRun{
-			ProjectID:                 wr.ProjectID,
-			WorkflowNodeRunID:         nr.ID,
-			Start:                     time.Time{},
-			Queued:                    time.Now(),
-			Status:                    sdk.StatusWaiting,
-			Parameters:                jobParams,
-			ExecGroups:                groups,
-			IntegrationPluginBinaries: integrationPluginBinaries,
+			ProjectID:          wr.ProjectID,
+			WorkflowNodeRunID:  nr.ID,
+			Start:              time.Time{},
+			Queued:             time.Now(),
+			Status:             sdk.StatusWaiting,
+			Parameters:         jobParams,
+			ExecGroups:         groups,
+			IntegrationPlugins: integrationPlugins,
 			Job: sdk.ExecutedJob{
 				Job: *job,
 			},
@@ -567,7 +567,8 @@ jobLoop:
 	return report, nil
 }
 
-func getIntegrationPluginBinaries(db gorp.SqlExecutor, wr *sdk.WorkflowRun, nr *sdk.WorkflowNodeRun) ([]sdk.GRPCPluginBinary, error) {
+func getIntegrationPlugins(db gorp.SqlExecutor, wr *sdk.WorkflowRun, nr *sdk.WorkflowNodeRun) ([]sdk.GRPCPlugin, error) {
+	plugins := make([]sdk.GRPCPlugin, 0)
 	var projectIntegrationModelID int64
 	node := wr.Workflow.WorkflowData.NodeByID(nr.WorkflowNodeID)
 	if node != nil && node.Context != nil {
@@ -584,9 +585,24 @@ func getIntegrationPluginBinaries(db gorp.SqlExecutor, wr *sdk.WorkflowRun, nr *
 		if err != nil {
 			return nil, sdk.NewErrorFrom(sdk.ErrNotFound, "Cannot find plugin for integration model id %d, %v", projectIntegrationModelID, err)
 		}
-		return plugin.Binaries, nil
+		plugins = append(plugins, *plugin)
 	}
-	return nil, nil
+
+	var artifactManagerModelID int64
+	for _, int := range wr.Workflow.Integrations {
+		if int.Model.ArtifactManager {
+			artifactManagerModelID = int.Model.ID
+		}
+	}
+	if artifactManagerModelID != 0 {
+		plgs, err := plugin.LoadAllByIntegrationModelID(db, artifactManagerModelID)
+		if err != nil {
+			return nil, sdk.NewErrorFrom(sdk.ErrNotFound, "Cannot find plugin for integration model id %d, %v", projectIntegrationModelID, err)
+		}
+		plugins = append(plugins, plgs...)
+	}
+
+	return plugins, nil
 }
 
 func getExecutablesGroups(wr *sdk.WorkflowRun, nr *sdk.WorkflowNodeRun) ([]sdk.Group, error) {
@@ -706,7 +722,9 @@ func NodeBuildParametersFromRun(wr sdk.WorkflowRun, id int64) ([]sdk.Parameter, 
 
 //NodeBuildParametersFromWorkflow returns build_parameters for a node given its id
 func NodeBuildParametersFromWorkflow(proj sdk.Project, wf *sdk.Workflow, refNode *sdk.Node, ancestorsIds []int64) ([]sdk.Parameter, error) {
-	runContext := nodeRunContext{}
+	runContext := nodeRunContext{
+		ProjectIntegrations: wf.Integrations,
+	}
 	res := []sdk.Parameter{}
 	if refNode != nil && refNode.Context != nil {
 		if refNode.Context.PipelineID != 0 && wf.Pipelines != nil {
@@ -730,7 +748,7 @@ func NodeBuildParametersFromWorkflow(proj sdk.Project, wf *sdk.Workflow, refNode
 		if refNode.Context.ProjectIntegrationID != 0 && wf.ProjectIntegrations != nil {
 			pp, has := wf.ProjectIntegrations[refNode.Context.ProjectIntegrationID]
 			if has {
-				runContext.ProjectIntegration = pp
+				runContext.ProjectIntegrations = append(runContext.ProjectIntegrations, pp)
 			}
 		}
 		runContext.NodeGroups = refNode.Groups

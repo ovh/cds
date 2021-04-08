@@ -364,10 +364,10 @@ version: v1.0`),
 	require.Len(t, secrets, 6)
 	require.NotNil(t, sdk.VariableFind(secrets, "cds.key.app-key.priv"))
 	require.NotNil(t, sdk.VariableFind(secrets, "cds.app.app-password"))
-	require.NotNil(t, sdk.VariableFind(secrets, "cds.integration.token"))
+	require.NotNil(t, sdk.VariableFind(secrets, "cds.integration.deployment.token"))
 	require.NotNil(t, sdk.VariableFind(secrets, "cds.key.env-key.priv"))
 	require.NotNil(t, sdk.VariableFind(secrets, "cds.env.env-password"))
 
 	// from project
-	require.NotNil(t, sdk.VariableFind(secrets, "cds.integration.mypassword"))
+	require.NotNil(t, sdk.VariableFind(secrets, "cds.integration.deployment.mypassword"))
 }

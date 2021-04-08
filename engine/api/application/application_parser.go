@@ -213,7 +213,7 @@ func ParseAndImport(ctx context.Context, db gorpmapper.SqlExecutorWithTx, cache 
 					}
 					v.Value = clearPWD
 					applicationSecrets = append(applicationSecrets, sdk.Variable{
-						Name:  fmt.Sprintf("%s:cds.integration.%s", pfName, k),
+						Name:  fmt.Sprintf("%s:cds.integration.deployment.%s", pfName, k),
 						Type:  sdk.SecretVariable,
 						Value: clearPWD,
 					})
