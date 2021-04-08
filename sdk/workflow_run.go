@@ -498,9 +498,6 @@ type WorkflowNodeJobRun struct {
 	HatcheryName       string             `json:"hatchery_name,omitempty"`
 	WorkerName         string             `json:"worker_name,omitempty"`
 	IntegrationPlugins []GRPCPlugin       `json:"integration_plugin,omitempty"`
-
-	// Deprecated
-	IntegrationPluginBinaries []GRPCPluginBinary `json:"integration_plugin_binaries,omitempty"`
 }
 
 // WorkflowNodeJobRunSummary is a light representation of WorkflowNodeJobRun for CDS event

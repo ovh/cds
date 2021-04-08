@@ -94,8 +94,6 @@ type JobRun struct {
 	HatcheryName       string         `db:"hatchery_name"`
 	WorkerName         string         `db:"worker_name"`
 	IntegrationPlugins sql.NullString `db:"integration_plugins"`
-	// Deprecated
-	IntegrationPluginBinaries sql.NullString `db:"integration_plugin_binaries"`
 }
 
 // ToJobRun transform the JobRun with data of the provided sdk.WorkflowNodeJobRun
@@ -128,10 +126,6 @@ func (j *JobRun) ToJobRun(jr *sdk.WorkflowNodeJobRun) (err error) {
 	j.IntegrationPlugins, err = gorpmapping.JSONToNullString(jr.IntegrationPlugins)
 	if err != nil {
 		return sdk.WrapError(err, "column integration_plugins")
-	}
-	j.IntegrationPluginBinaries, err = gorpmapping.JSONToNullString(jr.IntegrationPluginBinaries)
-	if err != nil {
-		return sdk.WrapError(err, "column integration_plugin_binaries")
 	}
 	j.Header, err = gorpmapping.JSONToNullString(jr.Header)
 	if err != nil {
@@ -169,9 +163,6 @@ func (j JobRun) WorkflowNodeRunJob() (sdk.WorkflowNodeJobRun, error) {
 	}
 	if err := gorpmapping.JSONNullString(j.IntegrationPlugins, &jr.IntegrationPlugins); err != nil {
 		return jr, sdk.WrapError(err, "integration_plugins")
-	}
-	if err := gorpmapping.JSONNullString(j.IntegrationPluginBinaries, &jr.IntegrationPluginBinaries); err != nil {
-		return jr, sdk.WrapError(err, "integration_plugin_binaries")
 	}
 	if err := gorpmapping.JSONNullString(j.Header, &jr.Header); err != nil {
 		return jr, sdk.WrapError(err, "header")
