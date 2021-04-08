@@ -104,7 +104,7 @@ const deployData = `{
 	}
 }`
 
-func (e *helloDeploymentPlugin) Deploy(ctx context.Context, q *integrationplugin.DeployQuery) (*integrationplugin.DeployResult, error) {
+func (e *helloDeploymentPlugin) Run(ctx context.Context, q *integrationplugin.RunQuery) (*integrationplugin.RunResult, error) {
 	var application = q.GetOptions()["cds.application"]
 	var helloHost = q.GetOptions()["cds.integration.host"]
 	var deploymentToken = q.GetOptions()["cds.integration.deployment.token"]
@@ -166,13 +166,7 @@ func (e *helloDeploymentPlugin) Deploy(ctx context.Context, q *integrationplugin
 		return fail("deployment failed")
 	}
 
-	return &integrationplugin.DeployResult{
-		Status: sdk.StatusSuccess,
-	}, nil
-}
-
-func (e *helloDeploymentPlugin) DeployStatus(ctx context.Context, q *integrationplugin.DeployStatusQuery) (*integrationplugin.DeployResult, error) {
-	return &integrationplugin.DeployResult{
+	return &integrationplugin.RunResult{
 		Status: sdk.StatusSuccess,
 	}, nil
 }
@@ -185,10 +179,10 @@ func main() {
 	return
 }
 
-func fail(format string, args ...interface{}) (*integrationplugin.DeployResult, error) {
+func fail(format string, args ...interface{}) (*integrationplugin.RunResult, error) {
 	msg := fmt.Sprintf(format, args...)
 	fmt.Println(msg)
-	return &integrationplugin.DeployResult{
+	return &integrationplugin.RunResult{
 		Details: msg,
 		Status:  sdk.StatusFail,
 	}, nil

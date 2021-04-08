@@ -10,7 +10,7 @@ require (
 	github.com/Shopify/sarama v1.27.0
 	github.com/bgentry/speakeasy v0.1.0
 	github.com/fsamin/go-shredder v0.0.0-20180118184739-b2488aedb5be
-	github.com/golang/protobuf v1.3.2
+	github.com/golang/protobuf v1.5.0
 	github.com/ovh/cds v0.0.0-00010101000000-000000000000
 	github.com/phayes/permbits v0.0.0-20190612203442-39d7c581d2ee
 	github.com/stretchr/testify v1.6.1

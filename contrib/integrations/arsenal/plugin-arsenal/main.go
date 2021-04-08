@@ -85,7 +85,7 @@ const deployData = `{
 	}
 }`
 
-func (e *arsenalDeploymentPlugin) Deploy(ctx context.Context, q *integrationplugin.DeployQuery) (*integrationplugin.DeployResult, error) {
+func (e *arsenalDeploymentPlugin) Run(ctx context.Context, q *integrationplugin.RunQuery) (*integrationplugin.RunResult, error) {
 	var application = q.GetOptions()["cds.application"]
 	var arsenalHost = q.GetOptions()["cds.integration.host"]
 	var arsenalDeploymentToken = q.GetOptions()["cds.integration.deployment.token"]
@@ -193,13 +193,7 @@ func (e *arsenalDeploymentPlugin) Deploy(ctx context.Context, q *integrationplug
 		return fail("deployment failed")
 	}
 
-	return &integrationplugin.DeployResult{
-		Status: sdk.StatusSuccess,
-	}, nil
-}
-
-func (e *arsenalDeploymentPlugin) DeployStatus(ctx context.Context, q *integrationplugin.DeployStatusQuery) (*integrationplugin.DeployResult, error) {
-	return &integrationplugin.DeployResult{
+	return &integrationplugin.RunResult{
 		Status: sdk.StatusSuccess,
 	}, nil
 }
@@ -213,10 +207,10 @@ func main() {
 
 }
 
-func fail(format string, args ...interface{}) (*integrationplugin.DeployResult, error) {
+func fail(format string, args ...interface{}) (*integrationplugin.RunResult, error) {
 	msg := fmt.Sprintf(format, args...)
 	fmt.Println(msg)
-	return &integrationplugin.DeployResult{
+	return &integrationplugin.RunResult{
 		Details: msg,
 		Status:  sdk.StatusFail,
 	}, nil
