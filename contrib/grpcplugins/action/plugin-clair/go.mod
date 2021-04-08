@@ -22,7 +22,7 @@ require (
 	github.com/docker/docker v1.13.1
 	github.com/docker/go-metrics v0.0.1 // indirect
 	github.com/docker/libtrust v0.0.0-20160708172513-aabc10ec26b7 // indirect
-	github.com/golang/protobuf v1.4.2
+	github.com/golang/protobuf v1.5.0
 	github.com/jgsqware/xnet v0.0.0-20170203143001-13630f0737d2
 	github.com/mattn/go-shellwords v1.0.10 // indirect
 	github.com/mholt/archiver v3.1.1+incompatible

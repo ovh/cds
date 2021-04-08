@@ -7,7 +7,7 @@ go 1.16
 require (
 	github.com/bsm/sarama-cluster v2.1.15+incompatible // indirect
 	github.com/garyburd/redigo v1.6.2 // indirect
-	github.com/golang/protobuf v1.3.2
+	github.com/golang/protobuf v1.5.0
 	github.com/mattn/go-shellwords v1.0.6 // indirect
 	github.com/mxk/go-imap v0.0.0-20150429134902-531c36c3f12d // indirect
 	github.com/ovh/cds v0.0.0-00010101000000-000000000000

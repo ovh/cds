@@ -64,11 +64,11 @@ func RunDeployApplication(ctx context.Context, wk workerruntime.Runtime, _ sdk.A
 
 	wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("# Plugin %s v%s is ready", manifest.Name, manifest.Version))
 
-	query := integrationplugin.DeployQuery{
+	query := integrationplugin.RunQuery{
 		Options: sdk.ParametersToMap(wk.Parameters()),
 	}
 
-	res, err := integrationPluginClient.Deploy(ctx, &query)
+	res, err := integrationPluginClient.Run(ctx, &query)
 	if err != nil {
 		integrationPluginClientStop(ctx, integrationPluginClient, done, stopLogs)
 		return sdk.Result{}, fmt.Errorf("error deploying application: %v", err)

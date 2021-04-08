@@ -10,6 +10,8 @@ package actionplugin;
 import "google/protobuf/empty.proto";
 
 // To generate the go files run:
+// libprotoc 3.10.1
+// go get -u github.com/golang/protobuf/protoc-gen-go@v1.3.5
 // protoc --go_out=plugins=grpc:. *.proto
 
 message ActionPluginManifest {
