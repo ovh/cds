@@ -20,10 +20,10 @@ testcases:
 - name: import integration
   steps:
   - script: "cd ./fixtures/ITSCWRKFLW15 && make build"
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin integration-model import ./fixtures/ITSCWRKFLW15/simple-integ.yml
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin plugins import ./fixtures/ITSCWRKFLW15/simple-integ-plugin.yml
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin plugins binary-add simple-integ-plugin ./fixtures/ITSCWRKFLW15/plugin-simple-integ-darwin-amd64.yml ./fixtures/ITSCWRKFLW15/plugin-simple-integ-darwin-amd64
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin plugins binary-add hello-action-plugin ./fixtures/ITSCWRKFLW15/plugin-simple-integ-linux-amd64.yml ./fixtures/ITSCWRKFLW15/plugin-simple-integ-linux-amd64
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} admin integration-model import ./fixtures/ITSCWRKFLW15/simple-integ.yml"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} admin plugins import ./fixtures/ITSCWRKFLW15/simple-integ-plugin.yml"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} admin plugins binary-add simple-integ-plugin ./fixtures/ITSCWRKFLW15/plugin-simple-integ-darwin-amd64.yml ./fixtures/ITSCWRKFLW15/plugin-simple-integ-darwin-amd64"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} admin plugins binary-add hello-action-plugin ./fixtures/ITSCWRKFLW15/plugin-simple-integ-linux-amd64.yml ./fixtures/ITSCWRKFLW15/plugin-simple-integ-linux-amd64"
 
 - name: import application
   steps:
@@ -45,26 +45,26 @@ testcases:
           version:
             type: string
             value: '{{.cds.version}}'" > ./fixtures/ITSCWRKFLW15/application.yml
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} application import --force ITSCWRKFLW15 ./fixtures/ITSCWRKFLW15/application.yml
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} application import --force ITSCWRKFLW15 ./fixtures/ITSCWRKFLW15/application.yml"
 
 - name: import pipeline
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} pipeline import --force ITSCWRKFLW15 ./fixtures/ITSCWRKFLW15/pipeline.yml
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} pipeline import --force ITSCWRKFLW15 ./fixtures/ITSCWRKFLW15/pipeline.yml"
 
 - name: import workflow
   steps:
-  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow import --force ITSCWRKFLW15 ./fixtures/ITSCWRKFLW15/workflow.yml
+  - script:  "{{.cdsctl}} -f {{.cdsctl.config}} workflow import --force ITSCWRKFLW15 ./fixtures/ITSCWRKFLW15/workflow.yml"
 
 - name: run workflow
   steps:
-  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow run ITSCWRKFLW15 ITSCWRKFLW15-WORKFLOW
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} workflow run ITSCWRKFLW15 ITSCWRKFLW15-WORKFLOW"
     assertions:
     - result.code ShouldEqual 0
     - "result.systemout ShouldContainSubstring Workflow ITSCWRKFLW15-WORKFLOW #1 has been launched"
 
 - name: check workflow
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow status ITSCWRKFLW15 ITSCWRKFLW15-WORKFLOW 1 --format json
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} workflow status ITSCWRKFLW15 ITSCWRKFLW15-WORKFLOW 1 --format json"
     retry: 10
     delay: 3
     assertions:
@@ -77,11 +77,11 @@ testcases:
 
 - name: check if pre-requisite is visible in queue
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin curl /queue/workflows|grep "job.requirement.region"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} admin curl /queue/workflows|grep \"job.requirement.binary.curl\""
 
 - name: check workflow
   steps:
-    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow status ITSCWRKFLW15 ITSCWRKFLW15-WORKFLOW 1 --format json
+    - script: "{{.cdsctl}} -f {{.cdsctl.config}} workflow status ITSCWRKFLW15 ITSCWRKFLW15-WORKFLOW 1 --format json"
       retry: 20
       delay: 3
       assertions:
@@ -90,7 +90,7 @@ testcases:
         -
 - name: check result
   steps:
-    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download ITSCWRKFLW15 ITSCWRKFLW15-WORKFLOW 1 --pattern NewJob
+    - script: "{{.cdsctl}} -f {{.cdsctl.config}} workflow logs download ITSCWRKFLW15 ITSCWRKFLW15-WORKFLOW 1 --pattern NewJob"
       retry: 10
       delay: 3
     - script: grep "Retry.max 100" *.log

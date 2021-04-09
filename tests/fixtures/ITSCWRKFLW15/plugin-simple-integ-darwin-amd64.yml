@@ -1,7 +1,7 @@
-os: linux
+os: darwin
 arch: amd64
-cmd: ./deployment-plugin-hello-linux-amd64
+cmd: ./plugin-simple-integ-darwin-amd64
 requirements:
-  - name: region
-    value: region
-    type: region
+  - name: curl
+    value: curl
+    type: binary
