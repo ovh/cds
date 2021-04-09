@@ -27,8 +27,8 @@ testcases:
 
 - name: import application
   steps:
-  - script: export encryptedPassword=$({{.cdsctl}} -f {{.cdsctl.config}} encrypt ITSCWRKFLW15 my-secret jesuisunpassword | cut -d ' ' -f 2)
   - script: |
+      export encryptedPassword=$({{.cdsctl}} -f {{.cdsctl.config}} encrypt ITSCWRKFLW15 my-secret jesuisunpassword | cut -d ' ' -f 2)
       echo "version: v1.0
       name: ITSCWRKFLW15-APPLICATION
       deployments:
