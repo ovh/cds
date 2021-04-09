@@ -1,0 +1,3 @@
+os: linux
+arch: amd64
+cmd: ./deployment-plugin-hello-linux-amd64
