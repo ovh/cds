@@ -2,6 +2,6 @@ os: darwin
 arch: amd64
 cmd: ./plugin-simple-integ-darwin-amd64
 requirements:
-  - name: curl
-    value: curl
+  - name: git
+    value: git
     type: binary

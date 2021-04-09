@@ -2,6 +2,6 @@ os: linux
 arch: amd64
 cmd: ./plugin-simple-integ-linux-amd64
 requirements:
-  - name: curl
-    value: curl
+  - name: git
+    value: git
     type: binary

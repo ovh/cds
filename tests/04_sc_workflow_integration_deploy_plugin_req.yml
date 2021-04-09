@@ -77,7 +77,7 @@ testcases:
 
 - name: check if pre-requisite is visible in queue
   steps:
-  - script: "{{.cdsctl}} -f {{.cdsctl.config}} admin curl /queue/workflows|grep \"job.requirement.binary.curl\""
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} admin curl /queue/workflows|grep \"job.requirement.binary.git\""
 
 - name: check workflow
   steps:
