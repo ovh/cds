@@ -1,3 +1,7 @@
 os: linux
 arch: amd64
 cmd: ./deployment-plugin-hello-linux-amd64
+requirements:
+  - name: region
+    value: region
+    type: region
