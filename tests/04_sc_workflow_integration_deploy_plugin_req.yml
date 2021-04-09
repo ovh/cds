@@ -23,7 +23,7 @@ testcases:
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} admin integration-model import ./fixtures/ITSCWRKFLW15/simple-integ.yml"
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} admin plugins import ./fixtures/ITSCWRKFLW15/simple-integ-plugin.yml"
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} admin plugins binary-add simple-integ-plugin ./fixtures/ITSCWRKFLW15/plugin-simple-integ-darwin-amd64.yml ./fixtures/ITSCWRKFLW15/plugin-simple-integ-darwin-amd64"
-  - script: "{{.cdsctl}} -f {{.cdsctl.config}} admin plugins binary-add hello-action-plugin ./fixtures/ITSCWRKFLW15/plugin-simple-integ-linux-amd64.yml ./fixtures/ITSCWRKFLW15/plugin-simple-integ-linux-amd64"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} admin plugins binary-add simple-integ-plugin ./fixtures/ITSCWRKFLW15/plugin-simple-integ-linux-amd64.yml ./fixtures/ITSCWRKFLW15/plugin-simple-integ-linux-amd64"
 
 - name: import application
   steps:
