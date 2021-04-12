@@ -76,6 +76,7 @@ type Runtime interface {
 	RunResultSignature(fileName string, perm uint32, t sdk.WorkflowRunResultType) (string, error)
 	WorkerCacheSignature(tag string) (string, error)
 	FeatureEnabled(featureName sdk.FeatureName) bool
+	GetPlugin(pluginType string) *sdk.GRPCPlugin
 	CDNHttpURL() string
 	InstallKey(key sdk.Variable) (*KeyResponse, error)
 	InstallKeyTo(key sdk.Variable, destinationPath string) (*KeyResponse, error)

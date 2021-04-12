@@ -134,7 +134,9 @@ func processNode(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cac
 
 	// BUILD RUN CONTEXT
 	// Process parameters for the jobs
-	runContext := nodeRunContext{}
+	runContext := nodeRunContext{
+		ProjectIntegrations: wr.Workflow.Integrations,
+	}
 	if n.Context.PipelineID != 0 {
 		runContext.Pipeline = wr.Workflow.Pipelines[n.Context.PipelineID]
 	}
@@ -145,8 +147,9 @@ func processNode(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cac
 		runContext.Environment = wr.Workflow.Environments[n.Context.EnvironmentID]
 	}
 	if n.Context.ProjectIntegrationID != 0 {
-		runContext.ProjectIntegration = wr.Workflow.ProjectIntegrations[n.Context.ProjectIntegrationID]
+		runContext.ProjectIntegrations = append(runContext.ProjectIntegrations, wr.Workflow.ProjectIntegrations[n.Context.ProjectIntegrationID])
 	}
+	runContext.ProjectIntegrations = append(runContext.ProjectIntegrations, wr.Workflow.Integrations...)
 
 	// NODE CONTEXT BUILD PARAMETER
 	computeNodeContextBuildParameters(ctx, proj, wr, nr, n, runContext)

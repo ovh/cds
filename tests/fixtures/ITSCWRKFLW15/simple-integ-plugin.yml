@@ -1,0 +1,5 @@
+name: simple-integ-plugin
+type: integration-deploy_application
+integration: SimpleInteg
+author: "OVH SAS"
+description: "Simple Example Deployment Plugin"

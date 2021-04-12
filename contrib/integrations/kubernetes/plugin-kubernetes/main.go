@@ -91,11 +91,11 @@ func getStartingConfig(token, timeout string) clientcmd.KubeconfigGetter {
 }
 
 func (k8sPlugin *kubernetesDeploymentPlugin) Run(ctx context.Context, q *integrationplugin.RunQuery) (*integrationplugin.RunResult, error) {
-	k8sAPIURL := q.GetOptions()["cds.integration.api_url"]
-	k8sToken := q.GetOptions()["cds.integration.token"]
-	k8sCaCertificate := q.GetOptions()["cds.integration.ca_certificate"]
-	deploymentFilepath := q.GetOptions()["cds.integration.deployment_files"]
-	helmChart := q.GetOptions()["cds.integration.helm_chart"]
+	k8sAPIURL := q.GetOptions()["cds.integration.deployment.api_url"]
+	k8sToken := q.GetOptions()["cds.integration.deployment.token"]
+	k8sCaCertificate := q.GetOptions()["cds.integration.deployment.ca_certificate"]
+	deploymentFilepath := q.GetOptions()["cds.integration.deployment.deployment_files"]
+	helmChart := q.GetOptions()["cds.integration.deployment.helm_chart"]
 
 	if k8sToken == "" {
 		return fail("Kubernetes token should not be empty")
@@ -172,12 +172,12 @@ func fail(format string, args ...interface{}) (*integrationplugin.RunResult, err
 }
 
 func executeK8s(q *integrationplugin.RunQuery) error {
-	k8sAPIURL := q.GetOptions()["cds.integration.api_url"]
-	k8sToken := q.GetOptions()["cds.integration.token"]
-	k8sCaCertificate := q.GetOptions()["cds.integration.ca_certificate"]
-	namespace := q.GetOptions()["cds.integration.namespace"]
-	deploymentFilepath := q.GetOptions()["cds.integration.deployment_files"]
-	timeoutStr := q.GetOptions()["cds.integration.timeout"]
+	k8sAPIURL := q.GetOptions()["cds.integration.deployment.api_url"]
+	k8sToken := q.GetOptions()["cds.integration.deployment.token"]
+	k8sCaCertificate := q.GetOptions()["cds.integration.deployment.ca_certificate"]
+	namespace := q.GetOptions()["cds.integration.deployment.namespace"]
+	deploymentFilepath := q.GetOptions()["cds.integration.deployment.deployment_files"]
+	timeoutStr := q.GetOptions()["cds.integration.deployment.timeout"]
 	project := q.GetOptions()["cds.project"]
 	workflow := q.GetOptions()["cds.workflow"]
 	if namespace == "" {
@@ -278,7 +278,7 @@ func executeK8s(q *integrationplugin.RunQuery) error {
 func executeHelm(q *integrationplugin.RunQuery) error {
 	project := q.GetOptions()["cds.project"]
 	workflow := q.GetOptions()["cds.workflow"]
-	helmVersion := q.GetOptions()["cds.integration.helm_version"]
+	helmVersion := q.GetOptions()["cds.integration.deployment.helm_version"]
 
 	if helmVersion == "" {
 		helmVersion = "2.12.2"
@@ -372,11 +372,11 @@ func executeHelm(q *integrationplugin.RunQuery) error {
 }
 
 func executeHelmV2(binaryName, kubeCfg string, q *integrationplugin.RunQuery) error {
-	releaseName := q.GetOptions()["cds.integration.release_name"]
-	namespace := q.GetOptions()["cds.integration.namespace"]
-	helmChart := q.GetOptions()["cds.integration.helm_chart"]
-	helmValues := q.GetOptions()["cds.integration.helm_values"]
-	timeoutStr := q.GetOptions()["cds.integration.timeout"]
+	releaseName := q.GetOptions()["cds.integration.deployment.release_name"]
+	namespace := q.GetOptions()["cds.integration.deployment.namespace"]
+	helmChart := q.GetOptions()["cds.integration.deployment.helm_chart"]
+	helmValues := q.GetOptions()["cds.integration.deployment.helm_values"]
+	timeoutStr := q.GetOptions()["cds.integration.deployment.timeout"]
 	application := q.GetOptions()["cds.application"]
 
 	if namespace == "" {
@@ -459,11 +459,11 @@ func executeHelmV2(binaryName, kubeCfg string, q *integrationplugin.RunQuery) er
 }
 
 func executeHelmV3(binaryName, kubeCfg string, q *integrationplugin.RunQuery) error {
-	releaseName := q.GetOptions()["cds.integration.release_name"]
-	namespace := q.GetOptions()["cds.integration.namespace"]
-	helmChart := q.GetOptions()["cds.integration.helm_chart"]
-	helmValues := q.GetOptions()["cds.integration.helm_values"]
-	timeoutStr := q.GetOptions()["cds.integration.timeout"]
+	releaseName := q.GetOptions()["cds.integration.deployment.release_name"]
+	namespace := q.GetOptions()["cds.integration.deployment.namespace"]
+	helmChart := q.GetOptions()["cds.integration.deployment.helm_chart"]
+	helmValues := q.GetOptions()["cds.integration.deployment.helm_values"]
+	timeoutStr := q.GetOptions()["cds.integration.deployment.timeout"]
 	application := q.GetOptions()["cds.application"]
 
 	if namespace == "" {

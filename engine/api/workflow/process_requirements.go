@@ -16,7 +16,7 @@ import (
 
 // processNodeJobRunRequirements returns requirements list interpolated, and true or false if at least
 // one requirement is of type "Service"
-func processNodeJobRunRequirements(ctx context.Context, db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNodeRun, execsGroupIDs []int64, integrationPluginBinaries []sdk.GRPCPluginBinary) (sdk.RequirementList, bool, *sdk.Model, *sdk.MultiError) {
+func processNodeJobRunRequirements(ctx context.Context, db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNodeRun, execsGroupIDs []int64, integrationPlugins []sdk.GRPCPlugin) (sdk.RequirementList, bool, *sdk.Model, *sdk.MultiError) {
 	var requirements sdk.RequirementList
 	var errm sdk.MultiError
 	var containsService bool
@@ -24,8 +24,10 @@ func processNodeJobRunRequirements(ctx context.Context, db gorp.SqlExecutor, j s
 	var tmp = sdk.ParametersToMap(run.BuildParameters)
 
 	pluginsRequirements := []sdk.Requirement{}
-	for i := range integrationPluginBinaries {
-		pluginsRequirements = append(pluginsRequirements, integrationPluginBinaries[i].Requirements...)
+	for _, p := range integrationPlugins {
+		for _, b := range p.Binaries {
+			pluginsRequirements = append(pluginsRequirements, b.Requirements...)
+		}
 	}
 
 	// as some plugin binaries can have same requirement, we deduplicate them

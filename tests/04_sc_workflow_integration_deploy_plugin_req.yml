@@ -19,34 +19,52 @@ testcases:
 
 - name: import integration
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin integration-model import ./fixtures/integrations/hello-it.yml
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin plugins import ./fixtures/plugins/hello-it-plugin.yml
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin plugins import ./fixtures/plugins/hello-action-plugin.yml
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin plugins binary-add hello-it-plugin ./fixtures/plugins/hello-it-plugin-binary.yml ./fixtures/plugins/hello.py 
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin plugins binary-add hello-action-plugin ./fixtures/plugins/hello-action-plugin-binary.yml ./fixtures/plugins/hello.py
+  - script: "cd ./fixtures/ITSCWRKFLW15 && make build"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} admin integration-model import ./fixtures/ITSCWRKFLW15/simple-integ.yml"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} admin plugins import ./fixtures/ITSCWRKFLW15/simple-integ-plugin.yml"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} admin plugins binary-add simple-integ-plugin ./fixtures/ITSCWRKFLW15/plugin-simple-integ-darwin-amd64.yml ./fixtures/ITSCWRKFLW15/plugin-simple-integ-darwin-amd64"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} admin plugins binary-add simple-integ-plugin ./fixtures/ITSCWRKFLW15/plugin-simple-integ-linux-amd64.yml ./fixtures/ITSCWRKFLW15/plugin-simple-integ-linux-amd64"
 
 - name: import application
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} application import --force ITSCWRKFLW15 ./fixtures/ITSCWRKFLW15/application.yml
+  - script: |
+      export encryptedPassword=$({{.cdsctl}} -f {{.cdsctl.config}} encrypt ITSCWRKFLW15 my-secret jesuisunpassword | cut -d ' ' -f 2)
+      echo "version: v1.0
+      name: ITSCWRKFLW15-APPLICATION
+      deployments:
+        simple-integration-dev:
+          deployment.token:
+            type: password
+            value: ${encryptedPassword}
+          retry.delay:
+            type: string
+            value: \"50\"
+          retry.max:
+            type: string
+            value: \"100\"
+          version:
+            type: string
+            value: '{{.cds.version}}'" > ./fixtures/ITSCWRKFLW15/application.yml
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} application import --force ITSCWRKFLW15 ./fixtures/ITSCWRKFLW15/application.yml"
 
 - name: import pipeline
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} pipeline import --force ITSCWRKFLW15 ./fixtures/ITSCWRKFLW15/pipeline.yml
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} pipeline import --force ITSCWRKFLW15 ./fixtures/ITSCWRKFLW15/pipeline.yml"
 
 - name: import workflow
   steps:
-  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow import --force ITSCWRKFLW15 ./fixtures/ITSCWRKFLW15/workflow.yml
+  - script:  "{{.cdsctl}} -f {{.cdsctl.config}} workflow import --force ITSCWRKFLW15 ./fixtures/ITSCWRKFLW15/workflow.yml"
 
 - name: run workflow
   steps:
-  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow run ITSCWRKFLW15 ITSCWRKFLW15-WORKFLOW
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} workflow run ITSCWRKFLW15 ITSCWRKFLW15-WORKFLOW"
     assertions:
     - result.code ShouldEqual 0
     - "result.systemout ShouldContainSubstring Workflow ITSCWRKFLW15-WORKFLOW #1 has been launched"
 
 - name: check workflow
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow status ITSCWRKFLW15 ITSCWRKFLW15-WORKFLOW 1 --format json
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} workflow status ITSCWRKFLW15 ITSCWRKFLW15-WORKFLOW 1 --format json"
     retry: 10
     delay: 3
     assertions:
@@ -59,11 +77,22 @@ testcases:
 
 - name: check if pre-requisite is visible in queue
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin curl /queue/workflows|grep "job.requirement.region"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} admin curl /queue/workflows|grep \"job.requirement.binary.git\""
 
-- name: stop workflow
+- name: check workflow
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow stop ITSCWRKFLW15 ITSCWRKFLW15-WORKFLOW 1
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} workflow status ITSCWRKFLW15 ITSCWRKFLW15-WORKFLOW 1 --format json"
+    retry: 20
+    delay: 3
     assertions:
     - result.code ShouldEqual 0
-    - "result.systemout ShouldContainSubstring Workflow ITSCWRKFLW15-WORKFLOW #1 has been stopped"
+    - result.systemoutjson.status ShouldEqual Success
+
+- name: check result
+  steps:
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} workflow logs download ITSCWRKFLW15 ITSCWRKFLW15-WORKFLOW 1 --pattern NewJob"
+    retry: 10
+    delay: 3
+  - script: grep "Retry.max 100" *.log
+  - script: grep "Retry.delay 50" *.log
+  - script: grep "Deployment.token drowssapnusiusej" *.log

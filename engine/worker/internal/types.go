@@ -139,6 +139,15 @@ func (wk *CurrentWorker) WorkerCacheSignature(tag string) (string, error) {
 	return signature, sdk.WrapError(err, "cannot sign log message")
 }
 
+func (wk *CurrentWorker) GetPlugin(pluginType string) *sdk.GRPCPlugin {
+	for i := range wk.currentJob.wJob.IntegrationPlugins {
+		if wk.currentJob.wJob.IntegrationPlugins[i].Type == pluginType {
+			return &wk.currentJob.wJob.IntegrationPlugins[i]
+		}
+	}
+	return nil
+}
+
 func (wk *CurrentWorker) RunResultSignature(artifactName string, perm uint32, t sdk.WorkflowRunResultType) (string, error) {
 	sig := cdn.Signature{
 		ProjectKey:   wk.currentJob.projectKey,

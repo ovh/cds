@@ -14,41 +14,21 @@ import (
 	"github.com/ovh/cds/sdk/grpcplugin/integrationplugin"
 )
 
-func RunDeployApplication(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, secrets []sdk.Variable) (sdk.Result, error) {
-	jobID, err := workerruntime.JobID(ctx)
-	if err != nil {
-		return sdk.Result{}, err
-	}
-
-	pfName := sdk.ParameterFind(wk.Parameters(), "cds.integration")
+func RunDeployApplication(ctx context.Context, wk workerruntime.Runtime, _ sdk.Action, _ []sdk.Variable) (sdk.Result, error) {
+	pfName := sdk.ParameterFind(wk.Parameters(), "cds.integration.deployment")
 	if pfName == nil {
-		return sdk.Result{}, errors.New("Unable to retrieve deployment integration... Aborting")
+		return sdk.Result{}, errors.New("unable to retrieve deployment integration... Aborting")
 	}
 
-	pkey := sdk.ParameterFind(wk.Parameters(), "cds.project")
-	pf, err := wk.Client().ProjectIntegrationGet(pkey.Value, pfName.Value, true)
-	if err != nil {
-		return sdk.Result{}, fmt.Errorf("unable to retrieve deployment integration (%v)... Aborting", err)
-	}
-
-	job, err := wk.Client().QueueJobInfo(ctx, jobID)
-	if err != nil {
-		return sdk.Result{}, err
+	plugin := wk.GetPlugin(sdk.GRPCPluginDeploymentIntegration)
+	if plugin == nil {
+		return sdk.Result{}, sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find plugin of type %s", sdk.GRPCPluginDeploymentIntegration)
 	}
 
 	//First check OS and Architecture
-	var currentOS = strings.ToLower(sdk.GOOS)
-	var currentARCH = strings.ToLower(sdk.GOARCH)
-	var binary *sdk.GRPCPluginBinary
-	for _, b := range job.IntegrationPluginBinaries {
-		if b.OS == currentOS && b.Arch == currentARCH {
-			binary = &b
-			break
-		}
-	}
-
+	binary := plugin.GetBinary(strings.ToLower(sdk.GOOS), strings.ToLower(sdk.GOARCH))
 	if binary == nil {
-		return sdk.Result{}, fmt.Errorf("Unable to retrieve the plugin for deployment integration %s... Aborting", pf.Model.Name)
+		return sdk.Result{}, fmt.Errorf("unable to retrieve the plugin for deployment integration %s... Aborting", pfName.Value)
 	}
 
 	pluginSocket, err := startGRPCPlugin(ctx, binary.PluginName, wk, binary, startGRPCPluginOptions{})
@@ -91,7 +71,7 @@ func RunDeployApplication(ctx context.Context, wk workerruntime.Runtime, a sdk.A
 	res, err := integrationPluginClient.Run(ctx, &query)
 	if err != nil {
 		integrationPluginClientStop(ctx, integrationPluginClient, done, stopLogs)
-		return sdk.Result{}, fmt.Errorf("Error deploying application: %v", err)
+		return sdk.Result{}, fmt.Errorf("error deploying application: %v", err)
 	}
 
 	wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("# Details: %s", res.Details))

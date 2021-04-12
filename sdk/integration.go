@@ -242,6 +242,9 @@ const (
 	IntegrationConfigTypePassword = "password"
 	// IntegrationConfigTypeBoolean represents a password configuration value
 	IntegrationConfigTypeBoolean = "boolean"
+
+	IntegrationVariablePrefixDeployment      = "deployment"
+	IntegrationVariablePrefixArtifactManager = "artifact_manager"
 )
 
 // IntegrationConfigValue represent a configuration value for a integration
@@ -259,6 +262,20 @@ func (config IntegrationConfigMap) Clone() IntegrationConfigMap {
 		new[k] = v.Clone()
 	}
 	return new
+}
+
+func GetIntegrationVariablePrefix(model IntegrationModel) string {
+	if model.Deployment {
+		return IntegrationVariablePrefixDeployment
+	}
+	if model.ArtifactManager {
+		return IntegrationVariablePrefixArtifactManager
+	}
+	return ""
+}
+
+func AllowIntegrationInVariable(model IntegrationModel) bool {
+	return model.ArtifactManager || model.Deployment
 }
 
 func (config IntegrationConfigMap) Blur() {
@@ -301,6 +318,7 @@ type IntegrationModel struct {
 	Deployment              bool                 `json:"deployment" db:"deployment" yaml:"deployment" cli:"deployment_supported"`
 	Compute                 bool                 `json:"compute" db:"compute" yaml:"compute" cli:"compute_supported"`
 	Event                   bool                 `json:"event" db:"event" yaml:"event" cli:"event_supported"`
+	ArtifactManager         bool                 `json:"artifact_manager" db:"artifact_manager" yaml:"artifact_manager" cli:"artifact_manager_supported"`
 	Public                  bool                 `json:"public,omitempty" db:"public" yaml:"public,omitempty"`
 }
 
