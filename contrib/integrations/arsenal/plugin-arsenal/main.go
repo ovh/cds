@@ -89,6 +89,9 @@ func (e *arsenalDeploymentPlugin) Run(ctx context.Context, q *integrationplugin.
 	var application = q.GetOptions()["cds.application"]
 	var arsenalHost = q.GetOptions()["cds.integration.deployment.host"]
 	var arsenalDeploymentToken = q.GetOptions()["cds.integration.deployment.deployment.token"]
+	if arsenalDeploymentToken == "" {
+		arsenalDeploymentToken = q.GetOptions()["cds.integration.deployment.token"]
+	}
 	var maxRetryStr = q.GetOptions()["cds.integration.deployment.retry.max"]
 	var delayRetryStr = q.GetOptions()["cds.integration.deployment.retry.delay"]
 	maxRetry, err := strconv.Atoi(maxRetryStr)

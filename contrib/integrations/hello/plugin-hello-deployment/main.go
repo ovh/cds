@@ -108,6 +108,9 @@ func (e *helloDeploymentPlugin) Run(ctx context.Context, q *integrationplugin.Ru
 	var application = q.GetOptions()["cds.application"]
 	var helloHost = q.GetOptions()["cds.integration.deployment.host"]
 	var deploymentToken = q.GetOptions()["cds.integration.deployment.deployment.token"]
+	if deploymentToken == "" {
+		deploymentToken = q.GetOptions()["cds.integration.deployment.token"]
+	}
 	var maxRetryStr = q.GetOptions()["cds.integration.deployment.retry.max"]
 	var delayRetryStr = q.GetOptions()["cds.integration.deployment.retry.delay"]
 	maxRetry, err := strconv.Atoi(maxRetryStr)
