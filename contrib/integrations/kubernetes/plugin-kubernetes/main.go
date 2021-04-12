@@ -92,9 +92,9 @@ func getStartingConfig(token, timeout string) clientcmd.KubeconfigGetter {
 
 func (k8sPlugin *kubernetesDeploymentPlugin) Run(ctx context.Context, q *integrationplugin.RunQuery) (*integrationplugin.RunResult, error) {
 	k8sAPIURL := q.GetOptions()["cds.integration.deployment.api_url"]
-	k8sToken := q.GetOptions()["cds.integration.deployment.deployment.token"]
+	k8sToken := q.GetOptions()["cds.integration.deployment.token"]
 	if k8sToken == "" {
-		k8sToken = q.GetOptions()["cds.integration.deployment.token"]
+		k8sToken = q.GetOptions()["cds.integration.token"]
 	}
 	k8sCaCertificate := q.GetOptions()["cds.integration.deployment.ca_certificate"]
 	deploymentFilepath := q.GetOptions()["cds.integration.deployment.deployment_files"]
@@ -176,9 +176,9 @@ func fail(format string, args ...interface{}) (*integrationplugin.RunResult, err
 
 func executeK8s(q *integrationplugin.RunQuery) error {
 	k8sAPIURL := q.GetOptions()["cds.integration.deployment.api_url"]
-	k8sToken := q.GetOptions()["cds.integration.deployment.deployment.token"]
+	k8sToken := q.GetOptions()["cds.integration.deployment.token"]
 	if k8sToken == "" {
-		k8sToken = q.GetOptions()["cds.integration.deployment.token"]
+		k8sToken = q.GetOptions()["cds.integration.token"]
 	}
 	k8sCaCertificate := q.GetOptions()["cds.integration.deployment.ca_certificate"]
 	namespace := q.GetOptions()["cds.integration.deployment.namespace"]
