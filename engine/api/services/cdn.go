@@ -8,17 +8,29 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func GetCDNPublicTCPAdress(ctx context.Context, db gorp.SqlExecutor) (string, error) {
+func GetCDNPublicTCPAdress(ctx context.Context, db gorp.SqlExecutor) (string, bool, error) {
 	srvs, err := LoadAllByType(ctx, db, sdk.TypeCDN)
 	if err != nil {
-		return "", err
+		return "", false, err
 	}
+
+	var tcp_addr string
+	var tcp_tls bool
+
+findAddr:
 	for _, svr := range srvs {
 		if addr, ok := svr.Config["public_tcp"]; ok {
-			return addr.(string), nil
+			tcp_addr = addr.(string)
+			if tls, ok := svr.Config["public_tcp_enable_tls"]; ok {
+				tcp_tls = tls.(bool)
+			}
+			break findAddr
 		}
 	}
-	return "", sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find any tcp configuration in CDN Uservice")
+	if tcp_addr != "" {
+		return tcp_addr, tcp_tls, nil
+	}
+	return "", false, sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find any tcp configuration in CDN Uservice")
 }
 
 func GetCDNPublicHTTPAdress(ctx context.Context, db gorp.SqlExecutor) (string, error) {

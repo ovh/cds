@@ -21,9 +21,6 @@ var esClient *elastic.Client
 func New() *Service {
 	s := new(Service)
 	s.GoRoutines = sdk.NewGoRoutines()
-	s.Router = &api.Router{
-		Mux: mux.NewRouter(),
-	}
 	return s
 }
 
@@ -37,7 +34,10 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 	if !ok {
 		return fmt.Errorf("ApplyConfiguration> Invalid Elasticsearch configuration")
 	}
-
+	s.Router = &api.Router{
+		Mux:    mux.NewRouter(),
+		Config: s.Cfg.HTTP,
+	}
 	s.HTTPURL = s.Cfg.URL
 	s.ServiceName = s.Cfg.Name
 	s.ServiceType = sdk.TypeElasticsearch

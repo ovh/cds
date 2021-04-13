@@ -59,6 +59,7 @@ type Router struct {
 	nbPanic               int
 	lastPanic             *time.Time
 	scopeDetails          []sdk.AuthConsumerScopeDetail
+	Config                service.HTTPRouterConfiguration
 }
 
 // HandlerConfigFunc is a type used in the router configuration fonction "Handle"
@@ -224,7 +225,6 @@ func (r *Router) computeScopeDetails() {
 				Methods: methods,
 			})
 		}
-
 		details[i].Scope = scope
 		details[i].Endpoints = endpoints
 	}
@@ -340,6 +340,13 @@ func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.Han
 			telemetry.Path, req.URL.Path,
 			telemetry.Method, req.Method)
 
+		// Retrieve the client ip address from the header (X-Forwarded-For by default)
+		clientIP := req.Header.Get(r.Config.HeaderXForwardedFor)
+		if clientIP == "" {
+			// If the header has not been found, fallback on the remote adress from the http request
+			clientIP = req.RemoteAddr
+		}
+
 		// Prepare logging fields
 		ctx = context.WithValue(ctx, cdslog.Method, req.Method)
 		ctx = context.WithValue(ctx, cdslog.Route, cleanURL)
@@ -347,6 +354,7 @@ func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.Han
 		ctx = context.WithValue(ctx, cdslog.Deprecated, rc.IsDeprecated)
 		ctx = context.WithValue(ctx, cdslog.Handler, rc.Name)
 		ctx = context.WithValue(ctx, cdslog.Action, rc.Name)
+		ctx = context.WithValue(ctx, cdslog.IPAddress, clientIP)
 
 		var fields = mux.Vars(req)
 		for k, v := range fields {
@@ -534,8 +542,22 @@ func MaintenanceAware() service.HandlerConfigParam {
 }
 
 // NotFoundHandler is called by default by Mux is any matching handler has been found
-func NotFoundHandler(w http.ResponseWriter, req *http.Request) {
-	service.WriteError(context.Background(), w, req, sdk.NewError(sdk.ErrNotFound, fmt.Errorf("%s not found", req.URL.Path)))
+func (r *Router) NotFoundHandler(w http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+
+	// Retrieve the client ip address from the header (X-Forwarded-For by default)
+	clientIP := req.Header.Get(r.Config.HeaderXForwardedFor)
+	if clientIP == "" {
+		// If the header has not been found, fallback on the remote adress from the http request
+		clientIP = req.RemoteAddr
+	}
+
+	// Prepare logging fields
+	ctx = context.WithValue(ctx, cdslog.Method, req.Method)
+	ctx = context.WithValue(ctx, cdslog.RequestURI, req.RequestURI)
+	ctx = context.WithValue(ctx, cdslog.IPAddress, clientIP)
+
+	service.WriteError(ctx, w, req, sdk.NewError(sdk.ErrNotFound, fmt.Errorf("%s not found", req.URL.Path)))
 }
 
 // StatusPanic returns router status. If nbPanic > 30 -> Alert, if nbPanic > 0 -> Warn

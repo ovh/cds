@@ -17,12 +17,10 @@ import (
 	"github.com/docker/docker/api/types"
 	docker "github.com/docker/docker/client"
 	"github.com/docker/go-connections/tlsconfig"
-	"github.com/gorilla/mux"
 	"github.com/rockbears/log"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 
-	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdn"
@@ -35,9 +33,6 @@ import (
 func New() *HatcherySwarm {
 	s := new(HatcherySwarm)
 	s.GoRoutines = sdk.NewGoRoutines()
-	s.Router = &api.Router{
-		Mux: mux.NewRouter(),
-	}
 	return s
 }
 

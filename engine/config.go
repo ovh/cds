@@ -80,32 +80,39 @@ func configBootstrap(args []string) Configuration {
 				HealthURL:  "https://ovh.github.io",
 				Type:       "doc",
 			})
+			conf.API.HTTP.Port = 8081
 		case sdk.TypeUI:
 			conf.UI = &ui.Configuration{}
 			conf.UI.Name = "cds-ui-" + namesgenerator.GetRandomNameCDS(0)
 			defaults.SetDefaults(conf.UI)
+			conf.UI.HTTP.Port = 8080
 		case "migrate":
 			conf.DatabaseMigrate = &migrateservice.Configuration{}
 			defaults.SetDefaults(conf.DatabaseMigrate)
 			conf.DatabaseMigrate.Name = "cds-migrate-" + namesgenerator.GetRandomNameCDS(0)
 			conf.DatabaseMigrate.ServiceAPI.DB.Schema = "public"
 			conf.DatabaseMigrate.ServiceCDN.DB.Schema = "cdn"
+			conf.DatabaseMigrate.HTTP.Port = 8087
 		case sdk.TypeHatchery + ":local":
 			conf.Hatchery.Local = &local.HatcheryConfiguration{}
 			defaults.SetDefaults(conf.Hatchery.Local)
 			conf.Hatchery.Local.Name = "cds-hatchery-local-" + namesgenerator.GetRandomNameCDS(0)
+			conf.Hatchery.Local.HTTP.Port = 8086
 		case sdk.TypeHatchery + ":kubernetes":
 			conf.Hatchery.Kubernetes = &kubernetes.HatcheryConfiguration{}
 			defaults.SetDefaults(conf.Hatchery.Kubernetes)
 			conf.Hatchery.Kubernetes.Name = "cds-hatchery-kubernetes-" + namesgenerator.GetRandomNameCDS(0)
+			conf.Hatchery.Kubernetes.HTTP.Port = 8086
 		case sdk.TypeHatchery + ":marathon":
 			conf.Hatchery.Marathon = &marathon.HatcheryConfiguration{}
 			defaults.SetDefaults(conf.Hatchery.Marathon)
 			conf.Hatchery.Marathon.Name = "cds-hatchery-marathon-" + namesgenerator.GetRandomNameCDS(0)
+			conf.Hatchery.Marathon.HTTP.Port = 8086
 		case sdk.TypeHatchery + ":openstack":
 			conf.Hatchery.Openstack = &openstack.HatcheryConfiguration{}
 			defaults.SetDefaults(conf.Hatchery.Openstack)
 			conf.Hatchery.Openstack.Name = "cds-hatchery-openstack-" + namesgenerator.GetRandomNameCDS(0)
+			conf.Hatchery.Openstack.HTTP.Port = 8086
 		case sdk.TypeHatchery + ":swarm":
 			conf.Hatchery.Swarm = &swarm.HatcheryConfiguration{}
 			defaults.SetDefaults(conf.Hatchery.Swarm)
@@ -115,14 +122,17 @@ func configBootstrap(args []string) Configuration {
 				},
 			}
 			conf.Hatchery.Swarm.Name = "cds-hatchery-swarm-" + namesgenerator.GetRandomNameCDS(0)
+			conf.Hatchery.Swarm.HTTP.Port = 8086
 		case sdk.TypeHatchery + ":vsphere":
 			conf.Hatchery.VSphere = &vsphere.HatcheryConfiguration{}
 			defaults.SetDefaults(conf.Hatchery.VSphere)
 			conf.Hatchery.VSphere.Name = "cds-hatchery-vsphere-" + namesgenerator.GetRandomNameCDS(0)
+			conf.Hatchery.VSphere.HTTP.Port = 8086
 		case sdk.TypeHooks:
 			conf.Hooks = &hooks.Configuration{}
 			defaults.SetDefaults(conf.Hooks)
 			conf.Hooks.Name = "cds-hooks-" + namesgenerator.GetRandomNameCDS(0)
+			conf.Hooks.HTTP.Port = 8083
 		case sdk.TypeVCS:
 			conf.VCS = &vcs.Configuration{}
 			defaults.SetDefaults(conf.VCS)
@@ -144,13 +154,16 @@ func configBootstrap(args []string) Configuration {
 				"gerrit":         {URL: "http://localhost:8080", Gerrit: &gerrit},
 			}
 			conf.VCS.Name = "cds-vcs-" + namesgenerator.GetRandomNameCDS(0)
+			conf.VCS.HTTP.Port = 8084
 		case sdk.TypeRepositories:
 			conf.Repositories = &repositories.Configuration{}
 			defaults.SetDefaults(conf.Repositories)
 			conf.Repositories.Name = "cds-repositories-" + namesgenerator.GetRandomNameCDS(0)
+			conf.Repositories.HTTP.Port = 8085
 		case sdk.TypeCDN:
 			conf.CDN = &cdn.Configuration{}
 			defaults.SetDefaults(conf.CDN)
+			conf.CDN.HTTP.Port = 8089
 			conf.CDN.Database.Schema = "cdn"
 			conf.CDN.Units.HashLocatorSalt = sdk.RandomString(8)
 			conf.CDN.Units.Buffers = map[string]storage.BufferConfiguration{
@@ -193,6 +206,7 @@ func configBootstrap(args []string) Configuration {
 		case sdk.TypeElasticsearch:
 			conf.ElasticSearch = &elasticsearch.Configuration{}
 			defaults.SetDefaults(conf.ElasticSearch)
+			conf.ElasticSearch.HTTP.Port = 8088
 		default:
 			sdk.Exit("Error service '%s' is unknown", a)
 		}

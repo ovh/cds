@@ -111,7 +111,7 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 
 		// Get CDN TCP Addr
 		// Get CDN TCP Addr
-		pbji.GelfServiceAddr, err = services.GetCDNPublicTCPAdress(ctx, api.mustDB())
+		pbji.GelfServiceAddr, pbji.GelfServiceAddrEnableTLS, err = services.GetCDNPublicTCPAdress(ctx, api.mustDB())
 		if err != nil {
 			return err
 		}

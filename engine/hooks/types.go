@@ -26,11 +26,8 @@ type Service struct {
 
 // Configuration is the hooks configuration structure
 type Configuration struct {
-	Name string `toml:"name" comment:"Name of this CDS Hooks Service\n Enter a name to enable this service" json:"name"`
-	HTTP struct {
-		Addr string `toml:"addr" default:"" commented:"true" comment:"Listen address without port, example: 127.0.0.1" json:"addr"`
-		Port int    `toml:"port" default:"8083" json:"port"`
-	} `toml:"http" comment:"######################\n CDS Hooks HTTP Configuration \n######################" json:"http"`
+	Name             string                          `toml:"name" comment:"Name of this CDS Hooks Service\n Enter a name to enable this service" json:"name"`
+	HTTP             service.HTTPRouterConfiguration `toml:"http" comment:"######################\n CDS Hooks HTTP Configuration \n######################" json:"http"`
 	URL              string                          `toml:"url" default:"http://localhost:8083" json:"url"`
 	URLPublic        string                          `toml:"urlPublic" default:"http://localhost:8080/cdshooks" comment:"Public url for external call (webhook)" json:"urlPublic"`
 	RetryDelay       int64                           `toml:"retryDelay" default:"120" comment:"Execution retry delay in seconds" json:"retryDelay"`

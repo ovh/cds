@@ -30,14 +30,10 @@ var _ service.BeforeStart = new(dbmigservice)
 
 // Configuration is the exposed type for database API configuration
 type Configuration struct {
-	Name      string `toml:"name" comment:"Name of this CDS Database Migrate service\n Enter a name to enable this service" json:"name"`
-	URL       string `default:"http://localhost:8087" json:"url"`
-	Directory string `toml:"directory" comment:"SQL Migration files directory" default:"sql" json:"directory"`
-	HTTP      struct {
-		Addr     string `toml:"addr" default:"" commented:"true" comment:"Listen address without port, example: 127.0.0.1" json:"addr"`
-		Port     int    `toml:"port" default:"8087" json:"port"`
-		Insecure bool   `toml:"insecure" default:"false" commented:"true" comment:"sslInsecureSkipVerify, set to true if you use a self-signed SSL on CDS API" json:"insecure"`
-	} `toml:"http" comment:"#####################################\n CDS DB Migrate HTTP configuration \n####################################" json:"http"`
+	Name       string                          `toml:"name" comment:"Name of this CDS Database Migrate service\n Enter a name to enable this service" json:"name"`
+	URL        string                          `default:"http://localhost:8087" json:"url"`
+	Directory  string                          `toml:"directory" comment:"SQL Migration files directory" default:"sql" json:"directory"`
+	HTTP       service.HTTPRouterConfiguration `toml:"http" comment:"#####################################\n CDS DB Migrate HTTP configuration \n####################################" json:"http"`
 	API        service.APIServiceConfiguration `toml:"api" comment:"####################\n CDS API Settings \n###################" json:"api"`
 	ServiceAPI struct {
 		Enable bool                     `toml:"enable" default:"true" comment:"set to false to disable migration for API database" json:"enable"`
@@ -84,7 +80,6 @@ func (s *dbmigservice) ApplyConfiguration(cfg interface{}) error {
 	}
 
 	dbCfg, _ := cfg.(Configuration)
-
 	s.cfg = dbCfg
 	s.ServiceName = s.cfg.Name
 	s.ServiceType = sdk.TypeDBMigrate
@@ -92,7 +87,8 @@ func (s *dbmigservice) ApplyConfiguration(cfg interface{}) error {
 
 	s.MaxHeartbeatFailures = s.cfg.API.MaxHeartbeatFailures
 	s.Router = &api.Router{
-		Mux: mux.NewRouter(),
+		Mux:    mux.NewRouter(),
+		Config: s.cfg.HTTP,
 	}
 	return nil
 }
