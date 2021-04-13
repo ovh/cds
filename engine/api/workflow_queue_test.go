@@ -6,9 +6,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/ovh/cds/engine/api/bootstrap"
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
-	"github.com/ovh/cds/engine/featureflipping"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -17,6 +14,10 @@ import (
 	"path"
 	"testing"
 	"time"
+
+	"github.com/ovh/cds/engine/api/bootstrap"
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/featureflipping"
 
 	"github.com/ovh/venom"
 
@@ -484,6 +485,7 @@ func Test_postTakeWorkflowJobHandler(t *testing.T) {
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), pbji))
 
 	assert.Equal(t, "cdn.net:4545", pbji.GelfServiceAddr)
+	assert.Equal(t, true, pbji.GelfServiceAddrEnableTLS)
 
 	run, err := workflow.LoadNodeJobRun(context.TODO(), api.mustDB(), api.Cache, ctx.job.ID)
 	require.NoError(t, err)

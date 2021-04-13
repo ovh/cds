@@ -545,8 +545,9 @@ func InitCDNService(t *testing.T, db gorpmapper.SqlExecutorWithTx, scopes ...sdk
 			PublicKey:  publicKey,
 			ConsumerID: &hConsumer.ID,
 			Config: map[string]interface{}{
-				"public_tcp":  "cdn.net:4545",
-				"public_http": "http://cdn.net:8080",
+				"public_tcp":            "cdn.net:4545",
+				"public_http":           "http://cdn.net:8080",
+				"public_tcp_enable_tls": true,
 			},
 		},
 	}

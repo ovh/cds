@@ -137,21 +137,24 @@ func (c *Common) RefreshServiceLogger(ctx context.Context) error {
 		c.Signer = signer
 	}
 
-	tcpCDNUrl := c.CDNLogsURL
-	// Check if the url has a scheme
-	// We have to remove if to retrieve the hostname
-	if i := strings.Index(tcpCDNUrl, "://"); i > -1 {
-		tcpCDNUrl = tcpCDNUrl[i+3:]
-	}
-	tcpCDNHostname, _, err := net.SplitHostPort(tcpCDNUrl)
-	if err != nil {
-		return sdk.WithStack(err)
+	var graylogCfg = &hook.Config{
+		Addr:     c.CDNLogsURL,
+		Protocol: "tcp",
 	}
 
-	var graylogCfg = &hook.Config{
-		Addr:      c.CDNLogsURL,
-		Protocol:  "tcp",
-		TLSConfig: &tls.Config{ServerName: tcpCDNHostname},
+	if cdnConfig.TCPURLEnableTLS {
+		tcpCDNUrl := c.CDNLogsURL
+		// Check if the url has a scheme
+		// We have to remove if to retrieve the hostname
+		if i := strings.Index(tcpCDNUrl, "://"); i > -1 {
+			tcpCDNUrl = tcpCDNUrl[i+3:]
+		}
+		tcpCDNHostname, _, err := net.SplitHostPort(tcpCDNUrl)
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+
+		graylogCfg.TLSConfig = &tls.Config{ServerName: tcpCDNHostname}
 	}
 
 	if c.ServiceLogger == nil {
