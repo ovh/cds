@@ -443,7 +443,7 @@ func (api *API) InitRouter() {
 	r.Handle("/template/{groupName}/{templateSlug}/usage", Scope(sdk.AuthConsumerScopeTemplate), r.GET(api.getTemplateUsageHandler))
 
 	//Not Found handler
-	r.Mux.NotFoundHandler = http.HandlerFunc(NotFoundHandler)
+	r.Mux.NotFoundHandler = http.HandlerFunc(r.NotFoundHandler)
 
 	r.computeScopeDetails()
 }

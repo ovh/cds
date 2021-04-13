@@ -64,12 +64,9 @@ type Service struct {
 
 // Configuration is the hooks configuration structure
 type Configuration struct {
-	Name string        `toml:"name" default:"cds-cdn" comment:"Name of this CDS CDN Service\n Enter a name to enable this service" json:"name"`
-	TCP  sdk.TCPServer `toml:"tcp" comment:"######################\n CDS CDN TCP Configuration \n######################" json:"tcp"`
-	HTTP struct {
-		Addr string `toml:"addr" default:"" commented:"true" comment:"Listen address without port, example: 127.0.0.1" json:"addr"`
-		Port int    `toml:"port" default:"8089" json:"port"`
-	} `toml:"http" comment:"######################\n CDS CDN HTTP Configuration \n######################" json:"http"`
+	Name       string                                 `toml:"name" default:"cds-cdn" comment:"Name of this CDS CDN Service\n Enter a name to enable this service" json:"name"`
+	TCP        sdk.TCPServer                          `toml:"tcp" comment:"######################\n CDS CDN TCP Configuration \n######################" json:"tcp"`
+	HTTP       service.HTTPRouterConfiguration        `toml:"http" comment:"######################\n CDS CDN HTTP Configuration \n######################" json:"http"`
 	URL        string                                 `default:"http://localhost:8089" json:"url" comment:"Private URL for communication with API"`
 	PublicTCP  string                                 `toml:"publicTCP" default:"localhost:8090" comment:"Public address to access to CDN TCP server" json:"public_tcp"`
 	PublicHTTP string                                 `toml:"publicHTTP" default:"http://localhost:8089" comment:"Public address to access to CDN HTTP server" json:"public_http"`

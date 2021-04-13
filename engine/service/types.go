@@ -24,16 +24,19 @@ type APIServiceConfiguration struct {
 	MaxHeartbeatFailures int    `toml:"maxHeartbeatFailures" default:"10" json:"maxHeartbeatFailures"`
 }
 
+type HTTPRouterConfiguration struct {
+	Addr                string `toml:"addr" default:"" commented:"true" comment:"Listen HTTP address without port, example: 127.0.0.1" json:"addr"`
+	Port                int    `toml:"port" default:"8081" json:"port"`
+	HeaderXForwardedFor string `toml:"headerXForwardedFor" default:"X-Forwarded-For" json:"header_w_forwarded_for"`
+}
+
 // HatcheryCommonConfiguration is the base configuration for all hatcheries
 type HatcheryCommonConfiguration struct {
-	Name          string `toml:"name" default:"" comment:"Name of Hatchery" json:"name"`
-	RSAPrivateKey string `toml:"rsaPrivateKey" default:"" comment:"The RSA Private Key used by the hatchery.\nThis is mandatory." json:"-"`
-	HTTP          struct {
-		Addr string `toml:"addr" default:"" commented:"true" comment:"Listen address without port, example: 127.0.0.1" json:"addr"`
-		Port int    `toml:"port" default:"8086" json:"port"`
-	} `toml:"http" comment:"######################\n CDS Hatchery HTTP Configuration \n######################" json:"http"`
-	URL string `toml:"url" default:"http://localhost:8086" comment:"URL of this Hatchery" json:"url"`
-	API struct {
+	Name          string                  `toml:"name" default:"" comment:"Name of Hatchery" json:"name"`
+	RSAPrivateKey string                  `toml:"rsaPrivateKey" default:"" comment:"The RSA Private Key used by the hatchery.\nThis is mandatory." json:"-"`
+	HTTP          HTTPRouterConfiguration `toml:"http" comment:"######################\n CDS Hatchery HTTP Configuration \n######################" json:"http"`
+	URL           string                  `toml:"url" default:"http://localhost:8086" comment:"URL of this Hatchery" json:"url"`
+	API           struct {
 		HTTP struct {
 			URL      string `toml:"url" default:"http://localhost:8081" comment:"CDS API URL" json:"url"`
 			Insecure bool   `toml:"insecure" default:"false" commented:"true" comment:"sslInsecureSkipVerify, set to true if you use a self-signed SSL on CDS API" json:"insecure"`

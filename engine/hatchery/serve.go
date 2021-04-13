@@ -104,7 +104,7 @@ func (c *Common) initRouter(ctx context.Context, h hatchery.Interface) {
 	r.Mux.HandleFunc("/debug/pprof/{action}", pprof.Index)
 	r.Mux.HandleFunc("/debug/pprof/", pprof.Index)
 
-	r.Mux.NotFoundHandler = http.HandlerFunc(api.NotFoundHandler)
+	r.Mux.NotFoundHandler = http.HandlerFunc(r.NotFoundHandler)
 }
 
 func (c *Common) GetPrivateKey() *rsa.PrivateKey {
