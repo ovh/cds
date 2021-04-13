@@ -80,7 +80,6 @@ func (s *dbmigservice) ApplyConfiguration(cfg interface{}) error {
 	}
 
 	dbCfg, _ := cfg.(Configuration)
-
 	s.cfg = dbCfg
 	s.ServiceName = s.cfg.Name
 	s.ServiceType = sdk.TypeDBMigrate
@@ -88,7 +87,8 @@ func (s *dbmigservice) ApplyConfiguration(cfg interface{}) error {
 
 	s.MaxHeartbeatFailures = s.cfg.API.MaxHeartbeatFailures
 	s.Router = &api.Router{
-		Mux: mux.NewRouter(),
+		Mux:    mux.NewRouter(),
+		Config: s.cfg.HTTP,
 	}
 	return nil
 }

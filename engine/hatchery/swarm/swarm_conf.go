@@ -7,8 +7,10 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	types "github.com/docker/docker/api/types"
+	"github.com/gorilla/mux"
 	"github.com/rockbears/log"
 
+	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 )
@@ -20,7 +22,10 @@ func (h *HatcherySwarm) Init(config interface{}) (cdsclient.ServiceConfig, error
 	if !ok {
 		return cfg, sdk.WithStack(fmt.Errorf("invalid swarm hatchery configuration"))
 	}
-
+	h.Router = &api.Router{
+		Mux:    mux.NewRouter(),
+		Config: sConfig.HTTP,
+	}
 	cfg.Host = sConfig.API.HTTP.URL
 	cfg.Token = sConfig.API.Token
 	cfg.InsecureSkipVerifyTLS = sConfig.API.HTTP.Insecure

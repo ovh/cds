@@ -29,9 +29,6 @@ import (
 func New() *HatcheryLocal {
 	s := new(HatcheryLocal)
 	s.GoRoutines = sdk.NewGoRoutines()
-	s.Router = &api.Router{
-		Mux: mux.NewRouter(),
-	}
 	s.LocalWorkerRunner = new(localWorkerRunner)
 	return s
 }
@@ -42,7 +39,10 @@ func (h *HatcheryLocal) Init(config interface{}) (cdsclient.ServiceConfig, error
 	if !ok {
 		return cfg, sdk.WithStack(fmt.Errorf("invalid local hatchery configuration"))
 	}
-
+	h.Router = &api.Router{
+		Mux:    mux.NewRouter(),
+		Config: sConfig.HTTP,
+	}
 	cfg.Host = sConfig.API.HTTP.URL
 	cfg.Token = sConfig.API.Token
 	cfg.InsecureSkipVerifyTLS = sConfig.API.HTTP.Insecure

@@ -30,9 +30,6 @@ import (
 func New() *HatcheryKubernetes {
 	s := new(HatcheryKubernetes)
 	s.GoRoutines = sdk.NewGoRoutines()
-	s.Router = &api.Router{
-		Mux: mux.NewRouter(),
-	}
 	return s
 }
 
@@ -55,6 +52,11 @@ func (h *HatcheryKubernetes) Init(config interface{}) (cdsclient.ServiceConfig, 
 	sConfig, ok := config.(HatcheryConfiguration)
 	if !ok {
 		return cfg, sdk.WithStack(fmt.Errorf("invalid kubernetes hatchery configuration"))
+	}
+
+	h.Router = &api.Router{
+		Mux:    mux.NewRouter(),
+		Config: sConfig.HTTP,
 	}
 
 	cfg.Host = sConfig.API.HTTP.URL
