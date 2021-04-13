@@ -28,6 +28,7 @@ message RunQuery {
 message RunResult {
     string status = 1;
     string details = 2;
+    map<string, string> outputs = 3;
 }
 
 service IntegrationPlugin {
