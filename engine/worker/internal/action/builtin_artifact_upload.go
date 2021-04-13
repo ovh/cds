@@ -92,7 +92,7 @@ func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Acti
 			// 1. Integration specified on artifact upload action ( advanced parameter )
 			// 2. Integration artifact manager on workflow
 			// 3. CDN activated or nor
-			if integrationName != "" {
+			if integrationName != sdk.DefaultStorageIntegrationName {
 				if err := uploadArtifactByApiCall(path, wk, ctx, projectKey, integrationName, jobID, tag); err != nil {
 					log.Warn(ctx, "queueArtifactUpload(%s, %s, %d, %s, %s) failed: %v", projectKey, integrationName, jobID, tag.Value, path, err)
 					chanError <- sdk.WrapError(err, "Error while uploading artifact by api call %s", path)
