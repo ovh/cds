@@ -5,9 +5,10 @@ import (
 	"crypto/rsa"
 	"crypto/tls"
 	"fmt"
+	"net"
 	"net/http"
 	"net/http/pprof"
-	"net/url"
+	"strings"
 	"sync"
 	"time"
 
@@ -136,7 +137,13 @@ func (c *Common) RefreshServiceLogger(ctx context.Context) error {
 		c.Signer = signer
 	}
 
-	tcpCDNUrl, err := url.Parse(c.CDNLogsURL)
+	tcpCDNUrl := c.CDNLogsURL
+	// Check if the url has a scheme
+	// We have to remove if to retrieve the hostname
+	if i := strings.Index(tcpCDNUrl, "://"); i > -1 {
+		tcpCDNUrl = tcpCDNUrl[i+3:]
+	}
+	tcpCDNHostname, _, err := net.SplitHostPort(tcpCDNUrl)
 	if err != nil {
 		return sdk.WithStack(err)
 	}
@@ -144,7 +151,7 @@ func (c *Common) RefreshServiceLogger(ctx context.Context) error {
 	var graylogCfg = &hook.Config{
 		Addr:      c.CDNLogsURL,
 		Protocol:  "tcp",
-		TLSConfig: &tls.Config{ServerName: tcpCDNUrl.Hostname()},
+		TLSConfig: &tls.Config{ServerName: tcpCDNHostname},
 	}
 
 	if c.ServiceLogger == nil {
