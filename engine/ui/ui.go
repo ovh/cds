@@ -28,6 +28,9 @@ import (
 func New() *Service {
 	s := new(Service)
 	s.GoRoutines = sdk.NewGoRoutines()
+	s.Router = &api.Router{
+		Mux: mux.NewRouter(),
+	}
 	return s
 }
 
@@ -36,10 +39,6 @@ func (s *Service) Init(config interface{}) (cdsclient.ServiceConfig, error) {
 	sConfig, ok := config.(Configuration)
 	if !ok {
 		return cfg, sdk.WithStack(fmt.Errorf("invalid ui service configuration"))
-	}
-	s.Router = &api.Router{
-		Mux:    mux.NewRouter(),
-		Config: sConfig.HTTP,
 	}
 	cfg.Host = sConfig.API.HTTP.URL
 	cfg.Token = sConfig.API.Token
@@ -63,6 +62,7 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 	s.ServiceType = sdk.TypeUI
 	s.HTTPURL = s.Cfg.URL
 	s.MaxHeartbeatFailures = s.Cfg.API.MaxHeartbeatFailures
+	s.Router.Config = s.Cfg.HTTP
 
 	// HTMLDir must contains the ui dist directory.
 	// ui.tar.gz contains the dist directory
