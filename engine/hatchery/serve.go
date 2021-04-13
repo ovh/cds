@@ -3,9 +3,11 @@ package hatchery
 import (
 	"context"
 	"crypto/rsa"
+	"crypto/tls"
 	"fmt"
 	"net/http"
 	"net/http/pprof"
+	"net/url"
 	"sync"
 	"time"
 
@@ -134,9 +136,15 @@ func (c *Common) RefreshServiceLogger(ctx context.Context) error {
 		c.Signer = signer
 	}
 
+	tcpCDNUrl, err := url.Parse(c.CDNLogsURL)
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+
 	var graylogCfg = &hook.Config{
-		Addr:     c.CDNLogsURL,
-		Protocol: "tcp",
+		Addr:      c.CDNLogsURL,
+		Protocol:  "tcp",
+		TLSConfig: &tls.Config{ServerName: tcpCDNUrl.Hostname()},
 	}
 
 	if c.ServiceLogger == nil {

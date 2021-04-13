@@ -2,7 +2,9 @@ package internal
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/base64"
+	"net/url"
 	"strings"
 	"time"
 
@@ -57,6 +59,11 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 	log.Info(ctx, "Setup step logger %s", info.GelfServiceAddr)
 	throttlePolicy := hook.NewDefaultThrottlePolicy()
 
+	tcpCDNUrl, err := url.Parse(info.GelfServiceAddr)
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+
 	var graylogCfg = &hook.Config{
 		Addr:     info.GelfServiceAddr,
 		Protocol: "tcp",
@@ -65,6 +72,7 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 			Period: 10 * time.Millisecond,
 			Policy: throttlePolicy,
 		},
+		TLSConfig: &tls.Config{ServerName: tcpCDNUrl.Hostname()},
 	}
 
 	l, h, err := cdslog.New(ctx, graylogCfg)
