@@ -11,7 +11,7 @@ describe('Pipe: Default', () => {
   });
 
   it('providing html value with script inside and sanitize', () => {
-    const elt = pipe.transform(`<script>alert("test")</script> and <div onclick="alert('test')"></div>`, false);
+    const elt = pipe.transform(`<script>alert("test")</script> and <div onclick="alert('test')"></div>`);
     const sanitizedValue = sanitizer.sanitize(SecurityContext.HTML, elt);
     expect(sanitizedValue).toBe(' and <div></div>');
   });
