@@ -43,14 +43,21 @@ export class CallbackComponent implements OnInit, OnDestroy {
         this.loading = true;
     }
 
-    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit() {
         this.paramsSub = this._route.params.subscribe(params => {
             this.consumerType = params['consumerType'];
 
-            this.code = this._route.snapshot.queryParams.code || this._route.snapshot.queryParams.token;
-            this.state = this._route.snapshot.queryParams.state || this._route.snapshot.queryParams.request;
+            let queryParams = this._route.snapshot.queryParams;
+            if (this._route.snapshot.fragment) {
+                const dus = new DefaultUrlSerializer();
+                const parsed = dus.parse(this._route.snapshot.fragment);
+                queryParams = parsed.queryParams;
+            }
+
+            this.code = queryParams.code || queryParams.token;
+            this.state = queryParams.state || queryParams.request;
 
             if (!this.code || !this.state) {
                 this.loading = false;
@@ -70,7 +77,7 @@ export class CallbackComponent implements OnInit, OnDestroy {
                     this.loading = false;
                     this.showCTL = true;
                     this._cd.markForCheck();
-                })
+                });
                 return;
             }
 
