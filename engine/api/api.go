@@ -878,26 +878,29 @@ func (a *API) Serve(ctx context.Context) error {
 // This will returns a cookie with no expiration date that should be dropped by browser when closed.
 func (a *API) SetCookieSession(w http.ResponseWriter, name, value string) {
 	a.setCookie(w, &http.Cookie{
-		Name:  name,
-		Value: value,
+		Name:     name,
+		Value:    value,
+		HttpOnly: false,
 	})
 }
 
 // SetCookie on given response writter, automatically add domain and path based on api config.
-func (a *API) SetCookie(w http.ResponseWriter, name, value string, expires time.Time) {
+func (a *API) SetCookie(w http.ResponseWriter, name, value string, expires time.Time, httpOnly bool) {
 	a.setCookie(w, &http.Cookie{
-		Name:    name,
-		Value:   value,
-		Expires: expires,
+		Name:     name,
+		Value:    value,
+		Expires:  expires,
+		HttpOnly: httpOnly,
 	})
 }
 
 // UnsetCookie on given response writter, automatically add domain and path based on api config.
-func (a *API) UnsetCookie(w http.ResponseWriter, name string) {
+func (a *API) UnsetCookie(w http.ResponseWriter, name string, httpOnly bool) {
 	a.setCookie(w, &http.Cookie{
-		Name:   name,
-		Value:  "",
-		MaxAge: -1,
+		Name:     name,
+		Value:    "",
+		MaxAge:   -1,
+		HttpOnly: httpOnly,
 	})
 }
 
@@ -909,6 +912,12 @@ func (a *API) setCookie(w http.ResponseWriter, c *http.Cookie) {
 		if c.Path == "" {
 			c.Path = "/"
 		}
+	}
+	c.SameSite = http.SameSiteStrictMode
+	c.Secure = true
+	uiURL, _ := url.Parse(a.Config.URL.UI)
+	if uiURL != nil && uiURL.Hostname() != "" {
+		c.Domain = uiURL.Hostname()
 	}
 	http.SetCookie(w, c)
 }
