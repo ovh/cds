@@ -30,9 +30,15 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Handle(s.Cfg.DeployURL+"/mon/metrics/all", nil, r.GET(service.GetMetricsHandler))
 
 	// proxypass
-	r.Mux.PathPrefix(s.Cfg.DeployURL + "/cdsapi").Handler(s.getReverseProxy(s.Cfg.DeployURL+"/cdsapi", s.Cfg.API.HTTP.URL))
-	r.Mux.PathPrefix(s.Cfg.DeployURL + "/cdshooks").Handler(s.getReverseProxy(s.Cfg.DeployURL+"/cdshooks", s.Cfg.HooksURL))
-	r.Mux.PathPrefix(s.Cfg.DeployURL + "/cdscdn").Handler(s.getReverseProxy(s.Cfg.DeployURL+"/cdscdn", s.Cfg.CDNURL))
+	if s.Cfg.API.HTTP.URL != "" {
+		r.Mux.PathPrefix(s.Cfg.DeployURL + "/cdsapi").Handler(s.getReverseProxy(s.Cfg.DeployURL+"/cdsapi", s.Cfg.API.HTTP.URL))
+	}
+	if s.Cfg.HooksURL != "" {
+		r.Mux.PathPrefix(s.Cfg.DeployURL + "/cdshooks").Handler(s.getReverseProxy(s.Cfg.DeployURL+"/cdshooks", s.Cfg.HooksURL))
+	}
+	if s.Cfg.CDNURL != "" {
+		r.Mux.PathPrefix(s.Cfg.DeployURL + "/cdscdn").Handler(s.getReverseProxy(s.Cfg.DeployURL+"/cdscdn", s.Cfg.CDNURL))
+	}
 
 	// serve static UI files
 	r.Mux.PathPrefix("/docs").Handler(s.uiServe(http.Dir(s.DocsDir), s.DocsDir))
