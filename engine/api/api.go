@@ -913,7 +913,7 @@ func (a *API) setCookie(w http.ResponseWriter, c *http.Cookie) {
 			c.Path = "/"
 		}
 	}
-	c.SameSite = http.SameSiteLaxMode
+	c.SameSite = http.SameSiteStrictMode
 	c.Secure = true
 	uiURL, _ := url.Parse(a.Config.URL.UI)
 	if uiURL != nil && uiURL.Hostname() != "" {
