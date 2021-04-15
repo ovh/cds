@@ -73,12 +73,12 @@ func (s GithubServerConfiguration) check() error {
 		return errGithubConfigurationError
 	}
 	if s.ProxyWebhook != "" && !strings.Contains(s.ProxyWebhook, "://") {
-		return fmt.Errorf("Github proxy webhook must have the HTTP scheme")
+		return fmt.Errorf("GitHub proxy webhook must have the HTTP scheme")
 	}
 	return nil
 }
 
-var errGithubConfigurationError = fmt.Errorf("Github configuration Error")
+var errGithubConfigurationError = fmt.Errorf("GitHub configuration Error")
 
 // GitlabServerConfiguration represents the gitlab configuration
 type GitlabServerConfiguration struct {
@@ -96,7 +96,7 @@ type GitlabServerConfiguration struct {
 
 func (s GitlabServerConfiguration) check() error {
 	if s.ProxyWebhook != "" && !strings.Contains(s.ProxyWebhook, "://") {
-		return fmt.Errorf("gitlab proxy webhook must have the HTTP scheme")
+		return fmt.Errorf("GitLab proxy webhook must have the HTTP scheme")
 	}
 	return nil
 }
@@ -117,7 +117,7 @@ type BitbucketServerConfiguration struct {
 
 func (s BitbucketServerConfiguration) check() error {
 	if s.ProxyWebhook != "" && !strings.Contains(s.ProxyWebhook, "://") {
-		return fmt.Errorf("bitbucket proxy webhook must have the HTTP scheme")
+		return fmt.Errorf("Bitbucket proxy webhook must have the HTTP scheme")
 	}
 	return nil
 }
@@ -139,7 +139,7 @@ type BitbucketCloudConfiguration struct {
 
 func (s BitbucketCloudConfiguration) check() error {
 	if s.ProxyWebhook != "" && !strings.Contains(s.ProxyWebhook, "://") {
-		return fmt.Errorf("bitbucket proxy webhook must have the HTTP scheme")
+		return fmt.Errorf("Bitbucket proxy webhook must have the HTTP scheme")
 	}
 	return nil
 }
