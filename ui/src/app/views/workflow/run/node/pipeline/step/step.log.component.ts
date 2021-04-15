@@ -1,4 +1,3 @@
-import { HttpClient } from '@angular/common/http';
 import {
     ChangeDetectionStrategy, ChangeDetectorRef,
     Component,
@@ -10,7 +9,7 @@ import {
     ViewChild
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Select, Store } from '@ngxs/store';
+import { Store } from '@ngxs/store';
 import {
     default as AnsiUp
 } from 'ansi_up';
@@ -79,11 +78,8 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         private _cd: ChangeDetectorRef,
         private _store: Store,
         private _ngZone: NgZone,
-        private _workflowService: WorkflowService,
-        private _http: HttpClient
-    ) {
-        this.ansi_up.escape_for_html = !this.htmlViewSelected;
-    }
+        private _workflowService: WorkflowService
+    ) { }
 
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 

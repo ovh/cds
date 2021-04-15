@@ -136,7 +136,7 @@ func CheckAndExecuteTemplate(ctx context.Context, db *gorp.DbMap, store cache.St
 	// check that group exists
 	grp, err := group.LoadByName(ctx, tx, groupName)
 	if err != nil {
-		return allMsgs, nil, err
+		return allMsgs, nil, sdk.WrapError(err, "error with loading group named %q", groupName)
 	}
 
 	var groupPermissionValid bool
