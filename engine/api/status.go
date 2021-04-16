@@ -48,9 +48,16 @@ func (api *API) statusHandler() service.Handler {
 			status = http.StatusServiceUnavailable
 		}
 
+		// Always load services to ensure that database connection is ok.
 		srvs, err := services.LoadAll(ctx, api.mustDB(), services.LoadOptions.WithStatus)
 		if err != nil {
 			return err
+		}
+
+		// If there is a valid session and user is maintainer, allows to get status details.
+		currentConsumer := getAPIConsumer(ctx)
+		if currentConsumer == nil || !isMaintainer(ctx) {
+			return service.WriteJSON(w, nil, status)
 		}
 
 		mStatus := api.computeGlobalStatus(srvs)
