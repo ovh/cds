@@ -129,7 +129,7 @@ func (api *API) InitRouter() {
 	r.Handle("/broadcast/{id}/mark", Scope(sdk.AuthConsumerScopeProject), r.POST(api.postMarkAsReadBroadcastHandler))
 
 	// Overall health
-	r.Handle("/mon/status", ScopeNone(), r.GET(api.statusHandler, service.OverrideAuth(service.NoAuthMiddleware)))
+	r.Handle("/mon/status", ScopeNone(), r.GET(api.statusHandler, service.OverrideAuth(api.authOptionalMiddleware)))
 	r.Handle("/mon/version", ScopeNone(), r.GET(service.VersionHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 	r.Handle("/mon/db/migrate", ScopeNone(), r.GET(api.getMonDBStatusMigrateHandler, service.OverrideAuth(api.authAdminMiddleware)))
 	r.Handle("/mon/metrics", ScopeNone(), r.GET(service.GetPrometheustMetricsHandler(api), service.OverrideAuth(service.NoAuthMiddleware)))
