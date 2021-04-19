@@ -58,7 +58,26 @@ func (api *API) postWorkflowPreviewHandler() service.Handler {
 			return sdk.NewError(sdk.ErrWrongRequest, errw)
 		}
 
-		wf, err := workflow.Parse(ctx, *proj, ew)
+		// load the workflow from database if exists
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WrapError(err, "unable to start transaction")
+		}
+		defer tx.Rollback() // nolint
+
+		workflowExists, err := workflow.Exists(tx, proj.Key, ew.GetName())
+		if err != nil {
+			return sdk.WrapError(err, "Cannot check if workflow exists")
+		}
+		var existingWorkflow *sdk.Workflow
+		if workflowExists {
+			existingWorkflow, err = workflow.Load(ctx, tx, api.Cache, *proj, ew.GetName(), workflow.LoadOptions{WithIcon: true})
+			if err != nil {
+				return sdk.WrapError(err, "unable to load existing workflow")
+			}
+		}
+
+		wf, err := workflow.Parse(ctx, *proj, existingWorkflow, ew)
 		if err != nil {
 			return sdk.WrapError(err, "unable import workflow %s", ew.GetName())
 		}
