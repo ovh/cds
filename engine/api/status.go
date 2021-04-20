@@ -57,7 +57,8 @@ func (api *API) statusHandler() service.Handler {
 		// If there is a valid session and user is maintainer, allows to get status details.
 		currentConsumer := getAPIConsumer(ctx)
 		if currentConsumer == nil || !isMaintainer(ctx) {
-			return service.WriteJSON(w, nil, status)
+			mStatus := api.computeGlobalPublicStatus()
+			return service.WriteJSON(w, mStatus, status)
 		}
 
 		mStatus := api.computeGlobalStatus(srvs)
@@ -79,6 +80,19 @@ var (
 	tagService     tag.Key
 	tagsService    []tag.Key
 )
+
+// computeGlobalPublicStatus returns global public status
+func (api *API) computeGlobalPublicStatus() sdk.MonitoringStatus {
+	return sdk.MonitoringStatus{
+		Lines: []sdk.MonitoringStatusLine{
+			{
+				Status:    sdk.MonitoringStatusOK,
+				Component: "Global/Maintenance",
+				Value:     fmt.Sprintf("%v", api.Maintenance),
+			},
+		},
+	}
+}
 
 // computeGlobalStatus returns global status
 func (api *API) computeGlobalStatus(srvs []sdk.Service) sdk.MonitoringStatus {
