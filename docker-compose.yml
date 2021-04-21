@@ -105,6 +105,7 @@ services:
             elasticsearch.elasticsearch.indexMetrics=cds-index-metrics \
             elasticsearch.elasticsearch.url=http://elasticsearch:9200 \
             ui.url=http://${HOSTNAME}:8080 \
+            ui.enableServiceProxy=true \
             ui.api.http.url=http://cds-api:8081 \
             ui.hooksURL=http://cds-hooks:8083 \
             ui.cdnURL=http://cds-cdn:8089;

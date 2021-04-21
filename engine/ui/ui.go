@@ -240,8 +240,10 @@ func (s *Service) indexHTMLReplaceVar() error {
 		return sdk.WrapError(err, "cannot parse base href regex")
 	}
 	indexContent := regexBaseHref.ReplaceAllString(string(read), "<base href=\""+s.Cfg.BaseURL+"\">")
-	indexContent = strings.Replace(indexContent, "window.cds_sentry_url = '';", "window.cds_sentry_url = '"+s.Cfg.SentryURL+"';", -1)
 	indexContent = strings.Replace(indexContent, "window.cds_version = '';", "window.cds_version='"+sdk.VERSION+"';", -1)
+	if s.Cfg.SentryURL != "" {
+		indexContent = strings.Replace(indexContent, "window.cds_sentry_url = '';", "window.cds_sentry_url = '"+s.Cfg.SentryURL+"';", -1)
+	}
 	return ioutil.WriteFile(indexHTML, []byte(indexContent), 0)
 }
 
