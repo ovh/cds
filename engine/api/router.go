@@ -340,8 +340,11 @@ func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.Han
 			telemetry.Path, req.URL.Path,
 			telemetry.Method, req.Method)
 
-		// Retrieve the client ip address from the header (X-Forwarded-For by default)
-		clientIP := req.Header.Get(r.Config.HeaderXForwardedFor)
+		var clientIP string
+		if r.Config.HeaderXForwardedFor != "" {
+			// Retrieve the client ip address from the header (X-Forwarded-For by default)
+			clientIP = req.Header.Get(r.Config.HeaderXForwardedFor)
+		}
 		if clientIP == "" {
 			// If the header has not been found, fallback on the remote adress from the http request
 			clientIP = req.RemoteAddr
@@ -545,8 +548,11 @@ func MaintenanceAware() service.HandlerConfigParam {
 func (r *Router) NotFoundHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 
-	// Retrieve the client ip address from the header (X-Forwarded-For by default)
-	clientIP := req.Header.Get(r.Config.HeaderXForwardedFor)
+	var clientIP string
+	if r.Config.HeaderXForwardedFor != "" {
+		// Retrieve the client ip address from the header (X-Forwarded-For by default)
+		clientIP = req.Header.Get(r.Config.HeaderXForwardedFor)
+	}
 	if clientIP == "" {
 		// If the header has not been found, fallback on the remote adress from the http request
 		clientIP = req.RemoteAddr

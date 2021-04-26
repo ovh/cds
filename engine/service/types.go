@@ -27,7 +27,7 @@ type APIServiceConfiguration struct {
 type HTTPRouterConfiguration struct {
 	Addr                string `toml:"addr" default:"" commented:"true" comment:"Listen HTTP address without port, example: 127.0.0.1" json:"addr"`
 	Port                int    `toml:"port" default:"8081" json:"port"`
-	HeaderXForwardedFor string `toml:"headerXForwardedFor" default:"X-Forwarded-For" json:"header_w_forwarded_for"`
+	HeaderXForwardedFor string `toml:"headerXForwardedFor" commented:"true" comment:"Forward source addr from given header, let empty to use request addr." default:"X-Forwarded-For" json:"header_w_forwarded_for"`
 }
 
 // HatcheryCommonConfiguration is the base configuration for all hatcheries

@@ -75,7 +75,23 @@ func (s *Service) getReverseProxy(ctx context.Context, path, urlRemote string) h
 	origin, _ := url.Parse(urlRemote)
 	director := func(req *http.Request) {
 		reqPath := strings.TrimPrefix(req.URL.Path, path)
-		req.Header.Add("X-Forwarded-For", req.RemoteAddr)
+
+		var clientIP string
+		if s.Cfg.HTTP.HeaderXForwardedFor != "" {
+			// Retrieve the client ip address from the header (X-Forwarded-For by default)
+			clientIP = req.Header.Get(s.Cfg.HTTP.HeaderXForwardedFor)
+		}
+		if clientIP == "" {
+			// If the header has not been found, fallback on the remote adress from the http request
+			clientIP = req.RemoteAddr
+		}
+
+		headerForward := "X-Forwarded-For"
+		if s.Cfg.HTTP.HeaderXForwardedFor != "" {
+			headerForward = s.Cfg.HTTP.HeaderXForwardedFor
+		}
+
+		req.Header.Add(headerForward, clientIP)
 		req.Header.Add("X-Forwarded-Host", req.Host)
 		req.Header.Add("X-Origin-Host", origin.Host)
 		req.URL.Scheme = origin.Scheme
