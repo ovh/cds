@@ -52,9 +52,6 @@ func (a *WorkflowRunResultArtifact) IsValid() error {
 	if a.Name == "" {
 		return WrapError(ErrInvalidData, "missing artifact name")
 	}
-	if a.Size == 0 {
-		return WrapError(ErrInvalidData, "missing artifact size")
-	}
 	if a.MD5 == "" {
 		return WrapError(ErrInvalidData, "missing md5Sum")
 	}
@@ -78,9 +75,6 @@ type WorkflowRunResultCoverage struct {
 func (a *WorkflowRunResultCoverage) IsValid() error {
 	if a.Name == "" {
 		return WrapError(ErrInvalidData, "missing file name")
-	}
-	if a.Size == 0 {
-		return WrapError(ErrInvalidData, "missing file size")
 	}
 	if a.MD5 == "" {
 		return WrapError(ErrInvalidData, "missing md5Sum")
