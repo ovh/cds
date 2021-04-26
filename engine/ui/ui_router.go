@@ -75,6 +75,7 @@ func (s *Service) getReverseProxy(ctx context.Context, path, urlRemote string) h
 	origin, _ := url.Parse(urlRemote)
 	director := func(req *http.Request) {
 		reqPath := strings.TrimPrefix(req.URL.Path, path)
+		req.Header.Add("X-Forwarded-For", req.RemoteAddr)
 		req.Header.Add("X-Forwarded-Host", req.Host)
 		req.Header.Add("X-Origin-Host", origin.Host)
 		req.URL.Scheme = origin.Scheme
