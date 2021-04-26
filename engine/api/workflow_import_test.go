@@ -1081,7 +1081,7 @@ permissions:
 	assert.Equal(t, g2.Name, w.Groups[1].Group.Name)
 	assert.Equal(t, sdk.PermissionRead, w.Groups[1].Permission)
 
-	// Import again the workflow without permissions should reset to project permissions
+	// Import again the workflow without permissions should reset to previous workflow permissions
 	uri = api.Router.GetRoute("POST", api.postWorkflowImportHandler, map[string]string{
 		"permProjectKey": proj.Key,
 	})
@@ -1106,14 +1106,12 @@ workflow:
 	w, err = workflow.Load(context.TODO(), db, api.Cache, *proj, "test_1", workflow.LoadOptions{})
 	require.NoError(t, err)
 
-	require.Len(t, w.Groups, 3)
+	require.Len(t, w.Groups, 2)
 	sort.Slice(w.Groups, func(i, j int) bool {
 		return w.Groups[i].Group.Name < w.Groups[j].Group.Name
 	})
 	assert.Equal(t, proj.ProjectGroups[0].Group.Name, w.Groups[0].Group.Name)
 	assert.Equal(t, sdk.PermissionReadWriteExecute, w.Groups[0].Permission)
-	assert.Equal(t, g1.Name, w.Groups[1].Group.Name)
-	assert.Equal(t, sdk.PermissionReadExecute, w.Groups[1].Permission)
-	assert.Equal(t, g2.Name, w.Groups[2].Group.Name)
-	assert.Equal(t, sdk.PermissionReadExecute, w.Groups[2].Permission)
+	assert.Equal(t, g2.Name, w.Groups[1].Group.Name)
+	assert.Equal(t, sdk.PermissionRead, w.Groups[1].Permission)
 }

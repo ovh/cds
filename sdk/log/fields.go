@@ -28,6 +28,7 @@ const (
 	StatusNum          = log.Field("status_num")
 	Goroutine          = log.Field("goroutine")
 	RequestID          = log.Field("request_id")
+	IPAddress          = log.Field("ip_address")
 	Service            = log.Field("service")
 	Stacktrace         = log.Field("stack_trace")
 	Duration           = log.Field("duration_milliseconds_num")
@@ -46,6 +47,7 @@ func init() {
 		AuthSessionID,
 		AuthSessionIAT,
 		AuthSessionTokenID,
+		IPAddress,
 		Method,
 		Route,
 		RequestURI,

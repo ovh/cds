@@ -45,7 +45,7 @@
                 <div class="line" *ngFor="let line of step.lines; trackBy: trackLineElement; let j = index">
                     <div class="number">{{step.firstDisplayedLineNumber + j + 1}}</div>
                     <div class="value">
-                        <pre [innerHTML]="line.value | ansi: (this.mode !== displayModes.ANSI) | safeHtml: false"></pre>
+                        <pre [innerHTML]="line.value | ansi: (this.mode !== displayModes.ANSI) | safeHtml"></pre>
                     </div>
                     <div class="extra" *ngIf="line.extra">
                         <div *ngFor="let extra of line.extra">{{extra}}</div>
@@ -71,7 +71,7 @@
                         {{((step.firstDisplayedLineNumber + step.totalLinesCount) - step.endLines.length) + j + 1}}
                     </div>
                     <div class="value">
-                        <pre [innerHTML]="line.value | ansi: (this.mode !== displayModes.ANSI) | safeHtml: false"></pre>
+                        <pre [innerHTML]="line.value | ansi: (this.mode !== displayModes.ANSI) | safeHtml"></pre>
                     </div>
                     <div class="extra" *ngIf="line.extra">
                         <div *ngFor="let extra of line.extra">{{extra}}</div>
@@ -86,7 +86,7 @@
             *ngFor="let line of services[currentTabIndex-1].lines; trackBy: trackLineElement; let j = index">
             <div class="number">{{j + 1}}</div>
             <div class="value">
-                <pre [innerHTML]="line.value | ansi: (this.mode !== displayModes.ANSI) | safeHtml: false"></pre>
+                <pre [innerHTML]="line.value | ansi: (this.mode !== displayModes.ANSI) | safeHtml"></pre>
             </div>
         </div>
         <div class="line expand"
@@ -111,7 +111,7 @@
                 1}}
             </div>
             <div class="value">
-                <pre [innerHTML]="line.value | ansi: (this.mode !== displayModes.ANSI) | safeHtml: false"></pre>
+                <pre [innerHTML]="line.value | ansi: (this.mode !== displayModes.ANSI) | safeHtml"></pre>
             </div>
         </div>
     </div>

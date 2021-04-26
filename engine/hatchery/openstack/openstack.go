@@ -41,9 +41,6 @@ var _ hatchery.InterfaceWithModels = new(HatcheryOpenstack)
 func New() *HatcheryOpenstack {
 	s := new(HatcheryOpenstack)
 	s.GoRoutines = sdk.NewGoRoutines()
-	s.Router = &api.Router{
-		Mux: mux.NewRouter(),
-	}
 	return s
 }
 
@@ -54,7 +51,10 @@ func (h *HatcheryOpenstack) Init(config interface{}) (cdsclient.ServiceConfig, e
 	if !ok {
 		return cfg, sdk.WithStack(fmt.Errorf("invalid openstack hatchery configuration"))
 	}
-
+	h.Router = &api.Router{
+		Mux:    mux.NewRouter(),
+		Config: sConfig.HTTP,
+	}
 	cfg.Host = sConfig.API.HTTP.URL
 	cfg.Token = sConfig.API.Token
 	cfg.InsecureSkipVerifyTLS = sConfig.API.HTTP.Insecure

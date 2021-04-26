@@ -93,6 +93,7 @@ type ServiceConfiguration struct {
 }
 
 type CDNConfig struct {
-	TCPURL  string `json:"tcp_url"`
-	HTTPURL string `json:"http_url"`
+	TCPURL          string `json:"tcp_url"`
+	TCPURLEnableTLS bool   `json:"tcp_url_enable_tls"`
+	HTTPURL         string `json:"http_url"`
 }

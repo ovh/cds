@@ -230,7 +230,7 @@ func (c *client) Stream(ctx context.Context, httpClient HTTPClient, method strin
 		var requestError error
 		if rs, ok := body.(io.ReadSeeker); ok {
 			if _, err := rs.Seek(0, 0); err != nil {
-				return nil, nil, 0, newError(fmt.Errorf("request failed after %d retries: %v", i, err))
+				return nil, nil, 0, newError(fmt.Errorf("request failed after %d retries: %v. Original error: %v", i, err, savederror))
 			}
 			req, requestError = http.NewRequest(method, url, body)
 		} else {

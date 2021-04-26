@@ -2,7 +2,9 @@ package internal
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/base64"
+	"net"
 	"strings"
 	"time"
 
@@ -65,6 +67,21 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 			Period: 10 * time.Millisecond,
 			Policy: throttlePolicy,
 		},
+	}
+
+	if info.GelfServiceAddrEnableTLS {
+		tcpCDNUrl := info.GelfServiceAddr
+		// Check if the url has a scheme
+		// We have to remove if to retrieve the hostname
+		if i := strings.Index(tcpCDNUrl, "://"); i > -1 {
+			tcpCDNUrl = tcpCDNUrl[i+3:]
+		}
+		tcpCDNHostname, _, err := net.SplitHostPort(tcpCDNUrl)
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+
+		graylogCfg.TLSConfig = &tls.Config{ServerName: tcpCDNHostname}
 	}
 
 	l, h, err := cdslog.New(ctx, graylogCfg)

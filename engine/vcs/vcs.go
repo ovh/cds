@@ -24,9 +24,6 @@ import (
 func New() *Service {
 	s := new(Service)
 	s.GoRoutines = sdk.NewGoRoutines()
-	s.Router = &api.Router{
-		Mux: mux.NewRouter(),
-	}
 	return s
 }
 
@@ -36,7 +33,10 @@ func (s *Service) Init(config interface{}) (cdsclient.ServiceConfig, error) {
 	if !ok {
 		return cfg, sdk.WithStack(fmt.Errorf("invalid vcs configuration"))
 	}
-
+	s.Router = &api.Router{
+		Mux:    mux.NewRouter(),
+		Config: sConfig.HTTP,
+	}
 	cfg.Host = sConfig.API.HTTP.URL
 	cfg.Token = sConfig.API.Token
 	cfg.InsecureSkipVerifyTLS = sConfig.API.HTTP.Insecure

@@ -3,9 +3,12 @@ package hatchery
 import (
 	"context"
 	"crypto/rsa"
+	"crypto/tls"
 	"fmt"
+	"net"
 	"net/http"
 	"net/http/pprof"
+	"strings"
 	"sync"
 	"time"
 
@@ -104,7 +107,7 @@ func (c *Common) initRouter(ctx context.Context, h hatchery.Interface) {
 	r.Mux.HandleFunc("/debug/pprof/{action}", pprof.Index)
 	r.Mux.HandleFunc("/debug/pprof/", pprof.Index)
 
-	r.Mux.NotFoundHandler = http.HandlerFunc(api.NotFoundHandler)
+	r.Mux.NotFoundHandler = http.HandlerFunc(r.NotFoundHandler)
 }
 
 func (c *Common) GetPrivateKey() *rsa.PrivateKey {
@@ -137,6 +140,21 @@ func (c *Common) RefreshServiceLogger(ctx context.Context) error {
 	var graylogCfg = &hook.Config{
 		Addr:     c.CDNLogsURL,
 		Protocol: "tcp",
+	}
+
+	if cdnConfig.TCPURLEnableTLS {
+		tcpCDNUrl := c.CDNLogsURL
+		// Check if the url has a scheme
+		// We have to remove if to retrieve the hostname
+		if i := strings.Index(tcpCDNUrl, "://"); i > -1 {
+			tcpCDNUrl = tcpCDNUrl[i+3:]
+		}
+		tcpCDNHostname, _, err := net.SplitHostPort(tcpCDNUrl)
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+
+		graylogCfg.TLSConfig = &tls.Config{ServerName: tcpCDNHostname}
 	}
 
 	if c.ServiceLogger == nil {

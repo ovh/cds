@@ -64,10 +64,7 @@ type Configuration struct {
 		API string `toml:"api" default:"http://localhost:8081" json:"api"`
 		UI  string `toml:"ui" default:"http://localhost:8080" json:"ui"`
 	} `toml:"url" comment:"#####################\n CDS URLs Settings \n####################" json:"url"`
-	HTTP struct {
-		Addr string `toml:"addr" default:"" commented:"true" comment:"Listen HTTP address without port, example: 127.0.0.1" json:"addr"`
-		Port int    `toml:"port" default:"8081" json:"port"`
-	} `toml:"http" json:"http"`
+	HTTP    service.HTTPRouterConfiguration `toml:"http" json:"http"`
 	Secrets struct {
 		Key string `toml:"key" json:"-"`
 	} `toml:"secrets" json:"secrets"`
@@ -552,6 +549,7 @@ func (a *API) Serve(ctx context.Context) error {
 	a.Router = &Router{
 		Mux:        mux.NewRouter(),
 		Background: ctx,
+		Config:     a.Config.HTTP,
 	}
 	a.InitRouter()
 	if err := a.initWebsocket(event.DefaultPubSubKey); err != nil {
@@ -880,26 +878,29 @@ func (a *API) Serve(ctx context.Context) error {
 // This will returns a cookie with no expiration date that should be dropped by browser when closed.
 func (a *API) SetCookieSession(w http.ResponseWriter, name, value string) {
 	a.setCookie(w, &http.Cookie{
-		Name:  name,
-		Value: value,
+		Name:     name,
+		Value:    value,
+		HttpOnly: false,
 	})
 }
 
 // SetCookie on given response writter, automatically add domain and path based on api config.
-func (a *API) SetCookie(w http.ResponseWriter, name, value string, expires time.Time) {
+func (a *API) SetCookie(w http.ResponseWriter, name, value string, expires time.Time, httpOnly bool) {
 	a.setCookie(w, &http.Cookie{
-		Name:    name,
-		Value:   value,
-		Expires: expires,
+		Name:     name,
+		Value:    value,
+		Expires:  expires,
+		HttpOnly: httpOnly,
 	})
 }
 
 // UnsetCookie on given response writter, automatically add domain and path based on api config.
-func (a *API) UnsetCookie(w http.ResponseWriter, name string) {
+func (a *API) UnsetCookie(w http.ResponseWriter, name string, httpOnly bool) {
 	a.setCookie(w, &http.Cookie{
-		Name:   name,
-		Value:  "",
-		MaxAge: -1,
+		Name:     name,
+		Value:    "",
+		MaxAge:   -1,
+		HttpOnly: httpOnly,
 	})
 }
 
@@ -911,6 +912,12 @@ func (a *API) setCookie(w http.ResponseWriter, c *http.Cookie) {
 		if c.Path == "" {
 			c.Path = "/"
 		}
+	}
+	c.SameSite = http.SameSiteStrictMode
+	c.Secure = true
+	uiURL, _ := url.Parse(a.Config.URL.UI)
+	if uiURL != nil && uiURL.Hostname() != "" {
+		c.Domain = uiURL.Hostname()
 	}
 	http.SetCookie(w, c)
 }
