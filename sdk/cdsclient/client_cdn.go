@@ -47,7 +47,6 @@ func (c *client) CDNItemUpload(ctx context.Context, cdnAddr string, signature st
 			time.Sleep(1 * time.Second)
 			continue
 		}
-		//_, _, _, err = c.Request(ctx, http.MethodPost, fmt.Sprintf("%s/item/upload", cdnAddr), f, SetHeader("X-CDS-WORKER-SIGNATURE", signature))
 		savedError = nil
 		break
 	}
