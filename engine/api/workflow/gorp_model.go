@@ -75,25 +75,25 @@ type NodeRun struct {
 
 // JobRun is a gorp wrapper around sdk.WorkflowNodeJobRun
 type JobRun struct {
-	ProjectID                 int64          `db:"project_id"`
-	ID                        int64          `db:"id"`
-	WorkflowNodeRunID         int64          `db:"workflow_node_run_id"`
-	Job                       sql.NullString `db:"job"`
-	Parameters                sql.NullString `db:"variables"`
-	Status                    string         `db:"status"`
-	Retry                     int            `db:"retry"`
-	Queued                    time.Time      `db:"queued"`
-	Start                     time.Time      `db:"start"`
-	Done                      time.Time      `db:"done"`
-	Model                     string         `db:"model"`
-	ExecGroups                sql.NullString `db:"exec_groups"`
-	IntegrationPluginBinaries sql.NullString `db:"integration_plugin_binaries"`
-	BookedBy                  sdk.Service    `db:"-"`
-	ContainsService           bool           `db:"contains_service"`
-	ModelType                 sql.NullString `db:"model_type"`
-	Header                    sql.NullString `db:"header"`
-	HatcheryName              string         `db:"hatchery_name"`
-	WorkerName                string         `db:"worker_name"`
+	ProjectID          int64          `db:"project_id"`
+	ID                 int64          `db:"id"`
+	WorkflowNodeRunID  int64          `db:"workflow_node_run_id"`
+	Job                sql.NullString `db:"job"`
+	Parameters         sql.NullString `db:"variables"`
+	Status             string         `db:"status"`
+	Retry              int            `db:"retry"`
+	Queued             time.Time      `db:"queued"`
+	Start              time.Time      `db:"start"`
+	Done               time.Time      `db:"done"`
+	Model              string         `db:"model"`
+	ExecGroups         sql.NullString `db:"exec_groups"`
+	BookedBy           sdk.Service    `db:"-"`
+	ContainsService    bool           `db:"contains_service"`
+	ModelType          sql.NullString `db:"model_type"`
+	Header             sql.NullString `db:"header"`
+	HatcheryName       string         `db:"hatchery_name"`
+	WorkerName         string         `db:"worker_name"`
+	IntegrationPlugins sql.NullString `db:"integration_plugins"`
 }
 
 // ToJobRun transform the JobRun with data of the provided sdk.WorkflowNodeJobRun
@@ -123,9 +123,9 @@ func (j *JobRun) ToJobRun(jr *sdk.WorkflowNodeJobRun) (err error) {
 	if err != nil {
 		return sdk.WrapError(err, "column exec_groups")
 	}
-	j.IntegrationPluginBinaries, err = gorpmapping.JSONToNullString(jr.IntegrationPluginBinaries)
+	j.IntegrationPlugins, err = gorpmapping.JSONToNullString(jr.IntegrationPlugins)
 	if err != nil {
-		return sdk.WrapError(err, "column integration_plugin_binaries")
+		return sdk.WrapError(err, "column integration_plugins")
 	}
 	j.Header, err = gorpmapping.JSONToNullString(jr.Header)
 	if err != nil {
@@ -161,8 +161,8 @@ func (j JobRun) WorkflowNodeRunJob() (sdk.WorkflowNodeJobRun, error) {
 	if err := gorpmapping.JSONNullString(j.ExecGroups, &jr.ExecGroups); err != nil {
 		return jr, sdk.WrapError(err, "column exec_groups")
 	}
-	if err := gorpmapping.JSONNullString(j.IntegrationPluginBinaries, &jr.IntegrationPluginBinaries); err != nil {
-		return jr, sdk.WrapError(err, "integration_plugin_binaries")
+	if err := gorpmapping.JSONNullString(j.IntegrationPlugins, &jr.IntegrationPlugins); err != nil {
+		return jr, sdk.WrapError(err, "integration_plugins")
 	}
 	if err := gorpmapping.JSONNullString(j.Header, &jr.Header); err != nil {
 		return jr, sdk.WrapError(err, "header")

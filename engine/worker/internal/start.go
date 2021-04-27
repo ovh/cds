@@ -164,7 +164,7 @@ func processBookedWJob(ctx context.Context, w *CurrentWorker, wjobs chan<- sdk.W
 		return fmt.Errorf("processBookedWJob> the worker have no all requirements")
 	}
 
-	pluginsOK, errPlugins := checkPluginDeployment(ctx, w, *wjob)
+	pluginsOK, errPlugins := checkPlugins(ctx, w, *wjob)
 	if !pluginsOK {
 		var details = errPlugins.Error()
 

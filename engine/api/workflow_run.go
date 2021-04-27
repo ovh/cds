@@ -1187,6 +1187,13 @@ func saveWorkflowRunSecrets(ctx context.Context, db *gorp.DbMap, projID int64, w
 		}
 		ppIDs[n.Context.ProjectIntegrationID] = ""
 	}
+	for _, n := range wr.Workflow.Integrations {
+		if !sdk.AllowIntegrationInVariable(n.Model) {
+			continue
+		}
+		ppIDs[n.ID] = ""
+	}
+
 	for ppID := range ppIDs {
 		projectIntegration, err := integration.LoadProjectIntegrationByIDWithClearPassword(tx, ppID)
 		if err != nil {
@@ -1202,7 +1209,7 @@ func saveWorkflowRunSecrets(ctx context.Context, db *gorp.DbMap, projID int64, w
 			wrSecret := sdk.WorkflowRunSecret{
 				WorkflowRunID: wr.ID,
 				Context:       fmt.Sprintf(workflow.SecretProjIntegrationContext, ppID),
-				Name:          fmt.Sprintf("cds.integration.%s", k),
+				Name:          fmt.Sprintf("cds.integration.%s.%s", sdk.GetIntegrationVariablePrefix(projectIntegration.Model), k),
 				Type:          v.Type,
 				Value:         []byte(v.Value),
 			}

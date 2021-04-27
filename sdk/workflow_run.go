@@ -477,27 +477,27 @@ func (w WorkflowNodeRunArtifact) Equal(c WorkflowNodeRunArtifact) bool {
 
 //WorkflowNodeJobRun represents an job to be run
 type WorkflowNodeJobRun struct {
-	ProjectID                 int64              `json:"project_id"`
-	ID                        int64              `json:"id"`
-	WorkflowNodeRunID         int64              `json:"workflow_node_run_id,omitempty"`
-	Job                       ExecutedJob        `json:"job"`
-	Parameters                []Parameter        `json:"parameters,omitempty"`
-	Status                    string             `json:"status"`
-	Retry                     int                `json:"retry"`
-	Queued                    time.Time          `json:"queued,omitempty" cli:"queued"`
-	QueuedSeconds             int64              `json:"queued_seconds,omitempty"`
-	Start                     time.Time          `json:"start,omitempty"`
-	Done                      time.Time          `json:"done,omitempty"`
-	Model                     string             `json:"model,omitempty"`
-	ModelType                 string             `json:"model_type,omitempty"`
-	BookedBy                  Service            `json:"bookedby,omitempty"`
-	SpawnInfos                []SpawnInfo        `json:"spawninfos"`
-	ExecGroups                Groups             `json:"exec_groups"`
-	IntegrationPluginBinaries []GRPCPluginBinary `json:"integration_plugin_binaries,omitempty"`
-	Header                    WorkflowRunHeaders `json:"header,omitempty"`
-	ContainsService           bool               `json:"contains_service,omitempty"`
-	HatcheryName              string             `json:"hatchery_name,omitempty"`
-	WorkerName                string             `json:"worker_name,omitempty"`
+	ProjectID          int64              `json:"project_id"`
+	ID                 int64              `json:"id"`
+	WorkflowNodeRunID  int64              `json:"workflow_node_run_id,omitempty"`
+	Job                ExecutedJob        `json:"job"`
+	Parameters         []Parameter        `json:"parameters,omitempty"`
+	Status             string             `json:"status"`
+	Retry              int                `json:"retry"`
+	Queued             time.Time          `json:"queued,omitempty" cli:"queued"`
+	QueuedSeconds      int64              `json:"queued_seconds,omitempty"`
+	Start              time.Time          `json:"start,omitempty"`
+	Done               time.Time          `json:"done,omitempty"`
+	Model              string             `json:"model,omitempty"`
+	ModelType          string             `json:"model_type,omitempty"`
+	BookedBy           Service            `json:"bookedby,omitempty"`
+	SpawnInfos         []SpawnInfo        `json:"spawninfos"`
+	ExecGroups         Groups             `json:"exec_groups"`
+	Header             WorkflowRunHeaders `json:"header,omitempty"`
+	ContainsService    bool               `json:"contains_service,omitempty"`
+	HatcheryName       string             `json:"hatchery_name,omitempty"`
+	WorkerName         string             `json:"worker_name,omitempty"`
+	IntegrationPlugins []GRPCPlugin       `json:"integration_plugin,omitempty"`
 }
 
 // WorkflowNodeJobRunSummary is a light representation of WorkflowNodeJobRun for CDS event
@@ -557,6 +557,20 @@ func (wnjr *WorkflowNodeJobRun) Translate() {
 			wnjr.SpawnInfos[ki].UserMessage = m.String()
 		}
 	}
+}
+
+func (wnjr *WorkflowNodeJobRun) GetPuginBinary(pluginType string, os string, arch string) *GRPCPluginBinary {
+	for _, p := range wnjr.IntegrationPlugins {
+		if p.Type != pluginType {
+			continue
+		}
+		for _, b := range p.Binaries {
+			if b.OS == os && b.Arch == arch {
+				return &b
+			}
+		}
+	}
+	return nil
 }
 
 //WorkflowNodeRunHookEvent is an instanc of event received on a hook

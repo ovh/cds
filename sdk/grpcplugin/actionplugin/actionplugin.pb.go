@@ -4,11 +4,13 @@
 package actionplugin
 
 import (
+	context "context"
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
 	empty "github.com/golang/protobuf/ptypes/empty"
-	context "golang.org/x/net/context"
 	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
 	math "math"
 )
 
@@ -21,7 +23,7 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
 type ActionPluginManifest struct {
 	Name                 string   `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
@@ -227,7 +229,9 @@ func init() {
 	proto.RegisterType((*WorkerHTTPPortQuery)(nil), "actionplugin.WorkerHTTPPortQuery")
 }
 
-func init() { proto.RegisterFile("actionplugin.proto", fileDescriptor_8761e3c72e0ffc53) }
+func init() {
+	proto.RegisterFile("actionplugin.proto", fileDescriptor_8761e3c72e0ffc53)
+}
 
 var fileDescriptor_8761e3c72e0ffc53 = []byte{
 	// 425 bytes of a gzipped FileDescriptorProto
@@ -262,11 +266,11 @@ var fileDescriptor_8761e3c72e0ffc53 = []byte{
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ context.Context
-var _ grpc.ClientConn
+var _ grpc.ClientConnInterface
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion4
+const _ = grpc.SupportPackageIsVersion6
 
 // ActionPluginClient is the client API for ActionPlugin service.
 //
@@ -279,10 +283,10 @@ type ActionPluginClient interface {
 }
 
 type actionPluginClient struct {
-	cc *grpc.ClientConn
+	cc grpc.ClientConnInterface
 }
 
-func NewActionPluginClient(cc *grpc.ClientConn) ActionPluginClient {
+func NewActionPluginClient(cc grpc.ClientConnInterface) ActionPluginClient {
 	return &actionPluginClient{cc}
 }
 
@@ -328,6 +332,23 @@ type ActionPluginServer interface {
 	Run(context.Context, *ActionQuery) (*ActionResult, error)
 	WorkerHTTPPort(context.Context, *WorkerHTTPPortQuery) (*empty.Empty, error)
 	Stop(context.Context, *empty.Empty) (*empty.Empty, error)
+}
+
+// UnimplementedActionPluginServer can be embedded to have forward compatible implementations.
+type UnimplementedActionPluginServer struct {
+}
+
+func (*UnimplementedActionPluginServer) Manifest(ctx context.Context, req *empty.Empty) (*ActionPluginManifest, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Manifest not implemented")
+}
+func (*UnimplementedActionPluginServer) Run(ctx context.Context, req *ActionQuery) (*ActionResult, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Run not implemented")
+}
+func (*UnimplementedActionPluginServer) WorkerHTTPPort(ctx context.Context, req *WorkerHTTPPortQuery) (*empty.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method WorkerHTTPPort not implemented")
+}
+func (*UnimplementedActionPluginServer) Stop(ctx context.Context, req *empty.Empty) (*empty.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Stop not implemented")
 }
 
 func RegisterActionPluginServer(s *grpc.Server, srv ActionPluginServer) {

@@ -29,7 +29,7 @@ var requirementCheckFuncs = map[string]func(w *CurrentWorker, r sdk.Requirement)
 
 func checkRequirements(ctx context.Context, w *CurrentWorker, a *sdk.Action) (bool, []sdk.Requirement) {
 	requirementsOK := true
-	errRequirements := []sdk.Requirement{}
+	errRequirements := make([]sdk.Requirement, 0)
 
 	log.Debug(ctx, "requirements for %s >>> %+v\n", a.Name, a.Requirements)
 	for _, r := range a.Requirements {
@@ -89,7 +89,7 @@ func checkPluginRequirement(w *CurrentWorker, r sdk.Requirement) (bool, error) {
 }
 
 // checkHostnameRequirement returns true if current hostname is a requirement
-func checkHostnameRequirement(w *CurrentWorker, r sdk.Requirement) (bool, error) {
+func checkHostnameRequirement(_ *CurrentWorker, r sdk.Requirement) (bool, error) {
 	h, err := os.Hostname()
 	if err != nil {
 		return false, err
@@ -98,7 +98,7 @@ func checkHostnameRequirement(w *CurrentWorker, r sdk.Requirement) (bool, error)
 }
 
 // checkBinaryRequirement returns true is binary requirement is in worker's PATH
-func checkBinaryRequirement(w *CurrentWorker, r sdk.Requirement) (bool, error) {
+func checkBinaryRequirement(_ *CurrentWorker, r sdk.Requirement) (bool, error) {
 	if _, err := exec.LookPath(r.Value); err != nil {
 		// Return nil because the error contains 'Executable file not found', that's what we wanted
 		return false, nil
@@ -178,7 +178,7 @@ func checkMemoryRequirement(w *CurrentWorker, r sdk.Requirement) (bool, error) {
 	return totalMemory >= (neededMemory*1024*1024)*90/100, nil
 }
 
-func checkOSArchRequirement(w *CurrentWorker, r sdk.Requirement) (bool, error) {
+func checkOSArchRequirement(_ *CurrentWorker, r sdk.Requirement) (bool, error) {
 	osarch := strings.Split(r.Value, "/")
 	if len(osarch) != 2 {
 		return false, fmt.Errorf("invalid requirement %s", r.Value)
@@ -188,35 +188,45 @@ func checkOSArchRequirement(w *CurrentWorker, r sdk.Requirement) (bool, error) {
 }
 
 // region is checked by hatchery only
-func checkRegionRequirement(w *CurrentWorker, r sdk.Requirement) (bool, error) {
+func checkRegionRequirement(_ *CurrentWorker, _ sdk.Requirement) (bool, error) {
 	return true, nil
 }
 
-// checkPluginDeployment returns true if current job:
+// checkPlugins returns true if current job:
 //  - is not linked to a deployment integration
 //  - is linked to a deployement integration, plugin well downloaded (in this func) and
 //    requirements on the plugins are OK too
-func checkPluginDeployment(ctx context.Context, w *CurrentWorker, job sdk.WorkflowNodeJobRun) (bool, error) {
-	var currentOS = strings.ToLower(sdk.GOOS)
-	var currentARCH = strings.ToLower(sdk.GOARCH)
-	var binary *sdk.GRPCPluginBinary
+func checkPlugins(ctx context.Context, w *CurrentWorker, job sdk.WorkflowNodeJobRun) (bool, error) {
 
-	if len(job.IntegrationPluginBinaries) == 0 {
+	if len(job.IntegrationPlugins) == 0 {
 		// current job is not linked to a deployment integration (in pipeline context)
 		return true, nil
 	}
 
-	log.Debug(ctx, "Checking plugins...(%#v)", job.IntegrationPluginBinaries)
+	log.Debug(ctx, "Checking plugins...(%#v)", job.IntegrationPlugins)
+
+	for _, p := range job.IntegrationPlugins {
+		if err := checkPluginBinary(ctx, w, p); err != nil {
+			return false, err
+		}
+	}
+	return true, nil
+}
+
+func checkPluginBinary(ctx context.Context, w *CurrentWorker, p sdk.GRPCPlugin) error {
+	var binary *sdk.GRPCPluginBinary
+	var currentOS = strings.ToLower(sdk.GOOS)
+	var currentARCH = strings.ToLower(sdk.GOARCH)
 
 	// first check OS and Architecture
-	for _, b := range job.IntegrationPluginBinaries {
+	for _, b := range p.Binaries {
 		if b.OS == currentOS && b.Arch == currentARCH {
 			binary = &b
 			break
 		}
 	}
 	if binary == nil {
-		return false, fmt.Errorf("%s %s not supported by this plugin", currentOS, currentARCH)
+		return fmt.Errorf("%s %s not supported by this plugin", currentOS, currentARCH)
 	}
 
 	// then check plugin requirements
@@ -226,10 +236,9 @@ func checkPluginDeployment(ctx context.Context, w *CurrentWorker, job sdk.Workfl
 			log.Warn(ctx, "checkQueue> error on checkRequirement %s", err)
 		}
 		if !ok {
-			return false, fmt.Errorf("plugin requirement %s does not match", r.Name)
+			return fmt.Errorf("plugin requirement %s does not match", r.Name)
 		}
 	}
-
 	// then try to download the plugin
 	//integrationPluginBinary := path.Join(w.BaseDir().Name(), binary.Name)
 	if _, err := w.BaseDir().Stat(binary.Name); os.IsNotExist(err) {
@@ -237,12 +246,12 @@ func checkPluginDeployment(ctx context.Context, w *CurrentWorker, job sdk.Workfl
 		//If the file doesn't exist. Download it.
 		fi, err := w.BaseDir().OpenFile(binary.Name, os.O_CREATE|os.O_RDWR, os.FileMode(binary.Perm))
 		if err != nil {
-			return false, err
+			return err
 		}
 
 		if err := w.client.PluginGetBinary(binary.PluginName, currentOS, currentARCH, fi); err != nil {
 			_ = fi.Close()
-			return false, err
+			return err
 		}
 		//It's downloaded. Close the file
 		_ = fi.Close()
@@ -251,6 +260,5 @@ func checkPluginDeployment(ctx context.Context, w *CurrentWorker, job sdk.Workfl
 	}
 
 	log.Info(ctx, "plugin successfully downloaded: %#v", binary.Name)
-
-	return true, nil
+	return nil
 }

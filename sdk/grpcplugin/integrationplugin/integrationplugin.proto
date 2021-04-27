@@ -9,7 +9,9 @@ package integrationplugin;
 
 import "google/protobuf/empty.proto";
 
-// To generate the go files run: 
+// To generate the go files run:
+// libprotoc 3.10.1
+// go get -u github.com/golang/protobuf/protoc-gen-go@v1.3.5
 // protoc --go_out=plugins=grpc:. *.proto
 
 message IntegrationPluginManifest {
@@ -19,22 +21,18 @@ message IntegrationPluginManifest {
     string author = 4;
 }
 
-message DeployQuery {
+message RunQuery {
     map<string, string> options = 1;
 }
 
-message DeployResult {
+message RunResult {
     string status = 1;
     string details = 2;
-}
-
-message DeployStatusQuery {
-    string ID = 1;
+    map<string, string> outputs = 3;
 }
 
 service IntegrationPlugin {
     rpc Manifest (google.protobuf.Empty) returns (IntegrationPluginManifest) {}
-    rpc Deploy (DeployQuery) returns (DeployResult) {}
-    rpc DeployStatus (DeployStatusQuery) returns (DeployResult) {}
+    rpc Run (RunQuery) returns (RunResult) {}
     rpc Stop (google.protobuf.Empty) returns (google.protobuf.Empty) {}
 }

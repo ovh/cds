@@ -89,7 +89,7 @@ func (e *helloDeploymentPlugin) Manifest(ctx context.Context, _ *empty.Empty) (*
 // to your "deployment" system. All data will be interpolate
 // with the real values below, by calling interpolate.Do func.
 const deployData = `{
-	"version": "{{.cds.integration.version}}",
+	"version": "{{.cds.integration.deployment.version}}",
 	"metadata": {
 		"CDS_APPLICATION": "{{.cds.application}}",
 		"CDS_RUN": "{{.cds.run}}",
@@ -104,20 +104,23 @@ const deployData = `{
 	}
 }`
 
-func (e *helloDeploymentPlugin) Deploy(ctx context.Context, q *integrationplugin.DeployQuery) (*integrationplugin.DeployResult, error) {
+func (e *helloDeploymentPlugin) Run(ctx context.Context, q *integrationplugin.RunQuery) (*integrationplugin.RunResult, error) {
 	var application = q.GetOptions()["cds.application"]
-	var helloHost = q.GetOptions()["cds.integration.host"]
-	var deploymentToken = q.GetOptions()["cds.integration.deployment.token"]
-	var maxRetryStr = q.GetOptions()["cds.integration.retry.max"]
-	var delayRetryStr = q.GetOptions()["cds.integration.retry.delay"]
+	var helloHost = q.GetOptions()["cds.integration.deployment.host"]
+	var deploymentToken = q.GetOptions()["cds.integration.deployment.deployment.token"]
+	if deploymentToken == "" {
+		deploymentToken = q.GetOptions()["cds.integration.deployment.token"]
+	}
+	var maxRetryStr = q.GetOptions()["cds.integration.deployment.retry.max"]
+	var delayRetryStr = q.GetOptions()["cds.integration.deployment.retry.delay"]
 	maxRetry, err := strconv.Atoi(maxRetryStr)
 	if err != nil {
-		fmt.Printf("Error parsing cds.integration.retry.max: %v. Default value (10) will be used\n", err)
+		fmt.Printf("Error parsing cds.integration.deployment.retry.max: %v. Default value (10) will be used\n", err)
 		maxRetry = 10
 	}
 	delayRetry, err := strconv.Atoi(delayRetryStr)
 	if err != nil {
-		fmt.Printf("Error parsing cds.integration.retry.max: %v. Default value (5) will be used\n", err)
+		fmt.Printf("Error parsing cds.integration.deployment.retry.max: %v. Default value (5) will be used\n", err)
 		delayRetry = 5
 	}
 
@@ -166,13 +169,7 @@ func (e *helloDeploymentPlugin) Deploy(ctx context.Context, q *integrationplugin
 		return fail("deployment failed")
 	}
 
-	return &integrationplugin.DeployResult{
-		Status: sdk.StatusSuccess,
-	}, nil
-}
-
-func (e *helloDeploymentPlugin) DeployStatus(ctx context.Context, q *integrationplugin.DeployStatusQuery) (*integrationplugin.DeployResult, error) {
-	return &integrationplugin.DeployResult{
+	return &integrationplugin.RunResult{
 		Status: sdk.StatusSuccess,
 	}, nil
 }
@@ -185,10 +182,10 @@ func main() {
 	return
 }
 
-func fail(format string, args ...interface{}) (*integrationplugin.DeployResult, error) {
+func fail(format string, args ...interface{}) (*integrationplugin.RunResult, error) {
 	msg := fmt.Sprintf(format, args...)
 	fmt.Println(msg)
-	return &integrationplugin.DeployResult{
+	return &integrationplugin.RunResult{
 		Details: msg,
 		Status:  sdk.StatusFail,
 	}, nil

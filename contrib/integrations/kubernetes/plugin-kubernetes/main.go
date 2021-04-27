@@ -90,12 +90,15 @@ func getStartingConfig(token, timeout string) clientcmd.KubeconfigGetter {
 	}
 }
 
-func (k8sPlugin *kubernetesDeploymentPlugin) Deploy(ctx context.Context, q *integrationplugin.DeployQuery) (*integrationplugin.DeployResult, error) {
-	k8sAPIURL := q.GetOptions()["cds.integration.api_url"]
-	k8sToken := q.GetOptions()["cds.integration.token"]
-	k8sCaCertificate := q.GetOptions()["cds.integration.ca_certificate"]
-	deploymentFilepath := q.GetOptions()["cds.integration.deployment_files"]
-	helmChart := q.GetOptions()["cds.integration.helm_chart"]
+func (k8sPlugin *kubernetesDeploymentPlugin) Run(ctx context.Context, q *integrationplugin.RunQuery) (*integrationplugin.RunResult, error) {
+	k8sAPIURL := q.GetOptions()["cds.integration.deployment.api_url"]
+	k8sToken := q.GetOptions()["cds.integration.deployment.token"]
+	if k8sToken == "" {
+		k8sToken = q.GetOptions()["cds.integration.token"]
+	}
+	k8sCaCertificate := q.GetOptions()["cds.integration.deployment.ca_certificate"]
+	deploymentFilepath := q.GetOptions()["cds.integration.deployment.deployment_files"]
+	helmChart := q.GetOptions()["cds.integration.deployment.helm_chart"]
 
 	if k8sToken == "" {
 		return fail("Kubernetes token should not be empty")
@@ -150,14 +153,7 @@ current-context: default-context`, k8sToken, certb64, k8sAPIURL)
 		return fail("Must have deployment_files or helm_chart not empty")
 	}
 
-	return &integrationplugin.DeployResult{
-		Status: sdk.StatusSuccess,
-	}, nil
-}
-
-func (k8sPlugin *kubernetesDeploymentPlugin) DeployStatus(ctx context.Context, q *integrationplugin.DeployStatusQuery) (*integrationplugin.DeployResult, error) {
-	// I use the flag --wait to let kubectl wait until all deployments are done. Then it's not required
-	return &integrationplugin.DeployResult{
+	return &integrationplugin.RunResult{
 		Status: sdk.StatusSuccess,
 	}, nil
 }
@@ -169,22 +165,25 @@ func main() {
 	}
 }
 
-func fail(format string, args ...interface{}) (*integrationplugin.DeployResult, error) {
+func fail(format string, args ...interface{}) (*integrationplugin.RunResult, error) {
 	msg := fmt.Sprintf(format, args...)
 	fmt.Println(msg)
-	return &integrationplugin.DeployResult{
+	return &integrationplugin.RunResult{
 		Details: msg,
 		Status:  sdk.StatusFail,
 	}, nil
 }
 
-func executeK8s(q *integrationplugin.DeployQuery) error {
-	k8sAPIURL := q.GetOptions()["cds.integration.api_url"]
-	k8sToken := q.GetOptions()["cds.integration.token"]
-	k8sCaCertificate := q.GetOptions()["cds.integration.ca_certificate"]
-	namespace := q.GetOptions()["cds.integration.namespace"]
-	deploymentFilepath := q.GetOptions()["cds.integration.deployment_files"]
-	timeoutStr := q.GetOptions()["cds.integration.timeout"]
+func executeK8s(q *integrationplugin.RunQuery) error {
+	k8sAPIURL := q.GetOptions()["cds.integration.deployment.api_url"]
+	k8sToken := q.GetOptions()["cds.integration.deployment.token"]
+	if k8sToken == "" {
+		k8sToken = q.GetOptions()["cds.integration.token"]
+	}
+	k8sCaCertificate := q.GetOptions()["cds.integration.deployment.ca_certificate"]
+	namespace := q.GetOptions()["cds.integration.deployment.namespace"]
+	deploymentFilepath := q.GetOptions()["cds.integration.deployment.deployment_files"]
+	timeoutStr := q.GetOptions()["cds.integration.deployment.timeout"]
 	project := q.GetOptions()["cds.project"]
 	workflow := q.GetOptions()["cds.workflow"]
 	if namespace == "" {
@@ -282,10 +281,10 @@ func executeK8s(q *integrationplugin.DeployQuery) error {
 	return nil
 }
 
-func executeHelm(q *integrationplugin.DeployQuery) error {
+func executeHelm(q *integrationplugin.RunQuery) error {
 	project := q.GetOptions()["cds.project"]
 	workflow := q.GetOptions()["cds.workflow"]
-	helmVersion := q.GetOptions()["cds.integration.helm_version"]
+	helmVersion := q.GetOptions()["cds.integration.deployment.helm_version"]
 
 	if helmVersion == "" {
 		helmVersion = "2.12.2"
@@ -378,12 +377,12 @@ func executeHelm(q *integrationplugin.DeployQuery) error {
 	return fmt.Errorf("Unsupported helm version")
 }
 
-func executeHelmV2(binaryName, kubeCfg string, q *integrationplugin.DeployQuery) error {
-	releaseName := q.GetOptions()["cds.integration.release_name"]
-	namespace := q.GetOptions()["cds.integration.namespace"]
-	helmChart := q.GetOptions()["cds.integration.helm_chart"]
-	helmValues := q.GetOptions()["cds.integration.helm_values"]
-	timeoutStr := q.GetOptions()["cds.integration.timeout"]
+func executeHelmV2(binaryName, kubeCfg string, q *integrationplugin.RunQuery) error {
+	releaseName := q.GetOptions()["cds.integration.deployment.release_name"]
+	namespace := q.GetOptions()["cds.integration.deployment.namespace"]
+	helmChart := q.GetOptions()["cds.integration.deployment.helm_chart"]
+	helmValues := q.GetOptions()["cds.integration.deployment.helm_values"]
+	timeoutStr := q.GetOptions()["cds.integration.deployment.timeout"]
 	application := q.GetOptions()["cds.application"]
 
 	if namespace == "" {
@@ -465,12 +464,12 @@ func executeHelmV2(binaryName, kubeCfg string, q *integrationplugin.DeployQuery)
 	return nil
 }
 
-func executeHelmV3(binaryName, kubeCfg string, q *integrationplugin.DeployQuery) error {
-	releaseName := q.GetOptions()["cds.integration.release_name"]
-	namespace := q.GetOptions()["cds.integration.namespace"]
-	helmChart := q.GetOptions()["cds.integration.helm_chart"]
-	helmValues := q.GetOptions()["cds.integration.helm_values"]
-	timeoutStr := q.GetOptions()["cds.integration.timeout"]
+func executeHelmV3(binaryName, kubeCfg string, q *integrationplugin.RunQuery) error {
+	releaseName := q.GetOptions()["cds.integration.deployment.release_name"]
+	namespace := q.GetOptions()["cds.integration.deployment.namespace"]
+	helmChart := q.GetOptions()["cds.integration.deployment.helm_chart"]
+	helmValues := q.GetOptions()["cds.integration.deployment.helm_values"]
+	timeoutStr := q.GetOptions()["cds.integration.deployment.timeout"]
 	application := q.GetOptions()["cds.application"]
 
 	if namespace == "" {

@@ -1,7 +1,7 @@
 version: v1.0
 name: ITSCWRKFLW15-PIPELINE
 jobs:
-- job: New Job
+- job: NewJob
   steps:
   - deploy: '{{.cds.application}}'
   requirements:

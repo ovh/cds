@@ -1126,7 +1126,7 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 	require.NotNil(t, sdk.VariableFind(secrets, "cds.proj.projvar"))
 
 	// Proj Integration
-	require.NotNil(t, sdk.VariableFind(secrets, "cds.integration.mypassword"))
+	require.NotNil(t, sdk.VariableFind(secrets, "cds.integration.deployment.mypassword"))
 
 	// Application variable
 	require.Nil(t, sdk.VariableFind(secrets, "cds.app.app-clear"))
@@ -1134,8 +1134,8 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 	// Application key
 	require.NotNil(t, sdk.VariableFind(secrets, "cds.key.app-sshkey.priv"))
 	// Application integration
-	require.NotNil(t, sdk.VariableFind(secrets, "cds.integration.token"))
-	require.Nil(t, sdk.VariableFind(secrets, "cds.integration.notoken"))
+	require.NotNil(t, sdk.VariableFind(secrets, "cds.integration.deployment.token"))
+	require.Nil(t, sdk.VariableFind(secrets, "cds.integration.deployment.notoken"))
 
 	// Env variable
 	require.NotNil(t, sdk.VariableFind(secrets, "cds.env.env-password"))

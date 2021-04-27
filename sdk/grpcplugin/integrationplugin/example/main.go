@@ -26,16 +26,9 @@ func (e *ExamplePlugin) Manifest(ctx context.Context, _ *empty.Empty) (*integrat
 	}, nil
 }
 
-func (e *ExamplePlugin) Deploy(ctx context.Context, q *integrationplugin.DeployQuery) (*integrationplugin.DeployResult, error) {
+func (e *ExamplePlugin) Run(ctx context.Context, q *integrationplugin.RunQuery) (*integrationplugin.RunResult, error) {
 	fmt.Println("YOLO !!!!")
-	return &integrationplugin.DeployResult{
-		Details: "none",
-		Status:  "success",
-	}, nil
-}
-
-func (e *ExamplePlugin) DeployStatus(ctx context.Context, q *integrationplugin.DeployStatusQuery) (*integrationplugin.DeployResult, error) {
-	return &integrationplugin.DeployResult{
+	return &integrationplugin.RunResult{
 		Details: "none",
 		Status:  "success",
 	}, nil

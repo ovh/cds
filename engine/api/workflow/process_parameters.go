@@ -75,21 +75,27 @@ func getBuildParameterFromNodeContext(proj sdk.Project, w sdk.Workflow, runConte
 		}
 	}
 
-	// COMPUTE  INTEGRATION VARIABLE
-	if runContext.ProjectIntegration.ID != 0 {
-		vars["cds.integration"] = runContext.ProjectIntegration.Name
-		tmp := sdk.ParametersFromIntegration(runContext.ProjectIntegration.Config)
+	// COMPUTE INTEGRATION VARIABLE FROM NODE CONTEXT
+	for _, integ := range runContext.ProjectIntegrations {
+		if !sdk.AllowIntegrationInVariable(integ.Model) {
+			continue
+		}
+		prefix := sdk.GetIntegrationVariablePrefix(integ.Model)
+		vars["cds.integration."+prefix] = integ.Name
+		tmp := sdk.ParametersFromIntegration(prefix, integ.Config)
 		for k, v := range tmp {
 			vars[k] = v
 		}
 
-		// COMPUTE DEPLOYMENT STRATEGIES VARIABLE
-		if runContext.Application.ID != 0 {
-			for pfName, pfConfig := range runContext.Application.DeploymentStrategies {
-				if pfName == runContext.ProjectIntegration.Name {
-					tmp := sdk.ParametersFromIntegration(pfConfig)
-					for k, v := range tmp {
-						vars[k] = v
+		if integ.Model.Deployment {
+			// COMPUTE DEPLOYMENT STRATEGIES VARIABLE
+			if runContext.Application.ID != 0 {
+				for pfName, pfConfig := range runContext.Application.DeploymentStrategies {
+					if pfName == integ.Name {
+						tmp := sdk.ParametersFromIntegration(prefix, pfConfig)
+						for k, v := range tmp {
+							vars[k] = v
+						}
 					}
 				}
 			}
@@ -151,7 +157,7 @@ func getBuildParameterFromNodeContext(proj sdk.Project, w sdk.Workflow, runConte
 		vars["parent.outgoinghook"] = hookEvent.WorkflowNodeHookUUID
 	}
 
-	params := []sdk.Parameter{}
+	params := make([]sdk.Parameter, 0)
 	for k, v := range vars {
 		sdk.AddParameter(&params, k, sdk.StringParameter, v)
 	}
@@ -166,7 +172,7 @@ func getParentParameters(w *sdk.WorkflowRun, nodeRuns []*sdk.WorkflowNodeRun) ([
 
 		node := w.Workflow.WorkflowData.NodeByID(parentNodeRun.WorkflowNodeID)
 		if node == nil {
-			return nil, sdk.WithStack(fmt.Errorf("Unable to find node %d in workflow", parentNodeRun.WorkflowNodeID))
+			return nil, sdk.WithStack(fmt.Errorf("unable to find node %d in workflow", parentNodeRun.WorkflowNodeID))
 		}
 		nodeName = node.Name
 
