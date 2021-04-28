@@ -712,7 +712,6 @@ func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 		}
 	}
 
-	log.Error(ctx, "5>>>>%d", len(wf.Integrations))
 	if err := InsertWorkflowData(db, wf); err != nil {
 		return sdk.WrapError(err, "Update> Unable to insert workflow data")
 	}
@@ -725,7 +724,6 @@ func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 		}
 	}
 
-	log.Error(ctx, "6>>>>%d<<<", len(wf.Integrations))
 	wf.LastModified = time.Now()
 	dbw := Workflow{Workflow: *wf}
 	if _, err := db.UpdateColumns(func(c *gorp.ColumnMap) bool { return c.ColumnName != "project_key" }, &dbw); err != nil {
