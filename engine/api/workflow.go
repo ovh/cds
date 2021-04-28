@@ -770,7 +770,17 @@ func (api *API) deleteWorkflowEventsIntegrationHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load Workflow %s", key)
 		}
 
-		if err := workflow.RemoveIntegrationFromWorkflow(db, wf.ID, prjIntegrationID); err != nil {
+		var integ *sdk.WorkflowProjectIntegration
+		for i := range wf.Integrations {
+			if wf.Integrations[i].ProjectIntegrationID == prjIntegrationID {
+				integ = &wf.Integrations[i]
+			}
+		}
+		if integ == nil {
+			return sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find integration %d", prjIntegrationID)
+		}
+
+		if err := workflow.RemoveIntegrationFromWorkflow(db, *integ); err != nil {
 			return sdk.WrapError(err, "cannot remove integration id %d from workflow %s (id: %d)", prjIntegrationID, wf.Name, wf.ID)
 		}
 

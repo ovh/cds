@@ -489,3 +489,25 @@ type WorkflowProjectIntegration struct {
 	ProjectIntegration   ProjectIntegration `json:"project_integration" db:"-"`
 	Config               IntegrationConfig  `json:"config" db:"config"`
 }
+
+func (wpi *WorkflowProjectIntegration) MergeWithModel(model IntegrationModel) {
+	if model.AdditionalDefaultConfig != nil {
+		if wpi.Config == nil {
+			wpi.Config = model.AdditionalDefaultConfig.Clone()
+		} else {
+			// Merge params
+			for k, v := range model.AdditionalDefaultConfig {
+				if _, has := wpi.Config[k]; !has {
+					wpi.Config[k] = v
+				}
+			}
+			// remove old params
+			for k := range wpi.Config {
+				if _, has := model.AdditionalDefaultConfig[k]; !has {
+					delete(wpi.Config, k)
+				}
+			}
+		}
+
+	}
+}

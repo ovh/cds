@@ -30,12 +30,9 @@ func LoadWorkflowIntegrationsByWorkflowID(db gorp.SqlExecutor, id int64) ([]sdk.
 }
 
 // RemoveIntegrationFromWorkflow remove a project integration on a workflow
-func RemoveIntegrationFromWorkflow(db gorp.SqlExecutor, workflowID int64, projectIntegrationID int64) error {
-	query := "DELETE FROM workflow_project_integration WHERE workflow_id = $1 AND project_integration_id = $2"
-	if _, err := db.Exec(query, workflowID, projectIntegrationID); err != nil {
-		return sdk.WithStack(err)
-	}
-	return nil
+func RemoveIntegrationFromWorkflow(db gorp.SqlExecutor, workflowInteg sdk.WorkflowProjectIntegration) error {
+	dbInteg := dbWorkflowProjectIntegration(workflowInteg)
+	return gorpmapping.Delete(db, &dbInteg)
 }
 
 // DeleteIntegrationsFromWorkflow remove a project integration on a workflow

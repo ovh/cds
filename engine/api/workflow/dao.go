@@ -31,8 +31,8 @@ type PushSecrets struct {
 	EnvironmentdSecrets map[int64][]sdk.Variable
 }
 
-// LoadAllByProjectIDs returns all workflow for given project ids.
-func LoadAllNamesByProjectIDs(ctx context.Context, db gorp.SqlExecutor, projectIDs []int64) ([]sdk.WorkflowName, error) {
+// LoadAllNamesByProjectIDs returns all workflow for given project ids.
+func LoadAllNamesByProjectIDs(_ context.Context, db gorp.SqlExecutor, projectIDs []int64) ([]sdk.WorkflowName, error) {
 	query := `
     SELECT workflow.*, project.projectkey
 	FROM workflow
@@ -132,7 +132,7 @@ func UpdateMetadata(db gorp.SqlExecutor, workflowID int64, metadata sdk.Metadata
 	return nil
 }
 
-// updateFromRepository update the from_repository of a workflow
+// UpdateFromRepository update the from_repository of a workflow
 func UpdateFromRepository(db gorp.SqlExecutor, workflowID int64, fromRepository string) error {
 	if _, err := db.Exec("UPDATE workflow SET from_repository = $1, last_modified = current_timestamp WHERE id = $2", fromRepository, workflowID); err != nil {
 		return sdk.WithStack(err)
@@ -172,7 +172,7 @@ func (w *Workflow) PostGet(db gorp.SqlExecutor) error {
 }
 
 // PreUpdate is a db hook
-func (w *Workflow) PreUpdate(db gorp.SqlExecutor) error {
+func (w *Workflow) PreUpdate(_ gorp.SqlExecutor) error {
 	if w.FromRepository != "" && strings.HasPrefix(w.FromRepository, "http") {
 		fromRepoURL, err := url.Parse(w.FromRepository)
 		if err != nil {
@@ -190,30 +190,6 @@ func (w *Workflow) PostUpdate(db gorp.SqlExecutor) error {
 		integ := &w.Integrations[i]
 		if integ.ID != 0 {
 			continue
-		}
-		integ.WorkflowID = w.ID
-		if integ.ProjectIntegrationID == 0 {
-			integ.ProjectIntegrationID = integ.ProjectIntegration.ID
-		}
-
-		if integ.ProjectIntegration.Model.AdditionalDefaultConfig != nil {
-			if integ.Config == nil {
-				integ.Config = integ.ProjectIntegration.Model.AdditionalDefaultConfig.Clone()
-			} else {
-				// Merge params
-				for k, v := range integ.ProjectIntegration.Model.AdditionalDefaultConfig {
-					if _, has := integ.Config[k]; !has {
-						integ.Config[k] = v
-					}
-				}
-				// remove old params
-				for k := range integ.Config {
-					if _, has := integ.ProjectIntegration.Model.AdditionalDefaultConfig[k]; !has {
-						delete(integ.Config, k)
-					}
-				}
-			}
-
 		}
 		if err := AddWorkflowIntegration(db, integ); err != nil {
 			return sdk.WrapError(err, "cannot add project event integration (%d) on workflow (%d)", integ.ProjectIntegration.ID, w.ID)
@@ -268,7 +244,7 @@ func LoadAllNames(db gorp.SqlExecutor, projID int64) (sdk.IDNames, error) {
 }
 
 // Load loads a workflow for a given user (ie. checking permissions)
-func Load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, name string, opts LoadOptions) (*sdk.Workflow, error) {
+func Load(ctx context.Context, db gorp.SqlExecutor, _ cache.Store, proj sdk.Project, name string, opts LoadOptions) (*sdk.Workflow, error) {
 	ctx, end := telemetry.Span(ctx, "workflow.Load")
 	defer end()
 
@@ -293,7 +269,7 @@ func Load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.
 // LoadAndLockByID loads a workflow
 
 // LoadByID loads a workflow
-func LoadByID(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, id int64, opts LoadOptions) (*sdk.Workflow, error) {
+func LoadByID(ctx context.Context, db gorp.SqlExecutor, _ cache.Store, proj sdk.Project, id int64, opts LoadOptions) (*sdk.Workflow, error) {
 	dao := opts.GetWorkflowDAO()
 	dao.Filters.WorkflowIDs = []int64{id}
 
@@ -461,7 +437,7 @@ func RenameNode(ctx context.Context, db gorp.SqlExecutor, w *sdk.Workflow) error
 	maxNumberByHookModel := map[int64]int{}
 	var maxForkNumber int
 
-	nodesToNamed := []*sdk.Node{}
+	nodesToNamed := make([]*sdk.Node, 0)
 	// Search max numbers by nodes type
 	for i := range nodes {
 		if nodes[i].Name == "" {
@@ -679,7 +655,7 @@ func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 	// Delete all nodes,joins, integration ID
 	wf.ResetIDs()
 
-	filteredPurgeTags := []string{}
+	filteredPurgeTags := make([]string, 0)
 	for _, t := range wf.PurgeTags {
 		if t != "" {
 			filteredPurgeTags = append(filteredPurgeTags, t)
@@ -826,7 +802,7 @@ func CompleteWorkflow(ctx context.Context, db gorp.SqlExecutor, w *sdk.Workflow,
 }
 
 // CheckValidity checks workflow validity
-func CheckValidity(ctx context.Context, db gorp.SqlExecutor, w *sdk.Workflow) error {
+func CheckValidity(_ context.Context, _ gorp.SqlExecutor, w *sdk.Workflow) error {
 	//Check project is not empty
 	if w.ProjectKey == "" {
 		return sdk.NewErrorFrom(sdk.ErrWorkflowInvalid, "invalid project key")
@@ -1005,24 +981,25 @@ func checkProjectIntegration(proj sdk.Project, w *sdk.Workflow, n *sdk.Node) err
 	return nil
 }
 
-// checkIntegration checks event integration data
+// checkIntegration checks integration data
 func checkIntegration(proj sdk.Project, w *sdk.Workflow) error {
 	for i := range w.Integrations {
-		eventIntegration := w.Integrations[i]
+		workflowIntegration := &w.Integrations[i]
 		found := false
 		for _, projInt := range proj.Integrations {
-			if eventIntegration.ProjectIntegration.Name == projInt.Name {
-				eventIntegration.ProjectIntegrationID = projInt.ID
-				w.Integrations[i] = eventIntegration
+			if workflowIntegration.ProjectIntegration.Name == projInt.Name {
+				workflowIntegration.ProjectIntegrationID = projInt.ID
+				workflowIntegration.WorkflowID = w.ID
+				workflowIntegration.MergeWithModel(projInt.Model)
+				w.Integrations[i] = *workflowIntegration
 				found = true
 				break
 			}
 		}
 		if !found {
-			return sdk.WithData(sdk.ErrIntegrationtNotFound, eventIntegration.ProjectIntegration.Name)
+			return sdk.WithData(sdk.ErrIntegrationtNotFound, workflowIntegration.ProjectIntegration.Name)
 		}
 	}
-
 	return nil
 }
 
