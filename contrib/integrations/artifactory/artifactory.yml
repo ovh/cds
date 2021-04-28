@@ -8,9 +8,9 @@ default_config:
     type: password
   artifactory.cds_repository:
     type: string
-  artifactory.repo.prefix.snapshot:
+  artifactory.promotion.low.maturity:
     type: string
-  artifactory.repo.prefix.release:
+  artifactory.promotion.high.maturity:
     type: string
 additional_default_config:
   build.info.path:
