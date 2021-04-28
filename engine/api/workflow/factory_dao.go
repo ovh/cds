@@ -502,7 +502,7 @@ func (dao WorkflowDAO) withIntegrations(db gorp.SqlExecutor, ws *[]Workflow) err
 	for x := range *ws {
 		w := &(*ws)[x]
 		var err error
-		w.Integrations, err = integration.LoadWorkflowIntegrationsByWorkflowID(db, w.ID)
+		w.Integrations, err = LoadWorkflowIntegrationsByWorkflowID(db, w.ID)
 		if err != nil {
 			return err
 		}

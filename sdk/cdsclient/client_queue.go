@@ -233,9 +233,9 @@ func (c *client) QueueWorkflowRunResultsAdd(ctx context.Context, jobID int64, ad
 	return nil
 }
 
-func (c *client) QueueWorkflowRunResultCheck(ctx context.Context, jobID int64, apiRef sdk.CDNRunResultAPIRef) error {
+func (c *client) QueueWorkflowRunResultCheck(ctx context.Context, jobID int64, runResultCheck sdk.WorkflowRunResultCheck) error {
 	uri := fmt.Sprintf("/queue/workflows/%d/run/results/check", jobID)
-	if _, err := c.PostJSON(ctx, uri, apiRef, nil); err != nil {
+	if _, err := c.PostJSON(ctx, uri, runResultCheck, nil); err != nil {
 		return err
 	}
 	return nil

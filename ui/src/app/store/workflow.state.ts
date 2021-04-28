@@ -632,14 +632,14 @@ export class WorkflowState {
     }
 
     //  ------- Event integration --------- //
-    @Action(actionWorkflow.UpdateEventIntegrationsWorkflow)
-    addEventIntegration(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.UpdateEventIntegrationsWorkflow) {
+    @Action(actionWorkflow.UpdateIntegrationsWorkflow)
+    addEventIntegration(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.UpdateIntegrationsWorkflow) {
         const state = ctx.getState();
         // As code Update Cache
         if (state.workflow && state.editMode) {
             const editWorkflow: Workflow = {
                 ...state.editWorkflow,
-                event_integrations: action.payload.eventIntegrations
+                integrations: action.payload.integrations
             };
             ctx.setState({
                 ...state,
@@ -651,7 +651,7 @@ export class WorkflowState {
 
         const workflow: Workflow = {
             ...state.workflow,
-            event_integrations: action.payload.eventIntegrations
+            integrations: action.payload.integrations
         };
 
         return ctx.dispatch(new actionWorkflow.UpdateWorkflow({
@@ -661,14 +661,15 @@ export class WorkflowState {
         }));
     }
 
-    @Action(actionWorkflow.DeleteEventIntegrationWorkflow)
-    deleteEventIntegration(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.DeleteEventIntegrationWorkflow) {
+    @Action(actionWorkflow.DeleteIntegrationWorkflow)
+    deleteEventIntegration(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.DeleteIntegrationWorkflow) {
         const state = ctx.getState();
         // As code Update Cache
         if (state.workflow && state.editMode) {
             const editWorkflow: Workflow = {
                 ...state.editWorkflow,
-                event_integrations: state.editWorkflow.event_integrations.filter((integ) => integ.id !== action.payload.integrationId)
+                integrations: state.editWorkflow.integrations
+                    .filter((integ) => integ.project_integration.id !== action.payload.projectIntegrationID)
             };
             ctx.setState({
                 ...state,
@@ -681,11 +682,12 @@ export class WorkflowState {
 
         return this._http.delete<null>(
             `/project/${action.payload.projectKey}/workflows/` +
-            `${action.payload.workflowName}/eventsintegration/${action.payload.integrationId}`
+            `${action.payload.workflowName}/integration/${action.payload.projectIntegrationID}`
         ).pipe(tap(() => {
             const workflow: Workflow = {
                 ...state.workflow,
-                event_integrations: state.workflow.event_integrations.filter((integ) => integ.id !== action.payload.integrationId)
+                integrations: state.workflow.integrations
+                    .filter((integ) => integ.project_integration.id !== action.payload.projectIntegrationID)
             };
 
             return ctx.dispatch(new actionWorkflow.UpdateWorkflow({

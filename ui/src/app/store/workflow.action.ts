@@ -1,7 +1,14 @@
 import { GroupPermission } from 'app/model/group.model';
 import { ProjectIntegration } from 'app/model/integration.model';
 import { RetentionDryRunEvent } from 'app/model/purge.model';
-import { WNode, WNodeHook, WNodeTrigger, Workflow, WorkflowNotification } from 'app/model/workflow.model';
+import {
+    WNode,
+    WNodeHook,
+    WNodeTrigger,
+    Workflow,
+    WorkflowNotification,
+    WorkflowProjectIntegration
+} from 'app/model/workflow.model';
 import { WorkflowNodeRun, WorkflowRun, WorkflowRunSummary } from 'app/model/workflow.run.model';
 
 // ---------  MODAL  -----
@@ -198,13 +205,13 @@ export class DeleteNotificationWorkflow {
 }
 
 //  ------- Event Integrations --------- //
-export class UpdateEventIntegrationsWorkflow {
-    static readonly type = '[Workflow] Update Event Integration in Workflow';
-    constructor(public payload: { projectKey: string, workflowName: string, eventIntegrations: ProjectIntegration[] }) { }
+export class UpdateIntegrationsWorkflow {
+    static readonly type = '[Workflow] Update Integration in Workflow';
+    constructor(public payload: { projectKey: string, workflowName: string, integrations: WorkflowProjectIntegration[] }) { }
 }
-export class DeleteEventIntegrationWorkflow {
-    static readonly type = '[Workflow] Delete Event Integration in Workflow';
-    constructor(public payload: { projectKey: string, workflowName: string, integrationId: number }) { }
+export class DeleteIntegrationWorkflow {
+    static readonly type = '[Workflow] Delete Integration in Workflow';
+    constructor(public payload: { projectKey: string, workflowName: string, projectIntegrationID: number }) { }
 }
 
 //  ------- Misc --------- //

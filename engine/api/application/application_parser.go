@@ -190,8 +190,8 @@ func ParseAndImport(ctx context.Context, db gorpmapper.SqlExecutorWithTx, cache 
 			msgList = append(msgList, sdk.NewMessage(sdk.MsgWorkflowErrorBadIntegrationName, pfName))
 			return app, nil, msgList, sdk.WrapError(sdk.NewErrorFrom(sdk.ErrWrongRequest, "deployment platform not found"), "deployment platform %s not found", pfName)
 		}
-		if projIt.Model.DeploymentDefaultConfig != nil {
-			deploymentStrategies[pfName] = projIt.Model.DeploymentDefaultConfig.Clone()
+		if projIt.Model.AdditionalDefaultConfig != nil {
+			deploymentStrategies[pfName] = projIt.Model.AdditionalDefaultConfig.Clone()
 		} else {
 			deploymentStrategies[pfName] = make(map[string]sdk.IntegrationConfigValue)
 		}

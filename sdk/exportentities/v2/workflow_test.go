@@ -976,6 +976,25 @@ workflow:
 `,
 		},
 		{
+			name: "Workflow with multiple integration",
+			yaml: `name: workflow-multiple-integration
+version: v2.0
+workflow:
+  test:
+    pipeline: test
+notifications:
+- type: event
+  integration: my-integration
+integrations:
+  artifactory:
+    type: artifact_manager
+    config:
+      build.info:
+        type: string
+        value: monbuildinfo
+`,
+		},
+		{
 			name: "Workflow with mutex pipeline child",
 			yaml: `name: mymutex
 version: v2.0

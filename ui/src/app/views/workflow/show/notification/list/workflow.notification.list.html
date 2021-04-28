@@ -81,15 +81,15 @@
                 <div class="ui row">
                     <div class="ui sixteen wide column">
                         <div class="ui middle aligned celled list"
-                            *ngIf="workflow.event_integrations && workflow.event_integrations.length > 0">
-                            <div class="item" *ngFor="let eventIntegration of workflow.event_integrations">
+                            *ngIf="workflow.integrations && workflow.integrations.length > 0">
+                            <div class="item" *ngFor="let eventIntegration of workflow.integrations | callback: filterEvent">
                                 <div class="right floated content">
                                     <app-delete-button type="icon" [loading]="loading"
-                                        (event)="deleteEvent(eventIntegration)">
+                                                       (event)="deleteEvent(eventIntegration.project_integration_id)">
                                     </app-delete-button>
                                 </div>
                                 <div class="middle aligned content intname">
-                                    {{eventIntegration.name}}
+                                    {{eventIntegration.project_integration.name}}
                                 </div>
                             </div>
                         </div>

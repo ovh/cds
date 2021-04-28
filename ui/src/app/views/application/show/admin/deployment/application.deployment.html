@@ -11,24 +11,24 @@
         <div class="six wide field">
             <ng-container *ngIf="selectedIntegration?.model">
                 <label>{{ 'integration_configuration' | translate }}</label>
-                <div class="inline fields" *ngFor="let k of selectedIntegration.model.deployment_default_config | keys">
+                <div class="inline fields" *ngFor="let k of selectedIntegration.model.additional_default_config | keys">
                     <div class="six wide field">
                         <label>
                             {{k}}
-                            <span *ngIf="selectedIntegration.model.deployment_default_config[k].description" suiPopup
-                                [popupText]="selectedIntegration.model.deployment_default_config[k].description"
+                            <span *ngIf="selectedIntegration.model.additional_default_config[k].description" suiPopup
+                                [popupText]="selectedIntegration.model.additional_default_config[k].description"
                                 popupPlacement="right center">
                                 <i class="info circle icon"></i>
                             </span>
                         </label>
                     </div>
                     <div class="ten wide field">
-                        <input type="text" [(ngModel)]="selectedIntegration.model.deployment_default_config[k].value"
-                            *ngIf="selectedIntegration.model.deployment_default_config[k].type === 'string'">
-                        <input type="password" [(ngModel)]="selectedIntegration.model.deployment_default_config[k].value"
-                            *ngIf="selectedIntegration.model.deployment_default_config[k].type === 'password'">
-                        <textarea class="ui textarea" rows="3" [(ngModel)]="selectedIntegration.model.deployment_default_config[k].value"
-                            *ngIf="selectedIntegration.model.deployment_default_config[k].type === 'text'"></textarea>
+                        <input type="text" [(ngModel)]="selectedIntegration.model.additional_default_config[k].value"
+                            *ngIf="selectedIntegration.model.additional_default_config[k].type === 'string'">
+                        <input type="password" [(ngModel)]="selectedIntegration.model.additional_default_config[k].value"
+                            *ngIf="selectedIntegration.model.additional_default_config[k].type === 'password'">
+                        <textarea class="ui textarea" rows="3" [(ngModel)]="selectedIntegration.model.additional_default_config[k].value"
+                            *ngIf="selectedIntegration.model.additional_default_config[k].type === 'text'"></textarea>
                     </div>
                 </div>
             </ng-container>

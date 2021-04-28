@@ -36,6 +36,8 @@ type Coverage sdk.WorkflowNodeRunCoverage
 
 type dbNodeRunVulenrabilitiesReport sdk.WorkflowNodeRunVulnerabilityReport
 
+type dbWorkflowProjectIntegration sdk.WorkflowProjectIntegration
+
 // NodeRun is a gorp wrapper around sdk.WorkflowNodeRun
 type NodeRun struct {
 	WorkflowID             sql.NullInt64  `db:"workflow_id"`
@@ -254,4 +256,5 @@ func init() {
 	gorpmapping.Register(gorpmapping.New(dbAsCodeEvents{}, "as_code_events", true, "id"))
 	gorpmapping.Register(gorpmapping.New(dbWorkflowRunSecret{}, "workflow_run_secret", false, "id"))
 	gorpmapping.Register(gorpmapping.New(dbRunResult{}, "workflow_run_result", false, "id"))
+	gorpmapping.Register(gorpmapping.New(dbWorkflowProjectIntegration{}, "workflow_project_integration", true, "id"))
 }

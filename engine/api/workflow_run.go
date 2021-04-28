@@ -1188,10 +1188,10 @@ func saveWorkflowRunSecrets(ctx context.Context, db *gorp.DbMap, projID int64, w
 		ppIDs[n.Context.ProjectIntegrationID] = ""
 	}
 	for _, n := range wr.Workflow.Integrations {
-		if !sdk.AllowIntegrationInVariable(n.Model) {
+		if !sdk.AllowIntegrationInVariable(n.ProjectIntegration.Model) {
 			continue
 		}
-		ppIDs[n.ID] = ""
+		ppIDs[n.ProjectIntegrationID] = ""
 	}
 
 	for ppID := range ppIDs {

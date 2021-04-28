@@ -843,7 +843,7 @@ func Test_putWorkflowHandler(t *testing.T) {
 				},
 			},
 		},
-		Integrations: []sdk.ProjectIntegration{projInt},
+		Integrations: []sdk.WorkflowProjectIntegration{{ProjectIntegration: projInt}},
 	}
 	workflow1.WorkflowData.Node.Hooks[0].Config[sdk.HookConfigEventFilter] = sdk.WorkflowNodeHookConfigValue{
 		Value:        "push;create",
@@ -965,7 +965,9 @@ func Test_deleteWorkflowEventIntegrationHandler(t *testing.T) {
 				},
 			},
 		},
-		Integrations: []sdk.ProjectIntegration{projInt},
+		Integrations: []sdk.WorkflowProjectIntegration{
+			{ProjectIntegration: projInt},
+		},
 	}
 
 	req = assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, &workflow1)

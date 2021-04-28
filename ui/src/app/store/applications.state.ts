@@ -381,7 +381,7 @@ export class ApplicationsState {
             if (!appToupdate.deployment_strategies) {
                 appToupdate.deployment_strategies = {};
             }
-            appToupdate.deployment_strategies[integration.name] = cloneDeep(integration.model.deployment_default_config);
+            appToupdate.deployment_strategies[integration.name] = cloneDeep(integration.model.additional_default_config);
             appToupdate.editModeChanged = true;
             ctx.setState({
                 ...stateEditMode,
@@ -392,7 +392,7 @@ export class ApplicationsState {
 
         let url = '/project/' + action.payload.projectKey +
             '/application/' + action.payload.applicationName + '/deployment/config/' + integration.name;
-        return this._http.post<Application>(url, integration.model.deployment_default_config)
+        return this._http.post<Application>(url, integration.model.additional_default_config)
             .pipe(tap((app) => {
                 const state = ctx.getState();
                 let applicationUpdated = Object.assign({}, state.application, {
@@ -411,12 +411,12 @@ export class ApplicationsState {
         let integration = new ProjectIntegration();
         integration.name = action.payload.deploymentName;
         integration.model = new IntegrationModel();
-        integration.model.deployment_default_config = action.payload.config;
+        integration.model.additional_default_config = action.payload.config;
 
         const stateEditMode = ctx.getState();
         if (stateEditMode.editMode) {
             let appToupdate = cloneDeep(stateEditMode.editApplication);
-            appToupdate.deployment_strategies[integration.name] = integration.model.deployment_default_config;
+            appToupdate.deployment_strategies[integration.name] = integration.model.additional_default_config;
             appToupdate.editModeChanged = true;
             ctx.setState({
                 ...stateEditMode,

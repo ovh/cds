@@ -32,7 +32,7 @@ func Test_LoadAllDeploymentAllApps(t *testing.T) {
 	pf := sdk.IntegrationModel{
 		Name:       pfname,
 		Deployment: true,
-		DeploymentDefaultConfig: sdk.IntegrationConfig{
+		AdditionalDefaultConfig: sdk.IntegrationConfig{
 			"token": sdk.IntegrationConfigValue{
 				Type:  sdk.IntegrationConfigTypePassword,
 				Value: "my-secret-token",

@@ -3,11 +3,12 @@ import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { ProjectIntegration } from 'app/model/integration.model';
 import { Project } from 'app/model/project.model';
-import { Workflow, WorkflowNotification } from 'app/model/workflow.model';
+import { Workflow, WorkflowNotification, WorkflowProjectIntegration } from 'app/model/workflow.model';
 import { NotificationService } from 'app/service/notification/notification.service';
 import { ToastService } from 'app/shared/toast/ToastService';
 // eslint-disable-next-line max-len
-import { AddNotificationWorkflow, DeleteEventIntegrationWorkflow, DeleteNotificationWorkflow, UpdateEventIntegrationsWorkflow, UpdateNotificationWorkflow } from 'app/store/workflow.action';
+import { AddNotificationWorkflow, DeleteIntegrationWorkflow, DeleteNotificationWorkflow,
+    UpdateIntegrationsWorkflow, UpdateNotificationWorkflow } from 'app/store/workflow.action';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { finalize, first } from 'rxjs/operators';
 
@@ -189,29 +190,37 @@ export class WorkflowNotificationListComponent {
 
     addEvent(integration: ProjectIntegration) {
         this.loading = true;
-        let eventIntegrations = new Array<ProjectIntegration>(integration);
-        if (this.workflow.event_integrations) {
-            eventIntegrations = [integration].concat(this.workflow.event_integrations)
+        let workflowIntegrations = new Array<WorkflowProjectIntegration>();
+        let wi = new WorkflowProjectIntegration();
+        wi.project_integration = integration;
+        wi.project_integration_id = integration.id;
+        workflowIntegrations.push(wi);
+        if (this.workflow.integrations) {
+            workflowIntegrations = [wi].concat(this.workflow.integrations)
         }
-        this.store.dispatch(new UpdateEventIntegrationsWorkflow({
+        this.store.dispatch(new UpdateIntegrationsWorkflow({
             projectKey: this.project.key,
             workflowName: this.workflow.name,
-            eventIntegrations
+            integrations: workflowIntegrations,
         })).pipe(finalize(() => {
             this.loading = false;
             this._cd.markForCheck();
         })).subscribe();
     }
 
-    deleteEvent(integration: ProjectIntegration) {
+    deleteEvent(projectIntegrationID: number) {
         this.loading = true;
-        this.store.dispatch(new DeleteEventIntegrationWorkflow({
+        this.store.dispatch(new DeleteIntegrationWorkflow({
             projectKey: this.project.key,
             workflowName: this.workflow.name,
-            integrationId: integration.id,
+            projectIntegrationID,
         })).pipe(finalize(() => {
             this.loading = false;
             this._cd.markForCheck();
         })).subscribe();
+    }
+
+    filterEvent(wpi: WorkflowProjectIntegration): boolean {
+        return wpi.project_integration.model.event;
     }
 }

@@ -315,13 +315,19 @@ func checkStatusWaiting(ctx context.Context, store cache.Store, jobID int64, sta
 	return nil
 }
 
-// LoadSecrets loads all secrets for a job run
+// LoadDecryptSecrets loads all secrets for a job run
 func LoadDecryptSecrets(ctx context.Context, db gorp.SqlExecutor, wr *sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun) ([]sdk.Variable, error) {
 	entities := []string{SecretProjContext}
 	if nodeRun != nil {
 		node := wr.Workflow.WorkflowData.NodeByID(nodeRun.WorkflowNodeID)
 		if node == nil {
 			return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "unable to find node %d in worflow run", nodeRun.WorkflowNodeID)
+		}
+		for _, integ := range wr.Workflow.Integrations {
+			if integ.ProjectIntegration.Model.Event {
+				continue
+			}
+			entities = append(entities, fmt.Sprintf(SecretProjIntegrationContext, integ.ProjectIntegrationID))
 		}
 		if node.Context != nil {
 			if node.Context.ApplicationID != 0 {

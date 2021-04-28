@@ -642,7 +642,7 @@ func Test_postApplicationImportHandler_ExistingAppWithDeploymentStrategy(t *test
 	pf := sdk.IntegrationModel{
 		Name:       pfname,
 		Deployment: true,
-		DeploymentDefaultConfig: sdk.IntegrationConfig{
+		AdditionalDefaultConfig: sdk.IntegrationConfig{
 			"token": sdk.IntegrationConfigValue{
 				Type:  sdk.IntegrationConfigTypePassword,
 				Value: "my-secret-token",
@@ -753,7 +753,7 @@ func Test_postApplicationImportHandler_DontOverrideDeploymentPasswordIfNotGiven(
 	pf := sdk.IntegrationModel{
 		Name:       pfname,
 		Deployment: true,
-		DeploymentDefaultConfig: sdk.IntegrationConfig{
+		AdditionalDefaultConfig: sdk.IntegrationConfig{
 			"token": sdk.IntegrationConfigValue{
 				Type:  sdk.IntegrationConfigTypePassword,
 				Value: "my-secret-token",

@@ -21,9 +21,9 @@ func GetRunResultKey(runID int64, t sdk.WorkflowRunResultType, fileName string) 
 	return cache.Key(KeyResult, string(t), strconv.Itoa(int(runID)), fileName)
 }
 
-func CanUploadRunResult(ctx context.Context, db *gorp.DbMap, store cache.Store, wr sdk.WorkflowRun, apiRef sdk.CDNRunResultAPIRef) (bool, error) {
+func CanUploadRunResult(ctx context.Context, db *gorp.DbMap, store cache.Store, wr sdk.WorkflowRun, runResultCheck sdk.WorkflowRunResultCheck) (bool, error) {
 	// Check run
-	if wr.ID != apiRef.RunID {
+	if wr.ID != runResultCheck.RunID {
 		return false, sdk.WrapError(sdk.ErrInvalidData, "unable to upload and artifact for this run")
 	}
 	if sdk.StatusIsTerminated(wr.Status) {
@@ -38,7 +38,7 @@ func CanUploadRunResult(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 		}
 		// Get last noderun
 		nodeRun := nodeRuns[0]
-		if nodeRun.ID != apiRef.RunNodeID {
+		if nodeRun.ID != runResultCheck.RunNodeID {
 			continue
 		}
 		nrs = nodeRuns
@@ -47,29 +47,29 @@ func CanUploadRunResult(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 		}
 	}
 	if len(nrs) == 0 {
-		return false, sdk.WrapError(sdk.ErrNotFound, "unable to find node run: %d", apiRef.RunNodeID)
+		return false, sdk.WrapError(sdk.ErrNotFound, "unable to find node run: %d", runResultCheck.RunNodeID)
 	}
 
 	// Check job data
-	nodeRunJob, err := LoadNodeJobRun(ctx, db, store, apiRef.RunJobID)
+	nodeRunJob, err := LoadNodeJobRun(ctx, db, store, runResultCheck.RunJobID)
 	if err != nil {
 		return false, err
 	}
-	if nodeRunJob.WorkflowNodeRunID != apiRef.RunNodeID {
-		return false, sdk.WrapError(sdk.ErrInvalidData, "invalid node run %d", apiRef.RunNodeID)
+	if nodeRunJob.WorkflowNodeRunID != runResultCheck.RunNodeID {
+		return false, sdk.WrapError(sdk.ErrInvalidData, "invalid node run %d", runResultCheck.RunNodeID)
 	}
 	if sdk.StatusIsTerminated(nodeRunJob.Status) {
 		return false, sdk.WrapError(sdk.ErrInvalidData, "unable to upload artifact on a terminated job")
 	}
 
 	// Check File Name
-	runResults, err := LoadRunResultsByRunIDAndType(ctx, db, apiRef.RunID, apiRef.RunResultType)
+	runResults, err := LoadRunResultsByRunIDAndType(ctx, db, runResultCheck.RunID, runResultCheck.ResultType)
 	if err != nil {
-		return false, sdk.WrapError(err, "unable to load run results for run %d", apiRef.RunID)
+		return false, sdk.WrapError(err, "unable to load run results for run %d", runResultCheck.RunID)
 	}
 	for _, result := range runResults {
 		var fileName string
-		switch apiRef.RunResultType {
+		switch runResultCheck.ResultType {
 		case sdk.WorkflowRunResultTypeArtifact:
 			refArt, err := result.GetArtifact()
 			if err != nil {
@@ -82,9 +82,15 @@ func CanUploadRunResult(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 				return false, err
 			}
 			fileName = refCov.Name
+		case sdk.WorkflowRunResultTypeArtifactManager:
+			refArt, err := result.GetArtifactManager()
+			if err != nil {
+				return false, err
+			}
+			fileName = refArt.Name
 		}
 
-		if fileName != apiRef.ToFilename() {
+		if fileName != runResultCheck.Name {
 			continue
 		}
 
@@ -98,15 +104,15 @@ func CanUploadRunResult(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 			break
 		}
 		if previousNodeRunUpload == nil {
-			return false, sdk.WrapError(sdk.ErrConflictData, "artifact %s has already been uploaded from another pipeline", apiRef.ArtifactName)
+			return false, sdk.WrapError(sdk.ErrConflictData, "artifact %s has already been uploaded from another pipeline", runResultCheck.Name)
 		}
 
 		// Check Sub num
 		if result.SubNum == nrs[0].SubNumber {
-			return false, sdk.WrapError(sdk.ErrConflictData, "artifact %s has already been uploaded", apiRef.ArtifactName)
+			return false, sdk.WrapError(sdk.ErrConflictData, "artifact %s has already been uploaded", runResultCheck.Name)
 		}
 		if result.SubNum > nrs[0].SubNumber {
-			return false, sdk.WrapError(sdk.ErrConflictData, "artifact %s cannot be uploaded into a previous run", apiRef.ArtifactName)
+			return false, sdk.WrapError(sdk.ErrConflictData, "artifact %s cannot be uploaded into a previous run", runResultCheck.Name)
 		}
 	}
 	return true, nil
@@ -127,6 +133,12 @@ func AddResult(db *gorp.DbMap, store cache.Store, runResult *sdk.WorkflowRunResu
 		if err != nil {
 			return err
 		}
+	case sdk.WorkflowRunResultTypeArtifactManager:
+		var err error
+		cacheKey, err = verifyAddResultArtifactManager(store, runResult)
+		if err != nil {
+			return err
+		}
 	default:
 		return sdk.WrapError(sdk.ErrInvalidData, "unkonwn result type %s", runResult.Type)
 	}
@@ -144,6 +156,25 @@ func AddResult(db *gorp.DbMap, store cache.Store, runResult *sdk.WorkflowRunResu
 		return err
 	}
 	return sdk.WithStack(store.Delete(cacheKey))
+}
+
+func verifyAddResultArtifactManager(store cache.Store, runResult *sdk.WorkflowRunResult) (string, error) {
+	artResult, err := runResult.GetArtifactManager()
+	if err != nil {
+		return "", err
+	}
+	if err := artResult.IsValid(); err != nil {
+		return "", err
+	}
+	cacheKey := GetRunResultKey(runResult.WorkflowRunID, runResult.Type, artResult.Name)
+	b, err := store.Exist(cacheKey)
+	if err != nil {
+		return cacheKey, err
+	}
+	if !b {
+		return cacheKey, sdk.WrapError(sdk.ErrForbidden, "unable to upload an unchecked artifact manager file")
+	}
+	return cacheKey, nil
 }
 
 func verifyAddResultCoverage(store cache.Store, runResult *sdk.WorkflowRunResult) (string, error) {

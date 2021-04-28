@@ -2,10 +2,11 @@ package action
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -91,7 +92,7 @@ func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Acti
 			// Priority:
 			// 1. Integration specified on artifact upload action ( advanced parameter )
 			// 2. Integration artifact manager on workflow
-			// 3. CDN activated or nor
+			// 3. CDN activated or not
 			if integrationName != sdk.DefaultStorageIntegrationName {
 				if err := uploadArtifactByApiCall(path, wk, ctx, projectKey, integrationName, jobID, tag); err != nil {
 					log.Warn(ctx, "queueArtifactUpload(%s, %s, %d, %s, %s) failed: %v", projectKey, integrationName, jobID, tag.Value, path, err)
@@ -101,7 +102,6 @@ func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Acti
 				return
 			} else if pluginArtifactManagement != nil {
 				if err := uploadArtifactByIntegrationPlugin(path, ctx, wk, pluginArtifactManagement); err != nil {
-					log.Warn(ctx, "queueArtifactUpload(%s, %s, %d, %s, %s) failed: %v", projectKey, integrationName, jobID, tag.Value, path, err)
 					chanError <- sdk.WrapError(err, "Error while uploading artifact by plugin %s", path)
 					wgErrors.Add(1)
 				}
@@ -140,6 +140,13 @@ func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Acti
 }
 
 func uploadArtifactByIntegrationPlugin(path string, ctx context.Context, wk workerruntime.Runtime, artiManager *sdk.GRPCPlugin) error {
+	_, fileName := filepath.Split(path)
+
+	// Check run result
+	if err := checkArtifactUpload(ctx, wk, fileName, sdk.WorkflowRunResultTypeArtifactManager); err != nil {
+		return fmt.Errorf("unable to check artifact upload authorization: %v", err)
+	}
+
 	pfName := sdk.ParameterFind(wk.Parameters(), "cds.integration.artifact_manager")
 	if pfName == nil {
 		return sdk.NewErrorFrom(sdk.ErrNotFound, "unable to retrieve artifact manager integration... Aborting")
@@ -185,22 +192,25 @@ func uploadArtifactByIntegrationPlugin(path string, ctx context.Context, wk work
 	wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("# Plugin %s v%s is ready", manifest.Name, manifest.Version))
 
 	opts := sdk.ParametersToMap(wk.Parameters())
-	opts["cds.integration.artifact_manager.upload.path"] = path
+	opts[sdk.ArtifactUploadPluginInputPath] = path
 	query := integrationplugin.RunQuery{
 		Options: opts,
 	}
 
 	res, err := integrationPluginClient.Run(ctx, &query)
 	if err != nil {
-		return fmt.Errorf("error deploying application: %v", err)
+		return fmt.Errorf("error uploading artifact: %v", err)
 	}
-
-	wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("# Details: %s", res.Details))
-	wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("# Status: %s", res.Status))
 
 	if strings.ToUpper(res.Status) != strings.ToUpper(sdk.StatusSuccess) {
 		return fmt.Errorf("plugin execution failed %s: %s", res.Status, res.Details)
 	}
+
+	// Add run result
+	if err := addWorkflowRunResult(ctx, wk, path, sdk.WorkflowRunResultTypeArtifactManager, *res); err != nil {
+		return fmt.Errorf("unable to add workflow run result for artifact %s: %v", path, err)
+	}
+
 	return nil
 }
 
@@ -235,4 +245,59 @@ func uploadArtifactByApiCall(path string, wk workerruntime.Runtime, ctx context.
 		wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("File '%s' uploaded in %.2fs to CDS API", path, duration.Seconds()))
 	}
 	return nil
+}
+
+func checkArtifactUpload(ctx context.Context, wk workerruntime.Runtime, fileName string, runResultType sdk.WorkflowRunResultType) error {
+	runID, runNodeID, runJobID := wk.GetJobIdentifiers()
+	runResultCheck := sdk.WorkflowRunResultCheck{
+		RunJobID:   runJobID,
+		RunNodeID:  runNodeID,
+		RunID:      runID,
+		Name:       fileName,
+		ResultType: runResultType,
+	}
+	return wk.Client().QueueWorkflowRunResultCheck(ctx, runJobID, runResultCheck)
+}
+
+func addWorkflowRunResult(ctx context.Context, wk workerruntime.Runtime, filePath string, runResultType sdk.WorkflowRunResultType, uploadResult integrationplugin.RunResult) error {
+	runID, runNodeID, runJobID := wk.GetJobIdentifiers()
+
+	fileMode, err := os.Stat(filePath)
+	if err != nil {
+		return sdk.WrapError(err, "unable to get file stat %s", fileMode)
+	}
+
+	size, err := strconv.ParseInt(uploadResult.Outputs[sdk.ArtifactUploadPluginOutputSize], 10, 64)
+	if err != nil {
+		return sdk.WrapError(err, "unable to retrieve file size")
+	}
+	perm, err := strconv.ParseUint(uploadResult.Outputs[sdk.ArtifactUploadPluginOutputPerm], 10, 32)
+	if err != nil {
+		return sdk.WrapError(err, "unable to retrieve file perm")
+	}
+
+	data := sdk.WorkflowRunResultArtifactManager{
+		Name:     uploadResult.Outputs[sdk.ArtifactUploadPluginOutputPathFileName],
+		MD5:      uploadResult.Outputs[sdk.ArtifactUploadPluginOutputPathMD5],
+		Perm:     uint32(perm),
+		RepoType: uploadResult.Outputs[sdk.ArtifactUploadPluginOutputPathRepoType],
+		RepoName: uploadResult.Outputs[sdk.ArtifactUploadPluginOutputPathRepoName],
+		Path:     uploadResult.Outputs[sdk.ArtifactUploadPluginOutputPathFilePath],
+		Size:     size,
+	}
+
+	bts, err := json.Marshal(data)
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+
+	runResult := sdk.WorkflowRunResult{
+		WorkflowNodeRunID: runNodeID,
+		Type:              runResultType,
+		WorkflowRunID:     runID,
+		WorkflowRunJobID:  runJobID,
+		DataRaw:           json.RawMessage(bts),
+	}
+
+	return wk.Client().QueueWorkflowRunResultsAdd(ctx, runJobID, runResult)
 }

@@ -78,8 +78,8 @@ func (api *API) postApplicationDeploymentStrategyConfigHandler() service.Handler
 
 		oldPfConfig, has := app.DeploymentStrategies[pfName]
 		if !has {
-			if pf.Model.DeploymentDefaultConfig != nil {
-				oldPfConfig = pf.Model.DeploymentDefaultConfig
+			if pf.Model.AdditionalDefaultConfig != nil {
+				oldPfConfig = pf.Model.AdditionalDefaultConfig
 			} else {
 				oldPfConfig = sdk.IntegrationConfig{}
 			}

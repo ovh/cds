@@ -17,7 +17,6 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/cache"
@@ -187,9 +186,37 @@ func (w *Workflow) PreUpdate(db gorp.SqlExecutor) error {
 
 // PostUpdate is a db hook
 func (w *Workflow) PostUpdate(db gorp.SqlExecutor) error {
-	for _, integ := range w.Integrations {
-		if err := integration.AddOnWorkflow(db, w.ID, integ.ID); err != nil {
-			return sdk.WrapError(err, "cannot add project event integration (%d) on workflow (%d)", integ.ID, w.ID)
+	for i := range w.Integrations {
+		integ := &w.Integrations[i]
+		if integ.ID != 0 {
+			continue
+		}
+		integ.WorkflowID = w.ID
+		if integ.ProjectIntegrationID == 0 {
+			integ.ProjectIntegrationID = integ.ProjectIntegration.ID
+		}
+
+		if integ.ProjectIntegration.Model.AdditionalDefaultConfig != nil {
+			if integ.Config == nil {
+				integ.Config = integ.ProjectIntegration.Model.AdditionalDefaultConfig.Clone()
+			} else {
+				// Merge params
+				for k, v := range integ.ProjectIntegration.Model.AdditionalDefaultConfig {
+					if _, has := integ.Config[k]; !has {
+						integ.Config[k] = v
+					}
+				}
+				// remove old params
+				for k := range integ.Config {
+					if _, has := integ.ProjectIntegration.Model.AdditionalDefaultConfig[k]; !has {
+						delete(integ.Config, k)
+					}
+				}
+			}
+
+		}
+		if err := AddWorkflowIntegration(db, integ); err != nil {
+			return sdk.WrapError(err, "cannot add project event integration (%d) on workflow (%d)", integ.ProjectIntegration.ID, w.ID)
 		}
 	}
 	return nil
@@ -608,7 +635,6 @@ func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 	if err := CompleteWorkflow(ctx, db, wf, proj, LoadOptions{}); err != nil {
 		return err
 	}
-
 	if err := CheckValidity(ctx, db, wf); err != nil {
 		return err
 	}
@@ -617,10 +643,9 @@ func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 		return sdk.WrapError(err, "unable to delete all notifications on workflow(%d - %s)", wf.ID, wf.Name)
 	}
 
-	if err := integration.DeleteFromWorkflow(db, wf.ID); err != nil {
+	if err := DeleteIntegrationsFromWorkflow(db, wf.ID); err != nil {
 		return sdk.WrapError(err, "unable to delete all integrations on workflow(%d - %s)", wf.ID, wf.Name)
 	}
-
 	// reload workflow to delete the current workflow data
 	oldWf, err := LoadByID(ctx, db, store, proj, wf.ID, LoadOptions{Minimal: true})
 	if err != nil {
@@ -647,12 +672,11 @@ func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 
 	// Keep MaxRun
 	wf.MaxRuns = oldWf.MaxRuns
-
 	if err := DeleteWorkflowData(db, *oldWf); err != nil {
 		return sdk.WrapError(err, "unable to delete from old workflow data(%d - %s)", wf.ID, wf.Name)
 	}
 
-	// Delete all node ID
+	// Delete all nodes,joins, integration ID
 	wf.ResetIDs()
 
 	filteredPurgeTags := []string{}
@@ -688,6 +712,7 @@ func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 		}
 	}
 
+	log.Error(ctx, "5>>>>%d", len(wf.Integrations))
 	if err := InsertWorkflowData(db, wf); err != nil {
 		return sdk.WrapError(err, "Update> Unable to insert workflow data")
 	}
@@ -700,13 +725,13 @@ func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 		}
 	}
 
+	log.Error(ctx, "6>>>>%d<<<", len(wf.Integrations))
 	wf.LastModified = time.Now()
 	dbw := Workflow{Workflow: *wf}
 	if _, err := db.UpdateColumns(func(c *gorp.ColumnMap) bool { return c.ColumnName != "project_key" }, &dbw); err != nil {
 		return sdk.WrapError(err, "Unable to update workflow")
 	}
 	*wf = dbw.Get()
-
 	return nil
 }
 
@@ -761,7 +786,7 @@ func CompleteWorkflow(ctx context.Context, db gorp.SqlExecutor, w *sdk.Workflow,
 
 	nodesArray := w.WorkflowData.Array()
 
-	if err := checkEventIntegration(proj, w); err != nil {
+	if err := checkIntegration(proj, w); err != nil {
 		return err
 	}
 
@@ -982,21 +1007,21 @@ func checkProjectIntegration(proj sdk.Project, w *sdk.Workflow, n *sdk.Node) err
 	return nil
 }
 
-// checkEventIntegration checks event integration data
-func checkEventIntegration(proj sdk.Project, w *sdk.Workflow) error {
+// checkIntegration checks event integration data
+func checkIntegration(proj sdk.Project, w *sdk.Workflow) error {
 	for i := range w.Integrations {
 		eventIntegration := w.Integrations[i]
 		found := false
 		for _, projInt := range proj.Integrations {
-			if eventIntegration.Name == projInt.Name {
-				eventIntegration.ID = projInt.ID
+			if eventIntegration.ProjectIntegration.Name == projInt.Name {
+				eventIntegration.ProjectIntegrationID = projInt.ID
 				w.Integrations[i] = eventIntegration
 				found = true
 				break
 			}
 		}
 		if !found {
-			return sdk.WithData(sdk.ErrIntegrationtNotFound, eventIntegration.Name)
+			return sdk.WithData(sdk.ErrIntegrationtNotFound, eventIntegration.ProjectIntegration.Name)
 		}
 	}
 

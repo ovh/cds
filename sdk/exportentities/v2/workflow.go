@@ -13,6 +13,16 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+const (
+	IntegrationArtifactManager = "artifact_manager"
+)
+
+// VariableValue is a struct to export a value of Variable
+type VariableValue struct {
+	Type  string `json:"type,omitempty" yaml:"type,omitempty"`
+	Value string `json:"value,omitempty" yaml:"value,omitempty"`
+}
+
 // Workflow is the "as code" representation of a sdk.Workflow
 type Workflow struct {
 	Name        string `json:"name" yaml:"name" jsonschema_description:"The name of the workflow."`
@@ -23,12 +33,19 @@ type Workflow struct {
 	Hooks    map[string][]HookEntry `json:"hooks,omitempty" yaml:"hooks,omitempty" jsonschema_description:"Workflow hooks list."`
 
 	// extra workflow data
-	Permissions     map[string]int      `json:"permissions,omitempty" yaml:"permissions,omitempty" jsonschema_description:"The permissions for the workflow (ex: myGroup: 7).\nhttps://ovh.github.io/cds/docs/concepts/permissions"`
-	Metadata        map[string]string   `json:"metadata,omitempty" yaml:"metadata,omitempty"`
-	PurgeTags       []string            `json:"purge_tags,omitempty" yaml:"purge_tags,omitempty"`
-	RetentionPolicy *string             `json:"retention_policy,omitempty" yaml:"retention_policy,omitempty"`
-	Notifications   []NotificationEntry `json:"notifications,omitempty" yaml:"notifications,omitempty"` // This is used when the workflow have only one pipeline
-	HistoryLength   *int64              `json:"history_length,omitempty" yaml:"history_length,omitempty"`
+	Permissions                map[string]int                             `json:"permissions,omitempty" yaml:"permissions,omitempty" jsonschema_description:"The permissions for the workflow (ex: myGroup: 7).\nhttps://ovh.github.io/cds/docs/concepts/permissions"`
+	Metadata                   map[string]string                          `json:"metadata,omitempty" yaml:"metadata,omitempty"`
+	PurgeTags                  []string                                   `json:"purge_tags,omitempty" yaml:"purge_tags,omitempty"`
+	RetentionPolicy            *string                                    `json:"retention_policy,omitempty" yaml:"retention_policy,omitempty"`
+	Notifications              []NotificationEntry                        `json:"notifications,omitempty" yaml:"notifications,omitempty"` // This is used when the workflow have only one pipeline
+	HistoryLength              *int64                                     `json:"history_length,omitempty" yaml:"history_length,omitempty"`
+	WorkflowProjectIntegration map[string]WorkflowProjectIntegrationEntry `json:"integrations,omitempty" yaml:"integrations,omitempty"`
+}
+
+// WorkflowProjectIntegrationEntry represents a integration linked to the workflow
+type WorkflowProjectIntegrationEntry struct {
+	IntegrationType string                   `json:"type,omitempty" yaml:"type,omitempty" jsonschema_description:"Type of integration"`
+	Config          map[string]VariableValue `json:"config,omitempty" yaml:"config,omitempty" jsonschema_description:"Configuration of the linked integration"`
 }
 
 // NodeEntry represents a node as code
@@ -111,6 +128,26 @@ func NewWorkflow(ctx context.Context, w sdk.Workflow, version string, opts ...Ex
 			// don't export empty metadata
 			if v != "" {
 				exportedWorkflow.Metadata[k] = v
+			}
+		}
+	}
+
+	if len(w.Integrations) > 0 {
+		exportedWorkflow.WorkflowProjectIntegration = make(map[string]WorkflowProjectIntegrationEntry)
+		for _, integ := range w.Integrations {
+			if !integ.ProjectIntegration.Model.ArtifactManager {
+				continue
+			}
+			config := make(map[string]VariableValue)
+			for k, v := range integ.Config {
+				config[k] = VariableValue{
+					Type:  v.Type,
+					Value: v.Value,
+				}
+			}
+			exportedWorkflow.WorkflowProjectIntegration[integ.ProjectIntegration.Name] = WorkflowProjectIntegrationEntry{
+				IntegrationType: IntegrationArtifactManager,
+				Config:          config,
 			}
 		}
 	}
@@ -426,6 +463,29 @@ func (w Workflow) GetWorkflow() (*sdk.Workflow, error) {
 	for g, p := range w.Permissions {
 		perm := sdk.GroupPermission{Group: sdk.Group{Name: g}, Permission: p}
 		wf.Groups = append(wf.Groups, perm)
+	}
+
+	wf.Integrations = make([]sdk.WorkflowProjectIntegration, 0, len(w.WorkflowProjectIntegration))
+	for projIntegName, entry := range w.WorkflowProjectIntegration {
+		wkInteg := sdk.WorkflowProjectIntegration{
+			ProjectIntegration: sdk.ProjectIntegration{
+				Name:  projIntegName,
+				Model: sdk.IntegrationModel{},
+			},
+			Config: make(map[string]sdk.IntegrationConfigValue, len(entry.Config)),
+		}
+		for k, v := range entry.Config {
+			wkInteg.Config[k] = sdk.IntegrationConfigValue{
+				Type:  v.Type,
+				Value: v.Value,
+			}
+		}
+		if entry.IntegrationType == IntegrationArtifactManager {
+			wkInteg.ProjectIntegration.Model.ArtifactManager = true
+		} else {
+			wkInteg.ProjectIntegration.Model.Event = true
+		}
+		wf.Integrations = append(wf.Integrations, wkInteg)
 	}
 
 	//Compute notifications

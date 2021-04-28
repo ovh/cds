@@ -1,0 +1,19 @@
+name: Artifactory
+default_config:
+  artifactory.url:
+    type: string
+  artifactory.token.name:
+    type: string
+  artifactory.token:
+    type: password
+  artifactory.cds_repository:
+    type: string
+  artifactory.repo.prefix.snapshot:
+    type: string
+  artifactory.repo.prefix.release:
+    type: string
+additional_default_config:
+  build.info.path:
+    type: string
+    value: ""
+artifact_manager: true

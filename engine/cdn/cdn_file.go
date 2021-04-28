@@ -59,7 +59,15 @@ func (s *Service) storeFile(ctx context.Context, sig cdn.Signature, reader io.Re
 	case sdk.CDNTypeItemRunResult:
 		// Call CDS API to check if we can upload the run result
 		runResultApiRef, _ := it.GetCDNRunResultApiRef()
-		if err := s.Client.QueueWorkflowRunResultCheck(ctx, sig.JobID, *runResultApiRef); err != nil {
+
+		runResultCheck := sdk.WorkflowRunResultCheck{
+			Name:       runResultApiRef.ArtifactName,
+			ResultType: runResultApiRef.RunResultType,
+			RunID:      runResultApiRef.RunID,
+			RunNodeID:  runResultApiRef.RunNodeID,
+			RunJobID:   runResultApiRef.RunJobID,
+		}
+		if err := s.Client.QueueWorkflowRunResultCheck(ctx, sig.JobID, runResultCheck); err != nil {
 			return err
 		}
 	}
@@ -111,7 +119,7 @@ func (s *Service) storeFile(ctx context.Context, sig cdn.Signature, reader io.Re
 	if err != nil {
 		return sdk.WithStack(err)
 	}
-	defer tx.Rollback()
+	defer tx.Rollback() //nolint
 
 	// Check and Clean file with same ref
 	if err := s.cleanPreviousFileItem(ctx, tx, sig, itemType, apiRef.ToFilename()); err != nil {
