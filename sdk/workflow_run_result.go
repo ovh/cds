@@ -71,9 +71,6 @@ func (a *WorkflowRunResultArtifactManager) IsValid() error {
 	if a.Name == "" {
 		return WrapError(ErrInvalidData, "missing artifact name")
 	}
-	if a.Size == 0 {
-		return WrapError(ErrInvalidData, "missing artifact size")
-	}
 	if a.MD5 == "" {
 		return WrapError(ErrInvalidData, "missing md5Sum")
 	}
