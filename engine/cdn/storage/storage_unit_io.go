@@ -123,8 +123,8 @@ func (r RunningStorageUnits) NewSource(ctx context.Context, refItemUnit sdk.CDNI
 	return &iuSource{iu: refItemUnit, source: unit}, nil
 }
 
-func (r RunningStorageUnits) GetItemUnitByLocatorByUnit(locator string, unitID string) (bool, error) {
+func (r RunningStorageUnits) GetItemUnitByLocatorByUnit(locator string, unitID string, itemType sdk.CDNItemType) (bool, error) {
 	// Load all the itemUnit for the unit and the same hashLocator
 	hashLocator := r.HashLocator(locator)
-	return HasItemUnitsByUnitAndHashLocator(r.db, unitID, hashLocator)
+	return HasItemUnitsByUnitAndHashLocator(r.db, unitID, hashLocator, itemType)
 }
