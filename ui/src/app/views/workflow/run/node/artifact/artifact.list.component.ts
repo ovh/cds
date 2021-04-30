@@ -105,7 +105,7 @@ export class WorkflowRunArtifactListComponent implements OnInit, OnDestroy {
 
     getHumainFileSize(size: number): string {
         if (size === 0) {
-            return '0B'
+            return '0B';
         }
         let i = Math.floor(Math.log(size) / Math.log(1024));
         let hSize = (size / Math.pow(1024, i)).toFixed(2);
