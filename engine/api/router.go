@@ -138,11 +138,13 @@ func (r *Router) recoverWrap(h http.HandlerFunc) http.HandlerFunc {
 					err = sdk.ErrUnknownError
 				}
 
-				log.Error(context.TODO(), "[PANIC_RECOVERY] Panic occurred on %s:%s, recover %s", req.Method, req.URL.String(), err)
+				ctx := req.Context()
 
 				trace := make([]byte, 4096)
-				count := runtime.Stack(trace, true)
-				log.Error(req.Context(), "[PANIC_RECOVERY] Stacktrace of %d bytes\n%s\n", count, trace)
+				_ = runtime.Stack(trace, true)
+
+				ctx = context.WithValue(ctx, cdslog.Stacktrace, string(trace))
+				log.Error(ctx, "[PANIC] Panic occurred on %s:%s, recover %s", req.Method, req.URL.String(), err)
 
 				//Checking if there are two much panics in two minutes
 				//If last panic was more than 2 minutes ago, reinit the panic counter
@@ -165,7 +167,7 @@ func (r *Router) recoverWrap(h http.HandlerFunc) http.HandlerFunc {
 					log.Error(req.Context(), "[PANIC_RECOVERY] RESTART NEEDED")
 				}
 
-				service.WriteError(req.Context(), w, req, err)
+				service.WriteError(ctx, w, req, err)
 			}
 		}()
 		h.ServeHTTP(w, req)
