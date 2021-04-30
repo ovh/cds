@@ -191,6 +191,7 @@ func (w *Workflow) PostUpdate(db gorp.SqlExecutor) error {
 		if integ.ID != 0 {
 			continue
 		}
+		integ.WorkflowID = w.ID
 		if err := AddWorkflowIntegration(db, integ); err != nil {
 			return sdk.WrapError(err, "cannot add project event integration (%d) on workflow (%d)", integ.ProjectIntegration.ID, w.ID)
 		}
