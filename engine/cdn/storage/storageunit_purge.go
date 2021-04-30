@@ -43,7 +43,7 @@ func (x *RunningStorageUnits) Purge(ctx context.Context, s Interface) error {
 			var hasItemUnit bool
 			if _, hasLocator := s.(StorageUnitWithLocator); hasLocator {
 				var err error
-				hasItemUnit, err = x.GetItemUnitByLocatorByUnit(ui.Locator, s.ID())
+				hasItemUnit, err = x.GetItemUnitByLocatorByUnit(ui.Locator, s.ID(), ui.Type)
 				if err != nil {
 					return err
 				}

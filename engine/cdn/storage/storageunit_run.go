@@ -120,7 +120,7 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, tx gorpmapper.SqlExec
 	}
 
 	// Check if the content (based on the locator) is already known from the destination unit
-	has, err := x.GetItemUnitByLocatorByUnit(iu.Locator, dest.ID())
+	has, err := x.GetItemUnitByLocatorByUnit(iu.Locator, dest.ID(), iu.Type)
 	if err != nil {
 		return err
 	}
