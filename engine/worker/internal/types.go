@@ -86,6 +86,10 @@ func (wk *CurrentWorker) Init(name, hatcheryName, apiEndpoint, token string, mod
 	return nil
 }
 
+func (wk *CurrentWorker) GetJobIdentifiers() (int64, int64, int64) {
+	return wk.currentJob.runID, wk.currentJob.wJob.WorkflowNodeRunID, wk.currentJob.wJob.ID
+}
+
 func (wk *CurrentWorker) GetContext() context.Context {
 	return wk.currentJob.context
 }

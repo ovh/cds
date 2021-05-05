@@ -5,11 +5,12 @@ export class IntegrationModel {
     identifier: string;
     icon: string;
     default_config: {};
-    deployment_default_config: {};
+    additional_default_config: {};
     disabled: boolean;
     hook: boolean;
     storage: boolean;
     deployment: boolean;
+    artifact_manager: boolean;
     compute: boolean;
     event: boolean;
     public: boolean;

@@ -310,7 +310,7 @@ func Test_postApplicationDeploymentStrategyConfigHandlerAsProvider(t *testing.T)
 	pf := sdk.IntegrationModel{
 		Name:       "test-deploy-3" + pkey,
 		Deployment: true,
-		DeploymentDefaultConfig: sdk.IntegrationConfig{
+		AdditionalDefaultConfig: sdk.IntegrationConfig{
 			"token": sdk.IntegrationConfigValue{
 				Type:  sdk.IntegrationConfigTypePassword,
 				Value: "my-secret-token",

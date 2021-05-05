@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"context"
+	"github.com/ovh/cds/engine/api/integration"
 	"io/ioutil"
 	"net/http/httptest"
 	"sort"
@@ -1114,4 +1115,95 @@ workflow:
 	assert.Equal(t, sdk.PermissionReadWriteExecute, w.Groups[0].Permission)
 	assert.Equal(t, g2.Name, w.Groups[1].Group.Name)
 	assert.Equal(t, sdk.PermissionRead, w.Groups[1].Permission)
+}
+
+func Test_postWorkflowImportHandler_WithArtifactManager(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	u, pass := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+
+	// Add Artifact manager
+	model := sdk.IntegrationModel{
+		Name:            sdk.RandomString(10),
+		ArtifactManager: true,
+		DefaultConfig: map[string]sdk.IntegrationConfigValue{
+			"host": {
+				Type: "string",
+			},
+		},
+		AdditionalDefaultConfig: map[string]sdk.IntegrationConfigValue{
+			"build.path": {
+				Type:  "string",
+				Value: "foo/bar",
+			},
+		},
+	}
+	require.NoError(t, integration.InsertModel(db, &model))
+	t.Cleanup(func() {
+		integration.DeleteModel(db, model.ID)
+	})
+
+	pp := &sdk.ProjectIntegration{
+		Name:               "my-arti",
+		Model:              model,
+		ProjectID:          proj.ID,
+		Config:             model.DefaultConfig,
+		IntegrationModelID: model.ID,
+	}
+
+	integration.InsertIntegration(db, pp)
+	proj.Integrations = []sdk.ProjectIntegration{*pp}
+
+	test.NotNil(t, proj)
+	pip := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+	}
+	sdk.AddParameter(&pip.Parameter, "name", sdk.StringParameter, "value")
+	test.NoError(t, pipeline.InsertPipeline(db, &pip))
+
+	//Prepare request
+	vars := map[string]string{
+		"permProjectKey": proj.Key,
+	}
+	uri := api.Router.GetRoute("POST", api.postWorkflowImportHandler, vars)
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, nil)
+
+	body := `name: test_1
+version: v2.0
+workflow:
+  pip1:
+    pipeline: pip1
+    parameters:
+      name: value
+  pip1_2:
+    depends_on:
+      - pip1
+    pipeline: pip1
+integrations:
+  my-arti:
+    type: artifact_manager
+    config:
+      build.path:
+        type: string
+        value: myvalue
+metadata:
+  default_tags: git.branch,git.author,git.hash`
+	req.Body = ioutil.NopCloser(strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/x-yaml")
+
+	//Do the request
+	rec := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 200, rec.Code)
+
+	w, err := workflow.Load(context.TODO(), db, api.Cache, *proj, "test_1", workflow.LoadOptions{})
+	test.NoError(t, err)
+
+	require.Equal(t, 1, len(w.Integrations))
+	require.Equal(t, pp.ID, w.Integrations[0].ProjectIntegrationID)
+	require.Equal(t, "myvalue", w.Integrations[0].Config["build.path"].Value)
 }

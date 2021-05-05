@@ -65,16 +65,13 @@ func TestCanUploadArtifactTerminatedJob(t *testing.T) {
 	ctx := context.Background()
 	db, store := test.SetupPG(t)
 
-	proj, wk, workflowRun, nodeRun, jobRun := createRunNodeRunAndJob(t, db, store)
+	_, _, workflowRun, nodeRun, jobRun := createRunNodeRunAndJob(t, db, store)
 
-	artifactRef := sdk.CDNRunResultAPIRef{
-		ProjectKey:   proj.Name,
-		WorkflowName: wk.Name,
-		WorkflowID:   wk.ID,
-		RunJobID:     jobRun.ID,
-		RunNodeID:    nodeRun.ID,
-		RunID:        workflowRun.ID,
-		ArtifactName: "myartifact",
+	artifactRef := sdk.WorkflowRunResultCheck{
+		RunJobID:  jobRun.ID,
+		RunNodeID: nodeRun.ID,
+		RunID:     workflowRun.ID,
+		Name:      "myartifact",
 	}
 
 	jobRun.Status = sdk.StatusSuccess
@@ -89,16 +86,13 @@ func TestCanUploadArtifactWrongNodeRun(t *testing.T) {
 	ctx := context.Background()
 	db, store := test.SetupPG(t)
 
-	proj, wk, workflowRun, nodeRun, jobRun := createRunNodeRunAndJob(t, db, store)
+	_, _, workflowRun, nodeRun, jobRun := createRunNodeRunAndJob(t, db, store)
 
-	artifactRef := sdk.CDNRunResultAPIRef{
-		ProjectKey:   proj.Key,
-		WorkflowName: wk.Name,
-		WorkflowID:   wk.ID,
-		RunJobID:     jobRun.ID,
-		RunNodeID:    nodeRun.ID + 1,
-		RunID:        workflowRun.ID,
-		ArtifactName: "myartifact",
+	artifactRef := sdk.WorkflowRunResultCheck{
+		RunJobID:  jobRun.ID,
+		RunNodeID: nodeRun.ID + 1,
+		RunID:     workflowRun.ID,
+		Name:      "myartifact",
 	}
 
 	_, err := workflow.CanUploadRunResult(ctx, db.DbMap, store, workflowRun, artifactRef)
@@ -110,17 +104,14 @@ func TestCanUploadArtifactAlreadyExist(t *testing.T) {
 	ctx := context.Background()
 	db, store := test.SetupPG(t)
 
-	proj, wk, workflowRun, nodeRun, jobRun := createRunNodeRunAndJob(t, db, store)
+	_, _, workflowRun, nodeRun, jobRun := createRunNodeRunAndJob(t, db, store)
 
-	artifactRef := sdk.CDNRunResultAPIRef{
-		ProjectKey:    proj.Key,
-		WorkflowName:  wk.Name,
-		WorkflowID:    wk.ID,
-		RunJobID:      jobRun.ID,
-		RunNodeID:     nodeRun.ID,
-		RunID:         workflowRun.ID,
-		ArtifactName:  "myartifact",
-		RunResultType: sdk.WorkflowRunResultTypeArtifact,
+	artifactRef := sdk.WorkflowRunResultCheck{
+		RunJobID:   jobRun.ID,
+		RunNodeID:  nodeRun.ID,
+		RunID:      workflowRun.ID,
+		Name:       "myartifact",
+		ResultType: sdk.WorkflowRunResultTypeArtifact,
 	}
 
 	result := sdk.WorkflowRunResult{
@@ -158,17 +149,14 @@ func TestCanUploadArtifactAlreadyExistInMoreRecentSubNum(t *testing.T) {
 	ctx := context.Background()
 	db, store := test.SetupPG(t)
 
-	proj, wk, workflowRun, nodeRun, jobRun := createRunNodeRunAndJob(t, db, store)
+	_, _, workflowRun, nodeRun, jobRun := createRunNodeRunAndJob(t, db, store)
 
-	artifactRef := sdk.CDNRunResultAPIRef{
-		ProjectKey:    proj.Key,
-		WorkflowName:  wk.Name,
-		WorkflowID:    wk.ID,
-		RunJobID:      jobRun.ID,
-		RunNodeID:     nodeRun.ID,
-		RunID:         workflowRun.ID,
-		ArtifactName:  "myartifact",
-		RunResultType: sdk.WorkflowRunResultTypeArtifact,
+	artifactRef := sdk.WorkflowRunResultCheck{
+		RunJobID:   jobRun.ID,
+		RunNodeID:  nodeRun.ID,
+		RunID:      workflowRun.ID,
+		Name:       "myartifact",
+		ResultType: sdk.WorkflowRunResultTypeArtifact,
 	}
 
 	result := sdk.WorkflowRunResult{
@@ -206,7 +194,7 @@ func TestCanUploadArtifactAlreadyExistInAPreviousSubNum(t *testing.T) {
 	ctx := context.Background()
 	db, store := test.SetupPG(t)
 
-	proj, wk, workflowRun, nodeRun, jobRun := createRunNodeRunAndJob(t, db, store)
+	_, wk, workflowRun, nodeRun, jobRun := createRunNodeRunAndJob(t, db, store)
 
 	nodeRun2 := workflow.NodeRun{
 		WorkflowRunID:  workflowRun.ID,
@@ -222,14 +210,11 @@ func TestCanUploadArtifactAlreadyExistInAPreviousSubNum(t *testing.T) {
 	require.NoError(t, err)
 	workflowRun = *run2
 
-	artifactRef := sdk.CDNRunResultAPIRef{
-		ProjectKey:   proj.Key,
-		WorkflowName: wk.Name,
-		WorkflowID:   wk.ID,
-		RunJobID:     jobRun.ID,
-		RunNodeID:    nodeRun2.ID,
-		RunID:        workflowRun.ID,
-		ArtifactName: "myartifact",
+	artifactRef := sdk.WorkflowRunResultCheck{
+		RunJobID:  jobRun.ID,
+		RunNodeID: nodeRun2.ID,
+		RunID:     workflowRun.ID,
+		Name:      "myartifact",
 	}
 
 	result := sdk.WorkflowRunResult{

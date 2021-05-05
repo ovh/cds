@@ -17,7 +17,6 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/cache"
@@ -32,8 +31,8 @@ type PushSecrets struct {
 	EnvironmentdSecrets map[int64][]sdk.Variable
 }
 
-// LoadAllByProjectIDs returns all workflow for given project ids.
-func LoadAllNamesByProjectIDs(ctx context.Context, db gorp.SqlExecutor, projectIDs []int64) ([]sdk.WorkflowName, error) {
+// LoadAllNamesByProjectIDs returns all workflow for given project ids.
+func LoadAllNamesByProjectIDs(_ context.Context, db gorp.SqlExecutor, projectIDs []int64) ([]sdk.WorkflowName, error) {
 	query := `
     SELECT workflow.*, project.projectkey
 	FROM workflow
@@ -133,7 +132,7 @@ func UpdateMetadata(db gorp.SqlExecutor, workflowID int64, metadata sdk.Metadata
 	return nil
 }
 
-// updateFromRepository update the from_repository of a workflow
+// UpdateFromRepository update the from_repository of a workflow
 func UpdateFromRepository(db gorp.SqlExecutor, workflowID int64, fromRepository string) error {
 	if _, err := db.Exec("UPDATE workflow SET from_repository = $1, last_modified = current_timestamp WHERE id = $2", fromRepository, workflowID); err != nil {
 		return sdk.WithStack(err)
@@ -173,7 +172,7 @@ func (w *Workflow) PostGet(db gorp.SqlExecutor) error {
 }
 
 // PreUpdate is a db hook
-func (w *Workflow) PreUpdate(db gorp.SqlExecutor) error {
+func (w *Workflow) PreUpdate(_ gorp.SqlExecutor) error {
 	if w.FromRepository != "" && strings.HasPrefix(w.FromRepository, "http") {
 		fromRepoURL, err := url.Parse(w.FromRepository)
 		if err != nil {
@@ -187,9 +186,14 @@ func (w *Workflow) PreUpdate(db gorp.SqlExecutor) error {
 
 // PostUpdate is a db hook
 func (w *Workflow) PostUpdate(db gorp.SqlExecutor) error {
-	for _, integ := range w.Integrations {
-		if err := integration.AddOnWorkflow(db, w.ID, integ.ID); err != nil {
-			return sdk.WrapError(err, "cannot add project event integration (%d) on workflow (%d)", integ.ID, w.ID)
+	for i := range w.Integrations {
+		integ := &w.Integrations[i]
+		if integ.ID != 0 {
+			continue
+		}
+		integ.WorkflowID = w.ID
+		if err := AddWorkflowIntegration(db, integ); err != nil {
+			return sdk.WrapError(err, "cannot add project event integration (%d) on workflow (%d)", integ.ProjectIntegration.ID, w.ID)
 		}
 	}
 	return nil
@@ -241,7 +245,7 @@ func LoadAllNames(db gorp.SqlExecutor, projID int64) (sdk.IDNames, error) {
 }
 
 // Load loads a workflow for a given user (ie. checking permissions)
-func Load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, name string, opts LoadOptions) (*sdk.Workflow, error) {
+func Load(ctx context.Context, db gorp.SqlExecutor, _ cache.Store, proj sdk.Project, name string, opts LoadOptions) (*sdk.Workflow, error) {
 	ctx, end := telemetry.Span(ctx, "workflow.Load")
 	defer end()
 
@@ -266,7 +270,7 @@ func Load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.
 // LoadAndLockByID loads a workflow
 
 // LoadByID loads a workflow
-func LoadByID(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, id int64, opts LoadOptions) (*sdk.Workflow, error) {
+func LoadByID(ctx context.Context, db gorp.SqlExecutor, _ cache.Store, proj sdk.Project, id int64, opts LoadOptions) (*sdk.Workflow, error) {
 	dao := opts.GetWorkflowDAO()
 	dao.Filters.WorkflowIDs = []int64{id}
 
@@ -434,7 +438,7 @@ func RenameNode(ctx context.Context, db gorp.SqlExecutor, w *sdk.Workflow) error
 	maxNumberByHookModel := map[int64]int{}
 	var maxForkNumber int
 
-	nodesToNamed := []*sdk.Node{}
+	nodesToNamed := make([]*sdk.Node, 0)
 	// Search max numbers by nodes type
 	for i := range nodes {
 		if nodes[i].Name == "" {
@@ -608,7 +612,6 @@ func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 	if err := CompleteWorkflow(ctx, db, wf, proj, LoadOptions{}); err != nil {
 		return err
 	}
-
 	if err := CheckValidity(ctx, db, wf); err != nil {
 		return err
 	}
@@ -617,10 +620,9 @@ func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 		return sdk.WrapError(err, "unable to delete all notifications on workflow(%d - %s)", wf.ID, wf.Name)
 	}
 
-	if err := integration.DeleteFromWorkflow(db, wf.ID); err != nil {
+	if err := DeleteIntegrationsFromWorkflow(db, wf.ID); err != nil {
 		return sdk.WrapError(err, "unable to delete all integrations on workflow(%d - %s)", wf.ID, wf.Name)
 	}
-
 	// reload workflow to delete the current workflow data
 	oldWf, err := LoadByID(ctx, db, store, proj, wf.ID, LoadOptions{Minimal: true})
 	if err != nil {
@@ -647,15 +649,14 @@ func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 
 	// Keep MaxRun
 	wf.MaxRuns = oldWf.MaxRuns
-
 	if err := DeleteWorkflowData(db, *oldWf); err != nil {
 		return sdk.WrapError(err, "unable to delete from old workflow data(%d - %s)", wf.ID, wf.Name)
 	}
 
-	// Delete all node ID
+	// Delete all nodes,joins, integration ID
 	wf.ResetIDs()
 
-	filteredPurgeTags := []string{}
+	filteredPurgeTags := make([]string, 0)
 	for _, t := range wf.PurgeTags {
 		if t != "" {
 			filteredPurgeTags = append(filteredPurgeTags, t)
@@ -706,7 +707,6 @@ func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 		return sdk.WrapError(err, "Unable to update workflow")
 	}
 	*wf = dbw.Get()
-
 	return nil
 }
 
@@ -761,7 +761,7 @@ func CompleteWorkflow(ctx context.Context, db gorp.SqlExecutor, w *sdk.Workflow,
 
 	nodesArray := w.WorkflowData.Array()
 
-	if err := checkEventIntegration(proj, w); err != nil {
+	if err := checkIntegration(proj, w); err != nil {
 		return err
 	}
 
@@ -803,7 +803,7 @@ func CompleteWorkflow(ctx context.Context, db gorp.SqlExecutor, w *sdk.Workflow,
 }
 
 // CheckValidity checks workflow validity
-func CheckValidity(ctx context.Context, db gorp.SqlExecutor, w *sdk.Workflow) error {
+func CheckValidity(_ context.Context, _ gorp.SqlExecutor, w *sdk.Workflow) error {
 	//Check project is not empty
 	if w.ProjectKey == "" {
 		return sdk.NewErrorFrom(sdk.ErrWorkflowInvalid, "invalid project key")
@@ -982,24 +982,25 @@ func checkProjectIntegration(proj sdk.Project, w *sdk.Workflow, n *sdk.Node) err
 	return nil
 }
 
-// checkEventIntegration checks event integration data
-func checkEventIntegration(proj sdk.Project, w *sdk.Workflow) error {
+// checkIntegration checks integration data
+func checkIntegration(proj sdk.Project, w *sdk.Workflow) error {
 	for i := range w.Integrations {
-		eventIntegration := w.Integrations[i]
+		workflowIntegration := &w.Integrations[i]
 		found := false
 		for _, projInt := range proj.Integrations {
-			if eventIntegration.Name == projInt.Name {
-				eventIntegration.ID = projInt.ID
-				w.Integrations[i] = eventIntegration
+			if workflowIntegration.ProjectIntegration.Name == projInt.Name {
+				workflowIntegration.ProjectIntegrationID = projInt.ID
+				workflowIntegration.WorkflowID = w.ID
+				workflowIntegration.MergeWithModel(projInt.Model)
+				w.Integrations[i] = *workflowIntegration
 				found = true
 				break
 			}
 		}
 		if !found {
-			return sdk.WithData(sdk.ErrIntegrationtNotFound, eventIntegration.Name)
+			return sdk.WithData(sdk.ErrIntegrationtNotFound, workflowIntegration.ProjectIntegration.Name)
 		}
 	}
-
 	return nil
 }
 

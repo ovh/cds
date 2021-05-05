@@ -590,8 +590,8 @@ func getIntegrationPlugins(db gorp.SqlExecutor, wr *sdk.WorkflowRun, nr *sdk.Wor
 
 	var artifactManagerModelID int64
 	for _, int := range wr.Workflow.Integrations {
-		if int.Model.ArtifactManager {
-			artifactManagerModelID = int.Model.ID
+		if int.ProjectIntegration.Model.ArtifactManager {
+			artifactManagerModelID = int.ProjectIntegration.Model.ID
 		}
 	}
 	if artifactManagerModelID != 0 {
@@ -723,9 +723,10 @@ func NodeBuildParametersFromRun(wr sdk.WorkflowRun, id int64) ([]sdk.Parameter, 
 //NodeBuildParametersFromWorkflow returns build_parameters for a node given its id
 func NodeBuildParametersFromWorkflow(proj sdk.Project, wf *sdk.Workflow, refNode *sdk.Node, ancestorsIds []int64) ([]sdk.Parameter, error) {
 	runContext := nodeRunContext{
-		ProjectIntegrations: wf.Integrations,
+		WorkflowProjectIntegrations: wf.Integrations,
+		ProjectIntegrations:         make([]sdk.ProjectIntegration, 0),
 	}
-	res := []sdk.Parameter{}
+	res := make([]sdk.Parameter, 0)
 	if refNode != nil && refNode.Context != nil {
 		if refNode.Context.PipelineID != 0 && wf.Pipelines != nil {
 			pip, has := wf.Pipelines[refNode.Context.PipelineID]

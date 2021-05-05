@@ -237,6 +237,12 @@ func toCLIRunResult(results []sdk.WorkflowRunResult) ([]RunResultCli, error) {
 				return nil, err
 			}
 			name = artiResult.Name
+		case sdk.WorkflowRunResultTypeArtifactManager:
+			artiResult, err := r.GetArtifactManager()
+			if err != nil {
+				return nil, err
+			}
+			name = artiResult.Name
 		}
 
 		cliresults = append(cliresults, RunResultCli{

@@ -6,8 +6,9 @@ import (
 )
 
 const (
-	WorkflowRunResultTypeArtifact WorkflowRunResultType = "artifact"
-	WorkflowRunResultTypeCoverage WorkflowRunResultType = "coverage"
+	WorkflowRunResultTypeArtifact        WorkflowRunResultType = "artifact"
+	WorkflowRunResultTypeCoverage        WorkflowRunResultType = "coverage"
+	WorkflowRunResultTypeArtifactManager WorkflowRunResultType = "artifact-manager"
 )
 
 type WorkflowRunResultType string
@@ -38,6 +39,54 @@ func (r *WorkflowRunResult) GetCoverage() (WorkflowRunResultCoverage, error) {
 		return data, WithStack(err)
 	}
 	return data, nil
+}
+
+func (r *WorkflowRunResult) GetArtifactManager() (WorkflowRunResultArtifactManager, error) {
+	var data WorkflowRunResultArtifactManager
+	if err := json.Unmarshal(r.DataRaw, &data); err != nil {
+		return data, WithStack(err)
+	}
+	return data, nil
+}
+
+type WorkflowRunResultCheck struct {
+	Name       string                `json:"name"`
+	RunID      int64                 `json:"run_id"`
+	RunNodeID  int64                 `json:"run_node_id"`
+	RunJobID   int64                 `json:"run_job_id"`
+	ResultType WorkflowRunResultType `json:"result_type"`
+}
+
+type WorkflowRunResultArtifactManager struct {
+	Name     string `json:"name"`
+	Size     int64  `json:"size"`
+	MD5      string `json:"md5"`
+	Path     string `json:"path"`
+	Perm     uint32 `json:"perm"`
+	RepoName string `json:"repository_name"`
+	RepoType string `json:"repository_type"`
+}
+
+func (a *WorkflowRunResultArtifactManager) IsValid() error {
+	if a.Name == "" {
+		return WrapError(ErrInvalidData, "missing artifact name")
+	}
+	if a.MD5 == "" {
+		return WrapError(ErrInvalidData, "missing md5Sum")
+	}
+	if a.Path == "" {
+		return WrapError(ErrInvalidData, "missing cdn item hash")
+	}
+	if a.Perm == 0 {
+		return WrapError(ErrInvalidData, "missing file permission")
+	}
+	if a.RepoName == "" {
+		return WrapError(ErrInvalidData, "missing repository_name")
+	}
+	if a.RepoType == "" {
+		return WrapError(ErrInvalidData, "missing repository_type")
+	}
+	return nil
 }
 
 type WorkflowRunResultArtifact struct {

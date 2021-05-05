@@ -497,7 +497,7 @@ describe('Applications', () => {
         let integration = new ProjectIntegration();
         integration.name = 'testintegration';
         integration.model = new IntegrationModel();
-        integration.model.deployment_default_config = {
+        integration.model.additional_default_config = {
             key1: 'value'
         };
 

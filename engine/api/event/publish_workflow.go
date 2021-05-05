@@ -10,10 +10,10 @@ import (
 )
 
 // publishWorkflowEvent publish workflow event
-func publishWorkflowEvent(ctx context.Context, payload interface{}, key, workflowName string, eventIntegrations []sdk.ProjectIntegration, u sdk.Identifiable) {
+func publishWorkflowEvent(ctx context.Context, payload interface{}, key, workflowName string, eventIntegrations []sdk.WorkflowProjectIntegration, u sdk.Identifiable) {
 	eventIntegrationsID := make([]int64, len(eventIntegrations))
 	for i, eventIntegration := range eventIntegrations {
-		eventIntegrationsID[i] = eventIntegration.ID
+		eventIntegrationsID[i] = eventIntegration.ProjectIntegrationID
 	}
 
 	bts, _ := json.Marshal(payload)

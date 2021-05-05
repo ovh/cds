@@ -204,44 +204,6 @@ func UpdateIntegration(db gorpmapper.SqlExecutorWithTx, pp sdk.ProjectIntegratio
 	return nil
 }
 
-// AddOnWorkflow link a project integration on a workflow
-func AddOnWorkflow(db gorp.SqlExecutor, workflowID int64, projectIntegrationID int64) error {
-	query := "INSERT INTO workflow_project_integration (workflow_id, project_integration_id) VALUES ($1, $2) ON CONFLICT DO NOTHING"
-	if _, err := db.Exec(query, workflowID, projectIntegrationID); err != nil {
-		return sdk.WithStack(err)
-	}
-	return nil
-}
-
-// LoadWorkflowIntegrationsByWorkflowID load workflow integrations by workflowid
-func LoadWorkflowIntegrationsByWorkflowID(db gorp.SqlExecutor, id int64) ([]sdk.ProjectIntegration, error) {
-	query := gorpmapping.NewQuery(`
-		SELECT project_integration.*
-		FROM project_integration
-		JOIN workflow_project_integration ON project_integration.id = workflow_project_integration.project_integration_id
-		WHERE workflow_project_integration.workflow_id = $1
-	`).Args(id)
-	return loadAll(db, query)
-}
-
-// RemoveFromWorkflow remove a project integration on a workflow
-func RemoveFromWorkflow(db gorp.SqlExecutor, workflowID int64, projectIntegrationID int64) error {
-	query := "DELETE FROM workflow_project_integration WHERE workflow_id = $1 AND project_integration_id = $2"
-	if _, err := db.Exec(query, workflowID, projectIntegrationID); err != nil {
-		return sdk.WithStack(err)
-	}
-	return nil
-}
-
-// DeleteFromWorkflow remove a project integration on a workflow
-func DeleteFromWorkflow(db gorp.SqlExecutor, workflowID int64) error {
-	query := "DELETE FROM workflow_project_integration WHERE workflow_id = $1"
-	if _, err := db.Exec(query, workflowID); err != nil {
-		return sdk.WithStack(err)
-	}
-	return nil
-}
-
 // LoadAllIntegrationsForProjectsWithDecryption load all integrations for all given project, with decryption
 func LoadAllIntegrationsForProjectsWithDecryption(ctx context.Context, db gorp.SqlExecutor, projIDs []int64) (map[int64][]sdk.ProjectIntegration, error) {
 	return loadAllIntegrationsForProjects(ctx, db, projIDs, gorpmapping.GetOptions.WithDecryption)

@@ -310,7 +310,7 @@ type IntegrationModel struct {
 	Identifier              string               `json:"identifier" db:"identifier" yaml:"identifier,omitempty"`
 	Icon                    string               `json:"icon" db:"icon" yaml:"icon"`
 	DefaultConfig           IntegrationConfig    `json:"default_config" db:"default_config" yaml:"default_config"`
-	DeploymentDefaultConfig IntegrationConfig    `json:"deployment_default_config" db:"deployment_default_config" yaml:"deployment_default_config"`
+	AdditionalDefaultConfig IntegrationConfig    `json:"additional_default_config" db:"additional_default_config" yaml:"additional_default_config"`
 	PublicConfigurations    IntegrationConfigMap `json:"public_configurations,omitempty" db:"cipher_public_configurations" yaml:"public_configurations"`
 	Disabled                bool                 `json:"disabled" db:"disabled" yaml:"disabled"`
 	Hook                    bool                 `json:"hook" db:"hook" yaml:"hook" cli:"hooks_supported"`
@@ -354,7 +354,7 @@ func (pf *ProjectIntegration) Blur() {
 	pf.Config.Blur()
 	pf.Model.DefaultConfig.Blur()
 	pf.Model.PublicConfigurations.Blur()
-	pf.Model.DeploymentDefaultConfig.Blur()
+	pf.Model.AdditionalDefaultConfig.Blur()
 }
 
 // MergeWith set new values from new config and update existing values if not default.

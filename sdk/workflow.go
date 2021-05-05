@@ -60,7 +60,7 @@ type Workflow struct {
 	ToDelete                bool                         `json:"to_delete" db:"to_delete" cli:"-"`
 	Favorite                bool                         `json:"favorite" db:"-" cli:"favorite"`
 	WorkflowData            WorkflowData                 `json:"workflow_data" db:"workflow_data" cli:"-"`
-	Integrations            []ProjectIntegration         `json:"event_integrations,omitempty" db:"-" cli:"-"`
+	Integrations            []WorkflowProjectIntegration `json:"integrations,omitempty" db:"-" cli:"-"`
 	AsCodeEvent             []AsCodeEvent                `json:"as_code_events,omitempty" db:"-" cli:"-"`
 	// aggregates
 	TemplateInstance *WorkflowTemplateInstance `json:"template_instance,omitempty" db:"-" cli:"-"`
@@ -189,10 +189,13 @@ type WorkflowNotification struct {
 	Integration    string                   `json:"integration,omitempty" db:"-"`
 }
 
-// ResetIDs resets all nodes and joins ids
+// ResetIDs resets all nodes, joins, integration ids
 func (w *Workflow) ResetIDs() {
 	for _, n := range w.WorkflowData.Array() {
 		n.ID = 0
+	}
+	for i := range w.Integrations {
+		w.Integrations[i].ID = 0
 	}
 }
 
@@ -369,10 +372,10 @@ func (w *Workflow) ValidateType() error {
 	return nil
 }
 
-func (w *Workflow) GetEventIntegration() []ProjectIntegration {
-	eventsIntegrations := make([]ProjectIntegration, 0)
+func (w *Workflow) GetEventIntegration() []WorkflowProjectIntegration {
+	eventsIntegrations := make([]WorkflowProjectIntegration, 0)
 	for _, i := range w.Integrations {
-		if i.Model.Event {
+		if i.ProjectIntegration.Model.Event {
 			eventsIntegrations = append(eventsIntegrations, i)
 		}
 	}
@@ -477,4 +480,34 @@ func WorkflowToIDs(ws []*Workflow) []int64 {
 		ids[i] = ws[i].ID
 	}
 	return ids
+}
+
+type WorkflowProjectIntegration struct {
+	ID                   int64              `json:"id" db:"id"`
+	WorkflowID           int64              `json:"workflow_id" db:"workflow_id"`
+	ProjectIntegrationID int64              `json:"project_integration_id" db:"project_integration_id"`
+	ProjectIntegration   ProjectIntegration `json:"project_integration" db:"-"`
+	Config               IntegrationConfig  `json:"config" db:"config"`
+}
+
+func (wpi *WorkflowProjectIntegration) MergeWithModel(model IntegrationModel) {
+	if model.AdditionalDefaultConfig != nil {
+		if wpi.Config == nil {
+			wpi.Config = model.AdditionalDefaultConfig.Clone()
+		} else {
+			// Merge params
+			for k, v := range model.AdditionalDefaultConfig {
+				if _, has := wpi.Config[k]; !has {
+					wpi.Config[k] = v
+				}
+			}
+			// remove old params
+			for k := range wpi.Config {
+				if _, has := model.AdditionalDefaultConfig[k]; !has {
+					delete(wpi.Config, k)
+				}
+			}
+		}
+
+	}
 }

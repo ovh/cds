@@ -21,6 +21,13 @@ export class WNodeType {
     static OUTGOINGHOOK = 'outgoinghook';
 }
 
+export class WorkflowProjectIntegration {
+    id: number;
+    project_integration_id: number;
+    workflow_id: number;
+    project_integration: ProjectIntegration;
+}
+
 // Workflow represents a pipeline based workflow
 export class Workflow {
     id: number;
@@ -46,7 +53,7 @@ export class Workflow {
     applications: { [key: number]: Application; };
     environments: { [key: number]: Environment; };
     project_integrations: { [key: number]: ProjectIntegration; };
-    event_integrations: ProjectIntegration[];
+    integrations: WorkflowProjectIntegration[];
     hook_models: { [key: number]: WorkflowHookModel; };
     outgoing_hook_models: { [key: number]: WorkflowHookModel; };
     labels: Label[];

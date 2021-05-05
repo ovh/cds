@@ -1065,36 +1065,21 @@ func (api *API) workflowRunResultCheckUploadHandler() service.Handler {
 			return err
 		}
 
-		if !isCDN(ctx) {
-			return sdk.WrapError(sdk.ErrForbidden, "only CDN can call this route")
+		if !isCDN(ctx) && !isWorker(ctx) {
+			return sdk.WrapError(sdk.ErrForbidden, "only CDN and worker can call this route")
 		}
 
 		wr, err := workflow.LoadRunByJobID(api.mustDBWithCtx(ctx), jobID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
 		if err != nil {
 			return err
 		}
-		proj, err := project.LoadByID(api.mustDB(), wr.ProjectID)
-		if err != nil {
-			return err
-		}
 
-		_, enabled := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeatureCDNArtifact, map[string]string{
-			"project_key": proj.Key,
-		})
-		if !enabled {
-			return sdk.WrapError(sdk.ErrForbidden, "cdn is not enabled for project %s", proj.Key)
-		}
-
-		var apiRef sdk.CDNRunResultAPIRef
-		if err := service.UnmarshalBody(r, &apiRef); err != nil {
+		var runResultCheck sdk.WorkflowRunResultCheck
+		if err := service.UnmarshalBody(r, &runResultCheck); err != nil {
 			return sdk.WithStack(err)
 		}
 
-		if apiRef.ToFilename() == "" {
-			return sdk.WrapError(sdk.ErrInvalidData, "unable to read run result api ref")
-		}
-
-		b, err := workflow.CanUploadRunResult(ctx, api.mustDBWithCtx(ctx), api.Cache, *wr, apiRef)
+		b, err := workflow.CanUploadRunResult(ctx, api.mustDBWithCtx(ctx), api.Cache, *wr, runResultCheck)
 		if err != nil {
 			return err
 		}
@@ -1103,8 +1088,8 @@ func (api *API) workflowRunResultCheckUploadHandler() service.Handler {
 		}
 
 		// Save check
-		if err := api.Cache.SetWithTTL(workflow.GetRunResultKey(apiRef.RunID, apiRef.RunResultType, apiRef.ArtifactName), true, 600); err != nil {
-			return sdk.WrapError(err, "unable to cache result artifact check %s ", apiRef.ToFilename())
+		if err := api.Cache.SetWithTTL(workflow.GetRunResultKey(runResultCheck.RunID, runResultCheck.ResultType, runResultCheck.Name), true, 600); err != nil {
+			return sdk.WrapError(err, "unable to cache result artifact check %s ", runResultCheck.Name)
 		}
 		return nil
 	}
@@ -1117,7 +1102,7 @@ func (api *API) postWorkflowRunResultsHandler() service.Handler {
 			return err
 		}
 
-		if !isCDN(ctx) {
+		if !isCDN(ctx) && !isWorker(ctx) {
 			return sdk.WrapError(sdk.ErrForbidden, "only CDN can call this route")
 		}
 

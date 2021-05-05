@@ -21,14 +21,14 @@ type publishWorkflowRunData struct {
 	workflowRunSubNum int64
 	status            string
 	workflowRunTags   []sdk.WorkflowRunTag
-	eventIntegrations []sdk.ProjectIntegration
+	eventIntegrations []sdk.WorkflowProjectIntegration
 	workflowNodeRunID int64
 }
 
 func publishRunWorkflow(ctx context.Context, payload interface{}, data publishWorkflowRunData) {
 	eventIntegrationsID := make([]int64, len(data.eventIntegrations))
 	for i, eventIntegration := range data.eventIntegrations {
-		eventIntegrationsID[i] = eventIntegration.ID
+		eventIntegrationsID[i] = eventIntegration.ProjectIntegrationID
 	}
 
 	bts, _ := json.Marshal(payload)

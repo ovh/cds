@@ -14,7 +14,7 @@ import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } f
 import { EventService } from 'app/event.service';
 import { Project } from 'app/model/project.model';
 import { RunToKeep } from 'app/model/purge.model';
-import { Workflow } from 'app/model/workflow.model';
+import { Workflow, WorkflowProjectIntegration } from 'app/model/workflow.model';
 import { FeatureNames } from 'app/service/feature/feature.service';
 import { ThemeStore } from 'app/service/theme/theme.store';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
@@ -24,13 +24,21 @@ import { WarningModalComponent } from 'app/shared/modal/warning/warning.componen
 import { Column, ColumnType } from 'app/shared/table/data-table.component';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { FeatureState } from 'app/store/feature.state';
-import { CleanRetentionDryRun, DeleteWorkflow, DeleteWorkflowIcon, UpdateWorkflow, UpdateWorkflowIcon } from 'app/store/workflow.action';
+import {
+    CleanRetentionDryRun, DeleteIntegrationWorkflow,
+    DeleteWorkflow,
+    DeleteWorkflowIcon,
+    UpdateIntegrationsWorkflow,
+    UpdateWorkflow,
+    UpdateWorkflowIcon
+} from 'app/store/workflow.action';
 import { WorkflowState } from 'app/store/workflow.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { CodemirrorComponent } from 'ng2-codemirror-typescript/Codemirror';
 import { DragulaService } from 'ng2-dragula-sgu';
 import { forkJoin, Observable, Subscription } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
+import { ProjectIntegration } from 'app/model/integration.model';
 
 declare let CodeMirror: any;
 
@@ -42,13 +50,25 @@ declare let CodeMirror: any;
 })
 @AutoUnsubscribe()
 export class WorkflowAdminComponent implements OnInit, OnDestroy {
-    @Input() project: Project;
+
+    _project: Project;
+    @Input()
+    set project(project: Project) {
+        this._project = project;
+        if (project.integrations) {
+            this.filteredIntegrations = cloneDeep(project.integrations.filter(p => p.model.artifact_manager));
+        }
+    }
+    get project(): Project {
+        return this._project;
+    }
 
     _workflow: Workflow;
     @Input()
     set workflow(data: Workflow) {
         if (data) {
             this._workflow = cloneDeep(data);
+            this.nbEventIntegrations = this._workflow.integrations.filter(i => i.project_integration.model.event).length
         }
     }
     get workflow() {
@@ -73,6 +93,10 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
     retentionRunsPolicyEnabled = false;
     maxRunsEnabled = false;
     codeMirrorConfig: any;
+
+    filteredIntegrations: Array<ProjectIntegration>;
+    nbEventIntegrations: number;
+    selectedIntegration: ProjectIntegration;
 
     @ViewChild('updateWarning')
     private warningUpdateModal: WarningModalComponent;
@@ -406,6 +430,26 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
             });
     }
 
+    addIntegration() {
+        this.loading = true;
+        let workflowIntegrations = new Array<WorkflowProjectIntegration>();
+        let wi = new WorkflowProjectIntegration();
+        wi.project_integration = this.selectedIntegration;
+        workflowIntegrations.push(wi);
+        if (this.workflow.integrations) {
+            workflowIntegrations = [wi].concat(this.workflow.integrations)
+        }
+        this.store.dispatch(new UpdateIntegrationsWorkflow({
+            projectKey: this.project.key,
+            workflowName: this.workflow.name,
+            integrations: workflowIntegrations,
+        })).pipe(finalize(() => {
+            this.loading = false;
+            delete this.selectedIntegration;
+            this._cd.markForCheck();
+        })).subscribe();
+    }
+
     fileEvent(event: { content: string, file: File }) {
         this.fileTooLarge = event.file.size > 100000;
         if (this.fileTooLarge) {
@@ -413,5 +457,21 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
         }
         this.iconUpdated = true;
         this._workflow.icon = event.content;
+    }
+
+    clickDeleteIntegration(integ: WorkflowProjectIntegration) {
+        this.loading = true;
+        this.store.dispatch(new DeleteIntegrationWorkflow({
+            projectKey: this.project.key,
+            workflowName: this.workflow.name,
+            projectIntegrationID: integ.project_integration_id
+        })).pipe(finalize(() => {
+            this.loading = false;
+            this._cd.markForCheck();
+        })).subscribe();
+    }
+
+    filterIntegration(integ: WorkflowProjectIntegration): boolean {
+        return !integ.project_integration.model.event;
     }
 }

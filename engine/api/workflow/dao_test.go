@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/ovh/cds/engine/api/integration"
 	"io/ioutil"
 	"net/http"
 	"reflect"
@@ -204,6 +205,103 @@ func TestInsertSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
 	assert.Equal(t, w.WorkflowData.Node.Context.ApplicationID, w1.WorkflowData.Node.Context.ApplicationID)
 	assert.Equal(t, w.WorkflowData.Node.Context.EnvironmentID, w1.WorkflowData.Node.Context.EnvironmentID)
 	assert.Equal(t, w.WorkflowData.Node.Context.Mutex, w1.WorkflowData.Node.Context.Mutex)
+}
+
+func TestUpdateWorkflowIntegration(t *testing.T) {
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+
+	u, _ := assets.InsertAdminUser(t, db)
+
+	// Create project
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
+
+	fooModel := sdk.IntegrationModel{
+		Name:            sdk.RandomString(10),
+		Author:          "foo",
+		ArtifactManager: true,
+		DefaultConfig: map[string]sdk.IntegrationConfigValue{
+			"Host": {
+				Type: sdk.IntegrationConfigTypeString,
+			},
+			"Token": {
+				Type: sdk.IntegrationConfigTypePassword,
+			},
+		},
+		AdditionalDefaultConfig: map[string]sdk.IntegrationConfigValue{
+			"BuildInfo": {
+				Type:  sdk.IntegrationConfigTypeString,
+				Value: "defaultValue",
+			},
+		},
+	}
+	require.NoError(t, integration.InsertModel(db, &fooModel))
+	t.Cleanup(func() {
+		integration.DeleteModel(db, fooModel.ID)
+	})
+
+	projInt := sdk.ProjectIntegration{
+		Name:               "Artifactory",
+		Config:             fooModel.DefaultConfig.Clone(),
+		Model:              fooModel,
+		IntegrationModelID: fooModel.ID,
+		ProjectID:          proj.ID,
+	}
+	projInt.Config["Host"] = sdk.IntegrationConfigValue{
+		Type:  sdk.IntegrationConfigTypeString,
+		Value: "myhost",
+	}
+	projInt.Config["Token"] = sdk.IntegrationConfigValue{
+		Type:  sdk.IntegrationConfigTypePassword,
+		Value: "mypassword",
+	}
+	require.NoError(t, integration.InsertIntegration(db, &projInt))
+
+	proj.Integrations = append(proj.Integrations, projInt)
+
+	pip := createEmptyPipeline(t, db, cache, proj, u)
+
+	// RELOAD PROJECT WITH DEPENDENCIES
+	proj.Pipelines = append(proj.Pipelines, *pip)
+
+	// WORKFLOW TO RUN
+	w := sdk.Workflow{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       sdk.RandomString(10),
+		WorkflowData: sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "root",
+				Ref:  "root",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: proj.Pipelines[0].ID,
+				},
+			},
+		},
+		Pipelines: map[int64]sdk.Pipeline{
+			proj.Pipelines[0].ID: proj.Pipelines[0],
+		},
+		Integrations: []sdk.WorkflowProjectIntegration{
+			{
+				ProjectIntegration:   projInt,
+				ProjectIntegrationID: projInt.ID,
+			},
+		},
+	}
+	require.NoError(t, workflow.Insert(context.TODO(), db, cache, *proj, &w))
+
+	buildInfoValue, has := w.Integrations[0].Config["BuildInfo"]
+	require.True(t, has)
+
+	// Update buildinf
+	buildInfoValue.Value = "newValue"
+	w.Integrations[0].Config["BuildInfo"] = buildInfoValue
+	require.NoError(t, workflow.Update(context.TODO(), db, cache, *proj, &w, workflow.UpdateOptions{}))
+
+	wfDb, err := workflow.LoadByID(context.TODO(), db, cache, *proj, w.ID, workflow.LoadOptions{})
+	require.NoError(t, err)
+	require.Equal(t, "newValue", wfDb.Integrations[0].Config["BuildInfo"].Value)
 }
 
 func TestInsertComplexeWorkflowAndExport(t *testing.T) {

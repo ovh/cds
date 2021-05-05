@@ -1,0 +1,5 @@
+name: artifactory-upload-artifact-plugin
+type: integration-upload_artifact
+integration: Artifactory
+author: "OVH SAS"
+description: "OVH Artifactory Upload Artifact Plugin"

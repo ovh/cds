@@ -183,7 +183,6 @@ func UpdateModel(db gorpmapper.SqlExecutorWithTx, m *sdk.IntegrationModel) error
 	}
 
 	m.PublicConfigurations = givenPublicConfig
-
 	dbm := integrationModel{IntegrationModel: *m}
 	if err := gorpmapping.UpdateAndSign(context.Background(), db, &dbm); err != nil {
 		return sdk.WrapError(err, "Unable to update integration model %s", m.Name)

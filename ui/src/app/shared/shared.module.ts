@@ -26,6 +26,7 @@ import { ClipboardModule } from 'ngx-clipboard';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 import { MarkdownModule } from 'ngx-markdown';
 import { MomentModule } from 'ngx-moment';
+import { CallbackPipe } from 'app/shared/pipes/callback.pipe';
 import { ActionComponent } from './action/action.component';
 import { ActionStepFormComponent } from './action/step/form/step.form.component';
 import { ActionStepComponent } from './action/step/step.component';
@@ -136,6 +137,7 @@ import { ZoneComponent } from './zone/zone.component';
         AuditListComponent,
         AutoFocusInputComponent,
         BreadcrumbComponent,
+        CallbackPipe,
         ChartComponentComponent,
         CommitListComponent,
         ConditionsComponent,
@@ -243,6 +245,7 @@ import { ZoneComponent } from './zone/zone.component';
         AsCodeEventComponent,
         BreadcrumbComponent,
         ProjectBreadcrumbComponent,
+        CallbackPipe,
         ChartComponentComponent,
         CodemirrorModule,
         CommitListComponent,

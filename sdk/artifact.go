@@ -5,6 +5,27 @@ const (
 	ArtifactUpload   = "Artifact Upload"
 	ArtifactDownload = "Artifact Download"
 	ServeStaticFiles = "Serve Static Files"
+
+	ArtifactMD5                      = "md5"
+	ArtifactName                     = "name"
+	ArtifactManagerPath              = "path"
+	ArtifactManagerRepositoryType    = "repository_type"
+	ArtifactoryManagerRepositoryName = "repository_name"
+
+	ArtifactUploadPluginInputPath = "cds.integration.artifact_manager.upload.path"
+
+	ArtifactUploadPluginOutputPathFileName = "name"
+	ArtifactUploadPluginOutputPathFilePath = "path"
+	ArtifactUploadPluginOutputPathRepoType = "repository_type"
+	ArtifactUploadPluginOutputPathRepoName = "repository_name"
+	ArtifactUploadPluginOutputPathMD5      = "md5"
+	ArtifactUploadPluginOutputPerm         = "perm"
+	ArtifactUploadPluginOutputSize         = "size"
+
+	ArtifactDownloadPluginInputDestinationPath = "cds.integration.artifact_manager.download.destination.path"
+	ArtifactDownloadPluginInputFilePath        = "cds.integration.artifact_manager.download.file.path"
+	ArtifactDownloadPluginInputMd5             = "cds.integration.artifact_manager.download.file.md5"
+	ArtifactDownloadPluginInputPerm            = "cds.integration.artifact_manager.download.file.perm"
 )
 
 // ArtifactsStore represents

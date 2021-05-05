@@ -30,6 +30,10 @@ type TestWorker struct {
 	logBuffer        bytes.Buffer
 }
 
+func (w *TestWorker) GetJobIdentifiers() (int64, int64, int64) {
+	return 0, 0, 0
+}
+
 func (w *TestWorker) WorkerCacheSignature(tag string) (string, error) {
 	return "mysig", nil
 }

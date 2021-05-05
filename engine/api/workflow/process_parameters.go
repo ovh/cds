@@ -75,11 +75,26 @@ func getBuildParameterFromNodeContext(proj sdk.Project, w sdk.Workflow, runConte
 		}
 	}
 
-	// COMPUTE INTEGRATION VARIABLE FROM NODE CONTEXT
-	for _, integ := range runContext.ProjectIntegrations {
-		if !sdk.AllowIntegrationInVariable(integ.Model) {
+	// COmpute integration from workflow
+	for _, integ := range runContext.WorkflowProjectIntegrations {
+		if !sdk.AllowIntegrationInVariable(integ.ProjectIntegration.Model) {
 			continue
 		}
+		prefix := sdk.GetIntegrationVariablePrefix(integ.ProjectIntegration.Model)
+		vars["cds.integration."+prefix] = integ.ProjectIntegration.Name
+		tmp := sdk.ParametersFromIntegration(prefix, integ.ProjectIntegration.Config)
+		for k, v := range tmp {
+			vars[k] = v
+		}
+
+		tmpWkfConf := sdk.ParametersFromIntegration(prefix, integ.Config)
+		for k, v := range tmpWkfConf {
+			vars[k] = v
+		}
+	}
+
+	// COMPUTE INTEGRATION VARIABLE FROM NODE CONTEXT
+	for _, integ := range runContext.ProjectIntegrations {
 		prefix := sdk.GetIntegrationVariablePrefix(integ.Model)
 		vars["cds.integration."+prefix] = integ.Name
 		tmp := sdk.ParametersFromIntegration(prefix, integ.Config)

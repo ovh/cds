@@ -1,0 +1,5 @@
+name: artifactory-download-artifact-plugin
+type: integration-download_artifact
+integration: Artifactory
+author: "OVH SAS"
+description: "OVH Artifactory Download Artifact Plugin"

@@ -77,6 +77,7 @@ type Runtime interface {
 	WorkerCacheSignature(tag string) (string, error)
 	FeatureEnabled(featureName sdk.FeatureName) bool
 	GetPlugin(pluginType string) *sdk.GRPCPlugin
+	GetJobIdentifiers() (int64, int64, int64)
 	CDNHttpURL() string
 	InstallKey(key sdk.Variable) (*KeyResponse, error)
 	InstallKeyTo(key sdk.Variable, destinationPath string) (*KeyResponse, error)
