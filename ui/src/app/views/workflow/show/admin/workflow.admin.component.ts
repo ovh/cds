@@ -68,7 +68,7 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
     set workflow(data: Workflow) {
         if (data) {
             this._workflow = cloneDeep(data);
-            this.nbEventIntegrations = this._workflow.integrations.filter(i => i.project_integration.model.event).length
+            this.nbEventIntegrations = this._workflow?.integrations?.filter(i => i.project_integration.model.event).length
         }
     }
     get workflow() {

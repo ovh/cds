@@ -20,9 +20,9 @@ var workflowRunResultCmd = cli.Command{
 }
 
 type RunResultCli struct {
-	ID   string                    `cli:"id"`
-	Type sdk.WorkflowRunResultType `cli:"type"`
-	Name string                    `cli:"name"`
+	ID   string `cli:"id"`
+	Type string `cli:"type"`
+	Name string `cli:"name"`
 }
 
 func workflowRunResult() *cobra.Command {
@@ -223,6 +223,7 @@ func workflowRunResultList(v cli.Values) (cli.ListResult, error) {
 func toCLIRunResult(results []sdk.WorkflowRunResult) ([]RunResultCli, error) {
 	cliresults := make([]RunResultCli, 0, len(results))
 	for _, r := range results {
+		artiType := string(r.Type)
 		var name string
 		switch r.Type {
 		case sdk.WorkflowRunResultTypeCoverage:
@@ -247,7 +248,7 @@ func toCLIRunResult(results []sdk.WorkflowRunResult) ([]RunResultCli, error) {
 
 		cliresults = append(cliresults, RunResultCli{
 			ID:   r.ID,
-			Type: r.Type,
+			Type: artiType,
 			Name: name,
 		})
 	}

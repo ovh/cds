@@ -6,12 +6,6 @@ const (
 	ArtifactDownload = "Artifact Download"
 	ServeStaticFiles = "Serve Static Files"
 
-	ArtifactMD5                      = "md5"
-	ArtifactName                     = "name"
-	ArtifactManagerPath              = "path"
-	ArtifactManagerRepositoryType    = "repository_type"
-	ArtifactoryManagerRepositoryName = "repository_name"
-
 	ArtifactUploadPluginInputPath = "cds.integration.artifact_manager.upload.path"
 
 	ArtifactUploadPluginOutputPathFileName = "name"

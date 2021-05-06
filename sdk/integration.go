@@ -2,7 +2,7 @@ package sdk
 
 import (
 	"database/sql/driver"
-	json "encoding/json"
+	"encoding/json"
 	"fmt"
 )
 
@@ -13,6 +13,16 @@ const (
 	OpenstackIntegrationModel     = "Openstack"
 	AWSIntegrationModel           = "AWS"
 	DefaultStorageIntegrationName = "shared.infra"
+	ArtifactManagerModel          = "ArtifactManager"
+
+	ArtifactManagerConfigPlatform              = "platform"
+	ArtifactManagerConfigURL                   = "url"
+	ArtifactManagerConfigTokenName             = "token.name"
+	ArtifactManagerConfigToken                 = "token"
+	ArtifactManagerConfigCdsRepository         = "cds.repository"
+	ArtifactManagerConfigPromotionLowMaturity  = "promotion.maturity.low"
+	ArtifactManagerConfigPromotionHighMaturity = "promotion.maturity.high"
+	ArtifactManagerConfigBuildInfoPath         = "build.info.path"
 )
 
 // Here are the default plateform models
@@ -22,6 +32,7 @@ var (
 		&RabbitMQIntegration,
 		&OpenstackIntegration,
 		&AWSIntegration,
+		&ArtifactManagerIntegration,
 	}
 	// KafkaIntegration represents a kafka integration
 	KafkaIntegration = IntegrationModel{
@@ -103,6 +114,43 @@ var (
 		Storage:  true,
 		Disabled: false,
 		Hook:     false,
+	}
+	// ArtifactManagerIntegration represents an artifact manager integration (like artifactory)
+	ArtifactManagerIntegration = IntegrationModel{
+		Name:       ArtifactManagerModel,
+		Author:     "CDS",
+		Identifier: "github.com/ovh/cds/integration/builtin/artifact-manager",
+		Icon:       "",
+		DefaultConfig: IntegrationConfig{
+			ArtifactManagerConfigPlatform: IntegrationConfigValue{
+				Type:        IntegrationConfigTypeString,
+				Description: "Only 'artifactory' is implemented",
+			},
+			ArtifactManagerConfigURL: IntegrationConfigValue{
+				Type: IntegrationConfigTypeString,
+			},
+			ArtifactManagerConfigTokenName: IntegrationConfigValue{
+				Type: IntegrationConfigTypeString,
+			},
+			ArtifactManagerConfigToken: IntegrationConfigValue{
+				Type: IntegrationConfigTypePassword,
+			},
+			ArtifactManagerConfigCdsRepository: IntegrationConfigValue{
+				Type: IntegrationConfigTypeString,
+			},
+			ArtifactManagerConfigPromotionLowMaturity: IntegrationConfigValue{
+				Type: IntegrationConfigTypeString,
+			},
+			ArtifactManagerConfigPromotionHighMaturity: IntegrationConfigValue{
+				Type: IntegrationConfigTypeString,
+			},
+		},
+		AdditionalDefaultConfig: IntegrationConfig{
+			ArtifactManagerConfigBuildInfoPath: IntegrationConfigValue{
+				Type: IntegrationConfigTypeString,
+			},
+		},
+		ArtifactManager: true,
 	}
 	// AWSIntegration represents an aws integration
 	AWSIntegration = IntegrationModel{
@@ -379,4 +427,10 @@ func (config *IntegrationConfig) HideSecrets() {
 			(*config)[k] = v
 		}
 	}
+}
+
+type FileInfo struct {
+	Size int64
+	Md5  string
+	Type string
 }

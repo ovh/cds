@@ -71,14 +71,8 @@ func (a *WorkflowRunResultArtifactManager) IsValid() error {
 	if a.Name == "" {
 		return WrapError(ErrInvalidData, "missing artifact name")
 	}
-	if a.MD5 == "" {
-		return WrapError(ErrInvalidData, "missing md5Sum")
-	}
 	if a.Path == "" {
 		return WrapError(ErrInvalidData, "missing cdn item hash")
-	}
-	if a.Perm == 0 {
-		return WrapError(ErrInvalidData, "missing file permission")
 	}
 	if a.RepoName == "" {
 		return WrapError(ErrInvalidData, "missing repository_name")

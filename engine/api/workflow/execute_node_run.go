@@ -588,18 +588,23 @@ func getIntegrationPlugins(db gorp.SqlExecutor, wr *sdk.WorkflowRun, nr *sdk.Wor
 		plugins = append(plugins, *plugin)
 	}
 
-	var artifactManagerModelID int64
-	for _, int := range wr.Workflow.Integrations {
-		if int.ProjectIntegration.Model.ArtifactManager {
-			artifactManagerModelID = int.ProjectIntegration.Model.ID
+	var artifactManagerInteg *sdk.WorkflowProjectIntegration
+	for i := range wr.Workflow.Integrations {
+		if wr.Workflow.Integrations[i].ProjectIntegration.Model.ArtifactManager {
+			artifactManagerInteg = &wr.Workflow.Integrations[i]
 		}
 	}
-	if artifactManagerModelID != 0 {
-		plgs, err := plugin.LoadAllByIntegrationModelID(db, artifactManagerModelID)
+	if artifactManagerInteg != nil {
+		plgs, err := plugin.LoadAllByIntegrationModelID(db, artifactManagerInteg.ProjectIntegration.Model.ID)
 		if err != nil {
 			return nil, sdk.NewErrorFrom(sdk.ErrNotFound, "Cannot find plugin for integration model id %d, %v", projectIntegrationModelID, err)
 		}
-		plugins = append(plugins, plgs...)
+		platform := artifactManagerInteg.ProjectIntegration.Config[sdk.ArtifactManagerConfigPlatform]
+		for _, plg := range plgs {
+			if strings.HasPrefix(plg.Name, fmt.Sprintf("%s-", platform.Value)) {
+				plugins = append(plugins, plg)
+			}
+		}
 	}
 
 	return plugins, nil

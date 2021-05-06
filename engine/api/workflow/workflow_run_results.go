@@ -2,12 +2,15 @@ package workflow
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"strconv"
 	"time"
 
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/api/integration/artifact_manager"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
@@ -118,7 +121,7 @@ func CanUploadRunResult(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 	return true, nil
 }
 
-func AddResult(db *gorp.DbMap, store cache.Store, runResult *sdk.WorkflowRunResult) error {
+func AddResult(ctx context.Context, db *gorp.DbMap, store cache.Store, wr *sdk.WorkflowRun, runResult *sdk.WorkflowRunResult) error {
 	var cacheKey string
 	switch runResult.Type {
 	case sdk.WorkflowRunResultTypeArtifact:
@@ -135,7 +138,7 @@ func AddResult(db *gorp.DbMap, store cache.Store, runResult *sdk.WorkflowRunResu
 		}
 	case sdk.WorkflowRunResultTypeArtifactManager:
 		var err error
-		cacheKey, err = verifyAddResultArtifactManager(store, runResult)
+		cacheKey, err = verifyAddResultArtifactManager(ctx, db, store, wr, runResult)
 		if err != nil {
 			return err
 		}
@@ -158,14 +161,56 @@ func AddResult(db *gorp.DbMap, store cache.Store, runResult *sdk.WorkflowRunResu
 	return sdk.WithStack(store.Delete(cacheKey))
 }
 
-func verifyAddResultArtifactManager(store cache.Store, runResult *sdk.WorkflowRunResult) (string, error) {
+// Check validity of the request + complete runResuklt with md5,size,type
+func verifyAddResultArtifactManager(ctx context.Context, db gorp.SqlExecutor, store cache.Store, wr *sdk.WorkflowRun, runResult *sdk.WorkflowRunResult) (string, error) {
 	artResult, err := runResult.GetArtifactManager()
 	if err != nil {
 		return "", err
 	}
+
+	// Check file in integration
+	var artiInteg *sdk.WorkflowProjectIntegration
+	for i := range wr.Workflow.Integrations {
+		if !wr.Workflow.Integrations[i].ProjectIntegration.Model.ArtifactManager {
+			continue
+		}
+		artiInteg = &wr.Workflow.Integrations[i]
+	}
+	if artiInteg == nil {
+		return "", sdk.NewErrorFrom(sdk.ErrInvalidData, "you cannot add a artifact manager run result without an integration")
+	}
+	secrets, err := loadRunSecretWithDecryption(ctx, db, wr.ID, []string{fmt.Sprintf(SecretProjIntegrationContext, artiInteg.ProjectIntegrationID)})
+	if err != nil {
+		return "", err
+	}
+	var artifactManagerToken string
+	for _, s := range secrets {
+		if s.Name == fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactManagerConfigToken) {
+			artifactManagerToken = s.Value
+			break
+		}
+	}
+	if artifactManagerToken == "" {
+		return "", sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find artifact manager token")
+	}
+	artifactClient, err := artifact_manager.NewClient(artiInteg.ProjectIntegration.Config[sdk.ArtifactManagerConfigPlatform].Value, artiInteg.ProjectIntegration.Config[sdk.ArtifactManagerConfigURL].Value, artifactManagerToken)
+	if err != nil {
+		return "", err
+	}
+	fileInfo, err := artifactClient.GetFileInfo(artResult.RepoName, artResult.Path)
+	if err != nil {
+		return "", err
+	}
+	artResult.Size = fileInfo.Size
+	artResult.MD5 = fileInfo.Md5
+	artResult.RepoType = fileInfo.Type
+
 	if err := artResult.IsValid(); err != nil {
 		return "", err
 	}
+	dataUpdated, _ := json.Marshal(artResult)
+	runResult.DataRaw = dataUpdated
+
 	cacheKey := GetRunResultKey(runResult.WorkflowRunID, runResult.Type, artResult.Name)
 	b, err := store.Exist(cacheKey)
 	if err != nil {
