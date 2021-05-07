@@ -13,7 +13,7 @@ testcases:
 - name: import integration
   steps:
   - script: envsubst < ./fixtures/integrations/artifactory.yml > ./fixtures/integrations/artifactory.replaced.yml
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} project integration import ITSCWRKFLW11 ./fixtures/integrations/artifactory.replaced.yml
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project integration import ITSCWRKFLWARTIFACTORY ./fixtures/integrations/artifactory.replaced.yml
 
 - name: import workflow
   steps:
@@ -21,20 +21,20 @@ testcases:
 
 - name: run workflow
   steps:
-  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow run ITSCWRKFLW11 test-action-artifact
+  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow run ITSCWRKFLWARTIFACTORY test-action-artifact
     assertions:
     - result.code ShouldEqual 0
     - "result.systemout ShouldContainSubstring Workflow test-action-artifact #1 has been launched"
 
 - name: the workflow should be successful
   steps:
-  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow status ITSCWRKFLW11 test-action-artifact 1 --format json
+  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow status ITSCWRKFLWARTIFACTORY test-action-artifact 1 --format json
     assertions:
     - result.code ShouldEqual 0
     - result.systemoutjson.status ShouldEqual Success
     retry: 30
     delay: 10
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow result list ITSCWRKFLW11 test-action-artifact 1 --format json
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow result list ITSCWRKFLWARTIFACTORY test-action-artifact 1 --format json
     assertions:
       - result.code ShouldEqual 0
       - result.systemoutjson ShouldHaveLength 2
