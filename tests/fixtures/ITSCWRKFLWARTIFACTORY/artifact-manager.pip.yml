@@ -1,0 +1,34 @@
+version: v1.0
+name: artifact-manager
+parameters:
+  integration:
+    type: string
+stages:
+- Stage 1
+- Stage 2
+jobs:
+- job: UploadJob
+  stage: Stage 1
+  steps:
+  - script:
+    - echo "foo"> bar
+    - echo "a_la_mano" > bar_mano
+    - curl -u "{{.cds.integration.artifact_manager.token.name}}:{{.cds.integration.artifaact_manager.token}}" -XPUT {{.cds.integration.artifact_manager.url}}{{.cds.integration.artifact_manager.cds.repository}}/path/to/my/bar_mano
+    - worker run-result add artifact-manager bar_mano {{.cds.integration.artifact_manager.cds.repository}} path/to/my/bar_mano
+  - artifactUpload:
+      path: bar
+      tag: '{{.cds.version}}'
+  requirements:
+  - os-architecture: linux/amd64
+- job: DownloadJob
+  stage: Stage 2
+  steps:
+  - artifactDownload:
+      path: "."
+      tag: ""
+  - script:
+    - ls -l
+    - pwd
+    - grep foo bar
+  requirements:
+  - os-architecture: linux/amd64

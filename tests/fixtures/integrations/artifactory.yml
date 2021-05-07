@@ -1,0 +1,29 @@
+name: artifactory
+model:
+  name: ArtifactManager
+config:
+  platform:
+    value: "artifactory"
+    type: string
+  url:
+    value: "${ARTIFACTORY_URL}/artifactory/"
+    type: string
+  token.name:
+    value: mytoken
+    type: string
+  token:
+    value: "${ARTIFACTORY_TOKEN}"
+    type: password
+  cds.repository:
+    value: "example-repo-local"
+    type: string
+  promotion.maturity.low:
+    value: "snapshot"
+    type: string
+  promotion.maturity.high:
+    value: "release"
+    type: string
+additional_default_config:
+  build.info.path:
+    type: string
+    value: "foo/bar"

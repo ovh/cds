@@ -8,6 +8,7 @@ export AWS_ENDPOINT_URL=http://$$(hostname):9000
 endef
 
 MINIO_CONTAINER_ID = $(shell docker ps -f name=minio1 -q)
+ARTIFACTORY_CONTAINER_ID = $(shell docker ps -f name=artifactory -q)
 
 UNAME_S := $(shell uname -s| tr A-Z a-z)
 VERSION := $(if ${CDS_VERSION},${CDS_VERSION},snapshot)
@@ -17,6 +18,13 @@ COVER_FILES = $(shell find . -name "*.coverprofile")
 clean:
 	@rm -f $(MINIO_CONTAINER_ID) $(MINIO_RC)
 	@docker kill minio1 || true && docker rm minio1 || true
+
+artifactory_start:
+	@if [ -z "$(ARTIFACTORY_CONTAINER_ID)" ]; then \
+		docker rm artifactory >/dev/null 2>&1 || true; \
+		echo "starting artifactory container"; \
+		docker run -d -p 9900:8081 -p 9901:8082 --name artifactory docker.bintray.io/jfrog/artifactory-oss:latest; \
+	fi;
 
 minio_start: $(MINIO_RC)
 	@if [ -z "$(MINIO_CONTAINER_ID)" ]; then \

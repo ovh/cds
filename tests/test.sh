@@ -55,6 +55,9 @@ AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID:-AKIAIOSFODNN7EXAMPLE}"
 AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY:-wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY}"
 AWS_ENDPOINT_URL="${AWS_ENDPOINT_URL:-http://$(hostname):9000}"
 
+ARTIFACTORY_TOKEN="${ARTIFACTORY_TOKEN:-password}"
+ARTIFACTORY_URL="${ARTIFACTORY_URL:-http://$(hostname):9900}"
+
 echo -e "Using venom using following variables:"
 echo -e "  VENOM=${CYAN}${VENOM}${NOCOLOR}"
 echo -e "  VENOM_OPTS=${CYAN}${VENOM_OPTS}${NOCOLOR}"
@@ -219,6 +222,8 @@ for target in $@; do
             export AWS_ACCESS_KEY_ID
             export AWS_SECRET_ACCESS_KEY
             export AWS_ENDPOINT_URL
+            export ARTIFACTORY_TOKEN
+            export ARTIFACTORY_URL
             workflow_with_integration_tests
             admin_tests;;
         workflow_with_third_parties)

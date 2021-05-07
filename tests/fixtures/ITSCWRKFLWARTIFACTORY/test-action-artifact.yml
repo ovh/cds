@@ -1,0 +1,11 @@
+name: test-action-artifact
+version: v2.0
+workflow:
+  root:
+    pipeline: artifact-manager
+integrations:
+  artifactory:
+    config:
+      build.info.path:
+        type: string
+        value: foo/bar
