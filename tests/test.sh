@@ -55,6 +55,7 @@ AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID:-AKIAIOSFODNN7EXAMPLE}"
 AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY:-wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY}"
 AWS_ENDPOINT_URL="${AWS_ENDPOINT_URL:-http://$(hostname):9000}"
 
+ARTIFACTORY_TOKEN_NAME="${ARTIFACTORY_TOKEN_NAME:-admin}"
 ARTIFACTORY_TOKEN="${ARTIFACTORY_TOKEN:-password}"
 ARTIFACTORY_URL="${ARTIFACTORY_URL:-http://$(hostname):9900}"
 
@@ -223,6 +224,7 @@ for target in $@; do
             export AWS_SECRET_ACCESS_KEY
             export AWS_ENDPOINT_URL
             export ARTIFACTORY_TOKEN
+            export ARTIFACTORY_TOKEN_NAME
             export ARTIFACTORY_URL
             workflow_with_integration_tests
             admin_tests;;

@@ -1,5 +1,6 @@
 name: Workflow (ITSCWRKFLWARTIFACTORY) should use the action artifact upload / download with integration artifactory
 vars:
+  artifactory_token_name: ''
   artifactory_token: ''
   artifactory_url: ''
 

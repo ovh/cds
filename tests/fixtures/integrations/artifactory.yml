@@ -9,7 +9,7 @@ config:
     value: "${ARTIFACTORY_URL}/artifactory/"
     type: string
   token.name:
-    value: mytoken
+    value: "${ARTIFACTORY_TOKEN_NAME}"
     type: string
   token:
     value: "${ARTIFACTORY_TOKEN}"
