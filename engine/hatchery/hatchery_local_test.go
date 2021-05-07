@@ -2,7 +2,6 @@ package hatchery_test
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"os/exec"
 	"strings"
@@ -107,11 +106,11 @@ func TestHatcheryLocal(t *testing.T) {
 	}
 }
 
-func TestHelperProcess(*testing.T) {
+func TestHelperProcess(t *testing.T) {
 	if os.Getenv("GO_WANT_HELPER_PROCESS") != "1" {
 		return
 	}
 
-	fmt.Println(os.Environ())
+	t.Log(os.Environ())
 	time.Sleep(30 * time.Second)
 }
