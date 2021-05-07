@@ -2,6 +2,7 @@ package hatchery_test
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/exec"
 	"strings"
@@ -49,6 +50,7 @@ func TestHatcheryLocal(t *testing.T) {
 	cfg.API.MaxHeartbeatFailures = 0
 	cfg.Provision.RegisterFrequency = 1
 	cfg.Provision.MaxWorker = 1
+	cfg.Provision.InjectEnvVars = []string{"AAA=AAA"}
 	privKey, _ := jws.NewRandomRSAKey()
 	privKeyPEM, _ := jws.ExportPrivateKey(privKey)
 	cfg.RSAPrivateKey = string(privKeyPEM)
@@ -109,5 +111,7 @@ func TestHelperProcess(*testing.T) {
 	if os.Getenv("GO_WANT_HELPER_PROCESS") != "1" {
 		return
 	}
+
+	fmt.Println(os.Environ())
 	time.Sleep(30 * time.Second)
 }

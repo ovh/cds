@@ -115,6 +115,7 @@ func configBootstrap(args []string) Configuration {
 			conf.Hatchery.Openstack.HTTP.Port = 8086
 		case sdk.TypeHatchery + ":swarm":
 			conf.Hatchery.Swarm = &swarm.HatcheryConfiguration{}
+			conf.Hatchery.Swarm.Provision.InjectEnvVars = []string{"CDS=1"}
 			defaults.SetDefaults(conf.Hatchery.Swarm)
 			conf.Hatchery.Swarm.DockerEngines = map[string]swarm.DockerEngineConfiguration{
 				"sample-docker-engine": {

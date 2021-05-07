@@ -250,12 +250,23 @@ func getStatusHandler(h hatchery.Interface) service.HandlerFunc {
 	}
 }
 
-func (c *Common) GenerateWorkerArgs(h hatchery.Interface, spawnArgs hatchery.SpawnArguments) sdk.WorkerArgs {
+func (c *Common) GenerateWorkerArgs(ctx context.Context, h hatchery.Interface, spawnArgs hatchery.SpawnArguments) sdk.WorkerArgs {
 	apiURL := h.Configuration().Provision.WorkerAPIHTTP.URL
 	httpInsecure := h.Configuration().Provision.WorkerAPIHTTP.Insecure
 	if apiURL == "" {
 		apiURL = h.Configuration().API.HTTP.URL
 		httpInsecure = h.Configuration().API.HTTP.Insecure
+	}
+
+	envvars := make(map[string]string, len(h.Configuration().Provision.InjectEnvVars))
+
+	for _, e := range h.Configuration().Provision.InjectEnvVars {
+		tuple := strings.SplitN(e, "=", 2)
+		if len(tuple) != 2 {
+			log.Error(ctx, "invalid env variable to inject: %q", e)
+			continue
+		}
+		envvars[tuple[0]] = tuple[1]
 	}
 
 	return sdk.WorkerArgs{
@@ -265,6 +276,7 @@ func (c *Common) GenerateWorkerArgs(h hatchery.Interface, spawnArgs hatchery.Spa
 		Name:              spawnArgs.WorkerName,
 		Model:             spawnArgs.ModelName(),
 		HatcheryName:      h.Name(),
+		InjectEnvVars:     envvars,
 		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
 		GraylogPort:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Port,
 		GraylogExtraKey:   h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey,

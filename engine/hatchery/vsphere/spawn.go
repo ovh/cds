@@ -323,7 +323,7 @@ func (h *HatcheryVSphere) launchScriptWorker(ctx context.Context, name string, j
 		return errt
 	}
 
-	udataParam := h.GenerateWorkerArgs(h, hatchery.SpawnArguments{
+	udataParam := h.GenerateWorkerArgs(ctx, h, hatchery.SpawnArguments{
 		WorkerToken: token,
 		WorkerName:  name,
 		Model:       &model,
@@ -331,6 +331,10 @@ func (h *HatcheryVSphere) launchScriptWorker(ctx context.Context, name string, j
 	udataParam.TTL = h.Config.WorkerTTL
 	udataParam.FromWorkerImage = true
 	udataParam.WorkflowJobID = jobID
+
+	for k, v := range udataParam.InjectEnvVars {
+		env = append(env, k+"="+v)
+	}
 
 	var buffer bytes.Buffer
 	if err := tmpl.Execute(&buffer, udataParam); err != nil {
