@@ -4,7 +4,9 @@ import (
 	"context"
 	"database/sql/driver"
 	json "encoding/json"
+	"fmt"
 	"net/http"
+	"sort"
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
@@ -393,15 +395,72 @@ type AuthConsumer struct {
 	GroupIDs           Int64Slice               `json:"group_ids,omitempty" cli:"group_ids" db:"group_ids"`
 	InvalidGroupIDs    Int64Slice               `json:"invalid_group_ids,omitempty" db:"invalid_group_ids"`
 	ScopeDetails       AuthConsumerScopeDetails `json:"scope_details,omitempty" cli:"scope_details" db:"scope_details"`
-	IssuedAt           time.Time                `json:"issued_at" cli:"issued_at" db:"issued_at"`
+	DeprecatedIssuedAt time.Time                `json:"issued_at" cli:"issued_at" db:"issued_at"`
 	Disabled           bool                     `json:"disabled" cli:"disabled" db:"disabled"`
 	Warnings           AuthConsumerWarnings     `json:"warnings,omitempty" db:"warnings"`
+	// Validity period
+	ValidityPeriods AuthConsumerValidityPeriods `json:"validity_periods,omitempty" db:"validity_periods"`
 	// aggregates
 	AuthentifiedUser *AuthentifiedUser `json:"user,omitempty" db:"-"`
 	Groups           Groups            `json:"groups,omitempty" db:"-"`
 	// aggregates by router auth middleware
 	Service *Service `json:"-" db:"-"`
 	Worker  *Worker  `json:"-" db:"-"`
+}
+
+func NewAuthConsumerValidityPeriod(iat time.Time, duration time.Duration) AuthConsumerValidityPeriods {
+	return AuthConsumerValidityPeriods{
+		{
+			IssuedAt: iat,
+			Duration: duration,
+		},
+	}
+}
+
+type AuthConsumerValidityPeriods []AuthConsumerValidityPeriod
+
+func (p AuthConsumerValidityPeriods) Value() (driver.Value, error) {
+	j, err := json.Marshal(p)
+	return j, WrapError(err, "cannot marshal AuthConsumerValidityPeriods")
+}
+
+func (p *AuthConsumerValidityPeriods) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
+	}
+	return WrapError(json.Unmarshal(source, p), "cannot unmarshal AuthConsumerValidityPeriods")
+}
+
+func (p AuthConsumerValidityPeriods) Latest() *AuthConsumerValidityPeriod {
+	if len(p) == 0 {
+		return nil
+	}
+	p.Sort()
+	return &p[0]
+}
+
+func (p *AuthConsumerValidityPeriods) Sort() {
+	sort.Slice(*p, func(i, j int) bool {
+		return (*p)[j].IssuedAt.Before((*p)[i].IssuedAt)
+	})
+}
+
+func (p *AuthConsumerValidityPeriods) RevokeLatest() {
+	if len(*p) == 0 {
+		return
+	}
+	p.Sort()
+	(*p)[0].Revoked = true
+}
+
+type AuthConsumerValidityPeriod struct {
+	IssuedAt time.Time     `json:"issued_at" cli:"issued_at" `
+	Duration time.Duration `json:"duration" cli:"duration"`
+	Revoked  bool          `json:"revoked" cli:"revoked"`
 }
 
 // IsValid returns validity for auth consumer.

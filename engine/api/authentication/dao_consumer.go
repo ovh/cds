@@ -117,6 +117,7 @@ func InsertConsumer(ctx context.Context, db gorpmapper.SqlExecutorWithTx, ac *sd
 		ac.ID = sdk.UUID()
 	}
 	ac.Created = time.Now()
+	ac.ValidityPeriods.Sort()
 	c := authConsumer{AuthConsumer: *ac}
 	if err := gorpmapping.InsertAndSign(ctx, db, &c); err != nil {
 		return sdk.WrapError(err, "unable to insert auth consumer")
@@ -127,6 +128,7 @@ func InsertConsumer(ctx context.Context, db gorpmapper.SqlExecutorWithTx, ac *sd
 
 // UpdateConsumer in database.
 func UpdateConsumer(ctx context.Context, db gorpmapper.SqlExecutorWithTx, ac *sdk.AuthConsumer) error {
+	ac.ValidityPeriods.Sort()
 	c := authConsumer{AuthConsumer: *ac}
 	if err := gorpmapping.UpdateAndSign(ctx, db, &c); err != nil {
 		return sdk.WrapError(err, "unable to update auth consumer with id: %s", ac.ID)

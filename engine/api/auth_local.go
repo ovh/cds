@@ -150,7 +150,7 @@ func initBuiltinConsumersFromStartupConfig(ctx context.Context, tx gorpmapper.Sq
 			Data:               map[string]string{},
 			GroupIDs:           []int64{group.SharedInfraGroup.ID},
 			ScopeDetails:       scopes,
-			IssuedAt:           time.Unix(startupConfig.IAT, 0),
+			ValidityPeriods:    sdk.NewAuthConsumerValidityPeriod(time.Unix(startupConfig.IAT, 0), 0),
 		}
 
 		if err := authentication.InsertConsumer(ctx, tx, &c); err != nil {

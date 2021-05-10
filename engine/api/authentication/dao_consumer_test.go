@@ -33,7 +33,7 @@ func TestLoadConsumer(t *testing.T) {
 		ScopeDetails:       sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAdmin),
 		GroupIDs:           []int64{5, 10},
 		AuthentifiedUserID: u.ID,
-		IssuedAt:           time.Now(),
+		ValidityPeriods:    sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
 	}
 	require.NoError(t, authentication.InsertConsumer(context.TODO(), db, &c1))
 
@@ -44,7 +44,7 @@ func TestLoadConsumer(t *testing.T) {
 		ScopeDetails:       sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAdmin),
 		GroupIDs:           []int64{10, 15},
 		AuthentifiedUserID: u.ID,
-		IssuedAt:           time.Now(),
+		ValidityPeriods:    sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
 	}
 	require.NoError(t, authentication.InsertConsumer(context.TODO(), db, &c2))
 
@@ -98,7 +98,7 @@ func TestInsertConsumer(t *testing.T) {
 	c := sdk.AuthConsumer{
 		Name:               sdk.RandomString(10),
 		AuthentifiedUserID: u.ID,
-		IssuedAt:           time.Now(),
+		ValidityPeriods:    sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
 	}
 	require.NoError(t, authentication.InsertConsumer(context.TODO(), db, &c))
 
@@ -119,7 +119,7 @@ func TestUpdateConsumer(t *testing.T) {
 	c := sdk.AuthConsumer{
 		Name:               sdk.RandomString(10),
 		AuthentifiedUserID: u.ID,
-		IssuedAt:           time.Now(),
+		ValidityPeriods:    sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
 	}
 	require.NoError(t, authentication.InsertConsumer(context.TODO(), db, &c))
 
@@ -142,7 +142,7 @@ func TestDeleteConsumer(t *testing.T) {
 	c := sdk.AuthConsumer{
 		Name:               sdk.RandomString(10),
 		AuthentifiedUserID: u.ID,
-		IssuedAt:           time.Now(),
+		ValidityPeriods:    sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
 	}
 	require.NoError(t, authentication.InsertConsumer(context.TODO(), db, &c))
 

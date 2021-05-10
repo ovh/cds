@@ -24,7 +24,8 @@ func NewConsumerWorker(ctx context.Context, db gorpmapper.SqlExecutorWithTx, nam
 			sdk.AuthConsumerScopeRunExecution,
 			sdk.AuthConsumerScopeService,
 		),
-		IssuedAt: time.Now(),
+		//IssuedAt: time.Now(),
+		ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 24*time.Hour),
 	}
 
 	if err := InsertConsumer(ctx, db, &c); err != nil {
@@ -46,7 +47,8 @@ func NewConsumerExternal(ctx context.Context, db gorpmapper.SqlExecutorWithTx, u
 			"username":    userInfo.Username,
 			"email":       userInfo.Email,
 		},
-		IssuedAt: time.Now(),
+		//IssuedAt: time.Now(),
+		ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
 	}
 
 	if err := InsertConsumer(ctx, db, &c); err != nil {
@@ -69,8 +71,14 @@ func ConsumerRegen(ctx context.Context, db gorpmapper.SqlExecutorWithTx, consume
 	consumer.InvalidGroupIDs = nil
 	consumer.Warnings = nil
 
-	// Update the IAT attribute in database
-	consumer.IssuedAt = time.Now()
+	// Regen the token
+	consumer.ValidityPeriods.RevokeLatest()
+	consumer.ValidityPeriods = append(consumer.ValidityPeriods,
+		sdk.AuthConsumerValidityPeriod{
+			IssuedAt: time.Now(),
+			Duration: 0,
+		},
+	)
 	if err := UpdateConsumer(ctx, db, consumer); err != nil {
 		return err
 	}

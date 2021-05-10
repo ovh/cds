@@ -78,7 +78,7 @@ func (api *API) postConsumerByUserHandler() service.Handler {
 		}
 
 		// Create the new built in consumer from request data
-		newConsumer, token, err := builtin.NewConsumer(ctx, tx, reqData.Name, reqData.Description,
+		newConsumer, token, err := builtin.NewConsumer(ctx, tx, reqData.Name, reqData.Description, 0,
 			consumer, reqData.GroupIDs, reqData.ScopeDetails)
 		if err != nil {
 			return err

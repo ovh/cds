@@ -37,7 +37,7 @@ func TestConsumerInvalidateGroupForUser_InvalidateOneConsumerGroup(t *testing.T)
 		ScopeDetails:       sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAdmin),
 		GroupIDs:           []int64{g1.ID, g2.ID},
 		AuthentifiedUserID: u.ID,
-		IssuedAt:           time.Now(),
+		ValidityPeriods:    sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
 	}
 	require.NoError(t, authentication.InsertConsumer(context.TODO(), db, &c))
 
@@ -77,7 +77,7 @@ func TestConsumerInvalidateGroupForUser_InvalidateOneConsumerGroupForAdmin(t *te
 		ScopeDetails:       sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAdmin),
 		GroupIDs:           []int64{g1.ID, g2.ID},
 		AuthentifiedUserID: u.ID,
-		IssuedAt:           time.Now(),
+		ValidityPeriods:    sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
 	}
 	require.NoError(t, authentication.InsertConsumer(context.TODO(), db, &c))
 
@@ -112,7 +112,7 @@ func TestConsumerInvalidateGroupForUser_InvalidateLastConsumerGroup(t *testing.T
 		ScopeDetails:       sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAdmin),
 		GroupIDs:           []int64{g1.ID},
 		AuthentifiedUserID: u.ID,
-		IssuedAt:           time.Now(),
+		ValidityPeriods:    sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
 	}
 	require.NoError(t, authentication.InsertConsumer(context.TODO(), db, &c))
 
@@ -152,7 +152,7 @@ func TestConsumerRemoveGroup_RemoveOneConsumerGroup(t *testing.T) {
 		ScopeDetails:       sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAdmin),
 		GroupIDs:           []int64{g1.ID, g2.ID},
 		AuthentifiedUserID: u.ID,
-		IssuedAt:           time.Now(),
+		ValidityPeriods:    sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
 	}
 	require.NoError(t, authentication.InsertConsumer(context.TODO(), db, &c))
 
@@ -191,7 +191,7 @@ func TestConsumerRemoveGroup_RemoveOneInvalidConsumerGroup(t *testing.T) {
 		GroupIDs:           []int64{g2.ID},
 		InvalidGroupIDs:    []int64{g1.ID},
 		AuthentifiedUserID: u.ID,
-		IssuedAt:           time.Now(),
+		ValidityPeriods:    sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
 		Warnings: sdk.AuthConsumerWarnings{{
 			Type:      sdk.WarningGroupInvalid,
 			GroupID:   g1.ID,
@@ -233,7 +233,7 @@ func TestConsumerRemoveGroup_RemoveLastConsumerGroup(t *testing.T) {
 		ScopeDetails:       sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAdmin),
 		GroupIDs:           []int64{g1.ID},
 		AuthentifiedUserID: u.ID,
-		IssuedAt:           time.Now(),
+		ValidityPeriods:    sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
 	}
 	require.NoError(t, authentication.InsertConsumer(context.TODO(), db, &c))
 
@@ -271,7 +271,7 @@ func TestConsumerRemoveGroup_RemoveLastInvalidConsumerGroup(t *testing.T) {
 		ScopeDetails:       sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAdmin),
 		InvalidGroupIDs:    []int64{g1.ID},
 		AuthentifiedUserID: u.ID,
-		IssuedAt:           time.Now(),
+		ValidityPeriods:    sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
 		Disabled:           true,
 		Warnings: sdk.AuthConsumerWarnings{
 			{
@@ -322,7 +322,7 @@ func TestConsumerRestoreInvalidatedGroupForUser_RestoreInvalidatedGroup(t *testi
 		GroupIDs:           []int64{g2.ID},
 		InvalidGroupIDs:    []int64{g1.ID},
 		AuthentifiedUserID: u.ID,
-		IssuedAt:           time.Now(),
+		ValidityPeriods:    sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
 		Warnings: sdk.AuthConsumerWarnings{
 			{
 				Type:      sdk.WarningGroupInvalid,
@@ -365,7 +365,7 @@ func TestConsumerLifecycle_RestoreInvalidatedLastGroup(t *testing.T) {
 		ScopeDetails:       sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAdmin),
 		InvalidGroupIDs:    []int64{g1.ID},
 		AuthentifiedUserID: u.ID,
-		IssuedAt:           time.Now(),
+		ValidityPeriods:    sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
 		Disabled:           true,
 		Warnings: sdk.AuthConsumerWarnings{
 			{
@@ -412,7 +412,7 @@ func TestConsumerInvalidateGroupsForUser_InvalidateLastGroups(t *testing.T) {
 		GroupIDs:           []int64{g1.ID},
 		InvalidGroupIDs:    []int64{g2.ID},
 		AuthentifiedUserID: u.ID,
-		IssuedAt:           time.Now(),
+		ValidityPeriods:    sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
 		Warnings: sdk.AuthConsumerWarnings{
 			{
 				Type:      sdk.WarningGroupInvalid,
@@ -462,7 +462,7 @@ func TestConsumerRestoreInvalidatedGroupsForUser(t *testing.T) {
 		ScopeDetails:       sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAdmin),
 		InvalidGroupIDs:    []int64{g1.ID, g2.ID},
 		AuthentifiedUserID: u.ID,
-		IssuedAt:           time.Now(),
+		ValidityPeriods:    sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
 		Disabled:           true,
 		Warnings: sdk.AuthConsumerWarnings{
 			{
