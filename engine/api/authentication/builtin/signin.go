@@ -1,10 +1,12 @@
 package builtin
 
 import (
+	"context"
 	"time"
 
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/sdk"
+	"github.com/rockbears/log"
 )
 
 type signinBuiltinConsumerToken struct {
@@ -38,7 +40,7 @@ func parseSigninConsumerToken(signature string) (signinBuiltinConsumerToken, err
 	return payload, nil
 }
 
-func CheckSigninConsumerTokenIssuedAt(signature string, c *sdk.AuthConsumer) (string, error) {
+func CheckSigninConsumerTokenIssuedAt(ctx context.Context, signature string, c *sdk.AuthConsumer) (string, error) {
 	payload, err := parseSigninConsumerToken(signature)
 	if err != nil {
 		return "", err
@@ -47,13 +49,15 @@ func CheckSigninConsumerTokenIssuedAt(signature string, c *sdk.AuthConsumer) (st
 		s, err := checkSigninConsumerTokenIssuedAt(payload, period)
 		if err == nil {
 			return s, nil
+		} else {
+			log.Debug(ctx, "%+v", err)
 		}
 	}
 	return "", sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid signin token")
 }
 
 func checkSigninConsumerTokenIssuedAt(payload signinBuiltinConsumerToken, v sdk.AuthConsumerValidityPeriod) (string, error) {
-	var eqIAT = time.Unix(payload.IAT, 0).Equal(v.IssuedAt)
+	var eqIAT = payload.IAT == v.IssuedAt.Unix()
 	var afterIAT = time.Unix(payload.IAT, 0).After(v.IssuedAt)
 	var hasRevoke = v.Duration > 0
 	var beforeRevoke = time.Unix(payload.IAT, 0).Before(v.IssuedAt.Add(v.Duration))
