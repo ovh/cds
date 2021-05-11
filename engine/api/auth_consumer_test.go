@@ -224,13 +224,69 @@ func Test_postConsumerRegenByUserHandler(t *testing.T) {
 	require.Equal(t, http.StatusBadRequest, rec.Code)
 
 	// the new signing token from the builtin consumer should be fine
+	signinToken2 := response.Token
 	uri = api.Router.GetRoute(http.MethodPost, api.postAuthBuiltinSigninHandler, nil)
 	req = assets.NewRequest(t, "POST", uri, sdk.AuthConsumerSigninRequest{
-		"token": response.Token,
+		"token": signinToken2,
 	})
 	rec = httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
 	require.Equal(t, http.StatusOK, rec.Code)
+
+	t.Log("next use case...")
+	time.Sleep(2 * time.Second)
+
+	// Regen the latest token with an overlap duration
+	uri = api.Router.GetRoute(http.MethodPost, api.postConsumerRegenByUserHandler, map[string]string{
+		"permUsername":   u.Username,
+		"permConsumerID": builtinConsumer.ID,
+	})
+	req = assets.NewJWTAuthentifiedRequest(t, jwt3, http.MethodPost, uri, sdk.AuthConsumerRegenRequest{
+		RevokeSessions:  true,
+		OverlapDuration: "4s", // short 4s overlap
+		NewDuration:     "24h",
+	})
+	rec = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusOK, rec.Code)
+
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &response))
+	t.Logf("here is the new consumer: %+v", response)
+
+	signinToken3 := response.Token
+
+	// Wait before using it
+	time.Sleep(2 * time.Second)
+
+	// the new signing token from the builtin consumer should be fine
+	uri = api.Router.GetRoute(http.MethodPost, api.postAuthBuiltinSigninHandler, nil)
+	req = assets.NewRequest(t, "POST", uri, sdk.AuthConsumerSigninRequest{
+		"token": signinToken3,
+	})
+	rec = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusOK, rec.Code)
+
+	// The old token should be ok too, because of the overlap duration
+	uri = api.Router.GetRoute(http.MethodPost, api.postAuthBuiltinSigninHandler, nil)
+	req = assets.NewRequest(t, "POST", uri, sdk.AuthConsumerSigninRequest{
+		"token": signinToken2,
+	})
+	rec = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusOK, rec.Code)
+
+	// Now wait for the overlab duration to be over....
+	time.Sleep(2 * time.Second)
+
+	// Now, the old token should be rejected
+	uri = api.Router.GetRoute(http.MethodPost, api.postAuthBuiltinSigninHandler, nil)
+	req = assets.NewRequest(t, "POST", uri, sdk.AuthConsumerSigninRequest{
+		"token": signinToken2,
+	})
+	rec = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusBadRequest, rec.Code)
 }
 
 func Test_getSessionsByUserHandler(t *testing.T) {

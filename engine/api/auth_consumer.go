@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/ovh/cds/sdk"
@@ -153,7 +154,27 @@ func (api *API) postConsumerRegenByUserHandler() service.Handler {
 			return err
 		}
 
-		if err := authentication.ConsumerRegen(ctx, tx, consumer); err != nil {
+		if req.OverlapDuration == "" {
+			req.OverlapDuration = api.Config.Auth.TokenOverlapDefaultDuration
+		}
+		if req.NewDuration == "" {
+			req.NewDuration = api.Config.Auth.TokenDefaultDuration
+		}
+		var overlapDuration, newDuration time.Duration
+		if req.OverlapDuration != "" {
+			overlapDuration, err = time.ParseDuration(req.OverlapDuration)
+			if err != nil {
+				return sdk.NewError(sdk.ErrWrongRequest, err)
+			}
+		}
+		if req.NewDuration != "" {
+			newDuration, err = time.ParseDuration(req.NewDuration)
+			if err != nil {
+				return sdk.NewError(sdk.ErrWrongRequest, err)
+			}
+		}
+
+		if err := authentication.ConsumerRegen(ctx, tx, consumer, overlapDuration, newDuration); err != nil {
 			return err
 		}
 

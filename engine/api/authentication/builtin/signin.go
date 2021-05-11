@@ -46,27 +46,23 @@ func CheckSigninConsumerTokenIssuedAt(ctx context.Context, signature string, c *
 		return "", err
 	}
 	for _, period := range c.ValidityPeriods {
-		s, err := checkSigninConsumerTokenIssuedAt(payload, period)
+		s, err := checkSigninConsumerTokenIssuedAt(ctx, payload, period)
 		if err == nil {
 			return s, nil
 		} else {
-			log.Debug(ctx, "%+v", err)
+			log.Debug(ctx, "payload IAT %q is not valid in %+v: %v", payload.IAT, period, err)
 		}
 	}
 	return "", sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid signin token")
 }
 
-func checkSigninConsumerTokenIssuedAt(payload signinBuiltinConsumerToken, v sdk.AuthConsumerValidityPeriod) (string, error) {
+func checkSigninConsumerTokenIssuedAt(ctx context.Context, payload signinBuiltinConsumerToken, v sdk.AuthConsumerValidityPeriod) (string, error) {
 	var eqIAT = payload.IAT == v.IssuedAt.Unix()
-	var afterIAT = time.Unix(payload.IAT, 0).After(v.IssuedAt)
 	var hasRevoke = v.Duration > 0
-	var beforeRevoke = time.Unix(payload.IAT, 0).Before(v.IssuedAt.Add(v.Duration))
-	var eqRevoke = time.Unix(payload.IAT, 0).Equal(v.IssuedAt.Add(v.Duration))
+	var beforeRevoke = time.Now().Before(v.IssuedAt.Add(v.Duration))
+	var eqRevoke = time.Now().Equal(v.IssuedAt.Add(v.Duration))
 
-	if v.Revoked {
-		return "", sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid signin token")
-	}
-	if !eqIAT && !afterIAT {
+	if !eqIAT {
 		return "", sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid signin token")
 	}
 	if hasRevoke && !beforeRevoke && !eqRevoke {

@@ -232,7 +232,9 @@ func (s AuthConsumerScopeSlice) Value() (driver.Value, error) {
 
 // AuthConsumerRegenRequest struct.
 type AuthConsumerRegenRequest struct {
-	RevokeSessions bool `json:"revoke_sessions"`
+	RevokeSessions  bool   `json:"revoke_sessions"`
+	OverlapDuration string `json:"overlap_duration"`
+	NewDuration     string `json:"new_duration"`
 }
 
 // AuthConsumerSigninRequest struct for auth consumer signin request.
@@ -449,18 +451,9 @@ func (p *AuthConsumerValidityPeriods) Sort() {
 	})
 }
 
-func (p *AuthConsumerValidityPeriods) RevokeLatest() {
-	if len(*p) == 0 {
-		return
-	}
-	p.Sort()
-	(*p)[0].Revoked = true
-}
-
 type AuthConsumerValidityPeriod struct {
 	IssuedAt time.Time     `json:"issued_at" cli:"issued_at" `
 	Duration time.Duration `json:"duration" cli:"duration"`
-	Revoked  bool          `json:"revoked" cli:"revoked"`
 }
 
 // IsValid returns validity for auth consumer.

@@ -47,8 +47,7 @@ func (api *API) postMaintenanceHandler() service.Handler {
 
 func (api *API) getAdminServicesHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		srvs := []sdk.Service{}
-
+		var srvs []sdk.Service
 		var err error
 		if r.FormValue("type") != "" {
 			srvs, err = services.LoadAllByType(ctx, api.mustDB(), r.FormValue("type"), services.LoadOptions.WithStatus)

@@ -59,7 +59,7 @@ func NewConsumerExternal(ctx context.Context, db gorpmapper.SqlExecutorWithTx, u
 }
 
 // ConsumerRegen updates a consumer issue date to invalidate old signin token.
-func ConsumerRegen(ctx context.Context, db gorpmapper.SqlExecutorWithTx, consumer *sdk.AuthConsumer) error {
+func ConsumerRegen(ctx context.Context, db gorpmapper.SqlExecutorWithTx, consumer *sdk.AuthConsumer, overlapDuration, newDuration time.Duration) error {
 	if consumer.Type != sdk.ConsumerBuiltin {
 		return sdk.NewErrorFrom(sdk.ErrForbidden, "can't regen a no builtin consumer")
 	}
@@ -72,7 +72,8 @@ func ConsumerRegen(ctx context.Context, db gorpmapper.SqlExecutorWithTx, consume
 	consumer.Warnings = nil
 
 	// Regen the token
-	consumer.ValidityPeriods.RevokeLatest()
+	latestPeriod := consumer.ValidityPeriods.Latest()
+	latestPeriod.Duration = time.Now().Add(overlapDuration).Sub(latestPeriod.IssuedAt)
 	consumer.ValidityPeriods = append(consumer.ValidityPeriods,
 		sdk.AuthConsumerValidityPeriod{
 			IssuedAt: time.Now(),
