@@ -1,6 +1,10 @@
 package main
 
 import (
+	"io/ioutil"
+	"os"
+
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
@@ -32,7 +36,15 @@ var projectVariableCreateCmd = cli.Command{
 	Args: []cli.Arg{
 		{Name: "variable-name"},
 		{Name: "variable-type"},
+	},
+	OptionalArgs: []cli.Arg{
 		{Name: "variable-value"},
+	},
+	Flags: []cli.Flag{
+		{
+			Name: "stdin",
+			Type: cli.FlagBool,
+		},
 	},
 }
 
@@ -42,6 +54,19 @@ func projectCreateVariableRun(v cli.Values) error {
 		Type:  v.GetString("variable-type"),
 		Value: v.GetString("variable-value"),
 	}
+
+	if variable.Value == "" && v.GetBool("stdin") {
+		btes, err := ioutil.ReadAll(os.Stdin)
+		if err != nil {
+			return err
+		}
+		variable.Value = string(btes)
+	}
+
+	if variable.Value == "" {
+		return errors.New("missing value")
+	}
+
 	return client.ProjectVariableCreate(v.GetString(_ProjectKey), variable)
 }
 
@@ -101,7 +126,15 @@ var projectVariableUpdateCmd = cli.Command{
 		{Name: "variable-oldname"},
 		{Name: "variable-name"},
 		{Name: "variable-type"},
+	},
+	OptionalArgs: []cli.Arg{
 		{Name: "variable-value"},
+	},
+	Flags: []cli.Flag{
+		{
+			Name: "stdin",
+			Type: cli.FlagBool,
+		},
 	},
 }
 
@@ -113,5 +146,18 @@ func projectUpdateVariableRun(v cli.Values) error {
 	variable.Name = v.GetString("variable-name")
 	variable.Type = v.GetString("variable-type")
 	variable.Value = v.GetString("variable-value")
+
+	if variable.Value == "" && v.GetBool("stdin") {
+		btes, err := ioutil.ReadAll(os.Stdin)
+		if err != nil {
+			return err
+		}
+		variable.Value = string(btes)
+	}
+
+	if variable.Value == "" {
+		return errors.New("missing value")
+	}
+
 	return client.ProjectVariableUpdate(v.GetString(_ProjectKey), variable)
 }
