@@ -42,8 +42,9 @@ var projectVariableCreateCmd = cli.Command{
 	},
 	Flags: []cli.Flag{
 		{
-			Name: "stdin",
-			Type: cli.FlagBool,
+			Name:  "stdin",
+			Usage: "read the variable value from stdin",
+			Type:  cli.FlagBool,
 		},
 	},
 }
@@ -132,8 +133,9 @@ var projectVariableUpdateCmd = cli.Command{
 	},
 	Flags: []cli.Flag{
 		{
-			Name: "stdin",
-			Type: cli.FlagBool,
+			Name:  "stdin",
+			Usage: "read the variable value from stdin",
+			Type:  cli.FlagBool,
 		},
 	},
 }
