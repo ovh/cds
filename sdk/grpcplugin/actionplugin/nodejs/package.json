@@ -16,7 +16,7 @@
   "dependencies": {
     "get-port": "4.0.0",
     "google-protobuf": "3.6.1",
-    "grpc": "1.22.2",
+    "grpc": "1.24.9",
     "lodash": "4.17.19",
     "yaml": "1.0.0"
   }
