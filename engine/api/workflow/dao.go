@@ -995,15 +995,14 @@ func checkIntegration(proj sdk.Project, w *sdk.Workflow) error {
 				workflowIntegration.MergeWithModel(projInt.Model)
 				w.Integrations[i] = *workflowIntegration
 				found = true
-
-				if workflowIntegration.ProjectIntegration.Model.ArtifactManager {
-					countArtifactManagerIntegration++
-				}
 				break
 			}
 		}
 		if !found {
 			return sdk.WithData(sdk.ErrIntegrationtNotFound, workflowIntegration.ProjectIntegration.Name)
+		}
+		if workflowIntegration.ProjectIntegration.Model.ArtifactManager {
+			countArtifactManagerIntegration++
 		}
 	}
 

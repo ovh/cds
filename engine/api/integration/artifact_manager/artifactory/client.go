@@ -42,7 +42,7 @@ func (c *Client) GetFileInfo(repoName string, filePath string) (sdk.FileInfo, er
 	fi := sdk.FileInfo{}
 	repoDetails := services.RepositoryDetails{}
 	if err := c.Asm.GetRepository(repoName, &repoDetails); err != nil {
-		return fi, sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to get repository %s", repoName)
+		return fi, sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to get repository %s: %v", repoName, err)
 	}
 	fi.Type = repoDetails.PackageType
 
