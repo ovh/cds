@@ -9,10 +9,10 @@ config:
     value: "${ARTIFACTORY_URL}/artifactory/"
     type: string
   token.name:
-    value: "${ARTIFACTORY_TOKEN_NAME}"
+    value: admin
     type: string
   token:
-    value: "${ARTIFACTORY_TOKEN}"
+    value: password
     type: password
   cds.repository:
     value: "example-repo-local"
