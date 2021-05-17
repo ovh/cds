@@ -19,6 +19,7 @@ import (
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/telemetry"
 )
@@ -84,7 +85,12 @@ func UpdateWorkflowRun(ctx context.Context, db gorp.SqlExecutor, wr *sdk.Workflo
 
 	runDB := Run(*wr)
 	if _, err := db.Update(&runDB); err != nil {
-		return sdk.WrapError(err, "Unable to update workflow run")
+		if e, ok := err.(*pq.Error); ok {
+			if e.Code == gorpmapper.ViolateUniqueKeyPGCode {
+				return sdk.NewError(sdk.ErrConflictData, e)
+			}
+		}
+		return sdk.WrapError(err, "unable to update workflow run")
 	}
 	wr.ID = runDB.ID
 	return nil
@@ -284,7 +290,7 @@ func LoadRunsIDsToDelete(db gorp.SqlExecutor, offset int64, limit int64) ([]int6
 	}
 
 	var ids []int64
-	querySelect := `SELECT id FROM workflow_run 
+	querySelect := `SELECT id FROM workflow_run
 					WHERE to_delete = true
 					ORDER BY workflow_run.start ASC limit $1 offset $2`
 	_, err = db.Select(&ids, querySelect, limit, offset)

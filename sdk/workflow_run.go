@@ -192,7 +192,7 @@ type WorkflowRunVersion struct {
 func (w WorkflowRunVersion) IsValid() error {
 	_, err := semver.ParseTolerant(w.Value)
 	if err != nil {
-		return NewError(ErrWrongRequest, fmt.Errorf("value '%s' is not semver compatible: %v", w.Value, err))
+		return NewError(ErrWrongRequest, fmt.Errorf("value %q is not semver compatible: %v", w.Value, err))
 	}
 	return nil
 }
