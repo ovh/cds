@@ -1228,11 +1228,14 @@ func (api *API) postWorkflowJobSetVersionHandler() service.Handler {
 		}
 
 		if workflowRun.Version != nil && *workflowRun.Version != data.Value {
-			return sdk.NewErrorFrom(sdk.ErrForbidden, "cannot change existing workflow run version value")
+			return sdk.NewErrorFrom(sdk.ErrForbidden, "cannot change existing workflow run version value %q", *workflowRun.Version)
 		}
 
 		workflowRun.Version = &data.Value
 		if err := workflow.UpdateWorkflowRun(ctx, tx, workflowRun); err != nil {
+			if sdk.ErrorIs(err, sdk.ErrConflictData) {
+				return sdk.NewErrorFrom(err, "version %q already used by another workflow run", data.Value)
+			}
 			return err
 		}
 
