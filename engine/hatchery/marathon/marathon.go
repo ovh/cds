@@ -237,7 +237,7 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 	instance := 1
 	forcePull := strings.HasSuffix(spawnArgs.Model.ModelDocker.Image, ":latest")
 
-	udataParam := h.GenerateWorkerArgs(h, spawnArgs)
+	udataParam := h.GenerateWorkerArgs(ctx, h, spawnArgs)
 	udataParam.TTL = h.Config.WorkerTTL
 	udataParam.WorkflowJobID = spawnArgs.JobID
 
@@ -279,7 +279,7 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 		spawnArgs.Model.ModelDocker.Envs = map[string]string{}
 	}
 
-	envsWm := map[string]string{}
+	envsWm := udataParam.InjectEnvVars
 	envsWm["CDS_MODEL_MEMORY"] = fmt.Sprintf("%d", memory)
 	envsWm["CDS_API"] = udataParam.API
 	envsWm["CDS_TOKEN"] = udataParam.Token

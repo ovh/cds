@@ -77,7 +77,7 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 		return err
 	}
 
-	udataParam := h.GenerateWorkerArgs(h, spawnArgs)
+	udataParam := h.GenerateWorkerArgs(ctx, h, spawnArgs)
 	udataParam.TTL = h.Config.WorkerTTL
 	udataParam.FromWorkerImage = withExistingImage
 	udataParam.WorkflowJobID = spawnArgs.JobID

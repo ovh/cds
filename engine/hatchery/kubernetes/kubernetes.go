@@ -193,7 +193,7 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 		}
 	}
 
-	udataParam := h.GenerateWorkerArgs(h, spawnArgs)
+	udataParam := h.GenerateWorkerArgs(ctx, h, spawnArgs)
 	udataParam.TTL = h.Config.WorkerTTL
 
 	udataParam.WorkflowJobID = spawnArgs.JobID
@@ -216,7 +216,7 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 	if spawnArgs.Model.ModelDocker.Envs == nil {
 		spawnArgs.Model.ModelDocker.Envs = map[string]string{}
 	}
-	envsWm := map[string]string{}
+	envsWm := udataParam.InjectEnvVars
 	envsWm["CDS_MODEL_MEMORY"] = fmt.Sprintf("%d", memory)
 	envsWm["CDS_API"] = udataParam.API
 	envsWm["CDS_TOKEN"] = udataParam.Token

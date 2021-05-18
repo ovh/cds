@@ -65,6 +65,7 @@ func TestHatcheryKubernetes_Status(t *testing.T) {
 	defer gock.Off()
 	defer gock.Observe(nil)
 	h := NewHatcheryKubernetesTest(t)
+	h.Config.HatcheryCommonConfiguration.Provision.InjectEnvVars = []string{"ZZZZ=ZZZZ"}
 
 	m := &sdk.Model{
 		Name: "model1",
@@ -96,6 +97,8 @@ func TestHatcheryKubernetes_Status(t *testing.T) {
 		require.Equal(t, 2, len(podRequest.Spec.Containers))
 		require.Equal(t, "k8s-toto", podRequest.Spec.Containers[0].Name)
 		require.Equal(t, int64(4096), podRequest.Spec.Containers[0].Resources.Requests.Memory().Value())
+		require.Equal(t, "ZZZZ", podRequest.Spec.Containers[0].Env[1].Name)
+		require.Equal(t, "ZZZZ", podRequest.Spec.Containers[0].Env[1].Value)
 		require.Equal(t, "service-0-pg", podRequest.Spec.Containers[1].Name)
 		require.Equal(t, 1, len(podRequest.Spec.Containers[1].Env))
 		require.Equal(t, "PG_USERNAME", podRequest.Spec.Containers[1].Env[0].Name)

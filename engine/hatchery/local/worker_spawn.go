@@ -71,7 +71,7 @@ func (h *HatcheryLocal) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 
 	log.Info(ctx, "HatcheryLocal.SpawnWorker> basedir: %s", basedir)
 
-	udataParam := h.GenerateWorkerArgs(h, spawnArgs)
+	udataParam := h.GenerateWorkerArgs(ctx, h, spawnArgs)
 	udataParam.BaseDir = basedir
 	udataParam.WorkerBinary = path.Join(h.BasedirDedicated, h.getWorkerBinaryName())
 	udataParam.WorkflowJobID = spawnArgs.JobID
@@ -108,6 +108,9 @@ func (h *HatcheryLocal) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 		if !strings.HasPrefix(e, "CDS") && !strings.HasPrefix(e, "HATCHERY") {
 			cmd.Env = append(cmd.Env, e)
 		}
+	}
+	for k, v := range udataParam.InjectEnvVars {
+		cmd.Env = append(cmd.Env, k+"="+v)
 	}
 
 	// Wait in a goroutine so that when process exits, Wait() update cmd.ProcessState

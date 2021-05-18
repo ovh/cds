@@ -56,6 +56,8 @@ type WorkerArgs struct {
 	GraylogExtraKey   string `json:"graylog_extra_key"`
 	GraylogExtraValue string `json:"graylog_extra_value"`
 	WorkerBinary      string
+	// Env variables
+	InjectEnvVars map[string]string `json:"inject_env_vars"`
 }
 
 // TemplateEnvs return envs interpolated with worker arguments
