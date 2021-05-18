@@ -135,7 +135,7 @@ func TestCanUploadArtifactAlreadyExist(t *testing.T) {
 
 	cacheKey := workflow.GetRunResultKey(result.WorkflowRunID, sdk.WorkflowRunResultTypeArtifact, artiData.Name)
 	require.NoError(t, store.SetWithTTL(cacheKey, true, 60))
-	require.NoError(t, workflow.AddResult(db.DbMap, store, &result))
+	require.NoError(t, workflow.AddResult(ctx, db.DbMap, store, &workflowRun, &result))
 	b, err := store.Exist(cacheKey)
 	require.NoError(t, err)
 	require.False(t, b)
@@ -180,7 +180,7 @@ func TestCanUploadArtifactAlreadyExistInMoreRecentSubNum(t *testing.T) {
 
 	cacheKey := workflow.GetRunResultKey(result.WorkflowRunID, sdk.WorkflowRunResultTypeArtifact, artiData.Name)
 	require.NoError(t, store.SetWithTTL(cacheKey, true, 60))
-	require.NoError(t, workflow.AddResult(db.DbMap, store, &result))
+	require.NoError(t, workflow.AddResult(ctx, db.DbMap, store, &workflowRun, &result))
 	b, err := store.Exist(cacheKey)
 	require.NoError(t, err)
 	require.False(t, b)
@@ -238,7 +238,7 @@ func TestCanUploadArtifactAlreadyExistInAPreviousSubNum(t *testing.T) {
 
 	cacheKey := workflow.GetRunResultKey(result.WorkflowRunID, sdk.WorkflowRunResultTypeArtifact, artiData.Name)
 	require.NoError(t, store.SetWithTTL(cacheKey, true, 60))
-	require.NoError(t, workflow.AddResult(db.DbMap, store, &result))
+	require.NoError(t, workflow.AddResult(ctx, db.DbMap, store, &workflowRun, &result))
 	b, err := store.Exist(cacheKey)
 	require.NoError(t, err)
 	require.False(t, b)

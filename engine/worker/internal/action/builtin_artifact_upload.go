@@ -133,7 +133,7 @@ func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Acti
 	wgErrors.Wait()
 
 	if !globalError.IsEmpty() {
-		return res, sdk.NewError(sdk.ErrUnknownError, fmt.Errorf("error: %v", globalError.Error()))
+		return res, sdk.NewError(sdk.ErrUnknownError, fmt.Errorf("error: fail to upload artifact"))
 	}
 
 	return res, nil
@@ -266,11 +266,6 @@ func addWorkflowRunResult(ctx context.Context, wk workerruntime.Runtime, filePat
 	if err != nil {
 		return sdk.WrapError(err, "unable to get file stat %s", fileMode)
 	}
-
-	size, err := strconv.ParseInt(uploadResult.Outputs[sdk.ArtifactUploadPluginOutputSize], 10, 64)
-	if err != nil {
-		return sdk.WrapError(err, "unable to retrieve file size")
-	}
 	perm, err := strconv.ParseUint(uploadResult.Outputs[sdk.ArtifactUploadPluginOutputPerm], 10, 32)
 	if err != nil {
 		return sdk.WrapError(err, "unable to retrieve file perm")
@@ -278,12 +273,9 @@ func addWorkflowRunResult(ctx context.Context, wk workerruntime.Runtime, filePat
 
 	data := sdk.WorkflowRunResultArtifactManager{
 		Name:     uploadResult.Outputs[sdk.ArtifactUploadPluginOutputPathFileName],
-		MD5:      uploadResult.Outputs[sdk.ArtifactUploadPluginOutputPathMD5],
 		Perm:     uint32(perm),
-		RepoType: uploadResult.Outputs[sdk.ArtifactUploadPluginOutputPathRepoType],
 		RepoName: uploadResult.Outputs[sdk.ArtifactUploadPluginOutputPathRepoName],
 		Path:     uploadResult.Outputs[sdk.ArtifactUploadPluginOutputPathFilePath],
-		Size:     size,
 	}
 
 	bts, err := json.Marshal(data)

@@ -77,9 +77,9 @@ func createArtifactoryClient(url, token string) (artifactory.ArtifactoryServices
 }
 
 func (e *artifactoryDownloadArtifactPlugin) Run(_ context.Context, opts *integrationplugin.RunQuery) (*integrationplugin.RunResult, error) {
-	cdsRepo := opts.GetOptions()["cds.integration.artifact_manager.artifactory.cds_repository"]
-	artifactoryURL := opts.GetOptions()["cds.integration.artifact_manager.artifactory.url"]
-	token := opts.GetOptions()["cds.integration.artifact_manager.artifactory.token"]
+	cdsRepo := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactManagerConfigCdsRepository)]
+	artifactoryURL := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactManagerConfigURL)]
+	token := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactManagerConfigToken)]
 
 	filePath := opts.GetOptions()[sdk.ArtifactDownloadPluginInputFilePath]
 	path := opts.GetOptions()[sdk.ArtifactDownloadPluginInputDestinationPath]

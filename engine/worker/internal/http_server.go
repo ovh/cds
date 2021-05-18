@@ -58,6 +58,7 @@ func (w *CurrentWorker) Serve(c context.Context) error {
 	r.HandleFunc("/upload", LogMiddleware(uploadHandler(c, w)))
 	r.HandleFunc("/checksecret", LogMiddleware(checkSecretHandler(c, w)))
 	r.HandleFunc("/var", LogMiddleware(addBuildVarHandler(c, w)))
+	r.HandleFunc("/run-result/add", LogMiddleware(addRunResulthandler(c, w)))
 	r.HandleFunc("/vulnerability", LogMiddleware(vulnerabilityHandler(c, w)))
 	r.HandleFunc("/version", LogMiddleware(setVersionHandler(c, w)))
 

@@ -162,7 +162,6 @@ func GetArtifactFromIntegrationPlugin(ctx context.Context, wk workerruntime.Runt
 	if binary == nil {
 		return res, fmt.Errorf("unable to retrieve the plugin for artifact download integration %s... Aborting", pfName.Value)
 	}
-
 	wg := new(sync.WaitGroup)
 	runResults, err := wk.Client().WorkflowRunResultsList(ctx, key, wkfName, number)
 	if err != nil {
@@ -178,12 +177,14 @@ func GetArtifactFromIntegrationPlugin(ctx context.Context, wk workerruntime.Runt
 
 		artData, err := runResult.GetArtifactManager()
 		if err != nil {
+			wk.SendLog(ctx, workerruntime.LevelInfo, "Can read run result data: "+err.Error())
+			wg.Done()
 			return res, err
 		}
-
 		opts := sdk.ParametersToMap(wk.Parameters())
-		repoName := opts["cds.integration.artifact_manager.artifactory.cds_repository"]
+		repoName := opts[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactManagerConfigCdsRepository)]
 		if repoName != artData.RepoName {
+			wg.Done()
 			wk.SendLog(ctx, workerruntime.LevelDebug, fmt.Sprintf("%s does not match configured repo name %s - skipped", repoName, artData.RepoName))
 			continue
 		}
@@ -202,7 +203,7 @@ func GetArtifactFromIntegrationPlugin(ctx context.Context, wk workerruntime.Runt
 		go func(opts map[string]string) {
 			defer wg.Done()
 			wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("Downloading artifact %s from %s...", artData.Name, repoName))
-			if err := runGRPCIntegrationPulugin(ctx, wk, binary, opts); err != nil {
+			if err := runGRPCIntegrationPlugin(ctx, wk, binary, opts); err != nil {
 				res.Status = sdk.StatusFail
 				res.Reason = err.Error()
 			}
@@ -217,7 +218,7 @@ func GetArtifactFromIntegrationPlugin(ctx context.Context, wk workerruntime.Runt
 	return res, nil
 }
 
-func runGRPCIntegrationPulugin(ctx context.Context, wk workerruntime.Runtime, binary *sdk.GRPCPluginBinary, opts map[string]string) error {
+func runGRPCIntegrationPlugin(ctx context.Context, wk workerruntime.Runtime, binary *sdk.GRPCPluginBinary, opts map[string]string) error {
 	pluginSocket, err := startGRPCPlugin(ctx, binary.PluginName, wk, binary, startGRPCPluginOptions{})
 	if err != nil {
 		return fmt.Errorf("unable to start GRPCPlugin: %v", err)

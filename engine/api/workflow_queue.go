@@ -1140,7 +1140,7 @@ func (api *API) postWorkflowRunResultsHandler() service.Handler {
 		}
 		runResult.SubNum = nr.SubNumber
 
-		if err := workflow.AddResult(api.mustDBWithCtx(ctx), api.Cache, &runResult); err != nil {
+		if err := workflow.AddResult(ctx, api.mustDBWithCtx(ctx), api.Cache, wr, &runResult); err != nil {
 			return err
 		}
 

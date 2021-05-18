@@ -302,6 +302,15 @@ func TestUpdateWorkflowIntegration(t *testing.T) {
 	wfDb, err := workflow.LoadByID(context.TODO(), db, cache, *proj, w.ID, workflow.LoadOptions{})
 	require.NoError(t, err)
 	require.Equal(t, "newValue", wfDb.Integrations[0].Config["BuildInfo"].Value)
+
+	w.Integrations = append(w.Integrations, sdk.WorkflowProjectIntegration{
+
+		ProjectIntegration:   projInt,
+		ProjectIntegrationID: projInt.ID,
+	})
+	errUpdate := workflow.Update(context.TODO(), db, cache, *proj, &w, workflow.UpdateOptions{})
+	require.NotNil(t, errUpdate)
+	require.Contains(t, errUpdate.Error(), "you can't have multiple artifact manager integrations on a workflow")
 }
 
 func TestInsertComplexeWorkflowAndExport(t *testing.T) {

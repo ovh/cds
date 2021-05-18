@@ -80,13 +80,13 @@ func (e *artifactoryUploadArtifactPlugin) createArtifactoryClient(url, token str
 }
 
 func (e *artifactoryUploadArtifactPlugin) Run(_ context.Context, opts *integrationplugin.RunQuery) (*integrationplugin.RunResult, error) {
-	cdsRepo := opts.GetOptions()["cds.integration.artifact_manager.artifactory.cds_repository"]
-	artifactoryURL := opts.GetOptions()["cds.integration.artifact_manager.artifactory.url"]
-	token := opts.GetOptions()["cds.integration.artifact_manager.artifactory.token"]
+	cdsRepo := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactManagerConfigCdsRepository)]
+	artifactoryURL := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactManagerConfigURL)]
+	token := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactManagerConfigToken)]
 	pathToUpload := opts.GetOptions()["cds.integration.artifact_manager.upload.path"]
 	projectKey := opts.GetOptions()["cds.project"]
 	workflowName := opts.GetOptions()["cds.workflow"]
-	buildInfo := opts.GetOptions()["cds.integration.artifact_manager.build.info.path"]
+	buildInfo := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactManagerConfigBuildInfoPath)]
 	version := opts.GetOptions()["cds.version"]
 
 	artiClient, err := e.createArtifactoryClient(artifactoryURL, token)
@@ -104,7 +104,7 @@ func (e *artifactoryUploadArtifactPlugin) Run(_ context.Context, opts *integrati
 
 	summary, err := artiClient.UploadFilesWithSummary(params)
 	if err != nil || summary.TotalFailed > 0 {
-		return fail("unable to upload file %s into artifactory %s: %v", pathToUpload, params.Target, err)
+		return fail("unable to upload file %s into artifactory[%s] %s: %v", pathToUpload, artifactoryURL, params.Target, err)
 	}
 	defer summary.Close()
 
