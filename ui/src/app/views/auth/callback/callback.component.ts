@@ -115,7 +115,8 @@ export class CallbackComponent implements OnInit, OnDestroy {
                 this._cd.markForCheck();
             }))
             .subscribe(_ => {
-                if (this.payloadData && this.payloadData.redirect_uri) {
+                if (this.payloadData && this.payloadData.redirect_uri &&
+                    !(this.payloadData.redirect_uri as string).startsWith('/auth/callback/')) {
                     let dus = new DefaultUrlSerializer();
                     this._router.navigateByUrl(dus.parse(this.payloadData.redirect_uri));
                 } else {
