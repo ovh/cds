@@ -1,16 +1,18 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { Select, Store } from '@ngxs/store';
 import {
+    UIArtifact,
     WorkflowNodeRun,
     WorkflowNodeRunArtifact,
-    WorkflowNodeRunStaticFiles,
-    WorkflowRunResultArtifact
+    WorkflowNodeRunStaticFiles, WorkflowRunResult,
+    WorkflowRunResultArtifact, WorkflowRunResultArtifactManager
 } from 'app/model/workflow.run.model';
 
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { Column, ColumnType, Filter } from 'app/shared/table/data-table.component';
 import { WorkflowState } from 'app/store/workflow.state';
 import { Observable, Subscription } from 'rxjs';
+import { Workflow } from 'app/model/workflow.model';
 
 @Component({
     selector: 'app-workflow-artifact-list',
@@ -23,42 +25,46 @@ export class WorkflowRunArtifactListComponent implements OnInit, OnDestroy {
     @Select(WorkflowState.getSelectedNodeRun()) nodeRun$: Observable<WorkflowNodeRun>;
     nodeRunSubs: Subscription;
 
+    runResult: Array<WorkflowRunResult>
     artifacts: Array<WorkflowNodeRunArtifact>;
+
+    uiArtifacts: Array<UIArtifact>;
     staticFiles: Array<WorkflowNodeRunStaticFiles>;
 
-    filter: Filter<WorkflowNodeRunArtifact>;
-    columns: Array<Column<WorkflowNodeRunArtifact>>;
+    filter: Filter<UIArtifact>;
+    columns: Array<Column<UIArtifact>>;
 
     constructor(private _cd: ChangeDetectorRef, private _store: Store) {
         this.filter = f => {
             const lowerFilter = f.toLowerCase();
             return d => d.name.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                d.sha512sum.toLowerCase().indexOf(lowerFilter) !== -1
+                d.md5.toLowerCase().indexOf(lowerFilter) !== -1
         };
         this.columns = [
-            <Column<WorkflowNodeRunArtifact>>{
+            <Column<UIArtifact>>{
                 type: ColumnType.LINK,
                 name: 'artifact_name',
-                selector: (a: WorkflowNodeRunArtifact) => {
+                selector: (a: UIArtifact) => {
                     let size = this.getHumainFileSize(a.size);
-                    let link = `./cdsapi/workflow/artifact/${a.download_hash}`
-                    if (!a.id) {
-                        link = `./cdscdn/item/run-result/${a.download_hash}/download`
+                    let link = a.link;
+                    let value = a.name;
+                    if (size) {
+                        value += ` (${size})`;
                     }
                     return {
                         link,
-                        value: `${a.name} (${size})`
+                        value
                     };
                 }
             },
-            <Column<WorkflowNodeRunArtifact>>{
-                name: 'artifact_tag',
-                selector: (a: WorkflowNodeRunArtifact) => a.tag
+            <Column<UIArtifact>>{
+                name: 'Type of artifact',
+                selector: (a: UIArtifact) => a.type
             },
-            <Column<WorkflowNodeRunArtifact>>{
+            <Column<UIArtifact>>{
                 type: ColumnType.TEXT_COPY,
                 name: 'MD5 Sum',
-                selector: (a: WorkflowNodeRunArtifact) => a.md5sum
+                selector: (a: UIArtifact) => a.md5
             }
         ];
     }
@@ -70,16 +76,36 @@ export class WorkflowRunArtifactListComponent implements OnInit, OnDestroy {
             if (!nr) {
                 return;
             }
-            let resultArtifacts = nr?.results.filter(r => r.type === 'artifact').map(r => <WorkflowRunResultArtifact>r.data);
-            if (!resultArtifacts) {
-                resultArtifacts = new Array<WorkflowRunResultArtifact>();
+
+            let computeArtifact = false;
+            if (nr.results && (!this.runResult || nr.results.length !== this.runResult.length)) {
+                computeArtifact = true
             }
-            if ( (!this.artifacts && (nr.artifacts || resultArtifacts.length > 0)) || (this.artifacts && nr.artifacts && this.artifacts.length !== (nr.artifacts.length + resultArtifacts.length))) {
-                this.artifacts = new Array<WorkflowNodeRunArtifact>();
-                if (nr.artifacts) {
-                    this.artifacts.push(...nr.artifacts);
+            if (nr.artifacts && (!this.artifacts || nr.artifacts.length !== this.artifacts.length)) {
+                computeArtifact = true
+            }
+            if (computeArtifact) {
+                let uiArtifacts: Array<UIArtifact>;
+                let uiRunResults: Array<UIArtifact>;
+                this.uiArtifacts = new Array<UIArtifact>();
+                if (nr.results) {
+                    let w = this._store.selectSnapshot(WorkflowState.workflowRunSnapshot).workflow
+                    uiRunResults = this.toUIArtifact(w, nr.results);
+                    this.uiArtifacts.push(...uiRunResults);
                 }
-                this.artifacts.push(...this.toWorkflowNodeRunArtifacts(resultArtifacts));
+
+                if (nr.artifacts) {
+                    uiArtifacts = nr.artifacts.map(a => {
+                        let uiArt = new UIArtifact();
+                        uiArt.name = a.name;
+                        uiArt.size = a.size;
+                        uiArt.md5 = a.md5sum;
+                        uiArt.type = 'file';
+                        uiArt.link = `./cdscdn/item/artifact/${a.download_hash}/download`;
+                        return uiArt;
+                    });
+                    this.uiArtifacts.push(...uiArtifacts)
+                }
                 this._cd.markForCheck();
             }
             if ((!this.staticFiles && nr.static_files) ||
@@ -90,25 +116,52 @@ export class WorkflowRunArtifactListComponent implements OnInit, OnDestroy {
         });
     }
 
-    toWorkflowNodeRunArtifacts(results: Array<WorkflowRunResultArtifact>): Array<WorkflowNodeRunArtifact> {
-        let arts = new Array<WorkflowNodeRunArtifact>();
-        results.forEach(r => {
-            let a = new WorkflowNodeRunArtifact();
-            a.download_hash = r.cdn_hash;
-            a.md5sum = r.md5;
-            a.size =  r.size;
-            a.name = r.name;
-            arts.push(a);
-        })
-        return arts;
-    }
-
     getHumainFileSize(size: number): string {
         if (size === 0) {
-            return '0B';
+            return '';
         }
         let i = Math.floor(Math.log(size) / Math.log(1024));
         let hSize = (size / Math.pow(1024, i)).toFixed(2);
         return hSize + ' ' + ['B', 'kB', 'MB', 'GB', 'TB'][i];
+    }
+
+    private toUIArtifact(w: Workflow, results: Array<WorkflowRunResult>): Array<UIArtifact> {
+        if (!results) {
+            return [];
+        }
+        let integrationArtifactManagerURL = '';
+        if (w?.integrations) {
+            for (let i = 0; i < w.integrations.length; i++) {
+               let integ = w.integrations[i];
+               if (!integ.project_integration.model.artifact_manager) {
+                   continue
+               }
+               integrationArtifactManagerURL = integ?.project_integration?.config['url']?.value;
+            }
+        }
+
+        return results.map(r => {
+            switch (r.type) {
+                case 'artifact':
+                case 'coverage':
+                    let data = <WorkflowRunResultArtifact>r.data;
+                    let uiArtifact = new UIArtifact();
+                    uiArtifact.link = `./cdscdn/item/run-result/${data.cdn_hash}/download`;
+                    uiArtifact.md5 = data.md5;
+                    uiArtifact.name = data.name;
+                    uiArtifact.size = data.size;
+                    uiArtifact.type = 'file';
+                    return uiArtifact;
+                case 'artifact-manager':
+                    let dataAM = <WorkflowRunResultArtifactManager>r.data;
+                    let uiArtifactAM = new UIArtifact();
+                    uiArtifactAM.link = `${integrationArtifactManagerURL}${dataAM.repository_name}/${dataAM.path}`;
+                    uiArtifactAM.md5 = dataAM.md5;
+                    uiArtifactAM.name = dataAM.name;
+                    uiArtifactAM.size = dataAM.size;
+                    uiArtifactAM.type = dataAM.repository_type;
+                    return uiArtifactAM;
+            }
+        })
     }
 }

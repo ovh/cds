@@ -124,16 +124,13 @@ export class WorkflowNodeRunComponent implements OnInit, OnDestroy {
                     refresh = true;
                 }
 
-                let artiResults = nr?.results?.filter(r => r.type === 'artifact');
-                let artiResultsLength = 0;
-                if (artiResults) {
-                    artiResultsLength = artiResults.length
-                }
+
+                let artiResultsLength = nr?.results?.length ?? 0
                 let oldArtiLength = 0;
                 if (nr.artifacts) {
                     oldArtiLength = nr.artifacts.length;
                 }
-                if ((nr.artifacts || artiResults) && (oldArtiLength + artiResultsLength) !== this.artifactLength) {
+                if ((nr.artifacts || artiResultsLength > 0) && (oldArtiLength + artiResultsLength) !== this.artifactLength) {
                     this.artifactLength = oldArtiLength + artiResultsLength;
                     refresh = true;
                 }
