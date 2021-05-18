@@ -181,7 +181,13 @@ func withAutoConf() cli.CommandModifier {
 		func(c *cli.Command, args *[]string) error {
 			// if args length equals or over context args length means that all
 			// context args were given so ignore discover conf
-			if len(*args) >= len(c.Ctx)+len(c.Args) {
+			var expectedArgs = len(c.Ctx)
+			for _, a := range c.Args {
+				if !a.AllowEmpty {
+					expectedArgs++
+				}
+			}
+			if len(*args) >= expectedArgs {
 				return nil
 			}
 
