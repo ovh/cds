@@ -98,7 +98,6 @@
   "application_variable_list_title": "List of application variables: ",
   "application_variable_form_title": "Add a new variable: ",
   "artifact_name": "Artifact name",
-  "artifact_tag": "Tag",
   "ascode_error_unknown_type": "Cannot determine the resource to update",
   "ascode_modal_title": "Save as code",
   "ascode_modal_label_branch": "Select or create a branch",
