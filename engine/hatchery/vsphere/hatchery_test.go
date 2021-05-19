@@ -381,7 +381,7 @@ func TestHatcheryVSphere_Status(t *testing.T) {
 		vSphereClient: c,
 		Common: hatchery.Common{
 			Common: service.Common{
-				GoRoutines: sdk.NewGoRoutines(),
+				GoRoutines: sdk.NewGoRoutines(context.Background()),
 			},
 		},
 	}
@@ -452,7 +452,7 @@ func TestHatcheryVSphere_provisioning_do_nothing(t *testing.T) {
 		vSphereClient: c,
 		Common: hatchery.Common{
 			Common: service.Common{
-				GoRoutines: sdk.NewGoRoutines(),
+				GoRoutines: sdk.NewGoRoutines(context.Background()),
 				Client:     cdsclient,
 			},
 		},
@@ -537,7 +537,7 @@ func TestHatcheryVSphere_provisioning_start_one(t *testing.T) {
 		vSphereClient: c,
 		Common: hatchery.Common{
 			Common: service.Common{
-				GoRoutines: sdk.NewGoRoutines(),
+				GoRoutines: sdk.NewGoRoutines(context.Background()),
 				Client:     cdsclient,
 			},
 		},

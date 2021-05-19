@@ -40,7 +40,7 @@ func TestStoreNewStepLog(t *testing.T) {
 		Cache:               cache,
 		Mapper:              m,
 	}
-	s.GoRoutines = sdk.NewGoRoutines()
+	s.GoRoutines = sdk.NewGoRoutines(context.TODO())
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
@@ -123,7 +123,7 @@ func TestStoreLastStepLog(t *testing.T) {
 		Cache:               cache,
 		Mapper:              m,
 	}
-	s.GoRoutines = sdk.NewGoRoutines()
+	s.GoRoutines = sdk.NewGoRoutines(context.TODO())
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
@@ -212,7 +212,7 @@ func TestStoreNewServiceLog(t *testing.T) {
 		Cache:               cache,
 		Mapper:              m,
 	}
-	s.GoRoutines = sdk.NewGoRoutines()
+	s.GoRoutines = sdk.NewGoRoutines(context.TODO())
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)

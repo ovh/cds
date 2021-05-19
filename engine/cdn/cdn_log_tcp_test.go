@@ -61,7 +61,7 @@ func TestWorkerLogCDNEnabled(t *testing.T) {
 	}
 	tmpDir, err := ioutil.TempDir("", t.Name()+"-cdn-1-*")
 	require.NoError(t, err)
-	cdnUnits, err := storage.Init(context.TODO(), m, store, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
+	cdnUnits, err := storage.Init(context.TODO(), m, store, db.DbMap, sdk.NewGoRoutines(context.TODO()), storage.Configuration{
 		HashLocatorSalt: "thisismysalt",
 		Buffers: map[string]storage.BufferConfiguration{
 			"redis_buffer": {
@@ -84,7 +84,7 @@ func TestWorkerLogCDNEnabled(t *testing.T) {
 	s.Units = cdnUnits
 
 	s.Cfg.Log.StepMaxSize = 1000
-	s.GoRoutines = sdk.NewGoRoutines()
+	s.GoRoutines = sdk.NewGoRoutines(context.TODO())
 
 	signature := cdn.Signature{
 		Worker: &cdn.SignatureWorker{
@@ -177,10 +177,10 @@ func TestServiceLogCDNDisabled(t *testing.T) {
 		Mapper:              m,
 	}
 	s.Cfg.Log.StepMaxSize = 1000
-	s.GoRoutines = sdk.NewGoRoutines()
+	s.GoRoutines = sdk.NewGoRoutines(context.TODO())
 	tmpDir, err := ioutil.TempDir("", t.Name()+"-cdn-1-*")
 	require.NoError(t, err)
-	cdnUnits, err := storage.Init(context.TODO(), m, store, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
+	cdnUnits, err := storage.Init(context.TODO(), m, store, db.DbMap, sdk.NewGoRoutines(context.TODO()), storage.Configuration{
 		HashLocatorSalt: "thisismysalt",
 		Buffers: map[string]storage.BufferConfiguration{
 			"redis_buffer": {
@@ -292,7 +292,7 @@ func TestStoreTruncatedLogs(t *testing.T) {
 		Cache:               cache,
 		Mapper:              m,
 	}
-	s.GoRoutines = sdk.NewGoRoutines()
+	s.GoRoutines = sdk.NewGoRoutines(context.TODO())
 
 	ctx, ccl := context.WithCancel(context.TODO())
 	t.Cleanup(ccl)

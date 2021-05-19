@@ -160,7 +160,7 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, tx gorpmapper.SqlExec
 
 	chanError := make(chan error)
 	pr, pw := io.Pipe()
-	gr := sdk.NewGoRoutines()
+	gr := sdk.NewGoRoutines(ctx)
 
 	gr.Exec(ctx, "runningStorageUnits.runItem.read", func(ctx context.Context) {
 		defer pw.Close()

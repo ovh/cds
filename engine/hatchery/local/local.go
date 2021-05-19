@@ -28,7 +28,7 @@ import (
 // New instanciates a new hatchery local
 func New() *HatcheryLocal {
 	s := new(HatcheryLocal)
-	s.GoRoutines = sdk.NewGoRoutines()
+	s.GoRoutines = sdk.NewGoRoutines(context.Background())
 	s.LocalWorkerRunner = new(localWorkerRunner)
 	return s
 }
