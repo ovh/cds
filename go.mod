@@ -145,6 +145,7 @@ require (
 	gopkg.in/olivere/elastic.v6 v6.2.17
 	gopkg.in/spacemonkeygo/httpsig.v0 v0.0.0-20170228231032-6732593ec966
 	gopkg.in/square/go-jose.v2 v2.3.1
+	gopkg.in/src-d/go-git.v4 v4.8.0 // indirect
 	gopkg.in/yaml.v2 v2.3.0
 	gotest.tools v2.1.0+incompatible // indirect
 	k8s.io/api v0.0.0-20181204000039-89a74a8d264d
