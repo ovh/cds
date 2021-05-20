@@ -5346,18 +5346,18 @@ func (mr *MockInterfaceMockRecorder) AuthConsumerLocalSignupVerify(token, initTo
 }
 
 // AuthConsumerRegen mocks base method.
-func (m *MockInterface) AuthConsumerRegen(username, id string) (sdk.AuthConsumerCreateResponse, error) {
+func (m *MockInterface) AuthConsumerRegen(username, id string, newDuration int64, overlapDuration string) (sdk.AuthConsumerCreateResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AuthConsumerRegen", username, id)
+	ret := m.ctrl.Call(m, "AuthConsumerRegen", username, id, newDuration, overlapDuration)
 	ret0, _ := ret[0].(sdk.AuthConsumerCreateResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // AuthConsumerRegen indicates an expected call of AuthConsumerRegen.
-func (mr *MockInterfaceMockRecorder) AuthConsumerRegen(username, id interface{}) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) AuthConsumerRegen(username, id, newDuration, overlapDuration interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AuthConsumerRegen", reflect.TypeOf((*MockInterface)(nil).AuthConsumerRegen), username, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AuthConsumerRegen", reflect.TypeOf((*MockInterface)(nil).AuthConsumerRegen), username, id, newDuration, overlapDuration)
 }
 
 // AuthConsumerSignin mocks base method.
@@ -10263,18 +10263,18 @@ func (mr *MockAuthClientMockRecorder) AuthConsumerLocalSignupVerify(token, initT
 }
 
 // AuthConsumerRegen mocks base method.
-func (m *MockAuthClient) AuthConsumerRegen(username, id string) (sdk.AuthConsumerCreateResponse, error) {
+func (m *MockAuthClient) AuthConsumerRegen(username, id string, newDuration int64, overlapDuration string) (sdk.AuthConsumerCreateResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AuthConsumerRegen", username, id)
+	ret := m.ctrl.Call(m, "AuthConsumerRegen", username, id, newDuration, overlapDuration)
 	ret0, _ := ret[0].(sdk.AuthConsumerCreateResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // AuthConsumerRegen indicates an expected call of AuthConsumerRegen.
-func (mr *MockAuthClientMockRecorder) AuthConsumerRegen(username, id interface{}) *gomock.Call {
+func (mr *MockAuthClientMockRecorder) AuthConsumerRegen(username, id, newDuration, overlapDuration interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AuthConsumerRegen", reflect.TypeOf((*MockAuthClient)(nil).AuthConsumerRegen), username, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AuthConsumerRegen", reflect.TypeOf((*MockAuthClient)(nil).AuthConsumerRegen), username, id, newDuration, overlapDuration)
 }
 
 // AuthConsumerSignin mocks base method.

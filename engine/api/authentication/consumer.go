@@ -77,7 +77,7 @@ func ConsumerRegen(ctx context.Context, db gorpmapper.SqlExecutorWithTx, consume
 	consumer.ValidityPeriods = append(consumer.ValidityPeriods,
 		sdk.AuthConsumerValidityPeriod{
 			IssuedAt: time.Now(),
-			Duration: 0,
+			Duration: newDuration,
 		},
 	)
 	if err := UpdateConsumer(ctx, db, consumer); err != nil {

@@ -78,8 +78,12 @@ func (api *API) postConsumerByUserHandler() service.Handler {
 			return err
 		}
 
+		if reqData.ValidityPeriods.Latest() == nil {
+			reqData.ValidityPeriods = sdk.NewAuthConsumerValidityPeriod(time.Now(), time.Duration(api.Config.Auth.TokenDefaultDuration*24)*time.Hour)
+		}
+
 		// Create the new built in consumer from request data
-		newConsumer, token, err := builtin.NewConsumer(ctx, tx, reqData.Name, reqData.Description, 0,
+		newConsumer, token, err := builtin.NewConsumer(ctx, tx, reqData.Name, reqData.Description, reqData.ValidityPeriods.Latest().Duration,
 			consumer, reqData.GroupIDs, reqData.ScopeDetails)
 		if err != nil {
 			return err
@@ -157,24 +161,21 @@ func (api *API) postConsumerRegenByUserHandler() service.Handler {
 		if req.OverlapDuration == "" {
 			req.OverlapDuration = api.Config.Auth.TokenOverlapDefaultDuration
 		}
-		if req.NewDuration == "" {
+		if req.NewDuration == 0 {
 			req.NewDuration = api.Config.Auth.TokenDefaultDuration
 		}
-		var overlapDuration, newDuration time.Duration
+		var overlapDuration time.Duration
 		if req.OverlapDuration != "" {
 			overlapDuration, err = time.ParseDuration(req.OverlapDuration)
 			if err != nil {
 				return sdk.NewError(sdk.ErrWrongRequest, err)
 			}
 		}
-		if req.NewDuration != "" {
-			newDuration, err = time.ParseDuration(req.NewDuration)
-			if err != nil {
-				return sdk.NewError(sdk.ErrWrongRequest, err)
-			}
-		}
 
-		if err := authentication.ConsumerRegen(ctx, tx, consumer, overlapDuration, newDuration); err != nil {
+		if err := authentication.ConsumerRegen(ctx, tx, consumer,
+			overlapDuration,
+			time.Duration(req.NewDuration)*(24*time.Hour),
+		); err != nil {
 			return err
 		}
 

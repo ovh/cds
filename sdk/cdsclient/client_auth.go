@@ -63,9 +63,12 @@ func (c *client) AuthConsumerDelete(username, id string) error {
 	return err
 }
 
-func (c *client) AuthConsumerRegen(username, id string) (sdk.AuthConsumerCreateResponse, error) {
+func (c *client) AuthConsumerRegen(username, id string, newDuration int64, overlapDuration string) (sdk.AuthConsumerCreateResponse, error) {
 	var consumer sdk.AuthConsumerCreateResponse
-	request := sdk.AuthConsumerRegenRequest{RevokeSessions: true}
+	request := sdk.AuthConsumerRegenRequest{
+		NewDuration:     newDuration,
+		OverlapDuration: overlapDuration,
+	}
 	_, _, _, err := c.RequestJSON(context.Background(), "POST", "/user/"+username+"/auth/consumer/"+id+"/regen", request, &consumer)
 	return consumer, err
 }

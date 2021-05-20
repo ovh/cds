@@ -244,7 +244,7 @@ func Test_postConsumerRegenByUserHandler(t *testing.T) {
 	req = assets.NewJWTAuthentifiedRequest(t, jwt3, http.MethodPost, uri, sdk.AuthConsumerRegenRequest{
 		RevokeSessions:  true,
 		OverlapDuration: "4s", // short 4s overlap
-		NewDuration:     "24h",
+		NewDuration:     1,
 	})
 	rec = httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)

@@ -234,7 +234,7 @@ func (s AuthConsumerScopeSlice) Value() (driver.Value, error) {
 type AuthConsumerRegenRequest struct {
 	RevokeSessions  bool   `json:"revoke_sessions"`
 	OverlapDuration string `json:"overlap_duration"`
-	NewDuration     string `json:"new_duration"`
+	NewDuration     int64  `json:"new_duration"`
 }
 
 // AuthConsumerSigninRequest struct for auth consumer signin request.

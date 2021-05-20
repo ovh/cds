@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -86,6 +87,9 @@ var authConsumerNewCmd = cli.Command{
 			Name:  "scopes",
 			Type:  cli.FlagSlice,
 			Usage: "Define the list of scopes for the consumer",
+		}, {
+			Name:  "duration",
+			Usage: "Validity period of the token generated for the consumer",
 		},
 	},
 }
@@ -121,7 +125,7 @@ func authConsumerNewRun(v cli.Values) error {
 			}
 		}
 		if !found {
-			return errors.Errorf("invalid given group name: '%s'", g)
+			return errors.Errorf("invalid given group name: %q", g)
 		}
 	}
 	if len(groupIDs) == 0 && !v.GetBool("no-interactive") {
@@ -139,7 +143,7 @@ func authConsumerNewRun(v cli.Values) error {
 	for _, s := range v.GetStringSlice("scopes") {
 		scope := sdk.AuthConsumerScope(s)
 		if !scope.IsValid() {
-			return errors.Errorf("invalid given scope value: '%s'", scope)
+			return errors.Errorf("invalid given scope value: %q", scope)
 		}
 		scopes = append(scopes, scope)
 	}
@@ -154,11 +158,21 @@ func authConsumerNewRun(v cli.Values) error {
 		}
 	}
 
+	var duration time.Duration
+	if v.GetString("duration") != "" {
+		iDuration, err := v.GetInt64("duration")
+		if err != nil {
+			return errors.Errorf("invalid given duration: %q", v.GetString("duration"))
+		}
+		duration = time.Duration(iDuration) * (24 * time.Hour)
+	}
+
 	res, err := client.AuthConsumerCreateForUser(username, sdk.AuthConsumer{
-		Name:         name,
-		Description:  description,
-		GroupIDs:     groupIDs,
-		ScopeDetails: sdk.NewAuthConsumerScopeDetails(scopes...),
+		Name:            name,
+		Description:     description,
+		GroupIDs:        groupIDs,
+		ScopeDetails:    sdk.NewAuthConsumerScopeDetails(scopes...),
+		ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), duration),
 	})
 	if err != nil {
 		return err
@@ -195,7 +209,7 @@ func authConsumerDeleteRun(v cli.Values) error {
 	if err := client.AuthConsumerDelete(username, consumerID); err != nil {
 		return err
 	}
-	fmt.Printf("Consumer '%s' successfully deleted.\n", consumerID)
+	fmt.Printf("Consumer %q successfully deleted.\n", consumerID)
 
 	return nil
 }
@@ -214,6 +228,15 @@ var authConsumerRegenCmd = cli.Command{
 			Name: consumerIDArg,
 		},
 	},
+	Flags: []cli.Flag{
+		{
+			Name:  "duration",
+			Usage: "Validity period of the token generated for the consumer",
+		}, {
+			Name:  "overlap",
+			Usage: "Overlap duration between actual token and the new one. eg: 24h, 30m",
+		},
+	},
 }
 
 func authConsumerRegenRun(v cli.Values) error {
@@ -222,12 +245,19 @@ func authConsumerRegenRun(v cli.Values) error {
 		username = "me"
 	}
 
+	duration, err := v.GetInt64("duration")
+	if err != nil {
+		return errors.Errorf("invalid given duration: %q", v.GetString("duration"))
+	}
+
+	overlap := v.GetString("overlap")
+
 	consumerID := v.GetString(consumerIDArg)
-	consumer, err := client.AuthConsumerRegen(username, consumerID)
+	consumer, err := client.AuthConsumerRegen(username, consumerID, duration, overlap)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Consumer '%s' successfully regenerated.\n", consumerID)
+	fmt.Printf("Consumer %q successfully regenerated.\n", consumerID)
 	fmt.Printf("Token: %s\n", consumer.Token)
 
 	return nil
