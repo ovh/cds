@@ -215,7 +215,7 @@ func newStep(act sdk.Action) Step {
 				s.InstallKey = &step
 			}
 		case sdk.PushBuildInfo:
-			step := StepPushBuildInfo{}
+			step := StepPushBuildInfo("{{.cds.workflow}}")
 			s.PushBuildInfo = &step
 		case sdk.DeployApplicationAction:
 			step := StepDeploy("{{.cds.application}}")
@@ -248,7 +248,7 @@ type StepParameters map[string]string
 // StepCustom represents exported custom step.
 type StepCustom map[string]StepParameters
 
-type StepPushBuildInfo struct{}
+type StepPushBuildInfo string
 
 // StepCoverage represents exported coverage step.
 type StepCoverage struct {
@@ -465,6 +465,9 @@ func (s Step) IsValid() bool {
 	if s.isScript() {
 		count++
 	}
+	if s.isPushBuildInfo() {
+		count++
+	}
 	count += len(s.StepCustom)
 
 	return count == 1
@@ -502,7 +505,7 @@ func (s Step) toAction() (*sdk.Action, error) {
 	} else if s.isScript() {
 		a, err = s.asScript()
 	} else if s.isPushBuildInfo() {
-
+		a = s.asPushBuildInfo()
 	} else {
 		a = s.asAction()
 	}
@@ -632,18 +635,11 @@ func (s Step) isInstallKey() bool { return s.InstallKey != nil }
 
 func (s Step) isPushBuildInfo() bool { return s.PushBuildInfo != nil }
 
-func (s Step) asPushBuildInfo() (sdk.Action, error) {
-	var a sdk.Action
-	m, err := stepToMap(s.PushBuildInfo)
-	if err != nil {
-		return a, err
+func (s Step) asPushBuildInfo() sdk.Action {
+	return sdk.Action{
+		Name: sdk.PushBuildInfo,
+		Type: sdk.BuiltinAction,
 	}
-	a = sdk.Action{
-		Name:       sdk.PushBuildInfo,
-		Type:       sdk.BuiltinAction,
-		Parameters: sdk.ParametersFromMap(m),
-	}
-	return a, nil
 }
 
 func (s Step) isCoverage() bool { return s.Coverage != nil }

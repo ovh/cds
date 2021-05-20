@@ -5,6 +5,8 @@ import (
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
+var pushBuildInfoExample = exportentities.StepPushBuildInfo("{{.cds.workflow}}")
+
 // PushBuildInfo action definition.
 var PushBuildInfo = Manifest{
 	Action: sdk.Action{
@@ -20,7 +22,7 @@ var PushBuildInfo = Manifest{
 			Stage: "Stage1",
 			Steps: []exportentities.Step{
 				{
-					PushBuildInfo: &exportentities.StepPushBuildInfo{},
+					PushBuildInfo: &pushBuildInfoExample,
 				},
 			},
 		}},

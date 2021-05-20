@@ -134,6 +134,5 @@ func handleChildrenError(current *sdk.Action, children []sdk.Action) error {
 			}
 		}
 	}
-
 	return sdk.NewErrorFrom(sdk.ErrWrongRequest, "some given step actions are not usable: (%s). Please check you have correct permissions on your project and your workflow", strings.Join(notFoundChildrenRefs, ", "))
 }
