@@ -6,12 +6,15 @@ import (
 	"net"
 	"time"
 
-	"github.com/ovh/cds/sdk/grpcplugin"
+	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc"
+
+	"github.com/ovh/cds/sdk/grpcplugin"
 )
 
 type Common struct {
 	grpcplugin.Common
+	HTTPPort int32
 }
 
 func Start(ctx context.Context, srv IntegrationPluginServer) error {
@@ -24,6 +27,11 @@ func Start(ctx context.Context, srv IntegrationPluginServer) error {
 	c.Srv = srv
 	c.Desc = &_IntegrationPlugin_serviceDesc
 	return p.Start(ctx)
+}
+
+func (c *Common) WorkerHTTPPort(_ context.Context, q *WorkerHTTPPortQuery) (*empty.Empty, error) {
+	c.HTTPPort = q.Port
+	return &empty.Empty{}, nil
 }
 
 func Client(ctx context.Context, socket string) (IntegrationPluginClient, error) {

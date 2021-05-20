@@ -54,7 +54,7 @@ func (c *Client) GetFileInfo(repoName string, filePath string) (sdk.FileInfo, er
 	}
 
 	if re.StatusCode >= 400 {
-		return fi, sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to call artifactory [HTTP: %d] %s", re.StatusCode, string(body))
+		return fi, sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to call artifactory [HTTP: %d] %s %s", re.StatusCode, fileInfoURL, string(body))
 	}
 
 	var resp FileInfoResponse

@@ -26,6 +26,7 @@ func init() {
 	mapBuiltinActions[sdk.CoverageAction] = action.RunParseCoverageResultAction
 	mapBuiltinActions[sdk.ServeStaticFiles] = action.RunServeStaticFiles
 	mapBuiltinActions[sdk.InstallKeyAction] = action.RunInstallKey
+	mapBuiltinActions[sdk.PushBuildInfo] = action.PushBuildInfo
 }
 
 func (w *CurrentWorker) runBuiltin(ctx context.Context, a sdk.Action, secrets []sdk.Variable) sdk.Result {

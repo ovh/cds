@@ -5,6 +5,7 @@ const (
 	GRPCPluginDeploymentIntegration = "integration-deploy_application"
 	GRPCPluginUploadArtifact        = "integration-upload_artifact"
 	GRPCPluginDownloadArtifact      = "integration-download_artifact"
+	GRPCPluginBuildInfo             = "integration-build_info"
 	GRPCPluginAction                = "action"
 )
 

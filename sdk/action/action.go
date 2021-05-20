@@ -14,6 +14,7 @@ import (
 var List = []Manifest{
 	ArtifactDownload,
 	ArtifactUpload,
+	PushBuildInfo,
 	CheckoutApplication,
 	Coverage,
 	DeployApplication,

@@ -6,11 +6,36 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
 )
+
+func getRunResultHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := workerruntime.SetJobID(ctx, wk.currentJob.wJob.ID)
+		ctx = workerruntime.SetStepOrder(ctx, wk.currentJob.currentStepIndex)
+		ctx = workerruntime.SetStepName(ctx, wk.currentJob.currentStepName)
+
+		projectKey := sdk.ParameterValue(wk.currentJob.params, "cds.project")
+		wName := sdk.ParameterValue(wk.currentJob.params, "cds.workflow")
+		runNumberString := sdk.ParameterValue(wk.currentJob.params, "cds.run.number")
+		runNumber, err := strconv.ParseInt(runNumberString, 10, 64)
+		if err != nil {
+			newError := sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("cannot parse '%s' as run number: %s", runNumberString, err))
+			writeError(w, r, newError)
+			return
+		}
+		results, err := wk.Client().WorkflowRunResultsList(ctx, projectKey, wName, runNumber)
+		if err != nil {
+			writeError(w, r, err)
+			return
+		}
+		writeJSON(w, results, http.StatusOK)
+	}
+}
 
 func addRunResulthandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
