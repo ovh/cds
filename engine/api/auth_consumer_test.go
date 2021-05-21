@@ -221,7 +221,7 @@ func Test_postConsumerRegenByUserHandler(t *testing.T) {
 	})
 	rec = httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
-	require.Equal(t, http.StatusBadRequest, rec.Code)
+	require.Equal(t, http.StatusForbidden, rec.Code)
 
 	// the new signing token from the builtin consumer should be fine
 	signinToken2 := response.Token
@@ -286,7 +286,7 @@ func Test_postConsumerRegenByUserHandler(t *testing.T) {
 	})
 	rec = httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
-	require.Equal(t, http.StatusBadRequest, rec.Code)
+	require.Equal(t, http.StatusForbidden, rec.Code)
 }
 
 func Test_getSessionsByUserHandler(t *testing.T) {
