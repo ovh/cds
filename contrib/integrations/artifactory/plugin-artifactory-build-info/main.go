@@ -98,7 +98,7 @@ func (e *artifactoryBuildInfoPlugin) Run(_ context.Context, opts *integrationplu
 		},
 		ArtifactoryPrincipal:     fmt.Sprintf("token:%s", tokenName),
 		ArtifactoryPluginVersion: sdk.VERSION,
-		Started:                  time.Now().Format("2006-01-02T15:04:05.893+0300"),
+		Started:                  time.Now().Format("2006-01-02T15:04:05.999-07:00"),
 		Number:                   version,
 		BuildUrl:                 runURL,
 		Modules:                  []buildinfo.Module{},
