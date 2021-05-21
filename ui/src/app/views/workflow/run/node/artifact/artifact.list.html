@@ -1,4 +1,4 @@
-<div class="artifact" *ngIf="artifacts || staticFiles">
+<div class="artifact" *ngIf="uiArtifacts || staticFiles">
     <table class="ui fixed celled table" *ngIf="staticFiles && staticFiles.length > 0">
         <thead>
             <tr>
@@ -21,5 +21,5 @@
             </tr>
         </tbody>
     </table>
-    <app-data-table [withFilter]="filter" [withPagination]="10" [columns]="columns" [data]="artifacts"></app-data-table>
+    <app-data-table [withFilter]="filter" [withPagination]="10" [columns]="columns" [data]="uiArtifacts"></app-data-table>
 </div>

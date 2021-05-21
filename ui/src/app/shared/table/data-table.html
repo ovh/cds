@@ -99,11 +99,13 @@
                         {{' '}}<span *ngFor="let l of c.selector.labels" class="ui label {{l.color}}">{{l.title | translate}}</span>
                     </ng-container>
                     <div *ngSwitchCase="'text-copy'" class="ui fluid action input">
-                        <input type="text" value="{{c.selector}}">
-                        <button class="ui icon button copyButton" [title]="'common_copy_clipboard' | translate"
-                            ngxClipboard [cbContent]="c.selector">
-                            <i class="copy icon"></i>
-                        </button>
+                        <ng-container *ngIf="c.selector">
+                            <input type="text" value="{{c.selector}}">
+                            <button class="ui icon button copyButton" [title]="'common_copy_clipboard' | translate"
+                                    ngxClipboard [cbContent]="c.selector">
+                                <i class="copy icon"></i>
+                            </button>
+                        </ng-container>
                     </div>
                     <span *ngSwitchCase="'text-labels'" class="text-labels">
                         {{c.selector.value |
