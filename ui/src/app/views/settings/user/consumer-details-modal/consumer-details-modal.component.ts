@@ -288,7 +288,7 @@ export class ConsumerDetailsModalComponent {
         }
         if (this.consumer.validity_periods.length > 0) {
             this.menuItems.push(<Item>{
-                translate: 'Validity periods',
+                translate: 'validity_periods',
                 key: 'validity_periods'
             });
         }
