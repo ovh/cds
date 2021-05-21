@@ -34,10 +34,13 @@ type GoRoutine struct {
 
 // GoRoutines contains list of routines that have to stay up
 type GoRoutines struct {
+	mutex  sync.Mutex
 	status []*GoRoutine
 }
 
 func (m *GoRoutines) GoRoutine(name string) *GoRoutine {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
 	for _, g := range m.status {
 		if g.Name == name {
 			return g
@@ -64,7 +67,7 @@ func (m *GoRoutines) restartGoRoutines(ctx context.Context) {
 			return
 		case <-t.C:
 			for _, g := range m.status {
-				if !g.Active {
+				if !g.Active && g.Restart {
 					log.Info(ctx, "restarting goroutine %q", g.Name)
 					m.exec(g)
 				}
@@ -75,6 +78,8 @@ func (m *GoRoutines) restartGoRoutines(ctx context.Context) {
 
 // Run runs the function within a goroutine with a panic recovery, and keep GoRoutine status.
 func (m *GoRoutines) Run(c context.Context, name string, fn func(ctx context.Context)) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
 	g := &GoRoutine{
 		ctx:     c,
 		Name:    name,
@@ -89,6 +94,8 @@ func (m *GoRoutines) Run(c context.Context, name string, fn func(ctx context.Con
 // RunWithRestart runs the function within a goroutine with a panic recovery, and keep GoRoutine status.
 // if the goroutine is stopped, it will ne restarted
 func (m *GoRoutines) RunWithRestart(c context.Context, name string, fn func(ctx context.Context)) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
 	g := &GoRoutine{
 		ctx:     c,
 		Name:    name,
