@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"net/http"
+	"time"
 
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/authentication/builtin"
@@ -55,6 +56,13 @@ func (api *API) postAuthBuiltinSigninHandler() service.Handler {
 		// Generate a new session for consumer
 		session, err := authentication.NewSession(ctx, tx, consumer, driver.GetSessionDuration())
 		if err != nil {
+			return err
+		}
+
+		// Store the last authentication date on the consumer
+		now := time.Now()
+		consumer.LastAuthentication = &now
+		if err := authentication.UpdateConsumerLastAuthentication(ctx, tx, consumer); err != nil {
 			return err
 		}
 

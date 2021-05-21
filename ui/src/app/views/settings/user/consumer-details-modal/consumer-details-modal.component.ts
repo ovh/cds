@@ -10,7 +10,7 @@ import {
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
-import { AuthConsumer, AuthSession } from 'app/model/authentication.model';
+import { AuthConsumer, AuthConsumerValidityPeriod, AuthSession } from 'app/model/authentication.model';
 import { Group } from 'app/model/group.model';
 import { AuthentifiedUser, AuthSummary } from 'app/model/user.model';
 import { AuthenticationService } from 'app/service/authentication/authentication.service';
@@ -19,6 +19,7 @@ import { Item } from 'app/shared/menu/menu.component';
 import { Column, ColumnType, Filter } from 'app/shared/table/data-table.component';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { AuthenticationState } from 'app/store/authentication.state';
+import * as moment from 'moment';
 
 export enum CloseEventType {
     CHILD_DETAILS = 'CHILD_DETAILS',
@@ -67,6 +68,7 @@ export class ConsumerDetailsModalComponent {
     consumerDeletedOrDetached: boolean;
     regenConsumerSigninToken: string;
     warningText: string;
+    columnsValidityPeriods: Array<Column<AuthConsumerValidityPeriod>>;
 
     constructor(
         private _modalService: SuiModalService,
@@ -122,9 +124,7 @@ export class ConsumerDetailsModalComponent {
                 class: 'two right aligned',
                 selector: (c: AuthConsumer) => ({
                         title: 'common_details',
-                        click: () => {
- this.clickConsumerDetails(c)
-}
+                        click: () => this.clickConsumerDetails(c)
                     })
             }
         ];
@@ -164,6 +164,35 @@ export class ConsumerDetailsModalComponent {
                 type: ColumnType.DATE,
                 name: 'user_auth_expire_at',
                 selector: (s: AuthSession) => s.expire_at
+            }
+        ];
+
+        this.columnsValidityPeriods = [
+            <Column<AuthConsumerValidityPeriod>>{
+                type: ColumnType.DATE,
+                name: 'Issued at',
+                selector: (s: AuthConsumerValidityPeriod) => moment(s.issued_at).format()
+            },
+            <Column<AuthConsumerValidityPeriod>>{
+                type: ColumnType.TEXT_LABELS,
+                name: 'Duration',
+                selector: (s: AuthConsumerValidityPeriod) => {
+                    let labels = [];
+                    if (s.duration === 0) {
+                        return {value: '-', labels};
+                    }
+
+                    let ms = (s.duration / 1000000);
+                    let days = Math.floor(ms / (1000 * 60 * 60 * 24));
+                    let unit = ' days';
+                    if (days <= 1) {
+                        unit = ' day';
+                    }
+                    return {
+                        value: days + unit,
+                        labels
+                    };
+                }
             }
         ];
     }
@@ -257,6 +286,12 @@ export class ConsumerDetailsModalComponent {
                 key: 'children'
             });
         }
+        if (this.consumer.validity_periods.length > 0) {
+            this.menuItems.push(<Item>{
+                translate: 'Validity periods',
+                key: 'validity_periods'
+            });
+        }
         this._cd.markForCheck();
     }
 
@@ -290,7 +325,6 @@ export class ConsumerDetailsModalComponent {
             this.consumerDeletedOrDetached = true;
             this.loading = false;
             this.modal.approve(true);
-
         });
     }
 

@@ -79,7 +79,7 @@ func (api *API) postConsumerByUserHandler() service.Handler {
 		}
 
 		if reqData.ValidityPeriods.Latest() == nil {
-			reqData.ValidityPeriods = sdk.NewAuthConsumerValidityPeriod(time.Now(), time.Duration(api.Config.Auth.TokenDefaultDuration*24)*time.Hour)
+			reqData.ValidityPeriods = sdk.NewAuthConsumerValidityPeriod(time.Now(), time.Duration(api.Config.Auth.TokenDefaultDuration)*(24*time.Hour))
 		}
 
 		// Create the new built in consumer from request data

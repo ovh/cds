@@ -84,7 +84,7 @@ type Configuration struct {
 		InsecureSkipVerifyTLS bool `toml:"insecureSkipVerifyTLS" json:"insecureSkipVerifyTLS" default:"false"`
 	} `toml:"internalServiceMesh" json:"internalServiceMesh"`
 	Auth struct {
-		TokenDefaultDuration        int64  `toml:"tokenDefaultDuration" default:"30" comment:"The default duration of a token" json:"tokenDefaultDuration"`
+		TokenDefaultDuration        int64  `toml:"tokenDefaultDuration" default:"30" comment:"The default duration of a token (in days)" json:"tokenDefaultDuration"`
 		TokenOverlapDefaultDuration string `toml:"tokenOverlapDefaultDuration" default:"24h" comment:"The default overlap duration when a token is regen" json:"tokenOverlapDefaultDuration"`
 		DefaultGroup                string `toml:"defaultGroup" default:"" comment:"The default group is the group in which every new user will be granted at signup" json:"defaultGroup"`
 		RSAPrivateKey               string `toml:"rsaPrivateKey" default:"" comment:"The RSA Private Key used to sign and verify the JWT Tokens issued by the API \nThis is mandatory." json:"-"`
@@ -710,6 +710,10 @@ func (a *API) Serve(ctx context.Context) error {
 
 	migrate.Add(ctx, sdk.Migration{Name: "RunsSecrets", Release: "0.47.0", Blocker: false, Automatic: true, ExecFunc: func(ctx context.Context) error {
 		return migrate.RunsSecrets(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper))
+	}})
+
+	migrate.Add(ctx, sdk.Migration{Name: "AuthConsumerTokenExpiration", Release: "0.47.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
+		return migrate.AuthConsumerTokenExpiration(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), time.Duration(a.Config.Auth.TokenDefaultDuration)*(24*time.Hour))
 	}})
 
 	isFreshInstall, errF := version.IsFreshInstall(a.mustDB())

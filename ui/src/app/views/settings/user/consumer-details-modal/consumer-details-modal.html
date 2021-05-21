@@ -32,6 +32,12 @@
                             </span>
                         </div>
                     </div>
+                    <div class="two fields">
+                        <div class="field">
+                            <label>Last authentication</label>
+                            {{consumer.last_authentication}}
+                        </div>
+                    </div>
                     <div class="field">
                         <app-menu class="menu" [items]="menuItems" (onSelect)="selectMenuItem($event)"></app-menu>
                     </div>
@@ -42,6 +48,11 @@
                         <ng-container *ngSwitchCase="'parent'">
                             <app-data-table *ngIf="consumer.parent" [columns]="columnsConsumers"
                                 [data]="[consumer.parent]">
+                            </app-data-table>
+                        </ng-container>
+                        <ng-container *ngSwitchCase="'validity_periods'">
+                            <app-data-table *ngIf="consumer.validity_periods" [columns]="columnsValidityPeriods"
+                                [data]="consumer.validity_periods">
                             </app-data-table>
                         </ng-container>
                         <app-data-table *ngSwitchCase="'children'" [withFilter]="filterChildren" [withPagination]="5"

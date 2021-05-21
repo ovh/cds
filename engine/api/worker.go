@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
@@ -92,6 +93,13 @@ func (api *API) postRegisterWorkerHandler() service.Handler {
 				sdk.WrapError(err, "[%s] Registering failed", workerTokenFromHatchery.Worker.WorkerName),
 				sdk.ErrUnauthorized,
 			)
+		}
+
+		// Store the last authentication date on the consumer
+		now := time.Now()
+		workerConsumer.LastAuthentication = &now
+		if err := authentication.UpdateConsumerLastAuthentication(ctx, tx, workerConsumer); err != nil {
+			return err
 		}
 
 		if err := tx.Commit(); err != nil {

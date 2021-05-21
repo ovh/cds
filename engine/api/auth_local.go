@@ -209,6 +209,13 @@ func (api *API) postAuthLocalSigninHandler() service.Handler {
 			return err
 		}
 
+		// Store the last authentication date on the consumer
+		now := time.Now()
+		consumer.LastAuthentication = &now
+		if err := authentication.UpdateConsumerLastAuthentication(ctx, tx, consumer); err != nil {
+			return err
+		}
+
 		// Generate a jwt for current session
 		jwt, err := authentication.NewSessionJWT(session, "")
 		if err != nil {
@@ -327,6 +334,13 @@ func (api *API) postAuthLocalVerifyHandler() service.Handler {
 			if err := initBuiltinConsumersFromStartupConfig(ctx, tx, consumer, initToken); err != nil {
 				return err
 			}
+		}
+
+		// Store the last authentication date on the consumer
+		now := time.Now()
+		consumer.LastAuthentication = &now
+		if err := authentication.UpdateConsumerLastAuthentication(ctx, tx, consumer); err != nil {
+			return err
 		}
 
 		// Generate a new session for consumer
@@ -491,6 +505,10 @@ func (api *API) postAuthLocalResetHandler() service.Handler {
 		if err != nil {
 			return err
 		}
+
+		// Store the last authentication date on the consumer
+		now := time.Now()
+		consumer.LastAuthentication = &now
 
 		consumer.Data["hash"] = string(hash)
 		if err := authentication.UpdateConsumer(ctx, tx, consumer); err != nil {
