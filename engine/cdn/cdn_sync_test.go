@@ -139,7 +139,9 @@ func TestSyncLog(t *testing.T) {
 	cdnUnits.Start(ctx, sdk.NewGoRoutines())
 	s.Units = cdnUnits
 
-	cdsStorage, ok := s.Units.Storages[0].(*cds.CDS)
+	t.Logf("here are the storages: %+v", s.Units.Storages)
+
+	cdsStorage, ok := s.Units.Storage("test-cds-backend.TestSyncLog").(*cds.CDS)
 	require.True(t, ok)
 
 	// Mock Http route
