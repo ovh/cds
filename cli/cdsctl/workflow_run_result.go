@@ -244,6 +244,7 @@ func toCLIRunResult(results []sdk.WorkflowRunResult) ([]RunResultCli, error) {
 				return nil, err
 			}
 			name = artiResult.Name
+			artiType = artiResult.RepoType
 		}
 
 		cliresults = append(cliresults, RunResultCli{

@@ -146,12 +146,29 @@ export class WorkflowRunResult {
     data: any;
 }
 
+export class UIArtifact {
+    name: string;
+    md5: string;
+    size: number;
+    link: string;
+    type: string;
+}
+
 
 export class WorkflowRunResultArtifact {
     name: string
     size: number;
     md5: string;
     cdn_hash: string;
+}
+
+export class WorkflowRunResultArtifactManager {
+    name: string;
+    size: number;
+    md5: string;
+    path: string;
+    repository_name: string;
+    repository_type: string;
 }
 
 export class WorkflowNodeOutgoingHookRunCallback {

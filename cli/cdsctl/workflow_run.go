@@ -162,9 +162,7 @@ func workflowRunManualRun(v cli.Values) error {
 	}
 
 	if v.GetBool("sync") {
-		if _, err := client.WorkflowRunResync(v.GetString(_ProjectKey), v.GetString(_WorkflowName), runNumber); err != nil {
-			return cli.WrapError(err, "Cannot resync your workflow run %d ", runNumber)
-		}
+		manual.Resync = true
 	}
 
 	if v.GetString("node-name") != "" {
