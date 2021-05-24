@@ -545,7 +545,7 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 
 	log.Info(ctx, "Initializing HTTP router")
-	a.GoRoutines = sdk.NewGoRoutines()
+	a.GoRoutines = sdk.NewGoRoutines(ctx)
 	a.Router = &Router{
 		Mux:        mux.NewRouter(),
 		Background: ctx,
@@ -652,12 +652,12 @@ func (a *API) Serve(ctx context.Context) error {
 		log.Error(ctx, "error while initializing event system: %s", err)
 	}
 
-	a.GoRoutines.Run(ctx, "event.dequeue", func(ctx context.Context) {
+	a.GoRoutines.RunWithRestart(ctx, "event.dequeue", func(ctx context.Context) {
 		event.DequeueEvent(ctx, a.mustDB())
 	})
 
 	log.Info(ctx, "Initializing internal routines...")
-	a.GoRoutines.Run(ctx, "maintenance.Subscribe", func(ctx context.Context) {
+	a.GoRoutines.RunWithRestart(ctx, "maintenance.Subscribe", func(ctx context.Context) {
 		if err := a.listenMaintenance(ctx); err != nil {
 			log.Error(ctx, "error while initializing listen maintenance routine: %s", err)
 		}
@@ -668,7 +668,7 @@ func (a *API) Serve(ctx context.Context) error {
 			log.Error(ctx, "error while initializing worker models routine: %s", err)
 		}
 	})
-	a.GoRoutines.Run(ctx, "worker.Initialize", func(ctx context.Context) {
+	a.GoRoutines.RunWithRestart(ctx, "worker.Initialize", func(ctx context.Context) {
 		if err := worker.Initialize(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Cache); err != nil {
 			log.Error(ctx, "error while initializing workers routine: %s", err)
 		}
@@ -684,25 +684,25 @@ func (a *API) Serve(ctx context.Context) error {
 	a.GoRoutines.Run(ctx, "audit.ComputeWorkflowAudit", func(ctx context.Context) {
 		audit.ComputeWorkflowAudit(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper))
 	})
-	a.GoRoutines.Run(ctx, "auditCleanerRoutine(ctx", func(ctx context.Context) {
+	a.GoRoutines.Run(ctx, "auditCleanerRoutine", func(ctx context.Context) {
 		auditCleanerRoutine(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper))
 	})
-	a.GoRoutines.Run(ctx, "repositoriesmanager.ReceiveEvents", func(ctx context.Context) {
+	a.GoRoutines.RunWithRestart(ctx, "repositoriesmanager.ReceiveEvents", func(ctx context.Context) {
 		repositoriesmanager.ReceiveEvents(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Cache)
 	})
-	a.GoRoutines.Run(ctx, "services.KillDeadServices", func(ctx context.Context) {
+	a.GoRoutines.RunWithRestart(ctx, "services.KillDeadServices", func(ctx context.Context) {
 		services.KillDeadServices(ctx, a.mustDB)
 	})
 	a.GoRoutines.Run(ctx, "broadcast.Initialize", func(ctx context.Context) {
 		broadcast.Initialize(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper))
 	})
-	a.GoRoutines.Run(ctx, "api.serviceAPIHeartbeat", func(ctx context.Context) {
+	a.GoRoutines.RunWithRestart(ctx, "api.serviceAPIHeartbeat", func(ctx context.Context) {
 		a.serviceAPIHeartbeat(ctx)
 	})
-	a.GoRoutines.Run(ctx, "authentication.SessionCleaner", func(ctx context.Context) {
+	a.GoRoutines.RunWithRestart(ctx, "authentication.SessionCleaner", func(ctx context.Context) {
 		authentication.SessionCleaner(ctx, a.mustDB, 10*time.Second)
 	})
-	a.GoRoutines.Run(ctx, "api.WorkflowRunCraft", func(ctx context.Context) {
+	a.GoRoutines.RunWithRestart(ctx, "api.WorkflowRunCraft", func(ctx context.Context) {
 		a.WorkflowRunCraft(ctx, 100*time.Millisecond)
 	})
 

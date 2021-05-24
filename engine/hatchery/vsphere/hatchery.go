@@ -26,7 +26,7 @@ import (
 // New instanciates a new Hatchery vsphere
 func New() *HatcheryVSphere {
 	s := new(HatcheryVSphere)
-	s.GoRoutines = sdk.NewGoRoutines()
+	s.GoRoutines = sdk.NewGoRoutines(context.Background())
 	return s
 }
 

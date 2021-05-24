@@ -27,7 +27,7 @@ import (
 // New returns a new service
 func New() *Service {
 	s := new(Service)
-	s.GoRoutines = sdk.NewGoRoutines()
+	s.GoRoutines = sdk.NewGoRoutines(context.Background())
 	s.Router = &api.Router{
 		Mux: mux.NewRouter(),
 	}

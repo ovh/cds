@@ -41,7 +41,7 @@ func TestGetItemValue(t *testing.T) {
 		Cache:               cache,
 		Mapper:              m,
 	}
-	s.GoRoutines = sdk.NewGoRoutines()
+	s.GoRoutines = sdk.NewGoRoutines(context.TODO())
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
@@ -202,7 +202,7 @@ func TestGetItemValue_ThousandLines(t *testing.T) {
 		Cache:               cache,
 		Mapper:              m,
 	}
-	s.GoRoutines = sdk.NewGoRoutines()
+	s.GoRoutines = sdk.NewGoRoutines(context.TODO())
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
@@ -309,7 +309,7 @@ func TestGetItemValue_Reverse(t *testing.T) {
 		Cache:               cache,
 		Mapper:              m,
 	}
-	s.GoRoutines = sdk.NewGoRoutines()
+	s.GoRoutines = sdk.NewGoRoutines(context.TODO())
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
@@ -419,7 +419,7 @@ func TestGetItemValue_ThousandLinesReverse(t *testing.T) {
 		Mapper:              m,
 	}
 	s.Cfg.Log.StepMaxSize = 200000
-	s.GoRoutines = sdk.NewGoRoutines()
+	s.GoRoutines = sdk.NewGoRoutines(context.TODO())
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)

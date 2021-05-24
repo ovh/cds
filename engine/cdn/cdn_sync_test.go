@@ -39,10 +39,10 @@ func TestSyncBuffer(t *testing.T) {
 		Cache:               cache,
 		Mapper:              m,
 		Common: service.Common{
-			GoRoutines: sdk.NewGoRoutines(),
+			GoRoutines: sdk.NewGoRoutines(context.TODO()),
 		},
 	}
-	cdnUnits, err := storage.Init(context.Background(), m, cache, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
+	cdnUnits, err := storage.Init(context.Background(), m, cache, db.DbMap, sdk.NewGoRoutines(context.TODO()), storage.Configuration{
 		HashLocatorSalt: "thisismysalt",
 		Buffers: map[string]storage.BufferConfiguration{
 			"redis_buffer": {
@@ -96,7 +96,7 @@ func TestSyncLog(t *testing.T) {
 		Cache:               cache,
 		Mapper:              m,
 		Common: service.Common{
-			GoRoutines: sdk.NewGoRoutines(),
+			GoRoutines: sdk.NewGoRoutines(context.TODO()),
 		},
 	}
 
@@ -106,7 +106,7 @@ func TestSyncLog(t *testing.T) {
 	tmpDir, err := ioutil.TempDir("", t.Name()+"-cdn-*")
 	require.NoError(t, err)
 
-	cdnUnits, err := storage.Init(ctx, m, cache, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
+	cdnUnits, err := storage.Init(ctx, m, cache, db.DbMap, sdk.NewGoRoutines(ctx), storage.Configuration{
 		HashLocatorSalt: "thisismysalt",
 		SyncNbElements:  100,
 		SyncSeconds:     1,
@@ -136,7 +136,7 @@ func TestSyncLog(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	cdnUnits.Start(ctx, sdk.NewGoRoutines())
+	cdnUnits.Start(ctx, sdk.NewGoRoutines(ctx))
 	s.Units = cdnUnits
 
 	cdsStorage, ok := s.Units.Storages[0].(*cds.CDS)
