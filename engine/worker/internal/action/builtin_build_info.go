@@ -76,7 +76,7 @@ func PushBuildInfo(ctx context.Context, wk workerruntime.Runtime, _ sdk.Action, 
 	res, err := integrationPluginClient.Run(ctx, &query)
 	if err != nil {
 		integrationPluginClientStop(ctx, integrationPluginClient, done, stopLogs)
-		return sdk.Result{}, fmt.Errorf("error deploying application: %v", err)
+		return sdk.Result{}, fmt.Errorf("error while running integration plugin: %v", err)
 	}
 
 	wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("# Details: %s", res.Details))
