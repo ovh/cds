@@ -5,10 +5,10 @@ import (
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
-// Release action definition.
-var Release = Manifest{
+// ReleaseVCS action definition.
+var ReleaseVCS = Manifest{
 	Action: sdk.Action{
-		Name:        sdk.ReleaseAction,
+		Name:        sdk.ReleaseVCSAction,
 		Description: "This action creates a release on the git repository linked to the application, if repository manager implements it.",
 		Parameters: []sdk.Parameter{
 			{
@@ -68,7 +68,7 @@ var Release = Manifest{
 					},
 				},
 				{
-					Release: &exportentities.StepRelease{
+					ReleaseVCS: &exportentities.StepReleaseVCS{
 						Artifacts:   "{{.cds.workspace}}/myFile",
 						Title:       "{{.cds.build.tag}}",
 						ReleaseNote: "My release {{.cds.build.tag}}",

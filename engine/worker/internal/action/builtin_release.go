@@ -13,7 +13,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func RunRelease(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, secrets []sdk.Variable) (sdk.Result, error) {
+func RunReleaseVCS(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, secrets []sdk.Variable) (sdk.Result, error) {
 	var res sdk.Result
 	res.Status = sdk.StatusFail
 	jobID, err := workerruntime.JobID(ctx)
