@@ -3,16 +3,17 @@ package nfs
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
+	"os"
+	"testing"
+	"time"
+
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/symmecrypt/ciphers/aesgcm"
 	"github.com/ovh/symmecrypt/keyloader"
 	"github.com/rockbears/log"
 	"github.com/stretchr/testify/require"
-	"io/ioutil"
-	"os"
-	"testing"
-	"time"
 )
 
 // To run export the mentionned env variables: NFS_HOST, NFS_PARTITION
@@ -63,7 +64,7 @@ func TestNFSReadWrite(t *testing.T) {
 	require.NotNil(t, d)
 	bd, is := d.(storage.BufferUnit)
 	require.True(t, is)
-	bd.New(sdk.NewGoRoutines(), storage.AbstractUnitConfig{})
+	bd.New(sdk.NewGoRoutines(ctx), storage.AbstractUnitConfig{})
 	err := bd.Init(ctx, &storage.NFSBufferConfiguration{
 		Host:            nfsHost,
 		TargetPartition: nfsTargetPath,

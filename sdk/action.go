@@ -21,7 +21,7 @@ const (
 	CoverageAction            = "Coverage"
 	GitCloneAction            = "GitClone"
 	GitTagAction              = "GitTag"
-	ReleaseAction             = "Release"
+	ReleaseVCSAction          = "ReleaseVCS"
 	CheckoutApplicationAction = "CheckoutApplication"
 	DeployApplicationAction   = "DeployApplication"
 	PushBuildInfo             = "PushBuildInfo"

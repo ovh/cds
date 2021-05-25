@@ -47,7 +47,7 @@ func TestDeduplicationCrossType(t *testing.T) {
 	tmpDir, err := ioutil.TempDir("", t.Name()+"-cdn-1-*")
 	require.NoError(t, err)
 
-	cdnUnits, err := storage.Init(ctx, m, cache, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
+	cdnUnits, err := storage.Init(ctx, m, cache, db.DbMap, sdk.NewGoRoutines(ctx), storage.Configuration{
 		SyncSeconds:     10,
 		SyncNbElements:  100,
 		HashLocatorSalt: "thisismysalt",
@@ -83,7 +83,7 @@ func TestDeduplicationCrossType(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.NotNil(t, cdnUnits)
-	cdnUnits.Start(ctx, sdk.NewGoRoutines())
+	cdnUnits.Start(ctx, sdk.NewGoRoutines(ctx))
 
 	units, err := storage.LoadAllUnits(ctx, m, db.DbMap)
 	require.NoError(t, err)
@@ -242,7 +242,7 @@ func TestRun(t *testing.T) {
 	tmpDir2, err := ioutil.TempDir("", t.Name()+"-cdn-2-*")
 	require.NoError(t, err)
 
-	cdnUnits, err := storage.Init(ctx, m, cache, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
+	cdnUnits, err := storage.Init(ctx, m, cache, db.DbMap, sdk.NewGoRoutines(ctx), storage.Configuration{
 		SyncSeconds:     10,
 		SyncNbElements:  100,
 		HashLocatorSalt: "thisismysalt",
@@ -284,7 +284,7 @@ func TestRun(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.NotNil(t, cdnUnits)
-	cdnUnits.Start(ctx, sdk.NewGoRoutines())
+	cdnUnits.Start(ctx, sdk.NewGoRoutines(ctx))
 
 	units, err := storage.LoadAllUnits(ctx, m, db.DbMap)
 	require.NoError(t, err)

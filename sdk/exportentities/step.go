@@ -167,23 +167,23 @@ func newStep(act sdk.Action) Step {
 			if prefix != nil {
 				s.GitTag.Prefix = prefix.Value
 			}
-		case sdk.ReleaseAction:
-			s.Release = &StepRelease{}
+		case sdk.ReleaseVCSAction:
+			s.ReleaseVCS = &StepReleaseVCS{}
 			artifacts := sdk.ParameterFind(act.Parameters, "artifacts")
 			if artifacts != nil {
-				s.Release.Artifacts = artifacts.Value
+				s.ReleaseVCS.Artifacts = artifacts.Value
 			}
 			releaseNote := sdk.ParameterFind(act.Parameters, "releaseNote")
 			if releaseNote != nil {
-				s.Release.ReleaseNote = releaseNote.Value
+				s.ReleaseVCS.ReleaseNote = releaseNote.Value
 			}
 			tag := sdk.ParameterFind(act.Parameters, "tag")
 			if tag != nil {
-				s.Release.Tag = tag.Value
+				s.ReleaseVCS.Tag = tag.Value
 			}
 			title := sdk.ParameterFind(act.Parameters, "title")
 			if title != nil {
-				s.Release.Title = title.Value
+				s.ReleaseVCS.Title = title.Value
 			}
 		case sdk.JUnitAction:
 			var step StepJUnitReport
@@ -294,8 +294,8 @@ type StepGitClone struct {
 	User       string `json:"user,omitempty" yaml:"user,omitempty"`
 }
 
-// StepRelease represents exported release step.
-type StepRelease struct {
+// StepReleaseVCS represents exported release step.
+type StepReleaseVCS struct {
 	Artifacts   string `json:"artifacts,omitempty" yaml:"artifacts,omitempty"`
 	ReleaseNote string `json:"releaseNote,omitempty" yaml:"releaseNote,omitempty"`
 	Tag         string `json:"tag,omitempty" yaml:"tag,omitempty" jsonschema:"required"`
@@ -341,7 +341,7 @@ type Step struct {
 	ServeStaticFiles *StepServeStaticFiles `json:"serveStaticFiles,omitempty" yaml:"serveStaticFiles,omitempty" jsonschema:"oneof_required=actionServeStaticFiles" jsonschema_description:"Serve static files.\nhttps://ovh.github.io/cds/docs/actions/builtin-serve-static-files"`
 	GitClone         *StepGitClone         `json:"gitClone,omitempty" yaml:"gitClone,omitempty" jsonschema:"oneof_required=actionGitClone" jsonschema_description:"Clone a git repository.\nhttps://ovh.github.io/cds/docs/actions/builtin-gitclone"`
 	GitTag           *StepGitTag           `json:"gitTag,omitempty" yaml:"gitTag,omitempty" jsonschema:"oneof_required=actionGitTag" jsonschema_description:"Create a git tag.\nhttps://ovh.github.io/cds/docs/actions/builtin-gittag"`
-	Release          *StepRelease          `json:"release,omitempty" yaml:"release,omitempty" jsonschema:"oneof_required=actionRelease" jsonschema_description:"Release an application.\nhttps://ovh.github.io/cds/docs/actions/builtin-release"`
+	ReleaseVCS       *StepReleaseVCS       `json:"releaseVCS,omitempty" yaml:"releaseVCS,omitempty" jsonschema:"oneof_required=actionReleaseVCS" jsonschema_description:"Release an application.\nhttps://ovh.github.io/cds/docs/actions/builtin-releasevcs"`
 	JUnitReport      *StepJUnitReport      `json:"jUnitReport,omitempty" yaml:"jUnitReport,omitempty" jsonschema:"oneof_required=actionJUNit" jsonschema_description:"Parse JUnit report.\nhttps://ovh.github.io/cds/docs/actions/builtin-junit"`
 	Checkout         *StepCheckout         `json:"checkout,omitempty" yaml:"checkout,omitempty" jsonschema:"oneof_required=actionCheckout" jsonschema_description:"Checkout repository for an application.\nhttps://ovh.github.io/cds/docs/actions/builtin-checkoutapplication"`
 	InstallKey       *StepInstallKey       `json:"installKey,omitempty" yaml:"installKey,omitempty" jsonschema:"oneof_required=actionInstallKey" jsonschema_description:"Install a key (GPG, SSH) in your current workspace.\nhttps://ovh.github.io/cds/docs/actions/builtin-installkey"`
@@ -447,7 +447,7 @@ func (s Step) IsValid() bool {
 	if s.isGitTag() {
 		count++
 	}
-	if s.isRelease() {
+	if s.isReleaseVCS() {
 		count++
 	}
 	if s.isCheckout() {
@@ -492,8 +492,8 @@ func (s Step) toAction() (*sdk.Action, error) {
 		a, err = s.asGitClone()
 	} else if s.isGitTag() {
 		a, err = s.asGitTag()
-	} else if s.isRelease() {
-		a, err = s.asRelease()
+	} else if s.isReleaseVCS() {
+		a, err = s.asReleaseVCS()
 	} else if s.isCheckout() {
 		a = s.asCheckoutApplication()
 	} else if s.isInstallKey() {
@@ -731,16 +731,16 @@ func (s Step) asGitTag() (sdk.Action, error) {
 	return a, nil
 }
 
-func (s Step) isRelease() bool { return s.Release != nil }
+func (s Step) isReleaseVCS() bool { return s.ReleaseVCS != nil }
 
-func (s Step) asRelease() (sdk.Action, error) {
+func (s Step) asReleaseVCS() (sdk.Action, error) {
 	var a sdk.Action
-	m, err := stepToMap(s.Release)
+	m, err := stepToMap(s.ReleaseVCS)
 	if err != nil {
 		return a, err
 	}
 	a = sdk.Action{
-		Name:       sdk.ReleaseAction,
+		Name:       sdk.ReleaseVCSAction,
 		Type:       sdk.BuiltinAction,
 		Parameters: sdk.ParametersFromMap(m),
 	}
@@ -800,7 +800,7 @@ func stepToMap(i interface{}) (map[string]string, error) {
 
 func (s Step) String() string {
 	buf := new(bytes.Buffer)
-	dump := dump.NewEncoder(buf)
-	_ = dump.Fdump(s)
+	dp := dump.NewEncoder(buf)
+	_ = dp.Fdump(s)
 	return buf.String()
 }

@@ -22,7 +22,7 @@ var List = []Manifest{
 	GitTag,
 	InstallKey,
 	JUnit,
-	Release,
+	ReleaseVCS,
 	Script,
 	ServeStaticFiles,
 }

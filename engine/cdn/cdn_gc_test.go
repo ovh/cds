@@ -39,7 +39,7 @@ func TestCleanSynchronizedItem(t *testing.T) {
 		Cache:               cache,
 		Mapper:              m,
 	}
-	s.GoRoutines = sdk.NewGoRoutines()
+	s.GoRoutines = sdk.NewGoRoutines(context.TODO())
 
 	tmpDir, err := ioutil.TempDir("", t.Name()+"-cdn-1-*")
 	require.NoError(t, err)
@@ -47,7 +47,7 @@ func TestCleanSynchronizedItem(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Second)
 	t.Cleanup(cancel)
 
-	cdnUnits, err := storage.Init(ctx, m, cache, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
+	cdnUnits, err := storage.Init(ctx, m, cache, db.DbMap, sdk.NewGoRoutines(ctx), storage.Configuration{
 		HashLocatorSalt: "thisismysalt",
 		Buffers: map[string]storage.BufferConfiguration{
 			"redis_buffer": {
@@ -208,7 +208,7 @@ func TestCleanSynchronizedItemWithDisabledStorage(t *testing.T) {
 		Cache:               cache,
 		Mapper:              m,
 	}
-	s.GoRoutines = sdk.NewGoRoutines()
+	s.GoRoutines = sdk.NewGoRoutines(context.TODO())
 
 	tmpDir, err := ioutil.TempDir("", t.Name()+"-cdn-1-*")
 	require.NoError(t, err)
@@ -216,7 +216,7 @@ func TestCleanSynchronizedItemWithDisabledStorage(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Second)
 	t.Cleanup(cancel)
 
-	cdnUnits, err := storage.Init(ctx, m, cache, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
+	cdnUnits, err := storage.Init(ctx, m, cache, db.DbMap, sdk.NewGoRoutines(ctx), storage.Configuration{
 		HashLocatorSalt: "thisismysalt",
 		Buffers: map[string]storage.BufferConfiguration{
 			"redis_buffer": {
@@ -351,7 +351,7 @@ func TestCleanWaitingItem(t *testing.T) {
 		Cache:               cache,
 		Mapper:              m,
 	}
-	s.GoRoutines = sdk.NewGoRoutines()
+	s.GoRoutines = sdk.NewGoRoutines(context.TODO())
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
@@ -402,7 +402,7 @@ func TestCleanWaitingItemWithoutItemUnit(t *testing.T) {
 		Cache:               cache,
 		Mapper:              m,
 	}
-	s.GoRoutines = sdk.NewGoRoutines()
+	s.GoRoutines = sdk.NewGoRoutines(context.TODO())
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
@@ -446,7 +446,7 @@ func TestPurgeItem(t *testing.T) {
 		Cache:               cache,
 		Mapper:              m,
 	}
-	s.GoRoutines = sdk.NewGoRoutines()
+	s.GoRoutines = sdk.NewGoRoutines(context.TODO())
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)

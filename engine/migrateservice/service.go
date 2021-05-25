@@ -48,7 +48,7 @@ type Configuration struct {
 // New instanciates a new API object
 func New() service.Service {
 	s := &dbmigservice{}
-	s.GoRoutines = sdk.NewGoRoutines()
+	s.GoRoutines = sdk.NewGoRoutines(context.Background())
 	return s
 }
 

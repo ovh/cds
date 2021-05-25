@@ -32,7 +32,7 @@ import (
 // New instanciates a new Hatchery Swarm
 func New() *HatcherySwarm {
 	s := new(HatcherySwarm)
-	s.GoRoutines = sdk.NewGoRoutines()
+	s.GoRoutines = sdk.NewGoRoutines(context.Background())
 	return s
 }
 

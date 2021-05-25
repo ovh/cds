@@ -129,7 +129,7 @@ vcs_ssh_key: proj-ssh-key
 vcs_pgp_key: proj-pgp-key
 ```
 
-Now with this setup you will be able to use the actions [CheckoutApplication]({{< relref "../../actions/builtin-checkoutapplication/" >}}) and [Release]({{< relref "../../actions/builtin-release/" >}}) in your pipelines.
+Now with this setup you will be able to use the actions [CheckoutApplication]({{< relref "../../actions/builtin-checkoutapplication/" >}}) and [Release]({{< relref "../../actions/builtin-releasevcs/" >}}) in your pipelines.
 
 ## Deployment
 

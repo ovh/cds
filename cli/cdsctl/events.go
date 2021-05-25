@@ -60,8 +60,8 @@ func eventsListenRun(v cli.Values) error {
 	chanMessageToSend := make(chan []sdk.WebsocketFilter)
 	chanErrorReceived := make(chan error)
 
-	sdk.NewGoRoutines().Run(ctx, "WebsocketEventsListenCmd", func(ctx context.Context) {
-		client.WebsocketEventsListen(ctx, sdk.NewGoRoutines(), chanMessageToSend, chanMessageReceived, chanErrorReceived)
+	sdk.NewGoRoutines(ctx).Run(ctx, "WebsocketEventsListenCmd", func(ctx context.Context) {
+		client.WebsocketEventsListen(ctx, sdk.NewGoRoutines(ctx), chanMessageToSend, chanMessageReceived, chanErrorReceived)
 	})
 
 	switch {

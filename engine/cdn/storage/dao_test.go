@@ -48,7 +48,7 @@ func TestLoadAllItemIDUnknownByUnit(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Second)
 	t.Cleanup(cancel)
 
-	cdnUnits, err := storage.Init(ctx, m, store, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
+	cdnUnits, err := storage.Init(ctx, m, store, db.DbMap, sdk.NewGoRoutines(ctx), storage.Configuration{
 		HashLocatorSalt: "thisismysalt",
 		Buffers: map[string]storage.BufferConfiguration{
 			"redis_buffer": {

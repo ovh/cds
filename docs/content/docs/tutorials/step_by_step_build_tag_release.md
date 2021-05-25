@@ -232,7 +232,7 @@ Tag is created on GitHub.
 
 ## 9 - Release Action
 
-[Release action]({{< relref "/docs/actions/builtin-release.md" >}}) action is implemented for GitHub only. 
+[Release action]({{< relref "/docs/actions/builtin-releasevcs.md" >}}) action is implemented for GitHub only. 
 You can use it to create a release from a tag and push some artifacts on it.
 
 {{%expand "view screenshots..." %}}
