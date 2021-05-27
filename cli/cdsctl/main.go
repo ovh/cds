@@ -46,6 +46,7 @@ func main() {
 		version(),
 		worker(),
 		workflow(),
+		preview(),
 	})
 	if err := root.Execute(); err != nil {
 		cli.ExitOnError(err)

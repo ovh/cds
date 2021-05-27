@@ -20,18 +20,21 @@ export class Tab {
 @AutoUnsubscribe()
 export class TabsComponent implements OnInit, OnChanges, OnDestroy {
     @Input() tabs: Array<Tab>;
+    @Input() disableNavigation: boolean;
+
     @Output() onSelect = new EventEmitter<Tab>();
+
     selected: Tab;
     queryParamsSub: Subscription;
 
     constructor(private _route: ActivatedRoute, private _router: Router) { }
 
-    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit() {
         this.select(this.tabs.find(t => t.default));
         this.queryParamsSub = this._route.queryParams.subscribe(params => {
-            if (params['tab']) {
+            if (params['tab'] && !this.disableNavigation) {
                 this.select(this.tabs.find(t => t.key === params['tab']));
             }
         });
@@ -49,11 +52,15 @@ export class TabsComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     clickSelect(tab: Tab) {
-        this._router.navigate([], {
-            relativeTo: this._route,
-            queryParams: { tab: tab.key },
-            queryParamsHandling: 'merge'
-        });
+        if (!this.disableNavigation) {
+            this._router.navigate([], {
+                relativeTo: this._route,
+                queryParams: { tab: tab.key },
+                queryParamsHandling: 'merge'
+            });
+        } else {
+            this.select(this.tabs.find(t => t.key === tab.key));
+        }
     }
 
     select(tab: Tab) {

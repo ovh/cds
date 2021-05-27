@@ -129,7 +129,7 @@ func newStagesForPipelineV1(stages []sdk.Stage) ([]string, map[string]Stage) {
 	return res, opts
 }
 
-func newRequirements(req []sdk.Requirement) []Requirement {
+func NewRequirements(req []sdk.Requirement) []Requirement {
 	if req == nil {
 		return nil
 	}
@@ -164,7 +164,7 @@ func newJob(j sdk.Job) Job {
 	}
 	jo.Steps = newSteps(j.Action)
 	jo.Description = j.Action.Description
-	jo.Requirements = newRequirements(j.Action.Requirements)
+	jo.Requirements = NewRequirements(j.Action.Requirements)
 	return jo
 }
 

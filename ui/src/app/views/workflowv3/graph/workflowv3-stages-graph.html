@@ -1,0 +1,11 @@
+<div class="svg-wrapper" #svgGraph>
+    <div class="controls">
+        <button class="ui icon button big" (click)="changeDirection()">
+            <i class="resize icon" [class.vertical]="direction === 'vertical'"
+                [class.horizontal]="direction === 'horizontal'"></i>
+        </button>
+        <button class="ui icon button big" (click)="clickOrigin()">
+            <i class="crosshairs icon"></i>
+        </button>
+    </div>
+</div>

@@ -6,10 +6,8 @@ import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { Stage } from 'app/model/stage.model';
 import { WorkflowNodeJobRun, WorkflowNodeRun } from 'app/model/workflow.run.model';
-import { FeatureNames } from 'app/service/feature/feature.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { DurationService } from 'app/shared/duration/duration.service';
-import { FeatureState } from 'app/store/feature.state';
 import { ProjectState } from 'app/store/project.state';
 import { SelectWorkflowNodeRunJob } from 'app/store/workflow.action';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
@@ -33,8 +31,9 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
     @Select(WorkflowState.getSelectedWorkflowNodeJobRun()) nodeJobRun$: Observable<WorkflowNodeJobRun>;
     nodeJobRunSubs: Subscription;
 
-    workflowName: string;
     project: Project;
+    workflowName: string;
+    workflowRunNum: number;
 
     // Pipeline data
     stages: Array<Stage>;
@@ -61,6 +60,7 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
     ) {
         this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
         this.workflowName = (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowRun.workflow.name;
+        this.workflowRunNum = (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowRun.num;
     }
 
     ngOnInit() {

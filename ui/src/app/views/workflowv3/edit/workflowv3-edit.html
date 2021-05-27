@@ -1,0 +1,12 @@
+<div *ngIf="errorMessage" class="ui warning message">
+    {{errorMessage}}
+</div>
+<div class="editor">
+    <codemirror [ngModel]="workflowYaml" (ngModelChange)="workflowYamlChange($event)" [config]="codeMirrorConfig"
+        #codeMirror>
+    </codemirror>
+    <div class="status">
+        <i *ngIf="writing && !loading" class="cog loading icon"></i>
+        <i *ngIf="loading" class="notch circle loading icon"></i>
+    </div>
+</div>

@@ -1,0 +1,10 @@
+deployments:
+  prod:
+    integration: '@myprod'
+    config:
+      token:
+        type: password
+        value: mytokenref
+      version:
+        type: string
+        value: '{{.cds.version}}'
