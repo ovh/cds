@@ -170,11 +170,11 @@ func (n *Buffer) ItemExists(ctx context.Context, m *gorpmapper.Mapper, db gorp.S
 	if err != nil {
 		return false, err
 	}
-	finfo, _, err := target.Lookup(path)
+	_, _, err = target.Lookup(path)
 	if err != nil {
 		return false, sdk.WithStack(err)
 	}
-	return finfo != nil && finfo.Name() != "", nil
+	return true, nil
 }
 
 func (n *Buffer) Status(_ context.Context) []sdk.MonitoringStatusLine {
