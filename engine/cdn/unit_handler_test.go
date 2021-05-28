@@ -231,8 +231,6 @@ func TestPostAdminResyncBackendWithDatabaseHandler(t *testing.T) {
 		cpt++
 		time.Sleep(250 * time.Millisecond)
 	}
-	//s.Units.GetBuffer(sdk.CDNTypeItemRunResult).ResyncWithDatabase(ctx, db, sdk.CDNTypeItemRunResult, false)
-
 	_, err = os.Stat(file2Path)
 	require.True(t, os.IsNotExist(err))
 

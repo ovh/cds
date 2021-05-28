@@ -125,14 +125,14 @@ func (s *Service) postAdminResyncBackendWithDatabaseHandler() service.Handler {
 
 		for _, u := range s.Units.Buffers {
 			if u.ID() == unitID {
-				s.GoRoutines.Run(context.Background(), "ResyncWithDB-"+unitID, func(ctx context.Context) {
+				s.GoRoutines.Exec(context.Background(), "ResyncWithDB-"+unitID, func(ctx context.Context) {
 					u.ResyncWithDatabase(ctx, s.mustDBWithCtx(ctx), it, dryRun)
 				})
 			}
 		}
 		for _, u := range s.Units.Storages {
 			if u.ID() == unitID {
-				s.GoRoutines.Run(context.Background(), "ResyncWithDB-"+unitID, func(ctx context.Context) {
+				s.GoRoutines.Exec(context.Background(), "ResyncWithDB-"+unitID, func(ctx context.Context) {
 					u.ResyncWithDatabase(ctx, s.mustDBWithCtx(ctx), it, dryRun)
 				})
 			}
