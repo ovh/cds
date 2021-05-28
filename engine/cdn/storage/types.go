@@ -98,6 +98,7 @@ type Unit interface {
 	Read(i sdk.CDNItemUnit, r io.Reader, w io.Writer) error
 	NewReader(ctx context.Context, i sdk.CDNItemUnit) (io.ReadCloser, error)
 	GetDriverName() string
+	ResyncWithDatabase(ctx context.Context, db gorp.SqlExecutor, t sdk.CDNItemType, dryRun bool)
 }
 
 type BufferUnit interface {
