@@ -231,7 +231,7 @@ var authConsumerRegenCmd = cli.Command{
 	Flags: []cli.Flag{
 		{
 			Name:  "duration",
-			Usage: "Validity period of the token generated for the consumer",
+			Usage: "Validity period of the token generated for the consumer (in days)",
 		}, {
 			Name:  "overlap",
 			Usage: "Overlap duration between actual token and the new one. eg: 24h, 30m",

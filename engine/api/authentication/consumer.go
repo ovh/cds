@@ -24,7 +24,6 @@ func NewConsumerWorker(ctx context.Context, db gorpmapper.SqlExecutorWithTx, nam
 			sdk.AuthConsumerScopeRunExecution,
 			sdk.AuthConsumerScopeService,
 		),
-		//IssuedAt: time.Now(),
 		ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 24*time.Hour),
 	}
 
@@ -47,7 +46,6 @@ func NewConsumerExternal(ctx context.Context, db gorpmapper.SqlExecutorWithTx, u
 			"username":    userInfo.Username,
 			"email":       userInfo.Email,
 		},
-		//IssuedAt: time.Now(),
 		ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
 	}
 

@@ -76,6 +76,8 @@ func getConsumer(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, 
 		}
 	}
 
+	ac.ValidityPeriods.Sort()
+
 	return &ac, nil
 }
 
