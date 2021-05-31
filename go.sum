@@ -326,8 +326,6 @@ github.com/jcmturner/gofork v1.0.0/go.mod h1:MK8+TM0La+2rjBD4jE12Kj1pCCxK7d2LK/U
 github.com/jessevdk/go-flags v1.4.0/go.mod h1:4FA24M0QyGHXBuZZK/XkWh8h0e1EYbRYJSGM75WSRxI=
 github.com/jfrog/gofrog v1.0.6 h1:yUDxSCw8gTK6vC4PvtG0HTnEOQJSZ+O4lWGCgkev1nU=
 github.com/jfrog/gofrog v1.0.6/go.mod h1:HkDzg+tMNw23UryoOv0+LB94BzYcl6MCIoz8Tmlb+s8=
-github.com/jfrog/jfrog-client-go v0.22.3 h1:CqircVnWso+EbpYymsLq1CplHlQ8zxHdy/VOhaAX6Bs=
-github.com/jfrog/jfrog-client-go v0.22.3/go.mod h1:1XMLr/yzslzV9uABPrX4gpA0Bvc51ZX6LRvu/L0WQPc=
 github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af h1:pmfjZENx5imkbgOkpRUYLnmbU7UEFbjtDA2hxJ1ichM=
 github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af/go.mod h1:Nht3zPeWKUH0NzdCt2Blrr5ys8VGpn0CEB0cQHVjt7k=
 github.com/jonboulle/clockwork v0.1.0 h1:VKV+ZcuP6l3yW9doeqz6ziZGgcynBVQO+obU0+0hcPo=
@@ -550,6 +548,8 @@ github.com/sguiheux/go-coverage v0.0.0-20190710153556-287b082a7197 h1:qu90yDtRE5
 github.com/sguiheux/go-coverage v0.0.0-20190710153556-287b082a7197/go.mod h1:0hhKrsUsoT7yvxwNGKa+TSYNA26DNWMqReeZEQq/9FI=
 github.com/sguiheux/go-nfs-client v0.0.0-20210311091651-4f075a6103cc h1:2hQK9ZA+R4QK6YSeI6J8h40fv1pQVmsoLwdn0omv4NE=
 github.com/sguiheux/go-nfs-client v0.0.0-20210311091651-4f075a6103cc/go.mod h1:JWMmlL5pWPL6DVIvix8TwfsDIfw8Cu1uyvid9Js3nyE=
+github.com/sguiheux/jfrog-client-go v0.21.1-0.20210526124627-b559bbbcdf25 h1:szpBX0VzkKReVit+MI4Qm9izvO60NSgP9JukQq4OKJU=
+github.com/sguiheux/jfrog-client-go v0.21.1-0.20210526124627-b559bbbcdf25/go.mod h1:1XMLr/yzslzV9uABPrX4gpA0Bvc51ZX6LRvu/L0WQPc=
 github.com/sguiheux/jsonschema v0.2.0 h1:hFHEPxudR6sNcsg50/iuJzHT5d3h3KOvtcg2Hrshs2k=
 github.com/sguiheux/jsonschema v0.2.0/go.mod h1:/n6+1/DWPltRLWL/VKyUxg6tzsl5kHUCcraimt4vr60=
 github.com/shirou/gopsutil v0.0.0-20170406131756-e49a95f3d5f8 h1:05R1OwSk31dkzqf2Jf27n2IOoF9zkK9LcPgPsEm8U7U=

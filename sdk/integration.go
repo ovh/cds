@@ -19,6 +19,7 @@ const (
 	ArtifactManagerConfigURL                   = "url"
 	ArtifactManagerConfigTokenName             = "token.name"
 	ArtifactManagerConfigToken                 = "token"
+	ArtifactManagerConfigReleaseToken          = "release.token"
 	ArtifactManagerConfigCdsRepository         = "cds.repository"
 	ArtifactManagerConfigPromotionLowMaturity  = "promotion.maturity.low"
 	ArtifactManagerConfigPromotionHighMaturity = "promotion.maturity.high"
@@ -133,6 +134,9 @@ var (
 				Type: IntegrationConfigTypeString,
 			},
 			ArtifactManagerConfigToken: IntegrationConfigValue{
+				Type: IntegrationConfigTypePassword,
+			},
+			ArtifactManagerConfigReleaseToken: IntegrationConfigValue{
 				Type: IntegrationConfigTypePassword,
 			},
 			ArtifactManagerConfigCdsRepository: IntegrationConfigValue{

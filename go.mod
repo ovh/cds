@@ -156,6 +156,8 @@ require (
 	sigs.k8s.io/yaml v1.1.0 // indirect
 )
 
+replace github.com/jfrog/jfrog-client-go => github.com/sguiheux/jfrog-client-go v0.21.1-0.20210526124627-b559bbbcdf25
+
 replace github.com/vmware/go-nfs-client => github.com/sguiheux/go-nfs-client v0.0.0-20210311091651-4f075a6103cc
 
 replace github.com/alecthomas/jsonschema => github.com/sguiheux/jsonschema v0.2.0

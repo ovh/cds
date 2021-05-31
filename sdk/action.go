@@ -26,6 +26,7 @@ const (
 	DeployApplicationAction   = "DeployApplication"
 	PushBuildInfo             = "PushBuildInfo"
 	InstallKeyAction          = "InstallKey"
+	ReleaseAction             = "Release"
 
 	DefaultGitCloneParameterTagValue = "{{.git.tag}}"
 )
@@ -147,7 +148,6 @@ func (a Action) IsValid() error {
 			}
 		}
 	}
-
 	return nil
 }
 

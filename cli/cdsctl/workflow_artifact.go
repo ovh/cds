@@ -97,6 +97,11 @@ var workflowArtifactDownloadCmd = cli.Command{
 			Usage:   "exclude files from download - could be a regex: *.log",
 			Default: "",
 		},
+		{
+			Name:    "cdn-url",
+			Usage:   "overwrite cdn url",
+			Default: "",
+		},
 	},
 }
 
@@ -106,10 +111,15 @@ func workflowArtifactDownloadRun(v cli.Values) error {
 		return cli.NewError("number parameter have to be an integer")
 	}
 
-	confCDN, err := client.ConfigCDN()
-	if err != nil {
-		return err
+	cdnURL := v.GetString("cdn-url")
+	if cdnURL == "" {
+		confCDN, err := client.ConfigCDN()
+		if err != nil {
+			return err
+		}
+		cdnURL = confCDN.HTTPURL
 	}
+
 	ok, err := downloadFromCDSAPI(v, number)
 	if err != nil {
 		return err
@@ -176,7 +186,7 @@ func workflowArtifactDownloadRun(v cli.Values) error {
 				return err
 			}
 			fmt.Printf("Downloading %s...\n", artifactData.Name)
-			r, err := client.CDNItemDownload(context.Background(), confCDN.HTTPURL, artifactData.CDNRefHash, sdk.CDNTypeItemRunResult)
+			r, err := client.CDNItemDownload(context.Background(), cdnURL, artifactData.CDNRefHash, sdk.CDNTypeItemRunResult)
 			if err != nil {
 				return err
 			}

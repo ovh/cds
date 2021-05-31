@@ -67,7 +67,6 @@ func (e *artifactoryBuildInfoPlugin) Run(_ context.Context, opts *integrationplu
 	token := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactManagerConfigToken)]
 	tokenName := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactManagerConfigTokenName)]
 	lowMaturitySuffix := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactManagerConfigPromotionLowMaturity)]
-	cdsRepo := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactManagerConfigCdsRepository)]
 
 	buildInfo := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactManagerConfigBuildInfoPath)]
 	version := opts.GetOptions()["cds.version"]
@@ -117,7 +116,6 @@ func (e *artifactoryBuildInfoPlugin) Run(_ context.Context, opts *integrationplu
 		workflowName:      workflowName,
 		version:           version,
 		projectKey:        projectKey,
-		cdsRepo:           cdsRepo,
 	}
 	modules, err := e.computeBuildInfoModules(artiClient, execContext)
 	if err != nil {
@@ -195,9 +193,7 @@ func (e *artifactoryBuildInfoPlugin) retrieveModulesArtifacts(client artifactory
 		props["build.number"] = execContext.version
 		props["build.timestamp"] = strconv.FormatInt(time.Now().Unix(), 10)
 		repoSrc := repoName
-		if repoName != execContext.cdsRepo {
-			repoSrc += "-" + execContext.lowMaturitySuffix
-		}
+		repoSrc += "-" + execContext.lowMaturitySuffix
 		if err := art.SetProperties(client, repoSrc, path, props); err != nil {
 			return nil, err
 		}
