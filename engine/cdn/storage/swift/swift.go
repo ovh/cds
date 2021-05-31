@@ -139,3 +139,7 @@ func (s *Swift) Remove(ctx context.Context, i sdk.CDNItemUnit) error {
 	}
 	return nil
 }
+
+func (s *Swift) ResyncWithDatabase(ctx context.Context, _ gorp.SqlExecutor, _ sdk.CDNItemType, _ bool) {
+	log.Error(ctx, "Resynchronization with database not implemented for swift storage unit")
+}
