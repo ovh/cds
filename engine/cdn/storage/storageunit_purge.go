@@ -2,11 +2,9 @@ package storage
 
 import (
 	"context"
-
-	"github.com/rockbears/log"
-
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
+	"github.com/rockbears/log"
 )
 
 const (

@@ -307,6 +307,15 @@ func (x *RunningStorageUnits) FilterItemUnitReaderByType(ius []sdk.CDNItemUnit) 
 	return ius
 }
 
+func (x *RunningStorageUnits) IsBuffer(id string) bool {
+	for _, buf := range x.Buffers {
+		if buf.ID() == id {
+			return true
+		}
+	}
+	return false
+}
+
 type LogConfig struct {
 	// Step logs
 	StepMaxSize        int64 `toml:"stepMaxSize" default:"15728640" comment:"Max step logs size in bytes (default: 15MB)" json:"stepMaxSize"`

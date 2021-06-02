@@ -15,6 +15,7 @@ import (
 
 	"github.com/rockbears/log"
 
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/gorpmapper"
@@ -208,13 +209,42 @@ func (s *Service) getItemFileValue(ctx context.Context, t sdk.CDNItemType, apiRe
 
 	// If item is in Buffer, get from it
 	if itemUnit != nil {
-		log.Error(ctx, "getItemFileValue> Getting file from buffer")
+		log.Debug(ctx, "getItemFileValue> Getting file from buffer")
 
-		rc, err := s.Units.FileBuffer().NewReader(ctx, *itemUnit)
+		lockKey := cache.Key(storage.FileBufferKey, s.Units.FileBuffer().ID(), "lock", itemUnit.ID)
+		hasLocked, err := s.Cache.Lock(lockKey, 5*time.Second, 0, 1)
 		if err != nil {
-			return nil, nil, nil, err
+			log.Error(ctx, "unable to get lock for %s", lockKey)
 		}
-		return itemUnit, s.Units.FileBuffer(), rc, nil
+		ignoreBuffer := false
+		if hasLocked {
+			// Reload to be sure that it's not marked as delete
+			_, err := storage.LoadItemUnitByID(ctx, s.Mapper, s.mustDBWithCtx(ctx), itemUnit.ID)
+			if err != nil {
+				if !sdk.ErrorIs(err, sdk.ErrNotFound) {
+					log.Error(ctx, "unable to load item unit: %v", err)
+				}
+				ignoreBuffer = true
+			}
+
+			readerKey := cache.Key(storage.FileBufferKey, s.Units.FileBuffer().ID(), "reader", itemUnit.ID, sdk.UUID())
+			if err := s.Cache.SetWithTTL(readerKey, true, 30); err != nil {
+				log.Error(ctx, "unable to set reader on file buffer: %v", err)
+				ignoreBuffer = true
+			}
+			if err := s.Cache.Unlock(lockKey); err != nil {
+				log.Error(ctx, "unable to release lock for %s", lockKey)
+			}
+		}
+
+		if hasLocked && !ignoreBuffer {
+			rc, err := s.Units.FileBuffer().NewReader(ctx, *itemUnit)
+			if err != nil {
+				return nil, nil, nil, err
+			}
+			return itemUnit, s.Units.FileBuffer(), rc, nil
+		}
+
 	}
 
 	// Get from storage
@@ -373,6 +403,10 @@ func (s *Service) getRandomItemUnitIDByItemID(ctx context.Context, itemID string
 			return "", "", sdk.NewErrorFrom(err, "cannot load item %s from given unit %s", itemID, defaultUnitName)
 		}
 		return selectedItemUnit.ID, defaultUnitName, nil
+	}
+
+	if len(itemUnits) == 1 && s.Units.IsBuffer(itemUnits[0].UnitID) {
+		return "", "", sdk.WithStack(fmt.Errorf("unable to find a non buffer storage for item: %s", itemID))
 	}
 
 	// Random pick a unit
