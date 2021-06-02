@@ -217,7 +217,7 @@ func (s *Service) getItemFileValue(ctx context.Context, t sdk.CDNItemType, apiRe
 			log.Error(ctx, "unable to get lock for %s", lockKey)
 			ignoreBuffer = true
 		}
-		if hasLocked && !ignoreBuffer {
+		if hasLocked {
 			// Reload to be sure that it's not marked as delete
 			_, err := storage.LoadItemUnitByID(ctx, s.Mapper, s.mustDBWithCtx(ctx), itemUnit.ID)
 			if err != nil {
@@ -235,6 +235,8 @@ func (s *Service) getItemFileValue(ctx context.Context, t sdk.CDNItemType, apiRe
 			if err := s.Cache.Unlock(lockKey); err != nil {
 				log.Error(ctx, "unable to release lock for %s", lockKey)
 			}
+		} else {
+			ignoreBuffer = true
 		}
 
 		if !ignoreBuffer {
