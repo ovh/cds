@@ -227,11 +227,14 @@ func (s *Service) getItemFileValue(ctx context.Context, t sdk.CDNItemType, apiRe
 				ignoreBuffer = true
 			}
 
-			readerKey := cache.Key(storage.FileBufferKey, s.Units.FileBuffer().ID(), "reader", itemUnit.ID, sdk.UUID())
-			if err := s.Cache.SetWithTTL(readerKey, true, 30); err != nil {
-				log.Error(ctx, "unable to set reader on file buffer: %v", err)
-				ignoreBuffer = true
+			if !ignoreBuffer {
+				readerKey := cache.Key(storage.FileBufferKey, s.Units.FileBuffer().ID(), "reader", itemUnit.ID, sdk.UUID())
+				if err := s.Cache.SetWithTTL(readerKey, true, 30); err != nil {
+					log.Error(ctx, "unable to set reader on file buffer: %v", err)
+					ignoreBuffer = true
+				}
 			}
+
 			if err := s.Cache.Unlock(lockKey); err != nil {
 				log.Error(ctx, "unable to release lock for %s", lockKey)
 			}
