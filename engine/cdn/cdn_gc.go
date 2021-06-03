@@ -172,7 +172,6 @@ func (s *Service) cleanBuffer(ctx context.Context) error {
 			}
 			if !b {
 				log.Info(ctx, "do not delete item unit %s, already locked: %v", uiID)
-				_ = s.Cache.Unlock(lockKey)
 				continue
 			}
 			readerPatternKey := cache.Key(storage.FileBufferKey, bu.ID(), "reader", uiID, "*")
