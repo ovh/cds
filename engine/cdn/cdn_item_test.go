@@ -13,6 +13,7 @@ import (
 	"github.com/rockbears/log"
 	"github.com/stretchr/testify/require"
 
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/lru"
 	"github.com/ovh/cds/engine/cdn/redis"
@@ -508,4 +509,55 @@ func TestGetItemValue_ThousandLinesReverse(t *testing.T) {
 	require.Equal(t, "Line 226\n", lines[0].Value)
 	require.Equal(t, int64(0), lines[226].Number)
 	require.Equal(t, "Line 0\n", lines[226].Value)
+}
+
+func TestGetFileItemFromBuffer(t *testing.T) {
+	m := gorpmapper.New()
+	item.InitDBMapping(m)
+	storage.InitDBMapping(m)
+
+	log.Factory = log.NewTestingWrapper(t)
+	db, factory, store, cancel := test.SetupPGToCancel(t, m, sdk.TypeCDN)
+	t.Cleanup(cancel)
+
+	cdntest.ClearItem(t, context.TODO(), m, db)
+	cdntest.ClearSyncRedisSet(t, store, "local_storage")
+
+	// Create cdn service
+	s := Service{
+		DBConnectionFactory: factory,
+		Cache:               store,
+		Mapper:              m,
+	}
+	s.GoRoutines = sdk.NewGoRoutines(context.TODO())
+
+	ctx, cancel := context.WithCancel(context.TODO())
+	t.Cleanup(cancel)
+
+	_ = test.LoadTestingConf(t, sdk.TypeCDN)
+	cdnUnits := newRunningStorageUnits(t, m, s.DBConnectionFactory.GetDBMap(m)(), ctx, store)
+	s.Units = cdnUnits
+
+	// Add Item in redis / fs/ cds -will be delete from redis
+	it := sdk.CDNItem{
+		ID:         sdk.UUID(),
+		Type:       sdk.CDNTypeItemRunResult,
+		Status:     sdk.CDNStatusItemCompleted,
+		APIRefHash: sdk.RandomString(10),
+	}
+	require.NoError(t, item.Insert(context.TODO(), s.Mapper, db, &it))
+	iuFileBuf := sdk.CDNItemUnit{UnitID: s.Units.FileBuffer().ID(), ItemID: it.ID, Type: it.Type}
+	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iuFileBuf))
+
+	// IU locked by gc
+	lockKey := cache.Key(storage.FileBufferKey, s.Units.FileBuffer().ID(), "lock", iuFileBuf.ID)
+	hasLocked, err := s.Cache.Lock(lockKey, 5*time.Second, 0, 1)
+	require.NoError(t, err)
+	require.True(t, hasLocked)
+
+	ui, unit, reader, err := s.getItemFileValue(ctx, sdk.CDNTypeItemRunResult, it.APIRefHash, getItemFileOptions{})
+	require.Nil(t, reader)
+	require.Nil(t, ui)
+	require.Nil(t, unit)
+	require.Contains(t, err.Error(), "unable to find item units for item with id: "+it.ID)
 }

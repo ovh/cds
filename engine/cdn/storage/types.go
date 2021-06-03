@@ -286,6 +286,17 @@ func (x RunningStorageUnits) GetBuffer(bufferType sdk.CDNItemType) BufferUnit {
 	}
 }
 
+func (x *RunningStorageUnits) FilterItemUnitFromBuffer(ius []sdk.CDNItemUnit) []sdk.CDNItemUnit {
+	itemsUnits := make([]sdk.CDNItemUnit, 0, len(ius))
+	for _, u := range ius {
+		if x.IsBuffer(u.UnitID) {
+			continue
+		}
+		itemsUnits = append(itemsUnits, u)
+	}
+	return itemsUnits
+}
+
 func (x *RunningStorageUnits) FilterItemUnitReaderByType(ius []sdk.CDNItemUnit) []sdk.CDNItemUnit {
 	// Remove cds backend from getting something that is not a log
 	if ius[0].Type != sdk.CDNTypeItemStepLog && ius[0].Type != sdk.CDNTypeItemServiceLog {
@@ -305,6 +316,15 @@ func (x *RunningStorageUnits) FilterItemUnitReaderByType(ius []sdk.CDNItemUnit) 
 		}
 	}
 	return ius
+}
+
+func (x *RunningStorageUnits) IsBuffer(id string) bool {
+	for _, buf := range x.Buffers {
+		if buf.ID() == id {
+			return true
+		}
+	}
+	return false
 }
 
 type LogConfig struct {
