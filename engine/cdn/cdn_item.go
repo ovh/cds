@@ -384,11 +384,12 @@ func (s *Service) getRandomItemUnitIDByItemID(ctx context.Context, itemID string
 		return "", "", err
 	}
 
+	itemUnits = s.Units.FilterItemUnitReaderByType(itemUnits)
+	itemUnits = s.Units.FilterItemUnitFromBuffer(itemUnits)
+
 	if len(itemUnits) == 0 {
 		return "", "", sdk.WithStack(fmt.Errorf("unable to find item units for item with id: %s", itemID))
 	}
-
-	itemUnits = s.Units.FilterItemUnitReaderByType(itemUnits)
 
 	var unit *sdk.CDNUnit
 	var selectedItemUnit *sdk.CDNItemUnit
@@ -408,10 +409,6 @@ func (s *Service) getRandomItemUnitIDByItemID(ctx context.Context, itemID string
 			return "", "", sdk.NewErrorFrom(err, "cannot load item %s from given unit %s", itemID, defaultUnitName)
 		}
 		return selectedItemUnit.ID, defaultUnitName, nil
-	}
-
-	if len(itemUnits) == 1 && s.Units.IsBuffer(itemUnits[0].UnitID) {
-		return "", "", sdk.WithStack(fmt.Errorf("unable to find a non buffer storage for item: %s", itemID))
 	}
 
 	// Random pick a unit
