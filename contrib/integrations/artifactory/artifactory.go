@@ -3,7 +3,6 @@ package art
 import (
 	"encoding/json"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"net/url"
 	"strings"
 	"time"
@@ -59,8 +58,6 @@ func CreateDistributionClient(url, token string) (*distribution.DistributionServ
 	if err != nil {
 		return nil, fmt.Errorf("unable to create service config: %v", err)
 	}
-	log.Error("Distribution client url: " + url)
-	log.Error("Distribution client token: " + token)
 	return distribution.New(serviceConfig)
 }
 

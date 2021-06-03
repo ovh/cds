@@ -2,8 +2,9 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"github.com/jfrog/jfrog-client-go/artifactory/services/utils"
+
 	"os"
 	"regexp"
 	"strings"
@@ -11,7 +12,11 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/jfrog/jfrog-client-go/artifactory"
 	artService "github.com/jfrog/jfrog-client-go/artifactory/services"
+	"github.com/jfrog/jfrog-client-go/artifactory/services/utils"
+	"github.com/jfrog/jfrog-client-go/distribution"
+	authdistrib "github.com/jfrog/jfrog-client-go/distribution/auth"
 	"github.com/jfrog/jfrog-client-go/distribution/services"
+	distriUtils "github.com/jfrog/jfrog-client-go/distribution/services/utils"
 	"github.com/jfrog/jfrog-client-go/utils/log"
 
 	"github.com/ovh/cds/contrib/grpcplugins"
@@ -41,6 +46,17 @@ $ cdsctl admin plugins binary-add artifactory-release-plugin artifactory-release
 
 type artifactoryReleasePlugin struct {
 	integrationplugin.Common
+}
+
+type EdgeNode struct {
+	Name     string `json:"name"`
+	SiteName string `json:"site_name"`
+	City     struct {
+		Name        string `json:"name"`
+		CountryCode string `json:"country_code"`
+	} `json:"city"`
+	LicenseType   string `json:"license_type"`
+	LicenseStatus string `json:"license_status"`
 }
 
 func (e *artifactoryReleasePlugin) Manifest(_ context.Context, _ *empty.Empty) (*integrationplugin.IntegrationPluginManifest, error) {
@@ -94,7 +110,7 @@ func (e *artifactoryReleasePlugin) Run(_ context.Context, opts *integrationplugi
 		artRegs = append(artRegs, r)
 	}
 
-	artifactrPromoted := make([]string, 0)
+	artifactPromoted := make([]string, 0)
 	for _, r := range runResult {
 		rData, err := r.GetArtifactManager()
 		if err != nil {
@@ -114,12 +130,12 @@ func (e *artifactoryReleasePlugin) Run(_ context.Context, opts *integrationplugi
 			if err := e.promoteDockerImage(artiClient, rData, lowMaturitySuffix, highMaturitySuffix); err != nil {
 				return fail("unable to promote docker image: %s: %v", rData.Name, err)
 			}
-			artifactrPromoted = append(artifactrPromoted, fmt.Sprintf("%s*/%s/manifest.json", rData.RepoName, rData.Path))
+			artifactPromoted = append(artifactPromoted, fmt.Sprintf("%s*/%s/manifest.json", rData.RepoName, rData.Path))
 		default:
 			if err := e.promoteFile(artiClient, rData, lowMaturitySuffix, highMaturitySuffix); err != nil {
 				return fail("unable to promote file: %s: %v", rData.Name, err)
 			}
-			artifactrPromoted = append(artifactrPromoted, fmt.Sprintf("%s*/%s", rData.RepoName, rData.Path))
+			artifactPromoted = append(artifactPromoted, fmt.Sprintf("%s*/%s", rData.RepoName, rData.Path))
 		}
 
 	}
@@ -140,15 +156,22 @@ func (e *artifactoryReleasePlugin) Run(_ context.Context, opts *integrationplugi
 			},
 		}
 	} else {
-		for _, pattern := range artifactrPromoted {
-			params.SpecFiles = []*utils.ArtifactoryCommonParams{
-				{
-					Recursive: true,
-					Build:     paramsBuild,
-					Pattern:   pattern,
-				},
-			}
+		params.SpecFiles = make([]*utils.ArtifactoryCommonParams, 0, len(artifactPromoted))
+		for _, pattern := range artifactPromoted {
+			params.SpecFiles = append(params.SpecFiles, &utils.ArtifactoryCommonParams{
+				Recursive: true,
+				Build:     paramsBuild,
+				Pattern:   pattern,
+			})
+
 		}
+	}
+	params.SignImmediately = true
+
+	fmt.Printf("Listing Edge nodes to distribute the release \n")
+	edges, err := e.listEdgeNodes(distriClient, artifactoryURL, releaseToken)
+	if err != nil {
+		return fail("%v", err)
 	}
 
 	fmt.Printf("Creating release %s %s\n", params.Name, params.Version)
@@ -156,9 +179,50 @@ func (e *artifactoryReleasePlugin) Run(_ context.Context, opts *integrationplugi
 		return fail("unable to create release bundle: %v", err)
 	}
 
+	fmt.Printf("Distribute Release %s %s\n", params.Name, params.Version)
+	distributionParams := services.NewDistributeReleaseBundleParams(params.Name, params.Version)
+	distributionParams.DistributionRules = make([]*distriUtils.DistributionCommonParams, 0, len(edges))
+	for _, e := range edges {
+		distributionParams.DistributionRules = append(distributionParams.DistributionRules, &distriUtils.DistributionCommonParams{
+			SiteName:     e.SiteName,
+			CityName:     e.City.Name,
+			CountryCodes: []string{e.City.CountryCode},
+		})
+	}
+	distriClient.DistributeReleaseBundle(distributionParams)
+
 	return &integrationplugin.RunResult{
 		Status: sdk.StatusSuccess,
 	}, nil
+}
+
+func (e *artifactoryReleasePlugin) listEdgeNodes(distriClient *distribution.DistributionServicesManager, url, token string) ([]EdgeNode, error) {
+	// action=x distribute
+	listEdgeNodePath := fmt.Sprintf("api/ui/distribution/edge_nodes?action=x")
+
+	dtb := authdistrib.NewDistributionDetails()
+	dtb.SetUrl(strings.Replace(url, "/artifactory/", "/distribution/", -1))
+	dtb.SetAccessToken(token)
+
+	fakeService := services.NewCreateReleaseBundleService(distriClient.Client())
+	fakeService.DistDetails = dtb
+	clientDetail := fakeService.DistDetails.CreateHttpClientDetails()
+	listEdgeURL := fmt.Sprintf("%s%s", fakeService.DistDetails.GetUrl(), listEdgeNodePath)
+	utils.SetContentType("application/json", &clientDetail.Headers)
+
+	resp, body, _, err := distriClient.Client().SendGet(listEdgeURL, true, &clientDetail)
+	if err != nil {
+		return nil, fmt.Errorf("unable to list edge node from distribution: %v", err)
+	}
+	if resp.StatusCode >= 400 {
+		return nil, fmt.Errorf("http error %d: %s", resp.StatusCode, string(body))
+	}
+
+	var edges []EdgeNode
+	if err := json.Unmarshal(body, &edges); err != nil {
+		return nil, fmt.Errorf("unable to unmarshal response %s: %v", string(body), err)
+	}
+	return edges, nil
 }
 
 func (e *artifactoryReleasePlugin) promoteFile(artiClient artifactory.ArtifactoryServicesManager, data sdk.WorkflowRunResultArtifactManager, lowMaturity, highMaturity string) error {
