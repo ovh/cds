@@ -559,5 +559,5 @@ func TestGetFileItemFromBuffer(t *testing.T) {
 	require.Nil(t, reader)
 	require.Nil(t, ui)
 	require.Nil(t, unit)
-	require.Contains(t, err.Error(), "unable to find a non buffer storage for item")
+	require.Contains(t, err.Error(), "unable to find item units for item with id: "+it.ID)
 }
