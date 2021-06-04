@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 
 	"os"
 	"regexp"
@@ -110,7 +111,12 @@ func (e *artifactoryReleasePlugin) Run(_ context.Context, opts *integrationplugi
 		artRegs = append(artRegs, r)
 	}
 
-	artifactPromoted := make([]string, 0)
+	type promotedArtifact struct {
+		Pattern string
+		Target  string
+	}
+
+	artifactPromoted := make([]promotedArtifact, 0)
 	for _, r := range runResult {
 		rData, err := r.GetArtifactManager()
 		if err != nil {
@@ -128,14 +134,26 @@ func (e *artifactoryReleasePlugin) Run(_ context.Context, opts *integrationplugi
 		switch rData.RepoType {
 		case "docker":
 			if err := e.promoteDockerImage(artiClient, rData, lowMaturitySuffix, highMaturitySuffix); err != nil {
-				return fail("unable to promote docker image: %s: %v", rData.Name, err)
+				return fail("unable to promote docker image: %s: %v", rData.Name+"-"+highMaturitySuffix, err)
 			}
-			artifactPromoted = append(artifactPromoted, fmt.Sprintf("%s*/%s/manifest.json", rData.RepoName, rData.Path))
+
+			// Pattern must be like: "<repo_src>/<path>/(*)"
+			// Target must be like: "<repo_target>/<path>/$1"
+			artifactPromoted = append(artifactPromoted, promotedArtifact{
+				Pattern: fmt.Sprintf("%s/%s/(*)", rData.RepoName+"-"+highMaturitySuffix, rData.Path),
+				Target:  fmt.Sprintf("%s/%s/{1}", rData.RepoName, rData.Path),
+			})
 		default:
 			if err := e.promoteFile(artiClient, rData, lowMaturitySuffix, highMaturitySuffix); err != nil {
 				return fail("unable to promote file: %s: %v", rData.Name, err)
 			}
-			artifactPromoted = append(artifactPromoted, fmt.Sprintf("%s*/%s", rData.RepoName, rData.Path))
+			dir, _ := filepath.Split(rData.Path)
+			// Pattern must be like: "<repo_src>/<path>/(*)"
+			// Target must be like: "<repo_target>/<path>/$1"
+			artifactPromoted = append(artifactPromoted, promotedArtifact{
+				Pattern: fmt.Sprintf("%s/%s(*)", rData.RepoName+"-"+highMaturitySuffix, dir),
+				Target:  fmt.Sprintf("%s/%s{1}", rData.RepoName, dir),
+			})
 		}
 
 	}
@@ -157,27 +175,28 @@ func (e *artifactoryReleasePlugin) Run(_ context.Context, opts *integrationplugi
 		}
 	} else {
 		params.SpecFiles = make([]*utils.ArtifactoryCommonParams, 0, len(artifactPromoted))
-		for _, pattern := range artifactPromoted {
-			params.SpecFiles = append(params.SpecFiles, &utils.ArtifactoryCommonParams{
+		for _, art := range artifactPromoted {
+			query := &utils.ArtifactoryCommonParams{
 				Recursive: true,
 				Build:     paramsBuild,
-				Pattern:   pattern,
-			})
-
+				Pattern:   art.Pattern,
+				Target:    art.Target,
+			}
+			params.SpecFiles = append(params.SpecFiles, query)
 		}
 	}
 	params.SignImmediately = true
+	fmt.Printf("Creating release %s %s\n", params.Name, params.Version)
+	if _, err := distriClient.CreateReleaseBundle(params); err != nil {
+		return fail("unable to create release bundle: %v", err)
+	}
 
 	fmt.Printf("Listing Edge nodes to distribute the release \n")
 	edges, err := e.listEdgeNodes(distriClient, artifactoryURL, releaseToken)
 	if err != nil {
 		return fail("%v", err)
 	}
-
-	fmt.Printf("Creating release %s %s\n", params.Name, params.Version)
-	if _, err := distriClient.CreateReleaseBundle(params); err != nil {
-		return fail("unable to create release bundle: %v", err)
-	}
+	edges = e.removeNonEdge(edges)
 
 	fmt.Printf("Distribute Release %s %s\n", params.Name, params.Version)
 	distributionParams := services.NewDistributeReleaseBundleParams(params.Name, params.Version)
@@ -199,7 +218,6 @@ func (e *artifactoryReleasePlugin) Run(_ context.Context, opts *integrationplugi
 func (e *artifactoryReleasePlugin) listEdgeNodes(distriClient *distribution.DistributionServicesManager, url, token string) ([]EdgeNode, error) {
 	// action=x distribute
 	listEdgeNodePath := fmt.Sprintf("api/ui/distribution/edge_nodes?action=x")
-
 	dtb := authdistrib.NewDistributionDetails()
 	dtb.SetUrl(strings.Replace(url, "/artifactory/", "/distribution/", -1))
 	dtb.SetAccessToken(token)
@@ -223,6 +241,17 @@ func (e *artifactoryReleasePlugin) listEdgeNodes(distriClient *distribution.Dist
 		return nil, fmt.Errorf("unable to unmarshal response %s: %v", string(body), err)
 	}
 	return edges, nil
+}
+
+func (e *artifactoryReleasePlugin) removeNonEdge(edges []EdgeNode) []EdgeNode {
+	edgeFiltered := make([]EdgeNode, 0, len(edges))
+	for _, e := range edges {
+		if e.LicenseType != "EDGE" {
+			continue
+		}
+		edgeFiltered = append(edgeFiltered, e)
+	}
+	return edgeFiltered
 }
 
 func (e *artifactoryReleasePlugin) promoteFile(artiClient artifactory.ArtifactoryServicesManager, data sdk.WorkflowRunResultArtifactManager, lowMaturity, highMaturity string) error {
