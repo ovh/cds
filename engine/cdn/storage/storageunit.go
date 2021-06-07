@@ -20,10 +20,6 @@ import (
 	cdslog "github.com/ovh/cds/sdk/log"
 )
 
-var (
-	FileBufferKey = cache.Key("cdn", "unit")
-)
-
 func (r RunningStorageUnits) Storage(name string) StorageUnit {
 	for _, x := range r.Storages {
 		if x.Name() == name {

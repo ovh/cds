@@ -143,7 +143,7 @@ func LoadAllSynchronizedItemIDs(db gorp.SqlExecutor, bufferUnitID string, maxSto
 	WITH inBuffer as (
 		SELECT item_id
 		FROM storage_unit_item
-		WHERE unit_id = $2
+		WHERE unit_id = $2 AND last_modified < NOW() - INTERVAL '15 minutes'
 	)
 	SELECT item_id
 	FROM storage_unit_item
