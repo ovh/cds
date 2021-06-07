@@ -386,6 +386,7 @@ func (s *Service) getRandomItemUnitIDByItemID(ctx context.Context, itemID string
 
 	itemUnits = s.Units.FilterItemUnitReaderByType(itemUnits)
 	itemUnits = s.Units.FilterItemUnitFromBuffer(itemUnits)
+	itemUnits = s.Units.FilterNotSyncBackend(itemUnits)
 
 	if len(itemUnits) == 0 {
 		return "", "", sdk.WithStack(fmt.Errorf("unable to find item units for item with id: %s", itemID))
