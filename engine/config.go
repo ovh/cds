@@ -691,7 +691,7 @@ func configSetStartupData(conf *Configuration) (string, error) {
 		startupCfg.Consumers = append(startupCfg.Consumers, cfg)
 	}
 
-	return authentication.SignJWS(startupCfg, time.Hour)
+	return authentication.SignJWS(startupCfg, time.Now(), time.Hour)
 }
 
 func getInitTokenFromExistingConfiguration(conf Configuration) (string, error) {
@@ -700,7 +700,8 @@ func getInitTokenFromExistingConfiguration(conf Configuration) (string, error) {
 	}
 	apiPrivateKeyPEM := []byte(conf.API.Auth.RSAPrivateKey)
 
-	globalIAT := time.Now().Unix()
+	now := time.Now()
+	globalIAT := now.Unix()
 	startupCfg := api.StartupConfig{}
 
 	if err := authentication.Init("cds-api", apiPrivateKeyPEM); err != nil {
@@ -951,5 +952,5 @@ func getInitTokenFromExistingConfiguration(conf Configuration) (string, error) {
 
 	startupCfg.IAT = globalIAT
 
-	return authentication.SignJWS(startupCfg, time.Hour)
+	return authentication.SignJWS(startupCfg, now, time.Hour)
 }

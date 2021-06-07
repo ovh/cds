@@ -89,7 +89,7 @@ var authConsumerNewCmd = cli.Command{
 			Usage: "Define the list of scopes for the consumer",
 		}, {
 			Name:  "duration",
-			Usage: "Validity period of the token generated for the consumer",
+			Usage: "Validity period of the token generated for the consumer (in days)",
 		},
 	},
 }

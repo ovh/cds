@@ -20,7 +20,7 @@ type Signer interface {
 	GetIssuerName() string
 	GetSigningKey() *rsa.PrivateKey
 	SignJWT(jwtToken *jwt.Token) (string, error)
-	SignJWS(content interface{}, duration time.Duration) (string, error)
+	SignJWS(content interface{}, now time.Time, duration time.Duration) (string, error)
 }
 
 type Verifier interface {
@@ -97,7 +97,7 @@ type signaturePayload struct {
 }
 
 // SignJWS returns a jws string using CDS signing key.
-func (s signer) SignJWS(content interface{}, duration time.Duration) (string, error) {
+func (s signer) SignJWS(content interface{}, now time.Time, duration time.Duration) (string, error) {
 	buf, err := json.Marshal(content)
 	if err != nil {
 		return "", sdk.WithStack(err)
@@ -112,7 +112,7 @@ func (s signer) SignJWS(content interface{}, duration time.Duration) (string, er
 		Data: jsonData,
 	}
 	if duration > 0 {
-		payload.Expire = time.Now().Add(duration).Unix()
+		payload.Expire = now.Add(duration).Unix()
 	}
 
 	signer, err := jws.NewSigner(s.signingKey)

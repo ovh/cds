@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/ovh/cds/sdk"
+	"github.com/pkg/errors"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/authentication"
@@ -172,9 +173,15 @@ func (api *API) postConsumerRegenByUserHandler() service.Handler {
 			}
 		}
 
+		newDuration := time.Duration(req.NewDuration) * (24 * time.Hour)
+
+		if overlapDuration > newDuration {
+			return sdk.NewError(sdk.ErrWrongRequest, errors.New("invalid duration"))
+		}
+
 		if err := authentication.ConsumerRegen(ctx, tx, consumer,
 			overlapDuration,
-			time.Duration(req.NewDuration)*(24*time.Hour),
+			newDuration,
 		); err != nil {
 			return err
 		}

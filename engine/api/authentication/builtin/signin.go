@@ -21,7 +21,7 @@ func NewSigninConsumerToken(c *sdk.AuthConsumer) (string, error) {
 		ConsumerID: c.ID,
 		IAT:        latestValidityPeriod.IssuedAt.Unix(),
 	}
-	return authentication.SignJWS(payload, latestValidityPeriod.Duration)
+	return authentication.SignJWS(payload, latestValidityPeriod.IssuedAt, latestValidityPeriod.Duration)
 }
 
 func CheckSigninConsumerToken(signature string) (string, int64, error) {
@@ -59,13 +59,12 @@ func CheckSigninConsumerTokenIssuedAt(ctx context.Context, signature string, c *
 func checkSigninConsumerTokenIssuedAt(ctx context.Context, payload signinBuiltinConsumerToken, v sdk.AuthConsumerValidityPeriod) (string, error) {
 	var eqIAT = payload.IAT == v.IssuedAt.Unix()
 	var hasRevoke = v.Duration > 0
-	var beforeRevoke = time.Now().Before(v.IssuedAt.Add(v.Duration))
-	var eqRevoke = time.Now().Equal(v.IssuedAt.Add(v.Duration))
+	var afterRevoke = time.Now().After(v.IssuedAt.Add(v.Duration))
 
 	if !eqIAT {
 		return "", sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid signin token")
 	}
-	if hasRevoke && !beforeRevoke && !eqRevoke {
+	if hasRevoke && afterRevoke {
 		return "", sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid signin token")
 	}
 	return payload.ConsumerID, nil
