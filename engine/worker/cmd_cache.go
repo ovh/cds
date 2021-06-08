@@ -233,7 +233,7 @@ func cachePullCmd() func(cmd *cobra.Command, args []string) {
 				sdk.Exit("cache pull HTTP %d error %v", resp.StatusCode, err)
 			}
 			cdsError := sdk.DecodeError(body)
-			sdk.Exit("%v", resp.StatusCode, cdsError)
+			sdk.Exit("%v", cdsError)
 		}
 
 		fmt.Printf("Worker cache pull with success (tag: %s)\n", args[0])
