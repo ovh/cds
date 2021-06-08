@@ -2,6 +2,7 @@ package cdsclient
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -18,16 +19,24 @@ func (c *client) CDNItemDownload(ctx context.Context, cdnAddr string, hash strin
 		auth := "Bearer " + c.config.SessionToken
 		req.Header.Add("Authorization", auth)
 	})
+	if err != nil {
+		return nil, err
+	}
 	if code >= 400 {
 		var stringBody string
 		if reader != nil {
 			body, _ := ioutil.ReadAll(reader)
-			if err := sdk.DecodeError(body); err != nil {
-				return nil, err
+			var errSdk sdk.Error
+			if err := json.Unmarshal(body, &errSdk); err == nil {
+				if errSdk.Message != "" {
+					stringBody = errSdk.Error()
+				}
 			}
-			stringBody = string(body)
+			if stringBody == "" {
+				stringBody = string(body)
+			}
 		}
-		return nil, newAPIError(fmt.Errorf("HTTP %d: %s", code, stringBody))
+		return nil, newAPIError(fmt.Errorf("%s", stringBody))
 	}
 	return reader, err
 }

@@ -390,7 +390,7 @@ var errorsAmericanEnglish = map[int]string{
 // Error type.
 type Error struct {
 	ID         int         `json:"id"`
-	Status     int         `json:"-"`
+	Status     int         `json:"status"`
 	Message    string      `json:"message"`
 	Data       interface{} `json:"data,omitempty"`
 	RequestID  string      `json:"request_id,omitempty"`
@@ -719,7 +719,6 @@ func ExtractHTTPError(source error) Error {
 	if httpError.Message == "" {
 		httpError.Message = httpError.Translate()
 	}
-
 	return httpError
 }
 
@@ -740,7 +739,7 @@ func DecodeError(data []byte) error {
 		return nil
 	}
 
-	if e.ID == 0 {
+	if e.ID == 0 && e.Status == 0 {
 		return nil
 	}
 
