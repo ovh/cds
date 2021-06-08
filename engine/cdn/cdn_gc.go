@@ -7,7 +7,6 @@ import (
 
 	"github.com/rockbears/log"
 
-	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/sdk"
@@ -39,7 +38,7 @@ func (s *Service) itemPurge(ctx context.Context) {
 
 // ItemsGC clean long incoming item + delete item from buffer when synchronized everywhere
 func (s *Service) itemsGC(ctx context.Context) {
-	tickGC := time.NewTicker(1 * time.Minute)
+	tickGC := time.NewTicker(30 * time.Minute)
 	defer tickGC.Stop()
 	for {
 		select {
@@ -160,35 +159,6 @@ func (s *Service) cleanBuffer(ctx context.Context) error {
 			log.Error(ctx, "unable to load item units: %v", err)
 			continue
 		}
-
-		itemUnitsToMark := make([]string, 0, len(itemUnitsIDs))
-		for i := range itemUnitsIDs {
-			uiID := itemUnitsIDs[i]
-			lockKey := cache.Key(storage.FileBufferKey, bu.ID(), "lock", uiID)
-			b, err := s.Cache.Lock(lockKey, 30*time.Second, 0, 1)
-			if err != nil {
-				log.Error(ctx, "unable to lock unit item: %v: %v", uiID, err)
-				continue
-			}
-			if !b {
-				log.Info(ctx, "do not delete item unit %s, already locked: %v", uiID)
-				continue
-			}
-			readerPatternKey := cache.Key(storage.FileBufferKey, bu.ID(), "reader", uiID, "*")
-			keys, err := s.Cache.Keys(cache.Key(readerPatternKey))
-			if err != nil {
-				log.Error(ctx, "unable to check if item unit is currently reading by cdn")
-				_ = s.Cache.Unlock(lockKey)
-				continue
-			}
-			if len(keys) > 0 {
-				log.Info(ctx, "do not delete item unit, it is currently reading by cdn")
-				_ = s.Cache.Unlock(lockKey)
-				continue
-			}
-			itemUnitsToMark = append(itemUnitsToMark, uiID)
-		}
-
 		tx, err := s.mustDBWithCtx(ctx).Begin()
 		if err != nil {
 			ctx := sdk.ContextWithStacktrace(ctx, err)
@@ -196,7 +166,7 @@ func (s *Service) cleanBuffer(ctx context.Context) error {
 			continue
 		}
 
-		if _, err := storage.MarkItemUnitToDelete(tx, itemUnitsToMark); err != nil {
+		if _, err := storage.MarkItemUnitToDelete(tx, itemUnitsIDs); err != nil {
 			_ = tx.Rollback()
 			ctx := sdk.ContextWithStacktrace(ctx, err)
 			log.Error(ctx, "unable to mark item as delete: %v", err)
