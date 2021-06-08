@@ -27,10 +27,8 @@ func (c *client) CDNItemDownload(ctx context.Context, cdnAddr string, hash strin
 		if reader != nil {
 			body, _ := ioutil.ReadAll(reader)
 			var errSdk sdk.Error
-			if err := json.Unmarshal(body, &errSdk); err == nil {
-				if errSdk.Message != "" {
-					stringBody = errSdk.Error()
-				}
+			if err := json.Unmarshal(body, &errSdk); err == nil && errSdk.Message != "" {
+				stringBody = errSdk.Error()
 			}
 			if stringBody == "" {
 				stringBody = string(body)
