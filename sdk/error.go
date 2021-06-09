@@ -390,7 +390,7 @@ var errorsAmericanEnglish = map[int]string{
 // Error type.
 type Error struct {
 	ID         int         `json:"id"`
-	Status     int         `json:"status"`
+	Status     int         `json:"-"`
 	Message    string      `json:"message"`
 	Data       interface{} `json:"data,omitempty"`
 	RequestID  string      `json:"request_id,omitempty"`
@@ -739,7 +739,7 @@ func DecodeError(data []byte) error {
 		return nil
 	}
 
-	if e.ID == 0 && e.Status == 0 {
+	if e.ID == 0 {
 		return nil
 	}
 

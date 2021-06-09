@@ -144,10 +144,13 @@ func cachePushCmd() func(cmd *cobra.Command, args []string) {
 		if resp.StatusCode >= 300 {
 			body, err := ioutil.ReadAll(resp.Body)
 			if err != nil {
-				sdk.Exit("cache push HTTP %s error %v", resp.StatusCode, err)
+				sdk.Exit("cache push HTTP %d error %v", resp.StatusCode, err)
 			}
-			cdsError := sdk.DecodeError(body)
-			sdk.Exit("%v", cdsError)
+			var sdkErr sdk.Error
+			if json.Unmarshal(body, &sdkErr); err != nil {
+				sdk.Exit("unable to read error: %s: %v", string(body), err)
+			}
+			sdk.Exit("%v", sdkErr)
 		}
 
 		fmt.Printf("Worker cache push with success (tag: %s)\n", args[0])
@@ -232,8 +235,11 @@ func cachePullCmd() func(cmd *cobra.Command, args []string) {
 			if err != nil {
 				sdk.Exit("cache pull HTTP %d error %v", resp.StatusCode, err)
 			}
-			cdsError := sdk.DecodeError(body)
-			sdk.Exit("%v", cdsError)
+			var sdkErr sdk.Error
+			if json.Unmarshal(body, &sdkErr); err != nil {
+				sdk.Exit("unable to read error: %s: %v", string(body), err)
+			}
+			sdk.Exit("%v", sdkErr)
 		}
 
 		fmt.Printf("Worker cache pull with success (tag: %s)\n", args[0])
