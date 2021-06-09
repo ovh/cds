@@ -73,26 +73,29 @@ func ParseAndImport(ctx context.Context, db gorpmapper.SqlExecutorWithTx, proj s
 	envSecrets := make([]sdk.Variable, 0)
 
 	//Compute variables
-	for p, v := range eenv.Values {
-		switch v.Type {
+	for p := range eenv.Values {
+		value := eenv.Values[p].Value
+		vtype := eenv.Values[p].Type
+
+		switch vtype {
 		case "":
-			v.Type = sdk.StringVariable
+			vtype = sdk.StringVariable
 		case sdk.SecretVariable:
-			secret, err := decryptFunc(db, proj.ID, v.Value)
+			secret, err := decryptFunc(db, proj.ID, value)
 			if err != nil {
 				return env, nil, nil, sdk.WrapError(err, "Unable to decrypt secret variable")
 			}
-			v.Value = secret
+			value = secret
 		}
 
-		vv := sdk.EnvironmentVariable{Name: p, Type: v.Type, Value: v.Value, EnvironmentID: env.ID}
+		vv := sdk.EnvironmentVariable{Name: p, Type: vtype, Value: value, EnvironmentID: env.ID}
 		env.Variables = append(env.Variables, vv)
 
-		if v.Type == sdk.SecretVariable {
+		if vtype == sdk.SecretVariable {
 			envSecrets = append(envSecrets, sdk.Variable{
 				Name:  fmt.Sprintf("cds.env.%s", vv.Name),
-				Type:  v.Type,
-				Value: v.Value,
+				Type:  vtype,
+				Value: value,
 			})
 		}
 	}
