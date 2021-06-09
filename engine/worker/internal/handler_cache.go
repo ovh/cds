@@ -211,7 +211,7 @@ func cachePullHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 			r, err = wk.client.CDNItemDownload(ctx, wk.cdnHttpAddr, items.Items[0].APIRefHash, sdk.CDNTypeItemWorkerCache)
 			if err != nil {
 				err = sdk.Error{
-					Message: "worker cache pull > Cannot pull cache: " + err.Error(),
+					Message: "Cannot pull cache: " + err.Error(),
 					Status:  http.StatusNotFound,
 				}
 				log.Error(ctx, "%v", err)
