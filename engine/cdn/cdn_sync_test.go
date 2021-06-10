@@ -139,8 +139,17 @@ func TestSyncLog(t *testing.T) {
 	cdnUnits.Start(ctx, sdk.NewGoRoutines(ctx))
 	s.Units = cdnUnits
 
-	cdsStorage, ok := s.Units.Storages[0].(*cds.CDS)
-	require.True(t, ok)
+	var cdsStorage *cds.CDS
+	for _, sto := range s.Units.Storages {
+		cdsStorage = sto.(*cds.CDS)
+		if cdsStorage != nil {
+			break
+		}
+	}
+
+	if cdsStorage == nil {
+		t.Fail()
+	}
 
 	// Mock Http route
 	gock.InterceptClient(cdsStorage.GetClient().HTTPClient())
