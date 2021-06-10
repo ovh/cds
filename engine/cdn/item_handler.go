@@ -251,7 +251,7 @@ func (s *Service) getArtifacts(ctx context.Context, r *http.Request, w http.Resp
 	if runID == "" {
 		return sdk.WrapError(sdk.ErrWrongRequest, "invalid workflow run")
 	}
-	items, err := item.LoadByRunID(ctx, s.Mapper, s.mustDBWithCtx(ctx), sdk.CDNTypeItemRunResult, runID)
+	items, err := item.LoadRunResultByRunID(ctx, s.Mapper, s.mustDBWithCtx(ctx), runID)
 	if err != nil {
 		return err
 	}
