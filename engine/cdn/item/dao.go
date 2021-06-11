@@ -319,8 +319,20 @@ func LoadOldItemByStatusAndDuration(ctx context.Context, m *gorpmapper.Mapper, d
 	return getItems(ctx, m, db, query, opts...)
 }
 
-func LoadByRunID(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, itemType sdk.CDNItemType, runID string) ([]sdk.CDNItem, error) {
-	query := gorpmapper.NewQuery("SELECT * FROM item WHERE api_ref->>'run_id'::text = $1 AND type = $2 AND to_delete = false").Args(runID, itemType)
+func LoadRunResultByRunID(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, runID string) ([]sdk.CDNItem, error) {
+	query := gorpmapper.NewQuery(`
+		WITH allResults AS (
+			SELECT api_ref->>'artifact_name' as name, api_ref->>'run_job_id' as run_job_id, id
+			FROM item
+			WHERE api_ref->>'run_id'::text = $1 AND type = $2  AND to_delete = false
+		),
+		deduplication AS (
+			SELECT distinct on (name) *
+			FROM allResults
+			ORDER BY name, run_job_id DESC
+		)
+		SELECT * FROM item WHERE id IN (SELECT id FROM deduplication)
+	`).Args(runID, sdk.CDNTypeItemRunResult)
 	return getItems(ctx, m, db, query)
 
 }
