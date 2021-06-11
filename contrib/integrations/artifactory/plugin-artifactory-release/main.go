@@ -208,7 +208,9 @@ func (e *artifactoryReleasePlugin) Run(_ context.Context, opts *integrationplugi
 			CountryCodes: []string{e.City.CountryCode},
 		})
 	}
-	distriClient.DistributeReleaseBundle(distributionParams)
+	if err := distriClient.DistributeReleaseBundle(distributionParams); err != nil {
+		return fail("unable to distribution version: %v", err)
+	}
 
 	return &integrationplugin.RunResult{
 		Status: sdk.StatusSuccess,
