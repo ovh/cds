@@ -3,9 +3,11 @@ package cdn
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"time"
 
+	gocache "github.com/patrickmn/go-cache"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/cache"
@@ -124,11 +126,20 @@ func (s *Service) dequeueMessages(ctx context.Context, jobLogsQueueKey string, q
 					hms = append(hms, hm)
 				}
 
-				// Send TO CDN Buffer
-				if err := s.sendToBufferWithRetry(ctx, hms); err != nil {
-					err = sdk.WrapError(err, "unable to send log into buffer")
+				// Send TO CDS API
+				if err := s.sendToCDS(ctx, hms); err != nil {
+					err = sdk.WrapError(err, "unable to send log to API")
 					ctx = sdk.ContextWithStacktrace(ctx, err)
 					log.Error(ctx, err.Error())
+				}
+
+				// Send TO CDN Buffer
+				if s.cdnEnabled(ctx, hms[0].Signature.ProjectKey) {
+					if err := s.sendToBufferWithRetry(ctx, hms); err != nil {
+						err = sdk.WrapError(err, "unable to send log into buffer")
+						ctx = sdk.ContextWithStacktrace(ctx, err)
+						log.Error(ctx, err.Error())
+					}
 				}
 				nbMessages += len(msgs)
 				t1 = time.Now()
@@ -179,4 +190,24 @@ func (s *Service) canDequeue(ctx context.Context, jobID string) (string, error) 
 		return "", err
 	}
 	return jobQueueKey, nil
+}
+
+// Check if storage on CDN is enabled
+func (s *Service) cdnEnabled(ctx context.Context, projectKey string) bool {
+	cacheKey := fmt.Sprintf("cdn-job-logs-enabled-project-%s", projectKey)
+	enabledI, has := runCache.Get(cacheKey)
+	if has {
+		return enabledI.(bool)
+	}
+
+	resp, err := s.Client.FeatureEnabled(sdk.FeatureCDNJobLogs, map[string]string{
+		"project_key": projectKey,
+	})
+	if err != nil {
+		log.Error(ctx, "unable to get job logs feature for project %s: %v", projectKey, err)
+		return false
+	}
+	enabled := !resp.Exists || resp.Enabled
+	runCache.Set(cacheKey, enabled, gocache.DefaultExpiration)
+	return enabled
 }

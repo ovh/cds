@@ -2,6 +2,7 @@ package cdn
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/rockbears/log"
@@ -12,6 +13,63 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdn"
 )
+
+func (s *Service) sendToCDS(ctx context.Context, msgs []handledMessage) error {
+	switch {
+	case msgs[0].Signature.Service != nil:
+		for _, msg := range msgs {
+			// Format line
+			msg.Msg.Full = buildMessage(msg)
+			if msg.Signature.Service != nil {
+				logs := sdk.ServiceLog{
+					ServiceRequirementName: msg.Signature.Service.RequirementName,
+					ServiceRequirementID:   msg.Signature.Service.RequirementID,
+					WorkflowNodeJobRunID:   msg.Signature.JobID,
+					WorkflowNodeRunID:      msg.Signature.NodeRunID,
+					Val:                    msg.Msg.Full,
+				}
+				if err := s.Client.QueueServiceLogs(ctx, []sdk.ServiceLog{logs}); err != nil {
+					return err
+				}
+			}
+		}
+		return nil
+	default:
+		// Aggregate messages by step
+		hms := make(map[string]handledMessage, len(msgs))
+		for _, msg := range msgs {
+			// Format line
+			msg.Msg.Full = buildMessage(msg)
+
+			k := fmt.Sprintf("%d-%d-%d", msg.Signature.JobID, msg.Signature.NodeRunID, msg.Signature.Worker.StepOrder)
+			// Aggregates lines in a single message
+			if _, ok := hms[k]; ok {
+				full := hms[k].Msg.Full
+				msg.Msg.Full = fmt.Sprintf("%s%s", full, msg.Msg.Full)
+				hms[k] = msg
+			} else {
+				hms[k] = msg
+			}
+		}
+
+		// Send logs to CDS API by step
+		for _, hm := range hms {
+			now := time.Now()
+			l := sdk.Log{
+				JobID:        hm.Signature.JobID,
+				NodeRunID:    hm.Signature.NodeRunID,
+				LastModified: &now,
+				StepOrder:    hm.Signature.Worker.StepOrder,
+				Val:          hm.Msg.Full,
+			}
+			if err := s.Client.QueueSendLogs(ctx, hm.Signature.JobID, l); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
 
 func (s *Service) sendToBufferWithRetry(ctx context.Context, hms []handledMessage) error {
 	if len(hms) == 0 {
