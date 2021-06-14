@@ -286,6 +286,26 @@ func (x RunningStorageUnits) GetBuffer(bufferType sdk.CDNItemType) BufferUnit {
 	}
 }
 
+func (x *RunningStorageUnits) CanSync(unitID string) bool {
+	for _, unit := range x.Storages {
+		if unit.ID() == unitID {
+			return unit.CanSync()
+		}
+	}
+	return false
+}
+
+func (x *RunningStorageUnits) FilterNotSyncBackend(ius []sdk.CDNItemUnit) []sdk.CDNItemUnit {
+	itemsUnits := make([]sdk.CDNItemUnit, 0, len(ius))
+	for _, u := range ius {
+		if !x.CanSync(u.UnitID) {
+			continue
+		}
+		itemsUnits = append(itemsUnits, u)
+	}
+	return itemsUnits
+}
+
 func (x *RunningStorageUnits) FilterItemUnitFromBuffer(ius []sdk.CDNItemUnit) []sdk.CDNItemUnit {
 	itemsUnits := make([]sdk.CDNItemUnit, 0, len(ius))
 	for _, u := range ius {
