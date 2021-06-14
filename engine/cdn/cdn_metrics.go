@@ -122,6 +122,9 @@ func (s *Service) ComputeMetrics(ctx context.Context) {
 
 			var storageStats []storage.Stat
 			for _, su := range s.Units.Storages {
+				if !su.CanSync() {
+					continue
+				}
 				storageStats = append(storageStats, s.countItemsForUnit(ctx, su)...)
 			}
 
