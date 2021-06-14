@@ -285,7 +285,19 @@ func getAll(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query) (
 }
 
 func LoadRunResultsByRunID(ctx context.Context, db gorp.SqlExecutor, runID int64) ([]sdk.WorkflowRunResult, error) {
-	query := gorpmapping.NewQuery("SELECT * FROM workflow_run_result where workflow_run_id = $1").Args(runID)
+	dbQuery := `
+	WITH allResults AS (
+		SELECT data->>'name' AS name, sub_num, id
+		FROM workflow_run_result
+		WHERE workflow_run_id = $1
+	), 
+	deduplication AS (
+		SELECT distinct on (name) *
+		FROM allResults
+		ORDER BY name, sub_num DESC
+	)
+	SELECT * FROM workflow_run_result WHERE id IN (SELECT id FROM deduplication);`
+	query := gorpmapping.NewQuery(dbQuery).Args(runID)
 	return getAll(ctx, db, query)
 }
 

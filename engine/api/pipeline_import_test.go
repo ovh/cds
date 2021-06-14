@@ -170,12 +170,13 @@ stages:
 - Stage 0
 - Stage 1
 jobs:
-- job: New Job
+- job: JobPushBuild
   stage: Stage 1
   steps:
+  - pushBuildInfo: '{{.cds.workflow}}'
   - script:
     - echo "coucou"
-- job: New Job
+- job: Echo
   stage: Stage 0
   steps:
   - script:
@@ -197,4 +198,6 @@ jobs:
 	assert.Equal(t, "Stage 0", pip.Stages[0].Name)
 	assert.Equal(t, 2, pip.Stages[1].BuildOrder)
 	assert.Equal(t, "Stage 1", pip.Stages[1].Name)
+
+	assert.Equal(t, "PushBuildInfo", pip.Stages[1].Jobs[0].Action.Actions[0].Name)
 }

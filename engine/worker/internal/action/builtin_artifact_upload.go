@@ -167,6 +167,11 @@ func uploadArtifactByIntegrationPlugin(path string, ctx context.Context, wk work
 		return fmt.Errorf("unable to call GRPCPlugin: %v", err)
 	}
 
+	qPort := integrationplugin.WorkerHTTPPortQuery{Port: wk.HTTPPort()}
+	if _, err := c.WorkerHTTPPort(ctx, &qPort); err != nil {
+		return fmt.Errorf("unable to setup plugin with worker port: %v", err)
+	}
+
 	pluginSocket.Client = c
 	if _, err := c.Manifest(context.Background(), new(empty.Empty)); err != nil {
 		return fmt.Errorf("unable to call GRPCPlugin: %v", err)

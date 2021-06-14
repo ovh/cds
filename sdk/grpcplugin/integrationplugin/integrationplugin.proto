@@ -31,8 +31,13 @@ message RunResult {
     map<string, string> outputs = 3;
 }
 
+message WorkerHTTPPortQuery {
+    int32 port = 1;
+}
+
 service IntegrationPlugin {
     rpc Manifest (google.protobuf.Empty) returns (IntegrationPluginManifest) {}
     rpc Run (RunQuery) returns (RunResult) {}
+    rpc WorkerHTTPPort (WorkerHTTPPortQuery) returns (google.protobuf.Empty) {}
     rpc Stop (google.protobuf.Empty) returns (google.protobuf.Empty) {}
 }

@@ -214,6 +214,9 @@ func newStep(act sdk.Action) Step {
 				step := StepInstallKey(string(key.Value))
 				s.InstallKey = &step
 			}
+		case sdk.PushBuildInfo:
+			step := StepPushBuildInfo("{{.cds.workflow}}")
+			s.PushBuildInfo = &step
 		case sdk.DeployApplicationAction:
 			step := StepDeploy("{{.cds.application}}")
 			s.Deploy = &step
@@ -244,6 +247,8 @@ type StepParameters map[string]string
 
 // StepCustom represents exported custom step.
 type StepCustom map[string]StepParameters
+
+type StepPushBuildInfo string
 
 // StepCoverage represents exported coverage step.
 type StepCoverage struct {
@@ -316,7 +321,7 @@ type StepCheckout string
 // StepInstallKey represents exported installKey step.
 type StepInstallKey interface{}
 
-// StepDeploy represents exported deploy step.
+// StepDeploy represents exported push build info step.
 type StepDeploy string
 
 // Step represents exported step used in a job.
@@ -329,6 +334,7 @@ type Step struct {
 	// step specific data, only one option should be set
 	StepCustom       `json:"-" yaml:",inline"`
 	Script           interface{}           `json:"script,omitempty" yaml:"script,omitempty" jsonschema:"oneof_type=string;array,oneof_required=actionScript" jsonschema_description:"Script.\nhttps://ovh.github.io/cds/docs/actions/builtin-script"`
+	PushBuildInfo    *StepPushBuildInfo    `json:"pushBuildInfo,omitempty" yaml:"pushBuildInfo,omitempty" jsonschema:"oneof_required=actionPushBuildInfo" jsonschema_description:"Push build info.\nhttps://ovh.github.io/cds/docs/actions/builtin-push-build-info"`
 	Coverage         *StepCoverage         `json:"coverage,omitempty" yaml:"coverage,omitempty" jsonschema:"oneof_required=actionCoverage" jsonschema_description:"Parse coverage report.\nhttps://ovh.github.io/cds/docs/actions/builtin-coverage"`
 	ArtifactDownload *StepArtifactDownload `json:"artifactDownload,omitempty" yaml:"artifactDownload,omitempty" jsonschema:"oneof_required=actionArtifactDownload" jsonschema_description:"Download artifacts in workspace.\nhttps://ovh.github.io/cds/docs/actions/builtin-artifact-download"`
 	ArtifactUpload   *StepArtifactUpload   `json:"artifactUpload,omitempty" yaml:"artifactUpload,omitempty" jsonschema:"oneof_required=actionArtifactUpload" jsonschema_description:"Upload artifacts from workspace.\nhttps://ovh.github.io/cds/docs/actions/builtin-artifact-upload"`
@@ -459,6 +465,9 @@ func (s Step) IsValid() bool {
 	if s.isScript() {
 		count++
 	}
+	if s.isPushBuildInfo() {
+		count++
+	}
 	count += len(s.StepCustom)
 
 	return count == 1
@@ -495,6 +504,8 @@ func (s Step) toAction() (*sdk.Action, error) {
 		a, err = s.asCoverage()
 	} else if s.isScript() {
 		a, err = s.asScript()
+	} else if s.isPushBuildInfo() {
+		a = s.asPushBuildInfo()
 	} else {
 		a = s.asAction()
 	}
@@ -621,6 +632,15 @@ func (s Step) asInstallKey() sdk.Action {
 }
 
 func (s Step) isInstallKey() bool { return s.InstallKey != nil }
+
+func (s Step) isPushBuildInfo() bool { return s.PushBuildInfo != nil }
+
+func (s Step) asPushBuildInfo() sdk.Action {
+	return sdk.Action{
+		Name: sdk.PushBuildInfo,
+		Type: sdk.BuiltinAction,
+	}
+}
 
 func (s Step) isCoverage() bool { return s.Coverage != nil }
 

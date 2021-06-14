@@ -1,0 +1,5 @@
+name: artifactory-build-info-plugin
+type: integration-build_info
+integration: ArtifactManager
+author: "OVH SAS"
+description: "OVH Artifactory Build info Plugin"

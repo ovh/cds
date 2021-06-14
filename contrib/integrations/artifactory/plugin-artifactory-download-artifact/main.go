@@ -7,13 +7,11 @@ import (
 	"strconv"
 
 	"github.com/golang/protobuf/ptypes/empty"
-	"github.com/jfrog/jfrog-client-go/artifactory"
-	"github.com/jfrog/jfrog-client-go/artifactory/auth"
 	"github.com/jfrog/jfrog-client-go/artifactory/services"
 	"github.com/jfrog/jfrog-client-go/artifactory/services/utils"
-	"github.com/jfrog/jfrog-client-go/config"
 	"github.com/jfrog/jfrog-client-go/utils/log"
 
+	art "github.com/ovh/cds/contrib/integrations/artifactory"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/grpcplugin/integrationplugin"
 )
@@ -61,21 +59,6 @@ func (e *artifactoryDownloadArtifactPlugin) Manifest(_ context.Context, _ *empty
 	}, nil
 }
 
-func createArtifactoryClient(url, token string) (artifactory.ArtifactoryServicesManager, error) {
-	rtDetails := auth.NewArtifactoryDetails()
-	rtDetails.SetUrl(url)
-	rtDetails.SetAccessToken(token)
-	serviceConfig, err := config.NewConfigBuilder().
-		SetServiceDetails(rtDetails).
-		SetThreads(1).
-		SetDryRun(false).
-		Build()
-	if err != nil {
-		return nil, fmt.Errorf("unable to create service config: %v", err)
-	}
-	return artifactory.New(serviceConfig)
-}
-
 func (e *artifactoryDownloadArtifactPlugin) Run(_ context.Context, opts *integrationplugin.RunQuery) (*integrationplugin.RunResult, error) {
 	cdsRepo := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactManagerConfigCdsRepository)]
 	artifactoryURL := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactManagerConfigURL)]
@@ -91,7 +74,7 @@ func (e *artifactoryDownloadArtifactPlugin) Run(_ context.Context, opts *integra
 		return fail("unable to read file permission %s: %v", permS, err)
 	}
 
-	artiClient, err := createArtifactoryClient(artifactoryURL, token)
+	artiClient, err := art.CreateArtifactoryClient(artifactoryURL, token)
 	if err != nil {
 		return fail("unable to create artifactory client: %v", err)
 	}
