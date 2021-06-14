@@ -71,7 +71,7 @@ func authConsumerTokenExpirationPerID(ctx context.Context, tx gorpmapper.SqlExec
 	}
 
 	consumer.ValidityPeriods = sdk.NewAuthConsumerValidityPeriod(time.Now(), duration)
-	log.Info(ctx, "consumer %q IAT=%v Expiration=%v", consumer.ValidityPeriods.Latest().IssuedAt, consumer.ValidityPeriods.Latest().IssuedAt.Add(consumer.ValidityPeriods.Latest().Duration))
+	log.Info(ctx, "consumer %q IAT=%v Expiration=%v", consumer.ID, consumer.ValidityPeriods.Latest().IssuedAt, consumer.ValidityPeriods.Latest().IssuedAt.Add(consumer.ValidityPeriods.Latest().Duration))
 
 	return authentication.UpdateConsumer(ctx, tx, consumer)
 }
