@@ -203,3 +203,7 @@ func (s *S3) Remove(ctx context.Context, i sdk.CDNItemUnit) error {
 	})
 	return sdk.WithStack(err)
 }
+
+func (s *S3) ResyncWithDatabase(ctx context.Context, _ gorp.SqlExecutor, _ sdk.CDNItemType, _ bool) {
+	log.Error(ctx, "Resynchronization with database not implemented for s3 storage unit")
+}

@@ -101,7 +101,7 @@ export class WorkflowRunArtifactListComponent implements OnInit, OnDestroy {
                         uiArt.size = a.size;
                         uiArt.md5 = a.md5sum;
                         uiArt.type = 'file';
-                        uiArt.link = `./cdscdn/item/artifact/${a.download_hash}/download`;
+                        uiArt.link = `./cdsapi/workflow/artifact/${a.download_hash}`;
                         return uiArt;
                     });
                     this.uiArtifacts.push(...uiArtifacts)

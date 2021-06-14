@@ -42,7 +42,7 @@ func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *test.Fak
 	api.AuthenticationDrivers[sdk.ConsumerBuiltin] = builtin.NewDriver()
 	api.AuthenticationDrivers[sdk.ConsumerTest] = authdrivertest.NewDriver(t)
 	api.AuthenticationDrivers[sdk.ConsumerTest2] = authdrivertest.NewDriver(t)
-	api.GoRoutines = sdk.NewGoRoutines()
+	api.GoRoutines = sdk.NewGoRoutines(context.TODO())
 
 	api.InitRouter()
 
@@ -90,7 +90,7 @@ func newTestServer(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *test.
 	api.AuthenticationDrivers = make(map[sdk.AuthConsumerType]sdk.AuthDriver)
 	api.AuthenticationDrivers[sdk.ConsumerLocal] = local.NewDriver(context.TODO(), false, "http://localhost:8080", "")
 	api.AuthenticationDrivers[sdk.ConsumerBuiltin] = builtin.NewDriver()
-	api.GoRoutines = sdk.NewGoRoutines()
+	api.GoRoutines = sdk.NewGoRoutines(context.TODO())
 
 	api.InitRouter()
 	ts := httptest.NewServer(router.Mux)

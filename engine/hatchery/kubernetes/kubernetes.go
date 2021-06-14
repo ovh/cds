@@ -29,7 +29,7 @@ import (
 // New instanciates a new hatchery local
 func New() *HatcheryKubernetes {
 	s := new(HatcheryKubernetes)
-	s.GoRoutines = sdk.NewGoRoutines()
+	s.GoRoutines = sdk.NewGoRoutines(context.Background())
 	return s
 }
 

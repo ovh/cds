@@ -66,7 +66,7 @@ func TestRunRelease(t *testing.T) {
 			Value: "999",
 		},
 	}...)
-	res, err := RunRelease(ctx, wk,
+	res, err := RunReleaseVCS(ctx, wk,
 		sdk.Action{
 			Parameters: []sdk.Parameter{
 				{
@@ -110,7 +110,7 @@ func TestRunReleaseMissingTag(t *testing.T) {
 			Value: "999",
 		},
 	}...)
-	res, err := RunRelease(ctx, wk,
+	res, err := RunReleaseVCS(ctx, wk,
 		sdk.Action{
 			Parameters: []sdk.Parameter{
 				{
@@ -150,7 +150,7 @@ func TestRunReleaseMissingTitle(t *testing.T) {
 			Value: "999",
 		},
 	}...)
-	res, err := RunRelease(ctx, wk,
+	res, err := RunReleaseVCS(ctx, wk,
 		sdk.Action{
 			Parameters: []sdk.Parameter{
 				{
@@ -190,7 +190,7 @@ func TestRunReleaseMissingReleaseNote(t *testing.T) {
 			Value: "999",
 		},
 	}...)
-	res, err := RunRelease(ctx, wk,
+	res, err := RunReleaseVCS(ctx, wk,
 		sdk.Action{
 			Parameters: []sdk.Parameter{
 				{
@@ -226,7 +226,7 @@ func TestRunReleaseMissingProjectKey(t *testing.T) {
 			Value: "999",
 		},
 	}...)
-	res, err := RunRelease(ctx, wk,
+	res, err := RunReleaseVCS(ctx, wk,
 		sdk.Action{
 			Parameters: []sdk.Parameter{
 				{
@@ -266,7 +266,7 @@ func TestRunReleaseMissingWorkflowName(t *testing.T) {
 			Value: "999",
 		},
 	}...)
-	res, err := RunRelease(ctx, wk,
+	res, err := RunReleaseVCS(ctx, wk,
 		sdk.Action{
 			Parameters: []sdk.Parameter{
 				{
@@ -306,7 +306,7 @@ func TestRunReleaseMissingWorkflowRunNumber(t *testing.T) {
 			Value: "workflow Name",
 		},
 	}...)
-	res, err := RunRelease(ctx, wk,
+	res, err := RunReleaseVCS(ctx, wk,
 		sdk.Action{
 			Parameters: []sdk.Parameter{
 				{

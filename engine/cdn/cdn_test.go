@@ -64,11 +64,11 @@ func newTestService(t *testing.T) (*Service, *test.FakeTransaction) {
 		Cache:               cache,
 		Mapper:              m,
 	}
-	s.GoRoutines = sdk.NewGoRoutines()
+	s.GoRoutines = sdk.NewGoRoutines(context.TODO())
 	if fakeAPIPrivateKey.key == nil {
 		fakeAPIPrivateKey.key, _ = jws.NewRandomRSAKey()
 	}
-	s.Common.GoRoutines = sdk.NewGoRoutines()
+	s.Common.GoRoutines = sdk.NewGoRoutines(context.TODO())
 	s.ParsedAPIPublicKey = &fakeAPIPrivateKey.key.PublicKey
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -123,7 +123,7 @@ func newRunningStorageUnits(t *testing.T, m *gorpmapper.Mapper, dbMap *gorp.DbMa
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	t.Cleanup(cancel)
 
-	cdnUnits, err := storage.Init(ctx, m, store, dbMap, sdk.NewGoRoutines(), storage.Configuration{
+	cdnUnits, err := storage.Init(ctx, m, store, dbMap, sdk.NewGoRoutines(ctx), storage.Configuration{
 		SyncSeconds:     2,
 		SyncNbElements:  100,
 		PurgeSeconds:    30,
@@ -161,6 +161,6 @@ func newRunningStorageUnits(t *testing.T, m *gorpmapper.Mapper, dbMap *gorp.DbMa
 		},
 	})
 	require.NoError(t, err)
-	cdnUnits.Start(ctx, sdk.NewGoRoutines())
+	cdnUnits.Start(ctx, sdk.NewGoRoutines(ctx))
 	return cdnUnits
 }

@@ -29,7 +29,7 @@ import (
 // New instanciates a new Hatchery Marathon
 func New() *HatcheryMarathon {
 	s := new(HatcheryMarathon)
-	s.GoRoutines = sdk.NewGoRoutines()
+	s.GoRoutines = sdk.NewGoRoutines(context.Background())
 	return s
 }
 

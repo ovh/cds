@@ -170,11 +170,11 @@ func (n *Buffer) ItemExists(ctx context.Context, m *gorpmapper.Mapper, db gorp.S
 	if err != nil {
 		return false, err
 	}
-	finfo, _, err := target.Lookup(path)
+	_, _, err = target.Lookup(path)
 	if err != nil {
 		return false, sdk.WithStack(err)
 	}
-	return finfo != nil && finfo.Name() != "", nil
+	return true, nil
 }
 
 func (n *Buffer) Status(_ context.Context) []sdk.MonitoringStatusLine {
@@ -331,4 +331,48 @@ func (n *Buffer) ls(v *gonfs.Target, path string) ([]*gonfs.EntryPlus, error) {
 		return nil, sdk.NewErrorFrom(sdk.ErrUnknownError, "readdir error: %v", err)
 	}
 	return dirs, nil
+}
+
+func (n *Buffer) ResyncWithDatabase(ctx context.Context, db gorp.SqlExecutor, t sdk.CDNItemType, dryRun bool) {
+	dial, target, err := n.Connect()
+	if err != nil {
+		log.Error(ctx, "nfs-buffer: unable to connect to NFS: %v", err)
+		return
+	}
+	defer dial.Close()   // nolint
+	defer target.Close() //
+
+	entries, err := n.ls(target, string(t))
+	if err != nil {
+		log.Error(ctx, "nfs-buffer: unable to list directory %s", string(t))
+		return
+	}
+	for _, e := range entries {
+		if e.IsDir() {
+			log.Warn(ctx, "nfs-buffer: found directory inside %s: %s", string(t), e)
+			continue
+		}
+		if e.FileName == "" {
+			log.Warn(ctx, "nfs-buffer: missing file name")
+			continue
+		}
+		has, err := storage.HashItemUnitByApiRefHash(db, e.FileName, n.ID())
+		if err != nil {
+			log.Error(ctx, "nfs-buffer: unable to check if unit item exist for api ref hash %s: %v", e.FileName, err)
+			continue
+		}
+		if has {
+			continue
+		}
+		if !dryRun {
+			if err := target.Remove(string(t) + "/" + e.FileName); err != nil {
+				log.Error(ctx, "nfs-buffer: unable to remove file %s: %v", string(t)+"/"+e.FileName, err)
+				continue
+			}
+			log.Info(ctx, "nfs-buffer: file %s has been deleted", e.FileName)
+		} else {
+			log.Info(ctx, "nfs-buffer: file %s should be deleted", e.FileName)
+		}
+	}
+	return
 }

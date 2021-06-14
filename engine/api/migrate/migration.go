@@ -46,7 +46,7 @@ func Run(ctx context.Context, db gorp.SqlExecutor) {
 				wg.Add(1)
 			}
 
-			sdk.NewGoRoutines().Run(ctx, "migrate_"+currentMigration.Name, func(contex context.Context) {
+			sdk.NewGoRoutines(ctx).Run(ctx, "migrate_"+currentMigration.Name, func(contex context.Context) {
 				defer func() {
 					if currentMigration.Blocker {
 						wg.Done()

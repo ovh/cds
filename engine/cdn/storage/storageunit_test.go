@@ -47,7 +47,7 @@ func TestDeduplicationCrossType(t *testing.T) {
 	tmpDir, err := ioutil.TempDir("", t.Name()+"-cdn-1-*")
 	require.NoError(t, err)
 
-	cdnUnits, err := storage.Init(ctx, m, cache, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
+	cdnUnits, err := storage.Init(ctx, m, cache, db.DbMap, sdk.NewGoRoutines(ctx), storage.Configuration{
 		SyncSeconds:     10,
 		SyncNbElements:  100,
 		HashLocatorSalt: "thisismysalt",
@@ -83,7 +83,7 @@ func TestDeduplicationCrossType(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.NotNil(t, cdnUnits)
-	cdnUnits.Start(ctx, sdk.NewGoRoutines())
+	cdnUnits.Start(ctx, sdk.NewGoRoutines(ctx))
 
 	units, err := storage.LoadAllUnits(ctx, m, db.DbMap)
 	require.NoError(t, err)
@@ -163,7 +163,7 @@ func TestDeduplicationCrossType(t *testing.T) {
 		Type:       sdk.CDNTypeItemRunResult,
 		Status:     sdk.CDNStatusItemCompleted,
 	}
-	iuArtifact, err := cdnUnits.NewItemUnit(ctx, cdnUnits.Buffers[1], itemArtifact)
+	iuArtifact, err := cdnUnits.NewItemUnit(ctx, cdnUnits.FileBuffer(), itemArtifact)
 	require.NoError(t, err)
 
 	// Create Destination Writer
@@ -188,7 +188,7 @@ func TestDeduplicationCrossType(t *testing.T) {
 	itemArtifact.MD5 = md5S
 	itemArtifact.Size = 0
 	itemArtifact.Status = sdk.CDNStatusItemCompleted
-	iuArtifact, err = cdnUnits.NewItemUnit(ctx, cdnUnits.Buffers[1], itemArtifact)
+	iuArtifact, err = cdnUnits.NewItemUnit(ctx, cdnUnits.FileBuffer(), itemArtifact)
 	require.NoError(t, err)
 	require.NoError(t, item.Insert(ctx, m, db, itemArtifact))
 	defer func() {
@@ -242,7 +242,7 @@ func TestRun(t *testing.T) {
 	tmpDir2, err := ioutil.TempDir("", t.Name()+"-cdn-2-*")
 	require.NoError(t, err)
 
-	cdnUnits, err := storage.Init(ctx, m, cache, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
+	cdnUnits, err := storage.Init(ctx, m, cache, db.DbMap, sdk.NewGoRoutines(ctx), storage.Configuration{
 		SyncSeconds:     10,
 		SyncNbElements:  100,
 		HashLocatorSalt: "thisismysalt",
@@ -284,7 +284,7 @@ func TestRun(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.NotNil(t, cdnUnits)
-	cdnUnits.Start(ctx, sdk.NewGoRoutines())
+	cdnUnits.Start(ctx, sdk.NewGoRoutines(ctx))
 
 	units, err := storage.LoadAllUnits(ctx, m, db.DbMap)
 	require.NoError(t, err)

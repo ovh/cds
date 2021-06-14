@@ -437,7 +437,7 @@ func workflowLogStreamRun(v cli.Values) error {
 	chanMsgReceived := make(chan json.RawMessage)
 	chanErrorReceived := make(chan error)
 
-	goRoutines := sdk.NewGoRoutines()
+	goRoutines := sdk.NewGoRoutines(ctx)
 	goRoutines.Exec(ctx, "WebsocketEventsListenCmd", func(ctx context.Context) {
 		for ctx.Err() == nil {
 			if err := client.RequestWebsocket(ctx, goRoutines, fmt.Sprintf("%s/item/stream", link.CDNURL), chanMessageToSend, chanMsgReceived, chanErrorReceived); err != nil {

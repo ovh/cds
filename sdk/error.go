@@ -719,7 +719,6 @@ func ExtractHTTPError(source error) Error {
 	if httpError.Message == "" {
 		httpError.Message = httpError.Translate()
 	}
-
 	return httpError
 }
 

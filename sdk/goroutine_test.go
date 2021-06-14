@@ -23,7 +23,7 @@ func Test_GoroutineTools(t *testing.T) {
 		var wg = new(sync.WaitGroup)
 		ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 		defer cancel()
-		NewGoRoutines().Exec(ctx, "test_goroutine", func(ctx context.Context) {
+		NewGoRoutines(ctx).Exec(ctx, "test_goroutine", func(ctx context.Context) {
 			wg.Add(1)
 			<-ctx.Done()
 			wg.Done()
@@ -42,7 +42,7 @@ func Test_GoroutineTools(t *testing.T) {
 		ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 		defer cancel()
 
-		NewGoRoutines().Exec(ctx, "test_goroutine", func(ctx context.Context) {
+		NewGoRoutines(ctx).Exec(ctx, "test_goroutine", func(ctx context.Context) {
 			wg.Add(1)
 			<-ctx.Done()
 			wg.Done()
@@ -63,18 +63,18 @@ func Test_GoroutineTools(t *testing.T) {
 		ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 		defer cancel()
 
-		m := NewGoRoutines()
+		m := NewGoRoutines(ctx)
 		m.Run(ctx, "test_goroutine_loop", func(ctx context.Context) {
 			wg.Add(1)
-			_, ok := m.status["test_goroutine_loop"]
-			require.True(t, ok)
-			require.True(t, m.status["test_goroutine_loop"])
+			s := m.GoRoutine("test_goroutine_loop")
+			require.NotNil(t, s)
+			require.True(t, s.Active)
 			<-ctx.Done()
 			wg.Done()
 		})
 
-		_, ok := m.status["test_goroutine_loop"]
-		require.True(t, ok)
+		s := m.GoRoutine("test_goroutine_loop")
+		require.NotNil(t, s)
 		require.Equal(t, 1, len(m.GetStatus()))
 	})
 }

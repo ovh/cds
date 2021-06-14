@@ -300,7 +300,7 @@ func ParametersMerge(src []Parameter, overwritter []Parameter) []Parameter {
 	return params
 }
 
-// ParametersMapMerge merges two maps of parameters preserving all git values
+// ParametersMapMerge merges two maps of parameters
 func ParametersMapMerge(params map[string]string, otherParams map[string]string, checkFuncs ...func(string) bool) map[string]string {
 	for k, overrideValue := range otherParams {
 		if _, ok := params[k]; ok {

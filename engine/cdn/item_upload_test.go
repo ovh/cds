@@ -53,7 +53,7 @@ func TestPostUploadHandler(t *testing.T) {
 	tmpDir2, err := ioutil.TempDir("", t.Name()+"-cdn-2-*")
 	require.NoError(t, err)
 
-	cdnUnits, err := storage.Init(ctx, s.Mapper, s.Cache, db.DbMap, sdk.NewGoRoutines(), storage.Configuration{
+	cdnUnits, err := storage.Init(ctx, s.Mapper, s.Cache, db.DbMap, sdk.NewGoRoutines(ctx), storage.Configuration{
 		SyncSeconds:     1,
 		SyncNbElements:  1000,
 		PurgeNbElements: 1000,
@@ -100,7 +100,7 @@ func TestPostUploadHandler(t *testing.T) {
 	})
 	require.NoError(t, err)
 	s.Units = cdnUnits
-	cdnUnits.Start(ctx, sdk.NewGoRoutines())
+	cdnUnits.Start(ctx, sdk.NewGoRoutines(ctx))
 
 	// Mock cds client
 	s.Client = cdsclient.New(cdsclient.Config{Host: "http://lolcat.api", InsecureSkipVerifyTLS: false})

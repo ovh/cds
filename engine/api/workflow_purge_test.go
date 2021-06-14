@@ -98,7 +98,7 @@ func Test_purgeDryRunHandler(t *testing.T) {
 	})
 	contextWS, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
-	go client.WebsocketEventsListen(contextWS, sdk.NewGoRoutines(), chanMessageToSend, chanMessageReceived, chanErrorReceived)
+	go client.WebsocketEventsListen(contextWS, sdk.NewGoRoutines(context.TODO()), chanMessageToSend, chanMessageReceived, chanErrorReceived)
 
 	// Subscribe to workflow retention
 	chanMessageToSend <- []sdk.WebsocketFilter{{

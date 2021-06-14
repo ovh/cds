@@ -233,7 +233,7 @@ func TestUpdateAsCodeEnvironmentHandler(t *testing.T) {
 	chanMessageReceived := make(chan sdk.WebsocketEvent)
 	chanMessageToSend := make(chan []sdk.WebsocketFilter)
 	chanErrorReceived := make(chan error)
-	go client.WebsocketEventsListen(context.TODO(), sdk.NewGoRoutines(), chanMessageToSend, chanMessageReceived, chanErrorReceived)
+	go client.WebsocketEventsListen(context.TODO(), sdk.NewGoRoutines(context.TODO()), chanMessageToSend, chanMessageReceived, chanErrorReceived)
 	chanMessageToSend <- []sdk.WebsocketFilter{{
 		Type:         sdk.WebsocketFilterTypeAscodeEvent,
 		ProjectKey:   proj.Key,

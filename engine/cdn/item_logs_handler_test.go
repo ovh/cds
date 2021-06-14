@@ -383,7 +383,7 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 	chanMsgReceived := make(chan json.RawMessage, 10)
 	chanErrorReceived := make(chan error, 10)
 	go func() {
-		chanErrorReceived <- client.RequestWebsocket(ctx, sdk.NewGoRoutines(), uri, chanMsgToSend, chanMsgReceived, chanErrorReceived)
+		chanErrorReceived <- client.RequestWebsocket(ctx, sdk.NewGoRoutines(ctx), uri, chanMsgToSend, chanMsgReceived, chanErrorReceived)
 	}()
 	buf, err := json.Marshal(sdk.CDNStreamFilter{
 		ItemType: sdk.CDNTypeItemStepLog,
@@ -441,7 +441,7 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 	ctx, cancel = context.WithTimeout(context.TODO(), time.Second*10)
 	t.Cleanup(func() { cancel() })
 	go func() {
-		chanErrorReceived <- client.RequestWebsocket(ctx, sdk.NewGoRoutines(), uri, chanMsgToSend, chanMsgReceived, chanErrorReceived)
+		chanErrorReceived <- client.RequestWebsocket(ctx, sdk.NewGoRoutines(ctx), uri, chanMsgToSend, chanMsgReceived, chanErrorReceived)
 	}()
 	buf, err = json.Marshal(sdk.CDNStreamFilter{
 		ItemType: sdk.CDNTypeItemStepLog,

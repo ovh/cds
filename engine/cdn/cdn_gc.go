@@ -38,7 +38,7 @@ func (s *Service) itemPurge(ctx context.Context) {
 
 // ItemsGC clean long incoming item + delete item from buffer when synchronized everywhere
 func (s *Service) itemsGC(ctx context.Context) {
-	tickGC := time.NewTicker(1 * time.Minute)
+	tickGC := time.NewTicker(30 * time.Minute)
 	defer tickGC.Stop()
 	for {
 		select {
@@ -153,14 +153,12 @@ func (s *Service) cleanBuffer(ctx context.Context) error {
 		if len(itemIDs) == 0 {
 			continue
 		}
-
 		itemUnitsIDs, err := storage.LoadAllItemUnitsIDsByItemIDsAndUnitID(s.mustDBWithCtx(ctx), bu.ID(), itemIDs)
 		if err != nil {
 			ctx := sdk.ContextWithStacktrace(ctx, err)
 			log.Error(ctx, "unable to load item units: %v", err)
 			continue
 		}
-
 		tx, err := s.mustDBWithCtx(ctx).Begin()
 		if err != nil {
 			ctx := sdk.ContextWithStacktrace(ctx, err)

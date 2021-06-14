@@ -143,7 +143,7 @@ func LoadAllSynchronizedItemIDs(db gorp.SqlExecutor, bufferUnitID string, maxSto
 	WITH inBuffer as (
 		SELECT item_id
 		FROM storage_unit_item
-		WHERE unit_id = $2
+		WHERE unit_id = $2 AND last_modified < NOW() - INTERVAL '15 minutes'
 	)
 	SELECT item_id
 	FROM storage_unit_item
@@ -172,6 +172,19 @@ func HasItemUnitsByUnitAndHashLocator(db gorp.SqlExecutor, unitID string, hashLo
 	var ids []string
 	_, err := db.Select(&ids, query, unitID, hashLocator, itemType)
 	return len(ids) > 0, sdk.WithStack(err)
+}
+
+func HashItemUnitByApiRefHash(db gorp.SqlExecutor, apiRefHash string, unitID string) (bool, error) {
+	query := `
+		SELECT count(sui.id) FROM storage_unit_item sui
+		JOIN item on item.id = sui.item_id
+		WHERE item.api_ref_hash = $1 AND unit_id = $2
+	`
+	nb, err := db.SelectInt(query, apiRefHash, unitID)
+	if err != nil {
+		return false, sdk.WithStack(err)
+	}
+	return nb > 0, nil
 }
 
 func LoadItemUnitByID(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, id string, opts ...gorpmapper.GetOptionFunc) (*sdk.CDNItemUnit, error) {
