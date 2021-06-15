@@ -149,7 +149,7 @@ func LoadAllSynchronizedItemIDs(db gorp.SqlExecutor, bufferUnitID string, maxSto
 	FROM storage_unit_item
 	WHERE item_id = ANY (select item_id from inBuffer)
 	GROUP BY item_id
-	HAVING COUNT(unit_id) = $1
+	HAVING COUNT(unit_id) >= $1
 	`
 	if _, err := db.Select(&itemIDs, query, maxStorageCount, bufferUnitID); err != nil {
 		return nil, sdk.WrapError(err, "unable to get item ids")
