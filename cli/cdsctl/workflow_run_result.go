@@ -3,14 +3,15 @@ package main
 import (
 	"context"
 	"fmt"
-	"io"
 	"os"
 	"regexp"
 
+	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 )
 
 var workflowRunResultCmd = cli.Command{
@@ -132,27 +133,15 @@ func workflowRunResultGet(v cli.Values) error {
 				return err
 			}
 			fmt.Printf("Downloading %s...\n", fileName)
-			r, err := client.CDNItemDownload(context.Background(), confCDN.HTTPURL, cdnHash, sdk.CDNTypeItemRunResult)
-			if err != nil {
+			file := cdsclient.File{
+				DestinationPath: fileName,
+				MD5:             md5,
+				Perm:            perm,
+			}
+			if err := client.CDNItemDownload(context.Background(), confCDN.HTTPURL, cdnHash, sdk.CDNTypeItemRunResult, afero.NewOsFs(), file); err != nil {
 				return err
 			}
-			if _, err := io.Copy(f, r); err != nil {
-				return cli.WrapError(err, "unable to write file")
-			}
-			if err := f.Close(); err != nil {
-				return cli.WrapError(err, "unable to close file")
-			}
 		}
-
-		md5Sum, err := sdk.FileMd5sum(fileName)
-		if err != nil {
-			return err
-		}
-
-		if md5Sum != md5 {
-			return cli.NewError("Invalid md5Sum \ndownloaded file:%s\n%s:%s", md5Sum, f.Name(), md5)
-		}
-
 		if toDownload {
 			fmt.Printf("File %s created, checksum OK\n", f.Name())
 		} else {

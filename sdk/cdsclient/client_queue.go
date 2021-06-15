@@ -233,12 +233,10 @@ func (c *client) QueueWorkflowRunResultsAdd(ctx context.Context, jobID int64, ad
 	return nil
 }
 
-func (c *client) QueueWorkflowRunResultCheck(ctx context.Context, jobID int64, runResultCheck sdk.WorkflowRunResultCheck) error {
+func (c *client) QueueWorkflowRunResultCheck(ctx context.Context, jobID int64, runResultCheck sdk.WorkflowRunResultCheck) (int, error) {
 	uri := fmt.Sprintf("/queue/workflows/%d/run/results/check", jobID)
-	if _, err := c.PostJSON(ctx, uri, runResultCheck, nil); err != nil {
-		return err
-	}
-	return nil
+	code, err := c.PostJSON(ctx, uri, runResultCheck, nil)
+	return code, err
 }
 
 // QueueJobRelease release a job for a worker

@@ -136,7 +136,7 @@ func (c *client) RequestJSON(ctx context.Context, method, path string, in interf
 func (c *client) Request(ctx context.Context, method string, path string, body io.Reader, mods ...RequestModifier) ([]byte, http.Header, int, error) {
 	respBody, respHeader, code, err := c.Stream(ctx, c.httpClient, method, path, body, mods...)
 	if err != nil {
-		return nil, nil, 0, err
+		return nil, nil, code, err
 	}
 	defer func() {
 		// Drain and close the body to let the Transport reuse the connection
@@ -177,6 +177,108 @@ func extractBodyErrorFromResponse(r *http.Response) error {
 		return newAPIError(err)
 	}
 	return newAPIError(fmt.Errorf("HTTP %d", r.StatusCode))
+}
+
+func (c *client) StreamNoRetry(ctx context.Context, httpClient HTTPClient, method string, path string, body io.Reader, mods ...RequestModifier) (io.ReadCloser, http.Header, int, error) {
+	// Checks that current session_token is still valid
+	// If not, challenge a new one against the authenticationToken
+	var checkToken = !strings.Contains(path, "/auth/consumer/builtin/signin") &&
+		!strings.Contains(path, "/auth/consumer/local/signin") &&
+		!strings.Contains(path, "/auth/consumer/local/signup") &&
+		!strings.Contains(path, "/auth/consumer/local/verify") &&
+		!strings.Contains(path, "/auth/consumer/worker/signin")
+
+	if checkToken && !c.config.HasValidSessionToken() && c.config.BuitinConsumerAuthenticationToken != "" {
+		if c.config.Verbose {
+			log.Printf("session token invalid: (%s). Relogin...\n", c.config.SessionToken)
+		}
+		resp, err := c.AuthConsumerSignin(sdk.ConsumerBuiltin, sdk.AuthConsumerSigninRequest{"token": c.config.BuitinConsumerAuthenticationToken})
+		if err != nil {
+			return nil, nil, -1, err
+		}
+		if c.config.Verbose {
+			log.Println("jwt: ", sdk.StringFirstN(resp.Token, 12))
+		}
+		c.config.SessionToken = resp.Token
+	}
+	labels := pprof.Labels("path", path, "method", method)
+	ctx = pprof.WithLabels(ctx, labels)
+	pprof.SetGoroutineLabels(ctx)
+
+	var url string
+	if strings.HasPrefix(path, "http") {
+		url = path
+	} else {
+		url = c.config.Host + path
+	}
+
+	req, err := http.NewRequest(method, url, body)
+	if err != nil {
+		return nil, nil, 0, sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to create request: %v", err)
+	}
+	req = req.WithContext(ctx)
+	date := sdk.FormatDateRFC5322(time.Now())
+	req.Header.Set("Date", date)
+	req.Header.Set("X-CDS-RemoteTime", date)
+
+	if c.config.Verbose {
+		log.Printf("Stream > context> %s\n", telemetry.DumpContext(ctx))
+	}
+	spanCtx, ok := telemetry.ContextToSpanContext(ctx)
+	if ok {
+		telemetry.DefaultFormat.SpanContextToRequest(spanCtx, req)
+	}
+
+	for i := range mods {
+		if mods[i] != nil {
+			mods[i](req)
+		}
+	}
+
+	if req.Header.Get("Content-Type") == "" {
+		req.Header.Set("Content-Type", "application/json")
+	}
+
+	req.Header.Set("Connection", "close")
+
+	//No auth on signing routes or on url that is not cds configured in config.Host
+	if strings.HasPrefix(url, c.config.Host) && !signinRouteRegexp.MatchString(path) {
+		if _, _, err := new(jwt.Parser).ParseUnverified(c.config.SessionToken, &sdk.AuthSessionJWTClaims{}); err == nil {
+			if c.config.Verbose {
+				log.Println("JWT recognized")
+			}
+			auth := "Bearer " + c.config.SessionToken
+			req.Header.Add("Authorization", auth)
+		}
+	}
+
+	if c.config.Verbose {
+		log.Println(cli.Green("********REQUEST**********"))
+		dmp, _ := httputil.DumpRequestOut(req, true)
+		log.Printf("%s", string(dmp))
+		log.Println(cli.Green("**************************"))
+	}
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return nil, nil, 500, sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to execute request: %v", err)
+	}
+	if c.config.Verbose {
+		log.Println(cli.Yellow("********RESPONSE**********"))
+		dmp, _ := httputil.DumpResponse(resp, true)
+		log.Printf("%s", string(dmp))
+		log.Println(cli.Yellow("**************************"))
+	}
+
+	if resp.StatusCode == 401 {
+		c.config.SessionToken = ""
+	}
+
+	if resp.StatusCode >= 400 {
+		err := extractBodyErrorFromResponse(resp)
+		return nil, nil, resp.StatusCode, err
+	}
+	return resp.Body, resp.Header, resp.StatusCode, nil
 }
 
 // Stream makes an authenticated http request and return io.ReadCloser
@@ -225,6 +327,7 @@ func (c *client) Stream(ctx context.Context, httpClient HTTPClient, method strin
 	}
 
 	var savederror error
+	var savedCodeError int
 	for i := 0; i <= c.config.Retry; i++ {
 		var req *http.Request
 		var requestError error
@@ -290,6 +393,8 @@ func (c *client) Stream(ctx context.Context, httpClient HTTPClient, method strin
 			continue
 		}
 
+		savedCodeError = resp.StatusCode
+
 		if c.config.Verbose {
 			log.Println(cli.Yellow("********RESPONSE**********"))
 			dmp, _ := httputil.DumpResponse(resp, true)
@@ -309,7 +414,7 @@ func (c *client) Stream(ctx context.Context, httpClient HTTPClient, method strin
 		return resp.Body, resp.Header, resp.StatusCode, nil
 	}
 
-	return nil, nil, 0, newError(fmt.Errorf("request failed after %d retries: %v", c.config.Retry, savederror))
+	return nil, nil, savedCodeError, newError(fmt.Errorf("request failed after %d retries: %v", c.config.Retry, savederror))
 }
 
 // UploadMultiPart upload multipart

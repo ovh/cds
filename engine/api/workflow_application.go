@@ -173,7 +173,7 @@ func (api *API) releaseApplicationWorkflowHandler() service.Handler {
 			var lastErr error
 			for {
 				attempt++
-				reader, err := api.Client.CDNItemDownload(ctx, cdnHTTP, r.CDNRefHash, sdk.CDNTypeItemRunResult)
+				reader, err := api.Client.CDNItemStream(ctx, cdnHTTP, r.CDNRefHash, sdk.CDNTypeItemRunResult)
 				if err != nil {
 					return err
 				}
@@ -189,9 +189,7 @@ func (api *API) releaseApplicationWorkflowHandler() service.Handler {
 			if lastErr != nil {
 				return err
 			}
-
 		}
-
 		return nil
 	}
 }

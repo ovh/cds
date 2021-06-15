@@ -18,6 +18,7 @@ import (
 
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 )
 
 func cachePushHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
@@ -185,150 +186,183 @@ func cachePullHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 		params := wk.currentJob.wJob.Parameters
 		projectKey := sdk.ParameterValue(params, "cds.project")
 
-		var r io.Reader
-		if cdnArtifact {
-			// Get cache link
-			items, err := wk.client.QueueWorkerCacheLink(ctx, wk.currentJob.wJob.ID, vars["ref"])
-			if err != nil {
-				err = sdk.Error{
-					Message: "worker cache pull > Cannot get cache links: " + err.Error(),
-					Status:  http.StatusNotFound,
-				}
-				log.Error(ctx, "%v", err)
-				writeError(w, req, err)
-				return
+		if !cdnArtifact {
+			getWorkerCacheFromAPI(w, req, wk, projectKey, vars, ctx, path)
+			return
+		}
+
+		// Get cache link
+		items, err := wk.client.QueueWorkerCacheLink(ctx, wk.currentJob.wJob.ID, vars["ref"])
+		if err != nil {
+			err = sdk.Error{
+				Message: "worker cache pull > Cannot get cache links: " + err.Error(),
+				Status:  http.StatusNotFound,
 			}
-			if len(items.Items) != 1 {
-				err := sdk.Error{
-					Message: "worker cache pull > No unique link found",
-					Status:  http.StatusNotFound,
-				}
-				log.Error(ctx, "%v", err)
-				writeError(w, req, err)
-				return
+			log.Error(ctx, "%v", err)
+			writeError(w, req, err)
+			return
+		}
+		if len(items.Items) != 1 {
+			err := sdk.Error{
+				Message: "worker cache pull > No unique link found",
+				Status:  http.StatusNotFound,
 			}
-			// Download cache
-			r, err = wk.client.CDNItemDownload(ctx, wk.cdnHttpAddr, items.Items[0].APIRefHash, sdk.CDNTypeItemWorkerCache)
-			if err != nil {
-				err = sdk.Error{
-					Message: "Cannot pull cache: " + err.Error(),
-					Status:  http.StatusNotFound,
-				}
-				log.Error(ctx, "%v", err)
-				writeError(w, req, err)
-				return
+			log.Error(ctx, "%v", err)
+			writeError(w, req, err)
+			return
+		}
+		// Download cache
+		wkDirFS := afero.NewOsFs()
+		if err := wkDirFS.MkdirAll(path, os.FileMode(0744)); err != nil {
+			newError := sdk.NewError(sdk.ErrInvalidData, fmt.Errorf("unable to create destination directory: %v", err))
+			writeError(w, req, newError)
+			return
+		}
+
+		dest := filepath.Join(path, "workercache.tar")
+		file := cdsclient.File{
+			DestinationPath: dest,
+			MD5:             items.Items[0].MD5,
+			Perm:            0755,
+		}
+		if err := wk.client.CDNItemDownload(ctx, wk.cdnHttpAddr, items.Items[0].APIRefHash, sdk.CDNTypeItemWorkerCache, wkDirFS, file); err != nil {
+			err = sdk.Error{
+				Message: "worker cache pull > Cannot pull cache: " + err.Error(),
+				Status:  http.StatusNotFound,
 			}
-		} else {
-			integrationName := sdk.DefaultIfEmptyStorage(req.FormValue("integration"))
-			var err error
-			r, err = wk.client.WorkflowCachePull(projectKey, integrationName, vars["ref"])
-			if err != nil {
-				err = sdk.Error{
-					Message: "worker cache pull > Cannot pull cache: " + err.Error(),
-					Status:  http.StatusNotFound,
-				}
-				log.Error(ctx, "%v", err)
-				writeError(w, req, err)
-				return
+			log.Error(ctx, "%v", err)
+			writeError(w, req, err)
+			return
+		}
+
+		// Open tar file
+		log.Info(ctx, "extracting worker cache %s / %s", file.DestinationPath, vars["ref"])
+		archive, err := wkDirFS.Open(file.DestinationPath)
+		if err != nil {
+			e := sdk.Error{
+				Message: "worker cache pull > unable to open archive: " + err.Error(),
+				Status:  http.StatusInternalServerError,
+			}
+			log.Error(ctx, "%v", e)
+			writeError(w, req, e)
+			return
+		}
+		if err := extractArchive(ctx, archive, path); err != nil {
+			log.Error(ctx, "%v", err)
+			writeError(w, req, err)
+			return
+		}
+		if err := wkDirFS.Remove(file.DestinationPath); err != nil {
+			e := sdk.Error{
+				Message: "unable to remove worker cache archive: " + err.Error(),
+				Status:  http.StatusInternalServerError,
+			}
+			log.Error(ctx, "%v", e)
+			writeError(w, req, e)
+			return
+		}
+		return
+	}
+}
+
+func getWorkerCacheFromAPI(w http.ResponseWriter, req *http.Request, wk *CurrentWorker, projectKey string, vars map[string]string, ctx context.Context, path string) {
+	integrationName := sdk.DefaultIfEmptyStorage(req.FormValue("integration"))
+	var err error
+	reader, err := wk.client.WorkflowCachePull(projectKey, integrationName, vars["ref"])
+	if err != nil {
+		err = sdk.Error{
+			Message: "worker cache pull > Cannot pull cache: " + err.Error(),
+			Status:  http.StatusNotFound,
+		}
+		log.Error(ctx, "%v", err)
+		writeError(w, req, err)
+		return
+	}
+	log.Debug(ctx, "cachePullHandler> Start read cache tar")
+
+	if err := extractArchive(ctx, reader, path); err != nil {
+		log.Error(ctx, "%s", err.Message)
+		writeJSON(w, err, err.Status)
+		return
+	}
+	return
+}
+
+func extractArchive(ctx context.Context, r io.Reader, path string) *sdk.Error {
+	tr := tar.NewReader(r)
+	for {
+		header, err := tr.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return &sdk.Error{
+				Message: "worker cache pull > Unable to read tar file: " + err.Error(),
+				Status:  http.StatusBadRequest,
 			}
 		}
 
-		log.Debug(ctx, "cachePullHandler> Start read cache tar")
+		if header == nil {
+			continue
+		}
 
-		tr := tar.NewReader(r)
-		for {
-			header, errH := tr.Next()
-			if errH == io.EOF {
-				break
-			}
+		log.Debug(ctx, "cachePullHandler> Tar contains file %s", header.Name)
 
-			if errH != nil {
-				errH = sdk.Error{
-					Message: "worker cache pull > Unable to read tar file: " + errH.Error(),
-					Status:  http.StatusBadRequest,
-				}
-				log.Error(ctx, "%v", errH)
-				writeJSON(w, errH, http.StatusBadRequest)
-				return
-			}
+		// the target location where the dir/file should be created
+		target := filepath.Join(path, header.Name)
 
-			if header == nil {
-				continue
-			}
-
-			log.Debug(ctx, "cachePullHandler> Tar contains file %s", header.Name)
-
-			// the target location where the dir/file should be created
-			target := filepath.Join(path, header.Name)
-
-			// check the file type
-			switch header.Typeflag {
-			// if its a dir and it doesn't exist create it
-			case tar.TypeDir:
-				if _, err := os.Stat(target); err != nil {
-					if err := os.MkdirAll(target, 0755); err != nil {
-						err = sdk.Error{
-							Message: "worker cache pull > Unable to mkdir all files : " + err.Error(),
-							Status:  http.StatusInternalServerError,
-						}
-						log.Error(ctx, "%v", err)
-						writeJSON(w, err, http.StatusInternalServerError)
-						return
-					}
-				}
-			case tar.TypeSymlink:
-				if err := os.Symlink(header.Linkname, target); err != nil {
-					err = sdk.Error{
-						Message: "worker cache pull > Unable to create symlink: " + err.Error(),
+		// check the file type
+		switch header.Typeflag {
+		// if its a dir and it doesn't exist create it
+		case tar.TypeDir:
+			if _, err := os.Stat(target); err != nil {
+				if err := os.MkdirAll(target, 0755); err != nil {
+					return &sdk.Error{
+						Message: "worker cache pull > Unable to mkdir all files : " + err.Error(),
 						Status:  http.StatusInternalServerError,
 					}
-					log.Error(ctx, "%v", err)
-					writeJSON(w, err, http.StatusInternalServerError)
-					return
 				}
-
-				// if it's a file create it
-			case tar.TypeReg, tar.TypeLink:
-				// if directory of file does not exist, create it before
-				if _, err := os.Stat(filepath.Dir(target)); err != nil {
-					if err := os.MkdirAll(filepath.Dir(target), 0755); err != nil {
-						err = sdk.Error{
-							Message: "worker cache pull > Unable to mkdir all files : " + err.Error(),
-							Status:  http.StatusInternalServerError,
-						}
-						log.Error(ctx, "%v", err)
-						writeJSON(w, err, http.StatusInternalServerError)
-						return
-					}
+			}
+		case tar.TypeSymlink:
+			if err := os.Symlink(header.Linkname, target); err != nil {
+				return &sdk.Error{
+					Message: "worker cache pull > Unable to create symlink: " + err.Error(),
+					Status:  http.StatusInternalServerError,
 				}
+			}
 
-				log.Debug(ctx, "cachePullHandler> Create file at %s", target)
-
-				f, err := os.OpenFile(target, os.O_CREATE|os.O_WRONLY, os.FileMode(header.Mode))
-				if err != nil {
-					sdkErr := sdk.Error{
-						Message: "worker cache pull > Unable to open file: " + err.Error(),
+			// if it's a file create it
+		case tar.TypeReg, tar.TypeLink:
+			// if directory of file does not exist, create it before
+			if _, err := os.Stat(filepath.Dir(target)); err != nil {
+				if err := os.MkdirAll(filepath.Dir(target), 0755); err != nil {
+					return &sdk.Error{
+						Message: "worker cache pull > Unable to mkdir all files : " + err.Error(),
 						Status:  http.StatusInternalServerError,
 					}
-					log.Error(ctx, "%v", err)
-					writeJSON(w, sdkErr, sdkErr.Status)
-					return
 				}
+			}
 
-				// copy over contents
-				if _, err := io.Copy(f, tr); err != nil {
-					_ = f.Close()
-					sdkErr := sdk.Error{
-						Message: "worker cache pull > Cannot copy content file: " + err.Error(),
-						Status:  http.StatusInternalServerError,
-					}
-					log.Error(ctx, "%v", err)
-					writeJSON(w, sdkErr, sdkErr.Status)
-					return
+			log.Debug(ctx, "cachePullHandler> Create file at %s", target)
+
+			f, err := os.OpenFile(target, os.O_CREATE|os.O_WRONLY, os.FileMode(header.Mode))
+			if err != nil {
+				return &sdk.Error{
+					Message: "worker cache pull > Unable to open file: " + err.Error(),
+					Status:  http.StatusInternalServerError,
 				}
+			}
 
+			// copy over contents
+			if _, err := io.Copy(f, tr); err != nil {
 				_ = f.Close()
+				return &sdk.Error{
+					Message: "worker cache pull > Cannot copy content file: " + err.Error(),
+					Status:  http.StatusInternalServerError,
+				}
 			}
+			_ = f.Close()
 		}
 	}
+	return nil
 }

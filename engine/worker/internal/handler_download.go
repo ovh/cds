@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -19,6 +18,7 @@ import (
 
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 )
 
 func downloadHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
@@ -146,27 +146,15 @@ func downloadHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 			go func(a sdk.CDNItem) {
 				defer wg.Done()
 				destFile := path.Join(reqArgs.Destination, a.APIRef.ToFilename())
-				f, err := wkDirFS.OpenFile(destFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.FileMode(apiRef.Perm))
-				if err != nil {
-					newError := sdk.NewError(sdk.ErrUnknownError, fmt.Errorf("cannot download artifact (OpenFile) %s: %s", destFile, err))
-					writeError(w, r, newError)
-					return
-				}
 				wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("Downloading artifact %s from workflow %s/%s on run %d...", destFile, projectKey, reqArgs.Workflow, reqArgs.Number))
 
-				reader, err := wk.Client().CDNItemDownload(ctx, wk.CDNHttpURL(), item.APIRefHash, sdk.CDNTypeItemRunResult)
-				if err != nil {
+				file := cdsclient.File{
+					DestinationPath: destFile,
+					MD5:             item.MD5,
+					Perm:            apiRef.Perm,
+				}
+				if err := wk.Client().CDNItemDownload(ctx, wk.CDNHttpURL(), item.APIRefHash, sdk.CDNTypeItemRunResult, wkDirFS, file); err != nil {
 					newError := sdk.NewError(sdk.ErrUnknownError, fmt.Errorf("cannot download artifact %s: %s", destFile, err))
-					writeError(w, r, newError)
-					return
-				}
-				if _, err := io.Copy(f, reader); err != nil {
-					newError := sdk.NewError(sdk.ErrUnknownError, fmt.Errorf("cannot download artifact (Copy) %s: %s", destFile, err))
-					writeError(w, r, newError)
-					return
-				}
-				if err := f.Close(); err != nil {
-					newError := sdk.NewError(sdk.ErrUnknownError, fmt.Errorf("cannot close file%s: %s", destFile, err))
 					writeError(w, r, newError)
 					return
 				}

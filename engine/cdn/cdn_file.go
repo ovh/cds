@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"io"
+	"net/http"
 	"os"
 
 	"github.com/ovh/cds/engine/cdn/item"
@@ -42,7 +43,7 @@ func (s *Service) storeFile(ctx context.Context, sig cdn.Signature, reader io.Re
 	// Check Item unicity
 	_, err = item.LoadByAPIRefHashAndType(ctx, s.Mapper, s.mustDBWithCtx(ctx), hashRef, itemType)
 	if err == nil {
-		return sdk.WrapError(sdk.ErrConflictData, "cannot upload the same file twice")
+		return sdk.NewErrorFrom(sdk.ErrInvalidData, "cannot upload the same file twice")
 	}
 	if !sdk.ErrorIs(err, sdk.ErrNotFound) {
 		return err
@@ -67,7 +68,11 @@ func (s *Service) storeFile(ctx context.Context, sig cdn.Signature, reader io.Re
 			RunNodeID:  runResultApiRef.RunNodeID,
 			RunJobID:   runResultApiRef.RunJobID,
 		}
-		if err := s.Client.QueueWorkflowRunResultCheck(ctx, sig.JobID, runResultCheck); err != nil {
+		code, err := s.Client.QueueWorkflowRunResultCheck(ctx, sig.JobID, runResultCheck)
+		if err != nil {
+			if code == http.StatusConflict {
+				return sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to upload the same file twice")
+			}
 			return err
 		}
 	}

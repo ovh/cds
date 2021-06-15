@@ -127,7 +127,7 @@ func JSONWithoutHTMLEncode(t interface{}) ([]byte, error) {
 	return buffer.Bytes(), err
 }
 
-// FileMd5sum returns the md5sum ofr a file
+// FileMd5sum returns the md5sum of a file
 func FileMd5sum(filePath string) (string, error) {
 	file, errop := os.Open(filePath)
 	if errop != nil {
