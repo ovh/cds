@@ -98,7 +98,7 @@ func (e *artifactoryReleasePlugin) Run(_ context.Context, opts *integrationplugi
 	// Promotion
 	artiClient, err := art.CreateArtifactoryClient(artifactoryURL, token)
 	if err != nil {
-		return fail("unable to create artifactory client")
+		return fail("unable to create artifactory client: %v", err)
 	}
 
 	artSplitted := strings.Split(artifactList, ",")
@@ -126,6 +126,7 @@ func (e *artifactoryReleasePlugin) Run(_ context.Context, opts *integrationplugi
 		for _, reg := range artRegs {
 			if reg.MatchString(rData.Name) {
 				skip = false
+				break
 			}
 		}
 		if skip {
