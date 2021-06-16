@@ -1225,7 +1225,7 @@ func saveWorkflowRunSecrets(ctx context.Context, db *gorp.DbMap, projID int64, w
 		for _, v := range variables {
 			var wrSecret sdk.WorkflowRunSecret
 			switch {
-			case strings.HasPrefix(v.Name, "cds.app.") || strings.HasPrefix(v.Name, "cds.key."):
+			case strings.HasPrefix(v.Name, "cds.app.") || strings.HasPrefix(v.Name, "cds.key.") || v.Name == "git.http.password":
 				wrSecret = sdk.WorkflowRunSecret{
 					WorkflowRunID: wr.ID,
 					Context:       fmt.Sprintf(workflow.SecretAppContext, id),

@@ -150,7 +150,7 @@ func initBuiltinConsumersFromStartupConfig(ctx context.Context, tx gorpmapper.Sq
 			Data:               map[string]string{},
 			GroupIDs:           []int64{group.SharedInfraGroup.ID},
 			ScopeDetails:       scopes,
-			IssuedAt:           time.Unix(startupConfig.IAT, 0),
+			ValidityPeriods:    sdk.NewAuthConsumerValidityPeriod(time.Unix(startupConfig.IAT, 0), 2*365*24*time.Hour), // Default validity period is two years
 		}
 
 		if err := authentication.InsertConsumer(ctx, tx, &c); err != nil {
@@ -206,6 +206,13 @@ func (api *API) postAuthLocalSigninHandler() service.Handler {
 		// Generate a new session for consumer
 		session, err := authentication.NewSession(ctx, tx, consumer, driver.GetSessionDuration())
 		if err != nil {
+			return err
+		}
+
+		// Store the last authentication date on the consumer
+		now := time.Now()
+		consumer.LastAuthentication = &now
+		if err := authentication.UpdateConsumerLastAuthentication(ctx, tx, consumer); err != nil {
 			return err
 		}
 
@@ -327,6 +334,13 @@ func (api *API) postAuthLocalVerifyHandler() service.Handler {
 			if err := initBuiltinConsumersFromStartupConfig(ctx, tx, consumer, initToken); err != nil {
 				return err
 			}
+		}
+
+		// Store the last authentication date on the consumer
+		now := time.Now()
+		consumer.LastAuthentication = &now
+		if err := authentication.UpdateConsumerLastAuthentication(ctx, tx, consumer); err != nil {
+			return err
 		}
 
 		// Generate a new session for consumer
@@ -491,6 +505,10 @@ func (api *API) postAuthLocalResetHandler() service.Handler {
 		if err != nil {
 			return err
 		}
+
+		// Store the last authentication date on the consumer
+		now := time.Now()
+		consumer.LastAuthentication = &now
 
 		consumer.Data["hash"] = string(hash)
 		if err := authentication.UpdateConsumer(ctx, tx, consumer); err != nil {

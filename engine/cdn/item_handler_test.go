@@ -378,6 +378,17 @@ func TestGetItemsArtefactHandler(t *testing.T) {
 	item2.APIRefHash = refhashLog
 	require.NoError(t, item.Insert(context.Background(), s.Mapper, db, &item2))
 
+	workerSignature.JobID += 1
+	item3 := sdk.CDNItem{
+		Type:   sdk.CDNTypeItemRunResult,
+		Status: sdk.CDNStatusItemCompleted,
+		APIRef: sdk.NewCDNRunResultApiRef(workerSignature),
+	}
+	refhash, err = item3.APIRef.ToHash()
+	require.NoError(t, err)
+	item3.APIRefHash = refhash
+	require.NoError(t, item.Insert(context.Background(), s.Mapper, db, &item3))
+
 	vars := map[string]string{
 		"type": string(sdk.CDNTypeItemRunResult),
 	}
@@ -397,5 +408,5 @@ func TestGetItemsArtefactHandler(t *testing.T) {
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &results))
 
 	require.Equal(t, 1, len(results))
-	require.Equal(t, item1.ID, results[0].ID)
+	require.Equal(t, item3.ID, results[0].ID)
 }

@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/cdn/redis"
@@ -141,4 +142,8 @@ func (s *Redis) Status(_ context.Context) []sdk.MonitoringStatusLine {
 
 func (s *Redis) Remove(_ context.Context, i sdk.CDNItemUnit) error {
 	return sdk.WithStack(s.store.Delete(cache.Key(keyBuffer, i.ItemID)))
+}
+
+func (s *Redis) ResyncWithDatabase(ctx context.Context, _ gorp.SqlExecutor, _ sdk.CDNItemType, _ bool) {
+	log.Error(ctx, "Resynchronization with database not implemented for redis buffer unit")
 }

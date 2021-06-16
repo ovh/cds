@@ -301,18 +301,11 @@ func (c *client) Stream(ctx context.Context, httpClient HTTPClient, method strin
 			c.config.SessionToken = ""
 		}
 
-		if resp.StatusCode == 409 || resp.StatusCode > 500 {
+		if resp.StatusCode == 409 || resp.StatusCode >= 500 {
 			time.Sleep(250 * time.Millisecond)
 			savederror = extractBodyErrorFromResponse(resp)
 			continue
 		}
-
-		// if no request error by status > 500, check CDS error
-		// if there is a CDS errors, return it
-		if resp.StatusCode == 500 {
-			return nil, resp.Header, resp.StatusCode, extractBodyErrorFromResponse(resp)
-		}
-
 		return resp.Body, resp.Header, resp.StatusCode, nil
 	}
 

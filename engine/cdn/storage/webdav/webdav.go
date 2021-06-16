@@ -120,3 +120,7 @@ func (s *Webdav) Remove(ctx context.Context, i sdk.CDNItemUnit) error {
 	}
 	return sdk.WithStack(s.client.Remove(f))
 }
+
+func (s *Webdav) ResyncWithDatabase(ctx context.Context, _ gorp.SqlExecutor, _ sdk.CDNItemType, _ bool) {
+	log.Error(ctx, "Resynchronization with database not implemented for webdav storage unit")
+}

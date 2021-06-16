@@ -163,7 +163,7 @@ func TestDeduplicationCrossType(t *testing.T) {
 		Type:       sdk.CDNTypeItemRunResult,
 		Status:     sdk.CDNStatusItemCompleted,
 	}
-	iuArtifact, err := cdnUnits.NewItemUnit(ctx, cdnUnits.Buffers[1], itemArtifact)
+	iuArtifact, err := cdnUnits.NewItemUnit(ctx, cdnUnits.FileBuffer(), itemArtifact)
 	require.NoError(t, err)
 
 	// Create Destination Writer
@@ -188,7 +188,7 @@ func TestDeduplicationCrossType(t *testing.T) {
 	itemArtifact.MD5 = md5S
 	itemArtifact.Size = 0
 	itemArtifact.Status = sdk.CDNStatusItemCompleted
-	iuArtifact, err = cdnUnits.NewItemUnit(ctx, cdnUnits.Buffers[1], itemArtifact)
+	iuArtifact, err = cdnUnits.NewItemUnit(ctx, cdnUnits.FileBuffer(), itemArtifact)
 	require.NoError(t, err)
 	require.NoError(t, item.Insert(ctx, m, db, itemArtifact))
 	defer func() {
@@ -205,7 +205,7 @@ func TestDeduplicationCrossType(t *testing.T) {
 
 	require.NoError(t, cdnUnits.FillWithUnknownItems(ctx, cdnUnits.Storages[0], 100))
 	require.NoError(t, cdnUnits.FillSyncItemChannel(ctx, cdnUnits.Storages[0], 100))
-	time.Sleep(1 * time.Second)
+	time.Sleep(2 * time.Second)
 
 	<-ctx.Done()
 

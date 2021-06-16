@@ -3,9 +3,11 @@ package api
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/ovh/cds/sdk"
+	"github.com/pkg/errors"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/authentication"
@@ -77,8 +79,12 @@ func (api *API) postConsumerByUserHandler() service.Handler {
 			return err
 		}
 
+		if reqData.ValidityPeriods.Latest() == nil {
+			reqData.ValidityPeriods = sdk.NewAuthConsumerValidityPeriod(time.Now(), time.Duration(api.Config.Auth.TokenDefaultDuration)*(24*time.Hour))
+		}
+
 		// Create the new built in consumer from request data
-		newConsumer, token, err := builtin.NewConsumer(ctx, tx, reqData.Name, reqData.Description,
+		newConsumer, token, err := builtin.NewConsumer(ctx, tx, reqData.Name, reqData.Description, reqData.ValidityPeriods.Latest().Duration,
 			consumer, reqData.GroupIDs, reqData.ScopeDetails)
 		if err != nil {
 			return err
@@ -153,7 +159,30 @@ func (api *API) postConsumerRegenByUserHandler() service.Handler {
 			return err
 		}
 
-		if err := authentication.ConsumerRegen(ctx, tx, consumer); err != nil {
+		if req.OverlapDuration == "" {
+			req.OverlapDuration = api.Config.Auth.TokenOverlapDefaultDuration
+		}
+		if req.NewDuration == 0 {
+			req.NewDuration = api.Config.Auth.TokenDefaultDuration
+		}
+		var overlapDuration time.Duration
+		if req.OverlapDuration != "" {
+			overlapDuration, err = time.ParseDuration(req.OverlapDuration)
+			if err != nil {
+				return sdk.NewError(sdk.ErrWrongRequest, err)
+			}
+		}
+
+		newDuration := time.Duration(req.NewDuration) * (24 * time.Hour)
+
+		if overlapDuration > newDuration {
+			return sdk.NewError(sdk.ErrWrongRequest, errors.New("invalid duration"))
+		}
+
+		if err := authentication.ConsumerRegen(ctx, tx, consumer,
+			overlapDuration,
+			newDuration,
+		); err != nil {
 			return err
 		}
 

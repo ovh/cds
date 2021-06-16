@@ -201,7 +201,7 @@ func Test_checkUserPermissions(t *testing.T) {
 			ctx := context.WithValue(context.TODO(), contextConsumer, &sdk.AuthConsumer{
 				AuthentifiedUserID: c.ConsumerAuthentifiedUser.ID,
 				AuthentifiedUser:   c.ConsumerAuthentifiedUser,
-				IssuedAt:           time.Now(),
+				ValidityPeriods:    sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
 			})
 			ctx = context.WithValue(ctx, contextDriverManifest, &sdk.AuthDriverManifest{})
 			err := api.checkUserPermissions(ctx, &responseTracker{}, c.TargetAuthentifiedUser.Username, c.Permission, nil)
@@ -284,7 +284,7 @@ func Test_checkUserPublicPermissions(t *testing.T) {
 			ctx := context.WithValue(context.TODO(), contextConsumer, &sdk.AuthConsumer{
 				AuthentifiedUserID: c.ConsumerAuthentifiedUser.ID,
 				AuthentifiedUser:   c.ConsumerAuthentifiedUser,
-				IssuedAt:           time.Now(),
+				ValidityPeriods:    sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
 			})
 			ctx = context.WithValue(ctx, contextDriverManifest, &sdk.AuthDriverManifest{})
 			err := api.checkUserPublicPermissions(ctx, &responseTracker{}, c.TargetAuthentifiedUser.Username, c.Permission, nil)
@@ -371,7 +371,7 @@ func Test_checkConsumerPermissions(t *testing.T) {
 			ctx := context.WithValue(context.TODO(), contextConsumer, &sdk.AuthConsumer{
 				AuthentifiedUserID: c.ConsumerAuthentifiedUser.ID,
 				AuthentifiedUser:   c.ConsumerAuthentifiedUser,
-				IssuedAt:           time.Now(),
+				ValidityPeriods:    sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
 			})
 			ctx = context.WithValue(ctx, contextDriverManifest, &sdk.AuthDriverManifest{})
 			err := api.checkConsumerPermissions(ctx, &responseTracker{}, c.TargetConsumer.ID, c.Permission, nil)
@@ -462,7 +462,7 @@ func Test_checkSessionPermissions(t *testing.T) {
 			ctx := context.WithValue(context.TODO(), contextConsumer, &sdk.AuthConsumer{
 				AuthentifiedUserID: c.ConsumerAuthentifiedUser.ID,
 				AuthentifiedUser:   c.ConsumerAuthentifiedUser,
-				IssuedAt:           time.Now(),
+				ValidityPeriods:    sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
 			})
 			ctx = context.WithValue(ctx, contextDriverManifest, &sdk.AuthDriverManifest{})
 			err := api.checkSessionPermissions(ctx, &responseTracker{}, c.TargetSession.ID, c.Permission, nil)

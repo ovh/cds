@@ -50,7 +50,6 @@ type executionContext struct {
 	workflowName      string
 	version           string
 	lowMaturitySuffix string
-	cdsRepo           string
 }
 
 func (e *artifactoryBuildInfoPlugin) Manifest(_ context.Context, _ *empty.Empty) (*integrationplugin.IntegrationPluginManifest, error) {

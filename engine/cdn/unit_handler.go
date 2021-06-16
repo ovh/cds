@@ -108,3 +108,36 @@ func (s *Service) markItemUnitAsDeleteHandler() service.Handler {
 		return nil
 	}
 }
+
+func (s *Service) postAdminResyncBackendWithDatabaseHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		unitID := vars["id"]
+		itemType := vars["type"]
+
+		it := sdk.CDNItemType(itemType)
+		if err := it.Validate(); err != nil {
+			return err
+		}
+
+		dryRunString := r.FormValue("dryRun")
+		dryRun := dryRunString != "false"
+
+		for _, u := range s.Units.Buffers {
+			if u.ID() == unitID {
+				choosenUnit := u
+				s.GoRoutines.Exec(context.Background(), "ResyncWithDB-"+unitID, func(ctx context.Context) {
+					choosenUnit.ResyncWithDatabase(ctx, s.mustDBWithCtx(ctx), it, dryRun)
+				})
+			}
+		}
+		for _, u := range s.Units.Storages {
+			if u.ID() == unitID {
+				s.GoRoutines.Exec(context.Background(), "ResyncWithDB-"+unitID, func(ctx context.Context) {
+					u.ResyncWithDatabase(ctx, s.mustDBWithCtx(ctx), it, dryRun)
+				})
+			}
+		}
+		return nil
+	}
+}

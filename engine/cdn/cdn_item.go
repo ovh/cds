@@ -208,13 +208,13 @@ func (s *Service) getItemFileValue(ctx context.Context, t sdk.CDNItemType, apiRe
 
 	// If item is in Buffer, get from it
 	if itemUnit != nil {
-		log.Error(ctx, "getItemFileValue> Getting file from buffer")
-
+		log.Debug(ctx, "getItemFileValue> Getting file from buffer")
 		rc, err := s.Units.FileBuffer().NewReader(ctx, *itemUnit)
 		if err != nil {
 			return nil, nil, nil, err
 		}
 		return itemUnit, s.Units.FileBuffer(), rc, nil
+
 	}
 
 	// Get from storage
@@ -349,11 +349,13 @@ func (s *Service) getRandomItemUnitIDByItemID(ctx context.Context, itemID string
 		return "", "", err
 	}
 
+	itemUnits = s.Units.FilterItemUnitReaderByType(itemUnits)
+	itemUnits = s.Units.FilterItemUnitFromBuffer(itemUnits)
+	itemUnits = s.Units.FilterNotSyncBackend(itemUnits)
+
 	if len(itemUnits) == 0 {
 		return "", "", sdk.WithStack(fmt.Errorf("unable to find item units for item with id: %s", itemID))
 	}
-
-	itemUnits = s.Units.FilterItemUnitReaderByType(itemUnits)
 
 	var unit *sdk.CDNUnit
 	var selectedItemUnit *sdk.CDNItemUnit
