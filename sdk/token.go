@@ -4,7 +4,9 @@ import (
 	"context"
 	"database/sql/driver"
 	json "encoding/json"
+	"fmt"
 	"net/http"
+	"sort"
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
@@ -230,7 +232,9 @@ func (s AuthConsumerScopeSlice) Value() (driver.Value, error) {
 
 // AuthConsumerRegenRequest struct.
 type AuthConsumerRegenRequest struct {
-	RevokeSessions bool `json:"revoke_sessions"`
+	RevokeSessions  bool   `json:"revoke_sessions"`
+	OverlapDuration string `json:"overlap_duration"`
+	NewDuration     int64  `json:"new_duration"`
 }
 
 // AuthConsumerSigninRequest struct for auth consumer signin request.
@@ -382,26 +386,74 @@ type AuthConsumers []AuthConsumer
 
 // AuthConsumer issues session linked to an authentified user.
 type AuthConsumer struct {
-	ID                 string                   `json:"id" cli:"id,key" db:"id"`
-	Name               string                   `json:"name" cli:"name" db:"name"`
-	Description        string                   `json:"description" cli:"description" db:"description"`
-	ParentID           *string                  `json:"parent_id,omitempty" db:"parent_id"`
-	AuthentifiedUserID string                   `json:"user_id,omitempty" db:"user_id"`
-	Type               AuthConsumerType         `json:"type" cli:"type" db:"type"`
-	Data               AuthConsumerData         `json:"-" db:"data"` // NEVER returns auth consumer data in json, TODO this fields should be visible only in auth package
-	Created            time.Time                `json:"created" cli:"created" db:"created"`
-	GroupIDs           Int64Slice               `json:"group_ids,omitempty" cli:"group_ids" db:"group_ids"`
-	InvalidGroupIDs    Int64Slice               `json:"invalid_group_ids,omitempty" db:"invalid_group_ids"`
-	ScopeDetails       AuthConsumerScopeDetails `json:"scope_details,omitempty" cli:"scope_details" db:"scope_details"`
-	IssuedAt           time.Time                `json:"issued_at" cli:"issued_at" db:"issued_at"`
-	Disabled           bool                     `json:"disabled" cli:"disabled" db:"disabled"`
-	Warnings           AuthConsumerWarnings     `json:"warnings,omitempty" db:"warnings"`
+	ID                 string                      `json:"id" cli:"id,key" db:"id"`
+	Name               string                      `json:"name" cli:"name" db:"name"`
+	Description        string                      `json:"description" cli:"description" db:"description"`
+	ParentID           *string                     `json:"parent_id,omitempty" db:"parent_id"`
+	AuthentifiedUserID string                      `json:"user_id,omitempty" db:"user_id"`
+	Type               AuthConsumerType            `json:"type" cli:"type" db:"type"`
+	Data               AuthConsumerData            `json:"-" db:"data"` // NEVER returns auth consumer data in json, TODO this fields should be visible only in auth package
+	Created            time.Time                   `json:"created" cli:"created" db:"created"`
+	GroupIDs           Int64Slice                  `json:"group_ids,omitempty" cli:"group_ids" db:"group_ids"`
+	InvalidGroupIDs    Int64Slice                  `json:"invalid_group_ids,omitempty" db:"invalid_group_ids"`
+	ScopeDetails       AuthConsumerScopeDetails    `json:"scope_details,omitempty" cli:"scope_details" db:"scope_details"`
+	DeprecatedIssuedAt time.Time                   `json:"issued_at" cli:"issued_at" db:"issued_at"`
+	Disabled           bool                        `json:"disabled" cli:"disabled" db:"disabled"`
+	Warnings           AuthConsumerWarnings        `json:"warnings,omitempty" db:"warnings"`
+	LastAuthentication *time.Time                  `json:"last_authentication,omitempty" db:"last_authentication"`
+	ValidityPeriods    AuthConsumerValidityPeriods `json:"validity_periods,omitempty" db:"validity_periods"`
 	// aggregates
 	AuthentifiedUser *AuthentifiedUser `json:"user,omitempty" db:"-"`
 	Groups           Groups            `json:"groups,omitempty" db:"-"`
 	// aggregates by router auth middleware
 	Service *Service `json:"-" db:"-"`
 	Worker  *Worker  `json:"-" db:"-"`
+}
+
+func NewAuthConsumerValidityPeriod(iat time.Time, duration time.Duration) AuthConsumerValidityPeriods {
+	return AuthConsumerValidityPeriods{
+		{
+			IssuedAt: iat,
+			Duration: duration,
+		},
+	}
+}
+
+type AuthConsumerValidityPeriods []AuthConsumerValidityPeriod
+
+func (p AuthConsumerValidityPeriods) Value() (driver.Value, error) {
+	j, err := json.Marshal(p)
+	return j, WrapError(err, "cannot marshal AuthConsumerValidityPeriods")
+}
+
+func (p *AuthConsumerValidityPeriods) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
+	}
+	return WrapError(json.Unmarshal(source, p), "cannot unmarshal AuthConsumerValidityPeriods")
+}
+
+func (p AuthConsumerValidityPeriods) Latest() *AuthConsumerValidityPeriod {
+	if len(p) == 0 {
+		return nil
+	}
+	p.Sort()
+	return &p[0]
+}
+
+func (p *AuthConsumerValidityPeriods) Sort() {
+	sort.Slice(*p, func(i, j int) bool {
+		return (*p)[j].IssuedAt.Before((*p)[i].IssuedAt)
+	})
+}
+
+type AuthConsumerValidityPeriod struct {
+	IssuedAt time.Time     `json:"issued_at" cli:"issued_at" `
+	Duration time.Duration `json:"duration" cli:"duration"`
 }
 
 // IsValid returns validity for auth consumer.

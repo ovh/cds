@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"net/http"
+	"time"
 
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/authentication/builtin"
@@ -18,43 +19,50 @@ func (api *API) postAuthBuiltinSigninHandler() service.Handler {
 		// Get the consumer builtin driver
 		driver, ok := api.AuthenticationDrivers[sdk.ConsumerBuiltin]
 		if !ok {
-			return sdk.WithStack(sdk.ErrNotFound)
+			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
 		// Extract and validate signin request
 		var req sdk.AuthConsumerSigninRequest
 		if err := service.UnmarshalBody(r, &req); err != nil {
-			return err
+			return sdk.NewError(sdk.ErrForbidden, err)
 		}
 		if err := driver.CheckSigninRequest(req); err != nil {
-			return err
+			return sdk.NewError(sdk.ErrForbidden, err)
 		}
 		// Convert code to external user info
 		userInfo, err := driver.GetUserInfo(ctx, req)
 		if err != nil {
-			return err
+			return sdk.NewError(sdk.ErrForbidden, err)
 		}
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			return sdk.WithStack(err)
+			return sdk.NewError(sdk.ErrForbidden, err)
 		}
 		defer tx.Rollback() // nolint
 
 		// Check if a consumer exists for consumer type and external user identifier
 		consumer, err := authentication.LoadConsumerByID(ctx, tx, userInfo.ExternalID)
 		if err != nil {
-			return err
+			return sdk.NewError(sdk.ErrForbidden, err)
 		}
 
 		// Check the Token validity againts the IAT attribute
-		if _, err := builtin.CheckSigninConsumerTokenIssuedAt(req["token"], consumer.IssuedAt); err != nil {
-			return err
+		if _, err := builtin.CheckSigninConsumerTokenIssuedAt(ctx, req["token"], consumer); err != nil {
+			return sdk.NewError(sdk.ErrForbidden, err)
 		}
 
 		// Generate a new session for consumer
 		session, err := authentication.NewSession(ctx, tx, consumer, driver.GetSessionDuration())
 		if err != nil {
+			return err
+		}
+
+		// Store the last authentication date on the consumer
+		now := time.Now()
+		consumer.LastAuthentication = &now
+		if err := authentication.UpdateConsumerLastAuthentication(ctx, tx, consumer); err != nil {
 			return err
 		}
 

@@ -1644,7 +1644,7 @@ func Test_postWorkflowRunHandlerWithoutRightConditionsOnHook(t *testing.T) {
 					return writeError(w, err)
 				}
 
-				for k, _ := range req {
+				for k := range req {
 					req[k] = sdk.NodeHook{
 						Conditions: sdk.WorkflowNodeConditions{
 							LuaScript: "return false",

@@ -363,7 +363,7 @@ func createOrRegenConsumer(apiURL, username, sessionToken string, v cli.Values) 
 			}
 		}
 		if consumerID != "" {
-			consumer, err := client.AuthConsumerRegen(username, consumerID)
+			consumer, err := client.AuthConsumerRegen(username, consumerID, 0, "")
 			if err != nil {
 				return "", "", cli.WrapError(err, "cdsctl: cannot regenerate consumer")
 			}

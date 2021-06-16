@@ -25,7 +25,7 @@ func Test_getConsumersByUserHandler(t *testing.T) {
 		authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
-	consumer, _, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), "", localConsumer, nil,
+	consumer, _, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), "", 0, localConsumer, nil,
 		sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeUser))
 	require.NoError(t, err)
 
@@ -69,10 +69,10 @@ func Test_postConsumerByUserHandler(t *testing.T) {
 	_, jwtRawAdmin := assets.InsertAdminUser(t, db)
 
 	data := sdk.AuthConsumer{
-		Name:         sdk.RandomString(10),
-		GroupIDs:     []int64{g.ID},
-		ScopeDetails: sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAccessToken),
-		IssuedAt:     time.Now(),
+		Name:            sdk.RandomString(10),
+		GroupIDs:        []int64{g.ID},
+		ScopeDetails:    sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAccessToken),
+		ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
 	}
 
 	uri := api.Router.GetRoute(http.MethodPost, api.postConsumerByUserHandler, map[string]string{
@@ -112,7 +112,7 @@ func Test_deleteConsumerByUserHandler(t *testing.T) {
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID,
 		authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
-	newConsumer, _, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), "", localConsumer, nil,
+	newConsumer, _, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), "", 0, localConsumer, nil,
 		sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAccessToken))
 	require.NoError(t, err)
 	cs, err := authentication.LoadConsumersByUserID(context.TODO(), db, u.ID)
@@ -152,7 +152,7 @@ func Test_postConsumerRegenByUserHandler(t *testing.T) {
 	api.Router.Mux.ServeHTTP(rec, req)
 	require.Equal(t, http.StatusForbidden, rec.Code)
 
-	builtinConsumer, signinToken1, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), "", localConsumer, nil,
+	builtinConsumer, signinToken1, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), "", 0, localConsumer, nil,
 		sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeUser, sdk.AuthConsumerScopeAccessToken))
 	require.NoError(t, err)
 	session, err := authentication.NewSession(context.TODO(), db, builtinConsumer, 5*time.Minute)
@@ -221,16 +221,72 @@ func Test_postConsumerRegenByUserHandler(t *testing.T) {
 	})
 	rec = httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
-	require.Equal(t, http.StatusBadRequest, rec.Code)
+	require.Equal(t, http.StatusForbidden, rec.Code)
 
 	// the new signing token from the builtin consumer should be fine
+	signinToken2 := response.Token
 	uri = api.Router.GetRoute(http.MethodPost, api.postAuthBuiltinSigninHandler, nil)
 	req = assets.NewRequest(t, "POST", uri, sdk.AuthConsumerSigninRequest{
-		"token": response.Token,
+		"token": signinToken2,
 	})
 	rec = httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
 	require.Equal(t, http.StatusOK, rec.Code)
+
+	t.Log("next use case...")
+	time.Sleep(2 * time.Second)
+
+	// Regen the latest token with an overlap duration
+	uri = api.Router.GetRoute(http.MethodPost, api.postConsumerRegenByUserHandler, map[string]string{
+		"permUsername":   u.Username,
+		"permConsumerID": builtinConsumer.ID,
+	})
+	req = assets.NewJWTAuthentifiedRequest(t, jwt3, http.MethodPost, uri, sdk.AuthConsumerRegenRequest{
+		RevokeSessions:  true,
+		OverlapDuration: "4s", // short 4s overlap
+		NewDuration:     1,
+	})
+	rec = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusOK, rec.Code)
+
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &response))
+	t.Logf("here is the new consumer: %+v", response)
+
+	signinToken3 := response.Token
+
+	// Wait before using it
+	time.Sleep(2 * time.Second)
+
+	// the new signing token from the builtin consumer should be fine
+	uri = api.Router.GetRoute(http.MethodPost, api.postAuthBuiltinSigninHandler, nil)
+	req = assets.NewRequest(t, "POST", uri, sdk.AuthConsumerSigninRequest{
+		"token": signinToken3,
+	})
+	rec = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusOK, rec.Code)
+
+	// The old token should be ok too, because of the overlap duration
+	uri = api.Router.GetRoute(http.MethodPost, api.postAuthBuiltinSigninHandler, nil)
+	req = assets.NewRequest(t, "POST", uri, sdk.AuthConsumerSigninRequest{
+		"token": signinToken2,
+	})
+	rec = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusOK, rec.Code)
+
+	// Now wait for the overlab duration to be over....
+	time.Sleep(2 * time.Second)
+
+	// Now, the old token should be rejected
+	uri = api.Router.GetRoute(http.MethodPost, api.postAuthBuiltinSigninHandler, nil)
+	req = assets.NewRequest(t, "POST", uri, sdk.AuthConsumerSigninRequest{
+		"token": signinToken2,
+	})
+	rec = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusForbidden, rec.Code)
 }
 
 func Test_getSessionsByUserHandler(t *testing.T) {
@@ -241,7 +297,7 @@ func Test_getSessionsByUserHandler(t *testing.T) {
 		authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
-	consumer, _, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), "", localConsumer, nil,
+	consumer, _, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), "", 0, localConsumer, nil,
 		sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeUser))
 	require.NoError(t, err)
 	s2, err := authentication.NewSession(context.TODO(), db, consumer, time.Second)
@@ -274,7 +330,7 @@ func Test_deleteSessionByUserHandler(t *testing.T) {
 		authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
-	consumer, _, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), "", localConsumer, nil,
+	consumer, _, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), "", 0, localConsumer, nil,
 		sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeUser))
 	require.NoError(t, err)
 	s2, err := authentication.NewSession(context.TODO(), db, consumer, time.Second)

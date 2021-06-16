@@ -56,7 +56,7 @@ func Test_authMiddleware_WithAuthConsumerDisabled(t *testing.T) {
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
-	builtinConsumer, _, err := builtin.NewConsumer(context.TODO(), db, "builtin", "", localConsumer, []int64{g.ID},
+	builtinConsumer, _, err := builtin.NewConsumer(context.TODO(), db, "builtin", "", 0, localConsumer, []int64{g.ID},
 		sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopes...))
 	require.NoError(t, err)
 	builtinSession, err := authentication.NewSession(context.TODO(), db, builtinConsumer, time.Second*5)
@@ -198,7 +198,7 @@ func Test_authMiddleware_WithAuthConsumerScoped(t *testing.T) {
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
-	builtinConsumer, _, err := builtin.NewConsumer(context.TODO(), db, "builtin", "", localConsumer, []int64{g.ID}, []sdk.AuthConsumerScopeDetail{
+	builtinConsumer, _, err := builtin.NewConsumer(context.TODO(), db, "builtin", "", 0, localConsumer, []int64{g.ID}, []sdk.AuthConsumerScopeDetail{
 		{
 			Scope: sdk.AuthConsumerScopeAction,
 			Endpoints: sdk.AuthConsumerScopeEndpoints{

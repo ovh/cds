@@ -29,7 +29,7 @@ func newConsumerWithData(ctx context.Context, db gorpmapper.SqlExecutorWithTx, u
 		Data: map[string]string{
 			"verified": sdk.FalseString,
 		},
-		IssuedAt: time.Now(),
+		ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
 	}
 
 	for k, v := range data {

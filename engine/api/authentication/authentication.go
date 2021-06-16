@@ -46,8 +46,8 @@ func VerifyJWT(token *jwt.Token) (interface{}, error) {
 	return getSigner().VerifyJWT(token)
 }
 
-func SignJWS(content interface{}, duration time.Duration) (string, error) {
-	return getSigner().SignJWS(content, duration)
+func SignJWS(content interface{}, now time.Time, duration time.Duration) (string, error) {
+	return getSigner().SignJWS(content, now, duration)
 }
 
 func VerifyJWS(signature string, content interface{}) error {

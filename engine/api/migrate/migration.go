@@ -52,9 +52,10 @@ func Run(ctx context.Context, db gorp.SqlExecutor) {
 						wg.Done()
 					}
 				}()
-				mig, errMig := GetByName(db, currentMigration.Name)
-				if errMig != nil {
-					log.Error(ctx, "Cannot get migration %s : %v", currentMigration.Name, errMig)
+				mig, err := GetByName(db, currentMigration.Name)
+				if err != nil {
+					ctx := sdk.ContextWithStacktrace(ctx, err)
+					log.Error(ctx, "Cannot get migration %s : %v", currentMigration.Name, err)
 					return
 				}
 				if mig != nil {
@@ -74,6 +75,7 @@ func Run(ctx context.Context, db gorp.SqlExecutor) {
 						currentMigration.Progress = "Begin"
 					}
 					if err := Insert(db, &currentMigration); err != nil {
+						ctx := sdk.ContextWithStacktrace(ctx, err)
 						log.Error(ctx, "Cannot insert migration %s : %v", currentMigration.Name, err)
 						return
 					}
@@ -85,6 +87,7 @@ func Run(ctx context.Context, db gorp.SqlExecutor) {
 
 				log.Info(ctx, "Migration [%s]: begin", currentMigration.Name)
 				if err := currentMigration.ExecFunc(contex); err != nil {
+					ctx := sdk.ContextWithStacktrace(ctx, err)
 					log.Error(ctx, "migration %s in ERROR : %v", currentMigration.Name, err)
 					currentMigration.Error = err.Error()
 				}
@@ -93,6 +96,7 @@ func Run(ctx context.Context, db gorp.SqlExecutor) {
 				currentMigration.Status = sdk.MigrationStatusDone
 
 				if err := Update(db, &currentMigration); err != nil {
+					ctx := sdk.ContextWithStacktrace(ctx, err)
 					log.Error(ctx, "Cannot update migration %s : %v", currentMigration.Name, err)
 				}
 				log.Info(ctx, "Migration [%s]: Done", currentMigration.Name)

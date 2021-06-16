@@ -30,7 +30,7 @@ func NewRegistrationToken(store cache.Store, regID string, isFirstConnection boo
 		return "", err
 	}
 
-	return authentication.SignJWS(payload, verifyLocalRegistrationTokenDuration)
+	return authentication.SignJWS(payload, time.Now(), verifyLocalRegistrationTokenDuration)
 }
 
 // CheckRegistrationToken checks that the given signature is a valid registration token.

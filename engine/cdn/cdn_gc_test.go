@@ -324,7 +324,7 @@ func TestCleanSynchronizedItemWithDisabledStorage(t *testing.T) {
 
 	iusRedisAfter, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, s.Units.LogsBuffer().ID(), &oneHundred)
 	require.NoError(t, err)
-	require.Equal(t, 2, len(iusRedisAfter))
+	require.Equal(t, 1, len(iusRedisAfter))
 
 	iusFS2After, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, s.Units.Storages[0].ID(), &oneHundred)
 	require.NoError(t, err)
