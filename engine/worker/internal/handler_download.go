@@ -18,7 +18,6 @@ import (
 
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdsclient"
 )
 
 func downloadHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
@@ -55,7 +54,7 @@ func downloadHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 				buildNumberString := sdk.ParameterValue(wk.currentJob.params, "cds.run.number")
 				reqArgs.Number, errN = strconv.ParseInt(buildNumberString, 10, 64)
 				if errN != nil {
-					newError := sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Cannot parse '%s' as run number: %s", buildNumberString, errN))
+					newError := sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("cannot parse '%s' as run number: %s", buildNumberString, errN))
 					writeError(w, r, newError)
 					return
 				}
@@ -148,12 +147,14 @@ func downloadHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 				destFile := path.Join(reqArgs.Destination, a.APIRef.ToFilename())
 				wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("Downloading artifact %s from workflow %s/%s on run %d...", destFile, projectKey, reqArgs.Workflow, reqArgs.Number))
 
-				file := cdsclient.File{
-					DestinationPath: destFile,
-					MD5:             item.MD5,
-					Perm:            apiRef.Perm,
+				f, err := wkDirFS.OpenFile(destFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.FileMode(apiRef.Perm))
+				if err != nil {
+					newError := sdk.NewError(sdk.ErrUnknownError, fmt.Errorf("cannot create file (OpenFile) %s: %s", destFile, err))
+					writeError(w, r, newError)
+					return
 				}
-				if err := wk.Client().CDNItemDownload(ctx, wk.CDNHttpURL(), item.APIRefHash, sdk.CDNTypeItemRunResult, wkDirFS, file); err != nil {
+				defer f.Close() //nolint
+				if err := wk.Client().CDNItemDownload(ctx, wk.CDNHttpURL(), item.APIRefHash, sdk.CDNTypeItemRunResult, a.MD5, f); err != nil {
 					newError := sdk.NewError(sdk.ErrUnknownError, fmt.Errorf("cannot download artifact %s: %s", destFile, err))
 					writeError(w, r, newError)
 					return
@@ -173,7 +174,7 @@ func GetArtifactFromAPI(ctx context.Context, wk *CurrentWorker, projectKey strin
 		return newError
 	}
 
-	regexp, err := regexp.Compile(reqArgs.Pattern)
+	reg, err := regexp.Compile(reqArgs.Pattern)
 	if err != nil {
 		newError := sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("invalid pattern %s : %v", reqArgs.Pattern, err))
 		return newError
@@ -187,7 +188,7 @@ func GetArtifactFromAPI(ctx context.Context, wk *CurrentWorker, projectKey strin
 	for i := range artifacts {
 		a := &artifacts[i]
 
-		if reqArgs.Pattern != "" && !regexp.MatchString(a.Name) {
+		if reqArgs.Pattern != "" && !reg.MatchString(a.Name) {
 			wg.Done()
 			continue
 		}
@@ -200,14 +201,14 @@ func GetArtifactFromAPI(ctx context.Context, wk *CurrentWorker, projectKey strin
 		go func(a *sdk.WorkflowNodeRunArtifact) {
 			defer wg.Done()
 
-			path := path.Join(reqArgs.Destination, a.Name)
-			f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.FileMode(a.Perm))
+			filePath := path.Join(reqArgs.Destination, a.Name)
+			f, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.FileMode(a.Perm))
 			if err != nil {
 				wk.SendLog(ctx, workerruntime.LevelError, fmt.Sprintf("Cannot download artifact (OpenFile) %s: %s", a.Name, err))
 				isInError = true
 				return
 			}
-			wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("downloading artifact %s with tag %s from workflow %s/%s on run %d (%s)...", a.Name, a.Tag, projectKey, reqArgs.Workflow, reqArgs.Number, path))
+			wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("downloading artifact %s with tag %s from workflow %s/%s on run %d (%s)...", a.Name, a.Tag, projectKey, reqArgs.Workflow, reqArgs.Number, filePath))
 			if err := wk.client.WorkflowNodeRunArtifactDownload(projectKey, reqArgs.Workflow, *a, f); err != nil {
 				wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("Cannot download artifact %s: %s", a.Name, err))
 				isInError = true
@@ -231,7 +232,7 @@ func GetArtifactFromAPI(ctx context.Context, wk *CurrentWorker, projectKey strin
 
 	wg.Wait()
 	if isInError {
-		newError := sdk.NewError(sdk.ErrUnknownError, fmt.Errorf("Error while downloading artifacts - see previous logs"))
+		newError := sdk.NewError(sdk.ErrUnknownError, fmt.Errorf("error while downloading artifacts - see previous logs"))
 		return newError
 	}
 	return nil

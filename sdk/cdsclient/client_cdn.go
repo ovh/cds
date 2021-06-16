@@ -9,7 +9,6 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/rockbears/log"
@@ -18,15 +17,13 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func (c *client) CDNItemDownload(ctx context.Context, cdnAddr string, hash string, itemType sdk.CDNItemType, fs afero.Fs, file File) error {
+func (c *client) CDNItemDownload(ctx context.Context, cdnAddr string, hash string, itemType sdk.CDNItemType, md5Sum string, writer io.WriteSeeker) error {
 	currentRetry := 0
 	var lastError error
 	for i := 0; i <= c.config.Retry; i++ {
 		currentRetry++
-		f, err := fs.OpenFile(file.DestinationPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.FileMode(file.Perm))
-		if err != nil {
-			newError := sdk.NewError(sdk.ErrUnknownError, fmt.Errorf("cannot create file (OpenFile) %s: %s", file.DestinationPath, err))
-			return newError
+		if _, err := writer.Seek(0, io.SeekStart); err != nil {
+			return sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to reset writer: %v", err)
 		}
 
 		reader, _, code, err := c.StreamNoRetry(ctx, c.HTTPNoTimeoutClient(), http.MethodGet, fmt.Sprintf("%s/item/%s/%s/download", cdnAddr, itemType, hash), nil, func(req *http.Request) {
@@ -35,35 +32,25 @@ func (c *client) CDNItemDownload(ctx context.Context, cdnAddr string, hash strin
 		})
 		if code >= 500 {
 			lastError = err
-			_ = f.Close()
 			continue
 		}
 
 		if err != nil {
-			_ = f.Close()
 			return err
 		}
 
 		md5Hash := md5.New()
-		multiWriter := io.MultiWriter(md5Hash, f)
+		multiWriter := io.MultiWriter(md5Hash, writer)
 
 		if _, err := io.Copy(multiWriter, reader); err != nil {
 			lastError = fmt.Errorf("unable to read cdn response: %v", err)
 			log.Error(ctx, "%v", lastError)
-			_ = f.Close()
 			continue
 		}
 
 		md5S := hex.EncodeToString(md5Hash.Sum(nil))
-		if md5S != file.MD5 {
-			lastError = fmt.Errorf("ms5 doesn't match: Want %s Got %s", file.MD5, md5S)
-			log.Error(ctx, "%v", lastError)
-			_ = f.Close()
-			continue
-		}
-
-		if err = f.Close(); err != nil {
-			lastError = fmt.Errorf("unable to close file %s: %v", file.DestinationPath, err)
+		if md5S != md5Sum {
+			lastError = fmt.Errorf("ms5 doesn't match: Want %s Got %s", md5Sum, md5S)
 			log.Error(ctx, "%v", lastError)
 			continue
 		}
@@ -119,7 +106,7 @@ func (c *client) CDNItemUpload(ctx context.Context, cdnAddr string, signature st
 				return time.Since(t0), err
 			}
 			var errSdk sdk.Error
-			if json.Unmarshal(bts, &errSdk); err != nil {
+			if err := json.Unmarshal(bts, &errSdk); err != nil {
 				return time.Since(t0), fmt.Errorf("%s", string(bts))
 			}
 			return time.Since(t0), fmt.Errorf("%v", errSdk)

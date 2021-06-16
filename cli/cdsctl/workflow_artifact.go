@@ -7,12 +7,10 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdsclient"
 )
 
 var workflowArtifactCmd = cli.Command{
@@ -172,13 +170,16 @@ func workflowArtifactDownloadRun(v cli.Values) error {
 
 		if toDownload {
 			fmt.Printf("Downloading %s...\n", artifactData.Name)
-			file := cdsclient.File{
-				DestinationPath: artifactData.Name,
-				MD5:             artifactData.MD5,
-				Perm:            artifactData.Perm,
+			f, err := os.OpenFile(artifactData.Name, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.FileMode(artifactData.Perm))
+			if err != nil {
+				return sdk.NewError(sdk.ErrUnknownError, fmt.Errorf("cannot create file (OpenFile) %s: %s", artifactData.Name, err))
 			}
-			if err := client.CDNItemDownload(context.Background(), confCDN.HTTPURL, artifactData.CDNRefHash, sdk.CDNTypeItemRunResult, afero.NewOsFs(), file); err != nil {
+			if err := client.CDNItemDownload(context.Background(), confCDN.HTTPURL, artifactData.CDNRefHash, sdk.CDNTypeItemRunResult, artifactData.MD5, f); err != nil {
+				_ = f.Close()
 				return err
+			}
+			if err := f.Close(); err != nil {
+				return sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to close file %s: %v", artifactData.Name, err)
 			}
 		}
 		if toDownload {

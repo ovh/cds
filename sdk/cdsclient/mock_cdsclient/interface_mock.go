@@ -3471,17 +3471,17 @@ func (m *MockWorkerClient) EXPECT() *MockWorkerClientMockRecorder {
 }
 
 // CDNItemDownload mocks base method.
-func (m *MockWorkerClient) CDNItemDownload(ctx context.Context, cdnAddr, hash string, itemType sdk.CDNItemType, fs afero.Fs, file cdsclient.File) error {
+func (m *MockWorkerClient) CDNItemDownload(ctx context.Context, cdnAddr, hash string, itemType sdk.CDNItemType, md5 string, writer io.WriteSeeker) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CDNItemDownload", ctx, cdnAddr, hash, itemType, fs, file)
+	ret := m.ctrl.Call(m, "CDNItemDownload", ctx, cdnAddr, hash, itemType, md5, writer)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // CDNItemDownload indicates an expected call of CDNItemDownload.
-func (mr *MockWorkerClientMockRecorder) CDNItemDownload(ctx, cdnAddr, hash, itemType, fs, file interface{}) *gomock.Call {
+func (mr *MockWorkerClientMockRecorder) CDNItemDownload(ctx, cdnAddr, hash, itemType, md5, writer interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CDNItemDownload", reflect.TypeOf((*MockWorkerClient)(nil).CDNItemDownload), ctx, cdnAddr, hash, itemType, fs, file)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CDNItemDownload", reflect.TypeOf((*MockWorkerClient)(nil).CDNItemDownload), ctx, cdnAddr, hash, itemType, md5, writer)
 }
 
 // CDNItemStream mocks base method.
@@ -3762,17 +3762,17 @@ func (m *MockCDNClient) EXPECT() *MockCDNClientMockRecorder {
 }
 
 // CDNItemDownload mocks base method.
-func (m *MockCDNClient) CDNItemDownload(ctx context.Context, cdnAddr, hash string, itemType sdk.CDNItemType, fs afero.Fs, file cdsclient.File) error {
+func (m *MockCDNClient) CDNItemDownload(ctx context.Context, cdnAddr, hash string, itemType sdk.CDNItemType, md5 string, writer io.WriteSeeker) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CDNItemDownload", ctx, cdnAddr, hash, itemType, fs, file)
+	ret := m.ctrl.Call(m, "CDNItemDownload", ctx, cdnAddr, hash, itemType, md5, writer)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // CDNItemDownload indicates an expected call of CDNItemDownload.
-func (mr *MockCDNClientMockRecorder) CDNItemDownload(ctx, cdnAddr, hash, itemType, fs, file interface{}) *gomock.Call {
+func (mr *MockCDNClientMockRecorder) CDNItemDownload(ctx, cdnAddr, hash, itemType, md5, writer interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CDNItemDownload", reflect.TypeOf((*MockCDNClient)(nil).CDNItemDownload), ctx, cdnAddr, hash, itemType, fs, file)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CDNItemDownload", reflect.TypeOf((*MockCDNClient)(nil).CDNItemDownload), ctx, cdnAddr, hash, itemType, md5, writer)
 }
 
 // CDNItemStream mocks base method.
@@ -5551,17 +5551,17 @@ func (mr *MockInterfaceMockRecorder) Broadcasts() *gomock.Call {
 }
 
 // CDNItemDownload mocks base method.
-func (m *MockInterface) CDNItemDownload(ctx context.Context, cdnAddr, hash string, itemType sdk.CDNItemType, fs afero.Fs, file cdsclient.File) error {
+func (m *MockInterface) CDNItemDownload(ctx context.Context, cdnAddr, hash string, itemType sdk.CDNItemType, md5 string, writer io.WriteSeeker) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CDNItemDownload", ctx, cdnAddr, hash, itemType, fs, file)
+	ret := m.ctrl.Call(m, "CDNItemDownload", ctx, cdnAddr, hash, itemType, md5, writer)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // CDNItemDownload indicates an expected call of CDNItemDownload.
-func (mr *MockInterfaceMockRecorder) CDNItemDownload(ctx, cdnAddr, hash, itemType, fs, file interface{}) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) CDNItemDownload(ctx, cdnAddr, hash, itemType, md5, writer interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CDNItemDownload", reflect.TypeOf((*MockInterface)(nil).CDNItemDownload), ctx, cdnAddr, hash, itemType, fs, file)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CDNItemDownload", reflect.TypeOf((*MockInterface)(nil).CDNItemDownload), ctx, cdnAddr, hash, itemType, md5, writer)
 }
 
 // CDNItemStream mocks base method.
@@ -8853,17 +8853,17 @@ func (m *MockWorkerInterface) EXPECT() *MockWorkerInterfaceMockRecorder {
 }
 
 // CDNItemDownload mocks base method.
-func (m *MockWorkerInterface) CDNItemDownload(ctx context.Context, cdnAddr, hash string, itemType sdk.CDNItemType, fs afero.Fs, file cdsclient.File) error {
+func (m *MockWorkerInterface) CDNItemDownload(ctx context.Context, cdnAddr, hash string, itemType sdk.CDNItemType, md5 string, writer io.WriteSeeker) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CDNItemDownload", ctx, cdnAddr, hash, itemType, fs, file)
+	ret := m.ctrl.Call(m, "CDNItemDownload", ctx, cdnAddr, hash, itemType, md5, writer)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // CDNItemDownload indicates an expected call of CDNItemDownload.
-func (mr *MockWorkerInterfaceMockRecorder) CDNItemDownload(ctx, cdnAddr, hash, itemType, fs, file interface{}) *gomock.Call {
+func (mr *MockWorkerInterfaceMockRecorder) CDNItemDownload(ctx, cdnAddr, hash, itemType, md5, writer interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CDNItemDownload", reflect.TypeOf((*MockWorkerInterface)(nil).CDNItemDownload), ctx, cdnAddr, hash, itemType, fs, file)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CDNItemDownload", reflect.TypeOf((*MockWorkerInterface)(nil).CDNItemDownload), ctx, cdnAddr, hash, itemType, md5, writer)
 }
 
 // CDNItemStream mocks base method.

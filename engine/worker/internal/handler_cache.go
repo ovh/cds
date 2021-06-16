@@ -18,7 +18,6 @@ import (
 
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdsclient"
 )
 
 func cachePushHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
@@ -220,12 +219,15 @@ func cachePullHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 		}
 
 		dest := filepath.Join(path, "workercache.tar")
-		file := cdsclient.File{
-			DestinationPath: dest,
-			MD5:             items.Items[0].MD5,
-			Perm:            0755,
+		f, err := os.OpenFile(dest, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.FileMode(0755))
+		if err != nil {
+			err = sdk.NewError(sdk.ErrUnknownError, fmt.Errorf("cannot create file (OpenFile) %s: %s", dest, err))
+			log.Error(ctx, "%v", err)
+			writeError(w, req, err)
+			return
 		}
-		if err := wk.client.CDNItemDownload(ctx, wk.cdnHttpAddr, items.Items[0].APIRefHash, sdk.CDNTypeItemWorkerCache, wkDirFS, file); err != nil {
+		if err := wk.client.CDNItemDownload(ctx, wk.cdnHttpAddr, items.Items[0].APIRefHash, sdk.CDNTypeItemWorkerCache, items.Items[0].MD5, f); err != nil {
+			_ = f.Close()
 			err = sdk.Error{
 				Message: "worker cache pull > Cannot pull cache: " + err.Error(),
 				Status:  http.StatusNotFound,
@@ -234,10 +236,19 @@ func cachePullHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 			writeError(w, req, err)
 			return
 		}
+		if err := f.Close(); err != nil {
+			err = sdk.Error{
+				Message: fmt.Sprintf("worker cache pull > unable to close file %s: %v", dest, err),
+				Status:  http.StatusInternalServerError,
+			}
+			log.Error(ctx, "%v", err)
+			writeError(w, req, err)
+			return
+		}
 
 		// Open tar file
-		log.Info(ctx, "extracting worker cache %s / %s", file.DestinationPath, vars["ref"])
-		archive, err := wkDirFS.Open(file.DestinationPath)
+		log.Info(ctx, "extracting worker cache %s / %s", dest, vars["ref"])
+		archive, err := wkDirFS.Open(dest)
 		if err != nil {
 			e := sdk.Error{
 				Message: "worker cache pull > unable to open archive: " + err.Error(),
@@ -252,7 +263,7 @@ func cachePullHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 			writeError(w, req, err)
 			return
 		}
-		if err := wkDirFS.Remove(file.DestinationPath); err != nil {
+		if err := wkDirFS.Remove(dest); err != nil {
 			e := sdk.Error{
 				Message: "unable to remove worker cache archive: " + err.Error(),
 				Status:  http.StatusInternalServerError,

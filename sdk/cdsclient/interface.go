@@ -18,12 +18,6 @@ import (
 	"github.com/ovh/venom"
 )
 
-type File struct {
-	MD5             string
-	Perm            uint32
-	DestinationPath string
-}
-
 type Filter struct {
 	Name, Value string
 }
@@ -311,7 +305,7 @@ type WorkerClient interface {
 
 type CDNClient interface {
 	CDNItemUpload(ctx context.Context, cdnAddr string, signature string, fs afero.Fs, path string) (time.Duration, error)
-	CDNItemDownload(ctx context.Context, cdnAddr string, hash string, itemType sdk.CDNItemType, fs afero.Fs, file File) error
+	CDNItemDownload(ctx context.Context, cdnAddr string, hash string, itemType sdk.CDNItemType, md5 string, writer io.WriteSeeker) error
 	CDNItemStream(ctx context.Context, cdnAddr string, hash string, itemType sdk.CDNItemType) (io.Reader, error)
 }
 
