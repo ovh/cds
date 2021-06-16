@@ -47,7 +47,7 @@ func AuthConsumerTokenExpiration(ctx context.Context, dbFunc func() *gorp.DbMap,
 
 func authConsumerTokenExpirationPerID(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, id string, duration time.Duration) error {
 	// Lock the row
-	id, err := tx.SelectStr("select id from auth_consumer where id=$1 and validity_periods is null for update skip locked")
+	id, err := tx.SelectStr("select id from auth_consumer where id=$1 and validity_periods is null for update skip locked", id)
 	if err == sql.ErrNoRows {
 		return nil
 	}
@@ -70,7 +70,7 @@ func authConsumerTokenExpirationPerID(ctx context.Context, tx gorpmapper.SqlExec
 		return nil
 	}
 
-	consumer.ValidityPeriods = sdk.NewAuthConsumerValidityPeriod(time.Now(), duration)
+	consumer.ValidityPeriods = sdk.NewAuthConsumerValidityPeriod(consumer.DeprecatedIssuedAt, duration)
 	log.Info(ctx, "consumer %q IAT=%v Expiration=%v", consumer.ID, consumer.ValidityPeriods.Latest().IssuedAt, consumer.ValidityPeriods.Latest().IssuedAt.Add(consumer.ValidityPeriods.Latest().Duration))
 
 	return authentication.UpdateConsumer(ctx, tx, consumer)
