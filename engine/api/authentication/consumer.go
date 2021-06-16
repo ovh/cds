@@ -24,7 +24,7 @@ func NewConsumerWorker(ctx context.Context, db gorpmapper.SqlExecutorWithTx, nam
 			sdk.AuthConsumerScopeRunExecution,
 			sdk.AuthConsumerScopeService,
 		),
-		IssuedAt: time.Now(),
+		ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 24*time.Hour),
 	}
 
 	if err := InsertConsumer(ctx, db, &c); err != nil {
@@ -46,7 +46,7 @@ func NewConsumerExternal(ctx context.Context, db gorpmapper.SqlExecutorWithTx, u
 			"username":    userInfo.Username,
 			"email":       userInfo.Email,
 		},
-		IssuedAt: time.Now(),
+		ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
 	}
 
 	if err := InsertConsumer(ctx, db, &c); err != nil {
@@ -57,7 +57,7 @@ func NewConsumerExternal(ctx context.Context, db gorpmapper.SqlExecutorWithTx, u
 }
 
 // ConsumerRegen updates a consumer issue date to invalidate old signin token.
-func ConsumerRegen(ctx context.Context, db gorpmapper.SqlExecutorWithTx, consumer *sdk.AuthConsumer) error {
+func ConsumerRegen(ctx context.Context, db gorpmapper.SqlExecutorWithTx, consumer *sdk.AuthConsumer, overlapDuration, newDuration time.Duration) error {
 	if consumer.Type != sdk.ConsumerBuiltin {
 		return sdk.NewErrorFrom(sdk.ErrForbidden, "can't regen a no builtin consumer")
 	}
@@ -69,8 +69,15 @@ func ConsumerRegen(ctx context.Context, db gorpmapper.SqlExecutorWithTx, consume
 	consumer.InvalidGroupIDs = nil
 	consumer.Warnings = nil
 
-	// Update the IAT attribute in database
-	consumer.IssuedAt = time.Now()
+	// Regen the token
+	latestPeriod := consumer.ValidityPeriods.Latest()
+	latestPeriod.Duration = time.Now().Add(overlapDuration).Sub(latestPeriod.IssuedAt)
+	consumer.ValidityPeriods = append(consumer.ValidityPeriods,
+		sdk.AuthConsumerValidityPeriod{
+			IssuedAt: time.Now(),
+			Duration: newDuration,
+		},
+	)
 	if err := UpdateConsumer(ctx, db, consumer); err != nil {
 		return err
 	}

@@ -205,7 +205,7 @@ func TestDeduplicationCrossType(t *testing.T) {
 
 	require.NoError(t, cdnUnits.FillWithUnknownItems(ctx, cdnUnits.Storages[0], 100))
 	require.NoError(t, cdnUnits.FillSyncItemChannel(ctx, cdnUnits.Storages[0], 100))
-	time.Sleep(1 * time.Second)
+	time.Sleep(2 * time.Second)
 
 	<-ctx.Done()
 

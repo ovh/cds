@@ -14,6 +14,7 @@ import { Item } from 'app/shared/menu/menu.component';
 import { Column, ColumnType, Filter } from 'app/shared/table/data-table.component';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { AuthenticationState } from 'app/store/authentication.state';
+import * as moment from 'moment';
 import { forkJoin } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { CloseEventType, ConsumerCreateModalComponent } from '../consumer-create-modal/consumer-create-modal.component';
@@ -206,6 +207,39 @@ export class UserEditComponent implements OnInit {
                         value: c.groups ? c.groups.map((g: Group) => g.name).join(', ') : '*',
                         icons
                     }
+                }
+            },
+            <Column<AuthConsumer>>{
+                name: 'End of token validity',
+                selector: (c: AuthConsumer) => {
+                    if (!c.validity_periods) {
+                        return '';
+                    }
+
+                    c.validity_periods.sort((x, y) => {
+                        let dX = moment(x.issued_at).toDate();
+                        let dY = moment(y.issued_at).toDate();
+                        return dY.getTime() - dX.getTime();
+                    });
+
+                    let period = c.validity_periods[0];
+                    if (period.duration === 0) {
+                        return '';
+                    }
+
+                    let d = moment(period.issued_at).toDate();
+                    d.setTime(d.getTime() + (period.duration / 1000000));
+
+                    return moment(d).fromNow();
+                }
+            },
+            <Column<AuthConsumer>>{
+                name: 'Last authentication',
+                selector: (c: AuthConsumer) => {
+                    if (!c.last_authentication) {
+                        return 'never';
+                    }
+                    return moment(c.last_authentication).fromNow();
                 }
             },
             <Column<AuthConsumer>>{

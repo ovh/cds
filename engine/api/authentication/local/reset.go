@@ -17,9 +17,10 @@ type resetLocalConsumerToken struct {
 
 // NewResetConsumerToken returns a new reset consumer token for given consumer id.
 func NewResetConsumerToken(store cache.Store, consumerID string) (string, error) {
+	var now = time.Now()
 	payload := resetLocalConsumerToken{
 		ConsumerID: consumerID,
-		Nonce:      time.Now().Unix(),
+		Nonce:      now.Unix(),
 	}
 
 	cacheKey := cache.Key("authentication:consumer:reset", consumerID)
@@ -27,7 +28,7 @@ func NewResetConsumerToken(store cache.Store, consumerID string) (string, error)
 		return "", err
 	}
 
-	return authentication.SignJWS(payload, resetLocalConsumerTokenDuration)
+	return authentication.SignJWS(payload, now, resetLocalConsumerTokenDuration)
 }
 
 // CheckResetConsumerToken checks that the given signature is a valid reset consumer token.

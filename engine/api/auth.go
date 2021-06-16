@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/rockbears/log"
@@ -270,6 +271,13 @@ func (api *API) postAuthSigninHandler() service.Handler {
 			session, err = authentication.NewSession(ctx, tx, consumer, sessionDuration)
 		}
 		if err != nil {
+			return err
+		}
+
+		// Store the last authentication date on the consumer
+		now := time.Now()
+		consumer.LastAuthentication = &now
+		if err := authentication.UpdateConsumerLastAuthentication(ctx, tx, consumer); err != nil {
 			return err
 		}
 

@@ -695,6 +695,7 @@
   "auth_consumer_details_modal_title": "Details for consumer '{{name}}'",
   "auth_consumer_create_modal_title": "Create a new consumer",
   "auth_consumer_create_modal_info_groups": "Let groups selection empty to create consumer with wildcard access on groups.",
+  "validity_periods": "Validity periods",
   "vcs_connection": "Connection:",
   "vcs_user": "User: ",
   "vcs_password": "Password: ",

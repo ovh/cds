@@ -26,7 +26,7 @@ func TestSignJWS(t *testing.T) {
 		Nonce:    time.Now().Unix(),
 	}
 
-	token, err := authentication.SignJWS(p, time.Hour)
+	token, err := authentication.SignJWS(p, time.Now(), time.Hour)
 	require.NoError(t, err)
 
 	var res myPayload

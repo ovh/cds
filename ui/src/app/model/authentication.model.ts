@@ -1,10 +1,16 @@
 import { WithKey } from 'app/shared/table/data-table.component';
+import * as moment from 'moment';
 import { Group } from './group.model';
 import { AuthentifiedUser } from './user.model';
 
 export class AuthConsumerScopeDetail {
     scope: string;
     endpoints: Array<AuthConsumerScopeEndpoint>;
+}
+
+export class AuthConsumerValidityPeriod {
+    duration: number;
+    issued_at: string;
 }
 
 export class AuthConsumerScopeEndpoint {
@@ -81,6 +87,8 @@ export class AuthConsumer {
     groups: Array<Group>;
     disabled: boolean;
     warnings: Array<AuthConsumerWarning>;
+    validity_periods: Array<AuthConsumerValidityPeriod>;
+    last_authentication: string;
 
     // UI fields
     parent: AuthConsumer;

@@ -76,6 +76,8 @@ func getConsumer(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, 
 		}
 	}
 
+	ac.ValidityPeriods.Sort()
+
 	return &ac, nil
 }
 
@@ -117,6 +119,7 @@ func InsertConsumer(ctx context.Context, db gorpmapper.SqlExecutorWithTx, ac *sd
 		ac.ID = sdk.UUID()
 	}
 	ac.Created = time.Now()
+	ac.ValidityPeriods.Sort()
 	c := authConsumer{AuthConsumer: *ac}
 	if err := gorpmapping.InsertAndSign(ctx, db, &c); err != nil {
 		return sdk.WrapError(err, "unable to insert auth consumer")
@@ -127,6 +130,7 @@ func InsertConsumer(ctx context.Context, db gorpmapper.SqlExecutorWithTx, ac *sd
 
 // UpdateConsumer in database.
 func UpdateConsumer(ctx context.Context, db gorpmapper.SqlExecutorWithTx, ac *sdk.AuthConsumer) error {
+	ac.ValidityPeriods.Sort()
 	c := authConsumer{AuthConsumer: *ac}
 	if err := gorpmapping.UpdateAndSign(ctx, db, &c); err != nil {
 		return sdk.WrapError(err, "unable to update auth consumer with id: %s", ac.ID)
@@ -139,4 +143,13 @@ func UpdateConsumer(ctx context.Context, db gorpmapper.SqlExecutorWithTx, ac *sd
 func DeleteConsumerByID(db gorp.SqlExecutor, id string) error {
 	_, err := db.Exec("DELETE FROM auth_consumer WHERE id = $1", id)
 	return sdk.WrapError(err, "unable to delete auth consumer with id %s", id)
+}
+
+// UpdateConsumerLastAuthentication updates only the column last_authentication
+func UpdateConsumerLastAuthentication(ctx context.Context, db gorp.SqlExecutor, ac *sdk.AuthConsumer) error {
+	c := authConsumer{AuthConsumer: *ac}
+	err := gorpmapping.UpdateColumns(db, &c, func(cm *gorp.ColumnMap) bool {
+		return cm.ColumnName == "last_authentication"
+	})
+	return sdk.WrapError(err, "unable to update last_authentication auth consumer with id %s", ac.ID)
 }
