@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/golang/protobuf/ptypes/empty"
-	"github.com/mholt/archiver"
+	"github.com/mholt/archiver/v3"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
@@ -23,7 +23,7 @@ func (actPlugin *archiveActionPlugin) Manifest(ctx context.Context, _ *empty.Emp
 	return &actionplugin.ActionPluginManifest{
 		Name:        "plugin-archive",
 		Author:      "mdouchement <https://github.com/mdouchement>",
-		Description: `This is a plugin to compress or uncompress an archive. Supported formats: .zip, .tar, .tar.gz, .tar.bz2, .tar.xz, .tar.lz4, .tar.sz, and .rar (extract-only)`,
+		Description: `This is a plugin to compress or uncompress an archive. Supported formats: .zip, .tar, .tar.gz, .tar.bz2, .tar.xz, .tar.zst, .tar.lz4, .tar.sz, and .rar (extract-only)`,
 		Version:     sdk.VERSION,
 	}, nil
 }
