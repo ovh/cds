@@ -96,7 +96,7 @@ func (c *client) CDNItemUpload(ctx context.Context, cdnAddr string, signature st
 		}
 		body, _, code, err := c.Stream(ctx, c.HTTPNoTimeoutClient(), http.MethodPost, fmt.Sprintf("%s/item/upload", cdnAddr), f, SetHeader("X-CDS-WORKER-SIGNATURE", signature))
 		if err != nil {
-			savedError = newAPIError(fmt.Errorf("unable to upload file, try %d: %v", i+1, err))
+			savedError = err
 			time.Sleep(1 * time.Second)
 			continue
 		}
@@ -105,11 +105,10 @@ func (c *client) CDNItemUpload(ctx context.Context, cdnAddr string, signature st
 			if err != nil {
 				return time.Since(t0), err
 			}
-			var errSdk sdk.Error
-			if err := json.Unmarshal(bts, &errSdk); err != nil {
-				return time.Since(t0), fmt.Errorf("%s", string(bts))
+			if err := sdk.DecodeError(bts); err != nil {
+				return time.Since(t0), err
 			}
-			return time.Since(t0), fmt.Errorf("%v", errSdk)
+			return time.Since(t0), newAPIError(fmt.Errorf("HTTP %d", code))
 		}
 		savedError = nil
 		break

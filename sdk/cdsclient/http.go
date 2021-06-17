@@ -112,13 +112,6 @@ func (c *client) RequestJSON(ctx context.Context, method, path string, in interf
 		return nil, nil, code, err
 	}
 
-	if code >= 400 {
-		if err := sdk.DecodeError(res); err != nil {
-			return res, nil, code, err
-		}
-		return res, nil, code, newAPIError(fmt.Errorf("HTTP %d", code))
-	}
-
 	if code == 204 {
 		return res, header, code, nil
 	}
@@ -158,7 +151,7 @@ func (c *client) Request(ctx context.Context, method string, path string, body i
 
 	if code >= 400 {
 		if err := sdk.DecodeError(bodyBtes); err != nil {
-			return bodyBtes, nil, code, newAPIError(err)
+			return bodyBtes, nil, code, err
 		}
 		return bodyBtes, nil, code, newAPIError(fmt.Errorf("HTTP %d", code))
 	}
@@ -174,7 +167,7 @@ func extractBodyErrorFromResponse(r *http.Response) error {
 	body, _ := ioutil.ReadAll(r.Body)
 	r.Body.Close() // nolint
 	if err := sdk.DecodeError(body); err != nil {
-		return newAPIError(err)
+		return err
 	}
 	return newAPIError(fmt.Errorf("HTTP %d", r.StatusCode))
 }
@@ -414,6 +407,9 @@ func (c *client) Stream(ctx context.Context, httpClient HTTPClient, method strin
 		return resp.Body, resp.Header, resp.StatusCode, nil
 	}
 
+	if savedCodeError == 409 {
+		return nil, nil, savedCodeError, savederror
+	}
 	return nil, nil, savedCodeError, newError(fmt.Errorf("request failed after %d retries: %v", c.config.Retry, savederror))
 }
 

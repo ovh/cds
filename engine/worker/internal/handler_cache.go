@@ -160,10 +160,6 @@ func cachePushHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 		}
 		duration, err := wk.client.CDNItemUpload(ctx, wk.cdnHttpAddr, sig, wk.BaseDir(), tarF.Name())
 		if err != nil {
-			err := sdk.Error{
-				Message: "worker cache push > Cannot upload cache: %v" + err.Error(),
-				Status:  http.StatusInternalServerError,
-			}
 			log.Error(ctx, "%v", err)
 			writeError(w, r, err)
 			return
