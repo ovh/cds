@@ -23,7 +23,9 @@ func init() {
 }
 
 func main() {
-	mainCmd.Execute()
+	if err := mainCmd.Execute(); err != nil {
+		os.Exit(1)
+	}
 }
 
 var mainCmd = &cobra.Command{
