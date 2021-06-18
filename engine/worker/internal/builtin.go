@@ -21,6 +21,7 @@ func init() {
 	mapBuiltinActions[sdk.GitCloneAction] = action.RunGitClone
 	mapBuiltinActions[sdk.GitTagAction] = action.RunGitTag
 	mapBuiltinActions[sdk.ReleaseVCSAction] = action.RunReleaseVCS
+	mapBuiltinActions[sdk.ReleaseAction] = action.RunRelease
 	mapBuiltinActions[sdk.CheckoutApplicationAction] = action.RunCheckoutApplication
 	mapBuiltinActions[sdk.DeployApplicationAction] = action.RunDeployApplication
 	mapBuiltinActions[sdk.CoverageAction] = action.RunParseCoverageResultAction
