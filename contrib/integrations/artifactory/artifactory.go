@@ -4,12 +4,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/jfrog/jfrog-client-go/artifactory"
 	"github.com/jfrog/jfrog-client-go/artifactory/auth"
 	"github.com/jfrog/jfrog-client-go/artifactory/services"
 	"github.com/jfrog/jfrog-client-go/config"
+	"github.com/jfrog/jfrog-client-go/distribution"
+	authdistrib "github.com/jfrog/jfrog-client-go/distribution/auth"
+
 
 	"github.com/ovh/cds/sdk"
 )
@@ -41,6 +45,21 @@ type FileInfoChecksum struct {
 type FileChildren struct {
 	Uri    string `json:"uri"`
 	Folder bool   `json:"folder"`
+}
+
+func CreateDistributionClient(url, token string) (*distribution.DistributionServicesManager, error) {
+	dtb := authdistrib.NewDistributionDetails()
+	dtb.SetUrl(strings.Replace(url, "/artifactory/", "/distribution/", -1))
+	dtb.SetAccessToken(token)
+	serviceConfig, err := config.NewConfigBuilder().
+		SetServiceDetails(dtb).
+		SetThreads(1).
+		SetDryRun(false).
+		Build()
+	if err != nil {
+		return nil, fmt.Errorf("unable to create service config: %v", err)
+	}
+	return distribution.New(serviceConfig)
 }
 
 func CreateArtifactoryClient(url, token string) (artifactory.ArtifactoryServicesManager, error) {

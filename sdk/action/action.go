@@ -23,6 +23,7 @@ var List = []Manifest{
 	InstallKey,
 	JUnit,
 	ReleaseVCS,
+	Release,
 	Script,
 	ServeStaticFiles,
 }
