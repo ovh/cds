@@ -7,7 +7,7 @@ weight: 1
 
 The release 0.49 introduced a new parameter in CDN configuration to disable and remove a CDN unit.
 In the previous version 0.48, you created a CDS Unit for CDN. Time is coming to disabled it.
-In the next release, all logs datas in CDS will be deleted, and CDN will become the only way to manage logs.
+In the next release (0.50), all logs datas in CDS will be deleted, and CDN will become the only way to manage logs.
 
 
 # Disable CDS Unit
@@ -22,11 +22,6 @@ Add in your cdn configuration, the property "disableSync = true" for the CDS Uni
         host = "https://<your.cds.api>"
         token = "<your.token>"
 ```
-
-With this parameter, CDN will ignore the unit for:
-
-* unit synchronization
-* cleaning redis buffers
 
 # Remove CDS Unit item from CDN Database
 
