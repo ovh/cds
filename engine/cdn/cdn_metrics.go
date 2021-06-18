@@ -65,7 +65,7 @@ func (s *Service) initMetrics(ctx context.Context) error {
 	itemUnitToDeleteView := telemetry.NewViewLast(s.Metrics.ItemUnitToDelete.Name(), s.Metrics.ItemUnitToDelete, []tag.Key{tagStorage, tagItemType})
 
 	if s.DBConnectionFactory != nil {
-		s.GoRoutines.Run(ctx, "cds-compute-metrics", func(ctx context.Context) {
+		s.GoRoutines.RunWithRestart(ctx, "cds-compute-metrics", func(ctx context.Context) {
 			s.ComputeMetrics(ctx)
 		})
 	}

@@ -801,7 +801,7 @@ func (a *API) Serve(ctx context.Context) error {
 		func(ctx context.Context) {
 			services.Pings(ctx, a.mustDB, externalServices)
 		})
-	a.GoRoutines.Run(ctx, "workflow.Initialize",
+	a.GoRoutines.RunWithRestart(ctx, "workflow.Initialize",
 		func(ctx context.Context) {
 			workflow.SetMaxRuns(a.Config.Workflow.MaxRuns)
 			workflow.Initialize(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Cache, a.Config.URL.UI, a.Config.DefaultOS, a.Config.DefaultArch, a.Config.Log.StepMaxSize)
