@@ -17,8 +17,7 @@ import (
 
 func (api *API) getWorkflowHooksHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// This handler can only be called by a service managed by an admin
-		if isService := isService(ctx); !isService && !isAdmin(ctx) {
+		if !isHooks(ctx) {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
@@ -28,6 +27,21 @@ func (api *API) getWorkflowHooksHandler() service.Handler {
 		}
 
 		return service.WriteJSON(w, hooks, http.StatusOK)
+	}
+}
+
+func (api *API) getWorkflowHookExecutionsHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if !isHooks(ctx) {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
+
+		executionIDs, err := workflow.LoadNodeRunDistinctExecutionIDs(api.mustDB())
+		if err != nil {
+			return err
+		}
+
+		return service.WriteJSON(w, executionIDs, http.StatusOK)
 	}
 }
 

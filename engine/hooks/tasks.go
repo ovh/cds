@@ -69,10 +69,24 @@ func (s *Service) synchronizeTasks(ctx context.Context) error {
 
 	log.Info(ctx, "Hooks> Synchronizing tasks from CDS API (%s)", s.Cfg.API.HTTP.URL)
 
-	//Get all hooks from CDS, and synchronize the tasks in cache
+	// Get all hooks from CDS, and synchronize the tasks in cache
 	hooks, err := s.Client.WorkflowAllHooksList()
 	if err != nil {
-		return sdk.WrapError(err, "Unable to get hooks")
+		return sdk.WrapError(err, "unable to get hooks")
+	}
+	mHookIDs := make(map[string]struct{}, len(hooks))
+	for i := range hooks {
+		mHookIDs[hooks[i].UUID] = struct{}{}
+	}
+
+	// Get all node run execution ids from CDS, and synchronize the outgoing tasks in cache
+	executionIDs, err := s.Client.WorkflowAllHooksExecutions()
+	if err != nil {
+		return sdk.WrapError(err, "unable to get hook execution ids")
+	}
+	mExecutionIDs := make(map[string]struct{}, len(executionIDs))
+	for i := range executionIDs {
+		mExecutionIDs[executionIDs[i]] = struct{}{}
 	}
 
 	allOldTasks, err := s.Dao.FindAllTasks(ctx)
@@ -80,18 +94,16 @@ func (s *Service) synchronizeTasks(ctx context.Context) error {
 		return sdk.WrapError(err, "Unable to get allOldTasks")
 	}
 
-	//Delete all old task which are not referenced in CDS API anymore
+	// Delete all old task which are not referenced in CDS API anymore
 	for i := range allOldTasks {
 		t := &allOldTasks[i]
 		var found bool
-		for _, h := range hooks {
-			if h.UUID == t.UUID {
-				found = true
-				log.Debug(ctx, "Hook> Synchronizing %s task %s", h.HookModelName, t.UUID)
-				break
-			}
+		if t.Type == TypeOutgoingWebHook || t.Type == TypeOutgoingWorkflow {
+			_, found = mExecutionIDs[t.UUID]
+		} else {
+			_, found = mHookIDs[t.UUID]
 		}
-		if !found && t.Type != TypeOutgoingWebHook && t.Type != TypeOutgoingWorkflow {
+		if !found {
 			if err := s.deleteTask(ctx, t); err != nil {
 				log.Error(ctx, "Hook> Error on task %s delete on synchronization: %v", t.UUID, err)
 			} else {
@@ -100,6 +112,7 @@ func (s *Service) synchronizeTasks(ctx context.Context) error {
 		}
 	}
 
+	// Create or update hook tasks from CDS API data
 	for _, h := range hooks {
 		confProj := h.Config[sdk.HookConfigProject]
 		confWorkflow := h.Config[sdk.HookConfigWorkflow]

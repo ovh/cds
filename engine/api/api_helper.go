@@ -98,6 +98,14 @@ func isCDN(ctx context.Context) bool {
 	return c.Service != nil && c.Service.Type == sdk.TypeCDN
 }
 
+func isHooks(ctx context.Context) bool {
+	c := getAPIConsumer(ctx)
+	if c == nil {
+		return false
+	}
+	return c.Service != nil && c.Service.Type == sdk.TypeHooks
+}
+
 func isMFA(ctx context.Context) bool {
 	s := getAuthSession(ctx)
 	if s == nil {

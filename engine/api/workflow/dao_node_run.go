@@ -61,7 +61,7 @@ const withLightNodeRunTestsField string = ", json_build_object('ko', workflow_no
 func LoadNodeRunIDsWithLogs(db gorp.SqlExecutor, wIDs []int64, status []string) ([]sdk.WorkflowNodeRunIdentifiers, error) {
 	query := `
 		WITH noderun as (
-			SELECT distinct workflow_node_run_id as id, workflow_node_run.workflow_run_id, status  
+			SELECT distinct workflow_node_run_id as id, workflow_node_run.workflow_run_id, status
 			FROM workflow_node_run_job_logs
     		JOIN workflow_node_run ON workflow_node_run.id = workflow_node_run_id
     		WHERE  workflow_node_run.workflow_id = ANY($1)
@@ -865,4 +865,17 @@ func RunExist(db gorp.SqlExecutor, projectKey string, workflowID int64, hash str
 
 	count, err := db.SelectInt(query, projectKey, workflowID, hash)
 	return count != 0, err
+}
+
+func LoadNodeRunDistinctExecutionIDs(db gorp.SqlExecutor) ([]string, error) {
+	query := `
+		SELECT DISTINCT execution_id
+    FROM workflow_node_run
+    WHERE execution_id <> '' AND execution_id IS NOT NULL;
+	`
+	var executionIDs []string
+	if _, err := db.Select(&executionIDs, query); err != nil {
+		return nil, sdk.WithStack(err)
+	}
+	return executionIDs, nil
 }
