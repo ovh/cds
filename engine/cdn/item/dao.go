@@ -144,13 +144,13 @@ func Update(ctx context.Context, m *gorpmapper.Mapper, db gorpmapper.SqlExecutor
 
 func MarkToDeleteByRunIDs(db gorpmapper.SqlExecutorWithTx, runID int64) error {
 	query := `
-		UPDATE item SET to_delete = true WHERE (api_ref->>'run_id')::int = $1 
+		UPDATE item SET to_delete = true WHERE (api_ref->>'run_id')::int = $1
 	`
 	_, err := db.Exec(query, runID)
 	return sdk.WrapError(err, "unable to mark item to delete for run %d", runID)
 }
 
-func LoadFileByProjectAndCacheTag(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, itemType sdk.CDNItemType, projKey string, cacheTag string) (*sdk.CDNItem, error) {
+func LoadWorkerCacheItemByProjectAndCacheTag(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, projKey string, cacheTag string) (*sdk.CDNItem, error) {
 	query := gorpmapper.NewQuery(`
 		SELECT *
 		FROM item
@@ -158,9 +158,22 @@ func LoadFileByProjectAndCacheTag(ctx context.Context, m *gorpmapper.Mapper, db 
 		AND (api_ref->>'project_key')::text = $2
 		AND (api_ref->>'cache_tag')::text = $3
 		AND to_delete = false
-
-	`).Args(itemType, projKey, cacheTag)
+    ORDER BY created DESC
+    LIMIT 1
+  `).Args(sdk.CDNTypeItemWorkerCache, projKey, cacheTag)
 	return getItem(ctx, m, db, query)
+}
+
+func LoadWorkerCacheItemsByProjectAndCacheTag(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, projKey string, cacheTag string) ([]sdk.CDNItem, error) {
+	query := gorpmapper.NewQuery(`
+		SELECT *
+		FROM item
+		WHERE type = $1
+		AND (api_ref->>'project_key')::text = $2
+		AND (api_ref->>'cache_tag')::text = $3
+		AND to_delete = false
+  `).Args(sdk.CDNTypeItemWorkerCache, projKey, cacheTag)
+	return getItems(ctx, m, db, query)
 }
 
 // LoadByAPIRefHashAndType load an item by his job id, step order and type
@@ -168,7 +181,7 @@ func LoadByAPIRefHashAndType(ctx context.Context, m *gorpmapper.Mapper, db gorp.
 	query := gorpmapper.NewQuery(`
 		SELECT *
 		FROM item
-		WHERE api_ref_hash = $1 
+		WHERE api_ref_hash = $1
 		AND type = $2
 		AND to_delete = false
 	`).Args(hash, itemType)
@@ -179,7 +192,7 @@ func LoadByAPIRefHashAndType(ctx context.Context, m *gorpmapper.Mapper, db gorp.
 func ComputeSizeByIDs(db gorp.SqlExecutor, itemIDs []string) (int64, error) {
 	query := `
 		SELECT COALESCE(SUM(size), 0) FROM item
-		WHERE id = ANY($1) 
+		WHERE id = ANY($1)
 	`
 	size, err := db.SelectInt(query, pq.StringArray(itemIDs))
 	if err != nil {
@@ -191,9 +204,9 @@ func ComputeSizeByIDs(db gorp.SqlExecutor, itemIDs []string) (int64, error) {
 func ListNodeRunByProject(db gorp.SqlExecutor, projectKey string) ([]int64, error) {
 	var IDs []int64
 	query := `
-		SELECT 
+		SELECT
 			DISTINCT((api_ref->>'node_run_id')::int)
-		FROM item 
+		FROM item
 		WHERE api_ref->>'project_key' = $1
 	`
 	_, err := db.Select(&IDs, query, projectKey)
@@ -206,7 +219,7 @@ func ListNodeRunByProject(db gorp.SqlExecutor, projectKey string) ([]int64, erro
 // ComputeSizeByProjectKey returns the size used by a project
 func ComputeSizeByProjectKey(db gorp.SqlExecutor, projectKey string) (int64, error) {
 	query := `
-		SELECT SUM(size) FROM item WHERE api_ref->>'project_key' = $1 
+		SELECT SUM(size) FROM item WHERE api_ref->>'project_key' = $1
 	`
 	size, err := db.SelectInt(query, projectKey)
 	if err != nil {
@@ -223,7 +236,7 @@ type Stat struct {
 
 func CountItems(db gorp.SqlExecutor) (res []Stat, err error) {
 	_, err = db.Select(&res, `
-	SELECT status, type, count(status) as "number" 
+	SELECT status, type, count(status) as "number"
 	FROM item
 	GROUP BY status, type`)
 	return res, sdk.WithStack(err)
@@ -231,7 +244,7 @@ func CountItems(db gorp.SqlExecutor) (res []Stat, err error) {
 
 func CountItemsToDelete(db gorp.SqlExecutor) (int64, error) {
 	query := `SELECT count(1) as "number"
-	FROM item 
+	FROM item
 	WHERE to_delete = true`
 	nb, err := db.SelectInt(query)
 	return nb, sdk.WithStack(err)
@@ -334,5 +347,4 @@ func LoadRunResultByRunID(ctx context.Context, m *gorpmapper.Mapper, db gorp.Sql
 		SELECT * FROM item WHERE id IN (SELECT id FROM deduplication)
 	`).Args(runID, sdk.CDNTypeItemRunResult)
 	return getItems(ctx, m, db, query)
-
 }

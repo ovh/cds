@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"sort"
 
 	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/storage"
@@ -126,11 +127,6 @@ func (s *Service) storeFile(ctx context.Context, sig cdn.Signature, reader io.Re
 	}
 	defer tx.Rollback() //nolint
 
-	// Check and Clean file with same ref
-	if err := s.cleanPreviousFileItem(ctx, tx, sig, itemType, apiRef.ToFilename()); err != nil {
-		return err
-	}
-
 	// Insert Item
 	if err := item.Insert(ctx, s.Mapper, tx, it); err != nil {
 		return err
@@ -186,22 +182,42 @@ func (s *Service) storeFile(ctx context.Context, sig cdn.Signature, reader io.Re
 	}
 
 	s.Units.PushInSyncQueue(ctx, it.ID, it.Created)
+
+	// For worker cache item clean others with same ref to purge old cached data
+	if itemType == sdk.CDNTypeItemWorkerCache {
+		tx, err := s.mustDBWithCtx(ctx).Begin()
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		defer tx.Rollback() //nolint
+
+		if err := s.cleanPreviousCachedData(ctx, tx, sig, apiRef.ToFilename()); err != nil {
+			return err
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WithStack(err)
+		}
+	}
+
 	return nil
 }
 
-func (s *Service) cleanPreviousFileItem(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, sig cdn.Signature, itemType sdk.CDNItemType, name string) error {
-	switch itemType {
-	case sdk.CDNTypeItemWorkerCache:
-		// Check if item already exist
-		existingItem, err := item.LoadFileByProjectAndCacheTag(ctx, s.Mapper, tx, itemType, sig.ProjectKey, name)
-		if err != nil {
-			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
-				return err
-			}
-			return nil
-		}
-		existingItem.ToDelete = true
-		return item.Update(ctx, s.Mapper, tx, existingItem)
+// Mark to delete all items for given cache tag except the most recent one.
+func (s *Service) cleanPreviousCachedData(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, sig cdn.Signature, cacheTag string) error {
+	items, err := item.LoadWorkerCacheItemsByProjectAndCacheTag(ctx, s.Mapper, tx, sig.ProjectKey, cacheTag)
+	if err != nil {
+		return err
 	}
+
+	sort.Slice(items, func(i, j int) bool { return items[i].Created.Before(items[j].Created) })
+
+	for i := 0; i < len(items)-1; i++ {
+		items[i].ToDelete = true
+		if err := item.Update(ctx, s.Mapper, tx, &items[i]); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }

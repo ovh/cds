@@ -265,7 +265,7 @@ func (s *Service) getWorkerCache(ctx context.Context, r *http.Request, w http.Re
 	if projectKey == "" || cachetag == "" {
 		return sdk.WrapError(sdk.ErrWrongRequest, "invalid data to get worker cache")
 	}
-	item, err := item.LoadFileByProjectAndCacheTag(ctx, s.Mapper, s.mustDBWithCtx(ctx), sdk.CDNTypeItemWorkerCache, projectKey, cachetag)
+	item, err := item.LoadWorkerCacheItemByProjectAndCacheTag(ctx, s.Mapper, s.mustDBWithCtx(ctx), projectKey, cachetag)
 	if err != nil {
 		return err
 	}
