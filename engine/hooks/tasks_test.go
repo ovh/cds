@@ -166,6 +166,7 @@ func Test_dequeueTaskExecutions_ScheduledTask(t *testing.T) {
 	// Now we will triggered another hooks sync
 	// The mock must return one hook
 	m.EXPECT().WorkflowAllHooksList().Return([]sdk.NodeHook{*h}, nil)
+	m.EXPECT().WorkflowAllHooksExecutions().Return([]string{}, nil)
 	require.NoError(t, s.synchronizeTasks(context.Background()))
 
 	// We must be able to find the task
