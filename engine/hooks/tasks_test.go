@@ -3,6 +3,7 @@ package hooks
 import (
 	"context"
 	"net/http"
+	"sort"
 	"testing"
 	"time"
 
@@ -88,6 +89,7 @@ func Test_dequeueTaskExecutions_ScheduledTask(t *testing.T) {
 	// Mock the sync of tasks
 	// It will remove all the tasks from the database
 	m.EXPECT().WorkflowAllHooksList().Return([]sdk.NodeHook{}, nil)
+	m.EXPECT().WorkflowAllHooksExecutions().Return([]string{}, nil)
 	m.EXPECT().VCSConfiguration().Return(nil, nil).AnyTimes()
 	require.NoError(t, s.synchronizeTasks(ctx))
 
@@ -176,4 +178,56 @@ func Test_dequeueTaskExecutions_ScheduledTask(t *testing.T) {
 	require.Len(t, execs, 2)
 	assert.Equal(t, "DONE", execs[0].Status)
 	assert.Equal(t, "SCHEDULED", execs[1].Status)
+}
+
+func Test_synchronizeTasks(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+	s, cancel := setupTestHookService(t)
+	defer cancel()
+
+	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Second)
+	defer cancel()
+
+	// Get the mock
+	m := s.Client.(*mock_cdsclient.MockInterface)
+
+	m.EXPECT().VCSConfiguration().Return(nil, nil).AnyTimes()
+
+	m.EXPECT().WorkflowAllHooksList().Return([]sdk.NodeHook{}, nil)
+	m.EXPECT().WorkflowAllHooksExecutions().Return([]string{}, nil)
+	require.NoError(t, s.synchronizeTasks(ctx))
+
+	tasks, err := s.Dao.FindAllTasks(ctx)
+	require.NoError(t, err)
+	require.Len(t, tasks, 0)
+
+	require.NoError(t, s.Dao.SaveTask(&sdk.Task{
+		UUID: "1",
+		Type: TypeScheduler,
+	}))
+	require.NoError(t, s.Dao.SaveTask(&sdk.Task{
+		UUID: sdk.UUID(),
+		Type: TypeScheduler,
+	}))
+	require.NoError(t, s.Dao.SaveTask(&sdk.Task{
+		UUID: "2",
+		Type: TypeOutgoingWorkflow,
+	}))
+	require.NoError(t, s.Dao.SaveTask(&sdk.Task{
+		UUID: sdk.UUID(),
+		Type: TypeOutgoingWorkflow,
+	}))
+
+	m.EXPECT().WorkflowAllHooksList().Return([]sdk.NodeHook{{UUID: "1"}}, nil)
+	m.EXPECT().WorkflowAllHooksExecutions().Return([]string{"2"}, nil)
+	require.NoError(t, s.synchronizeTasks(ctx))
+
+	tasks, err = s.Dao.FindAllTasks(ctx)
+	require.NoError(t, err)
+	require.Len(t, tasks, 2)
+	sort.Slice(tasks, func(i, j int) bool { return tasks[i].UUID < tasks[j].UUID })
+	require.Equal(t, "1", tasks[0].UUID)
+	require.Equal(t, TypeScheduler, tasks[0].Type)
+	require.Equal(t, "2", tasks[1].UUID)
+	require.Equal(t, TypeOutgoingWorkflow, tasks[1].Type)
 }
