@@ -141,8 +141,9 @@ func TestSyncLog(t *testing.T) {
 
 	var cdsStorage *cds.CDS
 	for _, sto := range s.Units.Storages {
-		cdsStorage = sto.(*cds.CDS)
-		if cdsStorage != nil {
+		var is bool
+		cdsStorage, is = sto.(*cds.CDS)
+		if is {
 			break
 		}
 	}

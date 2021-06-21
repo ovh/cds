@@ -95,7 +95,6 @@ func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Acti
 			// 3. CDN activated or not
 			if integrationName != sdk.DefaultStorageIntegrationName {
 				if err := uploadArtifactByApiCall(path, wk, ctx, projectKey, integrationName, jobID, tag); err != nil {
-					log.Warn(ctx, "queueArtifactUpload(%s, %s, %d, %s, %s) failed: %v", projectKey, integrationName, jobID, tag.Value, path, err)
 					chanError <- sdk.WrapError(err, "Error while uploading artifact by api call %s", path)
 					wgErrors.Add(1)
 				}
@@ -107,14 +106,12 @@ func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Acti
 				}
 			} else if !cdnArtifactEnabled {
 				if err := uploadArtifactByApiCall(path, wk, ctx, projectKey, integrationName, jobID, tag); err != nil {
-					log.Warn(ctx, "queueArtifactUpload(%s, %s, %d, %s, %s) failed: %v", projectKey, integrationName, jobID, tag.Value, path, err)
 					chanError <- sdk.WrapError(err, "Error while uploading artifact by api call %s", path)
 					wgErrors.Add(1)
 				}
 				return
 			} else {
 				if err := uploadArtifactIntoCDN(path, ctx, wk); err != nil {
-					log.Error(ctx, "unable to upload artifact into cdn %q: %v", path, err)
 					chanError <- err
 					wgErrors.Add(1)
 				}
@@ -133,7 +130,7 @@ func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Acti
 	wgErrors.Wait()
 
 	if !globalError.IsEmpty() {
-		return res, sdk.NewError(sdk.ErrUnknownError, fmt.Errorf("error: fail to upload artifact"))
+		return res, fmt.Errorf("%s", globalError.Error())
 	}
 
 	return res, nil
@@ -143,7 +140,11 @@ func uploadArtifactByIntegrationPlugin(path string, ctx context.Context, wk work
 	_, fileName := filepath.Split(path)
 
 	// Check run result
-	if err := checkArtifactUpload(ctx, wk, fileName, sdk.WorkflowRunResultTypeArtifactManager); err != nil {
+	code, err := checkArtifactUpload(ctx, wk, fileName, sdk.WorkflowRunResultTypeArtifactManager)
+	if err != nil {
+		if code == 409 {
+			return fmt.Errorf("unable to upload the same file twice: %s", fileName)
+		}
 		return fmt.Errorf("unable to check artifact upload authorization: %v", err)
 	}
 
@@ -233,7 +234,7 @@ func uploadArtifactIntoCDN(path string, ctx context.Context, wk workerruntime.Ru
 
 	duration, err := wk.Client().CDNItemUpload(ctx, wk.CDNHttpURL(), signature, afero.NewOsFs(), path)
 	if err != nil {
-		return sdk.WrapError(err, "Error while uploading artifact %s", path)
+		return err
 	}
 	wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("File '%s' uploaded in %.2fs to CDS CDN", path, duration.Seconds()))
 	return nil
@@ -252,7 +253,7 @@ func uploadArtifactByApiCall(path string, wk workerruntime.Runtime, ctx context.
 	return nil
 }
 
-func checkArtifactUpload(ctx context.Context, wk workerruntime.Runtime, fileName string, runResultType sdk.WorkflowRunResultType) error {
+func checkArtifactUpload(ctx context.Context, wk workerruntime.Runtime, fileName string, runResultType sdk.WorkflowRunResultType) (int, error) {
 	runID, runNodeID, runJobID := wk.GetJobIdentifiers()
 	runResultCheck := sdk.WorkflowRunResultCheck{
 		RunJobID:   runJobID,

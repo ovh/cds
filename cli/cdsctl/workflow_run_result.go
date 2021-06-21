@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"io"
 	"os"
 	"regexp"
 
@@ -129,30 +128,17 @@ func workflowRunResultGet(v cli.Values) error {
 			var err error
 			f, err = os.OpenFile(fileName, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.FileMode(perm))
 			if err != nil {
-				return err
+				return sdk.NewError(sdk.ErrUnknownError, fmt.Errorf("cannot create file (OpenFile) %s: %s", fileName, err))
 			}
 			fmt.Printf("Downloading %s...\n", fileName)
-			r, err := client.CDNItemDownload(context.Background(), confCDN.HTTPURL, cdnHash, sdk.CDNTypeItemRunResult)
-			if err != nil {
+			if err := client.CDNItemDownload(context.Background(), confCDN.HTTPURL, cdnHash, sdk.CDNTypeItemRunResult, md5, f); err != nil {
+				_ = f.Close()
 				return err
 			}
-			if _, err := io.Copy(f, r); err != nil {
-				return cli.WrapError(err, "unable to write file")
-			}
 			if err := f.Close(); err != nil {
-				return cli.WrapError(err, "unable to close file")
+				return sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to close file %s: %v", fileName, err)
 			}
 		}
-
-		md5Sum, err := sdk.FileMd5sum(fileName)
-		if err != nil {
-			return err
-		}
-
-		if md5Sum != md5 {
-			return cli.NewError("Invalid md5Sum \ndownloaded file:%s\n%s:%s", md5Sum, f.Name(), md5)
-		}
-
 		if toDownload {
 			fmt.Printf("File %s created, checksum OK\n", f.Name())
 		} else {

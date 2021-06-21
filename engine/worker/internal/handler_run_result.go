@@ -65,7 +65,12 @@ func addRunResulthandler(ctx context.Context, wk *CurrentWorker) http.HandlerFun
 			Name:       reqArgs.Name,
 			ResultType: sdk.WorkflowRunResultTypeArtifactManager,
 		}
-		if err := wk.Client().QueueWorkflowRunResultCheck(ctx, runJobID, runResultCheck); err != nil {
+		code, err := wk.Client().QueueWorkflowRunResultCheck(ctx, runJobID, runResultCheck)
+		if err != nil {
+			if code == 409 {
+				writeError(w, r, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to upload the same file twice"))
+				return
+			}
 			writeError(w, r, sdk.WrapError(err, "unable to check run result %s", reqArgs.Name))
 			return
 

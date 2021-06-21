@@ -3,7 +3,6 @@ package action
 import (
 	"context"
 	"fmt"
-	"io"
 	"os"
 	"path"
 	"path/filepath"
@@ -115,34 +114,28 @@ func RunArtifactDownload(ctx context.Context, wk workerruntime.Runtime, a sdk.Ac
 		go func(a sdk.CDNItem) {
 			defer wg.Done()
 			destFile := path.Join(destPath, a.APIRef.ToFilename())
-			f, err := wkDirFS.OpenFile(destFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.FileMode(apiRef.Perm))
+			wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("Downloading artifact %s from workflow %s/%s on run %d...", destFile, project, workflow, n))
+
+			f, err := os.OpenFile(destFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.FileMode(apiRef.Perm))
 			if err != nil {
 				res.Status = sdk.StatusFail
-				res.Reason = err.Error()
-				log.Warn(ctx, "Cannot download artifact (OpenFile) %s: %s", destFile, err)
+				res.Reason = sdk.NewError(sdk.ErrUnknownError, fmt.Errorf("cannot create file (OpenFile) %s: %s", destFile, err)).Error()
+				log.Warn(ctx, "%s", res.Reason)
 				wk.SendLog(ctx, workerruntime.LevelError, res.Reason)
 				return
 			}
-			wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("Downloading artifact %s from workflow %s/%s on run %d...", destFile, project, workflow, n))
-
-			r, err := wk.Client().CDNItemDownload(ctx, wk.CDNHttpURL(), item.APIRefHash, sdk.CDNTypeItemRunResult)
-			if err != nil {
+			if err := wk.Client().CDNItemDownload(ctx, wk.CDNHttpURL(), item.APIRefHash, sdk.CDNTypeItemRunResult, a.MD5, f); err != nil {
+				_ = f.Close()
 				res.Status = sdk.StatusFail
 				res.Reason = err.Error()
 				log.Warn(ctx, "Cannot download artifact %s: %s", destFile, err)
 				wk.SendLog(ctx, workerruntime.LevelError, res.Reason)
 				return
 			}
-			if _, err := io.Copy(f, r); err != nil {
-				res.Status = sdk.StatusFail
-				res.Reason = err.Error()
-				log.Warn(ctx, "cannot download artifact %s: %s", destFile, sdk.WithStack(err))
-				wk.SendLog(ctx, workerruntime.LevelError, res.Reason)
-			}
 			if err := f.Close(); err != nil {
 				res.Status = sdk.StatusFail
-				res.Reason = err.Error()
-				log.Warn(ctx, "Cannot close file %s: %s", destFile, err)
+				res.Reason = sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to close file %s: %v", destFile, err).Error()
+				log.Warn(ctx, "%s", res.Reason)
 				wk.SendLog(ctx, workerruntime.LevelError, res.Reason)
 				return
 			}

@@ -270,7 +270,7 @@ type QueueClient interface {
 	QueueJobSetVersion(ctx context.Context, jobID int64, version sdk.WorkflowRunVersion) error
 	QueueWorkerCacheLink(ctx context.Context, jobID int64, tag string) (sdk.CDNItemLinks, error)
 	QueueWorkflowRunResultsAdd(ctx context.Context, jobID int64, addRequest sdk.WorkflowRunResult) error
-	QueueWorkflowRunResultCheck(ctx context.Context, jobID int64, runResultCheck sdk.WorkflowRunResultCheck) error
+	QueueWorkflowRunResultCheck(ctx context.Context, jobID int64, runResultCheck sdk.WorkflowRunResultCheck) (int, error)
 }
 
 // UserClient exposes users functions
@@ -305,7 +305,8 @@ type WorkerClient interface {
 
 type CDNClient interface {
 	CDNItemUpload(ctx context.Context, cdnAddr string, signature string, fs afero.Fs, path string) (time.Duration, error)
-	CDNItemDownload(ctx context.Context, cdnAddr string, hash string, itemType sdk.CDNItemType) (io.Reader, error)
+	CDNItemDownload(ctx context.Context, cdnAddr string, hash string, itemType sdk.CDNItemType, md5 string, writer io.WriteSeeker) error
+	CDNItemStream(ctx context.Context, cdnAddr string, hash string, itemType sdk.CDNItemType) (io.Reader, error)
 }
 
 // HookClient exposes functions used for hooks services
