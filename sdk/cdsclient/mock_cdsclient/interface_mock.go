@@ -3934,6 +3934,21 @@ func (mr *MockWorkflowClientMockRecorder) WorkflowAccess(ctx, projectKey, workfl
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowAccess", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowAccess), ctx, projectKey, workflowID, sessionID, itemType)
 }
 
+// WorkflowAllHooksExecutions mocks base method.
+func (m *MockWorkflowClient) WorkflowAllHooksExecutions() ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowAllHooksExecutions")
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowAllHooksExecutions indicates an expected call of WorkflowAllHooksExecutions.
+func (mr *MockWorkflowClientMockRecorder) WorkflowAllHooksExecutions() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowAllHooksExecutions", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowAllHooksExecutions))
+}
+
 // WorkflowAllHooksList mocks base method.
 func (m *MockWorkflowClient) WorkflowAllHooksList() ([]sdk.NodeHook, error) {
 	m.ctrl.T.Helper()
@@ -8153,6 +8168,21 @@ func (m *MockInterface) WorkflowAccess(ctx context.Context, projectKey string, w
 func (mr *MockInterfaceMockRecorder) WorkflowAccess(ctx, projectKey, workflowID, sessionID, itemType interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowAccess", reflect.TypeOf((*MockInterface)(nil).WorkflowAccess), ctx, projectKey, workflowID, sessionID, itemType)
+}
+
+// WorkflowAllHooksExecutions mocks base method.
+func (m *MockInterface) WorkflowAllHooksExecutions() ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowAllHooksExecutions")
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowAllHooksExecutions indicates an expected call of WorkflowAllHooksExecutions.
+func (mr *MockInterfaceMockRecorder) WorkflowAllHooksExecutions() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowAllHooksExecutions", reflect.TypeOf((*MockInterface)(nil).WorkflowAllHooksExecutions))
 }
 
 // WorkflowAllHooksList mocks base method.
