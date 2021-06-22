@@ -11,7 +11,7 @@ import { ProjectState } from 'app/store/project.state';
 import { WorkflowState } from 'app/store/workflow.state';
 import * as moment from 'moment';
 import { from, interval, Subject, Subscription } from 'rxjs';
-import { delay, mergeMap, retryWhen } from 'rxjs/operators';
+import { delay, concatMap, retryWhen } from 'rxjs/operators';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 import { WorkflowRunJobVariableComponent } from '../variables/job.variables.component';
 
@@ -104,13 +104,13 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
     ) {
         this.subjectChannel = new Subject<WorkflowNodeJobRun>();
         this.subscriptionChannel = this.subjectChannel.pipe(
-            mergeMap(data => from(this.onNodeJobRunChange(data)))
+            concatMap(data => from(this.onNodeJobRunChange(data)))
         ).subscribe();
     }
 
     ngOnInit(): void {
         this.pollingSpawnInfoSubscription = interval(2000)
-            .pipe(mergeMap(_ => from(this.loadSpawnInfo())))
+            .pipe(concatMap(_ => from(this.loadSpawnInfo())))
             .subscribe();
     }
 
