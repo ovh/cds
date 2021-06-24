@@ -2,7 +2,7 @@
 <html id="docs" lang="en" class="">
 	<head>
 	<meta charset="utf-8">
-<title>Release - CDS - Continuous Delivery Service</title>
+<title>ReleaseVCS - CDS - Continuous Delivery Service</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="shortcut icon" type="image/png" href="../../../images/favicon.png">
 
@@ -17,20 +17,20 @@
 <link rel="stylesheet" href="../../../css/solarized-light.css">
 
 <meta name="description"
-    content="Release is a builtin action, you can&rsquo;t modify it.
+    content="ReleaseVCS is a builtin action, you can&rsquo;t modify it.
 This action creates a release on the git repository linked to the application, if repository manager implements it.
 Parameters  artifacts: (optional) Set a list of artifacts, separate by &lsquo;,&rsquo;. You can also use regexp. releaseNote: (optional) Set a release note for the release. tag: Tag attached to the release. title: Set a title for the release.  Requirements No Requirement">
 <meta property="og:description"
-    content="Release is a builtin action, you can&rsquo;t modify it.
+    content="ReleaseVCS is a builtin action, you can&rsquo;t modify it.
 This action creates a release on the git repository linked to the application, if repository manager implements it.
 Parameters  artifacts: (optional) Set a list of artifacts, separate by &lsquo;,&rsquo;. You can also use regexp. releaseNote: (optional) Set a release note for the release. tag: Tag attached to the release. title: Set a title for the release.  Requirements No Requirement">
 <meta name="twitter:description"
-    content="Release is a builtin action, you can&rsquo;t modify it.
+    content="ReleaseVCS is a builtin action, you can&rsquo;t modify it.
 This action creates a release on the git repository linked to the application, if repository manager implements it.
 Parameters  artifacts: (optional) Set a list of artifacts, separate by &lsquo;,&rsquo;. You can also use regexp. releaseNote: (optional) Set a release note for the release. tag: Tag attached to the release. title: Set a title for the release.  Requirements No Requirement">
-<meta property="og:url" content="/docs/actions/builtin-release/">
-<meta property="og:title" content="Release">
-<meta name="twitter:title" content="Release">
+<meta property="og:url" content="/docs/actions/builtin-releasevcs/">
+<meta property="og:title" content="ReleaseVCS">
+<meta name="twitter:title" content="ReleaseVCS">
 <meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
 <meta property="og:image" content="/images/cds-transparent.png">
 <script type="text/javascript" src="../../../js/anchor-4.1.1.min.js"></script>
@@ -373,7 +373,7 @@ Parameters  artifacts: (optional) Set a list of artifacts, separate by &lsquo;,&
 	
 		
 			
-<a class="item" data-title="Release" href="../../../docs/actions/builtin-release/"></a>
+<a class="item" data-title="ReleaseVCS" href="../../../docs/actions/builtin-releasevcs/"></a>
 
 		
 	
@@ -401,7 +401,7 @@ Parameters  artifacts: (optional) Set a list of artifacts, separate by &lsquo;,&
 			<div id="docsContent">
         		
 
-<h1>Release</h1>
+<h1>ReleaseVCS</h1>
 
 
 
@@ -414,7 +414,7 @@ Parameters  artifacts: (optional) Set a list of artifacts, separate by &lsquo;,&
   </ul>
 </nav>
 
-<p><strong>Release</strong> is a builtin action, you can&rsquo;t modify it.</p>
+<p><strong>ReleaseVCS</strong> is a builtin action, you can&rsquo;t modify it.</p>
 <p>This action creates a release on the git repository linked to the application, if repository manager implements it.</p>
 <h2 id="parameters">Parameters</h2>
 <ul>
@@ -426,7 +426,7 @@ Parameters  artifacts: (optional) Set a list of artifacts, separate by &lsquo;,&
 <h2 id="requirements">Requirements</h2>
 <p>No Requirement</p>
 <h2 id="yaml-example">YAML example</h2>
-<p>Example of a pipeline using Release action:</p>
+<p>Example of a pipeline using ReleaseVCS action:</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yml" data-lang="yml"><span style="color:#f92672">version</span>: <span style="color:#ae81ff">v1.0</span>
 <span style="color:#f92672">name</span>: <span style="color:#ae81ff">Pipeline1</span>
 <span style="color:#f92672">parameters</span>:
@@ -449,7 +449,7 @@ Parameters  artifacts: (optional) Set a list of artifacts, separate by &lsquo;,&
     - <span style="color:#e6db74">&#39;#!/bin/sh&#39;</span>
     - <span style="color:#ae81ff">TAG=`git describe --abbrev=0 --tags`</span>
     - <span style="color:#ae81ff">worker export tag $TAG</span>
-  - <span style="color:#f92672">release</span>:
+  - <span style="color:#f92672">releaseVCS</span>:
       <span style="color:#f92672">artifacts</span>: <span style="color:#e6db74">&#39;{{.cds.workspace}}/myFile&#39;</span>
       <span style="color:#f92672">releaseNote</span>: <span style="color:#ae81ff">My release {{.cds.build.tag}}</span>
       <span style="color:#f92672">tag</span>: <span style="color:#e6db74">&#39;{{.cds.build.tag}}&#39;</span>

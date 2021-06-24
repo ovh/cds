@@ -647,7 +647,7 @@ Each application in CDS can be linked to one repository on a repository manager.
 <span style="color:#f92672">vcs_connection_type</span>: <span style="color:#ae81ff">ssh</span>
 <span style="color:#f92672">vcs_ssh_key</span>: <span style="color:#ae81ff">proj-ssh-key</span>
 <span style="color:#f92672">vcs_pgp_key</span>: <span style="color:#ae81ff">proj-pgp-key</span>
-</code></pre></div><p>Now with this setup you will be able to use the actions <a href="../../../../docs/actions/builtin-checkoutapplication/">CheckoutApplication</a> and <a href="../../../../docs/actions/builtin-release/">Release</a> in your pipelines.</p>
+</code></pre></div><p>Now with this setup you will be able to use the actions <a href="../../../../docs/actions/builtin-checkoutapplication/">CheckoutApplication</a> and <a href="../../../../docs/actions/builtin-releasevcs/">Release</a> in your pipelines.</p>
 <h2 id="deployment">Deployment</h2>
 <p>In this section, you can define the setup to deploy your application on a platform. To be able to setup it, you must have at least one <a href="../../../../docs/integrations/">integration supporting deployment</a> properly configured on your CDS instance.</p>
 <p>The <code>deployments</code> section is the list of the settings you can use to deploy to several platforms. For instance, if you want to be able to be deploy the same application, from the same helm chart with subtle changes in variables, depending on the cluster, you can set the following configuration.</p>

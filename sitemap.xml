@@ -20,6 +20,8 @@
   </url><url>
     <loc>/hosting/upgrade/migrate_0.48/</loc>
   </url><url>
+    <loc>/hosting/upgrade/migrate_0.49/</loc>
+  </url><url>
     <loc>/docs/concepts/workflow/payload/</loc>
   </url><url>
     <loc>/docs/concepts/workflow/hooks/webhook/</loc>
@@ -198,6 +200,8 @@
   </url><url>
     <loc>/docs/components/cdsctl/workflow/label/add/</loc>
   </url><url>
+    <loc>/docs/components/worker/run-result/add/</loc>
+  </url><url>
     <loc>/development/rest/admin/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/admin/</loc>
@@ -217,6 +221,8 @@
     <loc>/docs/actions/builtin-artifact-download/</loc>
   </url><url>
     <loc>/docs/actions/builtin-artifact-upload/</loc>
+  </url><url>
+    <loc>/docs/components/worker/run-result/add/artifact-manager/</loc>
   </url><url>
     <loc>/docs/components/worker/artifacts/</loc>
   </url><url>
@@ -682,6 +688,8 @@
   </url><url>
     <loc>/docs/components/cdsctl/worker/model/</loc>
   </url><url>
+    <loc>/development/rest/mon/</loc>
+  </url><url>
     <loc>/docs/components/cdsctl/consumer/new/</loc>
   </url><url>
     <loc>/docs/components/engine/config/new/</loc>
@@ -756,7 +764,7 @@
   </url><url>
     <loc>/docs/components/engine/config/regen/</loc>
   </url><url>
-    <loc>/docs/actions/builtin-release/</loc>
+    <loc>/docs/actions/builtin-releasevcs/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/group/rename/</loc>
   </url><url>
@@ -780,11 +788,11 @@
   </url><url>
     <loc>/docs/components/cdsctl/admin/database/roll-encrypted-data/</loc>
   </url><url>
-    <loc>/docs/components/cdsctl/admin/database/roll-encrypteddata/</loc>
-  </url><url>
     <loc>/docs/components/cdsctl/admin/database/roll-signed-data/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/workflow/run/</loc>
+  </url><url>
+    <loc>/docs/components/worker/run-result/</loc>
   </url><url>
     <loc>/docs/actions/builtin-script/</loc>
   </url><url>

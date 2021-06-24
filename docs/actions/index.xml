@@ -195,7 +195,7 @@ version: v1.0 name: Pipeline1 stages: - Stage1 jobs: - job: Job1 stage: Stage1 s
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>/docs/actions/plugin-archive/</guid>
-      <description>This is a plugin to compress or uncompress an archive. Supported formats: .zip, .tar, .tar.gz, .tar.bz2, .tar.xz, .tar.lz4, .tar.sz, and .rar (extract-only)
+      <description>This is a plugin to compress or uncompress an archive. Supported formats: .zip, .tar, .tar.gz, .tar.bz2, .tar.xz, .tar.zst, .tar.lz4, .tar.sz, and .rar (extract-only)
 Parameters  action: &amp;ldquo;compress&amp;rdquo; or &amp;ldquo;uncompress&amp;rdquo; an archive destination: The destination path source: The source path  </description>
     </item>
     
@@ -294,12 +294,12 @@ Parameters  exclude: Exclude some files, one file per line loglevel: Log Level: 
     </item>
     
     <item>
-      <title>Release</title>
-      <link>/docs/actions/builtin-release/</link>
+      <title>ReleaseVCS</title>
+      <link>/docs/actions/builtin-releasevcs/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>/docs/actions/builtin-release/</guid>
-      <description>Release is a builtin action, you can&amp;rsquo;t modify it.
+      <guid>/docs/actions/builtin-releasevcs/</guid>
+      <description>ReleaseVCS is a builtin action, you can&amp;rsquo;t modify it.
 This action creates a release on the git repository linked to the application, if repository manager implements it.
 Parameters  artifacts: (optional) Set a list of artifacts, separate by &amp;lsquo;,&amp;rsquo;. You can also use regexp. releaseNote: (optional) Set a release note for the release. tag: Tag attached to the release. title: Set a title for the release.  Requirements No Requirement</description>
     </item>

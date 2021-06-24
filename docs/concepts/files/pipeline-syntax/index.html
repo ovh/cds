@@ -18,13 +18,13 @@
 
 <meta name="description"
     content="A CDS workflow file only contains the description of pipelines orchestration, hooks, run conditions, etc. Consider the following Pipeline which implements a basic two-stage continuous delivery pipeline:
-version: v1.0 name: build stages: - Compile - Package jobs: - job: Build UI stage: Compile steps: - gitClone: branch: &#39;{{.git.branch}}&#39; commit: &#39;{{.git.hash}}&#39; directory: cds url: &#39;{{.git.url}}&#39; - script: - cd cds/ui - npm set registry https://registry.npmjs.org - npm install - ng build -prod --aot - tar cfz ui.">
+version: v1.0 name: build parameters: param_name: type: string default: default_value stages: - Compile - Package jobs: - job: Build UI stage: Compile steps: - gitClone: branch: &#39;{{.git.branch}}&#39; commit: &#39;{{.git.hash}}&#39; directory: cds url: &#39;{{.git.url}}&#39; - script: - echo {{.cds.pip.param_name}}  - cd cds/ui - npm set registry https://registry.">
 <meta property="og:description"
     content="A CDS workflow file only contains the description of pipelines orchestration, hooks, run conditions, etc. Consider the following Pipeline which implements a basic two-stage continuous delivery pipeline:
-version: v1.0 name: build stages: - Compile - Package jobs: - job: Build UI stage: Compile steps: - gitClone: branch: &#39;{{.git.branch}}&#39; commit: &#39;{{.git.hash}}&#39; directory: cds url: &#39;{{.git.url}}&#39; - script: - cd cds/ui - npm set registry https://registry.npmjs.org - npm install - ng build -prod --aot - tar cfz ui.">
+version: v1.0 name: build parameters: param_name: type: string default: default_value stages: - Compile - Package jobs: - job: Build UI stage: Compile steps: - gitClone: branch: &#39;{{.git.branch}}&#39; commit: &#39;{{.git.hash}}&#39; directory: cds url: &#39;{{.git.url}}&#39; - script: - echo {{.cds.pip.param_name}}  - cd cds/ui - npm set registry https://registry.">
 <meta name="twitter:description"
     content="A CDS workflow file only contains the description of pipelines orchestration, hooks, run conditions, etc. Consider the following Pipeline which implements a basic two-stage continuous delivery pipeline:
-version: v1.0 name: build stages: - Compile - Package jobs: - job: Build UI stage: Compile steps: - gitClone: branch: &#39;{{.git.branch}}&#39; commit: &#39;{{.git.hash}}&#39; directory: cds url: &#39;{{.git.url}}&#39; - script: - cd cds/ui - npm set registry https://registry.npmjs.org - npm install - ng build -prod --aot - tar cfz ui.">
+version: v1.0 name: build parameters: param_name: type: string default: default_value stages: - Compile - Package jobs: - job: Build UI stage: Compile steps: - gitClone: branch: &#39;{{.git.branch}}&#39; commit: &#39;{{.git.hash}}&#39; directory: cds url: &#39;{{.git.url}}&#39; - script: - echo {{.cds.pip.param_name}}  - cd cds/ui - npm set registry https://registry.">
 <meta property="og:url" content="/docs/concepts/files/pipeline-syntax/">
 <meta property="og:title" content="Pipeline configuration file">
 <meta name="twitter:title" content="Pipeline configuration file">
@@ -532,6 +532,12 @@ version: v1.0 name: build stages: - Compile - Package jobs: - job: Build UI stag
 Consider the following Pipeline which implements a basic two-stage continuous delivery pipeline:</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#f92672">version</span>: <span style="color:#ae81ff">v1.0</span>
 <span style="color:#f92672">name</span>: <span style="color:#ae81ff">build</span>
+
+<span style="color:#f92672">parameters</span>:
+  <span style="color:#f92672">param_name</span>:
+    <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
+    <span style="color:#f92672">default</span>: <span style="color:#ae81ff">default_value</span>
+    
 <span style="color:#f92672">stages</span>:
 - <span style="color:#ae81ff">Compile</span>
 - <span style="color:#ae81ff">Package</span>
@@ -547,6 +553,7 @@ Consider the following Pipeline which implements a basic two-stage continuous de
       <span style="color:#f92672">directory</span>: <span style="color:#ae81ff">cds</span>
       <span style="color:#f92672">url</span>: <span style="color:#e6db74">&#39;{{.git.url}}&#39;</span>
   - <span style="color:#f92672">script</span>:
+    - <span style="color:#ae81ff">echo {{.cds.pip.param_name}}  </span>
     - <span style="color:#ae81ff">cd cds/ui</span>
     - <span style="color:#ae81ff">npm set registry https://registry.npmjs.org</span>
     - <span style="color:#ae81ff">npm install</span>

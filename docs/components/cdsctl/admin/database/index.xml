@@ -62,17 +62,6 @@ cdsctl admin database roll-encrypted-data SERVICE ENTITY ... Options inherited f
     </item>
     
     <item>
-      <title>roll-encrypteddata</title>
-      <link>/docs/components/cdsctl/admin/database/roll-encrypteddata/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>/docs/components/cdsctl/admin/database/roll-encrypteddata/</guid>
-      <description>cdsctl admin database roll-encrypteddata Roll a encrypted data in database
-Synopsis Roll a encrypted data in database
-cdsctl admin database roll-encrypteddata ENTITY ... Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -n, --no-interactive Set to disable interaction with ctl --verbose Enable verbose output SEE ALSO  cdsctl admin database	- Manage CDS Database  </description>
-    </item>
-    
-    <item>
       <title>roll-signed-data</title>
       <link>/docs/components/cdsctl/admin/database/roll-signed-data/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
