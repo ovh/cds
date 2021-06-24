@@ -312,26 +312,9 @@ func workflowLogDownloadRun(v cli.Values) error {
 			}
 		}
 
-		var data []byte
-		if link != nil {
-			data, err = client.WorkflowLogDownload(context.Background(), *link)
-			if err != nil {
-				return err
-			}
-		} else {
-			if log.detailType == workflowLogDetailTypeService {
-				serviceLog, err := client.WorkflowNodeRunJobServiceLog(context.Background(), projectKey, workflowName, log.runID, log.jobID, log.serviceName)
-				if err != nil {
-					return err
-				}
-				data = []byte(serviceLog.Val)
-			} else {
-				buildState, err := client.WorkflowNodeRunJobStepLog(context.Background(), projectKey, workflowName, log.runID, log.jobID, log.stepOrder)
-				if err != nil {
-					return err
-				}
-				data = []byte(buildState.StepLogs.Val)
-			}
+		data, err := client.WorkflowLogDownload(context.Background(), *link)
+		if err != nil {
+			return err
 		}
 
 		if err := ioutil.WriteFile(log.getFilename(), data, 0644); err != nil {

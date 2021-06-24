@@ -51,12 +51,6 @@ func TestSyncBuffer(t *testing.T) {
 			},
 		},
 		Storages: map[string]storage.StorageConfiguration{
-			"test-cds-backend.TestSyncBuffer": {
-				CDS: &storage.CDSStorageConfiguration{
-					Host:  "http://lolcat.host:8081",
-					Token: "mytoken",
-				},
-			},
 			"test-local.TestSyncBuffer": {
 				Local: &storage.LocalStorageConfiguration{
 					Path: tmpDir,
@@ -67,7 +61,7 @@ func TestSyncBuffer(t *testing.T) {
 	require.NoError(t, err)
 	s.Units = cdnUnits
 
-	cache.Set("cdn:buffer:my-item", "foo")
+	_ = cache.Set("cdn:buffer:my-item", "foo")
 
 	s.Units.SyncBuffer(context.Background())
 

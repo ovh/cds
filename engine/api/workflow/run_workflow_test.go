@@ -628,10 +628,6 @@ queueRun:
 			t.Fatal(err)
 		}
 
-		//TestAddLog
-		require.NoError(t, workflow.AppendLog(db, j.ID, j.WorkflowNodeRunID, 1, "This is a log", workflow.DefaultMaxLogSize))
-		require.NoError(t, workflow.AppendLog(db, j.ID, j.WorkflowNodeRunID, 1, "This is another log", workflow.DefaultMaxLogSize))
-
 		j, err = workflow.LoadNodeJobRun(context.TODO(), db, cache, j.ID)
 		require.NoError(t, err)
 		assert.Equal(t, "hatchery_name", j.HatcheryName)
@@ -665,10 +661,6 @@ queueRun:
 		if !jobRunFound {
 			t.Fatalf("unable to retrieve job run in the workflow run")
 		}
-
-		logs, err := workflow.LoadLogs(db, takenJob.ID)
-		require.NoError(t, err)
-		require.NotEmpty(t, logs)
 
 		// check if there is another job to run
 		if takenJob.Job.Action.Name == "job10" {

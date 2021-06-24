@@ -72,12 +72,6 @@ func TestCleanSynchronizedItem(t *testing.T) {
 					},
 				},
 			},
-			"cds-backend": {
-				CDS: &storage.CDSStorageConfiguration{
-					Host:  "lolcat.host",
-					Token: "mytoken",
-				},
-			},
 		},
 	})
 	require.NoError(t, err)
@@ -239,13 +233,6 @@ func TestCleanSynchronizedItemWithDisabledStorage(t *testing.T) {
 							SecretValue: "secret_value",
 						},
 					},
-				},
-			},
-			"cds-backend": {
-				DisableSync: true,
-				CDS: &storage.CDSStorageConfiguration{
-					Host:  "lolcat.host",
-					Token: "mytoken",
 				},
 			},
 		},

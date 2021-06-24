@@ -16,53 +16,6 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func Test_getWorkflowNodeRunJobStepLogHandler(t *testing.T) {
-	api, db, router := newTestAPI(t)
-
-	u, pass, proj, w1, lastRun, jobRun := initGetWorkflowNodeRunJobTest(t, api, db)
-
-	uri := router.GetRoute("GET", api.getWorkflowNodeRunJobStepLogHandler, map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": w1.Name,
-		"nodeRunID":        fmt.Sprintf("%d", lastRun.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0].ID),
-		"runJobID":         fmt.Sprintf("%d", jobRun.ID),
-		"stepOrder":        "0",
-	})
-	require.NotEmpty(t, uri)
-	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
-	rec := httptest.NewRecorder()
-	router.Mux.ServeHTTP(rec, req)
-
-	var stepState sdk.BuildState
-	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &stepState))
-	require.Equal(t, 200, rec.Code)
-	require.Equal(t, "123456789012345... truncated\n", stepState.StepLogs.Val)
-	require.Equal(t, sdk.StatusBuilding, stepState.Status)
-}
-
-func Test_getWorkflowNodeRunJobServiceLogHandler(t *testing.T) {
-	api, db, router := newTestAPI(t)
-
-	u, pass, proj, w1, lastRun, jobRun := initGetWorkflowNodeRunJobTest(t, api, db)
-
-	uri := router.GetRoute("GET", api.getWorkflowNodeRunJobServiceLogHandler, map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": w1.Name,
-		"nodeRunID":        fmt.Sprintf("%d", lastRun.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0].ID),
-		"runJobID":         fmt.Sprintf("%d", jobRun.ID),
-		"serviceName":      "postgres",
-	})
-	require.NotEmpty(t, uri)
-	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
-	rec := httptest.NewRecorder()
-	router.Mux.ServeHTTP(rec, req)
-
-	var log sdk.ServiceLog
-	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &log))
-	require.Equal(t, 200, rec.Code)
-	require.Equal(t, "098765432109876... truncated\n", log.Val)
-}
-
 func Test_getWorkflowNodeRunJobLinkHandler(t *testing.T) {
 	featureflipping.Init(gorpmapping.Mapper)
 
