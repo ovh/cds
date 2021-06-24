@@ -8,7 +8,6 @@ description: |
 parameters:
   name: 
     type: string
-    default: "{{.cds.project}-{{.cds.workflow}}"
     description: Release Bundle name
   version:
     type: string
