@@ -57,6 +57,8 @@ func unmarshalSpecFile(content []byte) (s *spec.SpecFiles, err error) {
 }
 
 func (actPlugin *artifactoryReleaseBundleCreatePlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
+	log.SetLogger(log.NewLogger(log.INFO, os.Stdout))
+
 	name := q.GetOptions()["name"]
 	version := q.GetOptions()["version"]
 	description := q.GetOptions()["description"]
