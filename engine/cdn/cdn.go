@@ -14,7 +14,6 @@ import (
 	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/lru"
 	"github.com/ovh/cds/engine/cdn/storage"
-	"github.com/ovh/cds/engine/cdn/storage/cds"
 	_ "github.com/ovh/cds/engine/cdn/storage/local"
 	_ "github.com/ovh/cds/engine/cdn/storage/nfs"
 	_ "github.com/ovh/cds/engine/cdn/storage/redis"
@@ -173,19 +172,6 @@ func (s *Service) Start(ctx context.Context) error {
 	s.GoRoutines.Run(ctx, "service.cdn-purge-items", func(ctx context.Context) {
 		s.itemPurge(ctx)
 	})
-
-	// Start CDS Backend migration
-	for _, st := range s.Units.Storages {
-		cdsStorage, ok := st.(*cds.CDS)
-		if !ok {
-			continue
-		}
-		s.GoRoutines.Exec(ctx, "cdn-cds-backend-migration", func(ctx context.Context) {
-			if err := s.listenCDSSync(ctx, cdsStorage); err != nil {
-				log.Error(ctx, "unable to listen pubsub for cds sync: %v", err)
-			}
-		})
-	}
 
 	s.GoRoutines.Run(ctx, "service.log-cache-eviction", func(ctx context.Context) {
 		s.LogCache.Evict(ctx)

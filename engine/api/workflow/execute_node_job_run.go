@@ -1,7 +1,6 @@
 package workflow
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"sync"
@@ -393,63 +392,6 @@ func FreeNodeJobRun(ctx context.Context, store cache.Store, id int64) error {
 	return sdk.WrapError(sdk.ErrJobNotBooked, "BookNodeJobRun> job %d already released", id)
 }
 
-func AppendLog(db gorp.SqlExecutor, jobID, nodeRunID, stepOrder int64, val string, maxLogSize int64) error {
-	// check if log exists without loading data but with log size
-	exists, size, err := ExistsStepLog(db, jobID, stepOrder)
-	if err != nil {
-		return sdk.WrapError(err, "cannot check if log exists")
-	}
-
-	logs := &sdk.Log{
-		JobID:     jobID,
-		NodeRunID: nodeRunID,
-		StepOrder: stepOrder,
-		Val:       val,
-	}
-
-	// ignore the log if max size already reached
-	if maxReached := truncateLogs(maxLogSize, size, logs); maxReached {
-		log.Debug(context.TODO(), "truncated logs")
-		return nil
-	}
-
-	if !exists {
-		return sdk.WrapError(insertLog(db, logs), "cannot insert log")
-	}
-
-	return sdk.WrapError(updateLog(db, logs), "cannot update log")
-}
-
-//AddServiceLog adds a service log
-func AddServiceLog(db gorp.SqlExecutor, logs *sdk.ServiceLog, maxLogSize int64) error {
-	// check if log exists without loading data but with log size
-	exists, size, err := ExistsServiceLog(db, logs.WorkflowNodeJobRunID, logs.ServiceRequirementName)
-	if err != nil {
-		return sdk.WrapError(err, "cannot check if log exists")
-	}
-
-	// ignore the log if max size already reached
-	if maxReached := truncateServiceLogs(maxLogSize, size, logs); maxReached {
-		return nil
-	}
-
-	if !exists {
-		return sdk.WrapError(insertServiceLog(db, logs), "Cannot insert log")
-	}
-
-	existingLogs, err := LoadServiceLog(db, logs.WorkflowNodeJobRunID, logs.ServiceRequirementName)
-	if err != nil {
-		return sdk.WrapError(err, "cannot load existing logs")
-	}
-
-	logbuf := bytes.NewBufferString(existingLogs.Val)
-	logbuf.WriteString(logs.Val)
-	existingLogs.Val = logbuf.String()
-	existingLogs.LastModified = logs.LastModified
-
-	return sdk.WrapError(updateServiceLog(db, existingLogs), "Cannot update log")
-}
-
 // RestartWorkflowNodeJob restart all workflow node job and update logs to indicate restart
 func RestartWorkflowNodeJob(ctx context.Context, db gorp.SqlExecutor, wNodeJob sdk.WorkflowNodeJobRun, maxLogSize int64) error {
 	var end func()
@@ -464,13 +406,6 @@ func RestartWorkflowNodeJob(ctx context.Context, db gorp.SqlExecutor, wNodeJob s
 		wNodeJob.Job.Reason = "Killed (Reason: Timeout)\n"
 		step.Status = sdk.StatusWaiting
 		step.Done = time.Time{}
-		if err := AppendLog(
-			db, wNodeJob.ID, wNodeJob.WorkflowNodeRunID, int64(step.StepOrder),
-			"\n\n\n-=-=-=-=-=- Worker timeout: job replaced in queue -=-=-=-=-=-\n\n\n",
-			maxLogSize,
-		); err != nil {
-			return err
-		}
 	}
 
 	nodeRun, err := LoadAndLockNodeRunByID(ctx, db, wNodeJob.WorkflowNodeRunID)

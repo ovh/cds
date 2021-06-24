@@ -78,7 +78,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 	// We should have at least one storage backend that is not of type cds to store logs and artifacts
 	activeStorage := 0
 	for _, s := range config.Storages {
-		if !s.DisableSync && s.CDS == nil {
+		if !s.DisableSync {
 			activeStorage++
 		}
 	}
@@ -182,22 +182,6 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 	for name, cfg := range config.Storages {
 		var storageUnit StorageUnit
 		switch {
-		case cfg.CDS != nil:
-			log.Info(ctx, "Initializing cds backend...")
-			d := GetDriver("cds")
-			if d == nil {
-				return nil, sdk.WithStack(fmt.Errorf("cds driver is not available"))
-			}
-			sd, is := d.(StorageUnit)
-			if !is {
-				return nil, sdk.WithStack(fmt.Errorf("cds driver is not a storage unit driver"))
-			}
-			sd.New(gorts, AbstractUnitConfig{syncBandwidth: float64(cfg.SyncBandwidth) * 1024 * 1024, syncParrallel: cfg.SyncParallel, disableSync: cfg.DisableSync}) // convert from MBytes to Bytes
-
-			if err := sd.Init(ctx, cfg.CDS); err != nil {
-				return nil, err
-			}
-			storageUnit = sd
 		case cfg.Local != nil:
 			log.Info(ctx, "Initializing local backend...")
 			d := GetDriver("local")

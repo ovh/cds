@@ -578,63 +578,6 @@ func (api *API) postJobResult(ctx context.Context, proj *sdk.Project, wr *sdk.Wo
 	return report, nil
 }
 
-func (api *API) postWorkflowJobLogsHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		id, err := requestVarInt(r, "jobID")
-		if err != nil {
-			return sdk.WrapError(err, "invalid id")
-		}
-
-		if !isCDN(ctx) {
-			return sdk.WithStack(sdk.ErrForbidden)
-		}
-
-		var logs sdk.Log
-		if err := service.UnmarshalBody(r, &logs); err != nil {
-			return err
-		}
-
-		if id != logs.JobID {
-			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid job id")
-		}
-
-		if err := workflow.AppendLog(api.mustDB(), logs.JobID, logs.NodeRunID, logs.StepOrder, logs.Val, api.Config.Log.StepMaxSize); err != nil {
-			return err
-		}
-		return nil
-	}
-}
-
-func (api *API) postWorkflowJobServiceLogsHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if !isCDN(ctx) {
-			return sdk.WithStack(sdk.ErrForbidden)
-		}
-
-		var logs []sdk.ServiceLog
-		if err := service.UnmarshalBody(r, &logs); err != nil {
-			return err
-		}
-		db := api.mustDB()
-
-		globalErr := &sdk.MultiError{}
-		errorOccured := false
-		for _, servLog := range logs {
-			if err := workflow.AddServiceLog(db, &servLog, api.Config.Log.ServiceMaxSize); err != nil {
-				errorOccured = true
-				globalErr.Append(fmt.Errorf("postWorkflowJobServiceLogsHandler> %v", err))
-			}
-		}
-
-		if errorOccured {
-			log.Error(ctx, globalErr.Error())
-			return globalErr
-		}
-
-		return nil
-	}
-}
-
 func (api *API) getWorkerCacheLinkHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
