@@ -1,0 +1,61 @@
+name: plugin-artifactory-release-bundle-create
+type: action
+author: "François Samin <francois.samin@corp.ovh.com>"
+description: |
+ Creates and sign a Artifactory Release Bundle from a specification.
+
+ Read more: https://www.jfrog.com/confluence/display/CLI/CLI+for+JFrog+Artifactory#CLIforJFrogArtifactory-UsingFileSpecs
+parameters:
+  name: 
+    type: string
+    default: "{{.cds.project}-{{.cds.workflow}}"
+    description: Release Bundle name
+  version:
+    type: string
+    default: "{{.cds.version}}"
+    description: Release Bundle version
+  description:
+    type: string
+    description: Release Bundle description
+  release_notes:
+    type: text
+    description: Release Notes (markdown format)
+  specification:
+    type: text
+    default: |
+      {
+          "files": [
+              {
+                  "pattern" or "aql": "[Mandatory]",
+                  "target": "[Mandatory]",
+                  "props": "[Optional]",
+                  "excludeProps": "[Optional]",
+                  "recursive": "[Optional, Default: 'true']",
+                  "flat" : "[Optional, Default: 'false']",
+                  "exclusions": ["[Optional, Applicable only when 'pattern' is specified]"],
+                  "archiveEntries": "[Optional]",
+                  "build": "[Optional]",
+                  "bundle": "[Optional]",
+                  "validateSymlinks": "[Optional]",
+                  "sortBy" : ["[Optional]"],
+                  "sortOrder": "[Optional, Default: 'asc']",
+                  "limit": [Optional],
+                  "offset": [Optional]
+              }
+          ]
+      }
+    description: Spec Schema (yaml or json)
+  variables:
+    type: text
+    description: variables dicionnary (yaml or json)
+  url:
+    type: string
+    description: JFrog Artifactory URL url
+    default: cds.integration.artifact_manager.url
+    advanced: true
+  token:
+    type: string
+    description: JFrog Distribution token
+    default: cds.integration.artifact_manager.release.token
+    advanced: true
+
