@@ -156,7 +156,6 @@ func workflowArtifactDownloadRun(v cli.Values) error {
 			fmt.Printf("File %s is excluded from download\n", artifactData.Name)
 			continue
 		}
-		var f *os.File
 		var toDownload bool
 		if _, err := os.Stat(artifactData.Name); os.IsNotExist(err) {
 			toDownload = true
@@ -164,17 +163,24 @@ func workflowArtifactDownloadRun(v cli.Values) error {
 
 			// file exists, check sha512
 			var errf error
-			f, errf = os.OpenFile(artifactData.Name, os.O_RDWR|os.O_CREATE, os.FileMode(artifactData.Perm))
+			f, errf := os.OpenFile(artifactData.Name, os.O_RDWR|os.O_CREATE, os.FileMode(artifactData.Perm))
 			if errf != nil {
+				_ = f.Close()
 				return errf
 			}
 			md5Sum, err := sdk.FileMd5sum(artifactData.Name)
 			if err != nil {
+				_ = f.Close()
 				return err
 			}
 
 			if md5Sum != artifactData.MD5 {
 				toDownload = true
+			} else {
+				fmt.Printf("File %s already downloaded, checksum OK\n", f.Name())
+			}
+			if err := f.Close(); err != nil {
+				return err
 			}
 		}
 
@@ -188,16 +194,11 @@ func workflowArtifactDownloadRun(v cli.Values) error {
 				_ = f.Close()
 				return err
 			}
+			fmt.Printf("File %s created, checksum OK\n", f.Name())
 			if err := f.Close(); err != nil {
 				return sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to close file %s: %v", artifactData.Name, err)
 			}
 		}
-		if toDownload {
-			fmt.Printf("File %s created, checksum OK\n", f.Name())
-		} else {
-			fmt.Printf("File %s already downloaded, checksum OK\n", f.Name())
-		}
-
 		ok = true
 	}
 
