@@ -51,10 +51,7 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
     currentNodeJobRun: WorkflowNodeJobRun;
     currentNodeRunStatus: string;
 
-    displayServiceLogs = false;
     durationIntervalID: number;
-
-    cdnEnabled: boolean;
 
     constructor(
         private _route: ActivatedRoute,
@@ -67,10 +64,6 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
-        const featCDN = this._store.selectSnapshot(FeatureState.featureProject(FeatureNames.CDNJobLogs,
-            JSON.stringify({ project_key: this.project.key })))
-        this.cdnEnabled = featCDN && (!featCDN?.exists || featCDN.enabled);
-
         this.nodeJobRunSubs = this.nodeJobRun$.subscribe(rj => {
             if (!rj && !this.currentJob) {
                 return;

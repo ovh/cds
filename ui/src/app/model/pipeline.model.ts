@@ -186,11 +186,6 @@ export class SpawnInfoMessage {
     id: string;
 }
 
-export class BuildResult {
-    status: string;
-    step_logs: Log;
-}
-
 export class CDNLogLink {
     item_type: string;
     api_ref: string;
@@ -230,28 +225,6 @@ export class CDNStreamFilter  {
     item_type: string;
     api_ref: string;
     offset: number;
-}
-
-export interface Log {
-    id: number;
-    workflow_node_run_id: number;
-    workflow_node_run_job_id: number;
-    stepOrder: number;
-    val: string;
-    start: LogDate;
-    lastModified: LogDate;
-    done: LogDate;
-}
-
-export interface ServiceLog {
-    id: number;
-    workflow_node_run_id: number;
-    workflow_node_run_job_id: number;
-    requirement_id: number;
-    requirement_service_name: number;
-    val: string;
-    start: LogDate;
-    last_modified: LogDate;
 }
 
 export class LogDate {
