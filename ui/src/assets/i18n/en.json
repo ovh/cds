@@ -19,6 +19,7 @@
   "auth_verify_success": "The account for user '{{username}}' was successfully verified.",
   "auth_consumer_details_parent": "Parent consumer",
   "auth_consumer_details_children": "Children consumers",
+  "auth_consumer_regen": "Regen",
   "auth_consumer_regen_revoke": "Regen and revoke sessions",
   "account_btn_password": "Forgotten password",
   "account_btn_signup": "Sign up",
