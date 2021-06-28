@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Group, GroupMember } from 'app/model/group.model';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { IdName, Project } from 'app/model/project.model';
 
 @Injectable()
 export class GroupService {
@@ -45,5 +46,9 @@ export class GroupService {
 
     removeMember(name: string, member: GroupMember): Observable<Group> {
         return this._http.delete<Group>(`/group/${name}/user/${member.username}`);
+    }
+
+    getProjectsInGroup(name: string): Observable<Array<Project>> {
+        return this._http.get<Array<Project>>(`/group/${name}/project`)
     }
 }

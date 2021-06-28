@@ -149,6 +149,13 @@ func (m *Mapper) Delete(db gorp.SqlExecutor, i interface{}) error {
 	}
 
 	_, err := db.Delete(i)
+	if e, ok := err.(*pq.Error); ok {
+		switch e.Code {
+		case ViolateForeignKeyPGCode:
+			err = sdk.NewError(sdk.ErrForbidden, e)
+		}
+	}
+
 	return sdk.WithStack(err)
 }
 
