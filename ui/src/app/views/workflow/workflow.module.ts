@@ -6,9 +6,6 @@ import { WorkflowGraphComponent } from './graph/workflow.graph.component';
 import { WorkflowRunArtifactListComponent } from './run/node/artifact/artifact.list.component';
 import { WorkflowNodeRunHistoryComponent } from './run/node/history/history.component';
 import { WorkflowRunNodePipelineComponent } from './run/node/pipeline/node.pipeline.component';
-import { WorkflowServiceLogComponent } from './run/node/pipeline/service/service.log.component';
-import { WorkflowRunJobSpawnInfoComponent } from './run/node/pipeline/spawninfo/spawninfo.component';
-import { WorkflowStepLogComponent } from './run/node/pipeline/step/step.log.component';
 import { WorkflowRunJobVariableComponent } from './run/node/pipeline/variables/job.variables.component';
 import { WorkflowRunJobComponent } from './run/node/pipeline/workflow-run-job/workflow-run-job.component';
 import { WorkflowNodeRunSummaryComponent } from './run/node/summary/run.summary.component';
@@ -39,16 +36,13 @@ import { workflowRouting } from './workflow.routing';
         WorkflowNotificationListComponent,
         WorkflowRunArtifactListComponent,
         WorkflowRunComponent,
-        WorkflowRunJobSpawnInfoComponent,
         WorkflowRunJobVariableComponent,
         WorkflowRunNodePipelineComponent,
         WorkflowRunSummaryComponent,
         WorkflowRunTestsResultComponent,
         WorkflowRunTestTableComponent,
-        WorkflowServiceLogComponent,
         WorkflowShowComponent,
         WorkflowSidebarCodeComponent,
-        WorkflowStepLogComponent,
         WorkflowRunJobComponent
     ],
     imports: [

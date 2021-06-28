@@ -3155,20 +3155,6 @@ func (mr *MockQueueClientMockRecorder) QueueSendCoverage(ctx, id, report interfa
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueSendCoverage", reflect.TypeOf((*MockQueueClient)(nil).QueueSendCoverage), ctx, id, report)
 }
 
-// QueueSendLogs mocks base method.
-func (m *MockQueueClient) QueueSendLogs(ctx context.Context, id int64, log sdk.Log) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "QueueSendLogs", ctx, id, log)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// QueueSendLogs indicates an expected call of QueueSendLogs.
-func (mr *MockQueueClientMockRecorder) QueueSendLogs(ctx, id, log interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueSendLogs", reflect.TypeOf((*MockQueueClient)(nil).QueueSendLogs), ctx, id, log)
-}
-
 // QueueSendResult mocks base method.
 func (m *MockQueueClient) QueueSendResult(ctx context.Context, id int64, res sdk.Result) error {
 	m.ctrl.T.Helper()
@@ -3223,20 +3209,6 @@ func (m *MockQueueClient) QueueSendVulnerability(ctx context.Context, id int64, 
 func (mr *MockQueueClientMockRecorder) QueueSendVulnerability(ctx, id, report interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueSendVulnerability", reflect.TypeOf((*MockQueueClient)(nil).QueueSendVulnerability), ctx, id, report)
-}
-
-// QueueServiceLogs mocks base method.
-func (m *MockQueueClient) QueueServiceLogs(ctx context.Context, logs []sdk.ServiceLog) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "QueueServiceLogs", ctx, logs)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// QueueServiceLogs indicates an expected call of QueueServiceLogs.
-func (mr *MockQueueClientMockRecorder) QueueServiceLogs(ctx, logs interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueServiceLogs", reflect.TypeOf((*MockQueueClient)(nil).QueueServiceLogs), ctx, logs)
 }
 
 // QueueStaticFilesUpload mocks base method.
@@ -4162,21 +4134,6 @@ func (mr *MockWorkflowClientMockRecorder) WorkflowNodeRunJobServiceLink(ctx, pro
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowNodeRunJobServiceLink", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowNodeRunJobServiceLink), ctx, projectKey, workflowName, nodeRunID, job, serviceName)
 }
 
-// WorkflowNodeRunJobServiceLog mocks base method.
-func (m *MockWorkflowClient) WorkflowNodeRunJobServiceLog(ctx context.Context, projectKey, workflowName string, nodeRunID, job int64, serviceName string) (*sdk.ServiceLog, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WorkflowNodeRunJobServiceLog", ctx, projectKey, workflowName, nodeRunID, job, serviceName)
-	ret0, _ := ret[0].(*sdk.ServiceLog)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// WorkflowNodeRunJobServiceLog indicates an expected call of WorkflowNodeRunJobServiceLog.
-func (mr *MockWorkflowClientMockRecorder) WorkflowNodeRunJobServiceLog(ctx, projectKey, workflowName, nodeRunID, job, serviceName interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowNodeRunJobServiceLog", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowNodeRunJobServiceLog), ctx, projectKey, workflowName, nodeRunID, job, serviceName)
-}
-
 // WorkflowNodeRunJobStepLink mocks base method.
 func (m *MockWorkflowClient) WorkflowNodeRunJobStepLink(ctx context.Context, projectKey, workflowName string, nodeRunID, job, step int64) (*sdk.CDNLogLink, error) {
 	m.ctrl.T.Helper()
@@ -4205,21 +4162,6 @@ func (m *MockWorkflowClient) WorkflowNodeRunJobStepLinks(ctx context.Context, pr
 func (mr *MockWorkflowClientMockRecorder) WorkflowNodeRunJobStepLinks(ctx, projectKey, workflowName, nodeRunID, job interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowNodeRunJobStepLinks", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowNodeRunJobStepLinks), ctx, projectKey, workflowName, nodeRunID, job)
-}
-
-// WorkflowNodeRunJobStepLog mocks base method.
-func (m *MockWorkflowClient) WorkflowNodeRunJobStepLog(ctx context.Context, projectKey, workflowName string, nodeRunID, job, step int64) (*sdk.BuildState, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WorkflowNodeRunJobStepLog", ctx, projectKey, workflowName, nodeRunID, job, step)
-	ret0, _ := ret[0].(*sdk.BuildState)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// WorkflowNodeRunJobStepLog indicates an expected call of WorkflowNodeRunJobStepLog.
-func (mr *MockWorkflowClientMockRecorder) WorkflowNodeRunJobStepLog(ctx, projectKey, workflowName, nodeRunID, job, step interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowNodeRunJobStepLog", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowNodeRunJobStepLog), ctx, projectKey, workflowName, nodeRunID, job, step)
 }
 
 // WorkflowNodeRunRelease mocks base method.
@@ -4403,21 +4345,6 @@ func (mr *MockWorkflowClientMockRecorder) WorkflowRunSearch(projectKey, offset, 
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{projectKey, offset, limit}, filter...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowRunSearch", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowRunSearch), varargs...)
-}
-
-// WorkflowRunsAndNodesIDs mocks base method.
-func (m *MockWorkflowClient) WorkflowRunsAndNodesIDs(projectkey string) ([]sdk.WorkflowNodeRunIdentifiers, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WorkflowRunsAndNodesIDs", projectkey)
-	ret0, _ := ret[0].([]sdk.WorkflowNodeRunIdentifiers)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// WorkflowRunsAndNodesIDs indicates an expected call of WorkflowRunsAndNodesIDs.
-func (mr *MockWorkflowClientMockRecorder) WorkflowRunsAndNodesIDs(projectkey interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowRunsAndNodesIDs", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowRunsAndNodesIDs), projectkey)
 }
 
 // WorkflowRunsDeleteByBranch mocks base method.
@@ -7137,20 +7064,6 @@ func (mr *MockInterfaceMockRecorder) QueueSendCoverage(ctx, id, report interface
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueSendCoverage", reflect.TypeOf((*MockInterface)(nil).QueueSendCoverage), ctx, id, report)
 }
 
-// QueueSendLogs mocks base method.
-func (m *MockInterface) QueueSendLogs(ctx context.Context, id int64, log sdk.Log) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "QueueSendLogs", ctx, id, log)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// QueueSendLogs indicates an expected call of QueueSendLogs.
-func (mr *MockInterfaceMockRecorder) QueueSendLogs(ctx, id, log interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueSendLogs", reflect.TypeOf((*MockInterface)(nil).QueueSendLogs), ctx, id, log)
-}
-
 // QueueSendResult mocks base method.
 func (m *MockInterface) QueueSendResult(ctx context.Context, id int64, res sdk.Result) error {
 	m.ctrl.T.Helper()
@@ -7205,20 +7118,6 @@ func (m *MockInterface) QueueSendVulnerability(ctx context.Context, id int64, re
 func (mr *MockInterfaceMockRecorder) QueueSendVulnerability(ctx, id, report interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueSendVulnerability", reflect.TypeOf((*MockInterface)(nil).QueueSendVulnerability), ctx, id, report)
-}
-
-// QueueServiceLogs mocks base method.
-func (m *MockInterface) QueueServiceLogs(ctx context.Context, logs []sdk.ServiceLog) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "QueueServiceLogs", ctx, logs)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// QueueServiceLogs indicates an expected call of QueueServiceLogs.
-func (mr *MockInterfaceMockRecorder) QueueServiceLogs(ctx, logs interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueServiceLogs", reflect.TypeOf((*MockInterface)(nil).QueueServiceLogs), ctx, logs)
 }
 
 // QueueStaticFilesUpload mocks base method.
@@ -8483,21 +8382,6 @@ func (mr *MockInterfaceMockRecorder) WorkflowNodeRunJobServiceLink(ctx, projectK
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowNodeRunJobServiceLink", reflect.TypeOf((*MockInterface)(nil).WorkflowNodeRunJobServiceLink), ctx, projectKey, workflowName, nodeRunID, job, serviceName)
 }
 
-// WorkflowNodeRunJobServiceLog mocks base method.
-func (m *MockInterface) WorkflowNodeRunJobServiceLog(ctx context.Context, projectKey, workflowName string, nodeRunID, job int64, serviceName string) (*sdk.ServiceLog, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WorkflowNodeRunJobServiceLog", ctx, projectKey, workflowName, nodeRunID, job, serviceName)
-	ret0, _ := ret[0].(*sdk.ServiceLog)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// WorkflowNodeRunJobServiceLog indicates an expected call of WorkflowNodeRunJobServiceLog.
-func (mr *MockInterfaceMockRecorder) WorkflowNodeRunJobServiceLog(ctx, projectKey, workflowName, nodeRunID, job, serviceName interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowNodeRunJobServiceLog", reflect.TypeOf((*MockInterface)(nil).WorkflowNodeRunJobServiceLog), ctx, projectKey, workflowName, nodeRunID, job, serviceName)
-}
-
 // WorkflowNodeRunJobStepLink mocks base method.
 func (m *MockInterface) WorkflowNodeRunJobStepLink(ctx context.Context, projectKey, workflowName string, nodeRunID, job, step int64) (*sdk.CDNLogLink, error) {
 	m.ctrl.T.Helper()
@@ -8526,21 +8410,6 @@ func (m *MockInterface) WorkflowNodeRunJobStepLinks(ctx context.Context, project
 func (mr *MockInterfaceMockRecorder) WorkflowNodeRunJobStepLinks(ctx, projectKey, workflowName, nodeRunID, job interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowNodeRunJobStepLinks", reflect.TypeOf((*MockInterface)(nil).WorkflowNodeRunJobStepLinks), ctx, projectKey, workflowName, nodeRunID, job)
-}
-
-// WorkflowNodeRunJobStepLog mocks base method.
-func (m *MockInterface) WorkflowNodeRunJobStepLog(ctx context.Context, projectKey, workflowName string, nodeRunID, job, step int64) (*sdk.BuildState, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WorkflowNodeRunJobStepLog", ctx, projectKey, workflowName, nodeRunID, job, step)
-	ret0, _ := ret[0].(*sdk.BuildState)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// WorkflowNodeRunJobStepLog indicates an expected call of WorkflowNodeRunJobStepLog.
-func (mr *MockInterfaceMockRecorder) WorkflowNodeRunJobStepLog(ctx, projectKey, workflowName, nodeRunID, job, step interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowNodeRunJobStepLog", reflect.TypeOf((*MockInterface)(nil).WorkflowNodeRunJobStepLog), ctx, projectKey, workflowName, nodeRunID, job, step)
 }
 
 // WorkflowNodeRunRelease mocks base method.
@@ -8765,21 +8634,6 @@ func (mr *MockInterfaceMockRecorder) WorkflowRunSearch(projectKey, offset, limit
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{projectKey, offset, limit}, filter...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowRunSearch", reflect.TypeOf((*MockInterface)(nil).WorkflowRunSearch), varargs...)
-}
-
-// WorkflowRunsAndNodesIDs mocks base method.
-func (m *MockInterface) WorkflowRunsAndNodesIDs(projectkey string) ([]sdk.WorkflowNodeRunIdentifiers, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WorkflowRunsAndNodesIDs", projectkey)
-	ret0, _ := ret[0].([]sdk.WorkflowNodeRunIdentifiers)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// WorkflowRunsAndNodesIDs indicates an expected call of WorkflowRunsAndNodesIDs.
-func (mr *MockInterfaceMockRecorder) WorkflowRunsAndNodesIDs(projectkey interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowRunsAndNodesIDs", reflect.TypeOf((*MockInterface)(nil).WorkflowRunsAndNodesIDs), projectkey)
 }
 
 // WorkflowRunsDeleteByBranch mocks base method.
@@ -9215,20 +9069,6 @@ func (mr *MockWorkerInterfaceMockRecorder) QueueSendCoverage(ctx, id, report int
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueSendCoverage", reflect.TypeOf((*MockWorkerInterface)(nil).QueueSendCoverage), ctx, id, report)
 }
 
-// QueueSendLogs mocks base method.
-func (m *MockWorkerInterface) QueueSendLogs(ctx context.Context, id int64, log sdk.Log) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "QueueSendLogs", ctx, id, log)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// QueueSendLogs indicates an expected call of QueueSendLogs.
-func (mr *MockWorkerInterfaceMockRecorder) QueueSendLogs(ctx, id, log interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueSendLogs", reflect.TypeOf((*MockWorkerInterface)(nil).QueueSendLogs), ctx, id, log)
-}
-
 // QueueSendResult mocks base method.
 func (m *MockWorkerInterface) QueueSendResult(ctx context.Context, id int64, res sdk.Result) error {
 	m.ctrl.T.Helper()
@@ -9283,20 +9123,6 @@ func (m *MockWorkerInterface) QueueSendVulnerability(ctx context.Context, id int
 func (mr *MockWorkerInterfaceMockRecorder) QueueSendVulnerability(ctx, id, report interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueSendVulnerability", reflect.TypeOf((*MockWorkerInterface)(nil).QueueSendVulnerability), ctx, id, report)
-}
-
-// QueueServiceLogs mocks base method.
-func (m *MockWorkerInterface) QueueServiceLogs(ctx context.Context, logs []sdk.ServiceLog) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "QueueServiceLogs", ctx, logs)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// QueueServiceLogs indicates an expected call of QueueServiceLogs.
-func (mr *MockWorkerInterfaceMockRecorder) QueueServiceLogs(ctx, logs interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueServiceLogs", reflect.TypeOf((*MockWorkerInterface)(nil).QueueServiceLogs), ctx, logs)
 }
 
 // QueueStaticFilesUpload mocks base method.

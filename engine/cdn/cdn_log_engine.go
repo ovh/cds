@@ -16,7 +16,6 @@ import (
 
 var (
 	keyJobLogQueue = cache.Key("cdn", "log", "job")
-	keyJobLogLines = cache.Key("cdn", "log", "lines")
 	keyJobLogSize  = cache.Key("cdn", "log", "incoming", "size")
 
 	// Dequeue keys
@@ -126,20 +125,11 @@ func (s *Service) dequeueMessages(ctx context.Context, jobLogsQueueKey string, q
 					hms = append(hms, hm)
 				}
 
-				// Send TO CDS API
-				if err := s.sendToCDS(ctx, hms); err != nil {
-					err = sdk.WrapError(err, "unable to send log to API")
+				// Send TO CDN Buffer
+				if err := s.sendToBufferWithRetry(ctx, hms); err != nil {
+					err = sdk.WrapError(err, "unable to send log into buffer")
 					ctx = sdk.ContextWithStacktrace(ctx, err)
 					log.Error(ctx, err.Error())
-				}
-
-				// Send TO CDN Buffer
-				if s.cdnEnabled(ctx, hms[0].Signature.ProjectKey) {
-					if err := s.sendToBufferWithRetry(ctx, hms); err != nil {
-						err = sdk.WrapError(err, "unable to send log into buffer")
-						ctx = sdk.ContextWithStacktrace(ctx, err)
-						log.Error(ctx, err.Error())
-					}
 				}
 				nbMessages += len(msgs)
 				t1 = time.Now()

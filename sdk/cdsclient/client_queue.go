@@ -275,12 +275,6 @@ func (c *client) QueueSendUnitTests(ctx context.Context, id int64, report venom.
 	return err
 }
 
-func (c *client) QueueSendLogs(ctx context.Context, id int64, log sdk.Log) error {
-	path := fmt.Sprintf("/queue/workflows/%d/log", id)
-	_, err := c.PostJSON(ctx, path, log, nil)
-	return err
-}
-
 func (c *client) QueueSendVulnerability(ctx context.Context, id int64, report sdk.VulnerabilityWorkerReport) error {
 	path := fmt.Sprintf("/queue/workflows/%d/vulnerability", id)
 	_, err := c.PostJSON(ctx, path, report, nil)
@@ -531,14 +525,6 @@ func (c *client) QueueJobTag(ctx context.Context, jobID int64, tags []sdk.Workfl
 func (c *client) QueueJobSetVersion(ctx context.Context, jobID int64, version sdk.WorkflowRunVersion) error {
 	path := fmt.Sprintf("/queue/workflows/%d/version", jobID)
 	_, err := c.PostJSON(ctx, path, version, nil)
-	return err
-}
-
-func (c *client) QueueServiceLogs(ctx context.Context, logs []sdk.ServiceLog) error {
-	status, err := c.PostJSON(ctx, "/queue/workflows/log/service", logs, nil)
-	if status >= 400 {
-		return newAPIError(fmt.Errorf("Error: HTTP code %d", status))
-	}
 	return err
 }
 

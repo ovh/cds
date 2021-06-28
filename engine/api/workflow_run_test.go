@@ -2719,28 +2719,6 @@ func initGetWorkflowNodeRunJobTest(t *testing.T, api *API, db gorpmapper.SqlExec
 	// Update node job run
 	require.NoError(t, workflow.UpdateNodeRun(api.mustDB(), &lastRun.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0]))
 
-	// Add log
-	require.NoError(t, workflow.AppendLog(api.mustDB(), jobRun.ID, jobRun.WorkflowNodeRunID, 0, "1234567890", 15))
-
-	// Add truncated log
-	require.NoError(t, workflow.AppendLog(api.mustDB(), jobRun.ID, jobRun.WorkflowNodeRunID, 0, "1234567890", 15))
-
-	// Add service log
-	require.NoError(t, workflow.AddServiceLog(api.mustDB(), &sdk.ServiceLog{
-		WorkflowNodeRunID:      jobRun.WorkflowNodeRunID,
-		WorkflowNodeJobRunID:   jobRun.ID,
-		Val:                    "0987654321",
-		ServiceRequirementName: "postgres",
-	}, 15))
-
-	// Add truncated service log
-	require.NoError(t, workflow.AddServiceLog(api.mustDB(), &sdk.ServiceLog{
-		WorkflowNodeRunID:      jobRun.WorkflowNodeRunID,
-		WorkflowNodeJobRunID:   jobRun.ID,
-		Val:                    "0987654321",
-		ServiceRequirementName: "postgres",
-	}, 15))
-
 	return u, pass, proj, w1, lastRun, jobRun
 }
 

@@ -36,24 +36,6 @@ const (
 	defaultLimit = 10
 )
 
-func (api *API) getWorkflowsRunsAndNodesIDshandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
-
-		p, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithWorkflowNames)
-		if err != nil {
-			return err
-		}
-
-		ids, err := workflow.LoadNodeRunIDsWithLogs(api.mustDB(), p.WorkflowNames.IDs(), []string{sdk.StatusFail, sdk.StatusStopped, sdk.StatusSuccess})
-		if err != nil {
-			return err
-		}
-		return service.WriteJSON(w, ids, http.StatusOK)
-	}
-}
-
 func (api *API) searchWorkflowRun(_ context.Context, w http.ResponseWriter, r *http.Request, route, key, name string) error {
 	// About pagination: [FR] http://blog.octo.com/designer-une-api-rest/#pagination
 	var limit, offset int

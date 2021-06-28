@@ -4,7 +4,6 @@ import { FeatureEnabledResponse } from 'app/model/feature.model';
 import { Observable } from 'rxjs';
 
 export enum FeatureNames {
-    CDNJobLogs = 'cdn-job-logs',
     CDNArtifact = 'cdn-artifact',
     WorkflowRetentionPolicy = 'workflow-retention-policy',
     WorkflowRetentionMaxRuns = 'workflow-retention-maxruns'

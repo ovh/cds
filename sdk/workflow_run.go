@@ -127,14 +127,6 @@ func (a *WorkflowNodeTriggerRuns) Scan(src interface{}) error {
 	return WrapError(json.Unmarshal(source, a), "cannot unmarshal WorkflowNodeTriggerRuns")
 }
 
-type WorkflowNodeRunIdentifiers struct {
-	WorkflowRunID int64  `db:"id"`
-	WorkflowID    int64  `db:"workflow_id"`
-	WorkflowName  string `db:"name"`
-	RunNumber     int64  `db:"num"`
-	NodeRunID     int64  `db:"node_run_id"`
-}
-
 type WorkflowRunSecret struct {
 	ID            string `json:"-" db:"id"`
 	WorkflowRunID int64  `json:"-" db:"workflow_run_id"`

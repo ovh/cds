@@ -109,14 +109,6 @@ func (ss StepStatus) ToSummary() StepStatusSummary {
 	}
 }
 
-// BuildState define struct returned when looking for build state informations
-type BuildState struct {
-	Stages   []Stage `json:"stages,omitempty"`
-	Logs     []Log   `json:"logs,omitempty"`
-	StepLogs Log     `json:"step_logs,omitempty"`
-	Status   string  `json:"status,omitempty"`
-}
-
 // Action status in queue
 const (
 	StatusPending           = "Pending"

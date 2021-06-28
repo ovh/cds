@@ -2,13 +2,11 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Operation } from 'app/model/operation.model';
 import {
-    BuildResult,
     CDNLine,
     CDNLinesResponse,
     CDNLogLink,
     CDNLogLinks,
     CDNLogsLines,
-    ServiceLog,
     SpawnInfo
 } from 'app/model/pipeline.model';
 import { WorkflowRetentoinDryRunResponse } from 'app/model/purge.model';
@@ -66,10 +64,6 @@ export class WorkflowService {
         );
     }
 
-    getStepLog(projectKey: string, workflowName: string, nodeRunID: number, jobRunID: number, stepOrder: number): Observable<BuildResult> {
-        return this._http.get<BuildResult>(`/project/${projectKey}/workflows/${workflowName}/nodes/${nodeRunID}/job/${jobRunID}/step/${stepOrder}/log`);
-    }
-
     getStepLink(projectKey: string, workflowName: string, nodeRunID: number,
         jobRunID: number, stepOrder: number): Observable<CDNLogLink> {
         return this._http.get<CDNLogLink>(`/project/${projectKey}/workflows/${workflowName}/nodes/${nodeRunID}/job/${jobRunID}/step/${stepOrder}/link`);
@@ -107,11 +101,6 @@ export class WorkflowService {
 
     getLogDownload(link: CDNLogLink): Observable<string> {
         return this._http.get(`./cdscdn/item/${link.item_type}/${link.api_ref}/download`, { responseType: 'text' });
-    }
-
-    getServiceLog(projectKey: string, workflowName: string, nodeRunID: number,
-        jobRunID: number, serviceName: string): Observable<ServiceLog> {
-        return this._http.get<ServiceLog>(`/project/${projectKey}/workflows/${workflowName}/nodes/${nodeRunID}/job/${jobRunID}/service/${serviceName}/log`);
     }
 
     getServiceLink(projectKey: string, workflowName: string, nodeRunID: number,

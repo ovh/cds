@@ -107,16 +107,6 @@ export class WorkflowComponent implements OnInit, OnDestroy {
                     }
                 }));
             });
-            this._featureService.isEnabled(FeatureNames.CDNJobLogs, data).subscribe(f => {
-                this._store.dispatch(new AddFeatureResult(<FeaturePayload>{
-                    key: f.name,
-                    result: {
-                        paramString: JSON.stringify(data),
-                        enabled: f.enabled,
-                        exists: f.exists
-                    }
-                }));
-            });
             this._featureService.isEnabled(FeatureNames.WorkflowRetentionPolicy, data).subscribe(f => {
                 this._store.dispatch(new AddFeatureResult(<FeaturePayload>{
                     key: f.name,

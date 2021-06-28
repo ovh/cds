@@ -40,7 +40,6 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Handle("/unit/{id}", nil, r.DELETE(s.deleteUnitHandler))
 	r.Handle("/unit/{id}/item", nil, r.DELETE(s.markItemUnitAsDeleteHandler))
 
-	r.Handle("/sync/projects", nil, r.POST(s.syncProjectsHandler))
 	r.Handle("/sync/buffer", nil, r.POST(s.syncBufferHandler))
 
 	r.Handle("/size/item/project/{projectKey}", nil, r.GET(s.getSizeByProjectHandler))
