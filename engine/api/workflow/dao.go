@@ -990,6 +990,7 @@ func checkIntegration(proj sdk.Project, w *sdk.Workflow) error {
 		found := false
 		for _, projInt := range proj.Integrations {
 			if workflowIntegration.ProjectIntegration.Name == projInt.Name {
+				workflowIntegration.ProjectIntegration = projInt
 				workflowIntegration.ProjectIntegrationID = projInt.ID
 				workflowIntegration.WorkflowID = w.ID
 				workflowIntegration.MergeWithModel(projInt.Model)
