@@ -66,6 +66,7 @@ func LoadIDsToDelete(db gorp.SqlExecutor, offset int, limit int) ([]string, erro
 		SELECT id
 		FROM item
 		WHERE to_delete = true
+		ORDER BY created ASC
 		OFFSET $1
 		LIMIT $2
 	`
