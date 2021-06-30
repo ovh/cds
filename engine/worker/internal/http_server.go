@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/rockbears/log"
@@ -64,10 +63,8 @@ func (w *CurrentWorker) Serve(c context.Context) error {
 	r.HandleFunc("/version", LogMiddleware(setVersionHandler(c, w)))
 
 	srv := &http.Server{
-		Handler:      r,
-		Addr:         "127.0.0.1:0",
-		WriteTimeout: 6 * time.Minute,
-		ReadTimeout:  6 * time.Minute,
+		Handler: r,
+		Addr:    "127.0.0.1:0",
 	}
 
 	//Start the server
