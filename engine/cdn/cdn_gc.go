@@ -18,7 +18,7 @@ const (
 )
 
 func (s *Service) itemPurge(ctx context.Context) {
-	tickPurge := time.NewTicker(1 * time.Minute)
+	tickPurge := time.NewTicker(15 * time.Minute)
 	defer tickPurge.Stop()
 	for {
 		select {
@@ -86,39 +86,46 @@ func (s *Service) markUnitItemToDeleteByItemID(ctx context.Context, itemID strin
 }
 
 func (s *Service) cleanItemToDelete(ctx context.Context) error {
-	ids, err := item.LoadIDsToDelete(s.mustDBWithCtx(ctx), 1000)
-	if err != nil {
-		return err
-	}
+	offset := 0
+	limit := 1000
 
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	r.Shuffle(len(ids), func(i, j int) { ids[i], ids[j] = ids[j], ids[i] })
-
-	if len(ids) > 0 {
-		log.Info(ctx, "cdn:purge:item: %d items to delete", len(ids))
-	}
-
-	for _, id := range ids {
-		nbUnitItemToDelete, err := s.markUnitItemToDeleteByItemID(ctx, id)
+	for {
+		ids, err := item.LoadIDsToDelete(s.mustDBWithCtx(ctx), offset, limit)
 		if err != nil {
-			log.Error(ctx, "cdn:purge:item: unable to mark unit item %q to delete: %v", id, err)
-			continue
+			return err
 		}
 
-		log.Debug(ctx, "cdn:purge:item: %d unit items to delete for item %q", nbUnitItemToDelete, id)
+		if len(ids) == 0 {
+			return nil
+		}
 
-		// If and only If there is not more unit item to mark as delete,
-		// let's delete the item in database
-		if nbUnitItemToDelete == 0 {
-			nbItemUnits, err := storage.CountItemUnitsToDeleteByItemID(s.mustDBWithCtx(ctx), id)
+		log.Info(ctx, "cdn:purge:item: %d items to delete", len(ids))
+		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		r.Shuffle(len(ids), func(i, j int) { ids[i], ids[j] = ids[j], ids[i] })
+
+		for _, id := range ids {
+			nbUnitItemToDelete, err := s.markUnitItemToDeleteByItemID(ctx, id)
 			if err != nil {
-				log.Error(ctx, "cdn:purge:item: unable to count unit item %q to delete: %v", id, err)
+				log.Error(ctx, "cdn:purge:item: unable to mark unit item %q to delete: %v", id, err)
 				continue
 			}
 
-			if nbItemUnits > 0 {
-				log.Debug(ctx, "cdn:purge:item: %d unit items to delete for item %q", nbItemUnits, id)
-			} else {
+			log.Debug(ctx, "cdn:purge:item: %d unit items to delete for item %q", nbUnitItemToDelete, id)
+
+			// If and only If there is not more unit item to mark as delete,
+			// let's delete the item in database
+			if nbUnitItemToDelete == 0 {
+				nbItemUnits, err := storage.CountItemUnitsToDeleteByItemID(s.mustDBWithCtx(ctx), id)
+				if err != nil {
+					log.Error(ctx, "cdn:purge:item: unable to count unit item %q to delete: %v", id, err)
+					continue
+				}
+
+				if nbItemUnits > 0 {
+					log.Debug(ctx, "cdn:purge:item: %d unit items to delete for item %q", nbItemUnits, id)
+					continue
+				}
+
 				if err := s.LogCache.Remove([]string{id}); err != nil {
 					return sdk.WrapError(err, "cdn:purge:item: unable to remove from logCache for item %q", id)
 				}
@@ -128,12 +135,13 @@ func (s *Service) cleanItemToDelete(ctx context.Context) error {
 				for _, sto := range s.Units.Storages {
 					s.Units.RemoveFromRedisSyncQueue(ctx, sto, id)
 				}
-
 				log.Debug(ctx, "cdn:purge:item: %s item deleted", id)
 			}
 		}
+		if len(ids) < limit {
+			return nil
+		}
 	}
-	return nil
 }
 
 func (s *Service) cleanBuffer(ctx context.Context) error {

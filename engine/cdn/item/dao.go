@@ -61,15 +61,17 @@ func getItem(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, q g
 	return &item, sdk.WithStack(err)
 }
 
-func LoadIDsToDelete(db gorp.SqlExecutor, size int) ([]string, error) {
+func LoadIDsToDelete(db gorp.SqlExecutor, offset int, limit int) ([]string, error) {
 	query := `
 		SELECT id
 		FROM item
 		WHERE to_delete = true
-		LIMIT $1
+		ORDER BY created ASC
+		OFFSET $1
+		LIMIT $2
 	`
 	var ids []string
-	if _, err := db.Select(&ids, query, size); err != nil {
+	if _, err := db.Select(&ids, query, offset, limit); err != nil {
 		return nil, sdk.WithStack(err)
 	}
 	return ids, nil

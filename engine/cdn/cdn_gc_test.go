@@ -422,7 +422,7 @@ func TestPurgeItem(t *testing.T) {
 	require.Equal(t, 1, len(items))
 
 	// Check there are 2 item to delete
-	ids, err := item.LoadIDsToDelete(db, 10)
+	ids, err := item.LoadIDsToDelete(db, 0, 10)
 	require.NoError(t, err)
 	require.GreaterOrEqual(t, len(ids), 2)
 

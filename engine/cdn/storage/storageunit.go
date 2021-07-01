@@ -376,13 +376,54 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 		}
 	}
 
+	// Purge Buffer unit
+	for i := range r.Buffers {
+		b := r.Buffers[i]
+		gorts.RunWithRestart(ctx, "RunningStorageUnits.purge."+b.Name(),
+			func(ctx context.Context) {
+				tickrPurge := time.NewTicker(time.Duration(r.config.PurgeSeconds) * time.Second)
+				defer tickrPurge.Stop()
+				for {
+					select {
+					case <-ctx.Done():
+						return
+					case <-tickrPurge.C:
+						if err := r.Purge(ctx, b); err != nil {
+							ctx = sdk.ContextWithStacktrace(ctx, err)
+							log.Error(ctx, "RunningStorageUnits.purge> error: %v", err)
+						}
+					}
+				}
+			},
+		)
+	}
+
+	// Purge Storage Unit
+	for i := range r.Storages {
+		s := r.Storages[i]
+		gorts.RunWithRestart(ctx, "RunningStorageUnits.purge."+s.Name(),
+			func(ctx context.Context) {
+				tickrPurge := time.NewTicker(time.Duration(r.config.PurgeSeconds) * time.Second)
+				defer tickrPurge.Stop()
+				for {
+					select {
+					case <-ctx.Done():
+						return
+					case <-tickrPurge.C:
+						if err := r.Purge(ctx, s); err != nil {
+							ctx = sdk.ContextWithStacktrace(ctx, err)
+							log.Error(ctx, "RunningStorageUnits.purge> error: %v", err)
+						}
+					}
+				}
+			},
+		)
+	}
+
 	// 	Feed the sync processes with a ticker
 	gorts.Run(ctx, "RunningStorageUnits.Start", func(ctx context.Context) {
 		tickr := time.NewTicker(time.Duration(r.config.SyncSeconds) * time.Second)
-		tickrPurge := time.NewTicker(time.Duration(r.config.PurgeSeconds) * time.Second)
-
 		defer tickr.Stop()
-		defer tickrPurge.Stop()
 		for {
 			select {
 			case <-ctx.Done():
@@ -406,30 +447,6 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 					)
 				}
 				wg.Wait()
-			case <-tickrPurge.C:
-				for i := range r.Buffers {
-					b := r.Buffers[i]
-					gorts.Exec(ctx, "RunningStorageUnits.purge."+b.Name(),
-						func(ctx context.Context) {
-							if err := r.Purge(ctx, b); err != nil {
-								ctx = sdk.ContextWithStacktrace(ctx, err)
-								log.Error(ctx, "RunningStorageUnits.purge> error: %v", err)
-							}
-						},
-					)
-				}
-
-				for i := range r.Storages {
-					s := r.Storages[i]
-					gorts.Exec(ctx, "RunningStorageUnits.purge."+s.Name(),
-						func(ctx context.Context) {
-							if err := r.Purge(ctx, s); err != nil {
-								ctx = sdk.ContextWithStacktrace(ctx, err)
-								log.Error(ctx, "RunningStorageUnits.purge> error: %v", err)
-							}
-						},
-					)
-				}
 			}
 		}
 
