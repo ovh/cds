@@ -4,6 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { AuthenticationState } from 'app/store/authentication.state';
 import { finalize } from 'rxjs/operators';
+import { Project } from 'app/model/project.model';
 import { Group, GroupMember } from '../../../../model/group.model';
 import { AuthentifiedUser, AuthSummary } from '../../../../model/user.model';
 import { GroupService } from '../../../../service/group/group.service';
@@ -29,6 +30,7 @@ export class GroupEditComponent implements OnInit {
     private groupnamePattern = new RegExp('^[a-zA-Z0-9._-]{1,}$');
     groupPatternError = false;
     path: Array<PathItem>;
+    projects: Array<Project>;
 
     constructor(
         private _userService: UserService,
@@ -73,6 +75,10 @@ export class GroupEditComponent implements OnInit {
             this.updatePath();
             this._cd.markForCheck();
         });
+        this._groupService.getProjectsInGroup(this.groupName).subscribe(projs => {
+            this.projects = projs;
+            this._cd.markForCheck();
+        })
     }
 
     updateDataFromGroup(): void {

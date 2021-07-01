@@ -103,6 +103,7 @@ export class VariableComponent extends Table<Variable> {
                 case 'project':
                     this._projAudit.getVariableAudit(this.project.key, v.name).subscribe(audits => {
                         this.currentVariableAudits = audits;
+                        this._cd.markForCheck();
                         setTimeout(() => {
                             this.auditModal.show({ observeChanges: true });
                         }, 100);
@@ -111,6 +112,7 @@ export class VariableComponent extends Table<Variable> {
                 case 'environment':
                     this._envAudit.getVariableAudit(this.project.key, this.environmentName, v.name).subscribe(audits => {
                         this.currentVariableAudits = audits;
+                        this._cd.markForCheck();
                         setTimeout(() => {
                             this.auditModal.show({ observeChanges: true });
                         }, 100);
@@ -119,6 +121,7 @@ export class VariableComponent extends Table<Variable> {
                 case 'application':
                     this._appAudit.getVariableAudit(this.project.key, this.applicationName, v.name).subscribe(audits => {
                         this.currentVariableAudits = audits;
+                        this._cd.markForCheck();
                         setTimeout(() => {
                             this.auditModal.show({ observeChanges: true });
                         }, 100);

@@ -15,6 +15,49 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+func Test_getProjectGroupHandler(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	g := sdk.Group{Name: sdk.RandomString(10)}
+	_, jwtRaw := assets.InsertLambdaUser(t, db, &g)
+
+	p1 := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	_ = assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	p3 := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+
+	require.NoError(t, group.InsertLinkGroupProject(context.TODO(), db, &group.LinkGroupProject{
+		ProjectID: p1.ID,
+		GroupID:   g.ID,
+		Role:      7,
+	}))
+	require.NoError(t, group.InsertLinkGroupProject(context.TODO(), db, &group.LinkGroupProject{
+		ProjectID: p3.ID,
+		GroupID:   g.ID,
+		Role:      7,
+	}))
+
+	uri := api.Router.GetRoute(http.MethodGet, api.getProjectGroupHandler, map[string]string{
+		"permGroupName": g.Name,
+	})
+	require.NotEmpty(t, uri)
+	req := assets.NewJWTAuthentifiedRequest(t, jwtRaw, http.MethodGet, uri, nil)
+	rec := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusOK, rec.Code)
+	var result []sdk.Project
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &result))
+
+	require.Equal(t, 2, len(result))
+
+	if result[0].Key == p1.Key {
+		require.Equal(t, p3.Key, result[1].Key)
+	} else if result[1].Key == p1.Key {
+		require.Equal(t, p3.Key, result[0].Key)
+	} else {
+		t.Fail()
+	}
+}
+
 func Test_getGroupHandler(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 

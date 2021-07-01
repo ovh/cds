@@ -45,6 +45,23 @@ func (api *API) getGroupsHandler() service.Handler {
 	}
 }
 
+func (api *API) getProjectGroupHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		name := vars["permGroupName"]
+
+		g, err := group.LoadByName(ctx, api.mustDB(), name)
+		if err != nil {
+			return err
+		}
+		projects, err := project.LoadAllByGroupIDs(ctx, api.mustDB(), api.Cache, []int64{g.ID})
+		if err != nil {
+			return err
+		}
+		return service.WriteJSON(w, projects, http.StatusOK)
+	}
+}
+
 func (api *API) getGroupHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
