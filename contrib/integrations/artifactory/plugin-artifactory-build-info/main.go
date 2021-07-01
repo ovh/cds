@@ -66,6 +66,7 @@ func (e *artifactoryBuildInfoPlugin) Run(_ context.Context, opts *integrationplu
 	token := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactManagerConfigToken)]
 	tokenName := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactManagerConfigTokenName)]
 	lowMaturitySuffix := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactManagerConfigPromotionLowMaturity)]
+	artifactoryProjectKey := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactProjectKey)]
 
 	buildInfo := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactManagerConfigBuildInfoPath)]
 	version := opts.GetOptions()["cds.version"]
@@ -121,7 +122,7 @@ func (e *artifactoryBuildInfoPlugin) Run(_ context.Context, opts *integrationplu
 		return fail("unable to compute build info: %v", err)
 	}
 	buildInfoRequest.Modules = modules
-	if _, err := artiClient.PublishBuildInfo(buildInfoRequest, ""); err != nil {
+	if _, err := artiClient.PublishBuildInfo(buildInfoRequest, artifactoryProjectKey); err != nil {
 		return fail("unable to push build info: %v", err)
 	}
 	return &integrationplugin.RunResult{
