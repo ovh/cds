@@ -93,8 +93,18 @@ func ApplyRetentionPolicyOnWorkflow(ctx context.Context, store cache.Store, db *
 		if err != nil {
 			return err
 		}
+		log.Info(ctx, "Purge getting branch for repo %s - count: %d", app.RepositoryFullname, len(branches))
+		defaultBranchFound := false
 		for _, b := range branches {
 			branchesMap[b.DisplayID] = struct{}{}
+			if b.Default {
+				log.Info(ctx, "Purge getting default branch for repo %s - %s", app.RepositoryFullname, b.DisplayID)
+				defaultBranchFound = true
+			}
+		}
+
+		if !defaultBranchFound {
+			log.Warn(ctx, "Purge getting default branch for repo %s - not found", app.RepositoryFullname)
 		}
 	}
 
