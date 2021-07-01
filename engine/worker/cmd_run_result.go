@@ -38,9 +38,17 @@ func cdmAddRunResult() *cobra.Command {
 func cmdRunResultAddArtifactIntegration() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "artifact-manager",
-		Short: "worker run-result add",
-		Long:  `Inside a job, add a run result of type artifact manager`,
-		Run:   addArtifactManagerRunResultCmd(),
+		Short: "worker run-result add artifact-manager <artifact_name> <repository_name> <path_inside_repository>",
+		Long: `Inside a job, add a run result of type artifact manager:
+Worker Command:
+
+	worker run-result add artifact-manager <artifact_name> <repository_name> <path_inside_repository>
+
+Example:
+
+	worker run-result add artifact-manager custom/debian:10 my-docker-repository-name custom/debian/10
+`,
+		Run: addArtifactManagerRunResultCmd(),
 	}
 	return c
 }
