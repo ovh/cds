@@ -117,6 +117,7 @@ func (e *artifactoryReleasePlugin) Run(_ context.Context, opts *integrationplugi
 	}
 
 	artifactPromoted := make([]promotedArtifact, 0)
+	patternUsed := make(map[string]struct{})
 	for _, r := range runResult {
 		rData, err := r.GetArtifactManager()
 		if err != nil {
@@ -140,21 +141,30 @@ func (e *artifactoryReleasePlugin) Run(_ context.Context, opts *integrationplugi
 
 			// Pattern must be like: "<repo_src>/<path>/(*)"
 			// Target must be like: "<repo_target>/<path>/$1"
-			artifactPromoted = append(artifactPromoted, promotedArtifact{
-				Pattern: fmt.Sprintf("%s/%s/(*)", rData.RepoName+"-"+highMaturitySuffix, rData.Path),
-				Target:  fmt.Sprintf("%s/%s/{1}", rData.RepoName, rData.Path),
-			})
+			pattern := fmt.Sprintf("%s/%s/(*)", rData.RepoName+"-"+highMaturitySuffix, rData.Path)
+			if _, has := patternUsed[pattern]; !has {
+				artifactPromoted = append(artifactPromoted, promotedArtifact{
+					Pattern: pattern,
+					Target:  fmt.Sprintf("%s/%s/{1}", rData.RepoName, rData.Path),
+				})
+				patternUsed[pattern] = struct{}{}
+			}
 		default:
 			if err := e.promoteFile(artiClient, rData, lowMaturitySuffix, highMaturitySuffix); err != nil {
 				return fail("unable to promote file: %s: %v", rData.Name, err)
 			}
 			dir, _ := filepath.Split(rData.Path)
+
 			// Pattern must be like: "<repo_src>/<path>/(*)"
 			// Target must be like: "<repo_target>/<path>/$1"
-			artifactPromoted = append(artifactPromoted, promotedArtifact{
-				Pattern: fmt.Sprintf("%s/%s(*)", rData.RepoName+"-"+highMaturitySuffix, dir),
-				Target:  fmt.Sprintf("%s/%s{1}", rData.RepoName, dir),
-			})
+			pattern := fmt.Sprintf("%s/%s(*)", rData.RepoName+"-"+highMaturitySuffix, dir)
+			if _, has := patternUsed[pattern]; !has {
+				artifactPromoted = append(artifactPromoted, promotedArtifact{
+					Pattern: pattern,
+					Target:  fmt.Sprintf("%s/%s{1}", rData.RepoName, dir),
+				})
+				patternUsed[pattern] = struct{}{}
+			}
 		}
 
 	}
@@ -188,6 +198,7 @@ func (e *artifactoryReleasePlugin) Run(_ context.Context, opts *integrationplugi
 	}
 	params.SignImmediately = true
 	fmt.Printf("Creating release %s %s\n", params.Name, params.Version)
+
 	if _, err := distriClient.CreateReleaseBundle(params); err != nil {
 		return fail("unable to create release bundle: %v", err)
 	}
