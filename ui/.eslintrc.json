@@ -104,7 +104,7 @@
         "no-redeclare": "error",
         "no-underscore-dangle": "off",
         "prefer-const": "off",
-        "semi": [2, "always"]
+        "semi": [1, "always"]
       }
     },
     {
