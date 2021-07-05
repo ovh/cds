@@ -81,12 +81,19 @@ func RunParseCoverageResultAction(ctx context.Context, wk workerruntime.Runtime,
 		if err != nil {
 			return res, fmt.Errorf("coverage parser: unable to create signature: %v", err)
 		}
-		duration, err := wk.Client().CDNItemUpload(ctx, wk.CDNHttpURL(), sig, afero.NewOsFs(), fpath)
-		if err != nil {
-			return res, fmt.Errorf("coverage parser: unable to upload coverage report: %v", err)
-		}
-		wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("File '%s' uploaded in %.2fs to CDS CDN", name, duration.Seconds()))
 
+		pluginArtifactManagement := wk.GetPlugin(sdk.GRPCPluginUploadArtifact)
+		if pluginArtifactManagement != nil {
+			if err := uploadArtifactByIntegrationPlugin(fpath, ctx, wk, pluginArtifactManagement); err != nil {
+				return res, fmt.Errorf("coverage parser: unable to upload in artifact manager: %v", err)
+			}
+		} else {
+			duration, err := wk.Client().CDNItemUpload(ctx, wk.CDNHttpURL(), sig, afero.NewOsFs(), fpath)
+			if err != nil {
+				return res, fmt.Errorf("coverage parser: unable to upload coverage report: %v", err)
+			}
+			wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("File '%s' uploaded in %.2fs to CDS CDN", name, duration.Seconds()))
+		}
 	}
 
 	if parserMode != "" {
