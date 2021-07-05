@@ -65,7 +65,7 @@ export class ProjectShowComponent implements OnInit, OnDestroy {
                         if (!integ.model.default_config) {
                             return;
                         }
-                        let keys = Object.keys(integ.model.default_config)
+                        let keys = Object.keys(integ.model.default_config);
                         if (keys) {
                             keys.forEach(k => {
                                 if (!integ.config) {
@@ -74,9 +74,9 @@ export class ProjectShowComponent implements OnInit, OnDestroy {
                                 if (!integ.config[k]) {
                                     integ.config[k] = integ.model.default_config[k];
                                 }
-                            })
+                            });
                         }
-                    })
+                    });
                 }
 
                 this._cd.markForCheck();
