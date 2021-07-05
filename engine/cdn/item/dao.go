@@ -2,6 +2,7 @@ package item
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -145,10 +146,11 @@ func Update(ctx context.Context, m *gorpmapper.Mapper, db gorpmapper.SqlExecutor
 }
 
 func MarkToDeleteByRunIDs(db gorpmapper.SqlExecutorWithTx, runID int64) error {
+	runIdS := strconv.FormatInt(runID, 64)
 	query := `
-		UPDATE item SET to_delete = true WHERE (api_ref->>'run_id')::int = $1
+		UPDATE item SET to_delete = true WHERE api_ref->>'run_id' = $1
 	`
-	_, err := db.Exec(query, runID)
+	_, err := db.Exec(query, runIdS)
 	return sdk.WrapError(err, "unable to mark item to delete for run %d", runID)
 }
 
