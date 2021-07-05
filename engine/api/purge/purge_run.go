@@ -42,6 +42,7 @@ func GetRetentionPolicyVariables() []string {
 
 func markWorkflowRunsToDelete(ctx context.Context, store cache.Store, db *gorp.DbMap, workflowRunsMarkToDelete *stats.Int64Measure) error {
 	dao := new(workflow.WorkflowDAO)
+	dao.Loaders.WithApplications = true
 	wfs, err := dao.LoadAll(ctx, db)
 	if err != nil {
 		return err
