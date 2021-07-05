@@ -59,6 +59,26 @@ export class ProjectShowComponent implements OnInit, OnDestroy {
                 }
                 this.project = proj;
                 this._projectStore.updateRecentProject(this.project);
+
+                if (this.project.integrations) {
+                    this.project.integrations.forEach(integ => {
+                        if (!integ.model.default_config) {
+                            return;
+                        }
+                        let keys = Object.keys(integ.model.default_config)
+                        if (keys) {
+                            keys.forEach(k => {
+                                if (!integ.config) {
+                                    integ.config = {};
+                                }
+                                if (!integ.config[k]) {
+                                    integ.config[k] = integ.model.default_config[k];
+                                }
+                            })
+                        }
+                    })
+                }
+
                 this._cd.markForCheck();
             });
     }
