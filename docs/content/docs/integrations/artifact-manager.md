@@ -5,17 +5,17 @@ card:
   name: artifact-manager
 ---
 
-The Artifactory integration used the builtin integration model "Artifact Manager" and can be configured on every project by users
+The Artifactory integration uses the builtin integration model "Artifact Manager" and can be configured on every project by users
 
 This integration allows you:
 
-* to upload/download artifact inside artifactory
-* create a new artifactory build from your workflow run results
-* create a release bundle using artifacts previously uploaded in artifactory
+* to upload/download artifact into artifactory
+* to create a new artifactory build from your workflow run results
+* to create a release bundle using artifacts previously uploaded in artifactory
 
 ## Recommendations
 
-To make full use of this integration, we recommend a few things
+To take full advantage of this integration, we recommend a few things:
 
 * Naming your local repositories like this: [team]-[technology]-[maturity]
 * Having virtual repositories named like this: [team]-[technology]
@@ -34,16 +34,16 @@ By using this convention, the CDS release action will be able to promote your ar
 
 On the integration project view, add a new "Artifact Manager" integration and fill the following parameters:
 
-* Name: The name of the integration.
-* platform: Must be 'artifactory'
-* url: URL of artifactory api (https//myinstance.ofartifactory/artifactory/)
-* project.key: The name of the artifactory project (https://www.jfrog.com/confluence/display/JFROG/Projects)
-* cds.repository: The name of the repository used by CDS to upload/download artifacts (must be a virtual repository)
-* token.name: The name of the access token used by CDS to access the artifactory API
-* token: The value of the access token used by CDS to access the artifactory API
-* release.token: The value of the access token used by CDS to access the distribution API (https://www.jfrog.com/confluence/display/JFROG/JFrog+Distribution)
-* promotion.maturity.low: suffix used on your local repositories to identify your snapshots
-* promotion.maturity.high: suffix used on your local repositories to identify your releases
+* `name`: The name of the integration.
+* `platform`: Must be 'artifactory'
+* `url`: URL of artifactory api (https//myinstance.ofartifactory/artifactory/)
+* `project.key`: The name of the artifactory project (https://www.jfrog.com/confluence/display/JFROG/Projects)
+* `cds.repository`: The name of the repository used by CDS to upload/download artifacts (must be a virtual repository)
+* `token.name`: The name of the access token used by CDS to access the artifactory API
+* `token`: The value of the access token used by CDS to access the artifactory API
+* `release.token`: The value of the access token used by CDS to access the distribution API (https://www.jfrog.com/confluence/display/JFROG/JFrog+Distribution)
+* `promotion.maturity.low`: suffix used on your local repositories to identify your snapshots
+* `promotion.maturity.high`: suffix used on your local repositories to identify your releases
 
 ### Enable Artifactory integration on your workflow
 
@@ -51,7 +51,7 @@ On the workflow advanced view, you can link your workflow to project integration
 
 Select the artifactory integration and fill the parameter:
 
-* build.info.path: prefix used by CDS action Push Build Info to name your build info (see below for more detailed informations). For example it can be the name of your team.
+* `build.info.path`: prefix used by CDS action Push Build Info to name your build info (see below for more detailed informations). For example it can be the name of your team.
 
 ## Integration actions
 
