@@ -7,7 +7,7 @@ import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
 import { AsCodeEvent } from 'app/store/ascode.action';
 import { UpdateMaintenance } from 'app/store/cds.action';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { filter, first } from 'rxjs/operators';
+import { concatMap, first } from 'rxjs/operators';
 import { Broadcast } from './model/broadcast.model';
 import { Event, EventType } from './model/event.model';
 import { LoadOpts } from './model/project.model';
@@ -22,13 +22,13 @@ import {
     ExternalChangeApplication,
     ResyncApplication
 } from './store/applications.action';
-import { ApplicationsState, ApplicationStateModel } from './store/applications.state';
+import { ApplicationsState } from './store/applications.state';
 import { AuthenticationState } from './store/authentication.state';
 import { AddEvent } from './store/event.action';
 import { DeleteFromCachePipeline, ExternalChangePipeline, ResyncPipeline } from './store/pipelines.action';
-import { PipelinesState, PipelinesStateModel } from './store/pipelines.state';
+import { PipelinesState } from './store/pipelines.state';
 import * as projectActions from './store/project.action';
-import { ProjectState, ProjectStateModel } from './store/project.state';
+import { ProjectState } from './store/project.state';
 import {
     ComputeRetentionDryRunEvent,
     ExternalChangeWorkflow,
@@ -71,19 +71,19 @@ export class AppService {
         this.routeParams = params;
     }
 
-    manageEvent(event: Event): void {
+    async manageEvent(event: Event): Promise<void> {
         if (!event || !event.type_event) {
-            return
+            return;
         }
-        this._store.dispatch(new AddEvent(event));
+        await this._store.dispatch(new AddEvent(event)).toPromise();
 
         if (event.type_event.indexOf(EventType.MAINTENANCE) === 0) {
-            this._store.dispatch(new UpdateMaintenance(event.payload['enable']));
+            await this._store.dispatch(new UpdateMaintenance(event.payload['enable'])).toPromise();
             return;
         }
         if (event.type_event.indexOf(EventType.ASCODE) === 0) {
             if (event.username === this._store.selectSnapshot(AuthenticationState.summary).user.username) {
-                this._store.dispatch(new AsCodeEvent(event.payload['as_code_event']));
+                await this._store.dispatch(new AsCodeEvent(event.payload['as_code_event'])).toPromise();
             }
             return;
         }
@@ -94,8 +94,11 @@ export class AppService {
                 if (retentionEvent.status === 'ERROR') {
                     this._toast.error('', retentionEvent.error);
                 }
-                this._store.dispatch(new ComputeRetentionDryRunEvent(
-                    { projectKey: event.project_key, workflowName: event.workflow_name, event: retentionEvent }));
+                await this._store.dispatch(new ComputeRetentionDryRunEvent({
+                    projectKey: event.project_key,
+                    workflowName: event.workflow_name,
+                    event: retentionEvent
+                })).toPromise();
             }
             return;
         }
@@ -108,7 +111,7 @@ export class AppService {
             event.type_event === EventType.PIPELINE_DELETE ||
             event.type_event === EventType.WORKFLOW_ADD || event.type_event === EventType.WORKFLOW_UPDATE ||
             event.type_event === EventType.WORKFLOW_DELETE) {
-            this.updateProjectCache(event);
+            await this.updateProjectCache(event);
 
             if (event.type_event === EventType.APPLICATION_UPDATE || event.type_event === EventType.WORKFLOW_UPDATE) {
                 this._navbarService.refreshData();
@@ -116,13 +119,13 @@ export class AppService {
 
         }
         if (event.type_event.indexOf(EventType.APPLICATION_PREFIX) === 0) {
-            this.updateApplicationCache(event);
+            await this.updateApplicationCache(event);
         } else if (event.type_event.indexOf(EventType.PIPELINE_PREFIX) === 0) {
-            this.updatePipelineCache(event);
+            await this.updatePipelineCache(event);
         } else if (event.type_event.indexOf(EventType.WORKFLOW_PREFIX) === 0) {
-            this.updateWorkflowCache(event);
+            await this.updateWorkflowCache(event);
         } else if (event.type_event.indexOf(EventType.RUN_WORKFLOW_PREFIX) === 0) {
-            this.updateWorkflowRunCache(event);
+            await this.updateWorkflowRunCache(event);
         } else if (event.type_event.indexOf(EventType.BROADCAST_PREFIX) === 0) {
             this.updateBroadcastCache(event);
         }
@@ -154,193 +157,187 @@ export class AppService {
         }
     }
 
-    updateProjectCache(event: Event): void {
+    async updateProjectCache(event: Event): Promise<void> {
         if (!event || !event.type_event) {
-            return
+            return;
         }
-        this._store.selectOnce(ProjectState)
-            .pipe(
-                filter((projState: ProjectStateModel) => projState && projState.project && projState.project.key === event.project_key)
-            )
-            .subscribe((projectState: ProjectStateModel) => {
-                let projectInCache = projectState.project;
-                // If working on project or sub resources
-                if (this.routeParams['key'] && this.routeParams['key'] === projectInCache.key) {
-                    // if modification from another user, display a notification
-                    if (event.username !== this._store.selectSnapshot(AuthenticationState.summary).user.username) {
-                        this._store.dispatch(new projectActions.ExternalChangeProject({ projectKey: projectInCache.key }));
-                        this._toast.info('', this._translate.instant('warning_project', { username: event.username }));
-                        return;
-                    }
-                } else {
-                    // If no working on current project, remove from cache
-                    this._store.dispatch(new projectActions.DeleteProjectFromCache({ projectKey: projectInCache.key }));
+        let projState = this._store.selectSnapshot(ProjectState);
+        if (projState && projState.project && projState.project.key === event.project_key) {
+            let projectInCache = projState.project;
+            // If working on project or sub resources
+            if (this.routeParams['key'] && this.routeParams['key'] === projectInCache.key) {
+                // if modification from another user, display a notification
+                if (event.username !== this._store.selectSnapshot(AuthenticationState.summary).user.username) {
+                    await this._store.dispatch(new projectActions.ExternalChangeProject({ projectKey: projectInCache.key })).toPromise();
+                    this._toast.info('', this._translate.instant('warning_project', { username: event.username }));
                     return;
                 }
+            } else {
+                // If no working on current project, remove from cache
+                await this._store.dispatch(new projectActions.DeleteProjectFromCache({ projectKey: projectInCache.key })).toPromise();
+                return;
+            }
 
-                if (event.type_event === EventType.PROJECT_DELETE) {
-                    this._store.dispatch(new projectActions.DeleteProjectFromCache({ projectKey: projectInCache.key }));
-                    return;
-                }
+            if (event.type_event === EventType.PROJECT_DELETE) {
+                await this._store.dispatch(new projectActions.DeleteProjectFromCache({ projectKey: projectInCache.key })).toPromise();
+                return;
+            }
 
-                let opts = [];
-                if (event.type_event.indexOf(EventType.PROJECT_VARIABLE_PREFIX) === 0) {
-                    opts.push(new LoadOpts('withVariables', 'variables'));
-                } else if (event.type_event.indexOf(EventType.PROJECT_PERMISSION_PREFIX) === 0) {
-                    opts.push(new LoadOpts('withGroups', 'groups'));
-                } else if (event.type_event.indexOf(EventType.PROJECT_KEY_PREFIX) === 0) {
-                    opts.push(new LoadOpts('withKeys', 'keys'));
-                } else if (event.type_event.indexOf(EventType.PROJECT_INTEGRATION_PREFIX) === 0) {
-                    opts.push(new LoadOpts('withIntegrations', 'integrations'));
-                } else if (event.type_event.indexOf(EventType.APPLICATION_PREFIX) === 0) {
-                    opts.push(new LoadOpts('withApplicationNames', 'application_names'));
-                } else if (event.type_event.indexOf(EventType.PIPELINE_PREFIX) === 0) {
-                    opts.push(new LoadOpts('withPipelineNames', 'pipeline_names'));
-                } else if (event.type_event.indexOf(EventType.ENVIRONMENT_PREFIX) === 0) {
-                    opts.push(new LoadOpts('withEnvironmentNames', 'environment_names'));
-                } else if (event.type_event.indexOf(EventType.WORKFLOW_PREFIX) === 0) {
-                    opts.push(new LoadOpts('withWorkflowNames', 'workflow_names'));
-                    opts.push(new LoadOpts('withLabels', 'labels'));
-                }
+            let opts = [];
+            if (event.type_event.indexOf(EventType.PROJECT_VARIABLE_PREFIX) === 0) {
+                opts.push(new LoadOpts('withVariables', 'variables'));
+            } else if (event.type_event.indexOf(EventType.PROJECT_PERMISSION_PREFIX) === 0) {
+                opts.push(new LoadOpts('withGroups', 'groups'));
+            } else if (event.type_event.indexOf(EventType.PROJECT_KEY_PREFIX) === 0) {
+                opts.push(new LoadOpts('withKeys', 'keys'));
+            } else if (event.type_event.indexOf(EventType.PROJECT_INTEGRATION_PREFIX) === 0) {
+                opts.push(new LoadOpts('withIntegrations', 'integrations'));
+            } else if (event.type_event.indexOf(EventType.APPLICATION_PREFIX) === 0) {
+                opts.push(new LoadOpts('withApplicationNames', 'application_names'));
+            } else if (event.type_event.indexOf(EventType.PIPELINE_PREFIX) === 0) {
+                opts.push(new LoadOpts('withPipelineNames', 'pipeline_names'));
+            } else if (event.type_event.indexOf(EventType.ENVIRONMENT_PREFIX) === 0) {
+                opts.push(new LoadOpts('withEnvironmentNames', 'environment_names'));
+            } else if (event.type_event.indexOf(EventType.WORKFLOW_PREFIX) === 0) {
+                opts.push(new LoadOpts('withWorkflowNames', 'workflow_names'));
+                opts.push(new LoadOpts('withLabels', 'labels'));
+            }
 
-                if (event.type_event.indexOf('Variable') === -1 && event.type_event.indexOf('Parameter') === -1
-                    && event.type_event.indexOf(EventType.ENVIRONMENT_PREFIX) === -1) {
-                    this._store.dispatch(new projectActions.ResyncProject({ projectKey: projectInCache.key, opts }));
-                }
-            });
+            if (event.type_event.indexOf('Variable') === -1 && event.type_event.indexOf('Parameter') === -1
+                && event.type_event.indexOf(EventType.ENVIRONMENT_PREFIX) === -1) {
+                await this._store.dispatch(new projectActions.ResyncProject({ projectKey: projectInCache.key, opts })).toPromise();
+            }
+        }
     }
 
-    updateApplicationCache(event: Event): void {
+    async updateApplicationCache(event: Event): Promise<void> {
         if (!event || !event.type_event) {
-            return
+            return;
         }
         const payload = { projectKey: event.project_key, applicationName: event.application_name };
 
-        this._store.selectOnce(ApplicationsState).subscribe((appState: ApplicationStateModel) => {
-            if (!appState.application ||
-                !(appState.application.name === event.application_name &&
-                    appState.currentProjectKey === event.project_key)) {
-                return;
-            }
-
-            if (event.type_event === EventType.APPLICATION_DELETE) {
-                // If user is on an application that has been deleted by an other user
-                if (this.routeParams['key'] && this.routeParams['key'] === event.project_key &&
-                    this.routeParams['appName'] && this.routeParams['appName'] === event.application_name &&
-                    event.username !== this._store.selectSnapshot(AuthenticationState.summary).user.username) {
-                    this._toast.info('', this._translate.instant('application_deleted_by',
-                        { appName: this.routeParams['appName'], username: event.username }));
-                    this._router.navigate(['/project'], this.routeParams['key']);
-                }
-                this._store.dispatch(new ClearCacheApplication());
-                this._store.dispatch(new projectActions.DeleteApplicationInProject({ applicationName: event.application_name }));
-                return;
-            }
-
-            // If working on the application
-            if (this.routeParams['key'] && this.routeParams['key'] === event.project_key
-                && this.routeParams['appName'] === event.application_name) {
-                // modification by another user
-                if (event.username !== this._store.selectSnapshot(AuthenticationState.summary).user.username) {
-                    this._store.dispatch(new ExternalChangeApplication(payload));
-                    this._toast.info('', this._translate.instant('warning_application', { username: event.username }));
-                    return;
-                }
-            } else {
-                this._store.dispatch(new ClearCacheApplication());
-                return;
-            }
-
-            if (event.type_event.indexOf('Variable') === -1) {
-                this._store.dispatch(new ResyncApplication(payload));
-            }
-        });
-    }
-
-    updatePipelineCache(event: Event): void {
-        if (!event || !event.type_event) {
-            return
+        let appState = this._store.selectSnapshot(ApplicationsState);
+        if (!appState.application ||
+            !(appState.application.name === event.application_name &&
+                appState.currentProjectKey === event.project_key)) {
+            return;
         }
 
-        this._store.selectOnce(PipelinesState).subscribe((pips: PipelinesStateModel) => {
-            if (!pips || !pips.pipeline || pips.pipeline.name !== event.pipeline_name || pips.currentProjectKey !== event.project_key) {
+        if (event.type_event === EventType.APPLICATION_DELETE) {
+            // If user is on an application that has been deleted by an other user
+            if (this.routeParams['key'] && this.routeParams['key'] === event.project_key &&
+                this.routeParams['appName'] && this.routeParams['appName'] === event.application_name &&
+                event.username !== this._store.selectSnapshot(AuthenticationState.summary).user.username) {
+                this._toast.info('', this._translate.instant('application_deleted_by',
+                    { appName: this.routeParams['appName'], username: event.username }));
+                this._router.navigate(['/project'], this.routeParams['key']);
+            }
+            await this._store.dispatch(new ClearCacheApplication()).toPromise();
+            await this._store.dispatch(new projectActions.DeleteApplicationInProject({
+                applicationName: event.application_name
+            })).toPromise();
+            return;
+        }
+
+        // If working on the application
+        if (this.routeParams['key'] && this.routeParams['key'] === event.project_key
+            && this.routeParams['appName'] === event.application_name) {
+            // modification by another user
+            if (event.username !== this._store.selectSnapshot(AuthenticationState.summary).user.username) {
+                await this._store.dispatch(new ExternalChangeApplication(payload)).toPromise();
+                this._toast.info('', this._translate.instant('warning_application', { username: event.username }));
                 return;
             }
+        } else {
+            await this._store.dispatch(new ClearCacheApplication()).toPromise();
+            return;
+        }
 
-            if (event.type_event === EventType.PIPELINE_DELETE) {
-                this._store.dispatch(new DeleteFromCachePipeline({
-                    projectKey: event.project_key,
-                    pipelineName: event.pipeline_name
-                }));
-                this._store.dispatch(new projectActions.DeletePipelineInProject({ pipelineName: event.pipeline_name }));
-                return;
-            }
+        if (event.type_event.indexOf('Variable') === -1) {
+            await this._store.dispatch(new ResyncApplication(payload)).toPromise();
+        }
+    }
 
-            // update pipeline
-            if (this.routeParams['key'] && this.routeParams['key'] === event.project_key
-                && this.routeParams['pipName'] === event.pipeline_name) {
-                if (event.username !== this._store.selectSnapshot(AuthenticationState.summary).user.username) {
-                    this._store.dispatch(new ExternalChangePipeline({
-                        projectKey: event.project_key,
-                        pipelineName: event.pipeline_name
-                    }));
-                    this._toast.info('', this._translate.instant('warning_pipeline', { username: event.username }));
-                    return;
-                }
-            } else {
-                this._store.dispatch(new DeleteFromCachePipeline({
-                    projectKey: event.project_key,
-                    pipelineName: event.pipeline_name
-                }));
-                return;
-            }
+    async updatePipelineCache(event: Event): Promise<void> {
+        if (!event || !event.type_event) {
+            return;
+        }
 
-            this._store.dispatch(new ResyncPipeline({
+        let pips = this._store.selectSnapshot(PipelinesState);
+        if (!pips || !pips.pipeline || pips.pipeline.name !== event.pipeline_name || pips.currentProjectKey !== event.project_key) {
+            return;
+        }
+
+        if (event.type_event === EventType.PIPELINE_DELETE) {
+            await this._store.dispatch(new DeleteFromCachePipeline({
                 projectKey: event.project_key,
                 pipelineName: event.pipeline_name
-            }))
-        });
+            })).toPromise();
+            await this._store.dispatch(new projectActions.DeletePipelineInProject({ pipelineName: event.pipeline_name })).toPromise();
+            return;
+        }
+
+        // update pipeline
+        if (this.routeParams['key'] && this.routeParams['key'] === event.project_key
+            && this.routeParams['pipName'] === event.pipeline_name) {
+            if (event.username !== this._store.selectSnapshot(AuthenticationState.summary).user.username) {
+                await this._store.dispatch(new ExternalChangePipeline({
+                    projectKey: event.project_key,
+                    pipelineName: event.pipeline_name
+                })).toPromise();
+                this._toast.info('', this._translate.instant('warning_pipeline', { username: event.username }));
+                return;
+            }
+        } else {
+            await this._store.dispatch(new DeleteFromCachePipeline({
+                projectKey: event.project_key,
+                pipelineName: event.pipeline_name
+            })).toPromise();
+            return;
+        }
+
+        await this._store.dispatch(new ResyncPipeline({
+            projectKey: event.project_key,
+            pipelineName: event.pipeline_name
+        })).toPromise();
     }
 
-    updateWorkflowCache(event: Event): void {
+    async updateWorkflowCache(event: Event): Promise<void> {
         if (!event || !event.type_event) {
             return
         }
-        this._store.selectOnce(WorkflowState)
-            .pipe(
-                filter((wf) => wf != null && wf.workflow
-                    && (wf.projectKey !== event.project_key || wf.workflow.name !== event.workflow_name)))
-            .subscribe(() => {
-                if (event.type_event === EventType.WORKFLOW_DELETE) {
-                    this._store.dispatch(new projectActions.DeleteWorkflowInProject({ workflowName: event.workflow_name }));
+        let wf = this._store.selectSnapshot(WorkflowState)
+        if (wf != null && wf.workflow && (wf.projectKey !== event.project_key || wf.workflow.name !== event.workflow_name)) {
+            if (event.type_event === EventType.WORKFLOW_DELETE) {
+                await this._store.dispatch(new projectActions.DeleteWorkflowInProject({ workflowName: event.workflow_name })).toPromise();
+                return;
+            }
+
+            // update workflow
+            if (this.routeParams['key'] && this.routeParams['key'] === event.project_key
+                && this.routeParams['workflowName'] === event.workflow_name) {
+                if (event.username !== this._store.selectSnapshot(AuthenticationState.summary).user.username) {
+                    await this._store.dispatch(new ExternalChangeWorkflow({
+                        projectKey: event.project_key,
+                        workflowName: event.workflow_name
+                    })).toPromise();
+                    this._toast.info('', this._translate.instant('warning_workflow', { username: event.username }));
                     return;
                 }
+            } else {
+                return;
+            }
 
-                // update workflow
-                if (this.routeParams['key'] && this.routeParams['key'] === event.project_key
-                    && this.routeParams['workflowName'] === event.workflow_name) {
-                    if (event.username !== this._store.selectSnapshot(AuthenticationState.summary).user.username) {
-                        this._store.dispatch(new ExternalChangeWorkflow({
-                            projectKey: event.project_key,
-                            workflowName: event.workflow_name
-                        }));
-                        this._toast.info('', this._translate.instant('warning_workflow', { username: event.username }));
-                        return;
-                    }
-                } else {
-                    return;
-                }
-
-                this._store.dispatch(new GetWorkflow({
-                    projectKey: event.project_key,
-                    workflowName: event.workflow_name
-                }));
-            });
+            await this._store.dispatch(new GetWorkflow({
+                projectKey: event.project_key,
+                workflowName: event.workflow_name
+            })).toPromise();
+        }
     }
 
-    updateWorkflowRunCache(event: Event): void {
+    async updateWorkflowRunCache(event: Event): Promise<void> {
         if (!event || !event.type_event) {
-            return
+            return;
         }
         if (this.routeParams['key'] !== event.project_key || this.routeParams['workflowName'] !== event.workflow_name) {
             return;
@@ -348,11 +345,11 @@ export class AppService {
         switch (event.type_event) {
             case EventType.RUN_WORKFLOW_PREFIX:
                 if (event.payload['to_delete']) {
-                    this._store.dispatch(new RemoveWorkflowRunFromList({
+                    await this._store.dispatch(new RemoveWorkflowRunFromList({
                         projectKey: event.project_key,
                         workflowName: event.workflow_name,
                         num: event.workflow_run_num
-                    }));
+                    })).toPromise();
 
                     if (this.routeParams['number'] === event.workflow_run_num.toString()) {
                         this._toast.info('', 'This run has just been deleted')
@@ -361,17 +358,19 @@ export class AppService {
                     return;
                 }
                 if (this.routeParams['number'] === event.workflow_run_num.toString()) {
-                    // if same run number , then update store
-                    this._store.dispatch(new GetWorkflowRun({
+                    // if same run number , then update
+                    await this._store.dispatch(new GetWorkflowRun({
                         projectKey: event.project_key,
                         workflowName: event.workflow_name,
                         num: event.workflow_run_num
-                    }));
+                    })).toPromise();
                 } else {
-                    this._workflowRunService
+                    await this._workflowRunService
                         .getWorkflowRun(event.project_key, event.workflow_name, event.workflow_run_num)
-                        .pipe(first())
-                        .subscribe(wrkRun => this._store.dispatch(new UpdateWorkflowRunList({ workflowRun: wrkRun })));
+                        .pipe(
+                            first(),
+                            concatMap(wrkRun => this._store.dispatch(new UpdateWorkflowRunList({ workflowRun: wrkRun })))
+                        ).toPromise();
                 }
                 break;
             case EventType.RUN_WORKFLOW_NODE:
@@ -379,24 +378,22 @@ export class AppService {
                 const wnr = this._store.selectSnapshot<WorkflowNodeRun>((state) => state.workflow.workflowNodeRun);
                 let wnrEvent = <WorkflowNodeRun>event.payload;
                 if (wnr && wnr.id === wnrEvent.id) {
-                    this._store.dispatch(
-                        new GetWorkflowNodeRun({
-                            projectKey: event.project_key,
-                            workflowName: event.workflow_name,
-                            num: event.workflow_run_num,
-                            nodeRunID: wnr.id
-                        }));
+                    await this._store.dispatch(new GetWorkflowNodeRun({
+                        projectKey: event.project_key,
+                        workflowName: event.workflow_name,
+                        num: event.workflow_run_num,
+                        nodeRunID: wnr.id
+                    })).toPromise();
                 }
 
                 // Refresh workflow run if user is listening on it
                 const wr = this._store.selectSnapshot<WorkflowRun>((state) => state.workflow.workflowRun);
                 if (wr && wr.num === event.workflow_run_num) {
-                    this._store.dispatch(new GetWorkflowRun(
-                        {
-                            projectKey: event.project_key,
-                            workflowName: event.workflow_name,
-                            num: event.workflow_run_num
-                        }));
+                    await this._store.dispatch(new GetWorkflowRun({
+                        projectKey: event.project_key,
+                        workflowName: event.workflow_name,
+                        num: event.workflow_run_num
+                    })).toPromise();
                 }
                 break;
         }

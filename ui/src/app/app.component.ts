@@ -8,9 +8,9 @@ import { Store } from '@ngxs/store';
 import { EventService } from 'app/event.service';
 import { GetCDSStatus } from 'app/store/cds.action';
 import { CDSState } from 'app/store/cds.state';
-import { WebSocketSubject } from 'rxjs/internal-compatibility';
 import { interval, of, zip } from 'rxjs';
-import { filter, map, mergeMap } from 'rxjs/operators';
+import { WebSocketSubject } from 'rxjs/internal-compatibility';
+import { concatMap, filter, map, mergeMap } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 import * as format from 'string-format-obj';
 import { AppService } from './app.service';
@@ -183,7 +183,8 @@ export class AppComponent implements OnInit, OnDestroy {
 
     startVersionWorker(): void {
         this._ngZone.runOutsideAngular(() => {
-            this.versionWorkerSubscription = interval(60000).pipe(mergeMap(_ => this._monitoringService.getVersion()))
+            this.versionWorkerSubscription = interval(60000)
+                .pipe(concatMap(_ => this._monitoringService.getVersion()))
                 .subscribe(v => {
                     this._ngZone.run(() => {
                         if ((<any>window).cds_version !== v.version) {
