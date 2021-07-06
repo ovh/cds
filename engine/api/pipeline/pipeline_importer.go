@@ -36,7 +36,7 @@ func ImportUpdate(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, pi
 		}
 		log.Debug(ctx, "ImportUpdate>> Force import pipeline %s in project %s without fromRepository", pip.Name, proj.Key)
 	} else if oldPipeline.FromRepository != "" && pip.FromRepository != oldPipeline.FromRepository {
-		return sdk.WrapError(sdk.ErrPipelineAsCodeOverride, "unable to update as code pipeline %s/%s.", oldPipeline.FromRepository, pip.FromRepository)
+		return sdk.WrapError(sdk.ErrPipelineAsCodeOverride, "unable to update as code pipeline %q old repo:%s to:%s.", pip.Name, oldPipeline.FromRepository, pip.FromRepository)
 	}
 
 	// check that action used by job can be used by pipeline's project

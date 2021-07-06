@@ -118,7 +118,7 @@ func configBootstrap(args []string) Configuration {
 			defaults.SetDefaults(conf.Hatchery.Swarm)
 			conf.Hatchery.Swarm.DockerEngines = map[string]swarm.DockerEngineConfiguration{
 				"sample-docker-engine": {
-					Host: "///var/run/docker.sock",
+					Host: "unix:///var/run/docker.sock",
 				},
 			}
 			conf.Hatchery.Swarm.Name = "cds-hatchery-swarm-" + namesgenerator.GetRandomNameCDS(0)
