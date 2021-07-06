@@ -146,7 +146,7 @@ func Update(ctx context.Context, m *gorpmapper.Mapper, db gorpmapper.SqlExecutor
 }
 
 func MarkToDeleteByRunIDs(db gorpmapper.SqlExecutorWithTx, runID int64) error {
-	runIdS := strconv.FormatInt(runID, 64)
+	runIdS := strconv.FormatInt(runID, 10)
 	query := `
 		UPDATE item SET to_delete = true WHERE api_ref->>'run_id' = $1
 	`
