@@ -206,6 +206,7 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, db *gorp.DbMap, dest 
 	if err != nil {
 		return sdk.WrapError(err, "unable to start transaction")
 	}
+	defer tx.Rollback() //nolint
 	// Save in database that the item is complete for the storage unit
 	if err := InsertItemUnit(ctx, x.m, tx, iu); err != nil {
 		return err
