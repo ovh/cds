@@ -11,6 +11,7 @@ import (
 	"github.com/rockbears/log"
 	"go.opencensus.io/stats"
 
+	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
@@ -42,7 +43,6 @@ func GetRetentionPolicyVariables() []string {
 
 func markWorkflowRunsToDelete(ctx context.Context, store cache.Store, db *gorp.DbMap, workflowRunsMarkToDelete *stats.Int64Measure) error {
 	dao := new(workflow.WorkflowDAO)
-	dao.Loaders.WithApplications = true
 	wfs, err := dao.LoadAll(ctx, db)
 	if err != nil {
 		return err
@@ -67,7 +67,10 @@ func ApplyRetentionPolicyOnWorkflow(ctx context.Context, store cache.Store, db *
 	if wf.WorkflowData.Node.Context != nil {
 		appID := wf.WorkflowData.Node.Context.ApplicationID
 		if appID != 0 {
-			app = wf.Applications[appID]
+			app, err := application.LoadByID(db, appID)
+			if err != nil {
+				return err
+			}
 			if app.RepositoryFullname != "" {
 				tx, err := db.Begin()
 				if err != nil {
@@ -83,6 +86,10 @@ func ApplyRetentionPolicyOnWorkflow(ctx context.Context, store cache.Store, db *
 				if err != nil {
 					_ = tx.Rollback()
 					return sdk.WithStack(err)
+				}
+				if err := tx.Commit(); err != nil {
+					_ = tx.Rollback()
+					return err
 				}
 			}
 		}
