@@ -117,7 +117,7 @@ export class WorkflowGraphComponent implements AfterViewInit, OnDestroy {
         this.svg = d3.select(element).append('svg');
 
         let g = this.svg.append('g');
-        this.render(g, this.g);
+        this.render(g, <any>this.g);
 
         this.zoom = d3.zoom().scaleExtent([
             WorkflowGraphComponent.minScale,
