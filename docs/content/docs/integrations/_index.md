@@ -29,4 +29,6 @@ cards:
   title: CDS Events
 - name: authentication
   title: User Authentication
+- name: artifact-manager
+  title: Artifact Manager
 ---
