@@ -340,15 +340,7 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 						}
 
 						t0 := time.Now()
-						tx, err := r.db.Begin()
-						if err != nil {
-							err = sdk.WrapError(err, "unable to begin tx")
-							ctx = sdk.ContextWithStacktrace(ctx, err)
-							log.Error(ctx, "%v", err)
-							continue
-						}
-
-						if err := r.processItem(ctx, tx, s, id); err != nil {
+						if err := r.processItem(ctx, r.db, s, id); err != nil {
 							if !sdk.ErrorIs(err, sdk.ErrNotFound) {
 								t1 := time.Now()
 								ctx = sdk.ContextWithStacktrace(ctx, err)
@@ -357,19 +349,8 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 							} else {
 								log.Info(ctx, "item id=%q is locked", id)
 							}
-							_ = tx.Rollback()
 							continue
 						}
-
-						if err := tx.Commit(); err != nil {
-							err = sdk.WrapError(err, "unable to commit tx")
-							ctx = sdk.ContextWithStacktrace(ctx, err)
-							log.Error(ctx, "%v", err)
-							_ = tx.Rollback()
-							continue
-						}
-
-						r.RemoveFromRedisSyncQueue(ctx, s, id)
 					}
 				},
 			)
