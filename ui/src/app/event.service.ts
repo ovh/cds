@@ -3,8 +3,9 @@ import { Router } from '@angular/router';
 import { AppService } from 'app/app.service';
 import { WebsocketEvent, WebsocketFilter, WebsocketFilterType } from 'app/model/websocket.model';
 import { ToastService } from 'app/shared/toast/ToastService';
+import { from } from 'rxjs';
 import { WebSocketSubject } from 'rxjs/internal-compatibility';
-import { delay, retryWhen } from 'rxjs/operators';
+import { concatMap, delay, filter, retryWhen } from 'rxjs/operators';
 import { webSocket } from 'rxjs/webSocket';
 
 @Injectable()
@@ -47,13 +48,17 @@ export class EventService {
 
         this.websocket
             .pipe(retryWhen(errors => errors.pipe(delay(2000))))
-            .subscribe((message: WebsocketEvent) => {
-                if (message.status === 'OK') {
-                    this._appService.manageEvent(message.event);
-                } else {
-                    this._toastService.error('', message.error);
-                }
-            }, (err) => {
+            .pipe(
+                filter((message: WebsocketEvent): boolean => {
+                    let ok = message.status === 'OK';
+                    if (!ok) {
+                        this._toastService.error('', message.error);
+                    }
+                    return ok;
+                }),
+                concatMap((message: WebsocketEvent) => from(this._appService.manageEvent(message.event)))
+            )
+            .subscribe(() => {}, (err) => {
                 console.error('Error: ', err)
             }, () => {
                 console.warn('Websocket Completed');

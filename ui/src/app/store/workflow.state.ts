@@ -1212,48 +1212,51 @@ export class WorkflowState {
             loadingWorkflowNodeRun: true,
         });
 
-        forkJoin([
+        return forkJoin([
             this._workflowRunService
                 .getWorkflowNodeRun(action.payload.projectKey, action.payload.workflowName,
                     action.payload.num, action.payload.nodeRunID),
             this._workflowRunService
                 .getWorkflowNodeRunResults(action.payload.projectKey, action.payload.workflowName,
                     action.payload.num, action.payload.nodeRunID)
-        ]).pipe(first(), finalize(() => {
-            const stateFin = ctx.getState();
-            ctx.setState({
-                ...stateFin,
-                loadingWorkflowNodeRun: false
-            });
-        })).subscribe(partial => {
+        ]).pipe(
+            first(),
+            finalize(() => {
+                const stateFin = ctx.getState();
+                ctx.setState({
+                    ...stateFin,
+                    loadingWorkflowNodeRun: false
+                });
+            }),
+            tap(partial => {
+                let wnr = partial[0];
+                let runResults = partial[1];
 
-            let wnr = partial[0];
-            let runResults = partial[1];
+                let routeParams = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root);
+                if (action.payload.projectKey !== routeParams['key'] || action.payload.workflowName !== routeParams['workflowName']) {
+                    return;
+                }
+                if (!routeParams['number'] || routeParams['number'] !== action.payload.num.toString()) {
+                    return;
+                }
+                if (!routeParams['nodeId'] || routeParams['nodeId'] !== action.payload.nodeRunID.toString()) {
+                    return;
+                }
 
-            let routeParams = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root);
-            if (action.payload.projectKey !== routeParams['key'] || action.payload.workflowName !== routeParams['workflowName']) {
-                return;
-            }
-            if (!routeParams['number'] || routeParams['number'] !== action.payload.num.toString()) {
-                return;
-            }
-            if (!routeParams['nodeId'] || routeParams['nodeId'] !== action.payload.nodeRunID.toString()) {
-                return;
-            }
-
-            wnr.results = runResults;
-            const stateNR = ctx.getState();
-            let node = Workflow.getNodeByID(wnr.workflow_node_id, stateNR.workflowRun.workflow);
-            ctx.setState({
-                ...stateNR,
-                projectKey: action.payload.projectKey,
-                workflowNodeRun: wnr,
-                node,
-            });
-            if (stateNR.workflowNodeJobRun) {
-                ctx.dispatch(new SelectWorkflowNodeRunJob({ jobID: stateNR.workflowNodeJobRun.job.pipeline_action_id }));
-            }
-        })
+                wnr.results = runResults;
+                const stateNR = ctx.getState();
+                let node = Workflow.getNodeByID(wnr.workflow_node_id, stateNR.workflowRun.workflow);
+                ctx.setState({
+                    ...stateNR,
+                    projectKey: action.payload.projectKey,
+                    workflowNodeRun: wnr,
+                    node,
+                });
+                if (stateNR.workflowNodeJobRun) {
+                    ctx.dispatch(new SelectWorkflowNodeRunJob({ jobID: stateNR.workflowNodeJobRun.job.pipeline_action_id }));
+                }
+            })
+        );
     }
 
     @Action(actionWorkflow.CleanWorkflowRun)
@@ -1298,8 +1301,8 @@ export class WorkflowState {
         ctx.setState({
             ...state,
             listRuns: [...state.listRuns.slice(0, index),
-                WorkflowRun.Summary(action.payload.workflowRun),
-                ...state.listRuns.slice(index + 1)]
+            WorkflowRun.Summary(action.payload.workflowRun),
+            ...state.listRuns.slice(index + 1)]
         });
     }
 
