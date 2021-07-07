@@ -334,26 +334,33 @@ func LoadRunsSummaries(db gorp.SqlExecutor, projectkey, workflowname string, off
 
 	if len(tagFilter) > 0 {
 		// Posgres operator: '<@' means 'is contained by' eg. 'ARRAY[2,7] <@ ARRAY[1,7,4,2,6]' ==> returns true
-		query = fmt.Sprintf(`select %s
-		from workflow_run wr
-		join project on wr.project_id = project.id
-		join workflow on wr.workflow_id = workflow.id
-		join (
-			select workflow_run_id, string_agg(all_tags, ',') as tags
-			from (
-				select workflow_run_id, tag || '=' || value "all_tags"
-				from workflow_run_tag
-				order by tag
-			) as all_wr_tags
-			group by workflow_run_id
-		) as tags on wr.id = tags.workflow_run_id
-		where project.projectkey = $1
-		and workflow.name = $2
-		AND wr.to_delete = false
-		and string_to_array($5, ',') <@ string_to_array(tags.tags, ',')
-		order by wr.start desc
-		limit $3 offset $4`, selectedColumn)
-
+		query = fmt.Sprintf(`
+			WITH workflowID as (
+				SELECT workflow.id FROM workflow
+				JOIN project ON project.id = workflow.project_id
+				WHERE workflow.name = $2 AND project.projectkey = $1
+			), 
+			runs as (
+				SELECT %s 
+				FROM workflow_run wr
+				JOIN workflowID ON workflowID.id = wr.workflow_id
+				WHERE wr.to_delete = false
+			),
+			tags as (
+				SELECT workflow_run_id, tag || '=' || value "all_tags" 
+				FROM workflow_run_tag
+				JOIN runs ON runs.id = workflow_run_id
+			),
+			aggTags as (
+				SELECT workflow_run_id, string_agg(all_tags, ',') as tags 
+				FROM tags
+				GROUP BY workflow_run_id
+			)
+			SELECT runs.*
+			FROM runs
+			JOIN aggTags ON aggTags.workflow_run_id = runs.id
+			WHERE string_to_array($5, ',') <@ string_to_array(aggTags.tags, ',') 
+			ORDER BY runs.start DESC OFFSET $4 LIMIT $3`, selectedColumn)
 		var tags []string
 		for k, v := range tagFilter {
 			tags = append(tags, k+"="+v)
