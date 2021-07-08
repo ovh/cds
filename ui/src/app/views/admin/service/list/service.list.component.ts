@@ -56,9 +56,9 @@ export class ServiceListComponent {
                 name: 'common_status',
                 type: ColumnType.LABEL,
                 selector: (c: MonitoringStatusLine) => ({
-                        class: MonitoringStatusLineUtil.color(c),
-                        value: c.status
-                    })
+                    class: MonitoringStatusLineUtil.color(c),
+                    value: c.status
+                })
             },
             <Column<MonitoringStatusLine>>{
                 name: 'common_value',
@@ -84,22 +84,24 @@ export class ServiceListComponent {
                     return line.status.toLowerCase().indexOf(lowerFilter) !== -1;
                 }
                 return line.status.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                line.component.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                line.value.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                line.type.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                (line.service && line.service.toLowerCase().indexOf(lowerFilter) !== -1) ||
-                (line.hostname && line.hostname.toLowerCase().indexOf(lowerFilter) !== -1) ||
-                (line.session && line.session.toLowerCase().indexOf(lowerFilter) !== -1) ||
-                (line.consumer && line.consumer.toLowerCase().indexOf(lowerFilter) !== -1);
+                    line.component.toLowerCase().indexOf(lowerFilter) !== -1 ||
+                    line.value.toLowerCase().indexOf(lowerFilter) !== -1 ||
+                    line.type.toLowerCase().indexOf(lowerFilter) !== -1 ||
+                    (line.service && line.service.toLowerCase().indexOf(lowerFilter) !== -1) ||
+                    (line.hostname && line.hostname.toLowerCase().indexOf(lowerFilter) !== -1) ||
+                    (line.session && line.session.toLowerCase().indexOf(lowerFilter) !== -1) ||
+                    (line.consumer && line.consumer.toLowerCase().indexOf(lowerFilter) !== -1);
             }
         };
 
-        forkJoin(
+        forkJoin([
             this.refreshProfiles(),
             this.refreshStatus(),
             this.refreshServices(),
             this.refreshGoroutines(),
-        ).pipe(finalize(() => this._cd.markForCheck())).subscribe( _ => {
+        ]).pipe(
+            finalize(() => this._cd.markForCheck())
+        ).subscribe(_ => {
             this.status.lines.forEach(g => {
                 if (g.component.startsWith('Global/')) {
                     let type = g.component.slice(7);
@@ -123,7 +125,7 @@ export class ServiceListComponent {
                                 name: type,
                                 value: g.value,
                                 status: g.status,
-                                services: this.services.filter(srv => srv.type === type)
+                                services: this.services.filter(srv => srv.type === type).sort((a, b) => a.name < b.name ? -1 : 1)
                             });
                             break;
                     }
@@ -148,7 +150,7 @@ export class ServiceListComponent {
     refreshServices(): Observable<any> {
         return this._serviceService.getServices().pipe(tap(services => {
             if (services) {
-                this.services = services;
+                this.services = [];
                 services.forEach(s => {
                     s.status = 'OK';
                     if (s.monitoring_status.lines) {
@@ -162,7 +164,8 @@ export class ServiceListComponent {
                             }
                         }
                     }
-                })
+                    this.services.push(s);
+                });
             }
         }));
     }

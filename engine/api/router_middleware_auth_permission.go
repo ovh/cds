@@ -99,9 +99,15 @@ func (api *API) checkJobIDPermissions(ctx context.Context, w http.ResponseWriter
 	if runNodeJob.ExecGroups.HasOneOf(getAPIConsumer(ctx).GetGroupIDs()...) {
 		return nil
 	}
-	if isAdmin(ctx) {
-		trackSudo(ctx, w)
-		return nil
+	if perm == sdk.PermissionRead {
+		if isMaintainer(ctx) {
+			return nil
+		}
+	} else {
+		if isAdmin(ctx) {
+			trackSudo(ctx, w)
+			return nil
+		}
 	}
 
 	return sdk.WrapError(sdk.ErrForbidden, "not authorized for job %s", jobID)
