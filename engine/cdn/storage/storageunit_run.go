@@ -129,7 +129,16 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, db *gorp.DbMap, dest 
 
 	if has {
 		log.Info(ctx, "item %s has been pushed to %s with deduplication", item.ID, dest.Name())
-		return nil
+		tx, err := db.Begin()
+		if err != nil {
+			return sdk.WrapError(err, "unable to start transaction")
+		}
+		defer tx.Rollback() //nolint
+		// Save in database that the item is complete for the storage unit
+		if err := InsertItemUnit(ctx, x.m, tx, iu); err != nil {
+			return err
+		}
+		return sdk.WrapError(tx.Commit(), "unable to commit tx")
 	}
 
 	t1 := time.Now()
@@ -140,7 +149,7 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, db *gorp.DbMap, dest 
 		return err
 	}
 	if writer == nil {
-		return nil
+		return sdk.NewErrorFrom(sdk.ErrNotFound, "unable to get writer")
 	}
 	rateLimitWriter := shapeio.NewWriter(writer)
 	rateLimitWriter.SetRateLimit(dest.SyncBandwidth())
