@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -299,6 +300,7 @@ func (n *Buffer) dirSize() (int64, error) {
 	defer dial.Close()   // nolint
 	defer target.Close() //
 	n.pingStatus = sdk.MonitoringStatusOK
+
 	return n.computeDirSizeRecursive(target, ".")
 }
 
@@ -309,7 +311,7 @@ func (n *Buffer) computeDirSizeRecursive(v *gonfs.Target, path string) (int64, e
 		return 0, err
 	}
 	for _, e := range entries {
-		if e.FileName == "." || e.FileName == ".." {
+		if strings.HasPrefix(e.FileName, ".") {
 			continue
 		}
 		if e.IsDir() {
