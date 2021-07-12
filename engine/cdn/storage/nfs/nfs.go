@@ -186,8 +186,8 @@ func (n *Buffer) Status(_ context.Context) []sdk.MonitoringStatusLine {
 			Status:    n.pingStatus,
 		},
 		{
-			Component: fmt.Sprintf("storage/%s/redis_dbsize", n.Name()),
-			Value:     fmt.Sprintf("%d keys", n.size),
+			Component: fmt.Sprintf("storage/%s/size", n.Name()),
+			Value:     fmt.Sprintf("%d octets", n.size),
 			Status:    sdk.MonitoringStatusOK,
 		}}
 }
