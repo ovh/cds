@@ -32,7 +32,7 @@ func (s *Service) postUploadHandler() service.Handler {
 			return sdk.WrapError(err, "worker key: %d", len(workerData.PrivateKey))
 		}
 
-		if err := s.storeFile(ctx, signature, r.Body); err != nil {
+		if err := s.storeFile(ctx, signature, r.Body, StoreFileOptions{}); err != nil {
 			return err
 		}
 		return nil

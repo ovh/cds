@@ -439,6 +439,7 @@ type Raw interface {
 	DeleteJSON(ctx context.Context, path string, out interface{}, mods ...RequestModifier) (int, error)
 	RequestJSON(ctx context.Context, method, path string, in interface{}, out interface{}, mods ...RequestModifier) ([]byte, http.Header, int, error)
 	Request(ctx context.Context, method string, path string, body io.Reader, mods ...RequestModifier) ([]byte, http.Header, int, error)
+	Stream(ctx context.Context, httpClient HTTPClient, method string, path string, body io.Reader, mods ...RequestModifier) (io.ReadCloser, http.Header, int, error)
 	HTTPClient() *http.Client
 	HTTPNoTimeoutClient() *http.Client
 	HTTPWebsocketClient() *websocket.Dialer

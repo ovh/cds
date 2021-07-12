@@ -247,7 +247,7 @@ func TestGetItemArtifactDownloadHandler(t *testing.T) {
 		},
 	}
 
-	require.NoError(t, s.storeFile(ctx, sig, f))
+	require.NoError(t, s.storeFile(ctx, sig, f, StoreFileOptions{}))
 
 	signer, err := authentication.NewSigner("cdn-test", test.SigningKey)
 	require.NoError(t, err)
