@@ -3,13 +3,14 @@ package cdn
 import (
 	"context"
 	"fmt"
-	"github.com/gorilla/mux"
-	"github.com/ovh/cds/sdk"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 
+	"github.com/gorilla/mux"
+
 	"github.com/ovh/cds/engine/service"
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdn"
 )
 
