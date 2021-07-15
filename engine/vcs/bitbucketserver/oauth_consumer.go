@@ -66,21 +66,13 @@ func (g *bitbucketConsumer) AuthorizeToken(ctx context.Context, token, verifier 
 	return accessToken.Token(), accessToken.Secret(), nil
 }
 
-//keep client in memory
-var instancesAuthorizedClient = map[string]*bitbucketClient{}
-
 //GetAuthorized returns an authorized client
 func (g *bitbucketConsumer) GetAuthorizedClient(ctx context.Context, accessToken, accessTokenSecret string, _ int64) (sdk.VCSAuthorizedClient, error) {
-	c, ok := instancesAuthorizedClient[accessToken]
-	if !ok {
-		c = &bitbucketClient{
-			consumer:          *g,
-			accessToken:       accessToken,
-			accessTokenSecret: accessTokenSecret,
-			token:             g.token,
-			username:          g.username,
-		}
-		instancesAuthorizedClient[accessToken] = c
-	}
-	return c, nil
+	return &bitbucketClient{
+		consumer:          *g,
+		accessToken:       accessToken,
+		accessTokenSecret: accessTokenSecret,
+		token:             g.token,
+		username:          g.username,
+	}, nil
 }
