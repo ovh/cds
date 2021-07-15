@@ -156,7 +156,7 @@ func NewWorkflow(ctx context.Context, w sdk.Workflow, version string, opts ...Ex
 		exportedWorkflow.HistoryLength = &w.HistoryLength
 	}
 
-	if w.RetentionPolicy != "" && w.RetentionPolicy != sdk.DefaultRetentionRule {
+	if w.RetentionPolicy != "" {
 		exportedWorkflow.RetentionPolicy = &w.RetentionPolicy
 	}
 

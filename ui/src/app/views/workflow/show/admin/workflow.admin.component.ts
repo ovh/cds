@@ -39,6 +39,8 @@ import { DragulaService } from 'ng2-dragula-sgu';
 import { forkJoin, Observable, Subscription } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
 import { ProjectIntegration } from 'app/model/integration.model';
+import { ConfigService } from 'app/service/config/config.service';
+import { APIConfig } from 'app/model/config.service';
 
 declare let CodeMirror: any;
 
@@ -72,7 +74,7 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
         }
     }
     get workflow() {
-        return this._workflow
+        return this._workflow;
     }
 
     @Input() editMode: boolean;
@@ -97,6 +99,8 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
     filteredIntegrations: Array<ProjectIntegration>;
     nbEventIntegrations: number;
     selectedIntegration: ProjectIntegration;
+
+    apiConfig: APIConfig;
 
     @ViewChild('updateWarning')
     private warningUpdateModal: WarningModalComponent;
@@ -136,8 +140,14 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
         private _dragularService: DragulaService,
         private _theme: ThemeStore,
         private _modalService: SuiModalService,
-        private _eventService: EventService
+        private _eventService: EventService,
+        private _configService: ConfigService
     ) {
+        this._configService.getAPIConfig().subscribe(c => {
+            this.apiConfig = c;
+            this._cd.markForCheck();
+        });
+
         this._dragularService.createGroup('bag-tag', {
             accepts(el, target, source, sibling) {
                 return sibling !== null;
@@ -177,7 +187,7 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
             lineWrapping: true,
             lineNumbers: true,
             autoRefresh: true,
-            gutters: ['CodeMirror-lint-markers'],
+            gutters: ['CodeMirror-lint-markers']
         };
 
         this.themeSubscription = this._theme.get().subscribe(t => {

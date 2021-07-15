@@ -49,6 +49,10 @@ a.disabled:hover {
     overflow: hidden !important;
 }
 
+app-workflow-admin .CodeMirror-scroll {
+  min-height: 180px;
+}
+
 .fullheight {
     .CodeMirror {
         height: 100% !important;
@@ -129,7 +133,7 @@ body ::-webkit-scrollbar-thumb {
 
 .ui.selection.dropdown {
     width: 100%;
-    min-width: 0px;
+    min-width: 0;
 }
 
 .ui.selection.classic.dropdown {
@@ -328,14 +332,14 @@ body ::-webkit-scrollbar-thumb {
     }
 
     .ui.right.dropdown {
-        border-bottom-left-radius: 0px;
-        border-top-left-radius: 0px;
+        border-bottom-left-radius: 0;
+        border-top-left-radius: 0;
         border-left: none;
     }
 
     .ui.left.dropdown {
-        border-bottom-right-radius: 0px;
-        border-top-right-radius: 0px;
+        border-bottom-right-radius: 0;
+        border-top-right-radius: 0;
     }
 }
 
@@ -362,7 +366,7 @@ body ::-webkit-scrollbar-thumb {
     padding-right: 1em;
 
     >.text>.flag {
-        margin-right: 0em;
+        margin-right: 0;
     }
 }
 

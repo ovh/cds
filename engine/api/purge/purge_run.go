@@ -171,12 +171,17 @@ func applyRetentionPolicyOnRun(ctx context.Context, db *gorp.DbMap, wf sdk.Workf
 		return true, err
 	}
 
+	retentionPolicy := defaultRunRetentionPolicy
+	if wf.RetentionPolicy != "" {
+		retentionPolicy = wf.RetentionPolicy
+	}
+
 	// Enabling strict checks on variables to prevent errors on rule definition
 	if err := luaCheck.EnableStrict(); err != nil {
 		return true, sdk.WithStack(err)
 	}
 
-	if err := luaCheck.Perform(wf.RetentionPolicy); err != nil {
+	if err := luaCheck.Perform(retentionPolicy); err != nil {
 		return true, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to apply retention policy on workflow %s/%s: %v", wf.ProjectKey, wf.Name, err)
 	}
 

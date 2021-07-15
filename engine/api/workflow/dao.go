@@ -312,18 +312,15 @@ func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 	if w.HistoryLength == 0 {
 		w.HistoryLength = sdk.DefaultHistoryLength
 	}
-	if w.RetentionPolicy == "" {
-		w.RetentionPolicy = sdk.DefaultRetentionRule
-	}
 	w.MaxRuns = maxRuns
 
 	w.LastModified = time.Now()
 	if err := db.QueryRow(`INSERT INTO workflow (
-		name, description, icon, project_id, history_length, from_repository, purge_tags, workflow_data, metadata, retention_policy, max_runs
+		name, description, icon, project_id, history_length, from_repository, purge_tags, workflow_data, metadata, max_runs
 	)
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 	RETURNING id`,
-		w.Name, w.Description, w.Icon, w.ProjectID, w.HistoryLength, w.FromRepository, w.PurgeTags, w.WorkflowData, w.Metadata, w.RetentionPolicy, w.MaxRuns).Scan(&w.ID); err != nil {
+		w.Name, w.Description, w.Icon, w.ProjectID, w.HistoryLength, w.FromRepository, w.PurgeTags, w.WorkflowData, w.Metadata, w.MaxRuns).Scan(&w.ID); err != nil {
 		return sdk.WrapError(err, "Unable to insert workflow %s/%s", w.ProjectKey, w.Name)
 	}
 
@@ -635,15 +632,6 @@ func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 			wf.HistoryLength = sdk.DefaultHistoryLength
 		} else {
 			wf.HistoryLength = oldWf.HistoryLength
-		}
-	}
-
-	// Set or keep RetentionPolicy
-	if wf.RetentionPolicy == "" {
-		if oldWf.RetentionPolicy == "" {
-			wf.RetentionPolicy = sdk.DefaultRetentionRule
-		} else {
-			wf.RetentionPolicy = oldWf.RetentionPolicy
 		}
 	}
 
