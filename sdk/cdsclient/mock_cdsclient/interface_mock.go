@@ -7480,6 +7480,28 @@ func (mr *MockInterfaceMockRecorder) ServicesByType(stype interface{}) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ServicesByType", reflect.TypeOf((*MockInterface)(nil).ServicesByType), stype)
 }
 
+// Stream mocks base method.
+func (m *MockInterface) Stream(ctx context.Context, httpClient cdsclient.HTTPClient, method, path string, body io.Reader, mods ...cdsclient.RequestModifier) (io.ReadCloser, http.Header, int, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, httpClient, method, path, body}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "Stream", varargs...)
+	ret0, _ := ret[0].(io.ReadCloser)
+	ret1, _ := ret[1].(http.Header)
+	ret2, _ := ret[2].(int)
+	ret3, _ := ret[3].(error)
+	return ret0, ret1, ret2, ret3
+}
+
+// Stream indicates an expected call of Stream.
+func (mr *MockInterfaceMockRecorder) Stream(ctx, httpClient, method, path, body interface{}, mods ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, httpClient, method, path, body}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Stream", reflect.TypeOf((*MockInterface)(nil).Stream), varargs...)
+}
+
 // TemplateApply mocks base method.
 func (m *MockInterface) TemplateApply(groupName, templateSlug string, req sdk.WorkflowTemplateRequest) (*tar.Reader, error) {
 	m.ctrl.T.Helper()
@@ -9778,6 +9800,28 @@ func (mr *MockRawMockRecorder) RequestJSON(ctx, method, path, in, out interface{
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, method, path, in, out}, mods...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RequestJSON", reflect.TypeOf((*MockRaw)(nil).RequestJSON), varargs...)
+}
+
+// Stream mocks base method.
+func (m *MockRaw) Stream(ctx context.Context, httpClient cdsclient.HTTPClient, method, path string, body io.Reader, mods ...cdsclient.RequestModifier) (io.ReadCloser, http.Header, int, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, httpClient, method, path, body}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "Stream", varargs...)
+	ret0, _ := ret[0].(io.ReadCloser)
+	ret1, _ := ret[1].(http.Header)
+	ret2, _ := ret[2].(int)
+	ret3, _ := ret[3].(error)
+	return ret0, ret1, ret2, ret3
+}
+
+// Stream indicates an expected call of Stream.
+func (mr *MockRawMockRecorder) Stream(ctx, httpClient, method, path, body interface{}, mods ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, httpClient, method, path, body}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Stream", reflect.TypeOf((*MockRaw)(nil).Stream), varargs...)
 }
 
 // MockGRPCPluginsClient is a mock of GRPCPluginsClient interface.

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"regexp"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdn"
 )
 
 var workflowArtifactCmd = cli.Command{
@@ -23,7 +25,86 @@ func workflowArtifact() *cobra.Command {
 	return cli.NewCommand(workflowArtifactCmd, nil, []*cobra.Command{
 		cli.NewListCommand(workflowArtifactListCmd, workflowArtifactListRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(workflowArtifactDownloadCmd, workflowArtifactDownloadRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(workflowArtifactCDNMigrateCmd, workflowArtifactCDNMigrate, nil, withAllCommandModifiers()...),
 	})
+}
+
+var workflowArtifactCDNMigrateCmd = cli.Command{
+	Name:  "cdn-migrate",
+	Short: "Migrate artifact into CDN",
+	Long: `Migrate artifact from CDS to CDN
+cdsctl workflow artifact cdn-migrate <project_key> <workflow_name> <run_number>
+
+CDN does not manage artifact with same name inside a run. They will be renamed <num>_<artifact_name>
+Migrated artifacts will not be visible with cdsctl workflow result command
+`,
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+		{Name: _WorkflowName},
+	},
+	Args: []cli.Arg{
+		{Name: "number"},
+	},
+}
+
+func workflowArtifactCDNMigrate(v cli.Values) error {
+	number, err := strconv.ParseInt(v.GetString("number"), 10, 64)
+	if err != nil {
+		return cli.NewError("number parameter have to be an integer")
+	}
+	projKey := v.GetString(_ProjectKey)
+	wName := v.GetString(_WorkflowName)
+
+	run, err := client.WorkflowRunGet(projKey, wName, number)
+	if err != nil {
+		return err
+	}
+
+	workflowArtifacts, err := client.WorkflowRunArtifacts(projKey, wName, number)
+	if err != nil {
+		return err
+	}
+
+	artName := make(map[string]int64)
+	for _, art := range workflowArtifacts {
+		prefix := ""
+		nb, has := artName[art.Name]
+		if has {
+			prefix = fmt.Sprintf("%d_", nb)
+			fmt.Printf("%s/%s will be renamed to %s%s\n", art.Name, art.Tag, prefix, art.Name)
+
+		}
+		artName[art.Name] = nb + 1
+		artName := prefix + art.Name
+		// Call cdn to migrate
+		sign := cdn.Signature{
+			ProjectKey:   projKey,
+			WorkflowName: wName,
+			WorkflowID:   run.WorkflowID,
+			RunID:        art.WorkflowID,
+			RunNumber:    run.Number,
+			NodeRunID:    art.WorkflowNodeRunID,
+			JobName:      "",
+			JobID:        0,
+			Worker: &cdn.SignatureWorker{
+				FileName:      artName,
+				FilePerm:      art.Perm,
+				RunResultType: string(sdk.CDNTypeItemRunResult),
+			},
+		}
+
+		// call cdn
+		url := fmt.Sprintf("/migrate/artifact/%s/%s/%d", projKey, wName, art.ID)
+		bts, _ := json.Marshal(sign)
+		if bts, err := client.ServiceCallPOST(sdk.TypeCDN, url, bts); err != nil {
+			fmt.Printf("unable to migrate %s: %s: %v\n", art.Name, string(bts), err)
+			continue
+		}
+		fmt.Printf("artifact %s migrated\n", artName)
+
+	}
+	fmt.Printf("Migration done.")
+	return nil
 }
 
 var workflowArtifactListCmd = cli.Command{

@@ -19,7 +19,11 @@ import (
 	"github.com/ovh/cds/sdk/cdn"
 )
 
-func (s *Service) storeFile(ctx context.Context, sig cdn.Signature, reader io.ReadCloser) error {
+type StoreFileOptions struct {
+	DisableApiRunResult bool
+}
+
+func (s *Service) storeFile(ctx context.Context, sig cdn.Signature, reader io.ReadCloser, storeFileOptions StoreFileOptions) error {
 	var itemType sdk.CDNItemType
 	switch {
 	case sig.Worker.FileName != "":
@@ -57,24 +61,26 @@ func (s *Service) storeFile(ctx context.Context, sig cdn.Signature, reader io.Re
 		Status:     sdk.CDNStatusItemIncoming,
 	}
 
-	switch itemType {
-	case sdk.CDNTypeItemRunResult:
-		// Call CDS API to check if we can upload the run result
-		runResultApiRef, _ := it.GetCDNRunResultApiRef()
+	if !storeFileOptions.DisableApiRunResult {
+		switch itemType {
+		case sdk.CDNTypeItemRunResult:
+			// Call CDS API to check if we can upload the run result
+			runResultApiRef, _ := it.GetCDNRunResultApiRef()
 
-		runResultCheck := sdk.WorkflowRunResultCheck{
-			Name:       runResultApiRef.ArtifactName,
-			ResultType: runResultApiRef.RunResultType,
-			RunID:      runResultApiRef.RunID,
-			RunNodeID:  runResultApiRef.RunNodeID,
-			RunJobID:   runResultApiRef.RunJobID,
-		}
-		code, err := s.Client.QueueWorkflowRunResultCheck(ctx, sig.JobID, runResultCheck)
-		if err != nil {
-			if code == http.StatusConflict {
-				return sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to upload the same file twice")
+			runResultCheck := sdk.WorkflowRunResultCheck{
+				Name:       runResultApiRef.ArtifactName,
+				ResultType: runResultApiRef.RunResultType,
+				RunID:      runResultApiRef.RunID,
+				RunNodeID:  runResultApiRef.RunNodeID,
+				RunJobID:   runResultApiRef.RunJobID,
 			}
-			return err
+			code, err := s.Client.QueueWorkflowRunResultCheck(ctx, sig.JobID, runResultCheck)
+			if err != nil {
+				if code == http.StatusConflict {
+					return sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to upload the same file twice")
+				}
+				return err
+			}
 		}
 	}
 
@@ -138,42 +144,44 @@ func (s *Service) storeFile(ctx context.Context, sig cdn.Signature, reader io.Re
 		return err
 	}
 
-	runResultApiRef, _ := it.GetCDNRunResultApiRef()
-	switch itemType {
-	case sdk.CDNTypeItemRunResult:
-		var result interface{}
-		switch runResultApiRef.RunResultType {
-		case sdk.WorkflowRunResultTypeArtifact:
-			result = sdk.WorkflowRunResultArtifact{
-				Name:       apiRef.ToFilename(),
-				Size:       it.Size,
-				MD5:        it.MD5,
-				CDNRefHash: it.APIRefHash,
-				Perm:       runResultApiRef.Perm,
+	if !storeFileOptions.DisableApiRunResult {
+		runResultApiRef, _ := it.GetCDNRunResultApiRef()
+		switch itemType {
+		case sdk.CDNTypeItemRunResult:
+			var result interface{}
+			switch runResultApiRef.RunResultType {
+			case sdk.WorkflowRunResultTypeArtifact:
+				result = sdk.WorkflowRunResultArtifact{
+					Name:       apiRef.ToFilename(),
+					Size:       it.Size,
+					MD5:        it.MD5,
+					CDNRefHash: it.APIRefHash,
+					Perm:       runResultApiRef.Perm,
+				}
+			case sdk.WorkflowRunResultTypeCoverage:
+				result = sdk.WorkflowRunResultCoverage{
+					Name:       apiRef.ToFilename(),
+					Size:       it.Size,
+					MD5:        it.MD5,
+					CDNRefHash: it.APIRefHash,
+					Perm:       runResultApiRef.Perm,
+				}
 			}
-		case sdk.WorkflowRunResultTypeCoverage:
-			result = sdk.WorkflowRunResultCoverage{
-				Name:       apiRef.ToFilename(),
-				Size:       it.Size,
-				MD5:        it.MD5,
-				CDNRefHash: it.APIRefHash,
-				Perm:       runResultApiRef.Perm,
-			}
-		}
 
-		bts, err := json.Marshal(result)
-		if err != nil {
-			return sdk.WithStack(err)
-		}
-		wrResult := sdk.WorkflowRunResult{
-			WorkflowRunID:     sig.RunID,
-			WorkflowNodeRunID: sig.NodeRunID,
-			WorkflowRunJobID:  sig.JobID,
-			Type:              runResultApiRef.RunResultType,
-			DataRaw:           json.RawMessage(bts),
-		}
-		if err := s.Client.QueueWorkflowRunResultsAdd(ctx, sig.JobID, wrResult); err != nil {
-			return err
+			bts, err := json.Marshal(result)
+			if err != nil {
+				return sdk.WithStack(err)
+			}
+			wrResult := sdk.WorkflowRunResult{
+				WorkflowRunID:     sig.RunID,
+				WorkflowNodeRunID: sig.NodeRunID,
+				WorkflowRunJobID:  sig.JobID,
+				Type:              runResultApiRef.RunResultType,
+				DataRaw:           json.RawMessage(bts),
+			}
+			if err := s.Client.QueueWorkflowRunResultsAdd(ctx, sig.JobID, wrResult); err != nil {
+				return err
+			}
 		}
 	}
 

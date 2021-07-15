@@ -36,6 +36,8 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Handle("/item/{type}/{apiRef}/download/{unit}", nil, r.GET(s.getItemDownloadInUnitHandler, service.OverrideAuth(s.itemAccessMiddleware)))
 	r.Handle("/item/{type}/{apiRef}/lines", nil, r.GET(s.getItemLogsLinesHandler, service.OverrideAuth(s.itemAccessMiddleware)))
 
+	r.Handle("/migrate/artifact/{projectKey}/{workflowName}/{artifactID}", nil, r.POST(s.migrateArtifactInCDNHandler))
+
 	r.Handle("/unit", nil, r.GET(s.getUnitsHandler))
 	r.Handle("/unit/{id}", nil, r.DELETE(s.deleteUnitHandler))
 	r.Handle("/unit/{id}/item", nil, r.DELETE(s.markItemUnitAsDeleteHandler))
