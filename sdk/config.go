@@ -11,6 +11,10 @@ type ConfigUser struct {
 	URLAPI string `json:"url.api"`
 }
 
+type APIConfig struct {
+	DefaultRunRetentionPolicy string `json:"default_run_retention_policy"`
+}
+
 type TCPServer struct {
 	Addr               string `toml:"addr" default:"" comment:"Listen address without port, example: 127.0.0.1" json:"addr"`
 	Port               int    `toml:"port" default:"8090" json:"port"`

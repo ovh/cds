@@ -48,3 +48,11 @@ func (api *API) ConfigCDNHandler() service.Handler {
 			http.StatusOK)
 	}
 }
+
+func (api *API) ConfigAPIHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		return service.WriteJSON(w, sdk.APIConfig{
+			DefaultRunRetentionPolicy: api.Config.Workflow.DefaultRetentionPolicy,
+		}, http.StatusOK)
+	}
+}

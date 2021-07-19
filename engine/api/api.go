@@ -202,7 +202,8 @@ type Configuration struct {
 		Error   string `toml:"error" comment:"Help displayed to user on each error. Warning: this message could be view by anonymous user. Markdown accepted." json:"error" default:""`
 	} `toml:"help" comment:"######################\n 'Help' informations \n######################" json:"help"`
 	Workflow struct {
-		MaxRuns int64 `toml:"maxRuns" comment:"Maximum of runs by workflow" json:"maxRuns" default:"255"`
+		MaxRuns                int64  `toml:"maxRuns" comment:"Maximum of runs by workflow" json:"maxRuns" default:"255"`
+		DefaultRetentionPolicy string `toml:"defaultRetentionPolicy" comment:"Default rule for workflow run retention policy, this rule can be overridden on each workflow.\n Example: 'return run_days_before < 365' keeps runs for one year." json:"defaultRetentionPolicy" default:"return run_days_before < 365"`
 	} `toml:"workflow" comment:"######################\n 'Workflow' global configuration \n######################" json:"workflow"`
 }
 
@@ -814,6 +815,10 @@ func (a *API) Serve(ctx context.Context) error {
 		func(ctx context.Context) {
 			metrics.Init(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper))
 		})
+	// init purge
+	if err := purge.SetDefaultRunRetentionPolicy(a.Config.Workflow.DefaultRetentionPolicy); err != nil {
+		return err
+	}
 	a.GoRoutines.Run(ctx, "Purge-MarkRuns",
 		func(ctx context.Context) {
 			purge.MarkRunsAsDelete(ctx, a.Cache, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Metrics.WorkflowRunsMarkToDelete)

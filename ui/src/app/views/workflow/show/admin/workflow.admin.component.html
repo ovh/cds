@@ -135,7 +135,7 @@
                             [popupText]="'workflow_retention_maxruns_admin' | translate"></i>
                     </label>
                 </div>
-                <ng-container *ngIf="retentionRunsPolicyEnabled">
+                <ng-container *ngIf="retentionRunsPolicyEnabled && apiConfig">
                     <div class="field">
                         <label>
                             {{ 'workflow_retention_policy' | translate }}
@@ -152,7 +152,8 @@
                                 [routerLink]="['/docs', 'docs', 'concepts', 'workflow', 'retention']">
                                 here</a>.
                         </ng-template>
-                        <codemirror name="policy" (change)="changeCodeMirror(codemirrorRetentionPolicy)"
+                        <codemirror name="policy" [placeholder]="apiConfig?.default_run_retention_policy"
+                                    (change)="changeCodeMirror(codemirrorRetentionPolicy)"
                             [(ngModel)]="workflow.retention_policy" [config]="codeMirrorConfig"
                             #codemirrorRetentionPolicy></codemirror>
                     </div>

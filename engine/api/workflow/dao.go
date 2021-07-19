@@ -312,9 +312,6 @@ func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 	if w.HistoryLength == 0 {
 		w.HistoryLength = sdk.DefaultHistoryLength
 	}
-	if w.RetentionPolicy == "" {
-		w.RetentionPolicy = sdk.DefaultRetentionRule
-	}
 	w.MaxRuns = maxRuns
 
 	w.LastModified = time.Now()
@@ -635,15 +632,6 @@ func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 			wf.HistoryLength = sdk.DefaultHistoryLength
 		} else {
 			wf.HistoryLength = oldWf.HistoryLength
-		}
-	}
-
-	// Set or keep RetentionPolicy
-	if wf.RetentionPolicy == "" {
-		if oldWf.RetentionPolicy == "" {
-			wf.RetentionPolicy = sdk.DefaultRetentionRule
-		} else {
-			wf.RetentionPolicy = oldWf.RetentionPolicy
 		}
 	}
 

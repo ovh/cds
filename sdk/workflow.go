@@ -13,8 +13,7 @@ import (
 
 // DefaultHistoryLength is the default history length
 const (
-	DefaultHistoryLength int64  = 20
-	DefaultRetentionRule string = "return (git_branch_exist == \"false\" and run_days_before < 2) or run_days_before < 365"
+	DefaultHistoryLength int64 = 20
 )
 
 // ColorRegexp represent the regexp for a format to hexadecimal color
