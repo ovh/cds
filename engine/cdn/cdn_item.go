@@ -291,7 +291,7 @@ func (s *Service) getItemLogValue(ctx context.Context, t sdk.CDNItemType, apiRef
 	}
 
 	log.Debug(ctx, "getItemLogValue> Getting logs from cache")
-	return it, int64(linesCount), s.LogCache.NewReader(it.ID, opts.format, opts.from, opts.size, opts.sort), filename, nil
+	return it, int64(linesCount), s.LogCache.NewReader(*it, opts.format, opts.from, opts.size, opts.sort), filename, nil
 }
 
 func (s *Service) pushItemLogIntoCache(ctx context.Context, it sdk.CDNItem, unitName string) error {

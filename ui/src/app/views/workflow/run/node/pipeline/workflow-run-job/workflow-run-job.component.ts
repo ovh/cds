@@ -11,7 +11,7 @@ import { ProjectState } from 'app/store/project.state';
 import { WorkflowState } from 'app/store/workflow.state';
 import * as moment from 'moment';
 import { from, interval, Subject, Subscription } from 'rxjs';
-import { delay, concatMap, retryWhen } from 'rxjs/operators';
+import { concatMap, delay, retryWhen } from 'rxjs/operators';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 import { WorkflowRunJobVariableComponent } from '../variables/job.variables.component';
 
@@ -117,7 +117,7 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     async onNodeJobRunChange(data: WorkflowNodeJobRun) {
-        if (!data) {
+        if (!data?.job?.step_status) {
             return;
         }
         this._nodeJobRun = data;
@@ -208,7 +208,7 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
     selectTab(i: number): void {
         this.currentTabIndex = i;
         this._cd.markForCheck();
-        this.loadDataForCurrentTab();
+        this.loadDataForCurrentTab().then(() => {});
     }
 
     clickMode(mode: DisplayMode): void {
@@ -235,12 +235,12 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
             results.forEach(r => {
                 let steporder = links?.datas?.find(d => d.api_ref === r.api_ref)?.step_order + 1;
                 if (!steporder) {
-                    return
+                    return;
                 }
                 this.steps[steporder].totalLinesCount = r.lines_count;
                 this.steps[steporder].open = false;
                 this.steps[steporder].loading = false;
-            })
+            });
         }
 
         this.computeStepFirstLineNumbers();
@@ -260,6 +260,10 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
 
     async loadSpawnInfo() {
         if (!this.nodeJobRun || PipelineStatus.isDone(this.nodeJobRun.status)) {
+            if (PipelineStatus.isDone(this.nodeJobRun?.status)) {
+                // cancel the interval
+                this.pollingSpawnInfoSubscription.unsubscribe();
+            }
             return;
         }
 
@@ -270,6 +274,7 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
         let result = await this._workflowService.getNodeJobRunInfo(projectKey, workflowName,
             runNumber, this.nodeJobRun.workflow_node_run_id, this.nodeJobRun.id).toPromise();
         this.setSpawnInfos(result);
+
     }
 
     setSpawnInfos(is: Array<SpawnInfo>): void {
@@ -316,15 +321,15 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
         }
     }
 
-    formatDuration(from: moment.Moment, to?: moment.Moment): string {
-        return DurationService.duration(from.toDate(), to ? to.toDate() : moment().toDate());
+    formatDuration(fromM: moment.Moment, to?: moment.Moment): string {
+        return DurationService.duration(fromM.toDate(), to ? to.toDate() : moment().toDate());
     }
 
     async clickExpandStepDown(index: number) {
         let step = this.steps[index];
         let result = await this._workflowService.getLogLines(step.link,
             { offset: `${step.lines[step.lines.length - 1].number + 1}`, limit: `${this.expandLoadLinesCount}` }
-        ).toPromise()
+        ).toPromise();
         this.steps[index].totalLinesCount = result.totalCount;
         this.steps[index].lines = step.lines.concat(result.lines.filter(l => !step.endLines.find(line => line.number === l.number)));
         this._cd.markForCheck();
@@ -336,7 +341,8 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
             { offset: `-${step.endLines.length + this.expandLoadLinesCount}`, limit: `${this.expandLoadLinesCount}` }
         ).toPromise();
         this.steps[index].totalLinesCount = result.totalCount;
-        this.steps[index].endLines = result.lines.filter(l => !step.lines.find(line => line.number === l.number) && !step.endLines.find(line => line.number === l.number)).concat(step.endLines);
+        this.steps[index].endLines = result.lines.filter(l => !step.lines.find(line => line.number === l.number)
+            && !step.endLines.find(line => line.number === l.number)).concat(step.endLines);
         this._cd.markForCheck();
     }
 
@@ -362,6 +368,21 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
         }
     }
 
+    receiveLogs(l: CDNLine): void {
+        if (this.steps) {
+            this.steps.forEach(v => {
+               if (v?.link?.api_ref === l.api_ref_hash) {
+                   if (!v.lines.find(line => line.number === l.number)
+                       && !v.endLines.find(line => line.number === l.number)) {
+                       v.endLines.push(l);
+                       v.totalLinesCount++;
+                       this._cd.markForCheck();
+                   }
+               }
+            });
+        }
+    }
+
     async startListenLastActiveStep() {
         // Skip if only informations step exists
         if (this.steps.length <= 1) {
@@ -380,45 +401,22 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
             this.nodeJobRun.workflow_node_run_id, this.nodeJobRun.id, this.nodeJobRun.job.step_status.length - 1).toPromise();
         let result = await this._workflowService.getLogLines(link, { limit: `${this.initLoadLinesCount}` }).toPromise();
         this.steps[this.steps.length - 1].link = link;
-        this.steps[this.steps.length - 1].lines = result.lines;
+
+        // Websocket may have already sent endlines
+        if (result.lines) {
+            this.steps[this.steps.length - 1].lines = [];
+            for (let i = 0; i < result.lines.length; i++) {
+                let lineFound = this.steps[this.steps.length - 1].endLines.find(line => line.number === result.lines[i].number);
+                if (lineFound) {
+                    break;
+                }
+                this.steps[this.steps.length - 1].lines.push(result.lines[i]);
+            }
+        }
         this.steps[this.steps.length - 1].totalLinesCount = result.totalCount;
         this.steps[this.steps.length - 1].open = true;
         this.steps[this.steps.length - 1].loading = false;
         this._cd.markForCheck();
-
-        const protocol = window.location.protocol.replace('http', 'ws');
-        const host = window.location.host;
-        const href = this._router['location']._baseHref;
-
-        this.websocket = webSocket({
-            url: `${protocol}//${host}${href}/cdscdn/item/stream`,
-            openObserver: {
-                next: value => {
-                    if (value.type === 'open') {
-                        this.websocket.next(<CDNStreamFilter>{
-                            item_type: link.item_type,
-                            api_ref: link.api_ref,
-                            offset: result.totalCount > 0 ? -5 : 0
-                        });
-                    }
-                }
-            }
-        });
-
-        this.websocketSubscription = this.websocket
-            .pipe(retryWhen(errors => errors.pipe(delay(2000))))
-            .subscribe((l: CDNLine) => {
-                if (!this.steps[this.steps.length - 1].lines.find(line => line.number === l.number)
-                    && !this.steps[this.steps.length - 1].endLines.find(line => line.number === l.number)) {
-                    this.steps[this.steps.length - 1].endLines.push(l);
-                    this.steps[this.steps.length - 1].totalLinesCount++;
-                    this._cd.markForCheck();
-                }
-            }, (err) => {
-                console.error('Error: ', err)
-            }, () => {
-                console.warn('Websocket Completed');
-            });
     }
 
     async loadOrListenService() {
@@ -482,7 +480,7 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
                     this._cd.markForCheck();
                 }
             }, (err) => {
-                console.error('Error: ', err)
+                console.error('Error: ', err);
             }, () => {
                 console.warn('Websocket Completed');
             });
@@ -507,7 +505,8 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
             limit: `${this.expandLoadLinesCount}`
         }).toPromise();
         this.services[index].totalLinesCount = result.totalCount;
-        this.services[index].endLines = result.lines.filter(l => !service.lines.find(line => line.number === l.number) && !service.endLines.find(line => line.number === l.number)).concat(service.endLines);
+        this.services[index].endLines = result.lines.filter(l => !service.lines.find(line => line.number === l.number)
+            && !service.endLines.find(line => line.number === l.number)).concat(service.endLines);
         this._cd.markForCheck();
     }
 
@@ -520,7 +519,7 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
     async clickOpen(step: LogBlock) {
         if (step?.lines?.length > 0 || step.open) {
             step.clickOpen();
-            return
+            return;
         }
 
         step.loading = true;
@@ -533,6 +532,6 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
         step.totalLinesCount = results[0].totalCount;
         step.open = true;
         step.loading = false;
-        this._cd.markForCheck()
+        this._cd.markForCheck();
     }
 }
