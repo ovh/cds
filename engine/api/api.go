@@ -204,6 +204,7 @@ type Configuration struct {
 	Workflow struct {
 		MaxRuns                int64  `toml:"maxRuns" comment:"Maximum of runs by workflow" json:"maxRuns" default:"255"`
 		DefaultRetentionPolicy string `toml:"defaultRetentionPolicy" comment:"Default rule for workflow run retention policy, this rule can be overridden on each workflow.\n Example: 'return run_days_before < 365' keeps runs for one year." json:"defaultRetentionPolicy" default:"return run_days_before < 365"`
+		DisablePurgeDeletion   bool   `toml:"disablePurgeDeletion" comment:"Allow you to disable the deletion part of the purge. Workflow run will only be marked as delete" json:"disablePurgeDeletion" default:"false"`
 	} `toml:"workflow" comment:"######################\n 'Workflow' global configuration \n######################" json:"workflow"`
 }
 
@@ -816,7 +817,7 @@ func (a *API) Serve(ctx context.Context) error {
 			metrics.Init(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper))
 		})
 	// init purge
-	if err := purge.SetDefaultRunRetentionPolicy(a.Config.Workflow.DefaultRetentionPolicy); err != nil {
+	if err := purge.SetPurgeConfiguration(a.Config.Workflow.DefaultRetentionPolicy, a.Config.Workflow.DisablePurgeDeletion); err != nil {
 		return err
 	}
 	a.GoRoutines.Run(ctx, "Purge-MarkRuns",

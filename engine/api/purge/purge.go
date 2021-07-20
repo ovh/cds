@@ -24,12 +24,14 @@ import (
 )
 
 var defaultRunRetentionPolicy string
+var disableDeletion bool
 
-func SetDefaultRunRetentionPolicy(rule string) error {
+func SetPurgeConfiguration(rule string, disableDeletionConf bool) error {
 	if rule == "" {
 		return sdk.WithStack(fmt.Errorf("invalid empty rule for default workflow run retention policy"))
 	}
 	defaultRunRetentionPolicy = rule
+	disableDeletion = disableDeletionConf
 	return nil
 }
 
@@ -47,6 +49,7 @@ func MarkRunsAsDelete(ctx context.Context, store cache.Store, DBFunc func() *gor
 			}
 		case <-tickMark.C:
 			// Mark workflow run to delete
+			log.Info(ctx, "purge> Start marking workflow run as delete")
 			if err := markWorkflowRunsToDelete(ctx, store, DBFunc(), workflowRunsMarkToDelete); err != nil {
 				ctx = sdk.ContextWithStacktrace(ctx, err)
 				log.Error(ctx, "%v", err)
@@ -73,9 +76,11 @@ func WorkflowRuns(ctx context.Context, DBFunc func() *gorp.DbMap, sharedStorage 
 				log.Warn(ctx, "purge> Error: %v", err)
 			}
 
-			log.Debug(ctx, "purge> Deleting all workflow run marked to delete...")
-			if err := deleteWorkflowRunsHistory(ctx, DBFunc(), sharedStorage, workflowRunsDeleted); err != nil {
-				log.Warn(ctx, "purge> Error on deleteWorkflowRunsHistory : %v", err)
+			if !disableDeletion {
+				log.Info(ctx, "purge> Start deleting all workflow run marked to delete...")
+				if err := deleteWorkflowRunsHistory(ctx, DBFunc(), sharedStorage, workflowRunsDeleted); err != nil {
+					log.Warn(ctx, "purge> Error on deleteWorkflowRunsHistory : %v", err)
+				}
 			}
 		}
 	}
