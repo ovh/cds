@@ -339,12 +339,21 @@ func (s *Service) getBranchHandler() service.Handler {
 		}
 		// Check if access token has been refreshed
 		if accessToken != client.GetAccessToken(ctx) {
+			log.Info(ctx, "debug_auth accessToken_diff")
 			w.Header().Set(sdk.HeaderXAccessToken, client.GetAccessToken(ctx))
 		}
 
 		ghBranch, err := client.Branch(ctx, fmt.Sprintf("%s/%s", owner, repo), branch)
 		if err != nil {
-			return sdk.WrapError(err, "Unable to get repo %s/%s branch %s", owner, repo, branch)
+			var debugat, debugas string
+			if len(accessToken) > 4 {
+				debugat = accessToken[:4]
+			}
+			if len(accessTokenSecret) > 4 {
+				debugas = accessTokenSecret[:4]
+			}
+			debug := fmt.Sprintf("debug_auth handler lenat:%d lenat2:%d lenas:%d debugat:%v debugas:%v", len(accessToken), len(client.GetAccessToken(ctx)), len(accessTokenSecret), debugat, debugas)
+			return sdk.WrapError(err, "Unable to get repo %s/%s branch %s - debug: %v", owner, repo, branch, debug)
 		}
 		return service.WriteJSON(w, ghBranch, http.StatusOK)
 	}
