@@ -50,9 +50,6 @@ func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Acti
 	}
 
 	tag := sdk.ParameterFind(a.Parameters, "tag")
-	if tag == nil {
-		return res, sdk.NewError(sdk.ErrWorkerErrorCommand, fmt.Errorf("tag variable is empty. aborting"))
-	}
 
 	// Global all files matching filePath
 	filesPath, err := afero.Glob(afero.NewOsFs(), artifactPath)
@@ -241,6 +238,9 @@ func uploadArtifactIntoCDN(path string, ctx context.Context, wk workerruntime.Ru
 }
 
 func uploadArtifactByApiCall(path string, wk workerruntime.Runtime, ctx context.Context, projectKey string, integrationName string, jobID int64, tag *sdk.Parameter) error {
+	if tag == nil {
+		return sdk.NewError(sdk.ErrWorkerErrorCommand, fmt.Errorf("tag variable is empty. aborting"))
+	}
 	throughTempURL, duration, err := wk.Client().QueueArtifactUpload(ctx, projectKey, integrationName, jobID, tag.Value, path)
 	if err != nil {
 		return err
