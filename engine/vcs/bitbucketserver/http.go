@@ -161,7 +161,7 @@ func (c *bitbucketClient) do(ctx context.Context, method, api, path string, para
 		if len(c.accessTokenSecret) > 4 {
 			debugAS = c.accessTokenSecret[:4]
 		}
-		log.Info(ctx, "debug_auth accessToken_http lenat:%d lenas:%d at:%v as:%v", len(debugAT), len(debugAS), debugAT, debugAS)
+		log.Info(ctx, "debug_auth accessToken_http lenat:%d lenas:%d at:%v as:%v", len(c.accessToken), len(c.accessTokenSecret), debugAT, debugAS)
 		return sdk.WithStack(sdk.ErrUnauthorized)
 	case 400:
 		log.Warn(ctx, "bitbucketClient.do> %s", string(body))
