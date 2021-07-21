@@ -216,6 +216,7 @@ export class CDNLinesResponse {
 export class CDNLine {
     number: number;
     value: string;
+    api_ref_hash: string;
 
     // properties used by ui only
     extra: Array<string>;

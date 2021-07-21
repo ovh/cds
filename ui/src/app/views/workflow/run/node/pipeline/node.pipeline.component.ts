@@ -1,21 +1,21 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Select, Store } from '@ngxs/store';
-import { Job } from 'app/model/job.model';
-import { PipelineStatus } from 'app/model/pipeline.model';
+import { CDNLine, CDNStreamFilter, PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { Stage } from 'app/model/stage.model';
 import { WorkflowNodeJobRun, WorkflowNodeRun } from 'app/model/workflow.run.model';
-import { FeatureNames } from 'app/service/feature/feature.service';
+import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { DurationService } from 'app/shared/duration/duration.service';
-import { FeatureState } from 'app/store/feature.state';
 import { ProjectState } from 'app/store/project.state';
 import { SelectWorkflowNodeRunJob } from 'app/store/workflow.action';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Observable, Subscription } from 'rxjs';
-import { ScrollTarget } from './workflow-run-job/workflow-run-job.component';
+import { delay, retryWhen } from 'rxjs/operators';
+import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
+import { ScrollTarget, WorkflowRunJobComponent } from './workflow-run-job/workflow-run-job.component';
 
 @Component({
     selector: 'app-node-run-pipeline',
@@ -25,7 +25,10 @@ import { ScrollTarget } from './workflow-run-job/workflow-run-job.component';
 })
 @AutoUnsubscribe()
 export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
+    readonly initLoadLinesCount = 10;
+
     @ViewChild('scrollContent') scrollContent: ElementRef;
+    @ViewChild('runjobComponent') runjobComponent: WorkflowRunJobComponent;
 
     @Select(WorkflowState.getSelectedNodeRun()) nodeRun$: Observable<WorkflowNodeRun>;
     nodeRunSubs: Subscription;
@@ -47,17 +50,20 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
 
     currentNodeRunID: number;
     currentNodeRunNum: number;
-    currentJob: Job;
     currentNodeJobRun: WorkflowNodeJobRun;
     currentNodeRunStatus: string;
 
     durationIntervalID: number;
 
+    websocket: WebSocketSubject<any>;
+    websocketSubscription: Subscription;
+
     constructor(
         private _route: ActivatedRoute,
         private _router: Router,
         private _cd: ChangeDetectorRef,
-        private _store: Store
+        private _store: Store,
+        private _workflowService: WorkflowService
     ) {
         this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
         this.workflowName = (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowRun.workflow.name;
@@ -65,23 +71,28 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.nodeJobRunSubs = this.nodeJobRun$.subscribe(rj => {
-            if (!rj && !this.currentJob) {
+            if (!rj && !this.currentNodeJobRun) {
+                this.stopWebsocketSubscription();
                 return;
             }
-            this.currentNodeJobRun = rj;
             if (!rj) {
-                delete this.currentJob;
+                delete this.currentNodeJobRun;
                 this._cd.markForCheck();
                 return;
             }
-            if (this.currentJob) {
-                const pipelineActionIdChanged = rj.job.pipeline_action_id !== this.currentJob.pipeline_action_id;
-                const stepStatusChanged = rj.job.step_status?.length !== this.currentJob.step_status?.length;
-                if (!pipelineActionIdChanged && !stepStatusChanged) {
-                    return;
+
+            if (this.currentNodeJobRun && rj.id === this.currentNodeJobRun.id && this.currentNodeJobRun?.status === rj?.status) {
+                if (this.currentNodeJobRun?.job?.pipeline_action_id === rj.job.pipeline_action_id) {
+                    const stepStatusChanged = rj.job.step_status?.length !== this.currentNodeJobRun.job.step_status?.length;
+                    if (!stepStatusChanged) {
+                        return;
+                    }
                 }
             }
-            this.currentJob = rj.job;
+            // Update step status data
+            this.currentNodeJobRun = cloneDeep(rj);
+            // Refresh websocket filter if needed
+            this.startStreamingLogsForJob().then(() => {});
             this._cd.markForCheck();
         });
 
@@ -108,6 +119,63 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
         });
     }
 
+    async getCDNStreamFilter(): Promise<CDNStreamFilter> {
+        // Get links from last step
+        let projectKey = this._store.selectSnapshot(ProjectState.projectSnapshot).key;
+        let workflowName = this._store.selectSnapshot(WorkflowState.workflowSnapshot).name;
+        let link = await this._workflowService.getStepLink(projectKey, workflowName,
+            this.currentNodeRunID, this.currentNodeJobRun.id, this.currentNodeJobRun.job.step_status.length - 1).toPromise();
+
+        // Get logs lines
+        let result = await this._workflowService.getLogLines(link, { limit: `${this.initLoadLinesCount}` }).toPromise();
+
+        return <CDNStreamFilter>{
+            item_type: link.item_type,
+            api_ref: link.api_ref,
+            offset: result.totalCount > 0 ? -5 : 0
+        };
+    }
+
+    async startStreamingLogsForJob() {
+        if (!this.currentNodeJobRun || !this.currentNodeJobRun.job.step_status) {
+            return;
+        }
+
+        let cdnFilter = await this.getCDNStreamFilter();
+
+        if (!this.websocket) {
+            const protocol = window.location.protocol.replace('http', 'ws');
+            const host = window.location.host;
+            const href = this._router['location']._baseHref;
+            this.websocket = webSocket({
+                url: `${protocol}//${host}${href}/cdscdn/item/stream`,
+                openObserver: {
+                    next: value => {
+                        if (value.type === 'open') {
+                            this.websocket.next(cdnFilter);
+                        }
+                    }
+                }
+            });
+
+            this.websocketSubscription = this.websocket
+                .pipe(retryWhen(errors => errors.pipe(delay(2000))))
+                .subscribe((l: CDNLine) => {
+                    if (this.runjobComponent) {
+                        this.runjobComponent.receiveLogs(l);
+                    } else {
+                        console.log('job component not loaded');
+                    }
+                }, (err) => {
+                    console.error('Error: ', err);
+                }, () => {
+                    console.warn('Websocket Completed');
+                });
+        } else {
+            this.websocket.next(cdnFilter);
+        }
+    }
+
     selectedJobManual(jobID: number) {
         if (!this.mapJobStatus.has(jobID)) {
             return;
@@ -122,7 +190,7 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
     }
 
     selectJob(jobID: number): void {
-        if (this.currentJob && jobID === this.currentJob.pipeline_action_id) {
+        if (jobID === this.currentNodeJobRun?.job?.pipeline_action_id) {
             return;
         }
         this._store.dispatch(new SelectWorkflowNodeRunJob({ jobID }));
@@ -142,7 +210,6 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
                 // Test Job status
                 if (s.run_jobs) {
                     s.run_jobs.forEach((rj, rjIndex) => {
-
                         let warnings = 0;
                         // compute warning
                         if (rj.job.step_status) {
@@ -165,8 +232,9 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
                         if (!currentNodeJobRun && sIndex === 0 && rjIndex === 0 && !this._route.snapshot.queryParams['actionId']) {
                             refresh = true;
                             this.selectJob(s.jobs[0].pipeline_action_id);
-                        } else if (currentNodeJobRun && currentNodeJobRun.job.pipeline_action_id === this.currentJob.pipeline_action_id) {
-                            this.selectJob(this.currentJob.pipeline_action_id);
+                        } else if (currentNodeJobRun &&
+                            currentNodeJobRun.job.pipeline_action_id === this.currentNodeJobRun.job.pipeline_action_id) {
+                            this.selectJob(this.currentNodeJobRun.job.pipeline_action_id);
                         } else if (this._route.snapshot.queryParams['actionId'] &&
                             this._route.snapshot.queryParams['actionId'] === rj.job.pipeline_action_id.toString()) {
                             this.selectJob(rj.job.pipeline_action_id);
@@ -224,6 +292,7 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void {
         this.deleteInterval();
         this._store.dispatch(new SelectWorkflowNodeRunJob({ jobID: 0 }));
+        this.stopWebsocketSubscription();
     }
 
     deleteInterval(): void {
@@ -235,5 +304,11 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
 
     onJobScroll(target: ScrollTarget): void {
         this.scrollContent.nativeElement.scrollTop = target === ScrollTarget.TOP ? 0 : this.scrollContent.nativeElement.scrollHeight;
+    }
+
+    stopWebsocketSubscription(): void {
+        if (this.websocketSubscription) {
+            this.websocketSubscription.unsubscribe();
+        }
     }
 }

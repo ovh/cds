@@ -16,6 +16,7 @@ var _ io.ReadCloser = new(Reader)
 
 type Reader struct {
 	Store         cache.ScoredSetStore
+	ApiRefHash    string
 	ItemID        string
 	PrefixKey     string
 	nextIndex     uint
@@ -39,6 +40,7 @@ func (r *Reader) get(from uint, to uint) ([]Line, error) {
 		if err := json.Unmarshal(res[i].Value, &value); err != nil {
 			return nil, sdk.WrapError(err, "cannot unmarshal line value from store")
 		}
+		ls[i].ApiRefHash = r.ApiRefHash
 		ls[i].Value = strings.TrimFunc(value, unicode.IsNumber)
 		ls[i].Value = strings.TrimPrefix(ls[i].Value, "#")
 	}
@@ -72,7 +74,7 @@ func (r *Reader) loadMoreLines() error {
 		}
 	}
 
-	maxLinesToRead := uint(lineCount) - uint(r.From)
+	maxLinesToRead := lineCount - uint(r.From)
 	if r.Size == 0 || r.Size > maxLinesToRead {
 		r.Size = maxLinesToRead
 	}
@@ -122,15 +124,15 @@ func (r *Reader) loadMoreLines() error {
 		from = r.nextIndex
 		to = newNextIndex - 1
 	} else {
-		if uint(lineCount) < newNextIndex {
+		if lineCount < newNextIndex {
 			from = 0
 		} else {
-			from = uint(lineCount) - newNextIndex
+			from = lineCount - newNextIndex
 		}
-		if uint(lineCount) < r.nextIndex {
+		if lineCount < r.nextIndex {
 			to = uint(lineCount) - 1
 		} else {
-			to = uint(lineCount) - (r.nextIndex + 1)
+			to = lineCount - (r.nextIndex + 1)
 		}
 	}
 	lines, err := r.get(from, to)
