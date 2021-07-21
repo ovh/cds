@@ -28,6 +28,6 @@ Then, a hatchery will spawn a worker compiled with the specified `os-architectur
   # if no model and no os/arch is specified in your job's requirements then spawn worker on this architecture (example: amd64, arm, 386)
   defaultArch = "amd64"
 
-  # if no model and os/arch is specified in your job's requirements then spawn worker on this operating system (example: freebsd, linux, windows)
+  # if no model and os/arch is specified in your job's requirements then spawn worker on this operating system (example: darwin, freebsd, linux, windows)
   defaultOS = "linux"
 ```
