@@ -142,10 +142,11 @@ export class WorkflowWNodeComponent implements OnInit, OnDestroy {
             case WNodeType.OUTGOINGHOOK:
                 if (this.hasWorkflowRun
                     && this.currentNodeRun
+                    && this.node.outgoing_hook.config['target_project']
                     && this.node.outgoing_hook.config['target_workflow']
                     && this.currentNodeRun.callback) {
                     this._router.navigate([
-                        '/project', this.project.key,
+                        '/project', this.node.outgoing_hook.config['target_project'].value,
                         'workflow', this.node.outgoing_hook.config['target_workflow'].value,
                         'run', this.currentNodeRun.callback.workflow_run_number
                     ], { queryParams: {} });
