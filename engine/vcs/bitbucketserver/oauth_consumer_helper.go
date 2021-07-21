@@ -1,24 +1,34 @@
 package bitbucketserver
 
 import (
+	"crypto/rand"
+	"encoding/binary"
 	"fmt"
-	"math/rand"
+	"os"
 	"sort"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"time"
 )
 
 // -----------------------------------------------------------------------------
 // Private Helper Functions
 
-// Nonce generator, seeded with current time
-var nonceGenerator = rand.New(rand.NewSource(time.Now().Unix()))
+var nonceCounter uint64
+var hostname string
 
-// Nonce generates a random string. Nonce's are uniquely generated
-// for each request.
+func init() {
+	hostname, _ = os.Hostname()
+
+	if err := binary.Read(rand.Reader, binary.BigEndian, &nonceCounter); err != nil {
+		nonceCounter = uint64(time.Now().UnixNano()) // fallback
+	}
+}
+
+// nonce returns a unique string.
 func nonce() string {
-	return strconv.FormatInt(nonceGenerator.Int63(), 10)
+	return hostname + strconv.FormatUint(atomic.AddUint64(&nonceCounter, 1), 16)
 }
 
 // Timestamp generates a timestamp, expressed in the number of seconds
