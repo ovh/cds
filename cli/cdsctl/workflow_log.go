@@ -438,6 +438,12 @@ func workflowLogStreamRun(v cli.Values) error {
 	}
 	chanMessageToSend <- buf
 
+	type logBlock struct {
+		Number     int64  `json:"number"`
+		Value      string `json:"value"`
+		ApiRefHash string `json:"api_ref_hash"`
+	}
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -448,6 +454,13 @@ func workflowLogStreamRun(v cli.Values) error {
 			}
 			fmt.Printf("Error: %s\n", err)
 		case m := <-chanMsgReceived:
+			var line logBlock
+			if err := json.Unmarshal(m, &line); err != nil {
+				return err
+			}
+			if line.ApiRefHash != link.APIRef {
+				continue
+			}
 			fmt.Printf("%s", string(m))
 		}
 	}
