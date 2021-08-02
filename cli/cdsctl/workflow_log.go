@@ -431,8 +431,7 @@ func workflowLogStreamRun(v cli.Values) error {
 	})
 
 	buf, err := json.Marshal(sdk.CDNStreamFilter{
-		ItemType: link.ItemType,
-		APIRef:   link.APIRef,
+		JobRunID: log.jobID,
 	})
 	if err != nil {
 		return cli.WrapError(err, "unable to marshal streamFilter")
