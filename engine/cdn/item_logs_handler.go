@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
 	"github.com/rockbears/log"
 

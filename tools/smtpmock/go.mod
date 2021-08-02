@@ -3,8 +3,9 @@ module github.com/ovh/cds/tools/smtpmock
 go 1.17
 
 require (
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/fsamin/smtp v0.0.0-20190904085838-54a7c428d4f9
+	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/labstack/echo v3.3.10+incompatible
 	github.com/labstack/gommon v0.3.0 // indirect
 	github.com/pkg/errors v0.8.1

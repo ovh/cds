@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/go-gorp/gorp"
+	"github.com/golang-jwt/jwt"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/services"

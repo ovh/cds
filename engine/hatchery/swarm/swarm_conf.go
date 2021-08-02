@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
 	types "github.com/docker/docker/api/types"
+	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
 	"github.com/rockbears/log"
 

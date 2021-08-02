@@ -3,7 +3,7 @@ package cdsclient
 import (
 	"sync"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt"
 
 	"github.com/ovh/cds/sdk"
 )

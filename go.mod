@@ -17,6 +17,7 @@ require (
 	github.com/coreos/go-oidc v2.2.1+incompatible
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/docker/distribution v2.7.0-rc.0+incompatible
+	github.com/docker/distribution v2.7.0-rc.0+incompatible // indirect
 	github.com/docker/docker v1.13.1
 	github.com/docker/go-connections v0.3.0
 	github.com/eapache/go-resiliency v1.2.0
@@ -28,6 +29,8 @@ require (
 	github.com/gambol99/go-marathon v0.0.0-20170922093320-ec4a50170df7
 	github.com/go-gorp/gorp v2.0.0+incompatible
 	github.com/go-redis/redis v6.15.2+incompatible
+	github.com/go-sql-driver/mysql v1.4.1 // indirect
+	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/golang/mock v1.4.4
 	github.com/golang/protobuf v1.5.0
 	github.com/gophercloud/gophercloud v0.0.0-20190504011306-6f9faf57fddc
