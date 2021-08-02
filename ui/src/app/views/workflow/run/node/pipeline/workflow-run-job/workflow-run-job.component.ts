@@ -2,7 +2,7 @@ import { OnDestroy, Output, ViewChild } from '@angular/core';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { Store } from '@ngxs/store';
-import { CDNLine, CDNLogLink, CDNStreamFilter, PipelineStatus, SpawnInfo } from 'app/model/pipeline.model';
+import { CDNLine, CDNLogLink, PipelineStatus, SpawnInfo } from 'app/model/pipeline.model';
 import { WorkflowNodeJobRun } from 'app/model/workflow.run.model';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
@@ -11,8 +11,7 @@ import { ProjectState } from 'app/store/project.state';
 import { WorkflowState } from 'app/store/workflow.state';
 import * as moment from 'moment';
 import { from, interval, Subject, Subscription } from 'rxjs';
-import { concatMap, delay, retryWhen } from 'rxjs/operators';
-import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
+import { concatMap } from 'rxjs/operators';
 import { WorkflowRunJobVariableComponent } from '../variables/job.variables.component';
 
 export enum DisplayMode {
@@ -86,13 +85,11 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
     tabs: Array<Tab>;
     currentTabIndex = 0;
     pollingSpawnInfoSubscription: Subscription;
-    websocket: WebSocketSubject<any>;
-    websocketSubscription: Subscription;
     previousNodeJobRun: WorkflowNodeJobRun;
     steps: Array<LogBlock>;
     services: Array<LogBlock>;
 
-    // The following subject and subscription are used as a channel to serialize changes on polling and websocket subscription.
+    // The following subject and subscription are used as a channel to serialize changes on polling.
     subjectChannel: Subject<WorkflowNodeJobRun>;
     subscriptionChannel: Subscription;
 
@@ -182,7 +179,6 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
     }
 
     async loadDataForCurrentTab() {
-        this.stopWebsocketSubscription();
 
         if (this.currentTabIndex === 0) {
             if (PipelineStatus.isDone(this.nodeJobRun.status)) {
@@ -202,7 +198,6 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
         this.steps = null;
         this.services = null;
         this.currentTabIndex = 0;
-        this.stopWebsocketSubscription();
     }
 
     selectTab(i: number): void {
@@ -346,12 +341,6 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
         this._cd.markForCheck();
     }
 
-    stopWebsocketSubscription(): void {
-        if (this.websocketSubscription) {
-            this.websocketSubscription.unsubscribe();
-        }
-    }
-
     async loadFirstFailedOrLastStep() {
         if (this.steps.length <= 1) {
             return;
@@ -376,11 +365,23 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
                        && !v.endLines.find(line => line.number === l.number)) {
                        v.endLines.push(l);
                        v.totalLinesCount++;
-                       this._cd.markForCheck();
                    }
                }
             });
         }
+        if (this.services) {
+            this.services.forEach(v => {
+                if (v?.link?.api_ref === l.api_ref_hash) {
+                    if (!v.lines.find(line => line.number === l.number)
+                        && !v.endLines.find(line => line.number === l.number)) {
+                        v.endLines.push(l);
+                        v.totalLinesCount++;
+                        this._cd.markForCheck();
+                    }
+                }
+            });
+        }
+        this._cd.markForCheck();
     }
 
     async startListenLastActiveStep() {
@@ -449,41 +450,6 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
         this.services[this.currentTabIndex - 1].lines = result.lines;
         this.services[this.currentTabIndex - 1].totalLinesCount = result.totalCount;
         this._cd.markForCheck();
-
-        const protocol = window.location.protocol.replace('http', 'ws');
-        const host = window.location.host;
-        const href = this._router['location']._baseHref;
-
-
-        this.websocket = webSocket({
-            url: `${protocol}//${host}${href}/cdscdn/item/stream`,
-            openObserver: {
-                next: value => {
-                    if (value.type === 'open') {
-                        this.websocket.next(<CDNStreamFilter>{
-                            item_type: this.services[this.currentTabIndex - 1].link.item_type,
-                            api_ref: this.services[this.currentTabIndex - 1].link.api_ref,
-                            offset: this.services[this.currentTabIndex - 1].totalLinesCount > 0 ? -5 : 0
-                        });
-                    }
-                }
-            }
-        });
-
-        this.websocketSubscription = this.websocket
-            .pipe(retryWhen(errors => errors.pipe(delay(2000))))
-            .subscribe((l: CDNLine) => {
-                if (!this.services[this.currentTabIndex - 1].lines.find(line => line.number === l.number)
-                    && !this.services[this.currentTabIndex - 1].endLines.find(line => line.number === l.number)) {
-                    this.services[this.currentTabIndex - 1].endLines.push(l);
-                    this.services[this.currentTabIndex - 1].totalLinesCount++;
-                    this._cd.markForCheck();
-                }
-            }, (err) => {
-                console.error('Error: ', err);
-            }, () => {
-                console.warn('Websocket Completed');
-            });
     }
 
     async clickExpandServiceDown(index: number) {

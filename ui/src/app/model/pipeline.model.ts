@@ -224,7 +224,7 @@ export class CDNLine {
 
 export class CDNStreamFilter  {
     item_type: string;
-    api_ref: string;
+    job_run_id: number;
     offset: number;
 }
 

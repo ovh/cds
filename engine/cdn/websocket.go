@@ -73,9 +73,13 @@ func (s *Service) publishWSEvent(item sdk.CDNItem) {
 	if s.WSEvents == nil {
 		s.WSEvents = make(map[string]sdk.CDNWSEvent)
 	}
+	apiRefItem, _ := item.GetCDNLogApiRef()
+	if apiRefItem == nil {
+		return
+	}
 	s.WSEvents[item.ID] = sdk.CDNWSEvent{
 		ItemType: item.Type,
-		APIRef:   item.APIRefHash,
+		JobRunID: apiRefItem.NodeRunJobID,
 	}
 }
 
@@ -109,7 +113,7 @@ func (s *Service) websocketOnMessage(e sdk.CDNWSEvent) {
 
 	for _, id := range clientIDs {
 		c := s.WSServer.GetClientData(id)
-		if c == nil || c.itemFilter == nil || !(c.itemFilter.ItemType == e.ItemType && c.itemFilter.APIRef == e.APIRef) {
+		if c == nil || c.itemFilter == nil || c.itemFilter.JobRunID != e.JobRunID {
 			continue
 		}
 		c.TriggerUpdate()
@@ -147,13 +151,17 @@ func (s *websocketServer) GetClientData(uuid string) *websocketClientData {
 }
 
 type websocketClientData struct {
-	sessionID           string
-	mutexData           sync.Mutex
-	itemFilter          *sdk.CDNStreamFilter
+	sessionID       string
+	mutexData       sync.Mutex
+	itemFilter      *sdk.CDNStreamFilter
+	itemUnitsData   map[string]ItemUnitClientData
+	mutexTrigger    sync.Mutex
+	triggeredUpdate bool
+}
+
+type ItemUnitClientData struct {
 	itemUnit            *sdk.CDNItemUnit
 	scoreNextLineToSend int64
-	mutexTrigger        sync.Mutex
-	triggeredUpdate     bool
 }
 
 func (d *websocketClientData) TriggerUpdate() {
@@ -183,7 +191,8 @@ func (d *websocketClientData) UpdateFilter(msg []byte) error {
 	defer d.mutexData.Unlock()
 
 	d.itemFilter = &filter
-	d.scoreNextLineToSend = filter.Offset
-	d.itemUnit = nil // reset verified will trigger a new permission check
+	// TODO
+	//qd.scoreNextLineToSend = filter.Offset
+	d.itemUnitsData = nil // reset verified will trigger a new permission check
 	return nil
 }

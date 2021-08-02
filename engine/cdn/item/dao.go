@@ -180,6 +180,18 @@ func LoadWorkerCacheItemsByProjectAndCacheTag(ctx context.Context, m *gorpmapper
 	return getItems(ctx, m, db, query)
 }
 
+// LoadByJobRunID load an item by his job id and type
+func LoadByJobRunID(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, jobRunId int64, itemTypes []string, opts ...gorpmapper.GetOptionFunc) ([]sdk.CDNItem, error) {
+	query := gorpmapper.NewQuery(`
+		SELECT *
+		FROM item
+		WHERE api_ref->>'node_run_job_id' = $1
+		AND type = ANY($2)
+		AND to_delete = false
+	`).Args(strconv.FormatInt(jobRunId, 10), pq.StringArray(itemTypes))
+	return getItems(ctx, m, db, query, opts...)
+}
+
 // LoadByAPIRefHashAndType load an item by his job id, step order and type
 func LoadByAPIRefHashAndType(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, hash string, itemType sdk.CDNItemType, opts ...gorpmapper.GetOptionFunc) (*sdk.CDNItem, error) {
 	query := gorpmapper.NewQuery(`

@@ -91,8 +91,11 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
             }
             // Update step status data
             this.currentNodeJobRun = cloneDeep(rj);
-            // Refresh websocket filter if needed
-            this.startStreamingLogsForJob().then(() => {});
+            // Start websocket if job is not finished
+            if (!PipelineStatus.isDone(this.currentNodeJobRun.status)) {
+                this.startStreamingLogsForJob().then(() => {});
+            }
+
             this._cd.markForCheck();
         });
 
@@ -131,8 +134,8 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
 
         return <CDNStreamFilter>{
             item_type: link.item_type,
-            api_ref: link.api_ref,
-            offset: result.totalCount > 0 ? -5 : 0
+            job_run_id: this.currentNodeJobRun.id,
+            offset: result.totalCount > 0 ? -5 : 0 // TODO: send array of offset ( for each step )
         };
     }
 

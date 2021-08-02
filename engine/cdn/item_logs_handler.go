@@ -30,8 +30,8 @@ func (s *Service) getItemLogsStreamHandler() service.Handler {
 		}
 		defer c.Close() //nolint
 
-		jwt := ctx.Value(service.ContextJWT).(*jwt.Token)
-		claims := jwt.Claims.(*sdk.AuthSessionJWTClaims)
+		jwtToken := ctx.Value(service.ContextJWT).(*jwt.Token)
+		claims := jwtToken.Claims.(*sdk.AuthSessionJWTClaims)
 		sessionID := claims.StandardClaims.Id
 
 		wsClient := websocket.NewClient(c)
@@ -93,70 +93,87 @@ func (s *Service) sendLogsToWSClient(ctx context.Context, wsClient websocket.Cli
 		return nil
 	}
 
-	if wsClientData.itemUnit == nil {
-		it, err := item.LoadByAPIRefHashAndType(ctx, s.Mapper, s.mustDBWithCtx(ctx), wsClientData.itemFilter.APIRef, wsClientData.itemFilter.ItemType)
-		if err != nil {
-			// Catch not found error as the item can be created after the client stream subscription
-			if sdk.ErrorIs(err, sdk.ErrNotFound) {
-				log.Debug(ctx, "sendLogsToWSClient> can't found item with type %s and ref %s for client %s: %+v", wsClientData.itemFilter.ItemType, wsClientData.itemFilter.APIRef, wsClient.UUID(), err)
-				return nil
-			}
+	if wsClientData.itemUnitsData == nil {
+		wsClientData.itemUnitsData = make(map[string]ItemUnitClientData)
+	}
+
+	its, err := item.LoadByJobRunID(ctx, s.Mapper, s.mustDBWithCtx(ctx), wsClientData.itemFilter.JobRunID, []string{string(sdk.CDNTypeItemStepLog), string(sdk.CDNTypeItemServiceLog)})
+	if err != nil {
+		// Catch not found error as the item can be created after the client stream subscription
+		if sdk.ErrorIs(err, sdk.ErrNotFound) {
+			log.Debug(ctx, "sendLogsToWSClient> can't found item job run %d for client %s: %+v", wsClientData.itemFilter.JobRunID, wsClient.UUID(), err)
 			return nil
 		}
+		return nil
+	}
 
-		if err := s.itemAccessCheck(ctx, *it); err != nil {
-			var projectKey, workflow string
-			logRef, has := it.GetCDNLogApiRef()
-			if has {
-				projectKey = logRef.ProjectKey
-				workflow = logRef.WorkflowName
+	for _, it := range its {
+		if _, has := wsClientData.itemUnitsData[it.ID]; !has {
+			if err := s.itemAccessCheck(ctx, it); err != nil {
+				var projectKey, workflow string
+				logRef, has := it.GetCDNLogApiRef()
+				if has {
+					projectKey = logRef.ProjectKey
+					workflow = logRef.WorkflowName
+				}
+				return sdk.WrapError(err, "client %s can't access logs for workflow %s/%s", wsClient.UUID(), projectKey, workflow)
 			}
-			return sdk.WrapError(err, "client %s can't access logs for workflow %s/%s", wsClient.UUID(), projectKey, workflow)
+			iu, err := storage.LoadItemUnitByUnit(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.LogsBuffer().ID(), it.ID)
+			if err != nil {
+				return err
+			}
+			wsClientData.itemUnitsData[it.ID] = ItemUnitClientData{
+				itemUnit:            iu,
+				scoreNextLineToSend: 0,
+			}
 		}
 
-		iu, err := storage.LoadItemUnitByUnit(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.LogsBuffer().ID(), it.ID)
+	}
+
+	for k, v := range wsClientData.itemUnitsData {
+		// avoid to send all messages for ended steps
+		if v.scoreNextLineToSend == 0 && v.itemUnit.Item.Status == sdk.CDNStatusItemCompleted {
+			continue
+		}
+		log.Debug(ctx, "getItemLogsStreamHandler> send log to client %s from %d", wsClient.UUID(), v.scoreNextLineToSend)
+
+		rc, err := s.Units.LogsBuffer().NewAdvancedReader(ctx, *v.itemUnit, sdk.CDNReaderFormatJSON, v.scoreNextLineToSend, 100, 0)
 		if err != nil {
 			return err
 		}
-
-		wsClientData.itemUnit = iu
-	}
-
-	log.Debug(ctx, "getItemLogsStreamHandler> send log to client %s from %d", wsClient.UUID(), wsClientData.scoreNextLineToSend)
-
-	rc, err := s.Units.LogsBuffer().NewAdvancedReader(ctx, *wsClientData.itemUnit, sdk.CDNReaderFormatJSON, wsClientData.scoreNextLineToSend, 100, 0)
-	if err != nil {
-		return err
-	}
-	defer rc.Close() // nolint
-	buf := new(bytes.Buffer)
-	if _, err := io.Copy(buf, rc); err != nil {
-		return sdk.WrapError(err, "cannot copy data from reader to memory buffer")
-	}
-	var lines []redis.Line
-	if err := json.Unmarshal(buf.Bytes(), &lines); err != nil {
-		return sdk.WrapError(err, "cannot unmarshal lines from buffer %v", string(buf.Bytes()))
-	}
-
-	log.Debug(ctx, "getItemLogsStreamHandler> iterate over %d lines to send for client %s", len(lines), wsClient.UUID())
-	oldNextLineToSend := wsClientData.scoreNextLineToSend
-	for i := range lines {
-		if wsClientData.scoreNextLineToSend > 0 && wsClientData.scoreNextLineToSend != lines[i].Number {
-			break
+		buf := new(bytes.Buffer)
+		if _, err := io.Copy(buf, rc); err != nil {
+			_ = rc.Close()
+			return sdk.WrapError(err, "cannot copy data from reader to memory buffer")
 		}
-		if err := wsClient.Send(lines[i]); err != nil {
-			return err
+		var lines []redis.Line
+		if err := json.Unmarshal(buf.Bytes(), &lines); err != nil {
+			_ = rc.Close()
+			return sdk.WrapError(err, "cannot unmarshal lines from buffer %v", string(buf.Bytes()))
 		}
-		if wsClientData.scoreNextLineToSend < 0 {
-			wsClientData.scoreNextLineToSend = lines[i].Number + 1
-		} else {
-			wsClientData.scoreNextLineToSend++
-		}
-	}
 
-	// If all the lines were sent, we can trigger another update, if only one line was send do not trigger an update wait for next event from broker
-	if len(lines) > 1 && (oldNextLineToSend > 0 || wsClientData.scoreNextLineToSend-oldNextLineToSend == int64(len(lines))) {
-		wsClientData.TriggerUpdate()
+		log.Debug(ctx, "getItemLogsStreamHandler> iterate over %d lines to send for client %s", len(lines), wsClient.UUID())
+		oldNextLineToSend := v.scoreNextLineToSend
+		for i := range lines {
+			if v.scoreNextLineToSend > 0 && v.scoreNextLineToSend != lines[i].Number {
+				break
+			}
+			if err := wsClient.Send(lines[i]); err != nil {
+				return err
+			}
+			if v.scoreNextLineToSend < 0 {
+				v.scoreNextLineToSend = lines[i].Number + 1
+				wsClientData.itemUnitsData[k] = v
+			} else {
+				v.scoreNextLineToSend++
+				wsClientData.itemUnitsData[k] = v
+			}
+		}
+
+		// If all the lines were sent, we can trigger another update, if only one line was send do not trigger an update wait for next event from broker
+		if len(lines) > 1 && (oldNextLineToSend > 0 || v.scoreNextLineToSend-oldNextLineToSend == int64(len(lines))) {
+			wsClientData.TriggerUpdate()
+		}
 	}
 
 	return nil
