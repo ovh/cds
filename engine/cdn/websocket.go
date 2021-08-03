@@ -191,8 +191,6 @@ func (d *websocketClientData) UpdateFilter(msg []byte) error {
 	defer d.mutexData.Unlock()
 
 	d.itemFilter = &filter
-	// TODO
-	//qd.scoreNextLineToSend = filter.Offset
 	d.itemUnitsData = nil // reset verified will trigger a new permission check
 	return nil
 }

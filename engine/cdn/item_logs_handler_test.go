@@ -333,22 +333,6 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 	jwtTokenRaw, err := signer.SignJWT(jwtToken)
 	require.NoError(t, err)
 
-	apiRef := sdk.CDNLogAPIRef{
-		ProjectKey:     signature.ProjectKey,
-		WorkflowName:   signature.WorkflowName,
-		WorkflowID:     signature.WorkflowID,
-		RunID:          signature.RunID,
-		NodeRunName:    signature.NodeRunName,
-		NodeRunID:      signature.NodeRunID,
-		NodeRunJobName: signature.JobName,
-		NodeRunJobID:   signature.JobID,
-		StepName:       signature.Worker.StepName,
-		StepOrder:      signature.Worker.StepOrder,
-	}
-	apiRefHashU, err := hashstructure.Hash(apiRef, nil)
-	require.NoError(t, err)
-	apiRefHash := strconv.FormatUint(apiRefHashU, 10)
-
 	var messageCounter int64
 	sendMessage := func() {
 		hm := handledMessage{
@@ -386,9 +370,7 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 		chanErrorReceived <- client.RequestWebsocket(ctx, sdk.NewGoRoutines(ctx), uri, chanMsgToSend, chanMsgReceived, chanErrorReceived)
 	}()
 	buf, err := json.Marshal(sdk.CDNStreamFilter{
-		ItemType: sdk.CDNTypeItemStepLog,
-		APIRef:   apiRefHash,
-		Offset:   0,
+		JobRunID: signature.JobID,
 	})
 	require.NoError(t, err)
 	chanMsgToSend <- buf
@@ -408,9 +390,9 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 		}
 	}
 
-	require.Len(t, lines, 10)
-	require.Equal(t, "[EMERGENCY] message 0\n", lines[0].Value)
-	require.Equal(t, int64(0), lines[0].Number)
+	require.Len(t, lines, 5)
+	require.Equal(t, "[EMERGENCY] message 5\n", lines[5].Value)
+	require.Equal(t, int64(5), lines[5].Number)
 	require.Equal(t, "[EMERGENCY] message 9\n", lines[9].Value)
 	require.Equal(t, int64(9), lines[9].Number)
 
@@ -433,42 +415,7 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 		}
 	}
 
-	require.Len(t, lines, 20)
+	require.Len(t, lines, 15)
 	require.Equal(t, "[EMERGENCY] message 19\n", lines[19].Value)
 	require.Equal(t, int64(19), lines[19].Number)
-
-	// Try another connection with offset
-	ctx, cancel = context.WithTimeout(context.TODO(), time.Second*10)
-	t.Cleanup(func() { cancel() })
-	go func() {
-		chanErrorReceived <- client.RequestWebsocket(ctx, sdk.NewGoRoutines(ctx), uri, chanMsgToSend, chanMsgReceived, chanErrorReceived)
-	}()
-	buf, err = json.Marshal(sdk.CDNStreamFilter{
-		ItemType: sdk.CDNTypeItemStepLog,
-		APIRef:   apiRefHash,
-		Offset:   15,
-	})
-	require.NoError(t, err)
-	chanMsgToSend <- buf
-
-	lines = make([]redis.Line, 0)
-	for ctx.Err() == nil && len(lines) < 5 {
-		select {
-		case <-ctx.Done():
-			break
-		case err := <-chanErrorReceived:
-			require.NoError(t, err)
-			break
-		case msg := <-chanMsgReceived:
-			var line redis.Line
-			require.NoError(t, json.Unmarshal(msg, &line))
-			lines = append(lines, line)
-		}
-	}
-
-	require.Len(t, lines, 5)
-	require.Equal(t, "[EMERGENCY] message 15\n", lines[0].Value)
-	require.Equal(t, int64(15), lines[0].Number)
-	require.Equal(t, "[EMERGENCY] message 19\n", lines[4].Value)
-	require.Equal(t, int64(19), lines[4].Number)
 }

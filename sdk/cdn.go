@@ -375,7 +375,6 @@ type CDNWSEvent struct {
 
 type CDNStreamFilter struct {
 	JobRunID int64 `json:"job_run_id"`
-	Offset   int64 `json:"offset"`
 }
 
 func (f CDNStreamFilter) Validate() error {

@@ -122,24 +122,14 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
         });
     }
 
-    async getCDNStreamFilter(): Promise<CDNStreamFilter> {
-        // Get links from last step
-        let projectKey = this._store.selectSnapshot(ProjectState.projectSnapshot).key;
-        let workflowName = this._store.selectSnapshot(WorkflowState.workflowSnapshot).name;
-        let link = await this._workflowService.getStepLink(projectKey, workflowName,
-            this.currentNodeRunID, this.currentNodeJobRun.id, this.currentNodeJobRun.job.step_status.length - 1).toPromise();
-        return <CDNStreamFilter>{
-            item_type: link.item_type,
-            job_run_id: this.currentNodeJobRun.id,
-        };
-    }
-
     async startStreamingLogsForJob() {
         if (!this.currentNodeJobRun || !this.currentNodeJobRun.job.step_status) {
             return;
         }
 
-        let cdnFilter = await this.getCDNStreamFilter();
+        let cdnFilter = <CDNStreamFilter>{
+            job_run_id: this.currentNodeJobRun.id,
+        };
 
         if (!this.websocket) {
             const protocol = window.location.protocol.replace('http', 'ws');
