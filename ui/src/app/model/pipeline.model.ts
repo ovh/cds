@@ -1,5 +1,4 @@
 import { AsCodeEvents } from './ascode.model';
-import { Environment } from './environment.model';
 import { Parameter } from './parameter.model';
 import { Stage } from './stage.model';
 import { Usage } from './usage.model';
@@ -159,20 +158,6 @@ export class Pipeline {
     }
 }
 
-export class PipelineRunRequest {
-    parameters: Array<Parameter>;
-    env: Environment;
-    parent_build_number: number; // instead of version
-    parent_pipeline_id: number;
-    parent_environment_id: number;
-    parent_application_id: number;
-    parent_version: number; // instead of build_number
-
-    constructor() {
-        this.parameters = new Array<Parameter>();
-    }
-}
-
 export class SpawnInfo {
     api_time: Date;
     remote_time: Date;
@@ -225,11 +210,6 @@ export class CDNLine {
 export class CDNStreamFilter  {
     item_type: string;
     job_run_id: number;
-    offset: number;
-}
-
-export class LogDate {
-    seconds: number;
 }
 
 export class Tests {

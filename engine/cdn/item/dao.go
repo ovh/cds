@@ -188,6 +188,7 @@ func LoadByJobRunID(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecut
 		WHERE api_ref->>'node_run_job_id' = $1
 		AND type = ANY($2)
 		AND to_delete = false
+		ORDER BY created DESC
 	`).Args(strconv.FormatInt(jobRunId, 10), pq.StringArray(itemTypes))
 	return getItems(ctx, m, db, query, opts...)
 }

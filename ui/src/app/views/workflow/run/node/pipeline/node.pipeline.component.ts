@@ -128,14 +128,9 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
         let workflowName = this._store.selectSnapshot(WorkflowState.workflowSnapshot).name;
         let link = await this._workflowService.getStepLink(projectKey, workflowName,
             this.currentNodeRunID, this.currentNodeJobRun.id, this.currentNodeJobRun.job.step_status.length - 1).toPromise();
-
-        // Get logs lines
-        let result = await this._workflowService.getLogLines(link, { limit: `${this.initLoadLinesCount}` }).toPromise();
-
         return <CDNStreamFilter>{
             item_type: link.item_type,
             job_run_id: this.currentNodeJobRun.id,
-            offset: result.totalCount > 0 ? -5 : 0 // TODO: send array of offset ( for each step )
         };
     }
 

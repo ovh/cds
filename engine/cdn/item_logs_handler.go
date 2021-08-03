@@ -122,9 +122,11 @@ func (s *Service) sendLogsToWSClient(ctx context.Context, wsClient websocket.Cli
 			if err != nil {
 				return err
 			}
+
+			// Take last 5 lines to begin
 			wsClientData.itemUnitsData[it.ID] = ItemUnitClientData{
 				itemUnit:            iu,
-				scoreNextLineToSend: 0,
+				scoreNextLineToSend: -5,
 			}
 		}
 
