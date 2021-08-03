@@ -296,7 +296,7 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 	s.Client = cdsclient.New(cdsclient.Config{Host: "http://lolcat.api", InsecureSkipVerifyTLS: false})
 	gock.InterceptClient(s.Client.(cdsclient.Raw).HTTPClient())
 	t.Cleanup(gock.Off)
-	gock.New("http://lolcat.api").Get("/project/" + projectKey + "/workflows/1/type/step-log/access").Reply(http.StatusOK).JSON(nil)
+	gock.New("http://lolcat.api").Get("/project/" + projectKey + "/workflows/1/type/step-log/access").Times(1).Reply(http.StatusOK).JSON(nil)
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
@@ -310,7 +310,7 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 		NodeRunID:    1,
 		NodeRunName:  "MyPipeline",
 		JobName:      "MyJob",
-		JobID:        1,
+		JobID:        123456789,
 		Worker: &cdn.SignatureWorker{
 			StepName:  "script1",
 			StepOrder: 1,
@@ -376,7 +376,7 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 	chanMsgToSend <- buf
 
 	var lines []redis.Line
-	for ctx.Err() == nil && len(lines) < 10 {
+	for ctx.Err() == nil && len(lines) < 5 {
 		select {
 		case <-ctx.Done():
 			break
@@ -391,17 +391,17 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 	}
 
 	require.Len(t, lines, 5)
-	require.Equal(t, "[EMERGENCY] message 5\n", lines[5].Value)
-	require.Equal(t, int64(5), lines[5].Number)
-	require.Equal(t, "[EMERGENCY] message 9\n", lines[9].Value)
-	require.Equal(t, int64(9), lines[9].Number)
+	require.Equal(t, "[EMERGENCY] message 5\n", lines[0].Value)
+	require.Equal(t, int64(5), lines[0].Number)
+	require.Equal(t, "[EMERGENCY] message 9\n", lines[4].Value)
+	require.Equal(t, int64(9), lines[4].Number)
 
 	// Send some messages
 	for i := 0; i < 10; i++ {
 		sendMessage()
 	}
 
-	for ctx.Err() == nil && len(lines) < 20 {
+	for ctx.Err() == nil && len(lines) < 15 {
 		select {
 		case <-ctx.Done():
 			break
@@ -416,6 +416,6 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 	}
 
 	require.Len(t, lines, 15)
-	require.Equal(t, "[EMERGENCY] message 19\n", lines[19].Value)
-	require.Equal(t, int64(19), lines[19].Number)
+	require.Equal(t, "[EMERGENCY] message 19\n", lines[14].Value)
+	require.Equal(t, int64(19), lines[14].Number)
 }

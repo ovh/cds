@@ -180,7 +180,7 @@ func TestGetItemValue(t *testing.T) {
 	buf5 := new(strings.Builder)
 	_, err = io.Copy(buf5, rc5)
 	require.NoError(t, err)
-	require.Equal(t, "[{\"number\":8,\"value\":\"Line 8\\n\"},{\"number\":9,\"value\":\"Line 9\\n\"}]", buf5.String())
+	require.Equal(t, "[{\"number\":8,\"value\":\"Line 8\\n\",\"api_ref_hash\":\""+apiRefhash+"\"},{\"number\":9,\"value\":\"Line 9\\n\",\"api_ref_hash\":\""+apiRefhash+"\"}]", buf5.String())
 }
 
 func TestGetItemValue_ThousandLines(t *testing.T) {
