@@ -151,7 +151,7 @@ func TestBranches(t *testing.T) {
 	bbClient := getNewAuthorizedClient(t)
 	assert.NotNil(t, bbClient)
 
-	branches, err := bbClient.Branches(context.Background(), "bnjjj/test")
+	branches, err := bbClient.Branches(context.Background(), "bnjjj/test", sdk.VCSBranchesFilter{})
 	require.NoError(t, err)
 	assert.NotEmpty(t, branches)
 }

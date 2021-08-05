@@ -12,7 +12,7 @@ import (
 
 func TestBranches(t *testing.T) {
 	client := getAuthorizedClient(t)
-	branches, err := client.Branches(context.Background(), "CDS/images")
+	branches, err := client.Branches(context.Background(), "CDS/images", sdk.VCSBranchesFilter{Limit: 100})
 	test.NoError(t, err)
 	assert.NotEmpty(t, branches)
 	t.Logf("branches: %+v", branches)
