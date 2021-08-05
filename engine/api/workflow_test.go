@@ -667,14 +667,12 @@ func Test_putWorkflowHandler(t *testing.T) {
 			w.Body = ioutil.NopCloser(body)
 
 			switch r.URL.String() {
-			case "/vcs/github/repos/foo/bar/branches":
-				bs := []sdk.VCSBranch{}
+			case "/vcs/github/repos/foo/bar/branches/?branch=&default=true":
 				b := sdk.VCSBranch{
 					DisplayID: "master",
 					Default:   true,
 				}
-				bs = append(bs, b)
-				if err := enc.Encode(bs); err != nil {
+				if err := enc.Encode(b); err != nil {
 					return writeError(w, err)
 				}
 			case "/task/bulk":
