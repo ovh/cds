@@ -111,7 +111,7 @@ func TestPurgeWorkflowRun(t *testing.T) {
 					return writeError(w, err)
 				}
 				// Default payload on workflow insert
-			case "/vcs/github/repos/sguiheux/demo/branches":
+			case "/vcs/github/repos/sguiheux/demo/branches/?branch=&default=true":
 				b := sdk.VCSBranch{
 					Default:      true,
 					DisplayID:    "master",
@@ -121,7 +121,7 @@ func TestPurgeWorkflowRun(t *testing.T) {
 					return writeError(w, err)
 				}
 				// NEED GET BRANCH TO GET LATEST COMMIT
-			case "/vcs/github/repos/sguiheux/demo/branches/?branch=master":
+			case "/vcs/github/repos/sguiheux/demo/branches/?branch=master&default=false":
 				b := sdk.VCSBranch{
 					Default:      false,
 					DisplayID:    "master",
@@ -362,12 +362,10 @@ func TestPurgeWorkflowRunWithOneSuccessWorkflowRun(t *testing.T) {
 
 			switch r.URL.String() {
 			// NEED get REPO
-			case "/vcs/github/repos/sguiheux/demo/branches":
-				branches := []sdk.VCSBranch{
-					{
-						ID:        "master",
-						DisplayID: "master",
-					},
+			case "/vcs/github/repos/sguiheux/demo/branches/?branch=&default=true":
+				branches := sdk.VCSBranch{
+					ID:        "master",
+					DisplayID: "master",
 				}
 				if err := enc.Encode(branches); err != nil {
 					return writeError(w, err)
@@ -387,7 +385,7 @@ func TestPurgeWorkflowRunWithOneSuccessWorkflowRun(t *testing.T) {
 					return writeError(w, err)
 				}
 				// NEED GET BRANCH TO GET LATEST COMMIT
-			case "/vcs/github/repos/sguiheux/demo/branches/?branch=master":
+			case "/vcs/github/repos/sguiheux/demo/branches/?branch=master&default=false":
 				b := sdk.VCSBranch{
 					Default:      false,
 					DisplayID:    "master",
@@ -578,7 +576,7 @@ func TestPurgeWorkflowRunWithNoSuccessWorkflowRun(t *testing.T) {
 					return writeError(w, err)
 				}
 				// NEED GET BRANCH TO GET LATEST COMMIT
-			case "/vcs/github/repos/sguiheux/demo/branches/?branch=master":
+			case "/vcs/github/repos/sguiheux/demo/branches/?branch=master&default=false":
 				b := sdk.VCSBranch{
 					Default:      false,
 					DisplayID:    "master",

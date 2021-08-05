@@ -69,7 +69,7 @@ func TestAPI_detachRepositoriesManagerHandler(t *testing.T) {
 					return writeError(w, err)
 				}
 				// Default payload on workflow insert
-			case "/vcs/github/repos/sguiheux/demo/branches":
+			case "/vcs/github/repos/sguiheux/demo/branches/?branch=&default=true":
 				b := sdk.VCSBranch{
 					Default:      true,
 					DisplayID:    "master",
@@ -79,7 +79,7 @@ func TestAPI_detachRepositoriesManagerHandler(t *testing.T) {
 					return writeError(w, err)
 				}
 				// NEED GET BRANCH TO GET LATEST COMMIT
-			case "/vcs/github/repos/sguiheux/demo/branches/?branch=master":
+			case "/vcs/github/repos/sguiheux/demo/branches/?branch=master&default=false":
 				b := sdk.VCSBranch{
 					Default:      false,
 					DisplayID:    "master",

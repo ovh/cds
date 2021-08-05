@@ -96,17 +96,17 @@ func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
 					return writeError(w, err)
 				}
 				// NEED for default payload on insert
-			case "/vcs/github/repos/sguiheux/demo/branches":
+			case "/vcs/github/repos/sguiheux/demo/branches/?branch=&default=true":
 				b := sdk.VCSBranch{
 					Default:      true,
 					DisplayID:    "master",
 					LatestCommit: "mylastcommit",
 				}
-				if err := enc.Encode([]sdk.VCSBranch{b}); err != nil {
+				if err := enc.Encode(b); err != nil {
 					return writeError(w, err)
 				}
 				// NEED GET BRANCH TO GET LATEST COMMIT
-			case "/vcs/github/repos/sguiheux/demo/branches/?branch=master":
+			case "/vcs/github/repos/sguiheux/demo/branches/?branch=master&default=false":
 				b := sdk.VCSBranch{
 					Default:      false,
 					DisplayID:    "master",
@@ -289,13 +289,13 @@ func TestHookRunWithHashOnlyProcessNodeBuildParameter(t *testing.T) {
 					return writeError(w, err)
 				}
 				// NEED for default payload on insert
-			case "/vcs/github/repos/sguiheux/demo/branches":
+			case "/vcs/github/repos/sguiheux/demo/branches/?branch=&default=true":
 				b := sdk.VCSBranch{
 					Default:      true,
 					DisplayID:    "master",
 					LatestCommit: "mylastcommit",
 				}
-				if err := enc.Encode([]sdk.VCSBranch{b}); err != nil {
+				if err := enc.Encode(b); err != nil {
 					return writeError(w, err)
 				}
 				// NEED GET COMMIT TO GET AUTHOR AND MESSAGE
@@ -466,17 +466,17 @@ func TestManualRunWithPayloadProcessNodeBuildParameter(t *testing.T) {
 					return writeError(w, err)
 				}
 				// NEED for default payload on insert
-			case "/vcs/github/repos/sguiheux/demo/branches":
+			case "/vcs/github/repos/sguiheux/demo/branches/?branch=&default=true":
 				b := sdk.VCSBranch{
 					Default:      true,
 					DisplayID:    "master",
 					LatestCommit: "mylastcommit",
 				}
-				if err := enc.Encode([]sdk.VCSBranch{b}); err != nil {
+				if err := enc.Encode(b); err != nil {
 					return writeError(w, err)
 				}
 				// NEED GET BRANCH TO GET LATEST COMMIT
-			case "/vcs/github/repos/sguiheux/demo/branches/?branch=feat%2Fbranch":
+			case "/vcs/github/repos/sguiheux/demo/branches/?branch=feat%2Fbranch&default=false":
 				b := sdk.VCSBranch{
 					Default:      false,
 					DisplayID:    "feat/branch",
@@ -618,17 +618,17 @@ func TestManualRunBranchAndCommitInPayloadProcessNodeBuildParameter(t *testing.T
 					return writeError(w, err)
 				}
 				// NEED for default payload on insert
-			case "/vcs/github/repos/sguiheux/demo/branches":
+			case "/vcs/github/repos/sguiheux/demo/branches/?branch=&default=true":
 				b := sdk.VCSBranch{
 					Default:      true,
 					DisplayID:    "master",
 					LatestCommit: "mylastcommit",
 				}
-				if err := enc.Encode([]sdk.VCSBranch{b}); err != nil {
+				if err := enc.Encode(b); err != nil {
 					return writeError(w, err)
 				}
 				// NEED GET BRANCH TO GET LATEST COMMIT
-			case "/vcs/github/repos/sguiheux/demo/branches/?branch=feat%2Fbranch":
+			case "/vcs/github/repos/sguiheux/demo/branches/?branch=feat%2Fbranch&default=false":
 				t.Fatalf("No need to get branch: %s", r.URL.String())
 				// NEED GET COMMIT TO GET AUTHOR AND MESSAGE
 			case "/vcs/github/repos/sguiheux/demo/commits/currentcommit":
@@ -758,22 +758,17 @@ func TestManualRunBranchAndRepositoryInPayloadProcessNodeBuildParameter(t *testi
 				if err := enc.Encode(repo); err != nil {
 					return writeError(w, err)
 				}
-			case "/vcs/github/repos/sguiheux/demo/branches":
+			case "/vcs/github/repos/sguiheux/demo/branches/?branch=&default=true":
 				b := sdk.VCSBranch{
 					Default:      true,
 					DisplayID:    "master",
 					LatestCommit: "defaultcommit",
 				}
-				b2 := sdk.VCSBranch{
-					Default:      false,
-					DisplayID:    "feat/branch",
-					LatestCommit: "mylastcommit",
-				}
-				if err := enc.Encode([]sdk.VCSBranch{b, b2}); err != nil {
+				if err := enc.Encode(b); err != nil {
 					return writeError(w, err)
 				}
 				// NEED GET BRANCH TO GET LATEST COMMIT
-			case "/vcs/github/repos/sguiheux/demo/branches/?branch=feat%2Fbranch":
+			case "/vcs/github/repos/sguiheux/demo/branches/?branch=feat%2Fbranch&default=false":
 				b := sdk.VCSBranch{
 					Default:      false,
 					DisplayID:    "feat/branch",
@@ -811,7 +806,7 @@ func TestManualRunBranchAndRepositoryInPayloadProcessNodeBuildParameter(t *testi
 					return writeError(w, err)
 				}
 			// NEED GET BRANCH TO GET LATEST COMMIT
-			case "/vcs/github/repos/sguiheux/demo/branches/?branch=feat%2FbranchForked":
+			case "/vcs/github/repos/sguiheux/demo/branches/?branch=feat%2FbranchForked&default=false":
 				b := sdk.VCSBranch{
 					Default:      false,
 					DisplayID:    "feat/branchForked",
@@ -835,7 +830,7 @@ func TestManualRunBranchAndRepositoryInPayloadProcessNodeBuildParameter(t *testi
 					return writeError(w, err)
 				}
 			// NEED GET BRANCH TO GET LATEST COMMIT
-			case "/vcs/github/repos/richardlt/demo/branches/?branch=feat%2FbranchForked":
+			case "/vcs/github/repos/richardlt/demo/branches/?branch=feat%2FbranchForked&default=false":
 				b := sdk.VCSBranch{
 					Default:      false,
 					DisplayID:    "feat/branchForked",
@@ -1005,28 +1000,24 @@ func TestManualRunBuildParameterMultiApplication(t *testing.T) {
 				if err := enc.Encode(repo); err != nil {
 					return writeError(w, err)
 				}
-			case "/vcs/stash/repos/ovh/cds/branches":
-				bs := []sdk.VCSBranch{
-					{
-						LatestCommit: "defaultCommit",
-						DisplayID:    "defaultBranch",
-						Default:      true,
-						ID:           "1",
-					},
+			case "/vcs/stash/repos/ovh/cds/branches/?branch=&default=true":
+				bs := sdk.VCSBranch{
+					LatestCommit: "defaultCommit",
+					DisplayID:    "defaultBranch",
+					Default:      true,
+					ID:           "1",
 				}
 				if err := enc.Encode(bs); err != nil {
 					return writeError(w, err)
 				}
-			case "/vcs/stash/repos/ovh/cds/branches/?branch=feat%2Fbranch":
+			case "/vcs/stash/repos/ovh/cds/branches/?branch=feat%2Fbranch&default=false":
 				return writeError(w, sdk.ErrNotFound)
-			case "/vcs/github/repos/sguiheux/demo/branches":
-				bs := []sdk.VCSBranch{
-					{
-						LatestCommit: "defaultCommit",
-						DisplayID:    "defaultBranch",
-						Default:      true,
-						ID:           "1",
-					},
+			case "/vcs/github/repos/sguiheux/demo/branches/?branch=&default=true":
+				bs := sdk.VCSBranch{
+					LatestCommit: "defaultCommit",
+					DisplayID:    "defaultBranch",
+					Default:      true,
+					ID:           "1",
 				}
 				if err := enc.Encode(bs); err != nil {
 					return writeError(w, err)
@@ -1059,7 +1050,7 @@ func TestManualRunBuildParameterMultiApplication(t *testing.T) {
 					return writeError(w, err)
 				}
 				// NEED GET BRANCH TO GET LATEST COMMIT
-			case "/vcs/github/repos/sguiheux/demo/branches/?branch=feat%2Fbranch":
+			case "/vcs/github/repos/sguiheux/demo/branches/?branch=feat%2Fbranch&default=false":
 				b := sdk.VCSBranch{
 					Default:      false,
 					DisplayID:    "feat/branch",
@@ -1250,32 +1241,18 @@ func TestManualRunBuildParameterNoApplicationOnRoot(t *testing.T) {
 				if err := enc.Encode(repo); err != nil {
 					return writeError(w, err)
 				}
-			case "/vcs/stash/repos/ovh/cds/branches":
-				bs := []sdk.VCSBranch{
-					{
-						LatestCommit: "defaultCommit",
-						DisplayID:    "defaultBranch",
-						Default:      true,
-						ID:           "1",
-					},
+			case "/vcs/stash/repos/ovh/cds/branches/?branch=&default=true":
+				bs := sdk.VCSBranch{
+					LatestCommit: "defaultCommit",
+					DisplayID:    "defaultBranch",
+					Default:      true,
+					ID:           "1",
 				}
 				if err := enc.Encode(bs); err != nil {
 					return writeError(w, err)
 				}
-			case "/vcs/stash/repos/ovh/cds/branches/?branch=feat%2Fbranch":
+			case "/vcs/stash/repos/ovh/cds/branches/?branch=feat%2Fbranch&default=false":
 				return writeError(w, sdk.ErrNotFound)
-			case "/vcs/github/repos/sguiheux/demo/branches":
-				bs := []sdk.VCSBranch{
-					{
-						LatestCommit: "defaultCommit",
-						DisplayID:    "defaultBranch",
-						Default:      true,
-						ID:           "1",
-					},
-				}
-				if err := enc.Encode(bs); err != nil {
-					return writeError(w, err)
-				}
 			case "/vcs/stash/repos/ovh/cds/commits/defaultCommit":
 				c := sdk.VCSCommit{
 					Author: sdk.VCSAuthor{
@@ -1305,7 +1282,7 @@ func TestManualRunBuildParameterNoApplicationOnRoot(t *testing.T) {
 				}
 				// NEED GET BRANCH TO GET LATEST COMMIT
 			//case "/vcs/github/repos/sguiheux/demo/branches/?branch=feat%2Fbranch":
-			case "/vcs/github/repos/sguiheux/demo/branches/?branch=defaultBranch":
+			case "/vcs/github/repos/sguiheux/demo/branches/?branch=defaultBranch&default=false":
 				b := sdk.VCSBranch{
 					Default:      false,
 					DisplayID:    "defaultBranch",
@@ -1496,19 +1473,17 @@ func TestGitParamOnPipelineWithoutApplication(t *testing.T) {
 				if err := enc.Encode(repo); err != nil {
 					return writeError(w, err)
 				}
-			case "/vcs/github/repos/sguiheux/demo/branches":
+			case "/vcs/github/repos/sguiheux/demo/branches/?branch=&default=true":
 				b := sdk.VCSBranch{
 					Default:      true,
 					DisplayID:    "master",
 					LatestCommit: "defaultCommit",
 				}
-				if err := enc.Encode([]sdk.VCSBranch{
-					b,
-				}); err != nil {
+				if err := enc.Encode(b); err != nil {
 					return writeError(w, err)
 				}
 				// NEED GET BRANCH TO GET LATEST COMMIT
-			case "/vcs/github/repos/sguiheux/demo/branches/?branch=feat%2Fbranch":
+			case "/vcs/github/repos/sguiheux/demo/branches/?branch=feat%2Fbranch&default=false":
 				b := sdk.VCSBranch{
 					Default:      false,
 					DisplayID:    "feat/branch",
@@ -1684,17 +1659,17 @@ func TestGitParamOnApplicationWithoutRepo(t *testing.T) {
 				if err := enc.Encode(repo); err != nil {
 					return writeError(w, err)
 				}
-			case "/vcs/github/repos/sguiheux/demo/branches":
+			case "/vcs/github/repos/sguiheux/demo/branches/?branch=&default=true":
 				b := sdk.VCSBranch{
 					Default:      true,
 					DisplayID:    "master",
 					LatestCommit: "defaultcommit",
 				}
-				if err := enc.Encode([]sdk.VCSBranch{b}); err != nil {
+				if err := enc.Encode(b); err != nil {
 					return writeError(w, err)
 				}
 				// NEED GET BRANCH TO GET LATEST COMMIT
-			case "/vcs/github/repos/sguiheux/demo/branches/?branch=feat%2Fbranch":
+			case "/vcs/github/repos/sguiheux/demo/branches/?branch=feat%2Fbranch&default=false":
 				b := sdk.VCSBranch{
 					Default:      false,
 					DisplayID:    "feat/branch",
@@ -1873,17 +1848,17 @@ func TestGitParamOn2ApplicationSameRepo(t *testing.T) {
 				if err := enc.Encode(repo); err != nil {
 					return writeError(w, err)
 				}
-			case "/vcs/github/repos/sguiheux/demo/branches":
+			case "/vcs/github/repos/sguiheux/demo/branches/?branch=&default=true":
 				b := sdk.VCSBranch{
 					Default:      false,
 					DisplayID:    "feat/branch",
 					LatestCommit: "mylastcommit",
 				}
-				if err := enc.Encode([]sdk.VCSBranch{b}); err != nil {
+				if err := enc.Encode(b); err != nil {
 					return writeError(w, err)
 				}
 				// NEED GET BRANCH TO GET LATEST COMMIT
-			case "/vcs/github/repos/sguiheux/demo/branches/?branch=feat%2Fbranch":
+			case "/vcs/github/repos/sguiheux/demo/branches/?branch=feat%2Fbranch&default=false":
 				repoBranch++
 				if repoBranch == 2 {
 					t.Fatalf("Must not be call twice: %s", r.URL.String())
@@ -2075,17 +2050,17 @@ func TestGitParamWithJoin(t *testing.T) {
 				if err := enc.Encode(repo); err != nil {
 					return writeError(w, err)
 				}
-			case "/vcs/github/repos/sguiheux/demo/branches":
+			case "/vcs/github/repos/sguiheux/demo/branches/?branch=&default=true":
 				b := sdk.VCSBranch{
 					Default:      true,
 					DisplayID:    "master",
 					LatestCommit: "defaultcommit",
 				}
-				if err := enc.Encode([]sdk.VCSBranch{b}); err != nil {
+				if err := enc.Encode(b); err != nil {
 					return writeError(w, err)
 				}
 				// NEED GET BRANCH TO GET LATEST COMMIT
-			case "/vcs/github/repos/sguiheux/demo/branches/?branch=feat%2Fbranch":
+			case "/vcs/github/repos/sguiheux/demo/branches/?branch=feat%2Fbranch&default=false":
 				repoBranch++
 				if repoBranch == 2 {
 					t.Fatalf("Must not be call twice: %s", r.URL.String())
@@ -2412,17 +2387,17 @@ func TestGitParamOn2ApplicationSameRepoWithFork(t *testing.T) {
 				if err := enc.Encode(repo); err != nil {
 					return writeError(w, err)
 				}
-			case "/vcs/github/repos/sguiheux/demo/branches":
+			case "/vcs/github/repos/sguiheux/demo/branches/?branch=&default=true":
 				b := sdk.VCSBranch{
 					Default:      true,
 					DisplayID:    "master",
 					LatestCommit: "defaultcommit",
 				}
-				if err := enc.Encode([]sdk.VCSBranch{b}); err != nil {
+				if err := enc.Encode(b); err != nil {
 					return writeError(w, err)
 				}
 				// NEED GET BRANCH TO GET LATEST COMMIT
-			case "/vcs/github/repos/sguiheux/demo/branches/?branch=feat%2Fbranch":
+			case "/vcs/github/repos/sguiheux/demo/branches/?branch=feat%2Fbranch&default=false":
 				repoBranch++
 				if repoBranch == 2 {
 					t.Fatalf("Must not be call twice: %s", r.URL.String())
@@ -2615,17 +2590,17 @@ func TestManualRunWithPayloadAndRunCondition(t *testing.T) {
 				if err := enc.Encode(repo); err != nil {
 					return writeError(w, err)
 				}
-			case "/vcs/github/repos/sguiheux/demo/branches":
+			case "/vcs/github/repos/sguiheux/demo/branches/?branch=&default=true":
 				b := sdk.VCSBranch{
 					Default:      true,
 					DisplayID:    "master",
 					LatestCommit: "defaultcommit",
 				}
-				if err := enc.Encode([]sdk.VCSBranch{b}); err != nil {
+				if err := enc.Encode(b); err != nil {
 					return writeError(w, err)
 				}
 				// NEED GET BRANCH TO GET LATEST COMMIT
-			case "/vcs/github/repos/sguiheux/demo/branches/?branch=feat%2Fbranch":
+			case "/vcs/github/repos/sguiheux/demo/branches/?branch=feat%2Fbranch&default=false":
 				b := sdk.VCSBranch{
 					Default:      false,
 					DisplayID:    "feat/branch",
