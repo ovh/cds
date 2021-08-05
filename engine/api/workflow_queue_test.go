@@ -1362,22 +1362,15 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 				if err := enc.Encode(repo); err != nil {
 					return writeError(wri, err)
 				}
-			case "/vcs/repoManServ/repos/foo/bar/branches":
-				bs := []sdk.VCSBranch{}
+			case "/vcs/repoManServ/repos/foo/bar/branches/?branch=&default=true":
 				b := sdk.VCSBranch{
 					DisplayID: "master",
 					Default:   true,
 				}
-				bs = append(bs, b)
-				b2 := sdk.VCSBranch{
-					DisplayID: "my-branch",
-					Default:   false,
-				}
-				bs = append(bs, b2)
-				if err := enc.Encode(bs); err != nil {
+				if err := enc.Encode(b); err != nil {
 					return writeError(wri, err)
 				}
-			case "/vcs/repoManServ/repos/foo/bar/branches/?branch=master":
+			case "/vcs/repoManServ/repos/foo/bar/branches/?branch=master&default=false":
 				b := sdk.VCSBranch{
 					DisplayID: "master",
 					Default:   true,
@@ -1395,7 +1388,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 				if err := enc.Encode(c); err != nil {
 					return writeError(wri, err)
 				}
-			case "/vcs/repoManServ/repos/foo/bar/branches/?branch=my-branch":
+			case "/vcs/repoManServ/repos/foo/bar/branches/?branch=my-branch&default=false":
 				b := sdk.VCSBranch{
 					DisplayID: "my-branch",
 					Default:   true,
