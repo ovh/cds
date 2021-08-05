@@ -596,21 +596,11 @@ func GetNodeRunBuildCommits(ctx context.Context, db gorpmapper.SqlExecutorWithTx
 	}
 
 	if cur.Branch == "" && cur.Tag == "" {
-		branches, err := client.Branches(ctx, cur.Remote)
+		branch, err := repositoriesmanager.DefaultBranch(ctx, client, cur.Remote)
 		if err != nil {
 			return nil, cur, sdk.WrapError(err, "cannot load branches from vcs api remote %s", cur.Remote)
 		}
-		found := false
-		for _, br := range branches {
-			if br.Default {
-				cur.Branch = br.DisplayID
-				found = true
-				break
-			}
-		}
-		if !found {
-			return nil, cur, sdk.WithStack(fmt.Errorf("cannot find default branch from vcs api"))
-		}
+		cur.Branch = branch.DisplayID
 	}
 
 	var envID int64
@@ -626,7 +616,7 @@ func GetNodeRunBuildCommits(ctx context.Context, db gorpmapper.SqlExecutorWithTx
 	var lastCommit sdk.VCSCommit
 	if cur.Hash == "" && cur.Tag == "" && cur.Branch != "" {
 		//If we only have the current branch, search for the branch
-		br, err := client.Branch(ctx, repo, cur.Branch)
+		br, err := client.Branch(ctx, repo, sdk.VCSBranchFilters{BranchName: cur.Branch})
 		if err != nil {
 			return nil, cur, sdk.WrapError(err, "cannot get branch %s", cur.Branch)
 		}
@@ -660,7 +650,7 @@ func GetNodeRunBuildCommits(ctx context.Context, db gorpmapper.SqlExecutorWithTx
 	} else if prev.Hash != "" {
 		if cur.Tag == "" {
 			if cur.Hash == "" {
-				br, err := client.Branch(ctx, repo, cur.Branch)
+				br, err := client.Branch(ctx, repo, sdk.VCSBranchFilters{BranchName: cur.Branch})
 				if err != nil {
 					return nil, cur, sdk.WrapError(err, "Cannot get branch %s", cur.Branch)
 				}

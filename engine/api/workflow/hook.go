@@ -424,17 +424,11 @@ func DefaultPayload(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store 
 				return wf.WorkflowData.Node.Context.DefaultPayload, sdk.WrapError(err, "cannot get authorized client")
 			}
 
-			branches, err := client.Branches(ctx, app.RepositoryFullname)
+			branch, err := repositoriesmanager.DefaultBranch(ctx, client, app.RepositoryFullname)
 			if err != nil {
 				return wf.WorkflowData.Node.Context.DefaultPayload, err
 			}
-
-			for _, branch := range branches {
-				if branch.Default {
-					defaultBranch = branch.DisplayID
-					break
-				}
-			}
+			defaultBranch = branch.DisplayID
 		}
 
 		defaultPayload = wf.WorkflowData.Node.Context.DefaultPayload

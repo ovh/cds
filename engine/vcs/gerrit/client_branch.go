@@ -8,7 +8,7 @@ import (
 )
 
 //Branches retrieves the branches
-func (c *gerritClient) Branches(ctx context.Context, fullname string) ([]sdk.VCSBranch, error) {
+func (c *gerritClient) Branches(ctx context.Context, fullname string, _ sdk.VCSBranchesFilter) ([]sdk.VCSBranch, error) {
 	branches, _, err := c.client.Projects.ListBranches(fullname, nil)
 	if err != nil {
 		return nil, sdk.WrapError(err, "unable to list branches")
@@ -45,8 +45,8 @@ func (c *gerritClient) Branches(ctx context.Context, fullname string) ([]sdk.VCS
 }
 
 //Branch retrieves the branch
-func (c *gerritClient) Branch(ctx context.Context, fullname, branchName string) (*sdk.VCSBranch, error) {
-	branch, _, err := c.client.Projects.GetBranch(fullname, branchName)
+func (c *gerritClient) Branch(ctx context.Context, fullname string, filters sdk.VCSBranchFilters) (*sdk.VCSBranch, error) {
+	branch, _, err := c.client.Projects.GetBranch(fullname, filters.BranchName)
 	if err != nil {
 		return nil, sdk.WrapError(err, "unable to get branch")
 	}

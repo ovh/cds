@@ -203,6 +203,15 @@ type VCSServerService interface {
 	GetAuthorizedClient(context.Context, string, string, int64) (VCSAuthorizedClientService, error)
 }
 
+type VCSBranchFilters struct {
+	BranchName string
+	Default    bool
+}
+
+type VCSBranchesFilter struct {
+	Limit int64
+}
+
 // VCSAuthorizedClientCommon is an interface for a connected client on a VCS Server.
 type VCSAuthorizedClientCommon interface {
 	//Repos
@@ -210,8 +219,8 @@ type VCSAuthorizedClientCommon interface {
 	RepoByFullname(ctx context.Context, fullname string) (VCSRepo, error)
 
 	//Branches
-	Branches(context.Context, string) ([]VCSBranch, error)
-	Branch(ctx context.Context, repo string, branch string) (*VCSBranch, error)
+	Branches(context.Context, string, VCSBranchesFilter) ([]VCSBranch, error)
+	Branch(ctx context.Context, repo string, filters VCSBranchFilters) (*VCSBranch, error)
 
 	//Tags
 	Tags(ctx context.Context, repo string) ([]VCSTag, error)

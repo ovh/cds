@@ -180,16 +180,11 @@ func ComputeLatestDefaultBranchReport(ctx context.Context, db gorpmapper.SqlExec
 		return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "ComputeLatestDefaultBranchReport> Cannot get repo client %s : %s", wnr.VCSServer, erra)
 	}
 
-	branches, err := client.Branches(ctx, wnr.VCSRepository)
+	branch, err := repositoriesmanager.DefaultBranch(ctx, client, wnr.VCSRepository)
 	if err != nil {
 		return err
 	}
-	for _, b := range branches {
-		if b.Default {
-			defaultBranch = b.DisplayID
-			break
-		}
-	}
+	defaultBranch = branch.DisplayID
 
 	if defaultBranch != wnr.VCSBranch {
 		defaultCoverage, errD := loadLatestCoverageReport(db, wnr.WorkflowID, wnr.VCSRepository, defaultBranch, covReport.ApplicationID)
