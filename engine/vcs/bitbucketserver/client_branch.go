@@ -3,7 +3,6 @@ package bitbucketserver
 import (
 	"context"
 	"fmt"
-	"github.com/rockbears/log"
 	"net/url"
 	"strconv"
 	"strings"
@@ -40,7 +39,6 @@ func (b *bitbucketClient) Branches(ctx context.Context, fullname string, filters
 		}
 
 		var response BranchResponse
-		log.Error(ctx, "CALL STASH BRANCHES")
 		if err := b.do(ctx, "GET", "core", path, params, nil, &response, nil); err != nil {
 			return nil, sdk.WrapError(err, "Unable to get branches %s", path)
 		}
