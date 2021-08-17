@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -27,6 +26,7 @@ type QueueFilter struct {
 	Until        *time.Time
 	Limit        *int
 	Statuses     []string
+	Regions      []string
 }
 
 func NewQueueFilter() QueueFilter {
@@ -92,17 +92,25 @@ func LoadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.S
 	from workflow_node_run_job
 	where workflow_node_run_job.queued >= $1
 	and workflow_node_run_job.queued <= $2
-	and workflow_node_run_job.status = ANY(string_to_array($3, ','))
+	and workflow_node_run_job.status = ANY($3)
 	AND contains_service IN ($4, $5)
-	AND (model_type is NULL OR model_type = '' OR model_type = ANY(string_to_array($6, ',')))
+	AND (model_type is NULL OR model_type = '' OR model_type = ANY($6))
+  AND (
+    workflow_node_run_job.region = ANY($7)
+    OR
+    (workflow_node_run_job.region is NULL AND '' = ANY($7))
+    OR
+    array_length($7, 1) is NULL
+  )
 	ORDER BY workflow_node_run_job.queued ASC
 	`).Args(
-		*filter.Since,                       // $1
-		*filter.Until,                       // $2
-		strings.Join(filter.Statuses, ","),  // $3
-		containsService[0],                  // $4
-		containsService[1],                  // $5
-		strings.Join(filter.ModelType, ","), // $6
+		*filter.Since,                    // $1
+		*filter.Until,                    // $2
+		pq.StringArray(filter.Statuses),  // $3
+		containsService[0],               // $4
+		containsService[1],               // $5
+		pq.StringArray(filter.ModelType), // $6
+		pq.StringArray(filter.Regions),   // $7
 	)
 
 	return loadNodeJobRunQueue(ctx, db, store, query, filter.Limit)
@@ -125,12 +133,13 @@ func LoadNodeJobRunQueueByGroupIDs(ctx context.Context, db gorp.SqlExecutor, sto
 	-- Parameters:
 	--  $1: Queue since
 	--  $2: Queue until
-	--  $3: Comma separated list of status
+	--  $3: List of status
 	--  $4, $5: Should (or should not) contains service, or we don't care
-	--  $6: Comma separated list of model types
+	--  $6: List of model types
 	--  $7: Comman separated list of groups ID
 	--  $8: shared infra group ID
 	--  $9: minimum level of permission
+  --  $10: List of regions
 	WITH workflow_id_with_permissions AS (
 		SELECT workflow_perm.workflow_id,
 			CASE WHEN $8 = ANY(string_to_array($7, ',')::int[]) THEN 7
@@ -167,24 +176,32 @@ func LoadNodeJobRunQueueByGroupIDs(ctx context.Context, db gorp.SqlExecutor, sto
 	)
 	AND workflow_node_run_job.queued >= $1
 	AND workflow_node_run_job.queued <= $2
-	AND workflow_node_run_job.status = ANY(string_to_array($3, ','))
+	AND workflow_node_run_job.status = ANY($3)
 	AND workflow_node_run_job.contains_service IN ($4, $5)
 	AND (
 		workflow_node_run_job.model_type is NULL
 		OR
-		model_type = '' OR model_type = ANY(string_to_array($6, ','))
+		model_type = '' OR model_type = ANY($6)
 	)
+  AND (
+    workflow_node_run_job.region = ANY($10)
+    OR
+    (workflow_node_run_job.region is NULL AND '' = ANY($10))
+    OR
+    array_length($10, 1) is NULL
+  )
 	ORDER BY workflow_node_run_job.queued ASC
 	`).Args(
 		*filter.Since,                          // $1
 		*filter.Until,                          // $2
-		strings.Join(filter.Statuses, ","),     // $3
+		pq.StringArray(filter.Statuses),        // $3
 		containsService[0],                     // $4
 		containsService[1],                     // $5
-		strings.Join(filter.ModelType, ","),    // $6
+		pq.StringArray(filter.ModelType),       // $6
 		gorpmapping.IDsToQueryString(groupIDs), // $7
 		group.SharedInfraGroup.ID,              // $8
 		filter.Rights,                          // $9
+		pq.StringArray(filter.Regions),         // $10
 	)
 	return loadNodeJobRunQueue(ctx, db, store, query, filter.Limit)
 }
@@ -379,7 +396,10 @@ func getHatcheryInfo(ctx context.Context, store cache.Store, j *JobRun) {
 		log.Error(ctx, "cannot get from cache %s: %v", k, err)
 	}
 	if find {
-		j.BookedBy = h
+		j.BookedBy = sdk.BookedBy{
+			Name: h.Name,
+			ID:   h.ID,
+		}
 	}
 }
 

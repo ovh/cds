@@ -16,12 +16,12 @@ import (
 )
 
 // LoadNodeRunJobInfo load infos (workflow_node_run_job_infos) for a job (workflow_node_run_job)
-func LoadNodeRunJobInfo(ctx context.Context, db gorp.SqlExecutor, jobID int64) ([]sdk.SpawnInfo, error) {
+func LoadNodeRunJobInfo(ctx context.Context, db gorp.SqlExecutor, nodeRunID int64, jobID int64) ([]sdk.SpawnInfo, error) {
 	res := []struct {
 		Bytes sql.NullString `db:"spawninfos"`
 	}{}
-	query := "SELECT spawninfos FROM workflow_node_run_job_info WHERE workflow_node_run_job_id = $1"
-	if _, err := db.Select(&res, query, jobID); err != nil {
+	query := "SELECT spawninfos FROM workflow_node_run_job_info WHERE workflow_node_run_id = $1 AND workflow_node_run_job_id = $2"
+	if _, err := db.Select(&res, query, nodeRunID, jobID); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}

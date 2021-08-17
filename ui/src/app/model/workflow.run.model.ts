@@ -218,12 +218,17 @@ export class WorkflowNodeJobRun {
     start: string;
     done: string;
     model: string;
-    bookedby: Hatchery;
+    bookedby: BookedBy;
     spawninfos: Array<SpawnInfo>;
 
     // UI infos for queue
     duration: string;
     updating: boolean;
+}
+
+export class BookedBy {
+    id: number;
+    name: string;
 }
 
 // WorkflowNodeRunHookEvent is an instanc of event received on a hook

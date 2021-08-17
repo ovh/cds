@@ -33,6 +33,7 @@ func syncJobInNodeRun(n *sdk.WorkflowNodeRun, j *sdk.WorkflowNodeJobRun, stageIn
 			rj.Done = j.Done
 			rj.Model = j.Model
 			rj.ModelType = j.ModelType
+			rj.Region = j.Region
 			rj.ContainsService = j.ContainsService
 			rj.Job = j.Job
 			rj.Header = j.Header
@@ -69,6 +70,7 @@ func syncTakeJobInNodeRun(ctx context.Context, db gorp.SqlExecutor, n *sdk.Workf
 			rj.Done = j.Done
 			rj.Model = j.Model
 			rj.ModelType = j.ModelType
+			rj.Region = j.Region
 			rj.ContainsService = j.ContainsService
 			rj.WorkerName = j.WorkerName
 			rj.HatcheryName = j.HatcheryName
@@ -503,6 +505,14 @@ jobLoop:
 		}
 		wjob.Job.Job.Action.Requirements = jobRequirements // Set the interpolated requirements on the job run only
 
+		// Set region from requirement on job run if exists
+		for i := range jobRequirements {
+			if jobRequirements[i].Type == sdk.RegionRequirement {
+				wjob.Region = &jobRequirements[i].Value
+				break
+			}
+		}
+
 		if !stage.Enabled || !wjob.Job.Enabled {
 			wjob.Status = sdk.StatusDisabled
 			skippedOrDisabledJobs++
@@ -650,7 +660,7 @@ func syncStage(ctx context.Context, db gorp.SqlExecutor, store cache.Store, stag
 			if runJobDB.Status == sdk.StatusBuilding || runJobDB.Status == sdk.StatusWaiting {
 				stageEnd = false
 			}
-			spawnInfos, err := LoadNodeRunJobInfo(ctx, db, runJob.ID)
+			spawnInfos, err := LoadNodeRunJobInfo(ctx, db, runJob.WorkflowNodeRunID, runJob.ID)
 			if err != nil {
 				return false, sdk.WrapError(err, "unable to load spawn infos for runJob: %d", runJob.ID)
 			}
@@ -665,9 +675,9 @@ func syncStage(ctx context.Context, db gorp.SqlExecutor, store cache.Store, stag
 				runJob.Done = runJobDB.Done
 				runJob.Model = runJobDB.Model
 				runJob.ModelType = runJobDB.ModelType
+				runJob.Region = runJobDB.Region
 				runJob.ContainsService = runJobDB.ContainsService
 				runJob.Job = runJobDB.Job
-				runJob.Model = runJobDB.Model
 				runJob.WorkerName = runJobDB.WorkerName
 				runJob.HatcheryName = runJobDB.HatcheryName
 			}
@@ -945,7 +955,7 @@ func stopWorkflowNodeRunStages(ctx context.Context, db gorp.SqlExecutor, nodeRun
 		stag := &nodeRun.Stages[iS]
 		for iR := range stag.RunJobs {
 			runj := &stag.RunJobs[iR]
-			spawnInfos, err := LoadNodeRunJobInfo(ctx, db, runj.ID)
+			spawnInfos, err := LoadNodeRunJobInfo(ctx, db, nodeRun.ID, runj.ID)
 			if err != nil {
 				log.Warn(ctx, "unable to load spawn infos for runj ID: %d", runj.ID)
 			} else {
@@ -1030,7 +1040,7 @@ func SyncNodeRunRunJob(ctx context.Context, db gorp.SqlExecutor, nodeRun *sdk.Wo
 		for j := range s.RunJobs {
 			runJob := &s.RunJobs[j]
 			if runJob.ID == nodeJobRun.ID {
-				spawnInfos, err := LoadNodeRunJobInfo(ctx, db, runJob.ID)
+				spawnInfos, err := LoadNodeRunJobInfo(ctx, db, nodeRun.ID, runJob.ID)
 				if err != nil {
 					return false, sdk.WrapError(err, "unable to load spawn infos for runJobID: %d", runJob.ID)
 				}

@@ -755,6 +755,11 @@ func (api *API) getWorkflowJobQueueHandler() service.Handler {
 			return errM
 		}
 
+		regions, err := QueryStrings(r, "region")
+		if err != nil {
+			return sdk.NewError(sdk.ErrWrongRequest, err)
+		}
+
 		permissions := sdk.PermissionRead
 
 		isW := isWorker(ctx)
@@ -770,6 +775,7 @@ func (api *API) getWorkflowJobQueueHandler() service.Handler {
 		filter.Rights = permissions
 		filter.Statuses = status
 		filter.Limit = &limit
+		filter.Regions = regions
 		if modelType != "" {
 			filter.ModelType = []string{modelType}
 		}

@@ -89,7 +89,8 @@ type JobRun struct {
 	Done               time.Time      `db:"done"`
 	Model              string         `db:"model"`
 	ExecGroups         sql.NullString `db:"exec_groups"`
-	BookedBy           sdk.Service    `db:"-"`
+	BookedBy           sdk.BookedBy   `db:"-"`
+	Region             *string        `db:"region"`
 	ContainsService    bool           `db:"contains_service"`
 	ModelType          sql.NullString `db:"model_type"`
 	Header             sql.NullString `db:"header"`
@@ -118,6 +119,7 @@ func (j *JobRun) ToJobRun(jr *sdk.WorkflowNodeJobRun) (err error) {
 	j.Done = jr.Done
 	j.Model = jr.Model
 	j.ModelType = sql.NullString{Valid: true, String: string(jr.ModelType)}
+	j.Region = jr.Region
 	j.ContainsService = jr.ContainsService
 	j.ExecGroups, err = gorpmapping.JSONToNullString(jr.ExecGroups)
 	j.WorkerName = jr.WorkerName
@@ -149,6 +151,7 @@ func (j JobRun) WorkflowNodeRunJob() (sdk.WorkflowNodeJobRun, error) {
 		Start:             j.Start,
 		Done:              j.Done,
 		BookedBy:          j.BookedBy,
+		Region:            j.Region,
 		ContainsService:   j.ContainsService,
 		HatcheryName:      j.HatcheryName,
 		WorkerName:        j.WorkerName,

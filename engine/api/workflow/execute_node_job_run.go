@@ -198,7 +198,7 @@ func UpdateNodeJobRunStatus(ctx context.Context, db gorpmapper.SqlExecutorWithTx
 		return report, err
 	}
 
-	spawnInfos, err := LoadNodeRunJobInfo(ctx, db, job.ID)
+	spawnInfos, err := LoadNodeRunJobInfo(ctx, db, nodeRun.ID, job.ID)
 	if err != nil {
 		return report, sdk.WrapError(err, "unable to load spawn infos for runJob: %d", job.ID)
 	}
