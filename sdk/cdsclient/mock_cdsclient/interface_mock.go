@@ -3128,17 +3128,22 @@ func (mr *MockQueueClientMockRecorder) QueueJobTag(ctx, jobID, tags interface{})
 }
 
 // QueuePolling mocks base method.
-func (m *MockQueueClient) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, modelType string, ratioService *int) error {
+func (m *MockQueueClient) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "QueuePolling", ctx, goRoutines, jobs, errs, delay, modelType, ratioService)
+	varargs := []interface{}{ctx, goRoutines, jobs, errs, delay}
+	for _, a := range ms {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "QueuePolling", varargs...)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // QueuePolling indicates an expected call of QueuePolling.
-func (mr *MockQueueClientMockRecorder) QueuePolling(ctx, goRoutines, jobs, errs, delay, modelType, ratioService interface{}) *gomock.Call {
+func (mr *MockQueueClientMockRecorder) QueuePolling(ctx, goRoutines, jobs, errs, delay interface{}, ms ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueuePolling", reflect.TypeOf((*MockQueueClient)(nil).QueuePolling), ctx, goRoutines, jobs, errs, delay, modelType, ratioService)
+	varargs := append([]interface{}{ctx, goRoutines, jobs, errs, delay}, ms...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueuePolling", reflect.TypeOf((*MockQueueClient)(nil).QueuePolling), varargs...)
 }
 
 // QueueSendCoverage mocks base method.
@@ -3259,10 +3264,10 @@ func (mr *MockQueueClientMockRecorder) QueueWorkerCacheLink(ctx, jobID, tag inte
 }
 
 // QueueWorkflowNodeJobRun mocks base method.
-func (m *MockQueueClient) QueueWorkflowNodeJobRun(status ...string) ([]sdk.WorkflowNodeJobRun, error) {
+func (m *MockQueueClient) QueueWorkflowNodeJobRun(mods ...cdsclient.RequestModifier) ([]sdk.WorkflowNodeJobRun, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{}
-	for _, a := range status {
+	for _, a := range mods {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "QueueWorkflowNodeJobRun", varargs...)
@@ -3272,9 +3277,9 @@ func (m *MockQueueClient) QueueWorkflowNodeJobRun(status ...string) ([]sdk.Workf
 }
 
 // QueueWorkflowNodeJobRun indicates an expected call of QueueWorkflowNodeJobRun.
-func (mr *MockQueueClientMockRecorder) QueueWorkflowNodeJobRun(status ...interface{}) *gomock.Call {
+func (mr *MockQueueClientMockRecorder) QueueWorkflowNodeJobRun(mods ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueWorkflowNodeJobRun", reflect.TypeOf((*MockQueueClient)(nil).QueueWorkflowNodeJobRun), status...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueWorkflowNodeJobRun", reflect.TypeOf((*MockQueueClient)(nil).QueueWorkflowNodeJobRun), mods...)
 }
 
 // QueueWorkflowRunResultCheck mocks base method.
@@ -7037,17 +7042,22 @@ func (mr *MockInterfaceMockRecorder) QueueJobTag(ctx, jobID, tags interface{}) *
 }
 
 // QueuePolling mocks base method.
-func (m *MockInterface) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, modelType string, ratioService *int) error {
+func (m *MockInterface) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "QueuePolling", ctx, goRoutines, jobs, errs, delay, modelType, ratioService)
+	varargs := []interface{}{ctx, goRoutines, jobs, errs, delay}
+	for _, a := range ms {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "QueuePolling", varargs...)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // QueuePolling indicates an expected call of QueuePolling.
-func (mr *MockInterfaceMockRecorder) QueuePolling(ctx, goRoutines, jobs, errs, delay, modelType, ratioService interface{}) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) QueuePolling(ctx, goRoutines, jobs, errs, delay interface{}, ms ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueuePolling", reflect.TypeOf((*MockInterface)(nil).QueuePolling), ctx, goRoutines, jobs, errs, delay, modelType, ratioService)
+	varargs := append([]interface{}{ctx, goRoutines, jobs, errs, delay}, ms...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueuePolling", reflect.TypeOf((*MockInterface)(nil).QueuePolling), varargs...)
 }
 
 // QueueSendCoverage mocks base method.
@@ -7168,10 +7178,10 @@ func (mr *MockInterfaceMockRecorder) QueueWorkerCacheLink(ctx, jobID, tag interf
 }
 
 // QueueWorkflowNodeJobRun mocks base method.
-func (m *MockInterface) QueueWorkflowNodeJobRun(status ...string) ([]sdk.WorkflowNodeJobRun, error) {
+func (m *MockInterface) QueueWorkflowNodeJobRun(mods ...cdsclient.RequestModifier) ([]sdk.WorkflowNodeJobRun, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{}
-	for _, a := range status {
+	for _, a := range mods {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "QueueWorkflowNodeJobRun", varargs...)
@@ -7181,9 +7191,9 @@ func (m *MockInterface) QueueWorkflowNodeJobRun(status ...string) ([]sdk.Workflo
 }
 
 // QueueWorkflowNodeJobRun indicates an expected call of QueueWorkflowNodeJobRun.
-func (mr *MockInterfaceMockRecorder) QueueWorkflowNodeJobRun(status ...interface{}) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) QueueWorkflowNodeJobRun(mods ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueWorkflowNodeJobRun", reflect.TypeOf((*MockInterface)(nil).QueueWorkflowNodeJobRun), status...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueWorkflowNodeJobRun", reflect.TypeOf((*MockInterface)(nil).QueueWorkflowNodeJobRun), mods...)
 }
 
 // QueueWorkflowRunResultCheck mocks base method.
@@ -9064,17 +9074,22 @@ func (mr *MockWorkerInterfaceMockRecorder) QueueJobTag(ctx, jobID, tags interfac
 }
 
 // QueuePolling mocks base method.
-func (m *MockWorkerInterface) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, modelType string, ratioService *int) error {
+func (m *MockWorkerInterface) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "QueuePolling", ctx, goRoutines, jobs, errs, delay, modelType, ratioService)
+	varargs := []interface{}{ctx, goRoutines, jobs, errs, delay}
+	for _, a := range ms {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "QueuePolling", varargs...)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // QueuePolling indicates an expected call of QueuePolling.
-func (mr *MockWorkerInterfaceMockRecorder) QueuePolling(ctx, goRoutines, jobs, errs, delay, modelType, ratioService interface{}) *gomock.Call {
+func (mr *MockWorkerInterfaceMockRecorder) QueuePolling(ctx, goRoutines, jobs, errs, delay interface{}, ms ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueuePolling", reflect.TypeOf((*MockWorkerInterface)(nil).QueuePolling), ctx, goRoutines, jobs, errs, delay, modelType, ratioService)
+	varargs := append([]interface{}{ctx, goRoutines, jobs, errs, delay}, ms...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueuePolling", reflect.TypeOf((*MockWorkerInterface)(nil).QueuePolling), varargs...)
 }
 
 // QueueSendCoverage mocks base method.
@@ -9195,10 +9210,10 @@ func (mr *MockWorkerInterfaceMockRecorder) QueueWorkerCacheLink(ctx, jobID, tag 
 }
 
 // QueueWorkflowNodeJobRun mocks base method.
-func (m *MockWorkerInterface) QueueWorkflowNodeJobRun(status ...string) ([]sdk.WorkflowNodeJobRun, error) {
+func (m *MockWorkerInterface) QueueWorkflowNodeJobRun(mods ...cdsclient.RequestModifier) ([]sdk.WorkflowNodeJobRun, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{}
-	for _, a := range status {
+	for _, a := range mods {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "QueueWorkflowNodeJobRun", varargs...)
@@ -9208,9 +9223,9 @@ func (m *MockWorkerInterface) QueueWorkflowNodeJobRun(status ...string) ([]sdk.W
 }
 
 // QueueWorkflowNodeJobRun indicates an expected call of QueueWorkflowNodeJobRun.
-func (mr *MockWorkerInterfaceMockRecorder) QueueWorkflowNodeJobRun(status ...interface{}) *gomock.Call {
+func (mr *MockWorkerInterfaceMockRecorder) QueueWorkflowNodeJobRun(mods ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueWorkflowNodeJobRun", reflect.TypeOf((*MockWorkerInterface)(nil).QueueWorkflowNodeJobRun), status...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueWorkflowNodeJobRun", reflect.TypeOf((*MockWorkerInterface)(nil).QueueWorkflowNodeJobRun), mods...)
 }
 
 // QueueWorkflowRunResultCheck mocks base method.

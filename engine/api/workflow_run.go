@@ -1505,12 +1505,27 @@ func (api *API) getWorkflowRunArtifactsHandler() service.Handler {
 
 func (api *API) getWorkflowNodeRunJobSpawnInfosHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		projectKey := vars["key"]
+		workflowName := vars["permWorkflowName"]
+
+		id, err := requestVarInt(r, "nodeRunID")
+		if err != nil {
+			return err
+		}
 		runJobID, err := requestVarInt(r, "runJobID")
 		if err != nil {
-			return sdk.WrapError(err, "invalid number run job id")
+			return err
 		}
 
-		spawnInfos, err := workflow.LoadNodeRunJobInfo(ctx, api.mustDB(), runJobID)
+		nodeRun, err := workflow.LoadNodeRun(api.mustDB(), projectKey, workflowName, id, workflow.LoadRunOptions{
+			DisableDetailledNodeRun: true,
+		})
+		if err != nil {
+			return sdk.WrapError(err, "unable to load last workflow run")
+		}
+
+		spawnInfos, err := workflow.LoadNodeRunJobInfo(ctx, api.mustDB(), nodeRun.ID, runJobID)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load spawn infos for node run job id %d", runJobID)
 		}

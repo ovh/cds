@@ -70,7 +70,25 @@ func Create(ctx context.Context, h Interface) error {
 
 	h.GetGoRoutines().Run(ctx, "queuePolling", func(ctx context.Context) {
 		log.Debug(ctx, "starting queue polling")
-		if err := h.CDSClient().QueuePolling(ctx, h.GetGoRoutines(), wjobs, errs, 20*time.Second, modelType, h.Configuration().Provision.RatioService); err != nil {
+
+		var ms []cdsclient.RequestModifier
+		ratioService := h.Configuration().Provision.RatioService
+		if ratioService != nil {
+			ms = append(ms, cdsclient.RatioService(*ratioService))
+		}
+		if modelType != "" {
+			ms = append(ms, cdsclient.ModelType(modelType))
+		}
+		region := h.Configuration().Provision.Region
+		if region != "" {
+			regions := []string{region}
+			if !h.Configuration().Provision.IgnoreJobWithNoRegion {
+				regions = append(regions, "")
+			}
+			ms = append(ms, cdsclient.Region(regions...))
+		}
+
+		if err := h.CDSClient().QueuePolling(ctx, h.GetGoRoutines(), wjobs, errs, 20*time.Second, ms...); err != nil {
 			log.Error(ctx, "Queues polling stopped: %v", err)
 		}
 	})

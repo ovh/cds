@@ -84,7 +84,7 @@ export class QueueComponent implements OnDestroy {
                         if (nj.status === PipelineStatus.BUILDING) {
                             return nj.job.worker_name;
                         }
-                        if (nj.bookedby !== null) {
+                        if (nj?.bookedby?.name) {
                             return nj.bookedby.name;
                         }
                         return '';

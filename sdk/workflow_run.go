@@ -482,7 +482,8 @@ type WorkflowNodeJobRun struct {
 	Done               time.Time          `json:"done,omitempty"`
 	Model              string             `json:"model,omitempty"`
 	ModelType          string             `json:"model_type,omitempty"`
-	BookedBy           Service            `json:"bookedby,omitempty"`
+	Region             *string            `json:"region,omitempty"`
+	BookedBy           BookedBy           `json:"bookedby,omitempty"`
 	SpawnInfos         []SpawnInfo        `json:"spawninfos"`
 	ExecGroups         Groups             `json:"exec_groups"`
 	Header             WorkflowRunHeaders `json:"header,omitempty"`
@@ -490,6 +491,11 @@ type WorkflowNodeJobRun struct {
 	HatcheryName       string             `json:"hatchery_name,omitempty"`
 	WorkerName         string             `json:"worker_name,omitempty"`
 	IntegrationPlugins []GRPCPlugin       `json:"integration_plugin,omitempty"`
+}
+
+type BookedBy struct {
+	Name string `json:"name,omitempty"`
+	ID   int64  `json:"id,omitempty"`
 }
 
 // WorkflowNodeJobRunSummary is a light representation of WorkflowNodeJobRun for CDS event

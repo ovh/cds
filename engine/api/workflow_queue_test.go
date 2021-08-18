@@ -18,6 +18,7 @@ import (
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/featureflipping"
+	"github.com/ovh/cds/sdk/cdsclient"
 
 	"github.com/ovh/venom"
 
@@ -441,6 +442,109 @@ func TestGetWorkflowJobQueueHandler(t *testing.T) {
 
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &n))
 	require.Equal(t, 10, n.Num)
+}
+
+func TestGetWorkflowJobQueueHandler_WithRegions(t *testing.T) {
+	api, db, router := newTestAPI(t)
+
+	// Delete all existing workers
+	workers, err := worker.LoadAll(context.TODO(), db)
+	require.NoError(t, err)
+	for _, w := range workers {
+		_ = worker.Delete(db, w.ID)
+	}
+
+	// Remove all jobs in queue
+	filterClean := workflow.NewQueueFilter()
+	nrj, _ := workflow.LoadNodeJobRunQueue(context.TODO(), db, api.Cache, filterClean)
+	for _, j := range nrj {
+		_ = workflow.DeleteNodeJobRuns(db, j.WorkflowNodeRunID)
+	}
+
+	res := testRunWorkflow(t, api, router, func(tt *testing.T, tx gorpmapper.SqlExecutorWithTx, pip *sdk.Pipeline, app *sdk.Application) {
+		script := assets.GetBuiltinOrPluginActionByName(t, tx, sdk.ScriptAction)
+
+		j2 := &sdk.Job{
+			Enabled: true,
+			Action: sdk.Action{
+				Enabled: true,
+				Actions: []sdk.Action{
+					assets.NewAction(script.ID, sdk.Parameter{Name: "script", Value: "echo j2"}),
+				},
+				Requirements: []sdk.Requirement{{
+					Name:  "region",
+					Type:  sdk.RegionRequirement,
+					Value: "test1",
+				}},
+			},
+		}
+		require.NoError(tt, pipeline.InsertJob(tx, j2, pip.Stages[0].ID, pip))
+		pip.Stages[0].Jobs = append(pip.Stages[0].Jobs, *j2)
+
+		j3 := &sdk.Job{
+			Enabled: true,
+			Action: sdk.Action{
+				Enabled: true,
+				Actions: []sdk.Action{
+					assets.NewAction(script.ID, sdk.Parameter{Name: "script", Value: "echo j3"}),
+				},
+				Requirements: []sdk.Requirement{{
+					Name:  "region",
+					Type:  sdk.RegionRequirement,
+					Value: "test2",
+				}},
+			},
+		}
+		require.NoError(tt, pipeline.InsertJob(tx, j3, pip.Stages[0].ID, pip))
+		pip.Stages[0].Jobs = append(pip.Stages[0].Jobs, *j3)
+	})
+
+	test := func(jwt string) func(t *testing.T) {
+		return func(t *testing.T) {
+			uri := router.GetRoute("GET", api.getWorkflowJobQueueHandler, nil)
+			test.NotEmpty(t, uri)
+			req := assets.NewJWTAuthentifiedRequest(t, jwt, "GET", uri, nil)
+			rec := httptest.NewRecorder()
+			router.Mux.ServeHTTP(rec, req)
+			require.Equal(t, 200, rec.Code)
+			jobs := []sdk.WorkflowNodeJobRun{}
+			require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &jobs))
+			require.Len(t, jobs, 3)
+			require.Nil(t, jobs[0].Region)
+			require.NotNil(t, jobs[1].Region)
+			require.Equal(t, "test1", *jobs[1].Region)
+			require.NotNil(t, jobs[2].Region)
+			require.Equal(t, "test2", *jobs[2].Region)
+
+			uri = router.GetRoute("GET", api.getWorkflowJobQueueHandler, nil)
+			test.NotEmpty(t, uri)
+			req = assets.NewJWTAuthentifiedRequest(t, jwt, "GET", uri, nil)
+			cdsclient.Region("test1", "")(req)
+			rec = httptest.NewRecorder()
+			router.Mux.ServeHTTP(rec, req)
+			require.Equal(t, 200, rec.Code)
+			require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &jobs))
+			require.Len(t, jobs, 2)
+			require.Nil(t, jobs[0].Region)
+			require.NotNil(t, jobs[1].Region)
+			require.Equal(t, "test1", *jobs[1].Region)
+
+			uri = router.GetRoute("GET", api.getWorkflowJobQueueHandler, nil)
+			test.NotEmpty(t, uri)
+			req = assets.NewJWTAuthentifiedRequest(t, jwt, "GET", uri, nil)
+			cdsclient.Region("test3")(req)
+			rec = httptest.NewRecorder()
+			router.Mux.ServeHTTP(rec, req)
+			require.Equal(t, 200, rec.Code)
+			require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &jobs))
+			require.Len(t, jobs, 0)
+		}
+	}
+
+	_, jwtAdmin := assets.InsertAdminUser(t, db)
+	jwtUser := res.password
+	t.Run("test as admin", test(jwtAdmin))
+	t.Run("test as lambda user", test(jwtUser))
 }
 
 func Test_postTakeWorkflowJobHandler(t *testing.T) {

@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 	"time"
 
 	"github.com/spf13/afero"
@@ -249,9 +250,9 @@ type ProjectVariablesClient interface {
 
 // QueueClient exposes queue related functions
 type QueueClient interface {
-	QueueWorkflowNodeJobRun(status ...string) ([]sdk.WorkflowNodeJobRun, error)
+	QueueWorkflowNodeJobRun(mods ...RequestModifier) ([]sdk.WorkflowNodeJobRun, error)
 	QueueCountWorkflowNodeJobRun(since *time.Time, until *time.Time, modelType string, ratioService *int) (sdk.WorkflowNodeJobRunCount, error)
-	QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, modelType string, ratioService *int) error
+	QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, ms ...RequestModifier) error
 	QueueTakeJob(ctx context.Context, job sdk.WorkflowNodeJobRun) (*sdk.WorkflowNodeJobRunData, error)
 	QueueJobBook(ctx context.Context, id int64) (sdk.WorkflowNodeJobRunBooked, error)
 	QueueJobRelease(ctx context.Context, id int64) error
@@ -569,6 +570,46 @@ func Force() RequestModifier {
 func ContentType(value string) RequestModifier {
 	return func(r *http.Request) {
 		r.Header.Add("Content-Type", value)
+	}
+}
+
+func Status(status ...string) RequestModifier {
+	return func(r *http.Request) {
+		if len(status) > 0 {
+			q := r.URL.Query()
+			for _, s := range status {
+				q.Add("status", s)
+			}
+			r.URL.RawQuery = q.Encode()
+		}
+	}
+}
+
+func Region(regions ...string) RequestModifier {
+	return func(r *http.Request) {
+		if len(regions) > 0 {
+			q := r.URL.Query()
+			for _, r := range regions {
+				q.Add("region", r)
+			}
+			r.URL.RawQuery = q.Encode()
+		}
+	}
+}
+
+func RatioService(ratioService int) RequestModifier {
+	return func(r *http.Request) {
+		q := r.URL.Query()
+		q.Set("ratioService", strconv.Itoa(ratioService))
+		r.URL.RawQuery = q.Encode()
+	}
+}
+
+func ModelType(modelType string) RequestModifier {
+	return func(r *http.Request) {
+		q := r.URL.Query()
+		q.Set("modelType", modelType)
+		r.URL.RawQuery = q.Encode()
 	}
 }
 
