@@ -159,5 +159,5 @@ func TestHatcheryOpenstack_checkSpawnLimits_CountSmallerFlavorToKeep(t *testing.
 
 	err = h.checkSpawnLimits(context.TODO(), m1)
 	require.Error(t, err, "0 CPUs left to start new flavor")
-	assert.Contains(t, err.Error(), "CountSmallerFlavorToKeep")
+	assert.Contains(t, err.Error(), "MaxCPUs limit")
 }
