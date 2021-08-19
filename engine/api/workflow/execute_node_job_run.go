@@ -127,10 +127,10 @@ func UpdateNodeJobRunStatus(ctx context.Context, db gorpmapper.SqlExecutorWithTx
 	report := new(ProcessorReport)
 
 	_, next := telemetry.Span(ctx, "workflow.LoadRunByID")
-	nodeRun, errLoad := LoadNodeRunByID(db, job.WorkflowNodeRunID, LoadRunOptions{})
+	nodeRun, err := LoadNodeRunByID(db, job.WorkflowNodeRunID, LoadRunOptions{})
 	next()
-	if errLoad != nil {
-		return nil, sdk.WrapError(errLoad, "Unable to load node run id %d", job.WorkflowNodeRunID)
+	if err != nil {
+		return nil, sdk.WrapError(err, "Unable to load node run id %d", job.WorkflowNodeRunID)
 	}
 
 	query := `SELECT status FROM workflow_node_run_job WHERE id = $1`
@@ -138,6 +138,8 @@ func UpdateNodeJobRunStatus(ctx context.Context, db gorpmapper.SqlExecutorWithTx
 	if err := db.QueryRow(query, job.ID).Scan(&currentStatus); err != nil {
 		return nil, sdk.WrapError(err, "Cannot select status from workflow_node_run_job node job run %d", job.ID)
 	}
+
+	log.Info(ctx, "job %d current status %q, new status %q", job.ID, status, currentStatus)
 
 	switch status {
 	case sdk.StatusBuilding:
@@ -158,12 +160,12 @@ func UpdateNodeJobRunStatus(ctx context.Context, db gorpmapper.SqlExecutorWithTx
 		job.Status = status
 
 		_, next := telemetry.Span(ctx, "workflow.LoadRunByID")
-		wf, errLoadWf := LoadRunByID(db, nodeRun.WorkflowRunID, LoadRunOptions{
+		wf, err := LoadRunByID(db, nodeRun.WorkflowRunID, LoadRunOptions{
 			WithDeleted: true,
 		})
 		next()
-		if errLoadWf != nil {
-			return nil, sdk.WrapError(errLoadWf, "workflow.UpdateNodeJobRunStatus> Unable to load run id %d", nodeRun.WorkflowRunID)
+		if err != nil {
+			return nil, sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Unable to load run id %d", nodeRun.WorkflowRunID)
 		}
 
 		wf.LastExecution = time.Now()
@@ -174,23 +176,14 @@ func UpdateNodeJobRunStatus(ctx context.Context, db gorpmapper.SqlExecutorWithTx
 		return nil, sdk.WithStack(fmt.Errorf("cannot update WorkflowNodeJobRun %d to status %v", job.ID, status))
 	}
 
-	//If the job has been set to building, set the stage to building
-	var stageIndex int
-	for i := range nodeRun.Stages {
-		s := &nodeRun.Stages[i]
-		for _, j := range s.Jobs {
-			if j.Action.ID == job.Job.Job.Action.ID {
-				stageIndex = i
-			}
-		}
-	}
-
 	if err := UpdateNodeJobRun(ctx, db, job); err != nil {
 		return nil, sdk.WrapError(err, "Cannot update WorkflowNodeJobRun %d", job.ID)
 	}
 
 	report.Add(ctx, *job)
 
+	//If the job has been set to building, set the stage to building
+	var stageIndex = nodeRun.GetStageIndex(job)
 	if status == sdk.StatusBuilding {
 		// Sync job status in noderun
 		r, err := syncTakeJobInNodeRun(ctx, db, nodeRun, job, stageIndex)

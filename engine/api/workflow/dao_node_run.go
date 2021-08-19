@@ -814,8 +814,8 @@ func updateNodeRunCommits(db gorp.SqlExecutor, id int64, commits []sdk.VCSCommit
 	return nil
 }
 
-// updateNodeRunStatusAndStage update just noderun status and stage
-func updateNodeRunStatusAndStage(db gorp.SqlExecutor, nodeRun *sdk.WorkflowNodeRun) error {
+// UpdateNodeRunStatusAndStage update just noderun status and stage
+func UpdateNodeRunStatusAndStage(db gorp.SqlExecutor, nodeRun *sdk.WorkflowNodeRun) error {
 	stagesBts, errMarshal := json.Marshal(nodeRun.Stages)
 	if errMarshal != nil {
 		return sdk.WrapError(errMarshal, "unable to marshal stages")

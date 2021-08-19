@@ -8,6 +8,7 @@ import (
 
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 // Resync a workflow in the given workflow run
@@ -83,6 +84,9 @@ func ResyncWorkflowRunStatus(ctx context.Context, db gorp.SqlExecutor, wr *sdk.W
 
 // ResyncNodeRunsWithCommits load commits build in this node run and save it into node run
 func ResyncNodeRunsWithCommits(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk.Project, report *ProcessorReport) {
+	ctx, end := telemetry.Span(ctx, "workflow.ResyncNodeRunsWithCommits")
+	defer end()
+
 	if report == nil {
 		return
 	}

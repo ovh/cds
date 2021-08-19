@@ -95,7 +95,7 @@ func syncTakeJobInNodeRun(ctx context.Context, db gorp.SqlExecutor, n *sdk.Workf
 	}
 
 	// Save the node run in database
-	if err := updateNodeRunStatusAndStage(db, n); err != nil {
+	if err := UpdateNodeRunStatusAndStage(db, n); err != nil {
 		return nil, sdk.WrapError(err, "unable to update node id=%d at status %s", n.ID, n.Status)
 	}
 	return report, nil
@@ -276,7 +276,7 @@ func executeNodeRun(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store 
 	}
 
 	// Save the node run in database
-	if err := updateNodeRunStatusAndStage(db, workflowNodeRun); err != nil {
+	if err := UpdateNodeRunStatusAndStage(db, workflowNodeRun); err != nil {
 		return nil, sdk.WrapError(err, "unable to update node id=%d at status %s", workflowNodeRun.ID, workflowNodeRun.Status)
 	}
 
