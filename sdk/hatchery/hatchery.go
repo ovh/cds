@@ -23,7 +23,7 @@ var (
 	Client                         cdsclient.HTTPClient
 	defaultMaxProvisioning         = 10
 	models                         []sdk.Model
-	MaxAttemptsNumberBeforeFailure = 2
+	MaxAttemptsNumberBeforeFailure = 5
 	CacheSpawnIDsTTL               = 10 * time.Second
 	CacheNbAttemptsIDsTTL          = 1 * time.Hour
 )
