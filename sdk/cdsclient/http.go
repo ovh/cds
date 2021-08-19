@@ -117,7 +117,7 @@ func (c *client) RequestJSON(ctx context.Context, method, path string, in interf
 	}
 
 	if out != nil {
-		if err := json.Unmarshal(res, out); err != nil {
+		if err := sdk.JSONUnmarshal(res, out); err != nil {
 			return res, nil, code, newError(err)
 		}
 	}

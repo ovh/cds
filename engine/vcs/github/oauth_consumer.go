@@ -2,7 +2,6 @@ package github
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/url"
 	"strings"
@@ -67,7 +66,7 @@ func (g *githubConsumer) AuthorizeToken(ctx context.Context, state, code string)
 	}
 
 	ghResponse := map[string]string{}
-	if err := json.Unmarshal(res, &ghResponse); err != nil {
+	if err := sdk.JSONUnmarshal(res, &ghResponse); err != nil {
 		return "", "", fmt.Errorf("Unable to parse github response (%d) %s ", status, string(res))
 	}
 

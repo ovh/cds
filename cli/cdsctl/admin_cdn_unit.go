@@ -1,8 +1,8 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
+
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
@@ -34,7 +34,7 @@ func adminCdnUnitList(_ cli.Values) (cli.ListResult, error) {
 		return nil, err
 	}
 	var result []sdk.CDNUnitHandlerRequest
-	if err := json.Unmarshal(bts, &result); err != nil {
+	if err := sdk.JSONUnmarshal(bts, &result); err != nil {
 		return nil, err
 	}
 	return cli.AsListResult(result), nil

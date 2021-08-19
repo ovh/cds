@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"math"
@@ -293,7 +292,7 @@ func parseApplicationConfigFile(f string) (*marathon.Application, error) {
 
 	//Parse marathon.json
 	appConfig := &marathon.Application{}
-	if err := json.Unmarshal(buff, appConfig); err != nil {
+	if err := sdk.JSONUnmarshal(buff, appConfig); err != nil {
 		fmt.Printf("Configuration file parse error: %s\n", err)
 		return nil, err
 	}

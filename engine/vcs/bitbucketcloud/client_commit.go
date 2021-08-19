@@ -2,7 +2,6 @@ package bitbucketcloud
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/url"
 	"strings"
@@ -92,7 +91,7 @@ func (client *bitbucketcloudClient) Commit(ctx context.Context, repo, hash strin
 		return commit, sdk.NewError(sdk.ErrRepoNotFound, errorAPI(body))
 	}
 	var c Commit
-	if err := json.Unmarshal(body, &c); err != nil {
+	if err := sdk.JSONUnmarshal(body, &c); err != nil {
 		log.Warn(ctx, "bitbucketcloudClient.Commit> Unable to parse bitbucket cloud commit: %s", err)
 		return sdk.VCSCommit{}, err
 	}

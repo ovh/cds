@@ -109,7 +109,7 @@ func (c *client) ServiceGetJSON(ctx context.Context, stype, path string, out int
 	if err != nil {
 		return code, err
 	}
-	if err := json.Unmarshal(btes, out); err != nil {
+	if err := sdk.JSONUnmarshal(btes, out); err != nil {
 		return code, newError(err)
 	}
 	return code, nil
@@ -131,7 +131,7 @@ func (c *client) ServicePostJSON(ctx context.Context, stype, path string, in, ou
 	}
 
 	if len(btes) > 0 {
-		if err := json.Unmarshal(btes, out); err != nil {
+		if err := sdk.JSONUnmarshal(btes, out); err != nil {
 			return code, newError(err)
 		}
 	}
@@ -155,7 +155,7 @@ func (c *client) ServicePutJSON(ctx context.Context, stype, path string, in, out
 	}
 
 	if len(btes) > 0 {
-		if err := json.Unmarshal(btes, out); err != nil {
+		if err := sdk.JSONUnmarshal(btes, out); err != nil {
 			return code, newError(err)
 		}
 	}
@@ -168,7 +168,7 @@ func (c *client) ServiceDeleteJSON(ctx context.Context, stype, path string, out 
 		return code, err
 	}
 
-	if err := json.Unmarshal(btes, out); err != nil {
+	if err := sdk.JSONUnmarshal(btes, out); err != nil {
 		return code, newError(err)
 	}
 	return code, nil

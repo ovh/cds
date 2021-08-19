@@ -3,7 +3,6 @@ package workflow
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"sort"
 	"strconv"
@@ -1075,7 +1074,7 @@ func stopRunsBlocked(ctx context.Context, db *gorp.DbMap) error {
 			Status: resp[i].Status,
 		}
 		if resp[i].Stages.Valid {
-			if err := json.Unmarshal([]byte(resp[i].Stages.String), &nr.Stages); err != nil {
+			if err := sdk.JSONUnmarshal([]byte(resp[i].Stages.String), &nr.Stages); err != nil {
 				return sdk.WrapError(err, "cannot unmarshal stages")
 			}
 		}
@@ -1086,7 +1085,7 @@ func stopRunsBlocked(ctx context.Context, db *gorp.DbMap) error {
 			nr.Done = now
 		}
 
-		if err := updateNodeRunStatusAndStage(tx, &nr); err != nil {
+		if err := UpdateNodeRunStatusAndStage(tx, &nr); err != nil {
 			return sdk.WrapError(err, "cannot update node runs stages")
 		}
 	}

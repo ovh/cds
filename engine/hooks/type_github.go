@@ -1,7 +1,6 @@
 package hooks
 
 import (
-	"encoding/json"
 	"strconv"
 	"time"
 
@@ -170,7 +169,7 @@ func (g *GithubDate) UnmarshalJSON(data []byte) error {
 	if err == nil {
 		d = time.Unix(int64(dateInt), 0)
 	} else {
-		if err := json.Unmarshal(data, &d); err != nil {
+		if err := sdk.JSONUnmarshal(data, &d); err != nil {
 			return err
 		}
 	}

@@ -64,7 +64,7 @@ func (a *UserNotificationSettings) Scan(src interface{}) error {
 	if !ok {
 		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
-	return WrapError(json.Unmarshal(source, a), "cannot unmarshal UserNotificationSettings")
+	return WrapError(JSONUnmarshal(source, a), "cannot unmarshal UserNotificationSettings")
 }
 
 // UserNotificationTemplate is the notification content

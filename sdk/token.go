@@ -203,7 +203,7 @@ func (s *AuthConsumerScopeDetails) Scan(src interface{}) error {
 	if !ok {
 		return WithStack(errors.New("type assertion .([]byte) failed"))
 	}
-	return WrapError(json.Unmarshal(source, s), "cannot unmarshal AuthConsumerScopeDetails")
+	return WrapError(JSONUnmarshal(source, s), "cannot unmarshal AuthConsumerScopeDetails")
 }
 
 // Value returns driver.Value from scope detail slice.
@@ -221,7 +221,7 @@ func (s *AuthConsumerScopeSlice) Scan(src interface{}) error {
 	if !ok {
 		return WithStack(errors.New("type assertion .([]byte) failed"))
 	}
-	return WrapError(json.Unmarshal(source, s), "cannot unmarshal AuthConsumerScopeSlice")
+	return WrapError(JSONUnmarshal(source, s), "cannot unmarshal AuthConsumerScopeSlice")
 }
 
 // Value returns driver.Value from scope slice.
@@ -314,7 +314,7 @@ func (d *AuthConsumerData) Scan(src interface{}) error {
 	if !ok {
 		return WithStack(errors.New("type assertion .([]byte) failed"))
 	}
-	return WrapError(json.Unmarshal(source, d), "cannot unmarshal AuthConsumerData")
+	return WrapError(JSONUnmarshal(source, d), "cannot unmarshal AuthConsumerData")
 }
 
 // Value returns driver.Value from consumer data.
@@ -372,7 +372,7 @@ func (w *AuthConsumerWarnings) Scan(src interface{}) error {
 	if !ok {
 		return WithStack(errors.New("type assertion .([]byte) failed"))
 	}
-	return WrapError(json.Unmarshal(source, w), "cannot unmarshal AuthConsumerWarnings")
+	return WrapError(JSONUnmarshal(source, w), "cannot unmarshal AuthConsumerWarnings")
 }
 
 // Value returns driver.Value from consumer warnings.
@@ -434,7 +434,7 @@ func (p *AuthConsumerValidityPeriods) Scan(src interface{}) error {
 	if !ok {
 		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
-	return WrapError(json.Unmarshal(source, p), "cannot unmarshal AuthConsumerValidityPeriods")
+	return WrapError(JSONUnmarshal(source, p), "cannot unmarshal AuthConsumerValidityPeriods")
 }
 
 func (p AuthConsumerValidityPeriods) Latest() *AuthConsumerValidityPeriod {

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -105,7 +104,7 @@ func adminCdnCacheLogStatusRun(_ cli.Values) (cli.ListResult, error) {
 		return nil, err
 	}
 	ts := []sdk.MonitoringStatusLine{}
-	if err := json.Unmarshal(btes, &ts); err != nil {
+	if err := sdk.JSONUnmarshal(btes, &ts); err != nil {
 		return nil, err
 	}
 	return cli.AsListResult(ts), nil

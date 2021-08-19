@@ -53,7 +53,7 @@ func processNodeJobRunRequirements(ctx context.Context, db gorp.SqlExecutor, j s
 		}
 		if v.Type == sdk.ModelRequirement {
 			// It is forbidden to have more than one model requirement.
-			if model != "" {
+			if j.Action.Enabled && model != "" {
 				errm.Append(sdk.ErrInvalidJobRequirementDuplicateModel)
 				break
 			}
@@ -81,7 +81,7 @@ func processNodeJobRunRequirements(ctx context.Context, db gorp.SqlExecutor, j s
 							break
 						}
 					}
-					if !hasCapa {
+					if j.Action.Enabled && !hasCapa {
 						errm.Append(sdk.ErrInvalidJobRequirementWorkerModelCapabilitites)
 						break
 					}

@@ -256,7 +256,7 @@ func (config *IntegrationConfig) Scan(src interface{}) error {
 	if !ok {
 		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
-	return WrapError(json.Unmarshal(source, config), "cannot unmarshal IntegrationConfig")
+	return WrapError(JSONUnmarshal(source, config), "cannot unmarshal IntegrationConfig")
 }
 
 // EncryptSecrets encrypt secrets given a cypher func
@@ -355,7 +355,7 @@ func (config *IntegrationConfigMap) Scan(src interface{}) error {
 	if !ok {
 		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
-	return WrapError(json.Unmarshal(source, config), "cannot unmarshal IntegrationConfigMap")
+	return WrapError(JSONUnmarshal(source, config), "cannot unmarshal IntegrationConfigMap")
 }
 
 // IntegrationModel represent a integration model with its default configuration

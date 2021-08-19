@@ -95,7 +95,7 @@ func (s *Service) doGerritExecution(e *sdk.TaskExecution) (*sdk.WorkflowNodeRunH
 	}
 
 	var gerritEvent GerritEvent
-	if err := json.Unmarshal(e.GerritEvent.Message, &gerritEvent); err != nil {
+	if err := sdk.JSONUnmarshal(e.GerritEvent.Message, &gerritEvent); err != nil {
 		return nil, sdk.WrapError(err, "unable to unmarshal gerrit event %s", string(e.GerritEvent.Message))
 	}
 
@@ -314,7 +314,7 @@ func ListenGerritStreamEvent(ctx context.Context, store cache.Store, goRoutines 
 			}
 			var event GerritEvent
 			lineBytes := []byte(line)
-			if err := json.Unmarshal(lineBytes, &event); err != nil {
+			if err := sdk.JSONUnmarshal(lineBytes, &event); err != nil {
 				log.Error(ctx, "unable to read gerrit event %v: %s", err, line)
 				continue
 			}

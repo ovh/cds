@@ -21,12 +21,12 @@ func TestEnvironmentUnmarshal(t *testing.T) {
 	data2 := []byte(fmt.Sprintf("{\"name\":\"two\",\"last_modified\":%d}", now.Unix()))
 
 	var one sdk.Environment
-	require.NoError(t, json.Unmarshal(data1, &one))
+	require.NoError(t, sdk.JSONUnmarshal(data1, &one))
 	assert.Equal(t, "one", one.Name)
 	assert.True(t, now.Equal(one.LastModified))
 
 	var two sdk.Environment
-	require.NoError(t, json.Unmarshal(data2, &two))
+	require.NoError(t, sdk.JSONUnmarshal(data2, &two))
 	assert.Equal(t, "two", two.Name)
 	assert.True(t, now.Equal(two.LastModified))
 }

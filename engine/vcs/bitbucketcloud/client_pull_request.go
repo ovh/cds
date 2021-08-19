@@ -24,7 +24,7 @@ func (client *bitbucketcloudClient) PullRequest(ctx context.Context, fullname st
 		return sdk.VCSPullRequest{}, sdk.NewError(sdk.ErrRepoNotFound, errorAPI(body))
 	}
 	var pullrequest PullRequest
-	if err := json.Unmarshal(body, &pullrequest); err != nil {
+	if err := sdk.JSONUnmarshal(body, &pullrequest); err != nil {
 		log.Warn(ctx, "bitbucketcloudClient.PullRequest> Unable to parse bitbucket cloud commit: %s", err)
 		return sdk.VCSPullRequest{}, err
 	}
@@ -136,7 +136,7 @@ func (client *bitbucketcloudClient) PullRequestCreate(ctx context.Context, repo 
 	}
 
 	var prResponse PullRequest
-	if err := json.Unmarshal(body, &prResponse); err != nil {
+	if err := sdk.JSONUnmarshal(body, &prResponse); err != nil {
 		return sdk.VCSPullRequest{}, sdk.WrapError(err, "Unable to unmarshal pullrequest %s", string(body))
 	}
 

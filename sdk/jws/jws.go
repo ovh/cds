@@ -116,7 +116,7 @@ func Verify(key interface{}, s string, i interface{}) error {
 	if err != nil {
 		return sdk.WithStack(fmt.Errorf("unable to verify payload: %v signature: %v", string(object.UnsafePayloadWithoutVerification()), err))
 	}
-	return sdk.WithStack(json.Unmarshal(output, i))
+	return sdk.WithStack(sdk.JSONUnmarshal(output, i))
 }
 
 func UnsafeParse(s string, i interface{}) error {
@@ -125,5 +125,5 @@ func UnsafeParse(s string, i interface{}) error {
 		return sdk.WithStack(err)
 	}
 	output := object.UnsafePayloadWithoutVerification()
-	return sdk.WithStack(json.Unmarshal(output, i))
+	return sdk.WithStack(sdk.JSONUnmarshal(output, i))
 }

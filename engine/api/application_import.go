@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -45,7 +44,7 @@ func (api *API) postApplicationImportHandler() service.Handler {
 		var errapp error
 		switch contentType {
 		case "application/json":
-			errapp = json.Unmarshal(body, eapp)
+			errapp = sdk.JSONUnmarshal(body, eapp)
 		case "application/x-yaml", "text/x-yam":
 			errapp = yaml.Unmarshal(body, eapp)
 		default:

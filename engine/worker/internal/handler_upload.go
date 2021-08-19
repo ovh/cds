@@ -2,7 +2,6 @@ package internal
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -29,7 +28,7 @@ func uploadHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 		}
 
 		var art workerruntime.UploadArtifact
-		if err := json.Unmarshal(data, &art); err != nil {
+		if err := sdk.JSONUnmarshal(data, &art); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}

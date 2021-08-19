@@ -79,7 +79,7 @@ func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, j
 			}
 			if wsEvent.Event.EventType == "sdk.EventRunWorkflowJob" && wsEvent.Event.Status == sdk.StatusWaiting {
 				var jobEvent sdk.EventRunWorkflowJob
-				if err := json.Unmarshal(wsEvent.Event.Payload, &jobEvent); err != nil {
+				if err := sdk.JSONUnmarshal(wsEvent.Event.Payload, &jobEvent); err != nil {
 					errs <- newError(fmt.Errorf("unable to unmarshal job %v: %v", wsEvent.Event.Payload, err))
 					continue
 				}
@@ -581,7 +581,7 @@ func (c *client) queueDirectStaticFilesUpload(projectKey, integrationName string
 			SetHeader("Content-Disposition", "attachment; filename=archive.tar"),
 			SetHeader("Content-Type", writer.FormDataContentType()))
 		if err == nil && code < 300 {
-			if err := json.Unmarshal(respBody, &staticFileResp); err != nil {
+			if err := sdk.JSONUnmarshal(respBody, &staticFileResp); err != nil {
 				return "", newError(fmt.Errorf("unable to unmarshal body: %v: %v", string(respBody), err))
 			}
 			fmt.Printf("Files uploaded with public URL: %s\n", staticFileResp.PublicURL)

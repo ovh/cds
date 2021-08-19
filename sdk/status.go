@@ -40,7 +40,7 @@ func (m *MonitoringStatus) Scan(src interface{}) error {
 	if !ok {
 		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
-	return WrapError(json.Unmarshal(source, m), "cannot unmarshal MonitoringStatus")
+	return WrapError(JSONUnmarshal(source, m), "cannot unmarshal MonitoringStatus")
 }
 
 // AddLine adds line to MonitoringStatus, including the Type of component

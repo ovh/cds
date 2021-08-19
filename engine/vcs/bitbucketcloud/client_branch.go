@@ -2,7 +2,6 @@ package bitbucketcloud
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/url"
 
@@ -87,7 +86,7 @@ func (client *bitbucketcloudClient) Branch(ctx context.Context, fullname, theBra
 	}
 
 	var branch Branch
-	if err := json.Unmarshal(body, &branch); err != nil {
+	if err := sdk.JSONUnmarshal(body, &branch); err != nil {
 		log.Warn(ctx, "bitbucketcloudClient.Branch> Unable to parse github branch: %s", err)
 		return nil, err
 	}

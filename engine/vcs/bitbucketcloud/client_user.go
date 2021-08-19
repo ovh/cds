@@ -2,7 +2,6 @@ package bitbucketcloud
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	"github.com/rockbears/log"
@@ -23,7 +22,7 @@ func (client *bitbucketcloudClient) User(ctx context.Context, username string) (
 	if status >= 400 {
 		return user, sdk.NewError(sdk.ErrRepoNotFound, errorAPI(body))
 	}
-	if err := json.Unmarshal(body, &user); err != nil {
+	if err := sdk.JSONUnmarshal(body, &user); err != nil {
 		log.Warn(ctx, "bitbucketcloudClient.User> Unable to parse bitbucket cloud commit: %s", err)
 		return user, err
 	}
@@ -50,7 +49,7 @@ func (client *bitbucketcloudClient) CurrentUser(ctx context.Context) (User, erro
 		if status >= 400 {
 			return user, sdk.NewError(sdk.ErrUserNotFound, errorAPI(body))
 		}
-		if err := json.Unmarshal(body, &user); err != nil {
+		if err := sdk.JSONUnmarshal(body, &user); err != nil {
 			return user, sdk.WithStack(err)
 		}
 		//Put the body on cache for 1 hour
@@ -81,7 +80,7 @@ func (client *bitbucketcloudClient) Teams(ctx context.Context) (Teams, error) {
 		if status >= 400 {
 			return teams, sdk.NewError(sdk.ErrNotFound, errorAPI(body))
 		}
-		if err := json.Unmarshal(body, &teams); err != nil {
+		if err := sdk.JSONUnmarshal(body, &teams); err != nil {
 			return teams, sdk.WithStack(err)
 		}
 		//Put the body on cache for 1 hour

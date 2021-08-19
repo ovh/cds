@@ -2,7 +2,6 @@ package hooks
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"os/signal"
@@ -103,10 +102,10 @@ func (s *Service) doRabbitMQTaskExecution(t *sdk.TaskExecution) (*sdk.WorkflowNo
 
 	//Try to parse the body as an array
 	bodyJSONArray := []interface{}{}
-	if err := json.Unmarshal(t.RabbitMQ.Message, &bodyJSONArray); err != nil {
+	if err := sdk.JSONUnmarshal(t.RabbitMQ.Message, &bodyJSONArray); err != nil {
 		//Try to parse the body as a map
 		bodyJSONMap := map[string]interface{}{}
-		if err2 := json.Unmarshal(t.RabbitMQ.Message, &bodyJSONMap); err2 == nil {
+		if err2 := sdk.JSONUnmarshal(t.RabbitMQ.Message, &bodyJSONMap); err2 == nil {
 			bodyJSON = bodyJSONMap
 		}
 	} else {

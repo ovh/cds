@@ -380,7 +380,7 @@ func (s Step) MarshalJSON() ([]byte, error) {
 	}
 
 	var m map[string]json.RawMessage
-	if err := json.Unmarshal(b, &m); err != nil {
+	if err := sdk.JSONUnmarshal(b, &m); err != nil {
 		return nil, err
 	}
 
@@ -404,13 +404,13 @@ func (s Step) MarshalJSON() ([]byte, error) {
 func (s *Step) UnmarshalJSON(data []byte) error {
 	type StepAlias Step // prevent recursion
 	var sa StepAlias
-	if err := json.Unmarshal(data, &sa); err != nil {
+	if err := sdk.JSONUnmarshal(data, &sa); err != nil {
 		return err
 	}
 	*s = Step(sa)
 
 	var m map[string]json.RawMessage
-	if err := json.Unmarshal(data, &m); err != nil {
+	if err := sdk.JSONUnmarshal(data, &m); err != nil {
 		return err
 	}
 
@@ -428,7 +428,7 @@ func (s *Step) UnmarshalJSON(data []byte) error {
 	for k, v := range m {
 		if _, ok := jsonFields[k]; !ok {
 			var sp StepParameters
-			if err := json.Unmarshal(v, &sp); err != nil {
+			if err := sdk.JSONUnmarshal(v, &sp); err != nil {
 				return err
 			}
 			if s.StepCustom == nil {
@@ -830,7 +830,7 @@ func stepToMap(i interface{}) (map[string]string, error) {
 		return nil, sdk.WithStack(err)
 	}
 	var m map[string]string
-	if err := json.Unmarshal(buf, &m); err != nil {
+	if err := sdk.JSONUnmarshal(buf, &m); err != nil {
 		return nil, sdk.WithStack(err)
 	}
 	return m, nil

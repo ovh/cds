@@ -55,7 +55,7 @@ func (m *Mapper) Decrypt(src []byte, dest interface{}, extra []interface{}) erro
 		return sdk.WithStack(fmt.Errorf("unable to decrypt content: %v", err))
 	}
 
-	return json.Unmarshal(clearContent, dest)
+	return sdk.JSONUnmarshal(clearContent, dest)
 }
 
 func (m *Mapper) updateEncryptedData(db gorp.SqlExecutor, i interface{}) error {

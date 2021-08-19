@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"path/filepath"
 
@@ -251,7 +250,7 @@ func (e *artifactoryReleasePlugin) listEdgeNodes(distriClient *distribution.Dist
 	}
 
 	var edges []EdgeNode
-	if err := json.Unmarshal(body, &edges); err != nil {
+	if err := sdk.JSONUnmarshal(body, &edges); err != nil {
 		return nil, fmt.Errorf("unable to unmarshal response %s: %v", string(body), err)
 	}
 	return edges, nil

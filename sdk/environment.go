@@ -1,7 +1,7 @@
 package sdk
 
 import (
-	json "encoding/json"
+	"encoding/json"
 	"time"
 )
 

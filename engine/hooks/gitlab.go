@@ -2,7 +2,6 @@ package hooks
 
 import (
 	"context"
-	"encoding/json"
 	"strings"
 
 	"github.com/rockbears/log"
@@ -15,7 +14,7 @@ func (s *Service) generatePayloadFromGitlabRequest(ctx context.Context, t *sdk.T
 	workflowName := t.Config["workflow"].Value
 
 	var request GitlabEvent
-	if err := json.Unmarshal(t.WebHook.RequestBody, &request); err != nil {
+	if err := sdk.JSONUnmarshal(t.WebHook.RequestBody, &request); err != nil {
 		return nil, sdk.WrapError(err, "unable ro read gitlab request: %s", string(t.WebHook.RequestBody))
 	}
 

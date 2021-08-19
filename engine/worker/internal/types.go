@@ -319,7 +319,7 @@ func (w *CurrentWorker) Blur(i interface{}) error {
 		}
 	}
 
-	if err := json.Unmarshal([]byte(dataS), i); err != nil {
+	if err := sdk.JSONUnmarshal([]byte(dataS), i); err != nil {
 		return err
 	}
 

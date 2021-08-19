@@ -613,7 +613,7 @@ func (api *API) postJobResult(ctx context.Context, tx gorpmapper.SqlExecutorWith
 		// pq: update or delete on table "workflow_node_run_job" violates foreign key constraint "fk_worker_workflow_node_run_job" on table "worker")
 		if wr != nil && strings.Contains(err.Error(), "fk_worker_workflow_node_run_job") {
 			log.ErrorWithStackTrace(ctx, err)
-			statusFromDB, err := tx.SelectNullStr("select status from worker where id = $1")
+			statusFromDB, err := tx.SelectNullStr("select status from worker where id = $1", wr.ID)
 			if err != nil {
 				log.Error(ctx, "unable to get worker %q status in db", wr.Name)
 			}

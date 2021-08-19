@@ -2,7 +2,6 @@ package internal
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -52,7 +51,7 @@ func addRunResulthandler(ctx context.Context, wk *CurrentWorker) http.HandlerFun
 		defer r.Body.Close() //nolint
 
 		var reqArgs sdk.WorkflowRunResultArtifactManager
-		if err := json.Unmarshal(data, &reqArgs); err != nil {
+		if err := sdk.JSONUnmarshal(data, &reqArgs); err != nil {
 			newError := sdk.NewError(sdk.ErrWrongRequest, err)
 			writeError(w, r, newError)
 			return

@@ -2,7 +2,6 @@ package github
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"strings"
 	"time"
@@ -37,7 +36,7 @@ func (g *githubClient) RateLimit(ctx context.Context) error {
 		return sdk.NewError(sdk.ErrUnknownError, errorAPI(body))
 	}
 	rateLimit := &RateLimit{}
-	if err := json.Unmarshal(body, rateLimit); err != nil {
+	if err := sdk.JSONUnmarshal(body, rateLimit); err != nil {
 		log.Warn(ctx, "githubClient.RateLimit> Error %s", err)
 		return err
 	}

@@ -2,7 +2,6 @@ package internal
 
 import (
 	"context"
-	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -29,7 +28,7 @@ func tmplHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 		}
 
 		var a workerruntime.TmplPath
-		if err := json.Unmarshal(data, &a); err != nil {
+		if err := sdk.JSONUnmarshal(data, &a); err != nil {
 			newError := sdk.NewError(sdk.ErrWrongRequest, err)
 			writeError(w, r, newError)
 			return

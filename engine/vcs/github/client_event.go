@@ -2,7 +2,6 @@ package github
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -44,7 +43,7 @@ func (g *githubClient) GetEvents(ctx context.Context, fullname string, dateRef t
 	}
 
 	nextEvents := []Event{}
-	if err := json.Unmarshal(body, &nextEvents); err != nil {
+	if err := sdk.JSONUnmarshal(body, &nextEvents); err != nil {
 		log.Warn(ctx, "githubClient.GetEvents> Unable to parse github events: %s", err)
 		return nil, interval, fmt.Errorf("Unable to parse github events %s: %s", string(body), err)
 	}

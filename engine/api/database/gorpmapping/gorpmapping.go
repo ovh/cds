@@ -3,6 +3,8 @@ package gorpmapping
 import (
 	"database/sql"
 	"encoding/json"
+
+	"github.com/ovh/cds/sdk"
 )
 
 //JSONToNullString returns a valid sql.NullString with json-marshalled i
@@ -22,5 +24,5 @@ func JSONNullString(s sql.NullString, holder interface{}) error {
 	if !s.Valid {
 		return nil
 	}
-	return json.Unmarshal([]byte(s.String), holder)
+	return sdk.JSONUnmarshal([]byte(s.String), holder)
 }

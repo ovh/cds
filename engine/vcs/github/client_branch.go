@@ -2,7 +2,6 @@ package github
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -63,7 +62,7 @@ func (g *githubClient) Branches(ctx context.Context, fullname string) ([]sdk.VCS
 			noEtag = true
 			continue
 		} else {
-			if err := json.Unmarshal(body, &nextBranches); err != nil {
+			if err := sdk.JSONUnmarshal(body, &nextBranches); err != nil {
 				log.Warn(ctx, "githubClient.Branches> Unable to parse github branches: %s", err)
 				return nil, err
 			}
@@ -134,7 +133,7 @@ func (g *githubClient) Branch(ctx context.Context, fullname, theBranch string) (
 			log.Error(ctx, "Unable to get branch (%s) from the cache", cacheBranchKey)
 		}
 	} else {
-		if err := json.Unmarshal(body, &branch); err != nil {
+		if err := sdk.JSONUnmarshal(body, &branch); err != nil {
 			log.Warn(ctx, "githubClient.Branch> Unable to parse github branch: %s", err)
 			return nil, err
 		}

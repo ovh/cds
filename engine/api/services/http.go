@@ -118,7 +118,7 @@ func doMultiPartRequest(ctx context.Context, srvs []sdk.Service, method, path st
 			}
 
 			if out != nil {
-				if err := json.Unmarshal(res, out); err != nil {
+				if err := sdk.JSONUnmarshal(res, out); err != nil {
 					return code, sdk.WrapError(err, "Unable to marshal output")
 				}
 			}
@@ -186,7 +186,7 @@ func _doJSONRequest(ctx context.Context, srv *sdk.Service, method, path string, 
 	}
 
 	if out != nil {
-		if err := json.Unmarshal(res, out); err != nil {
+		if err := sdk.JSONUnmarshal(res, out); err != nil {
 			return headers, code, sdk.WrapError(err, "unable to unmarshal output")
 		}
 	}
@@ -209,7 +209,7 @@ func PostBinary(ctx context.Context, srvs []sdk.Service, path string, r io.Reade
 		return code, err
 	}
 	if out != nil {
-		if err := json.Unmarshal(res, out); err != nil {
+		if err := sdk.JSONUnmarshal(res, out); err != nil {
 			return code, sdk.WithStack(err)
 		}
 	}

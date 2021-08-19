@@ -69,7 +69,7 @@ func (s *Service) doPollerTaskExecution(ctx context.Context, task *sdk.Task, tas
 	payloadValues := map[string]string{}
 	if payload, ok := task.Config["payload"]; ok && payload.Value != "{}" {
 		var payloadInt interface{}
-		if err := json.Unmarshal([]byte(payload.Value), &payloadInt); err == nil {
+		if err := sdk.JSONUnmarshal([]byte(payload.Value), &payloadInt); err == nil {
 			e := dump.NewDefaultEncoder()
 			e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
 			e.ExtraFields.DetailedMap = false

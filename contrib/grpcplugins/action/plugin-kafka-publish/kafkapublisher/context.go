@@ -1,15 +1,16 @@
 package kafkapublisher
 
 import (
-	"encoding/json"
 	"fmt"
 	"path"
+
+	"github.com/ovh/cds/sdk"
 )
 
 //GetContext returns a context
 func GetContext(data []byte) (*Context, bool) {
 	c := &Context{}
-	if err := json.Unmarshal(data, c); err != nil {
+	if err := sdk.JSONUnmarshal(data, c); err != nil {
 		return nil, false
 	}
 	c.ReceivedFiles = map[string]bool{}

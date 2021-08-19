@@ -2,7 +2,6 @@ package gerrit
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -15,7 +14,7 @@ import (
 // SetStatus set build status on Gerrit
 func (c *gerritClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	var eventNR sdk.EventRunWorkflowNode
-	if err := json.Unmarshal(event.Payload, &eventNR); err != nil {
+	if err := sdk.JSONUnmarshal(event.Payload, &eventNR); err != nil {
 		return sdk.WrapError(err, "cannot unmarshal payload")
 	}
 

@@ -172,7 +172,7 @@ func (w *WorkflowNodeHookConfig) Scan(src interface{}) error {
 	if !ok {
 		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
-	return WrapError(json.Unmarshal(source, w), "cannot unmarshal WorkflowNodeHookConfig")
+	return WrapError(JSONUnmarshal(source, w), "cannot unmarshal WorkflowNodeHookConfig")
 }
 
 func (w WorkflowNodeHookConfig) Equals(o WorkflowNodeHookConfig) bool {

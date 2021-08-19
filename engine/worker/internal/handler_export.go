@@ -2,7 +2,6 @@ package internal
 
 import (
 	"context"
-	"encoding/json"
 	"io/ioutil"
 	"net/http"
 
@@ -27,7 +26,7 @@ func addBuildVarHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc
 		}
 
 		var v sdk.Variable
-		if err := json.Unmarshal(data, &v); err != nil {
+		if err := sdk.JSONUnmarshal(data, &v); err != nil {
 			log.Error(ctx, "addBuildVarHandler> Cannot Unmarshal err: %s", err)
 			w.WriteHeader(http.StatusBadRequest)
 			return

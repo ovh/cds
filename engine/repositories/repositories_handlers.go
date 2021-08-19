@@ -4,7 +4,6 @@ import (
 	"archive/tar"
 	"bytes"
 	"context"
-	"encoding/json"
 	"io"
 	"net/http"
 	"strings"
@@ -105,7 +104,7 @@ func readOperationMultipart(r *http.Request) (*sdk.Operation, map[string][]byte,
 		file.Close()
 	}
 
-	if err := json.Unmarshal([]byte(r.FormValue("dataJSON")), &op); err != nil {
+	if err := sdk.JSONUnmarshal([]byte(r.FormValue("dataJSON")), &op); err != nil {
 		return nil, nil, sdk.WithStack(err)
 	}
 	return op, files, nil

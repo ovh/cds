@@ -25,7 +25,7 @@ func (c *client) WebsocketEventsListen(ctx context.Context, goRoutines *sdk.GoRo
 				chanMsgToSend <- m
 			case m := <-chanMsgReceived:
 				var wsEvent sdk.WebsocketEvent
-				if err := json.Unmarshal(m, &wsEvent); err != nil {
+				if err := sdk.JSONUnmarshal(m, &wsEvent); err != nil {
 					chanErrorReceived <- newError(fmt.Errorf("unable to unmarshal message: %s: %v", string(m), err))
 					continue
 				}

@@ -23,7 +23,7 @@ var (
 	Client                         cdsclient.HTTPClient
 	defaultMaxProvisioning         = 10
 	models                         []sdk.Model
-	MaxAttemptsNumberBeforeFailure = 5
+	MaxAttemptsNumberBeforeFailure = 2
 	CacheSpawnIDsTTL               = 10 * time.Second
 	CacheNbAttemptsIDsTTL          = 1 * time.Hour
 )
@@ -216,6 +216,7 @@ func Create(ctx context.Context, h Interface) error {
 							j.ID,
 							sdk.Result{
 								ID:         j.ID,
+								BuildID:    j.ID,
 								Status:     sdk.StatusFail,
 								RemoteTime: time.Now(),
 								Reason:     fmt.Sprintf("hatchery %q failed to start worker after %d attempts", h.Configuration().Name, MaxAttemptsNumberBeforeFailure),

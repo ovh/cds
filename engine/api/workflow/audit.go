@@ -28,7 +28,7 @@ type addWorkflowAudit struct{}
 
 func (a addWorkflowAudit) Compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
 	var wEvent sdk.EventWorkflowAdd
-	if err := json.Unmarshal(e.Payload, &wEvent); err != nil {
+	if err := sdk.JSONUnmarshal(e.Payload, &wEvent); err != nil {
 		return sdk.WrapError(err, "Unable to unmarshal payload")
 	}
 
@@ -58,7 +58,7 @@ type updateWorkflowAudit struct{}
 
 func (u updateWorkflowAudit) Compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
 	var wEvent sdk.EventWorkflowUpdate
-	if err := json.Unmarshal(e.Payload, &wEvent); err != nil {
+	if err := sdk.JSONUnmarshal(e.Payload, &wEvent); err != nil {
 		return sdk.WrapError(err, "Unable to unmarshal payload")
 	}
 
@@ -98,7 +98,7 @@ type addWorkflowPermissionAudit struct{}
 
 func (a addWorkflowPermissionAudit) Compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
 	var wEvent sdk.EventWorkflowPermissionAdd
-	if err := json.Unmarshal(e.Payload, &wEvent); err != nil {
+	if err := sdk.JSONUnmarshal(e.Payload, &wEvent); err != nil {
 		return sdk.WrapError(err, "Unable to unmarshal payload")
 	}
 
@@ -124,7 +124,7 @@ type updateWorkflowPermissionAudit struct{}
 
 func (u updateWorkflowPermissionAudit) Compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
 	var wEvent sdk.EventWorkflowPermissionUpdate
-	if err := json.Unmarshal(e.Payload, &wEvent); err != nil {
+	if err := sdk.JSONUnmarshal(e.Payload, &wEvent); err != nil {
 		return sdk.WrapError(err, "Unable to unmarshal payload")
 	}
 
@@ -156,7 +156,7 @@ type deleteWorkflowPermissionAudit struct{}
 
 func (a deleteWorkflowPermissionAudit) Compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
 	var wEvent sdk.EventWorkflowPermissionDelete
-	if err := json.Unmarshal(e.Payload, &wEvent); err != nil {
+	if err := sdk.JSONUnmarshal(e.Payload, &wEvent); err != nil {
 		return sdk.WrapError(err, "Unable to unmarshal payload")
 	}
 

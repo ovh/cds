@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"os/signal"
@@ -11,6 +10,7 @@ import (
 	"github.com/fsamin/go-shredder"
 
 	"github.com/ovh/cds/contrib/grpcplugins/action/kafka-publish/kafkapublisher"
+	"github.com/ovh/cds/sdk"
 )
 
 //Wait for ACK to CDS through kafka. Entrypoint is the actionID from the context file. After a fimeout (seconds) it will return an error
@@ -145,7 +145,7 @@ func ackFromKafka(kafka, topic, group, user, password, key string, timeout time.
 				continue
 			} else {
 				ack := &kafkapublisher.Ack{}
-				if err := json.Unmarshal(msg, ack); err != nil {
+				if err := sdk.JSONUnmarshal(msg, ack); err != nil {
 					fmt.Printf("Unable to parse ack: %s\n", err)
 					continue
 				}

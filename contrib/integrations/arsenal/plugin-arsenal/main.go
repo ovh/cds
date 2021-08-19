@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -137,7 +136,7 @@ func (e *arsenalDeploymentPlugin) Run(ctx context.Context, q *integrationplugin.
 
 	//Read the followUp token
 	bodyResult := map[string]string{}
-	if err := json.Unmarshal(body, &bodyResult); err != nil {
+	if err := sdk.JSONUnmarshal(body, &bodyResult); err != nil {
 		return fail("Error: Unable to read body: %v", err)
 	}
 	var followUpToken = bodyResult["followup_token"]
@@ -177,7 +176,7 @@ func (e *arsenalDeploymentPlugin) Run(ctx context.Context, q *integrationplugin.
 
 		//Read the followUp token
 		bodyResult := map[string]interface{}{}
-		if err := json.Unmarshal(body, &bodyResult); err != nil {
+		if err := sdk.JSONUnmarshal(body, &bodyResult); err != nil {
 			return fail("Error: Unable to read body: %v", err)
 		}
 

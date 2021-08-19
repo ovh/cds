@@ -33,7 +33,7 @@ func (w *WorkflowTemplateRequest) Scan(src interface{}) error {
 	if !ok {
 		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
-	return WrapError(json.Unmarshal(source, w), "cannot unmarshal WorkflowTemplateRequest")
+	return WrapError(JSONUnmarshal(source, w), "cannot unmarshal WorkflowTemplateRequest")
 }
 
 // WorkflowTemplateParsed struct.
@@ -81,7 +81,7 @@ func (w *WorkflowTemplate) Scan(src interface{}) error {
 	if !ok {
 		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
-	return WrapError(json.Unmarshal(source, w), "cannot unmarshal WorkflowTemplate")
+	return WrapError(JSONUnmarshal(source, w), "cannot unmarshal WorkflowTemplate")
 }
 
 // IsValid returns workflow template validity.
@@ -165,7 +165,7 @@ func (w *WorkflowTemplate) CheckParams(r WorkflowTemplateRequest) error {
 			case ParameterTypeJSON:
 				if v != "" {
 					var res interface{}
-					if err := json.Unmarshal([]byte(v), &res); err != nil {
+					if err := JSONUnmarshal([]byte(v), &res); err != nil {
 						return NewErrorFrom(ErrInvalidData, "Given value it's not json for %s", p.Key)
 					}
 				}
@@ -306,7 +306,7 @@ func (w *WorkflowTemplateParameters) Scan(src interface{}) error {
 	if !ok {
 		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
-	return WrapError(json.Unmarshal(source, w), "cannot unmarshal WorkflowTemplateParameters")
+	return WrapError(JSONUnmarshal(source, w), "cannot unmarshal WorkflowTemplateParameters")
 }
 
 // PipelineTemplates struct.
@@ -327,7 +327,7 @@ func (p *PipelineTemplates) Scan(src interface{}) error {
 	if !ok {
 		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
-	return WrapError(json.Unmarshal(source, p), "cannot unmarshal PipelineTemplates")
+	return WrapError(JSONUnmarshal(source, p), "cannot unmarshal PipelineTemplates")
 }
 
 // ApplicationTemplates struct.
@@ -348,7 +348,7 @@ func (a *ApplicationTemplates) Scan(src interface{}) error {
 	if !ok {
 		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
-	return WrapError(json.Unmarshal(source, a), "cannot unmarshal ApplicationTemplates")
+	return WrapError(JSONUnmarshal(source, a), "cannot unmarshal ApplicationTemplates")
 }
 
 // EnvironmentTemplates struct.
@@ -369,7 +369,7 @@ func (e *EnvironmentTemplates) Scan(src interface{}) error {
 	if !ok {
 		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
-	return WrapError(json.Unmarshal(source, e), "cannot unmarshal EnvironmentTemplates")
+	return WrapError(JSONUnmarshal(source, e), "cannot unmarshal EnvironmentTemplates")
 }
 
 // IsValid returns pipeline template validity.
@@ -469,7 +469,7 @@ func (w *WorkflowTemplateBulkOperations) Scan(src interface{}) error {
 	if !ok {
 		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
-	return WrapError(json.Unmarshal(source, w), "cannot unmarshal WorkflowTemplateBulkOperations")
+	return WrapError(JSONUnmarshal(source, w), "cannot unmarshal WorkflowTemplateBulkOperations")
 }
 
 // WorkflowTemplateError contains info about template parsing error.

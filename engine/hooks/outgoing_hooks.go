@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -197,7 +196,7 @@ func (s *Service) doOutgoingWorkflowExecution(ctx context.Context, t *sdk.TaskEx
 
 		var payloadInt interface{}
 		if payloadstr != "" {
-			if err := json.Unmarshal([]byte(payloadstr), &payloadInt); err == nil {
+			if err := sdk.JSONUnmarshal([]byte(payloadstr), &payloadInt); err == nil {
 				e := dump.NewDefaultEncoder()
 				e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
 				e.ExtraFields.DetailedMap = false

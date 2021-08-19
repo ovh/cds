@@ -210,16 +210,6 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 		return false
 	}
 
-	ctxSendSpawnInfo, next = telemetry.Span(ctxJob, "hatchery.SendSpawnInfo", telemetry.Tag("msg", sdk.MsgSpawnInfoHatcheryStartsSuccessfully.ID))
-	SendSpawnInfo(ctxSendSpawnInfo, h, j.id, sdk.SpawnMsg{
-		ID: sdk.MsgSpawnInfoHatcheryStartsSuccessfully.ID,
-		Args: []interface{}{
-			h.Service().Name,
-			arg.WorkerName,
-			sdk.Round(time.Since(start), time.Second).String()},
-	})
-	next()
-
 	if j.model != nil && j.model.IsDeprecated {
 		ctxSendSpawnInfo, next = telemetry.Span(ctxJob, "hatchery.SendSpawnInfo", telemetry.Tag("msg", sdk.MsgSpawnInfoDeprecatedModel.ID))
 		SendSpawnInfo(ctxSendSpawnInfo, h, j.id, sdk.SpawnMsg{

@@ -2,7 +2,6 @@ package hooks
 
 import (
 	"context"
-	"encoding/json"
 	"strings"
 
 	"github.com/rockbears/log"
@@ -14,7 +13,7 @@ func (s *Service) generatePayloadFromBitbucketCloudRequest(ctx context.Context, 
 	payloads := []map[string]interface{}{}
 
 	var request BitbucketCloudWebHookEvent
-	if err := json.Unmarshal(t.WebHook.RequestBody, &request); err != nil {
+	if err := sdk.JSONUnmarshal(t.WebHook.RequestBody, &request); err != nil {
 		return nil, sdk.WrapError(err, "unable ro read bitbucket request: %s", string(t.WebHook.RequestBody))
 	}
 

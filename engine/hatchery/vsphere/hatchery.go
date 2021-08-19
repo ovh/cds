@@ -2,7 +2,6 @@ package vsphere
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -215,7 +214,7 @@ func getVirtualMachineCDSAnnotation(ctx context.Context, srv mo.VirtualMachine) 
 		return nil
 	}
 	var annot annotation
-	if err := json.Unmarshal([]byte(srv.Config.Annotation), &annot); err != nil {
+	if err := sdk.JSONUnmarshal([]byte(srv.Config.Annotation), &annot); err != nil {
 		return nil
 	}
 	return &annot

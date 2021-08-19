@@ -2,7 +2,6 @@ package internal
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -35,7 +34,7 @@ func downloadHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 		defer r.Body.Close() // nolint
 
 		var reqArgs workerruntime.DownloadArtifact
-		if err := json.Unmarshal(data, &reqArgs); err != nil {
+		if err := sdk.JSONUnmarshal(data, &reqArgs); err != nil {
 			newError := sdk.NewError(sdk.ErrWrongRequest, err)
 			writeError(w, r, newError)
 			return
