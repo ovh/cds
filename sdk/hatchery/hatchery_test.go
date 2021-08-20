@@ -51,8 +51,8 @@ func TestCreate(t *testing.T) {
 	mockHatchery.EXPECT().GetGoRoutines().Return(grtn).AnyTimes()
 	mockHatchery.EXPECT().CDSClient().Return(mockCDSClient).AnyTimes()
 	mockHatchery.EXPECT().GetLogger().Return(getMockLogger()).AnyTimes()
-	mockCDSClient.EXPECT().QueuePolling(gomock.Any(), grtn, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), nil).DoAndReturn(
-		func(ctx context.Context, goRoutines *sdk.GoRoutines, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, modelType string, ratioService *int) error {
+	mockCDSClient.EXPECT().QueuePolling(gomock.Any(), grtn, gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, goRoutines *sdk.GoRoutines, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration) error {
 			j := sdk.WorkflowNodeJobRun{
 				ProjectID:         1,
 				ID:                666,
