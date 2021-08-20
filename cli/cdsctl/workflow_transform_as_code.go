@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -82,7 +81,7 @@ forLoop:
 			fmt.Printf("Error: %v\n", err)
 		case evt := <-chanMessageReceived:
 			if evt.Event.EventType == fmt.Sprintf("%T", sdk.EventOperation{}) {
-				if err := json.Unmarshal(evt.Event.Payload, &ope); err != nil {
+				if err := sdk.JSONUnmarshal(evt.Event.Payload, &ope); err != nil {
 					return nil, cli.WrapError(err, "cannot parse operation from received event")
 				}
 				if ope.Status > sdk.OperationStatusProcessing {

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/url"
 	"time"
@@ -55,7 +54,7 @@ func adminHooksTaskListRun(v cli.Values) (cli.ListResult, error) {
 		return nil, err
 	}
 	ts := []sdk.Task{}
-	if err := json.Unmarshal(btes, &ts); err != nil {
+	if err := sdk.JSONUnmarshal(btes, &ts); err != nil {
 		return nil, err
 	}
 
@@ -113,7 +112,7 @@ func adminHooksTaskExecutionListRun(v cli.Values) (cli.ListResult, error) {
 		TimestampH  string `cli:"Timestamp H"`
 	}
 	ts := sdk.Task{}
-	if err := json.Unmarshal(btes, &ts); err != nil {
+	if err := sdk.JSONUnmarshal(btes, &ts); err != nil {
 		return nil, err
 	}
 	te := []TaskExecutionDisplay{}

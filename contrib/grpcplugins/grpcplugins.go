@@ -35,7 +35,7 @@ func GetRunResults(workerHTTPPort int32) ([]sdk.WorkflowRunResult, error) {
 	}
 
 	var results []sdk.WorkflowRunResult
-	if err := json.Unmarshal(body, &results); err != nil {
+	if err := sdk.JSONUnmarshal(body, &results); err != nil {
 		return nil, fmt.Errorf("unable to unmarshal response: %v", err)
 	}
 	return results, nil
@@ -95,7 +95,7 @@ func GetServices(workerHTTPPort int32, serviceType string) ([]sdk.ServiceConfigu
 	}
 
 	var serv []sdk.ServiceConfiguration
-	if err := json.Unmarshal(b, &serv); err != nil {
+	if err := sdk.JSONUnmarshal(b, &serv); err != nil {
 		return nil, fmt.Errorf("cannot unmarshal body /services: %v", err)
 	}
 	return serv, nil

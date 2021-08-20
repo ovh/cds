@@ -2,7 +2,6 @@ package github
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 
 	"github.com/rockbears/log"
@@ -33,7 +32,7 @@ func (g *githubClient) User(ctx context.Context, username string) (User, error) 
 			log.Error(ctx, "cannot get from cache %s: %v", k, err)
 		}
 	} else {
-		if err := json.Unmarshal(body, &user); err != nil {
+		if err := sdk.JSONUnmarshal(body, &user); err != nil {
 			return User{}, err
 		}
 		//Put the body on cache for one hour and one minute

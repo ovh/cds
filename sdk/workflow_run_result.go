@@ -27,7 +27,7 @@ type WorkflowRunResult struct {
 
 func (r *WorkflowRunResult) GetArtifact() (WorkflowRunResultArtifact, error) {
 	var data WorkflowRunResultArtifact
-	if err := json.Unmarshal(r.DataRaw, &data); err != nil {
+	if err := JSONUnmarshal(r.DataRaw, &data); err != nil {
 		return data, WithStack(err)
 	}
 	return data, nil
@@ -35,7 +35,7 @@ func (r *WorkflowRunResult) GetArtifact() (WorkflowRunResultArtifact, error) {
 
 func (r *WorkflowRunResult) GetCoverage() (WorkflowRunResultCoverage, error) {
 	var data WorkflowRunResultCoverage
-	if err := json.Unmarshal(r.DataRaw, &data); err != nil {
+	if err := JSONUnmarshal(r.DataRaw, &data); err != nil {
 		return data, WithStack(err)
 	}
 	return data, nil
@@ -43,7 +43,7 @@ func (r *WorkflowRunResult) GetCoverage() (WorkflowRunResultCoverage, error) {
 
 func (r *WorkflowRunResult) GetArtifactManager() (WorkflowRunResultArtifactManager, error) {
 	var data WorkflowRunResultArtifactManager
-	if err := json.Unmarshal(r.DataRaw, &data); err != nil {
+	if err := JSONUnmarshal(r.DataRaw, &data); err != nil {
 		return data, WithStack(err)
 	}
 	return data, nil

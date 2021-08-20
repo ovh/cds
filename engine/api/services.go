@@ -232,7 +232,7 @@ func (api *API) serviceAPIHeartbeatUpdate(ctx context.Context, db *gorp.DbMap) {
 
 	var srvConfig sdk.ServiceConfig
 	b, _ := json.Marshal(api.Config)
-	json.Unmarshal(b, &srvConfig) // nolint
+	sdk.JSONUnmarshal(b, &srvConfig) // nolint
 
 	srv := &sdk.Service{
 		CanonicalService: sdk.CanonicalService{

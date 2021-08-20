@@ -129,7 +129,7 @@ func (c *Common) Register(ctx context.Context, cfg interface{}) error {
 	if err != nil {
 		return sdk.WithStack(err)
 	}
-	if err := json.Unmarshal(b, &sdkConfig); err != nil {
+	if err := sdk.JSONUnmarshal(b, &sdkConfig); err != nil {
 		return sdk.WithStack(err)
 	}
 

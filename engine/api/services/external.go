@@ -29,7 +29,7 @@ type ExternalService struct {
 func (e ExternalService) ServiceConfig() sdk.ServiceConfig {
 	b, _ := json.Marshal(e)
 	var cfg sdk.ServiceConfig
-	json.Unmarshal(b, &cfg) // nolint
+	sdk.JSONUnmarshal(b, &cfg) // nolint
 	return cfg
 }
 

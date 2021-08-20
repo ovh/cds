@@ -82,7 +82,7 @@ func (w *Workflow) Scan(src interface{}) error {
 	if !ok {
 		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
-	return WrapError(json.Unmarshal(source, w), "cannot unmarshal Workflow")
+	return WrapError(JSONUnmarshal(source, w), "cannot unmarshal Workflow")
 }
 
 type PurgeTags []string
@@ -102,7 +102,7 @@ func (a *PurgeTags) Scan(src interface{}) error {
 	if !ok {
 		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
-	return WrapError(json.Unmarshal(source, a), "cannot unmarshal PurgeTags")
+	return WrapError(JSONUnmarshal(source, a), "cannot unmarshal PurgeTags")
 }
 
 // Value returns driver.Value from WorkflowData.
@@ -120,7 +120,7 @@ func (a *WorkflowData) Scan(src interface{}) error {
 	if !ok {
 		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
-	return WrapError(json.Unmarshal(source, a), "cannot unmarshal WorkflowData")
+	return WrapError(JSONUnmarshal(source, a), "cannot unmarshal WorkflowData")
 }
 
 type Workflows []Workflow
@@ -402,7 +402,7 @@ func (w *WorkflowNodeConditions) Scan(src interface{}) error {
 	if !ok {
 		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
-	return WrapError(json.Unmarshal(source, w), "cannot unmarshal WorkflowNodeConditions")
+	return WrapError(JSONUnmarshal(source, w), "cannot unmarshal WorkflowNodeConditions")
 }
 
 //WorkflowNodeCondition represents a condition to trigger ot not a pipeline in a workflow. Operator can be =, !=, regex

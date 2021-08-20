@@ -103,7 +103,7 @@ func (s signer) SignJWS(content interface{}, now time.Time, duration time.Durati
 		return "", sdk.WithStack(err)
 	}
 	var jsonData map[string]interface{}
-	if err := json.Unmarshal(buf, &jsonData); err != nil {
+	if err := sdk.JSONUnmarshal(buf, &jsonData); err != nil {
 		return "", sdk.WithStack(err)
 	}
 
@@ -141,7 +141,7 @@ func (s verifier) VerifyJWS(signature string, content interface{}) error {
 	if err != nil {
 		return sdk.WrapError(err, "unable to decode payload data")
 	}
-	if err := json.Unmarshal(buf, content); err != nil {
+	if err := sdk.JSONUnmarshal(buf, content); err != nil {
 		return sdk.WrapError(err, "unable to decode payload data")
 	}
 

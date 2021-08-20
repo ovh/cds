@@ -3,7 +3,6 @@ package migrate
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 
 	"github.com/go-gorp/gorp"
@@ -385,7 +384,7 @@ func loadRuns(db gorp.SqlExecutor, query string) ([]sdk.WorkflowRun, error) {
 			return nil, err
 		}
 		if ww.Valid {
-			if err := json.Unmarshal([]byte(ww.String), &wr.Workflow); err != nil {
+			if err := sdk.JSONUnmarshal([]byte(ww.String), &wr.Workflow); err != nil {
 				return nil, err
 			}
 		}

@@ -2,7 +2,6 @@ package redis
 
 import (
 	"context"
-	"encoding/json"
 	"io"
 	"sort"
 	"strings"
@@ -36,7 +35,7 @@ func (r *Reader) get(from uint, to uint) ([]Line, error) {
 	for i := range res {
 		ls[i].Number = int64(res[i].Score)
 		var value string
-		if err := json.Unmarshal(res[i].Value, &value); err != nil {
+		if err := sdk.JSONUnmarshal(res[i].Value, &value); err != nil {
 			return nil, sdk.WrapError(err, "cannot unmarshal line value from store")
 		}
 		ls[i].Value = strings.TrimFunc(value, unicode.IsNumber)

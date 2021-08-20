@@ -1,7 +1,6 @@
 package art
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/url"
 	"strings"
@@ -13,7 +12,6 @@ import (
 	"github.com/jfrog/jfrog-client-go/config"
 	"github.com/jfrog/jfrog-client-go/distribution"
 	authdistrib "github.com/jfrog/jfrog-client-go/distribution/auth"
-
 
 	"github.com/ovh/cds/sdk"
 )
@@ -97,7 +95,7 @@ func GetFileInfo(artiClient artifactory.ArtifactoryServicesManager, repoName str
 		return resp, sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to call artifactory [HTTP: %d] %s", re.StatusCode, string(body))
 	}
 
-	if err := json.Unmarshal(body, &resp); err != nil {
+	if err := sdk.JSONUnmarshal(body, &resp); err != nil {
 		return resp, sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to read artifactory response %s: %v", string(body), err)
 	}
 	return resp, nil

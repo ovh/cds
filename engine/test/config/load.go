@@ -1,12 +1,12 @@
 package config
 
 import (
-	"encoding/json"
 	"io/ioutil"
 	"os"
 	"os/user"
 	"path"
 
+	"github.com/ovh/cds/sdk"
 	"github.com/stretchr/testify/require"
 )
 
@@ -25,7 +25,7 @@ func LoadTestingConf(t require.TestingT, serviceType string) map[string]string {
 	require.NoError(t, err, "error reading test configuration file from %s", f)
 	if len(btes) != 0 {
 		cfg := map[string]string{}
-		require.NoError(t, json.Unmarshal(btes, &cfg), "error to unmarshal test configuration file from %s", f)
+		require.NoError(t, sdk.JSONUnmarshal(btes, &cfg), "error to unmarshal test configuration file from %s", f)
 		return cfg
 	}
 

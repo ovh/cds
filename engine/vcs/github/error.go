@@ -1,8 +1,9 @@
 package github
 
 import (
-	"encoding/json"
 	"fmt"
+
+	"github.com/ovh/cds/sdk"
 )
 
 //Error wraps github error format
@@ -38,7 +39,7 @@ var (
 //errorAPI creates a new error
 func errorAPI(body []byte) error {
 	res := map[string]string{}
-	json.Unmarshal(body, &res)
+	sdk.JSONUnmarshal(body, &res)
 	return ghError{
 		ID:   "api_error",
 		Desc: res["message"],

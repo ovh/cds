@@ -1,8 +1,9 @@
 package bitbucketcloud
 
 import (
-	"encoding/json"
 	"fmt"
+
+	"github.com/ovh/cds/sdk"
 )
 
 //Error wraps bitbucketcloud error format
@@ -36,6 +37,6 @@ var (
 //errorAPI creates a new error
 func errorAPI(body []byte) error {
 	var res Error
-	_ = json.Unmarshal(body, &res)
+	_ = sdk.JSONUnmarshal(body, &res)
 	return res
 }

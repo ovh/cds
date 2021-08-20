@@ -3,7 +3,6 @@ package cdn
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -134,7 +133,7 @@ func (s *Service) sendLogsToWSClient(ctx context.Context, wsClient websocket.Cli
 		return sdk.WrapError(err, "cannot copy data from reader to memory buffer")
 	}
 	var lines []redis.Line
-	if err := json.Unmarshal(buf.Bytes(), &lines); err != nil {
+	if err := sdk.JSONUnmarshal(buf.Bytes(), &lines); err != nil {
 		return sdk.WrapError(err, "cannot unmarshal lines from buffer %v", string(buf.Bytes()))
 	}
 

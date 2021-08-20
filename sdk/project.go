@@ -279,7 +279,7 @@ func (a *Metadata) Scan(src interface{}) error {
 	if !ok {
 		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
-	return WrapError(json.Unmarshal(source, a), "cannot unmarshal Metadata")
+	return WrapError(JSONUnmarshal(source, a), "cannot unmarshal Metadata")
 }
 
 //LastModification is stored in cache and used for ProjectLastUpdates computing

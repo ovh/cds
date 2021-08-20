@@ -2,7 +2,6 @@ package cdn
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -119,7 +118,7 @@ func (s *Service) dequeueMessages(ctx context.Context, jobLogsQueueKey string, q
 				hms := make([]handledMessage, 0, len(msgs))
 				for _, m := range msgs {
 					var hm handledMessage
-					if err := json.Unmarshal(m, &hm); err != nil {
+					if err := sdk.JSONUnmarshal(m, &hm); err != nil {
 						return sdk.WithStack(err)
 					}
 					hms = append(hms, hm)

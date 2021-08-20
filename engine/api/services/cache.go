@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"encoding/json"
 	"sync"
 	"time"
 
@@ -133,7 +132,7 @@ func (c *iCache) doListenDatabase(ctx context.Context) {
 
 		case n := <-listener.Notify:
 			e := map[string]interface{}{}
-			if err := json.Unmarshal([]byte(n.Extra), &e); err != nil {
+			if err := sdk.JSONUnmarshal([]byte(n.Extra), &e); err != nil {
 				log.Warn(ctx, "unable to unmarshal received event: %v", err)
 				continue
 			}

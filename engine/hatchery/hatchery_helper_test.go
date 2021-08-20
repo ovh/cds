@@ -141,7 +141,7 @@ func InitMock(t *testing.T, url string) {
 			},
 		})
 
-	gock.New(url).Post("/queue/workflows/1/spawn/infos").Times(2).Reply(200)
+	gock.New(url).Post("/queue/workflows/1/spawn/infos").Times(1).Reply(200)
 
 	gock.New(url).Post("/queue/workflows/1/book").
 		Reply(204)

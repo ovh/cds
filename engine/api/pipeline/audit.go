@@ -92,7 +92,7 @@ func (p *PipelineAudit) PostGet(s gorp.SqlExecutor) error {
 		return sdk.WrapError(err, "error on queryRow")
 	}
 
-	if err := json.Unmarshal(pip, &p.Pipeline); err != nil {
+	if err := sdk.JSONUnmarshal(pip, &p.Pipeline); err != nil {
 		return sdk.WrapError(err, "error on unmarshal job")
 	}
 	return nil

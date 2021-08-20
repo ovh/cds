@@ -150,7 +150,7 @@ func keyInstallCmd() func(cmd *cobra.Command, args []string) {
 		defer resp.Body.Close() // nolint
 
 		var keyResp workerruntime.KeyResponse
-		if err := json.Unmarshal(bodyBtes, &keyResp); err != nil {
+		if err := sdk.JSONUnmarshal(bodyBtes, &keyResp); err != nil {
 			sdk.Exit("Error: worker key install> cannot unmarshall key response: %s", string(bodyBtes))
 		}
 

@@ -224,6 +224,8 @@ func DeleteByID(db gorp.SqlExecutor, id int64) error {
 
 // LoadProjectByNodeJobRunID return a project from node job run id
 func LoadProjectByNodeJobRunID(ctx context.Context, db gorp.SqlExecutor, store cache.Store, nodeJobRunID int64, opts ...LoadOptionFunc) (*sdk.Project, error) {
+	ctx, end := telemetry.Span(ctx, "project.LoadProjectByNodeJobRunID")
+	defer end()
 	query := `
 		SELECT project.* FROM project
 		JOIN workflow_run ON workflow_run.project_id = project.id

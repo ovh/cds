@@ -2,7 +2,6 @@ package bitbucketcloud
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/url"
 	"time"
@@ -55,7 +54,7 @@ func (consumer *bitbucketcloudConsumer) AuthorizeToken(ctx context.Context, _, c
 	}
 
 	var resp AccessToken
-	if err := json.Unmarshal(res, &resp); err != nil {
+	if err := sdk.JSONUnmarshal(res, &resp); err != nil {
 		return "", "", fmt.Errorf("Unable to parse bitbucketcloud response (%d) %s ", status, string(res))
 	}
 
@@ -81,7 +80,7 @@ func (consumer *bitbucketcloudConsumer) RefreshToken(ctx context.Context, refres
 	}
 
 	var resp AccessToken
-	if err := json.Unmarshal(res, &resp); err != nil {
+	if err := sdk.JSONUnmarshal(res, &resp); err != nil {
 		return "", "", fmt.Errorf("Unable to parse bitbucketcloud response (%d) %s ", status, string(res))
 	}
 

@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/md5"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -72,7 +71,7 @@ func (c *client) CDNItemStream(ctx context.Context, cdnAddr string, hash string,
 		if reader != nil {
 			body, _ := ioutil.ReadAll(reader)
 			var errSdk sdk.Error
-			if err := json.Unmarshal(body, &errSdk); err == nil && errSdk.Message != "" {
+			if err := sdk.JSONUnmarshal(body, &errSdk); err == nil && errSdk.Message != "" {
 				stringBody = errSdk.Error()
 			}
 			if stringBody == "" {

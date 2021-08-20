@@ -16,14 +16,14 @@ cdsctl admin errors get <error_uuid>
 
 All errors from lib should be wrapped like **sdk.WithStack(err)** or **sdk.WrapError(err, format, values...)** directly when created. 
 ```go
-if err := json.Unmarshal(...); err != nil {
+if err := sdk.JSONUnmarshal(...); err != nil {
     return sdk.WithStack(err) // or return sdk.WrapError(err, "Cannot unmarshal given data")
 }
 ```
 
 **WrapError** can be used to add more details about an error when returned.
 ```go
-func one() error { return sdk.WithStack(json.Unmarshal(...)) }
+func one() error { return sdk.WithStack(sdk.JSONUnmarshal(...)) }
 
 func two() error { return sdk.WrapError(one(), "Error calling one") }
 
@@ -42,15 +42,15 @@ func four() error {
 
 To create an error that will generate a specific HTTP status code you should use the **sdk.NewError** func or returned an existing sdk.Error.
 ```go
-if err := json.Unmarshal(...); err != nil {
+if err := sdk.JSONUnmarshal(...); err != nil {
     return sdk.NewError(sdk.ErrWrongRequest, err) // returns a 400 http code with default translated message and from value that contains err cause. 
 }
 
-if err := json.Unmarshal(...); err != nil {
+if err := sdk.JSONUnmarshal(...); err != nil {
     return sdk.NewErrorFrom(sdk.ErrWrongRequest, "A text that will be in from message") // returns a 400 http code with default translated message and test as from. 
 }
 
-if err := json.Unmarshal(...); err != nil {
+if err := sdk.JSONUnmarshal(...); err != nil {
     return sdk.WrapError(sdk.ErrWrongRequest, "Cannot unmarshal given data") // or return sdk.WithStack(sdk.ErrWrongRequest) returns a 400 http code with default translated message.
 }
 ```
@@ -64,7 +64,7 @@ if err := one(); err != nil {
     }
 }
 
-err := json.Unmarshal(...)
+err := sdk.JSONUnmarshal(...)
 sdk.ErrorIs(err, sdk.ErrUnknownError) => true
 sdk.ErrorIsUnknown(err) => true
 ```

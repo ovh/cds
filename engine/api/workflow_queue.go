@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"strings"
 
 	"net/http"
 	"strconv"
@@ -30,6 +31,7 @@ import (
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/featureflipping"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/jws"
@@ -395,12 +397,24 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 			return err
 		}
 
-		if ok := isWorker(ctx); !ok {
-			return sdk.WithStack(sdk.ErrForbidden)
+		var wk *sdk.Worker
+		var hatch *sdk.Service
+		if isWorker(ctx) {
+			wk, err = worker.LoadByID(ctx, api.mustDB(), getAPIConsumer(ctx).Worker.ID)
+			if err != nil {
+				return err
+			}
 		}
-		wk, err := worker.LoadByID(ctx, api.mustDB(), getAPIConsumer(ctx).Worker.ID)
-		if err != nil {
-			return err
+
+		if isHatchery(ctx) {
+			hatch, err = services.LoadByID(ctx, api.mustDBWithCtx(ctx), getAPIConsumer(ctx).Service.ID)
+			if err != nil {
+				return err
+			}
+		}
+
+		if wk == nil && hatch == nil {
+			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
 		// Unmarshal into results
@@ -408,35 +422,46 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 		if err := service.UnmarshalBody(r, &res); err != nil {
 			return sdk.WrapError(err, "cannot unmarshal request")
 		}
+
 		customCtx, cancel := context.WithTimeout(ctx, 180*time.Second)
 		defer cancel()
-		dbWithCtx := api.mustDBWithCtx(customCtx)
-
-		_, next := telemetry.Span(ctx, "project.LoadProjectByNodeJobRunID")
-		proj, err := project.LoadProjectByNodeJobRunID(ctx, dbWithCtx, api.Cache, id, project.LoadOptions.WithVariables)
-		next()
+		proj, err := project.LoadProjectByNodeJobRunID(ctx, api.mustDBWithCtx(customCtx), api.Cache, id, project.LoadOptions.WithVariables)
 		if err != nil {
-			if sdk.ErrorIs(err, sdk.ErrNoProject) {
-				_, err := workflow.LoadNodeJobRun(ctx, dbWithCtx, api.Cache, id)
-				if sdk.ErrorIs(err, sdk.ErrWorkflowNodeRunJobNotFound) {
-					// job result already send as job is no more in database
-					// this log is here to stats it and we returns nil for unlock the worker
-					// and avoid a "worker timeout"
-					log.Warn(ctx, "NodeJobRun not found: %d err:%v", id, err)
-					return nil
-				}
-				return sdk.WrapError(err, "cannot load NodeJobRun %d", id)
-			}
 			return sdk.WrapError(err, "cannot load project from job %d", id)
 		}
 
-		telemetry.Current(ctx,
-			telemetry.Tag(telemetry.TagProjectKey, proj.Key),
-		)
+		telemetry.Current(ctx, telemetry.Tag(telemetry.TagProjectKey, proj.Key))
+		ctx = context.WithValue(ctx, log.Field("action_metadata_project_key"), proj.Key)
 
-		report, err := api.postJobResult(customCtx, proj, wk, &res)
+		// Start the transaction
+		tx, err := api.mustDBWithCtx(ctx).Begin()
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		defer tx.Rollback() // nolint
+
+		// Load workflow node job run
+		job, err := workflow.LoadAndLockNodeJobRunSkipLocked(ctx, tx, api.Cache, res.BuildID)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load node run job %d", res.BuildID)
+		}
+
+		// If the call is made by an hatchery, we have to check that the job is at status waiting
+		if hatch != nil {
+			if job.Status != sdk.StatusWaiting {
+				return sdk.WithStack(sdk.ErrForbidden)
+			}
+		}
+
+		// Let's work
+		report, err := api.postJobResult(customCtx, tx, proj, job, wk, hatch, &res)
 		if err != nil {
 			return sdk.WrapError(err, "unable to post job result")
+		}
+
+		// Commit the transaction
+		if err := tx.Commit(); err != nil {
+			return sdk.WithStack(err)
 		}
 
 		workflowRuns := report.WorkflowRuns()
@@ -449,9 +474,7 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 			}
 		}
 
-		_, next = telemetry.Span(ctx, "workflow.ResyncNodeRunsWithCommits")
 		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, *proj, report)
-		next()
 
 		go api.WorkflowSendEvent(context.Background(), *proj, report)
 
@@ -459,38 +482,64 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 	}
 }
 
-func (api *API) postJobResult(ctx context.Context, proj *sdk.Project, wr *sdk.Worker, res *sdk.Result) (*workflow.ProcessorReport, error) {
+func (api *API) postJobResult(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, proj *sdk.Project, job *sdk.WorkflowNodeJobRun, wr *sdk.Worker, hatch *sdk.Service, res *sdk.Result) (*workflow.ProcessorReport, error) {
+	// Warning: here the worker "wk" of the hatchery "hatch" can be nil
+
 	var end func()
 	ctx, end = telemetry.Span(ctx, "postJobResult")
 	defer end()
-
-	//Start the transaction
-	tx, errb := api.mustDBWithCtx(ctx).Begin()
-	if errb != nil {
-		return nil, sdk.WrapError(errb, "postJobResult> Cannot begin tx")
-	}
-	defer tx.Rollback() // nolint
-
-	//Load workflow node job run
-	job, errj := workflow.LoadAndLockNodeJobRunSkipLocked(ctx, tx, api.Cache, res.BuildID)
-	if errj != nil {
-		return nil, sdk.WrapError(errj, "cannot load node run job %d", res.BuildID)
-	}
 
 	telemetry.Current(ctx,
 		telemetry.Tag(telemetry.TagWorkflowNodeJobRun, res.BuildID),
 		telemetry.Tag(telemetry.TagWorkflowNodeRun, job.WorkflowNodeRunID),
 		telemetry.Tag(telemetry.TagJob, job.Job.Action.Name))
 
-	msg := sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerEnd.ID, Args: []interface{}{wr.Name, res.Duration}}
-	infos := []sdk.SpawnInfo{{
-		RemoteTime:  res.RemoteTime,
-		Message:     msg,
-		UserMessage: msg.DefaultUserMessage(),
-	}}
+	// Add spawn info
+	if wr != nil {
+		msg := sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerEnd.ID, Args: []interface{}{wr.Name}}
+		infos := []sdk.SpawnInfo{{
+			RemoteTime:  res.RemoteTime,
+			Message:     msg,
+			UserMessage: msg.DefaultUserMessage(),
+		}}
+		if err := workflow.AddSpawnInfosNodeJobRun(tx, job.WorkflowNodeRunID, job.ID, workflow.PrepareSpawnInfos(infos)); err != nil {
+			return nil, sdk.WrapError(err, "Cannot save spawn info job %d", job.ID)
+		}
+	}
+	if hatch != nil && res.Status == sdk.StatusFail {
+		msg := sdk.SpawnMsg{ID: sdk.MsgSpawnErrorHatcheryRetryAttempt.ID, Args: []interface{}{hatch.Name, res.Reason}}
+		infos := []sdk.SpawnInfo{{
+			RemoteTime:  res.RemoteTime,
+			Message:     msg,
+			UserMessage: msg.DefaultUserMessage(),
+		}}
+		if err := workflow.AddSpawnInfosNodeJobRun(tx, job.WorkflowNodeRunID, job.ID, workflow.PrepareSpawnInfos(infos)); err != nil {
+			return nil, sdk.WrapError(err, "Cannot save spawn info job %d", job.ID)
+		}
 
-	if err := workflow.AddSpawnInfosNodeJobRun(tx, job.WorkflowNodeRunID, job.ID, workflow.PrepareSpawnInfos(infos)); err != nil {
-		return nil, sdk.WrapError(err, "Cannot save spawn info job %d", job.ID)
+		// If the call is made by a hatchery, we have to update the stage status, because it is still at status waiting
+		nodeRun, err := workflow.LoadNodeRunByID(tx, job.WorkflowNodeRunID, workflow.LoadRunOptions{})
+		if err != nil {
+			return nil, sdk.WrapError(err, "Unable to load node run id %d", job.WorkflowNodeRunID)
+		}
+
+		var stageIndex = nodeRun.GetStageIndex(job)
+		if stageIndex == -1 {
+			if err != nil {
+				return nil, sdk.NewError(sdk.ErrWrongRequest, sdk.WithStack(fmt.Errorf("stage not found")))
+			}
+		}
+		var stage = &nodeRun.Stages[stageIndex]
+		if stage.Status == sdk.StatusWaiting {
+			stage.Status = sdk.StatusBuilding
+		}
+		if nodeRun.Status == sdk.StatusWaiting {
+			nodeRun.Status = sdk.StatusBuilding
+		}
+		// Save the node run in database
+		if err := workflow.UpdateNodeRunStatusAndStage(tx, nodeRun); err != nil {
+			return nil, sdk.WrapError(err, "unable to update node id=%d at status %s", nodeRun.ID, nodeRun.Status)
+		}
 	}
 
 	// Manage build variables, we have to push them on the job and to propagate on the node above
@@ -515,6 +564,7 @@ func (api *API) postJobResult(ctx context.Context, proj *sdk.Project, wr *sdk.Wo
 		return nil, sdk.WrapError(err, "Unable to update node job run %d", res.BuildID)
 	}
 
+	// Handle build variables sent by the worker
 	if len(res.NewVariables) > 0 {
 		nodeRun, err := workflow.LoadAndLockNodeRunByID(ctx, tx, job.WorkflowNodeRunID)
 		if err != nil {
@@ -548,21 +598,28 @@ func (api *API) postJobResult(ctx context.Context, proj *sdk.Project, wr *sdk.Wo
 	}
 	// ^ build variables are now updated on job run and on node
 
-	//Update worker status
-	if err := worker.SetStatus(ctx, tx, wr.ID, sdk.StatusWaiting); err != nil {
-		return nil, sdk.WrapError(err, "cannot update worker %s status", wr.ID)
+	if wr != nil {
+		//Update worker status
+		if err := worker.SetStatus(ctx, tx, wr.ID, sdk.StatusWaiting); err != nil {
+			return nil, sdk.WrapError(err, "cannot update worker %s status", wr.ID)
+		}
 	}
 
 	// Update action status
 	log.Debug(ctx, "postJobResult> Updating %d to %s in queue", job.ID, res.Status)
 	report, err := workflow.UpdateNodeJobRunStatus(ctx, tx, api.Cache, *proj, job, res.Status)
 	if err != nil {
+		// Checking the error:
+		// pq: update or delete on table "workflow_node_run_job" violates foreign key constraint "fk_worker_workflow_node_run_job" on table "worker")
+		if wr != nil && strings.Contains(err.Error(), "fk_worker_workflow_node_run_job") {
+			log.ErrorWithStackTrace(ctx, err)
+			statusFromDB, err := tx.SelectNullStr("select status from worker where id = $1", wr.ID)
+			if err != nil {
+				log.Error(ctx, "unable to get worker %q status in db", wr.Name)
+			}
+			log.Error(ctx, "worker %q status is %q (%q in DB)", wr.Name, wr.Status, statusFromDB)
+		}
 		return nil, sdk.WrapError(err, "cannot update NodeJobRun %d status", job.ID)
-	}
-
-	//Commit the transaction
-	if err := tx.Commit(); err != nil {
-		return nil, sdk.WrapError(err, "cannot commit tx")
 	}
 
 	for i := range report.WorkflowRuns() {

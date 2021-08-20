@@ -1,7 +1,6 @@
 package artifactory
 
 import (
-	"encoding/json"
 	"fmt"
 	"strconv"
 	"time"
@@ -58,7 +57,7 @@ func (c *Client) GetFileInfo(repoName string, filePath string) (sdk.FileInfo, er
 	}
 
 	var resp FileInfoResponse
-	if err := json.Unmarshal(body, &resp); err != nil {
+	if err := sdk.JSONUnmarshal(body, &resp); err != nil {
 		return fi, sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to read artifactory response %s: %v", string(body), err)
 	}
 

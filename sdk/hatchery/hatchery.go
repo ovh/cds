@@ -20,10 +20,30 @@ import (
 
 var (
 	// Client is a CDS Client
-	Client                 cdsclient.HTTPClient
-	defaultMaxProvisioning = 10
-	models                 []sdk.Model
+	Client                         cdsclient.HTTPClient
+	defaultMaxProvisioning         = 10
+	models                         []sdk.Model
+	MaxAttemptsNumberBeforeFailure = 5
+	CacheSpawnIDsTTL               = 10 * time.Second
+	CacheNbAttemptsIDsTTL          = 1 * time.Hour
 )
+
+type CacheNbAttemptsJobIDs struct {
+	cache *cache.Cache
+}
+
+func (c *CacheNbAttemptsJobIDs) Key(id int64) string {
+	return strconv.FormatInt(id, 10)
+}
+
+func (c *CacheNbAttemptsJobIDs) NewAttempt(id int64) int {
+	key := c.Key(id)
+	nbAttempt, err := c.cache.IncrementInt(key, 1)
+	if err != nil {
+		c.cache.SetDefault(key, 1)
+	}
+	return nbAttempt
+}
 
 // Create creates hatchery
 func Create(ctx context.Context, h Interface) error {
@@ -64,9 +84,13 @@ func Create(ctx context.Context, h Interface) error {
 	wjobs := make(chan sdk.WorkflowNodeJobRun, h.Configuration().Provision.MaxConcurrentProvisioning)
 	errs := make(chan error, 1)
 
-	// Create a cache with a default expiration time of 3 second, and which
-	// purges expired items every minute
-	spawnIDs := cache.New(10*time.Second, 60*time.Second)
+	// Create a cache to keep in memory the jobID processed in the last 10s.
+	cacheSpawnIDs := cache.New(CacheSpawnIDsTTL, 2*CacheSpawnIDsTTL)
+
+	// Create a cache to only process each jobID only a number of attenmpts before force to fail the job
+	cacheNbAttemptsIDs := &CacheNbAttemptsJobIDs{
+		cache: cache.New(CacheNbAttemptsIDsTTL, 2*CacheNbAttemptsIDsTTL),
+	}
 
 	h.GetGoRoutines().Run(ctx, "queuePolling", func(ctx context.Context) {
 		log.Debug(ctx, "starting queue polling")
@@ -179,14 +203,14 @@ func Create(ctx context.Context, h Interface) error {
 				}
 
 				//Check if the jobs is concerned by a pending worker creation
-				if _, exist := spawnIDs.Get(strconv.FormatInt(j.ID, 10)); exist {
+				if _, exist := cacheSpawnIDs.Get(strconv.FormatInt(j.ID, 10)); exist {
 					log.Debug(ctx, "job %d already spawned in previous routine", j.ID)
 					endTrace("already spawned")
 					continue
 				}
 
 				//Before doing anything, push in cache
-				spawnIDs.SetDefault(strconv.FormatInt(j.ID, 10), j.ID)
+				cacheSpawnIDs.SetDefault(strconv.FormatInt(j.ID, 10), j.ID)
 
 				//Check bookedBy current hatchery
 				if j.BookedBy.ID != 0 {
@@ -199,6 +223,26 @@ func Create(ctx context.Context, h Interface) error {
 				if !checkCapacities(ctx, h) {
 					log.Info(ctx, "hatchery %s is not able to provision new worker", h.Service().Name)
 					endTrace("no capacities")
+					continue
+				}
+
+				//Check if we already try to start a worker for this job
+				nbAttempts := cacheNbAttemptsIDs.NewAttempt(j.ID)
+				if nbAttempts > MaxAttemptsNumberBeforeFailure {
+					if err := h.CDSClient().
+						QueueSendResult(ctx,
+							j.ID,
+							sdk.Result{
+								ID:         j.ID,
+								BuildID:    j.ID,
+								Status:     sdk.StatusFail,
+								RemoteTime: time.Now(),
+								Reason:     fmt.Sprintf("hatchery %q failed to start worker after %d attempts", h.Configuration().Name, MaxAttemptsNumberBeforeFailure),
+							}); err != nil {
+						log.ErrorWithStackTrace(ctx, err)
+					}
+					log.Info(ctx, "hatchery %q failed to start worker after %d attempts", h.Configuration().Name, MaxAttemptsNumberBeforeFailure)
+					endTrace("maximum attempts")
 					continue
 				}
 

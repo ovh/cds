@@ -75,7 +75,7 @@ func (c *ServiceConfig) Scan(src interface{}) error {
 	if !ok {
 		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
-	return WrapError(json.Unmarshal(source, c), "cannot unmarshal ServiceConfig")
+	return WrapError(JSONUnmarshal(source, c), "cannot unmarshal ServiceConfig")
 }
 
 // ServiceConfiguration is the configuration of service

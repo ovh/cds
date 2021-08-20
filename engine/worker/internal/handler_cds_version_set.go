@@ -2,7 +2,6 @@ package internal
 
 import (
 	"context"
-	"encoding/json"
 	"io/ioutil"
 	"net/http"
 
@@ -24,7 +23,7 @@ func setVersionHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc 
 		defer r.Body.Close()
 
 		var req workerruntime.CDSVersionSet
-		if err := json.Unmarshal(data, &req); err != nil {
+		if err := sdk.JSONUnmarshal(data, &req); err != nil {
 			writeError(w, r, sdk.NewError(sdk.ErrWrongRequest, err))
 			return
 		}

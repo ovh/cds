@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"net/url"
 	"strings"
@@ -129,7 +128,7 @@ func (d authDriver) CheckSigninStateToken(req sdk.AuthConsumerSigninRequest) err
 	}
 
 	var signinStateToken sdk.AuthSigninConsumerToken
-	if err := json.Unmarshal(rawRequest, &signinStateToken); err != nil {
+	if err := sdk.JSONUnmarshal(rawRequest, &signinStateToken); err != nil {
 		return sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("unable to parse state: %v", err))
 	}
 
@@ -212,7 +211,7 @@ func (d authDriver) GetUserInfo(ctx context.Context, req sdk.AuthConsumerSigninR
 	}
 
 	var itk issuedToken
-	if err := json.Unmarshal(rawIssuedToken, &itk); err != nil {
+	if err := sdk.JSONUnmarshal(rawIssuedToken, &itk); err != nil {
 		return u, sdk.NewError(sdk.ErrUnauthorized, err)
 	}
 

@@ -2,7 +2,6 @@ package internal
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -25,7 +24,7 @@ func checkSecretHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc
 		}
 
 		var a workerruntime.FilePath
-		if err := json.Unmarshal(data, &a); err != nil {
+		if err := sdk.JSONUnmarshal(data, &a); err != nil {
 			returnHTTPError(ctx, w, 400, fmt.Errorf("failed to unmarshal %s", data))
 			return
 		}

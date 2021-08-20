@@ -50,7 +50,7 @@ func TestDAO_LinkGroupUser(t *testing.T) {
 	assert.Len(t, grp.Members, 2)
 
 	err = group.DeleteUserFromGroup(context.TODO(), db, grp.ID, u1.ID)
-	require.EqualError(t, err, "TestDAO_LinkGroupUser>DeleteUserFromGroup: not enough group admin left")
+	require.EqualError(t, err, "not enough group admin left")
 
 	grp, err = group.LoadByName(context.TODO(), db, groupName, group.LoadOptions.WithMembers)
 	require.NoError(t, err)

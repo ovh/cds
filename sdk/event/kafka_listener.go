@@ -2,7 +2,6 @@ package event
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -77,7 +76,7 @@ func (h *handler) Cleanup(sarama.ConsumerGroupSession) error {
 func (h *handler) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
 	for message := range claim.Messages() {
 		var event sdk.Event
-		json.Unmarshal(message.Value, &event)
+		sdk.JSONUnmarshal(message.Value, &event)
 		if err := h.processEventFunc(event); err != nil {
 			h.errorLogFunc("Error on ProcessEventFunc:%s", err)
 		}

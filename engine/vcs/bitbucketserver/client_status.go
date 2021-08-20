@@ -128,7 +128,7 @@ const (
 func processWorkflowNodeRunEvent(event sdk.Event, uiURL string) (statusData, error) {
 	data := statusData{}
 	var eventNR sdk.EventRunWorkflowNode
-	if err := json.Unmarshal(event.Payload, &eventNR); err != nil {
+	if err := sdk.JSONUnmarshal(event.Payload, &eventNR); err != nil {
 		return data, sdk.WrapError(err, "cannot unmarshal payload")
 	}
 	data.key = fmt.Sprintf("%s-%s-%s",

@@ -97,7 +97,7 @@ func (eva *dbEnvironmentVariableAudit) PostGet(db gorp.SqlExecutor) error {
 
 	if before.Valid {
 		vBefore := &sdk.EnvironmentVariable{}
-		if err := json.Unmarshal([]byte(before.String), vBefore); err != nil {
+		if err := sdk.JSONUnmarshal([]byte(before.String), vBefore); err != nil {
 			return sdk.WithStack(err)
 		}
 		if sdk.NeedPlaceholder(vBefore.Type) {
@@ -109,7 +109,7 @@ func (eva *dbEnvironmentVariableAudit) PostGet(db gorp.SqlExecutor) error {
 
 	if after.Valid {
 		vAfter := &sdk.EnvironmentVariable{}
-		if err := json.Unmarshal([]byte(after.String), vAfter); err != nil {
+		if err := sdk.JSONUnmarshal([]byte(after.String), vAfter); err != nil {
 			return sdk.WithStack(err)
 		}
 		if sdk.NeedPlaceholder(vAfter.Type) {

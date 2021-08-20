@@ -2,7 +2,6 @@ package elasticsearch
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -161,7 +160,7 @@ func (s *Service) loadMetric(ctx context.Context, ID string) (sdk.Metric, error)
 		return m, nil
 	}
 
-	if err := json.Unmarshal(*results.Hits.Hits[0].Source, &m); err != nil {
+	if err := sdk.JSONUnmarshal(*results.Hits.Hits[0].Source, &m); err != nil {
 		return m, err
 	}
 	return m, nil

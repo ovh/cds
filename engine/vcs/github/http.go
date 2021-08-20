@@ -2,7 +2,6 @@ package github
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -57,7 +56,7 @@ func (g *githubConsumer) postForm(path string, data url.Values, headers map[stri
 
 	if res.StatusCode > 400 {
 		ghErr := &ghError{}
-		if err := json.Unmarshal(resBody, ghErr); err == nil {
+		if err := sdk.JSONUnmarshal(resBody, ghErr); err == nil {
 			return res.StatusCode, resBody, ghErr
 		}
 	}

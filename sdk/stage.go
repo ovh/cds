@@ -1,7 +1,6 @@
 package sdk
 
 import (
-	json "encoding/json"
 	"strings"
 	"time"
 )
@@ -37,7 +36,7 @@ func (s *Stage) UnmarshalJSON(data []byte) error {
 		Warnings      []PipelineBuildWarning `json:"warnings"`
 	}
 
-	if err := json.Unmarshal(data, &tmp); err != nil {
+	if err := JSONUnmarshal(data, &tmp); err != nil {
 		return err
 	}
 	s.ID = tmp.ID
@@ -53,7 +52,7 @@ func (s *Stage) UnmarshalJSON(data []byte) error {
 	s.Warnings = tmp.Warnings
 
 	var v map[string]interface{}
-	if err := json.Unmarshal(data, &v); err != nil {
+	if err := JSONUnmarshal(data, &v); err != nil {
 		return err
 	}
 	if lastModifiedNumber, ok := v["last_modified"].(float64); ok {

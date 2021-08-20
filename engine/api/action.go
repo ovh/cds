@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"io/ioutil"
 	"net/http"
 
@@ -385,7 +384,7 @@ func (api *API) getActionAuditHandler() service.Handler {
 
 			if clone.DataBefore != "" {
 				var before sdk.Action
-				if err := json.Unmarshal([]byte(clone.DataBefore), &before); err != nil {
+				if err := sdk.JSONUnmarshal([]byte(clone.DataBefore), &before); err != nil {
 					log.Error(ctx, "%+v", sdk.WrapError(err, "cannot parse action audit"))
 					continue
 				}
@@ -402,7 +401,7 @@ func (api *API) getActionAuditHandler() service.Handler {
 
 			if clone.DataAfter != "" {
 				var after sdk.Action
-				if err := json.Unmarshal([]byte(clone.DataAfter), &after); err != nil {
+				if err := sdk.JSONUnmarshal([]byte(clone.DataAfter), &after); err != nil {
 					log.Error(ctx, "%+v", sdk.WrapError(err, "cannot parse action audit"))
 					continue
 				}
@@ -458,7 +457,7 @@ func (api *API) postActionAuditRollbackHandler() service.Handler {
 		}
 
 		var before sdk.Action
-		if err := json.Unmarshal([]byte(aa.DataBefore), &before); err != nil {
+		if err := sdk.JSONUnmarshal([]byte(aa.DataBefore), &before); err != nil {
 			return sdk.WrapError(err, "cannot parse action audit")
 		}
 

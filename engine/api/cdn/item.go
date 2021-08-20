@@ -2,7 +2,6 @@ package cdn
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -50,7 +49,7 @@ func ListItems(ctx context.Context, db gorp.SqlExecutor, itemtype sdk.CDNItemTyp
 		return result, err
 	}
 	var cdnItems []sdk.CDNItem
-	if err := json.Unmarshal(btes, &cdnItems); err != nil {
+	if err := sdk.JSONUnmarshal(btes, &cdnItems); err != nil {
 		return result, sdk.WithStack(err)
 	}
 

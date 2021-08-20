@@ -439,8 +439,8 @@ github.com/rasky/go-xdr v0.0.0-20170124162913-1a41d1a06c93/go.mod h1:Nfe4efndBz4
 github.com/rcrowley/go-metrics v0.0.0-20181016184325-3113b8401b8a/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
 github.com/rcrowley/go-metrics v0.0.0-20200313005456-10cdbea86bc0 h1:MkV+77GLUNo5oJ0jf870itWm3D0Sjh7+Za9gazKc5LQ=
 github.com/rcrowley/go-metrics v0.0.0-20200313005456-10cdbea86bc0/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
-github.com/rockbears/log v0.3.0 h1:V26Z4/UnlwM4sIUXT01rrY0gfvrPSc//U3a6KlPcwhk=
-github.com/rockbears/log v0.3.0/go.mod h1:fKa6erpK6U16kk8xOLGusFuVz4qr+mqe+9zD0kVn7VI=
+github.com/rockbears/log v0.4.0 h1:/zBVygXaaJJ+SQDdG4m5ptwLdkQqfTbl8afCbUF5Q8U=
+github.com/rockbears/log v0.4.0/go.mod h1:z46IOEOh914gJvg256Vm3F4s8K7D3ePaEAzuMYcfk98=
 github.com/rogpeppe/fastuuid v0.0.0-20150106093220-6724a57986af/go.mod h1:XWv6SoW27p1b0cqNHllgS5HIMJraePCO15w5zCzIWYg=
 github.com/rogpeppe/go-internal v1.3.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
 github.com/rubenv/sql-migrate v0.0.0-20160620083229-6f4757563362/go.mod h1:WS0rl9eEliYI8DPnr3TOwz4439pay+qNgzJoVya/DmY=

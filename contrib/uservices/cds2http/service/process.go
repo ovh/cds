@@ -48,7 +48,7 @@ func process(event sdk.Event, client *http.Client) error {
 		return nil
 	}
 
-	if err := json.Unmarshal(event.Payload, &eventNotif); err != nil {
+	if err := sdk.JSONUnmarshal(event.Payload, &eventNotif); err != nil {
 		log.Warnf("process> cannot read payload. type:%s err:%s", event.EventType, err)
 		return nil
 	}

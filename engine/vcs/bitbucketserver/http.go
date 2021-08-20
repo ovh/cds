@@ -186,7 +186,7 @@ func (c *bitbucketClient) do(ctx context.Context, method, api, path string, para
 
 		// bitbucket can return 204 with no-content
 		if resp.StatusCode != 204 || strings.TrimSpace(string(body)) != "" {
-			if err := json.Unmarshal(body, v); err != nil {
+			if err := sdk.JSONUnmarshal(body, v); err != nil {
 				return err
 			}
 		}

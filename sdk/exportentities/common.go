@@ -59,7 +59,7 @@ func GetFormatFromContentType(ct string) (Format, error) {
 func Unmarshal(btes []byte, f Format, i interface{}) error {
 	switch f {
 	case FormatJSON:
-		if err := json.Unmarshal(btes, i); err != nil {
+		if err := sdk.JSONUnmarshal(btes, i); err != nil {
 			return sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "cannot unmarshal given data as json"))
 		}
 		return nil
@@ -77,7 +77,7 @@ func UnmarshalStrict(btes []byte, f Format, i interface{}) error {
 	var err error
 	switch f {
 	case FormatJSON:
-		err = json.Unmarshal(btes, i)
+		err = sdk.JSONUnmarshal(btes, i)
 	case FormatYAML:
 		err = yaml.UnmarshalStrict(btes, i)
 	default:

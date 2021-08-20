@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"io/ioutil"
 	"net/http"
 
@@ -40,7 +39,7 @@ func (api *API) postWorkerModelImportHandler() service.Handler {
 		var errUnMarshall error
 		switch contentType {
 		case "application/json":
-			errUnMarshall = json.Unmarshal(body, &eWorkerModel)
+			errUnMarshall = sdk.JSONUnmarshal(body, &eWorkerModel)
 		case "application/x-yaml", "text/x-yam":
 			errUnMarshall = yaml.Unmarshal(body, &eWorkerModel)
 		default:

@@ -2,7 +2,6 @@ package github
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"strings"
 
@@ -61,7 +60,7 @@ func (g *githubClient) Tags(ctx context.Context, fullname string) ([]sdk.VCSTag,
 			noEtag = true
 			continue
 		} else {
-			if err := json.Unmarshal(body, &nextTags); err != nil {
+			if err := sdk.JSONUnmarshal(body, &nextTags); err != nil {
 				log.Warn(ctx, "githubClient.Tags> Unable to parse github tags: %s", err)
 				return nil, err
 			}

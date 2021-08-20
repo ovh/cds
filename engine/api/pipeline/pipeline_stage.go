@@ -201,7 +201,7 @@ func LoadPipelineStage(ctx context.Context, db gorp.SqlExecutor, p *sdk.Pipeline
 
 			var pipelineActionParameter []sdk.Parameter
 			var isUpdated bool
-			err = json.Unmarshal([]byte(mapArgs[id][index]), &pipelineActionParameter)
+			err = sdk.JSONUnmarshal([]byte(mapArgs[id][index]), &pipelineActionParameter)
 			if err != nil {
 				return sdk.WithStack(err)
 			}
