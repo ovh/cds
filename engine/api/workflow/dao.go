@@ -49,6 +49,9 @@ func LoadAllNamesByProjectIDs(_ context.Context, db gorp.SqlExecutor, projectIDs
 
 // LoadAllByIDs returns all workflows by ids.
 func LoadAllByIDs(ctx context.Context, db gorp.SqlExecutor, ids []int64) (sdk.Workflows, error) {
+	if len(ids) == 0 {
+		return []sdk.Workflow{}, nil
+	}
 	var dao WorkflowDAO
 	dao.Filters.WorkflowIDs = ids
 	return dao.LoadAll(ctx, db)

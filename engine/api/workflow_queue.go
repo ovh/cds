@@ -478,6 +478,13 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 
 		go api.WorkflowSendEvent(context.Background(), *proj, report)
 
+		for i := range report.WorkflowRuns() {
+			run := &report.WorkflowRuns()[i]
+			if err := api.updateParentWorkflowRun(ctx, run); err != nil {
+				return sdk.WithStack(err)
+			}
+		}
+
 		return nil
 	}
 }
@@ -620,16 +627,6 @@ func (api *API) postJobResult(ctx context.Context, tx gorpmapper.SqlExecutorWith
 			log.Error(ctx, "worker %q status is %q (%q in DB)", wr.Name, wr.Status, statusFromDB)
 		}
 		return nil, sdk.WrapError(err, "cannot update NodeJobRun %d status", job.ID)
-	}
-
-	for i := range report.WorkflowRuns() {
-		run := &report.WorkflowRuns()[i]
-		reportParent, err := api.updateParentWorkflowRun(ctx, run)
-		if err != nil {
-			return nil, sdk.WithStack(err)
-		}
-
-		go api.WorkflowSendEvent(context.Background(), *proj, reportParent)
 	}
 
 	return report, nil
