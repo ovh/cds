@@ -493,34 +493,38 @@ func (api *API) stopWorkflowRun(ctx context.Context, p *sdk.Project, run *sdk.Wo
 	}
 
 	if parentWorkflowRunID == 0 {
-		report, err := api.updateParentWorkflowRun(ctx, run)
-		if err != nil {
+		if err := api.updateParentWorkflowRun(ctx, run); err != nil {
 			return nil, sdk.WithStack(err)
 		}
-		go api.WorkflowSendEvent(context.Background(), *p, report)
 	}
 
 	return report, nil
 }
 
-func (api *API) updateParentWorkflowRun(ctx context.Context, run *sdk.WorkflowRun) (*workflow.ProcessorReport, error) {
+func (api *API) updateParentWorkflowRun(ctx context.Context, run *sdk.WorkflowRun) error {
 	if !run.HasParentWorkflow() {
-		return nil, nil
+		return nil
 	}
 
+	tx, err := api.mustDB().Begin()
+	if err != nil {
+		return sdk.WrapError(err, "unable to start transaction")
+	}
+	defer tx.Rollback() //nolint
+
 	parentProj, err := project.Load(context.Background(),
-		api.mustDB(), run.RootRun().HookEvent.ParentWorkflow.Key,
+		tx, run.RootRun().HookEvent.ParentWorkflow.Key,
 		project.LoadOptions.WithVariables,
 		project.LoadOptions.WithIntegrations,
 		project.LoadOptions.WithApplicationVariables,
 		project.LoadOptions.WithApplicationWithDeploymentStrategies,
 	)
 	if err != nil {
-		return nil, sdk.WrapError(err, "cannot load project")
+		return sdk.WrapError(err, "cannot load project")
 	}
 
 	parentWR, err := workflow.LoadRun(ctx,
-		api.mustDB(),
+		tx,
 		run.RootRun().HookEvent.ParentWorkflow.Key,
 		run.RootRun().HookEvent.ParentWorkflow.Name,
 		run.RootRun().HookEvent.ParentWorkflow.Run,
@@ -528,16 +532,22 @@ func (api *API) updateParentWorkflowRun(ctx context.Context, run *sdk.WorkflowRu
 			DisableDetailledNodeRun: false,
 		})
 	if err != nil {
-		return nil, sdk.WrapError(err, "unable to load parent run: %v", run.RootRun().HookEvent)
+		return sdk.WrapError(err, "unable to load parent run: %v", run.RootRun().HookEvent)
 	}
 
-	report, err := workflow.UpdateParentWorkflowRun(ctx, api.mustDB, api.Cache, run, *parentProj, parentWR)
+	report, err := workflow.UpdateParentWorkflowRun(ctx, tx, api.Cache, run, *parentProj, parentWR)
 	if err != nil {
-		return nil, sdk.WithStack(err)
+		return sdk.WithStack(err)
 	}
+
+	if err := tx.Commit(); err != nil {
+		return sdk.WithStack(err)
+	}
+
 	go api.WorkflowSendEvent(context.Background(), *parentProj, report)
 
-	return report, nil
+	// Recursively update the parent run
+	return api.updateParentWorkflowRun(ctx, parentWR)
 }
 
 func (api *API) getWorkflowNodeRunHistoryHandler() service.Handler {
@@ -1111,11 +1121,9 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 	// Update parent
 	for i := range report.WorkflowRuns() {
 		run := &report.WorkflowRuns()[i]
-		reportParent, err := api.updateParentWorkflowRun(ctx, run)
-		if err != nil {
+		if err := api.updateParentWorkflowRun(ctx, run); err != nil {
 			log.Error(ctx, "unable to update parent workflow run: %v", err)
 		}
-		go api.WorkflowSendEvent(context.Background(), *p, reportParent)
 	}
 }
 
