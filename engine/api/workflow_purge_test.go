@@ -251,7 +251,6 @@ func Test_Purge_DeleteArtifactsFromRepositoryManager(t *testing.T) {
 		nil)
 
 	mockArtifactory.EXPECT().SetProperties("repository-snapshot", "path/to/foo", gomock.Any(), gomock.Any()).Return(nil)
-	mockArtifactory.EXPECT().SetProperties("repository-release", "path/to/foo", gomock.Any(), gomock.Any()).Return(nil)
 
 	artifact_manager.DefaultClientFactory = func(_, _, _ string) (artifact_manager.ArtifactManager, error) {
 		return mockArtifactory, nil
