@@ -15,9 +15,18 @@ import (
 
 type ArtifactManager interface {
 	GetFileInfo(repoName string, filePath string) (sdk.FileInfo, error)
+	SetProperties(repoName string, filePath string, values ...sdk.KeyValues) error
 }
 
+type ClientFactoryFunc func(string, string, string) (ArtifactManager, error)
+
+var DefaultClientFactory ClientFactoryFunc = newClient
+
 func NewClient(managerType, url, token string) (ArtifactManager, error) {
+	return DefaultClientFactory(managerType, url, token)
+}
+
+func newClient(managerType, url, token string) (ArtifactManager, error) {
 	switch managerType {
 	case "artifactory":
 		return newArtifactoryClient(url, token)

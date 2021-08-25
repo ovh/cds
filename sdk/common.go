@@ -319,3 +319,8 @@ func JSONUnmarshal(btes []byte, i interface{}) error {
 	}
 	return nil
 }
+
+type KeyValues struct {
+	Key    string
+	Values []string
+}

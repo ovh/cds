@@ -2,11 +2,14 @@ package artifactory
 
 import (
 	"fmt"
+	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/jfrog/jfrog-client-go/artifactory"
 	"github.com/jfrog/jfrog-client-go/artifactory/services"
+
 	"github.com/ovh/cds/sdk"
 )
 
@@ -72,4 +75,26 @@ func (c *Client) GetFileInfo(repoName string, filePath string) (sdk.FileInfo, er
 		fi.Md5 = resp.Checksums.Md5
 	}
 	return fi, nil
+}
+
+func (c *Client) SetProperties(repoName string, filePath string, values ...sdk.KeyValues) error {
+	var properties string
+	for i, kv := range values {
+		if i > 0 {
+			properties += "|" // https://www.jfrog.com/confluence/display/JFROG/Artifactory+REST+API#ArtifactoryRESTAPI-SetItemProperties
+		}
+		properties += url.QueryEscape(kv.Key) + "=" + url.QueryEscape(strings.Join(kv.Values, ","))
+	}
+	fileInfoURL := fmt.Sprintf("%sapi/storage/%s/%s?properties=%s&recursive=1", c.Asm.GetConfig().GetServiceDetails().GetUrl(), repoName, filePath, properties)
+	httpDetails := c.Asm.GetConfig().GetServiceDetails().CreateHttpClientDetails()
+	re, _, err := c.Asm.Client().SendPut(fileInfoURL, nil, &httpDetails)
+	if err != nil {
+		return sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to call artifactory: %v", err)
+	}
+
+	if re.StatusCode >= 400 {
+		return sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to call artifactory [HTTP: %d] %s", re.StatusCode, fileInfoURL)
+	}
+
+	return nil
 }

@@ -241,6 +241,15 @@ func (config IntegrationConfig) Clone() IntegrationConfig {
 	return new
 }
 
+// Set value
+func (config IntegrationConfig) SetValue(name string, value string) {
+	val, ok := config[name]
+	if ok {
+		val.Value = value
+		config[name] = val
+	}
+}
+
 // Value returns driver.Value from IntegrationConfig.
 func (config IntegrationConfig) Value() (driver.Value, error) {
 	j, err := json.Marshal(config)
