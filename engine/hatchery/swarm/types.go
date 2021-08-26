@@ -61,7 +61,7 @@ type DockerEngineConfiguration struct {
 }
 
 type RegistryCredential struct {
-	Domain   string `mapstructure:"domain" commented:"true" toml:"domain" json:"-"`
+	Domain   string `mapstructure:"domain" default:"docker.io" commented:"true" toml:"domain" json:"-"`
 	Username string `mapstructure:"username" commented:"true" toml:"username" json:"-"`
 	Password string `mapstructure:"password" commented:"true" toml:"password" json:"-"`
 }
