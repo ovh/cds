@@ -84,6 +84,8 @@ func Do(input string, vars map[string]string) (string, error) {
 	var processedExpression = map[string]void{}
 	sm := interpolateRegex.FindAllStringSubmatch(input, -1)
 	if len(sm) > 0 {
+		var usedVariables = make(map[string]void, len(vars))
+		var usedHelpers = make(map[string]void, len(InterpolateHelperFuncs))
 		for i := 0; i < len(sm); i++ {
 			if len(sm[i]) > 0 {
 				var expression = strings.TrimSpace(sm[i][1])
@@ -92,8 +94,6 @@ func Do(input string, vars map[string]string) (string, error) {
 				}
 				processedExpression[expression] = void{}
 
-				var usedVariables = make(map[string]void, len(vars))
-				var usedHelpers = make(map[string]void, len(InterpolateHelperFuncs))
 				var quotedStuff = []string{}
 				var trimmedExpression = strings.TrimPrefix(expression, "{{")
 				trimmedExpression = strings.TrimSuffix(trimmedExpression, "}}")
@@ -125,11 +125,17 @@ func Do(input string, vars map[string]string) (string, error) {
 					}
 				}
 
+				var defaultIsUsed bool
+				if _, ok := usedHelpers["default"]; ok {
+					defaultIsUsed = true
+				}
+
 				unknownVariables := make([]string, 0, 1000)
 				for v := range usedVariables {
 					if _, is := flatData[v]; !is {
 						unknownVariables = append(unknownVariables, v)
 					}
+					delete(usedVariables, v)
 				}
 
 				unknownHelpers := make([]string, 0, 1000)
@@ -137,11 +143,7 @@ func Do(input string, vars map[string]string) (string, error) {
 					if _, is := InterpolateHelperFuncs[h]; !is {
 						unknownHelpers = append(unknownHelpers, h)
 					}
-				}
-
-				var defaultIsUsed bool
-				if _, ok := usedHelpers["default"]; ok {
-					defaultIsUsed = true
+					delete(usedHelpers, h)
 				}
 
 				if !defaultIsUsed && (len(unknownVariables) > 0 || len(unknownHelpers) > 0) {
