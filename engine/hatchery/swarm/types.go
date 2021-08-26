@@ -31,6 +31,8 @@ type HatcheryConfiguration struct {
 	NetworkEnableIPv6 bool `mapstructure:"networkEnableIPv6" toml:"networkEnableIPv6" default:"false" commented:"false" comment:"if true: hatchery creates private network between services with ipv6 enabled" json:"networkEnableIPv6"`
 
 	DockerEngines map[string]DockerEngineConfiguration `mapstructure:"dockerEngines" toml:"dockerEngines" comment:"List of Docker Engines" json:"dockerEngines,omitempty"`
+
+	RegistryCredentials []RegistryCredential `mapstructure:"registryCredentials" toml:"registryCredentials" commented:"true" comment:"List of Docker registry credentials" json:"-"`
 }
 
 // HatcherySwarm is a hatchery which can be connected to a remote to a docker remote api
@@ -56,4 +58,10 @@ type DockerEngineConfiguration struct {
 	TLSKEYPEM             string `mapstructure:"TLSKEYPEM" toml:"TLSKEYPEM" comment:"content of your key.pem" json:"-"`
 	APIVersion            string `mapstructure:"APIVersion" toml:"APIVersion" comment:"DOCKER_API_VERSION" json:"APIVersion"` // DOCKER_API_VERSION
 	MaxContainers         int    `mapstructure:"maxContainers" toml:"maxContainers" default:"10" commented:"false" comment:"Max Containers on Host managed by this Hatchery" json:"maxContainers"`
+}
+
+type RegistryCredential struct {
+	Domain   string `mapstructure:"domain" commented:"true" toml:"domain" json:"-"`
+	Username string `mapstructure:"username" commented:"true" toml:"username" json:"-"`
+	Password string `mapstructure:"password" commented:"true" toml:"password" json:"-"`
 }

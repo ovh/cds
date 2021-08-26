@@ -123,6 +123,9 @@ func configBootstrap(args []string) Configuration {
 			}
 			conf.Hatchery.Swarm.Name = "cds-hatchery-swarm-" + namesgenerator.GetRandomNameCDS(0)
 			conf.Hatchery.Swarm.HTTP.Port = 8086
+			conf.Hatchery.Swarm.RegistryCredentials = []swarm.RegistryCredential{{
+				Domain: "docker.io",
+			}}
 		case sdk.TypeHatchery + ":vsphere":
 			conf.Hatchery.VSphere = &vsphere.HatcheryConfiguration{}
 			defaults.SetDefaults(conf.Hatchery.VSphere)
