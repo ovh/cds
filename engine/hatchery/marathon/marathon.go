@@ -320,6 +320,10 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 		Labels:    &h.marathonLabels,
 	}
 
+	if h.Config.MarathonApplicationURIs != nil && len(h.Config.MarathonApplicationURIs) > 0 {
+		application.Uris = &h.Config.MarathonApplicationURIs
+	}
+
 	_, next := telemetry.Span(ctx, "marathonClient.CreateApplication")
 	if _, err := h.marathonClient.CreateApplication(application); err != nil {
 		next()

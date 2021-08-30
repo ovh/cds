@@ -37,6 +37,9 @@ type HatcheryConfiguration struct {
 
 	// WorkerSpawnTimeout Worker Timeout Spawning (seconds)
 	WorkerSpawnTimeout int `mapstructure:"workerSpawnTimeout" toml:"workerSpawnTimeout" default:"120" commented:"false" comment:"Worker Timeout Spawning (seconds)" json:"workerSpawnTimeout"`
+
+	// MarathonApplicationURIs will set "uris" value for each Application
+	MarathonApplicationURIs []string `mapstructure:"applicationURIs" toml:"applicationURIs" commented:"true" comment:"Use this option if you want to add uris on workers spawned by this hatchery." json:"-"`
 }
 
 // HatcheryMarathon implements HatcheryMode interface for mesos mode
