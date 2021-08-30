@@ -335,14 +335,14 @@ func (c *vcsClient) Tags(ctx context.Context, fullname string) ([]sdk.VCSTag, er
 	return tags, nil
 }
 
-func (c *vcsClient) Branches(ctx context.Context, fullname string) ([]sdk.VCSBranch, error) {
+func (c *vcsClient) Branches(ctx context.Context, fullname string, filters sdk.VCSBranchesFilter) ([]sdk.VCSBranch, error) {
 	items, has := c.Cache().Get("/branches/" + fullname)
 	if has {
 		return items.([]sdk.VCSBranch), nil
 	}
 
 	branches := []sdk.VCSBranch{}
-	path := fmt.Sprintf("/vcs/%s/repos/%s/branches", c.name, fullname)
+	path := fmt.Sprintf("/vcs/%s/repos/%s/branches?limit=%d", c.name, fullname, filters.Limit)
 	if _, err := c.doJSONRequest(ctx, "GET", path, nil, &branches); err != nil {
 		return nil, sdk.NewErrorFrom(err, "unable to find branches on repository %s from %s", fullname, c.name)
 	}
@@ -352,27 +352,22 @@ func (c *vcsClient) Branches(ctx context.Context, fullname string) ([]sdk.VCSBra
 	return branches, nil
 }
 
-func (c *vcsClient) Branch(ctx context.Context, fullname string, branchName string) (*sdk.VCSBranch, error) {
+func (c *vcsClient) Branch(ctx context.Context, fullname string, filters sdk.VCSBranchFilters) (*sdk.VCSBranch, error) {
 	branch := sdk.VCSBranch{}
-	path := fmt.Sprintf("/vcs/%s/repos/%s/branches/?branch=%s", c.name, fullname, url.QueryEscape(branchName))
+	path := fmt.Sprintf("/vcs/%s/repos/%s/branches/?branch=%s&default=%v", c.name, fullname, url.QueryEscape(filters.BranchName), filters.Default)
 	if _, err := c.doJSONRequest(ctx, "GET", path, nil, &branch); err != nil {
-		return nil, sdk.WrapError(err, "unable to find branch %s on repository %s from %s", branchName, fullname, c.name)
+		return nil, sdk.WrapError(err, "unable to find branch %s/%v on repository %s from %s", filters.BranchName, filters.Default, fullname, c.name)
 	}
 	return &branch, nil
 }
 
 // DefaultBranch get default branch from given repository
 func DefaultBranch(ctx context.Context, c sdk.VCSAuthorizedClientCommon, fullname string) (sdk.VCSBranch, error) {
-	branches, err := c.Branches(ctx, fullname)
+	branch, err := c.Branch(ctx, fullname, sdk.VCSBranchFilters{Default: true})
 	if err != nil {
 		return sdk.VCSBranch{}, err
 	}
-	for _, b := range branches {
-		if b.Default {
-			return b, nil
-		}
-	}
-	return sdk.VCSBranch{}, sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find default branch on repository %s (among %d branches)", fullname, len(branches))
+	return *branch, nil
 }
 
 func (c *vcsClient) Commits(ctx context.Context, fullname, branch, since, until string) ([]sdk.VCSCommit, error) {

@@ -7,7 +7,7 @@ import (
 )
 
 //Branches retrieves the branches
-func (c *gitlabClient) Branches(ctx context.Context, fullname string) ([]sdk.VCSBranch, error) {
+func (c *gitlabClient) Branches(ctx context.Context, fullname string, _ sdk.VCSBranchesFilter) ([]sdk.VCSBranch, error) {
 	p, _, err := c.client.Projects.GetProject(fullname, nil)
 	if err != nil {
 		return nil, err
@@ -33,9 +33,8 @@ func (c *gitlabClient) Branches(ctx context.Context, fullname string) ([]sdk.VCS
 }
 
 //Branch retrieves the branch
-func (c *gitlabClient) Branch(ctx context.Context, fullname, branchName string) (*sdk.VCSBranch, error) {
-
-	b, g, err := c.client.Branches.GetBranch(fullname, branchName)
+func (c *gitlabClient) Branch(ctx context.Context, fullname string, filters sdk.VCSBranchFilters) (*sdk.VCSBranch, error) {
+	b, g, err := c.client.Branches.GetBranch(fullname, filters.BranchName)
 	if err != nil {
 		if g != nil && g.StatusCode == 404 {
 			return nil, sdk.WithStack(sdk.ErrNoBranch)

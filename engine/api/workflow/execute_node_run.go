@@ -1154,7 +1154,7 @@ func getVCSInfos(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cac
 		vcsInfos.Hash = defaultB.LatestCommit
 	case vcsInfos.Hash == "" && vcsInfos.Branch != "":
 		// GET COMMIT INFO
-		branch, errB := client.Branch(ctx, vcsInfos.Repository, vcsInfos.Branch)
+		branch, errB := client.Branch(ctx, vcsInfos.Repository, sdk.VCSBranchFilters{BranchName: vcsInfos.Branch})
 		if errB != nil {
 			// Try default branch
 			b, errD := repositoriesmanager.DefaultBranch(ctx, client, vcsInfos.Repository)

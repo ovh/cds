@@ -68,16 +68,11 @@ func (api *API) postImportAsCodeHandler() service.Handler {
 				sdk.NewErrorFrom(sdk.ErrNoReposManagerClientAuth, "cannot get client for %s %s", key, ope.VCSServer))
 		}
 
-		branches, err := client.Branches(ctx, ope.RepoFullName)
+		branch, err := repositoriesmanager.DefaultBranch(ctx, client, ope.RepoFullName)
 		if err != nil {
 			return err
 		}
-		for _, b := range branches {
-			if b.Default {
-				ope.Setup.Checkout.Branch = b.DisplayID
-				break
-			}
-		}
+		ope.Setup.Checkout.Branch = branch.DisplayID
 
 		if err := operation.PostRepositoryOperation(ctx, tx, *p, ope, nil); err != nil {
 			return sdk.WrapError(err, "cannot create repository operation")

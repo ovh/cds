@@ -11,7 +11,7 @@ import (
 )
 
 // Branches returns list of branches for a repo
-func (client *bitbucketcloudClient) Branches(ctx context.Context, fullname string) ([]sdk.VCSBranch, error) {
+func (client *bitbucketcloudClient) Branches(ctx context.Context, fullname string, filters sdk.VCSBranchesFilter) ([]sdk.VCSBranch, error) {
 	repo, err := client.repoByFullname(ctx, fullname)
 	if err != nil {
 		return nil, sdk.WrapError(err, "cannot get repo by fullname")
@@ -25,6 +25,10 @@ func (client *bitbucketcloudClient) Branches(ctx context.Context, fullname strin
 	nextPage := 1
 	for {
 		if ctx.Err() != nil {
+			break
+		}
+
+		if filters.Limit != 0 && len(branches) >= int(filters.Limit) {
 			break
 		}
 
@@ -67,13 +71,13 @@ func (client *bitbucketcloudClient) Branches(ctx context.Context, fullname strin
 }
 
 // Branch returns only detail of a branch
-func (client *bitbucketcloudClient) Branch(ctx context.Context, fullname, theBranch string) (*sdk.VCSBranch, error) {
+func (client *bitbucketcloudClient) Branch(ctx context.Context, fullname string, filters sdk.VCSBranchFilters) (*sdk.VCSBranch, error) {
 	repo, err := client.repoByFullname(ctx, fullname)
 	if err != nil {
 		return nil, err
 	}
 
-	url := fmt.Sprintf("/repositories/%s/refs/branches/%s", fullname, theBranch)
+	url := fmt.Sprintf("/repositories/%s/refs/branches/%s", fullname, filters.BranchName)
 	status, body, _, err := client.get(url)
 	if err != nil {
 		return nil, err
@@ -92,7 +96,7 @@ func (client *bitbucketcloudClient) Branch(ctx context.Context, fullname, theBra
 	}
 
 	if branch.Name == "" {
-		return nil, fmt.Errorf("bitbucketcloudClient.Branch > Cannot find branch %s", theBranch)
+		return nil, fmt.Errorf("bitbucketcloudClient.Branch > Cannot find branch %s", filters.BranchName)
 	}
 
 	branchResult := &sdk.VCSBranch{

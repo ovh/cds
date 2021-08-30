@@ -234,7 +234,7 @@ func (api *API) getApplicationVCSInfosHandler() service.Handler {
 		if remote != "" && remote != app.RepositoryFullname {
 			repositoryFullname = remote
 		}
-		branches, err := client.Branches(ctx, repositoryFullname)
+		branches, err := client.Branches(ctx, repositoryFullname, sdk.VCSBranchesFilter{Limit: 50})
 		if err != nil {
 			return err
 		}
@@ -481,7 +481,7 @@ func (api *API) updateAsCodeApplicationHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "updateAsCodeApplicationHandler> Cannot get client got %s %s : %v", key, appDB.VCSServer, err)
 		}
 
-		b, err := client.Branch(ctx, appDB.RepositoryFullname, branch)
+		b, err := client.Branch(ctx, appDB.RepositoryFullname, sdk.VCSBranchFilters{BranchName: branch})
 		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return err
 		}

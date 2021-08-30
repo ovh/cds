@@ -98,7 +98,7 @@ func ApplyRetentionPolicyOnWorkflow(ctx context.Context, store cache.Store, db *
 
 	branchesMap := make(map[string]struct{})
 	if vcsClient != nil {
-		branches, err := vcsClient.Branches(ctx, app.RepositoryFullname)
+		branches, err := vcsClient.Branches(ctx, app.RepositoryFullname, sdk.VCSBranchesFilter{})
 		if err != nil {
 			return err
 		}

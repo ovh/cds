@@ -288,6 +288,16 @@ func (s *Service) getBranchesHandler() service.Handler {
 		name := muxVar(r, "name")
 		owner := muxVar(r, "owner")
 		repo := muxVar(r, "repo")
+		limitS := r.URL.Query().Get("limit")
+
+		var limit int64
+		if limitS != "" {
+			l, err := strconv.Atoi(limitS)
+			if err != nil {
+				return sdk.NewErrorFrom(sdk.ErrInvalidData, "limit must be an integer")
+			}
+			limit = int64(l)
+		}
 
 		accessToken, accessTokenSecret, created, ok := getAccessTokens(ctx)
 		if !ok {
@@ -309,7 +319,7 @@ func (s *Service) getBranchesHandler() service.Handler {
 			w.Header().Set(sdk.HeaderXAccessToken, client.GetAccessToken(ctx))
 		}
 
-		branches, err := client.Branches(ctx, fmt.Sprintf("%s/%s", owner, repo))
+		branches, err := client.Branches(ctx, fmt.Sprintf("%s/%s", owner, repo), sdk.VCSBranchesFilter{Limit: limit})
 		if err != nil {
 			var debugat, debugas string
 			if len(accessToken) > 4 {
@@ -331,6 +341,12 @@ func (s *Service) getBranchHandler() service.Handler {
 		owner := muxVar(r, "owner")
 		repo := muxVar(r, "repo")
 		branch := r.URL.Query().Get("branch")
+		defaultBranchS := r.URL.Query().Get("default")
+
+		var defaultBranch bool
+		if defaultBranchS == "true" {
+			defaultBranch = true
+		}
 
 		accessToken, accessTokenSecret, created, ok := getAccessTokens(ctx)
 		if !ok {
@@ -351,7 +367,7 @@ func (s *Service) getBranchHandler() service.Handler {
 			w.Header().Set(sdk.HeaderXAccessToken, client.GetAccessToken(ctx))
 		}
 
-		ghBranch, err := client.Branch(ctx, fmt.Sprintf("%s/%s", owner, repo), branch)
+		ghBranch, err := client.Branch(ctx, fmt.Sprintf("%s/%s", owner, repo), sdk.VCSBranchFilters{BranchName: branch, Default: defaultBranch})
 		if err != nil {
 			return sdk.WrapError(err, "Unable to get repo %s/%s branch %s", owner, repo, branch)
 		}
