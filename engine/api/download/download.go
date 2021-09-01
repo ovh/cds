@@ -13,6 +13,7 @@ import (
 	"github.com/mholt/archiver"
 	"github.com/rockbears/log"
 
+	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -29,9 +30,7 @@ type Conf struct {
 func Init(ctx context.Context, conf Conf) error {
 	// Checking downloadable binaries
 	sdk.InitSupportedOSArch(conf.SupportedOSArch)
-	if err := CheckBinary(ctx, conf, "worker", sdk.GOOS, sdk.GOARCH, ""); err != nil {
-		return err
-	}
+	ensureWorkerBinary(ctx, conf)
 	resources := sdk.AllDownloadableResourcesWithAvailability(conf.Directory)
 	var hasWorker, hasCtl, hasEngine bool
 	for _, r := range resources {
@@ -56,6 +55,39 @@ func Init(ctx context.Context, conf Conf) error {
 		// If no worker, let's exit because CDS for run anything
 		log.Error(ctx, "worker is unavailable for download. Please check your configuration file or the %s directory", conf.Directory)
 		return errors.New("worker binary unavailable")
+	}
+	return nil
+}
+
+func ensureWorkerBinary(ctx context.Context, conf Conf) error {
+	if !conf.DownloadFromGitHub {
+		if err := CheckBinary(ctx, conf, "worker", sdk.GOOS, sdk.GOARCH, ""); err != nil {
+			return err
+		}
+	}
+
+	// conf.DownloadFromGitHub true
+	// if worker not here, we ask user to download it from GitHub
+	filename := sdk.BinaryFilename("worker", sdk.GOOS, sdk.GOARCH, "")
+	if sdk.IsDownloadedBinary(conf.Directory, filename) {
+		return nil
+	}
+
+	ask := fmt.Sprintf("Worker binary %q does not exist into %v\nWhat do you want to do?", filename, conf.Directory)
+
+	answerDoNothing := "Do nothing - exit now"
+	answerDownload := "Download from GitHub"
+	opts := []string{answerDoNothing, answerDownload}
+
+	selected := cli.AskChoice(ask, opts...)
+
+	switch opts[selected] {
+	case answerDoNothing:
+		return nil
+	case answerDownload:
+		if err := CheckBinary(ctx, conf, "worker", sdk.GOOS, sdk.GOARCH, ""); err != nil {
+			return err
+		}
 	}
 	return nil
 }

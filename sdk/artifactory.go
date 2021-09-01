@@ -53,7 +53,7 @@ func NewArtifactoryClient(url string, token string) (artifactory.ArtifactoryServ
 		SetDryRun(false).
 		Build()
 	if err != nil {
-		return nil, fmt.Errorf("unable to create service config: %v", err)
+		return nil, WrapError(err, "unable to create service config")
 	}
 	asm, err := artifactory.New(serviceConfig)
 	if err != nil {
