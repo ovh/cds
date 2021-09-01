@@ -100,7 +100,7 @@ func GetBinaryFromArtifactory(conf Conf, filename string) error {
 	jlog.SetLogger(jlog.NewLogger(jlog.ERROR, os.Stdout))
 	artiClient, err := sdk.NewArtifactoryClient(conf.ArtifactoryURL, conf.ArtifactoryToken)
 	if err != nil {
-		return fmt.Errorf("unable to create artifactory client: %v", err)
+		return sdk.WrapError(err, "unable to create artifactory client")
 	}
 
 	params := services.NewDownloadParams()
