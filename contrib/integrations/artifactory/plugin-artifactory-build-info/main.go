@@ -80,7 +80,7 @@ func (e *artifactoryBuildInfoPlugin) Run(_ context.Context, opts *integrationplu
 	if err != nil {
 		return fail("unable to create artifactory client: %v", err)
 	}
-	log.SetLogger(log.NewLogger(log.INFO, os.Stdout))
+	log.SetLogger(log.NewLogger(log.ERROR, os.Stdout))
 
 	buildInfoName := fmt.Sprintf("%s/%s/%s", buildInfo, projectKey, workflowName)
 
