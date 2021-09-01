@@ -3,6 +3,5 @@ export class DownloadableResource {
     os: string;
     arch: string;
     filename: string;
-    available: boolean;
     variant: string;
 }

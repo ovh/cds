@@ -62,7 +62,7 @@ func CreateDistributionClient(url, token string) (*distribution.DistributionServ
 
 func CreateArtifactoryClient(url, token string) (artifactory.ArtifactoryServicesManager, error) {
 	rtDetails := auth.NewArtifactoryDetails()
-	rtDetails.SetUrl(url)
+	rtDetails.SetUrl(strings.TrimSuffix(url, "/") + "/") // ensure having '/' at the end
 	rtDetails.SetAccessToken(token)
 	serviceConfig, err := config.NewConfigBuilder().
 		SetServiceDetails(rtDetails).

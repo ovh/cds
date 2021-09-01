@@ -161,7 +161,6 @@ type EventsClient interface {
 type DownloadClient interface {
 	Download() ([]sdk.DownloadableResource, error)
 	DownloadURLFromAPI(name, os, arch, variant string) string
-	DownloadURLFromGithub(filename string) (string, error)
 }
 
 // ActionClient exposes actions related functions

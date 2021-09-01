@@ -244,8 +244,6 @@ func main() {
 	if err := actionplugin.Start(context.Background(), &actPlugin); err != nil {
 		panic(err)
 	}
-	return
-
 }
 
 func tmplApplicationConfigFile(q *actionplugin.ActionQuery, filepath string) (string, error) {

@@ -119,8 +119,6 @@ func main() {
 	if err := integrationplugin.Start(context.Background(), &e); err != nil {
 		panic(err)
 	}
-	return
-
 }
 
 func fail(format string, args ...interface{}) (*integrationplugin.RunResult, error) {

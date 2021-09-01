@@ -41,7 +41,7 @@ This command exit 0 if current binary is uptodate.
 
 		var versionTxt string
 		if flagUpToDateFromGithub {
-			urlVersionFile, errGH := client.DownloadURLFromGithub("VERSION")
+			urlVersionFile, errGH := sdk.DownloadURLFromGithub("VERSION", "latest")
 			if errGH != nil {
 				sdk.Exit("Error while getting URL from Github url:%s err:%s\n", urlVersionFile, errGH)
 			}
@@ -58,7 +58,7 @@ This command exit 0 if current binary is uptodate.
 		} else {
 			remoteVersion, errv := client.MonVersion()
 			if errv != nil {
-				sdk.Exit("Error while getting version from GithubAPI err:%s\n", errv)
+				sdk.Exit("Error while getting version from GitHub API err:%s\n", errv)
 			}
 			versionTxt = remoteVersion.Version
 		}
