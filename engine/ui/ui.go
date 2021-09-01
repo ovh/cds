@@ -336,20 +336,20 @@ func (s *Service) downloadStaticFilesFromGitHub(ctx context.Context, version str
 	if _, err := os.Stat(s.Cfg.Staticdir); os.IsNotExist(err) {
 		log.Info(ctx, "ui> creating directory %s", s.Cfg.Staticdir)
 		if err := os.Mkdir(s.Cfg.Staticdir, 0740); err != nil {
-			return fmt.Errorf("error while creating directory: %v", err)
+			return sdk.WrapError(err, "error while creating directory: %v", s.Cfg.Staticdir)
 		}
 	}
 
 	urlFiles, err := sdk.DownloadURLFromGithub("ui.tar.gz", version)
 	if err != nil {
-		return fmt.Errorf("error while getting ui.tar.gz from GitHub err:%s", err)
+		return sdk.WrapError(err, "error while getting ui.tar.gz from GitHub")
 	}
 
 	log.Info(ctx, "ui> Downloading from %s...", urlFiles)
 
 	resp, err := http.Get(urlFiles)
 	if err != nil {
-		return fmt.Errorf("error while getting ui.tar.gz from GitHub: %v", err)
+		return sdk.WrapError(err, "error while getting ui.tar.gz from GitHub")
 	}
 	defer resp.Body.Close()
 

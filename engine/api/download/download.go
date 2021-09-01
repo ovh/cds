@@ -11,7 +11,6 @@ import (
 	"github.com/jfrog/jfrog-client-go/artifactory/services"
 	jlog "github.com/jfrog/jfrog-client-go/utils/log"
 	"github.com/mholt/archiver"
-	art "github.com/ovh/cds/contrib/integrations/artifactory"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/sdk"
@@ -99,13 +98,14 @@ func CheckBinary(ctx context.Context, conf Conf, name, os, arch, variant string)
 
 func GetBinaryFromArtifactory(conf Conf, filename string) error {
 	jlog.SetLogger(jlog.NewLogger(jlog.ERROR, os.Stdout))
-	artiClient, err := art.CreateArtifactoryClient(conf.ArtifactoryURL, conf.ArtifactoryToken)
+	artiClient, err := sdk.NewArtifactoryClient(conf.ArtifactoryURL, conf.ArtifactoryToken)
 	if err != nil {
 		return fmt.Errorf("unable to create artifactory client: %v", err)
 	}
 
 	params := services.NewDownloadParams()
-	params.Pattern = fmt.Sprintf("%s/%s/%s/%s", conf.ArtifactoryRepository, conf.ArtifactoryPath, sdk.CDSVERSION, filename)
+	params.Pattern = fmt.Sprintf("%s/%s/%s/%s", conf.ArtifactoryRepository, conf.ArtifactoryPath, sdk.VERSION, filename)
+	// target must have a '/' at the end. We ensure to have this '/' (and only one)
 	params.Target = strings.TrimSuffix(conf.Directory, "/") + "/"
 	params.Flat = true
 	params.Retries = 5

@@ -9,9 +9,6 @@ var (
 	//VERSION is set with -ldflags "-X github.com/ovh/cds/sdk.VERSION=$(VERSION)"
 	VERSION = "snapshot"
 
-	//CDSVERSION is set with -ldflags "-X github.com/ovh/cds/sdk.CDSVERSION=$(CDSVERSION)"
-	CDSVERSION = "snapshot"
-
 	//GOOS is set with -ldflags "-X github.com/ovh/cds/sdk.GOOS=$(GOOS)"
 	GOOS = ""
 

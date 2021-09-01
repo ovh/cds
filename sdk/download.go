@@ -3,6 +3,7 @@ package sdk
 import (
 	"context"
 	json "encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -242,7 +243,7 @@ func DownloadURLFromGithub(filename string, version string) (string, error) {
 	text := fmt.Sprintf("Invalid Artifacts on latest release (%s). Please try again in few minutes.\n", filename)
 	text += fmt.Sprintf("If the problem persists, please open an issue on %s\n", URLGithubIssues)
 	text += fmt.Sprintf("You can manually download binary from latest release: %s\n", URLGithubReleases)
-	return "", fmt.Errorf(text)
+	return "", errors.New(text)
 }
 
 // code below is from https://github.com/google/go-github/tree/master/github
