@@ -82,7 +82,7 @@ type Configuration struct {
 		SupportedOSArch    string `toml:"supportedOSArch" default:"" json:"supportedOSArch" commented:"true" comment="example: darwin/amd64,darwin/arm64,linux/amd64,windows/amd64"`
 		DownloadFromGitHub bool   `toml:"downloadFromGitHub" default:"true" json:"downloadFromGitHub" comment:"allow downloading binaries from GitHub"`
 		Artifactory        struct {
-			URL        string `toml:"url" default:"https://your-artifactory" json:"url" comment:"URL of your artifactory"`
+			URL        string `toml:"url" default:"https://your-artifactory/artifactory" json:"url" comment:"URL of your artifactory"`
 			Path       string `toml:"path" default:"artifactory path" json:"path" comment:"example: CDS/w-cds. This path must contains directory named as '0.49.0-32-gadf433b.16303' and this directory must contains cds binaries"`
 			Repository string `toml:"repository" default:"artifactory repository" json:"repository" comment:"artifactory repository"`
 			Token      string `toml:"token" default:"artifactory token" json:"-" comment:"token used to get binaries"`
