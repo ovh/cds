@@ -23,7 +23,7 @@ var (
 	Client                                cdsclient.HTTPClient
 	defaultMaxProvisioning                = 10
 	models                                []sdk.Model
-	DefaultMaxAttemptsNumberBeforeFailure = 5
+	defaultMaxAttemptsNumberBeforeFailure = 5
 	CacheSpawnIDsTTL                      = 10 * time.Second
 	CacheNbAttemptsIDsTTL                 = 1 * time.Hour
 )
@@ -298,7 +298,7 @@ func Create(ctx context.Context, h Interface) error {
 				if maxAttemptsNumberBeforeFailure > -1 {
 					nbAttempts := cacheNbAttemptsIDs.NewAttempt(j.ID)
 					if maxAttemptsNumberBeforeFailure == 0 {
-						maxAttemptsNumberBeforeFailure = DefaultMaxAttemptsNumberBeforeFailure
+						maxAttemptsNumberBeforeFailure = defaultMaxAttemptsNumberBeforeFailure
 					}
 					if nbAttempts > maxAttemptsNumberBeforeFailure {
 						if err := h.CDSClient().

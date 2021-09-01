@@ -205,7 +205,7 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 			ID:   sdk.MsgSpawnInfoHatcheryErrorSpawn.ID,
 			Args: []interface{}{h.Service().Name, modelName, sdk.Round(time.Since(start), time.Second).String(), sdk.ExtractHTTPError(errSpawn).Error()},
 		})
-		log.ErrorWithStackTrace(ctx, sdk.WrapError(errSpawn, "hatchery %s cannot spawn worker %s for job %d: %v", h.Service().Name, modelName, j.id))
+		log.ErrorWithStackTrace(ctx, sdk.WrapError(errSpawn, "hatchery %s cannot spawn worker %s for job %d", h.Service().Name, modelName, j.id))
 		next()
 		return false
 	}
