@@ -7,7 +7,7 @@ import (
 
 func TestInitSupportedOSArch(t *testing.T) {
 	type args struct {
-		supportedOSArchConf string
+		supportedOSArchConf []string
 	}
 	tests := []struct {
 		name    string
@@ -17,26 +17,20 @@ func TestInitSupportedOSArch(t *testing.T) {
 	}{
 		{
 			name:    "with wrong value",
-			args:    args{supportedOSArchConf: "foo/bar"},
+			args:    args{supportedOSArchConf: []string{"foo/bar"}},
 			wantErr: true,
 		},
 		{
 			name:    "with empty value",
-			args:    args{supportedOSArchConf: ""},
+			args:    args{supportedOSArchConf: []string{}},
 			wantErr: false,
 			want:    []string{"darwin/amd64", "darwin/arm64", "linux/amd64", "linux/ppc64le"}, // and more
 		},
 		{
 			name:    "with good value",
-			args:    args{supportedOSArchConf: "darwin/amd64,darwin/arm64,linux/amd64"},
+			args:    args{supportedOSArchConf: []string{"darwin/amd64", "darwin/arm64", "linux/amd64"}},
 			wantErr: false,
 			want:    []string{"darwin/amd64", "darwin/arm64", "linux/amd64"},
-		},
-		{
-			name:    "with good value including space",
-			args:    args{supportedOSArchConf: " darwin/amd64, darwin/arm64, linux/amd64,windows/amd64"},
-			wantErr: false,
-			want:    []string{"darwin/amd64", "darwin/arm64", "linux/amd64", "windows/amd64"},
 		},
 	}
 	for _, tt := range tests {

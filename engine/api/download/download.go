@@ -24,7 +24,7 @@ type Conf struct {
 	ArtifactoryPath       string
 	ArtifactoryRepository string
 	ArtifactoryToken      string
-	SupportedOSArch       string
+	SupportedOSArch       []string
 }
 
 func Init(ctx context.Context, conf Conf) error {

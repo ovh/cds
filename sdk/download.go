@@ -39,8 +39,8 @@ var (
 	cdsctlVariant   = []string{"nokeychain"}
 )
 
-func InitSupportedOSArch(supportedOSArchConf string) error {
-	if supportedOSArchConf == "" {
+func InitSupportedOSArch(supportedOSArchConf []string) error {
+	if len(supportedOSArchConf) == 0 {
 		// if the supportedOSArchConf is empty, we init it with the full list
 		for _, os := range supportedOS {
 			for _, arch := range supportedARCH {
@@ -51,7 +51,7 @@ func InitSupportedOSArch(supportedOSArchConf string) error {
 	}
 
 	// example of supportedOSArchConf: darwin/amd64,darwin/arm64,linux/amd64,windows/amd64
-	for _, v := range strings.Split(strings.ReplaceAll(supportedOSArchConf, " ", ""), ",") {
+	for _, v := range supportedOSArchConf {
 		t := strings.Split(v, "/")
 		if len(t) != 2 {
 			return fmt.Errorf("invalid value %q in supportedOSArch configuration", v)
