@@ -20,12 +20,12 @@ import (
 
 var (
 	// Client is a CDS Client
-	Client                         cdsclient.HTTPClient
-	defaultMaxProvisioning         = 10
-	models                         []sdk.Model
-	MaxAttemptsNumberBeforeFailure = 5
-	CacheSpawnIDsTTL               = 10 * time.Second
-	CacheNbAttemptsIDsTTL          = 1 * time.Hour
+	Client                                cdsclient.HTTPClient
+	defaultMaxProvisioning                = 10
+	models                                []sdk.Model
+	DefaultMaxAttemptsNumberBeforeFailure = 5
+	CacheSpawnIDsTTL                      = 10 * time.Second
+	CacheNbAttemptsIDsTTL                 = 1 * time.Hour
 )
 
 type CacheNbAttemptsJobIDs struct {
@@ -87,7 +87,7 @@ func Create(ctx context.Context, h Interface) error {
 	// Create a cache to keep in memory the jobID processed in the last 10s.
 	cacheSpawnIDs := cache.New(CacheSpawnIDsTTL, 2*CacheSpawnIDsTTL)
 
-	// Create a cache to only process each jobID only a number of attenmpts before force to fail the job
+	// Create a cache to only process each jobID only a number of attempts before force to fail the job
 	cacheNbAttemptsIDs := &CacheNbAttemptsJobIDs{
 		cache: cache.New(CacheNbAttemptsIDsTTL, 2*CacheNbAttemptsIDsTTL),
 	}
@@ -226,26 +226,6 @@ func Create(ctx context.Context, h Interface) error {
 					continue
 				}
 
-				//Check if we already try to start a worker for this job
-				nbAttempts := cacheNbAttemptsIDs.NewAttempt(j.ID)
-				if nbAttempts > MaxAttemptsNumberBeforeFailure {
-					if err := h.CDSClient().
-						QueueSendResult(ctx,
-							j.ID,
-							sdk.Result{
-								ID:         j.ID,
-								BuildID:    j.ID,
-								Status:     sdk.StatusFail,
-								RemoteTime: time.Now(),
-								Reason:     fmt.Sprintf("hatchery %q failed to start worker after %d attempts", h.Configuration().Name, MaxAttemptsNumberBeforeFailure),
-							}); err != nil {
-						log.ErrorWithStackTrace(ctx, err)
-					}
-					log.Info(ctx, "hatchery %q failed to start worker after %d attempts", h.Configuration().Name, MaxAttemptsNumberBeforeFailure)
-					endTrace("maximum attempts")
-					continue
-				}
-
 				workerRequest := workerStarterRequest{
 					ctx:               currentCtx,
 					cancel:            endTrace,
@@ -309,6 +289,32 @@ func Create(ctx context.Context, h Interface) error {
 					// Interpolate model secrets
 					if err := ModelInterpolateSecrets(hWithModels, chosenModel); err != nil {
 						log.Error(ctx, "%v", err)
+						continue
+					}
+				}
+
+				// Check if we already try to start a worker for this job
+				maxAttemptsNumberBeforeFailure := h.Configuration().Provision.MaxAttemptsNumberBeforeFailure
+				if maxAttemptsNumberBeforeFailure > -1 {
+					nbAttempts := cacheNbAttemptsIDs.NewAttempt(j.ID)
+					if maxAttemptsNumberBeforeFailure == 0 {
+						maxAttemptsNumberBeforeFailure = DefaultMaxAttemptsNumberBeforeFailure
+					}
+					if nbAttempts > maxAttemptsNumberBeforeFailure {
+						if err := h.CDSClient().
+							QueueSendResult(ctx,
+								j.ID,
+								sdk.Result{
+									ID:         j.ID,
+									BuildID:    j.ID,
+									Status:     sdk.StatusFail,
+									RemoteTime: time.Now(),
+									Reason:     fmt.Sprintf("hatchery %q failed to start worker after %d attempts", h.Configuration().Name, maxAttemptsNumberBeforeFailure),
+								}); err != nil {
+							log.ErrorWithStackTrace(ctx, err)
+						}
+						log.Info(ctx, "hatchery %q failed to start worker after %d attempts", h.Configuration().Name, maxAttemptsNumberBeforeFailure)
+						endTrace("maximum attempts")
 						continue
 					}
 				}
