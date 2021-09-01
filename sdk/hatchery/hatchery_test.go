@@ -40,8 +40,8 @@ func TestCreate(t *testing.T) {
 	}
 	hatcheryConfig.Provision.MaxWorker = 1
 
-	hatchery.CacheSpawnIDsTTL = 2 * time.Second // decrease this cache TTL to speedup the test
-	hatchery.MaxAttemptsNumberBeforeFailure = 2 // decrease this value to speedup the test
+	hatchery.CacheSpawnIDsTTL = 2 * time.Second                 // decrease this cache TTL to speedup the test
+	hatcheryConfig.Provision.MaxAttemptsNumberBeforeFailure = 2 // decrease this value to speedup the test
 
 	mockHatchery.EXPECT().Name().Return(t.Name()).AnyTimes()
 	mockHatchery.EXPECT().Type().Return(sdk.TypeHatchery).AnyTimes()

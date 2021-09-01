@@ -67,6 +67,7 @@ type HatcheryCommonConfiguration struct {
 				ExtraValue string `toml:"extraValue" comment:"value for extraKey field. For many keys: valueaaa,valuebbb" json:"-"`
 			} `toml:"graylog" json:"graylog"`
 		} `toml:"workerLogsOptions" comment:"Worker Log Configuration" json:"workerLogsOptions"`
+		MaxAttemptsNumberBeforeFailure int `toml:"maxAttemptsNumberBeforeFailure" default:"5" commented:"true" comment:"Maximum attempts to start a same job. -1 to disable failing jobs when to many attempts" json:"maxAttemptsNumberBeforeFailure"`
 	} `toml:"provision" json:"provision"`
 	LogOptions struct {
 		SpawnOptions struct {
