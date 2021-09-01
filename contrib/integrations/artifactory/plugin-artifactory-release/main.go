@@ -3,9 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
-	"path/filepath"
-
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -43,6 +42,11 @@ Build the present binaries and import in CDS:
 
 $ cdsctl admin plugins binary-add artifactory-release-plugin artifactory-release-plugin-bin.yml <path-to-binary-file>
 */
+
+type promotedArtifact struct {
+	Pattern string
+	Target  string
+}
 
 type artifactoryReleasePlugin struct {
 	integrationplugin.Common
@@ -102,17 +106,12 @@ func (e *artifactoryReleasePlugin) Run(_ context.Context, opts *integrationplugi
 
 	artSplitted := strings.Split(artifactList, ",")
 	artRegs := make([]*regexp.Regexp, 0, len(artSplitted))
-	for _, art := range artSplitted {
-		r, err := regexp.Compile(art)
+	for _, arti := range artSplitted {
+		r, err := regexp.Compile(arti)
 		if err != nil {
 			return fail("unable compile regexp in artifact list: %v", err)
 		}
 		artRegs = append(artRegs, r)
-	}
-
-	type promotedArtifact struct {
-		Pattern string
-		Target  string
 	}
 
 	artifactPromoted := make([]promotedArtifact, 0)
@@ -169,37 +168,9 @@ func (e *artifactoryReleasePlugin) Run(_ context.Context, opts *integrationplugi
 	}
 
 	// Release bundle
-	buildInfoName := fmt.Sprintf("%s/%s/%s", buildInfo, projectKey, workflowName)
-
-	params := services.NewCreateReleaseBundleParams(strings.Replace(buildInfoName, "/", "-", -1), version)
-	params.ReleaseNotes = releaseNote
-	params.ReleaseNotesSyntax = "plain_text"
-
-	paramsBuild := fmt.Sprintf("%s/%s", strings.Replace(buildInfoName, "/", "\\/", -1), version)
-	if artifactList == "" {
-		params.SpecFiles = []*utils.ArtifactoryCommonParams{
-			{
-				Recursive: true,
-				Build:     paramsBuild,
-			},
-		}
-	} else {
-		params.SpecFiles = make([]*utils.ArtifactoryCommonParams, 0, len(artifactPromoted))
-		for _, art := range artifactPromoted {
-			query := &utils.ArtifactoryCommonParams{
-				Recursive: true,
-				Build:     paramsBuild,
-				Pattern:   art.Pattern,
-				Target:    art.Target,
-			}
-			params.SpecFiles = append(params.SpecFiles, query)
-		}
-	}
-	params.SignImmediately = true
-	fmt.Printf("Creating release %s %s\n", params.Name, params.Version)
-
-	if _, err := distriClient.CreateReleaseBundle(params); err != nil {
-		return fail("unable to create release bundle: %v", err)
+	releaseName, releaseVersion, err := e.createReleaseBundle(distriClient, projectKey, workflowName, version, buildInfo, artifactList, releaseNote, artifactPromoted, artifactoryURL, releaseToken)
+	if err != nil {
+		return fail(err.Error())
 	}
 
 	fmt.Printf("Listing Edge nodes to distribute the release \n")
@@ -209,8 +180,8 @@ func (e *artifactoryReleasePlugin) Run(_ context.Context, opts *integrationplugi
 	}
 	edges = e.removeNonEdge(edges)
 
-	fmt.Printf("Distribute Release %s %s\n", params.Name, params.Version)
-	distributionParams := services.NewDistributeReleaseBundleParams(params.Name, params.Version)
+	fmt.Printf("Distribute Release %s %s\n", releaseName, releaseVersion)
+	distributionParams := services.NewDistributeReleaseBundleParams(releaseName, releaseVersion)
 	distributionParams.DistributionRules = make([]*distriUtils.DistributionCommonParams, 0, len(edges))
 	for _, e := range edges {
 		distributionParams.DistributionRules = append(distributionParams.DistributionRules, &distriUtils.DistributionCommonParams{
@@ -219,13 +190,58 @@ func (e *artifactoryReleasePlugin) Run(_ context.Context, opts *integrationplugi
 			CountryCodes: []string{e.City.CountryCode},
 		})
 	}
-	if err := distriClient.DistributeReleaseBundle(distributionParams); err != nil {
-		return fail("unable to distribution version: %v", err)
+	if err := distriClient.DistributeReleaseBundleSync(distributionParams, 10); err != nil {
+		return fail("unable to distribute version: %v", err)
 	}
 
 	return &integrationplugin.RunResult{
 		Status: sdk.StatusSuccess,
 	}, nil
+}
+
+func (e *artifactoryReleasePlugin) createReleaseBundle(distriClient *distribution.DistributionServicesManager, projectKey, workflowName, version, buildInfo string, artifactList, releaseNote string, artifactPromoted []promotedArtifact, artifactoryURL, releaseToken string) (string, string, error) {
+	buildInfoName := fmt.Sprintf("%s/%s/%s", buildInfo, projectKey, workflowName)
+
+	params := services.NewCreateReleaseBundleParams(strings.Replace(buildInfoName, "/", "-", -1), version)
+
+	exist, err := e.checkReleaseBundleExist(distriClient, artifactoryURL, releaseToken, params.Name, params.Version)
+	if err != nil {
+		return "", "", err
+	}
+	if !exist {
+		params.ReleaseNotes = releaseNote
+		params.ReleaseNotesSyntax = "plain_text"
+
+		paramsBuild := fmt.Sprintf("%s/%s", strings.Replace(buildInfoName, "/", "\\/", -1), version)
+		if artifactList == "" {
+			params.SpecFiles = []*utils.ArtifactoryCommonParams{
+				{
+					Recursive: true,
+					Build:     paramsBuild,
+				},
+			}
+		} else {
+			params.SpecFiles = make([]*utils.ArtifactoryCommonParams, 0, len(artifactPromoted))
+			for _, arti := range artifactPromoted {
+				query := &utils.ArtifactoryCommonParams{
+					Recursive: true,
+					Build:     paramsBuild,
+					Pattern:   arti.Pattern,
+					Target:    arti.Target,
+				}
+				params.SpecFiles = append(params.SpecFiles, query)
+			}
+		}
+		params.SignImmediately = true
+		fmt.Printf("Creating release %s %s\n", params.Name, params.Version)
+
+		if _, err := distriClient.CreateReleaseBundle(params); err != nil {
+			return "", "", fmt.Errorf("unable to create release bundle %s/%s: %v", params.Name, params.Version, err)
+		}
+	} else {
+		fmt.Printf("Release bundle %s/%s already exist", params.Name, params.Version)
+	}
+	return params.Name, params.Version, nil
 }
 
 func (e *artifactoryReleasePlugin) listEdgeNodes(distriClient *distribution.DistributionServicesManager, url, token string) ([]EdgeNode, error) {
@@ -274,14 +290,24 @@ func (e *artifactoryReleasePlugin) promoteFile(artiClient artifactory.Artifactor
 	params.Pattern = fmt.Sprintf("%s/%s", srcRepo, data.Path)
 	params.Target = fmt.Sprintf("%s/%s", targetRepo, data.Path)
 	params.Flat = true
-	fmt.Printf("Promoting file %s from %s to %s\n", data.Name, srcRepo, targetRepo)
-	nbSuccess, nbFailed, err := artiClient.Move(params)
+
+	// Check if artifact already exist on destination
+	exist, err := e.checkArtifactExists(artiClient, targetRepo, data.Path)
 	if err != nil {
 		return err
 	}
-	if nbFailed > 0 || nbSuccess == 0 {
-		return fmt.Errorf("%s: copy failed with no reason", data.Name)
+	if !exist {
+		fmt.Printf("Promoting file %s from %s to %s\n", data.Name, srcRepo, targetRepo)
+		nbSuccess, nbFailed, err := artiClient.Move(params)
+		if err != nil {
+			return err
+		}
+		if nbFailed > 0 || nbSuccess == 0 {
+			return fmt.Errorf("%s: copy failed with no reason", data.Name)
+		}
+		return nil
 	}
+	fmt.Printf("%s has been already promoted", data.Name)
 	return nil
 }
 
@@ -290,8 +316,59 @@ func (e *artifactoryReleasePlugin) promoteDockerImage(artiClient artifactory.Art
 	targetRepo := fmt.Sprintf("%s-%s", data.RepoName, highMaturity)
 	params := artService.NewDockerPromoteParams(data.Path, sourceRepo, targetRepo)
 	params.Copy = false
-	fmt.Printf("Promoting docker image %s from %s to %s\n", data.Name, params.SourceRepo, params.TargetRepo)
-	return artiClient.PromoteDocker(params)
+
+	// Check if artifact already exist on destination
+	exist, err := e.checkArtifactExists(artiClient, targetRepo, data.Path)
+	if err != nil {
+		return err
+	}
+	if !exist {
+		fmt.Printf("Promoting docker image %s from %s to %s\n", data.Name, params.SourceRepo, params.TargetRepo)
+		return artiClient.PromoteDocker(params)
+	}
+	fmt.Printf("%s has been already promoted", data.Name)
+	return nil
+}
+
+func (e *artifactoryReleasePlugin) checkArtifactExists(artiClient artifactory.ArtifactoryServicesManager, repoName string, artiName string) (bool, error) {
+	httpDetails := artiClient.GetConfig().GetServiceDetails().CreateHttpClientDetails()
+	fileInfoURL := fmt.Sprintf("%sapi/storage/%s/%s", artiClient.GetConfig().GetServiceDetails().GetUrl(), repoName, artiName)
+	re, body, _, err := artiClient.Client().SendGet(fileInfoURL, true, &httpDetails)
+	if err != nil {
+		return false, fmt.Errorf("unable to get file info %s/%s: %v", repoName, artiName, err)
+	}
+	if re.StatusCode == 404 {
+		return false, nil
+	}
+	if re.StatusCode >= 400 {
+		return false, fmt.Errorf("unable to call artifactory [HTTP: %d] %s %s", re.StatusCode, fileInfoURL, string(body))
+	}
+	return true, nil
+}
+
+func (e *artifactoryReleasePlugin) checkReleaseBundleExist(client *distribution.DistributionServicesManager, url string, token string, name string, version string) (bool, error) {
+	getReleasePath := fmt.Sprintf("api/v1/release_bundle/%s/%s?format=json", name, version)
+	dtb := authdistrib.NewDistributionDetails()
+	dtb.SetUrl(strings.Replace(url, "/artifactory/", "/distribution/", -1))
+	dtb.SetAccessToken(token)
+
+	fakeService := services.NewCreateReleaseBundleService(client.Client())
+	fakeService.DistDetails = dtb
+	clientDetail := fakeService.DistDetails.CreateHttpClientDetails()
+	getReleaseURL := fmt.Sprintf("%s%s", fakeService.DistDetails.GetUrl(), getReleasePath)
+	utils.SetContentType("application/json", &clientDetail.Headers)
+
+	resp, body, _, err := client.Client().SendGet(getReleaseURL, true, &clientDetail)
+	if err != nil {
+		return false, fmt.Errorf("unable to get release bundle %s/%s from distribution: %v", name, version, err)
+	}
+	if resp.StatusCode == 404 {
+		return false, nil
+	}
+	if resp.StatusCode >= 400 {
+		return false, fmt.Errorf("http error %d: %s", resp.StatusCode, string(body))
+	}
+	return true, nil
 }
 
 func main() {
