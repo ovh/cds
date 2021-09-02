@@ -103,8 +103,6 @@ func main() {
 	if err := actionplugin.Start(context.Background(), &actPlugin); err != nil {
 		panic(err)
 	}
-	return
-
 }
 
 func pushImage(dockerImage string) (reference.NamedTagged, distribution.Manifest, error) {

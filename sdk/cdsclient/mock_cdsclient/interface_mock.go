@@ -1862,21 +1862,6 @@ func (mr *MockDownloadClientMockRecorder) DownloadURLFromAPI(name, os, arch, var
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DownloadURLFromAPI", reflect.TypeOf((*MockDownloadClient)(nil).DownloadURLFromAPI), name, os, arch, variant)
 }
 
-// DownloadURLFromGithub mocks base method.
-func (m *MockDownloadClient) DownloadURLFromGithub(filename string) (string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DownloadURLFromGithub", filename)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// DownloadURLFromGithub indicates an expected call of DownloadURLFromGithub.
-func (mr *MockDownloadClientMockRecorder) DownloadURLFromGithub(filename interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DownloadURLFromGithub", reflect.TypeOf((*MockDownloadClient)(nil).DownloadURLFromGithub), filename)
-}
-
 // MockActionClient is a mock of ActionClient interface.
 type MockActionClient struct {
 	ctrl     *gomock.Controller
@@ -5618,21 +5603,6 @@ func (m *MockInterface) DownloadURLFromAPI(name, os, arch, variant string) strin
 func (mr *MockInterfaceMockRecorder) DownloadURLFromAPI(name, os, arch, variant interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DownloadURLFromAPI", reflect.TypeOf((*MockInterface)(nil).DownloadURLFromAPI), name, os, arch, variant)
-}
-
-// DownloadURLFromGithub mocks base method.
-func (m *MockInterface) DownloadURLFromGithub(filename string) (string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DownloadURLFromGithub", filename)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// DownloadURLFromGithub indicates an expected call of DownloadURLFromGithub.
-func (mr *MockInterfaceMockRecorder) DownloadURLFromGithub(filename interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DownloadURLFromGithub", reflect.TypeOf((*MockInterface)(nil).DownloadURLFromGithub), filename)
 }
 
 // EnvironmentCreate mocks base method.

@@ -3,8 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
-	"net/http"
 	"os"
 	"path"
 
@@ -13,7 +11,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdsclient"
 )
 
 func init() {
@@ -64,7 +61,7 @@ You can also indicate a specific os or architecture to not download all binaries
 		if conf.API == nil {
 			sdk.Exit("Invalid configuration file")
 		}
-		downloadTarGzFromGithub(conf.API.Directories.Download, "cds-worker-all.tar.gz")
+		downloadTarGzFromGithub(context.Background(), conf.API.Download.Directory, "cds-worker-all.tar.gz")
 	},
 }
 
@@ -81,7 +78,7 @@ var downloadUICmd = &cobra.Command{
 		if conf.UI == nil {
 			sdk.Exit("Invalid configuration file - missing ui section")
 		}
-		downloadTarGzFromGithub(conf.UI.Staticdir, "ui.tar.gz")
+		downloadTarGzFromGithub(context.Background(), conf.UI.Staticdir, "ui.tar.gz")
 	},
 }
 
@@ -98,14 +95,11 @@ var downloadSQLCmd = &cobra.Command{
 		if conf.DatabaseMigrate == nil {
 			sdk.Exit("Invalid configuration file - missing databaseMigrate section")
 		}
-		downloadTarGzFromGithub(conf.DatabaseMigrate.Directory, "sql.tar.gz")
+		downloadTarGzFromGithub(context.Background(), conf.DatabaseMigrate.Directory, "sql.tar.gz")
 	},
 }
 
-func downloadTarGzFromGithub(confPath, filename string) {
-	config := cdsclient.Config{Host: flagDownloadURLAPI}
-	client := cdsclient.New(config)
-
+func downloadTarGzFromGithub(ctx context.Context, confPath, filename string) {
 	if ok, err := sdk.DirectoryExists(confPath); !ok {
 		if err := os.MkdirAll(confPath, os.FileMode(0700)); err != nil {
 			sdk.Exit("Unable to create directory %s: %v", confPath, err)
@@ -115,36 +109,11 @@ func downloadTarGzFromGithub(confPath, filename string) {
 		sdk.Exit("Invalid download directory %s: %v", confPath, err)
 	}
 
-	urlBinary, err := client.DownloadURLFromGithub(filename)
-	if err != nil {
-		sdk.Exit("Error while getting %s from err:%s\n", filename, urlBinary, err)
-	}
-
-	fmt.Printf("Downloading into %s...\n", confPath)
-	resp, err := http.Get(urlBinary)
-	if err != nil {
-		sdk.Exit("Error while getting binary from: %s err:%s\n", urlBinary, err)
-	}
-	defer resp.Body.Close()
-
-	if err := sdk.CheckContentTypeBinary(resp); err != nil {
-		sdk.Exit(err.Error())
-	}
-
-	if resp.StatusCode != 200 {
-		sdk.Exit("Error http code: %d, url called: %s\n", resp.StatusCode, urlBinary)
-	}
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		sdk.Exit("Error while reading file content for %s", filename)
+	if err := sdk.DownloadFromGitHub(ctx, confPath, filename, "latest"); err != nil {
+		sdk.Exit("Downloading %s failed: %v", filename, err)
 	}
 
 	fullpath := path.Join(confPath, filename)
-	if err := ioutil.WriteFile(fullpath, body, 0755); err != nil {
-		sdk.Exit("Error while write file content for %s in %s", filename, confPath)
-	}
-
 	if err := archiver.DefaultTarGz.Unarchive(fullpath, confPath); err != nil {
 		sdk.Exit("Unarchive %s failed: %v", filename, err)
 	}

@@ -39,7 +39,7 @@ func updateRun(v cli.Values) error {
 	if v.GetBool("from-github") {
 		// no need to have apiEndpoint here
 		var errGH error
-		urlBinary, errGH = client.DownloadURLFromGithub(sdk.GetArtifactFilename("cdsctl", sdk.GOOS, sdk.GOARCH, variant))
+		urlBinary, errGH = sdk.DownloadURLFromGithub(sdk.BinaryFilename("cdsctl", sdk.GOOS, sdk.GOARCH, variant), "latest")
 		if errGH != nil {
 			return cli.NewError("Error while getting URL from GitHub url:%s err:%s", urlBinary, errGH)
 		}

@@ -59,7 +59,7 @@ services:
             api.cache.redis.host=cds-cache:6379 \
             api.cache.redis.password=cds \
             api.database.host=cds-db \
-            api.directories.download=/app \
+            api.download.directory=/app \
             api.url.api=http://${HOSTNAME}:8081 \
             api.url.ui=http://${HOSTNAME}:8080 \
             api.log.level=info \

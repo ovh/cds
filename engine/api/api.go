@@ -32,6 +32,7 @@ import (
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/broadcast"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/api/download"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/mail"
@@ -76,9 +77,17 @@ type Configuration struct {
 			Password string `toml:"password" json:"-"`
 		} `toml:"redis" comment:"Connect CDS to a redis cache If you more than one CDS instance and to avoid losing data at startup" json:"redis"`
 	} `toml:"cache" comment:"######################\n CDS Cache Settings \n#####################" json:"cache"`
-	Directories struct {
-		Download string `toml:"download" default:"/var/lib/cds-engine" json:"download"`
-	} `toml:"directories" json:"directories"`
+	Download struct {
+		Directory          string   `toml:"directory" default:"/var/lib/cds-engine" json:"directory" comment:"this directory contains cds binaries. If it's empty, cds will download binaries from GitHub (property downloadFromGitHub) or from an artifactory instance (property artifactory) to it"`
+		SupportedOSArch    []string `toml:"supportedOSArch" default:"" json:"supportedOSArch" commented:"true" comment:"example: [\"darwin/amd64\",\"darwin/arm64\",\"linux/amd64\",\"windows/amd64\"]. If empty, all os / arch are supported: windows,darwin,linux,freebsd,openbsd and amd64,arm,386,arm64,ppc64le"`
+		DownloadFromGitHub bool     `toml:"downloadFromGitHub" default:"true" json:"downloadFromGitHub" comment:"allow downloading binaries from GitHub"`
+		Artifactory        struct {
+			URL        string `toml:"url" default:"https://your-artifactory/artifactory" json:"url" comment:"URL of your artifactory" commented:"true"`
+			Path       string `toml:"path" default:"artifactoryPath" json:"path" comment:"example: CDS/w-cds. This path must contains directory named as '0.49.0' and this directory must contains cds binaries"`
+			Repository string `toml:"repository" default:"artifactoryRepository" json:"repository" comment:"artifactory repository"`
+			Token      string `toml:"token" default:"artifactoryToken" json:"-" comment:"token used to get binaries"`
+		} `toml:"artifactory" default:"true" json:"artifactory" comment:"Artifactory Configuration (optional)." commented:"true"`
+	} `toml:"download" json:"download"`
 	InternalServiceMesh struct {
 		RequestSecondsTimeout int  `toml:"requestSecondsTimeout" json:"requestSecondsTimeout" default:"60"`
 		InsecureSkipVerifyTLS bool `toml:"insecureSkipVerifyTLS" json:"insecureSkipVerifyTLS" default:"false"`
@@ -285,7 +294,7 @@ func (a *API) ApplyConfiguration(config interface{}) error {
 	var ok bool
 	a.Config, ok = config.(Configuration)
 	if !ok {
-		return fmt.Errorf("Invalid configuration")
+		return fmt.Errorf("invalid configuration")
 	}
 
 	a.Common.ServiceType = sdk.TypeAPI
@@ -297,7 +306,7 @@ func (a *API) ApplyConfiguration(config interface{}) error {
 func (a *API) CheckConfiguration(config interface{}) error {
 	aConfig, ok := config.(Configuration)
 	if !ok {
-		return fmt.Errorf("Invalid API configuration")
+		return fmt.Errorf("invalid API configuration")
 	}
 
 	if aConfig.Name == "" {
@@ -310,32 +319,32 @@ func (a *API) CheckConfiguration(config interface{}) error {
 
 	if aConfig.URL.UI != "" {
 		if _, err := url.Parse(aConfig.URL.UI); err != nil {
-			return fmt.Errorf("Invalid given UI URL")
+			return fmt.Errorf("invalid given UI URL")
 		}
 	}
 
-	if aConfig.Directories.Download == "" {
-		return fmt.Errorf("Invalid download directory (empty)")
+	if aConfig.Download.Directory == "" {
+		return fmt.Errorf("invalid download directory (empty)")
 	}
 
-	if ok, err := sdk.DirectoryExists(aConfig.Directories.Download); !ok {
-		if err := os.MkdirAll(aConfig.Directories.Download, os.FileMode(0700)); err != nil {
-			return fmt.Errorf("Unable to create directory %s: %v", aConfig.Directories.Download, err)
+	if ok, err := sdk.DirectoryExists(aConfig.Download.Directory); !ok {
+		if err := os.MkdirAll(aConfig.Download.Directory, os.FileMode(0700)); err != nil {
+			return fmt.Errorf("Unable to create directory %s: %v", aConfig.Download.Directory, err)
 		}
-		log.Info(context.Background(), "Directory %s has been created", aConfig.Directories.Download)
+		log.Info(context.Background(), "Directory %s has been created", aConfig.Download.Directory)
 	} else if err != nil {
-		return fmt.Errorf("Invalid download directory %s: %v", aConfig.Directories.Download, err)
+		return fmt.Errorf("invalid download directory %s: %v", aConfig.Download.Directory, err)
 	}
 
 	switch aConfig.Artifact.Mode {
 	case "local", "awss3", "openstack", "swift":
 	default:
-		return fmt.Errorf("Invalid artifact mode")
+		return fmt.Errorf("invalid artifact mode")
 	}
 
 	if aConfig.Artifact.Mode == "local" {
 		if aConfig.Artifact.Local.BaseDirectory == "" {
-			return fmt.Errorf("Invalid artifact local base directory (empty name)")
+			return fmt.Errorf("invalid artifact local base directory (empty name)")
 		}
 		if ok, err := sdk.DirectoryExists(aConfig.Artifact.Local.BaseDirectory); !ok {
 			if err := os.MkdirAll(aConfig.Artifact.Local.BaseDirectory, os.FileMode(0700)); err != nil {
@@ -343,12 +352,12 @@ func (a *API) CheckConfiguration(config interface{}) error {
 			}
 			log.Info(context.Background(), "Directory %s has been created", aConfig.Artifact.Local.BaseDirectory)
 		} else if err != nil {
-			return fmt.Errorf("Invalid artifact local base directory %s: %v", aConfig.Artifact.Local.BaseDirectory, err)
+			return fmt.Errorf("invalid artifact local base directory %s: %v", aConfig.Artifact.Local.BaseDirectory, err)
 		}
 	}
 
 	if len(aConfig.Secrets.Key) != 32 {
-		return fmt.Errorf("Invalid secret key. It should be 32 bits (%d)", len(aConfig.Secrets.Key))
+		return fmt.Errorf("invalid secret key. It should be 32 bits (%d)", len(aConfig.Secrets.Key))
 	}
 
 	if aConfig.DefaultArch == "" {
@@ -367,6 +376,18 @@ func (a *API) CheckConfiguration(config interface{}) error {
 	}
 
 	return nil
+}
+
+func (api *API) getDownloadConf() download.Conf {
+	return download.Conf{
+		Directory:             api.Config.Download.Directory,
+		DownloadFromGitHub:    api.Config.Download.DownloadFromGitHub,
+		ArtifactoryURL:        api.Config.Download.Artifactory.URL,
+		ArtifactoryPath:       api.Config.Download.Artifactory.Path,
+		ArtifactoryRepository: api.Config.Download.Artifactory.Repository,
+		ArtifactoryToken:      api.Config.Download.Artifactory.Token,
+		SupportedOSArch:       api.Config.Download.SupportedOSArch,
+	}
 }
 
 type StartupConfigConsumerType string
@@ -402,30 +423,8 @@ func (a *API) Serve(ctx context.Context) error {
 	a.StartupTime = time.Now()
 
 	// Checking downloadable binaries
-	resources := sdk.AllDownloadableResourcesWithAvailability(a.Config.Directories.Download)
-	var hasWorker, hasCtl, hasEngine bool
-	for _, r := range resources {
-		if r.Available != nil && *r.Available {
-			switch r.Name {
-			case "worker":
-				hasWorker = true
-			case "cdsctl":
-				hasCtl = true
-			case "engine":
-				hasEngine = true
-			}
-		}
-	}
-	if !hasEngine {
-		log.Error(ctx, "engine is unavailable for download, this may lead to a poor user experience. Please check your configuration file or the %s directory", a.Config.Directories.Download)
-	}
-	if !hasCtl {
-		log.Error(ctx, "cdsctl is unavailable for download, this may lead to a poor user experience. Please check your configuration file or the %s directory", a.Config.Directories.Download)
-	}
-	if !hasWorker {
-		// If no worker, let's exit because CDS for run anything
-		log.Error(ctx, "worker is unavailable for download. Please check your configuration file or the %s directory", a.Config.Directories.Download)
-		return errors.New("worker binary unavailable")
+	if err := download.Init(ctx, a.getDownloadConf()); err != nil {
+		return sdk.WrapError(err, "unable to initialize downloadable binaries")
 	}
 
 	// Initialize the jwt layer

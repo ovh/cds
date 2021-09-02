@@ -4,7 +4,7 @@
         <div *ngIf="loading" class="ui active text loader">{{ 'common_loading' | translate }}</div>
         <div class="ui bulleted list">
                 <ng-container *ngFor="let resource of resources">
-                <div class="item" *ngIf="resource.available"> 
+                <div class="item"> 
                     <strong>{{resource.name}}</strong> {{resource.os}} {{resource.arch}} <em>{{resource.variant}}</em>
                     <a href="cdsapi/download/{{resource.name}}/{{resource.os}}/{{resource.arch}}?variant={{resource.variant}}">
                         ({{resource.filename}})
