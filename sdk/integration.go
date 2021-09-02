@@ -25,6 +25,7 @@ const (
 	ArtifactManagerConfigPromotionLowMaturity  = "promotion.maturity.low"
 	ArtifactManagerConfigPromotionHighMaturity = "promotion.maturity.high"
 	ArtifactManagerConfigBuildInfoPath         = "build.info.path"
+	ArtifactManagerConfigBuildInfoPrefix       = "build.info.prefix"
 )
 
 // Here are the default plateform models
@@ -150,6 +151,9 @@ var (
 				Type: IntegrationConfigTypeString,
 			},
 			ArtifactManagerConfigPromotionHighMaturity: IntegrationConfigValue{
+				Type: IntegrationConfigTypeString,
+			},
+			ArtifactManagerConfigBuildInfoPrefix: IntegrationConfigValue{
 				Type: IntegrationConfigTypeString,
 			},
 		},

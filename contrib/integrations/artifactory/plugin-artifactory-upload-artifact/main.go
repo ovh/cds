@@ -69,8 +69,12 @@ func (e *artifactoryUploadArtifactPlugin) Run(_ context.Context, opts *integrati
 	pathToUpload := opts.GetOptions()["cds.integration.artifact_manager.upload.path"]
 	projectKey := opts.GetOptions()["cds.project"]
 	workflowName := opts.GetOptions()["cds.workflow"]
-	buildInfo := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactManagerConfigBuildInfoPath)]
 	version := opts.GetOptions()["cds.version"]
+
+	buildInfo := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactManagerConfigBuildInfoPrefix)]
+	if buildInfo == "" {
+		buildInfo = opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactManagerConfigBuildInfoPath)]
+	}
 
 	artiClient, err := art.CreateArtifactoryClient(artifactoryURL, token)
 	if err != nil {
