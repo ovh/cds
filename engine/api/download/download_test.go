@@ -14,8 +14,9 @@ func TestInit(t *testing.T) {
 	defer os.RemoveAll(tmpDir2)
 
 	conf := Conf{
-		Directory:          tmpDir1,
-		DownloadFromGitHub: true,
+		Directory:           tmpDir1,
+		DownloadFromGitHub:  true,
+		ForceDownloadGitHub: true,
 	}
 
 	if err := Init(context.TODO(), conf); err != nil {

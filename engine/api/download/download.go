@@ -25,6 +25,7 @@ type Conf struct {
 	ArtifactoryRepository string
 	ArtifactoryToken      string
 	SupportedOSArch       []string
+	ForceDownloadGitHub   bool
 }
 
 func Init(ctx context.Context, conf Conf) error {
@@ -71,6 +72,10 @@ func ensureWorkerBinary(ctx context.Context, conf Conf) error {
 	filename := sdk.BinaryFilename("worker", sdk.GOOS, sdk.GOARCH, "")
 	if sdk.IsDownloadedBinary(conf.Directory, filename) {
 		return nil
+	}
+
+	if conf.ForceDownloadGitHub {
+		return CheckBinary(ctx, conf, "worker", sdk.GOOS, sdk.GOARCH, "")
 	}
 
 	ask := fmt.Sprintf("Worker binary %q does not exist into %v\nWhat do you want to do?", filename, conf.Directory)
