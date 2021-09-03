@@ -74,7 +74,7 @@ func (h *HatcherySwarm) pullImage(dockerClient *dockerClient, img string, timeou
 				Password:      credentials.Password,
 				ServerAddress: domain,
 			}
-			log.Debug(context.TODO(), "hatchery> swarm> pullImage> Found credentials %q to pull image %q", credentials.Domain, img)
+			log.Debug(context.TODO(), "found credentials %q to pull image %q", credentials.Domain, img)
 		}
 	}
 
@@ -85,12 +85,13 @@ func (h *HatcherySwarm) pullImage(dockerClient *dockerClient, img string, timeou
 			return sdk.WithStack(err)
 		}
 		opts.RegistryAuth = base64.StdEncoding.EncodeToString(config)
-		log.Debug(context.TODO(), "hatchery> swarm> pullImage> pulling image %q on %q with login on %q", img, dockerClient.name, authConfig.ServerAddress)
+		log.Debug(context.TODO(), "pulling image %q on %q with login on %q", img, dockerClient.name, authConfig.ServerAddress)
 	}
 
 	res, err := dockerClient.ImageCreate(ctx, img, opts)
 	if err != nil {
-		log.Warn(ctx, "hatchery> swarm> pullImage> Unable to pull image %s on %s: %s", img, dockerClient.name, err)
+		ctx = sdk.ContextWithStacktrace(ctx, err)
+		log.Warn(ctx, "unable to pull image %s on %s: %s", img, dockerClient.name, err)
 		return sdk.WithStack(err)
 	}
 
