@@ -4,12 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"path"
 	"strings"
 
 	"github.com/jfrog/jfrog-client-go/artifactory/services"
-	jlog "github.com/jfrog/jfrog-client-go/utils/log"
 	"github.com/mholt/archiver"
 	"github.com/rockbears/log"
 
@@ -134,7 +132,6 @@ func CheckBinary(ctx context.Context, conf Conf, name, os, arch, variant string)
 }
 
 func GetBinaryFromArtifactory(conf Conf, filename string) error {
-	jlog.SetLogger(jlog.NewLogger(jlog.ERROR, os.Stdout))
 	artiClient, err := sdk.NewArtifactoryClient(conf.ArtifactoryURL, conf.ArtifactoryToken)
 	if err != nil {
 		return sdk.WrapError(err, "unable to create artifactory client")
