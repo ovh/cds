@@ -1,6 +1,6 @@
 .PHONY: clean
 
-VERSION := $(if ${CDS_SEMVER},${CDS_SEMVER},snapshot)
+VERSION := $(if ${CDS_VERSION},${CDS_VERSION},snapshot)
 
 TARGET_DIR = dist
 TARGET_NAME = nodejs
