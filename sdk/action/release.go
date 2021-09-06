@@ -21,6 +21,12 @@ var Release = Manifest{
 				Description: "(optional) Set a list of artifacts, separate by ','. You can also use regexp.",
 				Type:        sdk.StringParameter,
 			},
+			{
+				Name:        "releaseNameSuffix",
+				Description: "(optional) Add a suffix to the release name",
+				Type:        sdk.StringParameter,
+				Advanced:    true,
+			},
 		},
 	},
 	Example: exportentities.PipelineV1{
