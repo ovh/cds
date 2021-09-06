@@ -100,6 +100,14 @@ func (g *githubClient) Branches(ctx context.Context, fullname string, filters sd
 
 // Branch returns only detail of a branch
 func (g *githubClient) Branch(ctx context.Context, fullname string, filters sdk.VCSBranchFilters) (*sdk.VCSBranch, error) {
+	if filters.Default {
+		repo, err := g.repoByFullname(ctx, fullname)
+		if err != nil {
+			return nil, err
+		}
+		filters.BranchName = repo.DefaultBranch
+	}
+
 	cacheBranchKey := cache.Key("vcs", "github", "branches", g.OAuthToken, "/repos/"+fullname+"/branch/"+filters.BranchName)
 	repo, err := g.repoByFullname(ctx, fullname)
 	if err != nil {
