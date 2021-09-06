@@ -72,6 +72,14 @@ func (client *bitbucketcloudClient) Branches(ctx context.Context, fullname strin
 
 // Branch returns only detail of a branch
 func (client *bitbucketcloudClient) Branch(ctx context.Context, fullname string, filters sdk.VCSBranchFilters) (*sdk.VCSBranch, error) {
+	if filters.Default {
+		repo, err := client.repoByFullname(ctx, fullname)
+		if err != nil {
+			return nil, err
+		}
+		filters.BranchName = repo.Mainbranch.Name
+	}
+
 	repo, err := client.repoByFullname(ctx, fullname)
 	if err != nil {
 		return nil, err
