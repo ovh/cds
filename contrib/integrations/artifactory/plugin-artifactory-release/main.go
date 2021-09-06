@@ -243,7 +243,7 @@ func (e *artifactoryReleasePlugin) createReleaseBundle(distriClient *distributio
 			return "", "", fmt.Errorf("unable to create release bundle %s/%s: %v", params.Name, params.Version, err)
 		}
 	} else {
-		fmt.Printf("Release bundle %s/%s already exist", params.Name, params.Version)
+		fmt.Printf("Release bundle %s/%s already exist\n", params.Name, params.Version)
 	}
 	return params.Name, params.Version, nil
 }
@@ -311,7 +311,7 @@ func (e *artifactoryReleasePlugin) promoteFile(artiClient artifactory.Artifactor
 		}
 		return nil
 	}
-	fmt.Printf("%s has been already promoted", data.Name)
+	fmt.Printf("%s has been already promoted\n", data.Name)
 	return nil
 }
 
@@ -330,7 +330,7 @@ func (e *artifactoryReleasePlugin) promoteDockerImage(artiClient artifactory.Art
 		fmt.Printf("Promoting docker image %s from %s to %s\n", data.Name, params.SourceRepo, params.TargetRepo)
 		return artiClient.PromoteDocker(params)
 	}
-	fmt.Printf("%s has been already promoted", data.Name)
+	fmt.Printf("%s has been already promoted\n", data.Name)
 	return nil
 }
 
