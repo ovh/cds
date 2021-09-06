@@ -23,7 +23,7 @@ require (
 	github.com/confluentinc/bincover v0.2.0
 	github.com/coreos/go-oidc v2.2.1+incompatible
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
-	github.com/docker/distribution v2.7.0-rc.0+incompatible // indirect
+	github.com/docker/distribution v2.7.0-rc.0+incompatible
 	github.com/docker/docker v1.13.1
 	github.com/docker/go-connections v0.3.0
 	github.com/docker/go-units v0.3.2 // indirect
