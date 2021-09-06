@@ -123,7 +123,12 @@ func CheckBinary(ctx context.Context, conf Conf, name, os, arch, variant string)
 
 	if strings.HasSuffix(filenameToDownload, ".tar.gz") {
 		log.Info(ctx, "untar %v", filenameToDownload)
-		if err := archiver.DefaultTarGz.Unarchive(path.Join(conf.Directory, filenameToDownload), conf.Directory); err != nil {
+		arc := archiver.TarGz{
+			Tar: &archiver.Tar{
+				OverwriteExisting: true,
+			},
+		}
+		if err := arc.Unarchive(path.Join(conf.Directory, filenameToDownload), conf.Directory); err != nil {
 			return sdk.WrapError(err, "unarchive %s failed", filenameToDownload)
 		}
 	}
