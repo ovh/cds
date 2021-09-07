@@ -90,6 +90,7 @@ func (e *artifactoryReleasePlugin) Run(_ context.Context, opts *integrationplugi
 
 	artifactList := opts.GetOptions()["artifacts"]
 	releaseNote := opts.GetOptions()["releaseNote"]
+	releaseNameSuffix := opts.GetOptions()["releaseNameSuffix"]
 
 	runResult, err := grpcplugins.GetRunResults(e.HTTPPort)
 	if err != nil {
@@ -172,7 +173,7 @@ func (e *artifactoryReleasePlugin) Run(_ context.Context, opts *integrationplugi
 	}
 
 	// Release bundle
-	releaseName, releaseVersion, err := e.createReleaseBundle(distriClient, projectKey, workflowName, version, buildInfo, artifactList, releaseNote, artifactPromoted, artifactoryURL, releaseToken)
+	releaseName, releaseVersion, err := e.createReleaseBundle(distriClient, projectKey, workflowName, version, buildInfo, artifactList, releaseNameSuffix, releaseNote, artifactPromoted, artifactoryURL, releaseToken)
 	if err != nil {
 		return fail(err.Error())
 	}
@@ -203,10 +204,13 @@ func (e *artifactoryReleasePlugin) Run(_ context.Context, opts *integrationplugi
 	}, nil
 }
 
-func (e *artifactoryReleasePlugin) createReleaseBundle(distriClient *distribution.DistributionServicesManager, projectKey, workflowName, version, buildInfo string, artifactList, releaseNote string, artifactPromoted []promotedArtifact, artifactoryURL, releaseToken string) (string, string, error) {
+func (e *artifactoryReleasePlugin) createReleaseBundle(distriClient *distribution.DistributionServicesManager, projectKey, workflowName, version, buildInfo string, artifactList, releaseNameSuffix, releaseNote string, artifactPromoted []promotedArtifact, artifactoryURL, releaseToken string) (string, string, error) {
 	buildInfoName := fmt.Sprintf("%s/%s/%s", buildInfo, projectKey, workflowName)
 
 	params := services.NewCreateReleaseBundleParams(strings.Replace(buildInfoName, "/", "-", -1), version)
+	if releaseNameSuffix != "" {
+		params.Name += releaseNameSuffix
+	}
 
 	exist, err := e.checkReleaseBundleExist(distriClient, artifactoryURL, releaseToken, params.Name, params.Version)
 	if err != nil {
