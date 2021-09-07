@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -42,11 +41,6 @@ Build the present binaries and import in CDS:
 
 $ cdsctl admin plugins binary-add artifactory-release-plugin artifactory-release-plugin-bin.yml <path-to-binary-file>
 */
-
-type promotedArtifact struct {
-	Pattern string
-	Target  string
-}
 
 type artifactoryReleasePlugin struct {
 	integrationplugin.Common
@@ -119,8 +113,7 @@ func (e *artifactoryReleasePlugin) Run(_ context.Context, opts *integrationplugi
 		artRegs = append(artRegs, r)
 	}
 
-	artifactPromoted := make([]promotedArtifact, 0)
-	patternUsed := make(map[string]struct{})
+	promotedArtifacts := make([]string, 0)
 	for _, r := range runResult {
 		rData, err := r.GetArtifactManager()
 		if err != nil {
@@ -141,39 +134,18 @@ func (e *artifactoryReleasePlugin) Run(_ context.Context, opts *integrationplugi
 			if err := e.promoteDockerImage(artiClient, rData, lowMaturitySuffix, highMaturitySuffix); err != nil {
 				return fail("unable to promote docker image: %s: %v", rData.Name+"-"+highMaturitySuffix, err)
 			}
-
-			// Pattern must be like: "<repo_src>/<path>/(*)"
-			// Target must be like: "<repo_target>/<path>/$1"
-			pattern := fmt.Sprintf("%s/%s/(*)", rData.RepoName+"-"+highMaturitySuffix, rData.Path)
-			if _, has := patternUsed[pattern]; !has {
-				artifactPromoted = append(artifactPromoted, promotedArtifact{
-					Pattern: pattern,
-					Target:  fmt.Sprintf("%s/%s/{1}", rData.RepoName, rData.Path),
-				})
-				patternUsed[pattern] = struct{}{}
-			}
+			promotedArtifacts = append(promotedArtifacts, fmt.Sprintf("%s-%s/%s/manifest.json", rData.RepoName, highMaturitySuffix, rData.Path))
 		default:
 			if err := e.promoteFile(artiClient, rData, lowMaturitySuffix, highMaturitySuffix); err != nil {
 				return fail("unable to promote file: %s: %v", rData.Name, err)
 			}
-			dir, _ := filepath.Split(rData.Path)
-
-			// Pattern must be like: "<repo_src>/<path>/(*)"
-			// Target must be like: "<repo_target>/<path>/$1"
-			pattern := fmt.Sprintf("%s/%s(*)", rData.RepoName+"-"+highMaturitySuffix, dir)
-			if _, has := patternUsed[pattern]; !has {
-				artifactPromoted = append(artifactPromoted, promotedArtifact{
-					Pattern: pattern,
-					Target:  fmt.Sprintf("%s/%s{1}", rData.RepoName, dir),
-				})
-				patternUsed[pattern] = struct{}{}
-			}
+			promotedArtifacts = append(promotedArtifacts, fmt.Sprintf("%s-%s/%s", rData.RepoName, highMaturitySuffix, rData.Path))
 		}
 
 	}
 
 	// Release bundle
-	releaseName, releaseVersion, err := e.createReleaseBundle(distriClient, projectKey, workflowName, version, buildInfo, artifactList, releaseNameSuffix, releaseNote, artifactPromoted, artifactoryURL, releaseToken)
+	releaseName, releaseVersion, err := e.createReleaseBundle(distriClient, projectKey, workflowName, version, buildInfo, promotedArtifacts, releaseNameSuffix, releaseNote, artifactoryURL, releaseToken)
 	if err != nil {
 		return fail(err.Error())
 	}
@@ -204,7 +176,7 @@ func (e *artifactoryReleasePlugin) Run(_ context.Context, opts *integrationplugi
 	}, nil
 }
 
-func (e *artifactoryReleasePlugin) createReleaseBundle(distriClient *distribution.DistributionServicesManager, projectKey, workflowName, version, buildInfo string, artifactList, releaseNameSuffix, releaseNote string, artifactPromoted []promotedArtifact, artifactoryURL, releaseToken string) (string, string, error) {
+func (e *artifactoryReleasePlugin) createReleaseBundle(distriClient *distribution.DistributionServicesManager, projectKey, workflowName, version, buildInfo string, artifactPromoted []string, releaseNameSuffix, releaseNote string, artifactoryURL, releaseToken string) (string, string, error) {
 	buildInfoName := fmt.Sprintf("%s/%s/%s", buildInfo, projectKey, workflowName)
 
 	params := services.NewCreateReleaseBundleParams(strings.Replace(buildInfoName, "/", "-", -1), version)
@@ -221,25 +193,17 @@ func (e *artifactoryReleasePlugin) createReleaseBundle(distriClient *distributio
 		params.ReleaseNotesSyntax = "plain_text"
 
 		paramsBuild := fmt.Sprintf("%s/%s", strings.Replace(buildInfoName, "/", "\\/", -1), version)
-		if artifactList == "" {
-			params.SpecFiles = []*utils.ArtifactoryCommonParams{
-				{
-					Recursive: true,
-					Build:     paramsBuild,
-				},
+
+		params.SpecFiles = make([]*utils.ArtifactoryCommonParams, 0, len(artifactPromoted))
+		for _, arti := range artifactPromoted {
+			query := &utils.ArtifactoryCommonParams{
+				Recursive: true,
+				Build:     paramsBuild,
+				Pattern:   arti,
 			}
-		} else {
-			params.SpecFiles = make([]*utils.ArtifactoryCommonParams, 0, len(artifactPromoted))
-			for _, arti := range artifactPromoted {
-				query := &utils.ArtifactoryCommonParams{
-					Recursive: true,
-					Build:     paramsBuild,
-					Pattern:   arti.Pattern,
-					Target:    arti.Target,
-				}
-				params.SpecFiles = append(params.SpecFiles, query)
-			}
+			params.SpecFiles = append(params.SpecFiles, query)
 		}
+
 		params.SignImmediately = true
 		fmt.Printf("Creating release %s %s\n", params.Name, params.Version)
 
