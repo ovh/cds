@@ -23,7 +23,7 @@ var Release = Manifest{
 			},
 			{
 				Name:        "releaseNameSuffix",
-				Description: "(optional) Add a suffix to the release name",
+				Description: "(optional) Add a suffix to the release name (eg. beta, RC-1, GA, etc.)",
 				Type:        sdk.StringParameter,
 				Advanced:    true,
 			},
