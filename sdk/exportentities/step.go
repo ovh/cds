@@ -177,6 +177,10 @@ func newStep(act sdk.Action) Step {
 			if releaseNote != nil {
 				s.Release.ReleaseNote = releaseNote.Value
 			}
+			releaseNameSuffix := sdk.ParameterFind(act.Parameters, "releaseNameSuffix")
+			if releaseNameSuffix != nil {
+				s.Release.ReleaseNameSuffix = releaseNameSuffix.Value
+			}
 		case sdk.ReleaseVCSAction:
 			s.ReleaseVCS = &StepReleaseVCS{}
 			artifacts := sdk.ParameterFind(act.Parameters, "artifacts")
@@ -306,8 +310,9 @@ type StepGitClone struct {
 
 // StepRelease represents exported release step.
 type StepRelease struct {
-	Artifacts   string `json:"artifacts,omitempty" yaml:"artifacts,omitempty"`
-	ReleaseNote string `json:"releaseNote,omitempty" yaml:"releaseNote,omitempty"`
+	Artifacts         string `json:"artifacts,omitempty" yaml:"artifacts,omitempty"`
+	ReleaseNote       string `json:"releaseNote,omitempty" yaml:"releaseNote,omitempty"`
+	ReleaseNameSuffix string `json:"releaseNameSuffix,omitempty" yaml:"releaseNameSuffix,omitempty"`
 }
 
 // StepReleaseVCS represents exported release step.
