@@ -416,7 +416,51 @@ var (
 		},
 	}
 
-	testcases = []pipelineTestCase{t1_1, t1_2, t2_2}
+	tRealease = pipelineTestCase{
+		name: "Pipeline with 1 stages and 1 release job",
+		arg: sdk.Pipeline{
+			Name: "MyPipeline tRelease",
+			Stages: []sdk.Stage{
+				{
+					BuildOrder: 1,
+					Name:       "stage 1",
+					Enabled:    true,
+					Jobs: []sdk.Job{{
+						Enabled: true,
+						Action: sdk.Action{
+							Name:        "Job 1",
+							Description: "This is job 1",
+							Actions: []sdk.Action{
+								{
+									Type:    sdk.BuiltinAction,
+									Name:    sdk.ReleaseAction,
+									Enabled: true,
+									Parameters: []sdk.Parameter{
+										{
+											Name:  "artifacts",
+											Type:  sdk.StringParameter,
+											Value: ".*",
+										},
+										{
+											Name:  "releaseNote",
+											Type:  sdk.StringParameter,
+											Value: "my release",
+										},
+										{
+											Name:  "releaseNameSuffix",
+											Type:  sdk.StringParameter,
+											Value: "-RC",
+										},
+									},
+								},
+							},
+						},
+					}},
+				},
+			},
+		},
+	}
+	testcases = []pipelineTestCase{t1_1, t1_2, t2_2, tRealease}
 )
 
 func TestExportPipeline_YAML(t *testing.T) {
