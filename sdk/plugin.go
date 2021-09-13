@@ -7,6 +7,7 @@ const (
 	GRPCPluginDownloadArtifact      = "integration-download_artifact"
 	GRPCPluginBuildInfo             = "integration-build_info"
 	GRPCPluginRelease               = "integration-release"
+	GRPCPluginPromote               = "integration-promote"
 	GRPCPluginAction                = "action"
 )
 

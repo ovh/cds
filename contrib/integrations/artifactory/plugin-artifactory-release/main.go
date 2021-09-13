@@ -8,8 +8,6 @@ import (
 	"strings"
 
 	"github.com/golang/protobuf/ptypes/empty"
-	"github.com/jfrog/jfrog-client-go/artifactory"
-	artService "github.com/jfrog/jfrog-client-go/artifactory/services"
 	"github.com/jfrog/jfrog-client-go/artifactory/services/utils"
 	"github.com/jfrog/jfrog-client-go/distribution"
 	authdistrib "github.com/jfrog/jfrog-client-go/distribution/auth"
@@ -70,13 +68,8 @@ func (e *artifactoryReleasePlugin) Run(_ context.Context, opts *integrationplugi
 	artifactoryURL := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactManagerConfigURL)]
 	token := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactManagerConfigToken)]
 	releaseToken := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactManagerConfigReleaseToken)]
-	lowMaturitySuffix := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactManagerConfigPromotionLowMaturity)]
-	highMaturitySuffix := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactManagerConfigPromotionHighMaturity)]
 
 	buildInfo := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactManagerConfigBuildInfoPrefix)]
-	if buildInfo == "" {
-		buildInfo = opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactManagerConfigBuildInfoPath)]
-	}
 
 	version := opts.GetOptions()["cds.version"]
 	projectKey := opts.GetOptions()["cds.project"]
@@ -84,7 +77,15 @@ func (e *artifactoryReleasePlugin) Run(_ context.Context, opts *integrationplugi
 
 	artifactList := opts.GetOptions()["artifacts"]
 	releaseNote := opts.GetOptions()["releaseNote"]
-	releaseNameSuffix := opts.GetOptions()["releaseNameSuffix"]
+	srcMaturity := opts.GetOptions()["srcMaturity"]
+	destMaturity := opts.GetOptions()["destMaturity"]
+
+	if srcMaturity == "" {
+		srcMaturity = "snapshot"
+	}
+	if destMaturity == "" {
+		destMaturity = "release"
+	}
 
 	runResult, err := grpcplugins.GetRunResults(e.HTTPPort)
 	if err != nil {
@@ -131,21 +132,21 @@ func (e *artifactoryReleasePlugin) Run(_ context.Context, opts *integrationplugi
 		}
 		switch rData.RepoType {
 		case "docker":
-			if err := e.promoteDockerImage(artiClient, rData, lowMaturitySuffix, highMaturitySuffix); err != nil {
-				return fail("unable to promote docker image: %s: %v", rData.Name+"-"+highMaturitySuffix, err)
+			if err := art.PromoteDockerImage(artiClient, rData, srcMaturity, destMaturity); err != nil {
+				return fail("unable to promote docker image: %s: %v", rData.Name+"-"+destMaturity, err)
 			}
-			promotedArtifacts = append(promotedArtifacts, fmt.Sprintf("%s-%s/%s/manifest.json", rData.RepoName, highMaturitySuffix, rData.Path))
+			promotedArtifacts = append(promotedArtifacts, fmt.Sprintf("%s-%s/%s/manifest.json", rData.RepoName, destMaturity, rData.Path))
 		default:
-			if err := e.promoteFile(artiClient, rData, lowMaturitySuffix, highMaturitySuffix); err != nil {
+			if err := art.PromoteFile(artiClient, rData, srcMaturity, destMaturity); err != nil {
 				return fail("unable to promote file: %s: %v", rData.Name, err)
 			}
-			promotedArtifacts = append(promotedArtifacts, fmt.Sprintf("%s-%s/%s", rData.RepoName, highMaturitySuffix, rData.Path))
+			promotedArtifacts = append(promotedArtifacts, fmt.Sprintf("%s-%s/%s", rData.RepoName, destMaturity, rData.Path))
 		}
 
 	}
 
 	// Release bundle
-	releaseName, releaseVersion, err := e.createReleaseBundle(distriClient, projectKey, workflowName, version, buildInfo, promotedArtifacts, releaseNameSuffix, releaseNote, artifactoryURL, releaseToken)
+	releaseName, releaseVersion, err := e.createReleaseBundle(distriClient, projectKey, workflowName, version, buildInfo, promotedArtifacts, destMaturity, releaseNote, artifactoryURL, releaseToken)
 	if err != nil {
 		return fail(err.Error())
 	}
@@ -176,12 +177,12 @@ func (e *artifactoryReleasePlugin) Run(_ context.Context, opts *integrationplugi
 	}, nil
 }
 
-func (e *artifactoryReleasePlugin) createReleaseBundle(distriClient *distribution.DistributionServicesManager, projectKey, workflowName, version, buildInfo string, artifactPromoted []string, releaseNameSuffix, releaseNote string, artifactoryURL, releaseToken string) (string, string, error) {
+func (e *artifactoryReleasePlugin) createReleaseBundle(distriClient *distribution.DistributionServicesManager, projectKey, workflowName, version, buildInfo string, artifactPromoted []string, destMaturity, releaseNote string, artifactoryURL, releaseToken string) (string, string, error) {
 	buildInfoName := fmt.Sprintf("%s/%s/%s", buildInfo, projectKey, workflowName)
 
 	params := services.NewCreateReleaseBundleParams(strings.Replace(buildInfoName, "/", "-", -1), version)
-	if releaseNameSuffix != "" {
-		params.Name += releaseNameSuffix
+	if destMaturity != "" {
+		params.Version += "-" + destMaturity
 	}
 
 	exist, err := e.checkReleaseBundleExist(distriClient, artifactoryURL, releaseToken, params.Name, params.Version)
@@ -253,69 +254,6 @@ func (e *artifactoryReleasePlugin) removeNonEdge(edges []EdgeNode) []EdgeNode {
 		edgeFiltered = append(edgeFiltered, e)
 	}
 	return edgeFiltered
-}
-
-func (e *artifactoryReleasePlugin) promoteFile(artiClient artifactory.ArtifactoryServicesManager, data sdk.WorkflowRunResultArtifactManager, lowMaturity, highMaturity string) error {
-	srcRepo := fmt.Sprintf("%s-%s", data.RepoName, lowMaturity)
-	targetRepo := fmt.Sprintf("%s-%s", data.RepoName, highMaturity)
-	params := artService.NewMoveCopyParams()
-	params.Pattern = fmt.Sprintf("%s/%s", srcRepo, data.Path)
-	params.Target = fmt.Sprintf("%s/%s", targetRepo, data.Path)
-	params.Flat = true
-
-	// Check if artifact already exist on destination
-	exist, err := e.checkArtifactExists(artiClient, targetRepo, data.Path)
-	if err != nil {
-		return err
-	}
-	if !exist {
-		fmt.Printf("Promoting file %s from %s to %s\n", data.Name, srcRepo, targetRepo)
-		nbSuccess, nbFailed, err := artiClient.Move(params)
-		if err != nil {
-			return err
-		}
-		if nbFailed > 0 || nbSuccess == 0 {
-			return fmt.Errorf("%s: copy failed with no reason", data.Name)
-		}
-		return nil
-	}
-	fmt.Printf("%s has been already promoted", data.Name)
-	return nil
-}
-
-func (e *artifactoryReleasePlugin) promoteDockerImage(artiClient artifactory.ArtifactoryServicesManager, data sdk.WorkflowRunResultArtifactManager, lowMaturity, highMaturity string) error {
-	sourceRepo := fmt.Sprintf("%s-%s", data.RepoName, lowMaturity)
-	targetRepo := fmt.Sprintf("%s-%s", data.RepoName, highMaturity)
-	params := artService.NewDockerPromoteParams(data.Path, sourceRepo, targetRepo)
-	params.Copy = false
-
-	// Check if artifact already exist on destination
-	exist, err := e.checkArtifactExists(artiClient, targetRepo, data.Path)
-	if err != nil {
-		return err
-	}
-	if !exist {
-		fmt.Printf("Promoting docker image %s from %s to %s\n", data.Name, params.SourceRepo, params.TargetRepo)
-		return artiClient.PromoteDocker(params)
-	}
-	fmt.Printf("%s has been already promoted", data.Name)
-	return nil
-}
-
-func (e *artifactoryReleasePlugin) checkArtifactExists(artiClient artifactory.ArtifactoryServicesManager, repoName string, artiName string) (bool, error) {
-	httpDetails := artiClient.GetConfig().GetServiceDetails().CreateHttpClientDetails()
-	fileInfoURL := fmt.Sprintf("%sapi/storage/%s/%s", artiClient.GetConfig().GetServiceDetails().GetUrl(), repoName, artiName)
-	re, body, _, err := artiClient.Client().SendGet(fileInfoURL, true, &httpDetails)
-	if err != nil {
-		return false, fmt.Errorf("unable to get file info %s/%s: %v", repoName, artiName, err)
-	}
-	if re.StatusCode == 404 {
-		return false, nil
-	}
-	if re.StatusCode >= 400 {
-		return false, fmt.Errorf("unable to call artifactory [HTTP: %d] %s %s", re.StatusCode, fileInfoURL, string(body))
-	}
-	return true, nil
 }
 
 func (e *artifactoryReleasePlugin) checkReleaseBundleExist(client *distribution.DistributionServicesManager, url string, token string, name string, version string) (bool, error) {

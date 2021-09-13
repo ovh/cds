@@ -24,7 +24,6 @@ const (
 	ArtifactProjectKey                         = "project.key"
 	ArtifactManagerConfigPromotionLowMaturity  = "promotion.maturity.low"
 	ArtifactManagerConfigPromotionHighMaturity = "promotion.maturity.high"
-	ArtifactManagerConfigBuildInfoPath         = "build.info.path"
 	ArtifactManagerConfigBuildInfoPrefix       = "build.info.prefix"
 )
 
@@ -154,11 +153,6 @@ var (
 				Type: IntegrationConfigTypeString,
 			},
 			ArtifactManagerConfigBuildInfoPrefix: IntegrationConfigValue{
-				Type: IntegrationConfigTypeString,
-			},
-		},
-		AdditionalDefaultConfig: IntegrationConfig{
-			ArtifactManagerConfigBuildInfoPath: IntegrationConfigValue{
 				Type: IntegrationConfigTypeString,
 			},
 		},
