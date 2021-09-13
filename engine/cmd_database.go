@@ -18,8 +18,8 @@ import (
 	migrate "github.com/rubenv/sql-migrate"
 	"github.com/spf13/cobra"
 
-	"github.com/ovh/cds/engine/api/database/dbmigrate"
 	"github.com/ovh/cds/engine/database"
+	"github.com/ovh/cds/engine/database/dbmigrate"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 )

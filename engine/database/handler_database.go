@@ -7,12 +7,49 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/database/dbmigrate"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
 
 type DBFunc func() *gorp.DbMap
+
+func AdminDeleteDatabaseMigration(db DBFunc) service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		id := vars["id"]
+
+		if len(id) == 0 {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "Id is mandatory. Check id from table gorp_migrations")
+		}
+
+		return dbmigrate.DeleteMigrate(db().Db, id)
+	}
+}
+
+func AdminDatabaseMigrationUnlocked(db DBFunc) service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		id := vars["id"]
+
+		if len(id) == 0 {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "Id is mandatory. Check id from table gorp_migrations_lock")
+		}
+
+		return dbmigrate.UnlockMigrate(db().Db, id, gorp.PostgresDialect{})
+	}
+}
+
+func AdminGetDatabaseMigration(db DBFunc) service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		a, err := dbmigrate.List(db().Db)
+		if err != nil {
+			return sdk.WrapError(err, "Cannot load database migration list %d", err)
+		}
+		return service.WriteJSON(w, a, http.StatusOK)
+	}
+}
 
 func AdminDatabaseSignatureResume(db DBFunc, mapper *gorpmapper.Mapper) service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {

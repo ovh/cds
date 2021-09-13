@@ -1,8 +1,12 @@
 name: Database Commands TestSuite
 testcases:
+- name: list migrations
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database list cdn'
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database list api'
 - name: delete an invalid row from gorp_migration
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database list|grep '\|*_*\.sql'
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database delete foo
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database list api|grep '\|*_*\.sql'
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database delete api foo
     assertions:
     - result.code ShouldNotEqual 0

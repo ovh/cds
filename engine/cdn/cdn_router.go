@@ -46,6 +46,10 @@ func (s *Service) initRouter(ctx context.Context) {
 
 	r.Handle("/size/item/project/{projectKey}", nil, r.GET(s.getSizeByProjectHandler))
 
+	r.Handle("/admin/database/migration/delete/{id}", nil, r.DELETE(s.deleteDatabaseMigrationHandler))
+	r.Handle("/admin/database/migration/unlock/{id}", nil, r.POST(s.postDatabaseMigrationUnlockedHandler))
+	r.Handle("/admin/database/migration", nil, r.GET(s.getDatabaseMigrationHandler))
+
 	r.Handle("/admin/database/signature", nil, r.GET(s.getAdminDatabaseSignatureResume))
 	r.Handle("/admin/database/signature/{entity}/roll/{pk}", nil, r.POST(s.postAdminDatabaseSignatureRollEntityByPrimaryKey))
 	r.Handle("/admin/database/signature/{entity}/{signer}", nil, r.GET(s.getAdminDatabaseSignatureTuplesBySigner))
