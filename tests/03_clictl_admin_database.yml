@@ -3,7 +3,11 @@ testcases:
 - name: list migrations
   steps:
   - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database list cdn
+    retry: 2
+    delay: 5
   - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database list api
+    retry: 2
+    delay: 5
 - name: delete an invalid row from gorp_migration
   steps:
   - script: {{.cdsctl}} -f {{.cdsctl.config}} admin database list api|grep '\|*_*\.sql'
