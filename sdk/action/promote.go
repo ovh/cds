@@ -5,17 +5,12 @@ import (
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
-// Release action definition.
-var Release = Manifest{
+// Promote action definition.
+var Promote = Manifest{
 	Action: sdk.Action{
-		Name:        sdk.ReleaseAction,
-		Description: "This action creates a release on a artifact manager. It promotes artifacts.",
+		Name:        sdk.PromoteAction,
+		Description: "This action promote artifacts in an artifact manager",
 		Parameters: []sdk.Parameter{
-			{
-				Name:        "releaseNote",
-				Description: "(optional) Set a release note for the release.",
-				Type:        sdk.TextParameter,
-			},
 			{
 				Name:        "artifacts",
 				Description: "(optional) Set a list of artifacts, separate by ','. You can also use regexp.",
@@ -25,15 +20,11 @@ var Release = Manifest{
 				Name:        "srcMaturity",
 				Description: "Repository suffix from which the artifact will be moved",
 				Type:        sdk.StringParameter,
-				Value:       "snapshot",
-				Advanced:    true,
 			},
 			{
 				Name:        "destMaturity",
 				Description: "Repository suffix in which the artifact will be moved",
 				Type:        sdk.StringParameter,
-				Value:       "release",
-				Advanced:    true,
 			},
 		},
 	},
@@ -46,7 +37,7 @@ var Release = Manifest{
 			Stage: "Stage1",
 			Steps: []exportentities.Step{
 				{
-					Release: &exportentities.StepRelease{
+					Promote: &exportentities.StepPromote{
 						Artifacts: "*.zip",
 					},
 				},

@@ -119,3 +119,66 @@ func SetProperties(artiClient artifactory.ArtifactoryServicesManager, repoName s
 	}
 	return nil
 }
+
+func PromoteFile(artiClient artifactory.ArtifactoryServicesManager, data sdk.WorkflowRunResultArtifactManager, lowMaturity, highMaturity string) error {
+	srcRepo := fmt.Sprintf("%s-%s", data.RepoName, lowMaturity)
+	targetRepo := fmt.Sprintf("%s-%s", data.RepoName, highMaturity)
+	params := services.NewMoveCopyParams()
+	params.Pattern = fmt.Sprintf("%s/%s", srcRepo, data.Path)
+	params.Target = fmt.Sprintf("%s/%s", targetRepo, data.Path)
+	params.Flat = true
+
+	// Check if artifact already exist on destination
+	exist, err := checkArtifactExists(artiClient, targetRepo, data.Path)
+	if err != nil {
+		return err
+	}
+	if !exist {
+		fmt.Printf("Promoting file %s from %s to %s\n", data.Name, srcRepo, targetRepo)
+		nbSuccess, nbFailed, err := artiClient.Move(params)
+		if err != nil {
+			return err
+		}
+		if nbFailed > 0 || nbSuccess == 0 {
+			return fmt.Errorf("%s: copy failed with no reason", data.Name)
+		}
+		return nil
+	}
+	fmt.Printf("%s has been already promoted", data.Name)
+	return nil
+}
+
+func PromoteDockerImage(artiClient artifactory.ArtifactoryServicesManager, data sdk.WorkflowRunResultArtifactManager, lowMaturity, highMaturity string) error {
+	sourceRepo := fmt.Sprintf("%s-%s", data.RepoName, lowMaturity)
+	targetRepo := fmt.Sprintf("%s-%s", data.RepoName, highMaturity)
+	params := services.NewDockerPromoteParams(data.Path, sourceRepo, targetRepo)
+	params.Copy = false
+
+	// Check if artifact already exist on destination
+	exist, err := checkArtifactExists(artiClient, targetRepo, data.Path)
+	if err != nil {
+		return err
+	}
+	if !exist {
+		fmt.Printf("Promoting docker image %s from %s to %s\n", data.Name, params.SourceRepo, params.TargetRepo)
+		return artiClient.PromoteDocker(params)
+	}
+	fmt.Printf("%s has been already promoted", data.Name)
+	return nil
+}
+
+func checkArtifactExists(artiClient artifactory.ArtifactoryServicesManager, repoName string, artiName string) (bool, error) {
+	httpDetails := artiClient.GetConfig().GetServiceDetails().CreateHttpClientDetails()
+	fileInfoURL := fmt.Sprintf("%sapi/storage/%s/%s", artiClient.GetConfig().GetServiceDetails().GetUrl(), repoName, artiName)
+	re, body, _, err := artiClient.Client().SendGet(fileInfoURL, true, &httpDetails)
+	if err != nil {
+		return false, fmt.Errorf("unable to get file info %s/%s: %v", repoName, artiName, err)
+	}
+	if re.StatusCode == 404 {
+		return false, nil
+	}
+	if re.StatusCode >= 400 {
+		return false, fmt.Errorf("unable to call artifactory [HTTP: %d] %s %s", re.StatusCode, fileInfoURL, string(body))
+	}
+	return true, nil
+}
