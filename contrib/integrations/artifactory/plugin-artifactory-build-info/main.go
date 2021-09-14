@@ -70,11 +70,8 @@ func (e *artifactoryBuildInfoPlugin) Run(_ context.Context, opts *integrationplu
 	tokenName := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactManagerConfigTokenName)]
 	lowMaturitySuffix := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactManagerConfigPromotionLowMaturity)]
 	artifactoryProjectKey := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactProjectKey)]
-
 	buildInfo := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactManagerConfigBuildInfoPrefix)]
-	if buildInfo == "" {
-		buildInfo = opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactManagerConfigBuildInfoPath)]
-	}
+
 	version := opts.GetOptions()["cds.version"]
 	projectKey := opts.GetOptions()["cds.project"]
 	workflowName := opts.GetOptions()["cds.workflow"]

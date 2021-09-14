@@ -46,6 +46,17 @@ func (c *gerritClient) Branches(ctx context.Context, fullname string, _ sdk.VCSB
 
 //Branch retrieves the branch
 func (c *gerritClient) Branch(ctx context.Context, fullname string, filters sdk.VCSBranchFilters) (*sdk.VCSBranch, error) {
+	if filters.Default {
+		bs, err := c.Branches(ctx, fullname, sdk.VCSBranchesFilter{})
+		if err != nil {
+			return nil, err
+		}
+		for _, b := range bs {
+			if b.Default {
+				return &b, nil
+			}
+		}
+	}
 	branch, _, err := c.client.Projects.GetBranch(fullname, filters.BranchName)
 	if err != nil {
 		return nil, sdk.WrapError(err, "unable to get branch")

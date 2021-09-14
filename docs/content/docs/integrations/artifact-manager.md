@@ -43,19 +43,14 @@ On the integration project view, add a new "Artifact Manager" integration and fi
 * `token`: The value of the access token used by CDS to access the artifactory API
 * `release.token`: The value of the access token used by CDS to access the distribution API (https://www.jfrog.com/confluence/display/JFROG/JFrog+Distribution)
 * `promotion.maturity.low`: suffix used on your local repositories to identify your snapshots
-* `promotion.maturity.high`: suffix used on your local repositories to identify your releases
 
 ### Enable Artifactory integration on your workflow
 
 On the workflow advanced view, you can link your workflow to project integration.
 
-Select the artifactory integration and fill the parameter:
-
-* `build.info.path`: prefix used by CDS action Push Build Info to name your build info (see below for more detailed informations). For example it can be the name of your team.
-
 ## Integration actions
 
-The artifactory integration comes with 4 actions (https://github.com/ovh/cds/tree/master/contrib/integrations/artifactory)
+The artifactory integration comes with 5 actions (https://github.com/ovh/cds/tree/master/contrib/integrations/artifactory)
 
 ### Artifactory-Upload-Artifact
 
@@ -76,6 +71,15 @@ This plugin is used by CDS Push Build Info action to create inside artifactory a
 This action must be run after all the artifacts have been uploaded
 
 The build name computed by CDS will be: [build.info.path]/[cds.projectkey]/[cds.workflow.name]
+
+### Artifactory-Promote
+
+This plugin is used by CDS Promote action to move artifacts from 1 repository to another. The two repositories must share the name but having a different suffix.
+
+For example:
+ * my-docker-repo-snapshot
+ * my-docker-repo-release
+
 
 ### Artifactory-Release
 
