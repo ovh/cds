@@ -144,7 +144,7 @@ func PromoteFile(artiClient artifactory.ArtifactoryServicesManager, data sdk.Wor
 		}
 		return nil
 	}
-	fmt.Printf("%s has been already promoted", data.Name)
+	fmt.Printf("%s has been already promoted\n", data.Name)
 	return nil
 }
 
@@ -163,7 +163,7 @@ func PromoteDockerImage(artiClient artifactory.ArtifactoryServicesManager, data 
 		fmt.Printf("Promoting docker image %s from %s to %s\n", data.Name, params.SourceRepo, params.TargetRepo)
 		return artiClient.PromoteDocker(params)
 	}
-	fmt.Printf("%s has been already promoted", data.Name)
+	fmt.Printf("%s has been already promoted\n", data.Name)
 	return nil
 }
 
