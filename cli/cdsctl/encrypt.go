@@ -59,7 +59,9 @@ my-data: 01234567890987654321`,
 }
 
 func encrypt() *cobra.Command {
-	return cli.NewCommand(encryptCmd, encryptRun, cli.SubCommands{encryptList()}, withAllCommandModifiers()...)
+	return cli.NewCommand(encryptCmd, encryptRun, cli.SubCommands{
+		encryptList(), encryptDelete(),
+	}, withAllCommandModifiers()...)
 }
 
 func encryptRun(v cli.Values) error {
@@ -95,4 +97,23 @@ func encryptListRun(v cli.Values) (cli.ListResult, error) {
 		return nil, err
 	}
 	return cli.AsListResult(secrets), nil
+}
+
+var encryptDeleteCmd = cli.Command{
+	Name:  "delete",
+	Short: "Delete the given encrypted variable of your CDS project",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+	},
+	Args: []cli.Arg{
+		{Name: "name"},
+	},
+}
+
+func encryptDelete() *cobra.Command {
+	return cli.NewDeleteCommand(encryptDeleteCmd, encryptDeleteRun, nil, withAllCommandModifiers()...)
+}
+
+func encryptDeleteRun(v cli.Values) error {
+	return client.VariableEncryptDelete(v.GetString(_ProjectKey), v.GetString("name"))
 }

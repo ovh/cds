@@ -2766,6 +2766,20 @@ func (mr *MockProjectClientMockRecorder) VariableEncrypt(projectKey, varName, co
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VariableEncrypt", reflect.TypeOf((*MockProjectClient)(nil).VariableEncrypt), projectKey, varName, content)
 }
 
+// VariableEncryptDelete mocks base method.
+func (m *MockProjectClient) VariableEncryptDelete(projectKey, name string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "VariableEncryptDelete", projectKey, name)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// VariableEncryptDelete indicates an expected call of VariableEncryptDelete.
+func (mr *MockProjectClientMockRecorder) VariableEncryptDelete(projectKey, name interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VariableEncryptDelete", reflect.TypeOf((*MockProjectClient)(nil).VariableEncryptDelete), projectKey, name)
+}
+
 // VariableListEncrypt mocks base method.
 func (m *MockProjectClient) VariableListEncrypt(projectKey string) ([]sdk.Secret, error) {
 	m.ctrl.T.Helper()
@@ -2955,6 +2969,20 @@ func (m *MockProjectVariablesClient) VariableEncrypt(projectKey, varName, conten
 func (mr *MockProjectVariablesClientMockRecorder) VariableEncrypt(projectKey, varName, content interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VariableEncrypt", reflect.TypeOf((*MockProjectVariablesClient)(nil).VariableEncrypt), projectKey, varName, content)
+}
+
+// VariableEncryptDelete mocks base method.
+func (m *MockProjectVariablesClient) VariableEncryptDelete(projectKey, name string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "VariableEncryptDelete", projectKey, name)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// VariableEncryptDelete indicates an expected call of VariableEncryptDelete.
+func (mr *MockProjectVariablesClientMockRecorder) VariableEncryptDelete(projectKey, name interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VariableEncryptDelete", reflect.TypeOf((*MockProjectVariablesClient)(nil).VariableEncryptDelete), projectKey, name)
 }
 
 // VariableListEncrypt mocks base method.
@@ -7749,6 +7777,20 @@ func (m *MockInterface) VariableEncrypt(projectKey, varName, content string) (*s
 func (mr *MockInterfaceMockRecorder) VariableEncrypt(projectKey, varName, content interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VariableEncrypt", reflect.TypeOf((*MockInterface)(nil).VariableEncrypt), projectKey, varName, content)
+}
+
+// VariableEncryptDelete mocks base method.
+func (m *MockInterface) VariableEncryptDelete(projectKey, name string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "VariableEncryptDelete", projectKey, name)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// VariableEncryptDelete indicates an expected call of VariableEncryptDelete.
+func (mr *MockInterfaceMockRecorder) VariableEncryptDelete(projectKey, name interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VariableEncryptDelete", reflect.TypeOf((*MockInterface)(nil).VariableEncryptDelete), projectKey, name)
 }
 
 // VariableListEncrypt mocks base method.

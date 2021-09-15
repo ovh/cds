@@ -35,9 +35,14 @@ func ListEncryptedData(ctx context.Context, db gorp.SqlExecutor, projectID int64
 	var res []sdk.Secret
 	query := gorpmapping.NewQuery("select content_name, token from encrypted_data where project_id = $1").Args(projectID)
 	if err := gorpmapping.GetAll(ctx, db, query, &res); err != nil {
-		return nil, sdk.WithStack(err)
+		return nil, err
 	}
 	return res, nil
+}
+
+func DeleteEncryptedVariable(db gorp.SqlExecutor, projectID int64, name string) error {
+	_, err := db.Exec("delete from encrypted_data where project_id = $1 and content_name = $2", projectID, name)
+	return sdk.WithStack(err)
 }
 
 // EncryptWithBuiltinKey encrypt a content with the builtin gpg key encode, compress it and encode with base64
