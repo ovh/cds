@@ -10,8 +10,8 @@ import (
 	"github.com/rockbears/log"
 	migrate "github.com/rubenv/sql-migrate"
 
-	"github.com/ovh/cds/engine/api/database/dbmigrate"
 	"github.com/ovh/cds/engine/database"
+	"github.com/ovh/cds/engine/database/dbmigrate"
 	"github.com/ovh/cds/sdk"
 )
 

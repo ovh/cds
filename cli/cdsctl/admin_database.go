@@ -29,34 +29,66 @@ func adminDatabase() *cobra.Command {
 var adminDatabaseUnlockCmd = cli.Command{
 	Name:  "unlock",
 	Short: "Unlock a pending migration (Use with caution)",
+	Example: `
+$ cdsctl admin database unlock api id-to-unlock
+$ cdsctl admin database unlock cdn id-to-unlock
+	`,
 	Args: []cli.Arg{
+		{
+			Name: argServiceName,
+			IsValid: func(s string) bool {
+				return s == sdk.TypeCDN || s == sdk.TypeAPI
+			},
+		},
 		{Name: "id"},
 	},
 }
 
-func adminDatabaseUnlockFunc(v cli.Values) error {
-	return client.AdminDatabaseMigrationUnlock(v.GetString("id"))
+func adminDatabaseUnlockFunc(args cli.Values) error {
+	return client.AdminDatabaseMigrationUnlock(args.GetString(argServiceName), args.GetString("id"))
 }
 
 var adminDatabaseDeleteMigrationCmd = cli.Command{
 	Name:  "delete",
 	Short: "Delete a database migration from table gorp_migration (use with caution)",
+	Example: `
+$ cdsctl admin database delete api id-migration-to-delete
+$ cdsctl admin database delete cdn id-migration-to-delete
+	`,
 	Args: []cli.Arg{
+		{
+			Name: argServiceName,
+			IsValid: func(s string) bool {
+				return s == sdk.TypeCDN || s == sdk.TypeAPI
+			},
+		},
 		{Name: "id"},
 	},
 }
 
-func adminDatabaseDeleteFunc(v cli.Values) error {
-	return client.AdminDatabaseMigrationDelete(v.GetString("id"))
+func adminDatabaseDeleteFunc(args cli.Values) error {
+	return client.AdminDatabaseMigrationDelete(args.GetString(argServiceName), args.GetString("id"))
 }
 
 var adminDatabaseMigrationsList = cli.Command{
 	Name:  "list",
 	Short: "List all CDS DB migrations",
+	Example: `
+$ cdsctl admin database list api
+$ cdsctl admin database list cdn
+	`,
+	Args: []cli.Arg{
+		{
+			Name: argServiceName,
+			IsValid: func(s string) bool {
+				return s == sdk.TypeCDN || s == sdk.TypeAPI
+			},
+		},
+	},
 }
 
-func adminDatabaseMigrationsListFunc(_ cli.Values) (cli.ListResult, error) {
-	migrations, err := client.AdminDatabaseMigrationsList()
+func adminDatabaseMigrationsListFunc(args cli.Values) (cli.ListResult, error) {
+	migrations, err := client.AdminDatabaseMigrationsList(args.GetString(argServiceName))
 	if err != nil {
 		return nil, err
 	}
