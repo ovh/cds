@@ -75,7 +75,7 @@ services:
             cdn.database.host=cds-db \
             cdn.publicTCP=${HOSTNAME}:8090 \
             cdn.api.http.url=http://cds-api:8081 \
-            cdn.url=http://cds-cdn:8089 \
+            cdn.URL=http://cds-cdn:8089 \
             hatchery.local.commonConfiguration.url=http://cds-hatchery-local:8086 \
             hatchery.local.commonConfiguration.api.http.url=http://cds-api:8081 \
             hatchery.local.basedir=/app/hatchery-local \
