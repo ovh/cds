@@ -72,7 +72,6 @@ services:
             cdn.storageUnits.buffers.redis.redis.password=cds \
             cdn.storageUnits.buffers.local-buffer.local.path=/app/cdn-buffer \
             cdn.storageUnits.storages.local.local.path=/app/cdn-storage \
-            cdn.storageUnits.storages.cds.cds.host=http://cds-api:8081 \
             cdn.database.host=cds-db \
             cdn.publicTCP=${HOSTNAME}:8090 \
             cdn.api.http.url=http://cds-api:8081 \
