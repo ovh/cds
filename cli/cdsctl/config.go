@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strconv"
 
 	"github.com/fsamin/go-repo"
 	"github.com/pkg/errors"
@@ -118,12 +119,17 @@ func loadConfig(cmd *cobra.Command) (string, *cdsclient.Config, error) {
 		return "", nil, cli.NewError("invalid cdsctl configuration to reach a CDS API")
 	}
 
+	// Get max retry config from environment only
+	configNbRetryFromEnv := os.Getenv("CDS_HTTP_MAX_RETRY")
+	configNbRetry, _ := strconv.ParseInt(configNbRetryFromEnv, 10, 64)
+
 	config := &cdsclient.Config{
 		Host:                              cdsctx.Host,
 		SessionToken:                      cdsctx.Session,
 		BuitinConsumerAuthenticationToken: cdsctx.Token,
 		Verbose:                           verbose,
 		InsecureSkipVerifyTLS:             insecureSkipVerifyTLS,
+		Retry:                             int(configNbRetry),
 	}
 
 	return configFile, config, nil
