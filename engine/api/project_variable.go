@@ -72,6 +72,25 @@ func (api *API) postEncryptVariableHandler() service.Handler {
 	}
 }
 
+func (api *API) deleteEncryptVariableHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars[permProjectKey]
+
+		p, err := project.Load(ctx, api.mustDB(), key)
+		if err != nil {
+			return err
+		}
+
+		secretName := r.FormValue("name")
+		if secretName == "" {
+			return sdk.WithStack(sdk.ErrWrongRequest)
+		}
+
+		return project.DeleteEncryptedVariable(api.mustDB(), p.ID, secretName)
+	}
+}
+
 func (api *API) getVariablesAuditInProjectnHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
