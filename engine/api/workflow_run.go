@@ -1073,6 +1073,14 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 		}
 	}
 
+	if exist := featureflipping.Exists(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeatureRegion); exist {
+		if err := workflow.CheckRegion(ctx, api.mustDB(), wfRun.Workflow); err != nil {
+			r := failInitWorkflowRun(ctx, api.mustDB(), wfRun, err)
+			report.Merge(ctx, r)
+			return
+		}
+	}
+
 	tx, err := api.mustDB().Begin()
 	if err != nil {
 		r := failInitWorkflowRun(ctx, api.mustDB(), wfRun, sdk.WrapError(err, "unable to start workflow %s/%s", p.Key, wf.Name))
@@ -1273,6 +1281,8 @@ func failInitWorkflowRun(ctx context.Context, db *gorp.DbMap, wfRun *sdk.Workflo
 		if len(wfRun.WorkflowNodeRuns) == 0 {
 			wfRun.Status = sdk.StatusNeverBuilt
 		}
+	} else if sdk.ErrorIs(err, sdk.ErrRegionNotAllowed) {
+		info = sdk.SpawnMsgNew(*sdk.MsgWorkflowRegionError)
 	} else {
 		httpErr := sdk.ExtractHTTPError(err)
 		ctx = sdk.ContextWithStacktrace(ctx, err)

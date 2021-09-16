@@ -3159,6 +3159,121 @@ func Test_postWorkflowRunHandlerRestartOnlyFailed(t *testing.T) {
 	assert.Equal(t, sdk.StatusWaiting, wrr.WorkflowNodeRuns[wrr.Workflow.WorkflowData.Node.ID][0].Stages[0].RunJobs[1].Status)
 }
 
+func Test_CheckRegionDuringInitWorkflow(t *testing.T) {
+	featureflipping.Init(gorpmapping.Mapper)
+	api, db, router := newTestAPI(t)
+
+	existingFeat, _ := featureflipping.LoadByName(context.Background(), gorpmapping.Mapper, db, sdk.FeatureRegion)
+	featureflipping.Delete(db, existingFeat.ID)
+	f := &sdk.Feature{
+		Name: sdk.FeatureRegion,
+		Rule: "return false",
+	}
+	require.NoError(t, featureflipping.Insert(gorpmapping.Mapper, db, f))
+	t.Cleanup(func() {
+		featureflipping.Delete(db, f.ID)
+	})
+
+	u, pass := assets.InsertAdminUser(t, db)
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+
+	pip := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+	}
+	require.NoError(t, pipeline.InsertPipeline(api.mustDB(), &pip))
+	s := sdk.NewStage("stage 1")
+	s.Enabled = true
+	s.PipelineID = pip.ID
+	pipeline.InsertStage(api.mustDB(), s)
+	j := &sdk.Job{
+		Enabled: true,
+		Action: sdk.Action{
+			Enabled: true,
+			Requirements: []sdk.Requirement{
+				{
+					Name:  "region",
+					Type:  sdk.RegionRequirement,
+					Value: "my-prod-region",
+				},
+			},
+		},
+	}
+	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
+	s.Jobs = append(s.Jobs, *j)
+
+	pip.Stages = append(pip.Stages, *s)
+
+	w := sdk.Workflow{
+		Name:       "test_1",
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		WorkflowData: sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "root",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+			},
+		},
+	}
+
+	proj2, errP := project.Load(context.TODO(), api.mustDB(), proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
+	require.NoError(t, errP)
+
+	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, *proj2, &w))
+	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, *proj, "test_1", workflow.LoadOptions{})
+	require.NoError(t, err)
+
+	//Prepare request
+	vars := map[string]string{
+		"key":              proj.Key,
+		"permWorkflowName": w1.Name,
+	}
+	uri := router.GetRoute("POST", api.postWorkflowRunHandler, vars)
+	test.NotEmpty(t, uri)
+
+	opts := sdk.WorkflowRunPostHandlerOption{
+		Manual: &sdk.WorkflowNodeRunManual{
+			OnlyFailedJobs: false,
+			Resync:         false,
+		},
+	}
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, opts)
+
+	//Do the request
+	rec := httptest.NewRecorder()
+	router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 202, rec.Code)
+
+	var wrr sdk.WorkflowRun
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &wrr))
+
+	wr := &wrr
+	assert.Equal(t, int64(1), wr.Number)
+
+	opts = sdk.WorkflowRunPostHandlerOption{
+		Manual: &sdk.WorkflowNodeRunManual{
+			OnlyFailedJobs: true,
+			Resync:         false,
+		},
+		FromNodeIDs:    []int64{w1.WorkflowData.Node.ID},
+		Number:         &wr.Number,
+		AuthConsumerID: consumer.ID,
+	}
+	api.initWorkflowRun(context.TODO(), proj2.Key, &wr.Workflow, wr, opts)
+
+	wr, _ = workflow.LoadRun(context.TODO(), db, proj2.Key, w1.Name, 1, workflow.LoadRunOptions{})
+
+	require.Equal(t, sdk.StatusFail, wr.Status)
+	require.Equal(t, 1, len(wr.Infos))
+	require.Equal(t, "MsgWorkflowRegionError", wr.Infos[0].Message.ID)
+}
+
 func Test_postWorkflowRunHandlerRestartResync(t *testing.T) {
 	api, db, router := newTestAPI(t)
 

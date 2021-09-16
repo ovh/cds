@@ -94,6 +94,7 @@ var (
 	MsgWorkflowGeneratedFromTemplateVersion = &Message{"MsgWorkflowGeneratedFromTemplateVersion", trad{FR: "Le workflow a été généré à partir du modèle de workflow: %s.", EN: "The workflow was generated from the template: %s"}, nil, RunInfoTypInfo}
 	MsgTooMuchWorkflowRun                   = &Message{"MsgTooMuchWorkflowRun", trad{FR: "L'exécution de ce workflow est suspendu. Vous dépassez le nombre maximum d'éxécution autorisé (%.f). Merci de revoir la politique de retention de ce workflow", EN: "Workflow run is delayed. The maximum number of runs for this workflow has been reached ( %.f ). Please update your workflow retention policy"}, nil, RunInfoTypeWarning}
 	MsgSpawnErrorHatcheryRetryAttempt       = &Message{"MsgSpawnErrorHatcheryRetryAttempt", trad{EN: "Job execution failed by hatchery %s. Reason: %s"}, nil, RunInfoTypeError}
+	MsgWorkflowRegionError                  = &Message{"MsgWorkflowRegionError", trad{EN: "Region not allowed on this workflow"}, nil, RunInfoTypeError}
 )
 
 // Messages contains all sdk Messages

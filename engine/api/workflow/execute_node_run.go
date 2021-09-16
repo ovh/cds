@@ -13,11 +13,13 @@ import (
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/action"
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/plugin"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/cache"
+	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/telemetry"
@@ -333,7 +335,7 @@ func releaseMutex(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store ca
     ORDER BY workflow_run.num ASC
     LIMIT 1
   `
-	waitingRunID, err := db.SelectInt(mutexQuery, workflowID, nodeName, string(sdk.StatusWaiting))
+	waitingRunID, err := db.SelectInt(mutexQuery, workflowID, nodeName, sdk.StatusWaiting)
 	if err != nil && err != sql.ErrNoRows {
 		err = sdk.WrapError(err, "unable to load mutex-locked workflow node run id")
 		ctx = sdk.ContextWithStacktrace(ctx, err)
@@ -474,6 +476,12 @@ jobLoop:
 			spawnErrs.Join(*err)
 		}
 
+		if exist := featureflipping.Exists(ctx, gorpmapping.Mapper, db, sdk.FeatureRegion); exist {
+			if err := checkJobRegion(ctx, db, wr.Workflow.ProjectKey, wr.Workflow.Name, *job); err != nil {
+				spawnErrs.Append(sdk.ErrRegionNotAllowed)
+			}
+		}
+
 		// check that children actions used by job can be used by the project
 		if err := action.CheckChildrenForGroupIDsWithLoop(ctx, db, &job.Action, sdk.Groups(groups).ToIDs()); err != nil {
 			spawnErrs.Append(err)
@@ -591,11 +599,11 @@ func getIntegrationPlugins(db gorp.SqlExecutor, wr *sdk.WorkflowRun, nr *sdk.Wor
 	}
 
 	if projectIntegrationModelID > 0 {
-		plugin, err := plugin.LoadByIntegrationModelIDAndType(db, projectIntegrationModelID, sdk.GRPCPluginDeploymentIntegration)
+		plg, err := plugin.LoadByIntegrationModelIDAndType(db, projectIntegrationModelID, sdk.GRPCPluginDeploymentIntegration)
 		if err != nil {
 			return nil, sdk.NewErrorFrom(sdk.ErrNotFound, "Cannot find plugin for integration model id %d, %v", projectIntegrationModelID, err)
 		}
-		plugins = append(plugins, *plugin)
+		plugins = append(plugins, *plg)
 	}
 
 	var artifactManagerInteg *sdk.WorkflowProjectIntegration
@@ -721,7 +729,7 @@ func syncStage(ctx context.Context, db gorp.SqlExecutor, store cache.Store, stag
 
 // NodeBuildParametersFromRun return build parameters from previous workflow run
 func NodeBuildParametersFromRun(wr sdk.WorkflowRun, id int64) ([]sdk.Parameter, error) {
-	params := []sdk.Parameter{}
+	params := make([]sdk.Parameter, 0)
 
 	nodesRun, ok := wr.WorkflowNodeRuns[id]
 	if !ok || len(nodesRun) == 0 {
