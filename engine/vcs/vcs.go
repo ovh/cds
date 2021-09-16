@@ -93,7 +93,7 @@ func (s *Service) getConsumer(name string) (sdk.VCSServer, error) {
 			serverCfg.URL,
 			serverCfg.Github.APIURL,
 			s.Cfg.API.HTTP.URL,
-			s.Cfg.UI.HTTP.URL,
+			s.UI.HTTP.URL,
 			serverCfg.Github.ProxyWebhook,
 			serverCfg.Github.Username,
 			serverCfg.Github.Token,
@@ -107,7 +107,7 @@ func (s *Service) getConsumer(name string) (sdk.VCSServer, error) {
 			[]byte(serverCfg.Bitbucket.PrivateKey),
 			serverCfg.URL,
 			s.Cfg.API.HTTP.URL,
-			s.Cfg.UI.HTTP.URL,
+			s.UI.HTTP.URL,
 			serverCfg.Bitbucket.ProxyWebhook,
 			serverCfg.Bitbucket.Username,
 			serverCfg.Bitbucket.Token,
@@ -119,7 +119,7 @@ func (s *Service) getConsumer(name string) (sdk.VCSServer, error) {
 		return bitbucketcloud.New(serverCfg.BitbucketCloud.ClientID,
 			serverCfg.BitbucketCloud.ClientSecret,
 			serverCfg.URL,
-			s.Cfg.UI.HTTP.URL,
+			s.UI.HTTP.URL,
 			serverCfg.BitbucketCloud.ProxyWebhook,
 			s.Cache,
 			serverCfg.BitbucketCloud.Status.Disable,
@@ -131,7 +131,7 @@ func (s *Service) getConsumer(name string) (sdk.VCSServer, error) {
 			serverCfg.Gitlab.Secret,
 			serverCfg.URL,
 			serverCfg.Gitlab.CallbackURL,
-			s.Cfg.UI.HTTP.URL,
+			s.UI.HTTP.URL,
 			serverCfg.Gitlab.ProxyWebhook,
 			s.Cache,
 			serverCfg.Gitlab.Status.Disable,
@@ -155,6 +155,13 @@ func (s *Service) getConsumer(name string) (sdk.VCSServer, error) {
 func (s *Service) Serve(c context.Context) error {
 	log.Info(c, "VCS> Starting service %s %s...", s.Cfg.Name, sdk.VERSION)
 	s.StartupTime = time.Now()
+
+	// Retrieve UI URL from API
+	cfgUser, err := s.Client.ConfigUser()
+	if err != nil {
+		return err
+	}
+	s.UI.HTTP.URL = cfgUser.URLUI
 
 	//Init the cache
 	var errCache error

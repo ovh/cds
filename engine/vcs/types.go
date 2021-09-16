@@ -16,18 +16,18 @@ type Service struct {
 	Cfg    Configuration
 	Router *api.Router
 	Cache  cache.Store
+	UI     struct {
+		HTTP struct {
+			URL string
+		}
+	}
 }
 
 // Configuration is the vcs configuration structure
 type Configuration struct {
-	Name string                          `toml:"name" comment:"Name of this CDS VCS Service\n Enter a name to enable this service" json:"name"`
-	HTTP service.HTTPRouterConfiguration `toml:"http" comment:"######################\n CDS VCS HTTP Configuration \n######################" json:"http"`
-	URL  string                          `default:"http://localhost:8084" json:"url"`
-	UI   struct {
-		HTTP struct {
-			URL string `toml:"url" default:"http://localhost:8080" json:"url"`
-		} `toml:"http" json:"http"`
-	} `toml:"ui" json:"ui"`
+	Name  string                          `toml:"name" comment:"Name of this CDS VCS Service\n Enter a name to enable this service" json:"name"`
+	HTTP  service.HTTPRouterConfiguration `toml:"http" comment:"######################\n CDS VCS HTTP Configuration \n######################" json:"http"`
+	URL   string                          `default:"http://localhost:8084" json:"url"`
 	API   service.APIServiceConfiguration `toml:"api" comment:"######################\n CDS API Settings \n######################" json:"api"`
 	Cache struct {
 		TTL   int `toml:"ttl" default:"60" json:"ttl"`
