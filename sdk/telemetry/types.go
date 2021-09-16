@@ -27,7 +27,7 @@ type Configuration struct {
 	TracingEnabled bool `toml:"tracingEnabled" json:"tracingEnabled"`
 	Exporters      struct {
 		Jaeger struct {
-			ServiceName         string  `toml:"ServiceName" default:"" json:"serviceName"`
+			ServiceName         string  `toml:"serviceName" default:"" json:"serviceName"`
 			CollectorEndpoint   string  `toml:"collectorEndpoint" default:"http://localhost:14268/api/traces" json:"collectorEndpoint"`
 			SamplingProbability float64 `toml:"samplingProbability" json:"metricSamplingProbability"`
 		} `json:"jaeger"`
