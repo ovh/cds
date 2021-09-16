@@ -3,6 +3,7 @@ package hatchery
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"sync/atomic"
 	"time"
 
@@ -108,8 +109,10 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 	)
 	telemetry.Record(ctxJob, GetMetrics().SpawnedWorkers, 1)
 
+	ctx = context.WithValue(ctx, log.Field("action_metadata_job_id"), strconv.Itoa(int(j.id)))
+
 	log.Debug(ctx, "hatchery> spawnWorkerForJob> %d", j.id)
-	defer log.Debug(ctx, "hatchery> spawnWorkerForJob> %d (%.3f seconds elapsed)", j.id, time.Since(time.Unix(j.timestamp, 0)).Seconds())
+	defer log.Info(ctx, "hatchery> spawnWorkerForJob> %d (%.3f seconds elapsed)", j.id, time.Since(time.Unix(j.timestamp, 0)).Seconds())
 
 	maxProv := h.Configuration().Provision.MaxConcurrentProvisioning
 	if maxProv < 1 {
@@ -194,8 +197,6 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 		return false
 	}
 	arg.WorkerToken = jwt
-	log.Debug(ctx, "hatchery> spawnWorkerForJob> new JWT for worker: %s", jwt)
-
 	errSpawn := h.SpawnWorker(ctx, arg)
 	next()
 	if errSpawn != nil {
