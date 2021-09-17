@@ -195,6 +195,7 @@ func (wk *CurrentWorker) CDNHttpURL() string {
 }
 
 func (wk *CurrentWorker) prepareLog(ctx context.Context, level workerruntime.Level, s string) (cdslog.Message, string, error) {
+	var ts = time.Now().UnixNano()
 	var res cdslog.Message
 
 	if wk.currentJob.wJob == nil {
@@ -228,7 +229,7 @@ func (wk *CurrentWorker) prepareLog(ctx context.Context, level workerruntime.Lev
 		ProjectKey:   wk.currentJob.projectKey,
 		JobID:        wk.currentJob.wJob.ID,
 		NodeRunID:    wk.currentJob.wJob.WorkflowNodeRunID,
-		Timestamp:    time.Now().UnixNano(),
+		Timestamp:    ts,
 		WorkflowID:   wk.currentJob.workflowID,
 		WorkflowName: wk.currentJob.workflowName,
 		NodeRunName:  wk.currentJob.nodeRunName,

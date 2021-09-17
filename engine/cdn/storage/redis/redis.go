@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"math"
 	"strconv"
 
 	"github.com/go-gorp/gorp"
@@ -71,9 +72,10 @@ func (s *Redis) Size(i sdk.CDNItemUnit) (int64, error) {
 	return s.store.Size(k)
 }
 
-func (s *Redis) Add(i sdk.CDNItemUnit, index uint, value string) error {
-	value = strconv.Itoa(int(index)) + "#" + value
-	return s.store.ScoredSetAdd(context.Background(), cache.Key(keyBuffer, i.ItemID), value, float64(index))
+func (s *Redis) Add(i sdk.CDNItemUnit, score float64, value string) error {
+	si, _ := math.Modf(score)
+	value = strconv.Itoa(int(si)) + "#" + value
+	return s.store.ScoredSetAdd(context.Background(), cache.Key(keyBuffer, i.ItemID), value, score)
 }
 
 func (s *Redis) Card(i sdk.CDNItemUnit) (int, error) {
@@ -92,7 +94,7 @@ func (s *Redis) NewReader(_ context.Context, i sdk.CDNItemUnit) (io.ReadCloser, 
 }
 
 // NewAdvancedReader instanciate a reader from given option, format can be JSON or Text. If from is < 0, read end lines (ex: from=-100 size=0 means read the last 100 lines)
-func (s *Redis) NewAdvancedReader(_ context.Context, i sdk.CDNItemUnit, format sdk.CDNReaderFormat, from int64, size uint, sort int64) (io.ReadCloser, error) {
+func (s *Redis) NewAdvancedReader(_ context.Context, i sdk.CDNItemUnit, format sdk.CDNReaderFormat, from float64, size float64, sort int64) (io.ReadCloser, error) {
 	return &redis.Reader{
 		Store:     s.store,
 		PrefixKey: keyBuffer,

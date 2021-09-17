@@ -220,33 +220,9 @@ func buildMessage(hm handledMessage) string {
 	if !strings.HasSuffix(val, "\n") {
 		val += "\n"
 	}
-	return fmt.Sprintf("[%s] %s", getLevelString(hm.Msg.Level), val)
+	return fmt.Sprintf("%s", val)
 }
 
-func getLevelString(level int32) string {
-	var lvl string
-	switch level {
-	case int32(hook.LOG_DEBUG):
-		lvl = "DEBUG"
-	case int32(hook.LOG_INFO):
-		lvl = "INFO"
-	case int32(hook.LOG_NOTICE):
-		lvl = "NOTICE"
-	case int32(hook.LOG_WARNING):
-		lvl = "WARN"
-	case int32(hook.LOG_ERR):
-		lvl = "ERROR"
-	case int32(hook.LOG_CRIT):
-		lvl = "CRITICAL"
-	case int32(hook.LOG_ALERT):
-		lvl = "ALERT"
-	case int32(hook.LOG_EMERG):
-		lvl = "EMERGENCY"
-	}
-	return lvl
-}
-
-//
 func (s *Service) handleServiceLog(ctx context.Context, hatcheryID int64, hatcheryName string, workerName string, sig interface{}, m hook.Message) error {
 	var signature cdn.Signature
 	var pk *rsa.PublicKey

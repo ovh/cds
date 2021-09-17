@@ -112,9 +112,9 @@ type BufferUnit interface {
 
 type LogBufferUnit interface {
 	BufferUnit
-	Add(i sdk.CDNItemUnit, score uint, value string) error
+	Add(i sdk.CDNItemUnit, score float64, value string) error
 	Card(i sdk.CDNItemUnit) (int, error)
-	NewAdvancedReader(ctx context.Context, i sdk.CDNItemUnit, format sdk.CDNReaderFormat, from int64, size uint, sort int64) (io.ReadCloser, error)
+	NewAdvancedReader(ctx context.Context, i sdk.CDNItemUnit, format sdk.CDNReaderFormat, from float64, size float64, sort int64) (io.ReadCloser, error)
 	Keys() ([]string, error)
 }
 
