@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -80,7 +81,7 @@ func reflectFindFieldTagValue(i interface{}, field, tagKey string) string {
 	return column
 }
 
-func (m *Mapper) loadTupleByPrimaryKey(db gorp.SqlExecutor, entity string, pk interface{}, lock bool, opts ...GetOptionFunc) (interface{}, error) {
+func (m *Mapper) loadTupleByPrimaryKey(ctx context.Context, db gorp.SqlExecutor, entity string, pk interface{}, lock bool, opts ...GetOptionFunc) (interface{}, error) {
 	e, ok := m.Mapping[entity]
 	if !ok {
 		return nil, sdk.WithStack(fmt.Errorf("unknown entity %s", entity))
@@ -90,14 +91,15 @@ func (m *Mapper) loadTupleByPrimaryKey(db gorp.SqlExecutor, entity string, pk in
 
 	var query = NewQuery(fmt.Sprintf(`SELECT * FROM "%s" WHERE %s::text = $1::text`, e.Name, e.Keys[0])).Args(pk)
 	if lock {
-		query = NewQuery(fmt.Sprintf(`SELECT * FROM "%s" WHERE %s::text = $1::text FOR UPDATE NO WAIT`, e.Name, e.Keys[0])).Args(pk)
+		query = NewQuery(fmt.Sprintf(`SELECT * FROM "%s" WHERE %s::text = $1::text FOR UPDATE SKIP LOCKED`, e.Name, e.Keys[0])).Args(pk)
 	}
 	found, err := m.Get(context.Background(), db, query, newTargetPtr.Interface(), opts...)
 	if err != nil {
 		return nil, err
 	}
 	if !found {
-		return nil, sdk.WithStack(sdk.ErrNotFound)
+		log.Error(ctx, "unable to load entry %q %q=%q", e.Name, e.Keys[0], pk)
+		return nil, nil
 	}
 
 	val := newTargetPtr.Interface()
@@ -120,10 +122,10 @@ func (m *Mapper) loadTupleByPrimaryKey(db gorp.SqlExecutor, entity string, pk in
 	return val, nil
 }
 
-func (m *Mapper) LoadTupleByPrimaryKey(db gorp.SqlExecutor, entity string, pk interface{}, opts ...GetOptionFunc) (interface{}, error) {
-	return m.loadTupleByPrimaryKey(db, entity, pk, false, opts...)
+func (m *Mapper) LoadTupleByPrimaryKey(ctx context.Context, db gorp.SqlExecutor, entity string, pk interface{}, opts ...GetOptionFunc) (interface{}, error) {
+	return m.loadTupleByPrimaryKey(ctx, db, entity, pk, false, opts...)
 }
 
-func (m *Mapper) LoadAndLockTupleByPrimaryKey(db gorp.SqlExecutor, entity string, pk interface{}, opts ...GetOptionFunc) (interface{}, error) {
-	return m.loadTupleByPrimaryKey(db, entity, pk, true, opts...)
+func (m *Mapper) LoadAndLockTupleByPrimaryKey(ctx context.Context, db gorp.SqlExecutor, entity string, pk interface{}, opts ...GetOptionFunc) (interface{}, error) {
+	return m.loadTupleByPrimaryKey(ctx, db, entity, pk, true, opts...)
 }

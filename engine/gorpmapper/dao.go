@@ -87,7 +87,7 @@ func (m *Mapper) UpdateColumns(db gorp.SqlExecutor, i interface{}, columnFilter 
 		entityName := fmt.Sprintf("%T", reflect.ValueOf(i).Elem().Interface())
 
 		// Reload and decrypt the old tuple from the database
-		tuple, err := m.LoadTupleByPrimaryKey(db, entityName, id, GetOptions.WithDecryption)
+		tuple, err := m.LoadTupleByPrimaryKey(context.Background(), db, entityName, id, GetOptions.WithDecryption)
 		if err != nil {
 			return err
 		}

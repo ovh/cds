@@ -140,7 +140,7 @@ func AdminDatabaseRollEncryptedEntityByPrimaryKey(db DBFunc, mapper *gorpmapper.
 
 		defer tx.Rollback() // nolint
 
-		if err := mapper.RollEncryptedTupleByPrimaryKey(tx, entity, pk); err != nil {
+		if err := mapper.RollEncryptedTupleByPrimaryKey(ctx, tx, entity, pk); err != nil {
 			return err
 		}
 

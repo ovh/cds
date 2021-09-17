@@ -1,6 +1,7 @@
 package gorpmapper
 
 import (
+	"context"
 	"errors"
 
 	"github.com/go-gorp/gorp"
@@ -18,7 +19,7 @@ func (m *Mapper) ListEncryptedEntities() []string {
 	return encryptedEntities
 }
 
-func (m *Mapper) RollEncryptedTupleByPrimaryKey(db gorp.SqlExecutor, entity string, pk interface{}) error {
+func (m *Mapper) RollEncryptedTupleByPrimaryKey(ctx context.Context, db gorp.SqlExecutor, entity string, pk interface{}) error {
 	e, ok := m.Mapping[entity]
 	if !ok {
 		return sdk.WithStack(errors.New("unknown entity"))
@@ -27,7 +28,7 @@ func (m *Mapper) RollEncryptedTupleByPrimaryKey(db gorp.SqlExecutor, entity stri
 		return sdk.WithStack(errors.New("entity is not encrypted"))
 	}
 
-	tuple, err := m.LoadAndLockTupleByPrimaryKey(db, entity, pk)
+	tuple, err := m.LoadAndLockTupleByPrimaryKey(ctx, db, entity, pk)
 	if err != nil {
 		return err
 	}
