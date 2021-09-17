@@ -132,6 +132,7 @@ func TestCanUploadArtifactAlreadyExist(t *testing.T) {
 		Perm:       0777,
 	}
 	bts, err := json.Marshal(artiData)
+	require.NoError(t, err)
 	result.DataRaw = bts
 
 	cacheKey := workflow.GetRunResultKey(result.WorkflowRunID, sdk.WorkflowRunResultTypeArtifact, artiData.Name)
@@ -177,6 +178,7 @@ func TestCanUploadArtifactAlreadyExistInMoreRecentSubNum(t *testing.T) {
 		Perm:       0777,
 	}
 	bts, err := json.Marshal(artiData)
+	require.NoError(t, err)
 	result.DataRaw = bts
 
 	cacheKey := workflow.GetRunResultKey(result.WorkflowRunID, sdk.WorkflowRunResultTypeArtifact, artiData.Name)
@@ -235,6 +237,7 @@ func TestCanUploadArtifactAlreadyExistInAPreviousSubNum(t *testing.T) {
 		Perm:       0777,
 	}
 	bts, err := json.Marshal(artiData)
+	require.NoError(t, err)
 	result.DataRaw = bts
 
 	cacheKey := workflow.GetRunResultKey(result.WorkflowRunID, sdk.WorkflowRunResultTypeArtifact, artiData.Name)

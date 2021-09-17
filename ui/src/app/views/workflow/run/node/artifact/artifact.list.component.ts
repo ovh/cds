@@ -5,7 +5,7 @@ import {
     WorkflowNodeRun,
     WorkflowNodeRunArtifact,
     WorkflowNodeRunStaticFiles, WorkflowRunResult,
-    WorkflowRunResultArtifact, WorkflowRunResultArtifactManager
+    WorkflowRunResultArtifact, WorkflowRunResultArtifactManager, WorkflowRunResultStaticFile
 } from 'app/model/workflow.run.model';
 
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
@@ -45,11 +45,13 @@ export class WorkflowRunArtifactListComponent implements OnInit, OnDestroy {
                 type: ColumnType.LINK,
                 name: 'artifact_name',
                 selector: (a: UIArtifact) => {
-                    let size = this.getHumainFileSize(a.size);
                     let link = a.link;
                     let value = a.name;
-                    if (size) {
-                        value += ` (${size})`;
+                    if (a.size) {
+                        let size = this.getHumainFileSize(a.size);
+                        if (size) {
+                            value += ` (${size})`;
+                        }
                     }
                     return {
                         link,
@@ -161,6 +163,13 @@ export class WorkflowRunArtifactListComponent implements OnInit, OnDestroy {
                     uiArtifactAM.size = dataAM.size;
                     uiArtifactAM.type = dataAM.repository_type;
                     return uiArtifactAM;
+                case 'static-file':
+                    let dataSF = <WorkflowRunResultStaticFile>r.data;
+                    let uiArtifactSF = new UIArtifact();
+                    uiArtifactSF.link = dataSF.remote_url;
+                    uiArtifactSF.name = dataSF.name;
+                    uiArtifactSF.type = 'static file';
+                    return uiArtifactSF;
             }
         })
     }

@@ -9,6 +9,7 @@ const (
 	WorkflowRunResultTypeArtifact        WorkflowRunResultType = "artifact"
 	WorkflowRunResultTypeCoverage        WorkflowRunResultType = "coverage"
 	WorkflowRunResultTypeArtifactManager WorkflowRunResultType = "artifact-manager"
+	WorkflowRunResultTypeStaticFile      WorkflowRunResultType = "static-file"
 )
 
 type WorkflowRunResultType string
@@ -49,6 +50,14 @@ func (r *WorkflowRunResult) GetArtifactManager() (WorkflowRunResultArtifactManag
 	return data, nil
 }
 
+func (r *WorkflowRunResult) GetStaticFile() (WorkflowRunResultStaticFile, error) {
+	var data WorkflowRunResultStaticFile
+	if err := JSONUnmarshal(r.DataRaw, &data); err != nil {
+		return data, WithStack(err)
+	}
+	return data, nil
+}
+
 type WorkflowRunResultCheck struct {
 	Name       string                `json:"name"`
 	RunID      int64                 `json:"run_id"`
@@ -79,6 +88,21 @@ func (a *WorkflowRunResultArtifactManager) IsValid() error {
 	}
 	if a.RepoType == "" {
 		return WrapError(ErrInvalidData, "missing repository_type")
+	}
+	return nil
+}
+
+type WorkflowRunResultStaticFile struct {
+	Name      string `json:"name"`
+	RemoteURL string `json:"remote_url"`
+}
+
+func (a *WorkflowRunResultStaticFile) IsValid() error {
+	if a.Name == "" {
+		return WrapError(ErrInvalidData, "missing static-file name")
+	}
+	if a.RemoteURL == "" {
+		return WrapError(ErrInvalidData, "missing remote url")
 	}
 	return nil
 }
