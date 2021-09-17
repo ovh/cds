@@ -133,8 +133,19 @@ func AdminDatabaseRollEncryptedEntityByPrimaryKey(db DBFunc, mapper *gorpmapper.
 		entity := vars["entity"]
 		pk := vars["pk"]
 
-		if err := mapper.RollEncryptedTupleByPrimaryKey(db(), entity, pk); err != nil {
+		tx, err := db().Begin()
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+
+		defer tx.Rollback() // nolint
+
+		if err := mapper.RollEncryptedTupleByPrimaryKey(tx, entity, pk); err != nil {
 			return err
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WithStack(err)
 		}
 
 		return nil

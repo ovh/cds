@@ -80,7 +80,7 @@ func reflectFindFieldTagValue(i interface{}, field, tagKey string) string {
 	return column
 }
 
-func (m *Mapper) LoadTupleByPrimaryKey(db gorp.SqlExecutor, entity string, pk interface{}, opts ...GetOptionFunc) (interface{}, error) {
+func (m *Mapper) loadTupleByPrimaryKey(db gorp.SqlExecutor, entity string, pk interface{}, lock bool, opts ...GetOptionFunc) (interface{}, error) {
 	e, ok := m.Mapping[entity]
 	if !ok {
 		return nil, sdk.WithStack(fmt.Errorf("unknown entity %s", entity))
@@ -88,7 +88,10 @@ func (m *Mapper) LoadTupleByPrimaryKey(db gorp.SqlExecutor, entity string, pk in
 
 	newTargetPtr := reflect.New(reflect.TypeOf(e.Target))
 
-	query := NewQuery(fmt.Sprintf(`SELECT * FROM "%s" WHERE %s::text = $1::text`, e.Name, e.Keys[0])).Args(pk)
+	var query = NewQuery(fmt.Sprintf(`SELECT * FROM "%s" WHERE %s::text = $1::text`, e.Name, e.Keys[0])).Args(pk)
+	if lock {
+		query = NewQuery(fmt.Sprintf(`SELECT * FROM "%s" WHERE %s::text = $1::text FOR UPDATE NO WAIT`, e.Name, e.Keys[0])).Args(pk)
+	}
 	found, err := m.Get(context.Background(), db, query, newTargetPtr.Interface(), opts...)
 	if err != nil {
 		return nil, err
@@ -115,4 +118,12 @@ func (m *Mapper) LoadTupleByPrimaryKey(db gorp.SqlExecutor, entity string, pk in
 	}
 
 	return val, nil
+}
+
+func (m *Mapper) LoadTupleByPrimaryKey(db gorp.SqlExecutor, entity string, pk interface{}, opts ...GetOptionFunc) (interface{}, error) {
+	return m.loadTupleByPrimaryKey(db, entity, pk, false, opts...)
+}
+
+func (m *Mapper) LoadAndLockTupleByPrimaryKey(db gorp.SqlExecutor, entity string, pk interface{}, opts ...GetOptionFunc) (interface{}, error) {
+	return m.loadTupleByPrimaryKey(db, entity, pk, true, opts...)
 }

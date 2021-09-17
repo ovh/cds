@@ -27,7 +27,7 @@ func (m *Mapper) RollEncryptedTupleByPrimaryKey(db gorp.SqlExecutor, entity stri
 		return sdk.WithStack(errors.New("entity is not encrypted"))
 	}
 
-	tuple, err := m.LoadTupleByPrimaryKey(db, entity, pk)
+	tuple, err := m.LoadAndLockTupleByPrimaryKey(db, entity, pk)
 	if err != nil {
 		return err
 	}
