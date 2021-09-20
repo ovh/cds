@@ -155,7 +155,7 @@ func AddResult(ctx context.Context, db *gorp.DbMap, store cache.Store, wr *sdk.W
 			return err
 		}
 	default:
-		return sdk.WrapError(sdk.ErrInvalidData, "unkonwn result type %s", runResult.Type)
+		return sdk.WrapError(sdk.ErrInvalidData, "unknown result type %s", runResult.Type)
 	}
 
 	tx, err := db.Begin()
