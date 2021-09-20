@@ -82,7 +82,7 @@ func convertJobs(resJobs map[string]Job, resDeployments map[string]Deployment, c
 	var currentNodeCondition *Condition
 	if isFullExport {
 		if node.Context.Conditions.LuaScript != "" || len(node.Context.Conditions.PlainConditions) > 0 {
-			currentNodeCondition = &Condition{Lua: node.Context.Conditions.LuaScript}
+			currentNodeCondition = &Condition{Script: node.Context.Conditions.LuaScript}
 			for _, c := range node.Context.Conditions.PlainConditions {
 				currentNodeCondition.Checks = append(currentNodeCondition.Checks, Check{
 					Variable: c.Variable,

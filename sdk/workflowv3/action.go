@@ -21,7 +21,7 @@ func (a Actions) ToGraph() Graph {
 }
 
 type Action struct {
-	Parameters   map[string]ActionParameter `json:"description,omitempty" yaml:"description,omitempty"`
+	Parameters   map[string]ActionParameter `json:"parameters,omitempty" yaml:"parameters,omitempty"`
 	Requirements []Requirement              `json:"requirements,omitempty" yaml:"requirements,omitempty"`
 	Steps        []Step                     `json:"steps,omitempty" yaml:"steps,omitempty"`
 }

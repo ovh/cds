@@ -231,23 +231,23 @@ func deduplicateStrings(in []string) []string {
 
 type Condition struct {
 	Checks []Check `json:"checks,omitempty" yaml:"checks,omitempty"`
-	Lua    string  `json:"lua_script,omitempty" yaml:"script,omitempty"`
+	Script string  `json:"script,omitempty" yaml:"script,omitempty"`
 }
 
 func (c *Condition) Merge(o Condition) {
 	c.Checks = append(c.Checks, o.Checks...)
-	if c.Lua != "" && o.Lua != "" {
-		c.Lua = `
+	if c.Script != "" && o.Script != "" {
+		c.Script = `
     local function c1()
-      ` + c.Lua + `
+      ` + c.Script + `
     end
     local function c2()
-      ` + o.Lua + `
+      ` + o.Script + `
     end
     return c1() and c2();
     `
-	} else if o.Lua != "" {
-		c.Lua = o.Lua
+	} else if o.Script != "" {
+		c.Script = o.Script
 	}
 }
 

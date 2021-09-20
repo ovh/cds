@@ -3,7 +3,6 @@ package api
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -132,7 +131,7 @@ func (api *API) getWorkflowV3RunHandler() service.Handler {
 		}
 
 		var wkr sdk.WorkflowRun
-		if err := sdk.JsonUnmarshal(p.buf.Bytes(), &wkr); err != nil {
+		if err := sdk.JSONUnmarshal(p.buf.Bytes(), &wkr); err != nil {
 			return err
 		}
 

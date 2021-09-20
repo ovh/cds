@@ -12,6 +12,7 @@ import (
 type Step struct {
 	exportentities.StepCustom `json:"-" yaml:",inline"`
 	Script                    *StepScript                          `json:"script,omitempty" yaml:"script,omitempty"`
+	PushBuildInfo             *exportentities.StepPushBuildInfo    `json:"pushBuildInfo,omitempty" yaml:"pushBuildInfo,omitempty"`
 	Coverage                  *exportentities.StepCoverage         `json:"coverage,omitempty" yaml:"coverage,omitempty"`
 	ArtifactDownload          *exportentities.StepArtifactDownload `json:"artifactDownload,omitempty" yaml:"artifactDownload,omitempty"`
 	ArtifactUpload            *exportentities.StepArtifactUpload   `json:"artifactUpload,omitempty" yaml:"artifactUpload,omitempty"`
@@ -19,6 +20,7 @@ type Step struct {
 	GitClone                  *exportentities.StepGitClone         `json:"gitClone,omitempty" yaml:"gitClone,omitempty"`
 	GitTag                    *exportentities.StepGitTag           `json:"gitTag,omitempty" yaml:"gitTag,omitempty"`
 	ReleaseVCS                *exportentities.StepReleaseVCS       `json:"releaseVCS,omitempty" yaml:"releaseVCS,omitempty"`
+	Release                   *exportentities.StepRelease          `json:"release,omitempty" yaml:"release,omitempty"`
 	JUnitReport               *exportentities.StepJUnitReport      `json:"jUnitReport,omitempty" yaml:"jUnitReport,omitempty"`
 	Checkout                  *exportentities.StepCheckout         `json:"checkout,omitempty" yaml:"checkout,omitempty"`
 	InstallKey                *exportentities.StepInstallKey       `json:"installKey,omitempty" yaml:"installKey,omitempty"`
@@ -109,6 +111,9 @@ func (s Step) Validate(w Workflow) (ExternalDependencies, error) {
 	if s.Script != nil {
 		actionTypes = append(actionTypes, "script")
 	}
+	if s.PushBuildInfo != nil {
+		actionTypes = append(actionTypes, "pushBuildInfo")
+	}
 	if s.Deploy != nil {
 		actionTypes = append(actionTypes, "deploy")
 	}
@@ -132,6 +137,9 @@ func (s Step) Validate(w Workflow) (ExternalDependencies, error) {
 	}
 	if s.ReleaseVCS != nil {
 		actionTypes = append(actionTypes, "releaseVCS")
+	}
+	if s.Release != nil {
+		actionTypes = append(actionTypes, "release")
 	}
 	if s.Checkout != nil {
 		actionTypes = append(actionTypes, "checkout")
