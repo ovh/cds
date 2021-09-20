@@ -250,3 +250,76 @@ func TestCanUploadArtifactAlreadyExistInAPreviousSubNum(t *testing.T) {
 	_, err = workflow.CanUploadRunResult(ctx, db.DbMap, store, workflowRun, artifactRef)
 	require.NoError(t, err)
 }
+
+func TestCanUploadStaticFile(t *testing.T) {
+	ctx := context.Background()
+	db, store := test.SetupPG(t)
+
+	_, _, workflowRun, nodeRun, jobRun := createRunNodeRunAndJob(t, db, store)
+
+	staticFileRef := sdk.WorkflowRunResultCheck{
+		RunJobID:   jobRun.ID,
+		RunNodeID:  nodeRun.ID,
+		RunID:      workflowRun.ID,
+		Name:       "my title static file",
+		ResultType: sdk.WorkflowRunResultTypeStaticFile,
+	}
+
+	result := sdk.WorkflowRunResult{
+		ID:                sdk.UUID(),
+		Created:           time.Now(),
+		WorkflowNodeRunID: nodeRun.ID,
+		WorkflowRunID:     workflowRun.ID,
+		SubNum:            0,
+		WorkflowRunJobID:  jobRun.ID + 1,
+		Type:              sdk.WorkflowRunResultTypeStaticFile,
+	}
+	artiData := sdk.WorkflowRunResultStaticFile{
+		Name:      "my title static file",
+		RemoteURL: "https://foo/bar",
+	}
+	bts, err := json.Marshal(artiData)
+	require.NoError(t, err)
+	result.DataRaw = bts
+
+	cacheKey := workflow.GetRunResultKey(result.WorkflowRunID, sdk.WorkflowRunResultTypeStaticFile, artiData.Name)
+	require.NoError(t, store.SetWithTTL(cacheKey, true, 60))
+	require.NoError(t, workflow.AddResult(ctx, db.DbMap, store, &workflowRun, &result))
+	b, err := store.Exist(cacheKey)
+	require.NoError(t, err)
+	require.False(t, b)
+
+	_, err = workflow.CanUploadRunResult(ctx, db.DbMap, store, workflowRun, staticFileRef)
+	require.True(t, sdk.ErrorIs(err, sdk.ErrConflictData))
+	require.Contains(t, err.Error(), "artifact my title static file has already been uploaded")
+}
+func TestCanUploadStaticFileInvalid(t *testing.T) {
+	ctx := context.Background()
+	db, store := test.SetupPG(t)
+
+	_, _, workflowRun, nodeRun, jobRun := createRunNodeRunAndJob(t, db, store)
+
+	result := sdk.WorkflowRunResult{
+		ID:                sdk.UUID(),
+		Created:           time.Now(),
+		WorkflowNodeRunID: nodeRun.ID,
+		WorkflowRunID:     workflowRun.ID,
+		SubNum:            0,
+		WorkflowRunJobID:  jobRun.ID + 1,
+		Type:              sdk.WorkflowRunResultTypeStaticFile,
+	}
+	artiData := sdk.WorkflowRunResultStaticFile{
+		Name:      "my title static file",
+		RemoteURL: "",
+	}
+	bts, err := json.Marshal(artiData)
+	require.NoError(t, err)
+	result.DataRaw = bts
+
+	cacheKey := workflow.GetRunResultKey(result.WorkflowRunID, sdk.WorkflowRunResultTypeStaticFile, artiData.Name)
+	require.NoError(t, store.SetWithTTL(cacheKey, true, 60))
+
+	err = workflow.AddResult(ctx, db.DbMap, store, &workflowRun, &result)
+	require.Contains(t, err.Error(), "missing remote url")
+	require.Error(t, err)
+}

@@ -77,7 +77,7 @@ func RunDeployApplication(ctx context.Context, wk workerruntime.Runtime, _ sdk.A
 	wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("# Details: %s", res.Details))
 	wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("# Status: %s", res.Status))
 
-	if strings.ToUpper(res.Status) == strings.ToUpper(sdk.StatusSuccess) {
+	if strings.EqualFold(res.Status, sdk.StatusSuccess) {
 		integrationPluginClientStop(ctx, integrationPluginClient, done, stopLogs)
 		return sdk.Result{
 			Status: sdk.StatusSuccess,
