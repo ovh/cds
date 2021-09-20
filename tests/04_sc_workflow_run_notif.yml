@@ -21,7 +21,7 @@ testcases:
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} project remove --force 04SCWORKFLOWRUNNOTIF"
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force 04scworkflowrunnotif"
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} project add 04SCWORKFLOWRUNNOTIF 04SCWorkflowRunNotif"
-  - script: "{{.cdsctl}} -f {{.cdsctl.config}} project variable add email_notif \"notif1@locahost.local,notif2@locahost.local\""
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} project variable add 04SCWORKFLOWRUNNOTIF email_notif \"notif1@locahost.local,notif2@locahost.local\""
 
 - name: import pipeline and workflow
   steps:
