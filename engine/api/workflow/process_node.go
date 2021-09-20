@@ -255,7 +255,7 @@ func processNode(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cac
 	// Replace ("{{ }}" in vcsInfo that should be badly interpreted by interpolation engine)
 	var repl = func(s *string) {
 		*s = strings.ReplaceAll(*s, "{{", "((")
-		*s = strings.ReplaceAll(*s, "{{", "))")
+		*s = strings.ReplaceAll(*s, "}}", "))")
 	}
 
 	// Update git params / git columns
