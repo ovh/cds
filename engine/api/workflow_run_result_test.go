@@ -33,7 +33,7 @@ func Test_getWorkflowRunAndNodeRunResults(t *testing.T) {
 
 	require.NoError(t, api.workflowRunCraft(context.TODO(), wrCreate.ID))
 
-	wrDB, err := workflow.LoadRunByID(db, wrCreate.ID, workflow.LoadRunOptions{})
+	wrDB, err := workflow.LoadRunByID(context.Background(), db, wrCreate.ID, workflow.LoadRunOptions{})
 	require.NoError(t, err)
 
 	artiData := sdk.WorkflowRunResultArtifact{

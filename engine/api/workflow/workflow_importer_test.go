@@ -471,7 +471,7 @@ func TestImport(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			workflowExists, err := workflow.Exists(db, proj.Key, tt.args.w.Name)
+			workflowExists, err := workflow.Exists(context.Background(), db, proj.Key, tt.args.w.Name)
 			if err != nil {
 				t.Errorf("%s", err)
 			}

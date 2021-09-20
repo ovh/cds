@@ -1579,7 +1579,7 @@ func TestGitParamOnPipelineWithoutApplication(t *testing.T) {
 
 	// Load run
 	var errRun error
-	wr, errRun = workflow.LoadRunByID(db, wr.ID, workflow.LoadRunOptions{})
+	wr, errRun = workflow.LoadRunByID(context.Background(), db, wr.ID, workflow.LoadRunOptions{})
 	assert.NoError(t, errRun)
 
 	assert.Equal(t, 2, len(wr.WorkflowNodeRuns))

@@ -347,7 +347,7 @@ version: v1.0`),
 
 	require.NoError(t, waitCraftinWorkflow(t, api, db, wr.ID))
 
-	wrDB, errDB := workflow.LoadRunByID(db, wr.ID, workflow.LoadRunOptions{})
+	wrDB, errDB := workflow.LoadRunByID(context.Background(), db, wr.ID, workflow.LoadRunOptions{})
 	require.NoError(t, errDB)
 
 	t.Logf("%d %+v", wrDB.Workflow.WorkflowData.Node.ID, wrDB.WorkflowNodeRuns)
