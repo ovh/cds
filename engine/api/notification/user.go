@@ -3,6 +3,7 @@ package notification
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/go-gorp/gorp"
 	"github.com/rockbears/log"
@@ -217,7 +218,17 @@ func getWorkflowEvent(notif *sdk.UserNotificationSettings, params map[string]str
 		Subject: subject,
 		Body:    body,
 	}
-	e.Recipients = append(e.Recipients, notif.Recipients...)
+
+	var recipients []string
+	for i := range notif.Recipients {
+		r, err := interpolate.Do(e.Recipients[i], params)
+		if err != nil {
+			return sdk.EventNotif{}, err
+		}
+		recipients = append(recipients, strings.Split(r, ",")...)
+	}
+
+	e.Recipients = append(e.Recipients, recipients...)
 
 	return e, nil
 }
