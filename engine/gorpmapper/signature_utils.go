@@ -94,6 +94,10 @@ func (m *Mapper) RollSignedTupleByPrimaryKey(ctx context.Context, db SqlExecutor
 		return err
 	}
 
+	if tuple == nil {
+		return nil
+	}
+
 	if err := m.UpdateAndSign(ctx, db, tuple.(Canonicaller)); err != nil {
 		return err
 	}
