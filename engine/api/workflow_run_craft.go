@@ -156,7 +156,10 @@ func (api *API) workflowRunCraft(ctx context.Context, id int64) error {
 
 	log.Debug(ctx, "api.workflowRunCraft> crafting workflow %s/%s #%d.%d (%d)", proj.Key, wf.Name, run.Number, run.LastSubNumber, run.ID)
 
-	api.initWorkflowRun(ctx, proj.Key, wf, run, *run.ToCraftOpts)
+	if api.initWorkflowRun(ctx, proj.Key, wf, run, *run.ToCraftOpts) == nil {
+		// If not report is sent back, it means that nothing has been done.
+		return nil
+	}
 
 	log.Info(ctx, "api.workflowRunCraft> workflow %s/%s #%d.%d (%d) crafted", proj.Key, wf.Name, run.Number, run.LastSubNumber, run.ID)
 

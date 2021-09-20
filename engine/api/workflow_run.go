@@ -25,6 +25,7 @@ import (
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -949,7 +950,7 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 	}
 }
 
-func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Workflow, wfRun *sdk.WorkflowRun, opts sdk.WorkflowRunPostHandlerOption) {
+func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Workflow, wfRun *sdk.WorkflowRun, opts sdk.WorkflowRunPostHandlerOption) *workflow.ProcessorReport {
 	ctx, end := telemetry.Span(ctx, "api.initWorkflowRun",
 		telemetry.Tag(telemetry.TagProjectKey, projKey),
 		telemetry.Tag(telemetry.TagWorkflow, wf.Name),
@@ -965,7 +966,7 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 	if err != nil {
 		r := failInitWorkflowRun(ctx, api.mustDB(), wfRun, err)
 		report.Merge(ctx, r)
-		return
+		return report
 	}
 
 	// Add service for consumer if exists
@@ -973,7 +974,7 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 		r := failInitWorkflowRun(ctx, api.mustDB(), wfRun, err)
 		report.Merge(ctx, r)
-		return
+		return report
 	}
 	c.Service = s
 
@@ -985,7 +986,23 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 	if err != nil {
 		r := failInitWorkflowRun(ctx, api.mustDB(), wfRun, sdk.WrapError(err, "cannot load project for as code workflow creation"))
 		report.Merge(ctx, r)
-		return
+		return report
+	}
+
+	// To avoid crafting more than once workflow as code from the same repo at the same time
+	// We lock the repository in redis
+	if wf.FromRepository != "" {
+		cackeKey := cache.Key("api", "initworkflow", "repository", wf.FromRepository)
+		ok, err := api.Cache.Lock(cackeKey, time.Minute, 100, 5)
+		if err != nil {
+			r := failInitWorkflowRun(ctx, api.mustDB(), wfRun, sdk.WrapError(err, "unable lock repository in cache"))
+			report.Merge(ctx, r)
+			return report
+		}
+		if !ok {
+			return nil
+		}
+		defer api.Cache.Unlock(cackeKey) // nolint
 	}
 
 	defer func() {
@@ -1000,13 +1017,13 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 			if err != nil {
 				r := failInitWorkflowRun(ctx, api.mustDB(), wfRun, sdk.WrapError(err, "unable to sync as code event"))
 				report.Merge(ctx, r)
-				return
+				return report
 			}
 			if res.Merged {
 				if err := workflow.UpdateFromRepository(api.mustDB(), wf.ID, res.FromRepository); err != nil {
 					r := failInitWorkflowRun(ctx, api.mustDB(), wfRun, sdk.WrapError(err, "unable to sync as code event"))
 					report.Merge(ctx, r)
-					return
+					return report
 				}
 				wf.FromRepository = res.FromRepository
 				event.PublishWorkflowUpdate(ctx, p.Key, *wf, *wf, c)
@@ -1034,7 +1051,7 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 			if err != nil {
 				r := failInitWorkflowRun(ctx, api.mustDB(), wfRun, sdk.WrapError(err, "cannot load project for as code workflow creation"))
 				report.Merge(ctx, r)
-				return
+				return report
 			}
 
 			// Get workflow from repository
@@ -1050,7 +1067,7 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 			if err != nil {
 				r1 := failInitWorkflowRun(ctx, api.mustDB(), wfRun, sdk.WrapError(err, "unable to get workflow from repository"))
 				report.Merge(ctx, r1)
-				return
+				return report
 			}
 
 			event.PublishWorkflowUpdate(ctx, p.Key, *wf, oldWf, c)
@@ -1060,7 +1077,7 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 			if err != nil {
 				r1 := failInitWorkflowRun(ctx, api.mustDB(), wfRun, sdk.WrapError(err, "unable to retrieve workflow secret"))
 				report.Merge(ctx, r1)
-				return
+				return report
 			}
 		}
 
@@ -1069,7 +1086,7 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 		if err := saveWorkflowRunSecrets(ctx, api.mustDB(), p.ID, *wfRun, workflowSecrets); err != nil {
 			r := failInitWorkflowRun(ctx, api.mustDB(), wfRun, sdk.WrapError(err, "unable to compute workflow secrets %s/%s", p.Key, wf.Name))
 			report.Merge(ctx, r)
-			return
+			return report
 		}
 	}
 
@@ -1077,7 +1094,7 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 	if err != nil {
 		r := failInitWorkflowRun(ctx, api.mustDB(), wfRun, sdk.WrapError(err, "unable to start workflow %s/%s", p.Key, wf.Name))
 		report.Merge(ctx, r)
-		return
+		return report
 	}
 
 	r, err := workflow.StartWorkflowRun(ctx, tx, api.Cache, *p, wfRun, &opts, *c, asCodeInfosMsg)
@@ -1086,13 +1103,13 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 		_ = tx.Rollback()
 		r := failInitWorkflowRun(ctx, api.mustDB(), wfRun, sdk.WrapError(err, "unable to start workflow %s/%s", p.Key, wf.Name))
 		report.Merge(ctx, r)
-		return
+		return report
 	}
 	if err := tx.Commit(); err != nil {
 		_ = tx.Rollback()
 		r := failInitWorkflowRun(ctx, api.mustDB(), wfRun, sdk.WrapError(err, "unable to start workflow %s/%s", p.Key, wf.Name))
 		report.Merge(ctx, r)
-		return
+		return report
 	}
 	workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, *p, report)
 
@@ -1125,6 +1142,8 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 			log.Error(ctx, "unable to update parent workflow run: %v", err)
 		}
 	}
+
+	return report
 }
 
 func saveWorkflowRunSecrets(ctx context.Context, db *gorp.DbMap, projID int64, wr sdk.WorkflowRun, secrets *workflow.PushSecrets) error {
