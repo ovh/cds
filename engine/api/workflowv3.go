@@ -94,7 +94,7 @@ func (api *API) getWorkflowV3Handler() service.Handler {
 		}
 
 		var wk sdk.Workflow
-		if err := json.Unmarshal(p.buf.Bytes(), &wk); err != nil {
+		if err := sdk.JSONUnmarshal(p.buf.Bytes(), &wk); err != nil {
 			return sdk.WithStack(err)
 		}
 
@@ -132,8 +132,8 @@ func (api *API) getWorkflowV3RunHandler() service.Handler {
 		}
 
 		var wkr sdk.WorkflowRun
-		if err := json.Unmarshal(p.buf.Bytes(), &wkr); err != nil {
-			return sdk.WithStack(err)
+		if err := sdk.JsonUnmarshal(p.buf.Bytes(), &wkr); err != nil {
+			return err
 		}
 
 		res := workflowv3.ConvertRun(&wkr, full)

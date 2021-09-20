@@ -9,7 +9,7 @@ import (
 var previewCmd = cli.Command{
 	Name:  "preview",
 	Short: "CDS feature preview",
-	Long:  "Preview commands should not be used in production. This commands are subject to breaking changes.",
+	Long:  "Preview commands should not be used in production. These commands are subject to breaking changes.",
 }
 
 func preview() *cobra.Command {
