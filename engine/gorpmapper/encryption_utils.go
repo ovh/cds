@@ -33,6 +33,10 @@ func (m *Mapper) RollEncryptedTupleByPrimaryKey(ctx context.Context, db gorp.Sql
 		return err
 	}
 
+	if tuple == nil {
+		return nil
+	}
+
 	if err := m.Update(db, tuple); err != nil {
 		return err
 	}

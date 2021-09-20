@@ -230,7 +230,6 @@ func (api *API) checkWorkflowPermissions(ctx context.Context, w http.ResponseWri
 		telemetry.Current(ctx, telemetry.Tag(telemetry.TagPermission, "is_admin"))
 		trackSudo(ctx, w)
 		return nil
-
 	}
 	log.Debug(ctx, "checkWorkflowPermissions> %s access granted to %s/%s because has permission (max permission = %d)", getAPIConsumer(ctx).ID, projectKey, workflowName, maxLevelPermission)
 	telemetry.Current(ctx, telemetry.Tag(telemetry.TagPermission, "is_granted"))
