@@ -221,7 +221,7 @@ func getWorkflowEvent(notif *sdk.UserNotificationSettings, params map[string]str
 
 	var recipients []string
 	for i := range notif.Recipients {
-		r, err := interpolate.Do(e.Recipients[i], params)
+		r, err := interpolate.Do(notif.Recipients[i], params)
 		if err != nil {
 			return sdk.EventNotif{}, err
 		}
