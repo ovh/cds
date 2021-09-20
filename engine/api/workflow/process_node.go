@@ -252,8 +252,20 @@ func processNode(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cac
 		}
 	}
 
+	// Replace ("{{ }}" in vcsInfo that should be badly interpreted by interpolation engine)
+	var repl = func(s *string) {
+		*s = strings.ReplaceAll(*s, "{{", "((")
+		*s = strings.ReplaceAll(*s, "}}", "))")
+	}
+
 	// Update git params / git columns
 	if isRoot && vcsInf != nil {
+		repl(&vcsInf.Author)
+		repl(&vcsInf.Branch)
+		repl(&vcsInf.Hash)
+		repl(&vcsInf.Message)
+		repl(&vcsInf.Tag)
+
 		setValuesGitInBuildParameters(nr, *vcsInf)
 	}
 
@@ -281,6 +293,12 @@ func processNode(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cac
 
 	// Update datas if repo change
 	if !isRoot && vcsInf != nil {
+		repl(&vcsInf.Author)
+		repl(&vcsInf.Branch)
+		repl(&vcsInf.Hash)
+		repl(&vcsInf.Message)
+		repl(&vcsInf.Tag)
+
 		setValuesGitInBuildParameters(nr, *vcsInf)
 	}
 
