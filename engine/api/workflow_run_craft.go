@@ -70,7 +70,7 @@ func (api *API) workflowRunCraft(ctx context.Context, id int64) error {
 	}()
 
 	_, next = telemetry.Span(ctx, "api.workflowRunCraft.LoadRunByID")
-	run, err := workflow.LoadRunByID(api.mustDB(), id, workflow.LoadRunOptions{})
+	run, err := workflow.LoadRunByID(ctx, api.mustDB(), id, workflow.LoadRunOptions{})
 	if sdk.ErrorIs(err, sdk.ErrNotFound) {
 		next()
 		return nil

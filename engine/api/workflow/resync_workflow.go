@@ -113,7 +113,7 @@ func ResyncNodeRunsWithCommits(ctx context.Context, db *gorp.DbMap, store cache.
 				return
 			}
 
-			wr, err := LoadRunByID(tx, nr.WorkflowRunID, LoadRunOptions{})
+			wr, err := LoadRunByID(ctx, tx, nr.WorkflowRunID, LoadRunOptions{})
 			if err != nil {
 				ctx := log.ContextWithStackTrace(ctx, err)
 				log.Error(ctx, "ResyncNodeRuns> Unable to load workflowRun by id %d: %v", nr.WorkflowRunID, err)

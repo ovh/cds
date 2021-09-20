@@ -20,6 +20,7 @@ import (
 	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/luascript"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 type MarkAsDeleteOptions struct {
@@ -42,6 +43,9 @@ func GetRetentionPolicyVariables() []string {
 }
 
 func markWorkflowRunsToDelete(ctx context.Context, store cache.Store, db *gorp.DbMap, workflowRunsMarkToDelete *stats.Int64Measure) error {
+	ctx, end := telemetry.Span(ctx, "purge.markWorkflowRunsToDelete")
+	defer end()
+
 	dao := new(workflow.WorkflowDAO)
 	wfs, err := dao.LoadAll(ctx, db)
 	if err != nil {
@@ -62,6 +66,9 @@ func markWorkflowRunsToDelete(ctx context.Context, store cache.Store, db *gorp.D
 }
 
 func ApplyRetentionPolicyOnWorkflow(ctx context.Context, store cache.Store, db *gorp.DbMap, wf sdk.Workflow, opts MarkAsDeleteOptions, u *sdk.AuthentifiedUser) error {
+	ctx, end := telemetry.Span(ctx, "purge.ApplyRetentionPolicyOnWorkflow")
+	defer end()
+
 	var vcsClient sdk.VCSAuthorizedClientService
 	var app sdk.Application
 	if wf.WorkflowData.Node.Context != nil {
@@ -122,7 +129,7 @@ func ApplyRetentionPolicyOnWorkflow(ctx context.Context, store cache.Store, db *
 	limit := 50
 	offset := 0
 	for {
-		wfRuns, _, _, count, err := workflow.LoadRunsSummaries(db, wf.ProjectKey, wf.Name, offset, limit, nil)
+		wfRuns, _, _, count, err := workflow.LoadRunsSummaries(ctx, db, wf.ProjectKey, wf.Name, offset, limit, nil)
 		if err != nil {
 			return err
 		}

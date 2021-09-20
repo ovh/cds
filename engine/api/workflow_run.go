@@ -37,7 +37,7 @@ const (
 	defaultLimit = 10
 )
 
-func (api *API) searchWorkflowRun(_ context.Context, w http.ResponseWriter, r *http.Request, route, key, name string) error {
+func (api *API) searchWorkflowRun(ctx context.Context, w http.ResponseWriter, r *http.Request, route, key, name string) error {
 	// About pagination: [FR] http://blog.octo.com/designer-une-api-rest/#pagination
 	var limit, offset int
 
@@ -74,7 +74,7 @@ func (api *API) searchWorkflowRun(_ context.Context, w http.ResponseWriter, r *h
 
 	//Maximim range is set to 50
 	w.Header().Add("Accept-Range", "run 50")
-	runs, offset, limit, count, err := workflow.LoadRunsSummaries(api.mustDB(), key, name, offset, limit, mapFilters)
+	runs, offset, limit, count, err := workflow.LoadRunsSummaries(ctx, api.mustDB(), key, name, offset, limit, mapFilters)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to load workflow runs")
 	}
@@ -255,7 +255,7 @@ func (api *API) getLatestWorkflowRunHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		name := vars["permWorkflowName"]
-		run, err := workflow.LoadLastRun(api.mustDB(), key, name, workflow.LoadRunOptions{WithArtifacts: true})
+		run, err := workflow.LoadLastRun(ctx, api.mustDB(), key, name, workflow.LoadRunOptions{WithArtifacts: true})
 		if err != nil {
 			return sdk.WrapError(err, "Unable to load last workflow run")
 		}
@@ -375,7 +375,7 @@ func (api *API) stopWorkflowRunHandler() service.Handler {
 		go api.WorkflowSendEvent(context.Background(), *proj, report)
 
 		go func(ID int64) {
-			wRun, err := workflow.LoadRunByID(api.mustDB(), ID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
+			wRun, err := workflow.LoadRunByID(ctx, api.mustDB(), ID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
 			if err != nil {
 				log.Error(ctx, "workflow.stopWorkflowNodeRun> Cannot load run for resync commit status %v", err)
 				return
@@ -761,7 +761,7 @@ func (api *API) stopWorkflowNodeRunHandler() service.Handler {
 		})
 
 		go func(ID int64) {
-			wRun, err := workflow.LoadRunByID(api.mustDB(), ID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
+			wRun, err := workflow.LoadRunByID(ctx, api.mustDB(), ID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
 			if err != nil {
 				log.Error(ctx, "workflow.stopWorkflowNodeRun> Cannot load run for resync commit status %v", err)
 				return

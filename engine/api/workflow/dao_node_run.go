@@ -187,8 +187,7 @@ func LoadAndLockNodeRunByID(ctx context.Context, db gorp.SqlExecutor, id int64) 
 
 //LoadAndLockNodeRunByJobID load and lock a specific node run on a workflow
 func LoadAndLockNodeRunByJobID(ctx context.Context, db gorp.SqlExecutor, jobID int64) (*sdk.WorkflowNodeRun, error) {
-	var end func()
-	_, end = telemetry.Span(ctx, "workflow.LoadAndLockNodeRunByJobID")
+	_, end := telemetry.Span(ctx, "workflow.LoadAndLockNodeRunByJobID")
 	defer end()
 
 	var rr = NodeRun{}
@@ -209,7 +208,10 @@ func LoadAndLockNodeRunByJobID(ctx context.Context, db gorp.SqlExecutor, jobID i
 }
 
 //LoadNodeRunByID load a specific node run on a workflow
-func LoadNodeRunByID(db gorp.SqlExecutor, id int64, loadOpts LoadRunOptions) (*sdk.WorkflowNodeRun, error) {
+func LoadNodeRunByID(ctx context.Context, db gorp.SqlExecutor, id int64, loadOpts LoadRunOptions) (*sdk.WorkflowNodeRun, error) {
+	_, end := telemetry.Span(ctx, "workflow.LoadNodeRunByID")
+	defer end()
+
 	var rr = NodeRun{}
 	var testsField string
 	if loadOpts.WithTests {

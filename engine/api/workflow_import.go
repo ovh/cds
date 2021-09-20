@@ -65,7 +65,7 @@ func (api *API) postWorkflowPreviewHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		workflowExists, err := workflow.Exists(tx, proj.Key, ew.GetName())
+		workflowExists, err := workflow.Exists(ctx, tx, proj.Key, ew.GetName())
 		if err != nil {
 			return sdk.WrapError(err, "Cannot check if workflow exists")
 		}
@@ -145,7 +145,7 @@ func (api *API) postWorkflowImportHandler() service.Handler {
 		u := getAPIConsumer(ctx)
 
 		// load the workflow from database if exists
-		workflowExists, err := workflow.Exists(tx, proj.Key, ew.GetName())
+		workflowExists, err := workflow.Exists(ctx, tx, proj.Key, ew.GetName())
 		if err != nil {
 			return sdk.WrapError(err, "Cannot check if workflow exists")
 		}

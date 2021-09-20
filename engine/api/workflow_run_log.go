@@ -64,7 +64,7 @@ func (api *API) getWorkflowNodeRunJobStepLinksHandler() service.Handler {
 			return sdk.NewErrorFrom(sdk.ErrNotFound, "cannot find run job for id %d", runJobID)
 		}
 
-		jobRun, err := workflow.LoadRunByID(api.mustDB(), nodeRun.WorkflowRunID, workflow.LoadRunOptions{
+		jobRun, err := workflow.LoadRunByID(ctx, api.mustDB(), nodeRun.WorkflowRunID, workflow.LoadRunOptions{
 			DisableDetailledNodeRun: true,
 		})
 		if err != nil {
@@ -160,7 +160,7 @@ func (api *API) getWorkflowNodeRunJobLogLinkHandler(ctx context.Context, w http.
 		return sdk.NewErrorFrom(sdk.ErrNotFound, "cannot find run job for id %d", runJobID)
 	}
 
-	jobRun, err := workflow.LoadRunByID(api.mustDB(), nodeRun.WorkflowRunID, workflow.LoadRunOptions{
+	jobRun, err := workflow.LoadRunByID(ctx, api.mustDB(), nodeRun.WorkflowRunID, workflow.LoadRunOptions{
 		DisableDetailledNodeRun: true,
 	})
 	if err != nil {
@@ -263,7 +263,7 @@ func (api *API) getWorkflowAccessHandler() service.Handler {
 			return err
 		}
 
-		exists, err := workflow.ExistsID(api.mustDB(), projectKey, workflowID)
+		exists, err := workflow.ExistsID(ctx, api.mustDB(), projectKey, workflowID)
 		if err != nil {
 			return err
 		}

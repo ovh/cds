@@ -279,7 +279,7 @@ func deleteRunHistory(ctx context.Context, db *gorp.DbMap, workflowRunID int64, 
 	}
 	defer tx.Rollback() // nolint
 
-	wr, err := workflow.LoadAndLockRunByID(tx, workflowRunID, workflow.LoadRunOptions{DisableDetailledNodeRun: true, WithDeleted: true})
+	wr, err := workflow.LoadAndLockRunByID(ctx, tx, workflowRunID, workflow.LoadRunOptions{DisableDetailledNodeRun: true, WithDeleted: true})
 	if err != nil {
 		if sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return nil
@@ -406,7 +406,10 @@ func DeleteArtifactsFromRepositoryManager(ctx context.Context, db gorp.SqlExecut
 
 // DeleteArtifacts removes artifacts from storage
 func DeleteArtifacts(ctx context.Context, db gorp.SqlExecutor, sharedStorage objectstore.Driver, workflowRunID int64) error {
-	wr, err := workflow.LoadRunByID(db, workflowRunID, workflow.LoadRunOptions{WithArtifacts: true, DisableDetailledNodeRun: false, WithDeleted: true})
+	ctx, end := telemetry.Span(ctx, "purge.DeleteArtifacts")
+	defer end()
+
+	wr, err := workflow.LoadRunByID(ctx, db, workflowRunID, workflow.LoadRunOptions{WithArtifacts: true, DisableDetailledNodeRun: false, WithDeleted: true})
 	if err != nil {
 		return sdk.WrapError(err, "error on load LoadRunByID:%d", workflowRunID)
 	}
