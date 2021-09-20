@@ -562,6 +562,9 @@ func UpdateNodeRun(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
 
 // GetNodeRunBuildCommits gets commits for given node run and return current vcs info
 func GetNodeRunBuildCommits(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, proj sdk.Project, wf sdk.Workflow, wNodeName string, number int64, nodeRun *sdk.WorkflowNodeRun, app *sdk.Application, env *sdk.Environment) ([]sdk.VCSCommit, sdk.BuildNumberAndHash, error) {
+	ctx, end := telemetry.Span(ctx, "workflow.GetNodeRunBuildCommits")
+	defer end()
+
 	var cur sdk.BuildNumberAndHash
 	if app == nil {
 		log.Debug(ctx, "GetNodeRunBuildCommits> No app linked")
@@ -791,8 +794,11 @@ func PreviousNodeRunVCSInfos(ctx context.Context, db gorp.SqlExecutor, projectKe
 	return previous, nil
 }
 
-func updateNodeRunCommits(db gorp.SqlExecutor, id int64, commits []sdk.VCSCommit) error {
-	log.Debug(context.TODO(), "updateNodeRunCommits> Updating %d commits for workflow_node_run #%d", len(commits), id)
+func updateNodeRunCommits(ctx context.Context, db gorp.SqlExecutor, id int64, commits []sdk.VCSCommit) error {
+	ctx, end := telemetry.Span(ctx, "workflow.updateNodeRunCommits")
+	defer end()
+
+	log.Debug(ctx, "updateNodeRunCommits> Updating %d commits for workflow_node_run #%d", len(commits), id)
 	commitsBtes, errMarshal := json.Marshal(commits)
 	if errMarshal != nil {
 		return sdk.WrapError(errMarshal, "updateNodeRunCommits> Unable to marshal commits")
