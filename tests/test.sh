@@ -92,7 +92,7 @@ smoke_tests_api() {
         START="$(date +%s)"
         ${CMD} >${f}.output 2>&1
         check_failure $? ${f}.output
-        echo "Test duration: $[ $(date +%s) - ${START} ] - ${f}"
+        echo -e "  ${DARKGRAY}duration: $[ $(date +%s) - ${START} ]${NOCOLOR}"
         mv_results ${f}
     done
 }
@@ -127,7 +127,7 @@ smoke_tests_services() {
         START="$(date +%s)"
         ${CMD} >${f}.output 2>&1
         check_failure $? ${f}.output
-        echo "Test duration: $[ $(date +%s) - ${START} ] - ${f}"
+        echo -e "  ${DARKGRAY}duration: $[ $(date +%s) - ${START} ]${NOCOLOR}"
         mv_results ${f}
     done
 }
@@ -140,7 +140,7 @@ cli_tests() {
         START="$(date +%s)"
         ${CMD} >${f}.output 2>&1
         check_failure $? ${f}.output
-        echo "Test duration: $[ $(date +%s) - ${START} ] - ${f}"
+        echo -e "  ${DARKGRAY}duration: $[ $(date +%s) - ${START} ]${NOCOLOR}"
         mv_results ${f}
     done
 }
@@ -153,7 +153,7 @@ workflow_tests() {
         START="$(date +%s)"
         ${CMD} >${f}.output 2>&1
         check_failure $? ${f}.output
-        echo "Test duration: $[ $(date +%s) - ${START} ] - ${f}"
+        echo -e "  ${DARKGRAY}duration: $[ $(date +%s) - ${START} ]${NOCOLOR}"
         mv_results ${f}
     done
 }
@@ -171,7 +171,7 @@ workflow_with_integration_tests() {
         START="$(date +%s)"
         ${CMD} >${f}.output 2>&1
         check_failure $? ${f}.output
-        echo "Test duration: $[ $(date +%s) - ${START} ] - ${f}"
+        echo -e "  ${DARKGRAY}duration: $[ $(date +%s) - ${START} ]${NOCOLOR}"
         mv_results ${f}
     done
 }
@@ -193,7 +193,7 @@ workflow_with_third_parties() {
         START="$(date +%s)"
         ${CMD} >${f}.output 2>&1
         check_failure $? ${f}.output
-        echo "Test duration: $[ $(date +%s) - ${START} ] - ${f}"
+        echo -e "  ${DARKGRAY}duration: $[ $(date +%s) - ${START} ]${NOCOLOR}"
         mv_results ${f}
     done
 }
@@ -206,7 +206,7 @@ admin_tests() {
         START="$(date +%s)"
         ${CMD} >${f}.output 2>&1
         check_failure $? ${f}.output
-        echo "Test duration: $[ $(date +%s) - ${START} ] - ${f}"
+        echo -e "  ${DARKGRAY}duration: $[ $(date +%s) - ${START} ]${NOCOLOR}"
         mv_results ${f}
     done
 }

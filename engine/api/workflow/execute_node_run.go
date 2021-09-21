@@ -106,13 +106,14 @@ func syncTakeJobInNodeRun(ctx context.Context, db gorp.SqlExecutor, n *sdk.Workf
 func executeNodeRun(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, proj sdk.Project, workflowNodeRun *sdk.WorkflowNodeRun) (*ProcessorReport, error) {
 	var end func()
 	ctx, end = telemetry.Span(ctx, "workflow.executeNodeRun",
+		telemetry.Tag(telemetry.TagProjectKey, proj.Key),
 		telemetry.Tag(telemetry.TagWorkflowRun, workflowNodeRun.Number),
 		telemetry.Tag(telemetry.TagWorkflowNodeRun, workflowNodeRun.ID),
 		telemetry.Tag("workflow_node_run_status", workflowNodeRun.Status),
 	)
 	defer end()
 
-	wr, err := LoadRunByID(db, workflowNodeRun.WorkflowRunID, LoadRunOptions{})
+	wr, err := LoadRunByID(ctx, db, workflowNodeRun.WorkflowRunID, LoadRunOptions{})
 	if err != nil {
 		return nil, sdk.WrapError(err, "unable to load workflow run with id %d", workflowNodeRun.WorkflowRunID)
 	}
@@ -283,7 +284,7 @@ func executeNodeRun(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store 
 	}
 
 	//Reload the workflow
-	updatedWorkflowRun, err := LoadRunByID(db, workflowNodeRun.WorkflowRunID, LoadRunOptions{})
+	updatedWorkflowRun, err := LoadRunByID(ctx, db, workflowNodeRun.WorkflowRunID, LoadRunOptions{})
 	if err != nil {
 		return nil, sdk.WrapError(err, "unable to reload workflow run id=%d", workflowNodeRun.WorkflowRunID)
 	}
@@ -319,8 +320,8 @@ func executeNodeRun(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store 
 }
 
 func releaseMutex(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, proj sdk.Project, workflowID int64, nodeName string) (*ProcessorReport, error) {
-	_, next := telemetry.Span(ctx, "workflow.releaseMutex")
-	defer next()
+	ctx, end := telemetry.Span(ctx, "workflow.releaseMutex")
+	defer end()
 
 	mutexQuery := `
     SELECT workflow_node_run.id
@@ -345,7 +346,7 @@ func releaseMutex(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store ca
 	}
 
 	// Load the workflow node run that is waiting for the mutex
-	waitingRun, errRun := LoadNodeRunByID(db, waitingRunID, LoadRunOptions{})
+	waitingRun, errRun := LoadNodeRunByID(ctx, db, waitingRunID, LoadRunOptions{})
 	if errRun != nil && sdk.Cause(errRun) != sql.ErrNoRows {
 		err = sdk.WrapError(err, "unable to load mutex-locked workflow node run")
 		ctx = sdk.ContextWithStacktrace(ctx, err)
@@ -357,7 +358,7 @@ func releaseMutex(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store ca
 	}
 
 	// Load the workflow run that is waiting for the mutex
-	workflowRun, err := LoadRunByID(db, waitingRun.WorkflowRunID, LoadRunOptions{})
+	workflowRun, err := LoadRunByID(ctx, db, waitingRun.WorkflowRunID, LoadRunOptions{})
 	if err != nil {
 		err = sdk.WrapError(err, "unable to load mutex-locked workflow run")
 		ctx = sdk.ContextWithStacktrace(ctx, err)
