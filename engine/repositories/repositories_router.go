@@ -8,7 +8,7 @@ import (
 )
 
 func (s *Service) initRouter(ctx context.Context) {
-	log.Debug(ctx, "Repositories> Router initialized")
+	log.Debug(ctx, "router initialized")
 	r := s.Router
 	r.Background = ctx
 	r.URL = s.Cfg.URL
