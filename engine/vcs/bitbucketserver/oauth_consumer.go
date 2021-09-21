@@ -9,12 +9,15 @@ import (
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 const oauth1OOB = "oob"
 
 //AuthorizeRedirect returns the request token, the Authorize URL
 func (g *bitbucketConsumer) AuthorizeRedirect(ctx context.Context) (string, string, error) {
+	_, end := telemetry.Span(ctx, "bitbucketserver.AuthorizeRedirect")
+	defer end()
 	requestToken, err := g.RequestToken()
 	if err != nil {
 		log.Warn(ctx, "requestToken>%s\n", err)
@@ -41,6 +44,8 @@ func (g *bitbucketConsumer) AuthorizeRedirect(ctx context.Context) (string, stri
 //AuthorizeToken returns the authorized token (and its secret)
 //from the request token and the verifier got on authorize url
 func (g *bitbucketConsumer) AuthorizeToken(ctx context.Context, token, verifier string) (string, string, error) {
+	_, end := telemetry.Span(ctx, "bitbucketserver.AuthorizeToken")
+	defer end()
 	accessTokenURL, _ := url.Parse(g.accessTokenURL)
 	req := http.Request{
 		URL:    accessTokenURL,

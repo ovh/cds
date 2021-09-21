@@ -13,6 +13,7 @@ import (
 	"github.com/xanzy/go-gitlab"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 type authorizeResponse struct {
@@ -30,6 +31,9 @@ type Error struct {
 
 //AuthorizeRedirect returns the request token, the Authorize URL
 func (g *gitlabConsumer) AuthorizeRedirect(ctx context.Context) (string, string, error) {
+	_, end := telemetry.Span(ctx, "gitlab.AuthorizeRedirect")
+	defer end()
+
 	// See https://docs.gitlab.com/ce/api/oauth2.html
 
 	requestToken, err := sdk.GenerateHash()

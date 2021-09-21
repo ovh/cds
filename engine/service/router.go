@@ -1,8 +1,11 @@
 package service
 
 import (
+	"context"
 	"fmt"
 	"net/http"
+	"reflect"
+	"runtime"
 	"strings"
 	"time"
 
@@ -36,3 +39,23 @@ func DefaultHeaders() map[string]string {
 
 // HandlerConfigParam is a type used in handler configuration, to set specific config on a route given a method
 type HandlerConfigParam func(*HandlerConfig)
+
+func TracingMiddlewareFunc(s Service) Middleware {
+	return func(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *HandlerConfig) (context.Context, error) {
+		name := runtime.FuncForPC(reflect.ValueOf(rc.Handler).Pointer()).Name()
+		name = strings.Replace(name, ".func1", "", 1)
+
+		splittedName := strings.Split(name, ".")
+		name = splittedName[len(splittedName)-1]
+
+		opts := telemetry.Options{
+			Name: name,
+		}
+
+		ctx, err := telemetry.Start(ctx, s, w, req, opts)
+		newReq := req.WithContext(ctx)
+		*req = *newReq
+
+		return ctx, err
+	}
+}

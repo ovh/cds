@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 func (b *bitbucketClient) getHooks(ctx context.Context, repo string) ([]WebHook, error) {
@@ -41,6 +42,8 @@ func (b *bitbucketClient) getHookByID(ctx context.Context, repo string, webHookI
 }
 
 func (b *bitbucketClient) GetHook(ctx context.Context, repo, url string) (sdk.VCSHook, error) {
+	ctx, end := telemetry.Span(ctx, "bitbucketserver.GetHook", telemetry.Tag(telemetry.TagRepository, repo))
+	defer end()
 	whooks, err := b.getHooks(ctx, repo)
 	if err != nil {
 		return sdk.VCSHook{}, err
@@ -65,6 +68,8 @@ func (b *bitbucketClient) GetHook(ctx context.Context, repo, url string) (sdk.VC
 }
 
 func (b *bitbucketClient) CreateHook(ctx context.Context, repo string, hook *sdk.VCSHook) error {
+	ctx, end := telemetry.Span(ctx, "bitbucketserver.CreateHook", telemetry.Tag(telemetry.TagRepository, repo))
+	defer end()
 	project, slug, err := getRepo(repo)
 	if err != nil {
 		return err
@@ -107,6 +112,8 @@ func (b *bitbucketClient) CreateHook(ctx context.Context, repo string, hook *sdk
 }
 
 func (b *bitbucketClient) UpdateHook(ctx context.Context, repo string, hook *sdk.VCSHook) error {
+	ctx, end := telemetry.Span(ctx, "bitbucketserver.UpdateHook", telemetry.Tag(telemetry.TagRepository, repo))
+	defer end()
 	project, slug, err := getRepo(repo)
 	if err != nil {
 		return err
@@ -137,6 +144,8 @@ func (b *bitbucketClient) UpdateHook(ctx context.Context, repo string, hook *sdk
 }
 
 func (b *bitbucketClient) DeleteHook(ctx context.Context, repo string, hook sdk.VCSHook) error {
+	ctx, end := telemetry.Span(ctx, "bitbucketserver.DeleteHook", telemetry.Tag(telemetry.TagRepository, repo))
+	defer end()
 	project, slug, err := getRepo(repo)
 	if err != nil {
 		return sdk.WithStack(err)

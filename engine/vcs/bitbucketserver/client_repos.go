@@ -7,9 +7,13 @@ import (
 	"strings"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 func (b *bitbucketClient) Repos(ctx context.Context) ([]sdk.VCSRepo, error) {
+	ctx, end := telemetry.Span(ctx, "bitbucketserver.Repos")
+	defer end()
+
 	bbRepos := []Repo{}
 
 	path := "/repos"

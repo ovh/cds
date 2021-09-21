@@ -11,6 +11,7 @@ import (
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 type statusData struct {
@@ -23,6 +24,9 @@ type statusData struct {
 }
 
 func (b *bitbucketClient) SetStatus(ctx context.Context, event sdk.Event) error {
+	ctx, end := telemetry.Span(ctx, "bitbucketserver.SetStatus")
+	defer end()
+
 	if b.consumer.disableStatus {
 		log.Warn(ctx, "bitbucketClient.SetStatus>  ⚠ Bitbucket statuses are disabled")
 		return nil

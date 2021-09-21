@@ -161,8 +161,9 @@ func Create(ctx context.Context, h Interface) error {
 
 				log.Info(currentCtx, "processing job %d", j.ID)
 
+				var endSpan *trace.Span
 				if val, has := j.Header.Get(telemetry.SampledHeader); has && val == "1" {
-					currentCtx, _ = telemetry.New(currentCtx, h, "hatchery.JobReceive", trace.AlwaysSample(), trace.SpanKindServer)
+					currentCtx, endSpan = telemetry.New(currentCtx, h, "hatchery.JobReceive", trace.AlwaysSample(), trace.SpanKindUnspecified)
 
 					r, _ := j.Header.Get(sdk.WorkflowRunHeader)
 					w, _ := j.Header.Get(sdk.WorkflowHeader)
@@ -189,6 +190,9 @@ func Create(ctx context.Context, h Interface) error {
 						)
 					}
 					telemetry.End(currentCtx, nil, nil) // nolint
+					if endSpan != nil {
+						endSpan.End()
+					}
 					var T struct{}
 					traceEnded = &T
 					currentCancel()
