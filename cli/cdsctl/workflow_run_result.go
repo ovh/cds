@@ -128,7 +128,7 @@ func workflowRunResultGet(v cli.Values) error {
 			var err error
 			f, err = os.OpenFile(fileName, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.FileMode(perm))
 			if err != nil {
-				return sdk.NewError(sdk.ErrUnknownError, fmt.Errorf("cannot create file (OpenFile) %s: %s", fileName, err))
+				return cli.NewError("unable to open file %s: %s", fileName, err)
 			}
 			fmt.Printf("Downloading %s...\n", fileName)
 			if err := client.CDNItemDownload(context.Background(), confCDN.HTTPURL, cdnHash, sdk.CDNTypeItemRunResult, md5, f); err != nil {
@@ -136,7 +136,7 @@ func workflowRunResultGet(v cli.Values) error {
 				return err
 			}
 			if err := f.Close(); err != nil {
-				return sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to close file %s: %v", fileName, err)
+				return cli.NewError("unable to close file %s: %v", fileName, err)
 			}
 		}
 		if toDownload {

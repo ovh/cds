@@ -28,7 +28,7 @@ func UpdateOutgoingHookRunStatus(ctx context.Context, db gorpmapper.SqlExecutorW
 	}
 
 	// Reload node run with build parameters
-	nodeRun, err := LoadNodeRunByID(db, nr.ID, LoadRunOptions{})
+	nodeRun, err := LoadNodeRunByID(ctx, db, nr.ID, LoadRunOptions{})
 	if err != nil {
 		return nil, err
 	}

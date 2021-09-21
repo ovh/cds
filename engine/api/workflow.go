@@ -109,7 +109,7 @@ func (api *API) getRetentionPolicySuggestionHandler() service.Handler {
 		}
 
 		varsPayload := make(map[string]string, 0)
-		run, err := workflow.LoadLastRun(api.mustDB(), key, name, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
+		run, err := workflow.LoadLastRun(ctx, api.mustDB(), key, name, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
 		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return err
 		}
@@ -193,7 +193,7 @@ func (api *API) postWorkflowRetentionPolicyDryRun() service.Handler {
 		wf.RetentionPolicy = request.RetentionPolicy
 
 		// Get the number of runs to analyze
-		_, _, _, count, err := workflow.LoadRunsSummaries(api.mustDB(), wf.ProjectKey, wf.Name, 0, 1, nil)
+		_, _, _, count, err := workflow.LoadRunsSummaries(ctx, api.mustDB(), wf.ProjectKey, wf.Name, 0, 1, nil)
 		if err != nil {
 			return err
 		}
@@ -680,7 +680,7 @@ func (api *API) deleteWorkflowHandler() service.Handler {
 			return sdk.WrapError(errP, "Cannot load Project %s", key)
 		}
 
-		b, errW := workflow.Exists(api.mustDB(), key, name)
+		b, errW := workflow.Exists(ctx, api.mustDB(), key, name)
 		if errW != nil {
 			return sdk.WrapError(errW, "Cannot check Workflow %s", key)
 		}
@@ -845,7 +845,7 @@ func (api *API) getWorkflowNotificationsConditionsHandler() service.Handler {
 			Operators: sdk.WorkflowConditionsOperators,
 		}
 
-		wr, errr := workflow.LoadLastRun(api.mustDB(), key, name, workflow.LoadRunOptions{})
+		wr, errr := workflow.LoadLastRun(ctx, api.mustDB(), key, name, workflow.LoadRunOptions{})
 		if errr != nil {
 			if !sdk.ErrorIs(errr, sdk.ErrNotFound) {
 				return sdk.WrapError(errr, "getWorkflowTriggerConditionHandler> Unable to load last run workflow")

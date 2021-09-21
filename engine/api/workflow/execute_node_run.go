@@ -108,13 +108,14 @@ func syncTakeJobInNodeRun(ctx context.Context, db gorp.SqlExecutor, n *sdk.Workf
 func executeNodeRun(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, proj sdk.Project, workflowNodeRun *sdk.WorkflowNodeRun) (*ProcessorReport, error) {
 	var end func()
 	ctx, end = telemetry.Span(ctx, "workflow.executeNodeRun",
+		telemetry.Tag(telemetry.TagProjectKey, proj.Key),
 		telemetry.Tag(telemetry.TagWorkflowRun, workflowNodeRun.Number),
 		telemetry.Tag(telemetry.TagWorkflowNodeRun, workflowNodeRun.ID),
 		telemetry.Tag("workflow_node_run_status", workflowNodeRun.Status),
 	)
 	defer end()
 
-	wr, err := LoadRunByID(db, workflowNodeRun.WorkflowRunID, LoadRunOptions{})
+	wr, err := LoadRunByID(ctx, db, workflowNodeRun.WorkflowRunID, LoadRunOptions{})
 	if err != nil {
 		return nil, sdk.WrapError(err, "unable to load workflow run with id %d", workflowNodeRun.WorkflowRunID)
 	}
@@ -285,7 +286,7 @@ func executeNodeRun(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store 
 	}
 
 	//Reload the workflow
-	updatedWorkflowRun, err := LoadRunByID(db, workflowNodeRun.WorkflowRunID, LoadRunOptions{})
+	updatedWorkflowRun, err := LoadRunByID(ctx, db, workflowNodeRun.WorkflowRunID, LoadRunOptions{})
 	if err != nil {
 		return nil, sdk.WrapError(err, "unable to reload workflow run id=%d", workflowNodeRun.WorkflowRunID)
 	}
@@ -321,8 +322,8 @@ func executeNodeRun(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store 
 }
 
 func releaseMutex(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, proj sdk.Project, workflowID int64, nodeName string) (*ProcessorReport, error) {
-	_, next := telemetry.Span(ctx, "workflow.releaseMutex")
-	defer next()
+	ctx, end := telemetry.Span(ctx, "workflow.releaseMutex")
+	defer end()
 
 	mutexQuery := `
     SELECT workflow_node_run.id
@@ -347,7 +348,7 @@ func releaseMutex(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store ca
 	}
 
 	// Load the workflow node run that is waiting for the mutex
-	waitingRun, errRun := LoadNodeRunByID(db, waitingRunID, LoadRunOptions{})
+	waitingRun, errRun := LoadNodeRunByID(ctx, db, waitingRunID, LoadRunOptions{})
 	if errRun != nil && sdk.Cause(errRun) != sql.ErrNoRows {
 		err = sdk.WrapError(err, "unable to load mutex-locked workflow node run")
 		ctx = sdk.ContextWithStacktrace(ctx, err)
@@ -359,7 +360,7 @@ func releaseMutex(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store ca
 	}
 
 	// Load the workflow run that is waiting for the mutex
-	workflowRun, err := LoadRunByID(db, waitingRun.WorkflowRunID, LoadRunOptions{})
+	workflowRun, err := LoadRunByID(ctx, db, waitingRun.WorkflowRunID, LoadRunOptions{})
 	if err != nil {
 		err = sdk.WrapError(err, "unable to load mutex-locked workflow run")
 		ctx = sdk.ContextWithStacktrace(ctx, err)
@@ -429,7 +430,7 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 	}
 
 	_, next = telemetry.Span(ctx, "workflow.getIntegrationPlugins")
-	integrationPlugins, err := getIntegrationPlugins(db, wr, nr)
+	integrationConfigs, integrationPlugins, err := getIntegrationPlugins(db, wr, nr)
 	if err != nil {
 		return report, sdk.WrapError(err, "unable to get integration plugins requirement")
 	}
@@ -470,7 +471,7 @@ jobLoop:
 		}
 
 		_, next = telemetry.Span(ctx, "workflow.processNodeJobRunRequirements")
-		jobRequirements, containsService, wm, err := processNodeJobRunRequirements(ctx, db, *job, nr, sdk.Groups(groups).ToIDs(), integrationPlugins)
+		jobRequirements, containsService, wm, err := processNodeJobRunRequirements(ctx, db, *job, nr, sdk.Groups(groups).ToIDs(), integrationPlugins, integrationConfigs)
 		next()
 		if err != nil {
 			spawnErrs.Join(*err)
@@ -585,23 +586,26 @@ jobLoop:
 	return report, nil
 }
 
-func getIntegrationPlugins(db gorp.SqlExecutor, wr *sdk.WorkflowRun, nr *sdk.WorkflowNodeRun) ([]sdk.GRPCPlugin, error) {
+func getIntegrationPlugins(db gorp.SqlExecutor, wr *sdk.WorkflowRun, nr *sdk.WorkflowNodeRun) ([]sdk.IntegrationConfig, []sdk.GRPCPlugin, error) {
 	plugins := make([]sdk.GRPCPlugin, 0)
-	var projectIntegrationModelID int64
+	mapConfig := make([]sdk.IntegrationConfig, 0)
+
+	var projectIntegration *sdk.ProjectIntegration
 	node := wr.Workflow.WorkflowData.NodeByID(nr.WorkflowNodeID)
 	if node != nil && node.Context != nil {
 		if node.Context.ProjectIntegrationID != 0 {
 			pp, has := wr.Workflow.ProjectIntegrations[node.Context.ProjectIntegrationID]
 			if has {
-				projectIntegrationModelID = pp.Model.ID
+				projectIntegration = &pp
 			}
 		}
 	}
 
-	if projectIntegrationModelID > 0 {
-		plg, err := plugin.LoadByIntegrationModelIDAndType(db, projectIntegrationModelID, sdk.GRPCPluginDeploymentIntegration)
+	if projectIntegration != nil && projectIntegration.Model.ID > 0 {
+		mapConfig = append(mapConfig, projectIntegration.Config)
+		plg, err := plugin.LoadByIntegrationModelIDAndType(db, projectIntegration.Model.ID, sdk.GRPCPluginDeploymentIntegration)
 		if err != nil {
-			return nil, sdk.NewErrorFrom(sdk.ErrNotFound, "Cannot find plugin for integration model id %d, %v", projectIntegrationModelID, err)
+			return nil, nil, sdk.NewErrorFrom(sdk.ErrNotFound, "Cannot find plugin for integration model id %d, %v", projectIntegration.Model.ID, err)
 		}
 		plugins = append(plugins, *plg)
 	}
@@ -613,9 +617,10 @@ func getIntegrationPlugins(db gorp.SqlExecutor, wr *sdk.WorkflowRun, nr *sdk.Wor
 		}
 	}
 	if artifactManagerInteg != nil {
+		mapConfig = append(mapConfig, artifactManagerInteg.Config)
 		plgs, err := plugin.LoadAllByIntegrationModelID(db, artifactManagerInteg.ProjectIntegration.Model.ID)
 		if err != nil {
-			return nil, sdk.NewErrorFrom(sdk.ErrNotFound, "Cannot find plugin for integration model id %d, %v", projectIntegrationModelID, err)
+			return nil, nil, sdk.NewErrorFrom(sdk.ErrNotFound, "Cannot find plugin for integration model id %d, %v", artifactManagerInteg.ProjectIntegration.Model.ID, err)
 		}
 		platform := artifactManagerInteg.ProjectIntegration.Config[sdk.ArtifactManagerConfigPlatform]
 		for _, plg := range plgs {
@@ -625,7 +630,7 @@ func getIntegrationPlugins(db gorp.SqlExecutor, wr *sdk.WorkflowRun, nr *sdk.Wor
 		}
 	}
 
-	return plugins, nil
+	return mapConfig, plugins, nil
 }
 
 func getExecutablesGroups(wr *sdk.WorkflowRun, nr *sdk.WorkflowNodeRun) ([]sdk.Group, error) {

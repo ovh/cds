@@ -117,8 +117,7 @@ func (r *ProcessorReport) Errors() []error {
 
 // UpdateNodeJobRunStatus Update status of an workflow_node_run_job.
 func UpdateNodeJobRunStatus(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, proj sdk.Project, job *sdk.WorkflowNodeJobRun, status string) (*ProcessorReport, error) {
-	var end func()
-	ctx, end = telemetry.Span(ctx, "workflow.UpdateNodeJobRunStatus",
+	ctx, end := telemetry.Span(ctx, "workflow.UpdateNodeJobRunStatus",
 		telemetry.Tag(telemetry.TagWorkflowNodeJobRun, job.ID),
 		telemetry.Tag("workflow_node_run_job_status", status),
 	)
@@ -127,7 +126,7 @@ func UpdateNodeJobRunStatus(ctx context.Context, db gorpmapper.SqlExecutorWithTx
 	report := new(ProcessorReport)
 
 	_, next := telemetry.Span(ctx, "workflow.LoadRunByID")
-	nodeRun, err := LoadNodeRunByID(db, job.WorkflowNodeRunID, LoadRunOptions{})
+	nodeRun, err := LoadNodeRunByID(ctx, db, job.WorkflowNodeRunID, LoadRunOptions{})
 	next()
 	if err != nil {
 		return nil, sdk.WrapError(err, "Unable to load node run id %d", job.WorkflowNodeRunID)
@@ -159,11 +158,9 @@ func UpdateNodeJobRunStatus(ctx context.Context, db gorpmapper.SqlExecutorWithTx
 		job.Done = time.Now()
 		job.Status = status
 
-		_, next := telemetry.Span(ctx, "workflow.LoadRunByID")
-		wf, err := LoadRunByID(db, nodeRun.WorkflowRunID, LoadRunOptions{
+		wf, err := LoadRunByID(ctx, db, nodeRun.WorkflowRunID, LoadRunOptions{
 			WithDeleted: true,
 		})
-		next()
 		if err != nil {
 			return nil, sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Unable to load run id %d", nodeRun.WorkflowRunID)
 		}

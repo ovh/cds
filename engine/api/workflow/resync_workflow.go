@@ -97,17 +97,26 @@ func ResyncNodeRunsWithCommits(ctx context.Context, db *gorp.DbMap, store cache.
 			continue
 		}
 
-		go func(nr sdk.WorkflowNodeRun) {
+		go func(nrID int64) {
 			tx, err := db.Begin()
 			if err != nil {
+				ctx := log.ContextWithStackTrace(ctx, err)
 				log.Error(ctx, "ResyncNodeRuns> Cannot begin db tx: %v", sdk.WithStack(err))
 				return
 			}
 			defer tx.Rollback() // nolint
 
-			wr, errL := LoadAndLockRunByID(tx, nr.WorkflowRunID, LoadRunOptions{})
-			if errL != nil {
-				log.Error(ctx, "ResyncNodeRuns> Unable to load workflowRun by id %d: %v", nr.WorkflowRunID, errL)
+			nr, err := LoadAndLockNodeRunByID(ctx, tx, nrID)
+			if err != nil {
+				ctx := log.ContextWithStackTrace(ctx, err)
+				log.Error(ctx, "ResyncNodeRuns> Unable to load workflowNodeRun by id %d: %v", nrID, err)
+				return
+			}
+
+			wr, err := LoadRunByID(ctx, tx, nr.WorkflowRunID, LoadRunOptions{})
+			if err != nil {
+				ctx := log.ContextWithStackTrace(ctx, err)
+				log.Error(ctx, "ResyncNodeRuns> Unable to load workflowRun by id %d: %v", nr.WorkflowRunID, err)
 				return
 			}
 
@@ -117,6 +126,7 @@ func ResyncNodeRunsWithCommits(ctx context.Context, db *gorp.DbMap, store cache.
 
 			n := wr.Workflow.WorkflowData.NodeByID(nr.WorkflowNodeID)
 			if n == nil {
+				ctx := log.ContextWithStackTrace(ctx, err)
 				log.Error(ctx, "ResyncNodeRuns> Unable to find node data by id %d in a workflow run id %d", nr.WorkflowNodeID, nr.WorkflowRunID)
 				return
 			}
@@ -131,15 +141,17 @@ func ResyncNodeRunsWithCommits(ctx context.Context, db *gorp.DbMap, store cache.
 			}
 
 			//New context because we are in goroutine
-			commits, curVCSInfos, err := GetNodeRunBuildCommits(context.TODO(), tx, store, proj, wr.Workflow, nodeName, wr.Number, &nr, &app, env)
+			commits, curVCSInfos, err := GetNodeRunBuildCommits(ctx, tx, store, proj, wr.Workflow, nodeName, wr.Number, nr, &app, env)
 			if err != nil {
+				ctx := log.ContextWithStackTrace(ctx, err)
 				log.Error(ctx, "ResyncNodeRuns> cannot get build commits on a node run %v", err)
 			} else if commits != nil {
 				nr.Commits = commits
 			}
 
 			if len(commits) > 0 {
-				if err := updateNodeRunCommits(tx, nr.ID, commits); err != nil {
+				if err := updateNodeRunCommits(ctx, tx, nr.ID, commits); err != nil {
+					ctx := log.ContextWithStackTrace(ctx, err)
 					log.Error(ctx, "ResyncNodeRuns> Unable to update node run commits %v", err)
 				}
 			}
@@ -160,13 +172,15 @@ func ResyncNodeRunsWithCommits(ctx context.Context, db *gorp.DbMap, store cache.
 
 			if tagsUpdated {
 				if err := UpdateWorkflowRunTags(tx, wr); err != nil {
+					ctx := log.ContextWithStackTrace(ctx, err)
 					log.Error(ctx, "ResyncNodeRuns> Unable to update workflow run tags %v", err)
 				}
 			}
 
 			if err := tx.Commit(); err != nil {
+				ctx := log.ContextWithStackTrace(ctx, err)
 				log.Error(ctx, "ResyncNodeRuns> Cannot commit db tx: %v", sdk.WithStack(err))
 			}
-		}(nodeRun)
+		}(nodeRun.ID)
 	}
 }

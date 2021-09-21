@@ -1,3 +1,0 @@
-name: test-action-staticfiles
-version: v1.0
-pipeline: pipeline-play-staticfiles

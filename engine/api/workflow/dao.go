@@ -63,7 +63,10 @@ type UpdateOptions struct {
 }
 
 // Exists checks if a workflow exists
-func Exists(db gorp.SqlExecutor, key string, name string) (bool, error) {
+func Exists(ctx context.Context, db gorp.SqlExecutor, key string, name string) (bool, error) {
+	_, end := telemetry.Span(ctx, "workflow.Exists")
+	defer end()
+
 	query := `
 		select count(1)
 		from workflow
@@ -78,7 +81,9 @@ func Exists(db gorp.SqlExecutor, key string, name string) (bool, error) {
 }
 
 // ExistsID checks if a workflow exists for given ID and project
-func ExistsID(db gorp.SqlExecutor, key string, id int64) (bool, error) {
+func ExistsID(ctx context.Context, db gorp.SqlExecutor, key string, id int64) (bool, error) {
+	_, end := telemetry.Span(ctx, "workflow.ExistsID")
+	defer end()
 	query := `
 		select count(1)
 		from workflow
@@ -93,7 +98,7 @@ func ExistsID(db gorp.SqlExecutor, key string, id int64) (bool, error) {
 }
 
 func LoadByRepo(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, repo string, opts LoadOptions) (*sdk.Workflow, error) {
-	ctx, end := telemetry.Span(ctx, "workflow.Load")
+	ctx, end := telemetry.Span(ctx, "workflow.LoadByRepo")
 	defer end()
 
 	dao := opts.GetWorkflowDAO()
@@ -1116,7 +1121,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		oldWf = &opts.OldWorkflow
 	} else {
 		// load the workflow from database if exists
-		workflowExists, err = Exists(db, proj.Key, data.Workflow.GetName())
+		workflowExists, err = Exists(ctx, db, proj.Key, data.Workflow.GetName())
 		if err != nil {
 			return nil, nil, nil, nil, sdk.WrapError(err, "cannot check if workflow exists")
 		}

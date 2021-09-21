@@ -72,9 +72,6 @@ func (e *artifactoryUploadArtifactPlugin) Run(_ context.Context, opts *integrati
 	version := opts.GetOptions()["cds.version"]
 
 	buildInfo := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactManagerConfigBuildInfoPrefix)]
-	if buildInfo == "" {
-		buildInfo = opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactManagerConfigBuildInfoPath)]
-	}
 
 	artiClient, err := art.CreateArtifactoryClient(artifactoryURL, token)
 	if err != nil {

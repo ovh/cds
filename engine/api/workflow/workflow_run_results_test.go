@@ -4,10 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"github.com/ovh/cds/engine/cache"
-	"github.com/ovh/cds/engine/gorpmapper"
 	"testing"
 	"time"
+
+	"github.com/ovh/cds/engine/cache"
+	"github.com/ovh/cds/engine/gorpmapper"
 
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -56,7 +57,7 @@ func createRunNodeRunAndJob(t *testing.T, db gorpmapper.SqlExecutorWithTx, store
 	require.NoError(t, db.Insert(dbj))
 	jobRun.ID = dbj.ID
 
-	workflowRun, err := workflow.LoadRunByID(db, wr.ID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
+	workflowRun, err := workflow.LoadRunByID(context.Background(), db, wr.ID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
 	require.NoError(t, err)
 	return *proj, wk, *workflowRun, nodeRun, jobRun
 }
@@ -206,7 +207,7 @@ func TestCanUploadArtifactAlreadyExistInAPreviousSubNum(t *testing.T) {
 	jobRun.WorkflowNodeRunID = nodeRun2.ID
 	require.NoError(t, workflow.UpdateNodeJobRun(ctx, db, &jobRun))
 
-	run2, err := workflow.LoadRunByID(db, workflowRun.ID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
+	run2, err := workflow.LoadRunByID(context.Background(), db, workflowRun.ID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
 	require.NoError(t, err)
 	workflowRun = *run2
 

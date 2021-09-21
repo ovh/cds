@@ -27,9 +27,9 @@ type Configuration struct {
 	TracingEnabled bool `toml:"tracingEnabled" json:"tracingEnabled"`
 	Exporters      struct {
 		Jaeger struct {
-			HTTPCollectorEndpoint string  `toml:"HTTPCollectorEndpoint" default:"http://localhost:14268" json:"httpCollectorEndpoint"`
-			CollectorEndpoint     string  `toml:"collectorEndpoint" default:"" json:"collectorEndpoint"`
-			SamplingProbability   float64 `toml:"samplingProbability" json:"metricSamplingProbability"`
+			ServiceName         string  `toml:"serviceName" default:"" json:"serviceName"`
+			CollectorEndpoint   string  `toml:"collectorEndpoint" default:"http://localhost:14268/api/traces" json:"collectorEndpoint"`
+			SamplingProbability float64 `toml:"samplingProbability" json:"metricSamplingProbability"`
 		} `json:"jaeger"`
 		Prometheus struct {
 			ReporteringPeriod int `toml:"ReporteringPeriod" default:"10" json:"reporteringPeriod"`

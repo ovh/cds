@@ -16,25 +16,39 @@ import (
 
 // processNodeJobRunRequirements returns requirements list interpolated, and true or false if at least
 // one requirement is of type "Service"
-func processNodeJobRunRequirements(ctx context.Context, db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNodeRun, execsGroupIDs []int64, integrationPlugins []sdk.GRPCPlugin) (sdk.RequirementList, bool, *sdk.Model, *sdk.MultiError) {
+func processNodeJobRunRequirements(ctx context.Context, db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNodeRun, execsGroupIDs []int64, integrationPlugins []sdk.GRPCPlugin, integrationsConfigs []sdk.IntegrationConfig) (sdk.RequirementList, bool, *sdk.Model, *sdk.MultiError) {
 	var requirements sdk.RequirementList
 	var errm sdk.MultiError
 	var containsService bool
 	var model string
 	var tmp = sdk.ParametersToMap(run.BuildParameters)
 
-	pluginsRequirements := []sdk.Requirement{}
+	pluginsRequirements := make([]sdk.Requirement, 0)
 	for _, p := range integrationPlugins {
 		for _, b := range p.Binaries {
 			pluginsRequirements = append(pluginsRequirements, b.Requirements...)
 		}
 	}
 
-	// as some plugin binaries can have same requirement, we deduplicate them
-	pluginsRequirements = sdk.RequirementListDeduplicate(pluginsRequirements)
-
 	// then add plugins requirement to the action requirement
 	j.Action.Requirements = append(j.Action.Requirements, pluginsRequirements...)
+
+	integrationRequirements := make([]sdk.Requirement, 0)
+	for _, c := range integrationsConfigs {
+		for k, v := range c {
+			if v.Type != sdk.IntegrationConfigTypeRegion {
+				continue
+			}
+			integrationRequirements = append(integrationRequirements, sdk.Requirement{
+				Name:  k,
+				Type:  sdk.RegionRequirement,
+				Value: v.Value,
+			})
+		}
+	}
+	j.Action.Requirements = append(j.Action.Requirements, integrationRequirements...)
+
+	j.Action.Requirements = sdk.RequirementListDeduplicate(j.Action.Requirements)
 
 	for _, v := range j.Action.Requirements {
 		name, errName := interpolate.Do(v.Name, tmp)
@@ -75,8 +89,8 @@ func processNodeJobRunRequirements(ctx context.Context, db gorp.SqlExecutor, j s
 			for _, req := range requirements {
 				if req.Type == sdk.BinaryRequirement {
 					var hasCapa bool
-					for _, cap := range wm.RegisteredCapabilities {
-						if cap.Value == req.Value {
+					for _, capa := range wm.RegisteredCapabilities {
+						if capa.Value == req.Value {
 							hasCapa = true
 							break
 						}
@@ -90,6 +104,19 @@ func processNodeJobRunRequirements(ctx context.Context, db gorp.SqlExecutor, j s
 		}
 	}
 
+	regionRequirementMap := make(map[string]struct{})
+	for _, r := range requirements {
+		if r.Type != sdk.RegionRequirement {
+			continue
+		}
+		if _, has := regionRequirementMap[r.Value]; !has {
+			regionRequirementMap[r.Value] = struct{}{}
+		}
+	}
+	if len(regionRequirementMap) > 1 {
+		errm.Append(sdk.NewErrorFrom(sdk.ErrInvalidJobRequirement, "Cannot have multiple region requirements %v", regionRequirementMap))
+	}
+
 	if errm.IsEmpty() {
 		return requirements, containsService, wm, nil
 	}
@@ -97,7 +124,7 @@ func processNodeJobRunRequirements(ctx context.Context, db gorp.SqlExecutor, j s
 }
 
 func prepareRequirementsToNodeJobRunParameters(reqs sdk.RequirementList) []sdk.Parameter {
-	params := []sdk.Parameter{}
+	params := make([]sdk.Parameter, 0)
 	for _, r := range reqs {
 		if r.Type == sdk.ServiceRequirement {
 			k := fmt.Sprintf("job.requirement.%s.%s", strings.ToLower(r.Type), strings.ToLower(r.Name))

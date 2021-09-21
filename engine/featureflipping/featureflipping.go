@@ -10,6 +10,7 @@ import (
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/luascript"
+	"github.com/ovh/cds/sdk/telemetry"
 
 	"github.com/ovh/cds/engine/gorpmapper"
 )
@@ -19,11 +20,16 @@ var (
 )
 
 func Exists(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, name sdk.FeatureName) bool {
+	ctx, end := telemetry.Span(ctx, "featureflipping.Exists")
+	defer end()
 	f, _ := LoadByName(ctx, m, db, name)
 	return f.ID != 0
 }
 
 func IsEnabled(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, name sdk.FeatureName, vars map[string]string) (exists bool, enabled bool) {
+	ctx, end := telemetry.Span(ctx, "featureflipping.IsEnabled")
+	defer end()
+
 	cachedFeatureI, has := cacheFeature.Get(string(name))
 	if !has {
 		f, err := LoadByName(ctx, m, db, name)

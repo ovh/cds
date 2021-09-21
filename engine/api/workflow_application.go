@@ -42,7 +42,7 @@ func (api *API) releaseApplicationWorkflowHandler() service.Handler {
 			return err
 		}
 
-		workflowRun, err := workflow.LoadRunByIDAndProjectKey(api.mustDB(), key, wNodeRun.WorkflowRunID, loadOpts)
+		workflowRun, err := workflow.LoadRunByIDAndProjectKey(ctx, api.mustDB(), key, wNodeRun.WorkflowRunID, loadOpts)
 		if err != nil {
 			return err
 		}
