@@ -1122,6 +1122,8 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 			log.Error(ctx, "unable to update parent workflow run: %v", err)
 		}
 	}
+
+	return report
 }
 
 func (api *API) initWorkflowRunPurge(ctx context.Context, wf *sdk.Workflow) {
@@ -1146,19 +1148,6 @@ func (api *API) initWorkflowRunPurge(ctx context.Context, wf *sdk.Workflow) {
 			workflow.CountWorkflowRunsMarkToDelete(ctx, api.mustDB(), api.Metrics.WorkflowRunsMarkToDelete)
 		})
 	}
-<<<<<<< HEAD
-
-	// Update parent
-	for i := range report.WorkflowRuns() {
-		run := &report.WorkflowRuns()[i]
-		if err := api.updateParentWorkflowRun(ctx, run); err != nil {
-			log.Error(ctx, "unable to update parent workflow run: %v", err)
-		}
-	}
-
-	return report
-=======
->>>>>>> fix: sonar
 }
 
 func saveWorkflowRunSecrets(ctx context.Context, db *gorp.DbMap, projID int64, wr sdk.WorkflowRun, secrets *workflow.PushSecrets) error {
