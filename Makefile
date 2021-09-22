@@ -24,9 +24,6 @@ endif
 modclean:
 	@echo "cleaning modcache... " && GO111MODULE=off go clean -modcache || true
 
-mod:
-	@echo "running go mod tidy... " && GO111MODULE=on go mod tidy
-
 
 ENGINE_DIST = $(wildcard engine/dist/*)
 WORKER_DIST = $(wildcard engine/worker/dist/*)

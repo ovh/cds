@@ -273,7 +273,9 @@ func (a *API) websocketOnMessage(e sdk.Event) {
 				return
 			}
 
+			c.mutex.Lock()
 			found, needCheckPermission := c.filters.HasOneKey(eventKeys...)
+			c.mutex.Unlock()
 			if !found {
 				return
 			}

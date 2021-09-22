@@ -41,7 +41,10 @@ func (s *Service) processor(ctx context.Context) error {
 }
 
 func (s *Service) do(ctx context.Context, op sdk.Operation) error {
-	log.Debug(ctx, "repositories > processing > %v", op.UUID)
+	ctx = context.WithValue(ctx, cdslog.Operation, op.UUID)
+	ctx = context.WithValue(ctx, cdslog.Repository, op.RepoFullName)
+
+	log.Debug(ctx, "processing > %v", op.UUID)
 
 	r := s.Repo(op)
 	if s.dao.lock(r.ID()) == errLockUnavailable {
@@ -95,7 +98,7 @@ func (s *Service) do(ctx context.Context, op sdk.Operation) error {
 	log.Debug(ctx, "repositories > operation %s: %+v ", op.UUID, op.Error)
 	log.Info(ctx, "repositories > operation %s status: %v ", op.UUID, op.Status)
 	if op.Status == sdk.OperationStatusError {
-		log.Error(ctx, "repositories> operation %s error %s", op.UUID, op.Error.Message)
+		log.Error(ctx, "operation %s error %s", op.UUID, op.Error.Message)
 	}
 
 	return s.dao.saveOperation(&op)
