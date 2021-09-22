@@ -9,6 +9,7 @@ const (
 	FeaturePurgeName    FeatureName = "workflow-retention-policy"
 	FeaturePurgeMaxRuns FeatureName = "workflow-retention-maxruns"
 	FeatureTracing      FeatureName = "tracing"
+	FeatureRegion       FeatureName = "region"
 )
 
 type Feature struct {

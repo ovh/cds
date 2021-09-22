@@ -13,11 +13,13 @@ import (
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/action"
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/plugin"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/cache"
+	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/telemetry"
@@ -473,6 +475,12 @@ jobLoop:
 		next()
 		if err != nil {
 			spawnErrs.Join(*err)
+		}
+
+		if exist := featureflipping.Exists(ctx, gorpmapping.Mapper, db, sdk.FeatureRegion); exist {
+			if err := checkJobRegion(ctx, db, wr.Workflow.ProjectKey, wr.Workflow.Name, *job); err != nil {
+				spawnErrs.Append(sdk.ErrRegionNotAllowed)
+			}
 		}
 
 		// check that children actions used by job can be used by the project
