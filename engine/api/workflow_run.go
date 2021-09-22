@@ -1094,7 +1094,7 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 		if err := workflow.CheckRegion(ctx, api.mustDB(), wfRun.Workflow); err != nil {
 			r := failInitWorkflowRun(ctx, api.mustDB(), wfRun, err)
 			report.Merge(ctx, r)
-			return
+			return report
 		}
 	}
 
