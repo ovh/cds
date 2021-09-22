@@ -7,10 +7,14 @@ import (
 	"strings"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 // Tags retrieve tags
 func (b *bitbucketClient) Tags(ctx context.Context, fullname string) ([]sdk.VCSTag, error) {
+	ctx, end := telemetry.Span(ctx, "bitbucketserver.Tags", telemetry.Tag(telemetry.TagRepository, fullname))
+	defer end()
+
 	t := strings.Split(fullname, "/")
 	if len(t) != 2 {
 		return nil, sdk.ErrRepoNotFound

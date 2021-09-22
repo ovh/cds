@@ -9,9 +9,12 @@ import (
 
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 func (b *bitbucketClient) Commits(ctx context.Context, repo, branch, since, until string) ([]sdk.VCSCommit, error) {
+	ctx, end := telemetry.Span(ctx, "bitbucketserver.Branches", telemetry.Tag(telemetry.TagRepository, repo))
+	defer end()
 	commits := []sdk.VCSCommit{}
 	project, slug, err := getRepo(repo)
 	if err != nil {
