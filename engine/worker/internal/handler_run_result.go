@@ -72,7 +72,7 @@ func addRunResult(ctx context.Context, wk *CurrentWorker, w http.ResponseWriter,
 		}
 		name = reqArgs.Name
 	case sdk.WorkflowRunResultTypeArtifactManager:
-		var reqArgs sdk.WorkflowRunResultStaticFile
+		var reqArgs sdk.WorkflowRunResultArtifactManager
 		if err := sdk.JSONUnmarshal(data, &reqArgs); err != nil {
 			newError := sdk.NewError(sdk.ErrWrongRequest, err)
 			writeError(w, r, newError)

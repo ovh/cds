@@ -1113,6 +1113,18 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 	}
 	workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, *p, report)
 
+	api.initWorkflowRunPurge(ctx, wf)
+
+	// Update parent
+	for i := range report.WorkflowRuns() {
+		run := &report.WorkflowRuns()[i]
+		if err := api.updateParentWorkflowRun(ctx, run); err != nil {
+			log.Error(ctx, "unable to update parent workflow run: %v", err)
+		}
+	}
+}
+
+func (api *API) initWorkflowRunPurge(ctx context.Context, wf *sdk.Workflow) {
 	_, enabled := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeaturePurgeName, map[string]string{"project_key": wf.ProjectKey})
 	if !enabled {
 		// Purge workflow run
@@ -1134,6 +1146,7 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 			workflow.CountWorkflowRunsMarkToDelete(ctx, api.mustDB(), api.Metrics.WorkflowRunsMarkToDelete)
 		})
 	}
+<<<<<<< HEAD
 
 	// Update parent
 	for i := range report.WorkflowRuns() {
@@ -1144,6 +1157,8 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 	}
 
 	return report
+=======
+>>>>>>> fix: sonar
 }
 
 func saveWorkflowRunSecrets(ctx context.Context, db *gorp.DbMap, projID int64, wr sdk.WorkflowRun, secrets *workflow.PushSecrets) error {
