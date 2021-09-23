@@ -132,7 +132,7 @@ func (r *Redis) NewWriter(itemID string) io.WriteCloser {
 }
 
 // NewReader instanciates a new reader
-func (r *Redis) NewReader(itemID string, format sdk.CDNReaderFormat, from float64, size float64, sort int64) io.ReadCloser {
+func (r *Redis) NewReader(itemID string, format sdk.CDNReaderFormat, from int64, size uint, sort int64) io.ReadCloser {
 	return &redis.Reader{
 		Store:     r.store,
 		ItemID:    itemID,

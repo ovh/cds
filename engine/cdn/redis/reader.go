@@ -3,7 +3,6 @@ package redis
 import (
 	"context"
 	"io"
-	"math"
 	"sort"
 	"strings"
 	"unicode"
@@ -20,17 +19,17 @@ type Reader struct {
 	Store         cache.ScoredSetStore
 	ItemID        string
 	PrefixKey     string
-	nextIndex     float64
-	From          float64 // the offset that we want to use when reading lines from Redis, allows negative value to get last lines
-	Size          float64 // the count of lines that we want to read (0 means to the end)
+	nextIndex     uint
+	From          int64 // the offset that we want to use when reading lines from Redis, allows negative value to get last lines
+	Size          uint  // the count of lines that we want to read (0 means to the end)
 	currentBuffer []byte
 	Format        sdk.CDNReaderFormat
 	readEOF       bool
 	Sort          int64 // < 0 for latest logs first, >= 0 for older logs first
 }
 
-func (r *Reader) get(from float64, to float64) ([]Line, error) {
-	res, err := r.Store.ScoredSetScanWithScores(context.Background(), cache.Key(r.PrefixKey, r.ItemID), from, to)
+func (r *Reader) get(from uint, to uint) ([]Line, error) {
+	res, err := r.Store.ScoredSetScanWithScores(context.Background(), cache.Key(r.PrefixKey, r.ItemID), float64(from), float64(to))
 	if err != nil {
 		return nil, err
 	}
@@ -68,17 +67,17 @@ func (r *Reader) loadMoreLines() error {
 	if err != nil {
 		return err
 	}
-	lineCount := maxScore + 1
+	lineCount := uint(maxScore) + 1
 
 	// If from is less than 0 try to substract given value to lines count
 	if r.From < 0 {
-		r.From = lineCount + r.From
+		r.From = int64(lineCount) + r.From
 		if r.From < 0 {
 			r.From = 0
 		}
 	}
 
-	maxLinesToRead := math.Round(lineCount - r.From)
+	maxLinesToRead := lineCount - uint(r.From)
 	if r.Size == 0 || r.Size > maxLinesToRead {
 		r.Size = maxLinesToRead
 	}
@@ -86,7 +85,7 @@ func (r *Reader) loadMoreLines() error {
 	isFirstRead := r.nextIndex == 0
 	// If its first read, init the next index with 'from' value
 	if isFirstRead {
-		r.nextIndex = r.From // 'from' can be 0 but not < 0 at this point
+		r.nextIndex = uint(r.From) // 'from' can be 0 but not < 0 at this point
 	}
 
 	// If first read and json format init json list, also define formatter to exec before append lines and at read end
@@ -106,7 +105,7 @@ func (r *Reader) loadMoreLines() error {
 	}
 
 	// Read 100 lines if possible or only the missing lines if less than 100
-	alreadyReadLinesLength := r.nextIndex - r.From
+	alreadyReadLinesLength := r.nextIndex - uint(r.From)
 	linesLeftToRead := r.Size - alreadyReadLinesLength
 	if linesLeftToRead == 0 {
 		if !r.readEOF {
@@ -115,7 +114,7 @@ func (r *Reader) loadMoreLines() error {
 		}
 		return nil
 	}
-	var newNextIndex float64
+	var newNextIndex uint
 	if linesLeftToRead > 100 {
 		newNextIndex = r.nextIndex + 100
 	} else {
@@ -123,7 +122,7 @@ func (r *Reader) loadMoreLines() error {
 	}
 
 	// Get new lines from Redis and append it to current buffer
-	var from, to float64
+	var from, to uint
 	if r.Sort >= 0 {
 		from = r.nextIndex
 		to = newNextIndex - 1

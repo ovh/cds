@@ -216,6 +216,7 @@ export class CDNLinesResponse {
 export class CDNLine {
     number: number;
     value: string;
+    since: number; // the count of milliseconds since job start
 
     // properties used by ui only
     extra: Array<string>;

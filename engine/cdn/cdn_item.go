@@ -262,7 +262,7 @@ func (s *Service) getItemLogValue(ctx context.Context, t sdk.CDNItemType, apiRef
 			return nil, 0, nil, "", err
 		}
 
-		rc, err := s.Units.LogsBuffer().NewAdvancedReader(ctx, *itemUnit, opts.format, float64(opts.from), float64(opts.size), opts.sort)
+		rc, err := s.Units.LogsBuffer().NewAdvancedReader(ctx, *itemUnit, opts.format, opts.from, opts.size, opts.sort)
 		if err != nil {
 			return nil, 0, nil, "", err
 		}
@@ -291,7 +291,7 @@ func (s *Service) getItemLogValue(ctx context.Context, t sdk.CDNItemType, apiRef
 	}
 
 	log.Debug(ctx, "getItemLogValue> Getting logs from cache")
-	return it, int64(linesCount), s.LogCache.NewReader(it.ID, opts.format, float64(opts.from), float64(opts.size), opts.sort), filename, nil
+	return it, int64(linesCount), s.LogCache.NewReader(it.ID, opts.format, opts.from, opts.size, opts.sort), filename, nil
 }
 
 func (s *Service) pushItemLogIntoCache(ctx context.Context, it sdk.CDNItem, unitName string) error {

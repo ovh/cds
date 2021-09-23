@@ -123,7 +123,7 @@ func (s *Service) sendLogsToWSClient(ctx context.Context, wsClient websocket.Cli
 
 	log.Debug(ctx, "getItemLogsStreamHandler> send log to client %s from %d", wsClient.UUID(), wsClientData.scoreNextLineToSend)
 
-	rc, err := s.Units.LogsBuffer().NewAdvancedReader(ctx, *wsClientData.itemUnit, sdk.CDNReaderFormatJSON, float64(wsClientData.scoreNextLineToSend), 100, 0)
+	rc, err := s.Units.LogsBuffer().NewAdvancedReader(ctx, *wsClientData.itemUnit, sdk.CDNReaderFormatJSON, wsClientData.scoreNextLineToSend, 100, 0)
 	if err != nil {
 		return err
 	}
@@ -134,7 +134,7 @@ func (s *Service) sendLogsToWSClient(ctx context.Context, wsClient websocket.Cli
 	}
 	var lines []redis.Line
 	if err := sdk.JSONUnmarshal(buf.Bytes(), &lines); err != nil {
-		return sdk.WrapError(err, "cannot unmarshal lines from buffer %v", string(buf.Bytes()))
+		return sdk.WrapError(err, "cannot unmarshal lines from buffer %v", buf.String())
 	}
 
 	log.Debug(ctx, "getItemLogsStreamHandler> iterate over %d lines to send for client %s", len(lines), wsClient.UUID())
