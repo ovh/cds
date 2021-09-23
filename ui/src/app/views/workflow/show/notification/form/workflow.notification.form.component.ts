@@ -34,8 +34,8 @@ export class WorkflowNotificationFormComponent implements OnInit {
         }
     }
     get notification() {
- return this._notification;
-}
+     return this._notification;
+    }
 
     @Input() editMode: boolean;
     @Input() readOnly: boolean;
@@ -65,8 +65,8 @@ export class WorkflowNotificationFormComponent implements OnInit {
         }
     }
     get workflow() {
- return this._workflow;
-}
+     return this._workflow;
+    }
 
     @Output() updatedNotification = new EventEmitter<WorkflowNotification>();
     @Output() deleteNotificationEvent = new EventEmitter<WorkflowNotification>();
