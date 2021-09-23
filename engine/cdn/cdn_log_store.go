@@ -2,11 +2,10 @@ package cdn
 
 import (
 	"context"
-	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/rockbears/log"
+	"github.com/shopspring/decimal"
 
 	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/storage"
@@ -78,10 +77,12 @@ func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signa
 	if ms < 0 {
 		ms = 0
 	}
-	score, err := strconv.ParseFloat(fmt.Sprintf("%d.%d", countLine, ms), 64)
-	if err != nil {
-		log.ErrorWithStackTrace(ctx, err)
-	}
+
+	// Build the score from the "countLine" as the interger part and "ms" as floating part
+	scoreD := decimal.NewFromInt(ms)
+	scoreD = scoreD.Shift(-sdk.DigitsCount(ms)) // bit shift to make 1234 become 0.1234
+	scoreD = scoreD.Add(decimal.NewFromInt(int64(countLine)))
+	score, _ := scoreD.Float64()
 
 	if err := bufferUnit.Add(*iu, score, content); err != nil {
 		return err

@@ -151,7 +151,7 @@ type websocketClientData struct {
 	mutexData           sync.Mutex
 	itemFilter          *sdk.CDNStreamFilter
 	itemUnit            *sdk.CDNItemUnit
-	scoreNextLineToSend float64
+	scoreNextLineToSend int64
 	mutexTrigger        sync.Mutex
 	triggeredUpdate     bool
 }
@@ -183,7 +183,7 @@ func (d *websocketClientData) UpdateFilter(msg []byte) error {
 	defer d.mutexData.Unlock()
 
 	d.itemFilter = &filter
-	d.scoreNextLineToSend = float64(filter.Offset)
+	d.scoreNextLineToSend = filter.Offset
 	d.itemUnit = nil // reset verified will trigger a new permission check
 	return nil
 }

@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"math"
 	"net/http"
 	"time"
 
@@ -124,7 +123,7 @@ func (s *Service) sendLogsToWSClient(ctx context.Context, wsClient websocket.Cli
 
 	log.Debug(ctx, "getItemLogsStreamHandler> send log to client %s from %d", wsClient.UUID(), wsClientData.scoreNextLineToSend)
 
-	rc, err := s.Units.LogsBuffer().NewAdvancedReader(ctx, *wsClientData.itemUnit, sdk.CDNReaderFormatJSON, wsClientData.scoreNextLineToSend, 100, 0)
+	rc, err := s.Units.LogsBuffer().NewAdvancedReader(ctx, *wsClientData.itemUnit, sdk.CDNReaderFormatJSON, float64(wsClientData.scoreNextLineToSend), 100, 0)
 	if err != nil {
 		return err
 	}
@@ -155,7 +154,7 @@ func (s *Service) sendLogsToWSClient(ctx context.Context, wsClient websocket.Cli
 	}
 
 	// If all the lines were sent, we can trigger another update, if only one line was send do not trigger an update wait for next event from broker
-	if len(lines) > 1 && (oldNextLineToSend > 0 || int(math.Round(wsClientData.scoreNextLineToSend-oldNextLineToSend)) == len(lines)) {
+	if len(lines) > 1 && (oldNextLineToSend > 0 || int(wsClientData.scoreNextLineToSend-oldNextLineToSend) == len(lines)) {
 		wsClientData.TriggerUpdate()
 	}
 

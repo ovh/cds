@@ -8,6 +8,8 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/shopspring/decimal"
+
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 )
@@ -34,7 +36,11 @@ func (r *Reader) get(from float64, to float64) ([]Line, error) {
 	}
 	ls := make([]Line, len(res))
 	for i := range res {
-		ls[i].Number = res[i].Score
+		scoreD := decimal.NewFromFloat(res[i].Score)
+		ls[i].Number = scoreD.IntPart()
+		floatD := scoreD.Sub(decimal.NewFromInt(ls[i].Number))
+		ls[i].Since = floatD.Coefficient().Int64()
+
 		var value string
 		if err := sdk.JSONUnmarshal(res[i].Value, &value); err != nil {
 			return nil, sdk.WrapError(err, "cannot unmarshal line value from store")

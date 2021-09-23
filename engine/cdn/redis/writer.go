@@ -27,7 +27,7 @@ func (w *Writer) add(score float64, value string) error {
 	itemKey := cache.Key(w.PrefixKey, w.ItemID)
 	si, _ := math.Modf(score)
 	value = strconv.Itoa(int(si)) + "#" + value
-	if err := w.Store.ScoredSetAdd(context.Background(), itemKey, value, float64(score)); err != nil {
+	if err := w.Store.ScoredSetAdd(context.Background(), itemKey, value, score); err != nil {
 		return err
 	}
 	return nil

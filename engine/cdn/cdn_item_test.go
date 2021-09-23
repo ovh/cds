@@ -180,7 +180,7 @@ func TestGetItemValue(t *testing.T) {
 	buf5 := new(strings.Builder)
 	_, err = io.Copy(buf5, rc5)
 	require.NoError(t, err)
-	require.Equal(t, "[{\"number\":8,\"value\":\"Line 8\\n\"},{\"number\":9,\"value\":\"Line 9\\n\"}]", buf5.String())
+	require.Equal(t, "[{\"number\":8,\"value\":\"Line 8\\n\",\"since\":0},{\"number\":9,\"value\":\"Line 9\\n\",\"since\":0}]", buf5.String())
 }
 
 func TestGetItemValue_ThousandLines(t *testing.T) {
@@ -267,9 +267,9 @@ func TestGetItemValue_ThousandLines(t *testing.T) {
 	var lines []redis.Line
 	require.NoError(t, json.Unmarshal(buf.Bytes(), &lines), "given json should be valid")
 	require.Len(t, lines, 200)
-	require.Equal(t, float64(773), lines[0].Number)
+	require.Equal(t, int64(773), lines[0].Number)
 	require.Equal(t, "Line 773\n", lines[0].Value)
-	require.Equal(t, float64(972), lines[199].Number)
+	require.Equal(t, int64(972), lines[199].Number)
 	require.Equal(t, "Line 972\n", lines[199].Value)
 
 	_, _, rc, _, err = s.getItemLogValue(context.Background(), sdk.CDNTypeItemStepLog, apiRefhash, getItemLogOptions{
@@ -284,9 +284,9 @@ func TestGetItemValue_ThousandLines(t *testing.T) {
 
 	require.NoError(t, json.Unmarshal(buf.Bytes(), &lines), "given json should be valid")
 	require.Len(t, lines, 227)
-	require.Equal(t, float64(773), lines[0].Number)
+	require.Equal(t, int64(773), lines[0].Number)
 	require.Equal(t, "Line 773\n", lines[0].Value)
-	require.Equal(t, float64(999), lines[226].Number)
+	require.Equal(t, int64(999), lines[226].Number)
 	require.Equal(t, "Line 999\n", lines[226].Value)
 }
 
@@ -373,9 +373,9 @@ func TestGetItemValue_Reverse(t *testing.T) {
 	var lines []redis.Line
 	require.NoError(t, json.Unmarshal(buf.Bytes(), &lines), "given json should be valid")
 	require.Len(t, lines, 5)
-	require.Equal(t, float64(4), lines[0].Number)
+	require.Equal(t, int64(4), lines[0].Number)
 	require.Equal(t, "Line 4\n", lines[0].Value)
-	require.Equal(t, float64(0), lines[4].Number)
+	require.Equal(t, int64(0), lines[4].Number)
 	require.Equal(t, "Line 0\n", lines[4].Value)
 
 	// Get From Buffer
@@ -393,9 +393,9 @@ func TestGetItemValue_Reverse(t *testing.T) {
 
 	require.NoError(t, json.Unmarshal(buf.Bytes(), &lines), "given json should be valid")
 	require.Len(t, lines, 2)
-	require.Equal(t, float64(2), lines[0].Number)
+	require.Equal(t, int64(2), lines[0].Number)
 	require.Equal(t, "Line 2\n", lines[0].Value)
-	require.Equal(t, float64(1), lines[1].Number)
+	require.Equal(t, int64(1), lines[1].Number)
 	require.Equal(t, "Line 1\n", lines[1].Value)
 }
 
@@ -486,9 +486,9 @@ func TestGetItemValue_ThousandLinesReverse(t *testing.T) {
 	var lines []redis.Line
 	require.NoError(t, json.Unmarshal(buf.Bytes(), &lines), "given json should be valid")
 	require.Len(t, lines, 200)
-	require.Equal(t, float64(226), lines[0].Number)
+	require.Equal(t, int64(226), lines[0].Number)
 	require.Equal(t, "Line 226\n", lines[0].Value)
-	require.Equal(t, float64(27), lines[199].Number)
+	require.Equal(t, int64(27), lines[199].Number)
 	require.Equal(t, "Line 27\n", lines[199].Value)
 
 	_, _, rc, _, err = s.getItemLogValue(context.Background(), sdk.CDNTypeItemStepLog, apiRefhash, getItemLogOptions{
@@ -504,8 +504,8 @@ func TestGetItemValue_ThousandLinesReverse(t *testing.T) {
 
 	require.NoError(t, json.Unmarshal(buf.Bytes(), &lines), "given json should be valid")
 	require.Equal(t, len(lines), 227)
-	require.Equal(t, float64(226), lines[0].Number)
+	require.Equal(t, int64(226), lines[0].Number)
 	require.Equal(t, "Line 226\n", lines[0].Value)
-	require.Equal(t, float64(0), lines[226].Number)
+	require.Equal(t, int64(0), lines[226].Number)
 	require.Equal(t, "Line 0\n", lines[226].Value)
 }

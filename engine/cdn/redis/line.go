@@ -8,8 +8,9 @@ import (
 )
 
 type Line struct {
-	Number float64 `json:"number"`
-	Value  string  `json:"value"`
+	Number int64  `json:"number"`
+	Value  string `json:"value"`
+	Since  int64  `json:"since"`
 }
 
 func (l Line) Format(f sdk.CDNReaderFormat) ([]byte, error) {

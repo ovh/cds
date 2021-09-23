@@ -280,9 +280,8 @@ func TestGetItemLogsLinesHandler(t *testing.T) {
 	var lines []redis.Line
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &lines))
 	require.Len(t, lines, 1)
-	require.Equal(t, float64(0), lines[0].Number)
+	require.Equal(t, int64(0), lines[0].Number)
 	require.Equal(t, "this is a message\n", lines[0].Value)
-
 }
 
 func TestGetItemLogsStreamHandler(t *testing.T) {
@@ -410,9 +409,9 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 
 	require.Len(t, lines, 10)
 	require.Equal(t, "message 0\n", lines[0].Value)
-	require.Equal(t, float64(0), lines[0].Number)
+	require.Equal(t, int64(0), lines[0].Number)
 	require.Equal(t, "message 9\n", lines[9].Value)
-	require.Equal(t, float64(9), lines[9].Number)
+	require.Equal(t, int64(9), lines[9].Number)
 
 	// Send some messages
 	for i := 0; i < 10; i++ {
@@ -435,7 +434,7 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 
 	require.Len(t, lines, 20)
 	require.Equal(t, "message 19\n", lines[19].Value)
-	require.Equal(t, float64(19), lines[19].Number)
+	require.Equal(t, int64(19), lines[19].Number)
 
 	// Try another connection with offset
 	ctx, cancel = context.WithTimeout(context.TODO(), time.Second*10)
@@ -468,7 +467,7 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 
 	require.Len(t, lines, 5)
 	require.Equal(t, "message 15\n", lines[0].Value)
-	require.Equal(t, float64(15), lines[0].Number)
+	require.Equal(t, int64(15), lines[0].Number)
 	require.Equal(t, "message 19\n", lines[4].Value)
-	require.Equal(t, float64(19), lines[4].Number)
+	require.Equal(t, int64(19), lines[4].Number)
 }
