@@ -1,4 +1,13 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component, ElementRef,
+    EventEmitter,
+    Input,
+    OnInit,
+    Output,
+    ViewChild
+} from '@angular/core';
 import { Project } from 'app/model/project.model';
 // eslint-disable-next-line max-len
 import { notificationOnFailure, notificationOnSuccess, notificationTypes, WNode, WNodeType, Workflow, WorkflowNotification, WorkflowTriggerConditionCache } from 'app/model/workflow.model';
@@ -30,6 +39,8 @@ export class WorkflowNotificationFormComponent implements OnInit {
 
     @Input() editMode: boolean;
     @Input() readOnly: boolean;
+
+    @ViewChild('select') nodeSelect: ElementRef;
 
     types: Array<string>;
     notifOnSuccess: Array<string>;
@@ -92,6 +103,10 @@ export class WorkflowNotificationFormComponent implements OnInit {
             this.statusEnabled = !this._notification.settings.template.disable_status;
             this.commentEnabled = !this._notification.settings.template.disable_comment;
             this.alwaysSend = this._notification.settings.on_success === 'always';
+        }
+
+        if (this.nodeSelect) {
+            (<any>this.nodeSelect).writeValue(this._notification.source_node_ref);
         }
     }
 
