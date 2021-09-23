@@ -103,7 +103,7 @@ func TestStoreNewStepLog(t *testing.T) {
 	require.NoError(t, err)
 
 	require.NoError(t, err)
-	require.Equal(t, "[EMERGENCY] this is a message\n", buf.String())
+	require.Equal(t, "this is a message\n", buf.String())
 }
 
 func TestStoreLastStepLog(t *testing.T) {
@@ -269,5 +269,5 @@ func TestStoreNewServiceLog(t *testing.T) {
 	require.NoError(t, err)
 
 	require.NoError(t, err)
-	require.Equal(t, "[EMERGENCY] this is a message\n", buf.String())
+	require.Equal(t, "this is a message\n", buf.String())
 }

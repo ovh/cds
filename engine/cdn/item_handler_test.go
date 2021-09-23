@@ -185,7 +185,7 @@ func TestGetItemLogsDownloadHandler(t *testing.T) {
 	s.Router.Mux.ServeHTTP(rec, req)
 	require.Equal(t, 200, rec.Code)
 
-	assert.Equal(t, "[EMERGENCY] this is a message\n", string(rec.Body.Bytes()))
+	assert.Equal(t, "this is a message\n", string(rec.Body.Bytes()))
 
 	uri = s.Router.GetRoute("GET", s.getItemHandler, map[string]string{
 		"type":   string(sdk.CDNTypeItemStepLog),

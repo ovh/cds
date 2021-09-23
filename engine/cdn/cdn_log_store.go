@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/rockbears/log"
+	"github.com/shopspring/decimal"
 
 	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/storage"
@@ -49,6 +50,9 @@ func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signa
 		return err
 	}
 
+	var t0 = it.Created.UnixNano() / 1000000 // convert to ms
+	var t1 = signature.Timestamp / 1000000
+
 	ctx = context.WithValue(ctx, storage.FieldAPIRef, it.APIRefHash)
 
 	iu, err := s.loadOrCreateItemUnitBuffer(ctx, it.ID, itemType)
@@ -67,7 +71,20 @@ func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signa
 	if err != nil {
 		return err
 	}
-	if err := bufferUnit.Add(*iu, uint(countLine), content); err != nil {
+
+	// Add the number of millisecond since creation
+	ms := t1 - t0
+	if ms < 0 {
+		ms = 0
+	}
+
+	// Build the score from the "countLine" as the interger part and "ms" as floating part
+	scoreD := decimal.NewFromInt(ms)
+	scoreD = scoreD.Shift(-sdk.DigitsCount(ms)) // bit shift to make 1234 become 0.1234
+	scoreD = scoreD.Add(decimal.NewFromInt(int64(countLine)))
+	score, _ := scoreD.Float64()
+
+	if err := bufferUnit.Add(*iu, score, content); err != nil {
 		return err
 	}
 
@@ -119,6 +136,7 @@ func (s *Service) loadOrCreateItem(ctx context.Context, itemType sdk.CDNItemType
 			Type:       itemType,
 			APIRefHash: hashRef,
 			Status:     sdk.CDNStatusItemIncoming,
+			Created:    time.Unix(0, signature.Timestamp),
 		}
 
 		tx, err := s.mustDBWithCtx(ctx).Begin()

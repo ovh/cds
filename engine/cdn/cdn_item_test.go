@@ -242,7 +242,7 @@ func TestGetItemValue_ThousandLines(t *testing.T) {
 		UnitID: s.Units.LogsBuffer().ID(),
 	}
 	for i := 0; i < 1000; i++ {
-		require.NoError(t, s.Units.LogsBuffer().Add(iu, uint(i), fmt.Sprintf("Line %d\n", i)))
+		require.NoError(t, s.Units.LogsBuffer().Add(iu, float64(i), fmt.Sprintf("Line %d\n", i)))
 	}
 
 	require.NoError(t, s.completeItem(context.TODO(), db, iu))
@@ -349,7 +349,7 @@ func TestGetItemValue_Reverse(t *testing.T) {
 		UnitID: s.Units.LogsBuffer().ID(),
 	}
 	for i := 0; i < 5; i++ {
-		require.NoError(t, s.Units.LogsBuffer().Add(iu, uint(i), fmt.Sprintf("Line %d\n", i)))
+		require.NoError(t, s.Units.LogsBuffer().Add(iu, float64(i), fmt.Sprintf("Line %d\n", i)))
 	}
 
 	require.NoError(t, s.completeItem(context.TODO(), db, iu))
@@ -459,7 +459,7 @@ func TestGetItemValue_ThousandLinesReverse(t *testing.T) {
 		UnitID: s.Units.LogsBuffer().ID(),
 	}
 	for i := 0; i < 1000; i++ {
-		require.NoError(t, s.Units.LogsBuffer().Add(iu, uint(i), fmt.Sprintf("Line %d\n", i)))
+		require.NoError(t, s.Units.LogsBuffer().Add(iu, float64(i), fmt.Sprintf("Line %d\n", i)))
 	}
 
 	require.NoError(t, s.completeItem(context.TODO(), db, iu))

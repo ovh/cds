@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path"
@@ -207,8 +208,11 @@ func RunScriptAction(ctx context.Context, wk workerruntime.Runtime, a sdk.Action
 		cmd := exec.CommandContext(ctx, script.shell, script.opts...)
 		res.Status = sdk.StatusUnknown
 
+		pr, pw := io.Pipe()
 		cmd.Dir = script.dir
 		cmd.Env = wk.Environ()
+		cmd.Stdout = pw
+		cmd.Stderr = pw
 
 		workerpath, err := osext.Executable()
 		if err != nil {
@@ -226,50 +230,17 @@ func RunScriptAction(ctx context.Context, wk workerruntime.Runtime, a sdk.Action
 			}
 		}
 
-		stdout, err := cmd.StdoutPipe()
-		if err != nil {
-			chanErr <- fmt.Errorf("failure due to internal error: unable to capture stdout: %v", err)
-			res.Status = sdk.StatusFail
-			chanRes <- res
-			return
-		}
-
-		stderr, err := cmd.StderrPipe()
-		if err != nil {
-			chanErr <- fmt.Errorf("failure due to internal error: unable to capture stderr: %v", err)
-			res.Status = sdk.StatusFail
-			chanRes <- res
-			return
-		}
-
-		stdoutreader := bufio.NewReader(stdout)
-		stderrreader := bufio.NewReader(stderr)
+		reader := bufio.NewReader(pr)
 
 		outchan := make(chan bool)
 		go func() {
 			for {
-				line, errs := stdoutreader.ReadString('\n')
+				line, errs := reader.ReadString('\n')
 				if line != "" {
 					wk.SendLog(ctx, workerruntime.LevelInfo, line)
 				}
 				if errs != nil {
-					stdout.Close()
 					close(outchan)
-					return
-				}
-			}
-		}()
-
-		errchan := make(chan bool)
-		go func() {
-			for {
-				line, errs := stderrreader.ReadString('\n')
-				if line != "" {
-					wk.SendLog(ctx, workerruntime.LevelWarn, line)
-				}
-				if errs != nil {
-					stderr.Close()
-					close(errchan)
 					return
 				}
 			}
@@ -282,11 +253,12 @@ func RunScriptAction(ctx context.Context, wk workerruntime.Runtime, a sdk.Action
 			return
 		}
 
-		<-outchan
-		<-errchan
 		if err := cmd.Wait(); err != nil {
 			chanErr <- fmt.Errorf("command failure: %v", err)
 		}
+
+		pr.Close()
+		<-outchan
 
 		res.Status = sdk.StatusSuccess
 		chanRes <- res

@@ -14,6 +14,7 @@ import { AsCodeSaveModalComponent } from 'app/shared/ascode/save-modal/ascode.sa
 import { ConditionsComponent } from 'app/shared/conditions/conditions.component';
 import { GroupFormComponent } from 'app/shared/group/form/group.form.component';
 import { AutoFocusInputComponent } from 'app/shared/input/autofocus/autofocus.input.component';
+import { CallbackPipe } from 'app/shared/pipes/callback.pipe';
 import { SelectFilterComponent } from 'app/shared/select/select.component';
 import { WorkflowHookMenuEditComponent } from 'app/shared/workflow/menu/edit-hook/menu.edit.hook.component';
 import { WorkflowWizardNodeConditionComponent } from 'app/shared/workflow/wizard/conditions/wizard.conditions.component';
@@ -26,7 +27,6 @@ import { ClipboardModule } from 'ngx-clipboard';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 import { MarkdownModule } from 'ngx-markdown';
 import { MomentModule } from 'ngx-moment';
-import { CallbackPipe } from 'app/shared/pipes/callback.pipe';
 import { ActionComponent } from './action/action.component';
 import { ActionStepFormComponent } from './action/step/form/step.form.component';
 import { ActionStepComponent } from './action/step/step.component';
@@ -55,6 +55,7 @@ import { PermissionListComponent } from './permission/list/permission.list.compo
 import { PermissionService } from './permission/permission.service';
 import { AnsiPipe } from './pipes/ansi.pipe';
 import { CutPipe } from './pipes/cut.pipe';
+import { DurationMsPipe } from './pipes/duration.pipe';
 import { KeysPipe } from './pipes/keys.pipe';
 import { ForMapPipe } from './pipes/map.pipe';
 import { NgForNumber } from './pipes/ngfor.number.pipe';
@@ -145,6 +146,7 @@ import { ZoneComponent } from './zone/zone.component';
         ConfirmModalComponent,
         CutPipe,
         DataTableComponent,
+        DurationMsPipe,
         PaginationComponent,
         DeleteButtonComponent,
         DeleteModalComponent,
@@ -254,6 +256,7 @@ import { ZoneComponent } from './zone/zone.component';
         CutPipe,
         GroupFormComponent,
         DeleteButtonComponent,
+        DurationMsPipe,
         ConfirmButtonComponent,
         UploadButtonComponent,
         DragulaModule,

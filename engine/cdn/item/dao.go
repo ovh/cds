@@ -115,7 +115,9 @@ func LoadAndLockByID(ctx context.Context, m *gorpmapper.Mapper, db gorpmapper.Sq
 // Insert in database.
 func Insert(ctx context.Context, m *gorpmapper.Mapper, db gorpmapper.SqlExecutorWithTx, i *sdk.CDNItem) error {
 	i.ID = sdk.UUID()
-	i.Created = time.Now()
+	if i.Created.IsZero() {
+		i.Created = time.Now()
+	}
 	i.LastModified = time.Now()
 
 	cdnItem := toItemDB(*i)
