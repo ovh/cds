@@ -45,7 +45,7 @@ func TestReader_EOF(t *testing.T) {
 	buf1 := new(strings.Builder)
 	_, err = io.Copy(buf1, r)
 	require.NoError(t, err)
-	require.Equal(t, "[{\"number\":0,\"value\":\"this is the first line\\n\",\"since\":0},{\"number\":1,\"value\":\"this is the second line\\n\",\"since\":0}]", buf1.String())
+	require.Equal(t, "[{\"number\":0,\"value\":\"this is the first line\\n\"},{\"number\":1,\"value\":\"this is the second line\\n\"}]", buf1.String())
 
 	// Insert a new line in redis
 	_, err = io.Copy(w, strings.NewReader("this is the third line\n"))
