@@ -622,7 +622,7 @@ func (api *API) postJobResult(ctx context.Context, tx gorpmapper.SqlExecutorWith
 			log.ErrorWithStackTrace(ctx, err)
 			statusFromDB, err := tx.SelectNullStr("select status from worker where id = $1", wr.ID)
 			if err != nil {
-				log.Error(ctx, "unable to get worker %q status in db", wr.Name)
+				log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "unable to get worker %q status in db with id %q", wr.Name, wr.ID))
 			}
 			log.Error(ctx, "worker %q status is %q (%q in DB)", wr.Name, wr.Status, statusFromDB)
 		}
