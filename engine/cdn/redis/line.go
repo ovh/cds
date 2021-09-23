@@ -10,7 +10,7 @@ import (
 type Line struct {
 	Number int64  `json:"number"`
 	Value  string `json:"value"`
-	Since  int64  `json:"since"`
+	Since  int64  `json:"since,omitempty"`
 }
 
 func (l Line) Format(f sdk.CDNReaderFormat) ([]byte, error) {
