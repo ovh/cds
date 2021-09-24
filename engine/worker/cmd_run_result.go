@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 
@@ -61,11 +62,14 @@ func addStaticFileRunResultCmd() func(cmd *cobra.Command, args []string) {
 		}
 
 		name := args[0]
-		remoteURL := args[1]
+		remoteURL, err := url.Parse(args[1])
+		if err != nil {
+			sdk.Exit("remote url invalid:%v url:%v", err, remoteURL)
+		}
 
 		payload := sdk.WorkflowRunResultStaticFile{
 			Name:      name,
-			RemoteURL: remoteURL,
+			RemoteURL: remoteURL.String(),
 		}
 		data, _ := json.Marshal(payload)
 		addRunResult(data, sdk.WorkflowRunResultTypeStaticFile)
