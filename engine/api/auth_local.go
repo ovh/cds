@@ -319,8 +319,10 @@ func (api *API) postAuthLocalVerifyHandler() service.Handler {
 			return err
 		}
 
-		if err := group.CheckUserInDefaultGroup(ctx, tx, newUser.ID); err != nil {
-			return err
+		if api.Config.Auth.AutoAddDefaultGroup {
+			if err := group.CheckUserInDefaultGroup(ctx, tx, newUser.ID); err != nil {
+				return err
+			}
 		}
 
 		// Create new local consumer for new user, set this consumer as pending validation
