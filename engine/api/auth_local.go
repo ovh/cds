@@ -319,7 +319,7 @@ func (api *API) postAuthLocalVerifyHandler() service.Handler {
 			return err
 		}
 
-		if api.Config.Auth.AutoAddUserInDefaultGroup {
+		if !api.Config.Auth.DisableAddUserInDefaultGroup {
 			if err := group.CheckUserInDefaultGroup(ctx, tx, newUser.ID); err != nil {
 				return err
 			}
