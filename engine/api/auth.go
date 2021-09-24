@@ -170,7 +170,7 @@ func (api *API) postAuthSigninHandler() service.Handler {
 						return err
 					}
 				}
-				if api.Config.Auth.AutoAddDefaultGroup {
+				if api.Config.Auth.AutoAddUserInDefaultGroup {
 					if err := group.CheckUserInDefaultGroup(ctx, tx, u.ID); err != nil {
 						return err
 					}
@@ -240,7 +240,7 @@ func (api *API) postAuthSigninHandler() service.Handler {
 							return err
 						}
 
-						if api.Config.Auth.AutoAddDefaultGroup {
+						if api.Config.Auth.AutoAddUserInDefaultGroup {
 							if err := group.CheckUserInDefaultGroup(ctx, tx, u.ID); err != nil {
 								return err
 							}
