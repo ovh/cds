@@ -7,6 +7,10 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/gorilla/mux"
+
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
@@ -15,6 +19,16 @@ import (
 
 func (api *API) postWorkflowV3ValidateHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		projectKey := vars["permProjectKey"]
+
+		_, enabled := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeatureWorkflowV3, map[string]string{
+			"project_key": projectKey,
+		})
+		if !enabled {
+			return sdk.WrapError(sdk.ErrForbidden, "workflow v3 is not enabled for project %s", projectKey)
+		}
+
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			return sdk.NewError(sdk.ErrWrongRequest, err)
@@ -74,6 +88,16 @@ func (w *workflowv3ProxyWriter) WriteHeader(statusCode int) {
 
 func (api *API) getWorkflowV3Handler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		projectKey := vars["key"]
+
+		_, enabled := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeatureWorkflowV3, map[string]string{
+			"project_key": projectKey,
+		})
+		if !enabled {
+			return sdk.WrapError(sdk.ErrForbidden, "workflow v3 is not enabled for project %s", projectKey)
+		}
+
 		full := service.FormBool(r, "full")
 		format := FormString(r, "format")
 		if format == "" {
@@ -114,6 +138,16 @@ func (api *API) getWorkflowV3Handler() service.Handler {
 
 func (api *API) getWorkflowV3RunHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		projectKey := vars["key"]
+
+		_, enabled := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeatureWorkflowV3, map[string]string{
+			"project_key": projectKey,
+		})
+		if !enabled {
+			return sdk.WrapError(sdk.ErrForbidden, "workflow v3 is not enabled for project %s", projectKey)
+		}
+
 		full := service.FormBool(r, "full")
 		format := FormString(r, "format")
 		if format == "" {

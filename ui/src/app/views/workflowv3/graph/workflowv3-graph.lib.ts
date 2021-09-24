@@ -53,6 +53,7 @@ export class WorkflowV3Graph<T extends WithHighlight> {
     forks: { [key: string]: { parents: Array<string>, children: Array<string> } } = {};
     joins: { [key: string]: { parents: Array<string>, children: Array<string> } } = {};
     nodeStatus: { [key: string]: string } = {};
+    currentSelectedNodeKey: string = null;
 
     constructor(
         factory: ComponentFactory<T>,
@@ -189,6 +190,11 @@ export class WorkflowV3Graph<T extends WithHighlight> {
                 this.svg.call(this.zoom.transform,
                     d3.zoomIdentity.translate(this.transformed.x, this.transformed.y).scale(this.transformed.k));
             }
+        }
+
+        if (this.currentSelectedNodeKey) {
+            this.unselectAllNode();
+            this.selectNode(this.currentSelectedNodeKey);
         }
     }
 
@@ -473,6 +479,9 @@ export class WorkflowV3Graph<T extends WithHighlight> {
     selectNode(key: string): void {
         if (this.nodesComponent.has(`node-${key}`)) {
             this.nodesComponent.get(`node-${key}`).instance.setSelect(true);
+            this.currentSelectedNodeKey = key;
+        } else {
+            this.currentSelectedNodeKey = null;
         }
     }
 

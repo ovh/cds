@@ -7,6 +7,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { SuiModule } from '@richardlt/ng2-semantic-ui';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { AuthenticationGuard } from 'app/guard/authentication.guard';
+import { FeatureGuard } from 'app/guard/feature.guard';
 import { NoAuthenticationGuard } from 'app/guard/no-authentication.guard';
 import { AsCodeEventComponent } from 'app/shared/ascode/events/ascode.event.component';
 import { AsCodeSaveFormComponent } from 'app/shared/ascode/save-form/ascode.save-form.component';
@@ -14,6 +15,7 @@ import { AsCodeSaveModalComponent } from 'app/shared/ascode/save-modal/ascode.sa
 import { ConditionsComponent } from 'app/shared/conditions/conditions.component';
 import { GroupFormComponent } from 'app/shared/group/form/group.form.component';
 import { AutoFocusInputComponent } from 'app/shared/input/autofocus/autofocus.input.component';
+import { CallbackPipe } from 'app/shared/pipes/callback.pipe';
 import { SelectFilterComponent } from 'app/shared/select/select.component';
 import { WorkflowHookMenuEditComponent } from 'app/shared/workflow/menu/edit-hook/menu.edit.hook.component';
 import { WorkflowWizardNodeConditionComponent } from 'app/shared/workflow/wizard/conditions/wizard.conditions.component';
@@ -27,7 +29,6 @@ import { ClipboardModule } from 'ngx-clipboard';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 import { MarkdownModule } from 'ngx-markdown';
 import { MomentModule } from 'ngx-moment';
-import { CallbackPipe } from 'app/shared/pipes/callback.pipe';
 import { ActionComponent } from './action/action.component';
 import { ActionStepFormComponent } from './action/step/form/step.form.component';
 import { ActionStepComponent } from './action/step/step.component';
@@ -234,7 +235,8 @@ import { ZoneComponent } from './zone/zone.component';
         SharedService,
         ToastService,
         AuthenticationGuard,
-        NoAuthenticationGuard
+        NoAuthenticationGuard,
+        FeatureGuard
     ],
     schemas: [
         CUSTOM_ELEMENTS_SCHEMA

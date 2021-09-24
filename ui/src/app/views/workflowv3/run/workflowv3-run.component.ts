@@ -1,10 +1,13 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { Store } from '@ngxs/store';
+import { EventType } from 'app/model/event.model';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { Tab } from 'app/shared/tabs/tabs.component';
-import { Observable } from 'rxjs';
-import { finalize } from 'rxjs/operators';
+import { EventState } from 'app/store/event.state';
+import { Observable, Subscription, timer } from 'rxjs';
+import { debounce, filter, finalize } from 'rxjs/operators';
 import { GraphDirection } from '../graph/workflowv3-graph.lib';
 import { WorkflowV3StagesGraphComponent } from '../graph/workflowv3-stages-graph.component';
 import { JobRun, WorkflowRunV3 } from '../workflowv3.model';
@@ -30,11 +33,13 @@ export class WorkflowV3RunComponent implements OnInit, OnDestroy {
     tabs: Array<Tab>;
     selectedTab: Tab;
     selectJobRun: JobRun;
+    eventSubscription: Subscription;
 
     constructor(
         private _cd: ChangeDetectorRef,
         private _http: HttpClient,
-        private _activatedRoute: ActivatedRoute
+        private _activatedRoute: ActivatedRoute,
+        private _store: Store
     ) {
         this.tabs = [<Tab>{
             translate: 'common_problems',
@@ -56,8 +61,27 @@ export class WorkflowV3RunComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         const parentParams = this._activatedRoute.snapshot.parent.params;
-        const params = this._activatedRoute.snapshot.params;
         this.projectKey = parentParams['key'];
+
+        this.loadWorkflowRun();
+
+        // Refresh workflow run when receiving new events for a job
+        this.eventSubscription = this._store.select(EventState.last)
+            .pipe(
+                filter(e => e && this.data && e.type_event === EventType.RUN_WORKFLOW_NODE
+                    && e.project_key === this.projectKey
+                    && e.workflow_name === this.data.workflow.name
+                    && e.workflow_run_num === this.data.number),
+                debounce(() => timer(500))
+            )
+            .subscribe(e => {
+                this.loadWorkflowRun();
+            });
+    }
+
+    loadWorkflowRun(): void {
+        const parentParams = this._activatedRoute.snapshot.parent.params;
+        const params = this._activatedRoute.snapshot.params;
         const workflowName = parentParams['workflowName'];
         const runNumber = params['number'];
 
@@ -88,6 +112,8 @@ export class WorkflowV3RunComponent implements OnInit, OnDestroy {
                 });
 
                 // Parse spawn infos
+                this.infos = [];
+                this.problems = [];
                 wr.infos.forEach(i => {
                     switch (i.type) {
                         case 'Info':

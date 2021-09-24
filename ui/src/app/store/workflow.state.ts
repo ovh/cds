@@ -1141,7 +1141,7 @@ export class WorkflowState {
                 tap((wr: WorkflowRun) => {
                     const stateRun = ctx.getState();
                     let routeParams = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root);
-                    if (wr.project_id !== stateRun.workflow.project_id || wr.workflow_id !== stateRun.workflow.id) {
+                    if (!stateRun.workflow || wr.project_id !== stateRun.workflow.project_id || wr.workflow_id !== stateRun.workflow.id) {
                         return;
                     }
                     if (routeParams['number'] && routeParams['number'] === wr.num.toString()) {

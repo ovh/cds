@@ -28,7 +28,6 @@ export class WorkflowV3EditComponent implements OnInit, OnDestroy {
 
     @Output() onChange = new EventEmitter<WorkflowV3>();
 
-    paramsRouteSubscription: Subscription;
     workflowYaml = '';
     themeSubscription: Subscription;
     workflowYamlSubject = new Subject<string>();
@@ -53,10 +52,7 @@ export class WorkflowV3EditComponent implements OnInit, OnDestroy {
         };
     }
 
-    // Should be set to use @AutoUnsubscribe with AOT
-    ngOnDestroy(): void {
-        this.workflowYamlSubject.complete();
-    }
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
         this.themeSubscription = this._theme.get().subscribe(t => {

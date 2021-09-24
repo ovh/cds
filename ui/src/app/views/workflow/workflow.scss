@@ -89,6 +89,11 @@ i.star {
     position: relative;
     top: -3px;
     margin-left: 10px;
+
+    &.preview {
+        top: -2px;
+        margin: 0 10px;
+    }
 }
 
 .infoPopup {
