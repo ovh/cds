@@ -40,6 +40,10 @@ Build the present binaries and import in CDS:
 $ cdsctl admin plugins binary-add artifactory-release-plugin artifactory-release-plugin-bin.yml <path-to-binary-file>
 */
 
+const (
+	DefaultHighMaturity = "release"
+)
+
 type artifactoryReleasePlugin struct {
 	integrationplugin.Common
 }
@@ -84,7 +88,7 @@ func (e *artifactoryReleasePlugin) Run(_ context.Context, opts *integrationplugi
 		srcMaturity = "snapshot"
 	}
 	if destMaturity == "" {
-		destMaturity = "release"
+		destMaturity = DefaultHighMaturity
 	}
 
 	runResult, err := grpcplugins.GetRunResults(e.HTTPPort)
@@ -181,7 +185,7 @@ func (e *artifactoryReleasePlugin) createReleaseBundle(distriClient *distributio
 	buildInfoName := fmt.Sprintf("%s/%s/%s", buildInfo, projectKey, workflowName)
 
 	params := services.NewCreateReleaseBundleParams(strings.Replace(buildInfoName, "/", "-", -1), version)
-	if destMaturity != "" {
+	if destMaturity != "" && destMaturity != DefaultHighMaturity {
 		params.Version += "-" + destMaturity
 	}
 
