@@ -2,7 +2,6 @@ package github
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -61,7 +60,7 @@ func (g *githubClient) Repos(ctx context.Context) ([]sdk.VCSRepo, error) {
 			noEtag = true
 			continue
 		} else {
-			if err := json.Unmarshal(body, &nextRepos); err != nil {
+			if err := sdk.JSONUnmarshal(body, &nextRepos); err != nil {
 				log.Warn(ctx, "githubClient.Repos> Unable to parse github repositories: %s", err)
 				return nil, err
 			}
@@ -138,7 +137,7 @@ func (g *githubClient) repoByFullname(ctx context.Context, fullname string) (Rep
 			log.Error(ctx, "cannot get from cache %s: %v", k, err)
 		}
 	} else {
-		if err := json.Unmarshal(body, &repo); err != nil {
+		if err := sdk.JSONUnmarshal(body, &repo); err != nil {
 			log.Warn(ctx, "githubClient.Repos> Unable to parse github repository: %s", err)
 			return Repository{}, err
 		}
@@ -178,7 +177,7 @@ func (g *githubClient) UserHasWritePermission(ctx context.Context, fullname stri
 			log.Error(ctx, "cannot get from cache %s: %v", k, err)
 		}
 	} else {
-		if err := json.Unmarshal(resp, &permResp); err != nil {
+		if err := sdk.JSONUnmarshal(resp, &permResp); err != nil {
 			return false, sdk.WrapError(err, "unable to unmarshal: %s", string(resp))
 		}
 		if err := g.Cache.SetWithTTL(k, permResp, 61*60); err != nil {
@@ -218,7 +217,7 @@ func (g *githubClient) GrantWritePermission(ctx context.Context, fullname string
 	// Response when a new invitation is created
 	if resp.StatusCode == 201 {
 		invit := RepositoryInvitation{}
-		if err := json.Unmarshal(body, &invit); err != nil {
+		if err := sdk.JSONUnmarshal(body, &invit); err != nil {
 			log.Warn(ctx, "githubClient.GrantWritePermission> unable to unmarshal invitation %s", err)
 			return err
 		}

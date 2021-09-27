@@ -6,9 +6,12 @@ import (
 	"net/url"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 func (b *bitbucketClient) ListForks(ctx context.Context, repo string) ([]sdk.VCSRepo, error) {
+	ctx, end := telemetry.Span(ctx, "bitbucketserver.ListForks", telemetry.Tag(telemetry.TagRepository, repo))
+	defer end()
 	bbRepos := []Repo{}
 	project, slug, err := getRepo(repo)
 	if err != nil {

@@ -2,12 +2,10 @@ package sdk
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
-	"runtime"
 	"strings"
 
 	cdslog "github.com/ovh/cds/sdk/log"
@@ -202,6 +200,8 @@ var (
 	ErrConflictData                                  = Error{ID: 192, Status: http.StatusConflict}
 	ErrWebsocketUpgrade                              = Error{ID: 193, Status: http.StatusUpgradeRequired}
 	ErrMFARequired                                   = Error{ID: 194, Status: http.StatusForbidden}
+	ErrHatcheryNoResourceAvailable                   = Error{ID: 195, Status: http.StatusInternalServerError}
+	ErrRegionNotAllowed                              = Error{ID: 196, Status: http.StatusInternalServerError}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -385,6 +385,8 @@ var errorsAmericanEnglish = map[int]string{
 	ErrConflictData.ID:                                  "Data conflict",
 	ErrWebsocketUpgrade.ID:                              "Websocket upgrade required",
 	ErrMFARequired.ID:                                   "Multi factor authentication is required",
+	ErrHatcheryNoResourceAvailable.ID:                   "No enough resource available to start worker",
+	ErrRegionNotAllowed.ID:                              "Region not allowed",
 }
 
 // Error type.
@@ -464,8 +466,7 @@ func NewErrorWithStack(root error, err error) error {
 }
 
 type errorWithStack struct {
-	root      error  // root error should be wrapped with stack
-	stack     *stack // used to generate inline call stack
+	root      error // root error should be wrapped with stack
 	httpError Error
 }
 
@@ -473,9 +474,12 @@ func (w errorWithStack) Error() string {
 	var cause string
 	root := w.root.Error()
 	if root != "" && root != w.httpError.From && root != w.httpError.Error() {
-		cause = fmt.Sprintf(" (caused by: %s)", w.root)
+		cause = fmt.Sprintf("(caused by: %s)", w.root)
 	}
-	return fmt.Sprintf("%s: %s%s", w.stack.String(), w.httpError, cause)
+	if cause == "" {
+		return w.httpError.Error()
+	}
+	return fmt.Sprintf("%s %s", w.httpError, cause)
 }
 
 func (w errorWithStack) Format(s fmt.State, verb rune) {
@@ -513,50 +517,6 @@ func IsErrorWithStack(err error) bool {
 	return ok
 }
 
-type stack []uintptr
-
-func (s *stack) String() string {
-	var names []string
-	for _, pc := range *s {
-		name := runtime.FuncForPC(pc).Name()
-		if strings.HasPrefix(name, "github.com/ovh/cds/vendor") {
-			continue
-		}
-		if strings.HasPrefix(name, "github.com/ovh/cds") {
-			sp := strings.Split(name, "/")
-			sp = strings.Split(sp[len(sp)-1], ".")
-			var name string
-			// check if it's a struct or package func
-			if strings.HasPrefix(sp[1], "(") {
-				name = sp[2]
-			} else {
-				name = sp[1]
-			}
-			ignoredNames := StringSlice{"NewError", "NewErrorFrom", "WithStack", "WrapError", "Append", "NewErrorWithStack", "extractBodyErrorFromResponse", "Stream"}
-			if !ignoredNames.Contains(name) {
-				names = append(names, name)
-			}
-		}
-	}
-	reverse(names)
-	return strings.Join(names, ">")
-}
-
-func reverse(ss []string) {
-	last := len(ss) - 1
-	for i := 0; i < len(ss)/2; i++ {
-		ss[i], ss[last-i] = ss[last-i], ss[i]
-	}
-}
-
-func callers() *stack {
-	const depth = 32
-	var pcs [depth]uintptr
-	n := runtime.Callers(3, pcs[:])
-	var st stack = pcs[0:n]
-	return &st
-}
-
 // NewError returns a merge of given err with new http error.
 func NewError(httpError Error, err error) error {
 	// if the given error is nil do nothing
@@ -584,7 +544,6 @@ func NewError(httpError Error, err error) error {
 	// if it's a library error create a new error with stack
 	return errorWithStack{
 		root:      errors.WithStack(err),
-		stack:     callers(),
 		httpError: httpError,
 	}
 }
@@ -624,7 +583,6 @@ func WrapError(err error, format string, args ...interface{}) error {
 	if e, ok := err.(Error); ok {
 		return errorWithStack{
 			root:      errors.WithStack(fmt.Errorf(format, args...)),
-			stack:     callers(),
 			httpError: e,
 		}
 	}
@@ -641,7 +599,6 @@ func WrapError(err error, format string, args ...interface{}) error {
 
 	return errorWithStack{
 		root:      errors.Wrap(err, m),
-		stack:     callers(),
 		httpError: httpError,
 	}
 }
@@ -667,14 +624,12 @@ func WithStack(err error) error {
 	if e, ok := err.(Error); ok {
 		return errorWithStack{
 			root:      errors.New(e.Translate()),
-			stack:     callers(),
 			httpError: e,
 		}
 	}
 
 	return errorWithStack{
 		root:      errors.WithStack(err),
-		stack:     callers(),
 		httpError: ErrUnknownError,
 	}
 }
@@ -735,7 +690,7 @@ func Exit(format string, args ...interface{}) {
 func DecodeError(data []byte) error {
 	var e Error
 
-	if err := json.Unmarshal(data, &e); err != nil {
+	if err := JSONUnmarshal(data, &e); err != nil {
 		return nil
 	}
 

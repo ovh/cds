@@ -192,7 +192,7 @@ func (api *API) checkWorkflowPermissions(ctx context.Context, w http.ResponseWri
 		return sdk.WrapError(sdk.ErrWrongRequest, "invalid given workflow name")
 	}
 
-	exists, err := workflow.Exists(api.mustDB(), projectKey, workflowName)
+	exists, err := workflow.Exists(ctx, api.mustDB(), projectKey, workflowName)
 	if err != nil {
 		return err
 	}
@@ -230,7 +230,6 @@ func (api *API) checkWorkflowPermissions(ctx context.Context, w http.ResponseWri
 		telemetry.Current(ctx, telemetry.Tag(telemetry.TagPermission, "is_admin"))
 		trackSudo(ctx, w)
 		return nil
-
 	}
 	log.Debug(ctx, "checkWorkflowPermissions> %s access granted to %s/%s because has permission (max permission = %d)", getAPIConsumer(ctx).ID, projectKey, workflowName, maxLevelPermission)
 	telemetry.Current(ctx, telemetry.Tag(telemetry.TagPermission, "is_granted"))

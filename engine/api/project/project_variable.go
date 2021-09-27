@@ -2,7 +2,6 @@ package project
 
 import (
 	"database/sql"
-	"encoding/json"
 
 	"github.com/go-gorp/gorp"
 
@@ -32,7 +31,7 @@ func GetVariableAudit(db gorp.SqlExecutor, key string) ([]sdk.VariableAudit, err
 			return nil, err
 		}
 		var vars []sdk.Variable
-		err = json.Unmarshal([]byte(data), &vars)
+		err = sdk.JSONUnmarshal([]byte(data), &vars)
 		if err != nil {
 			return nil, err
 		}

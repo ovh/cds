@@ -2,7 +2,6 @@ package github
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -110,7 +109,7 @@ func (g *githubClient) Commits(ctx context.Context, repo, theBranch, since, unti
 	// Calculate since commit
 	if since == "" {
 		// If no since commit, take from the beginning of the branch
-		b, errB := g.Branch(ctx, repo, theBranch)
+		b, errB := g.Branch(ctx, repo, sdk.VCSBranchFilters{BranchName: theBranch})
 		if errB != nil {
 			return nil, errB
 		}
@@ -213,7 +212,7 @@ func (g *githubClient) allCommitBetween(ctx context.Context, repo string, untilD
 		}
 		nextCommits := []Commit{}
 
-		if err := json.Unmarshal(body, &nextCommits); err != nil {
+		if err := sdk.JSONUnmarshal(body, &nextCommits); err != nil {
 			log.Warn(ctx, "githubClient.Commits> Unable to parse github commits: %s", err)
 			return nil, err
 		}
@@ -247,7 +246,7 @@ func (g *githubClient) Commit(ctx context.Context, repo, hash string) (sdk.VCSCo
 			log.Error(ctx, "cannot get from cache %s: %v", k, err)
 		}
 	} else {
-		if err := json.Unmarshal(body, &c); err != nil {
+		if err := sdk.JSONUnmarshal(body, &c); err != nil {
 			log.Warn(ctx, "githubClient.Commit> Unable to parse github commit: %s", err)
 			return sdk.VCSCommit{}, err
 		}
@@ -295,7 +294,7 @@ func (g *githubClient) CommitsBetweenRefs(ctx context.Context, repo, base, head 
 			log.Error(ctx, "cannot get from cache %s: %v", k, err)
 		}
 	} else {
-		if err := json.Unmarshal(body, &diff); err != nil {
+		if err := sdk.JSONUnmarshal(body, &diff); err != nil {
 			log.Warn(ctx, "githubClient.CommitsBetweenRefs> Unable to parse github commit: %s", err)
 			return commits, err
 		}

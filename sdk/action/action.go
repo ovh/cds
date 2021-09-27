@@ -22,6 +22,7 @@ var List = []Manifest{
 	GitTag,
 	InstallKey,
 	JUnit,
+	Promote,
 	ReleaseVCS,
 	Release,
 	Script,

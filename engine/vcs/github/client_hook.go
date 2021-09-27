@@ -59,7 +59,7 @@ func (g *githubClient) CreateHook(ctx context.Context, repo string, hook *sdk.VC
 		return sdk.WrapError(err, "github.CreateHook. Data : %s", b)
 	}
 
-	if err := json.Unmarshal(body, &r); err != nil {
+	if err := sdk.JSONUnmarshal(body, &r); err != nil {
 		return sdk.WrapError(err, "Cannot unmarshal response")
 	}
 	hook.ID = fmt.Sprintf("%d", r.ID)
@@ -141,7 +141,7 @@ func (g *githubClient) getHooks(ctx context.Context, fullname string) ([]Webhook
 			}
 			break
 		} else {
-			if err := json.Unmarshal(body, &nextHooks); err != nil {
+			if err := sdk.JSONUnmarshal(body, &nextHooks); err != nil {
 				log.Warn(ctx, "githubClient.getHooks> Unable to parse github hooks: %s", err)
 				return nil, err
 			}
@@ -206,7 +206,7 @@ func (g *githubClient) getHookByID(ctx context.Context, fullname, id string) (We
 			return webhook, sdk.WithStack(fmt.Errorf("unable to get getHooks (%s) from the cache", strings.ReplaceAll(cacheKey, g.OAuthToken, "")))
 		}
 	} else {
-		if err := json.Unmarshal(body, &webhook); err != nil {
+		if err := sdk.JSONUnmarshal(body, &webhook); err != nil {
 			log.Warn(ctx, "githubClient.getHookByID> Unable to parse github hook: %v", err)
 			return webhook, err
 		}

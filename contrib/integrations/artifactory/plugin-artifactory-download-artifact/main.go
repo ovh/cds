@@ -9,6 +9,7 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/jfrog/jfrog-client-go/artifactory/services"
 	"github.com/jfrog/jfrog-client-go/artifactory/services/utils"
+	"github.com/jfrog/jfrog-client-go/utils/io/fileutils"
 	"github.com/jfrog/jfrog-client-go/utils/log"
 
 	art "github.com/ovh/cds/contrib/integrations/artifactory"
@@ -79,6 +80,7 @@ func (e *artifactoryDownloadArtifactPlugin) Run(_ context.Context, opts *integra
 		return fail("unable to create artifactory client: %v", err)
 	}
 	log.SetLogger(log.NewLogger(log.ERROR, os.Stdout))
+	fileutils.SetTempDirBase(opts.GetOptions()["cds.workspace"])
 
 	params := services.NewDownloadParams()
 	params.Pattern = fmt.Sprintf("%s/%s", cdsRepo, filePath)
@@ -117,8 +119,6 @@ func main() {
 	if err := integrationplugin.Start(context.Background(), &e); err != nil {
 		panic(err)
 	}
-	return
-
 }
 
 func fail(format string, args ...interface{}) (*integrationplugin.RunResult, error) {

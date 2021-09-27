@@ -149,7 +149,7 @@ func TestBranches(t *testing.T) {
 	ghClient := getNewAuthorizedClient(t)
 	assert.NotNil(t, ghClient)
 
-	branches, err := ghClient.Branches(context.Background(), "ovh/cds")
+	branches, err := ghClient.Branches(context.Background(), "ovh/cds", sdk.VCSBranchesFilter{})
 	require.NoError(t, err)
 	assert.NotEmpty(t, branches)
 }
@@ -158,7 +158,7 @@ func TestBranch(t *testing.T) {
 	ghClient := getNewAuthorizedClient(t)
 	assert.NotNil(t, ghClient)
 
-	branch, err := ghClient.Branch(context.Background(), "ovh/cds", "master")
+	branch, err := ghClient.Branch(context.Background(), "ovh/cds", sdk.VCSBranchFilters{BranchName: "master"})
 	require.NoError(t, err)
 	assert.NotNil(t, branch)
 }

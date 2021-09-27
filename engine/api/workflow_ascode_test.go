@@ -584,22 +584,20 @@ func Test_WorkflowAsCodeWithNotifications(t *testing.T) {
 		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/fsamin/go-repo", gomock.Any(), gomock.Any(), gomock.Any()).MinTimes(0)
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/fsamin/go-repo/branches", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/fsamin/go-repo/branches/?branch=&default=true", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
-				bs := []sdk.VCSBranch{}
 				b := sdk.VCSBranch{
 					DisplayID:    "master",
 					LatestCommit: "aaaaaaa",
 				}
-				bs = append(bs, b)
-				out = bs
+				out = b
 				return nil, 200, nil
 			},
 		).MaxTimes(10)
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/fsamin/go-repo/branches/?branch=master", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/fsamin/go-repo/branches/?branch=master&default=false", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 				b := &sdk.VCSBranch{
@@ -896,7 +894,7 @@ version: v1.0`),
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &wrun))
 
 	require.NoError(t, waitCraftinWorkflow(t, api, api.mustDB(), wrun.ID))
-	wr, _ := workflow.LoadRunByID(db, wrun.ID, workflow.LoadRunOptions{})
+	wr, _ := workflow.LoadRunByID(context.Background(), db, wrun.ID, workflow.LoadRunOptions{})
 
 	assert.NotEqual(t, "Fail", wr.Status)
 
@@ -1000,28 +998,21 @@ hooks:
 		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/fsamin/go-repo", gomock.Any(), gomock.Any(), gomock.Any()).MinTimes(0)
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/fsamin/go-repo/branches", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/fsamin/go-repo/branches/?branch=&default=true", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
-				bs := []sdk.VCSBranch{}
 				b := sdk.VCSBranch{
 					DisplayID:    "master",
 					LatestCommit: "aaaaaaa",
 					Default:      true,
 				}
-				b2 := sdk.VCSBranch{
-					DisplayID:    "non-default",
-					LatestCommit: "aaaaaaa",
-					Default:      false,
-				}
-				bs = append(bs, b, b2)
-				out = bs
+				out = b
 				return nil, 200, nil
 			},
 		).MaxTimes(10)
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/fsamin/go-repo/branches/?branch=non-default", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/fsamin/go-repo/branches/?branch=non-default&default=false", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 				b := &sdk.VCSBranch{

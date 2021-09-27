@@ -53,22 +53,15 @@ func Test_releaseApplicationWorkflowHandler(t *testing.T) {
 				if err := enc.Encode(repo); err != nil {
 					return writeError(wri, err)
 				}
-			case "/vcs/github/repos/myproj/myapp/branches":
-				bs := []sdk.VCSBranch{}
+			case "/vcs/github/repos/myproj/myapp/branches/?branch=&default=true":
 				b := sdk.VCSBranch{
 					DisplayID: "master",
 					Default:   true,
 				}
-				bs = append(bs, b)
-				b2 := sdk.VCSBranch{
-					DisplayID: "my-branch",
-					Default:   false,
-				}
-				bs = append(bs, b2)
-				if err := enc.Encode(bs); err != nil {
+				if err := enc.Encode(b); err != nil {
 					return writeError(wri, err)
 				}
-			case "/vcs/github/repos/myproj/myapp/branches/?branch=master":
+			case "/vcs/github/repos/myproj/myapp/branches/?branch=master&default=false":
 				b := sdk.VCSBranch{
 					DisplayID: "master",
 					Default:   true,
@@ -86,7 +79,7 @@ func Test_releaseApplicationWorkflowHandler(t *testing.T) {
 				if err := enc.Encode(c); err != nil {
 					return writeError(wri, err)
 				}
-			case "/vcs/github/repos/myproj/myapp/branches/?branch=my-branch":
+			case "/vcs/github/repos/myproj/myapp/branches/?branch=my-branch&default=false":
 				b := sdk.VCSBranch{
 					DisplayID: "my-branch",
 					Default:   true,

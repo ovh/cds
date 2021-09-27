@@ -2,12 +2,13 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"regexp"
 	"strings"
 	"text/template"
+
+	"github.com/ovh/cds/sdk"
 )
 
 const (
@@ -39,7 +40,7 @@ func NewApplications(file string) (*Applications, error) {
 		return nil, fmt.Errorf("failed to read applications file : %s", err)
 	}
 
-	err = json.Unmarshal(data, &ret)
+	err = sdk.JSONUnmarshal(data, &ret)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshall applications file : %s", err)
 	}

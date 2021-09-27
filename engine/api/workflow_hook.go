@@ -303,12 +303,9 @@ func (api *API) postWorkflowJobHookCallbackHandler() service.Handler {
 
 		go api.WorkflowSendEvent(context.Background(), *proj, report)
 
-		report, err = api.updateParentWorkflowRun(ctx, wr)
-		if err != nil {
+		if err := api.updateParentWorkflowRun(ctx, wr); err != nil {
 			return sdk.WithStack(err)
 		}
-
-		go api.WorkflowSendEvent(context.Background(), *proj, report)
 
 		return nil
 	}

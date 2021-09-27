@@ -62,7 +62,7 @@ func TestErrorIs(t *testing.T) {
 
 func TestNewError(t *testing.T) {
 	err := NewError(ErrWrongRequest, fmt.Errorf("this is an error generated from vendor"))
-	assert.Equal(t, "TestNewError: wrong request (from: this is an error generated from vendor)", err.Error())
+	assert.Equal(t, "wrong request (from: this is an error generated from vendor)", err.Error())
 
 	// print the error call stack
 	t.Log(err)
@@ -79,10 +79,10 @@ func TestNewError(t *testing.T) {
 
 func TestWrapError(t *testing.T) {
 	err := fourForStackTest()
-	assert.Equal(t, "TestWrapError>fourForStackTest>fiveForStackTest: internal server error (caused by: four: five: this is an error generated from vendor)", err.Error())
+	assert.Equal(t, "internal server error (caused by: four: five: this is an error generated from vendor)", err.Error())
 
 	err = oneForStackTest()
-	assert.Equal(t, "TestWrapError>oneForStackTest>twoForStackTest>threeForStackTest>fourForStackTest>fiveForStackTest: action definition contains a recursive loop (caused by: one: two: three: four: five: this is an error generated from vendor)", err.Error())
+	assert.Equal(t, "action definition contains a recursive loop (caused by: one: two: three: four: five: this is an error generated from vendor)", err.Error())
 
 	// print the error call stack
 	t.Log(err)
@@ -117,22 +117,22 @@ func TestCause(t *testing.T) {
 
 func TestNewAdvancedError(t *testing.T) {
 	err := NewErrorFrom(ErrWrongRequest, "this is an error generated from vendor")
-	assert.Equal(t, "TestNewAdvancedError: wrong request (from: this is an error generated from vendor)", err.Error())
+	assert.Equal(t, "wrong request (from: this is an error generated from vendor)", err.Error())
 	httpErr := ExtractHTTPError(err)
 	assert.Equal(t, "wrong request (from: this is an error generated from vendor)", httpErr.Error())
 
 	err = WrapError(err, "Something no visible for http error")
-	assert.Equal(t, "TestNewAdvancedError: wrong request (from: this is an error generated from vendor) (caused by: Something no visible for http error: this is an error generated from vendor)", err.Error())
+	assert.Equal(t, "wrong request (from: this is an error generated from vendor) (caused by: Something no visible for http error: this is an error generated from vendor)", err.Error())
 	httpErr = ExtractHTTPError(err)
 	assert.Equal(t, "wrong request (from: this is an error generated from vendor)", httpErr.Error())
 
 	err = NewError(ErrAlreadyTaken, err)
-	assert.Equal(t, "TestNewAdvancedError: This job is already taken by another worker (from: this is an error generated from vendor) (caused by: Something no visible for http error: this is an error generated from vendor)", err.Error())
+	assert.Equal(t, "This job is already taken by another worker (from: this is an error generated from vendor) (caused by: Something no visible for http error: this is an error generated from vendor)", err.Error())
 	httpErr = ExtractHTTPError(err)
 	assert.Equal(t, "This job is already taken by another worker (from: this is an error generated from vendor)", httpErr.Error())
 
 	err = NewErrorWithStack(err, NewErrorFrom(ErrNotFound, "can't found this"))
-	assert.Equal(t, "TestNewAdvancedError: resource not found (from: can't found this) (caused by: Something no visible for http error: this is an error generated from vendor)", err.Error())
+	assert.Equal(t, "resource not found (from: can't found this) (caused by: Something no visible for http error: this is an error generated from vendor)", err.Error())
 	httpErr = ExtractHTTPError(err)
 	assert.Equal(t, "resource not found (from: can't found this)", httpErr.Error())
 
@@ -167,22 +167,22 @@ func TestMultiError(t *testing.T) {
 	mError.Append(errThree)
 	mError.Append(errFourth)
 
-	assert.Equal(t, "TestMultiError: internal server error (caused by: my first error), TestMultiError: wrong request (from: my second error), TestMultiError: internal server error (caused by: hidden info: my third error), TestMultiError: already exists (from: my fourth error)", mError.Error())
+	assert.Equal(t, "internal server error (caused by: my first error), wrong request (from: my second error), internal server error (caused by: hidden info: my third error), already exists (from: my fourth error)", mError.Error())
 	httpErr := ExtractHTTPError(mError)
 	assert.Equal(t, "internal server error, wrong request: my second error, internal server error, already exists: my fourth error", httpErr.Error())
 
 	wrappedErr := NewError(ErrWrongRequest, mError)
-	assert.Equal(t, "TestMultiError: wrong request (from: internal server error, wrong request: my second error, internal server error, already exists: my fourth error) (caused by: TestMultiError: internal server error (caused by: my first error), TestMultiError: wrong request (from: my second error), TestMultiError: internal server error (caused by: hidden info: my third error), TestMultiError: already exists (from: my fourth error))", wrappedErr.Error())
+	assert.Equal(t, "wrong request (from: internal server error, wrong request: my second error, internal server error, already exists: my fourth error) (caused by: internal server error (caused by: my first error), wrong request (from: my second error), internal server error (caused by: hidden info: my third error), already exists (from: my fourth error))", wrappedErr.Error())
 	httpErr = ExtractHTTPError(wrappedErr)
 	assert.Equal(t, "wrong request (from: internal server error, wrong request: my second error, internal server error, already exists: my fourth error)", httpErr.Error())
 
 	stackErr := WithStack(mError)
-	assert.Equal(t, "TestMultiError: internal server error (from: internal server error, wrong request: my second error, internal server error, already exists: my fourth error) (caused by: TestMultiError: internal server error (caused by: my first error), TestMultiError: wrong request (from: my second error), TestMultiError: internal server error (caused by: hidden info: my third error), TestMultiError: already exists (from: my fourth error))", stackErr.Error())
+	assert.Equal(t, "internal server error (from: internal server error, wrong request: my second error, internal server error, already exists: my fourth error) (caused by: internal server error (caused by: my first error), wrong request (from: my second error), internal server error (caused by: hidden info: my third error), already exists (from: my fourth error))", stackErr.Error())
 	httpErr = ExtractHTTPError(stackErr)
 	assert.Equal(t, "internal server error (from: internal server error, wrong request: my second error, internal server error, already exists: my fourth error)", httpErr.Error())
 
 	stackErr = WrapError(mError, "more info")
-	assert.Equal(t, "TestMultiError: internal server error (from: internal server error, wrong request: my second error, internal server error, already exists: my fourth error) (caused by: more info: TestMultiError: internal server error (caused by: my first error), TestMultiError: wrong request (from: my second error), TestMultiError: internal server error (caused by: hidden info: my third error), TestMultiError: already exists (from: my fourth error))", stackErr.Error())
+	assert.Equal(t, "internal server error (from: internal server error, wrong request: my second error, internal server error, already exists: my fourth error) (caused by: more info: internal server error (caused by: my first error), wrong request (from: my second error), internal server error (caused by: hidden info: my third error), already exists (from: my fourth error))", stackErr.Error())
 	httpErr = ExtractHTTPError(stackErr)
 	assert.Equal(t, "internal server error (from: internal server error, wrong request: my second error, internal server error, already exists: my fourth error)", httpErr.Error())
 }
@@ -205,5 +205,5 @@ func Test_cause(t *testing.T) {
 	mError.Append(err2)
 	mError.Append(err3)
 	mError.Append(err4)
-	assert.Equal(t, "Test_cause: internal server error (from: my error) (caused by: my lib error), Test_cause: wrong request (from: my error), Test_cause: wrong request (from: my error), Test_cause: wrong request", Cause(mError).Error())
+	assert.Equal(t, "internal server error (from: my error) (caused by: my lib error), wrong request (from: my error), wrong request (from: my error), wrong request", Cause(mError).Error())
 }

@@ -69,8 +69,9 @@ func (e *artifactoryUploadArtifactPlugin) Run(_ context.Context, opts *integrati
 	pathToUpload := opts.GetOptions()["cds.integration.artifact_manager.upload.path"]
 	projectKey := opts.GetOptions()["cds.project"]
 	workflowName := opts.GetOptions()["cds.workflow"]
-	buildInfo := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactManagerConfigBuildInfoPath)]
 	version := opts.GetOptions()["cds.version"]
+
+	buildInfo := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactManagerConfigBuildInfoPrefix)]
 
 	artiClient, err := art.CreateArtifactoryClient(artifactoryURL, token)
 	if err != nil {
@@ -118,8 +119,6 @@ func main() {
 	if err := integrationplugin.Start(context.Background(), &e); err != nil {
 		panic(err)
 	}
-	return
-
 }
 
 func fail(format string, args ...interface{}) (*integrationplugin.RunResult, error) {

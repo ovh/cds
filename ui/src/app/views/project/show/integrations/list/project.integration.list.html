@@ -29,12 +29,18 @@
                             </label>
                         </div>
                         <div class="ten wide field">
-                            <input type="checkbox" [(ngModel)]="p.config[k].value" *ngIf="p.config[k].type === 'boolean'" (keydown)="p.hasChanged = true" [readonly]="p.model.public"/>
-                            <input type="text" [(ngModel)]="p.config[k].value" *ngIf="p.config[k].type === 'string'" (keydown)="p.hasChanged = true" [readonly]="p.model.public">
-                            <ng-container *ngIf="p.config[k].type === 'text'">
-                                <codemirror [(ngModel)]="p.config[k].value" [config]="codeMirrorConfig" #codeMirror (keydown)="p.hasChanged = true"></codemirror>
+                            <ng-container *ngIf="p.config[k].static">
+                                <input type="text" *ngIf="p.config[k].type !== 'password'" [(ngModel)]="p.config[k].value" readonly>
+                                <input type="password" *ngIf="p.config[k].type === 'password'" [(ngModel)]="p.config[k].value" readonly>
                             </ng-container>
-                            <input type="password" name="integrationpassword" [(ngModel)]="p.config[k].value" *ngIf="p.config[k].type === 'password'" (keydown)="p.hasChanged = true">
+                            <ng-container *ngIf="!p.config[k].static">
+                                <input type="checkbox" [(ngModel)]="p.config[k].value" *ngIf="p.config[k].type === 'boolean'" (keydown)="p.hasChanged = true" [readonly]="p.model.public"/>
+                                <input type="text" [(ngModel)]="p.config[k].value" *ngIf="p.config[k].type === 'string'" (keydown)="p.hasChanged = true" [readonly]="p.model.public">
+                                <ng-container *ngIf="p.config[k].type === 'text'">
+                                    <codemirror [(ngModel)]="p.config[k].value" [config]="codeMirrorConfig" #codeMirror (keydown)="p.hasChanged = true"></codemirror>
+                                </ng-container>
+                                <input type="password" name="integrationpassword" [(ngModel)]="p.config[k].value" *ngIf="p.config[k].type === 'password'" (keydown)="p.hasChanged = true">
+                            </ng-container>
                         </div>
                     </div>
                 </div>

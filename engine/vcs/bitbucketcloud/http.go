@@ -3,7 +3,6 @@ package bitbucketcloud
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -51,7 +50,7 @@ func (consumer *bitbucketcloudConsumer) postForm(url string, data url.Values, he
 
 	if res.StatusCode > 400 {
 		var errBb Error
-		if err := json.Unmarshal(resBody, &errBb); err == nil {
+		if err := sdk.JSONUnmarshal(resBody, &errBb); err == nil {
 			return res.StatusCode, resBody, errBb
 		}
 	}
@@ -215,5 +214,5 @@ func (client *bitbucketcloudClient) do(ctx context.Context, method, api, path st
 		return sdk.WithStack(sdk.ErrWrongRequest)
 	}
 
-	return sdk.WithStack(json.Unmarshal(body, v))
+	return sdk.WithStack(sdk.JSONUnmarshal(body, v))
 }

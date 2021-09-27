@@ -2,7 +2,6 @@ package github
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -44,7 +43,7 @@ func (g *githubClient) GetEvents(ctx context.Context, fullname string, dateRef t
 	}
 
 	nextEvents := []Event{}
-	if err := json.Unmarshal(body, &nextEvents); err != nil {
+	if err := sdk.JSONUnmarshal(body, &nextEvents); err != nil {
 		log.Warn(ctx, "githubClient.GetEvents> Unable to parse github events: %s", err)
 		return nil, interval, fmt.Errorf("Unable to parse github events %s: %s", string(body), err)
 	}
@@ -143,7 +142,7 @@ func (g *githubClient) PushEvents(ctx context.Context, fullname string, iEvents 
 
 	res := []sdk.VCSPushEvent{}
 	for b, c := range lastCommitPerBranch {
-		branch, err := g.Branch(ctx, fullname, b)
+		branch, err := g.Branch(ctx, fullname, sdk.VCSBranchFilters{BranchName: b})
 		if err != nil && strings.Contains(err.Error(), "Branch not found") {
 			log.Debug(ctx, "githubClient.PushEvents> Unable to find branch %s in %s : %s", b, fullname, err)
 			continue
@@ -178,7 +177,7 @@ func (g *githubClient) CreateEvents(ctx context.Context, fullname string, iEvent
 	res := []sdk.VCSCreateEvent{}
 	for _, e := range events {
 		b := e.Payload.Ref
-		branch, err := g.Branch(ctx, fullname, b)
+		branch, err := g.Branch(ctx, fullname, sdk.VCSBranchFilters{BranchName: b})
 		if err != nil || branch == nil {
 			errtxt := fmt.Sprintf("githubClient.CreateEvents> Unable to find branch %s in %s : %s", b, fullname, err)
 			if err != nil && !strings.Contains(errtxt, "Branch not found") {

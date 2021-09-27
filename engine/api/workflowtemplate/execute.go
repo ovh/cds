@@ -3,7 +3,6 @@ package workflowtemplate
 import (
 	"bytes"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -34,7 +33,7 @@ func prepareParams(wt sdk.WorkflowTemplate, r sdk.WorkflowTemplateRequest) inter
 			case sdk.ParameterTypeJSON:
 				var res interface{}
 				// safely ignore the error because the value of v has been validated on apply submit
-				_ = json.Unmarshal([]byte(v), &res)
+				_ = sdk.JSONUnmarshal([]byte(v), &res)
 				m[p.Key] = res
 			default:
 				m[p.Key] = v

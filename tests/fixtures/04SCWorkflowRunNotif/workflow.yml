@@ -13,6 +13,7 @@ notifications:
     on_success: always
     recipients:
     - notif@localhost.local
+    - "{{.cds.proj.email_notif}}"
     template:
       body: |
         title:{{.cds.project}}/{{.cds.workflow}}#{{.cds.version}} {{.cds.status}}

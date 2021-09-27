@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"math/rand"
 	"net/http"
@@ -82,10 +81,10 @@ func (c *websocketClientData) updateEventFilters(ctx context.Context, db gorp.Sq
 	var fs []sdk.WebsocketFilter
 
 	var f sdk.WebsocketFilter
-	if err := json.Unmarshal(msg, &f); err == nil {
+	if err := sdk.JSONUnmarshal(msg, &f); err == nil {
 		fs = []sdk.WebsocketFilter{f}
 	} else {
-		if err := json.Unmarshal(msg, &fs); err != nil {
+		if err := sdk.JSONUnmarshal(msg, &fs); err != nil {
 			return sdk.WrapError(err, "cannot unmarshal websocket input message")
 		}
 	}
@@ -210,7 +209,7 @@ func (a *API) initWebsocket(pubSubKey string) error {
 		telemetry.Record(a.Router.Background, WebSocketEvents, 1)
 
 		var e sdk.Event
-		if err := json.Unmarshal(m, &e); err != nil {
+		if err := sdk.JSONUnmarshal(m, &e); err != nil {
 			err = sdk.WrapError(err, "cannot parse event from WS broker")
 			ctx := sdk.ContextWithStacktrace(context.TODO(), err)
 			log.Warn(ctx, err.Error())
@@ -274,7 +273,9 @@ func (a *API) websocketOnMessage(e sdk.Event) {
 				return
 			}
 
+			c.mutex.Lock()
 			found, needCheckPermission := c.filters.HasOneKey(eventKeys...)
+			c.mutex.Unlock()
 			if !found {
 				return
 			}

@@ -281,8 +281,7 @@ func TestGetItemLogsLinesHandler(t *testing.T) {
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &lines))
 	require.Len(t, lines, 1)
 	require.Equal(t, int64(0), lines[0].Number)
-	require.Equal(t, "[EMERGENCY] this is a message\n", lines[0].Value)
-
+	require.Equal(t, "this is a message\n", lines[0].Value)
 }
 
 func TestGetItemLogsStreamHandler(t *testing.T) {
@@ -390,11 +389,11 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 		}
 	}
 
-	require.Len(t, lines, 5)
-	require.Equal(t, "[EMERGENCY] message 5\n", lines[0].Value)
-	require.Equal(t, int64(5), lines[0].Number)
-	require.Equal(t, "[EMERGENCY] message 9\n", lines[4].Value)
-	require.Equal(t, int64(9), lines[4].Number)
+	require.Len(t, lines, 10)
+	require.Equal(t, "message 0\n", lines[0].Value)
+	require.Equal(t, int64(0), lines[0].Number)
+	require.Equal(t, "message 9\n", lines[9].Value)
+	require.Equal(t, int64(9), lines[9].Number)
 
 	// Send some messages
 	for i := 0; i < 10; i++ {
@@ -415,7 +414,40 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 		}
 	}
 
-	require.Len(t, lines, 15)
-	require.Equal(t, "[EMERGENCY] message 19\n", lines[14].Value)
-	require.Equal(t, int64(19), lines[14].Number)
+	require.Len(t, lines, 20)
+	require.Equal(t, "message 19\n", lines[19].Value)
+	require.Equal(t, int64(19), lines[19].Number)
+
+	// Try another connection with offset
+	ctx, cancel = context.WithTimeout(context.TODO(), time.Second*10)
+	t.Cleanup(func() { cancel() })
+	go func() {
+		chanErrorReceived <- client.RequestWebsocket(ctx, sdk.NewGoRoutines(ctx), uri, chanMsgToSend, chanMsgReceived, chanErrorReceived)
+	}()
+	buf, err = json.Marshal(sdk.CDNStreamFilter{
+		JobRunID: 123456789,
+	})
+	require.NoError(t, err)
+	chanMsgToSend <- buf
+
+	lines = make([]redis.Line, 0)
+	for ctx.Err() == nil && len(lines) < 5 {
+		select {
+		case <-ctx.Done():
+			break
+		case err := <-chanErrorReceived:
+			require.NoError(t, err)
+			break
+		case msg := <-chanMsgReceived:
+			var line redis.Line
+			require.NoError(t, json.Unmarshal(msg, &line))
+			lines = append(lines, line)
+		}
+	}
+
+	require.Len(t, lines, 5)
+	require.Equal(t, "message 15\n", lines[0].Value)
+	require.Equal(t, int64(15), lines[0].Number)
+	require.Equal(t, "message 19\n", lines[4].Value)
+	require.Equal(t, int64(19), lines[4].Number)
 }

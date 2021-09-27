@@ -238,10 +238,10 @@ func updateSchedulerPayload(ctx context.Context, db gorpmapper.SqlExecutorWithTx
 			var bodyJSON interface{}
 			//Try to parse the body as an array
 			bodyJSONArray := []interface{}{}
-			if err := json.Unmarshal([]byte(h.Config["payload"].Value), &bodyJSONArray); err != nil {
+			if err := sdk.JSONUnmarshal([]byte(h.Config["payload"].Value), &bodyJSONArray); err != nil {
 				//Try to parse the body as a map
 				bodyJSONMap := map[string]interface{}{}
-				if err2 := json.Unmarshal([]byte(h.Config["payload"].Value), &bodyJSONMap); err2 == nil {
+				if err2 := sdk.JSONUnmarshal([]byte(h.Config["payload"].Value), &bodyJSONMap); err2 == nil {
 					bodyJSON = bodyJSONMap
 				}
 			} else {
@@ -424,17 +424,11 @@ func DefaultPayload(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store 
 				return wf.WorkflowData.Node.Context.DefaultPayload, sdk.WrapError(err, "cannot get authorized client")
 			}
 
-			branches, err := client.Branches(ctx, app.RepositoryFullname)
+			branch, err := repositoriesmanager.DefaultBranch(ctx, client, app.RepositoryFullname)
 			if err != nil {
 				return wf.WorkflowData.Node.Context.DefaultPayload, err
 			}
-
-			for _, branch := range branches {
-				if branch.Default {
-					defaultBranch = branch.DisplayID
-					break
-				}
-			}
+			defaultBranch = branch.DisplayID
 		}
 
 		defaultPayload = wf.WorkflowData.Node.Context.DefaultPayload
@@ -444,7 +438,7 @@ func DefaultPayload(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store 
 				GitRepository: app.RepositoryFullname,
 			}
 			defaultPayloadBtes, _ := json.Marshal(structuredDefaultPayload)
-			if err := json.Unmarshal(defaultPayloadBtes, &defaultPayload); err != nil {
+			if err := sdk.JSONUnmarshal(defaultPayloadBtes, &defaultPayload); err != nil {
 				return nil, err
 			}
 		} else if defaultPayloadMap, err := wf.WorkflowData.Node.Context.DefaultPayloadToMap(); err == nil && defaultPayloadMap["git.branch"] == "" {

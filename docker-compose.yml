@@ -59,7 +59,7 @@ services:
             api.cache.redis.host=cds-cache:6379 \
             api.cache.redis.password=cds \
             api.database.host=cds-db \
-            api.directories.download=/app \
+            api.download.directory=/app \
             api.url.api=http://${HOSTNAME}:8081 \
             api.url.ui=http://${HOSTNAME}:8080 \
             api.log.level=info \
@@ -72,11 +72,10 @@ services:
             cdn.storageUnits.buffers.redis.redis.password=cds \
             cdn.storageUnits.buffers.local-buffer.local.path=/app/cdn-buffer \
             cdn.storageUnits.storages.local.local.path=/app/cdn-storage \
-            cdn.storageUnits.storages.cds.cds.host=http://cds-api:8081 \
             cdn.database.host=cds-db \
             cdn.publicTCP=${HOSTNAME}:8090 \
             cdn.api.http.url=http://cds-api:8081 \
-            cdn.url=http://cds-cdn:8089 \
+            cdn.URL=http://cds-cdn:8089 \
             hatchery.local.commonConfiguration.url=http://cds-hatchery-local:8086 \
             hatchery.local.commonConfiguration.api.http.url=http://cds-api:8081 \
             hatchery.local.basedir=/app/hatchery-local \

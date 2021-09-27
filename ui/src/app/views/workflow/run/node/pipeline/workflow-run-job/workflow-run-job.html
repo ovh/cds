@@ -29,7 +29,7 @@
                     <div *ngIf="!step.disabled && step.startDate && !step.duration">
                         {{step.startDate | amTimeAgo: true : formatDuration }}
                     </div>
-                    <div *ngIf="step.duration">{{step.duration}}</div>
+                    <div *ngIf="step.duration" title="Step duration">{{step.duration}}</div>
                     <div [class.orange]="step.optional && step.failed" *ngIf="step.optional">Optional</div>
                     <div *ngIf="step.disabled">Disabled</div>
                     <div class="red" *ngIf="step.failed && !step.optional">Failed</div>
@@ -46,6 +46,9 @@
                     <div class="number">{{step.firstDisplayedLineNumber + j + 1}}</div>
                     <div class="value">
                         <pre [innerHTML]="line.value | ansi: (this.mode !== displayModes.ANSI) | safeHtml"></pre>
+                        <div class="since" *ngIf="line.since" title="Duration since step start">{{line.since |
+                            durationMs}}
+                        </div>
                     </div>
                     <div class="extra" *ngIf="line.extra">
                         <div *ngFor="let extra of line.extra">{{extra}}</div>
@@ -72,6 +75,8 @@
                     </div>
                     <div class="value">
                         <pre [innerHTML]="line.value | ansi: (this.mode !== displayModes.ANSI) | safeHtml"></pre>
+                        <div class="since" *ngIf="line.since" title="Duration since step start">{{line.since |
+                            durationMs}}</div>
                     </div>
                     <div class="extra" *ngIf="line.extra">
                         <div *ngFor="let extra of line.extra">{{extra}}</div>

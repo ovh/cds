@@ -21,6 +21,20 @@ var Release = Manifest{
 				Description: "(optional) Set a list of artifacts, separate by ','. You can also use regexp.",
 				Type:        sdk.StringParameter,
 			},
+			{
+				Name:        "srcMaturity",
+				Description: "Repository suffix from which the artifact will be moved",
+				Type:        sdk.StringParameter,
+				Value:       "snapshot",
+				Advanced:    true,
+			},
+			{
+				Name:        "destMaturity",
+				Description: "Repository suffix in which the artifact will be moved",
+				Type:        sdk.StringParameter,
+				Value:       "release",
+				Advanced:    true,
+			},
 		},
 	},
 	Example: exportentities.PipelineV1{

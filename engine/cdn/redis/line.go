@@ -11,6 +11,7 @@ type Line struct {
 	Number     int64  `json:"number"`
 	Value      string `json:"value"`
 	ApiRefHash string `json:"api_ref_hash"`
+	Since      int64  `json:"since,omitempty"`
 }
 
 func (l Line) Format(f sdk.CDNReaderFormat) ([]byte, error) {

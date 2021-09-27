@@ -20,10 +20,30 @@ import (
 
 var (
 	// Client is a CDS Client
-	Client                 cdsclient.HTTPClient
-	defaultMaxProvisioning = 10
-	models                 []sdk.Model
+	Client                                cdsclient.HTTPClient
+	defaultMaxProvisioning                = 10
+	models                                []sdk.Model
+	defaultMaxAttemptsNumberBeforeFailure = 5
+	CacheSpawnIDsTTL                      = 10 * time.Second
+	CacheNbAttemptsIDsTTL                 = 1 * time.Hour
 )
+
+type CacheNbAttemptsJobIDs struct {
+	cache *cache.Cache
+}
+
+func (c *CacheNbAttemptsJobIDs) Key(id int64) string {
+	return strconv.FormatInt(id, 10)
+}
+
+func (c *CacheNbAttemptsJobIDs) NewAttempt(id int64) int {
+	key := c.Key(id)
+	nbAttempt, err := c.cache.IncrementInt(key, 1)
+	if err != nil {
+		c.cache.SetDefault(key, 1)
+	}
+	return nbAttempt
+}
 
 // Create creates hatchery
 func Create(ctx context.Context, h Interface) error {
@@ -64,13 +84,35 @@ func Create(ctx context.Context, h Interface) error {
 	wjobs := make(chan sdk.WorkflowNodeJobRun, h.Configuration().Provision.MaxConcurrentProvisioning)
 	errs := make(chan error, 1)
 
-	// Create a cache with a default expiration time of 3 second, and which
-	// purges expired items every minute
-	spawnIDs := cache.New(10*time.Second, 60*time.Second)
+	// Create a cache to keep in memory the jobID processed in the last 10s.
+	cacheSpawnIDs := cache.New(CacheSpawnIDsTTL, 2*CacheSpawnIDsTTL)
+
+	// Create a cache to only process each jobID only a number of attempts before force to fail the job
+	cacheNbAttemptsIDs := &CacheNbAttemptsJobIDs{
+		cache: cache.New(CacheNbAttemptsIDsTTL, 2*CacheNbAttemptsIDsTTL),
+	}
 
 	h.GetGoRoutines().Run(ctx, "queuePolling", func(ctx context.Context) {
 		log.Debug(ctx, "starting queue polling")
-		if err := h.CDSClient().QueuePolling(ctx, h.GetGoRoutines(), wjobs, errs, 20*time.Second, modelType, h.Configuration().Provision.RatioService); err != nil {
+
+		var ms []cdsclient.RequestModifier
+		ratioService := h.Configuration().Provision.RatioService
+		if ratioService != nil {
+			ms = append(ms, cdsclient.RatioService(*ratioService))
+		}
+		if modelType != "" {
+			ms = append(ms, cdsclient.ModelType(modelType))
+		}
+		region := h.Configuration().Provision.Region
+		if region != "" {
+			regions := []string{region}
+			if !h.Configuration().Provision.IgnoreJobWithNoRegion {
+				regions = append(regions, "")
+			}
+			ms = append(ms, cdsclient.Region(regions...))
+		}
+
+		if err := h.CDSClient().QueuePolling(ctx, h.GetGoRoutines(), wjobs, errs, 20*time.Second, ms...); err != nil {
 			log.Error(ctx, "Queues polling stopped: %v", err)
 		}
 	})
@@ -115,8 +157,13 @@ func Create(ctx context.Context, h Interface) error {
 
 				var traceEnded *struct{}
 				currentCtx, currentCancel := context.WithTimeout(ctx, 10*time.Minute)
+				currentCtx = context.WithValue(currentCtx, log.Field("action_metadata_job_id"), strconv.Itoa(int(j.ID)))
+
+				log.Info(currentCtx, "processing job %d", j.ID)
+
+				var endSpan *trace.Span
 				if val, has := j.Header.Get(telemetry.SampledHeader); has && val == "1" {
-					currentCtx, _ = telemetry.New(currentCtx, h, "hatchery.JobReceive", trace.AlwaysSample(), trace.SpanKindServer)
+					currentCtx, endSpan = telemetry.New(currentCtx, h, "hatchery.JobReceive", trace.AlwaysSample(), trace.SpanKindUnspecified)
 
 					r, _ := j.Header.Get(sdk.WorkflowRunHeader)
 					w, _ := j.Header.Get(sdk.WorkflowHeader)
@@ -130,7 +177,7 @@ func Create(ctx context.Context, h Interface) error {
 					)
 
 					if _, ok := j.Header["WS"]; ok {
-						log.Debug(ctx, "hatchery> received job from WS")
+						log.Debug(currentCtx, "hatchery> received job from WS")
 						telemetry.Current(currentCtx,
 							telemetry.Tag("from", "ws"),
 						)
@@ -143,6 +190,9 @@ func Create(ctx context.Context, h Interface) error {
 						)
 					}
 					telemetry.End(currentCtx, nil, nil) // nolint
+					if endSpan != nil {
+						endSpan.End()
+					}
 					var T struct{}
 					traceEnded = &T
 					currentCancel()
@@ -161,25 +211,25 @@ func Create(ctx context.Context, h Interface) error {
 				}
 
 				//Check if the jobs is concerned by a pending worker creation
-				if _, exist := spawnIDs.Get(strconv.FormatInt(j.ID, 10)); exist {
-					log.Debug(ctx, "job %d already spawned in previous routine", j.ID)
+				if _, exist := cacheSpawnIDs.Get(strconv.FormatInt(j.ID, 10)); exist {
+					log.Debug(currentCtx, "job %d already spawned in previous routine", j.ID)
 					endTrace("already spawned")
 					continue
 				}
 
 				//Before doing anything, push in cache
-				spawnIDs.SetDefault(strconv.FormatInt(j.ID, 10), j.ID)
+				cacheSpawnIDs.SetDefault(strconv.FormatInt(j.ID, 10), j.ID)
 
 				//Check bookedBy current hatchery
 				if j.BookedBy.ID != 0 {
-					log.Debug(ctx, "hatchery> job %d is already booked", j.ID)
+					log.Debug(currentCtx, "hatchery> job %d is already booked", j.ID)
 					endTrace("booked by someone")
 					continue
 				}
 
 				//Check if hatchery if able to start a new worker
-				if !checkCapacities(ctx, h) {
-					log.Info(ctx, "hatchery %s is not able to provision new worker", h.Service().Name)
+				if !checkCapacities(currentCtx, h) {
+					log.Info(currentCtx, "hatchery %s is not able to provision new worker", h.Service().Name)
 					endTrace("no capacities")
 					continue
 				}
@@ -210,11 +260,11 @@ func Create(ctx context.Context, h Interface) error {
 				}
 
 				if !containsRegionRequirement && h.Configuration().Provision.IgnoreJobWithNoRegion {
-					log.Debug(ctx, "cannot launch this job because it does not contains a region prerequisite and IgnoreJobWithNoRegion=true in hatchery configuration")
+					log.Debug(currentCtx, "cannot launch this job because it does not contains a region prerequisite and IgnoreJobWithNoRegion=true in hatchery configuration")
 					canTakeJob = false
 				} else if isWithModels {
 					for i := range models {
-						if canRunJobWithModel(ctx, hWithModels, workerRequest, &models[i]) {
+						if canRunJobWithModel(currentCtx, hWithModels, workerRequest, &models[i]) {
 							chosenModel = &models[i]
 							canTakeJob = true
 							break
@@ -223,19 +273,19 @@ func Create(ctx context.Context, h Interface) error {
 
 					// No model has been found, let's send a failing result
 					if chosenModel == nil {
-						log.Debug(ctx, "hatchery> no model")
+						log.Debug(currentCtx, "hatchery> no model")
 						endTrace("no model")
 						continue
 					}
 				} else {
-					if canRunJob(ctx, h, workerRequest) {
-						log.Debug(ctx, "hatchery %s can try to spawn a worker for job %d", h.Name(), j.ID)
+					if canRunJob(currentCtx, h, workerRequest) {
+						log.Debug(currentCtx, "hatchery %s can try to spawn a worker for job %d", h.Name(), j.ID)
 						canTakeJob = true
 					}
 				}
 
 				if !canTakeJob {
-					log.Info(ctx, "hatchery %s is not able to run the job %d", h.Name(), j.ID)
+					log.Info(currentCtx, "hatchery %s is not able to run the job %d", h.Name(), j.ID)
 					endTrace("cannot run job")
 					continue
 				}
@@ -246,13 +296,39 @@ func Create(ctx context.Context, h Interface) error {
 
 					// Interpolate model secrets
 					if err := ModelInterpolateSecrets(hWithModels, chosenModel); err != nil {
-						log.Error(ctx, "%v", err)
+						log.Error(currentCtx, "%v", err)
+						continue
+					}
+				}
+
+				// Check if we already try to start a worker for this job
+				maxAttemptsNumberBeforeFailure := h.Configuration().Provision.MaxAttemptsNumberBeforeFailure
+				if maxAttemptsNumberBeforeFailure > -1 {
+					nbAttempts := cacheNbAttemptsIDs.NewAttempt(j.ID)
+					if maxAttemptsNumberBeforeFailure == 0 {
+						maxAttemptsNumberBeforeFailure = defaultMaxAttemptsNumberBeforeFailure
+					}
+					if nbAttempts > maxAttemptsNumberBeforeFailure {
+						if err := h.CDSClient().
+							QueueSendResult(currentCtx,
+								j.ID,
+								sdk.Result{
+									ID:         j.ID,
+									BuildID:    j.ID,
+									Status:     sdk.StatusFail,
+									RemoteTime: time.Now(),
+									Reason:     fmt.Sprintf("hatchery %q failed to start worker after %d attempts", h.Configuration().Name, maxAttemptsNumberBeforeFailure),
+								}); err != nil {
+							log.ErrorWithStackTrace(currentCtx, err)
+						}
+						log.Info(currentCtx, "hatchery %q failed to start worker after %d attempts", h.Configuration().Name, maxAttemptsNumberBeforeFailure)
+						endTrace("maximum attempts")
 						continue
 					}
 				}
 
 				//Ask to start
-				log.Debug(ctx, "hatchery> Request a worker for job %d (%.3f seconds elapsed)", j.ID, time.Since(t0).Seconds())
+				log.Info(currentCtx, "hatchery> Request a worker for job %d (%.3f seconds elapsed)", j.ID, time.Since(t0).Seconds())
 				workersStartChan <- workerRequest
 
 			case <-chanRegister:

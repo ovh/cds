@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -146,7 +145,7 @@ func (actPlugin *venomActionPlugin) Run(ctx context.Context, q *actionplugin.Act
 		}
 		switch filepath.Ext(varsFromFile) {
 		case ".json":
-			err = json.Unmarshal(bytes, &varFileMap)
+			err = sdk.JSONUnmarshal(bytes, &varFileMap)
 		case ".yaml":
 			err = yaml.Unmarshal(bytes, &varFileMap)
 		default:

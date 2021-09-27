@@ -101,7 +101,7 @@ func (pva *dbProjectVariableAudit) PostGet(db gorp.SqlExecutor) error {
 
 	if before.Valid {
 		vBefore := &sdk.ProjectVariable{}
-		if err := json.Unmarshal([]byte(before.String), vBefore); err != nil {
+		if err := sdk.JSONUnmarshal([]byte(before.String), vBefore); err != nil {
 			return err
 		}
 		if sdk.NeedPlaceholder(vBefore.Type) {
@@ -113,7 +113,7 @@ func (pva *dbProjectVariableAudit) PostGet(db gorp.SqlExecutor) error {
 
 	if after.Valid {
 		vAfter := &sdk.ProjectVariable{}
-		if err := json.Unmarshal([]byte(after.String), vAfter); err != nil {
+		if err := sdk.JSONUnmarshal([]byte(after.String), vAfter); err != nil {
 			return err
 		}
 		if sdk.NeedPlaceholder(vAfter.Type) {

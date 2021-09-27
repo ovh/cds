@@ -18,6 +18,7 @@ import (
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
+	cdslog "github.com/ovh/cds/sdk/log"
 )
 
 // postImportAsCodeHandler
@@ -68,16 +69,11 @@ func (api *API) postImportAsCodeHandler() service.Handler {
 				sdk.NewErrorFrom(sdk.ErrNoReposManagerClientAuth, "cannot get client for %s %s", key, ope.VCSServer))
 		}
 
-		branches, err := client.Branches(ctx, ope.RepoFullName)
+		branch, err := repositoriesmanager.DefaultBranch(ctx, client, ope.RepoFullName)
 		if err != nil {
 			return err
 		}
-		for _, b := range branches {
-			if b.Default {
-				ope.Setup.Checkout.Branch = b.DisplayID
-				break
-			}
-		}
+		ope.Setup.Checkout.Branch = branch.DisplayID
 
 		if err := operation.PostRepositoryOperation(ctx, tx, *p, ope, nil); err != nil {
 			return sdk.WrapError(err, "cannot create repository operation")
@@ -90,6 +86,9 @@ func (api *API) postImportAsCodeHandler() service.Handler {
 		u := getAPIConsumer(ctx)
 
 		api.GoRoutines.Exec(context.Background(), fmt.Sprintf("postImportAsCodeHandler-%s", ope.UUID), func(ctx context.Context) {
+			ctx = context.WithValue(ctx, cdslog.Operation, ope.UUID)
+			ctx = context.WithValue(ctx, cdslog.Repository, ope.RepoFullName)
+
 			ope, err := operation.Poll(ctx, api.mustDB(), ope.UUID)
 			if err != nil {
 				ctx = sdk.ContextWithStacktrace(ctx, err)
@@ -98,7 +97,7 @@ func (api *API) postImportAsCodeHandler() service.Handler {
 			}
 
 			if ope.Status == sdk.OperationStatusError {
-				log.Error(ctx, "repositories> operation %s error %+v", ope.UUID, ope.Error)
+				log.Error(ctx, "operation %s error %+v", ope.UUID, ope.Error)
 			}
 
 			ope = &sdk.Operation{

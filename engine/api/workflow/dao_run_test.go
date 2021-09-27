@@ -111,7 +111,7 @@ func TestPurgeWorkflowRun(t *testing.T) {
 					return writeError(w, err)
 				}
 				// Default payload on workflow insert
-			case "/vcs/github/repos/sguiheux/demo/branches":
+			case "/vcs/github/repos/sguiheux/demo/branches/?branch=&default=true":
 				b := sdk.VCSBranch{
 					Default:      true,
 					DisplayID:    "master",
@@ -121,7 +121,7 @@ func TestPurgeWorkflowRun(t *testing.T) {
 					return writeError(w, err)
 				}
 				// NEED GET BRANCH TO GET LATEST COMMIT
-			case "/vcs/github/repos/sguiheux/demo/branches/?branch=master":
+			case "/vcs/github/repos/sguiheux/demo/branches/?branch=master&default=false":
 				b := sdk.VCSBranch{
 					Default:      false,
 					DisplayID:    "master",
@@ -249,7 +249,7 @@ vcs_ssh_key: proj-blabla
 	errP := workflow.PurgeWorkflowRun(context.TODO(), db, *w1)
 	test.NoError(t, errP)
 
-	_, _, _, count, errRuns := workflow.LoadRunsSummaries(db, proj.Key, w1.Name, 0, 10, nil)
+	_, _, _, count, errRuns := workflow.LoadRunsSummaries(context.Background(), db, proj.Key, w1.Name, 0, 10, nil)
 	test.NoError(t, errRuns)
 	test.Equal(t, 2, count, "Number of workflow runs isn't correct")
 }
@@ -338,7 +338,7 @@ func TestPurgeWorkflowRunWithRunningStatus(t *testing.T) {
 	errP := workflow.PurgeWorkflowRun(context.TODO(), db, *w1)
 	test.NoError(t, errP)
 
-	_, _, _, count, errRuns := workflow.LoadRunsSummaries(db, proj.Key, w1.Name, 0, 10, nil)
+	_, _, _, count, errRuns := workflow.LoadRunsSummaries(context.Background(), db, proj.Key, w1.Name, 0, 10, nil)
 	test.NoError(t, errRuns)
 	test.Equal(t, 5, count, "Number of workflow runs isn't correct")
 }
@@ -362,12 +362,10 @@ func TestPurgeWorkflowRunWithOneSuccessWorkflowRun(t *testing.T) {
 
 			switch r.URL.String() {
 			// NEED get REPO
-			case "/vcs/github/repos/sguiheux/demo/branches":
-				branches := []sdk.VCSBranch{
-					{
-						ID:        "master",
-						DisplayID: "master",
-					},
+			case "/vcs/github/repos/sguiheux/demo/branches/?branch=&default=true":
+				branches := sdk.VCSBranch{
+					ID:        "master",
+					DisplayID: "master",
 				}
 				if err := enc.Encode(branches); err != nil {
 					return writeError(w, err)
@@ -387,7 +385,7 @@ func TestPurgeWorkflowRunWithOneSuccessWorkflowRun(t *testing.T) {
 					return writeError(w, err)
 				}
 				// NEED GET BRANCH TO GET LATEST COMMIT
-			case "/vcs/github/repos/sguiheux/demo/branches/?branch=master":
+			case "/vcs/github/repos/sguiheux/demo/branches/?branch=master&default=false":
 				b := sdk.VCSBranch{
 					Default:      false,
 					DisplayID:    "master",
@@ -532,7 +530,7 @@ vcs_ssh_key: proj-blabla
 	errP := workflow.PurgeWorkflowRun(context.TODO(), db, *w1)
 	test.NoError(t, errP)
 
-	wruns, _, _, count, errRuns := workflow.LoadRunsSummaries(db, proj.Key, w1.Name, 0, 10, nil)
+	wruns, _, _, count, errRuns := workflow.LoadRunsSummaries(context.Background(), db, proj.Key, w1.Name, 0, 10, nil)
 	test.NoError(t, errRuns)
 	test.Equal(t, 3, count, "Number of workflow runs isn't correct")
 	wfInSuccess := false
@@ -578,7 +576,7 @@ func TestPurgeWorkflowRunWithNoSuccessWorkflowRun(t *testing.T) {
 					return writeError(w, err)
 				}
 				// NEED GET BRANCH TO GET LATEST COMMIT
-			case "/vcs/github/repos/sguiheux/demo/branches/?branch=master":
+			case "/vcs/github/repos/sguiheux/demo/branches/?branch=master&default=false":
 				b := sdk.VCSBranch{
 					Default:      false,
 					DisplayID:    "master",
@@ -712,7 +710,7 @@ vcs_ssh_key: proj-blabla
 	n := workflow.CountWorkflowRunsMarkToDelete(context.TODO(), db, nil)
 	assert.True(t, n >= 3, "At least 3 runs must be mark to delete")
 
-	_, _, _, count, errRuns := workflow.LoadRunsSummaries(db, proj.Key, w1.Name, 0, 10, nil)
+	_, _, _, count, errRuns := workflow.LoadRunsSummaries(context.Background(), db, proj.Key, w1.Name, 0, 10, nil)
 	test.NoError(t, errRuns)
 	test.Equal(t, 2, count, "Number of workflow runs isn't correct")
 }
@@ -798,7 +796,7 @@ func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
 	errP := workflow.PurgeWorkflowRun(context.TODO(), db, *w1)
 	test.NoError(t, errP)
 
-	_, _, _, count, errRuns := workflow.LoadRunsSummaries(db, proj.Key, w1.Name, 0, 10, nil)
+	_, _, _, count, errRuns := workflow.LoadRunsSummaries(context.Background(), db, proj.Key, w1.Name, 0, 10, nil)
 	test.NoError(t, errRuns)
 	test.Equal(t, 3, count, "Number of workflow runs isn't correct")
 }
@@ -884,7 +882,7 @@ func TestPurgeWorkflowRunWithoutTagsBiggerHistoryLength(t *testing.T) {
 	errP := workflow.PurgeWorkflowRun(context.TODO(), db, *w1)
 	test.NoError(t, errP)
 
-	_, _, _, count, errRuns := workflow.LoadRunsSummaries(db, proj.Key, w1.Name, 0, 10, nil)
+	_, _, _, count, errRuns := workflow.LoadRunsSummaries(context.Background(), db, proj.Key, w1.Name, 0, 10, nil)
 	test.NoError(t, errRuns)
 	test.Equal(t, 10, count, "Number of workflow runs isn't correct")
 }

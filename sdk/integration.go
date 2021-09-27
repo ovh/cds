@@ -24,7 +24,7 @@ const (
 	ArtifactProjectKey                         = "project.key"
 	ArtifactManagerConfigPromotionLowMaturity  = "promotion.maturity.low"
 	ArtifactManagerConfigPromotionHighMaturity = "promotion.maturity.high"
-	ArtifactManagerConfigBuildInfoPath         = "build.info.path"
+	ArtifactManagerConfigBuildInfoPrefix       = "build.info.prefix"
 )
 
 // Here are the default plateform models
@@ -152,9 +152,7 @@ var (
 			ArtifactManagerConfigPromotionHighMaturity: IntegrationConfigValue{
 				Type: IntegrationConfigTypeString,
 			},
-		},
-		AdditionalDefaultConfig: IntegrationConfig{
-			ArtifactManagerConfigBuildInfoPath: IntegrationConfigValue{
+			ArtifactManagerConfigBuildInfoPrefix: IntegrationConfigValue{
 				Type: IntegrationConfigTypeString,
 			},
 		},
@@ -241,6 +239,15 @@ func (config IntegrationConfig) Clone() IntegrationConfig {
 	return new
 }
 
+// Set value
+func (config IntegrationConfig) SetValue(name string, value string) {
+	val, ok := config[name]
+	if ok {
+		val.Value = value
+		config[name] = val
+	}
+}
+
 // Value returns driver.Value from IntegrationConfig.
 func (config IntegrationConfig) Value() (driver.Value, error) {
 	j, err := json.Marshal(config)
@@ -256,7 +263,7 @@ func (config *IntegrationConfig) Scan(src interface{}) error {
 	if !ok {
 		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
-	return WrapError(json.Unmarshal(source, config), "cannot unmarshal IntegrationConfig")
+	return WrapError(JSONUnmarshal(source, config), "cannot unmarshal IntegrationConfig")
 }
 
 // EncryptSecrets encrypt secrets given a cypher func
@@ -298,6 +305,8 @@ const (
 	IntegrationConfigTypePassword = "password"
 	// IntegrationConfigTypeBoolean represents a password configuration value
 	IntegrationConfigTypeBoolean = "boolean"
+	// IntegrationConfigTypeRegion represents a region requirement
+	IntegrationConfigTypeRegion = "region"
 
 	IntegrationVariablePrefixDeployment      = "deployment"
 	IntegrationVariablePrefixArtifactManager = "artifact_manager"
@@ -308,6 +317,7 @@ type IntegrationConfigValue struct {
 	Value       string `json:"value" yaml:"value"`
 	Type        string `json:"type" yaml:"type"`
 	Description string `json:"description,omitempty" yaml:"description,omitempty"`
+	Static      bool   `json:"static,omitempty" yaml:"static,omitempty"`
 }
 
 type IntegrationConfigMap map[string]IntegrationConfig
@@ -355,7 +365,7 @@ func (config *IntegrationConfigMap) Scan(src interface{}) error {
 	if !ok {
 		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
-	return WrapError(json.Unmarshal(source, config), "cannot unmarshal IntegrationConfigMap")
+	return WrapError(JSONUnmarshal(source, config), "cannot unmarshal IntegrationConfigMap")
 }
 
 // IntegrationModel represent a integration model with its default configuration

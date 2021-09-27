@@ -282,7 +282,7 @@ func workflowLogDownloadRun(v cli.Values) error {
 	if v.GetString("pattern") != "" {
 		reg, err = regexp.Compile(v.GetString("pattern"))
 		if err != nil {
-			return sdk.NewErrorFrom(err, "invalid pattern %s", v.GetString("pattern"))
+			return cli.NewError("invalid pattern %q", v.GetString("pattern"))
 		}
 	}
 

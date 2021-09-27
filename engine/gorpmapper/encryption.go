@@ -1,6 +1,7 @@
 package gorpmapper
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -10,6 +11,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 const (
@@ -55,7 +57,7 @@ func (m *Mapper) Decrypt(src []byte, dest interface{}, extra []interface{}) erro
 		return sdk.WithStack(fmt.Errorf("unable to decrypt content: %v", err))
 	}
 
-	return json.Unmarshal(clearContent, dest)
+	return sdk.JSONUnmarshal(clearContent, dest)
 }
 
 func (m *Mapper) updateEncryptedData(db gorp.SqlExecutor, i interface{}) error {
@@ -149,15 +151,18 @@ func (m *Mapper) resetEncryptedData(db gorp.SqlExecutor, i interface{}) error {
 	return nil
 }
 
-func getEncryptedData(m *Mapper, db gorp.SqlExecutor, i interface{}) error {
+func getEncryptedData(ctx context.Context, m *Mapper, db gorp.SqlExecutor, i interface{}) error {
+	_, end := telemetry.Span(ctx, "gorpmappeer.getEncryptedData")
+	defer end()
+
 	// If the target is a slice or a pointer of slice, let's call getEncryptedSliceData
 	t := reflect.TypeOf(i)
 	if t.Kind() == reflect.Ptr {
 		if t = t.Elem(); t.Kind() == reflect.Slice {
-			return m.getEncryptedSliceData(db, i)
+			return m.getEncryptedSliceData(ctx, db, i)
 		}
 	} else if t.Kind() == reflect.Slice {
-		return m.getEncryptedSliceData(db, i)
+		return m.getEncryptedSliceData(ctx, db, i)
 	}
 
 	// Get the TableMapping for the concrete type. If the type entity is not encrypt, let's skip all the things
@@ -224,7 +229,10 @@ func getEncryptedData(m *Mapper, db gorp.SqlExecutor, i interface{}) error {
 	return nil
 }
 
-func (m *Mapper) getEncryptedSliceData(db gorp.SqlExecutor, i interface{}) error {
+func (m *Mapper) getEncryptedSliceData(ctx context.Context, db gorp.SqlExecutor, i interface{}) error {
+	_, end := telemetry.Span(ctx, "gorpmappeer.getEncryptedSliceData")
+	defer end()
+
 	// Let's consider the value pointed only
 	val := reflect.ValueOf(i)
 	if reflect.ValueOf(i).Kind() == reflect.Ptr {

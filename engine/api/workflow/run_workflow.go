@@ -4,8 +4,12 @@ import (
 	"context"
 	"time"
 
+	"github.com/go-gorp/gorp"
+
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/cache"
+	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/telemetry"
@@ -184,4 +188,48 @@ func manualRun(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache
 		return report, sdk.WithStack(sdk.ErrConditionsNotOk)
 	}
 	return report, nil
+}
+
+func CheckRegion(ctx context.Context, db gorp.SqlExecutor, wf sdk.Workflow) error {
+	for _, projInt := range wf.ProjectIntegrations {
+		for _, c := range projInt.Config {
+			if c.Type != sdk.RegionRequirement {
+				continue
+			}
+			if !isRegionEnable(ctx, db, wf.ProjectKey, wf.Name, c.Value) {
+				return sdk.WrapError(sdk.ErrRegionNotAllowed, "Region %s not allowed for workflow %s", c.Value, wf.Name)
+			}
+		}
+	}
+	for _, p := range wf.Pipelines {
+		for _, s := range p.Stages {
+			for _, j := range s.Jobs {
+				if err := checkJobRegion(ctx, db, wf.ProjectKey, wf.Name, j); err != nil {
+					return err
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func checkJobRegion(ctx context.Context, db gorp.SqlExecutor, projKey, wName string, j sdk.Job) error {
+	for _, req := range j.Action.Requirements {
+		if req.Type != sdk.RegionRequirement {
+			continue
+		}
+		if !isRegionEnable(ctx, db, projKey, wName, req.Value) {
+			return sdk.WrapError(sdk.ErrRegionNotAllowed, "Region %s not allowed for workflow %s", req.Value, wName)
+		}
+	}
+	return nil
+}
+
+func isRegionEnable(ctx context.Context, db gorp.SqlExecutor, projKey, wName, region string) bool {
+	_, enabled := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, db, sdk.FeatureRegion, map[string]string{
+		"project_key":   projKey,
+		"workflow_name": wName,
+		"region":        region,
+	})
+	return enabled
 }

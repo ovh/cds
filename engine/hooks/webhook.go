@@ -2,7 +2,6 @@ package hooks
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"mime"
 	"net/http"
@@ -37,7 +36,7 @@ func getRepositoryHeader(t *sdk.TaskExecution, events []string) string {
 	} else if v, ok := t.WebHook.RequestHeader[BitbucketHeader]; ok {
 		if sdk.IsInArray(v[0], events) || (len(events) == 0 && (v[0] == "repo:refs_changed" || v[0] == "repo:push")) {
 			var request sdk.BitbucketServerWebhookEvent
-			if err := json.Unmarshal(t.WebHook.RequestBody, &request); err == nil && request.EventKey != "" {
+			if err := sdk.JSONUnmarshal(t.WebHook.RequestBody, &request); err == nil && request.EventKey != "" {
 				return BitbucketHeader
 			} else {
 				// We return a fake header to make a difference between server and cloud version
@@ -157,11 +156,11 @@ func executeWebHook(t *sdk.TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error)
 
 			//Try to parse the body as an array
 			bodyJSONArray := []interface{}{}
-			if err := json.Unmarshal(t.WebHook.RequestBody, &bodyJSONArray); err != nil {
+			if err := sdk.JSONUnmarshal(t.WebHook.RequestBody, &bodyJSONArray); err != nil {
 
 				//Try to parse the body as a map
 				bodyJSONMap := map[string]interface{}{}
-				if err2 := json.Unmarshal(t.WebHook.RequestBody, &bodyJSONMap); err2 == nil {
+				if err2 := sdk.JSONUnmarshal(t.WebHook.RequestBody, &bodyJSONMap); err2 == nil {
 					bodyJSON = bodyJSONMap
 				}
 			} else {

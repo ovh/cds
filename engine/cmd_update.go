@@ -40,7 +40,7 @@ var updateCmd = &cobra.Command{
 		if flagUpdateFromGithub {
 			// no need to have apiEndpoint here
 			var errGH error
-			urlBinary, errGH = client.DownloadURLFromGithub(sdk.GetArtifactFilename("engine", sdk.GOOS, sdk.GOARCH, ""))
+			urlBinary, errGH = sdk.DownloadURLFromGithub(sdk.BinaryFilename("engine", sdk.GOOS, sdk.GOARCH, ""), "latest")
 			if errGH != nil {
 				sdk.Exit("Error while getting URL from Github url:%s err:%s\n", urlBinary, errGH)
 			}

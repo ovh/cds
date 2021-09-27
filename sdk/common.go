@@ -205,7 +205,7 @@ func (s *StringSlice) Scan(src interface{}) error {
 	if !ok {
 		return WithStack(errors.New("type assertion .([]byte) failed"))
 	}
-	return WrapError(json.Unmarshal(source, s), "cannot unmarshal StringSlice")
+	return WrapError(JSONUnmarshal(source, s), "cannot unmarshal StringSlice")
 }
 
 // Value returns driver.Value from string slice.
@@ -232,7 +232,7 @@ func (s *Int64Slice) Scan(src interface{}) error {
 	if !ok {
 		return WithStack(errors.New("type assertion .([]byte) failed"))
 	}
-	return WrapError(json.Unmarshal(source, s), "cannot unmarshal Int64Slice")
+	return WrapError(JSONUnmarshal(source, s), "cannot unmarshal Int64Slice")
 }
 
 // Value returns driver.Value from int64 slice.
@@ -308,4 +308,28 @@ func PathIsAbs(s string) bool {
 		return windowsPathRegex.MatchString(s)
 	}
 	return path.IsAbs(s)
+}
+
+func JSONUnmarshal(btes []byte, i interface{}) error {
+	d := json.NewDecoder(bytes.NewReader(btes))
+	d.UseNumber()
+	err := d.Decode(i)
+	if err != nil {
+		return WithStack(err)
+	}
+	return nil
+}
+
+type KeyValues struct {
+	Key    string
+	Values []string
+}
+
+func DigitsCount(number int64) int32 {
+	var count int32 = 0
+	for number != 0 {
+		number /= 10
+		count += 1
+	}
+	return count
 }

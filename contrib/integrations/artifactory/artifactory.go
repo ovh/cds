@@ -1,7 +1,6 @@
 package art
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/url"
 	"strings"
@@ -13,7 +12,6 @@ import (
 	"github.com/jfrog/jfrog-client-go/config"
 	"github.com/jfrog/jfrog-client-go/distribution"
 	authdistrib "github.com/jfrog/jfrog-client-go/distribution/auth"
-
 
 	"github.com/ovh/cds/sdk"
 )
@@ -64,7 +62,7 @@ func CreateDistributionClient(url, token string) (*distribution.DistributionServ
 
 func CreateArtifactoryClient(url, token string) (artifactory.ArtifactoryServicesManager, error) {
 	rtDetails := auth.NewArtifactoryDetails()
-	rtDetails.SetUrl(url)
+	rtDetails.SetUrl(strings.TrimSuffix(url, "/") + "/") // ensure having '/' at the end
 	rtDetails.SetAccessToken(token)
 	serviceConfig, err := config.NewConfigBuilder().
 		SetServiceDetails(rtDetails).
@@ -97,7 +95,7 @@ func GetFileInfo(artiClient artifactory.ArtifactoryServicesManager, repoName str
 		return resp, sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to call artifactory [HTTP: %d] %s", re.StatusCode, string(body))
 	}
 
-	if err := json.Unmarshal(body, &resp); err != nil {
+	if err := sdk.JSONUnmarshal(body, &resp); err != nil {
 		return resp, sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to read artifactory response %s: %v", string(body), err)
 	}
 	return resp, nil
@@ -120,4 +118,67 @@ func SetProperties(artiClient artifactory.ArtifactoryServicesManager, repoName s
 		return sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to call artifactory [HTTP: %d] %s: %s", resp.StatusCode, fileInfoURL, string(body))
 	}
 	return nil
+}
+
+func PromoteFile(artiClient artifactory.ArtifactoryServicesManager, data sdk.WorkflowRunResultArtifactManager, lowMaturity, highMaturity string) error {
+	srcRepo := fmt.Sprintf("%s-%s", data.RepoName, lowMaturity)
+	targetRepo := fmt.Sprintf("%s-%s", data.RepoName, highMaturity)
+	params := services.NewMoveCopyParams()
+	params.Pattern = fmt.Sprintf("%s/%s", srcRepo, data.Path)
+	params.Target = fmt.Sprintf("%s/%s", targetRepo, data.Path)
+	params.Flat = true
+
+	// Check if artifact already exist on destination
+	exist, err := checkArtifactExists(artiClient, targetRepo, data.Path)
+	if err != nil {
+		return err
+	}
+	if !exist {
+		fmt.Printf("Promoting file %s from %s to %s\n", data.Name, srcRepo, targetRepo)
+		nbSuccess, nbFailed, err := artiClient.Move(params)
+		if err != nil {
+			return err
+		}
+		if nbFailed > 0 || nbSuccess == 0 {
+			return fmt.Errorf("%s: copy failed with no reason", data.Name)
+		}
+		return nil
+	}
+	fmt.Printf("%s has been already promoted\n", data.Name)
+	return nil
+}
+
+func PromoteDockerImage(artiClient artifactory.ArtifactoryServicesManager, data sdk.WorkflowRunResultArtifactManager, lowMaturity, highMaturity string) error {
+	sourceRepo := fmt.Sprintf("%s-%s", data.RepoName, lowMaturity)
+	targetRepo := fmt.Sprintf("%s-%s", data.RepoName, highMaturity)
+	params := services.NewDockerPromoteParams(data.Path, sourceRepo, targetRepo)
+	params.Copy = false
+
+	// Check if artifact already exist on destination
+	exist, err := checkArtifactExists(artiClient, targetRepo, data.Path)
+	if err != nil {
+		return err
+	}
+	if !exist {
+		fmt.Printf("Promoting docker image %s from %s to %s\n", data.Name, params.SourceRepo, params.TargetRepo)
+		return artiClient.PromoteDocker(params)
+	}
+	fmt.Printf("%s has been already promoted\n", data.Name)
+	return nil
+}
+
+func checkArtifactExists(artiClient artifactory.ArtifactoryServicesManager, repoName string, artiName string) (bool, error) {
+	httpDetails := artiClient.GetConfig().GetServiceDetails().CreateHttpClientDetails()
+	fileInfoURL := fmt.Sprintf("%sapi/storage/%s/%s", artiClient.GetConfig().GetServiceDetails().GetUrl(), repoName, artiName)
+	re, body, _, err := artiClient.Client().SendGet(fileInfoURL, true, &httpDetails)
+	if err != nil {
+		return false, fmt.Errorf("unable to get file info %s/%s: %v", repoName, artiName, err)
+	}
+	if re.StatusCode == 404 {
+		return false, nil
+	}
+	if re.StatusCode >= 400 {
+		return false, fmt.Errorf("unable to call artifactory [HTTP: %d] %s %s", re.StatusCode, fileInfoURL, string(body))
+	}
+	return true, nil
 }

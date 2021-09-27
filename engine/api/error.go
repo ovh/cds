@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -55,7 +54,7 @@ func (api *API) getErrorHandler() service.Handler {
 		}
 
 		var res graylogResponse
-		if err := json.Unmarshal(body, &res); err != nil {
+		if err := sdk.JSONUnmarshal(body, &res); err != nil {
 			return sdk.WrapError(err, "cannot unmarshal response from Graylog")
 		}
 

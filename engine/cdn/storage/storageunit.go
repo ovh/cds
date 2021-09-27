@@ -155,7 +155,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 		if sdk.ErrorIs(err, sdk.ErrNotFound) {
 			var srvConfig sdk.ServiceConfig
 			b, _ := json.Marshal(bu)
-			_ = json.Unmarshal(b, &srvConfig) // nolint
+			_ = sdk.JSONUnmarshal(b, &srvConfig) // nolint
 			u = &sdk.CDNUnit{
 				ID:      sdk.UUID(),
 				Created: time.Now(),
@@ -250,7 +250,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 		if sdk.ErrorIs(err, sdk.ErrNotFound) {
 			var srvConfig sdk.ServiceConfig
 			b, _ := json.Marshal(cfg)
-			_ = json.Unmarshal(b, &srvConfig) // nolint
+			_ = sdk.JSONUnmarshal(b, &srvConfig) // nolint
 			u = &sdk.CDNUnit{
 				ID:      sdk.UUID(),
 				Created: time.Now(),

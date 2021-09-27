@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"net/url"
 	"strings"
@@ -15,6 +14,7 @@ import (
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/gpg"
+	"github.com/ovh/cds/sdk/slug"
 )
 
 const (
@@ -129,7 +129,7 @@ func (d authDriver) CheckSigninStateToken(req sdk.AuthConsumerSigninRequest) err
 	}
 
 	var signinStateToken sdk.AuthSigninConsumerToken
-	if err := json.Unmarshal(rawRequest, &signinStateToken); err != nil {
+	if err := sdk.JSONUnmarshal(rawRequest, &signinStateToken); err != nil {
 		return sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("unable to parse state: %v", err))
 	}
 
@@ -212,7 +212,7 @@ func (d authDriver) GetUserInfo(ctx context.Context, req sdk.AuthConsumerSigninR
 	}
 
 	var itk issuedToken
-	if err := json.Unmarshal(rawIssuedToken, &itk); err != nil {
+	if err := sdk.JSONUnmarshal(rawIssuedToken, &itk); err != nil {
 		return u, sdk.NewError(sdk.ErrUnauthorized, err)
 	}
 
@@ -224,6 +224,9 @@ func (d authDriver) GetUserInfo(ctx context.Context, req sdk.AuthConsumerSigninR
 	log.Info(ctx, "new session created for remote_user: %v, iat: %v, token_id: %v, mfa: %v", itk.RemoteUser, itk.IAT, itk.TokenID, itk.MFA)
 
 	u.Username = itk.RemoteUser
+	if len(u.Username) < 3 && itk.RemoteUsername != "" {
+		u.Username = slug.Convert(itk.RemoteUsername)
+	}
 	u.ExternalID = itk.RemoteUser
 	u.MFA = itk.MFA && d.Config.MFASupportEnabled
 	u.Email = itk.RemoteUser + "@" + d.Config.MailDomain
@@ -233,9 +236,10 @@ func (d authDriver) GetUserInfo(ctx context.Context, req sdk.AuthConsumerSigninR
 }
 
 type issuedToken struct {
-	Audience   string `json:"Audience"`
-	RemoteUser string `json:"RemoteUser"`
-	TokenID    string `json:"TokenId"`
-	MFA        bool   `json:"MFA"`
-	IAT        int64  `json:"iat"`
+	Audience       string `json:"Audience"`
+	RemoteUser     string `json:"RemoteUser"`
+	RemoteUsername string `json:"RemoteUsername"`
+	TokenID        string `json:"TokenId"`
+	MFA            bool   `json:"MFA"`
+	IAT            int64  `json:"iat"`
 }

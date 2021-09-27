@@ -87,7 +87,7 @@ func (m *Mapper) UpdateColumns(db gorp.SqlExecutor, i interface{}, columnFilter 
 		entityName := fmt.Sprintf("%T", reflect.ValueOf(i).Elem().Interface())
 
 		// Reload and decrypt the old tuple from the database
-		tuple, err := m.LoadTupleByPrimaryKey(db, entityName, id, GetOptions.WithDecryption)
+		tuple, err := m.LoadTupleByPrimaryKey(context.Background(), db, entityName, id, GetOptions.WithDecryption)
 		if err != nil {
 			return err
 		}
@@ -163,7 +163,7 @@ func acceptAllFilter(col *gorp.ColumnMap) bool {
 	return true
 }
 
-type GetOptionFunc func(m *Mapper, db gorp.SqlExecutor, i interface{}) error
+type GetOptionFunc func(context.Context, *Mapper, gorp.SqlExecutor, interface{}) error
 
 var GetOptions = struct {
 	WithDecryption GetOptionFunc
@@ -206,7 +206,7 @@ func (m *Mapper) GetAll(ctx context.Context, db gorp.SqlExecutor, q Query, i int
 	}
 
 	for _, f := range opts {
-		if err := f(m, db, i); err != nil {
+		if err := f(ctx, m, db, i); err != nil {
 			return err
 		}
 	}
@@ -234,7 +234,7 @@ func (m *Mapper) Get(ctx context.Context, db gorp.SqlExecutor, q Query, i interf
 	}
 
 	for _, f := range opts {
-		if err := f(m, db, i); err != nil {
+		if err := f(ctx, m, db, i); err != nil {
 			return false, err
 		}
 	}

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/spf13/cobra"
 
 	"github.com/mum4k/termdash"
@@ -68,7 +69,7 @@ func queueStopAllRun(v cli.Values) error {
 		return nil
 	}
 
-	jobs, err := client.QueueWorkflowNodeJobRun(sdk.StatusWaiting, sdk.StatusBuilding)
+	jobs, err := client.QueueWorkflowNodeJobRun(cdsclient.Status(sdk.StatusWaiting, sdk.StatusBuilding))
 	if err != nil {
 		return err
 	}
@@ -144,7 +145,7 @@ type jobCLI struct {
 }
 
 func getJobQueue(status ...string) ([]jobCLI, error) {
-	jobs, err := client.QueueWorkflowNodeJobRun(status...)
+	jobs, err := client.QueueWorkflowNodeJobRun(cdsclient.Status(status...))
 	if err != nil {
 		return nil, err
 	}

@@ -187,8 +187,7 @@ func LoadAndLockNodeRunByID(ctx context.Context, db gorp.SqlExecutor, id int64) 
 
 //LoadAndLockNodeRunByJobID load and lock a specific node run on a workflow
 func LoadAndLockNodeRunByJobID(ctx context.Context, db gorp.SqlExecutor, jobID int64) (*sdk.WorkflowNodeRun, error) {
-	var end func()
-	_, end = telemetry.Span(ctx, "workflow.LoadAndLockNodeRunByJobID")
+	_, end := telemetry.Span(ctx, "workflow.LoadAndLockNodeRunByJobID")
 	defer end()
 
 	var rr = NodeRun{}
@@ -209,7 +208,10 @@ func LoadAndLockNodeRunByJobID(ctx context.Context, db gorp.SqlExecutor, jobID i
 }
 
 //LoadNodeRunByID load a specific node run on a workflow
-func LoadNodeRunByID(db gorp.SqlExecutor, id int64, loadOpts LoadRunOptions) (*sdk.WorkflowNodeRun, error) {
+func LoadNodeRunByID(ctx context.Context, db gorp.SqlExecutor, id int64, loadOpts LoadRunOptions) (*sdk.WorkflowNodeRun, error) {
+	_, end := telemetry.Span(ctx, "workflow.LoadNodeRunByID")
+	defer end()
+
 	var rr = NodeRun{}
 	var testsField string
 	if loadOpts.WithTests {
@@ -562,6 +564,9 @@ func UpdateNodeRun(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
 
 // GetNodeRunBuildCommits gets commits for given node run and return current vcs info
 func GetNodeRunBuildCommits(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, proj sdk.Project, wf sdk.Workflow, wNodeName string, number int64, nodeRun *sdk.WorkflowNodeRun, app *sdk.Application, env *sdk.Environment) ([]sdk.VCSCommit, sdk.BuildNumberAndHash, error) {
+	ctx, end := telemetry.Span(ctx, "workflow.GetNodeRunBuildCommits")
+	defer end()
+
 	var cur sdk.BuildNumberAndHash
 	if app == nil {
 		log.Debug(ctx, "GetNodeRunBuildCommits> No app linked")
@@ -596,21 +601,11 @@ func GetNodeRunBuildCommits(ctx context.Context, db gorpmapper.SqlExecutorWithTx
 	}
 
 	if cur.Branch == "" && cur.Tag == "" {
-		branches, err := client.Branches(ctx, cur.Remote)
+		branch, err := repositoriesmanager.DefaultBranch(ctx, client, cur.Remote)
 		if err != nil {
 			return nil, cur, sdk.WrapError(err, "cannot load branches from vcs api remote %s", cur.Remote)
 		}
-		found := false
-		for _, br := range branches {
-			if br.Default {
-				cur.Branch = br.DisplayID
-				found = true
-				break
-			}
-		}
-		if !found {
-			return nil, cur, sdk.WithStack(fmt.Errorf("cannot find default branch from vcs api"))
-		}
+		cur.Branch = branch.DisplayID
 	}
 
 	var envID int64
@@ -626,7 +621,7 @@ func GetNodeRunBuildCommits(ctx context.Context, db gorpmapper.SqlExecutorWithTx
 	var lastCommit sdk.VCSCommit
 	if cur.Hash == "" && cur.Tag == "" && cur.Branch != "" {
 		//If we only have the current branch, search for the branch
-		br, err := client.Branch(ctx, repo, cur.Branch)
+		br, err := client.Branch(ctx, repo, sdk.VCSBranchFilters{BranchName: cur.Branch})
 		if err != nil {
 			return nil, cur, sdk.WrapError(err, "cannot get branch %s", cur.Branch)
 		}
@@ -660,7 +655,7 @@ func GetNodeRunBuildCommits(ctx context.Context, db gorpmapper.SqlExecutorWithTx
 	} else if prev.Hash != "" {
 		if cur.Tag == "" {
 			if cur.Hash == "" {
-				br, err := client.Branch(ctx, repo, cur.Branch)
+				br, err := client.Branch(ctx, repo, sdk.VCSBranchFilters{BranchName: cur.Branch})
 				if err != nil {
 					return nil, cur, sdk.WrapError(err, "Cannot get branch %s", cur.Branch)
 				}
@@ -801,8 +796,11 @@ func PreviousNodeRunVCSInfos(ctx context.Context, db gorp.SqlExecutor, projectKe
 	return previous, nil
 }
 
-func updateNodeRunCommits(db gorp.SqlExecutor, id int64, commits []sdk.VCSCommit) error {
-	log.Debug(context.TODO(), "updateNodeRunCommits> Updating %d commits for workflow_node_run #%d", len(commits), id)
+func updateNodeRunCommits(ctx context.Context, db gorp.SqlExecutor, id int64, commits []sdk.VCSCommit) error {
+	ctx, end := telemetry.Span(ctx, "workflow.updateNodeRunCommits")
+	defer end()
+
+	log.Debug(ctx, "updateNodeRunCommits> Updating %d commits for workflow_node_run #%d", len(commits), id)
 	commitsBtes, errMarshal := json.Marshal(commits)
 	if errMarshal != nil {
 		return sdk.WrapError(errMarshal, "updateNodeRunCommits> Unable to marshal commits")
@@ -814,8 +812,8 @@ func updateNodeRunCommits(db gorp.SqlExecutor, id int64, commits []sdk.VCSCommit
 	return nil
 }
 
-// updateNodeRunStatusAndStage update just noderun status and stage
-func updateNodeRunStatusAndStage(db gorp.SqlExecutor, nodeRun *sdk.WorkflowNodeRun) error {
+// UpdateNodeRunStatusAndStage update just noderun status and stage
+func UpdateNodeRunStatusAndStage(db gorp.SqlExecutor, nodeRun *sdk.WorkflowNodeRun) error {
 	stagesBts, errMarshal := json.Marshal(nodeRun.Stages)
 	if errMarshal != nil {
 		return sdk.WrapError(errMarshal, "unable to marshal stages")

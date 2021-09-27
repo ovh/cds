@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"math"
@@ -245,8 +244,6 @@ func main() {
 	if err := actionplugin.Start(context.Background(), &actPlugin); err != nil {
 		panic(err)
 	}
-	return
-
 }
 
 func tmplApplicationConfigFile(q *actionplugin.ActionQuery, filepath string) (string, error) {
@@ -293,7 +290,7 @@ func parseApplicationConfigFile(f string) (*marathon.Application, error) {
 
 	//Parse marathon.json
 	appConfig := &marathon.Application{}
-	if err := json.Unmarshal(buff, appConfig); err != nil {
+	if err := sdk.JSONUnmarshal(buff, appConfig); err != nil {
 		fmt.Printf("Configuration file parse error: %s\n", err)
 		return nil, err
 	}

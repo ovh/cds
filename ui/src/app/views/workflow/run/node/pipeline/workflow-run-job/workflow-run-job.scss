@@ -103,10 +103,32 @@
             .value {
                 flex: 1;
                 overflow-wrap: anywhere;
+                position: relative;
+
                 pre {
                     margin: 0;
                     white-space: pre-wrap;
                     word-break: break-all;
+                }
+
+                &:hover {
+                    .since {
+                        display: block;
+                    }
+                }
+
+                .since {
+                    display: none;
+                    height: 15px;
+                    background-color: #666666;
+                    color: #cccccc;
+                    line-height: 11px;
+                    font-size: 11px;
+                    border-radius: 6px;
+                    padding: 2px 4px;
+                    position: absolute;
+                    top: 2px;
+                    right: 4px;
                 }
             }
 

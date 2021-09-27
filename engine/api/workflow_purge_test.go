@@ -7,9 +7,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang/mock/gomock"
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/authentication/builtin"
 	"github.com/ovh/cds/engine/api/event"
+	"github.com/ovh/cds/engine/api/integration"
+	"github.com/ovh/cds/engine/api/integration/artifact_manager"
+	"github.com/ovh/cds/engine/api/integration/artifact_manager/mock_artifact_manager"
+	"github.com/ovh/cds/engine/api/purge"
 	"github.com/ovh/cds/sdk/cdsclient"
 
 	"github.com/stretchr/testify/assert"
@@ -127,7 +132,7 @@ func Test_purgeDryRunHandler(t *testing.T) {
 
 	require.Equal(t, int64(2), result.NbRunsToAnalize)
 
-	run1DB, err := workflow.LoadRunByID(api.mustDB(), run2.ID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
+	run1DB, err := workflow.LoadRunByID(context.Background(), api.mustDB(), run2.ID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
 	require.NoError(t, err)
 	require.False(t, run1DB.ToDelete)
 
@@ -144,4 +149,126 @@ func Test_purgeDryRunHandler(t *testing.T) {
 		require.Len(t, eventRun.Runs, 1)
 		require.Equal(t, eventRun.Runs[0].ID, run1.ID)
 	}
+}
+
+func Test_Purge_DeleteArtifactsFromRepositoryManager(t *testing.T) {
+	ctx := context.Background()
+	api, db, _ := newTestAPI(t)
+
+	// Create user
+	u, _ := assets.InsertAdminUser(t, db)
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+
+	p := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	w := assets.InsertTestWorkflow(t, db, api.Cache, p, sdk.RandomString(10))
+
+	integrationModel, err := integration.LoadModelByName(db, sdk.ArtifactManagerIntegration.Name)
+	require.NoError(t, err)
+
+	integrationConfig := integrationModel.DefaultConfig.Clone()
+	integrationConfig.SetValue("url", "https://artifactory.lolcat.host/")
+	integrationConfig.SetValue("platform", "artifactory")
+	integrationConfig.SetValue("token.name", "my-token")
+	integrationConfig.SetValue("token", "abcdef")
+	integrationConfig.SetValue("release.token", "abcdef")
+	integrationConfig.SetValue("project.key", "my-project-key")
+	integrationConfig.SetValue("cds.repository", "my-repository")
+	integrationConfig.SetValue("promotion.maturity.low", "snapshot")
+	integrationConfig.SetValue("promotion.maturity.high", "release")
+
+	projectIntegration := sdk.ProjectIntegration{
+		ProjectID:          p.ID,
+		IntegrationModelID: integrationModel.ID,
+		Config:             integrationConfig,
+		Model:              integrationModel,
+	}
+
+	require.NoError(t, integration.InsertIntegration(db, &projectIntegration))
+
+	p.Integrations = append(p.Integrations, projectIntegration)
+
+	w.Integrations = append(w.Integrations,
+		sdk.WorkflowProjectIntegration{
+			WorkflowID:           w.ID,
+			ProjectIntegrationID: projectIntegration.ID,
+			Config:               integrationModel.AdditionalDefaultConfig.Clone(),
+			ProjectIntegration:   projectIntegration,
+		},
+	)
+
+	workflow.Update(ctx, db, api.Cache, *p, w, workflow.UpdateOptions{
+		DisableHookManagement: true,
+	})
+
+	w, err = workflow.Load(ctx, db, api.Cache, *p, w.Name, workflow.LoadOptions{
+		DeepPipeline:          true,
+		WithAsCodeUpdateEvent: true,
+		WithIcon:              true,
+		WithIntegrations:      true,
+		WithTemplate:          true,
+	})
+	require.NoError(t, err)
+
+	wr, err := workflow.CreateRun(db.DbMap, w, sdk.WorkflowRunPostHandlerOption{
+		Hook: &sdk.WorkflowNodeRunHookEvent{},
+	})
+	require.NoError(t, err)
+
+	opts := sdk.WorkflowRunPostHandlerOption{
+		Manual:         &sdk.WorkflowNodeRunManual{},
+		AuthConsumerID: consumer.ID,
+	}
+
+	api.initWorkflowRun(ctx, p.Key, w, wr, opts)
+
+	wr, err = workflow.LoadRunByID(context.Background(), db.DbMap, wr.ID, workflow.LoadRunOptions{
+		WithCoverage:        true,
+		WithArtifacts:       true,
+		WithStaticFiles:     true,
+		WithTests:           true,
+		WithVulnerabilities: true,
+	})
+	require.NoError(t, err)
+
+	data := sdk.WorkflowRunResultArtifactManager{
+		Path:     "path/to/foo",
+		Name:     "foo",
+		RepoName: "repository",
+	}
+	rawData, _ := json.Marshal(data)
+
+	ctrl := gomock.NewController(t)
+	t.Cleanup(func() {
+		ctrl.Finish()
+	})
+
+	mockArtifactory := mock_artifact_manager.NewMockArtifactManager(ctrl)
+
+	mockArtifactory.EXPECT().GetFileInfo("repository", "path/to/foo").Return(
+		sdk.FileInfo{
+			Type: "generic",
+		},
+		nil)
+
+	mockArtifactory.EXPECT().SetProperties("repository-snapshot", "path/to/foo", gomock.Any(), gomock.Any()).Return(nil)
+
+	artifact_manager.DefaultClientFactory = func(_, _, _ string) (artifact_manager.ArtifactManager, error) {
+		return mockArtifactory, nil
+	}
+
+	api.Cache.SetWithTTL(workflow.GetRunResultKey(wr.ID, sdk.WorkflowRunResultTypeArtifactManager, data.Name), true, 60)
+	require.NoError(t,
+		workflow.AddResult(ctx, db.DbMap, api.Cache, wr,
+			&sdk.WorkflowRunResult{
+				Type:              sdk.WorkflowRunResultTypeArtifactManager,
+				Created:           time.Now(),
+				WorkflowRunID:     wr.ID,
+				WorkflowNodeRunID: wr.RootRun().ID,
+				WorkflowRunJobID:  wr.RootRun().Stages[0].RunJobs[0].ID,
+				DataRaw:           rawData,
+			},
+		),
+	)
+
+	require.NoError(t, purge.DeleteArtifactsFromRepositoryManager(ctx, db, wr))
 }

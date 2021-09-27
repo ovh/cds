@@ -109,7 +109,7 @@ func (a *Author) Scan(src interface{}) error {
 	if !ok {
 		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
-	return WrapError(json.Unmarshal(source, a), "cannot unmarshal Author")
+	return WrapError(JSONUnmarshal(source, a), "cannot unmarshal Author")
 }
 
 // Update workflow template field from new data.
@@ -219,7 +219,7 @@ func (m *ModelVirtualMachine) Scan(src interface{}) error {
 	if !ok {
 		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
-	return WrapError(json.Unmarshal(source, m), "cannot unmarshal ModelVirtualMachine")
+	return WrapError(JSONUnmarshal(source, m), "cannot unmarshal ModelVirtualMachine")
 }
 
 // ModelDocker for swarm, marathon and kubernetes.
@@ -250,7 +250,7 @@ func (m *ModelDocker) Scan(src interface{}) error {
 	if !ok {
 		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
-	return WrapError(json.Unmarshal(source, m), "cannot unmarshal ModelDocker")
+	return WrapError(JSONUnmarshal(source, m), "cannot unmarshal ModelDocker")
 }
 
 // ModelPattern represent patterns for users and admin when creating a worker model
@@ -285,7 +285,7 @@ func (m *ModelCmds) Scan(src interface{}) error {
 	if !ok {
 		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
-	return WrapError(json.Unmarshal(source, m), "cannot unmarshal ModelCmds")
+	return WrapError(JSONUnmarshal(source, m), "cannot unmarshal ModelCmds")
 }
 
 // ModelsToGroupIDs returns group ids of given worker models.

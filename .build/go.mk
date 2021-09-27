@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 GO_BUILD                 = GOPRIVATE="${GO_PRIVATE}" CGO_ENABLED=0 go build -a -installsuffix cgo
-GO_LIST                  = env GO111MODULE=on GOPRIVATE="${GO_PRIVATE}" go list
+GO_LIST                  = env GOPRIVATE="${GO_PRIVATE}" go list
 TEST_CMD                 = go test -v -timeout 600s -coverprofile=profile.coverprofile
 TEST_C_CMD               = go test -c -coverprofile=profile.coverprofile
 TEST_RUN_ARGS            = -test.v -test.timeout 600s -test.coverprofile=profile.coverprofile
@@ -114,9 +114,9 @@ mk_go_test-xunit: $(GO_GOJUNIT) $(GOFILES) $(TARGET_RESULTS) # Generate test wit
 				if [ $$NO_TESTS -gt 0 ]; then \
 					echo "No tests found \t\t\t($$TST)"; \
 				else \
-					if [ ! -z "${CDS_VERSION}" ]; then \
+					if [ ! -z "${CI}" ]; then \
 						echo "Sending $$TST to CDS"; \
-						worker upload --tag `echo $$TST | sed 's|./||' | sed 's|./||' | sed 's|/|_|g') | sed 's|_tests.log||'` $(abspath $$TST); \
+						worker upload $(abspath $$TST); \
 					fi; \
 					echo "Generating xUnit report \t$$TST.tests-results.xml"; \
 					cat $$TST | $(GO_GOJUNIT) > $$TST.tests-results.xml; \

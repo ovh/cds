@@ -320,6 +320,10 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 		Labels:    &h.marathonLabels,
 	}
 
+	if h.Config.MarathonApplicationURIs != nil && len(h.Config.MarathonApplicationURIs) > 0 {
+		application.Uris = &h.Config.MarathonApplicationURIs
+	}
+
 	_, next := telemetry.Span(ctx, "marathonClient.CreateApplication")
 	if _, err := h.marathonClient.CreateApplication(application); err != nil {
 		next()
@@ -354,7 +358,7 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 	next()
 	if err != nil {
 		ticker.Stop()
-		return fmt.Errorf("spawnMarathonDockerWorker> failed to list deployments: %s", err.Error())
+		return sdk.WrapError(err, "failed to list deployments")
 	}
 
 	if len(deployments) == 0 {
@@ -415,7 +419,7 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 		return nil
 	}
 
-	return fmt.Errorf("spawnMarathonDockerWorker> %s", errors.Error())
+	return fmt.Errorf(errors.Error())
 }
 
 func (h *HatcheryMarathon) listApplications(idPrefix string) ([]string, error) {

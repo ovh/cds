@@ -195,7 +195,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 		return sdk.WithStack(fmt.Errorf("unable to spawn worker, no Job ID and no Register"))
 	}
 
-	telemetry.Current(ctx, telemetry.Tag(telemetry.TagWorker, spawnArgs.WorkerName))
+	telemetry.Current(ctx, telemetry.Tag(telemetry.TagWorker, spawnArgs.WorkerName), telemetry.Tag(telemetry.TagWorkflowNodeJobRun, spawnArgs.JobID))
 	log.Debug(ctx, "hatchery> swarm> SpawnWorker> Spawning worker %s", spawnArgs.WorkerName)
 
 	// Choose a dockerEngine
@@ -347,7 +347,8 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 				}
 
 				if err := h.createAndStartContainer(ctx, dockerClient, args, spawnArgs); err != nil {
-					log.Warn(ctx, "hatchery> swarm> SpawnWorker> Unable to start required container on %s: %s", dockerClient.name, err)
+					ctx = sdk.ContextWithStacktrace(ctx, err)
+					log.Warn(ctx, "unable to start required container on %s: %s", dockerClient.name, err)
 					return err
 				}
 				services = append(services, serviceName)
@@ -440,7 +441,8 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 
 	//start the worker
 	if err := h.createAndStartContainer(ctx, dockerClient, args, spawnArgs); err != nil {
-		log.Warn(ctx, "hatchery> swarm> SpawnWorker> Unable to start container %s on %s with image %s err:%v", args.name, dockerClient.name, spawnArgs.Model.ModelDocker.Image, err)
+		ctx = sdk.ContextWithStacktrace(ctx, err)
+		log.Warn(ctx, "unable to start container %s on %s with image %s err:%v", args.name, dockerClient.name, spawnArgs.Model.ModelDocker.Image, err)
 		return err
 	}
 

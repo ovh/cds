@@ -2,7 +2,6 @@ package github
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -128,7 +127,7 @@ func (d authDriver) GetUserInfo(ctx context.Context, req sdk.AuthConsumerSigninR
 		Email string `json:"email"`
 		Name  string `json:"name"`
 	}
-	if err := json.Unmarshal(resBody, &githubUser); err != nil {
+	if err := sdk.JSONUnmarshal(resBody, &githubUser); err != nil {
 		return info, sdk.WithStack(err)
 	}
 

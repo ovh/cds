@@ -2,7 +2,6 @@ package gitlab
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -14,6 +13,7 @@ import (
 	"github.com/xanzy/go-gitlab"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 type authorizeResponse struct {
@@ -31,6 +31,9 @@ type Error struct {
 
 //AuthorizeRedirect returns the request token, the Authorize URL
 func (g *gitlabConsumer) AuthorizeRedirect(ctx context.Context) (string, string, error) {
+	_, end := telemetry.Span(ctx, "gitlab.AuthorizeRedirect")
+	defer end()
+
 	// See https://docs.gitlab.com/ce/api/oauth2.html
 
 	requestToken, err := sdk.GenerateHash()
@@ -76,7 +79,7 @@ func (g *gitlabConsumer) postForm(path string, data url.Values, headers map[stri
 
 	if res.StatusCode > 400 {
 		glErr := &Error{}
-		if err := json.Unmarshal(resBody, glErr); err == nil {
+		if err := sdk.JSONUnmarshal(resBody, glErr); err == nil {
 			return res.StatusCode, resBody, fmt.Errorf("%s: %s", glErr.Error, glErr.Description)
 		}
 	}
@@ -109,7 +112,7 @@ func (g *gitlabConsumer) AuthorizeToken(ctx context.Context, state, code string)
 	}
 
 	glResponse := authorizeResponse{}
-	if err := json.Unmarshal(res, &glResponse); err != nil {
+	if err := sdk.JSONUnmarshal(res, &glResponse); err != nil {
 		return "", "", fmt.Errorf("Unable to parse gitlab response (%d) %s ", status, string(res))
 	}
 

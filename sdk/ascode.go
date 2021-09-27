@@ -34,7 +34,7 @@ func (d *AsCodeEventData) Scan(src interface{}) error {
 	if !ok {
 		return WithStack(errors.New("type assertion .([]byte) failed"))
 	}
-	return WrapError(json.Unmarshal(source, d), "cannot unmarshal AsCodeEventData")
+	return WrapError(JSONUnmarshal(source, d), "cannot unmarshal AsCodeEventData")
 }
 
 // Value returns driver.Value from consumer data.

@@ -2,11 +2,12 @@ package redis
 
 import (
 	"context"
-	"encoding/json"
 	"io"
 	"sort"
 	"strings"
 	"unicode"
+
+	"github.com/shopspring/decimal"
 
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
@@ -35,9 +36,13 @@ func (r *Reader) get(from uint, to uint) ([]Line, error) {
 	}
 	ls := make([]Line, len(res))
 	for i := range res {
-		ls[i].Number = int64(res[i].Score)
+		scoreD := decimal.NewFromFloat(res[i].Score)
+		ls[i].Number = scoreD.IntPart()
+		floatD := scoreD.Sub(decimal.NewFromInt(ls[i].Number))
+		ls[i].Since = floatD.Coefficient().Int64()
+
 		var value string
-		if err := json.Unmarshal(res[i].Value, &value); err != nil {
+		if err := sdk.JSONUnmarshal(res[i].Value, &value); err != nil {
 			return nil, sdk.WrapError(err, "cannot unmarshal line value from store")
 		}
 		ls[i].ApiRefHash = r.ApiRefHash
@@ -103,7 +108,7 @@ func (r *Reader) loadMoreLines() error {
 
 	// Read 100 lines if possible or only the missing lines if less than 100
 	alreadyReadLinesLength := r.nextIndex - uint(r.From)
-	linesLeftToRead := uint(r.Size) - alreadyReadLinesLength
+	linesLeftToRead := r.Size - alreadyReadLinesLength
 	if linesLeftToRead == 0 {
 		if !r.readEOF {
 			r.readEOF = true
@@ -130,7 +135,7 @@ func (r *Reader) loadMoreLines() error {
 			from = lineCount - newNextIndex
 		}
 		if lineCount < r.nextIndex {
-			to = uint(lineCount) - 1
+			to = lineCount - 1
 		} else {
 			to = lineCount - (r.nextIndex + 1)
 		}

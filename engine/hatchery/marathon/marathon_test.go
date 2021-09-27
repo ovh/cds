@@ -321,7 +321,7 @@ func TestSpawnWorkerTimeout(t *testing.T) {
 	})
 	t.Logf("%+v\n", err)
 	assert.Error(t, err)
-	assert.Equal(t, "spawnMarathonDockerWorker> TestSpawnWorkerTimeout>SpawnWorker: internal server error (caused by: deployment for aaa timeout)", err.Error())
+	assert.Equal(t, "internal server error (caused by: deployment for aaa timeout)", err.Error())
 }
 
 func TestCanSpawn(t *testing.T) {

@@ -44,7 +44,7 @@ func (g *githubClient) Release(ctx context.Context, fullname string, tagName str
 	}
 
 	var response ReleaseResponse
-	if err := json.Unmarshal(body, &response); err != nil {
+	if err := sdk.JSONUnmarshal(body, &response); err != nil {
 		return nil, sdk.WrapError(err, "Cannot unmarshal response: %s", string(body))
 	}
 

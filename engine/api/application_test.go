@@ -134,29 +134,25 @@ func TestUpdateAsCodeApplicationHandler(t *testing.T) {
 				return nil, 200, nil
 			},
 		)
-	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/foo/myrepo/branches", gomock.Any(), gomock.Any(), gomock.Any()).
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/foo/myrepo/branches/?branch=&default=true", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
-			bs := []sdk.VCSBranch{}
 			b := sdk.VCSBranch{
 				DisplayID:    "master",
 				LatestCommit: "aaaaaaa",
 			}
-			bs = append(bs, b)
-			out = bs
+			out = b
 			return nil, 200, nil
 		}).Times(1)
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/foo/myrepo/branches/?branch=master", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/foo/myrepo/branches/?branch=master&default=false", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
-				bs := []sdk.VCSBranch{}
 				b := sdk.VCSBranch{
 					DisplayID: "master",
 					Default:   false,
 				}
-				bs = append(bs, b)
-				out = bs
+				out = b
 				return nil, 404, nil
 			},
 		).MaxTimes(1)

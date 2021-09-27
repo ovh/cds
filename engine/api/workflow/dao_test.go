@@ -1660,13 +1660,13 @@ func TestInsertAndDeleteMultiHook(t *testing.T) {
 				}
 
 				// NEED for default payload on insert
-			case "/vcs/github/repos/sguiheux/demo/branches":
+			case "/vcs/github/repos/sguiheux/demo/branches/?branch=&default=true":
 				b := sdk.VCSBranch{
 					Default:      true,
 					DisplayID:    "master",
 					LatestCommit: "mylastcommit",
 				}
-				if err := enc.Encode([]sdk.VCSBranch{b}); err != nil {
+				if err := enc.Encode(b); err != nil {
 					return writeError(w, err)
 				}
 			case "/task/bulk":

@@ -12,21 +12,24 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func (c *client) AdminDatabaseMigrationDelete(id string) error {
-	_, _, _, err := c.Request(context.Background(), "DELETE", "/admin/database/migration/delete/"+url.QueryEscape(id), nil)
+func (c *client) AdminDatabaseMigrationDelete(service string, id string) error {
+	path := fmt.Sprintf("/admin/database/migration/delete/%s", url.QueryEscape(id))
+	var f = c.switchServiceCallFunc(service, http.MethodDelete, path, nil, nil)
+	_, err := f()
 	return err
 }
 
-func (c *client) AdminDatabaseMigrationsList() ([]sdk.DatabaseMigrationStatus, error) {
+func (c *client) AdminDatabaseMigrationsList(service string) ([]sdk.DatabaseMigrationStatus, error) {
 	dlist := []sdk.DatabaseMigrationStatus{}
-	if _, err := c.GetJSON(context.Background(), "/admin/database/migration", &dlist); err != nil {
-		return nil, err
-	}
-	return dlist, nil
+	var f = c.switchServiceCallFunc(service, http.MethodGet, "/admin/database/migration", nil, &dlist)
+	_, err := f()
+	return dlist, err
 }
 
-func (c *client) AdminDatabaseMigrationUnlock(id string) error {
-	_, _, _, err := c.Request(context.Background(), "POST", "/admin/database/migration/unlock/"+url.QueryEscape(id), nil)
+func (c *client) AdminDatabaseMigrationUnlock(service string, id string) error {
+	path := fmt.Sprintf("/admin/database/migration/unlock/%s", url.QueryEscape(id))
+	var f = c.switchServiceCallFunc(service, http.MethodPost, path, nil, nil)
+	_, err := f()
 	return err
 }
 
@@ -109,7 +112,7 @@ func (c *client) ServiceGetJSON(ctx context.Context, stype, path string, out int
 	if err != nil {
 		return code, err
 	}
-	if err := json.Unmarshal(btes, out); err != nil {
+	if err := sdk.JSONUnmarshal(btes, out); err != nil {
 		return code, newError(err)
 	}
 	return code, nil
@@ -131,7 +134,7 @@ func (c *client) ServicePostJSON(ctx context.Context, stype, path string, in, ou
 	}
 
 	if len(btes) > 0 {
-		if err := json.Unmarshal(btes, out); err != nil {
+		if err := sdk.JSONUnmarshal(btes, out); err != nil {
 			return code, newError(err)
 		}
 	}
@@ -155,7 +158,7 @@ func (c *client) ServicePutJSON(ctx context.Context, stype, path string, in, out
 	}
 
 	if len(btes) > 0 {
-		if err := json.Unmarshal(btes, out); err != nil {
+		if err := sdk.JSONUnmarshal(btes, out); err != nil {
 			return code, newError(err)
 		}
 	}
@@ -168,7 +171,7 @@ func (c *client) ServiceDeleteJSON(ctx context.Context, stype, path string, out 
 		return code, err
 	}
 
-	if err := json.Unmarshal(btes, out); err != nil {
+	if err := sdk.JSONUnmarshal(btes, out); err != nil {
 		return code, newError(err)
 	}
 	return code, nil

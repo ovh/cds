@@ -156,7 +156,7 @@ func ackAction(c *cli.Context) error {
 
 	//Parse the context file
 	ctx := &kafkapublisher.Context{}
-	if err := json.Unmarshal(contextBody, ctx); err != nil {
+	if err := sdk.JSONUnmarshal(contextBody, ctx); err != nil {
 		return cli.NewExitError(err.Error(), 43)
 	}
 

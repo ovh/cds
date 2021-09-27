@@ -121,8 +121,6 @@ func main() {
 	if err := actionplugin.Start(context.Background(), &actPlugin); err != nil {
 		panic(err)
 	}
-	return
-
 }
 
 func getConfigByApplication(apps *Applications, tmpl *template.Template) (map[string]string, error) {

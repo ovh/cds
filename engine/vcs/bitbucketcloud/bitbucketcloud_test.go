@@ -151,7 +151,7 @@ func TestBranches(t *testing.T) {
 	bbClient := getNewAuthorizedClient(t)
 	assert.NotNil(t, bbClient)
 
-	branches, err := bbClient.Branches(context.Background(), "bnjjj/test")
+	branches, err := bbClient.Branches(context.Background(), "bnjjj/test", sdk.VCSBranchesFilter{})
 	require.NoError(t, err)
 	assert.NotEmpty(t, branches)
 }
@@ -160,7 +160,7 @@ func TestBranch(t *testing.T) {
 	bbClient := getNewAuthorizedClient(t)
 	assert.NotNil(t, bbClient)
 
-	branch, err := bbClient.Branch(context.Background(), "bnjjj/test", "master")
+	branch, err := bbClient.Branch(context.Background(), "bnjjj/test", sdk.VCSBranchFilters{BranchName: "master"})
 	require.NoError(t, err)
 	assert.NotNil(t, branch)
 }

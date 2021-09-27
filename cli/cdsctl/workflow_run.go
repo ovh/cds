@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -34,7 +33,7 @@ var workflowRunManualCmd = cli.Command{
 					return true
 				}
 				data := map[string]interface{}{}
-				return json.Unmarshal([]byte(s), &data) == nil
+				return sdk.JSONUnmarshal([]byte(s), &data) == nil
 			},
 		},
 		{
@@ -97,7 +96,7 @@ func workflowRunManualRun(v cli.Values) error {
 	manual := sdk.WorkflowNodeRunManual{}
 	if strings.TrimSpace(v.GetString("data")) != "" {
 		data := map[string]interface{}{}
-		if err := json.Unmarshal([]byte(v.GetString("data")), &data); err != nil {
+		if err := sdk.JSONUnmarshal([]byte(v.GetString("data")), &data); err != nil {
 			return cli.NewError("error payload isn't a valid json")
 		}
 		manual.Payload = data

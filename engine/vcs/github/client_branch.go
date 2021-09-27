@@ -2,7 +2,6 @@ package github
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -14,7 +13,7 @@ import (
 
 // Branches returns list of branches for a repo
 // https://developer.github.com/v3/repos/branches/#list-branches
-func (g *githubClient) Branches(ctx context.Context, fullname string) ([]sdk.VCSBranch, error) {
+func (g *githubClient) Branches(ctx context.Context, fullname string, filters sdk.VCSBranchesFilter) ([]sdk.VCSBranch, error) {
 	var branches = []Branch{}
 	repo, err := g.repoByFullname(ctx, fullname)
 	if err != nil {
@@ -26,6 +25,9 @@ func (g *githubClient) Branches(ctx context.Context, fullname string) ([]sdk.VCS
 	var nextPage = "/repos/" + fullname + "/branches"
 	for nextPage != "" {
 		if ctx.Err() != nil {
+			break
+		}
+		if filters.Limit > 0 && len(branches) >= int(filters.Limit) {
 			break
 		}
 
@@ -63,7 +65,7 @@ func (g *githubClient) Branches(ctx context.Context, fullname string) ([]sdk.VCS
 			noEtag = true
 			continue
 		} else {
-			if err := json.Unmarshal(body, &nextBranches); err != nil {
+			if err := sdk.JSONUnmarshal(body, &nextBranches); err != nil {
 				log.Warn(ctx, "githubClient.Branches> Unable to parse github branches: %s", err)
 				return nil, err
 			}
@@ -97,14 +99,22 @@ func (g *githubClient) Branches(ctx context.Context, fullname string) ([]sdk.VCS
 }
 
 // Branch returns only detail of a branch
-func (g *githubClient) Branch(ctx context.Context, fullname, theBranch string) (*sdk.VCSBranch, error) {
-	cacheBranchKey := cache.Key("vcs", "github", "branches", g.OAuthToken, "/repos/"+fullname+"/branch/"+theBranch)
+func (g *githubClient) Branch(ctx context.Context, fullname string, filters sdk.VCSBranchFilters) (*sdk.VCSBranch, error) {
+	if filters.Default {
+		repo, err := g.repoByFullname(ctx, fullname)
+		if err != nil {
+			return nil, err
+		}
+		filters.BranchName = repo.DefaultBranch
+	}
+
+	cacheBranchKey := cache.Key("vcs", "github", "branches", g.OAuthToken, "/repos/"+fullname+"/branch/"+filters.BranchName)
 	repo, err := g.repoByFullname(ctx, fullname)
 	if err != nil {
 		return nil, err
 	}
 
-	url := "/repos/" + fullname + "/branches/" + theBranch
+	url := "/repos/" + fullname + "/branches/" + filters.BranchName
 	status, body, _, err := g.get(ctx, url)
 	if err != nil {
 		if err := g.Cache.Delete(cacheBranchKey); err != nil {
@@ -134,22 +144,22 @@ func (g *githubClient) Branch(ctx context.Context, fullname, theBranch string) (
 			log.Error(ctx, "Unable to get branch (%s) from the cache", cacheBranchKey)
 		}
 	} else {
-		if err := json.Unmarshal(body, &branch); err != nil {
+		if err := sdk.JSONUnmarshal(body, &branch); err != nil {
 			log.Warn(ctx, "githubClient.Branch> Unable to parse github branch: %s", err)
 			return nil, err
 		}
 	}
 
 	if branch.Name == "" {
-		log.Warn(ctx, "githubClient.Branch> Cannot find branch %v: %s", branch, theBranch)
+		log.Warn(ctx, "githubClient.Branch> Cannot find branch %v: %s", branch, filters.BranchName)
 		if err := g.Cache.Delete(cacheBranchKey); err != nil {
 			log.Error(ctx, "githubClient.Branch> unable to delete cache key %v: %v", cacheBranchKey, err)
 		}
-		return nil, fmt.Errorf("githubClient.Branch > Cannot find branch %s", theBranch)
+		return nil, fmt.Errorf("githubClient.Branch > Cannot find branch %s", filters.BranchName)
 	}
 
 	//Put the body on cache for one hour and one minute
-	k := cache.Key("vcs", "github", "branches", g.OAuthToken, "/repos/"+fullname+"/branch/"+theBranch)
+	k := cache.Key("vcs", "github", "branches", g.OAuthToken, "/repos/"+fullname+"/branch/"+filters.BranchName)
 	if err := g.Cache.SetWithTTL(k, branch, 61*60); err != nil {
 		log.Error(ctx, "cannot SetWithTTL: %s: %v", k, err)
 	}

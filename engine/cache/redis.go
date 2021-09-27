@@ -116,7 +116,7 @@ func (s *RedisStore) Get(key string, value interface{}) (bool, error) {
 		return false, sdk.WrapError(errRedis, "redis> get error %s", key)
 	}
 	if val != "" {
-		if err := json.Unmarshal([]byte(val), value); err != nil {
+		if err := sdk.JSONUnmarshal([]byte(val), value); err != nil {
 			return false, sdk.WrapError(err, "redis> cannot get unmarshal %s", key)
 		}
 		return true, nil
@@ -281,7 +281,7 @@ func (s *RedisStore) DequeueWithContext(c context.Context, queueName string, wai
 	}
 	if elem != "" {
 		b := []byte(elem)
-		if err := json.Unmarshal(b, value); err != nil {
+		if err := sdk.JSONUnmarshal(b, value); err != nil {
 			return sdk.WrapError(err, "redis.DequeueWithContext> error on unmarshal value on queue:%s", queueName)
 		}
 	}
@@ -440,7 +440,7 @@ func (s *RedisStore) SetScan(ctx context.Context, key string, members ...interfa
 				return sdk.WithStack(fmt.Errorf("SetScan member %s not found", keys[i]))
 			}
 
-			if err := json.Unmarshal([]byte(res[i].(string)), members[i]); err != nil {
+			if err := sdk.JSONUnmarshal([]byte(res[i].(string)), members[i]); err != nil {
 				return sdk.WrapError(err, "redis> cannot unmarshal %s", keys[i])
 			}
 		}
@@ -556,7 +556,7 @@ func (s *RedisStore) ScoredSetRange(_ context.Context, key string, from, to int6
 
 	for i := 0; i < v.Len(); i++ {
 		m := v.Index(i).Interface()
-		if err := json.Unmarshal([]byte(values[i]), &m); err != nil {
+		if err := sdk.JSONUnmarshal([]byte(values[i]), &m); err != nil {
 			return sdk.WrapError(err, "redis> cannot unmarshal %s", values[i])
 		}
 		v.Index(i).Set(reflect.ValueOf(m))
@@ -584,7 +584,7 @@ func (s *RedisStore) ScoredSetRevRange(_ context.Context, key string, offset int
 
 	for i := 0; i < v.Len(); i++ {
 		m := v.Index(i).Interface()
-		if err := json.Unmarshal([]byte(values[i]), &m); err != nil {
+		if err := sdk.JSONUnmarshal([]byte(values[i]), &m); err != nil {
 			return sdk.WrapError(err, "redis> cannot unmarshal %s", values[i])
 		}
 		v.Index(i).Set(reflect.ValueOf(m))
@@ -625,7 +625,7 @@ func (s *RedisStore) ScoredSetScan(_ context.Context, key string, from, to float
 
 	for i := 0; i < v.Len(); i++ {
 		m := v.Index(i).Interface()
-		if err := json.Unmarshal([]byte(values[i]), &m); err != nil {
+		if err := sdk.JSONUnmarshal([]byte(values[i]), &m); err != nil {
 			return sdk.WrapError(err, "redis> cannot unmarshal %s", values[i])
 		}
 		v.Index(i).Set(reflect.ValueOf(m))

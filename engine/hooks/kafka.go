@@ -2,7 +2,6 @@ package hooks
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"sync/atomic"
@@ -156,10 +155,10 @@ func (s *Service) doKafkaTaskExecution(t *sdk.TaskExecution) (*sdk.WorkflowNodeR
 
 	//Try to parse the body as an array
 	bodyJSONArray := []interface{}{}
-	if err := json.Unmarshal(t.Kafka.Message, &bodyJSONArray); err != nil {
+	if err := sdk.JSONUnmarshal(t.Kafka.Message, &bodyJSONArray); err != nil {
 		//Try to parse the body as a map
 		bodyJSONMap := map[string]interface{}{}
-		if err2 := json.Unmarshal(t.Kafka.Message, &bodyJSONMap); err2 == nil {
+		if err2 := sdk.JSONUnmarshal(t.Kafka.Message, &bodyJSONMap); err2 == nil {
 			bodyJSON = bodyJSONMap
 		}
 	} else {

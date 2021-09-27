@@ -2,12 +2,12 @@ package github
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/url"
 	"strings"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/telemetry"
 	"github.com/rockbears/log"
 )
 
@@ -19,6 +19,8 @@ var (
 //AuthorizeRedirect returns the request token, the Authorize GitHubURL
 //doc: https://developer.github.com/v3/oauth/#web-application-flow
 func (g *githubConsumer) AuthorizeRedirect(ctx context.Context) (string, string, error) {
+	_, end := telemetry.Span(ctx, "github.AuthorizeRedirect")
+	defer end()
 	// GET https://github.com/login/oauth/authorize
 	// with parameters : client_id, redirect_uri, scope, state
 	requestToken, err := sdk.GenerateHash()
@@ -40,6 +42,9 @@ func (g *githubConsumer) AuthorizeRedirect(ctx context.Context) (string, string,
 //AuthorizeToken returns the authorized token (and its secret)
 //from the request token and the verifier got on authorize url
 func (g *githubConsumer) AuthorizeToken(ctx context.Context, state, code string) (string, string, error) {
+	_, end := telemetry.Span(ctx, "github.AuthorizeToken")
+	defer end()
+
 	log.Debug(ctx, "AuthorizeToken> Github send code %s for state %s", code, state)
 	//POST https://github.com/login/oauth/access_token
 	//Parameters:
@@ -67,7 +72,7 @@ func (g *githubConsumer) AuthorizeToken(ctx context.Context, state, code string)
 	}
 
 	ghResponse := map[string]string{}
-	if err := json.Unmarshal(res, &ghResponse); err != nil {
+	if err := sdk.JSONUnmarshal(res, &ghResponse); err != nil {
 		return "", "", fmt.Errorf("Unable to parse github response (%d) %s ", status, string(res))
 	}
 

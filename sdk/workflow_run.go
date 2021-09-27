@@ -50,7 +50,7 @@ func (h *WorkflowRunHeaders) Scan(src interface{}) error {
 	if !ok {
 		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
-	return WrapError(json.Unmarshal(source, h), "cannot unmarshal WorkflowRunHeaders")
+	return WrapError(JSONUnmarshal(source, h), "cannot unmarshal WorkflowRunHeaders")
 }
 
 //WorkflowRun is an execution instance of a run
@@ -106,7 +106,7 @@ func (a *WorkflowRunInfos) Scan(src interface{}) error {
 	if !ok {
 		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
-	return WrapError(json.Unmarshal(source, a), "cannot unmarshal WorkflowRunInfos")
+	return WrapError(JSONUnmarshal(source, a), "cannot unmarshal WorkflowRunInfos")
 }
 
 type WorkflowNodeTriggerRuns map[int64]WorkflowNodeTriggerRun
@@ -124,7 +124,7 @@ func (a *WorkflowNodeTriggerRuns) Scan(src interface{}) error {
 	if !ok {
 		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
-	return WrapError(json.Unmarshal(source, a), "cannot unmarshal WorkflowNodeTriggerRuns")
+	return WrapError(JSONUnmarshal(source, a), "cannot unmarshal WorkflowNodeTriggerRuns")
 }
 
 type WorkflowRunSecret struct {
@@ -168,7 +168,7 @@ func (a *WorkflowRunPostHandlerOption) Scan(src interface{}) error {
 	if !ok {
 		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
-	return WrapError(json.Unmarshal(source, a), "cannot unmarshal WorkflowRunPostHandlerOption")
+	return WrapError(JSONUnmarshal(source, a), "cannot unmarshal WorkflowRunPostHandlerOption")
 }
 
 //WorkflowRunNumber contains a workflow run number
@@ -364,6 +364,19 @@ type WorkflowNodeRun struct {
 	VCSReport              string                               `json:"vcs_report,omitempty"`
 }
 
+func (nodeRun *WorkflowNodeRun) GetStageIndex(job *WorkflowNodeJobRun) int {
+	var stageIndex = -1
+	for i := range nodeRun.Stages {
+		s := &nodeRun.Stages[i]
+		for _, j := range s.Jobs {
+			if j.Action.ID == job.Job.Job.Action.ID {
+				stageIndex = i
+			}
+		}
+	}
+	return stageIndex
+}
+
 // WorkflowNodeOutgoingHookRunCallback is the callback coming from hooks uservice avec an outgoing hook execution
 type WorkflowNodeOutgoingHookRunCallback struct {
 	NodeHookID        int64     `json:"workflow_node_outgoing_hook_id"`
@@ -482,7 +495,8 @@ type WorkflowNodeJobRun struct {
 	Done               time.Time          `json:"done,omitempty"`
 	Model              string             `json:"model,omitempty"`
 	ModelType          string             `json:"model_type,omitempty"`
-	BookedBy           Service            `json:"bookedby,omitempty"`
+	Region             *string            `json:"region,omitempty"`
+	BookedBy           BookedBy           `json:"bookedby,omitempty"`
 	SpawnInfos         []SpawnInfo        `json:"spawninfos"`
 	ExecGroups         Groups             `json:"exec_groups"`
 	Header             WorkflowRunHeaders `json:"header,omitempty"`
@@ -490,6 +504,11 @@ type WorkflowNodeJobRun struct {
 	HatcheryName       string             `json:"hatchery_name,omitempty"`
 	WorkerName         string             `json:"worker_name,omitempty"`
 	IntegrationPlugins []GRPCPlugin       `json:"integration_plugin,omitempty"`
+}
+
+type BookedBy struct {
+	Name string `json:"name,omitempty"`
+	ID   int64  `json:"id,omitempty"`
 }
 
 // WorkflowNodeJobRunSummary is a light representation of WorkflowNodeJobRun for CDS event

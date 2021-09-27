@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/go-gorp/gorp"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/cache"
@@ -29,7 +28,7 @@ func UpdateOutgoingHookRunStatus(ctx context.Context, db gorpmapper.SqlExecutorW
 	}
 
 	// Reload node run with build parameters
-	nodeRun, err := LoadNodeRunByID(db, nr.ID, LoadRunOptions{})
+	nodeRun, err := LoadNodeRunByID(ctx, db, nr.ID, LoadRunOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +80,7 @@ loop:
 }
 
 // UpdateParentWorkflowRun updates the workflow which triggered the current workflow
-func UpdateParentWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, wr *sdk.WorkflowRun, parentProj sdk.Project, parentWR *sdk.WorkflowRun) (*ProcessorReport, error) {
+func UpdateParentWorkflowRun(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, store cache.Store, wr *sdk.WorkflowRun, parentProj sdk.Project, parentWR *sdk.WorkflowRun) (*ProcessorReport, error) {
 	_, end := telemetry.Span(ctx, "workflow.UpdateParentWorkflowRun")
 	defer end()
 
@@ -95,13 +94,6 @@ func UpdateParentWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, sto
 	if !wr.HasParentWorkflow() {
 		return nil, nil
 	}
-
-	tx, err := dbFunc().Begin()
-	if err != nil {
-		return nil, sdk.WrapError(err, "Unable to start transaction")
-	}
-
-	defer tx.Rollback() //nolint
 
 	hookrun := parentWR.GetOutgoingHookRun(wr.RootRun().HookEvent.ParentWorkflow.HookRunID)
 	if hookrun == nil {
@@ -126,10 +118,6 @@ func UpdateParentWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, sto
 			wr.RootRun().HookEvent.ParentWorkflow.Run,
 			err)
 		return nil, sdk.WrapError(err, "Unable to update outgoing hook run status")
-	}
-
-	if err := tx.Commit(); err != nil {
-		return nil, sdk.WrapError(err, "Unable to commit transaction")
 	}
 
 	return report, nil

@@ -18,6 +18,7 @@ import (
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/featureflipping"
+	"github.com/ovh/cds/sdk/cdsclient"
 
 	"github.com/ovh/venom"
 
@@ -443,6 +444,109 @@ func TestGetWorkflowJobQueueHandler(t *testing.T) {
 	require.Equal(t, 10, n.Num)
 }
 
+func TestGetWorkflowJobQueueHandler_WithRegions(t *testing.T) {
+	api, db, router := newTestAPI(t)
+
+	// Delete all existing workers
+	workers, err := worker.LoadAll(context.TODO(), db)
+	require.NoError(t, err)
+	for _, w := range workers {
+		_ = worker.Delete(db, w.ID)
+	}
+
+	// Remove all jobs in queue
+	filterClean := workflow.NewQueueFilter()
+	nrj, _ := workflow.LoadNodeJobRunQueue(context.TODO(), db, api.Cache, filterClean)
+	for _, j := range nrj {
+		_ = workflow.DeleteNodeJobRuns(db, j.WorkflowNodeRunID)
+	}
+
+	res := testRunWorkflow(t, api, router, func(tt *testing.T, tx gorpmapper.SqlExecutorWithTx, pip *sdk.Pipeline, app *sdk.Application) {
+		script := assets.GetBuiltinOrPluginActionByName(t, tx, sdk.ScriptAction)
+
+		j2 := &sdk.Job{
+			Enabled: true,
+			Action: sdk.Action{
+				Enabled: true,
+				Actions: []sdk.Action{
+					assets.NewAction(script.ID, sdk.Parameter{Name: "script", Value: "echo j2"}),
+				},
+				Requirements: []sdk.Requirement{{
+					Name:  "region",
+					Type:  sdk.RegionRequirement,
+					Value: "test1",
+				}},
+			},
+		}
+		require.NoError(tt, pipeline.InsertJob(tx, j2, pip.Stages[0].ID, pip))
+		pip.Stages[0].Jobs = append(pip.Stages[0].Jobs, *j2)
+
+		j3 := &sdk.Job{
+			Enabled: true,
+			Action: sdk.Action{
+				Enabled: true,
+				Actions: []sdk.Action{
+					assets.NewAction(script.ID, sdk.Parameter{Name: "script", Value: "echo j3"}),
+				},
+				Requirements: []sdk.Requirement{{
+					Name:  "region",
+					Type:  sdk.RegionRequirement,
+					Value: "test2",
+				}},
+			},
+		}
+		require.NoError(tt, pipeline.InsertJob(tx, j3, pip.Stages[0].ID, pip))
+		pip.Stages[0].Jobs = append(pip.Stages[0].Jobs, *j3)
+	})
+
+	test := func(jwt string) func(t *testing.T) {
+		return func(t *testing.T) {
+			uri := router.GetRoute("GET", api.getWorkflowJobQueueHandler, nil)
+			test.NotEmpty(t, uri)
+			req := assets.NewJWTAuthentifiedRequest(t, jwt, "GET", uri, nil)
+			rec := httptest.NewRecorder()
+			router.Mux.ServeHTTP(rec, req)
+			require.Equal(t, 200, rec.Code)
+			jobs := []sdk.WorkflowNodeJobRun{}
+			require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &jobs))
+			require.Len(t, jobs, 3)
+			require.Nil(t, jobs[0].Region)
+			require.NotNil(t, jobs[1].Region)
+			require.Equal(t, "test1", *jobs[1].Region)
+			require.NotNil(t, jobs[2].Region)
+			require.Equal(t, "test2", *jobs[2].Region)
+
+			uri = router.GetRoute("GET", api.getWorkflowJobQueueHandler, nil)
+			test.NotEmpty(t, uri)
+			req = assets.NewJWTAuthentifiedRequest(t, jwt, "GET", uri, nil)
+			cdsclient.Region("test1", "")(req)
+			rec = httptest.NewRecorder()
+			router.Mux.ServeHTTP(rec, req)
+			require.Equal(t, 200, rec.Code)
+			require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &jobs))
+			require.Len(t, jobs, 2)
+			require.Nil(t, jobs[0].Region)
+			require.NotNil(t, jobs[1].Region)
+			require.Equal(t, "test1", *jobs[1].Region)
+
+			uri = router.GetRoute("GET", api.getWorkflowJobQueueHandler, nil)
+			test.NotEmpty(t, uri)
+			req = assets.NewJWTAuthentifiedRequest(t, jwt, "GET", uri, nil)
+			cdsclient.Region("test3")(req)
+			rec = httptest.NewRecorder()
+			router.Mux.ServeHTTP(rec, req)
+			require.Equal(t, 200, rec.Code)
+			require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &jobs))
+			require.Len(t, jobs, 0)
+		}
+	}
+
+	_, jwtAdmin := assets.InsertAdminUser(t, db)
+	jwtUser := res.password
+	t.Run("test as admin", test(jwtAdmin))
+	t.Run("test as lambda user", test(jwtUser))
+}
+
 func Test_postTakeWorkflowJobHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
@@ -748,7 +852,7 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 
 	wNodeJobRun, errJ := workflow.LoadNodeJobRun(context.TODO(), api.mustDB(), api.Cache, ctx.job.ID)
 	require.NoError(t, errJ)
-	nodeRun, errN := workflow.LoadNodeRunByID(api.mustDB(), wNodeJobRun.WorkflowNodeRunID, workflow.LoadRunOptions{WithArtifacts: true, WithTests: true})
+	nodeRun, errN := workflow.LoadNodeRunByID(context.Background(), api.mustDB(), wNodeJobRun.WorkflowNodeRunID, workflow.LoadRunOptions{WithArtifacts: true, WithTests: true})
 	require.NoError(t, errN)
 
 	assert.NotNil(t, nodeRun.Tests)
@@ -835,7 +939,7 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	wNodeJobRun, errJ := workflow.LoadNodeJobRun(context.TODO(), api.mustDB(), api.Cache, ctx.job.ID)
 	require.NoError(t, errJ)
 
-	updatedNodeRun, errN2 := workflow.LoadNodeRunByID(api.mustDB(), wNodeJobRun.WorkflowNodeRunID, workflow.LoadRunOptions{WithArtifacts: true})
+	updatedNodeRun, errN2 := workflow.LoadNodeRunByID(context.Background(), api.mustDB(), wNodeJobRun.WorkflowNodeRunID, workflow.LoadRunOptions{WithArtifacts: true})
 	require.NoError(t, errN2)
 
 	assert.NotNil(t, updatedNodeRun.Artifacts)
@@ -1362,22 +1466,15 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 				if err := enc.Encode(repo); err != nil {
 					return writeError(wri, err)
 				}
-			case "/vcs/repoManServ/repos/foo/bar/branches":
-				bs := []sdk.VCSBranch{}
+			case "/vcs/repoManServ/repos/foo/bar/branches/?branch=&default=true":
 				b := sdk.VCSBranch{
 					DisplayID: "master",
 					Default:   true,
 				}
-				bs = append(bs, b)
-				b2 := sdk.VCSBranch{
-					DisplayID: "my-branch",
-					Default:   false,
-				}
-				bs = append(bs, b2)
-				if err := enc.Encode(bs); err != nil {
+				if err := enc.Encode(b); err != nil {
 					return writeError(wri, err)
 				}
-			case "/vcs/repoManServ/repos/foo/bar/branches/?branch=master":
+			case "/vcs/repoManServ/repos/foo/bar/branches/?branch=master&default=false":
 				b := sdk.VCSBranch{
 					DisplayID: "master",
 					Default:   true,
@@ -1395,7 +1492,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 				if err := enc.Encode(c); err != nil {
 					return writeError(wri, err)
 				}
-			case "/vcs/repoManServ/repos/foo/bar/branches/?branch=my-branch":
+			case "/vcs/repoManServ/repos/foo/bar/branches/?branch=my-branch&default=false":
 				b := sdk.VCSBranch{
 					DisplayID: "my-branch",
 					Default:   true,
@@ -1501,7 +1598,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	}, *consumer, nil)
 	assert.NoError(t, errT)
 
-	wrr, err := workflow.LoadRunByID(db, wrToTest.ID, workflow.LoadRunOptions{})
+	wrr, err := workflow.LoadRunByID(context.Background(), db, wrToTest.ID, workflow.LoadRunOptions{})
 	assert.NoError(t, err)
 
 	log.Warn(context.Background(), "%s", wrr.Status)
@@ -1573,7 +1670,7 @@ func Test_postWorkflowJobSetVersionHandler(t *testing.T) {
 	run, err := workflow.LoadRun(context.TODO(), db, ctx.project.Key, ctx.workflow.Name, ctx.run.Number, workflow.LoadRunOptions{})
 	require.NoError(t, err)
 	require.Empty(t, "", run.Version)
-	nodeRun, err := workflow.LoadNodeRunByID(db, ctx.job.WorkflowNodeRunID, workflow.LoadRunOptions{})
+	nodeRun, err := workflow.LoadNodeRunByID(context.Background(), db, ctx.job.WorkflowNodeRunID, workflow.LoadRunOptions{})
 	require.NoError(t, err)
 	require.Equal(t, "1", sdk.ParameterValue(nodeRun.BuildParameters, "cds.version"))
 
@@ -1593,7 +1690,7 @@ func Test_postWorkflowJobSetVersionHandler(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, run.Version)
 	require.Equal(t, "1.2.3", *run.Version)
-	nodeRun, err = workflow.LoadNodeRunByID(db, ctx.job.WorkflowNodeRunID, workflow.LoadRunOptions{})
+	nodeRun, err = workflow.LoadNodeRunByID(context.Background(), db, ctx.job.WorkflowNodeRunID, workflow.LoadRunOptions{})
 	require.NoError(t, err)
 	require.Equal(t, "1.2.3", sdk.ParameterValue(nodeRun.BuildParameters, "cds.version"))
 
@@ -1638,7 +1735,7 @@ func Test_workflowRunResultsAdd(t *testing.T) {
 
 	require.NoError(t, api.workflowRunCraft(context.TODO(), wrCreate.ID))
 
-	wrDB, err := workflow.LoadRunByID(db, wrCreate.ID, workflow.LoadRunOptions{})
+	wrDB, err := workflow.LoadRunByID(context.Background(), db, wrCreate.ID, workflow.LoadRunOptions{})
 	require.NoError(t, err)
 
 	nr := wrDB.WorkflowNodeRuns[w.WorkflowData.Node.ID][0]
@@ -1722,7 +1819,7 @@ func Test_workflowRunResultCheckUpload(t *testing.T) {
 
 	require.NoError(t, api.workflowRunCraft(context.TODO(), wrCreate.ID))
 
-	wrDB, err := workflow.LoadRunByID(db, wrCreate.ID, workflow.LoadRunOptions{})
+	wrDB, err := workflow.LoadRunByID(context.Background(), db, wrCreate.ID, workflow.LoadRunOptions{})
 	require.NoError(t, err)
 
 	nr := wrDB.WorkflowNodeRuns[w.WorkflowData.Node.ID][0]

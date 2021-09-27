@@ -2,7 +2,6 @@ package internal
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -33,7 +32,7 @@ func keyInstallHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc 
 
 		var mapBody = make(map[string]string)
 		if len(body) > 0 {
-			if err := json.Unmarshal(body, &mapBody); err != nil {
+			if err := sdk.JSONUnmarshal(body, &mapBody); err != nil {
 				writeError(w, r, sdk.NewError(sdk.ErrWrongRequest, err))
 				return
 			}

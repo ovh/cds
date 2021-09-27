@@ -2,7 +2,6 @@ package github
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"strconv"
 	"strings"
@@ -57,7 +56,7 @@ func (g *githubClient) ListForks(ctx context.Context, repo string) ([]sdk.VCSRep
 			noEtag = true
 			continue
 		} else {
-			if err := json.Unmarshal(body, &nextRepos); err != nil {
+			if err := sdk.JSONUnmarshal(body, &nextRepos); err != nil {
 				log.Warn(ctx, "githubClient.ListForks> Unable to parse github repositories: %s", err)
 				return nil, err
 			}

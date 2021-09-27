@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -13,6 +15,7 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/jfrog/jfrog-client-go/artifactory"
 	"github.com/jfrog/jfrog-client-go/artifactory/buildinfo"
+	"github.com/jfrog/jfrog-client-go/artifactory/services/utils"
 	"github.com/jfrog/jfrog-client-go/utils/log"
 
 	"github.com/ovh/cds/contrib/grpcplugins"
@@ -67,8 +70,8 @@ func (e *artifactoryBuildInfoPlugin) Run(_ context.Context, opts *integrationplu
 	tokenName := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactManagerConfigTokenName)]
 	lowMaturitySuffix := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactManagerConfigPromotionLowMaturity)]
 	artifactoryProjectKey := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactProjectKey)]
+	buildInfo := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactManagerConfigBuildInfoPrefix)]
 
-	buildInfo := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactManagerConfigBuildInfoPath)]
 	version := opts.GetOptions()["cds.version"]
 	projectKey := opts.GetOptions()["cds.project"]
 	workflowName := opts.GetOptions()["cds.workflow"]
@@ -80,6 +83,11 @@ func (e *artifactoryBuildInfoPlugin) Run(_ context.Context, opts *integrationplu
 	log.SetLogger(log.NewLogger(log.ERROR, os.Stdout))
 
 	buildInfoName := fmt.Sprintf("%s/%s/%s", buildInfo, projectKey, workflowName)
+
+	// Check existing build info
+	if err := e.deleteExistingBuild(artiClient, artifactoryProjectKey, buildInfoName, version); err != nil {
+		return fail("unable to clean existing build: %v", err)
+	}
 
 	nodeRunURL := opts.GetOptions()["cds.ui.pipeline.run"]
 	runURL := nodeRunURL[0:strings.Index(nodeRunURL, "/node/")]
@@ -128,6 +136,34 @@ func (e *artifactoryBuildInfoPlugin) Run(_ context.Context, opts *integrationplu
 	return &integrationplugin.RunResult{
 		Status: sdk.StatusSuccess,
 	}, nil
+}
+
+type DeleteBuildRequest struct {
+	Project         string   `json:"project"`
+	BuildName       string   `json:"buildName"`
+	BuildNumbers    []string `json:"buildNumbers"`
+	DeleteArtifacts bool     `json:"deleteArtifacts"`
+	DeleteAll       bool     `json:"deleteAll"`
+}
+
+func (e *artifactoryBuildInfoPlugin) deleteExistingBuild(client artifactory.ArtifactoryServicesManager, artifactoryProjectKey string, buildName string, buildVersion string) error {
+	httpDetails := client.GetConfig().GetServiceDetails().CreateHttpClientDetails()
+	utils.SetContentType("application/json", &httpDetails.Headers)
+	request := DeleteBuildRequest{
+		Project:      artifactoryProjectKey,
+		BuildName:    buildName,
+		BuildNumbers: []string{buildVersion},
+	}
+	bts, _ := json.Marshal(request)
+	deleteBuildURL := fmt.Sprintf("%sapi/build/delete", client.GetConfig().GetServiceDetails().GetUrl())
+	re, body, err := client.Client().SendPost(deleteBuildURL, bts, &httpDetails)
+	if err != nil {
+		return err
+	}
+	if re.StatusCode == http.StatusNotFound || re.StatusCode < 400 {
+		return nil
+	}
+	return fmt.Errorf("unable to delete build: %s", string(body))
 }
 
 func (e *artifactoryBuildInfoPlugin) computeBuildInfoModules(client artifactory.ArtifactoryServicesManager, execContext executionContext) ([]buildinfo.Module, error) {
@@ -223,8 +259,6 @@ func main() {
 	if err := integrationplugin.Start(context.Background(), &e); err != nil {
 		panic(err)
 	}
-	return
-
 }
 
 func fail(format string, args ...interface{}) (*integrationplugin.RunResult, error) {

@@ -4,6 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http/httptest"
+	"testing"
+
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/test"
@@ -12,8 +15,6 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"net/http/httptest"
-	"testing"
 )
 
 func Test_getWorkflowRunAndNodeRunResults(t *testing.T) {
@@ -32,7 +33,7 @@ func Test_getWorkflowRunAndNodeRunResults(t *testing.T) {
 
 	require.NoError(t, api.workflowRunCraft(context.TODO(), wrCreate.ID))
 
-	wrDB, err := workflow.LoadRunByID(db, wrCreate.ID, workflow.LoadRunOptions{})
+	wrDB, err := workflow.LoadRunByID(context.Background(), db, wrCreate.ID, workflow.LoadRunOptions{})
 	require.NoError(t, err)
 
 	artiData := sdk.WorkflowRunResultArtifact{

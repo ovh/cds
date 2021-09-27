@@ -202,6 +202,7 @@ export class CDNLine {
     number: number;
     value: string;
     api_ref_hash: string;
+    since: number; // the count of milliseconds since job start
 
     // properties used by ui only
     extra: Array<string>;

@@ -3,7 +3,6 @@ package internal
 import (
 	"archive/tar"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -40,7 +39,7 @@ func cachePushHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 		}
 
 		var c sdk.Cache
-		if err := json.Unmarshal(data, &c); err != nil {
+		if err := sdk.JSONUnmarshal(data, &c); err != nil {
 			err = sdk.Error{
 				Message: "worker cache push > Cannot unmarshall body : " + err.Error(),
 				Status:  http.StatusInternalServerError,

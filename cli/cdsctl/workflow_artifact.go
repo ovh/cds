@@ -269,7 +269,7 @@ func workflowArtifactDownloadRun(v cli.Values) error {
 			fmt.Printf("Downloading %s...\n", artifactData.Name)
 			f, err := os.OpenFile(artifactData.Name, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.FileMode(artifactData.Perm))
 			if err != nil {
-				return sdk.NewError(sdk.ErrUnknownError, fmt.Errorf("cannot create file (OpenFile) %s: %s", artifactData.Name, err))
+				return cli.NewError("unable to open file %s: %v", artifactData.Name, err)
 			}
 			if err := client.CDNItemDownload(context.Background(), cdnURL, artifactData.CDNRefHash, sdk.CDNTypeItemRunResult, artifactData.MD5, f); err != nil {
 				_ = f.Close()
@@ -277,7 +277,7 @@ func workflowArtifactDownloadRun(v cli.Values) error {
 			}
 			fmt.Printf("File %s created, checksum OK\n", f.Name())
 			if err := f.Close(); err != nil {
-				return sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to close file %s: %v", artifactData.Name, err)
+				return cli.NewError("unable to close file %s: %v", artifactData.Name, err)
 			}
 		}
 		ok = true

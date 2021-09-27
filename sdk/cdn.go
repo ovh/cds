@@ -53,26 +53,26 @@ func (c CDNItem) MarshalJSON() ([]byte, error) {
 func (c *CDNItem) UnmarshalJSON(data []byte) error {
 	type Alias CDNItem // prevent recursion
 	var itemAlias Alias
-	if err := json.Unmarshal(data, &itemAlias); err != nil {
+	if err := JSONUnmarshal(data, &itemAlias); err != nil {
 		return WithStack(err)
 	}
 
 	switch itemAlias.Type {
 	case CDNTypeItemStepLog, CDNTypeItemServiceLog:
 		var apiRef CDNLogAPIRef
-		if err := json.Unmarshal(itemAlias.APIRefRaw, &apiRef); err != nil {
+		if err := JSONUnmarshal(itemAlias.APIRefRaw, &apiRef); err != nil {
 			return WithStack(err)
 		}
 		itemAlias.APIRef = &apiRef
 	case CDNTypeItemRunResult:
 		var apiRef CDNRunResultAPIRef
-		if err := json.Unmarshal(itemAlias.APIRefRaw, &apiRef); err != nil {
+		if err := JSONUnmarshal(itemAlias.APIRefRaw, &apiRef); err != nil {
 			return WithStack(err)
 		}
 		itemAlias.APIRef = &apiRef
 	case CDNTypeItemWorkerCache:
 		var apiRef CDNWorkerCacheAPIRef
-		if err := json.Unmarshal(itemAlias.APIRefRaw, &apiRef); err != nil {
+		if err := JSONUnmarshal(itemAlias.APIRefRaw, &apiRef); err != nil {
 			return WithStack(err)
 		}
 		itemAlias.APIRef = &apiRef
@@ -331,7 +331,7 @@ func (a *CDNLogAPIRef) Scan(src interface{}) error {
 	if !ok {
 		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
-	return WrapError(json.Unmarshal(source, a), "cannot unmarshal CDNLogAPIRef")
+	return WrapError(JSONUnmarshal(source, a), "cannot unmarshal CDNLogAPIRef")
 }
 
 type CDNItemType string

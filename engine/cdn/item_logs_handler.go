@@ -3,7 +3,6 @@ package cdn
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -13,7 +12,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/rockbears/log"
 
-	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/redis"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/service"
@@ -97,87 +95,72 @@ func (s *Service) sendLogsToWSClient(ctx context.Context, wsClient websocket.Cli
 		wsClientData.itemUnitsData = make(map[string]ItemUnitClientData)
 	}
 
-	its, err := item.LoadByJobRunID(ctx, s.Mapper, s.mustDBWithCtx(ctx), wsClientData.itemFilter.JobRunID, []string{string(sdk.CDNTypeItemStepLog), string(sdk.CDNTypeItemServiceLog)})
-	if err != nil {
-		// Catch not found error as the item can be created after the client stream subscription
-		if sdk.ErrorIs(err, sdk.ErrNotFound) {
-			log.Debug(ctx, "sendLogsToWSClient> can't found item job run %d for client %s: %+v", wsClientData.itemFilter.JobRunID, wsClient.UUID(), err)
-			return nil
-		}
-		return nil
-	}
+	for k := range wsClientData.itemUnitsData {
+		if wsClientData.itemUnitsData[k].itemUnit == nil {
+			iu, err := storage.LoadItemUnitByID(ctx, s.Mapper, s.mustDBWithCtx(ctx), k)
+			if err != nil {
+				return err
+			}
 
-	for _, it := range its {
-		if _, has := wsClientData.itemUnitsData[it.ID]; !has {
-			if err := s.itemAccessCheck(ctx, it); err != nil {
+			if err := s.itemAccessCheck(ctx, *iu.Item); err != nil {
 				var projectKey, workflow string
-				logRef, has := it.GetCDNLogApiRef()
+				logRef, has := iu.Item.GetCDNLogApiRef()
 				if has {
 					projectKey = logRef.ProjectKey
 					workflow = logRef.WorkflowName
 				}
 				return sdk.WrapError(err, "client %s can't access logs for workflow %s/%s", wsClient.UUID(), projectKey, workflow)
 			}
-			iu, err := storage.LoadItemUnitByUnit(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.LogsBuffer().ID(), it.ID)
-			if err != nil {
-				return err
-			}
-
-			// Take last 5 lines to begin
-			wsClientData.itemUnitsData[it.ID] = ItemUnitClientData{
+			wsClientData.itemUnitsData[k] = ItemUnitClientData{
 				itemUnit:            iu,
-				scoreNextLineToSend: -5,
+				scoreNextLineToSend: 0,
 			}
 		}
 
-	}
-
-	for k, v := range wsClientData.itemUnitsData {
-		// avoid to send all messages for ended steps
-		if v.scoreNextLineToSend == 0 && v.itemUnit.Item.Status == sdk.CDNStatusItemCompleted {
-			continue
-		}
-		log.Debug(ctx, "getItemLogsStreamHandler> send log to client %s from %d", wsClient.UUID(), v.scoreNextLineToSend)
-
-		rc, err := s.Units.LogsBuffer().NewAdvancedReader(ctx, *v.itemUnit, sdk.CDNReaderFormatJSON, v.scoreNextLineToSend, 100, 0)
-		if err != nil {
+		if err := s.sendStepLog(ctx, wsClient, wsClientData, wsClientData.itemUnitsData[k]); err != nil {
 			return err
 		}
-		buf := new(bytes.Buffer)
-		if _, err := io.Copy(buf, rc); err != nil {
-			_ = rc.Close()
-			return sdk.WrapError(err, "cannot copy data from reader to memory buffer")
-		}
-		var lines []redis.Line
-		if err := json.Unmarshal(buf.Bytes(), &lines); err != nil {
-			_ = rc.Close()
-			return sdk.WrapError(err, "cannot unmarshal lines from buffer %v", string(buf.Bytes()))
-		}
 
-		log.Debug(ctx, "getItemLogsStreamHandler> iterate over %d lines to send for client %s", len(lines), wsClient.UUID())
-		oldNextLineToSend := v.scoreNextLineToSend
-		for i := range lines {
-			if v.scoreNextLineToSend > 0 && v.scoreNextLineToSend != lines[i].Number {
-				break
-			}
-			if err := wsClient.Send(lines[i]); err != nil {
-				return err
-			}
-			if v.scoreNextLineToSend < 0 {
-				v.scoreNextLineToSend = lines[i].Number + 1
-				wsClientData.itemUnitsData[k] = v
-			} else {
-				v.scoreNextLineToSend++
-				wsClientData.itemUnitsData[k] = v
-			}
-		}
+	}
+	return nil
+}
 
-		// If all the lines were sent, we can trigger another update, if only one line was send do not trigger an update wait for next event from broker
-		if len(lines) > 1 && (oldNextLineToSend > 0 || v.scoreNextLineToSend-oldNextLineToSend == int64(len(lines))) {
-			wsClientData.TriggerUpdate()
-		}
+func (s *Service) sendStepLog(ctx context.Context, wsClient websocket.Client, wsClientData *websocketClientData, data ItemUnitClientData) error {
+	log.Debug(ctx, "getItemLogsStreamHandler> send log to client %s from %d", wsClient.UUID(), data.scoreNextLineToSend)
+
+	rc, err := s.Units.LogsBuffer().NewAdvancedReader(ctx, *data.itemUnit, sdk.CDNReaderFormatJSON, data.scoreNextLineToSend, 100, 0)
+	if err != nil {
+		return err
+	}
+	defer rc.Close() // nolint
+	buf := new(bytes.Buffer)
+	if _, err := io.Copy(buf, rc); err != nil {
+		return sdk.WrapError(err, "cannot copy data from reader to memory buffer")
+	}
+	var lines []redis.Line
+	if err := sdk.JSONUnmarshal(buf.Bytes(), &lines); err != nil {
+		return sdk.WrapError(err, "cannot unmarshal lines from buffer %v", buf.String())
 	}
 
+	log.Debug(ctx, "getItemLogsStreamHandler> iterate over %d lines to send for client %s", len(lines), wsClient.UUID())
+	oldNextLineToSend := data.scoreNextLineToSend
+	for i := range lines {
+		if data.scoreNextLineToSend > 0 && data.scoreNextLineToSend != lines[i].Number {
+			break
+		}
+		if err := wsClient.Send(lines[i]); err != nil {
+			return err
+		}
+		if data.scoreNextLineToSend < 0 {
+			data.scoreNextLineToSend = lines[i].Number + 1
+		} else {
+			data.scoreNextLineToSend++
+		}
+	}
+	// If all the lines were sent, we can trigger another update, if only one line was send do not trigger an update wait for next event from broker
+	if len(lines) > 1 && (oldNextLineToSend > 0 || int(data.scoreNextLineToSend-oldNextLineToSend) == len(lines)) {
+		wsClientData.TriggerUpdate()
+	}
 	return nil
 }
 

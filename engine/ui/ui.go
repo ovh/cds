@@ -336,24 +336,20 @@ func (s *Service) downloadStaticFilesFromGitHub(ctx context.Context, version str
 	if _, err := os.Stat(s.Cfg.Staticdir); os.IsNotExist(err) {
 		log.Info(ctx, "ui> creating directory %s", s.Cfg.Staticdir)
 		if err := os.Mkdir(s.Cfg.Staticdir, 0740); err != nil {
-			return fmt.Errorf("Error while creating directory: %v", err)
+			return sdk.WrapError(err, "error while creating directory: %v", s.Cfg.Staticdir)
 		}
 	}
 
-	urlFiles := fmt.Sprintf("https://github.com/ovh/cds/releases/download/%s/ui.tar.gz", version)
-	if version == "latest" {
-		var err error
-		urlFiles, err = s.Client.DownloadURLFromGithub("ui.tar.gz")
-		if err != nil {
-			return fmt.Errorf("Error while getting ui.tar.gz from Github err:%s", err)
-		}
+	urlFiles, err := sdk.DownloadURLFromGithub("ui.tar.gz", version)
+	if err != nil {
+		return sdk.WrapError(err, "error while getting ui.tar.gz from GitHub")
 	}
 
 	log.Info(ctx, "ui> Downloading from %s...", urlFiles)
 
 	resp, err := http.Get(urlFiles)
 	if err != nil {
-		return fmt.Errorf("Error while getting ui.tar.gz from GitHub: %v", err)
+		return sdk.WrapError(err, "error while getting ui.tar.gz from GitHub")
 	}
 	defer resp.Body.Close()
 
@@ -362,7 +358,7 @@ func (s *Service) downloadStaticFilesFromGitHub(ctx context.Context, version str
 	}
 
 	if resp.StatusCode != 200 {
-		return fmt.Errorf("Error while getting ui.tar.gz from GitHub - HTTP code: %d", resp.StatusCode)
+		return fmt.Errorf("error while getting ui.tar.gz from GitHub - HTTP code: %d", resp.StatusCode)
 	}
 
 	log.Info(ctx, "ui> Download successful, decompressing the archive file...")

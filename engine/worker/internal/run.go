@@ -19,21 +19,7 @@ import (
 	"github.com/ovh/cds/sdk/interpolate"
 )
 
-func processVariablesAndParameters(action *sdk.Action, jobParameters []sdk.Parameter, jobSecrets []sdk.Variable) error {
-	if err := processJobParameter(jobParameters, jobSecrets); err != nil {
-		return err
-	}
-
-	if err := processActionVariables(action, nil, jobParameters, jobSecrets); err != nil {
-		return err
-	}
-	return nil
-}
-
-func processJobParameter(parameters []sdk.Parameter, secrets []sdk.Variable) error {
-	secretParam := sdk.VariablesToParameters("", secrets)
-	secretMap := sdk.ParametersToMap(secretParam)
-
+func processJobParameter(parameters []sdk.Parameter) error {
 	for i := range parameters {
 		var err error
 		var oldValue = parameters[i].Value
@@ -42,11 +28,6 @@ func processJobParameter(parameters []sdk.Parameter, secrets []sdk.Variable) err
 		for keepReplacing && x < 10 {
 			var paramMap = sdk.ParametersToMap(parameters)
 			parameters[i].Value, err = interpolate.Do(parameters[i].Value, paramMap)
-			if err != nil {
-				return sdk.WrapError(err, "Unable to interpolate job parameters")
-			}
-
-			parameters[i].Value, err = interpolate.Do(parameters[i].Value, secretMap)
 			if err != nil {
 				return sdk.WrapError(err, "Unable to interpolate job parameters")
 			}
@@ -67,18 +48,16 @@ func processJobParameter(parameters []sdk.Parameter, secrets []sdk.Variable) err
 // - Secrets from project, application and environment
 //
 // This function should be called ONLY from worker
-func processActionVariables(a *sdk.Action, parent *sdk.Action, jobParameters []sdk.Parameter, secrets []sdk.Variable) error {
+func processActionVariables(a *sdk.Action, parent *sdk.Action, jobParameters []sdk.Parameter) error {
 	// replaces placeholder in parameters with ActionBuild variables
 	// replaces placeholder in parameters with Parent params
-	secretParam := sdk.VariablesToParameters("", secrets)
-	secretMap := sdk.ParametersToMap(secretParam)
+
 	var parentParamMap = map[string]string{}
 	if parent != nil {
 		parentParamMap = sdk.ParametersToMap(parent.Parameters)
 	}
 	jobParamMap := sdk.ParametersToMap(jobParameters)
 	allParams := sdk.ParametersMapMerge(parentParamMap, jobParamMap)
-	allParams = sdk.ParametersMapMerge(allParams, secretMap)
 	for i := range a.Parameters {
 		var err error
 		a.Parameters[i].Value, err = interpolate.Do(a.Parameters[i].Value, allParams)
@@ -89,7 +68,7 @@ func processActionVariables(a *sdk.Action, parent *sdk.Action, jobParameters []s
 
 	// replaces placeholder in all children recursively
 	for i := range a.Actions {
-		// Do not interpolate yet cds.version for child because the value can change during job execution
+		// Do not interpolate yet cds.version variable for child because the value can change during job execution
 		filterJobParameters := make([]sdk.Parameter, 0, len(jobParameters))
 		for i := range jobParameters {
 			if jobParameters[i].Name != "cds.version" {
@@ -97,7 +76,7 @@ func processActionVariables(a *sdk.Action, parent *sdk.Action, jobParameters []s
 			}
 		}
 
-		if err := processActionVariables(&a.Actions[i], a, filterJobParameters, secrets); err != nil {
+		if err := processActionVariables(&a.Actions[i], a, filterJobParameters); err != nil {
 			return err
 		}
 	}
@@ -236,6 +215,13 @@ func (w *CurrentWorker) runAction(ctx context.Context, a sdk.Action, jobID int64
 
 	// Replace variable placeholder that may have been added by last step
 	if err := w.replaceVariablesPlaceholder(&a, w.currentJob.params); err != nil {
+		return sdk.Result{
+			Status:  sdk.StatusFail,
+			BuildID: jobID,
+			Reason:  err.Error(),
+		}
+	}
+	if err := processActionVariables(&a, nil, w.currentJob.params); err != nil {
 		return sdk.Result{
 			Status:  sdk.StatusFail,
 			BuildID: jobID,
@@ -584,29 +570,21 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (res sdk.
 
 	w.currentJob.context = ctx
 
-	var jobParameters = jobInfo.NodeJobRun.Parameters
+	w.currentJob.params = jobInfo.NodeJobRun.Parameters
 
 	//Add working directory as job parameter
-	jobParameters = append(jobParameters, sdk.Parameter{
+	w.currentJob.params = append(w.currentJob.params, sdk.Parameter{
 		Name:  "cds.workspace",
 		Type:  sdk.StringParameter,
 		Value: wdAbs,
 	})
 
 	// add cds.worker on parameters available
-	jobParameters = append(jobParameters, sdk.Parameter{
+	w.currentJob.params = append(w.currentJob.params, sdk.Parameter{
 		Name:  "cds.worker",
 		Type:  sdk.StringParameter,
 		Value: jobInfo.NodeJobRun.Job.WorkerName,
 	})
-
-	// REPLACE ALL VARIABLE EVEN SECRETS HERE
-	if err := processVariablesAndParameters(&jobInfo.NodeJobRun.Job.Action, jobParameters, jobInfo.Secrets); err != nil {
-		return sdk.Result{
-			Status: sdk.StatusFail,
-			Reason: fmt.Sprintf("unable to process job %s: %v", jobInfo.NodeJobRun.Job.Action.Name, err),
-		}
-	}
 
 	// Add secrets as string or password in ActionBuild.Args
 	// So they can be used by plugins
@@ -616,10 +594,16 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (res sdk.
 			Name:  s.Name,
 			Value: s.Value,
 		}
-		jobParameters = append(jobParameters, p)
+		w.currentJob.params = append(w.currentJob.params, p)
 	}
 
-	w.currentJob.params = jobParameters
+	// REPLACE ALL VARIABLE EVEN SECRETS HERE
+	if err := processJobParameter(w.currentJob.params); err != nil {
+		return sdk.Result{
+			Status: sdk.StatusFail,
+			Reason: fmt.Sprintf("unable to process job %s: %v", jobInfo.NodeJobRun.Job.Action.Name, err),
+		}
+	}
 
 	res = w.runJob(ctx, &jobInfo.NodeJobRun.Job.Action, jobInfo.NodeJobRun.ID, jobInfo.Secrets)
 

@@ -82,7 +82,7 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "postWorkflowAsCodeHandler> cannot get client got %s %s : %v", key, rootApp.VCSServer, err)
 		}
 
-		b, err := client.Branch(ctx, rootApp.RepositoryFullname, branch)
+		b, err := client.Branch(ctx, rootApp.RepositoryFullname, sdk.VCSBranchFilters{BranchName: branch})
 		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return err
 		}

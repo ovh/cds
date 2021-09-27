@@ -92,19 +92,15 @@ func Test_RunNonDefaultBranchWithSecrets(t *testing.T) {
 	UUID := sdk.UUID()
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/myrepo/branches", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/myrepo/branches/?branch=&default=true", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
-				bs := []sdk.VCSBranch{
-					{
-						DisplayID: "master",
-						Default:   true,
-					},
-					{
-						DisplayID: "devbranch",
-					},
+				b := sdk.VCSBranch{
+					DisplayID: "master",
+					Default:   true,
 				}
-				out = bs
+
+				out = b
 				return nil, 200, nil
 			},
 		).MaxTimes(3)
@@ -188,7 +184,7 @@ version: v1.0`),
 
 	// Get vcsInfos +  Get Commits
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/myrepo/branches/?branch=devbranch", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/myrepo/branches/?branch=devbranch&default=false", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 				b := sdk.VCSBranch{
@@ -351,7 +347,7 @@ version: v1.0`),
 
 	require.NoError(t, waitCraftinWorkflow(t, api, db, wr.ID))
 
-	wrDB, errDB := workflow.LoadRunByID(db, wr.ID, workflow.LoadRunOptions{})
+	wrDB, errDB := workflow.LoadRunByID(context.Background(), db, wr.ID, workflow.LoadRunOptions{})
 	require.NoError(t, errDB)
 
 	t.Logf("%d %+v", wrDB.Workflow.WorkflowData.Node.ID, wrDB.WorkflowNodeRuns)

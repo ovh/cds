@@ -53,7 +53,7 @@ type HatcheryCommonConfiguration struct {
 		MaxConcurrentRegistering  int      `toml:"maxConcurrentRegistering" default:"2" comment:"Maximum allowed simultaneous workers registering. -1 to disable registering on this hatchery" json:"maxConcurrentRegistering"`
 		RegisterFrequency         int      `toml:"registerFrequency" default:"60" comment:"Check if some worker model have to be registered each n Seconds" json:"registerFrequency"`
 		Region                    string   `toml:"region" default:"" comment:"region of this hatchery - optional. With a free text as 'myregion', user can set a prerequisite 'region' with value 'myregion' on CDS Job" json:"region"`
-		IgnoreJobWithNoRegion     bool     `toml:"ignoreJobWithNoRegion" default:"false" comment:"Ignore job without a region prerequisite if ignoreJobWithNoRegion=true"`
+		IgnoreJobWithNoRegion     bool     `toml:"ignoreJobWithNoRegion" default:"false" comment:"Ignore job without a region prerequisite if ignoreJobWithNoRegion=true" json:"ignoreJobWithNoRegion"`
 		WorkerAPIHTTP             struct {
 			URL      string `toml:"url" default:"http://localhost:8081" commented:"true" comment:"CDS API URL for worker, let empty or commented to use the same URL that is used by the Hatchery" json:"url"`
 			Insecure bool   `toml:"insecure" default:"false" commented:"true" comment:"sslInsecureSkipVerify, set to true if you use a self-signed SSL on CDS API" json:"insecure"`
@@ -67,6 +67,7 @@ type HatcheryCommonConfiguration struct {
 				ExtraValue string `toml:"extraValue" comment:"value for extraKey field. For many keys: valueaaa,valuebbb" json:"-"`
 			} `toml:"graylog" json:"graylog"`
 		} `toml:"workerLogsOptions" comment:"Worker Log Configuration" json:"workerLogsOptions"`
+		MaxAttemptsNumberBeforeFailure int `toml:"maxAttemptsNumberBeforeFailure" default:"5" commented:"true" comment:"Maximum attempts to start a same job. -1 to disable failing jobs when to many attempts" json:"maxAttemptsNumberBeforeFailure"`
 	} `toml:"provision" json:"provision"`
 	LogOptions struct {
 		SpawnOptions struct {

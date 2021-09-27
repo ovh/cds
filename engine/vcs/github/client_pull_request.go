@@ -57,7 +57,7 @@ func (g *githubClient) PullRequest(ctx context.Context, fullname string, id stri
 			}
 
 		} else {
-			if err := json.Unmarshal(body, &pr); err != nil {
+			if err := sdk.JSONUnmarshal(body, &pr); err != nil {
 				log.Warn(ctx, "githubClient.PullRequest> Unable to parse github pullrequest: %s", err)
 				return sdk.VCSPullRequest{}, sdk.WithStack(err)
 			}
@@ -118,7 +118,7 @@ func (g *githubClient) PullRequests(ctx context.Context, fullname string, opts s
 			}
 			break
 		} else {
-			if err := json.Unmarshal(body, &nextPullRequests); err != nil {
+			if err := sdk.JSONUnmarshal(body, &nextPullRequests); err != nil {
 				log.Warn(ctx, "githubClient.Branches> Unable to parse github branches: %s", err)
 				return nil, err
 			}
@@ -232,7 +232,7 @@ func (g *githubClient) PullRequestCreate(ctx context.Context, repo string, pr sd
 	}
 
 	var prResponse PullRequest
-	if err := json.Unmarshal(body, &prResponse); err != nil {
+	if err := sdk.JSONUnmarshal(body, &prResponse); err != nil {
 		return sdk.VCSPullRequest{}, sdk.WrapError(err, "Unable to unmarshal pullrequest %s", string(body))
 	}
 

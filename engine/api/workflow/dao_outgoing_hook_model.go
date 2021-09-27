@@ -39,7 +39,7 @@ func (r *outgoingHookModel) PostGet(db gorp.SqlExecutor) error {
 		return err
 	}
 	conf := sdk.WorkflowNodeHookConfig{}
-	if err := json.Unmarshal([]byte(confStr), &conf); err != nil {
+	if err := sdk.JSONUnmarshal([]byte(confStr), &conf); err != nil {
 		return err
 	}
 	r.DefaultConfig = conf

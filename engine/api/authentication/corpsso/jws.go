@@ -46,7 +46,7 @@ func prepareRequest(requestSigningKey string, request sdk.AuthSigninConsumerToke
 		return "", sdk.WithStack(err)
 	}
 	var requestData map[string]interface{}
-	if err := json.Unmarshal(requestJSON, &requestData); err != nil {
+	if err := sdk.JSONUnmarshal(requestJSON, &requestData); err != nil {
 		return "", sdk.WithStack(err)
 	}
 

@@ -78,7 +78,7 @@ func (client *bitbucketcloudClient) SetStatus(ctx context.Context, event sdk.Eve
 	}
 
 	var resp Status
-	if err := json.Unmarshal(body, &resp); err != nil {
+	if err := sdk.JSONUnmarshal(body, &resp); err != nil {
 		return sdk.WrapError(err, "Unable to unmarshal body")
 	}
 
@@ -97,7 +97,7 @@ func (client *bitbucketcloudClient) ListStatuses(ctx context.Context, repo strin
 		return []sdk.VCSCommitStatus{}, sdk.NewError(sdk.ErrRepoNotFound, errorAPI(body))
 	}
 	var ss Statuses
-	if err := json.Unmarshal(body, &ss); err != nil {
+	if err := sdk.JSONUnmarshal(body, &ss); err != nil {
 		return []sdk.VCSCommitStatus{}, sdk.WrapError(err, "Unable to parse bitbucket cloud commit: %s", ref)
 	}
 
@@ -133,7 +133,7 @@ func processBbitbucketState(s Status) string {
 func processEventWorkflowNodeRun(event sdk.Event, cdsUIURL string, disabledStatusDetail bool) (statusData, error) {
 	data := statusData{}
 	var eventNR sdk.EventRunWorkflowNode
-	if err := json.Unmarshal(event.Payload, &eventNR); err != nil {
+	if err := sdk.JSONUnmarshal(event.Payload, &eventNR); err != nil {
 		return data, sdk.WrapError(err, "cannot unmarshal payload")
 	}
 	//We only manage status Success, Failure and Stopped

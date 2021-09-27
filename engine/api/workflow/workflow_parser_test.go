@@ -182,12 +182,12 @@ func TestParseAndImportFromRepository(t *testing.T) {
 				if err := enc.Encode(hook); err != nil {
 					return writeError(w, err)
 				}
-			case "/vcs/github/repos/foo/myrepo/branches":
-				vcsPR := []sdk.VCSBranch{{
+			case "/vcs/github/repos/foo/myrepo/branches/?branch=&default=true":
+				vcsPR := sdk.VCSBranch{
 					ID:        "master",
 					DisplayID: "master",
 					Default:   true,
-				}}
+				}
 				if err := enc.Encode(vcsPR); err != nil {
 					return writeError(w, err)
 				}

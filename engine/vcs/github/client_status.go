@@ -87,7 +87,7 @@ func (g *githubClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	}
 
 	s := &Status{}
-	if err := json.Unmarshal(body, s); err != nil {
+	if err := sdk.JSONUnmarshal(body, s); err != nil {
 		return sdk.WrapError(err, "Unable to unmarshal body")
 	}
 
@@ -115,7 +115,7 @@ func (g *githubClient) ListStatuses(ctx context.Context, repo string, ref string
 			log.Error(ctx, "cannot get from cache %s: %v", k, err)
 		}
 	} else {
-		if err := json.Unmarshal(body, &ss); err != nil {
+		if err := sdk.JSONUnmarshal(body, &ss); err != nil {
 			return []sdk.VCSCommitStatus{}, sdk.WrapError(err, "Unable to parse github commit: %s", ref)
 		}
 		//Put the body on cache for one hour and one minute
@@ -155,7 +155,7 @@ func processGithubState(s Status) string {
 func processEventWorkflowNodeRun(event sdk.Event, cdsUIURL string, disabledStatusDetail bool) (statusData, error) {
 	data := statusData{}
 	var eventNR sdk.EventRunWorkflowNode
-	if err := json.Unmarshal(event.Payload, &eventNR); err != nil {
+	if err := sdk.JSONUnmarshal(event.Payload, &eventNR); err != nil {
 		return data, sdk.WrapError(err, "cannot unmarshal payload")
 	}
 	//We only manage status Success and Failure

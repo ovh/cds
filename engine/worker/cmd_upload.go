@@ -23,7 +23,7 @@ var cmdUploadTag string
 func cmdUpload() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "upload",
-		Short: "worker upload --tag=tagValue {{.cds.workspace}}/fileToUpload",
+		Short: "worker upload {{.cds.workspace}}/fileToUpload",
 		Long: `
 Inside a job, there are two ways to upload an artifact:
 
@@ -52,10 +52,6 @@ func uploadCmd() func(cmd *cobra.Command, args []string) {
 		port, errPort := strconv.Atoi(portS)
 		if errPort != nil {
 			sdk.Exit("cannot parse '%s' as a port number", portS)
-		}
-
-		if cmdUploadTag == "" {
-			sdk.Exit("worker upload: invalid tag. %s\n", cmd.Short)
 		}
 
 		if len(args) == 0 {

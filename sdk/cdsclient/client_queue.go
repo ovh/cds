@@ -52,7 +52,7 @@ func shrinkQueue(queue *sdk.WorkflowQueue, nbJobsToKeep int) time.Time {
 	return t0
 }
 
-func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, modelType string, ratioService *int) error {
+func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, ms ...RequestModifier) error {
 	jobsTicker := time.NewTicker(delay)
 
 	// This goroutine call the SSE route
@@ -79,7 +79,7 @@ func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, j
 			}
 			if wsEvent.Event.EventType == "sdk.EventRunWorkflowJob" && wsEvent.Event.Status == sdk.StatusWaiting {
 				var jobEvent sdk.EventRunWorkflowJob
-				if err := json.Unmarshal(wsEvent.Event.Payload, &jobEvent); err != nil {
+				if err := sdk.JSONUnmarshal(wsEvent.Event.Payload, &jobEvent); err != nil {
 					errs <- newError(fmt.Errorf("unable to unmarshal job %v: %v", wsEvent.Event.Payload, err))
 					continue
 				}
@@ -108,22 +108,9 @@ func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, j
 				continue
 			}
 
-			urlValues := url.Values{}
-			if ratioService != nil {
-				urlValues.Set("ratioService", strconv.Itoa(*ratioService))
-			}
-
-			if modelType != "" {
-				urlValues.Set("modelType", modelType)
-			}
-
 			ctxt, cancel := context.WithTimeout(ctx, 10*time.Second)
 			queue := sdk.WorkflowQueue{}
-			var urlSuffix = urlValues.Encode()
-			if urlSuffix != "" {
-				urlSuffix = "?" + urlSuffix
-			}
-			if _, err := c.GetJSON(ctxt, "/queue/workflows"+urlSuffix, &queue, nil); err != nil && !sdk.ErrorIs(err, sdk.ErrUnauthorized) {
+			if _, err := c.GetJSON(ctxt, "/queue/workflows", &queue, ms...); err != nil && !sdk.ErrorIs(err, sdk.ErrUnauthorized) {
 				errs <- newError(fmt.Errorf("unable to load jobs: %v", err))
 				cancel()
 				continue
@@ -146,19 +133,10 @@ func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, j
 	}
 }
 
-func (c *client) QueueWorkflowNodeJobRun(status ...string) ([]sdk.WorkflowNodeJobRun, error) {
+func (c *client) QueueWorkflowNodeJobRun(ms ...RequestModifier) ([]sdk.WorkflowNodeJobRun, error) {
 	wJobs := []sdk.WorkflowNodeJobRun{}
-
 	url, _ := url.Parse("/queue/workflows")
-	if len(status) > 0 {
-		q := url.Query()
-		for _, s := range status {
-			q.Add("status", s)
-		}
-		url.RawQuery = q.Encode()
-	}
-
-	if _, err := c.GetJSON(context.Background(), url.String(), &wJobs); err != nil {
+	if _, err := c.GetJSON(context.Background(), url.String(), &wJobs, ms...); err != nil {
 		return nil, err
 	}
 	return wJobs, nil
@@ -581,7 +559,7 @@ func (c *client) queueDirectStaticFilesUpload(projectKey, integrationName string
 			SetHeader("Content-Disposition", "attachment; filename=archive.tar"),
 			SetHeader("Content-Type", writer.FormDataContentType()))
 		if err == nil && code < 300 {
-			if err := json.Unmarshal(respBody, &staticFileResp); err != nil {
+			if err := sdk.JSONUnmarshal(respBody, &staticFileResp); err != nil {
 				return "", newError(fmt.Errorf("unable to unmarshal body: %v: %v", string(respBody), err))
 			}
 			fmt.Printf("Files uploaded with public URL: %s\n", staticFileResp.PublicURL)

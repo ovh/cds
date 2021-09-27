@@ -2,7 +2,6 @@ package cdsclient
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	"github.com/ovh/cds/sdk"
@@ -39,7 +38,7 @@ func (c *client) MonErrorsGet(requestID string) ([]sdk.Error, error) {
 	}
 
 	var errs []sdk.Error
-	if err := json.Unmarshal(res, &errs); err != nil {
+	if err := sdk.JSONUnmarshal(res, &errs); err != nil {
 		return nil, err
 	}
 

@@ -33,7 +33,7 @@ func (s *Service) initWebsocket() error {
 		telemetry.Record(s.Router.Background, s.Metrics.WSEvents, 1)
 
 		var e sdk.CDNWSEvent
-		if err := json.Unmarshal(m, &e); err != nil {
+		if err := sdk.JSONUnmarshal(m, &e); err != nil {
 			err = sdk.WrapError(err, "cannot parse event from WS broker")
 			ctx := sdk.ContextWithStacktrace(context.TODO(), err)
 			log.Warn(ctx, err.Error())
@@ -180,7 +180,7 @@ func (d *websocketClientData) ConsumeTrigger() (triggered bool) {
 
 func (d *websocketClientData) UpdateFilter(msg []byte) error {
 	var filter sdk.CDNStreamFilter
-	if err := json.Unmarshal(msg, &filter); err != nil {
+	if err := sdk.JSONUnmarshal(msg, &filter); err != nil {
 		return sdk.WithStack(err)
 	}
 	if err := filter.Validate(); err != nil {

@@ -79,7 +79,7 @@ func (u *AuthentifiedUser) Scan(src interface{}) error {
 	if !ok {
 		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
-	return WrapError(json.Unmarshal(source, u), "cannot unmarshal AuthentifiedUser")
+	return WrapError(JSONUnmarshal(source, u), "cannot unmarshal AuthentifiedUser")
 }
 
 // GetGroupIDs returns groups ids for user

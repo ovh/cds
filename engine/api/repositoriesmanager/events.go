@@ -2,7 +2,6 @@ package repositoriesmanager
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -67,7 +66,7 @@ func processEvent(ctx context.Context, db gorpmapper.SqlExecutorWithTx, event sd
 
 	var eventWNR sdk.EventRunWorkflowNode
 
-	if err := json.Unmarshal(event.Payload, &eventWNR); err != nil {
+	if err := sdk.JSONUnmarshal(event.Payload, &eventWNR); err != nil {
 		return sdk.WrapError(err, "cannot read payload")
 	}
 	if eventWNR.RepositoryManagerName == "" {

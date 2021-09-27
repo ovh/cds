@@ -18,8 +18,8 @@ import (
 	migrate "github.com/rubenv/sql-migrate"
 	"github.com/spf13/cobra"
 
-	"github.com/ovh/cds/engine/api/database/dbmigrate"
 	"github.com/ovh/cds/engine/database"
+	"github.com/ovh/cds/engine/database/dbmigrate"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 )
@@ -150,12 +150,12 @@ func databaseDownloadSQLTarGz(currentVersion string, artifactName string, migrat
 	}
 	currentTag := currentVersion[:strings.LastIndex(currentVersion, "+")]
 	urlTarGZ := fmt.Sprintf("https://github.com/ovh/cds/releases/download/%s/%s", currentTag, artifactName)
-	fmt.Printf("Getting %s from github on %s...\n", artifactName, urlTarGZ)
+	fmt.Printf("Getting %s from GitHub on %s...\n", artifactName, urlTarGZ)
 
 	httpClient := cdsclient.NewHTTPClient(60*time.Second, false)
 	resp, err := httpClient.Get(urlTarGZ)
 	if err != nil {
-		return fmt.Errorf("error while getting %s from Github: %v", artifactName, err)
+		return sdk.WrapError(err, "error while getting %s from Github", artifactName)
 	}
 	defer resp.Body.Close()
 

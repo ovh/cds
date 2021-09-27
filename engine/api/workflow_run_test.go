@@ -788,7 +788,7 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 	}, *consumer, nil)
 	require.NoError(t, err)
 
-	lastrun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, w1.Name, workflow.LoadRunOptions{WithArtifacts: true, WithTests: true})
+	lastrun, err := workflow.LoadLastRun(context.Background(), api.mustDB(), proj.Key, w1.Name, workflow.LoadRunOptions{WithArtifacts: true, WithTests: true})
 	require.NoError(t, err)
 
 	vuln := sdk.Vulnerability{
@@ -1100,7 +1100,7 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 	// wait for the workflow to finish crafting
 	assert.NoError(t, waitCraftinWorkflow(t, api, db, wr.ID))
 
-	lastRun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, w1.Name, workflow.LoadRunOptions{})
+	lastRun, err := workflow.LoadLastRun(context.Background(), api.mustDB(), proj.Key, w1.Name, workflow.LoadRunOptions{})
 	test.NoError(t, err)
 	assert.NotNil(t, lastRun.RootRun())
 	payloadCount := 0
@@ -1168,7 +1168,7 @@ func waitCraftinWorkflow(t *testing.T, api *API, db gorp.SqlExecutor, id int64) 
 			t.Logf("(%v) exiting waitCraftingWorkflow %d", time.Now(), id)
 			return ctx.Err()
 		case <-tick.C:
-			w, _ := workflow.LoadRunByID(api.mustDB(), id, workflow.LoadRunOptions{})
+			w, _ := workflow.LoadRunByID(context.Background(), api.mustDB(), id, workflow.LoadRunOptions{})
 			if w == nil {
 				continue
 			}
@@ -1216,7 +1216,7 @@ func Test_workflowRunCraft(t *testing.T) {
 
 	require.NoError(t, api.workflowRunCraft(context.TODO(), wrPending.ID))
 
-	wrDB, err := workflow.LoadRunByID(db, wrPending.ID, workflow.LoadRunOptions{})
+	wrDB, err := workflow.LoadRunByID(context.Background(), db, wrPending.ID, workflow.LoadRunOptions{})
 	require.NoError(t, err)
 
 	require.Len(t, wrDB.Infos, 1)
@@ -1419,7 +1419,7 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 	router.Mux.ServeHTTP(rec, req)
 	require.Equal(t, 202, rec.Code)
 
-	lastRun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, w.Name, workflow.LoadRunOptions{})
+	lastRun, err := workflow.LoadLastRun(context.Background(), api.mustDB(), proj.Key, w.Name, workflow.LoadRunOptions{})
 	test.NoError(t, err)
 	waitCraftinWorkflow(t, api, db, lastRun.ID)
 
@@ -1881,7 +1881,7 @@ func Test_postWorkflowRunHandlerHookWithMutex(t *testing.T) {
 	defer req.Body.Close()
 	assert.Equal(t, 202, rec.Code)
 
-	lastRun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, w.Name, workflow.LoadRunOptions{})
+	lastRun, err := workflow.LoadLastRun(context.Background(), api.mustDB(), proj.Key, w.Name, workflow.LoadRunOptions{})
 	test.NoError(t, err)
 	waitCraftinWorkflow(t, api, db, lastRun.ID)
 
@@ -1896,14 +1896,14 @@ func Test_postWorkflowRunHandlerHookWithMutex(t *testing.T) {
 	defer req2.Body.Close()
 	assert.Equal(t, 202, rec2.Code)
 
-	lastRun, err = workflow.LoadLastRun(api.mustDB(), proj.Key, w.Name, workflow.LoadRunOptions{})
+	lastRun, err = workflow.LoadLastRun(context.Background(), api.mustDB(), proj.Key, w.Name, workflow.LoadRunOptions{})
 	test.NoError(t, err)
 	waitCraftinWorkflow(t, api, db, lastRun.ID)
 
 	// it's an async call, wait a bit the let cds take care of the previous request
 	time.Sleep(3 * time.Second)
 
-	lastRun, err = workflow.LoadLastRun(api.mustDB(), proj.Key, w1.Name, workflow.LoadRunOptions{})
+	lastRun, err = workflow.LoadLastRun(context.Background(), api.mustDB(), proj.Key, w1.Name, workflow.LoadRunOptions{})
 	test.NoError(t, err)
 	assert.Equal(t, int64(2), lastRun.Number)
 	assert.Equal(t, sdk.StatusBuilding, lastRun.Status)
@@ -1953,7 +1953,7 @@ func Test_postWorkflowRunHandlerMutexRelease(t *testing.T) {
 	router.Mux.ServeHTTP(rec, req)
 	require.Equal(t, 202, rec.Code)
 
-	lastRun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, wkf.Name, workflow.LoadRunOptions{})
+	lastRun, err := workflow.LoadLastRun(context.Background(), api.mustDB(), proj.Key, wkf.Name, workflow.LoadRunOptions{})
 	test.NoError(t, err)
 	waitCraftinWorkflow(t, api, db, lastRun.ID)
 
@@ -1999,7 +1999,7 @@ func Test_postWorkflowRunHandlerMutexRelease(t *testing.T) {
 	router.Mux.ServeHTTP(rec, req)
 	require.Equal(t, 202, rec.Code)
 
-	lastRun, err = workflow.LoadLastRun(api.mustDB(), proj.Key, wkf.Name, workflow.LoadRunOptions{})
+	lastRun, err = workflow.LoadLastRun(context.Background(), api.mustDB(), proj.Key, wkf.Name, workflow.LoadRunOptions{})
 	test.NoError(t, err)
 	waitCraftinWorkflow(t, api, db, lastRun.ID)
 
@@ -2048,7 +2048,7 @@ func Test_postWorkflowRunHandlerMutexRelease(t *testing.T) {
 	router.Mux.ServeHTTP(rec, req)
 	require.Equal(t, 202, rec.Code)
 
-	lastRun, err = workflow.LoadLastRun(api.mustDB(), proj.Key, wkf.Name, workflow.LoadRunOptions{})
+	lastRun, err = workflow.LoadLastRun(context.Background(), api.mustDB(), proj.Key, wkf.Name, workflow.LoadRunOptions{})
 	test.NoError(t, err)
 	waitCraftinWorkflow(t, api, db, lastRun.ID)
 
@@ -2345,7 +2345,7 @@ func Test_postWorkflowRunHandlerHook(t *testing.T) {
 	assert.Equal(t, int64(1), wr.Number)
 
 	assert.NoError(t, waitCraftinWorkflow(t, api, db, wr.ID))
-	lastRun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, w1.Name, workflow.LoadRunOptions{})
+	lastRun, err := workflow.LoadLastRun(context.Background(), api.mustDB(), proj.Key, w1.Name, workflow.LoadRunOptions{})
 	test.NoError(t, err)
 	assert.NotNil(t, lastRun.RootRun())
 	payloadCount := 0
@@ -2506,14 +2506,14 @@ func Test_postWorkflowRunHandler_ConditionNotOK(t *testing.T) {
 
 	assert.Equal(t, 202, rec.Code)
 
-	lastRun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, w.Name, workflow.LoadRunOptions{})
+	lastRun, err := workflow.LoadLastRun(context.Background(), api.mustDB(), proj.Key, w.Name, workflow.LoadRunOptions{})
 	test.NoError(t, err)
 	waitCraftinWorkflow(t, api, db, lastRun.ID)
 
 	// it's an async call, wait a bit the let cds take care of the previous request
 	time.Sleep(3 * time.Second)
 
-	lastRun, err = workflow.LoadLastRun(api.mustDB(), proj.Key, w.Name, workflow.LoadRunOptions{})
+	lastRun, err = workflow.LoadLastRun(context.Background(), api.mustDB(), proj.Key, w.Name, workflow.LoadRunOptions{})
 	test.NoError(t, err)
 	assert.Equal(t, int64(1), lastRun.Number)
 	assert.Equal(t, sdk.StatusNeverBuilt, lastRun.Status)
@@ -2704,7 +2704,7 @@ func initGetWorkflowNodeRunJobTest(t *testing.T, api *API, db gorpmapper.SqlExec
 	}, *consumer, nil)
 	require.NoError(t, err)
 
-	lastRun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, w1.Name, workflow.LoadRunOptions{WithArtifacts: true})
+	lastRun, err := workflow.LoadLastRun(context.Background(), api.mustDB(), proj.Key, w1.Name, workflow.LoadRunOptions{WithArtifacts: true})
 	require.NoError(t, err)
 
 	// Update step status
@@ -3111,7 +3111,7 @@ func Test_postWorkflowRunHandlerRestartOnlyFailed(t *testing.T) {
 	assert.NoError(t, workflow.UpdateWorkflowRun(context.TODO(), db, wrr))
 
 	// Update WORKFLOW NODE RUN
-	nr, err := workflow.LoadNodeRunByID(db, wrr.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0].ID, workflow.LoadRunOptions{})
+	nr, err := workflow.LoadNodeRunByID(context.Background(), db, wrr.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0].ID, workflow.LoadRunOptions{})
 	assert.NoError(t, err)
 
 	assert.NoError(t, workflow.DeleteNodeJobRuns(db, nr.ID))
@@ -3157,6 +3157,121 @@ func Test_postWorkflowRunHandlerRestartOnlyFailed(t *testing.T) {
 	assert.NotEqual(t, firstJobEnd, wrr.WorkflowNodeRuns[wrr.Workflow.WorkflowData.Node.ID][0].Stages[0].RunJobs[1].Start)
 	assert.Equal(t, sdk.StatusSuccess, wrr.WorkflowNodeRuns[wrr.Workflow.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].Status)
 	assert.Equal(t, sdk.StatusWaiting, wrr.WorkflowNodeRuns[wrr.Workflow.WorkflowData.Node.ID][0].Stages[0].RunJobs[1].Status)
+}
+
+func Test_CheckRegionDuringInitWorkflow(t *testing.T) {
+	featureflipping.Init(gorpmapping.Mapper)
+	api, db, router := newTestAPI(t)
+
+	existingFeat, _ := featureflipping.LoadByName(context.Background(), gorpmapping.Mapper, db, sdk.FeatureRegion)
+	featureflipping.Delete(db, existingFeat.ID)
+	f := &sdk.Feature{
+		Name: sdk.FeatureRegion,
+		Rule: "return false",
+	}
+	require.NoError(t, featureflipping.Insert(gorpmapping.Mapper, db, f))
+	t.Cleanup(func() {
+		featureflipping.Delete(db, f.ID)
+	})
+
+	u, pass := assets.InsertAdminUser(t, db)
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+
+	pip := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+	}
+	require.NoError(t, pipeline.InsertPipeline(api.mustDB(), &pip))
+	s := sdk.NewStage("stage 1")
+	s.Enabled = true
+	s.PipelineID = pip.ID
+	pipeline.InsertStage(api.mustDB(), s)
+	j := &sdk.Job{
+		Enabled: true,
+		Action: sdk.Action{
+			Enabled: true,
+			Requirements: []sdk.Requirement{
+				{
+					Name:  "region",
+					Type:  sdk.RegionRequirement,
+					Value: "my-prod-region",
+				},
+			},
+		},
+	}
+	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
+	s.Jobs = append(s.Jobs, *j)
+
+	pip.Stages = append(pip.Stages, *s)
+
+	w := sdk.Workflow{
+		Name:       "test_1",
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		WorkflowData: sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "root",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+			},
+		},
+	}
+
+	proj2, errP := project.Load(context.TODO(), api.mustDB(), proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
+	require.NoError(t, errP)
+
+	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, *proj2, &w))
+	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, *proj, "test_1", workflow.LoadOptions{})
+	require.NoError(t, err)
+
+	//Prepare request
+	vars := map[string]string{
+		"key":              proj.Key,
+		"permWorkflowName": w1.Name,
+	}
+	uri := router.GetRoute("POST", api.postWorkflowRunHandler, vars)
+	test.NotEmpty(t, uri)
+
+	opts := sdk.WorkflowRunPostHandlerOption{
+		Manual: &sdk.WorkflowNodeRunManual{
+			OnlyFailedJobs: false,
+			Resync:         false,
+		},
+	}
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, opts)
+
+	//Do the request
+	rec := httptest.NewRecorder()
+	router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 202, rec.Code)
+
+	var wrr sdk.WorkflowRun
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &wrr))
+
+	wr := &wrr
+	assert.Equal(t, int64(1), wr.Number)
+
+	opts = sdk.WorkflowRunPostHandlerOption{
+		Manual: &sdk.WorkflowNodeRunManual{
+			OnlyFailedJobs: true,
+			Resync:         false,
+		},
+		FromNodeIDs:    []int64{w1.WorkflowData.Node.ID},
+		Number:         &wr.Number,
+		AuthConsumerID: consumer.ID,
+	}
+	api.initWorkflowRun(context.TODO(), proj2.Key, &wr.Workflow, wr, opts)
+
+	wr, _ = workflow.LoadRun(context.TODO(), db, proj2.Key, w1.Name, 1, workflow.LoadRunOptions{})
+
+	require.Equal(t, sdk.StatusFail, wr.Status)
+	require.Equal(t, 1, len(wr.Infos))
+	require.Equal(t, "MsgWorkflowRegionError", wr.Infos[0].Message.ID)
 }
 
 func Test_postWorkflowRunHandlerRestartResync(t *testing.T) {
@@ -3255,7 +3370,7 @@ func Test_postWorkflowRunHandlerRestartResync(t *testing.T) {
 	assert.NoError(t, workflow.UpdateWorkflowRun(context.TODO(), db, wrr))
 
 	// Update WORKFLOW NODE RUN
-	nr, err := workflow.LoadNodeRunByID(db, wrr.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0].ID, workflow.LoadRunOptions{})
+	nr, err := workflow.LoadNodeRunByID(context.Background(), db, wrr.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0].ID, workflow.LoadRunOptions{})
 	assert.NoError(t, err)
 
 	assert.NoError(t, workflow.DeleteNodeJobRuns(db, nr.ID))

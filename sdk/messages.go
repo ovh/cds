@@ -59,15 +59,14 @@ var (
 	MsgEnvironmentDetached                  = &Message{"MsgEnvironmentDetached", trad{FR: "L'environnement %s est détaché du repository %s", EN: "The environment %s is detached from repository %s"}, nil, RunInfoTypInfo}
 	MsgWorkflowDetached                     = &Message{"MsgWorkflowDetached", trad{FR: "Le workflow %s est détaché du repository %s", EN: "The workflow %s is detached from repository %s"}, nil, RunInfoTypInfo}
 	MsgSpawnInfoHatcheryStarts              = &Message{"MsgSpawnInfoHatcheryStarts", trad{FR: "La Hatchery %s a démarré le lancement du worker avec le modèle %s", EN: "Hatchery %s starts spawn worker with model %s"}, nil, RunInfoTypInfo}
-	MsgSpawnInfoHatcheryErrorSpawn          = &Message{"MsgSpawnInfoHatcheryErrorSpawn", trad{FR: "Une erreur est survenue lorsque la Hatchery %s a démarré un worker avec le modèle %s après %s, err:%s", EN: "Error while Hatchery %s spawns worker with model %s after %s, err:%s"}, nil, RunInfoTypeError}
-	MsgSpawnInfoHatcheryStartsSuccessfully  = &Message{"MsgSpawnInfoHatcheryStartsSuccessfully", trad{FR: "La Hatchery %s a démarré le worker %s avec succès en %s", EN: "Hatchery %s spawns worker %s successfully in %s"}, nil, RunInfoTypInfo}
+	MsgSpawnInfoHatcheryErrorSpawn          = &Message{"MsgSpawnInfoHatcheryErrorSpawn", trad{FR: "Une erreur est survenue lorsque la Hatchery %s a démarré un worker avec le modèle %s après %s, err: %s", EN: "Error while Hatchery %s spawns worker with model %s after %s, err: %s"}, nil, RunInfoTypeError}
 	MsgSpawnInfoHatcheryStartDockerPull     = &Message{"MsgSpawnInfoHatcheryStartDockerPull", trad{FR: "La Hatchery %s a démarré le docker pull de l'image %s...", EN: "Hatchery %s starts docker pull %s..."}, nil, RunInfoTypInfo}
 	MsgSpawnInfoHatcheryEndDockerPull       = &Message{"MsgSpawnInfoHatcheryEndDockerPull", trad{FR: "La Hatchery %s a terminé le docker pull de l'image %s", EN: "Hatchery %s docker pull %s done"}, nil, RunInfoTypInfo}
 	MsgSpawnInfoHatcheryEndDockerPullErr    = &Message{"MsgSpawnInfoHatcheryEndDockerPullErr", trad{FR: "⚠ La Hatchery %s a terminé le docker pull de l'image %s en erreur: %s", EN: "⚠ Hatchery %s - docker pull %s done with error: %v"}, nil, RunInfoTypeError}
 	MsgSpawnInfoDeprecatedModel             = &Message{"MsgSpawnInfoDeprecatedModel", trad{FR: "⚠ Attention vous utilisez un worker model (%s) déprécié", EN: "⚠ Pay attention you are using a deprecated worker model (%s)"}, nil, RunInfoTypeWarning}
-	MsgSpawnInfoWorkerEnd                   = &Message{"MsgSpawnInfoWorkerEnd", trad{FR: "✓ Le worker %s a terminé et a passé %s à travailler sur les étapes", EN: "✓ Worker %s finished working on this job and took %s to work on the steps"}, nil, RunInfoTypInfo}
+	MsgSpawnInfoWorkerEnd                   = &Message{"MsgSpawnInfoWorkerEnd", trad{FR: "✓ Le worker %s a terminé et a passé %s à travailler sur les étapes", EN: "✓ Worker %s finished working on this job"}, nil, RunInfoTypInfo}
 	MsgSpawnInfoJobInQueue                  = &Message{"MsgSpawnInfoJobInQueue", trad{FR: "✓ Le job a été mis en file d'attente", EN: "✓ Job has been queued"}, nil, RunInfoTypInfo}
-	MsgSpawnInfoJobTaken                    = &Message{"MsgSpawnInfoJobTaken", trad{FR: "Le job %s a été pris par le worker %s", EN: "Job %s was taken by worker %s"}, nil, RunInfoTypInfo}
+	MsgSpawnInfoJobTaken                    = &Message{"MsgSpawnInfoJobTaken", trad{FR: "Le job %s a été pris par le worker %s", EN: "Job %s has been taken by worker %s"}, nil, RunInfoTypInfo}
 	MsgSpawnInfoJobTakenWorkerVersion       = &Message{"MsgSpawnInfoJobTakenWorkerVersion", trad{FR: "Worker %s version:%s os:%s arch:%s", EN: "Worker %s version:%s os:%s arch:%s"}, nil, RunInfoTypInfo}
 	MsgSpawnInfoWorkerForJob                = &Message{"MsgSpawnInfoWorkerForJob", trad{FR: "Ce worker %s a été créé pour lancer ce job", EN: "This worker %s was created to take this action"}, nil, RunInfoTypInfo}
 	MsgSpawnInfoWorkerForJobError           = &Message{"MsgSpawnInfoWorkerForJobError", trad{FR: "⚠ Ce worker %s a été créé pour lancer ce job, mais ne possède pas tous les pré-requis. Vérifiez que les prérequis suivants:%s", EN: "⚠ This worker %s was created to take this action, but does not have all prerequisites. Please verify the following prerequisites:%s"}, nil, RunInfoTypeError}
@@ -94,6 +93,8 @@ var (
 	MsgWorkflowDeprecatedVersion            = &Message{"MsgWorkflowDeprecatedVersion", trad{FR: "La configuration yaml de votre workflow est dans un format déprécié. Exportez le avec la CLI `cdsctl workflow export %s %s`", EN: "The yaml workflow configuration format is deprecated. Export your workflow with CLI `cdsctl workflow export %s %s`"}, nil, RunInfoTypeWarning}
 	MsgWorkflowGeneratedFromTemplateVersion = &Message{"MsgWorkflowGeneratedFromTemplateVersion", trad{FR: "Le workflow a été généré à partir du modèle de workflow: %s.", EN: "The workflow was generated from the template: %s"}, nil, RunInfoTypInfo}
 	MsgTooMuchWorkflowRun                   = &Message{"MsgTooMuchWorkflowRun", trad{FR: "L'exécution de ce workflow est suspendu. Vous dépassez le nombre maximum d'éxécution autorisé (%.f). Merci de revoir la politique de retention de ce workflow", EN: "Workflow run is delayed. The maximum number of runs for this workflow has been reached ( %.f ). Please update your workflow retention policy"}, nil, RunInfoTypeWarning}
+	MsgSpawnErrorHatcheryRetryAttempt       = &Message{"MsgSpawnErrorHatcheryRetryAttempt", trad{EN: "Job execution failed by hatchery %s. Reason: %s"}, nil, RunInfoTypeError}
+	MsgWorkflowRegionError                  = &Message{"MsgWorkflowRegionError", trad{EN: "You try to use a region but you do not have enough permission."}, nil, RunInfoTypeError}
 )
 
 // Messages contains all sdk Messages
@@ -138,7 +139,6 @@ var Messages = map[string]*Message{
 	MsgWorkflowDetached.ID:                     MsgWorkflowDetached,
 	MsgSpawnInfoHatcheryStarts.ID:              MsgSpawnInfoHatcheryStarts,
 	MsgSpawnInfoHatcheryErrorSpawn.ID:          MsgSpawnInfoHatcheryErrorSpawn,
-	MsgSpawnInfoHatcheryStartsSuccessfully.ID:  MsgSpawnInfoHatcheryStartsSuccessfully,
 	MsgSpawnInfoHatcheryStartDockerPull.ID:     MsgSpawnInfoHatcheryStartDockerPull,
 	MsgSpawnInfoHatcheryEndDockerPull.ID:       MsgSpawnInfoHatcheryEndDockerPull,
 	MsgSpawnInfoHatcheryEndDockerPullErr.ID:    MsgSpawnInfoHatcheryEndDockerPullErr,
@@ -172,6 +172,8 @@ var Messages = map[string]*Message{
 	MsgWorkflowDeprecatedVersion.ID:            MsgWorkflowDeprecatedVersion,
 	MsgWorkflowGeneratedFromTemplateVersion.ID: MsgWorkflowGeneratedFromTemplateVersion,
 	MsgTooMuchWorkflowRun.ID:                   MsgTooMuchWorkflowRun,
+	MsgSpawnErrorHatcheryRetryAttempt.ID:       MsgSpawnErrorHatcheryRetryAttempt,
+	MsgWorkflowRegionError.ID:                  MsgWorkflowRegionError,
 }
 
 //Message represent a struc format translated messages
