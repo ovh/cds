@@ -1,6 +1,8 @@
 import { ModuleWithProviders } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { AuthenticationGuard } from 'app/guard/authentication.guard';
+import { FeatureGuard } from 'app/guard/feature.guard';
+import { FeatureNames } from 'app/service/feature/feature.service';
 import { ProjectModule } from 'app/views/project/project.module';
 import { ProjectAddComponent } from './add/project.add.component';
 import { ProjectListComponent } from './list/project.list.component';
@@ -30,6 +32,12 @@ const projectRoutes: Routes = [
             {
                 path: ':key/pipeline', loadChildren:
                     () => import('app/views/pipeline/pipeline.module').then(m => m.PipelineModule)
+            },
+            {
+                path: ':key/workflowv3', loadChildren:
+                    () => import('app/views/workflowv3/workflowv3.module').then(m => m.WorkflowV3Module),
+                canActivate: [FeatureGuard],
+                data: { feature: FeatureNames.WorkflowV3 }
             }
         ]
     }

@@ -50,7 +50,7 @@ func NewAction(a sdk.Action) Action {
 		ea.Parameters[v.Name] = param
 	}
 	ea.Steps = newSteps(a)
-	ea.Requirements = newRequirements(a.Requirements)
+	ea.Requirements = NewRequirements(a.Requirements)
 	// enabled is the default value
 	// set enable attribute only if it's disabled
 	// no need to export it if action is enabled
@@ -64,7 +64,7 @@ func NewAction(a sdk.Action) Action {
 func newSteps(a sdk.Action) []Step {
 	res := make([]Step, len(a.Actions))
 	for i := range a.Actions {
-		res[i] = newStep(a.Actions[i])
+		res[i] = NewStep(a.Actions[i])
 	}
 
 	return res

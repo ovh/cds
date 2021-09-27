@@ -12,7 +12,7 @@ import (
 	"github.com/fsamin/go-dump"
 )
 
-func newStep(act sdk.Action) Step {
+func NewStep(act sdk.Action) Step {
 	s := Step{
 		Name: act.StepName,
 	}

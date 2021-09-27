@@ -1,0 +1,33 @@
+stages:
+  stage1: {}
+  stage2:
+    depends_on: [stage1]
+
+jobs:
+  build:
+    context:
+    - repository.helloworld
+    - '@repository.helloworld2'
+    - var.myvar1
+    - secret.secret1
+    stage: stage1
+    steps:
+    - script: |-
+        make clean
+        make build
+  test:
+    context:
+    - repository.helloworld
+    - '@repository.helloworld2'
+    - '@var.myextvar'
+    stage: stage1
+    steps:
+    - script: |-
+        make test
+    - myaction:
+        param1: value1
+    depends_on: [build]
+  deploy:
+    stage: stage2
+    steps:
+    - deploy: prod

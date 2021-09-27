@@ -1,0 +1,51 @@
+@import '../../../../common';
+
+:host {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    background-color: $darkBackground;
+}
+
+.message {
+    min-height: 40px;
+    width: 100%;
+    border-radius: unset !important;
+    margin: 0 !important;
+}
+
+.editor {
+    flex: 1;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+
+    codemirror {
+        flex: 1;
+        overflow-y: auto;
+
+        ::ng-deep {
+            .CodeMirror {
+                height: 100% !important;
+                max-height: 100%;
+            }
+
+            .CodeMirror-scroll {
+                height: 100% !important;
+                max-height: 100%;
+                overflow: auto !important;
+            }
+        }
+    }
+
+    .status {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        display: flex;
+        flex-direction: row;
+    }
+}

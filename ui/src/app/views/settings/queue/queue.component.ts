@@ -27,6 +27,7 @@ import { finalize } from 'rxjs/operators';
 @AutoUnsubscribe()
 export class QueueComponent implements OnDestroy {
     queueSubscription: Subscription;
+    eventSubscription: Subscription;
     currentAuthSummary: AuthSummary;
     nodeJobRuns: Array<WorkflowNodeJobRun> = [];
     parametersMaps: Array<{}> = [];
@@ -54,7 +55,7 @@ export class QueueComponent implements OnDestroy {
             translate: 'admin_queue_title'
         }];
 
-        this._store.select(EventState.last).subscribe(e => {
+        this.eventSubscription = this._store.select(EventState.last).subscribe(e => {
             if (!e || e.type_event !== EventType.RUN_WORKFLOW_JOB) {
                 return
             }
@@ -70,7 +71,8 @@ export class QueueComponent implements OnDestroy {
 
         this.queueSubscription = this._store.select(QueueState.jobs).subscribe(js => {
             let fitlers = this.status.length > 0 ? this.status : this.statusOptions;
-            this.nodeJobRuns = js.filter(j => !!fitlers.find(f => f === j.status)).sort((a: WorkflowNodeJobRun, b: WorkflowNodeJobRun) => moment(a.queued).isBefore(moment(b.queued)) ? -1 : 1);
+            this.nodeJobRuns = js.filter(j => !!fitlers.find(f => f === j.status))
+                .sort((a: WorkflowNodeJobRun, b: WorkflowNodeJobRun) => moment(a.queued).isBefore(moment(b.queued)) ? -1 : 1);
             if (this.nodeJobRuns.length > 0) {
                 this.requirementsList = [];
                 this.bookedOrBuildingByList = [];

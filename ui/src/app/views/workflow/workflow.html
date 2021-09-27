@@ -37,7 +37,7 @@
                             <div class="migrate">
                                 <button class="ui right floated green mini button"
                                     (click)="openSaveAsCodeModal();popup.close()">{{'common_migrate'
-                                | translate}}</button>
+                                    | translate}}</button>
                             </div>
                         </div>
                     </ng-container>
@@ -58,8 +58,9 @@
                         <p>{{ 'workflow_from_template' | translate}}
                             <a
                                 [routerLink]="['/settings/workflow-template/' + workflow.from_template.split('@')[0]]">{{workflow.from_template}}</a>
-                            <span *ngIf="!workflow.template_up_to_date" class="ui orange label mini">{{'common_not_up_to_date'
-                            | translate }}</span>
+                            <span *ngIf="!workflow.template_up_to_date"
+                                class="ui orange label mini">{{'common_not_up_to_date'
+                                | translate }}</span>
                         </p>
                         <div class="ui compact menu">
                             <a class="item small" (click)="showTemplateFrom();popup.close()">
@@ -84,6 +85,13 @@
                     </ng-template>
                 </div>
             </ng-template>
+        </div>
+        <div *ngIf="project && workflow && workflowV3Enabled" class="right floated labelFeature preview"
+            [title]="'workflow_from_template_btn' | translate">
+            <a class="ui label small blue"
+                [routerLink]="runNumber ? ['/project', project.key, 'workflowv3', workflow.name, 'run', runNumber] : ['/project', project.key, 'workflowv3', workflow.name]">
+                Preview Workflow v3
+            </a>
         </div>
     </app-workflow-breadcrumb>
     <div class="workflow-wrapper">

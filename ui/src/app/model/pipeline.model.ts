@@ -18,6 +18,12 @@ export class PipelineStatus {
     static STOPPED = 'Stopped';
     static PENDING = 'Pending';
 
+    static priority = [
+        PipelineStatus.NEVER_BUILT, PipelineStatus.PENDING, PipelineStatus.WAITING,
+        PipelineStatus.BUILDING, PipelineStatus.STOPPED,
+        PipelineStatus.FAIL, PipelineStatus.SUCCESS, PipelineStatus.DISABLED, PipelineStatus.SKIPPED
+    ];
+
     static neverRun(status: string) {
         return status === this.SKIPPED || status === this.NEVER_BUILT || status === this.SKIPPED || status === this.DISABLED;
     }
@@ -29,6 +35,17 @@ export class PipelineStatus {
     static isDone(status: string) {
         return status === this.SUCCESS || status === this.STOPPED || status === this.FAIL ||
             status === this.SKIPPED || status === this.DISABLED;
+    }
+
+    static sum(status: Array<string>): string {
+        const sum = status.map(s => PipelineStatus.priority.indexOf(s)).reduce((sum, num) => {
+            if (num > -1 && num < sum) { return num; }
+            return sum;
+        });
+        if (sum === -1) {
+            return null;
+        }
+        return PipelineStatus.priority[sum];
     }
 }
 
@@ -107,7 +124,7 @@ export class Pipeline {
         }, {});
         ref.forEach(a => {
             if (!mapParam[a.name]) {
-                current.push(a)
+                current.push(a);
             }
         });
 
@@ -152,7 +169,7 @@ export class Pipeline {
                             loopAgain = editPipeline.stages.findIndex(st => st.jobs.findIndex(jb => jb.ref === nextRef) !== -1) !== -1;
                         } while (loopAgain);
                         j.ref = nextJobRef;
-                    })
+                    });
                 }
             });
         }
@@ -222,7 +239,7 @@ export class CDNLine {
     extra: Array<string>;
 }
 
-export class CDNStreamFilter  {
+export class CDNStreamFilter {
     item_type: string;
     api_ref: string;
     offset: number;

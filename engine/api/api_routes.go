@@ -240,6 +240,11 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/workflow/{permWorkflowName}/node/{nodeID}/hook/model", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getWorkflowHookModelsHandler))
 	r.Handle("/project/{key}/workflow/{permWorkflowName}/node/{nodeID}/outgoinghook/model", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getWorkflowOutgoingHookModelsHandler))
 
+	// Workflows v3
+	r.Handle("/project/{permProjectKey}/workflowv3/validate", Scope(sdk.AuthConsumerScopeProject), r.POST(api.postWorkflowV3ValidateHandler))
+	r.Handle("/project/{key}/workflowv3/{permWorkflowName}", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getWorkflowV3Handler))
+	r.Handle("/project/{key}/workflowv3/{permWorkflowName}/run/{number}", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowV3RunHandler))
+
 	// Outgoing hook model
 	r.Handle("/workflow/outgoinghook/model", ScopeNone(), r.GET(api.getWorkflowOutgoingHookModelsHandler))
 

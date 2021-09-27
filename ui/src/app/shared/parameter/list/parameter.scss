@@ -1,13 +1,18 @@
 @import '../../../../common';
+
+:host {
+    display: block;
+}
+
 .ui.input {
-  position: inherit;
+    position: inherit;
 }
 
 .ui.form textarea.lock {
-  resize: none;
-  border: none;
+    resize: none;
+    border: none;
 }
 
 .middle-aligned {
-  vertical-align: middle !important;
+    vertical-align: middle !important;
 }

@@ -1,0 +1,4 @@
+notifications:
+  build:
+    type: emails
+    jobs: [build]

@@ -7,6 +7,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { SuiModule } from '@richardlt/ng2-semantic-ui';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { AuthenticationGuard } from 'app/guard/authentication.guard';
+import { FeatureGuard } from 'app/guard/feature.guard';
 import { NoAuthenticationGuard } from 'app/guard/no-authentication.guard';
 import { AsCodeEventComponent } from 'app/shared/ascode/events/ascode.event.component';
 import { AsCodeSaveFormComponent } from 'app/shared/ascode/save-form/ascode.save-form.component';
@@ -19,6 +20,7 @@ import { SelectFilterComponent } from 'app/shared/select/select.component';
 import { WorkflowHookMenuEditComponent } from 'app/shared/workflow/menu/edit-hook/menu.edit.hook.component';
 import { WorkflowWizardNodeConditionComponent } from 'app/shared/workflow/wizard/conditions/wizard.conditions.component';
 import { WorkflowWizardOutgoingHookComponent } from 'app/shared/workflow/wizard/outgoinghook/wizard.outgoinghook.component';
+import { WorkflowRunJobComponent } from 'app/views/workflow/run/node/pipeline/workflow-run-job/workflow-run-job.component';
 import { NgSemanticModule } from 'ng-semantic/ng-semantic';
 import { CodemirrorModule } from 'ng2-codemirror-typescript/Codemirror';
 import { DragulaModule } from 'ng2-dragula-sgu';
@@ -221,6 +223,7 @@ import { ZoneComponent } from './zone/zone.component';
         WorkflowWNodeMenuEditComponent,
         WorkflowWNodeOutGoingHookComponent,
         WorkflowWNodePipelineComponent,
+        WorkflowRunJobComponent,
         ZoneComponent,
         ZoneContentComponent,
         ToastHTTPErrorComponent
@@ -234,7 +237,8 @@ import { ZoneComponent } from './zone/zone.component';
         SharedService,
         ToastService,
         AuthenticationGuard,
-        NoAuthenticationGuard
+        NoAuthenticationGuard,
+        FeatureGuard
     ],
     schemas: [
         CUSTOM_ELEMENTS_SCHEMA
@@ -309,6 +313,7 @@ import { ZoneComponent } from './zone/zone.component';
         WorkflowNodeHookFormComponent,
         WorkflowTriggerComponent,
         WorkflowNodeEditModalComponent,
+        WorkflowRunJobComponent,
         ZoneComponent,
         ZoneContentComponent,
         UsageWorkflowsComponent,

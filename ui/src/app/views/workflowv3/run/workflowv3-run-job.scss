@@ -1,0 +1,87 @@
+@import '../../../../common';
+
+:host {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+}
+
+app-tabs {
+    ::ng-deep {
+        .menu {
+            background-color: inherit !important;
+        }
+    }
+}
+
+.close {
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 40px;
+    width: 40px;
+    padding: 10px;
+    cursor: pointer;
+
+    &:hover {
+        color: white;
+    }
+
+    .icon {
+        margin: unset;
+    }
+}
+
+app-workflow-run-job {
+    flex: 1;
+    overflow: hidden;
+
+    ::ng-deep {
+        .job {
+            height: 100%;
+            overflow-y: auto;
+            position: unset;
+
+            .header {
+                z-index: 1;
+                position: sticky;
+                top: 0;
+                background-color: inherit !important;
+
+                .menu.right:last-of-type {
+                    display: none !important;
+                }
+            }
+
+            .footer {
+                position: absolute !important;
+                right: 10px;
+            }
+        }
+    }
+}
+
+.variables {
+    flex: 1;
+    overflow-y: auto;
+
+    h4 {
+        margin: 20px 10px 5px 10px;
+    }
+
+    h4:first-child {
+        margin-top: 10px;
+    }
+
+    app-parameter-list {
+        margin: 0 10px;
+
+        ::ng-deep {
+            td {
+                border: 0px !important;
+            }
+        }
+    }
+}

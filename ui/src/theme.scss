@@ -550,10 +550,14 @@ a.ui.basic.grey.label:hover {
 
 .ui.red.message {
     .night & {
+        & .header {
+            color: inherit;
+        }
+
         color: $darkTheme_light_red;
         background-color: $darkTheme_night_red;
         box-shadow: 0px 0px 0px 1px $darkTheme_light_red inset,
-            0px 0px 0px 0px rgba(0, 0, 0, 0);
+        0px 0px 0px 0px rgba(0, 0, 0, 0);
     }
 }
 
