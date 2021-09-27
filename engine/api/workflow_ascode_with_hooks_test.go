@@ -477,7 +477,7 @@ version: v1.0`),
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &wrun))
 
 	require.NoError(t, waitCraftinWorkflow(t, api, api.mustDB(), wrun.ID))
-	wr, err := workflow.LoadRunByID(db, wrun.ID, workflow.LoadRunOptions{})
+	wr, err := workflow.LoadRunByID(context.Background(), db, wrun.ID, workflow.LoadRunOptions{})
 	require.NoError(t, nil)
 	require.NotEqual(t, "Fail", wr.Status)
 
@@ -809,7 +809,7 @@ version: v1.0`),
 
 	require.NoError(t, waitCraftinWorkflow(t, api, api.mustDB(), wrun.ID))
 
-	wr, err := workflow.LoadRunByID(db, wrun.ID, workflow.LoadRunOptions{})
+	wr, err := workflow.LoadRunByID(context.Background(), db, wrun.ID, workflow.LoadRunOptions{})
 	require.NoError(t, err)
 	require.NotEqual(t, "Fail", wr.Status)
 
@@ -1340,7 +1340,7 @@ version: v1.0`),
 
 	require.NoError(t, waitCraftinWorkflow(t, api, api.mustDB(), wrun.ID))
 
-	wr, err := workflow.LoadRunByID(db, wrun.ID, workflow.LoadRunOptions{})
+	wr, err := workflow.LoadRunByID(context.Background(), db, wrun.ID, workflow.LoadRunOptions{})
 	require.NoError(t, err)
 
 	assert.NotEqual(t, "Fail", wr.Status)
@@ -1408,7 +1408,7 @@ version: v1.0`),
 
 	require.NoError(t, waitCraftinWorkflow(t, api, api.mustDB(), wrun2.ID))
 
-	wr, err = workflow.LoadRunByID(db, wrun2.ID, workflow.LoadRunOptions{})
+	wr, err = workflow.LoadRunByID(context.Background(), db, wrun2.ID, workflow.LoadRunOptions{})
 	require.NoError(t, err)
 	require.NotEqual(t, "Fail", wr.Status)
 

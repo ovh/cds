@@ -69,7 +69,7 @@ func Test_deleteWorkflowRunsHistory(t *testing.T) {
 	err = deleteRunHistory(context.Background(), db.DbMap, wr.ID, cdnClient, sharedStorage, nil)
 	require.NoError(t, err)
 
-	_, err = workflow.LoadRunByID(db, wr.ID, workflow.LoadRunOptions{})
+	_, err = workflow.LoadRunByID(context.Background(), db, wr.ID, workflow.LoadRunOptions{})
 	require.NotNil(t, err)
 	require.True(t, sdk.ErrorIs(err, sdk.ErrNotFound))
 	require.True(t, gock.IsDone())

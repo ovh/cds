@@ -227,7 +227,7 @@ func (e *Error) Error() string {
 	if e.sdkError != nil {
 		return e.sdkError.Error()
 	}
-	panic("unknow error")
+	panic("unknown error")
 }
 
 type stackTracer interface {

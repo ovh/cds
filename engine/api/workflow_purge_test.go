@@ -132,7 +132,7 @@ func Test_purgeDryRunHandler(t *testing.T) {
 
 	require.Equal(t, int64(2), result.NbRunsToAnalize)
 
-	run1DB, err := workflow.LoadRunByID(api.mustDB(), run2.ID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
+	run1DB, err := workflow.LoadRunByID(context.Background(), api.mustDB(), run2.ID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
 	require.NoError(t, err)
 	require.False(t, run1DB.ToDelete)
 
@@ -221,7 +221,7 @@ func Test_Purge_DeleteArtifactsFromRepositoryManager(t *testing.T) {
 
 	api.initWorkflowRun(ctx, p.Key, w, wr, opts)
 
-	wr, err = workflow.LoadRunByID(db.DbMap, wr.ID, workflow.LoadRunOptions{
+	wr, err = workflow.LoadRunByID(context.Background(), db.DbMap, wr.ID, workflow.LoadRunOptions{
 		WithCoverage:        true,
 		WithArtifacts:       true,
 		WithStaticFiles:     true,

@@ -9,9 +9,12 @@ import (
 	"time"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 func (b *bitbucketClient) PullRequest(ctx context.Context, repo string, id string) (sdk.VCSPullRequest, error) {
+	ctx, end := telemetry.Span(ctx, "bitbucketserver.PullRequest", telemetry.Tag(telemetry.TagRepository, repo))
+	defer end()
 	project, slug, err := getRepo(repo)
 	if err != nil {
 		return sdk.VCSPullRequest{}, sdk.WithStack(err)

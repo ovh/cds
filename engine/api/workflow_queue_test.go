@@ -852,7 +852,7 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 
 	wNodeJobRun, errJ := workflow.LoadNodeJobRun(context.TODO(), api.mustDB(), api.Cache, ctx.job.ID)
 	require.NoError(t, errJ)
-	nodeRun, errN := workflow.LoadNodeRunByID(api.mustDB(), wNodeJobRun.WorkflowNodeRunID, workflow.LoadRunOptions{WithArtifacts: true, WithTests: true})
+	nodeRun, errN := workflow.LoadNodeRunByID(context.Background(), api.mustDB(), wNodeJobRun.WorkflowNodeRunID, workflow.LoadRunOptions{WithArtifacts: true, WithTests: true})
 	require.NoError(t, errN)
 
 	assert.NotNil(t, nodeRun.Tests)
@@ -939,7 +939,7 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	wNodeJobRun, errJ := workflow.LoadNodeJobRun(context.TODO(), api.mustDB(), api.Cache, ctx.job.ID)
 	require.NoError(t, errJ)
 
-	updatedNodeRun, errN2 := workflow.LoadNodeRunByID(api.mustDB(), wNodeJobRun.WorkflowNodeRunID, workflow.LoadRunOptions{WithArtifacts: true})
+	updatedNodeRun, errN2 := workflow.LoadNodeRunByID(context.Background(), api.mustDB(), wNodeJobRun.WorkflowNodeRunID, workflow.LoadRunOptions{WithArtifacts: true})
 	require.NoError(t, errN2)
 
 	assert.NotNil(t, updatedNodeRun.Artifacts)
@@ -1598,7 +1598,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	}, *consumer, nil)
 	assert.NoError(t, errT)
 
-	wrr, err := workflow.LoadRunByID(db, wrToTest.ID, workflow.LoadRunOptions{})
+	wrr, err := workflow.LoadRunByID(context.Background(), db, wrToTest.ID, workflow.LoadRunOptions{})
 	assert.NoError(t, err)
 
 	log.Warn(context.Background(), "%s", wrr.Status)
@@ -1670,7 +1670,7 @@ func Test_postWorkflowJobSetVersionHandler(t *testing.T) {
 	run, err := workflow.LoadRun(context.TODO(), db, ctx.project.Key, ctx.workflow.Name, ctx.run.Number, workflow.LoadRunOptions{})
 	require.NoError(t, err)
 	require.Empty(t, "", run.Version)
-	nodeRun, err := workflow.LoadNodeRunByID(db, ctx.job.WorkflowNodeRunID, workflow.LoadRunOptions{})
+	nodeRun, err := workflow.LoadNodeRunByID(context.Background(), db, ctx.job.WorkflowNodeRunID, workflow.LoadRunOptions{})
 	require.NoError(t, err)
 	require.Equal(t, "1", sdk.ParameterValue(nodeRun.BuildParameters, "cds.version"))
 
@@ -1690,7 +1690,7 @@ func Test_postWorkflowJobSetVersionHandler(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, run.Version)
 	require.Equal(t, "1.2.3", *run.Version)
-	nodeRun, err = workflow.LoadNodeRunByID(db, ctx.job.WorkflowNodeRunID, workflow.LoadRunOptions{})
+	nodeRun, err = workflow.LoadNodeRunByID(context.Background(), db, ctx.job.WorkflowNodeRunID, workflow.LoadRunOptions{})
 	require.NoError(t, err)
 	require.Equal(t, "1.2.3", sdk.ParameterValue(nodeRun.BuildParameters, "cds.version"))
 
@@ -1735,7 +1735,7 @@ func Test_workflowRunResultsAdd(t *testing.T) {
 
 	require.NoError(t, api.workflowRunCraft(context.TODO(), wrCreate.ID))
 
-	wrDB, err := workflow.LoadRunByID(db, wrCreate.ID, workflow.LoadRunOptions{})
+	wrDB, err := workflow.LoadRunByID(context.Background(), db, wrCreate.ID, workflow.LoadRunOptions{})
 	require.NoError(t, err)
 
 	nr := wrDB.WorkflowNodeRuns[w.WorkflowData.Node.ID][0]
@@ -1819,7 +1819,7 @@ func Test_workflowRunResultCheckUpload(t *testing.T) {
 
 	require.NoError(t, api.workflowRunCraft(context.TODO(), wrCreate.ID))
 
-	wrDB, err := workflow.LoadRunByID(db, wrCreate.ID, workflow.LoadRunOptions{})
+	wrDB, err := workflow.LoadRunByID(context.Background(), db, wrCreate.ID, workflow.LoadRunOptions{})
 	require.NoError(t, err)
 
 	nr := wrDB.WorkflowNodeRuns[w.WorkflowData.Node.ID][0]

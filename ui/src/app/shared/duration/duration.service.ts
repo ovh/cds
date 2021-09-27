@@ -9,6 +9,10 @@ export class DurationService {
         let fromMs = Math.round(from.getTime() / 1000) * 1000;
         let toMs = Math.round(to.getTime() / 1000) * 1000;
         let sub = toMs - fromMs;
-        return sub === 0 ? '~0s' : (new Duration(sub)).toString();
+        return DurationService.durationMs(sub);
+    }
+
+    public static durationMs(duration: number): string {
+        return duration === 0 ? '~0s' : (new Duration(duration)).toString();
     }
 }

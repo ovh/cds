@@ -37,7 +37,7 @@ func (api *API) getWorkflowTriggerConditionHandler() service.Handler {
 			Operators: sdk.WorkflowConditionsOperators,
 		}
 
-		wr, err := workflow.LoadLastRun(api.mustDB(), key, name, workflow.LoadRunOptions{})
+		wr, err := workflow.LoadLastRun(ctx, api.mustDB(), key, name, workflow.LoadRunOptions{})
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
 				return sdk.WrapError(err, "unable to load last run workflow")

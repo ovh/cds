@@ -181,6 +181,18 @@ func putPostAdminServiceCallHandler(api *API, method string) service.Handler {
 	}
 }
 
+func (api *API) deleteDatabaseMigrationHandler() service.Handler {
+	return database.AdminDeleteDatabaseMigration(api.mustDB)
+}
+
+func (api *API) postDatabaseMigrationUnlockedHandler() service.Handler {
+	return database.AdminDatabaseMigrationUnlocked(api.mustDB)
+}
+
+func (api *API) getDatabaseMigrationHandler() service.Handler {
+	return database.AdminGetDatabaseMigration(api.mustDB)
+}
+
 func (api *API) getAdminDatabaseSignatureResume() service.Handler {
 	return database.AdminDatabaseSignatureResume(api.mustDB, gorpmapping.Mapper)
 }

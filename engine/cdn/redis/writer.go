@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"math"
 	"strconv"
 	"strings"
 
@@ -16,16 +17,17 @@ type Writer struct {
 	Store         cache.ScoredSetStore
 	ItemID        string
 	PrefixKey     string
-	currentScore  uint
+	currentScore  float64
 	currentBuffer []byte
 	closed        bool
 }
 
 // Add new item in cache + update last usage
-func (w *Writer) add(score uint, value string) error {
+func (w *Writer) add(score float64, value string) error {
 	itemKey := cache.Key(w.PrefixKey, w.ItemID)
-	value = strconv.Itoa(int(score)) + "#" + value
-	if err := w.Store.ScoredSetAdd(context.Background(), itemKey, value, float64(score)); err != nil {
+	si, _ := math.Modf(score)
+	value = strconv.Itoa(int(si)) + "#" + value
+	if err := w.Store.ScoredSetAdd(context.Background(), itemKey, value, score); err != nil {
 		return err
 	}
 	return nil

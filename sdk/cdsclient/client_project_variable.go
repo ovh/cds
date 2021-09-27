@@ -57,3 +57,10 @@ func (c *client) VariableListEncrypt(projectKey string) ([]sdk.Secret, error) {
 	}
 	return secrets, nil
 }
+
+func (c *client) VariableEncryptDelete(projectKey, name string) error {
+	if _, err := c.DeleteJSON(context.Background(), "/project/"+projectKey+"/encrypt?name="+url.QueryEscape(name), nil, nil); err != nil {
+		return err
+	}
+	return nil
+}

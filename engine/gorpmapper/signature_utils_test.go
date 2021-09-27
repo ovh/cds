@@ -79,7 +79,7 @@ func Test_LoadTupleByPrimaryKey(t *testing.T) {
 	ids, err := m.ListTupleByCanonicalForm(db, "gorpmapper_test.testAuthentifiedUser", res[0].Signer)
 	require.NoError(t, err)
 
-	u, err := m.LoadTupleByPrimaryKey(db, "gorpmapper_test.testAuthentifiedUser", ids[0])
+	u, err := m.LoadTupleByPrimaryKey(context.TODO(), db, "gorpmapper_test.testAuthentifiedUser", ids[0])
 	require.NoError(t, err)
 
 	t.Logf("loaded %T : %+v", u, u)

@@ -24,7 +24,6 @@ const (
 	ArtifactProjectKey                         = "project.key"
 	ArtifactManagerConfigPromotionLowMaturity  = "promotion.maturity.low"
 	ArtifactManagerConfigPromotionHighMaturity = "promotion.maturity.high"
-	ArtifactManagerConfigBuildInfoPath         = "build.info.path"
 	ArtifactManagerConfigBuildInfoPrefix       = "build.info.prefix"
 )
 
@@ -154,11 +153,6 @@ var (
 				Type: IntegrationConfigTypeString,
 			},
 			ArtifactManagerConfigBuildInfoPrefix: IntegrationConfigValue{
-				Type: IntegrationConfigTypeString,
-			},
-		},
-		AdditionalDefaultConfig: IntegrationConfig{
-			ArtifactManagerConfigBuildInfoPath: IntegrationConfigValue{
 				Type: IntegrationConfigTypeString,
 			},
 		},
@@ -311,6 +305,8 @@ const (
 	IntegrationConfigTypePassword = "password"
 	// IntegrationConfigTypeBoolean represents a password configuration value
 	IntegrationConfigTypeBoolean = "boolean"
+	// IntegrationConfigTypeRegion represents a region requirement
+	IntegrationConfigTypeRegion = "region"
 
 	IntegrationVariablePrefixDeployment      = "deployment"
 	IntegrationVariablePrefixArtifactManager = "artifact_manager"
@@ -321,6 +317,7 @@ type IntegrationConfigValue struct {
 	Value       string `json:"value" yaml:"value"`
 	Type        string `json:"type" yaml:"type"`
 	Description string `json:"description,omitempty" yaml:"description,omitempty"`
+	Static      bool   `json:"static,omitempty" yaml:"static,omitempty"`
 }
 
 type IntegrationConfigMap map[string]IntegrationConfig

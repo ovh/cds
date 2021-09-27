@@ -8,9 +8,12 @@ import (
 	"strings"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 func (b *bitbucketClient) Branches(ctx context.Context, fullname string, filters sdk.VCSBranchesFilter) ([]sdk.VCSBranch, error) {
+	_, end := telemetry.Span(ctx, "bitbucketserver.Branches", telemetry.Tag(telemetry.TagRepository, fullname))
+	defer end()
 	branches := []sdk.VCSBranch{}
 
 	t := strings.Split(fullname, "/")

@@ -1,3 +1,0 @@
-name: test-worker-artifact
-version: v1.0
-pipeline: pipeline-play-worker-artifact

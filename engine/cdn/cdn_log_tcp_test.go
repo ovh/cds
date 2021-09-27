@@ -3,15 +3,16 @@ package cdn
 import (
 	"bytes"
 	"context"
+	"io"
+	"strconv"
+	"testing"
+
 	"github.com/mitchellh/hashstructure"
 	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/storage"
 	cdntest "github.com/ovh/cds/engine/cdn/test"
 	"github.com/ovh/cds/sdk/cdn"
 	"github.com/ovh/cds/sdk/log/hook"
-	"io"
-	"strconv"
-	"testing"
 
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/test"
@@ -128,6 +129,6 @@ func TestStoreTruncatedLogs(t *testing.T) {
 	_, err = io.Copy(buf, rc)
 	require.NoError(t, err)
 
-	require.Equal(t, "[EMERGENCY] Bim bam boum\n...truncated\n", buf.String())
+	require.Equal(t, "Bim bam boum\n...truncated\n", buf.String())
 	require.Equal(t, int64(2), lineCount)
 }

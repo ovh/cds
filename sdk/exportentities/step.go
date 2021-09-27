@@ -167,6 +167,20 @@ func NewStep(act sdk.Action) Step {
 			if prefix != nil {
 				s.GitTag.Prefix = prefix.Value
 			}
+		case sdk.PromoteAction:
+			s.Promote = &StepPromote{}
+			artifacts := sdk.ParameterFind(act.Parameters, "artifacts")
+			if artifacts != nil {
+				s.Promote.Artifacts = artifacts.Value
+			}
+			srcMaturity := sdk.ParameterFind(act.Parameters, "srcMaturity")
+			if srcMaturity != nil {
+				s.Promote.SrcMaturity = srcMaturity.Value
+			}
+			destMaturity := sdk.ParameterFind(act.Parameters, "destMaturity")
+			if destMaturity != nil {
+				s.Promote.DestMaturity = destMaturity.Value
+			}
 		case sdk.ReleaseAction:
 			s.Release = &StepRelease{}
 			artifacts := sdk.ParameterFind(act.Parameters, "artifacts")
@@ -177,9 +191,13 @@ func NewStep(act sdk.Action) Step {
 			if releaseNote != nil {
 				s.Release.ReleaseNote = releaseNote.Value
 			}
-			releaseNameSuffix := sdk.ParameterFind(act.Parameters, "releaseNameSuffix")
-			if releaseNameSuffix != nil {
-				s.Release.ReleaseNameSuffix = releaseNameSuffix.Value
+			srcMaturity := sdk.ParameterFind(act.Parameters, "srcMaturity")
+			if srcMaturity != nil {
+				s.Release.SrcMaturity = srcMaturity.Value
+			}
+			destMaturity := sdk.ParameterFind(act.Parameters, "destMaturity")
+			if destMaturity != nil {
+				s.Release.DestMaturity = destMaturity.Value
 			}
 		case sdk.ReleaseVCSAction:
 			s.ReleaseVCS = &StepReleaseVCS{}
@@ -308,11 +326,19 @@ type StepGitClone struct {
 	User       string `json:"user,omitempty" yaml:"user,omitempty"`
 }
 
+// StepPromote represents exported promote step.
+type StepPromote struct {
+	Artifacts    string `json:"artifacts,omitempty" yaml:"artifacts,omitempty"`
+	SrcMaturity  string `json:"srcMaturity,omitempty" yaml:"srcMaturity,omitempty"`
+	DestMaturity string `json:"destMaturity,omitempty" yaml:"destMaturity,omitempty"`
+}
+
 // StepRelease represents exported release step.
 type StepRelease struct {
-	Artifacts         string `json:"artifacts,omitempty" yaml:"artifacts,omitempty"`
-	ReleaseNote       string `json:"releaseNote,omitempty" yaml:"releaseNote,omitempty"`
-	ReleaseNameSuffix string `json:"releaseNameSuffix,omitempty" yaml:"releaseNameSuffix,omitempty"`
+	Artifacts    string `json:"artifacts,omitempty" yaml:"artifacts,omitempty"`
+	ReleaseNote  string `json:"releaseNote,omitempty" yaml:"releaseNote,omitempty"`
+	SrcMaturity  string `json:"srcMaturity,omitempty" yaml:"srcMaturity,omitempty"`
+	DestMaturity string `json:"destMaturity,omitempty" yaml:"destMaturity,omitempty"`
 }
 
 // StepReleaseVCS represents exported release step.
@@ -364,6 +390,7 @@ type Step struct {
 	GitTag           *StepGitTag           `json:"gitTag,omitempty" yaml:"gitTag,omitempty" jsonschema:"oneof_required=actionGitTag" jsonschema_description:"Create a git tag.\nhttps://ovh.github.io/cds/docs/actions/builtin-gittag"`
 	ReleaseVCS       *StepReleaseVCS       `json:"releaseVCS,omitempty" yaml:"releaseVCS,omitempty" jsonschema:"oneof_required=actionReleaseVCS" jsonschema_description:"Release an application.\nhttps://ovh.github.io/cds/docs/actions/builtin-releasevcs"`
 	Release          *StepRelease          `json:"release,omitempty" yaml:"release,omitempty" jsonschema:"oneof_required=actionRelease" jsonschema_description:"Release an application.\nhttps://ovh.github.io/cds/docs/actions/builtin-release"`
+	Promote          *StepPromote          `json:"promote,omitempty" yaml:"promote,omitempty" jsonschema:"oneof_required=actionPromote" jsonschema_description:"Promote artifacts.\nhttps://ovh.github.io/cds/docs/actions/builtin-promote"`
 	JUnitReport      *StepJUnitReport      `json:"jUnitReport,omitempty" yaml:"jUnitReport,omitempty" jsonschema:"oneof_required=actionJUNit" jsonschema_description:"Parse JUnit report.\nhttps://ovh.github.io/cds/docs/actions/builtin-junit"`
 	Checkout         *StepCheckout         `json:"checkout,omitempty" yaml:"checkout,omitempty" jsonschema:"oneof_required=actionCheckout" jsonschema_description:"Checkout repository for an application.\nhttps://ovh.github.io/cds/docs/actions/builtin-checkoutapplication"`
 	InstallKey       *StepInstallKey       `json:"installKey,omitempty" yaml:"installKey,omitempty" jsonschema:"oneof_required=actionInstallKey" jsonschema_description:"Install a key (GPG, SSH) in your current workspace.\nhttps://ovh.github.io/cds/docs/actions/builtin-installkey"`
@@ -519,6 +546,8 @@ func (s Step) toAction() (*sdk.Action, error) {
 		a, err = s.asGitTag()
 	} else if s.isReleaseVCS() {
 		a, err = s.asReleaseVCS()
+	} else if s.isPromote() {
+		a, err = s.asPromote()
 	} else if s.isRelease() {
 		a, err = s.asRelease()
 	} else if s.isCheckout() {
@@ -752,6 +781,22 @@ func (s Step) asGitTag() (sdk.Action, error) {
 	}
 	a = sdk.Action{
 		Name:       sdk.GitTagAction,
+		Type:       sdk.BuiltinAction,
+		Parameters: sdk.ParametersFromMap(m),
+	}
+	return a, nil
+}
+
+func (s Step) isPromote() bool { return s.Promote != nil }
+
+func (s Step) asPromote() (sdk.Action, error) {
+	var a sdk.Action
+	m, err := stepToMap(s.Release)
+	if err != nil {
+		return a, err
+	}
+	a = sdk.Action{
+		Name:       sdk.PromoteAction,
 		Type:       sdk.BuiltinAction,
 		Parameters: sdk.ParametersFromMap(m),
 	}

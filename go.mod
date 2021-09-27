@@ -32,7 +32,7 @@ require (
 	github.com/eapache/go-resiliency v1.2.0
 	github.com/fatih/color v1.7.0
 	github.com/fsamin/go-dump v1.0.9
-	github.com/fsamin/go-repo v0.1.8
+	github.com/fsamin/go-repo v0.1.10
 	github.com/fsamin/go-shredder v0.0.0-20180118184739-b2488aedb5be
 	github.com/fujiwara/shapeio v0.0.0-20170602072123-c073257dd745
 	github.com/gambol99/go-marathon v0.0.0-20170922093320-ec4a50170df7
@@ -106,6 +106,7 @@ require (
 	github.com/satori/go.uuid v1.2.0
 	github.com/sguiheux/go-coverage v0.0.0-20190710153556-287b082a7197
 	github.com/shirou/gopsutil v0.0.0-20170406131756-e49a95f3d5f8
+	github.com/shopspring/decimal v1.2.0
 	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/afero v1.2.2
 	github.com/spf13/cast v1.3.0

@@ -118,9 +118,15 @@ If you're using a self-signed certificate on CDS API, you probably want to use `
 
 	CDS_INSECURE=true cdsctl [command]
 
-For advanced usage, you can use a session-token instead of a token:
+Advanced usages:
+
+* you can use a session-token instead of a token:
 
 	CDS_API_URL="https://instance.cds.api" CDS_USER="username" CDS_SESSION_TOKEN="yourtoken" cdsctl [command]
+
+* you define a maximum number of retries for HTTP calls:
+
+	CDS_API_URL="https://instance.cds.api" CDS_SESSION_TOKEN="yourtoken" CDS_HTTP_MAX_RETRY=10 cdsctl [command]
 
 `,
 }

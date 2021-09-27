@@ -2,7 +2,7 @@ package sdk
 
 import (
 	"database/sql/driver"
-	json "encoding/json"
+	"encoding/json"
 	"fmt"
 )
 
@@ -27,6 +27,7 @@ const (
 	PushBuildInfo             = "PushBuildInfo"
 	InstallKeyAction          = "InstallKey"
 	ReleaseAction             = "Release"
+	PromoteAction             = "Promote"
 
 	DefaultGitCloneParameterTagValue = "{{.git.tag}}"
 )

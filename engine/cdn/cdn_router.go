@@ -13,6 +13,7 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.SetHeaderFunc = service.DefaultHeaders
 	r.Middlewares = append(r.Middlewares, s.jwtMiddleware)
 	r.DefaultAuthMiddleware = service.CheckRequestSignatureMiddleware(s.ParsedAPIPublicKey)
+	r.PostAuthMiddlewares = append(r.PostAuthMiddlewares, service.TracingMiddlewareFunc(s))
 
 	r.Handle("/mon/version", nil, r.GET(service.VersionHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 	r.Handle("/mon/status", nil, r.GET(s.statusHandler, service.OverrideAuth(service.NoAuthMiddleware)))
@@ -45,6 +46,10 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Handle("/sync/buffer", nil, r.POST(s.syncBufferHandler))
 
 	r.Handle("/size/item/project/{projectKey}", nil, r.GET(s.getSizeByProjectHandler))
+
+	r.Handle("/admin/database/migration/delete/{id}", nil, r.DELETE(s.deleteDatabaseMigrationHandler))
+	r.Handle("/admin/database/migration/unlock/{id}", nil, r.POST(s.postDatabaseMigrationUnlockedHandler))
+	r.Handle("/admin/database/migration", nil, r.GET(s.getDatabaseMigrationHandler))
 
 	r.Handle("/admin/database/signature", nil, r.GET(s.getAdminDatabaseSignatureResume))
 	r.Handle("/admin/database/signature/{entity}/roll/{pk}", nil, r.POST(s.postAdminDatabaseSignatureRollEntityByPrimaryKey))

@@ -114,7 +114,7 @@ func (api *API) getApplicationOverviewHandler() service.Handler {
 			tagFilter := make(map[string]string, 1)
 			tagFilter["git.branch"] = defaultBranch.DisplayID
 			for _, w := range app.Usage.Workflows {
-				runs, _, _, _, err := workflow.LoadRunsSummaries(tx, projectKey, w.Name, 0, 5, tagFilter)
+				runs, _, _, _, err := workflow.LoadRunsSummaries(ctx, tx, projectKey, w.Name, 0, 5, tagFilter)
 				if err != nil {
 					return sdk.WrapError(err, "unable to load runs")
 				}

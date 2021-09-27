@@ -3,6 +3,7 @@ package hatchery
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"sync/atomic"
 	"time"
 
@@ -48,7 +49,7 @@ func workerStarter(ctx context.Context, h Interface, workerNum string, jobs <-ch
 	for j := range jobs {
 		// Start a worker for a job
 		if m := j.registerWorkerModel; m == nil {
-			_ = spawnWorkerForJob(ctx, h, j)
+			_ = spawnWorkerForJob(j.ctx, h, j)
 			j.cancel("") // call to EndTrace for observability
 		} else { // Start a worker for registering
 			log.Debug(ctx, "Spawning worker for register model %s", m.Name)
@@ -99,17 +100,19 @@ func workerStarter(ctx context.Context, h Interface, workerNum string, jobs <-ch
 }
 
 func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest) bool {
-	ctxJob, end := telemetry.Span(j.ctx, "hatchery.spawnWorkerForJob")
+	ctx, end := telemetry.Span(ctx, "hatchery.spawnWorkerForJob")
 	defer end()
 
-	ctxJob = telemetry.ContextWithTag(ctxJob,
+	ctx = telemetry.ContextWithTag(ctx,
 		telemetry.TagServiceName, h.Name(),
 		telemetry.TagServiceType, h.Type(),
 	)
-	telemetry.Record(ctxJob, GetMetrics().SpawnedWorkers, 1)
+	telemetry.Record(ctx, GetMetrics().SpawnedWorkers, 1)
+
+	ctx = context.WithValue(ctx, log.Field("action_metadata_job_id"), strconv.Itoa(int(j.id)))
 
 	log.Debug(ctx, "hatchery> spawnWorkerForJob> %d", j.id)
-	defer log.Debug(ctx, "hatchery> spawnWorkerForJob> %d (%.3f seconds elapsed)", j.id, time.Since(time.Unix(j.timestamp, 0)).Seconds())
+	defer log.Info(ctx, "hatchery> spawnWorkerForJob> %d (%.3f seconds elapsed)", j.id, time.Since(time.Unix(j.timestamp, 0)).Seconds())
 
 	maxProv := h.Configuration().Provision.MaxConcurrentProvisioning
 	if maxProv < 1 {
@@ -135,7 +138,7 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 		return false
 	}
 
-	ctxQueueJobBook, next := telemetry.Span(ctxJob, "hatchery.QueueJobBook")
+	ctxQueueJobBook, next := telemetry.Span(ctx, "hatchery.QueueJobBook")
 	ctxQueueJobBook, cancel := context.WithTimeout(ctxQueueJobBook, 10*time.Second)
 	bookedInfos, err := h.CDSClient().QueueJobBook(ctxQueueJobBook, j.id)
 	if err != nil {
@@ -150,7 +153,7 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 	cancel()
 	log.Debug(ctx, "hatchery> spawnWorkerForJob> %d - send book job %d", j.timestamp, j.id)
 
-	ctxSendSpawnInfo, next := telemetry.Span(ctxJob, "hatchery.SendSpawnInfo", telemetry.Tag("msg", sdk.MsgSpawnInfoHatcheryStarts.ID))
+	ctxSendSpawnInfo, next := telemetry.Span(ctx, "hatchery.SendSpawnInfo", telemetry.Tag("msg", sdk.MsgSpawnInfoHatcheryStarts.ID))
 	start := time.Now()
 	SendSpawnInfo(ctxSendSpawnInfo, h, j.id, sdk.SpawnMsg{
 		ID: sdk.MsgSpawnInfoHatcheryStarts.ID,
@@ -163,7 +166,7 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 
 	workerName := generateWorkerName(h.Service().Name, false, modelName)
 
-	_, next = telemetry.Span(ctxJob, "hatchery.SpawnWorker")
+	ctxSpawnWorker, next := telemetry.Span(ctx, "hatchery.SpawnWorker", telemetry.Tag(telemetry.TagWorker, workerName))
 	arg := SpawnArguments{
 		WorkerName:   workerName,
 		Model:        j.model,
@@ -194,13 +197,11 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 		return false
 	}
 	arg.WorkerToken = jwt
-	log.Debug(ctx, "hatchery> spawnWorkerForJob> new JWT for worker: %s", jwt)
-
-	errSpawn := h.SpawnWorker(ctx, arg)
+	errSpawn := h.SpawnWorker(ctxSpawnWorker, arg)
 	next()
 	if errSpawn != nil {
 		ctx = sdk.ContextWithStacktrace(ctx, errSpawn)
-		ctxSendSpawnInfo, next = telemetry.Span(ctxJob, "hatchery.QueueJobSendSpawnInfo", telemetry.Tag("status", "errSpawn"), telemetry.Tag("msg", sdk.MsgSpawnInfoHatcheryErrorSpawn.ID))
+		ctxSendSpawnInfo, next = telemetry.Span(ctx, "hatchery.QueueJobSendSpawnInfo", telemetry.Tag("status", "errSpawn"), telemetry.Tag("msg", sdk.MsgSpawnInfoHatcheryErrorSpawn.ID))
 		SendSpawnInfo(ctxSendSpawnInfo, h, j.id, sdk.SpawnMsg{
 			ID:   sdk.MsgSpawnInfoHatcheryErrorSpawn.ID,
 			Args: []interface{}{h.Service().Name, modelName, sdk.Round(time.Since(start), time.Second).String(), sdk.ExtractHTTPError(errSpawn).Error()},
@@ -211,7 +212,7 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 	}
 
 	if j.model != nil && j.model.IsDeprecated {
-		ctxSendSpawnInfo, next = telemetry.Span(ctxJob, "hatchery.SendSpawnInfo", telemetry.Tag("msg", sdk.MsgSpawnInfoDeprecatedModel.ID))
+		ctxSendSpawnInfo, next = telemetry.Span(ctx, "hatchery.SendSpawnInfo", telemetry.Tag("msg", sdk.MsgSpawnInfoDeprecatedModel.ID))
 		SendSpawnInfo(ctxSendSpawnInfo, h, j.id, sdk.SpawnMsg{
 			ID:   sdk.MsgSpawnInfoDeprecatedModel.ID,
 			Args: []interface{}{modelName},

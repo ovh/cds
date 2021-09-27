@@ -447,9 +447,59 @@ var (
 											Value: "my release",
 										},
 										{
-											Name:  "releaseNameSuffix",
+											Name:  "srcMaturity",
 											Type:  sdk.StringParameter,
-											Value: "-RC",
+											Value: "staging",
+										},
+										{
+											Name:  "destMaturity",
+											Type:  sdk.StringParameter,
+											Value: "rc",
+										},
+									},
+								},
+							},
+						},
+					}},
+				},
+			},
+		},
+	}
+
+	tPromote = pipelineTestCase{
+		name: "Pipeline with 1 stages and 1 release job",
+		arg: sdk.Pipeline{
+			Name: "MyPipeline tRelease",
+			Stages: []sdk.Stage{
+				{
+					BuildOrder: 1,
+					Name:       "stage 1",
+					Enabled:    true,
+					Jobs: []sdk.Job{{
+						Enabled: true,
+						Action: sdk.Action{
+							Name:        "Job 1",
+							Description: "This is job 1",
+							Actions: []sdk.Action{
+								{
+									Type:    sdk.BuiltinAction,
+									Name:    sdk.PromoteAction,
+									Enabled: true,
+									Parameters: []sdk.Parameter{
+										{
+											Name:  "artifacts",
+											Type:  sdk.StringParameter,
+											Value: ".*",
+										},
+										{
+											Name:  "srcMaturity",
+											Type:  sdk.StringParameter,
+											Value: "snapshot",
+										},
+										{
+											Name:  "destMaturity",
+											Type:  sdk.StringParameter,
+											Value: "staging",
 										},
 									},
 								},

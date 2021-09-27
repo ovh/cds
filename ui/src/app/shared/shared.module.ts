@@ -57,6 +57,7 @@ import { PermissionListComponent } from './permission/list/permission.list.compo
 import { PermissionService } from './permission/permission.service';
 import { AnsiPipe } from './pipes/ansi.pipe';
 import { CutPipe } from './pipes/cut.pipe';
+import { DurationMsPipe } from './pipes/duration.pipe';
 import { KeysPipe } from './pipes/keys.pipe';
 import { ForMapPipe } from './pipes/map.pipe';
 import { NgForNumber } from './pipes/ngfor.number.pipe';
@@ -147,6 +148,7 @@ import { ZoneComponent } from './zone/zone.component';
         ConfirmModalComponent,
         CutPipe,
         DataTableComponent,
+        DurationMsPipe,
         PaginationComponent,
         DeleteButtonComponent,
         DeleteModalComponent,
@@ -258,6 +260,7 @@ import { ZoneComponent } from './zone/zone.component';
         CutPipe,
         GroupFormComponent,
         DeleteButtonComponent,
+        DurationMsPipe,
         ConfirmButtonComponent,
         UploadButtonComponent,
         DragulaModule,

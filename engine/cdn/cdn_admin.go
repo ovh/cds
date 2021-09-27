@@ -5,6 +5,18 @@ import (
 	"github.com/ovh/cds/engine/service"
 )
 
+func (s *Service) deleteDatabaseMigrationHandler() service.Handler {
+	return database.AdminDeleteDatabaseMigration(s.mustDB)
+}
+
+func (s *Service) postDatabaseMigrationUnlockedHandler() service.Handler {
+	return database.AdminDatabaseMigrationUnlocked(s.mustDB)
+}
+
+func (s *Service) getDatabaseMigrationHandler() service.Handler {
+	return database.AdminGetDatabaseMigration(s.mustDB)
+}
+
 func (s *Service) getAdminDatabaseSignatureResume() service.Handler {
 	return database.AdminDatabaseSignatureResume(s.mustDB, s.Mapper)
 }

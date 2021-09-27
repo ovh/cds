@@ -39,9 +39,9 @@ type TemplateClient interface {
 
 // Admin expose all function to CDS administration
 type Admin interface {
-	AdminDatabaseMigrationDelete(id string) error
-	AdminDatabaseMigrationUnlock(id string) error
-	AdminDatabaseMigrationsList() ([]sdk.DatabaseMigrationStatus, error)
+	AdminDatabaseMigrationDelete(service string, id string) error
+	AdminDatabaseMigrationUnlock(service string, id string) error
+	AdminDatabaseMigrationsList(service string) ([]sdk.DatabaseMigrationStatus, error)
 	AdminDatabaseSignaturesResume(service string) (sdk.CanonicalFormUsageResume, error)
 	AdminDatabaseSignaturesRollEntity(service string, e string) error
 	AdminDatabaseSignaturesRollAllEntities(service string) error
@@ -245,6 +245,7 @@ type ProjectVariablesClient interface {
 	ProjectVariableUpdate(projectKey string, variable *sdk.Variable) error
 	VariableEncrypt(projectKey string, varName string, content string) (*sdk.Variable, error)
 	VariableListEncrypt(projectKey string) ([]sdk.Secret, error)
+	VariableEncryptDelete(projectKey, name string) error
 }
 
 // QueueClient exposes queue related functions

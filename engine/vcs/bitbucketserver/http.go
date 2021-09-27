@@ -17,6 +17,7 @@ import (
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 var (
@@ -71,6 +72,9 @@ type options struct {
 }
 
 func (c *bitbucketClient) do(ctx context.Context, method, api, path string, params url.Values, values []byte, v interface{}, opts *options) error {
+	ctx, end := telemetry.Span(ctx, "bitbucketserver.do_http")
+	defer end()
+
 	// Sad hack to get username
 	var username = false
 	if path == "username" {
@@ -101,6 +105,8 @@ func (c *bitbucketClient) do(ctx context.Context, method, api, path string, para
 		Close:      true,
 		Header:     http.Header{},
 	}
+
+	log.Info(ctx, "%s %s", req.Method, req.URL.String())
 
 	if values != nil && len(values) > 0 {
 		buf := bytes.NewBuffer(values)

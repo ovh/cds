@@ -68,7 +68,7 @@ func (api *API) postWorkflowJobStaticFilesHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load node job run")
 		}
 
-		nodeRun, err := workflow.LoadNodeRunByID(api.mustDB(), nodeJobRun.WorkflowNodeRunID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
+		nodeRun, err := workflow.LoadNodeRunByID(ctx, api.mustDB(), nodeJobRun.WorkflowNodeRunID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
 		if err != nil {
 			return sdk.WrapError(err, "cannot load node run")
 		}
@@ -175,7 +175,7 @@ func (api *API) postWorkflowJobArtifactHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load node job run")
 		}
 
-		nodeRun, err := workflow.LoadNodeRunByID(api.mustDB(), nodeJobRun.WorkflowNodeRunID, workflow.LoadRunOptions{WithArtifacts: true, DisableDetailledNodeRun: true})
+		nodeRun, err := workflow.LoadNodeRunByID(ctx, api.mustDB(), nodeJobRun.WorkflowNodeRunID, workflow.LoadRunOptions{WithArtifacts: true, DisableDetailledNodeRun: true})
 		if err != nil {
 			return sdk.WrapError(err, "cannot load node run")
 		}
@@ -287,7 +287,7 @@ func (api *API) postWorkflowJobArtifactWithTempURLCallbackHandler() service.Hand
 			return sdk.WrapError(sdk.ErrForbidden, "submitted artifact doesn't match, key:%s art:%v cachedArt:%v", cacheKey, art, cachedArt)
 		}
 
-		nodeRun, err := workflow.LoadNodeRunByID(api.mustDB(), art.WorkflowNodeRunID, workflow.LoadRunOptions{WithArtifacts: true, DisableDetailledNodeRun: true})
+		nodeRun, err := workflow.LoadNodeRunByID(ctx, api.mustDB(), art.WorkflowNodeRunID, workflow.LoadRunOptions{WithArtifacts: true, DisableDetailledNodeRun: true})
 		if err != nil {
 			return sdk.WrapError(err, "cannot load node run")
 		}
@@ -347,7 +347,7 @@ func (api *API) postWorkflowJobArtifacWithTempURLHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load node job run with art.WorkflowNodeJobRunID: %d", art.WorkflowNodeJobRunID)
 		}
 
-		nodeRun, err := workflow.LoadNodeRunByID(api.mustDB(), nodeJobRun.WorkflowNodeRunID, workflow.LoadRunOptions{WithArtifacts: true, DisableDetailledNodeRun: true})
+		nodeRun, err := workflow.LoadNodeRunByID(ctx, api.mustDB(), nodeJobRun.WorkflowNodeRunID, workflow.LoadRunOptions{WithArtifacts: true, DisableDetailledNodeRun: true})
 		if err != nil {
 			return sdk.WrapError(err, "cannot load node run")
 		}

@@ -7,6 +7,8 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/shopspring/decimal"
+
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 )
@@ -33,7 +35,11 @@ func (r *Reader) get(from uint, to uint) ([]Line, error) {
 	}
 	ls := make([]Line, len(res))
 	for i := range res {
-		ls[i].Number = int64(res[i].Score)
+		scoreD := decimal.NewFromFloat(res[i].Score)
+		ls[i].Number = scoreD.IntPart()
+		floatD := scoreD.Sub(decimal.NewFromInt(ls[i].Number))
+		ls[i].Since = floatD.Coefficient().Int64()
+
 		var value string
 		if err := sdk.JSONUnmarshal(res[i].Value, &value); err != nil {
 			return nil, sdk.WrapError(err, "cannot unmarshal line value from store")
@@ -71,7 +77,7 @@ func (r *Reader) loadMoreLines() error {
 		}
 	}
 
-	maxLinesToRead := uint(lineCount) - uint(r.From)
+	maxLinesToRead := lineCount - uint(r.From)
 	if r.Size == 0 || r.Size > maxLinesToRead {
 		r.Size = maxLinesToRead
 	}
@@ -100,7 +106,7 @@ func (r *Reader) loadMoreLines() error {
 
 	// Read 100 lines if possible or only the missing lines if less than 100
 	alreadyReadLinesLength := r.nextIndex - uint(r.From)
-	linesLeftToRead := uint(r.Size) - alreadyReadLinesLength
+	linesLeftToRead := r.Size - alreadyReadLinesLength
 	if linesLeftToRead == 0 {
 		if !r.readEOF {
 			r.readEOF = true
@@ -121,15 +127,15 @@ func (r *Reader) loadMoreLines() error {
 		from = r.nextIndex
 		to = newNextIndex - 1
 	} else {
-		if uint(lineCount) < newNextIndex {
+		if lineCount < newNextIndex {
 			from = 0
 		} else {
-			from = uint(lineCount) - newNextIndex
+			from = lineCount - newNextIndex
 		}
-		if uint(lineCount) < r.nextIndex {
-			to = uint(lineCount) - 1
+		if lineCount < r.nextIndex {
+			to = lineCount - 1
 		} else {
-			to = uint(lineCount) - (r.nextIndex + 1)
+			to = lineCount - (r.nextIndex + 1)
 		}
 	}
 	lines, err := r.get(from, to)

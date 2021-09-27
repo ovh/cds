@@ -89,9 +89,13 @@ func (m *Mapper) RollSignedTupleByPrimaryKey(ctx context.Context, db SqlExecutor
 		return errors.New("entity is not signed")
 	}
 
-	tuple, err := m.LoadTupleByPrimaryKey(db, entity, pk)
+	tuple, err := m.LoadAndLockTupleByPrimaryKey(ctx, db, entity, pk)
 	if err != nil {
 		return err
+	}
+
+	if tuple == nil {
+		return nil
 	}
 
 	if err := m.UpdateAndSign(ctx, db, tuple.(Canonicaller)); err != nil {
