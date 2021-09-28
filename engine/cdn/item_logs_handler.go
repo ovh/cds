@@ -38,7 +38,27 @@ func (s *Service) getItemLogsStreamHandler() service.Handler {
 		defer s.WSServer.RemoveClient(wsClient.UUID())
 
 		wsClient.OnMessage(func(m []byte) {
-			if err := wsClientData.UpdateFilter(m); err != nil {
+			var filter sdk.CDNStreamFilter
+			if err := sdk.JSONUnmarshal(m, &filter); err != nil {
+				ctx = sdk.ContextWithStacktrace(ctx, err)
+				log.Warn(ctx, err.Error())
+				return
+			}
+
+			// Load last running step
+			var iuID string
+			if filter.JobRunID > 0 {
+				iu, err := storage.LoadLastItemUnitByJobUnitType(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.LogsBuffer().ID(), filter.JobRunID, sdk.CDNTypeItemStepLog)
+				if err != nil {
+					ctx = sdk.ContextWithStacktrace(ctx, err)
+					log.Warn(ctx, err.Error())
+					return
+				}
+				iuID = iu.ID
+
+			}
+
+			if err := wsClientData.UpdateFilter(filter, iuID); err != nil {
 				ctx = sdk.ContextWithStacktrace(ctx, err)
 				log.Warn(ctx, err.Error())
 				return
@@ -113,11 +133,11 @@ func (s *Service) sendLogsToWSClient(ctx context.Context, wsClient websocket.Cli
 			}
 			wsClientData.itemUnitsData[k] = ItemUnitClientData{
 				itemUnit:            iu,
-				scoreNextLineToSend: 0,
+				scoreNextLineToSend: wsClientData.itemUnitsData[k].scoreNextLineToSend,
 			}
 		}
 
-		if err := s.sendStepLog(ctx, wsClient, wsClientData, wsClientData.itemUnitsData[k]); err != nil {
+		if err := s.sendStepLog(ctx, wsClient, wsClientData, k); err != nil {
 			return err
 		}
 
@@ -125,9 +145,10 @@ func (s *Service) sendLogsToWSClient(ctx context.Context, wsClient websocket.Cli
 	return nil
 }
 
-func (s *Service) sendStepLog(ctx context.Context, wsClient websocket.Client, wsClientData *websocketClientData, data ItemUnitClientData) error {
-	log.Debug(ctx, "getItemLogsStreamHandler> send log to client %s from %d", wsClient.UUID(), data.scoreNextLineToSend)
+func (s *Service) sendStepLog(ctx context.Context, wsClient websocket.Client, wsClientData *websocketClientData, mapIndex string) error {
+	data := wsClientData.itemUnitsData[mapIndex]
 
+	log.Debug(ctx, "getItemLogsStreamHandler> send log to client %s from %d", wsClient.UUID(), data.scoreNextLineToSend)
 	rc, err := s.Units.LogsBuffer().NewAdvancedReader(ctx, *data.itemUnit, sdk.CDNReaderFormatJSON, data.scoreNextLineToSend, 100, 0)
 	if err != nil {
 		return err
@@ -157,6 +178,7 @@ func (s *Service) sendStepLog(ctx context.Context, wsClient websocket.Client, ws
 			data.scoreNextLineToSend++
 		}
 	}
+	wsClientData.itemUnitsData[mapIndex] = data
 	// If all the lines were sent, we can trigger another update, if only one line was send do not trigger an update wait for next event from broker
 	if len(lines) > 1 && (oldNextLineToSend > 0 || int(data.scoreNextLineToSend-oldNextLineToSend) == len(lines)) {
 		wsClientData.TriggerUpdate()

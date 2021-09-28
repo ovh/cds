@@ -292,6 +292,11 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 	require.NoError(t, s.initWebsocket())
 	ts := httptest.NewServer(s.Router.Mux)
 
+	_, err := db.Exec("DELETE FROM storage_unit_item")
+	require.NoError(t, err)
+	_, err = db.Exec("DELETE FROM ITEM")
+	require.NoError(t, err)
+
 	s.Client = cdsclient.New(cdsclient.Config{Host: "http://lolcat.api", InsecureSkipVerifyTLS: false})
 	gock.InterceptClient(s.Client.(cdsclient.Raw).HTTPClient())
 	t.Cleanup(gock.Off)
@@ -375,7 +380,7 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 	chanMsgToSend <- buf
 
 	var lines []redis.Line
-	for ctx.Err() == nil && len(lines) < 5 {
+	for ctx.Err() == nil && len(lines) < 10 {
 		select {
 		case <-ctx.Done():
 			break
@@ -400,7 +405,7 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 		sendMessage()
 	}
 
-	for ctx.Err() == nil && len(lines) < 15 {
+	for ctx.Err() == nil && len(lines) < 20 {
 		select {
 		case <-ctx.Done():
 			break
@@ -425,13 +430,13 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 		chanErrorReceived <- client.RequestWebsocket(ctx, sdk.NewGoRoutines(ctx), uri, chanMsgToSend, chanMsgReceived, chanErrorReceived)
 	}()
 	buf, err = json.Marshal(sdk.CDNStreamFilter{
-		JobRunID: 123456789,
+		JobRunID: signature.JobID,
 	})
 	require.NoError(t, err)
 	chanMsgToSend <- buf
 
 	lines = make([]redis.Line, 0)
-	for ctx.Err() == nil && len(lines) < 5 {
+	for ctx.Err() == nil && len(lines) < 10 {
 		select {
 		case <-ctx.Done():
 			break
@@ -445,9 +450,9 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 		}
 	}
 
-	require.Len(t, lines, 5)
-	require.Equal(t, "message 15\n", lines[0].Value)
-	require.Equal(t, int64(15), lines[0].Number)
-	require.Equal(t, "message 19\n", lines[4].Value)
-	require.Equal(t, int64(19), lines[4].Number)
+	require.Len(t, lines, 10)
+	require.Equal(t, "message 10\n", lines[0].Value)
+	require.Equal(t, int64(10), lines[0].Number)
+	require.Equal(t, "message 19\n", lines[9].Value)
+	require.Equal(t, int64(19), lines[9].Number)
 }

@@ -186,7 +186,7 @@ func TestPostAdminResyncBackendWithDatabaseHandler(t *testing.T) {
 		},
 	})
 	require.NoError(t, err)
-	_, err = s.loadOrCreateItemUnitBuffer(context.TODO(), it.ID, sdk.CDNTypeItemRunResult)
+	_, _, err = s.loadOrCreateItemUnitBuffer(context.TODO(), it.ID, sdk.CDNTypeItemRunResult)
 	require.NoError(t, err)
 
 	require.NoError(t, os.Mkdir(fmt.Sprintf("%s/%s", tmpDir, string(sdk.CDNTypeItemRunResult)), 0755))

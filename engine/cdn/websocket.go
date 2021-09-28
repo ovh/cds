@@ -67,20 +67,24 @@ func (s *Service) initWebsocket() error {
 	return nil
 }
 
-func (s *Service) publishWSEvent(item sdk.CDNItem) {
+func (s *Service) publishWSEvent(itemUnit sdk.CDNItemUnit, created bool) {
 	s.WSEventsMutex.Lock()
 	defer s.WSEventsMutex.Unlock()
 	if s.WSEvents == nil {
 		s.WSEvents = make(map[string]sdk.CDNWSEvent)
 	}
-	apiRefItem, _ := item.GetCDNLogApiRef()
+	apiRefItem, _ := itemUnit.Item.GetCDNLogApiRef()
 	if apiRefItem == nil {
 		return
 	}
-	s.WSEvents[item.ID] = sdk.CDNWSEvent{
-		ItemType: item.Type,
+	event := sdk.CDNWSEvent{
+		ItemType: itemUnit.Type,
 		JobRunID: apiRefItem.NodeRunJobID,
 	}
+	if created {
+		event.NewItemUnitID = itemUnit.ID
+	}
+	s.WSEvents[itemUnit.ID] = event
 }
 
 func (s *Service) sendWSEvent(ctx context.Context) error {
@@ -115,6 +119,12 @@ func (s *Service) websocketOnMessage(e sdk.CDNWSEvent) {
 		c := s.WSServer.GetClientData(id)
 		if c == nil || c.itemFilter == nil || c.itemFilter.JobRunID != e.JobRunID {
 			continue
+		}
+		if e.NewItemUnitID != "" {
+			// Add new step on client data
+			c.mutexData.Lock()
+			c.itemUnitsData[e.NewItemUnitID] = ItemUnitClientData{}
+			c.mutexData.Unlock()
 		}
 		c.TriggerUpdate()
 	}
@@ -178,11 +188,7 @@ func (d *websocketClientData) ConsumeTrigger() (triggered bool) {
 	return
 }
 
-func (d *websocketClientData) UpdateFilter(msg []byte) error {
-	var filter sdk.CDNStreamFilter
-	if err := sdk.JSONUnmarshal(msg, &filter); err != nil {
-		return sdk.WithStack(err)
-	}
+func (d *websocketClientData) UpdateFilter(filter sdk.CDNStreamFilter, itemUnitID string) error {
 	if err := filter.Validate(); err != nil {
 		return err
 	}
@@ -191,6 +197,11 @@ func (d *websocketClientData) UpdateFilter(msg []byte) error {
 	defer d.mutexData.Unlock()
 
 	d.itemFilter = &filter
-	d.itemUnitsData = nil // reset verified will trigger a new permission check
+	d.itemUnitsData = map[string]ItemUnitClientData{
+		itemUnitID: {
+			itemUnit:            nil,
+			scoreNextLineToSend: -10,
+		},
+	} // reset verified will trigger a new permission check
 	return nil
 }
