@@ -16,6 +16,7 @@ export class Event {
     status: string;
     workflow_run_num: number;
     workflow_run_num_sub: number;
+    workflow_node_run_id: number;
 }
 
 export class EventType {

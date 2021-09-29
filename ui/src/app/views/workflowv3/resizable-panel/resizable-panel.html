@@ -1,0 +1,10 @@
+<div class="panel" [class.horizontal]="this.direction === 'horizontal'"
+    [class.vertical]="this.direction === 'vertical'">
+    <div class="grabber" (mousedown)="onMouseDownGrabber()" #grabber>
+        <i *ngIf="this.direction === 'horizontal'" class="ellipsis vertical icon"></i>
+        <i *ngIf="this.direction === 'vertical'" class="ellipsis horizontal icon"></i>
+    </div>
+    <div class="content" [class.disableSelection]="grabbing" #content>
+        <ng-content></ng-content>
+    </div>
+</div>

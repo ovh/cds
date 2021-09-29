@@ -1,0 +1,5 @@
+<div class="node pointing" [class.highlight]="highlight" (mouseenter)="onMouseEnter()" (mouseleave)="onMouseOut()"
+    [class.success]="status === pipelineStatusEnum.SUCCESS"
+    [class.inactive]="status === pipelineStatusEnum.DISABLED || status === pipelineStatusEnum.SKIPPED"
+    [class.fail]="status === pipelineStatusEnum.FAIL">
+</div>

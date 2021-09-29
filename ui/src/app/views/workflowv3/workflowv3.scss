@@ -1,0 +1,28 @@
+@import '../../../common';
+
+:host {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.banner {
+    height: 50px;
+    background-color: $cds_color_teal;
+    text-align: center;
+    line-height: 50px;
+    color: white;
+    font-weight: 600;
+
+    a {
+        color: inherit;
+        text-decoration: underline;
+    }
+}
+
+.content {
+    flex: 1;
+    overflow: hidden;
+}

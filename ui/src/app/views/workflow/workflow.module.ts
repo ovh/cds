@@ -7,7 +7,6 @@ import { WorkflowRunArtifactListComponent } from './run/node/artifact/artifact.l
 import { WorkflowNodeRunHistoryComponent } from './run/node/history/history.component';
 import { WorkflowRunNodePipelineComponent } from './run/node/pipeline/node.pipeline.component';
 import { WorkflowRunJobVariableComponent } from './run/node/pipeline/variables/job.variables.component';
-import { WorkflowRunJobComponent } from './run/node/pipeline/workflow-run-job/workflow-run-job.component';
 import { WorkflowNodeRunSummaryComponent } from './run/node/summary/run.summary.component';
 import { WorkflowRunTestTableComponent } from './run/node/test/table/test.table.component';
 import { WorkflowRunTestsResultComponent } from './run/node/test/tests.component';
@@ -42,8 +41,7 @@ import { workflowRouting } from './workflow.routing';
         WorkflowRunTestsResultComponent,
         WorkflowRunTestTableComponent,
         WorkflowShowComponent,
-        WorkflowSidebarCodeComponent,
-        WorkflowRunJobComponent
+        WorkflowSidebarCodeComponent
     ],
     imports: [
         SharedModule,

@@ -1,0 +1,14 @@
+<div class="node pointing" [class.highlight]="highlight && !selected" [class.active]="selected" (click)="onMouseClick()"
+    (mouseenter)="onMouseEnter()" (mouseleave)="onMouseOut()"
+    [class.success]="node?.run?.status === pipelineStatusEnum.SUCCESS"
+    [class.inactive]="node?.run?.status === pipelineStatusEnum.DISABLED || node?.run?.status === pipelineStatusEnum.SKIPPED"
+    [class.fail]="node?.run?.status === pipelineStatusEnum.FAIL || node?.run?.status === pipelineStatusEnum.STOPPED"
+    [class.building]="node?.run?.status === pipelineStatusEnum.BUILDING || node?.run?.status === pipelineStatusEnum.WAITING">
+    <div class="title">
+        <div class="name ellipsis" title="{{node?.name}}">
+            <ng-container *ngIf="node?.name">
+                {{node?.name}}
+            </ng-container>
+        </div>
+    </div>
+</div>

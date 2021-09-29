@@ -4442,6 +4442,49 @@ func (mr *MockWorkflowClientMockRecorder) WorkflowUpdate(projectKey, name, wf in
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowUpdate", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowUpdate), projectKey, name, wf)
 }
 
+// MockWorkflowV3Client is a mock of WorkflowV3Client interface.
+type MockWorkflowV3Client struct {
+	ctrl     *gomock.Controller
+	recorder *MockWorkflowV3ClientMockRecorder
+}
+
+// MockWorkflowV3ClientMockRecorder is the mock recorder for MockWorkflowV3Client.
+type MockWorkflowV3ClientMockRecorder struct {
+	mock *MockWorkflowV3Client
+}
+
+// NewMockWorkflowV3Client creates a new mock instance.
+func NewMockWorkflowV3Client(ctrl *gomock.Controller) *MockWorkflowV3Client {
+	mock := &MockWorkflowV3Client{ctrl: ctrl}
+	mock.recorder = &MockWorkflowV3ClientMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockWorkflowV3Client) EXPECT() *MockWorkflowV3ClientMockRecorder {
+	return m.recorder
+}
+
+// WorkflowV3Get mocks base method.
+func (m *MockWorkflowV3Client) WorkflowV3Get(projectKey, workflowName string, opts ...cdsclient.RequestModifier) ([]byte, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{projectKey, workflowName}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "WorkflowV3Get", varargs...)
+	ret0, _ := ret[0].([]byte)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowV3Get indicates an expected call of WorkflowV3Get.
+func (mr *MockWorkflowV3ClientMockRecorder) WorkflowV3Get(projectKey, workflowName interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{projectKey, workflowName}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV3Get", reflect.TypeOf((*MockWorkflowV3Client)(nil).WorkflowV3Get), varargs...)
+}
+
 // MockMonitoringClient is a mock of MonitoringClient interface.
 type MockMonitoringClient struct {
 	ctrl     *gomock.Controller
@@ -8755,6 +8798,26 @@ func (m *MockInterface) WorkflowUpdate(projectKey, name string, wf *sdk.Workflow
 func (mr *MockInterfaceMockRecorder) WorkflowUpdate(projectKey, name, wf interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowUpdate", reflect.TypeOf((*MockInterface)(nil).WorkflowUpdate), projectKey, name, wf)
+}
+
+// WorkflowV3Get mocks base method.
+func (m *MockInterface) WorkflowV3Get(projectKey, workflowName string, opts ...cdsclient.RequestModifier) ([]byte, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{projectKey, workflowName}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "WorkflowV3Get", varargs...)
+	ret0, _ := ret[0].([]byte)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowV3Get indicates an expected call of WorkflowV3Get.
+func (mr *MockInterfaceMockRecorder) WorkflowV3Get(projectKey, workflowName interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{projectKey, workflowName}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV3Get", reflect.TypeOf((*MockInterface)(nil).WorkflowV3Get), varargs...)
 }
 
 // MockWorkerInterface is a mock of WorkerInterface interface.

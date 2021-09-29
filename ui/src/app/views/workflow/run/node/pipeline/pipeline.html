@@ -47,7 +47,8 @@
                                                     *ngIf="mapJobStatus?.get(j.pipeline_action_id)?.status !== pipelineStatusEnum.DISABLED && mapJobStatus?.get(j.pipeline_action_id)?.status !== pipelineStatusEnum.SKIPPED">
                                                     <span
                                                         *ngIf="mapJobStatus?.get(j.pipeline_action_id)?.status === pipelineStatusEnum.WAITING">
-                                                        {{ 'workflow_run_node_job_queued' | translate: {time: jobTime?.get(j.pipeline_action_id)} }}
+                                                        {{ 'workflow_run_node_job_queued' | translate: {time:
+                                                        jobTime?.get(j.pipeline_action_id)} }}
                                                     </span>
                                                     <span
                                                         *ngIf="mapJobStatus?.get(j.pipeline_action_id)?.status !== pipelineStatusEnum.WAITING">
@@ -68,7 +69,8 @@
                 </div>
                 <div class="row">
                     <div class="column">
-                        <app-workflow-run-job [nodeJobRun]="currentNodeJobRun" (onScroll)="onJobScroll($event)" #runjobComponent></app-workflow-run-job>
+                        <app-workflow-run-job [projectKey]="project.key" [workflowName]="workflowName"
+                           [nodeJobRun]="currentNodeJobRun" (onScroll)="onJobScroll($event)" #runjobComponent></app-workflow-run-job>
                     </div>
                 </div>
             </div>

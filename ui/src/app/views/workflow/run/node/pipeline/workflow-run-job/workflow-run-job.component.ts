@@ -1,14 +1,11 @@
 import { OnDestroy, Output, ViewChild } from '@angular/core';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { Store } from '@ngxs/store';
 import { CDNLine, CDNLogLink, PipelineStatus, SpawnInfo } from 'app/model/pipeline.model';
 import { WorkflowNodeJobRun } from 'app/model/workflow.run.model';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { DurationService } from 'app/shared/duration/duration.service';
-import { ProjectState } from 'app/store/project.state';
-import { WorkflowState } from 'app/store/workflow.state';
 import * as moment from 'moment';
 import { from, interval, Subject, Subscription } from 'rxjs';
 import { concatMap } from 'rxjs/operators';
@@ -72,6 +69,10 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
 
     @ViewChild('jobVariable') jobVariable: WorkflowRunJobVariableComponent;
 
+    @Input() projectKey: string;
+    @Input() workflowName: string;
+    @Input() workflowRunNumber: number;
+
     @Input() set nodeJobRun(data: WorkflowNodeJobRun) {
         this.subjectChannel.next(data);
     }
@@ -95,7 +96,6 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
 
     constructor(
         private _cd: ChangeDetectorRef,
-        private _store: Store,
         private _workflowService: WorkflowService,
         private _router: Router
     ) {
@@ -212,8 +212,8 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
     }
 
     async loadEndedSteps() {
-        let projectKey = this._store.selectSnapshot(ProjectState.projectSnapshot).key;
-        let workflowName = this._store.selectSnapshot(WorkflowState.workflowSnapshot).name;
+        let projectKey = this.projectKey;
+        let workflowName = this.workflowName;
 
         if (!this.nodeJobRun.job.step_status) {
             return;
@@ -262,9 +262,9 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
             return;
         }
 
-        let projectKey = this._store.selectSnapshot(ProjectState.projectSnapshot).key;
-        let workflowName = this._store.selectSnapshot(WorkflowState.workflowSnapshot).name;
-        let runNumber = this._store.selectSnapshot(WorkflowState).workflowNodeRun.num;
+        let projectKey = this.projectKey;
+        let workflowName = this.workflowName;
+        let runNumber = this.workflowRunNumber;
 
         let result = await this._workflowService.getNodeJobRunInfo(projectKey, workflowName,
             runNumber, this.nodeJobRun.workflow_node_run_id, this.nodeJobRun.id).toPromise();
@@ -395,8 +395,8 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
             return;
         }
 
-        let projectKey = this._store.selectSnapshot(ProjectState.projectSnapshot).key;
-        let workflowName = this._store.selectSnapshot(WorkflowState.workflowSnapshot).name;
+        let projectKey = this.projectKey;
+        let workflowName = this.workflowName;
 
         let link = await this._workflowService.getStepLink(projectKey, workflowName,
             this.nodeJobRun.workflow_node_run_id, this.nodeJobRun.id, this.nodeJobRun.job.step_status.length - 1).toPromise();
@@ -421,8 +421,8 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
     }
 
     async loadOrListenService() {
-        let projectKey = this._store.selectSnapshot(ProjectState.projectSnapshot).key;
-        let workflowName = this._store.selectSnapshot(WorkflowState.workflowSnapshot).name;
+        let projectKey = this.projectKey;
+        let workflowName = this.workflowName;
 
         this.services[this.currentTabIndex - 1].link = await this._workflowService.getServiceLink(projectKey, workflowName,
             this.nodeJobRun.workflow_node_run_id, this.nodeJobRun.id, this.services[this.currentTabIndex - 1].name).toPromise();

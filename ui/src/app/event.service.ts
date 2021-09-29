@@ -154,6 +154,7 @@ export class EventService {
                         });
                         break;
                     case 'workflow':
+                    case 'workflowv3':
                         fs.push(<WebsocketFilter>{
                             type: WebsocketFilterType.WORKFLOW,
                             project_key: projectKey,

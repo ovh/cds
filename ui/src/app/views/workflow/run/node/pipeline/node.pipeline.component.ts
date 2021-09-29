@@ -36,8 +36,9 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
     @Select(WorkflowState.getSelectedWorkflowNodeJobRun()) nodeJobRun$: Observable<WorkflowNodeJobRun>;
     nodeJobRunSubs: Subscription;
 
-    workflowName: string;
     project: Project;
+    workflowName: string;
+    workflowRunNum: number;
 
     // Pipeline data
     stages: Array<Stage>;
@@ -68,6 +69,7 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
     ) {
         this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
         this.workflowName = (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowRun.workflow.name;
+        this.workflowRunNum = (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowRun.num;
     }
 
     ngOnInit() {

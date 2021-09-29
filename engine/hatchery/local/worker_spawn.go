@@ -95,9 +95,9 @@ func (h *HatcheryLocal) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 	var cmd *exec.Cmd
 	if spawnArgs.RegisterOnly {
 		cmdSplitted[0] = "register"
-		cmd = h.LocalWorkerRunner.NewCmd(ctx, cmdSplitted[0], cmdSplitted...)
+		cmd = h.LocalWorkerRunner.NewCmd(context.Background(), cmdSplitted[0], cmdSplitted...)
 	} else {
-		cmd = h.LocalWorkerRunner.NewCmd(ctx, cmdSplitted[0], cmdSplitted[1:]...)
+		cmd = h.LocalWorkerRunner.NewCmd(context.Background(), cmdSplitted[0], cmdSplitted[1:]...)
 	}
 
 	cmd.Dir = udataParam.BaseDir
