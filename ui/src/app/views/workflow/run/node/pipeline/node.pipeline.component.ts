@@ -57,6 +57,7 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
 
     websocket: WebSocketSubject<any>;
     websocketSubscription: Subscription;
+    cdnFilter: CDNStreamFilter;
 
     constructor(
         private _route: ActivatedRoute,
@@ -127,9 +128,9 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
             return;
         }
 
-        let cdnFilter = <CDNStreamFilter>{
-            job_run_id: this.currentNodeJobRun.id,
-        };
+        if (!this.cdnFilter) {
+            this.cdnFilter = new CDNStreamFilter();
+        }
 
         if (!this.websocket) {
             const protocol = window.location.protocol.replace('http', 'ws');
@@ -140,7 +141,8 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
                 openObserver: {
                     next: value => {
                         if (value.type === 'open') {
-                            this.websocket.next(cdnFilter);
+                            this.cdnFilter.job_run_id = this.currentNodeJobRun.id;
+                            this.websocket.next(this.cdnFilter);
                         }
                     }
                 }
@@ -160,7 +162,11 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
                     console.warn('Websocket Completed');
                 });
         } else {
-            this.websocket.next(cdnFilter);
+            // Refresh cdn filter if job changed
+            if (this.cdnFilter.job_run_id !== this.currentNodeJobRun.id) {
+                this.cdnFilter.job_run_id = this.currentNodeJobRun.id;
+                this.websocket.next(this.cdnFilter);
+            }
         }
     }
 
