@@ -699,8 +699,14 @@ func (api *API) deleteWorkflowHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		if err := workflow.MarkAsDelete(ctx, tx, api.Cache, *p, wf); err != nil {
-			return err
+		if service.FormBool(r, "withDependencies") {
+			if err := workflow.MarkAsDeleteWithDependencies(ctx, tx, api.Cache, *p, wf); err != nil {
+				return err
+			}
+		} else {
+			if err := workflow.MarkAsDelete(ctx, tx, api.Cache, *p, wf); err != nil {
+				return err
+			}
 		}
 
 		if err := tx.Commit(); err != nil {

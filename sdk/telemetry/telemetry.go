@@ -7,12 +7,11 @@ import (
 
 	"contrib.go.opencensus.io/exporter/jaeger"
 	"contrib.go.opencensus.io/exporter/prometheus"
+	"github.com/pkg/errors"
 	"github.com/rockbears/log"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
 	"go.opencensus.io/trace"
-
-	"github.com/ovh/cds/sdk"
 )
 
 func serviceName(s Service) string {
@@ -72,7 +71,7 @@ func Init(ctx context.Context, cfg Configuration, s Service) (context.Context, e
 			ServiceName:       svcName,
 		})
 		if err != nil {
-			return ctx, sdk.WithStack(err)
+			return ctx, errors.WithStack(err)
 		}
 		trace.RegisterExporter(e)
 		ctx = context.WithValue(ctx, contextTraceExporter, e)
@@ -87,7 +86,7 @@ func Init(ctx context.Context, cfg Configuration, s Service) (context.Context, e
 
 	e, err := prometheus.NewExporter(prometheus.Options{})
 	if err != nil {
-		return ctx, sdk.WithStack(err)
+		return ctx, errors.WithStack(err)
 	}
 	view.RegisterExporter(e)
 	he := new(HTTPExporter)
@@ -100,6 +99,7 @@ func Init(ctx context.Context, cfg Configuration, s Service) (context.Context, e
 
 // Tags contants
 const (
+	TagGoroutine          = "goroutine"
 	TagHostname           = "hostname"
 	TagJob                = "job"
 	TagRepository         = "repository"

@@ -28,39 +28,40 @@ type WorkflowName struct {
 
 //Workflow represents a pipeline based workflow
 type Workflow struct {
-	ID                      int64                        `json:"id" db:"id" cli:"-"`
-	Name                    string                       `json:"name" db:"name" cli:"name,key"`
-	Description             string                       `json:"description,omitempty" db:"description" cli:"description"`
-	Icon                    string                       `json:"icon,omitempty" db:"icon" cli:"-"`
-	LastModified            time.Time                    `json:"last_modified" db:"last_modified" mapstructure:"-"`
-	ProjectID               int64                        `json:"project_id,omitempty" db:"project_id" cli:"-"`
-	ProjectKey              string                       `json:"project_key" db:"-" cli:"-"`
-	Groups                  []GroupPermission            `json:"groups,omitempty" db:"-" cli:"-"`
-	Permissions             Permissions                  `json:"permissions" db:"-" cli:"-"`
-	Metadata                Metadata                     `json:"metadata,omitempty" yaml:"metadata" db:"metadata"`
-	Usage                   *Usage                       `json:"usage,omitempty" db:"-" cli:"-"`
-	HistoryLength           int64                        `json:"history_length" db:"history_length" cli:"-"`
-	PurgeTags               PurgeTags                    `json:"purge_tags,omitempty" db:"purge_tags" cli:"-"`
-	RetentionPolicy         string                       `json:"retention_policy,omitempty" db:"retention_policy" cli:"-"`
-	MaxRuns                 int64                        `json:"max_runs,omitempty" db:"max_runs" cli:"-"`
-	Notifications           []WorkflowNotification       `json:"notifications,omitempty" db:"-" cli:"-"`
-	FromRepository          string                       `json:"from_repository,omitempty" db:"from_repository" cli:"from"`
-	DerivedFromWorkflowID   int64                        `json:"derived_from_workflow_id,omitempty" db:"derived_from_workflow_id" cli:"-"`
-	DerivedFromWorkflowName string                       `json:"derived_from_workflow_name,omitempty" db:"derived_from_workflow_name" cli:"-"`
-	DerivationBranch        string                       `json:"derivation_branch,omitempty" db:"derivation_branch" cli:"-"`
-	Audits                  []AuditWorkflow              `json:"audits,omitempty" db:"-"`
-	Pipelines               map[int64]Pipeline           `json:"pipelines,omitempty" db:"-" cli:"-"  mapstructure:"-"`
-	Applications            map[int64]Application        `json:"applications,omitempty" db:"-" cli:"-"  mapstructure:"-"`
-	Environments            map[int64]Environment        `json:"environments,omitempty" db:"-" cli:"-"  mapstructure:"-"`
-	ProjectIntegrations     map[int64]ProjectIntegration `json:"project_integrations,omitempty" db:"-" cli:"-"  mapstructure:"-"`
-	HookModels              map[int64]WorkflowHookModel  `json:"hook_models,omitempty" db:"-" cli:"-"  mapstructure:"-"`
-	OutGoingHookModels      map[int64]WorkflowHookModel  `json:"outgoing_hook_models,omitempty" db:"-" cli:"-"  mapstructure:"-"`
-	Labels                  []Label                      `json:"labels,omitempty" db:"-" cli:"labels"`
-	ToDelete                bool                         `json:"to_delete" db:"to_delete" cli:"-"`
-	Favorite                bool                         `json:"favorite" db:"-" cli:"favorite"`
-	WorkflowData            WorkflowData                 `json:"workflow_data" db:"workflow_data" cli:"-"`
-	Integrations            []WorkflowProjectIntegration `json:"integrations,omitempty" db:"-" cli:"-"`
-	AsCodeEvent             []AsCodeEvent                `json:"as_code_events,omitempty" db:"-" cli:"-"`
+	ID                       int64                        `json:"id" db:"id" cli:"-"`
+	Name                     string                       `json:"name" db:"name" cli:"name,key"`
+	Description              string                       `json:"description,omitempty" db:"description" cli:"description"`
+	Icon                     string                       `json:"icon,omitempty" db:"icon" cli:"-"`
+	LastModified             time.Time                    `json:"last_modified" db:"last_modified" mapstructure:"-"`
+	ProjectID                int64                        `json:"project_id,omitempty" db:"project_id" cli:"-"`
+	ProjectKey               string                       `json:"project_key" db:"-" cli:"-"`
+	Groups                   []GroupPermission            `json:"groups,omitempty" db:"-" cli:"-"`
+	Permissions              Permissions                  `json:"permissions" db:"-" cli:"-"`
+	Metadata                 Metadata                     `json:"metadata,omitempty" yaml:"metadata" db:"metadata"`
+	Usage                    *Usage                       `json:"usage,omitempty" db:"-" cli:"-"`
+	HistoryLength            int64                        `json:"history_length" db:"history_length" cli:"-"`
+	PurgeTags                PurgeTags                    `json:"purge_tags,omitempty" db:"purge_tags" cli:"-"`
+	RetentionPolicy          string                       `json:"retention_policy,omitempty" db:"retention_policy" cli:"-"`
+	MaxRuns                  int64                        `json:"max_runs,omitempty" db:"max_runs" cli:"-"`
+	Notifications            []WorkflowNotification       `json:"notifications,omitempty" db:"-" cli:"-"`
+	FromRepository           string                       `json:"from_repository,omitempty" db:"from_repository" cli:"from"`
+	DerivedFromWorkflowID    int64                        `json:"derived_from_workflow_id,omitempty" db:"derived_from_workflow_id" cli:"-"`
+	DerivedFromWorkflowName  string                       `json:"derived_from_workflow_name,omitempty" db:"derived_from_workflow_name" cli:"-"`
+	DerivationBranch         string                       `json:"derivation_branch,omitempty" db:"derivation_branch" cli:"-"`
+	Audits                   []AuditWorkflow              `json:"audits,omitempty" db:"-"`
+	Pipelines                map[int64]Pipeline           `json:"pipelines,omitempty" db:"-" cli:"-"  mapstructure:"-"`
+	Applications             map[int64]Application        `json:"applications,omitempty" db:"-" cli:"-"  mapstructure:"-"`
+	Environments             map[int64]Environment        `json:"environments,omitempty" db:"-" cli:"-"  mapstructure:"-"`
+	ProjectIntegrations      map[int64]ProjectIntegration `json:"project_integrations,omitempty" db:"-" cli:"-"  mapstructure:"-"`
+	HookModels               map[int64]WorkflowHookModel  `json:"hook_models,omitempty" db:"-" cli:"-"  mapstructure:"-"`
+	OutGoingHookModels       map[int64]WorkflowHookModel  `json:"outgoing_hook_models,omitempty" db:"-" cli:"-"  mapstructure:"-"`
+	Labels                   []Label                      `json:"labels,omitempty" db:"-" cli:"labels"`
+	ToDelete                 bool                         `json:"to_delete" db:"to_delete" cli:"-"`
+	ToDeleteWithDependencies *bool                        `json:"to_delete_with_dependencies" db:"to_delete_with_dependencies" cli:"-"`
+	Favorite                 bool                         `json:"favorite" db:"-" cli:"favorite"`
+	WorkflowData             WorkflowData                 `json:"workflow_data" db:"workflow_data" cli:"-"`
+	Integrations             []WorkflowProjectIntegration `json:"integrations,omitempty" db:"-" cli:"-"`
+	AsCodeEvent              []AsCodeEvent                `json:"as_code_events,omitempty" db:"-" cli:"-"`
 	// aggregates
 	TemplateInstance *WorkflowTemplateInstance `json:"template_instance,omitempty" db:"-" cli:"-"`
 	FromTemplate     string                    `json:"from_template,omitempty" db:"-" cli:"-"`

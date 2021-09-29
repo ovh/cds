@@ -611,7 +611,7 @@ func RenameNode(ctx context.Context, db gorp.SqlExecutor, w *sdk.Workflow) error
 
 // Update updates a workflow
 func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, proj sdk.Project, wf *sdk.Workflow, uptOption UpdateOptions) error {
-	ctx, end := telemetry.Span(ctx, "workflow.Update")
+	ctx, end := telemetry.Span(ctx, "workflow.Update", telemetry.Tag(telemetry.TagProjectKey, proj.Key), telemetry.Tag(telemetry.TagWorkflow, wf.Name))
 	defer end()
 
 	if err := CompleteWorkflow(ctx, db, wf, proj, LoadOptions{}); err != nil {
@@ -706,8 +706,25 @@ func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 	return nil
 }
 
+func MarkAsDeleteWithDependencies(ctx context.Context, db gorpmapper.SqlExecutorWithTx, cache cache.Store, proj sdk.Project, wf *sdk.Workflow) error {
+	ctx, end := telemetry.Span(ctx, "workflow.MarkAsDeleteWithDependencies", telemetry.Tag(telemetry.TagProjectKey, proj.Key), telemetry.Tag(telemetry.TagWorkflow, wf.Name))
+	defer end()
+
+	// In this case, don't unlink workflow dependencies in the workflow structure
+	// We want to keep the relatioship in the database
+	wf.ToDeleteWithDependencies = &sdk.True
+	wf.ToDelete = true
+	if err := Update(ctx, db, cache, proj, wf, UpdateOptions{DisableHookManagement: true}); err != nil {
+		return err
+	}
+	return nil
+}
+
 // MarkAsDelete marks a workflow to be deleted
 func MarkAsDelete(ctx context.Context, db gorpmapper.SqlExecutorWithTx, cache cache.Store, proj sdk.Project, wkf *sdk.Workflow) error {
+	ctx, end := telemetry.Span(ctx, "workflow.MarkAsDelete", telemetry.Tag(telemetry.TagProjectKey, proj.Key), telemetry.Tag(telemetry.TagWorkflow, wkf.Name))
+	defer end()
+
 	// Remove references of dependencies to be able to delete them before workflow deletion
 	nodes := wkf.WorkflowData.Array()
 	for _, n := range nodes {
@@ -717,11 +734,140 @@ func MarkAsDelete(ctx context.Context, db gorpmapper.SqlExecutorWithTx, cache ca
 		n.Context.ProjectIntegrationID = 0
 	}
 	wkf.ToDelete = true
+	wkf.ToDeleteWithDependencies = nil
 	return Update(ctx, db, cache, proj, wkf, UpdateOptions{DisableHookManagement: true})
+}
+
+func deleteOrUnlinkDependencies(ctx context.Context, db gorpmapper.SqlExecutorWithTx, cache cache.Store, proj sdk.Project, wf *sdk.Workflow) error {
+	ctx, end := telemetry.Span(ctx, "workflow.deleteOrUnlinkDependencies",
+		telemetry.Tag(telemetry.TagProjectKey, proj.Key),
+		telemetry.Tag(telemetry.TagWorkflow, wf.Name))
+	defer end()
+
+	var applicationIDToDelete []int64
+	for appID := range wf.Applications {
+		app := wf.Applications[appID]
+		log.Debug(ctx, "checking application %d %q %q", appID, app.Name, app.FromRepository)
+		// Check if the application is used by another workflow
+		otherWfs, err := LoadByApplicationName(ctx, db, proj.Key, app.Name) // this should not return any workflow because the current workflow has to_delete=true
+		if err != nil {
+			return err
+		}
+		if app.FromRepository == wf.FromRepository && len(otherWfs) > 0 {
+			// Remove the "as-code" flag because it is used by another workflow
+			app.FromRepository = ""
+			if err := application.Update(db, &app); err != nil {
+				return err
+			}
+		} else {
+			applicationIDToDelete = append(applicationIDToDelete, appID)
+		}
+	}
+
+	var pipelineIDToDelete []int64
+	for pipID := range wf.Pipelines {
+		pip := wf.Pipelines[pipID]
+
+		// Check if the pipeline is used by another workflow
+		otherWfs, err := LoadByPipelineName(ctx, db, proj.Key, pip.Name)
+		if err != nil {
+			return err
+		}
+		log.Debug(ctx, "checking pipeline %d %q %q %+v", pipID, pip.Name, pip.FromRepository, otherWfs)
+		if pip.FromRepository == wf.FromRepository && len(otherWfs) > 0 {
+			// Remove the "as-code" flag because it is used by another workflow
+			pip.FromRepository = ""
+			if err := pipeline.UpdatePipeline(db, &pip); err != nil {
+				return err
+			}
+		} else {
+			pipelineIDToDelete = append(pipelineIDToDelete, pipID)
+		}
+	}
+
+	var environmentIDToDelete []int64
+	for envID := range wf.Environments {
+		env := wf.Environments[envID]
+		log.Debug(ctx, "checking environment %d %q %q", envID, env.Name, env.FromRepository)
+		// Check if the pipeline is used by another workflow
+		otherWfs, err := LoadByEnvName(ctx, db, proj.Key, env.Name)
+		if err != nil {
+			return err
+		}
+		if env.FromRepository == wf.FromRepository && len(otherWfs) > 0 {
+			// Remove the "as-code" flag because it is used by another workflow
+			env.FromRepository = ""
+			if err := environment.UpdateEnvironment(db, &env); err != nil {
+				return err
+			}
+		} else {
+			environmentIDToDelete = append(environmentIDToDelete, envID)
+		}
+	}
+
+	// ---------
+	nodes := wf.WorkflowData.Array()
+	for _, n := range nodes {
+		n.Context.ApplicationID = 0
+		n.Context.PipelineID = 0
+		n.Context.EnvironmentID = 0
+		n.Context.ProjectIntegrationID = 0
+	}
+
+	// Reset workflow data
+	if err := DeleteWorkflowData(db, *wf); err != nil {
+		return err
+	}
+	wf.ResetIDs()
+	if err := InsertWorkflowData(db, wf); err != nil {
+		return err
+	}
+	wf.LastModified = time.Now()
+	dbw := Workflow{Workflow: *wf}
+	// Then update in database
+	if _, err := db.UpdateColumns(func(c *gorp.ColumnMap) bool { return c.ColumnName != "project_key" }, &dbw); err != nil {
+		return sdk.WrapError(err, "Unable to update workflow")
+	}
+	*wf = dbw.Get()
+
+	// Now delete applications, pipelines and environment
+	for _, appID := range applicationIDToDelete {
+		log.Info(ctx, "deleting application %d linked to workflow %q on project %q", appID, wf.Name, proj.Key)
+		if err := application.DeleteApplication(db, appID); err != nil {
+			return err
+		}
+	}
+
+	for _, pipID := range pipelineIDToDelete {
+		log.Info(ctx, "deleting pipeline %d linked to workflow %q on project %q", pipID, wf.Name, proj.Key)
+		if err := pipeline.DeletePipeline(ctx, db, pipID); err != nil {
+			return err
+		}
+	}
+
+	for _, envID := range environmentIDToDelete {
+		log.Info(ctx, "deleting pipeline %d linked to workflow %q on project %q", envID, wf.Name, proj.Key)
+		if err := environment.DeleteEnvironment(db, envID); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // Delete workflow
 func Delete(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, proj sdk.Project, w *sdk.Workflow) error {
+	ctx, end := telemetry.Span(ctx, "workflow.Delete",
+		telemetry.Tag(telemetry.TagProjectKey, proj.Key),
+		telemetry.Tag(telemetry.TagWorkflow, w.Name))
+	defer end()
+
+	if w.ToDeleteWithDependencies != nil && *w.ToDeleteWithDependencies {
+		if err := deleteOrUnlinkDependencies(ctx, db, store, proj, w); err != nil {
+			return sdk.WrapError(err, "unable to delete workflow dependencies")
+		}
+	}
+
 	// Delete all hooks
 	if err := hookUnregistration(ctx, db, store, proj, w.WorkflowData.GetHooksMapRef()); err != nil {
 		return sdk.WrapError(err, "unable to delete hooks from workflow")
@@ -733,8 +879,7 @@ func Delete(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 
 	query := `DELETE FROM w_node_trigger
 					WHERE parent_node_id IN
-					(SELECT id FROM w_node WHERE workflow_id = $1)
-		`
+					(SELECT id FROM w_node WHERE workflow_id = $1)`
 	if _, err := db.Exec(query, w.ID); err != nil {
 		return sdk.WrapError(err, "unable to delete node trigger")
 	}
@@ -749,7 +894,7 @@ func Delete(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 }
 
 func CompleteWorkflow(ctx context.Context, db gorp.SqlExecutor, w *sdk.Workflow, proj sdk.Project, opts LoadOptions) error {
-	ctx, end := telemetry.Span(ctx, "workflow.CompleteWorkflow")
+	ctx, end := telemetry.Span(ctx, "workflow.CompleteWorkflow", telemetry.Tag(telemetry.TagProjectKey, proj.Key), telemetry.Tag(telemetry.TagWorkflow, w.Name))
 	defer end()
 
 	w.InitMaps()
