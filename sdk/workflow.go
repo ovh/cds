@@ -511,3 +511,14 @@ func (wpi *WorkflowProjectIntegration) MergeWithModel(model IntegrationModel) {
 
 	}
 }
+
+type WorkflowDependencies struct {
+	Pipelines    []IDName `json:"pipelines"`
+	Applications []IDName `json:"applications"`
+	Environments []IDName `json:"environments"`
+}
+
+type WorkflowDeleteDependencies struct {
+	DeletedDependencies        WorkflowDependencies `json:"deleted_dependencies"`
+	UnlinkedAsCodeDependencies WorkflowDependencies `json:"unlinked_as_code_dependencies"`
+}

@@ -936,3 +936,94 @@ func (api *API) getSearchWorkflowHandler() service.Handler {
 		return service.WriteJSON(w, ws, http.StatusOK)
 	}
 }
+
+func (api *API) getWorkflowDependencieswHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars["key"]
+		name := vars["permWorkflowName"]
+
+		proj, err := project.Load(ctx, api.mustDB(), key)
+		if err != nil {
+			return err
+		}
+
+		var opts = workflow.LoadOptions{Minimal: true}
+
+		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, *proj, name, opts)
+		if err != nil {
+			return err
+		}
+
+		usage, err := loadWorkflowUsage(api.mustDB(), wf.ID)
+		if err != nil {
+			return err
+		}
+
+		var pips []sdk.IDName
+		var pipAsCodeUnlinked []sdk.IDName
+		for _, pip := range usage.Pipelines {
+			log.Debug(ctx, "checking pipeline %d %q %q", pip.ID, pip.Name, pip.FromRepository)
+			allWfs, err := workflow.LoadByPipelineName(ctx, api.mustDB(), key, pip.Name)
+			if err != nil {
+				return err
+			}
+			if len(allWfs) == 1 {
+				pips = append(pips, sdk.IDName{ID: pip.ID, Name: pip.Name})
+				continue
+			}
+			if wf.FromRepository != "" && pip.FromRepository == wf.FromRepository {
+				pipAsCodeUnlinked = append(pipAsCodeUnlinked, sdk.IDName{ID: pip.ID, Name: pip.Name})
+			}
+		}
+
+		var apps []sdk.IDName
+		var appAsCodeUnlinked []sdk.IDName
+		for _, app := range usage.Applications {
+			log.Debug(ctx, "checking application %d %q %q", app.ID, app.Name, app.FromRepository)
+			allWfs, err := workflow.LoadByApplicationName(ctx, api.mustDB(), key, app.Name)
+			if err != nil {
+				return err
+			}
+			if len(allWfs) == 1 {
+				apps = append(apps, sdk.IDName{ID: app.ID, Name: app.Name})
+				continue
+			}
+			if wf.FromRepository != "" && app.FromRepository == wf.FromRepository {
+				appAsCodeUnlinked = append(appAsCodeUnlinked, sdk.IDName{ID: app.ID, Name: app.Name})
+			}
+		}
+
+		var envs []sdk.IDName
+		var envsAsCodeUnlinked []sdk.IDName
+		for _, env := range usage.Environments {
+			log.Debug(ctx, "checking environment %d %q %q", env.ID, env.Name, env.FromRepository)
+			allWfs, err := workflow.LoadByEnvName(ctx, api.mustDB(), key, env.Name)
+			if err != nil {
+				return err
+			}
+			if len(allWfs) == 1 {
+				envs = append(envs, sdk.IDName{ID: env.ID, Name: env.Name})
+				continue
+			}
+			if wf.FromRepository != "" && env.FromRepository == wf.FromRepository {
+				envsAsCodeUnlinked = append(envsAsCodeUnlinked, sdk.IDName{ID: env.ID, Name: env.Name})
+			}
+		}
+
+		res := sdk.WorkflowDeleteDependencies{
+			DeletedDependencies: sdk.WorkflowDependencies{
+				Pipelines:    pips,
+				Applications: apps,
+				Environments: envs,
+			},
+			UnlinkedAsCodeDependencies: sdk.WorkflowDependencies{
+				Pipelines:    pipAsCodeUnlinked,
+				Applications: appAsCodeUnlinked,
+				Environments: envsAsCodeUnlinked,
+			},
+		}
+
+		return service.WriteJSON(w, res, http.StatusOK)
+	}
+}

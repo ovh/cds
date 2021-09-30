@@ -7,16 +7,16 @@ import (
 
 // Environment represent a deployment environment
 type Environment struct {
-	ID                   int64                 `json:"id" yaml:"-"`
-	Name                 string                `json:"name" yaml:"name" cli:"name,key"`
+	ID                   int64                 `json:"id" yaml:"-" db:"id"`
+	Name                 string                `json:"name" yaml:"name" cli:"name,key" db:"name"`
 	Variables            []EnvironmentVariable `json:"variables,omitempty" yaml:"variables"`
-	ProjectID            int64                 `json:"-" yaml:"-"`
+	ProjectID            int64                 `json:"-" yaml:"-" db:"project_id"`
 	ProjectKey           string                `json:"project_key" yaml:"-"`
-	Created              time.Time             `json:"created"`
-	LastModified         time.Time             `json:"last_modified"`
+	Created              time.Time             `json:"created" db:"created"`
+	LastModified         time.Time             `json:"last_modified" db:"last_modified"`
 	Keys                 []EnvironmentKey      `json:"keys"`
 	Usage                *Usage                `json:"usage,omitempty"`
-	FromRepository       string                `json:"from_repository,omitempty"`
+	FromRepository       string                `json:"from_repository,omitempty" db:"from_repository"`
 	WorkflowAscodeHolder *Workflow             `json:"workflow_ascode_holder,omitempty" cli:"-"`
 }
 
