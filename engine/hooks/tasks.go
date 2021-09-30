@@ -20,7 +20,6 @@ const (
 	TypeWebHook            = "Webhook"
 	TypeScheduler          = "Scheduler"
 	TypeRepoPoller         = "RepoPoller"
-	TypeBranchDeletion     = "BranchDeletion"
 	TypeKafka              = "Kafka"
 	TypeGerrit             = "Gerrit"
 	TypeRabbitMQ           = "RabbitMQ"
@@ -287,7 +286,7 @@ func (s *Service) startTask(ctx context.Context, t *sdk.Task) (*sdk.TaskExecutio
 	switch t.Type {
 	case TypeWebHook, TypeRepoManagerWebHook, TypeWorkflowHook:
 		return nil, nil
-	case TypeScheduler, TypeRepoPoller, TypeBranchDeletion:
+	case TypeScheduler, TypeRepoPoller:
 		return nil, s.prepareNextScheduledTaskExecution(ctx, t)
 	case TypeKafka:
 		return nil, s.startKafkaHook(ctx, t)
@@ -352,10 +351,6 @@ func (s *Service) prepareNextScheduledTaskExecution(ctx context.Context, t *sdk.
 				nextSchedule = time.Unix(nextExec, 0)
 			}
 		}
-
-	case TypeBranchDeletion:
-		now := time.Now()
-		nextSchedule = now.Add(24 * time.Hour)
 	}
 
 	//Craft a new execution
@@ -425,8 +420,6 @@ func (s *Service) doTask(ctx context.Context, t *sdk.Task, e *sdk.TaskExecution)
 		//Populate next execution
 		hs, err = s.doPollerTaskExecution(ctx, t, e)
 		doRestart = true
-	case e.ScheduledTask != nil && e.Type == TypeBranchDeletion:
-		_, err = s.doBranchDeletionTaskExecution(e)
 	case e.Kafka != nil && e.Type == TypeKafka:
 		h, err = s.doKafkaTaskExecution(e)
 	case e.RabbitMQ != nil && e.Type == TypeRabbitMQ:

@@ -4,24 +4,13 @@ import (
 	"context"
 	"strings"
 
-	"github.com/rockbears/log"
-
 	"github.com/ovh/cds/sdk"
 )
 
 func (s *Service) generatePayloadFromGitlabRequest(ctx context.Context, t *sdk.TaskExecution, event string) (map[string]interface{}, error) {
-	projectKey := t.Config["project"].Value
-	workflowName := t.Config["workflow"].Value
-
 	var request GitlabEvent
 	if err := sdk.JSONUnmarshal(t.WebHook.RequestBody, &request); err != nil {
 		return nil, sdk.WrapError(err, "unable ro read gitlab request: %s", string(t.WebHook.RequestBody))
-	}
-
-	// Branch deletion ( gitlab return 0000000000000000000000000000000000000000 as git hash)
-	if request.After == "0000000000000000000000000000000000000000" {
-		err := s.enqueueBranchDeletion(projectKey, workflowName, strings.TrimPrefix(request.Ref, "refs/heads/"))
-		return nil, sdk.WrapError(err, "cannot enqueue branch deletion")
 	}
 
 	payload := make(map[string]interface{})
@@ -38,9 +27,6 @@ func (s *Service) generatePayloadFromGitlabRequest(ctx context.Context, t *sdk.T
 		if !strings.HasPrefix(request.Ref, "refs/tags/") {
 			branch := strings.TrimPrefix(request.Ref, "refs/heads/")
 			payload[GIT_BRANCH] = branch
-			if err := s.stopBranchDeletionTask(ctx, branch); err != nil {
-				log.Error(ctx, "cannot stop branch deletion task for branch %s : %v", branch, err)
-			}
 		} else {
 			payload[GIT_TAG] = strings.TrimPrefix(request.Ref, "refs/tags/")
 		}

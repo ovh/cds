@@ -212,35 +212,6 @@ func executeWebHook(t *sdk.TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error)
 	return &h, nil
 }
 
-func (s *Service) enqueueBranchDeletion(projectKey, workflowName, branch string) error {
-	config := sdk.WorkflowNodeHookConfig{
-		"project": sdk.WorkflowNodeHookConfigValue{
-			Configurable: false,
-			Type:         sdk.HookConfigTypeProject,
-			Value:        projectKey,
-		},
-		"workflow": sdk.WorkflowNodeHookConfigValue{
-			Configurable: false,
-			Type:         sdk.HookConfigTypeWorkflow,
-			Value:        workflowName,
-		},
-		"branch": sdk.WorkflowNodeHookConfigValue{
-			Configurable: false,
-			Type:         sdk.HookConfigTypeString,
-			Value:        branch,
-		},
-	}
-	task := sdk.Task{
-		Config: config,
-		Type:   TypeBranchDeletion,
-		UUID:   branch + "-" + sdk.UUID(),
-	}
-
-	_, err := s.startTask(context.Background(), &task)
-
-	return sdk.WrapError(err, "cannot start task")
-}
-
 func copyValues(dst, src url.Values) {
 	for k, vs := range src {
 		for _, value := range vs {
