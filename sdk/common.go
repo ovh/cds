@@ -324,12 +324,3 @@ type KeyValues struct {
 	Key    string
 	Values []string
 }
-
-func DigitsCount(number int64) int32 {
-	var count int32 = 0
-	for number != 0 {
-		number /= 10
-		count += 1
-	}
-	return count
-}

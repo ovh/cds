@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"math"
-	"strconv"
 
 	"github.com/go-gorp/gorp"
 	"github.com/rockbears/log"
@@ -72,10 +70,9 @@ func (s *Redis) Size(i sdk.CDNItemUnit) (int64, error) {
 	return s.store.Size(k)
 }
 
-func (s *Redis) Add(i sdk.CDNItemUnit, score float64, value string) error {
-	si, _ := math.Modf(score)
-	value = strconv.Itoa(int(si)) + "#" + value
-	return s.store.ScoredSetAdd(context.Background(), cache.Key(keyBuffer, i.ItemID), value, score)
+func (s *Redis) Add(i sdk.CDNItemUnit, score uint, since uint, value string) error {
+	value = fmt.Sprintf("%d%d#%s", score, since, value)
+	return s.store.ScoredSetAdd(context.Background(), cache.Key(keyBuffer, i.ItemID), value, float64(score))
 }
 
 func (s *Redis) Card(i sdk.CDNItemUnit) (int, error) {

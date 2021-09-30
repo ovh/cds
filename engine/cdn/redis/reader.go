@@ -4,10 +4,9 @@ import (
 	"context"
 	"io"
 	"sort"
+	"strconv"
 	"strings"
 	"unicode"
-
-	"github.com/shopspring/decimal"
 
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
@@ -29,34 +28,32 @@ type Reader struct {
 }
 
 func (r *Reader) get(from uint, to uint) ([]Line, error) {
-	// Adding +1 to given "to" value to match last line with since > 0
-	res, err := r.Store.ScoredSetScanWithScores(context.Background(), cache.Key(r.PrefixKey, r.ItemID), float64(from), float64(to+1))
+	res, err := r.Store.ScoredSetScanWithScores(context.Background(), cache.Key(r.PrefixKey, r.ItemID), float64(from), float64(to))
 	if err != nil {
 		return nil, err
 	}
 
-	ls := make([]Line, 0, len(res))
+	ls := make([]Line, len(res))
 	for i := range res {
-		var l Line
-		scoreD := decimal.NewFromFloat(res[i].Score)
-		l.Number = scoreD.IntPart()
-
-		// Filter lines to prevent the line with number=to+1 to be returned
-		if l.Number > int64(to) {
-			continue
-		}
-
-		floatD := scoreD.Sub(decimal.NewFromInt(l.Number))
-		l.Since = floatD.Coefficient().Int64()
+		ls[i].Number = int64(res[i].Score)
 
 		var value string
 		if err := sdk.JSONUnmarshal(res[i].Value, &value); err != nil {
 			return nil, sdk.WrapError(err, "cannot unmarshal line value from store")
 		}
-		l.Value = strings.TrimFunc(value, unicode.IsNumber)
-		l.Value = strings.TrimPrefix(l.Value, "#")
 
-		ls = append(ls, l)
+		// Trim to remove line number
+		value = strings.TrimPrefix(value, strconv.Itoa(int(res[i].Score)))
+
+		// Trim to remove line "since" value if exists
+		ls[i].Value = strings.TrimLeftFunc(value, unicode.IsNumber)
+		if len(value) > len(ls[i].Value) {
+			since := value[0 : len(value)-len(ls[i].Value)]
+			ls[i].Since, _ = strconv.ParseInt(since, 10, 64)
+		}
+
+		// Trim to remove separator
+		ls[i].Value = strings.TrimPrefix(ls[i].Value, "#")
 	}
 	return ls, nil
 }

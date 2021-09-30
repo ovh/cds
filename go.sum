@@ -554,8 +554,6 @@ github.com/sguiheux/jsonschema v0.2.0 h1:hFHEPxudR6sNcsg50/iuJzHT5d3h3KOvtcg2Hrs
 github.com/sguiheux/jsonschema v0.2.0/go.mod h1:/n6+1/DWPltRLWL/VKyUxg6tzsl5kHUCcraimt4vr60=
 github.com/shirou/gopsutil v0.0.0-20170406131756-e49a95f3d5f8 h1:05R1OwSk31dkzqf2Jf27n2IOoF9zkK9LcPgPsEm8U7U=
 github.com/shirou/gopsutil v0.0.0-20170406131756-e49a95f3d5f8/go.mod h1:5b4v6he4MtMOwMlS0TUMTu2PcXUg8+E1lC7eC3UO/RA=
-github.com/shopspring/decimal v1.2.0 h1:abSATXmQEYyShuxI4/vyW3tV1MrKAJzCZ/0zLUXYbsQ=
-github.com/shopspring/decimal v1.2.0/go.mod h1:DKyhrW/HYNuLGql+MJL6WCR6knT2jwCFRcu2hWCYk4o=
 github.com/shurcooL/sanitized_anchor_name v1.0.0/go.mod h1:1NzhyTcUVG4SuEtjjoZeVRXNmyL/1OwPU0+IJeTBvfc=
 github.com/sirupsen/logrus v1.2.0/go.mod h1:LxeOpSwHxABJmUn/MG1IvRgCAasNZTLOkJPxbbu5VWo=
 github.com/sirupsen/logrus v1.7.0 h1:ShrD1U9pZB12TX0cVy0DtePoCH97K8EtX+mg7ZARUtM=
