@@ -171,6 +171,11 @@ export class WorkflowRunResultArtifactManager {
     repository_type: string;
 }
 
+export class WorkflowRunResultStaticFile {
+    name: string;
+    remote_url: string;
+}
+
 export class WorkflowNodeOutgoingHookRunCallback {
     workflow_node_outgoing_hook_id: number;
     start: Date;

@@ -17,10 +17,6 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-var (
-	cmdCDSSetVersionValue string
-)
-
 func cmdCDSVersionSet() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "set-version",

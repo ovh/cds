@@ -116,7 +116,7 @@ func TestRunInstallKeyAction_Absolute(t *testing.T) {
 		},
 	}
 	secrets := []sdk.Variable{
-		sdk.Variable{
+		{
 			ID:    1,
 			Name:  "cds.key.proj-mykey.priv",
 			Value: "test",

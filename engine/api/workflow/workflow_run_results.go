@@ -91,6 +91,12 @@ func CanUploadRunResult(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 				return false, err
 			}
 			fileName = refArt.Name
+		case sdk.WorkflowRunResultTypeStaticFile:
+			refArt, err := result.GetStaticFile()
+			if err != nil {
+				return false, err
+			}
+			fileName = refArt.Name
 		}
 
 		if fileName != runResultCheck.Name {
@@ -142,8 +148,14 @@ func AddResult(ctx context.Context, db *gorp.DbMap, store cache.Store, wr *sdk.W
 		if err != nil {
 			return err
 		}
+	case sdk.WorkflowRunResultTypeStaticFile:
+		var err error
+		cacheKey, err = verifyAddResultStaticFile(store, runResult)
+		if err != nil {
+			return err
+		}
 	default:
-		return sdk.WrapError(sdk.ErrInvalidData, "unkonwn result type %s", runResult.Type)
+		return sdk.WrapError(sdk.ErrInvalidData, "unknown result type %s", runResult.Type)
 	}
 
 	tx, err := db.Begin()
@@ -258,6 +270,26 @@ func verifyAddResultArtifact(store cache.Store, runResult *sdk.WorkflowRunResult
 	}
 	if !b {
 		return cacheKey, sdk.WrapError(sdk.ErrForbidden, "unable to upload an unchecked artifact")
+	}
+	return cacheKey, nil
+}
+
+func verifyAddResultStaticFile(store cache.Store, runResult *sdk.WorkflowRunResult) (string, error) {
+	staticFileRunResult, err := runResult.GetStaticFile()
+	if err != nil {
+		return "", err
+	}
+	if err := staticFileRunResult.IsValid(); err != nil {
+		return "", err
+	}
+
+	cacheKey := GetRunResultKey(runResult.WorkflowRunID, runResult.Type, staticFileRunResult.Name)
+	b, err := store.Exist(cacheKey)
+	if err != nil {
+		return cacheKey, err
+	}
+	if !b {
+		return cacheKey, sdk.WrapError(sdk.ErrForbidden, "unable to upload an unchecked static-file")
 	}
 	return cacheKey, nil
 }
