@@ -766,7 +766,7 @@ func PreviousNodeRunVCSInfos(ctx context.Context, db gorp.SqlExecutor, projectKe
 		argPrevious = append(argPrevious, envID)
 		queryPrevious += "AND w_node_context.environment_id = $5"
 	}
-	queryPrevious += fmt.Sprintf(" ORDER BY workflow_node_run.num DESC LIMIT 1")
+	queryPrevious += " ORDER BY workflow_node_run.num DESC LIMIT 1"
 
 	errPrev := db.QueryRow(queryPrevious, argPrevious...).Scan(&prevBranch, &prevTag, &prevHash, &prevRepository, &previousBuildNumber)
 	if errPrev == sql.ErrNoRows {

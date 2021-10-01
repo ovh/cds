@@ -43,7 +43,7 @@ func artifactsHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 			buildNumberString := sdk.ParameterValue(wk.currentJob.params, "cds.run.number")
 			reqArgs.Number, errN = strconv.ParseInt(buildNumberString, 10, 64)
 			if errN != nil {
-				newError := sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Cannot parse '%s' as run number: %s", buildNumberString, errN))
+				newError := sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("cannot parse '%s' as run number: %s", buildNumberString, errN))
 				writeError(w, r, newError)
 				return
 			}
@@ -52,14 +52,14 @@ func artifactsHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 		projectKey := sdk.ParameterValue(wk.currentJob.params, "cds.project")
 		artifacts, err := wk.client.WorkflowRunArtifacts(projectKey, reqArgs.Workflow, reqArgs.Number)
 		if err != nil {
-			newError := sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Cannot list artifacts with worker artifacts: %s", err))
+			newError := sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("cannot list artifacts with worker artifacts: %s", err))
 			writeError(w, r, newError)
 			return
 		}
 
 		regexp, errp := regexp.Compile(reqArgs.Pattern)
 		if errp != nil {
-			newError := sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Invalid pattern %s : %s", reqArgs.Pattern, errp))
+			newError := sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("invalid pattern %s : %s", reqArgs.Pattern, errp))
 			writeError(w, r, newError)
 			return
 		}

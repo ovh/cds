@@ -170,8 +170,10 @@ func (api *API) postAuthSigninHandler() service.Handler {
 						return err
 					}
 				}
-				if err := group.CheckUserInDefaultGroup(ctx, tx, u.ID); err != nil {
-					return err
+				if !api.Config.Auth.DisableAddUserInDefaultGroup {
+					if err := group.CheckUserInDefaultGroup(ctx, tx, u.ID); err != nil {
+						return err
+					}
 				}
 			} else {
 				// Check if a user already exists for external username
@@ -238,10 +240,11 @@ func (api *API) postAuthSigninHandler() service.Handler {
 							return err
 						}
 
-						if err := group.CheckUserInDefaultGroup(ctx, tx, u.ID); err != nil {
-							return err
+						if !api.Config.Auth.DisableAddUserInDefaultGroup {
+							if err := group.CheckUserInDefaultGroup(ctx, tx, u.ID); err != nil {
+								return err
+							}
 						}
-
 						signupDone = true
 					}
 				}

@@ -200,7 +200,6 @@ func GetArtifactFromIntegrationPlugin(ctx context.Context, wk workerruntime.Runt
 				res.Status = sdk.StatusFail
 				res.Reason = err.Error()
 			}
-			return
 		}(opts)
 		// Be kind with the artifact manager
 		if len(runResults) > 1 {
@@ -260,7 +259,7 @@ func runGRPCIntegrationPlugin(ctx context.Context, wk workerruntime.Runtime, bin
 		return fmt.Errorf("error deploying application: %v", err)
 	}
 
-	if strings.ToUpper(result.Status) != strings.ToUpper(sdk.StatusSuccess) {
+	if !strings.EqualFold(result.Status, sdk.StatusSuccess) {
 		return fmt.Errorf("plugin execution failed %s: %s", result.Status, result.Details)
 	}
 	return nil

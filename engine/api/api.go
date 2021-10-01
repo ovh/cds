@@ -93,11 +93,12 @@ type Configuration struct {
 		InsecureSkipVerifyTLS bool `toml:"insecureSkipVerifyTLS" json:"insecureSkipVerifyTLS" default:"false"`
 	} `toml:"internalServiceMesh" json:"internalServiceMesh"`
 	Auth struct {
-		TokenDefaultDuration        int64  `toml:"tokenDefaultDuration" default:"30" comment:"The default duration of a token (in days)" json:"tokenDefaultDuration"`
-		TokenOverlapDefaultDuration string `toml:"tokenOverlapDefaultDuration" default:"24h" comment:"The default overlap duration when a token is regen" json:"tokenOverlapDefaultDuration"`
-		DefaultGroup                string `toml:"defaultGroup" default:"" comment:"The default group is the group in which every new user will be granted at signup" json:"defaultGroup"`
-		RSAPrivateKey               string `toml:"rsaPrivateKey" default:"" comment:"The RSA Private Key used to sign and verify the JWT Tokens issued by the API \nThis is mandatory." json:"-"`
-		LDAP                        struct {
+		TokenDefaultDuration         int64  `toml:"tokenDefaultDuration" default:"30" comment:"The default duration of a token (in days)" json:"tokenDefaultDuration"`
+		TokenOverlapDefaultDuration  string `toml:"tokenOverlapDefaultDuration" default:"24h" comment:"The default overlap duration when a token is regen" json:"tokenOverlapDefaultDuration"`
+		DefaultGroup                 string `toml:"defaultGroup" default:"" comment:"The default group is the group in which every new user will be granted at signup" json:"defaultGroup"`
+		DisableAddUserInDefaultGroup bool   `toml:"disableAddUserInDefaultGroup" default:"false" comment:"If false, user are automatically added in the default group" json:"disableAddUserInDefaultGroup"`
+		RSAPrivateKey                string `toml:"rsaPrivateKey" default:"" comment:"The RSA Private Key used to sign and verify the JWT Tokens issued by the API \nThis is mandatory." json:"-"`
+		LDAP                         struct {
 			Enabled         bool   `toml:"enabled" default:"false" json:"enabled"`
 			SignupDisabled  bool   `toml:"signupDisabled" default:"false" json:"signupDisabled"`
 			Host            string `toml:"host" json:"host"`

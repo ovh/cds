@@ -4,15 +4,10 @@ import (
 	"context"
 	"strings"
 
-	"github.com/rockbears/log"
-
 	"github.com/ovh/cds/sdk"
 )
 
 func (s *Service) generatePayloadFromGithubRequest(ctx context.Context, t *sdk.TaskExecution, event string) (map[string]interface{}, error) {
-	projectKey := t.Config["project"].Value
-	workflowName := t.Config["workflow"].Value
-
 	var request GithubWebHookEvent
 	if err := sdk.JSONUnmarshal(t.WebHook.RequestBody, &request); err != nil {
 		return nil, sdk.WrapError(err, "unable ro read github request: %s", string(t.WebHook.RequestBody))
@@ -23,13 +18,6 @@ func (s *Service) generatePayloadFromGithubRequest(ctx context.Context, t *sdk.T
 
 	if request.Ref != "" {
 		branch := strings.TrimPrefix(request.Ref, "refs/heads/")
-		if request.Deleted {
-			err := s.enqueueBranchDeletion(projectKey, workflowName, branch)
-			return nil, sdk.WrapError(err, "cannot enqueue branch deletion")
-		}
-		if err := s.stopBranchDeletionTask(ctx, branch); err != nil {
-			log.Error(ctx, "cannot stop branch deletion task for branch %s : %v", branch, err)
-		}
 
 		if !strings.HasPrefix(request.Ref, "refs/tags/") {
 			payload[GIT_BRANCH] = branch

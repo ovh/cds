@@ -120,6 +120,10 @@ func (e *artifactoryReleasePlugin) Run(_ context.Context, opts *integrationplugi
 
 	promotedArtifacts := make([]string, 0)
 	for _, r := range runResult {
+		// static-file type does not need to be released
+		if r.Type == sdk.WorkflowRunResultTypeStaticFile {
+			continue
+		}
 		rData, err := r.GetArtifactManager()
 		if err != nil {
 			return fail("unable to read result %s: %v", r.ID, err)

@@ -91,6 +91,7 @@ func TestResyncCommitStatusNotifDisabled(t *testing.T) {
 	}
 
 	allSrv, err := services.LoadAll(context.TODO(), db)
+	assert.NoError(t, err)
 	for _, s := range allSrv {
 		if err := services.Delete(db, &s); err != nil {
 			t.Fatalf("unable to delete service: %v", err)

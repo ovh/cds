@@ -30,24 +30,37 @@ type Reader struct {
 }
 
 func (r *Reader) get(from uint, to uint) ([]Line, error) {
-	res, err := r.Store.ScoredSetScanWithScores(context.Background(), cache.Key(r.PrefixKey, r.ItemID), float64(from), float64(to))
+	// Adding +1 to given "to" value to match last line with since > 0
+	res, err := r.Store.ScoredSetScanWithScores(context.Background(), cache.Key(r.PrefixKey, r.ItemID), float64(from), float64(to+1))
 	if err != nil {
 		return nil, err
 	}
-	ls := make([]Line, len(res))
+
+	ls := make([]Line, 0, len(res))
 	for i := range res {
+		var l Line
 		scoreD := decimal.NewFromFloat(res[i].Score)
-		ls[i].Number = scoreD.IntPart()
-		floatD := scoreD.Sub(decimal.NewFromInt(ls[i].Number))
-		ls[i].Since = floatD.Coefficient().Int64()
+		l.Number = scoreD.IntPart()
+
+		// Filter lines to prevent the line with number=to+1 to be returned
+		if l.Number > int64(to) {
+			continue
+		}
+
+		floatD := scoreD.Sub(decimal.NewFromInt(l.Number))
+		l.Since = floatD.Coefficient().Int64()
 
 		var value string
 		if err := sdk.JSONUnmarshal(res[i].Value, &value); err != nil {
 			return nil, sdk.WrapError(err, "cannot unmarshal line value from store")
 		}
+
 		ls[i].ApiRefHash = r.ApiRefHash
-		ls[i].Value = strings.TrimFunc(value, unicode.IsNumber)
-		ls[i].Value = strings.TrimPrefix(ls[i].Value, "#")
+		l.Value = strings.TrimFunc(value, unicode.IsNumber)
+		l.Value = strings.TrimPrefix(l.Value, "#")
+
+		ls = append(ls, l)
+
 	}
 	return ls, nil
 }

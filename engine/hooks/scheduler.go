@@ -210,23 +210,11 @@ func (s *Service) deleteTaskExecutionsRoutine(ctx context.Context) error {
 				})
 
 				for i, e := range execs {
-					switch e.Type {
-					// Delete all branch deletion task execution
-					case TypeBranchDeletion:
-						if e.Status == TaskExecutionDone && e.ProcessingTimestamp != 0 {
-							if err := s.Dao.DeleteTaskExecution(&e); err != nil {
-								log.Error(ctx, "deleteTaskExecutionsRoutine > error on DeleteTaskExecution: %v", err)
-							}
-							taskToDelete = true
-						}
-					default:
-						if i >= s.Cfg.ExecutionHistory && e.ProcessingTimestamp != 0 {
-							if err := s.Dao.DeleteTaskExecution(&e); err != nil {
-								log.Error(ctx, "deleteTaskExecutionsRoutine > error on DeleteTaskExecution: %v", err)
-							}
+					if i >= s.Cfg.ExecutionHistory && e.ProcessingTimestamp != 0 {
+						if err := s.Dao.DeleteTaskExecution(&e); err != nil {
+							log.Error(ctx, "deleteTaskExecutionsRoutine > error on DeleteTaskExecution: %v", err)
 						}
 					}
-
 				}
 
 				if taskToDelete {

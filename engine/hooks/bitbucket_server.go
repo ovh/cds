@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/rockbears/log"
-
 	"github.com/ovh/cds/sdk"
 )
 
@@ -43,23 +41,7 @@ func (s *Service) generatePayloadFromBitbucketServerRequest(ctx context.Context,
 		payloads = append(payloads, payload)
 	}
 
-	projectKey := t.Config["project"].Value
-	workflowName := t.Config["workflow"].Value
 	for _, pushChange := range request.Changes {
-		if pushChange.Type == "DELETE" {
-			err := s.enqueueBranchDeletion(projectKey, workflowName, strings.TrimPrefix(pushChange.RefID, "refs/heads/"))
-			if err != nil {
-				log.Error(ctx, "cannot enqueue branch deletion: %v", err)
-			}
-			continue
-		}
-		if !strings.HasPrefix(pushChange.RefID, "refs/tags/") {
-			branch := strings.TrimPrefix(pushChange.RefID, "refs/heads/")
-			if err := s.stopBranchDeletionTask(ctx, branch); err != nil {
-				log.Error(ctx, "cannot stop branch deletion task for branch %s : %v", branch, err)
-			}
-		}
-
 		payloadChanges := make(map[string]interface{})
 		for k, v := range payload {
 			payloadChanges[k] = v
