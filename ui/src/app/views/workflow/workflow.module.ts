@@ -19,6 +19,7 @@ import { WorkflowShowComponent } from './show/workflow.component';
 import { WorkflowSidebarCodeComponent } from './sidebar/code/sidebar.code.component';
 import { WorkflowComponent } from './workflow.component';
 import { workflowRouting } from './workflow.routing';
+import { WorkflowDeleteModalComponent } from './show/admin/delete-modal/delete-modal.component';
 
 @NgModule({
     declarations: [
@@ -39,7 +40,8 @@ import { workflowRouting } from './workflow.routing';
         WorkflowRunTestsResultComponent,
         WorkflowRunTestTableComponent,
         WorkflowShowComponent,
-        WorkflowSidebarCodeComponent
+        WorkflowSidebarCodeComponent,
+        WorkflowDeleteModalComponent
     ],
     imports: [
         SharedModule,
