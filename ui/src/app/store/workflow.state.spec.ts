@@ -168,7 +168,7 @@ describe('Workflows', () => {
             workflowName: 'wf1',
             withDependencies: false,
         }));
-        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/workflows/wf1')).flush(null);
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/workflows/wf1?withDependencies=false')).flush(null);
 
         store.selectOnce(WorkflowState.getCurrent()).subscribe((wfs: WorkflowStateModel) => {
             expect(wfs.workflow).toBeFalsy();
