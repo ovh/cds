@@ -326,7 +326,7 @@ func (s *Service) doOutgoingWebHookExecution(ctx context.Context, t *sdk.TaskExe
 		return sdk.WrapError(handleError(ctx, err), "Unable to interpolate body")
 	}
 
-	req, err := http.NewRequest(method, urls, bytes.NewBuffer([]byte(body)))
+	req, err := http.NewRequest(method, urls, bytes.NewBufferString(body))
 	if err != nil {
 		return sdk.WrapError(handleError(ctx, err), "Unable to create request")
 	}

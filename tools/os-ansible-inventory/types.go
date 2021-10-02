@@ -37,16 +37,16 @@ type Filter struct {
 func (f Filter) Match(k, v string) (bool, error) {
 	switch f.Operator {
 	case "=":
-		if strings.ToUpper(k) == strings.ToUpper(f.Key) && strings.ToUpper(v) == strings.ToUpper(f.Value) {
+		if strings.EqualFold(k, f.Key) && strings.EqualFold(v, f.Value) {
 			return true, nil
 		}
 	case "~":
-		if strings.ToUpper(k) == strings.ToUpper(f.Key) {
+		if strings.EqualFold(k, f.Key) {
 			r, err := regexp.Compile(f.Value)
 			if err != nil {
 				return false, err
 			}
-			return r.Match([]byte(v)), nil
+			return r.MatchString(v), nil
 		}
 	default:
 		return false, fmt.Errorf("unsupported operator %s", f.Operator)
