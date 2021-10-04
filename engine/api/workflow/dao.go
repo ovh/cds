@@ -759,7 +759,7 @@ func deleteOrUnlinkDependencies(ctx context.Context, db gorpmapper.SqlExecutorWi
 			if err := application.Update(db, &app); err != nil {
 				return err
 			}
-		} else {
+		} else if len(otherWfs) == 0 {
 			applicationIDToDelete = append(applicationIDToDelete, appID)
 		}
 	}
@@ -780,7 +780,7 @@ func deleteOrUnlinkDependencies(ctx context.Context, db gorpmapper.SqlExecutorWi
 			if err := pipeline.UpdatePipeline(db, &pip); err != nil {
 				return err
 			}
-		} else {
+		} else if len(otherWfs) == 0 {
 			pipelineIDToDelete = append(pipelineIDToDelete, pipID)
 		}
 	}
@@ -800,7 +800,7 @@ func deleteOrUnlinkDependencies(ctx context.Context, db gorpmapper.SqlExecutorWi
 			if err := environment.UpdateEnvironment(db, &env); err != nil {
 				return err
 			}
-		} else {
+		} else if len(otherWfs) == 0 {
 			environmentIDToDelete = append(environmentIDToDelete, envID)
 		}
 	}
