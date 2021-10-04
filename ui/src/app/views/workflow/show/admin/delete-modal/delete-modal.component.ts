@@ -2,7 +2,6 @@ import {
     ChangeDetectionStrategy,
     ChangeDetectorRef,
     Component,
-    Input,
     ViewChild
 } from '@angular/core';
 import { Router } from '@angular/router';
@@ -13,11 +12,10 @@ import { Project } from 'app/model/project.model';
 import { WorkflowDeletedDependencies } from 'app/model/purge.model';
 import { Workflow } from 'app/model/workflow.model';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
-import { Column, ColumnType } from 'app/shared/table/data-table.component';
 import { ToastService } from 'app/shared/toast/ToastService';
+import { ProjectState } from 'app/store/project.state';
 import { DeleteWorkflow } from 'app/store/workflow.action';
-import { cloneDeep } from 'lodash';
-import { $$iterator } from 'rxjs/internal/symbol/iterator';
+import { WorkflowState } from 'app/store/workflow.state';
 import { finalize } from 'rxjs/operators';
 
 class WorkflowDeleteModalComponentDependency {
@@ -37,26 +35,8 @@ export class WorkflowDeleteModalComponent {
     open: boolean;
     loading: boolean;
     dependencies: WorkflowDeletedDependencies;
-
-    _project: Project;
-    @Input()
-    set project(project: Project) {
-        this._project = project;
-    }
-    get project(): Project {
-        return this._project;
-    }
-
-    _workflow: Workflow;
-    @Input()
-    set workflow(data: Workflow) {
-        if (data) {
-            this._workflow = cloneDeep(data);
-        }
-    }
-    get workflow() {
-        return this._workflow;
-    }
+    project: Project;
+    workflow: Workflow;
 
     constructor(
         private store: Store,
@@ -74,6 +54,8 @@ export class WorkflowDeleteModalComponent {
         }
 
         this.open = true;
+        this.project = this.store.selectSnapshot(ProjectState.projectSnapshot);
+        this.workflow = this.store.selectSnapshot(WorkflowState.workflowSnapshot);
         const config = new TemplateModalConfig<boolean, boolean, void>(this.workflowDeleteModal);
         config.mustScroll = true;
         this.modal = this._modalService.open(config);
@@ -83,7 +65,15 @@ export class WorkflowDeleteModalComponent {
         this.modal.onDeny(_ => {
             this.closeCallback();
         });
-        this.init();
+        this._workflowService.getDeletedDependencies(this.workflow).pipe(
+            finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
+            .subscribe((x) => {
+                this.dependencies = x;
+            }
+        );
     }
 
     deleteWorkflow(b: boolean): void {
@@ -95,7 +85,10 @@ export class WorkflowDeleteModalComponent {
                     withDependencies: b
                 })
         ).pipe(
-            finalize(() => this.loading = false))
+            finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
             .subscribe(() => {
                 this.modal.approve(true);
                 this._toast.success('', this._translate.instant('workflow_deleted'));
@@ -105,14 +98,5 @@ export class WorkflowDeleteModalComponent {
 
     closeCallback(): void {
         this.open = false;
-    }
-
-    init(): void {
-        this._workflowService.getDeletedDependencies(this.workflow).pipe(
-            finalize(() => this.loading = false)
-        ).subscribe((x) => {
-            this.dependencies = x;
-            this._cd.markForCheck();
-        });
     }
 }
