@@ -2116,7 +2116,7 @@ workflow:
 		"key":              proj.Key,
 		"permWorkflowName": wf.Name,
 	}
-	uri := router.GetRoute("GET", api.getWorkflowDependencieswHandler, vars)
+	uri := router.GetRoute("GET", api.getWorkflowDependenciesHandler, vars)
 	test.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, &wf)
 	w := httptest.NewRecorder()

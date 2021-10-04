@@ -937,7 +937,7 @@ func (api *API) getSearchWorkflowHandler() service.Handler {
 	}
 }
 
-func (api *API) getWorkflowDependencieswHandler() service.Handler {
+func (api *API) getWorkflowDependenciesHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
