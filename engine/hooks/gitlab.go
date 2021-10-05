@@ -13,6 +13,11 @@ func (s *Service) generatePayloadFromGitlabRequest(ctx context.Context, t *sdk.T
 		return nil, sdk.WrapError(err, "unable ro read gitlab request: %s", string(t.WebHook.RequestBody))
 	}
 
+	// Branch deletion ( gitlab return 0000000000000000000000000000000000000000 as git hash)
+	if request.After == "0000000000000000000000000000000000000000" {
+		return nil, nil
+	}
+
 	payload := make(map[string]interface{})
 
 	payload[GIT_EVENT] = event

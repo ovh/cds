@@ -24,6 +24,10 @@ func (s *Service) generatePayloadFromBitbucketCloudRequest(ctx context.Context, 
 	getPayloadStringVariable(ctx, payload, request)
 
 	for _, pushChange := range request.Push.Changes {
+		if pushChange.Closed {
+			continue
+		}
+
 		payloadChange := make(map[string]interface{})
 		for k, v := range payload {
 			payloadChange[k] = v
