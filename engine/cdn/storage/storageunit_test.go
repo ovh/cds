@@ -319,9 +319,9 @@ func TestRun(t *testing.T) {
 	itemUnit, err = storage.LoadItemUnitByID(ctx, m, db, itemUnit.ID, gorpmapper.GetOptions.WithDecryption)
 	require.NoError(t, err)
 
-	require.NoError(t, cdnUnits.LogsBuffer().Add(*itemUnit, 1.0, "this is the first log\n"))
+	require.NoError(t, cdnUnits.LogsBuffer().Add(*itemUnit, 1, 0, "this is the first log\n"))
 
-	require.NoError(t, cdnUnits.LogsBuffer().Add(*itemUnit, 2.0, "this is the second log\n"))
+	require.NoError(t, cdnUnits.LogsBuffer().Add(*itemUnit, 2, 0, "this is the second log\n"))
 
 	reader, err := cdnUnits.LogsBuffer().NewReader(context.TODO(), *itemUnit)
 	require.NoError(t, err)

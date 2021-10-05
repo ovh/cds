@@ -82,17 +82,17 @@ func TestGetItemValue(t *testing.T) {
 		ItemID: it.ID,
 		UnitID: s.Units.LogsBuffer().ID(),
 	}
-	require.NoError(t, s.Units.LogsBuffer().Add(iu, 0, "Line 0\n"))
-	require.NoError(t, s.Units.LogsBuffer().Add(iu, 1, "Line 1\n"))
-	require.NoError(t, s.Units.LogsBuffer().Add(iu, 2, "Line 2\n"))
-	require.NoError(t, s.Units.LogsBuffer().Add(iu, 3, "Line 3\n"))
-	require.NoError(t, s.Units.LogsBuffer().Add(iu, 4, "Line 4\n"))
-	require.NoError(t, s.Units.LogsBuffer().Add(iu, 5, "Line 5\n"))
-	require.NoError(t, s.Units.LogsBuffer().Add(iu, 6, "Line 6\n"))
-	require.NoError(t, s.Units.LogsBuffer().Add(iu, 7, "Line 7\n"))
-	require.NoError(t, s.Units.LogsBuffer().Add(iu, 8, "Line 8\n"))
-	require.NoError(t, s.Units.LogsBuffer().Add(iu, 9, "Line 9\n"))
-	require.NoError(t, s.Units.LogsBuffer().Add(iu, 10, "Line 10\n"))
+	require.NoError(t, s.Units.LogsBuffer().Add(iu, 0, 0, "Line 0\n"))
+	require.NoError(t, s.Units.LogsBuffer().Add(iu, 1, 0, "Line 1\n"))
+	require.NoError(t, s.Units.LogsBuffer().Add(iu, 2, 0, "Line 2\n"))
+	require.NoError(t, s.Units.LogsBuffer().Add(iu, 3, 0, "Line 3\n"))
+	require.NoError(t, s.Units.LogsBuffer().Add(iu, 4, 0, "Line 4\n"))
+	require.NoError(t, s.Units.LogsBuffer().Add(iu, 5, 0, "Line 5\n"))
+	require.NoError(t, s.Units.LogsBuffer().Add(iu, 6, 0, "Line 6\n"))
+	require.NoError(t, s.Units.LogsBuffer().Add(iu, 7, 0, "Line 7\n"))
+	require.NoError(t, s.Units.LogsBuffer().Add(iu, 8, 0, "Line 8\n"))
+	require.NoError(t, s.Units.LogsBuffer().Add(iu, 9, 0, "Line 9\n"))
+	require.NoError(t, s.Units.LogsBuffer().Add(iu, 10, 0, "Line 10\n"))
 
 	require.NoError(t, s.completeItem(context.TODO(), db, iu))
 	itemDB, err := item.LoadByID(context.TODO(), s.Mapper, db, it.ID, gorpmapper.GetOptions.WithDecryption)
@@ -241,8 +241,8 @@ func TestGetItemValue_ThousandLines(t *testing.T) {
 		ItemID: it.ID,
 		UnitID: s.Units.LogsBuffer().ID(),
 	}
-	for i := 0; i < 1000; i++ {
-		require.NoError(t, s.Units.LogsBuffer().Add(iu, float64(i), fmt.Sprintf("Line %d\n", i)))
+	for i := uint(0); i < 1000; i++ {
+		require.NoError(t, s.Units.LogsBuffer().Add(iu, i, 0, fmt.Sprintf("Line %d\n", i)))
 	}
 
 	require.NoError(t, s.completeItem(context.TODO(), db, iu))
@@ -348,8 +348,8 @@ func TestGetItemValue_Reverse(t *testing.T) {
 		ItemID: it.ID,
 		UnitID: s.Units.LogsBuffer().ID(),
 	}
-	for i := 0; i < 5; i++ {
-		require.NoError(t, s.Units.LogsBuffer().Add(iu, float64(i), fmt.Sprintf("Line %d\n", i)))
+	for i := uint(0); i < 5; i++ {
+		require.NoError(t, s.Units.LogsBuffer().Add(iu, i, 0, fmt.Sprintf("Line %d\n", i)))
 	}
 
 	require.NoError(t, s.completeItem(context.TODO(), db, iu))
@@ -458,8 +458,8 @@ func TestGetItemValue_ThousandLinesReverse(t *testing.T) {
 		ItemID: it.ID,
 		UnitID: s.Units.LogsBuffer().ID(),
 	}
-	for i := 0; i < 1000; i++ {
-		require.NoError(t, s.Units.LogsBuffer().Add(iu, float64(i), fmt.Sprintf("Line %d\n", i)))
+	for i := uint(0); i < 1000; i++ {
+		require.NoError(t, s.Units.LogsBuffer().Add(iu, i, 0, fmt.Sprintf("Line %d\n", i)))
 	}
 
 	require.NoError(t, s.completeItem(context.TODO(), db, iu))
