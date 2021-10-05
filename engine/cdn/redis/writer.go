@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"math"
-	"strconv"
 	"strings"
 
 	"github.com/ovh/cds/engine/cache"
@@ -17,17 +15,16 @@ type Writer struct {
 	Store         cache.ScoredSetStore
 	ItemID        string
 	PrefixKey     string
-	currentScore  float64
+	currentScore  uint
 	currentBuffer []byte
 	closed        bool
 }
 
 // Add new item in cache + update last usage
-func (w *Writer) add(score float64, value string) error {
+func (w *Writer) add(score uint, since uint, value string) error {
 	itemKey := cache.Key(w.PrefixKey, w.ItemID)
-	si, _ := math.Modf(score)
-	value = strconv.Itoa(int(si)) + "#" + value
-	if err := w.Store.ScoredSetAdd(context.Background(), itemKey, value, score); err != nil {
+	value = fmt.Sprintf("%d%d#%s", score, since, value)
+	if err := w.Store.ScoredSetAdd(context.Background(), itemKey, value, float64(score)); err != nil {
 		return err
 	}
 	return nil
@@ -52,7 +49,7 @@ func (w *Writer) Write(p []byte) (int, error) {
 			w.currentBuffer = []byte(bufferSplitted[i])
 			break
 		}
-		if err := w.add(w.currentScore, bufferSplitted[i]+"\n"); err != nil {
+		if err := w.add(w.currentScore, 0, bufferSplitted[i]+"\n"); err != nil {
 			return 0, err
 		}
 		w.currentScore++
@@ -66,7 +63,7 @@ func (w *Writer) Write(p []byte) (int, error) {
 func (w *Writer) Close() error {
 	w.closed = true
 	if len(w.currentBuffer) > 0 {
-		if err := w.add(w.currentScore, string(w.currentBuffer)+"\n"); err != nil {
+		if err := w.add(w.currentScore, 0, string(w.currentBuffer)+"\n"); err != nil {
 			return err
 		}
 	}
