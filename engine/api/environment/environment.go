@@ -15,8 +15,7 @@ import (
 func LoadAllByIDs(db gorp.SqlExecutor, ids []int64) ([]sdk.Environment, error) {
 	var envs []sdk.Environment
 
-	query := `
-    SELECT environment.id, environment.name, environment.project_id, environment.created,
+	query := `SELECT environment.id, environment.name, environment.project_id, environment.created,
       environment.last_modified, environment.from_repository, project.projectkey
 		FROM environment
 		JOIN project ON project.id = environment.project_id

@@ -313,9 +313,17 @@
                     <div class="description">{{ 'workflow_delete_description' | translate}}</div>
                 </div>
                 <div class="eight wide right aligned column">
-                    <app-delete-button [loading]="loading" (event)="deleteWorkflow()"></app-delete-button>
+                    <button class="ui red button active" [class.disabled]="loading" (click)="deleteWorkflow()">
+                        <i class="trash icon"></i>
+                        <ng-container >
+                            <span>{{ 'btn_delete' | translate }}</span>
+                        </ng-container>
+                    </button>
                 </div>
             </div>
         </app-zone-content>
     </app-zone>
 </div>
+
+<app-workflow-delete-modal #workflowDeleteModal>
+</app-workflow-delete-modal>

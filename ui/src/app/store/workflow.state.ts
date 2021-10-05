@@ -264,7 +264,7 @@ export class WorkflowState {
                 hook: null,
                 editModal: false
             });
-            return
+            return;
         }
         ctx.setState({
             ...state,
@@ -422,7 +422,7 @@ export class WorkflowState {
     @Action(actionWorkflow.DeleteWorkflow)
     delete(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.DeleteWorkflow) {
         return this._http.delete(
-            `/project/${action.payload.projectKey}/workflows/${action.payload.workflowName}`
+            `/project/${action.payload.projectKey}/workflows/${action.payload.workflowName}?withDependencies=${action.payload.withDependencies}`
         ).pipe(tap(() => {
             const state = ctx.getState();
             ctx.setState({
@@ -1290,7 +1290,7 @@ export class WorkflowState {
                 ...state,
                 listRuns: state.listRuns.concat(WorkflowRun.Summary(action.payload.workflowRun)).sort((a, b) => b.num - a.num)
             });
-            return
+            return;
 
         }
         if (state.listRuns[index].status === action.payload.workflowRun.status

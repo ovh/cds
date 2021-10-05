@@ -41,6 +41,7 @@ import { finalize, first } from 'rxjs/operators';
 import { ProjectIntegration } from 'app/model/integration.model';
 import { ConfigService } from 'app/service/config/config.service';
 import { APIConfig } from 'app/model/config.service';
+import { WorkflowDeleteModalComponent } from './delete-modal/delete-modal.component';
 
 declare let CodeMirror: any;
 
@@ -52,6 +53,9 @@ declare let CodeMirror: any;
 })
 @AutoUnsubscribe()
 export class WorkflowAdminComponent implements OnInit, OnDestroy {
+
+    @ViewChild('workflowDeleteModal')
+    workflowDeleteModal: WorkflowDeleteModalComponent;
 
     _project: Project;
     @Input()
@@ -70,7 +74,7 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
     set workflow(data: Workflow) {
         if (data) {
             this._workflow = cloneDeep(data);
-            this.nbEventIntegrations = this._workflow?.integrations?.filter(i => i.project_integration.model.event).length
+            this.nbEventIntegrations = this._workflow?.integrations?.filter(i => i.project_integration.model.event).length;
         }
     }
     get workflow() {
@@ -230,10 +234,10 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
         this.initDryRunSubscription();
 
         let featRetentionRunsPolicyResult = this.store.selectSnapshot(FeatureState.featureProject(FeatureNames.WorkflowRetentionPolicy,
-            JSON.stringify({ project_key: this.project.key })))
+            JSON.stringify({ project_key: this.project.key })));
         this.retentionRunsPolicyEnabled = featRetentionRunsPolicyResult?.enabled;
         let featMaxRunsResult = this.store.selectSnapshot(FeatureState.featureProject(FeatureNames.WorkflowRetentionMaxRuns,
-            JSON.stringify({ project_key: this.project.key })))
+            JSON.stringify({ project_key: this.project.key })));
         this.maxRunsEnabled = featMaxRunsResult?.enabled;
 
         this._cd.markForCheck();
@@ -284,7 +288,7 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
             }
             this.dryRunDatas = rs;
             this._cd.markForCheck();
-        })
+        });
         // Subscribe to dry run result status
         this.dryRunsStatusSubs = this.dryRunStatus$.subscribe(s => {
             if (s === this.dryRunStatus) {
@@ -295,7 +299,7 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
                 this._eventService.unsubscribeWorkflowRetention();
             }
             this._cd.markForCheck();
-        })
+        });
         this.dryRunProgressSub = this.dryRunProgress$.subscribe(nb => {
             if (nb === this.dryRunAnalyzedRuns) {
                 return;
@@ -372,7 +376,7 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
     retentionPolicyDryRun(): void {
 
         this.store.dispatch(new CleanRetentionDryRun());
-        this._eventService.subscribeToWorkflowPurgeDryRun(this.project.key, this.workflow.name)
+        this._eventService.subscribeToWorkflowPurgeDryRun(this.project.key, this.workflow.name);
         this.loading = true;
         this._workflowService.retentionPolicyDryRun(this.workflow)
             .pipe(finalize(() => {
@@ -430,14 +434,7 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
     }
 
     deleteWorkflow(): void {
-        this.store.dispatch(new DeleteWorkflow({
-            projectKey: this.project.key,
-            workflowName: this.workflow.name
-        })).pipe(finalize(() => this.loading = false))
-            .subscribe(() => {
-                this._toast.success('', this._translate.instant('workflow_deleted'));
-                this._router.navigate(['/project', this.project.key], { queryParams: { tab: 'workflows' } });
-            });
+        this.workflowDeleteModal.show();
     }
 
     addIntegration() {
@@ -447,7 +444,7 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
         wi.project_integration = this.selectedIntegration;
         workflowIntegrations.push(wi);
         if (this.workflow.integrations) {
-            workflowIntegrations = [wi].concat(this.workflow.integrations)
+            workflowIntegrations = [wi].concat(this.workflow.integrations);
         }
         this.store.dispatch(new UpdateIntegrationsWorkflow({
             projectKey: this.project.key,

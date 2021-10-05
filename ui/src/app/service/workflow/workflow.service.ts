@@ -9,7 +9,7 @@ import {
     CDNLogsLines,
     SpawnInfo
 } from 'app/model/pipeline.model';
-import { WorkflowRetentoinDryRunResponse } from 'app/model/purge.model';
+import { WorkflowDeletedDependencies, WorkflowDependencies, WorkflowRetentoinDryRunResponse } from 'app/model/purge.model';
 import { Workflow, WorkflowPull, WorkflowTriggerConditionCache } from 'app/model/workflow.model';
 import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
@@ -76,10 +76,10 @@ export class WorkflowService {
     getLogsLinesCount(links: CDNLogLinks, limit: number): Observable<Array<CDNLogsLines>> {
         let params = new HttpParams();
         links.datas.map(l => l.api_ref).forEach(ref => {
-            params = params.append('apiRefHash', ref)
-        })
+            params = params.append('apiRefHash', ref);
+        });
         params.append('limit', limit.toString());
-        return this._http.get<Array<CDNLogsLines>>(`./cdscdn/item/${links.item_type}/lines`, { params })
+        return this._http.get<Array<CDNLogsLines>>(`./cdscdn/item/${links.item_type}/lines`, { params });
     }
 
     getLogLines(link: CDNLogLink, params?: { [key: string]: string }): Observable<CDNLinesResponse> {
@@ -120,5 +120,15 @@ export class WorkflowService {
 
     retentionPolicySuggestion(workflow: Workflow) {
         return this._http.get<Array<string>>(`/project/${workflow.project_key}/workflows/${workflow.name}/retention/suggest`);
+    }
+
+    getDeletedDependencies(workflow: Workflow): Observable<WorkflowDeletedDependencies> {
+        return this._http.get<WorkflowDeletedDependencies>(`/project/${workflow.project_key}/workflows/${workflow.name}/delete/dependencies`).pipe(
+            map(data => {
+                data.deleted_dependencies = new WorkflowDependencies(data.deleted_dependencies);
+                data.unlinked_as_code_dependencies = new WorkflowDependencies(data.unlinked_as_code_dependencies);
+                return data;
+            })
+        );
     }
 }

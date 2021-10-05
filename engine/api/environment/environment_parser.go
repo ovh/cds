@@ -23,7 +23,7 @@ type ImportOptions struct {
 
 // ParseAndImport parse an exportentities.Environment and insert or update the environment in database
 func ParseAndImport(ctx context.Context, db gorpmapper.SqlExecutorWithTx, proj sdk.Project, eenv exportentities.Environment, opts ImportOptions, decryptFunc keys.DecryptFunc, u sdk.Identifiable) (*sdk.Environment, []sdk.Variable, []sdk.Message, error) {
-	log.Debug(ctx, "ParseAndImport>> Import environment %s in project %s (force=%v)", eenv.Name, proj.Key, opts.Force)
+	log.Debug(ctx, "ParseAndImport>> Import environment %s in project %s from repository %q (force=%v)", eenv.Name, proj.Key, opts.FromRepository, opts.Force)
 	log.Debug(ctx, "ParseAndImport>> Env: %+v", eenv)
 
 	msgList := []sdk.Message{}

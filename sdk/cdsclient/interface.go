@@ -325,7 +325,7 @@ type WorkflowClient interface {
 	WorkflowList(projectKey string, opts ...RequestModifier) ([]sdk.Workflow, error)
 	WorkflowGet(projectKey, name string, opts ...RequestModifier) (*sdk.Workflow, error)
 	WorkflowUpdate(projectKey, name string, wf *sdk.Workflow) error
-	WorkflowDelete(projectKey string, workflowName string) error
+	WorkflowDelete(projectKey string, workflowName string, opts ...RequestModifier) error
 	WorkflowLabelAdd(projectKey, name, labelName string) error
 	WorkflowLabelDelete(projectKey, name string, labelID int64) error
 	WorkflowGroupAdd(projectKey, name, groupName string, permission int) error

@@ -141,8 +141,8 @@ func (c *client) WorkflowRunList(projectKey string, workflowName string, offset,
 	return runs, nil
 }
 
-func (c *client) WorkflowDelete(projectKey string, workflowName string) error {
-	_, err := c.DeleteJSON(context.Background(), fmt.Sprintf("/project/%s/workflows/%s", projectKey, workflowName), nil)
+func (c *client) WorkflowDelete(projectKey string, workflowName string, opts ...RequestModifier) error {
+	_, err := c.DeleteJSON(context.Background(), fmt.Sprintf("/project/%s/workflows/%s", projectKey, workflowName), nil, opts...)
 	return err
 }
 

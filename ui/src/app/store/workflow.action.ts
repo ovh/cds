@@ -113,7 +113,7 @@ export class UpdateWorkflow {
 
 export class DeleteWorkflow {
     static readonly type = '[Workflow] Delete Workflow';
-    constructor(public payload: { projectKey: string, workflowName: string }) { }
+    constructor(public payload: { projectKey: string, workflowName: string, withDependencies: boolean }) { }
 }
 
 export class UpdateWorkflowIcon {
