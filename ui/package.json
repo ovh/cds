@@ -9,6 +9,8 @@
   },
   "scripts": {
     "ng": "ng",
+    "gulp": "gulp",
+    "build:semantic": "gulp -f ./semantic/gulpfile.js build",
     "start": "ng serve -c development",
     "test": "ng test --watch false --code-coverage",
     "e2e": "testcafe chromium:headless ./e2e/tests/* -S -s screenshots",
@@ -40,6 +42,7 @@
     "@angular/platform-browser": "11.2.14",
     "@angular/platform-browser-dynamic": "11.2.14",
     "@angular/router": "11.2.14",
+    "@fontsource/lato": "4.5.0",
     "@icholy/duration": "5.0.0",
     "@ngui/auto-complete": "3.0.0",
     "@ngx-translate/core": "12.1.2",
