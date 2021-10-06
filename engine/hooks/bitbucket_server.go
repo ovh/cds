@@ -42,6 +42,10 @@ func (s *Service) generatePayloadFromBitbucketServerRequest(ctx context.Context,
 	}
 
 	for _, pushChange := range request.Changes {
+		if pushChange.Type == "DELETE" {
+			continue
+		}
+
 		payloadChanges := make(map[string]interface{})
 		for k, v := range payload {
 			payloadChanges[k] = v
