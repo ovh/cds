@@ -43,8 +43,6 @@ func (r *Reader) get(from uint, to uint) ([]Line, error) {
 			return nil, sdk.WrapError(err, "cannot unmarshal line value from store")
 		}
 
-		ls[i].ApiRefHash = r.ApiRefHash
-
 		// Trim to remove line number
 		value = strings.TrimPrefix(value, strconv.Itoa(int(res[i].Score)))
 
