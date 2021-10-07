@@ -54,7 +54,7 @@ func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signa
 
 	ctx = context.WithValue(ctx, storage.FieldAPIRef, it.APIRefHash)
 
-	iu, created, err := s.loadOrCreateItemUnitBuffer(ctx, it.ID, itemType)
+	iu, err := s.loadOrCreateItemUnitBuffer(ctx, it.ID, itemType)
 	if err != nil {
 		return err
 	}
@@ -84,7 +84,7 @@ func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signa
 
 	// Send an event in WS broker to refresh streams on current item
 	s.GoRoutines.Exec(ctx, "storeLogsPublishWSEvent", func(ctx context.Context) {
-		s.publishWSEvent(*iu, created)
+		s.publishWSEvent(*iu)
 	})
 
 	// If we have all lines or buffer is full and we received the last line
@@ -162,49 +162,49 @@ func (s *Service) loadOrCreateItem(ctx context.Context, itemType sdk.CDNItemType
 	return it, nil
 }
 
-func (s *Service) loadOrCreateItemUnitBuffer(ctx context.Context, itemID string, itemType sdk.CDNItemType) (*sdk.CDNItemUnit, bool, error) {
+func (s *Service) loadOrCreateItemUnitBuffer(ctx context.Context, itemID string, itemType sdk.CDNItemType) (*sdk.CDNItemUnit, error) {
 	bufferUnit := s.Units.GetBuffer(itemType)
 	unit, err := storage.LoadUnitByName(ctx, s.Mapper, s.mustDBWithCtx(ctx), bufferUnit.Name())
 	if err != nil {
-		return nil, false, err
+		return nil, err
 	}
 
 	it, err := item.LoadByID(ctx, s.Mapper, s.mustDBWithCtx(ctx), itemID, gorpmapper.GetOptions.WithDecryption)
 	if err != nil {
-		return nil, false, err
+		return nil, err
 	}
 
 	itemUnit, err := storage.LoadItemUnitByUnit(ctx, s.Mapper, s.mustDBWithCtx(ctx), unit.ID, itemID, gorpmapper.GetOptions.WithDecryption)
 	if err != nil {
 		if !sdk.ErrorIs(err, sdk.ErrNotFound) {
-			return nil, false, err
+			return nil, err
 		}
 
 		itemUnit, err = s.Units.NewItemUnit(ctx, bufferUnit, it)
 		if err != nil {
-			return nil, false, err
+			return nil, err
 		}
 
 		tx, err := s.mustDBWithCtx(ctx).Begin()
 		if err != nil {
-			return nil, false, sdk.WithStack(err)
+			return nil, sdk.WithStack(err)
 		}
 		defer tx.Rollback() // nolint
 
 		if errInsert := storage.InsertItemUnit(ctx, s.Mapper, tx, itemUnit); errInsert == nil {
 			if err := tx.Commit(); err != nil {
-				return nil, false, sdk.WithStack(err)
+				return nil, sdk.WithStack(err)
 			}
-			return itemUnit, true, nil
+			return itemUnit, nil
 		} else if !sdk.ErrorIs(errInsert, sdk.ErrConflictData) {
-			return nil, false, errInsert
+			return nil, errInsert
 		}
 
 		itemUnit, err = storage.LoadItemUnitByUnit(ctx, s.Mapper, s.mustDBWithCtx(ctx), unit.ID, itemID, gorpmapper.GetOptions.WithDecryption)
 		if err != nil {
-			return nil, false, sdk.WrapError(err, "unable to load item unit %s/%s", unit.ID, itemID)
+			return nil, sdk.WrapError(err, "unable to load item unit %s/%s", unit.ID, itemID)
 		}
 	}
 
-	return itemUnit, false, nil
+	return itemUnit, nil
 }

@@ -369,9 +369,9 @@ const (
 )
 
 type CDNWSEvent struct {
-	ItemType      CDNItemType `json:"item_type"`
-	JobRunID      int64       `json:"job_run_id"`
-	NewItemUnitID string      `json:"new_item_unit_id"`
+	ItemType   CDNItemType `json:"item_type"`
+	JobRunID   int64       `json:"job_run_id"`
+	ItemUnitID string      `json:"new_item_unit_id"`
 }
 
 type CDNStreamFilter struct {

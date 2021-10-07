@@ -67,7 +67,7 @@ func (s *Service) initWebsocket() error {
 	return nil
 }
 
-func (s *Service) publishWSEvent(itemUnit sdk.CDNItemUnit, created bool) {
+func (s *Service) publishWSEvent(itemUnit sdk.CDNItemUnit) {
 	s.WSEventsMutex.Lock()
 	defer s.WSEventsMutex.Unlock()
 	if s.WSEvents == nil {
@@ -81,9 +81,7 @@ func (s *Service) publishWSEvent(itemUnit sdk.CDNItemUnit, created bool) {
 		ItemType: itemUnit.Type,
 		JobRunID: apiRefItem.NodeRunJobID,
 	}
-	if created {
-		event.NewItemUnitID = itemUnit.ID
-	}
+	event.ItemUnitID = itemUnit.ID
 	s.WSEvents[itemUnit.ID] = event
 }
 
@@ -120,12 +118,12 @@ func (s *Service) websocketOnMessage(e sdk.CDNWSEvent) {
 		if c == nil || c.itemFilter == nil || c.itemFilter.JobRunID != e.JobRunID {
 			continue
 		}
-		if e.NewItemUnitID != "" {
-			// Add new step on client data
-			c.mutexData.Lock()
-			c.itemUnitsData[e.NewItemUnitID] = ItemUnitClientData{}
-			c.mutexData.Unlock()
+		// Add new step on client data
+		c.mutexData.Lock()
+		if _, has := c.itemUnitsData[e.ItemUnitID]; !has {
+			c.itemUnitsData[e.ItemUnitID] = ItemUnitClientData{}
 		}
+		c.mutexData.Unlock()
 		c.TriggerUpdate()
 	}
 }
