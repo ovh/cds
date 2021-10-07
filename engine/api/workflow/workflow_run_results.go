@@ -197,7 +197,7 @@ func verifyAddResultArtifactManager(ctx context.Context, db gorp.SqlExecutor, st
 	}
 	var artifactManagerToken string
 	for _, s := range secrets {
-		if s.Name == fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactManagerConfigToken) {
+		if s.Name == fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactoryConfigToken) {
 			artifactManagerToken = s.Value
 			break
 		}
@@ -205,7 +205,7 @@ func verifyAddResultArtifactManager(ctx context.Context, db gorp.SqlExecutor, st
 	if artifactManagerToken == "" {
 		return "", sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find artifact manager token")
 	}
-	artifactClient, err := artifact_manager.NewClient(artiInteg.ProjectIntegration.Config[sdk.ArtifactManagerConfigPlatform].Value, artiInteg.ProjectIntegration.Config[sdk.ArtifactManagerConfigURL].Value, artifactManagerToken)
+	artifactClient, err := artifact_manager.NewClient(artiInteg.ProjectIntegration.Config[sdk.ArtifactoryConfigPlatform].Value, artiInteg.ProjectIntegration.Config[sdk.ArtifactoryConfigURL].Value, artifactManagerToken)
 	if err != nil {
 		return "", err
 	}

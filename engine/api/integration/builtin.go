@@ -16,7 +16,7 @@ var (
 		sdk.RabbitMQIntegration,
 		sdk.OpenstackIntegration,
 		sdk.AWSIntegration,
-		sdk.ArtifactManagerIntegration,
+		sdk.ArtifactoryIntegration,
 	}
 )
 

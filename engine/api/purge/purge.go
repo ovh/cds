@@ -333,8 +333,8 @@ func DeleteArtifactsFromRepositoryManager(ctx context.Context, db gorp.SqlExecut
 		return nil
 	}
 	var (
-		rtName = artifactManagerInteg.ProjectIntegration.Config[sdk.ArtifactManagerConfigPlatform].Value
-		rtURL  = artifactManagerInteg.ProjectIntegration.Config[sdk.ArtifactManagerConfigURL].Value
+		rtName = artifactManagerInteg.ProjectIntegration.Config[sdk.ArtifactoryConfigPlatform].Value
+		rtURL  = artifactManagerInteg.ProjectIntegration.Config[sdk.ArtifactoryConfigURL].Value
 	)
 
 	// Load the token from secrets
@@ -345,7 +345,7 @@ func DeleteArtifactsFromRepositoryManager(ctx context.Context, db gorp.SqlExecut
 
 	var rtToken string
 	for _, s := range secrets {
-		if s.Name == fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactManagerConfigToken) {
+		if s.Name == fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactoryConfigToken) {
 			rtToken = s.Value
 			break
 		}
@@ -366,8 +366,8 @@ func DeleteArtifactsFromRepositoryManager(ctx context.Context, db gorp.SqlExecut
 		return err
 	}
 
-	lowMaturity := artifactManagerInteg.ProjectIntegration.Config[sdk.ArtifactManagerConfigPromotionLowMaturity].Value
-	highMaturity := artifactManagerInteg.ProjectIntegration.Config[sdk.ArtifactManagerConfigPromotionHighMaturity].Value
+	lowMaturity := artifactManagerInteg.ProjectIntegration.Config[sdk.ArtifactoryConfigPromotionLowMaturity].Value
+	highMaturity := artifactManagerInteg.ProjectIntegration.Config[sdk.ArtifactoryConfigPromotionHighMaturity].Value
 
 	toDeleteProperties := []sdk.KeyValues{
 		{
