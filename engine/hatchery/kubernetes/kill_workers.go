@@ -34,51 +34,51 @@ func (h *HatcheryKubernetes) killAwolWorkers(ctx context.Context) error {
 			}
 		}
 
-		// If no job identifiers, no services on pod
-		jobIdentifiers := getJobIdentiers(labels)
-		if jobIdentifiers != nil {
-			// Browse container to send end log for each service
-			servicesLogs := make([]cdslog.Message, 0)
-			for _, container := range pod.Spec.Containers {
-				subsStr := containerServiceNameRegexp.FindAllStringSubmatch(container.Name, -1)
-				if len(subsStr) < 1 {
-					continue
-				}
-				if len(subsStr[0]) < 3 {
-					log.Error(ctx, "getServiceLogs> cannot find service id in the container name (%s) : %v", container.Name, subsStr)
-					continue
-				}
-				reqServiceID, _ := strconv.ParseInt(subsStr[0][1], 10, 64)
-				finalLog := cdslog.Message{
-					Level: logrus.InfoLevel,
-					Value: "End of Job",
-					Signature: cdn.Signature{
-						Service: &cdn.SignatureService{
-							HatcheryID:      h.Service().ID,
-							HatcheryName:    h.ServiceName(),
-							RequirementID:   reqServiceID,
-							RequirementName: subsStr[0][2],
-							WorkerName:      pod.ObjectMeta.Name,
-						},
-						ProjectKey:   labels[hatchery.LabelServiceProjectKey],
-						WorkflowName: labels[hatchery.LabelServiceWorkflowName],
-						WorkflowID:   jobIdentifiers.WorkflowID,
-						RunID:        jobIdentifiers.RunID,
-						NodeRunName:  labels[hatchery.LabelServiceNodeRunName],
-						JobName:      annotations[hatchery.LabelServiceJobName],
-						JobID:        jobIdentifiers.JobID,
-						NodeRunID:    jobIdentifiers.NodeRunID,
-						Timestamp:    time.Now().UnixNano(),
-					},
-				}
-				servicesLogs = append(servicesLogs, finalLog)
-			}
-			if len(servicesLogs) > 0 {
-				h.Common.SendServiceLog(ctx, servicesLogs, sdk.StatusTerminated)
-			}
-		}
-
 		if toDelete {
+			// If no job identifiers, no services on pod
+			jobIdentifiers := getJobIdentiers(labels)
+			if jobIdentifiers != nil {
+				// Browse container to send end log for each service
+				servicesLogs := make([]cdslog.Message, 0)
+				for _, container := range pod.Spec.Containers {
+					subsStr := containerServiceNameRegexp.FindAllStringSubmatch(container.Name, -1)
+					if len(subsStr) < 1 {
+						continue
+					}
+					if len(subsStr[0]) < 3 {
+						log.Error(ctx, "getServiceLogs> cannot find service id in the container name (%s) : %v", container.Name, subsStr)
+						continue
+					}
+					reqServiceID, _ := strconv.ParseInt(subsStr[0][1], 10, 64)
+					finalLog := cdslog.Message{
+						Level: logrus.InfoLevel,
+						Value: "End of Job",
+						Signature: cdn.Signature{
+							Service: &cdn.SignatureService{
+								HatcheryID:      h.Service().ID,
+								HatcheryName:    h.ServiceName(),
+								RequirementID:   reqServiceID,
+								RequirementName: subsStr[0][2],
+								WorkerName:      pod.ObjectMeta.Name,
+							},
+							ProjectKey:   labels[hatchery.LabelServiceProjectKey],
+							WorkflowName: labels[hatchery.LabelServiceWorkflowName],
+							WorkflowID:   jobIdentifiers.WorkflowID,
+							RunID:        jobIdentifiers.RunID,
+							NodeRunName:  labels[hatchery.LabelServiceNodeRunName],
+							JobName:      annotations[hatchery.LabelServiceJobName],
+							JobID:        jobIdentifiers.JobID,
+							NodeRunID:    jobIdentifiers.NodeRunID,
+							Timestamp:    time.Now().UnixNano(),
+						},
+					}
+					servicesLogs = append(servicesLogs, finalLog)
+				}
+				if len(servicesLogs) > 0 {
+					h.Common.SendServiceLog(ctx, servicesLogs, sdk.StatusTerminated)
+				}
+			}
+
 			// If its a worker "register", check registration before deleting it
 			if strings.HasPrefix(pod.Name, "register-") {
 				var modelPath string
