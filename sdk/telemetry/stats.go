@@ -4,11 +4,10 @@ import (
 	"context"
 	"strings"
 
+	"github.com/pkg/errors"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
-
-	"github.com/ovh/cds/sdk"
 )
 
 // RegisterView begins collecting data for the given views
@@ -23,7 +22,7 @@ func RegisterView(ctx context.Context, views ...*view.View) error {
 	for _, v := range views {
 		if view.Find(v.Name) == nil {
 			if err := view.Register(v); err != nil {
-				return sdk.WithStack(err)
+				return errors.WithStack(err)
 			}
 			var ev = ExposedView{
 				Name:        v.Name,
