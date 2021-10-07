@@ -23,7 +23,7 @@ func (h *HatcheryKubernetes) killAwolWorkers(ctx context.Context) error {
 	}
 	var globalErr error
 	for _, pod := range pods.Items {
-
+		annotations := pod.GetAnnotations()
 		labels := pod.GetLabels()
 		toDelete := false
 		for _, container := range pod.Status.ContainerStatuses {
@@ -65,7 +65,7 @@ func (h *HatcheryKubernetes) killAwolWorkers(ctx context.Context) error {
 						WorkflowID:   jobIdentifiers.WorkflowID,
 						RunID:        jobIdentifiers.RunID,
 						NodeRunName:  labels[hatchery.LabelServiceNodeRunName],
-						JobName:      labels[hatchery.LabelServiceJobName],
+						JobName:      annotations[hatchery.LabelServiceJobName],
 						JobID:        jobIdentifiers.JobID,
 						NodeRunID:    jobIdentifiers.NodeRunID,
 						Timestamp:    time.Now().UnixNano(),
@@ -74,7 +74,7 @@ func (h *HatcheryKubernetes) killAwolWorkers(ctx context.Context) error {
 				servicesLogs = append(servicesLogs, finalLog)
 			}
 			if len(servicesLogs) > 0 {
-				h.Common.SendServiceLog(ctx, servicesLogs, sdk.StatusNotTerminated)
+				h.Common.SendServiceLog(ctx, servicesLogs, sdk.StatusTerminated)
 			}
 		}
 
@@ -98,7 +98,7 @@ func (h *HatcheryKubernetes) killAwolWorkers(ctx context.Context) error {
 					}
 				}
 			}
-			if err := h.kubeClient.PodDelete(ctx, pod.Namespace, pod.Name, nil); err != nil {
+			if err := h.kubeClient.PodDelete(ctx, pod.Namespace, pod.Name, metav1.DeleteOptions{}); err != nil {
 				globalErr = err
 				log.Error(ctx, "hatchery:kubernetes> killAwolWorkers> Cannot delete pod %s (%s)", pod.Name, err)
 			}

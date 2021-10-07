@@ -32,7 +32,7 @@ func (h *HatcheryKubernetes) deleteSecrets(ctx context.Context) error {
 			}
 		}
 		if !found {
-			if err := h.kubeClient.SecretDelete(ctx, h.Config.Namespace, secret.Name, nil); err != nil {
+			if err := h.kubeClient.SecretDelete(ctx, h.Config.Namespace, secret.Name, metav1.DeleteOptions{}); err != nil {
 				log.Error(ctx, "deleteSecrets> Cannot delete secret %s : %v", secret.Name, err)
 			}
 		}
@@ -42,7 +42,7 @@ func (h *HatcheryKubernetes) deleteSecrets(ctx context.Context) error {
 }
 
 func (h *HatcheryKubernetes) createSecret(ctx context.Context, secretName string, model sdk.Model) error {
-	if _, err := h.kubeClient.SecretGet(ctx, h.Config.Namespace, secretName, &metav1.GetOptions{}); err != nil {
+	if _, err := h.kubeClient.SecretGet(ctx, h.Config.Namespace, secretName, metav1.GetOptions{}); err != nil {
 		registry := "https://index.docker.io/v1/"
 		if model.ModelDocker.Registry != "" {
 			registry = model.ModelDocker.Registry
@@ -61,7 +61,7 @@ func (h *HatcheryKubernetes) createSecret(ctx context.Context, secretName string
 				apiv1.DockerConfigJsonKey: dockerCfg,
 			},
 		}
-		if _, err := h.kubeClient.SecretCreate(ctx, h.Config.Namespace, &wmSecret); err != nil {
+		if _, err := h.kubeClient.SecretCreate(ctx, h.Config.Namespace, &wmSecret, metav1.CreateOptions{}); err != nil {
 			return sdk.WrapError(err, "Cannot create secret %s", secretName)
 		}
 	}

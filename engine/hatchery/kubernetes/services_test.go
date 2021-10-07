@@ -50,7 +50,9 @@ func Test_serviceLogs(t *testing.T) {
 						hatchery.LabelServiceProjectKey:   "KEY",
 						hatchery.LabelServiceRunID:        "1",
 						hatchery.LabelServiceNodeRunName:  "Mypip",
-						hatchery.LabelServiceJobName:      "MyJob",
+					},
+					Annotations: map[string]string{
+						hatchery.LabelServiceJobName: "MyJob",
 					},
 				},
 				Spec: v1.PodSpec{
