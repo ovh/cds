@@ -75,7 +75,7 @@ func (h *HatcheryKubernetes) ApplyConfiguration(cfg interface{}) error {
 	var ok bool
 	h.Config, ok = cfg.(HatcheryConfiguration)
 	if !ok {
-		return fmt.Errorf("invalid configuration")
+		return sdk.WithStack(fmt.Errorf("invalid configuration"))
 	}
 
 	var err error
@@ -359,7 +359,7 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 
 	_, err := h.kubeClient.PodCreate(ctx, h.Config.Namespace, &podSchema, metav1.CreateOptions{})
 	log.Debug(ctx, "hatchery> kubernetes> SpawnWorker> %s > Pod created", spawnArgs.WorkerName)
-	return err
+	return sdk.WithStack(err)
 }
 
 func (h *HatcheryKubernetes) GetLogger() *logrus.Logger {
