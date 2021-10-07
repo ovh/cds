@@ -17,7 +17,7 @@ module.exports = function (config) {
             {pattern: './src/test.ts', watched: false},
             {pattern: './src/assets/**/*.png', watched: false, included: false, served: true},
             {pattern: './node_modules/jquery/dist/jquery.js', watch: false, included: true, served: true},
-            {pattern: './node_modules/fomantic-ui/dist/semantic.js', watch: false, included: true, served: true},
+            {pattern: './semantic/dist/semantic.js', watch: false, included: true, served: true},
             {pattern: './node_modules/codemirror/lib/codemirror.js', watch: false, included: true, served: true},
             {pattern: './node_modules/dragula/dist/dragula.js', watch: false, included: true, served: true}
         ],

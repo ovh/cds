@@ -17,8 +17,11 @@ func (s *Service) generatePayloadFromGithubRequest(ctx context.Context, t *sdk.T
 	payload[GIT_EVENT] = event
 
 	if request.Ref != "" {
-		branch := strings.TrimPrefix(request.Ref, "refs/heads/")
+		if request.Deleted {
+			return nil, nil
+		}
 
+		branch := strings.TrimPrefix(request.Ref, "refs/heads/")
 		if !strings.HasPrefix(request.Ref, "refs/tags/") {
 			payload[GIT_BRANCH] = branch
 		} else {

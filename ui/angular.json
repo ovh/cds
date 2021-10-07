@@ -29,16 +29,15 @@
               "node_modules/codemirror/addon/hint/show-hint.css",
               "node_modules/codemirror/addon/lint/lint.css",
               "node_modules/codemirror/theme/darcula.css",
-              "node_modules/fomantic-ui/dist/semantic.css",
               "node_modules/angular2-toaster-sgu/toaster.css",
               "node_modules/font-awesome/css/font-awesome.css",
               "node_modules/animate.css/animate.min.css",
               "node_modules/prismjs/themes/prism-okaidia.css",
+              "semantic/dist/semantic.min.css",
               "src/styles.scss"
             ],
             "scripts": [
               "node_modules/jquery/dist/jquery.js",
-              "node_modules/fomantic-ui/dist/semantic.min.js",
               "node_modules/codemirror/lib/codemirror.js",
               "node_modules/codemirror/mode/shell/shell.js",
               "node_modules/codemirror/addon/mode/simple.js",
@@ -62,7 +61,8 @@
               "node_modules/js-yaml/dist/js-yaml.js",
               "resources/cds-hint.js",
               "node_modules/ansi_up/ansi_up.js",
-              "node_modules/prismjs/prism.js"
+              "node_modules/prismjs/prism.js",
+              "semantic/dist/semantic.min.js"
             ],
             "allowedCommonJsDependencies": [
                 "raven-js",
@@ -137,7 +137,6 @@
             "tsConfig": "src/tsconfig.spec.json",
             "scripts": [
               "node_modules/jquery/dist/jquery.js",
-              "node_modules/fomantic-ui/dist/semantic.min.js",
               "node_modules/codemirror/lib/codemirror.js",
               "node_modules/codemirror/mode/shell/shell.js",
               "node_modules/codemirror/addon/mode/simple.js",
@@ -155,16 +154,17 @@
               "node_modules/codemirror/addon/edit/matchbrackets.js",
               "node_modules/codemirror/addon/display/autorefresh.js",
               "resources/cds-hint.js",
-              "node_modules/ansi_up/ansi_up.js"
+              "node_modules/ansi_up/ansi_up.js",
+              "semantic/dist/semantic.min.js"
             ],
             "styles": [
               "node_modules/dragula/dist/dragula.css",
               "node_modules/codemirror/lib/codemirror.css",
               "node_modules/codemirror/addon/hint/show-hint.css",
-              "node_modules/fomantic-ui/dist/semantic.css",
               "node_modules/angular2-toaster-sgu/toaster.css",
               "node_modules/font-awesome/css/font-awesome.css",
               "node_modules/animate.css/animate.min.css",
+              "semantic/dist/semantic.min.css",
               "src/styles.scss"
             ],
             "assets": [

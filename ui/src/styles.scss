@@ -2,6 +2,16 @@
 
 @import "common";
 
+@import "~@fontsource/lato/scss/mixins";
+
+@include fontFace($style: italic, $weight: 400);
+
+@include fontFace($style: italic, $weight: 700);
+
+@include fontFace($style: normal, $weight: 400);
+
+@include fontFace($style: normal, $weight: 700);
+
 html,
 body {
     overflow-y: hidden;
@@ -50,11 +60,11 @@ a.disabled:hover {
 }
 
 .CodeMirror-empty {
-  color: $polar_grey_2 !important;
+    color: $polar_grey_2 !important;
 }
 
 app-workflow-admin .CodeMirror-scroll {
-  min-height: 180px;
+    min-height: 180px;
 }
 
 .fullheight {

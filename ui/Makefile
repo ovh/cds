@@ -5,7 +5,7 @@ VERSION := $(if ${CDS_VERSION},${CDS_VERSION},snapshot)
 clean:
 	@rm -rf dist
 	@rm -rf node_modules
-	@rm -rf semantic
+	@find semantic -name "*" -not -path "*/site/globals/site.variables" -delete
 	@rm -rf semantic\\
 	@rm -f package-lock.json
 

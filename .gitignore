@@ -44,8 +44,15 @@ ui/coverage
 ui/tests
 ui/typings
 ui/src/app/**/*.js
-ui/semantic
 ui/semantic\\
+ui/semantic/*
+!ui/semantic/src
+ui/semantic/src/*
+!ui/semantic/src/site
+ui/semantic/src/site/*
+!ui/semantic/src/site/globals
+ui/semantic/src/site/globals/*
+!ui/semantic/src/site/globals/site.variables
 ui/e2e/*.png
 ui/documentation
 ui/dist
