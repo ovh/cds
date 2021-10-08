@@ -145,6 +145,8 @@ require (
 	layeh.com/gopher-json v0.0.0-20201124131017-552bb3c4c3bf
 )
 
+replace gopkg.in/yaml.v2 v2.4.0 => gopkg.in/yaml.v2 v2.3.0
+
 replace github.com/jfrog/jfrog-client-go => github.com/sguiheux/jfrog-client-go v0.21.1-0.20210526124627-b559bbbcdf25
 
 replace github.com/vmware/go-nfs-client => github.com/sguiheux/go-nfs-client v0.0.0-20210311091651-4f075a6103cc
