@@ -19,6 +19,13 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+type WSLine struct {
+	Number     int64  `json:"number"`
+	Value      string `json:"value"`
+	Since      int64  `json:"since,omitempty"`
+	ApiRefHash string `json:"api_ref_hash"`
+}
+
 func (s *Service) getItemLogsStreamHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		c, err := websocket.Upgrader.Upgrade(w, r, nil)
@@ -48,14 +55,10 @@ func (s *Service) getItemLogsStreamHandler() service.Handler {
 			// Load last running step
 			var iuID string
 			if filter.JobRunID > 0 {
-				iu, err := storage.LoadLastItemUnitByJobUnitType(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.LogsBuffer().ID(), filter.JobRunID, sdk.CDNTypeItemStepLog)
-				if err != nil {
-					ctx = sdk.ContextWithStacktrace(ctx, err)
-					log.Warn(ctx, err.Error())
-					return
+				iu, _ := storage.LoadLastItemUnitByJobUnitType(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.LogsBuffer().ID(), filter.JobRunID, sdk.CDNTypeItemStepLog)
+				if iu != nil {
+					iuID = iu.ID
 				}
-				iuID = iu.ID
-
 			}
 
 			if err := wsClientData.UpdateFilter(filter, iuID); err != nil {
@@ -169,7 +172,13 @@ func (s *Service) sendStepLog(ctx context.Context, wsClient websocket.Client, ws
 		if data.scoreNextLineToSend > 0 && data.scoreNextLineToSend != lines[i].Number {
 			break
 		}
-		if err := wsClient.Send(lines[i]); err != nil {
+
+		if err := wsClient.Send(WSLine{
+			Number:     lines[i].Number,
+			Value:      lines[i].Value,
+			Since:      lines[i].Since,
+			ApiRefHash: data.itemUnit.Item.APIRefHash,
+		}); err != nil {
 			return err
 		}
 		if data.scoreNextLineToSend < 0 {

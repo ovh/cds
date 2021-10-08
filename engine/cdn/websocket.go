@@ -31,7 +31,6 @@ func (s *Service) initWebsocket() error {
 	s.WSBroker = websocket.NewBroker()
 	s.WSBroker.OnMessage(func(m []byte) {
 		telemetry.Record(s.Router.Background, s.Metrics.WSEvents, 1)
-
 		var e sdk.CDNWSEvent
 		if err := sdk.JSONUnmarshal(m, &e); err != nil {
 			err = sdk.WrapError(err, "cannot parse event from WS broker")
@@ -115,9 +114,11 @@ func (s *Service) websocketOnMessage(e sdk.CDNWSEvent) {
 
 	for _, id := range clientIDs {
 		c := s.WSServer.GetClientData(id)
+
 		if c == nil || c.itemFilter == nil || c.itemFilter.JobRunID != e.JobRunID {
 			continue
 		}
+
 		// Add new step on client data
 		c.mutexData.Lock()
 		if _, has := c.itemUnitsData[e.ItemUnitID]; !has {
@@ -195,11 +196,12 @@ func (d *websocketClientData) UpdateFilter(filter sdk.CDNStreamFilter, itemUnitI
 	defer d.mutexData.Unlock()
 
 	d.itemFilter = &filter
-	d.itemUnitsData = map[string]ItemUnitClientData{
-		itemUnitID: {
+	d.itemUnitsData = make(map[string]ItemUnitClientData)
+	if itemUnitID != "" {
+		d.itemUnitsData[itemUnitID] = ItemUnitClientData{
 			itemUnit:            nil,
 			scoreNextLineToSend: -10,
-		},
-	} // reset verified will trigger a new permission check
+		}
+	}
 	return nil
 }
