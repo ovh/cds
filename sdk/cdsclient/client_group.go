@@ -3,6 +3,7 @@ package cdsclient
 import (
 	"context"
 	"fmt"
+	"io"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -28,6 +29,23 @@ func (c *client) GroupGet(name string, mods ...RequestModifier) (*sdk.Group, err
 		return nil, err
 	}
 	return group, nil
+}
+
+func (c *client) GroupExport(name string, mods ...RequestModifier) ([]byte, error) {
+	path := fmt.Sprintf("/group/%s/export", name)
+	body, _, _, err := c.Request(context.Background(), "GET", path, nil, mods...)
+	if err != nil {
+		return nil, err
+	}
+	return body, nil
+}
+
+func (c *client) GroupImport(content io.Reader, mods ...RequestModifier) ([]byte, error) {
+	btes, _, _, err := c.Request(context.Background(), "POST", "/group/import", content, mods...)
+	if err != nil {
+		return nil, err
+	}
+	return btes, nil
 }
 
 func (c *client) GroupList() ([]sdk.Group, error) {

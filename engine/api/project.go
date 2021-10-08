@@ -531,7 +531,7 @@ func (api *API) postProjectHandler() service.Handler {
 			}
 
 			newGroup := sdk.Group{Name: groupSlug}
-			if err := group.Create(ctx, tx, &newGroup, consumer.AuthentifiedUser.ID); err != nil {
+			if err := group.Create(ctx, tx, &newGroup, consumer.AuthentifiedUser); err != nil {
 				return err
 			}
 

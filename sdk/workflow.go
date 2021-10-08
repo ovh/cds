@@ -35,7 +35,7 @@ type Workflow struct {
 	LastModified             time.Time                    `json:"last_modified" db:"last_modified" mapstructure:"-"`
 	ProjectID                int64                        `json:"project_id,omitempty" db:"project_id" cli:"-"`
 	ProjectKey               string                       `json:"project_key" db:"-" cli:"-"`
-	Groups                   []GroupPermission            `json:"groups,omitempty" db:"-" cli:"-"`
+	Groups                   GroupPermissions             `json:"groups,omitempty" db:"-" cli:"-"`
 	Permissions              Permissions                  `json:"permissions" db:"-" cli:"-"`
 	Metadata                 Metadata                     `json:"metadata,omitempty" yaml:"metadata" db:"metadata"`
 	Usage                    *Usage                       `json:"usage,omitempty" db:"-" cli:"-"`
@@ -68,6 +68,7 @@ type Workflow struct {
 	TemplateUpToDate bool                      `json:"template_up_to_date,omitempty" db:"-" cli:"-"`
 	URLs             URL                       `json:"urls" yaml:"-" db:"-" cli:"-"`
 	Runs             []WorkflowRun             `json:"runs,omitempty" yaml:"-" db:"-" cli:"-"`
+	Organization     string                    `json:"organization,omitempty" yaml:"-" db:"-" cli:"-"`
 }
 
 func (w Workflow) Value() (driver.Value, error) {

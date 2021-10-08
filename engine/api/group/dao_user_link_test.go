@@ -4,13 +4,14 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestDAO_LinkGroupUser(t *testing.T) {
@@ -21,10 +22,9 @@ func TestDAO_LinkGroupUser(t *testing.T) {
 
 	groupName := sdk.RandomString(10)
 
-	err := group.Create(context.TODO(), db, &sdk.Group{
+	require.NoError(t, group.Create(context.TODO(), db, &sdk.Group{
 		Name: groupName,
-	}, u1.ID)
-	require.NoError(t, err)
+	}, u1))
 
 	grp, err := group.LoadByName(context.TODO(), db, groupName, group.LoadOptions.WithMembers)
 	require.NoError(t, err)
@@ -34,40 +34,48 @@ func TestDAO_LinkGroupUser(t *testing.T) {
 		GroupID:            grp.ID,
 		AuthentifiedUserID: u2.ID,
 	}
-
-	err = group.InsertLinkGroupUser(context.TODO(), db, link)
-	require.NoError(t, err)
+	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), db, link))
 
 	grp, err = group.LoadByName(context.TODO(), db, groupName, group.LoadOptions.WithMembers)
 	require.NoError(t, err)
 	assert.Len(t, grp.Members, 2)
 
-	err = group.UpdateLinkGroupUser(context.TODO(), db, link)
-	require.NoError(t, err)
+	var m1, m2 *sdk.GroupMember
+	for i := range grp.Members {
+		if grp.Members[i].ID == u1.ID {
+			m1 = &grp.Members[i]
+		}
+		if grp.Members[i].ID == u2.ID {
+			m2 = &grp.Members[i]
+		}
+	}
+	require.NotNil(t, m1)
+	require.True(t, m1.Admin)
+	require.NotNil(t, m2)
+	require.False(t, m2.Admin)
+
+	link.Admin = true
+	require.NoError(t, group.UpdateLinkGroupUser(context.TODO(), db, link))
 
 	grp, err = group.LoadByName(context.TODO(), db, groupName, group.LoadOptions.WithMembers)
 	require.NoError(t, err)
 	assert.Len(t, grp.Members, 2)
 
-	err = group.DeleteUserFromGroup(context.TODO(), db, grp.ID, u1.ID)
-	require.EqualError(t, err, "not enough group admin left")
+	m1, m2 = nil, nil
+	for i := range grp.Members {
+		if grp.Members[i].ID == u1.ID {
+			m1 = &grp.Members[i]
+		}
+		if grp.Members[i].ID == u2.ID {
+			m2 = &grp.Members[i]
+		}
+	}
+	require.NotNil(t, m1)
+	require.True(t, m1.Admin)
+	require.NotNil(t, m2)
+	require.True(t, m2.Admin)
 
-	grp, err = group.LoadByName(context.TODO(), db, groupName, group.LoadOptions.WithMembers)
+	links, err := group.LoadLinksGroupUserForUserIDs(context.TODO(), db, []string{u1.ID, u2.ID})
 	require.NoError(t, err)
-	assert.Len(t, grp.Members, 2)
-
-	err = group.DeleteUserFromGroup(context.TODO(), db, grp.ID, u2.ID)
-	require.NoError(t, err)
-
-	grp, err = group.LoadByName(context.TODO(), db, groupName, group.LoadOptions.WithMembers)
-	require.NoError(t, err)
-	assert.Len(t, grp.Members, 1)
-
-	links1, err := group.LoadLinksGroupUserForUserIDs(context.TODO(), db, []string{u1.ID})
-	require.NoError(t, err)
-	assert.Len(t, links1, 1)
-
-	links2, err := group.LoadLinksGroupUserForUserIDs(context.TODO(), db, []string{u2.ID})
-	require.NoError(t, err)
-	assert.Len(t, links2, 0)
+	assert.Len(t, links, 2)
 }

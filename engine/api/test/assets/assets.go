@@ -208,8 +208,7 @@ func InsertLambdaUser(t *testing.T, db gorpmapper.SqlExecutorWithTx, groups ...*
 	for i := range groups {
 		existingGroup, _ := group.LoadByName(context.TODO(), db, groups[i].Name)
 		if existingGroup == nil {
-			err := group.Create(context.Background(), db, groups[i], u.ID)
-			require.NoError(t, err)
+			require.NoError(t, group.Create(context.Background(), db, groups[i], u))
 		} else {
 			groups[i].ID = existingGroup.ID
 			require.NoError(t, group.InsertLinkGroupUser(context.Background(), db,

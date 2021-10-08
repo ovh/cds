@@ -8,6 +8,8 @@ import (
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/ovh/cds/sdk/exportentities"
 )
 
 var groupCmd = cli.Command{
@@ -25,6 +27,8 @@ func group() *cobra.Command {
 		cli.NewDeleteCommand(groupDeleteCmd, groupDeleteRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(groupGrantCmd, groupGrantRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(groupRevokeCmd, groupRevokeRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(groupExportCmd, groupExportRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(groupImportCmd, groupImportRun, nil, withAllCommandModifiers()...),
 		groupMember(),
 	})
 }
@@ -200,5 +204,53 @@ func groupRevokeRun(v cli.Values) error {
 		fmt.Printf("Group '%s' deleted on project '%s' with success\n", groupName, project)
 	}
 
+	return nil
+}
+
+var groupExportCmd = cli.Command{
+	Name:  "export",
+	Short: "Export a CDS group",
+	Args: []cli.Arg{
+		{
+			Name: "group-name",
+		},
+	},
+	Flags: []cli.Flag{
+		{
+			Name:    "format",
+			Usage:   "Specify export format (json or yaml)",
+			Default: "yaml",
+		},
+	},
+}
+
+func groupExportRun(v cli.Values) error {
+	buf, err := client.GroupExport(v.GetString("group-name"), cdsclient.Format(v.GetString("format")))
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(buf))
+	return nil
+}
+
+var groupImportCmd = cli.Command{
+	Name:  "import",
+	Short: "Import a group",
+	Args: []cli.Arg{
+		{Name: "path"},
+	},
+}
+
+func groupImportRun(c cli.Values) error {
+	path := c.GetString("path")
+	contentFile, format, err := exportentities.OpenPath(path)
+	if err != nil {
+		return err
+	}
+	defer contentFile.Close() //nolint
+	if _, err := client.GroupImport(contentFile, cdsclient.ContentType(format.ContentType())); err != nil {
+		return err
+	}
+	fmt.Println("Group imported.")
 	return nil
 }

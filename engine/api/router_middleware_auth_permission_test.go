@@ -882,7 +882,7 @@ func Test_checkGroupPermissions(t *testing.T) {
 				Name: tt.args.groupName,
 			}
 
-			require.NoError(t, group.Create(context.TODO(), db, &g, groupAdmin.ID))
+			require.NoError(t, group.Create(context.TODO(), db, &g, groupAdmin))
 
 			for _, adm := range tt.setup.groupAdmins {
 				adm = prefix + adm
@@ -1020,7 +1020,7 @@ func Test_checkTemplateSlugPermissions(t *testing.T) {
 				g := sdk.Group{
 					Name: tt.setup.groupName,
 				}
-				require.NoError(t, group.Create(context.TODO(), db, &g, groupAdmin.ID))
+				require.NoError(t, group.Create(context.TODO(), db, &g, groupAdmin))
 				t.Logf("group %s created", g.Name)
 
 				if tt.setup.templateSlug != "" {

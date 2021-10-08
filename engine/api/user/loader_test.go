@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/user"
@@ -36,4 +37,28 @@ func TestLoadContacts(t *testing.T) {
 	assert.Equal(t, c.Value, result.Contacts[0].Value)
 
 	assert.NoError(t, user.DeleteByID(db, result.ID))
+}
+
+func TestLoadOrganization(t *testing.T) {
+	var u = sdk.AuthentifiedUser{
+		Username: sdk.RandomString(10),
+		Fullname: sdk.RandomString(10),
+		Ring:     sdk.UserRingAdmin,
+	}
+
+	db, _ := test.SetupPG(t)
+
+	require.NoError(t, user.Insert(context.TODO(), db, &u))
+	t.Cleanup(func() {
+		require.NoError(t, user.DeleteByID(db, u.ID))
+	})
+
+	require.NoError(t, user.InsertOrganization(context.TODO(), db, &user.Organization{
+		AuthentifiedUserID: u.ID,
+		Organization:       "one",
+	}))
+
+	result, err := user.LoadByID(context.TODO(), db, u.ID, user.LoadOptions.WithOrganization)
+	require.NoError(t, err)
+	require.Equal(t, "one", result.Organization)
 }

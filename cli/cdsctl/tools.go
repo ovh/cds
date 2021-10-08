@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -72,7 +73,7 @@ func (y yamlSchemaVSCodeInstaller) Install(schemas yamlSchemaPath) error {
 }
 
 func toolsYamlSchemaRun(v cli.Values) error {
-	res, err := client.UserGetSchema()
+	res, err := client.UserGetSchema(context.Background())
 	if err != nil {
 		return err
 	}

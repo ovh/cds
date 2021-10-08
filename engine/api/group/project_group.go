@@ -69,7 +69,7 @@ func LoadGroupsIntoProject(ctx context.Context, db gorp.SqlExecutor, proj *sdk.P
 		groupIDsMap[l.GroupID] = l.Role
 	}
 
-	groups, err := LoadAllByIDs(ctx, db, groupIDs)
+	groups, err := LoadAllByIDs(ctx, db, groupIDs, LoadOptions.WithOrganization)
 	if err != nil {
 		return err
 	}
@@ -84,6 +84,11 @@ func LoadGroupsIntoProject(ctx context.Context, db gorp.SqlExecutor, proj *sdk.P
 			Permission: p,
 		}
 		proj.ProjectGroups = append(proj.ProjectGroups, perm)
+	}
+
+	proj.Organization, err = proj.ProjectGroups.ComputeOrganization()
+	if err != nil {
+		return err
 	}
 
 	return nil

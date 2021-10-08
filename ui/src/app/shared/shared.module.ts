@@ -73,6 +73,7 @@ import { SharedService } from './shared.service';
 import { StatusIconComponent } from './status/status.component';
 import { DataTableComponent, SelectorPipe, SelectPipe } from './table/data-table.component';
 import { PaginationComponent } from './table/pagination.component';
+import { TabComponent } from './tabs/tab.component';
 import { TabsComponent } from './tabs/tabs.component';
 import { ToastHTTPErrorComponent } from './toast/toast-http-error.component';
 import { ToastService } from './toast/ToastService';
@@ -183,6 +184,7 @@ import { ZoneComponent } from './zone/zone.component';
         SelectPipe,
         StatusIconComponent,
         TabsComponent,
+        TabComponent,
         ToastHTTPErrorComponent,
         TruncatePipe,
         UploadButtonComponent,

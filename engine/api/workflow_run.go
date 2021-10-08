@@ -1201,7 +1201,7 @@ func saveWorkflowRunSecrets(ctx context.Context, db *gorp.DbMap, projID int64, w
 	}
 
 	// Find Needed Project Integrations
-	ppIDs := make(map[int64]string, 0)
+	ppIDs := make(map[int64]string)
 	for _, n := range wr.Workflow.WorkflowData.Array() {
 		if n.Context == nil || n.Context.ProjectIntegrationID == 0 {
 			continue

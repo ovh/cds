@@ -55,7 +55,7 @@
             <ng-container *ngFor="let c of (columns | selector:d:i)">
                 <td *ngIf="!c.disabled && c.hidden"></td>
                 <td *ngIf="!c.disabled && !c.hidden" [ngSwitch]="c.type" class="wide" [ngClass]="c.class">
-                    <i *ngSwitchCase="'icon'" [ngClass]="c.selector"></i>
+                    <i *ngSwitchCase="'icon'" [ngClass]="c.selector.icon" [title]="c.selector.title"></i>
                     <a *ngSwitchCase="'router-link'" class="ui" [routerLink]="c.selector.link">
                         {{c.selector.value}}
                     </a>

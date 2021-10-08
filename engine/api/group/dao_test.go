@@ -22,7 +22,7 @@ func TestLoadAll(t *testing.T) {
 
 	err := group.Create(context.TODO(), db, &sdk.Group{
 		Name: groupName,
-	}, u.ID)
+	}, u)
 	require.NoError(t, err)
 	grp, err := group.LoadByName(context.TODO(), db, groupName, group.LoadOptions.WithMembers)
 	require.NoError(t, err)
@@ -43,8 +43,6 @@ func TestLoadAll(t *testing.T) {
 	grp, err = group.LoadByID(context.TODO(), db, grp.ID, group.LoadOptions.WithMembers)
 	require.NoError(t, err)
 	require.Len(t, grp.Members, 1)
-
-	require.NoError(t, group.Update(context.TODO(), db, grp))
 
 	groupNameDefault := sdk.RandomString(10)
 	require.NoError(t, group.CreateDefaultGroup(db, groupNameDefault))

@@ -4,13 +4,14 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func Test_DAO_Project_Link(t *testing.T) {
@@ -24,7 +25,7 @@ func Test_DAO_Project_Link(t *testing.T) {
 
 	err := group.Create(context.TODO(), db, &sdk.Group{
 		Name: groupName,
-	}, u.ID)
+	}, u)
 	require.NoError(t, err)
 	grp, err := group.LoadByName(context.TODO(), db, groupName, group.LoadOptions.WithMembers)
 	require.NoError(t, err)

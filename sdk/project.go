@@ -36,7 +36,7 @@ type Project struct {
 	PipelineNames    IDNames                `json:"pipeline_names,omitempty" yaml:"pipeline_names,omitempty" db:"-"  cli:"-"`
 	Applications     []Application          `json:"applications,omitempty" yaml:"applications,omitempty" db:"-"  cli:"-"`
 	ApplicationNames IDNames                `json:"application_names,omitempty" yaml:"application_names,omitempty" db:"-"  cli:"-"`
-	ProjectGroups    []GroupPermission      `json:"groups,omitempty" yaml:"permissions,omitempty" db:"-"  cli:"-"`
+	ProjectGroups    GroupPermissions       `json:"groups,omitempty" yaml:"permissions,omitempty" db:"-"  cli:"-"`
 	Variables        []ProjectVariable      `json:"variables,omitempty" yaml:"variables,omitempty" db:"-"  cli:"-"`
 	Environments     []Environment          `json:"environments,omitempty" yaml:"environments,omitempty" db:"-"  cli:"-"`
 	EnvironmentNames IDNames                `json:"environment_names,omitempty" yaml:"environment_names,omitempty" db:"-"  cli:"-"`
@@ -49,6 +49,26 @@ type Project struct {
 	Features         map[string]bool        `json:"features" yaml:"features" db:"-" cli:"-"`
 	Favorite         bool                   `json:"favorite" yaml:"favorite" db:"-" cli:"favorite"`
 	URLs             URL                    `json:"urls" yaml:"-" db:"-" cli:"-"`
+	Organization     string                 `json:"organization" yaml:"-" db:"-" cli:"-"`
+}
+
+type GroupPermissions []GroupPermission
+
+func (g GroupPermissions) ComputeOrganization() (string, error) {
+	var org string
+	for _, gp := range g {
+		if gp.Permission <= PermissionRead {
+			continue
+		}
+		if gp.Group.Organization == "" {
+			continue
+		}
+		if org != "" && gp.Group.Organization != org {
+			return "", NewErrorFrom(ErrForbidden, "group permissions organization conflict")
+		}
+		org = gp.Group.Organization
+	}
+	return org, nil
 }
 
 type Permissions struct {

@@ -179,6 +179,8 @@ type ActionClient interface {
 type GroupClient interface {
 	GroupList() ([]sdk.Group, error)
 	GroupGet(name string, mods ...RequestModifier) (*sdk.Group, error)
+	GroupExport(name string, mods ...RequestModifier) ([]byte, error)
+	GroupImport(content io.Reader, mods ...RequestModifier) ([]byte, error)
 	GroupCreate(group *sdk.Group) error
 	GroupRename(oldName, newName string) error
 	GroupDelete(name string) error
@@ -276,12 +278,13 @@ type QueueClient interface {
 
 // UserClient exposes users functions
 type UserClient interface {
-	UserList() ([]sdk.AuthentifiedUser, error)
-	UserGet(username string) (*sdk.AuthentifiedUser, error)
-	UserGetMe() (*sdk.AuthentifiedUser, error)
-	UserGetGroups(username string) (map[string][]sdk.Group, error)
-	UpdateFavorite(params sdk.FavoriteParams) (interface{}, error)
-	UserGetSchema() (sdk.SchemaResponse, error)
+	UserList(ctx context.Context) ([]sdk.AuthentifiedUser, error)
+	UserGet(ctx context.Context, username string) (*sdk.AuthentifiedUser, error)
+	UserUpdate(ctx context.Context, username string, user *sdk.AuthentifiedUser) error
+	UserGetMe(ctx context.Context) (*sdk.AuthentifiedUser, error)
+	UserGetGroups(ctx context.Context, username string) (map[string][]sdk.Group, error)
+	UpdateFavorite(ctx context.Context, params sdk.FavoriteParams) (interface{}, error)
+	UserGetSchema(ctx context.Context) (sdk.SchemaResponse, error)
 }
 
 // WorkerClient exposes workers functions

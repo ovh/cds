@@ -131,6 +131,28 @@ export class DataTableComponent<T extends WithKey> extends Table<T> implements O
         super();
     }
 
+    static filterArgsFunc(rawSearch: string, matchFunc: (search: string, entry: any) => boolean): (d: any) => boolean {
+        const rawFilter = rawSearch.toLowerCase().split(' ');
+        let filters = {};
+        let words = [];
+        rawFilter.forEach(w => {
+            const filter = w.split(':');
+            if (filter.length === 2) {
+                filters[filter[0]] = filter[1];
+            } else {
+                words.push(w);
+            }
+        });
+        const lowerFilter = words.join(' ');
+        return (e: any) => {
+            let matchAllFilter = null;
+            if (Object.keys(filters).length > 0) {
+                matchAllFilter = Object.keys(filters).map(k => !!e[k] && e[k].toLowerCase() === filters[k]).reduce((p, c) => p && c);
+            }
+            return (matchAllFilter === null || matchAllFilter) && matchFunc(lowerFilter, e);
+        };
+    }
+
     ngOnChanges() {
         this.allData = this.data;
 

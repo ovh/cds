@@ -137,16 +137,18 @@ func (api *API) postAuthSigninHandler() service.Handler {
 		hasInitToken = hasInitToken && initToken != ""
 
 		// Check if a consumer exists for consumer type and external user identifier
-		consumer, err := authentication.LoadConsumerByTypeAndUserExternalID(ctx, tx, consumerType, userInfo.ExternalID)
+		consumer, err := authentication.LoadConsumerByTypeAndUserExternalID(ctx, tx, consumerType, userInfo.ExternalID,
+			authentication.LoadConsumerOptions.WithAuthentifiedUser)
 		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return err
 		}
 
 		// If there is no existing consumer we should check if a user need to be created
 		// Then we want to create a new consumer for current type
-		if consumer == nil {
-			var u *sdk.AuthentifiedUser
-
+		var u *sdk.AuthentifiedUser
+		if consumer != nil {
+			u = consumer.AuthentifiedUser
+		} else {
 			currentConsumer := getAPIConsumer(ctx)
 			if currentConsumer != nil {
 				// If no consumer already exists for given request, but there is a current session
@@ -208,9 +210,10 @@ func (api *API) postAuthSigninHandler() service.Handler {
 						}
 
 						u = &sdk.AuthentifiedUser{
-							Ring:     sdk.UserRingUser,
-							Username: userInfo.Username,
-							Fullname: userInfo.Fullname,
+							Ring:         sdk.UserRingUser,
+							Username:     userInfo.Username,
+							Fullname:     userInfo.Fullname,
+							Organization: userInfo.Organization,
 						}
 
 						// If a magic token is given and there is no admin already registered, set new user as admin
@@ -255,6 +258,10 @@ func (api *API) postAuthSigninHandler() service.Handler {
 			if err != nil {
 				return err
 			}
+		}
+
+		if err := api.userSetOrganization(ctx, tx, u, userInfo.Organization); err != nil {
+			return err
 		}
 
 		// If a new user has been created and a first admin has been create,

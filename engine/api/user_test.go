@@ -164,6 +164,54 @@ func Test_putUserHandler(t *testing.T) {
 			},
 			ExpectedStatus: http.StatusForbidden,
 		},
+		{
+			Name:           "A lambda user can't change its organization",
+			JWT:            jwtInitialRaw,
+			TargetUsername: initialNewUsername,
+			Data: sdk.AuthentifiedUser{
+				Username:     initialNewUsername,
+				Fullname:     initialNewFullname,
+				Ring:         sdk.UserRingMaintainer,
+				Organization: "my-org",
+			},
+			Expected: sdk.AuthentifiedUser{
+				Username:     initialNewUsername,
+				Fullname:     initialNewFullname,
+				Ring:         sdk.UserRingMaintainer,
+				Organization: "",
+			},
+			ExpectedStatus: http.StatusOK,
+		},
+		{
+			Name:           "A admin user can set user organization",
+			JWT:            jwtAdmin2Raw,
+			TargetUsername: initialNewUsername,
+			Data: sdk.AuthentifiedUser{
+				Username:     initialNewUsername,
+				Fullname:     initialNewFullname,
+				Ring:         sdk.UserRingMaintainer,
+				Organization: "my-org",
+			},
+			Expected: sdk.AuthentifiedUser{
+				Username:     initialNewUsername,
+				Fullname:     initialNewFullname,
+				Ring:         sdk.UserRingMaintainer,
+				Organization: "my-org",
+			},
+			ExpectedStatus: http.StatusOK,
+		},
+		{
+			Name:           "A admin user can't change user organization",
+			JWT:            jwtAdmin2Raw,
+			TargetUsername: initialNewUsername,
+			Data: sdk.AuthentifiedUser{
+				Username:     initialNewUsername,
+				Fullname:     initialNewFullname,
+				Ring:         sdk.UserRingMaintainer,
+				Organization: "my-other-org",
+			},
+			ExpectedStatus: http.StatusForbidden,
+		},
 	}
 
 	for _, c := range cases {
@@ -187,6 +235,7 @@ func Test_putUserHandler(t *testing.T) {
 			assert.Equal(t, c.Expected.Username, modified.Username)
 			assert.Equal(t, c.Expected.Fullname, modified.Fullname)
 			assert.Equal(t, c.Expected.Ring, modified.Ring)
+			assert.Equal(t, c.Expected.Organization, modified.Organization)
 		})
 	}
 }

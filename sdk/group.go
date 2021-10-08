@@ -26,8 +26,9 @@ type Group struct {
 	ID   int64  `json:"id" yaml:"-" db:"id"`
 	Name string `json:"name" yaml:"name" cli:"name,key" db:"name"`
 	// aggregate
-	Members GroupMembers `json:"members,omitempty" yaml:"members,omitempty" db:"-"`
-	Admin   bool         `json:"admin,omitempty" yaml:"admin,omitempty" db:"-"`
+	Members      GroupMembers `json:"members,omitempty" yaml:"members,omitempty" db:"-"`
+	Admin        bool         `json:"admin,omitempty" yaml:"admin,omitempty" db:"-"`
+	Organization string       `json:"organization,omitempty" yaml:"organization,omitempty" cli:"organization" db:"-"`
 }
 
 // IsValid returns an error if given group is not valid.
@@ -73,20 +74,80 @@ func (g Groups) ToMap() map[int64]Group {
 
 type GroupMembers []GroupMember
 
-func (members GroupMembers) UserIDs() []string {
-	var usersID = make([]string, len(members))
-	for i, m := range members {
+func (m GroupMembers) IsValid() error {
+	if len(m) == 0 {
+		return NewErrorFrom(ErrInvalidData, "invalid empty group members list")
+	}
+	for i := range m {
+		if m[i].ID == "" && m[i].Username == "" {
+			return NewErrorFrom(ErrWrongRequest, "invalid given user id or username for member")
+		}
+	}
+	return nil
+}
+
+func (m GroupMembers) UserIDs() []string {
+	var usersID = make([]string, len(m))
+	for i, m := range m {
 		usersID[i] = m.ID
 	}
 	return usersID
 }
 
+func (m GroupMembers) ComputeOrganization() (string, error) {
+	var org string
+	for i := range m {
+		if m[i].Organization == "" {
+			continue
+		}
+		if org != "" && m[i].Organization != org {
+			return "", NewErrorFrom(ErrInvalidData, "group members organization conflict %q and %q", org, m[i].Organization)
+		}
+		org = m[i].Organization
+	}
+	return org, nil
+}
+
+func (m GroupMembers) CheckAdminExists() error {
+	var adminFound bool
+	for i := range m {
+		if m[i].Admin {
+			adminFound = true
+			break
+		}
+	}
+	if !adminFound {
+		return NewErrorFrom(ErrInvalidData, "invalid given group members, at least one admin required")
+	}
+	return nil
+}
+
+func (m GroupMembers) DiffUserIDs(o GroupMembers) []string {
+	mIDs := m.UserIDs()
+	oIDs := o.UserIDs()
+	var diff []string
+	for i := range mIDs {
+		var found bool
+		for j := range oIDs {
+			if mIDs[i] == oIDs[j] {
+				found = true
+				break
+			}
+		}
+		if !found {
+			diff = append(diff, mIDs[i])
+		}
+	}
+	return diff
+}
+
 // GroupMember struct.
 type GroupMember struct {
-	ID       string `json:"id" yaml:"id" cli:"id,key"`
-	Username string `json:"username" yaml:"username" cli:"username"`
-	Fullname string `json:"fullname" yaml:"fullname,omitempty" cli:"fullname"`
-	Admin    bool   `json:"admin,omitempty" yaml:"admin,omitempty" cli:"admin"`
+	ID           string `json:"id" yaml:"id" cli:"id,key"`
+	Username     string `json:"username" yaml:"username" cli:"username"`
+	Fullname     string `json:"fullname" yaml:"fullname,omitempty" cli:"fullname"`
+	Admin        bool   `json:"admin,omitempty" yaml:"admin,omitempty" cli:"admin"`
+	Organization string `json:"organization,omitempty" yaml:"organization,omitempty" cli:"organization"`
 }
 
 // GroupPermission represent a group and his role in the project

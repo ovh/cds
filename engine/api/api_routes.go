@@ -112,7 +112,9 @@ func (api *API) InitRouter() {
 
 	// Group
 	r.Handle("/group", Scope(sdk.AuthConsumerScopeGroup), r.GET(api.getGroupsHandler), r.POST(api.postGroupHandler))
+	r.Handle("/group/import", Scope(sdk.AuthConsumerScopeGroup), r.POST(api.postGroupImportHandler))
 	r.Handle("/group/{permGroupName}", Scope(sdk.AuthConsumerScopeGroup), r.GET(api.getGroupHandler), r.PUT(api.putGroupHandler), r.DELETE(api.deleteGroupHandler))
+	r.Handle("/group/{permGroupName}/export", Scope(sdk.AuthConsumerScopeGroup), r.GET(api.getGroupExportHandler))
 	r.Handle("/group/{permGroupName}/user", Scope(sdk.AuthConsumerScopeGroup), r.POST(api.postGroupUserHandler))
 	r.Handle("/group/{permGroupName}/user/{username}", Scope(sdk.AuthConsumerScopeGroup), r.PUT(api.putGroupUserHandler), r.DELETE(api.deleteGroupUserHandler))
 	r.Handle("/group/{permGroupName}/project", Scope(sdk.AuthConsumerScopeGroup), r.GET(api.getProjectGroupHandler))

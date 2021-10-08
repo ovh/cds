@@ -13,6 +13,7 @@ import (
 
 	"github.com/fsamin/go-shredder"
 	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
 )
@@ -20,7 +21,6 @@ import (
 func init() {
 	gorpmapping.Register(gorpmapping.New(dbEncryptedData{}, "encrypted_data", false, "project_id", "content_name"))
 	gorpmapping.Register(gorpmapping.New(sdk.Secret{}, "encrypted_data", false, "project_id", "content_name"))
-
 }
 
 type dbEncryptedData struct {

@@ -11,7 +11,12 @@
                                 <div class="field">
                                     <label>{{'group_name' | translate}}</label>
                                     <input class="ui input" type="text" name="name" [(ngModel)]="group.name"
-                                           [disabled]="loading">
+                                        [disabled]="loading">
+                                </div>
+                                <div *ngIf="group.organization" class="field">
+                                    <label>Organization</label>
+                                    <input class="ui input" type="text" name="organization"
+                                        [ngModel]="group.organization" readonly>
                                 </div>
                             </div>
                         </div>
@@ -19,14 +24,14 @@
                             <div class="right floated column">
                                 <ng-container *ngIf="currentAuthSummary.isAdmin() || currentUserIsAdminOnGroup">
                                     <button class="ui green right floated button" *ngIf="group.id"
-                                            [class.loading]="loading" (click)="saveGroup()">
+                                        [class.loading]="loading" (click)="saveGroup()">
                                         <i class="save icon"></i>{{ 'btn_save' | translate }}
                                     </button>
                                     <app-delete-button *ngIf="group.id" class="right floated" (event)="clickDelete()"
-                                                       [loading]="deleteLoading"></app-delete-button>
+                                        [loading]="deleteLoading"></app-delete-button>
                                 </ng-container>
                                 <button *ngIf="!group.id" class="ui green right floated button"
-                                        [class.loading]="loading" (click)="saveGroup()">
+                                    [class.loading]="loading" (click)="saveGroup()">
                                     <i class="plus icon"></i>{{ 'btn_add' | translate }}
                                 </button>
                             </div>
@@ -37,18 +42,18 @@
                                     <div class="field">
                                         <label>{{ 'group_members' | translate }}</label>
                                         <sm-select *ngIf="currentAuthSummary.isAdmin() || currentUserIsAdminOnGroup"
-                                                   class="search" [options]="{'fullTextSearch': true}"
-                                                   [disabled]="loading"
-                                                   [(model)]="addUserUsername">
+                                            class="search" [options]="{'fullTextSearch': true}" [disabled]="loading"
+                                            [(model)]="addUserUsername">
                                             <option *ngFor="let user of users" [value]="user.username">
-                                                {{user.fullname}} -
-                                                {{user.username}}</option>
+                                                {{user.fullname}} - {{user.username}} {{user.organization ?
+                                                '(' + user.organization + ')' : ''}}
+                                            </option>
                                         </sm-select>
                                     </div>
                                     <div class="buttons"
-                                         *ngIf="currentAuthSummary.isAdmin() || currentUserIsAdminOnGroup">
+                                        *ngIf="currentAuthSummary.isAdmin() || currentUserIsAdminOnGroup">
                                         <button class="ui green button" [class.loading]="loading"
-                                                (click)="clickAddMember()">
+                                            (click)="clickAddMember()">
                                             <i class="add icon"></i>{{ 'btn_add' | translate }}
                                         </button>
                                     </div>
@@ -60,41 +65,41 @@
 
                                 <table class="ui fixed celled table" *ngIf="group.members && group.members?.length > 0">
                                     <thead>
-                                    <tr>
-                                        <th class="five wide">{{ 'user_label_username' | translate }}</th>
-                                        <th class="five wide">{{ 'user_label_fullname' | translate }}</th>
-                                        <th class="six wide"></th>
-                                    </tr>
+                                        <tr>
+                                            <th class="five wide">{{ 'user_label_username' | translate }}</th>
+                                            <th class="five wide">{{ 'user_label_fullname' | translate }}</th>
+                                            <th class="six wide"></th>
+                                        </tr>
                                     </thead>
                                     <tbody>
-                                    <tr *ngFor="let v of group.members">
-                                        <td>
-                                            <i class="fa fa-user-circle-o" *ngIf="v.admin"
-                                               title="{{ 'group_user_is_admin' | translate }}"></i>
-                                            {{v?.username}}
-                                        </td>
-                                        <td>
-                                            {{v?.fullname}}
-                                        </td>
-                                        <td>
-                                            <ng-container
+                                        <tr *ngFor="let v of group.members">
+                                            <td>
+                                                <i class="fa fa-user-circle-o" *ngIf="v.admin"
+                                                    title="{{ 'group_user_is_admin' | translate }}"></i>
+                                                {{v?.username}}
+                                            </td>
+                                            <td>
+                                                {{v?.fullname}}
+                                            </td>
+                                            <td>
+                                                <ng-container
                                                     *ngIf="currentAuthSummary.isAdmin() || currentUserIsAdminOnGroup">
-                                                <app-delete-button *ngIf="v?.username" class="ui right floated"
-                                                                   (event)="clickRemoveMember(v.username)"
-                                                                   [loading]="deleteLoading"></app-delete-button>
-                                                <button *ngIf="!v.admin" class="ui right floated button"
+                                                    <app-delete-button *ngIf="v?.username" class="ui right floated"
+                                                        (event)="clickRemoveMember(v.username)"
+                                                        [loading]="deleteLoading"></app-delete-button>
+                                                    <button *ngIf="!v.admin" class="ui right floated button"
                                                         [class.loading]="loading" (click)="clickSetAdmin(v.username)">
-                                                    <i class="add icon"></i>
-                                                    {{ 'group_btn_set_admin' | translate }}
-                                                </button>
-                                                <button *ngIf="v.admin" class="ui right floated button"
+                                                        <i class="add icon"></i>
+                                                        {{ 'group_btn_set_admin' | translate }}
+                                                    </button>
+                                                    <button *ngIf="v.admin" class="ui right floated button"
                                                         [class.loading]="loading" (click)="clickUnsetAdmin(v.username)">
-                                                    <i class="minus icon"></i>
-                                                    {{ 'group_btn_unset_admin' | translate }}
-                                                </button>
-                                            </ng-container>
-                                        </td>
-                                    </tr>
+                                                        <i class="minus icon"></i>
+                                                        {{ 'group_btn_unset_admin' | translate }}
+                                                    </button>
+                                                </ng-container>
+                                            </td>
+                                        </tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -107,20 +112,21 @@
                                     <ng-container *ngIf="projects && projects.length > 0">
                                         <table class="ui fixed celled table">
                                             <thead>
-                                            <tr>
-                                                <th class="five wide">Project key</th>
-                                                <th class="five wide">Project name</th>
-                                            </tr>
+                                                <tr>
+                                                    <th class="five wide">Project key</th>
+                                                    <th class="five wide">Project name</th>
+                                                </tr>
                                             </thead>
                                             <tbody>
-                                            <tr *ngFor="let p of projects">
-                                                <td>
-                                                    <a [routerLink]="['/project', p.key]" [queryParams]="{tab: 'permissions'}">
-                                                        {{p.key}}
-                                                    </a>
-                                                </td>
-                                                <td>{{p.name}}</td>
-                                            </tr>
+                                                <tr *ngFor="let p of projects">
+                                                    <td>
+                                                        <a [routerLink]="['/project', p.key]"
+                                                            [queryParams]="{tab: 'permissions'}">
+                                                            {{p.key}}
+                                                        </a>
+                                                    </td>
+                                                    <td>{{p.name}}</td>
+                                                </tr>
                                             </tbody>
                                         </table>
                                     </ng-container>

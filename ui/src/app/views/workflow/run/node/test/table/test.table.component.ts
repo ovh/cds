@@ -66,14 +66,16 @@ export class WorkflowRunTestTableComponent implements OnInit {
             <Column<TestCase>>{
                 type: ColumnType.ICON,
                 class: 'one',
-                selector: (tc: TestCase) => {
-                    if (tc.status === 'success') {
-                        return ['green', 'check', 'icon'];
-                    } else if (tc.status === 'failed') {
-                        return ['red', 'remove', 'circle', 'icon'];
-                    }
-                    return ['grey', 'ban', 'icon'];
-                }
+                selector: (tc: TestCase) => ({
+                    icon: (() => {
+                        if (tc.status === 'success') {
+                            return ['green', 'check', 'icon'];
+                        } else if (tc.status === 'failed') {
+                            return ['red', 'remove', 'circle', 'icon'];
+                        }
+                        return ['grey', 'ban', 'icon'];
+                    })()
+                })
             },
             <Column<TestCase>>{
                 class: 'ten',
@@ -84,10 +86,10 @@ export class WorkflowRunTestTableComponent implements OnInit {
                 name: '',
                 class: 'two right aligned',
                 selector: (tc: TestCase, index?: number) => ({
-                        icon: 'eye',
-                        class: 'icon small',
-                        click: () => this.clickTestCase(tc, index)
-                    }),
+                    icon: 'eye',
+                    class: 'icon small',
+                    click: () => this.clickTestCase(tc, index)
+                })
             },
         ];
     }
@@ -159,7 +161,7 @@ export class WorkflowRunTestTableComponent implements OnInit {
     }
 
     clickTestCase(tc: TestCase, index: number): void {
-        if (this.testCaseSelected && this.testCaseSelected.fullname === tc.fullname  && this.filterIndex === index) {
+        if (this.testCaseSelected && this.testCaseSelected.fullname === tc.fullname && this.filterIndex === index) {
             this.testCaseSelected = undefined;
             this.filterInput = this.beforeClickFilter;
             delete this.beforeClickFilter;

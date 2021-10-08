@@ -41,7 +41,6 @@ func (m *Mapper) Insert(db gorp.SqlExecutor, i interface{}) error {
 			err = sdk.NewError(sdk.ErrInvalidData, e)
 		}
 	}
-
 	if err != nil {
 		return sdk.WithStack(err)
 	}

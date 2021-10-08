@@ -8,7 +8,7 @@
                 [class.disabled]="!project.permissions.writable">{{ 'environment_create' | translate }}</a>
         </div>
         <div class="right aligned six wide column">
-            <app-input-autofocus [(model)]="filter"></app-input-autofocus>
+            <app-input-autofocus [model]="filter" (modelChange)="filterChanged($event)"></app-input-autofocus>
         </div>
     </div>
 
@@ -39,4 +39,3 @@
     </div>
 </div>
 <div class="ui text active loader" *ngIf="loading">{{'common_loading' | translate}}</div>
-

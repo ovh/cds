@@ -125,7 +125,6 @@ func loadVariablesWithClearPassword(ctx context.Context, db gorp.SqlExecutor, pr
 	}
 	proj.Variables = vars
 	return nil
-
 }
 
 func loadApplicationVariables(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project) error {

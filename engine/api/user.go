@@ -20,7 +20,7 @@ import (
 // GetUsers fetches all users from databases
 func (api *API) getUsersHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		users, err := user.LoadAll(ctx, api.mustDB())
+		users, err := user.LoadAll(ctx, api.mustDB(), user.LoadOptions.WithOrganization)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load user from db")
 		}
@@ -39,9 +39,9 @@ func (api *API) getUserHandler() service.Handler {
 		var u *sdk.AuthentifiedUser
 		var err error
 		if username == "me" {
-			u, err = user.LoadByID(ctx, api.mustDB(), consumer.AuthentifiedUserID)
+			u, err = user.LoadByID(ctx, api.mustDB(), consumer.AuthentifiedUserID, user.LoadOptions.WithOrganization)
 		} else {
-			u, err = user.LoadByUsername(ctx, api.mustDB(), username)
+			u, err = user.LoadByUsername(ctx, api.mustDB(), username, user.LoadOptions.WithOrganization)
 		}
 		if err != nil {
 			return err
@@ -127,12 +127,63 @@ func (api *API) putUserHandler() service.Handler {
 			return sdk.WrapError(err, "cannot update user")
 		}
 
+		if isAdmin(ctx) && data.Organization != "" && oldUser.Organization != data.Organization {
+			trackSudo(ctx, w)
+			if err := api.userSetOrganization(ctx, tx, &newUser, data.Organization); err != nil {
+				return err
+			}
+		}
+
 		if err := tx.Commit(); err != nil {
 			return sdk.WithStack(err)
 		}
 
+		if err := user.LoadOptions.WithOrganization(ctx, api.mustDBWithCtx(ctx), &newUser); err != nil {
+			return err
+		}
+
 		return service.WriteJSON(w, newUser, http.StatusOK)
 	}
+}
+
+func (api *API) userSetOrganization(ctx context.Context, db gorpmapper.SqlExecutorWithTx, u *sdk.AuthentifiedUser, org string) error {
+	if org == "" {
+		return nil
+	}
+	isAllowed := len(api.Config.Auth.AllowedOrganizations) == 0 || api.Config.Auth.AllowedOrganizations.Contains(org)
+	if !isAllowed {
+		return sdk.NewErrorFrom(sdk.ErrForbidden, "user organization %q is not allowed", org)
+	}
+
+	if err := user.LoadOptions.WithOrganization(ctx, db, u); err != nil {
+		return err
+	}
+	if u.Organization != "" {
+		if u.Organization == org {
+			return nil
+		}
+		return sdk.NewErrorFrom(sdk.ErrForbidden, "cannot change user organization to %q, value already set to %q", org, u.Organization)
+	}
+
+	u.Organization = org
+	if err := user.InsertOrganization(ctx, db, &user.Organization{
+		AuthentifiedUserID: u.ID,
+		Organization:       org,
+	}); err != nil {
+		return err
+	}
+
+	gs, err := group.LoadAllByUserID(ctx, db, u.ID)
+	if err != nil {
+		return err
+	}
+	for i := range gs {
+		if err := group.EnsureOrganization(ctx, db, &gs[i]); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // DeleteUserHandler removes a user.
@@ -167,6 +218,38 @@ func (api *API) deleteUserHandler() service.Handler {
 			}
 			if count < 2 {
 				return sdk.NewErrorFrom(sdk.ErrForbidden, "can't remove the last admin")
+			}
+		}
+
+		// We can't delete a user if it's the last admin in a group
+		var adminGroupIDs []int64
+		gus, err := group.LoadLinksGroupUserForUserIDs(ctx, tx, []string{u.ID})
+		if err != nil {
+			return err
+		}
+		for i := range gus {
+			if gus[i].Admin {
+				adminGroupIDs = append(adminGroupIDs, gus[i].ID)
+			}
+		}
+		if len(adminGroupIDs) > 0 {
+			gus, err := group.LoadLinksGroupUserForGroupIDs(ctx, tx, adminGroupIDs)
+			if err != nil {
+				return err
+			}
+			adminLeftCount := make(map[int64]int)
+			for _, id := range adminGroupIDs {
+				adminLeftCount[id] = 0
+			}
+			for i := range gus {
+				if gus[i].AuthentifiedUserID != u.ID && gus[i].Admin {
+					adminLeftCount[gus[i].GroupID] += 1
+				}
+			}
+			for _, count := range adminLeftCount {
+				if count < 1 {
+					return sdk.NewErrorFrom(sdk.ErrForbidden, "cannot remove user because it is the last admin of a group")
+				}
 			}
 		}
 

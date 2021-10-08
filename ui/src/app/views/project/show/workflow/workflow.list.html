@@ -19,7 +19,8 @@
             </div>
         </div>
         <div class="four wide column centered">
-          <a class="ui blue button" [routerLink]="['./workflow']" [class.disabled]="!project.permissions.writable">{{ 'workflow_create_btn' | translate }}</a>
+            <a class="ui blue button" [routerLink]="['./workflow']" [class.disabled]="!project.permissions.writable">{{
+                'workflow_create_btn' | translate }}</a>
         </div>
         <div class="right aligned six wide column">
             <app-input-autofocus [(model)]="filter"></app-input-autofocus>
@@ -30,26 +31,18 @@
             <ng-container *ngIf="project && project.workflow_names && project.workflow_names.length > 0">
                 <ng-container [ngSwitch]="viewMode">
                     <ng-container *ngSwitchCase="'blocs'">
-                        <app-project-workflows-blocs
-                            [project]="project"
-                            [workflows]="filteredWorkflows"
+                        <app-project-workflows-blocs [project]="project" [workflows]="filteredWorkflows"
                             (edit)="editLabels()">
                         </app-project-workflows-blocs>
                     </ng-container>
                     <ng-container *ngSwitchCase="'labels'">
-                        <app-project-workflows-labels
-                            [project]="project"
-                            [labels]="project.labels"
-                            [workflows]="filteredWorkflows"
-                            (edit)="editLabels()">
+                        <app-project-workflows-labels [project]="project" [labels]="project.labels"
+                            [workflows]="filteredWorkflows" (edit)="editLabels()">
                         </app-project-workflows-labels>
                     </ng-container>
                     <ng-container *ngSwitchCase="'lines'">
-                        <app-project-workflows-lines
-                            [project]="project"
-                            [labels]="project.labels"
-                            [workflows]="filteredWorkflows"
-                            (edit)="editLabels()">
+                        <app-project-workflows-lines [project]="project" [labels]="project.labels"
+                            [workflows]="filteredWorkflows" (edit)="editLabels()">
                         </app-project-workflows-lines>
                     </ng-container>
                 </ng-container>
@@ -62,7 +55,6 @@
 </div>
 <div class="ui text active loader" *ngIf="loading">{{'common_loading' | translate}}</div>
 <ng-container *ngIf="project">
-    <app-labels-edit
-        [project]="project" #projectLabels>
+    <app-labels-edit [project]="project" #projectLabels>
     </app-labels-edit>
 </ng-container>

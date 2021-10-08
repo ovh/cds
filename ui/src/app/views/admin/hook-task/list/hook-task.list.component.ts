@@ -22,7 +22,7 @@ export class HookTaskListComponent {
     constructor(
         private _hookService: HookService,
         private _cd: ChangeDetectorRef
-        ) {
+    ) {
         this.filter = f => {
             const lowerFilter = f.toLowerCase();
             return d => {
@@ -41,15 +41,17 @@ export class HookTaskListComponent {
         this.columns = [
             <Column<WorkflowHookTask>>{
                 type: ColumnType.ICON,
-                selector: (d: WorkflowHookTask) => d.stopped ? ['stop', 'red', 'icon'] : ['play', 'green', 'icon']
+                selector: (d: WorkflowHookTask) => ({
+                    icon: d.stopped ? ['stop', 'red', 'icon'] : ['play', 'green', 'icon']
+                })
             },
             <Column<WorkflowHookTask>>{
                 type: ColumnType.ROUTER_LINK,
                 name: 'UUID',
                 selector: (d: WorkflowHookTask) => ({
-                        link: '/admin/hooks-tasks/' + d.uuid,
-                        value: d.uuid
-                    })
+                    link: '/admin/hooks-tasks/' + d.uuid,
+                    value: d.uuid
+                })
             },
             <Column<WorkflowHookTask>>{
                 name: 'common_type',

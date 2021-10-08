@@ -22,16 +22,21 @@
                                         <input class="ui input" type="text" name="fullname" [(ngModel)]="user.fullname"
                                             [disabled]="loading" [readonly]="!editable">
                                     </div>
+                                    <div *ngIf="user.organization" class="field">
+                                        <label>Organization</label>
+                                        <input class="ui input" type="text" name="organization"
+                                            [ngModel]="user.organization" readonly>
+                                    </div>
                                     <div class="field">
                                         <label for="admin">{{'user_label_ring' | translate}}</label>
-                                        <sm-select *ngIf="currentAuthSummary.isAdmin()" class="fluid search" name="admin"
-                                            [disabled]="loading" [(model)]="user.ring">
+                                        <sm-select *ngIf="currentAuthSummary.isAdmin()" class="fluid search"
+                                            name="admin" [disabled]="loading" [(model)]="user.ring">
                                             <option [value]="'USER'">USER</option>
                                             <option [value]="'MAINTAINER'">MAINTAINER</option>
                                             <option [value]="'ADMIN'">ADMIN</option>
                                         </sm-select>
-                                        <input *ngIf="!currentAuthSummary.isAdmin()" class="ui input" type="text" name="admin"
-                                            [ngModel]="user.ring" [readonly]="true">
+                                        <input *ngIf="!currentAuthSummary.isAdmin()" class="ui input" type="text"
+                                            name="admin" [ngModel]="user.ring" [readonly]="true">
                                     </div>
                                     <div class="field inline" *ngIf="editable">
                                         <app-delete-button class="left floated" (event)="clickDelete()"
@@ -136,15 +141,20 @@
                                     <ng-container *ngIf="mConsumers[d.type]" [ngSwitch]="d.type">
                                         <ng-container *ngSwitchCase="'local'">
                                             <button class="ui primary button small"
-                                                (click)="clickConsumerDetails(mConsumers[d.type])">{{'common_details' | translate}}</button>
-                                            <button *ngIf="user.id === currentAuthSummary.user.id" class="ui green button small"
-                                                (click)="clickConsumerLocalReset()">{{'account_password_btn_reset' | translate}}</button>
+                                                (click)="clickConsumerDetails(mConsumers[d.type])">{{'common_details' |
+                                                translate}}</button>
+                                            <button *ngIf="user.id === currentAuthSummary.user.id"
+                                                class="ui green button small"
+                                                (click)="clickConsumerLocalReset()">{{'account_password_btn_reset' |
+                                                translate}}</button>
                                         </ng-container>
                                         <ng-container *ngSwitchDefault>
                                             <button class="ui primary button small"
-                                                (click)="clickConsumerDetails(mConsumers[d.type])">{{'common_details' | translate}}</button>
-                                            <app-confirm-button *ngIf="user.id === currentAuthSummary.user.id" [class]="'small'"
-                                                [color]="'red'" (event)="clickConsumerDetach(mConsumers[d.type])"
+                                                (click)="clickConsumerDetails(mConsumers[d.type])">{{'common_details' |
+                                                translate}}</button>
+                                            <app-confirm-button *ngIf="user.id === currentAuthSummary.user.id"
+                                                [class]="'small'" [color]="'red'"
+                                                (event)="clickConsumerDetach(mConsumers[d.type])"
                                                 [title]="'user_auth_consumer_detach_btn'">
                                             </app-confirm-button>
                                         </ng-container>
@@ -152,11 +162,13 @@
                                     <ng-container *ngIf="!mConsumers[d.type]" [ngSwitch]="d.type">
                                         <ng-container *ngSwitchCase="'local'">
                                             <button class="ui green button small" [class.loading]="loadingLocalReset"
-                                                (click)="clickConsumerLocalReset()">{{'account_password_btn_reset' | translate}}</button>
+                                                (click)="clickConsumerLocalReset()">{{'account_password_btn_reset' |
+                                                translate}}</button>
                                         </ng-container>
                                         <ng-container *ngSwitchCase="'ldap'">
                                             <button class="ui green button small"
-                                                (click)="clickConsumerLDAPSignin()">{{(showLDAPSigninForm ? 'account_btn_submit' : 'account_btn_signin') | translate}}</button>
+                                                (click)="clickConsumerLDAPSignin()">{{(showLDAPSigninForm ?
+                                                'account_btn_submit' : 'account_btn_signin') | translate}}</button>
                                         </ng-container>
                                         <ng-container *ngSwitchDefault>
                                             <a class="ui green button small" [routerLink]="'/auth/ask-signin/'+d.type"

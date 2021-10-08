@@ -261,6 +261,7 @@ type AuthDriverUserInfo struct {
 	Email           string
 	MFA             bool
 	ExternalTokenID string
+	Organization    string
 }
 
 // AuthCurrentConsumerResponse describe the current consumer and the current session

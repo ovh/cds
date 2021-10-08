@@ -37,6 +37,7 @@ export class Project {
   externalChange: boolean;
   loading: boolean;
   mute: boolean;
+  organization: string;
 }
 
 export class LoadOpts {

@@ -8,6 +8,7 @@ export class Group implements WithKey {
     name: string;
     members: Array<User>;
     admin: boolean;
+    organization: string;
 
     constructor() {
         this.name = '';

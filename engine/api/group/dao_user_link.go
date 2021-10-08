@@ -97,3 +97,21 @@ func UpdateLinkGroupUser(ctx context.Context, db gorpmapper.SqlExecutorWithTx, l
 func DeleteLinkGroupUser(db gorp.SqlExecutor, l *LinkGroupUser) error {
 	return sdk.WrapError(gorpmapping.Delete(db, l), "unable to delete link between group and user with id: %d", l.ID)
 }
+
+// DeleteAllLinksGroupUser removes all links group-user into database for given group.
+func DeleteLinkGroupUserForGroupIDAndUserID(db gorp.SqlExecutor, groupID int64, userID string) error {
+	query := `DELETE FROM group_authentified_user WHERE group_id = $1 AND authentified_user_id = $2`
+	if _, err := db.Exec(query, groupID, userID); err != nil {
+		return sdk.WrapError(err, "unable to delete link between group and user for group %d and user id %s", groupID, userID)
+	}
+	return nil
+}
+
+// DeleteAllLinksGroupUser removes all links group-user into database for given group.
+func DeleteAllLinksGroupUserForGroupID(db gorp.SqlExecutor, groupID int64) error {
+	query := `DELETE FROM group_authentified_user WHERE group_id = $1`
+	if _, err := db.Exec(query, groupID); err != nil {
+		return sdk.WrapError(err, "unable to delete links between group and user for group with id: %d", groupID)
+	}
+	return nil
+}

@@ -46,8 +46,7 @@ type Config struct {
 			SigningKeyClaim string `json:"signing_key_claim"`
 		} `json:"key_signing_key,omitempty"`
 	} `json:"token"`
-	MailDomain        string `json:"mail_domain"`
-	MFASupportEnabled bool   `json:"mfa_support"`
+	MFASupportEnabled bool `json:"mfa_support"`
 }
 
 func NewDriver(cfg Config) sdk.AuthDriver {
@@ -211,7 +210,7 @@ func (d authDriver) GetUserInfo(ctx context.Context, req sdk.AuthConsumerSigninR
 		return u, sdk.NewError(sdk.ErrUnauthorized, err)
 	}
 
-	var itk issuedToken
+	var itk IssuedToken
 	if err := sdk.JSONUnmarshal(rawIssuedToken, &itk); err != nil {
 		return u, sdk.NewError(sdk.ErrUnauthorized, err)
 	}
@@ -229,17 +228,21 @@ func (d authDriver) GetUserInfo(ctx context.Context, req sdk.AuthConsumerSigninR
 	}
 	u.ExternalID = itk.RemoteUser
 	u.MFA = itk.MFA && d.Config.MFASupportEnabled
-	u.Email = itk.RemoteUser + "@" + d.Config.MailDomain
+	u.Email = itk.RemoteEmail
 	u.ExternalTokenID = itk.TokenID
+	u.Organization = itk.Organization
 
 	return u, nil
 }
 
-type issuedToken struct {
-	Audience       string `json:"Audience"`
-	RemoteUser     string `json:"RemoteUser"`
-	RemoteUsername string `json:"RemoteUsername"`
-	TokenID        string `json:"TokenId"`
-	MFA            bool   `json:"MFA"`
-	IAT            int64  `json:"iat"`
+type IssuedToken struct {
+	Audience       string   `json:"Audience"`
+	RemoteUser     string   `json:"RemoteUser"`
+	RemoteUsername string   `json:"RemoteUsername"`
+	RemoteEmail    string   `json:"RemoteEmail"`
+	TokenID        string   `json:"TokenId"`
+	MFA            bool     `json:"MFA"`
+	IAT            int64    `json:"iat"`
+	Organization   string   `json:"Organization"`
+	Groups         []string `json:"Groups,omitempty"`
 }

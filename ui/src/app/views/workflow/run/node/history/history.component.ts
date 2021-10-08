@@ -40,21 +40,23 @@ export class WorkflowNodeRunHistoryComponent implements OnInit {
             <Column<WorkflowNodeRun>>{
                 type: ColumnType.ICON,
                 name: 'common_status',
-                selector: (nodeRun: WorkflowNodeRun) => {
-                    if (nodeRun.status === PipelineStatus.FAIL || nodeRun.status === PipelineStatus.STOPPED) {
-                        return ['remove', 'red', 'icon'];
-                    }
-                    if (nodeRun.status === PipelineStatus.SUCCESS) {
-                        return ['check', 'green', 'icon'];
-                    }
-                    if (nodeRun.status === PipelineStatus.WAITING || nodeRun.status === PipelineStatus.BUILDING) {
-                        return ['wait', 'blue', 'icon'];
-                    }
-                    if (PipelineStatus.neverRun(nodeRun.status)) {
-                        return ['ban', 'grey', 'icon'];
-                    }
-                    return ['stop', 'grey', 'icon'];
-                }
+                selector: (nodeRun: WorkflowNodeRun) => ({
+                    icon: (() => {
+                        if (nodeRun.status === PipelineStatus.FAIL || nodeRun.status === PipelineStatus.STOPPED) {
+                            return ['remove', 'red', 'icon'];
+                        }
+                        if (nodeRun.status === PipelineStatus.SUCCESS) {
+                            return ['check', 'green', 'icon'];
+                        }
+                        if (nodeRun.status === PipelineStatus.WAITING || nodeRun.status === PipelineStatus.BUILDING) {
+                            return ['wait', 'blue', 'icon'];
+                        }
+                        if (PipelineStatus.neverRun(nodeRun.status)) {
+                            return ['ban', 'grey', 'icon'];
+                        }
+                        return ['stop', 'grey', 'icon'];
+                    })()
+                })
             },
             <Column<WorkflowNodeRun>>{
                 type: ColumnType.TEXT,
