@@ -21,7 +21,7 @@ var (
 )
 
 // CreateBuiltinModels creates integrations models
-func CreateBuiltinModels(db *gorp.DbMap) error {
+func CreateBuiltinModels(ctx context.Context, db *gorp.DbMap) error {
 	tx, err := db.Begin()
 	if err != nil {
 		return sdk.WrapError(err, "Unable to start transaction")
@@ -40,21 +40,21 @@ func CreateBuiltinModels(db *gorp.DbMap) error {
 		}
 
 		if !ok {
-			log.Debug(context.Background(), "CreateBuiltinModels> inserting integration config: %s", p.Name)
+			log.Debug(ctx, "CreateBuiltinModels> inserting integration config: %s", p.Name)
 			if err := InsertModel(tx, p); err != nil {
 				return sdk.WrapError(err, "error on insert")
 			}
 		} else {
-			log.Debug(context.Background(), "CreateBuiltinModels> updating integration config: %s", p.Name)
-			oldM, err := LoadModelByName(tx, p.Name)
+			log.Debug(ctx, "CreateBuiltinModels> updating integration config: %s", p.Name)
+			oldM, err := LoadModelByName(ctx, tx, p.Name)
 			if err != nil {
 				return sdk.WrapError(err, "error on load")
 			}
 			p.ID = oldM.ID
-			if err := UpdateModel(tx, p); err != nil {
+			if err := UpdateModel(ctx, tx, p); err != nil {
 				return sdk.WrapError(err, "error on update")
 			}
 		}
 	}
-	return tx.Commit()
+	return sdk.WithStack(tx.Commit())
 }

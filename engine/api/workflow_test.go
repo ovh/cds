@@ -1425,7 +1425,7 @@ func TestBenchmarkGetWorkflowsWithoutAPIAsAdmin(t *testing.T) {
 	res := testing.Benchmark(func(b *testing.B) {
 		b.ResetTimer()
 		for n := 0; n < b.N; n++ {
-			if _, err := workflow.LoadAll(db, prj.Key); err != nil {
+			if _, err := workflow.LoadAll(context.TODO(), db, prj.Key); err != nil {
 				b.Logf("Cannot load workflows : %v", err)
 				b.Fail()
 				return

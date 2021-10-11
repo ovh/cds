@@ -1,9 +1,11 @@
 package project
 
 import (
+	"context"
 	"database/sql"
 
 	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
@@ -14,7 +16,7 @@ import (
 )
 
 // LoadOptionFunc is used as options to loadProject functions
-type LoadOptionFunc func(gorp.SqlExecutor, *sdk.Project) error
+type LoadOptionFunc func(context.Context, gorp.SqlExecutor, *sdk.Project) error
 
 // LoadOptions provides all options on project loads functions
 var LoadOptions = struct {
@@ -66,24 +68,24 @@ var LoadOptions = struct {
 	WithLabels:                              loadLabels,
 }
 
-func loadDefault(db gorp.SqlExecutor, proj *sdk.Project) error {
-	if err := loadVariables(db, proj); err != nil {
+func loadDefault(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project) error {
+	if err := loadVariables(ctx, db, proj); err != nil {
 		return sdk.WithStack(err)
 	}
-	if err := loadApplications(db, proj); err != nil {
-		return sdk.WithStack(err)
-	}
-	return nil
-}
-
-func loadApplications(db gorp.SqlExecutor, proj *sdk.Project) error {
-	if err := loadApplicationsWithOpts(db, proj); err != nil {
+	if err := loadApplications(ctx, db, proj); err != nil {
 		return sdk.WithStack(err)
 	}
 	return nil
 }
 
-func loadApplicationNames(db gorp.SqlExecutor, proj *sdk.Project) error {
+func loadApplications(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project) error {
+	if err := loadApplicationsWithOpts(ctx, db, proj); err != nil {
+		return sdk.WithStack(err)
+	}
+	return nil
+}
+
+func loadApplicationNames(_ context.Context, db gorp.SqlExecutor, proj *sdk.Project) error {
 	apps, err := application.LoadAllNames(db, proj.ID)
 	if err != nil {
 		return sdk.WithStack(err)
@@ -92,9 +94,9 @@ func loadApplicationNames(db gorp.SqlExecutor, proj *sdk.Project) error {
 	return nil
 }
 
-func loadApplicationWithDeploymentStrategies(db gorp.SqlExecutor, proj *sdk.Project) error {
+func loadApplicationWithDeploymentStrategies(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project) error {
 	if proj.Applications == nil {
-		if err := loadApplications(db, proj); err != nil {
+		if err := loadApplications(ctx, db, proj); err != nil {
 			return sdk.WithStack(err)
 		}
 	}
@@ -107,8 +109,8 @@ func loadApplicationWithDeploymentStrategies(db gorp.SqlExecutor, proj *sdk.Proj
 	return nil
 }
 
-func loadVariables(db gorp.SqlExecutor, proj *sdk.Project) error {
-	vars, err := LoadAllVariables(db, proj.ID)
+func loadVariables(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project) error {
+	vars, err := LoadAllVariables(ctx, db, proj.ID)
 	if err != nil {
 		return err
 	}
@@ -116,8 +118,8 @@ func loadVariables(db gorp.SqlExecutor, proj *sdk.Project) error {
 	return nil
 }
 
-func loadVariablesWithClearPassword(db gorp.SqlExecutor, proj *sdk.Project) error {
-	vars, err := LoadAllVariablesWithDecrytion(db, proj.ID)
+func loadVariablesWithClearPassword(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project) error {
+	vars, err := LoadAllVariablesWithDecrytion(ctx, db, proj.ID)
 	if err != nil {
 		return err
 	}
@@ -126,9 +128,9 @@ func loadVariablesWithClearPassword(db gorp.SqlExecutor, proj *sdk.Project) erro
 
 }
 
-func loadApplicationVariables(db gorp.SqlExecutor, proj *sdk.Project) error {
+func loadApplicationVariables(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project) error {
 	if proj.Applications == nil {
-		if err := loadApplications(db, proj); err != nil {
+		if err := loadApplications(ctx, db, proj); err != nil {
 			return sdk.WithStack(err)
 		}
 	}
@@ -142,9 +144,9 @@ func loadApplicationVariables(db gorp.SqlExecutor, proj *sdk.Project) error {
 	return nil
 }
 
-func loadApplicationKeys(db gorp.SqlExecutor, proj *sdk.Project) error {
+func loadApplicationKeys(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project) error {
 	if proj.Applications == nil {
-		if err := loadApplications(db, proj); err != nil {
+		if err := loadApplications(ctx, db, proj); err != nil {
 			return sdk.WithStack(err)
 		}
 	}
@@ -158,8 +160,8 @@ func loadApplicationKeys(db gorp.SqlExecutor, proj *sdk.Project) error {
 	return nil
 }
 
-func loadKeys(db gorp.SqlExecutor, proj *sdk.Project) error {
-	keys, err := LoadAllKeys(db, proj.ID)
+func loadKeys(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project) error {
+	keys, err := LoadAllKeys(ctx, db, proj.ID)
 	if err != nil {
 		return err
 	}
@@ -167,8 +169,8 @@ func loadKeys(db gorp.SqlExecutor, proj *sdk.Project) error {
 	return nil
 }
 
-func loadClearKeys(db gorp.SqlExecutor, proj *sdk.Project) error {
-	keys, err := LoadAllKeysWithPrivateContent(db, proj.ID)
+func loadClearKeys(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project) error {
+	keys, err := LoadAllKeysWithPrivateContent(ctx, db, proj.ID)
 	if err != nil {
 		return err
 	}
@@ -176,8 +178,8 @@ func loadClearKeys(db gorp.SqlExecutor, proj *sdk.Project) error {
 	return nil
 }
 
-func loadIntegrations(db gorp.SqlExecutor, proj *sdk.Project) error {
-	pf, err := integration.LoadIntegrationsByProjectID(db, proj.ID)
+func loadIntegrations(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project) error {
+	pf, err := integration.LoadIntegrationsByProjectID(ctx, db, proj.ID)
 	if err != nil {
 		return sdk.WrapError(err, "cannot load integrations")
 	}
@@ -185,8 +187,8 @@ func loadIntegrations(db gorp.SqlExecutor, proj *sdk.Project) error {
 	return nil
 }
 
-func loadClearIntegrations(db gorp.SqlExecutor, proj *sdk.Project) error {
-	pf, err := integration.LoadIntegrationsByProjectIDWithClearPassword(db, proj.ID)
+func loadClearIntegrations(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project) error {
+	pf, err := integration.LoadIntegrationsByProjectIDWithClearPassword(ctx, db, proj.ID)
 	if err != nil {
 		return sdk.WrapError(err, "cannot load integrations")
 	}
@@ -194,8 +196,8 @@ func loadClearIntegrations(db gorp.SqlExecutor, proj *sdk.Project) error {
 	return nil
 }
 
-func loadWorkflows(db gorp.SqlExecutor, proj *sdk.Project) error {
-	workflows, err := workflow.LoadAll(db, proj.Key)
+func loadWorkflows(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project) error {
+	workflows, err := workflow.LoadAll(ctx, db, proj.Key)
 	if err != nil {
 		return sdk.WithStack(err)
 	}
@@ -203,7 +205,7 @@ func loadWorkflows(db gorp.SqlExecutor, proj *sdk.Project) error {
 	return nil
 }
 
-func loadWorkflowNames(db gorp.SqlExecutor, proj *sdk.Project) error {
+func loadWorkflowNames(_ context.Context, db gorp.SqlExecutor, proj *sdk.Project) error {
 	wfs, err := workflow.LoadAllNames(db, proj.ID)
 	if err != nil {
 		return sdk.WithStack(err)
@@ -212,7 +214,7 @@ func loadWorkflowNames(db gorp.SqlExecutor, proj *sdk.Project) error {
 	return nil
 }
 
-func loadApplicationsWithOpts(db gorp.SqlExecutor, proj *sdk.Project, opts ...application.LoadOptionFunc) error {
+func loadApplicationsWithOpts(_ context.Context, db gorp.SqlExecutor, proj *sdk.Project, opts ...application.LoadOptionFunc) error {
 	apps, err := application.LoadAll(db, proj.Key, opts...)
 	if err != nil && sdk.Cause(err) != sql.ErrNoRows && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 		return sdk.WithStack(err)
@@ -221,7 +223,7 @@ func loadApplicationsWithOpts(db gorp.SqlExecutor, proj *sdk.Project, opts ...ap
 	return nil
 }
 
-func loadIcon(db gorp.SqlExecutor, proj *sdk.Project) error {
+func loadIcon(_ context.Context, db gorp.SqlExecutor, proj *sdk.Project) error {
 	icon, err := db.SelectStr("SELECT icon FROM project WHERE id = $1", proj.ID)
 	if err != nil {
 		return sdk.WithStack(err)
@@ -230,7 +232,7 @@ func loadIcon(db gorp.SqlExecutor, proj *sdk.Project) error {
 	return nil
 }
 
-func loadPipelines(db gorp.SqlExecutor, proj *sdk.Project) error {
+func loadPipelines(_ context.Context, db gorp.SqlExecutor, proj *sdk.Project) error {
 	pipelines, err := pipeline.LoadPipelines(db, proj.ID, false)
 	if err != nil && sdk.Cause(err) != sql.ErrNoRows && !sdk.ErrorIs(err, sdk.ErrPipelineNotFound) && !sdk.ErrorIs(err, sdk.ErrPipelineNotAttached) {
 		return sdk.WithStack(err)
@@ -239,7 +241,7 @@ func loadPipelines(db gorp.SqlExecutor, proj *sdk.Project) error {
 	return nil
 }
 
-func loadPipelineNames(db gorp.SqlExecutor, proj *sdk.Project) error {
+func loadPipelineNames(_ context.Context, db gorp.SqlExecutor, proj *sdk.Project) error {
 	pips, err := pipeline.LoadAllNames(db, proj.ID)
 	if err != nil {
 		return sdk.WithStack(err)
@@ -248,7 +250,7 @@ func loadPipelineNames(db gorp.SqlExecutor, proj *sdk.Project) error {
 	return nil
 }
 
-func loadEnvironments(db gorp.SqlExecutor, proj *sdk.Project) error {
+func loadEnvironments(_ context.Context, db gorp.SqlExecutor, proj *sdk.Project) error {
 	envs, err := environment.LoadEnvironments(db, proj.Key)
 	if err != nil && sdk.Cause(err) != sql.ErrNoRows && !sdk.ErrorIs(err, sdk.ErrNoEnvironment) {
 		return sdk.WithStack(err)
@@ -257,7 +259,7 @@ func loadEnvironments(db gorp.SqlExecutor, proj *sdk.Project) error {
 	return nil
 }
 
-func loadEnvironmentNames(db gorp.SqlExecutor, proj *sdk.Project) error {
+func loadEnvironmentNames(_ context.Context, db gorp.SqlExecutor, proj *sdk.Project) error {
 	var err error
 	var envs sdk.IDNames
 
@@ -269,14 +271,14 @@ func loadEnvironmentNames(db gorp.SqlExecutor, proj *sdk.Project) error {
 	return nil
 }
 
-func loadGroups(db gorp.SqlExecutor, proj *sdk.Project) error {
-	if err := group.LoadGroupsIntoProject(db, proj); err != nil && sdk.Cause(err) != sql.ErrNoRows {
+func loadGroups(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project) error {
+	if err := group.LoadGroupsIntoProject(ctx, db, proj); err != nil && sdk.Cause(err) != sql.ErrNoRows {
 		return err
 	}
 	return nil
 }
 
-func loadLabels(db gorp.SqlExecutor, proj *sdk.Project) error {
+func loadLabels(_ context.Context, db gorp.SqlExecutor, proj *sdk.Project) error {
 	labels, err := Labels(db, proj.ID)
 	if err != nil {
 		return sdk.WithStack(err)
@@ -286,7 +288,7 @@ func loadLabels(db gorp.SqlExecutor, proj *sdk.Project) error {
 }
 
 func loadFavorites(uID string) LoadOptionFunc {
-	return func(db gorp.SqlExecutor, proj *sdk.Project) error {
+	return func(_ context.Context, db gorp.SqlExecutor, proj *sdk.Project) error {
 		count, err := db.SelectInt("SELECT COUNT(1) FROM project_favorite WHERE project_id = $1 AND authentified_user_id = $2", proj.ID, uID)
 		if err != nil {
 			return sdk.WithStack(err)

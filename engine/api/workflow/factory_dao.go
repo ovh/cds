@@ -502,7 +502,7 @@ func (dao WorkflowDAO) withIntegrations(ctx context.Context, db gorp.SqlExecutor
 		ids = append(ids, id)
 	}
 
-	projectIntegrations, err := integration.LoadIntegrationsByIDs(db, ids)
+	projectIntegrations, err := integration.LoadIntegrationsByIDs(ctx, db, ids)
 	if err != nil {
 		return err
 	}
@@ -518,7 +518,7 @@ func (dao WorkflowDAO) withIntegrations(ctx context.Context, db gorp.SqlExecutor
 	for x := range *ws {
 		w := &(*ws)[x]
 		var err error
-		w.Integrations, err = LoadWorkflowIntegrationsByWorkflowID(db, w.ID)
+		w.Integrations, err = LoadWorkflowIntegrationsByWorkflowID(ctx, db, w.ID)
 		if err != nil {
 			return err
 		}

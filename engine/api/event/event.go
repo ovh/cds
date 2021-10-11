@@ -104,7 +104,7 @@ func DeleteEventIntegration(eventIntegrationID int64) {
 func ResetEventIntegration(ctx context.Context, db gorp.SqlExecutor, eventIntegrationID int64) error {
 	brokerConnectionKey := strconv.FormatInt(eventIntegrationID, 10)
 	brokersConnectionCache.Delete(brokerConnectionKey)
-	projInt, err := integration.LoadProjectIntegrationByIDWithClearPassword(db, eventIntegrationID)
+	projInt, err := integration.LoadProjectIntegrationByIDWithClearPassword(ctx, db, eventIntegrationID)
 	if err != nil {
 		return fmt.Errorf("cannot load project integration id %d and type event: %v", eventIntegrationID, err)
 	}
@@ -173,7 +173,7 @@ func DequeueEvent(ctx context.Context, db *gorp.DbMap) {
 			brokerConnectionKey := strconv.FormatInt(eventIntegrationID, 10)
 			brokerConnection, ok := brokersConnectionCache.Get(brokerConnectionKey)
 			if !ok {
-				projInt, err := integration.LoadProjectIntegrationByIDWithClearPassword(db, eventIntegrationID)
+				projInt, err := integration.LoadProjectIntegrationByIDWithClearPassword(ctx, db, eventIntegrationID)
 				if err != nil {
 					log.Error(ctx, "Event.DequeueEvent> Cannot load project integration for project %s and id %d and type event: %v", e.ProjectKey, eventIntegrationID, err)
 					continue

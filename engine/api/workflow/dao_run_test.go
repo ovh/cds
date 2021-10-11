@@ -925,8 +925,7 @@ func TestLoadRunsIDsToDelete(t *testing.T) {
 	require.Equal(t, int64(1), limit)
 	require.Equal(t, int64(2), count)
 
-	ids, offset, limit, count, err = workflow.LoadRunsIDsToDelete(db, 0, 50)
+	ids, _, _, _, err = workflow.LoadRunsIDsToDelete(db, 0, 50)
 	require.NoError(t, err)
 	require.Len(t, ids, 2)
-
 }

@@ -46,13 +46,13 @@ func DeleteEncryptedVariable(db gorp.SqlExecutor, projectID int64, name string) 
 }
 
 // EncryptWithBuiltinKey encrypt a content with the builtin gpg key encode, compress it and encode with base64
-func EncryptWithBuiltinKey(db gorp.SqlExecutor, projectID int64, name, content string) (string, error) {
+func EncryptWithBuiltinKey(ctx context.Context, db gorp.SqlExecutor, projectID int64, name, content string) (string, error) {
 	existingToken, err := db.SelectStr("select token from encrypted_data where project_id = $1 and content_name = $2", projectID, name)
 	if err != nil && err != sql.ErrNoRows {
 		return "", sdk.WrapError(err, "Unable to request encrypted_data")
 	}
 
-	k, err := loadBuiltinKey(db, projectID)
+	k, err := loadBuiltinKey(ctx, db, projectID)
 	if err != nil {
 		return "", sdk.WrapError(err, "Unable to load builtin key")
 	}
@@ -110,13 +110,13 @@ func EncryptWithBuiltinKey(db gorp.SqlExecutor, projectID int64, name, content s
 }
 
 // DecryptWithBuiltinKey decrypt a base64-ed, gzipped, content
-func DecryptWithBuiltinKey(db gorp.SqlExecutor, projectID int64, token string) (string, error) {
+func DecryptWithBuiltinKey(ctx context.Context, db gorp.SqlExecutor, projectID int64, token string) (string, error) {
 	dbed := dbEncryptedData{}
 	if err := db.SelectOne(&dbed, "select * from encrypted_data where token = $1", token); err != nil {
 		return "", sdk.WithStack(sdk.ErrProjectSecretDataUnknown)
 	}
 
-	k, err := loadBuiltinKey(db, projectID)
+	k, err := loadBuiltinKey(ctx, db, projectID)
 	if err != nil {
 		return "", sdk.WrapError(sdk.ErrProjectSecretDataUnknown, "Unable to load builtin key")
 	}

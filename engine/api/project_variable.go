@@ -29,7 +29,7 @@ func (api *API) getListEncryptVariableHandler() service.Handler {
 		}
 
 		for i := range res {
-			decryptedData, err := project.DecryptWithBuiltinKey(api.mustDB(), p.ID, res[i].Token)
+			decryptedData, err := project.DecryptWithBuiltinKey(ctx, api.mustDB(), p.ID, res[i].Token)
 			if err != nil {
 				log.Error(ctx, "unable to decrypt data %s: %v", res[i].Token, err)
 				res[i].Status = "decryption failed"
@@ -62,7 +62,7 @@ func (api *API) postEncryptVariableHandler() service.Handler {
 			return sdk.WrapError(err, "unable to read body")
 		}
 
-		encryptedValue, erre := project.EncryptWithBuiltinKey(api.mustDB(), p.ID, variable.Name, variable.Value)
+		encryptedValue, erre := project.EncryptWithBuiltinKey(ctx, api.mustDB(), p.ID, variable.Name, variable.Value)
 		if erre != nil {
 			return sdk.WrapError(erre, "unable to encrypte content %s", variable.Name)
 		}

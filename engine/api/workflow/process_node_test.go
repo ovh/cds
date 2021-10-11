@@ -57,6 +57,7 @@ func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
 	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
 
 	allSrv, err := services.LoadAll(context.TODO(), db)
+	require.NoError(t, err)
 	for _, s := range allSrv {
 		if err := services.Delete(db, &s); err != nil {
 			t.Fatalf("unable to delete service: %v", err)
@@ -250,6 +251,7 @@ func TestHookRunWithHashOnlyProcessNodeBuildParameter(t *testing.T) {
 	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
 
 	allSrv, err := services.LoadAll(context.TODO(), db)
+	require.NoError(t, err)
 	for _, s := range allSrv {
 		if err := services.Delete(db, &s); err != nil {
 			t.Fatalf("unable to delete service: %v", err)
@@ -431,6 +433,7 @@ func TestManualRunWithPayloadProcessNodeBuildParameter(t *testing.T) {
 	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
 
 	allSrv, err := services.LoadAll(context.TODO(), db)
+	require.NoError(t, err)
 	for _, s := range allSrv {
 		if err := services.Delete(db, &s); err != nil {
 			t.Fatalf("unable to delete service: %v", err)
@@ -967,6 +970,7 @@ func TestManualRunBuildParameterMultiApplication(t *testing.T) {
 	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer2))
 
 	allSrv, err := services.LoadAll(context.TODO(), db)
+	require.NoError(t, err)
 	for _, s := range allSrv {
 		if err := services.Delete(db, &s); err != nil {
 			t.Fatalf("unable to delete service: %v", err)
@@ -1208,6 +1212,7 @@ func TestManualRunBuildParameterNoApplicationOnRoot(t *testing.T) {
 	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer2))
 
 	allSrv, err := services.LoadAll(context.TODO(), db)
+	require.NoError(t, err)
 	for _, s := range allSrv {
 		if err := services.Delete(db, &s); err != nil {
 			t.Fatalf("unable to delete service: %v", err)
@@ -1439,6 +1444,7 @@ func TestGitParamOnPipelineWithoutApplication(t *testing.T) {
 	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer2))
 
 	allSrv, err := services.LoadAll(context.TODO(), db)
+	require.NoError(t, err)
 	for _, s := range allSrv {
 		if err := services.Delete(db, &s); err != nil {
 			t.Fatalf("unable to delete service: %v", err)
@@ -1625,6 +1631,7 @@ func TestGitParamOnApplicationWithoutRepo(t *testing.T) {
 	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer2))
 
 	allSrv, err := services.LoadAll(context.TODO(), db)
+	require.NoError(t, err)
 	for _, s := range allSrv {
 		if err := services.Delete(db, &s); err != nil {
 			t.Fatalf("unable to delete service: %v", err)
@@ -1807,6 +1814,7 @@ func TestGitParamOn2ApplicationSameRepo(t *testing.T) {
 	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
 
 	allSrv, err := services.LoadAll(context.TODO(), db)
+	require.NoError(t, err)
 	for _, s := range allSrv {
 		if err := services.Delete(db, &s); err != nil {
 			t.Fatalf("unable to delete service: %v", err)
@@ -2009,6 +2017,7 @@ func TestGitParamWithJoin(t *testing.T) {
 	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
 
 	allSrv, err := services.LoadAll(context.TODO(), db)
+	require.NoError(t, err)
 	for _, s := range allSrv {
 		if err := services.Delete(db, &s); err != nil {
 			t.Fatalf("unable to delete service: %v", err)
@@ -2234,7 +2243,7 @@ func TestIntegrationParam(t *testing.T) {
 	}
 	require.NoError(t, integration.InsertModel(db, &fooModel))
 	t.Cleanup(func() {
-		integration.DeleteModel(db, fooModel.ID)
+		integration.DeleteModel(context.TODO(), db, fooModel.ID)
 	})
 
 	projInt := sdk.ProjectIntegration{
@@ -2346,6 +2355,7 @@ func TestGitParamOn2ApplicationSameRepoWithFork(t *testing.T) {
 	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
 
 	allSrv, err := services.LoadAll(context.TODO(), db)
+	require.NoError(t, err)
 	for _, s := range allSrv {
 		if err := services.Delete(db, &s); err != nil {
 			t.Fatalf("unable to delete service: %v", err)
@@ -2556,6 +2566,7 @@ func TestManualRunWithPayloadAndRunCondition(t *testing.T) {
 	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
 
 	allSrv, err := services.LoadAll(context.TODO(), db)
+	require.NoError(t, err)
 	for _, s := range allSrv {
 		if err := services.Delete(db, &s); err != nil {
 			t.Fatalf("unable to delete service: %v", err)

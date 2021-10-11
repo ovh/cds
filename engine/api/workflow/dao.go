@@ -216,13 +216,13 @@ func (w *Workflow) Get() sdk.Workflow {
 }
 
 // LoadAll loads all workflows for a project. All users in a project can list all workflows in a project
-func LoadAll(db gorp.SqlExecutor, projectKey string) (sdk.Workflows, error) {
+func LoadAll(ctx context.Context, db gorp.SqlExecutor, projectKey string) (sdk.Workflows, error) {
 	dao := WorkflowDAO{
 		Filters: LoadAllWorkflowsOptionsFilters{
 			ProjectKey: projectKey,
 		},
 	}
-	return dao.LoadAll(context.Background(), db)
+	return dao.LoadAll(ctx, db)
 }
 
 // LoadAllNames loads all workflow names for a project.

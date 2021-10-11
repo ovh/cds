@@ -21,16 +21,16 @@ func DeleteIntegration(db gorp.SqlExecutor, integration sdk.ProjectIntegration) 
 	return nil
 }
 
-func load(db gorp.SqlExecutor, query gorpmapping.Query) (sdk.ProjectIntegration, error) {
-	pi, err := loadWithClearPassword(db, query)
+func load(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query) (sdk.ProjectIntegration, error) {
+	pi, err := loadWithClearPassword(ctx, db, query)
 	pi.Blur()
 	pi.Model.Blur()
 	return pi, err
 }
 
-func loadWithClearPassword(db gorp.SqlExecutor, query gorpmapping.Query) (sdk.ProjectIntegration, error) {
+func loadWithClearPassword(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query) (sdk.ProjectIntegration, error) {
 	var pp dbProjectIntegration
-	found, err := gorpmapping.Get(context.Background(), db, query, &pp, gorpmapping.GetOptions.WithDecryption)
+	found, err := gorpmapping.Get(ctx, db, query, &pp, gorpmapping.GetOptions.WithDecryption)
 	if err != nil {
 		return sdk.ProjectIntegration{}, err
 	}
@@ -42,11 +42,11 @@ func loadWithClearPassword(db gorp.SqlExecutor, query gorpmapping.Query) (sdk.Pr
 		return sdk.ProjectIntegration{}, err
 	}
 	if !isValid {
-		log.Error(context.Background(), "integration.LoadModelByName> model  %d data corrupted", pp.ID)
+		log.Error(ctx, "integration.LoadModelByName> model  %d data corrupted", pp.ID)
 		return sdk.ProjectIntegration{}, sdk.WithStack(sdk.ErrNotFound)
 	}
 
-	imodel, err := LoadModelWithClearPassword(db, pp.IntegrationModelID)
+	imodel, err := LoadModelWithClearPassword(ctx, db, pp.IntegrationModelID)
 	if err != nil {
 		return sdk.ProjectIntegration{}, err
 	}
@@ -56,42 +56,42 @@ func loadWithClearPassword(db gorp.SqlExecutor, query gorpmapping.Query) (sdk.Pr
 }
 
 // LoadProjectIntegrationByName Load a integration by project key and its name
-func LoadProjectIntegrationByName(db gorp.SqlExecutor, key string, name string) (sdk.ProjectIntegration, error) {
+func LoadProjectIntegrationByName(ctx context.Context, db gorp.SqlExecutor, key string, name string) (sdk.ProjectIntegration, error) {
 	query := gorpmapping.NewQuery(`
 		SELECT project_integration.*
 		FROM project_integration
 		JOIN project ON project.id = project_integration.project_id
 		WHERE project.projectkey = $1 AND project_integration.name = $2`).Args(key, name)
 
-	return load(db, query)
+	return load(ctx, db, query)
 }
 
-func LoadProjectIntegrationByNameWithClearPassword(db gorp.SqlExecutor, key string, name string) (sdk.ProjectIntegration, error) {
+func LoadProjectIntegrationByNameWithClearPassword(ctx context.Context, db gorp.SqlExecutor, key string, name string) (sdk.ProjectIntegration, error) {
 	query := gorpmapping.NewQuery(`
 	SELECT project_integration.*
 	FROM project_integration
 	JOIN project ON project.id = project_integration.project_id
 	WHERE project.projectkey = $1 AND project_integration.name = $2`).Args(key, name)
 
-	return loadWithClearPassword(db, query)
+	return loadWithClearPassword(ctx, db, query)
 }
 
 // LoadProjectIntegrationByID returns integration, selecting by its id
-func LoadProjectIntegrationByID(db gorp.SqlExecutor, id int64) (*sdk.ProjectIntegration, error) {
+func LoadProjectIntegrationByID(ctx context.Context, db gorp.SqlExecutor, id int64) (*sdk.ProjectIntegration, error) {
 	query := gorpmapping.NewQuery("SELECT * from project_integration WHERE id = $1").Args(id)
-	pp, err := load(db, query)
+	pp, err := load(ctx, db, query)
 	return &pp, err
 }
 
-func LoadProjectIntegrationByIDWithClearPassword(db gorp.SqlExecutor, id int64) (*sdk.ProjectIntegration, error) {
+func LoadProjectIntegrationByIDWithClearPassword(ctx context.Context, db gorp.SqlExecutor, id int64) (*sdk.ProjectIntegration, error) {
 	query := gorpmapping.NewQuery("SELECT * from project_integration WHERE id = $1").Args(id)
-	pp, err := loadWithClearPassword(db, query)
+	pp, err := loadWithClearPassword(ctx, db, query)
 	return &pp, err
 }
 
-func loadAllWithClearPassword(db gorp.SqlExecutor, query gorpmapping.Query) ([]sdk.ProjectIntegration, error) {
+func loadAllWithClearPassword(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query) ([]sdk.ProjectIntegration, error) {
 	var pp []dbProjectIntegration
-	if err := gorpmapping.GetAll(context.Background(), db, query, &pp, gorpmapping.GetOptions.WithDecryption); err != nil {
+	if err := gorpmapping.GetAll(ctx, db, query, &pp, gorpmapping.GetOptions.WithDecryption); err != nil {
 		return nil, err
 	}
 
@@ -102,11 +102,11 @@ func loadAllWithClearPassword(db gorp.SqlExecutor, query gorpmapping.Query) ([]s
 			return nil, err
 		}
 		if !isValid {
-			log.Error(context.Background(), "integration.loadAll> model %d data corrupted", p.ID)
+			log.Error(ctx, "integration.loadAll> model %d data corrupted", p.ID)
 			continue
 		}
 
-		imodel, err := LoadModelWithClearPassword(db, p.IntegrationModelID)
+		imodel, err := LoadModelWithClearPassword(ctx, db, p.IntegrationModelID)
 		if err != nil {
 			return nil, err
 		}
@@ -116,9 +116,9 @@ func loadAllWithClearPassword(db gorp.SqlExecutor, query gorpmapping.Query) ([]s
 	return integrations, nil
 
 }
-func loadAll(db gorp.SqlExecutor, query gorpmapping.Query) ([]sdk.ProjectIntegration, error) {
+func loadAll(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query) ([]sdk.ProjectIntegration, error) {
 	var pp []dbProjectIntegration
-	if err := gorpmapping.GetAll(context.Background(), db, query, &pp, gorpmapping.GetOptions.WithDecryption); err != nil {
+	if err := gorpmapping.GetAll(ctx, db, query, &pp, gorpmapping.GetOptions.WithDecryption); err != nil {
 		return nil, err
 	}
 	var integrations = make([]sdk.ProjectIntegration, len(pp))
@@ -132,7 +132,7 @@ func loadAll(db gorp.SqlExecutor, query gorpmapping.Query) ([]sdk.ProjectIntegra
 			continue
 		}
 
-		imodel, err := LoadModel(db, p.IntegrationModelID)
+		imodel, err := LoadModel(ctx, db, p.IntegrationModelID)
 		if err != nil {
 			return nil, err
 		}
@@ -144,21 +144,21 @@ func loadAll(db gorp.SqlExecutor, query gorpmapping.Query) ([]sdk.ProjectIntegra
 }
 
 // LoadIntegrationsByProjectIDWithClearPassword load integration integrations by project id
-func LoadIntegrationsByProjectIDWithClearPassword(db gorp.SqlExecutor, id int64) ([]sdk.ProjectIntegration, error) {
+func LoadIntegrationsByProjectIDWithClearPassword(ctx context.Context, db gorp.SqlExecutor, id int64) ([]sdk.ProjectIntegration, error) {
 	query := gorpmapping.NewQuery("SELECT * from project_integration WHERE project_id = $1").Args(id)
-	return loadAllWithClearPassword(db, query)
+	return loadAllWithClearPassword(ctx, db, query)
 }
 
 // LoadIntegrationsByProjectID load integration integrations by project id
-func LoadIntegrationsByProjectID(db gorp.SqlExecutor, id int64) ([]sdk.ProjectIntegration, error) {
+func LoadIntegrationsByProjectID(ctx context.Context, db gorp.SqlExecutor, id int64) ([]sdk.ProjectIntegration, error) {
 	query := gorpmapping.NewQuery("SELECT * from project_integration WHERE project_id = $1").Args(id)
-	return loadAll(db, query)
+	return loadAll(ctx, db, query)
 }
 
 // LoadIntegrationsByIDs load integration integrations by id
-func LoadIntegrationsByIDs(db gorp.SqlExecutor, ids []int64) ([]sdk.ProjectIntegration, error) {
+func LoadIntegrationsByIDs(ctx context.Context, db gorp.SqlExecutor, ids []int64) ([]sdk.ProjectIntegration, error) {
 	query := gorpmapping.NewQuery("SELECT * from project_integration WHERE id = ANY($1)").Args(pq.Int64Array(ids))
-	return loadAll(db, query)
+	return loadAll(ctx, db, query)
 }
 
 // InsertIntegration inserts a integration
@@ -175,7 +175,7 @@ func InsertIntegration(db gorpmapper.SqlExecutorWithTx, pp *sdk.ProjectIntegrati
 }
 
 // UpdateIntegration Update a integration
-func UpdateIntegration(db gorpmapper.SqlExecutorWithTx, pp sdk.ProjectIntegration) error {
+func UpdateIntegration(ctx context.Context, db gorpmapper.SqlExecutorWithTx, pp sdk.ProjectIntegration) error {
 	var oldConfig *sdk.ProjectIntegration
 
 	givenConfig := pp.Config.Clone()
@@ -184,7 +184,7 @@ func UpdateIntegration(db gorpmapper.SqlExecutorWithTx, pp sdk.ProjectIntegratio
 			if oldConfig == nil {
 				// reload the previous config to ensure we don't store placeholder
 				var err error
-				oldConfig, err = LoadProjectIntegrationByIDWithClearPassword(db, pp.ID)
+				oldConfig, err = LoadProjectIntegrationByIDWithClearPassword(ctx, db, pp.ID)
 				if err != nil {
 					return err
 				}
@@ -196,7 +196,7 @@ func UpdateIntegration(db gorpmapper.SqlExecutorWithTx, pp sdk.ProjectIntegratio
 
 	pp.Config = givenConfig
 	ppDb := dbProjectIntegration{ProjectIntegration: pp}
-	if err := gorpmapping.UpdateAndSign(context.Background(), db, &ppDb); err != nil {
+	if err := gorpmapping.UpdateAndSign(ctx, db, &ppDb); err != nil {
 		return sdk.WrapError(err, "Cannot update integration")
 	}
 	pp.Config = givenConfig

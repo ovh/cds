@@ -24,7 +24,7 @@ func (api *API) getKeysInProjectHandler() service.Handler {
 			return err
 		}
 
-		keys, err := project.LoadAllKeys(api.mustDB(), p.ID)
+		keys, err := project.LoadAllKeys(ctx, api.mustDB(), p.ID)
 		if err != nil {
 			return err
 		}

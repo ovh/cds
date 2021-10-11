@@ -3,6 +3,7 @@ package sdk
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"crypto/md5"
 	"crypto/sha512"
 	"database/sql/driver"
@@ -37,7 +38,7 @@ var (
 )
 
 // EncryptFunc is a common type
-type EncryptFunc func(gorp.SqlExecutor, int64, string, string) (string, error)
+type EncryptFunc func(context.Context, gorp.SqlExecutor, int64, string, string) (string, error)
 
 // IDName is generally used when you want to get basic informations from db
 type IDName struct {

@@ -312,7 +312,7 @@ func (api *API) postImportGroupsInProjectHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		if err := project.LoadOptions.WithGroups(api.mustDB(), proj); err != nil {
+		if err := project.LoadOptions.WithGroups(ctx, api.mustDB(), proj); err != nil {
 			return err
 		}
 
