@@ -121,7 +121,7 @@ var (
 	ArtifactoryIntegration = IntegrationModel{
 		Name:       ArtifactoryIntegrationModelName,
 		Author:     "CDS",
-		Identifier: "github.com/ovh/cds/integration/builtin/artifactifactoryr",
+		Identifier: "github.com/ovh/cds/integration/builtin/artifactory",
 		Icon:       "",
 		DefaultConfig: IntegrationConfig{
 			ArtifactoryConfigPlatform: IntegrationConfigValue{
