@@ -92,7 +92,7 @@ func addRunResult(ctx context.Context, wk *CurrentWorker, w http.ResponseWriter,
 	code, err := wk.Client().QueueWorkflowRunResultCheck(ctx, runJobID, runResultCheck)
 	if err != nil {
 		if code == 409 {
-			writeError(w, r, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to upload the same file twice"))
+			writeError(w, r, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to upload the same file twice: %s", name))
 			return
 		}
 		writeError(w, r, sdk.WrapError(err, "unable to check run result %s", name))
