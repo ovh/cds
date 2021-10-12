@@ -215,4 +215,4 @@ If you want to launch vcs & hooks µServices, you have to:
 
 Of course, you have to do the same thing with other µServices `repositories`, `elasticsearch`, `hatchery.swarm`, etc...
 
-A remark / question / suggestion, feel free to join us on https://gitter.im/ovh-cds/Lobby
+A remark / question / suggestion, feel free to join us on https://github.com/ovh/cds/discussions
