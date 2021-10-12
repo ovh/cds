@@ -40,10 +40,6 @@ ALL_DIST := $(ALL_DIST) $(UI_DIST)
 ALL_DIST := $(ALL_DIST) $(CONTRIB_DIST)
 ALL_TARGETS := $(foreach DIST,$(ALL_DIST),$(addprefix $(TARGET_DIR),$(notdir $(DIST))))
 
-
-goinstall:
-	go install $$(go list ./...)
-
 build:
 	$(info Building CDS Components for $(TARGET_OS) - $(TARGET_ARCH))
 	$(MAKE) build_ui -j1
