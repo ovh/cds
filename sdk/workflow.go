@@ -452,7 +452,7 @@ func (label *Label) IsValid() error {
 		}
 		label.Color = "#" + hex.EncodeToString(bytes)
 	} else {
-		if !ColorRegexp.Match([]byte(label.Color)) {
+		if !ColorRegexp.MatchString(label.Color) {
 			return WithStack(ErrIconBadFormat)
 		}
 	}

@@ -98,7 +98,7 @@ func (api *API) releaseApplicationWorkflowHandler() service.Handler {
 		for _, a := range workflowArtifacts {
 			for _, aToUp := range req.Artifacts {
 				if len(aToUp) > 0 {
-					ok, errRX := regexp.Match(aToUp, []byte(a.Name))
+					ok, errRX := regexp.MatchString(aToUp, a.Name)
 					if errRX != nil {
 						return sdk.WrapError(errRX, "releaseApplicationWorkflowHandler> %s is not a valid regular expression", aToUp)
 					}
@@ -148,7 +148,7 @@ func (api *API) releaseApplicationWorkflowHandler() service.Handler {
 			}
 			for _, aToUp := range req.Artifacts {
 				if len(aToUp) > 0 {
-					ok, err := regexp.Match(aToUp, []byte(artiData.Name))
+					ok, err := regexp.MatchString(aToUp, artiData.Name)
 					if err != nil {
 						return sdk.WrapError(err, "releaseApplicationWorkflowHandler> %s is not a valid regular expression", aToUp)
 					}
