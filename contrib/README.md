@@ -26,5 +26,4 @@ See [Workflow Templates Documentation](https://ovh.github.io/cds/docs/concepts/t
 ## µServices
 
 - [badge](https://github.com/ovh/cds/tree/master/contrib/uservices/badge)
-- [cds2http](https://github.com/ovh/cds/tree/master/contrib/uservices/cds2http)
 - [Hubot XMPP](https://github.com/ovh/cds/tree/master/contrib/uservices/hubot-xmpp)
