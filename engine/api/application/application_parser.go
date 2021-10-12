@@ -78,7 +78,7 @@ func ParseAndImport(ctx context.Context, db gorpmapper.SqlExecutorWithTx, cache 
 		case "":
 			v.Type = sdk.StringVariable
 		case sdk.SecretVariable:
-			secret, err := decryptFunc(db, proj.ID, v.Value)
+			secret, err := decryptFunc(ctx, db, proj.ID, v.Value)
 			if err != nil {
 				return app, nil, msgList, sdk.WrapError(sdk.NewError(sdk.ErrWrongRequest, err), "unable to decrypt secret variable")
 			}
@@ -123,7 +123,7 @@ func ParseAndImport(ctx context.Context, db gorpmapper.SqlExecutorWithTx, cache 
 			keepOldValue = true
 		}
 
-		kk, err := keys.Parse(db, proj.ID, kname, kval, decryptFunc)
+		kk, err := keys.Parse(ctx, db, proj.ID, kname, kval, decryptFunc)
 		if err != nil {
 			return app, nil, msgList, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to parse key %s", kname)
 		}
@@ -169,7 +169,7 @@ func ParseAndImport(ctx context.Context, db gorpmapper.SqlExecutorWithTx, cache 
 		return app, nil, msgList, sdk.NewErrorFrom(sdk.ErrInvalidApplicationRepoStrategy, "could not import application %s with a connection type ssh without ssh key", app.Name)
 	}
 	if eapp.VCSPassword != "" {
-		clearPWD, err := decryptFunc(db, proj.ID, eapp.VCSPassword)
+		clearPWD, err := decryptFunc(ctx, db, proj.ID, eapp.VCSPassword)
 		if err != nil {
 			return app, nil, msgList, sdk.WrapError(sdk.NewError(sdk.ErrWrongRequest, err), "unable to decrypt vcs password")
 		}
@@ -207,7 +207,7 @@ func ParseAndImport(ctx context.Context, db gorpmapper.SqlExecutorWithTx, cache 
 		for k, v := range pfConfig {
 			if v.Value != "" {
 				if v.Type == sdk.SecretVariable {
-					clearPWD, err := decryptFunc(db, proj.ID, v.Value)
+					clearPWD, err := decryptFunc(ctx, db, proj.ID, v.Value)
 					if err != nil {
 						return app, nil, nil, sdk.WrapError(sdk.NewError(sdk.ErrWrongRequest, err), "unable to decrypt deployment strategy password")
 					}

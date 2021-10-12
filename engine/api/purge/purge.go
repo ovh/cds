@@ -431,7 +431,7 @@ func DeleteArtifacts(ctx context.Context, db gorp.SqlExecutor, sharedStorage obj
 			for _, art := range wnr.Artifacts {
 				var integrationName string
 				if art.ProjectIntegrationID != nil && *art.ProjectIntegrationID > 0 {
-					projectIntegration, err := integration.LoadProjectIntegrationByID(db, *art.ProjectIntegrationID)
+					projectIntegration, err := integration.LoadProjectIntegrationByID(ctx, db, *art.ProjectIntegrationID)
 					if err != nil {
 						log.Error(ctx, "Cannot load LoadProjectIntegrationByID %s/%d", proj.Key, *art.ProjectIntegrationID)
 						continue

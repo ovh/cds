@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"net/http/httptest"
 	"testing"
 
@@ -18,14 +19,14 @@ func TestAddUpdateAndDeleteProjectIntegration(t *testing.T) {
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	u, pass := assets.InsertAdminUser(t, db)
 
-	integrationModel, err := integration.LoadModelByName(db, sdk.KafkaIntegration.Name)
+	integrationModel, err := integration.LoadModelByName(context.TODO(), db, sdk.KafkaIntegration.Name)
 	if err != nil {
-		assert.NoError(t, integration.CreateBuiltinModels(api.mustDB()))
+		assert.NoError(t, integration.CreateBuiltinModels(context.TODO(), api.mustDB()))
 		models, _ := integration.LoadModels(db)
 		assert.True(t, len(models) > 0)
 	}
 
-	integrationModel, err = integration.LoadModelByName(db, sdk.KafkaIntegration.Name)
+	integrationModel, err = integration.LoadModelByName(context.TODO(), db, sdk.KafkaIntegration.Name)
 	test.NoError(t, err)
 
 	pp := sdk.ProjectIntegration{

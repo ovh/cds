@@ -52,7 +52,7 @@ func InitiliazeDB(ctx context.Context, defaultValues sdk.DefaultValues, DBFunc f
 		return fmt.Errorf("cannot setup builtin workflow outgoing hook models: %v", err)
 	}
 
-	if err := integration.CreateBuiltinModels(DBFunc()); err != nil {
+	if err := integration.CreateBuiltinModels(ctx, DBFunc()); err != nil {
 		return fmt.Errorf("cannot setup integrations: %v", err)
 	}
 

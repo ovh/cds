@@ -43,7 +43,7 @@ func TestLoadAllShouldNotReturnAnyWorkflows(t *testing.T) {
 
 	proj, _ = project.LoadByID(db, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
-	ws, err := workflow.LoadAll(db, proj.Key)
+	ws, err := workflow.LoadAll(context.TODO(), db, proj.Key)
 	test.NoError(t, err)
 	assert.Equal(t, 0, len(ws))
 }
@@ -97,7 +97,7 @@ func TestInsertSimpleWorkflowAndExport(t *testing.T) {
 
 	assert.False(t, w1.WorkflowData.Node.Context.Mutex)
 
-	ws, err := workflow.LoadAll(db, proj.Key)
+	ws, err := workflow.LoadAll(context.TODO(), db, proj.Key)
 	test.NoError(t, err)
 	assert.Equal(t, 1, len(ws))
 
@@ -238,7 +238,7 @@ func TestUpdateWorkflowIntegration(t *testing.T) {
 	}
 	require.NoError(t, integration.InsertModel(db, &fooModel))
 	t.Cleanup(func() {
-		integration.DeleteModel(db, fooModel.ID)
+		integration.DeleteModel(context.TODO(), db, fooModel.ID)
 	})
 
 	projInt := sdk.ProjectIntegration{
@@ -1568,7 +1568,7 @@ func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 	assert.Equal(t, w.WorkflowData.Node.Context.PipelineID, w1.WorkflowData.Node.Context.PipelineID)
 	assertEqualNode(t, &w.WorkflowData.Node, &w1.WorkflowData.Node)
 
-	ws, err := workflow.LoadAll(db, proj.Key)
+	ws, err := workflow.LoadAll(context.TODO(), db, proj.Key)
 	test.NoError(t, err)
 	assert.Equal(t, 1, len(ws))
 

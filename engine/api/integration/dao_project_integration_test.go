@@ -27,7 +27,7 @@ func TestCRUDIntegration(t *testing.T) {
 	}
 	assert.NoError(t, project.Insert(db, &proj))
 
-	model, err := integration.LoadModelByNameWithClearPassword(db, sdk.KafkaIntegration.Name)
+	model, err := integration.LoadModelByNameWithClearPassword(context.TODO(), db, sdk.KafkaIntegration.Name)
 	require.NoError(t, err)
 
 	integ := sdk.ProjectIntegration{
@@ -42,19 +42,18 @@ func TestCRUDIntegration(t *testing.T) {
 	require.NoError(t, integration.InsertIntegration(db, &integ))
 	assert.Equal(t, sdk.PasswordPlaceholder, integ.Config["password"].Value)
 
-	reloadedInteg, err := integration.LoadIntegrationsByProjectID(db, proj.ID)
+	reloadedInteg, err := integration.LoadIntegrationsByProjectID(context.TODO(), db, proj.ID)
 	t.Logf("%+v", reloadedInteg)
 	require.NoError(t, err)
 	require.Len(t, reloadedInteg, 1)
 	assert.Equal(t, sdk.PasswordPlaceholder, reloadedInteg[0].Config["password"].Value)
 
-	reloadedInteg, err = integration.LoadIntegrationsByProjectIDWithClearPassword(db, proj.ID)
+	reloadedInteg, err = integration.LoadIntegrationsByProjectIDWithClearPassword(context.TODO(), db, proj.ID)
 	require.NoError(t, err)
 	require.Len(t, reloadedInteg, 1)
 	assert.Equal(t, "mypassword", reloadedInteg[0].Config["password"].Value)
 
 	require.NoError(t, integration.DeleteIntegration(db, reloadedInteg[0]))
-
 }
 
 func TestLoadAllIntegrationForAllProject(t *testing.T) {
@@ -66,7 +65,7 @@ func TestLoadAllIntegrationForAllProject(t *testing.T) {
 	key2 := sdk.RandomString(10)
 	proj2 := assets.InsertTestProject(t, db, cache, key2, key2)
 
-	model, err := integration.LoadModelByNameWithClearPassword(db, sdk.KafkaIntegration.Name)
+	model, err := integration.LoadModelByNameWithClearPassword(context.TODO(), db, sdk.KafkaIntegration.Name)
 	require.NoError(t, err)
 
 	integ1 := sdk.ProjectIntegration{

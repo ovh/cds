@@ -623,8 +623,7 @@ queueRun:
 		}
 
 		//Load workflow run
-		workflowRun, err := workflow.LoadRunByID(context.Background(), db, nodeRun.WorkflowRunID, workflow.LoadRunOptions{})
-		if err != nil {
+		if _, err := workflow.LoadRunByID(context.Background(), db, nodeRun.WorkflowRunID, workflow.LoadRunOptions{}); err != nil {
 			t.Fatal(err)
 		}
 
@@ -638,7 +637,7 @@ queueRun:
 		_, err = workflow.UpdateNodeJobRunStatus(context.TODO(), db, cache, *proj, j, sdk.StatusSuccess)
 		require.NoError(t, err)
 
-		workflowRun, err = workflow.LoadRunByID(context.Background(), db, wr.ID, workflow.LoadRunOptions{})
+		workflowRun, err := workflow.LoadRunByID(context.Background(), db, wr.ID, workflow.LoadRunOptions{})
 		require.NoError(t, err)
 		var jobRunFound bool
 	checkJobRun:

@@ -316,7 +316,7 @@ func unwrap(ctx context.Context, db gorp.SqlExecutor, p *dbProject, opts []LoadO
 		nameSplitted := strings.Split(name, "/")
 		name = nameSplitted[len(nameSplitted)-1]
 		_, end = telemetry.Span(ctx, name)
-		if err := f(db, &proj); err != nil && sdk.Cause(err) != sql.ErrNoRows {
+		if err := f(ctx, db, &proj); err != nil && sdk.Cause(err) != sql.ErrNoRows {
 			end()
 			return nil, err
 		}

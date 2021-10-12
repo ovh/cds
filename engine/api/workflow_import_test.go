@@ -3,7 +3,6 @@ package api
 import (
 	"bytes"
 	"context"
-	"github.com/ovh/cds/engine/api/integration"
 	"io/ioutil"
 	"net/http/httptest"
 	"sort"
@@ -16,6 +15,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
@@ -1141,7 +1141,7 @@ func Test_postWorkflowImportHandler_WithArtifactManager(t *testing.T) {
 	}
 	require.NoError(t, integration.InsertModel(db, &model))
 	t.Cleanup(func() {
-		integration.DeleteModel(db, model.ID)
+		integration.DeleteModel(context.TODO(), db, model.ID)
 	})
 
 	pp := &sdk.ProjectIntegration{

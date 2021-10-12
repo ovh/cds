@@ -21,17 +21,17 @@ func TestEncryptWithBuiltinKey(t *testing.T) {
 	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	content := "This is my content"
-	encryptedContent, err := project.EncryptWithBuiltinKey(db, proj.ID, "test", content)
+	encryptedContent, err := project.EncryptWithBuiltinKey(context.TODO(), db, proj.ID, "test", content)
 	test.NoError(t, err)
 	t.Logf("%s => %s", content, encryptedContent)
 
-	decryptedContent, err := project.DecryptWithBuiltinKey(db, proj.ID, encryptedContent)
+	decryptedContent, err := project.DecryptWithBuiltinKey(context.TODO(), db, proj.ID, encryptedContent)
 	test.NoError(t, err)
 	t.Logf("%s => %s", encryptedContent, decryptedContent)
 
 	assert.Equal(t, content, decryptedContent)
 
-	encryptedContent2, err := project.EncryptWithBuiltinKey(db, proj.ID, "test", content)
+	encryptedContent2, err := project.EncryptWithBuiltinKey(context.TODO(), db, proj.ID, "test", content)
 	test.NoError(t, err)
 	t.Logf("%s => %s", content, encryptedContent2)
 	assert.Equal(t, encryptedContent, encryptedContent2)

@@ -30,12 +30,12 @@ func Test_DAOVariable(t *testing.T) {
 	require.NoError(t, project.InsertVariable(db, proj.ID, v2, u))
 	assert.Equal(t, sdk.PasswordPlaceholder, v2.Value)
 
-	vs, err := project.LoadAllVariables(db, proj.ID)
+	vs, err := project.LoadAllVariables(context.TODO(), db, proj.ID)
 	require.NoError(t, err)
 	assert.Equal(t, "clear_value", vs[0].Value)
 	assert.Equal(t, sdk.PasswordPlaceholder, vs[1].Value)
 
-	vs, err = project.LoadAllVariablesWithDecrytion(db, proj.ID)
+	vs, err = project.LoadAllVariablesWithDecrytion(context.TODO(), db, proj.ID)
 	require.NoError(t, err)
 	assert.Equal(t, "clear_value", vs[0].Value)
 	assert.Equal(t, "secret_value", vs[1].Value)
@@ -57,7 +57,6 @@ func Test_DAOVariable(t *testing.T) {
 	require.NoError(t, project.DeleteVariable(db, proj.ID, v2, u))
 
 	require.NoError(t, project.DeleteAllVariables(db, proj.ID))
-
 }
 
 func Test_DAOVariableAllProjects(t *testing.T) {

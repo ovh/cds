@@ -767,7 +767,7 @@ func (a *API) Serve(ctx context.Context) error {
 		return fmt.Errorf("cannot setup builtin workflow outgoing hook models: %v", err)
 	}
 
-	if err := integration.CreateBuiltinModels(a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)()); err != nil {
+	if err := integration.CreateBuiltinModels(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)()); err != nil {
 		return fmt.Errorf("cannot setup integrations: %v", err)
 	}
 

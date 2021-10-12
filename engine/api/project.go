@@ -34,7 +34,7 @@ func (api *API) getProjectsHandler_FilterByRepo(ctx context.Context, w http.Resp
 
 	var projects sdk.Projects
 	var err error
-	var filterByRepoFunc = func(db gorp.SqlExecutor, p *sdk.Project) error {
+	var filterByRepoFunc = func(ctx context.Context, db gorp.SqlExecutor, p *sdk.Project) error {
 		//Filter the applications by repo
 		apps := []sdk.Application{}
 		for i := range p.Applications {

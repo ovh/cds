@@ -14,8 +14,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func loadAllVariables(db gorp.SqlExecutor, query gorpmapping.Query, opts ...gorpmapping.GetOptionFunc) ([]sdk.ProjectVariable, error) {
-	var ctx = context.Background()
+func loadAllVariables(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query, opts ...gorpmapping.GetOptionFunc) ([]sdk.ProjectVariable, error) {
 	var res []dbProjectVariable
 	vars := make([]sdk.ProjectVariable, 0, len(res))
 
@@ -38,25 +37,25 @@ func loadAllVariables(db gorp.SqlExecutor, query gorpmapping.Query, opts ...gorp
 }
 
 // LoadAllVariables Get all variable for the given project
-func LoadAllVariables(db gorp.SqlExecutor, projID int64) ([]sdk.ProjectVariable, error) {
+func LoadAllVariables(ctx context.Context, db gorp.SqlExecutor, projID int64) ([]sdk.ProjectVariable, error) {
 	query := gorpmapping.NewQuery(`
 		SELECT *
 		FROM project_variable
 		WHERE project_id = $1
 		ORDER BY var_name
 			  `).Args(projID)
-	return loadAllVariables(db, query)
+	return loadAllVariables(ctx, db, query)
 }
 
 // LoadAllVariablesWithDecrytion Get all variable for the given project, it also decrypt all the secure content
-func LoadAllVariablesWithDecrytion(db gorp.SqlExecutor, projID int64) ([]sdk.ProjectVariable, error) {
+func LoadAllVariablesWithDecrytion(ctx context.Context, db gorp.SqlExecutor, projID int64) ([]sdk.ProjectVariable, error) {
 	query := gorpmapping.NewQuery(`
 		SELECT *
 		FROM project_variable
 		WHERE project_id = $1
 		ORDER BY var_name
 			  `).Args(projID)
-	return loadAllVariables(db, query, gorpmapping.GetOptions.WithDecryption)
+	return loadAllVariables(ctx, db, query, gorpmapping.GetOptions.WithDecryption)
 }
 
 func loadVariable(db gorp.SqlExecutor, q gorpmapping.Query, opts ...gorpmapping.GetOptionFunc) (*sdk.ProjectVariable, error) {

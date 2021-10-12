@@ -7,8 +7,8 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/api/environment"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 	v2 "github.com/ovh/cds/sdk/exportentities/v2"
@@ -113,7 +113,7 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj sdk.
 		if a.FromRepository != wf.FromRepository { // don't export if coming from an other repository
 			continue
 		}
-		app, err := application.ExportApplication(db, a, encryptFunc, fmt.Sprintf("appID:%d", a.ID))
+		app, err := application.ExportApplication(ctx, db, a, encryptFunc, fmt.Sprintf("appID:%d", a.ID))
 		if err != nil {
 			return wp, sdk.WrapError(err, "unable to export app %s", a.Name)
 		}
@@ -124,7 +124,7 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj sdk.
 		if e.FromRepository != wf.FromRepository { // don't export if coming from an other repository
 			continue
 		}
-		env, err := environment.ExportEnvironment(db, e, encryptFunc, fmt.Sprintf("env:%d", e.ID))
+		env, err := environment.ExportEnvironment(ctx, db, e, encryptFunc, fmt.Sprintf("env:%d", e.ID))
 		if err != nil {
 			return wp, sdk.WrapError(err, "unable to export env %s", e.Name)
 		}

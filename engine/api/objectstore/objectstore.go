@@ -112,7 +112,7 @@ func GetDriver(ctx context.Context, db gorp.SqlExecutor, sharedStorage Driver, p
 
 // initDriver init a storage driver from a project integration
 func initDriver(ctx context.Context, db gorp.SqlExecutor, projectKey, integrationName string) (Driver, error) {
-	projectIntegration, err := integration.LoadProjectIntegrationByNameWithClearPassword(db, projectKey, integrationName)
+	projectIntegration, err := integration.LoadProjectIntegrationByNameWithClearPassword(ctx, db, projectKey, integrationName)
 	if err != nil {
 		return nil, sdk.WrapError(err, "Cannot load projectIntegration %s/%s", projectKey, integrationName)
 	}

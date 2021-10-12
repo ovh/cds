@@ -81,7 +81,7 @@ func ParseAndImport(ctx context.Context, db gorpmapper.SqlExecutorWithTx, proj s
 		case "":
 			vtype = sdk.StringVariable
 		case sdk.SecretVariable:
-			secret, err := decryptFunc(db, proj.ID, value)
+			secret, err := decryptFunc(ctx, db, proj.ID, value)
 			if err != nil {
 				return env, nil, nil, sdk.WrapError(err, "Unable to decrypt secret variable")
 			}
@@ -124,7 +124,7 @@ func ParseAndImport(ctx context.Context, db gorpmapper.SqlExecutorWithTx, proj s
 			keepOldValue = true
 		}
 
-		kk, err := keys.Parse(db, proj.ID, kname, kval, decryptFunc)
+		kk, err := keys.Parse(ctx, db, proj.ID, kname, kval, decryptFunc)
 		if err != nil {
 			return env, nil, nil, sdk.WrapError(err, "Unable to parse key")
 		}

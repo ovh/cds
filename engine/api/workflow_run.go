@@ -1216,7 +1216,7 @@ func saveWorkflowRunSecrets(ctx context.Context, db *gorp.DbMap, projID int64, w
 	}
 
 	for ppID := range ppIDs {
-		projectIntegration, err := integration.LoadProjectIntegrationByIDWithClearPassword(tx, ppID)
+		projectIntegration, err := integration.LoadProjectIntegrationByIDWithClearPassword(ctx, tx, ppID)
 		if err != nil {
 			return err
 		}
@@ -1384,7 +1384,7 @@ func (api *API) getDownloadArtifactHandler() service.Handler {
 
 		var integrationName string
 		if art.ProjectIntegrationID != nil && *art.ProjectIntegrationID > 0 {
-			projectIntegration, err := integration.LoadProjectIntegrationByID(api.mustDB(), *art.ProjectIntegrationID)
+			projectIntegration, err := integration.LoadProjectIntegrationByID(ctx, api.mustDB(), *art.ProjectIntegrationID)
 			if err != nil {
 				return sdk.WrapError(err, "cannot load project integration %s/%d", proj.Key, *art.ProjectIntegrationID)
 			}
@@ -1509,7 +1509,7 @@ func (api *API) getWorkflowRunArtifactsHandler() service.Handler {
 
 					var integrationName string
 					if art.ProjectIntegrationID != nil && *art.ProjectIntegrationID > 0 {
-						projectIntegration, err := integration.LoadProjectIntegrationByID(api.mustDB(), *art.ProjectIntegrationID)
+						projectIntegration, err := integration.LoadProjectIntegrationByID(ctx, api.mustDB(), *art.ProjectIntegrationID)
 						if err != nil {
 							log.Error(ctx, "Cannot load LoadProjectIntegrationByID %s/%d: err: %v", key, *art.ProjectIntegrationID, err)
 							return

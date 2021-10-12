@@ -320,7 +320,7 @@ func (api *API) updateAsCodeEnvironmentHandler() service.Handler {
 
 		u := getAPIConsumer(ctx)
 		env.ProjectID = proj.ID
-		envExported, err := environment.ExportEnvironment(tx, env, project.EncryptWithBuiltinKey, fmt.Sprintf("env:%d:%s", envDB.ID, branch))
+		envExported, err := environment.ExportEnvironment(ctx, tx, env, project.EncryptWithBuiltinKey, fmt.Sprintf("env:%d:%s", envDB.ID, branch))
 		if err != nil {
 			return err
 		}

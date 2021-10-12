@@ -28,12 +28,12 @@ func (api *API) getProjectIntegrationHandler() service.Handler {
 			if !isService(ctx) && !isWorker(ctx) {
 				return sdk.WithStack(sdk.ErrForbidden)
 			}
-			integ, err = integration.LoadProjectIntegrationByNameWithClearPassword(api.mustDB(), projectKey, integrationName)
+			integ, err = integration.LoadProjectIntegrationByNameWithClearPassword(ctx, api.mustDB(), projectKey, integrationName)
 			if err != nil {
 				return sdk.WrapError(err, "Cannot load integration %s/%s", projectKey, integrationName)
 			}
 		} else {
-			integ, err = integration.LoadProjectIntegrationByName(api.mustDB(), projectKey, integrationName)
+			integ, err = integration.LoadProjectIntegrationByName(ctx, api.mustDB(), projectKey, integrationName)
 			if err != nil {
 				return sdk.WrapError(err, "Cannot load integration %s/%s", projectKey, integrationName)
 			}
@@ -65,7 +65,7 @@ func (api *API) putProjectIntegrationHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot load project")
 		}
 
-		ppDB, errP := integration.LoadProjectIntegrationByNameWithClearPassword(api.mustDB(), projectKey, integrationName)
+		ppDB, errP := integration.LoadProjectIntegrationByNameWithClearPassword(ctx, api.mustDB(), projectKey, integrationName)
 		if errP != nil {
 			return sdk.WrapError(errP, "putProjectIntegrationHandler> Cannot load integration %s for project %s", integrationName, projectKey)
 		}
@@ -118,7 +118,7 @@ func (api *API) putProjectIntegrationHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrWrongRequest, "postProjectIntegrationHandler> model not found")
 		}
 
-		if err := integration.UpdateIntegration(tx, projectIntegration); err != nil {
+		if err := integration.UpdateIntegration(ctx, tx, projectIntegration); err != nil {
 			return sdk.WrapError(err, "Cannot update integration")
 		}
 

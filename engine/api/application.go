@@ -529,7 +529,7 @@ func (api *API) updateAsCodeApplicationHandler() service.Handler {
 
 		u := getAPIConsumer(ctx)
 		a.ProjectID = proj.ID
-		app, err := application.ExportApplication(tx, a, project.EncryptWithBuiltinKey, fmt.Sprintf("app:%d:%s", appDB.ID, branch))
+		app, err := application.ExportApplication(ctx, tx, a, project.EncryptWithBuiltinKey, fmt.Sprintf("app:%d:%s", appDB.ID, branch))
 		if err != nil {
 			return sdk.WrapError(err, "unable to export app %s", a.Name)
 		}

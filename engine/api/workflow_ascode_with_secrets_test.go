@@ -58,7 +58,7 @@ func Test_RunNonDefaultBranchWithSecrets(t *testing.T) {
 		Name:  "app-password",
 		Value: "my application secret",
 	}
-	encryptedAppVariable, errA := project.EncryptWithBuiltinKey(api.mustDB(), proj.ID, appVariable.Name, appVariable.Value)
+	encryptedAppVariable, errA := project.EncryptWithBuiltinKey(context.TODO(), api.mustDB(), proj.ID, appVariable.Name, appVariable.Value)
 	require.NoError(t, errA)
 
 	k, errK := keys.GenerateSSHKey("app-key")
@@ -67,17 +67,17 @@ func Test_RunNonDefaultBranchWithSecrets(t *testing.T) {
 		Name:    "app-key",
 		Private: k.Private,
 	}
-	encryptedAppKey, errB := project.EncryptWithBuiltinKey(api.mustDB(), proj.ID, appKey.Name, appKey.Private)
+	encryptedAppKey, errB := project.EncryptWithBuiltinKey(context.TODO(), api.mustDB(), proj.ID, appKey.Name, appKey.Private)
 	require.NoError(t, errB)
 
-	encryptedAppIntegration, errC := project.EncryptWithBuiltinKey(api.mustDB(), proj.ID, "token", "my application integration token")
+	encryptedAppIntegration, errC := project.EncryptWithBuiltinKey(context.TODO(), api.mustDB(), proj.ID, "token", "my application integration token")
 	require.NoError(t, errC)
 
 	envVariable := sdk.Variable{
 		Name:  "env-password",
 		Value: "my environment secret",
 	}
-	encryptedEnvVariable, errD := project.EncryptWithBuiltinKey(api.mustDB(), proj.ID, envVariable.Name, envVariable.Value)
+	encryptedEnvVariable, errD := project.EncryptWithBuiltinKey(context.TODO(), api.mustDB(), proj.ID, envVariable.Name, envVariable.Value)
 	require.NoError(t, errD)
 
 	ke, errKe := keys.GenerateSSHKey("env-key")
@@ -86,7 +86,7 @@ func Test_RunNonDefaultBranchWithSecrets(t *testing.T) {
 		Name:    "env-key",
 		Private: ke.Private,
 	}
-	encryptedEnvKey, errE := project.EncryptWithBuiltinKey(api.mustDB(), proj.ID, envKey.Name, envKey.Private)
+	encryptedEnvKey, errE := project.EncryptWithBuiltinKey(context.TODO(), api.mustDB(), proj.ID, envKey.Name, envKey.Private)
 	require.NoError(t, errE)
 
 	UUID := sdk.UUID()

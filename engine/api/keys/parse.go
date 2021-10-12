@@ -12,15 +12,15 @@ import (
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
-type DecryptFunc func(gorp.SqlExecutor, int64, string) (string, error)
+type DecryptFunc func(context.Context, gorp.SqlExecutor, int64, string) (string, error)
 
 // Parse and decrypts an exported key
-func Parse(db gorp.SqlExecutor, projID int64, kname string, kval exportentities.KeyValue, decryptFunc DecryptFunc) (*sdk.Key, error) {
+func Parse(ctx context.Context, db gorp.SqlExecutor, projID int64, kname string, kval exportentities.KeyValue, decryptFunc DecryptFunc) (*sdk.Key, error) {
 	k := new(sdk.Key)
 	k.Type = sdk.KeyType(kval.Type)
 	k.Name = kname
 	if kval.Value != "" {
-		privateKey, err := decryptFunc(db, projID, kval.Value)
+		privateKey, err := decryptFunc(ctx, db, projID, kval.Value)
 		if err != nil {
 			return nil, sdk.WrapError(err, "Unable to decrypt secret")
 		}
@@ -68,7 +68,7 @@ func Parse(db gorp.SqlExecutor, projID int64, kname string, kval exportentities.
 		}
 		k = &ktemp
 	} else {
-		log.Debug(context.Background(), "keys.Parse> Skip key regeneration")
+		log.Debug(ctx, "keys.Parse> Skip key regeneration")
 	}
 	return k, nil
 }

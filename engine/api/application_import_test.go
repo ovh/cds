@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"io/ioutil"
 	"net/http/httptest"
 	"strings"
@@ -654,7 +655,7 @@ func Test_postApplicationImportHandler_ExistingAppWithDeploymentStrategy(t *test
 		},
 	}
 	test.NoError(t, integration.InsertModel(db, &pf))
-	defer func() { _ = integration.DeleteModel(db, pf.ID) }()
+	defer func() { _ = integration.DeleteModel(context.TODO(), db, pf.ID) }()
 
 	pp := sdk.ProjectIntegration{
 		Model:              pf,
@@ -765,7 +766,7 @@ func Test_postApplicationImportHandler_DontOverrideDeploymentPasswordIfNotGiven(
 		},
 	}
 	test.NoError(t, integration.InsertModel(db, &pf))
-	defer func() { _ = integration.DeleteModel(db, pf.ID) }()
+	defer func() { _ = integration.DeleteModel(context.TODO(), db, pf.ID) }()
 
 	pp := sdk.ProjectIntegration{
 		Model:              pf,

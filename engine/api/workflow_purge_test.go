@@ -162,7 +162,7 @@ func Test_Purge_DeleteArtifactsFromRepositoryManager(t *testing.T) {
 	p := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	w := assets.InsertTestWorkflow(t, db, api.Cache, p, sdk.RandomString(10))
 
-	integrationModel, err := integration.LoadModelByName(db, sdk.ArtifactoryIntegration.Name)
+	integrationModel, err := integration.LoadModelByName(context.TODO(), db, sdk.ArtifactoryIntegration.Name)
 	require.NoError(t, err)
 
 	integrationConfig := integrationModel.DefaultConfig.Clone()

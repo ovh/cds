@@ -56,8 +56,8 @@ func DeleteLinksGroupProjectForProjectID(db gorp.SqlExecutor, projectID int64) e
 }
 
 // LoadGroupsIntoProject retrieves all groups related to project
-func LoadGroupsIntoProject(db gorp.SqlExecutor, proj *sdk.Project) error {
-	links, err := LoadLinksGroupProjectForProjectIDs(context.Background(), db, []int64{proj.ID})
+func LoadGroupsIntoProject(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project) error {
+	links, err := LoadLinksGroupProjectForProjectIDs(ctx, db, []int64{proj.ID})
 	if err != nil {
 		return err
 	}
@@ -69,7 +69,7 @@ func LoadGroupsIntoProject(db gorp.SqlExecutor, proj *sdk.Project) error {
 		groupIDsMap[l.GroupID] = l.Role
 	}
 
-	groups, err := LoadAllByIDs(context.Background(), db, groupIDs)
+	groups, err := LoadAllByIDs(ctx, db, groupIDs)
 	if err != nil {
 		return err
 	}

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"net/http/httptest"
 	"testing"
 
@@ -46,8 +47,8 @@ func Test_postIntegrationModelHandler(t *testing.T) {
 	router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 201, w.Code)
 
-	model, _ = integration.LoadModelByName(db, model.Name)
-	test.NoError(t, integration.DeleteModel(db, model.ID))
+	model, _ = integration.LoadModelByName(context.TODO(), db, model.Name)
+	test.NoError(t, integration.DeleteModel(context.TODO(), db, model.ID))
 }
 
 func Test_putIntegrationModelHandler(t *testing.T) {
@@ -73,7 +74,7 @@ func Test_putIntegrationModelHandler(t *testing.T) {
 	router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 
-	test.NoError(t, integration.DeleteModel(db, model.ID))
+	test.NoError(t, integration.DeleteModel(context.TODO(), db, model.ID))
 }
 
 func Test_deleteIntegrationModelHandler(t *testing.T) {
