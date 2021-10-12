@@ -15,6 +15,7 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -159,9 +160,12 @@ retry:
 		if code == 401 {
 			nbError++
 			if nbError == 60 {
+				log.Warn(ctx, "too many http code 401 returned on signin, waiting for 1 minute")
 				time.Sleep(time.Minute)
 				goto retry
 			}
+		} else if code == 403 {
+			log.Warn(ctx, "403 returned on signin call")
 		}
 		return nil, nil, err
 	}
