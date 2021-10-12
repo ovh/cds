@@ -17,5 +17,5 @@ require (
 	github.com/stretchr/testify v1.6.1
 	github.com/yesnault/go-imap v0.0.0-20160710142244-eb9bbb66bd7b // indirect
 	gopkg.in/testfixtures.v2 v2.6.0 // indirect
-	gopkg.in/yaml.v2 v2.3.0
+	gopkg.in/yaml.v2 v2.4.0
 )

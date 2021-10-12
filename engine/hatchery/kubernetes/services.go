@@ -44,6 +44,10 @@ func (h *HatcheryKubernetes) getServicesLogs(ctx context.Context) error {
 			log.Error(ctx, "getServicesLogs> labels is nil")
 			continue
 		}
+		annotations := pod.GetAnnotations()
+		if annotations == nil {
+			log.Error(ctx, "annotations is nil")
+		}
 
 		// If no job identifier, no service on the pod
 		jobIdentifiers := getJobIdentiers(labels)
@@ -70,7 +74,6 @@ func (h *HatcheryKubernetes) getServicesLogs(ctx context.Context) error {
 				continue
 			}
 			logsOpts := apiv1.PodLogOptions{SinceSeconds: &sinceSeconds, Container: container.Name, Timestamps: true}
-
 			logs, err := h.kubeClient.PodGetRawLogs(ctx, h.Config.Namespace, podName, &logsOpts)
 			if err != nil {
 				log.Error(ctx, "getServicesLogs> cannot get logs for container %s in pod %s, err : %v", container.Name, podName, err)
@@ -94,7 +97,7 @@ func (h *HatcheryKubernetes) getServicesLogs(ctx context.Context) error {
 					WorkflowID:   jobIdentifiers.WorkflowID,
 					RunID:        jobIdentifiers.RunID,
 					NodeRunName:  labels[hatchery.LabelServiceNodeRunName],
-					JobName:      labels[hatchery.LabelServiceJobName],
+					JobName:      annotations[hatchery.LabelServiceJobName],
 					JobID:        jobIdentifiers.JobID,
 					NodeRunID:    jobIdentifiers.NodeRunID,
 				},

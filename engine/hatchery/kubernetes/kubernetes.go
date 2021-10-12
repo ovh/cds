@@ -75,7 +75,7 @@ func (h *HatcheryKubernetes) ApplyConfiguration(cfg interface{}) error {
 	var ok bool
 	h.Config, ok = cfg.(HatcheryConfiguration)
 	if !ok {
-		return fmt.Errorf("Invalid configuration")
+		return sdk.WithStack(fmt.Errorf("invalid configuration"))
 	}
 
 	var err error
@@ -154,7 +154,7 @@ func (h *HatcheryKubernetes) WorkerModelSecretList(m sdk.Model) (sdk.WorkerModel
 
 // CanSpawn return wether or not hatchery can spawn model.
 // requirements are not supported
-func (h *HatcheryKubernetes) CanSpawn(ctx context.Context, model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
+func (h *HatcheryKubernetes) CanSpawn(ctx context.Context, _ *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
 	// Service and Hostname requirement are not supported
 	for _, r := range requirements {
 		if r.Type == sdk.HostnameRequirement {
@@ -262,6 +262,7 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 				LABEL_WORKER_MODEL:  strings.ToLower(spawnArgs.Model.Name),
 				LABEL_HATCHERY_NAME: h.Configuration().Name,
 			},
+			Annotations: map[string]string{},
 		},
 		Spec: apiv1.PodSpec{
 			RestartPolicy:                 apiv1.RestartPolicyNever,
@@ -350,15 +351,15 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 		podSchema.ObjectMeta.Labels[hatchery.LabelServiceWorkflowID] = fmt.Sprintf("%d", spawnArgs.WorkflowID)
 		podSchema.ObjectMeta.Labels[hatchery.LabelServiceRunID] = fmt.Sprintf("%d", spawnArgs.RunID)
 		podSchema.ObjectMeta.Labels[hatchery.LabelServiceNodeRunName] = spawnArgs.NodeRunName
-		podSchema.ObjectMeta.Labels[hatchery.LabelServiceJobName] = spawnArgs.JobName
+		podSchema.ObjectMeta.Annotations[hatchery.LabelServiceJobName] = spawnArgs.JobName
 
 		podSchema.Spec.Containers = append(podSchema.Spec.Containers, servContainer)
 		podSchema.Spec.HostAliases[0].Hostnames[i+1] = strings.ToLower(serv.Name)
 	}
 
-	_, err := h.kubeClient.PodCreate(ctx, h.Config.Namespace, &podSchema)
+	_, err := h.kubeClient.PodCreate(ctx, h.Config.Namespace, &podSchema, metav1.CreateOptions{})
 	log.Debug(ctx, "hatchery> kubernetes> SpawnWorker> %s > Pod created", spawnArgs.WorkerName)
-	return err
+	return sdk.WithStack(err)
 }
 
 func (h *HatcheryKubernetes) GetLogger() *logrus.Logger {
@@ -384,7 +385,7 @@ func (h *HatcheryKubernetes) WorkersStarted(ctx context.Context) []string {
 }
 
 // NeedRegistration return true if worker model need regsitration
-func (h *HatcheryKubernetes) NeedRegistration(ctx context.Context, m *sdk.Model) bool {
+func (h *HatcheryKubernetes) NeedRegistration(_ context.Context, m *sdk.Model) bool {
 	if m.NeedRegistration || m.LastRegistration.Unix() < m.UserLastModified.Unix() {
 		return true
 	}
