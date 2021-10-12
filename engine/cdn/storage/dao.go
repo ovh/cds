@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -155,6 +156,17 @@ func LoadAllSynchronizedItemIDs(db gorp.SqlExecutor, bufferUnitID string, maxSto
 		return nil, sdk.WrapError(err, "unable to get item ids")
 	}
 	return itemIDs, nil
+}
+
+func LoadLastItemUnitByJobUnitType(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, unitID string, jobRunID int64, cdnType sdk.CDNItemType, opts ...gorpmapper.GetOptionFunc) (*sdk.CDNItemUnit, error) {
+	url := `
+		SELECT sui.* FROM storage_unit_item  sui
+		JOIN item on item.id = sui.item_id
+		WHERE item.api_ref->>'node_run_job_id' = $1 AND sui.unit_id= $2  AND sui.type = $3
+        ORDER BY item.api_ref->>'step_order' DESC LIMIT 1
+	`
+	query := gorpmapper.NewQuery(url).Args(strconv.FormatInt(jobRunID, 10), unitID, cdnType)
+	return getItemUnit(ctx, m, db, query, opts...)
 }
 
 func LoadItemUnitByUnit(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, unitID string, itemID string, opts ...gorpmapper.GetOptionFunc) (*sdk.CDNItemUnit, error) {

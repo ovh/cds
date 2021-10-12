@@ -16,6 +16,7 @@ var _ io.ReadCloser = new(Reader)
 
 type Reader struct {
 	Store         cache.ScoredSetStore
+	ApiRefHash    string
 	ItemID        string
 	PrefixKey     string
 	nextIndex     uint
@@ -54,6 +55,7 @@ func (r *Reader) get(from uint, to uint) ([]Line, error) {
 
 		// Trim to remove separator
 		ls[i].Value = strings.TrimPrefix(ls[i].Value, "#")
+
 	}
 	return ls, nil
 }

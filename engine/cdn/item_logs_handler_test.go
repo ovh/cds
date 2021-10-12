@@ -292,10 +292,15 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 	require.NoError(t, s.initWebsocket())
 	ts := httptest.NewServer(s.Router.Mux)
 
+	_, err := db.Exec("DELETE FROM storage_unit_item")
+	require.NoError(t, err)
+	_, err = db.Exec("DELETE FROM ITEM")
+	require.NoError(t, err)
+
 	s.Client = cdsclient.New(cdsclient.Config{Host: "http://lolcat.api", InsecureSkipVerifyTLS: false})
 	gock.InterceptClient(s.Client.(cdsclient.Raw).HTTPClient())
 	t.Cleanup(gock.Off)
-	gock.New("http://lolcat.api").Get("/project/" + projectKey + "/workflows/1/type/step-log/access").Reply(http.StatusOK).JSON(nil)
+	gock.New("http://lolcat.api").Get("/project/" + projectKey + "/workflows/1/type/step-log/access").Times(1).Reply(http.StatusOK).JSON(nil)
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	t.Cleanup(cancel)
@@ -309,7 +314,7 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 		NodeRunID:    1,
 		NodeRunName:  "MyPipeline",
 		JobName:      "MyJob",
-		JobID:        1,
+		JobID:        123456789,
 		Worker: &cdn.SignatureWorker{
 			StepName:  "script1",
 			StepOrder: 1,
@@ -331,22 +336,6 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 	})
 	jwtTokenRaw, err := signer.SignJWT(jwtToken)
 	require.NoError(t, err)
-
-	apiRef := sdk.CDNLogAPIRef{
-		ProjectKey:     signature.ProjectKey,
-		WorkflowName:   signature.WorkflowName,
-		WorkflowID:     signature.WorkflowID,
-		RunID:          signature.RunID,
-		NodeRunName:    signature.NodeRunName,
-		NodeRunID:      signature.NodeRunID,
-		NodeRunJobName: signature.JobName,
-		NodeRunJobID:   signature.JobID,
-		StepName:       signature.Worker.StepName,
-		StepOrder:      signature.Worker.StepOrder,
-	}
-	apiRefHashU, err := hashstructure.Hash(apiRef, nil)
-	require.NoError(t, err)
-	apiRefHash := strconv.FormatUint(apiRefHashU, 10)
 
 	var messageCounter int64
 	sendMessage := func() {
@@ -385,9 +374,7 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 		chanErrorReceived <- client.RequestWebsocket(ctx, sdk.NewGoRoutines(ctx), uri, chanMsgToSend, chanMsgReceived, chanErrorReceived)
 	}()
 	buf, err := json.Marshal(sdk.CDNStreamFilter{
-		ItemType: sdk.CDNTypeItemStepLog,
-		APIRef:   apiRefHash,
-		Offset:   0,
+		JobRunID: signature.JobID,
 	})
 	require.NoError(t, err)
 	chanMsgToSend <- buf
@@ -443,15 +430,13 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 		chanErrorReceived <- client.RequestWebsocket(ctx, sdk.NewGoRoutines(ctx), uri, chanMsgToSend, chanMsgReceived, chanErrorReceived)
 	}()
 	buf, err = json.Marshal(sdk.CDNStreamFilter{
-		ItemType: sdk.CDNTypeItemStepLog,
-		APIRef:   apiRefHash,
-		Offset:   15,
+		JobRunID: signature.JobID,
 	})
 	require.NoError(t, err)
 	chanMsgToSend <- buf
 
 	lines = make([]redis.Line, 0)
-	for ctx.Err() == nil && len(lines) < 5 {
+	for ctx.Err() == nil && len(lines) < 10 {
 		select {
 		case <-ctx.Done():
 			break
@@ -465,9 +450,9 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 		}
 	}
 
-	require.Len(t, lines, 5)
-	require.Equal(t, "message 15\n", lines[0].Value)
-	require.Equal(t, int64(15), lines[0].Number)
-	require.Equal(t, "message 19\n", lines[4].Value)
-	require.Equal(t, int64(19), lines[4].Number)
+	require.Len(t, lines, 10)
+	require.Equal(t, "message 10\n", lines[0].Value)
+	require.Equal(t, int64(10), lines[0].Number)
+	require.Equal(t, "message 19\n", lines[9].Value)
+	require.Equal(t, int64(19), lines[9].Number)
 }
