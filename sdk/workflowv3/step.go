@@ -25,6 +25,7 @@ type Step struct {
 	Checkout                  *exportentities.StepCheckout         `json:"checkout,omitempty" yaml:"checkout,omitempty"`
 	InstallKey                *exportentities.StepInstallKey       `json:"installKey,omitempty" yaml:"installKey,omitempty"`
 	Deploy                    *exportentities.StepDeploy           `json:"deploy,omitempty" yaml:"deploy,omitempty"`
+	Promote                   *exportentities.StepPromote          `json:"promote,omitempty" yaml:"promote,omitempty"`
 }
 
 func (s Step) MarshalJSON() ([]byte, error) {
@@ -149,6 +150,9 @@ func (s Step) Validate(w Workflow) (ExternalDependencies, error) {
 	}
 	if s.Coverage != nil {
 		actionTypes = append(actionTypes, "coverage")
+	}
+	if s.Promote != nil {
+		actionTypes = append(actionTypes, "promote")
 	}
 	for aName := range s.StepCustom {
 		actionTypes = append(actionTypes, aName)
