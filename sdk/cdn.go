@@ -2,7 +2,7 @@ package sdk
 
 import (
 	"database/sql/driver"
-	json "encoding/json"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -369,22 +369,18 @@ const (
 )
 
 type CDNWSEvent struct {
-	ItemType CDNItemType `json:"item_type"`
-	APIRef   string      `json:"api_ref"`
+	ItemType   CDNItemType `json:"item_type"`
+	JobRunID   int64       `json:"job_run_id"`
+	ItemUnitID string      `json:"new_item_unit_id"`
 }
 
 type CDNStreamFilter struct {
-	ItemType CDNItemType `json:"item_type"`
-	APIRef   string      `json:"api_ref"`
-	Offset   int64       `json:"offset"`
+	JobRunID int64 `json:"job_run_id"`
 }
 
 func (f CDNStreamFilter) Validate() error {
-	if !f.ItemType.IsLog() {
-		return NewErrorFrom(ErrWrongRequest, "invalid item log type")
-	}
-	if f.APIRef == "" {
-		return NewErrorFrom(ErrWrongRequest, "invalid given api ref")
+	if f.JobRunID == 0 {
+		return NewErrorFrom(ErrWrongRequest, "invalid given job run identifier")
 	}
 	return nil
 }

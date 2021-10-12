@@ -29,12 +29,12 @@ func (b *Broker) Init(ctx context.Context, gorts *sdk.GoRoutines, pubSub cache.P
 	})
 
 	gorts.Run(ctx, "websocket.Broker.Init.start", func(ctx context.Context) {
-		b.start(ctx, gorts)
+		b.start(ctx)
 	})
 }
 
 // Start the broker
-func (b *Broker) start(ctx context.Context, gorts *sdk.GoRoutines) {
+func (b *Broker) start(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():

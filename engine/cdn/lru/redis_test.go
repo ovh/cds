@@ -66,13 +66,13 @@ func TestRedisLRU(t *testing.T) {
 	require.Equal(t, int64(45), size)
 
 	// Get first item
-	reader1 := r.NewReader(item1.ID, sdk.CDNReaderFormatText, 0, 2, 0)
+	reader1 := r.NewReader(item1, sdk.CDNReaderFormatText, 0, 2, 0)
 	buf1 := new(strings.Builder)
 	_, err = io.Copy(buf1, reader1)
 	require.NoError(t, reader1.Close())
 	require.NoError(t, err)
 	require.Equal(t, "this is the first line\nthis is the second line\n", buf1.String())
-	reader2 := r.NewReader(item1.ID, sdk.CDNReaderFormatText, 0, 0, 0)
+	reader2 := r.NewReader(item1, sdk.CDNReaderFormatText, 0, 0, 0)
 	buf2 := new(strings.Builder)
 	_, err = io.Copy(buf2, reader2)
 	require.NoError(t, reader2.Close())
@@ -83,7 +83,7 @@ func TestRedisLRU(t *testing.T) {
 	writer2 := r.NewWriter(item2.ID)
 	_, err = io.Copy(writer2, strings.NewReader("this is the first line\nthis is the second line"))
 	require.NoError(t, err)
-	reader3 := r.NewReader(item2.ID, sdk.CDNReaderFormatText, 0, 0, 0)
+	reader3 := r.NewReader(item2, sdk.CDNReaderFormatText, 0, 0, 0)
 	buf3 := new(strings.Builder)
 	_, err = io.Copy(buf3, reader3)
 	require.NoError(t, reader3.Close())
@@ -91,7 +91,7 @@ func TestRedisLRU(t *testing.T) {
 	require.Equal(t, "this is the first line\n", buf3.String())
 	// close the writer should add the last line
 	require.NoError(t, writer2.Close())
-	reader4 := r.NewReader(item2.ID, sdk.CDNReaderFormatText, 0, 0, 0)
+	reader4 := r.NewReader(item2, sdk.CDNReaderFormatText, 0, 0, 0)
 	buf4 := new(strings.Builder)
 	_, err = io.Copy(buf4, reader4)
 	require.NoError(t, reader4.Close())

@@ -8,23 +8,23 @@ import (
 
 // This is the buitin integration model
 const (
-	KafkaIntegrationModel         = "Kafka"
-	RabbitMQIntegrationModel      = "RabbitMQ"
-	OpenstackIntegrationModel     = "Openstack"
-	AWSIntegrationModel           = "AWS"
-	DefaultStorageIntegrationName = "shared.infra"
-	ArtifactManagerModel          = "ArtifactManager"
+	KafkaIntegrationModel           = "Kafka"
+	RabbitMQIntegrationModel        = "RabbitMQ"
+	OpenstackIntegrationModel       = "Openstack"
+	AWSIntegrationModel             = "AWS"
+	DefaultStorageIntegrationName   = "shared.infra"
+	ArtifactoryIntegrationModelName = "Artifactory"
 
-	ArtifactManagerConfigPlatform              = "platform"
-	ArtifactManagerConfigURL                   = "url"
-	ArtifactManagerConfigTokenName             = "token.name"
-	ArtifactManagerConfigToken                 = "token"
-	ArtifactManagerConfigReleaseToken          = "release.token"
-	ArtifactManagerConfigCdsRepository         = "cds.repository"
-	ArtifactProjectKey                         = "project.key"
-	ArtifactManagerConfigPromotionLowMaturity  = "promotion.maturity.low"
-	ArtifactManagerConfigPromotionHighMaturity = "promotion.maturity.high"
-	ArtifactManagerConfigBuildInfoPrefix       = "build.info.prefix"
+	ArtifactoryConfigPlatform              = "platform"
+	ArtifactoryConfigURL                   = "url"
+	ArtifactoryConfigTokenName             = "token.name"
+	ArtifactoryConfigToken                 = "token"
+	ArtifactoryConfigReleaseToken          = "release.token"
+	ArtifactoryConfigCdsRepository         = "cds.repository"
+	ArtifactoryConfigProjectKey            = "project.key"
+	ArtifactoryConfigPromotionLowMaturity  = "promotion.maturity.low"
+	ArtifactoryConfigPromotionHighMaturity = "promotion.maturity.high"
+	ArtifactoryConfigBuildInfoPrefix       = "build.info.prefix"
 )
 
 // Here are the default plateform models
@@ -34,7 +34,7 @@ var (
 		&RabbitMQIntegration,
 		&OpenstackIntegration,
 		&AWSIntegration,
-		&ArtifactManagerIntegration,
+		&ArtifactoryIntegration,
 	}
 	// KafkaIntegration represents a kafka integration
 	KafkaIntegration = IntegrationModel{
@@ -117,42 +117,41 @@ var (
 		Disabled: false,
 		Hook:     false,
 	}
-	// ArtifactManagerIntegration represents an artifact manager integration (like artifactory)
-	ArtifactManagerIntegration = IntegrationModel{
-		Name:       ArtifactManagerModel,
+	// ArtifactoryIntegration represent integration with artifactory
+	ArtifactoryIntegration = IntegrationModel{
+		Name:       ArtifactoryIntegrationModelName,
 		Author:     "CDS",
-		Identifier: "github.com/ovh/cds/integration/builtin/artifact-manager",
+		Identifier: "github.com/ovh/cds/integration/builtin/artifactory",
 		Icon:       "",
 		DefaultConfig: IntegrationConfig{
-			ArtifactManagerConfigPlatform: IntegrationConfigValue{
-				Type:        IntegrationConfigTypeString,
-				Description: "Only 'artifactory' is implemented",
-			},
-			ArtifactManagerConfigURL: IntegrationConfigValue{
+			ArtifactoryConfigPlatform: IntegrationConfigValue{
 				Type: IntegrationConfigTypeString,
 			},
-			ArtifactManagerConfigTokenName: IntegrationConfigValue{
+			ArtifactoryConfigURL: IntegrationConfigValue{
 				Type: IntegrationConfigTypeString,
 			},
-			ArtifactManagerConfigToken: IntegrationConfigValue{
+			ArtifactoryConfigTokenName: IntegrationConfigValue{
+				Type: IntegrationConfigTypeString,
+			},
+			ArtifactoryConfigToken: IntegrationConfigValue{
 				Type: IntegrationConfigTypePassword,
 			},
-			ArtifactManagerConfigReleaseToken: IntegrationConfigValue{
+			ArtifactoryConfigReleaseToken: IntegrationConfigValue{
 				Type: IntegrationConfigTypePassword,
 			},
-			ArtifactProjectKey: IntegrationConfigValue{
+			ArtifactoryConfigProjectKey: IntegrationConfigValue{
 				Type: IntegrationConfigTypeString,
 			},
-			ArtifactManagerConfigCdsRepository: IntegrationConfigValue{
+			ArtifactoryConfigCdsRepository: IntegrationConfigValue{
 				Type: IntegrationConfigTypeString,
 			},
-			ArtifactManagerConfigPromotionLowMaturity: IntegrationConfigValue{
+			ArtifactoryConfigPromotionLowMaturity: IntegrationConfigValue{
 				Type: IntegrationConfigTypeString,
 			},
-			ArtifactManagerConfigPromotionHighMaturity: IntegrationConfigValue{
+			ArtifactoryConfigPromotionHighMaturity: IntegrationConfigValue{
 				Type: IntegrationConfigTypeString,
 			},
-			ArtifactManagerConfigBuildInfoPrefix: IntegrationConfigValue{
+			ArtifactoryConfigBuildInfoPrefix: IntegrationConfigValue{
 				Type: IntegrationConfigTypeString,
 			},
 		},

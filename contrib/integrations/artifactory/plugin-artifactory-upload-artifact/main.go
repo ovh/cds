@@ -64,14 +64,14 @@ func (e *artifactoryUploadArtifactPlugin) Manifest(_ context.Context, _ *empty.E
 
 func (e *artifactoryUploadArtifactPlugin) Run(_ context.Context, opts *integrationplugin.RunQuery) (*integrationplugin.RunResult, error) {
 	prefix := "cds.integration.artifact_manager"
-	cdsRepo := opts.GetOptions()[fmt.Sprintf("%s.%s", prefix, sdk.ArtifactManagerConfigCdsRepository)]
-	artifactoryURL := opts.GetOptions()[fmt.Sprintf("%s.%s", prefix, sdk.ArtifactManagerConfigURL)]
-	token := opts.GetOptions()[fmt.Sprintf("%s.%s", prefix, sdk.ArtifactManagerConfigToken)]
+	cdsRepo := opts.GetOptions()[fmt.Sprintf("%s.%s", prefix, sdk.ArtifactoryConfigCdsRepository)]
+	artifactoryURL := opts.GetOptions()[fmt.Sprintf("%s.%s", prefix, sdk.ArtifactoryConfigURL)]
+	token := opts.GetOptions()[fmt.Sprintf("%s.%s", prefix, sdk.ArtifactoryConfigToken)]
 	pathToUpload := opts.GetOptions()[fmt.Sprintf("%s.upload.path", prefix)]
 	projectKey := opts.GetOptions()["cds.project"]
 	workflowName := opts.GetOptions()["cds.workflow"]
 	version := opts.GetOptions()["cds.version"]
-	buildInfo := opts.GetOptions()[fmt.Sprintf("%s.%s", prefix, sdk.ArtifactManagerConfigBuildInfoPrefix)]
+	buildInfo := opts.GetOptions()[fmt.Sprintf("%s.%s", prefix, sdk.ArtifactoryConfigBuildInfoPrefix)]
 
 	artiClient, err := art.CreateArtifactoryClient(artifactoryURL, token)
 	if err != nil {

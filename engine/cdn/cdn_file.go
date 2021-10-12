@@ -48,7 +48,7 @@ func (s *Service) storeFile(ctx context.Context, sig cdn.Signature, reader io.Re
 	// Check Item unicity
 	_, err = item.LoadByAPIRefHashAndType(ctx, s.Mapper, s.mustDBWithCtx(ctx), hashRef, itemType)
 	if err == nil {
-		return sdk.NewErrorFrom(sdk.ErrInvalidData, "cannot upload the same file twice")
+		return sdk.NewErrorFrom(sdk.ErrInvalidData, "cannot upload the same file twice: %s", apiRef.ToFilename())
 	}
 	if !sdk.ErrorIs(err, sdk.ErrNotFound) {
 		return err
@@ -77,7 +77,7 @@ func (s *Service) storeFile(ctx context.Context, sig cdn.Signature, reader io.Re
 			code, err := s.Client.QueueWorkflowRunResultCheck(ctx, sig.JobID, runResultCheck)
 			if err != nil {
 				if code == http.StatusConflict {
-					return sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to upload the same file twice")
+					return sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to upload the same file twice: %s", runResultApiRef.ToFilename())
 				}
 				return err
 			}

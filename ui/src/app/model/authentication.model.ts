@@ -1,5 +1,4 @@
 import { WithKey } from 'app/shared/table/data-table.component';
-import * as moment from 'moment';
 import { Group } from './group.model';
 import { AuthentifiedUser } from './user.model';
 

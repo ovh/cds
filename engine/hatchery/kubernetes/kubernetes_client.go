@@ -104,13 +104,13 @@ func getStartingConfig(config HatcheryConfiguration) func() (*clientcmdapi.Confi
 }
 
 type KubernetesClient interface {
-	PodCreate(ctx context.Context, ns string, spec *corev1.Pod) (*corev1.Pod, error)
-	PodDelete(ctx context.Context, ns string, name string, options *metav1.DeleteOptions) error
+	PodCreate(ctx context.Context, ns string, spec *corev1.Pod, options metav1.CreateOptions) (*corev1.Pod, error)
+	PodDelete(ctx context.Context, ns string, name string, options metav1.DeleteOptions) error
 	PodGetRawLogs(ctx context.Context, ns string, name string, options *corev1.PodLogOptions) ([]byte, error)
 	PodList(ctx context.Context, ns string, options metav1.ListOptions) (*corev1.PodList, error)
-	SecretCreate(ctx context.Context, ns string, spec *corev1.Secret) (*corev1.Secret, error)
-	SecretDelete(ctx context.Context, ns string, name string, options *metav1.DeleteOptions) error
-	SecretGet(ctx context.Context, ns string, name string, options *metav1.GetOptions) (*corev1.Secret, error)
+	SecretCreate(ctx context.Context, ns string, spec *corev1.Secret, options metav1.CreateOptions) (*corev1.Secret, error)
+	SecretDelete(ctx context.Context, ns string, name string, options metav1.DeleteOptions) error
+	SecretGet(ctx context.Context, ns string, name string, options metav1.GetOptions) (*corev1.Secret, error)
 	SecretList(ctx context.Context, ns string, options metav1.ListOptions) (*corev1.SecretList, error)
 }
 
@@ -122,46 +122,46 @@ var (
 	_ KubernetesClient = new(kubernetesClient)
 )
 
-func (k *kubernetesClient) PodCreate(ctx context.Context, ns string, spec *corev1.Pod) (*corev1.Pod, error) {
+func (k *kubernetesClient) PodCreate(ctx context.Context, ns string, spec *corev1.Pod, options metav1.CreateOptions) (*corev1.Pod, error) {
 	ctx = context.WithValue(ctx, logNS, ns)
 	ctx = context.WithValue(ctx, logPod, spec.Name)
 	log.Info(ctx, "creating pod %s", spec.Name)
-	pod, err := k.client.CoreV1().Pods(ns).Create(spec)
+	pod, err := k.client.CoreV1().Pods(ns).Create(ctx, spec, options)
 	return pod, sdk.WrapError(err, "unable to create pod %s", spec.Name)
 }
 
-func (k *kubernetesClient) PodDelete(ctx context.Context, ns string, name string, options *metav1.DeleteOptions) error {
+func (k *kubernetesClient) PodDelete(ctx context.Context, ns string, name string, options metav1.DeleteOptions) error {
 	ctx = context.WithValue(ctx, logNS, ns)
 	ctx = context.WithValue(ctx, logPod, name)
 	log.Info(ctx, "deleting pod %s", name)
-	err := k.client.CoreV1().Pods(ns).Delete(name, options)
+	err := k.client.CoreV1().Pods(ns).Delete(ctx, name, options)
 	return sdk.WrapError(err, "unable to delete pod %s", name)
 }
 
 func (k *kubernetesClient) PodList(ctx context.Context, ns string, opts metav1.ListOptions) (*corev1.PodList, error) {
 	ctx = context.WithValue(ctx, logNS, ns)
 	log.Info(ctx, "listing pod")
-	pods, err := k.client.CoreV1().Pods(ns).List(opts)
+	pods, err := k.client.CoreV1().Pods(ns).List(ctx, opts)
 	return pods, sdk.WrapError(err, "unable to list pods in namespace %s", ns)
 }
 
-func (k *kubernetesClient) SecretCreate(ctx context.Context, ns string, spec *corev1.Secret) (*corev1.Secret, error) {
-	secret, err := k.client.CoreV1().Secrets(ns).Create(spec)
+func (k *kubernetesClient) SecretCreate(ctx context.Context, ns string, spec *corev1.Secret, options metav1.CreateOptions) (*corev1.Secret, error) {
+	secret, err := k.client.CoreV1().Secrets(ns).Create(ctx, spec, options)
 	return secret, sdk.WrapError(err, "unable to create secret %s", spec.Name)
 }
 
-func (k *kubernetesClient) SecretDelete(ctx context.Context, ns string, name string, options *metav1.DeleteOptions) error {
-	err := k.client.CoreV1().Secrets(ns).Delete(name, options)
+func (k *kubernetesClient) SecretDelete(ctx context.Context, ns string, name string, options metav1.DeleteOptions) error {
+	err := k.client.CoreV1().Secrets(ns).Delete(ctx, name, options)
 	return sdk.WrapError(err, "unable to delete secret %s", name)
 }
 
-func (k *kubernetesClient) SecretGet(ctx context.Context, ns string, name string, options *metav1.GetOptions) (*corev1.Secret, error) {
-	secret, err := k.client.CoreV1().Secrets(ns).Get(name, *options)
+func (k *kubernetesClient) SecretGet(ctx context.Context, ns string, name string, options metav1.GetOptions) (*corev1.Secret, error) {
+	secret, err := k.client.CoreV1().Secrets(ns).Get(ctx, name, options)
 	return secret, sdk.WrapError(err, "unable to get secret %s", name)
 }
 
 func (k *kubernetesClient) SecretList(ctx context.Context, ns string, options metav1.ListOptions) (*corev1.SecretList, error) {
-	secrets, err := k.client.CoreV1().Secrets(ns).List(options)
+	secrets, err := k.client.CoreV1().Secrets(ns).List(ctx, options)
 	return secrets, sdk.WrapError(err, "unable to list secrets in namespace %s", ns)
 }
 
@@ -169,6 +169,6 @@ func (k *kubernetesClient) PodGetRawLogs(ctx context.Context, ns string, name st
 	ctx = context.WithValue(ctx, logNS, ns)
 	ctx = context.WithValue(ctx, logPod, name)
 	log.Debug(ctx, "get logs for pod %s", name)
-	logs, err := k.client.CoreV1().Pods(ns).GetLogs(name, options).DoRaw()
+	logs, err := k.client.CoreV1().Pods(ns).GetLogs(name, options).DoRaw(ctx)
 	return logs, sdk.WrapError(err, "unable to get pod %s raw logs", name)
 }

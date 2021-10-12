@@ -548,8 +548,49 @@ func (a *API) Serve(ctx context.Context) error {
 		return sdk.WrapError(err, "cannot connect to cache store")
 	}
 
-	log.Info(ctx, "Initializing HTTP router")
 	a.GoRoutines = sdk.NewGoRoutines(ctx)
+
+	log.Info(ctx, "Running migration")
+	migrate.Add(ctx, sdk.Migration{Name: "RunsSecrets", Release: "0.47.0", Blocker: false, Automatic: true, ExecFunc: func(ctx context.Context) error {
+		return migrate.RunsSecrets(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper))
+	}})
+
+	migrate.Add(ctx, sdk.Migration{Name: "AuthConsumerTokenExpiration", Release: "0.47.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
+		return migrate.AuthConsumerTokenExpiration(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), time.Duration(a.Config.Auth.TokenDefaultDuration)*(24*time.Hour))
+	}})
+
+	migrate.Add(ctx, sdk.Migration{Name: "ArtifactoryIntegration", Release: "0.49.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
+		return migrate.ArtifactoryIntegration(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper))
+	}})
+
+	isFreshInstall, errF := version.IsFreshInstall(a.mustDB())
+	if errF != nil {
+		return sdk.WrapError(errF, "Unable to check if it's a fresh installation of CDS")
+	}
+
+	if isFreshInstall {
+		if err := migrate.SaveAllMigrations(a.mustDB()); err != nil {
+			return sdk.WrapError(err, "Cannot save all migrations to done")
+		}
+	} else {
+		if sdk.VersionCurrent().Version != "" && !strings.HasPrefix(sdk.VersionCurrent().Version, "snapshot") {
+			major, minor, _, errV := version.MaxVersion(a.mustDB())
+			if errV != nil {
+				return sdk.WrapError(errV, "Cannot fetch max version of CDS already started")
+			}
+			if major != 0 || minor != 0 {
+				minSemverCompatible, _ := semver.Parse(migrate.MinCompatibleRelease)
+				if major < minSemverCompatible.Major || (major == minSemverCompatible.Major && minor < minSemverCompatible.Minor) {
+					return fmt.Errorf("there are some mandatory migrations which aren't done. Please check each changelog of CDS. Maybe you have skipped a release migration. The minimum compatible release is %s, please update to this release before", migrate.MinCompatibleRelease)
+				}
+			}
+		}
+
+		// Run all migrations in several goroutines
+		migrate.Run(ctx, a.mustDB())
+	}
+
+	log.Info(ctx, "Initializing HTTP router")
 	a.Router = &Router{
 		Mux:        mux.NewRouter(),
 		Background: ctx,
@@ -709,41 +750,6 @@ func (a *API) Serve(ctx context.Context) error {
 	a.GoRoutines.RunWithRestart(ctx, "api.WorkflowRunCraft", func(ctx context.Context) {
 		a.WorkflowRunCraft(ctx, 100*time.Millisecond)
 	})
-
-	migrate.Add(ctx, sdk.Migration{Name: "RunsSecrets", Release: "0.47.0", Blocker: false, Automatic: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.RunsSecrets(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper))
-	}})
-
-	migrate.Add(ctx, sdk.Migration{Name: "AuthConsumerTokenExpiration", Release: "0.47.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.AuthConsumerTokenExpiration(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), time.Duration(a.Config.Auth.TokenDefaultDuration)*(24*time.Hour))
-	}})
-
-	isFreshInstall, errF := version.IsFreshInstall(a.mustDB())
-	if errF != nil {
-		return sdk.WrapError(errF, "Unable to check if it's a fresh installation of CDS")
-	}
-
-	if isFreshInstall {
-		if err := migrate.SaveAllMigrations(a.mustDB()); err != nil {
-			return sdk.WrapError(err, "Cannot save all migrations to done")
-		}
-	} else {
-		if sdk.VersionCurrent().Version != "" && !strings.HasPrefix(sdk.VersionCurrent().Version, "snapshot") {
-			major, minor, _, errV := version.MaxVersion(a.mustDB())
-			if errV != nil {
-				return sdk.WrapError(errV, "Cannot fetch max version of CDS already started")
-			}
-			if major != 0 || minor != 0 {
-				minSemverCompatible, _ := semver.Parse(migrate.MinCompatibleRelease)
-				if major < minSemverCompatible.Major || (major == minSemverCompatible.Major && minor < minSemverCompatible.Minor) {
-					return fmt.Errorf("there are some mandatory migrations which aren't done. Please check each changelog of CDS. Maybe you have skipped a release migration. The minimum compatible release is %s, please update to this release before", migrate.MinCompatibleRelease)
-				}
-			}
-		}
-
-		// Run all migrations in several goroutines
-		migrate.Run(ctx, a.mustDB())
-	}
 
 	log.Info(ctx, "Bootstrapping database...")
 	defaultValues := sdk.DefaultValues{

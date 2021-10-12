@@ -84,7 +84,7 @@ func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signa
 
 	// Send an event in WS broker to refresh streams on current item
 	s.GoRoutines.Exec(ctx, "storeLogsPublishWSEvent", func(ctx context.Context) {
-		s.publishWSEvent(*it)
+		s.publishWSEvent(*iu)
 	})
 
 	// If we have all lines or buffer is full and we received the last line
