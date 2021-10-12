@@ -643,7 +643,7 @@ func getIntegrationPlugins(db gorp.SqlExecutor, wr *sdk.WorkflowRun, nr *sdk.Wor
 		if err != nil {
 			return nil, nil, sdk.NewErrorFrom(sdk.ErrNotFound, "Cannot find plugin for integration model id %d, %v", artifactManagerInteg.ProjectIntegration.Model.ID, err)
 		}
-		platform := artifactManagerInteg.ProjectIntegration.Config[sdk.ArtifactManagerConfigPlatform]
+		platform := artifactManagerInteg.ProjectIntegration.Config[sdk.ArtifactoryConfigPlatform]
 		for _, plg := range plgs {
 			if strings.HasPrefix(plg.Name, fmt.Sprintf("%s-", platform.Value)) {
 				plugins = append(plugins, plg)

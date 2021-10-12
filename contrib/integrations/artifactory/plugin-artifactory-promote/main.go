@@ -49,8 +49,8 @@ func (e *artifactoryPromotePlugin) Manifest(_ context.Context, _ *empty.Empty) (
 }
 
 func (e *artifactoryPromotePlugin) Run(_ context.Context, opts *integrationplugin.RunQuery) (*integrationplugin.RunResult, error) {
-	artifactoryURL := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactManagerConfigURL)]
-	token := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactManagerConfigToken)]
+	artifactoryURL := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactoryConfigURL)]
+	token := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactoryConfigToken)]
 
 	artifactList := opts.GetOptions()["artifacts"]
 	srcMaturity := opts.GetOptions()["srcMaturity"]
