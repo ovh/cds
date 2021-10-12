@@ -16,7 +16,7 @@ func ArtifactoryIntegration(ctx context.Context, dbFunc func() *gorp.DbMap) erro
 
 	defer tx.Rollback()
 
-	model, err := integration.LoadModelByNameWithClearPassword(tx, "ArtifactManager")
+	model, err := integration.LoadModelByNameWithClearPassword(ctx, tx, "ArtifactManager")
 	if err != nil {
 		return sdk.WithStack(err)
 	}
@@ -24,7 +24,7 @@ func ArtifactoryIntegration(ctx context.Context, dbFunc func() *gorp.DbMap) erro
 	// We just need to update the name, because bootstrap.InitializeDB
 	// that runs after will update all the data based on this name
 	model.Name = sdk.ArtifactoryIntegration.Name
-	if err := integration.UpdateModel(tx, &model); err != nil {
+	if err := integration.UpdateModel(ctx, tx, &model); err != nil {
 		return err
 	}
 
