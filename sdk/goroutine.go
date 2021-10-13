@@ -17,12 +17,12 @@ import (
 	"sync"
 	"time"
 
-	panicparsestack "github.com/maruel/panicparse/stack"
-	cdslog "github.com/ovh/cds/sdk/log"
-	"github.com/ovh/cds/sdk/telemetry"
+	"github.com/maruel/panicparse/v2/stack"
+	"github.com/pkg/errors"
 	"github.com/rockbears/log"
 
-	"github.com/pkg/errors"
+	cdslog "github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 type GoRoutine struct {
@@ -202,7 +202,7 @@ func GoroutineID() uint64 {
 	return n
 }
 
-func ListGoroutines() ([]*panicparsestack.Goroutine, error) {
+func ListGoroutines() ([]*stack.Goroutine, error) {
 	var w = new(bytes.Buffer)
 	if err := writeGoroutineStacks(w); err != nil {
 		return nil, err
@@ -326,13 +326,13 @@ func writeGoroutineStacks(w io.Writer) error {
 	return WithStack(err)
 }
 
-func parseGoRoutineStacks(r io.Reader, w io.Writer) ([]*panicparsestack.Goroutine, error) {
+func parseGoRoutineStacks(r io.Reader, w io.Writer) ([]*stack.Goroutine, error) {
 	if w == nil {
 		w = ioutil.Discard
 	}
-	goroutines, err := panicparsestack.ParseDump(r, w, true)
-	if err != nil {
+	s, _, err := stack.ScanSnapshot(r, w, stack.DefaultOpts())
+	if err != nil && err != io.EOF {
 		return nil, WithStack(err)
 	}
-	return goroutines.Goroutines, nil
+	return s.Goroutines, nil
 }

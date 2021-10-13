@@ -54,14 +54,17 @@ func (api *API) getDebugGoroutinesHandler() service.Handler {
 		var result = make(map[string][]goroutineInfo)
 
 		for _, goroutine := range grs {
-			slice := result[goroutine.State]
-			slice = append(slice, goroutineInfo{
-				State:      goroutine.State,
-				CreatedBy:  goroutine.CreatedBy.Func.Raw,
-				SourcePath: goroutine.CreatedBy.FullSrcLine(),
-				Caller:     goroutine.Stack.Calls[0].Func.Raw,
-			})
-			result[goroutine.State] = slice
+			info := goroutineInfo{
+				State: goroutine.State,
+			}
+			if len(goroutine.CreatedBy.Calls) > 0 {
+				info.CreatedBy = goroutine.CreatedBy.Calls[0].Func.Complete
+				info.SourcePath = goroutine.CreatedBy.Calls[0].LocalSrcPath
+			}
+			if len(goroutine.Stack.Calls) > 0 {
+				info.Caller = goroutine.Stack.Calls[0].Func.Complete
+			}
+			result[goroutine.State] = append(result[goroutine.State], info)
 		}
 
 		return service.WriteJSON(w, result, http.StatusOK)
