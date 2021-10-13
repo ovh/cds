@@ -57,12 +57,12 @@ require (
 	github.com/klauspost/compress v1.10.10 // indirect
 	github.com/klauspost/pgzip v1.2.4 // indirect
 	github.com/lib/pq v1.9.0 // indirect
-	github.com/maruel/panicparse v1.3.0 // indirect
-	github.com/mattn/go-colorable v0.1.1 // indirect
-	github.com/mattn/go-isatty v0.0.7 // indirect
+	github.com/maruel/panicparse/v2 v2.1.1 // indirect
+	github.com/mattn/go-colorable v0.1.7 // indirect
+	github.com/mattn/go-isatty v0.0.12 // indirect
 	github.com/mattn/go-runewidth v0.0.1 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
-	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b // indirect
+	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
 	github.com/mholt/archiver/v3 v3.5.0 // indirect
 	github.com/miscreant/miscreant.go v0.0.0-20200214223636-26d376326b75 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect

@@ -45,11 +45,11 @@ require (
 	github.com/keybase/go-keychain v0.0.0-20190828020956-aa639f275ae1
 	github.com/keybase/go.dbus v0.0.0-20190710215703-a33a09c8a604
 	github.com/lib/pq v1.9.0
-	github.com/maruel/panicparse v1.3.0
+	github.com/maruel/panicparse/v2 v2.1.1
 	github.com/mattn/go-sqlite3 v1.9.0
 	github.com/mattn/go-zglob v0.0.1
 	github.com/mcuadros/go-defaults v0.0.0-20161116231230-e1c978be3307
-	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b
+	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d
 	github.com/mholt/archiver v3.1.1+incompatible
 	github.com/mitchellh/hashstructure v0.0.0-20170609045927-2bca23e0e452
 	github.com/mitchellh/mapstructure v1.1.2
@@ -191,8 +191,8 @@ require (
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/magiconair/properties v1.8.1 // indirect
 	github.com/mailru/easyjson v0.0.0-20190626092158-b2ccc519800e // indirect
-	github.com/mattn/go-colorable v0.1.1 // indirect
-	github.com/mattn/go-isatty v0.0.7 // indirect
+	github.com/mattn/go-colorable v0.1.7 // indirect
+	github.com/mattn/go-isatty v0.0.12 // indirect
 	github.com/mattn/go-runewidth v0.0.1 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/mholt/archiver/v3 v3.5.0 // indirect
@@ -285,3 +285,5 @@ replace github.com/keybase/go-keychain => github.com/yesnault/go-keychain v0.0.0
 replace github.com/coreos/etcd v3.3.10+incompatible => github.com/coreos/etcd v3.3.13+incompatible
 
 replace github.com/jordan-wright/email => github.com/yesnault/email v0.0.0-20201006155628-d88bfe11e7f1
+
+replace github.com/maruel/panicparse/v2 => github.com/nvanbenschoten/panicparse/v2 v2.1.2-0.20210907191946-21cb5f04b05c
