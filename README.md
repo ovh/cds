@@ -1,6 +1,5 @@
 # CDS: Continuous Delivery Service
 
-[![Join the chat at https://gitter.im/ovh-cds/Lobby](https://badges.gitter.im/ovh-cds/Lobby.svg)](https://gitter.im/ovh-cds/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Go Report Card](https://goreportcard.com/badge/github.com/ovh/cds)](https://goreportcard.com/report/github.com/ovh/cds)
 [![GoDoc](https://godoc.org/github.com/ovh/cds/sdk/cdsclient?status.svg)](https://godoc.org/github.com/ovh/cds/sdk/cdsclient)
 
@@ -76,38 +75,6 @@ All data are stored in the database - nothing on filesystem. Just backup your da
 ### Need some help?
 
 Core Team is available on [Gitter](https://gitter.im/ovh-cds/Lobby)
-
-### Comparison Matrix
-
-All the features of the table are detailed below.
-
-| Feature | CDS | Bamboo | Buildbot | Gitlab CI | Jenkins |
-| --- | --- | --- | --- | --- | --- |
-| [Pipeline](#pipeline) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| [Workflow](#workflow) | :white_check_mark: | :x: | :white_check_mark: | :white_check_mark: <sub><sup>[*17](#some-explanations-on-the-comparison-matrix) | :x: |
-| [Visual configuration with Web UI](#visual-configuration-with-web-ui) | :white_check_mark: | :white_check_mark: | :x: | :x: | :x: <sub><sup>[*1](#some-explanations-on-the-comparison-matrix)</sub></sup> |
-| [Configuration on Git Repository](#configuration-on-git-repository) | :white_check_mark: | :x: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| [Configuration as code on UI](#configuration-as-code-on-ui) | :white_check_mark: | :x: | :x: | :white_check_mark: | :x: <sub><sup>[*2](#some-explanations-on-the-comparison-matrix)</sub></sup> |
-| [Native Git branching](#native-git-branching) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: <sub><sup>[*3](#some-explanations-on-the-comparison-matrix)</sub></sup> |
-| [Job's Services](#jobs-services) | :white_check_mark: | :x: | :x: | :white_check_mark: | :x: |
-| [Secure Remote Caching](#secure-remote-caching) | :white_check_mark: | :x: | :white_check_mark: | :white_check_mark: | :x: <sub><sup>[*4](#some-explanations-on-the-comparison-matrix)</sub></sup> |
-| [Enterprise Notification Bus](#enterprise-notification-bus) & [Built-in Hooks](#built-in-hooks) | :white_check_mark: | :x: | :x: | :x: | :x: |
-| [Continuous Deployment & Environment Support](#continuous-deployment--environment-support) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: <sub><sup>[*5](#some-explanations-on-the-comparison-matrix)</sub></sup> |
-| [Enterprise-grade permissions, Support of ACLs delegation](#enterprise-grade-permissions--support-of-acls-delegation) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: <sub><sup>[*6](#some-explanations-on-the-comparison-matrix)</sub></sup> |
-| [Build Artifacts Cloud](#build-artifacts-cloud) | :white_check_mark: | :x: | :white_check_mark: | :white_check_mark: | :x: <sub><sup>[*7](#some-explanations-on-the-comparison-matrix)</sub></sup> |
-| [Tests & Vulnerabilities Reports](#tests--vulnerabilities-reports) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: <sub><sup>[*8](#some-explanations-on-the-comparison-matrix)</sub></sup> | :white_check_mark: |
-| [Self-Service Project Creation - ability to create a tenant](#self-service-project-creation) | :white_check_mark: | :x: | :x: <sub><sup>[*9](#some-explanations-on-the-comparison-matrix)</sub></sup> | :white_check_mark: | :x: |
-| [Execution Environment Customization](#execution-environment-customization) | :white_check_mark: | :x: | :x: | :white_check_mark: | :x: <sub><sup>[*10](#some-explanations-on-the-comparison-matrix)</sub></sup> |
-| [Multi-Tenancy](#multi-tenancy) | :white_check_mark: | :x: | :x: | :white_check_mark: | :x: <sub><sup>[*11](#some-explanations-on-the-comparison-matrix)</sub></sup> |
-| [Command Line Interface (cdsctl): 100% features supported & User Friendly](#command-line-interface-cdsctl-100-features-supported) | :white_check_mark: | :x: | :white_check_mark: | :x: | :x: <sub><sup>[*12](#some-explanations-on-the-comparison-matrix)</sub></sup> |
-| [REST API & SDK](#rest-api--sdk) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| [Self-Hosting](#self-hosting) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| [High Availability & Scalability & Upgrade without User Downtime](#high-availability--scalability--upgrade-without-user-downtime) | :white_check_mark: | :x: | :x: | :white_check_mark: <sub><sup>[*13](#some-explanations-on-the-comparison-matrix)</sub></sup> | :x: |
-| [Built-in Metrics](#built-in-metrics) | :white_check_mark: | :white_check_mark: | :white_check_mark: |  :white_check_mark: | :x: <sub><sup>[*14](#some-explanations-on-the-comparison-matrix)</sub></sup> |
-| [Extensibility Plugins](#extensibility-plugins) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| [OS/Arch Compatibility](#osarch-compatibility) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| [Auto-Scale OnDemand multi-cloud](#auto-scale-ondemand-multi-cloud) | :white_check_mark: | :x: | :x: | :x: <sub><sup>[*15](#some-explanations-on-the-comparison-matrix)</sub></sup> | :x: <sub><sup>[*16](#some-explanations-on-the-comparison-matrix)</sub></sup> |
-
 
 ### CDS User features
 
@@ -289,25 +256,6 @@ Several types of hatchery are available:
 
  So yes, buzzwords or not, a multi-cloud Auto-scale OnDemand is a reality with CDS :-)
 
-#### Some explanations on the comparison matrix
-
-- *1 Impossible if you create your pipeline with Pipeline plugin, force usage of jenkinsfile
-- *2 There is the Pipeline plugin, but not compatible with Graphical Configuration with ui, Git branching, and repository manager integration.
-- *3 [Multi-branch pipeline plugin](https://wiki.jenkins.io/display/JENKINS/Pipeline+Multibranch+Plugin ) - but incompatible [Pipeline plugin](https://wiki.jenkins.io/display/JENKINS/Pipeline+Plugin)
-- *4 Job Cacher plugin not compatible with Blue Ocean, MultiBranch Pipeline, Pipeline plugin, but not compatible with Swift Storage
-- *5 "The current version of this plugin may not be safe to use. " https://wiki.jenkins.io/display/JENKINS/EnvInject+Plugin
-- *6 https://jenkins.io/doc/book/managing/security/#authorization
-- *7 it's not builtin, it's JCloud plugin
-- *8 Vulnerability report not available on CE Edition
-- *9 everything is in the same bucket
-- *10 docker only
-- *11 explained on https://www.cloudbees.com/blog/multi-tenancy-jenkins
-- *12 https://jenkins.io/doc/book/managing/cli/
-- *13 Upgrade Gitlab can be on several days https://docs.gitlab.com/ee/update/
-- *14 it's a plugin
-- *15 K8s, Docker machine & GKE only
-- *16 limited to about 150 executors https://www.cloudbees.com/blog/multi-tenancy-jenkins(§Scale)
-- *17 Only in Silver and Premium Gitlab Edition https://docs.gitlab.com/ee/ci/yaml/#trigger-premium
 
 ## License
 
