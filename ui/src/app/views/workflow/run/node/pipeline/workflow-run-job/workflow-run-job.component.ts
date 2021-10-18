@@ -114,7 +114,7 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     async onNodeJobRunChange(data: WorkflowNodeJobRun) {
-        if (!data?.job?.step_status) {
+        if (!data) {
             return;
         }
         this._nodeJobRun = data;
