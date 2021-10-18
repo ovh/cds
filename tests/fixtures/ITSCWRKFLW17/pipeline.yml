@@ -8,4 +8,3 @@ jobs:
     - env
   requirements:
   - model: "${CDS_MODEL_REQ}"
-  - region: "${CDS_REGION_REQ}"
