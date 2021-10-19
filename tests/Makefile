@@ -40,10 +40,10 @@ minio_reset_bucket:
 		"
 
 test-docker-compose:
-	docker-compose up --no-recreate -d cds-db cds-cache elasticsearch smtpmocksrv && \
+	docker-compose up -d cds-db cds-cache elasticsearch && \
 	sleep 5	&& \
-	docker-compose up --no-recreate cds-db-init && \
-	docker-compose up --no-recreate cds-migrate && \
+	docker-compose up cds-db-init && \
+	docker-compose up cds-migrate && \
 	docker-compose up cds-prepare && \
 	docker-compose up -d cds-api && \
 	echo "waiting 8s to let cds-api start.." && sleep 8 && \
@@ -52,10 +52,10 @@ test-docker-compose:
 	chmod +x cdsctl && \
 	cdsctl version && \
 	export CDSCTL=`realpath ./cdsctl` && \
-	TOKEN_CMD=`docker logs cds_cds-prepare_1|grep TOKEN` && \
+	TOKEN_CMD=`docker logs cds_cds-prepare_1 | grep INIT_TOKEN` && \
 	$$TOKEN_CMD && \
 	./test.sh smoke_api initialization && \
-	docker-compose up -d cds-cdn cds-ui cds-hooks cds-hatchery-local cds-elasticsearch && \
+	docker-compose up -d cds-cdn cds-ui cds-hooks cds-elasticsearch && \
 	echo "waiting 5s to let services start.." && sleep 5 && \
 	./test.sh smoke_services cli;
 

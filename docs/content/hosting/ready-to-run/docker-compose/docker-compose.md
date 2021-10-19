@@ -36,28 +36,24 @@ $ export CDS_DOCKER_IMAGE=ovhcom/cds-engine:{{< param "version" "latest" >}}
 $ docker pull ovhcom/cds-engine:{{< param "version" "latest" >}}
 
 # Create PostgreSQL database, redis and elasticsearch
-$ docker-compose up --no-recreate -d cds-db cds-cache elasticsearch dockerhost
+$ docker-compose up -d cds-db cds-cache elasticsearch
  
 # check if database is up, the logs must contain "LOG: database system is ready to accept connections"
 $ docker-compose logs| grep 'database system is ready to accept connections'
 # you should have this line after few seconds: cds-db_1 | LOG:  database system is ready to accept connections
 
-$ docker-compose up --no-recreate cds-db-init
-$ docker-compose up --no-recreate cds-migrate
+$ docker-compose up cds-db-init
+$ docker-compose up cds-migrate
 # You should have this log: "cdstest_cds-migrate_1 exited with code 0"
 
 # prepare initial configuration.
 $ docker-compose up cds-prepare
 
-# disable the smtp server
-$ export CDS_EDIT_CONFIG="api.smtp.disable=true"
-$ docker-compose up cds-edit-config
-
 # run API
 $ docker-compose up -d cds-api
 
 # the INIT_TOKEN variable will be used by cdsctl to create first admin user
-$ TOKEN_CMD=$(docker logs cdstest_cds-prepare_1|grep TOKEN) && $TOKEN_CMD
+$ TOKEN_CMD=$(docker logs $(docker-compose ps -q cds-prepare) | grep INIT_TOKEN) && $TOKEN_CMD
 # if you have this error:  "command too long: export INIT_TOKEN=....",
 # you can manually execute the command "export INIT_TOKEN=...."
 
@@ -69,7 +65,7 @@ $ ./cdsctl signup --api-url http://localhost:8081 --email admin@localhost.local 
 # enter a strong password
 
 # verify the user
-$ VERIFY_CMD=$(docker-compose logs cds-api|grep 'cdsctl signup verify'|cut -d '$' -f2|xargs) && ./$VERIFY_CMD
+$ VERIFY_CMD=$(docker-compose logs cds-api | grep 'cdsctl signup verify' | cut -d '$' -f2 | xargs) && ./$VERIFY_CMD
 # if you have this error:  "such file or directory: ./cdsctl signup verify --api-url...", 
 # you can manually execute the command "./cdsctl signup verify --api-url..."
 
@@ -88,7 +84,7 @@ $ ./cdsctl user me
 $ docker-compose up -d cds-ui cds-cdn cds-hooks cds-elasticsearch cds-hatchery-swarm
 
 # create first worker model
-$ ./cdsctl worker model import https://raw.githubusercontent.com/ovh/cds/{{< param "version" "master" >}}/contrib/worker-models/go-official-1.13.yml
+$ ./cdsctl worker model import https://raw.githubusercontent.com/ovh/cds/{{< param "version" "master" >}}/contrib/worker-models/go-official-1.17.yml
 
 # import Import a workflow template
 $ ./cdsctl template push https://raw.githubusercontent.com/ovh/cds/{{< param "version" "master" >}}/contrib/workflow-templates/demo-workflow-hello-world/demo-workflow-hello-world.yml

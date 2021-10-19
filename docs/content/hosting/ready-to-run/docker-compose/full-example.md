@@ -193,15 +193,13 @@ export HOSTNAME=$(hostname)
 export CDS_DOCKER_IMAGE=ovhcom/cds-engine:{{< param "version" "latest" >}}
 
 docker pull ovhcom/cds-engine:{{< param "version" "latest" >}}
-docker-compose up --no-recreate -d cds-db cds-cache elasticsearch dockerhost
+docker-compose up -d cds-db cds-cache elasticsearch
 sleep 3
 docker-compose logs| grep 'database system is ready to accept connections'
-docker-compose up --no-recreate cds-db-init
-docker-compose up --no-recreate cds-migrate
+docker-compose up cds-db-init
+docker-compose up cds-migrate
 sleep 3
 docker-compose up cds-prepare
-export CDS_EDIT_CONFIG="api.smtp.disable=true"
-docker-compose up cds-edit-config
 export CDS_EDIT_CONFIG="vcs.servers.github.github.clientId=${CDS_GITHUB_CLIENT_ID} vcs.servers.github.github.clientSecret=${CDS_GITHUB_CLIENT_SECRET} "
 docker-compose up cds-edit-config
 export CDS_EDIT_CONFIG="api.url.api=http://localhost:8081 api.url.ui=https://${CDS_DOMAIN_NAME} hatchery.swarm.commonConfiguration.api.http.url=http://cds-api:8081"
@@ -210,12 +208,12 @@ export CDS_EDIT_CONFIG="hatchery.swarm.commonConfiguration.api.http.url=https://
 docker-compose up cds-edit-config
 docker-compose up -d cds-api
 sleep 3
-TOKEN_CMD=$(docker logs debian_cds-prepare_1|grep TOKEN) && $TOKEN_CMD
+TOKEN_CMD=$(docker logs $(docker-compose ps -q cds-prepare) | grep INIT_TOKEN) && $TOKEN_CMD
 curl 'http://localhost:8081/download/cdsctl/linux/amd64?variant=nokeychain' -o cdsctl
 chmod +x cdsctl
 # this line will ask a password for admin user
 ./cdsctl signup --api-url http://localhost:8081 --email admin@localhost.local --username admin --fullname admin
-VERIFY_CMD=$(docker-compose logs cds-api|grep 'cdsctl signup verify'|cut -d '$' -f2|xargs) && ./$VERIFY_CMD
+VERIFY_CMD=$(docker-compose logs cds-api | grep 'cdsctl signup verify' | cut -d '$' -f2 | xargs) && ./$VERIFY_CMD
 # this line returns the RING of user, must be ADMIN
 ./cdsctl user me
 

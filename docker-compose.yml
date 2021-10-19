@@ -11,19 +11,22 @@ services:
       POSTGRES_PASSWORD: cds
       POSTGRES_USER: cds
       POSTGRES_DB: cds
+    volumes:
+      - cds-postgres-volume:/var/lib/postgresql/data
 
   cds-db-init:
     image: postgres:9.6
     command: >
-        sh -exc "
-        PGPASSWORD=cds psql -h cds-db -p 5432 -U cds -d cds -c \"CREATE SCHEMA IF NOT EXISTS cdn AUTHORIZATION cds;\";"
+        sh -exc "PGPASSWORD=cds psql -h cds-db -p 5432 -U cds -d cds -c \"CREATE SCHEMA IF NOT EXISTS cdn AUTHORIZATION cds;\";"
     links:
        - cds-db
 
   cds-cache:
     image: redis:alpine
-    command: redis-server --requirepass cds
+    command: redis-server --requirepass cds --save 60 1
     restart: always
+    volumes:
+      - cds-redis-volume:/data
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:6.7.2
@@ -50,22 +53,20 @@ services:
   cds-prepare:
     image: ${CDS_DOCKER_IMAGE:-ovhcom/cds-engine:latest}
     command: >
-        sh -c "
-        /app/cds-engine-linux-amd64 config new > /app/conf/conf.toml;
-        mkdir -p /app/artifacts /app/repositories /app/hatchery-local;
-        chown -R cds:cds /app/conf /app/artifacts /app/repositories /app/hatchery-local /app/cdn-buffer /app/cdn-storage;
+        bash -c "
+        if [ ! -f /app/conf/conf.toml ]; then
+          /app/cds-engine-linux-amd64 config new api cdn ui hooks repositories vcs elasticsearch hatchery:swarm > /app/conf/conf.toml;
+        else
+          echo '/!\ Config file already exists';
+        fi;
+        chown -R cds:cds /app/conf /app/artifacts /app/repositories /app/cdn-buffer /app/cdn-storage;
         /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml \
             api.artifact.local.baseDirectory=/app/artifacts \
             api.cache.redis.host=cds-cache:6379 \
             api.cache.redis.password=cds \
             api.database.host=cds-db \
             api.download.directory=/app \
-            api.url.api=http://${HOSTNAME}:8081 \
-            api.url.ui=http://${HOSTNAME}:8080 \
             api.log.level=info \
-            api.smtp.disable=false \
-            api.smtp.port=2023 \
-            api.smtp.host=smtpmocksrv \
             cdn.cache.redis.host=cds-cache:6379 \
             cdn.cache.redis.password=cds \
             cdn.storageUnits.buffers.redis.redis.host=cds-cache:6379 \
@@ -74,15 +75,12 @@ services:
             cdn.storageUnits.storages.local.local.path=/app/cdn-storage \
             cdn.database.host=cds-db \
             cdn.publicTCP=${HOSTNAME}:8090 \
+            cdn.publicHTTP=http://${HOSTNAME}:8089 \
             cdn.api.http.url=http://cds-api:8081 \
             cdn.URL=http://cds-cdn:8089 \
-            hatchery.local.commonConfiguration.url=http://cds-hatchery-local:8086 \
-            hatchery.local.commonConfiguration.api.http.url=http://cds-api:8081 \
-            hatchery.local.basedir=/app/hatchery-local \
             hatchery.swarm.commonConfiguration.url=http://cds-hatchery-swarm:8086 \
             hatchery.swarm.commonConfiguration.api.http.url=http://${HOSTNAME}:8081 \
             hatchery.swarm.ratioService=50 \
-            hatchery.swarm.dockerEngines.sample-docker-engine.host=tcp://dockerhost:2375 \
             hatchery.swarm.dockerEngines.sample-docker-engine.maxContainers=4 \
             hooks.url=http://cds-hooks:8083 \
             hooks.api.http.url=http://cds-api:8081 \
@@ -103,25 +101,19 @@ services:
             elasticsearch.elasticsearch.indexEvents=cds-index-events \
             elasticsearch.elasticsearch.indexMetrics=cds-index-metrics \
             elasticsearch.elasticsearch.url=http://elasticsearch:9200 \
-            ui.url=http://${HOSTNAME}:8080 \
             ui.enableServiceProxy=true \
             ui.api.http.url=http://cds-api:8081 \
             ui.hooksURL=http://cds-hooks:8083 \
             ui.cdnURL=http://cds-cdn:8089;
-            echo '';
             echo '/!\ Please run the export command BELOW, this will be useful to create admin user';
-            echo '';
             TOKEN=`/app/cds-engine-linux-amd64 config init-token --config /app/conf/conf.toml`;
             echo 'export INIT_TOKEN='$$TOKEN;
-            echo '';
-            echo '/!\ Please run the export command ABOVE, this will be useful to create admin user';
-            echo '';"
+            echo '/!\ Please run the export command ABOVE, this will be useful to create admin user';"
     user: root
     volumes:
       - cds-conf-volume:/app/conf
       - cds-artifacts-volume:/app/artifacts
       - cds-repositories-volume:/app/repositories
-      - cds-hatchery-local-volume:/app/hatchery-local
       - cds-cdn-buffer-volume:/app/cdn-buffer
       - cds-cdn-storage-volume:/app/cdn-storage
 
@@ -164,6 +156,8 @@ services:
     command: sh -c "/app/cds-engine-linux-amd64 start hatchery:swarm --config /app/conf/conf.toml"
     volumes:
       - cds-conf-volume:/app/conf
+      - /var/run/docker.sock:/var/run/docker.sock
+    user: root
     healthcheck:
       test: ["CMD", "curl", "-f", "http://127.0.0.1:8086/mon/version"]
       interval: 30s
@@ -186,22 +180,6 @@ services:
        - cds-api
     healthcheck:
       test: ["CMD", "curl", "-f", "http://127.0.0.1:8089/mon/version"]
-      interval: 30s
-      timeout: 10s
-      retries: 6
-
-  cds-hatchery-local:
-    image: ${CDS_DOCKER_IMAGE:-ovhcom/cds-engine:latest}
-    command: sh -c "/app/cds-engine-linux-amd64 start hatchery:local --config /app/conf/conf.toml"
-    volumes:
-      - cds-conf-volume:/app/conf
-      - cds-hatchery-local-volume:/app/hatchery-local
-    links:
-       - cds-api
-    ports:
-      - "127.0.0.1:8086:8086"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://127.0.0.1:8086/mon/version"]
       interval: 30s
       timeout: 10s
       retries: 6
@@ -274,33 +252,12 @@ services:
     volumes:
       - cds-conf-volume:/app/conf
 
-  dockerhost:
-    image: bobrik/socat
-    command: TCP4-LISTEN:2375,fork,reuseaddr UNIX-CONNECT:/var/run/docker.sock
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    ports:
-      - "127.0.0.1:2375:2375"
-
-  smtpmocksrv:
-    build:
-      context: ./tools/smtpmock
-    ports:
-      - "2023:2023"
-      - "2024:2024"
-
-  kibana:
-    image: docker.elastic.co/kibana/kibana-oss:6.7.2
-    ports:
-      - "127.0.0.1:5601:5601"
-    links:
-       - elasticsearch
-
 volumes:
+  cds-postgres-volume:
+  cds-redis-volume:
+  cds-elasticsearch-volume:
+  cds-conf-volume:
   cds-artifacts-volume:
   cds-repositories-volume:
-  cds-hatchery-local-volume:
-  cds-conf-volume:
-  cds-elasticsearch-volume:
   cds-cdn-buffer-volume:
   cds-cdn-storage-volume:

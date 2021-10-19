@@ -1,5 +1,5 @@
 name: [[.name]]
-version: v1.0
+version: v2.0
 workflow:
   build:
     pipeline: build-[[.id]]
@@ -27,10 +27,10 @@ workflow:
     - success
     depends_on:
     - fork
-  deploy-prod:   
+  deploy-prod:
     pipeline: deploy-[[.id]]
     application: [[.name]]
-    environment: [[.name]]-prod 
+    environment: [[.name]]-prod
     when:
     - manual
     - success

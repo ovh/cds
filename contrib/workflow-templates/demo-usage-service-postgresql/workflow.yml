@@ -1,3 +1,5 @@
 name: [[.name]]
-version: v1.0
-pipeline: demo-service-postgresql
+version: v2.0
+workflow:
+  demo-service-postgresql:
+    pipeline: demo-service-postgresql
