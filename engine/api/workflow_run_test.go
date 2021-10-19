@@ -3160,10 +3160,13 @@ func Test_postWorkflowRunHandlerRestartOnlyFailed(t *testing.T) {
 }
 
 func Test_CheckRegionDuringInitWorkflow(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	featureflipping.Init(gorpmapping.Mapper)
 	api, db, router := newTestAPI(t)
 
-	existingFeat, _ := featureflipping.LoadByName(context.Background(), gorpmapping.Mapper, db, sdk.FeatureRegion)
+	existingFeat, _ := featureflipping.LoadByName(ctx, gorpmapping.Mapper, db, sdk.FeatureRegion)
 	featureflipping.Delete(db, existingFeat.ID)
 	f := &sdk.Feature{
 		Name: sdk.FeatureRegion,
@@ -3177,7 +3180,7 @@ func Test_CheckRegionDuringInitWorkflow(t *testing.T) {
 	u, pass := assets.InsertAdminUser(t, db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(ctx, db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -3222,11 +3225,11 @@ func Test_CheckRegionDuringInitWorkflow(t *testing.T) {
 		},
 	}
 
-	proj2, errP := project.Load(context.TODO(), api.mustDB(), proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
+	proj2, errP := project.Load(ctx, api.mustDB(), proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
 	require.NoError(t, errP)
 
-	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, *proj2, &w))
-	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, *proj, "test_1", workflow.LoadOptions{})
+	require.NoError(t, workflow.Insert(ctx, db, api.Cache, *proj2, &w))
+	w1, err := workflow.Load(ctx, api.mustDB(), api.Cache, *proj, "test_1", workflow.LoadOptions{})
 	require.NoError(t, err)
 
 	//Prepare request
@@ -3265,9 +3268,9 @@ func Test_CheckRegionDuringInitWorkflow(t *testing.T) {
 		Number:         &wr.Number,
 		AuthConsumerID: consumer.ID,
 	}
-	api.initWorkflowRun(context.TODO(), proj2.Key, &wr.Workflow, wr, opts)
+	api.initWorkflowRun(ctx, proj2.Key, &wr.Workflow, wr, opts)
 
-	wr, _ = workflow.LoadRun(context.TODO(), db, proj2.Key, w1.Name, 1, workflow.LoadRunOptions{})
+	wr, _ = workflow.LoadRun(ctx, db, proj2.Key, w1.Name, 1, workflow.LoadRunOptions{})
 
 	require.Equal(t, sdk.StatusFail, wr.Status)
 	require.Equal(t, 1, len(wr.Infos))
