@@ -98,7 +98,7 @@ func (c *Common) Signin(ctx context.Context, cfg cdsclient.ServiceConfig) error 
 
 	var lasterr error
 	if err := initClient(ctxTimeout); err != nil {
-		lasterr = err // nolint
+		lasterr = err
 	loop:
 		for {
 			select {
@@ -109,7 +109,7 @@ func (c *Common) Signin(ctx context.Context, cfg cdsclient.ServiceConfig) error 
 				return ctxTimeout.Err()
 			case <-ticker.C:
 				if err := initClient(ctxTimeout); err == nil {
-					lasterr = err // nolint
+					lasterr = err //lint:ignore SA4006 false positive
 					break loop
 				}
 			}
