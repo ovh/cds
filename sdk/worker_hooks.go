@@ -7,10 +7,10 @@ import (
 )
 
 type WorkerHookProjectIntegrationModel struct {
-	ID                        int64                         `json:"id" db:"id"`
-	ProjectIntegrationModelID int64                         `json:"project_integration_id" db:"project_integration_id"`
-	Configuration             WorkerHookSetupTeardownConfig `json:"configuration" db:"configuration"`
-	Disable                   bool                          `json:"disable" db:"disable"`
+	ID                        int64                         `json:"id" db:"id" cli:"id,key"`
+	ProjectIntegrationModelID int64                         `json:"project_integration_id" db:"project_integration_id" cli:"-"`
+	Configuration             WorkerHookSetupTeardownConfig `json:"configuration" db:"configuration" cli:"configuration"`
+	Disable                   bool                          `json:"disable" db:"disable" cli:"disable"`
 }
 
 type WorkerHookSetupTeardownConfig struct {

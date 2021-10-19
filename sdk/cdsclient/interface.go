@@ -227,6 +227,8 @@ type ProjectClient interface {
 	ProjectRepositoryManagerList(projectKey string) ([]sdk.ProjectVCSServer, error)
 	ProjectRepositoryManagerDelete(projectKey string, repoManagerName string, force bool) error
 	ProjectAccess(ctx context.Context, projectKey, sessionID string, itemType sdk.CDNItemType) error
+	ProjectIntegrationWorkerHooksList(projectKey string, integrationName string) ([]sdk.WorkerHookProjectIntegrationModel, error)
+	ProjectIntegrationWorkerHooksImport(projectKey string, integrationName string, hooks []sdk.WorkerHookProjectIntegrationModel) error
 }
 
 // ProjectKeysClient exposes project keys related functions

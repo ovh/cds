@@ -118,3 +118,20 @@ func (c *client) ProjectIntegrationImport(projectKey string, content io.Reader, 
 	}
 	return pf, nil
 }
+
+func (c *client) ProjectIntegrationWorkerHooksList(projectKey string, integrationName string) ([]sdk.WorkerHookProjectIntegrationModel, error) {
+	path := fmt.Sprintf("/project/%s/integrations/%s/workerhooks", projectKey, integrationName)
+	var res []sdk.WorkerHookProjectIntegrationModel
+	if _, err := c.GetJSON(context.Background(), path, &res); err != nil {
+		return res, err
+	}
+	return res, nil
+}
+
+func (c *client) ProjectIntegrationWorkerHooksImport(projectKey string, integrationName string, hooks []sdk.WorkerHookProjectIntegrationModel) error {
+	path := fmt.Sprintf("/project/%s/integrations/%s/workerhooks", projectKey, integrationName)
+	if _, err := c.GetJSON(context.Background(), path, &hooks); err != nil {
+		return err
+	}
+	return nil
+}
