@@ -557,6 +557,8 @@ jobLoop:
 			wjob.Status = sdk.StatusFail
 
 			for _, e := range spawnErrs {
+				log.ErrorWithStackTrace(ctx, e)
+
 				msg := sdk.SpawnMsg{
 					ID: sdk.MsgSpawnInfoJobError.ID,
 				}
