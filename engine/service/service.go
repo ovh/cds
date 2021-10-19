@@ -96,14 +96,20 @@ func (c *Common) Signin(ctx context.Context, cfg cdsclient.ServiceConfig) error 
 		return err
 	}
 
+	var lasterr error
 	if err := initClient(ctxTimeout); err != nil {
+		lasterr = err // nolint
 	loop:
 		for {
 			select {
 			case <-ctxTimeout.Done():
+				if lasterr != nil {
+					fmt.Printf("Timeout after 5min - last error: %v\n", lasterr)
+				}
 				return ctxTimeout.Err()
 			case <-ticker.C:
 				if err := initClient(ctxTimeout); err == nil {
+					lasterr = err // nolint
 					break loop
 				}
 			}
