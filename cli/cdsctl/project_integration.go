@@ -118,7 +118,7 @@ func projectIntegrationExportFunc(v cli.Values) error {
 }
 
 var projectIntegrationWorkerHooksExportCmd = cli.Command{
-	Name:  "export",
+	Name:  "worker-hooks-export",
 	Short: "Export integration worker hooks available on a project",
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
@@ -144,7 +144,7 @@ func projectIntegrationWorkerHooksExportFunc(v cli.Values) error {
 }
 
 var projectIntegrationWorkerHooksImportCmd = cli.Command{
-	Name:  "import",
+	Name:  "worker-hooks-import",
 	Short: "Import integration worker hooks on a project",
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
@@ -172,7 +172,7 @@ func projectIntegrationWorkerHooksImportFunc(v cli.Values) error {
 		return cli.WrapError(err, "unable to parse file %s", v.GetString("filename"))
 	}
 
-	_, err = client.ProjectIntegrationWorkerHooksList(v.GetString(_ProjectKey), v.GetString("integration"))
+	err = client.ProjectIntegrationWorkerHooksImport(v.GetString(_ProjectKey), v.GetString("integration"), whs)
 	if err != nil {
 		return err
 	}

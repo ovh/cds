@@ -130,7 +130,7 @@ func (c *client) ProjectIntegrationWorkerHooksList(projectKey string, integratio
 
 func (c *client) ProjectIntegrationWorkerHooksImport(projectKey string, integrationName string, hooks []sdk.WorkerHookProjectIntegrationModel) error {
 	path := fmt.Sprintf("/project/%s/integrations/%s/workerhooks", projectKey, integrationName)
-	if _, err := c.GetJSON(context.Background(), path, &hooks); err != nil {
+	if _, err := c.PostJSON(context.Background(), path, &hooks, nil); err != nil {
 		return err
 	}
 	return nil
