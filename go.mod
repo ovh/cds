@@ -15,9 +15,7 @@ require (
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/confluentinc/bincover v0.2.0
 	github.com/coreos/go-oidc v2.2.1+incompatible
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/docker/distribution v2.7.0-rc.0+incompatible
-	github.com/docker/distribution v2.7.0-rc.0+incompatible // indirect
 	github.com/docker/docker v1.13.1
 	github.com/docker/go-connections v0.3.0
 	github.com/eapache/go-resiliency v1.2.0
@@ -148,7 +146,6 @@ require (
 	github.com/fsnotify/fsnotify v1.4.7 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/go-logr/logr v0.4.0 // indirect
-	github.com/go-sql-driver/mysql v1.4.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
 	github.com/golang/snappy v0.0.1 // indirect

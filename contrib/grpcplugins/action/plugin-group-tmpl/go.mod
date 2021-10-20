@@ -17,13 +17,13 @@ require (
 	github.com/apache/thrift v0.12.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/dsnet/compress v0.0.1 // indirect
 	github.com/eapache/go-resiliency v1.2.0 // indirect
 	github.com/emirpasic/gods v1.12.0 // indirect
 	github.com/fatih/color v1.7.0 // indirect
 	github.com/fsamin/go-dump v1.0.9 // indirect
 	github.com/go-gorp/gorp v2.0.0+incompatible // indirect
+	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/gookit/color v1.4.2 // indirect

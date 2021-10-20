@@ -23,7 +23,6 @@ require (
 	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/bsm/sarama-cluster v2.1.15+incompatible // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/dsnet/compress v0.0.1 // indirect
 	github.com/eapache/go-resiliency v1.2.0 // indirect
 	github.com/eapache/go-xerial-snappy v0.0.0-20180814174437-776d5712da21 // indirect
@@ -34,6 +33,7 @@ require (
 	github.com/garyburd/redigo v1.6.2 // indirect
 	github.com/go-gorp/gorp v2.0.0+incompatible // indirect
 	github.com/go-sql-driver/mysql v1.4.1 // indirect
+	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/gookit/color v1.4.2 // indirect
