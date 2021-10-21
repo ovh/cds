@@ -53,13 +53,11 @@ func TestCRUD(t *testing.T) {
 	require.NoError(t, workerhook.Insert(context.TODO(), db, &h))
 	require.NoError(t, workerhook.Update(context.TODO(), db, &h))
 
-	res, err := workerhook.LoadAllByProjectIntegrationID(context.TODO(), db, h.ProjectIntegrationModelID)
+	_, err = workerhook.LoadByProjectIntegrationID(context.TODO(), db, h.ProjectIntegrationModelID)
 	require.NoError(t, err)
-	require.Len(t, res, 1)
 
-	res, err = workerhook.LoadAllEnabledByProjectIntegrationID(context.TODO(), db, h.ProjectIntegrationModelID)
+	_, err = workerhook.LoadEnabledByProjectIntegrationID(context.TODO(), db, h.ProjectIntegrationModelID)
 	require.NoError(t, err)
-	require.Len(t, res, 1)
 
 	_, err = workerhook.LoadAll(context.TODO(), db)
 	require.NoError(t, err)

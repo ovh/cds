@@ -7,7 +7,6 @@ import (
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/telemetry"
-	"github.com/rockbears/log"
 )
 
 func init() {
@@ -37,34 +36,39 @@ func LoadByID(ctx context.Context, db gorp.SqlExecutor, id int64) (*sdk.WorkerHo
 		return nil, err
 	}
 	if !found {
-		log.Error(ctx, "not found with id = %d", id)
 		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 	return res, nil
 }
 
-func LoadAllByProjectIntegrationID(ctx context.Context, db gorp.SqlExecutor, projectIntegrationID int64) ([]sdk.WorkerHookProjectIntegrationModel, error) {
-	ctx, end := telemetry.Span(ctx, "workerhook.LoadAllByProjectIntegrationID")
+func LoadByProjectIntegrationID(ctx context.Context, db gorp.SqlExecutor, projectIntegrationID int64) (*sdk.WorkerHookProjectIntegrationModel, error) {
+	ctx, end := telemetry.Span(ctx, "workerhook.LoadByProjectIntegrationID")
 	defer end()
 	query := gorpmapping.NewQuery("select * from worker_hook_project_integration where project_integration_id = $1").Args(projectIntegrationID)
-	var res []sdk.WorkerHookProjectIntegrationModel
-	err := gorpmapping.GetAll(ctx, db, query, &res)
+	var res sdk.WorkerHookProjectIntegrationModel
+	found, err := gorpmapping.Get(ctx, db, query, &res)
 	if err != nil {
 		return nil, err
 	}
-	return res, nil
+	if !found {
+		return nil, sdk.WithStack(sdk.ErrNotFound)
+	}
+	return &res, nil
 }
 
-func LoadAllEnabledByProjectIntegrationID(ctx context.Context, db gorp.SqlExecutor, projectIntegrationID int64) ([]sdk.WorkerHookProjectIntegrationModel, error) {
-	ctx, end := telemetry.Span(ctx, "workerhook.LoadAllEnabledByProjectIntegrationID")
+func LoadEnabledByProjectIntegrationID(ctx context.Context, db gorp.SqlExecutor, projectIntegrationID int64) (*sdk.WorkerHookProjectIntegrationModel, error) {
+	ctx, end := telemetry.Span(ctx, "workerhook.LoadEnabledByProjectIntegrationID")
 	defer end()
 	query := gorpmapping.NewQuery("select * from worker_hook_project_integration where disable = false and project_integration_id = $1").Args(projectIntegrationID)
-	var res []sdk.WorkerHookProjectIntegrationModel
-	err := gorpmapping.GetAll(ctx, db, query, &res)
+	var res sdk.WorkerHookProjectIntegrationModel
+	found, err := gorpmapping.Get(ctx, db, query, &res)
 	if err != nil {
 		return nil, err
 	}
-	return res, nil
+	if !found {
+		return nil, sdk.WithStack(sdk.ErrNotFound)
+	}
+	return &res, nil
 }
 
 func LoadAll(ctx context.Context, db gorp.SqlExecutor) ([]sdk.WorkerHookProjectIntegrationModel, error) {
