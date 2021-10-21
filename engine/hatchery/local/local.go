@@ -3,7 +3,7 @@ package local
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"os/exec"
@@ -156,7 +156,7 @@ func (h *HatcheryLocal) downloadWorker() error {
 		return sdk.WrapError(err, "error while getting binary from CDS API")
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return sdk.WrapError(err, "error while getting binary from CDS API")
 	}

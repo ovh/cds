@@ -14,14 +14,14 @@ type WorkerHookProjectIntegrationModel struct {
 }
 
 type WorkerHookSetupTeardownConfig struct {
-	EnableOnRegions []string                                  `json:"enable_on_regions" yaml:"enable_on_regions"`
-	ByCapabilities  map[string]WorkerHookSetupTeardownScripts `json:"by_capabilitites" yaml:"by_capabilitites"`
+	DisableOnRegions []string                                  `json:"disable_on_regions" yaml:"disable_on_regions"`
+	ByCapabilities   map[string]WorkerHookSetupTeardownScripts `json:"by_capabilities" yaml:"by_capabilities"`
 }
 
 // Value returns driver.Value from WorkerHookSetupTeardownConfig.
 func (w WorkerHookSetupTeardownConfig) Value() (driver.Value, error) {
 	j, err := json.Marshal(w)
-	return j, WrapError(err, "cannot marshal Action")
+	return j, WrapError(err, "cannot marshal WorkerHookSetupTeardownConfig")
 }
 
 // Scan action.
@@ -37,7 +37,7 @@ func (w *WorkerHookSetupTeardownConfig) Scan(src interface{}) error {
 }
 
 type WorkerHookSetupTeardownScripts struct {
-	Priority int    `json:"int" yaml:"int"`
+	Priority int    `json:"priority" yaml:"priority"`
 	Label    string `json:"label" yaml:"label"`
 	Setup    string `json:"setup" yaml:"setup"`
 	Teardown string `json:"teardown" yaml:"teardown"`

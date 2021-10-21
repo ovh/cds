@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -130,7 +129,7 @@ func keyInstallCmd() func(cmd *cobra.Command, args []string) {
 		defer resp.Body.Close()
 
 		if resp.StatusCode >= 300 {
-			body, err := ioutil.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
 			if err != nil {
 				sdk.Exit("Error: worker key install> HTTP error %v\n", err)
 			}
@@ -142,7 +141,7 @@ func keyInstallCmd() func(cmd *cobra.Command, args []string) {
 			}
 		}
 
-		bodyBtes, err := ioutil.ReadAll(resp.Body)
+		bodyBtes, err := io.ReadAll(resp.Body)
 		if err != nil {
 			sdk.Exit("Error: worker key install> HTTP body read error %v\n", err)
 		}

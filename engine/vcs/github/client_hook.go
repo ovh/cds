@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -47,7 +47,7 @@ func (g *githubClient) CreateHook(ctx context.Context, repo string, hook *sdk.VC
 		return sdk.WrapError(err, "github.CreateHook")
 	}
 	defer res.Body.Close()
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return sdk.WrapError(err, "ReadAll")
 	}
@@ -94,7 +94,7 @@ func (g *githubClient) UpdateHook(ctx context.Context, repo string, hook *sdk.VC
 		return sdk.WrapError(err, "github.UpdateHook")
 	}
 	defer res.Body.Close()
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return sdk.WrapError(err, "ReadAll")
 	}

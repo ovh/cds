@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"reflect"
@@ -1362,7 +1363,7 @@ func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 			// NEED get REPO
 			case "/task/bulk":
 				var hooks map[string]sdk.NodeHook
-				bts, err := ioutil.ReadAll(r.Body)
+				bts, err := io.ReadAll(r.Body)
 				if err != nil {
 					return writeError(w, err)
 				}
@@ -1672,7 +1673,7 @@ func TestInsertAndDeleteMultiHook(t *testing.T) {
 				}
 			case "/task/bulk":
 				var hooks map[string]sdk.NodeHook
-				request, err := ioutil.ReadAll(r.Body)
+				request, err := io.ReadAll(r.Body)
 				if err != nil {
 					return writeError(w, err)
 				}
@@ -1977,7 +1978,7 @@ func TestDeleteWorkflowWithDependencies(t *testing.T) {
 				}
 			case "/task/bulk":
 				var hooks map[string]sdk.NodeHook
-				request, err := ioutil.ReadAll(r.Body)
+				request, err := io.ReadAll(r.Body)
 				if err != nil {
 					return writeError(w, err)
 				}
@@ -2170,7 +2171,7 @@ func TestDeleteWorkflowWithDependencies2(t *testing.T) {
 				}
 			case "/task/bulk":
 				var hooks map[string]sdk.NodeHook
-				request, err := ioutil.ReadAll(r.Body)
+				request, err := io.ReadAll(r.Body)
 				if err != nil {
 					return writeError(w, err)
 				}

@@ -3,6 +3,7 @@ package action
 import (
 	"bytes"
 	"encoding/json"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"testing"
@@ -29,7 +30,7 @@ func TestRunRelease(t *testing.T) {
 		Reply(200)
 
 	var checkRequest gock.ObserverFunc = func(request *http.Request, mock gock.Mock) {
-		bodyContent, err := ioutil.ReadAll(request.Body)
+		bodyContent, err := io.ReadAll(request.Body)
 		assert.NoError(t, err)
 		request.Body = ioutil.NopCloser(bytes.NewReader(bodyContent))
 		if mock != nil {

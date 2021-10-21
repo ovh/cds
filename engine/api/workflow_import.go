@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -26,7 +26,7 @@ func (api *API) postWorkflowPreviewHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 
-		body, err := ioutil.ReadAll(r.Body)
+		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			return sdk.NewError(sdk.ErrWrongRequest, err)
 		}
@@ -104,7 +104,7 @@ func (api *API) postWorkflowImportHandler() service.Handler {
 		key := vars[permProjectKey]
 		force := service.FormBool(r, "force")
 
-		body, err := ioutil.ReadAll(r.Body)
+		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			return sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "can't "))
 		}
@@ -193,7 +193,7 @@ func (api *API) putWorkflowImportHandler() service.Handler {
 		key := vars["key"]
 		wfName := vars["permWorkflowName"]
 
-		body, errr := ioutil.ReadAll(r.Body)
+		body, errr := io.ReadAll(r.Body)
 		if errr != nil {
 			return sdk.NewError(sdk.ErrWrongRequest, errr)
 		}
@@ -283,7 +283,7 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrWrongRequest)
 		}
 
-		btes, err := ioutil.ReadAll(r.Body)
+		btes, err := io.ReadAll(r.Body)
 		if err != nil {
 			return sdk.NewErrorWithStack(err, sdk.ErrWrongRequest)
 		}

@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -1636,7 +1637,7 @@ func Test_postWorkflowRunHandlerWithoutRightConditionsOnHook(t *testing.T) {
 			switch r.URL.String() {
 			case "/task/bulk":
 				var req map[string]sdk.NodeHook
-				bdy, err := ioutil.ReadAll(r.Body)
+				bdy, err := io.ReadAll(r.Body)
 				if err != nil {
 					return writeError(w, err)
 				}

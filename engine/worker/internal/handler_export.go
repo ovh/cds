@@ -2,7 +2,7 @@ package internal
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"github.com/rockbears/log"
@@ -18,7 +18,7 @@ func addBuildVarHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc
 		ctx = workerruntime.SetStepName(ctx, wk.currentJob.currentStepName)
 
 		// Get body
-		data, errra := ioutil.ReadAll(r.Body)
+		data, errra := io.ReadAll(r.Body)
 		if errra != nil {
 			log.Error(ctx, "addBuildVarHandler> Cannot ReadAll err: %s", errra)
 			w.WriteHeader(http.StatusBadRequest)

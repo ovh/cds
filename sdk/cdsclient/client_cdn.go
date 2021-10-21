@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -69,7 +68,7 @@ func (c *client) CDNItemStream(ctx context.Context, cdnAddr string, hash string,
 	if code >= 400 {
 		var stringBody string
 		if reader != nil {
-			body, _ := ioutil.ReadAll(reader)
+			body, _ := io.ReadAll(reader)
 			var errSdk sdk.Error
 			if err := sdk.JSONUnmarshal(body, &errSdk); err == nil && errSdk.Message != "" {
 				stringBody = errSdk.Error()
@@ -100,7 +99,7 @@ func (c *client) CDNItemUpload(ctx context.Context, cdnAddr string, signature st
 			continue
 		}
 		if code >= 400 {
-			bts, err := ioutil.ReadAll(body)
+			bts, err := io.ReadAll(body)
 			if err != nil {
 				return time.Since(t0), err
 			}

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/url"
 	"strings"
 
@@ -93,7 +92,7 @@ func (c *client) ProjectIntegrationDelete(projectKey string, integrationName str
 func (c *client) ProjectIntegrationImport(projectKey string, content io.Reader, mods ...RequestModifier) (sdk.ProjectIntegration, error) {
 	var pf sdk.ProjectIntegration
 
-	body, err := ioutil.ReadAll(content)
+	body, err := io.ReadAll(content)
 	if err != nil {
 		return pf, err
 	}

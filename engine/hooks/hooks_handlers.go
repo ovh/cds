@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"sort"
 	"strconv"
@@ -41,7 +41,7 @@ func (s *Service) webhookHandler() service.Handler {
 		}
 
 		//Read the body
-		req, err := ioutil.ReadAll(r.Body)
+		req, err := io.ReadAll(r.Body)
 		if err != nil {
 			return sdk.WrapError(err, "Unable to read request")
 		}

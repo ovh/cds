@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -977,7 +978,7 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	router.Mux.ServeHTTP(rec, req)
 
 	resp := rec.Result()
-	body, _ := ioutil.ReadAll(resp.Body)
+	body, _ := io.ReadAll(resp.Body)
 
 	require.Equal(t, 200, rec.Code)
 	require.Equal(t, "Hi, I am foo", string(body))

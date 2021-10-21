@@ -2,7 +2,7 @@ package api
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	yaml "gopkg.in/yaml.v2"
@@ -24,7 +24,7 @@ func (api *API) postWorkerModelImportHandler() service.Handler {
 
 		force := service.FormBool(r, "force")
 
-		body, errr := ioutil.ReadAll(r.Body)
+		body, errr := io.ReadAll(r.Body)
 		if errr != nil {
 			return sdk.NewError(sdk.ErrWrongRequest, errr)
 		}

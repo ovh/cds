@@ -3,7 +3,7 @@ package api
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"sort"
 	"strconv"
@@ -614,7 +614,7 @@ func (api *API) putWorkflowIconHandler() service.Handler {
 			return errP
 		}
 
-		imageBts, errr := ioutil.ReadAll(r.Body)
+		imageBts, errr := io.ReadAll(r.Body)
 		if errr != nil {
 			return sdk.NewError(sdk.ErrWrongRequest, errr)
 		}

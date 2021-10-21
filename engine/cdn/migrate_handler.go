@@ -3,7 +3,7 @@ package cdn
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strconv"
 
@@ -60,7 +60,7 @@ func (s *Service) migrateArtifactInCDNHandler() service.Handler {
 		}
 		if code >= 400 {
 			var bodyBtes []byte
-			bodyBtes, errR := ioutil.ReadAll(readcloser)
+			bodyBtes, errR := io.ReadAll(readcloser)
 			if errR != nil {
 				return errR
 			}

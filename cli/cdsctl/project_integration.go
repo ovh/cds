@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -162,7 +162,7 @@ func projectIntegrationWorkerHooksImportFunc(v cli.Values) error {
 	}
 	defer f.Close()
 
-	btes, err := ioutil.ReadAll(f)
+	btes, err := io.ReadAll(f)
 	if err != nil {
 		return cli.WrapError(err, "unable to read file %s", v.GetString("filename"))
 	}

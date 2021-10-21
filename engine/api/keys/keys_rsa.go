@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"strings"
 
 	"github.com/ovh/cds/sdk"
@@ -46,7 +45,7 @@ func generateSSHKeyPair(keyname string) (pub io.Reader, priv io.Reader, err erro
 
 //getSSHPrivateKey returns the RSA private key
 func getSSHPrivateKey(r io.Reader) (*rsa.PrivateKey, error) {
-	privBytes, errr := ioutil.ReadAll(r)
+	privBytes, errr := io.ReadAll(r)
 	if errr != nil {
 		return nil, sdk.WrapError(errr, "getSSHPrivateKey> Unable to read private key")
 	}
@@ -91,12 +90,12 @@ func GenerateSSHKey(name string) (sdk.Key, error) {
 	if errGenerate != nil {
 		return k, sdk.WrapError(errGenerate, "getSSHPublicKey> Cannot generate sshKey")
 	}
-	pub, errPub := ioutil.ReadAll(pubR)
+	pub, errPub := io.ReadAll(pubR)
 	if errPub != nil {
 		return k, sdk.WrapError(errPub, "getSSHPublicKey> Unable to read public key")
 	}
 
-	priv, errPriv := ioutil.ReadAll(privR)
+	priv, errPriv := io.ReadAll(privR)
 	if errPriv != nil {
 		return k, sdk.WrapError(errPriv, "getSSHPublicKey> Unable to read private key")
 	}

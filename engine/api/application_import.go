@@ -3,7 +3,7 @@ package api
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -29,7 +29,7 @@ func (api *API) postApplicationImportHandler() service.Handler {
 			return sdk.WrapError(err, "unable load project")
 		}
 
-		body, err := ioutil.ReadAll(r.Body)
+		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			return sdk.NewError(sdk.ErrWrongRequest, err)
 		}

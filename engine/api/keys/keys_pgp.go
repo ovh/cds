@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 
 	"github.com/ovh/cds/sdk"
 	"golang.org/x/crypto/openpgp"
@@ -110,12 +109,12 @@ func GeneratePGPKeyPair(name string) (sdk.Key, error) {
 		return k, err
 	}
 
-	pub, errPub := ioutil.ReadAll(bufPublic)
+	pub, errPub := io.ReadAll(bufPublic)
 	if errPub != nil {
 		return k, sdk.WrapError(errPub, "GeneratePGPKeyPair> Unable to read public key")
 	}
 
-	priv, errPriv := ioutil.ReadAll(bufPrivate)
+	priv, errPriv := io.ReadAll(bufPrivate)
 	if errPriv != nil {
 		return k, sdk.WrapError(errPriv, "GeneratePGPKeyPair>  Unable to read private key")
 	}

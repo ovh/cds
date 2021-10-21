@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"path"
 	"time"
 
@@ -105,7 +104,7 @@ func (s *AWSS3Store) Store(o Object, data io.ReadCloser) (string, error) {
 	defer data.Close()
 	log.Debug(context.Background(), "AWS-S3-Store> Setting up uploader")
 	uploader := s3manager.NewUploader(s.sess)
-	b, e := ioutil.ReadAll(data)
+	b, e := io.ReadAll(data)
 	if e != nil {
 		return "", sdk.WrapError(e, "AWS-S3-Store> Unable to read data from input object")
 	}

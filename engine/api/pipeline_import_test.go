@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"io/ioutil"
 	"net/http/httptest"
 	"strings"
@@ -50,7 +51,7 @@ jobs:
 	api.Router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
 
-	res, _ := ioutil.ReadAll(rec.Body)
+	res, _ := io.ReadAll(rec.Body)
 	pip := &sdk.Pipeline{}
 	test.NoError(t, json.Unmarshal(res, &pip))
 

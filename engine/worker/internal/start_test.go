@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -248,7 +249,7 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 	}()
 
 	var checkRequest gock.ObserverFunc = func(request *http.Request, mock gock.Mock) {
-		bodyContent, err := ioutil.ReadAll(request.Body)
+		bodyContent, err := io.ReadAll(request.Body)
 		assert.NoError(t, err)
 		request.Body = ioutil.NopCloser(bytes.NewReader(bodyContent))
 		if mock != nil {

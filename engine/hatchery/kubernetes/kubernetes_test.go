@@ -3,7 +3,7 @@ package kubernetes
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 
@@ -81,7 +81,7 @@ func TestHatcheryKubernetes_Status(t *testing.T) {
 		if request.Body == nil {
 			return
 		}
-		bodyContent, err := ioutil.ReadAll(request.Body)
+		bodyContent, err := io.ReadAll(request.Body)
 		assert.NoError(t, err)
 		var podRequest v1.Pod
 		require.NoError(t, json.Unmarshal(bodyContent, &podRequest))

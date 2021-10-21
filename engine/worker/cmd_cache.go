@@ -5,7 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -142,7 +142,7 @@ func cachePushCmd() func(cmd *cobra.Command, args []string) {
 		defer resp.Body.Close()
 
 		if resp.StatusCode >= 300 {
-			body, err := ioutil.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
 			if err != nil {
 				sdk.Exit("cache push HTTP %d error %v", resp.StatusCode, err)
 			}
@@ -231,7 +231,7 @@ func cachePullCmd() func(cmd *cobra.Command, args []string) {
 		}
 
 		if resp.StatusCode >= 300 {
-			body, err := ioutil.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
 			if err != nil {
 				sdk.Exit("cache pull HTTP %d error %v", resp.StatusCode, err)
 			}

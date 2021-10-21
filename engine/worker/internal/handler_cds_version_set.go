@@ -2,7 +2,7 @@ package internal
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
@@ -15,7 +15,7 @@ func setVersionHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc 
 		ctx = workerruntime.SetStepOrder(ctx, wk.currentJob.currentStepIndex)
 		ctx = workerruntime.SetStepName(ctx, wk.currentJob.currentStepName)
 
-		data, err := ioutil.ReadAll(r.Body)
+		data, err := io.ReadAll(r.Body)
 		if err != nil {
 			writeError(w, r, sdk.NewError(sdk.ErrWrongRequest, err))
 			return

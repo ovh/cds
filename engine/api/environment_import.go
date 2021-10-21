@@ -2,7 +2,7 @@ package api
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -32,7 +32,7 @@ func (api *API) postEnvironmentImportHandler() service.Handler {
 			return sdk.WrapError(err, "unable load project")
 		}
 
-		body, err := ioutil.ReadAll(r.Body)
+		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			return sdk.NewError(sdk.ErrWrongRequest, err)
 		}
@@ -88,7 +88,7 @@ func (api *API) importNewEnvironmentHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load %s", key)
 		}
 
-		body, err := ioutil.ReadAll(r.Body)
+		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			return sdk.NewError(sdk.ErrWrongRequest, sdk.WrapError(err, "unable to read body"))
 		}
@@ -167,7 +167,7 @@ func (api *API) importIntoEnvironmentHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load env %s/%s", key, envName)
 		}
 
-		body, err := ioutil.ReadAll(r.Body)
+		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			return sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to read body"))
 		}

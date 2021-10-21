@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 
@@ -75,7 +75,7 @@ func (g *githubClient) SetStatus(ctx context.Context, event sdk.Event) error {
 
 	defer res.Body.Close()
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to read body")
 	}

@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"context"
 	"io"
-	"io/ioutil"
 	"testing"
 
 	"github.com/ovh/cds/engine/api/application"
@@ -145,7 +144,7 @@ func TestPull(t *testing.T) {
 		test.NoError(t, err, "Unable to iterate over the tar buffer")
 		t.Logf("Contents of %s:", hdr.Name)
 
-		btes, err := ioutil.ReadAll(tr)
+		btes, err := io.ReadAll(tr)
 		test.NoError(t, err, "Unable to read the tar buffer")
 
 		t.Logf("%s", string(btes))

@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -188,7 +188,7 @@ func (g *githubClient) PullRequestComment(ctx context.Context, repo string, prRe
 
 	defer res.Body.Close()
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to read body")
 	}
@@ -226,7 +226,7 @@ func (g *githubClient) PullRequestCreate(ctx context.Context, repo string, pr sd
 	}
 	defer res.Body.Close()
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return sdk.VCSPullRequest{}, sdk.WrapError(err, "Unable to read body")
 	}

@@ -3,7 +3,7 @@ package github
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -206,7 +206,7 @@ func (g *githubClient) GrantWritePermission(ctx context.Context, fullname string
 		return nil
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}
@@ -229,7 +229,7 @@ func (g *githubClient) GrantWritePermission(ctx context.Context, fullname string
 			log.Warn(ctx, "githubClient.GrantWritePermission> Error (%s) %s", url, err)
 			return err
 		}
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return err
 		}

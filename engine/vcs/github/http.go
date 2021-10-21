@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -49,7 +48,7 @@ func (g *githubConsumer) postForm(path string, data url.Values, headers map[stri
 		return 0, nil, err
 	}
 	defer res.Body.Close()
-	resBody, err := ioutil.ReadAll(res.Body)
+	resBody, err := io.ReadAll(res.Body)
 	if err != nil {
 		return res.StatusCode, nil, err
 	}
@@ -274,7 +273,7 @@ func (c *githubClient) get(ctx context.Context, path string, opts ...getArgFunc)
 		return res.StatusCode, nil, nil, ErrorUnauthorized
 	}
 
-	resBody, err := ioutil.ReadAll(res.Body)
+	resBody, err := io.ReadAll(res.Body)
 	if err != nil {
 		return res.StatusCode, nil, nil, err
 	}

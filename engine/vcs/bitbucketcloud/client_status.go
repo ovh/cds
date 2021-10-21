@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"strings"
 
 	"github.com/rockbears/log"
@@ -69,7 +69,7 @@ func (client *bitbucketcloudClient) SetStatus(ctx context.Context, event sdk.Eve
 	}
 	defer res.Body.Close()
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to read body")
 	}

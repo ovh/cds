@@ -2,7 +2,7 @@ package swarm
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"strconv"
 	"strings"
 	"time"
@@ -66,7 +66,7 @@ func (h *HatcherySwarm) getServicesLogs() error {
 				continue
 			}
 
-			logs, err := ioutil.ReadAll(logsReader)
+			logs, err := io.ReadAll(logsReader)
 			if err != nil {
 				logsReader.Close() // nolint
 				err = sdk.WrapError(err, "cannot read logs for containers service %s %v", cnt.ID, cnt.Names)

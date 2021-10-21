@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -155,7 +156,7 @@ func TestPostUpdateWorkflowAsCodeHandler(t *testing.T) {
 				}
 			case "/task/bulk":
 				var hooks map[string]sdk.NodeHook
-				bts, err := ioutil.ReadAll(r.Body)
+				bts, err := io.ReadAll(r.Body)
 				if err != nil {
 					return writeError(w, err)
 				}
@@ -362,7 +363,7 @@ func TestPostMigrateWorkflowAsCodeHandler(t *testing.T) {
 				}
 			case "/task/bulk":
 				var hooks map[string]sdk.NodeHook
-				bts, err := ioutil.ReadAll(r.Body)
+				bts, err := io.ReadAll(r.Body)
 				if err != nil {
 					return writeError(w, err)
 				}

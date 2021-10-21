@@ -3,7 +3,7 @@ package api
 import (
 	"bytes"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -50,7 +50,7 @@ func TestAddEnvironmentHandler(t *testing.T) {
 	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
-	res, _ := ioutil.ReadAll(w.Body)
+	res, _ := io.ReadAll(w.Body)
 	projectResult := &sdk.Project{}
 	json.Unmarshal(res, &projectResult)
 	assert.Equal(t, len(projectResult.Environments), 1)
@@ -106,7 +106,7 @@ func TestUpdateEnvironmentHandler(t *testing.T) {
 	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
-	res, _ := ioutil.ReadAll(w.Body)
+	res, _ := io.ReadAll(w.Body)
 	t.Logf(string(res))
 	projectResult := &sdk.Project{}
 	json.Unmarshal(res, &projectResult)
@@ -157,7 +157,7 @@ func TestDeleteEnvironmentHandler(t *testing.T) {
 	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
-	res, _ := ioutil.ReadAll(w.Body)
+	res, _ := io.ReadAll(w.Body)
 	projectResult := &sdk.Project{}
 	json.Unmarshal(res, &projectResult)
 	assert.Equal(t, len(projectResult.Environments), 0)
@@ -204,7 +204,7 @@ func TestGetEnvironmentsHandler(t *testing.T) {
 	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
-	res, _ := ioutil.ReadAll(w.Body)
+	res, _ := io.ReadAll(w.Body)
 	envsResults := []sdk.Environment{}
 	json.Unmarshal(res, &envsResults)
 	assert.Equal(t, len(envsResults), 1)
@@ -246,7 +246,7 @@ func TestGetEnvironmentHandler(t *testing.T) {
 	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
-	res, _ := ioutil.ReadAll(w.Body)
+	res, _ := io.ReadAll(w.Body)
 	envResults := sdk.Environment{}
 	json.Unmarshal(res, &envResults)
 	assert.Equal(t, envResults.Name, "Preproduction")

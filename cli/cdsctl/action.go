@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"path"
 	"strings"
 	"time"
@@ -213,7 +213,7 @@ func actionDocRun(v cli.Values) error {
 	}
 	defer contentFile.Close()
 
-	body, err := ioutil.ReadAll(contentFile)
+	body, err := io.ReadAll(contentFile)
 	if err != nil {
 		return err
 	}

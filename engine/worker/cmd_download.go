@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"strconv"
@@ -105,7 +105,7 @@ func downloadCmd() func(cmd *cobra.Command, args []string) {
 		defer resp.Body.Close()
 
 		if resp.StatusCode >= 300 {
-			body, err := ioutil.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
 			if err != nil {
 				sdk.Exit("cannot artifact download HTTP %v\n", err)
 			}
