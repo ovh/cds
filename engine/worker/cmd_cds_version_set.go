@@ -74,7 +74,7 @@ func cdsVersionSetCmd() func(cmd *cobra.Command, args []string) {
 				return sdk.DecodeError(body)
 			}
 
-			fmt.Printf("CDS version was set to %s\n", a.Value)
+			fmt.Printf("CDS version set to %s\n", a.Value)
 
 			return nil
 		}
