@@ -1,5 +1,5 @@
 name: artifactory-promote-plugin
 type: integration-promote
-integration: ArtifactManager
+integration: Artifactory
 author: "OVH SAS"
 description: "OVH Artifactory Promote Plugin"
