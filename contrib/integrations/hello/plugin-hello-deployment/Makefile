@@ -40,7 +40,7 @@ build: $(TARGET_DIR)
 			if test "$$GOOS" = "windows" ; then EXTENSION=".exe"; fi; \
 			FILENAME=deployment-plugin-$(TARGET_NAME)-$$GOOS-$$GOARCH$$EXTENSION; \
 			echo Compiling $(TARGET_DIR)/$$FILENAME $(VERSION); \
-			GOOS=$$GOOS GOARCH=$$GOARCH $(GO_BUILD) $(TARGET_LDFLAGS) -o $(TARGET_DIR)/$$FILENAME; \
+			GOOS=$$GOOS GOARCH=$$GOARCH $(GO_BUILD) $(TARGET_LDFLAGS) -o $(TARGET_DIR)/$$FILENAME || exit 1; \
 			echo "$$PLUGIN_MANIFEST_BINARY" > $(TARGET_DIR)/plugin-kubernetes-$$GOOS-$$GOARCH.yml; \
 			perl -pi -e s,%os%,$$GOOS,g $(TARGET_DIR)/plugin-kubernetes-$$GOOS-$$GOARCH.yml; \
 			perl -pi -e s,%arch%,$$GOARCH,g $(TARGET_DIR)/plugin-kubernetes-$$GOOS-$$GOARCH.yml; \
