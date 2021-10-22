@@ -44,7 +44,7 @@ build: $(TARGET_DIR)
 			if test "$$GOOS" = "windows" ; then EXTENSION=".exe"; fi; \
 			echo Compiling $(TARGET_DIR)/$(TARGET_NAME)-$$GOOS-$$GOARCH$$EXTENSION $(VERSION); \
 			FILENAME=$(TARGET_NAME)-$$GOOS-$$GOARCH$$EXTENSION; \
-			GOOS=$$GOOS GOARCH=$$GOARCH CGO_ENABLED=0 $(GO_BUILD) $(TARGET_LDFLAGS) -o $(TARGET_DIR)/$$FILENAME; \
+			GOOS=$$GOOS GOARCH=$$GOARCH CGO_ENABLED=0 $(GO_BUILD) $(TARGET_LDFLAGS) -o $(TARGET_DIR)/$$FILENAME || exit 1; \
 			echo "$$PLUGIN_MANIFEST_BINARY" > $(TARGET_DIR)/$(TARGET_NAME)-$$GOOS-$$GOARCH.yml; \
 			perl -pi -e s,%os%,$$GOOS,g $(TARGET_DIR)/$(TARGET_NAME)-$$GOOS-$$GOARCH.yml; \
 			perl -pi -e s,%arch%,$$GOARCH,g $(TARGET_DIR)/$(TARGET_NAME)-$$GOOS-$$GOARCH.yml; \

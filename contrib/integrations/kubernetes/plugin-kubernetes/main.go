@@ -244,10 +244,10 @@ func executeK8s(q *integrationplugin.RunQuery) error {
 	}
 
 	if namespace != "" && namespace != apiv1.NamespaceDefault {
-		if _, err := clientset.CoreV1().Namespaces().Get(namespace, metav1.GetOptions{}); err != nil {
+		if _, err := clientset.CoreV1().Namespaces().Get(context.Background(), namespace, metav1.GetOptions{}); err != nil {
 			ns := apiv1.Namespace{}
 			ns.SetName(namespace)
-			if _, errC := clientset.CoreV1().Namespaces().Create(&ns); errC != nil {
+			if _, errC := clientset.CoreV1().Namespaces().Create(context.Background(), &ns, metav1.CreateOptions{}); errC != nil {
 				return fmt.Errorf("Cannot create namespace %s in kubernetes: %v", namespace, errC)
 			}
 		}
