@@ -71,16 +71,19 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 	}
 
 	udata := spawnArgs.Model.ModelVirtualMachine.PreCmd + "\n" + spawnArgs.Model.ModelVirtualMachine.Cmd + "\n" + spawnArgs.Model.ModelVirtualMachine.PostCmd
-
 	tmpl, err := template.New("udata").Parse(udata)
 	if err != nil {
 		return err
 	}
 
-	udataParam := h.GenerateWorkerArgs(ctx, h, spawnArgs)
-	udataParam.TTL = h.Config.WorkerTTL
-	udataParam.FromWorkerImage = withExistingImage
-	udataParam.WorkflowJobID = spawnArgs.JobID
+	workerConfig := h.GenerateWorkeConfig(ctx, h, spawnArgs)
+	udataParam := struct {
+		API             string
+		FromWorkerImage bool
+	}{
+		API:             workerConfig.APIEndpoint,
+		FromWorkerImage: withExistingImage,
+	}
 
 	var buffer bytes.Buffer
 	if err := tmpl.Execute(&buffer, udataParam); err != nil {

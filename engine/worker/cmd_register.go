@@ -33,7 +33,7 @@ func cmdRegisterRun() func(cmd *cobra.Command, args []string) {
 			log.Fatal(ctx, "%v", err)
 		}
 
-		if err := initFromConfig(cfg, w); err != nil {
+		if err := initFromConfig(ctx, cfg, w); err != nil {
 			log.Fatal(ctx, "%v", err)
 		}
 

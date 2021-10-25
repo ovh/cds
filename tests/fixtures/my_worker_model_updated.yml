@@ -8,8 +8,6 @@ envs:
   CDS_GRAYLOG_EXTRA_VALUE: '{{.GraylogExtraValue}}'
   CDS_GRAYLOG_HOST: '{{.GraylogHost}}'
   CDS_GRAYLOG_PORT: '{{.GraylogPort}}'
-  CDS_SINGLE_USE: "1"
-  CDS_TTL: '{{.TTL}}'
   atest: this is an env test
 shell: sh -c
 cmd: worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery={{.Hatchery}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --single-use

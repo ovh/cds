@@ -375,9 +375,12 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 		return errDockerOpts
 	}
 
-	udataParam := h.GenerateWorkerArgs(ctx, h, spawnArgs)
-	udataParam.TTL = h.Config.WorkerTTL
-	udataParam.WorkflowJobID = spawnArgs.JobID
+	workerConfig := h.GenerateWorkeConfig(ctx, h, spawnArgs)
+	udataParam := struct {
+		API string
+	}{
+		API: workerConfig.APIEndpoint,
+	}
 
 	tmpl, errt := template.New("cmd").Parse(spawnArgs.Model.ModelDocker.Cmd)
 	if errt != nil {
@@ -396,26 +399,10 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 		modelEnvs[k] = v
 	}
 
-	envsWm := udataParam.InjectEnvVars
+	envsWm := workerConfig.InjectEnvVars
 	envsWm["CDS_MODEL_MEMORY"] = fmt.Sprintf("%d", memory)
-	envsWm["CDS_API"] = udataParam.API
-	envsWm["CDS_TOKEN"] = udataParam.Token
-	envsWm["CDS_NAME"] = udataParam.Name
-	envsWm["CDS_MODEL_PATH"] = udataParam.Model
-	envsWm["CDS_HATCHERY_NAME"] = udataParam.HatcheryName
-	envsWm["CDS_FROM_WORKER_IMAGE"] = fmt.Sprintf("%v", udataParam.FromWorkerImage)
-	envsWm["CDS_INSECURE"] = fmt.Sprintf("%v", udataParam.HTTPInsecure)
 
-	if spawnArgs.JobID > 0 {
-		envsWm["CDS_BOOKED_WORKFLOW_JOB_ID"] = fmt.Sprintf("%d", spawnArgs.JobID)
-	}
-
-	envTemplated, errEnv := sdk.TemplateEnvs(udataParam, modelEnvs)
-	if errEnv != nil {
-		return errEnv
-	}
-
-	for envName, envValue := range envTemplated {
+	for envName, envValue := range modelEnvs {
 		envsWm[envName] = envValue
 	}
 

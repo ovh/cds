@@ -9,30 +9,6 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-var defaultEnvs = map[string]string{
-	"CDS_SINGLE_USE":          "1",
-	"CDS_TTL":                 "{{.TTL}}",
-	"CDS_GRAYLOG_HOST":        "{{.GraylogHost}}",
-	"CDS_GRAYLOG_PORT":        "{{.GraylogPort}}",
-	"CDS_GRAYLOG_EXTRA_KEY":   "{{.GraylogExtraKey}}",
-	"CDS_GRAYLOG_EXTRA_VALUE": "{{.GraylogExtraValue}}",
-}
-
-func mergeModelEnvsWithDefaultEnvs(m *workerModel) {
-	if m.Type != sdk.Docker {
-		return
-	}
-
-	if m.ModelDocker.Envs == nil {
-		m.ModelDocker.Envs = make(map[string]string)
-	}
-	for envName := range defaultEnvs {
-		if _, ok := m.ModelDocker.Envs[envName]; !ok {
-			m.ModelDocker.Envs[envName] = defaultEnvs[envName]
-		}
-	}
-}
-
 const registryPasswordSecretName = "secrets.registry_password"
 const vpsherePasswordSecretName = "secrets.vsphere_password"
 

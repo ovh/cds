@@ -107,13 +107,13 @@ func FlagInt64(cmd *cobra.Command, key string) int64 {
 	return i
 }
 
-func initFromConfig(cfg *workerruntime.WorkerConfig, w *internal.CurrentWorker) error {
+func initFromConfig(ctx context.Context, cfg *workerruntime.WorkerConfig, w *internal.CurrentWorker) error {
 	cfg.Log.GraylogFieldCDSVersion = sdk.VERSION
 	cfg.Log.GraylogFieldCDSOS = sdk.GOOS
 	cfg.Log.GraylogFieldCDSArch = sdk.GOARCH
 	cfg.Log.GraylogFieldCDSServiceType = "worker"
 
-	cdslog.Initialize(context.Background(), &cfg.Log)
+	cdslog.Initialize(ctx, &cfg.Log)
 
 	fs := afero.NewOsFs()
 	log.Debug(context.TODO(), "creating basedir %s", cfg.Basedir)
@@ -125,7 +125,7 @@ func initFromConfig(cfg *workerruntime.WorkerConfig, w *internal.CurrentWorker) 
 		cfg.HatcheryName,
 		cfg.APIEndpoint,
 		cfg.APIToken,
-		cfg.ModelName,
+		cfg.Model,
 		cfg.APIEndpointInsecure,
 		afero.NewBasePathFs(fs, cfg.Basedir))
 }
@@ -185,7 +185,7 @@ func initFromFlags(cmd *cobra.Command) (*workerruntime.WorkerConfig, error) {
 		APIToken:            token,
 		APIEndpoint:         apiEndpoint,
 		APIEndpointInsecure: FlagBool(cmd, flagInsecure),
-		ModelName:           FlagString(cmd, flagModel),
+		Model:               FlagString(cmd, flagModel),
 		Log: cdslog.Conf{
 			Level:             FlagString(cmd, flagLogLevel),
 			GraylogProtocol:   FlagString(cmd, flagGraylogProtocol),

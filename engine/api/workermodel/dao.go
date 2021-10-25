@@ -200,8 +200,6 @@ func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, model *sdk.Mod
 	dbmodel.UserLastModified = time.Now()
 	dbmodel.NeedRegistration = true
 
-	mergeModelEnvsWithDefaultEnvs(&dbmodel)
-
 	needSaveRegistryPassword, dockerRegistryPassword, err := replaceDockerRegistryPassword(db, &dbmodel)
 	if err != nil {
 		return err
@@ -245,8 +243,6 @@ func UpdateDB(ctx context.Context, db gorpmapper.SqlExecutorWithTx, model *sdk.M
 	if err := DeleteCapabilitiesByModelID(db, dbmodel.ID); err != nil {
 		return err
 	}
-
-	mergeModelEnvsWithDefaultEnvs(&dbmodel)
 
 	needSaveRegistryPassword, dockerRegistryPassword, err := replaceDockerRegistryPassword(db, &dbmodel)
 	if err != nil {
