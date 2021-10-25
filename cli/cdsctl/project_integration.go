@@ -119,7 +119,7 @@ func projectIntegrationExportFunc(v cli.Values) error {
 
 var projectIntegrationWorkerHooksExportCmd = cli.Command{
 	Name:  "worker-hooks-export",
-	Short: "Export integration worker hooks available on a project",
+	Short: "Export integration worker hook configuration",
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
 	},
@@ -129,7 +129,7 @@ var projectIntegrationWorkerHooksExportCmd = cli.Command{
 }
 
 func projectIntegrationWorkerHooksExportFunc(v cli.Values) error {
-	res, err := client.ProjectIntegrationWorkerHooksList(v.GetString(_ProjectKey), v.GetString("integration"))
+	res, err := client.ProjectIntegrationWorkerHooksGet(v.GetString(_ProjectKey), v.GetString("integration"))
 	if err != nil {
 		return err
 	}
@@ -145,7 +145,7 @@ func projectIntegrationWorkerHooksExportFunc(v cli.Values) error {
 
 var projectIntegrationWorkerHooksImportCmd = cli.Command{
 	Name:  "worker-hooks-import",
-	Short: "Import integration worker hooks on a project",
+	Short: "Import integration worker hook configuration",
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
 	},
@@ -167,12 +167,12 @@ func projectIntegrationWorkerHooksImportFunc(v cli.Values) error {
 		return cli.WrapError(err, "unable to read file %s", v.GetString("filename"))
 	}
 
-	var whs []sdk.WorkerHookProjectIntegrationModel
-	if err := yaml.Unmarshal(btes, &whs); err != nil {
+	var wh sdk.WorkerHookProjectIntegrationModel
+	if err := yaml.Unmarshal(btes, &wh); err != nil {
 		return cli.WrapError(err, "unable to parse file %s", v.GetString("filename"))
 	}
 
-	err = client.ProjectIntegrationWorkerHooksImport(v.GetString(_ProjectKey), v.GetString("integration"), whs)
+	err = client.ProjectIntegrationWorkerHooksImport(v.GetString(_ProjectKey), v.GetString("integration"), wh)
 	if err != nil {
 		return err
 	}

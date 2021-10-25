@@ -2573,33 +2573,33 @@ func (mr *MockProjectClientMockRecorder) ProjectIntegrationList(projectKey inter
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectIntegrationList", reflect.TypeOf((*MockProjectClient)(nil).ProjectIntegrationList), projectKey)
 }
 
-// ProjectIntegrationWorkerHooksImport mocks base method.
-func (m *MockProjectClient) ProjectIntegrationWorkerHooksImport(projectKey, integrationName string, hooks []sdk.WorkerHookProjectIntegrationModel) error {
+// ProjectIntegrationWorkerHooksGet mocks base method.
+func (m *MockProjectClient) ProjectIntegrationWorkerHooksGet(projectKey, integrationName string) (*sdk.WorkerHookProjectIntegrationModel, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ProjectIntegrationWorkerHooksImport", projectKey, integrationName, hooks)
+	ret := m.ctrl.Call(m, "ProjectIntegrationWorkerHooksGet", projectKey, integrationName)
+	ret0, _ := ret[0].(*sdk.WorkerHookProjectIntegrationModel)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectIntegrationWorkerHooksGet indicates an expected call of ProjectIntegrationWorkerHooksGet.
+func (mr *MockProjectClientMockRecorder) ProjectIntegrationWorkerHooksGet(projectKey, integrationName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectIntegrationWorkerHooksGet", reflect.TypeOf((*MockProjectClient)(nil).ProjectIntegrationWorkerHooksGet), projectKey, integrationName)
+}
+
+// ProjectIntegrationWorkerHooksImport mocks base method.
+func (m *MockProjectClient) ProjectIntegrationWorkerHooksImport(projectKey, integrationName string, hook sdk.WorkerHookProjectIntegrationModel) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectIntegrationWorkerHooksImport", projectKey, integrationName, hook)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // ProjectIntegrationWorkerHooksImport indicates an expected call of ProjectIntegrationWorkerHooksImport.
-func (mr *MockProjectClientMockRecorder) ProjectIntegrationWorkerHooksImport(projectKey, integrationName, hooks interface{}) *gomock.Call {
+func (mr *MockProjectClientMockRecorder) ProjectIntegrationWorkerHooksImport(projectKey, integrationName, hook interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectIntegrationWorkerHooksImport", reflect.TypeOf((*MockProjectClient)(nil).ProjectIntegrationWorkerHooksImport), projectKey, integrationName, hooks)
-}
-
-// ProjectIntegrationWorkerHooksList mocks base method.
-func (m *MockProjectClient) ProjectIntegrationWorkerHooksList(projectKey, integrationName string) ([]sdk.WorkerHookProjectIntegrationModel, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ProjectIntegrationWorkerHooksList", projectKey, integrationName)
-	ret0, _ := ret[0].([]sdk.WorkerHookProjectIntegrationModel)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ProjectIntegrationWorkerHooksList indicates an expected call of ProjectIntegrationWorkerHooksList.
-func (mr *MockProjectClientMockRecorder) ProjectIntegrationWorkerHooksList(projectKey, integrationName interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectIntegrationWorkerHooksList", reflect.TypeOf((*MockProjectClient)(nil).ProjectIntegrationWorkerHooksList), projectKey, integrationName)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectIntegrationWorkerHooksImport", reflect.TypeOf((*MockProjectClient)(nil).ProjectIntegrationWorkerHooksImport), projectKey, integrationName, hook)
 }
 
 // ProjectKeyCreate mocks base method.
@@ -6801,33 +6801,33 @@ func (mr *MockInterfaceMockRecorder) ProjectIntegrationList(projectKey interface
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectIntegrationList", reflect.TypeOf((*MockInterface)(nil).ProjectIntegrationList), projectKey)
 }
 
-// ProjectIntegrationWorkerHooksImport mocks base method.
-func (m *MockInterface) ProjectIntegrationWorkerHooksImport(projectKey, integrationName string, hooks []sdk.WorkerHookProjectIntegrationModel) error {
+// ProjectIntegrationWorkerHooksGet mocks base method.
+func (m *MockInterface) ProjectIntegrationWorkerHooksGet(projectKey, integrationName string) (*sdk.WorkerHookProjectIntegrationModel, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ProjectIntegrationWorkerHooksImport", projectKey, integrationName, hooks)
+	ret := m.ctrl.Call(m, "ProjectIntegrationWorkerHooksGet", projectKey, integrationName)
+	ret0, _ := ret[0].(*sdk.WorkerHookProjectIntegrationModel)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectIntegrationWorkerHooksGet indicates an expected call of ProjectIntegrationWorkerHooksGet.
+func (mr *MockInterfaceMockRecorder) ProjectIntegrationWorkerHooksGet(projectKey, integrationName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectIntegrationWorkerHooksGet", reflect.TypeOf((*MockInterface)(nil).ProjectIntegrationWorkerHooksGet), projectKey, integrationName)
+}
+
+// ProjectIntegrationWorkerHooksImport mocks base method.
+func (m *MockInterface) ProjectIntegrationWorkerHooksImport(projectKey, integrationName string, hook sdk.WorkerHookProjectIntegrationModel) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectIntegrationWorkerHooksImport", projectKey, integrationName, hook)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // ProjectIntegrationWorkerHooksImport indicates an expected call of ProjectIntegrationWorkerHooksImport.
-func (mr *MockInterfaceMockRecorder) ProjectIntegrationWorkerHooksImport(projectKey, integrationName, hooks interface{}) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) ProjectIntegrationWorkerHooksImport(projectKey, integrationName, hook interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectIntegrationWorkerHooksImport", reflect.TypeOf((*MockInterface)(nil).ProjectIntegrationWorkerHooksImport), projectKey, integrationName, hooks)
-}
-
-// ProjectIntegrationWorkerHooksList mocks base method.
-func (m *MockInterface) ProjectIntegrationWorkerHooksList(projectKey, integrationName string) ([]sdk.WorkerHookProjectIntegrationModel, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ProjectIntegrationWorkerHooksList", projectKey, integrationName)
-	ret0, _ := ret[0].([]sdk.WorkerHookProjectIntegrationModel)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ProjectIntegrationWorkerHooksList indicates an expected call of ProjectIntegrationWorkerHooksList.
-func (mr *MockInterfaceMockRecorder) ProjectIntegrationWorkerHooksList(projectKey, integrationName interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectIntegrationWorkerHooksList", reflect.TypeOf((*MockInterface)(nil).ProjectIntegrationWorkerHooksList), projectKey, integrationName)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectIntegrationWorkerHooksImport", reflect.TypeOf((*MockInterface)(nil).ProjectIntegrationWorkerHooksImport), projectKey, integrationName, hook)
 }
 
 // ProjectKeyCreate mocks base method.
