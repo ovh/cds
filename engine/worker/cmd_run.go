@@ -35,7 +35,14 @@ func runCmd() func(cmd *cobra.Command, args []string) {
 		ctx, cancel := context.WithCancel(context.Background())
 
 		// Setup workerfrom commandline flags or env variables
-		initFromFlags(cmd, w)
+		cfg, err := initFromFlags(cmd)
+		if err != nil {
+			log.Fatal(ctx, "%v", err)
+		}
+		if err := initFromConfig(cfg, w); err != nil {
+			log.Fatal(ctx, "%v", err)
+		}
+
 		defer cdslog.Flush(ctx, logrus.StandardLogger())
 
 		// Get the booked job ID

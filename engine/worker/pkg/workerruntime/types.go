@@ -6,11 +6,23 @@ import (
 	"fmt"
 
 	"github.com/ovh/cds/sdk/cdsclient"
+	cdslog "github.com/ovh/cds/sdk/log"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/spf13/afero"
 )
+
+type WorkerConfig struct {
+	Name                string
+	Basedir             string
+	Log                 cdslog.Conf
+	HatcheryName        string
+	APIEndpoint         string
+	APIEndpointInsecure bool
+	APIToken            string
+	ModelName           string
+}
 
 type DownloadArtifact struct {
 	Workflow    string `json:"workflow"`

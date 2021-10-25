@@ -28,7 +28,15 @@ func cmdRegisterRun() func(cmd *cobra.Command, args []string) {
 
 		ctx := context.Background()
 
-		initFromFlags(cmd, w)
+		cfg, err := initFromFlags(cmd)
+		if err != nil {
+			log.Fatal(ctx, "%v", err)
+		}
+
+		if err := initFromConfig(cfg, w); err != nil {
+			log.Fatal(ctx, "%v", err)
+		}
+
 		defer cdslog.Flush(ctx, logrus.StandardLogger())
 
 		if err := w.Register(ctx); err != nil {
