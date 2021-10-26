@@ -65,7 +65,6 @@ func TestAPI_post_getProjectIntegrationWorkerHookHandler(t *testing.T) {
 	btes := w.Body.Bytes()
 	var wh2 sdk.WorkerHookProjectIntegrationModel
 	require.NoError(t, json.Unmarshal(btes, &wh2))
-	t.Logf(">> wh2=%+v", wh2)
 
 	uri = router.GetRoute("GET", api.getProjectIntegrationWorkerHookHandler, vars)
 	req = assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
@@ -76,8 +75,6 @@ func TestAPI_post_getProjectIntegrationWorkerHookHandler(t *testing.T) {
 	btes = w.Body.Bytes()
 	var wh3 sdk.WorkerHookProjectIntegrationModel
 	require.NoError(t, json.Unmarshal(btes, &wh3))
-
-	t.Logf(">> wh3=%+v", wh3)
 
 	wh = wh3
 	wh.Disable = true
@@ -104,6 +101,4 @@ func TestAPI_post_getProjectIntegrationWorkerHookHandler(t *testing.T) {
 	var wh5 sdk.WorkerHookProjectIntegrationModel
 	require.NoError(t, json.Unmarshal(btes, &wh5))
 	require.True(t, wh5.Disable)
-	t.Logf(">> wh5=%+v", wh5)
-
 }

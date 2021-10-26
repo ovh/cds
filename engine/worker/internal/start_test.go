@@ -361,7 +361,6 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 	var logBuffer = new(bytes.Buffer)
 	var countTerminatedEndStepLog int
 	for i := range logMessages {
-		t.Logf(">> %d - %v", i, logMessages[i].Extra["_"+cdslog.ExtraFieldTerminated])
 		logBuffer.WriteString(logMessages[i].Full + "\n")
 		terminatedI := logMessages[i].Extra["_"+cdslog.ExtraFieldTerminated]
 		if cast.ToBool(terminatedI) {
