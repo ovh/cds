@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -148,7 +149,7 @@ func (c *bitbucketClient) do(ctx context.Context, method, api, path string, para
 
 	// Read the bytes from the body (make sure we defer close the body)
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return sdk.WithStack(err)
 	}

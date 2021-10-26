@@ -3,7 +3,7 @@ package nfs
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"testing"
 	"time"
@@ -105,7 +105,7 @@ func TestNFSReadWrite(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, r)
 
-	btes, err := ioutil.ReadAll(r)
+	btes, err := io.ReadAll(r)
 	require.NoError(t, err)
 	err = r.Close()
 	require.NoError(t, err)

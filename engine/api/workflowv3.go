@@ -3,7 +3,7 @@ package api
 import (
 	"bytes"
 	"context"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 
@@ -29,7 +29,7 @@ func (api *API) postWorkflowV3ValidateHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrForbidden, "workflow v3 is not enabled for project %s", projectKey)
 		}
 
-		body, err := ioutil.ReadAll(r.Body)
+		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			return sdk.NewError(sdk.ErrWrongRequest, err)
 		}

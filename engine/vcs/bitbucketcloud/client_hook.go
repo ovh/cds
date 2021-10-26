@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/url"
 	"strings"
 
@@ -42,7 +42,7 @@ func (client *bitbucketcloudClient) CreateHook(ctx context.Context, repo string,
 		return sdk.WrapError(err, "bitbucketcloud.CreateHook")
 	}
 	defer res.Body.Close()
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return sdk.WrapError(err, "ReadAll")
 	}
@@ -154,7 +154,7 @@ func (client *bitbucketcloudClient) UpdateHook(ctx context.Context, repo string,
 		return sdk.WrapError(err, "bitbucketcloud.UpdateHook")
 	}
 	defer res.Body.Close()
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return sdk.WrapError(err, "ReadAll")
 	}

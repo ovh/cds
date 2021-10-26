@@ -138,7 +138,7 @@ func (c *client) Request(ctx context.Context, method string, path string, body i
 	}()
 
 	var bodyBtes []byte
-	bodyBtes, err = ioutil.ReadAll(respBody)
+	bodyBtes, err = io.ReadAll(respBody)
 	if err != nil {
 		return nil, nil, code, newTransportError(err)
 	}
@@ -164,7 +164,7 @@ func (c *client) Request(ctx context.Context, method string, path string, body i
 var signinRouteRegexp = regexp.MustCompile(`\/auth\/consumer\/.*\/signin`)
 
 func extractBodyErrorFromResponse(r *http.Response) error {
-	body, _ := ioutil.ReadAll(r.Body)
+	body, _ := io.ReadAll(r.Body)
 	r.Body.Close() // nolint
 	if err := sdk.DecodeError(body); err != nil {
 		return newAPIError(err)
@@ -306,7 +306,7 @@ func (c *client) Stream(ctx context.Context, httpClient HTTPClient, method strin
 	var bodyBytes []byte
 	var err error
 	if _, ok := body.(io.ReadSeeker); !ok && body != nil {
-		bodyBytes, err = ioutil.ReadAll(body)
+		bodyBytes, err = io.ReadAll(body)
 		if err != nil {
 			return nil, nil, 0, newTransportError(err)
 		}
@@ -468,7 +468,7 @@ func (c *client) UploadMultiPart(method string, path string, body *bytes.Buffer,
 	}
 
 	var respBody []byte
-	respBody, err = ioutil.ReadAll(resp.Body)
+	respBody, err = io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, resp.StatusCode, newTransportError(err)
 	}

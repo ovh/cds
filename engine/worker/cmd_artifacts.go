@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"strconv"
@@ -87,7 +87,7 @@ func artifactsCmd() func(cmd *cobra.Command, args []string) {
 		defer resp.Body.Close()
 
 		if resp.StatusCode >= 300 {
-			body, err := ioutil.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
 			if err != nil {
 				sdk.Exit("cannot list artifacts HTTP %v\n", err)
 			}
@@ -96,7 +96,7 @@ func artifactsCmd() func(cmd *cobra.Command, args []string) {
 		}
 
 		// step: read the response body
-		respBody, err := ioutil.ReadAll(resp.Body)
+		respBody, err := io.ReadAll(resp.Body)
 		if err != nil {
 			sdk.Exit("artifacts failed ReadAll: %v\n", err)
 		}

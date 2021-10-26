@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -287,7 +288,7 @@ func TestSpawnWorkerTimeout(t *testing.T) {
 		if request.Body == nil {
 			return
 		}
-		bodyContent, err := ioutil.ReadAll(request.Body)
+		bodyContent, err := io.ReadAll(request.Body)
 		assert.NoError(t, err)
 		request.Body = ioutil.NopCloser(bytes.NewReader(bodyContent))
 		if mock != nil {

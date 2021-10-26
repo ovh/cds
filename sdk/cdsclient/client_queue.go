@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"net/url"
@@ -315,7 +314,7 @@ func (c *client) queueIndirectArtifactTempURLPost(url string, content []byte) er
 			defer resp.Body.Close()
 
 			var err error
-			body, err = ioutil.ReadAll(resp.Body)
+			body, err = io.ReadAll(resp.Body)
 			if err != nil {
 				globalErr = err
 				time.Sleep(1 * time.Second)
@@ -383,7 +382,7 @@ func (c *client) queueIndirectArtifactUpload(ctx context.Context, projectKey, in
 	}
 
 	//Read the file once
-	fileContent, errFileContent := ioutil.ReadAll(f)
+	fileContent, errFileContent := io.ReadAll(f)
 	if errFileContent != nil {
 		return errFileContent
 	}
@@ -440,7 +439,7 @@ func (c *client) queueDirectArtifactUpload(projectKey, integrationName string, n
 	}
 
 	//Read the file once
-	fileContent, errFileContent := ioutil.ReadAll(f)
+	fileContent, errFileContent := io.ReadAll(f)
 	if errFileContent != nil {
 		return errFileContent
 	}

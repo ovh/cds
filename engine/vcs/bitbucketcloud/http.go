@@ -43,7 +43,7 @@ func (consumer *bitbucketcloudConsumer) postForm(url string, data url.Values, he
 		return 0, nil, err
 	}
 	defer res.Body.Close()
-	resBody, err := ioutil.ReadAll(res.Body)
+	resBody, err := io.ReadAll(res.Body)
 	if err != nil {
 		return res.StatusCode, nil, err
 	}
@@ -126,7 +126,7 @@ func (client *bitbucketcloudClient) get(path string) (int, []byte, http.Header, 
 		return res.StatusCode, nil, nil, sdk.WithStack(ErrorUnauthorized)
 	}
 
-	resBody, err := ioutil.ReadAll(res.Body)
+	resBody, err := io.ReadAll(res.Body)
 	if err != nil {
 		return res.StatusCode, nil, nil, sdk.WithStack(err)
 	}
@@ -196,7 +196,7 @@ func (client *bitbucketcloudClient) do(ctx context.Context, method, api, path st
 
 	// Read the bytes from the body (make sure we defer close the body)
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return sdk.WithStack(err)
 	}

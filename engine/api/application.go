@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 
@@ -648,7 +648,7 @@ func (api *API) postApplicationMetadataHandler() service.Handler {
 		oldApp := *app
 
 		m := vars["metadata"]
-		v, err := ioutil.ReadAll(r.Body)
+		v, err := io.ReadAll(r.Body)
 		if err != nil {
 			return sdk.WrapError(err, "postApplicationMetadataHandler")
 		}

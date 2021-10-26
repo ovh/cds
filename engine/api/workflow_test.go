@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -1985,7 +1986,7 @@ func Test_getWorkfloDependencieswHandler(t *testing.T) {
 				}
 			case "/task/bulk":
 				var hooks map[string]sdk.NodeHook
-				request, err := ioutil.ReadAll(r.Body)
+				request, err := io.ReadAll(r.Body)
 				if err != nil {
 					return writeError(w, err)
 				}

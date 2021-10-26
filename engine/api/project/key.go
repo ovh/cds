@@ -9,7 +9,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"strings"
 
 	"github.com/fsamin/go-shredder"
@@ -62,7 +61,7 @@ func EncryptWithBuiltinKey(ctx context.Context, db gorp.SqlExecutor, projectID i
 		return "", sdk.WrapError(err, "Unable to encrypt content")
 	}
 
-	encryptedContent, err := ioutil.ReadAll(encryptedReader)
+	encryptedContent, err := io.ReadAll(encryptedReader)
 	if err != nil {
 		return "", sdk.WrapError(err, "Unable to ungzip content")
 	}
@@ -145,7 +144,7 @@ func DecryptWithBuiltinKey(ctx context.Context, db gorp.SqlExecutor, projectID i
 		return "", sdk.WrapError(err, "Unable to decrypt content")
 	}
 
-	decryptedContent, err := ioutil.ReadAll(decryptedReader)
+	decryptedContent, err := io.ReadAll(decryptedReader)
 	if err != nil {
 		return "", err
 	}

@@ -3,7 +3,6 @@ package bitbucketserver
 import (
 	"errors"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -38,7 +37,7 @@ func NewAccessToken(token, secret string, params map[string]string) *AccessToken
 // ParseAccessToken parses the URL-encoded query string from the Reader
 // and returns an AccessToken.
 func ParseAccessToken(reader io.ReadCloser) (*AccessToken, error) {
-	body, err := ioutil.ReadAll(reader)
+	body, err := io.ReadAll(reader)
 	reader.Close()
 	if err != nil {
 		return nil, err
@@ -116,7 +115,7 @@ type RequestToken struct {
 // ParseRequestToken parses the URL-encoded query string from the Reader
 // and returns a RequestToken.
 func ParseRequestToken(reader io.ReadCloser) (*RequestToken, error) {
-	body, err := ioutil.ReadAll(reader)
+	body, err := io.ReadAll(reader)
 	reader.Close()
 	if err != nil {
 		return nil, err

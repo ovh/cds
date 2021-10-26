@@ -3,6 +3,7 @@ package internal
 import (
 	"context"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -17,7 +18,7 @@ func checkSecretHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc
 		ctx = workerruntime.SetStepOrder(ctx, wk.currentJob.currentStepIndex)
 		ctx = workerruntime.SetStepName(ctx, wk.currentJob.currentStepName)
 
-		data, errRead := ioutil.ReadAll(r.Body)
+		data, errRead := io.ReadAll(r.Body)
 		if errRead != nil {
 			returnHTTPError(ctx, w, 400, errRead)
 			return

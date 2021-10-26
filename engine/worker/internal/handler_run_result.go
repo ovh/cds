@@ -3,7 +3,7 @@ package internal
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strconv"
 	"time"
@@ -53,7 +53,7 @@ func addRunResult(ctx context.Context, wk *CurrentWorker, w http.ResponseWriter,
 	ctx = workerruntime.SetStepOrder(ctx, wk.currentJob.currentStepIndex)
 	ctx = workerruntime.SetStepName(ctx, wk.currentJob.currentStepName)
 
-	data, err := ioutil.ReadAll(r.Body)
+	data, err := io.ReadAll(r.Body)
 	if err != nil {
 		newError := sdk.NewError(sdk.ErrWrongRequest, err)
 		writeError(w, r, newError)

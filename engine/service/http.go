@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"strconv"
 	"sync"
@@ -133,7 +132,7 @@ func UnmarshalBody(r *http.Request, i interface{}) error {
 	if r == nil {
 		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "request is null")
 	}
-	data, err := ioutil.ReadAll(r.Body)
+	data, err := io.ReadAll(r.Body)
 	if err != nil {
 		return sdk.NewError(sdk.ErrWrongRequest, err)
 	}

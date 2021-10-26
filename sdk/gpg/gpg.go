@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 
 	go_ed25519 "golang.org/x/crypto/ed25519"
 
@@ -84,7 +83,7 @@ func (k PrivateKey) DecryptData(data []byte) ([]byte, error) {
 		return nil, errors.Wrap(err, "Failed to read GPG message")
 	}
 
-	out, err := ioutil.ReadAll(message.UnverifiedBody)
+	out, err := io.ReadAll(message.UnverifiedBody)
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to read decrypted message")
 	}
@@ -272,7 +271,7 @@ func (k PublicKey) ReadSignedMessage(msg []byte) ([]byte, *packet.Signature, err
 		return nil, nil, errors.New("Message is signed with another key")
 	}
 
-	data, err := ioutil.ReadAll(md.UnverifiedBody)
+	data, err := io.ReadAll(md.UnverifiedBody)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "Failed to read body")
 	}

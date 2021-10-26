@@ -2,7 +2,7 @@ package keys
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"strings"
 
 	"github.com/go-gorp/gorp"
@@ -37,7 +37,7 @@ func Parse(ctx context.Context, db gorp.SqlExecutor, projID int64, kname string,
 			if errPub != nil {
 				return nil, sdk.WrapError(errPub, "keys.Parse> Unable to generate pgp public key")
 			}
-			pubBytes, errReadPub := ioutil.ReadAll(pubReader)
+			pubBytes, errReadPub := io.ReadAll(pubReader)
 			if errReadPub != nil {
 				return nil, sdk.WrapError(errReadPub, "keys.Parse> Unable to read pgp public key")
 			}
@@ -53,7 +53,7 @@ func Parse(ctx context.Context, db gorp.SqlExecutor, projID int64, kname string,
 			if errPub != nil {
 				return nil, sdk.WrapError(errPub, "keys.Parse> Unable to generate ssh public key")
 			}
-			pubBytes, errReadPub := ioutil.ReadAll(pubReader)
+			pubBytes, errReadPub := io.ReadAll(pubReader)
 			if errReadPub != nil {
 				return nil, sdk.WrapError(errReadPub, "keys.Parse> Unable to read ssh public key")
 			}

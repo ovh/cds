@@ -3,7 +3,7 @@ package keys
 import (
 	"bytes"
 	"encoding/base64"
-	"io/ioutil"
+	"io"
 	"testing"
 
 	"github.com/ovh/cds/engine/api/test"
@@ -25,10 +25,10 @@ func TestGenerateSSHKeyPair(t *testing.T) {
 	pub2, err := getSSHPublicKey("foo", priv2)
 	test.NoError(t, err)
 
-	pubBytes, err := ioutil.ReadAll(pub)
+	pubBytes, err := io.ReadAll(pub)
 	test.NoError(t, err)
 
-	pub2Bytes, err := ioutil.ReadAll(pub2)
+	pub2Bytes, err := io.ReadAll(pub2)
 	test.NoError(t, err)
 
 	assert.Equal(t, string(pubBytes), string(pub2Bytes))
@@ -56,7 +56,7 @@ func TestGenerateGPGKeyPair(t *testing.T) {
 	if err := w.Close(); err != nil {
 		t.Fatalf("cannot close %s", err)
 	}
-	bb, err := ioutil.ReadAll(buf)
+	bb, err := io.ReadAll(buf)
 	if err != nil {
 		t.Fatalf("cannot close %s", err)
 	}
@@ -78,7 +78,7 @@ func TestGenerateGPGKeyPair(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Cannot read message %s\n", err)
 	}
-	btes, err := ioutil.ReadAll(md.UnverifiedBody)
+	btes, err := io.ReadAll(md.UnverifiedBody)
 	if err != nil {
 		t.Fatalf("Cannot readall %s\n", err)
 	}
@@ -96,7 +96,7 @@ func TestGenerateGPGKeyPair(t *testing.T) {
 	pubReader, err := generatePGPPublicKey(entity)
 	assert.NoError(t, err)
 
-	pub2, _ := ioutil.ReadAll(pubReader)
+	pub2, _ := io.ReadAll(pubReader)
 	t.Logf(string(pub2))
 	assert.Equal(t, string([]byte(k.Public)), string(pub2))
 }

@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"sort"
 	"strconv"
@@ -947,7 +946,7 @@ func (api *API) postTemplatePullHandler() service.Handler {
 
 func (api *API) postTemplatePushHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		btes, err := ioutil.ReadAll(r.Body)
+		btes, err := io.ReadAll(r.Body)
 		if err != nil {
 			log.Error(ctx, "%v", sdk.WrapError(err, "unable to read body"))
 			return sdk.WithStack(sdk.ErrWrongRequest)

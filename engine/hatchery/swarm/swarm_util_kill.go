@@ -3,7 +3,7 @@ package swarm
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"strings"
 	"time"
 
@@ -58,7 +58,7 @@ func (h *HatcherySwarm) killAndRemove(ctx context.Context, dockerClient *dockerC
 					spawnErr.Logs = []byte(fmt.Sprintf("unable to get container logs: %v", errL))
 				} else if logsReader != nil {
 					defer logsReader.Close()
-					logs, errR := ioutil.ReadAll(logsReader)
+					logs, errR := io.ReadAll(logsReader)
 					if errR != nil {
 						spawnErr.Logs = []byte(fmt.Sprintf("unable to get read container logs: %v", errR))
 					} else if logs != nil {

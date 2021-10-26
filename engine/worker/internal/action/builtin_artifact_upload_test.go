@@ -2,6 +2,7 @@ package action
 
 import (
 	"bytes"
+	"io"
 	"io/ioutil"
 	"mime"
 	"net/http"
@@ -41,7 +42,7 @@ func TestRunArtifactUpload_Absolute(t *testing.T) {
 		Reply(200)
 
 	var checkRequest gock.ObserverFunc = func(request *http.Request, mock gock.Mock) {
-		bodyContent, err := ioutil.ReadAll(request.Body)
+		bodyContent, err := io.ReadAll(request.Body)
 		assert.NoError(t, err)
 		request.Body = ioutil.NopCloser(bytes.NewReader(bodyContent))
 		if mock != nil {
@@ -105,7 +106,7 @@ func TestRunArtifactUpload_Relative(t *testing.T) {
 		Reply(200)
 
 	var checkRequest gock.ObserverFunc = func(request *http.Request, mock gock.Mock) {
-		bodyContent, err := ioutil.ReadAll(request.Body)
+		bodyContent, err := io.ReadAll(request.Body)
 		assert.NoError(t, err)
 		request.Body = ioutil.NopCloser(bytes.NewReader(bodyContent))
 		if mock != nil {

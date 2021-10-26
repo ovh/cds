@@ -3,7 +3,7 @@ package internal
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -19,7 +19,7 @@ func artifactsHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 		ctx = workerruntime.SetStepOrder(ctx, wk.currentJob.currentStepIndex)
 		ctx = workerruntime.SetStepName(ctx, wk.currentJob.currentStepName)
 
-		data, errRead := ioutil.ReadAll(r.Body)
+		data, errRead := io.ReadAll(r.Body)
 		if errRead != nil {
 			newError := sdk.NewError(sdk.ErrWrongRequest, errRead)
 			writeError(w, r, newError)

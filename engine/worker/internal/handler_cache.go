@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -27,7 +26,7 @@ func cachePushHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 
 		cdnArtifact := wk.FeatureEnabled(sdk.FeatureCDNArtifact)
 
-		data, err := ioutil.ReadAll(r.Body)
+		data, err := io.ReadAll(r.Body)
 		if err != nil {
 			err = sdk.Error{
 				Message: "worker cache push > Cannot read body : " + err.Error(),

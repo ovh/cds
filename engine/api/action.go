@@ -2,7 +2,7 @@ package api
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"github.com/go-gorp/gorp"
@@ -628,7 +628,7 @@ func (api *API) getActionExportHandler() service.Handler {
 // importActionHandler insert OR update an existing action.
 func (api *API) importActionHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		body, err := ioutil.ReadAll(r.Body)
+		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			return err
 		}

@@ -3,12 +3,13 @@ package api
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/stretchr/testify/require"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/stretchr/testify/assert"
 
@@ -75,7 +76,7 @@ func TestAddJobHandler(t *testing.T) {
 	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
-	res, _ := ioutil.ReadAll(w.Body)
+	res, _ := io.ReadAll(w.Body)
 	pipResult := &sdk.Pipeline{}
 	json.Unmarshal(res, &pipResult)
 	assert.Equal(t, len(pipResult.Stages), 1)
@@ -155,7 +156,7 @@ func TestUpdateJobHandler(t *testing.T) {
 	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
-	res, _ := ioutil.ReadAll(w.Body)
+	res, _ := io.ReadAll(w.Body)
 	pipResult := &sdk.Pipeline{}
 	json.Unmarshal(res, &pipResult)
 	assert.Equal(t, len(pipResult.Stages), 1)
@@ -303,7 +304,7 @@ func TestDeleteJobHandler(t *testing.T) {
 	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
-	res, _ := ioutil.ReadAll(w.Body)
+	res, _ := io.ReadAll(w.Body)
 	pipResult := &sdk.Pipeline{}
 	json.Unmarshal(res, &pipResult)
 	assert.Equal(t, len(pipResult.Stages), 1)
@@ -396,7 +397,7 @@ func TestUpdateDisabledJobHandler(t *testing.T) {
 	router.Mux.ServeHTTP(w, req)
 
 	require.Equal(t, 200, w.Code)
-	res, _ := ioutil.ReadAll(w.Body)
+	res, _ := io.ReadAll(w.Body)
 	pipResult := &sdk.Pipeline{}
 	json.Unmarshal(res, &pipResult)
 	require.Equal(t, len(pipResult.Stages), 1)

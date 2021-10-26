@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math/rand"
 	"mime/multipart"
 	"net/http"
@@ -314,7 +313,7 @@ func doRequestFromURL(ctx context.Context, method string, callURL *url.URL, read
 	defer resp.Body.Close()
 
 	// Read the body
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, resp.Header, resp.StatusCode, sdk.WrapError(err, "unable to read body")
 	}

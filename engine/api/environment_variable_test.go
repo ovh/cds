@@ -3,7 +3,7 @@ package api
 import (
 	"bytes"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -63,7 +63,7 @@ func TestAddVariableInEnvironmentHandler(t *testing.T) {
 	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
-	res, _ := ioutil.ReadAll(w.Body)
+	res, _ := io.ReadAll(w.Body)
 	v := &sdk.Variable{}
 	assert.NoError(t, json.Unmarshal(res, &v))
 	assert.NotEqual(t, v.ID, 0)
@@ -132,7 +132,7 @@ func TestUpdateVariableInEnvironmentHandler(t *testing.T) {
 	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
-	res, _ := ioutil.ReadAll(w.Body)
+	res, _ := io.ReadAll(w.Body)
 	vUpdated := sdk.Variable{}
 	assert.NoError(t, json.Unmarshal(res, &vUpdated))
 	assert.Equal(t, vUpdated.Value, "new bar")
@@ -252,7 +252,7 @@ func TestGetVariablesInEnvironmentHandler(t *testing.T) {
 	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
-	res, _ := ioutil.ReadAll(w.Body)
+	res, _ := io.ReadAll(w.Body)
 	varsResult := []sdk.Variable{}
 	json.Unmarshal(res, &varsResult)
 	assert.Equal(t, len(varsResult), 1)

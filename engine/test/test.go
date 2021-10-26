@@ -2,7 +2,7 @@ package test
 
 import (
 	"encoding/base64"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 
@@ -36,7 +36,7 @@ type FakeHTTPClient struct {
 
 //Do implements sdk.HTTPClient and returns always the same response
 func (f *FakeHTTPClient) Do(r *http.Request) (*http.Response, error) {
-	b, err := ioutil.ReadAll(r.Body)
+	b, err := io.ReadAll(r.Body)
 	if err == nil {
 		r.Body.Close()
 	}

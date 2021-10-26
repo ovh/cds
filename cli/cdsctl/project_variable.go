@@ -1,7 +1,7 @@
 package main
 
 import (
-	"io/ioutil"
+	"io"
 	"os"
 
 	"github.com/pkg/errors"
@@ -57,7 +57,7 @@ func projectCreateVariableRun(v cli.Values) error {
 	}
 
 	if variable.Value == "" && v.GetBool("stdin") {
-		btes, err := ioutil.ReadAll(os.Stdin)
+		btes, err := io.ReadAll(os.Stdin)
 		if err != nil {
 			return err
 		}
@@ -150,7 +150,7 @@ func projectUpdateVariableRun(v cli.Values) error {
 	variable.Value = v.GetString("variable-value")
 
 	if variable.Value == "" && v.GetBool("stdin") {
-		btes, err := ioutil.ReadAll(os.Stdin)
+		btes, err := io.ReadAll(os.Stdin)
 		if err != nil {
 			return err
 		}

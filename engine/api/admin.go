@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 
@@ -163,7 +163,7 @@ func putPostAdminServiceCallHandler(api *API, method string) service.Handler {
 		}
 
 		query := r.FormValue("query")
-		body, err := ioutil.ReadAll(r.Body)
+		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			return sdk.WrapError(err, "Unable to read body")
 		}

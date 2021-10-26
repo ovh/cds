@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -71,7 +71,7 @@ func Test_tmplHandler(t *testing.T) {
 	output, err := fs.Open("output")
 	require.NoError(t, err)
 
-	btes, err = ioutil.ReadAll(output)
+	btes, err = io.ReadAll(output)
 	require.NoError(t, err)
 
 	t.Logf("output content: %v", string(btes))

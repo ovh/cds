@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -20,7 +21,7 @@ func tmplHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 		ctx = workerruntime.SetStepName(ctx, wk.currentJob.currentStepName)
 
 		// Get body
-		data, errRead := ioutil.ReadAll(r.Body)
+		data, errRead := io.ReadAll(r.Body)
 		if errRead != nil {
 			newError := sdk.NewError(sdk.ErrWrongRequest, errRead)
 			writeError(w, r, newError)

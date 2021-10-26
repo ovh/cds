@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/url"
 
 	"github.com/rockbears/log"
@@ -102,7 +102,7 @@ func (client *bitbucketcloudClient) PullRequestComment(ctx context.Context, repo
 
 	defer res.Body.Close()
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to read body")
 	}
@@ -130,7 +130,7 @@ func (client *bitbucketcloudClient) PullRequestCreate(ctx context.Context, repo 
 	}
 	defer res.Body.Close()
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return sdk.VCSPullRequest{}, sdk.WrapError(err, "Unable to read body")
 	}

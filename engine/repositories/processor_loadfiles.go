@@ -2,7 +2,7 @@ package repositories
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 
 	repo "github.com/fsamin/go-repo"
 
@@ -32,7 +32,7 @@ func (s *Service) processLoadFiles(ctx context.Context, op *sdk.Operation) error
 		if err != nil {
 			return sdk.WithStack(err)
 		}
-		btes, err := ioutil.ReadAll(fi)
+		btes, err := io.ReadAll(fi)
 		if err != nil {
 			fi.Close()
 			return sdk.WithStack(err)

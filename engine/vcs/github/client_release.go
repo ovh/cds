@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"strconv"
 	"strings"
 
@@ -34,7 +33,7 @@ func (g *githubClient) Release(ctx context.Context, fullname string, tagName str
 
 	defer res.Body.Close()
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, sdk.WrapError(err, "Cannot read release response")
 	}
@@ -70,7 +69,7 @@ func (g *githubClient) UploadReleaseFile(ctx context.Context, _ string, _ string
 	defer res.Body.Close()
 
 	if res.StatusCode != 201 {
-		errorMsg, _ := ioutil.ReadAll(res.Body)
+		errorMsg, _ := io.ReadAll(res.Body)
 		return sdk.WrapError(fmt.Errorf("github.Release >Unable to upload file on release. Url : %s - Status code : %d: %s", url, res.StatusCode, string(errorMsg)), "")
 	}
 

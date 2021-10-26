@@ -3,7 +3,7 @@ package internal
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"path/filepath"
 
@@ -21,7 +21,7 @@ func uploadHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 		ctx = workerruntime.SetStepName(ctx, wk.currentJob.currentStepName)
 
 		// Get body
-		data, errRead := ioutil.ReadAll(r.Body)
+		data, errRead := io.ReadAll(r.Body)
 		if errRead != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return

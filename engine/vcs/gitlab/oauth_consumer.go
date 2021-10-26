@@ -3,7 +3,7 @@ package gitlab
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -72,7 +72,7 @@ func (g *gitlabConsumer) postForm(path string, data url.Values, headers map[stri
 		return 0, nil, err
 	}
 	defer res.Body.Close()
-	resBody, err := ioutil.ReadAll(res.Body)
+	resBody, err := io.ReadAll(res.Body)
 	if err != nil {
 		return res.StatusCode, nil, err
 	}

@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -139,7 +139,7 @@ func addRunResult(data []byte, stype sdk.WorkflowRunResultType) {
 	defer resp.Body.Close() // nolint
 
 	if resp.StatusCode >= 300 {
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		if err != nil {
 			sdk.Exit("cannot add run result HTTP %v\n", err)
 		}
@@ -152,7 +152,7 @@ func addRunResult(data []byte, stype sdk.WorkflowRunResultType) {
 	}
 
 	// step: read the response body
-	respBody, err := ioutil.ReadAll(resp.Body)
+	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		sdk.Exit("add run result failed ReadAll: %v\n", err)
 	}

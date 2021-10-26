@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"strings"
@@ -50,7 +50,7 @@ This command exit 0 if current binary is uptodate.
 				sdk.Exit("Error while getting binary from CDS API: %s\n", errG)
 			}
 			defer resp.Body.Close()
-			respB, errR := ioutil.ReadAll(resp.Body)
+			respB, errR := io.ReadAll(resp.Body)
 			if errR != nil {
 				sdk.Exit("Error while reading VERSION file: %v\n", errR)
 			}

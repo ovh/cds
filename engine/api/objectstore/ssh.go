@@ -43,7 +43,7 @@ func (s *SSHStore) Status(ctx context.Context) sdk.MonitoringStatusLine {
 
 // Copies the encoded contents of an io.Reader to a remote location
 func (s *SSHStore) copy(session *ssh.Session, r io.Reader, path string) error {
-	b, err := ioutil.ReadAll(r)
+	b, err := io.ReadAll(r)
 	if err != nil {
 		return err
 	}

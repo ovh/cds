@@ -5,6 +5,7 @@ import (
 	json "encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -195,7 +196,7 @@ func DownloadFromGitHub(ctx context.Context, directory, filename string, version
 		return WrapError(err, "error http code: %d, url called: %s", resp.StatusCode, urlBinary)
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return WrapError(err, "error while reading file content for %s", filename)
 	}

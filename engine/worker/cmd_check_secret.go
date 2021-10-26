@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"strconv"
@@ -93,7 +93,7 @@ func tmplCheckSecretCmd() func(cmd *cobra.Command, args []string) {
 			}
 
 			if resp.StatusCode >= 300 {
-				body, err := ioutil.ReadAll(resp.Body)
+				body, err := io.ReadAll(resp.Body)
 				if err != nil {
 					sdk.Exit("cannot read response body %v\n", err)
 				}

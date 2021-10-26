@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/url"
 	"strings"
 
@@ -93,7 +92,7 @@ func (c *client) ProjectIntegrationDelete(projectKey string, integrationName str
 func (c *client) ProjectIntegrationImport(projectKey string, content io.Reader, mods ...RequestModifier) (sdk.ProjectIntegration, error) {
 	var pf sdk.ProjectIntegration
 
-	body, err := ioutil.ReadAll(content)
+	body, err := io.ReadAll(content)
 	if err != nil {
 		return pf, err
 	}
@@ -117,4 +116,21 @@ func (c *client) ProjectIntegrationImport(projectKey string, content io.Reader, 
 		return pf, err
 	}
 	return pf, nil
+}
+
+func (c *client) ProjectIntegrationWorkerHooksGet(projectKey string, integrationName string) (*sdk.WorkerHookProjectIntegrationModel, error) {
+	path := fmt.Sprintf("/project/%s/integrations/%s/workerhooks", projectKey, integrationName)
+	var res sdk.WorkerHookProjectIntegrationModel
+	if _, err := c.GetJSON(context.Background(), path, &res); err != nil {
+		return &res, err
+	}
+	return &res, nil
+}
+
+func (c *client) ProjectIntegrationWorkerHooksImport(projectKey string, integrationName string, hook sdk.WorkerHookProjectIntegrationModel) error {
+	path := fmt.Sprintf("/project/%s/integrations/%s/workerhooks", projectKey, integrationName)
+	if _, err := c.PostJSON(context.Background(), path, &hook, nil); err != nil {
+		return err
+	}
+	return nil
 }
