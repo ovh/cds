@@ -54,7 +54,7 @@ func (api *API) postProjectIntegrationWorkerHookHandler() service.Handler {
 			return err
 		}
 
-		inputWh.ProjectIntegrationModelID = integ.ID
+		inputWh.ProjectIntegrationID = integ.ID
 
 		wh, err := workerhook.LoadByProjectIntegrationID(ctx, tx, integ.ID)
 		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
