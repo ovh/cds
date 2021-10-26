@@ -193,7 +193,7 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 		}
 	}
 
-	workerConfig := h.GenerateWorkeConfig(ctx, h, spawnArgs)
+	workerConfig := h.GenerateWorkerConfig(ctx, h, spawnArgs)
 	udataParam := struct {
 		API string
 	}{
@@ -221,6 +221,7 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 	envsWm := workerConfig.InjectEnvVars
 	envsWm["CDS_MODEL_MEMORY"] = fmt.Sprintf("%d", memory)
 	envsWm["CDS_FROM_WORKER_IMAGE"] = "true"
+	envsWm["CDS_CONFIG"] = workerConfig.EncodeBase64()
 
 	for envName, envValue := range spawnArgs.Model.ModelDocker.Envs {
 		envsWm[envName] = envValue
@@ -380,7 +381,7 @@ func (h *HatcheryKubernetes) NeedRegistration(_ context.Context, m *sdk.Model) b
 }
 
 func (h *HatcheryKubernetes) routines(ctx context.Context) {
-	ticker := time.NewTicker(10 * time.Second)
+	ticker := time.NewTicker(10 * time.Minute)
 	defer ticker.Stop()
 
 	for {

@@ -116,18 +116,30 @@ func initFromConfig(ctx context.Context, cfg *workerruntime.WorkerConfig, w *int
 	cdslog.Initialize(ctx, &cfg.Log)
 
 	fs := afero.NewOsFs()
-	log.Debug(context.TODO(), "creating basedir %s", cfg.Basedir)
+	if cfg.Basedir == "" {
+		cfg.Basedir = os.TempDir()
+	}
+	log.Debug(ctx, "creating basedir %s", cfg.Basedir)
 	if err := fs.MkdirAll(cfg.Basedir, os.FileMode(0755)); err != nil {
-		return errors.Errorf("basedir error: %v", err)
+		return errors.Errorf("unable to setup worker basedir %q: %+v", cfg.Basedir, err)
+	}
+	os.Setenv("BASEDIR", cfg.Basedir)
+	os.Setenv("HATCHERY_NAME", cfg.HatcheryName)
+	os.Setenv("HATCHERY_WORKER", cfg.Name)
+	if cfg.Region != "" {
+		os.Setenv("HATCHERY_REGION", cfg.Region)
+	}
+	if cfg.Model != "" {
+		os.Setenv("HATCHERY_MODEL", cfg.Model)
+	}
+	for k, v := range cfg.InjectEnvVars {
+		if v == "" {
+			continue
+		}
+		os.Setenv(k, v)
 	}
 
-	return w.Init(cfg.Name,
-		cfg.HatcheryName,
-		cfg.APIEndpoint,
-		cfg.APIToken,
-		cfg.Model,
-		cfg.APIEndpointInsecure,
-		afero.NewBasePathFs(fs, cfg.Basedir))
+	return w.Init(cfg, afero.NewBasePathFs(fs, cfg.Basedir))
 }
 
 func initFromFlags(cmd *cobra.Command) (*workerruntime.WorkerConfig, error) {

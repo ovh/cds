@@ -24,6 +24,7 @@ import (
 
 	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/engine/worker/internal"
+	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	cdslog "github.com/ovh/cds/sdk/log"
@@ -253,8 +254,6 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 		assert.NoError(t, err)
 		request.Body = ioutil.NopCloser(bytes.NewReader(bodyContent))
 		if mock != nil {
-			t.Logf("%s %s - Body: %s", mock.Request().Method, mock.Request().URLStruct.String(), string(bodyContent))
-
 			switch mock.Request().URLStruct.String() {
 			case "http://lolcat.host/queue/workflows/42/step":
 				var result sdk.StepStatus
@@ -312,7 +311,17 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 	log.Debug(context.TODO(), "creating basedir %s", basedir)
 	require.NoError(t, fs.MkdirAll(basedir, os.FileMode(0755)))
 
-	if err := w.Init("test-worker", "test-hatchery", "http://lolcat.host", "xxx-my-token", "", true, afero.NewBasePathFs(fs, basedir)); err != nil {
+	cfg := &workerruntime.WorkerConfig{
+		Name:                "test-worker",
+		HatcheryName:        "test-hatchery",
+		APIEndpoint:         "http://lolcat.host",
+		APIToken:            "xxx-my-token",
+		APIEndpointInsecure: true,
+		Model:               "my-model",
+		Region:              "local-test",
+		Basedir:             basedir,
+	}
+	if err := w.Init(cfg, afero.NewBasePathFs(fs, basedir)); err != nil {
 		t.Fatalf("worker init failed: %v", err)
 	}
 	gock.InterceptClient(w.Client().(cdsclient.Raw).HTTPClient())
@@ -352,6 +361,7 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 	var logBuffer = new(bytes.Buffer)
 	var countTerminatedEndStepLog int
 	for i := range logMessages {
+		t.Logf(">> %d - %v", i, logMessages[i].Extra["_"+cdslog.ExtraFieldTerminated])
 		logBuffer.WriteString(logMessages[i].Full + "\n")
 		terminatedI := logMessages[i].Extra["_"+cdslog.ExtraFieldTerminated]
 		if cast.ToBool(terminatedI) {
@@ -378,4 +388,10 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 	assert.Equal(t, 1, strings.Count(logBuffer.String(), "CDS_SEMVER=0.1.0+cds.1"))
 	assert.Equal(t, 1, strings.Count(logBuffer.String(), "GIT_DESCRIBE=0.1.0"))
 	assert.Equal(t, 0, strings.Count(logBuffer.String(), "CDS_BUILD_CDS_BUILD"))
+	assert.Equal(t, 1, strings.Count(logBuffer.String(), "HATCHERY_MODEL=my-model"))
+	assert.Equal(t, 1, strings.Count(logBuffer.String(), "HATCHERY_NAME=test-hatchery"))
+	assert.Equal(t, 1, strings.Count(logBuffer.String(), "HATCHERY_WORKER=test-worker"))
+	assert.Equal(t, 1, strings.Count(logBuffer.String(), "HATCHERY_REGION=local-test"))
+	assert.Equal(t, 1, strings.Count(logBuffer.String(), "BASEDIR="))
+
 }

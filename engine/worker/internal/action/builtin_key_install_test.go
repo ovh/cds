@@ -26,8 +26,15 @@ func TestRunInstallKeyAction_Relative(t *testing.T) {
 	fs := afero.NewOsFs()
 	basedir := "test-" + test.GetTestName(t) + "-" + sdk.RandomString(10) + "-" + fmt.Sprintf("%d", time.Now().Unix())
 	require.NoError(t, fs.MkdirAll(basedir, os.FileMode(0755)))
-
-	if err := w.Init("test-worker", "test-hatchery", "http://lolcat.host", "xxx-my-token", "", true, afero.NewBasePathFs(fs, basedir)); err != nil {
+	cfg := &workerruntime.WorkerConfig{
+		Name:                "test-worker",
+		HatcheryName:        "test-hatchery",
+		APIEndpoint:         "http://lolcat.host",
+		APIToken:            "xxx-my-token",
+		APIEndpointInsecure: true,
+		Basedir:             basedir,
+	}
+	if err := w.Init(cfg, afero.NewBasePathFs(fs, basedir)); err != nil {
 		t.Fatalf("worker init failed: %v", err)
 	}
 	require.NoError(t, w.BaseDir().Mkdir("keys", os.FileMode(0700)))
@@ -84,8 +91,15 @@ func TestRunInstallKeyAction_Absolute(t *testing.T) {
 	fs := afero.NewOsFs()
 	basedir := "test-" + test.GetTestName(t) + "-" + sdk.RandomString(10) + "-" + fmt.Sprintf("%d", time.Now().Unix())
 	require.NoError(t, fs.MkdirAll(basedir, os.FileMode(0755)))
-
-	if err := w.Init("test-worker", "test-hatchery", "http://lolcat.host", "xxx-my-token", "", true, afero.NewBasePathFs(fs, basedir)); err != nil {
+	cfg := &workerruntime.WorkerConfig{
+		Name:                "test-worker",
+		HatcheryName:        "test-hatchery",
+		APIEndpoint:         "http://lolcat.host",
+		APIToken:            "xxx-my-token",
+		APIEndpointInsecure: true,
+		Basedir:             basedir,
+	}
+	if err := w.Init(cfg, afero.NewBasePathFs(fs, basedir)); err != nil {
 		t.Fatalf("worker init failed: %v", err)
 	}
 	require.NoError(t, w.BaseDir().Mkdir("keys", os.FileMode(0700)))

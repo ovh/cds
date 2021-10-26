@@ -375,7 +375,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 		return errDockerOpts
 	}
 
-	workerConfig := h.GenerateWorkeConfig(ctx, h, spawnArgs)
+	workerConfig := h.GenerateWorkerConfig(ctx, h, spawnArgs)
 	udataParam := struct {
 		API string
 	}{
@@ -401,6 +401,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 
 	envsWm := workerConfig.InjectEnvVars
 	envsWm["CDS_MODEL_MEMORY"] = fmt.Sprintf("%d", memory)
+	envsWm["CDS_CONFIG"] = workerConfig.EncodeBase64()
 
 	for envName, envValue := range modelEnvs {
 		envsWm[envName] = envValue

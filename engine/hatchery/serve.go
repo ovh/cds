@@ -252,7 +252,7 @@ func getStatusHandler(h hatchery.Interface) service.HandlerFunc {
 	}
 }
 
-func (c *Common) GenerateWorkeConfig(ctx context.Context, h hatchery.Interface, spawnArgs hatchery.SpawnArguments) workerruntime.WorkerConfig {
+func (c *Common) GenerateWorkerConfig(ctx context.Context, h hatchery.Interface, spawnArgs hatchery.SpawnArguments) workerruntime.WorkerConfig {
 	apiURL := h.Configuration().Provision.WorkerAPIHTTP.URL
 	httpInsecure := h.Configuration().Provision.WorkerAPIHTTP.Insecure
 	if apiURL == "" {
@@ -271,7 +271,7 @@ func (c *Common) GenerateWorkeConfig(ctx context.Context, h hatchery.Interface, 
 		envvars[tuple[0]] = tuple[1]
 	}
 
-	return workerruntime.WorkerConfig{
+	cfg := workerruntime.WorkerConfig{
 		Name:                spawnArgs.WorkerName,
 		BookedJobID:         spawnArgs.JobID,
 		HatcheryName:        h.Name(),
@@ -289,4 +289,7 @@ func (c *Common) GenerateWorkeConfig(ctx context.Context, h hatchery.Interface, 
 			Level:             h.Configuration().Provision.WorkerLogsOptions.Level,
 		},
 	}
+
+	log.Debug(ctx, "worker config: %v", cfg.EncodeBase64())
+	return cfg
 }

@@ -47,7 +47,7 @@ func (h *HatcheryLocal) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 	log.Info(ctx, "HatcheryLocal.SpawnWorker> basedir: %s", basedir)
 
 	workerBinary := path.Join(h.BasedirDedicated, h.getWorkerBinaryName())
-	workerConfig := h.GenerateWorkeConfig(ctx, h, spawnArgs)
+	workerConfig := h.GenerateWorkerConfig(ctx, h, spawnArgs)
 	workerConfig.Basedir = basedir
 
 	// Prefix the command with the directory where the worker binary has been downloaded

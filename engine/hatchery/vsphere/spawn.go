@@ -306,10 +306,16 @@ func (h *HatcheryVSphere) launchScriptWorker(ctx context.Context, name string, j
 		return err
 	}
 
+	workerConfig := h.GenerateWorkerConfig(ctx, h, hatchery.SpawnArguments{
+		WorkerToken: token,
+		WorkerName:  name,
+		Model:       &model,
+	})
+
 	env := []string{}
 
 	env = append(env, h.getGraylogEnv(model)...)
-	udata := model.ModelVirtualMachine.PreCmd + "\n" + model.ModelVirtualMachine.Cmd
+	udata := model.ModelVirtualMachine.PreCmd + "\n" + "CDS_CONFIG=" + workerConfig.EncodeBase64() + " " + model.ModelVirtualMachine.Cmd
 
 	if registerOnly {
 		udata += " register"
@@ -320,12 +326,6 @@ func (h *HatcheryVSphere) launchScriptWorker(ctx context.Context, name string, j
 	if errt != nil {
 		return errt
 	}
-
-	workerConfig := h.GenerateWorkeConfig(ctx, h, hatchery.SpawnArguments{
-		WorkerToken: token,
-		WorkerName:  name,
-		Model:       &model,
-	})
 
 	for k, v := range workerConfig.InjectEnvVars {
 		env = append(env, k+"="+v)

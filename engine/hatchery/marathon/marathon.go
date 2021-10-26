@@ -236,7 +236,7 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 
 	instance := 1
 	forcePull := strings.HasSuffix(spawnArgs.Model.ModelDocker.Image, ":latest")
-	workerConfig := h.GenerateWorkeConfig(ctx, h, spawnArgs)
+	workerConfig := h.GenerateWorkerConfig(ctx, h, spawnArgs)
 
 	// Prepare worker startup command
 	tmpl, errt := template.New("cmd").Parse(spawnArgs.Model.ModelDocker.Cmd)
