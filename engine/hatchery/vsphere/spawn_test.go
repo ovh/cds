@@ -242,7 +242,9 @@ func TestHatcheryVSphere_launchScriptWorker(t *testing.T) {
 	c.EXPECT().StartProgramInGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
 		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (int64, error) {
 			assert.Equal(t, "/bin/echo", req.Spec.GetGuestProgramSpec().ProgramPath)
-			assert.Equal(t, "-n ;\n./worker register\nshutdown -h now", req.Spec.GetGuestProgramSpec().Arguments)
+			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "-n ;\n")
+			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "./worker register\nshutdown -h now")
+			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "CDS_CONFIG=")
 			return 1, nil
 		},
 	)
@@ -400,7 +402,9 @@ func TestHatcheryVSphere_SpawnWorker(t *testing.T) {
 	c.EXPECT().StartProgramInGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
 		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (int64, error) {
 			assert.Equal(t, "/bin/echo", req.Spec.GetGuestProgramSpec().ProgramPath)
-			assert.Equal(t, "-n ;\n./worker\nshutdown -h now", req.Spec.GetGuestProgramSpec().Arguments)
+			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "-n ;\n")
+			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "./worker\nshutdown -h now")
+			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "CDS_CONFIG=")
 			return 1, nil
 		},
 	)
@@ -577,8 +581,9 @@ func TestHatcheryVSphere_SpawnWorkerFromProvisioning(t *testing.T) {
 
 	c.EXPECT().StartProgramInGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
 		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (int64, error) {
-			assert.Equal(t, "/bin/echo", req.Spec.GetGuestProgramSpec().ProgramPath)
-			assert.Equal(t, "-n ;\n./worker\nshutdown -h now", req.Spec.GetGuestProgramSpec().Arguments)
+			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "-n ;\n")
+			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "./worker\nshutdown -h now")
+			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "CDS_CONFIG=")
 			return 1, nil
 		},
 	)
