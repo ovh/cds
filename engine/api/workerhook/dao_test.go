@@ -39,7 +39,7 @@ func TestCRUD(t *testing.T) {
 	require.NoError(t, integration.InsertIntegration(db, &integ))
 
 	var h = sdk.WorkerHookProjectIntegrationModel{
-		ProjectIntegrationModelID: integ.ID,
+		ProjectIntegrationID: integ.ID,
 		Configuration: sdk.WorkerHookSetupTeardownConfig{
 			ByCapabilities: map[string]sdk.WorkerHookSetupTeardownScripts{
 				"docker": {
@@ -53,10 +53,10 @@ func TestCRUD(t *testing.T) {
 	require.NoError(t, workerhook.Insert(context.TODO(), db, &h))
 	require.NoError(t, workerhook.Update(context.TODO(), db, &h))
 
-	_, err = workerhook.LoadByProjectIntegrationID(context.TODO(), db, h.ProjectIntegrationModelID)
+	_, err = workerhook.LoadByProjectIntegrationID(context.TODO(), db, h.ProjectIntegrationID)
 	require.NoError(t, err)
 
-	_, err = workerhook.LoadEnabledByProjectIntegrationID(context.TODO(), db, h.ProjectIntegrationModelID)
+	_, err = workerhook.LoadEnabledByProjectIntegrationID(context.TODO(), db, h.ProjectIntegrationID)
 	require.NoError(t, err)
 
 	_, err = workerhook.LoadAll(context.TODO(), db)
