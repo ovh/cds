@@ -61,7 +61,7 @@ export class CdsctlComponent implements OnInit, OnDestroy {
         this.os = new Array<string>('windows', 'linux', 'darwin', 'freebsd');
         this.arch = new Array<string>('amd64', '386', 'arm', 'arm64');
         this.osChoice = 'linux';
-        this.archChoice = 'amd64'
+        this.archChoice = 'amd64';
     }
 
     ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
@@ -114,7 +114,7 @@ export class CdsctlComponent implements OnInit, OnDestroy {
     buildData(): void {
         let variant = '';
         if (!this.withKeychain) {
-            variant = '?variant=nokeychain'
+            variant = '?variant=nokeychain';
         }
         this.tutorials['part1'] = this._translate.instant('cdsctl_part_1',
             { apiURL: this.apiURL, osChoice: this.osChoice, archChoice: this.archChoice, variant });

@@ -7,9 +7,12 @@ import { WorkflowRunService } from 'app/service/services.module';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { Tab } from 'app/shared/tabs/tabs.component';
 import { EventState } from 'app/store/event.state';
-import { ScrollTarget } from 'app/views/workflow/run/node/pipeline/workflow-run-job/workflow-run-job.component';
+import {
+    ScrollTarget, WorkflowRunJobComponent
+} from 'app/views/workflow/run/node/pipeline/workflow-run-job/workflow-run-job.component';
 import { Subscription, timer } from 'rxjs';
 import { debounce, filter, finalize } from 'rxjs/operators';
+import { CDNLine } from 'app/model/pipeline.model';
 import { JobRun } from '../workflowv3.model';
 
 @Component({
@@ -20,7 +23,7 @@ import { JobRun } from '../workflowv3.model';
 })
 @AutoUnsubscribe()
 export class WorkflowV3RunJobComponent implements OnInit, OnChanges {
-    @ViewChild('workflowRunJob', { read: ElementRef }) workflowRunJob: ElementRef;
+    @ViewChild('workflowRunJob') workflowRunJob: WorkflowRunJobComponent;
 
     @Input() projectKey: string;
     @Input() workflowName: string;
@@ -98,8 +101,7 @@ export class WorkflowV3RunJobComponent implements OnInit, OnChanges {
     }
 
     onJobScroll(target: ScrollTarget): void {
-        this.workflowRunJob.nativeElement.children[0].scrollTop = target === ScrollTarget.TOP ?
-            0 : this.workflowRunJob.nativeElement.children[0].scrollHeight;
+        this.workflowRunJob.onJobScroll(target);
     }
 
     setVariables(data: Array<Parameter>) {
@@ -118,7 +120,7 @@ export class WorkflowV3RunJobComponent implements OnInit, OnChanges {
             if (name.indexOf('git.', 0) === 0) { return 'git'; }
             if (name.indexOf('workflow.', 0) === 0) { return 'workflow'; }
             return 'cds';
-        }
+        };
 
         data.forEach(p => {
             const t = computeType(p.name);
@@ -135,5 +137,9 @@ export class WorkflowV3RunJobComponent implements OnInit, OnChanges {
 
     clickClose(): void {
         this.onClickClose.emit();
+    }
+
+    receiveLogs(l: CDNLine) {
+        this.workflowRunJob.receiveLogs(l);
     }
 }

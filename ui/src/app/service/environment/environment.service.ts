@@ -19,7 +19,7 @@ export class EnvironmentService {
         params = params.append('withUsage', 'true');
 
         return this._http
-            .get<Environment>(`/project/${key}/environment/${envName}`, { params })
+            .get<Environment>(`/project/${key}/environment/${envName}`, { params });
     }
 
     get(key: string): Observable<Array<Environment>> {
@@ -44,7 +44,7 @@ export class EnvironmentService {
     updateAsCode(key: string, oldEnvName: string, environment: Environment, branch, message: string): Observable<Operation> {
         let params = new HttpParams();
         params = params.append('branch', branch);
-        params = params.append('message', message)
+        params = params.append('message', message);
         return this._http.put<Operation>(`/project/${key}/environment/${oldEnvName}/ascode`, environment, { params });
     }
 }

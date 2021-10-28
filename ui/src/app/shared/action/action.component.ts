@@ -206,7 +206,7 @@ export class ActionComponent implements OnDestroy, OnInit {
                 req.value = (newValue + ' ' + newOpts).trim();
                 req.opts = '';
             }
-        })
+        });
     }
 
     /**

@@ -101,7 +101,7 @@ export class ServiceShowComponent implements OnInit, OnDestroy {
                 (line.hostname && line.hostname.toLowerCase().indexOf(lowerFilter) !== -1) ||
                 (line.session && line.session.toLowerCase().indexOf(lowerFilter) !== -1) ||
                 (line.consumer && line.consumer.toLowerCase().indexOf(lowerFilter) !== -1);
-            }
+            };
         };
     }
 

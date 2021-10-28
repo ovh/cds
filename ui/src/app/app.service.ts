@@ -134,7 +134,7 @@ export class AppService {
 
     manageEventForTimeline(event: Event) {
         if (!event || !event.type_event) {
-            return
+            return;
         }
         if (event.type_event === EventType.RUN_WORKFLOW_PREFIX) {
             let mustAdd = true;
@@ -304,9 +304,9 @@ export class AppService {
 
     async updateWorkflowCache(event: Event): Promise<void> {
         if (!event || !event.type_event) {
-            return
+            return;
         }
-        let wf = this._store.selectSnapshot(WorkflowState)
+        let wf = this._store.selectSnapshot(WorkflowState);
         if (wf != null && wf.workflow && (wf.projectKey !== event.project_key || wf.workflow.name !== event.workflow_name)) {
             if (event.type_event === EventType.WORKFLOW_DELETE) {
                 await this._store.dispatch(new projectActions.DeleteWorkflowInProject({ workflowName: event.workflow_name })).toPromise();
@@ -352,7 +352,7 @@ export class AppService {
                     })).toPromise();
 
                     if (this.routeParams['number'] === event.workflow_run_num.toString()) {
-                        this._toast.info('', 'This run has just been deleted')
+                        this._toast.info('', 'This run has just been deleted');
                         this._router.navigate(['/project', this.routeParams['key'], 'workflow', event.workflow_name]);
                     }
                     return;
@@ -401,7 +401,7 @@ export class AppService {
 
     updateBroadcastCache(event: Event): void {
         if (!event || !event.type_event) {
-            return
+            return;
         }
         switch (event.type_event) {
             case EventType.BROADCAST_ADD:

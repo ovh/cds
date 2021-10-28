@@ -90,7 +90,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
         this.eventsRouteSubscription = this._router.events.subscribe(e => {
             if (e instanceof NavigationStart) {
-                this.hideNavBar = e.url.startsWith('/auth')
+                this.hideNavBar = e.url.startsWith('/auth');
             }
         });
     }
@@ -108,7 +108,7 @@ export class AppComponent implements OnInit, OnDestroy {
                 this.isAPIAvailable = false;
                 this.loading = false;
                 setTimeout(() => {
-                    window.location.reload()
+                    window.location.reload();
                 }, 30000);
             }
         );

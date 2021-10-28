@@ -38,10 +38,10 @@ export class ScopeDetailComponent {
         // If all routes selected returns with empty endpoints list
         if (this.allRoutesSelected) {
             this.onChange.emit(scopeDetail);
-            return
+            return;
         }
 
-        scopeDetail.endpoints = []
+        scopeDetail.endpoints = [];
         const routes = Object.keys(this.selectedRouteMethods);
         for (let i = 0; i < routes.length; i++) {
             let endpoint = <AuthConsumerScopeEndpoint>{

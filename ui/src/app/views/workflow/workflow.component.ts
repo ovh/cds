@@ -211,7 +211,7 @@ export class WorkflowComponent implements OnInit, OnDestroy {
             projectKey: this.project.key,
             workflowName: this.workflow.name
         })).pipe(finalize(() => this.loadingFav = false))
-            .subscribe(() => this._toast.success('', this._translate.instant('common_favorites_updated')))
+            .subscribe(() => this._toast.success('', this._translate.instant('common_favorites_updated')));
     }
 
     showTemplateFrom(): void {

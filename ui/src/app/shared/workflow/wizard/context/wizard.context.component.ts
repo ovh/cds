@@ -156,7 +156,7 @@ export class WorkflowWizardNodeContextComponent implements OnInit, OnDestroy {
                     }
                     this._cd.markForCheck();
                 }
-            )
+            );
         } else {
             this.integrations = [];
             this.initIntegrationList();

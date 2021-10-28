@@ -65,7 +65,7 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
                         delete this.selectedStage;
                     }
                     if (this.selectedJob && stageFound) {
-                        jobFound = stageFound.jobs.find(j => j.ref === this.selectedJob.ref)
+                        jobFound = stageFound.jobs.find(j => j.ref === this.selectedJob.ref);
                     } else {
                         delete this.selectedJob;
                     }
@@ -155,7 +155,7 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
                     this._cd.markForCheck();
                 })).subscribe(() => {
                     if (!this.editMode) {
-                        this._toast.success('', this._translate.instant('pipeline_stage_moved'))
+                        this._toast.success('', this._translate.instant('pipeline_stage_moved'));
                     }
                 });
             });

@@ -131,6 +131,6 @@ export class VCSStrategyComponent implements OnInit {
     }
 
     clickCopyKey() {
-        this._toast.success('', this._translate.instant('key_copied'))
+        this._toast.success('', this._translate.instant('key_copied'));
     }
 }

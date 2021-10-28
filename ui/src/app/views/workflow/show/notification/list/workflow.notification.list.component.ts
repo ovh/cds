@@ -145,7 +145,7 @@ export class WorkflowNotificationListComponent {
     }
 
     deleteNotification(n: WorkflowNotification): void {
-        this.loading = true
+        this.loading = true;
         this.store.dispatch(new DeleteNotificationWorkflow({
             projectKey: this.project.key,
             workflowName: this.workflow.name,
@@ -196,7 +196,7 @@ export class WorkflowNotificationListComponent {
         wi.project_integration_id = integration.id;
         workflowIntegrations.push(wi);
         if (this.workflow.integrations) {
-            workflowIntegrations = [wi].concat(this.workflow.integrations)
+            workflowIntegrations = [wi].concat(this.workflow.integrations);
         }
         this.store.dispatch(new UpdateIntegrationsWorkflow({
             projectKey: this.project.key,

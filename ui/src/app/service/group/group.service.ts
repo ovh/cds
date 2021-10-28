@@ -49,6 +49,6 @@ export class GroupService {
     }
 
     getProjectsInGroup(name: string): Observable<Array<Project>> {
-        return this._http.get<Array<Project>>(`/group/${name}/project`)
+        return this._http.get<Array<Project>>(`/group/${name}/project`);
     }
 }

@@ -250,7 +250,7 @@ export class ApplicationsState {
                 ...stateEditMode,
                 editApplication: appToupdate,
             });
-            return
+            return;
         }
 
 
@@ -290,7 +290,7 @@ export class ApplicationsState {
                 ...stateEditMode,
                 editApplication: appToupdate,
             });
-            return
+            return;
         }
         let url = `/project/${action.payload.projectKey}/application/${action.payload.applicationName}/variable/${variable.name}`;
         return this._http.delete<any>(url)
@@ -323,7 +323,7 @@ export class ApplicationsState {
                 ...stateEditMode,
                 editApplication: appToupdate,
             });
-            return
+            return;
         }
 
         let url = '/project/' + action.payload.projectKey + '/application/' + action.payload.applicationName + '/keys';
@@ -353,7 +353,7 @@ export class ApplicationsState {
                 ...stateEditMode,
                 editApplication: appToupdate,
             });
-            return
+            return;
         }
 
         let url = `/project/${action.payload.projectKey}/application/${action.payload.applicationName}/keys/${key.name}`;
@@ -387,7 +387,7 @@ export class ApplicationsState {
                 ...stateEditMode,
                 editApplication: appToupdate,
             });
-            return
+            return;
         }
 
         let url = '/project/' + action.payload.projectKey +
@@ -422,7 +422,7 @@ export class ApplicationsState {
                 ...stateEditMode,
                 editApplication: appToupdate,
             });
-            return
+            return;
         }
 
         return ctx.dispatch(new ActionApplication.AddApplicationDeployment({
@@ -444,7 +444,7 @@ export class ApplicationsState {
                 ...stateEditMode,
                 editApplication: appToupdate,
             });
-            return
+            return;
         }
 
         let url = '/project/' + action.payload.projectKey +

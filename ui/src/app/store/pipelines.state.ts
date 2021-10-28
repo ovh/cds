@@ -197,7 +197,7 @@ export class PipelinesState {
             let indexParam = pipToUpdate.parameters.findIndex(p => p.name === action.payload.parameterName);
             action.payload.parameter.hasChanged = false;
             action.payload.parameter.updating = false;
-            pipToUpdate.parameters[indexParam] = action.payload.parameter
+            pipToUpdate.parameters[indexParam] = action.payload.parameter;
             pipToUpdate.editModeChanged = true;
             ctx.setState({
                 ...stateEditMode,
@@ -368,7 +368,7 @@ export class PipelinesState {
                 ...stateEditMode,
                 pipeline: pipToUpdate,
             });
-            return
+            return;
         }
 
         let stage = action.payload.stage;

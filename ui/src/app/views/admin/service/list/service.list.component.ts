@@ -91,7 +91,7 @@ export class ServiceListComponent {
                     (line.hostname && line.hostname.toLowerCase().indexOf(lowerFilter) !== -1) ||
                     (line.session && line.session.toLowerCase().indexOf(lowerFilter) !== -1) ||
                     (line.consumer && line.consumer.toLowerCase().indexOf(lowerFilter) !== -1);
-            }
+            };
         };
 
         forkJoin([
@@ -111,14 +111,14 @@ export class ServiceListComponent {
                                 value: g.value,
                                 name: type,
                                 status: g.status
-                            }
+                            };
                             break;
                         case 'Version':
                             this.globalVersion = <Global>{
                                 value: g.value,
                                 name: type,
                                 status: g.status
-                            }
+                            };
                             break;
                         default:
                             this.globals.push(<Global>{
@@ -138,7 +138,7 @@ export class ServiceListComponent {
                 translate: 'services_list',
                 routerLink: ['/', 'admin', 'services']
             }];
-        })
+        });
     }
 
     refreshStatus(): Observable<any> {
@@ -158,7 +158,7 @@ export class ServiceListComponent {
                             const element = s.monitoring_status.lines[index];
                             if (element.status === 'AL') {
                                 s.status = element.status;
-                                break
+                                break;
                             } else if (element.status === 'WARN') {
                                 s.status = element.status;
                             }

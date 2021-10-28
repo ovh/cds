@@ -163,7 +163,7 @@ pattern_name: basic_unix`;
                 if (this.patternSelected.model.envs) {
                     this.envNames = Object.keys(this.patternSelected.model.envs);
                 }
-                break
+                break;
             default:
                 this.workerModel.model_virtual_machine.pre_cmd = this.patternSelected.model.pre_cmd;
                 this.workerModel.model_virtual_machine.cmd = this.patternSelected.model.cmd;

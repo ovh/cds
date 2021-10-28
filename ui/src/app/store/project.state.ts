@@ -489,7 +489,7 @@ export class ProjectState {
             idName.name = action.payload.changes.name;
             idName.description = action.payload.changes.description;
             idName.icon = action.payload.changes.icon;
-            application_names = [idName]
+            application_names = [idName];
         } else {
             application_names = application_names.map((app) => {
                 if (app.name === action.payload.previousAppName) {
@@ -498,7 +498,7 @@ export class ProjectState {
                     app.icon = action.payload.changes.icon;
                 }
                 return app;
-            })
+            });
         }
 
         return ctx.setState({
@@ -536,7 +536,7 @@ export class ProjectState {
         idName.icon = action.payload.icon;
         idName.labels = action.payload.labels;
         if (!workflow_names) {
-            workflow_names = [idName]
+            workflow_names = [idName];
         } else {
             workflow_names.push(idName);
         }

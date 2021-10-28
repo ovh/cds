@@ -54,7 +54,7 @@ export class WorkflowTemplateService {
         let params = new HttpParams();
         params = params.append('import', 'true');
         params = params.append('branch', branch);
-        params = params.append('message', message)
+        params = params.append('message', message);
         return this._http.post<Operation>(`/template/${groupName}/${templateSlug}/apply`,
             req, { params });
     }
@@ -88,7 +88,7 @@ export class WorkflowTemplateService {
         branch: string, message: string): Observable<WorkflowTemplateBulk> {
         let params = new HttpParams();
         params = params.append('branch', branch);
-        params = params.append('message', message)
+        params = params.append('message', message);
         return this._http.post<WorkflowTemplateBulk>(`/template/${groupName}/${templateSlug}/bulk`,
             req, { params });
     }

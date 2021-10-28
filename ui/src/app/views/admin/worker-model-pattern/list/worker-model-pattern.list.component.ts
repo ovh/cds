@@ -25,7 +25,7 @@ export class WorkerModelPatternListComponent {
         this.filter = f => {
             const lowerFilter = f.toLowerCase();
             return d => d.name.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                    d.type.toLowerCase().indexOf(lowerFilter) !== -1
+                    d.type.toLowerCase().indexOf(lowerFilter) !== -1;
         };
 
         this.path = [<PathItem>{

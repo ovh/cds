@@ -54,7 +54,7 @@ export class BroadcastStore {
             }
             this.addBroadcastInCache(bc);
             return b;
-        }))
+        }));
     }
 
 

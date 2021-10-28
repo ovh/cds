@@ -38,7 +38,7 @@ export class WorkflowRunArtifactListComponent implements OnInit, OnDestroy {
         this.filter = f => {
             const lowerFilter = f.toLowerCase();
             return d => d.name.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                d.md5.toLowerCase().indexOf(lowerFilter) !== -1
+                d.md5.toLowerCase().indexOf(lowerFilter) !== -1;
         };
         this.columns = [
             <Column<UIArtifact>>{
@@ -81,17 +81,17 @@ export class WorkflowRunArtifactListComponent implements OnInit, OnDestroy {
 
             let computeArtifact = false;
             if (nr.results && (!this.runResult || nr.results.length !== this.runResult.length)) {
-                computeArtifact = true
+                computeArtifact = true;
             }
             if (nr.artifacts && (!this.artifacts || nr.artifacts.length !== this.artifacts.length)) {
-                computeArtifact = true
+                computeArtifact = true;
             }
             if (computeArtifact) {
                 let uiArtifacts: Array<UIArtifact>;
                 let uiRunResults: Array<UIArtifact>;
                 this.uiArtifacts = new Array<UIArtifact>();
                 if (nr.results) {
-                    let w = this._store.selectSnapshot(WorkflowState.workflowRunSnapshot).workflow
+                    let w = this._store.selectSnapshot(WorkflowState.workflowRunSnapshot).workflow;
                     uiRunResults = this.toUIArtifact(w, nr.results);
                     this.uiArtifacts.push(...uiRunResults);
                 }
@@ -106,7 +106,7 @@ export class WorkflowRunArtifactListComponent implements OnInit, OnDestroy {
                         uiArt.link = `./cdsapi/workflow/artifact/${a.download_hash}`;
                         return uiArt;
                     });
-                    this.uiArtifacts.push(...uiArtifacts)
+                    this.uiArtifacts.push(...uiArtifacts);
                 }
                 this._cd.markForCheck();
             }
@@ -136,7 +136,7 @@ export class WorkflowRunArtifactListComponent implements OnInit, OnDestroy {
             for (let i = 0; i < w.integrations.length; i++) {
                let integ = w.integrations[i];
                if (!integ.project_integration.model.artifact_manager) {
-                   continue
+                   continue;
                }
                integrationArtifactManagerURL = integ?.project_integration?.config['url']?.value;
             }
@@ -171,6 +171,6 @@ export class WorkflowRunArtifactListComponent implements OnInit, OnDestroy {
                     uiArtifactSF.type = 'static file';
                     return uiArtifactSF;
             }
-        })
+        });
     }
 }

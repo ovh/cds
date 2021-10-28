@@ -32,7 +32,7 @@ export class WorkflowHookMenuEditComponent implements OnInit, OnDestroy {
         let wr = this._store.selectSnapshot(WorkflowState.workflowRunSnapshot);
         if (wr) {
             this.isRun = true;
-            let rootNodeRun = wr.nodes[wr.workflow.workflow_data.node.id][0]
+            let rootNodeRun = wr.nodes[wr.workflow.workflow_data.node.id][0];
             if (rootNodeRun && rootNodeRun?.hook_event ) {
                 this.hookEvent = rootNodeRun?.hook_event;
             }

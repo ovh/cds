@@ -178,7 +178,7 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
                 }
                 this.editableNode.context.conditions.plain = tmp;
 
-                let emptyConditions = this.editableNode.context.conditions.plain.findIndex(c => !c.variable)
+                let emptyConditions = this.editableNode.context.conditions.plain.findIndex(c => !c.variable);
                 if (emptyConditions > -1) {
                     this._toast.error('Forbidden', this._translate.instant('workflow_node_condition_empty'));
                     this.loading = false;
@@ -202,7 +202,7 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
                 }
                 this.editableHook.conditions.plain = tmp;
 
-                let emptyConditions = this.editableHook.conditions.plain.findIndex(c => !c.variable)
+                let emptyConditions = this.editableHook.conditions.plain.findIndex(c => !c.variable);
                 if (emptyConditions > -1) {
                     this._toast.error('Forbidden', this._translate.instant('workflow_node_condition_empty'));
                     this.loading = false;

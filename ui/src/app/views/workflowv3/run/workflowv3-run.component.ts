@@ -1,13 +1,16 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngxs/store';
 import { EventType } from 'app/model/event.model';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { Tab } from 'app/shared/tabs/tabs.component';
 import { EventState } from 'app/store/event.state';
 import { Observable, Subscription, timer } from 'rxjs';
-import { debounce, filter, finalize } from 'rxjs/operators';
+import { debounce, delay, filter, finalize, retryWhen } from 'rxjs/operators';
+import { CDNLine, CDNStreamFilter } from 'app/model/pipeline.model';
+import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
+import { WorkflowV3RunJobComponent } from 'app/views/workflowv3/run/workflowv3-run-job.component';
 import { GraphDirection } from '../graph/workflowv3-graph.lib';
 import { WorkflowV3StagesGraphComponent } from '../graph/workflowv3-stages-graph.component';
 import { JobRun, WorkflowRunV3 } from '../workflowv3.model';
@@ -21,6 +24,7 @@ import { JobRun, WorkflowRunV3 } from '../workflowv3.model';
 @AutoUnsubscribe()
 export class WorkflowV3RunComponent implements OnInit, OnDestroy {
     @ViewChild('graph') graph: WorkflowV3StagesGraphComponent;
+    @ViewChild('v3RunJob') v3JobComponent: WorkflowV3RunJobComponent;
 
     data: WorkflowRunV3;
     direction: GraphDirection = GraphDirection.VERTICAL;
@@ -35,11 +39,16 @@ export class WorkflowV3RunComponent implements OnInit, OnDestroy {
     selectJobRun: JobRun;
     eventSubscription: Subscription;
 
+    websocket: WebSocketSubject<any>;
+    websocketSubscription: Subscription;
+    cdnFilter: CDNStreamFilter;
+
     constructor(
         private _cd: ChangeDetectorRef,
         private _http: HttpClient,
         private _activatedRoute: ActivatedRoute,
-        private _store: Store
+        private _store: Store,
+        private _router: Router
     ) {
         this.tabs = [<Tab>{
             translate: 'common_problems',
@@ -127,6 +136,49 @@ export class WorkflowV3RunComponent implements OnInit, OnDestroy {
             });
     }
 
+    startStreamingLogsForJob() {
+        if (!this.cdnFilter) {
+            this.cdnFilter = new CDNStreamFilter();
+        }
+
+        if (!this.websocket) {
+            const protocol = window.location.protocol.replace('http', 'ws');
+            const host = window.location.host;
+            const href = this._router['location']._baseHref;
+            this.websocket = webSocket({
+                url: `${protocol}//${host}${href}/cdscdn/item/stream`,
+                openObserver: {
+                    next: value => {
+                        if (value.type === 'open') {
+                            this.cdnFilter.job_run_id = this.selectJobRun.workflow_node_job_run_id;
+                            this.websocket.next(this.cdnFilter);
+                        }
+                    }
+                }
+            });
+
+            this.websocketSubscription = this.websocket
+                .pipe(retryWhen(errors => errors.pipe(delay(2000))))
+                .subscribe((l: CDNLine) => {
+                    if (this.v3JobComponent) {
+                        this.v3JobComponent.receiveLogs(l);
+                    } else {
+                        console.log('job component not loaded');
+                    }
+                }, (err) => {
+                    console.error('Error: ', err);
+                }, () => {
+                    console.warn('Websocket Completed');
+                });
+        } else {
+            // Refresh cdn filter if job changed
+            if (this.cdnFilter.job_run_id !== this.selectJobRun.workflow_node_job_run_id) {
+                this.cdnFilter.job_run_id = this.selectJobRun.workflow_node_job_run_id;
+                this.websocket.next(this.cdnFilter);
+            }
+        }
+    }
+
     selectTab(tab: Tab): void {
         this.selectedTab = tab;
     }
@@ -158,6 +210,7 @@ export class WorkflowV3RunComponent implements OnInit, OnDestroy {
             return;
         }
         this.selectJobRun = this.data.job_runs[name][0];
+        this.startStreamingLogsForJob();
         this._cd.markForCheck();
     }
 

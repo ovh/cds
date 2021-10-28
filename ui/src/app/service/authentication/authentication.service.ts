@@ -22,7 +22,7 @@ export class AuthenticationService {
     askSignin(consumerType: string, origin: string, redirectURI: string, requireMFA: boolean): Observable<AuthDriverSigningRedirect> {
         let params = new HttpParams();
         if (origin) {
-            params = params.append('origin', origin)
+            params = params.append('origin', origin);
         }
         if (redirectURI) {
             params = params.append('redirect_uri', redirectURI);

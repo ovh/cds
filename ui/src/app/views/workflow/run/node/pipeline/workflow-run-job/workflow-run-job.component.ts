@@ -1,4 +1,4 @@
-import { OnDestroy, Output, ViewChild } from '@angular/core';
+import { ElementRef, OnDestroy, Output, ViewChild } from '@angular/core';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { CDNLine, CDNLogLink, PipelineStatus, SpawnInfo } from 'app/model/pipeline.model';
@@ -95,6 +95,7 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
     subscriptionChannel: Subscription;
 
     constructor(
+        private ref: ElementRef,
         private _cd: ChangeDetectorRef,
         private _workflowService: WorkflowService,
         private _router: Router
@@ -499,5 +500,10 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
         step.open = true;
         step.loading = false;
         this._cd.markForCheck();
+    }
+
+    onJobScroll(target: ScrollTarget) {
+        this.ref.nativeElement.children[0].scrollTop = target === ScrollTarget.TOP ?
+            0 : this.ref.nativeElement.children[0].scrollHeight;
     }
 }

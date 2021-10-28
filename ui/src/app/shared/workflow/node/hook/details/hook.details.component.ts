@@ -68,7 +68,7 @@ export class WorkflowNodeHookDetailsComponent implements OnInit, OnDestroy {
     show(hook: WNodeHook): void {
         let project = this._store.selectSnapshot(ProjectState.projectSnapshot);
         let workflow: Workflow;
-        let run = this._store.selectSnapshot(WorkflowState.workflowRunSnapshot)
+        let run = this._store.selectSnapshot(WorkflowState.workflowRunSnapshot);
         if (run) {
             this.runNumber = run.num;
             workflow = run.workflow;

@@ -90,7 +90,7 @@ export class ConsumerDetailsModalComponent {
                     c.id.toLowerCase().indexOf(lowerFilter) !== -1 ||
                     c.scope_details.map(s => s.scope).join(' ').toLowerCase().indexOf(lowerFilter) !== -1 ||
                     (c.groups && c.groups.map(g => g.name).join(' ').toLowerCase().indexOf(lowerFilter) !== -1) ||
-                    (!c.groups && lowerFilter === '*')
+                    (!c.groups && lowerFilter === '*');
         };
 
         this.columnsConsumers = [
@@ -107,7 +107,7 @@ export class ConsumerDetailsModalComponent {
                     return {
                         value: c.name,
                         labels
-                    }
+                    };
                 }
             },
             <Column<AuthConsumer>>{
@@ -135,7 +135,7 @@ export class ConsumerDetailsModalComponent {
                     s.id.toLowerCase().indexOf(lowerFilter) !== -1 ||
                     s.consumer_id.toLowerCase().indexOf(lowerFilter) !== -1 ||
                     s.created.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                    s.expire_at.toLowerCase().indexOf(lowerFilter) !== -1
+                    s.expire_at.toLowerCase().indexOf(lowerFilter) !== -1;
         };
 
         this.columnsSessions = [
@@ -152,7 +152,7 @@ export class ConsumerDetailsModalComponent {
                     return {
                         value: s.id,
                         labels
-                    }
+                    };
                 }
             },
             <Column<AuthSession>>{
@@ -208,10 +208,10 @@ export class ConsumerDetailsModalComponent {
         config.mustScroll = true;
         this.modal = this._modalService.open(config);
         this.modal.onApprove(_ => {
- this.closeCallback()
+ this.closeCallback();
 });
         this.modal.onDeny(_ => {
- this.closeCallback()
+ this.closeCallback();
 });
 
         this.init();
@@ -278,7 +278,7 @@ export class ConsumerDetailsModalComponent {
             this.menuItems.push(<Item>{
                 translate: 'auth_consumer_details_parent',
                 key: 'parent'
-            })
+            });
         }
         if (this.consumer.children.length > 0) {
             this.menuItems.push(<Item>{

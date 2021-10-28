@@ -207,7 +207,7 @@ export class ActionFormComponent implements OnDestroy {
                 req.value = (newValue + ' ' + newOpts).trim();
                 req.opts = '';
             }
-        })
+        });
     }
 
     /**

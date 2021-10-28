@@ -261,7 +261,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             }
 
             if (!toadd) {
-                continue
+                continue;
             }
             switch (element.type) {
                 case 'project':
@@ -310,7 +310,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
                             favProj.push(p.key);
                             return true;
                         }
-                        return false
+                        return false;
                     }
                     return p.favorite;
                 }).slice(0, 7);

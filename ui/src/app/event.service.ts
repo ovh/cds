@@ -59,7 +59,7 @@ export class EventService {
                 concatMap((message: WebsocketEvent) => from(this._appService.manageEvent(message.event)))
             )
             .subscribe(() => {}, (err) => {
-                console.error('Error: ', err)
+                console.error('Error: ', err);
             }, () => {
                 console.warn('Websocket Completed');
             });
@@ -127,7 +127,7 @@ export class EventService {
                     break;
                 }
                 if (urlSplitted.length === 3) { // Ignore application/pipeline/environment/workflow creation pages
-                    break
+                    break;
                 }
                 let entityType = urlSplitted[2];
                 let entityName = urlSplitted[3].split('?')[0];

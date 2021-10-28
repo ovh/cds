@@ -111,7 +111,7 @@ describe('Environment', () => {
             environments: [env]
         });
 
-        store.dispatch(new LoadEnvironment({projectKey: project.key, env}))
+        store.dispatch(new LoadEnvironment({projectKey: project.key, env}));
 
         env.name = 'dev';
         store.dispatch(new UpdateEnvironment({

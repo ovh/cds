@@ -73,7 +73,7 @@ export class CallbackComponent implements OnInit, OnDestroy {
             // If the origin is cdsctl, show the code and the state for copy
             if (this.payloadData && this.payloadData.origin === 'cdsctl') {
                 this._configService.getConfig().subscribe(config => {
-                    this.cmd = `cdsctl login verify ${config['url.api']} ${this.consumerType} ${this.state}:${this.code}`
+                    this.cmd = `cdsctl login verify ${config['url.api']} ${this.consumerType} ${this.state}:${this.code}`;
                     this.loading = false;
                     this.showCTL = true;
                     this._cd.markForCheck();

@@ -50,7 +50,7 @@ export class BroadcastEditComponent implements OnDestroy {
         private _cd: ChangeDetectorRef
     ) {
         this.currentAuthSummary = this._store.selectSnapshot(AuthenticationState.summary);
-        this.broadcastLevelsList = this._broadcastService.getBroadcastLevels()
+        this.broadcastLevelsList = this._broadcastService.getBroadcastLevels();
         this.broadcastLevelsList.forEach(element => {
             this.levels.push(element.value);
         });
@@ -68,9 +68,9 @@ export class BroadcastEditComponent implements OnDestroy {
             });
 
         this.paramsSub = this._route.params.subscribe(params => {
-            let id = parseInt(params['id'], 10)
+            let id = parseInt(params['id'], 10);
             this.broadcastSub = this._broadcastStore.getBroadcasts(id).subscribe(bcs => {
-                let broadcast = bcs.get(id)
+                let broadcast = bcs.get(id);
                 if (broadcast) {
                     this.broadcast = broadcast;
                     this.canEdit = this.currentAuthSummary.isAdmin();

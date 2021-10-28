@@ -64,7 +64,7 @@ export class AuthenticationState {
                 ctx.patchState({
                     summary: null,
                     error: err
-                })
+                });
                 return throwError(err);
             })
         );
@@ -76,7 +76,7 @@ export class AuthenticationState {
 
         return this._authenticationService.signout().pipe(
             finalize(() => {
-                ctx.patchState({ loading: false })
+                ctx.patchState({ loading: false });
             }),
             tap(_ => {
                 ctx.patchState({
@@ -90,7 +90,7 @@ export class AuthenticationState {
                     user: null,
                     summary: null,
                     error: err
-                })
+                });
                 return throwError(err);
             })
         );

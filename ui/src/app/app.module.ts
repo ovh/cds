@@ -38,7 +38,7 @@ export let errorFactory = () => {
     } else {
         return new ErrorHandler();
     }
-}
+};
 
 
 @NgModule({

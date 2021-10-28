@@ -89,6 +89,6 @@ class MockApplicationService {
     }
 
     getTypesFromAPI(): Observable<string[]> {
-        return of(['string', 'password'])
+        return of(['string', 'password']);
     }
 }

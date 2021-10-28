@@ -18,7 +18,7 @@ export class HelpState {
 
     @Selector()
     static last(state: HelpStateModel) {
-        return state.last
+        return state.last;
     }
 
     @Action(actionHelp.AddHelp)
