@@ -85,7 +85,6 @@ export class WorkflowV3RunComponent implements OnInit, OnDestroy {
             )
             .subscribe(e => {
                 this.loadWorkflowRun();
-                // this.loadNodeJobRun();
             });
     }
 
