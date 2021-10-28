@@ -46,9 +46,9 @@ export class EnvironmentKeysComponent {
                 }))
                     .subscribe(() => {
                         if (this.editMode) {
-                            this._toast.info('', this._translate.instant('environment_ascode_updated'))
+                            this._toast.info('', this._translate.instant('environment_ascode_updated'));
                         } else {
-                            this._toast.success('', this._translate.instant('keys_added'))
+                            this._toast.success('', this._translate.instant('keys_added'));
                         }
                     });
                 break;
@@ -63,9 +63,9 @@ export class EnvironmentKeysComponent {
                     this._cd.markForCheck();
                 })).subscribe(() => {
                     if (this.editMode) {
-                        this._toast.info('', this._translate.instant('environment_ascode_updated'))
+                        this._toast.info('', this._translate.instant('environment_ascode_updated'));
                     } else {
-                        this._toast.success('', this._translate.instant('keys_removed'))
+                        this._toast.success('', this._translate.instant('keys_removed'));
                     }
                 });
         }

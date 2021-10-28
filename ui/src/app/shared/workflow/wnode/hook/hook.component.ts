@@ -102,7 +102,7 @@ export class WorkflowNodeHookComponent implements OnInit, OnDestroy {
                 if (this.deleteHookModal) {
                     this.deleteHookModal.show();
                 }
-                break
+                break;
         }
     }
 

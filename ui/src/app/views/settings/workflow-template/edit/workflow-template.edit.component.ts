@@ -213,7 +213,7 @@ export class WorkflowTemplateEditComponent implements OnInit, OnDestroy {
                         selector: (a: AuditWorkflowTemplate) => ({
                                 title: 'common_rollback',
                                 click: () => {
-                                    this.clickRollback(a)
+                                    this.clickRollback(a);
                                 }
                             })
                     });
@@ -345,7 +345,7 @@ export class WorkflowTemplateEditComponent implements OnInit, OnDestroy {
                 this._cd.markForCheck();
             }))
             .subscribe(is => {
-                this.instances = is.sort((a, b) => a.key() < b.key() ? -1 : 1)
+                this.instances = is.sort((a, b) => a.key() < b.key() ? -1 : 1);
                 this.tabs = this.tabs.map((tab) => {
                     tab.default = false;
                     if (tab.key === 'instances') {

@@ -66,7 +66,7 @@ describe('CDS: Action Component', () => {
         action.requirements = new Array<Requirement>();
         fixture.componentInstance.editableAction = action;
         fixture.componentInstance.edit = true;
-        fixture.componentInstance.project = <Project>{ key: 'key' }
+        fixture.componentInstance.project = <Project>{ key: 'key' };
 
         fixture.detectChanges();
         tick(50);
@@ -136,7 +136,7 @@ describe('CDS: Action Component', () => {
         action.requirements = new Array<Requirement>();
         action.id = 1;
         fixture.componentInstance.editableAction = action;
-        fixture.componentInstance.project = <Project>{ key: 'key' }
+        fixture.componentInstance.project = <Project>{ key: 'key' };
 
         fixture.componentInstance._cd.detectChanges();
         tick(50);
@@ -173,7 +173,7 @@ describe('CDS: Action Component', () => {
         action.requirements = new Array<Requirement>();
         fixture.componentInstance.editableAction = action;
         fixture.componentInstance.edit = true;
-        fixture.componentInstance.project = <Project>{ key: 'key' }
+        fixture.componentInstance.project = <Project>{ key: 'key' };
 
         fixture.detectChanges();
         tick(50);
@@ -205,7 +205,7 @@ describe('CDS: Action Component', () => {
 
         // Create component
         let fixture = TestBed.createComponent(ActionComponent);
-        fixture.componentInstance.project = <Project>{ key: 'key' }
+        fixture.componentInstance.project = <Project>{ key: 'key' };
 
         let component = fixture.debugElement.componentInstance;
         expect(component).toBeTruthy();

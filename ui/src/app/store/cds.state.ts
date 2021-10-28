@@ -46,7 +46,7 @@ export class CDSState {
                 let maintenance = 'false';
                 let line = s.lines.find(m => {
                     if (m.component === 'Global/Maintenance') {
-                        return m
+                        return m;
                     }
                 });
                 if (line) {

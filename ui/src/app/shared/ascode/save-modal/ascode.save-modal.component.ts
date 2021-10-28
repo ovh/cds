@@ -125,7 +125,7 @@ export class AsCodeSaveModalComponent implements OnDestroy {
                 });
                 break;
             default:
-                this._toast.error('', this._translate.instant('ascode_error_unknown_type'))
+                this._toast.error('', this._translate.instant('ascode_error_unknown_type'));
         }
     }
 

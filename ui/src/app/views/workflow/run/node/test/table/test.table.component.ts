@@ -59,7 +59,7 @@ export class WorkflowRunTestTableComponent implements OnInit {
                     return lowerFilter.indexOf(d.status) >= 7;
                 }
                 return d.fullname.toLowerCase().indexOf(lowerFilter) !== -1;
-            }
+            };
         };
 
         this.columns = [
@@ -163,7 +163,7 @@ export class WorkflowRunTestTableComponent implements OnInit {
             this.testCaseSelected = undefined;
             this.filterInput = this.beforeClickFilter;
             delete this.beforeClickFilter;
-            return
+            return;
         }
         this.filterIndex = index;
         this.beforeClickFilter = this.filterInput;

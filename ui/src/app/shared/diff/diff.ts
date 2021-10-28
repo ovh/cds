@@ -12,7 +12,7 @@ export function calculateWorkflowTemplateDiff(before: WorkflowTemplate, after: W
             group_id: before.group_id,
             description: before.description,
             parameters: before.parameters
-        }
+        };
     }
 
     let afterTemplate: any;
@@ -23,7 +23,7 @@ export function calculateWorkflowTemplateDiff(before: WorkflowTemplate, after: W
             group_id: after.group_id,
             description: after.description,
             parameters: after.parameters
-        }
+        };
     }
 
     let diffItems = [
@@ -51,7 +51,7 @@ export function calculateWorkflowTemplateDiff(before: WorkflowTemplate, after: W
                 before: before && before.pipelines && before.pipelines[i] ? Base64.b64DecodeUnicode(before.pipelines[i].value) : null,
                 after: after && after.pipelines && after.pipelines[i] ? Base64.b64DecodeUnicode(after.pipelines[i].value) : null,
                 type: 'text/x-yaml'
-            })
+            });
     }
 
     let applicationsLength = Math.max(
@@ -68,7 +68,7 @@ export function calculateWorkflowTemplateDiff(before: WorkflowTemplate, after: W
                 after: after && after.applications && after.applications[i] ?
                     Base64.b64DecodeUnicode(after.applications[i].value) : null,
                 type: 'text/x-yaml'
-            })
+            });
     }
 
     let environmentsLength = Math.max(
@@ -85,7 +85,7 @@ export function calculateWorkflowTemplateDiff(before: WorkflowTemplate, after: W
                 after: after && after.environments && after.environments[i] ?
                     Base64.b64DecodeUnicode(after.environments[i].value) : null,
                 type: 'text/x-yaml'
-            })
+            });
     }
 
     return diffItems;

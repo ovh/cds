@@ -150,7 +150,7 @@ export class ApplicationAddComponent implements OnInit, OnDestroy {
     }
 
     fileEvent(event: { content: string, file: File }) {
-        this.fileTooLarge = event.file.size > 100000
+        this.fileTooLarge = event.file.size > 100000;
         if (this.fileTooLarge) {
             return;
         }

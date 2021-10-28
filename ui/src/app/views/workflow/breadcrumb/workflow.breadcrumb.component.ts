@@ -83,7 +83,7 @@ export class WorkflowBreadCrumbComponent implements OnInit, OnDestroy {
                         text: '' + (this.workflowRun.version ? this.workflowRun.version : this.workflowRun.num),
                         active: !!this._workflow.name && !!this.workflowRun.num,
                         routerLink: ['/project', this._project.key, 'workflow', this._workflow.name, 'run', this.workflowRun.num]
-                    })
+                    });
                 }
             }
         }

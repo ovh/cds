@@ -83,6 +83,6 @@ class MockParameterService {
     }
 
     getTypesFromAPI(): Observable<string[]> {
-        return of(['string', 'password'])
+        return of(['string', 'password']);
     }
 }

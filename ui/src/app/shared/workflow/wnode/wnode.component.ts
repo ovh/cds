@@ -219,7 +219,7 @@ export class WorkflowWNodeComponent implements OnInit, OnDestroy {
                     }, 0);
                 }, 0);
             }
-        })
+        });
     }
 
     canEdit(): boolean {
@@ -267,7 +267,7 @@ export class WorkflowWNodeComponent implements OnInit, OnDestroy {
             if (!editMode) {
                 this._toast.success('', this._translate.instant('workflow_updated'));
             } else {
-                   this._toast.info('', this._translate.instant('workflow_ascode_updated'))
+                   this._toast.info('', this._translate.instant('workflow_ascode_updated'));
             }
             if (modal) {
                 modal.approve(null);

@@ -23,7 +23,7 @@ export class WorkflowTemplateListComponent {
             return d => {
                 let s = `${d.group.name}/${d.name}`.toLowerCase();
                 return s.indexOf(lowerFilter) !== -1 || d.description.toLowerCase().indexOf(lowerFilter) !== -1;
-            }
+            };
         };
 
         this.path = [<PathItem>{

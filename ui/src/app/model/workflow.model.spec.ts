@@ -189,7 +189,7 @@ describe('CDS: Workflow Model', () => {
         let ok = Workflow.removeNodeOnly(workflow, childjt1.id);
 
         expect(ok).toBeTruthy();
-        expect(workflow.workflow_data.joins[0].triggers.length).toBe(2)
+        expect(workflow.workflow_data.joins[0].triggers.length).toBe(2);
     }));
 
     /**
@@ -279,6 +279,6 @@ describe('CDS: Workflow Model', () => {
 
         expect(ok).toBeTruthy();
         expect(workflow.workflow_data.joins[0].parents.length).toBe(1);
-        expect(workflow.workflow_data.joins[0].parents[0].parent_id).toBe(3)
+        expect(workflow.workflow_data.joins[0].parents[0].parent_id).toBe(3);
     }));
 });

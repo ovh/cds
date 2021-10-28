@@ -24,7 +24,7 @@ export class XSRFInterceptor implements HttpInterceptor {
         if (xsrfCookie) {
             headers['X-XSRF-TOKEN'] = xsrfCookie;
         }
-        return headers
+        return headers;
     }
 
     getCookie(name: string): string {

@@ -85,7 +85,7 @@ export class WorkflowRun {
         wrs.version = workflowRun.version;
         wrs.start = workflowRun.start;
         wrs.status = workflowRun.status;
-        wrs.duration = workflowRun.duration
+        wrs.duration = workflowRun.duration;
         wrs.tags = workflowRun.tags;
         return wrs;
     }

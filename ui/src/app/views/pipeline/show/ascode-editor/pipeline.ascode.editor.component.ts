@@ -101,7 +101,7 @@ export class PipelineAsCodeEditorComponent implements OnInit, AfterViewInit, OnD
                 }
             }
 
-        })
+        });
     }
 
     ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT

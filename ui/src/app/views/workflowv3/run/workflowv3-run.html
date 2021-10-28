@@ -37,5 +37,5 @@
 <app-resizable-panel *ngIf="selectJobRun" class="night" (onGrabbingStart)="panelStartResize()"
     (onGrabbingEnd)="panelEndResize()">
     <app-workflowv3-run-job [projectKey]="projectKey" [workflowName]="data.workflow.name" [workflowRunNum]="data.number"
-        [jobRun]="selectJobRun" (onClickClose)="closeJobPanel()"></app-workflowv3-run-job>
+        [jobRun]="selectJobRun" (onClickClose)="closeJobPanel()" #v3RunJob></app-workflowv3-run-job>
 </app-resizable-panel>

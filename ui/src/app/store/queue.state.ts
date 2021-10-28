@@ -18,7 +18,7 @@ export class QueueState {
 
     @Selector()
     static jobs(state: QueueStateModel) {
-        return state.jobs
+        return state.jobs;
     }
 
     @Action(actionQueue.SetJobs)

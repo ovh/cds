@@ -68,7 +68,7 @@ export class ParameterListComponent extends Table<Parameter> implements OnInit {
         if (!this.parameterTypes) {
             this._paramService.getTypesFromAPI().pipe(finalize(() => {
                 this.ready = true;
-                this._cd.markForCheck()
+                this._cd.markForCheck();
             })).subscribe(types => {
                 this.parameterTypes = types;
             });

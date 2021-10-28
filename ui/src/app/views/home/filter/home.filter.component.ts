@@ -88,7 +88,7 @@ export class HomeFilterComponent implements OnDestroy {
     // load workflow when opening dropdown
     loadProjectWorkflow(projFilter: ProjectFilter, mute: boolean) {
         if (projFilter.project) {
-            return
+            return;
         }
         projFilter.loading = true;
 

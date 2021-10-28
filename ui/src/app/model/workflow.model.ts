@@ -317,11 +317,11 @@ export class Workflow {
                     j.triggers.forEach(t => {
                         let hooks = WNode.getAllHooks(t.child_node);
                         if (hooks) {
-                            res = res.concat(hooks)
+                            res = res.concat(hooks);
                         }
-                    })
+                    });
                 }
-            })
+            });
         }
         return res;
     }

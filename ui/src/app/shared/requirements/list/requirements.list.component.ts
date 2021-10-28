@@ -90,10 +90,10 @@ export class RequirementsListComponent extends Table<Requirement> implements OnI
             case 'memory':
                 // memory: memory_4096
                 req.name = 'memory_' + req.value;
-                break
+                break;
             case 'model':
                 req.name = req.value;
-                break
+                break;
             case OSArchitecture:
                 req.name = OSArchitecture;
                 break;

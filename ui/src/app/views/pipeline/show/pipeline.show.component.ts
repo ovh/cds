@@ -230,7 +230,7 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
                         if (this.editMode) {
                             this._toast.info('', this._translate.instant('pipeline_ascode_updated'));
                         } else {
-                            this._toast.success('', this._translate.instant('parameter_added'))
+                            this._toast.success('', this._translate.instant('parameter_added'));
                         }
                     });
                     break;
@@ -257,7 +257,7 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
                         if (this.editMode) {
                             this._toast.info('', this._translate.instant('pipeline_ascode_updated'));
                         } else {
-                            this._toast.success('', this._translate.instant('parameter_deleted'))
+                            this._toast.success('', this._translate.instant('parameter_deleted'));
                         }
                     });
                     break;

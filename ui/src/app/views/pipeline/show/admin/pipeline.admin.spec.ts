@@ -82,7 +82,7 @@ describe('CDS: Pipeline Admin Component', () => {
             readable : true,
             writable: true,
             executable: true
-        }
+        };
         fixture.componentInstance.project = p;
 
         let pip: Pipeline = new Pipeline();

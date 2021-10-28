@@ -68,6 +68,6 @@ export class UserListComponent {
     filter(f: string) {
         const lowerFilter = f.toLowerCase();
         return (u: AuthentifiedUser) => u.username.toLowerCase().indexOf(lowerFilter) !== -1 ||
-            u.fullname.toLowerCase().indexOf(lowerFilter) !== -1
+            u.fullname.toLowerCase().indexOf(lowerFilter) !== -1;
     }
 }

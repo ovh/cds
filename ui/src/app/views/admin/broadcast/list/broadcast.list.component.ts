@@ -24,7 +24,7 @@ export class BroadcastListComponent {
             return d => d.id.toString().indexOf(lowerFilter) !== -1 ||
                     d.title.toLowerCase().indexOf(lowerFilter) !== -1 ||
                     d.level.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                    d.project_key.toLowerCase().indexOf(lowerFilter) !== -1
+                    d.project_key.toLowerCase().indexOf(lowerFilter) !== -1;
         };
 
         this.path = [<PathItem>{

@@ -195,9 +195,9 @@ export class WorkflowTemplateBulkModalComponent implements OnDestroy {
         let request: Observable<WorkflowTemplateBulk>;
         if (this.withAsCodeWorkflow) {
             request = this._workflowTemplateService.bulkAsCode(this.workflowTemplate.group.name, this.workflowTemplate.slug, req,
-                this.asCodeParameters.branch_name, this.asCodeParameters.commit_message)
+                this.asCodeParameters.branch_name, this.asCodeParameters.commit_message);
         } else {
-            request = this._workflowTemplateService.bulk(this.workflowTemplate.group.name, this.workflowTemplate.slug, req)
+            request = this._workflowTemplateService.bulk(this.workflowTemplate.group.name, this.workflowTemplate.slug, req);
         }
         request.pipe(finalize(() => this._cd.markForCheck())).subscribe(b => {
             this.response = b;
@@ -240,7 +240,7 @@ export class WorkflowTemplateBulkModalComponent implements OnDestroy {
                     if (done) {
                         this.pollingStatusSub.unsubscribe();
                     }
-                })
+                });
         });
     }
 

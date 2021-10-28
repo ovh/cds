@@ -125,7 +125,7 @@ export class WorkflowNodeRunComponent implements OnInit, OnDestroy {
                 }
 
 
-                let artiResultsLength = nr?.results?.length ?? 0
+                let artiResultsLength = nr?.results?.length ?? 0;
                 let oldArtiLength = 0;
                 if (nr.artifacts) {
                     oldArtiLength = nr.artifacts.length;
@@ -165,7 +165,7 @@ export class WorkflowNodeRunComponent implements OnInit, OnDestroy {
     }
 
     showTab(tab: string): void {
-        let queryParams = Object.assign({}, this._activatedRoute.snapshot.queryParams, { tab })
+        let queryParams = Object.assign({}, this._activatedRoute.snapshot.queryParams, { tab });
         let navExtras: NavigationExtras = { queryParams };
         this._router.navigate(['project', this.project.key,
             'workflow', this.workflowName,

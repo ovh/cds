@@ -24,7 +24,7 @@ export class JSONSchema implements Schema {
                     let pp = properties[k].patternProperties;
                     if (pp['.*'] && pp['.*'].$ref) {
                         let newElt = pp['.*'].$ref.replace(JSONSchema.defPrefix, '');
-                        JSONSchema.browse(schema, flatSchema, newElt, [...tree, k, '.*'])
+                        JSONSchema.browse(schema, flatSchema, newElt, [...tree, k, '.*']);
                     }
                 } else if (properties[k].type) {
                     let currentOneOf = new Array<Schema>();

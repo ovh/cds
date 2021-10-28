@@ -57,7 +57,7 @@ export class QueueComponent implements OnDestroy {
 
         this.eventSubscription = this._store.select(EventState.last).subscribe(e => {
             if (!e || e.type_event !== EventType.RUN_WORKFLOW_JOB) {
-                return
+                return;
             }
             let jobID = e.payload['id'];
             if (e.status === PipelineStatus.WAITING || e.status === PipelineStatus.BUILDING) {
@@ -119,8 +119,8 @@ export class QueueComponent implements OnDestroy {
             this.loading = false;
             this._cd.markForCheck();
         })).subscribe(js => {
-            this._store.dispatch(new SetJobs(js))
-        })
+            this._store.dispatch(new SetJobs(js));
+        });
     }
 
     stopNode(index: number) {
@@ -135,6 +135,6 @@ export class QueueComponent implements OnDestroy {
             .pipe(finalize(() => {
                 this._cd.markForCheck();
             }))
-            .subscribe(() => this._toast.success('', this._translate.instant('pipeline_stop')))
+            .subscribe(() => this._toast.success('', this._translate.instant('pipeline_stop')));
     }
 }

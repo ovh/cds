@@ -47,7 +47,7 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
                 this.offset = 0;
                 this._store.dispatch(new ClearListRuns()).subscribe(() => {
                     this.getRuns();
-                })
+                });
             }
             this._workflow = data;
         }
@@ -129,7 +129,7 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
             }))
             .subscribe((runs) => {
                 this._store.dispatch(new SetWorkflowRuns(
-                    { projectKey: this.project.key, workflowName: this.workflow.name, runs, filters: filter }))
+                    { projectKey: this.project.key, workflowName: this.workflow.name, runs, filters: filter }));
             });
     }
 
@@ -202,7 +202,7 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
             }, {});
         }
         this.offset = 0;
-        this.getRuns(filters)
+        this.getRuns(filters);
     }
 
     refreshRun(): void {
@@ -235,7 +235,7 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
 
     changeRun(num: number) {
         if (this.currentWorkflowRunNumber === num) {
-            return
+            return;
         }
         this._store.dispatch(new CleanWorkflowRun({}));
         this._router.navigate(['/project', this.project.key, 'workflow', this.workflow.name, 'run', num]);

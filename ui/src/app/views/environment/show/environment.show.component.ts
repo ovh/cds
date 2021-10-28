@@ -142,7 +142,7 @@ export class EnvironmentShowComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
-        this._store.dispatch(new CleanEnvironmentState())
+        this._store.dispatch(new CleanEnvironmentState());
     }
 
     showTab(tab: string): void {
@@ -169,7 +169,7 @@ export class EnvironmentShowComponent implements OnInit, OnDestroy {
                 }))
                     .subscribe(() => {
                         if (this.editMode) {
-                            this._toast.info('', this._translate.instant('environment_ascode_updated'))
+                            this._toast.info('', this._translate.instant('environment_ascode_updated'));
                         } else {
                             this._toast.success('', this._translate.instant('variable_added'));
                         }
@@ -188,9 +188,9 @@ export class EnvironmentShowComponent implements OnInit, OnDestroy {
                 }))
                     .subscribe(() => {
                         if (this.editMode) {
-                            this._toast.info('', this._translate.instant('environment_ascode_updated'))
+                            this._toast.info('', this._translate.instant('environment_ascode_updated'));
                         } else {
-                            this._toast.success('', this._translate.instant('variable_updated'))
+                            this._toast.success('', this._translate.instant('variable_updated'));
                         }
                     });
                 break;
@@ -205,9 +205,9 @@ export class EnvironmentShowComponent implements OnInit, OnDestroy {
                 }))
                     .subscribe(() => {
                         if (this.editMode) {
-                            this._toast.info('', this._translate.instant('environment_ascode_updated'))
+                            this._toast.info('', this._translate.instant('environment_ascode_updated'));
                         } else {
-                            this._toast.success('', this._translate.instant('variable_deleted'))
+                            this._toast.success('', this._translate.instant('variable_deleted'));
                         }
                     });
                 break;

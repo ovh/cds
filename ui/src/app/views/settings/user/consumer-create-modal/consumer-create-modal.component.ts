@@ -89,10 +89,10 @@ export class ConsumerCreateModalComponent {
         config.mustScroll = true;
         this.modal = this._modalService.open(config);
         this.modal.onApprove(_ => {
- this.closeCallback()
+ this.closeCallback();
 });
         this.modal.onDeny(_ => {
- this.closeCallback()
+ this.closeCallback();
 });
 
         this.init();
@@ -171,7 +171,7 @@ export class ConsumerCreateModalComponent {
 
     filterGroups(f: string) {
         const lowerFilter = f.toLowerCase();
-        return (g: Group) => g.name.toLowerCase().indexOf(lowerFilter) !== -1
+        return (g: Group) => g.name.toLowerCase().indexOf(lowerFilter) !== -1;
     }
 
     clickBack() {
@@ -243,7 +243,7 @@ export class ConsumerCreateModalComponent {
         for (let i = 0; i < this.selectedScopeDetails.length; i++) {
             if (this.selectedScopeDetails[i].scope === detail.scope) {
                 this.selectedScopeDetails[i] = detail;
-                return
+                return;
             }
         }
         this.selectedScopeDetails.push(detail);

@@ -137,7 +137,7 @@ export class UserEditComponent implements OnInit {
                     return {
                         value: c.value,
                         labels
-                    }
+                    };
                 }
             }
         ];
@@ -149,7 +149,7 @@ export class UserEditComponent implements OnInit {
                 c.id.toLowerCase().indexOf(lowerFilter) !== -1 ||
                 c.scope_details.map(s => s.scope).join(' ').toLowerCase().indexOf(lowerFilter) !== -1 ||
                 (c.groups && c.groups.map(g => g.name).join(' ').toLowerCase().indexOf(lowerFilter) !== -1) ||
-                (!c.groups && lowerFilter === '*')
+                (!c.groups && lowerFilter === '*');
         };
 
         this.columnsConsumers = [
@@ -166,7 +166,7 @@ export class UserEditComponent implements OnInit {
                     return {
                         value: c.name,
                         labels
-                    }
+                    };
                 }
             },
             <Column<AuthConsumer>>{
@@ -206,7 +206,7 @@ export class UserEditComponent implements OnInit {
                     return {
                         value: c.groups ? c.groups.map((g: Group) => g.name).join(', ') : '*',
                         icons
-                    }
+                    };
                 }
             },
             <Column<AuthConsumer>>{
@@ -249,7 +249,7 @@ export class UserEditComponent implements OnInit {
                 selector: (c: AuthConsumer) => ({
                     title: 'common_details',
                     click: () => {
-                        this.clickConsumerDetails(c)
+                        this.clickConsumerDetails(c);
                     }
                 })
             }
@@ -261,7 +261,7 @@ export class UserEditComponent implements OnInit {
                 s.id.toLowerCase().indexOf(lowerFilter) !== -1 ||
                 s.consumer_id.toLowerCase().indexOf(lowerFilter) !== -1 ||
                 s.created.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                s.expire_at.toLowerCase().indexOf(lowerFilter) !== -1
+                s.expire_at.toLowerCase().indexOf(lowerFilter) !== -1;
         };
 
         this.columnsSessions = [
@@ -330,7 +330,7 @@ export class UserEditComponent implements OnInit {
                     return {
                         value: s.id,
                         labels
-                    }
+                    };
                 }
             },
             <Column<AuthSession>>{
@@ -352,7 +352,7 @@ export class UserEditComponent implements OnInit {
                     title: 'user_auth_revoke_btn',
                     color: 'red',
                     click: () => {
-                        this.clickSessionRevoke(s)
+                        this.clickSessionRevoke(s);
                     }
                 })
             }

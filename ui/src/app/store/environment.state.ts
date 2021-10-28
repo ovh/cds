@@ -170,7 +170,7 @@ export class EnvironmentState {
             action.payload.variable
         ).pipe(tap((v: Variable) => {
             const state = ctx.getState();
-            let env = cloneDeep(state.environment)
+            let env = cloneDeep(state.environment);
             if (!env.variables) {
                 env.variables = new Array<Variable>();
             }
@@ -199,7 +199,7 @@ export class EnvironmentState {
             action.payload.environmentName + '/variable/' + action.payload.variable.name
         ).pipe(tap(() => {
             const state = ctx.getState();
-            let env = cloneDeep(state.environment)
+            let env = cloneDeep(state.environment);
             env.variables = env.variables.filter(va => va.name !== action.payload.variable.name);
             ctx.setState({
                 ...state,
@@ -233,7 +233,7 @@ export class EnvironmentState {
             action.payload.changes
         ).pipe(tap((v: Variable) => {
             const state = ctx.getState();
-            let env = cloneDeep(state.environment)
+            let env = cloneDeep(state.environment);
             env.variables = env.variables.map(va => {
                 if (va.name !== action.payload.variableName) {
                     return va;
@@ -243,7 +243,7 @@ export class EnvironmentState {
             ctx.setState({
                 ...state,
                 environment: env,
-            })
+            });
         }));
     }
 
@@ -265,7 +265,7 @@ export class EnvironmentState {
         return this._http.post<Key>(`/project/${action.payload.projectKey}/environment/${action.payload.envName}/keys`, action.payload.key)
             .pipe(tap((key: Key) => {
                 const state = ctx.getState();
-                let env = cloneDeep(state.environment)
+                let env = cloneDeep(state.environment);
                 if (!env.keys) {
                     env.keys = new Array<Key>();
                 }
@@ -293,7 +293,7 @@ export class EnvironmentState {
             '/environment/' + action.payload.envName + '/keys/' + action.payload.key.name)
             .pipe(tap(() => {
                 const state = ctx.getState();
-                let env = cloneDeep(state.environment)
+                let env = cloneDeep(state.environment);
                 env.keys = env.keys.filter(k => k.name !== action.payload.key.name);
                 ctx.setState({
                     ...state,

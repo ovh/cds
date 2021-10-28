@@ -69,6 +69,6 @@ export class AuditListComponent implements OnInit {
             before: this.selectedAudit.data_before,
             after: this.selectedAudit.data_after,
             type: diffType,
-        }]
+        }];
     }
 }

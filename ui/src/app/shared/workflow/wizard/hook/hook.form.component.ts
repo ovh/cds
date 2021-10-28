@@ -203,7 +203,7 @@ export class WorkflowNodeHookFormComponent implements OnInit, OnDestroy {
                 this.hook.config[k].value = this.selectedIntegration.name;
             } else {
                 if (this.selectedIntegration.config[k]) {
-                    this.hook.config[k] = cloneDeep(this.selectedIntegration.config[k])
+                    this.hook.config[k] = cloneDeep(this.selectedIntegration.config[k]);
                 }
             }
         });

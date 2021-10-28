@@ -41,7 +41,7 @@ export class FeatureState {
         if (existingFeature) {
             feature.results = existingFeature.results.filter(r => r.paramString !== action.payload.result.paramString);
         }
-        feature.results.push(action.payload.result)
+        feature.results.push(action.payload.result);
 
         ctx.setState({
             ...state,

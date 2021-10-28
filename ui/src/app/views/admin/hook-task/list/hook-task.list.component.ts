@@ -28,14 +28,14 @@ export class HookTaskListComponent {
             return d => {
                 let hookPath: string;
                 if (d.config && d.config['project'] && d.config['workflow']) {
-                    hookPath = (d.config['project'].value + '/' + d.config['workflow'].value).toLowerCase()
+                    hookPath = (d.config['project'].value + '/' + d.config['workflow'].value).toLowerCase();
                 }
                 return d.uuid.toLowerCase().indexOf(lowerFilter) !== -1 ||
                     d.type.toLowerCase().indexOf(lowerFilter) !== -1 ||
                     (hookPath && hookPath.indexOf(lowerFilter) !== -1) ||
                     d.nb_executions_todo.toString().toLowerCase().indexOf(lowerFilter) !== -1 ||
                     d.nb_executions_total.toString().toLowerCase().indexOf(lowerFilter) !== -1;
-            }
+            };
         };
 
         this.columns = [
@@ -63,7 +63,7 @@ export class HookTaskListComponent {
                         return {
                             link: '',
                             value: ''
-                        }
+                        };
                     }
                     return {
                         link: '/project/' + d.config['project'].value + '/workflow/' + d.config['workflow'].value,

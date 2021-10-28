@@ -3,7 +3,7 @@
     <i class="close icon"></i>
 </div>
 <app-workflow-run-job *ngIf="selectedTab.key === 'logs' && selectedNodeJobRun" [projectKey]="projectKey"
-    [workflowName]="workflowName" [workflowRunNum]="workflowRunNum" [nodeJobRun]="selectedNodeJobRun"
+    [workflowName]="workflowName" [workflowRunNumber]="workflowRunNum" [nodeJobRun]="selectedNodeJobRun"
     (onScroll)="onJobScroll($event)" #workflowRunJob>
 </app-workflow-run-job>
 <div class="variables" *ngIf="selectedTab.key === 'variables'">

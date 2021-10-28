@@ -111,7 +111,7 @@ export class ActionListComponent {
         return (d: Action) => {
             let s = `${d.group.name}/${d.name}`.toLowerCase();
             return s.indexOf(lowerFilter) !== -1;
-        }
+        };
     }
 
     filterBuiltin(f: string) {
@@ -119,7 +119,7 @@ export class ActionListComponent {
         return (d: Action) => {
             let s = d.name.toLowerCase();
             return s.indexOf(lowerFilter) !== -1;
-        }
+        };
     }
 
     selectTab(tab: Tab): void {

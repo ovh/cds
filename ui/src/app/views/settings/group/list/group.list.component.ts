@@ -55,6 +55,6 @@ export class GroupListComponent {
 
     filter(f: string) {
         const lowerFilter = f.toLowerCase();
-        return (g: Group) => g.name.toLowerCase().indexOf(lowerFilter) !== -1
+        return (g: Group) => g.name.toLowerCase().indexOf(lowerFilter) !== -1;
     }
 }

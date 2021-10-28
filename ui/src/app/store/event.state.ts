@@ -18,7 +18,7 @@ export class EventState {
 
     @Selector()
     static last(state: EventStateModel) {
-        return state.last
+        return state.last;
     }
 
     @Action(actionEvent.AddEvent)

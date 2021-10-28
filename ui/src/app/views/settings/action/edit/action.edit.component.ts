@@ -90,7 +90,7 @@ export class ActionEditComponent implements OnInit, OnDestroy {
                 selector: (aa: AuditAction) => ({
                         title: 'common_rollback',
                         click: () => {
- this.clickRollback(aa)
+ this.clickRollback(aa);
 }
                     })
             }

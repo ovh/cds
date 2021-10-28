@@ -48,7 +48,7 @@ export class GroupEditComponent implements OnInit {
     ngOnInit() {
         this._route.params.subscribe(params => {
             if (params['groupname'] !== 'add') {
-                this.groupName = params['groupname']
+                this.groupName = params['groupname'];
                 this.loadGroup();
             } else {
                 this.group = new Group();
@@ -78,7 +78,7 @@ export class GroupEditComponent implements OnInit {
         this._groupService.getProjectsInGroup(this.groupName).subscribe(projs => {
             this.projects = projs;
             this._cd.markForCheck();
-        })
+        });
     }
 
     updateDataFromGroup(): void {

@@ -76,7 +76,7 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit, OnDestroy 
     ngAfterViewInit(): void {
         this.nodeSub = this.node$.subscribe(n => {
             if (!n) {
-                return
+                return;
             }
             let stateSnap: WorkflowStateModel = this._store.selectSnapshot(WorkflowState);
             if (stateSnap.editMode) {

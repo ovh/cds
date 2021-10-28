@@ -86,7 +86,7 @@ export class WorkflowTriggerComponent {
         c.variable = 'cds.status';
         c.value = PipelineStatus.SUCCESS;
         c.operator = 'eq';
-        let editMode = this._store.selectSnapshot(WorkflowState).editMode
+        let editMode = this._store.selectSnapshot(WorkflowState).editMode;
         this.destNode.context.conditions.plain.push(c);
         if (editMode) {
             let allNodes = Workflow.getAllNodes(this.workflow);
@@ -137,7 +137,7 @@ export class WorkflowTriggerComponent {
             clonedWorkflow.workflow_data.node.hooks = [];
             clonedWorkflow.workflow_data.node = this.destNode;
         } else {
-            return
+            return;
         }
         if (editMode) {
             forkJoin([
@@ -163,7 +163,7 @@ export class WorkflowTriggerComponent {
                 if (projIn) {
                     clonedWorkflow.project_integrations[projIn.id] = projIn;
                 }
-                this.triggerEvent.emit(clonedWorkflow)
+                this.triggerEvent.emit(clonedWorkflow);
             });
         } else {
             this.triggerEvent.emit(clonedWorkflow);
@@ -188,7 +188,7 @@ export class WorkflowTriggerComponent {
             }
             return this._appService
                 .getApplication(this.project.key, this.project.application_names
-                    .find(a => a.id === this.destNode.context.application_id).name)
+                    .find(a => a.id === this.destNode.context.application_id).name);
         }
         return of(null);
     }
@@ -199,7 +199,7 @@ export class WorkflowTriggerComponent {
                 return of(w.pipelines[this.destNode.context.pipeline_id]);
             }
             return this._pipService.getPipeline(this.project.key, this.project.pipeline_names
-                .find(p => p.id === this.destNode.context.pipeline_id).name)
+                .find(p => p.id === this.destNode.context.pipeline_id).name);
         }
         return of(null);
     }

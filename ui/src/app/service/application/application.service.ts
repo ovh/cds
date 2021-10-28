@@ -23,7 +23,7 @@ export class ApplicationService {
         return this._http.get<Application>(
             `/project/${key}/application/${appName}`,
             { params }
-        )
+        );
     }
 
     /**
@@ -71,7 +71,7 @@ export class ApplicationService {
     updateAsCode(key: string, oldAppName, application: Application, branch, message: string): Observable<Operation> {
         let params = new HttpParams();
         params = params.append('branch', branch);
-        params = params.append('message', message)
+        params = params.append('message', message);
         return this._http.put<Operation>(`/project/${key}/application/${oldAppName}/ascode`, application, { params });
     }
 }
