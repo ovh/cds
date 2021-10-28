@@ -105,22 +105,10 @@ func ApplyRetentionPolicyOnWorkflow(ctx context.Context, store cache.Store, db *
 
 	branchesMap := make(map[string]struct{})
 	if vcsClient != nil {
-		branches, err := vcsClient.Branches(ctx, app.RepositoryFullname, sdk.VCSBranchesFilter{})
+		var err error
+		branchesMap, err = getBranches(ctx, app.RepositoryFullname, vcsClient)
 		if err != nil {
 			return err
-		}
-		log.Info(ctx, "Purge getting branch for repo %s - count: %d", app.RepositoryFullname, len(branches))
-		defaultBranchFound := false
-		for _, b := range branches {
-			branchesMap[b.DisplayID] = struct{}{}
-			if b.Default {
-				log.Info(ctx, "Purge getting default branch for repo %s - %s", app.RepositoryFullname, b.DisplayID)
-				defaultBranchFound = true
-			}
-		}
-
-		if !defaultBranchFound {
-			log.Warn(ctx, "Purge getting default branch for repo %s - not found", app.RepositoryFullname)
 		}
 	}
 
@@ -136,7 +124,31 @@ func ApplyRetentionPolicyOnWorkflow(ctx context.Context, store cache.Store, db *
 
 		nbRunsAnalyzed = int64(len(wfRuns))
 		for _, run := range wfRuns {
-			keep, err := applyRetentionPolicyOnRun(ctx, db, wf, run, branchesMap, app, vcsClient, opts)
+
+			payload, err := extractPayload(run)
+			if err != nil {
+				return err
+			}
+
+			var forkBranches map[string]struct{}
+			isFork := false
+			if gitRepo, has := payload["git.repository"]; has {
+				isFork = true
+				if gitRepo != app.RepositoryFullname {
+					forkBranches, err = getBranches(ctx, gitRepo, vcsClient)
+					if err != nil {
+						return err
+					}
+
+				}
+			}
+
+			var keep bool
+			if !isFork {
+				keep, err = applyRetentionPolicyOnRun(ctx, db, wf, run, payload, branchesMap, app, vcsClient, opts)
+			} else {
+				keep, err = applyRetentionPolicyOnRun(ctx, db, wf, run, payload, forkBranches, app, vcsClient, opts)
+			}
 			if err != nil {
 				return err
 			}
@@ -161,7 +173,59 @@ func ApplyRetentionPolicyOnWorkflow(ctx context.Context, store cache.Store, db *
 	return nil
 }
 
-func applyRetentionPolicyOnRun(ctx context.Context, db *gorp.DbMap, wf sdk.Workflow, run sdk.WorkflowRunSummary, branchesMap map[string]struct{}, app sdk.Application, vcsClient sdk.VCSAuthorizedClientService, opts MarkAsDeleteOptions) (bool, error) {
+func getBranches(ctx context.Context, repo string, vcsClient sdk.VCSAuthorizedClientService) (map[string]struct{}, error) {
+	branchesMap := make(map[string]struct{})
+	branches, err := vcsClient.Branches(ctx, repo, sdk.VCSBranchesFilter{})
+	if err != nil {
+		return nil, err
+	}
+	log.Info(ctx, "Purge getting branch for repo %s - count: %d", repo, len(branches))
+	defaultBranchFound := false
+	for _, b := range branches {
+		branchesMap[b.DisplayID] = struct{}{}
+		if b.Default {
+			log.Info(ctx, "Purge getting default branch for repo %s - %s", repo, b.DisplayID)
+			defaultBranchFound = true
+		}
+	}
+
+	if !defaultBranchFound {
+		log.Warn(ctx, "Purge getting default branch for repo %s - not found", repo)
+	}
+	return branchesMap, nil
+}
+
+func extractPayload(run sdk.WorkflowRunSummary) (map[string]string, error) {
+	vars := make(map[string]string)
+	// Add payload as variable
+	if run.ToCraftOpts != nil {
+		switch {
+		case run.ToCraftOpts.Manual != nil:
+			payload := run.ToCraftOpts.Manual.Payload
+			if payload != nil {
+				// COMPUTE PAYLOAD
+				e := dump.NewDefaultEncoder()
+				e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
+				e.ExtraFields.DetailedMap = false
+				e.ExtraFields.DetailedStruct = false
+				e.ExtraFields.Len = false
+				e.ExtraFields.Type = false
+				tmpVars, err := e.ToStringMap(payload)
+				if err != nil {
+					return nil, sdk.WithStack(err)
+				}
+				for k, v := range tmpVars {
+					vars[k] = v
+				}
+			}
+		case run.ToCraftOpts.Hook != nil && run.ToCraftOpts.Hook.Payload != nil:
+			vars = run.ToCraftOpts.Hook.Payload
+		}
+	}
+	return vars, nil
+}
+
+func applyRetentionPolicyOnRun(ctx context.Context, db *gorp.DbMap, wf sdk.Workflow, run sdk.WorkflowRunSummary, payload map[string]string, branchesMap map[string]struct{}, app sdk.Application, vcsClient sdk.VCSAuthorizedClientService, opts MarkAsDeleteOptions) (bool, error) {
 	if wf.ToDelete && !opts.DryRun {
 		if err := workflow.MarkWorkflowRunsAsDelete(db, []int64{run.ID}); err != nil {
 			return true, sdk.WithStack(err)
@@ -174,7 +238,7 @@ func applyRetentionPolicyOnRun(ctx context.Context, db *gorp.DbMap, wf sdk.Workf
 		return true, sdk.WithStack(err)
 	}
 
-	if err := purgeComputeVariables(ctx, luaCheck, run, branchesMap, app, vcsClient); err != nil {
+	if err := purgeComputeVariables(ctx, luaCheck, run, payload, branchesMap, app, vcsClient); err != nil {
 		return true, err
 	}
 
@@ -203,35 +267,9 @@ func applyRetentionPolicyOnRun(ctx context.Context, db *gorp.DbMap, wf sdk.Workf
 	return false, nil
 }
 
-func purgeComputeVariables(ctx context.Context, luaCheck *luascript.Check, run sdk.WorkflowRunSummary, branchesMap map[string]struct{}, app sdk.Application, vcsClient sdk.VCSAuthorizedClientService) error {
-	vars := make(map[string]string)
+func purgeComputeVariables(ctx context.Context, luaCheck *luascript.Check, run sdk.WorkflowRunSummary, payload map[string]string, branchesMap map[string]struct{}, app sdk.Application, vcsClient sdk.VCSAuthorizedClientService) error {
+	vars := payload
 	varsFloats := make(map[string]float64)
-
-	// Add payload as variable
-	if run.ToCraftOpts != nil {
-		switch {
-		case run.ToCraftOpts.Manual != nil:
-			payload := run.ToCraftOpts.Manual.Payload
-			if payload != nil {
-				// COMPUTE PAYLOAD
-				e := dump.NewDefaultEncoder()
-				e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
-				e.ExtraFields.DetailedMap = false
-				e.ExtraFields.DetailedStruct = false
-				e.ExtraFields.Len = false
-				e.ExtraFields.Type = false
-				tmpVars, err := e.ToStringMap(payload)
-				if err != nil {
-					return sdk.WithStack(err)
-				}
-				for k, v := range tmpVars {
-					vars[k] = v
-				}
-			}
-		case run.ToCraftOpts.Hook != nil && run.ToCraftOpts.Hook.Payload != nil:
-			vars = run.ToCraftOpts.Hook.Payload
-		}
-	}
 
 	// If we have gerrit change id, check status
 	if changeID, ok := vars["gerrit.change.id"]; ok && vcsClient != nil {
