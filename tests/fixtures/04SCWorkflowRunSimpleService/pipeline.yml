@@ -19,5 +19,5 @@ jobs:
   requirements:
   - service:
       name: mypg
-      value: postgres:9.6 POSTGRES_USER=foo POSTGRES_PASSWORD=bar
+      value: postgres:14.0 POSTGRES_USER=foo POSTGRES_PASSWORD=bar
   - os-architecture: linux/amd64
