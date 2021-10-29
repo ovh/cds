@@ -276,7 +276,7 @@ fe2fcbee96aa        ovhcom/cds-engine:latest                              "sh -c
 f2eb7b8c4329        ovhcom/cds-engine:latest                              "sh -c '/app/cds-eng…"   35 seconds ago      Up 33 seconds (healthy)                              debian_cds-elasticsearch_1
 22dc66a1b2a2        ovhcom/cds-engine:latest                              "sh -c '/app/cds-eng…"   35 seconds ago      Up 33 seconds (healthy)                              debian_cds-hatchery-swarm_1
 958ab1703f16        ovhcom/cds-engine:latest                              "sh -c '/app/cds-eng…"   39 seconds ago      Up 39 seconds (healthy)   0.0.0.0:8081->8081/tcp     debian_cds-api_1
-9223395500ab        postgres:9.6                                        "docker-entrypoint.s…"   2 minutes ago       Up About a minute         5432/tcp                   debian_cds-db_1
+9223395500ab        postgres:14.0                                        "docker-entrypoint.s…"   2 minutes ago       Up About a minute         5432/tcp                   debian_cds-db_1
 c9b58ce83003        docker.elastic.co/elasticsearch/elasticsearch:6.7.2   "/usr/local/bin/dock…"   2 minutes ago       Up About a minute         9200/tcp, 9300/tcp         debian_elasticsearch_1
 08cfe15c3e2c        bobrik/socat                                          "socat TCP4-LISTEN:2…"   2 minutes ago       Up About a minute         127.0.0.1:2375->2375/tcp   debian_dockerhost_1
 fc2ac075c000        redis:alpine                                          "docker-entrypoint.s…"   2 minutes ago       Up About a minute         6379/tcp                   debian_cds-cache_1
