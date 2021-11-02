@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 
@@ -66,10 +67,23 @@ func (actPlugin *artifactoryReleaseBundleCreatePlugin) Run(ctx context.Context, 
 	specification := q.GetOptions()["specification"]
 	variables := q.GetOptions()["variables"]
 	url := q.GetOptions()["url"]
-	token := q.GetOptions()["token"]
+	token := q.GetOptions()[q.GetOptions()["token_variable"]]
+
+	if url == "" {
+		url = q.GetOptions()["cds.integration.artifact_manager.url"]
+		token = q.GetOptions()["cds.integration.artifact_manager.release.token"]
+	}
+
+	if url == "" {
+		return actionplugin.Fail("missing Artifactory URL")
+	}
+	if token == "" {
+		return actionplugin.Fail("missing Artifactory Distribution Token")
+	}
 
 	var specVars map[string]string
 
+	fmt.Printf("Preparing release bundle %q version %q\n", name, version)
 	if err := yaml.Unmarshal([]byte(variables), &specVars); err != nil {
 		return actionplugin.Fail("invalid given variables: %v", err)
 	}
@@ -98,11 +112,14 @@ func (actPlugin *artifactoryReleaseBundleCreatePlugin) Run(ctx context.Context, 
 	}
 
 	var params = services.CreateReleaseBundleParams{ReleaseBundleParams: releaseBundleParams}
-	log.SetLogger(log.NewLogger(log.ERROR, os.Stdout))
+	fmt.Printf("Connecting to %s...\n", url)
 	distriClient, err := art.CreateDistributionClient(url, token)
 	if err != nil {
 		return actionplugin.Fail("unable to create distribution client: %v", err)
 	}
+
+	btes, _ := json.MarshalIndent(params, "  ", "  ")
+	fmt.Println(string(btes))
 
 	fmt.Printf("Creating release %s %s\n", params.Name, params.Version)
 	if _, err := distriClient.CreateReleaseBundle(params); err != nil {

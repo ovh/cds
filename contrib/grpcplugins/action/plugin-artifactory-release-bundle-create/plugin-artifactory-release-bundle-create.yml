@@ -43,18 +43,16 @@ parameters:
               }
           ]
       }
-    description: Spec Schema (yaml or json)
+    description: Spec Schema (yaml or json). see https://www.jfrog.com/confluence/display/CLI/CLI+for+JFrog+Artifactory#CLIforJFrogArtifactory-UsingFileSpecs
   variables:
     type: text
     description: variables dicionnary (yaml or json)
   url:
     type: string
-    description: JFrog Artifactory URL url
-    default: cds.integration.artifact_manager.url
+    description: JFrog Artifactory URL. Leave empty to use integration.
     advanced: true
-  token:
+  token_variable:
     type: string
-    description: JFrog Distribution token
-    default: cds.integration.artifact_manager.release.token
+    description: JFrog Distribution token variable name. Leave empty to use integration.
     advanced: true
 

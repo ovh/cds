@@ -242,14 +242,18 @@ func checkPluginBinary(ctx context.Context, w *CurrentWorker, p sdk.GRPCPlugin) 
 	// then try to download the plugin
 	//integrationPluginBinary := path.Join(w.BaseDir().Name(), binary.Name)
 	if _, err := w.BaseDir().Stat(binary.Name); os.IsNotExist(err) {
-		log.Debug(ctx, "Downloading the plugin %s", binary.PluginName)
+		log.Info(ctx, "Downloading the plugin %s", binary.PluginName)
 		//If the file doesn't exist. Download it.
 		fi, err := w.BaseDir().OpenFile(binary.Name, os.O_CREATE|os.O_RDWR, os.FileMode(binary.Perm))
 		if err != nil {
+			ctx := log.ContextWithStackTrace(ctx, err)
+			log.Error(ctx, "unable to openfile %q: %v", binary.Name, err)
 			return err
 		}
 
 		if err := w.client.PluginGetBinary(binary.PluginName, currentOS, currentARCH, fi); err != nil {
+			ctx := log.ContextWithStackTrace(ctx, err)
+			log.Error(ctx, "unable to download plugin %q, %q , %q: %v", binary.PluginName, currentOS, currentARCH, err)
 			_ = fi.Close()
 			return err
 		}
