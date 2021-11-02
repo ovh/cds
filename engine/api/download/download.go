@@ -147,7 +147,6 @@ func GetBinaryFromArtifactory(conf Conf, filename string) error {
 	// target must have a '/' at the end. We ensure to have this '/' (and only one)
 	params.Target = strings.TrimSuffix(conf.Directory, "/") + "/"
 	params.Flat = true
-	params.Retries = 5
 
 	summary, err := artiClient.DownloadFilesWithSummary(params)
 	if err != nil || summary.TotalFailed > 0 {
