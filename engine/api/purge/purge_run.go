@@ -183,13 +183,13 @@ func getBranches(ctx context.Context, repo string, vcsClient sdk.VCSAuthorizedCl
 	for _, b := range branches {
 		branchesMap[b.DisplayID] = struct{}{}
 		if b.Default {
-			log.Info(ctx, "Purge getting default branch for repo %s - %s", repo, b.DisplayID)
+			log.Info(ctx, "Getting default branch for repo %s - %s", repo, b.DisplayID)
 			defaultBranchFound = true
 		}
 	}
 
 	if !defaultBranchFound {
-		log.Warn(ctx, "Purge getting default branch for repo %s - not found", repo)
+		log.Warn(ctx, "Getting default branch for repo %s - not found", repo)
 	}
 	return branchesMap, nil
 }
