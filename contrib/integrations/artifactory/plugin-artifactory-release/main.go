@@ -199,7 +199,7 @@ func (e *artifactoryReleasePlugin) createReleaseBundle(distriClient *distributio
 	}
 	if !exist {
 		params.ReleaseNotes = releaseNote
-		params.ReleaseNotesSyntax = "plain_text"
+		params.ReleaseNotesSyntax = "markdown"
 
 		paramsBuild := fmt.Sprintf("%s/%s", strings.Replace(buildInfoName, "/", "\\/", -1), version)
 
