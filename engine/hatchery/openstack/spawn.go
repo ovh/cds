@@ -65,22 +65,30 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 			}
 		}
 	}
+	workerConfig := h.GenerateWorkerConfig(ctx, h, spawnArgs)
 
 	if spawnArgs.RegisterOnly {
-		spawnArgs.Model.ModelVirtualMachine.Cmd += " register"
+		spawnArgs.Model.ModelVirtualMachine.Cmd += fmt.Sprintf(" --config %s register", workerConfig.EncodeBase64())
+	} else {
+		spawnArgs.Model.ModelVirtualMachine.Cmd += fmt.Sprintf(" --config %s", workerConfig.EncodeBase64())
 	}
 
 	udata := spawnArgs.Model.ModelVirtualMachine.PreCmd + "\n" + spawnArgs.Model.ModelVirtualMachine.Cmd + "\n" + spawnArgs.Model.ModelVirtualMachine.PostCmd
-
 	tmpl, err := template.New("udata").Parse(udata)
 	if err != nil {
 		return err
 	}
 
-	udataParam := h.GenerateWorkerArgs(ctx, h, spawnArgs)
-	udataParam.TTL = h.Config.WorkerTTL
-	udataParam.FromWorkerImage = withExistingImage
-	udataParam.WorkflowJobID = spawnArgs.JobID
+	//workerConfig.Basedir =
+	udataParam := struct {
+		API             string
+		FromWorkerImage bool
+		Config          string
+	}{
+		API:             workerConfig.APIEndpoint,
+		FromWorkerImage: withExistingImage,
+		Config:          workerConfig.EncodeBase64(),
+	}
 
 	var buffer bytes.Buffer
 	if err := tmpl.Execute(&buffer, udataParam); err != nil {

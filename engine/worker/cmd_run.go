@@ -35,14 +35,24 @@ func runCmd() func(cmd *cobra.Command, args []string) {
 		ctx, cancel := context.WithCancel(context.Background())
 
 		// Setup workerfrom commandline flags or env variables
-		initFromFlags(cmd, w)
+		cfg, err := initFromFlags(cmd)
+		if err != nil {
+			log.Fatal(ctx, "%v", err)
+		}
+		if err := initFromConfig(ctx, cfg, w); err != nil {
+			log.Fatal(ctx, "%v", err)
+		}
+
 		defer cdslog.Flush(ctx, logrus.StandardLogger())
 
+		// TODO: remove this code with all the flags replaces by config
 		// Get the booked job ID
-		bookedWJobID := FlagInt64(cmd, flagBookedWorkflowJobID)
-
-		if bookedWJobID == 0 {
-			sdk.Exit("flag --booked-workflow-job-id is mandatory")
+		if cfg.BookedJobID == 0 {
+			bookedWJobID := FlagInt64(cmd, flagBookedWorkflowJobID)
+			if bookedWJobID == 0 {
+				sdk.Exit("flag --booked-workflow-job-id is mandatory")
+			}
+			cfg.BookedJobID = bookedWJobID
 		}
 
 		// Gracefully shutdown connections
@@ -64,7 +74,7 @@ func runCmd() func(cmd *cobra.Command, args []string) {
 			}
 		}()
 		// Start the worker
-		if err := internal.StartWorker(ctx, w, bookedWJobID); err != nil {
+		if err := internal.StartWorker(ctx, w, cfg.BookedJobID); err != nil {
 			ctx := sdk.ContextWithStacktrace(ctx, err)
 			ctx = context.WithValue(ctx, cdslog.RequestID, sdk.ExtractHTTPError(err).RequestID)
 			log.Error(ctx, err.Error())

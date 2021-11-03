@@ -6,15 +6,19 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ovh/cds/sdk"
+	"github.com/pkg/errors"
 	"github.com/rockbears/log"
+
+	"github.com/ovh/cds/sdk"
 )
 
 func StartWorker(ctx context.Context, w *CurrentWorker, bookedJobID int64) (mainError error) {
+	ctx = context.WithValue(ctx, log.Field("permJobID"), bookedJobID)
+
 	log.Info(ctx, "Starting worker %s on job %d", w.Name(), bookedJobID)
 
 	if bookedJobID == 0 {
-		return fmt.Errorf("startWorker: bookedJobID is mandatory. val:%d", bookedJobID)
+		return errors.Errorf("startWorker: bookedJobID is mandatory. val:%d", bookedJobID)
 	}
 
 	ctx, cancel := context.WithCancel(ctx)

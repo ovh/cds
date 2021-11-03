@@ -306,12 +306,16 @@ func (h *HatcheryVSphere) launchScriptWorker(ctx context.Context, name string, j
 		return err
 	}
 
-	env := []string{
-		"CDS_FROM_WORKER_IMAGE=true",
-	}
+	workerConfig := h.GenerateWorkerConfig(ctx, h, hatchery.SpawnArguments{
+		WorkerToken: token,
+		WorkerName:  name,
+		Model:       &model,
+	})
+
+	env := []string{}
 
 	env = append(env, h.getGraylogEnv(model)...)
-	udata := model.ModelVirtualMachine.PreCmd + "\n" + model.ModelVirtualMachine.Cmd
+	udata := model.ModelVirtualMachine.PreCmd + "\n" + "CDS_CONFIG=" + workerConfig.EncodeBase64() + " " + model.ModelVirtualMachine.Cmd
 
 	if registerOnly {
 		udata += " register"
@@ -323,19 +327,17 @@ func (h *HatcheryVSphere) launchScriptWorker(ctx context.Context, name string, j
 		return errt
 	}
 
-	udataParam := h.GenerateWorkerArgs(ctx, h, hatchery.SpawnArguments{
-		WorkerToken: token,
-		WorkerName:  name,
-		Model:       &model,
-	})
-	udataParam.TTL = h.Config.WorkerTTL
-	udataParam.FromWorkerImage = true
-	udataParam.WorkflowJobID = jobID
-
-	for k, v := range udataParam.InjectEnvVars {
+	for k, v := range workerConfig.InjectEnvVars {
 		env = append(env, k+"="+v)
 	}
 
+	udataParam := struct {
+		API             string
+		FromWorkerImage bool
+	}{
+		API:             workerConfig.APIEndpoint,
+		FromWorkerImage: true,
+	}
 	var buffer bytes.Buffer
 	if err := tmpl.Execute(&buffer, udataParam); err != nil {
 		return err

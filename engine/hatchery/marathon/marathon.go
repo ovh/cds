@@ -236,14 +236,17 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 
 	instance := 1
 	forcePull := strings.HasSuffix(spawnArgs.Model.ModelDocker.Image, ":latest")
+	workerConfig := h.GenerateWorkerConfig(ctx, h, spawnArgs)
 
-	udataParam := h.GenerateWorkerArgs(ctx, h, spawnArgs)
-	udataParam.TTL = h.Config.WorkerTTL
-	udataParam.WorkflowJobID = spawnArgs.JobID
-
+	// Prepare worker startup command
 	tmpl, errt := template.New("cmd").Parse(spawnArgs.Model.ModelDocker.Cmd)
 	if errt != nil {
 		return errt
+	}
+	udataParam := struct {
+		API string
+	}{
+		API: workerConfig.APIEndpoint,
 	}
 	var buffer bytes.Buffer
 	if errTmpl := tmpl.Execute(&buffer, udataParam); errTmpl != nil {
@@ -279,26 +282,11 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 		spawnArgs.Model.ModelDocker.Envs = map[string]string{}
 	}
 
-	envsWm := udataParam.InjectEnvVars
+	envsWm := workerConfig.InjectEnvVars
 	envsWm["CDS_MODEL_MEMORY"] = fmt.Sprintf("%d", memory)
-	envsWm["CDS_API"] = udataParam.API
-	envsWm["CDS_TOKEN"] = udataParam.Token
-	envsWm["CDS_NAME"] = udataParam.Name
-	envsWm["CDS_MODEL_PATH"] = udataParam.Model
-	envsWm["CDS_HATCHERY_NAME"] = udataParam.HatcheryName
-	envsWm["CDS_FROM_WORKER_IMAGE"] = fmt.Sprintf("%v", udataParam.FromWorkerImage)
-	envsWm["CDS_INSECURE"] = fmt.Sprintf("%v", udataParam.HTTPInsecure)
+	envsWm["CDS_CONFIG"] = workerConfig.EncodeBase64()
 
-	if spawnArgs.JobID > 0 {
-		envsWm["CDS_BOOKED_WORKFLOW_JOB_ID"] = fmt.Sprintf("%d", spawnArgs.JobID)
-	}
-
-	envTemplated, errEnv := sdk.TemplateEnvs(udataParam, spawnArgs.Model.ModelDocker.Envs)
-	if errEnv != nil {
-		return errEnv
-	}
-
-	for envName, envValue := range envTemplated {
+	for envName, envValue := range spawnArgs.Model.ModelDocker.Envs {
 		envsWm[envName] = envValue
 	}
 

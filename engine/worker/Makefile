@@ -41,6 +41,9 @@ clean:
 	@for profile in `find . -name "*.coverprofile"`; do \
 		rm $$profile; \
 	done;
+	@rm -rf internal/action/test-Test*
+	@rm -rf internal/test-Test*
+
 
 define get_os_from_binary_file
 $(strip $(shell echo $(1) | awk '{n=split($$1,a,"-");print a[n-1]}'))

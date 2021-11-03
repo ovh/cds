@@ -20,8 +20,6 @@ var containerServiceNameRegexp = regexp.MustCompile(`service-([0-9]+)-(.*)`)
 // HatcheryConfiguration is the configuration for local hatchery
 type HatcheryConfiguration struct {
 	service.HatcheryCommonConfiguration `mapstructure:"commonConfiguration" toml:"commonConfiguration" json:"commonConfiguration"`
-	// WorkerTTL Worker TTL (minutes)
-	WorkerTTL int `mapstructure:"workerTTL" toml:"workerTTL" default:"10" commented:"false" comment:"Worker TTL (minutes)" json:"workerTTL"`
 	// DefaultMemory Worker default memory
 	DefaultMemory int `mapstructure:"defaultMemory" toml:"defaultMemory" default:"1024" commented:"false" comment:"Worker default memory in Mo" json:"defaultMemory"`
 	// Namespace is the kubernetes namespace in which workers are spawned"

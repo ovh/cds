@@ -32,9 +32,6 @@ type HatcheryConfiguration struct {
 	// DefaultMemory Worker default memory
 	DefaultMemory int `mapstructure:"defaultMemory" toml:"defaultMemory" default:"1024" commented:"false" comment:"Worker default memory in Mo" json:"defaultMemory"`
 
-	// WorkerTTL Worker TTL (minutes)
-	WorkerTTL int `mapstructure:"workerTTL" toml:"workerTTL" default:"10" commented:"false" comment:"Worker TTL (minutes)" json:"workerTTL"`
-
 	// WorkerSpawnTimeout Worker Timeout Spawning (seconds)
 	WorkerSpawnTimeout int `mapstructure:"workerSpawnTimeout" toml:"workerSpawnTimeout" default:"120" commented:"false" comment:"Worker Timeout Spawning (seconds)" json:"workerSpawnTimeout"`
 

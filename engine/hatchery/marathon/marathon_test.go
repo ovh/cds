@@ -300,8 +300,7 @@ func TestSpawnWorkerTimeout(t *testing.T) {
 				assert.Equal(t, "BRIDGE", a.Container.Docker.Network)
 				assert.Equal(t, float64(1), a.CPUs)
 				assert.Equal(t, 1, *a.Instances)
-				assert.Equal(t, "1", (*a.Env)["CDS_BOOKED_WORKFLOW_JOB_ID"])
-				assert.Equal(t, "GroupModel/fake", (*a.Env)["CDS_MODEL_PATH"])
+				assert.NotEmpty(t, (*a.Env)["CDS_CONFIG"])
 
 				createAppResult.ID = a.ID
 				createAppResult.Env = a.Env

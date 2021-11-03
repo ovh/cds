@@ -25,8 +25,15 @@ func Test_tmplHandler(t *testing.T) {
 	fs := afero.NewOsFs()
 	basedir := "test-" + test.GetTestName(t) + "-" + sdk.RandomString(10) + "-" + fmt.Sprintf("%d", time.Now().Unix())
 	require.NoError(t, fs.MkdirAll(basedir, os.FileMode(0755)))
-
-	if err := wk.Init("test-worker", "test-hatchery", "http://lolcat.host", "xxx-my-token", "", true, afero.NewBasePathFs(fs, basedir)); err != nil {
+	cfg := &workerruntime.WorkerConfig{
+		Name:                "test-worker",
+		HatcheryName:        "test-hatchery",
+		APIEndpoint:         "http://lolcat.host",
+		APIToken:            "xxx-my-token",
+		APIEndpointInsecure: true,
+		Basedir:             basedir,
+	}
+	if err := wk.Init(cfg, afero.NewBasePathFs(fs, basedir)); err != nil {
 		t.Fatalf("worker init failed: %v", err)
 	}
 	wk.currentJob.wJob = &sdk.WorkflowNodeJobRun{
@@ -83,8 +90,15 @@ func Test_tmplHandlerInWrongDir(t *testing.T) {
 	fs := afero.NewOsFs()
 	basedir := "test-" + test.GetTestName(t) + "-" + sdk.RandomString(10) + "-" + fmt.Sprintf("%d", time.Now().Unix())
 	require.NoError(t, fs.MkdirAll(basedir, os.FileMode(0755)))
-
-	if err := wk.Init("test-worker", "test-hatchery", "http://lolcat.host", "xxx-my-token", "", true, afero.NewBasePathFs(fs, basedir)); err != nil {
+	cfg := &workerruntime.WorkerConfig{
+		Name:                "test-worker",
+		HatcheryName:        "test-hatchery",
+		APIEndpoint:         "http://lolcat.host",
+		APIToken:            "xxx-my-token",
+		APIEndpointInsecure: true,
+		Basedir:             basedir,
+	}
+	if err := wk.Init(cfg, afero.NewBasePathFs(fs, basedir)); err != nil {
 		t.Fatalf("worker init failed: %v", err)
 	}
 	wk.currentJob.wJob = &sdk.WorkflowNodeJobRun{ID: 1}
