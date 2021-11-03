@@ -2,14 +2,13 @@ package download
 
 import (
 	"context"
-	"io/ioutil"
 	"os"
 	"testing"
 )
 
 func TestInit(t *testing.T) {
-	tmpDir1, _ := ioutil.TempDir(os.TempDir(), "download1")
-	tmpDir2, _ := ioutil.TempDir(os.TempDir(), "download2")
+	tmpDir1, _ := os.MkdirTemp(os.TempDir(), "download1")
+	tmpDir2, _ := os.MkdirTemp(os.TempDir(), "download2")
 	defer os.RemoveAll(tmpDir1)
 	defer os.RemoveAll(tmpDir2)
 

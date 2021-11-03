@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -237,7 +236,7 @@ func fileHandler(ctx *kafkapublisher.Context, filename string, data []byte) erro
 	//No context
 	if ctx == nil {
 		fmt.Printf("Received file %s\n", filename)
-		if err := ioutil.WriteFile(filename, data, os.FileMode(0644)); err != nil {
+		if err := os.WriteFile(filename, data, os.FileMode(0644)); err != nil {
 			return err
 		}
 		return nil
@@ -265,7 +264,7 @@ func fileHandler(ctx *kafkapublisher.Context, filename string, data []byte) erro
 	//Write the file
 	filepath := path.Join(ctx.Directory, filename)
 	fmt.Printf("Received file %s in context %d => %s\n", filename, ctx.ActionID, filepath)
-	if err := ioutil.WriteFile(filepath, data, os.FileMode(0644)); err != nil {
+	if err := os.WriteFile(filepath, data, os.FileMode(0644)); err != nil {
 		return err
 	}
 
@@ -279,7 +278,7 @@ func fileHandler(ctx *kafkapublisher.Context, filename string, data []byte) erro
 		if err != nil {
 			return err
 		}
-		if err := ioutil.WriteFile(name, buff, os.FileMode(0644)); err != nil {
+		if err := os.WriteFile(name, buff, os.FileMode(0644)); err != nil {
 			return err
 		}
 		ctx.Closed = true

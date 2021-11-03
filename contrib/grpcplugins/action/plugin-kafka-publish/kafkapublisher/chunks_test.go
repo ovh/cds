@@ -1,7 +1,7 @@
 package kafkapublisher
 
 import (
-	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/fsamin/go-shredder"
@@ -32,7 +32,7 @@ func TestKafkaMessages(t *testing.T) {
 	ctx, err := shredder.Reassemble(chunks2, nil)
 	test.NoError(t, err)
 
-	btes, err := ioutil.ReadFile("chunks.go")
+	btes, err := os.ReadFile("chunks.go")
 	test.NoError(t, err)
 
 	assert.EqualValues(t, btes, ctx.Bytes())

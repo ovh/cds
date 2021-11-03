@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"testing"
 
@@ -149,7 +148,7 @@ func TestParseAndImportFromRepository(t *testing.T) {
 			body := new(bytes.Buffer)
 			w := new(http.Response)
 			enc := json.NewEncoder(body)
-			w.Body = ioutil.NopCloser(body)
+			w.Body = io.NopCloser(body)
 			w.StatusCode = http.StatusOK
 			switch r.URL.String() {
 			case "/operations":

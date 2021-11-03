@@ -3,7 +3,7 @@ package api
 import (
 	"bytes"
 	"context"
-	"io/ioutil"
+	"io"
 	"net/http/httptest"
 	"sort"
 	"strings"
@@ -60,7 +60,7 @@ workflow:
     pipeline: pip1
 metadata:
   default_tags: git.branch,git.author,git.hash`
-	req.Body = ioutil.NopCloser(strings.NewReader(body))
+	req.Body = io.NopCloser(strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/x-yaml")
 
 	//Do the request
@@ -132,7 +132,7 @@ workflow:
 permissions:
   ` + g1.Name + `: 5
   ` + g2.Name + `: 7`
-	req.Body = ioutil.NopCloser(strings.NewReader(body))
+	req.Body = io.NopCloser(strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/x-yaml")
 
 	//Do the request
@@ -192,7 +192,7 @@ workflow:
     pipeline: pip1
 metadata:
   default_tags: git.branch,git.author,git.hash`
-	req.Body = ioutil.NopCloser(strings.NewReader(body))
+	req.Body = io.NopCloser(strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/x-yaml")
 
 	//Do the request
@@ -284,7 +284,7 @@ workflow:
       - pip1
     pipeline: pip1`
 	req := assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, nil)
-	req.Body = ioutil.NopCloser(strings.NewReader(body))
+	req.Body = io.NopCloser(strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/x-yaml")
 	rec = httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
@@ -410,7 +410,7 @@ metadata:
   default_tags: git.branch,git.tag`
 
 	req := assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, nil)
-	req.Body = ioutil.NopCloser(strings.NewReader(body))
+	req.Body = io.NopCloser(strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/x-yaml")
 	rec = httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
@@ -542,7 +542,7 @@ metadata:
   default_tags: git.branch,git.tag`
 
 	req := assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, nil)
-	req.Body = ioutil.NopCloser(strings.NewReader(body))
+	req.Body = io.NopCloser(strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/x-yaml")
 	rec = httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
@@ -680,7 +680,7 @@ metadata:
   default_tags: git.branch,git.tag`
 
 	req := assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, nil)
-	req.Body = ioutil.NopCloser(strings.NewReader(body))
+	req.Body = io.NopCloser(strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/x-yaml")
 	rec = httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
@@ -842,7 +842,7 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 
 	test.NotEmpty(t, uri)
 	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri+"?force=true", nil)
-	req.Body = ioutil.NopCloser(r)
+	req.Body = io.NopCloser(r)
 	req.Header.Set("Content-Type", "application/tar")
 
 	//Do the request
@@ -971,7 +971,7 @@ metadata:
 `
 
 	req := assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, nil)
-	req.Body = ioutil.NopCloser(strings.NewReader(body))
+	req.Body = io.NopCloser(strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/x-yaml")
 	rec = httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
@@ -1022,7 +1022,7 @@ version: v2.0
 workflow:
   pip1:
     pipeline: pip1`
-	req.Body = ioutil.NopCloser(strings.NewReader(body))
+	req.Body = io.NopCloser(strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/x-yaml")
 
 	rec := httptest.NewRecorder()
@@ -1062,7 +1062,7 @@ workflow:
 permissions:
   ` + proj.ProjectGroups[0].Group.Name + `: 7
   ` + g2.Name + `: 4`
-	req.Body = ioutil.NopCloser(strings.NewReader(body))
+	req.Body = io.NopCloser(strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/x-yaml")
 
 	rec = httptest.NewRecorder()
@@ -1096,7 +1096,7 @@ version: v2.0
 workflow:
   pip1:
     pipeline: pip1`
-	req.Body = ioutil.NopCloser(strings.NewReader(body))
+	req.Body = io.NopCloser(strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/x-yaml")
 
 	rec = httptest.NewRecorder()
@@ -1192,7 +1192,7 @@ integrations:
         value: myvalue
 metadata:
   default_tags: git.branch,git.author,git.hash`
-	req.Body = ioutil.NopCloser(strings.NewReader(body))
+	req.Body = io.NopCloser(strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/x-yaml")
 
 	//Do the request

@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
+
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 )
@@ -84,7 +85,7 @@ var adminFeatureImportCmd = cli.Command{
 }
 
 func adminFeatureImportRun(v cli.Values) error {
-	btes, err := ioutil.ReadFile(v.GetString("file"))
+	btes, err := os.ReadFile(v.GetString("file"))
 	if err != nil {
 		return err
 	}

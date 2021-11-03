@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
@@ -252,7 +251,7 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 	var checkRequest gock.ObserverFunc = func(request *http.Request, mock gock.Mock) {
 		bodyContent, err := io.ReadAll(request.Body)
 		assert.NoError(t, err)
-		request.Body = ioutil.NopCloser(bytes.NewReader(bodyContent))
+		request.Body = io.NopCloser(bytes.NewReader(bodyContent))
 		if mock != nil {
 			switch mock.Request().URLStruct.String() {
 			case "http://lolcat.host/queue/workflows/42/step":

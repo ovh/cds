@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -133,7 +132,7 @@ func (c *client) Request(ctx context.Context, method string, path string, body i
 	}
 	defer func() {
 		// Drain and close the body to let the Transport reuse the connection
-		_, _ = io.Copy(ioutil.Discard, respBody)
+		_, _ = io.Copy(io.Discard, respBody)
 		_ = respBody.Close()
 	}()
 

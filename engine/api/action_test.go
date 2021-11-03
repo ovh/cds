@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -84,7 +84,7 @@ func Test_postActionImportHandler(t *testing.T) {
 	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, nil)
 
 	body, _ := yaml.Marshal(a)
-	req.Body = ioutil.NopCloser(bytes.NewBuffer(body))
+	req.Body = io.NopCloser(bytes.NewBuffer(body))
 	req.Header.Set("Content-Type", "application/x-yaml")
 
 	//Do the request

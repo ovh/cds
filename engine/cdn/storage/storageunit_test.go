@@ -8,7 +8,6 @@ import (
 	"crypto/sha512"
 	"encoding/hex"
 	"io"
-	"io/ioutil"
 	"os"
 	"testing"
 	"time"
@@ -42,9 +41,9 @@ func TestDeduplicationCrossType(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.TODO(), 3*time.Second)
 	t.Cleanup(cancel)
 
-	bufferDir, err := ioutil.TempDir("", t.Name()+"-cdnbuffer-1-*")
+	bufferDir, err := os.MkdirTemp("", t.Name()+"-cdnbuffer-1-*")
 	require.NoError(t, err)
-	tmpDir, err := ioutil.TempDir("", t.Name()+"-cdn-1-*")
+	tmpDir, err := os.MkdirTemp("", t.Name()+"-cdn-1-*")
 	require.NoError(t, err)
 
 	cdnUnits, err := storage.Init(ctx, m, cache, db.DbMap, sdk.NewGoRoutines(ctx), storage.Configuration{
@@ -237,9 +236,9 @@ func TestRun(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.TODO(), 3*time.Second)
 	t.Cleanup(cancel)
 
-	tmpDir, err := ioutil.TempDir("", t.Name()+"-cdn-1-*")
+	tmpDir, err := os.MkdirTemp("", t.Name()+"-cdn-1-*")
 	require.NoError(t, err)
-	tmpDir2, err := ioutil.TempDir("", t.Name()+"-cdn-2-*")
+	tmpDir2, err := os.MkdirTemp("", t.Name()+"-cdn-2-*")
 	require.NoError(t, err)
 
 	cdnUnits, err := storage.Init(ctx, m, cache, db.DbMap, sdk.NewGoRoutines(ctx), storage.Configuration{

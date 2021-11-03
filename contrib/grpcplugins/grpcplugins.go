@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"github.com/ovh/cds/sdk"
@@ -25,7 +25,7 @@ func GetRunResults(workerHTTPPort int32) ([]sdk.WorkflowRunResult, error) {
 		return nil, fmt.Errorf("cannot get run result /run-result: %v", err)
 	}
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read body on get run result /run-result: %v", err)
 	}
@@ -89,7 +89,7 @@ func GetServices(workerHTTPPort int32, serviceType string) ([]sdk.ServiceConfigu
 		return nil, fmt.Errorf("cannot get services from worker /services: HTTP %d", resp.StatusCode)
 	}
 
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("cannot read body /services: %v", err)
 	}

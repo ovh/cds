@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -1311,7 +1310,7 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 			body := new(bytes.Buffer)
 			w := new(http.Response)
 			enc := json.NewEncoder(body)
-			w.Body = ioutil.NopCloser(body)
+			w.Body = io.NopCloser(body)
 
 			switch r.URL.String() {
 			case "/operations/123":
@@ -1632,7 +1631,7 @@ func Test_postWorkflowRunHandlerWithoutRightConditionsOnHook(t *testing.T) {
 			body := new(bytes.Buffer)
 			w := new(http.Response)
 			enc := json.NewEncoder(body)
-			w.Body = ioutil.NopCloser(body)
+			w.Body = io.NopCloser(body)
 
 			switch r.URL.String() {
 			case "/task/bulk":
@@ -1801,7 +1800,7 @@ func Test_postWorkflowRunHandlerHookWithMutex(t *testing.T) {
 			body := new(bytes.Buffer)
 			w := new(http.Response)
 			enc := json.NewEncoder(body)
-			w.Body = ioutil.NopCloser(body)
+			w.Body = io.NopCloser(body)
 
 			switch r.URL.String() {
 			case "/task/bulk":
@@ -2259,7 +2258,7 @@ func Test_postWorkflowRunHandlerHook(t *testing.T) {
 			body := new(bytes.Buffer)
 			w := new(http.Response)
 			enc := json.NewEncoder(body)
-			w.Body = ioutil.NopCloser(body)
+			w.Body = io.NopCloser(body)
 
 			switch r.URL.String() {
 			case "/task/bulk":

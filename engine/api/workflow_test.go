@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -668,7 +667,7 @@ func Test_putWorkflowHandler(t *testing.T) {
 			body := new(bytes.Buffer)
 			w := new(http.Response)
 			enc := json.NewEncoder(body)
-			w.Body = ioutil.NopCloser(body)
+			w.Body = io.NopCloser(body)
 
 			switch r.URL.String() {
 			case "/vcs/github/repos/foo/bar/branches/?branch=&default=true":
@@ -1958,7 +1957,7 @@ func Test_getWorkfloDependencieswHandler(t *testing.T) {
 			body := new(bytes.Buffer)
 			w := new(http.Response)
 			enc := json.NewEncoder(body)
-			w.Body = ioutil.NopCloser(body)
+			w.Body = io.NopCloser(body)
 			switch r.URL.String() {
 			// NEED get REPO
 			case "/vcs/github/repos/sguiheux/demo":

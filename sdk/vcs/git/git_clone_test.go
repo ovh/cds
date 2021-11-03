@@ -3,7 +3,6 @@ package git
 import (
 	"bytes"
 	"context"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -14,7 +13,7 @@ import (
 
 func TestExtractInfo(t *testing.T) {
 	repo := "https://github.com/ovh/cds.git"
-	myrepo, _ := ioutil.TempDir(os.TempDir(), "cds_TestExtractInfo")
+	myrepo, _ := os.MkdirTemp(os.TempDir(), "cds_TestExtractInfo")
 	defer os.RemoveAll(myrepo)
 	opts := &CloneOpts{
 		CheckoutCommit: "f57e4c8405d5b6ffddc33755c105f73c64ed89da",
@@ -45,7 +44,7 @@ func TestExtractInfo(t *testing.T) {
 }
 func TestExtractInfoAbsPath(t *testing.T) {
 	repo := "https://github.com/ovh/cds.git"
-	myrepo, _ := ioutil.TempDir(os.TempDir(), "cds_TestExtractInfoAbsPath")
+	myrepo, _ := os.MkdirTemp(os.TempDir(), "cds_TestExtractInfoAbsPath")
 	defer os.RemoveAll(myrepo)
 	opts := &CloneOpts{
 		CheckoutCommit: "f57e4c8405d5b6ffddc33755c105f73c64ed89da",
@@ -76,7 +75,7 @@ func TestExtractInfoAbsPath(t *testing.T) {
 }
 func TestExtractInfoEmptyPath(t *testing.T) {
 	repo := "https://github.com/ovh/cds.git"
-	myrepo, _ := ioutil.TempDir(os.TempDir(), "cds_TestExtractInfoEmptyPath")
+	myrepo, _ := os.MkdirTemp(os.TempDir(), "cds_TestExtractInfoEmptyPath")
 	defer os.RemoveAll(myrepo)
 	opts := &CloneOpts{
 		CheckoutCommit: "f57e4c8405d5b6ffddc33755c105f73c64ed89da",

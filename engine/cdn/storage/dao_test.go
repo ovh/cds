@@ -2,7 +2,7 @@ package storage_test
 
 import (
 	"context"
-	"io/ioutil"
+	"os"
 	"testing"
 	"time"
 
@@ -42,7 +42,7 @@ func TestLoadAllItemIDUnknownByUnit(t *testing.T) {
 	i4 := sdk.CDNItem{ID: sdk.UUID(), APIRefHash: sdk.RandomString(10), Status: sdk.CDNStatusItemCompleted}
 	require.NoError(t, item.Insert(context.TODO(), m, db, &i4))
 
-	tmpDir, err := ioutil.TempDir("", t.Name()+"-cdn-1-*")
+	tmpDir, err := os.MkdirTemp("", t.Name()+"-cdn-1-*")
 	require.NoError(t, err)
 
 	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Second)
