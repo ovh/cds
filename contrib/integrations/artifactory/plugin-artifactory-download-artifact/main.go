@@ -86,7 +86,6 @@ func (e *artifactoryDownloadArtifactPlugin) Run(_ context.Context, opts *integra
 	params.Pattern = fmt.Sprintf("%s/%s", cdsRepo, filePath)
 	params.Target = path
 	params.Flat = true
-	params.Retries = 5
 
 	summary, err := artiClient.DownloadFilesWithSummary(params)
 	if err != nil || summary.TotalFailed > 0 {

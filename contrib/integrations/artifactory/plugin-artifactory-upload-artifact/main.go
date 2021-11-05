@@ -84,7 +84,6 @@ func (e *artifactoryUploadArtifactPlugin) Run(_ context.Context, opts *integrati
 	params.Target = fmt.Sprintf("%s/%s/%s/%s/", cdsRepo, projectKey, workflowName, version)
 	params.Flat = true
 	params.BuildProps = fmt.Sprintf("build.name=%s/%s/%s;build.number=%s;build.timestamp=%d", buildInfo, projectKey, workflowName, url.QueryEscape(version), time.Now().Unix())
-	params.Retries = 5
 
 	summary, err := artiClient.UploadFilesWithSummary(params)
 	if err != nil || summary.TotalFailed > 0 {

@@ -203,9 +203,9 @@ func (e *artifactoryReleasePlugin) createReleaseBundle(distriClient *distributio
 
 		paramsBuild := fmt.Sprintf("%s/%s", strings.Replace(buildInfoName, "/", "\\/", -1), version)
 
-		params.SpecFiles = make([]*utils.ArtifactoryCommonParams, 0, len(artifactPromoted))
+		params.SpecFiles = make([]*utils.CommonParams, 0, len(artifactPromoted))
 		for _, arti := range artifactPromoted {
-			query := &utils.ArtifactoryCommonParams{
+			query := &utils.CommonParams{
 				Recursive: true,
 				Build:     paramsBuild,
 				Pattern:   arti,
