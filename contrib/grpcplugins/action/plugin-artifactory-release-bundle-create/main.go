@@ -2,19 +2,21 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"os"
+	"strings"
 
 	"github.com/ghodss/yaml"
 	"github.com/golang/protobuf/ptypes/empty"
-	"github.com/jfrog/jfrog-cli-core/artifactory/spec"
-	"github.com/jfrog/jfrog-cli-core/utils/coreutils"
-	"github.com/jfrog/jfrog-client-go/distribution/services"
-	distributionServicesUtils "github.com/jfrog/jfrog-client-go/distribution/services/utils"
-	"github.com/jfrog/jfrog-client-go/utils/log"
+	"github.com/pkg/errors"
 
-	art "github.com/ovh/cds/contrib/integrations/artifactory"
+	"github.com/jfrog/jfrog-cli-core/v2/artifactory/commands/distribution"
+	"github.com/jfrog/jfrog-cli-core/v2/common/commands"
+	"github.com/jfrog/jfrog-cli-core/v2/common/spec"
+	speccore "github.com/jfrog/jfrog-cli-core/v2/common/spec"
+	"github.com/jfrog/jfrog-cli-core/v2/utils/config"
+	"github.com/jfrog/jfrog-cli/utils/cliutils"
+	distributionServicesUtils "github.com/jfrog/jfrog-client-go/distribution/services/utils"
+
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
 )
@@ -32,40 +34,32 @@ func (actPlugin *artifactoryReleaseBundleCreatePlugin) Manifest(ctx context.Cont
 	return &actionplugin.ActionPluginManifest{
 		Name:        "plugin-artifactory-release-bundle-create",
 		Author:      "François Samin <francois.samin@corp.ovh.com>",
-		Description: `This action creates and sign a release bundle from a yaml specification`,
+		Description: `This action creates and sign a release bundle from a specification file`,
 		Version:     sdk.VERSION,
 	}, nil
 }
 
-func unmarshalSpecFile(content []byte) (s *spec.SpecFiles, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			s = nil
-			err = fmt.Errorf("invalid given specification")
-		}
-	}()
-
-	var schema spec.SpecFiles
-	if err := yaml.Unmarshal(content, &schema); err != nil {
-		return nil, fmt.Errorf("invalid given specification: %v", err)
+func (actPlugin *artifactoryReleaseBundleCreatePlugin) PrepareSpecFiles(ctx context.Context, specification string) (*speccore.SpecFiles, error) {
+	var content = []byte(specification)
+	var specFiles speccore.SpecFiles
+	if err := yaml.Unmarshal(content, &specFiles); err != nil {
+		return nil, errors.Errorf("invalid given spec files: %v", err)
 	}
 
-	if err := spec.ValidateSpec(schema.Files, false, true, false); err != nil {
-		return nil, fmt.Errorf("invalid release bundle spec: %v", err)
+	err := spec.ValidateSpec(specFiles.Files, true, true, false)
+	if err != nil {
+		return nil, err
 	}
 
-	return &schema, nil
+	return &specFiles, nil
 }
 
 func (actPlugin *artifactoryReleaseBundleCreatePlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
-	log.SetLogger(log.NewLogger(log.INFO, os.Stdout))
-
 	name := q.GetOptions()["name"]
 	version := q.GetOptions()["version"]
 	description := q.GetOptions()["description"]
 	releaseNotes := q.GetOptions()["release_notes"]
 	specification := q.GetOptions()["specification"]
-	variables := q.GetOptions()["variables"]
 	url := q.GetOptions()["url"]
 	token := q.GetOptions()[q.GetOptions()["token_variable"]]
 
@@ -81,49 +75,40 @@ func (actPlugin *artifactoryReleaseBundleCreatePlugin) Run(ctx context.Context, 
 		return actionplugin.Fail("missing Artifactory Distribution Token")
 	}
 
-	var specVars map[string]string
-
 	fmt.Printf("Preparing release bundle %q version %q\n", name, version)
-	if err := yaml.Unmarshal([]byte(variables), &specVars); err != nil {
-		return actionplugin.Fail("invalid given variables: %v", err)
-	}
-
-	var content = []byte(specification)
-	if len(specVars) > 0 {
-		content = coreutils.ReplaceVars(content, specVars)
-	}
-
-	var schema, err = unmarshalSpecFile(content)
-	if err != nil {
-		return actionplugin.Fail("%v", err)
-	}
-
-	var releaseBundleParams = distributionServicesUtils.NewReleaseBundleParams(name, version)
-	releaseBundleParams.SignImmediately = true
+	releaseBundleParams := distributionServicesUtils.NewReleaseBundleParams(name, version)
 	releaseBundleParams.Description = description
 	releaseBundleParams.ReleaseNotes = releaseNotes
-	releaseBundleParams.ReleaseNotesSyntax = distributionServicesUtils.Markdown
-	for _, spec := range schema.Files {
-		p, err := spec.ToArtifactoryCommonParams()
-		if err != nil {
-			return actionplugin.Fail("invalid spec file: %v", err)
-		}
-		releaseBundleParams.SpecFiles = append(releaseBundleParams.SpecFiles, p)
-	}
+	releaseBundleParams.ReleaseNotesSyntax = "markdown"
+	releaseBundleParams.SignImmediately = true
 
-	var params = services.CreateReleaseBundleParams{ReleaseBundleParams: releaseBundleParams}
-	fmt.Printf("Connecting to %s...\n", url)
-	distriClient, err := art.CreateDistributionClient(url, token)
+	releaseBundleSpecs, err := actPlugin.PrepareSpecFiles(ctx, specification)
 	if err != nil {
-		return actionplugin.Fail("unable to create distribution client: %v", err)
+		return actionplugin.Fail(err.Error())
 	}
 
-	btes, _ := json.MarshalIndent(params, "  ", "  ")
-	fmt.Println(string(btes))
+	rtDetails := new(config.ServerDetails)
+	url = strings.TrimSuffix(url, "/") // ensure having '/' at the end
+	url = strings.TrimSuffix(url, "/artifactory")
+	url += "/distribution/"
+	rtDetails.DistributionUrl = url
+	rtDetails.AccessToken = token
 
-	fmt.Printf("Creating release %s %s\n", params.Name, params.Version)
-	if _, err := distriClient.CreateReleaseBundle(params); err != nil {
-		return actionplugin.Fail("unable to create release bundle: %v", err)
+	releaseBundleCreateCmd := distribution.NewReleaseBundleCreateCommand()
+	releaseBundleCreateCmd.SetServerDetails(rtDetails).SetReleaseBundleCreateParams(releaseBundleParams).SetSpec(releaseBundleSpecs).SetDetailedSummary(true)
+
+	err = commands.Exec(releaseBundleCreateCmd)
+
+	if summary := releaseBundleCreateCmd.GetSummary(); summary != nil {
+		fmt.Printf("Result from artifactory:\n")
+		_ = cliutils.PrintBuildInfoSummaryReport(summary.IsSucceeded(), summary.GetSha256(), err)
+	}
+
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		return &actionplugin.ActionResult{
+			Status: sdk.StatusFail,
+		}, nil
 	}
 
 	return &actionplugin.ActionResult{

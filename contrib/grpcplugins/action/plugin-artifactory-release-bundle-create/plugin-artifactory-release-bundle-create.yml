@@ -23,30 +23,14 @@ parameters:
     type: text
     default: |
       {
-          "files": [
-              {
-                  "pattern" or "aql": "[Mandatory]",
-                  "target": "[Mandatory]",
-                  "props": "[Optional]",
-                  "excludeProps": "[Optional]",
-                  "recursive": "[Optional, Default: 'true']",
-                  "flat" : "[Optional, Default: 'false']",
-                  "exclusions": ["[Optional, Applicable only when 'pattern' is specified]"],
-                  "archiveEntries": "[Optional]",
-                  "build": "[Optional]",
-                  "bundle": "[Optional]",
-                  "validateSymlinks": "[Optional]",
-                  "sortBy" : ["[Optional]"],
-                  "sortOrder": "[Optional, Default: 'asc']",
-                  "limit": [Optional],
-                  "offset": [Optional]
-              }
-          ]
+        "files": [
+          {
+            "pattern": "<repository-snaphost>/<path-to>/{{.cds.version}}/<file>",
+            "target": "<repository-release>/<path-to>/{{.cds.version}}/<file>",
+          }
+        ]
       }
     description: Spec Schema (yaml or json). see https://www.jfrog.com/confluence/display/CLI/CLI+for+JFrog+Artifactory#CLIforJFrogArtifactory-UsingFileSpecs
-  variables:
-    type: text
-    description: variables dicionnary (yaml or json)
   url:
     type: string
     description: JFrog Artifactory URL. Leave empty to use integration.

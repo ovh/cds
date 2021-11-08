@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
 	"github.com/stretchr/testify/require"
 )
@@ -17,7 +18,7 @@ func runHTTPServer(t *testing.T) *httptest.Server {
 		content, err := ioutil.ReadAll(r.Body)
 		require.NoError(t, err)
 		defer r.Body.Close() // nolint
-		require.Equal(t, string(`{"name":"the_name","version":"1.0.0","dry_run":false,"sign_immediately":true,"description":"the_description","spec":{"queries":[{"aql":"items.find({\"$and\":[{\"$and\":[{\"$eq\":\"my-repository\",\"repo\":null}]},{\"$and\":[{\"@cds_version\":\"${cds_version}\"},{\"@cds_application\":\"my-application\"}]}]}).include(\"name\",\"repo\",\"path\",\"actual_md5\",\"actual_sha1\",\"size\",\"type\",\"modified\",\"created\")"}]}}`), string(content))
+		require.Equal(t, "{\"name\":\"the_name\",\"version\":\"1.0.0\",\"dry_run\":false,\"sign_immediately\":true,\"description\":\"the_description\",\"spec\":{\"queries\":[{\"aql\":\"items.find({\\\"path\\\":{\\\"$ne\\\":\\\".\\\"},\\\"$or\\\":[{\\\"$and\\\":[{\\\"repo\\\":\\\"sgu-cicd-cds-snapshot\\\",\\\"path\\\":\\\"FSAMIN/test/55\\\",\\\"name\\\":\\\"file.txt\\\"}]}]}).include(\\\"name\\\",\\\"repo\\\",\\\"path\\\",\\\"actual_md5\\\",\\\"actual_sha1\\\",\\\"sha256\\\",\\\"size\\\",\\\"type\\\",\\\"modified\\\",\\\"created\\\")\",\"mappings\":[{\"input\":\"^sgu-cicd-cds-snapshot/FSAMIN/test/55/file\\\\.txt$\",\"output\":\"sgu-cicd-cds-release/FSAMIN/test/55/file.txt\"}]}]}}", string(content))
 		w.WriteHeader(http.StatusCreated)
 	}))
 }
@@ -31,26 +32,26 @@ func TestRun(t *testing.T) {
 	var p = artifactoryReleaseBundleCreatePlugin{}
 	var q = actionplugin.ActionQuery{
 		Options: map[string]string{
-			"name":          "the_name",
-			"version":       "1.0.0",
-			"description":   "the_description",
-			"url":           ts.URL + "/artifactory/",
-			"token":         "1234567890",
-			"release_notes": "",
+			"name":                                 "the_name",
+			"version":                              "1.0.0",
+			"description":                          "the_description",
+			"release_notes":                        "",
+			"cds.integration.artifact_manager.url": ts.URL + "/artifactory/",
+			"cds.integration.artifact_manager.release.token": "123456",
 			"specification": `
-files:
-- aql:
-    items.find:
-      "$and":
-      - "$and":
-        - repo:
-          "$eq": my-repository
-      - "$and":
-        - "@cds_version": "${cds_version}"
-        - "@cds_application": my-application`,
+{
+	"files": [
+	  {
+		"pattern": "sgu-cicd-cds-snapshot/FSAMIN/test/55/file.txt",
+		"target": "sgu-cicd-cds-release/FSAMIN/test/55/file.txt"
+	  }
+	]
+  }
+`,
 		},
 	}
 	res, err := p.Run(context.TODO(), &q)
 	require.NoError(t, err)
 	require.NotNil(t, res)
+	require.Equal(t, sdk.StatusSuccess, res.Status)
 }
