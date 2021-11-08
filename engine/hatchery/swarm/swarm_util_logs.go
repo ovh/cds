@@ -18,10 +18,12 @@ import (
 )
 
 func (h *HatcherySwarm) getServicesLogs() error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	ctx := context.Background()
 
-	apiWorkers, err := h.CDSClient().WorkerList(ctx)
+	ctxList, cancelList := context.WithTimeout(ctx, 10*time.Second)
+	defer cancelList()
+
+	apiWorkers, err := h.CDSClient().WorkerList(ctxList)
 	if err != nil {
 		return sdk.WrapError(err, "cannot get worker list from CDS api")
 	}
@@ -31,7 +33,7 @@ func (h *HatcherySwarm) getServicesLogs() error {
 	}
 
 	for _, dockerClient := range h.dockerClients {
-		containers, err := h.getContainers(dockerClient, types.ContainerListOptions{All: true})
+		containers, err := h.getContainers(ctx, dockerClient, types.ContainerListOptions{All: true})
 		if err != nil {
 			return sdk.WrapError(err, "Cannot get containers list from %s", dockerClient.name)
 		}
@@ -42,7 +44,7 @@ func (h *HatcherySwarm) getServicesLogs() error {
 				continue
 			}
 
-			workerName := cnt.Labels["service_worker"]
+			workerName := cnt.Labels[LabelServiceWorker]
 			// Check if there is a known worker in CDS api results for given worker name
 			// If not we skip sending logs as the worker is not ready.
 			// This will avoid problems validating log signature by the CDN service.
@@ -50,19 +52,19 @@ func (h *HatcherySwarm) getServicesLogs() error {
 				continue
 			}
 
-			ctx, cancel := context.WithTimeout(context.Background(), time.Minute*2)
+			ctxLogs, cancelLogs := context.WithTimeout(ctx, time.Minute*2)
 			logsOpts := types.ContainerLogsOptions{
 				Details:    true,
 				ShowStderr: true,
 				ShowStdout: true,
 				Since:      "10s",
 			}
-			logsReader, err := dockerClient.ContainerLogs(ctx, cnt.ID, logsOpts)
+			logsReader, err := dockerClient.ContainerLogs(ctxLogs, cnt.ID, logsOpts)
 			if err != nil {
 				err = sdk.WrapError(err, "cannot get logs from docker for containers service %s %v", cnt.ID, cnt.Names)
 				ctx := sdk.ContextWithStacktrace(ctx, err)
 				log.Error(ctx, err.Error())
-				cancel()
+				cancelLogs()
 				continue
 			}
 
@@ -72,11 +74,11 @@ func (h *HatcherySwarm) getServicesLogs() error {
 				err = sdk.WrapError(err, "cannot read logs for containers service %s %v", cnt.ID, cnt.Names)
 				ctx := sdk.ContextWithStacktrace(ctx, err)
 				log.Error(ctx, err.Error())
-				cancel()
+				cancelLogs()
 				continue
 			}
 
-			cancel()
+			cancelLogs()
 
 			if len(logs) > 0 {
 				jobIdentifiers := h.GetIdentifiersFromLabels(cnt)
@@ -120,9 +122,9 @@ func (h *HatcherySwarm) getServicesLogs() error {
 			logsReader.Close()
 		}
 		if len(servicesLogs) > 0 {
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-			h.Common.SendServiceLog(ctx, servicesLogs, sdk.StatusNotTerminated)
-			cancel()
+			ctxSend, cancelSend := context.WithTimeout(ctx, 10*time.Second)
+			h.Common.SendServiceLog(ctxSend, servicesLogs, sdk.StatusNotTerminated)
+			cancelSend()
 		}
 	}
 	return nil

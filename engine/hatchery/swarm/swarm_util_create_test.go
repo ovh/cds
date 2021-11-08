@@ -5,11 +5,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	types "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/go-connections/nat"
+	"github.com/stretchr/testify/require"
 	context "golang.org/x/net/context"
 
 	"github.com/ovh/cds/sdk"
@@ -126,7 +125,7 @@ func TestHatcherySwarm_createAndStartContainer(t *testing.T) {
 	err := h.createAndStartContainer(context.TODO(), h.dockerClients["default"], args, spawnArgs)
 	require.NoError(t, err)
 
-	containers, err := h.getContainers(h.dockerClients["default"], types.ContainerListOptions{})
+	containers, err := h.getContainers(context.TODO(), h.dockerClients["default"], types.ContainerListOptions{})
 	require.NoError(t, err)
 
 	cntr, err := getContainer(h.dockerClients["default"], containers, args.name, types.ContainerListOptions{})
@@ -171,7 +170,7 @@ func TestHatcherySwarm_createAndStartContainerWithMount(t *testing.T) {
 	err = h.createAndStartContainer(context.TODO(), h.dockerClients["default"], args, spawnArgs)
 	require.NoError(t, err)
 
-	containers, err := h.getContainers(h.dockerClients["default"], types.ContainerListOptions{})
+	containers, err := h.getContainers(context.TODO(), h.dockerClients["default"], types.ContainerListOptions{})
 	require.NoError(t, err)
 
 	cntr, err := getContainer(h.dockerClients["default"], containers, args.name, types.ContainerListOptions{})
@@ -205,7 +204,7 @@ func TestHatcherySwarm_createAndStartContainerWithNetwork(t *testing.T) {
 	err = h.createAndStartContainer(context.TODO(), h.dockerClients["default"], args, spawnArgs)
 	require.NoError(t, err)
 
-	containers, err := h.getContainers(h.dockerClients["default"], types.ContainerListOptions{})
+	containers, err := h.getContainers(context.TODO(), h.dockerClients["default"], types.ContainerListOptions{})
 	require.NoError(t, err)
 
 	cntr, err := getContainer(h.dockerClients["default"], containers, args.name, types.ContainerListOptions{})

@@ -22,7 +22,7 @@ const (
 	docker0 = "docker0"
 )
 
-func (h *HatcherySwarm) killAndRemove(ctx context.Context, dockerClient *dockerClient, ID string, containers []types.Container) error {
+func (h *HatcherySwarm) killAndRemove(ctx context.Context, dockerClient *dockerClient, ID string, containers Containers) error {
 	ctxList, cancelList := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancelList()
 	container, err := dockerClient.ContainerInspect(ctxList, ID)
@@ -36,7 +36,7 @@ func (h *HatcherySwarm) killAndRemove(ctx context.Context, dockerClient *dockerC
 	} else {
 		// If its a worker "register", check registration before deleting it
 		if strings.HasPrefix(container.Name, "/register-") {
-			modelPath := container.Config.Labels["worker_model_path"]
+			modelPath := container.Config.Labels[LabelWorkerModelPath]
 
 			if err := hatchery.CheckWorkerModelRegister(ctx, h, modelPath); err != nil {
 				ctx, cancel := context.WithTimeout(context.Background(), time.Minute*2)
@@ -107,7 +107,7 @@ func (h *HatcherySwarm) killAndRemove(ctx context.Context, dockerClient *dockerC
 			log.Debug(ctx, "hatchery> swarm> killAndRemove> Remove network %s", netname)
 			for id := range network.Containers {
 
-				c := h.getContainer(containers, id)
+				c := containers.GetByID(id)
 				if c != nil {
 					// Send final logs before deleting service container
 					jobIdentifiers := h.GetIdentifiersFromLabels(*c)
@@ -124,7 +124,7 @@ func (h *HatcherySwarm) killAndRemove(ctx context.Context, dockerClient *dockerC
 								HatcheryName:    h.ServiceName(),
 								RequirementID:   jobIdentifiers.ServiceID,
 								RequirementName: c.Labels[hatchery.LabelServiceReqName],
-								WorkerName:      c.Labels["service_worker"],
+								WorkerName:      c.Labels[LabelServiceWorker],
 							},
 							ProjectKey:   c.Labels[hatchery.LabelServiceProjectKey],
 							WorkflowName: c.Labels[hatchery.LabelServiceWorkflowName],
