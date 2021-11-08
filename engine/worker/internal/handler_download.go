@@ -68,7 +68,7 @@ func downloadHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 
 		workingDir, err := workerruntime.WorkingDirectory(wk.currentJob.context)
 		if err != nil {
-			log.Error(ctx, "Artifact upload failed: No working directory: %v", err)
+			log.Error(ctx, "Artifact download failed: No working directory: %v", err)
 			writeError(w, r, err)
 			return
 		}
@@ -76,13 +76,13 @@ func downloadHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 
 		result, err := action.RunArtifactDownload(ctx, wk, a, wk.currentJob.secrets)
 		if err != nil {
-			log.Error(ctx, "unable to upload artifacts: %v", err)
+			log.Error(ctx, "unable to download artifacts: %v", err)
 			writeError(w, r, err)
 			return
 		}
 		if result.Status != sdk.StatusSuccess {
-			log.Error(ctx, "Artifact upload failed: %v", result)
-			writeError(w, r, fmt.Errorf("artifact upload failed: %s", result.Reason))
+			log.Error(ctx, "Artifact download failed: %v", result)
+			writeError(w, r, fmt.Errorf("artifact download failed: %s", result.Reason))
 			return
 		}
 	}
