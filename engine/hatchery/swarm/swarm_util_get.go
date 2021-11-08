@@ -41,8 +41,8 @@ func (h *HatcherySwarm) getContainers(ctx context.Context, dockerClient *dockerC
 
 	// Filter hatchery's containers
 	res := make(Containers, 0, len(cs))
-	for _, c := range res {
-		if hatcheryName, ok := c.Labels[LabelHatchery]; ok || hatcheryName == h.Config.Name {
+	for _, c := range cs {
+		if hatcheryName, ok := c.Labels[LabelHatchery]; ok && hatcheryName == h.Config.Name {
 			res = append(res, c)
 		}
 	}

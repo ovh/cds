@@ -24,6 +24,7 @@ func Test_serviceLogs(t *testing.T) {
 	t.Cleanup(gock.Off)
 
 	h := InitTestHatcherySwarm(t)
+	h.Config.Name = "swarmy"
 	reader := rand.Reader
 	bitSize := 2048
 	key, err := rsa.GenerateKey(reader, bitSize)

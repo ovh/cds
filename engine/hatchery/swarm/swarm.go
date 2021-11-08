@@ -208,9 +208,9 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 	_, next := telemetry.Span(ctx, "swarm.chooseDockerEngine")
 	for dname, dclient := range h.dockerClients {
 		ctxList, cancelList := context.WithTimeout(context.Background(), 3*time.Second)
-		containers, errc := dclient.ContainerList(ctxList, types.ContainerListOptions{All: true})
-		if errc != nil {
-			log.Error(ctx, "hatchery> swarm> SpawnWorker> unable to list containers on %s: %v", dname, errc)
+		containers, err := dclient.ContainerList(ctxList, types.ContainerListOptions{All: true})
+		if err != nil {
+			log.Error(ctx, "hatchery> swarm> SpawnWorker> unable to list containers on %s: %v", dname, err)
 			cancelList()
 			continue
 		}

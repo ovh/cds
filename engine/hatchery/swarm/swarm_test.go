@@ -339,6 +339,7 @@ func TestHatcherySwarm_Spawn(t *testing.T) {
 func TestHatcherySwarm_SpawnMaxContainerReached(t *testing.T) {
 	defer gock.Off()
 	h := InitTestHatcherySwarm(t)
+	h.Config.Name = "swarmy"
 	h.dockerClients["default"].MaxContainers = 1
 
 	m := sdk.Model{
