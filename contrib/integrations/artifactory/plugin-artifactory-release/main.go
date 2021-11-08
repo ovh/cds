@@ -17,6 +17,7 @@ import (
 
 	"github.com/ovh/cds/contrib/grpcplugins"
 	art "github.com/ovh/cds/contrib/integrations/artifactory"
+	"github.com/ovh/cds/contrib/integrations/artifactory/plugin-artifactory-release/edge"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/grpcplugin/integrationplugin"
 )
@@ -46,17 +47,6 @@ const (
 
 type artifactoryReleasePlugin struct {
 	integrationplugin.Common
-}
-
-type EdgeNode struct {
-	Name     string `json:"name"`
-	SiteName string `json:"site_name"`
-	City     struct {
-		Name        string `json:"name"`
-		CountryCode string `json:"country_code"`
-	} `json:"city"`
-	LicenseType   string `json:"license_type"`
-	LicenseStatus string `json:"license_status"`
 }
 
 func (e *artifactoryReleasePlugin) Manifest(_ context.Context, _ *empty.Empty) (*integrationplugin.IntegrationPluginManifest, error) {
@@ -160,11 +150,11 @@ func (e *artifactoryReleasePlugin) Run(_ context.Context, opts *integrationplugi
 	}
 
 	fmt.Printf("Listing Edge nodes to distribute the release \n")
-	edges, err := e.listEdgeNodes(distriClient, artifactoryURL, releaseToken)
+	edges, err := edge.ListEdgeNodes(distriClient, artifactoryURL, releaseToken)
 	if err != nil {
 		return fail("%v", err)
 	}
-	edges = e.removeNonEdge(edges)
+	edges = edge.RemoveNonEdge(edges)
 
 	fmt.Printf("Distribute Release %s %s\n", releaseName, releaseVersion)
 	distributionParams := services.NewDistributeReleaseBundleParams(releaseName, releaseVersion)
@@ -223,45 +213,6 @@ func (e *artifactoryReleasePlugin) createReleaseBundle(distriClient *distributio
 		fmt.Printf("Release bundle %s/%s already exist\n", params.Name, params.Version)
 	}
 	return params.Name, params.Version, nil
-}
-
-func (e *artifactoryReleasePlugin) listEdgeNodes(distriClient *distribution.DistributionServicesManager, url, token string) ([]EdgeNode, error) {
-	// action=x distribute
-	listEdgeNodePath := fmt.Sprintf("api/ui/distribution/edge_nodes?action=x")
-	dtb := authdistrib.NewDistributionDetails()
-	dtb.SetUrl(strings.Replace(url, "/artifactory/", "/distribution/", -1))
-	dtb.SetAccessToken(token)
-
-	fakeService := services.NewCreateReleaseBundleService(distriClient.Client())
-	fakeService.DistDetails = dtb
-	clientDetail := fakeService.DistDetails.CreateHttpClientDetails()
-	listEdgeURL := fmt.Sprintf("%s%s", fakeService.DistDetails.GetUrl(), listEdgeNodePath)
-	utils.SetContentType("application/json", &clientDetail.Headers)
-
-	resp, body, _, err := distriClient.Client().SendGet(listEdgeURL, true, &clientDetail)
-	if err != nil {
-		return nil, fmt.Errorf("unable to list edge node from distribution: %v", err)
-	}
-	if resp.StatusCode >= 400 {
-		return nil, fmt.Errorf("http error %d: %s", resp.StatusCode, string(body))
-	}
-
-	var edges []EdgeNode
-	if err := sdk.JSONUnmarshal(body, &edges); err != nil {
-		return nil, fmt.Errorf("unable to unmarshal response %s: %v", string(body), err)
-	}
-	return edges, nil
-}
-
-func (e *artifactoryReleasePlugin) removeNonEdge(edges []EdgeNode) []EdgeNode {
-	edgeFiltered := make([]EdgeNode, 0, len(edges))
-	for _, e := range edges {
-		if e.LicenseType != "EDGE" {
-			continue
-		}
-		edgeFiltered = append(edgeFiltered, e)
-	}
-	return edgeFiltered
 }
 
 func (e *artifactoryReleasePlugin) checkReleaseBundleExist(client *distribution.DistributionServicesManager, url string, token string, name string, version string) (bool, error) {
