@@ -32,10 +32,21 @@ func RunArtifactDownload(ctx context.Context, wk workerruntime.Runtime, a sdk.Ac
 	destPath := sdk.ParameterValue(a.Parameters, "path")
 	tag := sdk.ParameterValue(a.Parameters, "tag")
 
+	actionWorkflow := sdk.ParameterValue(a.Parameters, "workflow")
+	actionRunNumber := sdk.ParameterValue(a.Parameters, "number")
+
+	destinationWorkflow := workflow
+	if actionWorkflow != "" {
+		destinationWorkflow = actionWorkflow
+	}
+	destinationWorkflowNum := number
+	if actionRunNumber != "" {
+		destinationWorkflowNum = actionRunNumber
+	}
+
 	if destPath == "" {
 		destPath = "."
 	}
-
 	workdir, err := workerruntime.WorkingDirectory(ctx)
 	if err != nil {
 		res.Status = sdk.StatusFail
@@ -61,7 +72,7 @@ func RunArtifactDownload(ctx context.Context, wk workerruntime.Runtime, a sdk.Ac
 
 	wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("Downloading artifacts from workflow into '%s'...", destPath))
 
-	n, err := strconv.ParseInt(number, 10, 64)
+	n, err := strconv.ParseInt(destinationWorkflowNum, 10, 64)
 	if err != nil {
 		res.Status = sdk.StatusFail
 		return res, fmt.Errorf("cds.run.number variable is not valid. aborting")
@@ -81,15 +92,15 @@ func RunArtifactDownload(ctx context.Context, wk workerruntime.Runtime, a sdk.Ac
 	// 1. Integration artifact manager on workflow
 	// 2. CDN activated or not
 	if pluginArtifactManagement != nil {
-		return GetArtifactFromIntegrationPlugin(ctx, wk, res, pattern, reg, destPath, pluginArtifactManagement, project, workflow, n)
+		return GetArtifactFromIntegrationPlugin(ctx, wk, res, pattern, reg, destPath, pluginArtifactManagement, project, destinationWorkflow, n)
 	}
 	// GET Artifact from CDS API
 	if !wk.FeatureEnabled(sdk.FeatureCDNArtifact) {
-		return GetArtifactFromAPI(ctx, wk, project, workflow, n, res, pattern, reg, tag, destPath, wkDirFS)
+		return GetArtifactFromAPI(ctx, wk, project, destinationWorkflow, n, res, pattern, reg, tag, destPath, wkDirFS)
 	}
 
 	// GET Artifact from CDS CDN
-	cdnItems, err := wk.Client().WorkflowRunArtifactsLinks(project, workflow, n)
+	cdnItems, err := wk.Client().WorkflowRunArtifactsLinks(project, destinationWorkflow, n)
 	if err != nil {
 		res.Status = sdk.StatusFail
 		return res, err
@@ -114,7 +125,7 @@ func RunArtifactDownload(ctx context.Context, wk workerruntime.Runtime, a sdk.Ac
 		go func(a sdk.CDNItem) {
 			defer wg.Done()
 			destFile := path.Join(destPath, a.APIRef.ToFilename())
-			wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("Downloading artifact %s from workflow %s/%s on run %d...", destFile, project, workflow, n))
+			wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("Downloading artifact %s from workflow %s/%s on run %d...", destFile, project, destinationWorkflow, n))
 
 			f, err := os.OpenFile(destFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.FileMode(apiRef.Perm))
 			if err != nil {
