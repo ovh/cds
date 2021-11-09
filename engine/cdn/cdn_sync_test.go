@@ -2,7 +2,7 @@ package cdn
 
 import (
 	"context"
-	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -27,7 +27,7 @@ func TestSyncBuffer(t *testing.T) {
 	cdntest.ClearItem(t, context.Background(), m, db)
 	cdntest.ClearUnits(t, context.Background(), m, db)
 
-	tmpDir, err := ioutil.TempDir("", t.Name()+"-cdn-*")
+	tmpDir, err := os.MkdirTemp("", t.Name()+"-cdn-*")
 	require.NoError(t, err)
 
 	// Create cdn service

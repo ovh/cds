@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"testing"
@@ -25,7 +25,7 @@ type mockHTTPClient struct {
 }
 
 func (h *mockHTTPClient) Do(*http.Request) (*http.Response, error) {
-	body := ioutil.NopCloser(bytes.NewReader([]byte("{}")))
+	body := io.NopCloser(bytes.NewReader([]byte("{}")))
 	return &http.Response{Body: body}, nil
 }
 

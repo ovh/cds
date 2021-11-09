@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -52,7 +51,7 @@ func TestAPI_detachRepositoriesManagerHandler(t *testing.T) {
 			body := new(bytes.Buffer)
 			w := new(http.Response)
 			enc := json.NewEncoder(body)
-			w.Body = ioutil.NopCloser(body)
+			w.Body = io.NopCloser(body)
 
 			switch r.URL.String() {
 			// NEED get REPO

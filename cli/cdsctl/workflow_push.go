@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -108,7 +107,7 @@ func workflowFilesToTarWriter(files []string, buf io.Writer) error {
 
 	// add some files to the archive
 	for _, file := range files {
-		filBuf, err := ioutil.ReadFile(file)
+		filBuf, err := os.ReadFile(file)
 		if err != nil {
 			return err
 		}

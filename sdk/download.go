@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
@@ -203,7 +202,7 @@ func DownloadFromGitHub(ctx context.Context, directory, filename string, version
 
 	fullpath := path.Join(directory, filename)
 	log.Debug(ctx, "downloading %v into  %v", urlBinary, fullpath)
-	if err := ioutil.WriteFile(fullpath, body, 0755); err != nil {
+	if err := os.WriteFile(fullpath, body, 0755); err != nil {
 		return WrapError(err, "error while write file content for %s in %s", filename, directory)
 	}
 

@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -57,7 +56,7 @@ func workflowV3ValidateRun(v cli.Values) error {
 
 	workflowIn := workflowv3.NewWorkflow()
 	for i := range files {
-		buf, err := ioutil.ReadFile(files[i])
+		buf, err := os.ReadFile(files[i])
 		if err != nil {
 			return errors.Wrapf(err, "cannot read file at %q", files[i])
 		}

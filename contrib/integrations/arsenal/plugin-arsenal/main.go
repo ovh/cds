@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -128,7 +128,7 @@ func (e *arsenalDeploymentPlugin) Run(ctx context.Context, q *integrationplugin.
 	defer res.Body.Close()
 
 	//Check the result
-	body, _ := ioutil.ReadAll(res.Body)
+	body, _ := io.ReadAll(res.Body)
 	if res.StatusCode != http.StatusOK {
 		fmt.Println("Body: ", string(body))
 		return fail("deployment failure (HTTP Status Code: %d)", res.StatusCode)
@@ -163,7 +163,7 @@ func (e *arsenalDeploymentPlugin) Run(ctx context.Context, q *integrationplugin.
 		}
 		defer res.Body.Close()
 
-		body, _ := ioutil.ReadAll(res.Body)
+		body, _ := io.ReadAll(res.Body)
 		if res.StatusCode == http.StatusServiceUnavailable {
 			retry++
 			fmt.Println("Arsenal service unavailable, waiting for next retry")

@@ -7,7 +7,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -136,7 +135,7 @@ current-context: default-context`, k8sToken, certb64, k8sAPIURL)
 		}
 	}()
 
-	if err := ioutil.WriteFile(".kube/config", []byte(kubecfg), 0755); err != nil {
+	if err := os.WriteFile(".kube/config", []byte(kubecfg), 0755); err != nil {
 		return fail("Cannot write kubeconfig : %v", err)
 	}
 
@@ -211,14 +210,14 @@ func executeK8s(q *integrationplugin.RunQuery) error {
 		}
 		defer response.Body.Close()
 
-		body, err := ioutil.ReadAll(response.Body)
+		body, err := io.ReadAll(response.Body)
 		if err != nil {
 			return fmt.Errorf("Cannot read body http response: %v", err)
 		}
 		fmt.Println("Download kubectl done...")
 
 		binaryName = project + "-" + workflow + "-kubectl"
-		if err := ioutil.WriteFile(binaryName, body, 0755); err != nil {
+		if err := os.WriteFile(binaryName, body, 0755); err != nil {
 			return fmt.Errorf("Cannot write file %s for kubectl : %v", binaryName, err)
 		}
 		defer func(binName string) {

@@ -3,6 +3,11 @@ package cdn
 import (
 	"context"
 	"fmt"
+	"net/http/httptest"
+	"os"
+	"testing"
+	"time"
+
 	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/storage"
 	cdntest "github.com/ovh/cds/engine/cdn/test"
@@ -14,11 +19,6 @@ import (
 	"github.com/ovh/symmecrypt/keyloader"
 	"github.com/rockbears/log"
 	"github.com/stretchr/testify/require"
-	"io/ioutil"
-	"net/http/httptest"
-	"os"
-	"testing"
-	"time"
 )
 
 func TestMarkItemUnitAsDeleteHandler(t *testing.T) {
@@ -115,10 +115,10 @@ func TestPostAdminResyncBackendWithDatabaseHandler(t *testing.T) {
 	// Start CDN
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
-	tmpDir, err := ioutil.TempDir("", t.Name()+"-cdn-1-*")
+	tmpDir, err := os.MkdirTemp("", t.Name()+"-cdn-1-*")
 	require.NoError(t, err)
 
-	tmpDir2, err := ioutil.TempDir("", t.Name()+"-cdn-2-*")
+	tmpDir2, err := os.MkdirTemp("", t.Name()+"-cdn-2-*")
 	require.NoError(t, err)
 
 	cdnUnits, err := storage.Init(ctx, s.Mapper, s.Cache, db.DbMap, sdk.NewGoRoutines(ctx), storage.Configuration{

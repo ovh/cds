@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"io/ioutil"
+	"os"
 	"strings"
 
 	"github.com/golang/protobuf/ptypes/empty"
@@ -35,7 +35,7 @@ func (actPlugin *npmAuditParserActionPlugin) Run(ctx context.Context, q *actionp
 	if file == "" {
 		return actionplugin.Fail("File parameter must not be empty")
 	}
-	b, err := ioutil.ReadFile(file)
+	b, err := os.ReadFile(file)
 	if err != nil {
 		return actionplugin.Fail("Unable to read file %s: %v", file, err)
 	}

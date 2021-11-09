@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"testing"
 	"time"
 
@@ -21,7 +21,7 @@ import (
 
 func TestWebdav(t *testing.T) {
 	log.Factory = log.NewTestingWrapper(t)
-	dir, err := ioutil.TempDir("", t.Name()+"-cdn-webdav-*")
+	dir, err := os.MkdirTemp("", t.Name()+"-cdn-webdav-*")
 	require.NoError(t, err)
 	srv := &webdav.Handler{
 		FileSystem: webdav.Dir(dir),

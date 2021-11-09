@@ -1,7 +1,6 @@
 package config
 
 import (
-	"io/ioutil"
 	"os"
 	"os/user"
 	"path"
@@ -21,7 +20,7 @@ func LoadTestingConf(t require.TestingT, serviceType string) map[string]string {
 	_, err := os.Stat(f)
 	require.NoError(t, err, "error no test configuration file found at %s", f)
 
-	btes, err := ioutil.ReadFile(f)
+	btes, err := os.ReadFile(f)
 	require.NoError(t, err, "error reading test configuration file from %s", f)
 	if len(btes) != 0 {
 		cfg := map[string]string{}

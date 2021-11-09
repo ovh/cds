@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -48,7 +47,7 @@ func mock(f func(r *http.Request) (*http.Response, error)) cdsclient.HTTPClient 
 func writeError(w *http.Response, err error) (*http.Response, error) {
 	body := new(bytes.Buffer)
 	enc := json.NewEncoder(body)
-	w.Body = ioutil.NopCloser(body)
+	w.Body = io.NopCloser(body)
 	sdkErr := sdk.ExtractHTTPError(err)
 	enc.Encode(sdkErr)
 	w.StatusCode = sdkErr.Status
@@ -84,7 +83,7 @@ func Test_postImportAsCodeHandler(t *testing.T) {
 			body := new(bytes.Buffer)
 			w := new(http.Response)
 			enc := json.NewEncoder(body)
-			w.Body = ioutil.NopCloser(body)
+			w.Body = io.NopCloser(body)
 
 			switch r.URL.String() {
 			case "/vcs/github/repos/myrepo/branches/?branch=&default=true":
@@ -177,7 +176,7 @@ func Test_postPerformImportAsCodeHandler(t *testing.T) {
 				body := new(bytes.Buffer)
 				w := new(http.Response)
 				enc := json.NewEncoder(body)
-				w.Body = ioutil.NopCloser(body)
+				w.Body = io.NopCloser(body)
 				if err := enc.Encode(hookInfo); err != nil {
 					return writeError(w, err)
 				}
@@ -193,7 +192,7 @@ func Test_postPerformImportAsCodeHandler(t *testing.T) {
 				body := new(bytes.Buffer)
 				w := new(http.Response)
 				enc := json.NewEncoder(body)
-				w.Body = ioutil.NopCloser(body)
+				w.Body = io.NopCloser(body)
 				if err := enc.Encode([]sdk.VCSBranch{b}); err != nil {
 					return writeError(w, err)
 				}
@@ -218,7 +217,7 @@ func Test_postPerformImportAsCodeHandler(t *testing.T) {
 				body := new(bytes.Buffer)
 				w := new(http.Response)
 				enc := json.NewEncoder(body)
-				w.Body = ioutil.NopCloser(body)
+				w.Body = io.NopCloser(body)
 				if err := enc.Encode(hooks); err != nil {
 					return writeError(w, err)
 				}
@@ -229,7 +228,7 @@ func Test_postPerformImportAsCodeHandler(t *testing.T) {
 				body := new(bytes.Buffer)
 				w := new(http.Response)
 				enc := json.NewEncoder(body)
-				w.Body = ioutil.NopCloser(body)
+				w.Body = io.NopCloser(body)
 
 				ope := new(sdk.Operation)
 				ope.URL = "https://github.com/fsamin/go-repo.git"
@@ -359,7 +358,7 @@ vcs_ssh_key: proj-blabla
 			body := new(bytes.Buffer)
 			w := new(http.Response)
 			enc := json.NewEncoder(body)
-			w.Body = ioutil.NopCloser(body)
+			w.Body = io.NopCloser(body)
 
 			switch r.URL.String() {
 			case "/vcs/github/repos/sguiheux/demo/pullrequests/666":

@@ -3,7 +3,6 @@ package action
 import (
 	"bytes"
 	"io"
-	"io/ioutil"
 	"mime"
 	"net/http"
 	"os"
@@ -26,7 +25,7 @@ func TestRunArtifactUpload_Absolute(t *testing.T) {
 		{Name: "cds.project", Value: "project"},
 	}
 
-	assert.NoError(t, ioutil.WriteFile("foo", []byte("something"), os.ModePerm))
+	assert.NoError(t, os.WriteFile("foo", []byte("something"), os.ModePerm))
 
 	fi, err := os.Open("foo")
 	require.NoError(t, err)
@@ -44,7 +43,7 @@ func TestRunArtifactUpload_Absolute(t *testing.T) {
 	var checkRequest gock.ObserverFunc = func(request *http.Request, mock gock.Mock) {
 		bodyContent, err := io.ReadAll(request.Body)
 		assert.NoError(t, err)
-		request.Body = ioutil.NopCloser(bytes.NewReader(bodyContent))
+		request.Body = io.NopCloser(bytes.NewReader(bodyContent))
 		if mock != nil {
 			t.Logf("%s %s - Body: %s", mock.Request().Method, mock.Request().URLStruct.String(), string(bodyContent))
 		}
@@ -108,7 +107,7 @@ func TestRunArtifactUpload_Relative(t *testing.T) {
 	var checkRequest gock.ObserverFunc = func(request *http.Request, mock gock.Mock) {
 		bodyContent, err := io.ReadAll(request.Body)
 		assert.NoError(t, err)
-		request.Body = ioutil.NopCloser(bytes.NewReader(bodyContent))
+		request.Body = io.NopCloser(bytes.NewReader(bodyContent))
 		if mock != nil {
 			t.Logf("%s %s - Body: %s", mock.Request().Method, mock.Request().URLStruct.String(), string(bodyContent))
 		}

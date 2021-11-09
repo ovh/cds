@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	stdlog "log"
 	"math"
 	"reflect"
@@ -59,7 +58,7 @@ func NewRedisStore(host, password string, ttl int) (*RedisStore, error) {
 		})
 	}
 
-	redis.SetLogger(stdlog.New(ioutil.Discard, "", stdlog.LstdFlags|stdlog.Lshortfile))
+	redis.SetLogger(stdlog.New(io.Discard, "", stdlog.LstdFlags|stdlog.Lshortfile))
 
 	pong, err := client.Ping().Result()
 	if err != nil {

@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -171,7 +170,7 @@ func databaseDownloadSQLTarGz(currentVersion string, artifactName string, migrat
 		return fmt.Errorf("invalid content type: %s", err.Error())
 	}
 
-	tmpfile, err := ioutil.TempFile(os.TempDir(), artifactName)
+	tmpfile, err := os.CreateTemp(os.TempDir(), artifactName)
 	if err != nil {
 		sdk.Exit(err.Error())
 	}
@@ -189,7 +188,7 @@ func databaseDownloadSQLTarGz(currentVersion string, artifactName string, migrat
 	fmt.Printf("Unarchive to %s\n", dest)
 
 	dirFiles := dest + "/sql"
-	files, err := ioutil.ReadDir(dirFiles)
+	files, err := os.ReadDir(dirFiles)
 	if err != nil {
 		return fmt.Errorf("error on readDir %s", dirFiles)
 	}

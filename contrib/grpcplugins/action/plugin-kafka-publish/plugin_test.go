@@ -1,7 +1,6 @@
 package main
 
 import (
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -15,7 +14,7 @@ func Test_tmplMessage(t *testing.T) {
 	}
 
 	var checkFile = func(str string) string {
-		b, err := ioutil.ReadFile(str)
+		b, err := os.ReadFile(str)
 		if err != nil {
 			return err.Error()
 		}

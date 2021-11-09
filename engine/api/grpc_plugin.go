@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -195,11 +194,11 @@ func (api *API) postGRPCluginBinaryHandler() service.Handler {
 
 		old := p.GetBinary(b.OS, b.Arch)
 		if old == nil {
-			if err := plugin.AddBinary(ctx, tx, api.SharedStorage, p, &b, ioutil.NopCloser(buff)); err != nil {
+			if err := plugin.AddBinary(ctx, tx, api.SharedStorage, p, &b, io.NopCloser(buff)); err != nil {
 				return sdk.WrapError(err, "unable to add plugin binary")
 			}
 		} else {
-			if err := plugin.UpdateBinary(ctx, tx, api.SharedStorage, p, &b, ioutil.NopCloser(buff)); err != nil {
+			if err := plugin.UpdateBinary(ctx, tx, api.SharedStorage, p, &b, io.NopCloser(buff)); err != nil {
 				return sdk.WrapError(err, "unable to add plugin binary")
 			}
 		}

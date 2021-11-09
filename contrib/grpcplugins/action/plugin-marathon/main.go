@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"math"
 	"net/url"
 	"os"
@@ -248,7 +247,7 @@ func main() {
 
 func tmplApplicationConfigFile(q *actionplugin.ActionQuery, filepath string) (string, error) {
 	//Read initial marathon.json file
-	buff, err := ioutil.ReadFile(filepath)
+	buff, err := os.ReadFile(filepath)
 	if err != nil {
 		fmt.Printf("Configuration file error: %s\n", err)
 		return "", err
@@ -262,7 +261,7 @@ func tmplApplicationConfigFile(q *actionplugin.ActionQuery, filepath string) (st
 	}
 
 	// create file
-	outfile, errtemp := ioutil.TempFile(os.TempDir(), "marathon.json")
+	outfile, errtemp := os.CreateTemp(os.TempDir(), "marathon.json")
 	if errtemp != nil {
 		fmt.Printf("Error writing temporary file: %s\n", errtemp.Error())
 		return "", errtemp
@@ -282,7 +281,7 @@ func tmplApplicationConfigFile(q *actionplugin.ActionQuery, filepath string) (st
 
 func parseApplicationConfigFile(f string) (*marathon.Application, error) {
 	//Read marathon.json
-	buff, errf := ioutil.ReadFile(f)
+	buff, errf := os.ReadFile(f)
 	if errf != nil {
 		fmt.Printf("Configuration file error: %s\n", errf)
 		return nil, errf
@@ -301,14 +300,14 @@ func parseApplicationConfigFile(f string) (*marathon.Application, error) {
 		fmt.Printf("Error with working directory : %s\n", erro)
 		return nil, erro
 	}
-	schemaPath, errt := ioutil.TempFile(os.TempDir(), "marathon.schema")
+	schemaPath, errt := os.CreateTemp(os.TempDir(), "marathon.schema")
 	if errt != nil {
 		fmt.Printf("Error marathon schema (%s) : %s\n", schemaPath.Name(), errt)
 		return nil, errt
 	}
 	defer os.RemoveAll(schemaPath.Name())
 
-	if err := ioutil.WriteFile(schemaPath.Name(), []byte(schema), 0644); err != nil {
+	if err := os.WriteFile(schemaPath.Name(), []byte(schema), 0644); err != nil {
 		fmt.Printf("Error marathon schema : %s\n", err)
 		return nil, err
 	}

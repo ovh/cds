@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
 	"os"
 	"reflect"
 	"testing"
@@ -56,7 +55,7 @@ func TestRun(t *testing.T) {
         ]
     }`
 
-	configfile, err := ioutil.TempFile(tmpdir, "config.tmpl")
+	configfile, err := os.CreateTemp(tmpdir, "config.tmpl")
 	if err != nil {
 		t.Fatalf("unexpected error creating temporary config file: %s", err)
 	}
@@ -68,7 +67,7 @@ func TestRun(t *testing.T) {
 		t.Fatalf("unexpected error writing config content: %s", err)
 	}
 
-	applicationsfile, err := ioutil.TempFile(tmpdir, "applications.json")
+	applicationsfile, err := os.CreateTemp(tmpdir, "applications.json")
 	if err != nil {
 		t.Fatalf("unexpected error creating temporary applications file: %s", err)
 	}
@@ -104,7 +103,7 @@ func TestRun(t *testing.T) {
 		return
 	}
 
-	gotContent, err := ioutil.ReadFile(outputfile)
+	gotContent, err := os.ReadFile(outputfile)
 	if err != nil {
 		t.Fatalf("unexpected error reading generated content: %s", err)
 		return

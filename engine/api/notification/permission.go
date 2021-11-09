@@ -5,9 +5,9 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/cache"
 )
 
 // projectPermissionUsers Get users that access to given project, without default group

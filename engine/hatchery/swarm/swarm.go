@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"fmt"
 	"html/template"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
@@ -84,20 +83,20 @@ func (h *HatcherySwarm) InitHatchery(ctx context.Context) error {
 					continue
 				}
 			} else if cfg.TLSCAPEM != "" && cfg.TLSCERTPEM != "" && cfg.TLSKEYPEM != "" {
-				tempDir, err := ioutil.TempDir("", "cert-"+hostName)
+				tempDir, err := os.MkdirTemp("", "cert-"+hostName)
 				if err != nil {
 					log.Error(ctx, "hatchery> swarm> docker client error: unable to create temp dir: %v", err)
 					continue
 				}
-				if err := ioutil.WriteFile(filepath.Join(tempDir, "ca.pem"), []byte(cfg.TLSCAPEM), os.FileMode(0600)); err != nil {
+				if err := os.WriteFile(filepath.Join(tempDir, "ca.pem"), []byte(cfg.TLSCAPEM), os.FileMode(0600)); err != nil {
 					log.Error(ctx, "hatchery> swarm> docker client error: unable to create ca.pem: %v", err)
 					continue
 				}
-				if err := ioutil.WriteFile(filepath.Join(tempDir, "cert.pem"), []byte(cfg.TLSCERTPEM), os.FileMode(0600)); err != nil {
+				if err := os.WriteFile(filepath.Join(tempDir, "cert.pem"), []byte(cfg.TLSCERTPEM), os.FileMode(0600)); err != nil {
 					log.Error(ctx, "hatchery> swarm> docker client error: unable to create cert.pem: %v", err)
 					continue
 				}
-				if err := ioutil.WriteFile(filepath.Join(tempDir, "key.pem"), []byte(cfg.TLSKEYPEM), os.FileMode(0600)); err != nil {
+				if err := os.WriteFile(filepath.Join(tempDir, "key.pem"), []byte(cfg.TLSKEYPEM), os.FileMode(0600)); err != nil {
 					log.Error(ctx, "hatchery> swarm> docker client error: unable to create key.pem:  %v", err)
 					continue
 				}

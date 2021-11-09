@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"net/http/httputil"
@@ -91,7 +90,7 @@ func InitMock(t *testing.T, url string) {
 		}
 		bodyContent, err := io.ReadAll(request.Body)
 		assert.NoError(t, err)
-		request.Body = ioutil.NopCloser(bytes.NewReader(bodyContent))
+		request.Body = io.NopCloser(bytes.NewReader(bodyContent))
 		if mock != nil {
 			t.Logf("%s %s - Body: %s", mock.Request().Method, mock.Request().URLStruct.String(), string(bodyContent))
 		}

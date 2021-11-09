@@ -8,9 +8,9 @@ import (
 	"strings"
 
 	"github.com/go-gorp/gorp"
-	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/observability"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk/telemetry"
 )

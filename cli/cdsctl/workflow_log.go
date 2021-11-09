@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -317,7 +317,7 @@ func workflowLogDownloadRun(v cli.Values) error {
 			return err
 		}
 
-		if err := ioutil.WriteFile(log.getFilename(), data, 0644); err != nil {
+		if err := os.WriteFile(log.getFilename(), data, 0644); err != nil {
 			return err
 		}
 		fmt.Printf("file %s created\n", log.getFilename())

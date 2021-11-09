@@ -5,7 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"regexp"
 	"time"
 
@@ -117,10 +117,10 @@ func RunGitTag(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, secr
 		tagOpts.SignKey = auth.SignKey.Private
 		tagOpts.SignID = auth.SignKey.ID
 
-		if err := ioutil.WriteFile("pgp.pub.key", []byte(auth.SignKey.Public), 0600); err != nil {
+		if err := os.WriteFile("pgp.pub.key", []byte(auth.SignKey.Public), 0600); err != nil {
 			return sdk.Result{}, fmt.Errorf("Cannot create pgp pub key file")
 		}
-		if err := ioutil.WriteFile("pgp.key", []byte(tagOpts.SignKey), 0600); err != nil {
+		if err := os.WriteFile("pgp.key", []byte(tagOpts.SignKey), 0600); err != nil {
 			return sdk.Result{}, fmt.Errorf("Cannot create pgp key file")
 		}
 	}

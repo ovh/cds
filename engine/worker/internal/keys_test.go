@@ -7,7 +7,6 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -91,7 +90,7 @@ func TestInstallKey_SSHKeyWithoutDestination(t *testing.T) {
 	resp, err := w.InstallKey(priKeyVar)
 	require.NoError(t, err)
 
-	content, err := ioutil.ReadFile(resp.PKey)
+	content, err := os.ReadFile(resp.PKey)
 	require.NoError(t, err)
 	assert.Equal(t, string(priKeyPEM), string(content))
 
@@ -135,7 +134,7 @@ func TestInstallKey_SSHKeyWithRelativeDestination(t *testing.T) {
 	resp, err := w.InstallKeyTo(priKeyVar, "ssh/id_rsa")
 	require.NoError(t, err)
 
-	content, err := ioutil.ReadFile(resp.PKey)
+	content, err := os.ReadFile(resp.PKey)
 	require.NoError(t, err)
 	assert.Equal(t, string(priKeyPEM), string(content))
 	t.Logf("the path to the key is %s", resp.PKey)
@@ -174,7 +173,7 @@ func TestInstallKey_SSHKeyWithAbsoluteDestination(t *testing.T) {
 	resp, err := w.InstallKeyTo(priKeyVar, "/tmp/fake_id_rsa")
 	require.NoError(t, err)
 
-	content, err := ioutil.ReadFile(resp.PKey)
+	content, err := os.ReadFile(resp.PKey)
 	require.NoError(t, err)
 	assert.Equal(t, string(priKeyPEM), string(content))
 	assert.Equal(t, "/tmp/fake_id_rsa", resp.PKey)
