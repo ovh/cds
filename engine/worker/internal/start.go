@@ -181,7 +181,7 @@ func processBookedWJob(ctx context.Context, w *CurrentWorker, wjobs chan<- sdk.W
 		if err := w.Client().QueueJobSendSpawnInfo(ctx, wjob.ID, infos); err != nil {
 			return sdk.WrapError(err, "Cannot record QueueJobSendSpawnInfo for job (err spawn): %d", wjob.ID)
 		}
-		return fmt.Errorf("processBookedWJob> the worker doensn't have the required plugins")
+		return fmt.Errorf("processBookedWJob> the worker doesn't have the required plugins")
 	}
 
 	// requirementsOK is ok
