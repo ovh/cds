@@ -732,6 +732,7 @@ func (w *CurrentWorker) setupHooks(ctx context.Context, jobInfo sdk.WorkflowNode
 				return errors.Errorf("unable to open hook file %q in %q: %v", hookFilePath, w.basedir.Name(), err)
 			}
 			if _, err := hookFile.WriteString(hookConfig.Setup); err != nil {
+				_ = hookFile.Close
 				return errors.Errorf("unable to setup hook %q: %v", hookFilePath, err)
 			}
 			if err := hookFile.Close(); err != nil {
@@ -744,6 +745,7 @@ func (w *CurrentWorker) setupHooks(ctx context.Context, jobInfo sdk.WorkflowNode
 				return errors.Errorf("unable to open hook file %q: %v", hookFilePath, err)
 			}
 			if _, err := hookFile.WriteString(hookConfig.Teardown); err != nil {
+				_ = hookFile.Close
 				return errors.Errorf("unable to setup hook %q: %v", hookFilePath, err)
 			}
 			if err := hookFile.Close(); err != nil {
