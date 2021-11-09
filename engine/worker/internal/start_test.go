@@ -87,11 +87,45 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 			Status: sdk.StatusBuilding,
 		})
 
+	gock.New("http://lolcat.host").Get("project/proj_key/workflows/workflow_name/runs/0").Times(1).
+		HeaderPresent("Authorization").
+		Reply(200).
+		JSON(sdk.WorkflowRun{
+			Workflow: sdk.Workflow{
+				Integrations: []sdk.WorkflowProjectIntegration{
+					{
+						ProjectIntegration: sdk.ProjectIntegration{
+							Name: "artifactory",
+						},
+					},
+				},
+			},
+		})
+
+	gock.New("http://lolcat.host").Get("project/proj_key/integrations/artifactory/workerhooks").Times(1).
+		HeaderPresent("Authorization").
+		Reply(200).
+		JSON(sdk.WorkerHookProjectIntegrationModel{
+			Configuration: sdk.WorkerHookSetupTeardownConfig{
+				ByCapabilities: map[string]sdk.WorkerHookSetupTeardownScripts{
+					"bash": {
+						Label: "first_hook",
+						Setup: `
+#!/bin/bash
+export FOO_FROM_HOOK=BAR`,
+						Teardown: "unset FOO_FROM_HOOK",
+					},
+				},
+			},
+		})
+
 	gock.New("http://lolcat.host").Post("/queue/workflows/42/take").
 		HeaderPresent("Authorization").
 		Reply(200).
 		JSON(
 			sdk.WorkflowNodeJobRunData{
+				ProjectKey:   "proj_key",
+				WorkflowName: "workflow_name",
 				Secrets: []sdk.Variable{
 					{
 						Name:  "cds.myPassword",
@@ -392,5 +426,6 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 	assert.Equal(t, 1, strings.Count(logBuffer.String(), "HATCHERY_WORKER=test-worker"))
 	assert.Equal(t, 1, strings.Count(logBuffer.String(), "HATCHERY_REGION=local-test"))
 	assert.Equal(t, 1, strings.Count(logBuffer.String(), "BASEDIR="))
+	assert.Equal(t, 1, strings.Count(logBuffer.String(), "FOO_FROM_HOOK=BAR"))
 
 }
