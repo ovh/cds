@@ -705,6 +705,9 @@ func (w *CurrentWorker) setupHooks(ctx context.Context, jobInfo sdk.WorkflowNode
 	for _, it := range wfrun.Workflow.Integrations {
 		integrationName := it.ProjectIntegration.Name
 		hook, err := w.client.ProjectIntegrationWorkerHookGet(jobInfo.ProjectKey, integrationName)
+		if sdk.ErrorIs(err, sdk.ErrNotFound) {
+			continue
+		}
 		if err != nil {
 			return err
 		}
