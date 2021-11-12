@@ -102,6 +102,8 @@ func RunGRPCPlugin(ctx context.Context, actionName string, params []sdk.Paramete
 		return
 	}
 
+	log.Info(ctx, "running plugin through socket %q", pluginSocket.Socket)
+
 	c, err := actionplugin.Client(ctx, pluginSocket.Socket)
 	if err != nil {
 		close(done)
@@ -133,7 +135,7 @@ func RunGRPCPlugin(ctx context.Context, actionName string, params []sdk.Paramete
 		actionPluginClientStop(ctx, actionPluginClient, stopLogs)
 		return
 	}
-	log.Debug(ctx, "plugin successfully initialized: %#v", manifest)
+	log.Info(ctx, "plugin successfully initialized: %#v", manifest)
 
 	w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("# Plugin %s version %s is ready", manifest.Name, manifest.Version))
 

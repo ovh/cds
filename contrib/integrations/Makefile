@@ -15,3 +15,9 @@ clean:
 	$(MAKE) clean -C artifactory/plugin-artifactory-release
 	$(MAKE) clean -C artifactory/plugin-artifactory-upload-artifact
 	$(MAKE) clean -C kubernetes/plugin-kubernetes
+
+ALL_PLUGINS = arsenal/plugin-arsenal artifactory/plugin-artifactory-build-info artifactory/plugin-artifactory-download-artifact artifactory/plugin-artifactory-promote artifactory/plugin-artifactory-release artifactory/plugin-artifactory-upload-artifact kubernetes/plugin-kubernetes
+publish: 
+	@for P in $(ALL_PLUGINS); do \
+		$(MAKE) publish -C $$P; \
+	done;

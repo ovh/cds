@@ -62,7 +62,7 @@ func processActionVariables(a *sdk.Action, parent *sdk.Action, jobParameters []s
 		var err error
 		a.Parameters[i].Value, err = interpolate.Do(a.Parameters[i].Value, allParams)
 		if err != nil {
-			return err
+			return sdk.NewErrorFrom(err, "unable to interpolate action parameter %q", a.Parameters[i].Name)
 		}
 	}
 
@@ -90,7 +90,7 @@ func (w *CurrentWorker) replaceVariablesPlaceholder(a *sdk.Action, params []sdk.
 		var err error
 		a.Parameters[i].Value, err = interpolate.Do(a.Parameters[i].Value, tmp)
 		if err != nil {
-			return sdk.WrapError(err, "Unable to interpolate action parameters")
+			return sdk.NewErrorFrom(err, "unable to interpolate action parameter %q", a.Parameters[i].Name)
 		}
 	}
 	return nil
@@ -202,7 +202,7 @@ func (w *CurrentWorker) runSubAction(ctx context.Context, a sdk.Action, jobID in
 }
 
 func (w *CurrentWorker) runAction(ctx context.Context, a sdk.Action, jobID int64, secrets []sdk.Variable, actionName string) sdk.Result {
-	log.Info(ctx, "runAction> start action %s %s %d", a.StepName, actionName, jobID)
+	log.Info(ctx, "runAction> start %s action %s %s %d", a.Type, a.StepName, actionName, jobID)
 	defer func() { log.Info(ctx, "runAction> end action %s %s run %d", a.StepName, actionName, jobID) }()
 
 	//If the action is disabled; skip it
@@ -215,6 +215,8 @@ func (w *CurrentWorker) runAction(ctx context.Context, a sdk.Action, jobID int64
 
 	// Replace variable placeholder that may have been added by last step
 	if err := w.replaceVariablesPlaceholder(&a, w.currentJob.params); err != nil {
+		log.ErrorWithStackTrace(ctx, err)
+		w.SendLog(ctx, workerruntime.LevelError, err.Error())
 		return sdk.Result{
 			Status:  sdk.StatusFail,
 			BuildID: jobID,
@@ -222,6 +224,8 @@ func (w *CurrentWorker) runAction(ctx context.Context, a sdk.Action, jobID int64
 		}
 	}
 	if err := processActionVariables(&a, nil, w.currentJob.params); err != nil {
+		log.ErrorWithStackTrace(ctx, err)
+		w.SendLog(ctx, workerruntime.LevelError, err.Error())
 		return sdk.Result{
 			Status:  sdk.StatusFail,
 			BuildID: jobID,
