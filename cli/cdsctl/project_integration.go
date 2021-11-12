@@ -129,7 +129,7 @@ var projectIntegrationWorkerHooksExportCmd = cli.Command{
 }
 
 func projectIntegrationWorkerHooksExportFunc(v cli.Values) error {
-	res, err := client.ProjectIntegrationWorkerHooksGet(v.GetString(_ProjectKey), v.GetString("integration"))
+	res, err := client.ProjectIntegrationWorkerHookGet(v.GetString(_ProjectKey), v.GetString("integration"))
 	if err != nil {
 		return err
 	}
