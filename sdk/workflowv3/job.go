@@ -44,6 +44,7 @@ func (j Jobs) ToGraphs() []Graph {
 }
 
 type Job struct {
+	ID           string                       `json:"-" yaml:"-"`
 	Enabled      *bool                        `json:"enabled,omitempty" yaml:"enabled,omitempty"`
 	Description  string                       `json:"description,omitempty" yaml:"description,omitempty"`
 	Conditions   *Condition                   `json:"conditions,omitempty" yaml:"conditions,omitempty"`
