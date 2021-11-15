@@ -81,9 +81,25 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 
 	//workerConfig.Basedir =
 	udataParam := struct {
-		API             string
-		FromWorkerImage bool
-		Config          string
+		// All fields below are deprecated
+		API               string `json:"api"`
+		Token             string `json:"token"`
+		Name              string `json:"name"`
+		BaseDir           string `json:"base_dir"`
+		HTTPInsecure      bool   `json:"http_insecure"`
+		Model             string `json:"model"`
+		HatcheryName      string `json:"hatchery_name"`
+		WorkflowJobID     int64  `json:"workflow_job_id"`
+		TTL               int    `json:"ttl"`
+		FromWorkerImage   bool   `json:"from_worker_image"`
+		GraylogHost       string `json:"graylog_host"`
+		GraylogPort       int    `json:"graylog_port"`
+		GraylogExtraKey   string `json:"graylog_extra_key"`
+		GraylogExtraValue string `json:"graylog_extra_value"`
+		WorkerBinary      string
+		InjectEnvVars     map[string]string `json:"inject_env_vars"`
+		// All fields above are deprecated
+		Config string
 	}{
 		API:             workerConfig.APIEndpoint,
 		FromWorkerImage: withExistingImage,
