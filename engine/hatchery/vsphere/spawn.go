@@ -312,35 +312,47 @@ func (h *HatcheryVSphere) launchScriptWorker(ctx context.Context, name string, j
 		Model:       &model,
 	})
 
-	env := []string{}
-
-	env = append(env, h.getGraylogEnv(model)...)
-	udata := model.ModelVirtualMachine.PreCmd + "\n" + "CDS_CONFIG=" + workerConfig.EncodeBase64() + " " + model.ModelVirtualMachine.Cmd
+	udata := model.ModelVirtualMachine.PreCmd + "\n" + model.ModelVirtualMachine.Cmd
 
 	if registerOnly {
 		udata += " register"
 	}
 	udata += "\n" + model.ModelVirtualMachine.PostCmd
 
-	tmpl, errt := template.New("udata").Parse(udata)
-	if errt != nil {
-		return errt
-	}
-
-	for k, v := range workerConfig.InjectEnvVars {
-		env = append(env, k+"="+v)
+	tmpl, err := template.New("udata").Parse(udata)
+	if err != nil {
+		return sdk.NewErrorFrom(err, "unable to parse template: %v", err)
 	}
 
 	udataParam := struct {
-		API             string
-		FromWorkerImage bool
+		// All fields below are deprecated
+		API               string
+		Token             string
+		Name              string
+		BaseDir           string
+		HTTPInsecure      bool
+		Model             string
+		HatcheryName      string
+		WorkflowJobID     int64
+		TTL               int
+		FromWorkerImage   bool
+		GraylogHost       string
+		GraylogPort       int
+		GraylogExtraKey   string
+		GraylogExtraValue string
+		WorkerBinary      string
+		InjectEnvVars     map[string]string
+		// All fields above are deprecated
+		Config string
 	}{
 		API:             workerConfig.APIEndpoint,
 		FromWorkerImage: true,
+		Config:          workerConfig.EncodeBase64(),
 	}
+
 	var buffer bytes.Buffer
 	if err := tmpl.Execute(&buffer, udataParam); err != nil {
-		return err
+		return sdk.NewErrorFrom(err, "unable to execute template: %v", err)
 	}
 
 	if err := h.checkVirtualMachineIsReady(ctx, model, vm); err != nil {
@@ -354,7 +366,18 @@ func (h *HatcheryVSphere) launchScriptWorker(ctx context.Context, name string, j
 		return err
 	}
 
-	if _, err := h.launchClientOp(ctx, vm, model.ModelVirtualMachine, buffer.String(), env); err != nil {
+	env := []string{
+		"CDS_CONFIG=" + workerConfig.EncodeBase64(),
+	}
+	env = append(env, h.getGraylogEnv(model)...)
+	for k, v := range workerConfig.InjectEnvVars {
+		env = append(env, k+"="+v)
+	}
+
+	script := buffer.String()
+	log.Debug(ctx, "script: \n"+script)
+
+	if _, err := h.launchClientOp(ctx, vm, model.ModelVirtualMachine, script, env); err != nil {
 		log.Warn(ctx, "launchScript> cannot start program %s", err)
 		log.Error(ctx, "cannot start program on virtual machine %q: %v", vm.Name(), err)
 		log.Warn(ctx, "shutdown virtual machine %q", vm.Name())

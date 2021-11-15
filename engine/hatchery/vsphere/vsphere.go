@@ -255,6 +255,7 @@ func (c *vSphereClient) CloneVirtualMachine(ctx context.Context, vm *object.Virt
 
 	res := info.Result.(types.ManagedObjectReference)
 
+	log.Debug(ctx, "VM cloned: %+v", res)
 	return &res, nil
 }
 
@@ -395,17 +396,19 @@ func (c *vSphereClient) WaitForVirtualMachineIP(ctx context.Context, vm *object.
 	ctxIP, cancelIP := context.WithTimeout(ctx, 3*time.Minute)
 	defer cancelIP()
 
-	var hasIP bool
 	var ip string
 
-	for !hasIP && ctxIP.Err() == nil { //TODO extract this part of the code to
+	if IPAddress != nil && *IPAddress != "" {
+		log.Debug(ctx, "waiting virtual machine %q got expected IP address: %v)", vm.Name(), *IPAddress)
+	}
+
+	for ctxIP.Err() == nil {
 		var err error
 		ip, err = vm.WaitForIP(ctxIP, true)
 		if err != nil {
 			return sdk.WrapError(err, "cannot get an ip")
 		}
 
-		log.Debug(ctx, "checking virtual machine %q IP address %q (expected: %v)", vm.Name(), ip, IPAddress)
 		if IPAddress != nil && *IPAddress != "" {
 			if ip == *IPAddress {
 				break

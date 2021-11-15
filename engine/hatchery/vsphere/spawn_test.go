@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -244,7 +245,13 @@ func TestHatcheryVSphere_launchScriptWorker(t *testing.T) {
 			assert.Equal(t, "/bin/echo", req.Spec.GetGuestProgramSpec().ProgramPath)
 			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "-n ;\n")
 			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "./worker register\nshutdown -h now")
-			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "CDS_CONFIG=")
+			var foundConfig bool
+			for _, env := range req.Spec.GetGuestProgramSpec().EnvVariables {
+				if strings.HasPrefix(env, "CDS_CONFIG=") {
+					foundConfig = true
+				}
+			}
+			assert.True(t, foundConfig, "CDS_CONFIG env variable should be set")
 			return 1, nil
 		},
 	)
@@ -404,7 +411,13 @@ func TestHatcheryVSphere_SpawnWorker(t *testing.T) {
 			assert.Equal(t, "/bin/echo", req.Spec.GetGuestProgramSpec().ProgramPath)
 			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "-n ;\n")
 			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "./worker\nshutdown -h now")
-			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "CDS_CONFIG=")
+			var foundConfig bool
+			for _, env := range req.Spec.GetGuestProgramSpec().EnvVariables {
+				if strings.HasPrefix(env, "CDS_CONFIG=") {
+					foundConfig = true
+				}
+			}
+			assert.True(t, foundConfig, "CDS_CONFIG env variable should be set")
 			return 1, nil
 		},
 	)
@@ -583,7 +596,13 @@ func TestHatcheryVSphere_SpawnWorkerFromProvisioning(t *testing.T) {
 		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (int64, error) {
 			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "-n ;\n")
 			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "./worker\nshutdown -h now")
-			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "CDS_CONFIG=")
+			var foundConfig bool
+			for _, env := range req.Spec.GetGuestProgramSpec().EnvVariables {
+				if strings.HasPrefix(env, "CDS_CONFIG=") {
+					foundConfig = true
+				}
+			}
+			assert.True(t, foundConfig, "CDS_CONFIG env variable should be set")
 			return 1, nil
 		},
 	)

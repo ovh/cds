@@ -394,6 +394,10 @@ func (h *HatcheryVSphere) provisioning(ctx context.Context) {
 		modelPath := h.Config.WorkerProvisioning[i].ModelPath
 		number := h.Config.WorkerProvisioning[i].Number
 
+		if number == 0 {
+			continue // If provisioning is disabled
+		}
+
 		tuple := strings.Split(modelPath, "/")
 		if len(tuple) != 2 {
 			log.Error(ctx, "invalid model name %q", modelPath)
@@ -404,6 +408,11 @@ func (h *HatcheryVSphere) provisioning(ctx context.Context) {
 		if err != nil {
 			ctx = sdk.ContextWithStacktrace(ctx, err)
 			log.Warn(ctx, "unable to get model name %q: %v", modelPath, err)
+			continue
+		}
+
+		if model.CheckRegistration || model.NeedRegistration {
+			log.Info(ctx, "model %q needs registration. skip provisioning.")
 			continue
 		}
 
@@ -423,6 +432,7 @@ func (h *HatcheryVSphere) provisioning(ctx context.Context) {
 			h.cacheProvisioning.mu.Unlock()
 
 			if err := h.ProvisionWorker(ctx, model, workerName); err != nil {
+				ctx = log.ContextWithStackTrace(ctx, err)
 				log.Error(ctx, "unable to provision model %q: %v", modelPath, err)
 			}
 
