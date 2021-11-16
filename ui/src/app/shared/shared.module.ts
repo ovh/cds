@@ -5,6 +5,7 @@ import { RouterModule } from '@angular/router';
 import { NguiAutoCompleteComponent, NguiAutoCompleteModule } from '@ngui/auto-complete';
 import { TranslateModule } from '@ngx-translate/core';
 import { SuiModule } from '@richardlt/ng2-semantic-ui';
+import { NgSemanticModule } from '@sgu/ng-semantic';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { AuthenticationGuard } from 'app/guard/authentication.guard';
 import { FeatureGuard } from 'app/guard/feature.guard';
@@ -22,7 +23,6 @@ import { WorkflowWizardNodeConditionComponent } from 'app/shared/workflow/wizard
 import { WorkflowWizardOutgoingHookComponent } from 'app/shared/workflow/wizard/outgoinghook/wizard.outgoinghook.component';
 import { WorkflowRunJobVariableComponent } from 'app/views/workflow/run/node/pipeline/variables/job.variables.component';
 import { WorkflowRunJobComponent } from 'app/views/workflow/run/node/pipeline/workflow-run-job/workflow-run-job.component';
-import { NgSemanticModule } from 'ng-semantic/ng-semantic';
 import { CodemirrorModule } from 'ng2-codemirror-typescript/Codemirror';
 import { DragulaModule } from 'ng2-dragula-sgu';
 import { NgxAutoScroll, NgxAutoScrollModule } from 'ngx-auto-scroll';
