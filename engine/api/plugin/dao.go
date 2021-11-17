@@ -2,7 +2,6 @@ package plugin
 
 import (
 	"context"
-	"database/sql"
 
 	"github.com/go-gorp/gorp"
 	"github.com/rockbears/log"
@@ -14,42 +13,25 @@ import (
 
 // Insert inserts a plugin
 func Insert(db gorp.SqlExecutor, p *sdk.GRPCPlugin) error {
-	m := grpcPlugin(*p)
-	if err := db.Insert(&m); err != nil {
+	for i := range p.Binaries {
+		p.Binaries[i].FileContent = nil
+		p.Binaries[i].PluginName = p.Name
+	}
+	if err := db.Insert(p); err != nil {
 		return sdk.WithStack(err)
 	}
-	*p = sdk.GRPCPlugin(m)
 	return nil
 }
 
 // Update updates a plugin
 func Update(db gorp.SqlExecutor, p *sdk.GRPCPlugin) error {
-	m := grpcPlugin(*p)
-	if _, err := db.Update(&m); err != nil {
-		return sdk.WithStack(err)
-	}
-	*p = sdk.GRPCPlugin(m)
-	return nil
-}
-
-func (p *grpcPlugin) PostInsert(db gorp.SqlExecutor) error {
-	return p.PostUpdate(db)
-}
-
-func (p *grpcPlugin) PostUpdate(db gorp.SqlExecutor) error {
 	for i := range p.Binaries {
 		p.Binaries[i].FileContent = nil
 		p.Binaries[i].PluginName = p.Name
 	}
-	s, err := gorpmapping.JSONToNullString(p.Binaries)
-	if err != nil {
-		return sdk.WrapError(err, "unable to marshal data")
+	if _, err := db.Update(&p); err != nil {
+		return sdk.WithStack(err)
 	}
-
-	if _, err := db.Exec("UPDATE grpc_plugin SET binaries = $2 WHERE id = $1", p.ID, s); err != nil {
-		return sdk.WrapError(err, "unable to update data")
-	}
-
 	return nil
 }
 
@@ -60,96 +42,74 @@ func Delete(ctx context.Context, db gorp.SqlExecutor, storageDriver objectstore.
 			log.Error(ctx, "plugin.Delete> unable to delete binary %v", b.ObjectPath)
 		}
 	}
-
-	m := grpcPlugin(*p)
-	if _, err := db.Delete(&m); err != nil {
+	if _, err := db.Delete(&p); err != nil {
 		return sdk.WrapError(err, "plugin.Delete")
 	}
 	return nil
 }
 
-// LoadByName loads a plugin by name
-func LoadByName(db gorp.SqlExecutor, name string) (*sdk.GRPCPlugin, error) {
-	m := grpcPlugin{}
-	if err := db.SelectOne(&m, "SELECT * FROM grpc_plugin WHERE NAME = $1", name); err != nil {
-		if err == sql.ErrNoRows {
-			return nil, sdk.NewErrorFrom(sdk.ErrNotFound, "plugin %s not found", name)
+func getAll(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) ([]sdk.GRPCPlugin, error) {
+	pps := []*sdk.GRPCPlugin{}
+
+	if err := gorpmapping.GetAll(ctx, db, q, &pps); err != nil {
+		return nil, sdk.WrapError(err, "cannot get plugins")
+	}
+	if len(pps) > 0 {
+		for i := range opts {
+			if err := opts[i](ctx, db, pps...); err != nil {
+				return nil, err
+			}
 		}
-		return nil, sdk.WrapError(err, "plugin.LoadByName")
 	}
-	if err := m.PostGet(db); err != nil {
-		return nil, sdk.WrapError(err, "plugin.LoadByName")
+
+	ps := make([]sdk.GRPCPlugin, len(pps))
+	for i := range pps {
+		ps[i] = *pps[i]
 	}
-	p := sdk.GRPCPlugin(m)
-	return &p, nil
+
+	return ps, nil
 }
 
-// LoadByIntegrationModelIDAndType loads a single plugin associated to a integration model id with a specified type
-func LoadByIntegrationModelIDAndType(db gorp.SqlExecutor, integrationModelID int64, typePlugin string) (*sdk.GRPCPlugin, error) {
-	m := grpcPlugin{}
-	if err := db.SelectOne(&m, "SELECT * FROM grpc_plugin where integration_model_id = $1 and type = $2", integrationModelID, typePlugin); err != nil {
-		if err == sql.ErrNoRows {
-			return nil, sdk.NewErrorFrom(sdk.ErrNotFound, "plugin not found (type: %s) for integration %d", typePlugin, integrationModelID)
-		}
-		return nil, sdk.WrapError(err, "plugin.LoadByIntegrationModelIDAndType")
-	}
-	if err := m.PostGet(db); err != nil {
-		return nil, sdk.WrapError(err, "plugin.LoadByIntegrationModelIDAndType")
-	}
-	p := sdk.GRPCPlugin(m)
-	return &p, nil
-}
+func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) (*sdk.GRPCPlugin, error) {
+	var p sdk.GRPCPlugin
 
-// LoadAllByIntegrationModelID loads all plugins associated to a integration model id
-func LoadAllByIntegrationModelID(db gorp.SqlExecutor, integrationModelID int64) ([]sdk.GRPCPlugin, error) {
-	m := []grpcPlugin{}
-	if _, err := db.Select(&m, "SELECT * FROM grpc_plugin where integration_model_id = $1", integrationModelID); err != nil {
-		return nil, sdk.WrapError(err, "plugin.LoadAllByIntegrationModelID")
-	}
-	res := make([]sdk.GRPCPlugin, len(m))
-	for i := range m {
-		p := m[i]
-		if err := p.PostGet(db); err != nil {
-			return nil, sdk.WrapError(err, "LoadAllByIntegrationModelID")
-		}
-		res[i] = sdk.GRPCPlugin(p)
-	}
-	return res, nil
-}
-
-// LoadAll loads all GRPC Plugins
-func LoadAll(db gorp.SqlExecutor) ([]sdk.GRPCPlugin, error) {
-	m := []grpcPlugin{}
-	if _, err := db.Select(&m, "SELECT * FROM grpc_plugin"); err != nil {
-		return nil, sdk.WrapError(err, "plugin.LoadAll")
-	}
-
-	res := make([]sdk.GRPCPlugin, len(m))
-	for i := range m {
-		p := m[i]
-		if err := p.PostGet(db); err != nil {
-			return nil, sdk.WrapError(err, "LoadAll")
-		}
-		res[i] = sdk.GRPCPlugin(p)
-	}
-
-	return res, nil
-}
-
-func (p *grpcPlugin) PostGet(db gorp.SqlExecutor) error {
-	s, err := db.SelectNullStr("SELECT binaries FROM grpc_plugin WHERE ID = $1", p.ID)
+	found, err := gorpmapping.Get(ctx, db, q, &p)
 	if err != nil {
-		return sdk.WrapError(err, "unable to get binaries for ID=%d", p.ID)
+		return nil, sdk.WrapError(err, "cannot get plugin")
 	}
-	if err := gorpmapping.JSONNullString(s, &p.Binaries); err != nil {
-		return sdk.WrapError(err, "plugin.PostGet")
+	if !found {
+		return nil, nil
 	}
-	if p.IntegrationModelID != nil {
-		var err error
-		p.Integration, err = db.SelectStr("SELECT name FROM integration_model WHERE ID = $1", p.IntegrationModelID)
-		if err != nil {
-			return sdk.WrapError(err, "unable to get integration name for ID=%d", p.IntegrationModelID)
+
+	for i := range opts {
+		if err := opts[i](ctx, db, &p); err != nil {
+			return nil, err
 		}
 	}
-	return nil
+
+	return &p, nil
+}
+
+// LoadAll GRPC plugins.
+func LoadAll(ctx context.Context, db gorp.SqlExecutor) ([]sdk.GRPCPlugin, error) {
+	query := gorpmapping.NewQuery("SELECT * FROM grpc_plugin")
+	return getAll(ctx, db, query, LoadOptions.WithIntegrationModelName)
+}
+
+// LoadAllByIntegrationModelID load all GRPC plugins for given integration model id.
+func LoadAllByIntegrationModelID(ctx context.Context, db gorp.SqlExecutor, integrationModelID int64) ([]sdk.GRPCPlugin, error) {
+	query := gorpmapping.NewQuery("SELECT * FROM grpc_plugin WHERE integration_model_id = $1").Args(integrationModelID)
+	return getAll(ctx, db, query, LoadOptions.WithIntegrationModelName)
+}
+
+// LoadByName retrieves in database the plugin with given name.
+func LoadByName(ctx context.Context, db gorp.SqlExecutor, name string) (*sdk.GRPCPlugin, error) {
+	query := gorpmapping.NewQuery("SELECT * FROM grpc_plugin WHERE name = $1").Args(name)
+	return get(ctx, db, query, LoadOptions.WithIntegrationModelName)
+}
+
+// LoadByIntegrationModelIDAndType retrieves in database a single plugin associated to a integration model id with a specified type.
+func LoadByIntegrationModelIDAndType(ctx context.Context, db gorp.SqlExecutor, integrationModelID int64, typePlugin string) (*sdk.GRPCPlugin, error) {
+	query := gorpmapping.NewQuery("SELECT * FROM grpc_plugin WHERE integration_model_id = $1 AND type = $2").Args(integrationModelID, typePlugin)
+	return get(ctx, db, query, LoadOptions.WithIntegrationModelName)
 }

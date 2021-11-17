@@ -39,7 +39,7 @@ func (api *API) getProjectIntegrationHandler() service.Handler {
 			}
 		}
 
-		plugins, err := plugin.LoadAllByIntegrationModelID(api.mustDB(), integ.IntegrationModelID)
+		plugins, err := plugin.LoadAllByIntegrationModelID(ctx, api.mustDB(), integ.IntegrationModelID)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load integration plugin %s/%s", projectKey, integrationName)
 		}
