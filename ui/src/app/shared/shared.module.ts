@@ -5,7 +5,7 @@ import { RouterModule } from '@angular/router';
 import { NguiAutoCompleteComponent, NguiAutoCompleteModule } from '@ngui/auto-complete';
 import { TranslateModule } from '@ngx-translate/core';
 import { SuiModule } from '@richardlt/ng2-semantic-ui';
-import { NgSemanticModule } from '@sgu/ng-semantic';
+import { NgxSemanticModule } from '@sgu/ng-semantic';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { AuthenticationGuard } from 'app/guard/authentication.guard';
 import { FeatureGuard } from 'app/guard/feature.guard';
@@ -118,7 +118,7 @@ import { ZoneComponent } from './zone/zone.component';
     imports: [
         CommonModule,
         ClipboardModule,
-        NgSemanticModule,
+        NgxSemanticModule,
         FormsModule,
         TranslateModule,
         DragulaModule.forRoot(),
@@ -286,7 +286,7 @@ import { ZoneComponent } from './zone/zone.component';
         MenuComponent,
         MomentModule,
         NgForNumber,
-        NgSemanticModule,
+        NgxSemanticModule,
         NgxAutoScroll,
         PaginationComponent,
         ParameterFormComponent,
