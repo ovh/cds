@@ -23,6 +23,25 @@ func processNodeJobRunRequirements(ctx context.Context, db gorp.SqlExecutor, j s
 	var model string
 	var tmp = sdk.ParametersToMap(run.BuildParameters)
 
+	if defaultOS != "" && defaultArch != "" {
+		var modelFound, osArchFound bool
+		for _, req := range j.Action.Requirements {
+			if req.Type == sdk.ModelRequirement {
+				modelFound = true
+			}
+			if req.Type == sdk.OSArchRequirement {
+				osArchFound = true
+			}
+		}
+		if !modelFound && !osArchFound {
+			j.Action.Requirements = append(j.Action.Requirements, sdk.Requirement{
+				Name:  defaultOS + "/" + defaultArch,
+				Type:  sdk.OSArchRequirement,
+				Value: defaultOS + "/" + defaultArch,
+			})
+		}
+	}
+
 	integrationRequirements := make([]sdk.Requirement, 0)
 	for _, c := range integrationsConfigs {
 		for k, v := range c {
@@ -97,6 +116,8 @@ func processNodeJobRunRequirements(ctx context.Context, db gorp.SqlExecutor, j s
 	// Add plugin requirmeent if needed based on the os/arch of the job
 	if len(integrationPlugins) > 0 {
 		var os, arch string
+
+		// Compute os/arch values from Model or OSArch requirement
 		if wm != nil {
 			if !wm.NeedRegistration && !wm.CheckRegistration {
 				os = *wm.RegisteredOS
@@ -116,6 +137,8 @@ func processNodeJobRunRequirements(ctx context.Context, db gorp.SqlExecutor, j s
 				}
 			}
 		}
+
+		// If os/arch values were found adding requirements from plugin binary
 		if os != "" && arch != "" {
 			for _, p := range integrationPlugins {
 				for _, b := range p.Binaries {

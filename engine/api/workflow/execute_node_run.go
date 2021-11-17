@@ -628,7 +628,7 @@ func getIntegrationPlugins(ctx context.Context, db gorp.SqlExecutor, wr *sdk.Wor
 		mapConfig = append(mapConfig, projectIntegration.Config)
 		plg, err := plugin.LoadByIntegrationModelIDAndType(ctx, db, projectIntegration.Model.ID, sdk.GRPCPluginDeploymentIntegration)
 		if err != nil {
-			return nil, nil, sdk.NewErrorFrom(sdk.ErrNotFound, "Cannot find plugin for integration model id %d, %v", projectIntegration.Model.ID, err)
+			return nil, nil, sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrNotFound, "cannot find plugin for integration model %q", projectIntegration.Model.Name))
 		}
 		plugins = append(plugins, *plg)
 	}

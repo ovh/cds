@@ -17,10 +17,7 @@ func Insert(db gorp.SqlExecutor, p *sdk.GRPCPlugin) error {
 		p.Binaries[i].FileContent = nil
 		p.Binaries[i].PluginName = p.Name
 	}
-	if err := db.Insert(p); err != nil {
-		return sdk.WithStack(err)
-	}
-	return nil
+	return sdk.WrapError(gorpmapping.Insert(db, p), "unable to insert plugin %q", p.Name)
 }
 
 // Update updates a plugin
@@ -29,10 +26,7 @@ func Update(db gorp.SqlExecutor, p *sdk.GRPCPlugin) error {
 		p.Binaries[i].FileContent = nil
 		p.Binaries[i].PluginName = p.Name
 	}
-	if _, err := db.Update(&p); err != nil {
-		return sdk.WithStack(err)
-	}
-	return nil
+	return sdk.WrapError(gorpmapping.Update(db, p), "unable to update plugin %q", p.Name)
 }
 
 // Delete deletes a plugin
@@ -42,10 +36,7 @@ func Delete(ctx context.Context, db gorp.SqlExecutor, storageDriver objectstore.
 			log.Error(ctx, "plugin.Delete> unable to delete binary %v", b.ObjectPath)
 		}
 	}
-	if _, err := db.Delete(&p); err != nil {
-		return sdk.WrapError(err, "plugin.Delete")
-	}
-	return nil
+	return sdk.WrapError(gorpmapping.Delete(db, p), "unable to delete plugin %q", p.Name)
 }
 
 func getAll(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) ([]sdk.GRPCPlugin, error) {
@@ -78,7 +69,7 @@ func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...
 		return nil, sdk.WrapError(err, "cannot get plugin")
 	}
 	if !found {
-		return nil, nil
+		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 
 	for i := range opts {
