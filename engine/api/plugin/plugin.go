@@ -70,7 +70,7 @@ func DeleteBinary(ctx context.Context, db gorp.SqlExecutor, storageDriver object
 	}
 
 	if err := storageDriver.Delete(ctx, oldBinary); err != nil {
-		log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "unable to delete plugin %s binary %s/%s", p.ID, os, arch))
+		log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "unable to delete plugin %s binary %s/%s", p.Name, os, arch))
 	}
 
 	p.Binaries = filteredBinaries
