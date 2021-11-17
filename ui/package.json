@@ -22,7 +22,7 @@
     "sentry:sourcemaps": "sentry-cli releases -o ${SENTRY_ORG} -p ${SENTRY_PROJECT} files ${CDS_VERSION} upload-sourcemaps --url-prefix=${SENTRY_CDS_PREFIX_URL}"
   },
   "lint-staged": {
-    "*.ts": "ng lint --lint-file-patterns"
+    "*.{js,scss,ts,html}": "tslint"
   },
   "private": true,
   "dependencies": {
