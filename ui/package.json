@@ -22,14 +22,7 @@
     "sentry:sourcemaps": "sentry-cli releases -o ${SENTRY_ORG} -p ${SENTRY_PROJECT} files ${CDS_VERSION} upload-sourcemaps --url-prefix=${SENTRY_CDS_PREFIX_URL}"
   },
   "lint-staged": {
-    "linters": {
-      "*.ts": "ng lint"
-    },
-    "relative": true,
-    "fileFlag": "--lint-file-patterns",
-    "ignore": [
-      "**/*.spec.ts"
-    ]
+    "*.ts": "ng lint --lint-file-patterns"
   },
   "private": true,
   "dependencies": {
@@ -140,7 +133,7 @@
     "karma-jasmine": "4.0.0",
     "karma-jasmine-html-reporter": "1.5.0",
     "karma-junit-reporter": "1.2.0",
-    "lint-staged": "git+https://github.com/bnjjj/lint-staged.git#master",
+    "lint-staged": "^12.0.2",
     "ts-node": "8.3.0",
     "tslint": "6.1.0",
     "typescript": "4.0.2",
