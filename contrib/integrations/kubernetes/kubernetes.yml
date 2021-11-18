@@ -8,7 +8,7 @@ default_config:
   token:
     type: password
 deployment: true
-deployment_default_config:
+additional_default_config:
   release_name:
     type: string
     description: Fill it if you want to use another name than your application name for the Helm release. Leave empty if not

@@ -451,7 +451,7 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 	}
 
 	_, next = telemetry.Span(ctx, "workflow.getIntegrationPlugins")
-	integrationConfigs, integrationPlugins, err := getIntegrationPlugins(db, wr, nr)
+	integrationConfigs, integrationPlugins, err := getIntegrationPlugins(ctx, db, wr, nr)
 	if err != nil {
 		return report, sdk.WrapError(err, "unable to get integration plugins requirement")
 	}
@@ -609,7 +609,7 @@ jobLoop:
 	return report, nil
 }
 
-func getIntegrationPlugins(db gorp.SqlExecutor, wr *sdk.WorkflowRun, nr *sdk.WorkflowNodeRun) ([]sdk.IntegrationConfig, []sdk.GRPCPlugin, error) {
+func getIntegrationPlugins(ctx context.Context, db gorp.SqlExecutor, wr *sdk.WorkflowRun, nr *sdk.WorkflowNodeRun) ([]sdk.IntegrationConfig, []sdk.GRPCPlugin, error) {
 	plugins := make([]sdk.GRPCPlugin, 0)
 	mapConfig := make([]sdk.IntegrationConfig, 0)
 
@@ -626,9 +626,9 @@ func getIntegrationPlugins(db gorp.SqlExecutor, wr *sdk.WorkflowRun, nr *sdk.Wor
 
 	if projectIntegration != nil && projectIntegration.Model.ID > 0 {
 		mapConfig = append(mapConfig, projectIntegration.Config)
-		plg, err := plugin.LoadByIntegrationModelIDAndType(db, projectIntegration.Model.ID, sdk.GRPCPluginDeploymentIntegration)
+		plg, err := plugin.LoadByIntegrationModelIDAndType(ctx, db, projectIntegration.Model.ID, sdk.GRPCPluginDeploymentIntegration)
 		if err != nil {
-			return nil, nil, sdk.NewErrorFrom(sdk.ErrNotFound, "Cannot find plugin for integration model id %d, %v", projectIntegration.Model.ID, err)
+			return nil, nil, sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrNotFound, "cannot find plugin for integration model %q", projectIntegration.Model.Name))
 		}
 		plugins = append(plugins, *plg)
 	}
@@ -641,7 +641,7 @@ func getIntegrationPlugins(db gorp.SqlExecutor, wr *sdk.WorkflowRun, nr *sdk.Wor
 	}
 	if artifactManagerInteg != nil {
 		mapConfig = append(mapConfig, artifactManagerInteg.Config)
-		plgs, err := plugin.LoadAllByIntegrationModelID(db, artifactManagerInteg.ProjectIntegration.Model.ID)
+		plgs, err := plugin.LoadAllByIntegrationModelID(ctx, db, artifactManagerInteg.ProjectIntegration.Model.ID)
 		if err != nil {
 			return nil, nil, sdk.NewErrorFrom(sdk.ErrNotFound, "Cannot find plugin for integration model id %d, %v", artifactManagerInteg.ProjectIntegration.Model.ID, err)
 		}

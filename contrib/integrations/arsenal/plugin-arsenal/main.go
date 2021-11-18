@@ -41,7 +41,7 @@ Arsenal integration must configured as following
 		host:
 			type: string
 	deployment: true
-	deployment_default_config:
+	additional_default_config:
 		version:
 			type: string
 		deployment.token:

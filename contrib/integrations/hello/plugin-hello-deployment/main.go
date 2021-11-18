@@ -42,7 +42,7 @@ Hello integration must configured as following (content of hello-integration.yml
   name: Hello
   author: "Username Lastname"
   default_config: {}
-  deployment_default_config:
+  additional_default_config:
   deployment.token:
     value: ""
     type: password

@@ -1,7 +1,7 @@
 name: HelloIT
 public: true
 deployment: true
-deployment_default_config:
+additional_default_config:
   version:
     type: string
     value: "{{.cds.version}}"
@@ -14,12 +14,12 @@ deployment_default_config:
     type: string
     value: 5
 public: true
-public_configurations: 
-  hello-it-dev: 
-    host: 
+public_configurations:
+  hello-it-dev:
+    host:
       type: string
       value: hello-it-dev-host
-  hello-it-prod: 
-    host: 
+  hello-it-prod:
+    host:
       type: string
       value: hello-it-prod-host
