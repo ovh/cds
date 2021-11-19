@@ -135,24 +135,28 @@ func ApplyRetentionPolicyOnWorkflow(ctx context.Context, store cache.Store, db *
 			if gitRepo, has := payload["git.repository"]; has {
 				if gitRepo != app.RepositoryFullname {
 					isFork = true
-					forkBranches, err = getBranches(ctx, gitRepo, vcsClient)
-					if err != nil {
-						return err
+					if vcsClient != nil {
+						forkBranches, err = getBranches(ctx, gitRepo, vcsClient)
+						if err != nil {
+							return err
+						}
 					}
 				}
 			}
 
 			var keep bool
-			if !isFork {
-				keep, err = applyRetentionPolicyOnRun(ctx, db, wf, run, payload, branchesMap, app, vcsClient, opts)
-			} else {
+			if isFork {
 				keep, err = applyRetentionPolicyOnRun(ctx, db, wf, run, payload, forkBranches, app, vcsClient, opts)
-			}
-			if err != nil {
-				return err
+			} else {
+				keep, err = applyRetentionPolicyOnRun(ctx, db, wf, run, payload, branchesMap, app, vcsClient, opts)
 			}
 			if keep {
 				runs = append(runs, sdk.WorkflowRunToKeep{ID: run.ID, Num: run.Number, Status: run.Status})
+			}
+			if err != nil {
+				log.Error(ctx, "error on run %v:%d err:%v", wf.Name, run.Number, err)
+				continue
+
 			}
 		}
 
@@ -291,6 +295,9 @@ func purgeComputeVariables(ctx context.Context, luaCheck *luascript.Check, run s
 	var exist bool
 	if has {
 		_, exist = branchesMap[b]
+	}
+	if has && vcsClient == nil {
+		return sdk.NewErrorFrom(sdk.ErrUnknownError, "vcsClient nil but git branch exists")
 	}
 	vars[RunHasGitBranch] = strconv.FormatBool(has)
 	vars[RunGitBranchExist] = strconv.FormatBool(exist)
