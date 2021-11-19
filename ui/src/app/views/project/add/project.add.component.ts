@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { AddProject } from 'app/store/project.action';
-import { SemanticModalComponent } from 'ng-semantic/ng-semantic';
+import { SemanticModalComponent } from '@sgu/ng-semantic';
 import { finalize, first } from 'rxjs/operators';
 import { Group, GroupPermission } from '../../../model/group.model';
 import { Project } from '../../../model/project.model';

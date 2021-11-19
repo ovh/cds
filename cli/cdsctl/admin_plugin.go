@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -56,7 +55,7 @@ var adminPluginsImportCmd = cli.Command{
 }
 
 func adminPluginsImportFunc(v cli.Values) error {
-	b, err := ioutil.ReadFile(v.GetString("file"))
+	b, err := os.ReadFile(v.GetString("file"))
 	if err != nil {
 		return cli.WrapError(err, "unable to read file %s", v.GetString("file"))
 	}
@@ -160,7 +159,7 @@ func adminPluginsAddBinaryFunc(v cli.Values) error {
 		return cli.WrapError(err, "unable to open file %s", v.GetString("filename"))
 	}
 
-	b, err := ioutil.ReadFile(v.GetString("descriptor"))
+	b, err := os.ReadFile(v.GetString("descriptor"))
 	if err != nil {
 		return cli.WrapError(err, "unable to read file %s", v.GetString("file"))
 	}
@@ -172,7 +171,7 @@ func adminPluginsAddBinaryFunc(v cli.Values) error {
 
 	desc.Name = filepath.Base(f.Name())
 	desc.Perm = uint32(fi.Mode().Perm())
-	desc.FileContent, err = ioutil.ReadFile(f.Name())
+	desc.FileContent, err = os.ReadFile(f.Name())
 	if err != nil {
 		return cli.WrapError(err, "unable to open file %s ", v.GetString("filename"))
 	}
@@ -202,7 +201,7 @@ var adminPluginsDocCmd = cli.Command{
 }
 
 func adminPluginsDocFunc(v cli.Values) error {
-	btes, errRead := ioutil.ReadFile(v.GetString("path"))
+	btes, errRead := os.ReadFile(v.GetString("path"))
 	if errRead != nil {
 		return cli.NewError("error while reading file: %s", errRead)
 	}

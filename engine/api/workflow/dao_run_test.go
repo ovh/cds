@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 	"time"
@@ -93,7 +93,7 @@ func TestPurgeWorkflowRun(t *testing.T) {
 			body := new(bytes.Buffer)
 			w := new(http.Response)
 			enc := json.NewEncoder(body)
-			w.Body = ioutil.NopCloser(body)
+			w.Body = io.NopCloser(body)
 
 			switch r.URL.String() {
 			// NEED get REPO
@@ -358,7 +358,7 @@ func TestPurgeWorkflowRunWithOneSuccessWorkflowRun(t *testing.T) {
 			body := new(bytes.Buffer)
 			w := new(http.Response)
 			enc := json.NewEncoder(body)
-			w.Body = ioutil.NopCloser(body)
+			w.Body = io.NopCloser(body)
 
 			switch r.URL.String() {
 			// NEED get REPO
@@ -558,7 +558,7 @@ func TestPurgeWorkflowRunWithNoSuccessWorkflowRun(t *testing.T) {
 			body := new(bytes.Buffer)
 			w := new(http.Response)
 			enc := json.NewEncoder(body)
-			w.Body = ioutil.NopCloser(body)
+			w.Body = io.NopCloser(body)
 
 			switch r.URL.String() {
 			// NEED get REPO

@@ -7,7 +7,6 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -58,7 +57,15 @@ func TestInstallKey_SSHKeyWithoutDestination(t *testing.T) {
 	basedir := "test-" + test.GetTestName(t) + "-" + sdk.RandomString(10) + "-" + fmt.Sprintf("%d", time.Now().Unix())
 	require.NoError(t, fs.MkdirAll(basedir, os.FileMode(0755)))
 
-	if err := w.Init("test-worker", "test-hatchery", "http://lolcat.host", "xxx-my-token", "", true, afero.NewBasePathFs(fs, basedir)); err != nil {
+	cfg := workerruntime.WorkerConfig{
+		Name:                "test-worker",
+		HatcheryName:        "test-hatchery",
+		APIEndpoint:         "http://lolcat.host",
+		APIToken:            "xxx-my-token",
+		APIEndpointInsecure: true,
+		Basedir:             basedir,
+	}
+	if err := w.Init(&cfg, afero.NewBasePathFs(fs, basedir)); err != nil {
 		t.Fatalf("worker init failed: %v", err)
 	}
 
@@ -83,7 +90,7 @@ func TestInstallKey_SSHKeyWithoutDestination(t *testing.T) {
 	resp, err := w.InstallKey(priKeyVar)
 	require.NoError(t, err)
 
-	content, err := ioutil.ReadFile(resp.PKey)
+	content, err := os.ReadFile(resp.PKey)
 	require.NoError(t, err)
 	assert.Equal(t, string(priKeyPEM), string(content))
 
@@ -98,8 +105,15 @@ func TestInstallKey_SSHKeyWithRelativeDestination(t *testing.T) {
 	fs := afero.NewOsFs()
 	basedir := "test-" + test.GetTestName(t) + "-" + sdk.RandomString(10) + "-" + fmt.Sprintf("%d", time.Now().Unix())
 	require.NoError(t, fs.MkdirAll(basedir, os.FileMode(0755)))
-
-	if err := w.Init("test-worker", "test-hatchery", "http://lolcat.host", "xxx-my-token", "", true, afero.NewBasePathFs(fs, basedir)); err != nil {
+	cfg := workerruntime.WorkerConfig{
+		Name:                "test-worker",
+		HatcheryName:        "test-hatchery",
+		APIEndpoint:         "http://lolcat.host",
+		APIToken:            "xxx-my-token",
+		APIEndpointInsecure: true,
+		Basedir:             basedir,
+	}
+	if err := w.Init(&cfg, afero.NewBasePathFs(fs, basedir)); err != nil {
 		t.Fatalf("worker init failed: %v", err)
 	}
 
@@ -120,7 +134,7 @@ func TestInstallKey_SSHKeyWithRelativeDestination(t *testing.T) {
 	resp, err := w.InstallKeyTo(priKeyVar, "ssh/id_rsa")
 	require.NoError(t, err)
 
-	content, err := ioutil.ReadFile(resp.PKey)
+	content, err := os.ReadFile(resp.PKey)
 	require.NoError(t, err)
 	assert.Equal(t, string(priKeyPEM), string(content))
 	t.Logf("the path to the key is %s", resp.PKey)
@@ -137,8 +151,14 @@ func TestInstallKey_SSHKeyWithRelativeDestination(t *testing.T) {
 
 func TestInstallKey_SSHKeyWithAbsoluteDestination(t *testing.T) {
 	var w = new(CurrentWorker)
-
-	if err := w.Init("test-worker", "test-hatchery", "http://lolcat.host", "xxx-my-token", "", true, nil); err != nil {
+	cfg := &workerruntime.WorkerConfig{
+		Name:                "test-worker",
+		HatcheryName:        "test-hatchery",
+		APIEndpoint:         "http://lolcat.host",
+		APIToken:            "xxx-my-token",
+		APIEndpointInsecure: true,
+	}
+	if err := w.Init(cfg, nil); err != nil {
 		t.Fatalf("worker init failed: %v", err)
 	}
 
@@ -153,7 +173,7 @@ func TestInstallKey_SSHKeyWithAbsoluteDestination(t *testing.T) {
 	resp, err := w.InstallKeyTo(priKeyVar, "/tmp/fake_id_rsa")
 	require.NoError(t, err)
 
-	content, err := ioutil.ReadFile(resp.PKey)
+	content, err := os.ReadFile(resp.PKey)
 	require.NoError(t, err)
 	assert.Equal(t, string(priKeyPEM), string(content))
 	assert.Equal(t, "/tmp/fake_id_rsa", resp.PKey)

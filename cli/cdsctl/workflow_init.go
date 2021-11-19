@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -277,7 +276,7 @@ func craftWorkflowFile(workflowName, appName, pipName, destinationDir string) (s
 	}
 
 	wFilePath := filepath.Join(destinationDir, workflowName+".yml")
-	if err := ioutil.WriteFile(wFilePath, b, os.FileMode(0644)); err != nil {
+	if err := os.WriteFile(wFilePath, b, os.FileMode(0644)); err != nil {
 		return "", cli.WrapError(err, "Unable to write workflow file")
 	}
 
@@ -408,7 +407,7 @@ func craftApplicationFile(proj *sdk.Project, existingApp *sdk.Application, fetch
 	}
 
 	appFilePath := filepath.Join(destinationDir, fmt.Sprintf(exportentities.PullApplicationName, appName))
-	if err := ioutil.WriteFile(appFilePath, b, os.FileMode(0644)); err != nil {
+	if err := os.WriteFile(appFilePath, b, os.FileMode(0644)); err != nil {
 		return "", cli.WrapError(err, "Unable to write application file")
 	}
 
@@ -444,7 +443,7 @@ func craftPipelineFile(proj *sdk.Project, existingPip *sdk.Pipeline, pipName, de
 	}
 
 	pipFilePath := filepath.Join(destinationDir, fmt.Sprintf(exportentities.PullPipelineName, pipName))
-	if err := ioutil.WriteFile(pipFilePath, b, os.FileMode(0644)); err != nil {
+	if err := os.WriteFile(pipFilePath, b, os.FileMode(0644)); err != nil {
 		return pipName, cli.WrapError(err, "Unable to write application file")
 	}
 

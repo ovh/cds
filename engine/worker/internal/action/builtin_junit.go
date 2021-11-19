@@ -75,8 +75,21 @@ func RunParseJunitTestResultAction(ctx context.Context, wk workerruntime.Runtime
 				ftests.TestSuites = append(ftests.TestSuites, s)
 			}
 			tests.TestSuites = append(tests.TestSuites, ftests.TestSuites...)
+			if len(ftests.TestSuites) == 0 {
+				log.Error(ctx, "unable to find testsuites in %q", f)
+				wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("WARNING: unable to parse %q as valid xUnit report file", filepath.Base(f)))
+				continue
+			}
+			log.Info(ctx, "found %d testsuites in %q", len(ftests.TestSuites), f)
 		} else {
 			tests.TestSuites = append(tests.TestSuites, vf.TestSuites...)
+
+			if len(ftests.TestSuites) == 0 {
+				log.Error(ctx, "unable to find testsuites in %q", f)
+				wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("WARNING: unable to parse %q as valid xUnit report file", filepath.Base(f)))
+				continue
+			}
+			log.Info(ctx, "found %d testsuites in %q", len(vf.TestSuites), f)
 		}
 	}
 

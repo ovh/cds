@@ -59,6 +59,7 @@ type HatcheryCommonConfiguration struct {
 			Insecure bool   `toml:"insecure" default:"false" commented:"true" comment:"sslInsecureSkipVerify, set to true if you use a self-signed SSL on CDS API" json:"insecure"`
 		} `toml:"workerApiHttp" json:"workerApiHttp"`
 		WorkerLogsOptions struct {
+			Level   string `toml:"level" comment:"Worker log level" json:"level"`
 			Graylog struct {
 				Host       string `toml:"host" comment:"Example: thot.ovh.com" json:"host"`
 				Port       int    `toml:"port" comment:"Example: 12202" json:"port"`

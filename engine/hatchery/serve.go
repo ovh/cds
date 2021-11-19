@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/pprof"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -17,6 +18,7 @@ import (
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/service"
+	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
@@ -250,7 +252,7 @@ func getStatusHandler(h hatchery.Interface) service.HandlerFunc {
 	}
 }
 
-func (c *Common) GenerateWorkerArgs(ctx context.Context, h hatchery.Interface, spawnArgs hatchery.SpawnArguments) sdk.WorkerArgs {
+func (c *Common) GenerateWorkerConfig(ctx context.Context, h hatchery.Interface, spawnArgs hatchery.SpawnArguments) workerruntime.WorkerConfig {
 	apiURL := h.Configuration().Provision.WorkerAPIHTTP.URL
 	httpInsecure := h.Configuration().Provision.WorkerAPIHTTP.Insecure
 	if apiURL == "" {
@@ -269,17 +271,25 @@ func (c *Common) GenerateWorkerArgs(ctx context.Context, h hatchery.Interface, s
 		envvars[tuple[0]] = tuple[1]
 	}
 
-	return sdk.WorkerArgs{
-		API:               apiURL,
-		HTTPInsecure:      httpInsecure,
-		Token:             spawnArgs.WorkerToken,
-		Name:              spawnArgs.WorkerName,
-		Model:             spawnArgs.ModelName(),
-		HatcheryName:      h.Name(),
-		InjectEnvVars:     envvars,
-		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
-		GraylogPort:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Port,
-		GraylogExtraKey:   h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey,
-		GraylogExtraValue: h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue,
+	cfg := workerruntime.WorkerConfig{
+		Name:                spawnArgs.WorkerName,
+		BookedJobID:         spawnArgs.JobID,
+		HatcheryName:        h.Name(),
+		Model:               spawnArgs.ModelName(),
+		APIToken:            spawnArgs.WorkerToken,
+		APIEndpoint:         apiURL,
+		APIEndpointInsecure: httpInsecure,
+		InjectEnvVars:       envvars,
+		Region:              h.Configuration().Provision.Region,
+		Log: cdslog.Conf{
+			GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
+			GraylogPort:       strconv.Itoa(h.Configuration().Provision.WorkerLogsOptions.Graylog.Port),
+			GraylogExtraKey:   h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey,
+			GraylogExtraValue: h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue,
+			Level:             h.Configuration().Provision.WorkerLogsOptions.Level,
+		},
 	}
+
+	log.Debug(ctx, "worker config: %v", cfg.EncodeBase64())
+	return cfg
 }

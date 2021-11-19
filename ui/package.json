@@ -22,14 +22,7 @@
     "sentry:sourcemaps": "sentry-cli releases -o ${SENTRY_ORG} -p ${SENTRY_PROJECT} files ${CDS_VERSION} upload-sourcemaps --url-prefix=${SENTRY_CDS_PREFIX_URL}"
   },
   "lint-staged": {
-    "linters": {
-      "*.ts": "ng lint"
-    },
-    "relative": true,
-    "fileFlag": "--lint-file-patterns",
-    "ignore": [
-      "**/*.spec.ts"
-    ]
+    "*.{js,scss,ts,html}": "tslint"
   },
   "private": true,
   "dependencies": {
@@ -51,6 +44,7 @@
     "@ngxs/logger-plugin": "3.7.0",
     "@ngxs/store": "3.7.0",
     "@richardlt/ng2-semantic-ui": "0.10.0-alpha.6-fork-5",
+    "@sgu/ng-semantic": "1.1.18",
     "@swimlane/ngx-charts": "16.0.0",
     "@types/dagre-d3": "0.6.2",
     "@types/js-yaml": "3.12.2",
@@ -79,7 +73,6 @@
     "modernizr": "3.7.1",
     "moment": "2.24.0",
     "ng-event-source": "1.0.14",
-    "ng-semantic": "https://github.com/sguiheux/ngSemantic/tarball/sgu-master",
     "ng2-codemirror-typescript": "3.0.1",
     "ng2-completer": "2.0.8",
     "ng2-dragula-sgu": "3.0.2",
@@ -140,7 +133,7 @@
     "karma-jasmine": "4.0.0",
     "karma-jasmine-html-reporter": "1.5.0",
     "karma-junit-reporter": "1.2.0",
-    "lint-staged": "git+https://github.com/bnjjj/lint-staged.git#master",
+    "lint-staged": "^12.0.2",
     "ts-node": "8.3.0",
     "tslint": "6.1.0",
     "typescript": "4.0.2",

@@ -1,0 +1,42 @@
+name: plugin-artifactory-release-bundle-create
+type: action
+author: "François Samin <francois.samin@corp.ovh.com>"
+description: |
+ Creates and sign a Artifactory Release Bundle from a specification.
+
+ Read more: https://www.jfrog.com/confluence/display/CLI/CLI+for+JFrog+Artifactory#CLIforJFrogArtifactory-UsingFileSpecs
+parameters:
+  name: 
+    type: string
+    description: Release Bundle name
+  version:
+    type: string
+    default: "{{.cds.version}}"
+    description: Release Bundle version
+  description:
+    type: string
+    description: Release Bundle description
+  release_notes:
+    type: text
+    description: Release Notes (markdown format)
+  specification:
+    type: text
+    default: |
+      {
+        "files": [
+          {
+            "pattern": "<repository-snaphost>/<path-to>/{{.cds.version}}/<file>",
+            "target": "<repository-release>/<path-to>/{{.cds.version}}/<file>",
+          }
+        ]
+      }
+    description: Spec Schema (yaml or json). see https://www.jfrog.com/confluence/display/CLI/CLI+for+JFrog+Artifactory#CLIforJFrogArtifactory-UsingFileSpecs
+  url:
+    type: string
+    description: JFrog Artifactory URL. Leave empty to use integration.
+    advanced: true
+  token_variable:
+    type: string
+    description: JFrog Distribution token variable name. Leave empty to use integration.
+    advanced: true
+

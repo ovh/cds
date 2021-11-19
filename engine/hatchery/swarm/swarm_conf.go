@@ -112,9 +112,6 @@ func (h *HatcherySwarm) CheckConfiguration(cfg interface{}) error {
 		return fmt.Errorf("Invalid hatchery swarm configuration: %v", err)
 	}
 
-	if hconfig.WorkerTTL <= 0 {
-		return fmt.Errorf("worker-ttl must be > 0")
-	}
 	if hconfig.DefaultMemory <= 1 {
 		return fmt.Errorf("worker-memory must be > 1")
 	}

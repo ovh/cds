@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"strings"
 
@@ -25,7 +24,7 @@ func main() {
 			Action: func(c *cli.Context) error {
 				p := New(nil, Config{}, "")
 				b, _ := yaml.Marshal(p.Config())
-				return ioutil.WriteFile(".debpacker.yml", b, os.FileMode(0644))
+				return os.WriteFile(".debpacker.yml", b, os.FileMode(0644))
 			},
 		},
 		{
@@ -42,7 +41,7 @@ func main() {
 		{
 			Name: "make",
 			Action: func(c *cli.Context) error {
-				b, err := ioutil.ReadFile(c.String("config"))
+				b, err := os.ReadFile(c.String("config"))
 				if err != nil {
 					return err
 				}

@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"strings"
 	"testing"
@@ -290,7 +289,7 @@ func TestSpawnWorkerTimeout(t *testing.T) {
 		}
 		bodyContent, err := io.ReadAll(request.Body)
 		assert.NoError(t, err)
-		request.Body = ioutil.NopCloser(bytes.NewReader(bodyContent))
+		request.Body = io.NopCloser(bytes.NewReader(bodyContent))
 		if mock != nil {
 			switch {
 			case request.Method == http.MethodPost && request.URL.String() == "http://mara.thon/v2/apps":
@@ -300,8 +299,7 @@ func TestSpawnWorkerTimeout(t *testing.T) {
 				assert.Equal(t, "BRIDGE", a.Container.Docker.Network)
 				assert.Equal(t, float64(1), a.CPUs)
 				assert.Equal(t, 1, *a.Instances)
-				assert.Equal(t, "1", (*a.Env)["CDS_BOOKED_WORKFLOW_JOB_ID"])
-				assert.Equal(t, "GroupModel/fake", (*a.Env)["CDS_MODEL_PATH"])
+				assert.NotEmpty(t, (*a.Env)["CDS_CONFIG"])
 
 				createAppResult.ID = a.ID
 				createAppResult.Env = a.Env

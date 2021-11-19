@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"fmt"
 	"html/template"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
@@ -84,20 +83,20 @@ func (h *HatcherySwarm) InitHatchery(ctx context.Context) error {
 					continue
 				}
 			} else if cfg.TLSCAPEM != "" && cfg.TLSCERTPEM != "" && cfg.TLSKEYPEM != "" {
-				tempDir, err := ioutil.TempDir("", "cert-"+hostName)
+				tempDir, err := os.MkdirTemp("", "cert-"+hostName)
 				if err != nil {
 					log.Error(ctx, "hatchery> swarm> docker client error: unable to create temp dir: %v", err)
 					continue
 				}
-				if err := ioutil.WriteFile(filepath.Join(tempDir, "ca.pem"), []byte(cfg.TLSCAPEM), os.FileMode(0600)); err != nil {
+				if err := os.WriteFile(filepath.Join(tempDir, "ca.pem"), []byte(cfg.TLSCAPEM), os.FileMode(0600)); err != nil {
 					log.Error(ctx, "hatchery> swarm> docker client error: unable to create ca.pem: %v", err)
 					continue
 				}
-				if err := ioutil.WriteFile(filepath.Join(tempDir, "cert.pem"), []byte(cfg.TLSCERTPEM), os.FileMode(0600)); err != nil {
+				if err := os.WriteFile(filepath.Join(tempDir, "cert.pem"), []byte(cfg.TLSCERTPEM), os.FileMode(0600)); err != nil {
 					log.Error(ctx, "hatchery> swarm> docker client error: unable to create cert.pem: %v", err)
 					continue
 				}
-				if err := ioutil.WriteFile(filepath.Join(tempDir, "key.pem"), []byte(cfg.TLSKEYPEM), os.FileMode(0600)); err != nil {
+				if err := os.WriteFile(filepath.Join(tempDir, "key.pem"), []byte(cfg.TLSKEYPEM), os.FileMode(0600)); err != nil {
 					log.Error(ctx, "hatchery> swarm> docker client error: unable to create key.pem:  %v", err)
 					continue
 				}
@@ -375,9 +374,12 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 		return errDockerOpts
 	}
 
-	udataParam := h.GenerateWorkerArgs(ctx, h, spawnArgs)
-	udataParam.TTL = h.Config.WorkerTTL
-	udataParam.WorkflowJobID = spawnArgs.JobID
+	workerConfig := h.GenerateWorkerConfig(ctx, h, spawnArgs)
+	udataParam := struct {
+		API string
+	}{
+		API: workerConfig.APIEndpoint,
+	}
 
 	tmpl, errt := template.New("cmd").Parse(spawnArgs.Model.ModelDocker.Cmd)
 	if errt != nil {
@@ -396,26 +398,11 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 		modelEnvs[k] = v
 	}
 
-	envsWm := udataParam.InjectEnvVars
+	envsWm := workerConfig.InjectEnvVars
 	envsWm["CDS_MODEL_MEMORY"] = fmt.Sprintf("%d", memory)
-	envsWm["CDS_API"] = udataParam.API
-	envsWm["CDS_TOKEN"] = udataParam.Token
-	envsWm["CDS_NAME"] = udataParam.Name
-	envsWm["CDS_MODEL_PATH"] = udataParam.Model
-	envsWm["CDS_HATCHERY_NAME"] = udataParam.HatcheryName
-	envsWm["CDS_FROM_WORKER_IMAGE"] = fmt.Sprintf("%v", udataParam.FromWorkerImage)
-	envsWm["CDS_INSECURE"] = fmt.Sprintf("%v", udataParam.HTTPInsecure)
+	envsWm["CDS_CONFIG"] = workerConfig.EncodeBase64()
 
-	if spawnArgs.JobID > 0 {
-		envsWm["CDS_BOOKED_WORKFLOW_JOB_ID"] = fmt.Sprintf("%d", spawnArgs.JobID)
-	}
-
-	envTemplated, errEnv := sdk.TemplateEnvs(udataParam, modelEnvs)
-	if errEnv != nil {
-		return errEnv
-	}
-
-	for envName, envValue := range envTemplated {
+	for envName, envValue := range modelEnvs {
 		envsWm[envName] = envValue
 	}
 

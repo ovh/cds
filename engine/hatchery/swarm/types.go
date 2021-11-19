@@ -18,9 +18,6 @@ type HatcheryConfiguration struct {
 	DefaultMemory     int  `mapstructure:"defaultMemory" toml:"defaultMemory" default:"1024" commented:"false" comment:"Worker default memory in Mo" json:"defaultMemory"`
 	DisableMemorySwap bool `mapstructure:"disableMemorySwap" toml:"disableMemorySwap" default:"false" commented:"true" comment:"Set to true to disable memory swap" json:"disableMemorySwap"`
 
-	// WorkerTTL Worker TTL (minutes)
-	WorkerTTL int `mapstructure:"workerTTL" toml:"workerTTL" default:"10" commented:"false" comment:"Worker TTL (minutes)" json:"workerTTL"`
-
 	// DockerOpts Docker options
 	DockerOpts string `mapstructure:"dockerOpts" toml:"dockerOpts" default:"" commented:"true" comment:"Docker Options. --add-host and --privileged supported. Example: dockerOpts=\"--add-host=myhost:x.x.x.x,myhost2:y.y.y.y --privileged\"" json:"dockerOpts,omitempty"`
 

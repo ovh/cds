@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"reflect"
 	"sort"
@@ -1357,7 +1356,7 @@ func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 			body := new(bytes.Buffer)
 			w := new(http.Response)
 			enc := json.NewEncoder(body)
-			w.Body = ioutil.NopCloser(body)
+			w.Body = io.NopCloser(body)
 
 			switch r.URL.String() {
 			// NEED get REPO
@@ -1643,7 +1642,7 @@ func TestInsertAndDeleteMultiHook(t *testing.T) {
 			body := new(bytes.Buffer)
 			w := new(http.Response)
 			enc := json.NewEncoder(body)
-			w.Body = ioutil.NopCloser(body)
+			w.Body = io.NopCloser(body)
 			switch r.URL.String() {
 			// NEED get REPO
 
@@ -1950,7 +1949,7 @@ func TestDeleteWorkflowWithDependencies(t *testing.T) {
 			body := new(bytes.Buffer)
 			w := new(http.Response)
 			enc := json.NewEncoder(body)
-			w.Body = ioutil.NopCloser(body)
+			w.Body = io.NopCloser(body)
 			switch r.URL.String() {
 			// NEED get REPO
 			case "/vcs/github/repos/sguiheux/demo":
@@ -2143,7 +2142,7 @@ func TestDeleteWorkflowWithDependencies2(t *testing.T) {
 			body := new(bytes.Buffer)
 			w := new(http.Response)
 			enc := json.NewEncoder(body)
-			w.Body = ioutil.NopCloser(body)
+			w.Body = io.NopCloser(body)
 			switch r.URL.String() {
 			// NEED get REPO
 			case "/vcs/github/repos/sguiheux/demo":

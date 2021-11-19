@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -59,13 +58,13 @@ func TestUpdateAsCodePipelineHandler(t *testing.T) {
 		_ = services.Delete(db, b) // nolint
 		_ = services.Delete(db, c) // nolint
 	}()
-	//This is a mock for the repositories service
+	// This is a mock for the repositories service
 	services.HTTPClient = mock(
 		func(r *http.Request) (*http.Response, error) {
 			body := new(bytes.Buffer)
 			w := new(http.Response)
 			enc := json.NewEncoder(body)
-			w.Body = ioutil.NopCloser(body)
+			w.Body = io.NopCloser(body)
 			w.StatusCode = http.StatusOK
 			switch r.URL.String() {
 			case "/operations":

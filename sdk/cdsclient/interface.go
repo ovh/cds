@@ -229,7 +229,7 @@ type ProjectClient interface {
 	ProjectRepositoryManagerList(projectKey string) ([]sdk.ProjectVCSServer, error)
 	ProjectRepositoryManagerDelete(projectKey string, repoManagerName string, force bool) error
 	ProjectAccess(ctx context.Context, projectKey, sessionID string, itemType sdk.CDNItemType) error
-	ProjectIntegrationWorkerHooksGet(projectKey string, integrationName string) (*sdk.WorkerHookProjectIntegrationModel, error)
+	ProjectIntegrationWorkerHookGet(projectKey string, integrationName string) (*sdk.WorkerHookProjectIntegrationModel, error)
 	ProjectIntegrationWorkerHooksImport(projectKey string, integrationName string, hook sdk.WorkerHookProjectIntegrationModel) error
 }
 
@@ -428,11 +428,13 @@ type Interface interface {
 type WorkerInterface interface {
 	GRPCPluginsClient
 	ProjectIntegrationGet(projectKey string, integrationName string, clearPassword bool) (sdk.ProjectIntegration, error)
+	ProjectIntegrationWorkerHookGet(projectKey string, integrationName string) (*sdk.WorkerHookProjectIntegrationModel, error)
 	QueueClient
 	Requirements() ([]sdk.Requirement, error)
 	ServiceClient
 	WorkerClient
 	WorkflowRunArtifacts(projectKey string, name string, number int64) ([]sdk.WorkflowNodeRunArtifact, error)
+	WorkflowRunGet(projectKey string, workflowName string, number int64) (*sdk.WorkflowRun, error)
 	WorkflowCachePush(projectKey, integrationName, ref string, tarContent io.Reader, size int) error
 	WorkflowCachePull(projectKey, integrationName, ref string) (io.Reader, error)
 	WorkflowRunList(projectKey string, workflowName string, offset, limit int64) ([]sdk.WorkflowRun, error)

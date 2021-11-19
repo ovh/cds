@@ -7,7 +7,6 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/rockbears/log"
 
-	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/sdk"
 )
@@ -21,30 +20,6 @@ func AddBinary(ctx context.Context, db gorp.SqlExecutor, storage objectstore.Dri
 
 	b.ObjectPath = objectPath
 	p.Binaries = append(p.Binaries, *b)
-
-	if p.Type == sdk.GRPCPluginAction {
-		act, errA := action.LoadByTypesAndName(ctx, db, []string{sdk.PluginAction}, p.Name, action.LoadOptions.Default)
-		if errA != nil {
-			return sdk.WrapError(errA, "cannot load public action for plugin type action")
-		}
-
-		// Add action requirement
-		for _, req := range b.Requirements {
-			found := false
-			for _, reqAct := range act.Requirements {
-				if req.Name == reqAct.Name && req.Type == reqAct.Type {
-					found = true
-					break
-				}
-			}
-			if !found {
-				req.ActionID = act.ID
-				if err := action.InsertRequirement(db, &req); err != nil {
-					return sdk.WrapError(err, "cannot insert action requirement %s", req.Name)
-				}
-			}
-		}
-	}
 
 	return Update(db, p)
 }
@@ -60,7 +35,6 @@ func UpdateBinary(ctx context.Context, db gorp.SqlExecutor, storageDriver object
 			break
 		}
 	}
-
 	if oldBinary == nil {
 		return sdk.WithStack(sdk.ErrUnsupportedOSArchPlugin)
 	}
@@ -77,33 +51,28 @@ func UpdateBinary(ctx context.Context, db gorp.SqlExecutor, storageDriver object
 	b.ObjectPath = objectPath
 	p.Binaries[index] = *b
 
-	if p.Type == sdk.GRPCPluginAction {
-		act, errA := action.LoadByTypesAndName(ctx, db, []string{sdk.PluginAction}, p.Name, action.LoadOptions.Default)
-		if errA != nil {
-			return sdk.WrapError(errA, "cannot load public action for plugin type action")
-		}
+	return Update(db, p)
+}
 
-		if err := action.DeleteRequirementsByActionID(db, act.ID); err != nil {
-			return sdk.WrapError(err, "cannot delete requirements for action of plugin type action")
-		}
-
-		if err := action.InsertRequirement(db, &sdk.Requirement{
-			ActionID: act.ID,
-			Name:     p.Name,
-			Type:     sdk.PluginRequirement,
-			Value:    p.Name,
-		}); err != nil {
-			return sdk.WrapError(err, "cannot insert plugin action requirement %s", p.Name)
-		}
-
-		// add action requirement
-		for _, req := range b.Requirements {
-			req.ActionID = act.ID
-			if err := action.InsertRequirement(db, &req); err != nil {
-				return sdk.WrapError(err, "cannot insert action requirement %s", req.Name)
-			}
+// DeleteBinary remove a binary for the plugin from objectsore and updates databases.
+func DeleteBinary(ctx context.Context, db gorp.SqlExecutor, storageDriver objectstore.Driver, p *sdk.GRPCPlugin, os, arch string) error {
+	var oldBinary *sdk.GRPCPluginBinary
+	filteredBinaries := make(sdk.GRPCPluginBinaries, 0, len(p.Binaries))
+	for i := range p.Binaries {
+		if p.Binaries[i].OS == os && p.Binaries[i].Arch == arch {
+			oldBinary = &p.Binaries[i]
+		} else {
+			filteredBinaries = append(filteredBinaries, p.Binaries[i])
 		}
 	}
+	if oldBinary == nil {
+		return sdk.WithStack(sdk.ErrUnsupportedOSArchPlugin)
+	}
 
+	if err := storageDriver.Delete(ctx, oldBinary); err != nil {
+		log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "unable to delete plugin %s binary %s/%s", p.Name, os, arch))
+	}
+
+	p.Binaries = filteredBinaries
 	return Update(db, p)
 }

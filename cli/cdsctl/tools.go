@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 
@@ -106,22 +105,22 @@ func toolsYamlSchemaRun(v cli.Values) error {
 		Environment: fmt.Sprintf("%s/environment.schema.json", targetFolder),
 	}
 
-	if err := ioutil.WriteFile(paths.Workflow, []byte(res.Workflow), 0775); err != nil {
+	if err := os.WriteFile(paths.Workflow, []byte(res.Workflow), 0775); err != nil {
 		return cli.WrapError(err, "Cannot write file at %s", paths.Workflow)
 	}
 	fmt.Printf("File %s successfully written.\n", paths.Workflow)
 
-	if err := ioutil.WriteFile(paths.Pipeline, []byte(res.Pipeline), 0775); err != nil {
+	if err := os.WriteFile(paths.Pipeline, []byte(res.Pipeline), 0775); err != nil {
 		return cli.WrapError(err, "Cannot write file at %s", paths.Pipeline)
 	}
 	fmt.Printf("File %s successfully written.\n", paths.Pipeline)
 
-	if err := ioutil.WriteFile(paths.Application, []byte(res.Application), 0775); err != nil {
+	if err := os.WriteFile(paths.Application, []byte(res.Application), 0775); err != nil {
 		return cli.WrapError(err, "Cannot write file at %s", paths.Application)
 	}
 	fmt.Printf("File %s successfully written.\n", paths.Application)
 
-	if err := ioutil.WriteFile(paths.Environment, []byte(res.Environment), 0775); err != nil {
+	if err := os.WriteFile(paths.Environment, []byte(res.Environment), 0775); err != nil {
 		return cli.WrapError(err, "Cannot write file at %s", paths.Environment)
 	}
 	fmt.Printf("File %s successfully written.\n", paths.Environment)

@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -83,7 +82,7 @@ func Test_cachePushPullHandler(t *testing.T) {
 	absoluteFilePath, err := filepath.Abs(afero.FullBaseFsPath(wkPush.basedir.(*afero.BasePathFs), "/absolute.txt"))
 	require.NoError(t, err)
 	t.Logf("Creating absolute file at %s", absoluteFilePath)
-	require.NoError(t, ioutil.WriteFile(absoluteFilePath, []byte("absolute"), os.FileMode(0755)))
+	require.NoError(t, os.WriteFile(absoluteFilePath, []byte("absolute"), os.FileMode(0755)))
 
 	// Prepare mock client for cds workers
 	ctrl := gomock.NewController(t)
@@ -167,11 +166,11 @@ func Test_cachePushPullHandler(t *testing.T) {
 	_, err = os.Stat(expectedAbsolutePath)
 	require.NoError(t, err, "absolute pulled file should exists")
 
-	btsRelative, err := ioutil.ReadFile(expectedRelativePath)
+	btsRelative, err := os.ReadFile(expectedRelativePath)
 	require.NoError(t, err)
 	assert.Equal(t, "relative", string(btsRelative))
 
-	btsAbsolute, err := ioutil.ReadFile(expectedAbsolutePath)
+	btsAbsolute, err := os.ReadFile(expectedAbsolutePath)
 	require.NoError(t, err)
 	assert.Equal(t, "absolute", string(btsAbsolute))
 }

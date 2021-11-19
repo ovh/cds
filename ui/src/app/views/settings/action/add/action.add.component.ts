@@ -3,17 +3,17 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
-import { Action } from '../../../../model/action.model';
-import { Group } from '../../../../model/group.model';
-import { Job } from '../../../../model/job.model';
-import { Pipeline } from '../../../../model/pipeline.model';
-import { Stage } from '../../../../model/stage.model';
-import { ActionService } from '../../../../service/action/action.service';
-import { GroupService } from '../../../../service/group/group.service';
-import { PipelineService } from '../../../../service/pipeline/pipeline.service';
-import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
-import { AutoUnsubscribe } from '../../../../shared/decorator/autoUnsubscribe';
-import { ToastService } from '../../../../shared/toast/ToastService';
+import { Action } from 'app/model/action.model';
+import { Group } from 'app/model/group.model';
+import { Job } from 'app/model/job.model';
+import { Pipeline } from 'app/model/pipeline.model';
+import { Stage } from 'app/model/stage.model';
+import { ActionService } from 'app/service/action/action.service';
+import { GroupService } from 'app/service/group/group.service';
+import { PipelineService } from 'app/service/pipeline/pipeline.service';
+import { PathItem } from 'app/shared/breadcrumb/breadcrumb.component';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { ToastService } from 'app/shared/toast/ToastService';
 
 @Component({
     selector: 'app-action-add',
@@ -104,6 +104,28 @@ export class ActionAddComponent implements OnInit, OnDestroy {
 
     actionSave(action: Action): void {
         this.action.loading = true;
+        if (action.actions) {
+            action.actions.forEach(a => {
+                if (a.parameters) {
+                    a.parameters.forEach(p => {
+                        if (p.type === 'boolean' && !p.value) {
+                            p.value = 'false';
+                        }
+                        p.value = p.value.toString();
+                    });
+                }
+            });
+        }
+
+        if (action.parameters) {
+            action.parameters.forEach(p => {
+                if (p.type === 'boolean' && !p.value) {
+                    p.value = 'false';
+                }
+                p.value = p.value.toString();
+            });
+        }
+
         this._actionService.add(action)
             .pipe(finalize(() => this._cd.markForCheck()))
             .subscribe(a => {

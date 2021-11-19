@@ -1,5 +1,11 @@
 package sdk
 
+import (
+	"database/sql/driver"
+	"encoding/json"
+	"errors"
+)
+
 // These are type of plugins
 const (
 	GRPCPluginDeploymentIntegration = "integration-deploy_application"
@@ -19,7 +25,7 @@ type GRPCPlugin struct {
 	Author             string             `json:"author" yaml:"author" cli:"author" db:"author"`
 	Description        string             `json:"description" yaml:"description" cli:"description" db:"description"`
 	Parameters         []Parameter        `json:"parameters,omitempty" yaml:"parameters,omitempty" cli:"parameters" db:"-"`
-	Binaries           []GRPCPluginBinary `json:"binaries" yaml:"binaries" cli:"-" db:"-"`
+	Binaries           GRPCPluginBinaries `json:"binaries" yaml:"binaries" cli:"-" db:"binaries"`
 	IntegrationModelID *int64             `json:"-" db:"integration_model_id" yaml:"-" cli:"-"`
 	Integration        string             `json:"integration" db:"-" yaml:"integration" cli:"integration"`
 }
@@ -39,6 +45,23 @@ func (p GRPCPlugin) GetBinary(os, arch string) *GRPCPluginBinary {
 		}
 	}
 	return nil
+}
+
+type GRPCPluginBinaries []GRPCPluginBinary
+
+// Scan plugin binaries.
+func (b *GRPCPluginBinaries) Scan(src interface{}) error {
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(errors.New("type assertion .([]byte) failed"))
+	}
+	return WrapError(JSONUnmarshal(source, b), "cannot unmarshal GRPCPluginBinaries")
+}
+
+// Value returns driver.Value from plugin binary slice.
+func (b GRPCPluginBinaries) Value() (driver.Value, error) {
+	j, err := json.Marshal(b)
+	return j, WrapError(err, "cannot marshal GRPCPluginBinaries")
 }
 
 // GRPCPluginBinary represents a binary file (for a specific os and arch) serving a GRPCPlugin

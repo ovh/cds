@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"net/http/httptest"
 	"strings"
 	"testing"
@@ -43,7 +42,7 @@ jobs:
   - script:
     - echo "test"
     - echo {{.limit | default ""}}`
-	req.Body = ioutil.NopCloser(strings.NewReader(body))
+	req.Body = io.NopCloser(strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/x-yaml")
 
 	//Do the request
@@ -89,7 +88,7 @@ jobs:
   - script:
     - echo "test"
     - echo {{.limit | default ""}}`
-	req.Body = ioutil.NopCloser(strings.NewReader(body))
+	req.Body = io.NopCloser(strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/x-yaml")
 
 	//Do the request
@@ -115,7 +114,7 @@ func Test_putPipelineImportJSONWithoutVersionHandler(t *testing.T) {
 	req := assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri+"?format=json", nil)
 
 	bodyjson := `{"name":"testest","stages":["Stage 1"],"jobs":[{"job":"echo with default","stage":"Stage 1","steps":[{"script":["echo \"test\"","echo {{.limit | default \"\"}}"]}]}]}`
-	req.Body = ioutil.NopCloser(strings.NewReader(bodyjson))
+	req.Body = io.NopCloser(strings.NewReader(bodyjson))
 	req.Header.Set("Content-Type", "application/json")
 
 	//Do the request
@@ -153,7 +152,7 @@ options:
         value: ""
 jobs:
 - job: New Job`
-	req.Body = ioutil.NopCloser(strings.NewReader(body))
+	req.Body = io.NopCloser(strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/x-yaml")
 
 	//Do the request
@@ -183,7 +182,7 @@ jobs:
   - script:
     - echo "coucou"
 `
-	req.Body = ioutil.NopCloser(strings.NewReader(body))
+	req.Body = io.NopCloser(strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/x-yaml")
 
 	//Do the request

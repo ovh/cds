@@ -13,7 +13,7 @@ import (
 // Workers need to register to main api so they can run actions
 func (w *CurrentWorker) Register(ctx context.Context) error {
 	var form sdk.WorkerRegistrationForm
-	log.Info(ctx, "Registering with Token %s on %s", sdk.StringFirstN(w.register.token, 12), w.register.apiEndpoint)
+	log.Info(ctx, "Registering on %s", w.cfg.APIEndpoint)
 
 	requirements, errR := w.client.Requirements()
 	if errR != nil {
@@ -27,7 +27,7 @@ func (w *CurrentWorker) Register(ctx context.Context) error {
 	form.OS = sdk.GOOS
 	form.Arch = sdk.GOARCH
 
-	worker, uptodate, err := w.client.WorkerRegister(context.Background(), w.register.token, form)
+	worker, uptodate, err := w.client.WorkerRegister(context.Background(), w.cfg.APIToken, form)
 	if err != nil {
 		return sdk.WithStack(err)
 	}

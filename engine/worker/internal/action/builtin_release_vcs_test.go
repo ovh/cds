@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"testing"
 
@@ -32,7 +31,7 @@ func TestRunRelease(t *testing.T) {
 	var checkRequest gock.ObserverFunc = func(request *http.Request, mock gock.Mock) {
 		bodyContent, err := io.ReadAll(request.Body)
 		assert.NoError(t, err)
-		request.Body = ioutil.NopCloser(bytes.NewReader(bodyContent))
+		request.Body = io.NopCloser(bytes.NewReader(bodyContent))
 		if mock != nil {
 			t.Logf("%s %s - Body: %s", mock.Request().Method, mock.Request().URLStruct.String(), string(bodyContent))
 			switch mock.Request().URLStruct.String() {

@@ -36,6 +36,7 @@ type logger struct {
 }
 
 type CurrentWorker struct {
+	cfg         *workerruntime.WorkerConfig
 	id          string
 	model       sdk.Model
 	basedir     afero.Fs
@@ -44,12 +45,7 @@ type CurrentWorker struct {
 	cdnHttpAddr string
 	stepLogLine int64
 	httpPort    int32
-	register    struct {
-		apiEndpoint string
-		token       string
-		model       string
-	}
-	currentJob struct {
+	currentJob  struct {
 		wJob             *sdk.WorkflowNodeJobRun
 		newVariables     []sdk.Variable
 		params           []sdk.Parameter
@@ -65,6 +61,7 @@ type CurrentWorker struct {
 		features         map[sdk.FeatureName]bool
 		currentStepIndex int
 		currentStepName  string
+		envFromHooks     map[string]string
 	}
 	status struct {
 		Name   string `json:"name"`
@@ -76,13 +73,11 @@ type CurrentWorker struct {
 // BuiltInAction defines builtin action signature
 type BuiltInAction func(context.Context, workerruntime.Runtime, sdk.Action, []sdk.Variable) (sdk.Result, error)
 
-func (wk *CurrentWorker) Init(name, hatcheryName, apiEndpoint, token string, model string, insecure bool, workspace afero.Fs) error {
-	wk.status.Name = name
+func (wk *CurrentWorker) Init(cfg *workerruntime.WorkerConfig, workspace afero.Fs) error {
+	wk.cfg = cfg
+	wk.status.Name = cfg.Name
 	wk.basedir = workspace
-	wk.register.model = model
-	wk.register.token = token
-	wk.register.apiEndpoint = apiEndpoint
-	wk.client = cdsclient.NewWorker(apiEndpoint, name, cdsclient.NewHTTPClient(time.Second*10, insecure))
+	wk.client = cdsclient.NewWorker(cfg.APIEndpoint, cfg.Name, cdsclient.NewHTTPClient(time.Second*10, cfg.APIEndpointInsecure))
 	return nil
 }
 
@@ -265,20 +260,33 @@ func (wk *CurrentWorker) Environ() []string {
 	newEnv := []string{"CI=1"}
 	// filter technical env variables
 	for _, e := range env {
+		if e == "" {
+			continue
+		}
 		if strings.HasPrefix(e, "CDS_") {
 			continue
 		}
 		newEnv = append(newEnv, e)
 	}
 
-	//We have to let it here for some legacy reason
-	newEnv = append(newEnv, "CDS_KEY=********")
-
-	// worker export http port
+	newEnv = append(newEnv, "CDS_KEY=********") //We have to let it here for some legacy reason
 	newEnv = append(newEnv, fmt.Sprintf("%s=%d", WorkerServerPort, wk.HTTPPort()))
-
-	// Api Endpoint in CDS_API_URL var
-	newEnv = append(newEnv, fmt.Sprintf("%s=%s", CDSApiUrl, wk.register.apiEndpoint))
+	newEnv = append(newEnv, fmt.Sprintf("%s=%s", CDSApiUrl, wk.cfg.APIEndpoint))
+	newEnv = append(newEnv, "BASEDIR="+wk.cfg.Basedir)
+	newEnv = append(newEnv, "HATCHERY_NAME="+wk.cfg.HatcheryName)
+	newEnv = append(newEnv, "HATCHERY_WORKER="+wk.cfg.Name)
+	if wk.cfg.Region != "" {
+		newEnv = append(newEnv, "HATCHERY_REGION="+wk.cfg.Region)
+	}
+	if wk.cfg.Model != "" {
+		newEnv = append(newEnv, "HATCHERY_MODEL="+wk.cfg.Model)
+	}
+	for k, v := range wk.cfg.InjectEnvVars {
+		if v == "" {
+			continue
+		}
+		newEnv = append(newEnv, k+"="+v)
+	}
 
 	//set up environment variables from pipeline build job parameters
 	for _, p := range wk.currentJob.params {
@@ -303,6 +311,11 @@ func (wk *CurrentWorker) Environ() []string {
 		envName = strings.Replace(envName, "-", "_", -1)
 		envName = strings.ToUpper(envName)
 		newEnv = append(newEnv, fmt.Sprintf("%s=%s", envName, p.Value))
+	}
+
+	//Set env variables from hooks
+	for k, v := range wk.currentJob.envFromHooks {
+		newEnv = append(newEnv, k+"="+v)
 	}
 	return newEnv
 }

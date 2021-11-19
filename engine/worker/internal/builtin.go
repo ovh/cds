@@ -55,6 +55,8 @@ func (w *CurrentWorker) runBuiltin(ctx context.Context, a sdk.Action, secrets []
 }
 
 func (w *CurrentWorker) runGRPCPlugin(ctx context.Context, a sdk.Action) sdk.Result {
+	log.Info(ctx, "running grpc plugin %q", a.Name)
+
 	chanRes := make(chan sdk.Result, 1)
 	done := make(chan struct{})
 	sdk.NewGoRoutines(ctx).Run(ctx, "runGRPCPlugin", func(ctx context.Context) {

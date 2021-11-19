@@ -1,8 +1,6 @@
 package sdk
 
 import (
-	"bytes"
-	"html/template"
 	"time"
 )
 
@@ -36,45 +34,6 @@ type WorkerRegistrationForm struct {
 type SpawnErrorForm struct {
 	Error string
 	Logs  []byte
-}
-
-// WorkerArgs is all the args needed to run a worker
-type WorkerArgs struct {
-	API             string `json:"api"`
-	Token           string `json:"token"`
-	Name            string `json:"name"`
-	BaseDir         string `json:"base_dir"`
-	HTTPInsecure    bool   `json:"http_insecure"`
-	Model           string `json:"model"`
-	HatcheryName    string `json:"hatchery_name"`
-	WorkflowJobID   int64  `json:"workflow_job_id"`
-	TTL             int    `json:"ttl"`
-	FromWorkerImage bool   `json:"from_worker_image"`
-	//Graylog params
-	GraylogHost       string `json:"graylog_host"`
-	GraylogPort       int    `json:"graylog_port"`
-	GraylogExtraKey   string `json:"graylog_extra_key"`
-	GraylogExtraValue string `json:"graylog_extra_value"`
-	WorkerBinary      string
-	// Env variables
-	InjectEnvVars map[string]string `json:"inject_env_vars"`
-}
-
-// TemplateEnvs return envs interpolated with worker arguments
-func TemplateEnvs(args WorkerArgs, envs map[string]string) (map[string]string, error) {
-	for name, value := range envs {
-		tmpl, errt := template.New("env").Parse(value)
-		if errt != nil {
-			return envs, errt
-		}
-		var buffer bytes.Buffer
-		if errTmpl := tmpl.Execute(&buffer, args); errTmpl != nil {
-			return envs, errTmpl
-		}
-		envs[name] = buffer.String()
-	}
-
-	return envs, nil
 }
 
 // WorkflowNodeJobRunData is returned to worker in answer to postTakeWorkflowJobHandler

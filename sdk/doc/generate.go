@@ -38,7 +38,11 @@ notoc: true
 	linkHandler := func(name string) string {
 		base := strings.TrimSuffix(name, path.Ext(name))
 		base = strings.Replace(base, rootName+"_", "", 1)
-		return fmt.Sprintf("/docs/components/%s/%s/", rootName, strings.Replace(strings.ToLower(base), "_", "/", -1))
+		base = strings.Replace(strings.ToLower(base), "_", "/", -1)
+		if rootName == base {
+			return fmt.Sprintf("/docs/components/%s/", rootName)
+		}
+		return fmt.Sprintf("/docs/components/%s/%s/", rootName, base)
 	}
 
 	fmt.Printf("%s\n", rootName)

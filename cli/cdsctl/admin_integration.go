@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
@@ -97,7 +97,7 @@ var adminIntegrationModelImportCmd = cli.Command{
 }
 
 func adminIntegrationModelImportRun(v cli.Values) error {
-	b, err := ioutil.ReadFile(v.GetString("file"))
+	b, err := os.ReadFile(v.GetString("file"))
 	if err != nil {
 		return cli.WrapError(err, "unable to read file %s", v.GetString("file"))
 	}

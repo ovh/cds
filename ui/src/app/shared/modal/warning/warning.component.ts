@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
-import { SemanticModalComponent } from 'ng-semantic/ng-semantic';
+import { SemanticModalComponent } from '@sgu/ng-semantic';
 
 @Component({
     selector: 'app-warning-modal',

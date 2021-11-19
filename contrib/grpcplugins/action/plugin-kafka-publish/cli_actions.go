@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	"github.com/bgentry/speakeasy"
@@ -59,7 +58,7 @@ func listenAction(c *cli.Context) error {
 	var pgpPrivateKey, pgpPassphrase []byte
 	if pgpPrivKey != "" {
 		var err error
-		pgpPrivateKey, err = ioutil.ReadFile(pgpPrivKey)
+		pgpPrivateKey, err = os.ReadFile(pgpPrivKey)
 		if err != nil {
 			return cli.NewExitError(err.Error(), 11)
 		}
@@ -139,7 +138,7 @@ func ackAction(c *cli.Context) error {
 	var logsBody []byte
 	if logFile := c.String("log"); logFile != "" {
 		var err error
-		logsBody, err = ioutil.ReadFile(logFile)
+		logsBody, err = os.ReadFile(logFile)
 		if err != nil {
 			return cli.NewExitError(err.Error(), 41)
 		}
@@ -149,7 +148,7 @@ func ackAction(c *cli.Context) error {
 	}
 
 	//Read the context json file
-	contextBody, err := ioutil.ReadFile(contextFile)
+	contextBody, err := os.ReadFile(contextFile)
 	if err != nil {
 		return cli.NewExitError(err.Error(), 42)
 	}

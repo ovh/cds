@@ -8,7 +8,6 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -47,10 +46,10 @@ func TestPostUploadHandler(t *testing.T) {
 	// Start CDN
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
-	tmpDir, err := ioutil.TempDir("", t.Name()+"-cdn-1-*")
+	tmpDir, err := os.MkdirTemp("", t.Name()+"-cdn-1-*")
 	require.NoError(t, err)
 
-	tmpDir2, err := ioutil.TempDir("", t.Name()+"-cdn-2-*")
+	tmpDir2, err := os.MkdirTemp("", t.Name()+"-cdn-2-*")
 	require.NoError(t, err)
 
 	cdnUnits, err := storage.Init(ctx, s.Mapper, s.Cache, db.DbMap, sdk.NewGoRoutines(ctx), storage.Configuration{

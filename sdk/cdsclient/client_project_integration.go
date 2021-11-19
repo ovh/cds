@@ -118,7 +118,7 @@ func (c *client) ProjectIntegrationImport(projectKey string, content io.Reader, 
 	return pf, nil
 }
 
-func (c *client) ProjectIntegrationWorkerHooksGet(projectKey string, integrationName string) (*sdk.WorkerHookProjectIntegrationModel, error) {
+func (c *client) ProjectIntegrationWorkerHookGet(projectKey string, integrationName string) (*sdk.WorkerHookProjectIntegrationModel, error) {
 	path := fmt.Sprintf("/project/%s/integrations/%s/workerhooks", projectKey, integrationName)
 	var res sdk.WorkerHookProjectIntegrationModel
 	if _, err := c.GetJSON(context.Background(), path, &res); err != nil {

@@ -20,25 +20,12 @@ func insertFirstPatterns(db gorp.SqlExecutor) error {
 	preCmdOs := `#!/bin/bash
 set +e
 export CDS_FROM_WORKER_IMAGE={{.FromWorkerImage}}
-export CDS_SINGLE_USE=1
 export CDS_API={{.API}}
-export CDS_TOKEN={{.Token}}
-export CDS_NAME={{.Name}}
-export CDS_MODEL={{.Model}}
-export CDS_HATCHERY_NAME={{.HatcheryName}}
-export CDS_BOOKED_WORKFLOW_JOB_ID={{.WorkflowJobID}}
-export CDS_TTL={{.TTL}}
-export CDS_INSECURE={{.HTTPInsecure}}
-export CDS_GRAYLOG_HOST={{.GraylogHost}}
-export CDS_GRAYLOG_PORT={{.GraylogPort}}
-export CDS_GRAYLOG_EXTRA_KEY={{.GraylogExtraKey}}
-export CDS_GRAYLOG_EXTRA_VALUE={{.GraylogExtraValue}}
 
 # Basic build binaries
 cd $HOME
 apt-get -y --force-yes update >> /tmp/user_data 2>&1
-apt-get -y --force-yes install curl git >> /tmp/user_data 2>&1
-apt-get -y --force-yes install binutils >> /tmp/user_data 2>&1
+apt-get -y --force-yes install curl git binutils >> /tmp/user_data 2>&1
 
 # Docker installation (FOR DEBIAN)
 if [[ "x{{.FromWorkerImage}}" = "xtrue" ]]; then
@@ -94,7 +81,7 @@ chmod +x worker
 			Type: sdk.HostProcess,
 			Name: "basic_unix",
 			Model: sdk.ModelCmds{
-				Cmd: "worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --graylog-extra-key={{.GraylogExtraKey}} --graylog-extra-value={{.GraylogExtraValue}} --graylog-host={{.GraylogHost}} --graylog-port={{.GraylogPort}} --booked-workflow-job-id={{.WorkflowJobID}} --single-use --force-exit",
+				Cmd: "worker --config={{.Config}}",
 			},
 		},
 	}
@@ -108,6 +95,9 @@ chmod +x worker
 			return sdk.WrapError(err, "cannot load worker_model_pattern for type %s", pattern.Type)
 		}
 		if numPattern > 0 {
+			if err := UpdatePattern(db, &pattern); err != nil {
+				return sdk.WrapError(err, "cannot update basic model %s", pattern.Type)
+			}
 			continue
 		}
 		if err := InsertPattern(db, &pattern); err != nil {

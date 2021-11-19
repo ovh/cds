@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"mime/quotedprintable"
 	"strings"
 
@@ -28,7 +28,7 @@ func smtpHandler(envelope *smtp.Envelope) error {
 		User:          envelope.User,
 	}
 
-	btes, err := ioutil.ReadAll(envelope.MessageData)
+	btes, err := io.ReadAll(envelope.MessageData)
 	if err != nil {
 		return err
 	}
@@ -36,7 +36,7 @@ func smtpHandler(envelope *smtp.Envelope) error {
 	m.Content = string(btes)
 
 	r := quotedprintable.NewReader(strings.NewReader(m.Content))
-	b, err := ioutil.ReadAll(r)
+	b, err := io.ReadAll(r)
 	if err != nil {
 		return err
 	}

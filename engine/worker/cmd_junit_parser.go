@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/xml"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"github.com/ovh/venom"
@@ -49,7 +49,7 @@ func junitParserCmd() func(cmd *cobra.Command, args []string) error {
 		var tests venom.Tests
 		for _, f := range filepaths {
 			var ftests venom.Tests
-			data, err := ioutil.ReadFile(f)
+			data, err := os.ReadFile(f)
 			if err != nil {
 				return fmt.Errorf("junit parser: cannot read file %s (%s)", f, err)
 			}

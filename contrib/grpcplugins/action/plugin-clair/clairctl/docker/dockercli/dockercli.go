@@ -26,7 +26,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"strings"
 
@@ -42,7 +42,7 @@ import (
 	"github.com/ovh/cds/contrib/grpcplugins/action/clair/clairctl/config"
 )
 
-//GetLocalManifest retrieve manifest for local image
+// GetLocalManifest retrieve manifest for local image
 func GetLocalManifest(imageName string, withExport bool) (reference.NamedTagged, distribution.Manifest, error) {
 	n, err := reference.ParseNamed(imageName)
 	if err != nil {
@@ -101,7 +101,7 @@ func save(imageName string) (distribution.Manifest, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot save image %s: %s", imageName, err)
 	}
-	all, err := ioutil.ReadAll(img)
+	all, err := io.ReadAll(img)
 	if err != nil {
 		panic(err)
 	}

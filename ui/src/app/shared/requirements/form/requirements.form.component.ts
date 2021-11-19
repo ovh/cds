@@ -5,7 +5,7 @@ import { Requirement } from 'app/model/requirement.model';
 import { WorkerModel } from 'app/model/worker-model.model';
 import { RequirementStore } from 'app/service/requirement/requirement.store';
 import { RequirementEvent } from 'app/shared/requirements/requirement.event.model';
-import { SemanticModalComponent } from 'ng-semantic/ng-semantic';
+import { SemanticModalComponent } from '@sgu/ng-semantic';
 import { finalize, first } from 'rxjs/operators';
 
 export const OSArchitecture = 'os-architecture';

@@ -64,7 +64,6 @@ func (d *DefaultThrottlePolicy) Flush() {
 	d.mutex.Lock()
 	defer d.mutex.Unlock()
 
-	fmt.Fprintf(os.Stderr, "[graylog] flush\n")
 	for len(d.buffer) != 0 {
 		time.Sleep(time.Second)
 	}
