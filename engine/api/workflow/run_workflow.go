@@ -204,7 +204,7 @@ func CheckRegion(ctx context.Context, db gorp.SqlExecutor, wf sdk.Workflow) erro
 	for _, p := range wf.Pipelines {
 		for _, s := range p.Stages {
 			for _, j := range s.Jobs {
-				if err := checkJobRegion(ctx, db, wf.ProjectKey, wf.Name, j); err != nil {
+				if err := checkJobRegion(ctx, db, wf.ProjectKey, wf.Name, j.Action.Requirements); err != nil {
 					return err
 				}
 			}
@@ -213,8 +213,8 @@ func CheckRegion(ctx context.Context, db gorp.SqlExecutor, wf sdk.Workflow) erro
 	return nil
 }
 
-func checkJobRegion(ctx context.Context, db gorp.SqlExecutor, projKey, wName string, j sdk.Job) error {
-	for _, req := range j.Action.Requirements {
+func checkJobRegion(ctx context.Context, db gorp.SqlExecutor, projKey, wName string, jobRequirements sdk.RequirementList) error {
+	for _, req := range jobRequirements {
 		if req.Type != sdk.RegionRequirement {
 			continue
 		}

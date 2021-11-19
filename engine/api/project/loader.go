@@ -31,7 +31,6 @@ var LoadOptions = struct {
 	WithEnvironments                        LoadOptionFunc
 	WithEnvironmentNames                    LoadOptionFunc
 	WithGroups                              LoadOptionFunc
-	WithPermission                          LoadOptionFunc
 	WithApplicationVariables                LoadOptionFunc
 	WithApplicationKeys                     LoadOptionFunc
 	WithApplicationWithDeploymentStrategies LoadOptionFunc

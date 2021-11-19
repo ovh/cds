@@ -82,8 +82,10 @@ func (api *API) importNewEnvironmentHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 
-		proj, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.Default,
-			project.LoadOptions.WithGroups, project.LoadOptions.WithPermission)
+		proj, err := project.Load(ctx, api.mustDB(), key,
+			project.LoadOptions.Default,
+			project.LoadOptions.WithGroups,
+		)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load %s", key)
 		}

@@ -67,7 +67,6 @@ func (api *API) getProjectsHandler_FilterByRepo(ctx context.Context, w http.Resp
 	}
 
 	opts := []project.LoadOptionFunc{
-		project.LoadOptions.WithPermission,
 		project.LoadOptions.WithApplications,
 		project.LoadOptions.WithWorkflows,
 	}
@@ -139,10 +138,7 @@ func (api *API) getProjectsHandler() service.Handler {
 			}
 		}
 
-		opts := []project.LoadOptionFunc{
-			project.LoadOptions.WithPermission,
-		}
-
+		var opts []project.LoadOptionFunc
 		if withIcon {
 			opts = append(opts, project.LoadOptions.WithIcon)
 		}
@@ -273,7 +269,6 @@ func (api *API) getProjectHandler() service.Handler {
 		withEnvironments := service.FormBool(r, "withEnvironments")
 		withEnvironmentNames := service.FormBool(r, "withEnvironmentNames")
 		withGroups := service.FormBool(r, "withGroups")
-		withPermission := service.FormBool(r, "withPermission")
 		withKeys := service.FormBool(r, "withKeys")
 		withWorkflows := service.FormBool(r, "withWorkflows")
 		withWorkflowNames := service.FormBool(r, "withWorkflowNames")
@@ -307,9 +302,6 @@ func (api *API) getProjectHandler() service.Handler {
 		}
 		if withGroups {
 			opts = append(opts, project.LoadOptions.WithGroups)
-		}
-		if withPermission {
-			opts = append(opts, project.LoadOptions.WithPermission)
 		}
 		if withKeys {
 			opts = append(opts, project.LoadOptions.WithKeys)
@@ -432,12 +424,16 @@ func (api *API) putProjectLabelsHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		p, errP := project.Load(ctx, db, key,
-			project.LoadOptions.WithLabels, project.LoadOptions.WithWorkflowNames, project.LoadOptions.WithVariables,
+		p, err := project.Load(ctx, db, key,
+			project.LoadOptions.WithLabels,
+			project.LoadOptions.WithWorkflowNames,
+			project.LoadOptions.WithVariables,
 			project.LoadOptions.WithFavorites(getAPIConsumer(ctx).AuthentifiedUser.ID),
-			project.LoadOptions.WithKeys, project.LoadOptions.WithPermission, project.LoadOptions.WithIntegrations)
-		if errP != nil {
-			return sdk.WrapError(errP, "putProjectLabelsHandler> Cannot load project updated from db")
+			project.LoadOptions.WithKeys,
+			project.LoadOptions.WithIntegrations,
+		)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load project updated from db")
 		}
 
 		p.Permissions.Readable = true
@@ -605,7 +601,6 @@ func (api *API) postProjectHandler() service.Handler {
 			project.LoadOptions.WithWorkflowNames,
 			project.LoadOptions.WithFavorites(consumer.AuthentifiedUser.ID),
 			project.LoadOptions.WithKeys,
-			project.LoadOptions.WithPermission,
 			project.LoadOptions.WithIntegrations,
 			project.LoadOptions.WithVariables,
 		)
