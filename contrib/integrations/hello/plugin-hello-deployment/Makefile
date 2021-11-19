@@ -41,10 +41,10 @@ build: $(TARGET_DIR)
 			FILENAME=deployment-plugin-$(TARGET_NAME)-$$GOOS-$$GOARCH$$EXTENSION; \
 			echo Compiling $(TARGET_DIR)/$$FILENAME $(VERSION); \
 			GOOS=$$GOOS GOARCH=$$GOARCH $(GO_BUILD) $(TARGET_LDFLAGS) -o $(TARGET_DIR)/$$FILENAME || exit 1; \
-			echo "$$PLUGIN_MANIFEST_BINARY" > $(TARGET_DIR)/plugin-kubernetes-$$GOOS-$$GOARCH.yml; \
-			perl -pi -e s,%os%,$$GOOS,g $(TARGET_DIR)/plugin-kubernetes-$$GOOS-$$GOARCH.yml; \
-			perl -pi -e s,%arch%,$$GOARCH,g $(TARGET_DIR)/plugin-kubernetes-$$GOOS-$$GOARCH.yml; \
-			perl -pi -e s,%filename%,$$FILENAME,g $(TARGET_DIR)/plugin-kubernetes-$$GOOS-$$GOARCH.yml; \
+			echo "$$PLUGIN_MANIFEST_BINARY" > $(TARGET_DIR)/plugin-hello-deployment-$$GOOS-$$GOARCH.yml; \
+			perl -pi -e s,%os%,$$GOOS,g $(TARGET_DIR)/plugin-hello-deployment-$$GOOS-$$GOARCH.yml; \
+			perl -pi -e s,%arch%,$$GOARCH,g $(TARGET_DIR)/plugin-hello-deployment-$$GOOS-$$GOARCH.yml; \
+			perl -pi -e s,%filename%,$$FILENAME,g $(TARGET_DIR)/plugin-hello-deployment-$$GOOS-$$GOARCH.yml; \
 		done; \
 	done
 
@@ -61,7 +61,7 @@ publish:
         PLUGIN_YML=$(TARGET_DIR)/plugin.yml; \
         NAME_PLUGIN=`grep 'name:' $$PLUGIN_YML|cut -d ':' -f2;`; \
         echo "Updating plugin $$NAME_PLUGIN with binary $$FILENAME"; \
-        cdsctl admin plugins binary-add $$NAME_PLUGIN $(TARGET_DIR)/plugin-$$GOOS-$$GOARCH.yml $(TARGET_DIR)/$$FILENAME; \
+        cdsctl admin plugins binary-add $$NAME_PLUGIN $(TARGET_DIR)/plugin-hello-deployment-$$GOOS-$$GOARCH.yml $(TARGET_DIR)/$$FILENAME; \
       else \
         echo "$$FILENAME is missing"; \
       fi \

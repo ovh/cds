@@ -15,7 +15,7 @@ import { ProjectAuditService } from 'app/service/project/project.audit.service';
 import { VariableService } from 'app/service/variable/variable.service';
 import { Table } from 'app/shared/table/table';
 import { VariableEvent } from 'app/shared/variable/variable.event.model';
-import { SemanticModalComponent } from 'ng-semantic/ng-semantic';
+import { SemanticModalComponent } from '@sgu/ng-semantic';
 import { finalize } from 'rxjs/operators';
 
 @Component({

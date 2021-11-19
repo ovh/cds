@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
@@ -30,7 +30,7 @@ func checkSecretHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc
 			return
 		}
 
-		btes, err := ioutil.ReadFile(a.Path)
+		btes, err := os.ReadFile(a.Path)
 		if err != nil {
 			returnHTTPError(ctx, w, 400, fmt.Errorf("failed to read file %s", a.Path))
 			return

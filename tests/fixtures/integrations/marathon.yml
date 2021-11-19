@@ -9,7 +9,7 @@ default_config:
     value: user
     type: string
 deployment: true
-deployment_default_config:
+additional_default_config:
   marathon_config:
     value: ""
     type: string

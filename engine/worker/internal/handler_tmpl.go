@@ -3,7 +3,6 @@ package internal
 import (
 	"context"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 
@@ -35,7 +34,7 @@ func tmplHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 			return
 		}
 
-		btes, err := ioutil.ReadFile(a.Path)
+		btes, err := os.ReadFile(a.Path)
 		if err != nil {
 			newError := sdk.NewError(sdk.ErrWrongRequest, err)
 			writeError(w, r, newError)
@@ -61,7 +60,7 @@ func tmplHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 			return
 		}
 
-		if err := ioutil.WriteFile(a.Destination, []byte(res), os.FileMode(0644)); err != nil {
+		if err := os.WriteFile(a.Destination, []byte(res), os.FileMode(0644)); err != nil {
 			log.Error(ctx, "tmpl> Unable to write file: %v", err)
 			writeError(w, r, sdk.NewError(sdk.ErrWrongRequest, err))
 			return

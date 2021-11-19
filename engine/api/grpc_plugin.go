@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -76,8 +75,7 @@ func (api *API) postGRPCluginHandler() service.Handler {
 
 func (api *API) getAllGRPCluginHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-
-		ps, err := plugin.LoadAll(api.mustDB())
+		ps, err := plugin.LoadAll(ctx, api.mustDB())
 		if err != nil {
 			return sdk.WrapError(err, "unable to load all plugins")
 		}
@@ -88,9 +86,9 @@ func (api *API) getAllGRPCluginHandler() service.Handler {
 
 func (api *API) getGRPCluginHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		var name = mux.Vars(r)["name"]
+		name := mux.Vars(r)["name"]
 
-		p, err := plugin.LoadByName(api.mustDB(), name)
+		p, err := plugin.LoadByName(ctx, api.mustDB(), name)
 		if err != nil {
 			return sdk.WrapError(err, "getGRPCluginHandler")
 		}
@@ -101,6 +99,8 @@ func (api *API) getGRPCluginHandler() service.Handler {
 
 func (api *API) putGRPCluginHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		name := mux.Vars(r)["name"]
+
 		db := api.mustDB()
 		var p sdk.GRPCPlugin
 		if err := service.UnmarshalBody(r, &p); err != nil {
@@ -110,8 +110,7 @@ func (api *API) putGRPCluginHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		var name = mux.Vars(r)["name"]
-		old, err := plugin.LoadByName(api.mustDB(), name)
+		old, err := plugin.LoadByName(ctx, api.mustDB(), name)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load old plugin")
 		}
@@ -154,8 +153,9 @@ func (api *API) putGRPCluginHandler() service.Handler {
 
 func (api *API) deleteGRPCluginHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		var name = mux.Vars(r)["name"]
-		old, err := plugin.LoadByName(api.mustDB(), name)
+		name := mux.Vars(r)["name"]
+
+		old, err := plugin.LoadByName(ctx, api.mustDB(), name)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load old plugin")
 		}
@@ -170,6 +170,9 @@ func (api *API) deleteGRPCluginHandler() service.Handler {
 
 func (api *API) postGRPCluginBinaryHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		name := vars["name"]
+
 		var b sdk.GRPCPluginBinary
 		if err := service.UnmarshalBody(r, &b); err != nil {
 			return sdk.WrapError(err, "postGRPCluginBinaryHandler")
@@ -185,8 +188,7 @@ func (api *API) postGRPCluginBinaryHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		name := mux.Vars(r)["name"]
-		p, err := plugin.LoadByName(tx, name)
+		p, err := plugin.LoadByName(ctx, tx, name)
 		if err != nil {
 			return sdk.WrapError(err, "postGRPCluginBinaryHandler")
 		}
@@ -195,11 +197,11 @@ func (api *API) postGRPCluginBinaryHandler() service.Handler {
 
 		old := p.GetBinary(b.OS, b.Arch)
 		if old == nil {
-			if err := plugin.AddBinary(ctx, tx, api.SharedStorage, p, &b, ioutil.NopCloser(buff)); err != nil {
+			if err := plugin.AddBinary(ctx, tx, api.SharedStorage, p, &b, io.NopCloser(buff)); err != nil {
 				return sdk.WrapError(err, "unable to add plugin binary")
 			}
 		} else {
-			if err := plugin.UpdateBinary(ctx, tx, api.SharedStorage, p, &b, ioutil.NopCloser(buff)); err != nil {
+			if err := plugin.UpdateBinary(ctx, tx, api.SharedStorage, p, &b, io.NopCloser(buff)); err != nil {
 				return sdk.WrapError(err, "unable to add plugin binary")
 			}
 		}
@@ -219,7 +221,7 @@ func (api *API) getGRPCluginBinaryHandler() service.Handler {
 		os := vars["os"]
 		arch := vars["arch"]
 
-		p, err := plugin.LoadByName(api.mustDB(), name)
+		p, err := plugin.LoadByName(ctx, api.mustDB(), name)
 		if err != nil {
 			return sdk.WrapError(err, "getGRPCluginBinaryHandler")
 		}
@@ -269,7 +271,7 @@ func (api *API) getGRPCluginBinaryInfosHandler() service.Handler {
 		os := vars["os"]
 		arch := vars["arch"]
 
-		p, err := plugin.LoadByName(api.mustDB(), name)
+		p, err := plugin.LoadByName(ctx, api.mustDB(), name)
 		if err != nil {
 			return sdk.WithStack(err)
 		}
@@ -285,6 +287,31 @@ func (api *API) getGRPCluginBinaryInfosHandler() service.Handler {
 
 func (api *API) deleteGRPCluginBinaryHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return nil
+		vars := mux.Vars(r)
+
+		name := vars["name"]
+		os := vars["os"]
+		arch := vars["arch"]
+
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WrapError(err, "unable to start tx")
+		}
+		defer tx.Rollback() // nolint
+
+		p, err := plugin.LoadByName(ctx, tx, name)
+		if err != nil {
+			return sdk.WrapError(err, "unable to load plugin")
+		}
+
+		if err := plugin.DeleteBinary(ctx, tx, api.SharedStorage, p, os, arch); err != nil {
+      return err
+    }
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "unable to commit tx")
+		}
+
+		return service.WriteJSON(w, nil, http.StatusOK)
 	}
 }

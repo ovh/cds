@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"io/ioutil"
 	"os"
 	"reflect"
 	"testing"
@@ -19,7 +18,7 @@ func TestRun(t *testing.T) {
 	params := `name=toto
 age=42`
 
-	tmplfile, err := ioutil.TempFile(tmpdir, "plugintmpl")
+	tmplfile, err := os.CreateTemp(tmpdir, "plugintmpl")
 	if err != nil {
 		t.Fatalf("unexpected error creating temporary template file: %s", err)
 	}
@@ -52,7 +51,7 @@ age=42`
 	}
 
 	expectedContent := `My name is toto, I am 42!`
-	gotContent, err := ioutil.ReadFile(tmplfile.Name() + ".out")
+	gotContent, err := os.ReadFile(tmplfile.Name() + ".out")
 	if err != nil {
 		t.Errorf("unexpected error reading generated content: %s", err)
 		return

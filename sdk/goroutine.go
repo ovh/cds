@@ -9,7 +9,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"runtime"
 	"runtime/pprof"
@@ -328,7 +327,7 @@ func writeGoroutineStacks(w io.Writer) error {
 
 func parseGoRoutineStacks(r io.Reader, w io.Writer) ([]*stack.Goroutine, error) {
 	if w == nil {
-		w = ioutil.Discard
+		w = io.Discard
 	}
 	s, _, err := stack.ScanSnapshot(r, w, stack.DefaultOpts())
 	if err != nil && err != io.EOF {

@@ -36,10 +36,10 @@ func TestInsertUpdateLoadDelete(t *testing.T) {
 
 	require.NoError(t, Update(db, &p))
 
-	_, err := LoadByName(db, "test_plugin")
+	_, err := LoadByName(context.TODO(), db, "test_plugin")
 	test.NoError(t, err)
 
-	all, err := LoadAll(db)
+	all, err := LoadAll(context.TODO(), db)
 	require.NoError(t, err)
 	assert.True(t, len(all) >= 1)
 	var found bool

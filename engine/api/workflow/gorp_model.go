@@ -175,25 +175,6 @@ func (j JobRun) WorkflowNodeRunJob() (sdk.WorkflowNodeJobRun, error) {
 	if j.ModelType.Valid {
 		jr.ModelType = j.ModelType.String
 	}
-	if defaultOS != "" && defaultArch != "" {
-		var modelFound, osArchFound bool
-		for _, req := range jr.Job.Action.Requirements {
-			if req.Type == sdk.ModelRequirement {
-				modelFound = true
-			}
-			if req.Type == sdk.OSArchRequirement {
-				osArchFound = true
-			}
-		}
-
-		if !modelFound && !osArchFound {
-			jr.Job.Action.Requirements = append(jr.Job.Action.Requirements, sdk.Requirement{
-				Name:  defaultOS + "/" + defaultArch,
-				Type:  sdk.OSArchRequirement,
-				Value: defaultOS + "/" + defaultArch,
-			})
-		}
-	}
 	return jr, nil
 }
 

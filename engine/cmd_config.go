@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
@@ -282,7 +281,7 @@ var configEditCmd = &cobra.Command{
 			sdk.Exit("File %s doesn't exist", cfgFile)
 		}
 
-		btes, err := ioutil.ReadFile(cfgFile)
+		btes, err := os.ReadFile(cfgFile)
 		if err != nil {
 			sdk.Exit("Error while read content of file %s - err:%v", cfgFile, err)
 		}
@@ -308,7 +307,7 @@ var configEditCmd = &cobra.Command{
 		}
 
 		tmpFile := "cds.tmp.toml"
-		if err := ioutil.WriteFile(tmpFile, []byte(tomlConf.String()), os.FileMode(0640)); err != nil {
+		if err := os.WriteFile(tmpFile, []byte(tomlConf.String()), os.FileMode(0640)); err != nil {
 			sdk.Exit("Error while create tempfile: %v", err)
 		}
 		defer os.Remove(tmpFile)

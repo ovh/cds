@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 	"text/template"
@@ -62,7 +61,7 @@ func (actPlugin *groupTmplActionPlugin) Run(ctx context.Context, q *actionplugin
 	}
 
 	// get template config content
-	configContent, err := ioutil.ReadFile(config)
+	configContent, err := os.ReadFile(config)
 	if err != nil {
 		return actionplugin.Fail("Failed to read config template file: %s", err)
 	}

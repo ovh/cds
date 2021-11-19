@@ -1,7 +1,7 @@
 package api
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http/httptest"
 	"strings"
 	"testing"
@@ -44,7 +44,7 @@ variables:
   var4:
     type: number
     value: 42`
-	req.Body = ioutil.NopCloser(strings.NewReader(body))
+	req.Body = io.NopCloser(strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/x-yaml")
 
 	//Do the request
@@ -148,7 +148,7 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecrets(t *testi
 	uri = api.Router.GetRoute("POST", api.postEnvironmentImportHandler, vars)
 	test.NotEmpty(t, uri)
 	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, nil)
-	req.Body = ioutil.NopCloser(strings.NewReader(body))
+	req.Body = io.NopCloser(strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/x-yaml")
 
 	//Do the request
@@ -265,7 +265,7 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecretsAndReImpo
 	uri = api.Router.GetRoute("POST", api.postEnvironmentImportHandler, vars)
 	test.NotEmpty(t, uri)
 	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, nil)
-	req.Body = ioutil.NopCloser(strings.NewReader(body))
+	req.Body = io.NopCloser(strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/x-yaml")
 
 	//Do the request
@@ -326,7 +326,7 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecretsAndReImpo
 	uri = api.Router.GetRoute("POST", api.postEnvironmentImportHandler, vars)
 	test.NotEmpty(t, uri)
 	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri+"?force=true", nil)
-	req.Body = ioutil.NopCloser(strings.NewReader(body))
+	req.Body = io.NopCloser(strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/x-yaml")
 
 	//Do the request
@@ -402,7 +402,7 @@ keys:
     type: pgp
   env-mySSHKey:
     type: ssh`
-	req.Body = ioutil.NopCloser(strings.NewReader(body))
+	req.Body = io.NopCloser(strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/x-yaml")
 
 	//Do the request
@@ -468,7 +468,7 @@ func Test_postEnvironmentImportHandler_ExistingAppFromYAMLWithoutForce(t *testin
 
 	body := `version: v1.0
 name: myNewEnv`
-	req.Body = ioutil.NopCloser(strings.NewReader(body))
+	req.Body = io.NopCloser(strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/x-yaml")
 
 	//Do the request
@@ -503,7 +503,7 @@ func Test_postEnvironmentImportHandler_ExistingAppFromYAMLInheritPermissions(t *
 
 	body := `version: v1.0
 name: myNewEnv`
-	req.Body = ioutil.NopCloser(strings.NewReader(body))
+	req.Body = io.NopCloser(strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/x-yaml")
 
 	//Do the request

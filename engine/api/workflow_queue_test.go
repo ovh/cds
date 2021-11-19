@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -1451,7 +1450,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 			body := new(bytes.Buffer)
 			wri := new(http.Response)
 			enc := json.NewEncoder(body)
-			wri.Body = ioutil.NopCloser(body)
+			wri.Body = io.NopCloser(body)
 
 			switch r.URL.String() {
 			case "/vcs/repoManServ/repos/foo/bar":

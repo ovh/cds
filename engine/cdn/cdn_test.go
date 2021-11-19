@@ -5,8 +5,8 @@ import (
 	"context"
 	"crypto/rsa"
 	"encoding/json"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"sync"
 	"testing"
 	"time"
@@ -114,10 +114,10 @@ var fakeAPIPrivateKey = struct {
 
 func newRunningStorageUnits(t *testing.T, m *gorpmapper.Mapper, dbMap *gorp.DbMap, ctx context.Context, store cache.Store) *storage.RunningStorageUnits {
 	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
-	tmpDir, err := ioutil.TempDir("", t.Name()+"-cdn-1-*")
+	tmpDir, err := os.MkdirTemp("", t.Name()+"-cdn-1-*")
 	require.NoError(t, err)
 
-	tmpDirBuf, err := ioutil.TempDir("", t.Name()+"-cdn-1-buf-*")
+	tmpDirBuf, err := os.MkdirTemp("", t.Name()+"-cdn-1-buf-*")
 	require.NoError(t, err)
 
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)

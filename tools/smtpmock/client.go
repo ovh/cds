@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/pkg/errors"
@@ -47,7 +46,7 @@ func (c *client) requestJSON(method string, url string, body io.Reader, data int
 		return errors.New(fmt.Sprintf("error request at %s %s", method, req.URL.String()))
 	}
 
-	buf, err := ioutil.ReadAll(res.Body)
+	buf, err := io.ReadAll(res.Body)
 	if err != nil {
 		return errors.WithStack(err)
 	}

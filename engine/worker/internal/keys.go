@@ -3,7 +3,6 @@ package internal
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -56,7 +55,7 @@ func (wk *CurrentWorker) InstallKey(key sdk.Variable) (*workerruntime.KeyRespons
 			}
 		}
 		content := []byte(key.Value)
-		tmpfile, errTmpFile := ioutil.TempFile("", key.Name)
+		tmpfile, errTmpFile := os.CreateTemp("", key.Name)
 		if errTmpFile != nil {
 			return nil, sdk.NewError(sdk.ErrWorkerErrorCommand, fmt.Errorf("Cannot setup pgp key %s : %v", key.Name, errTmpFile))
 		}
@@ -138,7 +137,7 @@ func (wk *CurrentWorker) InstallKeyTo(key sdk.Variable, destinationPath string) 
 			}
 		}
 		content := []byte(key.Value)
-		tmpfile, errTmpFile := ioutil.TempFile("", key.Name)
+		tmpfile, errTmpFile := os.CreateTemp("", key.Name)
 		if errTmpFile != nil {
 			return nil, sdk.NewError(sdk.ErrWorkerErrorCommand, fmt.Errorf("Cannot setup pgp key %s : %v", key.Name, errTmpFile))
 		}

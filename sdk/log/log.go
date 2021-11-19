@@ -4,7 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"strings"
 
@@ -59,7 +59,7 @@ func Initialize(ctx context.Context, conf *Conf) {
 
 	switch conf.Format {
 	case "discard":
-		logrus.SetOutput(ioutil.Discard)
+		logrus.SetOutput(io.Discard)
 	case "json":
 		logrus.SetFormatter(&logrus.JSONFormatter{})
 	default:

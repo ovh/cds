@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 	"text/template"
@@ -63,7 +62,7 @@ func (actPlugin *tmplActionPlugin) Run(ctx context.Context, q *actionplugin.Acti
 	}
 
 	// get template file content
-	content, err := ioutil.ReadFile(file)
+	content, err := os.ReadFile(file)
 	if err != nil {
 		return actionplugin.Fail("Failed to read template file: %v", err)
 	}

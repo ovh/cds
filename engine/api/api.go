@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -876,7 +876,7 @@ func (a *API) Serve(ctx context.Context) error {
 		var buffer = new(bytes.Buffer)
 		pprof.Lookup("heap").WriteTo(buffer, 1)
 		var heapProfile = heapProfile{uuid: sdk.UUID()}
-		s, err := a.SharedStorage.Store(heapProfile, ioutil.NopCloser(buffer))
+		s, err := a.SharedStorage.Store(heapProfile, io.NopCloser(buffer))
 		if err != nil {
 			log.Error(ctx, "unable to upload heap profile: %v", err)
 			return

@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
@@ -159,7 +158,7 @@ func (s *Service) checkChecksumFiles() error {
 	log.Debug(context.Background(), "ui> checking checksum files...")
 
 	filesUI := filepath.Join(s.HTMLDir, "FILES_UI")
-	content, err := ioutil.ReadFile(filesUI)
+	content, err := os.ReadFile(filesUI)
 	if err != nil {
 		return sdk.WrapError(err, "error while reading file %s", filesUI)
 	}
@@ -230,7 +229,7 @@ func (s *Service) prepareIndexHTML() (bool, error) {
 func (s *Service) indexHTMLReplaceVar() error {
 	indexHTML := filepath.Join(s.HTMLDir, "index.html")
 
-	read, err := ioutil.ReadFile(indexHTML)
+	read, err := os.ReadFile(indexHTML)
 	if err != nil {
 		return sdk.WrapError(err, "error while reading %s file", indexHTML)
 	}
@@ -244,7 +243,7 @@ func (s *Service) indexHTMLReplaceVar() error {
 	if s.Cfg.SentryURL != "" {
 		indexContent = strings.Replace(indexContent, "window.cds_sentry_url = '';", "window.cds_sentry_url = '"+s.Cfg.SentryURL+"';", -1)
 	}
-	return ioutil.WriteFile(indexHTML, []byte(indexContent), 0)
+	return os.WriteFile(indexHTML, []byte(indexContent), 0)
 }
 
 func (s *Service) askForGettingStaticFiles(ctx context.Context, version string) error {

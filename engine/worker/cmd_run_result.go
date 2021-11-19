@@ -150,11 +150,4 @@ func addRunResult(data []byte, stype sdk.WorkflowRunResultType) {
 			sdk.Exit("adding run result failed: %s\n", body)
 		}
 	}
-
-	// step: read the response body
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		sdk.Exit("add run result failed ReadAll: %v\n", err)
-	}
-	fmt.Println(string(respBody))
 }

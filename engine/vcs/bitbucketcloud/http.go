@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -177,7 +176,7 @@ func (client *bitbucketcloudClient) do(ctx context.Context, method, api, path st
 
 	if len(values) > 0 {
 		buf := bytes.NewBuffer(values)
-		req.Body = ioutil.NopCloser(buf)
+		req.Body = io.NopCloser(buf)
 		req.ContentLength = int64(buf.Len())
 	}
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", client.OAuthToken))

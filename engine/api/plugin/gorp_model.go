@@ -5,8 +5,6 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-type grpcPlugin sdk.GRPCPlugin
-
 func init() {
-	gorpmapping.Register(gorpmapping.New(grpcPlugin{}, "grpc_plugin", true, "id"))
+	gorpmapping.Register(gorpmapping.New(sdk.GRPCPlugin{}, "grpc_plugin", true, "id"))
 }

@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"sort"
@@ -111,7 +110,7 @@ func (c *bitbucketClient) do(ctx context.Context, method, api, path string, para
 
 	if values != nil && len(values) > 0 {
 		buf := bytes.NewBuffer(values)
-		req.Body = ioutil.NopCloser(buf)
+		req.Body = io.NopCloser(buf)
 		req.ContentLength = int64(buf.Len())
 	}
 

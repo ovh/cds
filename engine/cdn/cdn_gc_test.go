@@ -2,7 +2,7 @@ package cdn
 
 import (
 	"context"
-	"io/ioutil"
+	"os"
 	"testing"
 	"time"
 
@@ -42,7 +42,7 @@ func TestCleanSynchronizedItem(t *testing.T) {
 	}
 	s.GoRoutines = sdk.NewGoRoutines(context.TODO())
 
-	tmpDir, err := ioutil.TempDir("", t.Name()+"-cdn-1-*")
+	tmpDir, err := os.MkdirTemp("", t.Name()+"-cdn-1-*")
 	require.NoError(t, err)
 
 	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Second)
@@ -171,7 +171,7 @@ func TestCleanSynchronizedItemWithDisabledStorage(t *testing.T) {
 	}
 	s.GoRoutines = sdk.NewGoRoutines(context.TODO())
 
-	tmpDir, err := ioutil.TempDir("", t.Name()+"-cdn-1-*")
+	tmpDir, err := os.MkdirTemp("", t.Name()+"-cdn-1-*")
 	require.NoError(t, err)
 
 	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Second)

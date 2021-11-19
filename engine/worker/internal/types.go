@@ -61,6 +61,7 @@ type CurrentWorker struct {
 		features         map[sdk.FeatureName]bool
 		currentStepIndex int
 		currentStepName  string
+		envFromHooks     map[string]string
 	}
 	status struct {
 		Name   string `json:"name"`
@@ -310,6 +311,11 @@ func (wk *CurrentWorker) Environ() []string {
 		envName = strings.Replace(envName, "-", "_", -1)
 		envName = strings.ToUpper(envName)
 		newEnv = append(newEnv, fmt.Sprintf("%s=%s", envName, p.Value))
+	}
+
+	//Set env variables from hooks
+	for k, v := range wk.currentJob.envFromHooks {
+		newEnv = append(newEnv, k+"="+v)
 	}
 	return newEnv
 }

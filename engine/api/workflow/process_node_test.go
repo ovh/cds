@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"testing"
 	"time"
@@ -81,7 +80,7 @@ func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
 			body := new(bytes.Buffer)
 			w := new(http.Response)
 			enc := json.NewEncoder(body)
-			w.Body = ioutil.NopCloser(body)
+			w.Body = io.NopCloser(body)
 			switch r.URL.String() {
 			// NEED get REPO
 			case "/vcs/github/repos/sguiheux/demo":
@@ -275,7 +274,7 @@ func TestHookRunWithHashOnlyProcessNodeBuildParameter(t *testing.T) {
 			body := new(bytes.Buffer)
 			w := new(http.Response)
 			enc := json.NewEncoder(body)
-			w.Body = ioutil.NopCloser(body)
+			w.Body = io.NopCloser(body)
 			switch r.URL.String() {
 			// NEED get REPO
 			case "/vcs/github/repos/sguiheux/demo":
@@ -452,7 +451,7 @@ func TestManualRunWithPayloadProcessNodeBuildParameter(t *testing.T) {
 			body := new(bytes.Buffer)
 			w := new(http.Response)
 			enc := json.NewEncoder(body)
-			w.Body = ioutil.NopCloser(body)
+			w.Body = io.NopCloser(body)
 
 			switch r.URL.String() {
 			// NEED get REPO
@@ -598,13 +597,13 @@ func TestManualRunBranchAndCommitInPayloadProcessNodeBuildParameter(t *testing.T
 		services.Delete(db, mockVCSSservice)
 	}()
 
-	//This is a mock for the vcs service
+	// This is a mock for the vcs service
 	services.HTTPClient = mock(
 		func(r *http.Request) (*http.Response, error) {
 			body := new(bytes.Buffer)
 			w := new(http.Response)
 			enc := json.NewEncoder(body)
-			w.Body = ioutil.NopCloser(body)
+			w.Body = io.NopCloser(body)
 
 			switch r.URL.String() {
 			// NEED get REPO
@@ -745,7 +744,7 @@ func TestManualRunBranchAndRepositoryInPayloadProcessNodeBuildParameter(t *testi
 			body := new(bytes.Buffer)
 			w := new(http.Response)
 			enc := json.NewEncoder(body)
-			w.Body = ioutil.NopCloser(body)
+			w.Body = io.NopCloser(body)
 
 			switch r.URL.String() {
 			// NEED get REPO
@@ -989,7 +988,7 @@ func TestManualRunBuildParameterMultiApplication(t *testing.T) {
 			body := new(bytes.Buffer)
 			w := new(http.Response)
 			enc := json.NewEncoder(body)
-			w.Body = ioutil.NopCloser(body)
+			w.Body = io.NopCloser(body)
 
 			switch r.URL.String() {
 			case "/vcs/stash/repos/ovh/cds":
@@ -1231,7 +1230,7 @@ func TestManualRunBuildParameterNoApplicationOnRoot(t *testing.T) {
 			body := new(bytes.Buffer)
 			w := new(http.Response)
 			enc := json.NewEncoder(body)
-			w.Body = ioutil.NopCloser(body)
+			w.Body = io.NopCloser(body)
 
 			switch r.URL.String() {
 			case "/vcs/stash/repos/ovh/cds":
@@ -1463,7 +1462,7 @@ func TestGitParamOnPipelineWithoutApplication(t *testing.T) {
 			body := new(bytes.Buffer)
 			w := new(http.Response)
 			enc := json.NewEncoder(body)
-			w.Body = ioutil.NopCloser(body)
+			w.Body = io.NopCloser(body)
 
 			switch r.URL.String() {
 			// NEED get REPO
@@ -1650,7 +1649,7 @@ func TestGitParamOnApplicationWithoutRepo(t *testing.T) {
 			body := new(bytes.Buffer)
 			w := new(http.Response)
 			enc := json.NewEncoder(body)
-			w.Body = ioutil.NopCloser(body)
+			w.Body = io.NopCloser(body)
 
 			switch r.URL.String() {
 			// NEED get REPO
@@ -1836,7 +1835,7 @@ func TestGitParamOn2ApplicationSameRepo(t *testing.T) {
 			body := new(bytes.Buffer)
 			w := new(http.Response)
 			enc := json.NewEncoder(body)
-			w.Body = ioutil.NopCloser(body)
+			w.Body = io.NopCloser(body)
 
 			switch r.URL.String() {
 			// NEED get REPO
@@ -2039,7 +2038,7 @@ func TestGitParamWithJoin(t *testing.T) {
 			body := new(bytes.Buffer)
 			w := new(http.Response)
 			enc := json.NewEncoder(body)
-			w.Body = ioutil.NopCloser(body)
+			w.Body = io.NopCloser(body)
 
 			switch r.URL.String() {
 			// NEED get REPO
@@ -2377,7 +2376,7 @@ func TestGitParamOn2ApplicationSameRepoWithFork(t *testing.T) {
 			body := new(bytes.Buffer)
 			w := new(http.Response)
 			enc := json.NewEncoder(body)
-			w.Body = ioutil.NopCloser(body)
+			w.Body = io.NopCloser(body)
 
 			switch r.URL.String() {
 			// NEED get REPO
@@ -2585,7 +2584,7 @@ func TestManualRunWithPayloadAndRunCondition(t *testing.T) {
 			body := new(bytes.Buffer)
 			w := new(http.Response)
 			enc := json.NewEncoder(body)
-			w.Body = ioutil.NopCloser(body)
+			w.Body = io.NopCloser(body)
 
 			switch r.URL.String() {
 			// NEED get REPO
@@ -2880,7 +2879,7 @@ func (m *mockServiceClient) Do(r *http.Request) (*http.Response, error) {
 func writeError(w *http.Response, err error) (*http.Response, error) {
 	body := new(bytes.Buffer)
 	enc := json.NewEncoder(body)
-	w.Body = ioutil.NopCloser(body)
+	w.Body = io.NopCloser(body)
 	sdkErr := sdk.ExtractHTTPError(err)
 	_ = enc.Encode(sdkErr) // nolint
 	w.StatusCode = sdkErr.Status

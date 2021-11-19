@@ -3,7 +3,6 @@ package git
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/url"
 	"os"
@@ -112,7 +111,7 @@ func runGitCommandsOverSSH(commands []cmd, auth *AuthOpts, output *OutputOpts) e
 		wrapperPath = filepath.Join(keyDir, "gitwrapper")
 	}
 
-	if err := ioutil.WriteFile(wrapperPath, []byte(wrapper), os.FileMode(0700)); err != nil {
+	if err := os.WriteFile(wrapperPath, []byte(wrapper), os.FileMode(0700)); err != nil {
 		return sdk.WithStack(err)
 	}
 

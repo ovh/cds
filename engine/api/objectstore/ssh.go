@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"strings"
 
 	"github.com/ovh/cds/sdk"
@@ -67,7 +66,7 @@ func (s *SSHStore) read(session *ssh.Session, path string) (io.ReadCloser, error
 		return nil, err
 	}
 
-	return ioutil.NopCloser(bytes.NewReader(output)), nil
+	return io.NopCloser(bytes.NewReader(output)), nil
 }
 
 // Store store a object on disk

@@ -3,7 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"regexp"
 	"strings"
 	"text/template"
@@ -35,7 +35,7 @@ type VariableAlteration func(interface{}) (interface{}, error)
 func NewApplications(file string) (*Applications, error) {
 	var ret Applications
 
-	data, err := ioutil.ReadFile(file)
+	data, err := os.ReadFile(file)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read applications file : %s", err)
 	}

@@ -23,15 +23,24 @@ func processNodeJobRunRequirements(ctx context.Context, db gorp.SqlExecutor, j s
 	var model string
 	var tmp = sdk.ParametersToMap(run.BuildParameters)
 
-	pluginsRequirements := make([]sdk.Requirement, 0)
-	for _, p := range integrationPlugins {
-		for _, b := range p.Binaries {
-			pluginsRequirements = append(pluginsRequirements, b.Requirements...)
+	if defaultOS != "" && defaultArch != "" {
+		var modelFound, osArchFound bool
+		for _, req := range j.Action.Requirements {
+			if req.Type == sdk.ModelRequirement {
+				modelFound = true
+			}
+			if req.Type == sdk.OSArchRequirement {
+				osArchFound = true
+			}
+		}
+		if !modelFound && !osArchFound {
+			j.Action.Requirements = append(j.Action.Requirements, sdk.Requirement{
+				Name:  defaultOS + "/" + defaultArch,
+				Type:  sdk.OSArchRequirement,
+				Value: defaultOS + "/" + defaultArch,
+			})
 		}
 	}
-
-	// then add plugins requirement to the action requirement
-	j.Action.Requirements = append(j.Action.Requirements, pluginsRequirements...)
 
 	integrationRequirements := make([]sdk.Requirement, 0)
 	for _, c := range integrationsConfigs {
@@ -97,6 +106,46 @@ func processNodeJobRunRequirements(ctx context.Context, db gorp.SqlExecutor, j s
 					}
 					if j.Action.Enabled && !hasCapa {
 						errm.Append(sdk.ErrInvalidJobRequirementWorkerModelCapabilitites)
+						break
+					}
+				}
+			}
+		}
+	}
+
+	// Add plugin requirmeent if needed based on the os/arch of the job
+	if len(integrationPlugins) > 0 {
+		var os, arch string
+
+		// Compute os/arch values from Model or OSArch requirement
+		if wm != nil {
+			if !wm.NeedRegistration && !wm.CheckRegistration {
+				os = *wm.RegisteredOS
+				arch = *wm.RegisteredArch
+			}
+		} else {
+			for i := range requirements {
+				if requirements[i].Type == sdk.OSArchRequirement {
+					osarch := strings.Split(requirements[i].Value, "/")
+					if len(osarch) != 2 {
+						errm.Append(fmt.Errorf("invalid requirement %s", requirements[i].Value))
+					} else {
+						os = strings.ToLower(osarch[0])
+						arch = strings.ToLower(osarch[1])
+					}
+					break
+				}
+			}
+		}
+
+		// If os/arch values were found adding requirements from plugin binary
+		if os != "" && arch != "" {
+			for _, p := range integrationPlugins {
+				for _, b := range p.Binaries {
+					if strings.ToLower(b.OS) == os && strings.ToLower(b.Arch) == arch {
+						for i := range b.Requirements {
+							sdk.AddRequirement(&requirements, b.Requirements[i].ID, b.Requirements[i].Name, b.Requirements[i].Type, b.Requirements[i].Value)
+						}
 						break
 					}
 				}

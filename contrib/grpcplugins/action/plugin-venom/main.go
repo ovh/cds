@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -139,7 +138,7 @@ func (actPlugin *venomActionPlugin) Run(ctx context.Context, q *actionplugin.Act
 
 	if varsFromFile != "" {
 		varFileMap := make(map[string]string)
-		bytes, err := ioutil.ReadFile(varsFromFile)
+		bytes, err := os.ReadFile(varsFromFile)
 		if err != nil {
 			return actionplugin.Fail("VENOM - Error while reading file: %v\n", err)
 		}

@@ -1,0 +1,26 @@
+name: plugin-artifactory-release-bundle-distribute
+type: action
+author: "François Samin <francois.samin@corp.ovh.com>"
+description: |
+ Distributes a Artifactory Release Bundle on all the Jfrog Platform.
+parameters:
+  name: 
+    type: string
+    description: Release Bundle name
+  version:
+    type: string
+    default: "{{.cds.version}}"
+    description: Release Bundle version
+  url:
+    type: string
+    description: JFrog Artifactory URL. Leave empty to use integration.
+    advanced: true
+  token_variable:
+    type: string
+    description: JFrog Distribution token variable name. Leave empty to use integration.
+    advanced: true
+  distribute_only_on_edges:
+    type: boolean
+    description: Distribute release bundle only on edges.
+    default: "true"
+    advanced: true

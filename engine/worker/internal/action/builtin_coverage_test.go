@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -49,7 +48,7 @@ func TestRunCoverage_Absolute(t *testing.T) {
 	defer gock.Off()
 
 	wk, ctx := SetupTest(t)
-	assert.NoError(t, ioutil.WriteFile("results.xml", []byte(cobertura_result), os.ModePerm))
+	assert.NoError(t, os.WriteFile("results.xml", []byte(cobertura_result), os.ModePerm))
 	defer os.RemoveAll("results.xml")
 
 	fi, err := os.Open("results.xml")
@@ -63,7 +62,7 @@ func TestRunCoverage_Absolute(t *testing.T) {
 	var checkRequest gock.ObserverFunc = func(request *http.Request, mock gock.Mock) {
 		bodyContent, err := io.ReadAll(request.Body)
 		assert.NoError(t, err)
-		request.Body = ioutil.NopCloser(bytes.NewReader(bodyContent))
+		request.Body = io.NopCloser(bytes.NewReader(bodyContent))
 		if mock != nil {
 			t.Logf("%s %s - Body: %s", mock.Request().Method, mock.Request().URLStruct.String(), string(bodyContent))
 			switch mock.Request().URLStruct.String() {
@@ -117,7 +116,7 @@ func TestRunCoverage_Relative(t *testing.T) {
 	var checkRequest gock.ObserverFunc = func(request *http.Request, mock gock.Mock) {
 		bodyContent, err := io.ReadAll(request.Body)
 		assert.NoError(t, err)
-		request.Body = ioutil.NopCloser(bytes.NewReader(bodyContent))
+		request.Body = io.NopCloser(bytes.NewReader(bodyContent))
 		if mock != nil {
 			t.Logf("%s %s - Body: %s", mock.Request().Method, mock.Request().URLStruct.String(), string(bodyContent))
 			switch mock.Request().URLStruct.String() {
@@ -162,7 +161,7 @@ func TestRunCoverageMinimumFail(t *testing.T) {
 	defer gock.Off()
 
 	wk, ctx := SetupTest(t)
-	assert.NoError(t, ioutil.WriteFile("results.xml", []byte(cobertura_result), os.ModePerm))
+	assert.NoError(t, os.WriteFile("results.xml", []byte(cobertura_result), os.ModePerm))
 	defer os.RemoveAll("results.xml")
 
 	fi, err := os.Open("results.xml")
@@ -176,7 +175,7 @@ func TestRunCoverageMinimumFail(t *testing.T) {
 	var checkRequest gock.ObserverFunc = func(request *http.Request, mock gock.Mock) {
 		bodyContent, err := io.ReadAll(request.Body)
 		assert.NoError(t, err)
-		request.Body = ioutil.NopCloser(bytes.NewReader(bodyContent))
+		request.Body = io.NopCloser(bytes.NewReader(bodyContent))
 		if mock != nil {
 			t.Logf("%s %s - Body: %s", mock.Request().Method, mock.Request().URLStruct.String(), string(bodyContent))
 			switch mock.Request().URLStruct.String() {

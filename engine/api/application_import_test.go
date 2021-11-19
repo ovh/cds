@@ -3,7 +3,7 @@ package api
 import (
 	"bytes"
 	"context"
-	"io/ioutil"
+	"io"
 	"net/http/httptest"
 	"strings"
 	"testing"
@@ -49,7 +49,7 @@ variables:
   var4:
     type: number
     value: 42`
-	req.Body = ioutil.NopCloser(strings.NewReader(body))
+	req.Body = io.NopCloser(strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/x-yaml")
 
 	//Do the request
@@ -152,7 +152,7 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecrets(t *testi
 	uri = api.Router.GetRoute("POST", api.postApplicationImportHandler, vars)
 	test.NotEmpty(t, uri)
 	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, nil)
-	req.Body = ioutil.NopCloser(strings.NewReader(body))
+	req.Body = io.NopCloser(strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/x-yaml")
 
 	//Do the request
@@ -260,7 +260,7 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 	uri = api.Router.GetRoute("POST", api.postApplicationImportHandler, vars)
 	test.NotEmpty(t, uri)
 	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, nil)
-	req.Body = ioutil.NopCloser(strings.NewReader(body))
+	req.Body = io.NopCloser(strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/x-yaml")
 
 	//Do the request
@@ -314,7 +314,7 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 	uri = api.Router.GetRoute("POST", api.postApplicationImportHandler, vars)
 	test.NotEmpty(t, uri)
 	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri+"?force=true", nil)
-	req.Body = ioutil.NopCloser(strings.NewReader(body))
+	req.Body = io.NopCloser(strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/x-yaml")
 
 	//Do the request
@@ -473,7 +473,7 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 	test.NotEmpty(t, uri)
 	uri += "?force=true"
 	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, nil)
-	req.Body = ioutil.NopCloser(strings.NewReader(body))
+	req.Body = io.NopCloser(strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/x-yaml")
 
 	rec = httptest.NewRecorder()
@@ -524,7 +524,7 @@ keys:
     regen: true
   app-mySSHKey:
     type: ssh`
-	req.Body = ioutil.NopCloser(strings.NewReader(body))
+	req.Body = io.NopCloser(strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/x-yaml")
 
 	//Do the request
@@ -586,7 +586,7 @@ func Test_postApplicationImportHandler_ExistingAppFromYAMLWithoutForce(t *testin
 
 	body := `version: v1.0
 name: myNewApp`
-	req.Body = ioutil.NopCloser(strings.NewReader(body))
+	req.Body = io.NopCloser(strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/x-yaml")
 
 	//Do the request
@@ -620,7 +620,7 @@ func Test_postApplicationImportHandler_ExistingAppFromYAMLInheritPermissions(t *
 
 	body := `version: v1.0
 name: myNewApp`
-	req.Body = ioutil.NopCloser(strings.NewReader(body))
+	req.Body = io.NopCloser(strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/x-yaml")
 
 	//Do the request
@@ -706,7 +706,7 @@ func Test_postApplicationImportHandler_ExistingAppWithDeploymentStrategy(t *test
 
 	body = strings.Replace(body, "my-url-2", "my-url-3", 1)
 
-	req.Body = ioutil.NopCloser(strings.NewReader(body))
+	req.Body = io.NopCloser(strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/x-yaml")
 
 	//Do the request
@@ -814,7 +814,7 @@ func Test_postApplicationImportHandler_DontOverrideDeploymentPasswordIfNotGiven(
 
 	buf, err := yaml.Marshal(appUpdated)
 	test.NoError(t, err)
-	req.Body = ioutil.NopCloser(bytes.NewReader(buf))
+	req.Body = io.NopCloser(bytes.NewReader(buf))
 	req.Header.Set("Content-Type", "application/x-yaml")
 
 	rec := httptest.NewRecorder()

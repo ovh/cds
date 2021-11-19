@@ -83,11 +83,11 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
                 this._cd.markForCheck();
                 return;
             }
-
             if (this.currentNodeJobRun && rj.id === this.currentNodeJobRun.id && this.currentNodeJobRun?.status === rj?.status) {
                 if (this.currentNodeJobRun?.job?.pipeline_action_id === rj.job.pipeline_action_id) {
                     const stepStatusChanged = rj.job.step_status?.length !== this.currentNodeJobRun.job.step_status?.length;
-                    if (!stepStatusChanged) {
+                    const addParameters = !this.currentNodeJobRun.parameters && rj.parameters;
+                    if (!stepStatusChanged && !addParameters) {
                         return;
                     }
                 }
