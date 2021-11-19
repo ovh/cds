@@ -155,21 +155,43 @@ func TestHatcheryVSphere_createVirtualMachineTemplate(t *testing.T) {
 		},
 	).AnyTimes()
 
+	c.EXPECT().CreateTemporaryDirectoryInGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
+		func(ctx context.Context, procman *guest.ProcessManager, req *types.CreateTemporaryDirectoryInGuest) (*types.CreateTemporaryDirectoryInGuestResponse, error) {
+			return &types.CreateTemporaryDirectoryInGuestResponse{
+				Returnval: "/tmp",
+			}, nil
+		},
+	).AnyTimes()
+
+	c.EXPECT().CreateTemporaryFileInGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
+		func(ctx context.Context, procman *guest.ProcessManager, req *types.CreateTemporaryFileInGuest) (*types.CreateTemporaryFileInGuestResponse, error) {
+			return &types.CreateTemporaryFileInGuestResponse{
+				Returnval: "file",
+			}, nil
+		},
+	).AnyTimes()
+
 	c.EXPECT().StartProgramInGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
-		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (int64, error) {
+		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (*types.StartProgramInGuestResponse, error) {
 			assert.Equal(t, "/bin/echo", req.Spec.GetGuestProgramSpec().ProgramPath)
-			assert.Equal(t, "-n ;env", req.Spec.GetGuestProgramSpec().Arguments)
-			return 1, nil
+			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "-n ;env")
+			return &types.StartProgramInGuestResponse{}, nil
 		},
 	)
 
 	c.EXPECT().StartProgramInGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
-		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (int64, error) {
+		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (*types.StartProgramInGuestResponse, error) {
 			assert.Equal(t, "/bin/echo", req.Spec.GetGuestProgramSpec().ProgramPath)
-			assert.Equal(t, "-n ;shutdown -h now", req.Spec.GetGuestProgramSpec().Arguments)
-			return 1, nil
+			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "shutdown -h now")
+			return &types.StartProgramInGuestResponse{}, nil
 		},
 	)
+
+	c.EXPECT().WaitProcessInGuest(gomock.Any(), &procman, gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, procman *guest.ProcessManager, req *types.ListProcessesInGuest, retryDelay, timeout time.Duration) (int, error) {
+			return 0, nil
+		},
+	).AnyTimes()
 
 	c.EXPECT().WaitForVirtualMachineShutdown(gomock.Any(), &clonedVM).DoAndReturn(
 		func(ctx context.Context, vm *object.VirtualMachine) error {
@@ -232,16 +254,32 @@ func TestHatcheryVSphere_launchScriptWorker(t *testing.T) {
 		},
 	).AnyTimes()
 
+	c.EXPECT().CreateTemporaryDirectoryInGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
+		func(ctx context.Context, procman *guest.ProcessManager, req *types.CreateTemporaryDirectoryInGuest) (*types.CreateTemporaryDirectoryInGuestResponse, error) {
+			return &types.CreateTemporaryDirectoryInGuestResponse{
+				Returnval: "/tmp",
+			}, nil
+		},
+	).AnyTimes()
+
+	c.EXPECT().CreateTemporaryFileInGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
+		func(ctx context.Context, procman *guest.ProcessManager, req *types.CreateTemporaryFileInGuest) (*types.CreateTemporaryFileInGuestResponse, error) {
+			return &types.CreateTemporaryFileInGuestResponse{
+				Returnval: "file",
+			}, nil
+		},
+	).AnyTimes()
+
 	c.EXPECT().StartProgramInGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
-		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (int64, error) {
+		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (*types.StartProgramInGuestResponse, error) {
 			assert.Equal(t, "/bin/echo", req.Spec.GetGuestProgramSpec().ProgramPath)
-			assert.Equal(t, "-n ;env", req.Spec.GetGuestProgramSpec().Arguments)
-			return 1, nil
+			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "-n ;env")
+			return &types.StartProgramInGuestResponse{}, nil
 		},
 	)
 
 	c.EXPECT().StartProgramInGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
-		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (int64, error) {
+		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (*types.StartProgramInGuestResponse, error) {
 			assert.Equal(t, "/bin/echo", req.Spec.GetGuestProgramSpec().ProgramPath)
 			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "-n ;\n")
 			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "./worker register\nshutdown -h now")
@@ -252,9 +290,15 @@ func TestHatcheryVSphere_launchScriptWorker(t *testing.T) {
 				}
 			}
 			assert.True(t, foundConfig, "CDS_CONFIG env variable should be set")
-			return 1, nil
+			return &types.StartProgramInGuestResponse{}, nil
 		},
 	)
+
+	c.EXPECT().WaitProcessInGuest(gomock.Any(), &procman, gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, procman *guest.ProcessManager, req *types.ListProcessesInGuest, retryDelay, timeout time.Duration) (int, error) {
+			return 0, nil
+		},
+	).AnyTimes()
 
 	err := h.launchScriptWorker(ctx, "worker1", -1, "xxxxxxxx", validModel, true, &vm)
 	require.NoError(t, err)
@@ -398,19 +442,35 @@ func TestHatcheryVSphere_SpawnWorker(t *testing.T) {
 		},
 	).AnyTimes()
 
+	c.EXPECT().CreateTemporaryDirectoryInGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
+		func(ctx context.Context, procman *guest.ProcessManager, req *types.CreateTemporaryDirectoryInGuest) (*types.CreateTemporaryDirectoryInGuestResponse, error) {
+			return &types.CreateTemporaryDirectoryInGuestResponse{
+				Returnval: "/tmp",
+			}, nil
+		},
+	).AnyTimes()
+
+	c.EXPECT().CreateTemporaryFileInGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
+		func(ctx context.Context, procman *guest.ProcessManager, req *types.CreateTemporaryFileInGuest) (*types.CreateTemporaryFileInGuestResponse, error) {
+			return &types.CreateTemporaryFileInGuestResponse{
+				Returnval: "file",
+			}, nil
+		},
+	).AnyTimes()
+
 	c.EXPECT().StartProgramInGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
-		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (int64, error) {
+		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (*types.StartProgramInGuestResponse, error) {
 			assert.Equal(t, "/bin/echo", req.Spec.GetGuestProgramSpec().ProgramPath)
-			assert.Equal(t, "-n ;env", req.Spec.GetGuestProgramSpec().Arguments)
-			return 1, nil
+			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "-n ;env")
+			return &types.StartProgramInGuestResponse{}, nil
 		},
 	)
 
 	c.EXPECT().StartProgramInGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
-		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (int64, error) {
+		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (*types.StartProgramInGuestResponse, error) {
 			assert.Equal(t, "/bin/echo", req.Spec.GetGuestProgramSpec().ProgramPath)
 			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "-n ;\n")
-			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "./worker\nshutdown -h now")
+			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "shutdown -h now")
 			var foundConfig bool
 			for _, env := range req.Spec.GetGuestProgramSpec().EnvVariables {
 				if strings.HasPrefix(env, "CDS_CONFIG=") {
@@ -418,9 +478,15 @@ func TestHatcheryVSphere_SpawnWorker(t *testing.T) {
 				}
 			}
 			assert.True(t, foundConfig, "CDS_CONFIG env variable should be set")
-			return 1, nil
+			return &types.StartProgramInGuestResponse{}, nil
 		},
 	)
+
+	c.EXPECT().WaitProcessInGuest(gomock.Any(), &procman, gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, procman *guest.ProcessManager, req *types.ListProcessesInGuest, retryDelay, timeout time.Duration) (int, error) {
+			return 0, nil
+		},
+	).AnyTimes()
 
 	err := h.SpawnWorker(ctx, hatchery.SpawnArguments{
 		WorkerName:  "worker-name",
@@ -584,18 +650,36 @@ func TestHatcheryVSphere_SpawnWorkerFromProvisioning(t *testing.T) {
 		},
 	).AnyTimes()
 
+	c.EXPECT().CreateTemporaryDirectoryInGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
+		func(ctx context.Context, procman *guest.ProcessManager, req *types.CreateTemporaryDirectoryInGuest) (*types.CreateTemporaryDirectoryInGuestResponse, error) {
+			return &types.CreateTemporaryDirectoryInGuestResponse{
+				Returnval: "/tmp",
+			}, nil
+		},
+	).AnyTimes()
+
+	c.EXPECT().CreateTemporaryFileInGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
+		func(ctx context.Context, procman *guest.ProcessManager, req *types.CreateTemporaryFileInGuest) (*types.CreateTemporaryFileInGuestResponse, error) {
+			return &types.CreateTemporaryFileInGuestResponse{
+				Returnval: "file",
+			}, nil
+		},
+	).AnyTimes()
+
 	c.EXPECT().StartProgramInGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
-		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (int64, error) {
+		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (*types.StartProgramInGuestResponse, error) {
 			assert.Equal(t, "/bin/echo", req.Spec.GetGuestProgramSpec().ProgramPath)
-			assert.Equal(t, "-n ;env", req.Spec.GetGuestProgramSpec().Arguments)
-			return 1, nil
+			assert.Equal(t, "-n ;env 2>&1 >file", req.Spec.GetGuestProgramSpec().Arguments)
+			return &types.StartProgramInGuestResponse{
+				Returnval: 0,
+			}, nil
 		},
 	)
 
 	c.EXPECT().StartProgramInGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
-		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (int64, error) {
+		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (*types.StartProgramInGuestResponse, error) {
 			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "-n ;\n")
-			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "./worker\nshutdown -h now")
+			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "./worker\nshutdown -h now 2>&1 >file")
 			var foundConfig bool
 			for _, env := range req.Spec.GetGuestProgramSpec().EnvVariables {
 				if strings.HasPrefix(env, "CDS_CONFIG=") {
@@ -603,9 +687,15 @@ func TestHatcheryVSphere_SpawnWorkerFromProvisioning(t *testing.T) {
 				}
 			}
 			assert.True(t, foundConfig, "CDS_CONFIG env variable should be set")
-			return 1, nil
+			return &types.StartProgramInGuestResponse{}, nil
 		},
 	)
+
+	c.EXPECT().WaitProcessInGuest(gomock.Any(), &procman, gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, procman *guest.ProcessManager, req *types.ListProcessesInGuest, retryDelay, timeout time.Duration) (int, error) {
+			return 0, nil
+		},
+	).AnyTimes()
 
 	err := h.SpawnWorker(ctx, hatchery.SpawnArguments{
 		WorkerName:  "worker-name",

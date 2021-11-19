@@ -3,6 +3,7 @@ package vsphere
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 	"github.com/ovh/cds/sdk"
@@ -337,18 +338,40 @@ func TestHatcheryVSphere_launchClientOp(t *testing.T) {
 		},
 	)
 
+	c.EXPECT().CreateTemporaryDirectoryInGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
+		func(ctx context.Context, procman *guest.ProcessManager, req *types.CreateTemporaryDirectoryInGuest) (*types.CreateTemporaryDirectoryInGuestResponse, error) {
+			return &types.CreateTemporaryDirectoryInGuestResponse{
+				Returnval: "/tmp",
+			}, nil
+		},
+	).AnyTimes()
+
+	c.EXPECT().CreateTemporaryFileInGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
+		func(ctx context.Context, procman *guest.ProcessManager, req *types.CreateTemporaryFileInGuest) (*types.CreateTemporaryFileInGuestResponse, error) {
+			return &types.CreateTemporaryFileInGuestResponse{
+				Returnval: "file",
+			}, nil
+		},
+	).AnyTimes()
+
 	c.EXPECT().StartProgramInGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
-		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (int64, error) {
+		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (*types.StartProgramInGuestResponse, error) {
 			t.Logf("req: %+v", req.Spec.GetGuestProgramSpec())
 			assert.Equal(t, "user", req.Auth.(*types.NamePasswordAuthentication).Username)
 			assert.Equal(t, "password", req.Auth.(*types.NamePasswordAuthentication).Password)
 			assert.Equal(t, "/bin/echo", req.Spec.GetGuestProgramSpec().ProgramPath)
-			assert.Equal(t, "-n ;this is a script", req.Spec.GetGuestProgramSpec().Arguments)
+			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "-n ;this is a script")
 			assert.EqualValues(t, []string{"env=1"}, req.Spec.GetGuestProgramSpec().EnvVariables)
-			return 1, nil
+			return &types.StartProgramInGuestResponse{}, nil
 		},
 	)
 
+	c.EXPECT().WaitProcessInGuest(gomock.Any(), &procman, gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, procman *guest.ProcessManager, req *types.ListProcessesInGuest, retryDelay, timeout time.Duration) (int, error) {
+			return 0, nil
+		},
+	).AnyTimes()
+
 	ctx := context.Background()
-	h.launchClientOp(ctx, &vm, model, "this is a script", []string{"env=1"})
+	h.launchClientOp(ctx, &vm, model, "this is a script", []string{"env=1"}, 1)
 }

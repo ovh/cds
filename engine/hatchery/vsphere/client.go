@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/rockbears/log"
 	"github.com/vmware/govmomi/object"
@@ -293,10 +294,11 @@ func (h *HatcheryVSphere) prepareCloneSpec(ctx context.Context, vm *object.Virtu
 }
 
 // launchClientOp launch a script on the virtual machine given in parameters
-func (h *HatcheryVSphere) launchClientOp(ctx context.Context, vm *object.VirtualMachine, model sdk.ModelVirtualMachine, script string, env []string) (int64, error) {
+// https://kb.vmware.com/s/article/70711
+func (h *HatcheryVSphere) launchClientOp(ctx context.Context, vm *object.VirtualMachine, model sdk.ModelVirtualMachine, script string, env []string, maxDuration time.Duration) error {
 	procman, err := h.vSphereClient.ProcessManager(ctx, vm)
 	if err != nil {
-		return -1, err
+		return err
 	}
 
 	auth := types.NamePasswordAuthentication{
@@ -304,10 +306,27 @@ func (h *HatcheryVSphere) launchClientOp(ctx context.Context, vm *object.Virtual
 		Password: model.Password,
 	}
 
+	tmpDir, err := h.vSphereClient.CreateTemporaryDirectoryInGuest(ctx, procman, &types.CreateTemporaryDirectoryInGuest{
+		This: procman.Reference(),
+		Vm:   vm.Reference(),
+		Auth: &auth,
+	})
+	if err != nil {
+		return err
+	}
+
+	stdIO, err := h.vSphereClient.CreateTemporaryFileInGuest(ctx, procman, &types.CreateTemporaryFileInGuest{
+		This:          procman.Reference(),
+		Vm:            procman.Reference(),
+		Auth:          &auth,
+		DirectoryPath: tmpDir.Returnval,
+	})
+
 	guestspec := types.GuestProgramSpec{
-		ProgramPath:  "/bin/echo",
-		Arguments:    "-n ;" + script,
-		EnvVariables: env,
+		ProgramPath:      "/bin/echo",
+		Arguments:        "-n ;" + script + " 2>&1 >" + stdIO.Returnval,
+		EnvVariables:     env,
+		WorkingDirectory: tmpDir.Returnval,
 	}
 
 	req := types.StartProgramInGuest{
@@ -319,5 +338,25 @@ func (h *HatcheryVSphere) launchClientOp(ctx context.Context, vm *object.Virtual
 
 	log.Debug(ctx, "starting program %+v in guest...", guestspec)
 
-	return h.vSphereClient.StartProgramInGuest(ctx, procman, &req)
+	response, err := h.vSphereClient.StartProgramInGuest(ctx, procman, &req)
+	if err != nil {
+		return err
+	}
+
+	h.GoRoutines.Exec(ctx, vm.Name()+"-exec", func(ctx context.Context) {
+		code, err := h.vSphereClient.WaitProcessInGuest(ctx, procman, &types.ListProcessesInGuest{
+			This: procman.Reference(),
+			Vm:   vm.Reference(),
+			Auth: &auth,
+			Pids: []int64{response.Returnval},
+		}, maxDuration/10, maxDuration)
+		if err != nil {
+			ctx := log.ContextWithStackTrace(ctx, err)
+			log.Error(ctx, "%q process error: %v", vm.Name(), err)
+		}
+
+		log.Info(ctx, "script exited with status %d", code)
+	})
+
+	return err
 }
