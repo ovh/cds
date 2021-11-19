@@ -12,6 +12,7 @@ import (
 	"os/user"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
@@ -770,6 +771,11 @@ func (w *CurrentWorker) setupHooks(ctx context.Context, jobInfo sdk.WorkflowNode
 }
 
 func (w *CurrentWorker) executeHooksSetup(ctx context.Context, basedir afero.Fs, workingDir string) error {
+	if strings.EqualFold(runtime.GOOS, "windows") {
+		log.Warn(ctx, "hooks are not supported on windows")
+		return nil
+	}
+
 	var result = make(map[string]string)
 	var setupDir = path.Join(workingDir, "setup")
 
