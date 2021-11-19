@@ -40,7 +40,7 @@ func RunArtifactDownload(ctx context.Context, wk workerruntime.Runtime, a sdk.Ac
 		destinationWorkflow = actionWorkflow
 	}
 	destinationWorkflowNum := number
-	if actionRunNumber != "0" {
+	if actionRunNumber != "0" && actionRunNumber != "" {
 		destinationWorkflowNum = actionRunNumber
 	}
 
