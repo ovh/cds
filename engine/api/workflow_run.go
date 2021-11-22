@@ -982,6 +982,7 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 		project.LoadOptions.WithVariables,
 		project.LoadOptions.WithKeys,
 		project.LoadOptions.WithIntegrations,
+		project.LoadOptions.WithGroups,
 	)
 	if err != nil {
 		r := failInitWorkflowRun(ctx, api.mustDB(), wfRun, sdk.WrapError(err, "cannot load project for as code workflow creation"))
@@ -1091,7 +1092,7 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 	}
 
 	if exist := featureflipping.Exists(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeatureRegion); exist {
-		if err := workflow.CheckRegion(ctx, api.mustDB(), wfRun.Workflow); err != nil {
+		if err := workflow.CheckRegion(ctx, api.mustDB(), *p, wfRun.Workflow); err != nil {
 			r := failInitWorkflowRun(ctx, api.mustDB(), wfRun, err)
 			report.Merge(ctx, r)
 			return report

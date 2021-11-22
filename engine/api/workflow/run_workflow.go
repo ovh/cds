@@ -190,13 +190,13 @@ func manualRun(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache
 	return report, nil
 }
 
-func CheckRegion(ctx context.Context, db gorp.SqlExecutor, wf sdk.Workflow) error {
+func CheckRegion(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, wf sdk.Workflow) error {
 	for _, projInt := range wf.ProjectIntegrations {
 		for _, c := range projInt.Config {
 			if c.Type != sdk.RegionRequirement {
 				continue
 			}
-			if !isRegionEnable(ctx, db, wf.ProjectKey, wf.Name, c.Value) {
+			if !isRegionEnable(ctx, db, proj.Key, proj.Organization, wf.Name, c.Value) {
 				return sdk.WrapError(sdk.ErrRegionNotAllowed, "Region %s not allowed for workflow %s", c.Value, wf.Name)
 			}
 		}
@@ -204,7 +204,7 @@ func CheckRegion(ctx context.Context, db gorp.SqlExecutor, wf sdk.Workflow) erro
 	for _, p := range wf.Pipelines {
 		for _, s := range p.Stages {
 			for _, j := range s.Jobs {
-				if err := checkJobRegion(ctx, db, wf.ProjectKey, wf.Name, j.Action.Requirements); err != nil {
+				if err := checkJobRegion(ctx, db, proj.Key, proj.Organization, wf.Name, j.Action.Requirements); err != nil {
 					return err
 				}
 			}
@@ -213,23 +213,24 @@ func CheckRegion(ctx context.Context, db gorp.SqlExecutor, wf sdk.Workflow) erro
 	return nil
 }
 
-func checkJobRegion(ctx context.Context, db gorp.SqlExecutor, projKey, wName string, jobRequirements sdk.RequirementList) error {
+func checkJobRegion(ctx context.Context, db gorp.SqlExecutor, projKey, projOrg, wName string, jobRequirements sdk.RequirementList) error {
 	for _, req := range jobRequirements {
 		if req.Type != sdk.RegionRequirement {
 			continue
 		}
-		if !isRegionEnable(ctx, db, projKey, wName, req.Value) {
+		if !isRegionEnable(ctx, db, projKey, projOrg, wName, req.Value) {
 			return sdk.WrapError(sdk.ErrRegionNotAllowed, "Region %s not allowed for workflow %s", req.Value, wName)
 		}
 	}
 	return nil
 }
 
-func isRegionEnable(ctx context.Context, db gorp.SqlExecutor, projKey, wName, region string) bool {
+func isRegionEnable(ctx context.Context, db gorp.SqlExecutor, projKey, projOrg, wName, region string) bool {
 	_, enabled := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, db, sdk.FeatureRegion, map[string]string{
-		"project_key":   projKey,
-		"workflow_name": wName,
-		"region":        region,
+		"project_key":          projKey,
+		"project_organization": projOrg,
+		"workflow_name":        wName,
+		"region":               region,
 	})
 	return enabled
 }

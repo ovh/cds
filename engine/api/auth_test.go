@@ -391,7 +391,7 @@ func generateToken(t *testing.T, username string) string {
 	ssoToken := corpsso.IssuedToken{
 		RemoteUser:     username,
 		RemoteUsername: username,
-		RemoteEmail:    username + "@planet-express.futurama",
+		Email:          username + "@planet-express.futurama",
 		Organization:   "planet-express",
 		Audience:       sdk.UUID(),
 		TokenID:        sdk.UUID(),

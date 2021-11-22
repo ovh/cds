@@ -228,7 +228,7 @@ func (d authDriver) GetUserInfo(ctx context.Context, req sdk.AuthConsumerSigninR
 	}
 	u.ExternalID = itk.RemoteUser
 	u.MFA = itk.MFA && d.Config.MFASupportEnabled
-	u.Email = itk.RemoteEmail
+	u.Email = itk.Email
 	u.ExternalTokenID = itk.TokenID
 	u.Organization = itk.Organization
 
@@ -239,10 +239,10 @@ type IssuedToken struct {
 	Audience       string   `json:"Audience"`
 	RemoteUser     string   `json:"RemoteUser"`
 	RemoteUsername string   `json:"RemoteUsername"`
-	RemoteEmail    string   `json:"RemoteEmail"`
+	Email          string   `json:"email"`
 	TokenID        string   `json:"TokenId"`
 	MFA            bool     `json:"MFA"`
 	IAT            int64    `json:"iat"`
-	Organization   string   `json:"Organization"`
+	Organization   string   `json:"org"`
 	Groups         []string `json:"Groups,omitempty"`
 }
