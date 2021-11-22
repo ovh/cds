@@ -338,22 +338,6 @@ func TestHatcheryVSphere_launchClientOp(t *testing.T) {
 		},
 	)
 
-	c.EXPECT().CreateTemporaryDirectoryInGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
-		func(ctx context.Context, procman *guest.ProcessManager, req *types.CreateTemporaryDirectoryInGuest) (*types.CreateTemporaryDirectoryInGuestResponse, error) {
-			return &types.CreateTemporaryDirectoryInGuestResponse{
-				Returnval: "/tmp",
-			}, nil
-		},
-	).AnyTimes()
-
-	c.EXPECT().CreateTemporaryFileInGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
-		func(ctx context.Context, procman *guest.ProcessManager, req *types.CreateTemporaryFileInGuest) (*types.CreateTemporaryFileInGuestResponse, error) {
-			return &types.CreateTemporaryFileInGuestResponse{
-				Returnval: "file",
-			}, nil
-		},
-	).AnyTimes()
-
 	c.EXPECT().StartProgramInGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
 		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (*types.StartProgramInGuestResponse, error) {
 			t.Logf("req: %+v", req.Spec.GetGuestProgramSpec())

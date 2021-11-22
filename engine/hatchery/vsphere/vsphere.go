@@ -42,8 +42,6 @@ type VSphereClient interface {
 	LoadResourcePool(ctx context.Context) (*object.ResourcePool, error)
 	LoadDatastore(ctx context.Context, name string) (*object.Datastore, error)
 	ProcessManager(ctx context.Context, vm *object.VirtualMachine) (*guest.ProcessManager, error)
-	CreateTemporaryDirectoryInGuest(ctx context.Context, procman *guest.ProcessManager, req *types.CreateTemporaryDirectoryInGuest) (*types.CreateTemporaryDirectoryInGuestResponse, error)
-	CreateTemporaryFileInGuest(ctx context.Context, procman *guest.ProcessManager, req *types.CreateTemporaryFileInGuest) (*types.CreateTemporaryFileInGuestResponse, error)
 	StartProgramInGuest(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (*types.StartProgramInGuestResponse, error)
 	WaitProcessInGuest(ctx context.Context, procman *guest.ProcessManager, req *types.ListProcessesInGuest, retryDelay, timeout time.Duration) (int, error)
 }

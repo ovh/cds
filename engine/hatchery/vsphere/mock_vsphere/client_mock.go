@@ -54,36 +54,6 @@ func (mr *MockVSphereClientMockRecorder) CloneVirtualMachine(ctx, vm, folder, na
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CloneVirtualMachine", reflect.TypeOf((*MockVSphereClient)(nil).CloneVirtualMachine), ctx, vm, folder, name, config)
 }
 
-// CreateTemporaryDirectoryInGuest mocks base method.
-func (m *MockVSphereClient) CreateTemporaryDirectoryInGuest(ctx context.Context, procman *guest.ProcessManager, req *types.CreateTemporaryDirectoryInGuest) (*types.CreateTemporaryDirectoryInGuestResponse, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateTemporaryDirectoryInGuest", ctx, procman, req)
-	ret0, _ := ret[0].(*types.CreateTemporaryDirectoryInGuestResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateTemporaryDirectoryInGuest indicates an expected call of CreateTemporaryDirectoryInGuest.
-func (mr *MockVSphereClientMockRecorder) CreateTemporaryDirectoryInGuest(ctx, procman, req interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateTemporaryDirectoryInGuest", reflect.TypeOf((*MockVSphereClient)(nil).CreateTemporaryDirectoryInGuest), ctx, procman, req)
-}
-
-// CreateTemporaryFileInGuest mocks base method.
-func (m *MockVSphereClient) CreateTemporaryFileInGuest(ctx context.Context, procman *guest.ProcessManager, req *types.CreateTemporaryFileInGuest) (*types.CreateTemporaryFileInGuestResponse, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateTemporaryFileInGuest", ctx, procman, req)
-	ret0, _ := ret[0].(*types.CreateTemporaryFileInGuestResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateTemporaryFileInGuest indicates an expected call of CreateTemporaryFileInGuest.
-func (mr *MockVSphereClientMockRecorder) CreateTemporaryFileInGuest(ctx, procman, req interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateTemporaryFileInGuest", reflect.TypeOf((*MockVSphereClient)(nil).CreateTemporaryFileInGuest), ctx, procman, req)
-}
-
 // DestroyVirtualMachine mocks base method.
 func (m *MockVSphereClient) DestroyVirtualMachine(ctx context.Context, vm *object.VirtualMachine) error {
 	m.ctrl.T.Helper()

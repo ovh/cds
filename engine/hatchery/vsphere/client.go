@@ -306,27 +306,10 @@ func (h *HatcheryVSphere) launchClientOp(ctx context.Context, vm *object.Virtual
 		Password: model.Password,
 	}
 
-	tmpDir, err := h.vSphereClient.CreateTemporaryDirectoryInGuest(ctx, procman, &types.CreateTemporaryDirectoryInGuest{
-		This: procman.Reference(),
-		Vm:   vm.Reference(),
-		Auth: &auth,
-	})
-	if err != nil {
-		return err
-	}
-
-	stdIO, err := h.vSphereClient.CreateTemporaryFileInGuest(ctx, procman, &types.CreateTemporaryFileInGuest{
-		This:          procman.Reference(),
-		Vm:            procman.Reference(),
-		Auth:          &auth,
-		DirectoryPath: tmpDir.Returnval,
-	})
-
 	guestspec := types.GuestProgramSpec{
-		ProgramPath:      "/bin/echo",
-		Arguments:        "-n ;" + script + " 2>&1 >" + stdIO.Returnval,
-		EnvVariables:     env,
-		WorkingDirectory: tmpDir.Returnval,
+		ProgramPath:  "/bin/echo",
+		Arguments:    "-n ;" + script + " 2>&1 > stdout",
+		EnvVariables: env,
 	}
 
 	req := types.StartProgramInGuest{
