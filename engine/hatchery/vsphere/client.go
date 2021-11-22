@@ -14,6 +14,7 @@ import (
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
+	cdslog "github.com/ovh/cds/sdk/log"
 )
 
 // get all servers on our host
@@ -326,7 +327,8 @@ func (h *HatcheryVSphere) launchClientOp(ctx context.Context, vm *object.Virtual
 		return err
 	}
 
-	h.GoRoutines.Exec(ctx, vm.Name()+"-exec", func(ctx context.Context) {
+	ctx2 := context.WithValue(context.Background(), cdslog.AuthWorkerName, vm.Name())
+	h.GoRoutines.Exec(ctx2, vm.Name()+"-exec", func(ctx context.Context) {
 		code, err := h.vSphereClient.WaitProcessInGuest(ctx, procman, &types.ListProcessesInGuest{
 			This: procman.Reference(),
 			Vm:   vm.Reference(),

@@ -15,6 +15,7 @@ import (
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
+	cdslog "github.com/ovh/cds/sdk/log"
 )
 
 type annotation struct {
@@ -32,6 +33,7 @@ type annotation struct {
 
 // SpawnWorker creates a new vm instance
 func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) (err error) {
+	ctx = context.WithValue(ctx, cdslog.AuthWorkerName, spawnArgs.WorkerName)
 	log.Info(ctx, "SpawnWorker %q", spawnArgs.WorkerName)
 	defer func() {
 		if err != nil {
