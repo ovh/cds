@@ -66,7 +66,7 @@ func (h *HatcherySwarm) Status(ctx context.Context) *sdk.MonitoringStatus {
 	for dockerName, dockerClient := range h.dockerClients {
 		//Check images
 		status := sdk.MonitoringStatusOK
-		ctxList, cancelList := context.WithTimeout(context.Background(), 20*time.Second)
+		ctxList, cancelList := context.WithTimeout(ctx, 20*time.Second)
 		defer cancelList()
 		images, err := dockerClient.ImageList(ctxList, types.ImageListOptions{All: true})
 		if err != nil {
@@ -77,7 +77,7 @@ func (h *HatcherySwarm) Status(ctx context.Context) *sdk.MonitoringStatus {
 		m.AddLine(sdk.MonitoringStatusLine{Component: "Images-" + dockerName, Value: fmt.Sprintf("%d", len(images)), Status: status})
 		//Check containers
 		status = sdk.MonitoringStatusOK
-		cs, err := h.getContainers(dockerClient, types.ContainerListOptions{All: true})
+		cs, err := h.getContainers(ctx, dockerClient, types.ContainerListOptions{All: true})
 		if err != nil {
 			log.Warn(ctx, "hatchery> swarm> %s> Status> Unable to list containers on %s: %s", h.Name(), dockerName, err)
 			status = sdk.MonitoringStatusWarn

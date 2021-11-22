@@ -7,6 +7,15 @@ import (
 	hatcheryCommon "github.com/ovh/cds/engine/hatchery"
 )
 
+const (
+	LabelHatchery           = "hatchery"
+	LabelWorkerName         = "worker_name"
+	LabelServiceWorker      = "service_worker"
+	LabelServiceName        = "service_name"
+	LabelWorkerRequirements = "worker_requirements"
+	LabelWorkerModelPath    = "worker_model_path"
+)
+
 // HatcheryConfiguration is the configuration for hatchery
 type HatcheryConfiguration struct {
 	service.HatcheryCommonConfiguration `mapstructure:"commonConfiguration" toml:"commonConfiguration"`
