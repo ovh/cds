@@ -1,12 +1,10 @@
 package workflowv3
 
 import (
-	"fmt"
 	"sort"
 	"time"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/slug"
 )
 
 func ConvertRun(wr *sdk.WorkflowRun, isFullExport bool) WorkflowRun {
@@ -31,7 +29,18 @@ func ConvertRun(wr *sdk.WorkflowRun, isFullExport bool) WorkflowRun {
 			node := wr.Workflow.WorkflowData.NodeByID(exec.WorkflowNodeID)
 			for _, s := range exec.Stages {
 				for _, j := range s.RunJobs {
-					jName := slug.Convert(fmt.Sprintf("%s-%s-%s-%d", node.Name, s.Name, j.Job.Action.Name, j.Job.Action.ID))
+					jID := computeJobUniqueID(node.Name, s.Name, j.Job.Action.Name, j.Job.Action.ID)
+					var jName string
+					for name, job := range res.Workflow.Jobs {
+						if job.ID == jID {
+							jName = name
+							break
+						}
+					}
+					if jName == "" {
+						continue
+					}
+
 					if _, ok := res.JobRuns[jName]; !ok {
 						res.JobRuns[jName] = nil
 					}

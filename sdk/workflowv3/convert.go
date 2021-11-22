@@ -212,9 +212,10 @@ func computeNodePipelineJobs(w sdk.Workflow, pipelineID int64, nodeName string, 
 
 		var stageJobNames []string
 		for _, j := range s.Jobs {
-			jName := slug.Convert(fmt.Sprintf("%s-%s-%s-%d", nodeName, s.Name, j.Action.Name, j.Action.ID))
+			jName := computeJobName(res.allJobs, nodeName, s.Name, j.Action.Name, j.Action.ID)
 			stageJobNames = append(stageJobNames, jName)
 			newJob := ConvertJob(j, isFullExport)
+			newJob.ID = computeJobUniqueID(nodeName, s.Name, j.Action.Name, j.Action.ID)
 			if len(previousStagesJobNames) > 0 {
 				newJob.DependsOn = append(newJob.DependsOn, previousStagesJobNames...)
 			}
@@ -231,6 +232,29 @@ func computeNodePipelineJobs(w sdk.Workflow, pipelineID int64, nodeName string, 
 	}
 
 	return res
+}
+
+func computeJobUniqueID(nodeName, stageName, actionName string, actionID int64) string {
+	return slug.Convert(fmt.Sprintf("%s-%s-%s-%d", nodeName, stageName, actionName, actionID))
+}
+
+func computeJobName(allJobs map[string]*Job, nodeName, stageName, actionName string, actionID int64) string {
+	jName := slug.Convert(actionName)
+	if _, ok := allJobs[jName]; !ok {
+		return jName
+	}
+
+	jName = slug.Convert(fmt.Sprintf("%s-%s", stageName, actionName))
+	if _, ok := allJobs[jName]; !ok {
+		return jName
+	}
+
+	jName = slug.Convert(fmt.Sprintf("%s-%s-%s", nodeName, stageName, actionName))
+	if _, ok := allJobs[jName]; !ok {
+		return jName
+	}
+
+	return computeJobUniqueID(nodeName, stageName, actionName, actionID)
 }
 
 func splitAppVariablesByType(vs []sdk.ApplicationVariable) (variables, secrets []sdk.ApplicationVariable) {

@@ -93,8 +93,8 @@ func TestHatcherySwarm_ListAwolWorker(t *testing.T) {
 			ID:    "swarmy-model1-w1",
 			Names: []string{"swarmy-model1-w1"},
 			Labels: map[string]string{
-				"hatchery":    "swarmy",
-				"worker_name": "swarmy-model1-w1",
+				LabelHatchery:   "swarmy",
+				LabelWorkerName: "swarmy-model1-w1",
 			},
 			Created: d1h.Unix(),
 		},
@@ -102,8 +102,8 @@ func TestHatcherySwarm_ListAwolWorker(t *testing.T) {
 			ID:    "swarmy-model1-w2",
 			Names: []string{"swarmy-model1-w2"},
 			Labels: map[string]string{
-				"hatchery":    "swarmy",
-				"worker_name": "swarmy-model1-w2",
+				LabelHatchery:   "swarmy",
+				LabelWorkerName: "swarmy-model1-w2",
 			},
 			Created: d1h.Unix(),
 		},
@@ -111,8 +111,8 @@ func TestHatcherySwarm_ListAwolWorker(t *testing.T) {
 			ID:    "swarmy-model1-w3",
 			Names: []string{"swarmy-model1-w3"},
 			Labels: map[string]string{
-				"hatchery":    "swarmy",
-				"worker_name": "swarmy-model1-w3",
+				LabelHatchery:   "swarmy",
+				LabelWorkerName: "swarmy-model1-w3",
 			},
 			Created: time.Now().Unix(),
 		},
@@ -120,8 +120,8 @@ func TestHatcherySwarm_ListAwolWorker(t *testing.T) {
 			ID:    "swarmy2-model1-w4",
 			Names: []string{"swarmy2-model1-w4"},
 			Labels: map[string]string{
-				"hatchery":    "swarmy2",
-				"worker_name": "swarmy2-model1-w4",
+				LabelHatchery:   "swarmy2",
+				LabelWorkerName: "swarmy2-model1-w4",
 			},
 			Created: d1h.Unix(),
 		},
@@ -129,8 +129,8 @@ func TestHatcherySwarm_ListAwolWorker(t *testing.T) {
 			ID:    "swarmy-model1-w4",
 			Names: []string{"swarmy-model1-w4"},
 			Labels: map[string]string{
-				"hatchery":    "swarmy",
-				"worker_name": "swarmy-model1-w4",
+				LabelHatchery:   "swarmy",
+				LabelWorkerName: "swarmy-model1-w4",
 			},
 			Created: d1h.Unix(),
 			NetworkSettings: &types.SummaryNetworkSettings{
@@ -239,22 +239,22 @@ func TestHatcherySwarm_WorkersStarted(t *testing.T) {
 		{
 			Names: []string{"postgresql"},
 			Labels: map[string]string{
-				"hatchery":    "swarmy",
-				"worker_name": "w1",
+				LabelHatchery:   "swarmy",
+				LabelWorkerName: "w1",
 			},
 		},
 		{
 			Names: []string{"postgresql"},
 			Labels: map[string]string{
-				"hatchery":    "swarmy2",
-				"worker_name": "w3",
+				LabelHatchery:   "swarmy2",
+				LabelWorkerName: "w3",
 			},
 		},
 		{
 			Names: []string{"postgresql"},
 			Labels: map[string]string{
-				"hatchery":    "swarmy",
-				"worker_name": "w2",
+				LabelHatchery:   "swarmy",
+				LabelWorkerName: "w2",
 			},
 		},
 	}
@@ -289,7 +289,7 @@ func TestHatcherySwarm_Spawn(t *testing.T) {
 		{
 			Names: []string{"postgresql"},
 			Labels: map[string]string{
-				"hatchery": "swarmy",
+				LabelHatchery: "swarmy",
 			},
 		},
 	}
@@ -339,6 +339,7 @@ func TestHatcherySwarm_Spawn(t *testing.T) {
 func TestHatcherySwarm_SpawnMaxContainerReached(t *testing.T) {
 	defer gock.Off()
 	h := InitTestHatcherySwarm(t)
+	h.Config.Name = "swarmy"
 	h.dockerClients["default"].MaxContainers = 1
 
 	m := sdk.Model{
@@ -354,7 +355,7 @@ func TestHatcherySwarm_SpawnMaxContainerReached(t *testing.T) {
 		{
 			Names: []string{"postgresql"},
 			Labels: map[string]string{
-				"hatchery": "swarmy",
+				LabelHatchery: "swarmy",
 			},
 		},
 	}
@@ -401,6 +402,7 @@ func TestHatcherySwarm_CanSpawn(t *testing.T) {
 func TestHatcherySwarm_MaxContainerReached(t *testing.T) {
 	defer gock.Off()
 	h := InitTestHatcherySwarm(t)
+	h.Config.Name = "swarmy"
 	h.dockerClients["default"].MaxContainers = 2
 	m := sdk.Model{
 		ID:   1,
@@ -416,13 +418,13 @@ func TestHatcherySwarm_MaxContainerReached(t *testing.T) {
 		{
 			Names: []string{"worker1"},
 			Labels: map[string]string{
-				"hatchery": "swarmy",
+				LabelHatchery: "swarmy",
 			},
 		},
 		{
 			Names: []string{"worker2"},
 			Labels: map[string]string{
-				"hatchery": "swarmy",
+				LabelHatchery: "swarmy",
 			},
 		},
 	}
@@ -481,29 +483,29 @@ func TestHatcherySwarm_MaxContainerRatioPercentReached(t *testing.T) {
 		{
 			Names: []string{"worker1"},
 			Labels: map[string]string{
-				"hatchery":    "swarmy",
-				"worker_name": "w1",
+				LabelHatchery:   "swarmy",
+				LabelWorkerName: "w1",
 			},
 		},
 		{
 			Names: []string{"worker2"},
 			Labels: map[string]string{
-				"hatchery":    "swarmy",
-				"worker_name": "w2",
+				LabelHatchery:   "swarmy",
+				LabelWorkerName: "w2",
 			},
 		},
 		{
 			Names: []string{"worker3"},
 			Labels: map[string]string{
-				"hatchery":    "swarmy",
-				"worker_name": "w3",
+				LabelHatchery:   "swarmy",
+				LabelWorkerName: "w3",
 			},
 		},
 		{
 			Names: []string{"worker4"},
 			Labels: map[string]string{
-				"hatchery":    "swarmy",
-				"worker_name": "w4",
+				LabelHatchery:   "swarmy",
+				LabelWorkerName: "w4",
 			},
 		},
 	}
@@ -536,13 +538,13 @@ func TestHatcherySwarm_MaxContainerRatioPercentOK(t *testing.T) {
 		{
 			Names: []string{"worker1"},
 			Labels: map[string]string{
-				"hatchery": "swarmy",
+				LabelHatchery: "swarmy",
 			},
 		},
 		{
 			Names: []string{"worker2"},
 			Labels: map[string]string{
-				"hatchery": "swarmy",
+				LabelHatchery: "swarmy",
 			},
 		},
 	}

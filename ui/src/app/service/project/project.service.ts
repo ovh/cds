@@ -27,13 +27,11 @@ export class ProjectService {
 
         if (Array.isArray(opts) && opts.length) {
             opts = opts.concat([
-                new LoadOpts('withGroups', 'groups'),
-                new LoadOpts('withPermission', 'permission')
+                new LoadOpts('withGroups', 'groups')
             ]);
         } else {
             opts = [
-                new LoadOpts('withGroups', 'groups'),
-                new LoadOpts('withPermission', 'permission')
+                new LoadOpts('withGroups', 'groups')
             ];
         }
         opts.push(new LoadOpts('withFeatures', 'features'));
