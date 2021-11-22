@@ -499,7 +499,7 @@ jobLoop:
 		}
 
 		if exist := featureflipping.Exists(ctx, gorpmapping.Mapper, db, sdk.FeatureRegion); exist {
-			if err := checkJobRegion(ctx, db, wr.Workflow.ProjectKey, wr.Workflow.Name, *job); err != nil {
+			if err := checkJobRegion(ctx, db, wr.Workflow.ProjectKey, wr.Workflow.Name, jobRequirements); err != nil {
 				spawnErrs.Append(sdk.ErrRegionNotAllowed)
 			}
 		}
