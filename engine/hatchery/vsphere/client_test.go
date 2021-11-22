@@ -356,6 +356,16 @@ func TestHatcheryVSphere_launchClientOp(t *testing.T) {
 		},
 	).AnyTimes()
 
+	c.EXPECT().InitiateFileTransferFromGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
+		func(ctx context.Context, procman *guest.ProcessManager, req *types.InitiateFileTransferFromGuest) (*types.InitiateFileTransferFromGuestResponse, error) {
+			return &types.InitiateFileTransferFromGuestResponse{
+				Returnval: types.FileTransferInformation{
+					Url: "my-url",
+				},
+			}, nil
+		},
+	).AnyTimes()
+
 	ctx := context.Background()
 	h.launchClientOp(ctx, &vm, model, "this is a script", []string{"env=1"}, 1)
 }

@@ -3,7 +3,6 @@ package vsphere
 import (
 	"context"
 	"fmt"
-	"io"
 	"time"
 
 	"github.com/pkg/errors"
@@ -44,6 +43,7 @@ type VSphereClient interface {
 	ProcessManager(ctx context.Context, vm *object.VirtualMachine) (*guest.ProcessManager, error)
 	StartProgramInGuest(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (*types.StartProgramInGuestResponse, error)
 	WaitProcessInGuest(ctx context.Context, procman *guest.ProcessManager, req *types.ListProcessesInGuest, retryDelay, timeout time.Duration) (int, error)
+	InitiateFileTransferFromGuest(ctx context.Context, procman *guest.ProcessManager, req *types.InitiateFileTransferFromGuest) (*types.InitiateFileTransferFromGuestResponse, error)
 }
 
 func NewVSphereClient(vclient *govmomi.Client, datacenter string) VSphereClient {
@@ -317,9 +317,7 @@ func (c *vSphereClient) WaitProcessInGuest(ctx context.Context, procman *guest.P
 
 	for {
 		log.Debug(ctx, "checking process %d", req.Pids[0])
-
-		select {
-		case <-ctx.Done():
+		if ctx.Err() != nil {
 			return -1, sdk.WrapError(ctx.Err(), "timeout expired")
 		}
 
@@ -340,11 +338,9 @@ func (c *vSphereClient) WaitProcessInGuest(ctx context.Context, procman *guest.P
 
 		time.Sleep(retryDelay)
 	}
-
-	return 0, nil
 }
 
-func (c *vSphereClient) InitiateFileTransferFromGuest(ctx context.Context, procman *guest.ProcessManager, req *types.InitiateFileTransferFromGuest) (io.Reader, error) {
+func (c *vSphereClient) InitiateFileTransferFromGuest(ctx context.Context, procman *guest.ProcessManager, req *types.InitiateFileTransferFromGuest) (*types.InitiateFileTransferFromGuestResponse, error) {
 	ctxB, cancel := context.WithTimeout(ctx, c.requestTimeout)
 	defer cancel()
 
@@ -353,7 +349,7 @@ func (c *vSphereClient) InitiateFileTransferFromGuest(ctx context.Context, procm
 		return nil, sdk.WrapError(err, "unable to InitiateFileTransferFromGuest(%s)", req.GuestFilePath)
 	}
 
-	_ = res
+	log.Info(ctx, "file %q url: %v", req.GuestFilePath, res.Returnval.Url)
 
 	return nil, nil
 }

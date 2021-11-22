@@ -83,6 +83,21 @@ func (mr *MockVSphereClientMockRecorder) GetVirtualMachinePowerState(ctx, vm int
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVirtualMachinePowerState", reflect.TypeOf((*MockVSphereClient)(nil).GetVirtualMachinePowerState), ctx, vm)
 }
 
+// InitiateFileTransferFromGuest mocks base method.
+func (m *MockVSphereClient) InitiateFileTransferFromGuest(ctx context.Context, procman *guest.ProcessManager, req *types.InitiateFileTransferFromGuest) (*types.InitiateFileTransferFromGuestResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "InitiateFileTransferFromGuest", ctx, procman, req)
+	ret0, _ := ret[0].(*types.InitiateFileTransferFromGuestResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// InitiateFileTransferFromGuest indicates an expected call of InitiateFileTransferFromGuest.
+func (mr *MockVSphereClientMockRecorder) InitiateFileTransferFromGuest(ctx, procman, req interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InitiateFileTransferFromGuest", reflect.TypeOf((*MockVSphereClient)(nil).InitiateFileTransferFromGuest), ctx, procman, req)
+}
+
 // ListVirtualMachines mocks base method.
 func (m *MockVSphereClient) ListVirtualMachines(ctx context.Context) ([]mo.VirtualMachine, error) {
 	m.ctrl.T.Helper()

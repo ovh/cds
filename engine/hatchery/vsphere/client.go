@@ -329,6 +329,11 @@ func (h *HatcheryVSphere) launchClientOp(ctx context.Context, vm *object.Virtual
 
 	ctx2 := context.WithValue(context.Background(), cdslog.AuthWorkerName, vm.Name())
 	h.GoRoutines.Exec(ctx2, vm.Name()+"-exec", func(ctx context.Context) {
+		defer func() {
+			if r := recover(); r != nil {
+				fmt.Println("panic recovery", r)
+			}
+		}()
 		code, err := h.vSphereClient.WaitProcessInGuest(ctx, procman, &types.ListProcessesInGuest{
 			This: procman.Reference(),
 			Vm:   vm.Reference(),
@@ -341,6 +346,17 @@ func (h *HatcheryVSphere) launchClientOp(ctx context.Context, vm *object.Virtual
 		}
 
 		log.Info(ctx, "script exited with status %d", code)
+
+		_, err = h.vSphereClient.InitiateFileTransferFromGuest(ctx, procman, &types.InitiateFileTransferFromGuest{
+			This:          procman.Reference(),
+			Vm:            vm.Reference(),
+			Auth:          &auth,
+			GuestFilePath: "stdout",
+		})
+		if err != nil {
+			ctx := log.ContextWithStackTrace(ctx, err)
+			log.Error(ctx, "unable to get stdout %v", err)
+		}
 	})
 
 	return err
