@@ -687,6 +687,7 @@ func (a *API) Serve(ctx context.Context) error {
 		driverConfig.Token.SigningKey = a.Config.Auth.CorporateSSO.Keys.TokenSigningKey
 		driverConfig.Token.KeySigningKey.KeySigningKey = a.Config.Auth.CorporateSSO.Keys.TokenKeySigningKey.KeySigningKey
 		driverConfig.Token.KeySigningKey.SigningKeyClaim = a.Config.Auth.CorporateSSO.Keys.TokenKeySigningKey.SigningKeyClaim
+		driverConfig.AllowedOrganizations = a.Config.Auth.AllowedOrganizations
 
 		a.AuthenticationDrivers[sdk.ConsumerCorporateSSO] = corpsso.NewDriver(driverConfig)
 	}

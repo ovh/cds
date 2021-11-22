@@ -74,6 +74,7 @@ func LoadGroupsIntoProject(ctx context.Context, db gorp.SqlExecutor, proj *sdk.P
 		return err
 	}
 
+	proj.ProjectGroups = make(sdk.GroupPermissions, 0, len(links))
 	for _, g := range groups {
 		p, has := groupIDsMap[g.ID]
 		if !has {

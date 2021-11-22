@@ -113,7 +113,7 @@ func processNodeJobRunRequirements(ctx context.Context, db gorp.SqlExecutor, j s
 		}
 	}
 
-	// Add plugin requirmeent if needed based on the os/arch of the job
+	// Add plugin requirement if needed based on the os/arch of the job
 	if len(integrationPlugins) > 0 {
 		var os, arch string
 
