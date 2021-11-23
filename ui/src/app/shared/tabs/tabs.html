@@ -1,6 +1,3 @@
 <sm-menu class="pointing secondary stackable">
-    <a *ngFor="let t of tabs" sm-item [class.active]="selected.key === t.key" (click)="clickSelect(t)">
-        <i *ngIf="t.icon" [ngClass]="[t.icon, 'icon']"></i>
-        {{t.translate | translate:t.translate_args}}
-    </a>
+    <app-tab *ngFor="let t of tabs" [tab]="t" [active]="selected.key === t.key" (onSelect)="clickSelect(t)"></app-tab>
 </sm-menu>

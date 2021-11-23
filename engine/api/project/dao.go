@@ -91,37 +91,28 @@ func LoadAll(ctx context.Context, db gorp.SqlExecutor, store cache.Store, opts .
 }
 
 // LoadPermissions loads all projects where group has access
-func LoadPermissions(db gorp.SqlExecutor, groupID int64) ([]sdk.ProjectGroup, error) {
-	res := []sdk.ProjectGroup{}
-	query := `
-		SELECT project.projectKey, project.name, project.last_modified, project_group.role
-		FROM project
-	 	JOIN project_group ON project_group.project_id = project.id
-	 	WHERE project_group.group_id = $1
-		ORDER BY project.name ASC`
-
-	rows, err := db.Query(query, groupID)
+func LoadPermissions(ctx context.Context, db gorp.SqlExecutor, groupID int64) ([]sdk.ProjectGroup, error) {
+	rows, err := db.Query(`
+    SELECT project.id, project.projectKey, project.name, project.last_modified, project_group.role
+    FROM project
+    JOIN project_group ON project_group.project_id = project.id
+    WHERE project_group.group_id = $1
+    ORDER BY project.name ASC
+  `, groupID)
 	if err != nil {
-		return nil, err
+		return nil, sdk.WithStack(err)
 	}
 	defer rows.Close()
 
+	res := []sdk.ProjectGroup{}
 	for rows.Next() {
-		var projectKey, projectName string
-		var perm int
-		var lastModified time.Time
-		if err := rows.Scan(&projectKey, &projectName, &lastModified, &perm); err != nil {
-			return nil, err
+		var pg sdk.ProjectGroup
+		if err := rows.Scan(&pg.Project.ID, &pg.Project.Key, &pg.Project.Name, &pg.Project.LastModified, &pg.Permission); err != nil {
+			return nil, sdk.WithStack(err)
 		}
-		res = append(res, sdk.ProjectGroup{
-			Project: sdk.Project{
-				Key:          projectKey,
-				Name:         projectName,
-				LastModified: lastModified,
-			},
-			Permission: perm,
-		})
+		res = append(res, pg)
 	}
+
 	return res, nil
 }
 

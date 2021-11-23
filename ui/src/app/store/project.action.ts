@@ -20,9 +20,9 @@ export class FetchProject {
     constructor(public payload: { projectKey: string, opts: LoadOpts[] }) { }
 }
 
-// Use to resync Project from backend
-export class ResyncProject {
-    static readonly type = '[Project] Resync Project';
+// Use to enrich Project from backend
+export class EnrichProject {
+    static readonly type = '[Project] Enrich Project';
     constructor(public payload: { projectKey: string, opts: LoadOpts[] }) { }
 }
 

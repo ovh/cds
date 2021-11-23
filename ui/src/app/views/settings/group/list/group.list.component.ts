@@ -3,7 +3,7 @@ import { finalize } from 'rxjs/operators';
 import { Group } from '../../../../model/group.model';
 import { GroupService } from '../../../../service/group/group.service';
 import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
-import { Column, ColumnType } from '../../../../shared/table/data-table.component';
+import { Column, ColumnType, DataTableComponent } from '../../../../shared/table/data-table.component';
 
 @Component({
     selector: 'app-group-list',
@@ -19,16 +19,22 @@ export class GroupListComponent {
 
     constructor(
         private _groupService: GroupService,
-         private _cd: ChangeDetectorRef
+        private _cd: ChangeDetectorRef
     ) {
         this.columns = [
             <Column<Group>>{
                 type: ColumnType.ROUTER_LINK,
                 name: 'common_name',
                 selector: (g: Group) => ({
-                        link: '/settings/group/' + g.name,
-                        value: g.name
-                    })
+                    link: '/settings/group/' + g.name,
+                    value: g.name
+                })
+            },
+            <Column<Group>>{
+                type: ColumnType.TEXT,
+                name: 'Organization',
+                disabled: true,
+                selector: (u: Group) => u.organization
             }
         ];
         this.getGroups();
@@ -49,12 +55,13 @@ export class GroupListComponent {
                 this._cd.markForCheck();
             }))
             .subscribe(gs => {
- this.groups = gs;
-});
+                this.groups = gs;
+                const groupWithOrg = this.groups.map(g => !!g.organization).reduce((p, c) => p || c);
+                this.columns[1].disabled = !groupWithOrg;
+            });
     }
 
-    filter(f: string) {
-        const lowerFilter = f.toLowerCase();
-        return (g: Group) => g.name.toLowerCase().indexOf(lowerFilter) !== -1;
+    filter(rawSearch: string) {
+        return DataTableComponent.filterArgsFunc(rawSearch, (search: string, g: Group) => g.name.toLowerCase().indexOf(search) !== -1);
     }
 }

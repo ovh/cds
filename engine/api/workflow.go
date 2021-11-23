@@ -17,6 +17,7 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/event"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
@@ -494,6 +495,24 @@ func (api *API) postWorkflowHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
+		for _, n := range data.WorkflowData.Array() {
+			for _, gp := range n.Groups {
+				if gp.Group.ID == 0 {
+					g, err := group.LoadByName(ctx, tx, gp.Group.Name)
+					if err != nil {
+						return err
+					}
+					gp.Group = *g
+				}
+				if err := group.LoadOptions.WithOrganization(ctx, tx, &gp.Group); err != nil {
+					return err
+				}
+				if err := projectPermissionCheckOrganizationMatch(ctx, tx, p, &gp.Group, gp.Permission); err != nil {
+					return err
+				}
+			}
+		}
+
 		if err := workflow.Insert(ctx, tx, api.Cache, *p, &data); err != nil {
 			return sdk.WrapError(err, "cannot insert workflow")
 		}
@@ -560,6 +579,24 @@ func (api *API) putWorkflowHandler() service.Handler {
 			return sdk.WrapError(err, "cannot start transaction")
 		}
 		defer tx.Rollback() // nolint
+
+		for _, n := range wf.WorkflowData.Array() {
+			for _, gp := range n.Groups {
+				if gp.Group.ID == 0 {
+					g, err := group.LoadByName(ctx, tx, gp.Group.Name)
+					if err != nil {
+						return err
+					}
+					gp.Group = *g
+				}
+				if err := group.LoadOptions.WithOrganization(ctx, tx, &gp.Group); err != nil {
+					return err
+				}
+				if err := projectPermissionCheckOrganizationMatch(ctx, tx, p, &gp.Group, gp.Permission); err != nil {
+					return err
+				}
+			}
+		}
 
 		if err := workflow.Update(ctx, tx, api.Cache, *p, &wf, workflow.UpdateOptions{}); err != nil {
 			return sdk.WrapError(err, "cannot update workflow")

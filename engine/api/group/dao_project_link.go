@@ -11,64 +11,60 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-// LoadLinksGroupProjectForGroupID returns data from project_group table for given group id.
-func LoadLinksGroupProjectForGroupID(ctx context.Context, db gorp.SqlExecutor, groupID int64) (LinksGroupProject, error) {
-	ls := []LinkGroupProject{}
+func getLinksGroupProject(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadLinkGroupProjectOptionFunc) (LinksGroupProject, error) {
+	gps := []*LinkGroupProject{}
 
-	query := gorpmapping.NewQuery(`
-		SELECT *
-		FROM project_group
-		WHERE group_id = $1
-	`).Args(groupID)
-
-	if err := gorpmapping.GetAll(ctx, db, query, &ls); err != nil {
-		return nil, sdk.WrapError(err, "cannot get links between group %d and projects", groupID)
+	if err := gorpmapping.GetAll(ctx, db, q, &gps); err != nil {
+		return nil, sdk.WrapError(err, "cannot links group project")
 	}
 
-	var result []LinkGroupProject
-	for _, l := range ls {
-		isValid, err := gorpmapping.CheckSignature(l, l.Signature)
+	var pgps []*LinkGroupProject
+	for i := range gps {
+		isValid, err := gorpmapping.CheckSignature(gps[i], gps[i].Signature)
 		if err != nil {
 			return nil, err
 		}
 		if !isValid {
-			log.Error(ctx, "group.LoadLinksGroupProjectForGroupID> project_group %d data corrupted", l.ID)
+			log.Error(ctx, "project_group %d data corrupted", gps[i].ID)
 			continue
 		}
-		result = append(result, l)
+		pgps = append(pgps, gps[i])
+	}
+
+	if len(pgps) > 0 {
+		for i := range opts {
+			if err := opts[i](ctx, db, pgps...); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	var result = make([]LinkGroupProject, len(pgps))
+	for i := range pgps {
+		result[i] = *pgps[i]
 	}
 
 	return result, nil
 }
 
-// LoadLinksGroupProjectForProjectIDs returns data from project_group table for given group id.
-func LoadLinksGroupProjectForProjectIDs(ctx context.Context, db gorp.SqlExecutor, projectIDs []int64) (LinksGroupProject, error) {
-	ls := []LinkGroupProject{}
+// LoadLinksGroupProjectForGroupID returns data from project_group table for given group id.
+func LoadLinksGroupProjectForGroupID(ctx context.Context, db gorp.SqlExecutor, groupID int64, opts ...LoadLinkGroupProjectOptionFunc) (LinksGroupProject, error) {
+	query := gorpmapping.NewQuery(`
+		SELECT *
+		FROM project_group
+		WHERE group_id = $1
+	`).Args(groupID)
+	return getLinksGroupProject(ctx, db, query, opts...)
+}
 
+// LoadLinksGroupProjectForProjectIDs returns data from project_group table for given group id.
+func LoadLinksGroupProjectForProjectIDs(ctx context.Context, db gorp.SqlExecutor, projectIDs []int64, opts ...LoadLinkGroupProjectOptionFunc) (LinksGroupProject, error) {
 	query := gorpmapping.NewQuery(`
 		SELECT *
 		FROM project_group
 		WHERE project_id = ANY(string_to_array($1, ',')::int[])
   `).Args(gorpmapping.IDsToQueryString(projectIDs))
-
-	if err := gorpmapping.GetAll(ctx, db, query, &ls); err != nil {
-		return nil, sdk.WrapError(err, "cannot get links between group and project")
-	}
-
-	var result []LinkGroupProject
-	for _, l := range ls {
-		isValid, err := gorpmapping.CheckSignature(l, l.Signature)
-		if err != nil {
-			return nil, err
-		}
-		if !isValid {
-			log.Error(ctx, "group.LoadLinksGroupProjectForProjectIDs> project_group %d data corrupted", l.ID)
-			continue
-		}
-		result = append(result, l)
-	}
-
-	return result, nil
+	return getLinksGroupProject(ctx, db, query, opts...)
 }
 
 // LoadLinkGroupProjectForGroupIDAndProjectID returns a link from project_group if exists for given group and project ids.

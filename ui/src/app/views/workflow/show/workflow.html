@@ -18,7 +18,18 @@
                 <a sm-item [class.active]="selectedTab === 'permissions'" id="WorkflowPermissionsTabs"
                     (click)="showTab('permissions')">
                     <i class="users icon"></i>
-                    {{'common_permissions' | translate }}</a>
+                    {{'common_permissions' | translate }}
+                    <ng-template let-popup #warnPermission>
+                        Following groups that are not from organization "{{detailedWorkflow.organization}}" can read the
+                        workflow:
+                        <span *ngFor="let gp of groupsOutsideOrganization;let i = index">{{gp.group.name}}
+                            ({{gp.group.organization}}){{ i < groupsOutsideOrganization.length - 1 ? ', ' : '' }}</span>
+                                .
+                    </ng-template>
+                    <i *ngIf="detailedWorkflow && groupsOutsideOrganization && groupsOutsideOrganization.length > 0"
+                        class="exclamation triangle orange icon" suiPopup [popupTemplate]="warnPermission"
+                        popupPlacement="bottom left"></i>
+                </a>
                 <ng-container *ngIf="!detailedWorkflow.from_repository">
                     <a sm-item [class.active]="selectedTab === 'audits'" id="WorkflowAuditsTabs"
                         (click)="showTab('audits')">
@@ -95,7 +106,6 @@
                                                 </div>
                                             </div>
                                         </div>
-
                                     </div>
                                 </div>
                             </div>
@@ -114,6 +124,12 @@
             </div>
             <div *ngSwitchCase="'permissions'" class="padded">
                 <h3>{{ 'workflow_permission_list_title' | translate }}</h3>
+                <div *ngIf="detailedWorkflow && groupsOutsideOrganization && groupsOutsideOrganization.length > 0"
+                    class="ui warning message">Following groups that are not from organization
+                    "{{detailedWorkflow.organization}}" can read the workflow: <span
+                        *ngFor="let gp of groupsOutsideOrganization;let i = index">{{gp.group.name}}
+                        ({{gp.group.organization}}){{ i < groupsOutsideOrganization.length - 1 ? ', ' : '' }}</span>.
+                </div>
                 <app-permission-list [permissions]="this.groups" (event)="groupManagement($event)"
                     [edit]="detailedWorkflow.permissions.writable && !(detailedWorkflow.from_repository && detailedWorkflow.from_repository.length > 0)">
                 </app-permission-list>

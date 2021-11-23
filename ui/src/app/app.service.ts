@@ -205,7 +205,7 @@ export class AppService {
 
             if (event.type_event.indexOf('Variable') === -1 && event.type_event.indexOf('Parameter') === -1
                 && event.type_event.indexOf(EventType.ENVIRONMENT_PREFIX) === -1) {
-                await this._store.dispatch(new projectActions.ResyncProject({ projectKey: projectInCache.key, opts })).toPromise();
+                await this._store.dispatch(new projectActions.FetchProject({ projectKey: projectInCache.key, opts })).toPromise();
             }
         }
     }

@@ -33,21 +33,21 @@ type authDriver struct {
 
 type Config struct {
 	Request struct {
-		RedirectMethod string `json:"redirect_method"`
-		RedirectURL    string `json:"redirect_url"`
+		RedirectMethod string
+		RedirectURL    string
 		Keys           struct {
-			RequestSigningKey string `json:"request_signing_key"`
-		} `json:"keys"`
-	} `json:"request"`
+			RequestSigningKey string
+		}
+	}
 	Token struct {
-		SigningKey    string `json:"token_signing_key"`
+		SigningKey    string
 		KeySigningKey struct {
-			KeySigningKey   string `json:"public_signing_key"`
-			SigningKeyClaim string `json:"signing_key_claim"`
-		} `json:"key_signing_key,omitempty"`
-	} `json:"token"`
-	MailDomain        string `json:"mail_domain"`
-	MFASupportEnabled bool   `json:"mfa_support"`
+			KeySigningKey   string
+			SigningKeyClaim string
+		}
+	}
+	MFASupportEnabled    bool
+	AllowedOrganizations sdk.StringSlice
 }
 
 func NewDriver(cfg Config) sdk.AuthDriver {
@@ -211,7 +211,7 @@ func (d authDriver) GetUserInfo(ctx context.Context, req sdk.AuthConsumerSigninR
 		return u, sdk.NewError(sdk.ErrUnauthorized, err)
 	}
 
-	var itk issuedToken
+	var itk IssuedToken
 	if err := sdk.JSONUnmarshal(rawIssuedToken, &itk); err != nil {
 		return u, sdk.NewError(sdk.ErrUnauthorized, err)
 	}
@@ -219,6 +219,11 @@ func (d authDriver) GetUserInfo(ctx context.Context, req sdk.AuthConsumerSigninR
 	// We consider that the token provided by the Corporate SSO provider is valid for 15 minutes
 	if itk.IAT+int64(TTLSeconds) < time.Now().Unix() {
 		return u, sdk.NewErrorFrom(sdk.ErrWrongRequest, "expired JWT %s/%s", itk.RemoteUser, itk.TokenID)
+	}
+
+	// User organization should be in the list of allowed values
+	if !d.Config.AllowedOrganizations.Contains(itk.Organization) {
+		return u, sdk.NewErrorFrom(sdk.ErrWrongRequest, "organization not allowed %q", itk.Organization)
 	}
 
 	log.Info(ctx, "new session created for remote_user: %v, iat: %v, token_id: %v, mfa: %v", itk.RemoteUser, itk.IAT, itk.TokenID, itk.MFA)
@@ -229,17 +234,21 @@ func (d authDriver) GetUserInfo(ctx context.Context, req sdk.AuthConsumerSigninR
 	}
 	u.ExternalID = itk.RemoteUser
 	u.MFA = itk.MFA && d.Config.MFASupportEnabled
-	u.Email = itk.RemoteUser + "@" + d.Config.MailDomain
+	u.Email = itk.Email
 	u.ExternalTokenID = itk.TokenID
+	u.Organization = itk.Organization
 
 	return u, nil
 }
 
-type issuedToken struct {
-	Audience       string `json:"Audience"`
-	RemoteUser     string `json:"RemoteUser"`
-	RemoteUsername string `json:"RemoteUsername"`
-	TokenID        string `json:"TokenId"`
-	MFA            bool   `json:"MFA"`
-	IAT            int64  `json:"iat"`
+type IssuedToken struct {
+	Audience       string   `json:"Audience"`
+	RemoteUser     string   `json:"RemoteUser"`
+	RemoteUsername string   `json:"RemoteUsername"`
+	Email          string   `json:"email"`
+	TokenID        string   `json:"TokenId"`
+	MFA            bool     `json:"MFA"`
+	IAT            int64    `json:"iat"`
+	Organization   string   `json:"org"`
+	Groups         []string `json:"Groups,omitempty"`
 }

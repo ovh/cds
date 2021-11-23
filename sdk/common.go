@@ -268,6 +268,19 @@ func (s *Int64Slice) Remove(v int64) {
 	*s = filtered
 }
 
+// Remove duplicated value from slice.
+func (s *Int64Slice) Unique() {
+	m := make(map[int64]struct{})
+	for _, i := range *s {
+		m[i] = struct{}{}
+	}
+	unique := make([]int64, 0, len(m))
+	for k := range m {
+		unique = append(unique, k)
+	}
+	*s = unique
+}
+
 func StringIsAscii(s string) bool {
 	for _, r := range s {
 		if r > unicode.MaxASCII {

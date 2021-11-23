@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -30,7 +31,7 @@ var userListCmd = cli.Command{
 }
 
 func userListRun(v cli.Values) (cli.ListResult, error) {
-	users, err := client.UserList()
+	users, err := client.UserList(context.Background())
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +44,7 @@ var userMeCmd = cli.Command{
 }
 
 func userMeRun(v cli.Values) (interface{}, error) {
-	u, err := client.UserGetMe()
+	u, err := client.UserGetMe(context.Background())
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +62,7 @@ var userShowCmd = cli.Command{
 }
 
 func userShowRun(v cli.Values) (interface{}, error) {
-	u, err := client.UserGet(v.GetString("username"))
+	u, err := client.UserGet(context.Background(), v.GetString("username"))
 	if err != nil {
 		return nil, err
 	}

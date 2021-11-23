@@ -1,3 +1,17 @@
+<ng-template #tabPermissionTemplate>
+    <i [ngClass]="['users', 'icon']"></i>
+    {{'common_permissions' | translate}}
+    <ng-template let-popup #warnPermission>
+        Following groups that are not from organization "{{project.organization}}" can read the
+        project:
+        <span *ngFor="let gp of groupsOutsideOrganization;let i = index">{{gp.group.name}}
+            ({{gp.group.organization}}){{ i < groupsOutsideOrganization.length - 1 ? ', ' : '' }}</span>
+                .
+    </ng-template>
+    <i *ngIf="project && groupsOutsideOrganization && groupsOutsideOrganization.length > 0"
+        class="exclamation triangle orange icon" suiPopup [popupTemplate]="warnPermission"
+        popupPlacement="bottom left"></i>
+</ng-template>
 <div *ngIf="project; then projectPart;else loadingPart"></div>
 <ng-template #projectPart>
     <div id="ProjectShow">

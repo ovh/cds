@@ -35,6 +35,7 @@ export class WorkflowShowComponent implements OnInit, OnDestroy {
     workflowSubscription: Subscription;
     workflowPreviewSubscription: Subscription;
     groups: Array<GroupPermission>;
+    groupsOutsideOrganization: Array<GroupPermission>;
     dataSubs: Subscription;
     paramsSubs: Subscription;
     qpsSubs: Subscription;
@@ -93,6 +94,10 @@ export class WorkflowShowComponent implements OnInit, OnDestroy {
                 let from_repository = this.detailedWorkflow.from_repository;
                 this.previewWorkflow = this.detailedWorkflow.preview;
                 this.groups = cloneDeep(this.detailedWorkflow.groups);
+                if (!!this.detailedWorkflow.organization) {
+                    this.groupsOutsideOrganization = this.groups.filter(gp =>
+                        gp.group.organization && gp.group.organization !== this.detailedWorkflow.organization);
+                }
                 if (this.detailedWorkflow.preview) {
                     // check to avoid "can't define property "x": "obj" is not extensible"
                     if (this.previewWorkflow.hasOwnProperty('from_repository')) {
@@ -107,7 +112,8 @@ export class WorkflowShowComponent implements OnInit, OnDestroy {
                     return;
                 }
 
-                this.usageCount = Object.keys(this.detailedWorkflow.usage).reduce((total, key) => total + this.detailedWorkflow.usage[key].length, 0);
+                this.usageCount = Object.keys(this.detailedWorkflow.usage).reduce((total, key) =>
+                    total + this.detailedWorkflow.usage[key].length, 0);
             }
         });
 

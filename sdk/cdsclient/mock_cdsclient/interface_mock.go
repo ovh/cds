@@ -2079,6 +2079,26 @@ func (mr *MockGroupClientMockRecorder) GroupDelete(name interface{}) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GroupDelete", reflect.TypeOf((*MockGroupClient)(nil).GroupDelete), name)
 }
 
+// GroupExport mocks base method.
+func (m *MockGroupClient) GroupExport(name string, mods ...cdsclient.RequestModifier) ([]byte, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{name}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GroupExport", varargs...)
+	ret0, _ := ret[0].([]byte)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GroupExport indicates an expected call of GroupExport.
+func (mr *MockGroupClientMockRecorder) GroupExport(name interface{}, mods ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{name}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GroupExport", reflect.TypeOf((*MockGroupClient)(nil).GroupExport), varargs...)
+}
+
 // GroupGet mocks base method.
 func (m *MockGroupClient) GroupGet(name string, mods ...cdsclient.RequestModifier) (*sdk.Group, error) {
 	m.ctrl.T.Helper()
@@ -2097,6 +2117,26 @@ func (mr *MockGroupClientMockRecorder) GroupGet(name interface{}, mods ...interf
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{name}, mods...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GroupGet", reflect.TypeOf((*MockGroupClient)(nil).GroupGet), varargs...)
+}
+
+// GroupImport mocks base method.
+func (m *MockGroupClient) GroupImport(content io.Reader, mods ...cdsclient.RequestModifier) ([]byte, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{content}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GroupImport", varargs...)
+	ret0, _ := ret[0].([]byte)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GroupImport indicates an expected call of GroupImport.
+func (mr *MockGroupClientMockRecorder) GroupImport(content interface{}, mods ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{content}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GroupImport", reflect.TypeOf((*MockGroupClient)(nil).GroupImport), varargs...)
 }
 
 // GroupList mocks base method.
@@ -3377,93 +3417,107 @@ func (m *MockUserClient) EXPECT() *MockUserClientMockRecorder {
 }
 
 // UpdateFavorite mocks base method.
-func (m *MockUserClient) UpdateFavorite(params sdk.FavoriteParams) (interface{}, error) {
+func (m *MockUserClient) UpdateFavorite(ctx context.Context, params sdk.FavoriteParams) (interface{}, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateFavorite", params)
+	ret := m.ctrl.Call(m, "UpdateFavorite", ctx, params)
 	ret0, _ := ret[0].(interface{})
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // UpdateFavorite indicates an expected call of UpdateFavorite.
-func (mr *MockUserClientMockRecorder) UpdateFavorite(params interface{}) *gomock.Call {
+func (mr *MockUserClientMockRecorder) UpdateFavorite(ctx, params interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateFavorite", reflect.TypeOf((*MockUserClient)(nil).UpdateFavorite), params)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateFavorite", reflect.TypeOf((*MockUserClient)(nil).UpdateFavorite), ctx, params)
 }
 
 // UserGet mocks base method.
-func (m *MockUserClient) UserGet(username string) (*sdk.AuthentifiedUser, error) {
+func (m *MockUserClient) UserGet(ctx context.Context, username string) (*sdk.AuthentifiedUser, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UserGet", username)
+	ret := m.ctrl.Call(m, "UserGet", ctx, username)
 	ret0, _ := ret[0].(*sdk.AuthentifiedUser)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // UserGet indicates an expected call of UserGet.
-func (mr *MockUserClientMockRecorder) UserGet(username interface{}) *gomock.Call {
+func (mr *MockUserClientMockRecorder) UserGet(ctx, username interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGet", reflect.TypeOf((*MockUserClient)(nil).UserGet), username)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGet", reflect.TypeOf((*MockUserClient)(nil).UserGet), ctx, username)
 }
 
 // UserGetGroups mocks base method.
-func (m *MockUserClient) UserGetGroups(username string) (map[string][]sdk.Group, error) {
+func (m *MockUserClient) UserGetGroups(ctx context.Context, username string) (map[string][]sdk.Group, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UserGetGroups", username)
+	ret := m.ctrl.Call(m, "UserGetGroups", ctx, username)
 	ret0, _ := ret[0].(map[string][]sdk.Group)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // UserGetGroups indicates an expected call of UserGetGroups.
-func (mr *MockUserClientMockRecorder) UserGetGroups(username interface{}) *gomock.Call {
+func (mr *MockUserClientMockRecorder) UserGetGroups(ctx, username interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGetGroups", reflect.TypeOf((*MockUserClient)(nil).UserGetGroups), username)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGetGroups", reflect.TypeOf((*MockUserClient)(nil).UserGetGroups), ctx, username)
 }
 
 // UserGetMe mocks base method.
-func (m *MockUserClient) UserGetMe() (*sdk.AuthentifiedUser, error) {
+func (m *MockUserClient) UserGetMe(ctx context.Context) (*sdk.AuthentifiedUser, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UserGetMe")
+	ret := m.ctrl.Call(m, "UserGetMe", ctx)
 	ret0, _ := ret[0].(*sdk.AuthentifiedUser)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // UserGetMe indicates an expected call of UserGetMe.
-func (mr *MockUserClientMockRecorder) UserGetMe() *gomock.Call {
+func (mr *MockUserClientMockRecorder) UserGetMe(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGetMe", reflect.TypeOf((*MockUserClient)(nil).UserGetMe))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGetMe", reflect.TypeOf((*MockUserClient)(nil).UserGetMe), ctx)
 }
 
 // UserGetSchema mocks base method.
-func (m *MockUserClient) UserGetSchema() (sdk.SchemaResponse, error) {
+func (m *MockUserClient) UserGetSchema(ctx context.Context) (sdk.SchemaResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UserGetSchema")
+	ret := m.ctrl.Call(m, "UserGetSchema", ctx)
 	ret0, _ := ret[0].(sdk.SchemaResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // UserGetSchema indicates an expected call of UserGetSchema.
-func (mr *MockUserClientMockRecorder) UserGetSchema() *gomock.Call {
+func (mr *MockUserClientMockRecorder) UserGetSchema(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGetSchema", reflect.TypeOf((*MockUserClient)(nil).UserGetSchema))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGetSchema", reflect.TypeOf((*MockUserClient)(nil).UserGetSchema), ctx)
 }
 
 // UserList mocks base method.
-func (m *MockUserClient) UserList() ([]sdk.AuthentifiedUser, error) {
+func (m *MockUserClient) UserList(ctx context.Context) ([]sdk.AuthentifiedUser, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UserList")
+	ret := m.ctrl.Call(m, "UserList", ctx)
 	ret0, _ := ret[0].([]sdk.AuthentifiedUser)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // UserList indicates an expected call of UserList.
-func (mr *MockUserClientMockRecorder) UserList() *gomock.Call {
+func (mr *MockUserClientMockRecorder) UserList(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserList", reflect.TypeOf((*MockUserClient)(nil).UserList))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserList", reflect.TypeOf((*MockUserClient)(nil).UserList), ctx)
+}
+
+// UserUpdate mocks base method.
+func (m *MockUserClient) UserUpdate(ctx context.Context, username string, user *sdk.AuthentifiedUser) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UserUpdate", ctx, username, user)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UserUpdate indicates an expected call of UserUpdate.
+func (mr *MockUserClientMockRecorder) UserUpdate(ctx, username, user interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserUpdate", reflect.TypeOf((*MockUserClient)(nil).UserUpdate), ctx, username, user)
 }
 
 // MockWorkerClient is a mock of WorkerClient interface.
@@ -6063,6 +6117,26 @@ func (mr *MockInterfaceMockRecorder) GroupDelete(name interface{}) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GroupDelete", reflect.TypeOf((*MockInterface)(nil).GroupDelete), name)
 }
 
+// GroupExport mocks base method.
+func (m *MockInterface) GroupExport(name string, mods ...cdsclient.RequestModifier) ([]byte, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{name}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GroupExport", varargs...)
+	ret0, _ := ret[0].([]byte)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GroupExport indicates an expected call of GroupExport.
+func (mr *MockInterfaceMockRecorder) GroupExport(name interface{}, mods ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{name}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GroupExport", reflect.TypeOf((*MockInterface)(nil).GroupExport), varargs...)
+}
+
 // GroupGet mocks base method.
 func (m *MockInterface) GroupGet(name string, mods ...cdsclient.RequestModifier) (*sdk.Group, error) {
 	m.ctrl.T.Helper()
@@ -6081,6 +6155,26 @@ func (mr *MockInterfaceMockRecorder) GroupGet(name interface{}, mods ...interfac
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{name}, mods...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GroupGet", reflect.TypeOf((*MockInterface)(nil).GroupGet), varargs...)
+}
+
+// GroupImport mocks base method.
+func (m *MockInterface) GroupImport(content io.Reader, mods ...cdsclient.RequestModifier) ([]byte, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{content}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GroupImport", varargs...)
+	ret0, _ := ret[0].([]byte)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GroupImport indicates an expected call of GroupImport.
+func (mr *MockInterfaceMockRecorder) GroupImport(content interface{}, mods ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{content}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GroupImport", reflect.TypeOf((*MockInterface)(nil).GroupImport), varargs...)
 }
 
 // GroupList mocks base method.
@@ -7766,93 +7860,107 @@ func (mr *MockInterfaceMockRecorder) TemplatePush(tarContent interface{}) *gomoc
 }
 
 // UpdateFavorite mocks base method.
-func (m *MockInterface) UpdateFavorite(params sdk.FavoriteParams) (interface{}, error) {
+func (m *MockInterface) UpdateFavorite(ctx context.Context, params sdk.FavoriteParams) (interface{}, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateFavorite", params)
+	ret := m.ctrl.Call(m, "UpdateFavorite", ctx, params)
 	ret0, _ := ret[0].(interface{})
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // UpdateFavorite indicates an expected call of UpdateFavorite.
-func (mr *MockInterfaceMockRecorder) UpdateFavorite(params interface{}) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) UpdateFavorite(ctx, params interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateFavorite", reflect.TypeOf((*MockInterface)(nil).UpdateFavorite), params)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateFavorite", reflect.TypeOf((*MockInterface)(nil).UpdateFavorite), ctx, params)
 }
 
 // UserGet mocks base method.
-func (m *MockInterface) UserGet(username string) (*sdk.AuthentifiedUser, error) {
+func (m *MockInterface) UserGet(ctx context.Context, username string) (*sdk.AuthentifiedUser, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UserGet", username)
+	ret := m.ctrl.Call(m, "UserGet", ctx, username)
 	ret0, _ := ret[0].(*sdk.AuthentifiedUser)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // UserGet indicates an expected call of UserGet.
-func (mr *MockInterfaceMockRecorder) UserGet(username interface{}) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) UserGet(ctx, username interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGet", reflect.TypeOf((*MockInterface)(nil).UserGet), username)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGet", reflect.TypeOf((*MockInterface)(nil).UserGet), ctx, username)
 }
 
 // UserGetGroups mocks base method.
-func (m *MockInterface) UserGetGroups(username string) (map[string][]sdk.Group, error) {
+func (m *MockInterface) UserGetGroups(ctx context.Context, username string) (map[string][]sdk.Group, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UserGetGroups", username)
+	ret := m.ctrl.Call(m, "UserGetGroups", ctx, username)
 	ret0, _ := ret[0].(map[string][]sdk.Group)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // UserGetGroups indicates an expected call of UserGetGroups.
-func (mr *MockInterfaceMockRecorder) UserGetGroups(username interface{}) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) UserGetGroups(ctx, username interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGetGroups", reflect.TypeOf((*MockInterface)(nil).UserGetGroups), username)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGetGroups", reflect.TypeOf((*MockInterface)(nil).UserGetGroups), ctx, username)
 }
 
 // UserGetMe mocks base method.
-func (m *MockInterface) UserGetMe() (*sdk.AuthentifiedUser, error) {
+func (m *MockInterface) UserGetMe(ctx context.Context) (*sdk.AuthentifiedUser, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UserGetMe")
+	ret := m.ctrl.Call(m, "UserGetMe", ctx)
 	ret0, _ := ret[0].(*sdk.AuthentifiedUser)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // UserGetMe indicates an expected call of UserGetMe.
-func (mr *MockInterfaceMockRecorder) UserGetMe() *gomock.Call {
+func (mr *MockInterfaceMockRecorder) UserGetMe(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGetMe", reflect.TypeOf((*MockInterface)(nil).UserGetMe))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGetMe", reflect.TypeOf((*MockInterface)(nil).UserGetMe), ctx)
 }
 
 // UserGetSchema mocks base method.
-func (m *MockInterface) UserGetSchema() (sdk.SchemaResponse, error) {
+func (m *MockInterface) UserGetSchema(ctx context.Context) (sdk.SchemaResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UserGetSchema")
+	ret := m.ctrl.Call(m, "UserGetSchema", ctx)
 	ret0, _ := ret[0].(sdk.SchemaResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // UserGetSchema indicates an expected call of UserGetSchema.
-func (mr *MockInterfaceMockRecorder) UserGetSchema() *gomock.Call {
+func (mr *MockInterfaceMockRecorder) UserGetSchema(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGetSchema", reflect.TypeOf((*MockInterface)(nil).UserGetSchema))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGetSchema", reflect.TypeOf((*MockInterface)(nil).UserGetSchema), ctx)
 }
 
 // UserList mocks base method.
-func (m *MockInterface) UserList() ([]sdk.AuthentifiedUser, error) {
+func (m *MockInterface) UserList(ctx context.Context) ([]sdk.AuthentifiedUser, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UserList")
+	ret := m.ctrl.Call(m, "UserList", ctx)
 	ret0, _ := ret[0].([]sdk.AuthentifiedUser)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // UserList indicates an expected call of UserList.
-func (mr *MockInterfaceMockRecorder) UserList() *gomock.Call {
+func (mr *MockInterfaceMockRecorder) UserList(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserList", reflect.TypeOf((*MockInterface)(nil).UserList))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserList", reflect.TypeOf((*MockInterface)(nil).UserList), ctx)
+}
+
+// UserUpdate mocks base method.
+func (m *MockInterface) UserUpdate(ctx context.Context, username string, user *sdk.AuthentifiedUser) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UserUpdate", ctx, username, user)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UserUpdate indicates an expected call of UserUpdate.
+func (mr *MockInterfaceMockRecorder) UserUpdate(ctx, username, user interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserUpdate", reflect.TypeOf((*MockInterface)(nil).UserUpdate), ctx, username, user)
 }
 
 // VCSConfiguration mocks base method.

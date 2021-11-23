@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/event"
@@ -76,9 +77,9 @@ func (api *API) putGroupRoleOnProjectHandler() service.Handler {
 			return err
 		}
 
-		tx, errb := api.mustDB().Begin()
-		if errb != nil {
-			return sdk.WrapError(errb, "cannot start transaction")
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WrapError(err, "cannot start transaction")
 		}
 		defer tx.Rollback() // nolint
 
@@ -87,13 +88,17 @@ func (api *API) putGroupRoleOnProjectHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load project %s", key)
 		}
 
-		grp, err := group.LoadByName(ctx, tx, groupName)
+		grp, err := group.LoadByName(ctx, tx, groupName, group.LoadOptions.WithOrganization)
 		if err != nil {
 			return sdk.WrapError(err, "cannot find %s", groupName)
 		}
 
 		if group.IsDefaultGroupID(grp.ID) && data.Permission > sdk.PermissionRead {
 			return sdk.NewErrorFrom(sdk.ErrDefaultGroupPermission, "only read permission is allowed to default group")
+		}
+
+		if err := projectPermissionCheckOrganizationMatch(ctx, tx, proj, grp, data.Permission); err != nil {
+			return err
 		}
 
 		oldLink, err := group.LoadLinkGroupProjectForGroupIDAndProjectID(ctx, tx, grp.ID, proj.ID)
@@ -173,7 +178,7 @@ func (api *API) postGroupInProjectHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load %s", key)
 		}
 
-		grp, err := group.LoadByName(ctx, tx, data.Group.Name)
+		grp, err := group.LoadByName(ctx, tx, data.Group.Name, group.LoadOptions.WithOrganization)
 		if err != nil {
 			return sdk.WrapError(err, "cannot find %s", data.Group.Name)
 		}
@@ -188,6 +193,10 @@ func (api *API) postGroupInProjectHandler() service.Handler {
 		}
 		if link != nil {
 			return sdk.NewErrorFrom(sdk.ErrGroupExists, "group already in the project %s", proj.Name)
+		}
+
+		if err := projectPermissionCheckOrganizationMatch(ctx, tx, proj, grp, data.Permission); err != nil {
+			return err
 		}
 
 		newLink := group.LinkGroupProject{
@@ -318,4 +327,28 @@ func (api *API) postImportGroupsInProjectHandler() service.Handler {
 
 		return service.WriteJSON(w, proj, http.StatusOK)
 	}
+}
+
+func projectPermissionCheckOrganizationMatch(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project, grp *sdk.Group, role int) error {
+	if role > sdk.PermissionRead {
+		if len(proj.ProjectGroups) == 0 {
+			if err := group.LoadGroupsIntoProject(ctx, db, proj); err != nil {
+				return err
+			}
+		}
+		projectOrganization, err := proj.ProjectGroups.ComputeOrganization()
+		if err != nil {
+			return sdk.NewError(sdk.ErrForbidden, err)
+		}
+		if projectOrganization == "" {
+			return nil
+		}
+		if grp.Organization != projectOrganization {
+			if grp.Organization == "" {
+				return sdk.NewErrorFrom(sdk.ErrForbidden, "given group without organization don't match project organization %q", projectOrganization)
+			}
+			return sdk.NewErrorFrom(sdk.ErrForbidden, "given group with organization %q don't match project organization %q", grp.Organization, projectOrganization)
+		}
+	}
+	return nil
 }

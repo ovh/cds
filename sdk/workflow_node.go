@@ -1,7 +1,6 @@
 package sdk
 
 import (
-	"fmt"
 	"sort"
 
 	"github.com/fsamin/go-dump"
@@ -124,7 +123,7 @@ func (c *NodeContext) HasDefaultPayload() bool {
 func (c *NodeContext) DefaultPayloadToMap() (map[string]string, error) {
 	// DefaultPayloadToMap returns default payload to map
 	if c == nil {
-		return nil, fmt.Errorf("workflow node context is nil")
+		return nil, NewErrorFrom(ErrInvalidData, "workflow node context is nil")
 	}
 	if c.DefaultPayload == nil {
 		return map[string]string{}, nil
@@ -279,12 +278,12 @@ func (n Node) CheckApplicationDeploymentStrategies(proj Project, w *Workflow) er
 
 	pf := proj.GetIntegrationByID(n.Context.ProjectIntegrationID)
 	if pf == nil {
-		return WithStack(fmt.Errorf("integration unavailable"))
+		return NewErrorFrom(ErrInvalidData, "integration unavailable")
 	}
 
 	app := w.Applications[n.Context.ApplicationID]
 	if _, has := app.DeploymentStrategies[pf.Name]; !has {
-		return WithStack(fmt.Errorf("integration %s unavailable on application %s", pf.Name, app.Name))
+		return NewErrorFrom(ErrInvalidData, "integration %s unavailable on application %s", pf.Name, app.Name)
 	}
 	return nil
 }

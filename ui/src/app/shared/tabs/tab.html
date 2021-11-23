@@ -1,0 +1,7 @@
+<a sm-item [class.active]="active" (click)="click()">
+    <ng-container *ngIf="!tab.template">
+        <i *ngIf="tab.icon" [ngClass]="[tab.icon, 'icon']"></i>
+        {{tab.translate | translate:tab.translate_args}}
+    </ng-container>
+    <span #templateSibling></span>
+</a>

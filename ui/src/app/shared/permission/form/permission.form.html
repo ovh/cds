@@ -4,7 +4,8 @@
             <label>{{'group_name' | translate}}</label>
             <sm-select class="fluid search" [options]="{'fullTextSearch': true}"
                 [(model)]="newGroupPermission.group.name" id="PermissionGroupName">
-                <option *ngFor="let g of groupList" [ngValue]="g">{{g.name}}</option>
+                <option *ngFor="let g of groupList" [value]="g.name">{{g.name}}{{g.organization ? ' (' +
+                    g.organization + ')' : ''}}</option>
             </sm-select>
         </div>
         <div class="five wide field">

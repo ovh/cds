@@ -41,15 +41,17 @@ export class HookTaskShowComponent {
         this.columns = [
             <Column<TaskExecution>>{
                 type: ColumnType.ICON,
-                selector: (d: TaskExecution) => {
-                    if (d.status === HookStatus.DONE) {
-                        return ['check', 'green', 'icon'];
-                    } else if (d.status === HookStatus.FAIL) {
-                        return ['ban', 'red', 'icon'];
-                    } else {
-                        return ['wait', 'blue', 'icon'];
-                    }
-                }
+                selector: (d: TaskExecution) => ({
+                    icon: (() => {
+                        if (d.status === HookStatus.DONE) {
+                            return ['check', 'green', 'icon'];
+                        } else if (d.status === HookStatus.FAIL) {
+                            return ['ban', 'red', 'icon'];
+                        } else {
+                            return ['wait', 'blue', 'icon'];
+                        }
+                    })()
+                })
             },
             <Column<TaskExecution>>{
                 name: 'created at',
@@ -58,15 +60,15 @@ export class HookTaskShowComponent {
             <Column<TaskExecution>>{
                 name: 'proceed at',
                 selector: (d: TaskExecution) => d.processing_timestamp ?
-                        formatDate(new Date(d.processing_timestamp / 1000000), 'short', this._translate.currentLang) : '-'
+                    formatDate(new Date(d.processing_timestamp / 1000000), 'short', this._translate.currentLang) : '-'
             },
             <Column<TaskExecution>>{
                 type: ColumnType.LINK_CLICK,
                 name: 'action',
                 selector: (d: TaskExecution) => ({
-                        callback: this.selectExecution(d),
-                        value: 'open'
-                    })
+                    callback: this.selectExecution(d),
+                    value: 'open'
+                })
             }
         ];
 

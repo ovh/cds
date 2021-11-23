@@ -10,17 +10,62 @@ import (
 )
 
 // Create insert a new group in database and set user for given id as group admin.
-func Create(ctx context.Context, db gorpmapper.SqlExecutorWithTx, grp *sdk.Group, userID string) error {
+func Create(ctx context.Context, db gorpmapper.SqlExecutorWithTx, grp *sdk.Group, user *sdk.AuthentifiedUser) error {
 	if err := Insert(ctx, db, grp); err != nil {
 		return err
 	}
 
 	if err := InsertLinkGroupUser(ctx, db, &LinkGroupUser{
 		GroupID:            grp.ID,
-		AuthentifiedUserID: userID,
+		AuthentifiedUserID: user.ID,
 		Admin:              true,
 	}); err != nil {
 		return err
+	}
+
+	if user.Organization != "" {
+		if err := InsertOrganization(ctx, db, &Organization{
+			GroupID:      grp.ID,
+			Organization: user.Organization,
+		}); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// Create insert a new group in database and set user for given id as group admin.
+func Upsert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, oldGroup, newGroup *sdk.Group) error {
+	if oldGroup == nil {
+		if err := Insert(ctx, db, newGroup); err != nil {
+			return err
+		}
+	} else {
+		newGroup.ID = oldGroup.ID
+		if err := Update(ctx, db, newGroup); err != nil {
+			return err
+		}
+	}
+
+	if err := newGroup.Members.CheckAdminExists(); err != nil {
+		return err
+	}
+
+	if oldGroup != nil {
+		if err := DeleteAllLinksGroupUserForGroupID(db, oldGroup.ID); err != nil {
+			return err
+		}
+	}
+
+	for i := range newGroup.Members {
+		if err := InsertLinkGroupUser(ctx, db, &LinkGroupUser{
+			GroupID:            newGroup.ID,
+			AuthentifiedUserID: newGroup.Members[i].ID,
+			Admin:              newGroup.Members[i].Admin,
+		}); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -30,4 +75,82 @@ func Create(ctx context.Context, db gorpmapper.SqlExecutorWithTx, grp *sdk.Group
 func Delete(_ context.Context, db gorp.SqlExecutor, g *sdk.Group) error {
 	// Remove the group from database, this will also delete cascade group_user links
 	return deleteDB(db, g)
+}
+
+// EnsureOrganization computes group organization from members list and save it if needed.
+func EnsureOrganization(ctx context.Context, db gorpmapper.SqlExecutorWithTx, g *sdk.Group) error {
+	if err := LoadOptions.WithMembers(ctx, db, g); err != nil {
+		return err
+	}
+	exitingGroupOrganization, err := LoadOrganizationByGroupID(ctx, db, g.ID)
+	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+		return err
+	}
+	newGroupOrganization, err := g.Members.ComputeOrganization()
+	if err != nil {
+		return err
+	}
+	if exitingGroupOrganization != nil {
+		g.Organization = exitingGroupOrganization.Organization
+	}
+	if g.Organization == newGroupOrganization {
+		return nil
+	}
+
+	g.Organization = newGroupOrganization
+	if exitingGroupOrganization == nil {
+		if err := InsertOrganization(ctx, db, &Organization{
+			GroupID:      g.ID,
+			Organization: newGroupOrganization,
+		}); err != nil {
+			return err
+		}
+	} else {
+		exitingGroupOrganization.Organization = newGroupOrganization
+		if err := UpdateOrganization(ctx, db, exitingGroupOrganization); err != nil {
+			return err
+		}
+	}
+
+	// If organization was changed, check that the group org is not in conflict on each projects
+	// Load all projects with permission RX or RWX for current group
+	links, err := LoadLinksGroupProjectForGroupID(ctx, db, g.ID)
+	if err != nil {
+		return err
+	}
+	var projectIDs []int64
+	for i := range links {
+		if links[i].Role == sdk.PermissionRead {
+			continue
+		}
+		projectIDs = append(projectIDs, links[i].ProjectID)
+	}
+	if len(projectIDs) == 0 {
+		return nil
+	}
+
+	// Compute organization for each project
+	links, err = LoadLinksGroupProjectForProjectIDs(ctx, db, projectIDs, LoadLinkGroupProjectOptions.WithGroups)
+	if err != nil {
+		return err
+	}
+	mapProjectLinks := make(map[int64]sdk.GroupPermissions)
+	for _, link := range links {
+		if _, ok := mapProjectLinks[link.ProjectID]; !ok {
+			mapProjectLinks[link.ProjectID] = nil
+		}
+		mapProjectLinks[link.ProjectID] = append(mapProjectLinks[link.ProjectID], sdk.GroupPermission{
+			Permission: link.Role,
+			Group:      link.Group,
+		})
+	}
+
+	// For each project compute organization
+	for k, gps := range mapProjectLinks {
+		if _, err := gps.ComputeOrganization(); err != nil {
+			return sdk.NewErrorFrom(err, "changing group organization conflict on project with id: %d", k)
+		}
+	}
+
+	return nil
 }

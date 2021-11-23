@@ -61,6 +61,7 @@ export class Workflow {
     as_code_events: Array<AsCodeEvents>;
     retention_policy: string;
     max_runs: number;
+    organization: string;
 
     preview: Workflow;
     asCode: string;

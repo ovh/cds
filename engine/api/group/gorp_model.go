@@ -62,6 +62,8 @@ type LinkGroupProject struct {
 	GroupID   int64 `db:"group_id"`
 	ProjectID int64 `db:"project_id"`
 	Role      int   `db:"role"`
+	// Aggregates
+	Group sdk.Group `db:"-"`
 }
 
 func (c LinkGroupProject) Canonical() gorpmapper.CanonicalForms {
@@ -95,11 +97,26 @@ func (l LinksGroupProject) ToMapByProjectID() map[int64]LinksGroupProject {
 	return m
 }
 
+type Organization struct {
+	ID           int64  `db:"id"`
+	GroupID      int64  `db:"group_id"`
+	Organization string `db:"organization"`
+	gorpmapper.SignedEntity
+}
+
+func (o Organization) Canonical() gorpmapper.CanonicalForms {
+	_ = []interface{}{o.ID, o.GroupID, o.Organization} // Checks that fields exists at compilation
+	return []gorpmapper.CanonicalForm{
+		"{{print .ID}}{{print .GroupID}}{{.Organization}}",
+	}
+}
+
 func init() {
 	gorpmapping.Register(
 		gorpmapping.New(group{}, "group", true, "id"),
 		gorpmapping.New(LinkGroupUser{}, "group_authentified_user", true, "id"),
 		gorpmapping.New(LinkGroupProject{}, "project_group", true, "id"),
 		gorpmapping.New(LinkWorkflowGroupPermission{}, "workflow_perm", false),
+		gorpmapping.New(Organization{}, "group_organization", true, "id"),
 	)
 }

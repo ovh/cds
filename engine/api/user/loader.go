@@ -13,9 +13,11 @@ type LoadOptionFunc func(context.Context, gorp.SqlExecutor, ...*sdk.Authentified
 
 // LoadOptions for authentified users.
 var LoadOptions = struct {
-	WithContacts LoadOptionFunc
+	WithContacts     LoadOptionFunc
+	WithOrganization LoadOptionFunc
 }{
-	WithContacts: loadContacts,
+	WithContacts:     loadContacts,
+	WithOrganization: loadOrganization,
 }
 
 func loadContacts(ctx context.Context, db gorp.SqlExecutor, aus ...*sdk.AuthentifiedUser) error {
@@ -37,6 +39,29 @@ func loadContacts(ctx context.Context, db gorp.SqlExecutor, aus ...*sdk.Authenti
 	for i := range aus {
 		if _, ok := mapUsers[aus[i].ID]; ok {
 			aus[i].Contacts = mapUsers[aus[i].ID]
+		}
+	}
+
+	return nil
+}
+
+func loadOrganization(ctx context.Context, db gorp.SqlExecutor, aus ...*sdk.AuthentifiedUser) error {
+	userIDs := sdk.AuthentifiedUsersToIDs(aus)
+
+	// Get all organizations for user ids
+	orgs, err := LoadOrganizationsByUserIDs(ctx, db, userIDs)
+	if err != nil {
+		return err
+	}
+	mOrgs := make(map[string]Organization)
+	for i := range orgs {
+		mOrgs[orgs[i].AuthentifiedUserID] = orgs[i]
+	}
+
+	// Set organization on each users
+	for i := range aus {
+		if org, ok := mOrgs[aus[i].ID]; ok {
+			aus[i].Organization = org.Organization
 		}
 	}
 

@@ -7,8 +7,8 @@ import { ProjectIntegration } from 'app/model/integration.model';
 import { Key } from 'app/model/keys.model';
 import { IdName, Label, LoadOpts, Project } from 'app/model/project.model';
 import { Variable } from 'app/model/variable.model';
-import { EnvironmentService } from 'app/service/environment/environment.service';
 import { NavbarService } from 'app/service/navbar/navbar.service';
+import { ProjectService } from 'app/service/project/project.service';
 import { ProjectStore } from 'app/service/project/project.store';
 import { cloneDeep } from 'lodash-es';
 import { tap } from 'rxjs/operators';
@@ -37,7 +37,7 @@ export class ProjectState {
         private _http: HttpClient,
         private _navbarService: NavbarService,
         private _projectStore: ProjectStore,
-        private _envService: EnvironmentService
+        private _projectService: ProjectService
     ) { }
 
     @Selector()
@@ -91,30 +91,21 @@ export class ProjectState {
             });
         }
 
-        let opts = action.payload.opts;
-        if (Array.isArray(opts) && opts.length) {
-            opts = opts.concat([
-                new LoadOpts('withGroups', 'groups'),
-                new LoadOpts('withPermission', 'permission')
-            ]);
-        } else {
-            opts = [
-                new LoadOpts('withGroups', 'groups'),
-                new LoadOpts('withPermission', 'permission')
-            ];
-        }
-        opts.push(new LoadOpts('withIntegrations', 'integrations'));
-        opts.push(new LoadOpts('withLabels', 'labels'));
-
-        return ctx.dispatch(new ProjectAction.ResyncProject({projectKey: action.payload.projectKey, opts}));
+        return this._projectService.getProject(action.payload.projectKey, [
+            ...action.payload.opts,
+            new LoadOpts('withLabels', 'labels')
+        ])
+            .pipe(tap((res: Project) => {
+                ctx.dispatch(new ProjectAction.LoadProject(res));
+            }));
     }
 
-    @Action(ProjectAction.ResyncProject)
-    resync(ctx: StateContext<ProjectStateModel>, action: ProjectAction.ResyncProject) {
+    @Action(ProjectAction.EnrichProject)
+    resync(ctx: StateContext<ProjectStateModel>, action: ProjectAction.EnrichProject) {
         let params = new HttpParams();
         let opts = action.payload.opts;
         opts.push(new LoadOpts('withFeatures', 'features'));
-        opts.forEach((opt) => params = params.append(opt.queryParam, 'true'));
+        opts.forEach(opt => params = params.append(opt.queryParam, 'true'));
         const state = ctx.getState();
         ctx.setState({
             ...state,
@@ -123,58 +114,35 @@ export class ProjectState {
         return this._http
             .get<Project>('/project/' + action.payload.projectKey, { params })
             .pipe(tap((res: Project) => {
-                const proj = state.project;
-                let projectUpdated: Project;
-                if (action.payload.opts) {
-                    projectUpdated = Object.assign({}, proj, res);
-                    action.payload.opts.forEach(o => {
-                        switch (o.fieldName) {
-                            case 'workflow_names':
-                                if (!res.workflow_names) {
-                                    projectUpdated.workflow_names = [];
-                                }
-                                break;
-                            case 'pipeline_names':
-                                if (!res.pipeline_names) {
-                                    projectUpdated.pipeline_names = [];
-                                }
-                                break;
-                            case 'application_names':
-                                if (!res.application_names) {
-                                    projectUpdated.application_names = [];
-                                }
-                                break;
-                            case 'environments':
-                                if (!res.environments) {
-                                    projectUpdated.environments = [];
-                                }
-                                break;
-                            case 'environment_names':
-                                if (!res.environment_names) {
-                                    projectUpdated.environment_names = [];
-                                }
-                                break;
-                            case 'integrations':
-                                if (!res.integrations) {
-                                    projectUpdated.integrations = [];
-                                }
-                                break;
-                            case 'keys':
-                                if (!res.keys) {
-                                    projectUpdated.keys = [];
-                                }
-                                break;
-                            case 'labels':
-                                if (!res.labels) {
-                                    projectUpdated.labels = [];
-                                }
-                                break;
-                        }
-                    });
-                } else {
-                    projectUpdated = res;
-                }
-
+                let projectUpdated = { ...state.project };
+                (action.payload.opts ?? []).forEach(o => {
+                    switch (o.fieldName) {
+                        case 'workflow_names':
+                            projectUpdated.workflow_names = res.workflow_names;
+                            break;
+                        case 'pipeline_names':
+                            projectUpdated.pipeline_names = res.pipeline_names;
+                            break;
+                        case 'application_names':
+                            projectUpdated.application_names = res.application_names;
+                            break;
+                        case 'environments':
+                            projectUpdated.environments = res.environments;
+                            break;
+                        case 'environment_names':
+                            projectUpdated.environment_names = res.environment_names;
+                            break;
+                        case 'integrations':
+                            projectUpdated.integrations = res.integrations;
+                            break;
+                        case 'keys':
+                            projectUpdated.keys = res.keys;
+                            break;
+                        case 'labels':
+                            projectUpdated.labels = res.labels;
+                            break;
+                    }
+                });
                 ctx.dispatch(new ProjectAction.LoadProject(projectUpdated));
             }));
     }
@@ -296,7 +264,7 @@ export class ProjectState {
     @Action(ProjectAction.AddVariableInProject)
     addVariable(ctx: StateContext<ProjectStateModel>, action: ProjectAction.AddVariableInProject) {
         const state = ctx.getState();
-        return this._http.post<Variable>('/project/' + state.project.key + '/variable/' + action.payload.name, action.payload)
+        return this._http.post<Variable>(`/project/${state.project.key}/variable/${action.payload.name}`, action.payload)
             .pipe(tap((v: Variable) => {
                 let p = cloneDeep(state.project);
                 if (!p.variables) {
@@ -370,7 +338,7 @@ export class ProjectState {
     @Action(ProjectAction.AddLabelWorkflowInProject)
     addLabelWorkflow(ctx: StateContext<ProjectStateModel>, action: ProjectAction.AddLabelWorkflowInProject) {
         // check if we will a to resync project to get new labels
-        let resyncProject = !action.payload.label.id;
+        let resyncLabels = !action.payload.label.id;
         const state = ctx.getState();
         return this._http.post<Label>(
             `/project/${state.project.key}/workflows/${action.payload.workflowName}/label`,
@@ -397,10 +365,10 @@ export class ProjectState {
                 project: Object.assign({}, state.project, <Project>{ workflow_names }),
             });
 
-            if (resyncProject) {
-                ctx.dispatch(new ProjectAction.ResyncProject({
+            if (resyncLabels) {
+                ctx.dispatch(new ProjectAction.EnrichProject({
                     projectKey: state.project.key,
-                    opts: []
+                    opts: [new LoadOpts('withLabels', 'labels')]
                 }));
             }
         }));
@@ -413,7 +381,6 @@ export class ProjectState {
         return this._http.delete<null>(
             `/project/${state.project.key}/workflows/${action.payload.workflowName}/label/${action.payload.labelId}`
         ).pipe(tap(() => {
-
             let workflow_names = state.project.workflow_names ? state.project.workflow_names.concat([]) : [];
             workflow_names = workflow_names.map((wf) => {
                 if (action.payload.workflowName === wf.name) {
@@ -441,12 +408,10 @@ export class ProjectState {
     updateFavorite(ctx: StateContext<ProjectStateModel>, action: ProjectAction.UpdateFavoriteProject) {
         const state = ctx.getState();
 
-        return this._http.post(
-            '/user/favorite', {
-                type: 'project',
-                project_key: action.payload.projectKey
-            }
-        ).pipe(tap(() => {
+        return this._http.post('/user/favorite', {
+            type: 'project',
+            project_key: action.payload.projectKey
+        }).pipe(tap(() => {
             this._navbarService.refreshData();
             if (state.project && state.project.key) {
                 ctx.setState({

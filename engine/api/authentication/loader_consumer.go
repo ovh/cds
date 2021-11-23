@@ -47,7 +47,7 @@ func loadAuthentifiedUserWithContacts(ctx context.Context, db gorp.SqlExecutor, 
 
 func loadAuthentifiedUser(ctx context.Context, db gorp.SqlExecutor, cs ...*sdk.AuthConsumer) error {
 	// Load all users for given access tokens
-	users, err := user.LoadAllByIDs(ctx, db, sdk.AuthConsumersToAuthentifiedUserIDs(cs))
+	users, err := user.LoadAllByIDs(ctx, db, sdk.AuthConsumersToAuthentifiedUserIDs(cs), user.LoadOptions.WithOrganization)
 	if err != nil {
 		return err
 	}

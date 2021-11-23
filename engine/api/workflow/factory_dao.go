@@ -319,7 +319,7 @@ func (dao WorkflowDAO) withGroups(ctx context.Context, db gorp.SqlExecutor, ws *
 		ids = append(ids, id)
 	}
 
-	perms, err := group.LoadWorkflowGroupsByWorkflowIDs(db, ids)
+	perms, err := group.LoadWorkflowGroupsByWorkflowIDs(ctx, db, ids)
 	if err != nil {
 		return err
 	}
@@ -328,6 +328,10 @@ func (dao WorkflowDAO) withGroups(ctx context.Context, db gorp.SqlExecutor, ws *
 		for i, w := range *ws {
 			if w.ID == workflowID {
 				w.Groups = perm
+				w.Organization, err = w.Groups.ComputeOrganization()
+				if err != nil {
+					return err
+				}
 				(*ws)[i] = w
 				break
 			}

@@ -24,6 +24,7 @@ export class AuthentifiedUser {
     username: string;
     fullname: string;
     ring: string;
+    organization: string;
 }
 
 export class User {

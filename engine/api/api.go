@@ -93,11 +93,12 @@ type Configuration struct {
 		InsecureSkipVerifyTLS bool `toml:"insecureSkipVerifyTLS" json:"insecureSkipVerifyTLS" default:"false"`
 	} `toml:"internalServiceMesh" json:"internalServiceMesh"`
 	Auth struct {
-		TokenDefaultDuration         int64  `toml:"tokenDefaultDuration" default:"30" comment:"The default duration of a token (in days)" json:"tokenDefaultDuration"`
-		TokenOverlapDefaultDuration  string `toml:"tokenOverlapDefaultDuration" default:"24h" comment:"The default overlap duration when a token is regen" json:"tokenOverlapDefaultDuration"`
-		DefaultGroup                 string `toml:"defaultGroup" default:"" comment:"The default group is the group in which every new user will be granted at signup" json:"defaultGroup"`
-		DisableAddUserInDefaultGroup bool   `toml:"disableAddUserInDefaultGroup" default:"false" comment:"If false, user are automatically added in the default group" json:"disableAddUserInDefaultGroup"`
-		RSAPrivateKey                string `toml:"rsaPrivateKey" default:"" comment:"The RSA Private Key used to sign and verify the JWT Tokens issued by the API \nThis is mandatory." json:"-"`
+		TokenDefaultDuration         int64           `toml:"tokenDefaultDuration" default:"30" comment:"The default duration of a token (in days)" json:"tokenDefaultDuration"`
+		TokenOverlapDefaultDuration  string          `toml:"tokenOverlapDefaultDuration" default:"24h" comment:"The default overlap duration when a token is regen" json:"tokenOverlapDefaultDuration"`
+		DefaultGroup                 string          `toml:"defaultGroup" default:"" comment:"The default group is the group in which every new user will be granted at signup" json:"defaultGroup"`
+		DisableAddUserInDefaultGroup bool            `toml:"disableAddUserInDefaultGroup" default:"false" comment:"If false, user are automatically added in the default group" json:"disableAddUserInDefaultGroup"`
+		RSAPrivateKey                string          `toml:"rsaPrivateKey" default:"" comment:"The RSA Private Key used to sign and verify the JWT Tokens issued by the API \nThis is mandatory." json:"-"`
+		AllowedOrganizations         sdk.StringSlice `toml:"allowedOrganizations" default:"" comment:"The list of allowed organizations for CDS users, let empty to authorize all organizations." json:"allowedOrganizations"`
 		LDAP                         struct {
 			Enabled         bool   `toml:"enabled" default:"false" json:"enabled"`
 			SignupDisabled  bool   `toml:"signupDisabled" default:"false" json:"signupDisabled"`
@@ -120,7 +121,6 @@ type Configuration struct {
 			MFASupportEnabled bool   `json:"mfa_support_enabled" default:"false" toml:"mfaSupportEnabled"`
 			Enabled           bool   `json:"enabled" default:"false" toml:"enabled"`
 			SignupDisabled    bool   `json:"signupDisabled" default:"false" toml:"signupDisabled"`
-			MailDomain        string `json:"mailDomain" toml:"mailDomain"`
 			RedirectMethod    string `json:"redirect_method" toml:"redirectMethod"`
 			RedirectURL       string `json:"redirect_url" toml:"redirectURL"`
 			Keys              struct {
@@ -679,7 +679,6 @@ func (a *API) Serve(ctx context.Context) error {
 
 	if a.Config.Auth.CorporateSSO.Enabled {
 		driverConfig := corpsso.Config{
-			MailDomain:        a.Config.Auth.CorporateSSO.MailDomain,
 			MFASupportEnabled: a.Config.Auth.CorporateSSO.MFASupportEnabled,
 		}
 		driverConfig.Request.Keys.RequestSigningKey = a.Config.Auth.CorporateSSO.Keys.RequestSigningKey
@@ -688,6 +687,7 @@ func (a *API) Serve(ctx context.Context) error {
 		driverConfig.Token.SigningKey = a.Config.Auth.CorporateSSO.Keys.TokenSigningKey
 		driverConfig.Token.KeySigningKey.KeySigningKey = a.Config.Auth.CorporateSSO.Keys.TokenKeySigningKey.KeySigningKey
 		driverConfig.Token.KeySigningKey.SigningKeyClaim = a.Config.Auth.CorporateSSO.Keys.TokenKeySigningKey.SigningKeyClaim
+		driverConfig.AllowedOrganizations = a.Config.Auth.AllowedOrganizations
 
 		a.AuthenticationDrivers[sdk.ConsumerCorporateSSO] = corpsso.NewDriver(driverConfig)
 	}

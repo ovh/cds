@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -15,6 +16,8 @@ import (
 
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/authentication/corpsso"
+	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
@@ -316,7 +319,7 @@ func Test_postAuthSigninHandler_WithCorporateSSO(t *testing.T) {
 	cfg.Request.RedirectURL = "https://lolcat.host/sso/jwt"
 	cfg.Token.KeySigningKey.KeySigningKey = "-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmDMEXF1XRhYJKwYBBAHaRw8BAQdABEHVkfddwOIEFd7V0hsGrudgRuOlnV4/VSK6\nYJGFag+0HnRlc3QtbG9ja2VyIDx0ZXN0QGxvbGNhdC5ob3N0PoiQBBMWCAA4FiEE\nBN0dlUe5Vi8hx0ZsWXCoyV8Z2eQFAlxdV0YCGwMFCwkIBwIGFQoJCAsCBBYCAwEC\nHgECF4AACgkQWXCoyV8Z2eQt5gEAycwThBk4CzuQ8XtPvLA/kml3Jkclgw6ACGsP\nYOrnz+gA/2XOjnhYOA6S3sn9g4UMVtON8TofBMTTSqCdgrghu3kFuDgEXF1XRhIK\nKwYBBAGXVQEFAQEHQGlq7X9fCeXKxlmcWgT+fFJyS1MlL2uwKQteXl8yIadwAwEI\nB4h4BBgWCAAgFiEEBN0dlUe5Vi8hx0ZsWXCoyV8Z2eQFAlxdV0YCGwwACgkQWXCo\nyV8Z2eR4rgD/cPn9TStAoXc4Pa+sKgAFmG3NVCNln8FtkH5cQ1g0ouUA/AzcLTL4\nVQHT6ArvDWzJKKrh2PepZ5PVMS/Hwh/GDH4J\n=n1Ws\n-----END PGP PUBLIC KEY BLOCK-----"
 	cfg.Token.KeySigningKey.SigningKeyClaim = "key"
-	cfg.MailDomain = "lolcat.host"
+	cfg.AllowedOrganizations = []string{"planet-express"}
 
 	api.AuthenticationDrivers[sdk.ConsumerCorporateSSO] = corpsso.NewDriver(cfg)
 
@@ -386,24 +389,18 @@ func Test_postAuthSigninHandler_WithCorporateSSO(t *testing.T) {
 		err = user.DeleteByID(api.mustDB(), u.ID)
 		require.NoError(t, err)
 	})
-
 }
 
 func generateToken(t *testing.T, username string) string {
-	var uuid = func() string {
-		return sdk.UUID()
-	}
-	var ssoToken = struct {
-		RemoteUser string
-		Audience   string
-		TokenId    string
-		TwoFA      bool
-		Groups     []string `json:",omitempty"`
-	}{
-		RemoteUser: username,
-		Audience:   uuid(),
-		TokenId:    uuid(),
-		TwoFA:      true,
+	ssoToken := corpsso.IssuedToken{
+		RemoteUser:     username,
+		RemoteUsername: username,
+		Email:          username + "@planet-express.futurama",
+		Organization:   "planet-express",
+		Audience:       sdk.UUID(),
+		TokenID:        sdk.UUID(),
+		MFA:            true,
+		IAT:            time.Now().Unix(),
 	}
 	privKey, err := gpg.NewPrivateKeyFromPem(AuthKey, "")
 	if err != nil {
@@ -418,10 +415,7 @@ func generateToken(t *testing.T, username string) string {
 		t.Error("unable to create JOSE signer", err)
 		return ""
 	}
-	cl := jwt.Claims{
-		IssuedAt: jwt.NewNumericDate(time.Now()),
-	}
-	raw, err := jwt.Signed(sig).Claims(cl).Claims(ssoToken).CompactSerialize()
+	raw, err := jwt.Signed(sig).Claims(ssoToken).CompactSerialize()
 	if err != nil {
 		t.Error("Failed to create JWT token", err)
 		return ""
@@ -442,4 +436,80 @@ func Test_getAuthMe(t *testing.T) {
 	api.Router.Mux.ServeHTTP(rec, req)
 	require.Equal(t, 200, rec.Code)
 	t.Logf(rec.Body.String())
+}
+
+func TestUserSetOrganization_EnsureGroup(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	g1 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
+
+	u1, _ := assets.InsertLambdaUser(t, db, g1)
+	u2, _ := assets.InsertLambdaUser(t, db, g1)
+	u3, _ := assets.InsertLambdaUser(t, db, g1)
+
+	// Set not allowed org should return an error
+	api.Config.Auth.AllowedOrganizations = []string{"org0"}
+	err := api.userSetOrganization(context.TODO(), db, u1, "org1")
+	require.Error(t, err)
+	require.Equal(t, "forbidden (from: user organization \"org1\" is not allowed)", err.Error())
+
+	// Set org on user should also update its group
+	api.Config.Auth.AllowedOrganizations = []string{"org1", "org2"}
+	require.NoError(t, api.userSetOrganization(context.TODO(), db, u1, "org1"))
+	orgU1, err := user.LoadOrganizationByUserID(context.TODO(), db, u1.ID)
+	require.NoError(t, err)
+	require.Equal(t, "org1", orgU1.Organization)
+	orgG1, err := group.LoadOrganizationByGroupID(context.TODO(), db, g1.ID)
+	require.NoError(t, err)
+	require.Equal(t, "org1", orgG1.Organization)
+
+	// Set org should be ok when no conflict on groups
+	require.NoError(t, api.userSetOrganization(context.TODO(), db, u3, "org1"))
+	orgU3, err := user.LoadOrganizationByUserID(context.TODO(), db, u3.ID)
+	require.NoError(t, err)
+	require.Equal(t, "org1", orgU3.Organization)
+
+	// Set org on a user that is part of group with another org should return an error
+	err = api.userSetOrganization(context.TODO(), db, u2, "org2")
+	require.Error(t, err)
+	require.Equal(t, "Cannot validate given data (from: group members organization conflict \"org1\" and \"org2\")", err.Error())
+
+	// Change user org should return an error
+	err = api.userSetOrganization(context.TODO(), db, u1, "org2")
+	require.Error(t, err)
+	require.Equal(t, "forbidden (from: cannot change user organization to \"org2\", value already set to \"org1\")", err.Error())
+}
+
+func TestUserSetOrganization_EnsureProject(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	pKey := sdk.RandomString(10)
+	p1 := assets.InsertTestProject(t, db, api.Cache, pKey, pKey)
+
+	g1 := &p1.ProjectGroups[0].Group
+	g2 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
+	require.NoError(t, group.InsertLinkGroupProject(context.TODO(), db, &group.LinkGroupProject{
+		GroupID:   g2.ID,
+		ProjectID: p1.ID,
+		Role:      sdk.PermissionReadWriteExecute,
+	}))
+
+	u1, _ := assets.InsertLambdaUser(t, db, g1)
+	u2, _ := assets.InsertLambdaUser(t, db, g2)
+
+	// Assert project info
+	require.NoError(t, project.LoadOptions.WithGroups(context.TODO(), db, p1))
+	require.Equal(t, "", p1.Organization)
+	require.Len(t, p1.ProjectGroups, 2)
+
+	// Set org on u1 should change project organization
+	api.Config.Auth.AllowedOrganizations = []string{"org1", "org2"}
+	require.NoError(t, api.userSetOrganization(context.TODO(), db, u1, "org1"))
+	require.NoError(t, project.LoadOptions.WithGroups(context.TODO(), db, p1))
+	require.Equal(t, "org1", p1.Organization)
+
+	// Set another org on a user that is part of group with permission on the project should return an error
+	err := api.userSetOrganization(context.TODO(), db, u2, "org2")
+	require.Error(t, err)
+	require.Equal(t, fmt.Sprintf("forbidden (from: changing group organization conflict on project with id: %d) (caused by: group permissions organization conflict)", p1.ID), err.Error())
 }

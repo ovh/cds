@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnChanges, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { GroupPermission } from 'app/model/group.model';
 import { Project } from 'app/model/project.model';
 import { ConfirmModalComponent } from 'app/shared/modal/confirm/confirm.component';
 import { WarningModalComponent } from 'app/shared/modal/warning/warning.component';
@@ -14,26 +15,30 @@ import { finalize } from 'rxjs/operators';
     templateUrl: './permission.html',
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ProjectPermissionsComponent {
+export class ProjectPermissionsComponent implements OnChanges {
+    @ViewChild('permWarning') permWarningModal: WarningModalComponent;
+    @ViewChild('confirmPropagationModal') confirmPropagationModal: ConfirmModalComponent;
 
     @Input() project: Project;
-
-    @ViewChild('permWarning')
-    permWarningModal: WarningModalComponent;
-    @ViewChild('confirmPropagationModal')
-    confirmPropagationModal: ConfirmModalComponent;
 
     loading = false;
     permFormLoading = false;
     currentPermEvent: PermissionEvent;
+    groupsOutsideOrganization: Array<GroupPermission>;
 
     constructor(
         public _translate: TranslateService,
         private _toast: ToastService,
         private store: Store,
         private _cd: ChangeDetectorRef
-    ) {
+    ) { }
 
+    ngOnChanges(): void {
+        if (this.project && !!this.project.organization) {
+            this.groupsOutsideOrganization = this.project.groups.filter(gp =>
+                gp.group.organization && gp.group.organization !== this.project.organization);
+            this._cd.markForCheck();
+        }
     }
 
     groupEvent(event: PermissionEvent, skip?: boolean): void {

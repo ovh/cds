@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/ovh/cds/cli"
@@ -23,7 +24,7 @@ func workflowFavoriteRun(c cli.Values) error {
 		WorkflowName: c.GetString(_WorkflowName),
 	}
 
-	res, err := client.UpdateFavorite(params)
+	res, err := client.UpdateFavorite(context.Background(), params)
 	if err != nil {
 		return err
 	}

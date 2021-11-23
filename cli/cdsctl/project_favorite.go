@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/ovh/cds/cli"
@@ -22,7 +23,7 @@ func projectFavoriteRun(c cli.Values) error {
 		ProjectKey: c.GetString(_ProjectKey),
 	}
 
-	res, err := client.UpdateFavorite(params)
+	res, err := client.UpdateFavorite(context.Background(), params)
 	if err != nil {
 		return err
 	}

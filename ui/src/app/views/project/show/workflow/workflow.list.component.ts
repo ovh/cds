@@ -3,7 +3,7 @@ import { Store } from '@ngxs/store';
 import { IdName, Label, LoadOpts, Project } from 'app/model/project.model';
 import { ProjectStore } from 'app/service/project/project.store';
 import { LabelsEditComponent } from 'app/shared/labels/edit/labels.edit.component';
-import { ResyncProject } from 'app/store/project.action';
+import { EnrichProject } from 'app/store/project.action';
 import { finalize } from 'rxjs/operators';
 
 @Component({
@@ -68,14 +68,16 @@ export class ProjectWorkflowListComponent implements OnInit {
     filteredLabels: Array<Label> = [];
     loading = true;
 
-
-    constructor(private store: Store, private _cd: ChangeDetectorRef, private _projectStore: ProjectStore) {
-    }
+    constructor(
+        private store: Store,
+        private _cd: ChangeDetectorRef,
+        private _projectStore: ProjectStore
+    ) { }
 
     ngOnInit(): void {
         this.viewMode = this._projectStore.getWorkflowViewMode(this.project.key);
         let opts: Array<LoadOpts> = [new LoadOpts('withWorkflowNames', 'workflow_names')];
-        this.store.dispatch(new ResyncProject({projectKey: this.project.key, opts}))
+        this.store.dispatch(new EnrichProject({ projectKey: this.project.key, opts }))
             .pipe(finalize(() => {
                 this.loading = false;
                 this._cd.markForCheck();

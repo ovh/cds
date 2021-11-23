@@ -505,7 +505,7 @@ func Test_PermissionOnWorkflowInferiorOfProject(t *testing.T) {
 	router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 
-	require.NoError(t, group.DeleteUserFromGroup(context.TODO(), db, proj.ProjectGroups[0].Group.ID, u.ID))
+	require.NoError(t, group.DeleteLinkGroupUserForGroupIDAndUserID(db, proj.ProjectGroups[0].Group.ID, u.ID))
 
 	proj2, errP := project.Load(context.TODO(), api.mustDB(), proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
 	require.NoError(t, errP)
@@ -673,12 +673,12 @@ func Test_PermissionOnWorkflowWithRestrictionOnNode(t *testing.T) {
 	router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 
-	test.NoError(t, group.DeleteUserFromGroup(context.TODO(), db, proj.ProjectGroups[0].Group.ID, u.ID))
+	require.NoError(t, group.DeleteLinkGroupUserForGroupIDAndUserID(db, proj.ProjectGroups[0].Group.ID, u.ID))
 
-	proj2, errP := project.Load(context.TODO(), api.mustDB(), proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
-	test.NoError(t, errP)
-	wfLoaded, errL := workflow.Load(context.Background(), db, api.Cache, *proj2, newWf.Name, workflow.LoadOptions{DeepPipeline: true})
-	test.NoError(t, errL)
+	proj2, err := project.Load(context.TODO(), api.mustDB(), proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
+	require.NoError(t, err)
+	wfLoaded, err := workflow.Load(context.Background(), db, api.Cache, *proj2, newWf.Name, workflow.LoadOptions{DeepPipeline: true})
+	require.NoError(t, err)
 	assert.Equal(t, 2, len(wfLoaded.Groups))
 
 	// Try to update workflow
@@ -702,8 +702,8 @@ func Test_PermissionOnWorkflowWithRestrictionOnNode(t *testing.T) {
 	router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 
-	wfLoaded, errL = workflow.Load(context.Background(), db, api.Cache, *proj2, newWf.Name, workflow.LoadOptions{})
-	test.NoError(t, errL)
+	wfLoaded, err = workflow.Load(context.Background(), db, api.Cache, *proj2, newWf.Name, workflow.LoadOptions{})
+	require.NoError(t, err)
 	assert.Equal(t, 2, len(wfLoaded.Groups))
 	assert.Equal(t, int64(300), wfLoaded.HistoryLength)
 
