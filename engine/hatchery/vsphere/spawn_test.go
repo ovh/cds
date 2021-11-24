@@ -645,7 +645,7 @@ func TestHatcheryVSphere_SpawnWorkerFromProvisioning(t *testing.T) {
 	c.EXPECT().StartProgramInGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
 		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (*types.StartProgramInGuestResponse, error) {
 			assert.Equal(t, "/bin/echo", req.Spec.GetGuestProgramSpec().ProgramPath)
-			assert.Equal(t, "-n ;env 2>&1 > stdout", req.Spec.GetGuestProgramSpec().Arguments)
+			assert.Equal(t, "-n ;env", req.Spec.GetGuestProgramSpec().Arguments)
 			return &types.StartProgramInGuestResponse{
 				Returnval: 0,
 			}, nil
@@ -655,7 +655,7 @@ func TestHatcheryVSphere_SpawnWorkerFromProvisioning(t *testing.T) {
 	c.EXPECT().StartProgramInGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
 		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (*types.StartProgramInGuestResponse, error) {
 			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "-n ;\n")
-			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "./worker\nshutdown -h now 2>&1 > stdout")
+			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "./worker\nshutdown -h now")
 			var foundConfig bool
 			for _, env := range req.Spec.GetGuestProgramSpec().EnvVariables {
 				if strings.HasPrefix(env, "CDS_CONFIG=") {
