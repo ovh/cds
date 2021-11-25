@@ -256,9 +256,6 @@ func (h *HatcheryVSphere) WorkersStarted(ctx context.Context) []string {
 	for _, s := range srvs {
 		res = append(res, s.Name)
 	}
-
-	log.Debug(ctx, "started workers: "+strings.Join(res, ","))
-
 	return res
 }
 
