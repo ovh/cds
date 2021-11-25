@@ -631,10 +631,6 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (res sdk.
 	if err := w.setupHooks(ctx, jobInfo, w.basedir, hdFile.Name()); err != nil {
 		return sdk.Result{Status: sdk.StatusFail, Reason: fmt.Sprintf("Error: unable to setup hooks: %v", err)}
 	}
-	log.Info(ctx, "Executing hooks setup from directory: %s", hdFile.Name())
-	if err := w.executeHooksSetup(ctx, w.basedir, hdFile.Name()); err != nil {
-		return sdk.Result{Status: sdk.StatusFail, Reason: fmt.Sprintf("Error: unable to setup hooks: %v", err)}
-	}
 
 	w.currentJob.context = ctx
 	w.currentJob.params = jobInfo.NodeJobRun.Parameters
@@ -663,6 +659,11 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (res sdk.
 	// REPLACE ALL VARIABLE EVEN SECRETS HERE
 	if err := processJobParameter(w.currentJob.params); err != nil {
 		return sdk.Result{Status: sdk.StatusFail, Reason: fmt.Sprintf("unable to process job %s: %v", jobInfo.NodeJobRun.Job.Action.Name, err)}
+	}
+
+	log.Info(ctx, "Executing hooks setup from directory: %s", hdFile.Name())
+	if err := w.executeHooksSetup(ctx, w.basedir, hdFile.Name()); err != nil {
+		return sdk.Result{Status: sdk.StatusFail, Reason: fmt.Sprintf("Error: unable to setup hooks: %v", err)}
 	}
 
 	res = w.runJob(ctx, &jobInfo.NodeJobRun.Job.Action, jobInfo.NodeJobRun.ID, jobInfo.Secrets)
@@ -797,6 +798,7 @@ func (w *CurrentWorker) executeHooksSetup(ctx context.Context, basedir afero.Fs,
 
 		str := fmt.Sprintf("source %s ; echo '<<<ENVIRONMENT>>>' ; env", filepath)
 		cmd := exec.Command("bash", "-c", str)
+		cmd.Env = w.Environ()
 		bs, err := cmd.CombinedOutput()
 		if err != nil {
 			return errors.WithStack(err)
