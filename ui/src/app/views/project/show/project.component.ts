@@ -170,10 +170,19 @@ export class ProjectShowComponent implements OnInit, OnDestroy, AfterViewInit {
     ngAfterViewInit(): void {
         for (let i = 0; i < this.tabs.length; i++) {
             if (this.tabs[i].key === 'permissions') {
-                this.tabs[i].template = this.tabPermissionTemplate;
+                // Change ref of permission tab to be detected in tab component
+                let tab = cloneDeep(this.tabs[i]);
+                tab.template = this.tabPermissionTemplate;
+                this.tabs[i] = tab;
+
+                // Change ref of this.tabs to trigger onPush change. ( so no need to trigger markForCheck )
+                let newTabs = new Array<Tab>();
+                this.tabs.forEach(d => {
+                    newTabs.push(d);
+                });
+                this.tabs = newTabs;
             }
         }
-        this._cd.markForCheck();
     }
 
     selectTab(tab: Tab): void {
