@@ -260,7 +260,8 @@ func TestHatcheryVSphere_launchScriptWorker(t *testing.T) {
 		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (*types.StartProgramInGuestResponse, error) {
 			assert.Equal(t, "/bin/echo", req.Spec.GetGuestProgramSpec().ProgramPath)
 			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "-n ;\n")
-			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "./worker register\nshutdown -h now")
+			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "./worker register")
+			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "nshutdown -h now")
 			var foundConfig bool
 			for _, env := range req.Spec.GetGuestProgramSpec().EnvVariables {
 				if strings.HasPrefix(env, "CDS_CONFIG=") {
@@ -655,7 +656,8 @@ func TestHatcheryVSphere_SpawnWorkerFromProvisioning(t *testing.T) {
 	c.EXPECT().StartProgramInGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
 		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (*types.StartProgramInGuestResponse, error) {
 			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "-n ;\n")
-			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "./worker\nshutdown -h now")
+			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "./worker")
+			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "shutdown -h now")
 			var foundConfig bool
 			for _, env := range req.Spec.GetGuestProgramSpec().EnvVariables {
 				if strings.HasPrefix(env, "CDS_CONFIG=") {
