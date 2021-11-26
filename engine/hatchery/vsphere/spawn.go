@@ -314,7 +314,9 @@ func (h *HatcheryVSphere) launchScriptWorker(ctx context.Context, name string, j
 	udata := model.ModelVirtualMachine.PreCmd + "\n" + model.ModelVirtualMachine.Cmd
 
 	if registerOnly {
-		udata += " register"
+		udata += " register 1>/tmp/worker.register.log 2>&1"
+	} else {
+		udata += " 1>/tmp/worker.log 2>&1"
 	}
 	udata += "\n" + model.ModelVirtualMachine.PostCmd
 
