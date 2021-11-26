@@ -261,7 +261,7 @@ func TestHatcheryVSphere_launchScriptWorker(t *testing.T) {
 			assert.Equal(t, "/bin/echo", req.Spec.GetGuestProgramSpec().ProgramPath)
 			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "-n ;\n")
 			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "./worker register")
-			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "nshutdown -h now")
+			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "shutdown -h now")
 			var foundConfig bool
 			for _, env := range req.Spec.GetGuestProgramSpec().EnvVariables {
 				if strings.HasPrefix(env, "CDS_CONFIG=") {
