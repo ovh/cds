@@ -341,15 +341,21 @@ func (c *vSphereClient) WaitProcessInGuest(ctx context.Context, procman *guest.P
 }
 
 func (c *vSphereClient) InitiateFileTransferFromGuest(ctx context.Context, procman *guest.ProcessManager, req *types.InitiateFileTransferFromGuest) (*types.InitiateFileTransferFromGuestResponse, error) {
-	ctxB, cancel := context.WithTimeout(ctx, c.requestTimeout)
+	ctx, cancel := context.WithTimeout(ctx, c.requestTimeout)
 	defer cancel()
 
-	res, err := methods.InitiateFileTransferFromGuest(ctxB, procman.Client(), req)
+	o := guest.NewOperationsManager(procman.Client(), req.Vm)
+	fileManager, err := o.FileManager(ctx)
 	if err != nil {
-		return nil, sdk.WrapError(err, "unable to InitiateFileTransferFromGuest(%s)", req.GuestFilePath)
+		return nil, sdk.WithStack(err)
 	}
 
-	log.Info(ctx, "file %q url: %v", req.GuestFilePath, res.Returnval.Url)
+	link, err := fileManager.InitiateFileTransferFromGuest(ctx, req.Auth, req.GuestFilePath)
+	if err != nil {
+		return nil, sdk.WithStack(err)
+	}
+
+	log.Info(ctx, "file %q url: %v", req.GuestFilePath, link.Url)
 
 	return nil, nil
 }
