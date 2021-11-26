@@ -409,7 +409,7 @@ func (h *HatcheryVSphere) provisioning(ctx context.Context) {
 		}
 
 		if model.CheckRegistration || model.NeedRegistration {
-			log.Info(ctx, "model %q needs registration. skip provisioning.")
+			log.Info(ctx, "model %q needs registration. skip provisioning.", modelPath)
 			continue
 		}
 

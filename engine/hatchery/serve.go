@@ -260,6 +260,8 @@ func (c *Common) GenerateWorkerConfig(ctx context.Context, h hatchery.Interface,
 		httpInsecure = h.Configuration().API.HTTP.Insecure
 	}
 
+	log.Debug(ctx, "generating worker %q configuration (URL:%s)", apiURL)
+
 	envvars := make(map[string]string, len(h.Configuration().Provision.InjectEnvVars))
 
 	for _, e := range h.Configuration().Provision.InjectEnvVars {
@@ -282,11 +284,13 @@ func (c *Common) GenerateWorkerConfig(ctx context.Context, h hatchery.Interface,
 		InjectEnvVars:       envvars,
 		Region:              h.Configuration().Provision.Region,
 		Log: cdslog.Conf{
-			GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
-			GraylogPort:       strconv.Itoa(h.Configuration().Provision.WorkerLogsOptions.Graylog.Port),
-			GraylogExtraKey:   h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey,
-			GraylogExtraValue: h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue,
-			Level:             h.Configuration().Provision.WorkerLogsOptions.Level,
+			GraylogHost:                h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
+			GraylogPort:                strconv.Itoa(h.Configuration().Provision.WorkerLogsOptions.Graylog.Port),
+			GraylogExtraKey:            h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey,
+			GraylogExtraValue:          h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue,
+			Level:                      h.Configuration().Provision.WorkerLogsOptions.Level,
+			GraylogFieldCDSServiceType: "worker",
+			GraylogFieldCDSServiceName: spawnArgs.WorkerName,
 		},
 	}
 
