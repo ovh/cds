@@ -33,7 +33,7 @@ type UserRegistration struct {
 	Hash     string    `json:"-"  db:"hash"` // do no return hash in json
 }
 
-var UsernameRegex = regexp.MustCompile("[a-z0-9._-]{3,32}")
+var usernameRegex = regexp.MustCompile("[a-z0-9._-]{3,32}")
 
 // AuthentifiedUser struct contains all information about a cds user.
 type AuthentifiedUser struct {
@@ -49,10 +49,17 @@ type AuthentifiedUser struct {
 	Organization string       `json:"organization,omitempty" yaml:"organization,omitempty" cli:"organization" db:"-"`
 }
 
+func IsValidUsername(username string) error {
+	if username == "" || username == "me" || usernameRegex.MatchString(username) {
+		return NewErrorFrom(ErrInvalidUsername, "invalid given username")
+	}
+	return nil
+}
+
 // IsValid returns an error if given user's infos are not valid.
 func (u AuthentifiedUser) IsValid() error {
-	if u.Username == "" || u.Username == "me" {
-		return NewErrorFrom(ErrWrongRequest, "invalid given username")
+	if err := IsValidUsername(u.Username); err != nil {
+		return err
 	}
 	if u.Fullname == "" {
 		return NewErrorFrom(ErrWrongRequest, "invalid given fullname")

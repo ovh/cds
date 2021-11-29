@@ -43,7 +43,7 @@ func LoadRegistrationByID(ctx context.Context, db gorp.SqlExecutor, id string) (
 
 // InsertRegistration in database.
 func InsertRegistration(ctx context.Context, db gorpmapper.SqlExecutorWithTx, ur *sdk.UserRegistration) error {
-	if !sdk.UsernameRegex.MatchString(ur.Username) {
+	if err := sdk.IsValidUsername(ur.Username); err != nil {
 		return sdk.WithStack(sdk.ErrInvalidUsername)
 	}
 
