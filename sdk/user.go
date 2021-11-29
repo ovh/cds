@@ -50,8 +50,8 @@ type AuthentifiedUser struct {
 }
 
 func IsValidUsername(username string) error {
-	if username == "" || username == "me" || usernameRegex.MatchString(username) {
-		return NewErrorFrom(ErrInvalidUsername, "invalid given username")
+	if username == "" || username == "me" || !usernameRegex.MatchString(username) {
+		return NewErrorFrom(ErrInvalidUsername, "invalid given username: %q", username)
 	}
 	return nil
 }

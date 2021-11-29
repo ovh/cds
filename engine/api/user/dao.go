@@ -130,7 +130,7 @@ func CountAdmin(db gorp.SqlExecutor) (int64, error) {
 // Insert a user in database.
 func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, au *sdk.AuthentifiedUser) error {
 	if err := sdk.IsValidUsername(au.Username); err != nil {
-		return sdk.WithStack(sdk.ErrInvalidUsername)
+		return err
 	}
 
 	au.ID = sdk.UUID()
@@ -147,7 +147,7 @@ func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, au *sdk.Authen
 // Update a user in database.
 func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, au *sdk.AuthentifiedUser) error {
 	if err := sdk.IsValidUsername(au.Username); err != nil {
-		return sdk.WithStack(sdk.ErrInvalidUsername)
+		return err
 	}
 
 	u := authentifiedUser{AuthentifiedUser: *au}
