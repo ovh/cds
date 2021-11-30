@@ -15,7 +15,7 @@ import (
 func PushBuildInfo(ctx context.Context, wk workerruntime.Runtime, _ sdk.Action, _ []sdk.Variable) (sdk.Result, error) {
 	pfName := sdk.ParameterFind(wk.Parameters(), "cds.integration.artifact_manager")
 	if pfName == nil {
-		return sdk.Result{}, errors.New("unable to retrieve deployment integration... Aborting")
+		return sdk.Result{}, errors.New("unable to retrieve artifact manager integration... Aborting")
 	}
 
 	plugin := wk.GetPlugin(sdk.GRPCPluginBuildInfo)

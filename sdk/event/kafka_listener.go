@@ -2,37 +2,46 @@ package event
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/Shopify/sarama"
+	"github.com/pkg/errors"
 
 	"github.com/ovh/cds/sdk"
 )
 
+type KafkaConfig struct {
+	Version       string `json:"version"`
+	User          string `json:"user"`
+	Password      string `json:"password"`
+	Topic         string `json:"topic"`
+	Broker        string `json:"broker"`
+	ConsumerGroup string `json:"consumerGroup"`
+}
+
 // ConsumeKafka consume CDS Event from a kafka topic
-func ConsumeKafka(ctx context.Context, kafkaVersion, addr, topic, group, user, password string, processEventFunc func(sdk.Event) error, errorLogFunc func(string, ...interface{})) error {
+func ConsumeKafka(ctx context.Context, kafkaConfig KafkaConfig, processEventFunc func(sdk.Event) error, errorLogFunc func(string, ...interface{})) error {
 	var config = sarama.NewConfig()
 	config.Net.TLS.Enable = true
 	config.Net.SASL.Enable = true
-	config.Net.SASL.User = user
-	config.Net.SASL.Password = password
-	config.ClientID = user
+	config.Net.SASL.User = kafkaConfig.User
+	config.Net.SASL.Password = kafkaConfig.Password
+	config.ClientID = kafkaConfig.User
 	config.Consumer.Return.Errors = true
 
-	if kafkaVersion != "" {
-		kafkaVersion, err := sarama.ParseKafkaVersion(kafkaVersion)
+	if kafkaConfig.Version != "" {
+		kafkaVersion, err := sarama.ParseKafkaVersion(kafkaConfig.Version)
 		if err != nil {
-			return fmt.Errorf("error parsing Kafka version %v err:%s", kafkaVersion, err)
+			return errors.Wrapf(err, "error parsing Kafka version %v", kafkaConfig.Version)
 		}
 		config.Version = kafkaVersion
 	} else {
 		config.Version = sarama.V0_10_2_0
 	}
 
-	consumerGroup, err := sarama.NewConsumerGroup(strings.Split(addr, ","), group, config)
+	consumerGroup, err := sarama.NewConsumerGroup(strings.Split(kafkaConfig.Broker, ","), kafkaConfig.ConsumerGroup, config)
 	if err != nil {
-		return fmt.Errorf("Error creating consumer: %s", err)
+		return errors.Wrapf(err, "error creating consumer")
 	}
 
 	// Track errors
@@ -48,7 +57,7 @@ func ConsumeKafka(ctx context.Context, kafkaVersion, addr, topic, group, user, p
 	}
 	go func() {
 		for {
-			if err := consumerGroup.Consume(context.Background(), []string{topic}, &h); err != nil {
+			if err := consumerGroup.Consume(context.Background(), []string{kafkaConfig.Topic}, &h); err != nil {
 				errorLogFunc("Error on ProcessEventFunc:%s", err)
 			}
 		}
