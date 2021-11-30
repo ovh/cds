@@ -42,7 +42,7 @@ func getBroker(ctx context.Context, t string, option interface{}) (Broker, error
 		k := &KafkaClient{}
 		return k.initialize(ctx, option)
 	}
-	return nil, fmt.Errorf("Invalid Broker Type %s", t)
+	return nil, fmt.Errorf("invalid Broker Type %s", t)
 }
 
 // ResetPublicIntegrations load all integration of type Event and creates kafka brokers

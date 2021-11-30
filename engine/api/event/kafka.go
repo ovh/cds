@@ -24,6 +24,7 @@ type KafkaConfig struct {
 	BrokerAddresses string
 	User            string
 	Password        string
+	Version         string
 	Topic           string
 	MaxMessageByte  int
 	DisableTLS      bool
@@ -35,7 +36,7 @@ type KafkaConfig struct {
 func (c *KafkaClient) initialize(ctx context.Context, options interface{}) (Broker, error) {
 	conf, ok := options.(KafkaConfig)
 	if !ok {
-		return nil, fmt.Errorf("Invalid Kafka Initialization")
+		return nil, fmt.Errorf("invalid Kafka Initialization")
 	}
 
 	if conf.BrokerAddresses == "" ||
@@ -69,6 +70,9 @@ func (c *KafkaClient) initProducer() error {
 	if config.Net.SASL.Enable {
 		config.Net.SASL.User = c.options.User
 		config.Net.SASL.Password = c.options.Password
+	}
+	if c.options.Version == "" {
+		config.Version = sarama.V0_10_2_0
 	}
 
 	config.ClientID = c.options.ClientID
