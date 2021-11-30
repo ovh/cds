@@ -3273,8 +3273,11 @@ func Test_CheckRegionDuringInitWorkflow(t *testing.T) {
 	wr, _ = workflow.LoadRun(ctx, db, proj2.Key, w1.Name, 1, workflow.LoadRunOptions{})
 
 	require.Equal(t, sdk.StatusFail, wr.Status)
-	require.Equal(t, 1, len(wr.Infos))
-	require.Equal(t, "MsgWorkflowRegionError", wr.Infos[0].Message.ID)
+	require.Len(t, wr.Infos, 1)
+	require.Equal(t, "MsgWorkflowError", wr.Infos[0].Message.ID)
+	require.Len(t, wr.Infos[0].Message.Args, 1)
+	require.Equal(t, "Region not allowed (from: region \"my-prod-region\" not allowed for workflow \"test_1\")",
+		fmt.Sprintf("%s", wr.Infos[0].Message.Args[0]))
 }
 
 func Test_postWorkflowRunHandlerRestartResync(t *testing.T) {

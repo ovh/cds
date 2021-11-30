@@ -1306,13 +1306,15 @@ func failInitWorkflowRun(ctx context.Context, db *gorp.DbMap, wfRun *sdk.Workflo
 			wfRun.Status = sdk.StatusNeverBuilt
 		}
 	} else if sdk.ErrorIs(err, sdk.ErrRegionNotAllowed) {
-		info = sdk.SpawnMsgNew(*sdk.MsgWorkflowRegionError)
+		httpErr := sdk.ExtractHTTPError(err)
+		info = sdk.SpawnMsgNew(*sdk.MsgWorkflowError, httpErr)
+		ctx = sdk.ContextWithStacktrace(ctx, err)
+		log.Warn(ctx, "%v", err)
 	} else {
 		httpErr := sdk.ExtractHTTPError(err)
-		ctx = sdk.ContextWithStacktrace(ctx, err)
-		log.Error(ctx, "failInitWorkflowRun error: %v", err)
-		wfRun.Status = sdk.StatusFail
 		info = sdk.SpawnMsgNew(*sdk.MsgWorkflowError, httpErr)
+		wfRun.Status = sdk.StatusFail
+		log.ErrorWithStackTrace(ctx, err)
 	}
 
 	workflow.AddWorkflowRunInfo(wfRun, info)

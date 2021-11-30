@@ -196,8 +196,8 @@ func CheckRegion(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, wf 
 			if c.Type != sdk.RegionRequirement {
 				continue
 			}
-			if !isRegionEnable(ctx, db, proj.Key, proj.Organization, wf.Name, c.Value) {
-				return sdk.WrapError(sdk.ErrRegionNotAllowed, "Region %s not allowed for workflow %s", c.Value, wf.Name)
+			if err := isRegionEnable(ctx, db, proj.Key, proj.Organization, wf.Name, c.Value); err != nil {
+				return err
 			}
 		}
 	}
@@ -218,19 +218,23 @@ func checkJobRegion(ctx context.Context, db gorp.SqlExecutor, projKey, projOrg, 
 		if req.Type != sdk.RegionRequirement {
 			continue
 		}
-		if !isRegionEnable(ctx, db, projKey, projOrg, wName, req.Value) {
-			return sdk.WrapError(sdk.ErrRegionNotAllowed, "Region %s not allowed for workflow %s", req.Value, wName)
+		if err := isRegionEnable(ctx, db, projKey, projOrg, wName, req.Value); err != nil {
+			return err
 		}
 	}
 	return nil
 }
 
-func isRegionEnable(ctx context.Context, db gorp.SqlExecutor, projKey, projOrg, wName, region string) bool {
+func isRegionEnable(ctx context.Context, db gorp.SqlExecutor, projKey, projOrg, wName, region string) error {
 	_, enabled := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, db, sdk.FeatureRegion, map[string]string{
 		"project_key":          projKey,
 		"project_organization": projOrg,
 		"workflow_name":        wName,
 		"region":               region,
 	})
-	return enabled
+	if enabled {
+		return nil
+	}
+	return sdk.WrapError(sdk.NewErrorFrom(sdk.ErrRegionNotAllowed, "region %q not allowed for workflow %q", region, wName),
+		"project_key: %q, project_organization: %q, workflow_name: %q, region: %q", projKey, projOrg, wName, region)
 }
