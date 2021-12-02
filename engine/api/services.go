@@ -23,28 +23,20 @@ func (api *API) getServiceHandler() service.Handler {
 		vars := mux.Vars(r)
 		typeService := vars["type"]
 
-		var servicesConf []sdk.ServiceConfiguration
-		for _, s := range api.Config.Services {
-			if s.Type == typeService {
-				servicesConf = append(servicesConf, s)
-			}
-		}
-		if len(servicesConf) != 0 {
-			return service.WriteJSON(w, servicesConf, http.StatusOK)
+		if !isCDN(ctx) {
+			return sdk.WrapError(sdk.ErrForbidden, "only CDN can call this route")
 		}
 
-		// Try to load from DB
 		var srvs []sdk.Service
 		var err error
-		if isMaintainer(ctx) {
+		if typeService == sdk.TypeHatchery {
 			srvs, err = services.LoadAllByType(ctx, api.mustDB(), typeService)
-		} else {
-			c := getAPIConsumer(ctx)
-			srvs, err = services.LoadAllByTypeAndUserID(ctx, api.mustDB(), typeService, c.AuthentifiedUserID)
+			if err != nil {
+				return err
+			}
 		}
-		if err != nil {
-			return err
-		}
+
+		var servicesConf []sdk.ServiceConfiguration
 		for _, s := range srvs {
 			servicesConf = append(servicesConf, sdk.ServiceConfiguration{
 				URL:       s.HTTPURL,
@@ -54,9 +46,7 @@ func (api *API) getServiceHandler() service.Handler {
 				Type:      s.Type,
 			})
 		}
-		if len(servicesConf) == 0 {
-			return sdk.WrapError(sdk.ErrNotFound, "service %s not found", typeService)
-		}
+
 		return service.WriteJSON(w, servicesConf, http.StatusOK)
 	}
 }
@@ -73,6 +63,13 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 
 		if data.Name == "" {
 			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing service name")
+		}
+
+		if consumer.Type != sdk.ConsumerBuiltin {
+			return sdk.WrapError(sdk.ErrForbidden, "cannot register service from a consumer that is not of type \"builtin\"")
+		}
+		if isWorker(ctx) {
+			return sdk.WrapError(sdk.ErrForbidden, "cannot register a service from a consumer that is associated with a worker")
 		}
 
 		// Service that are not hatcheries should be started as an admin

@@ -51,7 +51,6 @@ func (w *CurrentWorker) Serve(c context.Context) error {
 	r.HandleFunc("/download", LogMiddleware(downloadHandler(c, w)))
 	r.HandleFunc("/exit", LogMiddleware(exitHandler(c, w)))
 	r.HandleFunc("/key/{key}/install", LogMiddleware(keyInstallHandler(c, w)))
-	r.HandleFunc("/services/{type}", LogMiddleware(serviceHandler(c, w)))
 	r.HandleFunc("/tag", LogMiddleware(tagHandler(c, w)))
 	r.HandleFunc("/tmpl", LogMiddleware(tmplHandler(c, w)))
 	r.HandleFunc("/upload", LogMiddleware(uploadHandler(c, w)))

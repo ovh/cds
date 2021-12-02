@@ -10,28 +10,25 @@ import (
 
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/authentication/builtin"
-	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func AuthentififyBuiltinConsumer(t *testing.T, api *API, jwsToken string) string {
 	uri := api.Router.GetRoute("POST", api.postAuthBuiltinSigninHandler, nil)
-	test.NotEmpty(t, uri)
-	btes, _ := json.Marshal(sdk.AuthConsumerSigninRequest{
-		"token": jwsToken,
-	})
-	t.Logf("signin with jws : %s", jwsToken)
-	req, err := http.NewRequest("POST", uri, bytes.NewBuffer(btes))
+	require.NotEmpty(t, uri)
+	btes, err := json.Marshal(sdk.AuthConsumerSigninRequest{"token": jwsToken})
 	require.NoError(t, err)
 
-	//Do the request
+	t.Logf("signin with jws : %s", jwsToken)
+
+	req, err := http.NewRequest("POST", uri, bytes.NewBuffer(btes))
+	require.NoError(t, err)
 	rec := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 200, rec.Code)
+	require.Equal(t, 200, rec.Code)
 
 	var signinReponse sdk.AuthConsumerSigninResponse
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &signinReponse))
@@ -40,7 +37,7 @@ func AuthentififyBuiltinConsumer(t *testing.T, api *API, jwsToken string) string
 
 	t.Logf("consumer authentified. jwt: %s", signinReponse.Token)
 
-	assert.NotEmpty(t, rec.Header().Get("X-Api-Pub-Signing-Key"))
+	require.NotEmpty(t, rec.Header().Get("X-Api-Pub-Signing-Key"))
 
 	return signinReponse.Token
 }

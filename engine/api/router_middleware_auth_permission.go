@@ -250,7 +250,7 @@ func (api *API) checkGroupPermissions(ctx context.Context, w http.ResponseWriter
 	log.Debug(ctx, "api.checkGroupPermissions> group %d has members %v", g.ID, g.Members)
 
 	if permissionValue > sdk.PermissionRead { // Only group administror or CDS administrator can update a group or its dependencies
-		if !isGroupAdmin(ctx, g) {
+		if !isGroupAdmin(ctx, g) || g.ID == group.SharedInfraGroup.ID {
 			if isAdmin(ctx) {
 				trackSudo(ctx, w)
 			} else {

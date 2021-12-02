@@ -70,16 +70,6 @@ func configBootstrap(args []string) Configuration {
 			conf.API.Name = "cds-api-" + namesgenerator.GetRandomNameCDS(0)
 			defaults.SetDefaults(conf.API)
 			conf.API.Database.Schema = "public"
-			conf.API.Services = append(conf.API.Services, sdk.ServiceConfiguration{
-				Name:       "sample-service",
-				URL:        "https://ovh.github.io",
-				Port:       "443",
-				Path:       "/cds",
-				HealthPath: "/cds",
-				HealthPort: "443",
-				HealthURL:  "https://ovh.github.io",
-				Type:       "doc",
-			})
 			conf.API.HTTP.Port = 8081
 		case sdk.TypeUI:
 			conf.UI = &ui.Configuration{}
