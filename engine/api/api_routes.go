@@ -31,7 +31,7 @@ func (api *API) InitRouter() {
 
 	// Auth
 	r.Handle("/auth/driver", ScopeNone(), r.GET(api.getAuthDriversHandler, service.OverrideAuth(service.NoAuthMiddleware)))
-	r.Handle("/auth/me", ScopeNone(), r.GET(api.getAuthMe))
+	r.Handle("/auth/me", Scope(sdk.AuthConsumerScopeUser), r.GET(api.getAuthMe))
 	r.Handle("/auth/scope", ScopeNone(), r.GET(api.getAuthScopesHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 	r.Handle("/auth/consumer/local/signup", ScopeNone(), r.POST(api.postAuthLocalSignupHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 	r.Handle("/auth/consumer/local/signin", ScopeNone(), r.POST(api.postAuthLocalSigninHandler, service.OverrideAuth(service.NoAuthMiddleware), MaintenanceAware()))
@@ -45,7 +45,7 @@ func (api *API) InitRouter() {
 	r.Handle("/auth/consumer/{consumerType}/signin", Scope(sdk.AuthConsumerScopeAccessToken), r.POST(api.postAuthSigninHandler, service.OverrideAuth(api.authOptionalMiddleware), MaintenanceAware()))
 	r.Handle("/auth/consumer/{consumerType}/detach", Scope(sdk.AuthConsumerScopeAccessToken), r.POST(api.postAuthDetachHandler))
 	r.Handle("/auth/consumer/signout", ScopeNone(), r.POST(api.postAuthSignoutHandler))
-	r.Handle("/auth/session/{sessionID}", ScopeNone(), r.GET(api.getAuthSession))
+	r.Handle("/auth/session/{sessionID}", Scope(sdk.AuthConsumerScopeService), r.GET(api.getAuthSession))
 
 	// Action
 	r.Handle("/action", Scope(sdk.AuthConsumerScopeAction), r.GET(api.getActionsHandler), r.POST(api.postActionHandler))
@@ -127,9 +127,9 @@ func (api *API) InitRouter() {
 	r.Handle("/integration/models/{name}", ScopeNone(), r.GET(api.getIntegrationModelHandler), r.PUT(api.putIntegrationModelHandler, service.OverrideAuth(api.authAdminMiddleware)), r.DELETE(api.deleteIntegrationModelHandler, service.OverrideAuth(api.authAdminMiddleware)))
 
 	// Broadcast
-	r.Handle("/broadcast", ScopeNone(), r.POST(api.addBroadcastHandler, service.OverrideAuth(api.authAdminMiddleware)), r.GET(api.getBroadcastsHandler))
-	r.Handle("/broadcast/{id}", ScopeNone(), r.GET(api.getBroadcastHandler), r.PUT(api.updateBroadcastHandler, service.OverrideAuth(api.authAdminMiddleware)), r.DELETE(api.deleteBroadcastHandler, service.OverrideAuth(api.authAdminMiddleware)))
-	r.Handle("/broadcast/{id}/mark", Scope(sdk.AuthConsumerScopeProject), r.POST(api.postMarkAsReadBroadcastHandler))
+	r.Handle("/broadcast", Scope(sdk.AuthConsumerScopeUser), r.POST(api.addBroadcastHandler, service.OverrideAuth(api.authAdminMiddleware)), r.GET(api.getBroadcastsHandler))
+	r.Handle("/broadcast/{id}", Scope(sdk.AuthConsumerScopeUser), r.GET(api.getBroadcastHandler), r.PUT(api.updateBroadcastHandler, service.OverrideAuth(api.authAdminMiddleware)), r.DELETE(api.deleteBroadcastHandler, service.OverrideAuth(api.authAdminMiddleware)))
+	r.Handle("/broadcast/{id}/mark", Scope(sdk.AuthConsumerScopeUser), r.POST(api.postMarkAsReadBroadcastHandler))
 
 	// Overall health
 	r.Handle("/mon/status", ScopeNone(), r.GET(api.statusHandler, service.OverrideAuth(api.authOptionalMiddleware)))
@@ -142,15 +142,15 @@ func (api *API) InitRouter() {
 
 	r.Handle("/help", ScopeNone(), r.GET(api.getHelpHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 
-	r.Handle("/ui/navbar", ScopeNone(), r.GET(api.getNavbarHandler))
-	r.Handle("/ui/project/{permProjectKey}/application/{applicationName}/overview", ScopeNone(), r.GET(api.getApplicationOverviewHandler))
+	r.Handle("/ui/navbar", Scope(sdk.AuthConsumerScopeUser), r.GET(api.getNavbarHandler))
+	r.Handle("/ui/project/{permProjectKey}/application/{applicationName}/overview", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getApplicationOverviewHandler))
 
 	// Import As Code
 	r.Handle("/import/{permProjectKey}", Scope(sdk.AuthConsumerScopeProject), r.POST(api.postImportAsCodeHandler))
 	r.Handle("/import/{permProjectKey}/{uuid}/perform", Scope(sdk.AuthConsumerScopeProject), r.POST(api.postPerformImportAsCodeHandler))
 
 	// Bookmarks
-	r.Handle("/bookmarks", ScopeNone(), r.GET(api.getBookmarksHandler))
+	r.Handle("/bookmarks", Scope(sdk.AuthConsumerScopeUser), r.GET(api.getBookmarksHandler))
 
 	// Project
 	r.Handle("/project", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getProjectsHandler), r.POST(api.postProjectHandler))
@@ -223,7 +223,7 @@ func (api *API) InitRouter() {
 	// Workflows
 	r.Handle("/workflow/artifact/{hash}", ScopeNone(), r.GET(api.downloadworkflowArtifactDirectHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 
-	r.Handle("/project/{key}/type/{type}/access", ScopeNone(), r.GET(api.getProjectAccessHandler))
+	r.Handle("/project/{key}/type/{type}/access", Scope(sdk.AuthConsumerScopeService), r.GET(api.getProjectAccessHandler))
 	r.Handle("/project/{permProjectKey}/workflows", Scope(sdk.AuthConsumerScopeProject), r.POST(api.postWorkflowHandler), r.GET(api.getWorkflowsHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getWorkflowHandler), r.PUT(api.putWorkflowHandler), r.DELETE(api.deleteWorkflowHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/delete/dependencies", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getWorkflowDependenciesHandler))
@@ -288,7 +288,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/nodes/{nodeRunID}/job/{runJobID}/service/{serviceName}/link", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowNodeRunJobServiceLinkHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/nodes/{nodeRunID}/job/{runJobID}/links", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowNodeRunJobStepLinksHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/nodes/{nodeRunID}/job/{runJobID}/step/{stepOrder}/link", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowNodeRunJobStepLinkHandler))
-	r.Handle("/project/{key}/workflows/{workflowID}/type/{type}/access", ScopeNone(), r.GET(api.getWorkflowAccessHandler))
+	r.Handle("/project/{key}/workflows/{workflowID}/type/{type}/access", Scope(sdk.AuthConsumerScopeService), r.GET(api.getWorkflowAccessHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/node/{nodeID}/triggers/condition", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowTriggerConditionHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/hook/triggers/condition", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowTriggerHookConditionHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/triggers/condition", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowTriggerConditionHandler))

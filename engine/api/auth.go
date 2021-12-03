@@ -406,25 +406,19 @@ func (api *API) getAuthMe() service.Handler {
 
 func (api *API) getAuthSession() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		c := getAPIConsumer(ctx)
-		if c == nil {
-			return sdk.WithStack(sdk.ErrUnauthorized)
-		}
-
-		if !isAdmin(ctx) {
-			return sdk.WithStack(sdk.ErrUnauthorized)
-		}
-
-		trackSudo(ctx, w)
-
 		vars := mux.Vars(r)
 		sessionID := vars["sessionID"]
+
+		if !isCDN(ctx) {
+			return sdk.WrapError(sdk.ErrForbidden, "only CDN can call this route")
+		}
+
 		s, err := authentication.LoadSessionByID(ctx, api.mustDB(), sessionID)
 		if err != nil {
 			return err
 		}
 
-		c, err = authentication.LoadConsumerByID(ctx, api.mustDB(), s.ConsumerID, authentication.LoadConsumerOptions.WithAuthentifiedUserWithContacts, authentication.LoadConsumerOptions.WithConsumerGroups)
+		c, err := authentication.LoadConsumerByID(ctx, api.mustDB(), s.ConsumerID, authentication.LoadConsumerOptions.WithAuthentifiedUserWithContacts, authentication.LoadConsumerOptions.WithConsumerGroups)
 		if err != nil {
 			return err
 		}

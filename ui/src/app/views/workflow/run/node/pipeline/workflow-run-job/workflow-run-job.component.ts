@@ -277,7 +277,7 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
         this.steps[0].lines = is.filter(i => !!i.user_message).map((info, i) => <CDNLine>{
             number: i,
             value: `${info.user_message}\n`,
-            extra: [moment(info.api_time).format('YYYY-MM-DD hh:mm:ss Z')]
+            extra: [moment(info.api_time).format('YYYY-MM-DD HH:mm:ss Z')]
         });
         this.steps[0].totalLinesCount = this.steps[0].lines.length;
         this.steps[0].open = true;
