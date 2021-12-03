@@ -319,7 +319,7 @@ func ListenGerritStreamEvent(ctx context.Context, store cache.Store, goRoutines 
 				continue
 			}
 
-			log.Info(ctx, "gerrit: event received %s", line)
+			log.Debug(ctx, "gerrit: event received %s", line)
 
 			// Avoid that 2 hook uservice dispatch the same event
 			// Take the lock to dispatch an event
