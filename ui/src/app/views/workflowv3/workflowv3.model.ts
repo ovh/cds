@@ -1,3 +1,4 @@
+import { ProjectIntegration } from 'app/model/integration.model';
 import { SpawnInfo } from 'app/model/pipeline.model';
 
 export class WorkflowV3ValidationResponse {
@@ -11,14 +12,18 @@ export class WorkflowV3 {
     name: string;
     stages: { [name: string]: Stage };
     jobs: { [name: string]: Job };
+    artifact_manager: string;
 }
 
 export class WorkflowRunV3 {
     status: string;
     number: number;
-    workflow: WorkflowV3;
     job_runs: { [name: string]: Array<JobRun> };
     infos: Array<SpawnInfo>;
+    resources: {
+        workflow: WorkflowV3;
+        integrations: Array<ProjectIntegration>;
+    }
 }
 
 export class JobRun {

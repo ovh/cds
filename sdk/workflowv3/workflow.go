@@ -24,17 +24,18 @@ func NewWorkflow() Workflow {
 }
 
 type Workflow struct {
-	Name          string                  `json:"name,omitempty" yaml:"name,omitempty"`
-	Repositories  Repositories            `json:"repositories,omitempty" yaml:"repositories,omitempty"`
-	Hooks         map[string]Hook         `json:"hooks,omitempty" yaml:"hooks,omitempty"`
-	Deployments   Deployments             `json:"deployments,omitempty" yaml:"deployments,omitempty"`
-	Notifications map[string]Notification `json:"notifications,omitempty" yaml:"notifications,omitempty"`
-	Stages        Stages                  `json:"stages,omitempty" yaml:"stages,omitempty"`
-	Jobs          Jobs                    `json:"jobs,omitempty" yaml:"jobs,omitempty"`
-	Variables     Variables               `json:"variables,omitempty" yaml:"variables,omitempty"`
-	Secrets       Secrets                 `json:"secrets,omitempty" yaml:"secrets,omitempty"`
-	Actions       Actions                 `json:"actions,omitempty" yaml:"actions,omitempty"`
-	Keys          Keys                    `json:"keys,omitempty" yaml:"keys,omitempty"`
+	Name            string                  `json:"name,omitempty" yaml:"name,omitempty"`
+	Repositories    Repositories            `json:"repositories,omitempty" yaml:"repositories,omitempty"`
+	Hooks           map[string]Hook         `json:"hooks,omitempty" yaml:"hooks,omitempty"`
+	Deployments     Deployments             `json:"deployments,omitempty" yaml:"deployments,omitempty"`
+	ArtifactManager ArtifactManager         `json:"artifact_manager,omitempty" yaml:"artifact_manager,omitempty"`
+	Notifications   map[string]Notification `json:"notifications,omitempty" yaml:"notifications,omitempty"`
+	Stages          Stages                  `json:"stages,omitempty" yaml:"stages,omitempty"`
+	Jobs            Jobs                    `json:"jobs,omitempty" yaml:"jobs,omitempty"`
+	Variables       Variables               `json:"variables,omitempty" yaml:"variables,omitempty"`
+	Secrets         Secrets                 `json:"secrets,omitempty" yaml:"secrets,omitempty"`
+	Actions         Actions                 `json:"actions,omitempty" yaml:"actions,omitempty"`
+	Keys            Keys                    `json:"keys,omitempty" yaml:"keys,omitempty"`
 }
 
 func (w Workflow) Validate() (ExternalDependencies, error) {
@@ -101,6 +102,13 @@ func (w Workflow) Validate() (ExternalDependencies, error) {
 			return extDep, errors.WithMessagef(err, "key %q", kName)
 		}
 	}
+
+	// Validate artifact manager
+	dep, err := w.ArtifactManager.Validate()
+	if err != nil {
+		return extDep, errors.WithMessagef(err, "artifact manager")
+	}
+	extDep.Add(dep)
 
 	// Validate stages
 	for sName, s := range w.Stages {

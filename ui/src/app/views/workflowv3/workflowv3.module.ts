@@ -11,6 +11,7 @@ import { WorkflowV3RunComponent } from './run/workflowv3-run.component';
 import { WorkflowV3ShowComponent } from './show/workflowv3-show.component';
 import { WorkflowV3Component } from './workflowv3.component';
 import { workflowV3Routing } from './workflowv3.routing';
+import { WorkflowV3RunService } from './workflowv3.run.service';
 
 @NgModule({
     declarations: [
@@ -32,6 +33,9 @@ import { workflowV3Routing } from './workflowv3.routing';
     schemas: [
         CUSTOM_ELEMENTS_SCHEMA,
         NO_ERRORS_SCHEMA
+    ],
+    providers: [
+        WorkflowV3RunService
     ]
 })
 export class WorkflowV3Module {

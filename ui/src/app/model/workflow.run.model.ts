@@ -150,6 +150,7 @@ export class UIArtifact {
     name: string;
     md5: string;
     size: number;
+    human_size: string;
     link: string;
     type: string;
 }
