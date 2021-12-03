@@ -2,8 +2,10 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"runtime"
 	"testing"
 	"time"
 
@@ -15,6 +17,8 @@ import (
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/hatchery"
+	"github.com/ovh/cds/sdk/jws"
 )
 
 func Test_authMiddleware(t *testing.T) {
@@ -285,4 +289,110 @@ func Test_authMiddleware_WithAuthConsumerScoped(t *testing.T) {
 	require.NoError(t, err)
 	_, err = api.authMiddleware(ctx, w, req, configHandler5)
 	assert.NoError(t, err, "no error should be returned because consumer can access any routes for scope Admin")
+}
+
+func Test_authMiddlewareWithServiceOrWorker(t *testing.T) {
+	api, db, router := newTestAPI(t)
+
+	admin, jwtAdmin := assets.InsertAdminUser(t, db)
+
+	config := &service.HandlerConfig{}
+
+	// The token should be able to pass the authAdminMiddleware
+	req := assets.NewJWTAuthentifiedRequest(t, jwtAdmin, http.MethodGet, "", nil)
+	w := httptest.NewRecorder()
+	ctx, err := api.jwtMiddleware(context.TODO(), w, req, config)
+	require.NoError(t, err)
+	_, err = api.authAdminMiddleware(ctx, w, req, config)
+	require.Nil(t, err)
+	_, err = api.authMaintainerMiddleware(ctx, w, req, config)
+	require.Nil(t, err)
+
+	// Admin create a consumer for a new service
+	uri := api.Router.GetRoute(http.MethodPost, api.postConsumerByUserHandler, map[string]string{
+		"permUsername": admin.Username,
+	})
+	require.NotEmpty(t, uri)
+	req = assets.NewJWTAuthentifiedRequest(t, jwtAdmin, http.MethodPost, uri, sdk.AuthConsumer{
+		Name:            sdk.RandomString(10),
+		ScopeDetails:    sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeAdmin),
+		ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+	})
+	rec := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, 201, rec.Code)
+	var srvConsumer sdk.AuthConsumerCreateResponse
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &srvConsumer))
+	jwtHatchery := AuthentififyBuiltinConsumer(t, api, srvConsumer.Token)
+
+	// The service token should be able to pass the authAdminMiddleware while the service was not registered
+	req = assets.NewJWTAuthentifiedRequest(t, jwtHatchery, http.MethodGet, "", nil)
+	w = httptest.NewRecorder()
+	ctx, err = api.jwtMiddleware(context.TODO(), w, req, config)
+	require.NoError(t, err)
+	_, err = api.authAdminMiddleware(ctx, w, req, config)
+	require.Nil(t, err)
+	_, err = api.authMaintainerMiddleware(ctx, w, req, config)
+	require.Nil(t, err)
+
+	// Register a hatchery with the service consumer
+	privateKey, err := jws.NewRandomRSAKey()
+	require.NoError(t, err)
+	publicKey, err := jws.ExportPublicKey(privateKey)
+	require.NoError(t, err)
+	hSrv := sdk.Service{
+		CanonicalService: sdk.CanonicalService{
+			Name:      sdk.RandomString(10),
+			Type:      sdk.TypeHatchery,
+			PublicKey: publicKey,
+		},
+	}
+	uri = api.Router.GetRoute(http.MethodPost, api.postServiceRegisterHandler, nil)
+	require.NotEmpty(t, uri)
+	req = assets.NewJWTAuthentifiedRequest(t, jwtHatchery, http.MethodPost, uri, hSrv)
+	rec = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, 200, rec.Code)
+
+	// The service token should not be able to pass the authAdminMiddleware or authMaintainerMiddleware anymore
+	req = assets.NewJWTAuthentifiedRequest(t, jwtHatchery, http.MethodGet, "", nil)
+	w = httptest.NewRecorder()
+	ctx, err = api.jwtMiddleware(context.TODO(), w, req, config)
+	require.NoError(t, err)
+	_, err = api.authAdminMiddleware(ctx, w, req, config)
+	require.Error(t, err, "an error should be returned because the consumer is linked to a service")
+	_, err = api.authMaintainerMiddleware(ctx, w, req, config)
+	require.Error(t, err, "an error should be returned because the consumer is linked to a service")
+
+	// Create a worker for the hatchery
+	workflowTestContext := testRunWorkflow(t, api, router)
+	testGetWorkflowJobAsWorker(t, api, db, router, &workflowTestContext)
+	require.NotNil(t, workflowTestContext.job)
+	jwtWorkerSignin, err := hatchery.NewWorkerToken(hSrv.Name, privateKey, time.Now().Add(time.Hour), hatchery.SpawnArguments{
+		HatcheryName: hSrv.Name,
+		WorkerName:   hSrv.Name + "-worker",
+		JobID:        workflowTestContext.job.ID,
+	})
+	require.NoError(t, err)
+	uri = api.Router.GetRoute("POST", api.postRegisterWorkerHandler, nil)
+	require.NotEmpty(t, uri)
+	req = assets.NewJWTAuthentifiedRequest(t, jwtWorkerSignin, "POST", uri, sdk.WorkerRegistrationForm{
+		Arch:    runtime.GOARCH,
+		OS:      runtime.GOOS,
+		Version: sdk.VERSION,
+	})
+	rec = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, 200, rec.Code)
+	jwtWorker := rec.Header().Get("X-CDS-JWT")
+
+	// The worker token should not be able to pass the authAdminMiddleware or authMaintainerMiddleware
+	req = assets.NewJWTAuthentifiedRequest(t, jwtWorker, http.MethodGet, "", nil)
+	w = httptest.NewRecorder()
+	ctx, err = api.jwtMiddleware(context.TODO(), w, req, config)
+	require.NoError(t, err)
+	_, err = api.authAdminMiddleware(ctx, w, req, config)
+	require.Error(t, err, "an error should be returned because the consumer is linked to a worker")
+	_, err = api.authMaintainerMiddleware(ctx, w, req, config)
+	require.Error(t, err, "an error should be returned because the consumer is linked to a worker")
 }

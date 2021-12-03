@@ -68,35 +68,3 @@ func SendVulnerabilityReport(workerHTTPPort int32, report sdk.VulnerabilityWorke
 
 	return nil
 }
-
-// GetServices call worker to get external service configuration
-func GetServices(workerHTTPPort int32, serviceType string) ([]sdk.ServiceConfiguration, error) {
-	if workerHTTPPort == 0 {
-		return nil, nil
-	}
-
-	req, err := http.NewRequest("GET", fmt.Sprintf("http://127.0.0.1:%d/services/%s", workerHTTPPort, serviceType), nil)
-	if err != nil {
-		return nil, fmt.Errorf("get service from worker /services: %v", err)
-	}
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("cannot get service from worker /services: %v", err)
-	}
-
-	if resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("cannot get services from worker /services: HTTP %d", resp.StatusCode)
-	}
-
-	b, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("cannot read body /services: %v", err)
-	}
-
-	var serv []sdk.ServiceConfiguration
-	if err := sdk.JSONUnmarshal(b, &serv); err != nil {
-		return nil, fmt.Errorf("cannot unmarshal body /services: %v", err)
-	}
-	return serv, nil
-}

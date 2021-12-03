@@ -508,11 +508,11 @@ func (c AuthConsumer) GetGroupIDs() []int64 {
 }
 
 func (c AuthConsumer) Admin() bool {
-	return c.AuthentifiedUser.Ring == UserRingAdmin
+	return c.AuthentifiedUser.Ring == UserRingAdmin && c.Worker == nil
 }
 
 func (c AuthConsumer) Maintainer() bool {
-	return c.AuthentifiedUser.Ring == UserRingMaintainer
+	return c.AuthentifiedUser.Ring == UserRingMaintainer && c.Worker == nil
 }
 
 func (c AuthConsumer) GetUsername() string {

@@ -195,9 +195,8 @@ type Configuration struct {
 			ForcePathStyle      bool   `toml:"forcePathStyle" json:"forcePathStyle" commented:"true"`                          //optional
 		} `toml:"awss3" json:"awss3"`
 	} `toml:"artifact" comment:"Either filesystem local storage or Openstack Swift Storage are supported" json:"artifact"`
-	Services    []sdk.ServiceConfiguration `toml:"services" comment:"###########################\n CDS Services Settings \n##########################" json:"services"`
-	DefaultOS   string                     `toml:"defaultOS" default:"linux" comment:"if no model and os/arch is specified in your job's requirements then spawn worker on this operating system (example: darwin, freebsd, linux, windows)" json:"defaultOS"`
-	DefaultArch string                     `toml:"defaultArch" default:"amd64" comment:"if no model and no os/arch is specified in your job's requirements then spawn worker on this architecture (example: amd64, arm, 386)" json:"defaultArch"`
+	DefaultOS   string `toml:"defaultOS" default:"linux" comment:"if no model and os/arch is specified in your job's requirements then spawn worker on this operating system (example: darwin, freebsd, linux, windows)" json:"defaultOS"`
+	DefaultArch string `toml:"defaultArch" default:"amd64" comment:"if no model and no os/arch is specified in your job's requirements then spawn worker on this architecture (example: amd64, arm, 386)" json:"defaultArch"`
 	Graylog     struct {
 		AccessToken string `toml:"accessToken" json:"-"`
 		Stream      string `toml:"stream" json:"-"`
@@ -781,34 +780,6 @@ func (a *API) Serve(ctx context.Context) error {
 	// Init Services
 	services.Initialize(ctx, a.DBConnectionFactory, a.GoRoutines)
 
-	externalServices := make([]services.ExternalService, 0, len(a.Config.Services))
-	for _, s := range a.Config.Services {
-		log.Info(ctx, "Managing external service %s %s", s.Name, s.Type)
-		serv := services.ExternalService{
-			Service: sdk.Service{
-				CanonicalService: sdk.CanonicalService{
-					Name:    s.Name,
-					Type:    s.Type,
-					HTTPURL: fmt.Sprintf("%s:%s%s", s.URL, s.Port, s.Path),
-				},
-			},
-			HealthPort: s.HealthPort,
-			HealthPath: s.HealthPath,
-			HealthURL:  s.HealthURL,
-			URL:        s.URL,
-			Path:       s.Path,
-			Port:       s.Port,
-		}
-		externalServices = append(externalServices, serv)
-	}
-
-	if err := services.InitExternal(ctx, a.mustDB(), externalServices); err != nil {
-		return fmt.Errorf("unable to init external service: %+v", err)
-	}
-	a.GoRoutines.Run(ctx, "pings-external-services",
-		func(ctx context.Context) {
-			services.Pings(ctx, a.mustDB, externalServices)
-		})
 	a.GoRoutines.RunWithRestart(ctx, "workflow.Initialize",
 		func(ctx context.Context) {
 			workflow.SetMaxRuns(a.Config.Workflow.MaxRuns)

@@ -22,7 +22,6 @@ func NewConsumerWorker(ctx context.Context, db gorpmapper.SqlExecutorWithTx, nam
 			sdk.AuthConsumerScopeProject,
 			sdk.AuthConsumerScopeRun,
 			sdk.AuthConsumerScopeRunExecution,
-			sdk.AuthConsumerScopeService,
 		),
 		ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 24*time.Hour),
 	}
