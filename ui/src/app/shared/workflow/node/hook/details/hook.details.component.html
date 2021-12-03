@@ -30,7 +30,7 @@
                          [class.doing]="option.status === hookStatus.DOING"
                         [class.error]="option.status === hookStatus.FAIL"></div>
                     {{ 'Workflow run n°' + option.workflow_run }}
-                    <span class="date">{{' at '}}{{option.timestamp/1000000 | amDateFormat: 'YYYY-MM-DD HH:mm:ss' }}</span>
+                    <span class="date">{{' at '}}{{option.timestamp/1000000 | amDateFormat: 'YYYY-MM-DD HH:mm:ss Z' }}</span>
                 </div>
             </ng-template>
         </ng-container>

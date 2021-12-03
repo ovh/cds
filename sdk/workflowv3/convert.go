@@ -239,12 +239,7 @@ func computeJobUniqueID(nodeName, stageName, actionName string, actionID int64) 
 }
 
 func computeJobName(allJobs map[string]*Job, nodeName, stageName, actionName string, actionID int64) string {
-	jName := slug.Convert(actionName)
-	if _, ok := allJobs[jName]; !ok {
-		return jName
-	}
-
-	jName = slug.Convert(fmt.Sprintf("%s-%s", stageName, actionName))
+	jName := slug.Convert(fmt.Sprintf("%s-%s", nodeName, actionName))
 	if _, ok := allJobs[jName]; !ok {
 		return jName
 	}
