@@ -315,15 +315,17 @@ func ListenGerritStreamEvent(ctx context.Context, store cache.Store, goRoutines 
 			var event GerritEvent
 			lineBytes := []byte(line)
 			if err := sdk.JSONUnmarshal(lineBytes, &event); err != nil {
-				log.Error(ctx, "unable to read gerrit event %v: %s", err, line)
+				log.Error(ctx, "gerrit: unable to read event %v: %s", err, line)
 				continue
 			}
+
+			log.Debug(ctx, "gerrit: event received %s", line)
 
 			// Avoid that 2 hook uservice dispatch the same event
 			// Take the lock to dispatch an event
 			locked, err := store.Lock(lockKey, time.Minute, 100, 15)
 			if err != nil {
-				log.Error(ctx, "unable to lock %s: %v", lockKey, err)
+				log.Error(ctx, "gerrit: unable to lock %s: %v", lockKey, err)
 			}
 
 			// compute md5
@@ -336,18 +338,22 @@ func ListenGerritStreamEvent(ctx context.Context, store cache.Store, goRoutines 
 			var existString string
 			b, _ := store.Get(k, &existString)
 			if !b {
-				_ = store.SetWithTTL(k, md5, 300)
+				if err := store.SetWithTTL(k, md5, 300); err != nil {
+					log.Warn(ctx, "gerrit: unable to set %s", k)
+				}
 			}
 
 			// release lock
 			if locked {
 				if err := store.Unlock(lockKey); err != nil {
-					log.Error(ctx, "unable to unlock %s: %v", lockKey, err)
+					log.Error(ctx, "gerrit: unable to unlock %s: %v", lockKey, err)
 				}
 			}
 
 			if !b {
 				gerritEventChan <- event
+			} else {
+				log.Info(ctx, "gerrit: skipping event")
 			}
 		}
 	}
