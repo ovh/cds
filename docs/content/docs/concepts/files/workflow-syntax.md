@@ -104,24 +104,6 @@ Example of email notification.
     - me@foo.bar
 ```
 
-Example of jabber notification. Note that you can add `conditions` on every notifications
-
-```yml
-- type: jabber
-  pipelines:
-  - deploy
-  settings:
-    on_start: true
-    send_to_groups: true
-    recipients:
-    - me@jabber.com
-    conditions:
-      check:
-      - variable: cds.triggered_by.email
-        operator: eq
-        value: me@localhost.local
-```
-
 Example of vcs notification. Note that `pipelines` list is optional on every notifications. When it's not specified, notification will be triggered for each pipeline
 
 ```yml

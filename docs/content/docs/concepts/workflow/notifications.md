@@ -10,7 +10,7 @@ On a workflow you can have 2 kinds of notifications:
 
 ## User notifications
 
-You can configure user notifications to send email or a message on jabber with different parameters. Inside the body of the notification you can customise the message thanks to the CDS variable templating with syntax like `{{.cds.myvar}}`. You can also use `HTML` to customise the message, then in order to let CDS interpret your message as an `HTML` one you just need to wrap all your message inside html tag like this `<html>MyContentHere</html>`.
+You can configure user notifications to send email with different parameters. Inside the body of the notification you can customise the message thanks to the CDS variable templating with syntax like `{{.cds.myvar}}`. You can also use `HTML` to customise the message, then in order to let CDS interpret your message as an `HTML` one you just need to wrap all your message inside html tag like this `<html>MyContentHere</html>`.
 
 ## VCS Notifications
 

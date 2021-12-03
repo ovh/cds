@@ -57,50 +57,18 @@ func GetUserWorkflowEvents(ctx context.Context, db gorp.SqlExecutor, store cache
 	for _, notif := range notifs {
 		if ShouldSendUserWorkflowNotification(ctx, notif, nr, previousWR) {
 			switch notif.Type {
-			case sdk.JabberUserNotification:
-				jn := &notif.Settings
-				//Get recipents from groups
-				if jn.SendToGroups != nil && *jn.SendToGroups {
-					u, err := projectPermissionUserIDs(ctx, db, store, projectID, sdk.PermissionRead)
-					if err != nil {
-						log.Error(ctx, "notification[Jabber]. error while loading permission: %v", err)
-						break
-					}
-					users, err := user.LoadAllByIDs(ctx, db, u)
-					if err != nil {
-						log.Error(ctx, "notification[Jabber]. error while loading users: %v", err)
-						break
-					}
-					for _, u := range users {
-						jn.Recipients = append(jn.Recipients, u.Username)
-					}
-				}
-				if jn.SendToAuthor == nil || *jn.SendToAuthor {
-					if author, ok := params[paramsAuthorEmail]; ok {
-						jn.Recipients = append(jn.Recipients, author)
-					}
-				}
-
-				//Finally deduplicate everyone
-				removeDuplicates(&jn.Recipients)
-				notif, err := getWorkflowEvent(jn, params)
-				if err != nil {
-					log.Error(ctx, "notification.GetUserWorkflowEvents> unable to handle event %+v: %v", jn, err)
-				}
-				events = append(events, notif)
-
 			case sdk.EmailUserNotification:
 				jn := &notif.Settings
 				//Get recipents from groups
 				if jn.SendToGroups != nil && *jn.SendToGroups {
 					u, err := projectPermissionUserIDs(ctx, db, store, projectID, sdk.PermissionRead)
 					if err != nil {
-						log.Error(ctx, "notification[Email].GetUserWorkflowEvents> error while loading permission: %v", err)
+						log.Error(ctx, "error while loading permission: %v", err)
 						return nil
 					}
 					contacts, err := user.LoadContactsByUserIDs(ctx, db, u)
 					if err != nil {
-						log.Error(ctx, "notification[Jabber]. error while loading users contacts: %v", err)
+						log.Error(ctx, "error while loading users contacts: %v", err)
 						break
 					}
 					for _, c := range contacts {
