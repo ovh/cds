@@ -289,7 +289,14 @@ func TestHatcheryVSphere_launchScriptWorker(t *testing.T) {
 		},
 	).AnyTimes()
 
-	err := h.launchScriptWorker(ctx, "worker1", -1, "xxxxxxxx", validModel, true, &vm)
+	spawnArgs := hatchery.SpawnArguments{
+		WorkerName:   "worker1",
+		WorkerToken:  "xxxxxxxx",
+		Model:        &validModel,
+		RegisterOnly: true,
+	}
+
+	err := h.launchScriptWorker(ctx, spawnArgs, &vm)
 	require.NoError(t, err)
 
 }
