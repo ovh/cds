@@ -21,12 +21,12 @@ var nbRegisteringWorkerModels int64
 
 func workerRegister(ctx context.Context, h InterfaceWithModels, startWorkerChan chan<- workerStarterRequest) error {
 	if len(models) == 0 {
-		return fmt.Errorf("hatchery> workerRegister> No model returned by GetWorkerModels")
+		return fmt.Errorf("workerRegister> No model returned by GetWorkerModels")
 	}
 	// currentRegister contains the register spawned in this ticker
 	currentRegistering, err := WorkerPool(ctx, h, sdk.StatusWorkerRegistering)
 	if err != nil {
-		log.Error(ctx, "hatchery> workerRegister> worker pool error: %v", err)
+		log.Error(ctx, "workerRegister> worker pool error: %v", err)
 	}
 
 	atomic.StoreInt64(&nbRegisteringWorkerModels, int64(len(currentRegistering)))
@@ -36,7 +36,7 @@ loopModels:
 			continue
 		}
 		if h.CanSpawn(ctx, &models[k], 0, nil) && (h.NeedRegistration(ctx, &models[k]) || models[k].CheckRegistration) {
-			log.Debug(ctx, "hatchery> workerRegister> need register")
+			log.Debug(ctx, "workerRegister> model %q need register", models[k].Path())
 		} else {
 			continue
 		}
@@ -46,26 +46,26 @@ loopModels:
 			maxRegistration = 2
 		}
 		if atomic.LoadInt64(&nbRegisteringWorkerModels) > maxRegistration {
-			log.Debug(ctx, "hatchery> workerRegister> max registering worker reached")
+			log.Debug(ctx, "workerRegister> max registering worker reached")
 			return nil
 		}
 
 		if !checkCapacities(ctx, h) {
-			log.Debug(ctx, "hatchery> workerRegister> unable to register now")
+			log.Debug(ctx, "workerRegister> unable to register now")
 			return nil
 		}
 
 		// Check if there is a pending registering worker
 		for _, w := range currentRegistering {
 			if strings.Contains(w.Name, models[k].Name) {
-				log.Info(ctx, "hatchery> workerRegister> %s is already registering (%s)", models[k].Name, w.Name)
+				log.Info(ctx, "workerRegister> %s is already registering (%s)", models[k].Name, w.Name)
 				continue loopModels
 			}
 		}
 
 		// if current hatchery is in same group than worker model -> do not avoid spawn, even if worker model is in error
 		if models[k].NbSpawnErr > 5 {
-			log.Warn(ctx, "hatchery> workerRegister> Too many errors on spawn with model %s, please check this worker model", models[k].Name)
+			log.Warn(ctx, "workerRegister> Too many errors on spawn with model %s, please check this worker model", models[k].Name)
 			continue
 		}
 
@@ -74,11 +74,11 @@ loopModels:
 			continue
 		}
 
-		log.Info(ctx, "hatchery> workerRegister> spawning model %s (%d)", models[k].Name, models[k].ID)
+		log.Info(ctx, "workerRegister> spawning model %s (%d)", models[k].Name, models[k].ID)
 
 		// Interpolate model secrets
 		if err := ModelInterpolateSecrets(h, &models[k]); err != nil {
-			log.Error(ctx, "hatchery> workerRegister> cannot interpolate secrets for model %s: %v", models[k].Path(), err)
+			log.Error(ctx, "workerRegister> cannot interpolate secrets for model %s: %v", models[k].Path(), err)
 			continue
 		}
 

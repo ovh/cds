@@ -34,7 +34,11 @@ type annotation struct {
 // SpawnWorker creates a new vm instance
 func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) (err error) {
 	ctx = context.WithValue(ctx, cdslog.AuthWorkerName, spawnArgs.WorkerName)
-	log.Info(ctx, "SpawnWorker %q", spawnArgs.WorkerName)
+	if spawnArgs.RegisterOnly {
+		log.Info(ctx, "SpawnWorker %q (register:%v)", spawnArgs.WorkerName, spawnArgs.RegisterOnly)
+	} else {
+		log.Info(ctx, "SpawnWorker %q (project: %s, workflow: %s , job:%v)", spawnArgs.WorkerName, spawnArgs.ProjectKey, spawnArgs.WorkflowName, spawnArgs.NodeRunName)
+	}
 	defer func() {
 		if err != nil {
 			ctx = sdk.ContextWithStacktrace(ctx, err)
@@ -181,6 +185,12 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 
 // createVirtualMachineTemplate create a model for a specific worker model
 func (h *HatcheryVSphere) createVirtualMachineTemplate(ctx context.Context, model sdk.Model, workerName string) (vm *object.VirtualMachine, err error) {
+	// If the vmTemplate already exist, let's remove it:
+	if tmpl, err := h.getVirtualMachineTemplateByName(ctx, model.Name); err == nil {
+		// remove the template
+		log.Warn(ctx, "removing vm template %q to create a new one for model %q", tmpl.Name, model.Path())
+	}
+
 	ctx, cancel := context.WithTimeout(ctx, 15*time.Minute)
 	defer cancel()
 
