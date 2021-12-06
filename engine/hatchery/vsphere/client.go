@@ -347,16 +347,18 @@ func (h *HatcheryVSphere) launchClientOp(ctx context.Context, vm *object.Virtual
 
 		log.Info(ctx, "script exited with status %d", code)
 
-		_, err = h.vSphereClient.InitiateFileTransferFromGuest(ctx, procman, &types.InitiateFileTransferFromGuest{
+		t, err := h.vSphereClient.InitiateFileTransferFromGuest(ctx, procman, &types.InitiateFileTransferFromGuest{
 			This:          procman.Reference(),
 			Vm:            vm.Reference(),
 			Auth:          &auth,
-			GuestFilePath: "stdout",
+			GuestFilePath: "/tmp/worker.log",
 		})
 		if err != nil {
 			ctx := log.ContextWithStackTrace(ctx, err)
 			log.Error(ctx, "unable to get stdout %v", err)
 		}
+
+		log.Info(ctx, t.Returnval.Url)
 	})
 
 	return err
