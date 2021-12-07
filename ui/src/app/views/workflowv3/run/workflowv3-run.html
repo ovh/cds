@@ -32,10 +32,28 @@
                 </div>
             </div>
         </ng-containers>
+        <ng-containers *ngIf="selectedTab.key === 'results'">
+            <div class="ui list infos">
+                <div *ngFor="let result of results" class="item info">
+                    <div class="right floated content">
+                        {{result.type}}
+                        <a *ngIf="!!result.md5" title="Copy hash" ngxClipboard [cbContent]="result.md5"
+                            (click)="confirmCopy();$event.stopPropagation();"><i class="copy outline icon"></i></a>
+                    </div>
+                    <div class="content">
+                        <a class="ui pointing" [href]="result.link" target="_blank">
+                            {{result.name}}
+                        </a>
+                        ({{result.human_size}})
+                    </div>
+                </div>
+            </div>
+        </ng-containers>
     </app-resizable-panel>
 </div>
 <app-resizable-panel *ngIf="selectJobRun" class="night" (onGrabbingStart)="panelStartResize()"
     (onGrabbingEnd)="panelEndResize()">
-    <app-workflowv3-run-job [projectKey]="projectKey" [workflowName]="data.workflow.name" [workflowRunNum]="data.number"
-        [jobRun]="selectJobRun" (onClickClose)="closeJobPanel()" #v3RunJob></app-workflowv3-run-job>
+    <app-workflowv3-run-job [projectKey]="projectKey" [workflowName]="data.resources.workflow.name"
+        [workflowRunNum]="data.number" [jobRun]="selectJobRun" (onClickClose)="closeJobPanel()" #v3RunJob>
+    </app-workflowv3-run-job>
 </app-resizable-panel>

@@ -1,19 +1,23 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngxs/store';
 import { EventType } from 'app/model/event.model';
+import { CDNLine, CDNStreamFilter } from 'app/model/pipeline.model';
+import { UIArtifact } from 'app/model/workflow.run.model';
+import { WorkflowRunService } from 'app/service/services.module';
+import { WorkflowHelper } from 'app/service/workflow/workflow.helper';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { Tab } from 'app/shared/tabs/tabs.component';
+import { ToastService } from 'app/shared/toast/ToastService';
 import { EventState } from 'app/store/event.state';
-import { Observable, Subscription, timer } from 'rxjs';
-import { debounce, delay, filter, finalize, retryWhen } from 'rxjs/operators';
-import { CDNLine, CDNStreamFilter } from 'app/model/pipeline.model';
-import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 import { WorkflowV3RunJobComponent } from 'app/views/workflowv3/run/workflowv3-run-job.component';
+import { Subscription, timer } from 'rxjs';
+import { debounce, delay, filter, retryWhen } from 'rxjs/operators';
+import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 import { GraphDirection } from '../graph/workflowv3-graph.lib';
 import { WorkflowV3StagesGraphComponent } from '../graph/workflowv3-stages-graph.component';
 import { JobRun, WorkflowRunV3 } from '../workflowv3.model';
+import { WorkflowV3RunService } from '../workflowv3.run.service';
 
 @Component({
     selector: 'app-workflowv3-run',
@@ -38,6 +42,7 @@ export class WorkflowV3RunComponent implements OnInit, OnDestroy {
     selectedTab: Tab;
     selectJobRun: JobRun;
     eventSubscription: Subscription;
+    results: Array<UIArtifact> = [];
 
     websocket: WebSocketSubject<any>;
     websocketSubscription: Subscription;
@@ -45,10 +50,12 @@ export class WorkflowV3RunComponent implements OnInit, OnDestroy {
 
     constructor(
         private _cd: ChangeDetectorRef,
-        private _http: HttpClient,
         private _activatedRoute: ActivatedRoute,
         private _store: Store,
-        private _router: Router
+        private _router: Router,
+        private _workflowRunService: WorkflowRunService,
+        private _workflowV3RunService: WorkflowV3RunService,
+        private _toast: ToastService
     ) {
         this.tabs = [<Tab>{
             translate: 'common_problems',
@@ -79,7 +86,7 @@ export class WorkflowV3RunComponent implements OnInit, OnDestroy {
             .pipe(
                 filter(e => e && this.data && e.type_event === EventType.RUN_WORKFLOW_NODE
                     && e.project_key === this.projectKey
-                    && e.workflow_name === this.data.workflow.name
+                    && e.workflow_name === this.data.resources.workflow.name
                     && e.workflow_run_num === this.data.number),
                 debounce(() => timer(500))
             )
@@ -88,7 +95,7 @@ export class WorkflowV3RunComponent implements OnInit, OnDestroy {
             });
     }
 
-    loadWorkflowRun(): void {
+    async loadWorkflowRun() {
         const parentParams = this._activatedRoute.snapshot.parent.params;
         const params = this._activatedRoute.snapshot.params;
         const workflowName = parentParams['workflowName'];
@@ -96,44 +103,60 @@ export class WorkflowV3RunComponent implements OnInit, OnDestroy {
 
         this.loading = true;
         this._cd.markForCheck();
-        this.getWorkflowRun(this.projectKey, workflowName, runNumber)
-            .pipe(finalize(() => {
-                this.loading = false;
-                this._cd.markForCheck();
-            }))
-            .subscribe(wr => {
-                this.data = wr;
+        this.data = await this._workflowV3RunService.getWorkflowRun(this.projectKey, workflowName, runNumber).toPromise();
 
-                // Create errors entries for failed jobs
-                this.errors = [];
-                Object.keys(wr.job_runs).forEach(k => {
-                    const jrs = wr.job_runs[k];
-                    const jr = jrs[jrs.length - 1];
-                    if (jr.status === 'Fail') {
-                        let error = { jobName: k, stepNumber: 0 };
-                        const stepsWithError = (jr.step_status ?? []).filter(s => s.status === 'Fail');
-                        if (stepsWithError.length > 0) {
-                            const step = stepsWithError[stepsWithError.length - 1];
-                            error.stepNumber = step.step_order + 1;
-                        }
-                        this.errors.push(error);
-                    }
-                });
+        // Create errors entries for failed jobs
+        this.errors = [];
+        Object.keys(this.data.job_runs).forEach(k => {
+            const jrs = this.data.job_runs[k];
+            const jr = jrs[jrs.length - 1];
+            if (jr.status === 'Fail') {
+                let error = { jobName: k, stepNumber: 0 };
+                const stepsWithError = (jr.step_status ?? []).filter(s => s.status === 'Fail');
+                if (stepsWithError.length > 0) {
+                    const step = stepsWithError[stepsWithError.length - 1];
+                    error.stepNumber = step.step_order + 1;
+                }
+                this.errors.push(error);
+            }
+        });
 
-                // Parse spawn infos
-                this.infos = [];
-                this.problems = [];
-                wr.infos.forEach(i => {
-                    switch (i.type) {
-                        case 'Info':
-                            this.infos.push(i.user_message);
-                            break;
-                        default:
-                            this.problems.push(i.user_message);
-                            break;
-                    }
-                });
-            });
+        // Parse spawn infos
+        this.infos = [];
+        this.problems = [];
+        this.data.infos.forEach(i => {
+            switch (i.type) {
+                case 'Info':
+                    this.infos.push(i.user_message);
+                    break;
+                default:
+                    this.problems.push(i.user_message);
+                    break;
+            }
+        });
+
+
+        this.loading = false;
+        this._cd.markForCheck();
+
+        await this.loadWorkflowRunResults();
+    }
+
+    async loadWorkflowRunResults() {
+        const parentParams = this._activatedRoute.snapshot.parent.params;
+        const params = this._activatedRoute.snapshot.params;
+        const workflowName = parentParams['workflowName'];
+        const runNumber = params['number'];
+
+        this.loading = true;
+        this._cd.markForCheck();
+
+        const rs = await this._workflowRunService.getWorkflowRunResults(this.projectKey, workflowName, runNumber).toPromise();
+        const artifactManagerIntegration = this.data.resources.integrations?.find(i => i.model.artifact_manager);
+        this.results = WorkflowHelper.toUIArtifact(rs, artifactManagerIntegration);
+
+        this.loading = false;
+        this._cd.markForCheck();
     }
 
     startStreamingLogsForJob() {
@@ -196,13 +219,6 @@ export class WorkflowV3RunComponent implements OnInit, OnDestroy {
         }
     }
 
-    getWorkflowRun(projectKey: string, workflowName: string, runNumber: number): Observable<WorkflowRunV3> {
-        let params = new HttpParams();
-        params = params.append('format', 'json');
-        params = params.append('full', 'true');
-        return this._http.get<WorkflowRunV3>(`/project/${projectKey}/workflowv3/${workflowName}/run/${runNumber}`, { params });
-    }
-
     clickShowJobLogs(name: string): void {
         if (!this.data.job_runs[name]) {
             this.selectJobRun = null;
@@ -220,5 +236,9 @@ export class WorkflowV3RunComponent implements OnInit, OnDestroy {
         if (this.graph) {
             this.graph.resize();
         }
+    }
+
+    confirmCopy() {
+        this._toast.success('', 'Run result hash copied!');
     }
 }

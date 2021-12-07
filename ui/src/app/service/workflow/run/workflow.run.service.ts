@@ -87,6 +87,18 @@ export class WorkflowRunService {
     }
 
     /**
+     * Get all result for the given workflow run
+     *
+     * @param key Project unique key
+     * @param workflowName Workflow name
+     * @param number Run number
+     */
+    getWorkflowRunResults(key: string, workflowName: string, number: number): Observable<Array<WorkflowRunResult>> {
+        return this._http.get<Array<WorkflowRunResult>>(
+            `/project/${key}/workflows/${workflowName}/runs/${number}/results`);
+    }
+
+    /**
      * Get all result for the given workflow node run
      *
      * @param key Project unique key

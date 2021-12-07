@@ -70,7 +70,7 @@ export class WorkflowV3StagesGraphComponent implements AfterViewInit, OnDestroy 
             return;
         }
         this.jobRuns = data.job_runs;
-        this.workflow = data.workflow;
+        this.workflow = data.resources.workflow;
     }
 
     @Output() onSelectJob = new EventEmitter<string>();

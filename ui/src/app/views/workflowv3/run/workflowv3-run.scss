@@ -43,6 +43,10 @@
     .infos {
         padding: 10px;
 
+        .right a {
+            text-decoration: none;
+        }
+
         .error {
             color: $darkTheme_red;
         }

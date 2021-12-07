@@ -22,8 +22,29 @@ func ConvertRun(wr *sdk.WorkflowRun, isFullExport bool) WorkflowRun {
 		Type:        info.Type,
 		UserMessage: info.DefaultUserMessage(),
 	})
-	res.Workflow = Convert(wr.Workflow, isFullExport)
+	res.Resources.Workflow = Convert(wr.Workflow, isFullExport)
 
+	// Build integration resources
+	extDep, _ := res.Resources.Workflow.Validate()
+	for _, i := range wr.Workflow.Integrations {
+		if _, ok := wr.Workflow.ProjectIntegrations[i.ProjectIntegrationID]; ok && i.ProjectIntegration.Model.ArtifactManager {
+			wr.Workflow.ProjectIntegrations[i.ProjectIntegrationID] = i.ProjectIntegration
+		}
+	}
+	for _, i := range extDep.Integrations {
+		for _, pi := range wr.Workflow.ProjectIntegrations {
+			if pi.Name == i {
+				res.Resources.Integrations = append(res.Resources.Integrations, pi)
+			}
+		}
+		for _, wi := range wr.Workflow.Integrations {
+			if wi.ProjectIntegration.Name == i {
+				res.Resources.Integrations = append(res.Resources.Integrations, wi.ProjectIntegration)
+			}
+		}
+	}
+
+	// Set job runs
 	for _, execs := range wr.WorkflowNodeRuns {
 		for _, exec := range execs {
 			node := wr.Workflow.WorkflowData.NodeByID(exec.WorkflowNodeID)
@@ -31,7 +52,7 @@ func ConvertRun(wr *sdk.WorkflowRun, isFullExport bool) WorkflowRun {
 				for _, j := range s.RunJobs {
 					jID := computeJobUniqueID(node.Name, s.Name, j.Job.Action.Name, j.Job.Action.ID)
 					var jName string
-					for name, job := range res.Workflow.Jobs {
+					for name, job := range res.Resources.Workflow.Jobs {
 						if job.ID == jID {
 							jName = name
 							break
@@ -67,7 +88,6 @@ func ConvertRun(wr *sdk.WorkflowRun, isFullExport bool) WorkflowRun {
 			}
 		}
 	}
-
 	for k := range res.JobRuns {
 		sort.Slice(res.JobRuns[k], func(i, j int) bool { return res.JobRuns[k][i].SubNumber > res.JobRuns[k][j].SubNumber })
 	}

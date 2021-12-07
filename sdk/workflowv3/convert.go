@@ -19,6 +19,13 @@ func Convert(w sdk.Workflow, isFullExport bool) Workflow {
 		convertApps(res.Variables, res.Secrets, res.Repositories, w)
 		convertEnvs(res.Variables, res.Secrets, w)
 	}
+
+	for _, i := range w.Integrations {
+		if i.ProjectIntegration.Model.ArtifactManager {
+			res.ArtifactManager = ArtifactManager("@" + i.ProjectIntegration.Name)
+		}
+	}
+
 	convertedNodes := make(map[int64]convertedJobs)
 	convertJobs(res.Jobs, res.Deployments, convertedNodes, w, nil, nil, w.WorkflowData.Node, isFullExport)
 	sort.Slice(w.WorkflowData.Joins, func(i, j int) bool { return w.WorkflowData.Joins[i].ID < w.WorkflowData.Joins[j].ID })
@@ -239,12 +246,12 @@ func computeJobUniqueID(nodeName, stageName, actionName string, actionID int64) 
 }
 
 func computeJobName(allJobs map[string]*Job, nodeName, stageName, actionName string, actionID int64) string {
-	jName := slug.Convert(fmt.Sprintf("%s-%s", nodeName, actionName))
+	jName := slug.Convert(nodeName + "-" + actionName)
 	if _, ok := allJobs[jName]; !ok {
 		return jName
 	}
 
-	jName = slug.Convert(fmt.Sprintf("%s-%s-%s", nodeName, stageName, actionName))
+	jName = slug.Convert(nodeName + "-" + stageName + "-" + actionName)
 	if _, ok := allJobs[jName]; !ok {
 		return jName
 	}

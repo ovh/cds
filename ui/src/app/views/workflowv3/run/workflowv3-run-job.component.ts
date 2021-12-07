@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild } from '@angular/core';
 import { Store } from '@ngxs/store';
 import { EventType } from 'app/model/event.model';
 import { Parameter } from 'app/model/parameter.model';
+import { CDNLine } from 'app/model/pipeline.model';
 import { WorkflowNodeJobRun } from 'app/model/workflow.run.model';
 import { WorkflowRunService } from 'app/service/services.module';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
@@ -12,7 +13,6 @@ import {
 } from 'app/views/workflow/run/node/pipeline/workflow-run-job/workflow-run-job.component';
 import { Subscription, timer } from 'rxjs';
 import { debounce, filter, finalize } from 'rxjs/operators';
-import { CDNLine } from 'app/model/pipeline.model';
 import { JobRun } from '../workflowv3.model';
 
 @Component({
