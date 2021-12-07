@@ -146,11 +146,7 @@ func cachePushCmd() func(cmd *cobra.Command, args []string) {
 			if err != nil {
 				sdk.Exit("cache push HTTP %d error %v", resp.StatusCode, err)
 			}
-			var sdkErr sdk.Error
-			if sdk.JSONUnmarshal(body, &sdkErr); err != nil {
-				sdk.Exit("unable to read error: %s: %v", string(body), err)
-			}
-			sdk.Exit("%v", sdkErr)
+			sdk.Exit("worker cache push failed: %s", string(body))
 		}
 
 		fmt.Printf("Worker cache push with success (tag: %s)\n", args[0])
@@ -235,11 +231,7 @@ func cachePullCmd() func(cmd *cobra.Command, args []string) {
 			if err != nil {
 				sdk.Exit("cache pull HTTP %d error %v", resp.StatusCode, err)
 			}
-			var sdkErr sdk.Error
-			if sdk.JSONUnmarshal(body, &sdkErr); err != nil {
-				sdk.Exit("unable to read error: %s: %v", string(body), err)
-			}
-			sdk.Exit("%v", sdkErr)
+			sdk.Exit("worker cache pull failed: %s", string(body))
 		}
 
 		fmt.Printf("Worker cache pull with success (tag: %s)\n", args[0])

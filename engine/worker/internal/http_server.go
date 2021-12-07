@@ -97,7 +97,12 @@ func writeJSON(w http.ResponseWriter, data interface{}, status int) {
 	_, _ = w.Write(b)
 }
 
+func writePlainText(w http.ResponseWriter, data string, status int) {
+	w.Header().Add("Content-Type", "text/plain")
+	w.WriteHeader(status)
+	_, _ = w.Write([]byte(data))
+}
+
 func writeError(w http.ResponseWriter, r *http.Request, err error) {
-	sdkErr := sdk.ExtractHTTPError(err)
-	writeJSON(w, sdkErr, sdkErr.Status)
+	writePlainText(w, err.Error(), 500)
 }

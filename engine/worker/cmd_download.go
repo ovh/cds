@@ -109,8 +109,7 @@ func downloadCmd() func(cmd *cobra.Command, args []string) {
 			if err != nil {
 				sdk.Exit("cannot artifact download HTTP %v\n", err)
 			}
-			cdsError := sdk.DecodeError(body)
-			sdk.Exit("download failed: %v\n", cdsError)
+			sdk.Exit("download failed: %v\n", string(body))
 		}
 	}
 }

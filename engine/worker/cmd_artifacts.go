@@ -91,8 +91,7 @@ func artifactsCmd() func(cmd *cobra.Command, args []string) {
 			if err != nil {
 				sdk.Exit("cannot list artifacts HTTP %v\n", err)
 			}
-			cdsError := sdk.DecodeError(body)
-			sdk.Exit("artifacts failed: %v\n", cdsError)
+			sdk.Exit("artifacts failed: %s\n", string(body))
 		}
 
 		// step: read the response body

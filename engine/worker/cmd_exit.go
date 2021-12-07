@@ -56,8 +56,7 @@ func exitCmd() func(cmd *cobra.Command, args []string) {
 				sdk.Exit("tag failed: unable to read body %v\n", err)
 			}
 			defer resp.Body.Close()
-			cdsError := sdk.DecodeError(body)
-			sdk.Exit("exit failed: %v\n", cdsError)
+			sdk.Exit("exit failed: %s\n", string(body))
 		}
 	}
 }

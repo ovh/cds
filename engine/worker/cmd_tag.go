@@ -70,7 +70,7 @@ func tagCmd() func(cmd *cobra.Command, args []string) {
 		req, errRequest := http.NewRequest("POST", fmt.Sprintf("http://127.0.0.1:%d/tag", port), strings.NewReader(formValues.Encode()))
 		req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 		if errRequest != nil {
-			sdk.Exit("cannot post worker tag (Request): %s\n", errRequest)
+			sdk.Exit("cannot post worker tag (Request): %v\n", errRequest)
 		}
 
 		client := http.DefaultClient
@@ -86,8 +86,7 @@ func tagCmd() func(cmd *cobra.Command, args []string) {
 				sdk.Exit("tag failed: unable to read body %v\n", err)
 			}
 			defer resp.Body.Close()
-			cdsError := sdk.DecodeError(body)
-			sdk.Exit("tag failed: %v\n", cdsError)
+			sdk.Exit("tag failed: %s\n", string(body))
 		}
 	}
 }
