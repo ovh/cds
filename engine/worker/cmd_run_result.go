@@ -129,12 +129,12 @@ func addRunResult(data []byte, stype sdk.WorkflowRunResultType) {
 
 	req, errRequest := http.NewRequest("POST", fmt.Sprintf("http://127.0.0.1:%d/run-result/add/%s", port, stype), bytes.NewBuffer(data))
 	if errRequest != nil {
-		sdk.Exit("cannot add run result (Request): %s\n", errRequest)
+		sdk.Exit("cannot add run result (Request): %v\n", errRequest)
 	}
 	client := http.DefaultClient
 	resp, errDo := client.Do(req)
 	if errDo != nil {
-		sdk.Exit("cannot post worker run-result (Do): %s\n", errDo)
+		sdk.Exit("cannot post worker run-result (Do): %v\n", errDo)
 	}
 	defer resp.Body.Close() // nolint
 
@@ -143,11 +143,6 @@ func addRunResult(data []byte, stype sdk.WorkflowRunResultType) {
 		if err != nil {
 			sdk.Exit("cannot add run result HTTP %v\n", err)
 		}
-		cdsError := sdk.DecodeError(body)
-		if cdsError != nil {
-			sdk.Exit("adding run result failed: %v\n", cdsError)
-		} else {
-			sdk.Exit("adding run result failed: %s\n", body)
-		}
+		sdk.Exit("adding run result failed: %s\n", string(body))
 	}
 }

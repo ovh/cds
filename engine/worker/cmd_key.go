@@ -133,12 +133,7 @@ func keyInstallCmd() func(cmd *cobra.Command, args []string) {
 			if err != nil {
 				sdk.Exit("Error: worker key install> HTTP error %v\n", err)
 			}
-			cdsError := sdk.DecodeError(body)
-			if cdsError != nil {
-				sdk.Exit("Error: worker key install> error: %v\n", cdsError)
-			} else {
-				sdk.Exit(string(body))
-			}
+			sdk.Exit("Key isntall failed: %s", string(body))
 		}
 
 		bodyBtes, err := io.ReadAll(resp.Body)

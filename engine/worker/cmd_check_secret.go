@@ -97,11 +97,7 @@ func tmplCheckSecretCmd() func(cmd *cobra.Command, args []string) {
 				if err != nil {
 					sdk.Exit("cannot read response body %v\n", err)
 				}
-				cdsError := sdk.DecodeError(body)
-				if cdsError != nil {
-					sdk.Exit("%v\n", cdsError)
-				}
-				sdk.Exit("%v\n", string(body))
+				sdk.Exit("Check secret failed: %s\n", string(body))
 			}
 		}
 	}

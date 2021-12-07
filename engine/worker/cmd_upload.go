@@ -89,8 +89,7 @@ func uploadCmd() func(cmd *cobra.Command, args []string) {
 				if err != nil {
 					sdk.Exit("cannot artifact upload HTTP %v\n", err)
 				}
-				cdsError := sdk.DecodeError(body)
-				sdk.Exit("artifact upload failed: %v\n", cdsError)
+				sdk.Exit("artifact upload failed: %s\n", string(body))
 			}
 		}
 	}

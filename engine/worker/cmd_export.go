@@ -63,17 +63,17 @@ func exportCmd(cmd *cobra.Command, args []string) {
 
 	data, err := json.Marshal(v)
 	if err != nil {
-		sdk.Exit("internal error (%s)\n", err)
+		sdk.Exit("internal error (%v)\n", err)
 	}
 
 	req, err := http.NewRequest("POST", fmt.Sprintf("http://127.0.0.1:%d/var", port), bytes.NewReader(data))
 	if err != nil {
-		sdk.Exit("cannot add variable: %s\n", err)
+		sdk.Exit("cannot add variable: %v\n", err)
 	}
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		sdk.Exit("cannot add variable: %s\n", err)
+		sdk.Exit("cannot add variable: %v\n", err)
 	}
 
 	if resp.StatusCode >= 300 {

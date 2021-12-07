@@ -97,12 +97,7 @@ func tmplCmd() func(cmd *cobra.Command, args []string) {
 			if err != nil {
 				sdk.Exit("tmpl failed: unable to read body %v\n", err)
 			}
-			cdsError := sdk.DecodeError(body)
-			if cdsError != nil {
-				sdk.Exit("tmpl failed: %v\n", cdsError)
-			} else {
-				sdk.Exit(string(body))
-			}
+			sdk.Exit("Worker tmpl failed: %s", string(body))
 		}
 	}
 }
