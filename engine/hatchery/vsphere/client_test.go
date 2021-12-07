@@ -3,7 +3,6 @@ package vsphere
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/golang/mock/gomock"
 	"github.com/ovh/cds/sdk"
@@ -350,22 +349,6 @@ func TestHatcheryVSphere_launchClientOp(t *testing.T) {
 		},
 	)
 
-	c.EXPECT().WaitProcessInGuest(gomock.Any(), &procman, gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
-		func(ctx context.Context, procman *guest.ProcessManager, req *types.ListProcessesInGuest, retryDelay, timeout time.Duration) (int, error) {
-			return 0, nil
-		},
-	).AnyTimes()
-
-	c.EXPECT().InitiateFileTransferFromGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
-		func(ctx context.Context, procman *guest.ProcessManager, req *types.InitiateFileTransferFromGuest) (*types.InitiateFileTransferFromGuestResponse, error) {
-			return &types.InitiateFileTransferFromGuestResponse{
-				Returnval: types.FileTransferInformation{
-					Url: "my-url",
-				},
-			}, nil
-		},
-	).AnyTimes()
-
 	ctx := context.Background()
-	h.launchClientOp(ctx, &vm, model, "this is a script", []string{"env=1"}, 1)
+	h.launchClientOp(ctx, &vm, model, "this is a script", []string{"env=1"})
 }

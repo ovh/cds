@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rockbears/log"
 	"github.com/vmware/govmomi"
 	"github.com/vmware/govmomi/find"
@@ -42,8 +41,6 @@ type VSphereClient interface {
 	LoadDatastore(ctx context.Context, name string) (*object.Datastore, error)
 	ProcessManager(ctx context.Context, vm *object.VirtualMachine) (*guest.ProcessManager, error)
 	StartProgramInGuest(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (*types.StartProgramInGuestResponse, error)
-	WaitProcessInGuest(ctx context.Context, procman *guest.ProcessManager, req *types.ListProcessesInGuest, retryDelay, timeout time.Duration) (int, error)
-	InitiateFileTransferFromGuest(ctx context.Context, procman *guest.ProcessManager, req *types.InitiateFileTransferFromGuest) (*types.InitiateFileTransferFromGuestResponse, error)
 }
 
 func NewVSphereClient(vclient *govmomi.Client, datacenter string) VSphereClient {
@@ -284,80 +281,12 @@ func (c *vSphereClient) ProcessManager(ctx context.Context, vm *object.VirtualMa
 	return procman, nil
 }
 
-func (c *vSphereClient) CreateTemporaryDirectoryInGuest(ctx context.Context, procman *guest.ProcessManager, req *types.CreateTemporaryDirectoryInGuest) (*types.CreateTemporaryDirectoryInGuestResponse, error) {
-	ctxB, cancel := context.WithTimeout(ctx, c.requestTimeout)
-	defer cancel()
-
-	res, err := methods.CreateTemporaryDirectoryInGuest(ctxB, procman.Client(), req)
-	return res, sdk.WrapError(err, "unable to create tmp dir in guest")
-}
-
-func (c *vSphereClient) CreateTemporaryFileInGuest(ctx context.Context, procman *guest.ProcessManager, req *types.CreateTemporaryFileInGuest) (*types.CreateTemporaryFileInGuestResponse, error) {
-	ctxB, cancel := context.WithTimeout(ctx, c.requestTimeout)
-	defer cancel()
-	res, err := methods.CreateTemporaryFileInGuest(ctxB, procman.Client(), req)
-	return res, sdk.WrapError(err, "unable to create tmp file in guest")
-}
-
 func (c *vSphereClient) StartProgramInGuest(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (*types.StartProgramInGuestResponse, error) {
 	ctxB, cancel := context.WithTimeout(ctx, c.requestTimeout)
 	defer cancel()
 
 	res, err := methods.StartProgramInGuest(ctxB, procman.Client(), req)
 	return res, sdk.WrapError(err, "unable to start program in guest")
-}
-
-func (c *vSphereClient) WaitProcessInGuest(ctx context.Context, procman *guest.ProcessManager, req *types.ListProcessesInGuest, retryDelay, timeout time.Duration) (int, error) {
-	if len(req.Pids) != 1 {
-		return -1, errors.Errorf("unsupported number of processes")
-	}
-
-	ctx, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
-
-	for {
-		log.Debug(ctx, "checking process %d", req.Pids[0])
-		if ctx.Err() != nil {
-			return -1, sdk.WrapError(ctx.Err(), "timeout expired")
-		}
-
-		ctxB, cancel := context.WithTimeout(ctx, c.requestTimeout)
-		defer cancel()
-
-		res, err := methods.ListProcessesInGuest(ctxB, procman.Client(), req)
-		if err != nil {
-			return -1, errors.WithStack(err)
-		}
-
-		if len(res.Returnval) == 0 {
-			return -1, errors.Errorf("unable to list process %v", req.Pids)
-		}
-		if res.Returnval[0].EndTime != nil {
-			return int(res.Returnval[0].ExitCode), nil
-		}
-
-		time.Sleep(retryDelay)
-	}
-}
-
-func (c *vSphereClient) InitiateFileTransferFromGuest(ctx context.Context, procman *guest.ProcessManager, req *types.InitiateFileTransferFromGuest) (*types.InitiateFileTransferFromGuestResponse, error) {
-	ctx, cancel := context.WithTimeout(ctx, c.requestTimeout)
-	defer cancel()
-
-	o := guest.NewOperationsManager(procman.Client(), req.Vm)
-	fileManager, err := o.FileManager(ctx)
-	if err != nil {
-		return nil, sdk.WithStack(err)
-	}
-
-	link, err := fileManager.InitiateFileTransferFromGuest(ctx, req.Auth, req.GuestFilePath)
-	if err != nil {
-		return nil, sdk.WithStack(err)
-	}
-
-	log.Info(ctx, "file %q url: %v", req.GuestFilePath, link.Url)
-
-	return nil, nil
 }
 
 func (c *vSphereClient) NewVirtualMachine(ctx context.Context, cloneSpec *types.VirtualMachineCloneSpec, ref *types.ManagedObjectReference) (*object.VirtualMachine, error) {

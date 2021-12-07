@@ -2,10 +2,10 @@ package hatchery
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"sync/atomic"
 
+	"github.com/pkg/errors"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/sdk"
@@ -21,12 +21,12 @@ var nbRegisteringWorkerModels int64
 
 func workerRegister(ctx context.Context, h InterfaceWithModels, startWorkerChan chan<- workerStarterRequest) error {
 	if len(models) == 0 {
-		return fmt.Errorf("workerRegister> No model returned by GetWorkerModels")
+		return errors.Errorf("no model returned by GetWorkerModels")
 	}
 	// currentRegister contains the register spawned in this ticker
 	currentRegistering, err := WorkerPool(ctx, h, sdk.StatusWorkerRegistering)
 	if err != nil {
-		log.Error(ctx, "workerRegister> worker pool error: %v", err)
+		log.Error(ctx, "worker pool error: %v", err)
 	}
 
 	atomic.StoreInt64(&nbRegisteringWorkerModels, int64(len(currentRegistering)))
@@ -36,7 +36,7 @@ loopModels:
 			continue
 		}
 		if h.CanSpawn(ctx, &models[k], 0, nil) && (h.NeedRegistration(ctx, &models[k]) || models[k].CheckRegistration) {
-			log.Debug(ctx, "workerRegister> model %q need register", models[k].Path())
+			log.Debug(ctx, "model %q need to register", models[k].Path())
 		} else {
 			continue
 		}
@@ -46,39 +46,41 @@ loopModels:
 			maxRegistration = 2
 		}
 		if atomic.LoadInt64(&nbRegisteringWorkerModels) > maxRegistration {
-			log.Debug(ctx, "workerRegister> max registering worker reached")
+			log.Debug(ctx, "max registering worker reached")
 			return nil
 		}
 
 		if !checkCapacities(ctx, h) {
-			log.Debug(ctx, "workerRegister> unable to register now")
+			log.Debug(ctx, "unable to register now")
 			return nil
 		}
 
 		// Check if there is a pending registering worker
 		for _, w := range currentRegistering {
 			if strings.Contains(w.Name, models[k].Name) {
-				log.Info(ctx, "workerRegister> %s is already registering (%s)", models[k].Name, w.Name)
+				log.Info(ctx, "model %q is already registering (%s)", models[k].Name, w.Name)
 				continue loopModels
 			}
 		}
 
 		// if current hatchery is in same group than worker model -> do not avoid spawn, even if worker model is in error
 		if models[k].NbSpawnErr > 5 {
-			log.Warn(ctx, "workerRegister> Too many errors on spawn with model %s, please check this worker model", models[k].Name)
+			log.Warn(ctx, "Too many errors on spawn with model %s, please check this worker model", models[k].Name)
 			continue
 		}
 
 		if err := h.CDSClient().WorkerModelBook(models[k].Group.Name, models[k].Name); err != nil {
-			log.Debug(ctx, "%v", sdk.WrapError(err, "cannot book model %s with id %d", models[k].Path(), models[k].ID))
+			ctx := log.ContextWithStackTrace(ctx, err)
+			log.Error(ctx, "cannot book model %s with id %d: %v", models[k].Path(), models[k].ID, err)
 			continue
 		}
 
-		log.Info(ctx, "workerRegister> spawning model %s (%d)", models[k].Name, models[k].ID)
+		log.Info(ctx, "model %q (%d) has been booked and will be spawned for registration", models[k].Name, models[k].ID)
 
 		// Interpolate model secrets
 		if err := ModelInterpolateSecrets(h, &models[k]); err != nil {
-			log.Error(ctx, "workerRegister> cannot interpolate secrets for model %s: %v", models[k].Path(), err)
+			ctx := log.ContextWithStackTrace(ctx, err)
+			log.Error(ctx, "cannot interpolate secrets for model %s: %v", models[k].Path(), err)
 			continue
 		}
 
@@ -109,10 +111,11 @@ func CheckWorkerModelRegister(ctx context.Context, h Interface, modelPath string
 	// so, we call a fresh model list to re-check the flag need registration known by the api
 	hWithModels, isWithModels := h.(InterfaceWithModels)
 	if isWithModels {
-		modelsFresh, errwm := hWithModels.WorkerModelsEnabled()
-		if errwm != nil {
-			log.Error(ctx, "error on h.CheckWorkerModelRegister(): %v", errwm)
-			return errwm
+		modelsFresh, err := hWithModels.WorkerModelsEnabled()
+		if err != nil {
+			ctx := log.ContextWithStackTrace(ctx, err)
+			log.Error(ctx, "error on h.CheckWorkerModelRegister(): %v", err)
+			return err
 		}
 
 		for i := range modelsFresh {

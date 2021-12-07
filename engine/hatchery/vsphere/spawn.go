@@ -34,21 +34,16 @@ type annotation struct {
 // SpawnWorker creates a new vm instance
 func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) (err error) {
 	ctx = context.WithValue(ctx, cdslog.AuthWorkerName, spawnArgs.WorkerName)
-	if spawnArgs.RegisterOnly {
-		log.Info(ctx, "SpawnWorker %q (register:%v)", spawnArgs.WorkerName, spawnArgs.RegisterOnly)
-	} else {
-		log.Info(ctx, "SpawnWorker %q (project: %s, workflow: %s , job:%v)", spawnArgs.WorkerName, spawnArgs.ProjectKey, spawnArgs.WorkflowName, spawnArgs.NodeRunName)
-	}
 	defer func() {
 		if err != nil {
 			ctx = sdk.ContextWithStacktrace(ctx, err)
-			log.Error(ctx, "HatcheryVSphere> SpawnWorker %q from model %q: ERROR: %v", spawnArgs.WorkerName, spawnArgs.ModelName(), err)
+			log.Error(ctx, "SpawnWorker %q from model %q: ERROR: %v", spawnArgs.WorkerName, spawnArgs.ModelName(), err)
 
 			h.cachePendingJobID.mu.Lock()
 			h.cachePendingJobID.list = sdk.DeleteFromInt64Array(h.cachePendingJobID.list, spawnArgs.JobID)
 			h.cachePendingJobID.mu.Unlock()
 		} else {
-			log.Info(ctx, "HatcheryVSphere> SpawnWorker %q from model %q: DONE", spawnArgs.WorkerName, spawnArgs.ModelName())
+			log.Info(ctx, "SpawnWorker %q from model %q: DONE", spawnArgs.WorkerName, spawnArgs.ModelName())
 		}
 	}()
 
@@ -257,7 +252,7 @@ func (h *HatcheryVSphere) createVirtualMachineTemplate(ctx context.Context, mode
 		return nil, err
 	}
 
-	if err := h.launchClientOp(ctx, clonedVM, model.ModelVirtualMachine, model.ModelVirtualMachine.PostCmd, nil, time.Minute); err != nil {
+	if err := h.launchClientOp(ctx, clonedVM, model.ModelVirtualMachine, model.ModelVirtualMachine.PostCmd, nil); err != nil {
 		log.Error(ctx, "cannot start program on virtual machine %q: %v", clonedVM.Name(), err)
 		log.Warn(ctx, "shutdown virtual machine %q", clonedVM.Name())
 		if err := h.vSphereClient.ShutdownVirtualMachine(ctx, clonedVM); err != nil {
@@ -301,7 +296,7 @@ func (h *HatcheryVSphere) checkVirtualMachineIsReady(ctx context.Context, model 
 		if ctx.Err() != nil {
 			return sdk.WithStack(fmt.Errorf("vm %q is not ready: %v - %v", vm.Name(), latestError, ctx.Err()))
 		}
-		if err := h.launchClientOp(ctx, vm, model.ModelVirtualMachine, "env", nil, 5*time.Second); err != nil {
+		if err := h.launchClientOp(ctx, vm, model.ModelVirtualMachine, "env", nil); err != nil {
 			log.Warn(ctx, "virtual machine %q is not ready: %v", vm.Name(), err)
 			latestError = err
 			time.Sleep(time.Second)
@@ -323,10 +318,11 @@ func (h *HatcheryVSphere) launchScriptWorker(ctx context.Context, spawnArgs hatc
 
 	udata := spawnArgs.Model.ModelVirtualMachine.PreCmd + "\n" + spawnArgs.Model.ModelVirtualMachine.Cmd
 
+	// Redirect worker stdout and stderr in /tmp
 	if spawnArgs.RegisterOnly {
 		udata += " register 1>/tmp/worker.register.log 2>&1"
 	} else {
-		udata += " 1>/tmp/worker.log 2>&1; sleep 300"
+		udata += " 1>/tmp/worker.log 2>&1;"
 	}
 	udata += "\n" + spawnArgs.Model.ModelVirtualMachine.PostCmd
 
@@ -384,10 +380,7 @@ func (h *HatcheryVSphere) launchScriptWorker(ctx context.Context, spawnArgs hatc
 		env = append(env, k+"="+v)
 	}
 
-	script := buffer.String()
-	log.Debug(ctx, "script: \n"+script)
-
-	if err := h.launchClientOp(ctx, vm, spawnArgs.Model.ModelVirtualMachine, script, env, 24*time.Hour); err != nil {
+	if err := h.launchClientOp(ctx, vm, spawnArgs.Model.ModelVirtualMachine, buffer.String(), env); err != nil {
 		log.Warn(ctx, "launchScript> cannot start program %s", err)
 		log.Error(ctx, "cannot start program on virtual machine %q: %v", vm.Name(), err)
 		log.Warn(ctx, "shutdown virtual machine %q", vm.Name())

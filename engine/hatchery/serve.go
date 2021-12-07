@@ -260,8 +260,6 @@ func (c *Common) GenerateWorkerConfig(ctx context.Context, h hatchery.Interface,
 		httpInsecure = h.Configuration().API.HTTP.Insecure
 	}
 
-	log.Debug(ctx, "generating worker %q configuration (URL:%s)", apiURL)
-
 	envvars := make(map[string]string, len(h.Configuration().Provision.InjectEnvVars))
 
 	for _, e := range h.Configuration().Provision.InjectEnvVars {
@@ -293,7 +291,5 @@ func (c *Common) GenerateWorkerConfig(ctx context.Context, h hatchery.Interface,
 			GraylogFieldCDSServiceName: spawnArgs.WorkerName,
 		},
 	}
-
-	log.Debug(ctx, "worker config: %v", cfg.EncodeBase64())
 	return cfg
 }

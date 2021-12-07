@@ -7,7 +7,6 @@ package mock_vsphere
 import (
 	context "context"
 	reflect "reflect"
-	time "time"
 
 	gomock "github.com/golang/mock/gomock"
 	guest "github.com/vmware/govmomi/guest"
@@ -81,21 +80,6 @@ func (m *MockVSphereClient) GetVirtualMachinePowerState(ctx context.Context, vm 
 func (mr *MockVSphereClientMockRecorder) GetVirtualMachinePowerState(ctx, vm interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVirtualMachinePowerState", reflect.TypeOf((*MockVSphereClient)(nil).GetVirtualMachinePowerState), ctx, vm)
-}
-
-// InitiateFileTransferFromGuest mocks base method.
-func (m *MockVSphereClient) InitiateFileTransferFromGuest(ctx context.Context, procman *guest.ProcessManager, req *types.InitiateFileTransferFromGuest) (*types.InitiateFileTransferFromGuestResponse, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "InitiateFileTransferFromGuest", ctx, procman, req)
-	ret0, _ := ret[0].(*types.InitiateFileTransferFromGuestResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// InitiateFileTransferFromGuest indicates an expected call of InitiateFileTransferFromGuest.
-func (mr *MockVSphereClientMockRecorder) InitiateFileTransferFromGuest(ctx, procman, req interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InitiateFileTransferFromGuest", reflect.TypeOf((*MockVSphereClient)(nil).InitiateFileTransferFromGuest), ctx, procman, req)
 }
 
 // ListVirtualMachines mocks base method.
@@ -344,19 +328,4 @@ func (m *MockVSphereClient) WaitForVirtualMachineShutdown(ctx context.Context, v
 func (mr *MockVSphereClientMockRecorder) WaitForVirtualMachineShutdown(ctx, vm interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitForVirtualMachineShutdown", reflect.TypeOf((*MockVSphereClient)(nil).WaitForVirtualMachineShutdown), ctx, vm)
-}
-
-// WaitProcessInGuest mocks base method.
-func (m *MockVSphereClient) WaitProcessInGuest(ctx context.Context, procman *guest.ProcessManager, req *types.ListProcessesInGuest, retryDelay, timeout time.Duration) (int, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WaitProcessInGuest", ctx, procman, req, retryDelay, timeout)
-	ret0, _ := ret[0].(int)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// WaitProcessInGuest indicates an expected call of WaitProcessInGuest.
-func (mr *MockVSphereClientMockRecorder) WaitProcessInGuest(ctx, procman, req, retryDelay, timeout interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitProcessInGuest", reflect.TypeOf((*MockVSphereClient)(nil).WaitProcessInGuest), ctx, procman, req, retryDelay, timeout)
 }

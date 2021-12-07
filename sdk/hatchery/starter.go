@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/sdk"
+	cdslog "github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/namesgenerator"
 	"github.com/ovh/cds/sdk/slug"
 	"github.com/ovh/cds/sdk/telemetry"
@@ -69,6 +70,9 @@ func workerStarter(ctx context.Context, h Interface, workerNum string, jobs <-ch
 				RegisterOnly: true,
 				HatcheryName: h.Service().Name,
 			}
+
+			ctx = context.WithValue(ctx, cdslog.AuthWorkerName, arg.WorkerName)
+			log.Info(ctx, "starting worker %q from model %q (register:%v)", arg.WorkerName, m.Name, arg.RegisterOnly)
 
 			// Get a JWT to authentified the worker
 			jwt, err := NewWorkerToken(h.Service().Name, h.GetPrivateKey(), time.Now().Add(1*time.Hour), arg)
@@ -182,7 +186,8 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 		JobName:      bookedInfos.JobName,
 	}
 
-	log.Info(ctx, "hatchery> spawnWorkerForJob> SpawnWorker> starting model %s for job %d with name %s", modelName, arg.JobID, arg.WorkerName)
+	ctxSpawnWorker = context.WithValue(ctxSpawnWorker, cdslog.AuthWorkerName, arg.WorkerName)
+	log.Info(ctx, "starting worker %q from model %q (project: %s, workflow: %s , job:%v, jobID:%v)", arg.WorkerName, modelName, arg.ProjectKey, arg.WorkflowName, arg.NodeRunName, arg.JobID)
 
 	// Get a JWT to authentified the worker
 	jwt, err := NewWorkerToken(h.Service().Name, h.GetPrivateKey(), time.Now().Add(1*time.Hour), arg)

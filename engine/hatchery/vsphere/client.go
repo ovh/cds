@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/rockbears/log"
 	"github.com/vmware/govmomi/object"
@@ -14,7 +13,6 @@ import (
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
-	cdslog "github.com/ovh/cds/sdk/log"
 )
 
 // get all servers on our host
@@ -295,8 +293,7 @@ func (h *HatcheryVSphere) prepareCloneSpec(ctx context.Context, vm *object.Virtu
 }
 
 // launchClientOp launch a script on the virtual machine given in parameters
-// https://kb.vmware.com/s/article/70711
-func (h *HatcheryVSphere) launchClientOp(ctx context.Context, vm *object.VirtualMachine, model sdk.ModelVirtualMachine, script string, env []string, maxDuration time.Duration) error {
+func (h *HatcheryVSphere) launchClientOp(ctx context.Context, vm *object.VirtualMachine, model sdk.ModelVirtualMachine, script string, env []string) error {
 	procman, err := h.vSphereClient.ProcessManager(ctx, vm)
 	if err != nil {
 		return err
@@ -322,44 +319,6 @@ func (h *HatcheryVSphere) launchClientOp(ctx context.Context, vm *object.Virtual
 
 	log.Debug(ctx, "starting program %+v in guest...", guestspec)
 
-	response, err := h.vSphereClient.StartProgramInGuest(ctx, procman, &req)
-	if err != nil {
-		return err
-	}
-
-	ctx2 := context.WithValue(context.Background(), cdslog.AuthWorkerName, vm.Name())
-	h.GoRoutines.Exec(ctx2, vm.Name()+"-exec", func(ctx context.Context) {
-		defer func() {
-			if r := recover(); r != nil {
-				fmt.Println("panic recovery", r)
-			}
-		}()
-		code, err := h.vSphereClient.WaitProcessInGuest(ctx, procman, &types.ListProcessesInGuest{
-			This: procman.Reference(),
-			Vm:   vm.Reference(),
-			Auth: &auth,
-			Pids: []int64{response.Returnval},
-		}, maxDuration/10, maxDuration)
-		if err != nil {
-			ctx := log.ContextWithStackTrace(ctx, err)
-			log.Error(ctx, "%q process error: %v", vm.Name(), err)
-		}
-
-		log.Info(ctx, "script exited with status %d", code)
-
-		t, err := h.vSphereClient.InitiateFileTransferFromGuest(ctx, procman, &types.InitiateFileTransferFromGuest{
-			This:          procman.Reference(),
-			Vm:            vm.Reference(),
-			Auth:          &auth,
-			GuestFilePath: "/tmp/worker.log",
-		})
-		if err != nil {
-			ctx := log.ContextWithStackTrace(ctx, err)
-			log.Error(ctx, "unable to get stdout %v", err)
-		}
-
-		log.Info(ctx, t.Returnval.Url)
-	})
-
+	_, err = h.vSphereClient.StartProgramInGuest(ctx, procman, &req)
 	return err
 }
