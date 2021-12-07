@@ -138,6 +138,6 @@ func Test_tmplHandlerInWrongDir(t *testing.T) {
 
 	body := w.Body.String()
 	t.Logf("result: %d : %v", w.Code, body)
-	require.Equal(t, `{"id":74,"message":"wrong request","from":"open adir/output: no such file or directory"}`, body)
+	require.Equal(t, "wrong request (from: open adir/output: no such file or directory)", body)
 
 }
