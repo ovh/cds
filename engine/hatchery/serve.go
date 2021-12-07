@@ -281,6 +281,7 @@ func (c *Common) GenerateWorkerConfig(ctx context.Context, h hatchery.Interface,
 		APIEndpointInsecure: httpInsecure,
 		InjectEnvVars:       envvars,
 		Region:              h.Configuration().Provision.Region,
+		Basedir:             h.Configuration().Provision.WorkerBasedir,
 		Log: cdslog.Conf{
 			GraylogHost:                h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
 			GraylogPort:                strconv.Itoa(h.Configuration().Provision.WorkerLogsOptions.Graylog.Port),

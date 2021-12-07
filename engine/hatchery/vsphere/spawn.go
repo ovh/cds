@@ -304,7 +304,6 @@ func (h *HatcheryVSphere) checkVirtualMachineIsReady(ctx context.Context, model 
 		}
 		break // else it means that it is ready
 	}
-
 	return nil
 }
 
