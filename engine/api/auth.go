@@ -210,10 +210,9 @@ func (api *API) postAuthSigninHandler() service.Handler {
 						}
 
 						u = &sdk.AuthentifiedUser{
-							Ring:         sdk.UserRingUser,
-							Username:     userInfo.Username,
-							Fullname:     userInfo.Fullname,
-							Organization: userInfo.Organization,
+							Ring:     sdk.UserRingUser,
+							Username: userInfo.Username,
+							Fullname: userInfo.Fullname,
 						}
 
 						// If a magic token is given and there is no admin already registered, set new user as admin

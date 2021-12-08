@@ -372,22 +372,22 @@ func Test_postAuthSigninHandler_WithCorporateSSO(t *testing.T) {
 
 		t.Logf("response: %s", string(bodyRaw))
 
-		assert.Equal(t, "mattgroening", response.User.GetUsername())
-		assert.NotEmpty(t, response.Token)
+		require.Equal(t, "mattgroening", response.User.GetUsername())
+		require.NotEmpty(t, response.Token)
 
-		u, err := user.LoadByUsername(context.TODO(), api.mustDB(), "mattgroening", user.LoadOptions.WithContacts)
+		u, err := user.LoadByUsername(context.TODO(), api.mustDB(), "mattgroening", user.LoadOptions.WithContacts, user.LoadOptions.WithOrganization)
 		require.NoError(t, err)
 		require.NotNil(t, u)
+		require.Equal(t, "planet-express", u.Organization)
 
 		consumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerCorporateSSO, u.ID)
 		require.NoError(t, err)
-		assert.Equal(t, sdk.ConsumerCorporateSSO, consumer.Type)
+		require.Equal(t, sdk.ConsumerCorporateSSO, consumer.Type)
 
 		t.Logf("consumer %s: %+v", consumer.Type, consumer.Data)
 
 		// tear down
-		err = user.DeleteByID(api.mustDB(), u.ID)
-		require.NoError(t, err)
+		require.NoError(t, user.DeleteByID(api.mustDB(), u.ID))
 	})
 }
 
