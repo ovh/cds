@@ -232,6 +232,7 @@ func (d authDriver) GetUserInfo(ctx context.Context, req sdk.AuthConsumerSigninR
 	if len(u.Username) < 3 && itk.RemoteUsername != "" {
 		u.Username = slug.Convert(itk.RemoteUsername)
 	}
+	u.Fullname = itk.RemoteUsername
 	u.ExternalID = itk.RemoteUser
 	u.MFA = itk.MFA && d.Config.MFASupportEnabled
 	u.Email = itk.Email
