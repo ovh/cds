@@ -15,6 +15,7 @@ import (
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
+	cdslog "github.com/ovh/cds/sdk/log"
 )
 
 type annotation struct {
@@ -32,17 +33,17 @@ type annotation struct {
 
 // SpawnWorker creates a new vm instance
 func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) (err error) {
-	log.Info(ctx, "SpawnWorker %q", spawnArgs.WorkerName)
+	ctx = context.WithValue(ctx, cdslog.AuthWorkerName, spawnArgs.WorkerName)
 	defer func() {
 		if err != nil {
 			ctx = sdk.ContextWithStacktrace(ctx, err)
-			log.Error(ctx, "HatcheryVSphere> SpawnWorker %q from model %q: ERROR: %v", spawnArgs.WorkerName, spawnArgs.ModelName(), err)
+			log.Error(ctx, "SpawnWorker %q from model %q: ERROR: %v", spawnArgs.WorkerName, spawnArgs.ModelName(), err)
 
 			h.cachePendingJobID.mu.Lock()
 			h.cachePendingJobID.list = sdk.DeleteFromInt64Array(h.cachePendingJobID.list, spawnArgs.JobID)
 			h.cachePendingJobID.mu.Unlock()
 		} else {
-			log.Info(ctx, "HatcheryVSphere> SpawnWorker %q from model %q: DONE", spawnArgs.WorkerName, spawnArgs.ModelName())
+			log.Info(ctx, "SpawnWorker %q from model %q: DONE", spawnArgs.WorkerName, spawnArgs.ModelName())
 		}
 	}()
 
@@ -137,9 +138,8 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 			h.cacheProvisioning.restarting = sdk.DeleteFromArray(h.cacheProvisioning.restarting, spawnArgs.WorkerName)
 			h.cacheProvisioning.mu.Unlock()
 
-			return h.launchScriptWorker(ctx, spawnArgs.WorkerName, spawnArgs.JobID, spawnArgs.WorkerToken, *spawnArgs.Model, false, provisionnedVMWorker)
+			return h.launchScriptWorker(ctx, spawnArgs, provisionnedVMWorker)
 		}
-
 	}
 
 	annot := annotation{
@@ -175,11 +175,21 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 		return err
 	}
 
-	return h.launchScriptWorker(ctx, spawnArgs.WorkerName, spawnArgs.JobID, spawnArgs.WorkerToken, *spawnArgs.Model, spawnArgs.RegisterOnly, vmWorker)
+	return h.launchScriptWorker(ctx, spawnArgs, vmWorker)
 }
 
 // createVirtualMachineTemplate create a model for a specific worker model
 func (h *HatcheryVSphere) createVirtualMachineTemplate(ctx context.Context, model sdk.Model, workerName string) (vm *object.VirtualMachine, err error) {
+	// If the vmTemplate already exist, let's remove it:
+	if tmpl, err := h.getVirtualMachineTemplateByName(ctx, model.Name); err == nil {
+		// remove the template
+		log.Warn(ctx, "removing vm template %q to create a new one for model %q", tmpl.Name, model.Path())
+		if err := h.deleteServer(ctx, tmpl); err != nil {
+			ctx := log.ContextWithStackTrace(ctx, err)
+			log.Error(ctx, "unable to delete vm template %q: %v", tmpl.Name, err)
+		}
+	}
+
 	ctx, cancel := context.WithTimeout(ctx, 15*time.Minute)
 	defer cancel()
 
@@ -242,7 +252,7 @@ func (h *HatcheryVSphere) createVirtualMachineTemplate(ctx context.Context, mode
 		return nil, err
 	}
 
-	if _, err := h.launchClientOp(ctx, clonedVM, model.ModelVirtualMachine, model.ModelVirtualMachine.PostCmd, nil); err != nil {
+	if err := h.launchClientOp(ctx, clonedVM, model.ModelVirtualMachine, model.ModelVirtualMachine.PostCmd, nil); err != nil {
 		log.Error(ctx, "cannot start program on virtual machine %q: %v", clonedVM.Name(), err)
 		log.Warn(ctx, "shutdown virtual machine %q", clonedVM.Name())
 		if err := h.vSphereClient.ShutdownVirtualMachine(ctx, clonedVM); err != nil {
@@ -286,9 +296,7 @@ func (h *HatcheryVSphere) checkVirtualMachineIsReady(ctx context.Context, model 
 		if ctx.Err() != nil {
 			return sdk.WithStack(fmt.Errorf("vm %q is not ready: %v - %v", vm.Name(), latestError, ctx.Err()))
 		}
-		// Try to run a script
-		_, err := h.launchClientOp(ctx, vm, model.ModelVirtualMachine, "env", nil)
-		if err != nil {
+		if err := h.launchClientOp(ctx, vm, model.ModelVirtualMachine, "env", nil); err != nil {
 			log.Warn(ctx, "virtual machine %q is not ready: %v", vm.Name(), err)
 			latestError = err
 			time.Sleep(time.Second)
@@ -296,71 +304,88 @@ func (h *HatcheryVSphere) checkVirtualMachineIsReady(ctx context.Context, model 
 		}
 		break // else it means that it is ready
 	}
-
 	return nil
 }
 
 // launchScriptWorker launch a script on the worker
-func (h *HatcheryVSphere) launchScriptWorker(ctx context.Context, name string, jobID int64, token string, model sdk.Model, registerOnly bool, vm *object.VirtualMachine) error {
+func (h *HatcheryVSphere) launchScriptWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments, vm *object.VirtualMachine) error {
 	if err := h.vSphereClient.WaitForVirtualMachineIP(ctx, vm, nil); err != nil {
 		return err
 	}
 
-	workerConfig := h.GenerateWorkerConfig(ctx, h, hatchery.SpawnArguments{
-		WorkerToken: token,
-		WorkerName:  name,
-		Model:       &model,
-	})
+	workerConfig := h.GenerateWorkerConfig(ctx, h, spawnArgs)
 
-	env := []string{}
+	udata := spawnArgs.Model.ModelVirtualMachine.PreCmd + "\n" + spawnArgs.Model.ModelVirtualMachine.Cmd
 
-	env = append(env, h.getGraylogEnv(model)...)
-	udata := model.ModelVirtualMachine.PreCmd + "\n" + "CDS_CONFIG=" + workerConfig.EncodeBase64() + " " + model.ModelVirtualMachine.Cmd
-
-	if registerOnly {
-		udata += " register"
+	// Redirect worker stdout and stderr in /tmp
+	if spawnArgs.RegisterOnly {
+		udata += " register 1>/tmp/worker.register.log 2>&1"
+	} else {
+		udata += " 1>/tmp/worker.log 2>&1;"
 	}
-	udata += "\n" + model.ModelVirtualMachine.PostCmd
+	udata += "\n" + spawnArgs.Model.ModelVirtualMachine.PostCmd
 
-	tmpl, errt := template.New("udata").Parse(udata)
-	if errt != nil {
-		return errt
-	}
-
-	for k, v := range workerConfig.InjectEnvVars {
-		env = append(env, k+"="+v)
+	tmpl, err := template.New("udata").Parse(udata)
+	if err != nil {
+		return sdk.NewErrorFrom(err, "unable to parse template: %v", err)
 	}
 
 	udataParam := struct {
-		API             string
-		FromWorkerImage bool
+		// All fields below are deprecated
+		API               string
+		Token             string
+		Name              string
+		BaseDir           string
+		HTTPInsecure      bool
+		Model             string
+		HatcheryName      string
+		WorkflowJobID     int64
+		TTL               int
+		FromWorkerImage   bool
+		GraylogHost       string
+		GraylogPort       int
+		GraylogExtraKey   string
+		GraylogExtraValue string
+		WorkerBinary      string
+		InjectEnvVars     map[string]string
+		// All fields above are deprecated
+		Config string
 	}{
 		API:             workerConfig.APIEndpoint,
 		FromWorkerImage: true,
-	}
-	var buffer bytes.Buffer
-	if err := tmpl.Execute(&buffer, udataParam); err != nil {
-		return err
+		Config:          workerConfig.EncodeBase64(),
 	}
 
-	if err := h.checkVirtualMachineIsReady(ctx, model, vm); err != nil {
+	var buffer bytes.Buffer
+	if err := tmpl.Execute(&buffer, udataParam); err != nil {
+		return sdk.NewErrorFrom(err, "unable to execute template: %v", err)
+	}
+
+	if err := h.checkVirtualMachineIsReady(ctx, *spawnArgs.Model, vm); err != nil {
 		log.Error(ctx, "virtual machine %q is not ready: %v", vm.Name(), err)
 		log.Warn(ctx, "shutdown virtual machine %q", vm.Name())
 		if err := h.vSphereClient.ShutdownVirtualMachine(ctx, vm); err != nil {
 			ctx = sdk.ContextWithStacktrace(ctx, err)
-			log.Error(ctx, "createVMModel> unable to shutdown vm %q: %v", model, err)
+			log.Error(ctx, "createVMModel> unable to shutdown vm %q: %v", spawnArgs.Model.Path(), err)
 		}
 		h.markToDelete(ctx, vm)
 		return err
 	}
 
-	if _, err := h.launchClientOp(ctx, vm, model.ModelVirtualMachine, buffer.String(), env); err != nil {
+	env := []string{
+		"CDS_CONFIG=" + workerConfig.EncodeBase64(),
+	}
+	for k, v := range workerConfig.InjectEnvVars {
+		env = append(env, k+"="+v)
+	}
+
+	if err := h.launchClientOp(ctx, vm, spawnArgs.Model.ModelVirtualMachine, buffer.String(), env); err != nil {
 		log.Warn(ctx, "launchScript> cannot start program %s", err)
 		log.Error(ctx, "cannot start program on virtual machine %q: %v", vm.Name(), err)
 		log.Warn(ctx, "shutdown virtual machine %q", vm.Name())
 		if err := h.vSphereClient.ShutdownVirtualMachine(ctx, vm); err != nil {
 			ctx = sdk.ContextWithStacktrace(ctx, err)
-			log.Error(ctx, "createVMModel> unable to shutdown vm %q: %v", model.Name, err)
+			log.Error(ctx, "createVMModel> unable to shutdown vm %q: %v", spawnArgs.Model.Name, err)
 		}
 		h.markToDelete(ctx, vm)
 		return err

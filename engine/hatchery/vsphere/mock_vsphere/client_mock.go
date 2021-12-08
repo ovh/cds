@@ -6,125 +6,39 @@ package mock_vsphere
 
 import (
 	context "context"
+	reflect "reflect"
+
 	gomock "github.com/golang/mock/gomock"
 	guest "github.com/vmware/govmomi/guest"
 	object "github.com/vmware/govmomi/object"
 	mo "github.com/vmware/govmomi/vim25/mo"
 	types "github.com/vmware/govmomi/vim25/types"
-	reflect "reflect"
 )
 
-// MockVSphereClient is a mock of VSphereClient interface
+// MockVSphereClient is a mock of VSphereClient interface.
 type MockVSphereClient struct {
 	ctrl     *gomock.Controller
 	recorder *MockVSphereClientMockRecorder
 }
 
-// MockVSphereClientMockRecorder is the mock recorder for MockVSphereClient
+// MockVSphereClientMockRecorder is the mock recorder for MockVSphereClient.
 type MockVSphereClientMockRecorder struct {
 	mock *MockVSphereClient
 }
 
-// NewMockVSphereClient creates a new mock instance
+// NewMockVSphereClient creates a new mock instance.
 func NewMockVSphereClient(ctrl *gomock.Controller) *MockVSphereClient {
 	mock := &MockVSphereClient{ctrl: ctrl}
 	mock.recorder = &MockVSphereClientMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockVSphereClient) EXPECT() *MockVSphereClientMockRecorder {
 	return m.recorder
 }
 
-// ListVirtualMachines mocks base method
-func (m *MockVSphereClient) ListVirtualMachines(ctx context.Context) ([]mo.VirtualMachine, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListVirtualMachines", ctx)
-	ret0, _ := ret[0].([]mo.VirtualMachine)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ListVirtualMachines indicates an expected call of ListVirtualMachines
-func (mr *MockVSphereClientMockRecorder) ListVirtualMachines(ctx interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListVirtualMachines", reflect.TypeOf((*MockVSphereClient)(nil).ListVirtualMachines), ctx)
-}
-
-// LoadVirtualMachine mocks base method
-func (m *MockVSphereClient) LoadVirtualMachine(ctx context.Context, name string) (*object.VirtualMachine, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "LoadVirtualMachine", ctx, name)
-	ret0, _ := ret[0].(*object.VirtualMachine)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// LoadVirtualMachine indicates an expected call of LoadVirtualMachine
-func (mr *MockVSphereClientMockRecorder) LoadVirtualMachine(ctx, name interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadVirtualMachine", reflect.TypeOf((*MockVSphereClient)(nil).LoadVirtualMachine), ctx, name)
-}
-
-// LoadVirtualMachineDevices mocks base method
-func (m *MockVSphereClient) LoadVirtualMachineDevices(ctx context.Context, vm *object.VirtualMachine) (object.VirtualDeviceList, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "LoadVirtualMachineDevices", ctx, vm)
-	ret0, _ := ret[0].(object.VirtualDeviceList)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// LoadVirtualMachineDevices indicates an expected call of LoadVirtualMachineDevices
-func (mr *MockVSphereClientMockRecorder) LoadVirtualMachineDevices(ctx, vm interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadVirtualMachineDevices", reflect.TypeOf((*MockVSphereClient)(nil).LoadVirtualMachineDevices), ctx, vm)
-}
-
-// StartVirtualMachine mocks base method
-func (m *MockVSphereClient) StartVirtualMachine(ctx context.Context, vm *object.VirtualMachine) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "StartVirtualMachine", ctx, vm)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// StartVirtualMachine indicates an expected call of StartVirtualMachine
-func (mr *MockVSphereClientMockRecorder) StartVirtualMachine(ctx, vm interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StartVirtualMachine", reflect.TypeOf((*MockVSphereClient)(nil).StartVirtualMachine), ctx, vm)
-}
-
-// ShutdownVirtualMachine mocks base method
-func (m *MockVSphereClient) ShutdownVirtualMachine(ctx context.Context, vm *object.VirtualMachine) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ShutdownVirtualMachine", ctx, vm)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// ShutdownVirtualMachine indicates an expected call of ShutdownVirtualMachine
-func (mr *MockVSphereClientMockRecorder) ShutdownVirtualMachine(ctx, vm interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ShutdownVirtualMachine", reflect.TypeOf((*MockVSphereClient)(nil).ShutdownVirtualMachine), ctx, vm)
-}
-
-// DestroyVirtualMachine mocks base method
-func (m *MockVSphereClient) DestroyVirtualMachine(ctx context.Context, vm *object.VirtualMachine) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DestroyVirtualMachine", ctx, vm)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// DestroyVirtualMachine indicates an expected call of DestroyVirtualMachine
-func (mr *MockVSphereClientMockRecorder) DestroyVirtualMachine(ctx, vm interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DestroyVirtualMachine", reflect.TypeOf((*MockVSphereClient)(nil).DestroyVirtualMachine), ctx, vm)
-}
-
-// CloneVirtualMachine mocks base method
+// CloneVirtualMachine mocks base method.
 func (m *MockVSphereClient) CloneVirtualMachine(ctx context.Context, vm *object.VirtualMachine, folder *object.Folder, name string, config *types.VirtualMachineCloneSpec) (*types.ManagedObjectReference, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CloneVirtualMachine", ctx, vm, folder, name, config)
@@ -133,13 +47,27 @@ func (m *MockVSphereClient) CloneVirtualMachine(ctx context.Context, vm *object.
 	return ret0, ret1
 }
 
-// CloneVirtualMachine indicates an expected call of CloneVirtualMachine
+// CloneVirtualMachine indicates an expected call of CloneVirtualMachine.
 func (mr *MockVSphereClientMockRecorder) CloneVirtualMachine(ctx, vm, folder, name, config interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CloneVirtualMachine", reflect.TypeOf((*MockVSphereClient)(nil).CloneVirtualMachine), ctx, vm, folder, name, config)
 }
 
-// GetVirtualMachinePowerState mocks base method
+// DestroyVirtualMachine mocks base method.
+func (m *MockVSphereClient) DestroyVirtualMachine(ctx context.Context, vm *object.VirtualMachine) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DestroyVirtualMachine", ctx, vm)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DestroyVirtualMachine indicates an expected call of DestroyVirtualMachine.
+func (mr *MockVSphereClientMockRecorder) DestroyVirtualMachine(ctx, vm interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DestroyVirtualMachine", reflect.TypeOf((*MockVSphereClient)(nil).DestroyVirtualMachine), ctx, vm)
+}
+
+// GetVirtualMachinePowerState mocks base method.
 func (m *MockVSphereClient) GetVirtualMachinePowerState(ctx context.Context, vm *object.VirtualMachine) (types.VirtualMachinePowerState, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetVirtualMachinePowerState", ctx, vm)
@@ -148,143 +76,28 @@ func (m *MockVSphereClient) GetVirtualMachinePowerState(ctx context.Context, vm 
 	return ret0, ret1
 }
 
-// GetVirtualMachinePowerState indicates an expected call of GetVirtualMachinePowerState
+// GetVirtualMachinePowerState indicates an expected call of GetVirtualMachinePowerState.
 func (mr *MockVSphereClientMockRecorder) GetVirtualMachinePowerState(ctx, vm interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVirtualMachinePowerState", reflect.TypeOf((*MockVSphereClient)(nil).GetVirtualMachinePowerState), ctx, vm)
 }
 
-// NewVirtualMachine mocks base method
-func (m *MockVSphereClient) NewVirtualMachine(ctx context.Context, cloneSpec *types.VirtualMachineCloneSpec, ref *types.ManagedObjectReference) (*object.VirtualMachine, error) {
+// ListVirtualMachines mocks base method.
+func (m *MockVSphereClient) ListVirtualMachines(ctx context.Context) ([]mo.VirtualMachine, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "NewVirtualMachine", ctx, cloneSpec, ref)
-	ret0, _ := ret[0].(*object.VirtualMachine)
+	ret := m.ctrl.Call(m, "ListVirtualMachines", ctx)
+	ret0, _ := ret[0].([]mo.VirtualMachine)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// NewVirtualMachine indicates an expected call of NewVirtualMachine
-func (mr *MockVSphereClientMockRecorder) NewVirtualMachine(ctx, cloneSpec, ref interface{}) *gomock.Call {
+// ListVirtualMachines indicates an expected call of ListVirtualMachines.
+func (mr *MockVSphereClientMockRecorder) ListVirtualMachines(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewVirtualMachine", reflect.TypeOf((*MockVSphereClient)(nil).NewVirtualMachine), ctx, cloneSpec, ref)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListVirtualMachines", reflect.TypeOf((*MockVSphereClient)(nil).ListVirtualMachines), ctx)
 }
 
-// RenameVirtualMachine mocks base method
-func (m *MockVSphereClient) RenameVirtualMachine(ctx context.Context, vm *object.VirtualMachine, newName string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RenameVirtualMachine", ctx, vm, newName)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// RenameVirtualMachine indicates an expected call of RenameVirtualMachine
-func (mr *MockVSphereClientMockRecorder) RenameVirtualMachine(ctx, vm, newName interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RenameVirtualMachine", reflect.TypeOf((*MockVSphereClient)(nil).RenameVirtualMachine), ctx, vm, newName)
-}
-
-// MarkVirtualMachineAsTemplate mocks base method
-func (m *MockVSphereClient) MarkVirtualMachineAsTemplate(ctx context.Context, vm *object.VirtualMachine) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "MarkVirtualMachineAsTemplate", ctx, vm)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// MarkVirtualMachineAsTemplate indicates an expected call of MarkVirtualMachineAsTemplate
-func (mr *MockVSphereClientMockRecorder) MarkVirtualMachineAsTemplate(ctx, vm interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkVirtualMachineAsTemplate", reflect.TypeOf((*MockVSphereClient)(nil).MarkVirtualMachineAsTemplate), ctx, vm)
-}
-
-// WaitForVirtualMachineShutdown mocks base method
-func (m *MockVSphereClient) WaitForVirtualMachineShutdown(ctx context.Context, vm *object.VirtualMachine) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WaitForVirtualMachineShutdown", ctx, vm)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// WaitForVirtualMachineShutdown indicates an expected call of WaitForVirtualMachineShutdown
-func (mr *MockVSphereClientMockRecorder) WaitForVirtualMachineShutdown(ctx, vm interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitForVirtualMachineShutdown", reflect.TypeOf((*MockVSphereClient)(nil).WaitForVirtualMachineShutdown), ctx, vm)
-}
-
-// WaitForVirtualMachineIP mocks base method
-func (m *MockVSphereClient) WaitForVirtualMachineIP(ctx context.Context, vm *object.VirtualMachine, IPAddress *string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WaitForVirtualMachineIP", ctx, vm, IPAddress)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// WaitForVirtualMachineIP indicates an expected call of WaitForVirtualMachineIP
-func (mr *MockVSphereClientMockRecorder) WaitForVirtualMachineIP(ctx, vm, IPAddress interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitForVirtualMachineIP", reflect.TypeOf((*MockVSphereClient)(nil).WaitForVirtualMachineIP), ctx, vm, IPAddress)
-}
-
-// LoadFolder mocks base method
-func (m *MockVSphereClient) LoadFolder(ctx context.Context) (*object.Folder, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "LoadFolder", ctx)
-	ret0, _ := ret[0].(*object.Folder)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// LoadFolder indicates an expected call of LoadFolder
-func (mr *MockVSphereClientMockRecorder) LoadFolder(ctx interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadFolder", reflect.TypeOf((*MockVSphereClient)(nil).LoadFolder), ctx)
-}
-
-// SetupEthernetCard mocks base method
-func (m *MockVSphereClient) SetupEthernetCard(ctx context.Context, card *types.VirtualEthernetCard, ethernetCardName string, network object.NetworkReference) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SetupEthernetCard", ctx, card, ethernetCardName, network)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// SetupEthernetCard indicates an expected call of SetupEthernetCard
-func (mr *MockVSphereClientMockRecorder) SetupEthernetCard(ctx, card, ethernetCardName, network interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetupEthernetCard", reflect.TypeOf((*MockVSphereClient)(nil).SetupEthernetCard), ctx, card, ethernetCardName, network)
-}
-
-// LoadNetwork mocks base method
-func (m *MockVSphereClient) LoadNetwork(ctx context.Context, name string) (object.NetworkReference, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "LoadNetwork", ctx, name)
-	ret0, _ := ret[0].(object.NetworkReference)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// LoadNetwork indicates an expected call of LoadNetwork
-func (mr *MockVSphereClientMockRecorder) LoadNetwork(ctx, name interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadNetwork", reflect.TypeOf((*MockVSphereClient)(nil).LoadNetwork), ctx, name)
-}
-
-// LoadResourcePool mocks base method
-func (m *MockVSphereClient) LoadResourcePool(ctx context.Context) (*object.ResourcePool, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "LoadResourcePool", ctx)
-	ret0, _ := ret[0].(*object.ResourcePool)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// LoadResourcePool indicates an expected call of LoadResourcePool
-func (mr *MockVSphereClientMockRecorder) LoadResourcePool(ctx interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadResourcePool", reflect.TypeOf((*MockVSphereClient)(nil).LoadResourcePool), ctx)
-}
-
-// LoadDatastore mocks base method
+// LoadDatastore mocks base method.
 func (m *MockVSphereClient) LoadDatastore(ctx context.Context, name string) (*object.Datastore, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "LoadDatastore", ctx, name)
@@ -293,13 +106,117 @@ func (m *MockVSphereClient) LoadDatastore(ctx context.Context, name string) (*ob
 	return ret0, ret1
 }
 
-// LoadDatastore indicates an expected call of LoadDatastore
+// LoadDatastore indicates an expected call of LoadDatastore.
 func (mr *MockVSphereClientMockRecorder) LoadDatastore(ctx, name interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadDatastore", reflect.TypeOf((*MockVSphereClient)(nil).LoadDatastore), ctx, name)
 }
 
-// ProcessManager mocks base method
+// LoadFolder mocks base method.
+func (m *MockVSphereClient) LoadFolder(ctx context.Context) (*object.Folder, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "LoadFolder", ctx)
+	ret0, _ := ret[0].(*object.Folder)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// LoadFolder indicates an expected call of LoadFolder.
+func (mr *MockVSphereClientMockRecorder) LoadFolder(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadFolder", reflect.TypeOf((*MockVSphereClient)(nil).LoadFolder), ctx)
+}
+
+// LoadNetwork mocks base method.
+func (m *MockVSphereClient) LoadNetwork(ctx context.Context, name string) (object.NetworkReference, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "LoadNetwork", ctx, name)
+	ret0, _ := ret[0].(object.NetworkReference)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// LoadNetwork indicates an expected call of LoadNetwork.
+func (mr *MockVSphereClientMockRecorder) LoadNetwork(ctx, name interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadNetwork", reflect.TypeOf((*MockVSphereClient)(nil).LoadNetwork), ctx, name)
+}
+
+// LoadResourcePool mocks base method.
+func (m *MockVSphereClient) LoadResourcePool(ctx context.Context) (*object.ResourcePool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "LoadResourcePool", ctx)
+	ret0, _ := ret[0].(*object.ResourcePool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// LoadResourcePool indicates an expected call of LoadResourcePool.
+func (mr *MockVSphereClientMockRecorder) LoadResourcePool(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadResourcePool", reflect.TypeOf((*MockVSphereClient)(nil).LoadResourcePool), ctx)
+}
+
+// LoadVirtualMachine mocks base method.
+func (m *MockVSphereClient) LoadVirtualMachine(ctx context.Context, name string) (*object.VirtualMachine, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "LoadVirtualMachine", ctx, name)
+	ret0, _ := ret[0].(*object.VirtualMachine)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// LoadVirtualMachine indicates an expected call of LoadVirtualMachine.
+func (mr *MockVSphereClientMockRecorder) LoadVirtualMachine(ctx, name interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadVirtualMachine", reflect.TypeOf((*MockVSphereClient)(nil).LoadVirtualMachine), ctx, name)
+}
+
+// LoadVirtualMachineDevices mocks base method.
+func (m *MockVSphereClient) LoadVirtualMachineDevices(ctx context.Context, vm *object.VirtualMachine) (object.VirtualDeviceList, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "LoadVirtualMachineDevices", ctx, vm)
+	ret0, _ := ret[0].(object.VirtualDeviceList)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// LoadVirtualMachineDevices indicates an expected call of LoadVirtualMachineDevices.
+func (mr *MockVSphereClientMockRecorder) LoadVirtualMachineDevices(ctx, vm interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadVirtualMachineDevices", reflect.TypeOf((*MockVSphereClient)(nil).LoadVirtualMachineDevices), ctx, vm)
+}
+
+// MarkVirtualMachineAsTemplate mocks base method.
+func (m *MockVSphereClient) MarkVirtualMachineAsTemplate(ctx context.Context, vm *object.VirtualMachine) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MarkVirtualMachineAsTemplate", ctx, vm)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// MarkVirtualMachineAsTemplate indicates an expected call of MarkVirtualMachineAsTemplate.
+func (mr *MockVSphereClientMockRecorder) MarkVirtualMachineAsTemplate(ctx, vm interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkVirtualMachineAsTemplate", reflect.TypeOf((*MockVSphereClient)(nil).MarkVirtualMachineAsTemplate), ctx, vm)
+}
+
+// NewVirtualMachine mocks base method.
+func (m *MockVSphereClient) NewVirtualMachine(ctx context.Context, cloneSpec *types.VirtualMachineCloneSpec, ref *types.ManagedObjectReference) (*object.VirtualMachine, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "NewVirtualMachine", ctx, cloneSpec, ref)
+	ret0, _ := ret[0].(*object.VirtualMachine)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// NewVirtualMachine indicates an expected call of NewVirtualMachine.
+func (mr *MockVSphereClientMockRecorder) NewVirtualMachine(ctx, cloneSpec, ref interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewVirtualMachine", reflect.TypeOf((*MockVSphereClient)(nil).NewVirtualMachine), ctx, cloneSpec, ref)
+}
+
+// ProcessManager mocks base method.
 func (m *MockVSphereClient) ProcessManager(ctx context.Context, vm *object.VirtualMachine) (*guest.ProcessManager, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ProcessManager", ctx, vm)
@@ -308,23 +225,107 @@ func (m *MockVSphereClient) ProcessManager(ctx context.Context, vm *object.Virtu
 	return ret0, ret1
 }
 
-// ProcessManager indicates an expected call of ProcessManager
+// ProcessManager indicates an expected call of ProcessManager.
 func (mr *MockVSphereClientMockRecorder) ProcessManager(ctx, vm interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProcessManager", reflect.TypeOf((*MockVSphereClient)(nil).ProcessManager), ctx, vm)
 }
 
-// StartProgramInGuest mocks base method
-func (m *MockVSphereClient) StartProgramInGuest(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (int64, error) {
+// RenameVirtualMachine mocks base method.
+func (m *MockVSphereClient) RenameVirtualMachine(ctx context.Context, vm *object.VirtualMachine, newName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RenameVirtualMachine", ctx, vm, newName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RenameVirtualMachine indicates an expected call of RenameVirtualMachine.
+func (mr *MockVSphereClientMockRecorder) RenameVirtualMachine(ctx, vm, newName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RenameVirtualMachine", reflect.TypeOf((*MockVSphereClient)(nil).RenameVirtualMachine), ctx, vm, newName)
+}
+
+// SetupEthernetCard mocks base method.
+func (m *MockVSphereClient) SetupEthernetCard(ctx context.Context, card *types.VirtualEthernetCard, ethernetCardName string, network object.NetworkReference) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetupEthernetCard", ctx, card, ethernetCardName, network)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetupEthernetCard indicates an expected call of SetupEthernetCard.
+func (mr *MockVSphereClientMockRecorder) SetupEthernetCard(ctx, card, ethernetCardName, network interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetupEthernetCard", reflect.TypeOf((*MockVSphereClient)(nil).SetupEthernetCard), ctx, card, ethernetCardName, network)
+}
+
+// ShutdownVirtualMachine mocks base method.
+func (m *MockVSphereClient) ShutdownVirtualMachine(ctx context.Context, vm *object.VirtualMachine) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ShutdownVirtualMachine", ctx, vm)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ShutdownVirtualMachine indicates an expected call of ShutdownVirtualMachine.
+func (mr *MockVSphereClientMockRecorder) ShutdownVirtualMachine(ctx, vm interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ShutdownVirtualMachine", reflect.TypeOf((*MockVSphereClient)(nil).ShutdownVirtualMachine), ctx, vm)
+}
+
+// StartProgramInGuest mocks base method.
+func (m *MockVSphereClient) StartProgramInGuest(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (*types.StartProgramInGuestResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "StartProgramInGuest", ctx, procman, req)
-	ret0, _ := ret[0].(int64)
+	ret0, _ := ret[0].(*types.StartProgramInGuestResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// StartProgramInGuest indicates an expected call of StartProgramInGuest
+// StartProgramInGuest indicates an expected call of StartProgramInGuest.
 func (mr *MockVSphereClientMockRecorder) StartProgramInGuest(ctx, procman, req interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StartProgramInGuest", reflect.TypeOf((*MockVSphereClient)(nil).StartProgramInGuest), ctx, procman, req)
+}
+
+// StartVirtualMachine mocks base method.
+func (m *MockVSphereClient) StartVirtualMachine(ctx context.Context, vm *object.VirtualMachine) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "StartVirtualMachine", ctx, vm)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// StartVirtualMachine indicates an expected call of StartVirtualMachine.
+func (mr *MockVSphereClientMockRecorder) StartVirtualMachine(ctx, vm interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StartVirtualMachine", reflect.TypeOf((*MockVSphereClient)(nil).StartVirtualMachine), ctx, vm)
+}
+
+// WaitForVirtualMachineIP mocks base method.
+func (m *MockVSphereClient) WaitForVirtualMachineIP(ctx context.Context, vm *object.VirtualMachine, IPAddress *string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WaitForVirtualMachineIP", ctx, vm, IPAddress)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WaitForVirtualMachineIP indicates an expected call of WaitForVirtualMachineIP.
+func (mr *MockVSphereClientMockRecorder) WaitForVirtualMachineIP(ctx, vm, IPAddress interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitForVirtualMachineIP", reflect.TypeOf((*MockVSphereClient)(nil).WaitForVirtualMachineIP), ctx, vm, IPAddress)
+}
+
+// WaitForVirtualMachineShutdown mocks base method.
+func (m *MockVSphereClient) WaitForVirtualMachineShutdown(ctx context.Context, vm *object.VirtualMachine) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WaitForVirtualMachineShutdown", ctx, vm)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WaitForVirtualMachineShutdown indicates an expected call of WaitForVirtualMachineShutdown.
+func (mr *MockVSphereClientMockRecorder) WaitForVirtualMachineShutdown(ctx, vm interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitForVirtualMachineShutdown", reflect.TypeOf((*MockVSphereClient)(nil).WaitForVirtualMachineShutdown), ctx, vm)
 }

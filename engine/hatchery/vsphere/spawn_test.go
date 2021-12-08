@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -155,18 +156,18 @@ func TestHatcheryVSphere_createVirtualMachineTemplate(t *testing.T) {
 	).AnyTimes()
 
 	c.EXPECT().StartProgramInGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
-		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (int64, error) {
+		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (*types.StartProgramInGuestResponse, error) {
 			assert.Equal(t, "/bin/echo", req.Spec.GetGuestProgramSpec().ProgramPath)
-			assert.Equal(t, "-n ;env", req.Spec.GetGuestProgramSpec().Arguments)
-			return 1, nil
+			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "-n ;env")
+			return &types.StartProgramInGuestResponse{}, nil
 		},
 	)
 
 	c.EXPECT().StartProgramInGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
-		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (int64, error) {
+		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (*types.StartProgramInGuestResponse, error) {
 			assert.Equal(t, "/bin/echo", req.Spec.GetGuestProgramSpec().ProgramPath)
-			assert.Equal(t, "-n ;shutdown -h now", req.Spec.GetGuestProgramSpec().Arguments)
-			return 1, nil
+			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "shutdown -h now")
+			return &types.StartProgramInGuestResponse{}, nil
 		},
 	)
 
@@ -232,24 +233,38 @@ func TestHatcheryVSphere_launchScriptWorker(t *testing.T) {
 	).AnyTimes()
 
 	c.EXPECT().StartProgramInGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
-		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (int64, error) {
+		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (*types.StartProgramInGuestResponse, error) {
 			assert.Equal(t, "/bin/echo", req.Spec.GetGuestProgramSpec().ProgramPath)
-			assert.Equal(t, "-n ;env", req.Spec.GetGuestProgramSpec().Arguments)
-			return 1, nil
+			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "-n ;env")
+			return &types.StartProgramInGuestResponse{}, nil
 		},
 	)
 
 	c.EXPECT().StartProgramInGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
-		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (int64, error) {
+		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (*types.StartProgramInGuestResponse, error) {
 			assert.Equal(t, "/bin/echo", req.Spec.GetGuestProgramSpec().ProgramPath)
 			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "-n ;\n")
-			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "./worker register\nshutdown -h now")
-			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "CDS_CONFIG=")
-			return 1, nil
+			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "./worker register")
+			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "shutdown -h now")
+			var foundConfig bool
+			for _, env := range req.Spec.GetGuestProgramSpec().EnvVariables {
+				if strings.HasPrefix(env, "CDS_CONFIG=") {
+					foundConfig = true
+				}
+			}
+			assert.True(t, foundConfig, "CDS_CONFIG env variable should be set")
+			return &types.StartProgramInGuestResponse{}, nil
 		},
 	)
 
-	err := h.launchScriptWorker(ctx, "worker1", -1, "xxxxxxxx", validModel, true, &vm)
+	spawnArgs := hatchery.SpawnArguments{
+		WorkerName:   "worker1",
+		WorkerToken:  "xxxxxxxx",
+		Model:        &validModel,
+		RegisterOnly: true,
+	}
+
+	err := h.launchScriptWorker(ctx, spawnArgs, &vm)
 	require.NoError(t, err)
 
 }
@@ -392,20 +407,26 @@ func TestHatcheryVSphere_SpawnWorker(t *testing.T) {
 	).AnyTimes()
 
 	c.EXPECT().StartProgramInGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
-		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (int64, error) {
+		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (*types.StartProgramInGuestResponse, error) {
 			assert.Equal(t, "/bin/echo", req.Spec.GetGuestProgramSpec().ProgramPath)
-			assert.Equal(t, "-n ;env", req.Spec.GetGuestProgramSpec().Arguments)
-			return 1, nil
+			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "-n ;env")
+			return &types.StartProgramInGuestResponse{}, nil
 		},
 	)
 
 	c.EXPECT().StartProgramInGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
-		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (int64, error) {
+		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (*types.StartProgramInGuestResponse, error) {
 			assert.Equal(t, "/bin/echo", req.Spec.GetGuestProgramSpec().ProgramPath)
 			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "-n ;\n")
-			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "./worker\nshutdown -h now")
-			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "CDS_CONFIG=")
-			return 1, nil
+			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "shutdown -h now")
+			var foundConfig bool
+			for _, env := range req.Spec.GetGuestProgramSpec().EnvVariables {
+				if strings.HasPrefix(env, "CDS_CONFIG=") {
+					foundConfig = true
+				}
+			}
+			assert.True(t, foundConfig, "CDS_CONFIG env variable should be set")
+			return &types.StartProgramInGuestResponse{}, nil
 		},
 	)
 
@@ -572,19 +593,28 @@ func TestHatcheryVSphere_SpawnWorkerFromProvisioning(t *testing.T) {
 	).AnyTimes()
 
 	c.EXPECT().StartProgramInGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
-		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (int64, error) {
+		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (*types.StartProgramInGuestResponse, error) {
 			assert.Equal(t, "/bin/echo", req.Spec.GetGuestProgramSpec().ProgramPath)
 			assert.Equal(t, "-n ;env", req.Spec.GetGuestProgramSpec().Arguments)
-			return 1, nil
+			return &types.StartProgramInGuestResponse{
+				Returnval: 0,
+			}, nil
 		},
 	)
 
 	c.EXPECT().StartProgramInGuest(gomock.Any(), &procman, gomock.Any()).DoAndReturn(
-		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (int64, error) {
+		func(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (*types.StartProgramInGuestResponse, error) {
 			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "-n ;\n")
-			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "./worker\nshutdown -h now")
-			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "CDS_CONFIG=")
-			return 1, nil
+			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "./worker")
+			assert.Contains(t, req.Spec.GetGuestProgramSpec().Arguments, "shutdown -h now")
+			var foundConfig bool
+			for _, env := range req.Spec.GetGuestProgramSpec().EnvVariables {
+				if strings.HasPrefix(env, "CDS_CONFIG=") {
+					foundConfig = true
+				}
+			}
+			assert.True(t, foundConfig, "CDS_CONFIG env variable should be set")
+			return &types.StartProgramInGuestResponse{}, nil
 		},
 	)
 

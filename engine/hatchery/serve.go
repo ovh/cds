@@ -281,15 +281,16 @@ func (c *Common) GenerateWorkerConfig(ctx context.Context, h hatchery.Interface,
 		APIEndpointInsecure: httpInsecure,
 		InjectEnvVars:       envvars,
 		Region:              h.Configuration().Provision.Region,
+		Basedir:             h.Configuration().Provision.WorkerBasedir,
 		Log: cdslog.Conf{
-			GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
-			GraylogPort:       strconv.Itoa(h.Configuration().Provision.WorkerLogsOptions.Graylog.Port),
-			GraylogExtraKey:   h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey,
-			GraylogExtraValue: h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue,
-			Level:             h.Configuration().Provision.WorkerLogsOptions.Level,
+			GraylogHost:                h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
+			GraylogPort:                strconv.Itoa(h.Configuration().Provision.WorkerLogsOptions.Graylog.Port),
+			GraylogExtraKey:            h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey,
+			GraylogExtraValue:          h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue,
+			Level:                      h.Configuration().Provision.WorkerLogsOptions.Level,
+			GraylogFieldCDSServiceType: "worker",
+			GraylogFieldCDSServiceName: spawnArgs.WorkerName,
 		},
 	}
-
-	log.Debug(ctx, "worker config: %v", cfg.EncodeBase64())
 	return cfg
 }

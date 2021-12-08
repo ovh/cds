@@ -293,10 +293,10 @@ func (h *HatcheryVSphere) prepareCloneSpec(ctx context.Context, vm *object.Virtu
 }
 
 // launchClientOp launch a script on the virtual machine given in parameters
-func (h *HatcheryVSphere) launchClientOp(ctx context.Context, vm *object.VirtualMachine, model sdk.ModelVirtualMachine, script string, env []string) (int64, error) {
+func (h *HatcheryVSphere) launchClientOp(ctx context.Context, vm *object.VirtualMachine, model sdk.ModelVirtualMachine, script string, env []string) error {
 	procman, err := h.vSphereClient.ProcessManager(ctx, vm)
 	if err != nil {
-		return -1, err
+		return err
 	}
 
 	auth := types.NamePasswordAuthentication{
@@ -319,5 +319,6 @@ func (h *HatcheryVSphere) launchClientOp(ctx context.Context, vm *object.Virtual
 
 	log.Debug(ctx, "starting program %+v in guest...", guestspec)
 
-	return h.vSphereClient.StartProgramInGuest(ctx, procman, &req)
+	_, err = h.vSphereClient.StartProgramInGuest(ctx, procman, &req)
+	return err
 }
