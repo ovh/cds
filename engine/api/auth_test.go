@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -353,6 +354,13 @@ func Test_postAuthSigninHandler_WithCorporateSSO(t *testing.T) {
 	})
 
 	t.Run("Test_postAuthSigninHandler_WithCorporateSSO", func(t *testing.T) {
+		t.Cleanup(func() {
+			u, _ := user.LoadByUsername(context.TODO(), api.mustDB(), "mattgroening")
+			if u != nil {
+				require.NoError(t, user.DeleteByID(api.mustDB(), u.ID))
+			}
+		})
+
 		uri := api.Router.GetRoute(http.MethodPost, api.postAuthSigninHandler, map[string]string{
 			"consumerType": string(sdk.ConsumerCorporateSSO),
 		})
@@ -372,29 +380,27 @@ func Test_postAuthSigninHandler_WithCorporateSSO(t *testing.T) {
 
 		t.Logf("response: %s", string(bodyRaw))
 
-		assert.Equal(t, "mattgroening", response.User.GetUsername())
-		assert.NotEmpty(t, response.Token)
+		require.Equal(t, "mattgroening", response.User.GetUsername())
+		require.NotEmpty(t, response.Token)
 
-		u, err := user.LoadByUsername(context.TODO(), api.mustDB(), "mattgroening", user.LoadOptions.WithContacts)
+		u, err := user.LoadByUsername(context.TODO(), api.mustDB(), "mattgroening", user.LoadOptions.WithContacts, user.LoadOptions.WithOrganization)
 		require.NoError(t, err)
 		require.NotNil(t, u)
+		require.Equal(t, "planet-express", u.Organization)
+		require.Equal(t, "Mattgroening", u.Fullname)
 
 		consumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerCorporateSSO, u.ID)
 		require.NoError(t, err)
-		assert.Equal(t, sdk.ConsumerCorporateSSO, consumer.Type)
+		require.Equal(t, sdk.ConsumerCorporateSSO, consumer.Type)
 
 		t.Logf("consumer %s: %+v", consumer.Type, consumer.Data)
-
-		// tear down
-		err = user.DeleteByID(api.mustDB(), u.ID)
-		require.NoError(t, err)
 	})
 }
 
 func generateToken(t *testing.T, username string) string {
 	ssoToken := corpsso.IssuedToken{
 		RemoteUser:     username,
-		RemoteUsername: username,
+		RemoteUsername: strings.Title(username),
 		Email:          username + "@planet-express.futurama",
 		Organization:   "planet-express",
 		Audience:       sdk.UUID(),
