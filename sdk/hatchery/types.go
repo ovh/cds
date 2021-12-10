@@ -29,7 +29,30 @@ const (
 // WorkerJWTClaims is the specific claims format for Worker JWT
 type WorkerJWTClaims struct {
 	jwt.StandardClaims
-	Worker SpawnArguments
+	Worker SpawnArgumentsJWT
+}
+
+type SpawnArgumentsJWT struct {
+	WorkerName string `json:"worker_model,omitempty"`
+	Model      struct {
+		ID int64 `json:"id,omitempty"`
+	} `json:"model,omitempty"`
+	JobID        int64  `json:"job_id,omitempty"`
+	RegisterOnly bool   `json:"register_only"`
+	HatcheryName string `json:"hatchery_name,omitempty"`
+}
+
+func (s SpawnArgumentsJWT) Validate() error {
+	if s.WorkerName == "" {
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "unauthorized to register a worker without a name")
+	}
+	if !s.RegisterOnly && s.JobID == 0 {
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "unauthorized to register a worker for a job without a JobID")
+	}
+	if s.RegisterOnly && s.JobID > 0 {
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "unauthorized to register only worker with a JobID")
+	}
+	return nil
 }
 
 // SpawnArguments contains arguments to func SpawnWorker

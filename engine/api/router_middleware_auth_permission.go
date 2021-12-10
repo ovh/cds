@@ -14,11 +14,9 @@ import (
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/user"
-	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/api/workflowtemplate"
-	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/telemetry"
@@ -61,38 +59,24 @@ func (api *API) checkJobIDPermissions(ctx context.Context, w http.ResponseWriter
 
 	id, err := strconv.ParseInt(jobID, 10, 64)
 	if err != nil {
-		log.Error(ctx, "checkJobIDPermissions> Unable to parse job id:%s err:%v", jobID, err)
-		return sdk.WrapError(sdk.ErrForbidden, "not authorized for job %s", jobID)
+		return sdk.NewErrorWithStack(sdk.WrapError(err, "unable to parse job id: %s", jobID), sdk.ErrForbidden)
 	}
 
 	runNodeJob, err := workflow.LoadNodeJobRun(ctx, api.mustDB(), api.Cache, id)
 	if err != nil {
-		log.Error(ctx, "checkWorkerPermission> Unable to load job %d err:%v", id, err)
-		return sdk.WrapError(sdk.ErrForbidden, "not authorized for job %s", jobID)
+		return sdk.NewErrorWithStack(sdk.WrapError(err, "unable to get job with id: %d", id), sdk.ErrForbidden)
 	}
+
+	consumer := getAPIConsumer(ctx)
 
 	// If the expected permission if >= RX and the consumer is a worker
 	// We check that the worker has took this job
-	if isWorker := isWorker(ctx); isWorker && perm >= sdk.PermissionReadExecute {
-		wk, err := worker.LoadByID(ctx, api.mustDB(), getAPIConsumer(ctx).Worker.ID)
-		if err != nil {
-			return err
-		}
-
-		var ok bool
-		k := cache.Key("api:workers", getAPIConsumer(ctx).ID, "perm", jobID)
-		if has, _ := api.Cache.Get(k, &ok); ok && has {
+	if consumer.Worker != nil {
+		wk := consumer.Worker
+		if wk.JobRunID != nil && runNodeJob.ID == *wk.JobRunID && perm <= sdk.PermissionReadExecute {
 			return nil
 		}
-
-		if wk.JobRunID != nil && runNodeJob.ID == *wk.JobRunID {
-			ok = true
-		}
-		_ = api.Cache.SetWithTTL(k, ok, 60*60)
-		if !ok {
-			return sdk.WrapError(sdk.ErrForbidden, "not authorized for job %s", jobID)
-		}
-		return nil
+		return sdk.WrapError(sdk.ErrForbidden, "not authorized for job %s", jobID)
 	}
 
 	// Else we check the exec groups
@@ -126,8 +110,28 @@ func (api *API) checkProjectPermissions(ctx context.Context, w http.ResponseWrit
 		}
 	}
 
-	if _, err := project.Load(ctx, api.mustDB(), projectKey); err != nil {
+	proj, err := project.Load(ctx, api.mustDB(), projectKey)
+	if err != nil {
 		return err
+	}
+
+	consumer := getAPIConsumer(ctx)
+
+	// A worker can only read/exec access the project of the its job.
+	if consumer.Worker != nil {
+		jobRunID := consumer.Worker.JobRunID
+		if jobRunID != nil {
+			nodeJobRun, err := workflow.LoadNodeJobRun(ctx, api.mustDB(), api.Cache, *jobRunID)
+			if err != nil {
+				return sdk.WrapError(sdk.ErrForbidden, "can't load node job run with id %q", *jobRunID)
+			}
+
+			if nodeJobRun.ProjectID == proj.ID && requiredPerm <= sdk.PermissionReadExecute {
+				return nil
+			}
+		}
+
+		return sdk.WrapError(sdk.ErrNoProject, "worker %q(%s) not authorized for project %q", consumer.Worker.Name, consumer.Worker.ID, projectKey)
 	}
 
 	perms, err := permission.LoadProjectMaxLevelPermission(ctx, api.mustDB(), []string{projectKey}, getAPIConsumer(ctx).GetGroupIDs())
@@ -200,6 +204,38 @@ func (api *API) checkWorkflowPermissions(ctx context.Context, w http.ResponseWri
 		return sdk.WithStack(sdk.ErrNotFound)
 	}
 
+	consumer := getAPIConsumer(ctx)
+
+	// A worker can only read/exec access the workflow of the its job.
+	if consumer.Worker != nil {
+		jobRunID := consumer.Worker.JobRunID
+		if jobRunID != nil {
+			nodeJobRun, err := workflow.LoadNodeJobRun(ctx, api.mustDB(), api.Cache, *jobRunID)
+			if err != nil {
+				return sdk.WrapError(sdk.ErrForbidden, "can't load node job run with id %q", *jobRunID)
+			}
+
+			nodeRun, err := workflow.LoadNodeRunByID(ctx, api.mustDB(), nodeJobRun.WorkflowNodeRunID, workflow.LoadRunOptions{})
+			if err != nil {
+				return sdk.WrapError(sdk.ErrForbidden, "can't load node run with id %q", nodeJobRun.WorkflowNodeRunID)
+			}
+
+			dao := workflow.LoadOptions{Minimal: true}.GetWorkflowDAO()
+			dao.Filters.ProjectKey = projectKey
+			dao.Filters.WorkflowName = workflowName
+			wf, err := dao.Load(ctx, api.mustDB())
+			if err != nil {
+				return err
+			}
+
+			if nodeRun.WorkflowID == wf.ID && perm <= sdk.PermissionReadExecute {
+				return nil
+			}
+		}
+
+		return sdk.WrapError(sdk.ErrNoProject, "worker %q(%s) not authorized for workflow %s/%s", consumer.Worker.Name, consumer.Worker.ID, projectKey, workflowName)
+	}
+
 	perms, err := permission.LoadWorkflowMaxLevelPermission(ctx, api.mustDB(), projectKey, []string{workflowName}, getAPIConsumer(ctx).GetGroupIDs())
 	if err != nil {
 		return sdk.NewError(sdk.ErrForbidden, err)
@@ -248,6 +284,10 @@ func (api *API) checkGroupPermissions(ctx context.Context, w http.ResponseWriter
 	}
 
 	log.Debug(ctx, "api.checkGroupPermissions> group %d has members %v", g.ID, g.Members)
+
+	if isWorker(ctx) {
+		return sdk.WithStack(sdk.ErrForbidden)
+	}
 
 	if permissionValue > sdk.PermissionRead { // Only group administror or CDS administrator can update a group or its dependencies
 		if !isGroupAdmin(ctx, g) || g.ID == group.SharedInfraGroup.ID {

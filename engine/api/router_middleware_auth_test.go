@@ -304,9 +304,9 @@ func Test_authMiddlewareWithServiceOrWorker(t *testing.T) {
 	ctx, err := api.jwtMiddleware(context.TODO(), w, req, config)
 	require.NoError(t, err)
 	_, err = api.authAdminMiddleware(ctx, w, req, config)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	_, err = api.authMaintainerMiddleware(ctx, w, req, config)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	// Admin create a consumer for a new service
 	uri := api.Router.GetRoute(http.MethodPost, api.postConsumerByUserHandler, map[string]string{
@@ -331,9 +331,9 @@ func Test_authMiddlewareWithServiceOrWorker(t *testing.T) {
 	ctx, err = api.jwtMiddleware(context.TODO(), w, req, config)
 	require.NoError(t, err)
 	_, err = api.authAdminMiddleware(ctx, w, req, config)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	_, err = api.authMaintainerMiddleware(ctx, w, req, config)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	// Register a hatchery with the service consumer
 	privateKey, err := jws.NewRandomRSAKey()
@@ -366,8 +366,8 @@ func Test_authMiddlewareWithServiceOrWorker(t *testing.T) {
 
 	// Create a worker for the hatchery
 	workflowTestContext := testRunWorkflow(t, api, router)
-	testGetWorkflowJobAsWorker(t, api, db, router, &workflowTestContext)
 	require.NotNil(t, workflowTestContext.job)
+
 	jwtWorkerSignin, err := hatchery.NewWorkerToken(hSrv.Name, privateKey, time.Now().Add(time.Hour), hatchery.SpawnArguments{
 		HatcheryName: hSrv.Name,
 		WorkerName:   hSrv.Name + "-worker",

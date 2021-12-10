@@ -12,6 +12,7 @@ import (
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/engine/service"
@@ -282,6 +283,34 @@ func (api *API) getWorkflowAccessHandler() service.Handler {
 		}
 		if consumer.Disabled {
 			return sdk.WrapError(sdk.ErrUnauthorized, "consumer (%s) is disabled", consumer.ID)
+		}
+
+		// Add worker for consumer if exists
+		worker, err := worker.LoadByConsumerID(ctx, api.mustDB(), consumer.ID)
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
+		}
+		consumer.Worker = worker
+
+		if consumer.Worker != nil {
+			jobRunID := consumer.Worker.JobRunID
+			if jobRunID != nil {
+				nodeJobRun, err := workflow.LoadNodeJobRun(ctx, api.mustDB(), api.Cache, *jobRunID)
+				if err != nil {
+					return sdk.WrapError(sdk.ErrUnauthorized, "can't load node job run with id %q", *jobRunID)
+				}
+
+				nodeRun, err := workflow.LoadNodeRunByID(ctx, api.mustDB(), nodeJobRun.WorkflowNodeRunID, workflow.LoadRunOptions{})
+				if err != nil {
+					return sdk.WrapError(sdk.ErrUnauthorized, "can't load node run with id %q", nodeJobRun.WorkflowNodeRunID)
+				}
+
+				if nodeRun.WorkflowID == workflowID {
+					return service.WriteJSON(w, nil, http.StatusOK)
+				}
+			}
+
+			return sdk.WrapError(sdk.ErrUnauthorized, "worker %q(%s) not authorized for workflow with id %d", consumer.Worker.Name, consumer.Worker.ID, workflowID)
 		}
 
 		maintainerOrAdmin := consumer.Maintainer() || consumer.Admin()

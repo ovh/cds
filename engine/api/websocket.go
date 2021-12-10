@@ -140,7 +140,7 @@ func (c *websocketClientData) updateEventFilters(ctx context.Context, db gorp.Sq
 
 // We need to check permission for some kind of events, when permission can't be verified at filter subscription.
 func (c *websocketClientData) checkEventPermission(ctx context.Context, db gorp.SqlExecutor, event sdk.Event) (bool, error) {
-	var isMaintainer = c.AuthConsumer.Maintainer() || c.AuthConsumer.Admin()
+	var isMaintainer = c.AuthConsumer.Maintainer()
 	var isHatchery = c.AuthConsumer.Service != nil && c.AuthConsumer.Service.Type == sdk.TypeHatchery
 	var isHatcheryWithGroups = isHatchery && len(c.AuthConsumer.GroupIDs) > 0
 

@@ -706,17 +706,23 @@ func (api *API) getProjectAccessHandler() service.Handler {
 		}
 		consumer.Worker = worker
 
-		maintainerOrAdmin := consumer.Maintainer() || consumer.Admin()
+		jobRunID := consumer.Worker.JobRunID
+		if jobRunID != nil {
+			proj, err := project.Load(ctx, api.mustDB(), projectKey)
+			if err != nil {
+				return sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
+			}
 
-		perms, err := permission.LoadProjectMaxLevelPermission(ctx, api.mustDB(), []string{projectKey}, consumer.GetGroupIDs())
-		if err != nil {
-			return sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
-		}
-		maxLevelPermission := perms.Level(projectKey)
-		if maxLevelPermission < sdk.PermissionRead && !maintainerOrAdmin {
-			return sdk.WrapError(sdk.ErrUnauthorized, "not authorized for project %s", projectKey)
+			nodeJobRun, err := workflow.LoadNodeJobRun(ctx, api.mustDB(), api.Cache, *jobRunID)
+			if err != nil {
+				return sdk.WrapError(sdk.ErrUnauthorized, "can't load node job run with id %q", *jobRunID)
+			}
+
+			if nodeJobRun.ProjectID == proj.ID {
+				return service.WriteJSON(w, nil, http.StatusOK)
+			}
 		}
 
-		return service.WriteJSON(w, nil, http.StatusOK)
+		return sdk.WrapError(sdk.ErrUnauthorized, "worker %q(%s) not authorized for project %q", consumer.Worker.Name, consumer.Worker.ID, projectKey)
 	}
 }

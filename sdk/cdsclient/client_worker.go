@@ -88,8 +88,6 @@ func (c *client) WorkerSetStatus(ctx context.Context, status string) error {
 	defer cancel()
 	var uri string
 	switch status {
-	case sdk.StatusChecking:
-		uri = fmt.Sprintf("/worker/checking")
 	case sdk.StatusWaiting:
 		uri = fmt.Sprintf("/worker/waiting")
 	default:

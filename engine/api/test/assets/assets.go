@@ -456,6 +456,7 @@ func InsertWorkerModel(t *testing.T, db gorpmapper.SqlExecutorWithTx, name strin
 
 func InsertHatchery(t *testing.T, db gorpmapper.SqlExecutorWithTx, grp sdk.Group) (*sdk.Service, *rsa.PrivateKey, *sdk.AuthConsumer, string) {
 	usr1, _ := InsertLambdaUser(t, db, &grp)
+	SetUserGroupAdmin(t, db, grp.ID, usr1.ID)
 
 	consumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, usr1.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
@@ -485,6 +486,8 @@ func InsertHatchery(t *testing.T, db gorpmapper.SqlExecutorWithTx, grp sdk.Group
 
 	jwt, err := authentication.NewSessionJWT(session, "")
 	require.NoError(t, err)
+
+	require.NoError(t, authentication.LoadConsumerOptions.WithAuthentifiedUser(context.TODO(), db, hConsumer))
 
 	return &srv, privateKey, hConsumer, jwt
 }
@@ -529,7 +532,7 @@ func InitCDNService(t *testing.T, db gorpmapper.SqlExecutorWithTx, scopes ...sdk
 	sharedGroup, err := group.LoadByName(context.TODO(), db, sdk.SharedInfraGroupName)
 	require.NoError(t, err)
 	hConsumer, _, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), "", 0, consumer, []int64{sharedGroup.ID},
-		sdk.NewAuthConsumerScopeDetails(append(scopes, sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeWorker)...))
+		sdk.NewAuthConsumerScopeDetails(append(scopes, sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeService)...))
 	require.NoError(t, err)
 
 	privateKey, err := jws.NewRandomRSAKey()

@@ -28,7 +28,7 @@ func Test_computeScopeDetails(t *testing.T) {
 
 	r.Handle("/handler1", Scope(sdk.AuthConsumerScopeUser), r.GET(myHandler))
 	r.Handle("/handler2", Scope(sdk.AuthConsumerScopeAction), r.GET(myHandler), r.PUT(myHandler))
-	r.Handle("/handler3", Scope(sdk.AuthConsumerScopeAccessToken, sdk.AuthConsumerScopeAction), r.GET(myHandler), r.POST(myHandler), r.DELETE(myHandler))
+	r.Handle("/handler3", Scopes(sdk.AuthConsumerScopeAccessToken, sdk.AuthConsumerScopeAction), r.GET(myHandler), r.POST(myHandler), r.DELETE(myHandler))
 
 	r.computeScopeDetails()
 

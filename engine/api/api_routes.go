@@ -9,8 +9,13 @@ import (
 
 type HandlerScope []sdk.AuthConsumerScope
 
-// Scope set for handler. If multiple scopes are given, one should match consumer scopes.
-func Scope(s ...sdk.AuthConsumerScope) HandlerScope {
+// Scope set for handler.
+func Scope(s sdk.AuthConsumerScope) HandlerScope {
+	return HandlerScope{s}
+}
+
+// Scopes set for handler. One should match consumer scopes.
+func Scopes(s ...sdk.AuthConsumerScope) HandlerScope {
 	return HandlerScope(s)
 }
 
@@ -168,7 +173,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{permProjectKey}/applications", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getApplicationsHandler), r.POST(api.addApplicationHandler))
 	r.Handle("/project/{permProjectKey}/integrations", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getProjectIntegrationsHandler), r.POST(api.postProjectIntegrationHandler))
 	r.Handle("/project/{permProjectKey}/integrations/{integrationName}", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getProjectIntegrationHandler), r.PUT(api.putProjectIntegrationHandler), r.DELETE(api.deleteProjectIntegrationHandler))
-	r.Handle("/project/{permProjectKey}/integrations/{integrationName}/workerhooks", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getProjectIntegrationWorkerHookHandler), r.POST(api.postProjectIntegrationWorkerHookHandler))
+	r.Handle("/project/{permProjectKey}/integrations/{integrationName}/workerhooks", Scopes(sdk.AuthConsumerScopeProject, sdk.AuthConsumerScopeRunExecution), r.GET(api.getProjectIntegrationWorkerHookHandler), r.POST(api.postProjectIntegrationWorkerHookHandler))
 	r.Handle("/project/{permProjectKey}/notifications", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getProjectNotificationsHandler, DEPRECATED))
 	r.Handle("/project/{permProjectKey}/keys", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getKeysInProjectHandler), r.POST(api.addKeyInProjectHandler))
 	r.Handle("/project/{permProjectKey}/keys/{name}", Scope(sdk.AuthConsumerScopeProject), r.DELETE(api.deleteKeyInProjectHandler))
@@ -267,21 +272,21 @@ func (api *API) InitRouter() {
 
 	// Workflows run
 	r.Handle("/project/{permProjectKey}/runs", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getWorkflowAllRunsHandler))
-	r.Handle("/project/{key}/workflows/{permWorkflowName}/artifact/{artifactId}", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getDownloadArtifactHandler))
-	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowRunsHandler), r.POSTEXECUTE(api.postWorkflowRunHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/artifact/{artifactId}", Scopes(sdk.AuthConsumerScopeRun, sdk.AuthConsumerScopeRunExecution), r.GET(api.getDownloadArtifactHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowRunsHandler), r.POST(api.postWorkflowRunHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/branch/{branch}", Scope(sdk.AuthConsumerScopeRun), r.DELETE(api.deleteWorkflowRunsBranchHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/latest", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getLatestWorkflowRunHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/tags", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowRunTagsHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/num", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowRunNumHandler), r.POST(api.postWorkflowRunNumHandler))
-	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowRunHandler), r.DELETE(api.deleteWorkflowRunHandler))
-	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/stop", Scope(sdk.AuthConsumerScopeRun), r.POSTEXECUTE(api.stopWorkflowRunHandler, MaintenanceAware()))
-	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/vcs/resync", Scope(sdk.AuthConsumerScopeRun), r.POSTEXECUTE(api.postResyncVCSWorkflowRunHandler))
-	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/artifacts", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowRunArtifactsHandler))
-	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/artifacts/links", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowRunArtifactLinksHandler))
-	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/results", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowRunResultsHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}", Scopes(sdk.AuthConsumerScopeRun, sdk.AuthConsumerScopeRunExecution), r.GET(api.getWorkflowRunHandler), r.DELETE(api.deleteWorkflowRunHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/stop", Scope(sdk.AuthConsumerScopeRun), r.POST(api.stopWorkflowRunHandler, MaintenanceAware()))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/vcs/resync", Scope(sdk.AuthConsumerScopeRun), r.POST(api.postResyncVCSWorkflowRunHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/artifacts", Scopes(sdk.AuthConsumerScopeRun, sdk.AuthConsumerScopeRunExecution), r.GET(api.getWorkflowRunArtifactsHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/artifacts/links", Scopes(sdk.AuthConsumerScopeRun, sdk.AuthConsumerScopeRunExecution), r.GET(api.getWorkflowRunArtifactLinksHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/results", Scopes(sdk.AuthConsumerScopeRun, sdk.AuthConsumerScopeRunExecution), r.GET(api.getWorkflowRunResultsHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowNodeRunHandler))
-	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}/results", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowNodeRunResultsHandler))
-	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}/stop", Scope(sdk.AuthConsumerScopeRun), r.POSTEXECUTE(api.stopWorkflowNodeRunHandler, MaintenanceAware()))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}/results", Scopes(sdk.AuthConsumerScopeRun, sdk.AuthConsumerScopeRunExecution), r.GET(api.getWorkflowNodeRunResultsHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}/stop", Scope(sdk.AuthConsumerScopeRun), r.POST(api.stopWorkflowNodeRunHandler, MaintenanceAware()))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeID}/history", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowNodeRunHistoryHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/{nodeName}/commits", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowCommitsHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}/job/{runJobID}/info", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowNodeRunJobSpawnInfosHandler))
@@ -292,7 +297,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/node/{nodeID}/triggers/condition", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowTriggerConditionHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/hook/triggers/condition", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowTriggerHookConditionHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/triggers/condition", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowTriggerConditionHandler))
-	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}/release", Scope(sdk.AuthConsumerScopeRun), r.POST(api.releaseApplicationWorkflowHandler, MaintenanceAware()))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}/release", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.releaseApplicationWorkflowHandler, MaintenanceAware()))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/hooks/{hookRunID}/callback", Scope(sdk.AuthConsumerScopeRun), r.POST(api.postWorkflowJobHookCallbackHandler, MaintenanceAware()))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/hooks/{hookRunID}/details", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowJobHookDetailsHandler))
 
@@ -327,18 +332,18 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{permProjectKey}/storage/{integrationName}/cache/{tag}/url", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.postPushCacheWithTempURLHandler, MaintenanceAware()), r.GET(api.getPullCacheWithTempURLHandler))
 
 	//Workflow queue
-	r.Handle("/queue/workflows", Scope(sdk.AuthConsumerScopeRun, sdk.AuthConsumerScopeRunExecution), r.GET(api.getWorkflowJobQueueHandler, MaintenanceAware()))
-	r.Handle("/queue/workflows/count", Scope(sdk.AuthConsumerScopeRun), r.GET(api.countWorkflowJobQueueHandler, MaintenanceAware()))
-	r.Handle("/queue/workflows/{id}/take", Scope(sdk.AuthConsumerScopeRunExecution), r.POST(api.postTakeWorkflowJobHandler, MaintenanceAware()))
+	r.Handle("/queue/workflows", Scope(sdk.AuthConsumerScopeRunExecution), r.GET(api.getWorkflowJobQueueHandler, MaintenanceAware()))
+	r.Handle("/queue/workflows/count", Scope(sdk.AuthConsumerScopeRunExecution), r.GET(api.countWorkflowJobQueueHandler, MaintenanceAware()))
+	r.Handle("/queue/workflows/{permJobID}/take", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.postTakeWorkflowJobHandler, MaintenanceAware()))
 	r.Handle("/queue/workflows/{permJobID}/cache/{tag}/links", Scope(sdk.AuthConsumerScopeRunExecution), r.GET(api.getWorkerCacheLinkHandler, MaintenanceAware()))
 	r.Handle("/queue/workflows/{permJobID}/book", Scope(sdk.AuthConsumerScopeRunExecution), r.POST(api.postBookWorkflowJobHandler, MaintenanceAware()), r.DELETE(api.deleteBookWorkflowJobHandler, MaintenanceAware()))
 	r.Handle("/queue/workflows/{permJobID}/infos", Scope(sdk.AuthConsumerScopeRunExecution), r.GET(api.getWorkflowJobHandler, MaintenanceAware()))
 	r.Handle("/queue/workflows/{permJobID}/vulnerability", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.postVulnerabilityReportHandler, MaintenanceAware()))
-	r.Handle("/queue/workflows/{permJobID}/spawn/infos", Scope(sdk.AuthConsumerScopeRunExecution), r.POST(api.postSpawnInfosWorkflowJobHandler, MaintenanceAware()))
+	r.Handle("/queue/workflows/{permJobID}/spawn/infos", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.postSpawnInfosWorkflowJobHandler, MaintenanceAware()))
 	r.Handle("/queue/workflows/{permJobID}/result", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobResultHandler, MaintenanceAware()))
 	r.Handle("/queue/workflows/{permJobID}/coverage", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobCoverageResultsHandler, MaintenanceAware()))
 	r.Handle("/queue/workflows/{permJobID}/run/results", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.postWorkflowRunResultsHandler))
-	r.Handle("/queue/workflows/{permJobID}/run/results/check", Scope(sdk.AuthConsumerScopeRunExecution), r.POST(api.workflowRunResultCheckUploadHandler))
+	r.Handle("/queue/workflows/{permJobID}/run/results/check", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.workflowRunResultCheckUploadHandler))
 	r.Handle("/queue/workflows/{permJobID}/test", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobTestsResultsHandler, MaintenanceAware()))
 	r.Handle("/queue/workflows/{permJobID}/tag", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobTagsHandler, MaintenanceAware()))
 	r.Handle("/queue/workflows/{permJobID}/step", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobStepStatusHandler, MaintenanceAware()))
@@ -396,12 +401,12 @@ func (api *API) InitRouter() {
 	r.Handle("/user/{permUsername}/auth/session/{permSessionID}", Scope(sdk.AuthConsumerScopeAccessToken), r.DELETE(api.deleteSessionByUserHandler))
 
 	// Workers
-	r.Handle("/worker", Scope(sdk.AuthConsumerScopeAdmin, sdk.AuthConsumerScopeWorker, sdk.AuthConsumerScopeHatchery), r.GET(api.getWorkersHandler))
-	r.Handle("/worker/refresh", Scope(sdk.AuthConsumerScopeWorker), r.POST(api.postRefreshWorkerHandler, MaintenanceAware()))
-	r.Handle("/worker/waiting", Scope(sdk.AuthConsumerScopeWorker), r.POST(api.workerWaitingHandler, MaintenanceAware()))
+	r.Handle("/worker", Scope(sdk.AuthConsumerScopeHatchery), r.GET(api.getWorkersHandler))
+	r.Handle("/worker/refresh", ScopeNone(), r.POST(api.postRefreshWorkerHandler, MaintenanceAware()))
+	r.Handle("/worker/waiting", ScopeNone(), r.POST(api.workerWaitingHandler, MaintenanceAware()))
 
 	// Worker models
-	r.Handle("/worker/model", Scope(sdk.AuthConsumerScopeWorkerModel), r.POST(api.postWorkerModelHandler), r.GET(api.getWorkerModelsHandler))
+	r.Handle("/worker/model", Scopes(sdk.AuthConsumerScopeWorkerModel, sdk.AuthConsumerScopeRunExecution), r.POST(api.postWorkerModelHandler), r.GET(api.getWorkerModelsHandler))
 	r.Handle("/worker/model/enabled", Scope(sdk.AuthConsumerScopeWorkerModel), r.GET(api.getWorkerModelsEnabledHandler))
 	r.Handle("/worker/model/type", Scope(sdk.AuthConsumerScopeWorkerModel), r.GET(api.getWorkerModelTypesHandler))
 	r.Handle("/worker/model/capability/type", Scope(sdk.AuthConsumerScopeWorkerModel), r.GET(api.getRequirementTypesHandler))
@@ -415,8 +420,8 @@ func (api *API) InitRouter() {
 	r.Handle("/worker/model/{permGroupName}/{permModelName}/book", Scope(sdk.AuthConsumerScopeWorkerModel), r.PUT(api.putBookWorkerModelHandler, MaintenanceAware()))
 	r.Handle("/worker/model/{permGroupName}/{permModelName}/error", Scope(sdk.AuthConsumerScopeWorkerModel), r.PUT(api.putSpawnErrorWorkerModelHandler, MaintenanceAware()))
 
-	r.Handle("/worker/{id}/disable", Scope(sdk.AuthConsumerScopeAdmin, sdk.AuthConsumerScopeHatchery), r.POST(api.disableWorkerHandler, MaintenanceAware()))
-	r.Handle("/worker/{name}", Scope(sdk.AuthConsumerScopeWorker), r.GET(api.getWorkerHandler))
+	r.Handle("/worker/{id}/disable", Scope(sdk.AuthConsumerScopeHatchery), r.POST(api.disableWorkerHandler, MaintenanceAware()))
+	r.Handle("/worker/{name}", Scope(sdk.AuthConsumerScopeService), r.GET(api.getWorkerHandler))
 
 	r.Handle("/project/{permProjectKey}/worker/model", Scope(sdk.AuthConsumerScopeWorkerModel), r.GET(api.getWorkerModelsForProjectHandler))
 	r.Handle("/group/{permGroupName}/worker/model", Scope(sdk.AuthConsumerScopeWorkerModel), r.GET(api.getWorkerModelsForGroupHandler))

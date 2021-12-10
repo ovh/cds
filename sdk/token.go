@@ -117,7 +117,6 @@ const (
 	AuthConsumerScopeRun          AuthConsumerScope = "Run"
 	AuthConsumerScopeRunExecution AuthConsumerScope = "RunExecution"
 	AuthConsumerScopeHooks        AuthConsumerScope = "Hooks"
-	AuthConsumerScopeWorker       AuthConsumerScope = "Worker"
 	AuthConsumerScopeWorkerModel  AuthConsumerScope = "WorkerModel"
 	AuthConsumerScopeHatchery     AuthConsumerScope = "Hatchery"
 	AuthConsumerScopeService      AuthConsumerScope = "Service"
@@ -135,7 +134,6 @@ var AuthConsumerScopes = []AuthConsumerScope{
 	AuthConsumerScopeRun,
 	AuthConsumerScopeRunExecution,
 	AuthConsumerScopeHooks,
-	AuthConsumerScopeWorker,
 	AuthConsumerScopeWorkerModel,
 	AuthConsumerScopeHatchery,
 	AuthConsumerScopeService,
@@ -500,7 +498,7 @@ func (c AuthConsumer) GetGroupIDs() []int64 {
 
 	if len(c.GroupIDs) > 0 {
 		groupIDs = c.GroupIDs
-	} else if c.AuthentifiedUser != nil {
+	} else if c.AuthentifiedUser != nil && c.Worker == nil {
 		groupIDs = c.AuthentifiedUser.GetGroupIDs()
 	}
 
@@ -512,7 +510,7 @@ func (c AuthConsumer) Admin() bool {
 }
 
 func (c AuthConsumer) Maintainer() bool {
-	return c.AuthentifiedUser.Ring == UserRingMaintainer && c.Worker == nil
+	return (c.AuthentifiedUser.Ring == UserRingMaintainer || c.AuthentifiedUser.Ring == UserRingAdmin) && c.Worker == nil
 }
 
 func (c AuthConsumer) GetUsername() string {
