@@ -3,7 +3,7 @@ package main
 import (
 	"time"
 
-	jwt "github.com/dgrijalva/jwt-go"
+	jwt "github.com/golang-jwt/jwt"
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 )

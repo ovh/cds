@@ -15,7 +15,7 @@ import (
 	cdntest "github.com/ovh/cds/engine/cdn/test"
 	"github.com/ovh/cds/sdk/cdn"
 
-	"github.com/dgrijalva/jwt-go"
+	jwt "github.com/golang-jwt/jwt"
 	"github.com/mitchellh/hashstructure"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
