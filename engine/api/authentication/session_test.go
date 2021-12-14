@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/go-gorp/gorp"
+	jwt "github.com/golang-jwt/jwt"
 	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/api/authentication"
