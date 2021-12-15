@@ -40,12 +40,15 @@ minio_reset_bucket:
 		"
 
 test-docker-compose:
-	docker-compose up --no-recreate -d cds-db cds-cache elasticsearch smtpmocksrv && \
+	(cd ../tools/smtpmock/ && docker build -t smtpmock . && docker run -d -p 2023:2023 -p 2024:2024 smtpmock) && \
+	docker-compose up --no-recreate -d cds-db cds-cache elasticsearch && \
 	sleep 5	&& \
 	docker-compose up --no-recreate cds-db-init && \
 	docker-compose up --no-recreate cds-migrate && \
 	docker-compose up cds-prepare && \
 	docker-compose up -d cds-api && \
+	export CDS_EDIT_CONFIG="api.smtp.disable=false api.smtp.port=2023 api.smtp.host=localhost" && \
+	docker-compose up cds-edit-config && \
 	echo "waiting 8s to let cds-api start.." && sleep 8 && \
 	echo "downloading cdsctl from http://localhost:8081/download/cdsctl/$(UNAME_S)/amd64?variant=nokeychain -o cdsctl" && \
 	curl http://localhost:8081/download/cdsctl/$(UNAME_S)/amd64?variant=nokeychain -o cdsctl && \

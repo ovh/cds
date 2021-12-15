@@ -70,9 +70,6 @@ services:
             api.database.host=cds-db \
             api.download.directory=/app \
             api.log.level=info \
-            api.smtp.disable=false \
-            api.smtp.port=2023 \
-            api.smtp.host=smtpmocksrv \
             cdn.cache.redis.host=cds-cache:6379 \
             cdn.cache.redis.password=cds \
             cdn.storageUnits.buffers.redis.redis.host=cds-cache:6379 \
@@ -286,13 +283,6 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - "127.0.0.1:2375:2375"
-
-  smtpmocksrv:
-    build:
-      context: ./tools/smtpmock
-    ports:
-      - "2023:2023"
-      - "2024:2024"
 
   kibana:
     image: docker.elastic.co/kibana/kibana-oss:6.7.2
