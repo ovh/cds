@@ -12,7 +12,7 @@ Before upgrading your CDS Instance:
 
 ## PostgreSQL
 
-PostgreSQL 14 min is now recommanded
+PostgreSQL 14 is now recommanded
 
 ## CDN Service
 
@@ -88,8 +88,6 @@ The default retention rule have to be added in api configuration:
     defaultRetentionPolicy = "return run_days_before < 365"
 ```
 Documentation: https://ovh.github.io/cds/docs/concepts/workflow/retention/
-
-In the next release (0.51.0), you don't need to use the feature flipping `workflow-retention-policy` to enable the new purge system.
 
 ## Spawning worker : MaxAttemptsNumberBeforeFailure
 
