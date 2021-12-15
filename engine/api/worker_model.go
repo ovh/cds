@@ -250,7 +250,9 @@ func (api *API) getWorkerModelsHandler() service.Handler {
 		}
 
 		var err error
-		if isMaintainer(ctx) {
+		if ok := isHatchery(ctx); ok && len(consumer.GroupIDs) > 0 {
+			models, err = workermodel.LoadAllByGroupIDs(ctx, api.mustDB(), consumer.GetGroupIDs(), &filter, workermodel.LoadOptions.Default)
+		} else if isMaintainer(ctx) {
 			models, err = workermodel.LoadAll(ctx, api.mustDB(), &filter, workermodel.LoadOptions.Default)
 		} else {
 			models, err = workermodel.LoadAllByGroupIDs(ctx, api.mustDB(), append(consumer.GetGroupIDs(), group.SharedInfraGroup.ID),

@@ -7,10 +7,14 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
+	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/ovh/cds/engine/api/authentication/builtin"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/worker"
@@ -924,11 +928,28 @@ func Test_getWorkerModels(t *testing.T) {
 
 	api, db, router := newTestAPI(t)
 
-	_, jwtAdmin := assets.InsertAdminUser(t, db)
+	admin, jwtAdmin := assets.InsertAdminUser(t, db)
 
 	g1 := &sdk.Group{Name: sdk.RandomString(10)}
 	g2 := assets.InsertGroup(t, db)
 	_, jwtGroupMember := assets.InsertLambdaUser(t, db, g1)
+
+	// Create a hatchery for the admin user
+	adminConsumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, admin.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	hatcheryConsumer, _, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), "", 0, adminConsumer, []int64{g2.ID}, sdk.NewAuthConsumerScopeDetails(
+		sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeWorkerModel))
+	require.NoError(t, err)
+	require.NoError(t, services.Insert(context.TODO(), db, &sdk.Service{
+		CanonicalService: sdk.CanonicalService{
+			Name:       hatcheryConsumer.Name,
+			Type:       sdk.TypeHatchery,
+			ConsumerID: &hatcheryConsumer.ID,
+		},
+	}))
+	sessionHatchery, err := authentication.NewSession(context.TODO(), db, hatcheryConsumer, 5*time.Minute)
+	require.NoError(t, err)
+	jwtHatchery, err := authentication.NewSessionJWT(sessionHatchery, "")
+	require.NoError(t, err)
 
 	m1 := sdk.Model{
 		Name:    "A" + sdk.RandomString(10),
@@ -976,6 +997,17 @@ func Test_getWorkerModels(t *testing.T) {
 	require.Equal(t, 2, len(results))
 	assert.Equal(t, m1.Name, results[0].Name)
 	assert.Equal(t, m2.Name, results[1].Name)
+
+	// getWorkerModelsHandler by hatchery with groups
+	uri = router.GetRoute(http.MethodGet, api.getWorkerModelsHandler, nil)
+	test.NotEmpty(t, uri)
+	req = assets.NewJWTAuthentifiedRequest(t, jwtHatchery, http.MethodGet, uri, nil)
+	w = httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+	json.Unmarshal(w.Body.Bytes(), &results)
+	require.Equal(t, 1, len(results))
+	assert.Equal(t, m3.Name, results[0].Name)
 
 	// getWorkerModelsForGroupHandler
 	uri = router.GetRoute(http.MethodGet, api.getWorkerModelsForGroupHandler, map[string]string{
