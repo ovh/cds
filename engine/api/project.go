@@ -704,9 +704,8 @@ func (api *API) getProjectAccessHandler() service.Handler {
 		if err != nil && sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return sdk.WrapError(sdk.ErrForbidden, "consumer (%s) is not a worker", consumer.ID)
 		}
-		consumer.Worker = worker
 
-		jobRunID := consumer.Worker.JobRunID
+		jobRunID := worker.JobRunID
 		if jobRunID != nil {
 			proj, err := project.Load(ctx, api.mustDB(), projectKey)
 			if err != nil {
@@ -723,6 +722,6 @@ func (api *API) getProjectAccessHandler() service.Handler {
 			}
 		}
 
-		return sdk.WrapError(sdk.ErrUnauthorized, "worker %q(%s) not authorized for project %q", consumer.Worker.Name, consumer.Worker.ID, projectKey)
+		return sdk.WrapError(sdk.ErrUnauthorized, "worker %q(%s) not authorized for project %q", worker.Name, worker.ID, projectKey)
 	}
 }

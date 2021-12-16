@@ -59,12 +59,14 @@ func (api *API) checkJobIDPermissions(ctx context.Context, w http.ResponseWriter
 
 	id, err := strconv.ParseInt(jobID, 10, 64)
 	if err != nil {
-		return sdk.NewErrorWithStack(sdk.WrapError(err, "unable to parse job id: %s", jobID), sdk.ErrForbidden)
+		log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "unable to parse job id: %s", jobID))
+		return sdk.WithStack(sdk.ErrForbidden)
 	}
 
 	runNodeJob, err := workflow.LoadNodeJobRun(ctx, api.mustDB(), api.Cache, id)
 	if err != nil {
-		return sdk.NewErrorWithStack(sdk.WrapError(err, "unable to get job with id: %d", id), sdk.ErrForbidden)
+		log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "unable to get job with id: %d", id))
+		return sdk.WithStack(sdk.ErrForbidden)
 	}
 
 	consumer := getAPIConsumer(ctx)
@@ -131,7 +133,7 @@ func (api *API) checkProjectPermissions(ctx context.Context, w http.ResponseWrit
 			}
 		}
 
-		return sdk.WrapError(sdk.ErrNoProject, "worker %q(%s) not authorized for project %q", consumer.Worker.Name, consumer.Worker.ID, projectKey)
+		return sdk.WrapError(sdk.ErrForbidden, "worker %q(%s) not authorized for project %q", consumer.Worker.Name, consumer.Worker.ID, projectKey)
 	}
 
 	perms, err := permission.LoadProjectMaxLevelPermission(ctx, api.mustDB(), []string{projectKey}, getAPIConsumer(ctx).GetGroupIDs())
@@ -233,7 +235,7 @@ func (api *API) checkWorkflowPermissions(ctx context.Context, w http.ResponseWri
 			}
 		}
 
-		return sdk.WrapError(sdk.ErrNoProject, "worker %q(%s) not authorized for workflow %s/%s", consumer.Worker.Name, consumer.Worker.ID, projectKey, workflowName)
+		return sdk.WrapError(sdk.ErrForbidden, "worker %q(%s) not authorized for workflow %s/%s", consumer.Worker.Name, consumer.Worker.ID, projectKey, workflowName)
 	}
 
 	perms, err := permission.LoadWorkflowMaxLevelPermission(ctx, api.mustDB(), projectKey, []string{workflowName}, getAPIConsumer(ctx).GetGroupIDs())

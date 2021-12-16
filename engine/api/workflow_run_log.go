@@ -290,10 +290,9 @@ func (api *API) getWorkflowAccessHandler() service.Handler {
 		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 		}
-		consumer.Worker = worker
 
-		if consumer.Worker != nil {
-			jobRunID := consumer.Worker.JobRunID
+		if worker != nil {
+			jobRunID := worker.JobRunID
 			if jobRunID != nil {
 				nodeJobRun, err := workflow.LoadNodeJobRun(ctx, api.mustDB(), api.Cache, *jobRunID)
 				if err != nil {
@@ -310,7 +309,7 @@ func (api *API) getWorkflowAccessHandler() service.Handler {
 				}
 			}
 
-			return sdk.WrapError(sdk.ErrUnauthorized, "worker %q(%s) not authorized for workflow with id %d", consumer.Worker.Name, consumer.Worker.ID, workflowID)
+			return sdk.WrapError(sdk.ErrUnauthorized, "worker %q(%s) not authorized for workflow with id %d", worker.Name, worker.ID, workflowID)
 		}
 
 		maintainerOrAdmin := consumer.Maintainer() || consumer.Admin()
