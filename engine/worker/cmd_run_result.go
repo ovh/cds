@@ -96,7 +96,7 @@ Example:
 
 func addArtifactManagerRunResultCmd() func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
-		if len(args) != 3 || len(args) != 4 {
+		if len(args) != 3 && len(args) != 4 {
 			sdk.Exit("missing arguments. Cmd: worker run-result add artifact-manager <fileName> <repo-name> <file-path> [file-type]")
 		}
 
