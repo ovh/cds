@@ -46,7 +46,7 @@ test-docker-compose:
 	docker-compose up --no-recreate cds-db-init && \
 	docker-compose up --no-recreate cds-migrate && \
 	docker-compose up cds-prepare && \
-	CDS_EDIT_CONFIG="api.smtp.disable=false api.smtp.port=2023 api.smtp.host=localhost " docker-compose up cds-edit-config && \
+	CDS_EDIT_CONFIG="api.smtp.disable=false api.smtp.port=2023 api.smtp.host=$(HOSTNAME) " docker-compose up cds-edit-config && \
 	docker-compose up -d cds-api && \
 	echo "waiting 8s to let cds-api start.." && sleep 8 && \
 	docker ps && \
