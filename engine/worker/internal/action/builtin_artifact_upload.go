@@ -49,7 +49,17 @@ func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Acti
 		artifactPath = filepath.Join(abs, artifactPath)
 	}
 
-	tag := sdk.ParameterFind(a.Parameters, "tag")
+	tagParam := sdk.ParameterFind(a.Parameters, "tag")
+	var tag string
+	if tagParam != nil {
+		tag = tagParam.Value
+	}
+
+	fileTypeParam := sdk.ParameterFind(a.Parameters, "type")
+	var fileType string
+	if fileTypeParam != nil {
+		fileType = fileTypeParam.Value
+	}
 
 	// Global all files matching filePath
 	filesPath, err := afero.Glob(afero.NewOsFs(), artifactPath)
@@ -91,18 +101,18 @@ func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Acti
 			// 2. Integration artifact manager on workflow
 			// 3. CDN activated or not
 			if integrationName != sdk.DefaultStorageIntegrationName {
-				if err := uploadArtifactByApiCall(path, wk, ctx, projectKey, integrationName, jobID, tag); err != nil {
+				if err := uploadArtifactByApiCall(path, wk, ctx, projectKey, integrationName, jobID, tag, fileType); err != nil {
 					chanError <- sdk.WrapError(err, "Error while uploading artifact by api call %s", path)
 					wgErrors.Add(1)
 				}
 				return
 			} else if pluginArtifactManagement != nil {
-				if err := uploadArtifactByIntegrationPlugin(path, ctx, wk, pluginArtifactManagement); err != nil {
+				if err := uploadArtifactByIntegrationPlugin(path, ctx, wk, pluginArtifactManagement, fileType); err != nil {
 					chanError <- sdk.WrapError(err, "Error while uploading artifact by plugin %s", path)
 					wgErrors.Add(1)
 				}
 			} else if !cdnArtifactEnabled {
-				if err := uploadArtifactByApiCall(path, wk, ctx, projectKey, integrationName, jobID, tag); err != nil {
+				if err := uploadArtifactByApiCall(path, wk, ctx, projectKey, integrationName, jobID, tag, fileType); err != nil {
 					chanError <- sdk.WrapError(err, "Error while uploading artifact by api call %s", path)
 					wgErrors.Add(1)
 				}
@@ -133,7 +143,7 @@ func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Acti
 	return res, nil
 }
 
-func uploadArtifactByIntegrationPlugin(path string, ctx context.Context, wk workerruntime.Runtime, artiManager *sdk.GRPCPlugin) error {
+func uploadArtifactByIntegrationPlugin(path string, ctx context.Context, wk workerruntime.Runtime, artiManager *sdk.GRPCPlugin, fileType string) error {
 	_, fileName := filepath.Split(path)
 
 	// Check run result
@@ -205,6 +215,8 @@ func uploadArtifactByIntegrationPlugin(path string, ctx context.Context, wk work
 		return fmt.Errorf("error uploading artifact: %v", err)
 	}
 
+	res.Outputs[sdk.ArtifactUploadPluginOutputFileType] = fileType
+
 	if strings.ToUpper(res.Status) != strings.ToUpper(sdk.StatusSuccess) {
 		return fmt.Errorf("plugin execution failed %s: %s", res.Status, res.Details)
 	}
@@ -237,11 +249,8 @@ func uploadArtifactIntoCDN(path string, ctx context.Context, wk workerruntime.Ru
 	return nil
 }
 
-func uploadArtifactByApiCall(path string, wk workerruntime.Runtime, ctx context.Context, projectKey string, integrationName string, jobID int64, tag *sdk.Parameter) error {
-	if tag == nil {
-		return sdk.NewError(sdk.ErrWorkerErrorCommand, fmt.Errorf("tag variable is empty. aborting"))
-	}
-	throughTempURL, duration, err := wk.Client().QueueArtifactUpload(ctx, projectKey, integrationName, jobID, tag.Value, path)
+func uploadArtifactByApiCall(path string, wk workerruntime.Runtime, ctx context.Context, projectKey string, integrationName string, jobID int64, tag, fileType string) error {
+	throughTempURL, duration, err := wk.Client().QueueArtifactUpload(ctx, projectKey, integrationName, jobID, tag, path, fileType)
 	if err != nil {
 		return err
 	}
@@ -282,6 +291,7 @@ func addWorkflowRunResult(ctx context.Context, wk workerruntime.Runtime, filePat
 		Perm:     uint32(perm),
 		RepoName: uploadResult.Outputs[sdk.ArtifactUploadPluginOutputPathRepoName],
 		Path:     uploadResult.Outputs[sdk.ArtifactUploadPluginOutputPathFilePath],
+		FileType: uploadResult.Outputs[sdk.ArtifactUploadPluginOutputFileType],
 	}
 
 	bts, err := json.Marshal(data)

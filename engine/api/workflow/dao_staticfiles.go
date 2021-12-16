@@ -9,6 +9,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+// DEPRECATED
 func loadStaticFilesByNodeRunID(db gorp.SqlExecutor, nodeRunID int64) ([]sdk.StaticFiles, error) {
 	var dbstaticFiles []dbStaticFiles
 	if _, err := db.Select(&dbstaticFiles, `SELECT
@@ -32,6 +33,7 @@ func loadStaticFilesByNodeRunID(db gorp.SqlExecutor, nodeRunID int64) ([]sdk.Sta
 	return staticFiles, nil
 }
 
+// DEPRECATED
 // InsertStaticFiles insert in table workflow_artifacts
 func InsertStaticFiles(db gorp.SqlExecutor, sf *sdk.StaticFiles) error {
 	sf.Created = time.Now()

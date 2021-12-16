@@ -57,7 +57,7 @@ export class WorkflowRunArtifactListComponent implements OnInit, OnDestroy {
             },
             <Column<UIArtifact>>{
                 name: 'Type of artifact',
-                selector: (a: UIArtifact) => a.type
+                selector: (a: UIArtifact) => a.file_type
             },
             <Column<UIArtifact>>{
                 type: ColumnType.TEXT_COPY,
@@ -112,6 +112,7 @@ export class WorkflowRunArtifactListComponent implements OnInit, OnDestroy {
                         uiArt.md5 = a.md5sum;
                         uiArt.type = 'file';
                         uiArt.link = `./cdsapi/workflow/artifact/${a.download_hash}`;
+                        uiArt.file_type = uiArt.type;
                         return uiArt;
                     });
                     this.uiArtifacts.push(...uiArtifacts);

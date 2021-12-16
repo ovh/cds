@@ -18,6 +18,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+// DEPRECATED
 func (api *API) postWorkflowJobStaticFilesHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if isWorker := isWorker(ctx); !isWorker {
@@ -121,6 +122,8 @@ func (api *API) postWorkflowJobStaticFilesHandler() service.Handler {
 	}
 }
 
+// DEPRECATED
+// TODO: remove this code after CDN would be mandatory
 func (api *API) postWorkflowJobArtifactHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if isWorker := isWorker(ctx); !isWorker {
@@ -251,6 +254,8 @@ func (api *API) postWorkflowJobArtifactHandler() service.Handler {
 	}
 }
 
+// DEPRECATED
+// TODO: remove this code after CDN would be mandatory
 func (api *API) postWorkflowJobArtifactWithTempURLCallbackHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if isWorker := isWorker(ctx); !isWorker {
@@ -307,6 +312,8 @@ func (api *API) postWorkflowJobArtifactWithTempURLCallbackHandler() service.Hand
 	}
 }
 
+// DEPRECATED
+// TODO: remove this code after CDN would be mandatory
 func (api *API) postWorkflowJobArtifacWithTempURLHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if isWorker := isWorker(ctx); !isWorker {
