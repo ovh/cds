@@ -23,7 +23,8 @@ export class WorkflowHelper {
                     uiArtifact.name = data.name;
                     uiArtifact.size = data.size;
                     uiArtifact.human_size = this.getHumainFileSize(data.size);
-                    uiArtifact.type = 'file';
+                    uiArtifact.type = r.type == 'artifact' ? 'file': r.type;
+                    uiArtifact.file_type = uiArtifact.type;
                     return uiArtifact;
                 case 'artifact-manager':
                     let dataAM = <WorkflowRunResultArtifactManager>r.data;
@@ -34,6 +35,7 @@ export class WorkflowHelper {
                     uiArtifactAM.size = dataAM.size;
                     uiArtifactAM.human_size = this.getHumainFileSize(dataAM.size);
                     uiArtifactAM.type = dataAM.repository_type;
+                    uiArtifactAM.file_type = dataAM.file_type ? dataAM.file_type : dataAM.repository_type;
                     return uiArtifactAM;
                 case 'static-file':
                     let dataSF = <WorkflowRunResultStaticFile>r.data;

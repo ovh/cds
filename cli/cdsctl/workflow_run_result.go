@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/exec"
 	"regexp"
 
 	"github.com/spf13/cobra"
@@ -81,6 +82,9 @@ func workflowRunResultGet(v cli.Values) error {
 		var fileName string
 		var perm uint32
 		var md5 string
+		var artifactManagerPath string
+		var artifactManagerRepo string
+
 		switch r.Type {
 		case sdk.WorkflowRunResultTypeArtifact:
 			art, err := r.GetArtifact()
@@ -100,6 +104,16 @@ func workflowRunResultGet(v cli.Values) error {
 			fileName = cov.Name
 			perm = cov.Perm
 			md5 = cov.MD5
+		case sdk.WorkflowRunResultTypeArtifactManager:
+			art, err := r.GetArtifactManager()
+			if err != nil {
+				return err
+			}
+			fileName = art.Name
+			perm = art.Perm
+			md5 = art.MD5
+			artifactManagerPath = art.Path
+			artifactManagerRepo = art.RepoName
 		default:
 			return cli.NewError("cannot get result of type %s", r.Type)
 		}
@@ -124,7 +138,27 @@ func workflowRunResultGet(v cli.Values) error {
 			}
 		}
 
-		if toDownload {
+		if !toDownload {
+			fmt.Printf("File %s already downloaded, checksum OK\n", f.Name())
+			return nil
+		}
+
+		if artifactManagerPath != "" && artifactManagerRepo != "" {
+			_, err := exec.LookPath("jfrog")
+			if err != nil {
+				fmt.Printf("# File is available on repository %s: %s\n", artifactManagerRepo, artifactManagerPath)
+				fmt.Printf("# to download the file use the following command\n")
+				fmt.Printf("jfrog rt download %s %q", artifactManagerRepo, artifactManagerPath)
+				return err
+			}
+			cmd := exec.Command("jfrog", "rt", "download", "--flat", artifactManagerRepo+"/"+artifactManagerPath)
+			output, err := cmd.CombinedOutput()
+			fmt.Println(string(output))
+			if err != nil {
+				return err
+			}
+			return nil
+		} else {
 			var err error
 			f, err = os.OpenFile(fileName, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.FileMode(perm))
 			if err != nil {
@@ -139,11 +173,8 @@ func workflowRunResultGet(v cli.Values) error {
 				return cli.NewError("unable to close file %s: %v", fileName, err)
 			}
 		}
-		if toDownload {
-			fmt.Printf("File %s created, checksum OK\n", f.Name())
-		} else {
-			fmt.Printf("File %s already downloaded, checksum OK\n", f.Name())
-		}
+
+		fmt.Printf("File %s created, checksum OK\n", f.Name())
 	}
 	return nil
 }
@@ -224,13 +255,19 @@ func toCLIRunResult(results []sdk.WorkflowRunResult) ([]RunResultCli, error) {
 				return nil, err
 			}
 			name = artiResult.Name
+			artiType = "file"
 		case sdk.WorkflowRunResultTypeArtifactManager:
 			artiResult, err := r.GetArtifactManager()
 			if err != nil {
 				return nil, err
 			}
 			name = artiResult.Name
-			artiType = artiResult.RepoType
+			if artiResult.FileType != "" {
+				artiType = artiResult.FileType
+			} else {
+				artiType = artiResult.RepoType
+			}
+
 		}
 
 		cliresults = append(cliresults, RunResultCli{

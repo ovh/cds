@@ -96,19 +96,24 @@ Example:
 
 func addArtifactManagerRunResultCmd() func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
-		if len(args) != 3 {
-			sdk.Exit("missing arguments. Cmd: worker run-result add artifact-manager <fileName> <repo-name> <file-path>")
+		if len(args) != 3 && len(args) != 4 {
+			sdk.Exit("missing arguments. Cmd: worker run-result add artifact-manager <fileName> <repo-name> <file-path> [file-type]")
 		}
 
 		fileName := args[0]
 		repositoryName := args[1]
 		filePath := args[2]
+		var fileType string
+		if len(args) == 4 {
+			fileType = args[3]
+		}
 
 		payload := sdk.WorkflowRunResultArtifactManager{
 			Name:     fileName,
 			Perm:     0,
 			Path:     filePath,
 			RepoName: repositoryName,
+			FileType: fileType,
 		}
 		data, _ := json.Marshal(payload)
 

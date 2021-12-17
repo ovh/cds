@@ -92,6 +92,7 @@ func LoadNodeRun(db gorp.SqlExecutor, projectkey, workflowname string, noderunID
 		}
 		r.Artifacts = arts
 	}
+	// DEPRECATED
 	if loadOpts.WithStaticFiles {
 		staticFiles, errS := loadStaticFilesByNodeRunID(db, r.ID)
 		if errS != nil {

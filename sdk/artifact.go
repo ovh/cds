@@ -15,11 +15,14 @@ const (
 	ArtifactUploadPluginOutputPathMD5      = "md5"
 	ArtifactUploadPluginOutputPerm         = "perm"
 	ArtifactUploadPluginOutputSize         = "size"
+	ArtifactUploadPluginOutputFileType     = "file_type"
 
 	ArtifactDownloadPluginInputDestinationPath = "cds.integration.artifact_manager.download.destination.path"
 	ArtifactDownloadPluginInputFilePath        = "cds.integration.artifact_manager.download.file.path"
 	ArtifactDownloadPluginInputMd5             = "cds.integration.artifact_manager.download.file.md5"
 	ArtifactDownloadPluginInputPerm            = "cds.integration.artifact_manager.download.file.perm"
+
+	ArtifactFileTypeCoverage = "coverage"
 )
 
 // ArtifactsStore represents

@@ -3093,9 +3093,9 @@ func (m *MockQueueClient) EXPECT() *MockQueueClientMockRecorder {
 }
 
 // QueueArtifactUpload mocks base method.
-func (m *MockQueueClient) QueueArtifactUpload(ctx context.Context, projectKey, integrationName string, nodeJobRunID int64, tag, filePath string) (bool, time.Duration, error) {
+func (m *MockQueueClient) QueueArtifactUpload(ctx context.Context, projectKey, integrationName string, nodeJobRunID int64, tag, filePath, fileType string) (bool, time.Duration, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "QueueArtifactUpload", ctx, projectKey, integrationName, nodeJobRunID, tag, filePath)
+	ret := m.ctrl.Call(m, "QueueArtifactUpload", ctx, projectKey, integrationName, nodeJobRunID, tag, filePath, fileType)
 	ret0, _ := ret[0].(bool)
 	ret1, _ := ret[1].(time.Duration)
 	ret2, _ := ret[2].(error)
@@ -3103,9 +3103,9 @@ func (m *MockQueueClient) QueueArtifactUpload(ctx context.Context, projectKey, i
 }
 
 // QueueArtifactUpload indicates an expected call of QueueArtifactUpload.
-func (mr *MockQueueClientMockRecorder) QueueArtifactUpload(ctx, projectKey, integrationName, nodeJobRunID, tag, filePath interface{}) *gomock.Call {
+func (mr *MockQueueClientMockRecorder) QueueArtifactUpload(ctx, projectKey, integrationName, nodeJobRunID, tag, filePath, fileType interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueArtifactUpload", reflect.TypeOf((*MockQueueClient)(nil).QueueArtifactUpload), ctx, projectKey, integrationName, nodeJobRunID, tag, filePath)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueArtifactUpload", reflect.TypeOf((*MockQueueClient)(nil).QueueArtifactUpload), ctx, projectKey, integrationName, nodeJobRunID, tag, filePath, fileType)
 }
 
 // QueueCountWorkflowNodeJobRun mocks base method.
@@ -7123,9 +7123,9 @@ func (mr *MockInterfaceMockRecorder) PutJSON(ctx, path, in, out interface{}, mod
 }
 
 // QueueArtifactUpload mocks base method.
-func (m *MockInterface) QueueArtifactUpload(ctx context.Context, projectKey, integrationName string, nodeJobRunID int64, tag, filePath string) (bool, time.Duration, error) {
+func (m *MockInterface) QueueArtifactUpload(ctx context.Context, projectKey, integrationName string, nodeJobRunID int64, tag, filePath, fileType string) (bool, time.Duration, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "QueueArtifactUpload", ctx, projectKey, integrationName, nodeJobRunID, tag, filePath)
+	ret := m.ctrl.Call(m, "QueueArtifactUpload", ctx, projectKey, integrationName, nodeJobRunID, tag, filePath, fileType)
 	ret0, _ := ret[0].(bool)
 	ret1, _ := ret[1].(time.Duration)
 	ret2, _ := ret[2].(error)
@@ -7133,9 +7133,9 @@ func (m *MockInterface) QueueArtifactUpload(ctx context.Context, projectKey, int
 }
 
 // QueueArtifactUpload indicates an expected call of QueueArtifactUpload.
-func (mr *MockInterfaceMockRecorder) QueueArtifactUpload(ctx, projectKey, integrationName, nodeJobRunID, tag, filePath interface{}) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) QueueArtifactUpload(ctx, projectKey, integrationName, nodeJobRunID, tag, filePath, fileType interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueArtifactUpload", reflect.TypeOf((*MockInterface)(nil).QueueArtifactUpload), ctx, projectKey, integrationName, nodeJobRunID, tag, filePath)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueArtifactUpload", reflect.TypeOf((*MockInterface)(nil).QueueArtifactUpload), ctx, projectKey, integrationName, nodeJobRunID, tag, filePath, fileType)
 }
 
 // QueueCountWorkflowNodeJobRun mocks base method.
@@ -9223,9 +9223,9 @@ func (mr *MockWorkerInterfaceMockRecorder) ProjectIntegrationWorkerHookGet(proje
 }
 
 // QueueArtifactUpload mocks base method.
-func (m *MockWorkerInterface) QueueArtifactUpload(ctx context.Context, projectKey, integrationName string, nodeJobRunID int64, tag, filePath string) (bool, time.Duration, error) {
+func (m *MockWorkerInterface) QueueArtifactUpload(ctx context.Context, projectKey, integrationName string, nodeJobRunID int64, tag, filePath, fileType string) (bool, time.Duration, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "QueueArtifactUpload", ctx, projectKey, integrationName, nodeJobRunID, tag, filePath)
+	ret := m.ctrl.Call(m, "QueueArtifactUpload", ctx, projectKey, integrationName, nodeJobRunID, tag, filePath, fileType)
 	ret0, _ := ret[0].(bool)
 	ret1, _ := ret[1].(time.Duration)
 	ret2, _ := ret[2].(error)
@@ -9233,9 +9233,9 @@ func (m *MockWorkerInterface) QueueArtifactUpload(ctx context.Context, projectKe
 }
 
 // QueueArtifactUpload indicates an expected call of QueueArtifactUpload.
-func (mr *MockWorkerInterfaceMockRecorder) QueueArtifactUpload(ctx, projectKey, integrationName, nodeJobRunID, tag, filePath interface{}) *gomock.Call {
+func (mr *MockWorkerInterfaceMockRecorder) QueueArtifactUpload(ctx, projectKey, integrationName, nodeJobRunID, tag, filePath, fileType interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueArtifactUpload", reflect.TypeOf((*MockWorkerInterface)(nil).QueueArtifactUpload), ctx, projectKey, integrationName, nodeJobRunID, tag, filePath)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueArtifactUpload", reflect.TypeOf((*MockWorkerInterface)(nil).QueueArtifactUpload), ctx, projectKey, integrationName, nodeJobRunID, tag, filePath, fileType)
 }
 
 // QueueCountWorkflowNodeJobRun mocks base method.
