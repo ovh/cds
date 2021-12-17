@@ -11,19 +11,22 @@ services:
       POSTGRES_PASSWORD: cds
       POSTGRES_USER: cds
       POSTGRES_DB: cds
+    volumes:
+      - cds-postgres-volume:/var/lib/postgresql/data
 
   cds-db-init:
     image: postgres:14.0
     command: >
-        sh -exc "
-        PGPASSWORD=cds psql -h cds-db -p 5432 -U cds -d cds -c \"CREATE SCHEMA IF NOT EXISTS cdn AUTHORIZATION cds;\";"
+        sh -exc "PGPASSWORD=cds psql -h cds-db -p 5432 -U cds -d cds -c \"CREATE SCHEMA IF NOT EXISTS cdn AUTHORIZATION cds;\";"
     links:
        - cds-db
 
   cds-cache:
     image: redis:alpine
-    command: redis-server --requirepass cds
+    command: redis-server --requirepass cds --save 60 1
     restart: always
+    volumes:
+      - cds-redis-volume:/data
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:6.7.2
@@ -50,7 +53,13 @@ services:
   cds-prepare:
     image: ${CDS_DOCKER_IMAGE:-ovhcom/cds-engine:latest}
     command: >
-        sh -c "
+        bash -c "
+        if [ ! -f /app/conf/conf.toml ]; then
+          /app/cds-engine-linux-amd64 config new api cdn ui hooks repositories vcs elasticsearch hatchery:local hatchery:swarm > /app/conf/conf.toml;
+        else
+          echo '/!\ Config file already exists';
+        fi;
+        chown -R cds:cds /app/conf /app/artifacts /app/repositories /app/cdn-buffer /app/cdn-storage;
         /app/cds-engine-linux-amd64 config new > /app/conf/conf.toml;
         mkdir -p /app/artifacts /app/repositories /app/hatchery-local;
         chown -R cds:cds /app/conf /app/artifacts /app/repositories /app/hatchery-local /app/cdn-buffer /app/cdn-storage;
@@ -60,12 +69,7 @@ services:
             api.cache.redis.password=cds \
             api.database.host=cds-db \
             api.download.directory=/app \
-            api.url.api=http://${HOSTNAME}:8081 \
-            api.url.ui=http://${HOSTNAME}:8080 \
             api.log.level=info \
-            api.smtp.disable=false \
-            api.smtp.port=2023 \
-            api.smtp.host=smtpmocksrv \
             cdn.cache.redis.host=cds-cache:6379 \
             cdn.cache.redis.password=cds \
             cdn.storageUnits.buffers.redis.redis.host=cds-cache:6379 \
@@ -103,7 +107,6 @@ services:
             elasticsearch.elasticsearch.indexEvents=cds-index-events \
             elasticsearch.elasticsearch.indexMetrics=cds-index-metrics \
             elasticsearch.elasticsearch.url=http://elasticsearch:9200 \
-            ui.url=http://${HOSTNAME}:8080 \
             ui.enableServiceProxy=true \
             ui.api.http.url=http://cds-api:8081 \
             ui.hooksURL=http://cds-hooks:8083 \
@@ -282,13 +285,6 @@ services:
     ports:
       - "127.0.0.1:2375:2375"
 
-  smtpmocksrv:
-    build:
-      context: ./tools/smtpmock
-    ports:
-      - "2023:2023"
-      - "2024:2024"
-
   kibana:
     image: docker.elastic.co/kibana/kibana-oss:6.7.2
     ports:
@@ -297,10 +293,12 @@ services:
        - elasticsearch
 
 volumes:
+  cds-postgres-volume:
+  cds-redis-volume:
+  cds-elasticsearch-volume:
+  cds-conf-volume:
   cds-artifacts-volume:
   cds-repositories-volume:
   cds-hatchery-local-volume:
-  cds-conf-volume:
-  cds-elasticsearch-volume:
   cds-cdn-buffer-volume:
   cds-cdn-storage-volume:

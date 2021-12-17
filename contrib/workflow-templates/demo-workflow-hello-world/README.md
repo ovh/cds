@@ -18,7 +18,7 @@ This template is linked to group: `shared.infra`
 
 If you want to import it, you have to be CDS Administrator on your CDS Instance.
 
-``` bash
+```sh
 # import from github
 cdsctl template push https://raw.githubusercontent.com/ovh/cds/master/contrib/workflow-templates/demo-workflow-hello-world/demo-workflow-hello-world.yml
 ```
