@@ -7,6 +7,15 @@ card:
 
 ## Run with Docker-Compose
 
+{{% notice warning %}}
+
+This tutorial allows you to start a CD locally quickly.
+
+* Do not use this docker-compose installation to run it in production without modification.
+* For production purpose, please read [CDS Services]({{< relref "../../cds_services" >}})
+
+{{% /notice %}}
+
 The [docker-compose.yml](https://github.com/ovh/cds/blob/{{< param "version" "master" >}}/docker-compose.yml) contains:
 
 - cds-db service with a PostgreSQL
@@ -57,9 +66,11 @@ $ TOKEN_CMD=$(docker logs $(docker-compose ps -q cds-prepare) | grep INIT_TOKEN)
 # if you have this error:  "command too long: export INIT_TOKEN=....",
 # you can manually execute the command "export INIT_TOKEN=...."
 
-# create user
-$ curl 'http://localhost:8081/download/cdsctl/linux/amd64?variant=nokeychain' -o cdsctl
+# download cdsctl
+# on linux: $ curl 'http://localhost:8081/download/cdsctl/linux/amd64?variant=nokeychain' -o cdsctl
 # on OSX: $ curl 'http://localhost:8081/download/cdsctl/darwin/amd64?variant=nokeychain' -o cdsctl
+
+# create user
 $ chmod +x cdsctl
 $ ./cdsctl signup --api-url http://localhost:8081 --email admin@localhost.local --username admin --fullname admin
 # enter a strong password
@@ -100,6 +111,15 @@ $ ./cdsctl workflow run DEMO MyFirstWorkflow
 Workflow MyFirstWorkflow #1 has been launched
 http://localhost:8080/project/DEMO/workflow/MyFirstWorkflow/run/1
 ```
+
+{{% notice warning %}}
+
+Important: the service is exposed without **https**.
+
+* Do not use this docker-compose installation to run it in production without modification.
+* Safari don't manage secured cookie on localhost, please use another browser to avoid authentication error on your browser
+
+{{% /notice %}}
 
 - Login on WebUI
 
