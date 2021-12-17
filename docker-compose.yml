@@ -90,7 +90,7 @@ services:
         /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml hatchery.local.commonConfiguration.url=http://cds-hatchery-local:8086;
         /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml hatchery.swarm.commonConfiguration.api.http.url=http://cds-api:8081;
         /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml hatchery.swarm.commonConfiguration.url=http://cds-hatchery-swarm:8086;
-        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml hatchery.swarm.commonConfiguration.provision.workerApiHttp.url=http://localhost:8081;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml hatchery.swarm.commonConfiguration.provision.workerApiHttp.url=http://$HOSTNAME:8081;
         /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml hatchery.swarm.dockerEngines.sample-docker-engine.host=tcp://dockerhost:2375;
         /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml hatchery.swarm.dockerEngines.sample-docker-engine.maxContainers=4;
         /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml hatchery.swarm.ratioService=50;

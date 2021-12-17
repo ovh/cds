@@ -9,7 +9,7 @@ card:
 
 {{% notice warning %}}
 
-This tutorial allows you to start a CD locally quickly.
+This tutorial allows you to start a CDS locally quickly.
 
 * Do not use this docker-compose installation to run it in production without modification.
 * For production purpose, please read [CDS Services]({{< relref "../../cds_services" >}})
@@ -153,12 +153,12 @@ If the flag is `true`, you can check the swarm hatchery logs:
 $ docker-compose logs -f cds-hatchery-swarm
 ```
 
-When a worker (so, a container) is starting, this container communicates with the api with the url `http://127.0.0.1:8081` to download the worker binary.
-This IP (127.0.0.1) can depend on your docker installation. If the container can't communicate to the api with this IP, you can update it:
+When a worker (so, a container) is starting, this container communicates with the api with the url `http://$HOSTNAME:8081` to download the worker binary.
+This URL is using your `$HOSTNAME`, but perhaps that this can't be used on your docker installation from a container. If the container can't communicate to the api with this url, you can update it:
 
 ```bash
-# you can replace 127.0.0.1 by your hostname for example
-$ export CDS_EDIT_CONFIG="hatchery.swarm.commonConfiguration.provision.workerApiHttp.url=http://127.0.0.1:8081 "
+# you can replace $HOSTNAME by your IP on local network. Example: 192.168.xxx.xxx
+$ export CDS_EDIT_CONFIG="hatchery.swarm.commonConfiguration.provision.workerApiHttp.url=http://192.168.xxx.xxx:8081 "
 $ docker-compose up cds-edit-config
 $ docker-compose restart cds-hatchery-swarm
 ```
