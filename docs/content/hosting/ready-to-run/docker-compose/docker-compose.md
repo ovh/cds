@@ -140,6 +140,30 @@ The build pipeline contains two stages, with only one job in each stage
 
 ![Build Pipeline](/images/ready_to_run_docker_compose_build_pipeline.png)
 
+## If the job does not start
+
+The worker model used in this tutorial is a docker image golang. CDS will run jobs only if the worker model is *registered*.
+
+So, if the first job of the workflow stay in *Waiting* status, you can check if you worker model is well registered.
+Go on http://localhost:8080/settings/worker-model/shared.infra/go-official-1.17 , you must have the flag `need registration: false`.
+
+If the flag is `true`, you can check the swarm hatchery logs:
+
+```bash
+$ docker-compose logs -f cds-hatchery-swarm
+```
+
+When a worker (so, a container) is starting, this container communicates with the api with the url `http://127.0.0.1:8081` to download the worker binary.
+This IP (127.0.0.1) can depend on your docker installation. If the container can't communicate to the api with this IP, you can update it:
+
+```bash
+# you can replace 127.0.0.1 by your hostname for example
+$ export CDS_EDIT_CONFIG="hatchery.swarm.commonConfiguration.provision.workerApiHttp.url=http://127.0.0.1:8081 "
+$ docker-compose up cds-edit-config
+$ docker-compose restart cds-hatchery-swarm
+```
+
+
 ## Setup connection with a VCS
 
 ```bash
