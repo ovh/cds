@@ -27,7 +27,7 @@ Docker compose is very convenient to launch CDS for testing it. But this is not 
 ## How to run
 
 ```bash
-$ mkdir /tmp/cdstest && cd /tmp/cdstest && mkdir -p tools/smtpmock
+$ mkdir /tmp/cdstest && cd /tmp/cdstest
 $ curl https://raw.githubusercontent.com/ovh/cds/{{< param "version" "master" >}}/docker-compose.yml -o docker-compose.yml
 $ export HOSTNAME=$(hostname)
 $ export CDS_DOCKER_IMAGE=ovhcom/cds-engine:{{< param "version" "latest" >}}

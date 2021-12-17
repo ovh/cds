@@ -57,68 +57,67 @@ services:
         if [ ! -f /app/conf/conf.toml ]; then
           /app/cds-engine-linux-amd64 config new api cdn ui hooks repositories vcs elasticsearch hatchery:local hatchery:swarm > /app/conf/conf.toml;
         else
-          echo '/!\ Config file already exists';
+          echo '/!\\ Config file already exists';
         fi;
         chown -R cds:cds /app/conf /app/artifacts /app/repositories /app/cdn-buffer /app/cdn-storage;
         /app/cds-engine-linux-amd64 config new > /app/conf/conf.toml;
         mkdir -p /app/artifacts /app/repositories /app/hatchery-local;
         chown -R cds:cds /app/conf /app/artifacts /app/repositories /app/hatchery-local /app/cdn-buffer /app/cdn-storage;
-        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml \
-            api.artifact.local.baseDirectory=/app/artifacts \
-            api.cache.redis.host=cds-cache:6379 \
-            api.cache.redis.password=cds \
-            api.database.host=cds-db \
-            api.download.directory=/app \
-            api.log.level=info \
-            cdn.cache.redis.host=cds-cache:6379 \
-            cdn.cache.redis.password=cds \
-            cdn.storageUnits.buffers.redis.redis.host=cds-cache:6379 \
-            cdn.storageUnits.buffers.redis.redis.password=cds \
-            cdn.storageUnits.buffers.local-buffer.local.path=/app/cdn-buffer \
-            cdn.storageUnits.storages.local.local.path=/app/cdn-storage \
-            cdn.database.host=cds-db \
-            cdn.publicTCP=${HOSTNAME}:8090 \
-            cdn.api.http.url=http://cds-api:8081 \
-            cdn.URL=http://cds-cdn:8089 \
-            hatchery.local.commonConfiguration.url=http://cds-hatchery-local:8086 \
-            hatchery.local.commonConfiguration.api.http.url=http://cds-api:8081 \
-            hatchery.local.basedir=/app/hatchery-local \
-            hatchery.swarm.commonConfiguration.url=http://cds-hatchery-swarm:8086 \
-            hatchery.swarm.commonConfiguration.api.http.url=http://${HOSTNAME}:8081 \
-            hatchery.swarm.ratioService=50 \
-            hatchery.swarm.dockerEngines.sample-docker-engine.host=tcp://dockerhost:2375 \
-            hatchery.swarm.dockerEngines.sample-docker-engine.maxContainers=4 \
-            hooks.url=http://cds-hooks:8083 \
-            hooks.api.http.url=http://cds-api:8081 \
-            hooks.cache.redis.host=cds-cache:6379 \
-            hooks.cache.redis.password=cds \
-            vcs.URL=http://cds-vcs:8084 \
-            vcs.api.http.url=http://cds-api:8081 \
-            vcs.cache.redis.host=cds-cache:6379 \
-            vcs.cache.redis.password=cds \
-            repositories.URL=http://cds-repositories:8085 \
-            repositories.basedir=/app/repositories \
-            repositories.api.http.url=http://cds-api:8081 \
-            repositories.cache.redis.host=cds-cache:6379 \
-            repositories.cache.redis.password=cds \
-            elasticsearch.URL=http://cds-elasticsearch:8088 \
-            elasticsearch.api.http.url=http://cds-api:8081 \
-            elasticsearch.name=cds-elasticsearch \
-            elasticsearch.elasticsearch.indexEvents=cds-index-events \
-            elasticsearch.elasticsearch.indexMetrics=cds-index-metrics \
-            elasticsearch.elasticsearch.url=http://elasticsearch:9200 \
-            ui.enableServiceProxy=true \
-            ui.api.http.url=http://cds-api:8081 \
-            ui.hooksURL=http://cds-hooks:8083 \
-            ui.cdnURL=http://cds-cdn:8089;
-            echo '';
-            echo '/!\ Please run the export command BELOW, this will be useful to create admin user';
-            echo '';
-            TOKEN=`/app/cds-engine-linux-amd64 config init-token --config /app/conf/conf.toml`;
-            echo 'export INIT_TOKEN='$$TOKEN;
-            echo '';
-            echo '/!\ Please run the export command ABOVE, this will be useful to create admin user';
-            echo '';"
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml api.artifact.local.baseDirectory=/app/artifacts;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml api.cache.redis.host=cds-cache:6379;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml api.cache.redis.password=cds;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml api.database.host=cds-db;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml api.download.directory=/app;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml api.log.level=info;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml cdn.cache.redis.host=cds-cache:6379;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml cdn.cache.redis.password=cds;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml cdn.storageUnits.buffers.redis.redis.host=cds-cache:6379;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml cdn.storageUnits.buffers.redis.redis.password=cds;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml cdn.storageUnits.buffers.local-buffer.local.path=/app/cdn-buffer;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml cdn.storageUnits.storages.local.local.path=/app/cdn-storage;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml cdn.database.host=cds-db;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml cdn.publicTCP=${HOSTNAME}:8090;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml cdn.api.http.url=http://cds-api:8081;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml cdn.URL=http://cds-cdn:8089;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml hatchery.local.commonConfiguration.url=http://cds-hatchery-local:8086;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml hatchery.local.commonConfiguration.api.http.url=http://cds-api:8081;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml hatchery.local.basedir=/app/hatchery-local;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml hatchery.swarm.commonConfiguration.url=http://cds-hatchery-swarm:8086;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml hatchery.swarm.commonConfiguration.api.http.url=http://${HOSTNAME}:8081;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml hatchery.swarm.ratioService=50;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml hatchery.swarm.dockerEngines.sample-docker-engine.host=tcp://dockerhost:2375;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml hatchery.swarm.dockerEngines.sample-docker-engine.maxContainers=4;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml hooks.url=http://cds-hooks:8083;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml hooks.api.http.url=http://cds-api:8081;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml hooks.cache.redis.host=cds-cache:6379;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml hooks.cache.redis.password=cds;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml vcs.URL=http://cds-vcs:8084;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml vcs.api.http.url=http://cds-api:8081;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml vcs.cache.redis.host=cds-cache:6379;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml vcs.cache.redis.password=cds;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml repositories.URL=http://cds-repositories:8085;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml repositories.basedir=/app/repositories;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml repositories.api.http.url=http://cds-api:8081;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml repositories.cache.redis.host=cds-cache:6379;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml repositories.cache.redis.password=cds;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml elasticsearch.URL=http://cds-elasticsearch:8088;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml elasticsearch.api.http.url=http://cds-api:8081;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml elasticsearch.name=cds-elasticsearch;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml elasticsearch.elasticsearch.indexEvents=cds-index-events;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml elasticsearch.elasticsearch.indexMetrics=cds-index-metrics;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml elasticsearch.elasticsearch.url=http://elasticsearch:9200;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml ui.enableServiceProxy=true;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml ui.api.http.url=http://cds-api:8081;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml ui.hooksURL=http://cds-hooks:8083;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml ui.cdnURL=http://cds-cdn:8089;
+        echo '';
+        echo '/!\\ Please run the export command BELOW, this will be useful to create admin user';
+        echo '';
+        TOKEN=`/app/cds-engine-linux-amd64 config init-token --config /app/conf/conf.toml`;
+        echo 'export INIT_TOKEN='$$TOKEN;
+        echo '';
+        echo '/!\\ Please run the export command ABOVE, this will be useful to create admin user';
+        echo '';"
     user: root
     volumes:
       - cds-conf-volume:/app/conf
