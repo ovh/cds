@@ -11,7 +11,12 @@ import (
 // NewWorkerToken .
 func NewWorkerToken(hatcheryName string, privateKey *rsa.PrivateKey, expiration time.Time, w SpawnArguments) (string, error) {
 	claims := WorkerJWTClaims{
-		Worker: w,
+		Worker: SpawnArgumentsJWT{
+			WorkerName:   w.WorkerName,
+			JobID:        w.JobID,
+			RegisterOnly: w.RegisterOnly,
+			HatcheryName: w.HatcheryName,
+		},
 		StandardClaims: jwt.StandardClaims{
 			Issuer:    hatcheryName,
 			Subject:   w.WorkerName,
@@ -20,12 +25,8 @@ func NewWorkerToken(hatcheryName string, privateKey *rsa.PrivateKey, expiration 
 			ExpiresAt: expiration.Unix(),
 		},
 	}
-
-	// FIXME create dedicated struct with only required fields for the token
-	if claims.Worker.Model != nil {
-		claims.Worker.Model = &sdk.Model{
-			ID: claims.Worker.Model.ID,
-		}
+	if w.Model != nil {
+		claims.Worker.Model.ID = w.Model.ID
 	}
 
 	jwtoken := jwt.NewWithClaims(jwt.SigningMethodRS512, claims)

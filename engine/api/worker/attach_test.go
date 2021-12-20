@@ -32,9 +32,9 @@ func TestReleaseAllFromHatchery(t *testing.T) {
 	h1, _, h1Consumer, _ := assets.InsertHatchery(t, db, *g)
 	h2, _, h2Consumer, _ := assets.InsertHatchery(t, db, *g)
 
-	w1Consumer, err := authentication.NewConsumerWorker(context.TODO(), db, "worker-1", h1, h1Consumer, []int64{g.ID})
+	w1Consumer, err := authentication.NewConsumerWorker(context.TODO(), db, "worker-1", h1, h1Consumer)
 	require.NoError(t, err)
-	w2Consumer, err := authentication.NewConsumerWorker(context.TODO(), db, "worker-2", h2, h2Consumer, []int64{g.ID})
+	w2Consumer, err := authentication.NewConsumerWorker(context.TODO(), db, "worker-2", h2, h2Consumer)
 	require.NoError(t, err)
 
 	require.NoError(t, worker.Insert(context.TODO(), db, &sdk.Worker{
@@ -84,9 +84,9 @@ func TestReAttachAllToHatchery(t *testing.T) {
 	h1, _, h1Consumer, _ := assets.InsertHatchery(t, db, *g)
 	h2, _, h2Consumer, _ := assets.InsertHatchery(t, db, *g)
 
-	w1Consumer, err := authentication.NewConsumerWorker(context.TODO(), db, "worker-1", h1, h1Consumer, []int64{g.ID})
+	w1Consumer, err := authentication.NewConsumerWorker(context.TODO(), db, "worker-1", h1, h1Consumer)
 	require.NoError(t, err)
-	w2Consumer, err := authentication.NewConsumerWorker(context.TODO(), db, "worker-2", h2, h2Consumer, []int64{g.ID})
+	w2Consumer, err := authentication.NewConsumerWorker(context.TODO(), db, "worker-2", h2, h2Consumer)
 	require.NoError(t, err)
 
 	require.NoError(t, worker.Insert(context.TODO(), db, &sdk.Worker{

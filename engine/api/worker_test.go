@@ -9,10 +9,9 @@ import (
 	"time"
 
 	"github.com/rockbears/log"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/gorpmapper"
@@ -23,20 +22,14 @@ import (
 
 func RegisterWorker(t *testing.T, api *API, db gorpmapper.SqlExecutorWithTx, groupID int64, existingWorkerModelName string, jobID int64, registerOnly bool) (*sdk.Worker, string) {
 	model, err := workermodel.LoadByNameAndGroupID(context.TODO(), api.mustDB(), existingWorkerModelName, groupID)
-	if err != nil {
-		t.Fatalf("RegisterWorker> Error getting worker model : %s", err)
-	}
+	require.NoError(t, err)
 
 	g, err := group.LoadByID(context.TODO(), api.mustDB(), groupID)
-	if err != nil {
-		t.Fatalf("RegisterWorker> Error getting group : %s", err)
-	}
+	require.NoError(t, err)
 	hSrv, hPrivKey, hConsumer, _ := assets.InsertHatchery(t, db, *g)
 
 	hPubKey, err := jws.ExportPublicKey(hPrivKey)
-	if err != nil {
-		t.Fatalf("RegisterWorker> Error exporting public key : %s", err)
-	}
+	require.NoError(t, err)
 	log.Debug(context.TODO(), "hatchery public key is %s", string(hPubKey))
 
 	jwt, err := hatchery.NewWorkerToken(hSrv.Name, hPrivKey, time.Now().Add(time.Hour), hatchery.SpawnArguments{
@@ -46,11 +39,11 @@ func RegisterWorker(t *testing.T, api *API, db gorpmapper.SqlExecutorWithTx, gro
 		JobID:        jobID,
 		RegisterOnly: registerOnly,
 	})
-	test.NoError(t, err)
-	assert.NotNil(t, hConsumer)
+	require.NoError(t, err)
+	require.NotNil(t, hConsumer)
 
 	uri := api.Router.GetRoute("POST", api.postRegisterWorkerHandler, nil)
-	test.NotEmpty(t, uri)
+	require.NotEmpty(t, uri)
 	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, sdk.WorkerRegistrationForm{
 		Arch:    runtime.GOARCH,
 		OS:      runtime.GOOS,
@@ -60,11 +53,11 @@ func RegisterWorker(t *testing.T, api *API, db gorpmapper.SqlExecutorWithTx, gro
 	//Do the request
 	rec := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 200, rec.Code)
+	require.Equal(t, 200, rec.Code)
 
 	//Check result
 	var w sdk.Worker
-	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), &w))
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &w))
 	workerJWT := rec.Header().Get("X-CDS-JWT")
 
 	t.Logf("Worker JWT: %s", workerJWT)
@@ -117,22 +110,22 @@ func TestPostRegisterWorkerHandler(t *testing.T) {
 	_, workerJWT := RegisterWorker(t, api, db, g.ID, model.Name, 0, true)
 
 	uri := api.Router.GetRoute("POST", api.postRefreshWorkerHandler, nil)
-	test.NotEmpty(t, uri)
+	require.NotEmpty(t, uri)
 	req := assets.NewJWTAuthentifiedRequest(t, workerJWT, "POST", uri, nil)
 
 	//Do the request
 	rec := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 204, rec.Code)
+	require.Equal(t, 204, rec.Code)
 
 	uri = api.Router.GetRoute("POST", api.postUnregisterWorkerHandler, nil)
-	test.NotEmpty(t, uri)
+	require.NotEmpty(t, uri)
 	req = assets.NewJWTAuthentifiedRequest(t, workerJWT, "POST", uri, nil)
 
 	//Do the request
 	rec = httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 204, rec.Code)
+	require.Equal(t, 204, rec.Code)
 }
 
 // TestPostInvalidRegister tests to register a worker for a job, without a JobID
@@ -158,11 +151,11 @@ func TestPostInvalidRegister(t *testing.T) {
 		JobID:        0,
 		RegisterOnly: false,
 	})
-	test.NoError(t, err)
-	assert.NotNil(t, hConsumer)
+	require.NoError(t, err)
+	require.NotNil(t, hConsumer)
 
 	uri := api.Router.GetRoute("POST", api.postRegisterWorkerHandler, nil)
-	test.NotEmpty(t, uri)
+	require.NotEmpty(t, uri)
 	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, sdk.WorkerRegistrationForm{
 		Arch:    runtime.GOARCH,
 		OS:      runtime.GOOS,
@@ -172,5 +165,5 @@ func TestPostInvalidRegister(t *testing.T) {
 	//Do the request
 	rec := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 401, rec.Code)
+	require.Equal(t, 401, rec.Code)
 }

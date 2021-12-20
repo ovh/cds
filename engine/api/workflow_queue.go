@@ -40,7 +40,7 @@ import (
 
 func (api *API) postTakeWorkflowJobHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		id, err := requestVarInt(r, "id")
+		id, err := requestVarInt(r, "permJobID")
 		if err != nil {
 			return err
 		}
@@ -764,6 +764,17 @@ func (api *API) postWorkflowJobStepStatusHandler() service.Handler {
 
 func (api *API) countWorkflowJobQueueHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		consumer := getAPIConsumer(ctx)
+
+		var count sdk.WorkflowNodeJobRunCount
+
+		if consumer.Worker != nil {
+			if consumer.Worker.JobRunID != nil {
+				count.Count = 1
+			}
+			return service.WriteJSON(w, count, http.StatusOK)
+		}
+
 		since, until, _ := getSinceUntilLimitHeader(ctx, w, r)
 		modelType, ratioService, err := getModelTypeRatioService(ctx, r)
 		if err != nil {
@@ -776,14 +787,13 @@ func (api *API) countWorkflowJobQueueHandler() service.Handler {
 		filter.Since = &since
 		filter.Until = &until
 
-		var count sdk.WorkflowNodeJobRunCount
-		if !isMaintainer(ctx) && !isAdmin(ctx) {
+		if !isMaintainer(ctx) {
 			count, err = workflow.CountNodeJobRunQueueByGroupIDs(ctx, api.mustDB(), api.Cache, filter, getAPIConsumer(ctx).GetGroupIDs())
 		} else {
 			count, err = workflow.CountNodeJobRunQueue(ctx, api.mustDB(), api.Cache, filter)
 		}
 		if err != nil {
-			return sdk.WrapError(err, "Unable to count queue")
+			return sdk.WrapError(err, "unable to count queue")
 		}
 
 		return service.WriteJSON(w, count, http.StatusOK)
@@ -798,15 +808,15 @@ func (api *API) getWorkflowJobQueueHandler() service.Handler {
 			return sdk.NewError(sdk.ErrWrongRequest, err)
 		}
 		if !sdk.StatusValidate(status...) {
-			return sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Invalid given status"))
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given status")
 		}
 		if len(status) == 0 {
 			status = []string{sdk.StatusWaiting}
 		}
 
-		modelType, ratioService, errM := getModelTypeRatioService(ctx, r)
-		if errM != nil {
-			return errM
+		modelType, ratioService, err := getModelTypeRatioService(ctx, r)
+		if err != nil {
+			return err
 		}
 
 		regions, err := QueryStrings(r, "region")
@@ -814,14 +824,26 @@ func (api *API) getWorkflowJobQueueHandler() service.Handler {
 			return sdk.NewError(sdk.ErrWrongRequest, err)
 		}
 
-		permissions := sdk.PermissionRead
+		consumer := getAPIConsumer(ctx)
 
-		isW := isWorker(ctx)
-		isS := isService(ctx)
-		if isW || isS {
-			permissions = sdk.PermissionReadExecute
+		jobs := make([]sdk.WorkflowNodeJobRun, 0)
+
+		if consumer.Worker != nil {
+			if consumer.Worker.JobRunID != nil {
+				job, err := workflow.LoadNodeJobRun(ctx, api.mustDB(), api.Cache, *consumer.Worker.JobRunID)
+				if err != nil {
+					return err
+				}
+				jobs = []sdk.WorkflowNodeJobRun{*job}
+			}
+			return service.WriteJSON(w, jobs, http.StatusOK)
 		}
 
+		isS := isService(ctx)
+		permissions := sdk.PermissionRead
+		if isS {
+			permissions = sdk.PermissionReadExecute
+		}
 		filter := workflow.NewQueueFilter()
 		filter.RatioService = ratioService
 		filter.Since = &since
@@ -834,15 +856,14 @@ func (api *API) getWorkflowJobQueueHandler() service.Handler {
 			filter.ModelType = []string{modelType}
 		}
 
-		var jobs []sdk.WorkflowNodeJobRun
-		// If the consumer is a worker, a hatchery or a non maintainer user, filter the job by its groups
-		if isW || isS || !isMaintainer(ctx) {
+		// If the consumer is a hatchery or a non maintainer user, filter the job by its groups
+		if isS || !isMaintainer(ctx) {
 			jobs, err = workflow.LoadNodeJobRunQueueByGroupIDs(ctx, api.mustDB(), api.Cache, filter, getAPIConsumer(ctx).GetGroupIDs())
 		} else {
 			jobs, err = workflow.LoadNodeJobRunQueue(ctx, api.mustDB(), api.Cache, filter)
 		}
 		if err != nil {
-			return sdk.WrapError(err, "Unable to load queue")
+			return sdk.WrapError(err, "unable to load queue")
 		}
 
 		return service.WriteJSON(w, jobs, http.StatusOK)
@@ -853,7 +874,7 @@ func getModelTypeRatioService(ctx context.Context, r *http.Request) (string, *in
 	modelType := FormString(r, "modelType")
 	if modelType != "" {
 		if !sdk.WorkerModelValidate(modelType) {
-			return "", nil, sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Invalid given modelType"))
+			return "", nil, sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given modelType")
 		}
 	}
 	ratioService := FormString(r, "ratioService")
@@ -861,7 +882,7 @@ func getModelTypeRatioService(ctx context.Context, r *http.Request) (string, *in
 	if ratioService != "" {
 		i, err := strconv.Atoi(ratioService)
 		if err != nil {
-			return "", nil, sdk.WrapError(sdk.ErrInvalidNumber, "getModelTypeRatioService> %s is not a integer", ratioService)
+			return "", nil, sdk.NewErrorFrom(sdk.ErrInvalidNumber, " %s is not a integer", ratioService)
 		}
 		ratio = &i
 	}
@@ -1106,7 +1127,7 @@ func (api *API) postWorkflowRunResultsHandler() service.Handler {
 		}
 
 		if !isCDN(ctx) && !isWorker(ctx) {
-			return sdk.WrapError(sdk.ErrForbidden, "only CDN can call this route")
+			return sdk.WrapError(sdk.ErrForbidden, "only CDN and worker can call this route")
 		}
 
 		var runResult sdk.WorkflowRunResult

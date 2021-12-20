@@ -1150,7 +1150,6 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 	require.NotNil(t, sdk.ParameterFind(lastRun.RootRun().BuildParameters, "cds.key.app-sshkey.id"))
 	require.NotNil(t, sdk.ParameterFind(lastRun.RootRun().BuildParameters, "cds.key.env-sshkey.pub"))
 	require.NotNil(t, sdk.ParameterFind(lastRun.RootRun().BuildParameters, "cds.key.env-sshkey.id"))
-
 }
 
 func waitCraftinWorkflow(t *testing.T, api *API, db gorp.SqlExecutor, id int64) error {
@@ -1158,7 +1157,7 @@ func waitCraftinWorkflow(t *testing.T, api *API, db gorp.SqlExecutor, id int64) 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	go api.WorkflowRunCraft(ctx, 10*time.Millisecond)
+	go api.WorkflowRunCraft(ctx, 1*time.Second)
 
 	tick := time.NewTicker(1 * time.Second)
 	defer tick.Stop()
@@ -1210,7 +1209,7 @@ func Test_workflowRunCraft(t *testing.T) {
 
 	f := sdk.Feature{
 		Name: sdk.FeaturePurgeMaxRuns,
-		Rule: "return true",
+		Rule: "return project_key == \"" + proj.Key + "\"",
 	}
 	require.NoError(t, featureflipping.Insert(gorpmapping.Mapper, api.mustDB(), &f))
 

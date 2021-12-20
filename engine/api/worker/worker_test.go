@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -72,19 +73,22 @@ func TestRegister(t *testing.T) {
 	db, store := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	g := assets.InsertGroup(t, db)
-	h, _, c, _ := assets.InsertHatchery(t, db, *g)
+	h, _, hatcheryConsumer, _ := assets.InsertHatchery(t, db, *g)
+	workerConsumer, err := authentication.NewConsumerWorker(context.TODO(), db, sdk.RandomString(10), h, hatcheryConsumer)
+	require.NoError(t, err)
 	m := assets.InsertWorkerModel(t, db, sdk.RandomString(5), g.ID)
 
-	w, err := worker.RegisterWorker(context.TODO(), db, store, hatchery.SpawnArguments{
+	spawnArgs := hatchery.SpawnArgumentsJWT{
 		HatcheryName: h.Name,
-		Model:        m,
 		RegisterOnly: true,
 		WorkerName:   sdk.RandomString(10),
-	}, *h, c, sdk.WorkerRegistrationForm{
+	}
+	spawnArgs.Model.ID = m.ID
+	w, err := worker.RegisterWorker(context.TODO(), db, store, spawnArgs, *h, hatcheryConsumer, workerConsumer, sdk.WorkerRegistrationForm{
 		Arch:               runtime.GOARCH,
 		OS:                 runtime.GOOS,
 		BinaryCapabilities: []string{"bash"},
-	})
+	}, nil)
 	require.NoError(t, err)
 	require.NotNil(t, w)
 
@@ -95,15 +99,16 @@ func TestRegister(t *testing.T) {
 	require.Equal(t, w.HatcheryID, wk.HatcheryID)
 
 	// try to register a worker for a job, without a JobID
-	w2, err := worker.RegisterWorker(context.TODO(), db, store, hatchery.SpawnArguments{
+	spawnArgs = hatchery.SpawnArgumentsJWT{
 		HatcheryName: h.Name,
-		Model:        m,
 		WorkerName:   sdk.RandomString(10),
-	}, *h, c, sdk.WorkerRegistrationForm{
+	}
+	spawnArgs.Model.ID = m.ID
+	w2, err := worker.RegisterWorker(context.TODO(), db, store, spawnArgs, *h, hatcheryConsumer, workerConsumer, sdk.WorkerRegistrationForm{
 		Arch:               runtime.GOARCH,
 		OS:                 runtime.GOOS,
 		BinaryCapabilities: []string{"bash"},
-	})
+	}, nil)
 
 	require.Error(t, err)
 	require.Nil(t, w2)

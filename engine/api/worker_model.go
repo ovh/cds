@@ -236,16 +236,27 @@ func (api *API) getWorkerModelsHandler() service.Handler {
 
 		consumer := getAPIConsumer(ctx)
 
-		// TODO test if hatchery wildcard vs with groups (wildcard same code as a user)
-		models := []sdk.Model{}
+		models := make([]sdk.Model, 0)
+
+		if consumer.Worker != nil {
+			if consumer.Worker.ModelID != nil {
+				model, err := workermodel.LoadByID(ctx, api.mustDB(), *consumer.Worker.ModelID, workermodel.LoadOptions.Default)
+				if err != nil {
+					return err
+				}
+				models = []sdk.Model{*model}
+			}
+			return service.WriteJSON(w, models, http.StatusOK)
+		}
+
 		var err error
 		if ok := isHatchery(ctx); ok && len(consumer.GroupIDs) > 0 {
 			models, err = workermodel.LoadAllByGroupIDs(ctx, api.mustDB(), consumer.GetGroupIDs(), &filter, workermodel.LoadOptions.Default)
-		} else if isMaintainer(ctx) || isAdmin(ctx) {
+		} else if isMaintainer(ctx) {
 			models, err = workermodel.LoadAll(ctx, api.mustDB(), &filter, workermodel.LoadOptions.Default)
 		} else {
-			groupIDs := append(consumer.GetGroupIDs(), group.SharedInfraGroup.ID)
-			models, err = workermodel.LoadAllByGroupIDs(ctx, api.mustDB(), groupIDs, &filter, workermodel.LoadOptions.Default)
+			models, err = workermodel.LoadAllByGroupIDs(ctx, api.mustDB(), append(consumer.GetGroupIDs(), group.SharedInfraGroup.ID),
+				&filter, workermodel.LoadOptions.Default)
 		}
 		if err != nil {
 			return sdk.WrapError(err, "cannot load worker models")
@@ -273,7 +284,7 @@ func (api *API) getWorkerModelUsageHandler() service.Handler {
 		}
 
 		var pips []sdk.Pipeline
-		if isMaintainer(ctx) || isAdmin(ctx) {
+		if isMaintainer(ctx) {
 			pips, err = pipeline.LoadByWorkerModel(ctx, api.mustDB(), m)
 		} else {
 			pips, err = pipeline.LoadByWorkerModelAndGroupIDs(ctx, api.mustDB(), m,

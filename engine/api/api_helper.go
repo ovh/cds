@@ -24,7 +24,7 @@ func isGroupAdmin(ctx context.Context, g *sdk.Group) bool {
 	member := g.IsMember(c.GetGroupIDs())
 	admin := g.IsAdmin(*c.AuthentifiedUser)
 	log.Debug(ctx, "api.isGroupAdmin> member:%t admin:%t", member, admin)
-	return member && admin
+	return member && admin && c.Worker == nil
 }
 
 func isGroupMember(ctx context.Context, g *sdk.Group) bool {
@@ -40,9 +40,7 @@ func isMaintainer(ctx context.Context) bool {
 	if c == nil {
 		return false
 	}
-	maintainer := c.Maintainer()
-	admin := c.Admin()
-	return maintainer || admin
+	return c.Maintainer()
 }
 
 func supportMFA(ctx context.Context) bool {

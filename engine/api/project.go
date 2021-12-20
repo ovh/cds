@@ -704,19 +704,24 @@ func (api *API) getProjectAccessHandler() service.Handler {
 		if err != nil && sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return sdk.WrapError(sdk.ErrForbidden, "consumer (%s) is not a worker", consumer.ID)
 		}
-		consumer.Worker = worker
 
-		maintainerOrAdmin := consumer.Maintainer() || consumer.Admin()
+		jobRunID := worker.JobRunID
+		if jobRunID != nil {
+			proj, err := project.Load(ctx, api.mustDB(), projectKey)
+			if err != nil {
+				return sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
+			}
 
-		perms, err := permission.LoadProjectMaxLevelPermission(ctx, api.mustDB(), []string{projectKey}, consumer.GetGroupIDs())
-		if err != nil {
-			return sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
+			nodeJobRun, err := workflow.LoadNodeJobRun(ctx, api.mustDB(), api.Cache, *jobRunID)
+			if err != nil {
+				return sdk.WrapError(sdk.ErrUnauthorized, "can't load node job run with id %q", *jobRunID)
+			}
+
+			if nodeJobRun.ProjectID == proj.ID {
+				return service.WriteJSON(w, nil, http.StatusOK)
+			}
 		}
-		maxLevelPermission := perms.Level(projectKey)
-		if maxLevelPermission < sdk.PermissionRead && !maintainerOrAdmin {
-			return sdk.WrapError(sdk.ErrUnauthorized, "not authorized for project %s", projectKey)
-		}
 
-		return service.WriteJSON(w, nil, http.StatusOK)
+		return sdk.WrapError(sdk.ErrUnauthorized, "worker %q(%s) not authorized for project %q", worker.Name, worker.ID, projectKey)
 	}
 }

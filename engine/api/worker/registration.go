@@ -58,34 +58,61 @@ type TakeForm struct {
 }
 
 // RegisterWorker  Register new worker
-func RegisterWorker(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, spawnArgs hatchery.SpawnArguments, hatcheryService sdk.Service, consumer *sdk.AuthConsumer, registrationForm sdk.WorkerRegistrationForm) (*sdk.Worker, error) {
-	if spawnArgs.WorkerName == "" {
-		return nil, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unauthorized to register a worker without a name")
-	}
-
-	if !spawnArgs.RegisterOnly && spawnArgs.JobID == 0 {
-		return nil, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unauthorized to register a worker for a job without a JobID")
+func RegisterWorker(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store,
+	spawnArgs hatchery.SpawnArgumentsJWT, hatcheryService sdk.Service, hatcheryConsumer *sdk.AuthConsumer, workerConsumer *sdk.AuthConsumer,
+	registrationForm sdk.WorkerRegistrationForm, runNodeJob *sdk.WorkflowNodeJobRun) (*sdk.Worker, error) {
+	if err := spawnArgs.Validate(); err != nil {
+		return nil, err
 	}
 
 	var model *sdk.Model
-	if spawnArgs.Model != nil {
+	if spawnArgs.Model.ID > 0 {
 		var err error
 		model, err = workermodel.LoadByID(ctx, db, spawnArgs.Model.ID, workermodel.LoadOptions.Default)
 		if err != nil {
 			return nil, err
 		}
 	}
-
-	// If worker model is public (sharedInfraGroup) it can be ran by every one
-	// If worker is public it can run every model
-	// Private worker for a group cannot run a private model for another group
-	if model != nil && !sdk.IsInInt64Array(group.SharedInfraGroup.ID, consumer.GetGroupIDs()) &&
-		!sdk.IsInInt64Array(model.GroupID, consumer.GetGroupIDs()) &&
-		model.GroupID != group.SharedInfraGroup.ID {
-		return nil, sdk.WithStack(sdk.ErrForbidden)
+	if spawnArgs.RegisterOnly && model == nil {
+		return nil, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unauthorized to register only worker without model information")
 	}
 
-	//Instanciate a new worker
+	// To use a model, the hatchery's consumer should have read access to the model's group or be CDS maintainer. Shared models can be used by every Hatchery.
+	// For restricted models, the hatchery consumer should have the model's group, it will not inherit permission from its parent.
+	// To register a model, the hatchery's consumer should be admin of the model's group or CDS admin.
+	if model != nil {
+		g, err := group.LoadByID(ctx, db, model.GroupID, group.LoadOptions.WithMembers)
+		if err != nil {
+			return nil, err
+		}
+		canUseModel := sdk.IsInInt64Array(model.GroupID, hatcheryConsumer.GetGroupIDs()) || hatcheryConsumer.Maintainer() || model.GroupID == group.SharedInfraGroup.ID
+		cantUseRestrictedModel := model.Restricted && !sdk.IsInInt64Array(model.GroupID, hatcheryConsumer.GroupIDs)
+		if !canUseModel || cantUseRestrictedModel {
+			return nil, sdk.WrapError(sdk.ErrForbidden, "hatchery can't use model %q", model.Path())
+		}
+		canRegisterModel := g.IsAdmin(*hatcheryConsumer.AuthentifiedUser) || hatcheryConsumer.Admin()
+		if spawnArgs.RegisterOnly && !canRegisterModel {
+			return nil, sdk.WrapError(sdk.ErrForbidden, "hatchery can't register model %q", model.Path())
+		}
+	}
+
+	// To register a job the hatchery's consumer should have a group with read/exec permission on the job.
+	// If the model is used to run a job, its group should be in the job's exec groups
+	if spawnArgs.JobID > 0 {
+		canTakeJob := runNodeJob.ExecGroups.HasOneOf(hatcheryConsumer.GetGroupIDs()...) || hatcheryConsumer.Admin()
+		if !canTakeJob {
+			return nil, sdk.WrapError(sdk.ErrForbidden, "hatchery can't register job with id %q", spawnArgs.JobID)
+		}
+
+		if model != nil {
+			canUseModelForJob := runNodeJob.ExecGroups.HasOneOf(model.GroupID)
+			if !canUseModelForJob {
+				return nil, sdk.WrapError(sdk.ErrForbidden, "hatchery can't register job (id: %q) with model (path: %q) for a group that is not in job's exec groups", spawnArgs.JobID, model.Path())
+			}
+		}
+	}
+
+	// Instanciate a new worker
 	w := &sdk.Worker{
 		ID:           sdk.UUID(),
 		Name:         spawnArgs.WorkerName,
@@ -93,7 +120,7 @@ func RegisterWorker(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store 
 		HatcheryID:   &hatcheryService.ID,
 		HatcheryName: hatcheryService.Name,
 		LastBeat:     time.Now(),
-		ConsumerID:   consumer.ID,
+		ConsumerID:   workerConsumer.ID,
 		Version:      registrationForm.Version,
 		OS:           registrationForm.OS,
 		Arch:         registrationForm.Arch,
@@ -111,7 +138,7 @@ func RegisterWorker(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store 
 		return nil, err
 	}
 
-	//If the worker is registered for a model and it gave us BinaryCapabilities...
+	// If the worker is registered for a model and it gave us BinaryCapabilities...
 	if model != nil && spawnArgs.RegisterOnly {
 		if len(registrationForm.BinaryCapabilities) > 0 {
 			if err := workermodel.UpdateCapabilities(ctx, db, model.ID, registrationForm); err != nil {

@@ -59,25 +59,22 @@ func (api *API) postRegisterWorkerHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		var groupIDs []int64
-		if workerTokenFromHatchery.Worker.JobID != 0 {
-			job, err := workflow.LoadNodeJobRun(ctx, tx, api.Cache, workerTokenFromHatchery.Worker.JobID)
-			if err != nil {
-				return sdk.NewErrorWithStack(sdk.WrapError(err, "error on LoadNodeJobRun with jobID %d", workerTokenFromHatchery.Worker.JobID), sdk.ErrForbidden)
-			}
-			groupIDs = sdk.Groups(job.ExecGroups).ToIDs()
-		} else {
-			groupIDs = hatcheryConsumer.GetGroupIDs()
-		}
-
 		// We have to issue a new consumer for the worker
-		workerConsumer, err := authentication.NewConsumerWorker(ctx, tx, workerTokenFromHatchery.Subject, hatchSrv, hatcheryConsumer, groupIDs)
+		workerConsumer, err := authentication.NewConsumerWorker(ctx, tx, workerTokenFromHatchery.Subject, hatchSrv, hatcheryConsumer)
 		if err != nil {
 			return err
 		}
 
+		var runNodeJob *sdk.WorkflowNodeJobRun
+		if workerTokenFromHatchery.Worker.JobID > 0 {
+			runNodeJob, err = workflow.LoadNodeJobRun(ctx, tx, api.Cache, workerTokenFromHatchery.Worker.JobID)
+			if err != nil {
+				return sdk.NewErrorWithStack(sdk.WrapError(err, "can't load job with id %d", workerTokenFromHatchery.Worker.JobID), sdk.ErrForbidden)
+			}
+		}
+
 		// Try to register worker
-		wk, err := worker.RegisterWorker(ctx, tx, api.Cache, workerTokenFromHatchery.Worker, *hatchSrv, workerConsumer, registrationForm)
+		wk, err := worker.RegisterWorker(ctx, tx, api.Cache, workerTokenFromHatchery.Worker, *hatchSrv, hatcheryConsumer, workerConsumer, registrationForm, runNodeJob)
 		if err != nil {
 			return sdk.NewErrorWithStack(
 				sdk.WrapError(err, "[%s] Registering failed", workerTokenFromHatchery.Worker.WorkerName),
@@ -215,11 +212,10 @@ func (api *API) disableWorkerHandler() service.Handler {
 
 func (api *API) postRefreshWorkerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		wk, err := worker.LoadByConsumerID(ctx, api.mustDB(), getAPIConsumer(ctx).ID)
-		if err != nil {
-			return err
+		if isWorker := isWorker(ctx); !isWorker {
+			return sdk.WithStack(sdk.ErrForbidden)
 		}
-
+		wk := getAPIConsumer(ctx).Worker
 		if err := worker.RefreshWorker(api.mustDB(), wk.ID); err != nil && (sdk.Cause(err) != sql.ErrNoRows || sdk.Cause(err) != worker.ErrNoWorker) {
 			return sdk.WrapError(err, "cannot refresh last beat of %s", wk.Name)
 		}
@@ -229,10 +225,10 @@ func (api *API) postRefreshWorkerHandler() service.Handler {
 
 func (api *API) postUnregisterWorkerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		wk, err := worker.LoadByConsumerID(ctx, api.mustDB(), getAPIConsumer(ctx).ID)
-		if err != nil {
-			return err
+		if isWorker := isWorker(ctx); !isWorker {
+			return sdk.WithStack(sdk.ErrForbidden)
 		}
+		wk := getAPIConsumer(ctx).Worker
 		if err := DisableWorker(ctx, api.mustDB(), wk.ID, api.Config.Log.StepMaxSize); err != nil {
 			return sdk.WrapError(err, "cannot delete worker %s", wk.Name)
 		}
@@ -242,10 +238,11 @@ func (api *API) postUnregisterWorkerHandler() service.Handler {
 
 func (api *API) workerWaitingHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		wk, err := worker.LoadByConsumerID(ctx, api.mustDB(), getAPIConsumer(ctx).ID)
-		if err != nil {
-			return err
+		if isWorker := isWorker(ctx); !isWorker {
+			return sdk.WithStack(sdk.ErrForbidden)
 		}
+
+		wk := getAPIConsumer(ctx).Worker
 
 		if wk.Status == sdk.StatusWaiting {
 			return nil

@@ -2,6 +2,7 @@ package group
 
 import (
 	"context"
+	"sort"
 
 	"github.com/go-gorp/gorp"
 
@@ -58,6 +59,8 @@ func loadMembers(ctx context.Context, db gorp.SqlExecutor, gs ...*sdk.Group) err
 	for _, g := range gs {
 		if _, ok := mLinks[g.ID]; ok {
 			g.Members = make([]sdk.GroupMember, 0, len(mLinks[g.ID]))
+			// Sort members by group link id
+			sort.Slice(mLinks[g.ID], func(i, j int) bool { return mLinks[g.ID][i].ID < mLinks[g.ID][j].ID })
 			for _, link := range mLinks[g.ID] {
 				if member, ok := mMembers[link.AuthentifiedUserID]; ok {
 					g.Members = append(g.Members, sdk.GroupMember{

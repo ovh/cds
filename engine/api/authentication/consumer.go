@@ -8,19 +8,14 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func NewConsumerWorker(ctx context.Context, db gorpmapper.SqlExecutorWithTx, name string, hatcherySrv *sdk.Service, hatcheryConsumer *sdk.AuthConsumer, groupIDs []int64) (*sdk.AuthConsumer, error) {
+func NewConsumerWorker(ctx context.Context, db gorpmapper.SqlExecutorWithTx, name string, hatcherySrv *sdk.Service, hatcheryConsumer *sdk.AuthConsumer) (*sdk.AuthConsumer, error) {
 	c := sdk.AuthConsumer{
 		Name:               name,
 		AuthentifiedUserID: hatcheryConsumer.AuthentifiedUserID,
 		ParentID:           &hatcheryConsumer.ID,
 		Type:               sdk.ConsumerBuiltin,
 		Data:               map[string]string{},
-		GroupIDs:           groupIDs,
 		ScopeDetails: sdk.NewAuthConsumerScopeDetails(
-			sdk.AuthConsumerScopeWorker,
-			sdk.AuthConsumerScopeWorkerModel,
-			sdk.AuthConsumerScopeProject,
-			sdk.AuthConsumerScopeRun,
 			sdk.AuthConsumerScopeRunExecution,
 		),
 		ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 24*time.Hour),

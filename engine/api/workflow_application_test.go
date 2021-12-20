@@ -10,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/api/application"
@@ -112,8 +111,6 @@ func Test_releaseApplicationWorkflowHandler(t *testing.T) {
 	}
 
 	ctx := testRunWorkflow(t, api, router, f)
-	testGetWorkflowJobAsWorker(t, api, db, router, &ctx)
-	assert.NotNil(t, ctx.job)
 
 	// Register the worker
 	testRegisterWorker(t, api, db, router, &ctx)

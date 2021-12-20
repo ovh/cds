@@ -188,7 +188,7 @@ func GroupPointersToIDs(gs []*Group) []int64 {
 	return ids
 }
 
-// IsMember checks if given group memeber is part of current group.
+// IsMember checks if given group member is part of current group.
 func (g Group) IsMember(groupIDs []int64) bool {
 	for _, id := range groupIDs {
 		if id == g.ID {
@@ -198,8 +198,7 @@ func (g Group) IsMember(groupIDs []int64) bool {
 	return false
 }
 
-// IsAdmin checks if given authentified user is admin for current group,
-// group should have members aggregated and authentified user old user struct should be set.
+// IsAdmin checks if given authentified user is admin for current group, group should have members aggregated.
 func (g Group) IsAdmin(u AuthentifiedUser) bool {
 	for _, member := range g.Members {
 		if member.ID == u.ID {
