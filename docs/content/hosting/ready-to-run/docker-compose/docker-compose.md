@@ -7,6 +7,15 @@ card:
 
 ## Run with Docker-Compose
 
+{{% notice warning %}}
+
+This tutorial allows you to start a CDS locally quickly.
+
+* Do not use this docker-compose installation to run it in production without modification.
+* For production purpose, please read [CDS Services]({{< relref "../../cds_services" >}})
+
+{{% /notice %}}
+
 The [docker-compose.yml](https://github.com/ovh/cds/blob/{{< param "version" "master" >}}/docker-compose.yml) contains:
 
 - cds-db service with a PostgreSQL
@@ -27,7 +36,7 @@ Docker compose is very convenient to launch CDS for testing it. But this is not 
 ## How to run
 
 ```bash
-$ mkdir /tmp/cdstest && cd /tmp/cdstest && mkdir -p tools/smtpmock
+$ mkdir /tmp/cdstest && cd /tmp/cdstest
 $ curl https://raw.githubusercontent.com/ovh/cds/{{< param "version" "master" >}}/docker-compose.yml -o docker-compose.yml
 $ export HOSTNAME=$(hostname)
 $ export CDS_DOCKER_IMAGE=ovhcom/cds-engine:{{< param "version" "latest" >}}
@@ -57,9 +66,11 @@ $ TOKEN_CMD=$(docker logs $(docker-compose ps -q cds-prepare) | grep INIT_TOKEN)
 # if you have this error:  "command too long: export INIT_TOKEN=....",
 # you can manually execute the command "export INIT_TOKEN=...."
 
-# create user
-$ curl 'http://localhost:8081/download/cdsctl/linux/amd64?variant=nokeychain' -o cdsctl
+# download cdsctl
+# on linux: $ curl 'http://localhost:8081/download/cdsctl/linux/amd64?variant=nokeychain' -o cdsctl
 # on OSX: $ curl 'http://localhost:8081/download/cdsctl/darwin/amd64?variant=nokeychain' -o cdsctl
+
+# create user
 $ chmod +x cdsctl
 $ ./cdsctl signup --api-url http://localhost:8081 --email admin@localhost.local --username admin --fullname admin
 # enter a strong password
@@ -101,6 +112,15 @@ Workflow MyFirstWorkflow #1 has been launched
 http://localhost:8080/project/DEMO/workflow/MyFirstWorkflow/run/1
 ```
 
+{{% notice warning %}}
+
+Important: the service is exposed without **https**.
+
+* Do not use this docker-compose installation to run it in production without modification.
+* Safari don't manage secured cookie on localhost, please use another browser to avoid authentication error on your browser
+
+{{% /notice %}}
+
 - Login on WebUI
 
 Open a browser on http://localhost:8080/account/signup, then login with the user `admin`,
@@ -119,6 +139,30 @@ There is a Run Condition on it `cds.manual = true`:
 The build pipeline contains two stages, with only one job in each stage
 
 ![Build Pipeline](/images/ready_to_run_docker_compose_build_pipeline.png)
+
+## If the job does not start
+
+The worker model used in this tutorial is a docker image golang. CDS will run jobs only if the worker model is *registered*.
+
+So, if the first job of the workflow stay in *Waiting* status, you can check if you worker model is well registered.
+Go on http://localhost:8080/settings/worker-model/shared.infra/go-official-1.17 , you must have the flag `need registration: false`.
+
+If the flag is `true`, you can check the swarm hatchery logs:
+
+```bash
+$ docker-compose logs -f cds-hatchery-swarm
+```
+
+When a worker (so, a container) is starting, this container communicates with the api with the url `http://$HOSTNAME:8081` to download the worker binary.
+This URL is using your `$HOSTNAME`, but perhaps that this can't be used on your docker installation from a container. If the container can't communicate to the api with this url, you can update it:
+
+```bash
+# you can replace $HOSTNAME by your IP on local network. Example: 192.168.xxx.xxx
+$ export CDS_EDIT_CONFIG="hatchery.swarm.commonConfiguration.provision.workerApiHttp.url=http://192.168.xxx.xxx:8081 "
+$ docker-compose up cds-edit-config
+$ docker-compose restart cds-hatchery-swarm
+```
+
 
 ## Setup connection with a VCS
 

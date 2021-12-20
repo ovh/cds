@@ -216,6 +216,9 @@ func verifyAddResultArtifactManager(ctx context.Context, db gorp.SqlExecutor, st
 	artResult.Size = fileInfo.Size
 	artResult.MD5 = fileInfo.Md5
 	artResult.RepoType = fileInfo.Type
+	if artResult.FileType == "" {
+		artResult.FileType = artResult.RepoType
+	}
 
 	if err := artResult.IsValid(); err != nil {
 		return "", err

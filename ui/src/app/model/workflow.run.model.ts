@@ -153,6 +153,7 @@ export class UIArtifact {
     human_size: string;
     link: string;
     type: string;
+    file_type: string;
 }
 
 
@@ -170,6 +171,7 @@ export class WorkflowRunResultArtifactManager {
     path: string;
     repository_name: string;
     repository_type: string;
+    file_type: string;
 }
 
 export class WorkflowRunResultStaticFile {

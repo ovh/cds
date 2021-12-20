@@ -264,19 +264,21 @@ func (c *client) QueueSendStepResult(ctx context.Context, id int64, res sdk.Step
 	return err
 }
 
-func (c *client) QueueArtifactUpload(ctx context.Context, projectKey, integrationName string, nodeJobRunID int64, tag, filePath string) (bool, time.Duration, error) {
+func (c *client) QueueArtifactUpload(ctx context.Context, projectKey, integrationName string, nodeJobRunID int64, tag, filePath, fileType string) (bool, time.Duration, error) {
 	t0 := time.Now()
 	store := new(sdk.ArtifactsStore)
 	uri := fmt.Sprintf("/project/%s/storage/%s", projectKey, integrationName)
 	_, _ = c.GetJSON(ctx, uri, store)
 	if store.TemporaryURLSupported {
-		err := c.queueIndirectArtifactUpload(ctx, projectKey, integrationName, nodeJobRunID, tag, filePath)
+		err := c.queueIndirectArtifactUpload(ctx, projectKey, integrationName, nodeJobRunID, tag, filePath, fileType)
 		return true, time.Since(t0), err
 	}
-	err := c.queueDirectArtifactUpload(projectKey, integrationName, nodeJobRunID, tag, filePath)
+	err := c.queueDirectArtifactUpload(projectKey, integrationName, nodeJobRunID, tag, filePath, fileType)
 	return false, time.Since(t0), err
 }
 
+// DEPRECATED
+// TODO: remove this code after CDN would be mandatory
 func (c *client) queueIndirectArtifactTempURL(ctx context.Context, projectKey, integrationName string, art *sdk.WorkflowNodeRunArtifact) error {
 	var retryURL = 10
 	var globalURLErr error
@@ -297,6 +299,8 @@ func (c *client) queueIndirectArtifactTempURL(ctx context.Context, projectKey, i
 	return globalURLErr
 }
 
+// DEPRECATED
+// TODO: remove this code after CDN would be mandatory
 func (c *client) queueIndirectArtifactTempURLPost(url string, content []byte) error {
 	//Post the file to the temporary URL
 	var retry = 10
@@ -335,7 +339,9 @@ func (c *client) queueIndirectArtifactTempURLPost(url string, content []byte) er
 	return globalErr
 }
 
-func (c *client) queueIndirectArtifactUpload(ctx context.Context, projectKey, integrationName string, nodeJobRunID int64, tag, filePath string) error {
+// DEPRECATED
+// TODO: remove this code after CDN would be mandatory
+func (c *client) queueIndirectArtifactUpload(ctx context.Context, projectKey, integrationName string, nodeJobRunID int64, tag, filePath, fileType string) error {
 	f, errop := os.Open(filePath)
 	if errop != nil {
 		return errop
@@ -416,7 +422,9 @@ func (c *client) queueIndirectArtifactUpload(ctx context.Context, projectKey, in
 	return callbackErr
 }
 
-func (c *client) queueDirectArtifactUpload(projectKey, integrationName string, nodeJobRunID int64, tag, filePath string) error {
+// DEPRECATED
+// TODO: remove this code after CDN would be mandatory
+func (c *client) queueDirectArtifactUpload(projectKey, integrationName string, nodeJobRunID int64, tag, filePath, fileType string) error {
 	f, errop := os.Open(filePath)
 	if errop != nil {
 		return errop
@@ -506,7 +514,8 @@ func (c *client) QueueJobSetVersion(ctx context.Context, jobID int64, version sd
 }
 
 //  STATIC FILES -----
-
+// DEPRECATED
+// TODO: remove this code after CDN would be mandatory
 func (c *client) QueueStaticFilesUpload(ctx context.Context, projectKey, integrationName string, nodeJobRunID int64, name, entrypoint, staticKey string, tarContent io.Reader) (string, bool, time.Duration, error) {
 	t0 := time.Now()
 	staticFile := sdk.StaticFiles{
@@ -527,6 +536,8 @@ func (c *client) QueueStaticFilesUpload(ctx context.Context, projectKey, integra
 	return publicURL, false, time.Since(t0), err
 }
 
+// DEPRECATED
+// TODO: remove this code after CDN would be mandatory
 func (c *client) queueDirectStaticFilesUpload(projectKey, integrationName string, staticFile *sdk.StaticFiles, tarContent io.Reader) (string, error) {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)

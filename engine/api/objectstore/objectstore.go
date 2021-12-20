@@ -21,7 +21,7 @@ type Driver interface {
 	GetProjectIntegration() sdk.ProjectIntegration
 	Status(ctx context.Context) sdk.MonitoringStatusLine
 	Store(o Object, data io.ReadCloser) (string, error)
-	ServeStaticFiles(o Object, entrypoint string, data io.ReadCloser) (string, error)
+	ServeStaticFiles(o Object, entrypoint string, data io.ReadCloser) (string, error) // DEPRECATED
 	Fetch(ctx context.Context, o Object) (io.ReadCloser, error)
 	Delete(ctx context.Context, o Object) error
 	DeleteContainer(ctx context.Context, containerPath string) error

@@ -3,6 +3,7 @@ package sdk
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -17,12 +18,21 @@ var ErrExecutableNotFound = errors.New("executable file not found in $PATH")
 func findExecutable(fs afero.Fs, file string) error {
 	d, err := fs.Stat(file)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
-	if m := d.Mode(); !m.IsDir() && m&0111 != 0 {
+
+	m := d.Mode()
+
+	isWindows := strings.EqualFold(runtime.GOOS, "windows")
+	isExecutable := m&0111 != 0
+
+	// Don't check exec permission for Windows.
+	// File mode will only return if the file is readonly or not.
+	// https://pkg.go.dev/os#Chmod
+	if !m.IsDir() && (isWindows || isExecutable) {
 		return nil
 	}
-	return os.ErrPermission
+	return errors.Wrapf(os.ErrPermission, "invalid permission %q", m)
 }
 
 // LookPath searches for an executable named file in the
@@ -35,11 +45,10 @@ func LookPath(fs afero.Fs, file string) (string, error) {
 	// but that would not match all the Unix shells.
 
 	if strings.Contains(file, "/") {
-		err := findExecutable(fs, file)
-		if err == nil {
-			return file, nil
+		if err := findExecutable(fs, file); err != nil {
+			return "", err
 		}
-		return "", ErrExecutableNotFound
+		return file, nil
 	}
 	path := os.Getenv("PATH")
 	for _, dir := range filepath.SplitList(path) {

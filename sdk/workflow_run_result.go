@@ -31,6 +31,7 @@ func (r *WorkflowRunResult) GetArtifact() (WorkflowRunResultArtifact, error) {
 	if err := JSONUnmarshal(r.DataRaw, &data); err != nil {
 		return data, WithStack(err)
 	}
+
 	return data, nil
 }
 
@@ -46,6 +47,9 @@ func (r *WorkflowRunResult) GetArtifactManager() (WorkflowRunResultArtifactManag
 	var data WorkflowRunResultArtifactManager
 	if err := JSONUnmarshal(r.DataRaw, &data); err != nil {
 		return data, WithStack(err)
+	}
+	if data.FileType == "" {
+		data.FileType = data.RepoType
 	}
 	return data, nil
 }
@@ -74,6 +78,7 @@ type WorkflowRunResultArtifactManager struct {
 	Perm     uint32 `json:"perm"`
 	RepoName string `json:"repository_name"`
 	RepoType string `json:"repository_type"`
+	FileType string `json:"file_type"`
 }
 
 func (a *WorkflowRunResultArtifactManager) IsValid() error {
@@ -113,6 +118,7 @@ type WorkflowRunResultArtifact struct {
 	MD5        string `json:"md5"`
 	CDNRefHash string `json:"cdn_hash"`
 	Perm       uint32 `json:"perm"`
+	FileType   string `json:"file_type"`
 }
 
 func (a *WorkflowRunResultArtifact) IsValid() error {

@@ -55,7 +55,7 @@ type HatcheryCommonConfiguration struct {
 		Region                    string   `toml:"region" default:"" comment:"region of this hatchery - optional. With a free text as 'myregion', user can set a prerequisite 'region' with value 'myregion' on CDS Job" json:"region"`
 		IgnoreJobWithNoRegion     bool     `toml:"ignoreJobWithNoRegion" default:"false" comment:"Ignore job without a region prerequisite if ignoreJobWithNoRegion=true" json:"ignoreJobWithNoRegion"`
 		WorkerAPIHTTP             struct {
-			URL      string `toml:"url" default:"http://localhost:8081" commented:"true" comment:"CDS API URL for worker, let empty or commented to use the same URL that is used by the Hatchery" json:"url"`
+			URL      string `toml:"url" default:"" commented:"false" comment:"CDS API URL for worker, let empty or commented to use the same URL that is used by the Hatchery. Example: http://localhost:8081" json:"url"`
 			Insecure bool   `toml:"insecure" default:"false" commented:"true" comment:"sslInsecureSkipVerify, set to true if you use a self-signed SSL on CDS API" json:"insecure"`
 		} `toml:"workerApiHttp" json:"workerApiHttp"`
 		WorkerBasedir     string `toml:"workerBasedir" commented:"true" comment:"Worker Basedir" json:"workerBasedir"`

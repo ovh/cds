@@ -7,6 +7,7 @@ import (
 	"time"
 )
 
+// DEPRECATED
 // StaticFiles define a files needed to be save for serving static files
 type StaticFiles struct {
 	ID                   int64     `json:"id" db:"id" cli:"id"`

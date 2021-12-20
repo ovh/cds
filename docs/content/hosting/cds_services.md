@@ -18,7 +18,7 @@ A CDS µService is a process that can be launch by the `engine` binary.
 - **api**: this is the main µService. 
   - Each `api` must shared the same PostgreSQL and redis databases. All other CDS µServices have to communicate with `api`.
   - The database user does not need to have the admin rights to create / alter tables.
-- **cdn**: this is the main µService. 
+- **cdn**: the `cdn` service is dedicated to receive and store CDS's logs and artifacts. 
   - Each `cdn` must shared the same PostgreSQL and redis databases.
   - The database user does not need to have the admin rights to create / alter tables.
 - **ui**: the `ui` service serves the CDS UI static files.
