@@ -272,7 +272,7 @@ func (api *API) InitRouter() {
 
 	// Workflows run
 	r.Handle("/project/{permProjectKey}/runs", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getWorkflowAllRunsHandler))
-	r.Handle("/project/{key}/workflows/{permWorkflowName}/artifact/{artifactId}", Scopes(sdk.AuthConsumerScopeRun, sdk.AuthConsumerScopeRunExecution), r.GET(api.getDownloadArtifactHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowNameAdvanced}/artifact/{artifactId}", Scopes(sdk.AuthConsumerScopeRun, sdk.AuthConsumerScopeRunExecution), r.GET(api.getDownloadArtifactHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowRunsHandler), r.POST(api.postWorkflowRunHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/branch/{branch}", Scope(sdk.AuthConsumerScopeRun), r.DELETE(api.deleteWorkflowRunsBranchHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/latest", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getLatestWorkflowRunHandler))
@@ -281,9 +281,9 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}", Scopes(sdk.AuthConsumerScopeRun, sdk.AuthConsumerScopeRunExecution), r.GET(api.getWorkflowRunHandler), r.DELETE(api.deleteWorkflowRunHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/stop", Scope(sdk.AuthConsumerScopeRun), r.POST(api.stopWorkflowRunHandler, MaintenanceAware()))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/vcs/resync", Scope(sdk.AuthConsumerScopeRun), r.POST(api.postResyncVCSWorkflowRunHandler))
-	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/artifacts", Scopes(sdk.AuthConsumerScopeRun, sdk.AuthConsumerScopeRunExecution), r.GET(api.getWorkflowRunArtifactsHandler))
-	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/artifacts/links", Scopes(sdk.AuthConsumerScopeRun, sdk.AuthConsumerScopeRunExecution), r.GET(api.getWorkflowRunArtifactLinksHandler))
-	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/results", Scopes(sdk.AuthConsumerScopeRun, sdk.AuthConsumerScopeRunExecution), r.GET(api.getWorkflowRunResultsHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowNameAdvanced}/runs/{number}/artifacts", Scopes(sdk.AuthConsumerScopeRun, sdk.AuthConsumerScopeRunExecution), r.GET(api.getWorkflowRunArtifactsHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowNameAdvanced}/runs/{number}/artifacts/links", Scopes(sdk.AuthConsumerScopeRun, sdk.AuthConsumerScopeRunExecution), r.GET(api.getWorkflowRunArtifactLinksHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowNameAdvanced}/runs/{number}/results", Scopes(sdk.AuthConsumerScopeRun, sdk.AuthConsumerScopeRunExecution), r.GET(api.getWorkflowRunResultsHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowNodeRunHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}/results", Scopes(sdk.AuthConsumerScopeRun, sdk.AuthConsumerScopeRunExecution), r.GET(api.getWorkflowNodeRunResultsHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}/stop", Scope(sdk.AuthConsumerScopeRun), r.POST(api.stopWorkflowNodeRunHandler, MaintenanceAware()))

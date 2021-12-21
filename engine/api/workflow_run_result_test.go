@@ -7,14 +7,15 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func Test_getWorkflowRunAndNodeRunResults(t *testing.T) {
@@ -85,9 +86,9 @@ func Test_getWorkflowRunAndNodeRunResults(t *testing.T) {
 
 	//Prepare request for RUN
 	varsRun := map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": w.Name,
-		"number":           fmt.Sprintf("%d", wrDB.Number),
+		"key":                      proj.Key,
+		"permWorkflowNameAdvanced": w.Name,
+		"number":                   fmt.Sprintf("%d", wrDB.Number),
 	}
 
 	uriRun := router.GetRoute("GET", api.getWorkflowRunResultsHandler, varsRun)

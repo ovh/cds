@@ -31,7 +31,7 @@ func CleanURLParameter(u string) string {
 		u = "consumer-type"
 	case "key", "permProjectKey":
 		u = "project-key"
-	case "permWorkflowName", "workflowName":
+	case "permWorkflowName", "permWorkflowNameAdvanced", "workflowName":
 		u = "workflow-name"
 	case "workflowID":
 		u = "workflow-id"

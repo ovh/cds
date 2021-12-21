@@ -1359,7 +1359,7 @@ func (api *API) getDownloadArtifactHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
-		name := vars["permWorkflowName"]
+		name := vars["permWorkflowNameAdvanced"]
 
 		id, errI := requestVarInt(r, "artifactId")
 		if errI != nil {
@@ -1423,7 +1423,7 @@ func (api *API) getWorkflowRunResultsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
-		name := vars["permWorkflowName"]
+		name := vars["permWorkflowNameAdvanced"]
 
 		number, err := requestVarInt(r, "number")
 		if err != nil {
@@ -1480,7 +1480,7 @@ func (api *API) getWorkflowRunArtifactsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
-		name := vars["permWorkflowName"]
+		name := vars["permWorkflowNameAdvanced"]
 
 		number, err := requestVarInt(r, "number")
 		if err != nil {
@@ -1489,7 +1489,7 @@ func (api *API) getWorkflowRunArtifactsHandler() service.Handler {
 
 		wr, err := workflow.LoadRun(ctx, api.mustDB(), key, name, number, workflow.LoadRunOptions{WithArtifacts: true})
 		if err != nil {
-			return err
+			return sdk.WrapError(err, "no workflow run found for %s/%s with number %d", key, name, number)
 		}
 
 		arts := []sdk.WorkflowNodeRunArtifact{}

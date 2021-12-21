@@ -76,6 +76,39 @@ func Test_checkWorkflowPermissions(t *testing.T) {
 		"permWorkflowName": wctx.workflow.Name,
 	})
 	assert.Error(t, err, "should not be granted")
+
+	// test case: worker for same project
+	w2ctx := testRunWorkflowForProject(t, api, api.Router, wctx.project, wctx.userToken)
+	consumer.GroupIDs = nil
+	consumer.AuthentifiedUser = admin
+	consumer.Worker = &sdk.Worker{
+		JobRunID: &wctx.job.ID,
+	}
+	ctx = context.WithValue(ctx, contextConsumer, consumer)
+	err = api.checkWorkflowPermissions(ctx, &responseTracker{}, w2ctx.workflow.Name, sdk.PermissionRead, map[string]string{
+		"key":              w2ctx.project.Key,
+		"permWorkflowName": w2ctx.workflow.Name,
+	})
+	require.Error(t, err, "should not be granted")
+	err = api.checkWorkflowAdvancedPermissions(ctx, &responseTracker{}, w2ctx.workflow.Name, sdk.PermissionRead, map[string]string{
+		"key":              w2ctx.project.Key,
+		"permWorkflowName": w2ctx.workflow.Name,
+	})
+	require.NoError(t, err, "should be granted")
+
+	// test case: worker for different project
+	w3ctx := testRunWorkflow(t, api, api.Router)
+	consumer.GroupIDs = nil
+	consumer.AuthentifiedUser = admin
+	consumer.Worker = &sdk.Worker{
+		JobRunID: &wctx.job.ID,
+	}
+	ctx = context.WithValue(ctx, contextConsumer, consumer)
+	err = api.checkWorkflowAdvancedPermissions(ctx, &responseTracker{}, w3ctx.workflow.Name, sdk.PermissionRead, map[string]string{
+		"key":              w3ctx.project.Key,
+		"permWorkflowName": w3ctx.workflow.Name,
+	})
+	require.Error(t, err, "should not be granted")
 }
 
 func Test_checkProjectPermissions(t *testing.T) {

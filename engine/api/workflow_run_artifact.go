@@ -26,7 +26,7 @@ func (api *API) getWorkflowRunArtifactLinksHandler() service.Handler {
 		if !enabled {
 			return sdk.NewErrorFrom(sdk.ErrNotFound, "cdn is not enable for project %s", projectKey)
 		}
-		workflowName := vars["permWorkflowName"]
+		workflowName := vars["permWorkflowNameAdvanced"]
 		runNumber, err := requestVarInt(r, "number")
 		if err != nil {
 			return err

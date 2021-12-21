@@ -307,6 +307,18 @@ func (api *API) getWorkflowAccessHandler() service.Handler {
 				if nodeRun.WorkflowID == workflowID {
 					return service.WriteJSON(w, nil, http.StatusOK)
 				}
+
+				daoSrc := workflow.LoadOptions{Minimal: true}.GetWorkflowDAO()
+				daoSrc.Filters.WorkflowIDs = []int64{nodeRun.WorkflowID}
+				workerSrcWf, err := daoSrc.Load(ctx, api.mustDB())
+				if err != nil {
+					return sdk.WrapError(err, "can't load worker source workflow with id %d on project %q", nodeRun.WorkflowID, projectKey)
+				}
+
+				// Allow workers to download artifact from other workflow inside the same project
+				if projectKey == workerSrcWf.ProjectKey && sdk.CDNItemType(itemType) == sdk.CDNTypeItemRunResult {
+					return service.WriteJSON(w, nil, http.StatusOK)
+				}
 			}
 
 			return sdk.WrapError(sdk.ErrUnauthorized, "worker %q(%s) not authorized for workflow with id %d", worker.Name, worker.ID, workflowID)
