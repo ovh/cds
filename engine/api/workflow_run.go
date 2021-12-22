@@ -355,6 +355,13 @@ func (api *API) stopWorkflowRunHandler() service.Handler {
 			return err
 		}
 
+		consumer := getAPIConsumer(ctx)
+
+		// This POST exec handler should not be called by workers
+		if consumer.Worker != nil {
+			return sdk.WrapError(sdk.ErrForbidden, "not authorized for worker")
+		}
+
 		run, err := workflow.LoadRun(ctx, api.mustDB(), key, name, number, workflow.LoadRunOptions{
 			WithDeleted: true,
 		})
@@ -692,6 +699,13 @@ func (api *API) stopWorkflowNodeRunHandler() service.Handler {
 			return err
 		}
 
+		consumer := getAPIConsumer(ctx)
+
+		// This POST exec handler should not be called by workers
+		if consumer.Worker != nil {
+			return sdk.WrapError(sdk.ErrForbidden, "not authorized for worker")
+		}
+
 		p, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithVariables)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load project")
@@ -811,6 +825,11 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 		name := vars["permWorkflowName"]
 
 		consumer := getAPIConsumer(ctx)
+
+		// This POST exec handler should not be called by workers
+		if consumer.Worker != nil {
+			return sdk.WrapError(sdk.ErrForbidden, "not authorized for worker")
+		}
 
 		telemetry.Current(ctx,
 			telemetry.Tag(telemetry.TagProjectKey, key),
@@ -1607,6 +1626,13 @@ func (api *API) postResyncVCSWorkflowRunHandler() service.Handler {
 		number, err := requestVarInt(r, "number")
 		if err != nil {
 			return err
+		}
+
+		consumer := getAPIConsumer(ctx)
+
+		// This POST exec handler should not be called by workers
+		if consumer.Worker != nil {
+			return sdk.WrapError(sdk.ErrForbidden, "not authorized for worker")
 		}
 
 		proj, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithVariables)
