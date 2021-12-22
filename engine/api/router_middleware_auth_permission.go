@@ -27,18 +27,19 @@ type PermCheckFunc func(ctx context.Context, w http.ResponseWriter, key string, 
 
 func permissionFunc(api *API) map[string]PermCheckFunc {
 	return map[string]PermCheckFunc{
-		"permProjectKey":        api.checkProjectPermissions,
-		"permWorkflowName":      api.checkWorkflowPermissions,
-		"permGroupName":         api.checkGroupPermissions,
-		"permModelName":         api.checkWorkerModelPermissions,
-		"permActionName":        api.checkActionPermissions,
-		"permActionBuiltinName": api.checkActionBuiltinPermissions,
-		"permTemplateSlug":      api.checkTemplateSlugPermissions,
-		"permUsernamePublic":    api.checkUserPublicPermissions,
-		"permUsername":          api.checkUserPermissions,
-		"permConsumerID":        api.checkConsumerPermissions,
-		"permSessionID":         api.checkSessionPermissions,
-		"permJobID":             api.checkJobIDPermissions,
+		"permProjectKey":           api.checkProjectPermissions,
+		"permWorkflowName":         api.checkWorkflowPermissions,
+		"permWorkflowNameAdvanced": api.checkWorkflowAdvancedPermissions,
+		"permGroupName":            api.checkGroupPermissions,
+		"permModelName":            api.checkWorkerModelPermissions,
+		"permActionName":           api.checkActionPermissions,
+		"permActionBuiltinName":    api.checkActionBuiltinPermissions,
+		"permTemplateSlug":         api.checkTemplateSlugPermissions,
+		"permUsernamePublic":       api.checkUserPublicPermissions,
+		"permUsername":             api.checkUserPermissions,
+		"permConsumerID":           api.checkConsumerPermissions,
+		"permSessionID":            api.checkSessionPermissions,
+		"permJobID":                api.checkJobIDPermissions,
 	}
 }
 
@@ -168,110 +169,139 @@ func (api *API) checkProjectPermissions(ctx context.Context, w http.ResponseWrit
 		trackSudo(ctx, w)
 		return nil
 	}
-	log.Debug(ctx, "checkWorkflowPermissions> %s(%s) access granted to %s because has permission (max permission = %d)", getAPIConsumer(ctx).Name, getAPIConsumer(ctx).ID, projectKey, callerPermission)
+	log.Debug(ctx, "checkProjectPermissions> %s(%s) access granted to %s because has permission (max permission = %d)", getAPIConsumer(ctx).Name, getAPIConsumer(ctx).ID, projectKey, callerPermission)
 	telemetry.Current(ctx, telemetry.Tag(telemetry.TagPermission, "is_granted"))
 	return nil
 }
 
 func (api *API) checkWorkflowPermissions(ctx context.Context, w http.ResponseWriter, workflowName string, perm int, routeVars map[string]string) error {
-	ctx, end := telemetry.Span(ctx, "api.checkWorkflowPermissions")
-	defer end()
+	return api.checkWorkflowPermissionsWithOpts(CheckWorkflowPermissionsOpts{})(ctx, w, workflowName, perm, routeVars)
+}
 
-	projectKey, has := routeVars["permProjectKey"]
-	if projectKey == "" {
-		projectKey, has = routeVars["key"]
-	}
-	if !has {
-		return sdk.WithStack(sdk.ErrNotFound)
-	}
+// Same as checkWorkflowPermissions but also allows GET for workers on same project's workflows.
+// This is needed as artifact download is allowed from a workflow to another in the same project.
+func (api *API) checkWorkflowAdvancedPermissions(ctx context.Context, w http.ResponseWriter, workflowName string, perm int, routeVars map[string]string) error {
+	return api.checkWorkflowPermissionsWithOpts(CheckWorkflowPermissionsOpts{
+		AllowGETForWorkerOnSameProject: true,
+	})(ctx, w, workflowName, perm, routeVars)
+}
 
-	if supportMFA(ctx) && !isMFA(ctx) {
-		_, requireMFA := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeatureMFARequired, map[string]string{
-			"project_key": projectKey,
-		})
-		if requireMFA {
-			return sdk.WithStack(sdk.ErrMFARequired)
+type CheckWorkflowPermissionsOpts struct {
+	AllowGETForWorkerOnSameProject bool
+}
+
+func (api *API) checkWorkflowPermissionsWithOpts(opts CheckWorkflowPermissionsOpts) PermCheckFunc {
+	return func(ctx context.Context, w http.ResponseWriter, workflowName string, perm int, routeVars map[string]string) error {
+		ctx, end := telemetry.Span(ctx, "api.checkWorkflowPermissions")
+		defer end()
+
+		projectKey, has := routeVars["permProjectKey"]
+		if projectKey == "" {
+			projectKey, has = routeVars["key"]
 		}
-	}
+		if !has {
+			return sdk.WithStack(sdk.ErrNotFound)
+		}
 
-	if workflowName == "" {
-		return sdk.WrapError(sdk.ErrWrongRequest, "invalid given workflow name")
-	}
+		if supportMFA(ctx) && !isMFA(ctx) {
+			_, requireMFA := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeatureMFARequired, map[string]string{
+				"project_key": projectKey,
+			})
+			if requireMFA {
+				return sdk.WithStack(sdk.ErrMFARequired)
+			}
+		}
 
-	exists, err := workflow.Exists(ctx, api.mustDB(), projectKey, workflowName)
-	if err != nil {
-		return err
-	}
-	if !exists {
-		return sdk.WithStack(sdk.ErrNotFound)
-	}
+		if workflowName == "" {
+			return sdk.WrapError(sdk.ErrWrongRequest, "invalid given workflow name")
+		}
 
-	consumer := getAPIConsumer(ctx)
+		exists, err := workflow.Exists(ctx, api.mustDB(), projectKey, workflowName)
+		if err != nil {
+			return err
+		}
+		if !exists {
+			return sdk.WithStack(sdk.ErrNotFound)
+		}
 
-	// A worker can only read/exec access the workflow of the its job.
-	if consumer.Worker != nil {
-		jobRunID := consumer.Worker.JobRunID
-		if jobRunID != nil {
-			nodeJobRun, err := workflow.LoadNodeJobRun(ctx, api.mustDB(), api.Cache, *jobRunID)
-			if err != nil {
-				return sdk.WrapError(sdk.ErrForbidden, "can't load node job run with id %q", *jobRunID)
+		consumer := getAPIConsumer(ctx)
+
+		// A worker can only read/exec access the workflow of the its job.
+		if consumer.Worker != nil {
+			jobRunID := consumer.Worker.JobRunID
+			if jobRunID != nil {
+				nodeJobRun, err := workflow.LoadNodeJobRun(ctx, api.mustDB(), api.Cache, *jobRunID)
+				if err != nil {
+					return sdk.WrapError(sdk.ErrForbidden, "can't load node job run with id %q", *jobRunID)
+				}
+
+				nodeRun, err := workflow.LoadNodeRunByID(ctx, api.mustDB(), nodeJobRun.WorkflowNodeRunID, workflow.LoadRunOptions{})
+				if err != nil {
+					return sdk.WrapError(sdk.ErrForbidden, "can't load node run with id %q", nodeJobRun.WorkflowNodeRunID)
+				}
+
+				daoTarget := workflow.LoadOptions{Minimal: true}.GetWorkflowDAO()
+				daoTarget.Filters.ProjectKey = projectKey
+				daoTarget.Filters.WorkflowName = workflowName
+				targetWf, err := daoTarget.Load(ctx, api.mustDB())
+				if err != nil {
+					return err
+				}
+
+				if nodeRun.WorkflowID == targetWf.ID && perm <= sdk.PermissionReadExecute {
+					return nil
+				}
+
+				daoSrc := workflow.LoadOptions{Minimal: true}.GetWorkflowDAO()
+				daoSrc.Filters.WorkflowIDs = []int64{nodeRun.WorkflowID}
+				workerSrcWf, err := daoSrc.Load(ctx, api.mustDB())
+				if err != nil {
+					return sdk.WrapError(err, "can't load worker source workflow with id %d on project %q", nodeRun.WorkflowID, projectKey)
+				}
+
+				if projectKey == workerSrcWf.ProjectKey && perm == sdk.PermissionRead && opts.AllowGETForWorkerOnSameProject {
+					return nil
+				}
 			}
 
-			nodeRun, err := workflow.LoadNodeRunByID(ctx, api.mustDB(), nodeJobRun.WorkflowNodeRunID, workflow.LoadRunOptions{})
-			if err != nil {
-				return sdk.WrapError(sdk.ErrForbidden, "can't load node run with id %q", nodeJobRun.WorkflowNodeRunID)
-			}
+			return sdk.WrapError(sdk.ErrForbidden, "worker %q(%s) not authorized for workflow %s/%s", consumer.Worker.Name, consumer.Worker.ID, projectKey, workflowName)
+		}
 
-			dao := workflow.LoadOptions{Minimal: true}.GetWorkflowDAO()
-			dao.Filters.ProjectKey = projectKey
-			dao.Filters.WorkflowName = workflowName
-			wf, err := dao.Load(ctx, api.mustDB())
-			if err != nil {
-				return err
-			}
+		perms, err := permission.LoadWorkflowMaxLevelPermission(ctx, api.mustDB(), projectKey, []string{workflowName}, getAPIConsumer(ctx).GetGroupIDs())
+		if err != nil {
+			return sdk.NewError(sdk.ErrForbidden, err)
+		}
 
-			if nodeRun.WorkflowID == wf.ID && perm <= sdk.PermissionReadExecute {
+		maxLevelPermission := perms.Level(workflowName)
+
+		if maxLevelPermission < perm { // If the caller based on its group doesn have enough permission level
+			// If it's about READ: we have to check if the user is a maintainer or an admin
+			if perm < sdk.PermissionReadExecute {
+				if !isMaintainer(ctx) {
+					// The caller doesn't enough permission level from its groups and is neither a maintainer nor an admin
+					log.Debug(ctx, "checkWorkflowPermissions> %s is not authorized to %s/%s", getAPIConsumer(ctx).ID, projectKey, workflowName)
+					return sdk.WrapError(sdk.ErrForbidden, "not authorized for workflow %s/%s", projectKey, workflowName)
+				}
+				log.Debug(ctx, "checkWorkflowPermissions> %s access granted to %s/%s because is maintainer", getAPIConsumer(ctx).ID, projectKey, workflowName)
+				telemetry.Current(ctx, telemetry.Tag(telemetry.TagPermission, "is_maintainer"))
 				return nil
 			}
-		}
 
-		return sdk.WrapError(sdk.ErrForbidden, "worker %q(%s) not authorized for workflow %s/%s", consumer.Worker.Name, consumer.Worker.ID, projectKey, workflowName)
-	}
-
-	perms, err := permission.LoadWorkflowMaxLevelPermission(ctx, api.mustDB(), projectKey, []string{workflowName}, getAPIConsumer(ctx).GetGroupIDs())
-	if err != nil {
-		return sdk.NewError(sdk.ErrForbidden, err)
-	}
-
-	maxLevelPermission := perms.Level(workflowName)
-
-	if maxLevelPermission < perm { // If the caller based on its group doesn have enough permission level
-		// If it's about READ: we have to check if the user is a maintainer or an admin
-		if perm < sdk.PermissionReadExecute {
-			if !isMaintainer(ctx) {
-				// The caller doesn't enough permission level from its groups and is neither a maintainer nor an admin
+			// If it's about Execute of Write: we have to check if the user is an admin
+			if !isAdmin(ctx) {
+				// The caller doesn't enough permission level from its groups and is not an admin
 				log.Debug(ctx, "checkWorkflowPermissions> %s is not authorized to %s/%s", getAPIConsumer(ctx).ID, projectKey, workflowName)
 				return sdk.WrapError(sdk.ErrForbidden, "not authorized for workflow %s/%s", projectKey, workflowName)
 			}
-			log.Debug(ctx, "checkWorkflowPermissions> %s access granted to %s/%s because is maintainer", getAPIConsumer(ctx).ID, projectKey, workflowName)
-			telemetry.Current(ctx, telemetry.Tag(telemetry.TagPermission, "is_maintainer"))
+			log.Debug(ctx, "checkWorkflowPermissions> %s access granted to %s/%s because is admin", getAPIConsumer(ctx).ID, projectKey, workflowName)
+			telemetry.Current(ctx, telemetry.Tag(telemetry.TagPermission, "is_admin"))
+			trackSudo(ctx, w)
 			return nil
 		}
-
-		// If it's about Execute of Write: we have to check if the user is an admin
-		if !isAdmin(ctx) {
-			// The caller doesn't enough permission level from its groups and is not an admin
-			log.Debug(ctx, "checkWorkflowPermissions> %s is not authorized to %s/%s", getAPIConsumer(ctx).ID, projectKey, workflowName)
-			return sdk.WrapError(sdk.ErrForbidden, "not authorized for workflow %s/%s", projectKey, workflowName)
-		}
-		log.Debug(ctx, "checkWorkflowPermissions> %s access granted to %s/%s because is admin", getAPIConsumer(ctx).ID, projectKey, workflowName)
-		telemetry.Current(ctx, telemetry.Tag(telemetry.TagPermission, "is_admin"))
-		trackSudo(ctx, w)
+		log.Debug(ctx, "checkWorkflowPermissions> %s access granted to %s/%s because has permission (max permission = %d)", getAPIConsumer(ctx).ID, projectKey, workflowName, maxLevelPermission)
+		telemetry.Current(ctx, telemetry.Tag(telemetry.TagPermission, "is_granted"))
 		return nil
 	}
-	log.Debug(ctx, "checkWorkflowPermissions> %s access granted to %s/%s because has permission (max permission = %d)", getAPIConsumer(ctx).ID, projectKey, workflowName, maxLevelPermission)
-	telemetry.Current(ctx, telemetry.Tag(telemetry.TagPermission, "is_granted"))
-	return nil
 }
 
 func (api *API) checkGroupPermissions(ctx context.Context, w http.ResponseWriter, groupName string, permissionValue int, routeVars map[string]string) error {

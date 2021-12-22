@@ -66,8 +66,8 @@ func testRunWorkflow(t *testing.T, api *API, router *Router, optsF ...testRunWor
 	db, err := api.mustDB().Begin()
 	require.NoError(t, err)
 
-	u, jwtLambda := assets.InsertLambdaUser(t, db)
 	key := "proj-" + sdk.RandomString(10)
+	u, jwtLambda := assets.InsertLambdaUser(t, db)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), db, &group.LinkGroupUser{
 		GroupID:            proj.ProjectGroups[0].Group.ID,
@@ -83,6 +83,19 @@ func testRunWorkflow(t *testing.T, api *API, router *Router, optsF ...testRunWor
 	vcsServer.Set("token", "foo")
 	vcsServer.Set("secret", "bar")
 	require.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+
+	require.NoError(t, db.Commit())
+
+	res := testRunWorkflowForProject(t, api, router, proj, jwtLambda, optsF...)
+	res.user = u
+	res.userToken = jwtLambda
+
+	return res
+}
+
+func testRunWorkflowForProject(t *testing.T, api *API, router *Router, proj *sdk.Project, jwtLambda string, optsF ...testRunWorkflowOptions) testRunWorkflowCtx {
+	db, err := api.mustDB().Begin()
+	require.NoError(t, err)
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -195,7 +208,7 @@ func testRunWorkflow(t *testing.T, api *API, router *Router, optsF ...testRunWor
 	require.NotEmpty(t, uri)
 
 	opts := &sdk.WorkflowRunPostHandlerOption{}
-	req := assets.NewAuthentifiedRequest(t, u, jwtLambda, "POST", uri, opts)
+	req := assets.NewJWTAuthentifiedRequest(t, jwtLambda, "POST", uri, opts)
 
 	//Do the request
 	rec := httptest.NewRecorder()
@@ -263,12 +276,10 @@ func testRunWorkflow(t *testing.T, api *API, router *Router, optsF ...testRunWor
 	require.NotNil(t, job)
 
 	return testRunWorkflowCtx{
-		user:      u,
-		userToken: jwtLambda,
-		project:   proj,
-		workflow:  w1,
-		run:       wr,
-		job:       job,
+		project:  proj,
+		workflow: w1,
+		run:      wr,
+		job:      job,
 	}
 }
 
@@ -894,9 +905,9 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 
 	//Prepare request
 	uri = router.GetRoute("GET", api.getWorkflowRunArtifactsHandler, map[string]string{
-		"key":              ctx.project.Key,
-		"permWorkflowName": ctx.workflow.Name,
-		"number":           fmt.Sprintf("%d", updatedNodeRun.Number),
+		"key":                      ctx.project.Key,
+		"permWorkflowNameAdvanced": ctx.workflow.Name,
+		"number":                   fmt.Sprintf("%d", updatedNodeRun.Number),
 	})
 	require.NotEmpty(t, uri)
 	req = assets.NewJWTAuthentifiedRequest(t, ctx.userToken, "GET", uri, nil)
@@ -912,9 +923,9 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	// Download artifact
 	//Prepare request
 	uri = router.GetRoute("GET", api.getDownloadArtifactHandler, map[string]string{
-		"key":              ctx.project.Key,
-		"permWorkflowName": ctx.workflow.Name,
-		"artifactId":       fmt.Sprintf("%d", arts[0].ID),
+		"key":                      ctx.project.Key,
+		"permWorkflowNameAdvanced": ctx.workflow.Name,
+		"artifactId":               fmt.Sprintf("%d", arts[0].ID),
 	})
 	require.NotEmpty(t, uri)
 	req = assets.NewJWTAuthentifiedRequest(t, ctx.userToken, "GET", uri, nil)
