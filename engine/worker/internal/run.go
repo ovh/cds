@@ -806,7 +806,6 @@ func (w *CurrentWorker) executeHooksSetup(ctx context.Context, basedir afero.Fs,
 		s := bufio.NewScanner(bytes.NewReader(bs))
 		start := false
 		for s.Scan() {
-			fmt.Println(s.Text())
 			if s.Text() == "<<<ENVIRONMENT>>>" {
 				start = true
 			} else if start {
@@ -814,8 +813,7 @@ func (w *CurrentWorker) executeHooksSetup(ctx context.Context, basedir afero.Fs,
 				if len(kv) == 2 {
 					k := kv[0]
 					v := kv[1]
-					if !sdk.IsInArray(k+"="+v, os.Environ()) {
-						log.Info(ctx, "env variable from hook %q: %s=%s", filepath, k, v)
+					if !sdk.IsInArray(k+"="+v, w.Environ()) {
 						result[k] = v
 					}
 				}

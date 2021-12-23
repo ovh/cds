@@ -314,7 +314,7 @@ func (api *API) postWorkflowJobArtifactWithTempURLCallbackHandler() service.Hand
 
 // DEPRECATED
 // TODO: remove this code after CDN would be mandatory
-func (api *API) postWorkflowJobArtifacWithTempURLHandler() service.Handler {
+func (api *API) postWorkflowJobArtifactWithTempURLHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if isWorker := isWorker(ctx); !isWorker {
 			return sdk.WithStack(sdk.ErrForbidden)
