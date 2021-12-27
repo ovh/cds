@@ -559,3 +559,12 @@ func TestWrapHelpers(t *testing.T) {
 		})
 	}
 }
+
+func TestDashReplacementWithµµµ(t *testing.T) {
+	vars := map[string]string{
+		"result.headers.x-cache": "a",
+	}
+	got, err := Do("result.headers.x-cache is {{.result.headers.x-cache}}", vars)
+	assert.NoError(t, err)
+	assert.Equal(t, "result.headers.x-cache is a", got)
+}

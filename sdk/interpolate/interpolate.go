@@ -74,7 +74,7 @@ func Do(input string, vars map[string]string) (string, error) {
 		flatData[kb] = vars[k]
 
 		// handle "-" in var name
-		replacements = append(replacements, k+" ", kb+" ", k+"}", kb+"}", k+"|", kb+"|")
+		replacements = append(replacements, "."+k+" ", "."+kb+" ", "."+k+"}", "."+kb+"}", "."+k+"|", "."+kb+"|")
 	}
 
 	// handle "-" in var name
