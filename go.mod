@@ -73,7 +73,7 @@ require (
 	github.com/shirou/gopsutil v0.0.0-20170406131756-e49a95f3d5f8
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/afero v1.2.2
-	github.com/spf13/cast v1.3.0
+	github.com/spf13/cast v1.4.1
 	github.com/spf13/cobra v1.1.1
 	github.com/spf13/viper v1.7.0
 	github.com/streadway/amqp v0.0.0-20180528204448-e5adc2ada8b8
@@ -136,7 +136,6 @@ require (
 	github.com/coreos/etcd v3.3.13+incompatible // indirect
 	github.com/coreos/go-semver v0.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/docker/go-units v0.3.2 // indirect
 	github.com/donovanhide/eventsource v0.0.0-20170630084216-b8f31a59085e // indirect
 	github.com/dsnet/compress v0.0.2-0.20210315054119-f66993602bf5 // indirect
