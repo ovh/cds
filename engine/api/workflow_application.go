@@ -19,6 +19,10 @@ import (
 
 func (api *API) releaseApplicationWorkflowHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if isWorker := isWorker(ctx); !isWorker {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
+
 		vars := mux.Vars(r)
 		key := vars["key"]
 		name := vars["permWorkflowName"]

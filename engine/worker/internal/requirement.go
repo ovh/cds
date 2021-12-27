@@ -226,7 +226,7 @@ func checkPluginBinary(ctx context.Context, w *CurrentWorker, p sdk.GRPCPlugin) 
 		}
 	}
 	if binary == nil {
-		return fmt.Errorf("%s %s not supported by this plugin", currentOS, currentARCH)
+		return fmt.Errorf("%s/%s not supported by plugin %s", currentOS, currentARCH, p.Name)
 	}
 
 	// then check plugin requirements

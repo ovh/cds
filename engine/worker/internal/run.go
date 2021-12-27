@@ -788,6 +788,8 @@ func (w *CurrentWorker) executeHooksSetup(ctx context.Context, basedir afero.Fs,
 
 	setupDir = filepath.Join(absPath, filepath.Base(setupDir))
 
+	workerEnv := w.Environ()
+
 	err := filepath.Walk(setupDir, func(filepath string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -798,7 +800,7 @@ func (w *CurrentWorker) executeHooksSetup(ctx context.Context, basedir afero.Fs,
 
 		str := fmt.Sprintf("source %s ; echo '<<<ENVIRONMENT>>>' ; env", filepath)
 		cmd := exec.Command("bash", "-c", str)
-		cmd.Env = w.Environ()
+		cmd.Env = workerEnv
 		bs, err := cmd.CombinedOutput()
 		if err != nil {
 			return errors.WithStack(err)
@@ -806,7 +808,6 @@ func (w *CurrentWorker) executeHooksSetup(ctx context.Context, basedir afero.Fs,
 		s := bufio.NewScanner(bytes.NewReader(bs))
 		start := false
 		for s.Scan() {
-			fmt.Println(s.Text())
 			if s.Text() == "<<<ENVIRONMENT>>>" {
 				start = true
 			} else if start {
@@ -814,8 +815,7 @@ func (w *CurrentWorker) executeHooksSetup(ctx context.Context, basedir afero.Fs,
 				if len(kv) == 2 {
 					k := kv[0]
 					v := kv[1]
-					if !sdk.IsInArray(k+"="+v, os.Environ()) {
-						log.Info(ctx, "env variable from hook %q: %s=%s", filepath, k, v)
+					if !sdk.IsInArray(k+"="+v, workerEnv) {
 						result[k] = v
 					}
 				}
@@ -824,7 +824,7 @@ func (w *CurrentWorker) executeHooksSetup(ctx context.Context, basedir afero.Fs,
 		return nil
 	})
 	w.currentJob.envFromHooks = result
-	return err
+	return errors.WithStack(err)
 }
 
 func (w *CurrentWorker) executeHooksTeardown(ctx context.Context, basedir afero.Fs, workingDir string) error {
