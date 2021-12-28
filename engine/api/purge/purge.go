@@ -346,7 +346,7 @@ func DeleteArtifactsFromRepositoryManager(ctx context.Context, db gorp.SqlExecut
 	var rtToken string
 	for _, s := range secrets {
 		if s.Name == fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactoryConfigToken) {
-			rtToken = s.Value
+			rtToken = string(s.Value)
 			break
 		}
 	}

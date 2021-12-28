@@ -312,7 +312,6 @@ func configSetStartupData(conf *Configuration) (string, error) {
 
 	if conf.API != nil {
 		conf.API.Auth.RSAPrivateKey = string(apiPrivateKeyPEM)
-		conf.API.Secrets.Key = sdk.RandomString(32)
 
 		key, _ := keyloader.GenerateKey("hmac", gorpmapper.KeySignIdentifier, false, time.Now())
 		conf.API.Database.SignatureKey = database.RollingKeyConfig{Cipher: "hmac"}

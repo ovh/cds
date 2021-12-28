@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"net/http"
@@ -106,7 +107,7 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 		}
 
 		pbji := &sdk.WorkflowNodeJobRunData{}
-		report, err := takeJob(ctx, api.mustDB, api.Cache, p, id, workerModelName, pbji, wk, hatcheryName)
+		report, err := takeJob(ctx, api.mustDB, api.Cache, p, id, workerModelName, pbji, wk, hatcheryName, api.Config.Secrets.SkipProjectSecretsOnRegion)
 		if err != nil {
 			return sdk.WrapError(err, "cannot takeJob nodeJobRunID:%d", id)
 		}
@@ -136,15 +137,14 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 	}
 }
 
-func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, p *sdk.Project, id int64, workerModel string, wnjri *sdk.WorkflowNodeJobRunData, wk *sdk.Worker, hatcheryName string) (*workflow.ProcessorReport, error) {
-	// Start a tx
-	tx, errBegin := dbFunc().Begin()
-	if errBegin != nil {
-		return nil, sdk.WrapError(errBegin, "Cannot start transaction")
+func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, p *sdk.Project, id int64, workerModel string, wnjri *sdk.WorkflowNodeJobRunData, wk *sdk.Worker, hatcheryName string, skipProjectSecretsOnRegion []string) (*workflow.ProcessorReport, error) {
+	tx, err := dbFunc().Begin()
+	if err != nil {
+		return nil, sdk.WrapError(err, "cannot start transaction")
 	}
 	defer tx.Rollback() // nolint
 
-	//Prepare spawn infos
+	// Prepare spawn infos
 	m1 := sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobTaken.ID, Args: []interface{}{fmt.Sprintf("%d", id), wk.Name}}
 	m2 := sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobTakenWorkerVersion.ID, Args: []interface{}{wk.Name, wk.Version, wk.OS, wk.Arch}}
 	infos := []sdk.SpawnInfo{
@@ -186,7 +186,7 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 	if noderun.Status == sdk.StatusWaiting {
 		noderun.Status = sdk.StatusBuilding
 		if err := workflow.UpdateNodeRun(tx, noderun); err != nil {
-			return nil, sdk.WrapError(err, "Cannot update node run")
+			return nil, sdk.WrapError(err, "cannot update node run")
 		}
 		report.Add(ctx, *noderun)
 	}
@@ -194,7 +194,7 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 	// Load workflow run
 	workflowRun, err := workflow.LoadRunByID(ctx, tx, noderun.WorkflowRunID, workflow.LoadRunOptions{})
 	if err != nil {
-		return nil, sdk.WrapError(err, "Unable to load workflow run")
+		return nil, sdk.WrapError(err, "unable to load workflow run")
 	}
 
 	secrets, err := workflow.LoadDecryptSecrets(ctx, tx, workflowRun, noderun)
@@ -207,7 +207,7 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 	wnjri.NodeJobRun = *job
 	wnjri.Number = noderun.Number
 	wnjri.SubNumber = noderun.SubNumber
-	wnjri.Secrets = secrets
+	wnjri.Secrets = make([]sdk.Variable, 0, len(secrets))
 	wnjri.RunID = workflowRun.ID
 	wnjri.WorkflowID = workflowRun.WorkflowID
 	wnjri.WorkflowName = workflowRun.Workflow.Name
@@ -215,6 +215,34 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 
 	if err := tx.Commit(); err != nil {
 		return nil, sdk.WithStack(err)
+	}
+
+	secretsReqs := job.Job.Action.Requirements.FilterByType(sdk.SecretRequirement).Values()
+	secretsReqsRegs := make([]*regexp.Regexp, 0, len(secretsReqs))
+	for i := range secretsReqs {
+		r, err := regexp.Compile(secretsReqs[i])
+		if err != nil {
+			return nil, sdk.WithStack(err)
+		}
+		secretsReqsRegs = append(secretsReqsRegs, r)
+	}
+
+	// Filter project's secrets depending of the region requirement that was set on job
+	skipProjectSecrets := job.Region != nil && sdk.IsInArray(*job.Region, skipProjectSecretsOnRegion)
+	for i := range secrets {
+		if skipProjectSecrets && secrets[i].Context == workflow.SecretProjContext {
+			var inRequirements bool
+			for _, reg := range secretsReqsRegs {
+				if reg.MatchString(secrets[i].Name) {
+					inRequirements = true
+					break
+				}
+			}
+			if !inRequirements {
+				continue
+			}
+		}
+		wnjri.Secrets = append(wnjri.Secrets, secrets[i].ToVariable())
 	}
 
 	return report, nil

@@ -839,13 +839,13 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 
 		// LOAD PROJECT
 		_, next := telemetry.Span(ctx, "project.Load")
-		p, errP := project.Load(ctx, api.mustDB(), key,
+		p, err := project.Load(ctx, api.mustDB(), key,
 			project.LoadOptions.WithVariables,
 			project.LoadOptions.WithIntegrations,
 		)
 		next()
-		if errP != nil {
-			return sdk.WrapError(errP, "cannot load project")
+		if err != nil {
+			return sdk.WrapError(err, "cannot load project")
 		}
 
 		opts := sdk.WorkflowRunPostHandlerOption{}
@@ -862,10 +862,9 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 		// CHECK IF IT S AN EXISTING RUN
 		var lastRun *sdk.WorkflowRun
 		if opts.Number != nil {
-			var errlr error
-			lastRun, errlr = workflow.LoadRun(ctx, api.mustDB(), key, name, *opts.Number, workflow.LoadRunOptions{})
-			if errlr != nil {
-				return sdk.WrapError(errlr, "unable to load workflow run")
+			lastRun, err = workflow.LoadRun(ctx, api.mustDB(), key, name, *opts.Number, workflow.LoadRunOptions{})
+			if err != nil {
+				return sdk.WrapError(err, "unable to load workflow run")
 			}
 		}
 
@@ -938,7 +937,6 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 			})
 
 		} else {
-			var err error
 			wf, err = workflow.Load(ctx, api.mustDB(), api.Cache, *p, name, workflow.LoadOptions{
 				DeepPipeline:          true,
 				WithAsCodeUpdateEvent: true,
@@ -956,10 +954,9 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 			}
 
 			// CREATE WORKFLOW RUN
-			var errCreateRun error
-			lastRun, errCreateRun = workflow.CreateRun(api.mustDB(), wf, opts)
-			if errCreateRun != nil {
-				return errCreateRun
+			lastRun, err = workflow.CreateRun(api.mustDB(), wf, opts)
+			if err != nil {
+				return err
 			}
 		}
 

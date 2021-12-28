@@ -38,6 +38,7 @@ func Test_postApplicationMetadataHandler_AsProvider(t *testing.T) {
 	require.NoError(t, err)
 	_, jws, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), sdk.RandomString(10), 0, localConsumer, u.GetGroupIDs(),
 		sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject))
+	require.NoError(t, err)
 
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)

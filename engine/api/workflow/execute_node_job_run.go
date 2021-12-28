@@ -305,7 +305,7 @@ func checkStatusWaiting(ctx context.Context, store cache.Store, jobID int64, sta
 }
 
 // LoadDecryptSecrets loads all secrets for a job run
-func LoadDecryptSecrets(ctx context.Context, db gorp.SqlExecutor, wr *sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun) ([]sdk.Variable, error) {
+func LoadDecryptSecrets(ctx context.Context, db gorp.SqlExecutor, wr *sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun) (sdk.WorkflowRunSecrets, error) {
 	entities := []string{SecretProjContext}
 
 	for _, integ := range wr.Workflow.Integrations {

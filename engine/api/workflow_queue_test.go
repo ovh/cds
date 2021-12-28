@@ -76,6 +76,27 @@ func testRunWorkflow(t *testing.T, api *API, router *Router, optsF ...testRunWor
 	}))
 	u.Groups = append(u.Groups, proj.ProjectGroups[0].Group)
 
+	proj.Keys = []sdk.ProjectKey{
+		{
+			Type: sdk.KeyTypeSSH,
+			Name: sdk.GenerateProjectDefaultKeyName(proj.Key, sdk.KeyTypeSSH),
+		},
+		{
+			Type: sdk.KeyTypePGP,
+			Name: sdk.GenerateProjectDefaultKeyName(proj.Key, sdk.KeyTypePGP),
+		},
+	}
+	for i := range proj.Keys {
+		k := &proj.Keys[i]
+		k.ProjectID = proj.ID
+		newKey, err := keys.GenerateKey(k.Name, k.Type)
+		require.NoError(t, err)
+		k.Private = newKey.Private
+		k.Public = newKey.Public
+		k.KeyID = newKey.KeyID
+		require.NoError(t, project.InsertKey(db, k))
+	}
+
 	vcsServer := sdk.ProjectVCSServerLink{
 		ProjectID: proj.ID,
 		Name:      "github",
@@ -574,6 +595,7 @@ func Test_postTakeWorkflowJobHandler(t *testing.T) {
 
 	assert.Equal(t, "cdn.net:4545", pbji.GelfServiceAddr)
 	assert.Equal(t, true, pbji.GelfServiceAddrEnableTLS)
+	assert.Len(t, pbji.Secrets, 5)
 
 	run, err := workflow.LoadNodeJobRun(context.TODO(), api.mustDB(), api.Cache, ctx.job.ID)
 	require.NoError(t, err)
@@ -581,6 +603,50 @@ func Test_postTakeWorkflowJobHandler(t *testing.T) {
 	assert.Equal(t, ctx.model.Name, run.Model)
 	assert.Equal(t, ctx.worker.Name, run.WorkerName)
 	assert.NotEmpty(t, run.HatcheryName)
+}
+
+func Test_postTakeWorkflowJobWithFilteredSecretHandler(t *testing.T) {
+	api, db, router := newTestAPI(t)
+
+	api.Config.Secrets.SkipProjectSecretsOnRegion = []string{"test"}
+
+	ctx := testRunWorkflow(t, api, router, func(tt *testing.T, tx gorpmapper.SqlExecutorWithTx, pip *sdk.Pipeline, app *sdk.Application) {
+		pip.Stages[0].Jobs[0].Action.Requirements = []sdk.Requirement{{
+			Name:  "test",
+			Type:  sdk.RegionRequirement,
+			Value: "test",
+		}, {
+			Name:  "cds.proj",
+			Type:  sdk.SecretRequirement,
+			Value: "^cds.key.proj-ssh-.*.priv$",
+		}}
+		require.NoError(tt, pipeline.UpdateJob(context.TODO(), tx, &pip.Stages[0].Jobs[0]))
+	})
+
+	// Prepare VCS Mock
+	mockVCSSservice, _, _ := assets.InitCDNService(t, db)
+	t.Cleanup(func() {
+		_ = services.Delete(db, mockVCSSservice) // nolint
+	})
+
+	//Register the worker
+	testRegisterWorker(t, api, db, router, &ctx)
+
+	uri := router.GetRoute("POST", api.postTakeWorkflowJobHandler, map[string]string{
+		"permJobID": fmt.Sprintf("%d", ctx.job.ID),
+	})
+	require.NotEmpty(t, uri)
+
+	//This call must work
+	req := assets.NewJWTAuthentifiedRequest(t, ctx.workerToken, "POST", uri, nil)
+	rec := httptest.NewRecorder()
+	router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, 200, rec.Code)
+
+	pbji := &sdk.WorkflowNodeJobRunData{}
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), pbji))
+
+	assert.Len(t, pbji.Secrets, 4)
 }
 
 func Test_postTakeWorkflowInvalidJobHandler(t *testing.T) {
@@ -1301,7 +1367,6 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 
 	// Add repo manager
 	proj.VCSServers = make([]sdk.ProjectVCSServerLink, 0, 1)
-	proj.VCSServers = append(proj.VCSServers)
 
 	vcsServer := sdk.ProjectVCSServerLink{
 		ProjectID: proj.ID,
@@ -1378,6 +1443,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, *p, &w))
 
 	allSrv, err := services.LoadAll(context.TODO(), db)
+	require.NoError(t, err)
 	for _, s := range allSrv {
 		if err := services.Delete(db, &s); err != nil {
 			t.Fatalf("unable to delete service: %v", err)
@@ -1703,6 +1769,7 @@ func Test_workflowRunResultsAdd(t *testing.T) {
 		Perm:       0777,
 	}
 	bts, err := json.Marshal(artiData)
+	require.NoError(t, err)
 	addResultRequest := sdk.WorkflowRunResult{
 		WorkflowRunID:     wrCreate.ID,
 		WorkflowNodeRunID: nr.ID,

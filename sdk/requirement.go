@@ -1,5 +1,7 @@
 package sdk
 
+import "regexp"
+
 const (
 	//BinaryRequirement refers to the need to a specific binary on host running the action
 	BinaryRequirement = "binary"
@@ -17,6 +19,8 @@ const (
 	OSArchRequirement = "os-architecture"
 	// RegionRequirement lets a use to force a job running in a hatchery's region
 	RegionRequirement = "region"
+	// SecretRequirement is needed to ask for a project's secret when it's not automatically injected (ex: when using SkipProjectSecretsOnRegion)
+	SecretRequirement = "secret"
 )
 
 // RequirementList is a list of requirement
@@ -29,6 +33,17 @@ func (l RequirementList) Values() []string {
 		values[i] = l[i].Value
 	}
 	return values
+}
+
+// FilterByType returns all requirements that match given type.
+func (l RequirementList) FilterByType(requirementType string) RequirementList {
+	res := make(RequirementList, 0, len(l))
+	for i := range l {
+		if l[i].Type == requirementType {
+			res = append(res, l[i])
+		}
+	}
+	return res
 }
 
 // RequirementListDeduplicate returns requirements list without duplicate values.
@@ -74,6 +89,15 @@ func (l RequirementList) IsValid() error {
 		return WithStack(ErrInvalidJobRequirementDuplicateHostname)
 	}
 
+	// check that secret requirements are valid regexp
+	for i := range l {
+		if l[i].Type == SecretRequirement {
+			if _, err := regexp.Compile(l[i].Value); err != nil {
+				return NewErrorFrom(ErrInvalidJobRequirement, "requirement of type secret with value %q is not a valid regex: %v", l[i].Value, err)
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -88,6 +112,7 @@ var (
 		PluginRequirement,
 		RegionRequirement,
 		ServiceRequirement,
+		SecretRequirement,
 	}
 
 	// OSArchRequirementValues comes from go tool dist list
