@@ -269,6 +269,10 @@ func computeJob(name string, j Job) (*sdk.Job, error) {
 	}
 	job.Action.Actions = children
 
+	if err := job.Action.Requirements.IsValid(); err != nil {
+		return nil, err
+	}
+
 	return &job, nil
 }
 

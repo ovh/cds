@@ -499,7 +499,7 @@ func (w errorWithStack) Format(s fmt.State, verb rune) {
 // ErrorWithFallback returns the current error if it's not a ErrUnknownError else it returns a new ErrorWithStack
 func ErrorWithFallback(err error, httpError Error, from string, args ...interface{}) error {
 	if ErrorIs(err, ErrUnknownError) {
-		return NewErrorWithStack(err, NewError(ErrWrongRequest, fmt.Errorf(from, args...)))
+		return NewErrorWithStack(err, NewError(httpError, fmt.Errorf(from, args...)))
 	}
 	return err
 }

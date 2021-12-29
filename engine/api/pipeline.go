@@ -40,11 +40,8 @@ func (api *API) updateAsCodePipelineHandler() service.Handler {
 		if err := service.UnmarshalBody(r, &p); err != nil {
 			return err
 		}
-
-		// check pipeline name pattern
-		regexp := sdk.NamePatternRegex
-		if !regexp.MatchString(p.Name) {
-			return sdk.WrapError(sdk.ErrInvalidPipelinePattern, "updateAsCodePipelineHandler: pipeline name %s do not respect pattern", p.Name)
+		if err := p.IsValid(); err != nil {
+			return err
 		}
 
 		tx, err := api.mustDB().Begin()
@@ -154,13 +151,10 @@ func (api *API) updatePipelineHandler() service.Handler {
 
 		var p sdk.Pipeline
 		if err := service.UnmarshalBody(r, &p); err != nil {
-			return sdk.WrapError(err, "Cannot read body")
+			return err
 		}
-
-		// check pipeline name pattern
-		regexp := sdk.NamePatternRegex
-		if !regexp.MatchString(p.Name) {
-			return sdk.WrapError(sdk.ErrInvalidPipelinePattern, "updatePipelineHandler: Pipeline name %s do not respect pattern", p.Name)
+		if err := p.IsValid(); err != nil {
+			return err
 		}
 
 		pipelineDB, err := pipeline.LoadPipeline(ctx, api.mustDB(), key, name, true)
@@ -172,9 +166,9 @@ func (api *API) updatePipelineHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
-		tx, errB := api.mustDB().Begin()
-		if errB != nil {
-			sdk.WrapError(errB, "updatePipelineHandler> Cannot start transaction")
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WrapError(err, "cannot start transaction")
 		}
 		defer tx.Rollback() // nolint
 
@@ -283,10 +277,8 @@ func (api *API) addPipelineHandler() service.Handler {
 		if err := service.UnmarshalBody(r, &p); err != nil {
 			return err
 		}
-
-		// check pipeline name pattern
-		if regexp := sdk.NamePatternRegex; !regexp.MatchString(p.Name) {
-			return sdk.NewErrorFrom(sdk.ErrInvalidPipelinePattern, "pipeline name %s do not respect pattern %s", p.Name, sdk.NamePattern)
+		if err := p.IsValid(); err != nil {
+			return err
 		}
 
 		// Check that pipeline does not already exists
