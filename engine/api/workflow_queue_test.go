@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"strings"
 	"testing"
 	"time"
 
@@ -595,7 +596,18 @@ func Test_postTakeWorkflowJobHandler(t *testing.T) {
 
 	assert.Equal(t, "cdn.net:4545", pbji.GelfServiceAddr)
 	assert.Equal(t, true, pbji.GelfServiceAddrEnableTLS)
-	assert.Len(t, pbji.Secrets, 5)
+	require.Len(t, pbji.Secrets, 5)
+	var foundDefaultSSHKey, foundDefaultPGPKey bool
+	for _, s := range pbji.Secrets {
+		if s.Name == "cds.key.proj-ssh-"+strings.ToLower(pbji.ProjectKey)+".priv" {
+			foundDefaultSSHKey = true
+		}
+		if s.Name == "cds.key.proj-pgp-"+strings.ToLower(pbji.ProjectKey)+".priv" {
+			foundDefaultPGPKey = true
+		}
+	}
+	require.True(t, foundDefaultSSHKey)
+	require.True(t, foundDefaultPGPKey)
 
 	run, err := workflow.LoadNodeJobRun(context.TODO(), api.mustDB(), api.Cache, ctx.job.ID)
 	require.NoError(t, err)
@@ -623,13 +635,11 @@ func Test_postTakeWorkflowJobWithFilteredSecretHandler(t *testing.T) {
 		require.NoError(tt, pipeline.UpdateJob(context.TODO(), tx, &pip.Stages[0].Jobs[0]))
 	})
 
-	// Prepare VCS Mock
 	mockVCSSservice, _, _ := assets.InitCDNService(t, db)
 	t.Cleanup(func() {
 		_ = services.Delete(db, mockVCSSservice) // nolint
 	})
 
-	//Register the worker
 	testRegisterWorker(t, api, db, router, &ctx)
 
 	uri := router.GetRoute("POST", api.postTakeWorkflowJobHandler, map[string]string{
@@ -637,7 +647,6 @@ func Test_postTakeWorkflowJobWithFilteredSecretHandler(t *testing.T) {
 	})
 	require.NotEmpty(t, uri)
 
-	//This call must work
 	req := assets.NewJWTAuthentifiedRequest(t, ctx.workerToken, "POST", uri, nil)
 	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
@@ -646,7 +655,18 @@ func Test_postTakeWorkflowJobWithFilteredSecretHandler(t *testing.T) {
 	pbji := &sdk.WorkflowNodeJobRunData{}
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), pbji))
 
-	assert.Len(t, pbji.Secrets, 4)
+	require.Len(t, pbji.Secrets, 4)
+	var foundDefaultSSHKey, foundDefaultPGPKey bool
+	for _, s := range pbji.Secrets {
+		if s.Name == "cds.key.proj-ssh-"+strings.ToLower(pbji.ProjectKey)+".priv" {
+			foundDefaultSSHKey = true
+		}
+		if s.Name == "cds.key.proj-pgp-"+strings.ToLower(pbji.ProjectKey)+".priv" {
+			foundDefaultPGPKey = true
+		}
+	}
+	require.True(t, foundDefaultSSHKey)
+	require.False(t, foundDefaultPGPKey)
 }
 
 func Test_postTakeWorkflowInvalidJobHandler(t *testing.T) {
