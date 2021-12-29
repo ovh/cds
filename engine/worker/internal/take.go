@@ -151,11 +151,9 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 
 	// Send the reason as a spawninfo
 	if res.Status != sdk.StatusSuccess && res.Reason != "" {
-		sp := sdk.SpawnMsg{ID: sdk.MsgWorkflowError.ID, Args: []interface{}{res.Reason}}
 		infos := []sdk.SpawnInfo{{
-			RemoteTime:  time.Now(),
-			Message:     sp,
-			UserMessage: sp.DefaultUserMessage(),
+			RemoteTime: time.Now(),
+			Message:    sdk.SpawnMsg{ID: sdk.MsgWorkflowError.ID, Args: []interface{}{res.Reason}},
 		}}
 		if err := w.Client().QueueJobSendSpawnInfo(ctx, job.ID, infos); err != nil {
 			log.Error(ctx, "processJob> Unable to send spawn info: %v", err)

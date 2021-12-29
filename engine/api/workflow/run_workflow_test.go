@@ -589,32 +589,20 @@ queueRun:
 		})
 		require.NoError(t, err)
 
-		sp := sdk.SpawnMsg{ID: sdk.MsgSpawnInfoHatcheryStarts.ID}
 		//AddSpawnInfosNodeJobRun
-		err := workflow.AddSpawnInfosNodeJobRun(db, j.WorkflowNodeRunID, j.ID, []sdk.SpawnInfo{
-			{
-				APITime:     time.Now(),
-				RemoteTime:  time.Now(),
-				Message:     sp,
-				UserMessage: sp.DefaultUserMessage(),
-			},
-		})
+		err := workflow.AddSpawnInfosNodeJobRun(db, j.WorkflowNodeRunID, j.ID, []sdk.SpawnInfo{{
+			Message: sdk.SpawnMsg{ID: sdk.MsgSpawnInfoHatcheryStarts.ID},
+		}})
 		assert.NoError(t, err)
 		if t.Failed() {
 			t.FailNow()
 		}
 
-		sp = sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobTaken.ID}
 		//TakeNodeJobRun
 		takenJobID := j.ID
-		takenJob, _, _ := workflow.TakeNodeJobRun(context.TODO(), db, cache, *proj, takenJobID, "model", "worker", "1", []sdk.SpawnInfo{
-			{
-				APITime:     time.Now(),
-				RemoteTime:  time.Now(),
-				Message:     sp,
-				UserMessage: sp.DefaultUserMessage(),
-			},
-		}, "hatchery_name")
+		takenJob, _, _ := workflow.TakeNodeJobRun(context.TODO(), db, cache, *proj, takenJobID, "model", "worker", "1", []sdk.SpawnInfo{{
+			Message: sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobTaken.ID},
+		}}, "hatchery_name")
 
 		//Load workflow node run
 		nodeRun, err := workflow.LoadNodeRunByID(context.Background(), db, takenJob.WorkflowNodeRunID, workflow.LoadRunOptions{})

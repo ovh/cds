@@ -11,7 +11,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 	"github.com/ovh/venom"
 	"github.com/rockbears/log"
@@ -30,7 +29,6 @@ import (
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/api/workflow"
-	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/service"
@@ -107,7 +105,7 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 		}
 
 		pbji := &sdk.WorkflowNodeJobRunData{}
-		report, err := takeJob(ctx, api.mustDB, api.Cache, p, id, workerModelName, pbji, wk, hatcheryName, api.Config.Secrets.SkipProjectSecretsOnRegion)
+		report, err := api.takeJob(ctx, p, id, workerModelName, pbji, wk, hatcheryName)
 		if err != nil {
 			return sdk.WrapError(err, "cannot takeJob nodeJobRunID:%d", id)
 		}
@@ -137,31 +135,24 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 	}
 }
 
-func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, p *sdk.Project, id int64, workerModel string, wnjri *sdk.WorkflowNodeJobRunData, wk *sdk.Worker, hatcheryName string, skipProjectSecretsOnRegion []string) (*workflow.ProcessorReport, error) {
-	tx, err := dbFunc().Begin()
+func (api *API) takeJob(ctx context.Context, p *sdk.Project, id int64, workerModel string, wnjri *sdk.WorkflowNodeJobRunData, wk *sdk.Worker, hatcheryName string) (*workflow.ProcessorReport, error) {
+	tx, err := api.mustDB().Begin()
 	if err != nil {
 		return nil, sdk.WrapError(err, "cannot start transaction")
 	}
 	defer tx.Rollback() // nolint
 
 	// Prepare spawn infos
-	m1 := sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobTaken.ID, Args: []interface{}{fmt.Sprintf("%d", id), wk.Name}}
-	m2 := sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobTakenWorkerVersion.ID, Args: []interface{}{wk.Name, wk.Version, wk.OS, wk.Arch}}
-	infos := []sdk.SpawnInfo{
-		{
-			RemoteTime:  getRemoteTime(ctx),
-			Message:     m1,
-			UserMessage: m1.DefaultUserMessage(),
-		},
-		{
-			RemoteTime:  getRemoteTime(ctx),
-			Message:     m2,
-			UserMessage: m2.DefaultUserMessage(),
-		},
-	}
+	infos := []sdk.SpawnInfo{{
+		RemoteTime: getRemoteTime(ctx),
+		Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobTaken.ID, Args: []interface{}{fmt.Sprintf("%d", id), wk.Name}},
+	}, {
+		RemoteTime: getRemoteTime(ctx),
+		Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobTakenWorkerVersion.ID, Args: []interface{}{wk.Name, wk.Version, wk.OS, wk.Arch}},
+	}}
 
 	// Take node job run
-	job, report, err := workflow.TakeNodeJobRun(ctx, tx, store, *p, id, workerModel, wk.Name, wk.ID, infos, hatcheryName)
+	job, report, err := workflow.TakeNodeJobRun(ctx, tx, api.Cache, *p, id, workerModel, wk.Name, wk.ID, infos, hatcheryName)
 	if err != nil {
 		return nil, sdk.WrapError(err, "cannot take job %d", id)
 	}
@@ -213,10 +204,6 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 	wnjri.WorkflowName = workflowRun.Workflow.Name
 	wnjri.NodeRunName = noderun.WorkflowNodeName
 
-	if err := tx.Commit(); err != nil {
-		return nil, sdk.WithStack(err)
-	}
-
 	secretsReqs := job.Job.Action.Requirements.FilterByType(sdk.SecretRequirement).Values()
 	secretsReqsRegs := make([]*regexp.Regexp, 0, len(secretsReqs))
 	for i := range secretsReqs {
@@ -228,7 +215,17 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 	}
 
 	// Filter project's secrets depending of the region requirement that was set on job
-	skipProjectSecrets := job.Region != nil && sdk.IsInArray(*job.Region, skipProjectSecretsOnRegion)
+	skipProjectSecrets := job.Region != nil && sdk.IsInArray(*job.Region, api.Config.Secrets.SkipProjectSecretsOnRegion)
+	if skipProjectSecrets {
+		if err := workflow.AddSpawnInfosNodeJobRun(tx, job.WorkflowNodeRunID, job.ID, []sdk.SpawnInfo{{
+			RemoteTime: getRemoteTime(ctx),
+			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoDisableSecretInjection.ID, Args: []interface{}{*job.Region}},
+		}}); err != nil {
+			return nil, sdk.WrapError(err, "cannot save spawn info job %d", job.ID)
+		}
+	}
+
+	var countMatchedSecrets int
 	for i := range secrets {
 		if skipProjectSecrets && secrets[i].Context == workflow.SecretProjContext {
 			var inRequirements bool
@@ -241,8 +238,22 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 			if !inRequirements {
 				continue
 			}
+			countMatchedSecrets++
 		}
 		wnjri.Secrets = append(wnjri.Secrets, secrets[i].ToVariable())
+	}
+
+	if skipProjectSecrets && len(secretsReqs) > 0 {
+		if err := workflow.AddSpawnInfosNodeJobRun(tx, job.WorkflowNodeRunID, job.ID, []sdk.SpawnInfo{{
+			RemoteTime: getRemoteTime(ctx),
+			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoManualSecretInjection.ID, Args: []interface{}{fmt.Sprintf("%d", countMatchedSecrets)}},
+		}}); err != nil {
+			return nil, sdk.WrapError(err, "cannot save spawn info job %d", job.ID)
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, sdk.WithStack(err)
 	}
 
 	return report, nil
@@ -392,12 +403,12 @@ func (api *API) postSpawnInfosWorkflowJobHandler() service.Handler {
 
 		var s []sdk.SpawnInfo
 		if err := service.UnmarshalBody(r, &s); err != nil {
-			return sdk.WrapError(err, "Cannot unmarshal request")
+			return sdk.WrapError(err, "cannot unmarshal request")
 		}
 
-		tx, errBegin := api.mustDB().Begin()
-		if errBegin != nil {
-			return sdk.WrapError(errBegin, "Cannot start transaction")
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WrapError(err, "cannot start transaction")
 		}
 		defer tx.Rollback() // nolint
 
@@ -531,24 +542,18 @@ func (api *API) postJobResult(ctx context.Context, tx gorpmapper.SqlExecutorWith
 
 	// Add spawn info
 	if wr != nil {
-		msg := sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerEnd.ID, Args: []interface{}{wr.Name}}
-		infos := []sdk.SpawnInfo{{
-			RemoteTime:  res.RemoteTime,
-			Message:     msg,
-			UserMessage: msg.DefaultUserMessage(),
-		}}
-		if err := workflow.AddSpawnInfosNodeJobRun(tx, job.WorkflowNodeRunID, job.ID, workflow.PrepareSpawnInfos(infos)); err != nil {
+		if err := workflow.AddSpawnInfosNodeJobRun(tx, job.WorkflowNodeRunID, job.ID, []sdk.SpawnInfo{{
+			RemoteTime: res.RemoteTime,
+			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerEnd.ID, Args: []interface{}{wr.Name}},
+		}}); err != nil {
 			return nil, sdk.WrapError(err, "Cannot save spawn info job %d", job.ID)
 		}
 	}
 	if hatch != nil && res.Status == sdk.StatusFail {
-		msg := sdk.SpawnMsg{ID: sdk.MsgSpawnErrorHatcheryRetryAttempt.ID, Args: []interface{}{hatch.Name, res.Reason}}
-		infos := []sdk.SpawnInfo{{
-			RemoteTime:  res.RemoteTime,
-			Message:     msg,
-			UserMessage: msg.DefaultUserMessage(),
-		}}
-		if err := workflow.AddSpawnInfosNodeJobRun(tx, job.WorkflowNodeRunID, job.ID, workflow.PrepareSpawnInfos(infos)); err != nil {
+		if err := workflow.AddSpawnInfosNodeJobRun(tx, job.WorkflowNodeRunID, job.ID, []sdk.SpawnInfo{{
+			RemoteTime: res.RemoteTime,
+			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnErrorHatcheryRetryAttempt.ID, Args: []interface{}{hatch.Name, res.Reason}},
+		}}); err != nil {
 			return nil, sdk.WrapError(err, "Cannot save spawn info job %d", job.ID)
 		}
 

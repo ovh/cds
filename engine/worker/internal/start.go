@@ -156,11 +156,9 @@ func processBookedWJob(ctx context.Context, w *CurrentWorker, wjobs chan<- sdk.W
 		for _, r := range errRequirements {
 			details += fmt.Sprintf(" %s(%s)", r.Value, r.Type)
 		}
-		sp := sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerForJobError.ID, Args: []interface{}{w.Name(), details}}
 		infos := []sdk.SpawnInfo{{
-			RemoteTime:  time.Now(),
-			Message:     sp,
-			UserMessage: sp.DefaultUserMessage(),
+			RemoteTime: time.Now(),
+			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerForJobError.ID, Args: []interface{}{w.Name(), details}},
 		}}
 		if err := w.Client().QueueJobSendSpawnInfo(ctx, wjob.ID, infos); err != nil {
 			return sdk.WrapError(err, "Cannot record QueueJobSendSpawnInfo for job (err spawn): %d", wjob.ID)
@@ -171,12 +169,9 @@ func processBookedWJob(ctx context.Context, w *CurrentWorker, wjobs chan<- sdk.W
 	pluginsOK, errPlugins := checkPlugins(ctx, w, *wjob)
 	if !pluginsOK {
 		var details = errPlugins.Error()
-
-		sp := sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerForJobError.ID, Args: []interface{}{w.Name(), details}}
 		infos := []sdk.SpawnInfo{{
-			RemoteTime:  time.Now(),
-			Message:     sp,
-			UserMessage: sp.DefaultUserMessage(),
+			RemoteTime: time.Now(),
+			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerForJobError.ID, Args: []interface{}{w.Name(), details}},
 		}}
 		if err := w.Client().QueueJobSendSpawnInfo(ctx, wjob.ID, infos); err != nil {
 			return sdk.WrapError(err, "Cannot record QueueJobSendSpawnInfo for job (err spawn): %d", wjob.ID)

@@ -422,13 +422,6 @@ func (api *API) stopWorkflowRun(ctx context.Context, p *sdk.Project, run *sdk.Wo
 	defer tx.Rollback() //nolint
 
 	spwnMsg := sdk.SpawnMsgNew(*sdk.MsgWorkflowNodeStop, ident.GetUsername())
-	stopInfos := sdk.SpawnInfo{
-		APITime:     time.Now(),
-		RemoteTime:  time.Now(),
-		Message:     spwnMsg,
-		UserMessage: spwnMsg.DefaultUserMessage(),
-	}
-
 	workflow.AddWorkflowRunInfo(run, spwnMsg)
 
 	for _, wn := range run.WorkflowNodeRuns {
@@ -439,7 +432,9 @@ func (api *API) stopWorkflowRun(ctx context.Context, p *sdk.Project, run *sdk.Wo
 				continue
 			}
 
-			r1, err := workflow.StopWorkflowNodeRun(ctx, api.mustDB, api.Cache, *p, *run, wnr, stopInfos)
+			r1, err := workflow.StopWorkflowNodeRun(ctx, api.mustDB, api.Cache, *p, *run, wnr, sdk.SpawnInfo{
+				Message: spwnMsg,
+			})
 			if err != nil {
 				return nil, sdk.WrapError(err, "unable to stop workflow node run %d", wnr.ID)
 			}
@@ -725,12 +720,8 @@ func (api *API) stopWorkflowNodeRunHandler() service.Handler {
 			return sdk.WrapError(err, "unable to load workflow node run with id %d for workflow %s and run with number %d", workflowNodeRunID, workflowName, workflowRun.Number)
 		}
 
-		sp := sdk.SpawnMsg{ID: sdk.MsgWorkflowNodeStop.ID, Args: []interface{}{getAPIConsumer(ctx).GetUsername()}}
 		r1, err := workflow.StopWorkflowNodeRun(ctx, api.mustDB, api.Cache, *p, *workflowRun, *workflowNodeRun, sdk.SpawnInfo{
-			APITime:     time.Now(),
-			RemoteTime:  time.Now(),
-			Message:     sp,
-			UserMessage: sp.DefaultUserMessage(),
+			Message: sdk.SpawnMsg{ID: sdk.MsgWorkflowNodeStop.ID, Args: []interface{}{getAPIConsumer(ctx).GetUsername()}},
 		})
 		if err != nil {
 			return sdk.WrapError(err, "unable to stop workflow node run")
