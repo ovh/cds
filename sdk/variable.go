@@ -131,6 +131,8 @@ const (
 	BooleanVariable    = "boolean"
 	NumberVariable     = "number"
 	RepositoryVariable = "repository"
+	SSHKeyVariable     = "ssh"
+	PGPKeyVariable     = "pgp"
 )
 
 var (
@@ -181,7 +183,7 @@ var (
 // NeedPlaceholder returns true if variable type is either secret or key
 func NeedPlaceholder(t string) bool {
 	switch t {
-	case SecretVariable, KeyVariable:
+	case SecretVariable, KeyVariable, SSHKeyVariable, PGPKeyVariable:
 		return true
 	default:
 		return false

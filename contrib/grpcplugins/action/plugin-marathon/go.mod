@@ -42,7 +42,6 @@ require (
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/gookit/color v1.4.2 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
-	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/huandu/xstrings v1.2.0 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
@@ -62,13 +61,10 @@ require (
 	github.com/mholt/archiver/v3 v3.5.1-0.20210618180617-81fac4ba96e4 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/hashstructure v0.0.0-20170609045927-2bca23e0e452 // indirect
-	github.com/mitchellh/mapstructure v1.1.2 // indirect
-	github.com/mndrix/tap-go v0.0.0-20170113192335-56cca451570b // indirect
 	github.com/nwaples/rardecode v1.1.0 // indirect
 	github.com/olekukonko/tablewriter v0.0.0-20160621093029-daf2955e742c // indirect
 	github.com/onsi/ginkgo v1.11.0 // indirect
 	github.com/onsi/gomega v1.7.0 // indirect
-	github.com/ovh/venom v0.25.0 // indirect
 	github.com/pborman/uuid v0.0.0-20170612153648-e790cca94e6c // indirect
 	github.com/pierrec/lz4/v4 v4.1.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
@@ -81,7 +77,6 @@ require (
 	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/sguiheux/go-coverage v0.0.0-20190710153556-287b082a7197 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
-	github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d // indirect
 	github.com/spf13/afero v1.2.2 // indirect
 	github.com/spf13/cobra v1.1.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect

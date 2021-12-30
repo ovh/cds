@@ -10,7 +10,6 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/ovh/venom"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -62,12 +61,13 @@ func TestRunParseJunitTestResultAction_Absolute(t *testing.T) {
 			t.Logf("%s %s - Body: %s", mock.Request().Method, mock.Request().URLStruct.String(), string(bodyContent))
 			switch mock.Request().URLStruct.String() {
 			case "http://lolcat.host/queue/workflows/666/test":
-				var report venom.Tests
-				err := json.Unmarshal(bodyContent, &report)
-				assert.NoError(t, err)
-				assert.Equal(t, 3, report.Total)
-				assert.Equal(t, 1, report.TotalKO)
-				assert.Equal(t, 1, report.TotalSkipped)
+				var report sdk.JUnitTestsSuites
+				require.NoError(t, json.Unmarshal(bodyContent, &report))
+				report = report.EnsureData()
+				stats := report.ComputeStats()
+				assert.Equal(t, 3, stats.Total)
+				assert.Equal(t, 1, stats.TotalKO)
+				assert.Equal(t, 1, stats.TotalSkipped)
 			}
 		}
 	}
@@ -87,7 +87,6 @@ func TestRunParseJunitTestResultAction_Absolute(t *testing.T) {
 		}, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, sdk.StatusFail, res.Status)
-
 }
 
 func TestRunParseJunitTestResultAction_Relative(t *testing.T) {
@@ -127,12 +126,13 @@ func TestRunParseJunitTestResultAction_Relative(t *testing.T) {
 			t.Logf("%s %s - Body: %s", mock.Request().Method, mock.Request().URLStruct.String(), string(bodyContent))
 			switch mock.Request().URLStruct.String() {
 			case "http://lolcat.host/queue/workflows/666/test":
-				var report venom.Tests
-				err := json.Unmarshal(bodyContent, &report)
-				assert.NoError(t, err)
-				assert.Equal(t, 3, report.Total)
-				assert.Equal(t, 1, report.TotalKO)
-				assert.Equal(t, 1, report.TotalSkipped)
+				var report sdk.JUnitTestsSuites
+				require.NoError(t, json.Unmarshal(bodyContent, &report))
+				report = report.EnsureData()
+				stats := report.ComputeStats()
+				assert.Equal(t, 3, stats.Total)
+				assert.Equal(t, 1, stats.TotalKO)
+				assert.Equal(t, 1, stats.TotalSkipped)
 			}
 		}
 	}
@@ -152,17 +152,12 @@ func TestRunParseJunitTestResultAction_Relative(t *testing.T) {
 		}, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, sdk.StatusFail, res.Status)
-
 }
 
-func Test_ComputeStats(t *testing.T) {
-	type args struct {
-		res *sdk.Result
-		v   *venom.Tests
-	}
+func Test_EnsureAndComputeStats(t *testing.T) {
 	tests := []struct {
 		name                    string
-		args                    args
+		args                    sdk.JUnitTestsSuites
 		want                    []string
 		status                  string
 		totalOK, totalKO, total int
@@ -177,18 +172,15 @@ func Test_ComputeStats(t *testing.T) {
 				"JUnit parser: 1 testsuite(s)",
 				"JUnit parser: testsuite myTestSuite has 1 testcase(s)",
 			},
-			args: args{
-				res: &sdk.Result{},
-				v: &venom.Tests{
-					TestSuites: []venom.TestSuite{
-						{
-							Name:     "myTestSuite",
-							Errors:   0,
-							Failures: 0,
-							TestCases: []venom.TestCase{
-								{
-									Name: "myTestCase",
-								},
+			args: sdk.JUnitTestsSuites{
+				TestSuites: []sdk.JUnitTestSuite{
+					{
+						Name:     "myTestSuite",
+						Errors:   0,
+						Failures: 0,
+						TestCases: []sdk.JUnitTestCase{
+							{
+								Name: "myTestCase",
 							},
 						},
 					},
@@ -208,19 +200,16 @@ func Test_ComputeStats(t *testing.T) {
 				"JUnit parser: testsuite myTestSuite has 1 failure(s)",
 				"JUnit parser: testsuite myTestSuite has 1 test(s) failed",
 			},
-			args: args{
-				res: &sdk.Result{},
-				v: &venom.Tests{
-					TestSuites: []venom.TestSuite{
-						{
-							Name:     "myTestSuite",
-							Errors:   0,
-							Failures: 1,
-							TestCases: []venom.TestCase{
-								{
-									Name:     "myTestCase",
-									Failures: []venom.Failure{{Value: "Foo"}},
-								},
+			args: sdk.JUnitTestsSuites{
+				TestSuites: []sdk.JUnitTestSuite{
+					{
+						Name:     "myTestSuite",
+						Errors:   0,
+						Failures: 1,
+						TestCases: []sdk.JUnitTestCase{
+							{
+								Name:     "myTestCase",
+								Failures: []sdk.JUnitTestFailure{{Value: "Foo"}},
 							},
 						},
 					},
@@ -241,20 +230,17 @@ func Test_ComputeStats(t *testing.T) {
 				"JUnit parser: testsuite TestSuite.0 has 2 failure(s)",
 				"JUnit parser: testsuite TestSuite.0 has 2 test(s) failed",
 			},
-			args: args{
-				res: &sdk.Result{},
-				v: &venom.Tests{
-					TestSuites: []venom.TestSuite{
-						{
-							Errors:   0,
-							Failures: 1,
-							TestCases: []venom.TestCase{
-								{
-									Failures: []venom.Failure{{Value: "Foo"}},
-								},
-								{
-									Failures: []venom.Failure{{Value: "Foo"}},
-								},
+			args: sdk.JUnitTestsSuites{
+				TestSuites: []sdk.JUnitTestSuite{
+					{
+						Errors:   0,
+						Failures: 1,
+						TestCases: []sdk.JUnitTestCase{
+							{
+								Failures: []sdk.JUnitTestFailure{{Value: "Foo"}},
+							},
+							{
+								Failures: []sdk.JUnitTestFailure{{Value: "Foo"}},
 							},
 						},
 					},
@@ -265,31 +251,27 @@ func Test_ComputeStats(t *testing.T) {
 			name:    "malformed",
 			status:  sdk.StatusFail,
 			totalOK: 0,
-			totalKO: 2, // sum of failure + errors on testsuite attribute. So 1+1
-			total:   2,
+			totalKO: 1,
+			total:   1,
 			want: []string{
 				"JUnit parser: 1 testsuite(s)",
 				"JUnit parser: testsuite myTestSuite has 1 testcase(s)",
 				"JUnit parser: testcase myTestCase has 3 failure(s)",
 				"JUnit parser: testcase myTestCase has 2 error(s)",
-				"JUnit parser: testsuite myTestSuite has 3 failure(s)",
-				"JUnit parser: testsuite myTestSuite has 2 error(s)",
+				"JUnit parser: testsuite myTestSuite has 1 error(s)",
 				"JUnit parser: testsuite myTestSuite has 1 test(s) failed",
 			},
-			args: args{
-				res: &sdk.Result{},
-				v: &venom.Tests{
-					TestSuites: []venom.TestSuite{
-						{
-							Name:     "myTestSuite",
-							Errors:   1,
-							Failures: 1,
-							TestCases: []venom.TestCase{
-								{
-									Name:     "myTestCase",
-									Errors:   []venom.Failure{{Value: "Foo"}, {Value: "Foo"}},
-									Failures: []venom.Failure{{Value: "Foo"}, {Value: "Foo"}, {Value: "Foo"}},
-								},
+			args: sdk.JUnitTestsSuites{
+				TestSuites: []sdk.JUnitTestSuite{
+					{
+						Name:     "myTestSuite",
+						Errors:   1,
+						Failures: 1,
+						TestCases: []sdk.JUnitTestCase{
+							{
+								Name:     "myTestCase",
+								Errors:   []sdk.JUnitTestFailure{{Value: "Foo"}, {Value: "Foo"}},
+								Failures: []sdk.JUnitTestFailure{{Value: "Foo"}, {Value: "Foo"}, {Value: "Foo"}},
 							},
 						},
 					},
@@ -309,29 +291,25 @@ func Test_ComputeStats(t *testing.T) {
 				"JUnit parser: testcase myTestCase 1 has 2 error(s)",
 				"JUnit parser: testcase myTestCase 2 has 3 failure(s)",
 				"JUnit parser: testcase myTestCase 2 has 2 error(s)",
-				"JUnit parser: testsuite myTestSuite has 6 failure(s)",
-				"JUnit parser: testsuite myTestSuite has 4 error(s)",
+				"JUnit parser: testsuite myTestSuite has 2 error(s)",
 				"JUnit parser: testsuite myTestSuite has 2 test(s) failed",
 			},
-			args: args{
-				res: &sdk.Result{},
-				v: &venom.Tests{
-					TestSuites: []venom.TestSuite{
-						{
-							Name:     "myTestSuite",
-							Errors:   1,
-							Failures: 1,
-							TestCases: []venom.TestCase{
-								{
-									Name:     "myTestCase 1",
-									Errors:   []venom.Failure{{Value: "Foo"}, {Value: "Foo"}},
-									Failures: []venom.Failure{{Value: "Foo"}, {Value: "Foo"}, {Value: "Foo"}},
-								},
-								{
-									Name:     "myTestCase 2",
-									Errors:   []venom.Failure{{Value: "Foo"}, {Value: "Foo"}},
-									Failures: []venom.Failure{{Value: "Foo"}, {Value: "Foo"}, {Value: "Foo"}},
-								},
+			args: sdk.JUnitTestsSuites{
+				TestSuites: []sdk.JUnitTestSuite{
+					{
+						Name:     "myTestSuite",
+						Errors:   1,
+						Failures: 1,
+						TestCases: []sdk.JUnitTestCase{
+							{
+								Name:     "myTestCase 1",
+								Errors:   []sdk.JUnitTestFailure{{Value: "Foo"}, {Value: "Foo"}},
+								Failures: []sdk.JUnitTestFailure{{Value: "Foo"}, {Value: "Foo"}, {Value: "Foo"}},
+							},
+							{
+								Name:     "myTestCase 2",
+								Errors:   []sdk.JUnitTestFailure{{Value: "Foo"}, {Value: "Foo"}},
+								Failures: []sdk.JUnitTestFailure{{Value: "Foo"}, {Value: "Foo"}, {Value: "Foo"}},
 							},
 						},
 					},
@@ -341,23 +319,15 @@ func Test_ComputeStats(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := ComputeStats(tt.args.res, tt.args.v); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ComputeStats() = %v, want %v", got, tt.want)
+			tests := tt.args.EnsureData()
+			stats := tests.ComputeStats()
+			reasons := ComputeTestsReasons(tests)
+			if !reflect.DeepEqual(reasons, tt.want) {
+				t.Fatalf("ComputeStats() = %v, want %v", reasons, tt.want)
 			}
-			if tt.args.res.Status != tt.status {
-				t.Errorf("status = %v, want %v", tt.args.res.Status, tt.status)
-			}
-
-			if tt.args.v.TotalOK != tt.totalOK {
-				t.Errorf("totalOK = %v, want %v", tt.args.v.TotalOK, tt.totalOK)
-			}
-
-			if tt.args.v.TotalKO != tt.totalKO {
-				t.Errorf("totalKO = %v, want %v", tt.args.v.TotalKO, tt.totalKO)
-			}
-			if tt.args.v.Total != tt.total {
-				t.Errorf("total = %v, want %v", tt.args.v.Total, tt.total)
-			}
+			require.Equal(t, tt.totalOK, stats.TotalOK)
+			require.Equal(t, tt.totalKO, stats.TotalKO)
+			require.Equal(t, tt.total, stats.Total)
 		})
 	}
 }

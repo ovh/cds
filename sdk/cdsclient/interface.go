@@ -16,7 +16,6 @@ import (
 	"github.com/sguiheux/go-coverage"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/venom"
 )
 
 type Filter struct {
@@ -263,7 +262,7 @@ type QueueClient interface {
 	QueueJobInfo(ctx context.Context, id int64) (*sdk.WorkflowNodeJobRun, error)
 	QueueJobSendSpawnInfo(ctx context.Context, id int64, in []sdk.SpawnInfo) error
 	QueueSendCoverage(ctx context.Context, id int64, report coverage.Report) error
-	QueueSendUnitTests(ctx context.Context, id int64, report venom.Tests) error
+	QueueSendUnitTests(ctx context.Context, id int64, report sdk.JUnitTestsSuites) error
 	QueueSendVulnerability(ctx context.Context, id int64, report sdk.VulnerabilityWorkerReport) error
 	QueueSendStepResult(ctx context.Context, id int64, res sdk.StepStatus) error
 	QueueSendResult(ctx context.Context, id int64, res sdk.Result) error

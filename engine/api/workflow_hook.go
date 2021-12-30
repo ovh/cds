@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"net/http"
-	"strings"
 
 	"github.com/gorilla/mux"
 
@@ -288,9 +287,15 @@ func (api *API) postWorkflowJobHookCallbackHandler() service.Handler {
 		}
 
 		// Hide secrets in payload
-		for _, s := range secrets {
-			callback.Log = strings.Replace(callback.Log, s.Value, "**"+s.Name+"**", -1)
+		values := make([]string, len(secrets))
+		for i := range secrets {
+			values[i] = secrets[i].Value
 		}
+		b, err := sdk.NewBlur(values)
+		if err != nil {
+			return err
+		}
+		callback.Log = b.String(callback.Log)
 
 		report, err := workflow.UpdateOutgoingHookRunStatus(ctx, tx, api.Cache, *proj, wr, hookRunID, callback)
 		if err != nil {

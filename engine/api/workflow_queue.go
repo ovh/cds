@@ -12,7 +12,6 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
-	"github.com/ovh/venom"
 	"github.com/rockbears/log"
 	"github.com/sguiheux/go-coverage"
 
@@ -984,10 +983,11 @@ func (api *API) postWorkflowJobTestsResultsHandler() service.Handler {
 		}
 
 		// Unmarshal into results
-		var new venom.Tests
+		var new sdk.JUnitTestsSuites
 		if err := service.UnmarshalBody(r, &new); err != nil {
 			return err
 		}
+		new = new.EnsureData()
 
 		// Load and lock Existing workflow Run Job
 		id, err := requestVarInt(r, "permJobID")
@@ -1012,7 +1012,7 @@ func (api *API) postWorkflowJobTestsResultsHandler() service.Handler {
 		}
 
 		if nr.Tests == nil {
-			nr.Tests = &venom.Tests{}
+			nr.Tests = &sdk.TestsResults{}
 		}
 
 		for k := range new.TestSuites {
@@ -1027,17 +1027,8 @@ func (api *API) postWorkflowJobTestsResultsHandler() service.Handler {
 			nr.Tests.TestSuites = append(nr.Tests.TestSuites, new.TestSuites[k])
 		}
 
-		// update total values
-		nr.Tests.Total = 0
-		nr.Tests.TotalOK = 0
-		nr.Tests.TotalKO = 0
-		nr.Tests.TotalSkipped = 0
-		for _, ts := range nr.Tests.TestSuites {
-			nr.Tests.Total += ts.Total
-			nr.Tests.TotalKO += ts.Failures + ts.Errors
-			nr.Tests.TotalOK += ts.Total - ts.Skipped - ts.Failures - ts.Errors
-			nr.Tests.TotalSkipped += ts.Skipped
-		}
+		nr.Tests.JUnitTestsSuites = nr.Tests.JUnitTestsSuites.EnsureData()
+		nr.Tests.TestsStats = nr.Tests.JUnitTestsSuites.ComputeStats()
 
 		if err := workflow.UpdateNodeRun(tx, nr); err != nil {
 			return sdk.WrapError(err, "cannot update node run")
@@ -1070,7 +1061,7 @@ func (api *API) postWorkflowJobTestsResultsHandler() service.Handler {
 
 			if defaultBranch.DisplayID == nr.VCSBranch {
 				// Push metrics
-				metrics.PushUnitTests(p.Key, nr.ApplicationID, nr.WorkflowID, nr.Number, *nr.Tests)
+				metrics.PushUnitTests(p.Key, nr.ApplicationID, nr.WorkflowID, nr.Number, nr.Tests.TestsStats)
 			}
 		}
 

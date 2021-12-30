@@ -33,7 +33,6 @@ require (
 	github.com/dsnet/compress v0.0.2-0.20210315054119-f66993602bf5 // indirect
 	github.com/eapache/go-resiliency v1.2.0 // indirect
 	github.com/emirpasic/gods v1.12.0 // indirect
-	github.com/fatih/color v1.7.0 // indirect
 	github.com/fsamin/go-dump v1.0.9 // indirect
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/go-git/gcfg v1.5.0 // indirect
@@ -70,12 +69,10 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/hashstructure v0.0.0-20170609045927-2bca23e0e452 // indirect
 	github.com/mitchellh/mapstructure v1.4.1 // indirect
-	github.com/mndrix/tap-go v0.0.0-20170113192335-56cca451570b // indirect
 	github.com/nwaples/rardecode v1.1.0 // indirect
 	github.com/onsi/ginkgo v1.11.0 // indirect
 	github.com/onsi/gomega v1.7.0 // indirect
 	github.com/ovh/cds/sdk/interpolate v0.0.0-20190319104452-71125b036b25 // indirect
-	github.com/ovh/venom v0.25.0 // indirect
 	github.com/pborman/uuid v0.0.0-20170612153648-e790cca94e6c // indirect
 	github.com/pelletier/go-toml v1.9.3 // indirect
 	github.com/pierrec/lz4/v4 v4.1.2 // indirect
@@ -88,7 +85,6 @@ require (
 	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/sguiheux/go-coverage v0.0.0-20190710153556-287b082a7197 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
-	github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d // indirect
 	github.com/spf13/afero v1.6.0 // indirect
 	github.com/spf13/cast v1.4.1 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect

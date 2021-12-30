@@ -17,7 +17,6 @@ import (
 	"time"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/venom"
 	"github.com/sguiheux/go-coverage"
 )
 
@@ -246,7 +245,7 @@ func (c *client) QueueSendCoverage(ctx context.Context, id int64, report coverag
 	return err
 }
 
-func (c *client) QueueSendUnitTests(ctx context.Context, id int64, report venom.Tests) error {
+func (c *client) QueueSendUnitTests(ctx context.Context, id int64, report sdk.JUnitTestsSuites) error {
 	path := fmt.Sprintf("/queue/workflows/%d/test", id)
 	_, err := c.PostJSON(ctx, path, report, nil)
 	return err

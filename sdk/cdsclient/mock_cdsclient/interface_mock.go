@@ -17,7 +17,6 @@ import (
 	websocket "github.com/gorilla/websocket"
 	sdk "github.com/ovh/cds/sdk"
 	cdsclient "github.com/ovh/cds/sdk/cdsclient"
-	venom "github.com/ovh/venom"
 	coverage "github.com/sguiheux/go-coverage"
 	afero "github.com/spf13/afero"
 )
@@ -3271,7 +3270,7 @@ func (mr *MockQueueClientMockRecorder) QueueSendStepResult(ctx, id, res interfac
 }
 
 // QueueSendUnitTests mocks base method.
-func (m *MockQueueClient) QueueSendUnitTests(ctx context.Context, id int64, report venom.Tests) error {
+func (m *MockQueueClient) QueueSendUnitTests(ctx context.Context, id int64, report sdk.JUnitTestsSuites) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueSendUnitTests", ctx, id, report)
 	ret0, _ := ret[0].(error)
@@ -7301,7 +7300,7 @@ func (mr *MockInterfaceMockRecorder) QueueSendStepResult(ctx, id, res interface{
 }
 
 // QueueSendUnitTests mocks base method.
-func (m *MockInterface) QueueSendUnitTests(ctx context.Context, id int64, report venom.Tests) error {
+func (m *MockInterface) QueueSendUnitTests(ctx context.Context, id int64, report sdk.JUnitTestsSuites) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueSendUnitTests", ctx, id, report)
 	ret0, _ := ret[0].(error)
@@ -9401,7 +9400,7 @@ func (mr *MockWorkerInterfaceMockRecorder) QueueSendStepResult(ctx, id, res inte
 }
 
 // QueueSendUnitTests mocks base method.
-func (m *MockWorkerInterface) QueueSendUnitTests(ctx context.Context, id int64, report venom.Tests) error {
+func (m *MockWorkerInterface) QueueSendUnitTests(ctx context.Context, id int64, report sdk.JUnitTestsSuites) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueSendUnitTests", ctx, id, report)
 	ret0, _ := ret[0].(error)
