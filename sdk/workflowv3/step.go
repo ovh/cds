@@ -16,7 +16,6 @@ type Step struct {
 	Coverage                  *exportentities.StepCoverage         `json:"coverage,omitempty" yaml:"coverage,omitempty"`
 	ArtifactDownload          *exportentities.StepArtifactDownload `json:"artifactDownload,omitempty" yaml:"artifactDownload,omitempty"`
 	ArtifactUpload            *exportentities.StepArtifactUpload   `json:"artifactUpload,omitempty" yaml:"artifactUpload,omitempty"`
-	ServeStaticFiles          *exportentities.StepServeStaticFiles `json:"serveStaticFiles,omitempty" yaml:"serveStaticFiles,omitempty"`
 	GitClone                  *exportentities.StepGitClone         `json:"gitClone,omitempty" yaml:"gitClone,omitempty"`
 	GitTag                    *exportentities.StepGitTag           `json:"gitTag,omitempty" yaml:"gitTag,omitempty"`
 	ReleaseVCS                *exportentities.StepReleaseVCS       `json:"releaseVCS,omitempty" yaml:"releaseVCS,omitempty"`
@@ -123,9 +122,6 @@ func (s Step) Validate(w Workflow) (ExternalDependencies, error) {
 	}
 	if s.ArtifactUpload != nil {
 		actionTypes = append(actionTypes, "artifactUpload")
-	}
-	if s.ServeStaticFiles != nil {
-		actionTypes = append(actionTypes, "serveStaticFiles")
 	}
 	if s.JUnitReport != nil {
 		actionTypes = append(actionTypes, "jUnitReport")

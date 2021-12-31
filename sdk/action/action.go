@@ -26,7 +26,6 @@ var List = []Manifest{
 	ReleaseVCS,
 	Release,
 	Script,
-	ServeStaticFiles,
 }
 
 // Manifest for a action.

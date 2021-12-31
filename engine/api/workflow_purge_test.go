@@ -225,7 +225,6 @@ func Test_Purge_DeleteArtifactsFromRepositoryManager(t *testing.T) {
 	wr, err = workflow.LoadRunByID(context.Background(), db.DbMap, wr.ID, workflow.LoadRunOptions{
 		WithCoverage:        true,
 		WithArtifacts:       true,
-		WithStaticFiles:     true,
 		WithTests:           true,
 		WithVulnerabilities: true,
 	})

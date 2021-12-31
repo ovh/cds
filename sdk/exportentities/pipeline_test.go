@@ -137,23 +137,6 @@ var (
 											},
 										},
 									},
-									{
-										Type:    sdk.BuiltinAction,
-										Name:    sdk.ServeStaticFiles,
-										Enabled: true,
-										Parameters: []sdk.Parameter{
-											{
-												Name:  "name",
-												Type:  sdk.StringParameter,
-												Value: "mywebsite",
-											},
-											{
-												Name:  "path",
-												Type:  sdk.StringParameter,
-												Value: "mywebsite/*",
-											},
-										},
-									},
 								},
 							},
 						},
@@ -655,10 +638,6 @@ jobs:
   - artifactUpload:
       path: arti.tar.gz
       tag: '{{.cds.version}}'
-  - serveStaticFiles:
-        entrypoint: index.html
-        name: my awesome website
-        path: website/*
 `
 
 	payload := &exportentities.PipelineV1{}
@@ -671,7 +650,6 @@ jobs:
 	assert.Len(t, p.Stages[0].Jobs[0].Action.Requirements, 3)
 	assert.Equal(t, sdk.GitCloneAction, p.Stages[0].Jobs[0].Action.Actions[0].Name)
 	assert.Equal(t, sdk.ArtifactUpload, p.Stages[0].Jobs[0].Action.Actions[1].Name)
-	assert.Equal(t, sdk.ServeStaticFiles, p.Stages[0].Jobs[0].Action.Actions[2].Name)
 	assert.Len(t, p.Stages[0].Jobs[0].Action.Actions[0].Parameters, 6)
 	assert.Len(t, p.Stages[0].Jobs[0].Action.Actions[1].Parameters, 2)
 	assert.Len(t, p.Stages[0].Jobs[0].Action.Actions[2].Parameters, 3)

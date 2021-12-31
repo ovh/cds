@@ -5,7 +5,7 @@ import {
     UIArtifact,
     WorkflowNodeRun,
     WorkflowNodeRunArtifact,
-    WorkflowNodeRunStaticFiles, WorkflowRunResult
+    WorkflowRunResult
 } from 'app/model/workflow.run.model';
 import { WorkflowHelper } from 'app/service/workflow/workflow.helper';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
@@ -28,7 +28,6 @@ export class WorkflowRunArtifactListComponent implements OnInit, OnDestroy {
     artifacts: Array<WorkflowNodeRunArtifact>;
 
     uiArtifacts: Array<UIArtifact>;
-    staticFiles: Array<WorkflowNodeRunStaticFiles>;
 
     filter: Filter<UIArtifact>;
     columns: Array<Column<UIArtifact>>;
@@ -117,11 +116,6 @@ export class WorkflowRunArtifactListComponent implements OnInit, OnDestroy {
                     });
                     this.uiArtifacts.push(...uiArtifacts);
                 }
-                this._cd.markForCheck();
-            }
-            if ((!this.staticFiles && nr.static_files) ||
-                (this.staticFiles && nr.static_files && this.staticFiles.length !== nr.static_files.length)) {
-                this.staticFiles = nr.static_files;
                 this._cd.markForCheck();
             }
         });

@@ -77,28 +77,6 @@ func NewStep(act sdk.Action) Step {
 			if destination != nil {
 				s.ArtifactUpload.Destination = destination.Value
 			}
-		case sdk.ServeStaticFiles:
-			s.ServeStaticFiles = &StepServeStaticFiles{}
-			name := sdk.ParameterFind(act.Parameters, "name")
-			if name != nil {
-				s.ServeStaticFiles.Name = name.Value
-			}
-			path := sdk.ParameterFind(act.Parameters, "path")
-			if path != nil {
-				s.ServeStaticFiles.Path = path.Value
-			}
-			entrypoint := sdk.ParameterFind(act.Parameters, "entrypoint")
-			if entrypoint != nil {
-				s.ServeStaticFiles.Entrypoint = entrypoint.Value
-			}
-			staticKey := sdk.ParameterFind(act.Parameters, "static-key")
-			if staticKey != nil {
-				s.ServeStaticFiles.StaticKey = staticKey.Value
-			}
-			destination := sdk.ParameterFind(act.Parameters, "destination")
-			if destination != nil {
-				s.ServeStaticFiles.Destination = destination.Value
-			}
 		case sdk.GitCloneAction:
 			s.GitClone = &StepGitClone{}
 			branch := sdk.ParameterFind(act.Parameters, "branch")
@@ -303,15 +281,6 @@ type StepArtifactUpload struct {
 	Tag         string `json:"tag,omitempty" yaml:"tag,omitempty" jsonschema:"required"`
 }
 
-// StepServeStaticFiles represents exported serve static files step.
-type StepServeStaticFiles struct {
-	Destination string `json:"destination,omitempty" yaml:"destination,omitempty"`
-	Entrypoint  string `json:"entrypoint,omitempty" yaml:"entrypoint,omitempty"`
-	Name        string `json:"name,omitempty" yaml:"name,omitempty" jsonschema:"required"`
-	Path        string `json:"path,omitempty" yaml:"path,omitempty" jsonschema:"required"`
-	StaticKey   string `json:"static-key,omitempty" yaml:"static-key,omitempty"`
-}
-
 // StepGitClone represents exported git clone step.
 type StepGitClone struct {
 	Branch     string `json:"branch,omitempty" yaml:"branch,omitempty"`
@@ -385,7 +354,6 @@ type Step struct {
 	Coverage         *StepCoverage         `json:"coverage,omitempty" yaml:"coverage,omitempty" jsonschema:"oneof_required=actionCoverage" jsonschema_description:"Parse coverage report.\nhttps://ovh.github.io/cds/docs/actions/builtin-coverage"`
 	ArtifactDownload *StepArtifactDownload `json:"artifactDownload,omitempty" yaml:"artifactDownload,omitempty" jsonschema:"oneof_required=actionArtifactDownload" jsonschema_description:"Download artifacts in workspace.\nhttps://ovh.github.io/cds/docs/actions/builtin-artifact-download"`
 	ArtifactUpload   *StepArtifactUpload   `json:"artifactUpload,omitempty" yaml:"artifactUpload,omitempty" jsonschema:"oneof_required=actionArtifactUpload" jsonschema_description:"Upload artifacts from workspace.\nhttps://ovh.github.io/cds/docs/actions/builtin-artifact-upload"`
-	ServeStaticFiles *StepServeStaticFiles `json:"serveStaticFiles,omitempty" yaml:"serveStaticFiles,omitempty" jsonschema:"oneof_required=actionServeStaticFiles" jsonschema_description:"Serve static files.\nhttps://ovh.github.io/cds/docs/actions/builtin-serve-static-files"`
 	GitClone         *StepGitClone         `json:"gitClone,omitempty" yaml:"gitClone,omitempty" jsonschema:"oneof_required=actionGitClone" jsonschema_description:"Clone a git repository.\nhttps://ovh.github.io/cds/docs/actions/builtin-gitclone"`
 	GitTag           *StepGitTag           `json:"gitTag,omitempty" yaml:"gitTag,omitempty" jsonschema:"oneof_required=actionGitTag" jsonschema_description:"Create a git tag.\nhttps://ovh.github.io/cds/docs/actions/builtin-gittag"`
 	ReleaseVCS       *StepReleaseVCS       `json:"releaseVCS,omitempty" yaml:"releaseVCS,omitempty" jsonschema:"oneof_required=actionReleaseVCS" jsonschema_description:"Release an application.\nhttps://ovh.github.io/cds/docs/actions/builtin-releasevcs"`
@@ -484,9 +452,6 @@ func (s Step) IsValid() bool {
 	if s.isArtifactUpload() {
 		count++
 	}
-	if s.isServeStaticFiles() {
-		count++
-	}
 	if s.isJUnitReport() {
 		count++
 	}
@@ -536,8 +501,6 @@ func (s Step) toAction() (*sdk.Action, error) {
 		a, err = s.asArtifactDownload()
 	} else if s.isArtifactUpload() {
 		a, err = s.asArtifactUpload()
-	} else if s.isServeStaticFiles() {
-		a, err = s.asServeStaticFiles()
 	} else if s.isJUnitReport() {
 		a = s.asJUnitReport()
 	} else if s.isGitClone() {
@@ -721,22 +684,6 @@ func (s Step) asDeployApplication() sdk.Action {
 		Name: sdk.DeployApplicationAction,
 		Type: sdk.BuiltinAction,
 	}
-}
-
-func (s Step) isServeStaticFiles() bool { return s.ServeStaticFiles != nil }
-
-func (s Step) asServeStaticFiles() (sdk.Action, error) {
-	var a sdk.Action
-	m, err := stepToMap(s.ServeStaticFiles)
-	if err != nil {
-		return a, err
-	}
-	a = sdk.Action{
-		Name:       sdk.ServeStaticFiles,
-		Type:       sdk.BuiltinAction,
-		Parameters: sdk.ParametersFromMap(m),
-	}
-	return a, nil
 }
 
 func (s Step) isJUnitReport() bool { return s.JUnitReport != nil }
