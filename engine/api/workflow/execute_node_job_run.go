@@ -223,12 +223,16 @@ func PrepareSpawnInfos(infos []sdk.SpawnInfo) []sdk.SpawnInfo {
 	now := time.Now()
 	prepared := make([]sdk.SpawnInfo, 0)
 	for _, info := range infos {
-		prepared = append(prepared, sdk.SpawnInfo{
+		preparedInfo := sdk.SpawnInfo{
 			APITime:     now,
 			RemoteTime:  info.RemoteTime,
 			Message:     info.Message,
 			UserMessage: info.Message.DefaultUserMessage(),
-		})
+		}
+		if preparedInfo.RemoteTime.IsZero() {
+			preparedInfo.RemoteTime = now
+		}
+		prepared = append(prepared, preparedInfo)
 	}
 	return prepared
 }
@@ -275,7 +279,7 @@ func TakeNodeJobRun(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store 
 		return nil, nil, sdk.WrapError(err, "cannot update worker_id in node job run %d", jobID)
 	}
 
-	if err := AddSpawnInfosNodeJobRun(db, job.WorkflowNodeRunID, jobID, PrepareSpawnInfos(infos)); err != nil {
+	if err := AddSpawnInfosNodeJobRun(db, job.WorkflowNodeRunID, jobID, infos); err != nil {
 		return nil, nil, sdk.WrapError(err, "cannot save spawn info on node job run %d", jobID)
 	}
 
@@ -305,7 +309,7 @@ func checkStatusWaiting(ctx context.Context, store cache.Store, jobID int64, sta
 }
 
 // LoadDecryptSecrets loads all secrets for a job run
-func LoadDecryptSecrets(ctx context.Context, db gorp.SqlExecutor, wr *sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun) ([]sdk.Variable, error) {
+func LoadDecryptSecrets(ctx context.Context, db gorp.SqlExecutor, wr *sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun) (sdk.WorkflowRunSecrets, error) {
 	entities := []string{SecretProjContext}
 
 	for _, integ := range wr.Workflow.Integrations {

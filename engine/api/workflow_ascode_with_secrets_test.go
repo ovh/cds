@@ -353,8 +353,10 @@ version: v1.0`),
 	t.Logf("%d %+v", wrDB.Workflow.WorkflowData.Node.ID, wrDB.WorkflowNodeRuns)
 	require.NotNil(t, wrDB.WorkflowNodeRuns[wrDB.Workflow.WorkflowData.Node.ID])
 	require.Len(t, wrDB.WorkflowNodeRuns[wrDB.Workflow.WorkflowData.Node.ID], 1)
-	secrets, errS := workflow.LoadDecryptSecrets(context.TODO(), db, wrDB, &wrDB.WorkflowNodeRuns[wrDB.Workflow.WorkflowData.Node.ID][0])
-	require.NoError(t, errS)
+	secretsRaw, err := workflow.LoadDecryptSecrets(context.TODO(), db, wrDB, &wrDB.WorkflowNodeRuns[wrDB.Workflow.WorkflowData.Node.ID][0])
+	require.NoError(t, err)
+
+	secrets := secretsRaw.ToVariables()
 
 	t.Logf("%+v", secrets)
 	require.Len(t, secrets, 6)

@@ -339,6 +339,7 @@ vcs_ssh_key: proj-blabla
 
 	// mock service
 	allSrv, err := services.LoadAll(context.TODO(), db)
+	require.NoError(t, err)
 	for _, s := range allSrv {
 		if err := services.Delete(db, &s); err != nil {
 			t.Fatalf("unable to delete service: %v", err)

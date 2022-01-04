@@ -29,27 +29,23 @@ func InsertRunSecret(ctx context.Context, db gorpmapper.SqlExecutorWithTx, wrSec
 	return nil
 }
 
-func loadRunSecretWithDecryption(ctx context.Context, db gorp.SqlExecutor, runID int64, entities []string) ([]sdk.Variable, error) {
+func loadRunSecretWithDecryption(ctx context.Context, db gorp.SqlExecutor, runID int64, entities []string) (sdk.WorkflowRunSecrets, error) {
 	var dbSecrets []dbWorkflowRunSecret
 	query := gorpmapping.NewQuery(`SELECT * FROM workflow_run_secret WHERE workflow_run_id = $1 AND context = ANY(string_to_array($2, ',')::text[])`).Args(runID, gorpmapping.IDStringsToQueryString(entities))
 	if err := gorpmapping.GetAll(ctx, db, query, &dbSecrets, gorpmapping.GetOptions.WithDecryption); err != nil {
 		return nil, err
 	}
-	secrets := make([]sdk.Variable, len(dbSecrets))
+	secrets := make(sdk.WorkflowRunSecrets, 0, len(dbSecrets))
 	for i := range dbSecrets {
 		isValid, err := gorpmapping.CheckSignature(dbSecrets[i], dbSecrets[i].Signature)
 		if err != nil {
 			return nil, err
 		}
 		if !isValid {
-			log.Error(ctx, "workflow.loadRunSecretWithDecryption> secret value corrupted %s", dbSecrets[i].ID)
+			log.Error(ctx, "secret value corrupted %s", dbSecrets[i].ID)
 			continue
 		}
-		secrets[i] = sdk.Variable{
-			Name:  dbSecrets[i].Name,
-			Type:  dbSecrets[i].Type,
-			Value: string(dbSecrets[i].Value),
-		}
+		secrets = append(secrets, dbSecrets[i].WorkflowRunSecret)
 	}
 	return secrets, nil
 }

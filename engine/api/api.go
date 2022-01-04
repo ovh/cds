@@ -67,7 +67,7 @@ type Configuration struct {
 	} `toml:"url" comment:"#####################\n CDS URLs Settings \n####################" json:"url"`
 	HTTP    service.HTTPRouterConfiguration `toml:"http" json:"http"`
 	Secrets struct {
-		Key string `toml:"key" json:"-"`
+		SkipProjectSecretsOnRegion []string `toml:"skipProjectSecretsOnRegion" json:"-"`
 	} `toml:"secrets" json:"secrets"`
 	Database database.DBConfigurationWithEncryption `toml:"database" comment:"################################\n Postgresql Database settings \n###############################" json:"database"`
 	Cache    struct {
@@ -354,10 +354,6 @@ func (a *API) CheckConfiguration(config interface{}) error {
 		} else if err != nil {
 			return fmt.Errorf("invalid artifact local base directory %s: %v", aConfig.Artifact.Local.BaseDirectory, err)
 		}
-	}
-
-	if len(aConfig.Secrets.Key) != 32 {
-		return fmt.Errorf("invalid secret key. It should be 32 bits (%d)", len(aConfig.Secrets.Key))
 	}
 
 	if aConfig.DefaultArch == "" {

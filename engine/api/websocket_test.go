@@ -34,6 +34,7 @@ func Test_websocketWrongFilters(t *testing.T) {
 
 	_, jws, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), sdk.RandomString(10), 0, localConsumer, u.GetGroupIDs(),
 		sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject))
+	require.NoError(t, err)
 
 	chanMessageReceived := make(chan sdk.WebsocketEvent)
 	chanMessageToSend := make(chan []sdk.WebsocketFilter)
@@ -72,6 +73,7 @@ func Test_websocketFilterRetroCompatibility(t *testing.T) {
 
 	u, _ := assets.InsertLambdaUser(t, db)
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	require.NoError(t, err)
 
 	c := &websocketClientData{
 		AuthConsumer: *localConsumer,
@@ -188,6 +190,7 @@ func Test_websocketDeconnection(t *testing.T) {
 
 	_, jws, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), sdk.RandomString(10), 0, localConsumer, u.GetGroupIDs(),
 		sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject))
+	require.NoError(t, err)
 
 	// Open websocket
 	client := cdsclient.New(cdsclient.Config{

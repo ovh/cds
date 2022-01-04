@@ -555,28 +555,15 @@ jobLoop:
 		if !spawnErrs.IsEmpty() {
 			failedJobs++
 			wjob.Status = sdk.StatusFail
-
 			for _, e := range spawnErrs {
 				log.ErrorWithStackTrace(ctx, e)
-
-				msg := sdk.SpawnMsg{
-					ID: sdk.MsgSpawnInfoJobError.ID,
-				}
-				msg.Args = []interface{}{sdk.ExtractHTTPError(e).Error()}
 				wjob.SpawnInfos = append(wjob.SpawnInfos, sdk.SpawnInfo{
-					APITime:     time.Now(),
-					Message:     msg,
-					RemoteTime:  time.Now(),
-					UserMessage: msg.DefaultUserMessage(),
+					Message: sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobError.ID, Args: []interface{}{sdk.ExtractHTTPError(e).Error()}},
 				})
 			}
 		} else {
-			sp := sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobInQueue.ID}
 			wjob.SpawnInfos = []sdk.SpawnInfo{{
-				APITime:     time.Now(),
-				Message:     sp,
-				RemoteTime:  time.Now(),
-				UserMessage: sp.DefaultUserMessage(),
+				Message: sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobInQueue.ID},
 			}}
 		}
 
@@ -588,7 +575,7 @@ jobLoop:
 		}
 		next()
 
-		if err := AddSpawnInfosNodeJobRun(db, wjob.WorkflowNodeRunID, wjob.ID, PrepareSpawnInfos(wjob.SpawnInfos)); err != nil {
+		if err := AddSpawnInfosNodeJobRun(db, wjob.WorkflowNodeRunID, wjob.ID, wjob.SpawnInfos); err != nil {
 			return nil, sdk.WrapError(err, "cannot save spawn info job %d", wjob.ID)
 		}
 

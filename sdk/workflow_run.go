@@ -127,6 +127,16 @@ func (a *WorkflowNodeTriggerRuns) Scan(src interface{}) error {
 	return WrapError(JSONUnmarshal(source, a), "cannot unmarshal WorkflowNodeTriggerRuns")
 }
 
+type WorkflowRunSecrets []WorkflowRunSecret
+
+func (s WorkflowRunSecrets) ToVariables() []Variable {
+	res := make([]Variable, len(s))
+	for i := range s {
+		res[i] = s[i].ToVariable()
+	}
+	return res
+}
+
 type WorkflowRunSecret struct {
 	ID            string `json:"-" db:"id"`
 	WorkflowRunID int64  `json:"-" db:"workflow_run_id"`
@@ -134,6 +144,14 @@ type WorkflowRunSecret struct {
 	Context       string `json:"-" db:"context"`
 	Name          string `json:"-" db:"name"`
 	Value         []byte `json:"-" db:"cypher_value" gorpmapping:"encrypted,ID"`
+}
+
+func (s WorkflowRunSecret) ToVariable() Variable {
+	return Variable{
+		Name:  s.Name,
+		Type:  s.Type,
+		Value: string(s.Value),
+	}
 }
 
 // WorkflowNodeRunRelease represents the request struct use by release builtin action for workflow

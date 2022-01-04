@@ -15,6 +15,7 @@ Requirement types:
 - [Memory]({{< relref "/docs/concepts/requirement/requirement_memory.md" >}})
 - [OS & Architecture]({{< relref "/docs/concepts/requirement/requirement_os_arch.md" >}})
 - [Region]({{< relref "/docs/concepts/requirement/requirement_region.md" >}})
+- [Secret]({{< relref "/docs/concepts/requirement/requirement_secret.md" >}})
 
 A [Job]({{< relref "/docs/concepts/job.md" >}}) will be executed by a **worker**.
 

@@ -25,6 +25,7 @@ var requirementCheckFuncs = map[string]func(w *CurrentWorker, r sdk.Requirement)
 	sdk.MemoryRequirement:   checkMemoryRequirement,
 	sdk.OSArchRequirement:   checkOSArchRequirement,
 	sdk.RegionRequirement:   checkRegionRequirement,
+	sdk.SecretRequirement:   checkSecretRequirement,
 }
 
 func checkRequirements(ctx context.Context, w *CurrentWorker, a *sdk.Action) (bool, []sdk.Requirement) {
@@ -189,6 +190,11 @@ func checkOSArchRequirement(_ *CurrentWorker, r sdk.Requirement) (bool, error) {
 
 // region is checked by hatchery only
 func checkRegionRequirement(_ *CurrentWorker, _ sdk.Requirement) (bool, error) {
+	return true, nil
+}
+
+// secret is checked by api only
+func checkSecretRequirement(_ *CurrentWorker, _ sdk.Requirement) (bool, error) {
 	return true, nil
 }
 

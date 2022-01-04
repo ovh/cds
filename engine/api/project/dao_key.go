@@ -57,8 +57,8 @@ func LoadAllKeys(ctx context.Context, db gorp.SqlExecutor, projectID int64) ([]s
 }
 
 // LoadAllKeysWithPrivateContent load all keys for the given project
-func LoadAllKeysWithPrivateContent(ctx context.Context, db gorp.SqlExecutor, appID int64) ([]sdk.ProjectKey, error) {
-	keys, err := LoadAllKeys(ctx, db, appID)
+func LoadAllKeysWithPrivateContent(ctx context.Context, db gorp.SqlExecutor, projID int64) ([]sdk.ProjectKey, error) {
+	keys, err := LoadAllKeys(ctx, db, projID)
 	if err != nil {
 		return nil, err
 	}

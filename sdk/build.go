@@ -16,9 +16,9 @@ type SpawnInfo struct {
 
 // SpawnMsg represents a msg for spawnInfo
 type SpawnMsg struct {
-	ID   string        `json:"id" db:"-"`
-	Args []interface{} `json:"args" db:"-"`
-	Type string        `json:"type" db:"-"`
+	ID   string        `json:"id,omitempty" db:"-"`
+	Args []interface{} `json:"args,omitempty" db:"-"`
+	Type string        `json:"type,omitempty" db:"-"`
 }
 
 func SpawnMsgNew(msg Message, args ...interface{}) SpawnMsg {

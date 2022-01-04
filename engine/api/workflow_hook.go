@@ -289,7 +289,7 @@ func (api *API) postWorkflowJobHookCallbackHandler() service.Handler {
 
 		// Hide secrets in payload
 		for _, s := range secrets {
-			callback.Log = strings.Replace(callback.Log, s.Value, "**"+s.Name+"**", -1)
+			callback.Log = strings.Replace(callback.Log, string(s.Value), sdk.PasswordPlaceholder, -1)
 		}
 
 		report, err := workflow.UpdateOutgoingHookRunStatus(ctx, tx, api.Cache, *proj, wr, hookRunID, callback)
@@ -336,11 +336,6 @@ func (api *API) getWorkflowJobHookDetailsHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrNotFound)
 		}
 
-		secrets, errSecret := workflow.LoadDecryptSecrets(ctx, db, wr, nil)
-		if errSecret != nil {
-			return sdk.WrapError(errSecret, "cannot load secrets")
-		}
-		hr.BuildParameters = append(hr.BuildParameters, sdk.VariablesToParameters("", secrets)...)
 		return service.WriteJSON(w, hr, http.StatusOK)
 	}
 }

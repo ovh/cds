@@ -198,7 +198,7 @@ func verifyAddResultArtifactManager(ctx context.Context, db gorp.SqlExecutor, st
 	var artifactManagerToken string
 	for _, s := range secrets {
 		if s.Name == fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactoryConfigToken) {
-			artifactManagerToken = s.Value
+			artifactManagerToken = string(s.Value)
 			break
 		}
 	}
@@ -325,7 +325,7 @@ func LoadRunResultsByRunID(ctx context.Context, db gorp.SqlExecutor, runID int64
 		SELECT data->>'name' AS name, sub_num, id
 		FROM workflow_run_result
 		WHERE workflow_run_id = $1
-	), 
+	),
 	deduplication AS (
 		SELECT distinct on (name) *
 		FROM allResults
