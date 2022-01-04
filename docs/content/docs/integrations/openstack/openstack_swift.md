@@ -11,7 +11,6 @@ With this integration, you can use a dedicated OpenStack Swift Storage on :
 
 - action [Artifact Upload]({{< relref "/docs/actions/builtin-artifact-upload.md">}})
 - action [Artifact Download]({{< relref "/docs/actions/builtin-artifact-download.md">}})
-- action [Serve Static Files]({{< relref "/docs/actions/builtin-serve-static-files.md">}})
 - [worker cache command]({{< relref "/docs/components/worker/cache">}})
 
 Notice: by default, the storage is configured in CDS Configuration. This integration
