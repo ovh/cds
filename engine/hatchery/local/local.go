@@ -391,6 +391,8 @@ func (h *HatcheryLocal) checkRequirement(r sdk.Requirement) (bool, error) {
 			return false, err
 		}
 		return h == r.Value, nil
+	case sdk.SecretRequirement:
+		return true, nil
 	default:
 		log.Debug(context.TODO(), "checkRequirement> %v don't work on this hatchery", r.Type)
 		return false, nil

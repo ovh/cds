@@ -478,7 +478,7 @@ version: v1.0`),
 
 	require.NoError(t, waitCraftinWorkflow(t, api, api.mustDB(), wrun.ID))
 	wr, err := workflow.LoadRunByID(context.Background(), db, wrun.ID, workflow.LoadRunOptions{})
-	require.NoError(t, nil)
+	require.NoError(t, err)
 	require.NotEqual(t, "Fail", wr.Status)
 
 	wk, err = workflow.Load(context.Background(), db, api.Cache, *proj, "w-go-repo", workflow.LoadOptions{})

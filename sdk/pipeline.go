@@ -21,6 +21,14 @@ type Pipeline struct {
 	WorkflowAscodeHolder *Workflow `json:"workflow_ascode_holder,omitempty" cli:"-" db:"-"`
 }
 
+func (p Pipeline) IsValid() error {
+	// check pipeline name pattern
+	if regexp := NamePatternRegex; !regexp.MatchString(p.Name) {
+		return NewErrorFrom(ErrInvalidPipelinePattern, "pipeline name %s do not respect pattern %s", p.Name, NamePattern)
+	}
+	return nil
+}
+
 // PipelineAudit represents pipeline audit
 type PipelineAudit struct {
 	ID         int64     `json:"id" db:"id"`

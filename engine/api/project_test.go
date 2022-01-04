@@ -38,28 +38,17 @@ func TestVariableInProject(t *testing.T) {
 		Value: "value1",
 		Type:  "PASSWORD",
 	}
-	err := project.InsertVariable(db, project1.ID, var1, &sdk.AuthentifiedUser{Username: "foo"})
-	if err != nil {
-		t.Fatalf("cannot insert var1 in project1: %s", err)
-	}
+	require.NoError(t, project.InsertVariable(db, project1.ID, var1, &sdk.AuthentifiedUser{Username: "foo"}))
 
 	// 3. Test Update variable
 	var2 := var1
 	var2.Value = "value1Updated"
-	err = project.UpdateVariable(db, project1.ID, var2, var1, &sdk.AuthentifiedUser{Username: "foo"})
-	if err != nil {
-		t.Fatalf("cannot update var1 in project1: %s", err)
-	}
+	require.NoError(t, project.UpdateVariable(db, project1.ID, var2, var1, &sdk.AuthentifiedUser{Username: "foo"}))
 
 	// 4. Delete variable
-	err = project.DeleteVariable(api.mustDB(), project1.ID, var1, &sdk.AuthentifiedUser{Username: "foo"})
-	if err != nil {
-		t.Fatalf("cannot delete var1 from project: %s", err)
-	}
-	varTest, err := project.LoadVariable(api.mustDB(), project1.ID, var1.Name)
-	if varTest != nil {
-		t.Fatalf("var1 should be deleted: %+v", varTest)
-	}
+	require.NoError(t, project.DeleteVariable(api.mustDB(), project1.ID, var1, &sdk.AuthentifiedUser{Username: "foo"}))
+	_, err := project.LoadVariable(api.mustDB(), project1.ID, var1.Name)
+	require.Error(t, err)
 
 	// 5. Insert new var
 	var3 := &sdk.ProjectVariable{
@@ -67,10 +56,7 @@ func TestVariableInProject(t *testing.T) {
 		Value: "value2",
 		Type:  "STRING",
 	}
-	err = project.InsertVariable(db, project1.ID, var3, &sdk.AuthentifiedUser{Username: "foo"})
-	if err != nil {
-		t.Fatalf("cannot insert var1 in project1: %s", err)
-	}
+	require.NoError(t, project.InsertVariable(db, project1.ID, var3, &sdk.AuthentifiedUser{Username: "foo"}))
 }
 
 func Test_getProjectsHandler(t *testing.T) {
@@ -324,6 +310,7 @@ func Test_getprojectsHandler_AsProviderWithRequestedUsername(t *testing.T) {
 
 	_, jws, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), sdk.RandomString(10), 0, localConsumer, admin.GetGroupIDs(),
 		sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject))
+	require.NoError(t, err)
 
 	u, _ := assets.InsertLambdaUser(t, db)
 
@@ -436,6 +423,7 @@ func Test_getProjectsHandler_FilterByRepo(t *testing.T) {
 
 	_, jws, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), sdk.RandomString(10), 0, localConsumer, admin.GetGroupIDs(),
 		sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject))
+	require.NoError(t, err)
 
 	u, _ := assets.InsertLambdaUser(t, db)
 

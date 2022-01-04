@@ -386,6 +386,7 @@ func Test_getWorkflowHandler_AsProvider(t *testing.T) {
 
 	_, jws, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), sdk.RandomString(10), 0, localConsumer, admin.GetGroupIDs(),
 		sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject))
+	require.NoError(t, err)
 
 	u, _ := assets.InsertLambdaUser(t, db)
 
@@ -1760,6 +1761,7 @@ func Test_getWorkflowsHandler_FilterByRepo(t *testing.T) {
 
 	_, jws, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), sdk.RandomString(10), 0, localConsumer, admin.GetGroupIDs(),
 		sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject))
+	require.NoError(t, err)
 
 	u, _ := assets.InsertLambdaUser(t, db)
 
@@ -1841,6 +1843,7 @@ func Test_getSearchWorkflowHandler(t *testing.T) {
 
 	_, jws, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), sdk.RandomString(10), 0, localConsumer, admin.GetGroupIDs(),
 		sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject))
+	require.NoError(t, err)
 
 	u, _ := assets.InsertLambdaUser(t, db)
 

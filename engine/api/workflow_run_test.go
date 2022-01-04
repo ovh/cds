@@ -1115,8 +1115,10 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 	assert.Equal(t, 1, payloadCount)
 	assert.True(t, testFound, "should find 'test' in build parameters")
 
-	secrets, err := workflow.LoadDecryptSecrets(context.TODO(), db, lastRun, lastRun.RootRun())
+	secretsRaw, err := workflow.LoadDecryptSecrets(context.TODO(), db, lastRun, lastRun.RootRun())
 	require.NoError(t, err)
+
+	secrets := secretsRaw.ToVariables()
 
 	t.Logf("%+v", secrets)
 
@@ -1288,6 +1290,7 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 	require.NoError(t, err)
 
 	allSrv, err := services.LoadAll(context.TODO(), db)
+	require.NoError(t, err)
 	for _, s := range allSrv {
 		if err := services.Delete(db, &s); err != nil {
 			t.Fatalf("unable to delete service: %v", err)

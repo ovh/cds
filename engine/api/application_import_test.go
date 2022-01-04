@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/application"
@@ -462,6 +463,7 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 	eapp.Keys[k2.Name] = ek2
 
 	btes, err := yaml.Marshal(eapp)
+	require.NoError(t, err)
 	body = string(btes)
 
 	t.Log(body)

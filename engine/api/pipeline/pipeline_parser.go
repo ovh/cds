@@ -22,9 +22,9 @@ type ImportOptions struct {
 // ParseAndImport parse an exportentities.pipeline and insert or update the pipeline in database
 func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj sdk.Project, epip exportentities.Pipeliner, u sdk.Identifiable, opts ImportOptions) (*sdk.Pipeline, []sdk.Message, error) {
 	//Transform payload to a sdk.Pipeline
-	pip, errP := epip.Pipeline()
-	if errP != nil {
-		return pip, nil, sdk.WrapError(sdk.NewError(sdk.ErrWrongRequest, errP), "unable to parse pipeline")
+	pip, err := epip.Pipeline()
+	if err != nil {
+		return nil, nil, err
 	}
 
 	pip.FromRepository = opts.FromRepository
@@ -34,9 +34,9 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, cache cache.Store,
 	}
 
 	// Check if pipeline exists
-	exist, errE := ExistPipeline(db, proj.ID, pip.Name)
-	if errE != nil {
-		return pip, nil, sdk.WrapError(errE, "unable to check if pipeline %v exists", pip.Name)
+	exist, err := ExistPipeline(db, proj.ID, pip.Name)
+	if err != nil {
+		return pip, nil, sdk.WrapError(err, "unable to check if pipeline %v exists", pip.Name)
 	}
 
 	done := new(sync.WaitGroup)
