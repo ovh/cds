@@ -270,6 +270,7 @@ func (api *API) postWorkflowJobHookCallbackHandler() service.Handler {
 			project.LoadOptions.WithIntegrations,
 			project.LoadOptions.WithApplicationVariables,
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,
+			project.LoadOptions.WithGroups,
 		)
 		next()
 		if err != nil {

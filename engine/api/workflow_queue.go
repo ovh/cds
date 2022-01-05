@@ -464,7 +464,10 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 
 		customCtx, cancel := context.WithTimeout(ctx, 180*time.Second)
 		defer cancel()
-		proj, err := project.LoadProjectByNodeJobRunID(ctx, api.mustDBWithCtx(customCtx), api.Cache, id, project.LoadOptions.WithVariables)
+		proj, err := project.LoadProjectByNodeJobRunID(ctx, api.mustDBWithCtx(customCtx), api.Cache, id,
+			project.LoadOptions.WithVariables,
+			project.LoadOptions.WithGroups,
+		)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load project from job %d", id)
 		}
