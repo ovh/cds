@@ -76,7 +76,7 @@ func RunParseJunitTestResultAction(ctx context.Context, wk workerruntime.Runtime
 		log.Debug(ctx, "found %d testsuites in %q", len(ftests.TestSuites), f)
 
 		if len(ftests.TestSuites) == 0 {
-			wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("WARNING: unable to parse %q as valid xUnit report file", filepath.Base(f)))
+			wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("WARNING: No JUnit testsuites found in file %q", filepath.Base(f)))
 			continue
 		}
 

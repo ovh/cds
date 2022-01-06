@@ -74,42 +74,43 @@ func (s JUnitTestsSuites) ComputeStats() TestsStats {
 
 type JUnitTestSuite struct {
 	XMLName   xml.Name        `xml:"testsuite" json:"-"`
-	Disabled  int             `xml:"disabled,attr,omitempty" json:"disabled"`
+	Disabled  int             `xml:"disabled,attr,omitempty" json:"disabled,omitempty"`
 	Errors    int             `xml:"errors,attr,omitempty" json:"errors,omitempty"`
 	Failures  int             `xml:"failures,attr,omitempty" json:"failures,omitempty"`
-	ID        string          `xml:"id,attr" json:"id"`
-	Name      string          `xml:"name,attr" json:"name"`
-	Package   string          `xml:"package,attr,omitempty" json:"package"`
+	ID        string          `xml:"id,attr" json:"id,omitempty"`
+	Name      string          `xml:"name,attr" json:"name,omitempty"`
+	Package   string          `xml:"package,attr,omitempty" json:"package,omitempty"`
 	Skipped   int             `xml:"skipped,attr,omitempty" json:"skipped,omitempty"`
-	TestCases []JUnitTestCase `xml:"testcase" json:"tests"`
-	Time      string          `xml:"time,attr,omitempty" json:"time"`
-	Timestamp string          `xml:"timestamp,attr,omitempty" json:"timestamp"`
-	Total     int             `xml:"tests,attr" json:"total"`
+	TestCases []JUnitTestCase `xml:"testcase" json:"tests,omitempty"`
+	Time      string          `xml:"time,attr,omitempty" json:"time,omitempty"`
+	Timestamp string          `xml:"timestamp,attr,omitempty" json:"timestamp,omitempty"`
+	Total     int             `xml:"tests,attr" json:"total,omitempty"`
 }
 
 type JUnitTestCase struct {
 	XMLName   xml.Name           `xml:"testcase" json:"-"`
-	Classname string             `xml:"classname,attr,omitempty" json:"classname"`
-	Errors    []JUnitTestFailure `xml:"error,omitempty" json:"errors"`
-	Failures  []JUnitTestFailure `xml:"failure,omitempty" json:"failures"`
-	Name      string             `xml:"name,attr" json:"name"`
-	Skipped   []JUnitTestSkipped `xml:"skipped,omitempty" json:"skipped"`
-	Status    string             `xml:"status,attr,omitempty" json:"status"`
-	Systemerr JUnitInnerResult   `xml:"system-err,omitempty" json:"systemerr"`
-	Systemout JUnitInnerResult   `xml:"system-out,omitempty" json:"systemout"`
-	Time      float64            `xml:"time,attr,omitempty" json:"time"`
+	Classname string             `xml:"classname,attr,omitempty" json:"classname,omitempty"`
+	Errors    []JUnitTestFailure `xml:"error,omitempty" json:"errors,omitempty"`
+	Failures  []JUnitTestFailure `xml:"failure,omitempty" json:"failures,omitempty"`
+	Name      string             `xml:"name,attr" json:"name,omitempty"`
+	Skipped   []JUnitTestSkipped `xml:"skipped,omitempty" json:"skipped,omitempty"`
+	Status    string             `xml:"status,attr,omitempty" json:"status,omitempty"`
+	Systemerr JUnitInnerResult   `xml:"system-err,omitempty" json:"systemerr,omitempty"`
+	Systemout JUnitInnerResult   `xml:"system-out,omitempty" json:"systemout,omitempty"`
+	Time      string             `xml:"time,attr,omitempty" json:"time,omitempty"`
 }
 
 type JUnitTestSkipped struct {
-	Value string `xml:",cdata" json:"value"`
+	Message string `xml:"message,attr,omitempty" json:"message,omitempty"`
+	Value   string `xml:",cdata" json:"value,omitempty"`
 }
 
 type JUnitTestFailure struct {
-	Message string `xml:"message,attr,omitempty" json:"message"`
-	Type    string `xml:"type,attr,omitempty" json:"type"`
-	Value   string `xml:",cdata" json:"value"`
+	Message string `xml:"message,attr,omitempty" json:"message,omitempty"`
+	Type    string `xml:"type,attr,omitempty" json:"type,omitempty"`
+	Value   string `xml:",cdata" json:"value,omitempty"`
 }
 
 type JUnitInnerResult struct {
-	Value string `xml:",cdata" json:"value" yaml:"value"`
+	Value string `xml:",cdata" json:"value,omitempty"`
 }

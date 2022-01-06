@@ -18,6 +18,7 @@ func TestBlur(t *testing.T) {
 		"&é'(§è!çà",
 		`"1234567890`,
 		"12345",
+		"123456",
 	})
 	require.NoError(t, err)
 
@@ -35,6 +36,7 @@ func TestBlur(t *testing.T) {
 	type report struct {
 		String      string   `json:"string,omitempty"`
 		StringSlice []string `json:"string_slice,omitempty"`
+		Number      int      `json:"number,omitempty"`
 	}
 	r := report{
 		String:      "&é'(§è!çà",
@@ -56,4 +58,20 @@ func TestBlur(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Equal(t, string(expected), b.String(string(source)))
+
+	tests := sdk.JUnitTestsSuites{
+		TestSuites: []sdk.JUnitTestSuite{{
+			Total:   123456,
+			Skipped: 5,
+			TestCases: []sdk.JUnitTestCase{{
+				Systemout: sdk.JUnitInnerResult{
+					Value: "1234567890abcdef",
+				},
+			}},
+		}},
+	}
+	require.NoError(t, b.Interface(&tests))
+	require.Equal(t, sdk.PasswordPlaceholder, tests.TestSuites[0].TestCases[0].Systemout.Value)
+	require.Equal(t, 0, tests.TestSuites[0].Total)
+	require.Equal(t, 5, tests.TestSuites[0].Skipped)
 }

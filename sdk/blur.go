@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"reflect"
 	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -74,6 +75,11 @@ func (b *Blur) Interface(i interface{}) error {
 			if err := b.Interface(e.Field(i).Addr().Interface()); err != nil {
 				return err
 			}
+		}
+	case reflect.Int:
+		data := e.Interface().(int)
+		if b.String(strconv.Itoa(data)) == PasswordPlaceholder {
+			e.SetInt(0)
 		}
 	default:
 		return fmt.Errorf("cannot blur given value of type %q", v.Type())
