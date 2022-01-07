@@ -19,8 +19,3 @@ parameters:
     type: string
     description: JFrog Distribution token variable name. Leave empty to use integration.
     advanced: true
-  distribute_only_on_edges:
-    type: boolean
-    description: Distribute release bundle only on edges.
-    default: "true"
-    advanced: true

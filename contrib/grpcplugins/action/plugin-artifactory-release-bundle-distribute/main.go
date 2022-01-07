@@ -64,9 +64,6 @@ func (actPlugin *artifactoryReleaseBundleDistributePlugin) Run(ctx context.Conte
 	if err != nil {
 		return actionplugin.Fail("%v", err)
 	}
-	if q.GetOptions()["distribute_only_on_edges"] != "true" {
-		edges = edge.RemoveNonEdge(edges)
-	}
 
 	if len(edges) == 0 {
 		return actionplugin.Fail("No destination available. Please check your credentials", err)

@@ -49,14 +49,3 @@ func ListEdgeNodes(distriClient *distribution.DistributionServicesManager, url, 
 	}
 	return edges, nil
 }
-
-func RemoveNonEdge(edges []EdgeNode) []EdgeNode {
-	edgeFiltered := make([]EdgeNode, 0, len(edges))
-	for _, e := range edges {
-		if e.LicenseType != "EDGE" {
-			continue
-		}
-		edgeFiltered = append(edgeFiltered, e)
-	}
-	return edgeFiltered
-}
