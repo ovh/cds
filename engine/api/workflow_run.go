@@ -521,6 +521,7 @@ func (api *API) updateParentWorkflowRun(ctx context.Context, run *sdk.WorkflowRu
 		project.LoadOptions.WithIntegrations,
 		project.LoadOptions.WithApplicationVariables,
 		project.LoadOptions.WithApplicationWithDeploymentStrategies,
+		project.LoadOptions.WithGroups,
 	)
 	if err != nil {
 		return sdk.WrapError(err, "cannot load project")
