@@ -154,7 +154,6 @@ func (e *artifactoryReleasePlugin) Run(_ context.Context, opts *integrationplugi
 	if err != nil {
 		return fail("%v", err)
 	}
-	edges = edge.RemoveNonEdge(edges)
 
 	fmt.Printf("Distribute Release %s %s\n", releaseName, releaseVersion)
 	distributionParams := services.NewDistributeReleaseBundleParams(releaseName, releaseVersion)
