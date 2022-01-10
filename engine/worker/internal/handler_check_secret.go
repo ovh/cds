@@ -39,7 +39,8 @@ func checkSecretHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc
 
 		var varFound string
 		for _, p := range wk.currentJob.params {
-			if (p.Type == sdk.SecretVariable || p.Type == sdk.KeyVariable) && len(p.Value) >= sdk.SecretMinLength && strings.Contains(sbtes, p.Value) {
+			isSecret := p.Type == sdk.SecretVariable || p.Type == sdk.KeyVariable || p.Type == sdk.SSHKeyVariable || p.Type == sdk.PGPKeyVariable
+			if isSecret && len(p.Value) >= sdk.SecretMinLength && strings.Contains(sbtes, p.Value) {
 				varFound = p.Name
 				break
 			}

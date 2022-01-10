@@ -60,7 +60,6 @@ require (
 	github.com/ovh/cds/sdk/interpolate v0.0.0-20190319104452-71125b036b25
 	github.com/ovh/configstore v0.3.3-0.20200701085609-a539fcf61db5
 	github.com/ovh/symmecrypt v0.5.1
-	github.com/ovh/venom v0.25.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pborman/uuid v0.0.0-20170612153648-e790cca94e6c
 	github.com/pelletier/go-toml v1.8.0
@@ -207,7 +206,6 @@ require (
 	github.com/mholt/archiver/v3 v3.5.1-0.20210618180617-81fac4ba96e4 // indirect
 	github.com/miscreant/miscreant.go v0.0.0-20200214223636-26d376326b75 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
-	github.com/mndrix/tap-go v0.0.0-20170113192335-56cca451570b // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/nsf/termbox-go v0.0.0-20190817171036-93860e161317 // indirect
@@ -228,7 +226,6 @@ require (
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
 	github.com/sergi/go-diff v1.1.0 // indirect
-	github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/subosito/gotenv v1.2.0 // indirect

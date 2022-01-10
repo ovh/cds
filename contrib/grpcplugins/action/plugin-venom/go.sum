@@ -489,7 +489,6 @@ github.com/ovh/configstore v0.3.3-0.20200701085609-a539fcf61db5/go.mod h1:IXY5qF
 github.com/ovh/go-ovh v0.0.0-20181109152953-ba5adb4cf014 h1:37VE5TYj2m/FLA9SNr4z0+A0JefvTmR60Zwf8XSEV7c=
 github.com/ovh/go-ovh v0.0.0-20181109152953-ba5adb4cf014/go.mod h1:joRatxRJaZBsY3JAOEMcoOp05CnZzsx4scTxi95DHyQ=
 github.com/ovh/symmecrypt v0.5.1/go.mod h1:566sFU1+ZRapOXcGeM4H8o+5/2l2zZcTN7bG1FvNWkE=
-github.com/ovh/venom v0.25.0/go.mod h1:vf+2wztk/hOPS9AU32/B9XhwVPxKZ97wBJLu+AGXhYQ=
 github.com/ovh/venom v0.26.0 h1:t+mdbA9Mf0wyRIfBGv9wkYJnsDRbTho5eUpbQ8UChwk=
 github.com/ovh/venom v0.26.0/go.mod h1:vf+2wztk/hOPS9AU32/B9XhwVPxKZ97wBJLu+AGXhYQ=
 github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=

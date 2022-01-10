@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
-import { Failure, TestCase, Tests } from 'app/model/pipeline.model';
+import { Failure, Skipped, TestCase, Tests } from 'app/model/pipeline.model';
 import { ThemeStore } from 'app/service/services.module';
 import { Column, ColumnType, Filter } from 'app/shared/table/data-table.component';
 import { cloneDeep } from 'lodash-es';
@@ -24,8 +24,6 @@ export class WorkflowRunTestTableComponent implements OnInit {
 
     beforeClickFilter: string;
     filterInput: string;
-    filterIndex: number;
-    countFilteredElement: number;
 
     testCaseSelected: TestCase;
     themeSubscription: Subscription;
@@ -58,6 +56,9 @@ export class WorkflowRunTestTableComponent implements OnInit {
                 if (lowerFilter.indexOf('status:') === 0) {
                     return lowerFilter.indexOf(d.status) >= 7;
                 }
+                if (lowerFilter.indexOf('fullname:') === 0) {
+                    return d.fullname.toLowerCase() === lowerFilter.substring(9);
+                }
                 return d.fullname.toLowerCase().indexOf(lowerFilter) !== -1;
             };
         };
@@ -85,21 +86,24 @@ export class WorkflowRunTestTableComponent implements OnInit {
                 type: ColumnType.BUTTON,
                 name: '',
                 class: 'two right aligned',
-                selector: (tc: TestCase, index?: number) => ({
+                selector: (tc: TestCase) => ({
                     icon: 'eye',
                     class: 'icon small',
-                    click: () => this.clickTestCase(tc, index)
+                    click: () => this.clickTestCase(tc)
                 })
             },
         ];
     }
 
-    resetFilter(count: number): void {
-        if (this.countFilteredElement !== count) {
-            this.countFilteredElement = count;
+    dataChanged(count: number): void {
+        if (count !== 1) {
             delete this.testCaseSelected;
-            delete this.beforeClickFilter;
+            this._cd.markForCheck();
         }
+    }
+
+    filterChanged(value: string): void {
+        this.filterInput = value;
     }
 
     ngOnInit(): void {
@@ -144,9 +148,9 @@ export class WorkflowRunTestTableComponent implements OnInit {
             if (ts.tests) {
                 let testCase = ts.tests.map(tc => {
                     tc.fullname = ts.name + ' / ' + tc.name;
-                    if (!tc.errors && !tc.failures) {
+                    if (!tc.errors && !tc.failures && !tc.skipped) {
                         tc.status = 'success';
-                    } else if ((tc.errors && tc.errors.length > 0) || (tc.failures && tc.failures.length > 0)) {
+                    } else if (tc.errors?.length > 0 || tc.failures?.length > 0) {
                         tc.status = 'failed';
                     } else {
                         tc.status = 'skipped';
@@ -160,37 +164,37 @@ export class WorkflowRunTestTableComponent implements OnInit {
         this._cd.detectChanges();
     }
 
-    clickTestCase(tc: TestCase, index: number): void {
-        if (this.testCaseSelected && this.testCaseSelected.fullname === tc.fullname && this.filterIndex === index) {
-            this.testCaseSelected = undefined;
+    clickTestCase(tc: TestCase): void {
+        if (this.testCaseSelected && this.testCaseSelected.fullname === tc.fullname) {
             this.filterInput = this.beforeClickFilter;
             delete this.beforeClickFilter;
+            delete this.testCaseSelected;
+            this._cd.markForCheck();
             return;
         }
-        this.filterIndex = index;
         this.beforeClickFilter = this.filterInput;
-        this.filterInput = tc.fullname;
-        tc.errorsAndFailures = this.getFailureString(tc.errors);
-        tc.errorsAndFailures += this.getFailureString(tc.failures);
+        this.filterInput = 'fullname:' + tc.fullname;
+        tc.messages = this.getFailureString(tc.errors);
+        tc.messages += this.getFailureString(tc.failures);
+        tc.messages += this.getFailureString(tc.skipped);
         this.testCaseSelected = tc;
         this._cd.markForCheck();
     }
 
-    getFailureString(fs: Array<Failure>): string {
+    getFailureString(fs: Array<Failure | Skipped>): string {
         if (!fs) {
             return '';
         }
-        let r = '';
-        for (const f of fs) {
+        return fs.map(f => {
+            let r = '';
             if (f.message) {
-                r += f.message + '<hr>';
+                r += f.message;
             }
             if (f.value) {
                 r += f.value;
             }
-            r += '\n';
-        }
-        return r;
+            return r;
+        }).filter(r => !!r).join('\n');
     }
 
 }

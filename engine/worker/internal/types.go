@@ -3,7 +3,6 @@ package internal
 import (
 	"context"
 	"crypto/md5"
-	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -69,6 +68,7 @@ type CurrentWorker struct {
 		Status string `json:"status"`
 	}
 	client cdsclient.WorkerInterface
+	blur   *sdk.Blur
 }
 
 // BuiltInAction defines builtin action signature
@@ -195,11 +195,12 @@ func (wk *CurrentWorker) prepareLog(ctx context.Context, level workerruntime.Lev
 	var res cdslog.Message
 
 	if wk.currentJob.wJob == nil {
-		return res, "", sdk.WithStack(fmt.Errorf("job is nill"))
+		return res, "", sdk.WithStack(fmt.Errorf("job is nil"))
 	}
-	if err := wk.Blur(&s); err != nil {
-		return res, "", sdk.WrapError(err, "unable to blur log")
+	if wk.blur == nil {
+		return res, "", sdk.WithStack(fmt.Errorf("blur is nil"))
 	}
+	s = wk.blur.String(s)
 
 	switch level {
 	case workerruntime.LevelDebug:
@@ -330,25 +331,31 @@ func (wk *CurrentWorker) Environ() []string {
 }
 
 func (w *CurrentWorker) Blur(i interface{}) error {
-	data, err := json.Marshal(i)
-	if err != nil {
-		return err
+	if w.blur == nil {
+		return fmt.Errorf("blur is not define for current worker")
 	}
 
-	dataS := string(data)
-	for i := range w.currentJob.secrets {
-		if len(w.currentJob.secrets[i].Value) >= sdk.SecretMinLength {
-			dataS = strings.Replace(dataS, w.currentJob.secrets[i].Value, sdk.PasswordPlaceholder, -1)
-		}
-	}
-
-	if err := sdk.JSONUnmarshal([]byte(dataS), i); err != nil {
-		return err
-	}
-
-	return nil
+	return w.blur.Interface(i)
 }
 
 func (w *CurrentWorker) HTTPPort() int32 {
 	return w.httpPort
+}
+
+func (wk *CurrentWorker) SetSecrets(secrets []sdk.Variable) error {
+	wk.currentJob.secrets = secrets
+
+	values := make([]string, len(wk.currentJob.secrets))
+	for i := range wk.currentJob.secrets {
+		values[i] = wk.currentJob.secrets[i].Value
+	}
+
+	b, err := sdk.NewBlur(values)
+	if err != nil {
+		return err
+	}
+
+	wk.blur = b
+
+	return nil
 }

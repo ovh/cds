@@ -8,8 +8,6 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/ovh/venom"
-
 	"github.com/ovh/cds/sdk/interpolate"
 )
 
@@ -157,7 +155,7 @@ func (nr WorkflowNodeRun) Report() (string, error) {
 		Stages           []Stage
 		Start            time.Time
 		Done             time.Time
-		Tests            *venom.Tests
+		Tests            *TestsResults
 	}{
 		WorkflowNodeName: nr.WorkflowNodeName,
 		Status:           nr.Status,

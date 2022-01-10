@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
-	"github.com/ovh/venom"
 	"github.com/rockbears/log"
 	"github.com/sguiheux/go-coverage"
 	"gopkg.in/olivere/elastic.v6"
@@ -89,7 +88,7 @@ func PushVulnerabilities(projKey string, appID int64, workflowID int64, num int6
 }
 
 // PushUnitTests Create metrics from unit tests and send them
-func PushUnitTests(projKey string, appID int64, workflowID int64, num int64, tests venom.Tests) {
+func PushUnitTests(projKey string, appID int64, workflowID int64, num int64, tests sdk.TestsStats) {
 	m := sdk.Metric{
 		Date:          time.Now(),
 		ProjectKey:    projKey,

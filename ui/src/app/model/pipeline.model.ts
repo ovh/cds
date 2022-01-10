@@ -275,10 +275,10 @@ export class TestCase {
     skipped: Array<Skipped>;
     systemout: InnerResult;
     systemerr: InnerResult;
-    errorsAndFailures: string;
 
     // UI param
     displayed: boolean;
+    messages: string;
 }
 
 // Failure contains data related to a failed test.
@@ -291,6 +291,7 @@ export class Failure {
 // Skipped contains data related to a skipped test.
 export class Skipped {
     value: string;
+    message: string;
 }
 
 // InnerResult is used by TestCase

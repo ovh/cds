@@ -21,8 +21,6 @@ import (
 	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/sdk/cdsclient"
 
-	"github.com/ovh/venom"
-
 	"github.com/rockbears/log"
 	"github.com/sguiheux/go-coverage"
 	"github.com/stretchr/testify/assert"
@@ -844,16 +842,11 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 	require.Equal(t, 200, rec.Code)
 
 	//Send test
-	tests := venom.Tests{
-		Total:        2,
-		TotalKO:      1,
-		TotalOK:      1,
-		TotalSkipped: 0,
-		TestSuites: []venom.TestSuite{
+	tests := sdk.JUnitTestsSuites{
+		TestSuites: []sdk.JUnitTestSuite{
 			{
-				Total: 1,
-				Name:  "TestSuite1",
-				TestCases: []venom.TestCase{
+				Name: "TestSuite1",
+				TestCases: []sdk.JUnitTestCase{
 					{
 						Name:   "TestCase1",
 						Status: "OK",
@@ -861,13 +854,12 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 				},
 			},
 			{
-				Total: 1,
-				Name:  "TestSuite2",
-				TestCases: []venom.TestCase{
+				Name: "TestSuite2",
+				TestCases: []sdk.JUnitTestCase{
 					{
 						Name:   "TestCase1",
 						Status: "KO",
-						Failures: []venom.Failure{
+						Failures: []sdk.JUnitTestFailure{
 							{
 								Value:   "Fail",
 								Type:    "Assertion error",
@@ -909,8 +901,10 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 	nodeRun, errN := workflow.LoadNodeRunByID(context.Background(), api.mustDB(), wNodeJobRun.WorkflowNodeRunID, workflow.LoadRunOptions{WithArtifacts: true, WithTests: true})
 	require.NoError(t, errN)
 
-	assert.NotNil(t, nodeRun.Tests)
+	require.NotNil(t, nodeRun.Tests)
 	require.Equal(t, 2, nodeRun.Tests.Total)
+	require.Equal(t, 1, nodeRun.Tests.TotalKO)
+	require.Equal(t, 1, nodeRun.Tests.TotalOK)
 }
 
 func Test_postWorkflowJobArtifactHandler(t *testing.T) {

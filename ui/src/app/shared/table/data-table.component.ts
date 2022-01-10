@@ -105,6 +105,7 @@ export class DataTableComponent<T extends WithKey> extends Table<T> implements O
     @Input() columns: Array<Column<T>>;
     @Output() sortChange = new EventEmitter<string>();
     @Output() dataChange = new EventEmitter<number>();
+    @Output() filterChange = new EventEmitter<string>();
     @Input() loading: boolean;
     @Input() withLineClick: boolean;
     @Output() clickLine = new EventEmitter<T>();
@@ -224,8 +225,9 @@ export class DataTableComponent<T extends WithKey> extends Table<T> implements O
         return data;
     }
 
-    filterChange() {
+    filterKeyUp() {
         this.getDataForCurrentPage();
+        this.filterChange.emit(this.filter);
     }
 
     pageChange(n: number) {

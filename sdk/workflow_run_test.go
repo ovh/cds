@@ -4,7 +4,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ovh/venom"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -48,23 +47,27 @@ func TestWorkflowRunReport(t *testing.T) {
 				},
 			},
 		},
-		Tests: &venom.Tests{
-			TotalKO: 1,
-			TestSuites: []venom.TestSuite{
-				{
-					Name: "Test suite1",
-					TestCases: []venom.TestCase{
-						{
-							Name: "test case 1",
-							Errors: []venom.Failure{
-								{},
+		Tests: &TestsResults{
+			TestsStats: TestsStats{
+				TotalKO: 1,
+			},
+			JUnitTestsSuites: JUnitTestsSuites{
+				TestSuites: []JUnitTestSuite{
+					{
+						Name: "Test suite1",
+						TestCases: []JUnitTestCase{
+							{
+								Name: "test case 1",
+								Errors: []JUnitTestFailure{
+									{},
+								},
+								Failures: []JUnitTestFailure{
+									{},
+								},
 							},
-							Failures: []venom.Failure{
-								{},
+							{
+								Name: "test case 2",
 							},
-						},
-						{
-							Name: "test case 2",
 						},
 					},
 				},
@@ -72,7 +75,7 @@ func TestWorkflowRunReport(t *testing.T) {
 		},
 	}
 	s, err := wfr.Report()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	t.Log(s)
 
 	wfr = WorkflowNodeRun{

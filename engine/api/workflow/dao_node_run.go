@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
-	"github.com/ovh/venom"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
@@ -376,7 +375,7 @@ func fromDBNodeRun(rr NodeRun, opts LoadRunOptions) (*sdk.WorkflowNodeRun, error
 	}
 
 	if rr.Tests.Valid {
-		r.Tests = new(venom.Tests)
+		r.Tests = new(sdk.TestsResults)
 		if err := gorpmapping.JSONNullString(rr.Tests, r.Tests); err != nil {
 			return nil, sdk.WrapError(err, "Error loading node run %d: Tests", r.ID)
 		}

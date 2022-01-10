@@ -130,8 +130,11 @@ func (api *API) updateVariableInEnvironmentHandler() service.Handler {
 		if err := service.UnmarshalBody(r, &newVar); err != nil {
 			return sdk.WithStack(sdk.ErrWrongRequest)
 		}
-		if newVar.Name != varName || newVar.Type == sdk.KeyVariable {
-			return sdk.WithStack(sdk.ErrWrongRequest)
+		if !sdk.IsInArray(newVar.Type, sdk.AvailableVariableType) {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given variable type: %q", newVar.Type)
+		}
+		if newVar.Name != varName {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "cannot change variable name")
 		}
 
 		env, errEnv := environment.LoadEnvironmentByName(api.mustDB(), key, envName)

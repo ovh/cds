@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/blang/semver"
-	"github.com/ovh/venom"
 	"github.com/sguiheux/go-coverage"
 )
 
@@ -364,7 +363,7 @@ type WorkflowNodeRun struct {
 	StaticFiles            []StaticFiles                        `json:"static_files,omitempty"`
 	Coverage               WorkflowNodeRunCoverage              `json:"coverage,omitempty"`
 	VulnerabilitiesReport  WorkflowNodeRunVulnerabilityReport   `json:"vulnerabilities_report,omitempty"`
-	Tests                  *venom.Tests                         `json:"tests,omitempty"`
+	Tests                  *TestsResults                        `json:"tests,omitempty"`
 	Commits                []VCSCommit                          `json:"commits,omitempty"`
 	TriggersRun            map[int64]WorkflowNodeTriggerRun     `json:"triggers_run,omitempty"`
 	VCSRepository          string                               `json:"vcs_repository"`
