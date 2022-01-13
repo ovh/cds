@@ -64,8 +64,18 @@ func (actPlugin *artifactoryReleaseBundleCreatePlugin) Run(ctx context.Context, 
 	token := q.GetOptions()[q.GetOptions()["token_variable"]]
 
 	if url == "" {
-		url = q.GetOptions()["cds.integration.artifact_manager.url"]
+		artiURL := q.GetOptions()["cds.integration.artifact_manager.url"]
+		artiToken := q.GetOptions()["cds.integration.artifact_manager.token"]
+
 		token = q.GetOptions()["cds.integration.artifact_manager.release.token"]
+		url = q.GetOptions()["cds.integration.artifact_manager.distribution.url"]
+
+		if url == "" {
+			url = artiURL
+		}
+		if token == "" {
+			token = artiToken
+		}
 	}
 
 	if url == "" {
@@ -89,8 +99,11 @@ func (actPlugin *artifactoryReleaseBundleCreatePlugin) Run(ctx context.Context, 
 
 	rtDetails := new(config.ServerDetails)
 	url = strings.TrimSuffix(url, "/") // ensure having '/' at the end
-	url = strings.TrimSuffix(url, "/artifactory")
-	url += "/distribution/"
+	if strings.HasSuffix(url, "/artifactory") {
+		url = strings.TrimSuffix(url, "/artifactory")
+		url += "/distribution"
+	}
+	url += "/"
 	rtDetails.DistributionUrl = url
 	rtDetails.AccessToken = token
 

@@ -17,6 +17,7 @@ const (
 
 	ArtifactoryConfigPlatform              = "platform"
 	ArtifactoryConfigURL                   = "url"
+	ArtifactoryConfigDistributionURL       = "distribution.url"
 	ArtifactoryConfigTokenName             = "token.name"
 	ArtifactoryConfigToken                 = "token"
 	ArtifactoryConfigReleaseToken          = "release.token"
@@ -128,6 +129,9 @@ var (
 				Type: IntegrationConfigTypeString,
 			},
 			ArtifactoryConfigURL: IntegrationConfigValue{
+				Type: IntegrationConfigTypeString,
+			},
+			ArtifactoryConfigDistributionURL: IntegrationConfigValue{
 				Type: IntegrationConfigTypeString,
 			},
 			ArtifactoryConfigTokenName: IntegrationConfigValue{
