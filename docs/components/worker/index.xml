@@ -121,7 +121,7 @@ this a a line in the file, with a CDS variable 2  if it&amp;rsquo;s the RUN n°2
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>/docs/components/worker/upload/</guid>
-      <description>worker upload worker upload --tag=tagValue {{.cds.workspace}}/fileToUpload
+      <description>worker upload worker upload {{.cds.workspace}}/fileToUpload
 Synopsis Inside a job, there are two ways to upload an artifact:
  with a step using action Upload Artifacts with a step script (https://ovh.github.io/cds/docs/actions/builtin-script/), using the worker command: worker upload &amp;lt;path&amp;gt;  worker upload --tag={{.cds.version}} {{.cds.workspace}}/files*.yml
 You can use you storage integration: worker upload &amp;ndash;destination=&amp;ldquo;yourStorageIntegrationName&amp;rdquo;

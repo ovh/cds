@@ -7,6 +7,18 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language><atom:link href="/docs/integrations/index.xml" rel="self" type="application/rss+xml" />
     <item>
+      <title>Artifactory</title>
+      <link>/docs/integrations/artifact-manager/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/integrations/artifact-manager/</guid>
+      <description>The Artifactory integration uses the builtin integration model &amp;ldquo;Artifact Manager&amp;rdquo; and can be configured on every project by users
+This integration allows you:
+ to upload/download artifact into artifactory to create a new artifactory build from your workflow run results to create a release bundle using artifacts previously uploaded in artifactory  Recommendations To take full advantage of this integration, we recommend a few things:
+ Naming your local repositories like this: [team]-[technology]-[maturity] Having virtual repositories named like this: [team]-[technology]  For example, you need a generic repository for CDS artifacts.</description>
+    </item>
+    
+    <item>
       <title>Bitbucket Cloud</title>
       <link>/docs/integrations/bitbucketcloud/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>preview on CDS - Continuous Delivery Service</title>
+    <link>/docs/components/cdsctl/preview/</link>
+    <description>Recent content in preview on CDS - Continuous Delivery Service</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language><atom:link href="/docs/components/cdsctl/preview/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>workflowv3-convert</title>
+      <link>/docs/components/cdsctl/preview/workflowv3-convert/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/preview/workflowv3-convert/</guid>
+      <description>cdsctl preview workflowv3-convert Convert existing workflow to Workflow V3 files.
+Synopsis Convert existing workflow to Workflow V3 files.
+cdsctl preview workflowv3-convert [ PROJECT-KEY WORKFLOW-NAME ] [flags] Options  --format string Specify export format (json or yaml) (default &amp;quot;yaml&amp;quot;) --full Set the flag to export pipeline, application and environment content. Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>workflowv3-validate</title>
+      <link>/docs/components/cdsctl/preview/workflowv3-validate/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/preview/workflowv3-validate/</guid>
+      <description>cdsctl preview workflowv3-validate Parse and validate given Workflow V3 files.
+Synopsis Parse and validate given Workflow V3 files.
+cdsctl preview workflowv3-validate [ PROJECT-KEY ] YAML-FILE ... [flags] Options  --silent Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -n, --no-interactive Set to disable interaction with ctl --verbose Enable verbose output SEE ALSO  cdsctl preview	- CDS feature preview  </description>
+    </item>
+    
+  </channel>
+</rss>

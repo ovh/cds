@@ -19,6 +19,17 @@ jobs: - job: build requirements: - region: myregion steps: ... </description>
     </item>
     
     <item>
+      <title>Secret Requirement</title>
+      <link>/docs/concepts/requirement/requirement_secret/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/concepts/requirement/requirement_secret/</guid>
+      <description>The Secret prerequisite allows you to require a worker to start with some project&amp;rsquo;s secrets when those secrets are not automatically injected.
+Secret automatic injection can be disabled if a job requires to run in a specific region (using a &amp;ldquo;Region&amp;rdquo; prerequisite) that was added in CDS API configuration (key: skipProjectSecretsOnRegion).
+The value for the requirement should be a valid regex. In the following example it is used to match both default SSH and PGP keys for a CDS project.</description>
+    </item>
+    
+    <item>
       <title>Service Link</title>
       <link>/docs/concepts/requirement/requirement_service/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>

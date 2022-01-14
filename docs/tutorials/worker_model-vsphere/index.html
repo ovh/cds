@@ -356,16 +356,13 @@ We will create a worker model called debian8-docker:
 </span><span style="color:#e6db74">  #!/bin/bash
 </span><span style="color:#e6db74">  set +e
 </span><span style="color:#e6db74">  export CDS_FROM_WORKER_IMAGE={{.FromWorkerImage}}
-</span><span style="color:#e6db74">  export CDS_SINGLE_USE=1
 </span><span style="color:#e6db74">  export CDS_API={{.API}}
 </span><span style="color:#e6db74">  export CDS_TOKEN={{.Token}}
 </span><span style="color:#e6db74">  export CDS_NAME={{.Name}}
 </span><span style="color:#e6db74">  export CDS_MODEL={{.Model}}
 </span><span style="color:#e6db74">  export CDS_HATCHERY={{.Hatchery}}
 </span><span style="color:#e6db74">  export CDS_HATCHERY_NAME={{.HatcheryName}}
-</span><span style="color:#e6db74">  export CDS_BOOKED_PB_JOB_ID={{.PipelineBuildJobID}}
 </span><span style="color:#e6db74">  export CDS_BOOKED_WORKFLOW_JOB_ID={{.WorkflowJobID}}
-</span><span style="color:#e6db74">  export CDS_TTL={{.TTL}}
 </span><span style="color:#e6db74">  export CDS_INSECURE={{.HTTPInsecure}}
 </span><span style="color:#e6db74">
 </span><span style="color:#e6db74">  # Basic build binaries

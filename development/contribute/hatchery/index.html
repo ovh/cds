@@ -276,10 +276,10 @@
 <p>First of all you need to create a new package like the other into the hatchery package. Let&rsquo;s call this package vSphere for our example.</p>
 </li>
 <li>
-<p>You have to implement the Service interface (see <a href="https://github.com/ovh/cds/blob/0.49.0/engine/types.go">here</a>) in order to configure launch this new hatchery mode via CDS engine CLI.</p>
+<p>You have to implement the Service interface (see <a href="https://github.com/ovh/cds/blob/0.50.0/engine/types.go">here</a>) in order to configure launch this new hatchery mode via CDS engine CLI.</p>
 </li>
 <li>
-<p>Your have to create a Configuration structure composed of the <a href="https://godoc.org/github.com/ovh/cds/sdk/hatchery#CommonConfiguration">hatchery.CommonConfiguration</a> and the variables you need to access to vSphere API. You finally have to update the <a href="https://github.com/ovh/cds/blob/0.49.0/engine/main.go">engine main.go file</a> to manage this new service and add and manage the configuration structure as part of the <a href="https://github.com/ovh/cds/blob/0.49.0/engine/types.go">global configuration</a>.</p>
+<p>Your have to create a Configuration structure composed of the <a href="https://godoc.org/github.com/ovh/cds/sdk/hatchery#CommonConfiguration">hatchery.CommonConfiguration</a> and the variables you need to access to vSphere API. You finally have to update the <a href="https://github.com/ovh/cds/blob/0.50.0/engine/main.go">engine main.go file</a> to manage this new service and add and manage the configuration structure as part of the <a href="https://github.com/ovh/cds/blob/0.50.0/engine/types.go">global configuration</a>.</p>
 </li>
 <li>
 <p>You need to implement the hatchery interface (see <a href="https://godoc.org/github.com/ovh/cds/sdk/hatchery#Interface">here</a>)</p>

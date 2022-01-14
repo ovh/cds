@@ -7,6 +7,18 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language><atom:link href="/docs/components/cdsctl/workflow/artifact/index.xml" rel="self" type="application/rss+xml" />
     <item>
+      <title>cdn-migrate</title>
+      <link>/docs/components/cdsctl/workflow/artifact/cdn-migrate/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/workflow/artifact/cdn-migrate/</guid>
+      <description>cdsctl workflow artifact cdn-migrate Migrate artifact into CDN
+Synopsis Migrate artifact from CDS to CDN cdsctl workflow artifact cdn-migrate &amp;lt;project_key&amp;gt; &amp;lt;workflow_name&amp;gt; &amp;lt;run_number&amp;gt;
+CDN does not manage artifact with same name inside a run. They will be renamed _&amp;lt;artifact_name&amp;gt; Migrated artifacts will not be visible with cdsctl workflow result command
+cdsctl workflow artifact cdn-migrate [ PROJECT-KEY WORKFLOW-NAME ] NUMBER Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
       <title>download</title>
       <link>/docs/components/cdsctl/workflow/artifact/download/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>

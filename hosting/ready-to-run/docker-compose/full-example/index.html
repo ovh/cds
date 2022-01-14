@@ -418,20 +418,18 @@ export CDS_GITHUB_CLIENT_SECRET<span style="color:#f92672">=</span><span style="
 
 mkdir -p tools/smtpmock
 
-curl https://raw.githubusercontent.com/ovh/cds/0.49.0/docker-compose.yml -o docker-compose.yml
+curl https://raw.githubusercontent.com/ovh/cds/0.50.0/docker-compose.yml -o docker-compose.yml
 export HOSTNAME<span style="color:#f92672">=</span><span style="color:#66d9ef">$(</span>hostname<span style="color:#66d9ef">)</span>
-export CDS_DOCKER_IMAGE<span style="color:#f92672">=</span>ovhcom/cds-engine:0.49.0
+export CDS_DOCKER_IMAGE<span style="color:#f92672">=</span>ovhcom/cds-engine:0.50.0
 
-docker pull ovhcom/cds-engine:0.49.0
-docker-compose up --no-recreate -d cds-db cds-cache elasticsearch dockerhost
+docker pull ovhcom/cds-engine:0.50.0
+docker-compose up -d cds-db cds-cache elasticsearch dockerhost
 sleep <span style="color:#ae81ff">3</span>
 docker-compose logs| grep <span style="color:#e6db74">&#39;database system is ready to accept connections&#39;</span>
-docker-compose up --no-recreate cds-db-init
-docker-compose up --no-recreate cds-migrate
+docker-compose up cds-db-init
+docker-compose up cds-migrate
 sleep <span style="color:#ae81ff">3</span>
 docker-compose up cds-prepare
-export CDS_EDIT_CONFIG<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;api.smtp.disable=true&#34;</span>
-docker-compose up cds-edit-config
 export CDS_EDIT_CONFIG<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;vcs.servers.github.github.clientId=</span><span style="color:#e6db74">${</span>CDS_GITHUB_CLIENT_ID<span style="color:#e6db74">}</span><span style="color:#e6db74"> vcs.servers.github.github.clientSecret=</span><span style="color:#e6db74">${</span>CDS_GITHUB_CLIENT_SECRET<span style="color:#e6db74">}</span><span style="color:#e6db74"> &#34;</span>
 docker-compose up cds-edit-config
 export CDS_EDIT_CONFIG<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;api.url.api=http://localhost:8081 api.url.ui=https://</span><span style="color:#e6db74">${</span>CDS_DOMAIN_NAME<span style="color:#e6db74">}</span><span style="color:#e6db74"> hatchery.swarm.commonConfiguration.api.http.url=http://cds-api:8081&#34;</span>
@@ -440,12 +438,12 @@ export CDS_EDIT_CONFIG<span style="color:#f92672">=</span><span style="color:#e6
 docker-compose up cds-edit-config
 docker-compose up -d cds-api
 sleep <span style="color:#ae81ff">3</span>
-TOKEN_CMD<span style="color:#f92672">=</span><span style="color:#66d9ef">$(</span>docker logs debian_cds-prepare_1|grep TOKEN<span style="color:#66d9ef">)</span> <span style="color:#f92672">&amp;&amp;</span> $TOKEN_CMD
+TOKEN_CMD<span style="color:#f92672">=</span><span style="color:#66d9ef">$(</span>docker logs <span style="color:#66d9ef">$(</span>docker-compose ps -q cds-prepare<span style="color:#66d9ef">)</span> | grep INIT_TOKEN<span style="color:#66d9ef">)</span> <span style="color:#f92672">&amp;&amp;</span> $TOKEN_CMD
 curl <span style="color:#e6db74">&#39;http://localhost:8081/download/cdsctl/linux/amd64?variant=nokeychain&#39;</span> -o cdsctl
 chmod +x cdsctl
 <span style="color:#75715e"># this line will ask a password for admin user</span>
 ./cdsctl signup --api-url http://localhost:8081 --email admin@localhost.local --username admin --fullname admin
-VERIFY_CMD<span style="color:#f92672">=</span><span style="color:#66d9ef">$(</span>docker-compose logs cds-api|grep <span style="color:#e6db74">&#39;cdsctl signup verify&#39;</span>|cut -d <span style="color:#e6db74">&#39;$&#39;</span> -f2|xargs<span style="color:#66d9ef">)</span> <span style="color:#f92672">&amp;&amp;</span> ./$VERIFY_CMD
+VERIFY_CMD<span style="color:#f92672">=</span><span style="color:#66d9ef">$(</span>docker-compose logs cds-api | grep <span style="color:#e6db74">&#39;cdsctl signup verify&#39;</span> | cut -d <span style="color:#e6db74">&#39;$&#39;</span> -f2 | xargs<span style="color:#66d9ef">)</span> <span style="color:#f92672">&amp;&amp;</span> ./$VERIFY_CMD
 <span style="color:#75715e"># this line returns the RING of user, must be ADMIN</span>
 ./cdsctl user me
 
@@ -458,9 +456,9 @@ sleep <span style="color:#ae81ff">3</span>
 docker-compose up -d cds-ui cds-cdn cds-hooks cds-elasticsearch cds-hatchery-swarm cds-vcs cds-repositories
 sleep <span style="color:#ae81ff">5</span>
 
-./cdsctl worker model import https://raw.githubusercontent.com/ovh/cds/0.49.0/contrib/worker-models/maven3-jdk10-official.yml
+./cdsctl worker model import https://raw.githubusercontent.com/ovh/cds/0.50.0/contrib/worker-models/maven3-jdk10-official.yml
 
-./cdsctl template push https://raw.githubusercontent.com/ovh/cds/0.49.0/contrib/workflow-templates/demo-workflow-hello-world/demo-workflow-hello-world.yml
+./cdsctl template push https://raw.githubusercontent.com/ovh/cds/0.50.0/contrib/workflow-templates/demo-workflow-hello-world/demo-workflow-hello-world.yml
 ./cdsctl project create DEMO FirstProject
 ./cdsctl template apply DEMO MyFirstWorkflow shared.infra/demo-workflow-hello-world --force --import-push --quiet
 ./cdsctl workflow run DEMO MyFirstWorkflow
@@ -492,7 +490,7 @@ fe2fcbee96aa        ovhcom/cds-engine:latest                              &quot;
 f2eb7b8c4329        ovhcom/cds-engine:latest                              &quot;sh -c '/app/cds-eng…&quot;   35 seconds ago      Up 33 seconds (healthy)                              debian_cds-elasticsearch_1
 22dc66a1b2a2        ovhcom/cds-engine:latest                              &quot;sh -c '/app/cds-eng…&quot;   35 seconds ago      Up 33 seconds (healthy)                              debian_cds-hatchery-swarm_1
 958ab1703f16        ovhcom/cds-engine:latest                              &quot;sh -c '/app/cds-eng…&quot;   39 seconds ago      Up 39 seconds (healthy)   0.0.0.0:8081-&gt;8081/tcp     debian_cds-api_1
-9223395500ab        postgres:9.6                                        &quot;docker-entrypoint.s…&quot;   2 minutes ago       Up About a minute         5432/tcp                   debian_cds-db_1
+9223395500ab        postgres:14.0                                        &quot;docker-entrypoint.s…&quot;   2 minutes ago       Up About a minute         5432/tcp                   debian_cds-db_1
 c9b58ce83003        docker.elastic.co/elasticsearch/elasticsearch:6.7.2   &quot;/usr/local/bin/dock…&quot;   2 minutes ago       Up About a minute         9200/tcp, 9300/tcp         debian_elasticsearch_1
 08cfe15c3e2c        bobrik/socat                                          &quot;socat TCP4-LISTEN:2…&quot;   2 minutes ago       Up About a minute         127.0.0.1:2375-&gt;2375/tcp   debian_dockerhost_1
 fc2ac075c000        redis:alpine                                          &quot;docker-entrypoint.s…&quot;   2 minutes ago       Up About a minute         6379/tcp                   debian_cds-cache_1
@@ -521,11 +519,11 @@ openstack security group rule list default
 export CDS_EDIT_CONFIG=&quot;api.auth.local.signupDisabled=true&quot;
 docker-compose up cds-edit-config
 
-# theh, restart api
+# then, restart api
 export HOSTNAME=$(hostname)
 docker-compose restart cds-api
 </code></pre><h3 id="reinstall-all-cds-on-the-same-vm">Reinstall all CDS on the same VM</h3>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#75715e"># with user debian</span>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh"><span style="color:#75715e"># with user debian</span>
 <span style="color:#75715e"># delete all containers and volumes</span>
 docker rm -f <span style="color:#e6db74">`</span>docker ps -aq<span style="color:#e6db74">`</span> <span style="color:#f92672">&amp;&amp;</span> docker volume prune
 

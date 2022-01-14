@@ -29,6 +29,17 @@ cdsctl group delete GROUP-NAME [flags] Options  --force Force delete without con
     </item>
     
     <item>
+      <title>export</title>
+      <link>/docs/components/cdsctl/group/export/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/group/export/</guid>
+      <description>cdsctl group export Export a CDS group
+Synopsis Export a CDS group
+cdsctl group export GROUP-NAME [flags] Options  --format string Specify export format (json or yaml) (default &amp;quot;yaml&amp;quot;) Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -n, --no-interactive Set to disable interaction with ctl --verbose Enable verbose output SEE ALSO  cdsctl group	- Manage CDS group  </description>
+    </item>
+    
+    <item>
       <title>grant</title>
       <link>/docs/components/cdsctl/group/grant/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
@@ -37,6 +48,17 @@ cdsctl group delete GROUP-NAME [flags] Options  --force Force delete without con
       <description>cdsctl group grant Grant a CDS group in a project or workflow
 Synopsis Grant a CDS group in a project or workflow
 cdsctl group grant [ PROJECT-KEY ] GROUP-NAME PERMISSION [flags] Options  -p, --only-project Indicate if the group must be added only on project or also on all workflows in project -w, --workflow string Workflow name Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>import</title>
+      <link>/docs/components/cdsctl/group/import/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/group/import/</guid>
+      <description>cdsctl group import Import a group
+Synopsis Import a group
+cdsctl group import PATH Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -n, --no-interactive Set to disable interaction with ctl --verbose Enable verbose output SEE ALSO  cdsctl group	- Manage CDS group  </description>
     </item>
     
     <item>

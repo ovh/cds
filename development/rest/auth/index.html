@@ -17,11 +17,11 @@
 <link rel="stylesheet" href="../../../css/solarized-light.css">
 
 <meta name="description"
-    content="GET /auth/me    URL /auth/me     Method GET   Permissions Auth: true   Code getAuthMe    GET /auth/session/&lt;session-id&gt;    URL /auth/session/&lt;session-id&gt;     Method GET   Permissions Auth: true   Code getAuthSession    POST /auth/consumer/&lt;consumer-type&gt;/detach    URL /auth/consumer/&lt;consumer-type&gt;/detach     Method POST   Permissions Auth: true   Scopes AccessToken   Code postAuthDetachHandler    POST /auth/consumer/signout    URL /auth/consumer/signout     Method POST   Permissions Auth: true   Code postAuthSignoutHandler    POST /auth/consumer/worker/signout    URL /auth/consumer/worker/signout     Method POST   Permissions Auth: true   Code postUnregisterWorkerHandler    ">
+    content="GET /auth/me    URL /auth/me     Method GET   Permissions Auth: true   Scopes User   Code getAuthMe    GET /auth/session/&lt;session-id&gt;    URL /auth/session/&lt;session-id&gt;     Method GET   Permissions Auth: true   Scopes Service   Code getAuthSession    POST /auth/consumer/&lt;consumer-type&gt;/detach    URL /auth/consumer/&lt;consumer-type&gt;/detach     Method POST   Permissions Auth: true   Scopes AccessToken   Code postAuthDetachHandler    POST /auth/consumer/signout    URL /auth/consumer/signout     Method POST   Permissions Auth: true   Code postAuthSignoutHandler    POST /auth/consumer/worker/signout    URL /auth/consumer/worker/signout     Method POST   Permissions Auth: true   Code postUnregisterWorkerHandler    ">
 <meta property="og:description"
-    content="GET /auth/me    URL /auth/me     Method GET   Permissions Auth: true   Code getAuthMe    GET /auth/session/&lt;session-id&gt;    URL /auth/session/&lt;session-id&gt;     Method GET   Permissions Auth: true   Code getAuthSession    POST /auth/consumer/&lt;consumer-type&gt;/detach    URL /auth/consumer/&lt;consumer-type&gt;/detach     Method POST   Permissions Auth: true   Scopes AccessToken   Code postAuthDetachHandler    POST /auth/consumer/signout    URL /auth/consumer/signout     Method POST   Permissions Auth: true   Code postAuthSignoutHandler    POST /auth/consumer/worker/signout    URL /auth/consumer/worker/signout     Method POST   Permissions Auth: true   Code postUnregisterWorkerHandler    ">
+    content="GET /auth/me    URL /auth/me     Method GET   Permissions Auth: true   Scopes User   Code getAuthMe    GET /auth/session/&lt;session-id&gt;    URL /auth/session/&lt;session-id&gt;     Method GET   Permissions Auth: true   Scopes Service   Code getAuthSession    POST /auth/consumer/&lt;consumer-type&gt;/detach    URL /auth/consumer/&lt;consumer-type&gt;/detach     Method POST   Permissions Auth: true   Scopes AccessToken   Code postAuthDetachHandler    POST /auth/consumer/signout    URL /auth/consumer/signout     Method POST   Permissions Auth: true   Code postAuthSignoutHandler    POST /auth/consumer/worker/signout    URL /auth/consumer/worker/signout     Method POST   Permissions Auth: true   Code postUnregisterWorkerHandler    ">
 <meta name="twitter:description"
-    content="GET /auth/me    URL /auth/me     Method GET   Permissions Auth: true   Code getAuthMe    GET /auth/session/&lt;session-id&gt;    URL /auth/session/&lt;session-id&gt;     Method GET   Permissions Auth: true   Code getAuthSession    POST /auth/consumer/&lt;consumer-type&gt;/detach    URL /auth/consumer/&lt;consumer-type&gt;/detach     Method POST   Permissions Auth: true   Scopes AccessToken   Code postAuthDetachHandler    POST /auth/consumer/signout    URL /auth/consumer/signout     Method POST   Permissions Auth: true   Code postAuthSignoutHandler    POST /auth/consumer/worker/signout    URL /auth/consumer/worker/signout     Method POST   Permissions Auth: true   Code postUnregisterWorkerHandler    ">
+    content="GET /auth/me    URL /auth/me     Method GET   Permissions Auth: true   Scopes User   Code getAuthMe    GET /auth/session/&lt;session-id&gt;    URL /auth/session/&lt;session-id&gt;     Method GET   Permissions Auth: true   Scopes Service   Code getAuthSession    POST /auth/consumer/&lt;consumer-type&gt;/detach    URL /auth/consumer/&lt;consumer-type&gt;/detach     Method POST   Permissions Auth: true   Scopes AccessToken   Code postAuthDetachHandler    POST /auth/consumer/signout    URL /auth/consumer/signout     Method POST   Permissions Auth: true   Code postAuthSignoutHandler    POST /auth/consumer/worker/signout    URL /auth/consumer/worker/signout     Method POST   Permissions Auth: true   Code postUnregisterWorkerHandler    ">
 <meta property="og:url" content="/development/rest/auth/">
 <meta property="og:title" content="auth">
 <meta name="twitter:title" content="auth">
@@ -425,6 +425,10 @@
 <td>Auth: true</td>
 </tr>
 <tr>
+<td>Scopes</td>
+<td>User</td>
+</tr>
+<tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getAuthMe%22">getAuthMe</a></td>
 </tr>
@@ -446,6 +450,10 @@
 <tr>
 <td>Permissions</td>
 <td>Auth: true</td>
+</tr>
+<tr>
+<td>Scopes</td>
+<td>Service</td>
 </tr>
 <tr>
 <td>Code</td>

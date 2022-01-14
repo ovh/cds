@@ -22,6 +22,8 @@
   </url><url>
     <loc>/hosting/upgrade/migrate_0.49/</loc>
   </url><url>
+    <loc>/hosting/upgrade/migrate_0.50/</loc>
+  </url><url>
     <loc>/docs/concepts/workflow/payload/</loc>
   </url><url>
     <loc>/docs/concepts/workflow/hooks/webhook/</loc>
@@ -105,6 +107,8 @@
     <loc>/docs/concepts/requirement/requirement_region/</loc>
   </url><url>
     <loc>/docs/concepts/workflow/run-conditions/</loc>
+  </url><url>
+    <loc>/docs/concepts/requirement/requirement_secret/</loc>
   </url><url>
     <loc>/hosting/configuration/</loc>
   </url><url>
@@ -224,6 +228,8 @@
   </url><url>
     <loc>/docs/components/worker/run-result/add/artifact-manager/</loc>
   </url><url>
+    <loc>/docs/integrations/artifact-manager/</loc>
+  </url><url>
     <loc>/docs/components/worker/artifacts/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/workflow/ascode/</loc>
@@ -259,6 +265,8 @@
     <loc>/docs/components/cdsctl/admin/migration/cancel/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/admin/cdn/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/workflow/artifact/cdn-migrate/</loc>
   </url><url>
     <loc>/docs/actions/cds-docker-package/</loc>
   </url><url>
@@ -349,6 +357,8 @@
     <loc>/docs/components/cdsctl/application/variable/delete/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/consumer/delete/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/encrypt/delete/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/environment/delete/</loc>
   </url><url>
@@ -452,6 +462,8 @@
   </url><url>
     <loc>/docs/components/cdsctl/environment/export/</loc>
   </url><url>
+    <loc>/docs/components/cdsctl/group/export/</loc>
+  </url><url>
     <loc>/docs/components/cdsctl/pipeline/export/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/project/integration/export/</loc>
@@ -527,6 +539,8 @@
     <loc>/docs/components/cdsctl/application/import/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/environment/import/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/group/import/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/pipeline/import/</loc>
   </url><url>
@@ -712,7 +726,7 @@
   </url><url>
     <loc>/docs/actions/plugin-archive/</loc>
   </url><url>
-    <loc>/docs/actions/plugin-clair/</loc>
+    <loc>/docs/actions/plugin-artifactory-release-bundle-distribute/</loc>
   </url><url>
     <loc>/docs/actions/plugin-download/</loc>
   </url><url>
@@ -732,6 +746,8 @@
   </url><url>
     <loc>/docs/components/cdsctl/admin/plugins/</loc>
   </url><url>
+    <loc>/docs/components/cdsctl/preview/</loc>
+  </url><url>
     <loc>/development/rest/project/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/admin/metadata/project/</loc>
@@ -739,6 +755,8 @@
     <loc>/docs/components/cdsctl/project/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/admin/cdn/item/projectsize/</loc>
+  </url><url>
+    <loc>/docs/actions/builtin-promote/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/template/pull/</loc>
   </url><url>
@@ -754,6 +772,8 @@
   </url><url>
     <loc>/docs/components/worker/cache/push/</loc>
   </url><url>
+    <loc>/docs/actions/builtin-pushbuildinfo/</loc>
+  </url><url>
     <loc>/development/rest/queue/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/queue/</loc>
@@ -763,6 +783,8 @@
     <loc>/docs/components/cdsctl/consumer/regen/</loc>
   </url><url>
     <loc>/docs/components/engine/config/regen/</loc>
+  </url><url>
+    <loc>/docs/actions/builtin-release/</loc>
   </url><url>
     <loc>/docs/actions/builtin-releasevcs/</loc>
   </url><url>
@@ -810,6 +832,8 @@
   </url><url>
     <loc>/docs/components/cdsctl/workflow/advanced/number/set/</loc>
   </url><url>
+    <loc>/docs/components/cdsctl/admin/users/set-organization/</loc>
+  </url><url>
     <loc>/docs/components/worker/set-version/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/shell/</loc>
@@ -851,6 +875,8 @@
     <loc>/docs/components/engine/start/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/admin/hooks/startall/</loc>
+  </url><url>
+    <loc>/docs/components/worker/run-result/add/static-file/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/admin/cdn/cache/status/</loc>
   </url><url>
@@ -922,6 +948,8 @@
   </url><url>
     <loc>/docs/components/cdsctl/user/</loc>
   </url><url>
+    <loc>/docs/components/cdsctl/admin/users/</loc>
+  </url><url>
     <loc>/development/rest/variable/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/application/variable/</loc>
@@ -946,6 +974,10 @@
   </url><url>
     <loc>/docs/components/worker/</loc>
   </url><url>
+    <loc>/docs/components/cdsctl/project/integration/worker-hooks-export/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/project/integration/worker-hooks-import/</loc>
+  </url><url>
     <loc>/docs/components/engine/download/workers/</loc>
   </url><url>
     <loc>/development/rest/workflow/</loc>
@@ -955,6 +987,10 @@
     <loc>/docs/components/cdsctl/workflow/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/admin/workflows/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/preview/workflowv3-convert/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/preview/workflowv3-validate/</loc>
   </url><url>
     <loc>/development/rest/ws/</loc>
   </url><url>

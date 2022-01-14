@@ -200,13 +200,13 @@ Parameters  action: &amp;ldquo;compress&amp;rdquo; or &amp;ldquo;uncompress&amp;
     </item>
     
     <item>
-      <title>plugin-clair</title>
-      <link>/docs/actions/plugin-clair/</link>
+      <title>plugin-artifactory-release-bundle-distribute</title>
+      <link>/docs/actions/plugin-artifactory-release-bundle-distribute/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>/docs/actions/plugin-clair/</guid>
-      <description>This is a plugin to run clair analysis
-Parameters  image: Image to analyze  </description>
+      <guid>/docs/actions/plugin-artifactory-release-bundle-distribute/</guid>
+      <description>Distributes a Artifactory Release Bundle on all the Jfrog Platform.
+Parameters  name: Release Bundle name token_variable: JFrog Distribution token variable name. Leave empty to use integration. url: JFrog Artifactory URL. Leave empty to use integration. version: Release Bundle version  </description>
     </item>
     
     <item>
@@ -291,6 +291,44 @@ Parameters  file: Template file to use output: Output path for generated file (d
       <description>This plugin helps you to run venom. Venom: https://github.com/ovh/venom.
 Add an extra step of type junit on your job to view tests results on CDS UI.
 Parameters  exclude: Exclude some files, one file per line loglevel: Log Level: debug, info, warn or error output: Directory where output xunit result file parallel: Launch Test Suites in parallel. Enter here number of routines path: Path containers yml venom files. Format: adirectory/, .</description>
+    </item>
+    
+    <item>
+      <title>Promote</title>
+      <link>/docs/actions/builtin-promote/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/actions/builtin-promote/</guid>
+      <description>Promote is a builtin action, you can&amp;rsquo;t modify it.
+This action promote artifacts in an artifact manager
+Parameters  artifacts: (optional) Set a list of artifacts, separate by &amp;lsquo;,&amp;rsquo;. You can also use regexp. destMaturity: Repository suffix in which the artifact will be moved srcMaturity: Repository suffix from which the artifact will be moved  Requirements No Requirement
+YAML example Example of a pipeline using Promote action:
+version: v1.0 name: Pipeline1 stages: - Stage1 jobs: - job: Job1 stage: Stage1 steps: - promote: artifacts: &amp;#39;*.</description>
+    </item>
+    
+    <item>
+      <title>PushBuildInfo</title>
+      <link>/docs/actions/builtin-pushbuildinfo/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/actions/builtin-pushbuildinfo/</guid>
+      <description>PushBuildInfo is a builtin action, you can&amp;rsquo;t modify it.
+Push build info into an artifact manager, useful only if you have an artifact manager linked to your workflow.
+Parameters No Parameter
+Requirements No Requirement
+YAML example Example of a pipeline using PushBuildInfo action:
+version: v1.0 name: Pipeline1 stages: - Stage1 jobs: - job: Job1 stage: Stage1 steps: - pushBuildInfo: &amp;#39;{{.cds.workflow}}&amp;#39; Note Implementation for artifactory can be found on GitHub</description>
+    </item>
+    
+    <item>
+      <title>Release</title>
+      <link>/docs/actions/builtin-release/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/actions/builtin-release/</guid>
+      <description>Release is a builtin action, you can&amp;rsquo;t modify it.
+This action creates a release on a artifact manager. It promotes artifacts.
+Parameters  artifacts: (optional) Set a list of artifacts, separate by &amp;lsquo;,&amp;rsquo;. You can also use regexp. destMaturity: Repository suffix in which the artifact will be moved releaseNote: (optional) Set a release note for the release. srcMaturity: Repository suffix from which the artifact will be moved  Requirements No Requirement</description>
     </item>
     
     <item>

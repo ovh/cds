@@ -12,8 +12,9 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>/hosting/ready-to-run/docker-compose/docker-compose/</guid>
-      <description>Run with Docker-Compose The docker-compose.yml contains:
- cds-db service with a PostgreSQL cds-cache service with a Redis elasticsearch service with an Elasticsearch dockerhost allows cds-hatchery-swarm service to communicate with the local docker daemon cds-migrate service to prepare databases for API and CDN cds-api service cds-ui service cds-elasticsearch service cds-hatchery-swarm service cds-vcs service cds-repositories service cds-cdn service  Docker compose is very convenient to launch CDS for testing it. But this is not recommended for a Production Installation.</description>
+      <description>Run with Docker-Compose This tutorial allows you to start a CDS locally quickly.
+ Do not use this docker-compose installation to run it in production without modification. For production purpose, please read CDS Services   The docker-compose.yml contains:
+ cds-db service with a PostgreSQL cds-cache service with a Redis elasticsearch service with an Elasticsearch dockerhost allows cds-hatchery-swarm service to communicate with the local docker daemon cds-migrate service to prepare databases for API and CDN cds-api service cds-ui service cds-elasticsearch service cds-hatchery-swarm service cds-vcs service cds-repositories service cds-cdn service  Docker compose is very convenient to launch CDS for testing it.</description>
     </item>
     
     <item>

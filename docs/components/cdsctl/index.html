@@ -1050,6 +1050,30 @@ CDS_VERBOSE=true cdsctl [command]  If you&rsquo;re using a self-signed certifica
 	
 		
 			
+<div class="item" data-title="users">
+	<div class="container">
+		
+		<a class="item" data-title="users" href="../../../docs/components/cdsctl/admin/users/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="set-organization" href="../../../docs/components/cdsctl/admin/users/set-organization/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
 <div class="item" data-title="workflows">
 	<div class="container">
 		
@@ -1308,6 +1332,12 @@ CDS_VERBOSE=true cdsctl [command]  If you&rsquo;re using a self-signed certifica
 	
 		
 			
+<a class="item" data-title="delete" href="../../../docs/components/cdsctl/encrypt/delete/"></a>
+
+		
+	
+		
+			
 <a class="item" data-title="list" href="../../../docs/components/cdsctl/encrypt/list/"></a>
 
 		
@@ -1500,7 +1530,19 @@ CDS_VERBOSE=true cdsctl [command]  If you&rsquo;re using a self-signed certifica
 	
 		
 			
+<a class="item" data-title="export" href="../../../docs/components/cdsctl/group/export/"></a>
+
+		
+	
+		
+			
 <a class="item" data-title="grant" href="../../../docs/components/cdsctl/group/grant/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="import" href="../../../docs/components/cdsctl/group/import/"></a>
 
 		
 	
@@ -1656,6 +1698,36 @@ CDS_VERBOSE=true cdsctl [command]  If you&rsquo;re using a self-signed certifica
 	
 		
 			
+<div class="item" data-title="preview">
+	<div class="container">
+		
+		<a class="item" data-title="preview" href="../../../docs/components/cdsctl/preview/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="workflowv3-convert" href="../../../docs/components/cdsctl/preview/workflowv3-convert/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="workflowv3-validate" href="../../../docs/components/cdsctl/preview/workflowv3-validate/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
 <div class="item" data-title="project">
 	<div class="container">
 		
@@ -1741,6 +1813,18 @@ CDS_VERBOSE=true cdsctl [command]  If you&rsquo;re using a self-signed certifica
 		
 			
 <a class="item" data-title="list" href="../../../docs/components/cdsctl/project/integration/list/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="worker-hooks-export" href="../../../docs/components/cdsctl/project/integration/worker-hooks-export/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="worker-hooks-import" href="../../../docs/components/cdsctl/project/integration/worker-hooks-import/"></a>
 
 		
 	
@@ -2322,6 +2406,12 @@ CDS_VERBOSE=true cdsctl [command]  If you&rsquo;re using a self-signed certifica
 	
 		
 			
+<a class="item" data-title="cdn-migrate" href="../../../docs/components/cdsctl/workflow/artifact/cdn-migrate/"></a>
+
+		
+	
+		
+			
 <a class="item" data-title="download" href="../../../docs/components/cdsctl/workflow/artifact/download/"></a>
 
 		
@@ -2824,6 +2914,12 @@ CDS_VERBOSE=true cdsctl [command]  If you&rsquo;re using a self-signed certifica
 
 		
 	
+		
+			
+<a class="item" data-title="static-file" href="../../../docs/components/worker/run-result/add/static-file/"></a>
+
+		
+	
 
 	</div>
 </div>
@@ -2907,9 +3003,17 @@ CDS_VERBOSE=true cdsctl [command]  If you&rsquo;re using a self-signed certifica
 <p>If you&rsquo;re using a self-signed certificate on CDS API, you probably want to use <code>CDS_INSECURE</code> variable.</p>
 <pre><code>CDS_INSECURE=true cdsctl [command]
 </code></pre>
-<p>For advanced usage, you can use a session-token instead of a token:</p>
-<pre><code>CDS_API_URL=&quot;https://instance.cds.api&quot; CDS_USER=&quot;username&quot; CDS_SESSION_TOKEN=&quot;yourtoken&quot; cdsctl [command]
-</code></pre>
+<p>Advanced usages:</p>
+<ul>
+<li>
+<p>you can use a session-token instead of a token:</p>
+<p>CDS_API_URL=&ldquo;<a href="https://instance.cds.api">https://instance.cds.api</a>&rdquo; CDS_USER=&ldquo;username&rdquo; CDS_SESSION_TOKEN=&ldquo;yourtoken&rdquo; cdsctl [command]</p>
+</li>
+<li>
+<p>you define a maximum number of retries for HTTP calls:</p>
+<p>CDS_API_URL=&ldquo;<a href="https://instance.cds.api">https://instance.cds.api</a>&rdquo; CDS_SESSION_TOKEN=&ldquo;yourtoken&rdquo; CDS_HTTP_MAX_RETRY=10 cdsctl [command]</p>
+</li>
+</ul>
 <pre><code>cdsctl [flags]
 </code></pre><h2 id="options">Options</h2>
 <pre><code>  -c, --context string   cdsctl context name
@@ -2931,6 +3035,7 @@ CDS_VERBOSE=true cdsctl [command]  If you&rsquo;re using a self-signed certifica
 <li><a href="../../../docs/components/cdsctl/health/">cdsctl health</a>	 - <code>Check CDS health</code></li>
 <li><a href="../../../docs/components/cdsctl/login/">cdsctl login</a>	 - <code>Login to CDS</code></li>
 <li><a href="../../../docs/components/cdsctl/pipeline/">cdsctl pipeline</a>	 - <code>Manage CDS pipeline</code></li>
+<li><a href="../../../docs/components/cdsctl/preview/">cdsctl preview</a>	 - <code>CDS feature preview</code></li>
 <li><a href="../../../docs/components/cdsctl/project/">cdsctl project</a>	 - <code>Manage CDS project</code></li>
 <li><a href="../../../docs/components/cdsctl/queue/">cdsctl queue</a>	 - <code>CDS Queue</code></li>
 <li><a href="../../../docs/components/cdsctl/reset-password/">cdsctl reset-password</a>	 - <code>Reset CDS user password</code></li>

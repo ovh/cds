@@ -12,9 +12,22 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>/docs/components/worker/run-result/add/artifact-manager/</guid>
-      <description>worker run-result add artifact-manager worker run-result add
-Synopsis Inside a job, add a run result of type artifact manager
-worker run-result add artifact-manager SEE ALSO  worker run-result add	- worker run-result add  </description>
+      <description>worker run-result add artifact-manager worker run-result add artifact-manager &amp;lt;artifact_name&amp;gt; &amp;lt;repository_name&amp;gt; &amp;lt;path_inside_repository&amp;gt;
+Synopsis Inside a job, add a run result of type artifact manager: Worker Command:
+worker run-result add artifact-manager &amp;lt;artifact_name&amp;gt; &amp;lt;repository_name&amp;gt; &amp;lt;path_inside_repository&amp;gt;  Example:
+worker run-result add artifact-manager custom/debian:10 my-docker-repository-name custom/debian/10  worker run-result add artifact-manager SEE ALSO  worker run-result add	- worker run-result add  </description>
+    </item>
+    
+    <item>
+      <title>static-file</title>
+      <link>/docs/components/worker/run-result/add/static-file/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/worker/run-result/add/static-file/</guid>
+      <description>worker run-result add static-file worker run-result add static-file &amp;lt;name&amp;gt; &amp;lt;remote_url&amp;gt;
+Synopsis Inside a job, add a run result of type static-file: Worker Command:
+worker run-result add static-file &amp;lt;name&amp;gt; &amp;lt;remote_url&amp;gt;  Example:
+worker run-result add static-file the-title https://the-remote-url/somewhere/index.html  worker run-result add static-file SEE ALSO  worker run-result add	- worker run-result add  </description>
     </item>
     
   </channel>

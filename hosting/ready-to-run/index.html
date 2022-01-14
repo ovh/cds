@@ -272,7 +272,7 @@
 <h2 id="prerequisite">Prerequisite</h2>
 <ul>
 <li>a Redis</li>
-<li>a PostgreSQL 9.6 min</li>
+<li>a PostgreSQL 9.6 min (Version 14.0 recommanded)</li>
 </ul>
 <h2 id="get-the-latest-release-from-github">Get the latest release from GitHub</h2>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">mkdir $HOME/cds
@@ -312,7 +312,7 @@ You can edit the section <code>api.cache.redis</code> in <code>conf.toml</code> 
 port <code>5432</code>, with an existing empty database and user named <code>cds</code> and a password &lsquo;cds&rsquo;.</p>
 <p>You can edit the section <code>api.database</code> in <code>conf.toml</code> file if needed.</p>
 <p>If it&rsquo;s just for test purpose, you can start a postgreSQL database with docker, as:</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">docker run --name cds-db -e POSTGRES_PASSWORD<span style="color:#f92672">=</span>cds -e POSTGRES_USER<span style="color:#f92672">=</span>cds -e POSTGRES_DB<span style="color:#f92672">=</span>cds -p 127.0.0.1:5432:5432 -d postgres:9.6
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">docker run --name cds-db -e POSTGRES_PASSWORD<span style="color:#f92672">=</span>cds -e POSTGRES_USER<span style="color:#f92672">=</span>cds -e POSTGRES_DB<span style="color:#f92672">=</span>cds -p 127.0.0.1:5432:5432 -d postgres:14.0
 </code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">cd $HOME/cds
 ./cds-engine download sql --config conf.toml
 ./cds-engine database upgrade --db-host localhost --db-user cds --db-password cds --db-name cds --db-schema public --db-sslmode disable --db-port <span style="color:#ae81ff">5432</span> --migrate-dir sql/api

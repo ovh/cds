@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html id="docs" lang="en" class="">
+	<head>
+	<meta charset="utf-8">
+<title>Promote - CDS - Continuous Delivery Service</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="shortcut icon" type="image/png" href="../../../images/favicon.png">
+
+
+
+
+<link rel="stylesheet" href="../../../sass/styles.css" integrity="" media="screen">
+<link rel="stylesheet" href="../../../css/callouts.css">
+<link rel="stylesheet" href="../../../css/auto-complete.css">
+<link rel="stylesheet" href="../../../css/fontawesome.min.css">
+<link rel="stylesheet" href="../../../css/asciinema-player.css">
+<link rel="stylesheet" href="../../../css/solarized-light.css">
+
+<meta name="description"
+    content="Promote is a builtin action, you can&rsquo;t modify it.
+This action promote artifacts in an artifact manager
+Parameters  artifacts: (optional) Set a list of artifacts, separate by &lsquo;,&rsquo;. You can also use regexp. destMaturity: Repository suffix in which the artifact will be moved srcMaturity: Repository suffix from which the artifact will be moved  Requirements No Requirement
+YAML example Example of a pipeline using Promote action:
+version: v1.0 name: Pipeline1 stages: - Stage1 jobs: - job: Job1 stage: Stage1 steps: - promote: artifacts: &#39;*.">
+<meta property="og:description"
+    content="Promote is a builtin action, you can&rsquo;t modify it.
+This action promote artifacts in an artifact manager
+Parameters  artifacts: (optional) Set a list of artifacts, separate by &lsquo;,&rsquo;. You can also use regexp. destMaturity: Repository suffix in which the artifact will be moved srcMaturity: Repository suffix from which the artifact will be moved  Requirements No Requirement
+YAML example Example of a pipeline using Promote action:
+version: v1.0 name: Pipeline1 stages: - Stage1 jobs: - job: Job1 stage: Stage1 steps: - promote: artifacts: &#39;*.">
+<meta name="twitter:description"
+    content="Promote is a builtin action, you can&rsquo;t modify it.
+This action promote artifacts in an artifact manager
+Parameters  artifacts: (optional) Set a list of artifacts, separate by &lsquo;,&rsquo;. You can also use regexp. destMaturity: Repository suffix in which the artifact will be moved srcMaturity: Repository suffix from which the artifact will be moved  Requirements No Requirement
+YAML example Example of a pipeline using Promote action:
+version: v1.0 name: Pipeline1 stages: - Stage1 jobs: - job: Job1 stage: Stage1 steps: - promote: artifacts: &#39;*.">
+<meta property="og:url" content="/docs/actions/builtin-promote/">
+<meta property="og:title" content="Promote">
+<meta name="twitter:title" content="Promote">
+<meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
+<meta property="og:image" content="/images/cds-transparent.png">
+<script type="text/javascript" src="../../../js/anchor-4.1.1.min.js"></script>
+<script type="text/javascript" src="../../../js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="../../../js/jquery-ui-1.12.1.min.js"></script>
+<script type="text/javascript" src="../../../js/bootstrap-3.3.7.min.js"></script>
+<script type="text/javascript" src="../../../js/highlight.pack.js"></script>
+<script>
+    hljs.initHighlightingOnLoad();
+
+</script>
+<script type="text/javascript" src="../../../js/script.js"></script>
+<script type="text/javascript" src="../../../js/lunr.min.js"></script>
+<a id="indexJSON" href="../../../index.json"></a>
+
+<script type="text/javascript" src="../../../js/auto-complete.js"></script>
+<script type="text/javascript" src="../../../js/search.js"></script>
+<script type="text/javascript" src="../../../js/asciinema-player.js"></script>
+
+	</head>
+	<body>
+		<section id="hero" class="light-text no-sub">
+			<a href="../../../" class="logo"></a>
+				<i id="tocburger" class="fa fa-bars" onclick='$("#toc").toggle()'></i><div class="nav-buttons" data-auto-burger="primary">
+				<ul class="global-nav">
+					
+					
+					<li><a href="../../../docs/" class="active">Documentation</a></li>
+					
+					<li><a href="../../../hosting/">Hosting your own instance</a></li>
+					
+					<li><a href="../../../development/">CDS Developer Manual</a></li>
+					
+					<li><a href="../../../about/">About</a></li>
+					
+					<li><i class="fa fa-search" onclick='$("#searchbox").toggle(); $("#search-query").focus().select()'></i></li>
+					<li>
+						<div id="btn-gh">
+							<a class="github-button" href="https://github.com/ovh/cds" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star CDS on GitHub">Star</a>
+							<script async defer src="https://buttons.github.io/buttons.js"></script>
+						</div>
+					</li>
+				</ul>
+				<div id="searchbox">
+					<input data-search-input id="search-query" type="text" placeholder="search...">
+					<span data-search-clear=""><i class="fa fa-close"></i></span>
+				</div>
+			</div>
+
+<div id="headSubMenu" class="light-text">
+
+
+
+
+	
+
+		
+
+		
+		<ul>
+			
+			
+			
+			<li><a href="../../../docs/">Home</a></li>
+			
+			
+				
+				<li><a href="../../../docs/concepts/">Concepts</a></li>
+			
+				
+				<li><a href="../../../docs/actions/" class="menuSelected">Actions</a></li>
+			
+				
+				<li><a href="../../../docs/components/">Components</a></li>
+			
+				
+				<li><a href="../../../docs/integrations/">Integrations</a></li>
+			
+				
+				<li><a href="../../../docs/tutorials/">Tutorials</a></li>
+			
+		</ul>
+		
+	
+
+	
+
+		
+
+		
+	
+
+	
+
+		
+
+		
+	
+
+	
+
+		
+
+		
+	
+
+</div>
+
+
+		</section>
+		<section id="page-content-with-menu">
+			
+<div id="toc">
+     <div class="toc-container">
+        
+        
+        
+        
+        
+            
+                
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                                    
+                                    
+                            
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                        
+                    
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                
+            
+        
+        
+        <i class="fa fa-bars" id="tocburger" onclick='$("#toc").toggle()'></i> 
+<a class="item" data-title="Actions" href="../../../docs/actions/"></a>
+
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Artifact Download" href="../../../docs/actions/builtin-artifact-download/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Artifact Upload" href="../../../docs/actions/builtin-artifact-upload/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="cds-docker-package" href="../../../docs/actions/cds-docker-package/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="cds-go-build" href="../../../docs/actions/cds-go-build/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="cds-nexus-upload" href="../../../docs/actions/cds-nexus-upload/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="cds-perl-test" href="../../../docs/actions/cds-perl-test/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="cds-publish-ovh-metrics" href="../../../docs/actions/cds-publish-ovh-metrics/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="cds-python-pylint" href="../../../docs/actions/cds-python-pylint/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="cds-sonar-scanner" href="../../../docs/actions/cds-sonar-scanner/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="cds-split-download" href="../../../docs/actions/cds-split-download/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="cds-split-upload" href="../../../docs/actions/cds-split-upload/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="CheckoutApplication" href="../../../docs/actions/builtin-checkoutapplication/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Coverage" href="../../../docs/actions/builtin-coverage/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="DeployApplication" href="../../../docs/actions/builtin-deployapplication/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="GitClone" href="../../../docs/actions/builtin-gitclone/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="GitTag" href="../../../docs/actions/builtin-gittag/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="JUnit" href="../../../docs/actions/builtin-junit/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="plugin-archive" href="../../../docs/actions/plugin-archive/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="plugin-artifactory-release-bundle-distribute" href="../../../docs/actions/plugin-artifactory-release-bundle-distribute/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="plugin-download" href="../../../docs/actions/plugin-download/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="plugin-group-tmpl" href="../../../docs/actions/plugin-group-tmpl/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="plugin-kafka-publish" href="../../../docs/actions/plugin-kafka-publish/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="plugin-marathon" href="../../../docs/actions/plugin-marathon/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="plugin-npm-audit-parser" href="../../../docs/actions/plugin-npm-audit-parser/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="plugin-ssh-cmd" href="../../../docs/actions/plugin-ssh-cmd/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="plugin-tmpl" href="../../../docs/actions/plugin-tmpl/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="plugin-venom" href="../../../docs/actions/plugin-venom/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Promote" href="../../../docs/actions/builtin-promote/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="PushBuildInfo" href="../../../docs/actions/builtin-pushbuildinfo/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Release" href="../../../docs/actions/builtin-release/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="ReleaseVCS" href="../../../docs/actions/builtin-releasevcs/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Script" href="../../../docs/actions/builtin-script/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Serve Static Files" href="../../../docs/actions/builtin-serve-static-files/"></a>
+
+		
+	
+
+
+
+
+
+     </div>
+</div>
+
+
+			<div id="docsContent">
+        		
+
+<h1>Promote</h1>
+
+
+
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#parameters">Parameters</a></li>
+    <li><a href="#requirements">Requirements</a></li>
+    <li><a href="#yaml-example">YAML example</a></li>
+    <li><a href="#notes">Notes</a></li>
+  </ul>
+</nav>
+
+<p><strong>Promote</strong> is a builtin action, you can&rsquo;t modify it.</p>
+<p>This action promote artifacts in an artifact manager</p>
+<h2 id="parameters">Parameters</h2>
+<ul>
+<li><strong>artifacts</strong>: (optional) Set a list of artifacts, separate by &lsquo;,&rsquo;. You can also use regexp.</li>
+<li><strong>destMaturity</strong>: Repository suffix in which the artifact will be moved</li>
+<li><strong>srcMaturity</strong>: Repository suffix from which the artifact will be moved</li>
+</ul>
+<h2 id="requirements">Requirements</h2>
+<p>No Requirement</p>
+<h2 id="yaml-example">YAML example</h2>
+<p>Example of a pipeline using Promote action:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yml" data-lang="yml"><span style="color:#f92672">version</span>: <span style="color:#ae81ff">v1.0</span>
+<span style="color:#f92672">name</span>: <span style="color:#ae81ff">Pipeline1</span>
+<span style="color:#f92672">stages</span>:
+- <span style="color:#ae81ff">Stage1</span>
+<span style="color:#f92672">jobs</span>:
+- <span style="color:#f92672">job</span>: <span style="color:#ae81ff">Job1</span>
+  <span style="color:#f92672">stage</span>: <span style="color:#ae81ff">Stage1</span>
+  <span style="color:#f92672">steps</span>:
+  - <span style="color:#f92672">promote</span>:
+      <span style="color:#f92672">artifacts</span>: <span style="color:#e6db74">&#39;*.zip&#39;</span>
+
+</code></pre></div><h2 id="notes">Notes</h2>
+<p>Implementation for artifactory can be found on <a href="https://github.com/ovh/cds/tree/master/contrib/integrations/artifactory">GitHub</a></p>
+
+
+
+
+			</div>
+		</section><footer>
+			<main>
+			<a href="https://www.ovh.com"><img src="https://ovh.github.io/cds/images/logo-ovh-white-72DPI.png"></a>
+			<div>
+				The CDS logos are copyrighted.
+				Icons made by <a href="https://www.flaticon.com/authors/eucalyp">Eucalyp</a> 
+				from <a href="https://www.flaticon.com/">www.flaticon.com</a>
+			</div>
+			</main>
+		</footer>
+
+	</body>
+</html>

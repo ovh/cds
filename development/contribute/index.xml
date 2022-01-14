@@ -12,7 +12,7 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>/development/contribute/documentation/</guid>
-      <description>Documentation https://ovh.github.io/cds is generated with Hugo. Source are under https://github.com/ovh/cds/tree/0.49.0/docs/content
+      <description>Documentation https://ovh.github.io/cds is generated with Hugo. Source are under https://github.com/ovh/cds/tree/0.50.0/docs/content
 Write / Generate / Test documentation:
  Download release Hugo Version Extended v0.54.0 https://github.com/gohugoio/hugo/releases/tag/v0.54.0 - put hugo binary in your PATH Download CDS Binaries: cdsctl, engine, worker from https://github.com/ovh/cds/releases/latest Clone CDS repository: git clone https://github.com/ovh/cds.git inside ${CDS_SOURCES} Generate documentation with Hugo  cd ${CDS_SOURCES} make install # to recompile all CDS binaries GEN_PATH=${CDS_SOURCES}/docs/content/docs/components make doc cd ${CDS_SOURCES}/docs hugo server  go to http://localhost:1313/  </description>
     </item>
@@ -36,7 +36,7 @@ Write / Generate / Test documentation:
       <guid>/development/contribute/development/</guid>
       <description>Before contributing to CDS, you&amp;rsquo;ll need to install your development environment.
  PostgreSQL Redis Node.js Golang CDS  If you are familiar with these different tools, you probably will not need to read this page :-)
-PostgreSQL Download PostgreSQL from https://www.postgresql.org/download/, version &amp;gt;= 9.6.
+PostgreSQL Download PostgreSQL from https://www.postgresql.org/download/, version &amp;gt;= 9.6. Version 14.0 recommanded
 You can easily use only PostgreSQL binaries, downloaded from https://www.enterprisedb.com/download-postgresql-binaries.
 Initialize DB by running:
 $ mkdir -p ~/data/postgres/data $ initdb -D ~/data/postgres/data Create user cds and database cds</description>

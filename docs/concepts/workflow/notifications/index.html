@@ -392,6 +392,12 @@
 	
 		
 			
+<a class="item" data-title="Secret Requirement" href="../../../../docs/concepts/requirement/requirement_secret/"></a>
+
+		
+	
+		
+			
 <a class="item" data-title="Service Link" href="../../../../docs/concepts/requirement/requirement_service/"></a>
 
 		
@@ -558,7 +564,7 @@
 </ul>
 </li>
 </ul>
-<p>If you need to know about other variable you can check <code>WorkflowNodeRun</code> data structure <a href="https://github.com/ovh/cds/blob/0.49.0/sdk/workflow_run.go">here</a>.</p>
+<p>If you need to know about other variable you can check <code>WorkflowNodeRun</code> data structure <a href="https://github.com/ovh/cds/blob/0.50.0/sdk/workflow_run.go">here</a>.</p>
 <p>For example by default the template of pull-request comment is:</p>
 <pre><code>[[- if .Stages ]]
 CDS Report [[.WorkflowNodeName]]#[[.Number]].[[.SubNumber]] [[ if eq .Status &quot;Success&quot; -]] ✔ [[ else ]][[ if eq .Status &quot;Fail&quot; -]] ✘ [[ else ]][[ if eq .Status &quot;Stopped&quot; -]] ■ [[ else ]]- [[ end ]] [[ end ]] [[ end ]]
@@ -591,7 +597,7 @@ Unit Tests Report
 </code></pre><p>And displayed on GitHub:</p>
 <p><img src="../images/example_pr_comment.png?height=200px" alt="example_pr_comment.png"></p>
 <h2 id="events">Events</h2>
-<p>If you need to trigger some specific actions on the technical side, like for example use a microservice which listens to all events in your workflow (updates, launch, stop, etc.), you can add an event integration like, for example, <a href="../../../../docs/integrations/kafka/kafka_events/">Kafka</a> and listen to the kafka topic to trigger some actions on your side. Events are more like sending notifications to machines instead of user notifications which are made for users. The see structure of sent events, you can look <a href="https://github.com/ovh/cds/blob/0.49.0/sdk/event.go">here</a> and <a href="https://github.com/ovh/cds/blob/0.49.0/sdk/event_workflow.go">here</a>.</p>
+<p>If you need to trigger some specific actions on the technical side, like for example use a microservice which listens to all events in your workflow (updates, launch, stop, etc.), you can add an event integration like, for example, <a href="../../../../docs/integrations/kafka/kafka_events/">Kafka</a> and listen to the kafka topic to trigger some actions on your side. Events are more like sending notifications to machines instead of user notifications which are made for users. The see structure of sent events, you can look <a href="https://github.com/ovh/cds/blob/0.50.0/sdk/event.go">here</a> and <a href="https://github.com/ovh/cds/blob/0.50.0/sdk/event_workflow.go">here</a>.</p>
 
 
 

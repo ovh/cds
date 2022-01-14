@@ -14,7 +14,7 @@
       <guid>/hosting/requirements/</guid>
       <description>CDS API is the core component of CDS. To start CDS API, the only mandatory dependencies are a PostgreSQL database, a Redis server and a path to the directory containing other CDS binaries.
 There is are two ways to set up CDS:
- as toml configuration over environment variables.  CDS API Third-parties At the minimum, CDS needs a PostgreSQL database &amp;gt;= 9.6 and Redis &amp;gt;= 3.2. But for serious usage your may need:</description>
+ as toml configuration over environment variables.  CDS API Third-parties At the minimum, CDS needs a PostgreSQL database &amp;gt;= 9.6 (version 14.0 recommanded) and Redis &amp;gt;= 3.2. But for serious usage your may need:</description>
     </item>
     
     <item>

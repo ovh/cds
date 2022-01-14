@@ -12,8 +12,9 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>/docs/components/cdn/</guid>
-      <description>What&amp;rsquo;s CDN CDN is a service dedicated to receive and store CDS&amp;rsquo;s logs. In a near future, it will also be able to manage artifacts and cache used by your jobs.
-CDN stores the list of all known log or artifact items in a Postgres database and communicates with storage backends to store the contents of those items. These backends are call units and there are two types of units in CDN:</description>
+      <description>What&amp;rsquo;s CDN CDN is a service dedicated to receive and store CDS&amp;rsquo;s logs and artifacts.
+CDN stores the list of all known log or artifact items in a Postgres database and communicates with storage backends to store the contents of those items. These backends are call units and there are two types of units in CDN:
+  Buffer unit: To store logs and artifacts of incoming jobs, these units are designed to be fast for read / write operations, but with limited capacity.</description>
     </item>
     
   </channel>
