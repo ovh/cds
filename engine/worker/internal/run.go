@@ -833,7 +833,6 @@ func (w *CurrentWorker) executeHooksTeardown(ctx context.Context, basedir afero.
 			return nil
 		}
 		cmd := exec.Command("bash", "-c", path)
-
 		if output, err := cmd.CombinedOutput(); err != nil {
 			return errors.Wrapf(err, w.blur.String(string(output)))
 		}
