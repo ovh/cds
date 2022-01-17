@@ -827,7 +827,7 @@ func (w *CurrentWorker) executeHooksSetup(ctx context.Context, basedir afero.Fs,
 	return errors.WithStack(err)
 }
 
-func (w *CurrentWorker) executeHooksTeardown(_ context.Context, basedir afero.Fs, workingDir string) error {
+func (w *CurrentWorker) executeHooksTeardown(ctx context.Context, basedir afero.Fs, workingDir string) error {
 	err := afero.Walk(basedir, path.Join(workingDir, "setup"), func(path string, info fs.FileInfo, err error) error {
 		if info.IsDir() {
 			return nil
@@ -835,7 +835,14 @@ func (w *CurrentWorker) executeHooksTeardown(_ context.Context, basedir afero.Fs
 		cmd := exec.Command("bash", "-c", path)
 
 		if output, err := cmd.CombinedOutput(); err != nil {
-			return errors.Wrapf(err, string(output))
+			outErr := string(output)
+			var errMsg string
+			if err := w.Blur(&outErr); err == nil {
+				errMsg = outErr
+			} else {
+				log.Error(ctx, "unable to blur teardown output: %v", err)
+			}
+			return errors.Wrapf(err, errMsg)
 		}
 		return nil
 	})
