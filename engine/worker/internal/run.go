@@ -835,14 +835,7 @@ func (w *CurrentWorker) executeHooksTeardown(ctx context.Context, basedir afero.
 		cmd := exec.Command("bash", "-c", path)
 
 		if output, err := cmd.CombinedOutput(); err != nil {
-			outErr := string(output)
-			var errMsg string
-			if err := w.Blur(&outErr); err == nil {
-				errMsg = outErr
-			} else {
-				log.Error(ctx, "unable to blur teardown output: %v", err)
-			}
-			return errors.Wrapf(err, errMsg)
+			return errors.Wrapf(err, w.blur.String(string(output)))
 		}
 		return nil
 	})
