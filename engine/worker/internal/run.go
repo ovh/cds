@@ -827,14 +827,15 @@ func (w *CurrentWorker) executeHooksSetup(ctx context.Context, basedir afero.Fs,
 	return errors.WithStack(err)
 }
 
-func (w *CurrentWorker) executeHooksTeardown(ctx context.Context, basedir afero.Fs, workingDir string) error {
+func (w *CurrentWorker) executeHooksTeardown(_ context.Context, basedir afero.Fs, workingDir string) error {
 	err := afero.Walk(basedir, path.Join(workingDir, "setup"), func(path string, info fs.FileInfo, err error) error {
 		if info.IsDir() {
 			return nil
 		}
 		cmd := exec.Command("bash", "-c", path)
-		if _, err := cmd.CombinedOutput(); err != nil {
-			return errors.WithStack(err)
+
+		if output, err := cmd.CombinedOutput(); err != nil {
+			return errors.Wrapf(err, string(output))
 		}
 		return nil
 	})
