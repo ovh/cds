@@ -51,7 +51,7 @@ can use the `./cds-engine config edit` command.
 Example:
 
 ```bash
-mkdir -p $HOME/cds/download $HOME/cds/download $HOME/cds/hatchery-basedir
+mkdir -p $HOME/cds/artifacts $HOME/cds/download $HOME/cds/hatchery-basedir
 ./cds-engine config edit conf.toml --output conf.toml \
   api.artifact.local.baseDirectory=$HOME/cds/artifacts \
   api.directories.download=$HOME/cds/download \
