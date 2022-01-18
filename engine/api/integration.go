@@ -70,11 +70,6 @@ func (api *API) postIntegrationModelHandler() service.Handler {
 
 		if m.Public {
 			go propagatePublicIntegrationModel(ctx, api.mustDB(), api.Cache, *m, getAPIConsumer(ctx))
-			if m.Event {
-				if err := event.ResetPublicIntegrations(ctx, api.mustDB()); err != nil {
-					return sdk.WrapError(err, "error while resetting public integrations")
-				}
-			}
 		}
 
 		return service.WriteJSON(w, m, http.StatusCreated)
@@ -127,12 +122,6 @@ func (api *API) putIntegrationModelHandler() service.Handler {
 			api.GoRoutines.Exec(ctx, "propagatePublicIntegrationModel", func(ctx context.Context) {
 				propagatePublicIntegrationModel(ctx, api.mustDB(), api.Cache, *m, getAPIConsumer(ctx))
 			})
-
-			if m.Event {
-				if err := event.ResetPublicIntegrations(ctx, api.mustDB()); err != nil {
-					return sdk.WrapError(err, "error while resetting public integrations")
-				}
-			}
 		}
 
 		return service.WriteJSON(w, m, http.StatusOK)
@@ -229,13 +218,6 @@ func (api *API) deleteIntegrationModelHandler() service.Handler {
 
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "Unable to commit tx")
-		}
-
-		if old.Event && old.Public {
-			// reset outside the transaction
-			if err := event.ResetPublicIntegrations(ctx, api.mustDB()); err != nil {
-				return sdk.WrapError(err, "error while resetting public integrations")
-			}
 		}
 
 		return nil

@@ -19,7 +19,6 @@ import (
 
 // cache with go cache
 var brokersConnectionCache = gocache.New(10*time.Minute, 6*time.Hour)
-var publicBrokersConnectionCache = []Broker{}
 var hostname, cdsname string
 var brokers []Broker
 var subscribers []chan<- sdk.Event
@@ -43,30 +42,6 @@ func getBroker(ctx context.Context, t string, option interface{}) (Broker, error
 		return k.initialize(ctx, option)
 	}
 	return nil, fmt.Errorf("invalid Broker Type %s", t)
-}
-
-// ResetPublicIntegrations load all integration of type Event and creates kafka brokers
-func ResetPublicIntegrations(ctx context.Context, db *gorp.DbMap) error {
-	publicBrokersConnectionCache = []Broker{}
-	filterType := sdk.IntegrationTypeEvent
-	integrations, err := integration.LoadPublicModelsByTypeWithDecryption(db, &filterType)
-	if err != nil {
-		return sdk.WrapError(err, "cannot load public models for event type")
-	}
-
-	for _, integration := range integrations {
-		for _, cfg := range integration.PublicConfigurations {
-			kafkaCfg := getKafkaConfig(cfg)
-			kafkaBroker, err := getBroker(ctx, "kafka", kafkaCfg)
-			if err != nil {
-				return sdk.WrapError(err, "cannot get broker for %s and user %s", cfg["broker url"].Value, cfg["username"].Value)
-			}
-
-			publicBrokersConnectionCache = append(publicBrokersConnectionCache, kafkaBroker)
-		}
-	}
-
-	return nil
 }
 
 func getKafkaConfig(cfg sdk.IntegrationConfig) KafkaConfig {
@@ -138,7 +113,7 @@ func Initialize(ctx context.Context, db *gorp.DbMap, cache Store) error {
 		}
 	}
 
-	return ResetPublicIntegrations(ctx, db)
+	return nil
 }
 
 // Subscribe to CDS events
@@ -163,15 +138,10 @@ func DequeueEvent(ctx context.Context, db *gorp.DbMap) {
 			s <- e
 		}
 
-		// Send into public brokers
-		for _, b := range publicBrokersConnectionCache {
-			if err := b.sendEvent(&e); err != nil {
-				log.Warn(ctx, "Error while sending message [%s: %s/%s/%s/%s/%s]: %s", e.EventType, e.ProjectKey, e.WorkflowName, e.ApplicationName, e.PipelineName, e.EnvironmentName, err)
-			}
-		}
 		for _, eventIntegrationID := range e.EventIntegrationsID {
 			brokerConnectionKey := strconv.FormatInt(eventIntegrationID, 10)
 			brokerConnection, ok := brokersConnectionCache.Get(brokerConnectionKey)
+			var brokerConfig KafkaConfig
 			if !ok {
 				projInt, err := integration.LoadProjectIntegrationByIDWithClearPassword(ctx, db, eventIntegrationID)
 				if err != nil {
@@ -194,6 +164,7 @@ func DequeueEvent(ctx context.Context, db *gorp.DbMap) {
 					continue
 				}
 				brokerConnection = kafkaBroker
+				brokerConfig = kafkaCfg
 			}
 
 			broker, ok := brokerConnection.(Broker)
@@ -203,6 +174,7 @@ func DequeueEvent(ctx context.Context, db *gorp.DbMap) {
 			}
 
 			// Send into external brokers
+			log.Info(ctx, "sending event %q to %s", e.EventType, brokerConfig.BrokerAddresses)
 			if err := broker.sendEvent(&e); err != nil {
 				log.Warn(ctx, "Error while sending message [%s: %s/%s/%s/%s/%s]: %s", e.EventType, e.ProjectKey, e.WorkflowName, e.ApplicationName, e.PipelineName, e.EnvironmentName, err)
 			}

@@ -42,8 +42,4 @@ func TestCRUDModel(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.True(t, len(models) > 1)
-
-	filter := sdk.IntegrationTypeEvent
-	_, err = LoadPublicModelsByTypeWithDecryption(db, &filter)
-	require.NoError(t, err)
 }

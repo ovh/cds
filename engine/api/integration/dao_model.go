@@ -39,46 +39,6 @@ func LoadModels(db gorp.SqlExecutor) ([]sdk.IntegrationModel, error) {
 	return res, nil
 }
 
-func LoadPublicModelsByTypeWithDecryption(db gorp.SqlExecutor, integrationType *sdk.IntegrationType) ([]sdk.IntegrationModel, error) {
-	q := "SELECT * from integration_model WHERE public = true"
-	if integrationType != nil {
-		switch *integrationType {
-		case sdk.IntegrationTypeEvent:
-			q += " AND integration_model.event = true"
-		case sdk.IntegrationTypeCompute:
-			q += " AND integration_model.compute = true"
-		case sdk.IntegrationTypeStorage:
-			q += " AND integration_model.storage = true"
-		case sdk.IntegrationTypeHook:
-			q += " AND integration_model.hook = true"
-		case sdk.IntegrationTypeDeployment:
-			q += " AND integration_model.deployment = true"
-		}
-	}
-
-	query := gorpmapping.NewQuery(q)
-	var pms integrationModelSlice
-
-	if err := gorpmapping.GetAll(context.Background(), db, query, &pms, gorpmapping.GetOptions.WithDecryption); err != nil {
-		return nil, err
-	}
-
-	var res []sdk.IntegrationModel
-	for _, pm := range pms {
-		isValid, err := gorpmapping.CheckSignature(pm, pm.Signature)
-		if err != nil {
-			return nil, err
-		}
-		if !isValid {
-			log.Error(context.Background(), "integration.LoadModel> model  %d data corrupted", pm.ID)
-			continue
-		}
-		res = append(res, pm.IntegrationModel)
-	}
-
-	return res, nil
-}
-
 // LoadModel Load a integration model by its ID
 func LoadModel(ctx context.Context, db gorp.SqlExecutor, modelID int64) (sdk.IntegrationModel, error) {
 	query := gorpmapping.NewQuery("SELECT * from integration_model where id = $1").Args(modelID)
