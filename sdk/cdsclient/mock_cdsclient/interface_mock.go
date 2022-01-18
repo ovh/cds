@@ -4610,21 +4610,6 @@ func (mr *MockMonitoringClientMockRecorder) MonDBMigrate() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MonDBMigrate", reflect.TypeOf((*MockMonitoringClient)(nil).MonDBMigrate))
 }
 
-// MonErrorsGet mocks base method.
-func (m *MockMonitoringClient) MonErrorsGet(requestID string) ([]sdk.Error, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "MonErrorsGet", requestID)
-	ret0, _ := ret[0].([]sdk.Error)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// MonErrorsGet indicates an expected call of MonErrorsGet.
-func (mr *MockMonitoringClientMockRecorder) MonErrorsGet(requestID interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MonErrorsGet", reflect.TypeOf((*MockMonitoringClient)(nil).MonErrorsGet), requestID)
-}
-
 // MonStatus mocks base method.
 func (m *MockMonitoringClient) MonStatus() (*sdk.MonitoringStatus, error) {
 	m.ctrl.T.Helper()
@@ -6390,21 +6375,6 @@ func (m *MockInterface) MonDBMigrate() ([]sdk.MonDBMigrate, error) {
 func (mr *MockInterfaceMockRecorder) MonDBMigrate() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MonDBMigrate", reflect.TypeOf((*MockInterface)(nil).MonDBMigrate))
-}
-
-// MonErrorsGet mocks base method.
-func (m *MockInterface) MonErrorsGet(requestID string) ([]sdk.Error, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "MonErrorsGet", requestID)
-	ret0, _ := ret[0].([]sdk.Error)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// MonErrorsGet indicates an expected call of MonErrorsGet.
-func (mr *MockInterfaceMockRecorder) MonErrorsGet(requestID interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MonErrorsGet", reflect.TypeOf((*MockInterface)(nil).MonErrorsGet), requestID)
 }
 
 // MonStatus mocks base method.

@@ -143,7 +143,6 @@ func (api *API) InitRouter() {
 	r.Handle("/mon/metrics", ScopeNone(), r.GET(service.GetPrometheustMetricsHandler(api), service.OverrideAuth(service.NoAuthMiddleware)))
 	r.Handle("/mon/metrics/all", ScopeNone(), r.GET(service.GetMetricsHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 	r.HandlePrefix("/mon/metrics/detail/", ScopeNone(), r.GET(service.GetMetricHandler("/mon/metrics/detail/"), service.OverrideAuth(service.NoAuthMiddleware)))
-	r.Handle("/mon/errors/{uuid}", ScopeNone(), r.GET(api.getErrorHandler, service.OverrideAuth(api.authAdminMiddleware)))
 
 	r.Handle("/help", ScopeNone(), r.GET(api.getHelpHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 
