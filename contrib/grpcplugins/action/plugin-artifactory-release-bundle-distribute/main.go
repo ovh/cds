@@ -25,7 +25,7 @@ type artifactoryReleaseBundleDistributePlugin struct {
 	actionplugin.Common
 }
 
-func (actPlugin *artifactoryReleaseBundleDistributePlugin) Manifest(ctx context.Context, _ *empty.Empty) (*actionplugin.ActionPluginManifest, error) {
+func (actPlugin *artifactoryReleaseBundleDistributePlugin) Manifest(_ context.Context, _ *empty.Empty) (*actionplugin.ActionPluginManifest, error) {
 	return &actionplugin.ActionPluginManifest{
 		Name:        "plugin-artifactory-release-bundle-distribute",
 		Author:      "François Samin <francois.samin@corp.ovh.com>",
@@ -34,7 +34,7 @@ func (actPlugin *artifactoryReleaseBundleDistributePlugin) Manifest(ctx context.
 	}, nil
 }
 
-func (actPlugin *artifactoryReleaseBundleDistributePlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
+func (actPlugin *artifactoryReleaseBundleDistributePlugin) Run(_ context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
 	name := q.GetOptions()["name"]
 	version := q.GetOptions()["version"]
 	url := q.GetOptions()["url"]
@@ -42,8 +42,18 @@ func (actPlugin *artifactoryReleaseBundleDistributePlugin) Run(ctx context.Conte
 	token := q.GetOptions()[q.GetOptions()["token_variable"]]
 
 	if url == "" {
-		url = q.GetOptions()["cds.integration.artifact_manager.url"]
+		artiURL := q.GetOptions()["cds.integration.artifact_manager.url"]
+		artiToken := q.GetOptions()["cds.integration.artifact_manager.token"]
+
 		token = q.GetOptions()["cds.integration.artifact_manager.release.token"]
+		url = q.GetOptions()["cds.integration.artifact_manager.distribution.url"]
+
+		if url == "" {
+			url = artiURL
+		}
+		if token == "" {
+			token = artiToken
+		}
 	}
 
 	if url == "" {
@@ -60,7 +70,7 @@ func (actPlugin *artifactoryReleaseBundleDistributePlugin) Run(ctx context.Conte
 	}
 
 	fmt.Printf("Listing Edge nodes to distribute the release\n")
-	edges, err := edge.ListEdgeNodes(distriClient, url, token)
+	edges, err := edge.ListEdgeNodes(distriClient)
 	if err != nil {
 		return actionplugin.Fail("%v", err)
 	}
@@ -80,7 +90,7 @@ func (actPlugin *artifactoryReleaseBundleDistributePlugin) Run(ctx context.Conte
 		})
 	}
 
-	if err := distriClient.DistributeReleaseBundleSync(distributionParams, 10); err != nil {
+	if err := distriClient.Dsm.DistributeReleaseBundleSync(distributionParams, 10); err != nil {
 		return actionplugin.Fail("unable to distribute version: %v", err)
 	}
 

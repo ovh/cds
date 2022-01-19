@@ -9,8 +9,6 @@ import (
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/jfrog/jfrog-client-go/artifactory/services/utils"
-	"github.com/jfrog/jfrog-client-go/distribution"
-	authdistrib "github.com/jfrog/jfrog-client-go/distribution/auth"
 	"github.com/jfrog/jfrog-client-go/distribution/services"
 	distriUtils "github.com/jfrog/jfrog-client-go/distribution/services/utils"
 	"github.com/jfrog/jfrog-client-go/utils/log"
@@ -60,6 +58,7 @@ func (e *artifactoryReleasePlugin) Manifest(_ context.Context, _ *empty.Empty) (
 
 func (e *artifactoryReleasePlugin) Run(_ context.Context, opts *integrationplugin.RunQuery) (*integrationplugin.RunResult, error) {
 	artifactoryURL := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactoryConfigURL)]
+	distributionURL := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactoryConfigDistributionURL)]
 	token := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactoryConfigToken)]
 	releaseToken := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactoryConfigReleaseToken)]
 
@@ -87,7 +86,15 @@ func (e *artifactoryReleasePlugin) Run(_ context.Context, opts *integrationplugi
 	}
 
 	log.SetLogger(log.NewLogger(log.ERROR, os.Stdout))
-	distriClient, err := art.CreateDistributionClient(artifactoryURL, releaseToken)
+	if distributionURL == "" {
+		fmt.Printf("Using %s to release\n", artifactoryURL)
+		distributionURL = artifactoryURL
+	}
+	if releaseToken == "" {
+		fmt.Println("Using distribution token to release")
+		releaseToken = token
+	}
+	distriClient, err := art.CreateDistributionClient(distributionURL, releaseToken)
 	if err != nil {
 		return fail("unable to create distribution client: %v", err)
 	}
@@ -144,28 +151,30 @@ func (e *artifactoryReleasePlugin) Run(_ context.Context, opts *integrationplugi
 	}
 
 	// Release bundle
-	releaseName, releaseVersion, err := e.createReleaseBundle(distriClient, projectKey, workflowName, version, buildInfo, promotedArtifacts, destMaturity, releaseNote, artifactoryURL, releaseToken)
+	releaseName, releaseVersion, err := e.createReleaseBundle(distriClient, projectKey, workflowName, version, buildInfo, promotedArtifacts, destMaturity, releaseNote)
 	if err != nil {
 		return fail(err.Error())
 	}
 
 	fmt.Printf("Listing Edge nodes to distribute the release \n")
-	edges, err := edge.ListEdgeNodes(distriClient, artifactoryURL, releaseToken)
+	edges, err := edge.ListEdgeNodes(distriClient)
 	if err != nil {
 		return fail("%v", err)
 	}
 
 	fmt.Printf("Distribute Release %s %s\n", releaseName, releaseVersion)
+
 	distributionParams := services.NewDistributeReleaseBundleParams(releaseName, releaseVersion)
 	distributionParams.DistributionRules = make([]*distriUtils.DistributionCommonParams, 0, len(edges))
 	for _, e := range edges {
+		fmt.Printf("Will be distribute on edge %s\n", e.Name)
 		distributionParams.DistributionRules = append(distributionParams.DistributionRules, &distriUtils.DistributionCommonParams{
 			SiteName:     e.SiteName,
 			CityName:     e.City.Name,
 			CountryCodes: []string{e.City.CountryCode},
 		})
 	}
-	if err := distriClient.DistributeReleaseBundleSync(distributionParams, 10); err != nil {
+	if err := distriClient.Dsm.DistributeReleaseBundleSync(distributionParams, 10); err != nil {
 		return fail("unable to distribute version: %v", err)
 	}
 
@@ -174,7 +183,7 @@ func (e *artifactoryReleasePlugin) Run(_ context.Context, opts *integrationplugi
 	}, nil
 }
 
-func (e *artifactoryReleasePlugin) createReleaseBundle(distriClient *distribution.DistributionServicesManager, projectKey, workflowName, version, buildInfo string, artifactPromoted []string, destMaturity, releaseNote string, artifactoryURL, releaseToken string) (string, string, error) {
+func (e *artifactoryReleasePlugin) createReleaseBundle(distriClient art.DistribClient, projectKey, workflowName, version, buildInfo string, artifactPromoted []string, destMaturity, releaseNote string) (string, string, error) {
 	buildInfoName := fmt.Sprintf("%s/%s/%s", buildInfo, projectKey, workflowName)
 
 	params := services.NewCreateReleaseBundleParams(strings.Replace(buildInfoName, "/", "-", -1), version)
@@ -182,7 +191,7 @@ func (e *artifactoryReleasePlugin) createReleaseBundle(distriClient *distributio
 		params.Version += "-" + destMaturity
 	}
 
-	exist, err := e.checkReleaseBundleExist(distriClient, artifactoryURL, releaseToken, params.Name, params.Version)
+	exist, err := e.checkReleaseBundleExist(distriClient, params.Name, params.Version)
 	if err != nil {
 		return "", "", err
 	}
@@ -205,7 +214,7 @@ func (e *artifactoryReleasePlugin) createReleaseBundle(distriClient *distributio
 		params.SignImmediately = true
 		fmt.Printf("Creating release %s %s\n", params.Name, params.Version)
 
-		if _, err := distriClient.CreateReleaseBundle(params); err != nil {
+		if _, err := distriClient.Dsm.CreateReleaseBundle(params); err != nil {
 			return "", "", fmt.Errorf("unable to create release bundle %s/%s: %v", params.Name, params.Version, err)
 		}
 	} else {
@@ -214,19 +223,16 @@ func (e *artifactoryReleasePlugin) createReleaseBundle(distriClient *distributio
 	return params.Name, params.Version, nil
 }
 
-func (e *artifactoryReleasePlugin) checkReleaseBundleExist(client *distribution.DistributionServicesManager, url string, token string, name string, version string) (bool, error) {
+func (e *artifactoryReleasePlugin) checkReleaseBundleExist(client art.DistribClient, name string, version string) (bool, error) {
 	getReleasePath := fmt.Sprintf("api/v1/release_bundle/%s/%s?format=json", name, version)
-	dtb := authdistrib.NewDistributionDetails()
-	dtb.SetUrl(strings.Replace(url, "/artifactory/", "/distribution/", -1))
-	dtb.SetAccessToken(token)
 
-	fakeService := services.NewCreateReleaseBundleService(client.Client())
-	fakeService.DistDetails = dtb
+	fakeService := services.NewCreateReleaseBundleService(client.Dsm.Client())
+	fakeService.DistDetails = client.ServiceConfig.GetServiceDetails()
 	clientDetail := fakeService.DistDetails.CreateHttpClientDetails()
 	getReleaseURL := fmt.Sprintf("%s%s", fakeService.DistDetails.GetUrl(), getReleasePath)
 	utils.SetContentType("application/json", &clientDetail.Headers)
 
-	resp, body, _, err := client.Client().SendGet(getReleaseURL, true, &clientDetail)
+	resp, body, _, err := client.Dsm.Client().SendGet(getReleaseURL, true, &clientDetail)
 	if err != nil {
 		return false, fmt.Errorf("unable to get release bundle %s/%s from distribution: %v", name, version, err)
 	}

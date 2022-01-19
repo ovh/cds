@@ -45,7 +45,12 @@ type FileChildren struct {
 	Folder bool   `json:"folder"`
 }
 
-func CreateDistributionClient(url, token string) (*distribution.DistributionServicesManager, error) {
+type DistribClient struct {
+	Dsm           *distribution.DistributionServicesManager
+	ServiceConfig config.Config
+}
+
+func CreateDistributionClient(url, token string) (DistribClient, error) {
 	dtb := authdistrib.NewDistributionDetails()
 	dtb.SetUrl(strings.Replace(url, "/artifactory/", "/distribution/", -1))
 	dtb.SetAccessToken(token)
@@ -55,9 +60,13 @@ func CreateDistributionClient(url, token string) (*distribution.DistributionServ
 		SetDryRun(false).
 		Build()
 	if err != nil {
-		return nil, fmt.Errorf("unable to create service config: %v", err)
+		return DistribClient{}, fmt.Errorf("unable to create service config: %v", err)
 	}
-	return distribution.New(serviceConfig)
+	dsm, err := distribution.New(serviceConfig)
+	if err != nil {
+		return DistribClient{}, nil
+	}
+	return DistribClient{Dsm: dsm, ServiceConfig: serviceConfig}, nil
 }
 
 func CreateArtifactoryClient(url, token string) (artifactory.ArtifactoryServicesManager, error) {
