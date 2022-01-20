@@ -26,7 +26,7 @@ func Test_putGroupRoleOnProjectHandler(t *testing.T) {
 	u1, jwtLambda1 := assets.InsertLambdaUser(t, db, &g1, g2)
 	assets.SetUserGroupAdmin(t, db, g1.ID, u1.ID)
 	assets.SetUserGroupAdmin(t, db, g2.ID, u1.ID)
-	// Create a lambda user 2 that is member of
+	// Create a lambda user 2 that is member of g1
 	_, jwtLambda2 := assets.InsertLambdaUser(t, db, &g1)
 
 	// User 1 can add g2 on project because admin of it
