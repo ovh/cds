@@ -96,7 +96,7 @@ func (api *API) computeGlobalPublicStatus() sdk.MonitoringStatus {
 
 // computeGlobalStatus returns global status
 func (api *API) computeGlobalStatus(srvs []sdk.Service) sdk.MonitoringStatus {
-	mStatus := sdk.MonitoringStatus{}
+	mStatus := sdk.MonitoringStatus{Now: time.Now()}
 
 	var version string
 	versionOk := true
