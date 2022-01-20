@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -10,13 +9,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
-	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdsclient"
 )
 
 func Test_putGroupRoleOnProjectHandler(t *testing.T) {
@@ -84,6 +80,7 @@ func Test_postGroupInProjectHandler(t *testing.T) {
 	g1 := proj.ProjectGroups[0].Group
 	g2 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 	g3 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
+	g4 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 
 	// Create a lambda user that is admin on g1 and g2
 	u, jwtLambda := assets.InsertLambdaUser(t, db, &g1, g2, g3)
@@ -109,68 +106,16 @@ func Test_postGroupInProjectHandler(t *testing.T) {
 	rec = httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
 	require.Equal(t, http.StatusForbidden, rec.Code)
-}
 
-func Test_postImportGroupsInProjectHandler_WithOrganization(t *testing.T) {
-	api, db, _ := newTestAPI(t)
-
-	_, jwtAdmin := assets.InsertAdminUser(t, db)
-
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
-	g1 := proj.ProjectGroups[0].Group
-	g2 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
-
-	// Create a lambda user that is admin on g1 and g2
-	u1, jwtLambda := assets.InsertLambdaUser(t, db, &g1, g2)
-	assets.SetUserGroupAdmin(t, db, g1.ID, u1.ID)
-	assets.SetUserGroupAdmin(t, db, g2.ID, u1.ID)
-	require.NoError(t, user.InsertOrganization(context.TODO(), db, &user.Organization{
-		AuthentifiedUserID: u1.ID,
-		Organization:       "org1",
-	}))
-	require.NoError(t, group.EnsureOrganization(context.TODO(), db, &g1))
-	require.NoError(t, group.EnsureOrganization(context.TODO(), db, g2))
-
-	g3 := sdk.Group{Name: sdk.RandomString(10)}
-	u2, _ := assets.InsertLambdaUser(t, db, &g3)
-	assets.SetUserGroupAdmin(t, db, g3.ID, u2.ID)
-	require.NoError(t, user.InsertOrganization(context.TODO(), db, &user.Organization{
-		AuthentifiedUserID: u2.ID,
-		Organization:       "org2",
-	}))
-	require.NoError(t, group.EnsureOrganization(context.TODO(), db, &g3))
-
-	// Add new group with same organization
-	proj.ProjectGroups = append(proj.ProjectGroups, sdk.GroupPermission{Group: *g2, Permission: sdk.PermissionRead})
-	uri := api.Router.GetRoute(http.MethodPost, api.postImportGroupsInProjectHandler, map[string]string{
+	// User is not member of g4
+	uri = api.Router.GetRoute(http.MethodPost, api.postGroupInProjectHandler, map[string]string{
 		"permProjectKey": proj.Key,
 	})
 	require.NotEmpty(t, uri)
-	req := assets.NewJWTAuthentifiedRequest(t, jwtLambda, http.MethodPost, uri, proj.ProjectGroups)
-	cdsclient.Force()(req)
-	req.Header.Set("Content-Type", "application/json")
-	rec := httptest.NewRecorder()
-	api.Router.Mux.ServeHTTP(rec, req)
-	require.Equal(t, http.StatusOK, rec.Code)
-	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &proj))
-	require.Len(t, proj.ProjectGroups, 2)
-	require.Equal(t, "org1", proj.Organization)
-
-	// Try add new group with other organization
-	proj.ProjectGroups = []sdk.GroupPermission{{Group: g3, Permission: sdk.PermissionReadWriteExecute}}
-	uri = api.Router.GetRoute(http.MethodPost, api.postImportGroupsInProjectHandler, map[string]string{
-		"permProjectKey": proj.Key,
-	})
-	require.NotEmpty(t, uri)
-	req = assets.NewJWTAuthentifiedRequest(t, jwtAdmin, http.MethodPost, uri, proj.ProjectGroups)
-	cdsclient.Force()(req)
-	req.Header.Set("Content-Type", "application/json")
+	req = assets.NewJWTAuthentifiedRequest(t, jwtLambda, http.MethodPost, uri, sdk.GroupPermission{Group: *g4, Permission: sdk.PermissionRead})
 	rec = httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
 	require.Equal(t, http.StatusForbidden, rec.Code)
-	var resultError sdk.Error
-	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &resultError))
-	require.Equal(t, "given group with organization \"org2\" don't match project organization \"org1\"", resultError.From)
 }
 
 // Test_ProjectPerms Useful to test permission on project

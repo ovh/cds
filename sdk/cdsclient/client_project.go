@@ -3,7 +3,6 @@ package cdsclient
 import (
 	"context"
 	"fmt"
-	"io"
 	"net/url"
 
 	"github.com/ovh/cds/sdk"
@@ -61,22 +60,6 @@ func (c *client) ProjectList(withApplications, withWorkflows bool, filters ...Fi
 		return nil, err
 	}
 	return p, nil
-}
-
-func (c *client) ProjectGroupsImport(projectKey string, content io.Reader, mods ...RequestModifier) (sdk.Project, error) {
-	var proj sdk.Project
-
-	path := fmt.Sprintf("/project/%s/group/import", projectKey)
-	btes, _, _, err := c.Request(context.Background(), "POST", path, content, mods...)
-	if err != nil {
-		return proj, err
-	}
-
-	if err := sdk.JSONUnmarshal(btes, &proj); err != nil {
-		return proj, err
-	}
-
-	return proj, nil
 }
 
 func (c *client) ProjectAccess(ctx context.Context, projectKey, sessionID string, itemType sdk.CDNItemType) error {

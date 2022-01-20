@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -14,7 +13,6 @@ import (
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/exportentities"
 )
 
 func (api *API) getGroupsHandler() service.Handler {
@@ -75,40 +73,6 @@ func (api *API) getGroupHandler() service.Handler {
 		}
 
 		return service.WriteJSON(w, g, http.StatusOK)
-	}
-}
-
-func (api *API) getGroupExportHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-
-		groupName := vars["permGroupName"]
-
-		format := FormString(r, "format")
-		if format == "" {
-			format = "yaml"
-		}
-		f, err := exportentities.GetFormat(format)
-		if err != nil {
-			return err
-		}
-
-		g, err := group.LoadByName(ctx, api.mustDB(), groupName, group.LoadOptions.Default)
-		if err != nil {
-			return err
-		}
-
-		b, err := exportentities.Marshal(g, f)
-		if err != nil {
-			return err
-		}
-
-		if _, err := w.Write(b); err != nil {
-			return sdk.WithStack(err)
-		}
-
-		w.Header().Add("Content-Type", f.ContentType())
-		return nil
 	}
 }
 
@@ -491,138 +455,5 @@ func (api *API) deleteGroupUserHandler() service.Handler {
 		}
 
 		return service.WriteJSON(w, g, http.StatusOK)
-	}
-}
-
-func (api *API) postGroupImportHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		body, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			return sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to read body"))
-		}
-
-		contentType := r.Header.Get("Content-Type")
-		if contentType == "" {
-			contentType = http.DetectContentType(body)
-		}
-		format, err := exportentities.GetFormatFromContentType(contentType)
-		if err != nil {
-			return err
-		}
-
-		var data sdk.Group
-		if err := exportentities.Unmarshal(body, format, &data); err != nil {
-			return err
-		}
-		if err := data.IsValid(); err != nil {
-			return err
-		}
-		if err := data.Members.IsValid(); err != nil {
-			return err
-		}
-
-		tx, err := api.mustDB().Begin()
-		if err != nil {
-			return sdk.WrapError(err, "cannot start transaction")
-		}
-		defer tx.Rollback() // nolint
-
-		oldGroup, err := group.LoadByName(ctx, tx, data.Name,
-			group.LoadOptions.WithMembers,
-			group.LoadOptions.WithOrganization,
-		)
-		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
-			return sdk.WrapError(err, "cannot load group: %s", data.Name)
-		}
-		if oldGroup != nil {
-			if !isGroupAdmin(ctx, oldGroup) {
-				if isAdmin(ctx) {
-					trackSudo(ctx, w)
-				} else {
-					return sdk.WithStack(sdk.ErrForbidden)
-				}
-			}
-		}
-
-		// Add user data and validate members
-		for i := range data.Members {
-			var u *sdk.AuthentifiedUser
-			if data.Members[i].ID != "" {
-				u, err = user.LoadByID(ctx, tx, data.Members[i].ID)
-			} else {
-				u, err = user.LoadByUsername(ctx, tx, data.Members[i].Username)
-			}
-			if err != nil {
-				return err
-			}
-			data.Members[i].ID = u.ID
-		}
-
-		if err := group.Upsert(ctx, tx, oldGroup, &data); err != nil {
-			return sdk.WrapError(err, "cannot update group with id: %d", data.ID)
-		}
-
-		// Check that user's Organization match group Organization
-		if err := group.EnsureOrganization(ctx, tx, &data); err != nil {
-			return err
-		}
-
-		if oldGroup != nil {
-			if oldGroup.Organization != "" && oldGroup.Organization != data.Organization {
-				return sdk.NewErrorFrom(sdk.ErrForbidden, "can't change group organization")
-			}
-
-			// Remove the group from consumers for removed users
-			removedUserIDs := oldGroup.Members.DiffUserIDs(data.Members)
-			for i := range removedUserIDs {
-				u, err := user.LoadByID(ctx, tx, removedUserIDs[i])
-				if err != nil {
-					return err
-				}
-				if err := authentication.ConsumerInvalidateGroupForUser(ctx, tx, &data, u); err != nil {
-					return err
-				}
-			}
-
-			// Restore group on consumers for added users
-			addedUserIDs := data.Members.DiffUserIDs(oldGroup.Members)
-			for i := range addedUserIDs {
-				if err := authentication.ConsumerRestoreInvalidatedGroupForUser(ctx, tx, data.ID, addedUserIDs[i]); err != nil {
-					return err
-				}
-			}
-		}
-
-		if err := tx.Commit(); err != nil {
-			return sdk.WithStack(err)
-		}
-
-		// In case where the user remove himself from group, do not return it
-		consumer := getAPIConsumer(ctx)
-		for i := range data.Members {
-			var found bool
-			if data.Members[i].ID == consumer.AuthentifiedUser.ID {
-				found = true
-				break
-			}
-			if !found {
-				return service.WriteJSON(w, nil, http.StatusOK)
-			}
-		}
-
-		// Load extra data for group
-		if err := group.LoadOptions.Default(ctx, api.mustDB(), &data); err != nil {
-			return err
-		}
-
-		b, err := exportentities.Marshal(data, format)
-		if err != nil {
-			return err
-		}
-		if _, err := w.Write(b); err != nil {
-			return sdk.WithStack(err)
-		}
-		w.Header().Add("Content-Type", format.ContentType())
-		return nil
 	}
 }

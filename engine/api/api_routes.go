@@ -117,9 +117,7 @@ func (api *API) InitRouter() {
 
 	// Group
 	r.Handle("/group", Scope(sdk.AuthConsumerScopeGroup), r.GET(api.getGroupsHandler), r.POST(api.postGroupHandler))
-	r.Handle("/group/import", Scope(sdk.AuthConsumerScopeGroup), r.POST(api.postGroupImportHandler))
 	r.Handle("/group/{permGroupName}", Scope(sdk.AuthConsumerScopeGroup), r.GET(api.getGroupHandler), r.PUT(api.putGroupHandler), r.DELETE(api.deleteGroupHandler))
-	r.Handle("/group/{permGroupName}/export", Scope(sdk.AuthConsumerScopeGroup), r.GET(api.getGroupExportHandler))
 	r.Handle("/group/{permGroupName}/user", Scope(sdk.AuthConsumerScopeGroup), r.POST(api.postGroupUserHandler))
 	r.Handle("/group/{permGroupName}/user/{username}", Scope(sdk.AuthConsumerScopeGroup), r.PUT(api.putGroupUserHandler), r.DELETE(api.deleteGroupUserHandler))
 	r.Handle("/group/{permGroupName}/project", Scope(sdk.AuthConsumerScopeGroup), r.GET(api.getProjectGroupHandler))
@@ -162,7 +160,6 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{permProjectKey}", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getProjectHandler), r.PUT(api.updateProjectHandler), r.DELETE(api.deleteProjectHandler))
 	r.Handle("/project/{permProjectKey}/labels", Scope(sdk.AuthConsumerScopeProject), r.PUT(api.putProjectLabelsHandler))
 	r.Handle("/project/{permProjectKey}/group", Scope(sdk.AuthConsumerScopeProject), r.POST(api.postGroupInProjectHandler))
-	r.Handle("/project/{permProjectKey}/group/import", Scope(sdk.AuthConsumerScopeProject), r.POST(api.postImportGroupsInProjectHandler))
 	r.Handle("/project/{permProjectKey}/group/{groupName}", Scope(sdk.AuthConsumerScopeProject), r.PUT(api.putGroupRoleOnProjectHandler), r.DELETE(api.deleteGroupFromProjectHandler))
 	r.Handle("/project/{permProjectKey}/variable", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getVariablesInProjectHandler))
 	r.Handle("/project/{permProjectKey}/encrypt", Scope(sdk.AuthConsumerScopeProject), r.POST(api.postEncryptVariableHandler), r.DELETE(api.deleteEncryptVariableHandler))

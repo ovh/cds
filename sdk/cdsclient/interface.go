@@ -178,8 +178,6 @@ type ActionClient interface {
 type GroupClient interface {
 	GroupList() ([]sdk.Group, error)
 	GroupGet(name string, mods ...RequestModifier) (*sdk.Group, error)
-	GroupExport(name string, mods ...RequestModifier) ([]byte, error)
-	GroupImport(content io.Reader, mods ...RequestModifier) ([]byte, error)
 	GroupCreate(group *sdk.Group) error
 	GroupRename(oldName, newName string) error
 	GroupDelete(name string) error
@@ -220,7 +218,6 @@ type ProjectClient interface {
 	ProjectList(withApplications, withWorkflow bool, filters ...Filter) ([]sdk.Project, error)
 	ProjectKeysClient
 	ProjectVariablesClient
-	ProjectGroupsImport(projectKey string, content io.Reader, mods ...RequestModifier) (sdk.Project, error)
 	ProjectIntegrationImport(projectKey string, content io.Reader, mods ...RequestModifier) (sdk.ProjectIntegration, error)
 	ProjectIntegrationGet(projectKey string, integrationName string, clearPassword bool) (sdk.ProjectIntegration, error)
 	ProjectIntegrationList(projectKey string) ([]sdk.ProjectIntegration, error)
