@@ -568,6 +568,10 @@ func (api *API) postGroupImportHandler() service.Handler {
 		}
 
 		if oldGroup != nil {
+			if oldGroup.Organization != "" && oldGroup.Organization != data.Organization {
+				return sdk.NewErrorFrom(sdk.ErrForbidden, "can't change group organization")
+			}
+
 			// Remove the group from consumers for removed users
 			removedUserIDs := oldGroup.Members.DiffUserIDs(data.Members)
 			for i := range removedUserIDs {

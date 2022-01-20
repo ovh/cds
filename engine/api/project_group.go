@@ -88,7 +88,7 @@ func (api *API) putGroupRoleOnProjectHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load project %s", key)
 		}
 
-		grp, err := group.LoadByName(ctx, tx, groupName, group.LoadOptions.WithOrganization)
+		grp, err := group.LoadByName(ctx, tx, groupName, group.LoadOptions.WithOrganization, group.LoadOptions.WithMembers)
 		if err != nil {
 			return sdk.WrapError(err, "cannot find %s", groupName)
 		}
@@ -104,6 +104,13 @@ func (api *API) putGroupRoleOnProjectHandler() service.Handler {
 		oldLink, err := group.LoadLinkGroupProjectForGroupIDAndProjectID(ctx, tx, grp.ID, proj.ID)
 		if err != nil {
 			return err
+		}
+		if !isGroupAdmin(ctx, grp) && data.Permission > oldLink.Role {
+			if isAdmin(ctx) {
+				trackSudo(ctx, w)
+			} else {
+				return sdk.WithStack(sdk.ErrInvalidGroupAdmin)
+			}
 		}
 
 		newLink := *oldLink
@@ -178,9 +185,17 @@ func (api *API) postGroupInProjectHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load %s", key)
 		}
 
-		grp, err := group.LoadByName(ctx, tx, data.Group.Name, group.LoadOptions.WithOrganization)
+		grp, err := group.LoadByName(ctx, tx, data.Group.Name, group.LoadOptions.WithOrganization, group.LoadOptions.WithMembers)
 		if err != nil {
 			return sdk.WrapError(err, "cannot find %s", data.Group.Name)
+		}
+
+		if !isGroupAdmin(ctx, grp) {
+			if isAdmin(ctx) {
+				trackSudo(ctx, w)
+			} else {
+				return sdk.WithStack(sdk.ErrInvalidGroupAdmin)
+			}
 		}
 
 		if group.IsDefaultGroupID(grp.ID) && data.Permission > sdk.PermissionRead {
@@ -263,10 +278,17 @@ func (api *API) postImportGroupsInProjectHandler() service.Handler {
 		if err := exportentities.Unmarshal(body, format, &data); err != nil {
 			return err
 		}
+		var atLeastOneRWXGroup bool
 		for i := range data {
 			if err := data[i].IsValid(); err != nil {
 				return err
 			}
+			if data[i].Permission == sdk.PermissionReadWriteExecute {
+				atLeastOneRWXGroup = true
+			}
+		}
+		if !atLeastOneRWXGroup || len(data) == 0 {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given group permission")
 		}
 
 		tx, err := api.mustDB().Begin()
@@ -277,8 +299,21 @@ func (api *API) postImportGroupsInProjectHandler() service.Handler {
 
 		// Check and set group on all given group permission
 		for i := range data {
-			grp, err := group.LoadByName(ctx, tx, data[i].Group.Name)
+			grp, err := group.LoadByName(ctx, tx, data[i].Group.Name, group.LoadOptions.WithOrganization, group.LoadOptions.WithMembers)
 			if err != nil {
+				return err
+			}
+			if !isGroupAdmin(ctx, grp) {
+				if isAdmin(ctx) {
+					trackSudo(ctx, w)
+				} else {
+					return sdk.NewErrorFrom(sdk.ErrForbidden, "admin permission on group %q is required", data[i].Group.Name)
+				}
+			}
+			if group.IsDefaultGroupID(grp.ID) && data[i].Permission > sdk.PermissionRead {
+				return sdk.NewErrorFrom(sdk.ErrDefaultGroupPermission, "only read permission is allowed to default group")
+			}
+			if err := projectPermissionCheckOrganizationMatch(ctx, tx, proj, grp, data[i].Permission); err != nil {
 				return err
 			}
 			data[i].Group = *grp

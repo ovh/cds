@@ -12,6 +12,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/test/assets"
+	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -364,18 +365,10 @@ func Test_postImportGroupHandler(t *testing.T) {
 	require.Equal(t, http.StatusOK, rec.Code)
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &g1))
 	require.Len(t, g1.Members, 2)
-	var foundU1, foundU2 bool
-	for i := range g1.Members {
-		if g1.Members[i].ID == u1.ID {
-			foundU1 = true
-			require.True(t, g1.Members[i].Admin)
-		}
-		if g1.Members[i].ID == u2.ID {
-			foundU2 = true
-			require.False(t, g1.Members[i].Admin)
-		}
-	}
-	require.True(t, foundU1 && foundU2)
+	require.NotNil(t, g1.Members.GetUserByID(u1.ID))
+	require.True(t, g1.Members.GetUserByID(u1.ID).Admin)
+	require.NotNil(t, g1.Members.GetUserByID(u2.ID))
+	require.False(t, g1.Members.GetUserByID(u2.ID).Admin)
 
 	// Change name
 	g1NewName := sdk.RandomString(10)
@@ -430,4 +423,83 @@ func Test_postImportGroupHandler(t *testing.T) {
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &g1))
 	require.Len(t, g1.Members, 1)
 	require.Equal(t, u1.ID, g1.Members[0].ID)
+}
+
+func Test_postImportGroupHandler_CheckOrganization(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	_, jwtAdmin := assets.InsertAdminUser(t, db)
+
+	groupName := sdk.RandomString(10)
+	u1, jwtLambda := assets.InsertLambdaUser(t, db, &sdk.Group{Name: groupName})
+	require.NoError(t, user.InsertOrganization(context.TODO(), db, &user.Organization{
+		AuthentifiedUserID: u1.ID,
+		Organization:       "org1",
+	}))
+	u2, _ := assets.InsertLambdaUser(t, db)
+	require.NoError(t, user.InsertOrganization(context.TODO(), db, &user.Organization{
+		AuthentifiedUserID: u2.ID,
+		Organization:       "org1",
+	}))
+	u3, _ := assets.InsertLambdaUser(t, db)
+	require.NoError(t, user.InsertOrganization(context.TODO(), db, &user.Organization{
+		AuthentifiedUserID: u3.ID,
+		Organization:       "org2",
+	}))
+
+	// Get the group
+	uri := api.Router.GetRoute(http.MethodGet, api.getGroupHandler, map[string]string{
+		"permGroupName": groupName,
+	})
+	require.NotEmpty(t, uri)
+	req := assets.NewJWTAuthentifiedRequest(t, jwtLambda, http.MethodGet, uri, nil)
+	rec := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusOK, rec.Code)
+	var group sdk.Group
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &group))
+	require.Len(t, group.Members, 1)
+	require.Equal(t, u1.ID, group.Members[0].ID)
+	require.True(t, group.Members[0].Admin)
+
+	// Add new member from same organization
+	group.Members = append(group.Members, sdk.GroupMember{ID: u2.ID})
+	uri = api.Router.GetRoute(http.MethodPost, api.postGroupImportHandler, nil)
+	require.NotEmpty(t, uri)
+	req = assets.NewJWTAuthentifiedRequest(t, jwtLambda, http.MethodPost, uri, group)
+	req.Header.Set("Content-Type", "application/json")
+	rec = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusOK, rec.Code)
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &group))
+	require.Len(t, group.Members, 2)
+	require.NotNil(t, group.Members.GetUserByID(u1.ID))
+	require.True(t, group.Members.GetUserByID(u1.ID).Admin)
+	require.NotNil(t, group.Members.GetUserByID(u2.ID))
+	require.False(t, group.Members.GetUserByID(u2.ID).Admin)
+
+	// Try add new member from other organization
+	group.Members = append(group.Members, sdk.GroupMember{ID: u3.ID})
+	uri = api.Router.GetRoute(http.MethodPost, api.postGroupImportHandler, nil)
+	require.NotEmpty(t, uri)
+	req = assets.NewJWTAuthentifiedRequest(t, jwtLambda, http.MethodPost, uri, group)
+	req.Header.Set("Content-Type", "application/json")
+	rec = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusBadRequest, rec.Code)
+	var resultError sdk.Error
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &resultError))
+	require.Equal(t, "group members organization conflict \"org1\" and \"org2\"", resultError.From)
+
+	// Try change group organization
+	group.Members = sdk.GroupMembers{{ID: u3.ID, Admin: true}}
+	uri = api.Router.GetRoute(http.MethodPost, api.postGroupImportHandler, nil)
+	require.NotEmpty(t, uri)
+	req = assets.NewJWTAuthentifiedRequest(t, jwtAdmin, http.MethodPost, uri, group)
+	req.Header.Set("Content-Type", "application/json")
+	rec = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusForbidden, rec.Code)
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &resultError))
+	require.Equal(t, "can't change group organization", resultError.From)
 }

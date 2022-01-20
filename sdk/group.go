@@ -94,6 +94,15 @@ func (m GroupMembers) UserIDs() []string {
 	return usersID
 }
 
+func (m GroupMembers) GetUserByID(id string) *GroupMember {
+	for i := range m {
+		if m[i].ID == id {
+			return &m[i]
+		}
+	}
+	return nil
+}
+
 func (m GroupMembers) ComputeOrganization() (string, error) {
 	var org string
 	for i := range m {
