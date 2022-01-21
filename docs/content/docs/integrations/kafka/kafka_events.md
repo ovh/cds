@@ -56,42 +56,7 @@ Import the integration on your CDS Project with:
 cdsctl project integration import PROJECT_KEY project-configuration.yml
 ```
 
-Then, as a standard user, you can add a [Kafka Hook]({{<relref "/docs/concepts/workflow/hooks/kafka-hook.md">}}) on your workflow.
-
-### Create a Public Kafka Integration for whole CDS Projects
-
-You can also add a Kafka Integration with cdsctl. As a CDS Administrator,
-this allows you to propose a Public Kafka Integration, available on all CDS Projects.
-
-Create a file `public-configuration.yml`:
-
-```yml
-name: your-kafka-integration
-event: true
-public: true
-public_configurations:
-  name-of-integration:
-    "broker url":
-      type: string
-      value: "n1.o1.your-broker:9093,n2.o1.n1.o1.your-broker:9093,n3.o1.n1.o1.your-broker:9093"
-    "topic":
-      type: string
-      value: "your-topic.events"
-    "username":
-      type: string
-      value: "your-topic.cds-reader"
-    "password":
-      type: password
-      value: xxxxxxxx
-```
-
-Import the integration with :
-
-```bash
-cdsctl admin integration-model import public-configuration.yml
-```
-
-Then, as a standard user, you can add a [Kafka Hook]({{<relref "/docs/concepts/workflow/hooks/kafka-hook.md">}}) on your workflow.
+Then, as a standard user, you can use your kafka integration for workflow notifications.
 
 ### One Integration, two use case
 
