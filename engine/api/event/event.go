@@ -2,6 +2,7 @@ package event
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
@@ -18,10 +19,13 @@ import (
 )
 
 // cache with go cache
-var brokersConnectionCache = gocache.New(10*time.Minute, 6*time.Hour)
-var hostname, cdsname string
-var brokers []Broker
-var subscribers []chan<- sdk.Event
+var (
+	brokersConnectionCache = gocache.New(10*time.Minute, 6*time.Hour)
+	hostname, cdsname      string
+	brokers                []Broker
+	globalBroker           Broker
+	subscribers            []chan<- sdk.Event
+)
 
 func init() {
 	subscribers = make([]chan<- sdk.Event, 0)
@@ -96,7 +100,11 @@ func ResetEventIntegration(ctx context.Context, db gorp.SqlExecutor, eventIntegr
 }
 
 // Initialize initializes event system
-func Initialize(ctx context.Context, db *gorp.DbMap, cache Store) error {
+func Initialize(ctx context.Context, db *gorp.DbMap, cache Store, glolbalKafkaConfigs ...KafkaConfig) error {
+	if len(glolbalKafkaConfigs) > 1 {
+		return errors.New("only one global kafka global config is supported")
+	}
+
 	store = cache
 	var err error
 	hostname, err = os.Hostname()
@@ -110,6 +118,14 @@ func Initialize(ctx context.Context, db *gorp.DbMap, cache Store) error {
 			cdsname += v[:3]
 		} else {
 			cdsname += v
+		}
+	}
+
+	if len(glolbalKafkaConfigs) == 1 && glolbalKafkaConfigs[0].BrokerAddresses != "" {
+		globalBroker, err = getBroker(ctx, "kafka", glolbalKafkaConfigs[0])
+		if err != nil {
+			ctx = log.ContextWithStackTrace(ctx, err)
+			log.Error(ctx, "unable to init builtin kafka broker from config: %v", err)
 		}
 	}
 
@@ -136,6 +152,13 @@ func DequeueEvent(ctx context.Context, db *gorp.DbMap) {
 
 		for _, s := range subscribers {
 			s <- e
+		}
+
+		if globalBroker != nil {
+			log.Info(ctx, "sending event %q to global broker", e.EventType)
+			if err := globalBroker.sendEvent(&e); err != nil {
+				log.Warn(ctx, "Error while sending message [%s: %s/%s/%s/%s/%s]: %s", e.EventType, e.ProjectKey, e.WorkflowName, e.ApplicationName, e.PipelineName, e.EnvironmentName, err)
+			}
 		}
 
 		for _, eventIntegrationID := range e.EventIntegrationsID {

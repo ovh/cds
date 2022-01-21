@@ -215,6 +215,9 @@ type Configuration struct {
 		DefaultRetentionPolicy string `toml:"defaultRetentionPolicy" comment:"Default rule for workflow run retention policy, this rule can be overridden on each workflow.\n Example: 'return run_days_before < 365' keeps runs for one year." json:"defaultRetentionPolicy" default:"return run_days_before < 365"`
 		DisablePurgeDeletion   bool   `toml:"disablePurgeDeletion" comment:"Allow you to disable the deletion part of the purge. Workflow run will only be marked as delete" json:"disablePurgeDeletion" default:"false"`
 	} `toml:"workflow" comment:"######################\n 'Workflow' global configuration \n######################" json:"workflow"`
+	EventBus struct {
+		GlobalKafka event.KafkaConfig `toml:"globalKafka" default:"false" json:"globalKafka"`
+	} `toml:"events" comment:"######################\n Event bus configuration \n######################" json:"events"`
 }
 
 // DefaultValues is the struc for API Default configuration default values
@@ -688,7 +691,7 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 
 	log.Info(ctx, "Initializing event broker...")
-	if err := event.Initialize(ctx, a.mustDB(), a.Cache); err != nil {
+	if err := event.Initialize(ctx, a.mustDB(), a.Cache, a.Config.EventBus.GlobalKafka); err != nil {
 		log.Error(ctx, "error while initializing event system: %s", err)
 	}
 
