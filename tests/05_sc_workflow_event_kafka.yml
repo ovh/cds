@@ -23,8 +23,7 @@ testcases:
 - name: check if consumer kafka is started
   steps:
   - script: sleep 15 && {{.cdsctl}} -f {{.cdsctl.config}} admin services status --type=hooks|grep 'Hook Kafka Consumers' | grep OK
-  retry: 30
-  delay: 10
+  timeout: 30
 
 - name: run workflow by sending a kafka event
   steps:
