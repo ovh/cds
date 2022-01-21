@@ -125,12 +125,9 @@ func Do(input string, vars map[string]string) (string, error) {
 					}
 				}
 
-				var isHandlingUnknownVars bool
+				var defaultIsUsed bool
 				if _, ok := usedHelpers["default"]; ok {
-					isHandlingUnknownVars = true
-				}
-				if _, ok := usedHelpers["ternary"]; ok {
-					isHandlingUnknownVars = true
+					defaultIsUsed = true
 				}
 
 				unknownVariables := make([]string, 0, 1000)
@@ -149,7 +146,7 @@ func Do(input string, vars map[string]string) (string, error) {
 					delete(usedHelpers, h)
 				}
 
-				if !isHandlingUnknownVars && (len(unknownVariables) > 0 || len(unknownHelpers) > 0) {
+				if !defaultIsUsed && (len(unknownVariables) > 0 || len(unknownHelpers) > 0) {
 					for _, s := range quotedStuff {
 						q := strings.Replace(sm[i][1], `"`+s+`"`, `\"`+s+`\"`, -1)
 						input = strings.Replace(input, sm[i][1], q, 1)

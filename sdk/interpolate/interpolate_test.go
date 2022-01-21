@@ -484,10 +484,10 @@ func TestDo(t *testing.T) {
 			args: args{
 				input: "{{.query | urlencode}}",
 				vars: map[string]string{
-					"query": "zone:eq=Somewhere over the rainbow&name:like=%mydomain.ovh.net",
+					"query": "zone:eq=Somewhere over the rainbow&name:like=%mydomain.localhost.local",
 				},
 			},
-			want:   "zone%3Aeq%3DSomewhere+over+the+rainbow%26name%3Alike%3D%25mydomain.ovh.net",
+			want:   "zone%3Aeq%3DSomewhere+over+the+rainbow%26name%3Alike%3D%25mydomain.localhost.local",
 			enable: true,
 		},
 		{
@@ -519,7 +519,6 @@ func TestDo(t *testing.T) {
 			args: args{
 				input: "{{ \"1\" | ternary .foo .bar}}",
 				vars: map[string]string{
-					"assert": "false",
 					"bar":    "bar",
 					"foo":    "foo",
 				},
@@ -529,19 +528,6 @@ func TestDo(t *testing.T) {
 		},
 		{
 			name: "ternary falsy",
-			args: args{
-				input: "{{.assert | ternary .foo .bar}}",
-				vars: map[string]string{
-					"assert": "false",
-					"bar":    "bar",
-					"foo":    "foo",
-				},
-			},
-			want:   "bar",
-			enable: true,
-		},
-		{
-			name: "ternary undef assert",
 			args: args{
 				input: "{{.assert | ternary .foo .bar}}",
 				vars: map[string]string{
