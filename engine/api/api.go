@@ -216,8 +216,8 @@ type Configuration struct {
 		DisablePurgeDeletion   bool   `toml:"disablePurgeDeletion" comment:"Allow you to disable the deletion part of the purge. Workflow run will only be marked as delete" json:"disablePurgeDeletion" default:"false"`
 	} `toml:"workflow" comment:"######################\n 'Workflow' global configuration \n######################" json:"workflow"`
 	EventBus struct {
-		GlobalKafka event.KafkaConfig `toml:"globalKafka" default:"false" json:"globalKafka"`
-	} `toml:"events" comment:"######################\n Event bus configuration \n######################" json:"events"`
+		GlobalKafka event.KafkaConfig `toml:"globalKafka" default:"false" json:"globalKafka" mapstructure:"globalKafka"`
+	} `toml:"events" comment:"######################\n Event bus configuration \n######################" json:"events" mapstructure:"events"`
 }
 
 // DefaultValues is the struc for API Default configuration default values
