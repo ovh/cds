@@ -219,3 +219,21 @@ func PublishWorkflowNodeJobRun(ctx context.Context, pkey string, wr sdk.Workflow
 	}
 	publishRunWorkflow(ctx, e, data)
 }
+
+func PublishEventJobSummary(ctx context.Context, e sdk.EventJobSummary, integrations []sdk.WorkflowProjectIntegration) {
+	eventIntegrationsID := make([]int64, len(integrations))
+	for i, eventIntegration := range integrations {
+		eventIntegrationsID[i] = eventIntegration.ProjectIntegrationID
+	}
+
+	bts, _ := json.Marshal(e)
+	event := sdk.Event{
+		Timestamp:           time.Now(),
+		Hostname:            hostname,
+		CDSName:             cdsname,
+		EventType:           fmt.Sprintf("%T", e),
+		Payload:             bts,
+		EventIntegrationsID: eventIntegrationsID,
+	}
+	_ = publishEvent(ctx, event)
+}

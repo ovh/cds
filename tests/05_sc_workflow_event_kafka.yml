@@ -50,6 +50,16 @@ testcases:
     delay: 10
     timeout: 100
 
+- name: check event in topic test.jobs
+  steps:
+  - script: kafkacat -b localhost:9092 -t test.jobs -C -o -1 -c 1
+    assertions:
+    - result.code ShouldEqual 0
+    - "result.systemoutjson.id ShouldNotBeEmpty"
+    retry: 10
+    delay: 10
+    timeout: 100
+
 - name: check workflow
   steps:
   - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow status ITSCWRKFLW18 ITSCWRKFLW18-WORKFLOW 1 --format json

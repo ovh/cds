@@ -21,7 +21,7 @@ import (
 func TestLoadByNameAsAdmin(t *testing.T) {
 	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
 
-	_ = event.Initialize(context.Background(), db.DbMap, cache)
+	_ = event.Initialize(context.Background(), db.DbMap, cache, nil)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
 	app := sdk.Application{

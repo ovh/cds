@@ -7,9 +7,8 @@ import (
 	"strings"
 
 	"github.com/Shopify/sarama"
+	"github.com/pkg/errors"
 	"github.com/rockbears/log"
-
-	"github.com/ovh/cds/sdk"
 )
 
 // KafkaClient enbeddes the Kafka connecion
@@ -104,15 +103,15 @@ func (c *KafkaClient) initProducer() error {
 }
 
 // sendOnKafkaTopic send a hook on a topic kafka
-func (c *KafkaClient) sendEvent(event *sdk.Event) error {
-	data, errm := json.Marshal(event)
-	if errm != nil {
-		return errm
+func (c *KafkaClient) sendEvent(event interface{}) error {
+	data, err := json.Marshal(event)
+	if err != nil {
+		return errors.WithStack(err)
 	}
 
 	msg := &sarama.ProducerMessage{Topic: c.options.Topic, Value: sarama.ByteEncoder(data)}
 	if _, _, err := c.producer.SendMessage(msg); err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	return nil
 }

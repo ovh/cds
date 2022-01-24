@@ -32,7 +32,7 @@ func Test_purgeDryRunHandler(t *testing.T) {
 	api, db, tsURL := newTestServer(t)
 
 	event.OverridePubSubKey("events_pubsub_test")
-	require.NoError(t, event.Initialize(context.Background(), api.mustDB(), api.Cache))
+	require.NoError(t, event.Initialize(context.Background(), api.mustDB(), api.Cache, nil))
 	require.NoError(t, api.initWebsocket("events_pubsub_test"))
 
 	u, pass := assets.InsertAdminUser(t, db)
@@ -91,7 +91,7 @@ func Test_purgeDryRunHandler(t *testing.T) {
 	run2.Status = sdk.StatusFail
 	require.NoError(t, workflow.UpdateWorkflowRunStatus(api.mustDB(), run2))
 
-	event.Initialize(context.TODO(), api.mustDB(), api.Cache)
+	event.Initialize(context.TODO(), api.mustDB(), api.Cache, nil)
 
 	chanMessageReceived := make(chan sdk.WebsocketEvent)
 	chanMessageToSend := make(chan []sdk.WebsocketFilter)
