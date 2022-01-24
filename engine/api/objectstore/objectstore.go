@@ -21,7 +21,6 @@ type Driver interface {
 	GetProjectIntegration() sdk.ProjectIntegration
 	Status(ctx context.Context) sdk.MonitoringStatusLine
 	Store(o Object, data io.ReadCloser) (string, error)
-	ServeStaticFiles(o Object, entrypoint string, data io.ReadCloser) (string, error) // DEPRECATED
 	Fetch(ctx context.Context, o Object) (io.ReadCloser, error)
 	Delete(ctx context.Context, o Object) error
 	DeleteContainer(ctx context.Context, containerPath string) error
@@ -34,8 +33,6 @@ type DriverWithRedirect interface {
 	StoreURL(o Object, contentType string) (url string, key string, err error)
 	// FetchURL returns a temporary url and a secret key to fetch an object
 	FetchURL(o Object) (url string, key string, err error)
-	// ServeStaticFilesURL returns a temporary url and a secret key to serve static files in a container
-	ServeStaticFilesURL(o Object, entrypoint string) (string, string, error)
 }
 
 // Kind will define const defining all supported objecstore drivers

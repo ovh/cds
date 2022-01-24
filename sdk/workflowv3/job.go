@@ -178,7 +178,6 @@ func ConvertJob(j sdk.Job, isFullExport bool) Job {
 			Coverage:         s.Coverage,
 			ArtifactDownload: s.ArtifactDownload,
 			ArtifactUpload:   s.ArtifactUpload,
-			ServeStaticFiles: s.ServeStaticFiles,
 			GitClone:         s.GitClone,
 			GitTag:           s.GitTag,
 			ReleaseVCS:       s.ReleaseVCS,

@@ -48,11 +48,6 @@ func (fss *FilesystemStore) Status(ctx context.Context) sdk.MonitoringStatusLine
 	return sdk.MonitoringStatusLine{Component: "Object-Store", Value: "Filesystem Storage", Status: sdk.MonitoringStatusOK}
 }
 
-// ServeStaticFiles NOT YET IMPLEMENTED
-func (fss *FilesystemStore) ServeStaticFiles(o Object, entrypoint string, data io.ReadCloser) (string, error) {
-	return "", sdk.WithStack(sdk.ErrNotImplemented)
-}
-
 // Store store a object on disk
 func (fss *FilesystemStore) Store(o Object, data io.ReadCloser) (string, error) {
 	dst := path.Join(fss.basedir, o.GetPath())

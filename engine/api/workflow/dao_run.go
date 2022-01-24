@@ -48,7 +48,6 @@ workflow_run.header
 type LoadRunOptions struct {
 	WithCoverage            bool
 	WithArtifacts           bool
-	WithStaticFiles         bool //DEPRECATED
 	WithTests               bool
 	WithLightTests          bool
 	WithVulnerabilities     bool
@@ -979,15 +978,6 @@ func syncNodeRuns(db gorp.SqlExecutor, wr *sdk.WorkflowRun, loadOpts LoadRunOpti
 				return sdk.WrapError(errA, "syncNodeRuns>Error loading artifacts for node run %d", wnr.ID)
 			}
 			wnr.Artifacts = arts
-		}
-
-		// DEPRECATED
-		if loadOpts.WithStaticFiles {
-			staticFiles, errS := loadStaticFilesByNodeRunID(db, wnr.ID)
-			if errS != nil {
-				return sdk.WrapError(errS, "syncNodeRuns>Error loading static files for node run %d", wnr.ID)
-			}
-			wnr.StaticFiles = staticFiles
 		}
 
 		if loadOpts.WithCoverage {

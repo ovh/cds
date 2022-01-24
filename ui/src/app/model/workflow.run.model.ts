@@ -125,7 +125,6 @@ export class WorkflowNodeRun implements WithKey {
     hook_execution_timestamp: number;
     execution_id: string;
     callback: WorkflowNodeOutgoingHookRunCallback;
-    static_files: Array<WorkflowNodeRunStaticFiles>;
 
     // ui data
     results: Array<WorkflowRunResult>;
@@ -201,16 +200,6 @@ export class WorkflowNodeRunArtifact {
     md5sum: string;
     sha512sum: string;
     object_path: string;
-    created: string;
-}
-
-// WorkflowNodeRunStaticFiles represent static files
-export class WorkflowNodeRunStaticFiles {
-    workflow_node_run_id: number;
-    id: number;
-    name: string;
-    entrypoint: string;
-    public_url: string;
     created: string;
 }
 

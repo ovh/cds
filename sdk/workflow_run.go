@@ -360,7 +360,6 @@ type WorkflowNodeRun struct {
 	PipelineParameters     []Parameter                          `json:"pipeline_parameters,omitempty"`
 	BuildParameters        []Parameter                          `json:"build_parameters,omitempty"`
 	Artifacts              []WorkflowNodeRunArtifact            `json:"artifacts,omitempty"`
-	StaticFiles            []StaticFiles                        `json:"static_files,omitempty"`
 	Coverage               WorkflowNodeRunCoverage              `json:"coverage,omitempty"`
 	VulnerabilitiesReport  WorkflowNodeRunVulnerabilityReport   `json:"vulnerabilities_report,omitempty"`
 	Tests                  *TestsResults                        `json:"tests,omitempty"`

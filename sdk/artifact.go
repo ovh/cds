@@ -4,7 +4,6 @@ package sdk
 const (
 	ArtifactUpload   = "Artifact Upload"
 	ArtifactDownload = "Artifact Download"
-	ServeStaticFiles = "Serve Static Files"
 
 	ArtifactUploadPluginInputPath = "cds.integration.artifact_manager.upload.path"
 

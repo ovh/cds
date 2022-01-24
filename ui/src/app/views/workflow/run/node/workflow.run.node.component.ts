@@ -33,7 +33,6 @@ export class WorkflowNodeRunComponent implements OnInit, OnDestroy {
     currentNodeRunNum: number;
     commitsLength = 0;
     artifactLength = 0;
-    staticFilesLength = 0;
     historyLength = 0;
     nodeRunTests: Tests;
     hasVulnerability = false;

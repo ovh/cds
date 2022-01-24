@@ -204,13 +204,3 @@ func (s *AWSS3Store) FetchURL(o Object) (string, string, error) {
 	log.Debug(context.Background(), "AWS-S3-Store> FetchURL urlStr:%v key:%v", urlStr, *key)
 	return urlStr, *key, nil
 }
-
-// ServeStaticFiles is not implemented on s3
-func (s *AWSS3Store) ServeStaticFiles(o Object, entrypoint string, data io.ReadCloser) (string, error) {
-	return "", sdk.WithStack(sdk.ErrNotImplemented)
-}
-
-// ServeStaticFilesURL returns a temporary url and a secret key to serve static files in a container
-func (s *AWSS3Store) ServeStaticFilesURL(o Object, entrypoint string) (string, string, error) {
-	return "", "", sdk.WithStack(sdk.ErrNotImplemented)
-}

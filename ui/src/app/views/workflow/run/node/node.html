@@ -38,11 +38,11 @@
                 </ng-container>
             </a>
             <a sm-item [class.active]="selectedTab === 'artifact'"
-                (click)="(artifactLength !== 0 || staticFilesLength !== 0) && showTab('artifact')"
-                [class.disabled]="artifactLength === 0 && staticFilesLength === 0">
-                <span *ngIf="artifactLength + staticFilesLength > 1">{{ 'common_artifacts' | translate }}</span>
-                <span *ngIf="artifactLength + staticFilesLength < 2">{{ 'common_artifact' | translate }}</span>
-                <span *ngIf="artifactLength">{{ ' (' + (staticFilesLength + artifactLength) + ')'}}</span>
+                (click)="artifactLength !== 0 && showTab('artifact')"
+                [class.disabled]="artifactLength === 0">
+                <span *ngIf="artifactLength > 1">{{ 'common_artifacts' | translate }}</span>
+                <span *ngIf="artifactLength < 2">{{ 'common_artifact' | translate }}</span>
+                <span *ngIf="artifactLength">{{ ' (' + artifactLength + ')'}}</span>
             </a>
             <a sm-item [class.active]="selectedTab === 'history'" (click)="historyLength !== 0 && showTab('history')"
                 [class.disabled]="historyLength === 0">

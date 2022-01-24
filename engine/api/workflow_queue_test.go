@@ -9,7 +9,6 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"os"
 	"path"
 	"strings"
@@ -1043,70 +1042,6 @@ func fileExists(filename string) bool {
 		return false
 	}
 	return !info.IsDir()
-}
-
-func Test_postWorkflowJobStaticFilesHandler(t *testing.T) {
-	api, db, router := newTestAPI(t)
-
-	s, _, _ := assets.InitCDNService(t, db)
-	defer func() {
-		_ = services.Delete(db, s)
-	}()
-
-	ctx := testRunWorkflow(t, api, router)
-
-	// Init store
-	cfg := objectstore.Config{
-		Kind: objectstore.Filesystem,
-		Options: objectstore.ConfigOptions{
-			Filesystem: objectstore.ConfigOptionsFilesystem{
-				Basedir: path.Join(os.TempDir(), "store"),
-			},
-		},
-	}
-
-	storage, errO := objectstore.Init(context.Background(), cfg)
-	require.NoError(t, errO)
-	api.SharedStorage = storage
-
-	//Register the worker
-	testRegisterWorker(t, api, db, router, &ctx)
-
-	//Take
-	uri := router.GetRoute("POST", api.postTakeWorkflowJobHandler, map[string]string{
-		"permJobID": fmt.Sprintf("%d", ctx.job.ID),
-	})
-	require.NotEmpty(t, uri)
-
-	req := assets.NewJWTAuthentifiedRequest(t, ctx.workerToken, "POST", uri, nil)
-	rec := httptest.NewRecorder()
-	router.Mux.ServeHTTP(rec, req)
-	require.Equal(t, 200, rec.Code)
-
-	uri = router.GetRoute("POST", api.postWorkflowJobStaticFilesHandler, map[string]string{
-		"name":            url.PathEscape("mywebsite"),
-		"integrationName": sdk.DefaultStorageIntegrationName,
-		"permProjectKey":  ctx.project.Key,
-	})
-	require.NotEmpty(t, uri)
-
-	mystaticfile, errF := os.Create(path.Join(os.TempDir(), "mystaticfile"))
-	defer os.RemoveAll(path.Join(os.TempDir(), "mystaticfile"))
-	require.NoError(t, errF)
-	_, errW := mystaticfile.Write([]byte("<html>Hi, I am foo</html>"))
-	require.NoError(t, errW)
-
-	errClose := mystaticfile.Close()
-	require.NoError(t, errClose)
-
-	params := map[string]string{
-		"entrypoint":   "index.html",
-		"nodeJobRunID": fmt.Sprintf("%d", ctx.job.ID),
-	}
-	req = assets.NewJWTAuthentifiedMultipartRequest(t, ctx.workerToken, "POST", uri, path.Join(os.TempDir(), "mystaticfile"), "mystaticfile", params)
-	rec = httptest.NewRecorder()
-	router.Mux.ServeHTTP(rec, req)
-	require.Equal(t, http.StatusNotImplemented, rec.Code)
 }
 
 func TestWorkerPrivateKey(t *testing.T) {

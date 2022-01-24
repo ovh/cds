@@ -1,25 +1,3 @@
-<div class="artifact" *ngIf="uiArtifacts || staticFiles">
-    <table class="ui fixed celled table" *ngIf="staticFiles && staticFiles.length > 0">
-        <thead>
-            <tr>
-                <th class="six wide">{{ 'static_file_name' | translate }}</th>
-                <th class="six wide">{{ 'common_created' | translate }}</th>
-                <th class="four wide center">{{ 'common_link' | translate }}</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr *ngFor="let sFile of staticFiles">
-                <td>
-                    {{sFile.name}}
-                </td>
-                <td>
-                    {{sFile.created | date:'short'}}
-                </td>
-                <td class="center">
-                    <a [href]="sFile.public_url" target="_blank"><i class="external alternate icon"></i></a>
-                </td>
-            </tr>
-        </tbody>
-    </table>
+<div class="artifact" *ngIf="uiArtifacts">
     <app-data-table [withFilter]="filter" [withPagination]="10" [columns]="columns" [data]="uiArtifacts"></app-data-table>
 </div>
