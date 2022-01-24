@@ -20,16 +20,16 @@ type KafkaClient struct {
 
 // KafkaConfig handles all config to connect to Kafka
 type KafkaConfig struct {
-	Enabled         bool
-	BrokerAddresses string
-	User            string
-	Password        string
-	Version         string
-	Topic           string
-	MaxMessageByte  int
-	DisableTLS      bool
-	DisableSASL     bool
-	ClientID        string
+	Enabled         bool   `toml:"enabled" json:"-" default:"false" mapstructure:"enabled"`
+	BrokerAddresses string `toml:"broker" json:"-"  mapstructure:"broker"`
+	User            string `toml:"user" json:"-" mapstructure:"user"`
+	Password        string `toml:"password" json:"-" mapstructure:"password"`
+	Version         string `toml:"version" json:"-" mapstructure:"version"`
+	Topic           string `toml:"topic" json:"-" mapstructure:"topic"`
+	MaxMessageByte  int    `toml:"maxMessageByte" json:"-" mapstructure:"maxMessageByte"`
+	DisableTLS      bool   `toml:"disableTLS" json:"-" mapstructure:"disableTLS"`
+	DisableSASL     bool   `toml:"disableSASL" json:"-" mapstructure:"disableSASL"`
+	ClientID        string `toml:"clientID" json:"-" mapstructure:"clientID"`
 }
 
 // initialize returns broker, isInit and err if
@@ -43,6 +43,18 @@ func (c *KafkaClient) initialize(ctx context.Context, options interface{}) (Brok
 		conf.Topic == "" {
 		return nil, fmt.Errorf("initKafka> Invalid Kafka Configuration")
 	}
+
+	if conf.MaxMessageByte == 0 {
+		conf.MaxMessageByte = 10000000
+	}
+
+	if conf.ClientID == "" {
+		conf.ClientID = conf.User
+	}
+	if conf.ClientID == "" {
+		conf.ClientID = "cds"
+	}
+
 	c.options = conf
 
 	if err := c.initProducer(); err != nil {

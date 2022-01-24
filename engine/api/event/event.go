@@ -2,6 +2,7 @@ package event
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
@@ -18,11 +19,13 @@ import (
 )
 
 // cache with go cache
-var brokersConnectionCache = gocache.New(10*time.Minute, 6*time.Hour)
-var publicBrokersConnectionCache = []Broker{}
-var hostname, cdsname string
-var brokers []Broker
-var subscribers []chan<- sdk.Event
+var (
+	brokersConnectionCache = gocache.New(10*time.Minute, 6*time.Hour)
+	hostname, cdsname      string
+	brokers                []Broker
+	globalBroker           Broker
+	subscribers            []chan<- sdk.Event
+)
 
 func init() {
 	subscribers = make([]chan<- sdk.Event, 0)
@@ -43,30 +46,6 @@ func getBroker(ctx context.Context, t string, option interface{}) (Broker, error
 		return k.initialize(ctx, option)
 	}
 	return nil, fmt.Errorf("invalid Broker Type %s", t)
-}
-
-// ResetPublicIntegrations load all integration of type Event and creates kafka brokers
-func ResetPublicIntegrations(ctx context.Context, db *gorp.DbMap) error {
-	publicBrokersConnectionCache = []Broker{}
-	filterType := sdk.IntegrationTypeEvent
-	integrations, err := integration.LoadPublicModelsByTypeWithDecryption(db, &filterType)
-	if err != nil {
-		return sdk.WrapError(err, "cannot load public models for event type")
-	}
-
-	for _, integration := range integrations {
-		for _, cfg := range integration.PublicConfigurations {
-			kafkaCfg := getKafkaConfig(cfg)
-			kafkaBroker, err := getBroker(ctx, "kafka", kafkaCfg)
-			if err != nil {
-				return sdk.WrapError(err, "cannot get broker for %s and user %s", cfg["broker url"].Value, cfg["username"].Value)
-			}
-
-			publicBrokersConnectionCache = append(publicBrokersConnectionCache, kafkaBroker)
-		}
-	}
-
-	return nil
 }
 
 func getKafkaConfig(cfg sdk.IntegrationConfig) KafkaConfig {
@@ -121,7 +100,11 @@ func ResetEventIntegration(ctx context.Context, db gorp.SqlExecutor, eventIntegr
 }
 
 // Initialize initializes event system
-func Initialize(ctx context.Context, db *gorp.DbMap, cache Store) error {
+func Initialize(ctx context.Context, db *gorp.DbMap, cache Store, glolbalKafkaConfigs ...KafkaConfig) error {
+	if len(glolbalKafkaConfigs) > 1 {
+		return errors.New("only one global kafka global config is supported")
+	}
+
 	store = cache
 	var err error
 	hostname, err = os.Hostname()
@@ -138,7 +121,15 @@ func Initialize(ctx context.Context, db *gorp.DbMap, cache Store) error {
 		}
 	}
 
-	return ResetPublicIntegrations(ctx, db)
+	if len(glolbalKafkaConfigs) == 1 && glolbalKafkaConfigs[0].BrokerAddresses != "" {
+		globalBroker, err = getBroker(ctx, "kafka", glolbalKafkaConfigs[0])
+		if err != nil {
+			ctx = log.ContextWithStackTrace(ctx, err)
+			log.Error(ctx, "unable to init builtin kafka broker from config: %v", err)
+		}
+	}
+
+	return nil
 }
 
 // Subscribe to CDS events
@@ -163,15 +154,17 @@ func DequeueEvent(ctx context.Context, db *gorp.DbMap) {
 			s <- e
 		}
 
-		// Send into public brokers
-		for _, b := range publicBrokersConnectionCache {
-			if err := b.sendEvent(&e); err != nil {
+		if globalBroker != nil {
+			log.Info(ctx, "sending event %q to global broker", e.EventType)
+			if err := globalBroker.sendEvent(&e); err != nil {
 				log.Warn(ctx, "Error while sending message [%s: %s/%s/%s/%s/%s]: %s", e.EventType, e.ProjectKey, e.WorkflowName, e.ApplicationName, e.PipelineName, e.EnvironmentName, err)
 			}
 		}
+
 		for _, eventIntegrationID := range e.EventIntegrationsID {
 			brokerConnectionKey := strconv.FormatInt(eventIntegrationID, 10)
 			brokerConnection, ok := brokersConnectionCache.Get(brokerConnectionKey)
+			var brokerConfig KafkaConfig
 			if !ok {
 				projInt, err := integration.LoadProjectIntegrationByIDWithClearPassword(ctx, db, eventIntegrationID)
 				if err != nil {
@@ -194,6 +187,7 @@ func DequeueEvent(ctx context.Context, db *gorp.DbMap) {
 					continue
 				}
 				brokerConnection = kafkaBroker
+				brokerConfig = kafkaCfg
 			}
 
 			broker, ok := brokerConnection.(Broker)
@@ -203,6 +197,7 @@ func DequeueEvent(ctx context.Context, db *gorp.DbMap) {
 			}
 
 			// Send into external brokers
+			log.Info(ctx, "sending event %q to %s", e.EventType, brokerConfig.BrokerAddresses)
 			if err := broker.sendEvent(&e); err != nil {
 				log.Warn(ctx, "Error while sending message [%s: %s/%s/%s/%s/%s]: %s", e.EventType, e.ProjectKey, e.WorkflowName, e.ApplicationName, e.PipelineName, e.EnvironmentName, err)
 			}

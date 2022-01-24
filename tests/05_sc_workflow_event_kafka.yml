@@ -13,7 +13,6 @@ testcases:
 
 - name: import integrations
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin integration-model import ./fixtures/integrations/kafka-public.yml
   - script: {{.cdsctl}} -f {{.cdsctl.config}} project integration import ITSCWRKFLW18 ./fixtures/integrations/kafka.yml
   - script: {{.cdsctl}} -f {{.cdsctl.config}} project integration import ITSCWRKFLW18 ./fixtures/integrations/kafka-hook.yml
 
@@ -24,12 +23,12 @@ testcases:
 - name: check if consumer kafka is started
   steps:
   - script: sleep 15 && {{.cdsctl}} -f {{.cdsctl.config}} admin services status --type=hooks|grep 'Hook Kafka Consumers' | grep OK
-  retry: 30
-  delay: 10
+    timeout: 30
 
 - name: run workflow by sending a kafka event
   steps:
   - script: kafkacat -b localhost:9092 -t test.hook -T -P -l ./fixtures/ITSCWRKFLW18/input-kafka.json
+    timeout: 30
 
 - name: check event in topic test.eventsproject
   steps:
@@ -37,8 +36,9 @@ testcases:
     assertions:
     - result.code ShouldEqual 0
     - "result.systemoutjson.type_event ShouldContainSubstring sdk.EventRunWorkflowJob"
-    retry: 30
+    retry: 10
     delay: 10
+    timeout: 100
 
 - name: check event in topic test.eventspublic
   steps:
@@ -46,8 +46,9 @@ testcases:
     assertions:
     - result.code ShouldEqual 0
     - "result.systemoutjson.type_event ShouldContainSubstring sdk.EventRunWorkflowJob"
-    retry: 30
+    retry: 10
     delay: 10
+    timeout: 100
 
 - name: check workflow
   steps:

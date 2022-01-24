@@ -41,6 +41,7 @@ func PushInElasticSearch(ctx context.Context, db gorp.SqlExecutor, store cache.S
 				continue
 			}
 			e.Payload = nil
+			log.Info(ctx, "sending event %q to %s services", e.EventType, sdk.TypeElasticsearch)
 			_, code, errD := services.NewClient(db, esServices).DoJSONRequest(context.Background(), "POST", "/events", e, nil)
 			if code >= 400 || errD != nil {
 				log.Error(ctx, "PushInElasticSearch> Unable to send event %s to elasticsearch [%d]: %v", e.EventType, code, errD)
