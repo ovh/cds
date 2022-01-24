@@ -519,8 +519,8 @@ func TestDo(t *testing.T) {
 			args: args{
 				input: "{{ \"1\" | ternary .foo .bar}}",
 				vars: map[string]string{
-					"bar":    "bar",
-					"foo":    "foo",
+					"bar": "bar",
+					"foo": "foo",
 				},
 			},
 			want:   "foo",
@@ -534,6 +534,18 @@ func TestDo(t *testing.T) {
 					"assert": "false",
 					"bar":    "bar",
 					"foo":    "foo",
+				},
+			},
+			want:   "bar",
+			enable: true,
+		},
+		{
+			name: "ternary undef assert",
+			args: args{
+				input: "{{.assert | ternary .foo .bar}}",
+				vars: map[string]string{
+					"bar": "bar",
+					"foo": "foo",
 				},
 			},
 			want:   "bar",
