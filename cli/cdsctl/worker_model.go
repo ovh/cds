@@ -62,8 +62,6 @@ func newWorkerModelDisplay(wm sdk.Model) workerModelDisplay {
 	name := wm.Name
 	if wm.Group != nil {
 		name = fmt.Sprintf("%s/%s", wm.Group.Name, wm.Name)
-	} else {
-		name = wm.Name
 	}
 
 	var image, flavor string

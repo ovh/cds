@@ -367,7 +367,6 @@ type MonitoringClient interface {
 	MonStatus() (*sdk.MonitoringStatus, error)
 	MonVersion() (*sdk.Version, error)
 	MonDBMigrate() ([]sdk.MonDBMigrate, error)
-	MonErrorsGet(requestID string) ([]sdk.Error, error)
 }
 
 // IntegrationClient exposes integration functions

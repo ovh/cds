@@ -197,12 +197,7 @@ type Configuration struct {
 	} `toml:"artifact" comment:"Either filesystem local storage or Openstack Swift Storage are supported" json:"artifact"`
 	DefaultOS   string `toml:"defaultOS" default:"linux" comment:"if no model and os/arch is specified in your job's requirements then spawn worker on this operating system (example: darwin, freebsd, linux, windows)" json:"defaultOS"`
 	DefaultArch string `toml:"defaultArch" default:"amd64" comment:"if no model and no os/arch is specified in your job's requirements then spawn worker on this architecture (example: amd64, arm, 386)" json:"defaultArch"`
-	Graylog     struct {
-		AccessToken string `toml:"accessToken" json:"-"`
-		Stream      string `toml:"stream" json:"-"`
-		URL         string `toml:"url" comment:"Example: http://localhost:9000" json:"url"`
-	} `toml:"graylog" json:"graylog" comment:"###########################\n Graylog Search. \n When CDS API generates errors, you can fetch them with cdsctl. \n Examples: \n $ cdsctl admin errors get <error-id> \n $ cdsctl admin errors get 55f6e977-d39b-11e8-8513-0242ac110007 \n##########################"`
-	Log struct {
+	Log         struct {
 		StepMaxSize    int64 `toml:"stepMaxSize" default:"15728640" comment:"Max step logs size in bytes (default: 15MB)" json:"stepMaxSize"`
 		ServiceMaxSize int64 `toml:"serviceMaxSize" default:"15728640" comment:"Max service logs size in bytes (default: 15MB)" json:"serviceMaxSize"`
 	} `toml:"log" json:"log" comment:"###########################\n Log settings.\n##########################"`

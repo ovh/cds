@@ -2,7 +2,6 @@ package cdsclient
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -29,18 +28,4 @@ func (c *client) MonDBMigrate() ([]sdk.MonDBMigrate, error) {
 		return nil, err
 	}
 	return monDBMigrate, nil
-}
-
-func (c *client) MonErrorsGet(requestID string) ([]sdk.Error, error) {
-	res, _, _, err := c.Request(context.Background(), "GET", fmt.Sprintf("/mon/errors/%s", requestID), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	var errs []sdk.Error
-	if err := sdk.JSONUnmarshal(res, &errs); err != nil {
-		return nil, err
-	}
-
-	return errs, nil
 }
