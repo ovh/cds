@@ -71,6 +71,15 @@ func (g GroupPermissions) ComputeOrganization() (string, error) {
 	return org, nil
 }
 
+func (g GroupPermissions) GetByGroupID(groupID int64) *GroupPermission {
+	for i := range g {
+		if g[i].Group.ID == groupID {
+			return &g[i]
+		}
+	}
+	return nil
+}
+
 type Permissions struct {
 	Readable   bool `json:"readable"`
 	Writable   bool `json:"writable"`

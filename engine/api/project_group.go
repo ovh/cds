@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"database/sql"
-	"io"
 	"net/http"
 
 	"github.com/go-gorp/gorp"
@@ -15,7 +14,6 @@ import (
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/exportentities"
 )
 
 func (api *API) deleteGroupFromProjectHandler() service.Handler {
@@ -88,7 +86,7 @@ func (api *API) putGroupRoleOnProjectHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load project %s", key)
 		}
 
-		grp, err := group.LoadByName(ctx, tx, groupName, group.LoadOptions.WithOrganization)
+		grp, err := group.LoadByName(ctx, tx, groupName, group.LoadOptions.WithOrganization, group.LoadOptions.WithMembers)
 		if err != nil {
 			return sdk.WrapError(err, "cannot find %s", groupName)
 		}
@@ -104,6 +102,13 @@ func (api *API) putGroupRoleOnProjectHandler() service.Handler {
 		oldLink, err := group.LoadLinkGroupProjectForGroupIDAndProjectID(ctx, tx, grp.ID, proj.ID)
 		if err != nil {
 			return err
+		}
+		if !isGroupAdmin(ctx, grp) && data.Permission > oldLink.Role {
+			if isAdmin(ctx) {
+				trackSudo(ctx, w)
+			} else {
+				return sdk.WithStack(sdk.ErrInvalidGroupAdmin)
+			}
 		}
 
 		newLink := *oldLink
@@ -178,9 +183,17 @@ func (api *API) postGroupInProjectHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load %s", key)
 		}
 
-		grp, err := group.LoadByName(ctx, tx, data.Group.Name, group.LoadOptions.WithOrganization)
+		grp, err := group.LoadByName(ctx, tx, data.Group.Name, group.LoadOptions.WithOrganization, group.LoadOptions.WithMembers)
 		if err != nil {
 			return sdk.WrapError(err, "cannot find %s", data.Group.Name)
+		}
+
+		if !isGroupAdmin(ctx, grp) {
+			if isAdmin(ctx) {
+				trackSudo(ctx, w)
+			} else {
+				return sdk.WithStack(sdk.ErrInvalidGroupAdmin)
+			}
 		}
 
 		if group.IsDefaultGroupID(grp.ID) && data.Permission > sdk.PermissionRead {
@@ -231,101 +244,6 @@ func (api *API) postGroupInProjectHandler() service.Handler {
 		event.PublishAddProjectPermission(ctx, proj, newGroupPermission, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, newGroupPermission, http.StatusOK)
-	}
-}
-
-func (api *API) postImportGroupsInProjectHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		key := vars[permProjectKey]
-		force := service.FormBool(r, "force")
-
-		proj, err := project.Load(ctx, api.mustDB(), key)
-		if err != nil {
-			return sdk.WrapError(err, "cannot load project %s", key)
-		}
-
-		body, err := io.ReadAll(r.Body)
-		if err != nil {
-			return sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to read body"))
-		}
-
-		contentType := r.Header.Get("Content-Type")
-		if contentType == "" {
-			contentType = http.DetectContentType(body)
-		}
-		format, err := exportentities.GetFormatFromContentType(contentType)
-		if err != nil {
-			return err
-		}
-
-		var data []sdk.GroupPermission
-		if err := exportentities.Unmarshal(body, format, &data); err != nil {
-			return err
-		}
-		for i := range data {
-			if err := data[i].IsValid(); err != nil {
-				return err
-			}
-		}
-
-		tx, err := api.mustDB().Begin()
-		if err != nil {
-			return sdk.WrapError(err, "cannot start transaction")
-		}
-		defer tx.Rollback() // nolint
-
-		// Check and set group on all given group permission
-		for i := range data {
-			grp, err := group.LoadByName(ctx, tx, data[i].Group.Name)
-			if err != nil {
-				return err
-			}
-			data[i].Group = *grp
-		}
-
-		if force {
-			if err := group.DeleteLinksGroupProjectForProjectID(tx, proj.ID); err != nil {
-				return sdk.WrapError(err, "cannot delete all groups for project %s", proj.Name)
-			}
-		} else {
-			linksForProject, err := group.LoadLinksGroupProjectForProjectIDs(ctx, tx, []int64{proj.ID})
-			if err != nil {
-				return err
-			}
-			for i := range data {
-				var exist bool
-				for j := range linksForProject {
-					if linksForProject[j].GroupID == data[i].Group.ID {
-						exist = true
-						break
-					}
-				}
-				if exist {
-					return sdk.WrapError(sdk.ErrGroupExists, "permission already set in project %s for group %s", proj.Name, data[i].Group.Name)
-				}
-			}
-		}
-
-		for i := range data {
-			if err := group.InsertLinkGroupProject(ctx, tx, &group.LinkGroupProject{
-				GroupID:   data[i].Group.ID,
-				ProjectID: proj.ID,
-				Role:      data[i].Permission,
-			}); err != nil {
-				return sdk.WrapError(err, "cannot add group %v in project %s", data[i].Group.Name, proj.Name)
-			}
-		}
-
-		if err := tx.Commit(); err != nil {
-			return sdk.WithStack(err)
-		}
-
-		if err := project.LoadOptions.WithGroups(ctx, api.mustDB(), proj); err != nil {
-			return err
-		}
-
-		return service.WriteJSON(w, proj, http.StatusOK)
 	}
 }
 

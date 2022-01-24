@@ -2078,26 +2078,6 @@ func (mr *MockGroupClientMockRecorder) GroupDelete(name interface{}) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GroupDelete", reflect.TypeOf((*MockGroupClient)(nil).GroupDelete), name)
 }
 
-// GroupExport mocks base method.
-func (m *MockGroupClient) GroupExport(name string, mods ...cdsclient.RequestModifier) ([]byte, error) {
-	m.ctrl.T.Helper()
-	varargs := []interface{}{name}
-	for _, a := range mods {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "GroupExport", varargs...)
-	ret0, _ := ret[0].([]byte)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GroupExport indicates an expected call of GroupExport.
-func (mr *MockGroupClientMockRecorder) GroupExport(name interface{}, mods ...interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{name}, mods...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GroupExport", reflect.TypeOf((*MockGroupClient)(nil).GroupExport), varargs...)
-}
-
 // GroupGet mocks base method.
 func (m *MockGroupClient) GroupGet(name string, mods ...cdsclient.RequestModifier) (*sdk.Group, error) {
 	m.ctrl.T.Helper()
@@ -2116,26 +2096,6 @@ func (mr *MockGroupClientMockRecorder) GroupGet(name interface{}, mods ...interf
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{name}, mods...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GroupGet", reflect.TypeOf((*MockGroupClient)(nil).GroupGet), varargs...)
-}
-
-// GroupImport mocks base method.
-func (m *MockGroupClient) GroupImport(content io.Reader, mods ...cdsclient.RequestModifier) ([]byte, error) {
-	m.ctrl.T.Helper()
-	varargs := []interface{}{content}
-	for _, a := range mods {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "GroupImport", varargs...)
-	ret0, _ := ret[0].([]byte)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GroupImport indicates an expected call of GroupImport.
-func (mr *MockGroupClientMockRecorder) GroupImport(content interface{}, mods ...interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{content}, mods...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GroupImport", reflect.TypeOf((*MockGroupClient)(nil).GroupImport), varargs...)
 }
 
 // GroupList mocks base method.
@@ -2526,26 +2486,6 @@ func (m *MockProjectClient) ProjectGroupDelete(projectKey, groupName string) err
 func (mr *MockProjectClientMockRecorder) ProjectGroupDelete(projectKey, groupName interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectGroupDelete", reflect.TypeOf((*MockProjectClient)(nil).ProjectGroupDelete), projectKey, groupName)
-}
-
-// ProjectGroupsImport mocks base method.
-func (m *MockProjectClient) ProjectGroupsImport(projectKey string, content io.Reader, mods ...cdsclient.RequestModifier) (sdk.Project, error) {
-	m.ctrl.T.Helper()
-	varargs := []interface{}{projectKey, content}
-	for _, a := range mods {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "ProjectGroupsImport", varargs...)
-	ret0, _ := ret[0].(sdk.Project)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ProjectGroupsImport indicates an expected call of ProjectGroupsImport.
-func (mr *MockProjectClientMockRecorder) ProjectGroupsImport(projectKey, content interface{}, mods ...interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{projectKey, content}, mods...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectGroupsImport", reflect.TypeOf((*MockProjectClient)(nil).ProjectGroupsImport), varargs...)
 }
 
 // ProjectIntegrationDelete mocks base method.
@@ -6116,26 +6056,6 @@ func (mr *MockInterfaceMockRecorder) GroupDelete(name interface{}) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GroupDelete", reflect.TypeOf((*MockInterface)(nil).GroupDelete), name)
 }
 
-// GroupExport mocks base method.
-func (m *MockInterface) GroupExport(name string, mods ...cdsclient.RequestModifier) ([]byte, error) {
-	m.ctrl.T.Helper()
-	varargs := []interface{}{name}
-	for _, a := range mods {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "GroupExport", varargs...)
-	ret0, _ := ret[0].([]byte)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GroupExport indicates an expected call of GroupExport.
-func (mr *MockInterfaceMockRecorder) GroupExport(name interface{}, mods ...interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{name}, mods...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GroupExport", reflect.TypeOf((*MockInterface)(nil).GroupExport), varargs...)
-}
-
 // GroupGet mocks base method.
 func (m *MockInterface) GroupGet(name string, mods ...cdsclient.RequestModifier) (*sdk.Group, error) {
 	m.ctrl.T.Helper()
@@ -6154,26 +6074,6 @@ func (mr *MockInterfaceMockRecorder) GroupGet(name interface{}, mods ...interfac
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{name}, mods...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GroupGet", reflect.TypeOf((*MockInterface)(nil).GroupGet), varargs...)
-}
-
-// GroupImport mocks base method.
-func (m *MockInterface) GroupImport(content io.Reader, mods ...cdsclient.RequestModifier) ([]byte, error) {
-	m.ctrl.T.Helper()
-	varargs := []interface{}{content}
-	for _, a := range mods {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "GroupImport", varargs...)
-	ret0, _ := ret[0].([]byte)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GroupImport indicates an expected call of GroupImport.
-func (mr *MockInterfaceMockRecorder) GroupImport(content interface{}, mods ...interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{content}, mods...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GroupImport", reflect.TypeOf((*MockInterface)(nil).GroupImport), varargs...)
 }
 
 // GroupList mocks base method.
@@ -6808,26 +6708,6 @@ func (m *MockInterface) ProjectGroupDelete(projectKey, groupName string) error {
 func (mr *MockInterfaceMockRecorder) ProjectGroupDelete(projectKey, groupName interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectGroupDelete", reflect.TypeOf((*MockInterface)(nil).ProjectGroupDelete), projectKey, groupName)
-}
-
-// ProjectGroupsImport mocks base method.
-func (m *MockInterface) ProjectGroupsImport(projectKey string, content io.Reader, mods ...cdsclient.RequestModifier) (sdk.Project, error) {
-	m.ctrl.T.Helper()
-	varargs := []interface{}{projectKey, content}
-	for _, a := range mods {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "ProjectGroupsImport", varargs...)
-	ret0, _ := ret[0].(sdk.Project)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ProjectGroupsImport indicates an expected call of ProjectGroupsImport.
-func (mr *MockInterfaceMockRecorder) ProjectGroupsImport(projectKey, content interface{}, mods ...interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{projectKey, content}, mods...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectGroupsImport", reflect.TypeOf((*MockInterface)(nil).ProjectGroupsImport), varargs...)
 }
 
 // ProjectIntegrationDelete mocks base method.

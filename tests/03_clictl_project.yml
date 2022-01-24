@@ -1,10 +1,5 @@
 name: Project Command TestSuite with CDS ctl
 testcases:
-- name: assert filepath, your current directory must be at the root of this project
-  steps:
-  - script: '[ -f ./fixtures/group_to_add.yml ]'
-  assertions:
-    - result.code ShouldEqual 0
 - name: prepare test
   steps:
   - script: {{.cdsctl}} -f {{.cdsctl.config}} group remove ITCLIAPPPRJ --force
@@ -24,37 +19,6 @@ testcases:
   - script: {{.cdsctl}} -f {{.cdsctl.config}} project list
     assertions:
       - result.code ShouldEqual 0
-      - result.systemout ShouldContainSubstring ITCLIAPPPRJ
-
-- name: project group import without force
-  steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} project group import ITCLIAPPPRJ ./fixtures/group_to_add.yml
-    assertions:
-      - result.code ShouldEqual 0
-      - result.systemout ShouldContainSubstring success
-      - result.systemout ShouldContainSubstring ITCLIAPPPRJ
-
-- name: project group import without force and existing groups
-  steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} project group import ITCLIAPPPRJ ./fixtures/group_to_add.yml
-    assertions:
-      - result.code ShouldEqual 50
-      - result.systemout ShouldContainSubstring 'group already exists'
-
-- name: project group import without force and unknown project
-  steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} project group import ITCLIFAPPPRJ ./fixtures/group_to_add.yml
-    assertions:
-      - result.code ShouldEqual 50
-      - result.systemout ShouldContainSubstring project
-      - result.systemout ShouldContainSubstring 'not exist'
-
-- name: project group import with force
-  steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} project group import ITCLIAPPPRJ ./fixtures/group_to_add.yml --force
-    assertions:
-      - result.code ShouldEqual 0
-      - result.systemout ShouldContainSubstring success
       - result.systemout ShouldContainSubstring ITCLIAPPPRJ
 
 - name: project favorite add

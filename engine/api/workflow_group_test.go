@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 
@@ -347,17 +348,24 @@ func Test_UpdateProjectPermsWithWorkflow(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
-	u, pass := assets.InsertLambdaUser(t, db, &proj.ProjectGroups[0].Group)
+	g1 := proj.ProjectGroups[0].Group
+	g2 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 
-	//First pipeline
+	// Create a lambda user that is admin of g1 and g2
+	u, jwt := assets.InsertLambdaUser(t, db, &g1, g2)
+	assets.SetUserGroupAdmin(t, db, g1.ID, u.ID)
+	assets.SetUserGroupAdmin(t, db, g2.ID, u.ID)
+
+	// Create a pipeline
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), &pip))
+	require.NoError(t, pipeline.InsertPipeline(api.mustDB(), &pip))
 
-	newWf := sdk.Workflow{
+	// Post a new workflow
+	wf := sdk.Workflow{
 		Name: sdk.RandomString(10),
 		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
@@ -371,56 +379,48 @@ func Test_UpdateProjectPermsWithWorkflow(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 	}
-
-	//Prepare request
-	vars := map[string]string{
+	uri := router.GetRoute(http.MethodPost, api.postWorkflowHandler, map[string]string{
 		"permProjectKey": proj.Key,
-	}
-	uri := router.GetRoute("POST", api.postWorkflowHandler, vars)
-	test.NotEmpty(t, uri)
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, &newWf)
-	//Do the request
+	})
+	require.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, u, jwt, http.MethodPost, uri, &wf)
 	w := httptest.NewRecorder()
 	router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 201, w.Code)
+	require.Equal(t, http.StatusCreated, w.Code)
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &wf))
+	require.NotEqual(t, 0, wf.ID)
 
-	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &newWf))
-	assert.NotEqual(t, 0, newWf.ID)
-
-	newGr := assets.InsertTestGroup(t, db, sdk.RandomString(10))
-	newGp := sdk.GroupPermission{
-		Group:      *newGr,
+	// Add group g2 on the project
+	uri = router.GetRoute(http.MethodPost, api.postGroupInProjectHandler, map[string]string{
+		"permProjectKey": proj.Key,
+	})
+	require.NotEmpty(t, uri)
+	req = assets.NewAuthentifiedRequest(t, u, jwt, http.MethodPost, uri, sdk.GroupPermission{
+		Group:      *g2,
 		Permission: sdk.PermissionReadWriteExecute,
-	}
-
-	uri = router.GetRoute("POST", api.postGroupInProjectHandler, vars)
-	test.NotEmpty(t, uri)
-	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, &newGp)
-	//Do the request
+	})
 	w = httptest.NewRecorder()
 	router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 200, w.Code)
+	require.Equal(t, 200, w.Code)
 
-	proj2, errP := project.Load(context.TODO(), api.mustDB(), proj.Key,
+	// Check project and workflow permissions
+	projResult, err := project.Load(context.TODO(), api.mustDB(), proj.Key,
 		project.LoadOptions.WithPipelines,
 		project.LoadOptions.WithGroups,
 	)
-	test.NoError(t, errP)
-	wfLoaded, errL := workflow.Load(context.Background(), db, api.Cache, *proj2, newWf.Name, workflow.LoadOptions{})
-	test.NoError(t, errL)
-
-	assert.Equal(t, 2, len(wfLoaded.Groups))
-	checked := 0
-	for _, grProj := range proj2.ProjectGroups {
-		for _, grWf := range wfLoaded.Groups {
-			if grProj.Group.Name == grWf.Group.Name {
-				checked++
-				assert.Equal(t, grProj.Permission, grWf.Permission)
-				break
-			}
-		}
-	}
-	assert.Equal(t, 2, checked, "Haven't checked all groups")
+	require.NoError(t, err)
+	require.Equal(t, 2, len(projResult.ProjectGroups))
+	require.NotNil(t, projResult.ProjectGroups.GetByGroupID(g1.ID))
+	require.Equal(t, sdk.PermissionReadWriteExecute, projResult.ProjectGroups.GetByGroupID(g1.ID).Permission)
+	require.NotNil(t, projResult.ProjectGroups.GetByGroupID(g2.ID))
+	require.Equal(t, sdk.PermissionReadWriteExecute, projResult.ProjectGroups.GetByGroupID(g2.ID).Permission)
+	wfResult, err := workflow.Load(context.TODO(), db, api.Cache, *proj, wf.Name, workflow.LoadOptions{})
+	require.NoError(t, err)
+	require.Equal(t, 2, len(wfResult.Groups))
+	require.NotNil(t, wfResult.Groups.GetByGroupID(g1.ID))
+	require.Equal(t, sdk.PermissionReadWriteExecute, wfResult.Groups.GetByGroupID(g1.ID).Permission)
+	require.NotNil(t, wfResult.Groups.GetByGroupID(g2.ID))
+	require.Equal(t, sdk.PermissionReadWriteExecute, wfResult.Groups.GetByGroupID(g2.ID).Permission)
 }
 
 // Test_PermissionOnWorkflowInferiorOfProject Useful to test when permission on wf is superior than permission on project
