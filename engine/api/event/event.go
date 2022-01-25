@@ -195,7 +195,6 @@ func DequeueEvent(ctx context.Context, db *gorp.DbMap) {
 			if err := jobSummaryBroker.sendEvent(ejs); err != nil {
 				log.Error(ctx, "Error while sending message %s: %v", string(e.Payload), err)
 			}
-			continue
 		}
 
 		for _, eventIntegrationID := range e.EventIntegrationsID {
@@ -206,10 +205,6 @@ func DequeueEvent(ctx context.Context, db *gorp.DbMap) {
 				projInt, err := integration.LoadProjectIntegrationByIDWithClearPassword(ctx, db, eventIntegrationID)
 				if err != nil {
 					log.Error(ctx, "Event.DequeueEvent> Cannot load project integration for project %s and id %d and type event: %v", e.ProjectKey, eventIntegrationID, err)
-					continue
-				}
-
-				if projInt.Model.Public {
 					continue
 				}
 
@@ -234,7 +229,7 @@ func DequeueEvent(ctx context.Context, db *gorp.DbMap) {
 			}
 
 			// Send into external brokers
-			log.Info(ctx, "sending event %q to %s", e.EventType, brokerConfig.BrokerAddresses)
+			log.Info(ctx, "sending event %q to integration broker: %s", e.EventType, brokerConfig.BrokerAddresses)
 			if err := broker.sendEvent(ejs); err != nil {
 				log.Warn(ctx, "Error while sending message %s: %v", string(e.Payload), err)
 			}

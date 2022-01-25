@@ -36,7 +36,7 @@ testcases:
   - script: kafkacat -b localhost:9092 -t test.eventsproject -C -o -1 -c 1
     assertions:
     - result.code ShouldEqual 0
-    - "result.systemoutjson.type_event ShouldContainSubstring sdk.EventRunWorkflowJob"
+    - "result.systemoutjson.workflow_run_version ShouldNotBeEmpty"
     timeout: 100
 
 - name: check event in topic test.eventspublic
