@@ -38,7 +38,9 @@ testcases:
     assertions:
     - result.code ShouldEqual 0
     - "result.systemoutjson.id ShouldNotBeEmpty"
-    timeout: 100
+    retry: 10
+    delay: 10
+    timeout: 300
 
 - name: check event in topic test.eventspublic
   steps:
