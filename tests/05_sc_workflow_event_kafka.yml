@@ -30,7 +30,6 @@ testcases:
   - script: kafkacat -b localhost:9092 -t test.hook -T -P -l ./fixtures/ITSCWRKFLW18/input-kafka.json
     retry: 10
     delay: 10
-    timeout: 30
 
 - name: check event in topic test.eventsproject
   steps:
@@ -38,8 +37,6 @@ testcases:
     assertions:
     - result.code ShouldEqual 0
     - "result.systemoutjson.type_event ShouldContainSubstring sdk.EventRunWorkflowJob"
-    retry: 10
-    delay: 10
     timeout: 100
 
 - name: check event in topic test.eventspublic
@@ -47,16 +44,16 @@ testcases:
   - script: kafkacat -b localhost:9092 -t test.eventspublic -C -o -1 -c 1
     assertions:
     - result.code ShouldEqual 0
-    - "result.systemoutjson.type_event ShouldContainSubstring sdk.EventRunWorkflowJob"
+    - "result.systemoutjson.type_event ShouldNotBeEmpty"
     timeout: 100
 
-#- name: check event in topic test.jobs
-#  steps:
-#  - script: kafkacat -b localhost:9092 -t test.jobs -C -o -1 -c 1
-#    assertions:
-#    - result.code ShouldEqual 0
-#    - "result.systemoutjson.id ShouldNotBeEmpty"
-#    timeout: 100
+- name: check event in topic test.jobs
+  steps:
+  - script: kafkacat -b localhost:9092 -t test.jobs -C -o -1 -c 1
+    assertions:
+    - result.code ShouldEqual 0
+    - "result.systemoutjson.id ShouldNotBeEmpty"
+    timeout: 100
 
 - name: check workflow
   steps:
