@@ -34,14 +34,16 @@ testcases:
 - name: check event in topic test.eventsproject
   steps:
   - script: kafkacat -b localhost:9092 -t test.eventsproject -C -o -1 -c 1
+    info: "kafka message is: {{.result.systemout}}"
     assertions:
     - result.code ShouldEqual 0
-    - "result.systemoutjson.workflow_run_version ShouldNotBeEmpty"
+    - "result.systemoutjson.id ShouldNotBeEmpty"
     timeout: 100
 
 - name: check event in topic test.eventspublic
   steps:
   - script: kafkacat -b localhost:9092 -t test.eventspublic -C -o -1 -c 1
+    info: "kafka message is: {{.result.systemout}}"
     assertions:
     - result.code ShouldEqual 0
     - "result.systemoutjson.type_event ShouldNotBeEmpty"
@@ -50,6 +52,7 @@ testcases:
 - name: check event in topic test.jobs
   steps:
   - script: kafkacat -b localhost:9092 -t test.jobs -C -o -1 -c 1
+    info: "kafka message is: {{.result.systemout}}"
     assertions:
     - result.code ShouldEqual 0
     - "result.systemoutjson.id ShouldNotBeEmpty"
