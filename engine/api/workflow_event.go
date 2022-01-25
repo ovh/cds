@@ -110,7 +110,7 @@ func NewEventJobSummary(wr sdk.WorkflowRun, noderun sdk.WorkflowNodeRun, jobrun 
 
 	if !jobrun.Start.IsZero() {
 		ejs.Started = &jobrun.Start
-		ejs.InQueueDuration = jobrun.Start.Sub(jobrun.Queued)
+		ejs.InQueueDuration = int(jobrun.Start.UnixMilli() - jobrun.Queued.UnixMilli())
 		ejs.WorkerModel = jobrun.Model
 		ejs.WorkerModelType = jobrun.ModelType
 		ejs.Worker = jobrun.WorkerName
@@ -125,8 +125,8 @@ func NewEventJobSummary(wr sdk.WorkflowRun, noderun sdk.WorkflowNodeRun, jobrun 
 
 	if !jobrun.Done.IsZero() {
 		ejs.Ended = &jobrun.Done
-		ejs.TotalDuration = jobrun.Done.Sub(jobrun.Start)
-		ejs.BuildDuration = jobrun.Done.Sub(jobrun.Queued)
+		ejs.TotalDuration = int(jobrun.Done.UnixMilli() - jobrun.Queued.UnixMilli())
+		ejs.BuildDuration = int(jobrun.Done.UnixMilli() - jobrun.Start.UnixMilli())
 		ejs.FinalStatus = jobrun.Status
 	}
 

@@ -15,12 +15,13 @@ import (
 
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/event"
 	"github.com/ovh/cds/sdk/namesgenerator"
 )
 
 type Config struct {
-	GlobalKafka     KafkaConfig `toml:"globalKafka" json:"globalKafka" mapstructure:"globalKafka"`
-	JobSummaryKafka KafkaConfig `toml:"jobSummaryKafka" json:"jobSummaryKafka" mapstructure:"jobSummaryKafka"`
+	GlobalKafka     event.KafkaConfig `toml:"globalKafka" json:"globalKafka" mapstructure:"globalKafka"`
+	JobSummaryKafka event.KafkaConfig `toml:"jobSummaryKafka" json:"jobSummaryKafka" mapstructure:"jobSummaryKafka"`
 }
 
 // cache with go cache
@@ -54,8 +55,8 @@ func getBroker(ctx context.Context, t string, option interface{}) (Broker, error
 	return nil, fmt.Errorf("invalid Broker Type %s", t)
 }
 
-func getKafkaConfig(cfg sdk.IntegrationConfig) KafkaConfig {
-	kafkaCfg := KafkaConfig{
+func getKafkaConfig(cfg sdk.IntegrationConfig) event.KafkaConfig {
+	kafkaCfg := event.KafkaConfig{
 		Enabled:         true,
 		BrokerAddresses: cfg["broker url"].Value,
 		Topic:           cfg["topic"].Value,
@@ -200,7 +201,7 @@ func DequeueEvent(ctx context.Context, db *gorp.DbMap) {
 		for _, eventIntegrationID := range e.EventIntegrationsID {
 			brokerConnectionKey := strconv.FormatInt(eventIntegrationID, 10)
 			brokerConnection, ok := brokersConnectionCache.Get(brokerConnectionKey)
-			var brokerConfig KafkaConfig
+			var brokerConfig event.KafkaConfig
 			if !ok {
 				projInt, err := integration.LoadProjectIntegrationByIDWithClearPassword(ctx, db, eventIntegrationID)
 				if err != nil {
