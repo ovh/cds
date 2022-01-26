@@ -295,7 +295,7 @@ func (wk *CurrentWorker) Environ() []string {
 		if v == "" {
 			continue
 		}
-		newEnv = append(newEnv, k+"="+v)
+		newEnv = append(newEnv, k+"="+sdk.OneLineValue(v))
 	}
 
 	//set up environment variables from pipeline build job parameters
@@ -313,19 +313,19 @@ func (wk *CurrentWorker) Environ() []string {
 		envName := strings.Replace(p.Name, ".", "_", -1)
 		envName = strings.Replace(envName, "-", "_", -1)
 		envName = strings.ToUpper(envName)
-		newEnv = append(newEnv, fmt.Sprintf("%s=%s", envName, p.Value))
+		newEnv = append(newEnv, fmt.Sprintf("%s=%s", envName, sdk.OneLineValue(p.Value)))
 	}
 
 	for _, p := range wk.currentJob.newVariables {
 		envName := strings.Replace(p.Name, ".", "_", -1)
 		envName = strings.Replace(envName, "-", "_", -1)
 		envName = strings.ToUpper(envName)
-		newEnv = append(newEnv, fmt.Sprintf("%s=%s", envName, p.Value))
+		newEnv = append(newEnv, fmt.Sprintf("%s=%s", envName, sdk.OneLineValue(p.Value)))
 	}
 
 	//Set env variables from hooks
 	for k, v := range wk.currentJob.envFromHooks {
-		newEnv = append(newEnv, k+"="+v)
+		newEnv = append(newEnv, k+"="+sdk.OneLineValue(v))
 	}
 	return newEnv
 }

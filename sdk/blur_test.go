@@ -19,6 +19,7 @@ func TestBlur(t *testing.T) {
 		`"1234567890`,
 		"12345",
 		"123456",
+		"123\n456",
 	})
 	require.NoError(t, err)
 
@@ -28,6 +29,7 @@ func TestBlur(t *testing.T) {
 	require.Equal(t, sdk.PasswordPlaceholder, b.String(`&é'"'"'(§è!çà`))
 	require.Equal(t, sdk.PasswordPlaceholder, b.String(url.QueryEscape("&é'(§è!çà")))
 	require.Equal(t, sdk.PasswordPlaceholder, b.String(base64.StdEncoding.EncodeToString([]byte("&é'(§è!çà"))))
+	require.Equal(t, sdk.PasswordPlaceholder, b.String("123\\n456"))
 
 	buf, err := json.Marshal(`"1234567890`)
 	require.NoError(t, err)

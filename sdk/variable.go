@@ -232,11 +232,20 @@ func EnvVartoENV(p Parameter) []string {
 
 	pName := strings.TrimPrefix(p.Name, "cds.env.")
 
+	oneLineValue := OneLineValue(p.Value)
+
 	envName := strings.Replace(pName, ".", "_", -1)
 	envName = strings.Replace(envName, "-", "_", -1)
-	env = append(env, fmt.Sprintf("CDS_ENV_%s=%s", strings.ToUpper(envName), p.Value)) // CDS_ENV_MYSTRINGVARIABLE
-	env = append(env, fmt.Sprintf("CDS_ENV_%s=%s", pName, p.Value))                    //CDS_ENV_MyStringVariable
-	env = append(env, fmt.Sprintf("%s=%s", pName, p.Value))                            // MyStringVariable
-	env = append(env, fmt.Sprintf("%s=%s", strings.ToUpper(envName), p.Value))         // MYSTRINGVARIABLE
+	env = append(env, fmt.Sprintf("CDS_ENV_%s=%s", strings.ToUpper(envName), oneLineValue)) // CDS_ENV_MYSTRINGVARIABLE
+	env = append(env, fmt.Sprintf("CDS_ENV_%s=%s", pName, oneLineValue))                    //CDS_ENV_MyStringVariable
+	env = append(env, fmt.Sprintf("%s=%s", pName, oneLineValue))                            // MyStringVariable
+	env = append(env, fmt.Sprintf("%s=%s", strings.ToUpper(envName), oneLineValue))         // MYSTRINGVARIABLE
 	return env
+}
+
+func OneLineValue(v string) string {
+	if strings.Contains(v, "\n") {
+		return strings.Replace(v, "\n", "\\n", -1)
+	}
+	return v
 }
