@@ -81,7 +81,7 @@ func TestCanBeRun(t *testing.T) {
 func TestPurgeWorkflowRun(t *testing.T) {
 	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
 
-	_ = event.Initialize(context.TODO(), db.DbMap, cache)
+	_ = event.Initialize(context.TODO(), db.DbMap, cache, nil)
 
 	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", sdk.TypeVCS)
 	defer func() {
@@ -257,7 +257,7 @@ vcs_ssh_key: proj-blabla
 func TestPurgeWorkflowRunWithRunningStatus(t *testing.T) {
 	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
 
-	_ = event.Initialize(context.TODO(), db.DbMap, cache)
+	_ = event.Initialize(context.TODO(), db.DbMap, cache, nil)
 
 	u, _ := assets.InsertAdminUser(t, db)
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
@@ -346,7 +346,7 @@ func TestPurgeWorkflowRunWithRunningStatus(t *testing.T) {
 func TestPurgeWorkflowRunWithOneSuccessWorkflowRun(t *testing.T) {
 	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
 
-	_ = event.Initialize(context.TODO(), db.DbMap, cache)
+	_ = event.Initialize(context.TODO(), db.DbMap, cache, nil)
 
 	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", sdk.TypeVCS)
 	defer func() {
@@ -546,7 +546,7 @@ vcs_ssh_key: proj-blabla
 func TestPurgeWorkflowRunWithNoSuccessWorkflowRun(t *testing.T) {
 	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
 
-	_ = event.Initialize(context.TODO(), db.DbMap, cache)
+	_ = event.Initialize(context.TODO(), db.DbMap, cache, nil)
 
 	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", sdk.TypeVCS)
 	defer func() {
@@ -718,7 +718,7 @@ vcs_ssh_key: proj-blabla
 func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
 	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
 
-	_ = event.Initialize(context.TODO(), db.DbMap, cache)
+	_ = event.Initialize(context.TODO(), db.DbMap, cache, nil)
 
 	u, _ := assets.InsertAdminUser(t, db)
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
@@ -804,7 +804,7 @@ func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
 func TestPurgeWorkflowRunWithoutTagsBiggerHistoryLength(t *testing.T) {
 	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
 
-	_ = event.Initialize(context.TODO(), db.DbMap, cache)
+	_ = event.Initialize(context.TODO(), db.DbMap, cache, nil)
 
 	u, _ := assets.InsertAdminUser(t, db)
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)

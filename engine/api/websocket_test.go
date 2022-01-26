@@ -254,7 +254,7 @@ func TestWebsocketNoEventLoose(t *testing.T) {
 
 	pubSubKey := "events_pubsub_test_" + sdk.RandomString(10)
 	event.OverridePubSubKey(pubSubKey)
-	require.NoError(t, event.Initialize(context.TODO(), api.mustDB(), api.Cache))
+	require.NoError(t, event.Initialize(context.TODO(), api.mustDB(), api.Cache, nil))
 	require.NoError(t, api.initWebsocket(pubSubKey))
 
 	_, jwt := assets.InsertAdminUser(t, db)

@@ -2,7 +2,7 @@ package event
 
 import (
 	"context"
-	"errors"
+	"encoding/json"
 	"fmt"
 	"os"
 	"strconv"
@@ -15,8 +15,14 @@ import (
 
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/event"
 	"github.com/ovh/cds/sdk/namesgenerator"
 )
+
+type Config struct {
+	GlobalKafka     event.KafkaConfig `toml:"globalKafka" json:"globalKafka" mapstructure:"globalKafka"`
+	JobSummaryKafka event.KafkaConfig `toml:"jobSummaryKafka" json:"jobSummaryKafka" mapstructure:"jobSummaryKafka"`
+}
 
 // cache with go cache
 var (
@@ -24,6 +30,7 @@ var (
 	hostname, cdsname      string
 	brokers                []Broker
 	globalBroker           Broker
+	jobSummaryBroker       Broker
 	subscribers            []chan<- sdk.Event
 )
 
@@ -34,7 +41,7 @@ func init() {
 // Broker event typed
 type Broker interface {
 	initialize(ctx context.Context, options interface{}) (Broker, error)
-	sendEvent(event *sdk.Event) error
+	sendEvent(event interface{}) error
 	status() string
 	close(ctx context.Context)
 }
@@ -48,8 +55,8 @@ func getBroker(ctx context.Context, t string, option interface{}) (Broker, error
 	return nil, fmt.Errorf("invalid Broker Type %s", t)
 }
 
-func getKafkaConfig(cfg sdk.IntegrationConfig) KafkaConfig {
-	kafkaCfg := KafkaConfig{
+func getKafkaConfig(cfg sdk.IntegrationConfig) event.KafkaConfig {
+	kafkaCfg := event.KafkaConfig{
 		Enabled:         true,
 		BrokerAddresses: cfg["broker url"].Value,
 		Topic:           cfg["topic"].Value,
@@ -100,11 +107,7 @@ func ResetEventIntegration(ctx context.Context, db gorp.SqlExecutor, eventIntegr
 }
 
 // Initialize initializes event system
-func Initialize(ctx context.Context, db *gorp.DbMap, cache Store, glolbalKafkaConfigs ...KafkaConfig) error {
-	if len(glolbalKafkaConfigs) > 1 {
-		return errors.New("only one global kafka global config is supported")
-	}
-
+func Initialize(ctx context.Context, db *gorp.DbMap, cache Store, config *Config) error {
 	store = cache
 	var err error
 	hostname, err = os.Hostname()
@@ -121,11 +124,27 @@ func Initialize(ctx context.Context, db *gorp.DbMap, cache Store, glolbalKafkaCo
 		}
 	}
 
-	if len(glolbalKafkaConfigs) == 1 && glolbalKafkaConfigs[0].BrokerAddresses != "" {
-		globalBroker, err = getBroker(ctx, "kafka", glolbalKafkaConfigs[0])
+	if config == nil {
+		return nil
+	}
+
+	if config.GlobalKafka.BrokerAddresses != "" {
+		globalBroker, err = getBroker(ctx, "kafka", config.GlobalKafka)
 		if err != nil {
 			ctx = log.ContextWithStackTrace(ctx, err)
 			log.Error(ctx, "unable to init builtin kafka broker from config: %v", err)
+		} else {
+			log.Info(ctx, "client to broker %s:%s ready", config.GlobalKafka.BrokerAddresses, config.GlobalKafka.Topic)
+		}
+	}
+
+	if config.JobSummaryKafka.BrokerAddresses != "" {
+		jobSummaryBroker, err = getBroker(ctx, "kafka", config.JobSummaryKafka)
+		if err != nil {
+			ctx = log.ContextWithStackTrace(ctx, err)
+			log.Error(ctx, "unable to init builtin kafka broker from config: %v", err)
+		} else {
+			log.Info(ctx, "client to broker %s:%s ready", config.JobSummaryKafka.BrokerAddresses, config.GlobalKafka.Topic)
 		}
 	}
 
@@ -150,29 +169,44 @@ func DequeueEvent(ctx context.Context, db *gorp.DbMap) {
 			return
 		}
 
-		for _, s := range subscribers {
-			s <- e
+		// Filter "EventJobSummary" for globalKafka Broker
+		if e.EventType != "sdk.EventJobSummary" {
+			for _, s := range subscribers {
+				s <- e
+			}
+			if globalBroker != nil {
+				log.Info(ctx, "sending event %q to global broker", e.EventType)
+				if err := globalBroker.sendEvent(&e); err != nil {
+					log.Warn(ctx, "Error while sending message [%s: %s/%s/%s/%s/%s]: %s", e.EventType, e.ProjectKey, e.WorkflowName, e.ApplicationName, e.PipelineName, e.EnvironmentName, err)
+				}
+			}
+			continue
+			// we don't send other events than EventJobSummary to users kafka
 		}
 
-		if globalBroker != nil {
-			log.Info(ctx, "sending event %q to global broker", e.EventType)
-			if err := globalBroker.sendEvent(&e); err != nil {
-				log.Warn(ctx, "Error while sending message [%s: %s/%s/%s/%s/%s]: %s", e.EventType, e.ProjectKey, e.WorkflowName, e.ApplicationName, e.PipelineName, e.EnvironmentName, err)
+		// We now only send "EventJobSummary" in the jobSummary Broker in project integrations
+		// if the users send specific kafka integration on their workflows
+		var ejs sdk.EventJobSummary
+		if err := json.Unmarshal(e.Payload, &ejs); err != nil {
+			ctx := log.ContextWithStackTrace(ctx, err)
+			log.Error(ctx, "unable to unmarshal EventJobSummary")
+			continue
+		}
+		if jobSummaryBroker != nil {
+			log.Info(ctx, "sending event %+v to job summary broker", ejs)
+			if err := jobSummaryBroker.sendEvent(ejs); err != nil {
+				log.Error(ctx, "Error while sending message %s: %v", string(e.Payload), err)
 			}
 		}
 
 		for _, eventIntegrationID := range e.EventIntegrationsID {
 			brokerConnectionKey := strconv.FormatInt(eventIntegrationID, 10)
 			brokerConnection, ok := brokersConnectionCache.Get(brokerConnectionKey)
-			var brokerConfig KafkaConfig
+			var brokerConfig event.KafkaConfig
 			if !ok {
 				projInt, err := integration.LoadProjectIntegrationByIDWithClearPassword(ctx, db, eventIntegrationID)
 				if err != nil {
 					log.Error(ctx, "Event.DequeueEvent> Cannot load project integration for project %s and id %d and type event: %v", e.ProjectKey, eventIntegrationID, err)
-					continue
-				}
-
-				if projInt.Model.Public {
 					continue
 				}
 
@@ -197,9 +231,9 @@ func DequeueEvent(ctx context.Context, db *gorp.DbMap) {
 			}
 
 			// Send into external brokers
-			log.Info(ctx, "sending event %q to %s", e.EventType, brokerConfig.BrokerAddresses)
-			if err := broker.sendEvent(&e); err != nil {
-				log.Warn(ctx, "Error while sending message [%s: %s/%s/%s/%s/%s]: %s", e.EventType, e.ProjectKey, e.WorkflowName, e.ApplicationName, e.PipelineName, e.EnvironmentName, err)
+			log.Info(ctx, "sending event %q to integration broker: %s", e.EventType, brokerConfig.BrokerAddresses)
+			if err := broker.sendEvent(ejs); err != nil {
+				log.Warn(ctx, "Error while sending message %s: %v", string(e.Payload), err)
 			}
 		}
 	}

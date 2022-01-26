@@ -7,34 +7,20 @@ import (
 	"strings"
 
 	"github.com/Shopify/sarama"
+	"github.com/ovh/cds/sdk/event"
+	"github.com/pkg/errors"
 	"github.com/rockbears/log"
-
-	"github.com/ovh/cds/sdk"
 )
 
 // KafkaClient enbeddes the Kafka connecion
 type KafkaClient struct {
-	options  KafkaConfig
+	options  event.KafkaConfig
 	producer sarama.SyncProducer
-}
-
-// KafkaConfig handles all config to connect to Kafka
-type KafkaConfig struct {
-	Enabled         bool   `toml:"enabled" json:"-" default:"false" mapstructure:"enabled"`
-	BrokerAddresses string `toml:"broker" json:"-"  mapstructure:"broker"`
-	User            string `toml:"user" json:"-" mapstructure:"user"`
-	Password        string `toml:"password" json:"-" mapstructure:"password"`
-	Version         string `toml:"version" json:"-" mapstructure:"version"`
-	Topic           string `toml:"topic" json:"-" mapstructure:"topic"`
-	MaxMessageByte  int    `toml:"maxMessageByte" json:"-" mapstructure:"maxMessageByte"`
-	DisableTLS      bool   `toml:"disableTLS" json:"-" mapstructure:"disableTLS"`
-	DisableSASL     bool   `toml:"disableSASL" json:"-" mapstructure:"disableSASL"`
-	ClientID        string `toml:"clientID" json:"-" mapstructure:"clientID"`
 }
 
 // initialize returns broker, isInit and err if
 func (c *KafkaClient) initialize(ctx context.Context, options interface{}) (Broker, error) {
-	conf, ok := options.(KafkaConfig)
+	conf, ok := options.(event.KafkaConfig)
 	if !ok {
 		return nil, fmt.Errorf("invalid Kafka Initialization")
 	}
@@ -104,15 +90,15 @@ func (c *KafkaClient) initProducer() error {
 }
 
 // sendOnKafkaTopic send a hook on a topic kafka
-func (c *KafkaClient) sendEvent(event *sdk.Event) error {
-	data, errm := json.Marshal(event)
-	if errm != nil {
-		return errm
+func (c *KafkaClient) sendEvent(event interface{}) error {
+	data, err := json.Marshal(event)
+	if err != nil {
+		return errors.WithStack(err)
 	}
 
 	msg := &sarama.ProducerMessage{Topic: c.options.Topic, Value: sarama.ByteEncoder(data)}
 	if _, _, err := c.producer.SendMessage(msg); err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	return nil
 }

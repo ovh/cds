@@ -108,6 +108,12 @@ func (s *Service) Serve(c context.Context) error {
 		}
 	}()
 
+	if s.Cfg.EventBus.JobSummaryKafka.BrokerAddresses != "" {
+		if err := s.consumeKafka(ctx, s.Cfg.EventBus.JobSummaryKafka); err != nil {
+			log.Error(ctx, "unable to start kafka consumer: %v", err)
+		}
+	}
+
 	//Start the http server
 	log.Info(ctx, "ElasticSearch> Starting HTTP Server on port %d", s.Cfg.HTTP.Port)
 	if err := server.ListenAndServe(); err != nil {

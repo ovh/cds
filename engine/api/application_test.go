@@ -79,7 +79,7 @@ func TestUpdateAsCodeApplicationHandler(t *testing.T) {
 	api, db, tsURL := newTestServer(t)
 
 	event.OverridePubSubKey("events_pubsub_test")
-	require.NoError(t, event.Initialize(context.Background(), api.mustDB(), api.Cache))
+	require.NoError(t, event.Initialize(context.Background(), api.mustDB(), api.Cache, nil))
 	require.NoError(t, api.initWebsocket("events_pubsub_test"))
 
 	u, jwt := assets.InsertAdminUser(t, db)

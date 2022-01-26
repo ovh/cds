@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/rockbears/log"
 
@@ -78,5 +79,56 @@ func (api *API) WorkflowSendEvent(ctx context.Context, proj sdk.Project, report 
 			continue
 		}
 		event.PublishWorkflowNodeJobRun(ctx, proj.Key, *wr, jobrun)
+
+		var ejs = NewEventJobSummary(*wr, *noderun, jobrun)
+		event.PublishEventJobSummary(ctx, ejs, wr.Workflow.Integrations)
 	}
+}
+
+func NewEventJobSummary(wr sdk.WorkflowRun, noderun sdk.WorkflowNodeRun, jobrun sdk.WorkflowNodeJobRun) sdk.EventJobSummary {
+	var ejs = sdk.EventJobSummary{
+		ID:                   jobrun.ID,
+		ProjectKey:           wr.Workflow.ProjectKey,
+		Workflow:             wr.Workflow.Name,
+		WorkflowRunNumber:    int(noderun.Number),
+		WorkflowRunSubNumber: int(noderun.SubNumber),
+		Created:              &jobrun.Queued,
+		Pipeline:             noderun.WorkflowNodeName,
+		Job:                  jobrun.Job.Action.Name,
+		GitVCS:               noderun.VCSServer,
+		GitRepo:              noderun.VCSRepository,
+		GitBranch:            noderun.VCSBranch,
+		GitTag:               noderun.VCSTag,
+		GitCommit:            noderun.VCSHash,
+	}
+
+	if wr.Version != nil {
+		ejs.WorkflowRunVersion = *wr.Version
+	} else {
+		ejs.WorkflowRunVersion = fmt.Sprintf("%d", wr.Number)
+	}
+
+	if !jobrun.Start.IsZero() {
+		ejs.Started = &jobrun.Start
+		ejs.InQueueDuration = int(jobrun.Start.UnixMilli() - jobrun.Queued.UnixMilli())
+		ejs.WorkerModel = jobrun.Model
+		ejs.WorkerModelType = jobrun.ModelType
+		ejs.Worker = jobrun.WorkerName
+		ejs.Hatchery = jobrun.HatcheryName
+		if jobrun.Region != nil {
+			ejs.Region = *jobrun.Region
+		}
+		if noderun.HookEvent != nil {
+			ejs.Hook = noderun.HookEvent.WorkflowNodeHookUUID
+		}
+	}
+
+	if !jobrun.Done.IsZero() {
+		ejs.Ended = &jobrun.Done
+		ejs.TotalDuration = int(jobrun.Done.UnixMilli() - jobrun.Queued.UnixMilli())
+		ejs.BuildDuration = int(jobrun.Done.UnixMilli() - jobrun.Start.UnixMilli())
+		ejs.FinalStatus = jobrun.Status
+	}
+
+	return ejs
 }

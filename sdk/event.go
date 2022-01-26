@@ -141,3 +141,32 @@ type EventMaintenance struct {
 type EventFake struct {
 	Data int64 `json:"data"`
 }
+
+type EventJobSummary struct {
+	ID                   int64      `json:"id"`
+	ProjectKey           string     `json:"project_key"`
+	Workflow             string     `json:"workflow"`
+	Pipeline             string     `json:"pipeline"`
+	Job                  string     `json:"job"`
+	WorkflowRunVersion   string     `json:"workflow_run_version"`
+	WorkflowRunNumber    int        `json:"workflow_run_number"`
+	WorkflowRunSubNumber int        `json:"workflow_run_sub_number"`
+	FinalStatus          string     `json:"final_status"`
+	Created              *time.Time `json:"created"`
+	Started              *time.Time `json:"started"`
+	Ended                *time.Time `json:"ended"`
+	InQueueDuration      int        `json:"in_queue_duration"`
+	BuildDuration        int        `json:"build_duration"`
+	TotalDuration        int        `json:"total_duration"`
+	WorkerModel          string     `json:"worker_model"`
+	WorkerModelType      string     `json:"worker_model_type"`
+	Worker               string     `json:"worker"`
+	Hatchery             string     `json:"hatchery"`
+	Region               string     `json:"region"`
+	Hook                 string     `json:"hook"`
+	GitVCS               string     `json:"git_vcs"`
+	GitRepo              string     `json:"git_repo"`
+	GitBranch            string     `json:"git_branch"`
+	GitTag               string     `json:"git_tag"`
+	GitCommit            string     `json:"git_commit"`
+}
