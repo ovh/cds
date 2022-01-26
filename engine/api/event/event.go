@@ -144,7 +144,7 @@ func Initialize(ctx context.Context, db *gorp.DbMap, cache Store, config *Config
 			ctx = log.ContextWithStackTrace(ctx, err)
 			log.Error(ctx, "unable to init builtin kafka broker from config: %v", err)
 		} else {
-			log.Info(ctx, "client to broker %s:%s ready", config.JobSummaryKafka.BrokerAddresses, config.GlobalKafka.Topic)s
+			log.Info(ctx, "client to broker %s:%s ready", config.JobSummaryKafka.BrokerAddresses, config.GlobalKafka.Topic)
 		}
 	}
 
