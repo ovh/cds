@@ -49,6 +49,18 @@ func Test_EnvVartoENV(t *testing.T) {
 				"MY_STRING_VARIABLE=value",
 			},
 		},
+		{
+			args: sdk.Parameter{
+				Name:  "cds.env.MyTextVariable",
+				Value: "one=one\ntwo=two\nthree=three",
+			},
+			want: []string{
+				"CDS_ENV_MYTEXTVARIABLE=one=one\\ntwo=two\\nthree=three",
+				"CDS_ENV_MyTextVariable=one=one\\ntwo=two\\nthree=three",
+				"MyTextVariable=one=one\\ntwo=two\\nthree=three",
+				"MYTEXTVARIABLE=one=one\\ntwo=two\\nthree=three",
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
