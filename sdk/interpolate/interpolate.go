@@ -129,6 +129,10 @@ func Do(input string, vars map[string]string) (string, error) {
 				if _, ok := usedHelpers["default"]; ok {
 					defaultIsUsed = true
 				}
+				// case: {{.assert | ternary "foo" "bar"}} when assert is not defined to avoid {{.assert | default false | ternary "foo" "bar"}}
+				if _, ok := usedHelpers["ternary"]; ok {
+					defaultIsUsed = true
+				}
 
 				unknownVariables := make([]string, 0, 1000)
 				for v := range usedVariables {

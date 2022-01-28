@@ -8,6 +8,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"net/url"
+	"path"
 	"reflect"
 	"strings"
 	"text/template"
@@ -71,6 +73,10 @@ func init() {
 			}
 			return a
 		},
+		"ternary":   ternary,
+		"urlencode": func(s string) string { return url.QueryEscape(s) },
+		"dirname":   func(s string) string { return path.Dir(s) },
+		"basename":  func(s string) string { return path.Base(s) },
 	})
 }
 
@@ -367,6 +373,13 @@ func escape(s string) string {
 	s1 = strings.Replace(s1, "/", "-", -1)
 	s1 = strings.Replace(s1, ".", "-", -1)
 	return s1
+}
+
+func ternary(v, v2, a interface{}) interface{} {
+	if cast.ToBool(a) {
+		return v
+	}
+	return v2
 }
 
 // toInt64 converts integer types to 64-bit integers

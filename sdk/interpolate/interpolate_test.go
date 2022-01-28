@@ -446,6 +446,111 @@ func TestDo(t *testing.T) {
 			want:   "my value 4 4",
 			enable: true,
 		},
+		{
+			name: "dirname",
+			args: args{
+				input: "{{.path | dirname}}",
+				vars: map[string]string{
+					"path": "/a/b/c",
+				},
+			},
+			want:   "/a/b",
+			enable: true,
+		},
+		{
+			name: "basename",
+			args: args{
+				input: "{{.path | basename}}",
+				vars: map[string]string{
+					"path": "/ab/c",
+				},
+			},
+			want:   "c",
+			enable: true,
+		},
+		{
+			name: "urlencode word",
+			args: args{
+				input: "{{.query | urlencode}}",
+				vars: map[string]string{
+					"query": "Trollhättan",
+				},
+			},
+			want:   "Trollh%C3%A4ttan",
+			enable: true,
+		},
+		{
+			name: "urlencode query",
+			args: args{
+				input: "{{.query | urlencode}}",
+				vars: map[string]string{
+					"query": "zone:eq=Somewhere over the rainbow&name:like=%mydomain.localhost.local",
+				},
+			},
+			want:   "zone%3Aeq%3DSomewhere+over+the+rainbow%26name%3Alike%3D%25mydomain.localhost.local",
+			enable: true,
+		},
+		{
+			name: "urlencode nothing to do",
+			args: args{
+				input: "{{.query | urlencode}}",
+				vars: map[string]string{
+					"query": "patrick",
+				},
+			},
+			want:   "patrick",
+			enable: true,
+		},
+		{
+			name: "ternary truthy",
+			args: args{
+				input: "{{.assert | ternary .foo .bar}}",
+				vars: map[string]string{
+					"assert": "true",
+					"bar":    "bar",
+					"foo":    "foo",
+				},
+			},
+			want:   "foo",
+			enable: true,
+		},
+		{
+			name: "ternary truthy integer",
+			args: args{
+				input: "{{ \"1\" | ternary .foo .bar}}",
+				vars: map[string]string{
+					"bar": "bar",
+					"foo": "foo",
+				},
+			},
+			want:   "foo",
+			enable: true,
+		},
+		{
+			name: "ternary falsy",
+			args: args{
+				input: "{{.assert | ternary .foo .bar}}",
+				vars: map[string]string{
+					"assert": "false",
+					"bar":    "bar",
+					"foo":    "foo",
+				},
+			},
+			want:   "bar",
+			enable: true,
+		},
+		{
+			name: "ternary undef assert",
+			args: args{
+				input: "{{.assert | ternary .foo .bar}}",
+				vars: map[string]string{
+					"bar": "bar",
+					"foo": "foo",
+				},
+			},
+			want:   "bar",
+			enable: true,
+		},
 	}
 	for _, tt := range tests {
 		if !tt.enable {
