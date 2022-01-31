@@ -215,11 +215,10 @@ func uploadArtifactByIntegrationPlugin(path string, ctx context.Context, wk work
 		return fmt.Errorf("error uploading artifact: %v", err)
 	}
 
-	res.Outputs[sdk.ArtifactUploadPluginOutputFileType] = fileType
-
 	if strings.ToUpper(res.Status) != strings.ToUpper(sdk.StatusSuccess) {
 		return fmt.Errorf("plugin execution failed %s: %s", res.Status, res.Details)
 	}
+	res.Outputs[sdk.ArtifactUploadPluginOutputFileType] = fileType
 
 	// Add run result
 	if err := addWorkflowRunResult(ctx, wk, path, sdk.WorkflowRunResultTypeArtifactManager, *res); err != nil {
