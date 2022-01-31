@@ -150,6 +150,10 @@ func (e *artifactoryReleasePlugin) Run(_ context.Context, opts *integrationplugi
 
 	}
 
+	if len(promotedArtifacts) == 0 {
+		return fail("There is no artifact to release.")
+	}
+
 	// Release bundle
 	releaseName, releaseVersion, err := e.createReleaseBundle(distriClient, projectKey, workflowName, version, buildInfo, promotedArtifacts, destMaturity, releaseNote)
 	if err != nil {
