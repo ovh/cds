@@ -151,7 +151,7 @@ func (e *artifactoryReleasePlugin) Run(_ context.Context, opts *integrationplugi
 	}
 
 	if len(promotedArtifacts) == 0 {
-		return fail("There is no artifacts to release.")
+		return fail("There is no artifact to release.")
 	}
 
 	// Release bundle
