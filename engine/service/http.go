@@ -138,7 +138,7 @@ func UnmarshalBody(r *http.Request, i interface{}) error {
 	}
 	defer r.Body.Close()
 	if err := sdk.JSONUnmarshal(data, i); err != nil {
-		return sdk.NewError(sdk.ErrWrongRequest, sdk.WrapError(err, "unable to unmarshal %s", string(data)))
+		return sdk.NewError(sdk.ErrWrongRequest, err)
 	}
 	return nil
 }
