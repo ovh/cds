@@ -94,19 +94,21 @@
             [direction]="direction" [project]="project" [workflowData]="workflowRunData['workflow']">
         </app-workflow-graph>
         <div *ngIf="workflowRunData['status'] === pipelineStatusEnum.PENDING" class="loading">
-            <ng-container *ngIf="!runDelayed">
-                <div class="sk-folding-cube">
-                    <div class="sk-cube1 sk-cube"></div>
-                    <div class="sk-cube2 sk-cube"></div>
-                    <div class="sk-cube4 sk-cube"></div>
-                    <div class="sk-cube3 sk-cube"></div>
+            <div class="col">
+                <ng-container *ngIf="!runDelayed">
+                    <div class="sk-fold">
+                        <div class="sk-fold-cube"></div>
+                        <div class="sk-fold-cube"></div>
+                        <div class="sk-fold-cube"></div>
+                        <div class="sk-fold-cube"></div>
+                    </div>
+                    {{'workflow_run_scheduling' | translate }}
+                </ng-container>
+                <div *ngIf="runDelayed">
+                    <i class="hourglass half icon"></i>
+                    {{'workflow_run_delayed' | translate }}
                 </div>
-                {{'workflow_run_scheduling' | translate }}
-            </ng-container>
-            <ng-container *ngIf="runDelayed">
-                <i class="hourglass half icon"></i>
-                {{'workflow_run_delayed' | translate }}
-            </ng-container>
+            </div>
         </div>
     </div>
 </div>

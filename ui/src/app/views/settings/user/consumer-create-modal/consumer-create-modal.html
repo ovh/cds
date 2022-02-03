@@ -77,7 +77,7 @@
     <div class="actions">
         <div class="ui grid">
             <div class="four wide column left aligned">
-                <button *ngIf="activeStep === formStepName.GROUPS || activeStep == formStepName.SCOPES"
+                <button *ngIf="activeStep === formStepName.GROUPS || activeStep === formStepName.SCOPES"
                     class="ui primary button" (click)="clickBack()">
                     {{ 'btn_back' | translate }}
                 </button>

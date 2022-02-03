@@ -1,7 +1,5 @@
 // eslint-disable-next-line max-len
 import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ComponentFactoryResolver, ComponentRef, EventEmitter, HostListener, Input, OnDestroy, Output, ViewChild, ViewContainerRef } from '@angular/core';
-import * as d3 from 'd3';
-import * as dagreD3 from 'dagre-d3';
 import { Project } from 'app/model/project.model';
 import { WNode, Workflow } from 'app/model/workflow.model';
 import { WorkflowCoreService } from 'app/service/workflow/workflow.core.service';
@@ -9,15 +7,13 @@ import { WorkflowStore } from 'app/service/workflow/workflow.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { WorkflowNodeHookComponent } from 'app/shared/workflow/wnode/hook/hook.component';
 import { WorkflowWNodeComponent } from 'app/shared/workflow/wnode/wnode.component';
+import * as d3 from 'd3';
+import * as dagreD3 from 'dagre-d3';
 
 @Component({
     selector: 'app-workflow-graph',
     templateUrl: './workflow.graph.html',
     styleUrls: ['./workflow.graph.scss'],
-    entryComponents: [
-        WorkflowWNodeComponent,
-        WorkflowNodeHookComponent
-    ],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()

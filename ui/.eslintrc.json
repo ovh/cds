@@ -15,48 +15,18 @@
         "createDefaultProgram": true
       },
       "extends": [
-        "plugin:@angular-eslint/ng-cli-compat",
-        "plugin:@angular-eslint/ng-cli-compat--formatting-add-on",
+        "plugin:@angular-eslint/recommended",
         "plugin:@angular-eslint/template/process-inline-templates"
       ],
       "rules": {
-        "@typescript-eslint/ban-types": [
-          "off"
-        ],
-        "@angular-eslint/no-output-native": [
-          "off"
-        ],
-        "no-shadow": [
+        "@angular-eslint/no-empty-lifecycle-method": [
           "off"
         ],
         "@angular-eslint/no-output-on-prefix": [
           "off"
         ],
-        "@typescript-eslint/prefer-for-of": [
+        "@angular-eslint/no-output-native": [
           "off"
-        ],
-        "max-len": [
-          "off"
-        ],
-        "prefer-arrow/prefer-arrow-functions": [
-          "off"
-        ],
-        "@typescript-eslint/consistent-type-assertions": [
-          "off"
-        ],
-        "@typescript-eslint/naming-convention": [
-          "off"
-        ],
-        "@typescript-eslint/member-ordering": [
-          "off"
-        ],
-        "@angular-eslint/component-selector": [
-          "error",
-          {
-            "type": "element",
-            "prefix": "app",
-            "style": "kebab-case"
-          }
         ],
         "@angular-eslint/directive-selector": [
           "error",
@@ -66,45 +36,14 @@
             "style": "camelCase"
           }
         ],
-        "@typescript-eslint/consistent-type-definitions": "error",
-        "@typescript-eslint/dot-notation": "off",
-        "@typescript-eslint/explicit-member-accessibility": [
-          "off",
-          {
-            "accessibility": "explicit"
-          }
-        ],
-        "@typescript-eslint/member-delimiter-style": [
-          "off",
-          {
-            "multiline": {
-              "delimiter": "none",
-              "requireLast": true
-            },
-            "singleline": {
-              "delimiter": "semi",
-              "requireLast": false
-            }
-          }
-        ],
-        "@typescript-eslint/semi": [
-          "off",
-          null
-        ],
-        "brace-style": [
+        "@angular-eslint/component-selector": [
           "error",
-          "1tbs",
           {
-            "allowSingleLine": true
+            "type": "element",
+            "prefix": "app",
+            "style": "kebab-case"
           }
-        ],
-        "id-blacklist": "off",
-        "id-match": "off",
-        "import/order": "error",
-        "no-redeclare": "error",
-        "no-underscore-dangle": "off",
-        "prefer-const": "off",
-        "semi": [1, "always"]
+        ]
       }
     },
     {
@@ -114,7 +53,14 @@
       "extends": [
         "plugin:@angular-eslint/template/recommended"
       ],
-      "rules": {}
+      "rules": {
+        "@angular-eslint/template/eqeqeq": [
+          "error",
+          {
+            "allowNullOrUndefined": true
+          }
+        ]
+      }
     }
   ]
 }

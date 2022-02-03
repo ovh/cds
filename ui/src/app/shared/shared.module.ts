@@ -232,10 +232,6 @@ import { ZoneComponent } from './zone/zone.component';
         ZoneComponent,
         ZoneContentComponent
     ],
-    entryComponents: [
-        NguiAutoCompleteComponent,
-        ToastHTTPErrorComponent
-    ],
     providers: [
         PermissionService,
         SharedService,

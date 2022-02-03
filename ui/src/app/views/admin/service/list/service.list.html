@@ -34,7 +34,7 @@
                                 <div class="header" [innerText]="g.name"></div>
                             </div>
                             <div class="extra content">
-                                <div class="meta" *ngIf="g.value=='0'">
+                                <div class="meta" *ngIf="g.value === '0'">
                                     n/a
                                 </div>
                                 <div class="ui middle aligned divided list" *ngFor="let srv of g.services; index as idx; first as isFirst">
