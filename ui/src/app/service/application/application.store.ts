@@ -21,7 +21,9 @@ export class ApplicationStore {
 
     loadRecentApplication(): void {
         let arrayApp = JSON.parse(localStorage.getItem(ApplicationStore.RECENT_APPLICATIONS_KEY));
-        this._recentApplications.next(immutable.List.of(...arrayApp));
+        if (arrayApp) {
+            this._recentApplications.next(immutable.List.of(...arrayApp));
+        }
     }
 
     /**

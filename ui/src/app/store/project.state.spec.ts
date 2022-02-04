@@ -37,10 +37,9 @@ describe('Project', () => {
                 ProjectService, PipelineService, EnvironmentService, ApplicationService],
             imports: [
                 HttpClientTestingModule, RouterTestingModule.withRoutes([]),
-                NgxsModule.forRoot([ProjectState, ApplicationsState, PipelinesState, WorkflowState])
+                NgxsModule.forRoot([ProjectState, ApplicationsState, PipelinesState, WorkflowState], {developmentMode: true})
             ],
         }).compileComponents();
-
         store = TestBed.inject(Store);
         http =  TestBed.inject(HttpTestingController);
     }));
@@ -219,9 +218,10 @@ describe('Project', () => {
             expect(state.project.application_names[0].name).toEqual('myApp');
         });
 
-        application.name = 'myAppRenamed';
-        application.description = 'my desc';
-        store.dispatch(new ProjectAction.UpdateApplicationInProject({ previousAppName: 'myApp', changes: application }));
+        let appUpdated = new Application();
+        appUpdated.name = 'myAppRenamed';
+        appUpdated.description = 'my desc';
+        store.dispatch(new ProjectAction.UpdateApplicationInProject({ previousAppName: 'myApp', changes: appUpdated }));
         store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
             expect(state.project).toBeTruthy();
             expect(state.project.name).toEqual('proj1');
@@ -544,13 +544,14 @@ describe('Project', () => {
             variables: [variable]
         });
 
-        variable.name = 'myTestVar';
-        variable.value = 'myTestValue';
+        let variableUpdated = new Variable();
+        variableUpdated.name = 'myTestVar';
+        variableUpdated.value = 'myTestValue';
         store.dispatch(new ProjectAction.UpdateVariableInProject({
             variableName: 'myVar',
-            changes: variable
+            changes: variableUpdated
         }));
-        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/variable/myVar')).flush(variable);
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/variable/myVar')).flush(variableUpdated);
 
         store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
             expect(state.project).toBeTruthy();
@@ -695,9 +696,11 @@ describe('Project', () => {
             groups: [group]
         });
 
-        group.permission = 4;
-        store.dispatch(new ProjectAction.UpdateGroupInProject({ projectKey: project.key, group }));
-        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/group/admin')).flush(group);
+        let groupUpdated = new GroupPermission();
+        groupUpdated.group = group.group;
+        groupUpdated.permission = 4;
+        store.dispatch(new ProjectAction.UpdateGroupInProject({ projectKey: project.key, group: groupUpdated }));
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/group/admin')).flush(groupUpdated);
 
         store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
             expect(state.project).toBeTruthy();
@@ -805,13 +808,14 @@ describe('Project', () => {
             integrations: [integration]
         });
 
-        integration.name = 'myInteBis';
+        let integrationUpdated = new ProjectIntegration();
+        integrationUpdated.name = 'myInteBis';
         store.dispatch(new ProjectAction.UpdateIntegrationInProject({
             projectKey: project.key,
             integrationName: 'myIntegration',
-            changes: integration
+            changes: integrationUpdated
         }));
-        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/integrations/myIntegration')).flush(integration);
+        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/test1/integrations/myIntegration')).flush(integrationUpdated);
 
         store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
             expect(state.project).toBeTruthy();

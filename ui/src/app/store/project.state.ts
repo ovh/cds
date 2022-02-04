@@ -447,7 +447,7 @@ export class ProjectState {
     @Action(ProjectAction.UpdateApplicationInProject)
     updateApplication(ctx: StateContext<ProjectStateModel>, action: ProjectAction.UpdateApplicationInProject) {
         const state = ctx.getState();
-        let application_names = state.project.application_names ? state.project.application_names.concat([]) : [];
+        let application_names = cloneDeep(state.project.application_names ? state.project.application_names.concat([]) : []);
 
         if (!application_names.length) {
             let idName = new IdName();
@@ -799,9 +799,9 @@ export class ProjectState {
             '/project/' + action.payload.projectKey + '/integrations/' + action.payload.integrationName,
             action.payload.changes
         ).pipe(tap((integration) => {
-            let integrations = state.project.integrations ? state.project.integrations.concat([]) : [];
+            let integrations = cloneDeep(state.project.integrations ? state.project.integrations.concat([]) : []);
             integrations = integrations.map((integ) => {
-                if (integ.name === integration.name) {
+                if (integ.name === action.payload.integrationName) {
                     return integration;
                 }
                 return integ;
