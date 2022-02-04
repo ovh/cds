@@ -1,13 +1,11 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { Store } from '@ngxs/store';
-import { Application } from 'app/model/application.model';
 import { Broadcast } from 'app/model/broadcast.model';
 import { Help } from 'app/model/help.model';
 import { NavbarProjectData, NavbarRecentData, NavbarSearchItem } from 'app/model/navbar.model';
 import { Project } from 'app/model/project.model';
 import { AuthSummary } from 'app/model/user.model';
-import { ApplicationStore } from 'app/service/application/application.store';
 import { BroadcastStore } from 'app/service/broadcast/broadcast.store';
 import { NavbarService } from 'app/service/navbar/navbar.service';
 import { RouterService } from 'app/service/router/router.service';
@@ -15,7 +13,7 @@ import { ProjectStore } from 'app/service/services.module';
 import { ThemeStore } from 'app/service/theme/theme.store';
 import { WorkflowStore } from 'app/service/workflow/workflow.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
-import { FetchCurrentAuth, SignoutCurrentUser } from 'app/store/authentication.action';
+import { SignoutCurrentUser } from 'app/store/authentication.action';
 import { AuthenticationState } from 'app/store/authentication.state';
 import { HelpState } from 'app/store/help.state';
 import { List } from 'immutable';
@@ -33,7 +31,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     // List of projects in the nav bar
     listFavs: Array<NavbarProjectData> = [];
     navRecentProjects: List<Project>;
-    navRecentApp: List<Application>;
     navRecentWorkflows: List<NavbarRecentData>;
     searchItems: Array<NavbarSearchItem> = [];
     recentItems: Array<NavbarSearchItem> = [];
@@ -44,7 +41,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     previousBroadcastsToDisplay: Array<Broadcast> = new Array<Broadcast>();
     loading = true;
     listWorkflows: List<NavbarRecentData>;
-    langSubscription: Subscription;
     navbarSubscription: Subscription;
     authSubscription: Subscription;
     sessionSubcription: Subscription;
@@ -62,14 +58,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
     isSearch = false;
     containsResult = false;
     projectsSubscription: Subscription;
-    applicationsSubscription: Subscription;
     workflowsSubscription: Subscription;
 
     constructor(
         private _navbarService: NavbarService,
         private _store: Store,
         private _projectStore: ProjectStore,
-        private _appStore: ApplicationStore,
         private _workflowStore: WorkflowStore,
         private _broadcastStore: BroadcastStore,
         private _router: Router,
@@ -130,26 +124,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 })).concat(
                     this.recentItems.filter((i) => i.type !== 'project')
                 );
-                this.items = this.recentItems;
-                this._cd.markForCheck();
-            }
-        });
-
-        // Listen change on recent app viewed
-        this.applicationsSubscription = this._appStore.getRecentApplications().subscribe(apps => {
-            if (apps) {
-                this.navRecentApp = apps;
-                this.recentItems = this.recentItems
-                    .filter((i) => i.type !== 'application')
-                    .concat(
-                        apps.toArray().map((app) => ({
-                            type: 'application',
-                            value: app.project_key + '/' + app.name,
-                            title: app.name,
-                            projectKey: app.project_key,
-                            favorite: false
-                        }))
-                    );
                 this.items = this.recentItems;
                 this._cd.markForCheck();
             }
@@ -280,14 +254,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
                         searchWfFull = true;
                     }
                     break;
-                case 'application':
-                    if (this.searchApplications.length < 10) {
-                        this.searchApplications.push(element);
-                        this.containsResult = true;
-                    } else {
-                        searchAppFull = true;
-                    }
-                    break;
             }
             if (searchPrjFull && searchWfFull && searchAppFull) {
                 break;
@@ -324,15 +290,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
                                 type: 'workflow',
                                 projectKey: p.key,
                                 favorite: p.favorite
-                            });
-                            break;
-                        case 'application':
-                            this.searchItems.push({
-                                value: p.key + '/' + p.application_name,
-                                title: p.application_name,
-                                type: 'application',
-                                projectKey: p.key,
-                                favorite: false
                             });
                             break;
                         default:
@@ -374,14 +331,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Navigate to the selected application.
-     */
-    navigateToApplication(key: string, appName: string): void {
-        this._router.navigate(['project', key, 'application', appName]);
-    }
-
-    /**
-     * Navigate to the selected application.
+     * Navigate to the selected workflow.
      */
     navigateToWorkflow(key: string, workflowName: string): void {
         this._router.navigate(['project', key, 'workflow', workflowName]);
