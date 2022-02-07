@@ -224,7 +224,7 @@ func (c *vcsClient) doJSONRequest(ctx context.Context, method, path string, in i
 	})
 
 	if code >= 400 {
-		log.Warn(ctx, "repositories manager %s HTTP %s %s error %s", c.name, method, path, code)
+		log.Warn(ctx, "repositories manager %s HTTP %s %s error %d", c.name, method, path, code)
 		switch code {
 		case http.StatusUnauthorized:
 			err = sdk.NewError(sdk.ErrNoReposManagerClientAuth, err)
