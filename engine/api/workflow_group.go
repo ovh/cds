@@ -106,11 +106,23 @@ func (api *API) putWorkflowGroupHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrNotFound, "no permission found for group %q on workflow", gp.Group.Name)
 		}
 
-		g, err := group.LoadByName(ctx, api.mustDB(), gp.Group.Name, group.LoadOptions.WithOrganization)
+		g, err := group.LoadByName(ctx, api.mustDB(), gp.Group.Name, group.LoadOptions.WithOrganization, group.LoadOptions.WithMembers)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load group with name %q", gp.Group.Name)
 		}
 		gp.Group = *g
+
+		if !isGroupAdmin(ctx, g) && gp.Permission > oldGp.Permission {
+			if isAdmin(ctx) {
+				trackSudo(ctx, w)
+			} else {
+				return sdk.WithStack(sdk.ErrInvalidGroupAdmin)
+			}
+		}
+
+		if group.IsDefaultGroupID(g.ID) && gp.Permission > sdk.PermissionRead {
+			return sdk.NewErrorFrom(sdk.ErrDefaultGroupPermission, "only read permission is allowed to default group")
+		}
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
@@ -164,11 +176,23 @@ func (api *API) postWorkflowGroupHandler() service.Handler {
 			}
 		}
 
-		g, err := group.LoadByName(ctx, api.mustDB(), gp.Group.Name, group.LoadOptions.WithOrganization)
+		g, err := group.LoadByName(ctx, api.mustDB(), gp.Group.Name, group.LoadOptions.WithOrganization, group.LoadOptions.WithMembers)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load group with name %q", gp.Group.Name)
 		}
 		gp.Group = *g
+
+		if !isGroupAdmin(ctx, g) && gp.Permission > sdk.PermissionRead {
+			if isAdmin(ctx) {
+				trackSudo(ctx, w)
+			} else {
+				return sdk.WithStack(sdk.ErrInvalidGroupAdmin)
+			}
+		}
+
+		if group.IsDefaultGroupID(g.ID) && gp.Permission > sdk.PermissionRead {
+			return sdk.NewErrorFrom(sdk.ErrDefaultGroupPermission, "only read permission is allowed to default group")
+		}
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
