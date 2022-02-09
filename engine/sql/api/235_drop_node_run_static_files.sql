@@ -1,5 +1,4 @@
 -- +migrate Up
-TRUNCATE workflow_node_run_static_files;
 DROP TABLE workflow_node_run_static_files;
 
 -- +migrate Down
