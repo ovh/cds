@@ -728,9 +728,10 @@ func PreviousNodeRunVCSInfos(ctx context.Context, db gorp.SqlExecutor, projectKe
 	queryPrevious := `
 		SELECT workflow_node_run.vcs_branch, workflow_node_run.vcs_tag, workflow_node_run.vcs_hash, workflow_node_run.vcs_repository, workflow_node_run.num
 		FROM workflow_node_run
-		JOIN w_node ON w_node.id = workflow_node_run.workflow_node_id AND w_node.name = $1 AND w_node.workflow_id = $2
+		JOIN w_node ON w_node.name = workflow_node_run.workflow_node_name AND w_node.name = $1 AND w_node.workflow_id = $2
 		JOIN w_node_context ON w_node_context.node_id = w_node.id
 		WHERE workflow_node_run.vcs_hash IS NOT NULL
+		AND workflow_node_run.workflow_id = $2
 		AND workflow_node_run.num < $3
 		AND w_node_context.application_id = $4
 	`
