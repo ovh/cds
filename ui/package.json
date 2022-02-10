@@ -123,7 +123,7 @@
     "@typescript-eslint/typescript-estree": "5.10.2",
     "codelyzer": "6.0.0",
     "copy-webpack-plugin": "9.0.0",
-    "eslint": "^8.2.0",
+    "eslint": "8.2.0",
     "eslint-plugin-import": "2.25.4",
     "eslint-plugin-jsdoc": "37.7.1",
     "eslint-plugin-prefer-arrow": "1.2.3",
@@ -139,7 +139,7 @@
     "lint-staged": "^12.0.2",
     "ts-node": "8.3.0",
     "typescript": "4.5.2",
-    "url": "^0.11.0",
+    "url": "0.11.0",
     "webdriver-manager": "12.1.7",
     "webpack-bundle-analyzer": "3.3.2",
     "wrench-sui": "0.0.3"

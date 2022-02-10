@@ -20,7 +20,9 @@ export class WorkflowStore {
 
     loadRecentWorkflows(): void {
         let arrayWorkflows = JSON.parse(localStorage.getItem(WorkflowStore.RECENT_WORKFLOWS_KEY));
-        this._recentWorkflows.next(List.of(...arrayWorkflows));
+        if (arrayWorkflows) {
+            this._recentWorkflows.next(List.of(...arrayWorkflows));
+        }
     }
 
     /**
