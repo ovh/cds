@@ -68,7 +68,7 @@ func TestUpdateAsCodeEnvironmentHandler(t *testing.T) {
 	}()
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "POST", "/task/bulk", gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "POST", "/task/bulk", gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil, 201, nil)
 
 	servicesClients.EXPECT().
@@ -126,8 +126,8 @@ func TestUpdateAsCodeEnvironmentHandler(t *testing.T) {
 		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/foo/myrepo", gomock.Any(), gomock.Any(), gomock.Any()).MinTimes(0)
 
 	servicesClients.EXPECT().
-		DoMultiPartRequest(gomock.Any(), "POST", "/operations", gomock.Any(), gomock.Any(), gomock.Any()).
-		DoAndReturn(func(ctx context.Context, method, path string, _ interface{}, in interface{}, out interface{}) (int, error) {
+		DoMultiPartRequest(gomock.Any(), "POST", "/operations", gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, method, path string, _ interface{}, in interface{}, out interface{}, mods ...interface{}) (int, error) {
 			ope := new(sdk.Operation)
 			ope.UUID = UUID
 			*(out.(*sdk.Operation)) = *ope
@@ -154,7 +154,7 @@ func TestUpdateAsCodeEnvironmentHandler(t *testing.T) {
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "GET", "/operations/"+UUID, gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(
-			func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, mods ...interface{}) (http.Header, int, error) {
 				ope := new(sdk.Operation)
 				ope.URL = "https://github.com/fsamin/go-repo.git"
 				ope.UUID = UUID
