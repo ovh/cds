@@ -56,9 +56,9 @@ func Test_WorkflowAsCodeWithNoHook_ShouldGive_AnAutomaticRepoWebHook(t *testing.
 	UUID := sdk.UUID()
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "POST", "/operations", gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "POST", "/operations", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(
-			func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, mods ...interface{}) (http.Header, int, error) {
 				ope := new(sdk.Operation)
 				ope.UUID = UUID
 				ope.Status = sdk.OperationStatusPending
@@ -79,9 +79,9 @@ func Test_WorkflowAsCodeWithNoHook_ShouldGive_AnAutomaticRepoWebHook(t *testing.
 		).MaxTimes(3)
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/operations/"+UUID, gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "GET", "/operations/"+UUID, gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(
-			func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, mods ...interface{}) (http.Header, int, error) {
 				ope := new(sdk.Operation)
 				ope.URL = "https://github.com/fsamin/go-repo.git"
 				ope.UUID = UUID
@@ -117,9 +117,9 @@ version: v1.0`),
 		).Times(2)
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "POST", "/task/bulk", gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "POST", "/task/bulk", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(
-			func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, mods ...interface{}) (http.Header, int, error) {
 				actualHooks, ok := in.(map[string]sdk.NodeHook)
 				require.True(t, ok)
 				require.Len(t, actualHooks, 1)
@@ -267,9 +267,9 @@ func Test_WorkflowAsCodeWithDefaultHook_ShouldGive_TheSameRepoWebHook(t *testing
 	UUID := sdk.UUID()
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "POST", "/operations", gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "POST", "/operations", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(
-			func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, mods ...interface{}) (http.Header, int, error) {
 				ope := new(sdk.Operation)
 				ope.UUID = UUID
 				ope.Status = sdk.OperationStatusPending
@@ -307,9 +307,9 @@ func Test_WorkflowAsCodeWithDefaultHook_ShouldGive_TheSameRepoWebHook(t *testing
 		).MaxTimes(3)
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/operations/"+UUID, gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "GET", "/operations/"+UUID, gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(
-			func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, mods ...interface{}) (http.Header, int, error) {
 				ope := new(sdk.Operation)
 				ope.URL = "https://github.com/fsamin/go-repo.git"
 				ope.UUID = UUID
@@ -347,9 +347,9 @@ version: v1.0`),
 		).Times(3)
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "POST", "/task/bulk", gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "POST", "/task/bulk", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(
-			func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, mods ...interface{}) (http.Header, int, error) {
 				actualHooks, ok := in.(map[string]sdk.NodeHook)
 				require.True(t, ok)
 				require.Len(t, actualHooks, 1)
@@ -564,8 +564,8 @@ func Test_WorkflowAsCodeWithDefaultHookAndAScheduler_ShouldGive_TheSameRepoWebHo
 	operationUUID := sdk.UUID()
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "POST", "/operations", gomock.Any(), gomock.Any()).
-		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
+		DoJSONRequest(gomock.Any(), "POST", "/operations", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, mods ...interface{}) (http.Header, int, error) {
 			ope := new(sdk.Operation)
 			ope.UUID = operationUUID
 			*(out.(*sdk.Operation)) = *ope
@@ -575,7 +575,7 @@ func Test_WorkflowAsCodeWithDefaultHookAndAScheduler_ShouldGive_TheSameRepoWebHo
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "GET", "/operations/"+operationUUID, gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(
-			func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, mods ...interface{}) (http.Header, int, error) {
 				ope := new(sdk.Operation)
 				ope.URL = "https://github.com/fsamin/go-repo.git"
 				ope.UUID = operationUUID
@@ -627,9 +627,9 @@ version: v1.0`),
 		).Times(3)
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "POST", "/task/bulk", gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "POST", "/task/bulk", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(
-			func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, mods ...interface{}) (http.Header, int, error) {
 				actualHooks, ok := in.(map[string]sdk.NodeHook)
 				require.True(t, ok)
 				require.Len(t, actualHooks, 2)
@@ -890,9 +890,9 @@ func Test_WorkflowAsCodeWithJustAcheduler_ShouldGive_ARepoWebHookAndTheScheduler
 	UUID := sdk.UUID()
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "POST", "/operations", gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "POST", "/operations", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(
-			func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, mods ...interface{}) (http.Header, int, error) {
 				ope := new(sdk.Operation)
 				ope.UUID = UUID
 				ope.Status = sdk.OperationStatusPending
@@ -929,9 +929,9 @@ func Test_WorkflowAsCodeWithJustAcheduler_ShouldGive_ARepoWebHookAndTheScheduler
 
 	gomock.InOrder(
 		servicesClients.EXPECT().
-			DoJSONRequest(gomock.Any(), "GET", "/operations/"+UUID, gomock.Any(), gomock.Any()).
+			DoJSONRequest(gomock.Any(), "GET", "/operations/"+UUID, gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(
-				func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
+				func(ctx context.Context, method, path string, in interface{}, out interface{}, mods ...interface{}) (http.Header, int, error) {
 					ope := new(sdk.Operation)
 					ope.URL = "https://github.com/fsamin/go-repo.git"
 					ope.UUID = UUID
@@ -984,7 +984,7 @@ version: v1.0`),
 		servicesClients.EXPECT().
 			DoJSONRequest(gomock.Any(), "GET", gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(
-				func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
+				func(ctx context.Context, method, path string, in interface{}, out interface{}, mods ...interface{}) (http.Header, int, error) {
 					ope := new(sdk.Operation)
 					ope.URL = "https://github.com/fsamin/go-repo.git"
 					ope.UUID = UUID
@@ -1037,7 +1037,7 @@ version: v1.0`),
 		servicesClients.EXPECT().
 			DoJSONRequest(gomock.Any(), "GET", gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(
-				func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
+				func(ctx context.Context, method, path string, in interface{}, out interface{}, mods ...interface{}) (http.Header, int, error) {
 					ope := new(sdk.Operation)
 					ope.URL = "https://github.com/fsamin/go-repo.git"
 					ope.UUID = UUID
@@ -1075,9 +1075,9 @@ version: v1.0`),
 
 	gomock.InOrder(
 		servicesClients.EXPECT().
-			DoJSONRequest(gomock.Any(), "POST", "/task/bulk", gomock.Any(), gomock.Any()).
+			DoJSONRequest(gomock.Any(), "POST", "/task/bulk", gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(
-				func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
+				func(ctx context.Context, method, path string, in interface{}, out interface{}, mods ...interface{}) (http.Header, int, error) {
 					actualHooks, ok := in.(map[string]sdk.NodeHook)
 					require.True(t, ok)
 					require.Len(t, actualHooks, 2)
@@ -1121,9 +1121,9 @@ version: v1.0`),
 			).Times(1),
 
 		servicesClients.EXPECT().
-			DoJSONRequest(gomock.Any(), "POST", "/task/bulk", gomock.Any(), gomock.Any()).
+			DoJSONRequest(gomock.Any(), "POST", "/task/bulk", gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(
-				func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
+				func(ctx context.Context, method, path string, in interface{}, out interface{}, mods ...interface{}) (http.Header, int, error) {
 					actualHooks, ok := in.(map[string]sdk.NodeHook)
 					require.True(t, ok)
 					require.Len(t, actualHooks, 1)
@@ -1147,9 +1147,9 @@ version: v1.0`),
 			).Times(1),
 
 		servicesClients.EXPECT().
-			DoJSONRequest(gomock.Any(), "DELETE", "/task/bulk", gomock.Any(), gomock.Any()).
+			DoJSONRequest(gomock.Any(), "DELETE", "/task/bulk", gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(
-				func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
+				func(ctx context.Context, method, path string, in interface{}, out interface{}, mods ...interface{}) (http.Header, int, error) {
 					actualHooks, ok := in.(map[string]sdk.NodeHook)
 					require.True(t, ok)
 					require.Len(t, actualHooks, 1)
@@ -1173,9 +1173,9 @@ version: v1.0`),
 			).Times(1),
 
 		servicesClients.EXPECT().
-			DoJSONRequest(gomock.Any(), "DELETE", "/task/bulk", gomock.Any(), gomock.Any()).
+			DoJSONRequest(gomock.Any(), "DELETE", "/task/bulk", gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(
-				func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
+				func(ctx context.Context, method, path string, in interface{}, out interface{}, mods ...interface{}) (http.Header, int, error) {
 					actualHooks, ok := in.(map[string]sdk.NodeHook)
 					require.True(t, ok)
 					require.Len(t, actualHooks, 1)
