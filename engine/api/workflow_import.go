@@ -292,6 +292,8 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 		log.Debug(ctx, "Read %d bytes from body", len(btes))
 		tr := tar.NewReader(bytes.NewReader(btes))
 
+		consumer := getAPIConsumer(ctx)
+
 		var pushOptions *workflow.PushOption
 		if r.Header.Get(sdk.WorkflowAsCodeHeader) != "" {
 			pushOptions = &workflow.PushOption{
@@ -300,8 +302,6 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 				Force:           service.FormBool(r, "force"),
 			}
 		}
-
-		u := getAPIConsumer(ctx)
 
 		//Load project
 		proj, err := project.Load(ctx, db, key,
@@ -322,8 +322,6 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 			return err
 		}
 
-		consumer := getAPIConsumer(ctx)
-
 		mods := []workflowtemplate.TemplateRequestModifierFunc{
 			workflowtemplate.TemplateRequestModifiers.DefaultKeys(*proj),
 		}
@@ -336,12 +334,12 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 		if err != nil {
 			return err
 		}
-		msgPush, wrkflw, oldWrkflw, _, err := workflow.Push(ctx, db, api.Cache, proj, data, pushOptions, u, project.DecryptWithBuiltinKey)
+		msgPush, wrkflw, oldWrkflw, _, err := workflow.Push(ctx, db, api.Cache, proj, data, pushOptions, consumer, project.DecryptWithBuiltinKey)
 		allMsg = append(allMsg, msgPush...)
 		if err != nil {
 			return err
 		}
-		if err := workflowtemplate.UpdateTemplateInstanceWithWorkflow(ctx, api.mustDB(), *wrkflw, *consumer, wti); err != nil {
+		if err := workflowtemplate.UpdateTemplateInstanceWithWorkflow(ctx, api.mustDB(), *wrkflw, consumer, wti); err != nil {
 			return err
 		}
 
@@ -353,9 +351,9 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 		}
 
 		if oldWrkflw != nil {
-			event.PublishWorkflowUpdate(ctx, proj.Key, *wrkflw, *oldWrkflw, u)
+			event.PublishWorkflowUpdate(ctx, proj.Key, *wrkflw, *oldWrkflw, consumer)
 		} else {
-			event.PublishWorkflowAdd(ctx, proj.Key, *wrkflw, u)
+			event.PublishWorkflowAdd(ctx, proj.Key, *wrkflw, consumer)
 		}
 
 		return service.WriteJSON(w, msgListString, http.StatusOK)

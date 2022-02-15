@@ -204,7 +204,7 @@ func ParseAndImport(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store 
 		}
 	}(&msgList)
 
-	globalError := Import(ctx, db, store, proj, oldW, w, u, opts.Force, msgChan)
+	globalError := Import(ctx, db, store, proj, oldW, w, u, opts, msgChan)
 	close(msgChan)
 	done.Wait()
 

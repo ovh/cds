@@ -18,7 +18,7 @@ import (
 )
 
 //Import is able to create a new workflow and all its components
-func Import(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, proj sdk.Project, oldW, w *sdk.Workflow, u sdk.Identifiable, force bool, msgChan chan<- sdk.Message) error {
+func Import(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, proj sdk.Project, oldW, w *sdk.Workflow, u sdk.Identifiable, opts ImportOptions, msgChan chan<- sdk.Message) error {
 	ctx, end := telemetry.Span(ctx, "workflow.Import")
 	defer end()
 
@@ -27,6 +27,18 @@ func Import(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 
 	if w.WorkflowData.Node.Context == nil {
 		w.WorkflowData.Node.Context = &sdk.NodeContext{}
+	}
+
+	// If the import not is done by a direct user (ie. from a hook)
+	// We don't take permission in account and we only keep permission of the oldWorkflow or projet permission
+	if opts.HookUUID != "" || opts.RepositoryName == "" {
+		log.Info(ctx, "Import is perform from 'as-code', we don't take groups in account (hooUUID=%q, repository=%q)", opts.HookUUID, opts.RepositoryName)
+		if oldW != nil {
+			w.Groups = oldW.Groups
+		}
+	} else if len(w.Groups) > 0 {
+		// The import is triggered by a user, we have to check the groups
+		// FIXME: call the same function than the handlers
 	}
 
 	// create the workflow if not exists
@@ -44,11 +56,11 @@ func Import(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 		w.Icon = oldW.Icon
 	}
 
-	if !force {
+	if !opts.Force {
 		return sdk.NewErrorFrom(sdk.ErrAlreadyExist, "workflow exists")
 	}
 
-	if force && oldW != nil && oldW.FromRepository != "" && w.FromRepository == "" {
+	if opts.Force && oldW != nil && oldW.FromRepository != "" && w.FromRepository == "" {
 		if err := detachResourceFromRepository(db, proj.ID, oldW, msgChan); err != nil {
 			return err
 		}

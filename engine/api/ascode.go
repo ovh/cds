@@ -130,6 +130,10 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 		key := vars[permProjectKey]
 		uuid := vars["uuid"]
 
+		if isService(ctx) {
+			return sdk.ErrForbidden
+		}
+
 		if uuid == "" {
 			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given operation uuid")
 		}
