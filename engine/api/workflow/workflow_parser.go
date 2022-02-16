@@ -39,25 +39,11 @@ func Parse(ctx context.Context, proj sdk.Project, oldW *sdk.Workflow, ew exporte
 	w.ProjectID = proj.ID
 	w.ProjectKey = proj.Key
 
-	// Get permission from old workflow if needed
-	if oldW != nil && len(w.Groups) == 0 {
-		w.Groups = make([]sdk.GroupPermission, 0, len(oldW.Groups))
-		for _, g := range oldW.Groups {
-			perm := sdk.GroupPermission{Group: sdk.Group{Name: g.Group.Name}, Permission: g.Permission}
-			w.Groups = append(w.Groups, perm)
-		}
-	} else if len(w.Groups) == 0 {
-		w.Groups = make([]sdk.GroupPermission, 0, len(proj.ProjectGroups))
-		for _, g := range proj.ProjectGroups {
-			perm := sdk.GroupPermission{Group: sdk.Group{Name: g.Group.Name}, Permission: g.Permission}
-			w.Groups = append(w.Groups, perm)
-		}
-	}
 	return w, nil
 }
 
 // ParseAndImport parse an exportentities.workflow and insert or update the workflow in database
-func ParseAndImport(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, proj sdk.Project, oldW *sdk.Workflow, ew exportentities.Workflow, u sdk.Identifiable, opts ImportOptions) (*sdk.Workflow, []sdk.Message, error) {
+func ParseAndImport(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, proj sdk.Project, oldW *sdk.Workflow, ew exportentities.Workflow, consumer *sdk.AuthConsumer, opts ImportOptions) (*sdk.Workflow, []sdk.Message, error) {
 	ctx, end := telemetry.Span(ctx, "workflow.ParseAndImport")
 	defer end()
 
@@ -204,7 +190,7 @@ func ParseAndImport(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store 
 		}
 	}(&msgList)
 
-	globalError := Import(ctx, db, store, proj, oldW, w, u, opts, msgChan)
+	globalError := Import(ctx, db, store, proj, oldW, w, consumer, opts, msgChan)
 	close(msgChan)
 	done.Wait()
 

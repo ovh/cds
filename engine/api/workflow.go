@@ -495,22 +495,9 @@ func (api *API) postWorkflowHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		for _, n := range data.WorkflowData.Array() {
-			for _, gp := range n.Groups {
-				if gp.Group.ID == 0 {
-					g, err := group.LoadByName(ctx, tx, gp.Group.Name)
-					if err != nil {
-						return err
-					}
-					gp.Group = *g
-				}
-				if err := group.LoadOptions.WithOrganization(ctx, tx, &gp.Group); err != nil {
-					return err
-				}
-				if err := projectPermissionCheckOrganizationMatch(ctx, tx, p, &gp.Group, gp.Permission); err != nil {
-					return err
-				}
-			}
+		// Check group permissions if given for workflow and nodes
+		if err := group.CheckWorkflowGroups(ctx, tx, p, &data, getAPIConsumer(ctx)); err != nil {
+			return err
 		}
 
 		if err := workflow.Insert(ctx, tx, api.Cache, *p, &data); err != nil {
@@ -580,22 +567,9 @@ func (api *API) putWorkflowHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		for _, n := range wf.WorkflowData.Array() {
-			for _, gp := range n.Groups {
-				if gp.Group.ID == 0 {
-					g, err := group.LoadByName(ctx, tx, gp.Group.Name)
-					if err != nil {
-						return err
-					}
-					gp.Group = *g
-				}
-				if err := group.LoadOptions.WithOrganization(ctx, tx, &gp.Group); err != nil {
-					return err
-				}
-				if err := projectPermissionCheckOrganizationMatch(ctx, tx, p, &gp.Group, gp.Permission); err != nil {
-					return err
-				}
-			}
+		// Check group permissions if given for workflow and nodes
+		if err := group.CheckWorkflowGroups(ctx, tx, p, &wf, getAPIConsumer(ctx)); err != nil {
+			return err
 		}
 
 		if err := workflow.Update(ctx, tx, api.Cache, *p, &wf, workflow.UpdateOptions{}); err != nil {

@@ -348,7 +348,7 @@ func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 			}
 			w.Groups[i].Group = *g
 		}
-		if err := group.UpsertAllWorkflowGroups(db, w, w.Groups); err != nil {
+		if err := group.UpsertAllWorkflowGroups(ctx, db, w, w.Groups); err != nil {
 			return sdk.WrapError(err, "Unable to update workflow")
 		}
 	} else {
@@ -1251,7 +1251,7 @@ func checkPipeline(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, w
 
 // Push push a workflow from cds files
 func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Project, data exportentities.WorkflowComponents,
-	opts *PushOption, u sdk.Identifiable, decryptFunc keys.DecryptFunc) ([]sdk.Message, *sdk.Workflow, *sdk.Workflow, *PushSecrets, error) {
+	opts *PushOption, consumer *sdk.AuthConsumer, decryptFunc keys.DecryptFunc) ([]sdk.Message, *sdk.Workflow, *sdk.Workflow, *PushSecrets, error) {
 	ctx, end := telemetry.Span(ctx, "workflow.Push")
 	defer end()
 	if data.Workflow == nil {
@@ -1299,7 +1299,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		if opts != nil {
 			fromRepo = opts.FromRepository
 		}
-		appDB, appSecrets, msgList, err := application.ParseAndImport(ctx, tx, store, *proj, &app, application.ImportOptions{Force: true, FromRepository: fromRepo}, decryptFunc, u)
+		appDB, appSecrets, msgList, err := application.ParseAndImport(ctx, tx, store, *proj, &app, application.ImportOptions{Force: true, FromRepository: fromRepo}, decryptFunc, consumer)
 		allMsg = append(allMsg, msgList...)
 		if err != nil {
 			return allMsg, nil, nil, nil, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to import application %s/%s", proj.Key, app.Name)
@@ -1313,7 +1313,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		if opts != nil {
 			fromRepo = opts.FromRepository
 		}
-		envDB, envsSecrets, msgList, err := environment.ParseAndImport(ctx, tx, *proj, env, environment.ImportOptions{Force: true, FromRepository: fromRepo}, decryptFunc, u)
+		envDB, envsSecrets, msgList, err := environment.ParseAndImport(ctx, tx, *proj, env, environment.ImportOptions{Force: true, FromRepository: fromRepo}, decryptFunc, consumer)
 		allMsg = append(allMsg, msgList...)
 		if err != nil {
 			return allMsg, nil, nil, nil, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to import environment %s/%s", proj.Key, env.Name)
@@ -1327,7 +1327,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		if opts != nil {
 			fromRepo = opts.FromRepository
 		}
-		pipDB, msgList, err := pipeline.ParseAndImport(ctx, tx, store, *proj, &pip, u, pipeline.ImportOptions{Force: true, FromRepository: fromRepo})
+		pipDB, msgList, err := pipeline.ParseAndImport(ctx, tx, store, *proj, &pip, consumer, pipeline.ImportOptions{Force: true, FromRepository: fromRepo})
 		allMsg = append(allMsg, msgList...)
 		if err != nil {
 			return allMsg, nil, nil, nil, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to import pipeline %s/%s", proj.Key, pip.Name)
@@ -1354,7 +1354,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		importOptions.HookUUID = opts.HookUUID
 	}
 
-	wf, msgList, err := ParseAndImport(ctx, tx, store, *proj, oldWf, data.Workflow, u, importOptions)
+	wf, msgList, err := ParseAndImport(ctx, tx, store, *proj, oldWf, data.Workflow, consumer, importOptions)
 	allMsg = append(allMsg, msgList...)
 	if err != nil {
 		return allMsg, nil, nil, nil, sdk.WrapError(err, "unable to import workflow %s", data.Workflow.GetName())

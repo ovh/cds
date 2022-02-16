@@ -2039,6 +2039,8 @@ func Test_getWorkfloDependencieswHandler(t *testing.T) {
 	)
 
 	u, pass := assets.InsertAdminUser(t, db)
+	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	require.NoError(t, err)
 
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	vcsServer := sdk.ProjectVCSServerLink{
@@ -2110,7 +2112,7 @@ workflow:
 	eWf, err := exportentities.UnmarshalWorkflow([]byte(workflowS), exportentities.FormatYAML)
 	require.NoError(t, err)
 
-	wf, _, err := workflow.ParseAndImport(ctx, db, cache, *proj, nil, eWf, u, workflow.ImportOptions{WorkflowName: "test-env", FromRepository: "from/my-repo"})
+	wf, _, err := workflow.ParseAndImport(ctx, db, cache, *proj, nil, eWf, localConsumer, workflow.ImportOptions{WorkflowName: "test-env", FromRepository: "from/my-repo"})
 	require.NotNil(t, wf)
 	require.NoError(t, err)
 
@@ -2149,7 +2151,7 @@ workflow:
 	eWf2, err := exportentities.UnmarshalWorkflow([]byte(workflowS2), exportentities.FormatYAML)
 	require.NoError(t, err)
 
-	wf2, _, err := workflow.ParseAndImport(ctx, db, cache, *proj, nil, eWf2, u, workflow.ImportOptions{WorkflowName: "test-env-2", FromRepository: "from/my-repo-2"})
+	wf2, _, err := workflow.ParseAndImport(ctx, db, cache, *proj, nil, eWf2, localConsumer, workflow.ImportOptions{WorkflowName: "test-env-2", FromRepository: "from/my-repo-2"})
 	require.NotNil(t, wf2)
 	require.NoError(t, err)
 
@@ -2168,5 +2170,4 @@ workflow:
 	require.Equal(t, app.Name, res2.UnlinkedAsCodeDependencies.Applications[0].Name)
 	require.Equal(t, env.ID, res2.UnlinkedAsCodeDependencies.Environments[0].ID)
 	require.Equal(t, env.Name, res2.UnlinkedAsCodeDependencies.Environments[0].Name)
-
 }

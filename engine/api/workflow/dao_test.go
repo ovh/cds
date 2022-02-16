@@ -20,6 +20,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/integration"
@@ -1934,6 +1935,8 @@ func TestDeleteWorkflowWithDependencies(t *testing.T) {
 	db, cache := test.SetupPG(t)
 
 	u, _ := assets.InsertAdminUser(t, db)
+	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	require.NoError(t, err)
 
 	bootstrap.InitiliazeDB(ctx, sdk.DefaultValues{}, func() *gorp.DbMap { return db.DbMap })
 	a, _ := assets.InsertService(t, db, "TestDeleteWorkflowWithDependenciesVCS", sdk.TypeVCS)
@@ -2097,7 +2100,7 @@ workflow:
 	eWf, err := exportentities.UnmarshalWorkflow([]byte(workflowS), exportentities.FormatYAML)
 	require.NoError(t, err)
 
-	wf, _, err := workflow.ParseAndImport(ctx, db, cache, *proj, nil, eWf, u, workflow.ImportOptions{WorkflowName: "test-env", FromRepository: "from/my-repo"})
+	wf, _, err := workflow.ParseAndImport(ctx, db, cache, *proj, nil, eWf, localConsumer, workflow.ImportOptions{WorkflowName: "test-env", FromRepository: "from/my-repo"})
 	require.NotNil(t, wf)
 	require.NoError(t, err)
 
@@ -2127,6 +2130,8 @@ func TestDeleteWorkflowWithDependencies2(t *testing.T) {
 	db, cache := test.SetupPG(t)
 
 	u, _ := assets.InsertAdminUser(t, db)
+	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	require.NoError(t, err)
 
 	bootstrap.InitiliazeDB(ctx, sdk.DefaultValues{}, func() *gorp.DbMap { return db.DbMap })
 	a, _ := assets.InsertService(t, db, "TestDeleteWorkflowWithDependenciesVCS", sdk.TypeVCS)
@@ -2290,7 +2295,7 @@ workflow:
 	eWf, err := exportentities.UnmarshalWorkflow([]byte(workflowS), exportentities.FormatYAML)
 	require.NoError(t, err)
 
-	wf, _, err := workflow.ParseAndImport(ctx, db, cache, *proj, nil, eWf, u, workflow.ImportOptions{WorkflowName: "test-env", FromRepository: "from/my-repo"})
+	wf, _, err := workflow.ParseAndImport(ctx, db, cache, *proj, nil, eWf, localConsumer, workflow.ImportOptions{WorkflowName: "test-env", FromRepository: "from/my-repo"})
 	require.NotNil(t, wf)
 	require.NoError(t, err)
 
@@ -2306,7 +2311,7 @@ workflow:
 	eWf2, err := exportentities.UnmarshalWorkflow([]byte(workflowS2), exportentities.FormatYAML)
 	require.NoError(t, err)
 
-	wf2, _, err := workflow.ParseAndImport(ctx, db, cache, *proj, nil, eWf2, u, workflow.ImportOptions{WorkflowName: "test-env-2", FromRepository: "from/my-repo-2"})
+	wf2, _, err := workflow.ParseAndImport(ctx, db, cache, *proj, nil, eWf2, localConsumer, workflow.ImportOptions{WorkflowName: "test-env-2", FromRepository: "from/my-repo-2"})
 	require.NotNil(t, wf2)
 	require.NoError(t, err)
 
@@ -2328,5 +2333,4 @@ workflow:
 	env, err = environment.LoadEnvironmentByID(db.DbMap, env.ID)
 	require.NoError(t, err)
 	require.Empty(t, env.FromRepository)
-
 }

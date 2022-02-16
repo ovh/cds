@@ -139,8 +139,9 @@ func CheckAndExecuteTemplate(ctx context.Context, db *gorp.DbMap, store cache.St
 		return allMsgs, nil, sdk.WrapError(err, "error with loading group named %q", groupName)
 	}
 
+	// Check if the template can be used by the current consumer
 	var groupPermissionValid bool
-	if consumer.Admin() || consumer.Maintainer() {
+	if consumer.Maintainer() {
 		groupPermissionValid = true
 	} else if grp.ID == group.SharedInfraGroup.ID {
 		groupPermissionValid = true
@@ -155,6 +156,14 @@ func CheckAndExecuteTemplate(ctx context.Context, db *gorp.DbMap, store cache.St
 	}
 	if !groupPermissionValid {
 		return allMsgs, nil, sdk.NewErrorFrom(sdk.ErrWrongRequest, "could not find given workflow template")
+	}
+
+	// Check that the template is allowed for target project
+	if grp.ID != group.SharedInfraGroup.ID {
+		gp := p.ProjectGroups.GetByGroupID(grp.ID)
+		if gp == nil || gp.Permission < sdk.PermissionReadExecute {
+			return allMsgs, nil, sdk.NewErrorFrom(sdk.ErrForbidden, "could not use workflow template %q, missing RX permission for group %q on project %q", templateSlug, grp.Name, p.Key)
+		}
 	}
 
 	wt, err := LoadBySlugAndGroupID(ctx, tx, templateSlug, grp.ID)

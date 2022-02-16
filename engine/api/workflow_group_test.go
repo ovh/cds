@@ -379,7 +379,7 @@ func Test_putWorkflowGroupHandler_UserShouldBeGroupAdminForRWAndRWX(t *testing.T
 		Group:      *g3,
 	}))
 
-	// User cannot set RX permission for g3 on workflow because not admin of g3
+	// User cannot set RWX permission for g3 on workflow because not admin of g3
 	uri := router.GetRoute(http.MethodPut, api.putWorkflowGroupHandler, map[string]string{
 		"key":              proj.Key,
 		"permWorkflowName": w.Name,
