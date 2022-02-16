@@ -1505,6 +1505,10 @@ version: v1.0`),
 			t.Fail()
 		}
 	}
+	//  Check the permission on the node are empty
+	wk.VisitNode(func(n *sdk.Node, wk *sdk.Workflow) {
+		require.Empty(t, n.Groups)
+	})
 
 	// Then we will trigger a run of the workflow wich should trigger an as-code operation
 	vars := map[string]string{
@@ -1545,5 +1549,25 @@ version: v1.0`),
 	wk, err = workflow.Load(context.Background(), db, api.Cache, *proj, "w-go-repo", workflow.LoadOptions{})
 	assert.NoError(t, err)
 	assert.NotNil(t, wk)
+
+	// Check that the permission on the workflow are still the same as the project
+	require.Len(t, wk.Groups, len(proj.ProjectGroups))
+	for i := range proj.ProjectGroups {
+		var check bool
+		for j := range wk.Groups {
+			if proj.ProjectGroups[i].Group.ID == wk.Groups[j].Group.ID {
+				check = true
+				require.Equal(t, proj.ProjectGroups[i].Group.ID, wk.Groups[j].Group.ID)
+				require.Equal(t, proj.ProjectGroups[i].Permission, wk.Groups[j].Permission)
+			}
+		}
+		if !check {
+			t.Fail()
+		}
+	}
+	//  Check the permission on the node are empty
+	wk.VisitNode(func(n *sdk.Node, wk *sdk.Workflow) {
+		require.Empty(t, n.Groups)
+	})
 
 }
