@@ -125,7 +125,7 @@ func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *
 	if err != nil {
 		return nil, allMsgs, err
 	}
-	msgPush, workflowPushed, _, secrets, err := Push(ctx, db, store, p, data, opt, consumer, decryptFunc)
+	msgPush, workflowPushed, _, secrets, err := Push(ctx, db, store, p, data, opt, &consumer, decryptFunc)
 	// Filter workflow push message if generated from template
 	for i := range msgPush {
 		if wti != nil && msgPush[i].ID == sdk.MsgWorkflowDeprecatedVersion.ID {

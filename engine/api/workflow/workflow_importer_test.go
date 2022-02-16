@@ -483,7 +483,7 @@ func TestImport(t *testing.T) {
 				}
 			}
 
-			if err := workflow.Import(context.TODO(), db, cache, *proj, wf, tt.args.w, u, tt.args.force, nil); err != nil {
+			if err := workflow.Import(context.TODO(), db, cache, *proj, wf, tt.args.w, u, workflow.ImportOptions{Force: tt.args.force}, nil); err != nil {
 				if !tt.wantErr {
 					t.Errorf("Import() error = %v, wantErr %v", err, tt.wantErr)
 				} else {
