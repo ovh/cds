@@ -29,7 +29,7 @@ func Import(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 		w.WorkflowData.Node.Context = &sdk.NodeContext{}
 	}
 
-	// If the import not is done by a direct user (ie. from a hook or if the content is coming from a repository)
+	// If the import is not done by a direct user (ie. from a hook or if the content is coming from a repository)
 	// We don't take permission in account and we only keep permission of the oldWorkflow or projet permission
 	if opts.HookUUID != "" || opts.RepositoryName != "" {
 		log.Info(ctx, "Import is perform from 'as-code', we don't take groups in account (hookUUID=%q, repository=%q)", opts.HookUUID, opts.RepositoryName)
