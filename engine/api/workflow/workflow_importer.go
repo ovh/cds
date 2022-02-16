@@ -29,14 +29,26 @@ func Import(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 		w.WorkflowData.Node.Context = &sdk.NodeContext{}
 	}
 
-	// If the import not is done by a direct user (ie. from a hook)
+	// If the import not is done by a direct user (ie. from a hook or if the content is coming from a repository)
 	// We don't take permission in account and we only keep permission of the oldWorkflow or projet permission
-	if opts.HookUUID != "" || opts.RepositoryName == "" {
-		log.Info(ctx, "Import is perform from 'as-code', we don't take groups in account (hooUUID=%q, repository=%q)", opts.HookUUID, opts.RepositoryName)
+	if opts.HookUUID != "" || opts.RepositoryName != "" {
+		log.Info(ctx, "Import is perform from 'as-code', we don't take groups in account (hookUUID=%q, repository=%q)", opts.HookUUID, opts.RepositoryName)
+		// reset permissions at the workflow level
+		w.Groups = nil
 		if oldW != nil {
 			w.Groups = oldW.Groups
 		}
-	} else if len(w.Groups) > 0 {
+		// reset permissions at the node level
+		w.VisitNode(func(n *sdk.Node, w *sdk.Workflow) {
+			n.Groups = nil
+			if oldW != nil {
+				oldN := oldW.WorkflowData.NodeByName(n.Name)
+				if oldN != nil {
+					n.Groups = oldN.Groups
+				}
+			}
+		})
+	} else {
 		// The import is triggered by a user, we have to check the groups
 		// FIXME: call the same function than the handlers
 	}
