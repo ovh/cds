@@ -64,22 +64,24 @@ func Import(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 			msgChan <- sdk.NewMessage(sdk.MsgWorkflowImportedInserted, w.Name)
 		}
 		return nil
-	} else {
-		// If not groups are given, do not change existing workflow groups
-		if len(w.Groups) > 0 {
-			for i := range w.Groups {
-				if w.Groups[i].Group.ID > 0 {
-					continue
-				}
-				g, err := group.LoadByName(ctx, db, w.Groups[i].Group.Name)
-				if err != nil {
-					return sdk.WrapError(err, "unable to load group %s", w.Groups[i].Group.Name)
-				}
-				w.Groups[i].Group = *g
+	}
+
+	w.ID = oldW.ID
+
+	// If not groups are given, do not change existing workflow groups
+	if len(w.Groups) > 0 {
+		for i := range w.Groups {
+			if w.Groups[i].Group.ID > 0 {
+				continue
 			}
-			if err := group.UpsertAllWorkflowGroups(ctx, db, w, w.Groups); err != nil {
-				return sdk.WrapError(err, "unable to update workflow")
+			g, err := group.LoadByName(ctx, db, w.Groups[i].Group.Name)
+			if err != nil {
+				return sdk.WrapError(err, "unable to load group %s", w.Groups[i].Group.Name)
 			}
+			w.Groups[i].Group = *g
+		}
+		if err := group.UpsertAllWorkflowGroups(ctx, db, w, w.Groups); err != nil {
+			return sdk.WrapError(err, "unable to update workflow")
 		}
 	}
 
@@ -91,7 +93,7 @@ func Import(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 		return sdk.NewErrorFrom(sdk.ErrAlreadyExist, "workflow exists")
 	}
 
-	if opts.Force && oldW != nil && oldW.FromRepository != "" && w.FromRepository == "" {
+	if opts.Force && oldW.FromRepository != "" && w.FromRepository == "" {
 		if err := detachResourceFromRepository(db, proj.ID, oldW, msgChan); err != nil {
 			return err
 		}
@@ -119,7 +121,6 @@ func Import(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 			}
 		}
 	}
-	w.ID = oldW.ID
 
 	// HookRegistration after workflow.Update.  It needs hooks to be created on DB
 	// Hook registration must only be done on default branch in case of workflow as-code
