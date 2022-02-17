@@ -353,6 +353,9 @@ func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 		}
 	} else {
 		log.Debug(ctx, "inherit permissions from project")
+		if err := group.LoadGroupsIntoProject(ctx, db, &proj); err != nil {
+			return err
+		}
 		for _, gp := range proj.ProjectGroups {
 			if err := group.AddWorkflowGroup(ctx, db, w, gp); err != nil {
 				return sdk.WrapError(err, "Cannot add group %s", gp.Group.Name)

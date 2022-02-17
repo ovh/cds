@@ -567,6 +567,9 @@ func (api *API) putWorkflowHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
+		// Update workflow do not handle workflow groups changes but only nodes groups
+		wf.Groups = nil
+
 		// Check group permissions if given for workflow and nodes
 		if err := group.CheckWorkflowGroups(ctx, tx, p, &wf, getAPIConsumer(ctx)); err != nil {
 			return err
