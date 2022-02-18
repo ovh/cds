@@ -9,6 +9,7 @@ import (
 	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -27,7 +28,7 @@ func LoadRoleGroupInWorkflow(db gorp.SqlExecutor, workflowID, groupID int64) (in
 }
 
 // AddWorkflowGroup Add permission on the given workflow for the given group
-func AddWorkflowGroup(ctx context.Context, db gorp.SqlExecutor, w *sdk.Workflow, gp sdk.GroupPermission) error {
+func AddWorkflowGroup(ctx context.Context, db gorpmapper.SqlExecutorWithTx, w *sdk.Workflow, gp sdk.GroupPermission) error {
 	link, err := LoadLinkGroupProjectForGroupIDAndProjectID(ctx, db, gp.Group.ID, w.ProjectID)
 	if err != nil {
 		if sdk.ErrorIs(err, sdk.ErrNotFound) {
@@ -48,24 +49,20 @@ func AddWorkflowGroup(ctx context.Context, db gorp.SqlExecutor, w *sdk.Workflow,
 }
 
 // UpdateWorkflowGroup  update group permission for the given group on the current workflow
-func UpdateWorkflowGroup(ctx context.Context, db gorp.SqlExecutor, w *sdk.Workflow, gp sdk.GroupPermission) error {
+func UpdateWorkflowGroup(ctx context.Context, db gorpmapper.SqlExecutorWithTx, w *sdk.Workflow, gp sdk.GroupPermission) error {
 	link, err := LoadLinkGroupProjectForGroupIDAndProjectID(ctx, db, gp.Group.ID, w.ProjectID)
 	if err != nil {
+		if sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return sdk.WithStack(sdk.ErrGroupNotFoundInProject)
+		}
 		return sdk.WrapError(err, "cannot load role for group %d in project %d", gp.Group.ID, w.ProjectID)
 	}
 	if link.Role == sdk.PermissionReadWriteExecute && gp.Permission < link.Role {
 		return sdk.WithStack(sdk.ErrWorkflowPermInsufficient)
 	}
 
-	query := `
-    UPDATE workflow_perm
-	  SET role = $1
-	  FROM project_group
-    WHERE project_group.id = workflow_perm.project_group_id
-      AND workflow_perm.workflow_id = $2
-      AND project_group.group_id = $3
-  `
-	if _, err := db.Exec(query, gp.Permission, w.ID, gp.Group.ID); err != nil {
+	query := "UPDATE workflow_perm SET role = $3 WHERE project_group_id = $1 AND workflow_id = $2"
+	if _, err := db.Exec(query, link.ID, w.ID, gp.Permission); err != nil {
 		return sdk.WithStack(err)
 	}
 
@@ -76,31 +73,39 @@ func UpdateWorkflowGroup(ctx context.Context, db gorp.SqlExecutor, w *sdk.Workfl
 		}
 	}
 
-	ok, err := checkAtLeastOneGroupWithWriteRoleOnWorkflow(db, w.ID)
-	if err != nil {
+	if err := checkAtLeastOneRWXRoleOnWorkflow(db, w.ID); err != nil {
 		return err
-	}
-	if !ok {
-		return sdk.WithStack(sdk.ErrLastGroupWithWriteRole)
 	}
 
 	return nil
 }
 
 // UpsertAllWorkflowGroups upsert all groups in a workflow
-func UpsertAllWorkflowGroups(db gorp.SqlExecutor, w *sdk.Workflow, gps []sdk.GroupPermission) error {
+func UpsertAllWorkflowGroups(ctx context.Context, db gorpmapper.SqlExecutorWithTx, w *sdk.Workflow, gps []sdk.GroupPermission) error {
+	query := "DELETE FROM workflow_perm WHERE workflow_id = $1"
+	if _, err := db.Exec(query, w.ID); err != nil {
+		return sdk.WrapError(err, "unable to remove group permissions for workflow %d", w.ID)
+	}
+
 	for _, gp := range gps {
+		link, err := LoadLinkGroupProjectForGroupIDAndProjectID(ctx, db, gp.Group.ID, w.ProjectID)
+		if err != nil {
+			if sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return sdk.WithStack(sdk.ErrGroupNotFoundInProject)
+			}
+			return sdk.WrapError(err, "cannot load role for group %d in project %d", gp.Group.ID, w.ProjectID)
+		}
+		if link.Role == sdk.PermissionReadWriteExecute && gp.Permission < link.Role {
+			return sdk.WithStack(sdk.ErrWorkflowPermInsufficient)
+		}
+
 		if err := UpsertWorkflowGroup(db, w.ProjectID, w.ID, gp); err != nil {
 			return err
 		}
 	}
 
-	ok, err := checkAtLeastOneGroupWithWriteRoleOnWorkflow(db, w.ID)
-	if err != nil {
+	if err := checkAtLeastOneRWXRoleOnWorkflow(db, w.ID); err != nil {
 		return err
-	}
-	if !ok {
-		return sdk.WithStack(sdk.ErrLastGroupWithWriteRole)
 	}
 
 	return nil
@@ -134,36 +139,25 @@ func DeleteWorkflowGroup(db gorp.SqlExecutor, w *sdk.Workflow, groupID int64, in
 		return sdk.WithStack(err)
 	}
 
-	ok, err := checkAtLeastOneGroupWithWriteRoleOnWorkflow(db, w.ID)
-	if err != nil {
+	if err := checkAtLeastOneRWXRoleOnWorkflow(db, w.ID); err != nil {
 		return err
 	}
-	if !ok {
+
+	w.Groups = append(w.Groups[:index], w.Groups[index+1:]...)
+
+	return nil
+}
+
+func checkAtLeastOneRWXRoleOnWorkflow(db gorp.SqlExecutor, wID int64) error {
+	query := `select count(project_group_id) from workflow_perm where workflow_id = $1 and role = $2`
+	nb, err := db.SelectInt(query, wID, sdk.PermissionReadWriteExecute)
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+	if nb == 0 {
 		return sdk.WithStack(sdk.ErrLastGroupWithWriteRole)
 	}
-	w.Groups = append(w.Groups[:index], w.Groups[index+1:]...)
 	return nil
-}
-
-// DeleteAllWorkflowGroups removes all group permission for the given workflow.
-func DeleteAllWorkflowGroups(db gorp.SqlExecutor, workflowID int64) error {
-	query := `
-    DELETE FROM workflow_perm
-    WHERE workflow_id = $1
-  `
-	if _, err := db.Exec(query, workflowID); err != nil {
-		return sdk.WrapError(err, "unable to remove group permissions for workflow %d", workflowID)
-	}
-	return nil
-}
-
-func checkAtLeastOneGroupWithWriteRoleOnWorkflow(db gorp.SqlExecutor, wID int64) (bool, error) {
-	query := `select count(project_group_id) from workflow_perm where workflow_id = $1 and role = $2`
-	nb, err := db.SelectInt(query, wID, 7)
-	if err != nil {
-		return false, sdk.WithStack(err)
-	}
-	return nb > 0, err
 }
 
 type LinkWorkflowGroupPermission struct {
@@ -250,4 +244,23 @@ func LoadWorkflowGroups(db gorp.SqlExecutor, workflowID int64) ([]sdk.GroupPermi
 		})
 	}
 	return wgs, nil
+}
+
+func CheckWorkflowGroups(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project, w *sdk.Workflow, consumer *sdk.AuthConsumer) error {
+	if err := LoadGroupsIntoProject(ctx, db, proj); err != nil {
+		return err
+	}
+	for i := range w.Groups {
+		if err := CheckGroupPermission(ctx, db, proj.ProjectGroups, &w.Groups[i], consumer); err != nil {
+			return err
+		}
+	}
+	for _, n := range w.WorkflowData.Array() {
+		for i := range n.Groups {
+			if err := CheckGroupPermission(ctx, db, proj.ProjectGroups, &n.Groups[i], consumer); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }

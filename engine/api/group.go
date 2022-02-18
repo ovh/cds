@@ -213,7 +213,7 @@ func (api *API) deleteGroupHandler() service.Handler {
 
 		// Send project permission changes
 		for _, pg := range projPerms {
-			event.PublishDeleteProjectPermission(ctx, &pg.Project, sdk.GroupPermission{Group: *g})
+			event.PublishDeleteProjectPermission(ctx, &pg.Project, sdk.GroupPermission{Group: *g}, getAPIConsumer(ctx))
 		}
 
 		return service.WriteJSON(w, nil, http.StatusOK)

@@ -9,7 +9,10 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
@@ -33,6 +36,9 @@ func TestImport(t *testing.T) {
 	db, cache := test.SetupPG(t)
 
 	u, _ := assets.InsertAdminUser(t, db)
+	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	require.NoError(t, err)
+
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
 
@@ -483,7 +489,7 @@ func TestImport(t *testing.T) {
 				}
 			}
 
-			if err := workflow.Import(context.TODO(), db, cache, *proj, wf, tt.args.w, u, workflow.ImportOptions{Force: tt.args.force}, nil); err != nil {
+			if err := workflow.Import(context.TODO(), db, cache, *proj, wf, tt.args.w, localConsumer, workflow.ImportOptions{Force: tt.args.force}, nil); err != nil {
 				if !tt.wantErr {
 					t.Errorf("Import() error = %v, wantErr %v", err, tt.wantErr)
 				} else {

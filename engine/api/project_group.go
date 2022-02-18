@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"net/http"
 
-	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/event"
@@ -54,7 +53,7 @@ func (api *API) deleteGroupFromProjectHandler() service.Handler {
 		event.PublishDeleteProjectPermission(ctx, proj, sdk.GroupPermission{
 			Group:      *grp,
 			Permission: link.Role,
-		})
+		}, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}
@@ -95,7 +94,7 @@ func (api *API) putGroupRoleOnProjectHandler() service.Handler {
 			return sdk.NewErrorFrom(sdk.ErrDefaultGroupPermission, "only read permission is allowed to default group")
 		}
 
-		if err := projectPermissionCheckOrganizationMatch(ctx, tx, proj, grp, data.Permission); err != nil {
+		if err := group.CheckProjectOrganizationMatch(ctx, tx, proj, grp, data.Permission); err != nil {
 			return err
 		}
 
@@ -118,7 +117,8 @@ func (api *API) putGroupRoleOnProjectHandler() service.Handler {
 			return err
 		}
 
-		if !onlyProject {
+		shouldUpdateWorkflow := newLink.Role == sdk.PermissionReadWriteExecute || !onlyProject
+		if shouldUpdateWorkflow {
 			wfList, err := workflow.LoadAllNames(tx, proj.ID)
 			if err != nil {
 				return sdk.WrapError(err, "cannot load all workflow names for project id %d key %s", proj.ID, proj.Key)
@@ -131,8 +131,7 @@ func (api *API) putGroupRoleOnProjectHandler() service.Handler {
 					}
 					return sdk.WrapError(err, "cannot load role for workflow %s with id %d and group id %d", wf.Name, wf.ID, grp.ID)
 				}
-
-				if oldLink.Role != role { // If project role and workflow role aren't sync do not update
+				if newLink.Role == role {
 					continue
 				}
 
@@ -188,7 +187,7 @@ func (api *API) postGroupInProjectHandler() service.Handler {
 			return sdk.WrapError(err, "cannot find %s", data.Group.Name)
 		}
 
-		if !isGroupAdmin(ctx, grp) {
+		if !isGroupAdmin(ctx, grp) && data.Permission > sdk.PermissionRead {
 			if isAdmin(ctx) {
 				trackSudo(ctx, w)
 			} else {
@@ -208,7 +207,7 @@ func (api *API) postGroupInProjectHandler() service.Handler {
 			return sdk.NewErrorFrom(sdk.ErrGroupExists, "group already in the project %s", proj.Name)
 		}
 
-		if err := projectPermissionCheckOrganizationMatch(ctx, tx, proj, grp, data.Permission); err != nil {
+		if err := group.CheckProjectOrganizationMatch(ctx, tx, proj, grp, data.Permission); err != nil {
 			return err
 		}
 
@@ -221,7 +220,8 @@ func (api *API) postGroupInProjectHandler() service.Handler {
 			return err
 		}
 
-		if !onlyProject {
+		shouldUpdateWorkflow := newLink.Role == sdk.PermissionReadWriteExecute || !onlyProject
+		if shouldUpdateWorkflow {
 			wfList, err := workflow.LoadAllNames(tx, proj.ID)
 			if err != nil {
 				return sdk.WrapError(err, "cannot load all workflow names for project id %d key %s", proj.ID, proj.Key)
@@ -229,7 +229,7 @@ func (api *API) postGroupInProjectHandler() service.Handler {
 			for _, wf := range wfList {
 				if err := group.UpsertWorkflowGroup(tx, proj.ID, wf.ID, sdk.GroupPermission{
 					Group:      *grp,
-					Permission: data.Permission,
+					Permission: newLink.Role,
 				}); err != nil {
 					return sdk.WrapError(err, "cannot upsert group %d in workflow %s with id %d", grp.ID, wf.Name, wf.ID)
 				}
@@ -245,28 +245,4 @@ func (api *API) postGroupInProjectHandler() service.Handler {
 
 		return service.WriteJSON(w, newGroupPermission, http.StatusOK)
 	}
-}
-
-func projectPermissionCheckOrganizationMatch(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project, grp *sdk.Group, role int) error {
-	if role > sdk.PermissionRead {
-		if len(proj.ProjectGroups) == 0 {
-			if err := group.LoadGroupsIntoProject(ctx, db, proj); err != nil {
-				return err
-			}
-		}
-		projectOrganization, err := proj.ProjectGroups.ComputeOrganization()
-		if err != nil {
-			return sdk.NewError(sdk.ErrForbidden, err)
-		}
-		if projectOrganization == "" {
-			return nil
-		}
-		if grp.Organization != projectOrganization {
-			if grp.Organization == "" {
-				return sdk.NewErrorFrom(sdk.ErrForbidden, "given group without organization don't match project organization %q", projectOrganization)
-			}
-			return sdk.NewErrorFrom(sdk.ErrForbidden, "given group with organization %q don't match project organization %q", grp.Organization, projectOrganization)
-		}
-	}
-	return nil
 }

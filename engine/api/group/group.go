@@ -29,3 +29,11 @@ func CheckUserInDefaultGroup(ctx context.Context, db gorpmapper.SqlExecutorWithT
 
 	return nil
 }
+
+// For given consumer check that it is group admin, member should be loaded
+// on group and worker should be loaded on consumer if exists
+func IsConsumerGroupAdmin(g *sdk.Group, c *sdk.AuthConsumer) bool {
+	member := g.IsMember(c.GetGroupIDs())
+	admin := g.IsAdmin(*c.AuthentifiedUser)
+	return member && admin && c.Worker == nil
+}

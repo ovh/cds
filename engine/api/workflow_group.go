@@ -55,7 +55,7 @@ func (api *API) deleteWorkflowGroupHandler() service.Handler {
 		defer tx.Rollback() // nolint
 
 		if err := group.DeleteWorkflowGroup(tx, wf, oldGp.Group.ID, groupIndex); err != nil {
-			return sdk.WrapError(err, "cannot delete group")
+			return err
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -130,7 +130,7 @@ func (api *API) putWorkflowGroupHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		if err := projectPermissionCheckOrganizationMatch(ctx, tx, proj, &gp.Group, gp.Permission); err != nil {
+		if err := group.CheckProjectOrganizationMatch(ctx, tx, proj, &gp.Group, gp.Permission); err != nil {
 			return err
 		}
 
@@ -200,7 +200,7 @@ func (api *API) postWorkflowGroupHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		if err := projectPermissionCheckOrganizationMatch(ctx, tx, proj, &gp.Group, gp.Permission); err != nil {
+		if err := group.CheckProjectOrganizationMatch(ctx, tx, proj, &gp.Group, gp.Permission); err != nil {
 			return err
 		}
 

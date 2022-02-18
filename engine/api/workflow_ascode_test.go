@@ -20,6 +20,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -974,6 +975,9 @@ hooks:
 	proj := assets.InsertTestProject(t, db, api.Cache, prjKey, prjKey)
 	u, _ := assets.InsertLambdaUser(t, db, &proj.ProjectGroups[0].Group)
 
+	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	require.NoError(t, err)
+
 	vcsServer := sdk.ProjectVCSServerLink{
 		ProjectID: proj.ID,
 		Name:      "github",
@@ -1203,7 +1207,7 @@ hooks:
 	// Import Workflow
 	ew, err := exportentities.UnmarshalWorkflow([]byte(wf), exportentities.FormatYAML)
 	require.NoError(t, err)
-	workflowInserted, _, err := workflow.ParseAndImport(context.TODO(), db, api.Cache, *proj, nil, ew, u, workflow.ImportOptions{Force: true, FromRepository: "https://github.com/fsamin/go-repo.git"})
+	workflowInserted, _, err := workflow.ParseAndImport(context.TODO(), db, api.Cache, *proj, nil, ew, localConsumer, workflow.ImportOptions{Force: true, FromRepository: "https://github.com/fsamin/go-repo.git"})
 	require.NoError(t, err)
 	require.Equal(t, workflowInserted.FromRepository, "https://github.com/fsamin/go-repo.git")
 

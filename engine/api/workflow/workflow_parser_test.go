@@ -119,6 +119,8 @@ func TestParseAndImportFromRepository(t *testing.T) {
 	db, cache := test.SetupPG(t)
 
 	u, _ := assets.InsertAdminUser(t, db)
+	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	require.NoError(t, err)
 
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, pkey, pkey)
@@ -260,7 +262,7 @@ func TestParseAndImportFromRepository(t *testing.T) {
 		},
 	}
 
-	_, _, err := workflow.ParseAndImport(context.TODO(), db, cache, *proj, nil, input, u, workflow.ImportOptions{Force: true, FromRepository: "foo/myrepo"})
+	_, _, err = workflow.ParseAndImport(context.TODO(), db, cache, *proj, nil, input, localConsumer, workflow.ImportOptions{Force: true, FromRepository: "foo/myrepo"})
 	assert.NoError(t, err)
 
 	w, errW := workflow.Load(context.TODO(), db, cache, *proj, input.Name, workflow.LoadOptions{})

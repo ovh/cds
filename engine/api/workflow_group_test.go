@@ -12,7 +12,6 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
@@ -379,7 +378,7 @@ func Test_putWorkflowGroupHandler_UserShouldBeGroupAdminForRWAndRWX(t *testing.T
 		Group:      *g3,
 	}))
 
-	// User cannot set RX permission for g3 on workflow because not admin of g3
+	// User cannot set RWX permission for g3 on workflow because not admin of g3
 	uri := router.GetRoute(http.MethodPut, api.putWorkflowGroupHandler, map[string]string{
 		"key":              proj.Key,
 		"permWorkflowName": w.Name,
@@ -808,145 +807,93 @@ func Test_PermissionOnWorkflowInferiorOfProject(t *testing.T) {
 	require.Equal(t, 403, w.Code)
 }
 
-// Test_PermissionOnWorkflowWithRestrictionOnNode Useful to test when we add permission on a workflow node
-func Test_PermissionOnWorkflowWithRestrictionOnNode(t *testing.T) {
+// Test_postWorkflowRunHandler_WithRestrictionOnNode useful to test workflow run with permission on a node
+func Test_postWorkflowRunHandler_WithRestrictionOnNode(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
-	u, pass := assets.InsertLambdaUser(t, db, &proj.ProjectGroups[0].Group)
-	assets.SetUserGroupAdmin(t, db, proj.ProjectGroups[0].Group.ID, u.ID)
 
-	// Add a new group on project to let us update the previous group permission to READ (because we must have at least one RW permission on project)
-	newGr := assets.InsertTestGroup(t, db, sdk.RandomString(10))
+	g1 := proj.ProjectGroups[0].Group
+	g2 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
+
+	// Set g2 to RX on project
 	require.NoError(t, group.InsertLinkGroupProject(context.TODO(), db, &group.LinkGroupProject{
-		GroupID:   newGr.ID,
+		GroupID:   g2.ID,
 		ProjectID: proj.ID,
-		Role:      sdk.PermissionReadWriteExecute,
+		Role:      sdk.PermissionReadExecute,
 	}))
-	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), db, &group.LinkGroupUser{
-		GroupID:            newGr.ID,
-		AuthentifiedUserID: u.ID,
-		Admin:              true,
-	}))
-	oldLink, err := group.LoadLinkGroupProjectForGroupIDAndProjectID(context.TODO(), db, proj.ProjectGroups[0].Group.ID, proj.ID)
-	require.NoError(t, err)
-	newLink := *oldLink
-	newLink.Role = sdk.PermissionRead
-	require.NoError(t, group.UpdateLinkGroupProject(db, &newLink))
 
-	//First pipeline
-	pip := sdk.Pipeline{
-		ProjectID:  proj.ID,
-		ProjectKey: proj.Key,
-		Name:       "pip1",
-	}
-	require.NoError(t, pipeline.InsertPipeline(api.mustDB(), &pip))
+	// Create user 1 that is admin of g1 and g2
+	u1, jwtLambda1 := assets.InsertLambdaUser(t, db, &g1)
+	assets.SetUserGroupAdmin(t, db, g1.ID, u1.ID)
+	// Create user 2 that is admin of g2
+	u2, jwtLambda2 := assets.InsertLambdaUser(t, db, g2)
+	assets.SetUserGroupAdmin(t, db, g2.ID, u2.ID)
 
-	newWf := sdk.Workflow{
-		Name: sdk.RandomString(10),
-		WorkflowData: sdk.WorkflowData{
-			Node: sdk.Node{
-				Name: "root",
-				Type: sdk.NodeTypePipeline,
-				Context: &sdk.NodeContext{
-					PipelineID: pip.ID,
-				},
-			},
-		},
-		ProjectID:  proj.ID,
-		ProjectKey: proj.Key,
-	}
+	// Insert workflow that will inherit from project permission
+	w := assets.InsertTestWorkflow(t, db, api.Cache, proj, sdk.RandomString(10))
 
-	//Prepare request to create workflow
-	vars := map[string]string{
-		"permProjectKey": proj.Key,
-	}
-	uri := router.GetRoute("POST", api.postWorkflowHandler, vars)
-	require.NotEmpty(t, uri)
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, &newWf)
-	//Do the request
-	w := httptest.NewRecorder()
-	router.Mux.ServeHTTP(w, req)
-	require.Equal(t, 201, w.Code)
-
-	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &newWf))
-	require.NotEqual(t, 0, newWf.ID)
-
-	// Update workflow group to change READ to RWX and get permission on project in READ and permission on workflow in RWX to test edition and run
-	vars = map[string]string{
+	// Update workflow to add RX node permission only for g1
+	w.WorkflowData.Node.Groups = []sdk.GroupPermission{{
+		Group:      g1,
+		Permission: sdk.PermissionReadExecute,
+	}}
+	uri := router.GetRoute(http.MethodPut, api.putWorkflowHandler, map[string]string{
 		"key":              proj.Key,
-		"permWorkflowName": newWf.Name,
-		"groupName":        proj.ProjectGroups[0].Group.Name,
-	}
-	uri = router.GetRoute("PUT", api.putWorkflowGroupHandler, vars)
+		"permWorkflowName": w.Name,
+	})
 	require.NotEmpty(t, uri)
+	req := assets.NewJWTAuthentifiedRequest(t, jwtLambda1, http.MethodPut, uri, &w)
+	rec := httptest.NewRecorder()
+	router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusOK, rec.Code)
+	var workflowResult sdk.Workflow
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &workflowResult))
+	require.Len(t, workflowResult.Groups, 2)
+	require.NotNil(t, workflowResult.Groups.GetByGroupID(g1.ID))
+	require.Equal(t, sdk.PermissionReadWriteExecute, workflowResult.Groups.GetByGroupID(g1.ID).Permission)
+	require.NotNil(t, workflowResult.Groups.GetByGroupID(g2.ID))
+	require.Equal(t, sdk.PermissionReadExecute, workflowResult.Groups.GetByGroupID(g2.ID).Permission)
+	require.Len(t, workflowResult.WorkflowData.Node.Groups, 1)
+	require.NotNil(t, workflowResult.WorkflowData.Node.Groups.GetByGroupID(g1.ID))
+	require.Equal(t, sdk.PermissionReadExecute, workflowResult.WorkflowData.Node.Groups.GetByGroupID(g1.ID).Permission)
 
-	newGp := sdk.GroupPermission{
-		Group:      proj.ProjectGroups[0].Group,
-		Permission: sdk.PermissionReadWriteExecute,
-	}
-	req = assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, &newGp)
-	//Do the request
-	w = httptest.NewRecorder()
-	router.Mux.ServeHTTP(w, req)
-	require.Equal(t, 200, w.Code)
-
-	require.NoError(t, group.DeleteLinkGroupUserForGroupIDAndUserID(db, proj.ProjectGroups[0].Group.ID, u.ID))
-
-	proj2, err := project.Load(context.TODO(), api.mustDB(), proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
-	require.NoError(t, err)
-	wfLoaded, err := workflow.Load(context.Background(), db, api.Cache, *proj2, newWf.Name, workflow.LoadOptions{DeepPipeline: true})
-	require.NoError(t, err)
-	require.Equal(t, 2, len(wfLoaded.Groups))
-
-	// Try to update workflow
-	vars = map[string]string{
+	// User 1 should be able to run the workflow
+	uri = router.GetRoute(http.MethodPost, api.postWorkflowRunHandler, map[string]string{
 		"key":              proj.Key,
-		"permWorkflowName": wfLoaded.Name,
-	}
-	uri = router.GetRoute("PUT", api.putWorkflowHandler, vars)
-	test.NotEmpty(t, uri)
-
-	wfLoaded.HistoryLength = 300
-	wfLoaded.WorkflowData.Node.Groups = []sdk.GroupPermission{
-		{
-			Group:      proj.ProjectGroups[0].Group,
-			Permission: sdk.PermissionReadExecute,
-		},
-	}
-	req = assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, &wfLoaded)
-	//Do the request
-	w = httptest.NewRecorder()
-	router.Mux.ServeHTTP(w, req)
-	require.Equal(t, 200, w.Code)
-
-	wfLoaded, err = workflow.Load(context.Background(), db, api.Cache, *proj2, newWf.Name, workflow.LoadOptions{})
-	require.NoError(t, err)
-	require.Equal(t, 2, len(wfLoaded.Groups))
-	require.Equal(t, int64(300), wfLoaded.HistoryLength)
-
-	// Try to run workflow
-	vars = map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": wfLoaded.Name,
-	}
-	uri = router.GetRoute("POST", api.postWorkflowRunHandler, vars)
+		"permWorkflowName": w.Name,
+	})
 	require.NotEmpty(t, uri)
-
-	opts := sdk.WorkflowRunPostHandlerOption{
-		FromNodeIDs: []int64{wfLoaded.WorkflowData.Node.ID},
+	req = assets.NewJWTAuthentifiedRequest(t, jwtLambda1, http.MethodPost, uri, &sdk.WorkflowRunPostHandlerOption{
+		FromNodeIDs: []int64{w.WorkflowData.Node.ID},
 		Manual: &sdk.WorkflowNodeRunManual{
-			Username: u.Username,
-			Fullname: u.Fullname,
-			Email:    u.GetEmail(),
+			Username: u1.Username,
+			Fullname: u1.Fullname,
+			Email:    u1.GetEmail(),
 		},
-	}
-	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, &opts)
-	//Do the request
-	w = httptest.NewRecorder()
-	router.Mux.ServeHTTP(w, req)
-	require.Equal(t, 403, w.Code)
+	})
+	rec = httptest.NewRecorder()
+	router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusAccepted, rec.Code)
+
+	// User 2 should not be able to run the workflow
+	uri = router.GetRoute(http.MethodPost, api.postWorkflowRunHandler, map[string]string{
+		"key":              proj.Key,
+		"permWorkflowName": w.Name,
+	})
+	require.NotEmpty(t, uri)
+	req = assets.NewJWTAuthentifiedRequest(t, jwtLambda2, http.MethodPost, uri, &sdk.WorkflowRunPostHandlerOption{
+		FromNodeIDs: []int64{w.WorkflowData.Node.ID},
+		Manual: &sdk.WorkflowNodeRunManual{
+			Username: u2.Username,
+			Fullname: u2.Fullname,
+			Email:    u2.GetEmail(),
+		},
+	})
+	rec = httptest.NewRecorder()
+	router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusForbidden, rec.Code)
 	var wfError sdk.Error
-	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &wfError))
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &wfError))
 	require.Equal(t, "you don't have execution right", wfError.Message)
 }

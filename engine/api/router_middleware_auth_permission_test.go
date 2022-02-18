@@ -708,10 +708,10 @@ func Test_checkWorkflowPermissionsByUser(t *testing.T) {
 		}
 
 		for groupName, permLevel := range tt.setup.WorkflowGroupPermissions {
-			g, err := group.LoadByName(context.TODO(), api.mustDB(), groupName+suffix, group.LoadOptions.WithMembers)
+			g, err := group.LoadByName(context.TODO(), db, groupName+suffix, group.LoadOptions.WithMembers)
 			require.NoError(t, err)
 
-			require.NoError(t, group.AddWorkflowGroup(context.TODO(), api.mustDB(), wrkflw, sdk.GroupPermission{
+			require.NoError(t, group.AddWorkflowGroup(context.TODO(), db, wrkflw, sdk.GroupPermission{
 				Group:      *g,
 				Permission: permLevel,
 			}))
