@@ -7,6 +7,9 @@ additional_default_config:
   version:
     type: string
     value: "{{.cds.version}}"
+  alternative.config:
+    type: text
+    value: ""
   deployment.token:
     type: password
   retry.max:
