@@ -26,6 +26,7 @@ const (
 	ArtifactoryConfigPromotionLowMaturity  = "promotion.maturity.low"
 	ArtifactoryConfigPromotionHighMaturity = "promotion.maturity.high"
 	ArtifactoryConfigBuildInfoPrefix       = "build.info.prefix"
+	ArtifactoryConfigRepositoryPrefix      = "repo.prefix"
 )
 
 // Here are the default plateform models
@@ -156,6 +157,9 @@ var (
 				Type: IntegrationConfigTypeString,
 			},
 			ArtifactoryConfigBuildInfoPrefix: IntegrationConfigValue{
+				Type: IntegrationConfigTypeString,
+			},
+			ArtifactoryConfigRepositoryPrefix: IntegrationConfigValue{
 				Type: IntegrationConfigTypeString,
 			},
 		},
