@@ -121,10 +121,12 @@ const deployData = `{
 func (e *arsenalDeploymentPlugin) Run(ctx context.Context, q *integrationplugin.RunQuery) (*integrationplugin.RunResult, error) {
 	// Read and check inputs
 	var (
-		application     = getStringOption(q, "cds.application")
-		arsenalHost     = getStringOption(q, "cds.integration.deployment.host")
-		deploymentToken = getStringOption(q, "cds.integration.deployment.deployment.token", "cds.integration.deployment.token")
-		alternative     = getStringOption(q, "cds.integration.deployment.alternative.config")
+		application       = getStringOption(q, "cds.application")
+		workflowRunNumber = getStringOption(q, "cds.run.number")
+		workflowNodeID    = getStringOption(q, "cds.node.id")
+		arsenalHost       = getStringOption(q, "cds.integration.deployment.host")
+		deploymentToken   = getStringOption(q, "cds.integration.deployment.deployment.token", "cds.integration.deployment.token")
+		alternative       = getStringOption(q, "cds.integration.deployment.alternative.config")
 	)
 	maxRetry, err := getIntOption(q, "cds.integration.deployment.retry.max")
 	if err != nil {
@@ -165,8 +167,17 @@ func (e *arsenalDeploymentPlugin) Run(ctx context.Context, q *integrationplugin.
 				return fail("failed to unmarshal alternative config: %v", err)
 			}
 
+			// Add references for later processing.
+			if altConfig.Options == nil {
+				altConfig.Options = make(map[string]interface{})
+			}
+			altConfig.Options["cds_run"] = workflowRunNumber
+			altConfig.Options["cds_node"] = workflowNodeID
+			altConfig.Options["cds_application"] = application
+
 			// Create alternative on /alternative
-			fmt.Printf("Creating alternative %s on Arsenal...\n", altConfig.Name)
+			rawAltConfig, _ := json.MarshalIndent(altConfig, "", "  ")
+			fmt.Printf("Creating/Updating alternative: %s\n", rawAltConfig)
 			if err = arsenalClient.upsertAlternative(altConfig); err != nil {
 				return failErr(err)
 			}
