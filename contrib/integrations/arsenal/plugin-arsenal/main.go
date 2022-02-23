@@ -123,7 +123,6 @@ func (e *arsenalDeploymentPlugin) Run(ctx context.Context, q *integrationplugin.
 	var (
 		application       = getStringOption(q, "cds.application")
 		workflowRunNumber = getStringOption(q, "cds.run.number")
-		workflowNodeID    = getStringOption(q, "cds.node.id")
 		arsenalHost       = getStringOption(q, "cds.integration.deployment.host")
 		deploymentToken   = getStringOption(q, "cds.integration.deployment.deployment.token", "cds.integration.deployment.token")
 		alternative       = getStringOption(q, "cds.integration.deployment.alternative.config")
@@ -172,7 +171,6 @@ func (e *arsenalDeploymentPlugin) Run(ctx context.Context, q *integrationplugin.
 				altConfig.Options = make(map[string]interface{})
 			}
 			altConfig.Options["cds_run"] = workflowRunNumber
-			altConfig.Options["cds_node"] = workflowNodeID
 			altConfig.Options["cds_application"] = application
 
 			// Create alternative on /alternative
