@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, Output } from '@angular/core';
-import { Group, GroupPermission } from 'app/model/group.model';
+import { Group, GroupPermission, SharedInfraGroupName } from 'app/model/group.model';
 import { GroupService } from 'app/service/group/group.service';
 import { PermissionEvent } from 'app/shared/permission/permission.event.model';
 import { PermissionService } from 'app/shared/permission/permission.service';
@@ -43,7 +43,7 @@ export class PermissionFormComponent {
 
     loadGroups() {
         this._groupService.getAll().pipe(first(), finalize(() => this._cd.markForCheck())).subscribe(groups => {
-            this.groupList = groups;
+            this.groupList = groups.filter(g => g.name !== SharedInfraGroupName);
             this.ready = true;
         });
     }
