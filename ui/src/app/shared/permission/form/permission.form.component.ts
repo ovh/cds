@@ -16,6 +16,7 @@ export class PermissionFormComponent {
     permissionList: {};
     groupList: Group[];
     newGroupPermission: GroupPermission;
+    manual: boolean;
 
     @Input() loading = false;
 
@@ -24,7 +25,11 @@ export class PermissionFormComponent {
 
     @Output() createGroupPermissionEvent = new EventEmitter<PermissionEvent>();
 
-    constructor(_permService: PermissionService, private _groupService: GroupService, private _cd: ChangeDetectorRef) {
+    constructor(
+        _permService: PermissionService,
+        private _groupService: GroupService,
+        private _cd: ChangeDetectorRef
+    ) {
         this.newGroupPermission = new GroupPermission();
         this.permissionList = _permService.getPermissions();
         this.loadGroups();
@@ -41,5 +46,17 @@ export class PermissionFormComponent {
             this.groupList = groups;
             this.ready = true;
         });
+    }
+
+    switchManualInput(): void {
+        this.manual = !this.manual;
+        this.newGroupPermission.group.name = '';
+        this._cd.markForCheck();
+    }
+
+    selectGroup(value: string): void {
+        if (this.manual) { return; }
+        this.newGroupPermission.group.name = value;
+        this._cd.markForCheck();
     }
 }
