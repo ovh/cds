@@ -1,12 +1,15 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"strconv"
-	"strings"
+	"text/template"
 	"time"
 
 	"github.com/golang/protobuf/ptypes/empty"
@@ -44,6 +47,8 @@ Arsenal integration must configured as following
 	additional_default_config:
 		version:
 			type: string
+		alternative.config:
+			type: text
 		deployment.token:
 			type: password
 		retry.max:
@@ -54,6 +59,36 @@ Arsenal integration must configured as following
 			value 5
 	plugin: arsenal-deployment-plugin
 */
+
+// alternativeConfig represents an alternative to a deployment.
+type alternativeConfig struct {
+	Name    string                 `json:"name"`
+	From    string                 `json:"from,omitempty"`
+	Config  map[string]interface{} `json:"config"`
+	Options map[string]interface{} `json:"options,omitempty"`
+}
+
+// deployRequest represents a deploy request to arsenal.
+type deployRequest struct {
+	Version     string            `json:"version"`
+	Alternative string            `json:"alternative,omitempty"`
+	Metadata    map[string]string `json:"metadata"`
+}
+
+// String returns a string representation of a deploy request. Omits metadata.
+func (r *deployRequest) String() string {
+	s := "Version: " + r.Version
+	if r.Alternative != "" {
+		s += "; Alternative: " + r.Alternative
+	}
+	return s
+}
+
+// followupState is the followup status of a deploy request.
+type followupState struct {
+	Done     bool    `json:"done"`
+	Progress float64 `json:"progress"`
+}
 
 type arsenalDeploymentPlugin struct {
 	integrationplugin.Common
@@ -73,130 +108,296 @@ const deployData = `{
 	"metadata": {
 		"CDS_APPLICATION": "{{.cds.application}}",
 		"CDS_RUN": "{{.cds.run}}",
-		"CDS_ENVIRONMENT": "{{.cds.integration}}",
+		"CDS_ENVIRONMENT": "{{.cds.integration.deployment}}",
 		"CDS_GIT_BRANCH": "{{.git.branch}}",
 		"CDS_WORKFLOW": "{{.cds.workflow}}",
 		"CDS_PROJECT": "{{.cds.project}}",
 		"CDS_VERSION": "{{.cds.version}}",
-		"CDS_SEMVER": "{{.cds.semver}}",
 		"CDS_GIT_REPOSITORY": "{{.git.repository}}",
 		"CDS_GIT_HASH": "{{.git.hash}}"
 	}
 }`
 
 func (e *arsenalDeploymentPlugin) Run(ctx context.Context, q *integrationplugin.RunQuery) (*integrationplugin.RunResult, error) {
-	var application = q.GetOptions()["cds.application"]
-	var arsenalHost = q.GetOptions()["cds.integration.deployment.host"]
-	var arsenalDeploymentToken = q.GetOptions()["cds.integration.deployment.deployment.token"]
-	if arsenalDeploymentToken == "" {
-		arsenalDeploymentToken = q.GetOptions()["cds.integration.deployment.token"]
-	}
-	var maxRetryStr = q.GetOptions()["cds.integration.deployment.retry.max"]
-	var delayRetryStr = q.GetOptions()["cds.integration.deployment.retry.delay"]
-	maxRetry, err := strconv.Atoi(maxRetryStr)
+	// Read and check inputs
+	var (
+		application       = getStringOption(q, "cds.application")
+		workflowRunNumber = getStringOption(q, "cds.run.number")
+		arsenalHost       = getStringOption(q, "cds.integration.deployment.host")
+		deploymentToken   = getStringOption(q, "cds.integration.deployment.deployment.token", "cds.integration.deployment.token")
+		alternative       = getStringOption(q, "cds.integration.deployment.alternative.config")
+	)
+	maxRetry, err := getIntOption(q, "cds.integration.deployment.retry.max")
 	if err != nil {
 		fmt.Printf("Error parsing cds.integration.deployment.retry.max: %v. Default value will be used\n", err)
 		maxRetry = 10
 	}
-	delayRetry, err := strconv.Atoi(delayRetryStr)
+	delayRetry, err := getIntOption(q, "cds.integration.deployment.retry.delay")
 	if err != nil {
 		fmt.Printf("Error parsing cds.integration.deployment.retry.max: %v. Default value will be used\n", err)
 		delayRetry = 5
 	}
+	if arsenalHost == "" {
+		return fail("missing arsenal host")
+	}
+	if deploymentToken == "" {
+		return fail("missing arsenal deployment token")
+	}
 
-	deployData, err := interpolate.Do(deployData, q.GetOptions())
+	arsenalClient := newArsenalClient(arsenalHost, deploymentToken)
+
+	// Read alternative if configured.
+	var altConfig *alternativeConfig
+	if len(alternative) > 0 {
+		// Resolve alternative.
+		altTmpl, err := template.New("alternative").Delims("[[", "]]").Funcs(interpolate.InterpolateHelperFuncs).Parse(alternative)
+		if err != nil {
+			return fail("failed to resolve alternative config: %v\n", err)
+		}
+		var altBuf bytes.Buffer
+		if err = altTmpl.Execute(&altBuf, q.GetOptions()); err != nil {
+			return fail("failed to interpolate alternative config: %v", err)
+		}
+
+		// Create alternative if anything was resolved.
+		if altBuf.Len() > 0 {
+			if err = json.Unmarshal(altBuf.Bytes(), &altConfig); err != nil {
+				fmt.Println("Resolved alternative:", altBuf.String())
+				return fail("failed to unmarshal alternative config: %v", err)
+			}
+
+			// Add references for later processing.
+			if altConfig.Options == nil {
+				altConfig.Options = make(map[string]interface{})
+			}
+			altConfig.Options["cds_run"] = workflowRunNumber
+			altConfig.Options["cds_application"] = application
+
+			// Create alternative on /alternative
+			rawAltConfig, _ := json.MarshalIndent(altConfig, "", "  ")
+			fmt.Printf("Creating/Updating alternative: %s\n", rawAltConfig)
+			if err = arsenalClient.upsertAlternative(altConfig); err != nil {
+				return failErr(err)
+			}
+		}
+	}
+
+	// Build deploy request
+	deployData, err := interpolate.Do(string(deployData), q.GetOptions())
 	if err != nil {
-		return fail("Error: unable to interpolate data: %v. Please check you integration configuration\n", err)
+		return fail("unable to interpolate data: %v\n", err)
 	}
-
-	httpClient := cdsclient.NewHTTPClient(60*time.Second, false)
-
-	// Prepare the request
-	req, err := http.NewRequest(http.MethodPost, arsenalHost+"/deploy", strings.NewReader(deployData))
+	deployReq := &deployRequest{}
+	err = json.Unmarshal([]byte(deployData), deployReq)
 	if err != nil {
-		return fail("Error: unable to prepare request on %s/deploy: %v", arsenalHost, err)
+		return fail("unable to create deploy request: %v\n", err)
 	}
-	req.Header.Add("X-Arsenal-Deployment-Token", arsenalDeploymentToken)
+	if altConfig != nil {
+		deployReq.Alternative = altConfig.Name
+	}
 
-	fmt.Printf("Deploying %s on Arsenal at %s...\n", application, arsenalHost)
-
-	// Do the request
-	res, err := httpClient.Do(req)
+	// Do deploy request
+	fmt.Printf("Deploying %s (%s) on Arsenal at %s...\n", application, deployReq, arsenalHost)
+	followUpToken, err := arsenalClient.deploy(deployReq)
 	if err != nil {
-		return fail("Error: Post %s/deploy failed: %v. Please check you integration configuration", arsenalHost, err)
-	}
-	defer res.Body.Close()
-
-	//Check the result
-	body, _ := io.ReadAll(res.Body)
-	if res.StatusCode != http.StatusOK {
-		fmt.Println("Body: ", string(body))
-		return fail("deployment failure (HTTP Status Code: %d)", res.StatusCode)
+		return fail("deploy failed: %v", err)
 	}
 
-	//Read the followUp token
-	bodyResult := map[string]string{}
-	if err := sdk.JSONUnmarshal(body, &bodyResult); err != nil {
-		return fail("Error: Unable to read body: %v", err)
-	}
-	var followUpToken = bodyResult["followup_token"]
-
-	//Retry loop to follow the deployment status
-	var retry = 0
+	// Retry loop to follow the deployment status
+	var retry int
 	var success bool
+	var lastProgress float64
 	for retry < maxRetry {
 		if retry > 0 {
-			fmt.Printf("Retrying in %s seconds...\n", delayRetryStr)
 			time.Sleep(time.Duration(delayRetry) * time.Second)
 		}
 
 		fmt.Println("Fetching followup status on deployment...")
-		req, err := http.NewRequest(http.MethodGet, arsenalHost+"/follow", nil)
+		state, err := arsenalClient.follow(followUpToken)
 		if err != nil {
-			return fail("Error: unable to prepare request on %s/follow: %v", arsenalHost, err)
+			return failErr(err)
 		}
-		req.Header.Add("X-Arsenal-Followup-Token", followUpToken)
-
-		res, err := httpClient.Do(req)
-		if err != nil {
-			return fail("Deployment failed: %v. Please check you integration configuration", err)
-		}
-		defer res.Body.Close()
-
-		body, _ := io.ReadAll(res.Body)
-		if res.StatusCode == http.StatusServiceUnavailable {
+		if state == nil {
 			retry++
 			fmt.Println("Arsenal service unavailable, waiting for next retry")
 			continue
 		}
-		if res.StatusCode != http.StatusOK {
-			fmt.Println("Body: ", string(body))
-			return fail("deployment failure")
-		}
-
-		//Read the followUp token
-		bodyResult := map[string]interface{}{}
-		if err := sdk.JSONUnmarshal(body, &bodyResult); err != nil {
-			return fail("Error: Unable to read body: %v", err)
-		}
-
-		doneB, doneIsBool := bodyResult["done"].(bool)
-		doneS, doneIsString := bodyResult["done"].(string)
-		if (doneIsBool && doneB) || (doneIsString && doneS == "true") {
+		if state.Done {
 			success = true
 			break
-		} else {
-			fmt.Println("Not done yet")
 		}
+		// If the progress is back to 0 after subsequent call to follows, it means
+		// it was probably cancelled on the platform side.
+		if state.Progress < lastProgress && state.Progress == 0 {
+			fmt.Println("Deployment cancelled.")
+			break
+		}
+		lastProgress = state.Progress
+
+		fmt.Printf("Deployment still in progress (%.1f%%)...\n", lastProgress*100)
 		retry++
 	}
 
 	if !success {
-		return fail("deployment failed")
+		return fail("deployment failed after %d retries", retry)
 	}
 
+	fmt.Println("Deployment succeeded.")
 	return &integrationplugin.RunResult{
 		Status: sdk.StatusSuccess,
+	}, nil
+}
+
+const (
+	arsenalDeploymentTokenHeader = "X-Arsenal-Deployment-Token"
+	arsenalFollowupTokenHeader   = "X-Arsenal-Followup-Token"
+)
+
+// arsenalClient is a helper client to call arsenal public API.
+type arsenalClient struct {
+	client          *http.Client
+	host            string
+	deploymentToken string
+}
+
+func newArsenalClient(host, deploymentToken string) *arsenalClient {
+	return &arsenalClient{
+		client:          cdsclient.NewHTTPClient(60*time.Second, false),
+		host:            host,
+		deploymentToken: deploymentToken,
+	}
+}
+
+// deploy makes a deploy request and returns a followup token if successful.
+func (ac *arsenalClient) deploy(deployRequest *deployRequest) (string, error) {
+	req, err := ac.newRequest(http.MethodPost, "/deploy", deployRequest)
+	if err != nil {
+		return "", err
+	}
+	req.Header.Add(arsenalDeploymentTokenHeader, ac.deploymentToken)
+
+	deployResult := make(map[string]string)
+	statusCode, rawBody, err := ac.doRequest(req, &deployResult)
+	if err != nil {
+		return "", err
+	}
+	if statusCode != http.StatusOK {
+		if statusCode >= http.StatusBadRequest && statusCode < http.StatusInternalServerError {
+			return "", fmt.Errorf("deploy request failed (HTTP status %d): %s", statusCode, rawBody)
+		}
+		return "", fmt.Errorf("cannot reach Arsenal service (HTTP status %d)", statusCode)
+	}
+	token, exists := deployResult["followup_token"]
+	if !exists {
+		return "", fmt.Errorf("no followup token returned")
+	}
+	return token, nil
+}
+
+// follow makes a followup request with a followup token.
+func (ac *arsenalClient) follow(followupToken string) (*followupState, error) {
+	req, err := ac.newRequest(http.MethodGet, "/follow", nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create follow request: %w", err)
+	}
+	req.Header.Add(arsenalFollowupTokenHeader, followupToken)
+
+	state := &followupState{}
+	statusCode, rawBody, err := ac.doRequest(req, state)
+	if err != nil {
+		return nil, err
+	}
+
+	if statusCode != http.StatusOK {
+		if statusCode == http.StatusServiceUnavailable {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed follow request (HTTP status %d): %s", statusCode, rawBody)
+	}
+	return state, nil
+}
+
+// upsertAlternative creates or updates an alternative.
+func (ac *arsenalClient) upsertAlternative(altConfig *alternativeConfig) error {
+	req, err := ac.newRequest(http.MethodPost, "/alternative", altConfig)
+	if err != nil {
+		return fmt.Errorf("failed to create upsert alternative request: %w", err)
+	}
+	req.Header.Add(arsenalDeploymentTokenHeader, ac.deploymentToken)
+
+	statusCode, rawBody, err := ac.doRequest(req, nil)
+	if err != nil {
+		return err
+	}
+	if statusCode != http.StatusOK {
+		if statusCode >= http.StatusBadRequest && statusCode < http.StatusInternalServerError {
+			return fmt.Errorf("failed upsert alternative request (HTTP status %d): %s", statusCode, rawBody)
+		}
+		return fmt.Errorf("cannot reach Arsenal service (HTTP status %d)", statusCode)
+	}
+	return nil
+}
+
+func (ac *arsenalClient) newRequest(method, uri string, obj interface{}) (*http.Request, error) {
+	var body io.ReadCloser
+	if obj != nil {
+		objData, err := json.Marshal(obj)
+		if err != nil {
+			return nil, fmt.Errorf("unable to encode request body: %w", err)
+		}
+		body = ioutil.NopCloser(bytes.NewReader(objData))
+	}
+
+	req, err := http.NewRequest(method, ac.host+uri, body)
+	if err != nil {
+		return nil, fmt.Errorf("unable to prepare request on %s %s: %v", method, uri, err)
+	}
+	return req, nil
+}
+
+func (ac *arsenalClient) doRequest(req *http.Request, respObject interface{}) (int, []byte, error) {
+	resp, err := ac.client.Do(req)
+	if err != nil {
+		return 0, nil, fmt.Errorf("%s %s failed: %w", req.Method, req.URL, err)
+	}
+	defer resp.Body.Close()
+
+	rawBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return resp.StatusCode, nil, fmt.Errorf("failed to read body from %s %s: %w", req.Method, req.URL, err)
+	}
+	if resp.StatusCode == http.StatusOK && respObject != nil {
+		err = sdk.JSONUnmarshal(rawBody, respObject)
+		if err != nil {
+			return resp.StatusCode, nil, fmt.Errorf("failed to decode body from %s %s: %w", req.Method, req.URL, err)
+		}
+	}
+
+	return resp.StatusCode, rawBody, nil
+}
+
+func getStringOption(q *integrationplugin.RunQuery, keys ...string) string {
+	for _, k := range keys {
+		if v, exists := q.GetOptions()[k]; exists {
+			return v
+		}
+	}
+	return ""
+}
+
+func getIntOption(q *integrationplugin.RunQuery, keys ...string) (int, error) {
+	return strconv.Atoi(getStringOption(q, keys...))
+}
+
+func fail(format string, args ...interface{}) (*integrationplugin.RunResult, error) {
+	return failErr(fmt.Errorf(format, args...))
+}
+
+func failErr(err error) (*integrationplugin.RunResult, error) {
+	fmt.Println("Error:", err)
+	return &integrationplugin.RunResult{
+		Details: err.Error(),
+		Status:  sdk.StatusFail,
 	}, nil
 }
 
@@ -205,13 +406,4 @@ func main() {
 	if err := integrationplugin.Start(context.Background(), &e); err != nil {
 		panic(err)
 	}
-}
-
-func fail(format string, args ...interface{}) (*integrationplugin.RunResult, error) {
-	msg := fmt.Sprintf(format, args...)
-	fmt.Println(msg)
-	return &integrationplugin.RunResult{
-		Details: msg,
-		Status:  sdk.StatusFail,
-	}, nil
 }
