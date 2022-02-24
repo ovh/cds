@@ -19,7 +19,6 @@ import (
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/namesgenerator"
-	"github.com/ovh/cds/sdk/slug"
 )
 
 // New instanciates a new Hatchery vsphere
@@ -416,13 +415,7 @@ func (h *HatcheryVSphere) provisioning(ctx context.Context) {
 		log.Info(ctx, "model %q provisioning: %d/%d", modelPath, mapAlreadyProvisionned[modelPath], number)
 
 		for i := 0; i < int(number)-mapAlreadyProvisionned[modelPath]; i++ {
-			var nameFirstPart = "provision-" + modelPath
-			if len(nameFirstPart) > maxLength-10 {
-				nameFirstPart = nameFirstPart[:maxLength-10]
-			}
-			var remainingLength = maxLength - len(nameFirstPart) - 1
-			random := namesgenerator.GetRandomNameCDSWithMaxLength(remainingLength)
-			workerName := slug.Convert(fmt.Sprintf("%s-%s", nameFirstPart, random))
+			workerName := namesgenerator.GenerateWorkerName(modelPath, "provision")
 
 			h.cacheProvisioning.mu.Lock()
 			h.cacheProvisioning.pending = append(h.cacheProvisioning.pending, workerName)
