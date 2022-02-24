@@ -116,7 +116,7 @@ func Initialize(ctx context.Context, db *gorp.DbMap, cache Store, config *Config
 	}
 	// generates an API name. api_foo_bar, only 3 first letters to have a readable status
 	cdsname = "api_"
-	for _, v := range strings.Split(namesgenerator.GetRandomNameCDS(0), "_") {
+	for _, v := range strings.Split(namesgenerator.GetRandomNameCDS(), "_") {
 		if len(v) > 3 {
 			cdsname += v[:3]
 		} else {

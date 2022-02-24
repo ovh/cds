@@ -67,41 +67,41 @@ func configBootstrap(args []string) Configuration {
 		switch a {
 		case sdk.TypeAPI:
 			conf.API = &api.Configuration{}
-			conf.API.Name = "cds-api-" + namesgenerator.GetRandomNameCDS(0)
+			conf.API.Name = "cds-api-" + namesgenerator.GetRandomNameCDS()
 			defaults.SetDefaults(conf.API)
 			conf.API.Database.Schema = "public"
 			conf.API.HTTP.Port = 8081
 		case sdk.TypeUI:
 			conf.UI = &ui.Configuration{}
-			conf.UI.Name = "cds-ui-" + namesgenerator.GetRandomNameCDS(0)
+			conf.UI.Name = "cds-ui-" + namesgenerator.GetRandomNameCDS()
 			defaults.SetDefaults(conf.UI)
 			conf.UI.HTTP.Port = 8080
 		case "migrate":
 			conf.DatabaseMigrate = &migrateservice.Configuration{}
 			defaults.SetDefaults(conf.DatabaseMigrate)
-			conf.DatabaseMigrate.Name = "cds-migrate-" + namesgenerator.GetRandomNameCDS(0)
+			conf.DatabaseMigrate.Name = "cds-migrate-" + namesgenerator.GetRandomNameCDS()
 			conf.DatabaseMigrate.ServiceAPI.DB.Schema = "public"
 			conf.DatabaseMigrate.ServiceCDN.DB.Schema = "cdn"
 			conf.DatabaseMigrate.HTTP.Port = 8087
 		case sdk.TypeHatchery + ":local":
 			conf.Hatchery.Local = &local.HatcheryConfiguration{}
 			defaults.SetDefaults(conf.Hatchery.Local)
-			conf.Hatchery.Local.Name = "cds-hatchery-local-" + namesgenerator.GetRandomNameCDS(0)
+			conf.Hatchery.Local.Name = "cds-hatchery-local-" + namesgenerator.GetRandomNameCDS()
 			conf.Hatchery.Local.HTTP.Port = 8086
 		case sdk.TypeHatchery + ":kubernetes":
 			conf.Hatchery.Kubernetes = &kubernetes.HatcheryConfiguration{}
 			defaults.SetDefaults(conf.Hatchery.Kubernetes)
-			conf.Hatchery.Kubernetes.Name = "cds-hatchery-kubernetes-" + namesgenerator.GetRandomNameCDS(0)
+			conf.Hatchery.Kubernetes.Name = "cds-hatchery-kubernetes-" + namesgenerator.GetRandomNameCDS()
 			conf.Hatchery.Kubernetes.HTTP.Port = 8086
 		case sdk.TypeHatchery + ":marathon":
 			conf.Hatchery.Marathon = &marathon.HatcheryConfiguration{}
 			defaults.SetDefaults(conf.Hatchery.Marathon)
-			conf.Hatchery.Marathon.Name = "cds-hatchery-marathon-" + namesgenerator.GetRandomNameCDS(0)
+			conf.Hatchery.Marathon.Name = "cds-hatchery-marathon-" + namesgenerator.GetRandomNameCDS()
 			conf.Hatchery.Marathon.HTTP.Port = 8086
 		case sdk.TypeHatchery + ":openstack":
 			conf.Hatchery.Openstack = &openstack.HatcheryConfiguration{}
 			defaults.SetDefaults(conf.Hatchery.Openstack)
-			conf.Hatchery.Openstack.Name = "cds-hatchery-openstack-" + namesgenerator.GetRandomNameCDS(0)
+			conf.Hatchery.Openstack.Name = "cds-hatchery-openstack-" + namesgenerator.GetRandomNameCDS()
 			conf.Hatchery.Openstack.HTTP.Port = 8086
 		case sdk.TypeHatchery + ":swarm":
 			conf.Hatchery.Swarm = &swarm.HatcheryConfiguration{}
@@ -111,7 +111,7 @@ func configBootstrap(args []string) Configuration {
 					Host: "unix:///var/run/docker.sock",
 				},
 			}
-			conf.Hatchery.Swarm.Name = "cds-hatchery-swarm-" + namesgenerator.GetRandomNameCDS(0)
+			conf.Hatchery.Swarm.Name = "cds-hatchery-swarm-" + namesgenerator.GetRandomNameCDS()
 			conf.Hatchery.Swarm.HTTP.Port = 8086
 			conf.Hatchery.Swarm.RegistryCredentials = []swarm.RegistryCredential{{
 				Domain: "docker.io",
@@ -119,12 +119,12 @@ func configBootstrap(args []string) Configuration {
 		case sdk.TypeHatchery + ":vsphere":
 			conf.Hatchery.VSphere = &vsphere.HatcheryConfiguration{}
 			defaults.SetDefaults(conf.Hatchery.VSphere)
-			conf.Hatchery.VSphere.Name = "cds-hatchery-vsphere-" + namesgenerator.GetRandomNameCDS(0)
+			conf.Hatchery.VSphere.Name = "cds-hatchery-vsphere-" + namesgenerator.GetRandomNameCDS()
 			conf.Hatchery.VSphere.HTTP.Port = 8086
 		case sdk.TypeHooks:
 			conf.Hooks = &hooks.Configuration{}
 			defaults.SetDefaults(conf.Hooks)
-			conf.Hooks.Name = "cds-hooks-" + namesgenerator.GetRandomNameCDS(0)
+			conf.Hooks.Name = "cds-hooks-" + namesgenerator.GetRandomNameCDS()
 			conf.Hooks.HTTP.Port = 8083
 		case sdk.TypeVCS:
 			conf.VCS = &vcs.Configuration{}
@@ -146,12 +146,12 @@ func configBootstrap(args []string) Configuration {
 				"gitlab":         {URL: "https://gitlab.com", Gitlab: &gitlab},
 				"gerrit":         {URL: "http://localhost:8080", Gerrit: &gerrit},
 			}
-			conf.VCS.Name = "cds-vcs-" + namesgenerator.GetRandomNameCDS(0)
+			conf.VCS.Name = "cds-vcs-" + namesgenerator.GetRandomNameCDS()
 			conf.VCS.HTTP.Port = 8084
 		case sdk.TypeRepositories:
 			conf.Repositories = &repositories.Configuration{}
 			defaults.SetDefaults(conf.Repositories)
-			conf.Repositories.Name = "cds-repositories-" + namesgenerator.GetRandomNameCDS(0)
+			conf.Repositories.Name = "cds-repositories-" + namesgenerator.GetRandomNameCDS()
 			conf.Repositories.HTTP.Port = 8085
 		case sdk.TypeCDN:
 			conf.CDN = &cdn.Configuration{}

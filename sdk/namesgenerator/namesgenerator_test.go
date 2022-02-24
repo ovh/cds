@@ -6,23 +6,13 @@ import (
 )
 
 func TestNameFormat(t *testing.T) {
-	name := GetRandomNameCDS(0)
+	name := GetRandomNameCDS()
 	if !strings.Contains(name, "_") {
 		t.Fatalf("Generated name does not contain an underscore")
 	}
 	t.Log("name generated:", name)
 	if strings.ContainsAny(name, "0123456789") {
 		t.Fatalf("Generated name contains numbers!")
-	}
-}
-
-func TestNameRetries(t *testing.T) {
-	name := GetRandomNameCDS(1)
-	if !strings.Contains(name, "_") {
-		t.Fatalf("Generated name does not contain an underscore")
-	}
-	if !strings.ContainsAny(name, "0123456789") {
-		t.Fatalf("Generated name doesn't contain a number")
 	}
 }
 
@@ -53,6 +43,51 @@ func TestGetRandomNameCDSWithMaxLength(t *testing.T) {
 			t.Logf("got: %v", got)
 			if len(got) > tt.args.maxLength {
 				t.Errorf("GetRandomNameCDSWithMaxLength() = %v", got)
+			}
+		})
+	}
+}
+
+func Test_GenerateWorkerName(t *testing.T) {
+	type args struct {
+		prefix string
+		model  string
+	}
+	tests := []struct {
+		name       string
+		args       args
+		wantPrefix string
+	}{
+		{
+			name:       "simple",
+			args:       args{prefix: "register", model: "rust-official-1.41"},
+			wantPrefix: "register-rust-official-1-41",
+		},
+		{
+			name:       "simple special char",
+			args:       args{prefix: "register", model: "shared.infra-rust-official-1.41"},
+			wantPrefix: "register-shared-infra-rust-official-1-41",
+		},
+		{
+			name:       "long hatchery name",
+			args:       args{prefix: "register", model: "shared.infra-rust-official-1.41"},
+			wantPrefix: "register-shared-infra-rust-official-1-41",
+		},
+		{
+			name:       "long model name",
+			args:       args{prefix: "register", model: "shared.infra-rust-official-1.41-xxx-xxx-xxx-xxx"},
+			wantPrefix: "register-shared-infra-rust-official-1-41-xxx-xxx-xxx",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := GenerateWorkerName(tt.args.model, tt.args.prefix)
+			if len(got) > 63 {
+				t.Errorf("len must be < 63() = %d - got: %s", len(got), got)
+			}
+
+			if !strings.HasPrefix(got, tt.wantPrefix) {
+				t.Errorf("GenerateWorkerName() = %s, want prefix: %s", got, tt.wantPrefix)
 			}
 		})
 	}
