@@ -10,8 +10,7 @@ COPY dist/ui.tar.gz /app/
 COPY dist/cds-docs.tar.gz /app/
 
 RUN groupadd -r cds && useradd --create-home -r -g cds cds
-RUN chmod +w /app/panic_dumps && \
-    chmod +x /app/cds-engine-linux-amd64 && \
+RUN chmod +x /app/cds-engine-linux-amd64 && \
     tar xzf /app/sql.tar.gz -C /app/sql && \
     tar xzf /app/ui.tar.gz -C /app/ui_static_files && \
     tar xzf /app/cds-docs.tar.gz -C /app/ui_static_files && \
