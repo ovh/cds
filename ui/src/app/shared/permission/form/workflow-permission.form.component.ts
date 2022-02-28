@@ -11,7 +11,7 @@ import { PermissionService } from 'app/shared/permission/permission.service';
 })
 export class WorkflowPermissionFormComponent {
     permissionList: {};
-    newGroupPermission: GroupPermission;
+    newGroupPermission: GroupPermission = new GroupPermission();
 
     @Input() loading = false;
     @Input() groups: Array<GroupPermission> = [];
@@ -24,7 +24,6 @@ export class WorkflowPermissionFormComponent {
     constructor(
         private _permService: PermissionService
     ) {
-        this.newGroupPermission = new GroupPermission();
         this.permissionList = this._permService.getPermissions();
     }
 

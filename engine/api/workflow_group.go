@@ -116,7 +116,7 @@ func (api *API) putWorkflowGroupHandler() service.Handler {
 			if isAdmin(ctx) {
 				trackSudo(ctx, w)
 			} else {
-				return sdk.WithStack(sdk.ErrInvalidGroupAdmin)
+				return sdk.NewErrorFrom(sdk.ErrInvalidGroupAdmin, "cannot set permission with level %d for group %q", gp.Permission, gp.Group.Name)
 			}
 		}
 
@@ -186,7 +186,7 @@ func (api *API) postWorkflowGroupHandler() service.Handler {
 			if isAdmin(ctx) {
 				trackSudo(ctx, w)
 			} else {
-				return sdk.WithStack(sdk.ErrInvalidGroupAdmin)
+				return sdk.NewErrorFrom(sdk.ErrInvalidGroupAdmin, "cannot set permission with level %d for group %q", gp.Permission, gp.Group.Name)
 			}
 		}
 

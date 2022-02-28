@@ -1,19 +1,24 @@
-<form class="ui form" *ngIf="groups?.length > 0" (ngSubmit)="create()">
+<form class="ui form" *ngIf="groups.length > 0" (ngSubmit)="create()">
     <div class="fields">
         <div class="seven wide field">
             <label>{{'group_name' | translate}}</label>
-            <sm-select class="fluid search" [options]="{'fullTextSearch': true}"
-                [(model)]="newGroupPermission.group.name">
-                <option *ngFor="let g of groups" [value]="g.group.name">{{g.group.name}}{{g.group.organization ? ' (' +
-                    g.group.organization + ')' : ''}}</option>
-            </sm-select>
+            <sui-select *ngIf="newGroupPermission" class="fluid selection" [(ngModel)]="newGroupPermission.group.name"
+                [options]="groups" [isSearchable]="true" valueField="group.name" labelField="group.name" #operatorSelect
+                name="group-name">
+                <sui-select-option *ngFor="let option of operatorSelect.filteredOptions" [value]="option">
+                </sui-select-option>
+            </sui-select>
         </div>
         <div class="five wide field">
             <label>{{'group_permission' | translate}}</label>
-            <sm-select class="fluid search" [options]="{'fullTextSearch': true}"
-                [(model)]="newGroupPermission.permission" id="PermissionGroupLevel">
-                <option *ngFor="let p of permissionList" [value]="p.value">{{p.name | translate}}</option>
-            </sm-select>
+            <sui-select class="fluid selection" [(ngModel)]="newGroupPermission.permission" [options]="permissionList"
+                valueField="value" #levelSelect name="permission-level" [optionTemplate]="optionLevelTemplate">
+                <sui-select-option *ngFor="let option of levelSelect.filteredOptions" [value]="option">
+                </sui-select-option>
+            </sui-select>
+            <ng-template let-option #optionLevelTemplate>
+                {{option.name | translate}}
+            </ng-template>
         </div>
         <div class="two wide center field">
             <button *ngIf="buttonType === 'submit'" type="submit" class="ui green button" [class.loading]="loading"
