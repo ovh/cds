@@ -71,8 +71,8 @@
                             <ng-container
                                 *ngIf="!readonly && !(workflow.from_repository && workflow.from_repository.length > 0)">
                                 <h3>{{ 'workflow_node_permissions_form_title' | translate }}</h3>
-                                <app-permission-form (createGroupPermissionEvent)="groupManagement($event)"
-                                    [loading]="loading"></app-permission-form>
+                                <app-workflow-permission-form [groups]="workflow.groups" (createGroupPermissionEvent)="groupManagement($event)"
+                                    [loading]="loading"></app-workflow-permission-form>
                             </ng-container>
                         </ng-container>
                         <ng-container *ngSwitchCase="'hook'">

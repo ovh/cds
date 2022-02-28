@@ -106,7 +106,7 @@ func (api *API) putGroupRoleOnProjectHandler() service.Handler {
 			if isAdmin(ctx) {
 				trackSudo(ctx, w)
 			} else {
-				return sdk.WithStack(sdk.ErrInvalidGroupAdmin)
+				return sdk.NewErrorFrom(sdk.ErrInvalidGroupAdmin, "cannot set permission with level %d for group %q", data.Permission, grp.Name)
 			}
 		}
 
@@ -191,7 +191,7 @@ func (api *API) postGroupInProjectHandler() service.Handler {
 			if isAdmin(ctx) {
 				trackSudo(ctx, w)
 			} else {
-				return sdk.WithStack(sdk.ErrInvalidGroupAdmin)
+				return sdk.NewErrorFrom(sdk.ErrInvalidGroupAdmin, "cannot set permission with level %d for group %q", data.Permission, grp.Name)
 			}
 		}
 

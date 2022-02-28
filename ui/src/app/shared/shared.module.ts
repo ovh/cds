@@ -54,6 +54,7 @@ import { ParameterFormComponent } from './parameter/form/parameter.form';
 import { ParameterListComponent } from './parameter/list/parameter.component';
 import { ParameterValueComponent } from './parameter/value/parameter.value.component';
 import { PermissionFormComponent } from './permission/form/permission.form.component';
+import { WorkflowPermissionFormComponent } from './permission/form/workflow-permission.form.component';
 import { PermissionListComponent } from './permission/list/permission.list.component';
 import { PermissionService } from './permission/permission.service';
 import { AnsiPipe } from './pipes/ansi.pipe';
@@ -172,6 +173,7 @@ import { ZoneComponent } from './zone/zone.component';
         ParameterListComponent,
         ParameterValueComponent,
         PermissionFormComponent,
+        WorkflowPermissionFormComponent,
         PermissionListComponent,
         ProjectBreadcrumbComponent,
         RepoManagerFormComponent,
@@ -295,6 +297,7 @@ import { ZoneComponent } from './zone/zone.component';
         ParameterListComponent,
         ParameterValueComponent,
         PermissionFormComponent,
+        WorkflowPermissionFormComponent,
         PermissionListComponent,
         ProjectBreadcrumbComponent,
         ReactiveFormsModule,

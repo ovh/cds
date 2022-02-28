@@ -1,27 +1,13 @@
-<form class="ui form" *ngIf="ready" (ngSubmit)="create()">
+<form class="ui form" *ngIf="groups.length > 0" (ngSubmit)="create()">
     <div class="fields">
         <div class="seven wide field">
-            <label>Group name <a class="group-help" suiPopup [popupTemplate]="popupHelp" popupTrigger="outsideClick"
-                    popupPlacement="bottom">My group is not listed</a></label>
-            <sui-select *ngIf="!manual" class="fluid selection" (selectedOptionChange)="selectGroup($event)"
-                [options]="groupList" [isSearchable]="true" valueField="name" #nameSelect name="group-name"
-                [optionTemplate]="optionNameTemplate">
-                <sui-select-option *ngFor="let option of nameSelect.filteredOptions" [value]="option">
+            <label>{{'group_name' | translate}}</label>
+            <sui-select *ngIf="newGroupPermission" class="fluid selection" [(ngModel)]="newGroupPermission.group.name"
+                [options]="groups" [isSearchable]="true" valueField="group.name" labelField="group.name" #operatorSelect
+                name="group-name">
+                <sui-select-option *ngFor="let option of operatorSelect.filteredOptions" [value]="option">
                 </sui-select-option>
             </sui-select>
-            <ng-template let-option #optionNameTemplate>
-                {{option.name}}{{option.organization ? ' (' + option.organization + ')' : ''}}
-            </ng-template>
-            <input *ngIf="manual" type="text" name="group-name" [(ngModel)]="newGroupPermission.group.name">
-            <ng-template let-popup #popupHelp>
-                <div class="group-help-popup">
-                    <span>You'll see only your groups in this list.</span>
-                    <span>If you need to add read permission to another group you can manually enter its name.</span>
-                    <button type="button" class="ui icon blue button"
-                        (click)="switchManualInput();popup.close();">Switch text
-                        input</button>
-                </div>
-            </ng-template>
         </div>
         <div class="five wide field">
             <label>{{'group_permission' | translate}}</label>

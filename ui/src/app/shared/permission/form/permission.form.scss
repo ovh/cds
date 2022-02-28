@@ -1,13 +1,26 @@
 .ui.form {
-
-  .field > label {
-    color: grey;
-  }
-
-  .field {
-    .ui.button {
-      margin-top: 1.7em;
+    .field>label {
+        color: grey;
     }
-  }
 
+    .field {
+        .ui.button {
+            margin-top: 1.7em;
+        }
+    }
+
+    .group-help {
+        float: right;
+        cursor: pointer;
+        font-size: 11px;
+    }
+}
+
+.group-help-popup {
+    display: flex;
+    flex-direction: column;
+
+    button {
+        margin-top: 10px;
+    }
 }

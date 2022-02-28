@@ -29,7 +29,7 @@ func CheckGroupPermission(ctx context.Context, db gorp.SqlExecutor, projectGroup
 	}
 
 	if !IsConsumerGroupAdmin(&gp.Group, consumer) && gp.Permission > sdk.PermissionRead {
-		return sdk.WithStack(sdk.ErrInvalidGroupAdmin)
+		return sdk.NewErrorFrom(sdk.ErrInvalidGroupAdmin, "cannot set permission with level %d for group %q", gp.Permission, gp.Group.Name)
 	}
 
 	return nil

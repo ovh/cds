@@ -136,8 +136,9 @@
                 <ng-container
                     *ngIf="detailedWorkflow.permissions.writable && !(detailedWorkflow.from_repository && detailedWorkflow.from_repository.length > 0)">
                     <h3>{{ 'workflow_permission_form_title' | translate }}</h3>
-                    <app-permission-form (createGroupPermissionEvent)="groupManagement($event)"
-                        [loading]="permFormLoading"></app-permission-form>
+                    <app-workflow-permission-form [groups]="project.groups"
+                        (createGroupPermissionEvent)="groupManagement($event)" [loading]="permFormLoading">
+                    </app-workflow-permission-form>
                 </ng-container>
                 <app-warning-modal [title]="_translate.instant('warning_modal_title')"
                     [msg]="_translate.instant('warning_modal_body')" (event)="groupManagement($event, true)"

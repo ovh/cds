@@ -52,7 +52,7 @@ func TestCheckWorkflowGroups_UserShouldBeGroupAdminForRWAndRWX(t *testing.T) {
 	})
 	err = group.CheckWorkflowGroups(context.TODO(), db, proj, w, localConsumer)
 	require.Error(t, err)
-	require.Equal(t, "User is not a group's admin", err.Error())
+	require.Equal(t, "User is not a group's admin (from: cannot set permission with level 5 for group \""+g3.Name+"\")", err.Error())
 
 	// User can add RX permission for g2 on workflow because admin of g2
 	w.Groups = w.Groups[0 : len(w.Groups)-2]
@@ -159,7 +159,7 @@ func TestCheckWorkflowGroups_UserShouldBeGroupAdminForRWAndRWX_Node(t *testing.T
 	}}
 	err = group.CheckWorkflowGroups(context.TODO(), db, proj, w, localConsumer)
 	require.Error(t, err)
-	require.Equal(t, "User is not a group's admin", err.Error())
+	require.Equal(t, "User is not a group's admin (from: cannot set permission with level 5 for group \""+g3.Name+"\")", err.Error())
 
 	// User can add RX permission for g2 on workflow node because admin of g2
 	w.Groups = nil
