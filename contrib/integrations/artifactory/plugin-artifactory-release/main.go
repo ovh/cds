@@ -171,7 +171,7 @@ func (e *artifactoryReleasePlugin) Run(_ context.Context, opts *integrationplugi
 	distributionParams := services.NewDistributeReleaseBundleParams(releaseName, releaseVersion)
 	distributionParams.DistributionRules = make([]*distriUtils.DistributionCommonParams, 0, len(edges))
 	for _, e := range edges {
-		fmt.Printf("Will be distribute on edge %s\n", e.Name)
+		fmt.Printf("Will be distributed to edge %s\n", e.Name)
 		distributionParams.DistributionRules = append(distributionParams.DistributionRules, &distriUtils.DistributionCommonParams{
 			SiteName:     e.SiteName,
 			CityName:     e.City.Name,

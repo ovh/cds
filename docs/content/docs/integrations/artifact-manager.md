@@ -50,7 +50,7 @@ On the workflow advanced view, you can link your workflow to project integration
 
 ## Integration actions
 
-The artifactory integration comes with 5 actions (https://github.com/ovh/cds/tree/master/contrib/integrations/artifactory)
+The artifactory integration comes with 5 actions: https://github.com/ovh/cds/tree/master/contrib/integrations/artifactory
 
 ### Artifactory-Upload-Artifact
 
@@ -66,9 +66,9 @@ The artifacts will be downloaded from the cds repository provided during the int
 
 ### Artifactory-Push-Build-Info
 
-This plugin is used by CDS Push Build Info action to create inside artifactory a build-info (https://www.jfrog.com/confluence/display/JFROG/Build+Integration).
+This plugin is used by CDS Push Build Info action to create inside artifactory a build-info. JFrog documentation: https://www.jfrog.com/confluence/display/JFROG/Build+Integration
 
-This action must be run after all the artifacts have been uploaded
+This action must be run after all the artifacts have been uploaded.
 
 The build name computed by CDS will be: [build.info.path]/[cds.projectkey]/[cds.workflow.name]
 
@@ -85,6 +85,6 @@ For example:
 
 This plugin is used by CDS Release action. 
 
-It promotes the provided artifacts, create a release bundle and distributes it on all the edges.
+It promotes the provided artifacts, creates a release bundle and distributes it to all edges.
 
-This action use both the artifactory and distribution APIs.
+This action uses both the artifactory and distribution APIs.

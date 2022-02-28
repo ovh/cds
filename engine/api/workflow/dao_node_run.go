@@ -731,8 +731,9 @@ func PreviousNodeRunVCSInfos(ctx context.Context, db gorp.SqlExecutor, projectKe
 		JOIN w_node ON w_node.name = workflow_node_run.workflow_node_name AND w_node.name = $1 AND w_node.workflow_id = $2
 		JOIN w_node_context ON w_node_context.node_id = w_node.id
 		WHERE workflow_node_run.vcs_hash IS NOT NULL
+		AND workflow_node_run.workflow_id = $2
 		AND workflow_node_run.num < $3
-    AND w_node_context.application_id = $4
+		AND w_node_context.application_id = $4
 	`
 
 	argPrevious := []interface{}{nodeName, wf.ID, current.BuildNumber, appID}

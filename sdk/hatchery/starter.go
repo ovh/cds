@@ -10,7 +10,6 @@ import (
 	"github.com/ovh/cds/sdk"
 	cdslog "github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/namesgenerator"
-	"github.com/ovh/cds/sdk/slug"
 	"github.com/ovh/cds/sdk/telemetry"
 	"github.com/rockbears/log"
 )
@@ -58,7 +57,7 @@ func workerStarter(ctx context.Context, h Interface, workerNum string, jobs <-ch
 				continue
 			}
 
-			workerName := generateWorkerName(h.Service().Name, true, m.Name)
+			workerName := namesgenerator.GenerateWorkerName(m.Name, "register")
 
 			atomic.AddInt64(&nbWorkerToStart, 1)
 			// increment nbRegisteringWorkerModels, but no decrement.
@@ -168,7 +167,7 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 	})
 	next()
 
-	workerName := generateWorkerName(h.Service().Name, false, modelName)
+	workerName := namesgenerator.GenerateWorkerName(modelName, "")
 
 	ctxSpawnWorker, next := telemetry.Span(ctx, "hatchery.SpawnWorker", telemetry.Tag(telemetry.TagWorker, workerName))
 	arg := SpawnArguments{
@@ -225,25 +224,4 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 		next()
 	}
 	return true // ok for this job
-}
-
-// a worker name must be 60 char max, without '.' and '_', "/" -> replaced by '-'
-const maxLength = 64
-
-func generateWorkerName(hatcheryName string, isRegister bool, modelName string) string {
-	prefix := ""
-	if isRegister {
-		prefix = "register-"
-	}
-
-	var nameFirstPart = fmt.Sprintf("%s%s", prefix, modelName)
-	if len(nameFirstPart) > maxLength-10 {
-		nameFirstPart = nameFirstPart[:maxLength-10]
-	}
-	var remainingLength = maxLength - len(nameFirstPart) - 1
-
-	random := namesgenerator.GetRandomNameCDSWithMaxLength(remainingLength)
-	workerName := fmt.Sprintf("%s-%s", nameFirstPart, random)
-
-	return slug.Convert(workerName)
 }

@@ -1527,14 +1527,19 @@ func Test_putWorkflowShouldNotCallHOOKSIfHookDoesNotChange(t *testing.T) {
 
 	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
 
-	u, pass := assets.InsertAdminUser(t, db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
+
+	g0 := proj.ProjectGroups[0].Group
+
+	u, jwtLambda := assets.InsertLambdaUser(t, db, &g0)
+	assets.SetUserGroupAdmin(t, db, g0.ID, u.ID)
+
 	pip := sdk.Pipeline{
 		Name:      "pipeline1",
 		ProjectID: proj.ID,
 	}
-	assert.NoError(t, pipeline.InsertPipeline(db, &pip))
+	require.NoError(t, pipeline.InsertPipeline(db, &pip))
 
 	wf := sdk.Workflow{
 		ProjectID:  proj.ID,
@@ -1596,24 +1601,22 @@ func Test_putWorkflowShouldNotCallHOOKSIfHookDoesNotChange(t *testing.T) {
 		)
 
 	// Insert the workflow
-	vars := map[string]string{
+	uri := router.GetRoute(http.MethodPost, api.postWorkflowHandler, map[string]string{
 		"permProjectKey": proj.Key,
-	}
-	uri := router.GetRoute("POST", api.postWorkflowHandler, vars)
-	test.NotEmpty(t, uri)
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, &wf)
+	})
+	require.NotEmpty(t, uri)
+	req := assets.NewJWTAuthentifiedRequest(t, jwtLambda, http.MethodPost, uri, &wf)
 	w := httptest.NewRecorder()
 	router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 201, w.Code)
+	require.Equal(t, http.StatusCreated, w.Code)
 
 	// Load the workflow
-	vars = map[string]string{
+	uri = router.GetRoute(http.MethodGet, api.getWorkflowHandler, map[string]string{
 		"key":              proj.Key,
 		"permWorkflowName": wf.Name,
-	}
-	uri = router.GetRoute("GET", api.getWorkflowHandler, vars)
-	test.NotEmpty(t, uri)
-	req = assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
+	})
+	require.NotEmpty(t, uri)
+	req = assets.NewJWTAuthentifiedRequest(t, jwtLambda, http.MethodGet, uri, nil)
 	w = httptest.NewRecorder()
 	router.Mux.ServeHTTP(w, req)
 
@@ -1622,13 +1625,15 @@ func Test_putWorkflowShouldNotCallHOOKSIfHookDoesNotChange(t *testing.T) {
 
 	// Then call the PUT handler, it should not trigger /task/bulk on hooks service
 	// Update the workflow
-	uri = router.GetRoute("PUT", api.putWorkflowHandler, vars)
-	test.NotEmpty(t, uri)
-	req = assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, &wf)
+	uri = router.GetRoute(http.MethodPut, api.putWorkflowHandler, map[string]string{
+		"key":              proj.Key,
+		"permWorkflowName": wf.Name,
+	})
+	require.NotEmpty(t, uri)
+	req = assets.NewJWTAuthentifiedRequest(t, jwtLambda, http.MethodPut, uri, &wf)
 	w = httptest.NewRecorder()
 	router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 200, w.Code)
-
+	assert.Equal(t, http.StatusOK, w.Code)
 }
 
 func Test_putWorkflowWithDuplicateHooksShouldRaiseAnError(t *testing.T) {
@@ -1643,13 +1648,12 @@ func Test_putWorkflowWithDuplicateHooksShouldRaiseAnError(t *testing.T) {
 		Name:      "pipeline1",
 		ProjectID: proj.ID,
 	}
-	assert.NoError(t, pipeline.InsertPipeline(db, &pip))
+	require.NoError(t, pipeline.InsertPipeline(db, &pip))
 
 	wf := sdk.Workflow{
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       sdk.RandomString(10),
-		Groups:     proj.ProjectGroups,
 		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "root",
@@ -1705,23 +1709,21 @@ func Test_putWorkflowWithDuplicateHooksShouldRaiseAnError(t *testing.T) {
 		)
 
 	// Insert the workflow
-	vars := map[string]string{
+	uri := router.GetRoute("POST", api.postWorkflowHandler, map[string]string{
 		"permProjectKey": proj.Key,
-	}
-	uri := router.GetRoute("POST", api.postWorkflowHandler, vars)
-	test.NotEmpty(t, uri)
+	})
+	require.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, &wf)
 	w := httptest.NewRecorder()
 	router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 201, w.Code)
+	require.Equal(t, 201, w.Code)
 
 	// Load the workflow
-	vars = map[string]string{
+	uri = router.GetRoute("GET", api.getWorkflowHandler, map[string]string{
 		"key":              proj.Key,
 		"permWorkflowName": wf.Name,
-	}
-	uri = router.GetRoute("GET", api.getWorkflowHandler, vars)
-	test.NotEmpty(t, uri)
+	})
+	require.NotEmpty(t, uri)
 	req = assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
 	w = httptest.NewRecorder()
 	router.Mux.ServeHTTP(w, req)
@@ -1730,7 +1732,6 @@ func Test_putWorkflowWithDuplicateHooksShouldRaiseAnError(t *testing.T) {
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &wf))
 
 	// Then add another hooks with similar properties. It should raise a 400 HTTP Error
-
 	wf.WorkflowData.Node.Hooks = append(wf.WorkflowData.Node.Hooks,
 		sdk.NodeHook{
 			HookModelID: sdk.WebHookModel.ID,
@@ -1743,13 +1744,15 @@ func Test_putWorkflowWithDuplicateHooksShouldRaiseAnError(t *testing.T) {
 	)
 
 	// Update the workflow
-	uri = router.GetRoute("PUT", api.putWorkflowHandler, vars)
-	test.NotEmpty(t, uri)
+	uri = router.GetRoute("PUT", api.putWorkflowHandler, map[string]string{
+		"key":              proj.Key,
+		"permWorkflowName": wf.Name,
+	})
+	require.NotEmpty(t, uri)
 	req = assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, &wf)
 	w = httptest.NewRecorder()
 	router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 400, w.Code)
-
+	require.Equal(t, 400, w.Code)
 }
 
 func Test_getWorkflowsHandler_FilterByRepo(t *testing.T) {
@@ -2039,6 +2042,8 @@ func Test_getWorkfloDependencieswHandler(t *testing.T) {
 	)
 
 	u, pass := assets.InsertAdminUser(t, db)
+	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	require.NoError(t, err)
 
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	vcsServer := sdk.ProjectVCSServerLink{
@@ -2110,7 +2115,7 @@ workflow:
 	eWf, err := exportentities.UnmarshalWorkflow([]byte(workflowS), exportentities.FormatYAML)
 	require.NoError(t, err)
 
-	wf, _, err := workflow.ParseAndImport(ctx, db, cache, *proj, nil, eWf, u, workflow.ImportOptions{WorkflowName: "test-env", FromRepository: "from/my-repo"})
+	wf, _, err := workflow.ParseAndImport(ctx, db, cache, *proj, nil, eWf, localConsumer, workflow.ImportOptions{WorkflowName: "test-env", FromRepository: "from/my-repo"})
 	require.NotNil(t, wf)
 	require.NoError(t, err)
 
@@ -2149,7 +2154,7 @@ workflow:
 	eWf2, err := exportentities.UnmarshalWorkflow([]byte(workflowS2), exportentities.FormatYAML)
 	require.NoError(t, err)
 
-	wf2, _, err := workflow.ParseAndImport(ctx, db, cache, *proj, nil, eWf2, u, workflow.ImportOptions{WorkflowName: "test-env-2", FromRepository: "from/my-repo-2"})
+	wf2, _, err := workflow.ParseAndImport(ctx, db, cache, *proj, nil, eWf2, localConsumer, workflow.ImportOptions{WorkflowName: "test-env-2", FromRepository: "from/my-repo-2"})
 	require.NotNil(t, wf2)
 	require.NoError(t, err)
 
@@ -2168,5 +2173,4 @@ workflow:
 	require.Equal(t, app.Name, res2.UnlinkedAsCodeDependencies.Applications[0].Name)
 	require.Equal(t, env.ID, res2.UnlinkedAsCodeDependencies.Environments[0].ID)
 	require.Equal(t, env.Name, res2.UnlinkedAsCodeDependencies.Environments[0].Name)
-
 }

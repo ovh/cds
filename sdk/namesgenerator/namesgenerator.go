@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"math/rand"
 	"time"
+
+	"github.com/ovh/cds/sdk/slug"
 )
 
 func init() {
@@ -847,7 +849,7 @@ begin:
 //
 
 // GetRandomNameCDS generates a random name from the list of adjectives and surnames in this package
-func GetRandomNameCDS(retry int) string {
+func GetRandomNameCDS() string {
 	format := rand.Intn(3)
 	var name string
 	switch format {
@@ -857,10 +859,6 @@ func GetRandomNameCDS(retry int) string {
 		name = fmt.Sprintf("%s_and_%s_%s", left[rand.Intn(len(left))], left[rand.Intn(len(left))], right[rand.Intn(len(right))])
 	default:
 		name = fmt.Sprintf("%s_%s", left[rand.Intn(len(left))], right[rand.Intn(len(right))])
-	}
-
-	if retry > 0 {
-		name = fmt.Sprintf("%s%d", name, rand.Intn(10))
 	}
 	return name
 }
@@ -874,9 +872,25 @@ func GetRandomNameCDSWithMaxLength(maxLength int) string {
 		return s[:maxLength]
 	}
 	for {
-		var s = GetRandomNameCDS(0)
+		var s = GetRandomNameCDS()
 		if len(s) <= maxLength {
 			return s
 		}
 	}
+}
+
+// A worker name must be 63 char max, without '.' and '_', "/" -> replaced by '-'
+const maxWorkerNameLength = 63
+
+func GenerateWorkerName(model, prefix string) string {
+	nameFirstPart := model
+	if len(prefix) > 0 {
+		nameFirstPart = prefix + "-" + model
+	}
+	if len(nameFirstPart) > maxWorkerNameLength-10 {
+		nameFirstPart = nameFirstPart[:maxWorkerNameLength-10]
+	}
+	remainingLength := maxWorkerNameLength - len(nameFirstPart) - 1
+	random := GetRandomNameCDSWithMaxLength(remainingLength)
+	return slug.Convert(nameFirstPart + "-" + random)
 }

@@ -140,7 +140,7 @@ func (k *kubernetesClient) PodDelete(ctx context.Context, ns string, name string
 
 func (k *kubernetesClient) PodList(ctx context.Context, ns string, opts metav1.ListOptions) (*corev1.PodList, error) {
 	ctx = context.WithValue(ctx, logNS, ns)
-	log.Info(ctx, "listing pod")
+	log.Info(ctx, "listing pod in namespace %s", ns)
 	pods, err := k.client.CoreV1().Pods(ns).List(ctx, opts)
 	return pods, sdk.WrapError(err, "unable to list pods in namespace %s", ns)
 }

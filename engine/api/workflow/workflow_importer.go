@@ -18,7 +18,7 @@ import (
 )
 
 //Import is able to create a new workflow and all its components
-func Import(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, proj sdk.Project, oldW, w *sdk.Workflow, u sdk.Identifiable, force bool, msgChan chan<- sdk.Message) error {
+func Import(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, proj sdk.Project, oldW, w *sdk.Workflow, consumer *sdk.AuthConsumer, opts ImportOptions, msgChan chan<- sdk.Message) error {
 	ctx, end := telemetry.Span(ctx, "workflow.Import")
 	defer end()
 
@@ -27,6 +27,32 @@ func Import(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 
 	if w.WorkflowData.Node.Context == nil {
 		w.WorkflowData.Node.Context = &sdk.NodeContext{}
+	}
+
+	// If the import is not done by a direct user (ie. from a hook or if the content is coming from a repository)
+	// We don't take permission in account and we only keep permission of the oldWorkflow or projet permission
+	if opts.HookUUID != "" || opts.RepositoryName != "" {
+		log.Info(ctx, "Import is perform from 'as-code', we don't take groups in account (hookUUID=%q, repository=%q)", opts.HookUUID, opts.RepositoryName)
+		// reset permissions at the workflow level
+		w.Groups = nil
+		if oldW != nil {
+			w.Groups = oldW.Groups
+		}
+		// reset permissions at the node level
+		w.VisitNode(func(n *sdk.Node, w *sdk.Workflow) {
+			n.Groups = nil
+			if oldW != nil {
+				oldN := oldW.WorkflowData.NodeByName(n.Name)
+				if oldN != nil {
+					n.Groups = oldN.Groups
+				}
+			}
+		})
+	} else {
+		// The import is triggered by a user, we have to check the groups
+		if err := group.CheckWorkflowGroups(ctx, db, &proj, w, consumer); err != nil {
+			return err
+		}
 	}
 
 	// create the workflow if not exists
@@ -40,15 +66,34 @@ func Import(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 		return nil
 	}
 
+	w.ID = oldW.ID
+
+	// If not groups are given, do not change existing workflow groups
+	if len(w.Groups) > 0 {
+		for i := range w.Groups {
+			if w.Groups[i].Group.ID > 0 {
+				continue
+			}
+			g, err := group.LoadByName(ctx, db, w.Groups[i].Group.Name)
+			if err != nil {
+				return sdk.WrapError(err, "unable to load group %s", w.Groups[i].Group.Name)
+			}
+			w.Groups[i].Group = *g
+		}
+		if err := group.UpsertAllWorkflowGroups(ctx, db, w, w.Groups); err != nil {
+			return sdk.WrapError(err, "unable to update workflow")
+		}
+	}
+
 	if oldW.Icon != "" && w.Icon == "" {
 		w.Icon = oldW.Icon
 	}
 
-	if !force {
+	if !opts.Force {
 		return sdk.NewErrorFrom(sdk.ErrAlreadyExist, "workflow exists")
 	}
 
-	if force && oldW != nil && oldW.FromRepository != "" && w.FromRepository == "" {
+	if opts.Force && oldW.FromRepository != "" && w.FromRepository == "" {
 		if err := detachResourceFromRepository(db, proj.ID, oldW, msgChan); err != nil {
 			return err
 		}
@@ -76,17 +121,12 @@ func Import(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.St
 			}
 		}
 	}
-	w.ID = oldW.ID
 
 	// HookRegistration after workflow.Update.  It needs hooks to be created on DB
 	// Hook registration must only be done on default branch in case of workflow as-code
 	// The derivation branch is set in workflow parser it is not coming from the default branch
 	uptOptions := UpdateOptions{
 		DisableHookManagement: w.DerivationBranch != "",
-	}
-
-	if err := importWorkflowGroups(db, w); err != nil {
-		return err
 	}
 
 	if err := Update(ctx, db, store, proj, w, uptOptions); err != nil {
@@ -146,24 +186,5 @@ func detachResourceFromRepository(db gorp.SqlExecutor, projectID int64, oldW *sd
 		msgChan <- sdk.NewMessage(sdk.MsgEnvironmentDetached, env.Name, oldW.FromRepository)
 	}
 
-	return nil
-}
-
-func importWorkflowGroups(db gorp.SqlExecutor, w *sdk.Workflow) error {
-	if len(w.Groups) > 0 {
-		if err := group.DeleteAllWorkflowGroups(db, w.ID); err != nil {
-			return err
-		}
-		for i := range w.Groups {
-			g, err := group.LoadByName(context.Background(), db, w.Groups[i].Group.Name)
-			if err != nil {
-				return sdk.WrapError(err, "unable to load group %s", w.Groups[i].Group.Name)
-			}
-			w.Groups[i].Group = *g
-		}
-		if err := group.UpsertAllWorkflowGroups(db, w, w.Groups); err != nil {
-			return sdk.WrapError(err, "unable to update workflow")
-		}
-	}
 	return nil
 }

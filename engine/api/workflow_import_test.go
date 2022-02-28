@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"context"
 	"io"
+	"net/http"
 	"net/http/httptest"
-	"sort"
 	"strings"
 	"testing"
 
@@ -91,11 +91,12 @@ metadata:
 func Test_postWorkflowImportWithPermissionHandler(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 
-	u, pass := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), "a-"+sdk.RandomString(10))
+
+	g0 := proj.ProjectGroups[0].Group
 	g1 := assets.InsertTestGroup(t, db, "b-"+sdk.RandomString(10))
 	g2 := assets.InsertTestGroup(t, db, "c-"+sdk.RandomString(10))
 
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), "a-"+sdk.RandomString(10))
 	require.NoError(t, group.InsertLinkGroupProject(context.TODO(), db, &group.LinkGroupProject{
 		GroupID:   g1.ID,
 		ProjectID: proj.ID,
@@ -107,6 +108,11 @@ func Test_postWorkflowImportWithPermissionHandler(t *testing.T) {
 		Role:      sdk.PermissionReadExecute,
 	}))
 
+	u, jwtLambda := assets.InsertLambdaUser(t, db, &g0, g1, g2)
+	assets.SetUserGroupAdmin(t, db, g0.ID, u.ID)
+	assets.SetUserGroupAdmin(t, db, g1.ID, u.ID)
+	assets.SetUserGroupAdmin(t, db, g2.ID, u.ID)
+
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
@@ -114,15 +120,13 @@ func Test_postWorkflowImportWithPermissionHandler(t *testing.T) {
 	}
 	require.NoError(t, pipeline.InsertPipeline(db, &pip))
 
-	//Prepare request
-	vars := map[string]string{
+	// Import workflow with permission
+	uri := api.Router.GetRoute(http.MethodPost, api.postWorkflowImportHandler, map[string]string{
 		"permProjectKey": proj.Key,
-	}
-	uri := api.Router.GetRoute("POST", api.postWorkflowImportHandler, vars)
-	test.NotEmpty(t, uri)
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, nil)
-
-	body := `name: test2
+	})
+	require.NotEmpty(t, uri)
+	req := assets.NewJWTAuthentifiedRequest(t, jwtLambda, http.MethodPost, uri, nil)
+	req.Body = io.NopCloser(strings.NewReader(`name: test2
 version: v2.0
 workflow:
   test:
@@ -131,30 +135,22 @@ workflow:
       ` + g1.Name + `: 7
 permissions:
   ` + g1.Name + `: 5
-  ` + g2.Name + `: 7`
-	req.Body = io.NopCloser(strings.NewReader(body))
+  ` + g2.Name + `: 7`))
 	req.Header.Set("Content-Type", "application/x-yaml")
-
-	//Do the request
 	rec := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 200, rec.Code)
-
-	//Check result
-	t.Logf(">>%s", rec.Body.String())
+	require.Equal(t, http.StatusOK, rec.Code)
 
 	w, err := workflow.Load(context.TODO(), db, api.Cache, *proj, "test2", workflow.LoadOptions{})
-	test.NoError(t, err)
-
-	assert.NotNil(t, w)
-
-	m, _ := dump.ToStringMap(w)
-	t.Logf("%+v", m)
-	assert.Equal(t, "test2", m["Workflow.Name"])
-	assert.Equal(t, "test", m["Workflow.WorkflowData.Node.Name"])
-	assert.Equal(t, "pip1", m["Workflow.WorkflowData.Node.Context.PipelineName"])
-	assert.Equal(t, "7", m["Workflow.WorkflowData.Node.Groups.Groups0.Permission"])
-	assert.Equal(t, g1.Name, m["Workflow.WorkflowData.Node.Groups.Groups0.Group.Name"])
+	require.NoError(t, err)
+	require.Len(t, w.Groups, 2)
+	require.NotNil(t, w.Groups.GetByGroupID(g1.ID))
+	require.Equal(t, sdk.PermissionReadExecute, w.Groups.GetByGroupID(g1.ID).Permission)
+	require.NotNil(t, w.Groups.GetByGroupID(g2.ID))
+	require.Equal(t, sdk.PermissionReadWriteExecute, w.Groups.GetByGroupID(g2.ID).Permission)
+	require.Len(t, w.WorkflowData.Node.Groups, 1)
+	require.NotNil(t, w.WorkflowData.Node.Groups.GetByGroupID(g1.ID))
+	require.Equal(t, sdk.PermissionReadWriteExecute, w.WorkflowData.Node.Groups.GetByGroupID(g1.ID).Permission)
 }
 
 func Test_postWorkflowImportHandlerWithExistingIcon(t *testing.T) {
@@ -989,11 +985,12 @@ metadata:
 func Test_postWorkflowImportHandler_editPermissions(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 
-	u, pass := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), "a-"+sdk.RandomString(10))
+
+	g0 := proj.ProjectGroups[0].Group
 	g1 := assets.InsertTestGroup(t, db, "b-"+sdk.RandomString(10))
 	g2 := assets.InsertTestGroup(t, db, "c-"+sdk.RandomString(10))
 
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), "a-"+sdk.RandomString(10))
 	require.NoError(t, group.InsertLinkGroupProject(context.TODO(), db, &group.LinkGroupProject{
 		GroupID:   g1.ID,
 		ProjectID: proj.ID,
@@ -1005,6 +1002,11 @@ func Test_postWorkflowImportHandler_editPermissions(t *testing.T) {
 		Role:      sdk.PermissionReadExecute,
 	}))
 
+	u, jwtLambda := assets.InsertLambdaUser(t, db, &g0, g1, g2)
+	assets.SetUserGroupAdmin(t, db, g0.ID, u.ID)
+	assets.SetUserGroupAdmin(t, db, g1.ID, u.ID)
+	assets.SetUserGroupAdmin(t, db, g2.ID, u.ID)
+
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
@@ -1012,109 +1014,89 @@ func Test_postWorkflowImportHandler_editPermissions(t *testing.T) {
 	}
 	require.NoError(t, pipeline.InsertPipeline(db, &pip))
 
-	uri := api.Router.GetRoute("POST", api.postWorkflowImportHandler, map[string]string{
+	uri := api.Router.GetRoute(http.MethodPost, api.postWorkflowImportHandler, map[string]string{
 		"permProjectKey": proj.Key,
 	})
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, nil)
-
-	body := `name: test_1
+	req := assets.NewJWTAuthentifiedRequest(t, jwtLambda, http.MethodPost, uri, nil)
+	req.Body = io.NopCloser(strings.NewReader(`name: test_1
 version: v2.0
 workflow:
   pip1:
-    pipeline: pip1`
-	req.Body = io.NopCloser(strings.NewReader(body))
+    pipeline: pip1`))
 	req.Header.Set("Content-Type", "application/x-yaml")
 
 	rec := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
-	require.Equal(t, 200, rec.Code)
+	require.Equal(t, http.StatusOK, rec.Code)
 	t.Logf(">>%s", rec.Body.String())
 
+	// Workflow permissions should be inherited from project
 	w, err := workflow.Load(context.TODO(), db, api.Cache, *proj, "test_1", workflow.LoadOptions{})
 	require.NoError(t, err)
-
-	// Workflow permissions should be inherited from project
 	require.Len(t, w.Groups, 3)
-	sort.Slice(w.Groups, func(i, j int) bool {
-		return w.Groups[i].Group.Name < w.Groups[j].Group.Name
-	})
-	assert.Equal(t, proj.ProjectGroups[0].Group.Name, w.Groups[0].Group.Name)
-	assert.Equal(t, sdk.PermissionReadWriteExecute, w.Groups[0].Permission)
-	assert.Equal(t, g1.Name, w.Groups[1].Group.Name)
-	assert.Equal(t, sdk.PermissionReadExecute, w.Groups[1].Permission)
-	assert.Equal(t, g2.Name, w.Groups[2].Group.Name)
-	assert.Equal(t, sdk.PermissionReadExecute, w.Groups[2].Permission)
+	require.NotNil(t, w.Groups.GetByGroupID(g0.ID))
+	require.Equal(t, sdk.PermissionReadWriteExecute, w.Groups.GetByGroupID(g0.ID).Permission)
+	require.NotNil(t, w.Groups.GetByGroupID(g1.ID))
+	require.Equal(t, sdk.PermissionReadExecute, w.Groups.GetByGroupID(g1.ID).Permission)
+	require.NotNil(t, w.Groups.GetByGroupID(g2.ID))
+	require.Equal(t, sdk.PermissionReadExecute, w.Groups.GetByGroupID(g2.ID).Permission)
 
-	// We want to change to permisison for g2 and remove the permission for g1
-	uri = api.Router.GetRoute("POST", api.postWorkflowImportHandler, map[string]string{
+	// We want to change to permission for g2 and remove the permission for g1
+	uri = api.Router.GetRoute(http.MethodPost, api.postWorkflowImportHandler, map[string]string{
 		"permProjectKey": proj.Key,
 	})
-	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, nil)
+	req = assets.NewJWTAuthentifiedRequest(t, jwtLambda, http.MethodPost, uri, nil)
 	q := req.URL.Query()
 	q.Set("force", "true")
 	req.URL.RawQuery = q.Encode()
-
-	body = `name: test_1
+	req.Body = io.NopCloser(strings.NewReader(`name: test_1
 version: v2.0
 workflow:
   pip1:
     pipeline: pip1
 permissions:
-  ` + proj.ProjectGroups[0].Group.Name + `: 7
-  ` + g2.Name + `: 4`
-	req.Body = io.NopCloser(strings.NewReader(body))
+  ` + g0.Name + `: 7
+  ` + g2.Name + `: 4`))
 	req.Header.Set("Content-Type", "application/x-yaml")
-
 	rec = httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
-	require.Equal(t, 200, rec.Code)
+	require.Equal(t, http.StatusOK, rec.Code)
 	t.Logf(">>%s", rec.Body.String())
 
 	w, err = workflow.Load(context.TODO(), db, api.Cache, *proj, "test_1", workflow.LoadOptions{})
 	require.NoError(t, err)
-
 	require.Len(t, w.Groups, 2)
-	sort.Slice(w.Groups, func(i, j int) bool {
-		return w.Groups[i].Group.Name < w.Groups[j].Group.Name
-	})
-	assert.Equal(t, proj.ProjectGroups[0].Group.Name, w.Groups[0].Group.Name)
-	assert.Equal(t, sdk.PermissionReadWriteExecute, w.Groups[0].Permission)
-	assert.Equal(t, g2.Name, w.Groups[1].Group.Name)
-	assert.Equal(t, sdk.PermissionRead, w.Groups[1].Permission)
+	require.NotNil(t, w.Groups.GetByGroupID(g0.ID))
+	require.Equal(t, sdk.PermissionReadWriteExecute, w.Groups.GetByGroupID(g0.ID).Permission)
+	require.NotNil(t, w.Groups.GetByGroupID(g2.ID))
+	require.Equal(t, sdk.PermissionRead, w.Groups.GetByGroupID(g2.ID).Permission)
 
-	// Import again the workflow without permissions should reset to previous workflow permissions
-	uri = api.Router.GetRoute("POST", api.postWorkflowImportHandler, map[string]string{
+	// Import again the workflow without permissions should not not change existing permissions
+	uri = api.Router.GetRoute(http.MethodPost, api.postWorkflowImportHandler, map[string]string{
 		"permProjectKey": proj.Key,
 	})
-	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, nil)
+	req = assets.NewJWTAuthentifiedRequest(t, jwtLambda, http.MethodPost, uri, nil)
 	q = req.URL.Query()
 	q.Set("force", "true")
 	req.URL.RawQuery = q.Encode()
-
-	body = `name: test_1
+	req.Body = io.NopCloser(strings.NewReader(`name: test_1
 version: v2.0
 workflow:
   pip1:
-    pipeline: pip1`
-	req.Body = io.NopCloser(strings.NewReader(body))
+    pipeline: pip1`))
 	req.Header.Set("Content-Type", "application/x-yaml")
-
 	rec = httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
-	require.Equal(t, 200, rec.Code)
+	require.Equal(t, http.StatusOK, rec.Code)
 	t.Logf(">>%s", rec.Body.String())
 
 	w, err = workflow.Load(context.TODO(), db, api.Cache, *proj, "test_1", workflow.LoadOptions{})
 	require.NoError(t, err)
-
 	require.Len(t, w.Groups, 2)
-	sort.Slice(w.Groups, func(i, j int) bool {
-		return w.Groups[i].Group.Name < w.Groups[j].Group.Name
-	})
-	assert.Equal(t, proj.ProjectGroups[0].Group.Name, w.Groups[0].Group.Name)
-	assert.Equal(t, sdk.PermissionReadWriteExecute, w.Groups[0].Permission)
-	assert.Equal(t, g2.Name, w.Groups[1].Group.Name)
-	assert.Equal(t, sdk.PermissionRead, w.Groups[1].Permission)
+	require.NotNil(t, w.Groups.GetByGroupID(g0.ID))
+	require.Equal(t, sdk.PermissionReadWriteExecute, w.Groups.GetByGroupID(g0.ID).Permission)
+	require.NotNil(t, w.Groups.GetByGroupID(g2.ID))
+	require.Equal(t, sdk.PermissionRead, w.Groups.GetByGroupID(g2.ID).Permission)
 }
 
 func Test_postWorkflowImportHandler_WithArtifactManager(t *testing.T) {

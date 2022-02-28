@@ -175,7 +175,10 @@ func TestUpdateTemplateInstanceWithWorkflow(t *testing.T) {
 
 	proj := assets.InsertTestProject(t, db, cache, sdk.RandomString(10), sdk.RandomString(10))
 	grp := proj.ProjectGroups[0].Group
+
 	usr, _ := assets.InsertLambdaUser(t, db, &grp)
+	assets.SetUserGroupAdmin(t, db, grp.ID, usr.ID)
+
 	consumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, usr.ID,
 		authentication.LoadConsumerOptions.WithAuthentifiedUser,
 		authentication.LoadConsumerOptions.WithConsumerGroups,
