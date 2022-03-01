@@ -20,7 +20,7 @@
     <ng-container *ngIf="isAPIAvailable && (!isConnected || !maintenance || currentAuthSummary?.user?.ring === 'ADMIN')">
         <app-navbar *ngIf="isConnected && !hideNavBar"></app-navbar>
 
-        <div class="banner" *ngIf="(maintenance) && (!isConnected || currentAuthSummary?.user?.ring == 'ADMIN')">
+        <div class="banner" *ngIf="(maintenance) && (!isConnected || currentAuthSummary?.user?.ring === 'ADMIN')">
             {{ 'maintenance_title' | translate }}
         </div>
         <div class="banner update" (click)="refresh()" *ngIf="showUIUpdatedBanner">

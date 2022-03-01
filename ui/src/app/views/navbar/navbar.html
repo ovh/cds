@@ -101,7 +101,7 @@
                     <div class="ui center"><i class="search icon"></i>{{'navbar_no_result' | translate}}</div>
                 </div>
                 <div class="ui internally celled grid" *ngIf="containsResult">
-                    <div class="four wide column">
+                    <div class="eight wide column">
                         <div class="ui secondary pointing menu">
                             <div class="ui relaxed divided list">
                                 <div class="item">
@@ -136,7 +136,7 @@
                         </div>
                     </div>
 
-                    <div class="six wide column">
+                    <div class="eight wide column">
                         <div class="ui secondary pointing menu">
                             <div class="ui relaxed divided list">
                                 <div class="item">
@@ -163,48 +163,6 @@
                                         <a class="header" (click)="$event.stopPropagation()"
                                             [routerLink]="['/project', el.projectKey, 'workflow', el.title]"
                                             title="{{ 'common_workflow_title' | translate }}{{el.title}}">
-                                            {{el.title}}
-                                        </a>
-                                        <div class="description">{{'navbar_in_project' | translate}}
-                                            <a (click)="$event.stopPropagation()"
-                                                [routerLink]="['/project', el.projectKey]"
-                                                title="{{ 'common_project_title' | translate }}{{el.title}}">
-                                                {{el.projectKey}}
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="six wide column">
-                        <div class="ui secondary pointing menu">
-                            <div class="ui relaxed divided list">
-                                <div class="item">
-                                    <div class="content">
-                                        {{ 'common_applications' | translate }}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="ui secondary pointing menu"
-                            *ngIf="!searchApplications || searchApplications.length <= 0">
-                            <div class="ui relaxed divided list">
-                                <div class="item">
-                                    <div class="content">
-                                        {{ 'navbar_no_application' | translate}}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="ui secondary pointing menu" *ngFor="let el of searchApplications">
-                            <div class="ui relaxed divided list">
-                                <div class="item">
-                                    <div class="content">
-                                        <a class="header" (click)="$event.stopPropagation()"
-                                            [routerLink]="['/project', el.projectKey, 'application', el.title]"
-                                            title="{{ 'common_application_title' | translate }}{{el.title}}">
                                             {{el.title}}
                                         </a>
                                         <div class="description">{{'navbar_in_project' | translate}}

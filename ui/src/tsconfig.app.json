@@ -13,7 +13,11 @@
     "outDir": "../out-tsc/app",
     "module": "esnext",
     "baseUrl": "",
-    "paths": {},
+    "paths": {
+      "url": [
+        "../node_modules/url"
+      ],
+    },
     "types": []
   },
   "include": [

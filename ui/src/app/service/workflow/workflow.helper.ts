@@ -23,7 +23,7 @@ export class WorkflowHelper {
                     uiArtifact.name = data.name;
                     uiArtifact.size = data.size;
                     uiArtifact.human_size = this.getHumainFileSize(data.size);
-                    uiArtifact.type = r.type == 'artifact' ? 'file': r.type;
+                    uiArtifact.type = r.type === 'artifact' ? 'file' : r.type;
                     uiArtifact.file_type = uiArtifact.type;
                     return uiArtifact;
                 case 'artifact-manager':

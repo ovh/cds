@@ -28,7 +28,9 @@ export class ProjectStore {
 
     loadRecentProjects(): void {
         let arrayApp = JSON.parse(localStorage.getItem(ProjectStore.RECENT_PROJECTS_KEY));
-        this._recentProjects.next(List.of(...arrayApp));
+        if (arrayApp) {
+            this._recentProjects.next(List.of(...arrayApp));
+        }
     }
 
     getProjectsList(resync: boolean = false): Observable<List<Project>> {

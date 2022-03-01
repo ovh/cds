@@ -33,6 +33,7 @@
               "node_modules/font-awesome/css/font-awesome.css",
               "node_modules/animate.css/animate.min.css",
               "node_modules/prismjs/themes/prism-okaidia.css",
+              "node_modules/spinkit/spinkit.min.css",
               "semantic/dist/semantic.min.css",
               "src/styles.scss"
             ],

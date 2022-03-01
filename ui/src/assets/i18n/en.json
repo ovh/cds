@@ -440,7 +440,6 @@
   "navbar_cdsctl": "Command Line cdsctl",
   "navbar_projects": "Projects",
   "navbar_no_project": "No project",
-  "navbar_no_application": "No application",
   "navbar_no_workflow": "No workflow",
   "navbar_favorites": "Bookmarks",
   "navbar_users": "Users",
