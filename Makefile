@@ -113,3 +113,5 @@ tidy:
 		echo "Running tidy on $$P"; \
 		(cd $$P && go mod tidy); \
 	done;
+	@echo "Running tidy on tests/fixtures/04SCWorkflowRunSimplePlugin"
+	@(cd tests/fixtures/04SCWorkflowRunSimplePlugin && go mod tidy)
