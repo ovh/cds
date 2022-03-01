@@ -74,7 +74,7 @@ require (
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.9.1 // indirect
 	github.com/prometheus/procfs v0.0.8 // indirect
-	github.com/rockbears/log v0.4.0 // indirect
+	github.com/rockbears/log v0.6.0 // indirect
 	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/sguiheux/go-coverage v0.0.0-20190710153556-287b082a7197 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect

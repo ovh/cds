@@ -448,6 +448,9 @@ const (
 // CanSpawn checks if the model can be spawned by this hatchery
 // it checks on every docker engine is one of the docker has availability
 func (h *HatcherySwarm) CanSpawn(ctx context.Context, model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
+	ctx, end := telemetry.Span(ctx, "hatchery.CanSpawn", telemetry.Tag(telemetry.TagWorker, model.Name))
+	defer end()
+
 	// Hostname requirement are not supported
 	for _, r := range requirements {
 		if r.Type == sdk.HostnameRequirement {
@@ -487,6 +490,9 @@ func (h *HatcherySwarm) CanSpawn(ctx context.Context, model *sdk.Model, jobID in
 // WorkersStarted returns the number of instances started but
 // not necessarily register on CDS yet
 func (h *HatcherySwarm) WorkersStarted(ctx context.Context) []string {
+	ctx, end := telemetry.Span(ctx, "hatchery.WorkersStarted")
+	defer end()
+
 	res := make([]string, 0)
 	for _, dockerClient := range h.dockerClients {
 		containers, err := h.getContainers(ctx, dockerClient, types.ContainerListOptions{All: true})

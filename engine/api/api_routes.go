@@ -30,7 +30,7 @@ func (api *API) InitRouter() {
 	api.Router.Middlewares = append(api.Router.Middlewares, api.tracingMiddleware, api.jwtMiddleware)
 	api.Router.DefaultAuthMiddleware = api.authMiddleware
 	api.Router.PostAuthMiddlewares = append(api.Router.PostAuthMiddlewares, api.xsrfMiddleware, api.maintenanceMiddleware)
-	api.Router.PostMiddlewares = append(api.Router.PostMiddlewares, TracingPostMiddleware)
+	api.Router.PostMiddlewares = append(api.Router.PostMiddlewares, service.TracingPostMiddleware)
 
 	r := api.Router
 

@@ -19,11 +19,6 @@ func (api *API) tracingMiddleware(ctx context.Context, w http.ResponseWriter, re
 	return TracingMiddlewareFunc(api, api.mustDB(), api.Cache)(ctx, w, req, rc)
 }
 
-func TracingPostMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig) (context.Context, error) {
-	ctx, err := telemetry.End(ctx, w, req)
-	return ctx, err
-}
-
 func TracingMiddlewareFunc(s service.Service, db gorp.SqlExecutor, store cache.Store) service.Middleware {
 	return func(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig) (context.Context, error) {
 		name := runtime.FuncForPC(reflect.ValueOf(rc.Handler).Pointer()).Name()

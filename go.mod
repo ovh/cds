@@ -65,7 +65,7 @@ require (
 	github.com/pelletier/go-toml v1.9.4
 	github.com/pkg/browser v0.0.0-20170505125900-c90ca0c84f15
 	github.com/pkg/errors v0.9.1
-	github.com/rockbears/log v0.4.0
+	github.com/rockbears/log v0.6.0
 	github.com/rubenv/sql-migrate v0.0.0-20160620083229-6f4757563362
 	github.com/satori/go.uuid v1.2.0
 	github.com/sguiheux/go-coverage v0.0.0-20190710153556-287b082a7197

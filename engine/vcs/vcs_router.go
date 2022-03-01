@@ -5,7 +5,6 @@ import (
 
 	"github.com/rockbears/log"
 
-	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/service"
 )
 
@@ -15,9 +14,10 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Background = ctx
 	r.URL = s.Cfg.URL
 	r.SetHeaderFunc = service.DefaultHeaders
+	r.Middlewares = append(r.Middlewares, service.TracingMiddlewareFunc(s))
 	r.DefaultAuthMiddleware = service.CheckRequestSignatureMiddleware(s.ParsedAPIPublicKey)
-	r.PostAuthMiddlewares = append(r.PostAuthMiddlewares, s.authMiddleware, service.TracingMiddlewareFunc(s))
-	r.PostMiddlewares = append(r.PostMiddlewares, api.TracingPostMiddleware)
+	r.PostAuthMiddlewares = append(r.PostAuthMiddlewares, s.authMiddleware)
+	r.PostMiddlewares = append(r.PostMiddlewares, service.TracingPostMiddleware)
 
 	r.Handle("/mon/version", nil, r.GET(service.VersionHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 	r.Handle("/mon/status", nil, r.GET(s.statusHandler, service.OverrideAuth(service.NoAuthMiddleware)))

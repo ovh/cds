@@ -95,7 +95,7 @@ require (
 	github.com/prometheus/common v0.9.1 // indirect
 	github.com/prometheus/procfs v0.0.8 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
-	github.com/rockbears/log v0.4.0 // indirect
+	github.com/rockbears/log v0.6.0 // indirect
 	github.com/rubenv/sql-migrate v0.0.0-20160620083229-6f4757563362 // indirect
 	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/sguiheux/go-coverage v0.0.0-20190710153556-287b082a7197 // indirect

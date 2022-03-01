@@ -9,6 +9,7 @@ import (
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 // workerRegister is called by a ticker.
@@ -20,6 +21,8 @@ import (
 var nbRegisteringWorkerModels int64
 
 func workerRegister(ctx context.Context, h InterfaceWithModels, startWorkerChan chan<- workerStarterRequest) error {
+	ctx, end := telemetry.Span(ctx, "hatchery.workerRegister")
+
 	if len(models) == 0 {
 		return errors.Errorf("no model returned by GetWorkerModels")
 	}
@@ -87,6 +90,8 @@ loopModels:
 		//Ask for the creation
 		startWorkerChan <- workerStarterRequest{
 			registerWorkerModel: &models[k],
+			ctx:                 ctx,
+			cancel:              end,
 		}
 	}
 	return nil

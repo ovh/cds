@@ -16,7 +16,7 @@ import (
 
 type workerStarterRequest struct {
 	ctx                 context.Context
-	cancel              func(reason string)
+	cancel              func()
 	id                  int64
 	model               *sdk.Model
 	execGroups          []sdk.Group
@@ -50,10 +50,11 @@ func workerStarter(ctx context.Context, h Interface, workerNum string, jobs <-ch
 		// Start a worker for a job
 		if m := j.registerWorkerModel; m == nil {
 			_ = spawnWorkerForJob(j.ctx, h, j)
-			j.cancel("") // call to EndTrace for observability
+			j.cancel() // call to EndTrace for observability
 		} else { // Start a worker for registering
 			log.Debug(ctx, "Spawning worker for register model %s", m.Name)
 			if atomic.LoadInt64(&nbWorkerToStart) > int64(h.Configuration().Provision.MaxConcurrentProvisioning) {
+				j.cancel() // call to EndTrace for observability
 				continue
 			}
 
@@ -83,11 +84,12 @@ func workerStarter(ctx context.Context, h Interface, workerNum string, jobs <-ch
 				if err := h.CDSClient().WorkerModelSpawnError(m.Group.Name, m.Name, spawnError); err != nil {
 					log.Error(ctx, "workerStarter> error on call client.WorkerModelSpawnError on worker model %s for register: %s", m.Name, err)
 				}
+				j.cancel() // call to EndTrace for observability
 				continue
 			}
 			arg.WorkerToken = jwt
 
-			if err := h.SpawnWorker(ctx, arg); err != nil {
+			if err := h.SpawnWorker(j.ctx, arg); err != nil {
 				ctx = sdk.ContextWithStacktrace(ctx, err)
 				log.Warn(ctx, "workerRegister> cannot spawn worker for register:%s err:%v", m.Name, err)
 				var spawnError = sdk.SpawnErrorForm{
@@ -98,6 +100,7 @@ func workerStarter(ctx context.Context, h Interface, workerNum string, jobs <-ch
 				}
 			}
 			atomic.AddInt64(&nbWorkerToStart, -1)
+			j.cancel() // call to EndTrace for observability
 		}
 	}
 }
@@ -112,7 +115,7 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 	)
 	telemetry.Record(ctx, GetMetrics().SpawnedWorkers, 1)
 
-	ctx = context.WithValue(ctx, log.Field("action_metadata_job_id"), strconv.Itoa(int(j.id)))
+	ctx = context.WithValue(ctx, LogFieldJobID, strconv.Itoa(int(j.id)))
 
 	log.Debug(ctx, "hatchery> spawnWorkerForJob> %d", j.id)
 	defer log.Info(ctx, "hatchery> spawnWorkerForJob> %d (%.3f seconds elapsed)", j.id, time.Since(time.Unix(j.timestamp, 0)).Seconds())

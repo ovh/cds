@@ -151,26 +151,25 @@ func Create(ctx context.Context, h Interface) error {
 					continue
 				}
 
-				var traceEnded *struct{}
-				currentCtx, currentCancel := context.WithTimeout(ctx, 10*time.Minute)
-				currentCtx = context.WithValue(currentCtx, log.Field("action_metadata_job_id"), strconv.Itoa(int(j.ID)))
-
+				currentCtx, currentCancel := context.WithTimeout(context.Background(), 10*time.Minute)
+				fields := log.FieldValues(ctx)
+				for k, v := range fields {
+					currentCtx = context.WithValue(currentCtx, k, v)
+				}
+				currentCtx = context.WithValue(currentCtx, LogFieldJobID, strconv.Itoa(int(j.ID)))
+				var endCurrentCtx context.CancelFunc
 				log.Info(currentCtx, "processing job %d", j.ID)
 
-				var endSpan *trace.Span
 				if val, has := j.Header.Get(telemetry.SampledHeader); has && val == "1" {
-					currentCtx, endSpan = telemetry.New(currentCtx, h, "hatchery.JobReceive", trace.AlwaysSample(), trace.SpanKindUnspecified)
-
 					r, _ := j.Header.Get(sdk.WorkflowRunHeader)
 					w, _ := j.Header.Get(sdk.WorkflowHeader)
 					p, _ := j.Header.Get(sdk.ProjectKeyHeader)
 
-					telemetry.Current(currentCtx,
-						telemetry.Tag(telemetry.TagWorkflow, w),
+					currentCtx = telemetry.New(currentCtx, h, "hatchery.JobReceive", trace.AlwaysSample(), trace.SpanKindServer)
+					currentCtx, endCurrentCtx = telemetry.Span(currentCtx, "hatchery.JobReceive", telemetry.Tag(telemetry.TagWorkflow, w),
 						telemetry.Tag(telemetry.TagWorkflowRun, r),
 						telemetry.Tag(telemetry.TagProjectKey, p),
-						telemetry.Tag(telemetry.TagWorkflowNodeJobRun, j.ID),
-					)
+						telemetry.Tag(telemetry.TagWorkflowNodeJobRun, j.ID))
 
 					if _, ok := j.Header["WS"]; ok {
 						log.Debug(currentCtx, "hatchery> received job from WS")
@@ -180,24 +179,22 @@ func Create(ctx context.Context, h Interface) error {
 					}
 				}
 				endTrace := func(reason string) {
+					if currentCancel != nil {
+						currentCancel()
+					}
 					if reason != "" {
 						telemetry.Current(currentCtx,
 							telemetry.Tag("reason", reason),
 						)
 					}
-					telemetry.End(currentCtx, nil, nil) // nolint
-					if endSpan != nil {
-						endSpan.End()
+					if endCurrentCtx != nil {
+						endCurrentCtx()
 					}
-					var T struct{}
-					traceEnded = &T
-					currentCancel()
+					telemetry.End(ctx, nil, nil)
 				}
 				go func() {
 					<-currentCtx.Done()
-					if traceEnded == nil {
-						endTrace(currentCtx.Err().Error())
-					}
+					endTrace(currentCtx.Err().Error())
 				}()
 
 				stats.Record(currentCtx, GetMetrics().Jobs.M(1))
@@ -232,7 +229,7 @@ func Create(ctx context.Context, h Interface) error {
 
 				workerRequest := workerStarterRequest{
 					ctx:               currentCtx,
-					cancel:            endTrace,
+					cancel:            currentCancel,
 					id:                j.ID,
 					execGroups:        j.ExecGroups,
 					requirements:      j.Job.Action.Requirements,
@@ -365,6 +362,9 @@ func canRunJob(ctx context.Context, h Interface, j workerStarterRequest) bool {
 const MemoryRegisterContainer int64 = 128
 
 func canRunJobWithModel(ctx context.Context, h InterfaceWithModels, j workerStarterRequest, model *sdk.Model) bool {
+	ctx, end := telemetry.Span(ctx, "hatchery.canRunJobWithModel", telemetry.Tag(telemetry.TagWorker, model.Name))
+	defer end()
+
 	if model.Type != h.ModelType() {
 		log.Debug(ctx, "canRunJobWithModel> model %s type:%s current hatchery modelType: %s", model.Name, model.Type, h.ModelType())
 		return false
@@ -381,6 +381,8 @@ func canRunJobWithModel(ctx context.Context, h InterfaceWithModels, j workerStar
 		return false
 	}
 
+	var next context.CancelFunc
+	ctx, next = telemetry.Span(ctx, "hatchery.canRunJobWithModel.checkExecGroups")
 	if len(j.execGroups) > 0 {
 		checkGroup := false
 		for _, g := range j.execGroups {
@@ -394,6 +396,7 @@ func canRunJobWithModel(ctx context.Context, h InterfaceWithModels, j workerStar
 			return false
 		}
 	}
+	next()
 
 	var containsModelRequirement, containsHostnameRequirement bool
 	for _, r := range j.requirements {
@@ -411,6 +414,7 @@ func canRunJobWithModel(ctx context.Context, h InterfaceWithModels, j workerStar
 	}
 
 	// Common check
+	ctx, next = telemetry.Span(ctx, "hatchery.canRunJobWithModel.commonCheckRequirements")
 	for _, r := range j.requirements {
 		// If requirement is a Model requirement, it's easy. It's either can or can't run
 		// r.Value could be: theModelName --port=8888:9999, so we take strings.Split(r.Value, " ")[0] to compare
@@ -422,6 +426,7 @@ func canRunJobWithModel(ctx context.Context, h InterfaceWithModels, j workerStar
 			isSameName := modelName == model.Name // for backward compatibility with runs, if only the name match we considered that the model can be used, keep this condition until the workflow runs were not migrated.
 			if !isGroupModel && !isSharedInfraModel && !isSameName {
 				log.Debug(ctx, "canRunJobWithModel> %d - job %d - model requirement r.Value(%s) do not match model.Name(%s) and model.Group(%s)", j.timestamp, j.id, strings.Split(r.Value, " ")[0], model.Name, model.Group.Name)
+				next()
 				return false
 			}
 		}
@@ -429,6 +434,7 @@ func canRunJobWithModel(ctx context.Context, h InterfaceWithModels, j workerStar
 		// service and memory requirements are only supported by docker model
 		if model.Type != sdk.Docker && (r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement) {
 			log.Debug(ctx, "canRunJobWithModel> %d - job %d - job with service requirement or memory requirement: only for model docker. current model:%s", j.timestamp, j.id, model.Type)
+			next()
 			return false
 		}
 
@@ -440,11 +446,13 @@ func canRunJobWithModel(ctx context.Context, h InterfaceWithModels, j workerStar
 
 		if r.Type == sdk.OSArchRequirement && model.RegisteredOS != nil && *model.RegisteredOS != "" && model.RegisteredArch != nil && *model.RegisteredArch != "" && r.Value != (*model.RegisteredOS+"/"+*model.RegisteredArch) {
 			log.Debug(ctx, "canRunJobWithModel> %d - job %d - job with OSArch requirement: cannot spawn on this OSArch. current model: %s/%s", j.timestamp, j.id, *model.RegisteredOS, *model.RegisteredArch)
+			next()
 			return false
 		}
 
 		if r.Type == sdk.RegionRequirement && r.Value != h.Configuration().Provision.Region {
 			log.Debug(ctx, "canRunJobWithModel> %d - job %d - job with region requirement: cannot spawn. hatchery-region:%s prerequisite:%s", j.timestamp, j.id, h.Configuration().Provision.Region, r.Value)
+			next()
 			return false
 		}
 
@@ -461,11 +469,13 @@ func canRunJobWithModel(ctx context.Context, h InterfaceWithModels, j workerStar
 
 				if !found {
 					log.Debug(ctx, "canRunJobWithModel> %d - job %d - model(%s) does not have binary %s(%s) for this job.", j.timestamp, j.id, model.Name, r.Name, r.Value)
+					next()
 					return false
 				}
 			}
 		}
 	}
+	next()
 
 	return h.CanSpawn(ctx, model, j.id, j.requirements)
 }
