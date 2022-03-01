@@ -96,10 +96,6 @@ func Create(ctx context.Context, h Interface) error {
 		log.Debug(ctx, "starting queue polling")
 
 		var ms []cdsclient.RequestModifier
-		ratioService := h.Configuration().Provision.RatioService
-		if ratioService != nil {
-			ms = append(ms, cdsclient.RatioService(*ratioService))
-		}
 		if modelType != "" {
 			ms = append(ms, cdsclient.ModelType(modelType))
 		}

@@ -811,14 +811,13 @@ func (api *API) countWorkflowJobQueueHandler() service.Handler {
 		}
 
 		since, until, _ := getSinceUntilLimitHeader(ctx, w, r)
-		modelType, ratioService, err := getModelTypeRatioService(ctx, r)
+		modelType, err := getModelType(ctx, r)
 		if err != nil {
 			return err
 		}
 
 		filter := workflow.NewQueueFilter()
 		filter.ModelType = []string{modelType}
-		filter.RatioService = ratioService
 		filter.Since = &since
 		filter.Until = &until
 
@@ -849,7 +848,7 @@ func (api *API) getWorkflowJobQueueHandler() service.Handler {
 			status = []string{sdk.StatusWaiting}
 		}
 
-		modelType, ratioService, err := getModelTypeRatioService(ctx, r)
+		modelType, err := getModelType(ctx, r)
 		if err != nil {
 			return err
 		}
@@ -880,7 +879,6 @@ func (api *API) getWorkflowJobQueueHandler() service.Handler {
 			permissions = sdk.PermissionReadExecute
 		}
 		filter := workflow.NewQueueFilter()
-		filter.RatioService = ratioService
 		filter.Since = &since
 		filter.Until = &until
 		filter.Rights = permissions
@@ -905,23 +903,14 @@ func (api *API) getWorkflowJobQueueHandler() service.Handler {
 	}
 }
 
-func getModelTypeRatioService(ctx context.Context, r *http.Request) (string, *int, error) {
+func getModelType(ctx context.Context, r *http.Request) (string, error) {
 	modelType := FormString(r, "modelType")
 	if modelType != "" {
 		if !sdk.WorkerModelValidate(modelType) {
-			return "", nil, sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given modelType")
+			return "", sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given modelType")
 		}
 	}
-	ratioService := FormString(r, "ratioService")
-	var ratio *int
-	if ratioService != "" {
-		i, err := strconv.Atoi(ratioService)
-		if err != nil {
-			return "", nil, sdk.NewErrorFrom(sdk.ErrInvalidNumber, " %s is not a integer", ratioService)
-		}
-		ratio = &i
-	}
-	return modelType, ratio, nil
+	return modelType, nil
 }
 
 // getSinceUntilLimitHeader returns since, until, limit

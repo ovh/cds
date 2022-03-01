@@ -19,14 +19,13 @@ import (
 
 // QueueFilter contains all criteria used to fetch queue
 type QueueFilter struct {
-	ModelType    []string
-	RatioService *int
-	Rights       int
-	Since        *time.Time
-	Until        *time.Time
-	Limit        *int
-	Statuses     []string
-	Regions      []string
+	ModelType []string
+	Rights    int
+	Since     *time.Time
+	Until     *time.Time
+	Limit     *int
+	Statuses  []string
+	Regions   []string
 }
 
 func NewQueueFilter() QueueFilter {
@@ -79,38 +78,27 @@ func CountNodeJobRunQueueByGroupIDs(ctx context.Context, db gorp.SqlExecutor, st
 func LoadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.Store, filter QueueFilter) ([]sdk.WorkflowNodeJobRun, error) {
 	ctx, end := telemetry.Span(ctx, "workflow.LoadNodeJobRunQueue")
 	defer end()
-	containsService := []bool{true, false}
-	if filter.RatioService != nil {
-		if *filter.RatioService == 100 {
-			containsService = []bool{true, true}
-		} else if *filter.RatioService == 0 {
-			containsService = []bool{false, false}
-		}
-	}
 
 	query := gorpmapping.NewQuery(`select distinct workflow_node_run_job.*
 	from workflow_node_run_job
 	where workflow_node_run_job.queued >= $1
 	and workflow_node_run_job.queued <= $2
 	and workflow_node_run_job.status = ANY($3)
-	AND contains_service IN ($4, $5)
-	AND (model_type is NULL OR model_type = '' OR model_type = ANY($6))
+	AND (model_type is NULL OR model_type = '' OR model_type = ANY($4))
   AND (
-    workflow_node_run_job.region = ANY($7)
+    workflow_node_run_job.region = ANY($5)
     OR
-    (workflow_node_run_job.region is NULL AND '' = ANY($7))
+    (workflow_node_run_job.region is NULL AND '' = ANY($5))
     OR
-    array_length($7, 1) is NULL
+    array_length($5, 1) is NULL
   )
 	ORDER BY workflow_node_run_job.queued ASC
 	`).Args(
 		*filter.Since,                    // $1
 		*filter.Until,                    // $2
 		pq.StringArray(filter.Statuses),  // $3
-		containsService[0],               // $4
-		containsService[1],               // $5
-		pq.StringArray(filter.ModelType), // $6
-		pq.StringArray(filter.Regions),   // $7
+		pq.StringArray(filter.ModelType), // $4
+		pq.StringArray(filter.Regions),   // $5
 	)
 
 	return loadNodeJobRunQueue(ctx, db, store, query, filter.Limit)
@@ -120,37 +108,28 @@ func LoadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.S
 func LoadNodeJobRunQueueByGroupIDs(ctx context.Context, db gorp.SqlExecutor, store cache.Store, filter QueueFilter, groupIDs []int64) ([]sdk.WorkflowNodeJobRun, error) {
 	ctx, end := telemetry.Span(ctx, "workflow.LoadNodeJobRunQueueByGroups")
 	defer end()
-	containsService := []bool{true, false}
-	if filter.RatioService != nil {
-		if *filter.RatioService == 100 {
-			containsService = []bool{true, true}
-		} else if *filter.RatioService == 0 {
-			containsService = []bool{false, false}
-		}
-	}
 
 	query := gorpmapping.NewQuery(`
 	-- Parameters:
 	--  $1: Queue since
 	--  $2: Queue until
 	--  $3: List of status
-	--  $4, $5: Should (or should not) contains service, or we don't care
-	--  $6: List of model types
-	--  $7: Comman separated list of groups ID
-	--  $8: shared infra group ID
-	--  $9: minimum level of permission
-  --  $10: List of regions
+	--  $4: List of model types
+	--  $5: Comman separated list of groups ID
+	--  $6: shared infra group ID
+	--  $7: minimum level of permission
+    --  $8: List of regions
 	WITH workflow_id_with_permissions AS (
 		SELECT workflow_perm.workflow_id,
-			CASE WHEN $8 = ANY(string_to_array($7, ',')::int[]) THEN 7
+			CASE WHEN $6 = ANY(string_to_array($5, ',')::int[]) THEN 7
 				 ELSE max(workflow_perm.role)
 			END as "role"
 		FROM workflow_perm
 		JOIN project_group ON project_group.id = workflow_perm.project_group_id
 		WHERE
-			project_group.group_id = ANY(string_to_array($7, ',')::int[])
+			project_group.group_id = ANY(string_to_array($5, ',')::int[])
 		OR
-			$8 = ANY(string_to_array($7, ',')::int[])
+			$6 = ANY(string_to_array($5, ',')::int[])
 		GROUP BY workflow_perm.workflow_id
 	), workflow_node_run_job_exec_groups AS (
 		SELECT id, jsonb_array_elements_text(exec_groups)::jsonb->'id' AS exec_group_id
@@ -158,7 +137,7 @@ func LoadNodeJobRunQueueByGroupIDs(ctx context.Context, db gorp.SqlExecutor, sto
 	), workflow_node_run_job_matching_exec_groups AS (
 		SELECT id
 		FROM workflow_node_run_job_exec_groups
-		WHERE exec_group_id::text = ANY(string_to_array($7, ','))
+		WHERE exec_group_id::text = ANY(string_to_array($5, ','))
 	)
 	SELECT DISTINCT workflow_node_run_job.*
 	FROM workflow_node_run_job
@@ -168,7 +147,7 @@ func LoadNodeJobRunQueueByGroupIDs(ctx context.Context, db gorp.SqlExecutor, sto
 	WHERE workflow.id IN (
 		SELECT workflow_id
 		FROM workflow_id_with_permissions
-		WHERE role >= $9
+		WHERE role >= $7
 	)
 	AND workflow_node_run_job.id IN (
 		SELECT id
@@ -177,31 +156,28 @@ func LoadNodeJobRunQueueByGroupIDs(ctx context.Context, db gorp.SqlExecutor, sto
 	AND workflow_node_run_job.queued >= $1
 	AND workflow_node_run_job.queued <= $2
 	AND workflow_node_run_job.status = ANY($3)
-	AND workflow_node_run_job.contains_service IN ($4, $5)
 	AND (
 		workflow_node_run_job.model_type is NULL
 		OR
-		model_type = '' OR model_type = ANY($6)
+		model_type = '' OR model_type = ANY($4)
 	)
   AND (
-    workflow_node_run_job.region = ANY($10)
+    workflow_node_run_job.region = ANY($8)
     OR
-    (workflow_node_run_job.region is NULL AND '' = ANY($10))
+    (workflow_node_run_job.region is NULL AND '' = ANY($8))
     OR
-    array_length($10, 1) is NULL
+    array_length($8, 1) is NULL
   )
 	ORDER BY workflow_node_run_job.queued ASC
 	`).Args(
 		*filter.Since,                          // $1
 		*filter.Until,                          // $2
 		pq.StringArray(filter.Statuses),        // $3
-		containsService[0],                     // $4
-		containsService[1],                     // $5
-		pq.StringArray(filter.ModelType),       // $6
-		gorpmapping.IDsToQueryString(groupIDs), // $7
-		group.SharedInfraGroup.ID,              // $8
-		filter.Rights,                          // $9
-		pq.StringArray(filter.Regions),         // $10
+		pq.StringArray(filter.ModelType),       // $4
+		gorpmapping.IDsToQueryString(groupIDs), // $5
+		group.SharedInfraGroup.ID,              // $6
+		filter.Rights,                          // $7
+		pq.StringArray(filter.Regions),         // $8
 	)
 	return loadNodeJobRunQueue(ctx, db, store, query, filter.Limit)
 }
