@@ -60,9 +60,9 @@ func Test_WorkflowAsCodeRename(t *testing.T) {
 	UUID := sdk.UUID()
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "POST", "/operations", gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "POST", "/operations", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(
-			func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
+			func(ctx context.Context, method string, path string, in interface{}, out interface{}, mods ...interface{}) (http.Header, int, error) {
 				ope := new(sdk.Operation)
 				ope.UUID = UUID
 				ope.Status = sdk.OperationStatusPending
@@ -76,7 +76,7 @@ func Test_WorkflowAsCodeRename(t *testing.T) {
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/fsamin/go-repo/branches/?branch=&default=true", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(
-			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+			func(ctx context.Context, method string, path string, in interface{}, out interface{}, mods ...interface{}) (http.Header, int, error) {
 				b := sdk.VCSBranch{
 					DisplayID: "master",
 				}
@@ -88,7 +88,7 @@ func Test_WorkflowAsCodeRename(t *testing.T) {
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/fsamin/go-repo/branches/?branch=master&default=false", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(
-			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+			func(ctx context.Context, method string, path string, in interface{}, out interface{}, mods ...interface{}) (http.Header, int, error) {
 				bs := []sdk.VCSBranch{}
 				b := sdk.VCSBranch{
 					DisplayID: "master",
@@ -101,9 +101,108 @@ func Test_WorkflowAsCodeRename(t *testing.T) {
 
 	gomock.InOrder(
 		servicesClients.EXPECT().
-			DoJSONRequest(gomock.Any(), "GET", gomock.Any(), gomock.Any(), gomock.Any()).
+			DoJSONRequest(gomock.Any(), "POST", "/task/bulk", gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(
-				func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
+				func(ctx context.Context, method string, path string, in interface{}, out interface{}, mods ...interface{}) (http.Header, int, error) {
+					actualHooks, ok := in.(map[string]sdk.NodeHook)
+					require.True(t, ok)
+					require.Len(t, actualHooks, 1)
+					for k, h := range actualHooks {
+						assert.Equal(t, "RepositoryWebHook", h.HookModelName)
+						assert.Equal(t, "POST", h.Config["method"].Value)
+						assert.Equal(t, "fsamin/go-repo", h.Config["repoFullName"].Value)
+						assert.Equal(t, "github", h.Config["vcsServer"].Value)
+						assert.Equal(t, "w-go-repo", h.Config["workflow"].Value)
+						h.Config["webHookURL"] = sdk.WorkflowNodeHookConfigValue{
+							Value:        "http://lolcat.host",
+							Configurable: false,
+						}
+						actualHooks[k] = h
+					}
+					out = actualHooks
+					return nil, 200, nil
+				},
+			),
+		servicesClients.EXPECT().
+			DoJSONRequest(gomock.Any(), "POST", "/task/bulk", gomock.Any(), gomock.Any(), gomock.Any()).
+			DoAndReturn(
+				func(ctx context.Context, method string, path string, in interface{}, out interface{}, mods ...interface{}) (http.Header, int, error) {
+					actualHooks, ok := in.(map[string]sdk.NodeHook)
+					require.True(t, ok)
+					require.Len(t, actualHooks, 1)
+					for k, h := range actualHooks {
+						assert.Equal(t, "RepositoryWebHook", h.HookModelName)
+						assert.Equal(t, "POST", h.Config["method"].Value)
+						assert.Equal(t, "fsamin/go-repo", h.Config["repoFullName"].Value)
+						assert.Equal(t, "github", h.Config["vcsServer"].Value)
+						assert.Equal(t, "w-go-repo-renamed", h.Config["workflow"].Value)
+						h.Config["webHookURL"] = sdk.WorkflowNodeHookConfigValue{
+							Value:        "http://lolcat.host",
+							Configurable: false,
+						}
+						actualHooks[k] = h
+					}
+					out = actualHooks
+					return nil, 200, nil
+				},
+			),
+	)
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/webhooks", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(
+			func(ctx context.Context, method string, path string, in interface{}, out interface{}, mods ...interface{}) (http.Header, int, error) {
+				*(out.(*repositoriesmanager.WebhooksInfos)) = repositoriesmanager.WebhooksInfos{
+					WebhooksSupported: true,
+					WebhooksDisabled:  false,
+					Icon:              sdk.GitHubIcon,
+					Events: []string{
+						"push",
+					},
+				}
+				return nil, 200, nil
+			},
+		).Times(2)
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "POST", "/vcs/github/repos/fsamin/go-repo/grant", gomock.Any(), gomock.Any(), gomock.Any())
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "POST", "/vcs/github/repos/fsamin/go-repo/hooks", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(
+			func(ctx context.Context, method string, path string, in interface{}, out interface{}, mods ...interface{}) (http.Header, int, error) {
+				vcsHooks := in.(*sdk.VCSHook)
+
+				require.Len(t, vcsHooks.Events, 0, "events list should be empty, default value is set by vcs")
+				vcsHooks.Events = []string{"push"}
+
+				vcsHooks.ID = sdk.UUID()
+				*(out.(*sdk.VCSHook)) = *vcsHooks
+				return nil, 200, nil
+			},
+		).Times(1)
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "PUT", "/vcs/github/repos/fsamin/go-repo/hooks", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(
+			func(ctx context.Context, method string, path string, in interface{}, out interface{}, mods ...interface{}) (http.Header, int, error) {
+				vcsHooks := in.(*sdk.VCSHook)
+				vcsHooks.ID = sdk.UUID()
+				require.Len(t, vcsHooks.Events, 0, "events list should be empty, default value is set by vcs")
+
+				vcsHooks.Events = []string{
+					"push",
+				}
+				*(out.(*sdk.VCSHook)) = *vcsHooks
+				return nil, 200, nil
+			},
+		).Times(1)
+
+	gomock.InOrder(
+		servicesClients.EXPECT().
+			DoJSONRequest(gomock.Any(), "GET", gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+			DoAndReturn(
+				func(ctx context.Context, method string, path string, in interface{}, out interface{}, mods ...interface{}) (http.Header, int, error) {
 					ope := new(sdk.Operation)
 					ope.URL = "https://github.com/fsamin/go-repo.git"
 					ope.UUID = UUID
@@ -138,9 +237,9 @@ version: v1.0`),
 				},
 			).Times(2),
 		servicesClients.EXPECT().
-			DoJSONRequest(gomock.Any(), "GET", gomock.Any(), gomock.Any(), gomock.Any()).
+			DoJSONRequest(gomock.Any(), "GET", gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(
-				func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
+				func(ctx context.Context, method string, path string, in interface{}, out interface{}, mods ...interface{}) (http.Header, int, error) {
 					ope := new(sdk.Operation)
 					ope.URL = "https://github.com/fsamin/go-repo.git"
 					ope.UUID = UUID
@@ -175,105 +274,6 @@ version: v1.0`),
 				},
 			).Times(1),
 	)
-
-	gomock.InOrder(
-		servicesClients.EXPECT().
-			DoJSONRequest(gomock.Any(), "POST", "/task/bulk", gomock.Any(), gomock.Any()).
-			DoAndReturn(
-				func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
-					actualHooks, ok := in.(map[string]sdk.NodeHook)
-					require.True(t, ok)
-					require.Len(t, actualHooks, 1)
-					for k, h := range actualHooks {
-						assert.Equal(t, "RepositoryWebHook", h.HookModelName)
-						assert.Equal(t, "POST", h.Config["method"].Value)
-						assert.Equal(t, "fsamin/go-repo", h.Config["repoFullName"].Value)
-						assert.Equal(t, "github", h.Config["vcsServer"].Value)
-						assert.Equal(t, "w-go-repo", h.Config["workflow"].Value)
-						h.Config["webHookURL"] = sdk.WorkflowNodeHookConfigValue{
-							Value:        "http://lolcat.host",
-							Configurable: false,
-						}
-						actualHooks[k] = h
-					}
-					out = actualHooks
-					return nil, 200, nil
-				},
-			),
-		servicesClients.EXPECT().
-			DoJSONRequest(gomock.Any(), "POST", "/task/bulk", gomock.Any(), gomock.Any()).
-			DoAndReturn(
-				func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
-					actualHooks, ok := in.(map[string]sdk.NodeHook)
-					require.True(t, ok)
-					require.Len(t, actualHooks, 1)
-					for k, h := range actualHooks {
-						assert.Equal(t, "RepositoryWebHook", h.HookModelName)
-						assert.Equal(t, "POST", h.Config["method"].Value)
-						assert.Equal(t, "fsamin/go-repo", h.Config["repoFullName"].Value)
-						assert.Equal(t, "github", h.Config["vcsServer"].Value)
-						assert.Equal(t, "w-go-repo-renamed", h.Config["workflow"].Value)
-						h.Config["webHookURL"] = sdk.WorkflowNodeHookConfigValue{
-							Value:        "http://lolcat.host",
-							Configurable: false,
-						}
-						actualHooks[k] = h
-					}
-					out = actualHooks
-					return nil, 200, nil
-				},
-			),
-	)
-
-	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/webhooks", gomock.Any(), gomock.Any(), gomock.Any()).
-		DoAndReturn(
-			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
-				*(out.(*repositoriesmanager.WebhooksInfos)) = repositoriesmanager.WebhooksInfos{
-					WebhooksSupported: true,
-					WebhooksDisabled:  false,
-					Icon:              sdk.GitHubIcon,
-					Events: []string{
-						"push",
-					},
-				}
-				return nil, 200, nil
-			},
-		).Times(2)
-
-	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "POST", "/vcs/github/repos/fsamin/go-repo/grant", gomock.Any(), gomock.Any(), gomock.Any())
-
-	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "POST", "/vcs/github/repos/fsamin/go-repo/hooks", gomock.Any(), gomock.Any(), gomock.Any()).
-		DoAndReturn(
-			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
-				vcsHooks := in.(*sdk.VCSHook)
-
-				require.Len(t, vcsHooks.Events, 0, "events list should be empty, default value is set by vcs")
-				vcsHooks.Events = []string{"push"}
-
-				vcsHooks.ID = sdk.UUID()
-				*(out.(*sdk.VCSHook)) = *vcsHooks
-				return nil, 200, nil
-			},
-		).Times(1)
-
-	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "PUT", "/vcs/github/repos/fsamin/go-repo/hooks", gomock.Any(), gomock.Any(), gomock.Any()).
-		DoAndReturn(
-			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
-				vcsHooks := in.(*sdk.VCSHook)
-				vcsHooks.ID = sdk.UUID()
-				require.Len(t, vcsHooks.Events, 0, "events list should be empty, default value is set by vcs")
-
-				vcsHooks.Events = []string{
-					"push",
-				}
-				*(out.(*sdk.VCSHook)) = *vcsHooks
-				return nil, 200, nil
-			},
-		).Times(1)
 
 	// Perform a "import as-code operation" to create a new workflow
 	ope := `{"repo_fullname":"fsamin/go-repo",  "vcs_server": "github", "url":"https://github.com/fsamin/go-repo.git","strategy":{"connection_type":"https","ssh_key":"","user":"","password":"","branch":"","default_branch":"master","pgp_key":""},"setup":{"checkout":{"branch":"master"}}}`

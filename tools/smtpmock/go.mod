@@ -8,7 +8,7 @@ require (
 	github.com/labstack/echo/v4 v4.6.1
 	github.com/pkg/errors v0.8.1
 	github.com/satori/go.uuid v1.2.0
-	github.com/urfave/cli/v2 v2.1.1
+	github.com/urfave/cli/v2 v2.3.0
 )
 
 require (
@@ -26,5 +26,5 @@ require (
 	golang.org/x/sys v0.0.0-20211214234402-4825e8c3871d // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20201208040808-7e3f01d25324 // indirect
-	gopkg.in/yaml.v2 v2.2.2 // indirect
+	gopkg.in/yaml.v2 v2.2.3 // indirect
 )

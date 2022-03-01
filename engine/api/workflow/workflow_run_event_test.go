@@ -199,22 +199,19 @@ func TestResyncCommitStatusSetStatus(t *testing.T) {
 	}()
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/gerrit/repos/foo/myrepo/commits/6c3efde/statuses",
-			gomock.Any(), gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/gerrit/repos/foo/myrepo/commits/6c3efde/statuses", gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil, 201, nil).MaxTimes(1)
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/gerrit",
-			gomock.Any(), gomock.Any()).
-		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/gerrit", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, mods ...interface{}) (http.Header, int, error) {
 			vcs := sdk.VCSConfiguration{Type: "gerrit"}
 			*(out.(*sdk.VCSConfiguration)) = vcs
 			return nil, 200, nil
 		}).MaxTimes(1)
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "POST", "/vcs/gerrit/status",
-			gomock.Any(), gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "POST", "/vcs/gerrit/status", gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil, 201, nil)
 
 	err := workflow.ResyncCommitStatus(ctx, db.DbMap, cache, *proj, wr)
@@ -312,14 +309,12 @@ func TestResyncCommitStatusCommentPR(t *testing.T) {
 	}()
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/gerrit/repos/foo/myrepo/commits/6c3efde/statuses",
-			gomock.Any(), gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/gerrit/repos/foo/myrepo/commits/6c3efde/statuses", gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil, 201, nil).MaxTimes(1)
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/gerrit",
-			gomock.Any(), gomock.Any()).
-		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/gerrit", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, mods ...interface{}) (http.Header, int, error) {
 			vcs := sdk.VCSConfiguration{Type: "gerrit"}
 			*(out.(*sdk.VCSConfiguration)) = vcs
 			return nil, 200, nil
@@ -551,9 +546,8 @@ func TestResyncCommitStatusCommitCache(t *testing.T) {
 		}).MaxTimes(1)
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/gerrit",
-			gomock.Any(), gomock.Any()).
-		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/gerrit", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, mods ...interface{}) (http.Header, int, error) {
 			vcs := sdk.VCSConfiguration{Type: "gerrit"}
 			*(out.(*sdk.VCSConfiguration)) = vcs
 			return nil, 200, nil

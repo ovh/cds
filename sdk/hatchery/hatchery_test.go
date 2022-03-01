@@ -12,6 +12,7 @@ import (
 
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/cdsclient/mock_cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/hatchery/mock_hatchery"
@@ -51,8 +52,8 @@ func TestCreate(t *testing.T) {
 	mockHatchery.EXPECT().GetGoRoutines().Return(grtn).AnyTimes()
 	mockHatchery.EXPECT().CDSClient().Return(mockCDSClient).AnyTimes()
 	mockHatchery.EXPECT().GetLogger().Return(getMockLogger()).AnyTimes()
-	mockCDSClient.EXPECT().QueuePolling(gomock.Any(), grtn, gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
-		func(ctx context.Context, goRoutines *sdk.GoRoutines, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration) error {
+	mockCDSClient.EXPECT().QueuePolling(gomock.Any(), grtn, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, goRoutines *sdk.GoRoutines, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
 			j := sdk.WorkflowNodeJobRun{
 				ProjectID:         1,
 				ID:                666,

@@ -174,8 +174,8 @@ func TestUpdateAsCodeApplicationHandler(t *testing.T) {
 		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/foo/myrepo", gomock.Any(), gomock.Any(), gomock.Any()).MinTimes(0)
 
 	servicesClients.EXPECT().
-		DoMultiPartRequest(gomock.Any(), "POST", "/operations", gomock.Any(), gomock.Any(), gomock.Any()).
-		DoAndReturn(func(ctx context.Context, method, path string, _ interface{}, in interface{}, out interface{}) (int, error) {
+		DoMultiPartRequest(gomock.Any(), "POST", "/operations", gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, method, path string, _ interface{}, in interface{}, out interface{}, mods ...interface{}) (int, error) {
 			ope := new(sdk.Operation)
 			ope.UUID = UUID
 			ope.Status = sdk.OperationStatusPending
@@ -203,7 +203,7 @@ func TestUpdateAsCodeApplicationHandler(t *testing.T) {
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "GET", "/operations/"+UUID, gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(
-			func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ ...interface{}) (http.Header, int, error) {
 				ope := new(sdk.Operation)
 				ope.URL = "https://github.com/fsamin/go-repo.git"
 				ope.UUID = UUID

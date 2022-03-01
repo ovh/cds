@@ -107,7 +107,7 @@ func Test_RunNonDefaultBranchWithSecrets(t *testing.T) {
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "POST", "/operations", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(
-			func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, mods ...interface{}) (http.Header, int, error) {
 				ope := sdk.Operation{
 					UUID: UUID,
 				}
@@ -117,9 +117,9 @@ func Test_RunNonDefaultBranchWithSecrets(t *testing.T) {
 		).MaxTimes(1)
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/operations/"+UUID, gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "GET", "/operations/"+UUID, gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(
-			func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, mods ...interface{}) (http.Header, int, error) {
 				ope := new(sdk.Operation)
 				ope.URL = "https://github.com/myrepo.git"
 				ope.UUID = UUID
