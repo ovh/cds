@@ -11,8 +11,10 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Background = ctx
 	r.URL = s.Cfg.URL
 	r.SetHeaderFunc = service.DefaultHeaders
+	r.Middlewares = append(r.Middlewares, service.TracingMiddlewareFunc(s))
 	r.DefaultAuthMiddleware = service.CheckRequestSignatureMiddleware(s.ParsedAPIPublicKey)
-	r.PostAuthMiddlewares = append(r.PostAuthMiddlewares, service.TracingMiddlewareFunc(s))
+	r.PostAuthMiddlewares = append(r.PostAuthMiddlewares)
+	r.PostMiddlewares = append(r.PostMiddlewares, service.TracingPostMiddleware)
 
 	r.Handle("/admin/maintenance", nil, r.POST(s.postMaintenanceHandler))
 

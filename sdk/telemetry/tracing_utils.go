@@ -9,24 +9,21 @@ import (
 )
 
 // New may start a tracing span
-func New(ctx context.Context, s Service, name string, sampler trace.Sampler, spanKind int) (context.Context, *trace.Span) {
+func New(ctx context.Context, s Service, name string, sampler trace.Sampler, spanKind int) context.Context {
 	exp := TraceExporter(ctx)
 	if exp == nil {
-		return ctx, nil
+		return ctx
 	}
-	ctx, span := trace.StartSpan(ctx, name,
-		trace.WithSampler(sampler),
-		trace.WithSpanKind(spanKind))
+	ctx, span := trace.StartSpan(ctx, name, trace.WithSampler(sampler), trace.WithSpanKind(spanKind))
+	ctx = ContextWithTag(ctx, TagServiceType, s.Type(), TagServiceName, s.Name())
 	ctx = SpanContextToContext(ctx, span.SpanContext())
-	ctx = ContextWithTag(ctx,
-		TagServiceType, s.Type(),
-		TagServiceName, s.Name(),
-	)
-	return ctx, span
+
+	ctx = context.WithValue(ctx, ContextMainSpan, span)
+	return ctx
 }
 
 // Start may start a tracing span
-func Start(ctx context.Context, s Service, w http.ResponseWriter, req *http.Request, opt Options) (context.Context, error) {
+func NewWithRequest(ctx context.Context, s Service, w http.ResponseWriter, req *http.Request, opt Options) (context.Context, error) {
 	exp := TraceExporter(ctx)
 	if exp == nil {
 		return ctx, nil
@@ -82,7 +79,7 @@ func Start(ctx context.Context, s Service, w http.ResponseWriter, req *http.Requ
 }
 
 // End may close a tracing span
-func End(ctx context.Context, w http.ResponseWriter, req *http.Request) (context.Context, error) {
+func End(ctx context.Context, _ http.ResponseWriter, _ *http.Request) (context.Context, error) {
 	span := MainSpan(ctx)
 	if span == nil {
 		return ctx, nil

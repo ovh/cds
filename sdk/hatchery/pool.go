@@ -15,6 +15,9 @@ import (
 
 // WorkerPool returns all the worker owned by the hatchery h, registered or not on the CDS API
 func WorkerPool(ctx context.Context, h Interface, statusFilter ...string) ([]sdk.Worker, error) {
+	ctx, end := telemetry.Span(ctx, "hatchery.WorkerPool")
+	defer end()
+
 	ctx = telemetry.ContextWithTag(ctx,
 		telemetry.TagServiceName, h.Name(),
 		telemetry.TagServiceType, h.Type(),

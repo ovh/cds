@@ -7,6 +7,7 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 type Containers []types.Container
@@ -31,10 +32,14 @@ func (c Containers) FilterWorkers() Containers {
 }
 
 func (h *HatcherySwarm) getContainers(ctx context.Context, dockerClient *dockerClient, options types.ContainerListOptions) (Containers, error) {
-	ctxList, cancelList := context.WithTimeout(ctx, 10*time.Second)
-	defer cancelList()
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
 
-	cs, err := dockerClient.ContainerList(ctxList, options)
+	var end context.CancelFunc
+	ctx, end = telemetry.Span(ctx, "swarm.getContainers")
+	defer end()
+
+	cs, err := dockerClient.ContainerList(ctx, options)
 	if err != nil {
 		return nil, sdk.WrapError(err, "unable to list containers on %s", dockerClient.name)
 	}

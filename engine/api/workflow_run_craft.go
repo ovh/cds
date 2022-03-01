@@ -38,8 +38,7 @@ func (api *API) WorkflowRunCraft(ctx context.Context, tick time.Duration) error 
 					ctx,
 					"workflowRunCraft-"+strconv.FormatInt(id, 10),
 					func(ctx context.Context) {
-						ctx, span := telemetry.New(ctx, api, "api.workflowRunCraft", nil, trace.SpanKindUnspecified)
-						defer span.End()
+						ctx = telemetry.New(ctx, api, "api.workflowRunCraft", nil, trace.SpanKindUnspecified)
 						if err := api.workflowRunCraft(ctx, id); err != nil {
 							log.Error(ctx, "WorkflowRunCraft> error on workflow run %d: %v", id, err)
 						}

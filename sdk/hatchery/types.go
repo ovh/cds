@@ -5,6 +5,7 @@ import (
 	"crypto/rsa"
 
 	jwt "github.com/golang-jwt/jwt"
+	"github.com/rockbears/log"
 	"github.com/sirupsen/logrus"
 	"go.opencensus.io/stats"
 
@@ -25,6 +26,14 @@ const (
 	LabelServiceID           = "CDS_SERVICE_ID"
 	LabelServiceReqName      = "CDS_SERVICE_NAME"
 )
+
+var (
+	LogFieldJobID = log.Field("action_metadata_job_id")
+)
+
+func init() {
+	log.RegisterField(LogFieldJobID)
+}
 
 // WorkerJWTClaims is the specific claims format for Worker JWT
 type WorkerJWTClaims struct {

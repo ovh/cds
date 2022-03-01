@@ -52,10 +52,15 @@ func TracingMiddlewareFunc(s Service) Middleware {
 			Name: name,
 		}
 
-		ctx, err := telemetry.Start(ctx, s, w, req, opts)
+		ctx, err := telemetry.NewWithRequest(ctx, s, w, req, opts)
 		newReq := req.WithContext(ctx)
 		*req = *newReq
 
 		return ctx, err
 	}
+}
+
+func TracingPostMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *HandlerConfig) (context.Context, error) {
+	ctx, err := telemetry.End(ctx, w, req)
+	return ctx, err
 }

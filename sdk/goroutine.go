@@ -21,7 +21,6 @@ import (
 	"github.com/rockbears/log"
 
 	cdslog "github.com/ovh/cds/sdk/log"
-	"github.com/ovh/cds/sdk/telemetry"
 )
 
 type GoRoutine struct {
@@ -131,9 +130,6 @@ func (m *GoRoutines) GetStatus() []MonitoringStatusLine {
 func (m *GoRoutines) exec(g *GoRoutine) {
 	hostname, _ := os.Hostname()
 	go func(ctx context.Context) {
-		ctx, end := telemetry.Span(ctx, "goroutine.exec", telemetry.Tag(telemetry.TagGoroutine, g.Name))
-		defer end()
-
 		ctx = context.WithValue(ctx, cdslog.Goroutine, g.Name)
 
 		labels := pprof.Labels(
