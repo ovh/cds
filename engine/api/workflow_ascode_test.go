@@ -1275,9 +1275,9 @@ func Test_WorkflowAsCodeWithPermissions(t *testing.T) {
 	UUID := sdk.UUID()
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "POST", "/operations", gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "POST", "/operations", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(
-			func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, mods ...interface{}) (http.Header, int, error) {
 				ope := new(sdk.Operation)
 				ope.UUID = UUID
 				ope.Status = sdk.OperationStatusPending
