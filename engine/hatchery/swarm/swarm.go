@@ -465,9 +465,6 @@ func (h *HatcherySwarm) CanSpawn(ctx context.Context, model *sdk.Model, jobID in
 
 		nbContainersFromHatchery := len(cs)
 
-		// List all workers containers
-		ws := cs.FilterWorkers()
-
 		// Checking the number of container on each docker engine
 		if nbContainersFromHatchery >= dockerClient.MaxContainers {
 			log.Debug(ctx, "hatchery> swarm> CanSpawn> max containers reached on %s. current:%d max:%d", dockerName, nbContainersFromHatchery, dockerClient.MaxContainers)
@@ -482,22 +479,6 @@ func (h *HatcherySwarm) CanSpawn(ctx context.Context, model *sdk.Model, jobID in
 			}
 		}
 
-		// hatcherySwarm.ratioService: Percent reserved for spawning worker with service requirement
-		// if no link -> we need to check ratioService
-		if len(links) == 0 {
-			ratioService := h.Config.Provision.RatioService
-			if ratioService != nil && *ratioService >= 100 {
-				log.Debug(ctx, "hatchery> swarm> CanSpawn> ratioService 100 by conf on %s - no spawn worker without CDS Service", dockerName)
-				return false
-			}
-			if nbContainersFromHatchery > 0 {
-				percentFree := 100 - (100 * len(ws) / dockerClient.MaxContainers)
-				if ratioService != nil && percentFree <= *ratioService {
-					log.Debug(ctx, "hatchery> swarm> CanSpawn> ratio reached on %s. percentFree:%d ratioService:%d", dockerName, percentFree, *ratioService)
-					return false
-				}
-			}
-		}
 		return true
 	}
 	return false

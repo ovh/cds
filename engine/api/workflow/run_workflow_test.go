@@ -732,36 +732,6 @@ queueRun:
 			}
 		}
 
-		// there is one job with a CDS Service prerequisiste
-		// Getting queue with RatioService=100 -> we want this job only.
-		// If we get a job without a service, it's a failure
-		cent := 100
-		filter = workflow.NewQueueFilter()
-		filter.Rights = sdk.PermissionReadExecute
-		filter.RatioService = &cent
-		jobsSince, err = workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter, sdk.Groups(append(u.Groups, proj.ProjectGroups[0].Group, g0, g1)).ToIDs())
-		require.NoError(t, err)
-		for _, job := range jobsSince {
-			if !job.ContainsService {
-				assert.Fail(t, " this job should not be in queue !job.ContainsService: job")
-			}
-		}
-
-		// there is one job with a CDS Service prerequisiste
-		// Getting queue with RatioService=0 -> we want job only without CDS Service.
-		// If we get a job with a service, it's a failure
-		zero := 0
-		filter = workflow.NewQueueFilter()
-		filter.Rights = sdk.PermissionReadExecute
-		filter.RatioService = &zero
-		jobsSince, err = workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter, sdk.Groups(append(u.Groups, proj.ProjectGroups[0].Group, g0, g1)).ToIDs())
-		require.NoError(t, err)
-		for _, job := range jobsSince {
-			if job.ContainsService {
-				assert.Fail(t, " this job should not be in queue job.ContainsService")
-			}
-		}
-
 		// there is one job with a CDS Model prerequisiste
 		// we get the queue with a modelType openstack : we don't want
 		// job with worker model type docker in result

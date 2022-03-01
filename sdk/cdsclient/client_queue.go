@@ -140,7 +140,7 @@ func (c *client) QueueWorkflowNodeJobRun(ms ...RequestModifier) ([]sdk.WorkflowN
 	return wJobs, nil
 }
 
-func (c *client) QueueCountWorkflowNodeJobRun(since *time.Time, until *time.Time, modelType string, ratioService *int) (sdk.WorkflowNodeJobRunCount, error) {
+func (c *client) QueueCountWorkflowNodeJobRun(since *time.Time, until *time.Time, modelType string) (sdk.WorkflowNodeJobRunCount, error) {
 	if since == nil {
 		since = new(time.Time)
 	}
@@ -150,9 +150,6 @@ func (c *client) QueueCountWorkflowNodeJobRun(since *time.Time, until *time.Time
 	}
 	url, _ := url.Parse("/queue/workflows/count")
 	q := url.Query()
-	if ratioService != nil {
-		q.Add("ratioService", fmt.Sprintf("%d", *ratioService))
-	}
 	if modelType != "" {
 		q.Add("modelType", modelType)
 	}

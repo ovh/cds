@@ -3048,18 +3048,18 @@ func (mr *MockQueueClientMockRecorder) QueueArtifactUpload(ctx, projectKey, inte
 }
 
 // QueueCountWorkflowNodeJobRun mocks base method.
-func (m *MockQueueClient) QueueCountWorkflowNodeJobRun(since, until *time.Time, modelType string, ratioService *int) (sdk.WorkflowNodeJobRunCount, error) {
+func (m *MockQueueClient) QueueCountWorkflowNodeJobRun(since, until *time.Time, modelType string) (sdk.WorkflowNodeJobRunCount, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "QueueCountWorkflowNodeJobRun", since, until, modelType, ratioService)
+	ret := m.ctrl.Call(m, "QueueCountWorkflowNodeJobRun", since, until, modelType)
 	ret0, _ := ret[0].(sdk.WorkflowNodeJobRunCount)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // QueueCountWorkflowNodeJobRun indicates an expected call of QueueCountWorkflowNodeJobRun.
-func (mr *MockQueueClientMockRecorder) QueueCountWorkflowNodeJobRun(since, until, modelType, ratioService interface{}) *gomock.Call {
+func (mr *MockQueueClientMockRecorder) QueueCountWorkflowNodeJobRun(since, until, modelType interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueCountWorkflowNodeJobRun", reflect.TypeOf((*MockQueueClient)(nil).QueueCountWorkflowNodeJobRun), since, until, modelType, ratioService)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueCountWorkflowNodeJobRun", reflect.TypeOf((*MockQueueClient)(nil).QueueCountWorkflowNodeJobRun), since, until, modelType)
 }
 
 // QueueJobBook mocks base method.
@@ -6971,18 +6971,18 @@ func (mr *MockInterfaceMockRecorder) QueueArtifactUpload(ctx, projectKey, integr
 }
 
 // QueueCountWorkflowNodeJobRun mocks base method.
-func (m *MockInterface) QueueCountWorkflowNodeJobRun(since, until *time.Time, modelType string, ratioService *int) (sdk.WorkflowNodeJobRunCount, error) {
+func (m *MockInterface) QueueCountWorkflowNodeJobRun(since, until *time.Time, modelType string) (sdk.WorkflowNodeJobRunCount, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "QueueCountWorkflowNodeJobRun", since, until, modelType, ratioService)
+	ret := m.ctrl.Call(m, "QueueCountWorkflowNodeJobRun", since, until, modelType)
 	ret0, _ := ret[0].(sdk.WorkflowNodeJobRunCount)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // QueueCountWorkflowNodeJobRun indicates an expected call of QueueCountWorkflowNodeJobRun.
-func (mr *MockInterfaceMockRecorder) QueueCountWorkflowNodeJobRun(since, until, modelType, ratioService interface{}) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) QueueCountWorkflowNodeJobRun(since, until, modelType interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueCountWorkflowNodeJobRun", reflect.TypeOf((*MockInterface)(nil).QueueCountWorkflowNodeJobRun), since, until, modelType, ratioService)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueCountWorkflowNodeJobRun", reflect.TypeOf((*MockInterface)(nil).QueueCountWorkflowNodeJobRun), since, until, modelType)
 }
 
 // QueueJobBook mocks base method.
@@ -9054,18 +9054,18 @@ func (mr *MockWorkerInterfaceMockRecorder) QueueArtifactUpload(ctx, projectKey, 
 }
 
 // QueueCountWorkflowNodeJobRun mocks base method.
-func (m *MockWorkerInterface) QueueCountWorkflowNodeJobRun(since, until *time.Time, modelType string, ratioService *int) (sdk.WorkflowNodeJobRunCount, error) {
+func (m *MockWorkerInterface) QueueCountWorkflowNodeJobRun(since, until *time.Time, modelType string) (sdk.WorkflowNodeJobRunCount, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "QueueCountWorkflowNodeJobRun", since, until, modelType, ratioService)
+	ret := m.ctrl.Call(m, "QueueCountWorkflowNodeJobRun", since, until, modelType)
 	ret0, _ := ret[0].(sdk.WorkflowNodeJobRunCount)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // QueueCountWorkflowNodeJobRun indicates an expected call of QueueCountWorkflowNodeJobRun.
-func (mr *MockWorkerInterfaceMockRecorder) QueueCountWorkflowNodeJobRun(since, until, modelType, ratioService interface{}) *gomock.Call {
+func (mr *MockWorkerInterfaceMockRecorder) QueueCountWorkflowNodeJobRun(since, until, modelType interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueCountWorkflowNodeJobRun", reflect.TypeOf((*MockWorkerInterface)(nil).QueueCountWorkflowNodeJobRun), since, until, modelType, ratioService)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueCountWorkflowNodeJobRun", reflect.TypeOf((*MockWorkerInterface)(nil).QueueCountWorkflowNodeJobRun), since, until, modelType)
 }
 
 // QueueJobBook mocks base method.
