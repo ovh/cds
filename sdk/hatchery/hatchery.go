@@ -161,7 +161,6 @@ func Create(ctx context.Context, h Interface) error {
 				log.Info(currentCtx, "processing job %d", j.ID)
 
 				if val, has := j.Header.Get(telemetry.SampledHeader); has && val == "1" {
-					log.Warn(ctx, "new span")
 					r, _ := j.Header.Get(sdk.WorkflowRunHeader)
 					w, _ := j.Header.Get(sdk.WorkflowHeader)
 					p, _ := j.Header.Get(sdk.ProjectKeyHeader)
@@ -180,7 +179,6 @@ func Create(ctx context.Context, h Interface) error {
 					}
 				}
 				endTrace := func(reason string) {
-					log.Warn(ctx, "endTrace reason: %q", reason)
 					if currentCancel != nil {
 						currentCancel()
 					}
@@ -189,7 +187,9 @@ func Create(ctx context.Context, h Interface) error {
 							telemetry.Tag("reason", reason),
 						)
 					}
-					endCurrentCtx()
+					if endCurrentCtx != nil {
+						endCurrentCtx()
+					}
 					telemetry.End(ctx, nil, nil)
 				}
 				go func() {
