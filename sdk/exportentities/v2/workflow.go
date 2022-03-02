@@ -27,7 +27,7 @@ type VariableValue struct {
 type Workflow struct {
 	Name        string `json:"name" yaml:"name" jsonschema_description:"The name of the workflow."`
 	Description string `json:"description,omitempty" yaml:"description,omitempty"`
-	Version     string `json:"version,omitempty" yaml:"version,omitempty" jsonschema_description:"Version for the yaml syntax, latest is v1.0."`
+	Version     string `json:"version,omitempty" yaml:"version,omitempty" jsonschema_description:"Version for the yaml syntax, latest is v2.0."`
 
 	Workflow map[string]NodeEntry   `json:"workflow,omitempty" yaml:"workflow,omitempty" jsonschema_description:"Workflow nodes list."`
 	Hooks    map[string][]HookEntry `json:"hooks,omitempty" yaml:"hooks,omitempty" jsonschema_description:"Workflow hooks list."`
