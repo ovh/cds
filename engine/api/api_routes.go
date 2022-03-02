@@ -29,7 +29,7 @@ func (api *API) InitRouter() {
 	api.Router.SetHeaderFunc = service.DefaultHeaders
 	api.Router.Middlewares = append(api.Router.Middlewares, api.tracingMiddleware, api.jwtMiddleware)
 	api.Router.DefaultAuthMiddleware = api.authMiddleware
-	api.Router.PostAuthMiddlewares = append(api.Router.PostAuthMiddlewares, api.xsrfMiddleware, api.maintenanceMiddleware)
+	api.Router.PostAuthMiddlewares = append(api.Router.PostAuthMiddlewares, api.xsrfMiddleware, api.maintenanceMiddleware, api.rbacMiddleware)
 	api.Router.PostMiddlewares = append(api.Router.PostMiddlewares, service.TracingPostMiddleware)
 
 	r := api.Router
@@ -448,6 +448,8 @@ func (api *API) InitRouter() {
 	r.Handle("/template/{groupName}/{templateSlug}/instance", Scope(sdk.AuthConsumerScopeTemplate), r.GET(api.getTemplateInstancesHandler))
 	r.Handle("/template/{groupName}/{templateSlug}/instance/{instanceID}", Scope(sdk.AuthConsumerScopeTemplate), r.DELETE(api.deleteTemplateInstanceHandler))
 	r.Handle("/template/{groupName}/{templateSlug}/usage", Scope(sdk.AuthConsumerScopeTemplate), r.GET(api.getTemplateUsageHandler))
+
+	r.Handle("/v2/project/{projectKey}/vcs", nil, r.POSTv2(api.addVCSOnProjectHandler))
 
 	//Not Found handler
 	r.Mux.NotFoundHandler = http.HandlerFunc(r.NotFoundHandler)

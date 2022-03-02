@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/go-gorp/gorp"
 	"github.com/rockbears/log"
 	"gopkg.in/spacemonkeygo/httpsig.v0"
 
@@ -22,6 +23,7 @@ import (
 
 // Handler defines the HTTP handler used in CDS engine
 type Handler func(ctx context.Context, w http.ResponseWriter, r *http.Request) error
+type RbacChecker func(ctx context.Context, db *gorp.DbMap, vars map[string]string) error
 
 // AsynchronousHandler defines the HTTP asynchronous handler used in CDS engine
 type AsynchronousHandler func(ctx context.Context, r *http.Request) error
@@ -31,6 +33,7 @@ type Middleware func(ctx context.Context, w http.ResponseWriter, req *http.Reque
 
 // HandlerFunc defines the way to instantiate a handler
 type HandlerFunc func() Handler
+type HandlerFuncV2 func() (Handler, []RbacChecker)
 
 // AsynchronousHandlerFunc defines the way to instantiate a handler
 type AsynchronousHandlerFunc func() AsynchronousHandler
@@ -54,6 +57,8 @@ type HandlerConfig struct {
 	AllowedScopes          []sdk.AuthConsumerScope
 	PermissionLevel        int
 	CleanURL               string
+	RbacCheckers           []RbacChecker
+	SkipCleanVariable      bool
 }
 
 // Accepted is a helper function used by asynchronous handlers

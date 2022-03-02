@@ -179,7 +179,13 @@ func (r *Router) computeScopeDetails() {
 	// create temporary map of scopes, for each scope we will create a map of routes with methods.
 	m := make(map[sdk.AuthConsumerScope]map[string]map[string]struct{})
 
+routeLoop:
 	for uri, cfg := range r.mapRouterConfigs {
+		for _, v := range cfg.Config {
+			if v.SkipCleanVariable {
+				continue routeLoop
+			}
+		}
 		var err error
 		uri, err = docSDK.CleanAndCheckURL(uri)
 		if err != nil {
@@ -484,6 +490,19 @@ func (r *Router) GET(h service.HandlerFunc, cfg ...service.HandlerConfigParam) *
 	rc.Handler = h()
 	rc.Method = "GET"
 	rc.PermissionLevel = sdk.PermissionRead
+	for _, c := range cfg {
+		c(&rc)
+	}
+	return &rc
+}
+
+func (r *Router) POSTv2(h service.HandlerFuncV2, cfg ...service.HandlerConfigParam) *service.HandlerConfig {
+	var rc service.HandlerConfig
+	handler, rbacCheckers := h()
+	rc.Handler = handler
+	rc.RbacCheckers = rbacCheckers
+	rc.SkipCleanVariable = true
+	rc.Method = "POST"
 	for _, c := range cfg {
 		c(&rc)
 	}
