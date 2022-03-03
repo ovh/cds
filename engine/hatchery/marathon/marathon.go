@@ -87,7 +87,12 @@ func (h *HatcheryMarathon) ApplyConfiguration(cfg interface{}) error {
 // Status returns sdk.MonitoringStatus, implements interface service.Service
 func (h *HatcheryMarathon) Status(ctx context.Context) *sdk.MonitoringStatus {
 	m := h.NewMonitoringStatus()
-	m.AddLine(sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", len(h.WorkersStarted(ctx)), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
+	ws, err := h.WorkersStarted(ctx)
+	if err != nil {
+		ctx = log.ContextWithStackTrace(ctx, err)
+		log.Warn(ctx, err.Error())
+	}
+	m.AddLine(sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", len(ws), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
 	return m
 }
 
@@ -419,18 +424,17 @@ func (h *HatcheryMarathon) listApplications(idPrefix string) ([]string, error) {
 
 // WorkersStarted returns the number of instances started but
 // not necessarily register on CDS yet
-func (h *HatcheryMarathon) WorkersStarted(ctx context.Context) []string {
+func (h *HatcheryMarathon) WorkersStarted(ctx context.Context) ([]string, error) {
 	apps, err := h.listApplications(h.Config.MarathonIDPrefix)
 	if err != nil {
-		log.Warn(ctx, "WorkersStarted> error on list applications err:%s", err)
-		return nil
+		return nil, sdk.WrapError(err, "error on list applications")
 	}
 	res := make([]string, len(apps))
 	for i, s := range apps {
 		res[i] = strings.Replace(s, h.Config.MarathonIDPrefix, "", 1)
 		res[i] = strings.TrimPrefix(res[i], "/")
 	}
-	return res
+	return res, nil
 }
 
 // InitHatchery only starts killing routine of worker not registered

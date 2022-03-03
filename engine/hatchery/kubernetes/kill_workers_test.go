@@ -9,6 +9,8 @@ import (
 	"gopkg.in/h2non/gock.v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/ovh/cds/sdk"
 )
 
 func TestHatcheryKubernetes_KillAwolWorkers(t *testing.T) {
@@ -19,8 +21,12 @@ func TestHatcheryKubernetes_KillAwolWorkers(t *testing.T) {
 		Items: []v1.Pod{
 			{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "w1",
-					Namespace: "kyubi",
+					Name:      "worker-1",
+					Namespace: "cds-workers",
+					Labels: map[string]string{
+						LABEL_HATCHERY_NAME: "my-hatchery",
+						LABEL_WORKER_NAME:   "worker-1",
+					},
 				},
 				Status: v1.PodStatus{
 					ContainerStatuses: []v1.ContainerStatus{
@@ -36,15 +42,23 @@ func TestHatcheryKubernetes_KillAwolWorkers(t *testing.T) {
 			},
 			{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "wrong",
-					Namespace: "kyubi",
+					Name:      "worker-2",
+					Namespace: "cds-workers",
+					Labels: map[string]string{
+						LABEL_HATCHERY_NAME: "my-hatchery",
+						LABEL_WORKER_NAME:   "worker-2",
+					},
 				},
 				Spec: v1.PodSpec{},
 			},
 			{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "w2",
-					Namespace: "kyubi",
+					Name:      "worker-3",
+					Namespace: "cds-workers",
+					Labels: map[string]string{
+						LABEL_HATCHERY_NAME: "my-hatchery",
+						LABEL_WORKER_NAME:   "worker-3",
+					},
 				},
 				Status: v1.PodStatus{
 					ContainerStatuses: []v1.ContainerStatus{
@@ -60,8 +74,12 @@ func TestHatcheryKubernetes_KillAwolWorkers(t *testing.T) {
 			},
 			{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "w3",
-					Namespace: "kyubi",
+					Name:      "worker-4",
+					Namespace: "cds-workers",
+					Labels: map[string]string{
+						LABEL_HATCHERY_NAME: "my-hatchery",
+						LABEL_WORKER_NAME:   "worker-4",
+					},
 				},
 				Status: v1.PodStatus{
 					ContainerStatuses: []v1.ContainerStatus{
@@ -75,13 +93,28 @@ func TestHatcheryKubernetes_KillAwolWorkers(t *testing.T) {
 					},
 				},
 			},
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "worker-5",
+					Namespace: "cds-workers",
+					Labels: map[string]string{
+						LABEL_HATCHERY_NAME: "my-hatchery",
+						LABEL_WORKER_NAME:   "worker-5",
+					},
+				},
+			},
 		},
 	}
-	gock.New("http://lolcat.kube").Get("/api/v1/namespaces/hachibi/pods").Reply(http.StatusOK).JSON(podsList)
+	gock.New("http://lolcat.kube").Get("/api/v1/namespaces/cds-workers/pods").Reply(http.StatusOK).JSON(podsList)
 
-	gock.New("http://lolcat.kube").Delete("/api/v1/namespaces/kyubi/pods/w1").Reply(http.StatusOK).JSON(nil)
-	gock.New("http://lolcat.kube").Delete("/api/v1/namespaces/kyubi/pods/w2").Reply(http.StatusOK).JSON(nil)
-	gock.New("http://lolcat.kube").Delete("/api/v1/namespaces/kyubi/pods/w3").Reply(http.StatusOK).JSON(nil)
+	gock.New("http://lolcat.kube").Delete("/api/v1/namespaces/cds-workers/pods/worker-1").Reply(http.StatusOK).JSON(nil)
+	gock.New("http://lolcat.kube").Delete("/api/v1/namespaces/cds-workers/pods/worker-2").Reply(http.StatusOK).JSON(nil)
+	gock.New("http://lolcat.kube").Delete("/api/v1/namespaces/cds-workers/pods/worker-3").Reply(http.StatusOK).JSON(nil)
+	gock.New("http://lolcat.kube").Delete("/api/v1/namespaces/cds-workers/pods/worker-4").Reply(http.StatusOK).JSON(nil)
+
+	gock.New("http://lolcat.api").Get("/worker").Reply(http.StatusOK).JSON([]sdk.Worker{{
+		Name: "worker-5",
+	}})
 
 	err := h.killAwolWorkers(context.TODO())
 	require.NoError(t, err)

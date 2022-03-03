@@ -209,11 +209,12 @@ func (mr *MockInterfaceMockRecorder) Type() *gomock.Call {
 }
 
 // WorkersStarted mocks base method.
-func (m *MockInterface) WorkersStarted(ctx context.Context) []string {
+func (m *MockInterface) WorkersStarted(ctx context.Context) ([]string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "WorkersStarted", ctx)
 	ret0, _ := ret[0].([]string)
-	return ret0
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // WorkersStarted indicates an expected call of WorkersStarted.
@@ -472,11 +473,12 @@ func (mr *MockInterfaceWithModelsMockRecorder) WorkerModelsEnabled() *gomock.Cal
 }
 
 // WorkersStarted mocks base method.
-func (m *MockInterfaceWithModels) WorkersStarted(ctx context.Context) []string {
+func (m *MockInterfaceWithModels) WorkersStarted(ctx context.Context) ([]string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "WorkersStarted", ctx)
 	ret0, _ := ret[0].([]string)
-	return ret0
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // WorkersStarted indicates an expected call of WorkersStarted.

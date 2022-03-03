@@ -83,12 +83,16 @@ func (h *HatcheryLocal) ApplyConfiguration(cfg interface{}) error {
 // Status returns sdk.MonitoringStatus, implements interface service.Service
 func (h *HatcheryLocal) Status(ctx context.Context) *sdk.MonitoringStatus {
 	m := h.NewMonitoringStatus()
+	ws, err := h.WorkersStarted(ctx)
+	if err != nil {
+		ctx = log.ContextWithStackTrace(ctx, err)
+		log.Warn(ctx, err.Error())
+	}
 	m.AddLine(sdk.MonitoringStatusLine{
 		Component: "Workers",
-		Value:     fmt.Sprintf("%d/%d", len(h.WorkersStarted(ctx)), h.Config.Provision.MaxWorker),
+		Value:     fmt.Sprintf("%d/%d", len(ws), h.Config.Provision.MaxWorker),
 		Status:    sdk.MonitoringStatusOK,
 	})
-
 	return m
 }
 
@@ -237,7 +241,7 @@ func (h *HatcheryLocal) killWorker(ctx context.Context, name string, workerCmd w
 
 // WorkersStarted returns the number of instances started but
 // not necessarily register on CDS yet
-func (h *HatcheryLocal) WorkersStarted(ctx context.Context) []string {
+func (h *HatcheryLocal) WorkersStarted(ctx context.Context) ([]string, error) {
 	h.Mutex.Lock()
 	defer h.Mutex.Unlock()
 	workers := make([]string, len(h.workers))
@@ -246,7 +250,7 @@ func (h *HatcheryLocal) WorkersStarted(ctx context.Context) []string {
 		workers[i] = n
 		i++
 	}
-	return workers
+	return workers, nil
 }
 
 // InitHatchery register local hatchery with its worker model

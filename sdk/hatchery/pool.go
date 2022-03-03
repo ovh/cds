@@ -32,7 +32,10 @@ func WorkerPool(ctx context.Context, h Interface, statusFilter ...string) ([]sdk
 	}
 
 	// Then: get all workers in the orchestrator queue
-	startedWorkers := h.WorkersStarted(ctx)
+	startedWorkers, err := h.WorkersStarted(ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	// Make the union of the two slices
 	allWorkers := make([]sdk.Worker, 0, len(startedWorkers)+len(registeredWorkers))

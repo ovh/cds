@@ -24,6 +24,7 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
+	"github.com/ovh/cds/sdk/slug"
 )
 
 // New instanciates a new hatchery local
@@ -99,8 +100,12 @@ func (h *HatcheryKubernetes) ApplyConfiguration(cfg interface{}) error {
 // Status returns sdk.MonitoringStatus, implements interface service.Service
 func (h *HatcheryKubernetes) Status(ctx context.Context) *sdk.MonitoringStatus {
 	m := h.NewMonitoringStatus()
-	m.AddLine(sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", len(h.WorkersStarted(ctx)), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
-
+	ws, err := h.WorkersStarted(ctx)
+	if err != nil {
+		ctx = log.ContextWithStackTrace(ctx, err)
+		log.Warn(ctx, err.Error())
+	}
+	m.AddLine(sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", len(ws), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
 	return m
 }
 
@@ -171,11 +176,6 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 		return sdk.WithStack(fmt.Errorf("no job ID and no register"))
 	}
 
-	label := "execution"
-	if spawnArgs.RegisterOnly {
-		label = "register"
-	}
-
 	var logJob string
 	if spawnArgs.JobID > 0 {
 		logJob = fmt.Sprintf("for workflow job %d,", spawnArgs.JobID)
@@ -221,7 +221,6 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 	envsWm := workerConfig.InjectEnvVars
 	envsWm["CDS_MODEL_MEMORY"] = fmt.Sprintf("%d", memory)
 	envsWm["CDS_FROM_WORKER_IMAGE"] = "true"
-	envsWm["CDS_CONFIG"] = workerConfig.EncodeBase64()
 
 	for envName, envValue := range spawnArgs.Model.ModelDocker.Envs {
 		envsWm[envName] = envValue
@@ -239,6 +238,23 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 		pullPolicy = "Always"
 	}
 
+	// Create secret for worker config
+	configSecretName, err := h.createConfigSecret(ctx, workerConfig)
+	if err != nil {
+		return sdk.WrapError(err, "cannot create secret for config %s", workerConfig.Name)
+	}
+	envs = append(envs, apiv1.EnvVar{
+		Name: "CDS_CONFIG",
+		ValueFrom: &apiv1.EnvVarSource{
+			SecretKeyRef: &apiv1.SecretKeySelector{
+				LocalObjectReference: apiv1.LocalObjectReference{
+					Name: configSecretName,
+				},
+				Key: "CDS_CONFIG",
+			},
+		},
+	})
+
 	var gracePeriodSecs int64
 	podSchema := apiv1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
@@ -246,9 +262,9 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 			Namespace:                  h.Config.Namespace,
 			DeletionGracePeriodSeconds: &gracePeriodSecs,
 			Labels: map[string]string{
-				LABEL_WORKER:        label,
-				LABEL_WORKER_MODEL:  strings.ToLower(spawnArgs.Model.Name),
-				LABEL_HATCHERY_NAME: h.Configuration().Name,
+				LABEL_HATCHERY_NAME:     h.Configuration().Name,
+				LABEL_WORKER_NAME:       workerConfig.Name,
+				LABEL_WORKER_MODEL_PATH: slug.Convert(spawnArgs.Model.Path()),
 			},
 			Annotations: map[string]string{},
 		},
@@ -273,6 +289,15 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 		},
 	}
 
+	// Check here to add secret if needed
+	if spawnArgs.Model.ModelDocker.Private {
+		secretRegistryName, err := h.createRegistrySecret(ctx, *spawnArgs.Model)
+		if err != nil {
+			return sdk.WrapError(err, "cannot create secret for model %s", spawnArgs.Model.Path())
+		}
+		podSchema.Spec.ImagePullSecrets = []apiv1.LocalObjectReference{{Name: secretRegistryName}}
+	}
+
 	var services []sdk.Requirement
 	for _, req := range spawnArgs.Requirements {
 		if req.Type == sdk.ServiceRequirement {
@@ -284,16 +309,6 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 		podSchema.Spec.HostAliases = make([]apiv1.HostAlias, 1)
 		podSchema.Spec.HostAliases[0] = apiv1.HostAlias{IP: "127.0.0.1", Hostnames: make([]string, len(services)+1)}
 		podSchema.Spec.HostAliases[0].Hostnames[0] = "worker"
-	}
-
-	// Check here to add secret if needed
-	secretName := "cds-credreg-" + spawnArgs.Model.Name
-	if spawnArgs.Model.ModelDocker.Private {
-		if err := h.createSecret(ctx, secretName, *spawnArgs.Model); err != nil {
-			return sdk.WrapError(err, "cannot create secret for model %s", spawnArgs.Model.Path())
-		}
-		podSchema.Spec.ImagePullSecrets = []apiv1.LocalObjectReference{{Name: secretName}}
-		podSchema.ObjectMeta.Labels[LABEL_SECRET] = secretName
 	}
 
 	for i, serv := range services {
@@ -345,7 +360,7 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 		podSchema.Spec.HostAliases[0].Hostnames[i+1] = strings.ToLower(serv.Name)
 	}
 
-	_, err := h.kubeClient.PodCreate(ctx, h.Config.Namespace, &podSchema, metav1.CreateOptions{})
+	_, err = h.kubeClient.PodCreate(ctx, h.Config.Namespace, &podSchema, metav1.CreateOptions{})
 	log.Debug(ctx, "hatchery> kubernetes> SpawnWorker> %s > Pod created", spawnArgs.WorkerName)
 	return sdk.WithStack(err)
 }
@@ -356,20 +371,18 @@ func (h *HatcheryKubernetes) GetLogger() *logrus.Logger {
 
 // WorkersStarted returns the number of instances started but
 // not necessarily register on CDS yet
-func (h *HatcheryKubernetes) WorkersStarted(ctx context.Context) []string {
-	list, err := h.kubeClient.PodList(ctx, h.Config.Namespace, metav1.ListOptions{LabelSelector: LABEL_HATCHERY_NAME})
+func (h *HatcheryKubernetes) WorkersStarted(ctx context.Context) ([]string, error) {
+	list, err := h.kubeClient.PodList(ctx, h.Config.Namespace, metav1.ListOptions{
+		LabelSelector: fmt.Sprintf("%s=%s,%s", LABEL_HATCHERY_NAME, h.Config.Name, LABEL_WORKER_NAME),
+	})
 	if err != nil {
-		log.Warn(ctx, "WorkersStarted> unable to list pods on namespace %s", h.Config.Namespace)
-		return nil
+		return nil, sdk.WrapError(err, "unable to list pods on namespace %s", h.Config.Namespace)
 	}
 	workerNames := make([]string, 0, list.Size())
 	for _, pod := range list.Items {
-		labels := pod.GetLabels()
-		if labels[LABEL_HATCHERY_NAME] == h.Configuration().Name {
-			workerNames = append(workerNames, pod.GetName())
-		}
+		workerNames = append(workerNames, pod.GetName())
 	}
-	return workerNames
+	return workerNames, nil
 }
 
 // NeedRegistration return true if worker model need regsitration
@@ -381,7 +394,7 @@ func (h *HatcheryKubernetes) NeedRegistration(_ context.Context, m *sdk.Model) b
 }
 
 func (h *HatcheryKubernetes) routines(ctx context.Context) {
-	ticker := time.NewTicker(10 * time.Minute)
+	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
 
 	for {
@@ -389,23 +402,25 @@ func (h *HatcheryKubernetes) routines(ctx context.Context) {
 		case <-ticker.C:
 			h.GoRoutines.Exec(ctx, "getCDNConfiguration", func(ctx context.Context) {
 				if err := h.Common.RefreshServiceLogger(ctx); err != nil {
-					log.Error(ctx, "hatchery> kubernetes> cannot get cdn configuration : %v", err)
+					log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "cannot get cdn configuration"))
 				}
 			})
 
 			h.GoRoutines.Exec(ctx, "getServicesLogs", func(ctx context.Context) {
 				if err := h.getServicesLogs(ctx); err != nil {
-					log.Error(ctx, "Hatchery> Kubernetes> Cannot get service logs : %v", err)
+					log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "cannot get service logs"))
 				}
 			})
 
 			h.GoRoutines.Exec(ctx, "killAwolWorker", func(ctx context.Context) {
-				_ = h.killAwolWorkers(ctx)
+				if err := h.killAwolWorkers(ctx); err != nil {
+					log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "cannot delete awol worker"))
+				}
 			})
 
 			h.GoRoutines.Exec(ctx, "deleteSecrets", func(ctx context.Context) {
 				if err := h.deleteSecrets(ctx); err != nil {
-					log.Error(ctx, "hatchery> kubernetes> cannot handle secrets : %v", err)
+					log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "cannot delete secrets"))
 				}
 			})
 		case <-ctx.Done():

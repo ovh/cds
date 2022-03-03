@@ -8,32 +8,49 @@ import (
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/slug"
 )
 
+// Delete worker model registry and worker config secrets that are not used by any pods.
 func (h *HatcheryKubernetes) deleteSecrets(ctx context.Context) error {
-	pods, err := h.kubeClient.PodList(ctx, h.Config.Namespace, metav1.ListOptions{LabelSelector: LABEL_SECRET})
+	pods, err := h.kubeClient.PodList(ctx, h.Config.Namespace, metav1.ListOptions{
+		LabelSelector: fmt.Sprintf("%s=%s,%s", LABEL_HATCHERY_NAME, h.Config.Name, LABEL_WORKER_NAME),
+	})
 	if err != nil {
 		return sdk.WrapError(err, "cannot get pods with secret")
 	}
 
-	secrets, err := h.kubeClient.SecretList(ctx, h.Config.Namespace, metav1.ListOptions{LabelSelector: LABEL_SECRET})
+	secrets, err := h.kubeClient.SecretList(ctx, h.Config.Namespace, metav1.ListOptions{LabelSelector: LABEL_HATCHERY_NAME})
 	if err != nil {
 		return sdk.WrapError(err, "cannot get secrets")
 	}
 
 	for _, secret := range secrets.Items {
-		found := false
+		secretLabels := secret.GetLabels()
+		if secretLabels == nil {
+			continue
+		}
+		var found bool
 		for _, pod := range pods.Items {
-			labels := pod.GetLabels()
-			if labels != nil && labels[LABEL_SECRET] == secret.Name {
+			podLabels := pod.GetLabels()
+			if podLabels == nil {
+				continue
+			}
+			if wm, ok := secretLabels[LABEL_WORKER_MODEL_PATH]; ok && podLabels[LABEL_WORKER_MODEL_PATH] == wm {
+				found = true
+				break
+			}
+			if w, ok := secretLabels[LABEL_WORKER_NAME]; ok && podLabels[LABEL_WORKER_NAME] == w {
 				found = true
 				break
 			}
 		}
 		if !found {
+			log.Debug(ctx, "delete secret %q", secret.Name)
 			if err := h.kubeClient.SecretDelete(ctx, h.Config.Namespace, secret.Name, metav1.DeleteOptions{}); err != nil {
-				log.Error(ctx, "deleteSecrets> Cannot delete secret %s : %v", secret.Name, err)
+				log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "cannot delete secret %s", secret.Name))
 			}
 		}
 	}
@@ -41,30 +58,58 @@ func (h *HatcheryKubernetes) deleteSecrets(ctx context.Context) error {
 	return nil
 }
 
-func (h *HatcheryKubernetes) createSecret(ctx context.Context, secretName string, model sdk.Model) error {
-	if _, err := h.kubeClient.SecretGet(ctx, h.Config.Namespace, secretName, metav1.GetOptions{}); err != nil {
-		registry := "https://index.docker.io/v1/"
-		if model.ModelDocker.Registry != "" {
-			registry = model.ModelDocker.Registry
-		}
-		dockerCfg := fmt.Sprintf(`{"auths":{"%s":{"username":"%s","password":"%s"}}}`, registry, model.ModelDocker.Username, model.ModelDocker.Password)
-		wmSecret := apiv1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      secretName,
-				Namespace: h.Config.Namespace,
-				Labels: map[string]string{
-					LABEL_SECRET: model.Name,
-				},
+func (h *HatcheryKubernetes) createRegistrySecret(ctx context.Context, model sdk.Model) (string, error) {
+	secretName := slug.Convert("cds-worker-registry-" + model.Path())
+
+	_ = h.kubeClient.SecretDelete(ctx, h.Config.Namespace, secretName, metav1.DeleteOptions{})
+
+	registry := "https://index.docker.io/v1/"
+	if model.ModelDocker.Registry != "" {
+		registry = model.ModelDocker.Registry
+	}
+	dockerCfg := fmt.Sprintf(`{"auths":{"%s":{"username":"%s","password":"%s"}}}`, registry, model.ModelDocker.Username, model.ModelDocker.Password)
+
+	if _, err := h.kubeClient.SecretCreate(ctx, h.Config.Namespace, &apiv1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      secretName,
+			Namespace: h.Config.Namespace,
+			Labels: map[string]string{
+				LABEL_HATCHERY_NAME:     h.Configuration().Name,
+				LABEL_WORKER_MODEL_PATH: slug.Convert(model.Path()),
 			},
-			Type: apiv1.SecretTypeDockerConfigJson,
-			StringData: map[string]string{
-				apiv1.DockerConfigJsonKey: dockerCfg,
-			},
-		}
-		if _, err := h.kubeClient.SecretCreate(ctx, h.Config.Namespace, &wmSecret, metav1.CreateOptions{}); err != nil {
-			return sdk.WrapError(err, "Cannot create secret %s", secretName)
-		}
+		},
+		Type: apiv1.SecretTypeDockerConfigJson,
+		StringData: map[string]string{
+			apiv1.DockerConfigJsonKey: dockerCfg,
+		},
+	}, metav1.CreateOptions{}); err != nil {
+		return "", sdk.WrapError(err, "cannot create secret %s", secretName)
 	}
 
-	return nil
+	return secretName, nil
+}
+
+func (h *HatcheryKubernetes) createConfigSecret(ctx context.Context, workerConfig workerruntime.WorkerConfig) (string, error) {
+	secretName := slug.Convert("cds-worker-config-" + workerConfig.Name)
+
+	_ = h.kubeClient.SecretDelete(ctx, h.Config.Namespace, secretName, metav1.DeleteOptions{})
+
+	if _, err := h.kubeClient.SecretCreate(ctx, h.Config.Namespace, &apiv1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      secretName,
+			Namespace: h.Config.Namespace,
+			Labels: map[string]string{
+				LABEL_HATCHERY_NAME: h.Configuration().Name,
+				LABEL_WORKER_NAME:   workerConfig.Name,
+			},
+		},
+		Type: apiv1.SecretTypeOpaque,
+		StringData: map[string]string{
+			"CDS_CONFIG": workerConfig.EncodeBase64(),
+		},
+	}, metav1.CreateOptions{}); err != nil {
+		return "", sdk.WrapError(err, "cannot create secret %s", secretName)
+	}
+
+	return secretName, nil
 }

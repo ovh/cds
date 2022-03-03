@@ -106,7 +106,7 @@ type Interface interface {
 	InitHatchery(ctx context.Context) error
 	SpawnWorker(ctx context.Context, spawnArgs SpawnArguments) error
 	CanSpawn(ctx context.Context, model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool
-	WorkersStarted(ctx context.Context) []string
+	WorkersStarted(ctx context.Context) ([]string, error)
 	Service() *sdk.Service
 	CDSClient() cdsclient.Interface
 	Configuration() service.HatcheryCommonConfiguration

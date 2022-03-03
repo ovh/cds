@@ -489,23 +489,21 @@ func (h *HatcherySwarm) CanSpawn(ctx context.Context, model *sdk.Model, jobID in
 
 // WorkersStarted returns the number of instances started but
 // not necessarily register on CDS yet
-func (h *HatcherySwarm) WorkersStarted(ctx context.Context) []string {
+func (h *HatcherySwarm) WorkersStarted(ctx context.Context) ([]string, error) {
 	ctx, end := telemetry.Span(ctx, "hatchery.WorkersStarted")
 	defer end()
-
 	res := make([]string, 0)
 	for _, dockerClient := range h.dockerClients {
 		containers, err := h.getContainers(ctx, dockerClient, types.ContainerListOptions{All: true})
 		if err != nil {
-			log.Error(ctx, "hatchery> swarm> WorkersStarted> Unable to list containers: %s", err)
-			return nil
+			return nil, sdk.WrapError(err, "unable to list containers")
 		}
 		workers := containers.FilterWorkers()
 		for _, w := range workers {
 			res = append(res, w.Labels[LabelWorkerName])
 		}
 	}
-	return res
+	return res, nil
 }
 
 func (h *HatcherySwarm) GetLogger() *logrus.Logger {

@@ -61,7 +61,12 @@ func (h *HatcherySwarm) ApplyConfiguration(cfg interface{}) error {
 // Status returns sdk.MonitoringStatus, implements interface service.Service
 func (h *HatcherySwarm) Status(ctx context.Context) *sdk.MonitoringStatus {
 	m := h.NewMonitoringStatus()
-	m.AddLine(sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", len(h.WorkersStarted(ctx)), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
+	ws, err := h.WorkersStarted(ctx)
+	if err != nil {
+		ctx = log.ContextWithStackTrace(ctx, err)
+		log.Warn(ctx, err.Error())
+	}
+	m.AddLine(sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", len(ws), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
 	var nbErrorImageList, nbErrorGetContainers int
 	for dockerName, dockerClient := range h.dockerClients {
 		//Check images
