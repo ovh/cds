@@ -10,8 +10,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func ProjectExist(ctx context.Context, db *gorp.DbMap, vars map[string]string) error {
-	log.Debug(ctx, "Rbac.ProjectExist")
+func ProjectExist(ctx context.Context, db gorp.SqlExecutor, vars map[string]string) error {
 	projectKey := vars["projectKey"]
 	exist, err := project.Exist(db, projectKey)
 	if err != nil {
@@ -24,8 +23,7 @@ func ProjectExist(ctx context.Context, db *gorp.DbMap, vars map[string]string) e
 	return nil
 }
 
-func ProjectManage(ctx context.Context, db *gorp.DbMap, vars map[string]string) error {
-	log.Debug(ctx, "Rbac.ProjectManage")
+func ProjectManage(ctx context.Context, db gorp.SqlExecutor, vars map[string]string) error {
 	projectKey := vars["projectKey"]
 	// TODO Check role manage project
 	log.Debug(ctx, "Checking manage project role on %s", projectKey)

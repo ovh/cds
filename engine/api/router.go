@@ -269,10 +269,7 @@ func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.Han
 	for i := range handlers {
 		handlers[i].CleanURL = cleanURL
 		handlers[i].AllowedScopes = scope
-		name := runtime.FuncForPC(reflect.ValueOf(handlers[i].Handler).Pointer()).Name()
-		name = strings.Replace(name, ".func1", "", 1)
-		name = strings.Replace(name, ".1", "", 1)
-		name = strings.Replace(name, "github.com/ovh/cds/engine/", "", 1)
+		name := sdk.GetFuncName(handlers[i].Handler)
 		handlers[i].Name = name
 		cfg.Config[handlers[i].Method] = handlers[i]
 	}

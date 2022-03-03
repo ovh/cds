@@ -13,7 +13,7 @@ import (
 func (api *API) addVCSOnProjectHandler() (service.Handler, []service.RbacChecker) {
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		pKey := vars["projKey"]
+		pKey := vars["projectKey"]
 
 		// my handler
 		log.Info(ctx, "My project: %s", pKey)

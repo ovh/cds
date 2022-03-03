@@ -23,7 +23,7 @@ import (
 
 // Handler defines the HTTP handler used in CDS engine
 type Handler func(ctx context.Context, w http.ResponseWriter, r *http.Request) error
-type RbacChecker func(ctx context.Context, db *gorp.DbMap, vars map[string]string) error
+type RbacChecker func(ctx context.Context, db gorp.SqlExecutor, vars map[string]string) error
 
 // AsynchronousHandler defines the HTTP asynchronous handler used in CDS engine
 type AsynchronousHandler func(ctx context.Context, r *http.Request) error
