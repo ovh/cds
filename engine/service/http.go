@@ -58,7 +58,6 @@ type HandlerConfig struct {
 	PermissionLevel        int
 	CleanURL               string
 	RbacCheckers           []RbacChecker
-	SkipCleanVariable      bool
 }
 
 // Accepted is a helper function used by asynchronous handlers
