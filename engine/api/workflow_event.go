@@ -102,6 +102,11 @@ func NewEventJobSummary(wr sdk.WorkflowRun, noderun sdk.WorkflowNodeRun, jobrun 
 		GitCommit:            noderun.VCSHash,
 	}
 
+	node := wr.Workflow.WorkflowData.NodeByID(noderun.WorkflowNodeID)
+	if node != nil && node.Context != nil {
+		ejs.PipelineName = node.Context.PipelineName
+	}
+
 	if wr.Version != nil {
 		ejs.WorkflowRunVersion = *wr.Version
 	} else {

@@ -147,6 +147,7 @@ type EventJobSummary struct {
 	ProjectKey           string     `json:"project_key"`
 	Workflow             string     `json:"workflow"`
 	Pipeline             string     `json:"pipeline"`
+	PipelineName         string     `json:"pipeline_name"`
 	Job                  string     `json:"job"`
 	WorkflowRunVersion   string     `json:"workflow_run_version"`
 	WorkflowRunNumber    int        `json:"workflow_run_number"`
