@@ -41,7 +41,7 @@ func Test_serviceLogs(t *testing.T) {
 			{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "pod-name",
-					Namespace: "kyubi",
+					Namespace: "cds-workers",
 					Labels: map[string]string{
 						hatchery.LabelServiceJobID:        "666",
 						hatchery.LabelServiceNodeRunID:    "999",
@@ -65,12 +65,12 @@ func Test_serviceLogs(t *testing.T) {
 			},
 		},
 	}
-	gock.New("http://lolcat.kube").Get("/api/v1/namespaces/hachibi/pods").Reply(http.StatusOK).JSON(podsList)
+	gock.New("http://lolcat.kube").Get("/api/v1/namespaces/cds-workers/pods").Reply(http.StatusOK).JSON(podsList)
 
 	gock.New("http://lolcat.kube").AddMatcher(func(r *http.Request, rr *gock.Request) (bool, error) {
 		b, err := gock.MatchPath(r, rr)
-		assert.NoError(t, err)
-		if r.Method == http.MethodGet && strings.HasPrefix(r.URL.String(), "http://lolcat.kube/api/v1/namespaces/hachibi/pods/pod-name/log?container=service-666-blabla") {
+		require.NoError(t, err)
+		if r.Method == http.MethodGet && strings.HasPrefix(r.URL.String(), "http://lolcat.kube/api/v1/namespaces/cds-workers/pods/pod-name/log?container=service-666-blabla") {
 			if b {
 				return true, nil
 			}
