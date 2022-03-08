@@ -103,6 +103,17 @@ func TestHatcheryKubernetes_KillAwolWorkers(t *testing.T) {
 					},
 				},
 			},
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "worker-6",
+					Namespace: "cds-workers",
+					Labels: map[string]string{
+						LABEL_HATCHERY_NAME: "my-hatchery",
+						LABEL_WORKER_NAME:   "worker-6",
+					},
+					CreationTimestamp: metav1.Now(),
+				},
+			},
 		},
 	}
 	gock.New("http://lolcat.kube").Get("/api/v1/namespaces/cds-workers/pods").Reply(http.StatusOK).JSON(podsList)
