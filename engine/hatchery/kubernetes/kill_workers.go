@@ -2,6 +2,7 @@ package kubernetes
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -17,20 +18,47 @@ import (
 )
 
 func (h *HatcheryKubernetes) killAwolWorkers(ctx context.Context) error {
-	pods, err := h.kubeClient.PodList(ctx, h.Config.Namespace, metav1.ListOptions{LabelSelector: LABEL_WORKER})
+	pods, err := h.kubeClient.PodList(ctx, h.Config.Namespace, metav1.ListOptions{
+		LabelSelector: fmt.Sprintf("%s=%s,%s", LABEL_HATCHERY_NAME, h.Config.Name, LABEL_WORKER_NAME),
+	})
 	if err != nil {
 		return err
 	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	workers, err := h.CDSClient().WorkerList(ctx)
+	if err != nil {
+		return err
+	}
+
 	var globalErr error
 	for _, pod := range pods.Items {
 		annotations := pod.GetAnnotations()
 		labels := pod.GetLabels()
-		toDelete := false
-		for _, container := range pod.Status.ContainerStatuses {
+		if labels == nil {
+			continue
+		}
 
-			if (container.State.Terminated != nil && (container.State.Terminated.Reason == "Completed" || container.State.Terminated.Reason == "Error")) ||
-				(container.State.Waiting != nil && container.State.Waiting.Reason == "ErrImagePull") {
-				toDelete = true
+		var toDelete, found bool
+		for _, w := range workers {
+			if workerName, ok := labels[LABEL_WORKER_NAME]; ok && workerName == w.Name {
+				found = true
+				break
+			}
+		}
+		if !found {
+			toDelete = true
+		}
+
+		if !toDelete {
+			for _, container := range pod.Status.ContainerStatuses {
+				terminated := (container.State.Terminated != nil && (container.State.Terminated.Reason == "Completed" || container.State.Terminated.Reason == "Error"))
+				errImagePull := (container.State.Waiting != nil && container.State.Waiting.Reason == "ErrImagePull")
+				if terminated || errImagePull {
+					toDelete = true
+					break
+				}
 			}
 		}
 

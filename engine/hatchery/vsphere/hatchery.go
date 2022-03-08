@@ -87,7 +87,12 @@ func (h *HatcheryVSphere) ApplyConfiguration(cfg interface{}) error {
 // Status returns sdk.MonitoringStatus, implements interface service.Service
 func (h *HatcheryVSphere) Status(ctx context.Context) *sdk.MonitoringStatus {
 	m := h.NewMonitoringStatus()
-	m.AddLine(sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", len(h.WorkersStarted(ctx)), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
+	ws, err := h.WorkersStarted(ctx)
+	if err != nil {
+		ctx = log.ContextWithStackTrace(ctx, err)
+		log.Warn(ctx, err.Error())
+	}
+	m.AddLine(sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", len(ws), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
 	return m
 }
 
@@ -249,13 +254,13 @@ func (h *HatcheryVSphere) WorkerModelSecretList(m sdk.Model) (sdk.WorkerModelSec
 
 // WorkersStarted returns the list of workers started but
 // not necessarily register on CDS yet
-func (h *HatcheryVSphere) WorkersStarted(ctx context.Context) []string {
+func (h *HatcheryVSphere) WorkersStarted(ctx context.Context) ([]string, error) {
 	srvs := h.getVirtualMachines(ctx)
 	res := make([]string, 0, len(srvs))
 	for _, s := range srvs {
 		res = append(res, s.Name)
 	}
-	return res
+	return res, nil
 }
 
 // ModelType returns type of hatchery

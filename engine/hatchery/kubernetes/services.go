@@ -2,6 +2,7 @@ package kubernetes
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -31,7 +32,9 @@ func (h *HatcheryKubernetes) getServicesLogs(ctx context.Context) error {
 		apiWorkerNames[apiWorkers[i].Name] = struct{}{}
 	}
 
-	pods, err := h.kubeClient.PodList(ctx, h.Config.Namespace, metav1.ListOptions{LabelSelector: hatchery.LabelServiceJobID})
+	pods, err := h.kubeClient.PodList(ctx, h.Config.Namespace, metav1.ListOptions{
+		LabelSelector: fmt.Sprintf("%s=%s,%s", LABEL_HATCHERY_NAME, h.Config.Name, hatchery.LabelServiceJobID),
+	})
 	if err != nil {
 		return err
 	}

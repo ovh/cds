@@ -14,6 +14,7 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"gopkg.in/h2non/gock.v1"
 )
 
@@ -37,7 +38,8 @@ func TestWorkerStarted(t *testing.T) {
 	}
 
 	gock.New("http://mara.thon").Get("/v2/apps").Reply(200).JSON(apps)
-	wkrs := h.WorkersStarted(context.TODO())
+	wkrs, err := h.WorkersStarted(context.TODO())
+  require.NoError(t, err)
 	t.Logf("%+v", wkrs)
 	assert.Equal(t, 2, len(wkrs))
 	assert.Equal(t, "w1", wkrs[0])
@@ -179,7 +181,6 @@ func TestKillAwolWOrkers(t *testing.T) {
 	err := h.killAwolWorkers()
 	assert.NoError(t, err)
 	assert.True(t, gock.IsDone())
-
 }
 
 func TestSpawn(t *testing.T) {

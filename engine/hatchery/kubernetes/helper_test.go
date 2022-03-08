@@ -23,12 +23,12 @@ func NewHatcheryKubernetesTest(t *testing.T) *HatcheryKubernetes {
 	h.kubeClient = &kubernetesClient{clientSet}
 	gock.InterceptClient(clientSet.CoreV1().RESTClient().(*rest.RESTClient).Client)
 
-	h.Config.Name = "kyubi"
-	h.Config.Namespace = "hachibi"
+	h.Config.Name = "my-hatchery"
+	h.Config.Namespace = "cds-workers"
 	h.ServiceInstance = &sdk.Service{
 		CanonicalService: sdk.CanonicalService{
 			ID:   1,
-			Name: "kyubi",
+			Name: "my-hatchery",
 		},
 	}
 	return h

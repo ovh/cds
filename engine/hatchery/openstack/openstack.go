@@ -91,7 +91,12 @@ func (h *HatcheryOpenstack) ApplyConfiguration(cfg interface{}) error {
 // Status returns sdk.MonitoringStatus, implements interface service.Service
 func (h *HatcheryOpenstack) Status(ctx context.Context) *sdk.MonitoringStatus {
 	m := h.NewMonitoringStatus()
-	m.AddLine(sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", len(h.WorkersStarted(ctx)), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
+	ws, err := h.WorkersStarted(ctx)
+	if err != nil {
+		ctx = log.ContextWithStackTrace(ctx, err)
+		log.Warn(ctx, err.Error())
+	}
+	m.AddLine(sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", len(ws), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
 	return m
 }
 
@@ -487,13 +492,13 @@ func (h *HatcheryOpenstack) deleteServer(ctx context.Context, s servers.Server) 
 
 // WorkersStarted returns the number of instances started but
 // not necessarily register on CDS yet
-func (h *HatcheryOpenstack) WorkersStarted(ctx context.Context) []string {
+func (h *HatcheryOpenstack) WorkersStarted(ctx context.Context) ([]string, error) {
 	srvs := h.getServers(ctx)
 	res := make([]string, len(srvs))
 	for i, s := range srvs {
 		res[i] = s.Metadata["worker"]
 	}
-	return res
+	return res, nil
 }
 
 // NeedRegistration return true if worker model need regsitration

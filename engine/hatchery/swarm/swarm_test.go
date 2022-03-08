@@ -260,7 +260,8 @@ func TestHatcherySwarm_WorkersStarted(t *testing.T) {
 	}
 	gock.New("https://lolcat.host").Get("/v6.66/containers/json").Reply(http.StatusOK).JSON(containers)
 
-	s := h.WorkersStarted(context.TODO())
+	s, err := h.WorkersStarted(context.TODO())
+	require.NoError(t, err)
 	require.Equal(t, 2, len(s))
 	require.Equal(t, "w1", s[0])
 	require.Equal(t, "w2", s[1])

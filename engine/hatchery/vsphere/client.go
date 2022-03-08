@@ -34,7 +34,6 @@ func (h *HatcheryVSphere) getVirtualMachines(ctx context.Context) []mo.VirtualMa
 		if isNotTemplate {
 			result = append(result, vms[i])
 		}
-
 	}
 	return result
 }
