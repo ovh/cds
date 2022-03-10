@@ -40,25 +40,28 @@ func (h *HatcheryKubernetes) killAwolWorkers(ctx context.Context) error {
 			continue
 		}
 
-		var toDelete, found bool
-		for _, w := range workers {
-			if workerName, ok := labels[LABEL_WORKER_NAME]; ok && workerName == w.Name {
-				found = true
+		var toDelete bool
+		for _, container := range pod.Status.ContainerStatuses {
+			terminated := (container.State.Terminated != nil && (container.State.Terminated.Reason == "Completed" || container.State.Terminated.Reason == "Error"))
+			errImagePull := (container.State.Waiting != nil && container.State.Waiting.Reason == "ErrImagePull")
+			if terminated || errImagePull {
+				toDelete = true
+				log.Debug(ctx, "pod %s/%s is terminated or in error", pod.Namespace, pod.Name)
 				break
 			}
 		}
-		if !found {
-			toDelete = true
-		}
 
 		if !toDelete {
-			for _, container := range pod.Status.ContainerStatuses {
-				terminated := (container.State.Terminated != nil && (container.State.Terminated.Reason == "Completed" || container.State.Terminated.Reason == "Error"))
-				errImagePull := (container.State.Waiting != nil && container.State.Waiting.Reason == "ErrImagePull")
-				if terminated || errImagePull {
-					toDelete = true
+			var found bool
+			for _, w := range workers {
+				if workerName, ok := labels[LABEL_WORKER_NAME]; ok && workerName == w.Name {
+					found = true
 					break
 				}
+			}
+			if !found && time.Since(pod.CreationTimestamp.Time) > 3*time.Minute {
+				toDelete = true
+				log.Debug(ctx, "pod %s/%s didn't match a registered worker and was started since %v", pod.Namespace, pod.Name, pod.CreationTimestamp.Time)
 			}
 		}
 
@@ -130,6 +133,7 @@ func (h *HatcheryKubernetes) killAwolWorkers(ctx context.Context) error {
 				globalErr = err
 				log.Error(ctx, "hatchery:kubernetes> killAwolWorkers> Cannot delete pod %s (%s)", pod.Name, err)
 			}
+			log.Debug(ctx, "pod %s/%s killed", pod.Namespace, pod.Name)
 		}
 	}
 	return globalErr
