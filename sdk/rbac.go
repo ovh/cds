@@ -11,32 +11,12 @@ const (
 )
 
 type Rbac struct {
-	UUID         string        `json:"uuid" db:"uuid"`
-	Name         string        `json:"name" db:"name"`
-	Created      time.Time     `json:"created" db:"created"`
-	LastModified time.Time     `json:"last_modified" db:"last_modified"`
-	Globals      []RbacGlobal  `json:"globals" db:"-"`
-	Projects     []RbacProject `json:"projects" db:"-"`
-}
-
-type AbstractRbac struct {
-	ID         int64       `json:"-" db:"id"`
-	RbacUUID   string      `json:"-" db:"rbac_uuid"`
-	Role       string      `json:"role" db:"role"`
-	RbacUsers  []RbacUser  `json:"users" db:"-"`
-	RbacGroups []RbacGroup `json:"groups" db:"-"`
-}
-
-type RbacUser struct {
-	ID     string `json:"-" db:"id"`
-	UserID string `json:"-" db:"user_id"`
-	Name   string `json:"name" db:"-"`
-}
-
-type RbacGroup struct {
-	ID      string `json:"-" db:"id"`
-	GroupID int64  `json:"-" db:"group_id"`
-	Name    string `json:"name" db:"-"`
+	UUID         string        `json:"uuid" db:"uuid" yaml:"-"`
+	Name         string        `json:"name" db:"name" yaml:"name"`
+	Created      time.Time     `json:"created" db:"created" yaml:"-"`
+	LastModified time.Time     `json:"last_modified" db:"last_modified" yaml:"-"`
+	Globals      []RbacGlobal  `json:"globals" db:"-" yaml:"globals"`
+	Projects     []RbacProject `json:"projects" db:"-" yaml:"projects"`
 }
 
 func IsValidRbac(rbac *Rbac) error {

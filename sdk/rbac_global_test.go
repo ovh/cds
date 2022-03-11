@@ -7,11 +7,9 @@ import (
 
 func TestRbacGlobalInvalidGlobalRole(t *testing.T) {
 	rb := RbacGlobal{
-		AbstractRbac: AbstractRbac{
-			Role:       "runWorkflow",
-			RbacGroups: []RbacGroup{{GroupID: 1}},
-			RbacUsers:  []RbacUser{{Name: "aa-aa-aa"}},
-		},
+		Role:          "runWorkflow",
+		RbacGroupsIDs: []int64{1},
+		RbacUsersIDs:  []string{"aa-aa-aa"},
 	}
 	err := isValidRbacGlobal("myRule", rb)
 	require.Error(t, err)
@@ -19,11 +17,9 @@ func TestRbacGlobalInvalidGlobalRole(t *testing.T) {
 }
 func TestRbacGlobalInvalidGroupAndUsers(t *testing.T) {
 	rb := RbacGlobal{
-		AbstractRbac: AbstractRbac{
-			Role:       RoleCreateProject,
-			RbacGroups: []RbacGroup{},
-			RbacUsers:  []RbacUser{},
-		},
+		Role:          RoleCreateProject,
+		RbacGroupsIDs: []int64{},
+		RbacUsersIDs:  []string{},
 	}
 	err := isValidRbacGlobal("myRule", rb)
 	require.Error(t, err)
@@ -32,11 +28,9 @@ func TestRbacGlobalInvalidGroupAndUsers(t *testing.T) {
 
 func TestRbacGlobalEmptyRole(t *testing.T) {
 	rb := RbacGlobal{
-		AbstractRbac: AbstractRbac{
-			Role:       "",
-			RbacGroups: []RbacGroup{{GroupID: 1}},
-			RbacUsers:  []RbacUser{},
-		},
+		Role:          "",
+		RbacGroupsIDs: []int64{1},
+		RbacUsersIDs:  []string{},
 	}
 	err := isValidRbacGlobal("myRule", rb)
 	require.Error(t, err)

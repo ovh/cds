@@ -7,13 +7,11 @@ import (
 
 func TestRbacProjectInvalidRole(t *testing.T) {
 	rb := RbacProject{
-		Projects: []RbacProjectIdentifiers{{ProjectID: 1}},
-		All:      false,
-		AbstractRbac: AbstractRbac{
-			Role:       RoleCreateProject,
-			RbacGroups: []RbacGroup{{GroupID: 1}},
-			RbacUsers:  []RbacUser{{Name: "aa-aa-aa"}},
-		},
+		RbacProjectsIDs: []int64{1},
+		All:             false,
+		Role:            RoleCreateProject,
+		RbacGroupsIDs:   []int64{1},
+		RbacUsersIDs:    []string{"aa-aa-aa"},
 	}
 	err := isValidRbacProject("myRule", rb)
 	require.Error(t, err)
@@ -21,13 +19,11 @@ func TestRbacProjectInvalidRole(t *testing.T) {
 }
 func TestRbacProjectInvalidGroupAndUsers(t *testing.T) {
 	rb := RbacProject{
-		Projects: []RbacProjectIdentifiers{{ProjectID: 1}},
-		All:      false,
-		AbstractRbac: AbstractRbac{
-			Role:       RoleRead,
-			RbacGroups: []RbacGroup{},
-			RbacUsers:  []RbacUser{},
-		},
+		RbacProjectsIDs: []int64{1},
+		All:             false,
+		Role:            RoleRead,
+		RbacGroupsIDs:   []int64{},
+		RbacUsersIDs:    []string{},
 	}
 	err := isValidRbacProject("myRule", rb)
 	require.Error(t, err)
@@ -35,13 +31,11 @@ func TestRbacProjectInvalidGroupAndUsers(t *testing.T) {
 }
 func TestRbacProjectInvalidProjectIDs(t *testing.T) {
 	rb := RbacProject{
-		Projects: []RbacProjectIdentifiers{},
-		All:      false,
-		AbstractRbac: AbstractRbac{
-			Role:       RoleRead,
-			RbacGroups: []RbacGroup{{GroupID: 1}},
-			RbacUsers:  []RbacUser{},
-		},
+		RbacProjectsIDs: []int64{1},
+		All:             false,
+		Role:            RoleRead,
+		RbacGroupsIDs:   []int64{1},
+		RbacUsersIDs:    []string{},
 	}
 	err := isValidRbacProject("myRule", rb)
 	require.Error(t, err)
@@ -49,13 +43,11 @@ func TestRbacProjectInvalidProjectIDs(t *testing.T) {
 }
 func TestRbacProjectEmptyRole(t *testing.T) {
 	rb := RbacProject{
-		Projects: []RbacProjectIdentifiers{{ProjectID: 1}},
-		All:      false,
-		AbstractRbac: AbstractRbac{
-			Role:       "",
-			RbacGroups: []RbacGroup{{GroupID: 1}},
-			RbacUsers:  []RbacUser{},
-		},
+		RbacProjectsIDs: []int64{1},
+		All:             false,
+		Role:            "",
+		RbacGroupsIDs:   []int64{1},
+		RbacUsersIDs:    []string{},
 	}
 	err := isValidRbacProject("myRule", rb)
 	require.Error(t, err)
@@ -63,13 +55,11 @@ func TestRbacProjectEmptyRole(t *testing.T) {
 }
 func TestRbacProjectInvalidAllAndListOfProject(t *testing.T) {
 	rb := RbacProject{
-		Projects: []RbacProjectIdentifiers{{ProjectID: 1}},
-		All:      true,
-		AbstractRbac: AbstractRbac{
-			Role:       RoleRead,
-			RbacGroups: []RbacGroup{{GroupID: 1}},
-			RbacUsers:  []RbacUser{},
-		},
+		RbacProjectsIDs: []int64{1},
+		All:             true,
+		Role:            RoleRead,
+		RbacGroupsIDs:   []int64{1},
+		RbacUsersIDs:    []string{},
 	}
 	err := isValidRbacProject("myRule", rb)
 	require.Error(t, err)

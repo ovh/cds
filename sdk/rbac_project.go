@@ -5,22 +5,20 @@ var (
 )
 
 type RbacProject struct {
-	AbstractRbac
-	All      bool                     `json:"all" db:"all"`
-	Projects []RbacProjectIdentifiers `json:"projects" db:"-"`
-}
+	All             bool     `json:"all" db:"all" yaml:"all"`
+	Role            string   `json:"role" db:"role" yaml:"role"`
+	RbacProjectKeys []string `json:"projects" db:"-" yaml:"projects"`
+	RbacUsersName   []string `json:"users" db:"-" yaml:"users"`
+	RbacGroupsName  []string `json:"groups" db:"-" yaml:"groups"`
 
-type RbacProjectIdentifiers struct {
-	ID            int64  `json:"-" db:"id"`
-	RbacProjectID int64  `json:"-" db:"rbac_project_id"`
-	ProjectID     int64  `json:"-" db:"project_id"`
-	ProjectKey    string `json:"project_key" db:"-"`
-	ProjectName   string `json:"project_name" db:"-"`
+	RbacProjectsIDs []int64  `json:"-" db:"-" yaml:"-"`
+	RbacUsersIDs    []string `json:"-" db:"-" yaml:"-"`
+	RbacGroupsIDs   []int64  `json:"-" db:"-" yaml:"-"`
 }
 
 func isValidRbacProject(rbacName string, rp RbacProject) error {
 	// Check empty group and users
-	if len(rp.RbacGroups) == 0 && len(rp.RbacUsers) == 0 {
+	if len(rp.RbacGroupsIDs) == 0 && len(rp.RbacUsersIDs) == 0 {
 		return WrapError(ErrInvalidData, "Rbac %s: missing groups or users on project permission", rbacName)
 	}
 
@@ -40,10 +38,10 @@ func isValidRbacProject(rbacName string, rp RbacProject) error {
 	}
 
 	// Check project_ids and all flag
-	if len(rp.Projects) == 0 && !rp.All {
+	if len(rp.RbacProjectsIDs) == 0 && !rp.All {
 		return WrapError(ErrInvalidData, "Rbac %s: must have at least 1 project on a project permission", rbacName)
 	}
-	if len(rp.Projects) > 0 && rp.All {
+	if len(rp.RbacProjectsIDs) > 0 && rp.All {
 		return WrapError(ErrInvalidData, "Rbac %s: you can't have a list of project and the all flag checked on a project permission", rbacName)
 	}
 	return nil

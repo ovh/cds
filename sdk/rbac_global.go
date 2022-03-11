@@ -5,11 +5,16 @@ var (
 )
 
 type RbacGlobal struct {
-	AbstractRbac
+	Role           string   `json:"role" db:"role" yaml:"role"`
+	RbacUsersName  []string `json:"users" db:"-" yaml:"users"`
+	RbacGroupsName []string `json:"groups" db:"-" yaml:"groups"`
+
+	RbacUsersIDs  []string `json:"-" db:"-" yaml:"-"`
+	RbacGroupsIDs []int64  `json:"-" db:"-" yaml:"-"`
 }
 
 func isValidRbacGlobal(rbacName string, rg RbacGlobal) error {
-	if len(rg.RbacGroups) == 0 && len(rg.RbacUsers) == 0 {
+	if len(rg.RbacGroupsIDs) == 0 && len(rg.RbacUsersIDs) == 0 {
 		return WrapError(ErrInvalidData, "Rbac %s: missing groups or users on global permission", rbacName)
 	}
 	if rg.Role == "" {
