@@ -31,7 +31,7 @@ func TestRbacProjectInvalidGroupAndUsers(t *testing.T) {
 }
 func TestRbacProjectInvalidProjectIDs(t *testing.T) {
 	rb := RbacProject{
-		RbacProjectsIDs: []int64{1},
+		RbacProjectsIDs: []int64{},
 		All:             false,
 		Role:            RoleRead,
 		RbacGroupsIDs:   []int64{1},
