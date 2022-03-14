@@ -6,8 +6,8 @@ const (
 	RoleRead             = "read"
 	RoleManage           = "manage"
 	RoleDelete           = "delete"
-	RoleCreateProject    = "createProject"
-	RoleManagePermission = "managePermission"
+	RoleCreateProject    = "create-project"
+	RoleManagePermission = "manage-permission"
 )
 
 type Rbac struct {

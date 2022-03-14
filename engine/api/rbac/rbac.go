@@ -12,11 +12,13 @@ import (
 
 func fillWithIDs(ctx context.Context, db gorp.SqlExecutor, r *sdk.Rbac) error {
 	// Check existing permission
-	uuid, err := LoadRbacUUIDByName(ctx, db, r.Name)
+	rbacDB, err := LoadRbacByName(ctx, db, r.Name)
 	if err != nil {
-		return err
+		if !sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return err
+		}
 	}
-	r.UUID = uuid
+	r.UUID = rbacDB.UUID
 
 	userCache := make(map[string]string)
 	groupCache := make(map[string]int64)

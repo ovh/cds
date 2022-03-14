@@ -18,7 +18,7 @@ func Test_addVCSOnProject(t *testing.T) {
 	vars := map[string]string{
 		"projectKey": proj.Key,
 	}
-	uri := api.Router.GetRouteV2("POST", api.addVCSOnProjectHandler, vars)
+	uri := api.Router.GetRouteV2("POST", api.postVCSOnProjectHandler, vars)
 	test.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, nil)
 

@@ -10,7 +10,7 @@ import (
 	"github.com/ovh/cds/engine/service"
 )
 
-func (api *API) addVCSOnProjectHandler() (service.Handler, []service.RbacChecker) {
+func (api *API) postVCSOnProjectHandler() (service.Handler, []service.RbacChecker) {
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		pKey := vars["projectKey"]

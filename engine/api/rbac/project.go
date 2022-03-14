@@ -16,7 +16,6 @@ func ProjectExist(ctx context.Context, db gorp.SqlExecutor, vars map[string]stri
 	if err != nil {
 		return err
 	}
-	log.Info(ctx, "Result")
 	if !exist {
 		return sdk.WithStack(sdk.ErrNotFound)
 	}

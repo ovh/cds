@@ -3,6 +3,7 @@ package rbac
 import (
 	"context"
 	"fmt"
+	"github.com/ovh/cds/engine/api/project"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -56,14 +57,14 @@ projects:
 
 	require.NoError(t, Insert(context.Background(), db, &r))
 
-	prjusers1, err := LoadRbacProjectIDsByUserID(context.TODO(), db, sdk.RoleRead, users1.ID)
+	prjusers1, err := project.LoadRbacProjectIDsByUserID(context.TODO(), db, sdk.RoleRead, users1.ID)
 	require.NoError(t, err)
 	t.Logf("%+v", prjusers1)
 	require.Len(t, prjusers1, 1)
 	require.Equal(t, prjusers1[0].ID, proj1.ID)
 	require.Equal(t, prjusers1[0].Key, proj1.Key)
 
-	prjusers2, err := LoadRbacProjectIDsByUserID(context.TODO(), db, sdk.RoleManage, users2.ID)
+	prjusers2, err := project.LoadRbacProjectIDsByUserID(context.TODO(), db, sdk.RoleManage, users2.ID)
 	require.NoError(t, err)
 	require.Len(t, prjusers2, 1)
 	require.Equal(t, prjusers2[0].ID, proj2.ID)
@@ -97,7 +98,7 @@ projects:
     groups: [%s]
     projects: [%s]
 globals:
-  - role: createProject
+  - role: create-project
     users: [%s]
 `, users1.Username, group1.Name, proj1.Key, group1.Name, proj2.Key, users1.Username)
 

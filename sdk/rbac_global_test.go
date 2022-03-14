@@ -13,7 +13,7 @@ func TestRbacGlobalInvalidGlobalRole(t *testing.T) {
 	}
 	err := isValidRbacGlobal("myRule", rb)
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "Rbac myRule: role runWorkflow is not allowed on a global permission")
+	require.Contains(t, err.Error(), "rbac myRule: role runWorkflow is not allowed on a global permission")
 }
 func TestRbacGlobalInvalidGroupAndUsers(t *testing.T) {
 	rb := RbacGlobal{
@@ -23,7 +23,7 @@ func TestRbacGlobalInvalidGroupAndUsers(t *testing.T) {
 	}
 	err := isValidRbacGlobal("myRule", rb)
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "Rbac myRule: missing groups or users on global permission")
+	require.Contains(t, err.Error(), "rbac myRule: missing groups or users on global permission")
 }
 
 func TestRbacGlobalEmptyRole(t *testing.T) {
@@ -34,5 +34,5 @@ func TestRbacGlobalEmptyRole(t *testing.T) {
 	}
 	err := isValidRbacGlobal("myRule", rb)
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "Rbac myRule: role for global permission cannot be empty")
+	require.Contains(t, err.Error(), "rbac myRule: role for global permission cannot be empty")
 }

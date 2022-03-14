@@ -51,7 +51,7 @@ func insertRbacGlobalGroup(ctx context.Context, db gorpmapper.SqlExecutorWithTx,
 	return nil
 }
 
-func loadRbacRbacGlobalUsersTargeted(ctx context.Context, db gorp.SqlExecutor, rbacGlobal *rbacGlobal) error {
+func loadRbacGlobalUsersTargeted(ctx context.Context, db gorp.SqlExecutor, rbacGlobal *rbacGlobal) error {
 	users, err := user.LoadUsersByRbacGlobal(ctx, db, rbacGlobal.ID)
 	if err != nil {
 		return err
@@ -65,7 +65,7 @@ func loadRbacRbacGlobalUsersTargeted(ctx context.Context, db gorp.SqlExecutor, r
 	return nil
 }
 
-func loadRbacRbacGlobalGroupsTargeted(ctx context.Context, db gorp.SqlExecutor, rbacGlobal *rbacGlobal) error {
+func loadRbacGlobalGroupsTargeted(ctx context.Context, db gorp.SqlExecutor, rbacGlobal *rbacGlobal) error {
 	groups, err := group.LoadGroupByRbacGlobal(ctx, db, rbacGlobal.ID)
 	if err != nil {
 		return err

@@ -15,10 +15,10 @@ type RbacGlobal struct {
 
 func isValidRbacGlobal(rbacName string, rg RbacGlobal) error {
 	if len(rg.RbacGroupsIDs) == 0 && len(rg.RbacUsersIDs) == 0 {
-		return WrapError(ErrInvalidData, "Rbac %s: missing groups or users on global permission", rbacName)
+		return NewErrorFrom(ErrInvalidData, "rbac %s: missing groups or users on global permission", rbacName)
 	}
 	if rg.Role == "" {
-		return WrapError(ErrInvalidData, "Rbac %s: role for global permission cannot be empty", rbacName)
+		return NewErrorFrom(ErrInvalidData, "rbac %s: role for global permission cannot be empty", rbacName)
 	}
 	roleFound := false
 	for _, r := range GlobalRoles {
@@ -28,7 +28,7 @@ func isValidRbacGlobal(rbacName string, rg RbacGlobal) error {
 		}
 	}
 	if !roleFound {
-		return WrapError(ErrInvalidData, "Rbac %s: role %s is not allowed on a global permission", rbacName, rg.Role)
+		return NewErrorFrom(ErrInvalidData, "rbac %s: role %s is not allowed on a global permission", rbacName, rg.Role)
 	}
 	return nil
 }

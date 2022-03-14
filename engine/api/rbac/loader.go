@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
@@ -25,10 +26,10 @@ var LoadOptions = struct {
 
 func loadDefault(ctx context.Context, db gorp.SqlExecutor, rbac *rbac) error {
 	if err := loadRbacGlobal(ctx, db, rbac); err != nil {
-		return sdk.WithStack(err)
+		return err
 	}
 	if err := loadRbacProject(ctx, db, rbac); err != nil {
-		return sdk.WithStack(err)
+		return err
 	}
 	return nil
 }
@@ -42,6 +43,13 @@ func loadRbacProject(ctx context.Context, db gorp.SqlExecutor, rbac *rbac) error
 	rbac.Projects = make([]sdk.RbacProject, 0, len(rbacPrj))
 	for i := range rbacPrj {
 		rp := &rbacPrj[i]
+		isValid, err := gorpmapping.CheckSignature(rp, rp.Signature)
+		if err != nil {
+			return sdk.WrapError(err, "error when checking signature for rbac_project %d", rp.ID)
+		}
+		if !isValid {
+			log.Error(ctx, "rbac_project.get> rbac_project %d data corrupted", rp.ID)
+		}
 		if err := loadRbacProjectTargeted(ctx, db, rp); err != nil {
 			return err
 		}
@@ -67,10 +75,17 @@ func loadRbacGlobal(ctx context.Context, db gorp.SqlExecutor, rbac *rbac) error 
 	rbac.Globals = make([]sdk.RbacGlobal, 0, len(rbacGbl))
 	for i := range rbacGbl {
 		rg := &rbacGbl[i]
-		if err := loadRbacRbacGlobalUsersTargeted(ctx, db, rg); err != nil {
+		isValid, err := gorpmapping.CheckSignature(rg, rg.Signature)
+		if err != nil {
+			return sdk.WrapError(err, "error when checking signature for rbac_global %d", rg.ID)
+		}
+		if !isValid {
+			log.Error(ctx, "rbac.loadRbacGlobal> rbac_global %d data corrupted", rg.ID)
+		}
+		if err := loadRbacGlobalUsersTargeted(ctx, db, rg); err != nil {
 			return err
 		}
-		if err := loadRbacRbacGlobalGroupsTargeted(ctx, db, rg); err != nil {
+		if err := loadRbacGlobalGroupsTargeted(ctx, db, rg); err != nil {
 			return err
 		}
 		rbac.Globals = append(rbac.Globals, rg.RbacGlobal)
