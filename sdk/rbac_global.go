@@ -4,17 +4,16 @@ var (
 	GlobalRoles = []string{RoleCreateProject, RoleManagePermission}
 )
 
-type RbacGlobal struct {
+type RBACGlobal struct {
 	Role           string   `json:"role" db:"role" yaml:"role"`
-	RbacUsersName  []string `json:"users" db:"-" yaml:"users"`
-	RbacGroupsName []string `json:"groups" db:"-" yaml:"groups"`
-
-	RbacUsersIDs  []string `json:"-" db:"-" yaml:"-"`
-	RbacGroupsIDs []int64  `json:"-" db:"-" yaml:"-"`
+	RBACUsersName  []string `json:"users" db:"-" yaml:"users"`
+	RBACGroupsName []string `json:"groups" db:"-" yaml:"groups"`
+	RBACUsersIDs   []string `json:"-" db:"-" yaml:"-"`
+	RBACGroupsIDs  []int64  `json:"-" db:"-" yaml:"-"`
 }
 
-func isValidRbacGlobal(rbacName string, rg RbacGlobal) error {
-	if len(rg.RbacGroupsIDs) == 0 && len(rg.RbacUsersIDs) == 0 {
+func isValidRbacGlobal(rbacName string, rg RBACGlobal) error {
+	if len(rg.RBACGroupsIDs) == 0 && len(rg.RBACUsersIDs) == 0 {
 		return NewErrorFrom(ErrInvalidData, "rbac %s: missing groups or users on global permission", rbacName)
 	}
 	if rg.Role == "" {

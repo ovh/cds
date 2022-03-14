@@ -12,13 +12,13 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func LoadRbacByName(ctx context.Context, db gorp.SqlExecutor, name string, opts ...LoadOptionFunc) (sdk.Rbac, error) {
+func LoadRbacByName(ctx context.Context, db gorp.SqlExecutor, name string, opts ...LoadOptionFunc) (sdk.RBAC, error) {
 	query := `SELECT * FROM rbac WHERE name = $1`
 	return get(ctx, db, gorpmapping.NewQuery(query).Args(name), opts...)
 }
 
 // Insert a RBAC permission in database
-func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, rb *sdk.Rbac) error {
+func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, rb *sdk.RBAC) error {
 	if err := sdk.IsValidRbac(rb); err != nil {
 		return err
 	}
@@ -29,7 +29,7 @@ func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, rb *sdk.Rbac) 
 		rb.Created = time.Now()
 	}
 	rb.LastModified = time.Now()
-	dbRb := rbac{Rbac: *rb}
+	dbRb := rbac{RBAC: *rb}
 	if err := gorpmapping.InsertAndSign(ctx, db, &dbRb); err != nil {
 		return err
 	}
@@ -37,7 +37,7 @@ func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, rb *sdk.Rbac) 
 	for i := range rb.Globals {
 		dbRbGlobal := rbacGlobal{
 			RbacUUID:   dbRb.UUID,
-			RbacGlobal: rb.Globals[i],
+			RBACGlobal: rb.Globals[i],
 		}
 		if err := insertRbacGlobal(ctx, db, &dbRbGlobal); err != nil {
 			return err
@@ -46,33 +46,33 @@ func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, rb *sdk.Rbac) 
 	for i := range rb.Projects {
 		dbRbProject := rbacProject{
 			RbacUUID:    dbRb.UUID,
-			RbacProject: rb.Projects[i],
+			RBACProject: rb.Projects[i],
 		}
 		if err := insertRbacProject(ctx, db, &dbRbProject); err != nil {
 			return err
 		}
 	}
-	*rb = dbRb.Rbac
+	*rb = dbRb.RBAC
 	return nil
 }
 
-func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, rb *sdk.Rbac) error {
+func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, rb *sdk.RBAC) error {
 	if err := Delete(ctx, db, *rb); err != nil {
 		return err
 	}
 	return Insert(ctx, db, rb)
 }
 
-func Delete(_ context.Context, db gorpmapper.SqlExecutorWithTx, rb sdk.Rbac) error {
-	dbRb := rbac{Rbac: rb}
+func Delete(_ context.Context, db gorpmapper.SqlExecutorWithTx, rb sdk.RBAC) error {
+	dbRb := rbac{RBAC: rb}
 	if err := gorpmapping.Delete(db, &dbRb); err != nil {
 		return err
 	}
 	return nil
 }
 
-func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) (sdk.Rbac, error) {
-	var r sdk.Rbac
+func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) (sdk.RBAC, error) {
+	var r sdk.RBAC
 	var rbacDB rbac
 	found, err := gorpmapping.Get(ctx, db, q, &rbacDB)
 	if err != nil {
@@ -94,6 +94,6 @@ func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...
 			return r, err
 		}
 	}
-	r = rbacDB.Rbac
+	r = rbacDB.RBAC
 	return r, nil
 }

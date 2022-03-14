@@ -7,7 +7,7 @@ import (
 )
 
 type rbac struct {
-	sdk.Rbac
+	sdk.RBAC
 	gorpmapper.SignedEntity
 }
 
@@ -20,7 +20,7 @@ func (r rbac) Canonical() gorpmapper.CanonicalForms {
 type rbacGlobal struct {
 	ID       int64  `db:"id"`
 	RbacUUID string `db:"rbac_uuid"`
-	sdk.RbacGlobal
+	sdk.RBACGlobal
 	gorpmapper.SignedEntity
 }
 
@@ -59,7 +59,7 @@ func (rgg rbacGlobalGroup) Canonical() gorpmapper.CanonicalForms {
 type rbacProject struct {
 	ID       int64  `json:"-" db:"id" yaml:"-"`
 	RbacUUID string `json:"-" db:"rbac_uuid" yaml:"-"`
-	sdk.RbacProject
+	sdk.RBACProject
 	gorpmapper.SignedEntity
 }
 

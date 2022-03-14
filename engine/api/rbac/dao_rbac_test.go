@@ -49,7 +49,7 @@ projects:
     groups: [%s]
 `, proj1.Key, users1.Username, group1.Name, proj2.Key, group1.Name, proj2.Key, group1.Name)
 
-	var r sdk.Rbac
+	var r sdk.RBAC
 	require.NoError(t, yaml.Unmarshal([]byte(perm), &r))
 
 	err = fillWithIDs(context.TODO(), db, &r)
@@ -102,7 +102,7 @@ globals:
     users: [%s]
 `, users1.Username, group1.Name, proj1.Key, group1.Name, proj2.Key, users1.Username)
 
-	var r sdk.Rbac
+	var r sdk.RBAC
 	require.NoError(t, yaml.Unmarshal([]byte(perm), &r))
 	err = fillWithIDs(context.TODO(), db, &r)
 	require.NoError(t, err)
@@ -115,10 +115,10 @@ globals:
 	// Global part
 	require.Equal(t, len(r.Globals), len(rbacDB.Globals))
 	require.Equal(t, r.Globals[0].Role, rbacDB.Globals[0].Role)
-	require.Equal(t, len(r.Globals[0].RbacUsersName), len(rbacDB.Globals[0].RbacUsersName))
-	require.Equal(t, users1.Username, rbacDB.Globals[0].RbacUsersName[0])
-	require.Equal(t, users1.ID, rbacDB.Globals[0].RbacUsersIDs[0])
-	require.Equal(t, len(r.Globals[0].RbacUsersName), len(rbacDB.Globals[0].RbacUsersName))
+	require.Equal(t, len(r.Globals[0].RBACUsersName), len(rbacDB.Globals[0].RBACUsersName))
+	require.Equal(t, users1.Username, rbacDB.Globals[0].RBACUsersName[0])
+	require.Equal(t, users1.ID, rbacDB.Globals[0].RBACUsersIDs[0])
+	require.Equal(t, len(r.Globals[0].RBACUsersName), len(rbacDB.Globals[0].RBACUsersName))
 
 	// Project part
 	require.Equal(t, len(r.Projects), len(rbacDB.Projects))
@@ -127,29 +127,29 @@ globals:
 	readCheck := false
 	for _, rp := range r.Projects {
 		if rp.Role == "manage" {
-			require.Equal(t, 1, len(rp.RbacGroupsName))
-			require.Equal(t, 1, len(rp.RbacGroupsIDs))
-			require.Equal(t, 1, len(rp.RbacProjectKeys))
-			require.Equal(t, 1, len(rp.RbacProjectsIDs))
-			require.Equal(t, proj2.Key, rp.RbacProjectKeys[0])
-			require.Equal(t, proj2.ID, rp.RbacProjectsIDs[0])
-			require.Equal(t, group1.Name, rp.RbacGroupsName[0])
-			require.Equal(t, group1.ID, rp.RbacGroupsIDs[0])
+			require.Equal(t, 1, len(rp.RBACGroupsName))
+			require.Equal(t, 1, len(rp.RBACGroupsIDs))
+			require.Equal(t, 1, len(rp.RBACProjectKeys))
+			require.Equal(t, 1, len(rp.RBACProjectsIDs))
+			require.Equal(t, proj2.Key, rp.RBACProjectKeys[0])
+			require.Equal(t, proj2.ID, rp.RBACProjectsIDs[0])
+			require.Equal(t, group1.Name, rp.RBACGroupsName[0])
+			require.Equal(t, group1.ID, rp.RBACGroupsIDs[0])
 			manageCheck = true
 		}
 		if rp.Role == "read" {
-			require.Equal(t, 1, len(rp.RbacGroupsName))
-			require.Equal(t, 1, len(rp.RbacGroupsIDs))
-			require.Equal(t, 1, len(rp.RbacUsersIDs))
-			require.Equal(t, 1, len(rp.RbacUsersName))
-			require.Equal(t, 1, len(rp.RbacProjectKeys))
-			require.Equal(t, 1, len(rp.RbacProjectsIDs))
-			require.Equal(t, proj1.Key, rp.RbacProjectKeys[0])
-			require.Equal(t, proj1.ID, rp.RbacProjectsIDs[0])
-			require.Equal(t, group1.Name, rp.RbacGroupsName[0])
-			require.Equal(t, group1.ID, rp.RbacGroupsIDs[0])
-			require.Equal(t, users1.Username, rp.RbacUsersName[0])
-			require.Equal(t, users1.ID, rp.RbacUsersIDs[0])
+			require.Equal(t, 1, len(rp.RBACGroupsName))
+			require.Equal(t, 1, len(rp.RBACGroupsIDs))
+			require.Equal(t, 1, len(rp.RBACUsersIDs))
+			require.Equal(t, 1, len(rp.RBACUsersName))
+			require.Equal(t, 1, len(rp.RBACProjectKeys))
+			require.Equal(t, 1, len(rp.RBACProjectsIDs))
+			require.Equal(t, proj1.Key, rp.RBACProjectKeys[0])
+			require.Equal(t, proj1.ID, rp.RBACProjectsIDs[0])
+			require.Equal(t, group1.Name, rp.RBACGroupsName[0])
+			require.Equal(t, group1.ID, rp.RBACGroupsIDs[0])
+			require.Equal(t, users1.Username, rp.RBACUsersName[0])
+			require.Equal(t, users1.ID, rp.RBACUsersIDs[0])
 			readCheck = true
 		}
 	}
@@ -176,7 +176,7 @@ projects:
 
 `, users1.Username, proj1.Key)
 
-	var r sdk.Rbac
+	var r sdk.RBAC
 	require.NoError(t, yaml.Unmarshal([]byte(perm), &r))
 	err = fillWithIDs(context.TODO(), db, &r)
 	require.NoError(t, err)
@@ -197,7 +197,7 @@ projects:
 
 `, users1.Username, proj1.Key)
 
-	var rUpdated sdk.Rbac
+	var rUpdated sdk.RBAC
 	require.NoError(t, yaml.Unmarshal([]byte(permUpdated), &rUpdated))
 	err = fillWithIDs(context.TODO(), db, &rUpdated)
 	require.NoError(t, err)

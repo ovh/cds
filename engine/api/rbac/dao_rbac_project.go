@@ -16,17 +16,17 @@ func insertRbacProject(ctx context.Context, db gorpmapper.SqlExecutorWithTx, dbR
 		return err
 	}
 
-	for _, rbProjectID := range dbRP.RbacProjectsIDs {
+	for _, rbProjectID := range dbRP.RBACProjectsIDs {
 		if err := insertRbacProjectID(ctx, db, dbRP.ID, rbProjectID); err != nil {
 			return err
 		}
 	}
-	for _, rbUserID := range dbRP.RbacUsersIDs {
+	for _, rbUserID := range dbRP.RBACUsersIDs {
 		if err := insertRbacProjectUser(ctx, db, dbRP.ID, rbUserID); err != nil {
 			return err
 		}
 	}
-	for _, rbGroupID := range dbRP.RbacGroupsIDs {
+	for _, rbGroupID := range dbRP.RBACGroupsIDs {
 		if err := insertRbacProjectGroup(ctx, db, dbRP.ID, rbGroupID); err != nil {
 			return err
 		}
@@ -72,11 +72,11 @@ func loadRbacProjectTargeted(ctx context.Context, db gorp.SqlExecutor, rbacProje
 	if err != nil {
 		return err
 	}
-	rbacProject.RbacProjectKeys = make([]string, 0, len(prjs))
-	rbacProject.RbacProjectsIDs = make([]int64, 0, len(prjs))
+	rbacProject.RBACProjectKeys = make([]string, 0, len(prjs))
+	rbacProject.RBACProjectsIDs = make([]int64, 0, len(prjs))
 	for _, pj := range prjs {
-		rbacProject.RbacProjectKeys = append(rbacProject.RbacProjectKeys, pj.Key)
-		rbacProject.RbacProjectsIDs = append(rbacProject.RbacProjectsIDs, pj.ID)
+		rbacProject.RBACProjectKeys = append(rbacProject.RBACProjectKeys, pj.Key)
+		rbacProject.RBACProjectsIDs = append(rbacProject.RBACProjectsIDs, pj.ID)
 	}
 	return nil
 }
@@ -86,11 +86,11 @@ func loadRbacRbacProjectUsersTargeted(ctx context.Context, db gorp.SqlExecutor, 
 	if err != nil {
 		return err
 	}
-	rbacProject.RbacUsersName = make([]string, 0, len(users))
-	rbacProject.RbacUsersIDs = make([]string, 0, len(users))
+	rbacProject.RBACUsersName = make([]string, 0, len(users))
+	rbacProject.RBACUsersIDs = make([]string, 0, len(users))
 	for _, u := range users {
-		rbacProject.RbacUsersName = append(rbacProject.RbacUsersName, u.Username)
-		rbacProject.RbacUsersIDs = append(rbacProject.RbacUsersIDs, u.ID)
+		rbacProject.RBACUsersName = append(rbacProject.RBACUsersName, u.Username)
+		rbacProject.RBACUsersIDs = append(rbacProject.RBACUsersIDs, u.ID)
 	}
 	return nil
 }
@@ -100,11 +100,11 @@ func loadRbacRbacProjectGroupsTargeted(ctx context.Context, db gorp.SqlExecutor,
 	if err != nil {
 		return err
 	}
-	rbacProject.RbacGroupsName = make([]string, 0, len(groups))
-	rbacProject.RbacGroupsIDs = make([]int64, 0, len(groups))
+	rbacProject.RBACGroupsName = make([]string, 0, len(groups))
+	rbacProject.RBACGroupsIDs = make([]int64, 0, len(groups))
 	for _, g := range groups {
-		rbacProject.RbacGroupsName = append(rbacProject.RbacGroupsName, g.Name)
-		rbacProject.RbacGroupsIDs = append(rbacProject.RbacGroupsIDs, g.ID)
+		rbacProject.RBACGroupsName = append(rbacProject.RBACGroupsName, g.Name)
+		rbacProject.RBACGroupsIDs = append(rbacProject.RBACGroupsIDs, g.ID)
 	}
 	return nil
 }

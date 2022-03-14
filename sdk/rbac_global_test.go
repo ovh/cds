@@ -6,20 +6,20 @@ import (
 )
 
 func TestRbacGlobalInvalidGlobalRole(t *testing.T) {
-	rb := RbacGlobal{
+	rb := RBACGlobal{
 		Role:          "runWorkflow",
-		RbacGroupsIDs: []int64{1},
-		RbacUsersIDs:  []string{"aa-aa-aa"},
+		RBACGroupsIDs: []int64{1},
+		RBACUsersIDs:  []string{"aa-aa-aa"},
 	}
 	err := isValidRbacGlobal("myRule", rb)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "rbac myRule: role runWorkflow is not allowed on a global permission")
 }
 func TestRbacGlobalInvalidGroupAndUsers(t *testing.T) {
-	rb := RbacGlobal{
+	rb := RBACGlobal{
 		Role:          RoleCreateProject,
-		RbacGroupsIDs: []int64{},
-		RbacUsersIDs:  []string{},
+		RBACGroupsIDs: []int64{},
+		RBACUsersIDs:  []string{},
 	}
 	err := isValidRbacGlobal("myRule", rb)
 	require.Error(t, err)
@@ -27,10 +27,10 @@ func TestRbacGlobalInvalidGroupAndUsers(t *testing.T) {
 }
 
 func TestRbacGlobalEmptyRole(t *testing.T) {
-	rb := RbacGlobal{
+	rb := RBACGlobal{
 		Role:          "",
-		RbacGroupsIDs: []int64{1},
-		RbacUsersIDs:  []string{},
+		RBACGroupsIDs: []int64{1},
+		RBACUsersIDs:  []string{},
 	}
 	err := isValidRbacGlobal("myRule", rb)
 	require.Error(t, err)

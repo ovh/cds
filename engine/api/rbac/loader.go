@@ -40,7 +40,7 @@ func loadRbacProject(ctx context.Context, db gorp.SqlExecutor, rbac *rbac) error
 	if err := gorpmapping.GetAll(ctx, db, gorpmapping.NewQuery(query).Args(rbac.UUID), &rbacPrj); err != nil {
 		return err
 	}
-	rbac.Projects = make([]sdk.RbacProject, 0, len(rbacPrj))
+	rbac.Projects = make([]sdk.RBACProject, 0, len(rbacPrj))
 	for i := range rbacPrj {
 		rp := &rbacPrj[i]
 		isValid, err := gorpmapping.CheckSignature(rp, rp.Signature)
@@ -61,7 +61,7 @@ func loadRbacProject(ctx context.Context, db gorp.SqlExecutor, rbac *rbac) error
 				return err
 			}
 		}
-		rbac.Projects = append(rbac.Projects, rp.RbacProject)
+		rbac.Projects = append(rbac.Projects, rp.RBACProject)
 	}
 	return nil
 }
@@ -72,7 +72,7 @@ func loadRbacGlobal(ctx context.Context, db gorp.SqlExecutor, rbac *rbac) error 
 	if err := gorpmapping.GetAll(ctx, db, gorpmapping.NewQuery(query).Args(rbac.UUID), &rbacGbl); err != nil {
 		return err
 	}
-	rbac.Globals = make([]sdk.RbacGlobal, 0, len(rbacGbl))
+	rbac.Globals = make([]sdk.RBACGlobal, 0, len(rbacGbl))
 	for i := range rbacGbl {
 		rg := &rbacGbl[i]
 		isValid, err := gorpmapping.CheckSignature(rg, rg.Signature)
@@ -88,7 +88,7 @@ func loadRbacGlobal(ctx context.Context, db gorp.SqlExecutor, rbac *rbac) error 
 		if err := loadRbacGlobalGroupsTargeted(ctx, db, rg); err != nil {
 			return err
 		}
-		rbac.Globals = append(rbac.Globals, rg.RbacGlobal)
+		rbac.Globals = append(rbac.Globals, rg.RBACGlobal)
 	}
 	return nil
 }

@@ -10,7 +10,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func fillWithIDs(ctx context.Context, db gorp.SqlExecutor, r *sdk.Rbac) error {
+func fillWithIDs(ctx context.Context, db gorp.SqlExecutor, r *sdk.RBAC) error {
 	// Check existing permission
 	rbacDB, err := LoadRbacByName(ctx, db, r.Name)
 	if err != nil {
@@ -38,9 +38,9 @@ func fillWithIDs(ctx context.Context, db gorp.SqlExecutor, r *sdk.Rbac) error {
 	return nil
 }
 
-func fillRbacProjectWithID(ctx context.Context, db gorp.SqlExecutor, rbacPrj *sdk.RbacProject, projectCache map[string]int64, userCache map[string]string, groupCache map[string]int64) error {
-	rbacPrj.RbacProjectsIDs = make([]int64, 0, len(rbacPrj.RbacProjectKeys))
-	for _, projKey := range rbacPrj.RbacProjectKeys {
+func fillRbacProjectWithID(ctx context.Context, db gorp.SqlExecutor, rbacPrj *sdk.RBACProject, projectCache map[string]int64, userCache map[string]string, groupCache map[string]int64) error {
+	rbacPrj.RBACProjectsIDs = make([]int64, 0, len(rbacPrj.RBACProjectKeys))
+	for _, projKey := range rbacPrj.RBACProjectKeys {
 		projectID := projectCache[projKey]
 		if projectID == 0 {
 			prj, err := project.Load(ctx, db, projKey)
@@ -50,10 +50,10 @@ func fillRbacProjectWithID(ctx context.Context, db gorp.SqlExecutor, rbacPrj *sd
 			projectID = prj.ID
 			projectCache[projKey] = prj.ID
 		}
-		rbacPrj.RbacProjectsIDs = append(rbacPrj.RbacProjectsIDs, projectID)
+		rbacPrj.RBACProjectsIDs = append(rbacPrj.RBACProjectsIDs, projectID)
 	}
-	rbacPrj.RbacUsersIDs = make([]string, 0, len(rbacPrj.RbacUsersName))
-	for _, userName := range rbacPrj.RbacUsersName {
+	rbacPrj.RBACUsersIDs = make([]string, 0, len(rbacPrj.RBACUsersName))
+	for _, userName := range rbacPrj.RBACUsersName {
 		userID := userCache[userName]
 		if userID == "" {
 			authentifierUser, err := user.LoadByUsername(ctx, db, userName)
@@ -63,10 +63,10 @@ func fillRbacProjectWithID(ctx context.Context, db gorp.SqlExecutor, rbacPrj *sd
 			userID = authentifierUser.ID
 			userCache[userName] = userID
 		}
-		rbacPrj.RbacUsersIDs = append(rbacPrj.RbacUsersIDs, userID)
+		rbacPrj.RBACUsersIDs = append(rbacPrj.RBACUsersIDs, userID)
 	}
-	rbacPrj.RbacGroupsIDs = make([]int64, 0, len(rbacPrj.RbacGroupsName))
-	for _, groupName := range rbacPrj.RbacGroupsName {
+	rbacPrj.RBACGroupsIDs = make([]int64, 0, len(rbacPrj.RBACGroupsName))
+	for _, groupName := range rbacPrj.RBACGroupsName {
 		groupID := groupCache[groupName]
 		if groupID == 0 {
 			groupDB, err := group.LoadByName(ctx, db, groupName)
@@ -76,14 +76,14 @@ func fillRbacProjectWithID(ctx context.Context, db gorp.SqlExecutor, rbacPrj *sd
 			groupID = groupDB.ID
 			groupCache[groupDB.Name] = groupID
 		}
-		rbacPrj.RbacGroupsIDs = append(rbacPrj.RbacGroupsIDs, groupID)
+		rbacPrj.RBACGroupsIDs = append(rbacPrj.RBACGroupsIDs, groupID)
 	}
 	return nil
 }
 
-func fillRbacGlobalWithID(ctx context.Context, db gorp.SqlExecutor, rbacGbl *sdk.RbacGlobal, userCache map[string]string, groupCache map[string]int64) error {
-	rbacGbl.RbacUsersIDs = make([]string, 0, len(rbacGbl.RbacUsersName))
-	for _, rbacUserName := range rbacGbl.RbacUsersName {
+func fillRbacGlobalWithID(ctx context.Context, db gorp.SqlExecutor, rbacGbl *sdk.RBACGlobal, userCache map[string]string, groupCache map[string]int64) error {
+	rbacGbl.RBACUsersIDs = make([]string, 0, len(rbacGbl.RBACUsersName))
+	for _, rbacUserName := range rbacGbl.RBACUsersName {
 		userID := userCache[rbacUserName]
 		if userID == "" {
 			authentifierUser, err := user.LoadByUsername(ctx, db, rbacUserName)
@@ -93,11 +93,11 @@ func fillRbacGlobalWithID(ctx context.Context, db gorp.SqlExecutor, rbacGbl *sdk
 			userID = authentifierUser.ID
 			userCache[rbacUserName] = userID
 		}
-		rbacGbl.RbacUsersIDs = append(rbacGbl.RbacUsersIDs, userID)
+		rbacGbl.RBACUsersIDs = append(rbacGbl.RBACUsersIDs, userID)
 	}
 
-	rbacGbl.RbacGroupsIDs = make([]int64, 0, len(rbacGbl.RbacGroupsName))
-	for _, groupName := range rbacGbl.RbacGroupsName {
+	rbacGbl.RBACGroupsIDs = make([]int64, 0, len(rbacGbl.RBACGroupsName))
+	for _, groupName := range rbacGbl.RBACGroupsName {
 		groupID := groupCache[groupName]
 		if groupID == 0 {
 			groupDB, err := group.LoadByName(ctx, db, groupName)
@@ -107,7 +107,7 @@ func fillRbacGlobalWithID(ctx context.Context, db gorp.SqlExecutor, rbacGbl *sdk
 			groupID = groupDB.ID
 			groupCache[groupDB.Name] = groupID
 		}
-		rbacGbl.RbacGroupsIDs = append(rbacGbl.RbacGroupsIDs, groupID)
+		rbacGbl.RBACGroupsIDs = append(rbacGbl.RBACGroupsIDs, groupID)
 	}
 	return nil
 }
