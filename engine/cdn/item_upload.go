@@ -6,7 +6,6 @@ import (
 
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-	_ "github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdn"
 	"github.com/ovh/cds/sdk/jws"
 )

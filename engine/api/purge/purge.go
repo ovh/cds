@@ -13,9 +13,7 @@ import (
 	"go.opencensus.io/stats"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
-	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/integration/artifact_manager"
-	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -61,7 +59,7 @@ func MarkRunsAsDelete(ctx context.Context, store cache.Store, DBFunc func() *gor
 }
 
 // PurgeWorkflow deletes workflow runs marked as to delete
-func WorkflowRuns(ctx context.Context, DBFunc func() *gorp.DbMap, sharedStorage objectstore.Driver, workflowRunsMarkToDelete, workflowRunsDeleted *stats.Int64Measure) {
+func WorkflowRuns(ctx context.Context, DBFunc func() *gorp.DbMap, workflowRunsMarkToDelete, workflowRunsDeleted *stats.Int64Measure) {
 	tickPurge := time.NewTicker(15 * time.Minute)
 	defer tickPurge.Stop()
 
@@ -80,7 +78,7 @@ func WorkflowRuns(ctx context.Context, DBFunc func() *gorp.DbMap, sharedStorage 
 
 			if !disableDeletion {
 				log.Info(ctx, "purge> Start deleting all workflow run marked to delete...")
-				if err := deleteWorkflowRunsHistory(ctx, DBFunc(), sharedStorage, workflowRunsDeleted); err != nil {
+				if err := deleteWorkflowRunsHistory(ctx, DBFunc(), workflowRunsDeleted); err != nil {
 					log.Warn(ctx, "purge> Error on deleteWorkflowRunsHistory : %v", err)
 				}
 			}
@@ -240,7 +238,7 @@ func workflows(ctx context.Context, db *gorp.DbMap, store cache.Store, workflowR
 }
 
 // deleteWorkflowRunsHistory is useful to delete all the workflow run marked with to delete flag in db
-func deleteWorkflowRunsHistory(ctx context.Context, db *gorp.DbMap, sharedStorage objectstore.Driver, workflowRunsDeleted *stats.Int64Measure) error {
+func deleteWorkflowRunsHistory(ctx context.Context, db *gorp.DbMap, workflowRunsDeleted *stats.Int64Measure) error {
 	//Load service "CDN"
 	srvs, err := services.LoadAllByType(ctx, db, sdk.TypeCDN)
 	if err != nil {
@@ -257,7 +255,7 @@ func deleteWorkflowRunsHistory(ctx context.Context, db *gorp.DbMap, sharedStorag
 		}
 
 		for _, workflowRunID := range workflowRunIDs {
-			if err := deleteRunHistory(ctx, db, workflowRunID, cdnClient, sharedStorage, workflowRunsDeleted); err != nil {
+			if err := deleteRunHistory(ctx, db, workflowRunID, cdnClient, workflowRunsDeleted); err != nil {
 				log.Error(ctx, "unable to delete run history: %v", err)
 			}
 			time.Sleep(10 * time.Millisecond) // avoid DDOS the database
@@ -272,7 +270,7 @@ func deleteWorkflowRunsHistory(ctx context.Context, db *gorp.DbMap, sharedStorag
 	return nil
 }
 
-func deleteRunHistory(ctx context.Context, db *gorp.DbMap, workflowRunID int64, cdnClient services.Client, sharedStorage objectstore.Driver, workflowRunsDeleted *stats.Int64Measure) error {
+func deleteRunHistory(ctx context.Context, db *gorp.DbMap, workflowRunID int64, cdnClient services.Client, workflowRunsDeleted *stats.Int64Measure) error {
 	tx, err := db.Begin()
 	if err != nil {
 		return sdk.WithStack(err)
@@ -287,11 +285,7 @@ func deleteRunHistory(ctx context.Context, db *gorp.DbMap, workflowRunID int64, 
 		return err
 	}
 
-	if err := DeleteArtifacts(ctx, tx, sharedStorage, workflowRunID); err != nil {
-		return sdk.WithStack(err)
-	}
-
-	if err := DeleteArtifactsFromRepositoryManager(ctx, tx, wr); err != nil {
+	if err := DeleteArtifactsFromArtifactManager(ctx, tx, wr); err != nil {
 		return sdk.WithStack(err)
 	}
 
@@ -316,7 +310,7 @@ func deleteRunHistory(ctx context.Context, db *gorp.DbMap, workflowRunID int64, 
 	return nil
 }
 
-func DeleteArtifactsFromRepositoryManager(ctx context.Context, db gorp.SqlExecutor, wr *sdk.WorkflowRun) error {
+func DeleteArtifactsFromArtifactManager(ctx context.Context, db gorp.SqlExecutor, wr *sdk.WorkflowRun) error {
 
 	// Check if the run is linked to an artifact manager integration
 	var artifactManagerInteg *sdk.WorkflowProjectIntegration
@@ -398,91 +392,6 @@ func DeleteArtifactsFromRepositoryManager(ctx context.Context, db gorp.SqlExecut
 				log.Error(ctx, "unable to mark artifact %q %q (run result %d) to delete: %v", art.RepoName+"-"+highMaturity, art.Path, res.ID, err)
 				continue
 			}
-		}
-	}
-
-	return nil
-}
-
-// DeleteArtifacts removes artifacts from storage
-func DeleteArtifacts(ctx context.Context, db gorp.SqlExecutor, sharedStorage objectstore.Driver, workflowRunID int64) error {
-	ctx, end := telemetry.Span(ctx, "purge.DeleteArtifacts")
-	defer end()
-
-	wr, err := workflow.LoadRunByID(ctx, db, workflowRunID, workflow.LoadRunOptions{WithArtifacts: true, DisableDetailledNodeRun: false, WithDeleted: true})
-	if err != nil {
-		return sdk.WrapError(err, "error on load LoadRunByID:%d", workflowRunID)
-	}
-
-	proj, errprj := project.LoadProjectByWorkflowID(db, wr.WorkflowID)
-	if errprj != nil {
-		return sdk.WrapError(errprj, "error while load project for workflow %d", wr.WorkflowID)
-	}
-
-	type driversContainersT struct {
-		projectKey      string
-		integrationName string
-		containerPath   string
-	}
-
-	driversContainers := []driversContainersT{}
-	for _, wnrs := range wr.WorkflowNodeRuns {
-		for _, wnr := range wnrs {
-			for _, art := range wnr.Artifacts {
-				var integrationName string
-				if art.ProjectIntegrationID != nil && *art.ProjectIntegrationID > 0 {
-					projectIntegration, err := integration.LoadProjectIntegrationByID(ctx, db, *art.ProjectIntegrationID)
-					if err != nil {
-						log.Error(ctx, "Cannot load LoadProjectIntegrationByID %s/%d", proj.Key, *art.ProjectIntegrationID)
-						continue
-					}
-					integrationName = projectIntegration.Name
-				} else {
-					integrationName = sdk.DefaultStorageIntegrationName
-				}
-
-				var found bool
-				for _, dc := range driversContainers {
-					if dc.containerPath == art.GetPath() && proj.Key == dc.projectKey && integrationName == dc.integrationName {
-						found = true
-						break
-					}
-				}
-
-				// container not found, add it to list to delete
-				if !found {
-					driversContainers = append(driversContainers, driversContainersT{
-						projectKey:      proj.Key,
-						integrationName: integrationName,
-						containerPath:   art.GetPath(),
-					})
-				}
-
-				storageDriver, err := objectstore.GetDriver(ctx, db, sharedStorage, proj.Key, integrationName)
-				if err != nil {
-					log.Error(ctx, "error while getting driver prj:%v integrationName:%v err:%v", proj.Key, integrationName, err)
-					continue
-				}
-
-				log.Debug(ctx, "DeleteArtifacts> deleting %+v", art)
-				if err := storageDriver.Delete(ctx, &art); err != nil {
-					log.Error(ctx, "error while deleting container prj:%v wnr:%v name:%v err:%v", proj.Key, wnr.ID, art.GetPath(), err)
-					continue
-				}
-			}
-		}
-	}
-
-	for _, dc := range driversContainers {
-		storageDriver, err := objectstore.GetDriver(ctx, db, sharedStorage, dc.projectKey, dc.integrationName)
-		if err != nil {
-			log.Error(ctx, "error while getting driver prj:%v integrationName:%v err:%v", dc.projectKey, dc.integrationName, err)
-			continue
-		}
-
-		if err := storageDriver.DeleteContainer(ctx, dc.containerPath); err != nil {
-			log.Error(ctx, "error while deleting container prj:%v path:%v err:%v", dc.projectKey, dc.containerPath, err)
-			continue
 		}
 	}
 

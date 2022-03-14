@@ -3,7 +3,6 @@ package action
 import (
 	"bytes"
 	"io"
-	"mime"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -34,11 +33,7 @@ func TestRunArtifactUpload_Absolute(t *testing.T) {
 
 	defer os.Remove("foo")
 
-	gock.New("http://lolcat.host").Get("/project/project/storage/shared.infra").
-		Reply(200)
-
-	gock.New("http://lolcat.host").Post("/project/project/storage/shared.infra/artifact/dGFn").
-		Reply(200)
+	gock.New("http://cdn.me").Post("/item/upload").Reply(200)
 
 	var checkRequest gock.ObserverFunc = func(request *http.Request, mock gock.Mock) {
 		bodyContent, err := io.ReadAll(request.Body)
@@ -47,21 +42,7 @@ func TestRunArtifactUpload_Absolute(t *testing.T) {
 		if mock != nil {
 			t.Logf("%s %s - Body: %s", mock.Request().Method, mock.Request().URLStruct.String(), string(bodyContent))
 		}
-		switch mock.Request().URLStruct.String() {
-		case "http://lolcat.host/queue/workflows/666/coverage":
-			require.NoError(t, request.ParseMultipartForm(10000))
-
-			_, params, err := mime.ParseMediaType(request.Header.Get("Content-Disposition"))
-			assert.NoError(t, err)
-
-			fileName := params["filename"]
-			assert.Equal(t, "foo", fileName)
-
-			md5 := params["md4sum"]
-			assert.Equal(t, "32c0c0a755c70c6faef2eeb98b66c3aeee4c389d62bb9b639796c37abe3d", md5)
-
-		case "/project/project/storage/shared.infra/artifact":
-		}
+		assert.Equal(t, "http://cdn.me/item/upload", mock.Request().URLStruct.String())
 	}
 
 	gock.Observe(checkRequest)
@@ -98,11 +79,7 @@ func TestRunArtifactUpload_Relative(t *testing.T) {
 	fname := filepath.Join(wk.workingDirectory.Name(), "foo")
 	assert.NoError(t, afero.WriteFile(wk.workspace, fname, []byte("something"), os.ModePerm))
 
-	gock.New("http://lolcat.host").Get("/project/project/storage/shared.infra").
-		Reply(200)
-
-	gock.New("http://lolcat.host").Post("/project/project/storage/shared.infra/artifact/dGFn").
-		Reply(200)
+	gock.New("http://cdn.me").Post("/item/upload").Reply(200)
 
 	var checkRequest gock.ObserverFunc = func(request *http.Request, mock gock.Mock) {
 		bodyContent, err := io.ReadAll(request.Body)
@@ -111,21 +88,7 @@ func TestRunArtifactUpload_Relative(t *testing.T) {
 		if mock != nil {
 			t.Logf("%s %s - Body: %s", mock.Request().Method, mock.Request().URLStruct.String(), string(bodyContent))
 		}
-		switch mock.Request().URLStruct.String() {
-		case "http://lolcat.host/queue/workflows/666/coverage":
-			require.NoError(t, request.ParseMultipartForm(10000))
-
-			_, params, err := mime.ParseMediaType(request.Header.Get("Content-Disposition"))
-			assert.NoError(t, err)
-
-			fileName := params["filename"]
-			assert.Equal(t, "foo", fileName)
-
-			md5 := params["md4sum"]
-			assert.Equal(t, "32c0c0a755c70c6faef2eeb98b66c3aeee4c389d62bb9b639796c37abe3d", md5)
-
-		case "/project/project/storage/shared.infra/artifact":
-		}
+		assert.Equal(t, "http://cdn.me/item/upload", mock.Request().URLStruct.String())
 	}
 
 	gock.Observe(checkRequest)

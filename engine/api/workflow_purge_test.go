@@ -152,7 +152,7 @@ func Test_purgeDryRunHandler(t *testing.T) {
 	}
 }
 
-func Test_Purge_DeleteArtifactsFromRepositoryManager(t *testing.T) {
+func Test_Purge_DeleteArtifactsFromArtifactManager(t *testing.T) {
 	ctx := context.Background()
 	api, db, _ := newTestAPI(t)
 
@@ -270,5 +270,5 @@ func Test_Purge_DeleteArtifactsFromRepositoryManager(t *testing.T) {
 		),
 	)
 
-	require.NoError(t, purge.DeleteArtifactsFromRepositoryManager(ctx, db, wr))
+	require.NoError(t, purge.DeleteArtifactsFromArtifactManager(ctx, db, wr))
 }

@@ -71,29 +71,27 @@ func RunParseCoverageResultAction(ctx context.Context, wk workerruntime.Runtime,
 		fpath = p
 	}
 
-	if wk.FeatureEnabled(sdk.FeatureCDNArtifact) {
-		_, name := filepath.Split(fpath)
-		fileMode, err := os.Stat(fpath)
-		if err != nil {
-			return res, fmt.Errorf("coverage parser: failed to get file stat: %v", err)
-		}
-		sig, err := wk.RunResultSignature(name, uint32(fileMode.Mode().Perm()), sdk.WorkflowRunResultTypeCoverage)
-		if err != nil {
-			return res, fmt.Errorf("coverage parser: unable to create signature: %v", err)
-		}
+	_, name := filepath.Split(fpath)
+	fileMode, err := os.Stat(fpath)
+	if err != nil {
+		return res, fmt.Errorf("coverage parser: failed to get file stat: %v", err)
+	}
+	sig, err := wk.RunResultSignature(name, uint32(fileMode.Mode().Perm()), sdk.WorkflowRunResultTypeCoverage)
+	if err != nil {
+		return res, fmt.Errorf("coverage parser: unable to create signature: %v", err)
+	}
 
-		pluginArtifactManagement := wk.GetPlugin(sdk.GRPCPluginUploadArtifact)
-		if pluginArtifactManagement != nil {
-			if err := uploadArtifactByIntegrationPlugin(fpath, ctx, wk, pluginArtifactManagement, sdk.ArtifactFileTypeCoverage); err != nil {
-				return res, fmt.Errorf("coverage parser: unable to upload in artifact manager: %v", err)
-			}
-		} else {
-			duration, err := wk.Client().CDNItemUpload(ctx, wk.CDNHttpURL(), sig, afero.NewOsFs(), fpath)
-			if err != nil {
-				return res, fmt.Errorf("coverage parser: unable to upload coverage report: %v", err)
-			}
-			wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("File '%s' uploaded in %.2fs to CDS CDN", name, duration.Seconds()))
+	pluginArtifactManagement := wk.GetPlugin(sdk.GRPCPluginUploadArtifact)
+	if pluginArtifactManagement != nil {
+		if err := uploadArtifactByIntegrationPlugin(fpath, ctx, wk, pluginArtifactManagement, sdk.ArtifactFileTypeCoverage); err != nil {
+			return res, fmt.Errorf("coverage parser: unable to upload in artifact manager: %v", err)
 		}
+	} else {
+		duration, err := wk.Client().CDNItemUpload(ctx, wk.CDNHttpURL(), sig, afero.NewOsFs(), fpath)
+		if err != nil {
+			return res, fmt.Errorf("coverage parser: unable to upload coverage report: %v", err)
+		}
+		wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("File '%s' uploaded in %.2fs to CDS CDN", name, duration.Seconds()))
 	}
 
 	if parserMode != "" {

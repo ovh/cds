@@ -12,7 +12,6 @@ import (
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/authentication"
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/integration"
@@ -22,7 +21,6 @@ import (
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
-	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/slug"
@@ -664,13 +662,11 @@ func (api *API) getProjectAccessHandler() service.Handler {
 		var enabled bool
 		switch sdk.CDNItemType(itemType) {
 		case sdk.CDNTypeItemWorkerCache:
-			_, enabled = featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeatureCDNArtifact, map[string]string{
-				"project_key": projectKey,
-			})
+			enabled = true
 		}
 
 		if !enabled {
-			return sdk.WrapError(sdk.ErrForbidden, "cdn is not enabled for project %s", projectKey)
+			return sdk.WrapError(sdk.ErrForbidden, "cdn is not enabled for this type %s", itemType)
 		}
 
 		if !isCDN(ctx) {

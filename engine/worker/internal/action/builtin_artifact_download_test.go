@@ -18,25 +18,33 @@ func TestRunArtifactDownload(t *testing.T) {
 
 	wk, ctx := SetupTest(t)
 
-	as := []sdk.WorkflowNodeRunArtifact{
-		{
-			ID:   1,
-			Name: "myFile.txt",
-			Tag:  "999",
-		},
-		{
-			ID:   2,
-			Name: "myFile.csv",
-			Tag:  "999",
+	f1 := bytes.NewBufferString("contentfile")
+
+	gock.New("http://cdn.me").Get("/item/run-result/the-ref/download").
+		Reply(200).Body(f1)
+
+	ref := sdk.CDNRunResultAPIRef{
+		ProjectKey:    "projKey",
+		WorkflowName:  "WorkflowName",
+		ArtifactName:  "myFile.txt",
+		RunResultType: sdk.WorkflowRunResultTypeArtifact,
+	}
+
+	it := sdk.CDNItemLinks{
+		CDNHttpURL: "http://lolcat.cdn.host",
+		Items: []sdk.CDNItem{
+			{
+				ID:         "1",
+				Type:       sdk.CDNTypeItemRunResult,
+				APIRef:     &ref,
+				APIRefHash: "the-ref",
+				MD5:        "d62dd48969b2bcf4023f51be7cc02c05",
+			},
 		},
 	}
 
-	f1 := bytes.NewBufferString("contentfile")
-
-	gock.New("http://lolcat.host").Get("/project/projKey/workflows/workflowName/runs/999/artifacts").
-		Reply(200).JSON(as)
-	gock.New("http://lolcat.host").Get("/project/projKey/workflows/workflowName/artifact/1").
-		Reply(200).Body(f1)
+	gock.New("http://lolcat.host").Get("/project/projKey/workflows/workflowName/runs/999/artifacts/links").
+		Reply(200).JSON(it)
 
 	gock.InterceptClient(wk.Client().(cdsclient.Raw).HTTPClient())
 	gock.InterceptClient(wk.Client().(cdsclient.Raw).HTTPNoTimeoutClient())
@@ -88,21 +96,33 @@ func TestRunArtifactDownloadOutsideWorkspace(t *testing.T) {
 	wk, ctx := SetupTest(t)
 
 	fileName := sdk.RandomString(10)
+	f1 := bytes.NewBufferString("contentfile")
 
-	as := []sdk.WorkflowNodeRunArtifact{
-		{
-			ID:   1,
-			Name: fileName,
-			Tag:  "999",
+	gock.New("http://cdn.me").Get("/item/run-result/the-ref/download").
+		Reply(200).Body(f1)
+
+	ref := sdk.CDNRunResultAPIRef{
+		ProjectKey:    "projKey",
+		WorkflowName:  "WorkflowName",
+		ArtifactName:  fileName,
+		RunResultType: sdk.WorkflowRunResultTypeArtifact,
+	}
+
+	it := sdk.CDNItemLinks{
+		CDNHttpURL: "http://lolcat.cdn.host",
+		Items: []sdk.CDNItem{
+			{
+				ID:         "1",
+				Type:       sdk.CDNTypeItemRunResult,
+				APIRef:     &ref,
+				APIRefHash: "the-ref",
+				MD5:        "d62dd48969b2bcf4023f51be7cc02c05",
+			},
 		},
 	}
 
-	f1 := bytes.NewBufferString("contentfile")
-
-	gock.New("http://lolcat.host").Get("/project/projKey/workflows/workflowName/runs/999/artifacts").
-		Reply(200).JSON(as)
-	gock.New("http://lolcat.host").Get("/project/projKey/workflows/workflowName/artifact/1").
-		Reply(200).Body(f1)
+	gock.New("http://lolcat.host").Get("/project/projKey/workflows/workflowName/runs/999/artifacts/links").
+		Reply(200).JSON(it)
 
 	gock.InterceptClient(wk.Client().(cdsclient.Raw).HTTPClient())
 	gock.InterceptClient(wk.Client().(cdsclient.Raw).HTTPNoTimeoutClient())

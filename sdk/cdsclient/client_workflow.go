@@ -5,11 +5,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"net/url"
-	"time"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -189,7 +187,7 @@ func (c *client) WorkflowRunNumberSet(projectKey string, workflowName string, nu
 		return err
 	}
 	if code >= 300 {
-		return newAPIError(fmt.Errorf("Cannot update workflow run number. HTTP code error : %d", code))
+		return newAPIError(fmt.Errorf("cannot update workflow run number. HTTP code error : %d", code))
 	}
 	return nil
 }
@@ -241,25 +239,6 @@ func (c *client) WorkflowLogDownload(ctx context.Context, link sdk.CDNLogLink) (
 	return data, nil
 }
 
-func (c *client) WorkflowNodeRunArtifactDownload(projectKey string, workflowName string, a sdk.WorkflowNodeRunArtifact, w io.Writer) error {
-	var url = fmt.Sprintf("/project/%s/workflows/%s/artifact/%d", projectKey, workflowName, a.ID)
-	var reader io.ReadCloser
-	var err error
-
-	if a.TempURL != "" {
-		url = a.TempURL
-	}
-
-	reader, _, _, err = c.Stream(context.Background(), c.HTTPNoTimeoutClient(), "GET", url, nil)
-	if err != nil {
-		return err
-	}
-	defer reader.Close()
-
-	_, err = io.Copy(w, reader)
-	return err
-}
-
 func (c *client) WorkflowNodeRunRelease(projectKey string, workflowName string, runNumber int64, nodeRunID int64, release sdk.WorkflowNodeRunRelease) error {
 	url := fmt.Sprintf("/project/%s/workflows/%s/runs/%d/nodes/%d/release", projectKey, workflowName, runNumber, nodeRunID)
 	btes, _ := json.Marshal(release)
@@ -269,7 +248,7 @@ func (c *client) WorkflowNodeRunRelease(projectKey string, workflowName string, 
 	}
 	defer res.Close()
 	if code >= 300 {
-		return newAPIError(fmt.Errorf("Cannot create workflow node run release. HTTP code error : %d", code))
+		return newAPIError(fmt.Errorf("cannot create workflow node run release. HTTP code error : %d", code))
 	}
 	return nil
 }
@@ -299,7 +278,7 @@ func (c *client) WorkflowRunFromHook(projectKey string, workflowName string, hoo
 		return nil, err
 	}
 	if code >= 300 {
-		return nil, newAPIError(fmt.Errorf("Cannot create workflow node run release. HTTP code error : %d", code))
+		return nil, newAPIError(fmt.Errorf("cannot create workflow node run release. HTTP code error : %d", code))
 	}
 	return run, nil
 }
@@ -323,7 +302,7 @@ func (c *client) WorkflowRunFromManual(projectKey string, workflowName string, m
 		return nil, err
 	}
 	if code >= 300 {
-		return nil, newAPIError(fmt.Errorf("Cannot run workflow node. HTTP code error: %d", code))
+		return nil, newAPIError(fmt.Errorf("cannot run workflow node. HTTP code error: %d", code))
 	}
 
 	return run, nil
@@ -338,9 +317,8 @@ func (c *client) WorkflowStop(projectKey string, workflowName string, number int
 		return nil, err
 	}
 	if code >= 300 {
-		return nil, newAPIError(fmt.Errorf("Cannot stop workflow %s. HTTP code error: %d", workflowName, code))
+		return nil, newAPIError(fmt.Errorf("cannot stop workflow %s. HTTP code error: %d", workflowName, code))
 	}
-
 	return run, nil
 }
 
@@ -353,84 +331,9 @@ func (c *client) WorkflowNodeStop(projectKey string, workflowName string, number
 		return nil, err
 	}
 	if code >= 300 {
-		return nil, newAPIError(fmt.Errorf("Cannot stop workflow node %d. HTTP code error: %d", fromNodeID, code))
+		return nil, newAPIError(fmt.Errorf("cannot stop workflow node %d. HTTP code error: %d", fromNodeID, code))
 	}
-
 	return nodeRun, nil
-}
-
-func (c *client) WorkflowCachePush(projectKey, integrationName, ref string, tarContent io.Reader, size int) error {
-	store := new(sdk.ArtifactsStore)
-	uri := fmt.Sprintf("/project/%s/storage/%s", projectKey, integrationName)
-	_, _ = c.GetJSON(context.Background(), uri, store)
-	if store.TemporaryURLSupported {
-		return c.workflowCachePushIndirectUpload(projectKey, integrationName, ref, tarContent, size)
-	}
-	return c.workflowCachePushDirectUpload(projectKey, integrationName, ref, tarContent)
-}
-
-func (c *client) workflowCachePushDirectUpload(projectKey, integrationName, ref string, tarContent io.Reader) error {
-	mods := []RequestModifier{
-		(func(r *http.Request) {
-			r.Header.Set("Content-Type", "application/tar")
-		}),
-	}
-
-	uri := fmt.Sprintf("/project/%s/storage/%s/cache/%s", projectKey, integrationName, ref)
-	_, _, code, err := c.Stream(context.Background(), c.HTTPNoTimeoutClient(), "POST", uri, tarContent, mods...)
-	if err != nil {
-		return err
-	}
-
-	if code >= 400 {
-		return newAPIError(fmt.Errorf("HTTP Code %d", code))
-	}
-
-	return nil
-}
-
-func (c *client) workflowCachePushIndirectUpload(projectKey, integrationName, ref string, tarContent io.Reader, size int) error {
-	uri := fmt.Sprintf("/project/%s/storage/%s/cache/%s/url", projectKey, integrationName, ref)
-	cacheObj := sdk.Cache{}
-	code, err := c.PostJSON(context.Background(), uri, cacheObj, &cacheObj)
-	if err != nil {
-		return err
-	}
-
-	if code >= 400 {
-		return newAPIError(fmt.Errorf("HTTP Code %d", code))
-	}
-
-	// FIXME temporary fix that will be deprecated with cdn artifacts
-	time.Sleep(2 * time.Second)
-
-	return c.workflowCachePushIndirectUploadPost(cacheObj.TmpURL, tarContent, size)
-}
-
-func (c *client) workflowCachePushIndirectUploadPost(url string, tarContent io.Reader, size int) error {
-	req, err := http.NewRequest("PUT", url, tarContent)
-	if err != nil {
-		return newError(err)
-	}
-	req.Header.Set("Content-Type", "application/tar")
-	req.ContentLength = int64(size)
-
-	resp, err := c.HTTPNoTimeoutClient().Do(req)
-	if err != nil {
-		return newTransportError(err)
-	}
-
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return newError(err)
-	}
-
-	if resp.StatusCode >= 300 {
-		return newAPIError(fmt.Errorf("unable to upload cache: (HTTP %d) %s", resp.StatusCode, string(body)))
-	}
-	return nil
 }
 
 func (c *client) WorkflowRunResultsList(ctx context.Context, projectKey string, name string, number int64) ([]sdk.WorkflowRunResult, error) {
@@ -440,45 +343,4 @@ func (c *client) WorkflowRunResultsList(ctx context.Context, projectKey string, 
 		return nil, err
 	}
 	return results, nil
-}
-
-func (c *client) WorkflowCachePull(projectKey, integrationName, ref string) (io.Reader, error) {
-	uri := fmt.Sprintf("/project/%s/storage/%s", projectKey, integrationName)
-	store := new(sdk.ArtifactsStore)
-	_, _ = c.GetJSON(context.Background(), uri, store)
-
-	downloadURL := fmt.Sprintf("/project/%s/storage/%s/cache/%s", projectKey, integrationName, ref)
-
-	if store.TemporaryURLSupported {
-		url := fmt.Sprintf("/project/%s/storage/%s/cache/%s/url", projectKey, integrationName, ref)
-		var cacheObj sdk.Cache
-		code, err := c.GetJSON(context.Background(), url, &cacheObj)
-		if err != nil {
-			return nil, err
-		}
-		if code >= 400 {
-			return nil, newAPIError(fmt.Errorf("HTTP Code %d", code))
-		}
-		downloadURL = cacheObj.TmpURL
-	}
-
-	mods := []RequestModifier{
-		(func(r *http.Request) {
-			r.Header.Set("Content-Type", "application/tar")
-		}),
-	}
-
-	res, _, code, err := c.Stream(context.Background(), c.HTTPNoTimeoutClient(), "GET", downloadURL, nil, mods...)
-	if err != nil {
-		return nil, err
-	}
-
-	if code >= 400 {
-		if code == 404 {
-			return nil, newError(fmt.Errorf("Cache not found"))
-		}
-		return nil, newAPIError(fmt.Errorf("HTTP Code %d", code))
-	}
-
-	return res, nil
 }

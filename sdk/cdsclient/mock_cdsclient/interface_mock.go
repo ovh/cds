@@ -3031,22 +3031,6 @@ func (m *MockQueueClient) EXPECT() *MockQueueClientMockRecorder {
 	return m.recorder
 }
 
-// QueueArtifactUpload mocks base method.
-func (m *MockQueueClient) QueueArtifactUpload(ctx context.Context, projectKey, integrationName string, nodeJobRunID int64, tag, filePath, fileType string) (bool, time.Duration, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "QueueArtifactUpload", ctx, projectKey, integrationName, nodeJobRunID, tag, filePath, fileType)
-	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[1].(time.Duration)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
-}
-
-// QueueArtifactUpload indicates an expected call of QueueArtifactUpload.
-func (mr *MockQueueClientMockRecorder) QueueArtifactUpload(ctx, projectKey, integrationName, nodeJobRunID, tag, filePath, fileType interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueArtifactUpload", reflect.TypeOf((*MockQueueClient)(nil).QueueArtifactUpload), ctx, projectKey, integrationName, nodeJobRunID, tag, filePath, fileType)
-}
-
 // QueueCountWorkflowNodeJobRun mocks base method.
 func (m *MockQueueClient) QueueCountWorkflowNodeJobRun(since, until *time.Time, modelType string) (sdk.WorkflowNodeJobRunCount, error) {
 	m.ctrl.T.Helper()
@@ -3959,35 +3943,6 @@ func (mr *MockWorkflowClientMockRecorder) WorkflowAllHooksList() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowAllHooksList", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowAllHooksList))
 }
 
-// WorkflowCachePull mocks base method.
-func (m *MockWorkflowClient) WorkflowCachePull(projectKey, integrationName, ref string) (io.Reader, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WorkflowCachePull", projectKey, integrationName, ref)
-	ret0, _ := ret[0].(io.Reader)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// WorkflowCachePull indicates an expected call of WorkflowCachePull.
-func (mr *MockWorkflowClientMockRecorder) WorkflowCachePull(projectKey, integrationName, ref interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowCachePull", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowCachePull), projectKey, integrationName, ref)
-}
-
-// WorkflowCachePush mocks base method.
-func (m *MockWorkflowClient) WorkflowCachePush(projectKey, integrationName, ref string, tarContent io.Reader, size int) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WorkflowCachePush", projectKey, integrationName, ref, tarContent, size)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// WorkflowCachePush indicates an expected call of WorkflowCachePush.
-func (mr *MockWorkflowClientMockRecorder) WorkflowCachePush(projectKey, integrationName, ref, tarContent, size interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowCachePush", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowCachePush), projectKey, integrationName, ref, tarContent, size)
-}
-
 // WorkflowDelete mocks base method.
 func (m *MockWorkflowClient) WorkflowDelete(projectKey, workflowName string, opts ...cdsclient.RequestModifier) error {
 	m.ctrl.T.Helper()
@@ -4131,20 +4086,6 @@ func (m *MockWorkflowClient) WorkflowNodeRun(projectKey, name string, number, no
 func (mr *MockWorkflowClientMockRecorder) WorkflowNodeRun(projectKey, name, number, nodeRunID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowNodeRun", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowNodeRun), projectKey, name, number, nodeRunID)
-}
-
-// WorkflowNodeRunArtifactDownload mocks base method.
-func (m *MockWorkflowClient) WorkflowNodeRunArtifactDownload(projectKey, name string, a sdk.WorkflowNodeRunArtifact, w io.Writer) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WorkflowNodeRunArtifactDownload", projectKey, name, a, w)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// WorkflowNodeRunArtifactDownload indicates an expected call of WorkflowNodeRunArtifactDownload.
-func (mr *MockWorkflowClientMockRecorder) WorkflowNodeRunArtifactDownload(projectKey, name, a, w interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowNodeRunArtifactDownload", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowNodeRunArtifactDownload), projectKey, name, a, w)
 }
 
 // WorkflowNodeRunJobServiceLink mocks base method.
@@ -6954,22 +6895,6 @@ func (mr *MockInterfaceMockRecorder) PutJSON(ctx, path, in, out interface{}, mod
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutJSON", reflect.TypeOf((*MockInterface)(nil).PutJSON), varargs...)
 }
 
-// QueueArtifactUpload mocks base method.
-func (m *MockInterface) QueueArtifactUpload(ctx context.Context, projectKey, integrationName string, nodeJobRunID int64, tag, filePath, fileType string) (bool, time.Duration, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "QueueArtifactUpload", ctx, projectKey, integrationName, nodeJobRunID, tag, filePath, fileType)
-	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[1].(time.Duration)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
-}
-
-// QueueArtifactUpload indicates an expected call of QueueArtifactUpload.
-func (mr *MockInterfaceMockRecorder) QueueArtifactUpload(ctx, projectKey, integrationName, nodeJobRunID, tag, filePath, fileType interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueArtifactUpload", reflect.TypeOf((*MockInterface)(nil).QueueArtifactUpload), ctx, projectKey, integrationName, nodeJobRunID, tag, filePath, fileType)
-}
-
 // QueueCountWorkflowNodeJobRun mocks base method.
 func (m *MockInterface) QueueCountWorkflowNodeJobRun(since, until *time.Time, modelType string) (sdk.WorkflowNodeJobRunCount, error) {
 	m.ctrl.T.Helper()
@@ -8217,35 +8142,6 @@ func (mr *MockInterfaceMockRecorder) WorkflowAsCodeStart(projectKey, repoURL, re
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowAsCodeStart", reflect.TypeOf((*MockInterface)(nil).WorkflowAsCodeStart), projectKey, repoURL, repoStrategy)
 }
 
-// WorkflowCachePull mocks base method.
-func (m *MockInterface) WorkflowCachePull(projectKey, integrationName, ref string) (io.Reader, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WorkflowCachePull", projectKey, integrationName, ref)
-	ret0, _ := ret[0].(io.Reader)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// WorkflowCachePull indicates an expected call of WorkflowCachePull.
-func (mr *MockInterfaceMockRecorder) WorkflowCachePull(projectKey, integrationName, ref interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowCachePull", reflect.TypeOf((*MockInterface)(nil).WorkflowCachePull), projectKey, integrationName, ref)
-}
-
-// WorkflowCachePush mocks base method.
-func (m *MockInterface) WorkflowCachePush(projectKey, integrationName, ref string, tarContent io.Reader, size int) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WorkflowCachePush", projectKey, integrationName, ref, tarContent, size)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// WorkflowCachePush indicates an expected call of WorkflowCachePush.
-func (mr *MockInterfaceMockRecorder) WorkflowCachePush(projectKey, integrationName, ref, tarContent, size interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowCachePush", reflect.TypeOf((*MockInterface)(nil).WorkflowCachePush), projectKey, integrationName, ref, tarContent, size)
-}
-
 // WorkflowDelete mocks base method.
 func (m *MockInterface) WorkflowDelete(projectKey, workflowName string, opts ...cdsclient.RequestModifier) error {
 	m.ctrl.T.Helper()
@@ -8429,20 +8325,6 @@ func (m *MockInterface) WorkflowNodeRun(projectKey, name string, number, nodeRun
 func (mr *MockInterfaceMockRecorder) WorkflowNodeRun(projectKey, name, number, nodeRunID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowNodeRun", reflect.TypeOf((*MockInterface)(nil).WorkflowNodeRun), projectKey, name, number, nodeRunID)
-}
-
-// WorkflowNodeRunArtifactDownload mocks base method.
-func (m *MockInterface) WorkflowNodeRunArtifactDownload(projectKey, name string, a sdk.WorkflowNodeRunArtifact, w io.Writer) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WorkflowNodeRunArtifactDownload", projectKey, name, a, w)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// WorkflowNodeRunArtifactDownload indicates an expected call of WorkflowNodeRunArtifactDownload.
-func (mr *MockInterfaceMockRecorder) WorkflowNodeRunArtifactDownload(projectKey, name, a, w interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowNodeRunArtifactDownload", reflect.TypeOf((*MockInterface)(nil).WorkflowNodeRunArtifactDownload), projectKey, name, a, w)
 }
 
 // WorkflowNodeRunJobServiceLink mocks base method.
@@ -9037,22 +8919,6 @@ func (mr *MockWorkerInterfaceMockRecorder) ProjectIntegrationWorkerHookGet(proje
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectIntegrationWorkerHookGet", reflect.TypeOf((*MockWorkerInterface)(nil).ProjectIntegrationWorkerHookGet), projectKey, integrationName)
 }
 
-// QueueArtifactUpload mocks base method.
-func (m *MockWorkerInterface) QueueArtifactUpload(ctx context.Context, projectKey, integrationName string, nodeJobRunID int64, tag, filePath, fileType string) (bool, time.Duration, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "QueueArtifactUpload", ctx, projectKey, integrationName, nodeJobRunID, tag, filePath, fileType)
-	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[1].(time.Duration)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
-}
-
-// QueueArtifactUpload indicates an expected call of QueueArtifactUpload.
-func (mr *MockWorkerInterfaceMockRecorder) QueueArtifactUpload(ctx, projectKey, integrationName, nodeJobRunID, tag, filePath, fileType interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueArtifactUpload", reflect.TypeOf((*MockWorkerInterface)(nil).QueueArtifactUpload), ctx, projectKey, integrationName, nodeJobRunID, tag, filePath, fileType)
-}
-
 // QueueCountWorkflowNodeJobRun mocks base method.
 func (m *MockWorkerInterface) QueueCountWorkflowNodeJobRun(since, until *time.Time, modelType string) (sdk.WorkflowNodeJobRunCount, error) {
 	m.ctrl.T.Helper()
@@ -9573,49 +9439,6 @@ func (m *MockWorkerInterface) WorkerUnregister(ctx context.Context) error {
 func (mr *MockWorkerInterfaceMockRecorder) WorkerUnregister(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkerUnregister", reflect.TypeOf((*MockWorkerInterface)(nil).WorkerUnregister), ctx)
-}
-
-// WorkflowCachePull mocks base method.
-func (m *MockWorkerInterface) WorkflowCachePull(projectKey, integrationName, ref string) (io.Reader, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WorkflowCachePull", projectKey, integrationName, ref)
-	ret0, _ := ret[0].(io.Reader)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// WorkflowCachePull indicates an expected call of WorkflowCachePull.
-func (mr *MockWorkerInterfaceMockRecorder) WorkflowCachePull(projectKey, integrationName, ref interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowCachePull", reflect.TypeOf((*MockWorkerInterface)(nil).WorkflowCachePull), projectKey, integrationName, ref)
-}
-
-// WorkflowCachePush mocks base method.
-func (m *MockWorkerInterface) WorkflowCachePush(projectKey, integrationName, ref string, tarContent io.Reader, size int) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WorkflowCachePush", projectKey, integrationName, ref, tarContent, size)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// WorkflowCachePush indicates an expected call of WorkflowCachePush.
-func (mr *MockWorkerInterfaceMockRecorder) WorkflowCachePush(projectKey, integrationName, ref, tarContent, size interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowCachePush", reflect.TypeOf((*MockWorkerInterface)(nil).WorkflowCachePush), projectKey, integrationName, ref, tarContent, size)
-}
-
-// WorkflowNodeRunArtifactDownload mocks base method.
-func (m *MockWorkerInterface) WorkflowNodeRunArtifactDownload(projectKey, name string, a sdk.WorkflowNodeRunArtifact, w io.Writer) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WorkflowNodeRunArtifactDownload", projectKey, name, a, w)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// WorkflowNodeRunArtifactDownload indicates an expected call of WorkflowNodeRunArtifactDownload.
-func (mr *MockWorkerInterfaceMockRecorder) WorkflowNodeRunArtifactDownload(projectKey, name, a, w interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowNodeRunArtifactDownload", reflect.TypeOf((*MockWorkerInterface)(nil).WorkflowNodeRunArtifactDownload), projectKey, name, a, w)
 }
 
 // WorkflowNodeRunRelease mocks base method.

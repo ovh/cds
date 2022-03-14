@@ -795,7 +795,7 @@ func (a *API) Serve(ctx context.Context) error {
 		})
 	a.GoRoutines.Run(ctx, "Purge-Runs",
 		func(ctx context.Context) {
-			purge.WorkflowRuns(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.SharedStorage, a.Metrics.WorkflowRunsMarkToDelete, a.Metrics.WorkflowRunsDeleted)
+			purge.WorkflowRuns(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Metrics.WorkflowRunsMarkToDelete, a.Metrics.WorkflowRunsDeleted)
 		})
 	a.GoRoutines.Run(ctx, "Purge-Workflow",
 		func(ctx context.Context) {

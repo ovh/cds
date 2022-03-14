@@ -9,12 +9,10 @@ import (
 	"github.com/mitchellh/hashstructure"
 
 	"github.com/ovh/cds/engine/api/authentication"
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
-	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
@@ -241,13 +239,11 @@ func (api *API) getWorkflowAccessHandler() service.Handler {
 		case sdk.CDNTypeItemStepLog, sdk.CDNTypeItemServiceLog:
 			enabled = true
 		case sdk.CDNTypeItemRunResult:
-			_, enabled = featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeatureCDNArtifact, map[string]string{
-				"project_key": projectKey,
-			})
+			enabled = true
 		}
 
 		if !enabled {
-			return sdk.WrapError(sdk.ErrForbidden, "cdn is not enabled for project %s", projectKey)
+			return sdk.WrapError(sdk.ErrForbidden, "cdn is not enabled for type %s", itemType)
 		}
 
 		if !isCDN(ctx) {
