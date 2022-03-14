@@ -45,16 +45,16 @@ func (d AuthDriver) GetSessionDuration() time.Duration {
 
 // CheckSignupRequest checks that given driver request is valid for a signup with auth local.
 func (d AuthDriver) CheckSignupRequest(req sdk.AuthConsumerSigninRequest) error {
-	if fullname, ok := req["fullname"]; !ok || fullname == "" {
+	if fullname, err := req.StringE("fullname"); err != nil || fullname == "" {
 		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing fullname for local signup")
 	}
-	if username, ok := req["username"]; !ok || username == "" {
+	if username, err := req.StringE("username"); err != nil || username == "" {
 		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid username for local signup")
 	}
-	if email, ok := req["email"]; !ok || !sdk.IsValidEmail(email) || !d.isAllowedDomain(email) {
+	if email, err := req.StringE("email"); err != nil || !sdk.IsValidEmail(email) || !d.isAllowedDomain(email) {
 		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid email for local signup")
 	}
-	if password, ok := req["password"]; !ok || password == "" {
+	if password, err := req.StringE("password"); err != nil || password == "" {
 		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid password for local signup")
 	} else if err := isPasswordValid(password); err != nil {
 		return err
@@ -64,10 +64,10 @@ func (d AuthDriver) CheckSignupRequest(req sdk.AuthConsumerSigninRequest) error 
 
 // CheckSigninRequest checks that given driver request is valid for a signin with auth local.
 func (d AuthDriver) CheckSigninRequest(req sdk.AuthConsumerSigninRequest) error {
-	if username, ok := req["username"]; !ok || username == "" {
+	if username, err := req.StringE("username"); err != nil || username == "" {
 		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid username for local signin")
 	}
-	if password, ok := req["password"]; !ok || password == "" {
+	if password, err := req.StringE("password"); err != nil || password == "" {
 		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid password for local signin")
 	}
 	return nil
@@ -75,7 +75,7 @@ func (d AuthDriver) CheckSigninRequest(req sdk.AuthConsumerSigninRequest) error 
 
 // CheckVerifyRequest checks that given driver request is valid for a verify consumer.
 func (d AuthDriver) CheckVerifyRequest(req sdk.AuthConsumerSigninRequest) error {
-	if token, ok := req["token"]; !ok || token == "" {
+	if token, err := req.StringE("token"); err != nil || token == "" {
 		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid token for local verify")
 	}
 	return nil
@@ -83,7 +83,7 @@ func (d AuthDriver) CheckVerifyRequest(req sdk.AuthConsumerSigninRequest) error 
 
 // CheckAskResetRequest checks that given driver request is valid for a ask reset with auth local.
 func (d AuthDriver) CheckAskResetRequest(req sdk.AuthConsumerSigninRequest) error {
-	if email, ok := req["email"]; !ok || !sdk.IsValidEmail(email) {
+	if email, err := req.StringE("email"); err != nil || !sdk.IsValidEmail(email) {
 		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid email for local signin")
 	}
 	return nil
@@ -91,10 +91,10 @@ func (d AuthDriver) CheckAskResetRequest(req sdk.AuthConsumerSigninRequest) erro
 
 // CheckResetRequest checks that given driver request is valid for a reset with auth local.
 func (d AuthDriver) CheckResetRequest(req sdk.AuthConsumerSigninRequest) error {
-	if token, ok := req["token"]; !ok || token == "" {
+	if token, err := req.StringE("token"); err != nil || token == "" {
 		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid token for local reset")
 	}
-	if password, ok := req["password"]; !ok || password == "" {
+	if password, err := req.StringE("password"); err != nil || password == "" {
 		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid password for local signup")
 	} else if err := isPasswordValid(password); err != nil {
 		return err

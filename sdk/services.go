@@ -21,22 +21,22 @@ const (
 )
 
 type CanonicalService struct {
-	ID         int64         `json:"id" db:"id"`
-	Name       string        `json:"name" db:"name" cli:"name,key"`
-	ConsumerID *string       `json:"-" db:"auth_consumer_id"`
-	Type       string        `json:"type" db:"type" cli:"type"`
-	HTTPURL    string        `json:"http_url" db:"http_url" cli:"url"`
-	Config     ServiceConfig `json:"config" db:"config" cli:"-"`
-	PublicKey  []byte        `json:"public_key" db:"public_key"`
+	ID         int64         `json:"id" db:"id" mapstructure:"id"`
+	Name       string        `json:"name" db:"name" cli:"name,key" mapstructure:"name"`
+	ConsumerID *string       `json:"-" db:"auth_consumer_id" mapstructure:"-"`
+	Type       string        `json:"type" db:"type" cli:"type" mapstructure:"type"`
+	HTTPURL    string        `json:"http_url" db:"http_url" cli:"url" mapstructure:"http_url"`
+	Config     ServiceConfig `json:"config" db:"config" cli:"-" mapstructure:"config"`
+	PublicKey  []byte        `json:"public_key" db:"public_key" mapstructure:"public_key"`
 }
 
 // Service is a µService registered on CDS API.
 type Service struct {
 	CanonicalService
-	LastHeartbeat    time.Time        `json:"last_heartbeat" db:"last_heartbeat" cli:"heartbeat"`
-	MonitoringStatus MonitoringStatus `json:"monitoring_status" db:"-" cli:"-"`
-	Version          string           `json:"version" db:"-" cli:"version"`
-	Uptodate         bool             `json:"up_to_date" db:"-"`
+	LastHeartbeat    time.Time        `json:"last_heartbeat" db:"last_heartbeat" cli:"heartbeat" mapstructure:"-"`
+	MonitoringStatus MonitoringStatus `json:"monitoring_status" db:"-" cli:"-" mapstructure:"-"`
+	Version          string           `json:"version" db:"-" cli:"version" mapstructure:"version"`
+	Uptodate         bool             `json:"up_to_date" db:"-" mapstructure:"up_to_date"`
 }
 
 // ServiceStatus contains the status for a service. The status can be attached to a sesion_id : all services except api

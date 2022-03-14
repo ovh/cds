@@ -37,11 +37,6 @@ func TestServicesHandlers(t *testing.T) {
 	api.Router.Mux.ServeHTTP(rec, req)
 	require.Equal(t, 201, rec.Code)
 
-	// Signin with the new consumer
-	var created sdk.AuthConsumerCreateResponse
-	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &created))
-	jwtSrv1 := AuthentififyBuiltinConsumer(t, api, created.Token)
-
 	// Register a new service (srv1) for the admin's consumer
 	var srv1 = sdk.Service{
 		CanonicalService: sdk.CanonicalService{
@@ -49,12 +44,11 @@ func TestServicesHandlers(t *testing.T) {
 			Type: sdk.TypeHatchery,
 		},
 	}
-	uri = api.Router.GetRoute(http.MethodPost, api.postServiceRegisterHandler, nil)
-	require.NotEmpty(t, uri)
-	req = assets.NewJWTAuthentifiedRequest(t, jwtSrv1, http.MethodPost, uri, srv1)
-	rec = httptest.NewRecorder()
-	api.Router.Mux.ServeHTTP(rec, req)
-	require.Equal(t, 200, rec.Code)
+
+	// Signin with the new consumer
+	var created sdk.AuthConsumerCreateResponse
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &created))
+	jwtSrv1 := AuthentififyBuiltinConsumer(t, api, created.Token, &srv1)
 
 	// No CDN client should not be able to get the new service configuration
 	uri = api.Router.GetRoute(http.MethodGet, api.getServiceHandler, map[string]string{
@@ -88,10 +82,6 @@ func TestServicesHandlers(t *testing.T) {
 	api.Router.Mux.ServeHTTP(rec, req)
 	require.Equal(t, 201, rec.Code)
 
-	// Signin with the new consumer
-	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &created))
-	jwtSrv2 := AuthentififyBuiltinConsumer(t, api, created.Token)
-
 	// Register a new service (srv2) for the lambda's consumer
 	var srv2 = sdk.Service{
 		CanonicalService: sdk.CanonicalService{
@@ -99,12 +89,10 @@ func TestServicesHandlers(t *testing.T) {
 			Type: sdk.TypeHatchery,
 		},
 	}
-	uri = api.Router.GetRoute(http.MethodPost, api.postServiceRegisterHandler, nil)
-	require.NotEmpty(t, uri)
-	req = assets.NewJWTAuthentifiedRequest(t, jwtSrv2, http.MethodPost, uri, srv2)
-	rec = httptest.NewRecorder()
-	api.Router.Mux.ServeHTTP(rec, req)
-	require.Equal(t, 200, rec.Code)
+
+	// Signin with the new consumer
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &created))
+	_ = AuthentififyBuiltinConsumer(t, api, created.Token, &srv2)
 
 	// Lambda user should not be able to get service 2 config
 	uri = api.Router.GetRoute(http.MethodGet, api.getServiceHandler, map[string]string{

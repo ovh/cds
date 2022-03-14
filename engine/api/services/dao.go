@@ -147,8 +147,7 @@ func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, s *sdk.Service
 }
 
 // UpsertStatus insert or update monitoring status
-func UpsertStatus(db gorpmapper.SqlExecutorWithTx, s sdk.Service, authSessionID string) error {
-	var sessionID *string
+func UpsertStatus(ctx context.Context, db gorpmapper.SqlExecutorWithTx, s sdk.Service, authSessionID string) error {
 	if authSessionID == "" {
 		// no sessionID : we can delete service_status to keep only one status
 		// example: each api has a consumerID and no authSessionID -> so only one status per service
@@ -160,10 +159,10 @@ func UpsertStatus(db gorpmapper.SqlExecutorWithTx, s sdk.Service, authSessionID 
 		_, err := db.Exec(query, s.MonitoringStatus, s.ID)
 		return sdk.WithStack(err)
 	}
-	sessionID = &authSessionID
 	query := `INSERT INTO service_status(monitoring_status, service_id, auth_session_id) VALUES($1,$2, $3)
 	ON CONFLICT (service_id, auth_session_id) DO UPDATE SET monitoring_status = $1, service_id = $2, auth_session_id = $3`
-	_, err := db.Exec(query, s.MonitoringStatus, s.ID, sessionID)
+	log.Info(ctx, "updating service %d status for session %q", s.ID, authSessionID)
+	_, err := db.Exec(query, s.MonitoringStatus, s.ID, authSessionID)
 	return sdk.WithStack(err)
 }
 

@@ -96,9 +96,9 @@ func (d authDriver) GetSessionDuration() time.Duration {
 }
 
 func (d authDriver) CheckSigninRequest(req sdk.AuthConsumerSigninRequest) error {
-	token, ok := req["token"]
-	if !ok {
-		token = req["code"]
+	token := req.String("token")
+	if token == "" {
+		token = req.String("code")
 	}
 	if token == "" {
 		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid token for corporate sso signin")
@@ -108,9 +108,9 @@ func (d authDriver) CheckSigninRequest(req sdk.AuthConsumerSigninRequest) error 
 
 func (d authDriver) CheckSigninStateToken(req sdk.AuthConsumerSigninRequest) error {
 	// Check if state is given and if its valid
-	state, okState := req["state"]
-	if !okState {
-		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing state value")
+	state, err := req.StringE("state")
+	if err != nil {
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid state")
 	}
 
 	pk, err := gpg.NewPrivateKeyFromPem(d.Config.Request.Keys.RequestSigningKey, "")
@@ -141,9 +141,9 @@ func (d authDriver) GetUserInfo(ctx context.Context, req sdk.AuthConsumerSigninR
 	var cfg = d.Config.Token
 
 	// Check if token is given and if its valid
-	token, okToken := req["token"]
-	if !okToken {
-		token = req["code"]
+	token := req.String("token")
+	if token == "" {
+		token = req.String("code")
 	}
 	if token == "" {
 		return u, sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing token value")

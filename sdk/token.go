@@ -11,6 +11,7 @@ import (
 
 	jwt "github.com/golang-jwt/jwt"
 	"github.com/pkg/errors"
+	"github.com/spf13/cast"
 )
 
 // AuthDriver interface.
@@ -236,13 +237,26 @@ type AuthConsumerRegenRequest struct {
 }
 
 // AuthConsumerSigninRequest struct for auth consumer signin request.
-type AuthConsumerSigninRequest map[string]string
+type AuthConsumerSigninRequest map[string]interface{}
+
+func (req AuthConsumerSigninRequest) String(s string) string {
+	return cast.ToString(req[s])
+}
+
+func (req AuthConsumerSigninRequest) StringE(s string) (string, error) {
+	val, err := cast.ToStringE(req[s])
+	if err != nil {
+		return "", NewError(ErrWrongRequest, err)
+	}
+	return val, nil
+}
 
 // AuthConsumerSigninResponse response for a auth consumer signin.
 type AuthConsumerSigninResponse struct {
-	APIURL string            `json:"api_url,omitempty"`
-	Token  string            `json:"token"` // session token
-	User   *AuthentifiedUser `json:"user"`
+	APIURL  string            `json:"api_url,omitempty"`
+	Token   string            `json:"token"` // session token
+	User    *AuthentifiedUser `json:"user"`
+	Service *Service          `json:"service,omitempty"`
 }
 
 // AuthConsumerCreateResponse response for a auth consumer creation.

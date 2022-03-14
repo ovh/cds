@@ -11,9 +11,11 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/rockbears/log"
 
+	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/worker"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
@@ -51,96 +53,84 @@ func (api *API) getServiceHandler() service.Handler {
 	}
 }
 
-func (api *API) postServiceRegisterHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		consumer := getAPIConsumer(ctx)
+// This has to be called by the signin handler
+func (api *API) serviceRegister(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, data *sdk.Service) error {
+	consumer := getAPIConsumer(ctx)
+	data.LastHeartbeat = time.Now()
+	if data.Name == "" {
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing service name")
+	}
 
-		var data sdk.Service
-		if err := service.UnmarshalBody(r, &data); err != nil {
-			return sdk.WithStack(err)
-		}
-		data.LastHeartbeat = time.Now()
+	if consumer.Type != sdk.ConsumerBuiltin {
+		return sdk.WrapError(sdk.ErrForbidden, "cannot register service from a consumer that is not of type \"builtin\"")
+	}
+	if isWorker(ctx) {
+		return sdk.WrapError(sdk.ErrForbidden, "cannot register a service from a consumer that is associated with a worker")
+	}
 
-		if data.Name == "" {
-			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing service name")
-		}
+	// Service that are not hatcheries should be started as an admin
+	if data.Type != sdk.TypeHatchery && !isAdmin(ctx) {
+		return sdk.WrapError(sdk.ErrForbidden, "cannot register service of type %s for consumer %s", data.Type, consumer.ID)
+	}
 
-		if consumer.Type != sdk.ConsumerBuiltin {
-			return sdk.WrapError(sdk.ErrForbidden, "cannot register service from a consumer that is not of type \"builtin\"")
-		}
-		if isWorker(ctx) {
-			return sdk.WrapError(sdk.ErrForbidden, "cannot register a service from a consumer that is associated with a worker")
-		}
+	// Try to find the service, and keep; else generate a new one
+	srv, err := services.LoadByConsumerID(ctx, tx, consumer.ID)
+	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+		return err
+	}
+	exists := srv != nil
 
-		// Service that are not hatcheries should be started as an admin
-		if data.Type != sdk.TypeHatchery && !isAdmin(ctx) {
-			return sdk.WrapError(sdk.ErrForbidden, "cannot register service of type %s for consumer %s", data.Type, consumer.ID)
-		}
+	if exists && srv.Type != data.Type {
+		return sdk.WrapError(sdk.ErrForbidden, "cannot register service %s of type %s for consumer %s while existing service type is different", data.Name, data.Type, consumer.ID)
+	}
 
-		// Insert or update the service
-		tx, err := api.mustDB().Begin()
-		if err != nil {
-			return sdk.WithStack(err)
-		}
-		defer tx.Rollback() // nolint
-
-		// Try to find the service, and keep; else generate a new one
-		srv, err := services.LoadByConsumerID(ctx, tx, consumer.ID)
-		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+	// Update or create the service
+	session := getAuthSession(ctx)
+	if session == nil {
+		return sdk.NewErrorFrom(sdk.ErrUnauthorized, "missing registered session")
+	}
+	if exists {
+		srv.Update(*data)
+		if err := services.Update(ctx, tx, srv); err != nil {
 			return err
 		}
-		exists := srv != nil
+		log.Debug(ctx, "postServiceRegisterHandler> update existing service %s(%d) registered for consumer %s", srv.Name, srv.ID, *srv.ConsumerID)
+	} else {
+		srv = data
+		srv.ConsumerID = &consumer.ID
 
-		if exists && srv.Type != data.Type {
-			return sdk.WrapError(sdk.ErrForbidden, "cannot register service %s of type %s for consumer %s while existing service type is different", data.Name, data.Type, consumer.ID)
-		}
-
-		// Update or create the service
-
-		var sessionID string
-		if a := getAuthSession(ctx); a != nil {
-			sessionID = a.ID
-		}
-		if exists {
-			srv.Update(data)
-			if err := services.Update(ctx, tx, srv); err != nil {
-				return err
-			}
-			log.Debug(ctx, "postServiceRegisterHandler> update existing service %s(%d) registered for consumer %s", srv.Name, srv.ID, *srv.ConsumerID)
-		} else {
-			srv = &data
-			srv.ConsumerID = &consumer.ID
-
-			if err := services.Insert(ctx, tx, srv); err != nil {
-				return sdk.WithStack(err)
-			}
-			log.Debug(ctx, "postServiceRegisterHandler> insert new service %s(%d) registered for consumer %s", srv.Name, srv.ID, *srv.ConsumerID)
-		}
-
-		if err := services.UpsertStatus(tx, *srv, sessionID); err != nil {
+		if err := services.Insert(ctx, tx, srv); err != nil {
 			return sdk.WithStack(err)
 		}
-
-		if len(srv.PublicKey) > 0 {
-			log.Debug(ctx, "postServiceRegisterHandler> service %s registered with public key: %s", srv.Name, string(srv.PublicKey))
-		}
-
-		// For hatchery service we need to check if there are workers that are not attached to an existing hatchery
-		// If some worker's parent consumer match current hatchery consumer we will attach this worker to the new hatchery.
-		if srv.Type == sdk.TypeHatchery {
-			if err := worker.ReAttachAllToHatchery(ctx, tx, *srv); err != nil {
-				return err
-			}
-		}
-
-		if err := tx.Commit(); err != nil {
-			return sdk.WithStack(err)
-		}
-
-		srv.Uptodate = data.Version == sdk.VERSION
-
-		return service.WriteJSON(w, srv, http.StatusOK)
+		log.Debug(ctx, "postServiceRegisterHandler> insert new service %s(%d) registered for consumer %s", srv.Name, srv.ID, *srv.ConsumerID)
 	}
+
+	log.Info(ctx, "Registering service %s(%d) consumer: %s, session %s", srv.Name, srv.ID, consumer.ID, session.ID)
+
+	_, err = authentication.LoadSessionByID(ctx, tx, session.ID)
+	if err != nil {
+		return err
+	}
+
+	if err := services.UpsertStatus(ctx, tx, *srv, session.ID); err != nil {
+		return sdk.WithStack(err)
+	}
+
+	if len(srv.PublicKey) > 0 {
+		log.Debug(ctx, "postServiceRegisterHandler> service %s registered with public key: %s", srv.Name, string(srv.PublicKey))
+	}
+
+	// For hatchery service we need to check if there are workers that are not attached to an existing hatchery
+	// If some worker's parent consumer match current hatchery consumer we will attach this worker to the new hatchery.
+	if srv.Type == sdk.TypeHatchery {
+		if err := worker.ReAttachAllToHatchery(ctx, tx, *srv); err != nil {
+			return err
+		}
+	}
+
+	srv.Uptodate = data.Version == sdk.VERSION
+	*data = *srv
+	return nil
 }
 
 func (api *API) postServiceHearbeatHandler() service.Handler {
@@ -188,7 +178,7 @@ func (api *API) postServiceHearbeatHandler() service.Handler {
 			return err
 		}
 
-		if err := services.UpsertStatus(tx, *s, sessionID); err != nil {
+		if err := services.UpsertStatus(ctx, tx, *s, sessionID); err != nil {
 			return err
 		}
 
@@ -270,7 +260,7 @@ func (api *API) serviceAPIHeartbeatUpdate(ctx context.Context, db *gorp.DbMap) {
 		}
 	}
 
-	if err := services.UpsertStatus(tx, *srv, authSessionID); err != nil {
+	if err := services.UpsertStatus(ctx, tx, *srv, authSessionID); err != nil {
 		log.Error(ctx, "serviceAPIHeartbeat> Unable to insert or update monitoring status %s: %v", srv.Name, err)
 		return
 	}

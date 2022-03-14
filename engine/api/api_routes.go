@@ -432,7 +432,6 @@ func (api *API) InitRouter() {
 	r.Handle("/ws", ScopeNone(), r.GET(api.getWebsocketHandler))
 
 	// Engine µServices
-	r.Handle("/services/register", Scope(sdk.AuthConsumerScopeService), r.POST(api.postServiceRegisterHandler, MaintenanceAware()))
 	r.Handle("/services/heartbeat", Scope(sdk.AuthConsumerScopeService), r.POST(api.postServiceHearbeatHandler))
 	r.Handle("/services/{type}", Scope(sdk.AuthConsumerScopeService), r.GET(api.getServiceHandler))
 

@@ -81,7 +81,8 @@ func (d authDriver) GetSessionDuration() time.Duration {
 }
 
 func (d authDriver) CheckSigninRequest(req sdk.AuthConsumerSigninRequest) error {
-	if code, ok := req["code"]; !ok || code == "" {
+	code, err := req.StringE("code")
+	if err != nil || code == "" {
 		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid code")
 	}
 	return nil
@@ -89,9 +90,9 @@ func (d authDriver) CheckSigninRequest(req sdk.AuthConsumerSigninRequest) error 
 
 func (d authDriver) CheckSigninStateToken(req sdk.AuthConsumerSigninRequest) error {
 	// Check if state is given and if its valid
-	state, okState := req["state"]
-	if !okState {
-		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing state value")
+	state, err := req.StringE("state")
+	if err != nil || state == "" {
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid state value")
 	}
 
 	return authentication.CheckDefaultSigninStateToken(state)
@@ -101,7 +102,8 @@ func (d authDriver) GetUserInfo(ctx context.Context, req sdk.AuthConsumerSigninR
 	var info sdk.AuthDriverUserInfo
 
 	ctx2 := context.WithValue(context.Background(), oauth2.HTTPClient, http.DefaultClient)
-	oauth2Token, err := d.OAuth2Config.Exchange(ctx2, req["code"])
+	code := req.String("code")
+	oauth2Token, err := d.OAuth2Config.Exchange(ctx2, code)
 	if err != nil {
 		return info, sdk.WrapError(err, "failed to exchange token")
 	}

@@ -76,8 +76,8 @@ func (d AuthDriver) CheckSigninRequest(req sdk.AuthConsumerSigninRequest) error 
 
 func (d AuthDriver) GetUserInfo(ctx context.Context, req sdk.AuthConsumerSigninRequest) (sdk.AuthDriverUserInfo, error) {
 	var userInfo sdk.AuthDriverUserInfo
-	var bind = req["bind"]
-	var password = req["password"]
+	var bind = req.String("bind")
+	var password = req.String("password")
 
 	if err := d.bind(ctx, bind, password); err != nil {
 		return userInfo, sdk.NewError(sdk.ErrUnauthorized, err)
@@ -112,7 +112,7 @@ func (d AuthDriver) GetUserInfo(ctx context.Context, req sdk.AuthConsumerSigninR
 	userInfo.Fullname = bufFullname.String()
 	userInfo.Email = entry[0].Attributes["mail"]
 	userInfo.ExternalID = entry[0].Attributes["uid"]
-	userInfo.Username = req["bind"]
+	userInfo.Username = req.String("bind")
 
 	return userInfo, nil
 }

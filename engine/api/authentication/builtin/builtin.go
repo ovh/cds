@@ -35,8 +35,8 @@ func (d AuthDriver) GetSessionDuration() time.Duration {
 func (d AuthDriver) GetUserInfo(ctx context.Context, req sdk.AuthConsumerSigninRequest) (sdk.AuthDriverUserInfo, error) {
 	var userInfo sdk.AuthDriverUserInfo
 
-	token, has := req["token"]
-	if !has {
+	token, err := req.StringE("token")
+	if err != nil {
 		return userInfo, sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid authentication token")
 	}
 
@@ -54,12 +54,12 @@ func (d AuthDriver) GetUserInfo(ctx context.Context, req sdk.AuthConsumerSigninR
 
 // CheckSigninRequest checks that given driver request is valid for a signin with auth builtin.
 func (d AuthDriver) CheckSigninRequest(req sdk.AuthConsumerSigninRequest) error {
-	token, has := req["token"]
-	if !has {
+	token, err := req.StringE("token")
+	if err != nil {
 		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid authentication token")
 	}
 
-	_, _, err := CheckSigninConsumerToken(token)
+	_, _, err = CheckSigninConsumerToken(token)
 	return err
 }
 

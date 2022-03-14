@@ -117,11 +117,6 @@ func InitMock(t *testing.T, url string) {
 		Body(bytes.NewBuffer([]byte("nop"))).
 		AddHeader("Content-Type", "application/octet-stream")
 
-	gock.New(url).Post("/services/register").
-		HeaderPresent("Authorization").
-		Reply(200).
-		JSON(sdk.Service{})
-
 	gock.New(url).Post("/services/heartbeat").
 		HeaderPresent("Authorization").
 		Reply(204)
