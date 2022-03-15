@@ -104,6 +104,7 @@ func InitMock(t *testing.T, url string) {
 				User: &sdk.AuthentifiedUser{
 					Username: "admin",
 				},
+				Service: &sdk.Service{},
 			},
 		).AddHeader("X-Api-Pub-Signing-Key", base64.StdEncoding.EncodeToString(pubKey))
 
