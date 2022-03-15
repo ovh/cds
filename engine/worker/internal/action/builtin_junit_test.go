@@ -50,7 +50,7 @@ func TestRunParseJunitTestResultAction_Absolute(t *testing.T) {
 	fiPath, err := filepath.Abs(fi.Name())
 	require.NoError(t, err)
 
-	gock.New("http://lolcat.host").Post("/queue/workflows/666/test").
+	gock.New("http://cds-api.local").Post("/queue/workflows/666/test").
 		Reply(200)
 
 	var checkRequest gock.ObserverFunc = func(request *http.Request, mock gock.Mock) {
@@ -60,7 +60,7 @@ func TestRunParseJunitTestResultAction_Absolute(t *testing.T) {
 		if mock != nil {
 			t.Logf("%s %s - Body: %s", mock.Request().Method, mock.Request().URLStruct.String(), string(bodyContent))
 			switch mock.Request().URLStruct.String() {
-			case "http://lolcat.host/queue/workflows/666/test":
+			case "http://cds-api.local/queue/workflows/666/test":
 				var report sdk.JUnitTestsSuites
 				require.NoError(t, json.Unmarshal(bodyContent, &report))
 				report = report.EnsureData()
@@ -115,7 +115,7 @@ func TestRunParseJunitTestResultAction_Relative(t *testing.T) {
 	fname := filepath.Join(wk.workingDirectory.Name(), "results.xml")
 	require.NoError(t, afero.WriteFile(wk.BaseDir(), fname, []byte(fileContent), os.ModePerm))
 
-	gock.New("http://lolcat.host").Post("/queue/workflows/666/test").
+	gock.New("http://cds-api.local").Post("/queue/workflows/666/test").
 		Reply(200)
 
 	var checkRequest gock.ObserverFunc = func(request *http.Request, mock gock.Mock) {
@@ -125,7 +125,7 @@ func TestRunParseJunitTestResultAction_Relative(t *testing.T) {
 		if mock != nil {
 			t.Logf("%s %s - Body: %s", mock.Request().Method, mock.Request().URLStruct.String(), string(bodyContent))
 			switch mock.Request().URLStruct.String() {
-			case "http://lolcat.host/queue/workflows/666/test":
+			case "http://cds-api.local/queue/workflows/666/test":
 				var report sdk.JUnitTestsSuites
 				require.NoError(t, json.Unmarshal(bodyContent, &report))
 				report = report.EnsureData()

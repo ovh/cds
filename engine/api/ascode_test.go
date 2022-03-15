@@ -208,7 +208,7 @@ func Test_postPerformImportAsCodeHandler(t *testing.T) {
 					if h.HookModelName == sdk.RepositoryWebHookModelName {
 						cfg := hooks[k].Config
 						cfg["webHookURL"] = sdk.WorkflowNodeHookConfigValue{
-							Value:        "http://lolcat.host",
+							Value:        "http://cds-api.local",
 							Configurable: false,
 						}
 					}

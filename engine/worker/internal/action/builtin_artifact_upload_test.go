@@ -33,7 +33,7 @@ func TestRunArtifactUpload_Absolute(t *testing.T) {
 
 	defer os.Remove("foo")
 
-	gock.New("http://cdn.me").Post("/item/upload").Reply(200)
+	gock.New("http://cds-cdn.local").Post("/item/upload").Reply(200)
 
 	var checkRequest gock.ObserverFunc = func(request *http.Request, mock gock.Mock) {
 		bodyContent, err := io.ReadAll(request.Body)
@@ -42,7 +42,7 @@ func TestRunArtifactUpload_Absolute(t *testing.T) {
 		if mock != nil {
 			t.Logf("%s %s - Body: %s", mock.Request().Method, mock.Request().URLStruct.String(), string(bodyContent))
 		}
-		assert.Equal(t, "http://cdn.me/item/upload", mock.Request().URLStruct.String())
+		assert.Equal(t, "http://cds-cdn.local/item/upload", mock.Request().URLStruct.String())
 	}
 
 	gock.Observe(checkRequest)
@@ -79,7 +79,7 @@ func TestRunArtifactUpload_Relative(t *testing.T) {
 	fname := filepath.Join(wk.workingDirectory.Name(), "foo")
 	assert.NoError(t, afero.WriteFile(wk.workspace, fname, []byte("something"), os.ModePerm))
 
-	gock.New("http://cdn.me").Post("/item/upload").Reply(200)
+	gock.New("http://cds-cdn.local").Post("/item/upload").Reply(200)
 
 	var checkRequest gock.ObserverFunc = func(request *http.Request, mock gock.Mock) {
 		bodyContent, err := io.ReadAll(request.Body)
@@ -88,7 +88,7 @@ func TestRunArtifactUpload_Relative(t *testing.T) {
 		if mock != nil {
 			t.Logf("%s %s - Body: %s", mock.Request().Method, mock.Request().URLStruct.String(), string(bodyContent))
 		}
-		assert.Equal(t, "http://cdn.me/item/upload", mock.Request().URLStruct.String())
+		assert.Equal(t, "http://cds-cdn.local/item/upload", mock.Request().URLStruct.String())
 	}
 
 	gock.Observe(checkRequest)

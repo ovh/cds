@@ -143,7 +143,7 @@ func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
 					if h.HookModelName == sdk.RepositoryWebHookModelName {
 						cfg := hooks[k].Config
 						cfg["webHookURL"] = sdk.WorkflowNodeHookConfigValue{
-							Value:        "http://lolcat.host",
+							Value:        "http://cds-api.local",
 							Configurable: false,
 						}
 					}
@@ -327,7 +327,7 @@ func TestHookRunWithHashOnlyProcessNodeBuildParameter(t *testing.T) {
 					if h.HookModelName == sdk.RepositoryWebHookModelName {
 						cfg := hooks[k].Config
 						cfg["webHookURL"] = sdk.WorkflowNodeHookConfigValue{
-							Value:        "http://lolcat.host",
+							Value:        "http://cds-api.local",
 							Configurable: false,
 						}
 					}

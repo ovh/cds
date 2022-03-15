@@ -64,12 +64,12 @@ func Test_serviceLogs(t *testing.T) {
 		},
 	}
 
-	gock.New("https://lolcat.host").Get("/v6.66/containers/json").Reply(http.StatusOK).JSON(containers)
+	gock.New("https://cds-api.local").Get("/v6.66/containers/json").Reply(http.StatusOK).JSON(containers)
 
-	gock.New("https://lolcat.host").AddMatcher(func(r *http.Request, rr *gock.Request) (bool, error) {
+	gock.New("https://cds-api.local").AddMatcher(func(r *http.Request, rr *gock.Request) (bool, error) {
 		b, err := gock.MatchPath(r, rr)
 		assert.NoError(t, err)
-		if r.Method == http.MethodGet && strings.HasPrefix(r.URL.String(), "https://lolcat.host/v6.66/containers/service-1/logs") {
+		if r.Method == http.MethodGet && strings.HasPrefix(r.URL.String(), "https://cds-api.local/v6.66/containers/service-1/logs") {
 			if b {
 				return true, nil
 			}

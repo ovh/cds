@@ -27,7 +27,7 @@ func TestLoadContacts(t *testing.T) {
 		UserID:  u.ID,
 		Primary: true,
 		Type:    sdk.UserContactTypeEmail,
-		Value:   u.Username + "@lolcat.host",
+		Value:   u.Username + "@cds-api.local",
 	}
 	assert.NoError(t, user.InsertContact(context.TODO(), db, &c))
 

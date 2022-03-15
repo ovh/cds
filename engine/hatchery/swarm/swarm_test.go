@@ -23,7 +23,7 @@ func TestHatcherySwarm_KillAwolNetwork(t *testing.T) {
 	h.Config.Name = "swarmy"
 
 	containers := []types.Container{}
-	gock.New("https://lolcat.host").Get("/v6.66/containers/json").Reply(http.StatusOK).JSON(containers)
+	gock.New("https://cds-api.local").Get("/v6.66/containers/json").Reply(http.StatusOK).JSON(containers)
 	workers := []sdk.Worker{}
 	gock.New("https://lolcat.api").Get("/worker").Reply(200).JSON(workers)
 
@@ -66,15 +66,15 @@ func TestHatcherySwarm_KillAwolNetwork(t *testing.T) {
 			Created:    time.Now().Add(-11 * time.Minute),
 		},
 	}
-	gock.New("https://lolcat.host").Get("/v6.66/networks").Reply(http.StatusOK).JSON(net)
-	gock.New("https://lolcat.host").Get("/v6.66/networks/net-1").Reply(http.StatusOK).JSON(net[0])
-	gock.New("https://lolcat.host").Get("/v6.66/networks/net-2").Reply(http.StatusOK).JSON(net[1])
-	gock.New("https://lolcat.host").Get("/v6.66/networks/net-3").Reply(http.StatusOK).JSON(net[2])
-	gock.New("https://lolcat.host").Get("/v6.66/networks/net-4").Reply(http.StatusOK).JSON(net[3])
-	gock.New("https://lolcat.host").Get("/v6.66/networks/net-5").Reply(http.StatusOK).JSON(net[4])
+	gock.New("https://cds-api.local").Get("/v6.66/networks").Reply(http.StatusOK).JSON(net)
+	gock.New("https://cds-api.local").Get("/v6.66/networks/net-1").Reply(http.StatusOK).JSON(net[0])
+	gock.New("https://cds-api.local").Get("/v6.66/networks/net-2").Reply(http.StatusOK).JSON(net[1])
+	gock.New("https://cds-api.local").Get("/v6.66/networks/net-3").Reply(http.StatusOK).JSON(net[2])
+	gock.New("https://cds-api.local").Get("/v6.66/networks/net-4").Reply(http.StatusOK).JSON(net[3])
+	gock.New("https://cds-api.local").Get("/v6.66/networks/net-5").Reply(http.StatusOK).JSON(net[4])
 
 	// JUJST DELETE NET-5
-	gock.New("https://lolcat.host").Delete("/v6.66/networks/net-5").Reply(http.StatusOK).JSON(nil)
+	gock.New("https://cds-api.local").Delete("/v6.66/networks/net-5").Reply(http.StatusOK).JSON(nil)
 
 	err := h.killAwolWorker(context.TODO())
 	require.NoError(t, err)
@@ -141,7 +141,7 @@ func TestHatcherySwarm_ListAwolWorker(t *testing.T) {
 			},
 		},
 	}
-	gock.New("https://lolcat.host").Get("/v6.66/containers/json").Reply(http.StatusOK).JSON(containers)
+	gock.New("https://cds-api.local").Get("/v6.66/containers/json").Reply(http.StatusOK).JSON(containers)
 
 	workers := []sdk.Worker{
 		{
@@ -169,9 +169,9 @@ func TestHatcherySwarm_ListAwolWorker(t *testing.T) {
 			},
 		},
 	}
-	gock.New("https://lolcat.host").Get("/v6.66/containers/swarmy-model1-w1/json").Reply(http.StatusOK).JSON(c1)
-	gock.New("https://lolcat.host").Post("/v6.66/containers/swarmy-model1-w1/kill").Reply(http.StatusOK).JSON(nil)
-	gock.New("https://lolcat.host").Delete("/v6.66/containers/swarmy-model1-w1").Reply(http.StatusOK).JSON(nil)
+	gock.New("https://cds-api.local").Get("/v6.66/containers/swarmy-model1-w1/json").Reply(http.StatusOK).JSON(c1)
+	gock.New("https://cds-api.local").Post("/v6.66/containers/swarmy-model1-w1/kill").Reply(http.StatusOK).JSON(nil)
+	gock.New("https://cds-api.local").Delete("/v6.66/containers/swarmy-model1-w1").Reply(http.StatusOK).JSON(nil)
 
 	c4 := types.ContainerJSON{
 		ContainerJSONBase: &types.ContainerJSONBase{
@@ -189,9 +189,9 @@ func TestHatcherySwarm_ListAwolWorker(t *testing.T) {
 			},
 		},
 	}
-	gock.New("https://lolcat.host").Get("/v6.66/containers/swarmy-model1-w4/json").Reply(http.StatusOK).JSON(c4)
-	gock.New("https://lolcat.host").Post("/v6.66/containers/swarmy-model1-w4/kill").Reply(http.StatusOK).JSON(nil)
-	gock.New("https://lolcat.host").Delete("/v6.66/containers/swarmy-model1-w4").Reply(http.StatusOK).JSON(nil)
+	gock.New("https://cds-api.local").Get("/v6.66/containers/swarmy-model1-w4/json").Reply(http.StatusOK).JSON(c4)
+	gock.New("https://cds-api.local").Post("/v6.66/containers/swarmy-model1-w4/kill").Reply(http.StatusOK).JSON(nil)
+	gock.New("https://cds-api.local").Delete("/v6.66/containers/swarmy-model1-w4").Reply(http.StatusOK).JSON(nil)
 
 	// Network
 	ns := []types.NetworkResource{
@@ -211,17 +211,17 @@ func TestHatcherySwarm_ListAwolWorker(t *testing.T) {
 			},
 		},
 	}
-	gock.New("https://lolcat.host").Get("/v6.66/networks/net-1").Reply(http.StatusOK).JSON(ns[0])
-	gock.New("https://lolcat.host").Get("/v6.66/networks/net-2").Reply(http.StatusOK).JSON(ns[1])
+	gock.New("https://cds-api.local").Get("/v6.66/networks/net-1").Reply(http.StatusOK).JSON(ns[0])
+	gock.New("https://cds-api.local").Get("/v6.66/networks/net-2").Reply(http.StatusOK).JSON(ns[1])
 
-	gock.New("https://lolcat.host").Post("/v6.66/containers/net-1-ctn-1/kill").Reply(http.StatusOK).JSON(nil)
-	gock.New("https://lolcat.host").Delete("/v6.66/containers/net-1-ctn-1").Reply(http.StatusOK).JSON(nil)
-	gock.New("https://lolcat.host").Post("/v6.66/containers/net-1-ctn-2/kill").Reply(http.StatusOK).JSON(nil)
-	gock.New("https://lolcat.host").Delete("/v6.66/containers/net-1-ctn-2").Reply(http.StatusOK).JSON(nil)
-	gock.New("https://lolcat.host").Delete("/v6.66/networks/net-2").Reply(http.StatusOK).JSON(nil)
+	gock.New("https://cds-api.local").Post("/v6.66/containers/net-1-ctn-1/kill").Reply(http.StatusOK).JSON(nil)
+	gock.New("https://cds-api.local").Delete("/v6.66/containers/net-1-ctn-1").Reply(http.StatusOK).JSON(nil)
+	gock.New("https://cds-api.local").Post("/v6.66/containers/net-1-ctn-2/kill").Reply(http.StatusOK).JSON(nil)
+	gock.New("https://cds-api.local").Delete("/v6.66/containers/net-1-ctn-2").Reply(http.StatusOK).JSON(nil)
+	gock.New("https://cds-api.local").Delete("/v6.66/networks/net-2").Reply(http.StatusOK).JSON(nil)
 
 	net := []types.NetworkResource{}
-	gock.New("https://lolcat.host").Get("/v6.66/networks").Reply(http.StatusOK).JSON(net)
+	gock.New("https://cds-api.local").Get("/v6.66/networks").Reply(http.StatusOK).JSON(net)
 
 	// Must keep: swarmy-model1-w2, swarmy-model1-w3, swarmy2-model1-w4
 	// Must delete: swarmy-model1-w1, swarmy-model1-w4
@@ -258,7 +258,7 @@ func TestHatcherySwarm_WorkersStarted(t *testing.T) {
 			},
 		},
 	}
-	gock.New("https://lolcat.host").Get("/v6.66/containers/json").Reply(http.StatusOK).JSON(containers)
+	gock.New("https://cds-api.local").Get("/v6.66/containers/json").Reply(http.StatusOK).JSON(containers)
 
 	s, err := h.WorkersStarted(context.TODO())
 	require.NoError(t, err)
@@ -294,27 +294,27 @@ func TestHatcherySwarm_Spawn(t *testing.T) {
 			},
 		},
 	}
-	gock.New("https://lolcat.host").Get("/v6.66/containers/json").Reply(http.StatusOK).JSON(containers)
+	gock.New("https://cds-api.local").Get("/v6.66/containers/json").Reply(http.StatusOK).JSON(containers)
 
 	// SERVICE
 	n := types.NetworkCreateResponse{
 		ID: "net-666",
 	}
-	gock.New("https://lolcat.host").Post("/v6.66/networks/create").Reply(http.StatusOK).JSON(n)
-	gock.New("https://lolcat.host").Post("/v6.66/images/create").MatchParam("fromImage", "postgresql").MatchParam("tag", "5.6.6").Reply(http.StatusOK).JSON(nil)
+	gock.New("https://cds-api.local").Post("/v6.66/networks/create").Reply(http.StatusOK).JSON(n)
+	gock.New("https://cds-api.local").Post("/v6.66/images/create").MatchParam("fromImage", "postgresql").MatchParam("tag", "5.6.6").Reply(http.StatusOK).JSON(nil)
 	cService := container.ContainerCreateCreatedBody{
 		ID: "serviceIdContainer",
 	}
-	gock.New("https://lolcat.host").Post("/v6.66/containers/create").MatchParam("name", "pg-*").Reply(http.StatusOK).JSON(cService)
-	gock.New("https://lolcat.host").Post("/v6.66/containers/serviceIdContainer/start").Reply(http.StatusOK).JSON(nil)
+	gock.New("https://cds-api.local").Post("/v6.66/containers/create").MatchParam("name", "pg-*").Reply(http.StatusOK).JSON(cService)
+	gock.New("https://cds-api.local").Post("/v6.66/containers/serviceIdContainer/start").Reply(http.StatusOK).JSON(nil)
 
 	// WORKER
-	gock.New("https://lolcat.host").Post("/v6.66/images/create").MatchParam("fromImage", "model").MatchParam("tag", "9").Reply(http.StatusOK).JSON(nil)
+	gock.New("https://cds-api.local").Post("/v6.66/images/create").MatchParam("fromImage", "model").MatchParam("tag", "9").Reply(http.StatusOK).JSON(nil)
 	cWorker := container.ContainerCreateCreatedBody{
 		ID: "workerIDContainer",
 	}
-	gock.New("https://lolcat.host").Post("/v6.66/containers/create").MatchParam("name", "swarmy-*").Reply(http.StatusOK).JSON(cWorker)
-	gock.New("https://lolcat.host").Post("/v6.66/containers/workerIDContainer/start").Reply(http.StatusOK).JSON(nil)
+	gock.New("https://cds-api.local").Post("/v6.66/containers/create").MatchParam("name", "swarmy-*").Reply(http.StatusOK).JSON(cWorker)
+	gock.New("https://cds-api.local").Post("/v6.66/containers/workerIDContainer/start").Reply(http.StatusOK).JSON(nil)
 
 	err := h.SpawnWorker(context.TODO(), hatchery.SpawnArguments{
 		JobID:      1,
@@ -360,7 +360,7 @@ func TestHatcherySwarm_SpawnMaxContainerReached(t *testing.T) {
 			},
 		},
 	}
-	gock.New("https://lolcat.host").Get("/v6.66/containers/json").Reply(http.StatusOK).JSON(containers)
+	gock.New("https://cds-api.local").Get("/v6.66/containers/json").Reply(http.StatusOK).JSON(containers)
 
 	err := h.SpawnWorker(context.TODO(), hatchery.SpawnArguments{
 		JobID:      666,
@@ -393,7 +393,7 @@ func TestHatcherySwarm_CanSpawn(t *testing.T) {
 			Labels: map[string]string{},
 		},
 	}
-	gock.New("https://lolcat.host").Get("/v6.66/containers/json").Reply(http.StatusOK).JSON(containers)
+	gock.New("https://cds-api.local").Get("/v6.66/containers/json").Reply(http.StatusOK).JSON(containers)
 
 	b := h.CanSpawn(context.TODO(), &m, jobID, []sdk.Requirement{})
 	assert.True(t, b)
@@ -430,7 +430,7 @@ func TestHatcherySwarm_MaxContainerReached(t *testing.T) {
 		},
 	}
 
-	gock.New("https://lolcat.host").Get("/v6.66/containers/json").Reply(http.StatusOK).JSON(containers)
+	gock.New("https://cds-api.local").Get("/v6.66/containers/json").Reply(http.StatusOK).JSON(containers)
 	b := h.CanSpawn(context.TODO(), &m, jobID, []sdk.Requirement{})
 	assert.False(t, b)
 	assert.True(t, gock.IsDone())

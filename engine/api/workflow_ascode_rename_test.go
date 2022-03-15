@@ -114,7 +114,7 @@ func Test_WorkflowAsCodeRename(t *testing.T) {
 						assert.Equal(t, "github", h.Config["vcsServer"].Value)
 						assert.Equal(t, "w-go-repo", h.Config["workflow"].Value)
 						h.Config["webHookURL"] = sdk.WorkflowNodeHookConfigValue{
-							Value:        "http://lolcat.host",
+							Value:        "http://cds-api.local",
 							Configurable: false,
 						}
 						actualHooks[k] = h
@@ -137,7 +137,7 @@ func Test_WorkflowAsCodeRename(t *testing.T) {
 						assert.Equal(t, "github", h.Config["vcsServer"].Value)
 						assert.Equal(t, "w-go-repo-renamed", h.Config["workflow"].Value)
 						h.Config["webHookURL"] = sdk.WorkflowNodeHookConfigValue{
-							Value:        "http://lolcat.host",
+							Value:        "http://cds-api.local",
 							Configurable: false,
 						}
 						actualHooks[k] = h

@@ -167,7 +167,7 @@ func Test_Purge_DeleteArtifactsFromArtifactManager(t *testing.T) {
 	require.NoError(t, err)
 
 	integrationConfig := integrationModel.DefaultConfig.Clone()
-	integrationConfig.SetValue("url", "https://artifactory.lolcat.host/")
+	integrationConfig.SetValue("url", "https://artifactory.cds-api.local/")
 	integrationConfig.SetValue("platform", "artifactory")
 	integrationConfig.SetValue("token.name", "my-token")
 	integrationConfig.SetValue("token", "abcdef")

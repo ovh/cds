@@ -130,7 +130,7 @@ version: v1.0`),
 					assert.Equal(t, "github", h.Config["vcsServer"].Value)
 					assert.Equal(t, "w-go-repo", h.Config["workflow"].Value)
 					h.Config["webHookURL"] = sdk.WorkflowNodeHookConfigValue{
-						Value:        "http://lolcat.host",
+						Value:        "http://cds-api.local",
 						Configurable: false,
 					}
 					actualHooks[k] = h
@@ -173,7 +173,7 @@ version: v1.0`),
 				vcsHooks.Events = []string{"push"}
 
 				assert.Equal(t, "POST", vcsHooks.Method)
-				assert.Equal(t, "http://lolcat.host", vcsHooks.URL)
+				assert.Equal(t, "http://cds-api.local", vcsHooks.URL)
 				vcsHooks.ID = sdk.UUID()
 				*(out.(*sdk.VCSHook)) = *vcsHooks
 
@@ -360,7 +360,7 @@ version: v1.0`),
 					assert.Equal(t, "github", h.Config["vcsServer"].Value)
 					assert.Equal(t, "w-go-repo", h.Config["workflow"].Value)
 					h.Config["webHookURL"] = sdk.WorkflowNodeHookConfigValue{
-						Value:        "http://lolcat.host",
+						Value:        "http://cds-api.local",
 						Configurable: false,
 					}
 					actualHooks[k] = h
@@ -403,7 +403,7 @@ version: v1.0`),
 				vcsHooks.Events = []string{"push"}
 
 				assert.Equal(t, "POST", vcsHooks.Method)
-				assert.Equal(t, "http://lolcat.host", vcsHooks.URL)
+				assert.Equal(t, "http://cds-api.local", vcsHooks.URL)
 
 				return nil, 200, nil
 			},
@@ -643,7 +643,7 @@ version: v1.0`),
 						assert.Equal(t, "github", h.Config["vcsServer"].Value)
 						assert.Equal(t, "w-go-repo", h.Config["workflow"].Value)
 						h.Config["webHookURL"] = sdk.WorkflowNodeHookConfigValue{
-							Value:        "http://lolcat.host",
+							Value:        "http://cds-api.local",
 							Configurable: false,
 						}
 						actualHooks[k] = h
@@ -704,7 +704,7 @@ version: v1.0`),
 				require.Len(t, vcsHooks.Events, 0, "events list should be empty, default value is set by vcs")
 				vcsHooks.Events = []string{"push"}
 
-				assert.Equal(t, "http://lolcat.host", vcsHooks.URL)
+				assert.Equal(t, "http://cds-api.local", vcsHooks.URL)
 				vcsHooks.ID = sdk.UUID()
 				*(out.(*sdk.VCSHook)) = *vcsHooks
 
@@ -1091,7 +1091,7 @@ version: v1.0`),
 							assert.Equal(t, "github", h.Config["vcsServer"].Value)
 							assert.Equal(t, "w-go-repo", h.Config["workflow"].Value)
 							h.Config["webHookURL"] = sdk.WorkflowNodeHookConfigValue{
-								Value:        "http://lolcat.host",
+								Value:        "http://cds-api.local",
 								Configurable: false,
 							}
 							actualHooks[k] = h
@@ -1232,7 +1232,7 @@ version: v1.0`),
 				vcsHooks.Events = []string{"push"}
 
 				assert.Equal(t, "POST", vcsHooks.Method)
-				assert.Equal(t, "http://lolcat.host", vcsHooks.URL)
+				assert.Equal(t, "http://cds-api.local", vcsHooks.URL)
 				vcsHooks.ID = sdk.UUID()
 				*(out.(*sdk.VCSHook)) = *vcsHooks
 				return nil, 200, nil

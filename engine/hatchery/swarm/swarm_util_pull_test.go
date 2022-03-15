@@ -19,11 +19,11 @@ func Test_pullImage(t *testing.T) {
 
 	h := InitTestHatcherySwarm(t)
 
-	gock.New("https://lolcat.host").Post("/images/create").Times(5).AddMatcher(func(r *http.Request, rr *gock.Request) (bool, error) {
+	gock.New("https://cds-api.local").Post("/images/create").Times(5).AddMatcher(func(r *http.Request, rr *gock.Request) (bool, error) {
 		values := r.URL.Query()
 
 		// Call 1
-		if values.Get("fromImage") == "my-registry.lolcat.host/my-image-1" && values.Get("tag") == "my-tag" {
+		if values.Get("fromImage") == "my-registry.cds-api.local/my-image-1" && values.Get("tag") == "my-tag" {
 			return true, nil
 		}
 		// Call 2
@@ -39,13 +39,13 @@ func Test_pullImage(t *testing.T) {
 		t.Log("Auth config", auth)
 
 		// Call 3
-		if values.Get("fromImage") == "my-first-registry.lolcat.host/my-image-3" && values.Get("tag") == "my-tag" &&
-			auth.Username == "my-user" && auth.Password == "my-pass-1" && auth.ServerAddress == "my-first-registry.lolcat.host" {
+		if values.Get("fromImage") == "my-first-registry.cds-api.local/my-image-3" && values.Get("tag") == "my-tag" &&
+			auth.Username == "my-user" && auth.Password == "my-pass-1" && auth.ServerAddress == "my-first-registry.cds-api.local" {
 			return true, nil
 		}
 		// Call 4
-		if values.Get("fromImage") == "my-second-registry.lolcat.host/my-image-4" && values.Get("tag") == "my-tag" &&
-			auth.Username == "my-user" && auth.Password == "my-pass-2" && auth.ServerAddress == "my-second-registry.lolcat.host" {
+		if values.Get("fromImage") == "my-second-registry.cds-api.local/my-image-4" && values.Get("tag") == "my-tag" &&
+			auth.Username == "my-user" && auth.Password == "my-pass-2" && auth.ServerAddress == "my-second-registry.cds-api.local" {
 			return true, nil
 		}
 		// Call 5
@@ -56,7 +56,7 @@ func Test_pullImage(t *testing.T) {
 		return false, nil
 	}).Reply(http.StatusOK)
 
-	require.NoError(t, h.pullImage(h.dockerClients["default"], "my-registry.lolcat.host/my-image-1:my-tag", time.Minute, sdk.Model{}))
+	require.NoError(t, h.pullImage(h.dockerClients["default"], "my-registry.cds-api.local/my-image-1:my-tag", time.Minute, sdk.Model{}))
 	require.NoError(t, h.pullImage(h.dockerClients["default"], "my-image-2:my-tag", time.Minute, sdk.Model{}))
 
 	h.Config.RegistryCredentials = []RegistryCredential{
@@ -66,19 +66,19 @@ func Test_pullImage(t *testing.T) {
 			Password: "my-pass",
 		},
 		{
-			Domain:   "my-first-registry.lolcat.host",
+			Domain:   "my-first-registry.cds-api.local",
 			Username: "my-user",
 			Password: "my-pass-1",
 		},
 		{
-			Domain:   "^*.lolcat.host$",
+			Domain:   "^*.cds-api.local$",
 			Username: "my-user",
 			Password: "my-pass-2",
 		},
 	}
 
-	require.NoError(t, h.pullImage(h.dockerClients["default"], "my-first-registry.lolcat.host/my-image-3:my-tag", time.Minute, sdk.Model{}))
-	require.NoError(t, h.pullImage(h.dockerClients["default"], "my-second-registry.lolcat.host/my-image-4:my-tag", time.Minute, sdk.Model{}))
+	require.NoError(t, h.pullImage(h.dockerClients["default"], "my-first-registry.cds-api.local/my-image-3:my-tag", time.Minute, sdk.Model{}))
+	require.NoError(t, h.pullImage(h.dockerClients["default"], "my-second-registry.cds-api.local/my-image-4:my-tag", time.Minute, sdk.Model{}))
 	require.NoError(t, h.pullImage(h.dockerClients["default"], "my-image-5:my-tag", time.Minute, sdk.Model{}))
 
 	require.True(t, gock.IsDone())

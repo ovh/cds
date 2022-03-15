@@ -688,7 +688,7 @@ func Test_putWorkflowHandler(t *testing.T) {
 					if h.HookModelName == sdk.RepositoryWebHookModelName {
 						cfg := hooks[k].Config
 						cfg["webHookURL"] = sdk.WorkflowNodeHookConfigValue{
-							Value:        "http://lolcat.host",
+							Value:        "http://cds-api.local",
 							Configurable: false,
 						}
 					}
@@ -714,7 +714,7 @@ func Test_putWorkflowHandler(t *testing.T) {
 				if err := enc.Encode(hook); err != nil {
 					return writeError(w, err)
 				}
-			case "/vcs/github/repos/foo/bar/hooks?url=http%3A%2F%2Flolcat.host&id=666":
+			case "/vcs/github/repos/foo/bar/hooks?url=http%3A%2F%2Fcds-api.local&id=666":
 				updatehookCalled = true
 				hook := sdk.VCSHook{}
 				if err := service.UnmarshalBody(r, &hook); err != nil {

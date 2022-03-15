@@ -10,7 +10,6 @@ require (
 	github.com/andygrunwald/go-gerrit v0.0.0-20181207071854-19ef3e9332a4
 	github.com/aws/aws-sdk-go v1.19.11
 	github.com/blang/semver v3.5.1+incompatible
-	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
 	github.com/buger/goterm v0.0.0-20170918171949-d443b9114f9c
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/confluentinc/bincover v0.2.0
@@ -195,9 +194,7 @@ require (
 	github.com/kevinburke/ssh_config v0.0.0-20201106050909-4977a11b4351 // indirect
 	github.com/klauspost/compress v1.13.6 // indirect
 	github.com/klauspost/pgzip v1.2.5 // indirect
-	github.com/kr/pretty v0.2.1 // indirect
 	github.com/kr/pty v1.1.8 // indirect
-	github.com/kr/text v0.2.0 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/magiconair/properties v1.8.5 // indirect
 	github.com/mailru/easyjson v0.0.0-20190626092158-b2ccc519800e // indirect

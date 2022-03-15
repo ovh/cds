@@ -47,7 +47,7 @@ func (w *TestWorker) FeatureEnabled(featureName sdk.FeatureName) bool {
 }
 
 func (w *TestWorker) CDNHttpURL() string {
-	return "http://cdn.me"
+	return "http://cds-cdn.local"
 }
 
 func (w *TestWorker) WorkingDirectory() *afero.BasePathFile {
@@ -173,7 +173,7 @@ func SetupTest(t *testing.T) (*TestWorker, context.Context) {
 
 	wk.keyDirectory = fi.(*afero.BasePathFile)
 
-	wk.client = cdsclient.NewWorker("http://lolcat.host", "test-client", cdsclient.NewHTTPClient(time.Second*360, false))
+	wk.client = cdsclient.NewWorker("http://cds-api.local", "test-client", cdsclient.NewHTTPClient(time.Second*360, false))
 
 	ctx := workerruntime.SetWorkingDirectory(context.TODO(), wk.workingDirectory)
 	ctx = workerruntime.SetKeysDirectory(ctx, wk.keyDirectory)

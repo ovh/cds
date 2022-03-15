@@ -28,7 +28,7 @@ func Test_tmplHandler(t *testing.T) {
 	cfg := &workerruntime.WorkerConfig{
 		Name:                "test-worker",
 		HatcheryName:        "test-hatchery",
-		APIEndpoint:         "http://lolcat.host",
+		APIEndpoint:         "http://cds-api.local",
 		APIToken:            "xxx-my-token",
 		APIEndpointInsecure: true,
 		Basedir:             basedir,
@@ -69,7 +69,7 @@ func Test_tmplHandler(t *testing.T) {
 
 	handler := tmplHandler(context.TODO(), wk)
 	w := httptest.NewRecorder()
-	r, err := http.NewRequest("POST", "http://lolcat.host/", bytes.NewReader(btes))
+	r, err := http.NewRequest("POST", "http://cds-api.local/", bytes.NewReader(btes))
 	require.NoError(t, err)
 	handler(w, r)
 
@@ -93,7 +93,7 @@ func Test_tmplHandlerInWrongDir(t *testing.T) {
 	cfg := &workerruntime.WorkerConfig{
 		Name:                "test-worker",
 		HatcheryName:        "test-hatchery",
-		APIEndpoint:         "http://lolcat.host",
+		APIEndpoint:         "http://cds-api.local",
 		APIToken:            "xxx-my-token",
 		APIEndpointInsecure: true,
 		Basedir:             basedir,
@@ -132,7 +132,7 @@ func Test_tmplHandlerInWrongDir(t *testing.T) {
 
 	handler := tmplHandler(context.TODO(), wk)
 	w := httptest.NewRecorder()
-	r, err := http.NewRequest("POST", "http://lolcat.host/", bytes.NewReader(btes))
+	r, err := http.NewRequest("POST", "http://cds-api.local/", bytes.NewReader(btes))
 	require.NoError(t, err)
 	handler(w, r)
 

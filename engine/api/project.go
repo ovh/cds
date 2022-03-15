@@ -659,13 +659,7 @@ func (api *API) getProjectAccessHandler() service.Handler {
 		projectKey := vars["key"]
 		itemType := vars["type"]
 
-		var enabled bool
-		switch sdk.CDNItemType(itemType) {
-		case sdk.CDNTypeItemWorkerCache:
-			enabled = true
-		}
-
-		if !enabled {
+		if sdk.CDNItemType(itemType) != sdk.CDNTypeItemWorkerCache {
 			return sdk.WrapError(sdk.ErrForbidden, "cdn is not enabled for this type %s", itemType)
 		}
 

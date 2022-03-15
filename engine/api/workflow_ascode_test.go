@@ -375,7 +375,7 @@ func TestPostMigrateWorkflowAsCodeHandler(t *testing.T) {
 					if h.HookModelName == sdk.RepositoryWebHookModelName {
 						cfg := hooks[k].Config
 						cfg["webHookURL"] = sdk.WorkflowNodeHookConfigValue{
-							Value:        "http://lolcat.host",
+							Value:        "http://cds-api.local",
 							Configurable: false,
 						}
 					}
@@ -784,7 +784,7 @@ version: v1.0`),
 					assert.Equal(t, "github", h.Config["vcsServer"].Value)
 					assert.Equal(t, "w-go-repo", h.Config["workflow"].Value)
 					h.Config["webHookURL"] = sdk.WorkflowNodeHookConfigValue{
-						Value:        "http://lolcat.host",
+						Value:        "http://cds-api.local",
 						Configurable: false,
 					}
 					actualHooks[k] = h
@@ -827,7 +827,7 @@ version: v1.0`),
 				vcsHooks.Events = []string{"push"}
 
 				assert.Equal(t, "POST", vcsHooks.Method)
-				assert.Equal(t, "http://lolcat.host", vcsHooks.URL)
+				assert.Equal(t, "http://cds-api.local", vcsHooks.URL)
 				vcsHooks.ID = sdk.UUID()
 				*(out.(*sdk.VCSHook)) = *vcsHooks
 
@@ -1140,7 +1140,7 @@ hooks:
 				for k, h := range actualHooks {
 					if h.HookModelName == sdk.RepositoryWebHookModelName {
 						h.Config["webHookURL"] = sdk.WorkflowNodeHookConfigValue{
-							Value:        "http://lolcat.host",
+							Value:        "http://cds-api.local",
 							Configurable: false,
 						}
 						actualHooks[k] = h
@@ -1182,7 +1182,7 @@ hooks:
 				vcsHooks.Events = []string{"push"}
 
 				assert.Equal(t, "POST", vcsHooks.Method)
-				assert.Equal(t, "http://lolcat.host", vcsHooks.URL)
+				assert.Equal(t, "http://cds-api.local", vcsHooks.URL)
 				vcsHooks.ID = sdk.UUID()
 				*(out.(*sdk.VCSHook)) = *vcsHooks
 
@@ -1419,7 +1419,7 @@ version: v1.0`),
 					assert.Equal(t, "github", h.Config["vcsServer"].Value)
 					assert.Equal(t, "w-go-repo", h.Config["workflow"].Value)
 					h.Config["webHookURL"] = sdk.WorkflowNodeHookConfigValue{
-						Value:        "http://lolcat.host",
+						Value:        "http://cds-api.local",
 						Configurable: false,
 					}
 					actualHooks[k] = h
@@ -1462,7 +1462,7 @@ version: v1.0`),
 				vcsHooks.Events = []string{"push"}
 
 				assert.Equal(t, "POST", vcsHooks.Method)
-				assert.Equal(t, "http://lolcat.host", vcsHooks.URL)
+				assert.Equal(t, "http://cds-api.local", vcsHooks.URL)
 				vcsHooks.ID = sdk.UUID()
 				*(out.(*sdk.VCSHook)) = *vcsHooks
 

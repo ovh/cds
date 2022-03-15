@@ -38,7 +38,7 @@ func InitMarathonMarathonTest(opts marathonJDD) *HatcheryMarathon {
 	if opts.WorkerSpawnTimeout > 0 {
 		h.Config.WorkerSpawnTimeout = opts.WorkerSpawnTimeout
 	}
-	h.Client = cdsclient.New(cdsclient.Config{Host: "http://lolcat.host", InsecureSkipVerifyTLS: false})
+	h.Client = cdsclient.New(cdsclient.Config{Host: "http://cds-api.local", InsecureSkipVerifyTLS: false})
 	gock.InterceptClient(h.Client.(cdsclient.Raw).HTTPClient())
 	return h
 }

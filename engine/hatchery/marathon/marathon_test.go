@@ -39,7 +39,7 @@ func TestWorkerStarted(t *testing.T) {
 
 	gock.New("http://mara.thon").Get("/v2/apps").Reply(200).JSON(apps)
 	wkrs, err := h.WorkersStarted(context.TODO())
-  require.NoError(t, err)
+	require.NoError(t, err)
 	t.Logf("%+v", wkrs)
 	assert.Equal(t, 2, len(wkrs))
 	assert.Equal(t, "w1", wkrs[0])
@@ -73,7 +73,7 @@ func TestKillDisabledWorker(t *testing.T) {
 			Status: sdk.StatusDisabled,
 		},
 	}
-	gock.New("http://lolcat.host").Get("/worker").Reply(200).JSON(workers)
+	gock.New("http://cds-api.local").Get("/worker").Reply(200).JSON(workers)
 
 	apps := marathon.Applications{
 		Apps: []marathon.Application{
@@ -139,7 +139,7 @@ func TestKillAwolWOrkers(t *testing.T) {
 			Status: sdk.StatusDisabled,
 		},
 	}
-	gock.New("http://lolcat.host").Get("/worker").Reply(200).JSON(workers)
+	gock.New("http://cds-api.local").Get("/worker").Reply(200).JSON(workers)
 
 	d := time.Now()
 	d3 := d.Add(-3 * time.Minute)

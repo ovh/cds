@@ -53,7 +53,7 @@ func InitTestHatcherySwarm(t *testing.T) *HatcherySwarm {
 	httpClient := cdsclient.NewHTTPClient(1*time.Minute, false)
 	c, err := docker.NewClientWithOpts(
 		docker.WithHTTPClient(httpClient),
-		docker.WithHost("https://lolcat.host"),
+		docker.WithHost("https://cds-api.local"),
 		docker.WithVersion("6.66"),
 	)
 	require.NoError(t, err)

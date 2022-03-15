@@ -20,7 +20,7 @@ func TestRunArtifactDownload(t *testing.T) {
 
 	f1 := bytes.NewBufferString("contentfile")
 
-	gock.New("http://cdn.me").Get("/item/run-result/the-ref/download").
+	gock.New("http://cds-cdn.local").Get("/item/run-result/the-ref/download").
 		Reply(200).Body(f1)
 
 	ref := sdk.CDNRunResultAPIRef{
@@ -43,7 +43,7 @@ func TestRunArtifactDownload(t *testing.T) {
 		},
 	}
 
-	gock.New("http://lolcat.host").Get("/project/projKey/workflows/workflowName/runs/999/artifacts/links").
+	gock.New("http://cds-api.local").Get("/project/projKey/workflows/workflowName/runs/999/artifacts/links").
 		Reply(200).JSON(it)
 
 	gock.InterceptClient(wk.Client().(cdsclient.Raw).HTTPClient())
@@ -98,7 +98,7 @@ func TestRunArtifactDownloadOutsideWorkspace(t *testing.T) {
 	fileName := sdk.RandomString(10)
 	f1 := bytes.NewBufferString("contentfile")
 
-	gock.New("http://cdn.me").Get("/item/run-result/the-ref/download").
+	gock.New("http://cds-cdn.local").Get("/item/run-result/the-ref/download").
 		Reply(200).Body(f1)
 
 	ref := sdk.CDNRunResultAPIRef{
@@ -121,7 +121,7 @@ func TestRunArtifactDownloadOutsideWorkspace(t *testing.T) {
 		},
 	}
 
-	gock.New("http://lolcat.host").Get("/project/projKey/workflows/workflowName/runs/999/artifacts/links").
+	gock.New("http://cds-api.local").Get("/project/projKey/workflows/workflowName/runs/999/artifacts/links").
 		Reply(200).JSON(it)
 
 	gock.InterceptClient(wk.Client().(cdsclient.Raw).HTTPClient())
