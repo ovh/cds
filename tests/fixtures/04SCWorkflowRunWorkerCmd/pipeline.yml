@@ -76,7 +76,7 @@ jobs:
       - cat << EOF > myFileUploaded
       - Je suis un artifact
       - EOF
-      - worker upload --tag={{.cds.version}} {{.cds.workspace}}/myFileUploaded
+      - worker upload {{.cds.workspace}}/myFileUploaded
   requirements:
   - os-architecture: linux/amd64
 - job: KEY

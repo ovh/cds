@@ -92,7 +92,7 @@ steps:
   - "    \techo \"File ${GOPATH}/src/{{.package}}/{{.binary}} not found!\""
   - '        exit 1;'
   - "\tfi"
-  - "\tworker upload --tag={{.cds.version}} \"${GOPATH}/src/{{.package}}/{{.binary}}\""
+  - "\tworker upload \"${GOPATH}/src/{{.package}}/{{.binary}}\""
   - else
   - "\techo \"artifact upload: {{.artifactUpload}}. So, artifact is not uploaded\""
   - fi;

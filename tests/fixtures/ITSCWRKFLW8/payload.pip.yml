@@ -8,6 +8,6 @@ jobs:
     - mkdir -p website/sub
     - env > thefile
     - ls -l
-    - worker upload --tag={{.cds.version}} thefile
+    - worker upload thefile
   requirements:
     - os-architecture: linux/amd64

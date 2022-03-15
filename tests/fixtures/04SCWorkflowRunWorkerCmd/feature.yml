@@ -1,3 +1,0 @@
-name: cdn-artifact
-rule: return project_key == "04SCWORKFLOWRUNWORKERCMD"
-

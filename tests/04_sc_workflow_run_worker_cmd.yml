@@ -11,7 +11,6 @@ testcases:
   - script: {{.cdsctl}} -f {{.cdsctl.config}} project remove --force 04SCWORKFLOWRUNWORKERCMD
   - script: {{.cdsctl}} -f {{.cdsctl.config}} group remove --force 04scworkflowrunworkercmd
   - script: {{.cdsctl}} -f {{.cdsctl.config}} project add 04SCWORKFLOWRUNWORKERCMD 04SCWorkflowRunWorkerCmd
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin features import ./fixtures/04SCWorkflowRunWorkerCmd/feature.yml
 
 - name: import pipeline and workflow
   steps:

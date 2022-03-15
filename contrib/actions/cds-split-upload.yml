@@ -55,11 +55,11 @@ steps:
   - 'worker export ${SOURCE}_md5 $x'
   - ""
   - 'echo -e "\n$x > ${SOURCE}-md5"'
-  - 'worker upload --tag={{.cds.version}} ${SOURCE}-md5'
+  - 'worker upload ${SOURCE}-md5'
   - ""
   - echo -e "\n"
   - 'split --verbose --bytes={{.splitSize}} ${ARGS} ${SOURCE} ${PREFIX_HANDLE}-'
   - ""
   - echo -e "\n"
-  - 'worker upload --tag=${TAG} ./${PREFIX_HANDLE}-*'
+  - 'worker upload ./${PREFIX_HANDLE}-*'
   - ""
