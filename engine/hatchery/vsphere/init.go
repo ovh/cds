@@ -114,7 +114,7 @@ func (h *HatcheryVSphere) newGovmomiClient(ctx context.Context) (*govmomi.Client
 		return nil, sdk.WrapError(err, "cannot parse url")
 	}
 
-	log.Info(ctx, "initializing connection to %v...", u)
+  log.Info(ctx, "initializing connection to https://%v", h.Config.VSphereEndpoint)
 
 	// Connect and log in to ESX or vCenter
 	return govmomi.NewClient(ctx, u, false)
