@@ -16,7 +16,7 @@ func (api *API) rbacMiddleware(ctx context.Context, _ http.ResponseWriter, req *
 	for _, checker := range rc.RbacCheckers {
 		ctx := context.WithValue(ctx, cdslog.RbackCheckerName, sdk.GetFuncName(checker))
 		if err := checker(ctx, api.mustDB(), mux.Vars(req)); err != nil {
-			log.Error(ctx, "%v", err)
+			log.ErrorWithStackTrace(ctx, err)
 			return ctx, sdk.WithStack(sdk.ErrForbidden)
 		}
 	}
