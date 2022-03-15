@@ -788,7 +788,7 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 	}, *consumer, nil)
 	require.NoError(t, err)
 
-	lastrun, err := workflow.LoadLastRun(context.Background(), api.mustDB(), proj.Key, w1.Name, workflow.LoadRunOptions{WithArtifacts: true, WithTests: true})
+	lastrun, err := workflow.LoadLastRun(context.Background(), api.mustDB(), proj.Key, w1.Name, workflow.LoadRunOptions{WithTests: true})
 	require.NoError(t, err)
 
 	vuln := sdk.Vulnerability{
@@ -2706,7 +2706,7 @@ func initGetWorkflowNodeRunJobTest(t *testing.T, api *API, db gorpmapper.SqlExec
 	}, *consumer, nil)
 	require.NoError(t, err)
 
-	lastRun, err := workflow.LoadLastRun(context.Background(), api.mustDB(), proj.Key, w1.Name, workflow.LoadRunOptions{WithArtifacts: true})
+	lastRun, err := workflow.LoadLastRun(context.Background(), api.mustDB(), proj.Key, w1.Name, workflow.LoadRunOptions{})
 	require.NoError(t, err)
 
 	// Update step status

@@ -890,7 +890,7 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 
 	wNodeJobRun, errJ := workflow.LoadNodeJobRun(context.TODO(), api.mustDB(), api.Cache, ctx.job.ID)
 	require.NoError(t, errJ)
-	nodeRun, errN := workflow.LoadNodeRunByID(context.Background(), api.mustDB(), wNodeJobRun.WorkflowNodeRunID, workflow.LoadRunOptions{WithArtifacts: true, WithTests: true})
+	nodeRun, errN := workflow.LoadNodeRunByID(context.Background(), api.mustDB(), wNodeJobRun.WorkflowNodeRunID, workflow.LoadRunOptions{WithTests: true})
 	require.NoError(t, errN)
 
 	require.NotNil(t, nodeRun.Tests)

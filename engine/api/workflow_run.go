@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -252,7 +251,7 @@ func (api *API) getLatestWorkflowRunHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		name := vars["permWorkflowName"]
-		run, err := workflow.LoadLastRun(ctx, api.mustDB(), key, name, workflow.LoadRunOptions{WithArtifacts: true})
+		run, err := workflow.LoadLastRun(ctx, api.mustDB(), key, name, workflow.LoadRunOptions{})
 		if err != nil {
 			return sdk.WrapError(err, "Unable to load last workflow run")
 		}
@@ -281,7 +280,6 @@ func (api *API) getWorkflowRunHandler() service.Handler {
 		run, err := workflow.LoadRun(ctx, api.mustDB(), key, name, number,
 			workflow.LoadRunOptions{
 				WithDeleted:             false,
-				WithArtifacts:           true,
 				WithLightTests:          true,
 				DisableDetailledNodeRun: !isService && withDetailledNodeRun != "true",
 			},
@@ -793,7 +791,6 @@ func (api *API) getWorkflowNodeRunHandler() service.Handler {
 		}
 		nodeRun, err := workflow.LoadNodeRun(api.mustDB(), key, name, id, workflow.LoadRunOptions{
 			WithTests:           true,
-			WithArtifacts:       true,
 			WithCoverage:        true,
 			WithVulnerabilities: true,
 		})
@@ -1383,40 +1380,6 @@ func (api *API) getWorkflowNodeRunResultsHandler() service.Handler {
 			return err
 		}
 		return service.WriteJSON(w, results, http.StatusOK)
-	}
-}
-
-func (api *API) getWorkflowRunArtifactsHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		key := vars["key"]
-		name := vars["permWorkflowNameAdvanced"]
-
-		number, err := requestVarInt(r, "number")
-		if err != nil {
-			return err
-		}
-
-		wr, err := workflow.LoadRun(ctx, api.mustDB(), key, name, number, workflow.LoadRunOptions{WithArtifacts: true})
-		if err != nil {
-			return sdk.WrapError(err, "no workflow run found for %s/%s with number %d", key, name, number)
-		}
-
-		arts := []sdk.WorkflowNodeRunArtifact{}
-		for _, runs := range wr.WorkflowNodeRuns {
-			if len(runs) == 0 {
-				continue
-			}
-
-			sort.Slice(runs, func(i, j int) bool {
-				return runs[i].SubNumber > runs[j].SubNumber
-			})
-
-			artifacts := workflow.MergeArtifactWithPreviousSubRun(runs)
-			arts = append(arts, artifacts...)
-		}
-
-		return service.WriteJSON(w, arts, http.StatusOK)
 	}
 }
 

@@ -84,13 +84,6 @@ func LoadNodeRun(db gorp.SqlExecutor, projectkey, workflowname string, noderunID
 		return nil, sdk.WithStack(err)
 	}
 
-	if loadOpts.WithArtifacts {
-		arts, errA := loadArtifactByNodeRunID(db, r.ID)
-		if errA != nil {
-			return nil, sdk.WrapError(errA, "LoadNodeRun>Error loading artifacts for run %d", r.ID)
-		}
-		r.Artifacts = arts
-	}
 	if loadOpts.WithCoverage {
 		cov, errCov := LoadCoverageReport(db, r.ID)
 		if errCov != nil && !sdk.ErrorIs(errCov, sdk.ErrNotFound) {
@@ -137,13 +130,6 @@ func LoadNodeRunByNodeJobID(db gorp.SqlExecutor, nodeJobRunID int64, loadOpts Lo
 		return nil, sdk.WithStack(err)
 	}
 
-	if loadOpts.WithArtifacts {
-		arts, errA := loadArtifactByNodeRunID(db, r.ID)
-		if errA != nil {
-			return nil, sdk.WrapError(errA, "LoadNodeRunByNodeJobID>Error loading artifacts for run %d", r.ID)
-		}
-		r.Artifacts = arts
-	}
 	return r, nil
 }
 
@@ -214,14 +200,6 @@ func LoadNodeRunByID(ctx context.Context, db gorp.SqlExecutor, id int64, loadOpt
 	r, err := fromDBNodeRun(rr, loadOpts)
 	if err != nil {
 		return nil, sdk.WithStack(err)
-	}
-
-	if loadOpts.WithArtifacts {
-		arts, err := loadArtifactByNodeRunID(db, r.ID)
-		if err != nil {
-			return nil, sdk.WrapError(err, "cannot load artifacts for workflow node run %d", r.ID)
-		}
-		r.Artifacts = arts
 	}
 
 	return r, nil

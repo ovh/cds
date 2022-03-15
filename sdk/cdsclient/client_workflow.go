@@ -143,15 +143,6 @@ func (c *client) WorkflowDelete(projectKey string, workflowName string, opts ...
 	return err
 }
 
-func (c *client) WorkflowRunArtifacts(projectKey string, workflowName string, number int64) ([]sdk.WorkflowNodeRunArtifact, error) {
-	url := fmt.Sprintf("/project/%s/workflows/%s/runs/%d/artifacts", projectKey, workflowName, number)
-	arts := []sdk.WorkflowNodeRunArtifact{}
-	if _, err := c.GetJSON(context.Background(), url, &arts); err != nil {
-		return nil, err
-	}
-	return arts, nil
-}
-
 func (c *client) WorkflowRunArtifactsLinks(projectKey string, workflowName string, number int64) (sdk.CDNItemLinks, error) {
 	url := fmt.Sprintf("/project/%s/workflows/%s/runs/%d/artifacts/links", projectKey, workflowName, number)
 	var resp sdk.CDNItemLinks

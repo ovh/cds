@@ -21,60 +21,8 @@ var workflowArtifactCmd = cli.Command{
 
 func workflowArtifact() *cobra.Command {
 	return cli.NewCommand(workflowArtifactCmd, nil, []*cobra.Command{
-		cli.NewListCommand(workflowArtifactListCmd, workflowArtifactListRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(workflowArtifactDownloadCmd, workflowArtifactDownloadRun, nil, withAllCommandModifiers()...),
 	})
-}
-
-var workflowArtifactListCmd = cli.Command{
-	Name:  "list",
-	Short: "List artifacts of one Workflow Run",
-	Ctx: []cli.Arg{
-		{Name: _ProjectKey},
-		{Name: _WorkflowName},
-	},
-	Args: []cli.Arg{
-		{Name: "number"},
-	},
-}
-
-func workflowArtifactListRun(v cli.Values) (cli.ListResult, error) {
-	number, err := strconv.ParseInt(v.GetString("number"), 10, 64)
-	if err != nil {
-		return nil, cli.NewError("number parameter have to be an integer")
-	}
-
-	workflowArtifacts, err := client.WorkflowRunArtifacts(v.GetString(_ProjectKey), v.GetString(_WorkflowName), number)
-	if err != nil {
-		return nil, err
-	}
-
-	results, err := client.WorkflowRunResultsList(context.Background(), v.GetString(_ProjectKey), v.GetString(_WorkflowName), number)
-	if err != nil {
-		return nil, err
-	}
-
-	type Artifact struct {
-		Name string `cli:"name"`
-		Md5  string `cli:"md5"`
-	}
-
-	artifacts := make([]Artifact, 0, len(workflowArtifacts))
-	for _, art := range workflowArtifacts {
-		artifacts = append(artifacts, Artifact{Name: art.Name, Md5: art.MD5sum})
-	}
-	for _, runResult := range results {
-		if runResult.Type != sdk.WorkflowRunResultTypeArtifact {
-			continue
-		}
-		artiData, err := runResult.GetArtifact()
-		if err != nil {
-			return nil, err
-		}
-		artifacts = append(artifacts, Artifact{Name: artiData.Name, Md5: artiData.MD5})
-	}
-
-	return cli.AsListResult(artifacts), nil
 }
 
 var workflowArtifactDownloadCmd = cli.Command{

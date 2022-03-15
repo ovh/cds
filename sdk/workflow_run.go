@@ -359,7 +359,6 @@ type WorkflowNodeRun struct {
 	Payload                interface{}                          `json:"payload,omitempty"`
 	PipelineParameters     []Parameter                          `json:"pipeline_parameters,omitempty"`
 	BuildParameters        []Parameter                          `json:"build_parameters,omitempty"`
-	Artifacts              []WorkflowNodeRunArtifact            `json:"artifacts,omitempty"`
 	Coverage               WorkflowNodeRunCoverage              `json:"coverage,omitempty"`
 	VulnerabilitiesReport  WorkflowNodeRunVulnerabilityReport   `json:"vulnerabilities_report,omitempty"`
 	Tests                  *TestsResults                        `json:"tests,omitempty"`

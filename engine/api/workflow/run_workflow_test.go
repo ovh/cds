@@ -141,7 +141,7 @@ func TestManualRun1(t *testing.T) {
 	assert.Equal(t, int64(2), lastrun.Number)
 
 	//TestLoadNodeRun
-	nodeRun, err := workflow.LoadNodeRun(db, proj.Key, "test_1", lastrun.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0].ID, workflow.LoadRunOptions{WithArtifacts: true})
+	nodeRun, err := workflow.LoadNodeRun(db, proj.Key, "test_1", lastrun.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0].ID, workflow.LoadRunOptions{})
 	require.NoError(t, err)
 
 	//don't want to compare queueSeconds attributes and spawn infos attributes
@@ -813,7 +813,7 @@ func TestNoStage(t *testing.T) {
 	require.NoError(t, err)
 
 	//TestLoadNodeRun
-	nodeRun, err := workflow.LoadNodeRun(db, proj.Key, "test_1", lastrun.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0].ID, workflow.LoadRunOptions{WithArtifacts: true})
+	nodeRun, err := workflow.LoadNodeRun(db, proj.Key, "test_1", lastrun.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0].ID, workflow.LoadRunOptions{})
 	require.NoError(t, err)
 
 	assert.Equal(t, sdk.StatusSuccess, nodeRun.Status)
@@ -889,7 +889,7 @@ func TestNoJob(t *testing.T) {
 	require.NoError(t, err)
 
 	//TestLoadNodeRun
-	nodeRun, err := workflow.LoadNodeRun(db, proj.Key, "test_1", lastrun.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0].ID, workflow.LoadRunOptions{WithArtifacts: true})
+	nodeRun, err := workflow.LoadNodeRun(db, proj.Key, "test_1", lastrun.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0].ID, workflow.LoadRunOptions{})
 	require.NoError(t, err)
 
 	assert.Equal(t, sdk.StatusSuccess, nodeRun.Status)
