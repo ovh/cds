@@ -79,17 +79,23 @@ func (c *Common) Signin(ctx context.Context, cdsclientConfig cdsclient.ServiceCo
 	if c.ServiceType == "api" {
 		return nil
 	}
-
 	log.Info(ctx, "Init CDS client for service %s(%T) %s", c.Type(), c, c.Name())
-
 	ctxTimeout, cancel := context.WithTimeout(ctx, 5*time.Minute)
 	defer cancel()
 	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
 
-	registerPayload, err := ParseServiceConfig(srvConfig)
+	serviceConfig, err := ParseServiceConfig(srvConfig)
 	if err != nil {
 		return err
+	}
+
+	registerPayload := sdk.Service{
+		CanonicalService: sdk.CanonicalService{
+			Name:   c.Name(),
+			Type:   c.Type(),
+			Config: serviceConfig,
+		},
 	}
 
 	initClient := func(ctx context.Context) error {

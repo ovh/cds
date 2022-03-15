@@ -93,6 +93,16 @@ func (api *API) postAuthBuiltinSigninHandler() service.Handler {
 		SetTracker(w, cdslog.AuthSessionIAT, session.Created.Unix())
 		ctx = context.WithValue(ctx, contextSession, session)
 
+		var driverManifest *sdk.AuthDriverManifest
+		if authDriver, ok := api.AuthenticationDrivers[consumer.Type]; ok {
+			m := authDriver.GetManifest()
+			driverManifest = &m
+		}
+		if driverManifest == nil {
+			return sdk.WrapError(sdk.ErrUnauthorized, "consumer driver (%s) was not found", consumer.Type)
+		}
+		ctx = context.WithValue(ctx, contextDriverManifest, driverManifest)
+
 		// If the Signin has a *service* Payload, we have to perform the service registration
 		srvInput, has := req["service"]
 		var srv sdk.Service
