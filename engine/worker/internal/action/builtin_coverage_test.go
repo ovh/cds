@@ -56,8 +56,8 @@ func TestRunCoverage_Absolute(t *testing.T) {
 	fiPath, err := filepath.Abs(fi.Name())
 	require.NoError(t, err)
 
-	gock.New("http://lolcat.host").Post("/queue/workflows/666/coverage").
-		Reply(200)
+	gock.New("http://lolcat.host").Post("/queue/workflows/666/coverage").Reply(200)
+	gock.New("http://cdn.me").Post("/item/upload").Reply(200)
 
 	var checkRequest gock.ObserverFunc = func(request *http.Request, mock gock.Mock) {
 		bodyContent, err := io.ReadAll(request.Body)
@@ -110,8 +110,8 @@ func TestRunCoverage_Relative(t *testing.T) {
 	fname := filepath.Join(wk.workingDirectory.Name(), "results.xml")
 	require.NoError(t, afero.WriteFile(wk.BaseDir(), fname, []byte(cobertura_result), os.ModePerm))
 
-	gock.New("http://lolcat.host").Post("/queue/workflows/666/coverage").
-		Reply(200)
+	gock.New("http://lolcat.host").Post("/queue/workflows/666/coverage").Reply(200)
+	gock.New("http://cdn.me").Post("/item/upload").Reply(200)
 
 	var checkRequest gock.ObserverFunc = func(request *http.Request, mock gock.Mock) {
 		bodyContent, err := io.ReadAll(request.Body)
@@ -169,8 +169,8 @@ func TestRunCoverageMinimumFail(t *testing.T) {
 	fiPath, err := filepath.Abs(fi.Name())
 	require.NoError(t, err)
 
-	gock.New("http://lolcat.host").Post("/queue/workflows/666/coverage").
-		Reply(200)
+	gock.New("http://lolcat.host").Post("/queue/workflows/666/coverage").Reply(200)
+	gock.New("http://cdn.me").Post("/item/upload").Reply(200)
 
 	var checkRequest gock.ObserverFunc = func(request *http.Request, mock gock.Mock) {
 		bodyContent, err := io.ReadAll(request.Body)
