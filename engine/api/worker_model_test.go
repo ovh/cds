@@ -936,8 +936,12 @@ func Test_getWorkerModels(t *testing.T) {
 
 	// Create a hatchery for the admin user
 	adminConsumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, admin.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
-	hatcheryConsumer, _, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), "", 0, adminConsumer, []int64{g2.ID}, sdk.NewAuthConsumerScopeDetails(
-		sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeWorkerModel))
+	consumerOptions := builtin.NewConsumerOptions{
+		Name:     sdk.RandomString(10),
+		GroupIDs: []int64{g2.ID},
+		Scopes:   sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeWorkerModel),
+	}
+	hatcheryConsumer, _, err := builtin.NewConsumer(context.TODO(), db, consumerOptions, adminConsumer)
 	require.NoError(t, err)
 	require.NoError(t, services.Insert(context.TODO(), db, &sdk.Service{
 		CanonicalService: sdk.CanonicalService{

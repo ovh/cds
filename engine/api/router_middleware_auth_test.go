@@ -60,8 +60,12 @@ func Test_authMiddleware_WithAuthConsumerDisabled(t *testing.T) {
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
-	builtinConsumer, _, err := builtin.NewConsumer(context.TODO(), db, "builtin", "", 0, localConsumer, []int64{g.ID},
-		sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopes...))
+	consumerOptions := builtin.NewConsumerOptions{
+		Name:     "builtin",
+		GroupIDs: []int64{g.ID},
+		Scopes:   sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopes...),
+	}
+	builtinConsumer, _, err := builtin.NewConsumer(context.TODO(), db, consumerOptions, localConsumer)
 	require.NoError(t, err)
 	builtinSession, err := authentication.NewSession(context.TODO(), db, builtinConsumer, time.Second*5)
 	require.NoError(t, err)
@@ -202,23 +206,29 @@ func Test_authMiddleware_WithAuthConsumerScoped(t *testing.T) {
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
-	builtinConsumer, _, err := builtin.NewConsumer(context.TODO(), db, "builtin", "", 0, localConsumer, []int64{g.ID}, []sdk.AuthConsumerScopeDetail{
-		{
-			Scope: sdk.AuthConsumerScopeAction,
-			Endpoints: sdk.AuthConsumerScopeEndpoints{
-				{
-					Route:   "/my-handler2",
-					Methods: []string{http.MethodGet},
-				},
-				{
-					Route: "/my-handler3",
+	consumerOptions := builtin.NewConsumerOptions{
+		Name:     "builtin",
+		GroupIDs: []int64{g.ID},
+		Scopes: []sdk.AuthConsumerScopeDetail{
+			{
+				Scope: sdk.AuthConsumerScopeAction,
+				Endpoints: sdk.AuthConsumerScopeEndpoints{
+					{
+						Route:   "/my-handler2",
+						Methods: []string{http.MethodGet},
+					},
+					{
+						Route: "/my-handler3",
+					},
 				},
 			},
+			{
+				Scope: sdk.AuthConsumerScopeAdmin,
+			},
 		},
-		{
-			Scope: sdk.AuthConsumerScopeAdmin,
-		},
-	})
+	}
+
+	builtinConsumer, _, err := builtin.NewConsumer(context.TODO(), db, consumerOptions, localConsumer)
 	require.NoError(t, err)
 	builtinSession, err := authentication.NewSession(context.TODO(), db, builtinConsumer, time.Second*5)
 	require.NoError(t, err)

@@ -44,8 +44,12 @@ func TestWithConsumerGroups(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotNil(t, 0, len(localConsumer.Groups), "no group ids on local consumer so no groups are expected")
 
-	newConsumer, _, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), sdk.RandomString(10), 0, localConsumer,
-		[]int64{g1.ID, g2.ID}, sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAccessToken))
+	consumerOptions := builtin.NewConsumerOptions{
+		Name:     sdk.RandomString(10),
+		GroupIDs: []int64{g1.ID, g2.ID},
+		Scopes:   sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAccessToken),
+	}
+	newConsumer, _, err := builtin.NewConsumer(context.TODO(), db, consumerOptions, localConsumer)
 	require.NoError(t, err)
 	builtinConsumer, err := authentication.LoadConsumerByID(context.TODO(), db, newConsumer.ID,
 		authentication.LoadConsumerOptions.WithConsumerGroups)

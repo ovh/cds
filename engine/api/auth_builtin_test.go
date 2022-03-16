@@ -58,7 +58,7 @@ func Test_postAuthBuiltinSigninHandler(t *testing.T) {
 		Description: sdk.RandomString(10),
 		Duration:    0,
 		GroupIDs:    usr.GetGroupIDs(),
-		sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject),
+		Scopes:      sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject),
 	}
 	_, jws, err := builtin.NewConsumer(context.TODO(), db, consumerOptions, localConsumer)
 	require.NoError(t, err)

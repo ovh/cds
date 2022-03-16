@@ -278,8 +278,13 @@ func Test_getProjectsHandler_AsProvider(t *testing.T) {
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, admin.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
-	_, jws, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), sdk.RandomString(10), 0, localConsumer, admin.GetGroupIDs(),
-		sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject))
+	consumerOptions := builtin.NewConsumerOptions{
+		Name:        sdk.RandomString(10),
+		Description: sdk.RandomString(10),
+		GroupIDs:    admin.GetGroupIDs(),
+		Scopes:      sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject),
+	}
+	_, jws, err := builtin.NewConsumer(context.TODO(), db, consumerOptions, localConsumer)
 	require.NoError(t, err)
 
 	u, _ := assets.InsertLambdaUser(t, db)
@@ -308,8 +313,13 @@ func Test_getprojectsHandler_AsProviderWithRequestedUsername(t *testing.T) {
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, admin.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
-	_, jws, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), sdk.RandomString(10), 0, localConsumer, admin.GetGroupIDs(),
-		sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject))
+	consumerOptions := builtin.NewConsumerOptions{
+		Name:        sdk.RandomString(10),
+		Description: sdk.RandomString(10),
+		GroupIDs:    admin.GetGroupIDs(),
+		Scopes:      sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject),
+	}
+	_, jws, err := builtin.NewConsumer(context.TODO(), db, consumerOptions, localConsumer)
 	require.NoError(t, err)
 
 	u, _ := assets.InsertLambdaUser(t, db)
@@ -421,8 +431,13 @@ func Test_getProjectsHandler_FilterByRepo(t *testing.T) {
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, admin.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
-	_, jws, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), sdk.RandomString(10), 0, localConsumer, admin.GetGroupIDs(),
-		sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject))
+	consumerOptions := builtin.NewConsumerOptions{
+		Name:        sdk.RandomString(10),
+		Description: sdk.RandomString(10),
+		GroupIDs:    admin.GetGroupIDs(),
+		Scopes:      sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject),
+	}
+	_, jws, err := builtin.NewConsumer(context.TODO(), db, consumerOptions, localConsumer)
 	require.NoError(t, err)
 
 	u, _ := assets.InsertLambdaUser(t, db)
