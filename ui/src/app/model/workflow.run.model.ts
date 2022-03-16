@@ -114,7 +114,6 @@ export class WorkflowNodeRun implements WithKey {
     payload: {};
     pipeline_parameters: Array<Parameter>;
     build_parameters: Array<Parameter>;
-    artifacts: Array<WorkflowNodeRunArtifact>;
     tests: Tests;
     commits: Array<Commit>;
     vulnerabilities_report: WorkflowNodeRunVulnerabilityReport;
@@ -185,22 +184,6 @@ export class WorkflowNodeOutgoingHookRunCallback {
     status: string;
     log: string;
     workflow_run_number: number;
-}
-
-// WorkflowNodeRunArtifact represents tests list
-export class WorkflowNodeRunArtifact {
-    workflow_id: number;
-    workflow_node_run_id: number;
-    id: number;
-    name: string;
-    tag: string;
-    download_hash: string;
-    size: number;
-    perm: number;
-    md5sum: string;
-    sha512sum: string;
-    object_path: string;
-    created: string;
 }
 
 // WorkflowNodeJobRun represents an job to be run

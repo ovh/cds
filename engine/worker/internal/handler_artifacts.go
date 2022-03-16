@@ -58,7 +58,7 @@ func artifactsHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 			return
 		}
 
-		artifactsJSON := []sdk.WorkflowNodeRunArtifact{}
+		artifactsJSON := []sdk.WorkflowRunResultArtifact{}
 
 		workflowRunResults, err := wk.client.WorkflowRunResultsList(ctx, projectKey, reqArgs.Workflow, reqArgs.Number)
 		if err != nil {
@@ -79,13 +79,7 @@ func artifactsHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 			if reqArgs.Pattern != "" && !regexp.MatchString(artData.Name) {
 				continue
 			}
-			artifactsJSON = append(artifactsJSON, sdk.WorkflowNodeRunArtifact{
-				MD5sum:  artData.MD5,
-				Name:    artData.Name,
-				Size:    artData.Size,
-				Created: result.Created,
-				Perm:    artData.Perm,
-			})
+			artifactsJSON = append(artifactsJSON, artData)
 		}
 
 		writeJSON(w, artifactsJSON, http.StatusOK)

@@ -4,7 +4,6 @@ import { ProjectIntegration } from 'app/model/integration.model';
 import {
     UIArtifact,
     WorkflowNodeRun,
-    WorkflowNodeRunArtifact,
     WorkflowRunResult
 } from 'app/model/workflow.run.model';
 import { WorkflowHelper } from 'app/service/workflow/workflow.helper';
@@ -25,8 +24,6 @@ export class WorkflowRunArtifactListComponent implements OnInit, OnDestroy {
     nodeRunSubs: Subscription;
 
     runResult: Array<WorkflowRunResult>
-    artifacts: Array<WorkflowNodeRunArtifact>;
-
     uiArtifacts: Array<UIArtifact>;
 
     filter: Filter<UIArtifact>;
@@ -78,9 +75,6 @@ export class WorkflowRunArtifactListComponent implements OnInit, OnDestroy {
             if (nr.results && (!this.runResult || nr.results.length !== this.runResult.length)) {
                 computeArtifact = true;
             }
-            if (nr.artifacts && (!this.artifacts || nr.artifacts.length !== this.artifacts.length)) {
-                computeArtifact = true;
-            }
             if (computeArtifact) {
                 let uiArtifacts: Array<UIArtifact>;
                 let uiRunResults: Array<UIArtifact>;
@@ -103,19 +97,6 @@ export class WorkflowRunArtifactListComponent implements OnInit, OnDestroy {
                     this.uiArtifacts.push(...uiRunResults);
                 }
 
-                if (nr.artifacts) {
-                    uiArtifacts = nr.artifacts.map(a => {
-                        let uiArt = new UIArtifact();
-                        uiArt.name = a.name;
-                        uiArt.size = a.size;
-                        uiArt.md5 = a.md5sum;
-                        uiArt.type = 'file';
-                        uiArt.link = `./cdsapi/workflow/artifact/${a.download_hash}`;
-                        uiArt.file_type = uiArt.type;
-                        return uiArt;
-                    });
-                    this.uiArtifacts.push(...uiArtifacts);
-                }
                 this._cd.markForCheck();
             }
         });
