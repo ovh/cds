@@ -79,7 +79,7 @@ func getAllRbacProjects(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.
 			return nil, sdk.WrapError(err, "error when checking signature for rbac_project %d", projectDatas.ID)
 		}
 		if !isValid {
-			log.Error(ctx, "rbac.getAllRBACGlobalUsers> rbac_project %d data corrupted", projectDatas.ID)
+			log.Error(ctx, "rbac.getAllRbacProjects> rbac_project %d data corrupted", projectDatas.ID)
 			continue
 		}
 	}

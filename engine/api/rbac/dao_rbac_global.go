@@ -64,7 +64,7 @@ func getAllRBACGlobalUsers(ctx context.Context, db gorp.SqlExecutor, rbacGlobal 
 			return sdk.WrapError(err, "error when checking signature for rbac_global_users %d", rbacUsers.ID)
 		}
 		if !isValid {
-			log.Error(ctx, "rbac.getAllRBACGlobalUsers> rbac_global_user %d data corrupted", rbacUsers.ID)
+			log.Error(ctx, "rbac.getAllRBACGlobalUsers> rbac_global_users %d data corrupted", rbacUsers.ID)
 			continue
 		}
 		rbacGlobal.RBACGlobal.RBACUsersIDs = append(rbacGlobal.RBACGlobal.RBACUsersIDs, rbacUsers.RbacGlobalUserID)
@@ -85,7 +85,7 @@ func getAllRBACGlobalGroups(ctx context.Context, db gorp.SqlExecutor, rbacGlobal
 			return sdk.WrapError(err, "error when checking signature for rbac_global_groups %d", rbacGroups.ID)
 		}
 		if !isValid {
-			log.Error(ctx, "rbac.getAllRBACGlobalUsers> rbac_global_groups %d data corrupted", rbacGroups.ID)
+			log.Error(ctx, "rbac.getAllRBACGlobalGroups> rbac_global_groups %d data corrupted", rbacGroups.ID)
 			continue
 		}
 		rbacGlobal.RBACGlobal.RBACGroupsIDs = append(rbacGlobal.RBACGlobal.RBACGroupsIDs, rbacGroups.RbacGlobalGroupID)

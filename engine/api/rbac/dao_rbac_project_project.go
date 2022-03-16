@@ -22,7 +22,7 @@ func getAllRBACProjectIdentifiers(ctx context.Context, db gorp.SqlExecutor, q go
 			return nil, sdk.WrapError(err, "error when checking signature for rbac_project_projects %d", projectDatas.ID)
 		}
 		if !isValid {
-			log.Error(ctx, "rbac.getAllRBACGlobalUsers> rbac_project_projects %d data corrupted", projectDatas.ID)
+			log.Error(ctx, "rbac.getAllRBACProjectIdentifiers> rbac_project_projects %d data corrupted", projectDatas.ID)
 			continue
 		}
 	}

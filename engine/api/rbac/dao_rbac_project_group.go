@@ -50,10 +50,10 @@ func getAllRBACProjectGroups(ctx context.Context, db gorp.SqlExecutor, q gorpmap
 	for _, rbacGroups := range rbacGroupIDs {
 		isValid, err := gorpmapping.CheckSignature(rbacGroups, rbacGroups.Signature)
 		if err != nil {
-			return nil, sdk.WrapError(err, "error when checking signature for rbac_global_groups %d", rbacGroups.ID)
+			return nil, sdk.WrapError(err, "error when checking signature for rbac_project_groups %d", rbacGroups.ID)
 		}
 		if !isValid {
-			log.Error(ctx, "rbac.getAllRBACGlobalUsers> rbac_global_groups %d data corrupted", rbacGroups.ID)
+			log.Error(ctx, "rbac.getAllRBACProjectGroups> rbac_project_groups %d data corrupted", rbacGroups.ID)
 			continue
 		}
 	}
