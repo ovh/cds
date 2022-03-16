@@ -120,6 +120,7 @@ type Common struct {
 	CDNLogsURL           string
 	ServiceLogger        *logrus.Logger
 	GoRoutines           *sdk.GoRoutines
+	Region               string
 }
 
 // Service is the interface for a engine service

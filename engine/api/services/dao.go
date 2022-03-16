@@ -136,6 +136,18 @@ func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, s *sdk.Service
 	return nil
 }
 
+// UpdateLastHeartbeat a service in database.
+func UpdateLastHeartbeat(ctx context.Context, db gorpmapper.SqlExecutorWithTx, s *sdk.Service) error {
+	sdb := service{Service: *s}
+	if err := gorpmapping.UpdateColumnsAndSign(ctx, db, &sdb,
+		func(cm *gorp.ColumnMap) bool {
+			return cm.ColumnName == "last_heartbeat"
+		}); err != nil {
+		return err
+	}
+	return nil
+}
+
 // Update a service in database.
 func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, s *sdk.Service) error {
 	sdb := service{Service: *s}

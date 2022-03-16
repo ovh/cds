@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -105,7 +106,11 @@ func (api *API) serviceRegister(ctx context.Context, tx gorpmapper.SqlExecutorWi
 		log.Debug(ctx, "postServiceRegisterHandler> insert new service %s(%d) registered for consumer %s", srv.Name, srv.ID, *srv.ConsumerID)
 	}
 
-	log.Info(ctx, "Registering service %s(%d) consumer: %s, session %s", srv.Name, srv.ID, consumer.ID, session.ID)
+	var strRegion string
+	if srv.Region != nil {
+		strRegion = fmt.Sprintf(" from region %q", *srv.Region)
+	}
+	log.Info(ctx, "Registering service %s(%d) %s, consumer: %s, session %s", srv.Name, srv.ID, strRegion, consumer.ID, session.ID)
 
 	_, err = authentication.LoadSessionByID(ctx, tx, session.ID)
 	if err != nil {
@@ -174,7 +179,7 @@ func (api *API) postServiceHearbeatHandler() service.Handler {
 		if a := getAuthSession(ctx); a != nil {
 			sessionID = a.ID
 		}
-		if err := services.Update(ctx, tx, s); err != nil {
+		if err := services.UpdateLastHeartbeat(ctx, tx, s); err != nil {
 			return err
 		}
 

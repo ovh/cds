@@ -71,8 +71,8 @@ type NewConsumerOptions struct {
 	Duration    time.Duration
 	GroupIDs    []int64
 	Scopes      sdk.AuthConsumerScopeDetails
-	ServiceName string
-	ServiceType string
+	ServiceName *string
+	ServiceType *string
 }
 
 func NewConsumer(ctx context.Context, db gorpmapper.SqlExecutorWithTx, opts NewConsumerOptions, parentConsumer *sdk.AuthConsumer) (*sdk.AuthConsumer, string, error) {

@@ -108,6 +108,10 @@ func (c *Common) Signin(ctx context.Context, cdsclientConfig cdsclient.ServiceCo
 		},
 	}
 
+	if c.Region != "" {
+		registerPayload.CanonicalService.Region = &c.Region
+	}
+
 	initClient := func(ctx context.Context) error {
 		var err error
 		// The call below should return the sdk.Service from the signin
@@ -157,33 +161,6 @@ func ParseServiceConfig(cfg interface{}) (sdk.ServiceConfig, error) {
 		return nil, sdk.WithStack(err)
 	}
 	return sdkConfig, nil
-}
-
-func (c *Common) PrepareSigninPayload(sdkConfig sdk.ServiceConfig) (*sdk.Service, error) {
-	if c.ServiceType == "api" {
-		return nil, nil
-	}
-
-	var srv = sdk.Service{
-		CanonicalService: sdk.CanonicalService{
-			Name:    c.ServiceName,
-			HTTPURL: c.HTTPURL,
-			Type:    c.ServiceType,
-			Config:  sdkConfig,
-		},
-		LastHeartbeat: time.Time{},
-		Version:       sdk.VERSION,
-	}
-
-	if c.PrivateKey != nil {
-		pubKeyPEM, err := jws.ExportPublicKey(c.PrivateKey)
-		if err != nil {
-			return nil, sdk.WrapError(err, "unable get public key from private key")
-		}
-		srv.PublicKey = pubKeyPEM
-	}
-
-	return &srv, nil
 }
 
 // Unregister logout the service

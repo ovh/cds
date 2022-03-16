@@ -12,8 +12,9 @@ type authConsumer struct {
 }
 
 func (c authConsumer) Canonical() gorpmapper.CanonicalForms {
-	_ = []interface{}{c.ID, c.AuthentifiedUserID, c.Type, c.Data, c.Created, c.GroupIDs, c.ScopeDetails, c.Disabled} // Checks that fields exists at compilation
+	_ = []interface{}{c.ID, c.AuthentifiedUserID, c.Type, c.Data, c.Created, c.GroupIDs, c.ScopeDetails, c.Disabled, c.ServiceName, c.ServiceType, c.ServiceRegion} // Checks that fields exists at compilation
 	return []gorpmapper.CanonicalForm{
+		"{{.ID}}{{.AuthentifiedUserID}}{{print .Type}}{{print .Data}}{{printDate .Created}}{{print .GroupIDs}}{{print .ScopeDetails}}{{print .Disabled}}{{.ServiceName}}{{.ServiceType}}{{.ServiceRegion}}",
 		"{{.ID}}{{.AuthentifiedUserID}}{{print .Type}}{{print .Data}}{{printDate .Created}}{{print .GroupIDs}}{{print .ScopeDetails}}{{print .Disabled}}",
 	}
 }

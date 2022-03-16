@@ -28,6 +28,7 @@ type CanonicalService struct {
 	HTTPURL    string        `json:"http_url" db:"http_url" cli:"url" mapstructure:"http_url"`
 	Config     ServiceConfig `json:"config" db:"config" cli:"-" mapstructure:"config"`
 	PublicKey  []byte        `json:"public_key" db:"public_key" mapstructure:"public_key"`
+	Region     *string       `json:"region" db:"region" mapstructure:"region"`
 }
 
 // Service is a µService registered on CDS API.
