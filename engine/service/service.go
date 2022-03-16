@@ -92,9 +92,10 @@ func (c *Common) Signin(ctx context.Context, cdsclientConfig cdsclient.ServiceCo
 
 	registerPayload := sdk.Service{
 		CanonicalService: sdk.CanonicalService{
-			Name:   c.Name(),
-			Type:   c.Type(),
-			Config: serviceConfig,
+			Name:    c.Name(),
+			Type:    c.Type(),
+			HTTPURL: c.HTTPURL,
+			Config:  serviceConfig,
 		},
 	}
 

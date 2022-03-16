@@ -415,6 +415,8 @@ type AuthConsumer struct {
 	Warnings           AuthConsumerWarnings        `json:"warnings,omitempty" db:"warnings"`
 	LastAuthentication *time.Time                  `json:"last_authentication,omitempty" db:"last_authentication"`
 	ValidityPeriods    AuthConsumerValidityPeriods `json:"validity_periods,omitempty" db:"validity_periods"`
+	ServiceName        string                      `json:"service_name,omitempty" db:"service_name"`
+	ServiceType        string                      `json:"service_type,omitempty" db:"service_type"`
 	// aggregates
 	AuthentifiedUser *AuthentifiedUser `json:"user,omitempty" db:"-"`
 	Groups           Groups            `json:"groups,omitempty" db:"-"`

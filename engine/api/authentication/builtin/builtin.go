@@ -65,9 +65,18 @@ func (d AuthDriver) CheckSigninRequest(req sdk.AuthConsumerSigninRequest) error 
 
 // NewConsumer returns a new builtin consumer for given data.
 // The parent consumer should be given with all data loaded including the authentified user.
-func NewConsumer(ctx context.Context, db gorpmapper.SqlExecutorWithTx, name, description string, duration time.Duration, parentConsumer *sdk.AuthConsumer,
-	groupIDs []int64, scopes sdk.AuthConsumerScopeDetails) (*sdk.AuthConsumer, string, error) {
-	if name == "" {
+type NewConsumerOptions struct {
+	Name        string
+	Description string
+	Duration    time.Duration
+	GroupIDs    []int64
+	Scopes      sdk.AuthConsumerScopeDetails
+	ServiceName string
+	ServiceType string
+}
+
+func NewConsumer(ctx context.Context, db gorpmapper.SqlExecutorWithTx, opts NewConsumerOptions, parentConsumer *sdk.AuthConsumer) (*sdk.AuthConsumer, string, error) {
+	if opts.Name == "" {
 		return nil, "", sdk.NewErrorFrom(sdk.ErrWrongRequest, "name should be given to create a built in consumer")
 	}
 
@@ -78,29 +87,31 @@ func NewConsumer(ctx context.Context, db gorpmapper.SqlExecutorWithTx, name, des
 		// Only if parentGroupIDs aren't empty. Because empty means all groups access
 		if len(parentConsumer.GroupIDs) > 0 {
 			parentGroupIDs := parentConsumer.GetGroupIDs()
-			for i := range groupIDs {
-				if !sdk.IsInInt64Array(groupIDs[i], parentGroupIDs) {
-					return nil, "", sdk.WrapError(sdk.ErrWrongRequest, "invalid given group id %d", groupIDs[i])
+			for i := range opts.GroupIDs {
+				if !sdk.IsInInt64Array(opts.GroupIDs[i], parentGroupIDs) {
+					return nil, "", sdk.WrapError(sdk.ErrWrongRequest, "invalid given group id %d", opts.GroupIDs[i])
 				}
 			}
 		}
 	}
 
 	// Check that given scopes are valid and if they match parent scopes
-	if err := checkNewConsumerScopes(parentConsumer.ScopeDetails, scopes); err != nil {
+	if err := checkNewConsumerScopes(parentConsumer.ScopeDetails, opts.Scopes); err != nil {
 		return nil, "", err
 	}
 
 	c := sdk.AuthConsumer{
-		Name:               name,
-		Description:        description,
+		Name:               opts.Name,
+		Description:        opts.Description,
 		ParentID:           &parentConsumer.ID,
 		AuthentifiedUserID: parentConsumer.AuthentifiedUserID,
 		Type:               sdk.ConsumerBuiltin,
 		Data:               map[string]string{},
-		GroupIDs:           groupIDs,
-		ScopeDetails:       scopes,
-		ValidityPeriods:    sdk.NewAuthConsumerValidityPeriod(time.Now(), duration),
+		GroupIDs:           opts.GroupIDs,
+		ScopeDetails:       opts.Scopes,
+		ValidityPeriods:    sdk.NewAuthConsumerValidityPeriod(time.Now(), opts.Duration),
+		ServiceName:        opts.ServiceName,
+		ServiceType:        opts.ServiceType,
 	}
 
 	if err := authentication.InsertConsumer(ctx, db, &c); err != nil {
