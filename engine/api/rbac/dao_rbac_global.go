@@ -4,11 +4,11 @@ import (
 	"context"
 
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
-	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/gorpmapper"
+	"github.com/ovh/cds/sdk"
 )
 
 func insertRbacGlobal(ctx context.Context, db gorpmapper.SqlExecutorWithTx, rg *rbacGlobal) error {
@@ -51,30 +51,44 @@ func insertRbacGlobalGroup(ctx context.Context, db gorpmapper.SqlExecutorWithTx,
 	return nil
 }
 
-func loadRbacGlobalUsersTargeted(ctx context.Context, db gorp.SqlExecutor, rbacGlobal *rbacGlobal) error {
-	users, err := user.LoadUsersByRbacGlobal(ctx, db, rbacGlobal.ID)
-	if err != nil {
+func getAllRBACGlobalUsers(ctx context.Context, db gorp.SqlExecutor, rbacGlobal *rbacGlobal) error {
+	q := gorpmapping.NewQuery("SELECT * FROM  rbac_global_users WHERE rbac_global_id = $1").Args(rbacGlobal.ID)
+	var rbacUserIDS []rbacGlobalUser
+	if err := gorpmapping.GetAll(ctx, db, q, &rbacUserIDS); err != nil {
 		return err
 	}
-	rbacGlobal.RBACUsersName = make([]string, 0, len(users))
-	rbacGlobal.RBACUsersIDs = make([]string, 0, len(users))
-	for _, u := range users {
-		rbacGlobal.RBACUsersName = append(rbacGlobal.RBACUsersName, u.Username)
-		rbacGlobal.RBACUsersIDs = append(rbacGlobal.RBACUsersIDs, u.ID)
+	rbacGlobal.RBACGlobal.RBACUsersIDs = make([]string, 0, len(rbacUserIDS))
+	for _, rbacUsers := range rbacUserIDS {
+		isValid, err := gorpmapping.CheckSignature(rbacUsers, rbacUsers.Signature)
+		if err != nil {
+			return sdk.WrapError(err, "error when checking signature for rbac_global_users %d", rbacUsers.ID)
+		}
+		if !isValid {
+			log.Error(ctx, "rbac.getAllRBACGlobalUsers> rbac_global_user %d data corrupted", rbacUsers.ID)
+			continue
+		}
+		rbacGlobal.RBACGlobal.RBACUsersIDs = append(rbacGlobal.RBACGlobal.RBACUsersIDs, rbacUsers.RbacGlobalUserID)
 	}
 	return nil
 }
 
-func loadRbacGlobalGroupsTargeted(ctx context.Context, db gorp.SqlExecutor, rbacGlobal *rbacGlobal) error {
-	groups, err := group.LoadGroupByRbacGlobal(ctx, db, rbacGlobal.ID)
-	if err != nil {
+func getAllRBACGlobalGroups(ctx context.Context, db gorp.SqlExecutor, rbacGlobal *rbacGlobal) error {
+	q := gorpmapping.NewQuery("SELECT * FROM rbac_global_groups WHERE rbac_global_id = $1").Args(rbacGlobal.ID)
+	var rbacGroupIDs []rbacGlobalGroup
+	if err := gorpmapping.GetAll(ctx, db, q, &rbacGroupIDs); err != nil {
 		return err
 	}
-	rbacGlobal.RBACGroupsName = make([]string, 0, len(groups))
-	rbacGlobal.RBACGroupsIDs = make([]int64, 0, len(groups))
-	for _, g := range groups {
-		rbacGlobal.RBACGroupsName = append(rbacGlobal.RBACGroupsName, g.Name)
-		rbacGlobal.RBACGroupsIDs = append(rbacGlobal.RBACGroupsIDs, g.ID)
+	rbacGlobal.RBACGlobal.RBACGroupsIDs = make([]int64, 0, len(rbacGroupIDs))
+	for _, rbacGroups := range rbacGroupIDs {
+		isValid, err := gorpmapping.CheckSignature(rbacGroups, rbacGroups.Signature)
+		if err != nil {
+			return sdk.WrapError(err, "error when checking signature for rbac_global_groups %d", rbacGroups.ID)
+		}
+		if !isValid {
+			log.Error(ctx, "rbac.getAllRBACGlobalUsers> rbac_global_groups %d data corrupted", rbacGroups.ID)
+			continue
+		}
+		rbacGlobal.RBACGlobal.RBACGroupsIDs = append(rbacGlobal.RBACGlobal.RBACGroupsIDs, rbacGroups.RbacGlobalGroupID)
 	}
 	return nil
 }

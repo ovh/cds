@@ -3,7 +3,6 @@ package rbac
 import (
 	"context"
 	"fmt"
-	"github.com/ovh/cds/engine/api/project"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -57,18 +56,16 @@ projects:
 
 	require.NoError(t, Insert(context.Background(), db, &r))
 
-	prjusers1, err := project.LoadRbacProjectIDsByUserID(context.TODO(), db, sdk.RoleRead, users1.ID)
+	prjusers1, err := LoadProjectIDsByRoleAndUserID(context.TODO(), db, sdk.RoleRead, users1.ID)
 	require.NoError(t, err)
 	t.Logf("%+v", prjusers1)
 	require.Len(t, prjusers1, 1)
-	require.Equal(t, prjusers1[0].ID, proj1.ID)
-	require.Equal(t, prjusers1[0].Key, proj1.Key)
+	require.Equal(t, prjusers1[0], proj1.ID)
 
-	prjusers2, err := project.LoadRbacProjectIDsByUserID(context.TODO(), db, sdk.RoleManage, users2.ID)
+	prjusers2, err := LoadProjectIDsByRoleAndUserID(context.TODO(), db, sdk.RoleManage, users2.ID)
 	require.NoError(t, err)
 	require.Len(t, prjusers2, 1)
-	require.Equal(t, prjusers2[0].ID, proj2.ID)
-	require.Equal(t, prjusers2[0].Key, proj2.Key)
+	require.Equal(t, prjusers2[0], proj2.ID)
 }
 
 func TestLoadRbac(t *testing.T) {
@@ -115,10 +112,7 @@ globals:
 	// Global part
 	require.Equal(t, len(r.Globals), len(rbacDB.Globals))
 	require.Equal(t, r.Globals[0].Role, rbacDB.Globals[0].Role)
-	require.Equal(t, len(r.Globals[0].RBACUsersName), len(rbacDB.Globals[0].RBACUsersName))
-	require.Equal(t, users1.Username, rbacDB.Globals[0].RBACUsersName[0])
 	require.Equal(t, users1.ID, rbacDB.Globals[0].RBACUsersIDs[0])
-	require.Equal(t, len(r.Globals[0].RBACUsersName), len(rbacDB.Globals[0].RBACUsersName))
 
 	// Project part
 	require.Equal(t, len(r.Projects), len(rbacDB.Projects))

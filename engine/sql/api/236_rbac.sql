@@ -59,7 +59,7 @@ CREATE TABLE rbac_project
 SELECT create_foreign_key_idx_cascade('FK_rbac_project', 'rbac_project', 'rbac', 'rbac_uuid', 'uuid');
 SELECT create_index('rbac_project', 'idx_rbac_project_role', 'role');
 
-CREATE TABLE rbac_project_ids
+CREATE TABLE rbac_project_projects
 (
     "id"              BIGSERIAL PRIMARY KEY,
     "rbac_project_id" BIGINT,
@@ -67,9 +67,9 @@ CREATE TABLE rbac_project_ids
     sig               BYTEA,
     signer            TEXT
 );
-SELECT create_foreign_key_idx_cascade('FK_rbac_project_ids', 'rbac_project_ids', 'rbac_project', 'rbac_project_id', 'id');
-SELECT create_foreign_key_idx_cascade('FK_rbac_project_ids_project', 'rbac_project_ids', 'project', 'project_id', 'id');
-SELECT create_unique_index('rbac_project_ids', 'idx_unq_rbac_project_ids', 'rbac_project_id,project_id');
+SELECT create_foreign_key_idx_cascade('FK_rbac_project_projects', 'rbac_project_projects', 'rbac_project', 'rbac_project_id', 'id');
+SELECT create_foreign_key_idx_cascade('FK_rbac_project_projects_project', 'rbac_project_projects', 'project', 'project_id', 'id');
+SELECT create_unique_index('rbac_project_projects', 'idx_unq_rbac_project_projects', 'rbac_project_id,project_id');
 
 CREATE TABLE rbac_project_users
 (
@@ -98,7 +98,7 @@ SELECT create_unique_index('rbac_project_groups', 'idx_unq_rbac_project_groups',
 -- +migrate Down
 DROP TABLE rbac_project_groups;
 DROP TABLE rbac_project_users;
-DROP TABLE rbac_project_ids;
+DROP TABLE rbac_project_projects;
 DROP TABLE rbac_project;
 DROP TABLE rbac_global_groups;
 DROP TABLE rbac_global_users;

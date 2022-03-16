@@ -88,6 +88,7 @@ func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...
 	}
 	if !isValid {
 		log.Error(ctx, "rbac.get> rbac %s (%s) data corrupted", rbacDB.Name, rbacDB.UUID)
+		return r, sdk.WithStack(sdk.ErrNotFound)
 	}
 	for _, f := range opts {
 		if err := f(ctx, db, &rbacDB); err != nil {

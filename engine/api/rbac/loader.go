@@ -49,15 +49,16 @@ func loadRbacProject(ctx context.Context, db gorp.SqlExecutor, rbac *rbac) error
 		}
 		if !isValid {
 			log.Error(ctx, "rbac_project.get> rbac_project %d data corrupted", rp.ID)
+			continue
 		}
-		if err := loadRbacProjectTargeted(ctx, db, rp); err != nil {
+		if err := loadRBACProjectIdentifiers(ctx, db, rp); err != nil {
 			return err
 		}
 		if !rp.All {
-			if err := loadRbacRbacProjectUsersTargeted(ctx, db, rp); err != nil {
+			if err := loadRBACProjectUsers(ctx, db, rp); err != nil {
 				return err
 			}
-			if err := loadRbacRbacProjectGroupsTargeted(ctx, db, rp); err != nil {
+			if err := loadRBACProjectGroups(ctx, db, rp); err != nil {
 				return err
 			}
 		}
@@ -81,11 +82,12 @@ func loadRbacGlobal(ctx context.Context, db gorp.SqlExecutor, rbac *rbac) error 
 		}
 		if !isValid {
 			log.Error(ctx, "rbac.loadRbacGlobal> rbac_global %d data corrupted", rg.ID)
+			continue
 		}
-		if err := loadRbacGlobalUsersTargeted(ctx, db, rg); err != nil {
+		if err := getAllRBACGlobalUsers(ctx, db, rg); err != nil {
 			return err
 		}
-		if err := loadRbacGlobalGroupsTargeted(ctx, db, rg); err != nil {
+		if err := getAllRBACGlobalGroups(ctx, db, rg); err != nil {
 			return err
 		}
 		rbac.Globals = append(rbac.Globals, rg.RBACGlobal)
