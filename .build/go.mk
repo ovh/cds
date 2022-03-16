@@ -88,7 +88,7 @@ $(GO_GOJUNIT):
 
 GO_COBERTURA = ${GOPATH}/bin/gocover-cobertura
 $(GO_COBERTURA):
-	go get -u github.com/t-yuki/gocover-cobertura
+	go get -u github.com/richardlt/gocover-cobertura
 
 GO_XUTOOLS = ${GOPATH}/bin/xutools
 $(GO_XUTOOLS):
