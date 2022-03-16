@@ -90,12 +90,21 @@ func (c *Common) Signin(ctx context.Context, cdsclientConfig cdsclient.ServiceCo
 		return err
 	}
 
+	var pubKey []byte
+	if c.PrivateKey != nil {
+		pubKey, err = jws.ExportPublicKey(c.PrivateKey)
+		if err != nil {
+			return err
+		}
+	}
+
 	registerPayload := sdk.Service{
 		CanonicalService: sdk.CanonicalService{
-			Name:    c.Name(),
-			Type:    c.Type(),
-			HTTPURL: c.HTTPURL,
-			Config:  serviceConfig,
+			Name:      c.Name(),
+			Type:      c.Type(),
+			HTTPURL:   c.HTTPURL,
+			Config:    serviceConfig,
+			PublicKey: pubKey,
 		},
 	}
 
