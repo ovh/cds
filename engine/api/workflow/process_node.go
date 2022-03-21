@@ -245,6 +245,11 @@ func processNode(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cac
 			return nil, false, sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "cannot get client %s %s got: %v", proj.Key, app.VCSServer, err)
 		}
 
+		// We can't have both git.branch and git.tag values
+		if currentJobGitValues["git.branch"] != "" && currentJobGitValues["git.tag"] != "" {
+			return nil, false, sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("invalid git variables"))
+		}
+
 		vcsInf, errVcs = getVCSInfos(ctx, db, store, proj.Key, vcsServer, currentJobGitValues, app.Name, app.VCSServer, app.RepositoryFullname)
 		if errVcs != nil {
 			AddWorkflowRunInfo(wr, sdk.SpawnMsgNew(*sdk.MsgWorkflowError, sdk.ExtractHTTPError(errVcs)))
