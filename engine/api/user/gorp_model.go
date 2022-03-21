@@ -12,6 +12,7 @@ type authentifiedUser struct {
 }
 
 func (u authentifiedUser) Canonical() gorpmapper.CanonicalForms {
+	_ = []interface{}{u.ID, u.Username, u.Fullname, u.Ring, u.Created}
 	return []gorpmapper.CanonicalForm{
 		"{{.ID}}{{.Username}}{{.Fullname}}{{.Ring}}{{printDate .Created}}",
 	}
@@ -23,6 +24,7 @@ type userContact struct {
 }
 
 func (c userContact) Canonical() gorpmapper.CanonicalForms {
+	_ = []interface{}{c.ID, c.UserID, c.Type, c.Value, c.Primary, c.Verified}
 	return []gorpmapper.CanonicalForm{
 		"{{.ID}}{{.UserID}}{{.Type}}{{.Value}}{{.Primary}}{{.Verified}}",
 	}

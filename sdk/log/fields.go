@@ -17,6 +17,7 @@ const (
 	AuthUserID         = log.Field("auth_user_id")
 	AuthUsername       = log.Field("auth_user_name")
 	AuthWorkerName     = log.Field("auth_worker_name")
+	RbackCheckerName   = log.Field("rbac_checker_name")
 	Deprecated         = log.Field("deprecated")
 	Duration           = log.Field("duration_milliseconds_num")
 	Goroutine          = log.Field("goroutine")
@@ -49,22 +50,23 @@ func init() {
 		AuthSessionID,
 		AuthSessionIAT,
 		AuthSessionTokenID,
-		IPAddress,
-		Method,
-		Route,
-		RequestURI,
 		Deprecated,
+		Duration,
+		Goroutine,
 		Handler,
+		IPAddress,
 		Latency,
 		LatencyNum,
+		Method,
+		RbackCheckerName,
+		Route,
+		RequestID,
+		RequestURI,
+		Service,
+		Size,
+		Stacktrace,
 		Status,
 		StatusNum,
-		Goroutine,
-		RequestID,
-		Service,
-		Stacktrace,
-		Duration,
-		Size,
 		Sudo,
 	)
 }

@@ -35,9 +35,7 @@ func writeNoContentPostMiddleware(ctx context.Context, w http.ResponseWriter, re
 	return ctx, nil
 }
 
-// GetRoute returns the routes given a handler
-func (r *Router) GetRoute(method string, handler service.HandlerFunc, vars map[string]string) string {
-	p1 := reflect.ValueOf(handler()).Pointer()
+func (r *Router) getRoute(method string, p1 uintptr, routeName string, vars map[string]string) string {
 	var url string
 	for uri, routerConfig := range r.mapRouterConfigs {
 		rc := routerConfig.Config[method]
@@ -59,10 +57,24 @@ func (r *Router) GetRoute(method string, handler service.HandlerFunc, vars map[s
 	}
 
 	if url == "" {
-		log.Debug(context.Background(), "Cant find route for Handler %s %v", method, handler)
-	}
 
+		log.Debug(context.Background(), "Cant find route for Handler %s %v", method, routeName)
+	}
 	return url
+}
+
+func (r *Router) GetRouteV2(method string, handler service.HandlerFuncV2, vars map[string]string) string {
+	routeHandler, _ := handler()
+	p1 := reflect.ValueOf(routeHandler).Pointer()
+	routeName := sdk.GetFuncName(routeHandler)
+	return r.getRoute(method, p1, routeName, vars)
+}
+
+// GetRoute returns the routes given a handler
+func (r *Router) GetRoute(method string, handler service.HandlerFunc, vars map[string]string) string {
+	p1 := reflect.ValueOf(handler()).Pointer()
+	routeName := sdk.GetFuncName(handler)
+	return r.getRoute(method, p1, routeName, vars)
 }
 
 // FormString return a string

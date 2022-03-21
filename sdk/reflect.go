@@ -2,8 +2,17 @@ package sdk
 
 import (
 	"reflect"
+	"runtime"
 	"strings"
 )
+
+func GetFuncName(i interface{}) string {
+	name := runtime.FuncForPC(reflect.ValueOf(i).Pointer()).Name()
+	name = strings.Replace(name, ".func1", "", 1)
+	name = strings.Replace(name, ".1", "", 1)
+	name = strings.Replace(name, "github.com/ovh/cds/engine/", "", 1)
+	return name
+}
 
 // From https://github.com/fsamin/go-dump/blob/master/helper.go
 // Apache-2.0 License

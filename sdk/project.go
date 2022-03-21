@@ -10,6 +10,11 @@ import (
 	"github.com/mitchellh/hashstructure"
 )
 
+type ProjectIdentifiers struct {
+	ID  int64  `json:"-" yaml:"-" db:"id"`
+	Key string `json:"-" yaml:"-"db:"projectkey"`
+}
+
 type Projects []Project
 
 func (projects Projects) Keys() []string {

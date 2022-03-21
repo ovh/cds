@@ -263,10 +263,7 @@ func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.Han
 	for i := range handlers {
 		handlers[i].CleanURL = cleanURL
 		handlers[i].AllowedScopes = scope
-		name := runtime.FuncForPC(reflect.ValueOf(handlers[i].Handler).Pointer()).Name()
-		name = strings.Replace(name, ".func1", "", 1)
-		name = strings.Replace(name, ".1", "", 1)
-		name = strings.Replace(name, "github.com/ovh/cds/engine/", "", 1)
+		name := sdk.GetFuncName(handlers[i].Handler)
 		handlers[i].Name = name
 		cfg.Config[handlers[i].Method] = handlers[i]
 	}
@@ -484,6 +481,18 @@ func (r *Router) GET(h service.HandlerFunc, cfg ...service.HandlerConfigParam) *
 	rc.Handler = h()
 	rc.Method = "GET"
 	rc.PermissionLevel = sdk.PermissionRead
+	for _, c := range cfg {
+		c(&rc)
+	}
+	return &rc
+}
+
+func (r *Router) POSTv2(h service.HandlerFuncV2, cfg ...service.HandlerConfigParam) *service.HandlerConfig {
+	var rc service.HandlerConfig
+	handler, rbacCheckers := h()
+	rc.Handler = handler
+	rc.RbacCheckers = rbacCheckers
+	rc.Method = "POST"
 	for _, c := range cfg {
 		c(&rc)
 	}
