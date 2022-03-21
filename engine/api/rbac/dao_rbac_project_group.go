@@ -47,6 +47,8 @@ func getAllRBACProjectGroups(ctx context.Context, db gorp.SqlExecutor, q gorpmap
 	if err := gorpmapping.GetAll(ctx, db, q, &rbacGroupIDs); err != nil {
 		return nil, err
 	}
+
+	groupsFiltered := make([]rbacProjectGroup, 0, len(rbacGroupIDs))
 	for _, rbacGroups := range rbacGroupIDs {
 		isValid, err := gorpmapping.CheckSignature(rbacGroups, rbacGroups.Signature)
 		if err != nil {
@@ -56,6 +58,7 @@ func getAllRBACProjectGroups(ctx context.Context, db gorp.SqlExecutor, q gorpmap
 			log.Error(ctx, "rbac.getAllRBACProjectGroups> rbac_project_groups %d data corrupted", rbacGroups.ID)
 			continue
 		}
+		groupsFiltered = append(groupsFiltered, rbacGroups)
 	}
-	return rbacGroupIDs, nil
+	return groupsFiltered, nil
 }

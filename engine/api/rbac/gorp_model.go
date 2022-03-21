@@ -12,6 +12,7 @@ type rbac struct {
 }
 
 func (r rbac) Canonical() gorpmapper.CanonicalForms {
+	_ = []interface{}{r.UUID, r.Name}
 	return []gorpmapper.CanonicalForm{
 		"{{.UUID}}{{.Name}}",
 	}
@@ -25,6 +26,7 @@ type rbacGlobal struct {
 }
 
 func (rg rbacGlobal) Canonical() gorpmapper.CanonicalForms {
+	_ = []interface{}{rg.ID, rg.RbacUUID, rg.Role}
 	return []gorpmapper.CanonicalForm{
 		"{{.ID}}{{.RbacUUID}}{{.Role}}",
 	}
@@ -38,6 +40,7 @@ type rbacGlobalUser struct {
 }
 
 func (rgu rbacGlobalUser) Canonical() gorpmapper.CanonicalForms {
+	_ = []interface{}{rgu.ID, rgu.RbacGlobalID, rgu.RbacGlobalUserID}
 	return []gorpmapper.CanonicalForm{
 		"{{.ID}}{{.RbacGlobalID}}{{.RbacGlobalUserID}}",
 	}
@@ -51,6 +54,7 @@ type rbacGlobalGroup struct {
 }
 
 func (rgg rbacGlobalGroup) Canonical() gorpmapper.CanonicalForms {
+	_ = []interface{}{rgg.ID, rgg.RbacGlobalID, rgg.RbacGlobalGroupID}
 	return []gorpmapper.CanonicalForm{
 		"{{.ID}}{{.RbacGlobalID}}{{.RbacGlobalGroupID}}",
 	}
@@ -64,6 +68,7 @@ type rbacProject struct {
 }
 
 func (rp rbacProject) Canonical() gorpmapper.CanonicalForms {
+	_ = []interface{}{rp.ID, rp.RbacUUID, rp.Role, rp.All}
 	return []gorpmapper.CanonicalForm{
 		"{{.ID}}{{.RbacUUID}}{{.Role}}{{.All}}",
 	}
@@ -77,6 +82,7 @@ type rbacProjectIdentifiers struct {
 }
 
 func (rpi rbacProjectIdentifiers) Canonical() gorpmapper.CanonicalForms {
+	_ = []interface{}{rpi.ID, rpi.RbacProjectID, rpi.ProjectID}
 	return []gorpmapper.CanonicalForm{
 		"{{.ID}}{{.RbacProjectID}}{{.ProjectID}}",
 	}
@@ -90,6 +96,7 @@ type rbacProjectUser struct {
 }
 
 func (rgu rbacProjectUser) Canonical() gorpmapper.CanonicalForms {
+	_ = []interface{}{rgu.ID, rgu.RbacProjectID, rgu.RbacProjectUserID}
 	return []gorpmapper.CanonicalForm{
 		"{{.ID}}{{.RbacProjectID}}{{.RbacProjectUserID}}",
 	}
@@ -103,6 +110,7 @@ type rbacProjectGroup struct {
 }
 
 func (rgg rbacProjectGroup) Canonical() gorpmapper.CanonicalForms {
+	_ = []interface{}{rgg.ID, rgg.RbacProjectID, rgg.RbacProjectGroupID}
 	return []gorpmapper.CanonicalForm{
 		"{{.ID}}{{.RbacProjectID}}{{.RbacProjectGroupID}}",
 	}

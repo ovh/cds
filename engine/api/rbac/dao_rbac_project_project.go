@@ -16,6 +16,7 @@ func getAllRBACProjectIdentifiers(ctx context.Context, db gorp.SqlExecutor, q go
 	if err := gorpmapping.GetAll(ctx, db, q, &rbacProjectIdentifier); err != nil {
 		return nil, err
 	}
+	rbacProjectIdentifierFiltered := make([]rbacProjectIdentifiers, 0, len(rbacProjectIdentifier))
 	for _, projectDatas := range rbacProjectIdentifier {
 		isValid, err := gorpmapping.CheckSignature(projectDatas, projectDatas.Signature)
 		if err != nil {
@@ -25,8 +26,9 @@ func getAllRBACProjectIdentifiers(ctx context.Context, db gorp.SqlExecutor, q go
 			log.Error(ctx, "rbac.getAllRBACProjectIdentifiers> rbac_project_projects %d data corrupted", projectDatas.ID)
 			continue
 		}
+		rbacProjectIdentifierFiltered = append(rbacProjectIdentifierFiltered, projectDatas)
 	}
-	return rbacProjectIdentifier, nil
+	return rbacProjectIdentifierFiltered, nil
 }
 
 func loadRBACProjectIdentifiers(ctx context.Context, db gorp.SqlExecutor, rbacProject *rbacProject) error {

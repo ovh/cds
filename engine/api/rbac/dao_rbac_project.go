@@ -73,6 +73,8 @@ func getAllRbacProjects(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.
 	if err := gorpmapping.GetAll(ctx, db, q, &rbacProjects); err != nil {
 		return nil, err
 	}
+
+	projectsFiltered := make([]rbacProject, 0, len(rbacProjects))
 	for _, projectDatas := range rbacProjects {
 		isValid, err := gorpmapping.CheckSignature(projectDatas, projectDatas.Signature)
 		if err != nil {
@@ -82,8 +84,9 @@ func getAllRbacProjects(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.
 			log.Error(ctx, "rbac.getAllRbacProjects> rbac_project %d data corrupted", projectDatas.ID)
 			continue
 		}
+		projectsFiltered = append(projectsFiltered, projectDatas)
 	}
-	return rbacProjects, nil
+	return projectsFiltered, nil
 }
 
 func loadRbacProjectsByRoleAndIDs(ctx context.Context, db gorp.SqlExecutor, role string, rbacProjectIDs []int64) ([]rbacProject, error) {
