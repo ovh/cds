@@ -12,7 +12,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/rockbears/log"
 
-	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/worker"
@@ -111,11 +110,6 @@ func (api *API) serviceRegister(ctx context.Context, tx gorpmapper.SqlExecutorWi
 		strRegion = fmt.Sprintf(" from region %q", *srv.Region)
 	}
 	log.Info(ctx, "Registering service %s(%d) %s, consumer: %s, session %s", srv.Name, srv.ID, strRegion, consumer.ID, session.ID)
-
-	_, err = authentication.LoadSessionByID(ctx, tx, session.ID)
-	if err != nil {
-		return err
-	}
 
 	if err := services.UpsertStatus(ctx, tx, *srv, session.ID); err != nil {
 		return sdk.WithStack(err)
