@@ -178,6 +178,19 @@ type BuildNumberAndHash struct {
 	RemoteURL   string
 }
 
+type VCSProject struct {
+	ID           int64     `json:"-" db:"id" yml:"-"`
+	Name         string    `json:"name" db:"name" yml:"-"`
+	Type         string    `json:"type" db:"type" yml:"-"`
+	Created      time.Time `json:"created" db:"created" yml:"-"`
+	LastModified time.Time `json:"last_modified" db:"last_modified" yml:"-"`
+	CreatedBy    string    `json:"created_by" db:"created_by" yml:"-"`
+	ProjectID    int64     `json:"-" db:"project_id" yml:"-"`
+	Username     string    `json:"username" db:"username" yml:"-"`
+	URL          string    `json:"url" db:"url" yml:"-"`
+	Value        []byte    `json:"-" db:"cypher_value" gorpmapping:"encrypted,ID,Name,ProjectID,Type"`
+}
+
 // VCSConfiguration represent a small vcs configuration
 type VCSConfiguration struct {
 	Type     string `json:"type"`
