@@ -121,11 +121,12 @@ export class WorkflowNotificationFormComponent implements OnInit {
     createNotification(): void {
         this.loading = true;
         this._notification.node_id = [];
-        this._notification.source_node_ref.forEach(source => {
-            let n = Workflow.getAllNodes(this.workflow).find(p => p.name === source);
-            this._notification.node_id.push(n.id);
-        });
-
+        if (this._notification.source_node_ref) {
+            this._notification.source_node_ref.forEach(source => {
+                let n = Workflow.getAllNodes(this.workflow).find(p => p.name === source);
+                this._notification.node_id.push(n.id);
+            });
+        }
         if (this.selectedUsers != null) {
             this._notification.settings.recipients = this.selectedUsers.split(',');
         }
