@@ -173,7 +173,7 @@ func UpsertStatus(ctx context.Context, db gorpmapper.SqlExecutorWithTx, s sdk.Se
 	}
 	query := `INSERT INTO service_status(monitoring_status, service_id, auth_session_id) VALUES($1,$2, $3)
 	ON CONFLICT (service_id, auth_session_id) DO UPDATE SET monitoring_status = $1, service_id = $2, auth_session_id = $3`
-	log.Info(ctx, "updating service %d status for session %q", s.ID, authSessionID)
+	log.Debug(ctx, "updating service %d status for session %q", s.ID, authSessionID)
 	_, err := db.Exec(query, s.MonitoringStatus, s.ID, authSessionID)
 	return sdk.WithStack(err)
 }
