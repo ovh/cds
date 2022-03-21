@@ -3,7 +3,7 @@ CREATE TABLE vcs_server
 (
     "id"            BIGSERIAL PRIMARY KEY,
     "name"          VARCHAR(255) NOT NULL,
-    "type"          VARCHAR(20) NOT NULL,
+    "type"          VARCHAR(64) NOT NULL,
     "created"       TIMESTAMP WITH TIME ZONE DEFAULT LOCALTIMESTAMP,
     "last_modified" TIMESTAMP WITH TIME ZONE DEFAULT LOCALTIMESTAMP,
     "created_by"    VARCHAR(255) NOT NULL,

@@ -24,7 +24,7 @@ func TestCrud(t *testing.T) {
 	vcsProject := &sdk.VCSProject{
 		Name:      "foo",
 		Type:      "github",
-		Value:     []byte("my-secret"),
+		Token:     []byte("my-secret"),
 		Username:  "the-username",
 		ProjectID: proj1.ID,
 	}
@@ -42,10 +42,10 @@ func TestCrud(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 1, len(all))
 	require.Equal(t, "the-username", all[0].Username)
-	require.Equal(t, "", string(all[0].Value)) // not decrypted
+	require.Equal(t, "", string(all[0].Token)) // not decrypted
 
 	all[0].Username = "the-username-updated"
-	all[0].Value = []byte("my-secret-updated")
+	all[0].Token = []byte("my-secret-updated")
 
 	err = Update(context.TODO(), db, &all[0])
 	require.NoError(t, err)
@@ -53,7 +53,7 @@ func TestCrud(t *testing.T) {
 	vcs, err := LoadVCSByProjectWithDecryption(context.Background(), db, proj1.ID, "foo")
 	require.NoError(t, err)
 	require.Equal(t, "the-username-updated", vcs.Username)
-	require.Equal(t, "my-secret-updated", string(vcs.Value)) // decrypted
+	require.Equal(t, "my-secret-updated", string(vcs.Token)) // decrypted
 
 	err = Delete(db, proj1.ID, "foo")
 	require.NoError(t, err)
