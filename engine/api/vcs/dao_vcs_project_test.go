@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
@@ -22,38 +23,38 @@ func TestCrud(t *testing.T) {
 	proj2 := assets.InsertTestProject(t, db, cache, key2, key2)
 
 	vcsProject := &sdk.VCSProject{
-		Name:      "foo",
-		Type:      "github",
-		Token:     []byte("my-secret"),
-		Username:  "the-username",
-		ProjectID: proj1.ID,
+		Name:        "foo",
+		Type:        "github",
+		AuthToken:   []byte("my-secret"),
+		Description: "the-username",
+		ProjectID:   proj1.ID,
 	}
 
 	err = Insert(context.TODO(), db, vcsProject)
 	require.NoError(t, err)
-	require.True(t, vcsProject.ID > 0)
+	require.NotEmpty(t, vcsProject.ID)
 
 	vcsProject.ProjectID = proj2.ID
-	vcsProject.Username = "the-2-username"
+	vcsProject.Description = "the-2-username"
 	err = Insert(context.TODO(), db, vcsProject)
 	require.NoError(t, err)
 
 	all, err := LoadAllVCSByProject(context.Background(), db, proj1.ID)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(all))
-	require.Equal(t, "the-username", all[0].Username)
-	require.Equal(t, "", string(all[0].Token)) // not decrypted
+	require.Equal(t, "the-username", all[0].Description)
+	require.Equal(t, "", string(all[0].AuthToken)) // not decrypted
 
-	all[0].Username = "the-username-updated"
-	all[0].Token = []byte("my-secret-updated")
+	all[0].Description = "the-username-updated"
+	all[0].AuthToken = []byte("my-secret-updated")
 
 	err = Update(context.TODO(), db, &all[0])
 	require.NoError(t, err)
 
-	vcs, err := LoadVCSByProjectWithDecryption(context.Background(), db, proj1.ID, "foo")
+	vcs, err := LoadVCSByProject(context.Background(), db, proj1.ID, "foo", gorpmapping.GetOptions.WithDecryption)
 	require.NoError(t, err)
-	require.Equal(t, "the-username-updated", vcs.Username)
-	require.Equal(t, "my-secret-updated", string(vcs.Token)) // decrypted
+	require.Equal(t, "the-username-updated", vcs.Description)
+	require.Equal(t, "my-secret-updated", string(vcs.AuthToken)) // decrypted
 
 	err = Delete(db, proj1.ID, "foo")
 	require.NoError(t, err)

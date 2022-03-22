@@ -179,16 +179,17 @@ type BuildNumberAndHash struct {
 }
 
 type VCSProject struct {
-	ID           int64     `json:"-" db:"id" yml:"-"`
-	Name         string    `json:"name" db:"name" yml:"-"`
-	Type         string    `json:"type" db:"type" yml:"-"`
-	Created      time.Time `json:"created" db:"created" yml:"-"`
-	LastModified time.Time `json:"last_modified" db:"last_modified" yml:"-"`
-	CreatedBy    string    `json:"created_by" db:"created_by" yml:"-"`
-	ProjectID    int64     `json:"-" db:"project_id" yml:"-"`
-	Username     string    `json:"username" db:"username" yml:"-"`
-	URL          string    `json:"url" db:"url" yml:"-"`
-	Token        []byte    `json:"-" db:"cypher_value" gorpmapping:"encrypted,ID,Name,ProjectID,Type"`
+	ID           string    `json:"-" db:"id"`
+	Name         string    `json:"name" db:"name"`
+	Type         string    `json:"type" db:"type"`
+	Created      time.Time `json:"created" db:"created"`
+	LastModified time.Time `json:"last_modified" db:"last_modified"`
+	CreatedBy    string    `json:"created_by" db:"created_by"`
+	ProjectID    int64     `json:"-" db:"project_id"`
+	Description  string    `json:"description" db:"description"`
+	URL          string    `json:"url" db:"url"`
+	AuthToken    []byte    `json:"-" db:"auth_token" gorpmapping:"encrypted,ProjectID"`
+	AuthUsername []byte    `json:"-" db:"auth_username"`
 }
 
 // VCSConfiguration represent a small vcs configuration

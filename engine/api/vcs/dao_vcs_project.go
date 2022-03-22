@@ -12,6 +12,7 @@ import (
 )
 
 func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, vcsProject *sdk.VCSProject) error {
+	vcsProject.ID = sdk.UUID()
 	vcsProject.Created = time.Now()
 	dbData := &dbVCSProject{VCSProject: *vcsProject}
 	if err := gorpmapping.InsertAndSign(ctx, db, dbData); err != nil {
@@ -52,7 +53,7 @@ func loadAllVCSByProject(ctx context.Context, db gorp.SqlExecutor, projectID int
 	for _, res := range res {
 		isValid, err := gorpmapping.CheckSignature(res, res.Signature)
 		if err != nil {
-			return nil, sdk.WrapError(err, "error when checking signature for vcs_server %d", res.ID)
+			return nil, sdk.WrapError(err, "error when checking signature for vcs_server %s", res.ID)
 		}
 		if !isValid {
 			log.Error(ctx, "vcs_server %d data corrupted", res.ID)
@@ -63,10 +64,10 @@ func loadAllVCSByProject(ctx context.Context, db gorp.SqlExecutor, projectID int
 	return vcsProjects, nil
 }
 
-func LoadVCSByProjectWithDecryption(ctx context.Context, db gorp.SqlExecutor, projectID int64, vcsName string) (*sdk.VCSProject, error) {
+func LoadVCSByProject(ctx context.Context, db gorp.SqlExecutor, projectID int64, vcsName string, opts ...gorpmapping.GetOptionFunc) (*sdk.VCSProject, error) {
 	query := gorpmapping.NewQuery(`SELECT * FROM vcs_server WHERE project_id = $1 AND name = $2`).Args(projectID, vcsName)
 	var res dbVCSProject
-	found, err := gorpmapping.Get(context.Background(), db, query, &res, gorpmapping.GetOptions.WithDecryption)
+	found, err := gorpmapping.Get(context.Background(), db, query, &res, opts...)
 	if err != nil {
 		return nil, err
 	}
