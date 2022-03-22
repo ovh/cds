@@ -37,7 +37,7 @@ func init() {
 func TestStartWorkerWithABookedJob(t *testing.T) {
 	defer gock.Off()
 
-	gock.New("http://lolcat.host").Get("/action/requirement").
+	gock.New("http://cds-api.local").Get("/action/requirement").
 		Reply(200).
 		JSON([]sdk.Requirement{
 			{
@@ -48,7 +48,7 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 		})
 
 	modelID := int64(1)
-	gock.New("http://lolcat.host").Post("/auth/consumer/worker/signin").
+	gock.New("http://cds-api.local").Post("/auth/consumer/worker/signin").
 		HeaderPresent("Authorization").
 		Reply(201).
 		JSON(sdk.Worker{
@@ -56,7 +56,7 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 			ModelID: &modelID,
 		}).AddHeader("X-CDS-JWT", "eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9.eyJJRCI6IjJiNTA3ZDZiLTlhZWYtNGNlNS04MzhlLTA1OTU5NjhjMGU5NSIsIkdyb3VwSURzIjpbMV0sIlNjb3BlcyI6WyJXb3JrZXIiLCJSdW5FeGVjdXRpb24iXSwiZXhwIjoxNTYwNTA5NTQyLCJqdGkiOiIyYjUwN2Q2Yi05YWVmLTRjZTUtODM4ZS0wNTk1OTY4YzBlOTUiLCJpYXQiOjE1NjA1MDU5NDIsImlzcyI6ImNkc190ZXN0Iiwic3ViIjoiMTU4ODY5M2YtOTE5NC00ODg5LWJmYjAtZWY3Nzc5M2QzY2ViIn0.jLot6mtYHdnNAKxUS7OK7d6fVyMQyc7fS2NW4s727dxjx01Q2pPUQJBr16gKsS4ETSKh2ik7kqGGXdOz3i67DxMlPHcs0Azka1VOlefPcA77is-oVu0MPh4JbL0KA7fCu_98VKLJH3B0jYr4HEG9285ZOjFg7L5yuR7OqeFfCE3MrigyMKaNOrNE2FohOK9o50GyW_pAr6uNXcTu-yvqQUsz2B2gsd90HK2iWnvb8pKnBVVPg9Q0VA5l2IoFZR_p_UKSJZcFyFnjWKBVy33b70xupDnCpD-3OcbIFAQ5NPRvU_BnEjj_Jm59Ljrv3pJt1ErTMTkMA9QIFdYkDp5a6Q")
 
-	gock.New("http://lolcat.host").Get("/worker/model").
+	gock.New("http://cds-api.local").Get("/worker/model").
 		HeaderPresent("Authorization").
 		Reply(200).
 		JSON([]sdk.Model{
@@ -66,11 +66,11 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 			},
 		})
 
-	gock.New("http://lolcat.host").Post("/worker/waiting").Times(2).
+	gock.New("http://cds-api.local").Post("/worker/waiting").Times(2).
 		HeaderPresent("Authorization").
 		Reply(200).JSON(nil)
 
-	gock.New("http://lolcat.host").Get("/queue/workflows/42/infos").
+	gock.New("http://cds-api.local").Get("/queue/workflows/42/infos").
 		HeaderPresent("Authorization").
 		Reply(200).
 		JSON(sdk.WorkflowNodeJobRun{
@@ -78,7 +78,7 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 			Status: sdk.StatusWaiting,
 		})
 
-	gock.New("http://lolcat.host").Get("/queue/workflows/42/infos").Times(2).
+	gock.New("http://cds-api.local").Get("/queue/workflows/42/infos").Times(2).
 		HeaderPresent("Authorization").
 		Reply(200).
 		JSON(sdk.WorkflowNodeJobRun{
@@ -86,7 +86,7 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 			Status: sdk.StatusBuilding,
 		})
 
-	gock.New("http://lolcat.host").Get("project/proj_key/workflows/workflow_name/runs/0").Times(1).
+	gock.New("http://cds-api.local").Get("project/proj_key/workflows/workflow_name/runs/0").Times(1).
 		HeaderPresent("Authorization").
 		Reply(200).
 		JSON(sdk.WorkflowRun{
@@ -101,7 +101,7 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 			},
 		})
 
-	gock.New("http://lolcat.host").Get("project/proj_key/integrations/artifactory/workerhooks").Times(1).
+	gock.New("http://cds-api.local").Get("project/proj_key/integrations/artifactory/workerhooks").Times(1).
 		HeaderPresent("Authorization").
 		Reply(200).
 		JSON(sdk.WorkerHookProjectIntegrationModel{
@@ -118,7 +118,7 @@ export FOO_FROM_HOOK=BAR`,
 			},
 		})
 
-	gock.New("http://lolcat.host").Post("/queue/workflows/42/take").
+	gock.New("http://cds-api.local").Post("/queue/workflows/42/take").
 		HeaderPresent("Authorization").
 		Reply(200).
 		JSON(
@@ -245,17 +245,17 @@ export FOO_FROM_HOOK=BAR`,
 			},
 		)
 
-	gock.New("http://lolcat.host").Post("/queue/workflows/42/step").Times(8).
+	gock.New("http://cds-api.local").Post("/queue/workflows/42/step").Times(8).
 		HeaderPresent("Authorization").
 		Reply(200).
 		JSON(nil)
 
-	gock.New("http://lolcat.host").Post("/queue/workflows/42/result").
+	gock.New("http://cds-api.local").Post("/queue/workflows/42/result").
 		HeaderPresent("Authorization").
 		Reply(200).
 		JSON(nil)
 
-	gock.New("http://lolcat.host").Post("/auth/consumer/worker/signout").
+	gock.New("http://cds-api.local").Post("/auth/consumer/worker/signout").
 		HeaderPresent("Authorization").
 		Reply(200).
 		JSON(nil)
@@ -288,7 +288,7 @@ export FOO_FROM_HOOK=BAR`,
 		request.Body = io.NopCloser(bytes.NewReader(bodyContent))
 		if mock != nil {
 			switch mock.Request().URLStruct.String() {
-			case "http://lolcat.host/queue/workflows/42/step":
+			case "http://cds-api.local/queue/workflows/42/step":
 				var result sdk.StepStatus
 				err := json.Unmarshal(bodyContent, &result)
 				assert.NoError(t, err)
@@ -318,7 +318,7 @@ export FOO_FROM_HOOK=BAR`,
 					t.Logf("This case should not happend")
 					t.Fail()
 				}
-			case "http://lolcat.host/queue/workflows/42/result":
+			case "http://cds-api.local/queue/workflows/42/result":
 				var result sdk.Result
 				err := json.Unmarshal(bodyContent, &result)
 				assert.NoError(t, err)
@@ -347,7 +347,7 @@ export FOO_FROM_HOOK=BAR`,
 	cfg := &workerruntime.WorkerConfig{
 		Name:                "test-worker",
 		HatcheryName:        "test-hatchery",
-		APIEndpoint:         "http://lolcat.host",
+		APIEndpoint:         "http://cds-api.local",
 		APIToken:            "xxx-my-token",
 		APIEndpointInsecure: true,
 		Model:               "my-model",
@@ -375,7 +375,7 @@ export FOO_FROM_HOOK=BAR`,
 		isDone = true
 		for _, m := range pending {
 			t.Logf("PENDING %s %s", m.Request().Method, m.Request().URLStruct.String())
-			if m.Request().URLStruct.String() != "http://lolcat.host/queue/workflows/42/log" {
+			if m.Request().URLStruct.String() != "http://cds-api.local/queue/workflows/42/log" {
 				isDone = false
 			}
 		}
@@ -384,7 +384,7 @@ export FOO_FROM_HOOK=BAR`,
 	if gock.HasUnmatchedRequest() {
 		reqs := gock.GetUnmatchedRequests()
 		for _, req := range reqs {
-			if req.URL.String() != "http://lolcat.host/queue/workflows/42/log" {
+			if req.URL.String() != "http://cds-api.local/queue/workflows/42/log" {
 				t.Logf("Request %s %s unmatched", req.Method, req.URL.String())
 				t.Fail()
 			}
@@ -416,7 +416,7 @@ export FOO_FROM_HOOK=BAR`,
 	assert.Equal(t, 2, strings.Count(logBuffer.String(), "my password should not be displayed here: **********\n"))
 	assert.Equal(t, 1, strings.Count(logBuffer.String(), "CDS_BUILD_NEWVAR=newval"))
 	assert.Equal(t, 1, strings.Count(logBuffer.String(), "CDS_KEY=********"))
-	assert.Equal(t, 1, strings.Count(logBuffer.String(), "CDS_API_URL=http://lolcat.host"))
+	assert.Equal(t, 1, strings.Count(logBuffer.String(), "CDS_API_URL=http://cds-api.local"))
 	assert.Equal(t, 1, strings.Count(logBuffer.String(), "CDS_SEMVER=0.1.0+cds.1"))
 	assert.Equal(t, 1, strings.Count(logBuffer.String(), "GIT_DESCRIBE=0.1.0"))
 	assert.Equal(t, 0, strings.Count(logBuffer.String(), "CDS_BUILD_CDS_BUILD"))

@@ -60,7 +60,7 @@ func TestInstallKey_SSHKeyWithoutDestination(t *testing.T) {
 	cfg := workerruntime.WorkerConfig{
 		Name:                "test-worker",
 		HatcheryName:        "test-hatchery",
-		APIEndpoint:         "http://lolcat.host",
+		APIEndpoint:         "http://cds-api.local",
 		APIToken:            "xxx-my-token",
 		APIEndpointInsecure: true,
 		Basedir:             basedir,
@@ -108,7 +108,7 @@ func TestInstallKey_SSHKeyWithRelativeDestination(t *testing.T) {
 	cfg := workerruntime.WorkerConfig{
 		Name:                "test-worker",
 		HatcheryName:        "test-hatchery",
-		APIEndpoint:         "http://lolcat.host",
+		APIEndpoint:         "http://cds-api.local",
 		APIToken:            "xxx-my-token",
 		APIEndpointInsecure: true,
 		Basedir:             basedir,
@@ -154,7 +154,7 @@ func TestInstallKey_SSHKeyWithAbsoluteDestination(t *testing.T) {
 	cfg := &workerruntime.WorkerConfig{
 		Name:                "test-worker",
 		HatcheryName:        "test-hatchery",
-		APIEndpoint:         "http://lolcat.host",
+		APIEndpoint:         "http://cds-api.local",
 		APIToken:            "xxx-my-token",
 		APIEndpointInsecure: true,
 	}
