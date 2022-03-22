@@ -1,7 +1,7 @@
 -- +migrate Up
 CREATE TABLE vcs_server
 (
-    "id"            BIGSERIAL PRIMARY KEY,
+    "id"            uuid PRIMARY KEY,
     "name"          VARCHAR(255) NOT NULL,
     "type"          VARCHAR(64) NOT NULL,    
     "project_id"    BIGINT,
