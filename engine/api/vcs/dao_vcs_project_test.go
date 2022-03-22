@@ -23,7 +23,7 @@ func TestCrud(t *testing.T) {
 	proj2 := assets.InsertTestProject(t, db, cache, key2, key2)
 
 	vcsProject := &sdk.VCSProject{
-		Name:        "foo",
+		Name:        "the-name",
 		Type:        "github",
 		AuthToken:   []byte("my-secret"),
 		Description: "the-username",
@@ -51,18 +51,18 @@ func TestCrud(t *testing.T) {
 	err = Update(context.TODO(), db, &all[0])
 	require.NoError(t, err)
 
-	vcs, err := LoadVCSByProject(context.Background(), db, proj1.ID, "foo", gorpmapping.GetOptions.WithDecryption)
+	vcs, err := LoadVCSByProject(context.Background(), db, proj1.ID, "the-name", gorpmapping.GetOptions.WithDecryption)
 	require.NoError(t, err)
 	require.Equal(t, "the-username-updated", vcs.Description)
 	require.Equal(t, "my-secret-updated", string(vcs.AuthToken)) // decrypted
 
-	err = Delete(db, proj1.ID, "foo")
+	err = Delete(db, proj1.ID, "the-name")
 	require.NoError(t, err)
 
 	all, err = LoadAllVCSByProject(context.Background(), db, proj1.ID)
 	require.NoError(t, err)
 	require.Equal(t, 0, len(all))
 
-	err = Delete(db, proj2.ID, "foo")
+	err = Delete(db, proj2.ID, "the-name")
 	require.NoError(t, err)
 }

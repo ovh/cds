@@ -179,7 +179,7 @@ type BuildNumberAndHash struct {
 }
 
 type VCSProject struct {
-	ID           string    `json:"-" db:"id"`
+	ID           string    `json:"id" db:"id"`
 	Name         string    `json:"name" db:"name"`
 	Type         string    `json:"type" db:"type"`
 	Created      time.Time `json:"created" db:"created"`
