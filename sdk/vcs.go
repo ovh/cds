@@ -179,6 +179,7 @@ type BuildNumberAndHash struct {
 }
 
 type VCSProject struct {
+<<<<<<< HEAD
 	ID           string            `json:"id" db:"id"`
 	Name         string            `json:"name" db:"name"`
 	Type         string            `json:"type" db:"type"`
@@ -189,6 +190,19 @@ type VCSProject struct {
 	Description  string            `json:"description" db:"description"`
 	URL          string            `json:"url" db:"url"`
 	Auth         map[string]string `json:"-" db:"auth" gorpmapping:"encrypted,ProjectID"`
+=======
+	ID           string    `json:"-" db:"id"`
+	Name         string    `json:"name" db:"name"`
+	Type         string    `json:"type" db:"type"`
+	Created      time.Time `json:"created" db:"created"`
+	LastModified time.Time `json:"last_modified" db:"last_modified"`
+	CreatedBy    string    `json:"created_by" db:"created_by"`
+	ProjectID    int64     `json:"-" db:"project_id"`
+	Description  string    `json:"description" db:"description"`
+	URL          string    `json:"url" db:"url"`
+	AuthToken    []byte    `json:"-" db:"auth_token" gorpmapping:"encrypted,ProjectID"`
+	AuthUsername []byte    `json:"-" db:"auth_username"`
+>>>>>>> fix: cr
 }
 
 // VCSConfiguration represent a small vcs configuration
