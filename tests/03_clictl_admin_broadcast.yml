@@ -4,7 +4,7 @@ testcases:
   steps:
   - script: '[ -f ./fixtures/broadcast.md ]'
     assertions:
-      - result.code ShouldEqual 0  
+      - result.code ShouldEqual 0
   - script: {{.cdsctl}} -f {{.cdsctl.config}} admin broadcasts list
   - script: {{.cdsctl}} -f {{.cdsctl.config}} admin broadcasts create "the title" < ./fixtures/broadcast.md
   - script: {{.cdsctl}} -f {{.cdsctl.config}} admin broadcasts list | grep "the title"
