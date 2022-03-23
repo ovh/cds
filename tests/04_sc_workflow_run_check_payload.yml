@@ -10,7 +10,7 @@ testcases:
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} project remove --force ITSCWRKFLW8"
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force itscwrkflw8 "
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} project add ITSCWRKFLW8 ITSCWRKFLW8"
-  - script: "{{.cdsctl}} -f {{.cdsctl.config}} admin features import ./fixtures/ITSCWRKFLW8/feature.yml"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} admin features import ./fixtures/ITSCWRKFLW8/feature/feature.yml"
   - script: |-
       {{.cdsctl}} -f {{.cdsctl.config}} worker model show buildpack-deps
       if [ $? -ne 0 ]; then
