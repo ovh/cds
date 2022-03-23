@@ -122,7 +122,7 @@ initialization_tests() {
 smoke_tests_services() {
     echo "Running smoke tests services:"
     for f in $(ls -1 02_*.yml); do
-        CMD="${VENOM} run ${VENOM_OPTS} ${f} --var cdsctl=${CDSCTL} --var ui.url=${CDS_UI_URL} --var hatchery.url=${CDS_HATCHERY_URL} --var hooks.url=${CDS_HOOKS_URL}"
+        CMD="${VENOM} run ${VENOM_OPTS} ${f} --var cdsctl.config=${CDSCTL_CONFIG}_admin --var cdsctl=${CDSCTL} --var ui.url=${CDS_UI_URL} --var hatchery.url=${CDS_HATCHERY_URL} --var hooks.url=${CDS_HOOKS_URL}"
         echo -e "  ${YELLOW}${f} ${DARKGRAY}[${CMD}]${NOCOLOR}"
         START="$(date +%s)"
         ${CMD} >${f}.output 2>&1
