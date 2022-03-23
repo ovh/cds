@@ -14,9 +14,6 @@ import (
 func TestCrud(t *testing.T) {
 	db, cache := test.SetupPG(t)
 
-	_, err := db.Exec("DELETE FROM vcs_project")
-	require.NoError(t, err)
-
 	key1 := sdk.RandomString(10)
 	key2 := sdk.RandomString(10)
 	proj1 := assets.InsertTestProject(t, db, cache, key1, key1)
@@ -30,7 +27,7 @@ func TestCrud(t *testing.T) {
 		ProjectID:   proj1.ID,
 	}
 
-	err = Insert(context.TODO(), db, vcsProject)
+	err := Insert(context.TODO(), db, vcsProject)
 	require.NoError(t, err)
 	require.NotEmpty(t, vcsProject.ID)
 
