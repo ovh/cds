@@ -1027,6 +1027,7 @@ func checkOutGoingHook(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.Node) error 
 }
 
 func checkHooks(ctx context.Context, db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.Node) error {
+	var duplicateHookIdx []int64
 	for i := range n.Hooks {
 		h := &n.Hooks[i]
 		if h.HookModelID != 0 {
@@ -1079,23 +1080,26 @@ func checkHooks(ctx context.Context, db gorp.SqlExecutor, w *sdk.Workflow, n *sd
 			v.Configurable = d.Configurable
 			h.Config[k] = v
 		}
-		var duplicateHookIdx []int64
 		// Check hooks duplication
 		for j := range n.Hooks {
 			h2 := n.Hooks[j]
 			if i != j && h.Ref() == h2.Ref() {
 				log.ErrorWithStackTrace(ctx, sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid workflow: duplicate hook %s", model.Name))
-				duplicateHookIdx = append(duplicateHookIdx, int64(j))
+				if !sdk.IsInInt64Array(int64(i), duplicateHookIdx) && !sdk.IsInInt64Array(int64(i), duplicateHookIdx) {
+					duplicateHookIdx = append(duplicateHookIdx, int64(j))
+				}
 			}
 		}
-		var newHooks = make([]sdk.NodeHook, 0, len(n.Hooks))
-		for j := range n.Hooks {
-			if !sdk.IsInInt64Array(int64(j), duplicateHookIdx) {
-				newHooks = append(newHooks, newHooks[j])
-			}
-		}
-		n.Hooks = newHooks
 	}
+
+	// Remove duplicate hooks
+	var newHooks = make([]sdk.NodeHook, 0, len(n.Hooks))
+	for i := range n.Hooks {
+		if !sdk.IsInInt64Array(int64(i), duplicateHookIdx) {
+			newHooks = append(newHooks, n.Hooks[i])
+		}
+	}
+	n.Hooks = newHooks
 
 	return nil
 }
