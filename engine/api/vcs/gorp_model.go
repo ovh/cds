@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	gorpmapping.Register(gorpmapping.New(dbVCSProject{}, "vcs_server", false, "id"))
+	gorpmapping.Register(gorpmapping.New(dbVCSProject{}, "vcs_project", false, "id"))
 }
 
 type dbVCSProject struct {

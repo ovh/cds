@@ -11,7 +11,7 @@ const (
 )
 
 type RBAC struct {
-	UUID         string        `json:"uuid" db:"uuid" yaml:"-"`
+	ID           string        `json:"id" db:"id" yaml:"-"`
 	Name         string        `json:"name" db:"name" yaml:"name"`
 	Created      time.Time     `json:"created" db:"created" yaml:"-"`
 	LastModified time.Time     `json:"last_modified" db:"last_modified" yaml:"-"`

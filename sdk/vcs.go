@@ -188,8 +188,7 @@ type VCSProject struct {
 	ProjectID    int64     `json:"-" db:"project_id"`
 	Description  string    `json:"description" db:"description"`
 	URL          string    `json:"url" db:"url"`
-	AuthToken    []byte    `json:"-" db:"auth_token" gorpmapping:"encrypted,ProjectID"`
-	AuthUsername []byte    `json:"-" db:"auth_username"`
+	Auth         []byte    `json:"-" db:"auth" gorpmapping:"encrypted,ProjectID"`
 }
 
 // VCSConfiguration represent a small vcs configuration

@@ -35,9 +35,9 @@ func loadDefault(ctx context.Context, db gorp.SqlExecutor, rbac *rbac) error {
 }
 
 func loadRbacProject(ctx context.Context, db gorp.SqlExecutor, rbac *rbac) error {
-	query := "SELECT * FROM rbac_project WHERE rbac_uuid = $1"
+	query := "SELECT * FROM rbac_project WHERE rbac_id = $1"
 	var rbacPrj []rbacProject
-	if err := gorpmapping.GetAll(ctx, db, gorpmapping.NewQuery(query).Args(rbac.UUID), &rbacPrj); err != nil {
+	if err := gorpmapping.GetAll(ctx, db, gorpmapping.NewQuery(query).Args(rbac.ID), &rbacPrj); err != nil {
 		return err
 	}
 	rbac.Projects = make([]sdk.RBACProject, 0, len(rbacPrj))
@@ -68,9 +68,9 @@ func loadRbacProject(ctx context.Context, db gorp.SqlExecutor, rbac *rbac) error
 }
 
 func loadRbacGlobal(ctx context.Context, db gorp.SqlExecutor, rbac *rbac) error {
-	query := "SELECT * FROM rbac_global WHERE rbac_uuid = $1"
+	query := "SELECT * FROM rbac_global WHERE rbac_id = $1"
 	var rbacGbl []rbacGlobal
-	if err := gorpmapping.GetAll(ctx, db, gorpmapping.NewQuery(query).Args(rbac.UUID), &rbacGbl); err != nil {
+	if err := gorpmapping.GetAll(ctx, db, gorpmapping.NewQuery(query).Args(rbac.ID), &rbacGbl); err != nil {
 		return err
 	}
 	rbac.Globals = make([]sdk.RBACGlobal, 0, len(rbacGbl))

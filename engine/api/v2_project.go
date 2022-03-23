@@ -2,12 +2,14 @@ package api
 
 import (
 	"context"
-	"github.com/gorilla/mux"
-	"github.com/ovh/cds/engine/api/rbac"
-	"github.com/rockbears/log"
 	"net/http"
 
+	"github.com/gorilla/mux"
+	"github.com/rockbears/log"
+
+	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/service"
+	"github.com/ovh/cds/sdk"
 )
 
 func (api *API) postVCSOnProjectHandler() (service.Handler, []service.RbacChecker) {
@@ -17,6 +19,14 @@ func (api *API) postVCSOnProjectHandler() (service.Handler, []service.RbacChecke
 
 		// my handler
 		log.Info(ctx, "My project: %s", pKey)
+
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		defer tx.Rollback() // nolint
+
+		// TODO
 
 		return nil
 	}
