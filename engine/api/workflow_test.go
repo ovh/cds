@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -1752,7 +1753,15 @@ func Test_putWorkflowWithDuplicateHooksShouldRaiseAnError(t *testing.T) {
 	req = assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, &wf)
 	w = httptest.NewRecorder()
 	router.Mux.ServeHTTP(w, req)
-	require.Equal(t, 400, w.Code)
+	require.Equal(t, 200, w.Code)
+
+	btes, err := ioutil.ReadAll(w.Body)
+	require.NoError(t, err)
+
+	var resultWorkflow sdk.Workflow
+	require.NoError(t, sdk.JSONUnmarshal(btes, &resultWorkflow))
+
+	require.Len(t, resultWorkflow.WorkflowData.Node.Hooks, 1)
 }
 
 func Test_getWorkflowsHandler_FilterByRepo(t *testing.T) {
