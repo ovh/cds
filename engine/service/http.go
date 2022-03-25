@@ -16,14 +16,21 @@ import (
 	"github.com/rockbears/log"
 	"gopkg.in/spacemonkeygo/httpsig.v0"
 
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/ovh/cds/sdk/exportentities"
 	cdslog "github.com/ovh/cds/sdk/log"
 )
 
 // Handler defines the HTTP handler used in CDS engine
 type Handler func(ctx context.Context, w http.ResponseWriter, r *http.Request) error
-type RbacChecker func(ctx context.Context, db gorp.SqlExecutor, vars map[string]string) error
+type RbacChecker func(ctx context.Context, auth *sdk.AuthConsumer, cache cache.Store, db gorp.SqlExecutor, vars map[string]string) error
+type RbacCheckers []RbacChecker
+
+func RBAC(checkers ...RbacChecker) []RbacChecker {
+	return checkers
+}
 
 // AsynchronousHandler defines the HTTP asynchronous handler used in CDS engine
 type AsynchronousHandler func(ctx context.Context, r *http.Request) error
@@ -33,7 +40,7 @@ type Middleware func(ctx context.Context, w http.ResponseWriter, req *http.Reque
 
 // HandlerFunc defines the way to instantiate a handler
 type HandlerFunc func() Handler
-type HandlerFuncV2 func() (Handler, []RbacChecker)
+type HandlerFuncV2 func() ([]RbacChecker, Handler)
 
 // AsynchronousHandlerFunc defines the way to instantiate a handler
 type AsynchronousHandlerFunc func() AsynchronousHandler
@@ -143,6 +150,33 @@ func UnmarshalBody(r *http.Request, i interface{}) error {
 	defer r.Body.Close()
 	if err := sdk.JSONUnmarshal(data, i); err != nil {
 		return sdk.NewError(sdk.ErrWrongRequest, err)
+	}
+	return nil
+}
+
+// UnmarshalRequest unmarshal the request into the specified entity.
+// The body request can be a JSON or a YAML format
+func UnmarshalRequest(ctx context.Context, req *http.Request, entity interface{}) error {
+	if req == nil {
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "request is null")
+	}
+	body, err := io.ReadAll(req.Body)
+	if err != nil {
+		return sdk.NewError(sdk.ErrWrongRequest, err)
+	}
+	defer req.Body.Close()
+
+	contentType := req.Header.Get("Content-Type")
+	if contentType == "" {
+		contentType = http.DetectContentType(body)
+	}
+	format, err := exportentities.GetFormatFromContentType(contentType)
+	if err != nil {
+		return err
+	}
+
+	if err := exportentities.Unmarshal(body, format, entity); err != nil {
+		return err
 	}
 	return nil
 }

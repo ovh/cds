@@ -489,10 +489,22 @@ func (r *Router) GET(h service.HandlerFunc, cfg ...service.HandlerConfigParam) *
 
 func (r *Router) POSTv2(h service.HandlerFuncV2, cfg ...service.HandlerConfigParam) *service.HandlerConfig {
 	var rc service.HandlerConfig
-	handler, rbacCheckers := h()
+	rbacCheckers, handler := h()
 	rc.Handler = handler
 	rc.RbacCheckers = rbacCheckers
 	rc.Method = "POST"
+	for _, c := range cfg {
+		c(&rc)
+	}
+	return &rc
+}
+
+func (r *Router) GETv2(h service.HandlerFuncV2, cfg ...service.HandlerConfigParam) *service.HandlerConfig {
+	var rc service.HandlerConfig
+	rbacCheckers, handler := h()
+	rc.Handler = handler
+	rc.RbacCheckers = rbacCheckers
+	rc.Method = "GET"
 	for _, c := range cfg {
 		c(&rc)
 	}

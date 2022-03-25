@@ -2,6 +2,7 @@ package rbac
 
 import (
 	"context"
+
 	"github.com/lib/pq"
 
 	"github.com/go-gorp/gorp"
@@ -32,7 +33,7 @@ func getAllRBACProjectIdentifiers(ctx context.Context, db gorp.SqlExecutor, q go
 }
 
 func loadRBACProjectIdentifiers(ctx context.Context, db gorp.SqlExecutor, rbacProject *rbacProject) error {
-	q := gorpmapping.NewQuery("SELECT * FROM  rbac_project_projects WHERE rbac_project_id = $1").Args(rbacProject.ID)
+	q := gorpmapping.NewQuery("SELECT * FROM rbac_project_projects WHERE rbac_project_id = $1").Args(rbacProject.ID)
 	rbacProjectIdentifiers, err := getAllRBACProjectIdentifiers(ctx, db, q)
 	if err != nil {
 		return err
@@ -47,6 +48,14 @@ func loadRBACProjectIdentifiers(ctx context.Context, db gorp.SqlExecutor, rbacPr
 func loadRRBACProjectIdentifiers(ctx context.Context, db gorp.SqlExecutor, rbacProjectIDs []int64) ([]rbacProjectIdentifiers, error) {
 	query := gorpmapping.NewQuery(`SELECT * FROM rbac_project_projects WHERE rbac_project_id = ANY($1)`).Args(pq.Int64Array(rbacProjectIDs))
 	return getAllRBACProjectIdentifiers(ctx, db, query)
+}
+
+func HasRoleOnProjectIDAndUserID(ctx context.Context, db gorp.SqlExecutor, role string, userID string, projectID int64) (bool, error) {
+	projectIDS, err := LoadProjectIDsByRoleAndUserID(ctx, db, role, userID)
+	if err != nil {
+		return false, err
+	}
+	return sdk.IsInInt64Array(projectID, projectIDS), nil
 }
 
 func LoadProjectIDsByRoleAndUserID(ctx context.Context, db gorp.SqlExecutor, role string, userID string) ([]int64, error) {
