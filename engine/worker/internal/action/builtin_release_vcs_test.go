@@ -20,12 +20,12 @@ func TestRunRelease(t *testing.T) {
 
 	wk, ctx := SetupTest(t)
 
-	gock.New("http://lolcat.host").Get("/queue/workflows/666/infos").
+	gock.New("http://cds-api.local").Get("/queue/workflows/666/infos").
 		Reply(200).JSON(
 		sdk.WorkflowNodeJobRun{
 			WorkflowNodeRunID: 6,
 		})
-	gock.New("http://lolcat.host").Post("/project/projKey/workflows/workflowName/runs/999/nodes/6/release").
+	gock.New("http://cds-api.local").Post("/project/projKey/workflows/workflowName/runs/999/nodes/6/release").
 		Reply(200)
 
 	var checkRequest gock.ObserverFunc = func(request *http.Request, mock gock.Mock) {
@@ -35,7 +35,7 @@ func TestRunRelease(t *testing.T) {
 		if mock != nil {
 			t.Logf("%s %s - Body: %s", mock.Request().Method, mock.Request().URLStruct.String(), string(bodyContent))
 			switch mock.Request().URLStruct.String() {
-			case "http://lolcat.host/project/projKey/workflows/workflowName/runs/999/nodes/6/release":
+			case "http://cds-api.local/project/projKey/workflows/workflowName/runs/999/nodes/6/release":
 				var releaseRequest sdk.WorkflowNodeRunRelease
 				err := json.Unmarshal(bodyContent, &releaseRequest)
 				assert.NoError(t, err)

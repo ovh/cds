@@ -49,12 +49,6 @@ func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Acti
 		artifactPath = filepath.Join(abs, artifactPath)
 	}
 
-	tagParam := sdk.ParameterFind(a.Parameters, "tag")
-	var tag string
-	if tagParam != nil {
-		tag = tagParam.Value
-	}
-
 	fileTypeParam := sdk.ParameterFind(a.Parameters, "type")
 	var fileType string
 	if fileTypeParam != nil {
@@ -84,39 +78,23 @@ func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Acti
 		}
 	}()
 
-	cdnArtifactEnabled := wk.FeatureEnabled(sdk.FeatureCDNArtifact)
-
-	integrationName := sdk.DefaultIfEmptyStorage(strings.TrimSpace(sdk.ParameterValue(a.Parameters, "destination")))
 	projectKey := sdk.ParameterValue(wk.Parameters(), "cds.project")
 	pluginArtifactManagement := wk.GetPlugin(sdk.GRPCPluginUploadArtifact)
 
 	wg.Add(len(filesPath))
 	for _, p := range filesPath {
 		go func(path string) {
-			log.Debug(ctx, "uploading %s projectKey:%v integrationName:%v job:%d", path, projectKey, integrationName, jobID)
+			log.Debug(ctx, "uploading %s projectKey:%v job:%d", path, projectKey, jobID)
 			defer wg.Done()
 
 			// Priority:
-			// 1. Integration specified on artifact upload action ( advanced parameter )
-			// 2. Integration artifact manager on workflow
-			// 3. CDN activated or not
-			if integrationName != sdk.DefaultStorageIntegrationName {
-				if err := uploadArtifactByApiCall(path, wk, ctx, projectKey, integrationName, jobID, tag, fileType); err != nil {
-					chanError <- sdk.WrapError(err, "Error while uploading artifact by api call %s", path)
-					wgErrors.Add(1)
-				}
-				return
-			} else if pluginArtifactManagement != nil {
+			// 1. Integration artifact manager on workflow
+			// 2. CDN
+			if pluginArtifactManagement != nil {
 				if err := uploadArtifactByIntegrationPlugin(path, ctx, wk, pluginArtifactManagement, fileType); err != nil {
 					chanError <- sdk.WrapError(err, "Error while uploading artifact by plugin %s", path)
 					wgErrors.Add(1)
 				}
-			} else if !cdnArtifactEnabled {
-				if err := uploadArtifactByApiCall(path, wk, ctx, projectKey, integrationName, jobID, tag, fileType); err != nil {
-					chanError <- sdk.WrapError(err, "Error while uploading artifact by api call %s", path)
-					wgErrors.Add(1)
-				}
-				return
 			} else {
 				if err := uploadArtifactIntoCDN(path, ctx, wk); err != nil {
 					chanError <- err
@@ -124,7 +102,6 @@ func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Acti
 				}
 				return
 			}
-
 		}(p)
 		if len(filesPath) > 1 {
 			//Wait 3 second to get the object storage to set up all the things
@@ -215,7 +192,7 @@ func uploadArtifactByIntegrationPlugin(path string, ctx context.Context, wk work
 		return fmt.Errorf("error uploading artifact: %v", err)
 	}
 
-	if strings.ToUpper(res.Status) != strings.ToUpper(sdk.StatusSuccess) {
+	if !strings.EqualFold(res.Status, sdk.StatusSuccess) {
 		return fmt.Errorf("plugin execution failed %s: %s", res.Status, res.Details)
 	}
 	res.Outputs[sdk.ArtifactUploadPluginOutputFileType] = fileType
@@ -245,19 +222,6 @@ func uploadArtifactIntoCDN(path string, ctx context.Context, wk workerruntime.Ru
 		return err
 	}
 	wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("File '%s' uploaded in %.2fs to CDS CDN", path, duration.Seconds()))
-	return nil
-}
-
-func uploadArtifactByApiCall(path string, wk workerruntime.Runtime, ctx context.Context, projectKey string, integrationName string, jobID int64, tag, fileType string) error {
-	throughTempURL, duration, err := wk.Client().QueueArtifactUpload(ctx, projectKey, integrationName, jobID, tag, path, fileType)
-	if err != nil {
-		return err
-	}
-	if throughTempURL {
-		wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("File '%s' uploaded in %.2fs to object store", path, duration.Seconds()))
-	} else {
-		wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("File '%s' uploaded in %.2fs to CDS API", path, duration.Seconds()))
-	}
 	return nil
 }
 

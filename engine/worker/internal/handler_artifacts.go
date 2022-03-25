@@ -50,12 +50,6 @@ func artifactsHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 		}
 
 		projectKey := sdk.ParameterValue(wk.currentJob.params, "cds.project")
-		artifacts, err := wk.client.WorkflowRunArtifacts(projectKey, reqArgs.Workflow, reqArgs.Number)
-		if err != nil {
-			newError := sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("cannot list artifacts with worker artifacts: %s", err))
-			writeError(w, r, newError)
-			return
-		}
 
 		regexp, errp := regexp.Compile(reqArgs.Pattern)
 		if errp != nil {
@@ -64,19 +58,7 @@ func artifactsHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 			return
 		}
 
-		artifactsJSON := []sdk.WorkflowNodeRunArtifact{}
-		for i := range artifacts {
-			a := &artifacts[i]
-
-			if reqArgs.Pattern != "" && !regexp.MatchString(a.Name) {
-				continue
-			}
-
-			if reqArgs.Tag != "" && a.Tag != reqArgs.Tag {
-				continue
-			}
-			artifactsJSON = append(artifactsJSON, *a)
-		}
+		artifactsJSON := []sdk.WorkflowRunResultArtifact{}
 
 		workflowRunResults, err := wk.client.WorkflowRunResultsList(ctx, projectKey, reqArgs.Workflow, reqArgs.Number)
 		if err != nil {
@@ -97,13 +79,7 @@ func artifactsHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 			if reqArgs.Pattern != "" && !regexp.MatchString(artData.Name) {
 				continue
 			}
-			artifactsJSON = append(artifactsJSON, sdk.WorkflowNodeRunArtifact{
-				MD5sum:  artData.MD5,
-				Name:    artData.Name,
-				Size:    artData.Size,
-				Created: result.Created,
-				Perm:    artData.Perm,
-			})
+			artifactsJSON = append(artifactsJSON, artData)
 		}
 
 		writeJSON(w, artifactsJSON, http.StatusOK)

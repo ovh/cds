@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/rockbears/log"
@@ -23,8 +22,6 @@ func cachePushHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 		ctx := workerruntime.SetJobID(ctx, wk.currentJob.wJob.ID)
 		ctx = workerruntime.SetStepOrder(ctx, wk.currentJob.currentStepIndex)
 		ctx = workerruntime.SetStepName(ctx, wk.currentJob.currentStepName)
-
-		cdnArtifact := wk.FeatureEnabled(sdk.FeatureCDNArtifact)
 
 		data, err := io.ReadAll(r.Body)
 		if err != nil {
@@ -81,8 +78,7 @@ func cachePushHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 			return
 		}
 
-		tarInfo, err := tarF.Stat()
-		if err != nil {
+		if _, err = tarF.Stat(); err != nil {
 			_ = tarF.Close() // nolint
 			err = sdk.Error{
 				Message: "worker cache push > Cannot get tmp tar file info : " + err.Error(),
@@ -106,40 +102,10 @@ func cachePushHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 			return
 		}
 
-		tarPath := tarF.Name()
-
 		if err := tarF.Close(); err != nil {
 			err := sdk.Error{
 				Message: "worker cache push > Cannot close file: " + err.Error(),
 				Status:  http.StatusInternalServerError,
-			}
-			log.Error(ctx, "%v", err)
-			writeError(w, r, err)
-			return
-		}
-
-		if !cdnArtifact {
-			var errPush error
-			for i := 0; i < 10; i++ {
-				f, err := wk.BaseDir().Open(tarPath)
-				if err != nil {
-					err := sdk.Error{
-						Message: "worker cache push > Cannot open tar file: " + err.Error(),
-						Status:  http.StatusInternalServerError,
-					}
-					log.Error(ctx, "%v", err)
-					writeError(w, r, err)
-					return
-				}
-				if errPush = wk.client.WorkflowCachePush(projectKey, sdk.DefaultIfEmptyStorage(c.IntegrationName), c.Tag, f, int(tarInfo.Size())); errPush == nil {
-					return
-				}
-				log.Error(ctx, "worker cache push > cannot push cache (retry x%d) : %v", i, errPush)
-				err = sdk.Error{
-					Message: "worker cache push > Cannot push cache: " + errPush.Error(),
-					Status:  http.StatusInternalServerError,
-				}
-				time.Sleep(3 * time.Second)
 			}
 			log.Error(ctx, "%v", err)
 			writeError(w, r, err)
@@ -174,15 +140,6 @@ func cachePullHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 
 		vars := mux.Vars(req)
 		path := req.FormValue("path")
-
-		cdnArtifact := wk.FeatureEnabled(sdk.FeatureCDNArtifact)
-		params := wk.currentJob.wJob.Parameters
-		projectKey := sdk.ParameterValue(params, "cds.project")
-
-		if !cdnArtifact {
-			getWorkerCacheFromAPI(w, req, wk, projectKey, vars, ctx, path)
-			return
-		}
 
 		// Get cache link
 		items, err := wk.client.QueueWorkerCacheLink(ctx, wk.currentJob.wJob.ID, vars["ref"])
@@ -268,29 +225,6 @@ func cachePullHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 		}
 		return
 	}
-}
-
-func getWorkerCacheFromAPI(w http.ResponseWriter, req *http.Request, wk *CurrentWorker, projectKey string, vars map[string]string, ctx context.Context, path string) {
-	integrationName := sdk.DefaultIfEmptyStorage(req.FormValue("integration"))
-	var err error
-	reader, err := wk.client.WorkflowCachePull(projectKey, integrationName, vars["ref"])
-	if err != nil {
-		err = sdk.Error{
-			Message: "worker cache pull > Cannot pull cache: " + err.Error(),
-			Status:  http.StatusNotFound,
-		}
-		log.Error(ctx, "%v", err)
-		writeError(w, req, err)
-		return
-	}
-	log.Debug(ctx, "cachePullHandler> Start read cache tar")
-
-	if err := extractArchive(ctx, reader, path); err != nil {
-		log.Error(ctx, "%s", err.Message)
-		writeJSON(w, err, err.Status)
-		return
-	}
-	return
 }
 
 func extractArchive(ctx context.Context, r io.Reader, path string) *sdk.Error {

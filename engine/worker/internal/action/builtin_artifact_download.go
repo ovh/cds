@@ -30,7 +30,6 @@ func RunArtifactDownload(ctx context.Context, wk workerruntime.Runtime, a sdk.Ac
 	pattern := sdk.ParameterValue(a.Parameters, "pattern")
 
 	destPath := sdk.ParameterValue(a.Parameters, "path")
-	tag := sdk.ParameterValue(a.Parameters, "tag")
 
 	actionWorkflow := sdk.ParameterValue(a.Parameters, "workflow")
 	actionRunNumber := sdk.ParameterValue(a.Parameters, "number")
@@ -90,13 +89,9 @@ func RunArtifactDownload(ctx context.Context, wk workerruntime.Runtime, a sdk.Ac
 
 	// Priority:
 	// 1. Integration artifact manager on workflow
-	// 2. CDN activated or not
+	// 2. CDN
 	if pluginArtifactManagement != nil {
 		return GetArtifactFromIntegrationPlugin(ctx, wk, res, pattern, reg, destPath, pluginArtifactManagement, project, destinationWorkflow, n)
-	}
-	// GET Artifact from CDS API
-	if !wk.FeatureEnabled(sdk.FeatureCDNArtifact) {
-		return GetArtifactFromAPI(ctx, wk, project, destinationWorkflow, n, res, pattern, reg, tag, destPath, wkDirFS)
 	}
 
 	// GET Artifact from CDS CDN
@@ -274,63 +269,4 @@ func runGRPCIntegrationPlugin(ctx context.Context, wk workerruntime.Runtime, bin
 		return fmt.Errorf("plugin execution failed %s: %s", result.Status, result.Details)
 	}
 	return nil
-}
-
-func GetArtifactFromAPI(ctx context.Context, wk workerruntime.Runtime, project string, workflow string, n int64, res sdk.Result, pattern string, regexp *regexp.Regexp, tag string, destPath string, wkDirFS afero.Fs) (sdk.Result, error) {
-	wg := new(sync.WaitGroup)
-	artifacts, err := wk.Client().WorkflowRunArtifacts(project, workflow, n)
-	if err != nil {
-		return res, err
-	}
-	wg.Add(len(artifacts))
-	for i := range artifacts {
-		a := &artifacts[i]
-
-		if pattern != "" && !regexp.MatchString(a.Name) {
-			wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("%s does not match pattern %s - skipped", a.Name, pattern))
-			wg.Done()
-			continue
-		}
-
-		if tag != "" && a.Tag != tag {
-			wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("%s does not match tag %s - skipped", a.Name, tag))
-			wg.Done()
-			continue
-		}
-
-		go func(a *sdk.WorkflowNodeRunArtifact) {
-			defer wg.Done()
-
-			destFile := path.Join(destPath, a.Name)
-			f, err := wkDirFS.OpenFile(destFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.FileMode(a.Perm))
-			if err != nil {
-				res.Status = sdk.StatusFail
-				res.Reason = err.Error()
-				log.Warn(ctx, "Cannot download artifact (OpenFile) %s: %s", destFile, err)
-				wk.SendLog(ctx, workerruntime.LevelError, res.Reason)
-				return
-			}
-			wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("Downloading artifact %s from workflow %s/%s on run %d...", destFile, project, workflow, n))
-			if err := wk.Client().WorkflowNodeRunArtifactDownload(project, workflow, *a, f); err != nil {
-				res.Status = sdk.StatusFail
-				res.Reason = err.Error()
-				log.Warn(ctx, "Cannot download artifact %s: %s", destFile, err)
-				wk.SendLog(ctx, workerruntime.LevelError, res.Reason)
-				return
-			}
-			if err := f.Close(); err != nil {
-				res.Status = sdk.StatusFail
-				res.Reason = err.Error()
-				log.Warn(ctx, "Cannot download artifact %s: %s", destFile, err)
-				wk.SendLog(ctx, workerruntime.LevelError, res.Reason)
-				return
-			}
-		}(a)
-		// TODO: write here a reason why we are waiting 3 seconds
-		if len(artifacts) > 1 {
-			time.Sleep(3 * time.Second)
-		}
-	}
-	wg.Wait()
-	return res, nil
 }

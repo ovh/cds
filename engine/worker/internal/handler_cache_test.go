@@ -3,6 +3,9 @@ package internal
 import (
 	"bytes"
 	"context"
+	"crypto/md5"
+	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -11,6 +14,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -24,6 +28,7 @@ import (
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient/mock_cdsclient"
+	"github.com/ovh/cds/sdk/jws"
 )
 
 func Test_cachePushPullHandler(t *testing.T) {
@@ -32,6 +37,17 @@ func Test_cachePushPullHandler(t *testing.T) {
 	basedir := "test-" + test.GetTestName(t) + "-" + sdk.RandomString(10) + "-" + fmt.Sprintf("%d", time.Now().Unix())
 	t.Logf("Creating worker basedir at %s", basedir)
 	require.NoError(t, fs.MkdirAll(basedir, os.FileMode(0755)))
+
+	workerKey, err := jws.NewRandomSymmetricKey(32)
+	require.NoError(t, err)
+	signingKey := base64.StdEncoding.EncodeToString(workerKey)
+
+	secretKey := make([]byte, 32)
+	_, err = base64.StdEncoding.Decode(secretKey, []byte(signingKey))
+	require.NoError(t, err)
+
+	signer, err := jws.NewHMacSigner(secretKey)
+	require.NoError(t, err)
 
 	// Setup test worker data for push and create run and tmp directories
 	ctxPush := context.Background()
@@ -51,6 +67,7 @@ func Test_cachePushPullHandler(t *testing.T) {
 	ctxPush = workerruntime.SetTmpDirectory(ctxPush, tdPushFile)
 	t.Logf("Setup push tmp directory at %s", tdPushFile.Name())
 
+	wkPush.currentJob.signer = signer
 	wkPush.currentJob.context = ctxPush
 	wkPush.currentJob.wJob = &sdk.WorkflowNodeJobRun{
 		Parameters: []sdk.Parameter{{
@@ -67,6 +84,7 @@ func Test_cachePushPullHandler(t *testing.T) {
 	pullJobInfo := sdk.WorkflowNodeJobRunData{}
 	pullJobInfo.NodeJobRun.Job.Job.Action.Name = sdk.RandomString(10)
 
+	wkPull.currentJob.signer = signer
 	wkPull.currentJob.wJob = &sdk.WorkflowNodeJobRun{
 		Parameters: []sdk.Parameter{{
 			Name:  "cds.project",
@@ -89,29 +107,57 @@ func Test_cachePushPullHandler(t *testing.T) {
 	m := mock_cdsclient.NewMockWorkerInterface(ctrl)
 	wkPush.client = m
 	wkPull.client = m
+	wkPush.cdnHttpAddr = "https://cdn.local"
+	wkPull.cdnHttpAddr = "https://cdn.local"
 
-	var generatedTar bytes.Buffer
-	var retryPush int
-	m.EXPECT().WorkflowCachePush("myProject", "shared.infra", "myTag", gomock.Any(), gomock.Any()).DoAndReturn(
-		func(projectKey, integrationName, ref string, tarContent io.Reader, size int) error {
-			retryPush++
-			if retryPush == 1 {
-				partialRead := make([]byte, 10)
-				l, err := tarContent.Read(partialRead)
-				require.NoError(t, err)
-				require.Equal(t, 10, l, "we should have read only 10 bytes of the tar")
-				return fmt.Errorf("a fake error occured with http request")
-			}
-			_, err := io.Copy(&generatedTar, tarContent)
+	var bodyBytes []byte
+	m.EXPECT().CDNItemUpload(gomock.Any(), "https://cdn.local", gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, cdnAddr string, signature string, fs afero.Fs, path string) (time.Duration, error) {
+			t0 := time.Now()
+			require.True(t, strings.Contains(path, "tar-"))
+			f, err := fs.Open(path)
+			require.NoError(t, err)
+			bodyBytes, err = io.ReadAll(f)
+			require.NotEqual(t, 0, len(bodyBytes))
+			return time.Since(t0), nil
+		},
+	)
+
+	md5Hash := md5.New()
+	md5S := hex.EncodeToString(md5Hash.Sum(nil))
+	apiRefHash := sdk.RandomString(10)
+	m.EXPECT().QueueWorkerCacheLink(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, jobID int64, tag string) (sdk.CDNItemLinks, error) {
+			return sdk.CDNItemLinks{
+				CDNHttpURL: "https://cdn.local",
+				Items: []sdk.CDNItem{
+					{
+						ID:         "foo",
+						MD5:        md5S,
+						APIRefHash: apiRefHash,
+						Type:       sdk.CDNTypeItemWorkerCache,
+					},
+				},
+			}, nil
+		},
+	)
+
+	// ctx context.Context, cdnAddr string, hash string, itemType sdk.CDNItemType, md5Sum string, writer io.WriteSeeker) error
+	m.EXPECT().CDNItemDownload(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, cdnAddr string, hash string, itemType sdk.CDNItemType, md5Sum string, writer io.WriteSeeker) error {
+			require.Equal(t, "https://cdn.local", cdnAddr)
+			require.Equal(t, sdk.CDNTypeItemWorkerCache, itemType)
+			require.Equal(t, md5S, md5Sum)
+			require.Equal(t, apiRefHash, hash)
+
+			_, err := writer.Seek(0, io.SeekStart)
+			require.NoError(t, err)
+
+			_, err = io.Copy(writer, bytes.NewBuffer(bodyBytes))
 			require.NoError(t, err)
 			return nil
 		},
-	).Times(2)
-	m.EXPECT().WorkflowCachePull("myProject", "shared.infra", "myTag").DoAndReturn(
-		func(projectKey, integrationName, ref string) (io.Reader, error) {
-			return bytes.NewBuffer(generatedTar.Bytes()), nil
-		},
-	).Times(1)
+	)
 
 	// Send cash push request for two files, one relative to workspace and another absolute to test basedir.
 	buf, err := json.Marshal(sdk.Cache{
