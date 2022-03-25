@@ -15,7 +15,7 @@ $(GO_GOJUNIT):
 	go get -u github.com/jstemmer/go-junit-report
 
 $(GO_COBERTURA):
-	go get -u github.com/t-yuki/gocover-cobertura
+	go get -u github.com/richardlt/gocover-cobertura
 
 $(TARGET_DIR):
 	@mkdir -p $(TARGET_DIR)

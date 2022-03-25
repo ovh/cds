@@ -65,7 +65,8 @@ func (d authDriver) GetSessionDuration() time.Duration {
 }
 
 func (d authDriver) CheckSigninRequest(req sdk.AuthConsumerSigninRequest) error {
-	if code, ok := req["code"]; !ok || code == "" {
+	code, err := req.StringE("code")
+	if err != nil || code == "" {
 		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid gitlab code")
 	}
 	return nil
@@ -73,9 +74,9 @@ func (d authDriver) CheckSigninRequest(req sdk.AuthConsumerSigninRequest) error 
 
 func (d authDriver) CheckSigninStateToken(req sdk.AuthConsumerSigninRequest) error {
 	// Check if state is given and if its valid
-	state, okState := req["state"]
-	if !okState {
-		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing state value")
+	state, err := req.StringE("state")
+	if err != nil {
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid state value")
 	}
 
 	return authentication.CheckDefaultSigninStateToken(state)
@@ -91,10 +92,10 @@ func (d authDriver) GetUserInfo(ctx context.Context, req sdk.AuthConsumerSigninR
 	}
 
 	ctx2 := context.WithValue(context.Background(), oauth2.HTTPClient, http.DefaultClient)
-	t, err := config.Exchange(ctx2, req["code"],
+	t, err := config.Exchange(ctx2, req.String("code"),
 		oauth2.SetAuthURLParam("client_id", d.clientID),
 		oauth2.SetAuthURLParam("client_secret", d.clientSecret),
-		oauth2.SetAuthURLParam("state", req["state"]),
+		oauth2.SetAuthURLParam("state", req.String("state")),
 		oauth2.SetAuthURLParam("redirect_uri", d.cdsURL+"/auth/callback/github"),
 	)
 	if err != nil {

@@ -73,6 +73,7 @@ func (h *HatcheryVSphere) ApplyConfiguration(cfg interface{}) error {
 	if err != nil {
 		return sdk.WithStack(fmt.Errorf("unable to parse RSA private Key: %v", err))
 	}
+	h.Common.Common.Region = h.Config.Provision.Region
 
 	if h.Config.WorkerTTL == 0 {
 		h.Config.WorkerTTL = 120

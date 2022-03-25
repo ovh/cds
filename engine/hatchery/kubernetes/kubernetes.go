@@ -93,6 +93,7 @@ func (h *HatcheryKubernetes) ApplyConfiguration(cfg interface{}) error {
 	if err != nil {
 		return fmt.Errorf("unable to parse RSA private Key: %v", err)
 	}
+	h.Common.Common.Region = h.Config.Provision.Region
 
 	return nil
 }

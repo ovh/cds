@@ -120,6 +120,7 @@ type Common struct {
 	CDNLogsURL           string
 	ServiceLogger        *logrus.Logger
 	GoRoutines           *sdk.GoRoutines
+	Region               string
 }
 
 // Service is the interface for a engine service
@@ -130,8 +131,7 @@ type Service interface {
 	CheckConfiguration(cfg interface{}) error
 	Start(ctx context.Context) error
 	Init(cfg interface{}) (cdsclient.ServiceConfig, error)
-	Signin(ctx context.Context, cfg cdsclient.ServiceConfig) error
-	Register(ctx context.Context, cfg interface{}) error
+	Signin(ctx context.Context, clientConfig cdsclient.ServiceConfig, srvConfig interface{}) error
 	Unregister(ctx context.Context) error
 	Heartbeat(ctx context.Context, status func(ctx context.Context) *sdk.MonitoringStatus) error
 	Status(ctx context.Context) *sdk.MonitoringStatus

@@ -75,23 +75,49 @@ func (c *Common) Start(ctx context.Context) error {
 }
 
 // Signin a new service on API
-func (c *Common) Signin(ctx context.Context, cfg cdsclient.ServiceConfig) error {
+func (c *Common) Signin(ctx context.Context, cdsclientConfig cdsclient.ServiceConfig, srvConfig interface{}) error {
 	if c.ServiceType == "api" {
 		return nil
 	}
-
 	log.Info(ctx, "Init CDS client for service %s(%T) %s", c.Type(), c, c.Name())
-
 	ctxTimeout, cancel := context.WithTimeout(ctx, 5*time.Minute)
 	defer cancel()
 	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
 
+	serviceConfig, err := ParseServiceConfig(srvConfig)
+	if err != nil {
+		return err
+	}
+
+	var pubKey []byte
+	if c.PrivateKey != nil {
+		pubKey, err = jws.ExportPublicKey(c.PrivateKey)
+		if err != nil {
+			return err
+		}
+	}
+
+	registerPayload := sdk.Service{
+		CanonicalService: sdk.CanonicalService{
+			Name:      c.Name(),
+			Type:      c.Type(),
+			HTTPURL:   c.HTTPURL,
+			Config:    serviceConfig,
+			PublicKey: pubKey,
+		},
+	}
+
+	if c.Region != "" {
+		registerPayload.CanonicalService.Region = &c.Region
+	}
+
 	initClient := func(ctx context.Context) error {
 		var err error
-		c.Client, c.APIPublicKey, err = cdsclient.NewServiceClient(ctx, cfg)
+		// The call below should return the sdk.Service from the signin
+		c.Client, c.ServiceInstance, c.APIPublicKey, err = cdsclient.NewServiceClient(ctx, cdsclientConfig, registerPayload)
 		if err != nil {
-			fmt.Println("Waiting for CDS API...")
+			fmt.Printf("Waiting for CDS API (%v)...\n", err)
 		}
 		return err
 	}
@@ -116,57 +142,25 @@ func (c *Common) Signin(ctx context.Context, cfg cdsclient.ServiceConfig) error 
 		}
 	}
 
-	var err error
 	c.ParsedAPIPublicKey, err = jws.NewPublicKeyFromPEM(c.APIPublicKey)
 	if err != nil {
 		return sdk.WithStack(err)
 	}
+
 	return nil
 }
 
-// Register registers a new service on API
-func (c *Common) Register(ctx context.Context, cfg interface{}) error {
-	if c.ServiceType == "api" {
-		return nil
-	}
-
+// ParseServiceConfig parse any object to craft a sdk.ServiceConfig
+func ParseServiceConfig(cfg interface{}) (sdk.ServiceConfig, error) {
 	var sdkConfig sdk.ServiceConfig
 	b, err := json.Marshal(cfg)
 	if err != nil {
-		return sdk.WithStack(err)
+		return nil, sdk.WithStack(err)
 	}
 	if err := sdk.JSONUnmarshal(b, &sdkConfig); err != nil {
-		return sdk.WithStack(err)
+		return nil, sdk.WithStack(err)
 	}
-
-	log.Info(ctx, "Registing service %s(%T) %s", c.Type(), c, c.Name())
-
-	var srv = sdk.Service{
-		CanonicalService: sdk.CanonicalService{
-			Name:    c.ServiceName,
-			HTTPURL: c.HTTPURL,
-			Type:    c.ServiceType,
-			Config:  sdkConfig,
-		},
-		LastHeartbeat: time.Time{},
-		Version:       sdk.VERSION,
-	}
-
-	if c.PrivateKey != nil {
-		pubKeyPEM, err := jws.ExportPublicKey(c.PrivateKey)
-		if err != nil {
-			return sdk.WrapError(err, "unable get public key from private key")
-		}
-		srv.PublicKey = pubKeyPEM
-	}
-
-	srv2, err := c.Client.ServiceRegister(ctx, srv)
-	if err != nil {
-		return sdk.WithStack(err)
-	}
-	c.ServiceInstance = srv2
-
-	return nil
+	return sdkConfig, nil
 }
 
 // Unregister logout the service

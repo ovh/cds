@@ -341,22 +341,17 @@ func start(c context.Context, s service.Service, serviceName string, cfg interfa
 	defer cancel()
 
 	ctx = context.WithValue(ctx, cdslog.Service, serviceName)
+
 	srvConfig, err := s.Init(cfg)
 	if err != nil {
 		return err
 	}
 
 	// Signin and register to CDS api
-	if err := s.Signin(c, srvConfig); err != nil {
+	if err := s.Signin(c, srvConfig, cfg); err != nil {
 		return sdk.WrapError(err, "unable to signin: %s", serviceName)
 	}
 	log.Info(ctx, "%s> Service signed in", serviceName)
-
-	// Signin and register to CDS api
-	if err := s.Register(c, cfg); err != nil {
-		return sdk.WrapError(err, "unable to register: %s", serviceName)
-	}
-	log.Info(ctx, "%s> Service registered", serviceName)
 
 	if err := s.Start(ctx); err != nil {
 		return sdk.WrapError(err, "unable to start service: %s", serviceName)

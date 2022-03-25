@@ -405,7 +405,6 @@ type Interface interface {
 	Requirements() ([]sdk.Requirement, error)
 	RepositoriesManagerInterface
 	ServiceClient
-	ServiceRegister(context.Context, sdk.Service) (*sdk.Service, error)
 	ServiceHeartbeat(*sdk.MonitoringStatus) error
 	UserClient
 	WorkerClient

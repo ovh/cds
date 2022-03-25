@@ -11,6 +11,7 @@ import (
 
 	jwt "github.com/golang-jwt/jwt"
 	"github.com/pkg/errors"
+	"github.com/spf13/cast"
 )
 
 // AuthDriver interface.
@@ -236,13 +237,26 @@ type AuthConsumerRegenRequest struct {
 }
 
 // AuthConsumerSigninRequest struct for auth consumer signin request.
-type AuthConsumerSigninRequest map[string]string
+type AuthConsumerSigninRequest map[string]interface{}
+
+func (req AuthConsumerSigninRequest) String(s string) string {
+	return cast.ToString(req[s])
+}
+
+func (req AuthConsumerSigninRequest) StringE(s string) (string, error) {
+	val, err := cast.ToStringE(req[s])
+	if err != nil {
+		return "", NewError(ErrWrongRequest, err)
+	}
+	return val, nil
+}
 
 // AuthConsumerSigninResponse response for a auth consumer signin.
 type AuthConsumerSigninResponse struct {
-	APIURL string            `json:"api_url,omitempty"`
-	Token  string            `json:"token"` // session token
-	User   *AuthentifiedUser `json:"user"`
+	APIURL  string            `json:"api_url,omitempty"`
+	Token   string            `json:"token"` // session token
+	User    *AuthentifiedUser `json:"user"`
+	Service *Service          `json:"service,omitempty"`
 }
 
 // AuthConsumerCreateResponse response for a auth consumer creation.
@@ -401,6 +415,9 @@ type AuthConsumer struct {
 	Warnings           AuthConsumerWarnings        `json:"warnings,omitempty" db:"warnings"`
 	LastAuthentication *time.Time                  `json:"last_authentication,omitempty" db:"last_authentication"`
 	ValidityPeriods    AuthConsumerValidityPeriods `json:"validity_periods,omitempty" db:"validity_periods"`
+	ServiceName        *string                     `json:"service_name,omitempty" db:"service_name"`
+	ServiceType        *string                     `json:"service_type,omitempty" db:"service_type"`
+	ServiceRegion      *string                     `json:"service_region,omitempty" db:"service_region"`
 	// aggregates
 	AuthentifiedUser *AuthentifiedUser `json:"user,omitempty" db:"-"`
 	Groups           Groups            `json:"groups,omitempty" db:"-"`

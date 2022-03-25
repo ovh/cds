@@ -16,10 +16,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func AuthentififyBuiltinConsumer(t *testing.T, api *API, jwsToken string) string {
+func AuthentififyBuiltinConsumer(t *testing.T, api *API, jwsToken string, srv *sdk.Service) string {
 	uri := api.Router.GetRoute("POST", api.postAuthBuiltinSigninHandler, nil)
 	require.NotEmpty(t, uri)
-	btes, err := json.Marshal(sdk.AuthConsumerSigninRequest{"token": jwsToken})
+	reqSignin := sdk.AuthConsumerSigninRequest{"token": jwsToken}
+	if srv != nil {
+		reqSignin["service"] = srv
+	}
+	btes, err := json.Marshal(reqSignin)
 	require.NoError(t, err)
 
 	t.Logf("signin with jws : %s", jwsToken)
@@ -49,8 +53,14 @@ func Test_postAuthBuiltinSigninHandler(t *testing.T) {
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, usr.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
-	_, jws, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), sdk.RandomString(10), 0, localConsumer, usr.GetGroupIDs(),
-		sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject))
+	consumerOptions := builtin.NewConsumerOptions{
+		Name:        sdk.RandomString(10),
+		Description: sdk.RandomString(10),
+		Duration:    0,
+		GroupIDs:    usr.GetGroupIDs(),
+		Scopes:      sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject),
+	}
+	_, jws, err := builtin.NewConsumer(context.TODO(), db, consumerOptions, localConsumer)
 	require.NoError(t, err)
-	AuthentififyBuiltinConsumer(t, api, jws)
+	AuthentififyBuiltinConsumer(t, api, jws, nil)
 }

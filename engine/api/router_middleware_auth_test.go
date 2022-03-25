@@ -60,8 +60,12 @@ func Test_authMiddleware_WithAuthConsumerDisabled(t *testing.T) {
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
-	builtinConsumer, _, err := builtin.NewConsumer(context.TODO(), db, "builtin", "", 0, localConsumer, []int64{g.ID},
-		sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopes...))
+	consumerOptions := builtin.NewConsumerOptions{
+		Name:     "builtin",
+		GroupIDs: []int64{g.ID},
+		Scopes:   sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopes...),
+	}
+	builtinConsumer, _, err := builtin.NewConsumer(context.TODO(), db, consumerOptions, localConsumer)
 	require.NoError(t, err)
 	builtinSession, err := authentication.NewSession(context.TODO(), db, builtinConsumer, time.Second*5)
 	require.NoError(t, err)
@@ -202,23 +206,29 @@ func Test_authMiddleware_WithAuthConsumerScoped(t *testing.T) {
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
-	builtinConsumer, _, err := builtin.NewConsumer(context.TODO(), db, "builtin", "", 0, localConsumer, []int64{g.ID}, []sdk.AuthConsumerScopeDetail{
-		{
-			Scope: sdk.AuthConsumerScopeAction,
-			Endpoints: sdk.AuthConsumerScopeEndpoints{
-				{
-					Route:   "/my-handler2",
-					Methods: []string{http.MethodGet},
-				},
-				{
-					Route: "/my-handler3",
+	consumerOptions := builtin.NewConsumerOptions{
+		Name:     "builtin",
+		GroupIDs: []int64{g.ID},
+		Scopes: []sdk.AuthConsumerScopeDetail{
+			{
+				Scope: sdk.AuthConsumerScopeAction,
+				Endpoints: sdk.AuthConsumerScopeEndpoints{
+					{
+						Route:   "/my-handler2",
+						Methods: []string{http.MethodGet},
+					},
+					{
+						Route: "/my-handler3",
+					},
 				},
 			},
+			{
+				Scope: sdk.AuthConsumerScopeAdmin,
+			},
 		},
-		{
-			Scope: sdk.AuthConsumerScopeAdmin,
-		},
-	})
+	}
+
+	builtinConsumer, _, err := builtin.NewConsumer(context.TODO(), db, consumerOptions, localConsumer)
 	require.NoError(t, err)
 	builtinSession, err := authentication.NewSession(context.TODO(), db, builtinConsumer, time.Second*5)
 	require.NoError(t, err)
@@ -321,19 +331,6 @@ func Test_authMiddlewareWithServiceOrWorker(t *testing.T) {
 	rec := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
 	require.Equal(t, 201, rec.Code)
-	var srvConsumer sdk.AuthConsumerCreateResponse
-	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &srvConsumer))
-	jwtHatchery := AuthentififyBuiltinConsumer(t, api, srvConsumer.Token)
-
-	// The service token should be able to pass the authAdminMiddleware while the service was not registered
-	req = assets.NewJWTAuthentifiedRequest(t, jwtHatchery, http.MethodGet, "", nil)
-	w = httptest.NewRecorder()
-	ctx, err = api.jwtMiddleware(context.TODO(), w, req, config)
-	require.NoError(t, err)
-	_, err = api.authAdminMiddleware(ctx, w, req, config)
-	require.NoError(t, err)
-	_, err = api.authMaintainerMiddleware(ctx, w, req, config)
-	require.NoError(t, err)
 
 	// Register a hatchery with the service consumer
 	privateKey, err := jws.NewRandomRSAKey()
@@ -347,17 +344,15 @@ func Test_authMiddlewareWithServiceOrWorker(t *testing.T) {
 			PublicKey: publicKey,
 		},
 	}
-	uri = api.Router.GetRoute(http.MethodPost, api.postServiceRegisterHandler, nil)
-	require.NotEmpty(t, uri)
-	req = assets.NewJWTAuthentifiedRequest(t, jwtHatchery, http.MethodPost, uri, hSrv)
-	rec = httptest.NewRecorder()
-	api.Router.Mux.ServeHTTP(rec, req)
-	require.Equal(t, 200, rec.Code)
+
+	var srvConsumer sdk.AuthConsumerCreateResponse
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &srvConsumer))
+	jwtHatchery := AuthentififyBuiltinConsumer(t, api, srvConsumer.Token, &hSrv)
 
 	// The service token should not be able to pass the authAdminMiddleware or authMaintainerMiddleware anymore
 	req = assets.NewJWTAuthentifiedRequest(t, jwtHatchery, http.MethodGet, "", nil)
 	w = httptest.NewRecorder()
-	ctx, err = api.jwtMiddleware(context.TODO(), w, req, config)
+	ctx, err = api.jwtMiddleware(ctx, w, req, config)
 	require.NoError(t, err)
 	_, err = api.authAdminMiddleware(ctx, w, req, config)
 	require.Error(t, err, "an error should be returned because the consumer is linked to a service")

@@ -96,7 +96,7 @@ func TestDAOWithStatus(t *testing.T) {
 	}
 
 	test.NoError(t, services.Insert(context.TODO(), db, &srv))
-	test.NoError(t, services.UpsertStatus(db, srv, ""))
+	test.NoError(t, services.UpsertStatus(context.TODO(), db, srv, ""))
 
 	srv2, err := services.LoadByName(context.TODO(), db, srv.Name)
 	test.NoError(t, err)

@@ -59,7 +59,7 @@ $(GO_GOJUNIT):
 	go get -u github.com/jstemmer/go-junit-report
 
 $(GO_COBERTURA):
-	go get -u github.com/t-yuki/gocover-cobertura
+	go get -u github.com/richardlt/gocover-cobertura
 
 $(GO_XUTOOLS):
 	go get -u github.com/richardlt/xutools

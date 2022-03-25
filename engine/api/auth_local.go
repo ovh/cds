@@ -43,7 +43,11 @@ func (api *API) postAuthLocalSignupHandler() service.Handler {
 		defer tx.Rollback() // nolint
 
 		// Check that user don't already exists in database
-		existingUser, err := user.LoadByUsername(ctx, tx, reqData["username"])
+		username, err := reqData.StringE("username")
+		if err != nil {
+			return err
+		}
+		existingUser, err := user.LoadByUsername(ctx, tx, username)
 		if err != nil && !sdk.ErrorIs(err, sdk.ErrUserNotFound) {
 			return err
 		}
@@ -52,7 +56,11 @@ func (api *API) postAuthLocalSignupHandler() service.Handler {
 		}
 
 		// Check that user contact don't already exists in database for given email
-		existingEmail, err := user.LoadContactByTypeAndValue(ctx, tx, sdk.UserContactTypeEmail, reqData["email"])
+		email, err := reqData.StringE("email")
+		if err != nil {
+			return err
+		}
+		existingEmail, err := user.LoadContactByTypeAndValue(ctx, tx, sdk.UserContactTypeEmail, email)
 		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return err
 		}
@@ -61,16 +69,21 @@ func (api *API) postAuthLocalSignupHandler() service.Handler {
 		}
 
 		// Generate password hash to store in consumer
-		hash, err := local.HashPassword(reqData["password"])
+		password, err := reqData.StringE("password")
+		if err != nil {
+			return err
+		}
+		hash, err := local.HashPassword(password)
 		if err != nil {
 			return err
 		}
 
 		// Prepare new user registration
+		fullname, _ := reqData.StringE("fullname")
 		reg := sdk.UserRegistration{
-			Username: reqData["username"],
-			Fullname: reqData["fullname"],
-			Email:    reqData["email"],
+			Username: username,
+			Fullname: fullname,
+			Email:    email,
 			Hash:     string(hash),
 		}
 
@@ -185,7 +198,11 @@ func (api *API) postAuthLocalSigninHandler() service.Handler {
 		defer tx.Rollback() // nolint
 
 		// Try to load a user in database for given username
-		usr, err := user.LoadByUsername(ctx, tx, reqData["username"])
+		username, err := reqData.StringE("username")
+		if err != nil {
+			return sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
+		}
+		usr, err := user.LoadByUsername(ctx, tx, username)
 		if err != nil {
 			return sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 		}
@@ -199,8 +216,14 @@ func (api *API) postAuthLocalSigninHandler() service.Handler {
 		// Check given password with consumer password
 		if hash, ok := consumer.Data["hash"]; !ok {
 			return sdk.WithStack(sdk.ErrUnauthorized)
-		} else if err := local.CompareHashAndPassword([]byte(hash), reqData["password"]); err != nil {
-			return sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
+		} else {
+			password, err := reqData.StringE("password")
+			if err != nil {
+				return err
+			}
+			if err := local.CompareHashAndPassword([]byte(hash), password); err != nil {
+				return sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
+			}
 		}
 
 		// Generate a new session for consumer
@@ -261,10 +284,10 @@ func (api *API) postAuthLocalVerifyHandler() service.Handler {
 			return err
 		}
 
-		initToken, hasInitToken := reqData["init_token"]
-		hasInitToken = hasInitToken && initToken != ""
+		initToken := reqData.String("init_token")
+		hasInitToken := initToken != ""
 
-		registrationID, err := local.CheckRegistrationToken(api.Cache, reqData["token"])
+		registrationID, err := local.CheckRegistrationToken(api.Cache, reqData.String("token"))
 		if err != nil {
 			return err
 		}
@@ -405,7 +428,7 @@ func (api *API) postAuthLocalAskResetHandler() service.Handler {
 			if err := localDriver.CheckAskResetRequest(reqData); err != nil {
 				return err
 			}
-			email = reqData["email"]
+			email = reqData.String("email")
 		}
 
 		tx, err := api.mustDB().Begin()
@@ -474,15 +497,16 @@ func (api *API) postAuthLocalResetHandler() service.Handler {
 			return err
 		}
 
-		if reqData["token"] == "" {
-			reqData["token"] = QueryString(r, "token")
+		token := reqData.String("token")
+		if token == "" {
+			token = QueryString(r, "token")
 		}
 
 		if err := localDriver.CheckResetRequest(reqData); err != nil {
 			return err
 		}
 
-		consumerID, err := local.CheckResetConsumerToken(api.Cache, reqData["token"])
+		consumerID, err := local.CheckResetConsumerToken(api.Cache, token)
 		if err != nil {
 			return err
 		}
@@ -503,7 +527,11 @@ func (api *API) postAuthLocalResetHandler() service.Handler {
 		}
 
 		// Generate password hash to store in consumer
-		hash, err := local.HashPassword(reqData["password"])
+		password, err := reqData.StringE("password")
+		if err != nil {
+			return err
+		}
+		hash, err := local.HashPassword(password)
 		if err != nil {
 			return err
 		}

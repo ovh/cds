@@ -104,6 +104,7 @@ func InitMock(t *testing.T, url string) {
 				User: &sdk.AuthentifiedUser{
 					Username: "admin",
 				},
+				Service: &sdk.Service{},
 			},
 		).AddHeader("X-Api-Pub-Signing-Key", base64.StdEncoding.EncodeToString(pubKey))
 
@@ -116,11 +117,6 @@ func InitMock(t *testing.T, url string) {
 		Reply(200).
 		Body(bytes.NewBuffer([]byte("nop"))).
 		AddHeader("Content-Type", "application/octet-stream")
-
-	gock.New(url).Post("/services/register").
-		HeaderPresent("Authorization").
-		Reply(200).
-		JSON(sdk.Service{})
 
 	gock.New(url).Post("/services/heartbeat").
 		HeaderPresent("Authorization").

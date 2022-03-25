@@ -133,8 +133,8 @@ func (api *API) postAuthSigninHandler() service.Handler {
 		defer tx.Rollback() // nolint
 
 		var signupDone bool
-		initToken, hasInitToken := req["init_token"]
-		hasInitToken = hasInitToken && initToken != ""
+		initToken := req.String("init_token")
+		hasInitToken := initToken != ""
 
 		// Check if a consumer exists for consumer type and external user identifier
 		consumer, err := authentication.LoadConsumerByTypeAndUserExternalID(ctx, tx, consumerType, userInfo.ExternalID,

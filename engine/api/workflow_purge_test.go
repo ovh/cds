@@ -39,8 +39,12 @@ func Test_purgeDryRunHandler(t *testing.T) {
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
-	_, jws, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), sdk.RandomString(10), 0, localConsumer, u.GetGroupIDs(),
-		sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject))
+	consumerOptions := builtin.NewConsumerOptions{
+		Name:     sdk.RandomString(10),
+		GroupIDs: u.GetGroupIDs(),
+		Scopes:   sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject),
+	}
+	_, jws, err := builtin.NewConsumer(context.TODO(), db, consumerOptions, localConsumer)
 	require.NoError(t, err)
 
 	key := sdk.RandomString(10)

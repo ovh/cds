@@ -68,8 +68,7 @@ func TestHatcheryLocal(t *testing.T) {
 		return nil
 	}
 
-	require.NoError(t, h.Signin(context.TODO(), srvCfg))
-	require.NoError(t, h.Register(context.TODO(), cfg))
+	require.NoError(t, h.Signin(context.TODO(), srvCfg, cfg))
 	require.NoError(t, h.Start(context.TODO()))
 
 	// Wait 30 sec to let the queue polling exec run one time

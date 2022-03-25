@@ -297,8 +297,15 @@ func Test_postApplicationDeploymentStrategyConfigHandlerAsProvider(t *testing.T)
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
-	_, jws, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), sdk.RandomString(10), 0, localConsumer, u.GetGroupIDs(),
-		sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject))
+	consumerOpts := builtin.NewConsumerOptions{
+		Name:        sdk.RandomString(10),
+		Description: sdk.RandomString(10),
+		Duration:    0,
+		GroupIDs:    u.GetGroupIDs(),
+		Scopes:      sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeProject),
+	}
+
+	_, jws, err := builtin.NewConsumer(context.TODO(), db, consumerOpts, localConsumer)
 	require.NoError(t, err)
 
 	pkey := sdk.RandomString(10)

@@ -124,37 +124,42 @@ func NewProviderClient(cfg ProviderConfig) ProviderClient {
 }
 
 // NewServiceClient returns client for a service
-func NewServiceClient(ctx context.Context, cfg ServiceConfig) (Interface, []byte, error) {
+func NewServiceClient(ctx context.Context, clientConfig ServiceConfig, registerPayload interface{}) (Interface, *sdk.Service, []byte, error) {
 	conf := Config{
-		Host:                              cfg.Host,
+		Host:                              clientConfig.Host,
 		Retry:                             2,
-		BuitinConsumerAuthenticationToken: cfg.Token,
-		InsecureSkipVerifyTLS:             cfg.InsecureSkipVerifyTLS,
+		BuitinConsumerAuthenticationToken: clientConfig.Token,
+		InsecureSkipVerifyTLS:             clientConfig.InsecureSkipVerifyTLS,
 	}
 
-	if cfg.RequestSecondsTimeout == 0 {
-		cfg.RequestSecondsTimeout = 60
+	if clientConfig.RequestSecondsTimeout == 0 {
+		clientConfig.RequestSecondsTimeout = 60
 	}
 
 	cli := new(client)
 	cli.config = &conf
 	cli.config.Mutex = new(sync.Mutex)
-	cli.httpClient = NewHTTPClient(time.Duration(cfg.RequestSecondsTimeout)*time.Second, conf.InsecureSkipVerifyTLS)
+	cli.httpClient = NewHTTPClient(time.Duration(clientConfig.RequestSecondsTimeout)*time.Second, conf.InsecureSkipVerifyTLS)
 	cli.httpNoTimeoutClient = NewHTTPClient(0, conf.InsecureSkipVerifyTLS)
 	cli.httpWebsocketClient = NewWebsocketDialer(conf.InsecureSkipVerifyTLS)
-	cli.config.Verbose = cfg.Verbose
+	cli.config.Verbose = clientConfig.Verbose
 	cli.init()
 
-	if cfg.Hook != nil {
-		if err := cfg.Hook(cli); err != nil {
-			return nil, nil, newError(err)
+	if clientConfig.Hook != nil {
+		if err := clientConfig.Hook(cli); err != nil {
+			return nil, nil, nil, newError(err)
 		}
 	}
 
 	var nbError int
 retry:
 	var res sdk.AuthConsumerSigninResponse
-	_, headers, code, err := cli.RequestJSON(ctx, "POST", "/auth/consumer/"+string(sdk.ConsumerBuiltin)+"/signin", sdk.AuthConsumerSigninRequest{"token": cfg.Token}, &res)
+	_, headers, code, err := cli.RequestJSON(ctx, "POST", "/auth/consumer/"+string(sdk.ConsumerBuiltin)+"/signin",
+		sdk.AuthConsumerSigninRequest{
+			"token":   clientConfig.Token,
+			"service": registerPayload,
+		},
+		&res)
 	if err != nil {
 		if code == 401 {
 			nbError++
@@ -163,14 +168,14 @@ retry:
 				goto retry
 			}
 		}
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	cli.config.SessionToken = res.Token
 
 	base64EncodedPubKey := headers.Get("X-Api-Pub-Signing-Key")
 	pubKey, err := base64.StdEncoding.DecodeString(base64EncodedPubKey)
 
-	return cli, pubKey, newError(err)
+	return cli, res.Service, pubKey, newError(err)
 }
 
 func (c *client) init() {

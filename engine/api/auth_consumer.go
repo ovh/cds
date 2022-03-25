@@ -84,8 +84,16 @@ func (api *API) postConsumerByUserHandler() service.Handler {
 		}
 
 		// Create the new built in consumer from request data
-		newConsumer, token, err := builtin.NewConsumer(ctx, tx, reqData.Name, reqData.Description, reqData.ValidityPeriods.Latest().Duration,
-			consumer, reqData.GroupIDs, reqData.ScopeDetails)
+		consumerOpts := builtin.NewConsumerOptions{
+			Name:        reqData.Name,
+			Description: reqData.Description,
+			Duration:    reqData.ValidityPeriods.Latest().Duration,
+			GroupIDs:    reqData.GroupIDs,
+			Scopes:      reqData.ScopeDetails,
+			ServiceName: reqData.ServiceName,
+			ServiceType: reqData.ServiceType,
+		}
+		newConsumer, token, err := builtin.NewConsumer(ctx, tx, consumerOpts, consumer)
 		if err != nil {
 			return err
 		}

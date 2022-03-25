@@ -40,7 +40,7 @@ func (d authDriver) CheckSigninRequest(req sdk.AuthConsumerSigninRequest) error 
 
 func (d authDriver) GetUserInfo(ctx context.Context, req sdk.AuthConsumerSigninRequest) (sdk.AuthDriverUserInfo, error) {
 	var u sdk.AuthDriverUserInfo
-	var username = req["username"]
+	var username = req.String("username")
 
 	u.ExternalID = username
 	u.Username = username
