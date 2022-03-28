@@ -134,6 +134,9 @@ func initBuiltinConsumersFromStartupConfig(ctx context.Context, tx gorpmapper.Sq
 
 	// Create the consumers provided by the startup configuration
 	for _, cfg := range startupConfig.Consumers {
+		if cfg.Name == "" {
+			continue
+		}
 		var scopes sdk.AuthConsumerScopeDetails
 
 		switch cfg.Type {
@@ -153,6 +156,7 @@ func initBuiltinConsumersFromStartupConfig(ctx context.Context, tx gorpmapper.Sq
 			scopes = sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeService)
 		}
 
+		svcType := string(cfg.Type)
 		var c = sdk.AuthConsumer{
 			ID:                 cfg.ID,
 			Name:               cfg.Name,
@@ -164,6 +168,8 @@ func initBuiltinConsumersFromStartupConfig(ctx context.Context, tx gorpmapper.Sq
 			GroupIDs:           []int64{group.SharedInfraGroup.ID},
 			ScopeDetails:       scopes,
 			ValidityPeriods:    sdk.NewAuthConsumerValidityPeriod(time.Unix(startupConfig.IAT, 0), 2*365*24*time.Hour), // Default validity period is two years
+			ServiceName:        &cfg.Name,
+			ServiceType:        &svcType,
 		}
 
 		if err := authentication.InsertConsumer(ctx, tx, &c); err != nil {

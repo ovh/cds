@@ -60,6 +60,32 @@ func (api *API) postAuthBuiltinSigninHandler() service.Handler {
 			return sdk.NewError(sdk.ErrForbidden, err)
 		}
 
+		// Check if the consumer is associated to a service
+		srvInput, hasService := req["service"]
+		var srv sdk.Service
+		if hasService {
+			btes, err := json.Marshal(srvInput)
+			if err != nil {
+				return sdk.NewError(sdk.ErrWrongRequest, err)
+			}
+			if err := sdk.JSONUnmarshal(btes, &srv); err != nil {
+				return sdk.NewError(sdk.ErrWrongRequest, err)
+			}
+			if consumer.ServiceName != nil && *consumer.ServiceName != srv.Name {
+				return sdk.NewErrorFrom(sdk.ErrForbidden, "service name %q doesn't match with consumer %q", srv.Name, *consumer.ServiceName)
+			}
+			if consumer.ServiceType != nil && *consumer.ServiceType != srv.Type {
+				return sdk.NewErrorFrom(sdk.ErrForbidden, "service type %q doesn't match with consumer %q", srv.Type, *consumer.ServiceType)
+			}
+			if consumer.ServiceRegion != nil && *consumer.ServiceRegion != *srv.Region {
+				return sdk.NewErrorFrom(sdk.ErrForbidden, "service region %q doesn't match with consumer %q", srv.Type, *consumer.ServiceRegion)
+			}
+		} else {
+			if consumer.ServiceName != nil || consumer.ServiceType != nil || consumer.ServiceRegion != nil {
+				return sdk.NewErrorFrom(sdk.ErrForbidden, "signing request doesn't match with consumer %q service definition. missing service payload", consumer.Name)
+			}
+		}
+
 		// Generate a new session for consumer
 		session, err := authentication.NewSession(ctx, tx, consumer, driver.GetSessionDuration())
 		if err != nil {
@@ -104,18 +130,7 @@ func (api *API) postAuthBuiltinSigninHandler() service.Handler {
 		ctx = context.WithValue(ctx, contextDriverManifest, driverManifest)
 
 		// If the Signin has a *service* Payload, we have to perform the service registration
-		srvInput, has := req["service"]
-		var srv sdk.Service
-		if has {
-			btes, err := json.Marshal(srvInput)
-			if err != nil {
-				return sdk.NewError(sdk.ErrWrongRequest, err)
-			}
-
-			if err := sdk.JSONUnmarshal(btes, &srv); err != nil {
-				return sdk.NewError(sdk.ErrWrongRequest, err)
-			}
-
+		if hasService {
 			ctx = context.WithValue(ctx, cdslog.AuthServiceName, srv.Name)
 			SetTracker(w, cdslog.AuthServiceName, srv.Name)
 
