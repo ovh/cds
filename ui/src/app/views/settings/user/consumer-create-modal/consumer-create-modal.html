@@ -67,6 +67,38 @@
                             </table>
                         </div>
                     </sui-accordion-panel>
+                    <sui-accordion-panel [isOpen]="activeStep === formStepName.SERVICE" [isDisabled]="true">
+                        <div title (click)="clickOpenStep(formStepName.SERVICE)">
+                            <i class="dropdown icon"></i>
+                            Service
+                        </div>
+                        <div content>
+                            <div class="ui form">
+                                <div class="ui message">
+                                    <p>Optional fields for consumer used by services (eg. hatcheries).</p>
+                                </div>
+                                <div class="ui wide field">
+                                    <div class="fields">
+                                        <div class="six wide field">
+                                            <label>{{'common_name' | translate}}</label>
+                                            <input class="ui input" type="text" name="name"
+                                                [(ngModel)]="newConsumer.service_name">
+                                        </div>
+                                        <div class="six wide field">
+                                            <label>Type</label>
+                                            <input class="ui input" type="text" name="type"
+                                                [(ngModel)]="newConsumer.service_type">
+                                        </div>
+                                        <div class="six wide field">
+                                            <label>Region</label>
+                                            <input class="ui input" type="text" name="region"
+                                                [(ngModel)]="newConsumer.service_region">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </sui-accordion-panel>
                 </sui-accordion>
                 <app-consumer-display-signin-token *ngIf="newConsumer.id" [consumer]="newConsumer"
                     [signinToken]="signinToken">
@@ -77,7 +109,7 @@
     <div class="actions">
         <div class="ui grid">
             <div class="four wide column left aligned">
-                <button *ngIf="activeStep === formStepName.GROUPS || activeStep === formStepName.SCOPES"
+                <button *ngIf="activeStep === formStepName.GROUPS || activeStep === formStepName.SCOPES || activeStep === formStepName.SERVICE"
                     class="ui primary button" (click)="clickBack()">
                     {{ 'btn_back' | translate }}
                 </button>
@@ -85,7 +117,7 @@
             <div class="eight wide column centered">
                 <button *ngIf="activeStep !== formStepName.TOKEN" class="ui green button" [class.loading]="loading"
                     (click)="clickNext()">
-                    <ng-container *ngIf="activeStep === formStepName.SCOPES; then createButton; else nextButton">
+                    <ng-container *ngIf="activeStep === formStepName.SERVICE; then createButton; else nextButton">
                     </ng-container>
                     <ng-template #createButton>
                         <i class="save icon"></i>{{ 'btn_create' | translate }}

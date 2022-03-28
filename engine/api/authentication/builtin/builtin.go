@@ -66,13 +66,14 @@ func (d AuthDriver) CheckSigninRequest(req sdk.AuthConsumerSigninRequest) error 
 // NewConsumer returns a new builtin consumer for given data.
 // The parent consumer should be given with all data loaded including the authentified user.
 type NewConsumerOptions struct {
-	Name        string
-	Description string
-	Duration    time.Duration
-	GroupIDs    []int64
-	Scopes      sdk.AuthConsumerScopeDetails
-	ServiceName *string
-	ServiceType *string
+	Name          string
+	Description   string
+	Duration      time.Duration
+	GroupIDs      []int64
+	Scopes        sdk.AuthConsumerScopeDetails
+	ServiceName   *string
+	ServiceType   *string
+	ServiceRegion *string
 }
 
 func NewConsumer(ctx context.Context, db gorpmapper.SqlExecutorWithTx, opts NewConsumerOptions, parentConsumer *sdk.AuthConsumer) (*sdk.AuthConsumer, string, error) {
@@ -112,6 +113,7 @@ func NewConsumer(ctx context.Context, db gorpmapper.SqlExecutorWithTx, opts NewC
 		ValidityPeriods:    sdk.NewAuthConsumerValidityPeriod(time.Now(), opts.Duration),
 		ServiceName:        opts.ServiceName,
 		ServiceType:        opts.ServiceType,
+		ServiceRegion:      opts.ServiceRegion,
 	}
 
 	if err := authentication.InsertConsumer(ctx, db, &c); err != nil {

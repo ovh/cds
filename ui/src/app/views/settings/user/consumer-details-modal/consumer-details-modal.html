@@ -35,7 +35,15 @@
                     <div class="two fields">
                         <div class="field">
                             <label>Last authentication</label>
-                            {{consumer.last_authentication}}
+                            {{consumer.last_authentication ? consumer.last_authentication : 'never'}}
+                        </div>
+                        <div class="field" *ngIf="consumer.service_name || consumer.service_type || consumer.service_region">
+                            <label>Service detail</label>
+                            <ul>
+                                <li>Name: {{consumer.service_name}}</li>
+                                <li>Type: {{consumer.service_type}}</li>
+                                <li>Region: {{consumer.service_region}}</li>
+                            </ul>
                         </div>
                     </div>
                     <div class="field">
