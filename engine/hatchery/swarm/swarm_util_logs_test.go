@@ -31,9 +31,9 @@ func Test_serviceLogs(t *testing.T) {
 	require.NoError(t, err)
 	h.Common.PrivateKey = key
 
-	gock.New("https://lolcat.api").Get("/worker").Reply(http.StatusOK).JSON([]sdk.Worker{{Name: "swarmy-model1-w1"}})
+	gock.New("https://cds-api.local").Get("/worker").Reply(http.StatusOK).JSON([]sdk.Worker{{Name: "swarmy-model1-w1"}})
 
-	gock.New("https://lolcat.api").Get("/config/cdn").Reply(http.StatusOK).JSON(sdk.CDNConfig{TCPURL: "tcphost:8090"})
+	gock.New("https://cds-api.local").Get("/config/cdn").Reply(http.StatusOK).JSON(sdk.CDNConfig{TCPURL: "tcphost:8090"})
 	require.NoError(t, h.RefreshServiceLogger(context.TODO()))
 
 	containers := []types.Container{
@@ -64,12 +64,12 @@ func Test_serviceLogs(t *testing.T) {
 		},
 	}
 
-	gock.New("https://lolcat.host").Get("/v6.66/containers/json").Reply(http.StatusOK).JSON(containers)
+	gock.New("https://lolcat.local").Get("/v6.66/containers/json").Reply(http.StatusOK).JSON(containers)
 
-	gock.New("https://lolcat.host").AddMatcher(func(r *http.Request, rr *gock.Request) (bool, error) {
+	gock.New("https://lolcat.local").AddMatcher(func(r *http.Request, rr *gock.Request) (bool, error) {
 		b, err := gock.MatchPath(r, rr)
 		assert.NoError(t, err)
-		if r.Method == http.MethodGet && strings.HasPrefix(r.URL.String(), "https://lolcat.host/v6.66/containers/service-1/logs") {
+		if r.Method == http.MethodGet && strings.HasPrefix(r.URL.String(), "https://lolcat.local/v6.66/containers/service-1/logs") {
 			if b {
 				return true, nil
 			}

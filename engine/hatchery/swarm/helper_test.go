@@ -53,7 +53,7 @@ func InitTestHatcherySwarm(t *testing.T) *HatcherySwarm {
 	httpClient := cdsclient.NewHTTPClient(1*time.Minute, false)
 	c, err := docker.NewClientWithOpts(
 		docker.WithHTTPClient(httpClient),
-		docker.WithHost("https://lolcat.host"),
+		docker.WithHost("https://lolcat.local"),
 		docker.WithVersion("6.66"),
 	)
 	require.NoError(t, err)
@@ -74,7 +74,7 @@ func InitTestHatcherySwarm(t *testing.T) *HatcherySwarm {
 	}
 	h.dockerClients["default"] = &dockerClient{Client: *c, name: "default"}
 
-	h.Client = cdsclient.New(cdsclient.Config{Host: "https://lolcat.api"})
+	h.Client = cdsclient.New(cdsclient.Config{Host: "https://cds-api.local"})
 	gock.InterceptClient(h.Client.HTTPClient())
 	return h
 }
