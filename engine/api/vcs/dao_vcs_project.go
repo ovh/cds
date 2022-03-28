@@ -38,11 +38,7 @@ func Delete(db gorpmapper.SqlExecutorWithTx, projectID int64, name string) error
 	return sdk.WrapError(err, "cannot delete vcs_project %d/%s", projectID, name)
 }
 
-func LoadAllVCSByProject(ctx context.Context, db gorp.SqlExecutor, projectKey string) ([]sdk.VCSProject, error) {
-	return loadAllVCSByProject(ctx, db, projectKey)
-}
-
-func loadAllVCSByProject(ctx context.Context, db gorp.SqlExecutor, projectKey string, opts ...gorpmapping.GetOptionFunc) ([]sdk.VCSProject, error) {
+func LoadAllVCSByProject(ctx context.Context, db gorp.SqlExecutor, projectKey string, opts ...gorpmapping.GetOptionFunc) ([]sdk.VCSProject, error) {
 	var res []dbVCSProject
 
 	query := gorpmapping.NewQuery(`SELECT vcs_project.* FROM vcs_project JOIN project ON project.id = vcs_project.project_id WHERE project.projectkey = $1`).Args(projectKey)
