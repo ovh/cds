@@ -3,9 +3,8 @@ package workflow
 import (
 	"testing"
 
-	"github.com/bmizerany/assert"
-
 	"github.com/ovh/cds/sdk"
+	"github.com/stretchr/testify/assert"
 )
 
 // Test merge function with multiple subrun but not a restartfailedjob use case

@@ -22,8 +22,8 @@ func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, rb *sdk.RBAC) 
 	if err := sdk.IsValidRbac(rb); err != nil {
 		return err
 	}
-	if rb.UUID == "" {
-		rb.UUID = sdk.UUID()
+	if rb.ID == "" {
+		rb.ID = sdk.UUID()
 	}
 	if rb.Created.IsZero() {
 		rb.Created = time.Now()
@@ -36,7 +36,7 @@ func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, rb *sdk.RBAC) 
 
 	for i := range rb.Globals {
 		dbRbGlobal := rbacGlobal{
-			RbacUUID:   dbRb.UUID,
+			RbacID:     dbRb.ID,
 			RBACGlobal: rb.Globals[i],
 		}
 		if err := insertRbacGlobal(ctx, db, &dbRbGlobal); err != nil {
@@ -45,7 +45,7 @@ func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, rb *sdk.RBAC) 
 	}
 	for i := range rb.Projects {
 		dbRbProject := rbacProject{
-			RbacUUID:    dbRb.UUID,
+			RbacID:      dbRb.ID,
 			RBACProject: rb.Projects[i],
 		}
 		if err := insertRbacProject(ctx, db, &dbRbProject); err != nil {
@@ -84,10 +84,10 @@ func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...
 
 	isValid, err := gorpmapping.CheckSignature(rbacDB, rbacDB.Signature)
 	if err != nil {
-		return r, sdk.WrapError(err, "error when checking signature for rbac %s", rbacDB.UUID)
+		return r, sdk.WrapError(err, "error when checking signature for rbac %s", rbacDB.ID)
 	}
 	if !isValid {
-		log.Error(ctx, "rbac.get> rbac %s (%s) data corrupted", rbacDB.Name, rbacDB.UUID)
+		log.Error(ctx, "rbac.get> rbac %s (%s) data corrupted", rbacDB.Name, rbacDB.ID)
 		return r, sdk.WithStack(sdk.ErrNotFound)
 	}
 	for _, f := range opts {

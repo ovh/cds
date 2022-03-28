@@ -12,23 +12,23 @@ type rbac struct {
 }
 
 func (r rbac) Canonical() gorpmapper.CanonicalForms {
-	_ = []interface{}{r.UUID, r.Name}
+	_ = []interface{}{r.ID, r.Name}
 	return []gorpmapper.CanonicalForm{
-		"{{.UUID}}{{.Name}}",
+		"{{.ID}}{{.Name}}",
 	}
 }
 
 type rbacGlobal struct {
-	ID       int64  `db:"id"`
-	RbacUUID string `db:"rbac_uuid"`
+	ID     int64  `db:"id"`
+	RbacID string `db:"rbac_id"`
 	sdk.RBACGlobal
 	gorpmapper.SignedEntity
 }
 
 func (rg rbacGlobal) Canonical() gorpmapper.CanonicalForms {
-	_ = []interface{}{rg.ID, rg.RbacUUID, rg.Role}
+	_ = []interface{}{rg.ID, rg.RbacID, rg.Role}
 	return []gorpmapper.CanonicalForm{
-		"{{.ID}}{{.RbacUUID}}{{.Role}}",
+		"{{.ID}}{{.RbacID}}{{.Role}}",
 	}
 }
 
@@ -61,16 +61,16 @@ func (rgg rbacGlobalGroup) Canonical() gorpmapper.CanonicalForms {
 }
 
 type rbacProject struct {
-	ID       int64  `json:"-" db:"id" yaml:"-"`
-	RbacUUID string `json:"-" db:"rbac_uuid" yaml:"-"`
+	ID     int64  `json:"-" db:"id" yaml:"-"`
+	RbacID string `json:"-" db:"rbac_id" yaml:"-"`
 	sdk.RBACProject
 	gorpmapper.SignedEntity
 }
 
 func (rp rbacProject) Canonical() gorpmapper.CanonicalForms {
-	_ = []interface{}{rp.ID, rp.RbacUUID, rp.Role, rp.All}
+	_ = []interface{}{rp.ID, rp.RbacID, rp.Role, rp.All}
 	return []gorpmapper.CanonicalForm{
-		"{{.ID}}{{.RbacUUID}}{{.Role}}{{.All}}",
+		"{{.ID}}{{.RbacID}}{{.Role}}{{.All}}",
 	}
 }
 
@@ -117,7 +117,7 @@ func (rgg rbacProjectGroup) Canonical() gorpmapper.CanonicalForms {
 }
 
 func init() {
-	gorpmapping.Register(gorpmapping.New(rbac{}, "rbac", false, "uuid"))
+	gorpmapping.Register(gorpmapping.New(rbac{}, "rbac", false, "id"))
 	gorpmapping.Register(gorpmapping.New(rbacGlobal{}, "rbac_global", true, "id"))
 	gorpmapping.Register(gorpmapping.New(rbacGlobalUser{}, "rbac_global_users", true, "id"))
 	gorpmapping.Register(gorpmapping.New(rbacGlobalGroup{}, "rbac_global_groups", true, "id"))
