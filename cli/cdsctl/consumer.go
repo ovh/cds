@@ -91,6 +91,18 @@ var authConsumerNewCmd = cli.Command{
 			Name:  "duration",
 			Usage: "Validity period of the token generated for the consumer (in days)",
 		},
+		{
+			Name:  "service-name",
+			Usage: "Name of the service",
+		},
+		{
+			Name:  "service-type",
+			Usage: "Type of service (hatchery, etc.)",
+		},
+		{
+			Name:  "service-region",
+			Usage: "Region where the service will be started",
+		},
 	},
 }
 
@@ -167,13 +179,40 @@ func authConsumerNewRun(v cli.Values) error {
 		duration = time.Duration(iDuration) * (24 * time.Hour)
 	}
 
-	res, err := client.AuthConsumerCreateForUser(username, sdk.AuthConsumer{
+	var svcName = v.GetString("service-name")
+	if svcName == "" && !v.GetBool("no-interactive") {
+		svcName = cli.AskValue("Service name")
+	}
+
+	var svcType = v.GetString("service-type")
+	if svcType == "" && !v.GetBool("no-interactive") {
+		svcType = cli.AskValue("Service type")
+	}
+
+	var svcRegion = v.GetString("service-region")
+	if svcRegion == "" && !v.GetBool("no-interactive") {
+		svcRegion = cli.AskValue("Service region")
+	}
+
+	var consumer = sdk.AuthConsumer{
 		Name:            name,
 		Description:     description,
 		GroupIDs:        groupIDs,
 		ScopeDetails:    sdk.NewAuthConsumerScopeDetails(scopes...),
 		ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), duration),
-	})
+	}
+
+	if svcName != "" {
+		consumer.ServiceName = &svcName
+	}
+	if svcType != "" {
+		consumer.ServiceType = &svcType
+	}
+	if svcRegion != "" {
+		consumer.ServiceRegion = &svcRegion
+	}
+
+	res, err := client.AuthConsumerCreateForUser(username, consumer)
 	if err != nil {
 		return err
 	}

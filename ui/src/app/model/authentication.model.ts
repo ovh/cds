@@ -88,6 +88,9 @@ export class AuthConsumer {
     warnings: Array<AuthConsumerWarning>;
     validity_periods: Array<AuthConsumerValidityPeriod>;
     last_authentication: string;
+    service_name: string;
+    service_type: string;
+    service_region: string;
 
     // UI fields
     parent: AuthConsumer;

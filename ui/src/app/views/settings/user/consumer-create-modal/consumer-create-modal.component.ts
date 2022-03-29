@@ -28,7 +28,8 @@ export enum FormStepName {
     INFORMATIONS = 0,
     GROUPS = 1,
     SCOPES = 2,
-    TOKEN = 3
+    SERVICE = 3,
+    TOKEN = 4
 }
 
 @Component({
@@ -182,6 +183,9 @@ export class ConsumerCreateModalComponent {
             case FormStepName.SCOPES:
                 this.activeStep = FormStepName.GROUPS;
                 break;
+            case FormStepName.SERVICE:
+                this.activeStep = FormStepName.SCOPES;
+                break;
             default:
                 return;
         }
@@ -201,6 +205,9 @@ export class ConsumerCreateModalComponent {
                 this.activeStep = FormStepName.SCOPES;
                 break;
             case FormStepName.SCOPES:
+                    this.activeStep = FormStepName.SERVICE;
+                    break;
+            case FormStepName.SERVICE:
                 this.save();
                 return;
             default:
@@ -234,6 +241,8 @@ export class ConsumerCreateModalComponent {
                 return true;
             case FormStepName.SCOPES:
                 return this.selectedScopeDetails.length > 0;
+            case FormStepName.SERVICE:
+                return true;
             default:
                 return false;
         }
