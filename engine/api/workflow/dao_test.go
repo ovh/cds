@@ -1396,7 +1396,7 @@ func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 					if h.HookModelName == sdk.RepositoryWebHookModelName {
 						cfg := hooks[k].Config
 						cfg["webHookURL"] = sdk.WorkflowNodeHookConfigValue{
-							Value:        "http://lolcat.host",
+							Value:        "http://lolcat.local",
 							Configurable: false,
 						}
 					}

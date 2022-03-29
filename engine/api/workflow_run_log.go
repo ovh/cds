@@ -9,12 +9,10 @@ import (
 	"github.com/mitchellh/hashstructure"
 
 	"github.com/ovh/cds/engine/api/authentication"
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
-	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
@@ -236,22 +234,14 @@ func (api *API) getWorkflowAccessHandler() service.Handler {
 		projectKey := vars["key"]
 		itemType := vars["type"]
 
-		var enabled bool
-		switch sdk.CDNItemType(itemType) {
-		case sdk.CDNTypeItemStepLog, sdk.CDNTypeItemServiceLog:
-			enabled = true
-		case sdk.CDNTypeItemRunResult:
-			_, enabled = featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeatureCDNArtifact, map[string]string{
-				"project_key": projectKey,
-			})
-		}
-
-		if !enabled {
-			return sdk.WrapError(sdk.ErrForbidden, "cdn is not enabled for project %s", projectKey)
-		}
-
 		if !isCDN(ctx) {
 			return sdk.WrapError(sdk.ErrForbidden, "only CDN can call this route")
+		}
+
+		if sdk.CDNItemType(itemType) != sdk.CDNTypeItemStepLog &&
+			sdk.CDNItemType(itemType) != sdk.CDNTypeItemServiceLog &&
+			sdk.CDNItemType(itemType) != sdk.CDNTypeItemRunResult {
+			return sdk.WrapError(sdk.ErrForbidden, "cdn is not enabled for this type %s", itemType)
 		}
 
 		sessionID := r.Header.Get(sdk.CDSSessionID)

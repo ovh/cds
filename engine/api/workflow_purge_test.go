@@ -171,7 +171,7 @@ func Test_Purge_DeleteArtifactsFromRepositoryManager(t *testing.T) {
 	require.NoError(t, err)
 
 	integrationConfig := integrationModel.DefaultConfig.Clone()
-	integrationConfig.SetValue("url", "https://artifactory.lolcat.host/")
+	integrationConfig.SetValue("url", "https://artifactory.lolcat.local/")
 	integrationConfig.SetValue("platform", "artifactory")
 	integrationConfig.SetValue("token.name", "my-token")
 	integrationConfig.SetValue("token", "abcdef")
@@ -228,7 +228,6 @@ func Test_Purge_DeleteArtifactsFromRepositoryManager(t *testing.T) {
 
 	wr, err = workflow.LoadRunByID(context.Background(), db.DbMap, wr.ID, workflow.LoadRunOptions{
 		WithCoverage:        true,
-		WithArtifacts:       true,
 		WithTests:           true,
 		WithVulnerabilities: true,
 	})

@@ -3,12 +3,9 @@ package api
 import (
 	"context"
 	"fmt"
-	"io"
 	"net/http"
-	"sort"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -20,7 +17,6 @@ import (
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/integration"
-	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/services"
@@ -255,7 +251,7 @@ func (api *API) getLatestWorkflowRunHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		name := vars["permWorkflowName"]
-		run, err := workflow.LoadLastRun(ctx, api.mustDB(), key, name, workflow.LoadRunOptions{WithArtifacts: true})
+		run, err := workflow.LoadLastRun(ctx, api.mustDB(), key, name, workflow.LoadRunOptions{})
 		if err != nil {
 			return sdk.WrapError(err, "Unable to load last workflow run")
 		}
@@ -284,7 +280,6 @@ func (api *API) getWorkflowRunHandler() service.Handler {
 		run, err := workflow.LoadRun(ctx, api.mustDB(), key, name, number,
 			workflow.LoadRunOptions{
 				WithDeleted:             false,
-				WithArtifacts:           true,
 				WithLightTests:          true,
 				DisableDetailledNodeRun: !isService && withDetailledNodeRun != "true",
 			},
@@ -796,7 +791,6 @@ func (api *API) getWorkflowNodeRunHandler() service.Handler {
 		}
 		nodeRun, err := workflow.LoadNodeRun(api.mustDB(), key, name, id, workflow.LoadRunOptions{
 			WithTests:           true,
-			WithArtifacts:       true,
 			WithCoverage:        true,
 			WithVulnerabilities: true,
 		})
@@ -1332,100 +1326,6 @@ func failInitWorkflowRun(ctx context.Context, db *gorp.DbMap, wfRun *sdk.Workflo
 	return report
 }
 
-func (api *API) downloadworkflowArtifactDirectHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		hash := vars["hash"]
-
-		art, err := workflow.LoadWorkfowArtifactByHash(api.mustDB(), hash)
-		if err != nil {
-			return sdk.WrapError(err, "Could not load artifact with hash %s", hash)
-		}
-
-		w.Header().Add("Content-Type", "application/octet-stream")
-		w.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", art.Name))
-
-		f, err := api.SharedStorage.Fetch(ctx, art)
-		if err != nil {
-			return sdk.WrapError(err, "Cannot fetch artifact")
-		}
-
-		if _, err := io.Copy(w, f); err != nil {
-			_ = f.Close()
-			return sdk.WrapError(err, "Cannot stream artifact")
-		}
-
-		if err := f.Close(); err != nil {
-			return sdk.WrapError(err, "Cannot close artifact")
-		}
-		return nil
-	}
-}
-
-func (api *API) getDownloadArtifactHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		key := vars["key"]
-		name := vars["permWorkflowNameAdvanced"]
-
-		id, errI := requestVarInt(r, "artifactId")
-		if errI != nil {
-			return sdk.NewErrorFrom(sdk.ErrInvalidID, "invalid node job run ID")
-		}
-
-		proj, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithIntegrations)
-		if err != nil {
-			return sdk.WrapError(err, "unable to load projet")
-		}
-
-		options := workflow.LoadOptions{}
-		work, err := workflow.Load(ctx, api.mustDB(), api.Cache, *proj, name, options)
-		if err != nil {
-			return sdk.WrapError(err, "cannot load workflow")
-		}
-
-		art, err := workflow.LoadArtifactByIDs(api.mustDB(), work.ID, id)
-		if err != nil {
-			return sdk.WrapError(err, "cannot load artifacts")
-		}
-
-		w.Header().Add("Content-Type", "application/octet-stream")
-		w.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", art.Name))
-
-		var integrationName string
-		if art.ProjectIntegrationID != nil && *art.ProjectIntegrationID > 0 {
-			projectIntegration, err := integration.LoadProjectIntegrationByID(ctx, api.mustDB(), *art.ProjectIntegrationID)
-			if err != nil {
-				return sdk.WrapError(err, "cannot load project integration %s/%d", proj.Key, *art.ProjectIntegrationID)
-			}
-			integrationName = projectIntegration.Name
-		} else {
-			integrationName = sdk.DefaultStorageIntegrationName
-		}
-
-		storageDriver, err := objectstore.GetDriver(ctx, api.mustDB(), api.SharedStorage, proj.Key, integrationName)
-		if err != nil {
-			return err
-		}
-
-		f, err := storageDriver.Fetch(ctx, art)
-		if err != nil {
-			_ = f.Close()
-			return sdk.WrapError(err, "cannot fetch artifact")
-		}
-
-		if _, err := io.Copy(w, f); err != nil {
-			_ = f.Close()
-			return sdk.WrapError(err, "cannot stream artifact")
-		}
-
-		if err := f.Close(); err != nil {
-			return sdk.WrapError(err, "cannot close artifact")
-		}
-		return nil
-	}
-}
-
 func (api *API) getWorkflowRunResultsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
@@ -1480,77 +1380,6 @@ func (api *API) getWorkflowNodeRunResultsHandler() service.Handler {
 			return err
 		}
 		return service.WriteJSON(w, results, http.StatusOK)
-	}
-}
-
-func (api *API) getWorkflowRunArtifactsHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		key := vars["key"]
-		name := vars["permWorkflowNameAdvanced"]
-
-		number, err := requestVarInt(r, "number")
-		if err != nil {
-			return err
-		}
-
-		wr, err := workflow.LoadRun(ctx, api.mustDB(), key, name, number, workflow.LoadRunOptions{WithArtifacts: true})
-		if err != nil {
-			return sdk.WrapError(err, "no workflow run found for %s/%s with number %d", key, name, number)
-		}
-
-		arts := []sdk.WorkflowNodeRunArtifact{}
-		for _, runs := range wr.WorkflowNodeRuns {
-			if len(runs) == 0 {
-				continue
-			}
-
-			sort.Slice(runs, func(i, j int) bool {
-				return runs[i].SubNumber > runs[j].SubNumber
-			})
-
-			artifacts := workflow.MergeArtifactWithPreviousSubRun(runs)
-
-			wg := &sync.WaitGroup{}
-			for i := range artifacts {
-				wg.Add(1)
-				go func(art *sdk.WorkflowNodeRunArtifact) {
-					defer wg.Done()
-
-					var integrationName string
-					if art.ProjectIntegrationID != nil && *art.ProjectIntegrationID > 0 {
-						projectIntegration, err := integration.LoadProjectIntegrationByID(ctx, api.mustDB(), *art.ProjectIntegrationID)
-						if err != nil {
-							log.Error(ctx, "Cannot load LoadProjectIntegrationByID %s/%d: err: %v", key, *art.ProjectIntegrationID, err)
-							return
-						}
-						integrationName = projectIntegration.Name
-					} else {
-						integrationName = sdk.DefaultStorageIntegrationName
-					}
-
-					storageDriver, err := objectstore.GetDriver(ctx, api.mustDB(), api.SharedStorage, key, integrationName)
-					if err != nil {
-						log.Error(ctx, "Cannot load storage driver: %v", err)
-						return
-					}
-
-					s, temporaryURLSupported := storageDriver.(objectstore.DriverWithRedirect)
-					if temporaryURLSupported { // with temp URL
-						fURL, _, err := s.FetchURL(art)
-						if err != nil {
-							log.Error(ctx, "Cannot fetch cache object: %v", err)
-						} else if fURL != "" {
-							art.TempURL = fURL
-						}
-					}
-				}(&artifacts[i])
-			}
-			wg.Wait()
-			arts = append(arts, artifacts...)
-		}
-
-		return service.WriteJSON(w, arts, http.StatusOK)
 	}
 }
 

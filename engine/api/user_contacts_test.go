@@ -26,7 +26,7 @@ func Test_getUserContactsHandler(t *testing.T) {
 		Primary: true,
 		Type:    sdk.UserContactTypeEmail,
 		UserID:  u.ID,
-		Value:   seed + "@lolcat.host",
+		Value:   seed + "@lolcat.local",
 	}))
 	require.NoError(t, user.InsertContact(context.TODO(), db, &sdk.UserContact{
 		Primary: false,
@@ -47,6 +47,6 @@ func Test_getUserContactsHandler(t *testing.T) {
 	var cs []sdk.UserContact
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &cs))
 	require.Equal(t, 2, len(cs))
-	assert.Equal(t, seed+"@lolcat.host", cs[0].Value)
+	assert.Equal(t, seed+"@lolcat.local", cs[0].Value)
 	assert.Equal(t, seed+"@lolcat2.host", cs[1].Value)
 }

@@ -17,7 +17,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/cdn"
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/metrics"
@@ -28,7 +27,6 @@ import (
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/api/workflow"
-	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -119,12 +117,6 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 		pbji.CDNHttpAddr, err = services.GetCDNPublicHTTPAdress(ctx, api.mustDB())
 		if err != nil {
 			return err
-		}
-		_, enabled := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeatureCDNArtifact, map[string]string{
-			"project_key": pbji.ProjectKey,
-		})
-		pbji.Features = map[sdk.FeatureName]bool{
-			sdk.FeatureCDNArtifact: enabled,
 		}
 
 		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, *p, report)
@@ -1154,17 +1146,6 @@ func (api *API) postWorkflowRunResultsHandler() service.Handler {
 		wr, err := workflow.LoadRunByJobID(ctx, api.mustDBWithCtx(ctx), jobID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
 		if err != nil {
 			return err
-		}
-		proj, err := project.LoadByID(api.mustDB(), wr.ProjectID)
-		if err != nil {
-			return err
-		}
-
-		_, enabled := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, api.mustDB(), sdk.FeatureCDNArtifact, map[string]string{
-			"project_key": proj.Key,
-		})
-		if !enabled {
-			return sdk.WrapError(sdk.ErrForbidden, "cdn is not enabled for project %s", proj.Key)
 		}
 
 		if wr.ID != runResult.WorkflowRunID {

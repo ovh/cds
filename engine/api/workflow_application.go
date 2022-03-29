@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
-	"sort"
 
 	"github.com/gorilla/mux"
 
@@ -40,26 +39,14 @@ func (api *API) releaseApplicationWorkflowHandler() service.Handler {
 		if err != nil {
 			return err
 		}
-		loadOpts := workflow.LoadRunOptions{WithArtifacts: true}
-		wNodeRun, err := workflow.LoadNodeRun(api.mustDB(), key, name, nodeRunID, loadOpts)
+		wNodeRun, err := workflow.LoadNodeRun(api.mustDB(), key, name, nodeRunID, workflow.LoadRunOptions{})
 		if err != nil {
 			return err
 		}
 
-		workflowRun, err := workflow.LoadRunByIDAndProjectKey(ctx, api.mustDB(), key, wNodeRun.WorkflowRunID, loadOpts)
+		workflowRun, err := workflow.LoadRunByIDAndProjectKey(ctx, api.mustDB(), key, wNodeRun.WorkflowRunID, workflow.LoadRunOptions{})
 		if err != nil {
 			return err
-		}
-
-		workflowArtifacts := []sdk.WorkflowNodeRunArtifact{}
-		for _, runs := range workflowRun.WorkflowNodeRuns {
-			if len(runs) == 0 {
-				continue
-			}
-			sort.Slice(runs, func(i, j int) bool {
-				return runs[i].SubNumber > runs[j].SubNumber
-			})
-			workflowArtifacts = append(workflowArtifacts, runs[0].Artifacts...)
 		}
 
 		node := workflowRun.Workflow.WorkflowData.NodeByID(wNodeRun.WorkflowNodeID)
@@ -95,49 +82,6 @@ func (api *API) releaseApplicationWorkflowHandler() service.Handler {
 		release, errRelease := client.Release(ctx, app.RepositoryFullname, req.TagName, req.ReleaseTitle, req.ReleaseContent)
 		if errRelease != nil {
 			return sdk.WithStack(errRelease)
-		}
-
-		// Get artifacts to upload
-		var artifactToUpload []sdk.WorkflowNodeRunArtifact
-		for _, a := range workflowArtifacts {
-			for _, aToUp := range req.Artifacts {
-				if len(aToUp) > 0 {
-					ok, errRX := regexp.MatchString(aToUp, a.Name)
-					if errRX != nil {
-						return sdk.WrapError(errRX, "releaseApplicationWorkflowHandler> %s is not a valid regular expression", aToUp)
-					}
-					if ok {
-						artifactToUpload = append(artifactToUpload, a)
-						break
-					}
-				}
-			}
-		}
-
-		for _, a := range artifactToUpload {
-			// Do manual retry because if http call failed, reader is closed
-			attempt := 0
-			var lastErr error
-			for {
-				attempt++
-				f, err := api.SharedStorage.Fetch(ctx, &a)
-				if err != nil {
-					return sdk.WrapError(err, "Cannot fetch artifact")
-				}
-
-				if err := client.UploadReleaseFile(ctx, app.RepositoryFullname, fmt.Sprintf("%d", release.ID), release.UploadURL, a.Name, f, int(a.Size)); err != nil {
-					lastErr = err
-					if attempt >= 5 {
-						break
-					}
-					continue
-				}
-				break
-			}
-			if lastErr != nil {
-				return err
-			}
-
 		}
 
 		results, err := workflow.LoadRunResultsByRunIDAndType(ctx, api.mustDB(), workflowRun.ID, sdk.WorkflowRunResultTypeArtifact)
