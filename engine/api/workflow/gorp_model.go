@@ -178,9 +178,6 @@ func (j JobRun) WorkflowNodeRunJob() (sdk.WorkflowNodeJobRun, error) {
 	return jr, nil
 }
 
-// NodeRunArtifact is a gorp wrapper around sdk.WorkflowNodeRunArtifact
-type NodeRunArtifact sdk.WorkflowNodeRunArtifact
-
 // RunTag is a gorp wrapper around sdk.WorkflowRunTag
 type RunTag sdk.WorkflowRunTag
 
@@ -219,7 +216,6 @@ func init() {
 	gorpmapping.Register(gorpmapping.New(Run{}, "workflow_run", true, "id"))
 	gorpmapping.Register(gorpmapping.New(NodeRun{}, "workflow_node_run", true, "id"))
 	gorpmapping.Register(gorpmapping.New(JobRun{}, "workflow_node_run_job", true, "id"))
-	gorpmapping.Register(gorpmapping.New(NodeRunArtifact{}, "workflow_node_run_artifacts", true, "id"))
 	gorpmapping.Register(gorpmapping.New(RunTag{}, "workflow_run_tag", false, "workflow_run_id", "tag"))
 	gorpmapping.Register(gorpmapping.New(hookModel{}, "workflow_hook_model", true, "id"))
 	gorpmapping.Register(gorpmapping.New(outgoingHookModel{}, "workflow_outgoing_hook_model", true, "id"))
