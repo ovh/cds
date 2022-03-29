@@ -17,7 +17,8 @@ import (
 func getProjectIDFromProjectKey(ctx context.Context, store cache.Store, db gorp.SqlExecutor, projectKey string) (int64, error) {
 	var projectID int64
 	var k = cache.Key("projet", "id", "from", "key", projectKey)
-	if has, _ := store.Get(k, &projectID); has {
+	has, _ := store.Get(k, &projectID)
+	if has && projectID > 0 {
 		return projectID, nil
 	}
 	project, err := project.Load(ctx, db, projectKey)
@@ -37,7 +38,7 @@ func hasRoleOnProject(ctx context.Context, auth *sdk.AuthConsumer, store cache.S
 	}
 
 	projectKey := vars["projectKey"]
-	log.Debug(ctx, "Checking manage project role on %s", projectKey)
+	log.Debug(ctx, "Checking project role on %s", projectKey)
 
 	projectID, err := getProjectIDFromProjectKey(ctx, store, db, projectKey)
 	if err != nil {
@@ -48,6 +49,8 @@ func hasRoleOnProject(ctx context.Context, auth *sdk.AuthConsumer, store cache.S
 	if err != nil {
 		return err
 	}
+
+	log.Debug(ctx, "hasRole:%t projectID:%d role:%s userID:%s", projectID, role, auth.AuthentifiedUser.ID)
 
 	if !hasRole {
 		return sdk.WithStack(sdk.ErrForbidden)

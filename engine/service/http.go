@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	yaml "github.com/ghodss/yaml"
 	"github.com/go-gorp/gorp"
 	"github.com/rockbears/log"
 	"gopkg.in/spacemonkeygo/httpsig.v0"
@@ -19,7 +20,6 @@ import (
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/ovh/cds/sdk/exportentities"
 	cdslog "github.com/ovh/cds/sdk/log"
 )
 
@@ -103,6 +103,29 @@ func WriteJSON(w http.ResponseWriter, data interface{}, status int) error {
 	return sdk.WithStack(Write(w, bytes.NewReader(b), status, "application/json"))
 }
 
+// WriteMarshal is a helper function to marshal json, handle errors and set Content-Type for the best
+// Response format could be application/json or appliation/x-yaml, depends on the Accept header
+// default response is application/x-yaml
+func WriteMarshal(w http.ResponseWriter, req *http.Request, data interface{}, status int) error {
+	var contentType string
+	var body []byte
+	var err error
+
+	if req.Header.Get("Accept") == "application/json" {
+		contentType = "application/json"
+		body, err = yaml.Marshal(data)
+	} else { // yaml is the default response
+		contentType = "application/x-yaml"
+		body, err = json.Marshal(data)
+	}
+
+	if err != nil {
+		return sdk.WrapError(err, "unable to marshal data into %s", contentType)
+	}
+
+	return sdk.WithStack(Write(w, bytes.NewReader(body), status, contentType))
+}
+
 // WriteProcessTime writes the duration of the call in the responsewriter
 func WriteProcessTime(ctx context.Context, w http.ResponseWriter) {
 	if h := w.Header().Get(cdsclient.ResponseAPINanosecondsTimeHeader); h != "" {
@@ -166,18 +189,10 @@ func UnmarshalRequest(ctx context.Context, req *http.Request, entity interface{}
 	}
 	defer req.Body.Close()
 
-	contentType := req.Header.Get("Content-Type")
-	if contentType == "" {
-		contentType = http.DetectContentType(body)
-	}
-	format, err := exportentities.GetFormatFromContentType(contentType)
-	if err != nil {
+	if err := yaml.Unmarshal(body, entity); err != nil {
 		return err
 	}
 
-	if err := exportentities.Unmarshal(body, format, entity); err != nil {
-		return err
-	}
 	return nil
 }
 

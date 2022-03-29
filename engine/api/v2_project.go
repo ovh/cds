@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/rbac"
@@ -39,8 +38,6 @@ func (api *API) postVCSProjectHandler() ([]service.RbacChecker, service.Handler)
 			vcsProject.ProjectID = project.ID
 			vcsProject.CreatedBy = getAPIConsumer(ctx).GetUsername()
 
-			log.Info(ctx, "vcsProject to insert: %+v", vcsProject)
-
 			if err := vcs.Insert(ctx, tx, &vcsProject); err != nil {
 				return err
 			}
@@ -49,7 +46,7 @@ func (api *API) postVCSProjectHandler() ([]service.RbacChecker, service.Handler)
 				return sdk.WithStack(err)
 			}
 
-			return service.WriteJSON(w, vcsProject, http.StatusCreated)
+			return service.WriteMarshal(w, req, vcsProject, http.StatusCreated)
 		}
 }
 
