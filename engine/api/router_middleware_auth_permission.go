@@ -87,7 +87,8 @@ func (api *API) checkJobIDPermissions(ctx context.Context, w http.ResponseWriter
 		return nil
 	}
 	if perm == sdk.PermissionRead {
-		if isMaintainer(ctx) {
+		if (isHatchery(ctx) && isGroupMember(ctx, group.SharedInfraGroup)) ||
+			isMaintainer(ctx) {
 			return nil
 		}
 	} else {
@@ -148,13 +149,19 @@ func (api *API) checkProjectPermissions(ctx context.Context, w http.ResponseWrit
 		log.Debug(ctx, "checkProjectPermissions> callerPermission=%d ", callerPermission)
 		// If it's about READ: we have to check if the user is a maintainer or an admin
 		if requiredPerm == sdk.PermissionRead {
-			if !isMaintainer(ctx) {
+			if !isHooks(ctx) && !isMaintainer(ctx) {
 				// The caller doesn't enough permission level from its groups and is neither a maintainer nor an admin
 				log.Debug(ctx, "checkProjectPermissions> %s(%s) is not authorized to %s", getAPIConsumer(ctx).Name, getAPIConsumer(ctx).ID, projectKey)
 				return sdk.WrapError(sdk.ErrNoProject, "not authorized for project %s", projectKey)
 			}
-			log.Debug(ctx, "checkProjectPermissions> %s(%s) access granted to %s because is maintainer", getAPIConsumer(ctx).Name, getAPIConsumer(ctx).ID, projectKey)
-			telemetry.Current(ctx, telemetry.Tag(telemetry.TagPermission, "is_maintainer"))
+			if isMaintainer(ctx) {
+				log.Debug(ctx, "checkProjectPermissions> %s(%s) access granted to %s because is maintainer", getAPIConsumer(ctx).Name, getAPIConsumer(ctx).ID, projectKey)
+				telemetry.Current(ctx, telemetry.Tag(telemetry.TagPermission, "is_maintainer"))
+			}
+			if isHooks(ctx) {
+				log.Debug(ctx, "checkProjectPermissions> %s(%s) access granted to %s because is hooks", getAPIConsumer(ctx).Name, getAPIConsumer(ctx).ID, projectKey)
+				telemetry.Current(ctx, telemetry.Tag(telemetry.TagPermission, "is_hooks"))
+			}
 			return nil
 		}
 
