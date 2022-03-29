@@ -7,6 +7,9 @@ import (
 )
 
 func TestInit(t *testing.T) {
+	if os.Getenv("CI") != "1" {
+		t.Skip("Skip download test when not running on CI")
+	}
 	tmpDir1, _ := os.MkdirTemp(os.TempDir(), "download1")
 	tmpDir2, _ := os.MkdirTemp(os.TempDir(), "download2")
 	defer os.RemoveAll(tmpDir1)

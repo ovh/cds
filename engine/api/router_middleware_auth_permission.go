@@ -277,18 +277,23 @@ func (api *API) checkWorkflowPermissionsWithOpts(opts CheckWorkflowPermissionsOp
 		if maxLevelPermission < perm { // If the caller based on its group doesn have enough permission level
 			// If it's about READ: we have to check if the user is a maintainer or an admin
 			if perm < sdk.PermissionReadExecute {
-				if !isMaintainer(ctx) {
+				if !isHooks(ctx) && !isMaintainer(ctx) {
 					// The caller doesn't enough permission level from its groups and is neither a maintainer nor an admin
 					log.Debug(ctx, "checkWorkflowPermissions> %s is not authorized to %s/%s", getAPIConsumer(ctx).ID, projectKey, workflowName)
 					return sdk.WrapError(sdk.ErrForbidden, "not authorized for workflow %s/%s", projectKey, workflowName)
 				}
-				log.Debug(ctx, "checkWorkflowPermissions> %s access granted to %s/%s because is maintainer", getAPIConsumer(ctx).ID, projectKey, workflowName)
-				telemetry.Current(ctx, telemetry.Tag(telemetry.TagPermission, "is_maintainer"))
+				if isHooks(ctx) {
+					log.Debug(ctx, "checkWorkflowPermissions> %s access granted to %s/%s because is hooks service", getAPIConsumer(ctx).ID, projectKey, workflowName)
+					telemetry.Current(ctx, telemetry.Tag(telemetry.TagPermission, "is_hooks"))
+				} else if isMaintainer(ctx) {
+					log.Debug(ctx, "checkWorkflowPermissions> %s access granted to %s/%s because is maintainer", getAPIConsumer(ctx).ID, projectKey, workflowName)
+					telemetry.Current(ctx, telemetry.Tag(telemetry.TagPermission, "is_maintainer"))
+				}
 				return nil
 			}
 
-			// If it's about Execute of Write: we have to check if the user is an admin
-			if !isAdmin(ctx) {
+			// If it's about Execute of Write: we have to check if the user is an admin or if it hooks service
+			if !isHooks(ctx) && !isAdmin(ctx) {
 				// The caller doesn't enough permission level from its groups and is not an admin
 				log.Debug(ctx, "checkWorkflowPermissions> %s is not authorized to %s/%s", getAPIConsumer(ctx).ID, projectKey, workflowName)
 				return sdk.WrapError(sdk.ErrForbidden, "not authorized for workflow %s/%s", projectKey, workflowName)
@@ -321,7 +326,12 @@ func (api *API) checkGroupPermissions(ctx context.Context, w http.ResponseWriter
 		return sdk.WithStack(sdk.ErrForbidden)
 	}
 
-	if permissionValue > sdk.PermissionRead { // Only group administror or CDS administrator can update a group or its dependencies
+	if permissionValue > sdk.PermissionRead {
+		// Hatcheries started for "shared.infra" group are granted for group "shared.infra"
+		if g.ID == group.SharedInfraGroup.ID && isHatchery(ctx) && isGroupMember(ctx, g) {
+			return nil
+		}
+		// Only group administror or CDS administrator can update a group or its dependencies
 		if !isGroupAdmin(ctx, g) || g.ID == group.SharedInfraGroup.ID {
 			if isAdmin(ctx) {
 				trackSudo(ctx, w)
