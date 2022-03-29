@@ -178,7 +178,6 @@ type BuildNumberAndHash struct {
 	RemoteURL   string
 }
 
-// TODO use "github.com/ghodss/yaml"
 type VCSProject struct {
 	ID           string            `json:"id" db:"id"`
 	Name         string            `json:"name" db:"name"`
