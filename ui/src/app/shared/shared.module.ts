@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { NguiAutoCompleteComponent, NguiAutoCompleteModule } from '@ngui/auto-complete';
+import { NguiAutoCompleteModule } from '@sgu/auto-complete';
 import { TranslateModule } from '@ngx-translate/core';
 import { SuiModule } from '@richardlt/ng2-semantic-ui';
 import { NgxSemanticModule } from '@sgu/ng-semantic';
@@ -25,7 +25,6 @@ import { WorkflowRunJobVariableComponent } from 'app/views/workflow/run/node/pip
 import { WorkflowRunJobComponent } from 'app/views/workflow/run/node/pipeline/workflow-run-job/workflow-run-job.component';
 import { CodemirrorModule } from 'ng2-codemirror-typescript/Codemirror';
 import { DragulaModule } from 'ng2-dragula-sgu';
-import { NgxAutoScroll, NgxAutoScrollModule } from 'ngx-auto-scroll';
 import { ClipboardModule } from 'ngx-clipboard';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 import { MarkdownModule } from 'ngx-markdown';
@@ -115,6 +114,7 @@ import { WorkflowWNodePipelineComponent } from './workflow/wnode/pipeline/wnode.
 import { WorkflowWNodeComponent } from './workflow/wnode/wnode.component';
 import { ZoneContentComponent } from './zone/zone-content/content.component';
 import { ZoneComponent } from './zone/zone.component';
+import { NgxAutoScrollDirective } from 'app/shared/directives/auto-scroll.directive';
 
 @NgModule({
     imports: [
@@ -131,7 +131,6 @@ import { ZoneComponent } from './zone/zone.component';
         NguiAutoCompleteModule,
         RouterModule,
         SuiModule,
-        NgxAutoScrollModule,
         InfiniteScrollModule,
         NgxChartsModule
     ],
@@ -168,6 +167,7 @@ import { ZoneComponent } from './zone/zone.component';
         LabelsEditComponent,
         MenuComponent,
         NgForNumber,
+        NgxAutoScrollDirective,
         PaginationComponent,
         ParameterFormComponent,
         ParameterListComponent,
@@ -287,7 +287,7 @@ import { ZoneComponent } from './zone/zone.component';
         MomentModule,
         NgForNumber,
         NgxSemanticModule,
-        NgxAutoScroll,
+        NgxAutoScrollDirective,
         PaginationComponent,
         ParameterFormComponent,
         ParameterListComponent,
