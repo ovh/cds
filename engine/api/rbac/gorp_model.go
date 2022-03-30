@@ -47,7 +47,7 @@ func (rgu rbacGlobalUser) Canonical() gorpmapper.CanonicalForms {
 }
 
 type rbacGlobalGroup struct {
-	ID                int64 `json:"-" db:"id" yaml:"-"`
+	ID                int64 `json:"-" db:"id"`
 	RbacGlobalID      int64 `db:"rbac_global_id"`
 	RbacGlobalGroupID int64 `db:"group_id"`
 	gorpmapper.SignedEntity
@@ -61,8 +61,8 @@ func (rgg rbacGlobalGroup) Canonical() gorpmapper.CanonicalForms {
 }
 
 type rbacProject struct {
-	ID     int64  `json:"-" db:"id" yaml:"-"`
-	RbacID string `json:"-" db:"rbac_id" yaml:"-"`
+	ID     int64  `json:"-" db:"id"`
+	RbacID string `json:"-" db:"rbac_id"`
 	sdk.RBACProject
 	gorpmapper.SignedEntity
 }
@@ -75,9 +75,9 @@ func (rp rbacProject) Canonical() gorpmapper.CanonicalForms {
 }
 
 type rbacProjectKey struct {
-	ID            int64  `json:"-" db:"id" yaml:"-"`
-	RbacProjectID int64  `json:"-" db:"rbac_project_id" yaml:"-"`
-	ProjectKey    string `json:"-" db:"project_key" yaml:"-"`
+	ID            int64  `json:"-" db:"id"`
+	RbacProjectID int64  `json:"-" db:"rbac_project_id"`
+	ProjectKey    string `json:"-" db:"project_key"`
 	gorpmapper.SignedEntity
 }
 
@@ -89,7 +89,7 @@ func (rpi rbacProjectKey) Canonical() gorpmapper.CanonicalForms {
 }
 
 type rbacProjectUser struct {
-	ID                int64  `json:"-" db:"id" yaml:"-"`
+	ID                int64  `json:"-" db:"id"`
 	RbacProjectID     int64  `db:"rbac_project_id"`
 	RbacProjectUserID string `db:"user_id"`
 	gorpmapper.SignedEntity
@@ -103,7 +103,7 @@ func (rgu rbacProjectUser) Canonical() gorpmapper.CanonicalForms {
 }
 
 type rbacProjectGroup struct {
-	ID                 int64 `json:"-" db:"id" yaml:"-"`
+	ID                 int64 `json:"-" db:"id"`
 	RbacProjectID      int64 `db:"rbac_project_id"`
 	RbacProjectGroupID int64 `db:"group_id"`
 	gorpmapper.SignedEntity

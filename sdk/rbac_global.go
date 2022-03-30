@@ -5,11 +5,11 @@ var (
 )
 
 type RBACGlobal struct {
-	Role           string   `json:"role" db:"role" yaml:"role"`
-	RBACUsersName  []string `json:"users" db:"-" yaml:"users"`
-	RBACGroupsName []string `json:"groups" db:"-" yaml:"groups"`
-	RBACUsersIDs   []string `json:"-" db:"-" yaml:"-"`
-	RBACGroupsIDs  []int64  `json:"-" db:"-" yaml:"-"`
+	Role           string   `json:"role" db:"role"`
+	RBACUsersName  []string `json:"users" db:"-"`
+	RBACGroupsName []string `json:"groups" db:"-"`
+	RBACUsersIDs   []string `json:"-" db:"-"`
+	RBACGroupsIDs  []int64  `json:"-" db:"-"`
 }
 
 func isValidRbacGlobal(rbacName string, rg RBACGlobal) error {

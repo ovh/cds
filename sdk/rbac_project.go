@@ -5,14 +5,14 @@ var (
 )
 
 type RBACProject struct {
-	All             bool     `json:"all" db:"all" yaml:"all"`
-	Role            string   `json:"role" db:"role" yaml:"role"`
-	RBACProjectKeys []string `json:"projects" db:"-" yaml:"projects"`
-	RBACUsersName   []string `json:"users" db:"-" yaml:"users"`
-	RBACGroupsName  []string `json:"groups" db:"-" yaml:"groups"`
+	All             bool     `json:"all" db:"all"`
+	Role            string   `json:"role" db:"role"`
+	RBACProjectKeys []string `json:"projects" db:"-"`
+	RBACUsersName   []string `json:"users" db:"-"`
+	RBACGroupsName  []string `json:"groups" db:"-"`
 
-	RBACUsersIDs  []string `json:"-" db:"-" yaml:"-"`
-	RBACGroupsIDs []int64  `json:"-" db:"-" yaml:"-"`
+	RBACUsersIDs  []string `json:"-" db:"-"`
+	RBACGroupsIDs []int64  `json:"-" db:"-"`
 }
 
 func isValidRbacProject(rbacName string, rbacProject RBACProject) error {
