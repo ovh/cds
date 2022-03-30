@@ -1,0 +1,9 @@
+name: plugin-arsenal-delete-alternative
+type: action
+integration: Arsenal
+author: "OVH SAS"
+description: "OVH Arsenal Delete Alternative Plugin"
+parameters:
+  alternative_name:
+    type: string
+    description: alternative name to delete, defaults to alternative from deployment integration if not set
