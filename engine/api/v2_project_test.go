@@ -60,7 +60,7 @@ projects:
 	var rb sdk.RBAC
 	require.NoError(t, yaml.Unmarshal([]byte(perm), &rb))
 
-	rb.Projects[0].RBACProjectsIDs = []int64{proj.ID}
+	rb.Projects[0].RBACProjectKeys = []string{proj.Key}
 	rb.Projects[0].RBACUsersIDs = []string{user1.ID}
 
 	require.NoError(t, rbac.Insert(context.Background(), db, &rb))

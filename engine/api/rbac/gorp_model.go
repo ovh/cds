@@ -74,17 +74,17 @@ func (rp rbacProject) Canonical() gorpmapper.CanonicalForms {
 	}
 }
 
-type rbacProjectIdentifiers struct {
-	ID            int64 `json:"-" db:"id" yaml:"-"`
-	RbacProjectID int64 `json:"-" db:"rbac_project_id" yaml:"-"`
-	ProjectID     int64 `json:"-" db:"project_id" yaml:"-"`
+type rbacProjectKey struct {
+	ID            int64  `json:"-" db:"id" yaml:"-"`
+	RbacProjectID int64  `json:"-" db:"rbac_project_id" yaml:"-"`
+	ProjectKey    string `json:"-" db:"project_key" yaml:"-"`
 	gorpmapper.SignedEntity
 }
 
-func (rpi rbacProjectIdentifiers) Canonical() gorpmapper.CanonicalForms {
-	_ = []interface{}{rpi.ID, rpi.RbacProjectID, rpi.ProjectID}
+func (rpi rbacProjectKey) Canonical() gorpmapper.CanonicalForms {
+	_ = []interface{}{rpi.ID, rpi.RbacProjectID, rpi.ProjectKey}
 	return []gorpmapper.CanonicalForm{
-		"{{.ID}}{{.RbacProjectID}}{{.ProjectID}}",
+		"{{.ID}}{{.RbacProjectID}}{{.ProjectKey}}",
 	}
 }
 
@@ -122,7 +122,7 @@ func init() {
 	gorpmapping.Register(gorpmapping.New(rbacGlobalUser{}, "rbac_global_users", true, "id"))
 	gorpmapping.Register(gorpmapping.New(rbacGlobalGroup{}, "rbac_global_groups", true, "id"))
 	gorpmapping.Register(gorpmapping.New(rbacProject{}, "rbac_project", true, "id"))
-	gorpmapping.Register(gorpmapping.New(rbacProjectIdentifiers{}, "rbac_project_projects", true, "id"))
+	gorpmapping.Register(gorpmapping.New(rbacProjectKey{}, "rbac_project_keys", true, "id"))
 	gorpmapping.Register(gorpmapping.New(rbacProjectUser{}, "rbac_project_users", true, "id"))
 	gorpmapping.Register(gorpmapping.New(rbacProjectGroup{}, "rbac_project_groups", true, "id"))
 }

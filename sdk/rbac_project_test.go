@@ -2,13 +2,14 @@ package sdk
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestRbacProjectInvalidRole(t *testing.T) {
 	rb := RBACProject{
-		RBACProjectsIDs: []int64{1},
+		RBACProjectKeys: []string{"foo"},
 		All:             false,
 		Role:            RoleCreateProject,
 		RBACGroupsIDs:   []int64{1},
@@ -20,7 +21,7 @@ func TestRbacProjectInvalidRole(t *testing.T) {
 }
 func TestRbacProjectInvalidGroupAndUsers(t *testing.T) {
 	rb := RBACProject{
-		RBACProjectsIDs: []int64{1},
+		RBACProjectKeys: []string{"foo"},
 		All:             false,
 		Role:            RoleRead,
 		RBACGroupsIDs:   []int64{},
@@ -32,7 +33,7 @@ func TestRbacProjectInvalidGroupAndUsers(t *testing.T) {
 }
 func TestRbacProjectInvalidProjectIDs(t *testing.T) {
 	rb := RBACProject{
-		RBACProjectsIDs: []int64{},
+		RBACProjectKeys: []string{"foo"},
 		All:             false,
 		Role:            RoleRead,
 		RBACGroupsIDs:   []int64{1},
@@ -44,7 +45,7 @@ func TestRbacProjectInvalidProjectIDs(t *testing.T) {
 }
 func TestRbacProjectEmptyRole(t *testing.T) {
 	rb := RBACProject{
-		RBACProjectsIDs: []int64{1},
+		RBACProjectKeys: []string{"foo"},
 		All:             false,
 		Role:            "",
 		RBACGroupsIDs:   []int64{1},
@@ -56,7 +57,7 @@ func TestRbacProjectEmptyRole(t *testing.T) {
 }
 func TestRbacProjectInvalidAllAndListOfProject(t *testing.T) {
 	rb := RBACProject{
-		RBACProjectsIDs: []int64{1},
+		RBACProjectKeys: []string{"foo"},
 		All:             true,
 		Role:            RoleRead,
 		RBACGroupsIDs:   []int64{1},

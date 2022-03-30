@@ -5,7 +5,6 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
 )
@@ -22,7 +21,6 @@ func fillWithIDs(ctx context.Context, db gorp.SqlExecutor, r *sdk.RBAC) error {
 
 	userCache := make(map[string]string)
 	groupCache := make(map[string]int64)
-	projectCache := make(map[string]int64)
 	for gID := range r.Globals {
 		rbacGbl := &r.Globals[gID]
 		if err := fillRbacGlobalWithID(ctx, db, rbacGbl, userCache, groupCache); err != nil {
@@ -31,27 +29,14 @@ func fillWithIDs(ctx context.Context, db gorp.SqlExecutor, r *sdk.RBAC) error {
 	}
 	for pID := range r.Projects {
 		rbacPrj := &r.Projects[pID]
-		if err := fillRbacProjectWithID(ctx, db, rbacPrj, projectCache, userCache, groupCache); err != nil {
+		if err := fillRbacProjectWithID(ctx, db, rbacPrj, userCache, groupCache); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func fillRbacProjectWithID(ctx context.Context, db gorp.SqlExecutor, rbacPrj *sdk.RBACProject, projectCache map[string]int64, userCache map[string]string, groupCache map[string]int64) error {
-	rbacPrj.RBACProjectsIDs = make([]int64, 0, len(rbacPrj.RBACProjectKeys))
-	for _, projKey := range rbacPrj.RBACProjectKeys {
-		projectID := projectCache[projKey]
-		if projectID == 0 {
-			prj, err := project.Load(ctx, db, projKey)
-			if err != nil {
-				return err
-			}
-			projectID = prj.ID
-			projectCache[projKey] = prj.ID
-		}
-		rbacPrj.RBACProjectsIDs = append(rbacPrj.RBACProjectsIDs, projectID)
-	}
+func fillRbacProjectWithID(ctx context.Context, db gorp.SqlExecutor, rbacPrj *sdk.RBACProject, userCache map[string]string, groupCache map[string]int64) error {
 	rbacPrj.RBACUsersIDs = make([]string, 0, len(rbacPrj.RBACUsersName))
 	for _, userName := range rbacPrj.RBACUsersName {
 		userID := userCache[userName]

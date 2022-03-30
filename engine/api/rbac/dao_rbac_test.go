@@ -31,8 +31,8 @@ func TestLoadRbacProject(t *testing.T) {
 	grpName1 := sdk.RandomString(10)
 	group1 := assets.InsertTestGroup(t, db, grpName1)
 
-	users1, _ := assets.InsertLambdaUser(t, db)
-	users2, _ := assets.InsertLambdaUser(t, db, group1)
+	user1, _ := assets.InsertLambdaUser(t, db)
+	user2, _ := assets.InsertLambdaUser(t, db, group1)
 
 	perm := fmt.Sprintf(`name: perm-test
 projects:
@@ -46,7 +46,7 @@ projects:
   - role: manage
     projects: [%s]
     groups: [%s]
-`, proj1.Key, users1.Username, group1.Name, proj2.Key, group1.Name, proj2.Key, group1.Name)
+`, proj1.Key, user1.Username, group1.Name, proj2.Key, group1.Name, proj2.Key, group1.Name)
 
 	var r sdk.RBAC
 	require.NoError(t, yaml.Unmarshal([]byte(perm), &r))
@@ -56,16 +56,16 @@ projects:
 
 	require.NoError(t, Insert(context.Background(), db, &r))
 
-	prjusers1, err := LoadProjectIDsByRoleAndUserID(context.TODO(), db, sdk.RoleRead, users1.ID)
+	projectKeysForUser1, err := LoadProjectKeysByRoleAndUserID(context.TODO(), db, sdk.RoleRead, user1.ID)
 	require.NoError(t, err)
-	t.Logf("%+v", prjusers1)
-	require.Len(t, prjusers1, 1)
-	require.Equal(t, prjusers1[0], proj1.ID)
+	t.Logf("%+v", projectKeysForUser1)
+	require.Len(t, projectKeysForUser1, 1)
+	require.Equal(t, projectKeysForUser1[0], proj1.Key)
 
-	prjusers2, err := LoadProjectIDsByRoleAndUserID(context.TODO(), db, sdk.RoleManage, users2.ID)
+	projectKeysForUser2, err := LoadProjectKeysByRoleAndUserID(context.TODO(), db, sdk.RoleManage, user2.ID)
 	require.NoError(t, err)
-	require.Len(t, prjusers2, 1)
-	require.Equal(t, prjusers2[0], proj2.ID)
+	require.Len(t, projectKeysForUser2, 1)
+	require.Equal(t, projectKeysForUser2[0], proj2.Key)
 }
 
 func TestLoadRbac(t *testing.T) {
@@ -83,7 +83,7 @@ func TestLoadRbac(t *testing.T) {
 	grpName1 := sdk.RandomString(10)
 	group1 := assets.InsertTestGroup(t, db, grpName1)
 
-	users1, _ := assets.InsertLambdaUser(t, db)
+	user1, _ := assets.InsertLambdaUser(t, db)
 
 	perm := fmt.Sprintf(`name: perm-test
 projects:
@@ -97,7 +97,7 @@ projects:
 globals:
   - role: create-project
     users: [%s]
-`, users1.Username, group1.Name, proj1.Key, group1.Name, proj2.Key, users1.Username)
+`, user1.Username, group1.Name, proj1.Key, group1.Name, proj2.Key, user1.Username)
 
 	var r sdk.RBAC
 	require.NoError(t, yaml.Unmarshal([]byte(perm), &r))
@@ -112,7 +112,7 @@ globals:
 	// Global part
 	require.Equal(t, len(r.Globals), len(rbacDB.Globals))
 	require.Equal(t, r.Globals[0].Role, rbacDB.Globals[0].Role)
-	require.Equal(t, users1.ID, rbacDB.Globals[0].RBACUsersIDs[0])
+	require.Equal(t, user1.ID, rbacDB.Globals[0].RBACUsersIDs[0])
 
 	// Project part
 	require.Equal(t, len(r.Projects), len(rbacDB.Projects))
@@ -124,9 +124,7 @@ globals:
 			require.Equal(t, 1, len(rp.RBACGroupsName))
 			require.Equal(t, 1, len(rp.RBACGroupsIDs))
 			require.Equal(t, 1, len(rp.RBACProjectKeys))
-			require.Equal(t, 1, len(rp.RBACProjectsIDs))
 			require.Equal(t, proj2.Key, rp.RBACProjectKeys[0])
-			require.Equal(t, proj2.ID, rp.RBACProjectsIDs[0])
 			require.Equal(t, group1.Name, rp.RBACGroupsName[0])
 			require.Equal(t, group1.ID, rp.RBACGroupsIDs[0])
 			manageCheck = true
@@ -137,13 +135,11 @@ globals:
 			require.Equal(t, 1, len(rp.RBACUsersIDs))
 			require.Equal(t, 1, len(rp.RBACUsersName))
 			require.Equal(t, 1, len(rp.RBACProjectKeys))
-			require.Equal(t, 1, len(rp.RBACProjectsIDs))
 			require.Equal(t, proj1.Key, rp.RBACProjectKeys[0])
-			require.Equal(t, proj1.ID, rp.RBACProjectsIDs[0])
 			require.Equal(t, group1.Name, rp.RBACGroupsName[0])
 			require.Equal(t, group1.ID, rp.RBACGroupsIDs[0])
-			require.Equal(t, users1.Username, rp.RBACUsersName[0])
-			require.Equal(t, users1.ID, rp.RBACUsersIDs[0])
+			require.Equal(t, user1.Username, rp.RBACUsersName[0])
+			require.Equal(t, user1.ID, rp.RBACUsersIDs[0])
 			readCheck = true
 		}
 	}
@@ -160,7 +156,7 @@ func TestUpdateRbac(t *testing.T) {
 	key1 := sdk.RandomString(10)
 	proj1 := assets.InsertTestProject(t, db, cache, key1, key1)
 
-	users1, _ := assets.InsertLambdaUser(t, db)
+	user1, _ := assets.InsertLambdaUser(t, db)
 
 	perm := fmt.Sprintf(`name: perm-test
 projects:
@@ -168,7 +164,7 @@ projects:
     users: [%s]
     projects: [%s]
 
-`, users1.Username, proj1.Key)
+`, user1.Username, proj1.Key)
 
 	var r sdk.RBAC
 	require.NoError(t, yaml.Unmarshal([]byte(perm), &r))
@@ -189,7 +185,7 @@ projects:
     users: [%s]
     projects: [%s]
 
-`, users1.Username, proj1.Key)
+`, user1.Username, proj1.Key)
 
 	var rUpdated sdk.RBAC
 	require.NoError(t, yaml.Unmarshal([]byte(permUpdated), &rUpdated))

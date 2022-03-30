@@ -103,7 +103,7 @@ func WriteJSON(w http.ResponseWriter, data interface{}, status int) error {
 	return sdk.WithStack(Write(w, bytes.NewReader(b), status, "application/json"))
 }
 
-// WriteMarshal is a helper function to marshal json, handle errors and set Content-Type for the best
+// WriteMarshal is a helper function to marshal json/yaml, handle errors and set Content-Type for the best
 // Response format could be application/json or appliation/x-yaml, depends on the Accept header
 // default response is application/x-yaml
 func WriteMarshal(w http.ResponseWriter, req *http.Request, data interface{}, status int) error {

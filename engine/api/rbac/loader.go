@@ -36,33 +36,33 @@ func loadDefault(ctx context.Context, db gorp.SqlExecutor, rbac *rbac) error {
 
 func loadRbacProject(ctx context.Context, db gorp.SqlExecutor, rbac *rbac) error {
 	query := "SELECT * FROM rbac_project WHERE rbac_id = $1"
-	var rbacPrj []rbacProject
-	if err := gorpmapping.GetAll(ctx, db, gorpmapping.NewQuery(query).Args(rbac.ID), &rbacPrj); err != nil {
+	var rbacProjects []rbacProject
+	if err := gorpmapping.GetAll(ctx, db, gorpmapping.NewQuery(query).Args(rbac.ID), &rbacProjects); err != nil {
 		return err
 	}
-	rbac.Projects = make([]sdk.RBACProject, 0, len(rbacPrj))
-	for i := range rbacPrj {
-		rp := &rbacPrj[i]
-		isValid, err := gorpmapping.CheckSignature(rp, rp.Signature)
+	rbac.Projects = make([]sdk.RBACProject, 0, len(rbacProjects))
+	for i := range rbacProjects {
+		rbacProject := &rbacProjects[i]
+		isValid, err := gorpmapping.CheckSignature(rbacProject, rbacProject.Signature)
 		if err != nil {
-			return sdk.WrapError(err, "error when checking signature for rbac_project %d", rp.ID)
+			return sdk.WrapError(err, "error when checking signature for rbac_project %d", rbacProject.ID)
 		}
 		if !isValid {
-			log.Error(ctx, "rbac_project.get> rbac_project %d data corrupted", rp.ID)
+			log.Error(ctx, "rbac_project.get> rbac_project %d data corrupted", rbacProject.ID)
 			continue
 		}
-		if err := loadRBACProjectIdentifiers(ctx, db, rp); err != nil {
+		if err := loadRBACProjectKeys(ctx, db, rbacProject); err != nil {
 			return err
 		}
-		if !rp.All {
-			if err := loadRBACProjectUsers(ctx, db, rp); err != nil {
+		if !rbacProject.All {
+			if err := loadRBACProjectUsers(ctx, db, rbacProject); err != nil {
 				return err
 			}
-			if err := loadRBACProjectGroups(ctx, db, rp); err != nil {
+			if err := loadRBACProjectGroups(ctx, db, rbacProject); err != nil {
 				return err
 			}
 		}
-		rbac.Projects = append(rbac.Projects, rp.RBACProject)
+		rbac.Projects = append(rbac.Projects, rbacProject.RBACProject)
 	}
 	return nil
 }
