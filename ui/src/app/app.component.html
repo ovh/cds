@@ -29,18 +29,22 @@
 
         <div class="page" [class.connected]="isConnected && !hideNavBar">
             <div class="content" [class.connected]="isConnected && !hideNavBar">
-                <div class="toast">
-                    <toaster-container [toasterconfig]="toasterConfigDefault"></toaster-container>
-                </div>
                 <router-outlet></router-outlet>
                 <div class="ui active text loader" *ngIf="displayResolver">{{ 'common_loading_project' | translate }}
                 </div>
             </div>
         </div>
-
         <app-node-edit-modal></app-node-edit-modal>
     </ng-container>
-
-    <toaster-container [toasterconfig]="toasterConfigErrorHTTP"></toaster-container>
-    <toaster-container [toasterconfig]="toasterConfigErrorHTTPLocked"></toaster-container>
 </div>
+<ng-template #templateRootToast let-data="data">
+    <div class="toastTitle">{{data.title}}</div>
+    <span *ngIf="data.from">{{data.from}}<br /></span>
+    <div *ngIf="data?.help && data?.help?.length > 0">
+        <markdown [data]="data.help"></markdown>
+    </div>
+    <span *ngIf="data.status === 500">
+        {{'toast_http_error_request_id' | translate}}
+        <pre style="font-size: 10px">{{data.request_id}}</pre>
+    </span>
+</ng-template>

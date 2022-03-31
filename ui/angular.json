@@ -21,9 +21,19 @@
             "polyfills": "src/polyfills.ts",
             "assets": [
               "src/assets",
-              "src/favicon.ico"
+              "src/favicon.ico",
+              {
+                "glob": "*",
+                "input": "node_modules/@ant-design/icons-angular/src/inline-svg/",
+                "output": "/assets/"
+              }, {
+                "glob": "ng-zorro-antd.dark.min.css",
+                "input": "./node_modules/ng-zorro-antd",
+                "output": "/assets/"
+              }
             ],
             "styles": [
+              "node_modules/ng-zorro-antd/ng-zorro-antd.min.css",
               "node_modules/dragula/dist/dragula.css",
               "node_modules/codemirror/lib/codemirror.css",
               "node_modules/codemirror/addon/hint/show-hint.css",

@@ -4,7 +4,6 @@ import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
-import { ToasterModule } from 'angular2-toaster-sgu';
 import { EventService } from 'app/event.service';
 import { NgxsStoreModule } from 'app/store/store.module';
 import * as Raven from 'raven-js';
@@ -40,7 +39,6 @@ export let errorFactory = () => {
     }
 };
 
-
 @NgModule({
     declarations: [
         AppComponent
@@ -51,7 +49,6 @@ export let errorFactory = () => {
         HttpClientModule,
         NavbarModule,
         NgxsStoreModule,
-        ToasterModule.forRoot(),
         SharedModule,
         ServicesModule.forRoot(),
         routing,
@@ -70,7 +67,7 @@ export let errorFactory = () => {
         AppService,
         EventService,
         { provide: ErrorHandler, useFactory: errorFactory },
-        { provide: LOCALE_ID, useValue: 'en' }
+        { provide: LOCALE_ID, useValue: 'en' },
     ],
     bootstrap: [AppComponent]
 })

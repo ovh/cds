@@ -1,6 +1,6 @@
 import { registerLocaleData } from '@angular/common';
 import localeEN from '@angular/common/locales/en';
-import { Component, NgZone, OnDestroy, OnInit } from '@angular/core';
+import { Component, NgZone, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, NavigationStart, ResolveEnd, ResolveStart, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -22,6 +22,7 @@ import { AutoUnsubscribe } from './shared/decorator/autoUnsubscribe';
 import { ToastService } from './shared/toast/ToastService';
 import { AuthenticationState } from './store/authentication.state';
 import { AddHelp } from './store/help.action';
+import { NzNotificationService } from 'ng-zorro-antd/notification';
 
 @Component({
     selector: 'app-root',
@@ -30,6 +31,10 @@ import { AddHelp } from './store/help.action';
 })
 @AutoUnsubscribe()
 export class AppComponent implements OnInit, OnDestroy {
+
+    @ViewChild('templateRootToast') toastTemplate: TemplateRef<any>;
+    toastSubs: Subscription;
+
     open: boolean;
     isAPIAvailable: boolean;
     isConnected: boolean;
@@ -42,9 +47,7 @@ export class AppComponent implements OnInit, OnDestroy {
     _routerSubscription: Subscription;
     _routerNavEndSubscription: Subscription;
     displayResolver: boolean;
-    toasterConfigDefault: any;
-    toasterConfigErrorHTTP: any;
-    toasterConfigErrorHTTPLocked: any;
+
     lastPing: number;
     eventsRouteSubscription: Subscription;
     maintenance: boolean;
@@ -67,12 +70,10 @@ export class AppComponent implements OnInit, OnDestroy {
         private _eventService: EventService,
         private _helpService: HelpService,
         private _ngZone: NgZone,
-        private _monitoringService: MonitoringService
+        private _monitoringService: MonitoringService,
+        private _nzNotificationService: NzNotificationService,
     ) {
         this.zone = new NgZone({ enableLongStackTrace: false });
-        this.toasterConfigDefault = this._toastService.getConfigDefault();
-        this.toasterConfigErrorHTTP = this._toastService.getConfigErrorHTTP();
-        this.toasterConfigErrorHTTPLocked = this._toastService.getConfigErrorHTTPLocked();
         _translate.addLangs(['en']);
         _translate.setDefaultLang('en');
         _translate.use('en');
@@ -112,6 +113,12 @@ export class AppComponent implements OnInit, OnDestroy {
                 }, 30000);
             }
         );
+        this.toastSubs = this._toastService.getObservable().subscribe( data => {
+            if (!this.toastTemplate) {
+                return;
+            }
+            this._nzNotificationService.template(this.toastTemplate, data)
+        });
     }
 
     load(): void {
