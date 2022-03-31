@@ -5,17 +5,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
-	"io/ioutil"
-	"net/http"
 	"strconv"
 	"text/template"
 	"time"
 
 	"github.com/golang/protobuf/ptypes/empty"
 
+	"github.com/ovh/cds/contrib/integrations/arsenal"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/grpcplugin/integrationplugin"
 	"github.com/ovh/cds/sdk/interpolate"
 )
@@ -59,36 +56,6 @@ Arsenal integration must configured as following
 			value 5
 	plugin: arsenal-deployment-plugin
 */
-
-// alternativeConfig represents an alternative to a deployment.
-type alternativeConfig struct {
-	Name    string                 `json:"name"`
-	From    string                 `json:"from,omitempty"`
-	Config  map[string]interface{} `json:"config"`
-	Options map[string]interface{} `json:"options,omitempty"`
-}
-
-// deployRequest represents a deploy request to arsenal.
-type deployRequest struct {
-	Version     string            `json:"version"`
-	Alternative string            `json:"alternative,omitempty"`
-	Metadata    map[string]string `json:"metadata"`
-}
-
-// String returns a string representation of a deploy request. Omits metadata.
-func (r *deployRequest) String() string {
-	s := "Version: " + r.Version
-	if r.Alternative != "" {
-		s += "; Alternative: " + r.Alternative
-	}
-	return s
-}
-
-// followupState is the followup status of a deploy request.
-type followupState struct {
-	Done     bool    `json:"done"`
-	Progress float64 `json:"progress"`
-}
 
 type arsenalDeploymentPlugin struct {
 	integrationplugin.Common
@@ -144,10 +111,10 @@ func (e *arsenalDeploymentPlugin) Run(ctx context.Context, q *integrationplugin.
 		return fail("missing arsenal deployment token")
 	}
 
-	arsenalClient := newArsenalClient(arsenalHost, deploymentToken)
+	arsenalClient := arsenal.NewClient(arsenalHost, deploymentToken)
 
 	// Read alternative if configured.
-	var altConfig *alternativeConfig
+	var altConfig *arsenal.Alternative
 	if len(alternative) > 0 {
 		// Resolve alternative.
 		altTmpl, err := template.New("alternative").Delims("[[", "]]").Funcs(interpolate.InterpolateHelperFuncs).Parse(alternative)
@@ -176,7 +143,7 @@ func (e *arsenalDeploymentPlugin) Run(ctx context.Context, q *integrationplugin.
 			// Create alternative on /alternative
 			rawAltConfig, _ := json.MarshalIndent(altConfig, "", "  ")
 			fmt.Printf("Creating/Updating alternative: %s\n", rawAltConfig)
-			if err = arsenalClient.upsertAlternative(altConfig); err != nil {
+			if err = arsenalClient.UpsertAlternative(altConfig); err != nil {
 				return failErr(err)
 			}
 		}
@@ -187,7 +154,7 @@ func (e *arsenalDeploymentPlugin) Run(ctx context.Context, q *integrationplugin.
 	if err != nil {
 		return fail("unable to interpolate data: %v\n", err)
 	}
-	deployReq := &deployRequest{}
+	deployReq := &arsenal.DeployRequest{}
 	err = json.Unmarshal([]byte(deployData), deployReq)
 	if err != nil {
 		return fail("unable to create deploy request: %v\n", err)
@@ -198,7 +165,7 @@ func (e *arsenalDeploymentPlugin) Run(ctx context.Context, q *integrationplugin.
 
 	// Do deploy request
 	fmt.Printf("Deploying %s (%s) on Arsenal at %s...\n", application, deployReq, arsenalHost)
-	followUpToken, err := arsenalClient.deploy(deployReq)
+	followUpToken, err := arsenalClient.Deploy(deployReq)
 	if err != nil {
 		return fail("deploy failed: %v", err)
 	}
@@ -213,7 +180,7 @@ func (e *arsenalDeploymentPlugin) Run(ctx context.Context, q *integrationplugin.
 		}
 
 		fmt.Println("Fetching followup status on deployment...")
-		state, err := arsenalClient.follow(followUpToken)
+		state, err := arsenalClient.Follow(followUpToken)
 		if err != nil {
 			return failErr(err)
 		}
@@ -246,134 +213,6 @@ func (e *arsenalDeploymentPlugin) Run(ctx context.Context, q *integrationplugin.
 	return &integrationplugin.RunResult{
 		Status: sdk.StatusSuccess,
 	}, nil
-}
-
-const (
-	arsenalDeploymentTokenHeader = "X-Arsenal-Deployment-Token"
-	arsenalFollowupTokenHeader   = "X-Arsenal-Followup-Token"
-)
-
-// arsenalClient is a helper client to call arsenal public API.
-type arsenalClient struct {
-	client          *http.Client
-	host            string
-	deploymentToken string
-}
-
-func newArsenalClient(host, deploymentToken string) *arsenalClient {
-	return &arsenalClient{
-		client:          cdsclient.NewHTTPClient(60*time.Second, false),
-		host:            host,
-		deploymentToken: deploymentToken,
-	}
-}
-
-// deploy makes a deploy request and returns a followup token if successful.
-func (ac *arsenalClient) deploy(deployRequest *deployRequest) (string, error) {
-	req, err := ac.newRequest(http.MethodPost, "/deploy", deployRequest)
-	if err != nil {
-		return "", err
-	}
-	req.Header.Add(arsenalDeploymentTokenHeader, ac.deploymentToken)
-
-	deployResult := make(map[string]string)
-	statusCode, rawBody, err := ac.doRequest(req, &deployResult)
-	if err != nil {
-		return "", err
-	}
-	if statusCode != http.StatusOK {
-		if statusCode >= http.StatusBadRequest && statusCode < http.StatusInternalServerError {
-			return "", fmt.Errorf("deploy request failed (HTTP status %d): %s", statusCode, rawBody)
-		}
-		return "", fmt.Errorf("cannot reach Arsenal service (HTTP status %d)", statusCode)
-	}
-	token, exists := deployResult["followup_token"]
-	if !exists {
-		return "", fmt.Errorf("no followup token returned")
-	}
-	return token, nil
-}
-
-// follow makes a followup request with a followup token.
-func (ac *arsenalClient) follow(followupToken string) (*followupState, error) {
-	req, err := ac.newRequest(http.MethodGet, "/follow", nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create follow request: %w", err)
-	}
-	req.Header.Add(arsenalFollowupTokenHeader, followupToken)
-
-	state := &followupState{}
-	statusCode, rawBody, err := ac.doRequest(req, state)
-	if err != nil {
-		return nil, err
-	}
-
-	if statusCode != http.StatusOK {
-		if statusCode == http.StatusServiceUnavailable {
-			return nil, nil
-		}
-		return nil, fmt.Errorf("failed follow request (HTTP status %d): %s", statusCode, rawBody)
-	}
-	return state, nil
-}
-
-// upsertAlternative creates or updates an alternative.
-func (ac *arsenalClient) upsertAlternative(altConfig *alternativeConfig) error {
-	req, err := ac.newRequest(http.MethodPost, "/alternative", altConfig)
-	if err != nil {
-		return fmt.Errorf("failed to create upsert alternative request: %w", err)
-	}
-	req.Header.Add(arsenalDeploymentTokenHeader, ac.deploymentToken)
-
-	statusCode, rawBody, err := ac.doRequest(req, nil)
-	if err != nil {
-		return err
-	}
-	if statusCode != http.StatusOK {
-		if statusCode >= http.StatusBadRequest && statusCode < http.StatusInternalServerError {
-			return fmt.Errorf("failed upsert alternative request (HTTP status %d): %s", statusCode, rawBody)
-		}
-		return fmt.Errorf("cannot reach Arsenal service (HTTP status %d)", statusCode)
-	}
-	return nil
-}
-
-func (ac *arsenalClient) newRequest(method, uri string, obj interface{}) (*http.Request, error) {
-	var body io.ReadCloser
-	if obj != nil {
-		objData, err := json.Marshal(obj)
-		if err != nil {
-			return nil, fmt.Errorf("unable to encode request body: %w", err)
-		}
-		body = ioutil.NopCloser(bytes.NewReader(objData))
-	}
-
-	req, err := http.NewRequest(method, ac.host+uri, body)
-	if err != nil {
-		return nil, fmt.Errorf("unable to prepare request on %s %s: %v", method, uri, err)
-	}
-	return req, nil
-}
-
-func (ac *arsenalClient) doRequest(req *http.Request, respObject interface{}) (int, []byte, error) {
-	resp, err := ac.client.Do(req)
-	if err != nil {
-		return 0, nil, fmt.Errorf("%s %s failed: %w", req.Method, req.URL, err)
-	}
-	defer resp.Body.Close()
-
-	rawBody, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return resp.StatusCode, nil, fmt.Errorf("failed to read body from %s %s: %w", req.Method, req.URL, err)
-	}
-	if resp.StatusCode == http.StatusOK && respObject != nil {
-		err = sdk.JSONUnmarshal(rawBody, respObject)
-		if err != nil {
-			return resp.StatusCode, nil, fmt.Errorf("failed to decode body from %s %s: %w", req.Method, req.URL, err)
-		}
-	}
-
-	return resp.StatusCode, rawBody, nil
 }
 
 func getStringOption(q *integrationplugin.RunQuery, keys ...string) string {
