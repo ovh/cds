@@ -85,7 +85,10 @@
                 }
               ]
             },
-            "development": {},
+            "development": {
+              "sourceMap": true,
+              "optimization": false
+            },
             "production": {
               "optimization": true,
               "outputHashing": "all",
