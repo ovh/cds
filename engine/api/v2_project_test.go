@@ -135,16 +135,49 @@ auth:
 	api.Router.Mux.ServeHTTP(w, req)
 	require.Equal(t, 201, w.Code)
 
-	// Then, get the vcs server
-	uriGet := api.Router.GetRouteV2("GET", api.getVCSProjectHandler, vars)
-	test.NotEmpty(t, uriGet)
+	// Then, get the vcs server in the list of vcs
+	uriGetAll := api.Router.GetRouteV2("GET", api.getVCSProjectAllHandler, vars)
+	test.NotEmpty(t, uriGetAll)
 
-	reqGet := assets.NewAuthentifiedRequest(t, u, pass, "GET", uriGet, nil)
+	reqGetAll := assets.NewAuthentifiedRequest(t, u, pass, "GET", uriGetAll, nil)
 	w2 := httptest.NewRecorder()
-	api.Router.Mux.ServeHTTP(w2, reqGet)
+	api.Router.Mux.ServeHTTP(w2, reqGetAll)
 	require.Equal(t, 200, w2.Code)
 
 	vcsProjects := []sdk.VCSProject{}
 	require.NoError(t, json.Unmarshal(w2.Body.Bytes(), &vcsProjects))
 	require.Len(t, vcsProjects, 1)
+
+	// Then, try to get the vcs server directly
+	vars["vcsProjectName"] = "my_vcs_server"
+	uriGet := api.Router.GetRouteV2("GET", api.getVCSProjectHandler, vars)
+	test.NotEmpty(t, uriGet)
+
+	reqGet := assets.NewAuthentifiedRequest(t, u, pass, "GET", uriGet, nil)
+	w3 := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w3, reqGet)
+	require.Equal(t, 200, w3.Code)
+
+	vcsProject := sdk.VCSProject{}
+	require.NoError(t, json.Unmarshal(w3.Body.Bytes(), &vcsProject))
+	require.Equal(t, "my_vcs_server", vcsProject.Name)
+	require.Empty(t, vcsProject.Auth)
+
+	// delete the vcs project
+	uriDelete := api.Router.GetRouteV2("DELETE", api.deleteVCSProjectHandler, vars)
+	test.NotEmpty(t, uriDelete)
+
+	reqDelete := assets.NewAuthentifiedRequest(t, u, pass, "DELETE", uriDelete, nil)
+	w4 := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w4, reqDelete)
+	require.Equal(t, 204, w4.Code)
+
+	reqGetAll2 := assets.NewAuthentifiedRequest(t, u, pass, "GET", uriGetAll, nil)
+	w5 := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w5, reqGetAll2)
+	require.Equal(t, 200, w5.Code)
+
+	vcsProjects2 := []sdk.VCSProject{}
+	require.NoError(t, json.Unmarshal(w5.Body.Bytes(), &vcsProjects2))
+	require.Len(t, vcsProjects2, 0)
 }

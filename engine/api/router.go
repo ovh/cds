@@ -457,6 +457,8 @@ func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.Han
 		writeNoContentPostMiddleware(ctx, responseWriter, req, rc) // nolint
 
 		for _, m := range r.PostMiddlewares {
+
+			log.Info(ctx, "####### execute PostMiddlewares :%v", m)
 			var err error
 			ctx, err = m(ctx, responseWriter, req, rc)
 			if err != nil {
@@ -505,6 +507,30 @@ func (r *Router) GETv2(h service.HandlerFuncV2, cfg ...service.HandlerConfigPara
 	rc.Handler = handler
 	rc.RbacCheckers = rbacCheckers
 	rc.Method = "GET"
+	for _, c := range cfg {
+		c(&rc)
+	}
+	return &rc
+}
+
+func (r *Router) DELETEv2(h service.HandlerFuncV2, cfg ...service.HandlerConfigParam) *service.HandlerConfig {
+	var rc service.HandlerConfig
+	rbacCheckers, handler := h()
+	rc.Handler = handler
+	rc.RbacCheckers = rbacCheckers
+	rc.Method = "DELETE"
+	for _, c := range cfg {
+		c(&rc)
+	}
+	return &rc
+}
+
+func (r *Router) PUTv2(h service.HandlerFuncV2, cfg ...service.HandlerConfigParam) *service.HandlerConfig {
+	var rc service.HandlerConfig
+	rbacCheckers, handler := h()
+	rc.Handler = handler
+	rc.RbacCheckers = rbacCheckers
+	rc.Method = "PUT"
 	for _, c := range cfg {
 		c(&rc)
 	}

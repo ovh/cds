@@ -26,7 +26,7 @@ func hasRoleOnProject(ctx context.Context, auth *sdk.AuthConsumer, store cache.S
 
 	log.RegisterField(LogFieldRole)
 	ctx = context.WithValue(ctx, LogFieldRole, role)
-	log.Info(ctx, "hasRole:%t")
+	log.Info(ctx, "hasRole:%t", hasRole)
 
 	if !hasRole {
 		return sdk.WithStack(sdk.ErrForbidden)

@@ -70,7 +70,7 @@ func LoadVCSByProject(ctx context.Context, db gorp.SqlExecutor, projectID int64,
 		return nil, err
 	}
 	if !found {
-		return nil, sdk.WithStack(sdk.ErrNotFound)
+		return nil, sdk.WrapError(sdk.ErrNotFound, "vcsName:%s", vcsName)
 	}
 	isValid, err := gorpmapping.CheckSignature(res, res.Signature)
 	if err != nil {
