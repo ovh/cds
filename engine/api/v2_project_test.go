@@ -35,7 +35,7 @@ func Test_crudVCSOnProjectLambdaUserForbidden(t *testing.T) {
 	api.Router.Mux.ServeHTTP(w, req)
 	require.Equal(t, 403, w.Code)
 
-	uriGet := api.Router.GetRouteV2("GET", api.getVCSProjectHandler, vars)
+	uriGet := api.Router.GetRouteV2("GET", api.getVCSProjectAllHandler, vars)
 	test.NotEmpty(t, uriGet)
 
 	reqGet := assets.NewAuthentifiedRequest(t, u, pass, "GET", uriGet, nil)
@@ -91,7 +91,7 @@ auth:
 	require.Equal(t, 201, w.Code)
 
 	// Then, get the vcs server
-	uriGet := api.Router.GetRouteV2("GET", api.getVCSProjectHandler, vars)
+	uriGet := api.Router.GetRouteV2("GET", api.getVCSProjectAllHandler, vars)
 	test.NotEmpty(t, uriGet)
 
 	reqGet := assets.NewAuthentifiedRequest(t, user1, pass, "GET", uriGet, nil)

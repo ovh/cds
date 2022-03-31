@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/ghodss/yaml"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
