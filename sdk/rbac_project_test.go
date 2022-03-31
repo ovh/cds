@@ -31,9 +31,9 @@ func TestRbacProjectInvalidGroupAndUsers(t *testing.T) {
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "rbac myRule: missing groups or users on project permission")
 }
-func TestRbacProjectInvalidProjectIDs(t *testing.T) {
+func TestRbacProjectInvalidProjectKeys(t *testing.T) {
 	rb := RBACProject{
-		RBACProjectKeys: []string{"foo"},
+		RBACProjectKeys: []string{},
 		All:             false,
 		Role:            RoleRead,
 		RBACGroupsIDs:   []int64{1},
