@@ -2,8 +2,6 @@ package purge
 
 import (
 	"context"
-	"os"
-	"path"
 	"testing"
 	"time"
 
@@ -18,22 +16,11 @@ import (
 	"gopkg.in/h2non/gock.v1"
 
 	"github.com/ovh/cds/engine/api/bootstrap"
-	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/test"
 )
 
 func Test_deleteWorkflowRunsHistory(t *testing.T) {
 	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
-
-	// Init store
-	cfg := objectstore.Config{
-		Kind: objectstore.Filesystem,
-		Options: objectstore.ConfigOptions{
-			Filesystem: objectstore.ConfigOptionsFilesystem{
-				Basedir: path.Join(os.TempDir(), "store"),
-			},
-		},
-	}
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -47,9 +34,6 @@ func Test_deleteWorkflowRunsHistory(t *testing.T) {
 
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "POST", "/bulk/item/delete", gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(1)
-
-	sharedStorage, errO := objectstore.Init(context.Background(), cfg)
-	test.NoError(t, errO)
 
 	p := assets.InsertTestProject(t, db, cache, sdk.RandomString(10), sdk.RandomString(10))
 	w := assets.InsertTestWorkflow(t, db, cache, p, sdk.RandomString(10))
@@ -66,7 +50,7 @@ func Test_deleteWorkflowRunsHistory(t *testing.T) {
 	require.NoError(t, err)
 	cdnClient := services.NewClient(db, srvs)
 
-	err = deleteRunHistory(context.Background(), db.DbMap, wr.ID, cdnClient, sharedStorage, nil)
+	err = deleteRunHistory(context.Background(), db.DbMap, wr.ID, cdnClient, nil)
 	require.NoError(t, err)
 
 	_, err = workflow.LoadRunByID(context.Background(), db, wr.ID, workflow.LoadRunOptions{})

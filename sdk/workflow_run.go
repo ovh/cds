@@ -4,7 +4,6 @@ import (
 	"database/sql/driver"
 	json "encoding/json"
 	"fmt"
-	"net/url"
 	"sort"
 	"strings"
 	"time"
@@ -359,7 +358,6 @@ type WorkflowNodeRun struct {
 	Payload                interface{}                          `json:"payload,omitempty"`
 	PipelineParameters     []Parameter                          `json:"pipeline_parameters,omitempty"`
 	BuildParameters        []Parameter                          `json:"build_parameters,omitempty"`
-	Artifacts              []WorkflowNodeRunArtifact            `json:"artifacts,omitempty"`
 	Coverage               WorkflowNodeRunCoverage              `json:"coverage,omitempty"`
 	VulnerabilitiesReport  WorkflowNodeRunVulnerabilityReport   `json:"vulnerabilities_report,omitempty"`
 	Tests                  *TestsResults                        `json:"tests,omitempty"`
@@ -455,45 +453,6 @@ func (nr *WorkflowNodeRun) Translate() {
 			nr.Stages[ks].RunJobs[kj].Translate()
 		}
 	}
-}
-
-//WorkflowNodeRunArtifact represents tests list
-type WorkflowNodeRunArtifact struct {
-	WorkflowID           int64     `json:"workflow_id" db:"workflow_run_id"`
-	WorkflowNodeRunID    int64     `json:"workflow_node_run_id" db:"workflow_node_run_id"`
-	WorkflowNodeJobRunID int64     `json:"workflow_node_job_run_id" db:"-"`
-	ID                   int64     `json:"id" db:"id"`
-	Name                 string    `json:"name" db:"name" cli:"name,key"`
-	Tag                  string    `json:"tag" db:"tag" cli:"tag"`
-	Ref                  string    `json:"ref" db:"ref" cli:"ref"`
-	DownloadHash         string    `json:"download_hash" db:"download_hash"`
-	Size                 int64     `json:"size,omitempty" db:"size"`
-	Perm                 uint32    `json:"perm,omitempty" db:"perm"`
-	MD5sum               string    `json:"md5sum,omitempty" db:"md5sum" cli:"-"`
-	SHA512sum            string    `json:"sha512sum,omitempty" db:"sha512sum" cli:"sha512sum"`
-	ObjectPath           string    `json:"object_path,omitempty" db:"object_path"`
-	Created              time.Time `json:"created,omitempty" db:"created"`
-	TempURL              string    `json:"temp_url,omitempty" db:"-"`
-	TempURLSecretKey     string    `json:"-" db:"-"`
-	ProjectIntegrationID *int64    `json:"project_integration_id" db:"project_integration_id"`
-}
-
-// Equal returns true if w WorkflowNodeRunArtifact equals c
-func (w WorkflowNodeRunArtifact) Equal(c WorkflowNodeRunArtifact) bool {
-	if w.SHA512sum != "" {
-		return w.WorkflowID == c.WorkflowID &&
-			w.WorkflowNodeRunID == c.WorkflowNodeRunID &&
-			w.DownloadHash == c.DownloadHash &&
-			w.Tag == c.Tag &&
-			w.TempURL == c.TempURL &&
-			w.SHA512sum == c.SHA512sum
-	}
-	return w.WorkflowID == c.WorkflowID &&
-		w.WorkflowNodeRunID == c.WorkflowNodeRunID &&
-		w.DownloadHash == c.DownloadHash &&
-		w.Tag == c.Tag &&
-		w.TempURL == c.TempURL &&
-		w.MD5sum == c.MD5sum
 }
 
 //WorkflowNodeJobRun represents an job to be run
@@ -621,23 +580,6 @@ type WorkflowNodeRunManual struct {
 	Username           string      `json:"username" db:"-"`
 	Fullname           string      `json:"fullname" db:"-"`
 	Email              string      `json:"email" db:"-"`
-}
-
-//GetName returns the name the artifact
-func (w *WorkflowNodeRunArtifact) GetName() string {
-	return w.Name
-}
-
-//GetPath returns the path of the artifact
-func (w *WorkflowNodeRunArtifact) GetPath() string {
-	ref := w.Ref
-	if ref == "" {
-		ref = w.Tag
-	}
-	container := fmt.Sprintf("%d-%d-%s", w.WorkflowID, w.WorkflowNodeRunID, ref)
-	container = url.QueryEscape(container)
-	container = strings.Replace(container, "/", "-", -1)
-	return container
 }
 
 type WorkflowQueue []WorkflowNodeJobRun

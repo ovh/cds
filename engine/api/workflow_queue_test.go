@@ -3,14 +3,11 @@ package api
 import (
 	"bytes"
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"os"
-	"path"
 	"strings"
 	"testing"
 	"time"
@@ -30,10 +27,8 @@ import (
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/keys"
-	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/purge"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/test"
@@ -897,151 +892,13 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 
 	wNodeJobRun, errJ := workflow.LoadNodeJobRun(context.TODO(), api.mustDB(), api.Cache, ctx.job.ID)
 	require.NoError(t, errJ)
-	nodeRun, errN := workflow.LoadNodeRunByID(context.Background(), api.mustDB(), wNodeJobRun.WorkflowNodeRunID, workflow.LoadRunOptions{WithArtifacts: true, WithTests: true})
+	nodeRun, errN := workflow.LoadNodeRunByID(context.Background(), api.mustDB(), wNodeJobRun.WorkflowNodeRunID, workflow.LoadRunOptions{WithTests: true})
 	require.NoError(t, errN)
 
 	require.NotNil(t, nodeRun.Tests)
 	require.Equal(t, 2, nodeRun.Tests.Total)
 	require.Equal(t, 1, nodeRun.Tests.TotalKO)
 	require.Equal(t, 1, nodeRun.Tests.TotalOK)
-}
-
-func Test_postWorkflowJobArtifactHandler(t *testing.T) {
-	api, db, router := newTestAPI(t)
-
-	s, _, _ := assets.InitCDNService(t, db)
-	defer func() {
-		_ = services.Delete(db, s)
-	}()
-
-	ctx := testRunWorkflow(t, api, router)
-
-	// Init store
-	cfg := objectstore.Config{
-		Kind: objectstore.Filesystem,
-		Options: objectstore.ConfigOptions{
-			Filesystem: objectstore.ConfigOptionsFilesystem{
-				Basedir: path.Join(os.TempDir(), "store"),
-			},
-		},
-	}
-
-	storage, errO := objectstore.Init(context.Background(), cfg)
-	require.NoError(t, errO)
-	api.SharedStorage = storage
-
-	//Register the worker
-	testRegisterWorker(t, api, db, router, &ctx)
-
-	//Take
-	uri := router.GetRoute("POST", api.postTakeWorkflowJobHandler, map[string]string{
-		"permJobID": fmt.Sprintf("%d", ctx.job.ID),
-	})
-	test.NotEmpty(t, uri)
-
-	req := assets.NewJWTAuthentifiedRequest(t, ctx.workerToken, "POST", uri, nil)
-	rec := httptest.NewRecorder()
-	router.Mux.ServeHTTP(rec, req)
-	require.Equal(t, 200, rec.Code)
-
-	uri = router.GetRoute("POST", api.postWorkflowJobArtifactHandler, map[string]string{
-		"ref":             base64.RawURLEncoding.EncodeToString([]byte("latest")),
-		"integrationName": sdk.DefaultStorageIntegrationName,
-		"permProjectKey":  ctx.project.Key,
-	})
-	require.NotEmpty(t, uri)
-
-	myartifact, errF := os.Create(path.Join(os.TempDir(), "myartifact"))
-	defer os.RemoveAll(path.Join(os.TempDir(), "myartifact"))
-	require.NoError(t, errF)
-	_, errW := myartifact.Write([]byte("Hi, I am foo"))
-	require.NoError(t, errW)
-
-	errClose := myartifact.Close()
-	require.NoError(t, errClose)
-
-	params := map[string]string{}
-	params["size"] = "12"
-	params["perm"] = "7"
-	params["md5sum"] = "123"
-	params["sha512sum"] = "1234"
-	params["nodeJobRunID"] = fmt.Sprintf("%d", ctx.job.ID)
-	req = assets.NewJWTAuthentifiedMultipartRequest(t, ctx.workerToken, "POST", uri, path.Join(os.TempDir(), "myartifact"), "myartifact", params)
-	rec = httptest.NewRecorder()
-	router.Mux.ServeHTTP(rec, req)
-	require.Equal(t, 204, rec.Code)
-
-	time.Sleep(1 * time.Second)
-
-	wNodeJobRun, errJ := workflow.LoadNodeJobRun(context.TODO(), api.mustDB(), api.Cache, ctx.job.ID)
-	require.NoError(t, errJ)
-
-	updatedNodeRun, errN2 := workflow.LoadNodeRunByID(context.Background(), api.mustDB(), wNodeJobRun.WorkflowNodeRunID, workflow.LoadRunOptions{WithArtifacts: true})
-	require.NoError(t, errN2)
-
-	assert.NotNil(t, updatedNodeRun.Artifacts)
-	require.Equal(t, 1, len(updatedNodeRun.Artifacts))
-
-	//Prepare request
-	uri = router.GetRoute("GET", api.getWorkflowRunArtifactsHandler, map[string]string{
-		"key":                      ctx.project.Key,
-		"permWorkflowNameAdvanced": ctx.workflow.Name,
-		"number":                   fmt.Sprintf("%d", updatedNodeRun.Number),
-	})
-	require.NotEmpty(t, uri)
-	req = assets.NewJWTAuthentifiedRequest(t, ctx.userToken, "GET", uri, nil)
-	rec = httptest.NewRecorder()
-	router.Mux.ServeHTTP(rec, req)
-	require.Equal(t, 200, rec.Code)
-
-	var arts []sdk.WorkflowNodeRunArtifact
-	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &arts))
-	require.Equal(t, 1, len(arts))
-	require.Equal(t, "myartifact", arts[0].Name)
-
-	// Download artifact
-	//Prepare request
-	uri = router.GetRoute("GET", api.getDownloadArtifactHandler, map[string]string{
-		"key":                      ctx.project.Key,
-		"permWorkflowNameAdvanced": ctx.workflow.Name,
-		"artifactId":               fmt.Sprintf("%d", arts[0].ID),
-	})
-	require.NotEmpty(t, uri)
-	req = assets.NewJWTAuthentifiedRequest(t, ctx.userToken, "GET", uri, nil)
-	rec = httptest.NewRecorder()
-	router.Mux.ServeHTTP(rec, req)
-
-	resp := rec.Result()
-	body, _ := io.ReadAll(resp.Body)
-
-	require.Equal(t, 200, rec.Code)
-	require.Equal(t, "Hi, I am foo", string(body))
-
-	// check if file is stored locally
-	containerPath := path.Join(os.TempDir(), "store", fmt.Sprintf("%d-%d-%v", ctx.run.ID, wNodeJobRun.WorkflowNodeRunID, arts[0].Ref))
-
-	artifactPath := path.Join(containerPath, "myartifact")
-	exists := fileExists(artifactPath)
-	assert.Equal(t, true, exists)
-
-	// then purge run to delete artifact
-	require.NoError(t, purge.DeleteArtifacts(router.Background, db, api.SharedStorage, ctx.run.ID))
-
-	// check if file is deleted
-	exists = fileExists(artifactPath)
-	assert.Equal(t, false, exists)
-
-	if _, err := os.Stat(containerPath); !os.IsNotExist(err) {
-		t.FailNow()
-	}
-}
-
-func fileExists(filename string) bool {
-	info, err := os.Stat(filename)
-	if os.IsNotExist(err) {
-		return false
-	}
-	return !info.IsDir()
 }
 
 func TestWorkerPrivateKey(t *testing.T) {
@@ -1669,15 +1526,6 @@ func Test_workflowRunResultsAdd(t *testing.T) {
 	featureflipping.Init(gorpmapping.Mapper)
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	feat := &sdk.Feature{
-		Name: sdk.FeatureCDNArtifact,
-		Rule: "return true",
-	}
-	require.NoError(t, featureflipping.Insert(gorpmapping.Mapper, db, feat))
-	t.Cleanup(func() {
-		_ = featureflipping.Delete(db, feat.ID)
-	})
-
 	cdnServices, _, jwtCDN := assets.InitCDNService(t, db)
 	t.Cleanup(func() { _ = services.Delete(db, cdnServices) })
 
@@ -1762,15 +1610,6 @@ func Test_workflowRunResultCheckUpload(t *testing.T) {
 
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
-
-	feat := &sdk.Feature{
-		Name: sdk.FeatureCDNArtifact,
-		Rule: "return true",
-	}
-	require.NoError(t, featureflipping.Insert(gorpmapping.Mapper, db, feat))
-	t.Cleanup(func() {
-		_ = featureflipping.Delete(db, feat.ID)
-	})
 
 	w := assets.InsertTestWorkflow(t, db, api.Cache, proj, sdk.RandomString(10))
 

@@ -47,7 +47,6 @@ workflow_run.header
 // LoadRunOptions are options for loading a run (node or workflow)
 type LoadRunOptions struct {
 	WithCoverage            bool
-	WithArtifacts           bool
 	WithTests               bool
 	WithLightTests          bool
 	WithVulnerabilities     bool
@@ -972,14 +971,6 @@ func syncNodeRuns(db gorp.SqlExecutor, wr *sdk.WorkflowRun, loadOpts LoadRunOpti
 			return err
 		}
 		wnr.CanBeRun = CanBeRun(wr, wnr)
-		if loadOpts.WithArtifacts {
-			arts, errA := loadArtifactByNodeRunID(db, wnr.ID)
-			if errA != nil {
-				return sdk.WrapError(errA, "syncNodeRuns>Error loading artifacts for node run %d", wnr.ID)
-			}
-			wnr.Artifacts = arts
-		}
-
 		if loadOpts.WithCoverage {
 			cov, errCov := LoadCoverageReport(db, wnr.ID)
 			if errCov != nil && !sdk.ErrorIs(errCov, sdk.ErrNotFound) {

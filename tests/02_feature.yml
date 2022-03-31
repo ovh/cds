@@ -1,7 +1,0 @@
-name: Enable CDN
-testcases:
-- name: Enable cdn only
-  steps:
-  - script: '[ -f ./fixtures/feature-cdn.yml ]'
-  - script: "{{.cdsctl}} -f {{.cdsctl.config}} admin features import ./fixtures/feature-cdn.yml"
-  
