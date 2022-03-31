@@ -457,8 +457,6 @@ func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.Han
 		writeNoContentPostMiddleware(ctx, responseWriter, req, rc) // nolint
 
 		for _, m := range r.PostMiddlewares {
-
-			log.Info(ctx, "####### execute PostMiddlewares :%v", m)
 			var err error
 			ctx, err = m(ctx, responseWriter, req, rc)
 			if err != nil {
