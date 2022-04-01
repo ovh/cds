@@ -11,7 +11,7 @@ clean:
 
 NG = node_modules/@angular/cli/bin/ng
 $(NG):
-	npm install
+	npm ci
 
 stats: $(NG)
 	@node --max-old-space-size=2048 node_modules/@angular/cli/bin/ng build --configuration production --stats-json
