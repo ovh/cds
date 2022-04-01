@@ -282,31 +282,37 @@ func (api *API) checkWorkflowPermissionsWithOpts(opts CheckWorkflowPermissionsOp
 		if maxLevelPermission < perm { // If the caller based on its group doesn have enough permission level
 			// If it's about READ: we have to check if the user is a maintainer or an admin
 			if perm < sdk.PermissionReadExecute {
-				if !isHooks(ctx) && !isMaintainer(ctx) {
-					// The caller doesn't enough permission level from its groups and is neither a maintainer nor an admin
-					log.Debug(ctx, "checkWorkflowPermissions> %s is not authorized to %s/%s", getAPIConsumer(ctx).ID, projectKey, workflowName)
-					return sdk.WrapError(sdk.ErrForbidden, "not authorized for workflow %s/%s", projectKey, workflowName)
+				if isMaintainer(ctx) || (isHooks(ctx) && opts.AllowHooks) {
+					if isHooks(ctx) {
+						log.Debug(ctx, "checkWorkflowPermissions> %s access granted to %s/%s because is hooks service", getAPIConsumer(ctx).ID, projectKey, workflowName)
+						telemetry.Current(ctx, telemetry.Tag(telemetry.TagPermission, "is_hooks"))
+					} else if isMaintainer(ctx) {
+						log.Debug(ctx, "checkWorkflowPermissions> %s access granted to %s/%s because is maintainer", getAPIConsumer(ctx).ID, projectKey, workflowName)
+						telemetry.Current(ctx, telemetry.Tag(telemetry.TagPermission, "is_maintainer"))
+					}
+					return nil
 				}
-				if isHooks(ctx) && opts.AllowHooks {
+				// The caller doesn't enough permission level from its groups and is neither a maintainer nor an admin
+				log.Debug(ctx, "checkWorkflowPermissions> %s is not authorized to %s/%s", getAPIConsumer(ctx).ID, projectKey, workflowName)
+				return sdk.WrapError(sdk.ErrForbidden, "not authorized for workflow %s/%s", projectKey, workflowName)
+			}
+
+			// If it's about Execute of Write: we have to check if the user is an admin or if it hooks service
+			if isAdmin(ctx) || (isHooks(ctx) && opts.AllowHooks) {
+				if isHooks(ctx) {
 					log.Debug(ctx, "checkWorkflowPermissions> %s access granted to %s/%s because is hooks service", getAPIConsumer(ctx).ID, projectKey, workflowName)
 					telemetry.Current(ctx, telemetry.Tag(telemetry.TagPermission, "is_hooks"))
-				} else if isMaintainer(ctx) {
-					log.Debug(ctx, "checkWorkflowPermissions> %s access granted to %s/%s because is maintainer", getAPIConsumer(ctx).ID, projectKey, workflowName)
-					telemetry.Current(ctx, telemetry.Tag(telemetry.TagPermission, "is_maintainer"))
+				} else if isAdmin(ctx) {
+					log.Debug(ctx, "checkWorkflowPermissions> %s access granted to %s/%s because is admin", getAPIConsumer(ctx).ID, projectKey, workflowName)
+					telemetry.Current(ctx, telemetry.Tag(telemetry.TagPermission, "is_admin"))
+					trackSudo(ctx, w)
 				}
 				return nil
 			}
 
-			// If it's about Execute of Write: we have to check if the user is an admin or if it hooks service
-			if !isHooks(ctx) && !isAdmin(ctx) {
-				// The caller doesn't enough permission level from its groups and is not an admin
-				log.Debug(ctx, "checkWorkflowPermissions> %s is not authorized to %s/%s", getAPIConsumer(ctx).ID, projectKey, workflowName)
-				return sdk.WrapError(sdk.ErrForbidden, "not authorized for workflow %s/%s", projectKey, workflowName)
-			}
-			log.Debug(ctx, "checkWorkflowPermissions> %s access granted to %s/%s because is admin", getAPIConsumer(ctx).ID, projectKey, workflowName)
-			telemetry.Current(ctx, telemetry.Tag(telemetry.TagPermission, "is_admin"))
-			trackSudo(ctx, w)
-			return nil
+			// The caller doesn't enough permission level from its groups and is not an admin
+			log.Debug(ctx, "checkWorkflowPermissions> %s is not authorized to %s/%s", getAPIConsumer(ctx).ID, projectKey, workflowName)
+			return sdk.WrapError(sdk.ErrForbidden, "not authorized for workflow %s/%s", projectKey, workflowName)
 		}
 		log.Debug(ctx, "checkWorkflowPermissions> %s access granted to %s/%s because has permission (max permission = %d)", getAPIConsumer(ctx).ID, projectKey, workflowName, maxLevelPermission)
 		telemetry.Current(ctx, telemetry.Tag(telemetry.TagPermission, "is_granted"))
@@ -337,7 +343,7 @@ func (api *API) checkGroupPermissions(ctx context.Context, w http.ResponseWriter
 			return nil
 		}
 		// Only group administror or CDS administrator can update a group or its dependencies
-		if !isGroupAdmin(ctx, g) || g.ID == group.SharedInfraGroup.ID {
+		if !isGroupAdmin(ctx, g) {
 			if isAdmin(ctx) {
 				trackSudo(ctx, w)
 			} else {
