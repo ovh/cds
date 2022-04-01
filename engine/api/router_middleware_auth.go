@@ -157,6 +157,8 @@ func (api *API) authOptionalMiddleware(ctx context.Context, w http.ResponseWrite
 	if consumer.Service != nil {
 		ctx = context.WithValue(ctx, cdslog.AuthServiceName, consumer.Service.Name)
 		SetTracker(w, cdslog.AuthServiceName, consumer.Service.Name)
+		ctx = context.WithValue(ctx, cdslog.AuthServiceType, consumer.Service.Type)
+		SetTracker(w, cdslog.AuthServiceType, consumer.Service.Type)
 	}
 
 	// Add worker for consumer if exists

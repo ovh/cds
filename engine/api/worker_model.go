@@ -79,6 +79,10 @@ func (api *API) postWorkerModelHandler() service.Handler {
 
 func (api *API) putWorkerModelHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if isService(ctx) {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
+
 		vars := mux.Vars(r)
 
 		groupName := vars["permGroupName"]
@@ -156,6 +160,10 @@ func (api *API) putWorkerModelHandler() service.Handler {
 
 func (api *API) deleteWorkerModelHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if isService(ctx) {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
+
 		vars := mux.Vars(r)
 
 		groupName := vars["permGroupName"]

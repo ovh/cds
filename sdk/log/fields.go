@@ -11,6 +11,7 @@ const (
 	Action             = log.Field("action")
 	AuthConsumerID     = log.Field("auth_consumer_id")
 	AuthServiceName    = log.Field("auth_service_name")
+	AuthServiceType    = log.Field("auth_service_type")
 	AuthSessionIAT     = log.Field("auth_session_iat")
 	AuthSessionID      = log.Field("auth_session_id")
 	AuthSessionTokenID = log.Field("auth_session_token")
@@ -45,6 +46,7 @@ func init() {
 		AuthUserID,
 		AuthUsername,
 		AuthServiceName,
+		AuthServiceType,
 		AuthWorkerName,
 		AuthConsumerID,
 		AuthSessionID,

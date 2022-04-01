@@ -174,6 +174,10 @@ func (api *API) getTemplateHandler() service.Handler {
 
 func (api *API) putTemplateHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if isService(ctx) {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
+
 		vars := mux.Vars(r)
 
 		groupName := vars["permGroupName"]
@@ -288,6 +292,10 @@ func (api *API) putTemplateHandler() service.Handler {
 
 func (api *API) deleteTemplateHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if isService(ctx) {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
+
 		vars := mux.Vars(r)
 
 		groupName := vars["permGroupName"]
@@ -917,6 +925,10 @@ func (api *API) deleteTemplateInstanceHandler() service.Handler {
 
 func (api *API) postTemplatePullHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if isService(ctx) {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
+
 		vars := mux.Vars(r)
 
 		groupName := vars["permGroupName"]

@@ -22,11 +22,12 @@ import (
 var _ Interface = new(client)
 
 type client struct {
-	httpClient          *http.Client
-	httpNoTimeoutClient *http.Client
-	httpWebsocketClient *websocket.Dialer
-	config              *Config
-	name                string
+	httpClient                       *http.Client
+	httpNoTimeoutClient              *http.Client
+	httpWebsocketClient              *websocket.Dialer
+	config                           *Config
+	name                             string
+	serviceAuthConsumerSigninRequest *sdk.AuthConsumerSigninRequest
 }
 
 func NewWebsocketDialer(insecureSkipVerifyTLS bool) *websocket.Dialer {
@@ -151,15 +152,16 @@ func NewServiceClient(ctx context.Context, clientConfig ServiceConfig, registerP
 		}
 	}
 
+	cli.serviceAuthConsumerSigninRequest = &sdk.AuthConsumerSigninRequest{
+		"token":   clientConfig.Token,
+		"service": registerPayload,
+	}
+
 	var nbError int
 retry:
 	var res sdk.AuthConsumerSigninResponse
 	_, headers, code, err := cli.RequestJSON(ctx, "POST", "/auth/consumer/"+string(sdk.ConsumerBuiltin)+"/signin",
-		sdk.AuthConsumerSigninRequest{
-			"token":   clientConfig.Token,
-			"service": registerPayload,
-		},
-		&res)
+		cli.serviceAuthConsumerSigninRequest, &res)
 	if err != nil {
 		if code == 401 {
 			nbError++

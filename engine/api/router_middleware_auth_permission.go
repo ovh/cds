@@ -87,8 +87,7 @@ func (api *API) checkJobIDPermissions(ctx context.Context, w http.ResponseWriter
 		return nil
 	}
 	if perm == sdk.PermissionRead {
-		if (isHatchery(ctx) && isGroupMember(ctx, group.SharedInfraGroup)) ||
-			isMaintainer(ctx) {
+		if isHatcheryShared(ctx) || isMaintainer(ctx) {
 			return nil
 		}
 	} else {
@@ -149,7 +148,7 @@ func (api *API) checkProjectPermissions(ctx context.Context, w http.ResponseWrit
 		log.Debug(ctx, "checkProjectPermissions> callerPermission=%d ", callerPermission)
 		// If it's about READ: we have to check if the user is a maintainer or an admin
 		if requiredPerm == sdk.PermissionRead {
-			if !isHooks(ctx) && !isMaintainer(ctx) {
+			if !isMaintainer(ctx) {
 				// The caller doesn't enough permission level from its groups and is neither a maintainer nor an admin
 				log.Debug(ctx, "checkProjectPermissions> %s(%s) is not authorized to %s", getAPIConsumer(ctx).Name, getAPIConsumer(ctx).ID, projectKey)
 				return sdk.WrapError(sdk.ErrNoProject, "not authorized for project %s", projectKey)
@@ -157,10 +156,6 @@ func (api *API) checkProjectPermissions(ctx context.Context, w http.ResponseWrit
 			if isMaintainer(ctx) {
 				log.Debug(ctx, "checkProjectPermissions> %s(%s) access granted to %s because is maintainer", getAPIConsumer(ctx).Name, getAPIConsumer(ctx).ID, projectKey)
 				telemetry.Current(ctx, telemetry.Tag(telemetry.TagPermission, "is_maintainer"))
-			}
-			if isHooks(ctx) {
-				log.Debug(ctx, "checkProjectPermissions> %s(%s) access granted to %s because is hooks", getAPIConsumer(ctx).Name, getAPIConsumer(ctx).ID, projectKey)
-				telemetry.Current(ctx, telemetry.Tag(telemetry.TagPermission, "is_hooks"))
 			}
 			return nil
 		}
@@ -188,13 +183,16 @@ func (api *API) checkWorkflowPermissions(ctx context.Context, w http.ResponseWri
 // Same as checkWorkflowPermissions but also allows GET for workers on same project's workflows.
 // This is needed as artifact download is allowed from a workflow to another in the same project.
 func (api *API) checkWorkflowAdvancedPermissions(ctx context.Context, w http.ResponseWriter, workflowName string, perm int, routeVars map[string]string) error {
-	return api.checkWorkflowPermissionsWithOpts(CheckWorkflowPermissionsOpts{
-		AllowGETForWorkerOnSameProject: true,
-	})(ctx, w, workflowName, perm, routeVars)
+	return api.checkWorkflowPermissionsWithOpts(
+		CheckWorkflowPermissionsOpts{
+			AllowGETForWorkerOnSameProject: true,
+			AllowHooks:                     true,
+		})(ctx, w, workflowName, perm, routeVars)
 }
 
 type CheckWorkflowPermissionsOpts struct {
 	AllowGETForWorkerOnSameProject bool
+	AllowHooks                     bool
 }
 
 func (api *API) checkWorkflowPermissionsWithOpts(opts CheckWorkflowPermissionsOpts) PermCheckFunc {
@@ -289,7 +287,7 @@ func (api *API) checkWorkflowPermissionsWithOpts(opts CheckWorkflowPermissionsOp
 					log.Debug(ctx, "checkWorkflowPermissions> %s is not authorized to %s/%s", getAPIConsumer(ctx).ID, projectKey, workflowName)
 					return sdk.WrapError(sdk.ErrForbidden, "not authorized for workflow %s/%s", projectKey, workflowName)
 				}
-				if isHooks(ctx) {
+				if isHooks(ctx) && opts.AllowHooks {
 					log.Debug(ctx, "checkWorkflowPermissions> %s access granted to %s/%s because is hooks service", getAPIConsumer(ctx).ID, projectKey, workflowName)
 					telemetry.Current(ctx, telemetry.Tag(telemetry.TagPermission, "is_hooks"))
 				} else if isMaintainer(ctx) {
@@ -335,7 +333,7 @@ func (api *API) checkGroupPermissions(ctx context.Context, w http.ResponseWriter
 
 	if permissionValue > sdk.PermissionRead {
 		// Hatcheries started for "shared.infra" group are granted for group "shared.infra"
-		if g.ID == group.SharedInfraGroup.ID && isHatchery(ctx) && isGroupMember(ctx, g) {
+		if isHatcheryShared(ctx) {
 			return nil
 		}
 		// Only group administror or CDS administrator can update a group or its dependencies

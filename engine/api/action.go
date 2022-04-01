@@ -214,6 +214,10 @@ func (api *API) getActionHandler() service.Handler {
 
 func (api *API) putActionHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if isService(ctx) {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
+
 		vars := mux.Vars(r)
 
 		groupName := vars["permGroupName"]
@@ -307,6 +311,10 @@ func (api *API) putActionHandler() service.Handler {
 
 func (api *API) deleteActionHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if isService(ctx) {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
+
 		vars := mux.Vars(r)
 
 		groupName := vars["permGroupName"]
@@ -425,6 +433,10 @@ func (api *API) getActionAuditHandler() service.Handler {
 
 func (api *API) postActionAuditRollbackHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if isService(ctx) {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
+
 		vars := mux.Vars(r)
 
 		groupName := vars["permGroupName"]
