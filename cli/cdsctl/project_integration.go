@@ -62,7 +62,7 @@ func projectIntegrationDeleteFunc(v cli.Values) error {
 var projectIntegrationImportCmd = cli.Command{
 	Name:    "import",
 	Short:   "Import a integration configuration on a project from a yaml file",
-	Example: "cdsctl integration import MY-PROJECT file.yml",
+	Example: "cdsctl project integration import MY-PROJECT file.yml",
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
 	},
@@ -93,7 +93,7 @@ func projectIntegrationImportFunc(v cli.Values) error {
 var projectIntegrationExportCmd = cli.Command{
 	Name:    "export",
 	Short:   "Export a integration configuration from a project to stdout",
-	Example: "cdsctl integration export MY-PROJECT MY-INTEGRATION-NAME > file.yaml",
+	Example: "cdsctl project integration export MY-PROJECT MY-INTEGRATION-NAME > file.yaml",
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
 	},
