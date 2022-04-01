@@ -6,6 +6,7 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/jfrog/jfrog-client-go/artifactory/services/utils"
@@ -56,7 +57,7 @@ func (e *artifactoryReleasePlugin) Manifest(_ context.Context, _ *empty.Empty) (
 	}, nil
 }
 
-func (e *artifactoryReleasePlugin) Run(_ context.Context, opts *integrationplugin.RunQuery) (*integrationplugin.RunResult, error) {
+func (e *artifactoryReleasePlugin) Run(ctx context.Context, opts *integrationplugin.RunQuery) (*integrationplugin.RunResult, error) {
 	artifactoryURL := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactoryConfigURL)]
 	distributionURL := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactoryConfigDistributionURL)]
 	token := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactoryConfigToken)]
@@ -85,7 +86,7 @@ func (e *artifactoryReleasePlugin) Run(_ context.Context, opts *integrationplugi
 		return fail("unable to list run results: %v", err)
 	}
 
-	log.SetLogger(log.NewLogger(log.ERROR, os.Stdout))
+	log.SetLogger(log.NewLogger(log.INFO, os.Stdout))
 	if distributionURL == "" {
 		fmt.Printf("Using %s to release\n", artifactoryURL)
 		distributionURL = artifactoryURL
@@ -94,13 +95,17 @@ func (e *artifactoryReleasePlugin) Run(_ context.Context, opts *integrationplugi
 		fmt.Println("Using distribution token to release")
 		releaseToken = token
 	}
-	distriClient, err := art.CreateDistributionClient(distributionURL, releaseToken)
+
+	ctx, cancel := context.WithTimeout(ctx, 15*time.Minute)
+	defer cancel()
+
+	distriClient, err := art.CreateDistributionClient(ctx, distributionURL, releaseToken)
 	if err != nil {
 		return fail("unable to create distribution client: %v", err)
 	}
 
 	// Promotion
-	artiClient, err := art.CreateArtifactoryClient(artifactoryURL, token)
+	artiClient, err := art.CreateArtifactoryClient(ctx, artifactoryURL, token)
 	if err != nil {
 		return fail("unable to create artifactory client: %v", err)
 	}

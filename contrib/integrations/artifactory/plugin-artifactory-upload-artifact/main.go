@@ -62,7 +62,7 @@ func (e *artifactoryUploadArtifactPlugin) Manifest(_ context.Context, _ *empty.E
 	}, nil
 }
 
-func (e *artifactoryUploadArtifactPlugin) Run(_ context.Context, opts *integrationplugin.RunQuery) (*integrationplugin.RunResult, error) {
+func (e *artifactoryUploadArtifactPlugin) Run(ctx context.Context, opts *integrationplugin.RunQuery) (*integrationplugin.RunResult, error) {
 	prefix := "cds.integration.artifact_manager"
 	cdsRepo := opts.GetOptions()[fmt.Sprintf("%s.%s", prefix, sdk.ArtifactoryConfigCdsRepository)]
 	artifactoryURL := opts.GetOptions()[fmt.Sprintf("%s.%s", prefix, sdk.ArtifactoryConfigURL)]
@@ -73,7 +73,10 @@ func (e *artifactoryUploadArtifactPlugin) Run(_ context.Context, opts *integrati
 	version := opts.GetOptions()["cds.version"]
 	buildInfo := opts.GetOptions()[fmt.Sprintf("%s.%s", prefix, sdk.ArtifactoryConfigBuildInfoPrefix)]
 
-	artiClient, err := art.CreateArtifactoryClient(artifactoryURL, token)
+	ctx, cancel := context.WithTimeout(ctx, 15*time.Minute)
+	defer cancel()
+
+	artiClient, err := art.CreateArtifactoryClient(ctx, artifactoryURL, token)
 	if err != nil {
 		return fail("unable to create artifactory client: %v", err)
 	}

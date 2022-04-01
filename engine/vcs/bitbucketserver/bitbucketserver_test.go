@@ -2,6 +2,7 @@ package bitbucketserver
 
 import (
 	"context"
+	"os"
 	"testing"
 
 	"github.com/ovh/cds/engine/cache"
@@ -13,7 +14,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestNew needs githubClientID and githubClientSecret
 func TestNewClient(t *testing.T) {
 	ghConsummer := getNewConsumer(t)
 	assert.NotNil(t, ghConsummer)
@@ -56,7 +56,7 @@ func getAuthorizedClient(t *testing.T) sdk.VCSAuthorizedClient {
 	redisPassword := cfg["redisPassword"]
 
 	if consumerKey == "" && privateKey == "" {
-		t.Logf("Unable to read github configuration. Skipping this tests.")
+		t.Logf("Unable to read bitbucket configuration. Skipping this tests.")
 		t.SkipNow()
 	}
 
@@ -71,7 +71,7 @@ func getAuthorizedClient(t *testing.T) sdk.VCSAuthorizedClient {
 	return cli
 }
 
-func TestClientAuthorizeToken(t *testing.T) {
+func TestClientAuthorizeRedirect(t *testing.T) {
 	consumer := getNewConsumer(t)
 	token, url, err := consumer.AuthorizeRedirect(context.Background())
 	t.Logf("token: %s", token)
@@ -83,6 +83,24 @@ func TestClientAuthorizeToken(t *testing.T) {
 
 	err = browser.OpenURL(url)
 	require.NoError(t, err)
+}
+
+func TestClientAuthorizeToken(t *testing.T) {
+	token := os.Getenv("TOKEN")
+	verifier := os.Getenv("VERIFIER")
+
+	if token == "" || verifier == "" {
+		t.SkipNow()
+	}
+
+	consumer := getNewConsumer(t)
+	accesstoken, accesstokenSecret, err := consumer.AuthorizeToken(context.Background(), token, verifier)
+	require.NoError(t, err)
+	assert.NotEmpty(t, accesstoken)
+	assert.NotEmpty(t, accesstokenSecret)
+
+	t.Logf("accesstoken: %s", accesstoken)
+	t.Logf("accesstokenSecret: %s", accesstokenSecret)
 }
 
 func TestAuthorizedClient(t *testing.T) {

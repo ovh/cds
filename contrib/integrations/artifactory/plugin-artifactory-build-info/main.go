@@ -15,6 +15,7 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/jfrog/jfrog-client-go/artifactory"
 	"github.com/jfrog/jfrog-client-go/artifactory/buildinfo"
+	"github.com/jfrog/jfrog-client-go/artifactory/services"
 	"github.com/jfrog/jfrog-client-go/artifactory/services/utils"
 	"github.com/jfrog/jfrog-client-go/utils/log"
 
@@ -64,7 +65,7 @@ func (e *artifactoryBuildInfoPlugin) Manifest(_ context.Context, _ *empty.Empty)
 	}, nil
 }
 
-func (e *artifactoryBuildInfoPlugin) Run(_ context.Context, opts *integrationplugin.RunQuery) (*integrationplugin.RunResult, error) {
+func (e *artifactoryBuildInfoPlugin) Run(ctx context.Context, opts *integrationplugin.RunQuery) (*integrationplugin.RunResult, error) {
 	artifactoryURL := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactoryConfigURL)]
 	token := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactoryConfigToken)]
 	tokenName := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactoryConfigTokenName)]
@@ -76,11 +77,14 @@ func (e *artifactoryBuildInfoPlugin) Run(_ context.Context, opts *integrationplu
 	projectKey := opts.GetOptions()["cds.project"]
 	workflowName := opts.GetOptions()["cds.workflow"]
 
-	artiClient, err := art.CreateArtifactoryClient(artifactoryURL, token)
+	ctx, cancel := context.WithTimeout(ctx, 15*time.Minute)
+	defer cancel()
+
+	artiClient, err := art.CreateArtifactoryClient(ctx, artifactoryURL, token)
 	if err != nil {
 		return fail("unable to create artifactory client: %v", err)
 	}
-	log.SetLogger(log.NewLogger(log.ERROR, os.Stdout))
+	log.SetLogger(log.NewLogger(log.INFO, os.Stdout))
 
 	buildInfoName := fmt.Sprintf("%s/%s/%s", buildInfo, projectKey, workflowName)
 
@@ -92,6 +96,14 @@ func (e *artifactoryBuildInfoPlugin) Run(_ context.Context, opts *integrationplu
 	nodeRunURL := opts.GetOptions()["cds.ui.pipeline.run"]
 	runURL := nodeRunURL[0:strings.Index(nodeRunURL, "/node/")]
 
+	fmt.Printf("Creating Artifactory Build %s %s on project %s...\n", buildInfoName, version, artifactoryProjectKey)
+
+	// Get the build agent from env variable set by worker
+	workerName := os.Getenv("CDS_WORKER")
+	if workerName == "" {
+		workerName = "CDS"
+	}
+
 	buildInfoRequest := &buildinfo.BuildInfo{
 		Properties: map[string]string{},
 		Name:       buildInfoName,
@@ -100,7 +112,7 @@ func (e *artifactoryBuildInfoPlugin) Run(_ context.Context, opts *integrationplu
 			Version: sdk.VERSION,
 		},
 		BuildAgent: &buildinfo.Agent{
-			Name:    "CDS",
+			Name:    workerName,
 			Version: sdk.VERSION,
 		},
 		ArtifactoryPrincipal:     fmt.Sprintf("token:%s", tokenName),
@@ -111,10 +123,16 @@ func (e *artifactoryBuildInfoPlugin) Run(_ context.Context, opts *integrationplu
 		Modules:                  []buildinfo.Module{},
 		VcsList:                  make([]buildinfo.Vcs, 0),
 	}
+
+	gitUrl := opts.GetOptions()["git.url"]
+	if gitUrl == "" {
+		gitUrl = opts.GetOptions()["git.http_url"]
+	}
+
 	buildInfoRequest.VcsList = append(buildInfoRequest.VcsList, buildinfo.Vcs{
 		Branch:   opts.GetOptions()["git.branch"],
 		Message:  opts.GetOptions()["git.message"],
-		Url:      opts.GetOptions()["git.http_url"],
+		Url:      gitUrl,
 		Revision: opts.GetOptions()["git.hash"],
 	})
 
@@ -133,6 +151,24 @@ func (e *artifactoryBuildInfoPlugin) Run(_ context.Context, opts *integrationplu
 	if _, err := artiClient.PublishBuildInfo(buildInfoRequest, artifactoryProjectKey); err != nil {
 		return fail("unable to push build info: %v", err)
 	}
+
+	// Temporary code
+	if opts.GetOptions()["cds.proj.xray.enabled"] == "true" {
+		fmt.Printf("Triggering XRay Build %s %s scan...\n", buildInfoName, version)
+
+		// Scan build info
+		scanBuildRequest := services.NewXrayScanParams()
+		scanBuildRequest.BuildName = buildInfoRequest.Name
+		scanBuildRequest.BuildNumber = buildInfoRequest.Number
+		scanBuildRequest.ProjectKey = artifactoryProjectKey
+		scanBuildResponseBtes, err := artiClient.XrayScanBuild(scanBuildRequest)
+		if err != nil {
+			fmt.Println(err.Error())
+		} else {
+			fmt.Println(string(scanBuildResponseBtes))
+		}
+	}
+
 	return &integrationplugin.RunResult{
 		Status: sdk.StatusSuccess,
 	}, nil
