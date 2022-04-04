@@ -218,7 +218,7 @@ func (api *API) getWorkflowHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
-		name := vars["permWorkflowName"]
+		name := vars["permWorkflowNameAdvanced"]
 		withUsage := service.FormBool(r, "withUsage")
 		withAudits := service.FormBool(r, "withAudits")
 		withLabels := service.FormBool(r, "withLabels")
@@ -531,7 +531,11 @@ func (api *API) putWorkflowHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
-		name := vars["permWorkflowName"]
+		name := vars["permWorkflowNameAdvanced"]
+
+		if isHooks(ctx) {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
 
 		p, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithIntegrations)
 		if err != nil {
@@ -687,7 +691,11 @@ func (api *API) deleteWorkflowHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
-		name := vars["permWorkflowName"]
+		name := vars["permWorkflowNameAdvanced"]
+
+		if isHooks(ctx) {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
 
 		p, errP := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithIntegrations)
 		if errP != nil {
