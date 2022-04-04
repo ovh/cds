@@ -5,7 +5,6 @@ import { Subscription } from 'rxjs/Subscription';
 
 export class Tab {
     title: string;
-    translate_args?: {};
     icon: string;
     key: string;
     default: boolean;

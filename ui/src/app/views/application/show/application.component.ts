@@ -162,22 +162,22 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
             usageText = 'Usage (' + this.usageCount + ')';
         }
         this.tabs = [<Tab>{
-            title: 'common_home',
+            title: 'Overview',
             key: 'home',
             default: true,
         }, <Tab>{
-            title: 'common_variables',
+            title: 'Variables',
             key: 'variables',
             icon: 'font'
         }, <Tab>{
-            title: 'common_vulnerabilities',
+            title: 'Vulnerabilities',
             key: 'vuln'
         }, <Tab>{
             title: usageText,
             icon: 'map signs',
             key: 'usage'
         }, <Tab>{
-            title: 'common_keys',
+            title: 'Keys',
             icon: 'privacy',
             key: 'keys'
         }]

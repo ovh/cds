@@ -97,44 +97,44 @@ export class ProjectShowComponent implements OnInit, OnDestroy, AfterViewInit {
 
     ngOnInit() {
         this.tabs = [<Tab>{
-            title: 'common_workflows',
+            title: 'Workflows',
             icon: 'share alternate',
             key: 'workflows',
             default: true,
         }, <Tab>{
-            title: 'common_applications',
+            title: 'Applications',
             icon: 'rocket',
             key: 'applications'
         }, <Tab>{
-            title: 'common_pipelines',
+            title: 'Pipelines',
             icon: 'sitemap',
             key: 'pipelines'
         }, <Tab>{
-            title: 'common_environments',
+            title: 'Environments',
             icon: 'tree',
             key: 'environments'
         }, <Tab>{
-            title: 'common_variables',
+            title: 'Variables',
             icon: 'font',
             key: 'variables'
         }, <Tab>{
             key: 'permissions',
         }, <Tab>{
-            title: 'common_keys',
+            title: 'Keys',
             icon: 'privacy',
             key: 'keys'
         }, <Tab>{
-            title: 'common_integrations',
+            title: 'Integrations',
             icon: 'plug',
             key: 'integrations'
         }, <Tab>{
-            title: 'common_warnings',
+            title: 'Warnings',
             icon: 'bug',
             key: 'warnings'
         }]
         if (this.project?.permissions?.writable) {
             this.tabs.push(<Tab>{
-                title: 'common_advanced',
+                title: 'Advanced',
                 icon: 'graduation',
                 key: 'advanced'
             })

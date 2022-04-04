@@ -51,16 +51,16 @@ export class ActionEditComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.tabs = [<Tab>{
-            title: 'common_action',
+            title: 'Action',
             icon: 'list',
             key: 'action',
             default: true
         }, <Tab>{
-            title: 'common_audit',
+            title: 'Audit',
             icon: 'history',
             key: 'audits'
         }, <Tab>{
-            title: 'common_usage',
+            title: 'Usage',
             icon: 'map signs',
             key: 'usage'
         }];
@@ -85,7 +85,7 @@ export class ActionEditComponent implements OnInit, OnDestroy {
             <Column<AuditAction>>{
                 disabled: true,
                 type: ColumnType.CONFIRM_BUTTON,
-                name: 'common_action',
+                name: 'Action',
                 class: 'two right aligned',
                 selector: (aa: AuditAction) => ({
                         title: 'common_rollback',

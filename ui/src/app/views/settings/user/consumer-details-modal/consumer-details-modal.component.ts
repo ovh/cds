@@ -120,7 +120,7 @@ export class ConsumerDetailsModalComponent {
             },
             <Column<AuthConsumer>>{
                 type: ColumnType.BUTTON,
-                name: 'common_action',
+                name: 'Action',
                 class: 'two right aligned',
                 selector: (c: AuthConsumer) => ({
                         title: 'common_details',

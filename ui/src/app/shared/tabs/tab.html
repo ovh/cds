@@ -1,6 +1,6 @@
 <ng-container *ngIf="!tab.template">
     <i *ngIf="tab.icon" [ngClass]="[tab.icon, 'icon']"></i>
-    {{tab.title | translate:tab.translate_args}}
+    {{tab.title}}
     <ng-container *ngIf="tab.warningText || tab.warningTemplate">
         <i class="exclamation triangle orange icon" suiPopup [popupTemplate]="tab.warningTemplate" [popupText]="tab.warningText"></i>
     </ng-container>

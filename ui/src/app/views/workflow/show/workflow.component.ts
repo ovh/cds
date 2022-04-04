@@ -168,14 +168,8 @@ export class WorkflowShowComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     initTabs() {
-        console.log('initTab');
-        /*
-         <i *ngIf="detailedWorkflow && groupsOutsideOrganization && groupsOutsideOrganization.length > 0"
-        class="exclamation triangle orange icon" suiPopup [popupTemplate]="warnPermission"
-        popupPlacement="bottom left"></i>
-         */
         let graphTab = <Tab> {
-            title: 'common_workflows',
+            title: 'Workflows',
             key: 'workflows',
             icon: 'share alternate',
             default: true
@@ -184,12 +178,12 @@ export class WorkflowShowComponent implements OnInit, OnDestroy, AfterViewInit {
             graphTab.warningText = this._translate.instant('workflow_preview_mode');
         }
         let notificationTab = <Tab>{
-            title: 'common_notifications',
+            title: 'Notifications',
             key: 'notifications',
             icon: 'alarm'
         };
         let permissionTab = <Tab>{
-            title: 'common_permissions',
+            title: 'Permissions',
             key: 'permissions',
             icon: 'users'
         }
@@ -202,13 +196,13 @@ export class WorkflowShowComponent implements OnInit, OnDestroy, AfterViewInit {
 
         if (!this.detailedWorkflow.from_repository)   {
             this.tabs.push(<Tab>{
-                title: 'common_audit',
+                title: 'Audit',
                 icon: 'history',
                 key: 'audits',
             });
         }
         this.tabs.push(<Tab>{
-            title: 'common_usage',
+            title: 'Usage',
             icon: 'map signs',
             key: 'usage'
         });
