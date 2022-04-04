@@ -995,6 +995,10 @@ func Test_deleteWorkflowEventIntegrationHandler(t *testing.T) {
 	assert.Equal(t, len(workflow1.Integrations), 1)
 
 	vars["integrationID"] = fmt.Sprintf("%d", projInt.ID)
+	vars = map[string]string{
+		"key":              proj.Key,
+		"permWorkflowName": "Name",
+	}
 	uri = router.GetRoute("DELETE", api.deleteWorkflowEventsIntegrationHandler, vars)
 	req = assets.NewAuthentifiedRequest(t, u, pass, "DELETE", uri, nil)
 
