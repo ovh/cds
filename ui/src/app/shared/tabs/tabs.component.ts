@@ -4,7 +4,7 @@ import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { Subscription } from 'rxjs/Subscription';
 
 export class Tab {
-    translate: string;
+    title: string;
     translate_args?: {};
     icon: string;
     key: string;

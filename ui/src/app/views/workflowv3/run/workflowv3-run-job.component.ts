@@ -46,11 +46,11 @@ export class WorkflowV3RunJobComponent implements OnInit, OnChanges {
         private _store: Store
     ) {
         this.tabs = [<Tab>{
-            translate: 'common_logs',
+            title: 'common_logs',
             key: 'logs',
             default: true
         }, <Tab>{
-            translate: 'common_variables',
+            title: 'common_variables',
             key: 'variables'
         }];
     }

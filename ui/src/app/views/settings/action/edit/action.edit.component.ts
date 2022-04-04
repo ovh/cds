@@ -51,16 +51,16 @@ export class ActionEditComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.tabs = [<Tab>{
-            translate: 'common_action',
+            title: 'common_action',
             icon: 'list',
             key: 'action',
             default: true
         }, <Tab>{
-            translate: 'common_audit',
+            title: 'common_audit',
             icon: 'history',
             key: 'audits'
         }, <Tab>{
-            translate: 'common_usage',
+            title: 'common_usage',
             icon: 'map signs',
             key: 'usage'
         }];

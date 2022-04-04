@@ -162,28 +162,28 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
             usageText = 'Usage (' + this.usageCount + ')';
         }
         this.tabs = [<Tab>{
-            translate: 'common_home',
+            title: 'common_home',
             key: 'home',
             default: true,
         }, <Tab>{
-            translate: 'common_variables',
+            title: 'common_variables',
             key: 'variables',
             icon: 'font'
         }, <Tab>{
-            translate: 'common_vulnerabilities',
+            title: 'common_vulnerabilities',
             key: 'vuln'
         }, <Tab>{
-            translate: usageText,
+            title: usageText,
             icon: 'map signs',
             key: 'usage'
         }, <Tab>{
-            translate: 'common_keys',
+            title: 'common_keys',
             icon: 'privacy',
             key: 'keys'
         }]
         if (this.project?.permissions?.writable) {
             this.tabs.push(<Tab>{
-                translate: 'Advanced',
+                title: 'Advanced',
                 icon: 'graduation',
                 key: 'advanced'
             })

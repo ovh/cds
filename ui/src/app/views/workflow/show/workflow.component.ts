@@ -175,7 +175,7 @@ export class WorkflowShowComponent implements OnInit, OnDestroy, AfterViewInit {
         popupPlacement="bottom left"></i>
          */
         let graphTab = <Tab> {
-            translate: 'common_workflows',
+            title: 'common_workflows',
             key: 'workflows',
             icon: 'share alternate',
             default: true
@@ -184,12 +184,12 @@ export class WorkflowShowComponent implements OnInit, OnDestroy, AfterViewInit {
             graphTab.warningText = this._translate.instant('workflow_preview_mode');
         }
         let notificationTab = <Tab>{
-            translate: 'common_notifications',
+            title: 'common_notifications',
             key: 'notifications',
             icon: 'alarm'
         };
         let permissionTab = <Tab>{
-            translate: 'common_permissions',
+            title: 'common_permissions',
             key: 'permissions',
             icon: 'users'
         }
@@ -202,19 +202,19 @@ export class WorkflowShowComponent implements OnInit, OnDestroy, AfterViewInit {
 
         if (!this.detailedWorkflow.from_repository)   {
             this.tabs.push(<Tab>{
-                translate: 'common_audit',
+                title: 'common_audit',
                 icon: 'history',
                 key: 'audits',
             });
         }
         this.tabs.push(<Tab>{
-            translate: 'common_usage',
+            title: 'common_usage',
             icon: 'map signs',
             key: 'usage'
         });
         if (this.detailedWorkflow.permissions.writable) {
             this.tabs.push( <Tab>{
-                translate: 'Advanced',
+                title: 'Advanced',
                 icon: 'graduation',
                 key: 'advanced'
             });

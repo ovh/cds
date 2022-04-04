@@ -76,20 +76,20 @@ export class WorkflowTemplateEditComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.tabs = [<Tab>{
-            translate: 'workflow_template',
+            title: 'workflow_template',
             icon: 'paste',
             key: 'workflow_template',
             default: true
         }, <Tab>{
-            translate: 'workflow_template_instances',
+            title: 'workflow_template_instances',
             icon: 'file outline',
             key: 'instances'
         }, <Tab>{
-            translate: 'common_audit',
+            title: 'common_audit',
             icon: 'history',
             key: 'audits'
         }, <Tab>{
-            translate: 'common_usage',
+            title: 'common_usage',
             icon: 'map signs',
             key: 'usage'
         }];
@@ -349,7 +349,7 @@ export class WorkflowTemplateEditComponent implements OnInit, OnDestroy {
                 this.tabs = this.tabs.map((tab) => {
                     tab.default = false;
                     if (tab.key === 'instances') {
-                        tab.translate = 'workflow_template_instances_with_nb';
+                        tab.title = 'workflow_template_instances_with_nb';
                         tab.translate_args = {
                             nb: this.instances.length,
                         };

@@ -189,25 +189,25 @@ export class WorkflowNodeRunComponent implements OnInit, OnDestroy {
         let historyTitle = 'History' + ' ('+ this.historyLength+')';
 
         this.tabs = [<Tab>{
-            translate: 'Pipeline',
+            title: 'Pipeline',
             key: 'pipeline',
             default: true,
             icon: 'sitemap'
         }, <Tab>{
-            translate: commitTitle,
+            title: commitTitle,
             key: 'commit',
             disabled: this.commitsLength === 0
         }, <Tab>{
-            translate: testTitle,
+            title: testTitle,
             key: 'test',
             icon: testIcon,
             disabled: !this.nodeRunTests || this.nodeRunTests?.total === 0
         }, <Tab>{
-            translate: artifactTitle,
+            title: artifactTitle,
             key: 'artifact',
             disabled: this.artifactLength === 0
         }, <Tab>{
-            translate: historyTitle,
+            title: historyTitle,
             key: 'history'
         }]
     }

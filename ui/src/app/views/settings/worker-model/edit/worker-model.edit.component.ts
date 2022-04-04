@@ -64,16 +64,16 @@ export class WorkerModelEditComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.tabs = [<Tab>{
-            translate: 'worker_model',
+            title: 'worker_model',
             icon: '',
             key: 'worker_model',
             default: true
         }, <Tab>{
-            translate: 'common_capabilities',
+            title: 'common_capabilities',
             icon: 'file outline',
             key: 'capabilities'
         }, <Tab>{
-            translate: 'common_usage',
+            title: 'common_usage',
             icon: 'map signs',
             key: 'usage'
         }];

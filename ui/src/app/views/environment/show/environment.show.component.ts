@@ -153,22 +153,22 @@ export class EnvironmentShowComponent implements OnInit, OnDestroy {
             usageText = 'Usage (' + this.usageCount + ')';
         }
         this.tabs = [<Tab>{
-            translate: 'Variables',
+            title: 'Variables',
             key: 'variables',
             default: true,
             icon: 'font'
         }, <Tab>{
-            translate: 'Keys',
+            title: 'Keys',
             key: 'keys',
             icon: 'privacy'
         }, <Tab>{
-            translate: usageText,
+            title: usageText,
             icon: 'map signs',
             key: 'usage'
         }]
         if (this.project?.permissions?.writable) {
             this.tabs.push(<Tab>{
-                translate: 'Advanced',
+                title: 'Advanced',
                 icon: 'graduation',
                 key: 'advanced'
             })

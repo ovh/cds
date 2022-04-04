@@ -218,29 +218,29 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
             usageText = 'Usage (' + this.usageCount + ')';
         }
         this.tabs = [<Tab>{
-            translate: 'Pipeline',
+            title: 'Pipeline',
             key: 'pipeline',
             default: true,
             icon: 'sitemap'
         }, <Tab>{
-            translate: 'Parameters',
+            title: 'Parameters',
             key: 'parameters',
             icon: 'font'
         }, <Tab>{
-            translate: usageText,
+            title: usageText,
             icon: 'map signs',
             key: 'usage'
         }]
         if (!this.pipeline?.from_repository) {
             this.tabs.push(<Tab>{
-                translate: 'Audits',
+                title: 'Audits',
                 icon: 'history',
                 key: 'audits'
             })
         }
         if (this.project?.permissions?.writable) {
             this.tabs.push( <Tab>{
-                translate: 'Advanced',
+                title: 'Advanced',
                 icon: 'graduation',
                 key: 'advanced'
             })
