@@ -11,12 +11,12 @@ const (
 )
 
 type RBAC struct {
-	ID           string        `json:"id" db:"id" yaml:"-"`
-	Name         string        `json:"name" db:"name" yaml:"name"`
-	Created      time.Time     `json:"created" db:"created" yaml:"-"`
-	LastModified time.Time     `json:"last_modified" db:"last_modified" yaml:"-"`
-	Globals      []RBACGlobal  `json:"globals" db:"-" yaml:"globals"`
-	Projects     []RBACProject `json:"projects" db:"-" yaml:"projects"`
+	ID           string        `json:"id" db:"id"`
+	Name         string        `json:"name" db:"name"`
+	Created      time.Time     `json:"created" db:"created"`
+	LastModified time.Time     `json:"last_modified" db:"last_modified"`
+	Globals      []RBACGlobal  `json:"globals" db:"-"`
+	Projects     []RBACProject `json:"projects" db:"-"`
 }
 
 func IsValidRbac(rbac *RBAC) error {

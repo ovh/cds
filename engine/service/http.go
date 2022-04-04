@@ -12,10 +12,12 @@ import (
 	"sync"
 	"time"
 
+	yaml "github.com/ghodss/yaml"
 	"github.com/go-gorp/gorp"
 	"github.com/rockbears/log"
 	"gopkg.in/spacemonkeygo/httpsig.v0"
 
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	cdslog "github.com/ovh/cds/sdk/log"
@@ -23,7 +25,12 @@ import (
 
 // Handler defines the HTTP handler used in CDS engine
 type Handler func(ctx context.Context, w http.ResponseWriter, r *http.Request) error
-type RbacChecker func(ctx context.Context, db gorp.SqlExecutor, vars map[string]string) error
+type RbacChecker func(ctx context.Context, auth *sdk.AuthConsumer, cache cache.Store, db gorp.SqlExecutor, vars map[string]string) error
+type RbacCheckers []RbacChecker
+
+func RBAC(checkers ...RbacChecker) []RbacChecker {
+	return checkers
+}
 
 // AsynchronousHandler defines the HTTP asynchronous handler used in CDS engine
 type AsynchronousHandler func(ctx context.Context, r *http.Request) error
@@ -33,7 +40,7 @@ type Middleware func(ctx context.Context, w http.ResponseWriter, req *http.Reque
 
 // HandlerFunc defines the way to instantiate a handler
 type HandlerFunc func() Handler
-type HandlerFuncV2 func() (Handler, []RbacChecker)
+type HandlerFuncV2 func() ([]RbacChecker, Handler)
 
 // AsynchronousHandlerFunc defines the way to instantiate a handler
 type AsynchronousHandlerFunc func() AsynchronousHandler
@@ -96,6 +103,29 @@ func WriteJSON(w http.ResponseWriter, data interface{}, status int) error {
 	return sdk.WithStack(Write(w, bytes.NewReader(b), status, "application/json"))
 }
 
+// WriteMarshal is a helper function to marshal json/yaml, handle errors and set Content-Type for the best
+// Response format could be application/json or appliation/x-yaml, depends on the Accept header
+// default response is application/x-yaml
+func WriteMarshal(w http.ResponseWriter, req *http.Request, data interface{}, status int) error {
+	var contentType string
+	var body []byte
+	var err error
+
+	if req.Header.Get("Accept") == "application/json" {
+		contentType = "application/json"
+		body, err = yaml.Marshal(data)
+	} else { // yaml is the default response
+		contentType = "application/x-yaml"
+		body, err = json.Marshal(data)
+	}
+
+	if err != nil {
+		return sdk.WrapError(err, "unable to marshal data into %s", contentType)
+	}
+
+	return sdk.WithStack(Write(w, bytes.NewReader(body), status, contentType))
+}
+
 // WriteProcessTime writes the duration of the call in the responsewriter
 func WriteProcessTime(ctx context.Context, w http.ResponseWriter) {
 	if h := w.Header().Get(cdsclient.ResponseAPINanosecondsTimeHeader); h != "" {
@@ -144,6 +174,25 @@ func UnmarshalBody(r *http.Request, i interface{}) error {
 	if err := sdk.JSONUnmarshal(data, i); err != nil {
 		return sdk.NewError(sdk.ErrWrongRequest, err)
 	}
+	return nil
+}
+
+// UnmarshalRequest unmarshal the request into the specified entity.
+// The body request can be a JSON or a YAML format
+func UnmarshalRequest(ctx context.Context, req *http.Request, entity interface{}) error {
+	if req == nil {
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "request is null")
+	}
+	body, err := io.ReadAll(req.Body)
+	if err != nil {
+		return sdk.NewError(sdk.ErrWrongRequest, err)
+	}
+	defer req.Body.Close()
+
+	if err := yaml.Unmarshal(body, entity); err != nil {
+		return err
+	}
+
 	return nil
 }
 

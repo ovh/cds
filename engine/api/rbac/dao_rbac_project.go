@@ -12,35 +12,35 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func insertRbacProject(ctx context.Context, db gorpmapper.SqlExecutorWithTx, dbRP *rbacProject) error {
-	if err := gorpmapping.InsertAndSign(ctx, db, dbRP); err != nil {
+func insertRbacProject(ctx context.Context, db gorpmapper.SqlExecutorWithTx, rbacProject *rbacProject) error {
+	if err := gorpmapping.InsertAndSign(ctx, db, rbacProject); err != nil {
 		return err
 	}
 
-	for _, rbProjectID := range dbRP.RBACProjectsIDs {
-		if err := insertRbacProjectIdentifiers(ctx, db, dbRP.ID, rbProjectID); err != nil {
+	for _, projectKey := range rbacProject.RBACProjectKeys {
+		if err := insertRbacProjectKey(ctx, db, rbacProject.ID, projectKey); err != nil {
 			return err
 		}
 	}
-	for _, rbUserID := range dbRP.RBACUsersIDs {
-		if err := insertRbacProjectUser(ctx, db, dbRP.ID, rbUserID); err != nil {
+	for _, rbUserID := range rbacProject.RBACUsersIDs {
+		if err := insertRbacProjectUser(ctx, db, rbacProject.ID, rbUserID); err != nil {
 			return err
 		}
 	}
-	for _, rbGroupID := range dbRP.RBACGroupsIDs {
-		if err := insertRbacProjectGroup(ctx, db, dbRP.ID, rbGroupID); err != nil {
+	for _, rbGroupID := range rbacProject.RBACGroupsIDs {
+		if err := insertRbacProjectGroup(ctx, db, rbacProject.ID, rbGroupID); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func insertRbacProjectIdentifiers(ctx context.Context, db gorpmapper.SqlExecutorWithTx, rbacParentID int64, projectID int64) error {
-	identifier := rbacProjectIdentifiers{
+func insertRbacProjectKey(ctx context.Context, db gorpmapper.SqlExecutorWithTx, rbacParentID int64, projectKey string) error {
+	rpk := rbacProjectKey{
 		RbacProjectID: rbacParentID,
-		ProjectID:     projectID,
+		ProjectKey:    projectKey,
 	}
-	if err := gorpmapping.InsertAndSign(ctx, db, &identifier); err != nil {
+	if err := gorpmapping.InsertAndSign(ctx, db, &rpk); err != nil {
 		return err
 	}
 	return nil

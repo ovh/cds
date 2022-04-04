@@ -133,8 +133,8 @@ func DeleteTestGroup(t *testing.T, db gorp.SqlExecutor, g *sdk.Group) {
 // InsertAdminUser have to be used only for tests.
 func InsertAdminUser(t *testing.T, db gorpmapper.SqlExecutorWithTx) (*sdk.AuthentifiedUser, string) {
 	data := sdk.AuthentifiedUser{
-		Username: sdk.RandomString(10),
-		Fullname: sdk.RandomString(10),
+		Username: "admin-" + sdk.RandomString(10),
+		Fullname: "admin-" + sdk.RandomString(10),
 		Ring:     sdk.UserRingAdmin,
 	}
 	require.NoError(t, user.Insert(context.TODO(), db, &data), "unable to insert user")
@@ -172,8 +172,8 @@ func DeleteConsumers(t *testing.T, db gorp.SqlExecutor) {
 // InsertMaintainerUser have to be used only for tests.
 func InsertMaintainerUser(t *testing.T, db gorpmapper.SqlExecutorWithTx) (*sdk.AuthentifiedUser, string) {
 	data := sdk.AuthentifiedUser{
-		Username: sdk.RandomString(10),
-		Fullname: sdk.RandomString(10),
+		Username: "maintainer-" + sdk.RandomString(10),
+		Fullname: "maintainer-" + sdk.RandomString(10),
 		Ring:     sdk.UserRingMaintainer,
 	}
 	require.NoError(t, user.Insert(context.TODO(), db, &data), "unable to insert user")
@@ -196,8 +196,8 @@ func InsertMaintainerUser(t *testing.T, db gorpmapper.SqlExecutorWithTx) (*sdk.A
 // InsertLambdaUser have to be used only for tests.
 func InsertLambdaUser(t *testing.T, db gorpmapper.SqlExecutorWithTx, groups ...*sdk.Group) (*sdk.AuthentifiedUser, string) {
 	u := &sdk.AuthentifiedUser{
-		Username: sdk.RandomString(10),
-		Fullname: sdk.RandomString(10),
+		Username: "lambda-" + sdk.RandomString(10),
+		Fullname: "lambda-" + sdk.RandomString(10),
 		Ring:     sdk.UserRingUser,
 	}
 	require.NoError(t, user.Insert(context.TODO(), db, u))

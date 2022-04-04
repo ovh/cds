@@ -87,6 +87,8 @@ func CleanURLParameter(u string) string {
 		u = "hook-run-id"
 	case "vcsServer":
 		u = "vcs-server"
+	case "vcsProjectName":
+		u = "vcs-project-name"
 	case "metricName":
 		u = "metric-name"
 	case "cloneName":

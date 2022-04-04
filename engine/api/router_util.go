@@ -64,7 +64,7 @@ func (r *Router) getRoute(method string, p1 uintptr, routeName string, vars map[
 }
 
 func (r *Router) GetRouteV2(method string, handler service.HandlerFuncV2, vars map[string]string) string {
-	routeHandler, _ := handler()
+	_, routeHandler := handler()
 	p1 := reflect.ValueOf(routeHandler).Pointer()
 	routeName := sdk.GetFuncName(routeHandler)
 	return r.getRoute(method, p1, routeName, vars)
