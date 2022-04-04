@@ -80,6 +80,8 @@ func (api *API) putVCSProjectHandler() ([]service.RbacChecker, service.Handler) 
 			}
 
 			vcsProject.ID = vcsOld.ID
+			vcsProject.Created = vcsOld.Created
+			vcsProject.CreatedBy = vcsOld.CreatedBy
 
 			if err := vcs.Update(ctx, tx, &vcsProject); err != nil {
 				return err
