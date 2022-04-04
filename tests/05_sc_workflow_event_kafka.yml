@@ -38,6 +38,7 @@ testcases:
     info: "kafka message is: {{.result.systemout}}"
     assertions:
     - result.code ShouldEqual 0
+    - 'result.systemout MustNotContainSubstring "Leader not available"'
     - "result.systemoutjson.id ShouldNotBeEmpty"
     retry: 10
     delay: 10
