@@ -273,8 +273,8 @@ func Test_getWorkflowHandler(t *testing.T) {
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 	//Prepare request
 	vars := map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": "workflow1",
+		"key":                      proj.Key,
+		"permWorkflowNameAdvanced": "workflow1",
 	}
 	uri := router.GetRoute("GET", api.getWorkflowHandler, vars)
 	test.NotEmpty(t, uri)
@@ -804,8 +804,8 @@ func Test_putWorkflowHandler(t *testing.T) {
 
 	//Prepare request
 	vars = map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": "Name",
+		"key":                      proj.Key,
+		"permWorkflowNameAdvanced": "Name",
 	}
 	uri = router.GetRoute("PUT", api.putWorkflowHandler, vars)
 	test.NotEmpty(t, uri)
@@ -925,8 +925,8 @@ func Test_deleteWorkflowEventIntegrationHandler(t *testing.T) {
 
 	//Prepare request
 	vars = map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": "Name",
+		"key":                      proj.Key,
+		"permWorkflowNameAdvanced": "Name",
 	}
 	uri = router.GetRoute("PUT", api.putWorkflowHandler, vars)
 	test.NotEmpty(t, uri)
@@ -1121,8 +1121,8 @@ func Test_postWorkflowRollbackHandler(t *testing.T) {
 
 	//Prepare request
 	vars = map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": "Name",
+		"key":                      proj.Key,
+		"permWorkflowNameAdvanced": "Name",
 	}
 	uri = router.GetRoute("PUT", api.putWorkflowHandler, vars)
 	test.NotEmpty(t, uri)
@@ -1345,8 +1345,8 @@ func Test_deleteWorkflowHandler(t *testing.T) {
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &wkf))
 
 	vars = map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": "Name",
+		"key":                      proj.Key,
+		"permWorkflowNameAdvanced": "Name",
 	}
 	uri = router.GetRoute("DELETE", api.deleteWorkflowHandler, vars)
 	test.NotEmpty(t, uri)
@@ -1617,8 +1617,8 @@ func Test_putWorkflowShouldNotCallHOOKSIfHookDoesNotChange(t *testing.T) {
 
 	// Load the workflow
 	uri = router.GetRoute(http.MethodGet, api.getWorkflowHandler, map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": wf.Name,
+		"key":                      proj.Key,
+		"permWorkflowNameAdvanced": wf.Name,
 	})
 	require.NotEmpty(t, uri)
 	req = assets.NewJWTAuthentifiedRequest(t, jwtLambda, http.MethodGet, uri, nil)
@@ -1631,8 +1631,8 @@ func Test_putWorkflowShouldNotCallHOOKSIfHookDoesNotChange(t *testing.T) {
 	// Then call the PUT handler, it should not trigger /task/bulk on hooks service
 	// Update the workflow
 	uri = router.GetRoute(http.MethodPut, api.putWorkflowHandler, map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": wf.Name,
+		"key":                      proj.Key,
+		"permWorkflowNameAdvanced": wf.Name,
 	})
 	require.NotEmpty(t, uri)
 	req = assets.NewJWTAuthentifiedRequest(t, jwtLambda, http.MethodPut, uri, &wf)
@@ -1725,8 +1725,8 @@ func Test_putWorkflowWithDuplicateHooksShouldRaiseAnError(t *testing.T) {
 
 	// Load the workflow
 	uri = router.GetRoute("GET", api.getWorkflowHandler, map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": wf.Name,
+		"key":                      proj.Key,
+		"permWorkflowNameAdvanced": wf.Name,
 	})
 	require.NotEmpty(t, uri)
 	req = assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
@@ -1750,8 +1750,8 @@ func Test_putWorkflowWithDuplicateHooksShouldRaiseAnError(t *testing.T) {
 
 	// Update the workflow
 	uri = router.GetRoute("PUT", api.putWorkflowHandler, map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": wf.Name,
+		"key":                      proj.Key,
+		"permWorkflowNameAdvanced": wf.Name,
 	})
 	require.NotEmpty(t, uri)
 	req = assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, &wf)
