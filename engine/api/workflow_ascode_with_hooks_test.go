@@ -455,8 +455,8 @@ version: v1.0`),
 
 	// Then we will trigger a run of the workflow wich should trigger an as-code operation
 	uri = api.Router.GetRoute("POST", api.postWorkflowRunHandler, map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": wk.Name,
+		"key":                      proj.Key,
+		"permWorkflowNameAdvanced": wk.Name,
 	})
 	require.NotEmpty(t, uri)
 	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, &sdk.WorkflowRunPostHandlerOption{
@@ -786,8 +786,8 @@ version: v1.0`),
 
 	// Then we will trigger a run of the workflow wich should trigger an as-code operation
 	uri = api.Router.GetRoute("POST", api.postWorkflowRunHandler, map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": wk.Name,
+		"key":                      proj.Key,
+		"permWorkflowNameAdvanced": wk.Name,
 	})
 	require.NotEmpty(t, uri)
 	req = assets.NewAuthentifiedRequest(t, u, jwt, "POST", uri, &sdk.WorkflowRunPostHandlerOption{
@@ -1317,8 +1317,8 @@ version: v1.0`),
 	// ======================================================================================
 	// 2. Then we will trigger a run of the workflow wich should trigger an as-code operation
 	uri = api.Router.GetRoute("POST", api.postWorkflowRunHandler, map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": wk.Name,
+		"key":                      proj.Key,
+		"permWorkflowNameAdvanced": wk.Name,
 	})
 	require.NotEmpty(t, uri)
 	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, &sdk.WorkflowRunPostHandlerOption{
@@ -1381,8 +1381,8 @@ version: v1.0`),
 	// ===========================================================================================================
 	// 3. Then we will trigger a run of the workflow wich should trigger an as-code operation with a hook deletion
 	uri = api.Router.GetRoute("POST", api.postWorkflowRunHandler, map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": wk.Name,
+		"key":                      proj.Key,
+		"permWorkflowNameAdvanced": wk.Name,
 	})
 	require.NotEmpty(t, uri)
 

@@ -151,10 +151,10 @@ func (api *API) getWorkflowRunsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
-		name := vars["permWorkflowName"]
+		name := vars["permWorkflowNameAdvanced"]
 		route := api.Router.GetRoute("GET", api.getWorkflowRunsHandler, map[string]string{
-			"key":          key,
-			"workflowName": name,
+			"key":                      key,
+			"permWorkflowNameAdvanced": name,
 		})
 		return api.searchWorkflowRun(ctx, w, r, route, key, name)
 	}
@@ -807,7 +807,7 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
-		name := vars["permWorkflowName"]
+		name := vars["permWorkflowNameAdvanced"]
 
 		consumer := getAPIConsumer(ctx)
 

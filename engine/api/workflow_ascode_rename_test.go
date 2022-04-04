@@ -319,8 +319,8 @@ version: v1.0`),
 
 	// Then we will trigger a run of the workflow wich should trigger an as-code operation with a renamed workflow
 	vars := map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": wk.Name,
+		"key":                      proj.Key,
+		"permWorkflowNameAdvanced": wk.Name,
 	}
 	uri = api.Router.GetRoute("POST", api.postWorkflowRunHandler, vars)
 	require.NotEmpty(t, uri)

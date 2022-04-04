@@ -216,8 +216,8 @@ func testRunWorkflowForProject(t *testing.T, api *API, router *Router, proj *sdk
 
 	//Prepare request
 	uri := router.GetRoute("POST", api.postWorkflowRunHandler, map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": w1.Name,
+		"key":                      proj.Key,
+		"permWorkflowNameAdvanced": w1.Name,
 	})
 	require.NotEmpty(t, uri)
 
