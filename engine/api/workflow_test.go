@@ -322,8 +322,8 @@ func Test_getWorkflowHandler_CheckPermission(t *testing.T) {
 	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, *proj, &wf))
 
 	vars := map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": "workflow1",
+		"key":                      proj.Key,
+		"permWorkflowNameAdvanced": "workflow1",
 	}
 	uri := api.Router.GetRoute("GET", api.getWorkflowHandler, vars)
 	test.NotEmpty(t, uri)
@@ -456,8 +456,8 @@ func Test_getWorkflowHandler_withUsage(t *testing.T) {
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 	//Prepare request
 	vars := map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": "workflow1",
+		"key":                      proj.Key,
+		"permWorkflowNameAdvanced": "workflow1",
 	}
 	uri := router.GetRoute("GET", api.getWorkflowHandler, vars)
 	test.NotEmpty(t, uri)
