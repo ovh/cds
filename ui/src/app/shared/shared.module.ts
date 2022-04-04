@@ -120,7 +120,7 @@ import { NzMenuModule } from 'ng-zorro-antd/menu';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 
 const ngZorroConfig: NzConfig = {
-    notification: {nzPauseOnHover: true, nzPlacement: "topRight"},
+    notification: {nzPauseOnHover: true, nzPlacement: "topRight"}
 };
 
 

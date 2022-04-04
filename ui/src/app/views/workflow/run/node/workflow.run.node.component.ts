@@ -221,14 +221,6 @@ export class WorkflowNodeRunComponent implements OnInit, OnDestroy {
 
     selectTab(tab: Tab): void {
         this.selectedTab = tab;
-        /*
-        let queryParams = Object.assign({}, this._activatedRoute.snapshot.queryParams, { tab });
-        let navExtras: NavigationExtras = { queryParams };
-        this._router.navigate(['project', this.project.key,
-            'workflow', this.workflowName,
-            'run', this.currentNodeRunNum,
-            'node', this.currentNodeRunID], navExtras);
-         */
     }
 
     initVulnerabilitySummary(nodeRun: WorkflowNodeRun): any[] {

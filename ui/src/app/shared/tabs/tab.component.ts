@@ -16,7 +16,6 @@ import { Tab } from './tabs.component';
 @Component({
     selector: 'app-tab',
     templateUrl: './tab.html',
-    styleUrls: ['./tab.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()

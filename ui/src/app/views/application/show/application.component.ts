@@ -151,7 +151,6 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                 if (current_tab) {
                     this.selectTab(current_tab);
                 }
-                this._cd.markForCheck();
             }
             this._cd.markForCheck();
         });
@@ -181,11 +180,14 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
             translate: 'common_keys',
             icon: 'privacy',
             key: 'keys'
-        }, <Tab>{
-            translate: 'Advanced',
-            icon: 'graduation',
-            key: 'advanced'
-        }];
+        }]
+        if (this.project?.permissions?.writable) {
+            this.tabs.push(<Tab>{
+                translate: 'Advanced',
+                icon: 'graduation',
+                key: 'advanced'
+            })
+        }
     }
 
     selectTab(tab: Tab): void {
