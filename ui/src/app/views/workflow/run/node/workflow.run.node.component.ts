@@ -173,8 +173,12 @@ export class WorkflowNodeRunComponent implements OnInit, OnDestroy {
         }
 
         let testTitle = this.nodeRunTests?.total > 1? 'Tests' : 'Test';
+        let testIcon = 'green check no-mrr';
         if (this.nodeRunTests?.total > 0) {
             testTitle = this.nodeRunTests?.total + ' ' + testTitle;
+        }
+        if (this.nodeRunTests.ko > 0) {
+            testIcon = 'red remove status';
         }
 
         let artifactTitle = this.artifactLength > 1 ? 'Artifacts' : 'Artifact';
@@ -183,19 +187,7 @@ export class WorkflowNodeRunComponent implements OnInit, OnDestroy {
         }
 
         let historyTitle = 'History' + ' ('+ this.historyLength+')';
-        /*
-        <a sm-item [class.active]="selectedTab === 'test'" (click)="nodeRunTests?.total !== 0 && showTab('test')" [class.disabled]="!nodeRunTests?.total">
-        <span *ngIf="nodeRunTests?.total > 1">{{ 'common_tests' | translate }}</span>
-        <span *ngIf="nodeRunTests?.total < 2">{{ 'common_test' | translate }}</span>
-        <ng-container *ngIf="nodeRunTests?.total > 0">
-            (
-                <ng-container *ngIf="nodeRunTests?.ok"><i class="green check icon no-mrr"></i>{{nodeRunTests.ok}}</ng-container>
-        <ng-container *ngIf="nodeRunTests?.ko"><i class="red remove icon status"></i>{{nodeRunTests.ko}}</ng-container>
-        <ng-container *ngIf="nodeRunTests?.skipped"><i class="grey ban icon status"></i>{{nodeRunTests.skipped}}</ng-container>
-    )
-        </ng-container>
-        </a>
-         */
+
         this.tabs = [<Tab>{
             translate: 'Pipeline',
             key: 'pipeline',
@@ -208,6 +200,7 @@ export class WorkflowNodeRunComponent implements OnInit, OnDestroy {
         }, <Tab>{
             translate: testTitle,
             key: 'test',
+            icon: testIcon,
             disabled: !this.nodeRunTests || this.nodeRunTests?.total === 0
         }, <Tab>{
             translate: artifactTitle,
