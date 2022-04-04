@@ -20,38 +20,20 @@
                 </ng-template>
             </div>
         </app-project-breadcrumb>
-
-        <div class="CDSmenu" *ngIf="environment">
-            <sm-menu title="" class="pointing secondary">
-                <a sm-item [class.active]="selectedTab === 'variables'" (click)="showTab('variables')">
-                    <i class="font icon"></i>{{ 'common_variables' | translate }}
-                </a>
-                <a sm-item [class.active]="selectedTab === 'keys'" id="EnvironmentKeysTab" (click)="showTab('keys')"><i
-                        class="privacy icon"></i>
-                    {{ 'common_keys' | translate }}
-                </a>
-                <a sm-item [class.active]="selectedTab === 'usage'" (click)="showTab('usage')">
-                    <i class="map signs icon"></i>{{ 'common_usage' | translate }}{{ ' (' + usageCount + ')' }}
-                </a>
-                <a sm-item [class.active]="selectedTab === 'advanced'" (click)="showTab('advanced')">
-                    <i class="graduation icon"></i>
-                    {{ 'common_advanced' | translate }}
-                </a>
-                <div class="ui small buttons" *ngIf="editMode && !readonly">
-                    <ng-container *ngIf="environment.editModeChanged">
-                        <button class="ui button" (click)="cancelEnvironment()">{{'common_cancel' | translate }}</button>
-                        <div class="or"></div>
-                    </ng-container>
-                    <button class="ui green button" [disabled]="!environment.editModeChanged"
-                            (click)="saveEditMode()">{{'btn_save_environment' | translate }}</button>
-                </div>
-            </sm-menu>
-        </div>
+        <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)"></app-tabs>
+        <ng-container *ngIf="editMode && !readonly">
+            <nz-button-group class="ascodeButton">
+                <ng-container *ngIf="environment.editModeChanged">
+                    <button nz-button nzType="default" (click)="cancelEnvironment()">{{'common_cancel' | translate }}</button>
+                </ng-container>
+                <button nz-button nzType="primary" [disabled]="!environment.editModeChanged" (click)="saveEditMode()">{{'btn_save_environment' | translate }}</button>
+            </nz-button-group>
+        </ng-container>
 
         <div class="scrollingContent">
             <div class="paddingContent">
                 <div class="viewContent">
-                    <div [ngSwitch]="selectedTab">
+                    <div [ngSwitch]="selectedTab.key">
                         <div *ngSwitchCase="'variables'">
                             <ng-container
                                 *ngIf="!readonly">

@@ -131,12 +131,14 @@ export class ProjectShowComponent implements OnInit, OnDestroy, AfterViewInit {
             translate: 'common_warnings',
             icon: 'bug',
             key: 'warnings'
-        }, <Tab>{
-            translate: 'common_advanced',
-            icon: 'graduation',
-            key: 'advanced'
-        }];
-
+        }]
+        if (this.project?.permissions?.writable) {
+            this.tabs.push(<Tab>{
+                translate: 'common_advanced',
+                icon: 'graduation',
+                key: 'advanced'
+            })
+        }
         this._route.queryParams.subscribe((queryParams) => {
             if (queryParams['tab']) {
                 let current_tab = this.tabs.find((tab) => tab.key === queryParams['tab']);

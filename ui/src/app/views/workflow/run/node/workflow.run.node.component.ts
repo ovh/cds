@@ -11,6 +11,7 @@ import { ProjectState } from 'app/store/project.state';
 import { GetWorkflowNodeRun, GetWorkflowRun } from 'app/store/workflow.action';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
 import { Observable, Subscription } from 'rxjs';
+import { Tab } from 'app/shared/tabs/tabs.component';
 
 @Component({
     selector: 'app-workflow-run-node',
@@ -41,7 +42,10 @@ export class WorkflowNodeRunComponent implements OnInit, OnDestroy {
 
     // History
     nodeRunsHistory = new Array<WorkflowNodeRun>();
-    selectedTab: string;
+
+    // tabs
+    tabs: Array<Tab>;
+    selectedTab: Tab;
 
     nbVuln = 0;
     deltaVul = 0;
@@ -56,14 +60,16 @@ export class WorkflowNodeRunComponent implements OnInit, OnDestroy {
         private _titleService: Title,
         private _cd: ChangeDetectorRef
     ) {
+        this.initTabs();
         this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
 
         // Tab selection
         this._activatedRoute.queryParams.subscribe(q => {
             if (q['tab']) {
-                this.selectedTab = q['tab'];
-            } else {
-                this.selectedTab = 'pipeline';
+                let current_tab = this.tabs.find((t) => t.key === q['tab']);
+                if (current_tab) {
+                    this.selectTab(current_tab);
+                }
             }
             this.pipelineName = q['name'] || '';
             this._cd.markForCheck();
@@ -154,18 +160,75 @@ export class WorkflowNodeRunComponent implements OnInit, OnDestroy {
                 }
             }
             if (refresh) {
+                this.initTabs();
                 this._cd.markForCheck();
             }
         });
     }
 
-    showTab(tab: string): void {
+    initTabs() {
+        let commitTitle = this.commitsLength > 1? 'Commits' : 'Commit';
+        if (this.commitsLength > 0) {
+            commitTitle = this.commitsLength.toString() + ' ' + commitTitle;
+        }
+
+        let testTitle = this.nodeRunTests?.total > 1? 'Tests' : 'Test';
+        if (this.nodeRunTests?.total > 0) {
+            testTitle = this.nodeRunTests?.total + ' ' + testTitle;
+        }
+
+        let artifactTitle = this.artifactLength > 1 ? 'Artifacts' : 'Artifact';
+        if (this.artifactLength > 0) {
+            artifactTitle = artifactTitle + ' ('+ this.artifactLength+')';
+        }
+
+        let historyTitle = 'History' + ' ('+ this.historyLength+')';
+        /*
+        <a sm-item [class.active]="selectedTab === 'test'" (click)="nodeRunTests?.total !== 0 && showTab('test')" [class.disabled]="!nodeRunTests?.total">
+        <span *ngIf="nodeRunTests?.total > 1">{{ 'common_tests' | translate }}</span>
+        <span *ngIf="nodeRunTests?.total < 2">{{ 'common_test' | translate }}</span>
+        <ng-container *ngIf="nodeRunTests?.total > 0">
+            (
+                <ng-container *ngIf="nodeRunTests?.ok"><i class="green check icon no-mrr"></i>{{nodeRunTests.ok}}</ng-container>
+        <ng-container *ngIf="nodeRunTests?.ko"><i class="red remove icon status"></i>{{nodeRunTests.ko}}</ng-container>
+        <ng-container *ngIf="nodeRunTests?.skipped"><i class="grey ban icon status"></i>{{nodeRunTests.skipped}}</ng-container>
+    )
+        </ng-container>
+        </a>
+         */
+        this.tabs = [<Tab>{
+            translate: 'Pipeline',
+            key: 'pipeline',
+            default: true,
+            icon: 'sitemap'
+        }, <Tab>{
+            translate: commitTitle,
+            key: 'commit',
+            disabled: this.commitsLength === 0
+        }, <Tab>{
+            translate: testTitle,
+            key: 'test',
+            disabled: !this.nodeRunTests || this.nodeRunTests?.total === 0
+        }, <Tab>{
+            translate: artifactTitle,
+            key: 'artifact',
+            disabled: this.artifactLength === 0
+        }, <Tab>{
+            translate: historyTitle,
+            key: 'history'
+        }]
+    }
+
+    selectTab(tab: Tab): void {
+        this.selectedTab = tab;
+        /*
         let queryParams = Object.assign({}, this._activatedRoute.snapshot.queryParams, { tab });
         let navExtras: NavigationExtras = { queryParams };
         this._router.navigate(['project', this.project.key,
             'workflow', this.workflowName,
             'run', this.currentNodeRunNum,
             'node', this.currentNodeRunID], navExtras);
+         */
     }
 
     initVulnerabilitySummary(nodeRun: WorkflowNodeRun): any[] {

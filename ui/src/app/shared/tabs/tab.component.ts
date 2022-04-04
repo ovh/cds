@@ -16,15 +16,13 @@ import { Tab } from './tabs.component';
 @Component({
     selector: 'app-tab',
     templateUrl: './tab.html',
+    styleUrls: ['./tab.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class TabComponent implements AfterViewInit, OnChanges {
     @ViewChild('templateSibling', { read: ViewContainerRef }) templateSibling: ViewContainerRef;
-
     @Input() tab: Tab;
-    @Input() active: boolean;
-    @Output() onSelect = new EventEmitter();
 
     constructor(
         private _cd: ChangeDetectorRef
@@ -44,9 +42,5 @@ export class TabComponent implements AfterViewInit, OnChanges {
             this.templateSibling.createEmbeddedView(this.tab.template);
             this._cd.markForCheck();
         }
-    }
-
-    click() {
-        this.onSelect.emit();
     }
 }

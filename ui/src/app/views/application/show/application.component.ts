@@ -6,7 +6,6 @@ import { Application } from 'app/model/application.model';
 import { Environment } from 'app/model/environment.model';
 import { Pipeline } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
-import { AuthentifiedUser } from 'app/model/user.model';
 import { Workflow } from 'app/model/workflow.model';
 import { ApplicationStore } from 'app/service/application/application.store';
 import { AsCodeSaveModalComponent } from 'app/shared/ascode/save-modal/ascode.save-modal.component';
@@ -17,11 +16,11 @@ import { VariableEvent } from 'app/shared/variable/variable.event.model';
 import * as applicationsActions from 'app/store/applications.action';
 import { CancelApplicationEdition, ClearCacheApplication } from 'app/store/applications.action';
 import { ApplicationsState, ApplicationStateModel } from 'app/store/applications.state';
-import { AuthenticationState } from 'app/store/authentication.state';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
 import { filter, finalize } from 'rxjs/operators';
+import { Tab } from 'app/shared/tabs/tabs.component';
 
 @Component({
     selector: 'app-application-show',
@@ -50,8 +49,9 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
     _routeParamsSub: Subscription;
     _queryParamsSub: Subscription;
 
-    // Selected tab
-    selectedTab = 'home';
+    // tabs
+    tabs: Array<Tab>;
+    selectedTab: Tab;
 
     @ViewChild('varWarning')
     private varWarningModal: WarningModalComponent;
@@ -132,6 +132,7 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                     this.pipelines = this.application.usage.pipelines || [];
                     this.usageCount = this.pipelines.length + this.environments.length + this.workflows.length;
                 }
+                this.initTabs();
 
                 // Update recent application viewed
                 this._applicationStore.updateRecentApplication(s.currentProjectKey, this.application);
@@ -142,17 +143,53 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
+        this.initTabs();
         this._queryParamsSub = this._routeActivated.queryParams.subscribe(params => {
             let tab = params['tab'];
             if (tab) {
-                this.selectedTab = tab;
+                let current_tab = this.tabs.find((t) => t.key === tab);
+                if (current_tab) {
+                    this.selectTab(current_tab);
+                }
+                this._cd.markForCheck();
             }
             this._cd.markForCheck();
         });
     }
 
-    showTab(tab: string): void {
-        this._router.navigateByUrl('/project/' + this.project.key + '/application/' + this.application.name + '?tab=' + tab);
+    initTabs() {
+        let usageText = 'Usage';
+        if (this.application) {
+            usageText = 'Usage (' + this.usageCount + ')';
+        }
+        this.tabs = [<Tab>{
+            translate: 'common_home',
+            key: 'home',
+            default: true,
+        }, <Tab>{
+            translate: 'common_variables',
+            key: 'variables',
+            icon: 'font'
+        }, <Tab>{
+            translate: 'common_vulnerabilities',
+            key: 'vuln'
+        }, <Tab>{
+            translate: usageText,
+            icon: 'map signs',
+            key: 'usage'
+        }, <Tab>{
+            translate: 'common_keys',
+            icon: 'privacy',
+            key: 'keys'
+        }, <Tab>{
+            translate: 'Advanced',
+            icon: 'graduation',
+            key: 'advanced'
+        }];
+    }
+
+    selectTab(tab: Tab): void {
+        this.selectedTab = tab;
     }
 
     /**

@@ -2,61 +2,13 @@
     <ng-container>
         <app-workflow-node-run-summary></app-workflow-node-run-summary>
     </ng-container>
-    <div class="CDSmenu">
-        <sm-menu title="" class="pointing secondary">
-            <a sm-item [class.active]="selectedTab === 'pipeline'" (click)="showTab('pipeline')">
-                <i class="sitemap icon"></i>
-                {{ 'common_pipeline' | translate }}
-            </a>
-            <a sm-item [class.active]="selectedTab === 'commit'" [class.disabled]="commitsLength === 0"
-                (click)="commitsLength !== 0 && showTab('commit')">
-                {{ commitsLength + ' '}}
-                <span *ngIf="commitsLength > 1">{{ 'common_commits' | translate }}</span>
-                <span *ngIf="commitsLength < 2">{{ 'common_commit' | translate }}</span>
-            </a>
-            <a sm-item [class.active]="selectedTab === 'vuln'" [class.disabled]="!hasVulnerability"
-                (click)="showTab('vuln')">
-                <span *ngIf="nbVuln > 0 || deltaVul !== 0">{{nbVuln + ' '}}</span>
-                <span>{{ 'common_vulnerabilities' | translate }}</span>
-                <span *ngIf="deltaVul !== 0">
-                    (
-                    <span *ngIf="deltaVul < 0"><i class="green caret down icon"></i></span>
-                    <span *ngIf="deltaVul > 0"><i class="red caret up icon"></i></span>
-                    <span *ngIf="deltaVul !== 0">{{deltaVul}}</span>
-                    )
-                </span>
-            </a>
-            <a sm-item [class.active]="selectedTab === 'test'" (click)="nodeRunTests?.total !== 0 && showTab('test')" [class.disabled]="!nodeRunTests?.total">
-                <span *ngIf="nodeRunTests?.total > 1">{{ 'common_tests' | translate }}</span>
-                <span *ngIf="nodeRunTests?.total < 2">{{ 'common_test' | translate }}</span>
-                <ng-container *ngIf="nodeRunTests?.total > 0">
-                (
-                    <ng-container *ngIf="nodeRunTests?.ok"><i class="green check icon no-mrr"></i>{{nodeRunTests.ok}}</ng-container>
-                    <ng-container *ngIf="nodeRunTests?.ko"><i class="red remove icon status"></i>{{nodeRunTests.ko}}</ng-container>
-                    <ng-container *ngIf="nodeRunTests?.skipped"><i class="grey ban icon status"></i>{{nodeRunTests.skipped}}</ng-container>
-                )
-                </ng-container>
-            </a>
-            <a sm-item [class.active]="selectedTab === 'artifact'"
-                (click)="artifactLength !== 0 && showTab('artifact')"
-                [class.disabled]="artifactLength === 0">
-                <span *ngIf="artifactLength > 1">{{ 'common_artifacts' | translate }}</span>
-                <span *ngIf="artifactLength < 2">{{ 'common_artifact' | translate }}</span>
-                <span *ngIf="artifactLength">{{ ' (' + artifactLength + ')'}}</span>
-            </a>
-            <a sm-item [class.active]="selectedTab === 'history'" (click)="historyLength !== 0 && showTab('history')"
-                [class.disabled]="historyLength === 0">
-                {{ 'common_history' | translate }}
-                {{ ' (' + historyLength + ')'}}
-            </a>
-        </sm-menu>
-    </div>
-    <div class="pipeline" *ngIf="selectedTab === 'pipeline'">
+    <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)"></app-tabs>
+    <div class="pipeline" *ngIf="selectedTab.key === 'pipeline'">
         <app-node-run-pipeline></app-node-run-pipeline>
     </div>
-    <div *ngIf="selectedTab !== 'pipeline'" class="scrollingContent">
+    <div *ngIf="selectedTab.key !== 'pipeline'" class="scrollingContent">
         <div class="paddingContent">
-            <div class="viewContent" [ngSwitch]="selectedTab">
+            <div class="viewContent" [ngSwitch]="selectedTab.key">
                 <div *ngSwitchCase="'artifact'">
                     <app-workflow-artifact-list></app-workflow-artifact-list>
                 </div>

@@ -37,40 +37,19 @@
                 </ng-template>
             </div>
         </app-project-breadcrumb>
-
-        <div class="CDSmenu">
-            <sm-menu title="" class="pointing secondary">
-                <a sm-item [class.active]="selectedTab === 'pipeline'" (click)="showTab('pipeline')">
-                    <i class="sitemap icon"></i>{{ 'common_pipeline' | translate }}
-                </a>
-                <a sm-item [class.active]="selectedTab === 'parameters'" (click)="showTab('parameters')">
-                    <i class="font icon"></i>{{ 'common_parameters' | translate }}
-                </a>
-                <a sm-item [class.active]="selectedTab === 'usage'" [class.disabled]="usageCount === 0"
-                    (click)="usageCount > 0 && showTab('usage')">
-                    <i class="map signs icon"></i>{{ 'common_usage' | translate }}{{ ' (' + usageCount + ')' }}
-                </a>
-                <a sm-item [class.active]="selectedTab === 'audits'" (click)="showTab('audits')">
-                    <i class="history icon"></i>{{'common_audit' | translate }}
-                </a>
-                <a sm-item [class.active]="selectedTab === 'advanced'" (click)="showTab('advanced')"
-                    *ngIf="project.permissions.writable">
-                    <i class="graduation icon"></i>{{ 'common_advanced' | translate }}
-                </a>
-                <div class="ui small buttons" *ngIf="editMode && !readOnly">
-                    <ng-container *ngIf="pipeline.editModeChanged">
-                        <button class="ui button" (click)="cancelPipeline()">{{'common_cancel' | translate }}</button>
-                        <div class="or"></div>
-                    </ng-container>
-                    <button class="ui green button" [disabled]="!pipeline.editModeChanged"
-                        (click)="saveEditMode()">{{'btn_save_pipeline' | translate }}</button>
-                </div>
-            </sm-menu>
-        </div>
+        <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)"></app-tabs>
+        <ng-container *ngIf="editMode && !readOnly">
+            <nz-button-group class="ascodeButton">
+                <ng-container *ngIf="pipeline.editModeChanged">
+                    <button nz-button nzType="default" (click)="cancelPipeline()">{{'common_cancel' | translate }}</button>
+                </ng-container>
+                <button nz-button nzType="primary" [disabled]="!pipeline.editModeChanged" (click)="saveEditMode()">{{'btn_save_pipeline' | translate }}</button>
+            </nz-button-group>
+        </ng-container>
 
         <div class="scrollingContent">
             <div class="paddingContent">
-                <div class="viewContent" [ngSwitch]="selectedTab">
+                <div class="viewContent" [ngSwitch]="selectedTab.key">
                     <div *ngSwitchCase="'pipeline'">
                         <app-pipeline-workflow [project]="project" [currentPipeline]="pipeline"
                             [queryParams]="queryParams" [editMode]="editMode" [readOnly]="readOnly">

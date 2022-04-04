@@ -26,6 +26,7 @@ import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
 import { filter, finalize, first } from 'rxjs/operators';
+import { Tab } from 'app/shared/tabs/tabs.component';
 
 @Component({
     selector: 'app-pipeline-show',
@@ -72,8 +73,9 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
     keys: AllKeys;
     asCodeEditorOpen: boolean;
 
-    // Selected tab
-    selectedTab = 'pipeline';
+    // tabs
+    tabs: Array<Tab>;
+    selectedTab: Tab;
 
     readOnly: boolean;
 
@@ -133,6 +135,7 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
+        this.initTabs();
         this.projectKey = this._routeActivated.snapshot.params['key'];
         this.pipName = this._routeActivated.snapshot.params['pipName'];
 
@@ -153,7 +156,10 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
             this.queryParams = params;
             let tab = params['tab'];
             if (tab) {
-                this.selectedTab = tab;
+                let current_tab = this.tabs.find((t) => t.key === tab);
+                if (current_tab) {
+                    this.selectTab(current_tab);
+                }
             }
             this._cd.markForCheck();
         });
@@ -199,14 +205,50 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
                 }
 
                 this.usageCount = this.applications.length + this.environments.length + this.workflows.length;
+                this.initTabs();
                 this._cd.markForCheck();
             }, () => {
                 this._router.navigate(['/project', this.projectKey], { queryParams: { tab: 'pipelines' } });
             });
     }
 
-    showTab(tab: string): void {
-        this._router.navigateByUrl(`/project/${this.project.key}/pipeline/${this.pipeline.name}?tab=${tab}`);
+    initTabs() {
+        let usageText = 'Usage';
+        if (this.pipeline) {
+            usageText = 'Usage (' + this.usageCount + ')';
+        }
+        this.tabs = [<Tab>{
+            translate: 'Pipeline',
+            key: 'pipeline',
+            default: true,
+            icon: 'sitemap'
+        }, <Tab>{
+            translate: 'Parameters',
+            key: 'parameters',
+            icon: 'font'
+        }, <Tab>{
+            translate: usageText,
+            icon: 'map signs',
+            key: 'usage'
+        }]
+        if (!this.pipeline?.from_repository) {
+            this.tabs.push(<Tab>{
+                translate: 'Audits',
+                icon: 'history',
+                key: 'audits'
+            })
+        }
+        if (this.project?.permissions?.writable) {
+            this.tabs.push( <Tab>{
+                translate: 'Advanced',
+                icon: 'graduation',
+                key: 'advanced'
+            })
+        }
+    }
+
+    selectTab(tab: Tab): void {
+        this.selectedTab = tab;
     }
 
     parameterEvent(event: ParameterEvent, skip?: boolean): void {

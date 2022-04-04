@@ -4,13 +4,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { Environment } from 'app/model/environment.model';
 import { Project } from 'app/model/project.model';
-import { AuthentifiedUser } from 'app/model/user.model';
 import { Workflow } from 'app/model/workflow.model';
 import { AsCodeSaveModalComponent } from 'app/shared/ascode/save-modal/ascode.save-modal.component';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { VariableEvent } from 'app/shared/variable/variable.event.model';
-import { AuthenticationState } from 'app/store/authentication.state';
 import { CleanEnvironmentState } from 'app/store/environment.action';
 import * as envActions from 'app/store/environment.action';
 import { EnvironmentState, EnvironmentStateModel } from 'app/store/environment.state';
@@ -18,6 +16,7 @@ import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import { cloneDeep } from 'lodash-es';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
+import { Tab } from 'app/shared/tabs/tabs.component';
 
 @Component({
     selector: 'app-environment-show',
@@ -50,8 +49,9 @@ export class EnvironmentShowComponent implements OnInit, OnDestroy {
     _routeDataSub: Subscription;
     _queryParamsSub: Subscription;
 
-    // Selected tab
-    selectedTab = 'variables';
+    // tabs
+    tabs: Array<Tab>;
+    selectedTab: Tab;
 
     // queryparam for breadcrum
     workflowName: string;
@@ -123,6 +123,7 @@ export class EnvironmentShowComponent implements OnInit, OnDestroy {
                                 this.workflows = this.environment.usage.workflows || [];
                                 this.usageCount = this.workflows.length;
                             }
+                            this.initTabs();
                             this._cd.markForCheck();
                         }, () => {
                             this._router.navigate(['/project', key], { queryParams: { tab: 'environments' } });
@@ -133,12 +134,49 @@ export class EnvironmentShowComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
+        this.initTabs();
         this._queryParamsSub = this._route.queryParams.subscribe(params => {
             let tab = params['tab'];
             if (tab) {
-                this.selectedTab = tab;
+                let current_tab = this.tabs.find((t) => t.key === tab);
+                if (current_tab) {
+                    this.selectTab(current_tab);
+                }
+                this._cd.markForCheck();
             }
         });
+    }
+
+    initTabs() {
+        let usageText = 'Usage';
+        if (this.environment) {
+            usageText = 'Usage (' + this.usageCount + ')';
+        }
+        this.tabs = [<Tab>{
+            translate: 'Variables',
+            key: 'variables',
+            default: true,
+            icon: 'font'
+        }, <Tab>{
+            translate: 'Keys',
+            key: 'keys',
+            icon: 'privacy'
+        }, <Tab>{
+            translate: usageText,
+            icon: 'map signs',
+            key: 'usage'
+        }]
+        if (this.project?.permissions?.writable) {
+            this.tabs.push(<Tab>{
+                translate: 'Advanced',
+                icon: 'graduation',
+                key: 'advanced'
+            })
+        }
+    }
+
+    selectTab(tab: Tab): void {
+        this.selectedTab = tab;
     }
 
     ngOnDestroy() {
