@@ -226,10 +226,10 @@ type ProjectClient interface {
 	ProjectAccess(ctx context.Context, projectKey, sessionID string, itemType sdk.CDNItemType) error
 	ProjectIntegrationWorkerHookGet(projectKey string, integrationName string) (*sdk.WorkerHookProjectIntegrationModel, error)
 	ProjectIntegrationWorkerHooksImport(projectKey string, integrationName string, hook sdk.WorkerHookProjectIntegrationModel) error
-	ProjectVCSImport(projectKey string, content io.Reader, mods ...RequestModifier) (sdk.ProjectVCSServer, error)
-	ProjectVCSGet(projectKey string, integrationName string) (sdk.ProjectVCSServer, error)
-	ProjectVCSList(projectKey string) ([]sdk.ProjectVCSServer, error)
-	ProjectVCSDelete(projectKey string, integrationName string) error
+	ProjectVCSImport(ctx context.Context, projectKey string, content io.Reader, mods ...RequestModifier) (sdk.ProjectVCSServer, error)
+	ProjectVCSGet(ctx context.Context, projectKey string, integrationName string) (sdk.ProjectVCSServer, error)
+	ProjectVCSList(ctx context.Context, projectKey string) ([]sdk.ProjectVCSServer, error)
+	ProjectVCSDelete(ctx context.Context, projectKey string, integrationName string) error
 }
 
 // ProjectKeysClient exposes project keys related functions

@@ -2,26 +2,26 @@ name: Project VCS Command TestSuite
 testcases:
 - name: import vcs server
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} project vcs import ./fixtures/my_vcs_project.yml
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental project vcs import ./fixtures/my_vcs_project.yml
   assertions:
     - result.code ShouldEqual 0
 
 - name: list vcs project
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} project vcs list
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental project vcs list
   assertions:
     - result.code ShouldEqual 0
 
 - name: list vcs project
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} project vcs export > my_vcs_project_exported.yml
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental project vcs export > my_vcs_project_exported.yml
   assertions:
     - result.code ShouldEqual 0
 
 - name: delete vcs project
   steps:
   - script: rm my_vcs_project_exported.yml
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} project vcs delete my_vcs_server
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental project vcs delete my_vcs_server
   assertions:
     - result.code ShouldEqual 0
 

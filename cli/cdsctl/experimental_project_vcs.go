@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -35,7 +36,7 @@ var projectVCSListCmd = cli.Command{
 }
 
 func projectVCSListFunc(v cli.Values) (cli.ListResult, error) {
-	pfs, err := client.ProjectVCSList(v.GetString(_ProjectKey))
+	pfs, err := client.ProjectVCSList(context.Background(), v.GetString(_ProjectKey))
 	return cli.AsListResult(pfs), err
 }
 
@@ -51,7 +52,7 @@ var projectVCSDeleteCmd = cli.Command{
 }
 
 func projectVCSDeleteFunc(v cli.Values) error {
-	return client.ProjectVCSDelete(v.GetString(_ProjectKey), v.GetString("name"))
+	return client.ProjectVCSDelete(context.Background(), v.GetString(_ProjectKey), v.GetString("name"))
 }
 
 var projectVCSImportCmd = cli.Command{
@@ -81,7 +82,7 @@ func projectVCSImportFunc(v cli.Values) error {
 		mods = append(mods, cdsclient.Force())
 	}
 
-	_, err = client.ProjectVCSImport(v.GetString(_ProjectKey), f, mods...)
+	_, err = client.ProjectVCSImport(context.Background(), v.GetString(_ProjectKey), f, mods...)
 	return err
 }
 
@@ -98,7 +99,7 @@ var projectVCSExportCmd = cli.Command{
 }
 
 func projectVCSExportFunc(v cli.Values) error {
-	pf, err := client.ProjectVCSGet(v.GetString(_ProjectKey), v.GetString("name"))
+	pf, err := client.ProjectVCSGet(context.Background(), v.GetString(_ProjectKey), v.GetString("name"))
 	if err != nil {
 		return err
 	}

@@ -2688,38 +2688,38 @@ func (mr *MockProjectClientMockRecorder) ProjectUpdate(key, project interface{})
 }
 
 // ProjectVCSDelete mocks base method.
-func (m *MockProjectClient) ProjectVCSDelete(projectKey, integrationName string) error {
+func (m *MockProjectClient) ProjectVCSDelete(ctx context.Context, projectKey, integrationName string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ProjectVCSDelete", projectKey, integrationName)
+	ret := m.ctrl.Call(m, "ProjectVCSDelete", ctx, projectKey, integrationName)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // ProjectVCSDelete indicates an expected call of ProjectVCSDelete.
-func (mr *MockProjectClientMockRecorder) ProjectVCSDelete(projectKey, integrationName interface{}) *gomock.Call {
+func (mr *MockProjectClientMockRecorder) ProjectVCSDelete(ctx, projectKey, integrationName interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVCSDelete", reflect.TypeOf((*MockProjectClient)(nil).ProjectVCSDelete), projectKey, integrationName)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVCSDelete", reflect.TypeOf((*MockProjectClient)(nil).ProjectVCSDelete), ctx, projectKey, integrationName)
 }
 
 // ProjectVCSGet mocks base method.
-func (m *MockProjectClient) ProjectVCSGet(projectKey, integrationName string) (sdk.ProjectVCSServer, error) {
+func (m *MockProjectClient) ProjectVCSGet(ctx context.Context, projectKey, integrationName string) (sdk.ProjectVCSServer, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ProjectVCSGet", projectKey, integrationName)
+	ret := m.ctrl.Call(m, "ProjectVCSGet", ctx, projectKey, integrationName)
 	ret0, _ := ret[0].(sdk.ProjectVCSServer)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ProjectVCSGet indicates an expected call of ProjectVCSGet.
-func (mr *MockProjectClientMockRecorder) ProjectVCSGet(projectKey, integrationName interface{}) *gomock.Call {
+func (mr *MockProjectClientMockRecorder) ProjectVCSGet(ctx, projectKey, integrationName interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVCSGet", reflect.TypeOf((*MockProjectClient)(nil).ProjectVCSGet), projectKey, integrationName)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVCSGet", reflect.TypeOf((*MockProjectClient)(nil).ProjectVCSGet), ctx, projectKey, integrationName)
 }
 
 // ProjectVCSImport mocks base method.
-func (m *MockProjectClient) ProjectVCSImport(projectKey string, content io.Reader, mods ...cdsclient.RequestModifier) (sdk.ProjectVCSServer, error) {
+func (m *MockProjectClient) ProjectVCSImport(ctx context.Context, projectKey string, content io.Reader, mods ...cdsclient.RequestModifier) (sdk.ProjectVCSServer, error) {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{projectKey, content}
+	varargs := []interface{}{ctx, projectKey, content}
 	for _, a := range mods {
 		varargs = append(varargs, a)
 	}
@@ -2730,25 +2730,25 @@ func (m *MockProjectClient) ProjectVCSImport(projectKey string, content io.Reade
 }
 
 // ProjectVCSImport indicates an expected call of ProjectVCSImport.
-func (mr *MockProjectClientMockRecorder) ProjectVCSImport(projectKey, content interface{}, mods ...interface{}) *gomock.Call {
+func (mr *MockProjectClientMockRecorder) ProjectVCSImport(ctx, projectKey, content interface{}, mods ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{projectKey, content}, mods...)
+	varargs := append([]interface{}{ctx, projectKey, content}, mods...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVCSImport", reflect.TypeOf((*MockProjectClient)(nil).ProjectVCSImport), varargs...)
 }
 
 // ProjectVCSList mocks base method.
-func (m *MockProjectClient) ProjectVCSList(projectKey string) ([]sdk.ProjectVCSServer, error) {
+func (m *MockProjectClient) ProjectVCSList(ctx context.Context, projectKey string) ([]sdk.ProjectVCSServer, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ProjectVCSList", projectKey)
+	ret := m.ctrl.Call(m, "ProjectVCSList", ctx, projectKey)
 	ret0, _ := ret[0].([]sdk.ProjectVCSServer)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ProjectVCSList indicates an expected call of ProjectVCSList.
-func (mr *MockProjectClientMockRecorder) ProjectVCSList(projectKey interface{}) *gomock.Call {
+func (mr *MockProjectClientMockRecorder) ProjectVCSList(ctx, projectKey interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVCSList", reflect.TypeOf((*MockProjectClient)(nil).ProjectVCSList), projectKey)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVCSList", reflect.TypeOf((*MockProjectClient)(nil).ProjectVCSList), ctx, projectKey)
 }
 
 // ProjectVariableCreate mocks base method.
@@ -6853,38 +6853,38 @@ func (mr *MockInterfaceMockRecorder) ProjectUpdate(key, project interface{}) *go
 }
 
 // ProjectVCSDelete mocks base method.
-func (m *MockInterface) ProjectVCSDelete(projectKey, integrationName string) error {
+func (m *MockInterface) ProjectVCSDelete(ctx context.Context, projectKey, integrationName string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ProjectVCSDelete", projectKey, integrationName)
+	ret := m.ctrl.Call(m, "ProjectVCSDelete", ctx, projectKey, integrationName)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // ProjectVCSDelete indicates an expected call of ProjectVCSDelete.
-func (mr *MockInterfaceMockRecorder) ProjectVCSDelete(projectKey, integrationName interface{}) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) ProjectVCSDelete(ctx, projectKey, integrationName interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVCSDelete", reflect.TypeOf((*MockInterface)(nil).ProjectVCSDelete), projectKey, integrationName)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVCSDelete", reflect.TypeOf((*MockInterface)(nil).ProjectVCSDelete), ctx, projectKey, integrationName)
 }
 
 // ProjectVCSGet mocks base method.
-func (m *MockInterface) ProjectVCSGet(projectKey, integrationName string) (sdk.ProjectVCSServer, error) {
+func (m *MockInterface) ProjectVCSGet(ctx context.Context, projectKey, integrationName string) (sdk.ProjectVCSServer, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ProjectVCSGet", projectKey, integrationName)
+	ret := m.ctrl.Call(m, "ProjectVCSGet", ctx, projectKey, integrationName)
 	ret0, _ := ret[0].(sdk.ProjectVCSServer)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ProjectVCSGet indicates an expected call of ProjectVCSGet.
-func (mr *MockInterfaceMockRecorder) ProjectVCSGet(projectKey, integrationName interface{}) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) ProjectVCSGet(ctx, projectKey, integrationName interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVCSGet", reflect.TypeOf((*MockInterface)(nil).ProjectVCSGet), projectKey, integrationName)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVCSGet", reflect.TypeOf((*MockInterface)(nil).ProjectVCSGet), ctx, projectKey, integrationName)
 }
 
 // ProjectVCSImport mocks base method.
-func (m *MockInterface) ProjectVCSImport(projectKey string, content io.Reader, mods ...cdsclient.RequestModifier) (sdk.ProjectVCSServer, error) {
+func (m *MockInterface) ProjectVCSImport(ctx context.Context, projectKey string, content io.Reader, mods ...cdsclient.RequestModifier) (sdk.ProjectVCSServer, error) {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{projectKey, content}
+	varargs := []interface{}{ctx, projectKey, content}
 	for _, a := range mods {
 		varargs = append(varargs, a)
 	}
@@ -6895,25 +6895,25 @@ func (m *MockInterface) ProjectVCSImport(projectKey string, content io.Reader, m
 }
 
 // ProjectVCSImport indicates an expected call of ProjectVCSImport.
-func (mr *MockInterfaceMockRecorder) ProjectVCSImport(projectKey, content interface{}, mods ...interface{}) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) ProjectVCSImport(ctx, projectKey, content interface{}, mods ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{projectKey, content}, mods...)
+	varargs := append([]interface{}{ctx, projectKey, content}, mods...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVCSImport", reflect.TypeOf((*MockInterface)(nil).ProjectVCSImport), varargs...)
 }
 
 // ProjectVCSList mocks base method.
-func (m *MockInterface) ProjectVCSList(projectKey string) ([]sdk.ProjectVCSServer, error) {
+func (m *MockInterface) ProjectVCSList(ctx context.Context, projectKey string) ([]sdk.ProjectVCSServer, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ProjectVCSList", projectKey)
+	ret := m.ctrl.Call(m, "ProjectVCSList", ctx, projectKey)
 	ret0, _ := ret[0].([]sdk.ProjectVCSServer)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ProjectVCSList indicates an expected call of ProjectVCSList.
-func (mr *MockInterfaceMockRecorder) ProjectVCSList(projectKey interface{}) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) ProjectVCSList(ctx, projectKey interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVCSList", reflect.TypeOf((*MockInterface)(nil).ProjectVCSList), projectKey)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVCSList", reflect.TypeOf((*MockInterface)(nil).ProjectVCSList), ctx, projectKey)
 }
 
 // ProjectVariableCreate mocks base method.
