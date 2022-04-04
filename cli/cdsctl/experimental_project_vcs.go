@@ -7,9 +7,9 @@ import (
 
 	"github.com/spf13/cobra"
 
+	yaml "github.com/ghodss/yaml"
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/ovh/cds/sdk/exportentities"
 )
 
 var projectVCSCmd = cli.Command{
@@ -104,7 +104,7 @@ func projectVCSExportFunc(v cli.Values) error {
 		return err
 	}
 
-	btes, err := exportentities.Marshal(pf, exportentities.FormatYAML)
+	btes, err := yaml.Marshal(pf)
 	if err != nil {
 		return err
 	}
