@@ -5,7 +5,6 @@ import { ActivatedRoute } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { ToasterModule } from 'angular2-toaster-sgu';
 import { EventService } from 'app/event.service';
 import { MonitoringStatus } from 'app/model/monitoring.model';
 import { EnvironmentService } from 'app/service/environment/environment.service';
@@ -41,6 +40,7 @@ import { ToastService } from './shared/toast/ToastService';
 import { FetchCurrentAuth } from './store/authentication.action';
 import { NgxsStoreModule } from './store/store.module';
 import { NavbarModule } from './views/navbar/navbar.module';
+import { NzNotificationModule } from 'ng-zorro-antd/notification';
 
 describe('App: CDS', () => {
 
@@ -80,7 +80,7 @@ describe('App: CDS', () => {
                 NgxsStoreModule,
                 SharedModule,
                 NavbarModule,
-                ToasterModule.forRoot(),
+                NzNotificationModule,
                 RouterTestingModule.withRoutes([]),
                 HttpClientTestingModule,
                 TranslateModule.forRoot({

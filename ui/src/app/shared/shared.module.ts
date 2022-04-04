@@ -75,7 +75,6 @@ import { DataTableComponent, SelectorPipe, SelectPipe } from './table/data-table
 import { PaginationComponent } from './table/pagination.component';
 import { TabComponent } from './tabs/tab.component';
 import { TabsComponent } from './tabs/tabs.component';
-import { ToastHTTPErrorComponent } from './toast/toast-http-error.component';
 import { ToastService } from './toast/ToastService';
 import { UsageApplicationsComponent } from './usage/applications/usage.applications.component';
 import { UsageEnvironmentsComponent } from './usage/environments/usage.environments.component';
@@ -115,9 +114,18 @@ import { WorkflowWNodeComponent } from './workflow/wnode/wnode.component';
 import { ZoneContentComponent } from './zone/zone-content/content.component';
 import { ZoneComponent } from './zone/zone.component';
 import { NgxAutoScrollDirective } from 'app/shared/directives/auto-scroll.directive';
+import { NZ_CONFIG, NzConfig } from 'ng-zorro-antd/core/config';
+import { NzNotificationModule } from 'ng-zorro-antd/notification';
+
+const ngZorroConfig: NzConfig = {
+    notification: {nzPauseOnHover: true, nzPlacement: "topRight"}
+};
+
+
 
 @NgModule({
     imports: [
+        NzNotificationModule,
         CommonModule,
         ClipboardModule,
         NgxSemanticModule,
@@ -187,7 +195,6 @@ import { NgxAutoScrollDirective } from 'app/shared/directives/auto-scroll.direct
         StatusIconComponent,
         TabsComponent,
         TabComponent,
-        ToastHTTPErrorComponent,
         TruncatePipe,
         UploadButtonComponent,
         UsageApplicationsComponent,
@@ -240,7 +247,8 @@ import { NgxAutoScrollDirective } from 'app/shared/directives/auto-scroll.direct
         ToastService,
         AuthenticationGuard,
         NoAuthenticationGuard,
-        FeatureGuard
+        FeatureGuard,
+        { provide: NZ_CONFIG, useValue: ngZorroConfig },
     ],
     schemas: [
         CUSTOM_ELEMENTS_SCHEMA
@@ -288,6 +296,7 @@ import { NgxAutoScrollDirective } from 'app/shared/directives/auto-scroll.direct
         NgForNumber,
         NgxSemanticModule,
         NgxAutoScrollDirective,
+        NzNotificationModule,
         PaginationComponent,
         ParameterFormComponent,
         ParameterListComponent,
@@ -307,7 +316,6 @@ import { NgxAutoScrollDirective } from 'app/shared/directives/auto-scroll.direct
         StatusIconComponent,
         SuiModule,
         TabsComponent,
-        ToastHTTPErrorComponent,
         TranslateModule,
         TruncatePipe,
         UploadButtonComponent,

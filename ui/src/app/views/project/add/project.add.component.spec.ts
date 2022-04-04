@@ -5,7 +5,6 @@ import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { ToasterService } from 'angular2-toaster-sgu';
 import { ApplicationService } from 'app/service/application/application.service';
 import { AuthenticationService } from 'app/service/authentication/authentication.service';
 import { MonitoringService } from 'app/service/monitoring/monitoring.service';
@@ -32,6 +31,7 @@ import { SharedModule } from 'app/shared/shared.module';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { ProjectModule } from '../project.module';
 import { ProjectAddComponent } from './project.add.component';
+import { NzNotificationModule } from 'ng-zorro-antd/notification';
 
 describe('CDS: Project Show Component', () => {
 
@@ -53,7 +53,7 @@ describe('CDS: Project Show Component', () => {
                 ApplicationService,
                 EnvironmentService,
                 VariableService,
-                ToasterService,
+                NzNotificationModule,
                 HelpService,
                 TranslateService,
                 TranslateParser,
