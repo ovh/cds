@@ -2702,10 +2702,10 @@ func (mr *MockProjectClientMockRecorder) ProjectVCSDelete(ctx, projectKey, integ
 }
 
 // ProjectVCSGet mocks base method.
-func (m *MockProjectClient) ProjectVCSGet(ctx context.Context, projectKey, integrationName string) (sdk.ProjectVCSServer, error) {
+func (m *MockProjectClient) ProjectVCSGet(ctx context.Context, projectKey, integrationName string) (sdk.VCSProject, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ProjectVCSGet", ctx, projectKey, integrationName)
-	ret0, _ := ret[0].(sdk.ProjectVCSServer)
+	ret0, _ := ret[0].(sdk.VCSProject)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -2717,14 +2717,14 @@ func (mr *MockProjectClientMockRecorder) ProjectVCSGet(ctx, projectKey, integrat
 }
 
 // ProjectVCSImport mocks base method.
-func (m *MockProjectClient) ProjectVCSImport(ctx context.Context, projectKey string, content io.Reader, mods ...cdsclient.RequestModifier) (sdk.ProjectVCSServer, error) {
+func (m *MockProjectClient) ProjectVCSImport(ctx context.Context, projectKey string, content io.Reader, mods ...cdsclient.RequestModifier) (sdk.VCSProject, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, projectKey, content}
 	for _, a := range mods {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "ProjectVCSImport", varargs...)
-	ret0, _ := ret[0].(sdk.ProjectVCSServer)
+	ret0, _ := ret[0].(sdk.VCSProject)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -2737,10 +2737,10 @@ func (mr *MockProjectClientMockRecorder) ProjectVCSImport(ctx, projectKey, conte
 }
 
 // ProjectVCSList mocks base method.
-func (m *MockProjectClient) ProjectVCSList(ctx context.Context, projectKey string) ([]sdk.ProjectVCSServer, error) {
+func (m *MockProjectClient) ProjectVCSList(ctx context.Context, projectKey string) ([]sdk.VCSProject, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ProjectVCSList", ctx, projectKey)
-	ret0, _ := ret[0].([]sdk.ProjectVCSServer)
+	ret0, _ := ret[0].([]sdk.VCSProject)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -6867,10 +6867,10 @@ func (mr *MockInterfaceMockRecorder) ProjectVCSDelete(ctx, projectKey, integrati
 }
 
 // ProjectVCSGet mocks base method.
-func (m *MockInterface) ProjectVCSGet(ctx context.Context, projectKey, integrationName string) (sdk.ProjectVCSServer, error) {
+func (m *MockInterface) ProjectVCSGet(ctx context.Context, projectKey, integrationName string) (sdk.VCSProject, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ProjectVCSGet", ctx, projectKey, integrationName)
-	ret0, _ := ret[0].(sdk.ProjectVCSServer)
+	ret0, _ := ret[0].(sdk.VCSProject)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -6882,14 +6882,14 @@ func (mr *MockInterfaceMockRecorder) ProjectVCSGet(ctx, projectKey, integrationN
 }
 
 // ProjectVCSImport mocks base method.
-func (m *MockInterface) ProjectVCSImport(ctx context.Context, projectKey string, content io.Reader, mods ...cdsclient.RequestModifier) (sdk.ProjectVCSServer, error) {
+func (m *MockInterface) ProjectVCSImport(ctx context.Context, projectKey string, content io.Reader, mods ...cdsclient.RequestModifier) (sdk.VCSProject, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, projectKey, content}
 	for _, a := range mods {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "ProjectVCSImport", varargs...)
-	ret0, _ := ret[0].(sdk.ProjectVCSServer)
+	ret0, _ := ret[0].(sdk.VCSProject)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -6902,10 +6902,10 @@ func (mr *MockInterfaceMockRecorder) ProjectVCSImport(ctx, projectKey, content i
 }
 
 // ProjectVCSList mocks base method.
-func (m *MockInterface) ProjectVCSList(ctx context.Context, projectKey string) ([]sdk.ProjectVCSServer, error) {
+func (m *MockInterface) ProjectVCSList(ctx context.Context, projectKey string) ([]sdk.VCSProject, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ProjectVCSList", ctx, projectKey)
-	ret0, _ := ret[0].([]sdk.ProjectVCSServer)
+	ret0, _ := ret[0].([]sdk.VCSProject)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

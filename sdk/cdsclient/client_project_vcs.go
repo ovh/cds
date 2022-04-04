@@ -10,18 +10,18 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func (c *client) ProjectVCSGet(ctx context.Context, projectKey string, vcsName string) (sdk.ProjectVCSServer, error) {
+func (c *client) ProjectVCSGet(ctx context.Context, projectKey string, vcsName string) (sdk.VCSProject, error) {
 	path := fmt.Sprintf("/v2/project/%s/vcs/%s", projectKey, vcsName)
-	var pf sdk.ProjectVCSServer
+	var pf sdk.VCSProject
 	if _, err := c.GetJSON(ctx, path, &pf); err != nil {
 		return pf, err
 	}
 	return pf, nil
 }
 
-func (c *client) ProjectVCSList(ctx context.Context, projectKey string) ([]sdk.ProjectVCSServer, error) {
+func (c *client) ProjectVCSList(ctx context.Context, projectKey string) ([]sdk.VCSProject, error) {
 	path := fmt.Sprintf("/v2/project/%s/vcs", projectKey)
-	var pfs []sdk.ProjectVCSServer
+	var pfs []sdk.VCSProject
 	if _, err := c.GetJSON(ctx, path, &pfs); err != nil {
 		return pfs, err
 	}
@@ -30,15 +30,15 @@ func (c *client) ProjectVCSList(ctx context.Context, projectKey string) ([]sdk.P
 
 func (c *client) ProjectVCSDelete(ctx context.Context, projectKey string, vcsName string) error {
 	path := fmt.Sprintf("/v2/project/%s/vcs/%s", projectKey, vcsName)
-	var pf sdk.ProjectVCSServer
+	var pf sdk.VCSProject
 	if _, err := c.DeleteJSON(ctx, path, &pf); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (c *client) ProjectVCSImport(ctx context.Context, projectKey string, content io.Reader, mods ...RequestModifier) (sdk.ProjectVCSServer, error) {
-	var pf sdk.ProjectVCSServer
+func (c *client) ProjectVCSImport(ctx context.Context, projectKey string, content io.Reader, mods ...RequestModifier) (sdk.VCSProject, error) {
+	var pf sdk.VCSProject
 
 	body, err := io.ReadAll(content)
 	if err != nil {
