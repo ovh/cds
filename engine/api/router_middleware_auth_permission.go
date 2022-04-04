@@ -27,19 +27,20 @@ type PermCheckFunc func(ctx context.Context, w http.ResponseWriter, key string, 
 
 func permissionFunc(api *API) map[string]PermCheckFunc {
 	return map[string]PermCheckFunc{
-		"permProjectKey":           api.checkProjectPermissions,
-		"permWorkflowName":         api.checkWorkflowPermissions,
-		"permWorkflowNameAdvanced": api.checkWorkflowAdvancedPermissions,
-		"permGroupName":            api.checkGroupPermissions,
-		"permModelName":            api.checkWorkerModelPermissions,
-		"permActionName":           api.checkActionPermissions,
-		"permActionBuiltinName":    api.checkActionBuiltinPermissions,
-		"permTemplateSlug":         api.checkTemplateSlugPermissions,
-		"permUsernamePublic":       api.checkUserPublicPermissions,
-		"permUsername":             api.checkUserPermissions,
-		"permConsumerID":           api.checkConsumerPermissions,
-		"permSessionID":            api.checkSessionPermissions,
-		"permJobID":                api.checkJobIDPermissions,
+		"permProjectKey":                 api.checkProjectPermissions,
+		"permProjectKeyWithHooksAllowed": api.checkProjectAdvancedWithHooksAllowed,
+		"permWorkflowName":               api.checkWorkflowPermissions,
+		"permWorkflowNameAdvanced":       api.checkWorkflowAdvancedPermissions,
+		"permGroupName":                  api.checkGroupPermissions,
+		"permModelName":                  api.checkWorkerModelPermissions,
+		"permActionName":                 api.checkActionPermissions,
+		"permActionBuiltinName":          api.checkActionBuiltinPermissions,
+		"permTemplateSlug":               api.checkTemplateSlugPermissions,
+		"permUsernamePublic":             api.checkUserPublicPermissions,
+		"permUsername":                   api.checkUserPermissions,
+		"permConsumerID":                 api.checkConsumerPermissions,
+		"permSessionID":                  api.checkSessionPermissions,
+		"permJobID":                      api.checkJobIDPermissions,
 	}
 }
 
@@ -100,8 +101,16 @@ func (api *API) checkJobIDPermissions(ctx context.Context, w http.ResponseWriter
 	return sdk.WrapError(sdk.ErrForbidden, "not authorized for job %s", jobID)
 }
 
-func (api *API) checkProjectPermissions(ctx context.Context, w http.ResponseWriter, projectKey string, requiredPerm int, routeVars map[string]string) error {
-	ctx, end := telemetry.Span(ctx, "api.checkProjectPermissions")
+type checkProjectPermissionsOpts struct {
+	AllowHooks bool
+}
+
+func (api *API) checkProjectAdvancedWithHooksAllowed(ctx context.Context, w http.ResponseWriter, projectKey string, requiredPerm int, routeVars map[string]string) error {
+	return api.checkProjectAdvancedPermissionsWithOpts(ctx, w, projectKey, requiredPerm, routeVars, checkProjectPermissionsOpts{AllowHooks: true})
+}
+
+func (api *API) checkProjectAdvancedPermissionsWithOpts(ctx context.Context, w http.ResponseWriter, projectKey string, requiredPerm int, routeVars map[string]string, opts checkProjectPermissionsOpts) error {
+	ctx, end := telemetry.Span(ctx, "api.checkProjectAdvancedPermissions")
 	defer end()
 
 	if supportMFA(ctx) && !isMFA(ctx) {
@@ -148,16 +157,19 @@ func (api *API) checkProjectPermissions(ctx context.Context, w http.ResponseWrit
 		log.Debug(ctx, "checkProjectPermissions> callerPermission=%d ", callerPermission)
 		// If it's about READ: we have to check if the user is a maintainer or an admin
 		if requiredPerm == sdk.PermissionRead {
-			if !isMaintainer(ctx) {
-				// The caller doesn't enough permission level from its groups and is neither a maintainer nor an admin
-				log.Debug(ctx, "checkProjectPermissions> %s(%s) is not authorized to %s", getAPIConsumer(ctx).Name, getAPIConsumer(ctx).ID, projectKey)
-				return sdk.WrapError(sdk.ErrNoProject, "not authorized for project %s", projectKey)
-			}
 			if isMaintainer(ctx) {
 				log.Debug(ctx, "checkProjectPermissions> %s(%s) access granted to %s because is maintainer", getAPIConsumer(ctx).Name, getAPIConsumer(ctx).ID, projectKey)
 				telemetry.Current(ctx, telemetry.Tag(telemetry.TagPermission, "is_maintainer"))
+				return nil
 			}
-			return nil
+			if opts.AllowHooks && isHooks(ctx) {
+				log.Debug(ctx, "checkProjectPermissions> %s(%s) access granted to %s because is hooks", getAPIConsumer(ctx).Name, getAPIConsumer(ctx).ID, projectKey)
+				telemetry.Current(ctx, telemetry.Tag(telemetry.TagPermission, "is_hooks"))
+				return nil
+			}
+			// The caller doesn't enough permission level from its groups and is neither a maintainer nor an admin
+			log.Debug(ctx, "checkProjectPermissions> %s(%s) is not authorized to %s", getAPIConsumer(ctx).Name, getAPIConsumer(ctx).ID, projectKey)
+			return sdk.WrapError(sdk.ErrNoProject, "not authorized for project %s", projectKey)
 		}
 
 		// If it's about Execute of Write: we have to check if the user is an admin
@@ -174,6 +186,10 @@ func (api *API) checkProjectPermissions(ctx context.Context, w http.ResponseWrit
 	log.Debug(ctx, "checkProjectPermissions> %s(%s) access granted to %s because has permission (max permission = %d)", getAPIConsumer(ctx).Name, getAPIConsumer(ctx).ID, projectKey, callerPermission)
 	telemetry.Current(ctx, telemetry.Tag(telemetry.TagPermission, "is_granted"))
 	return nil
+}
+
+func (api *API) checkProjectPermissions(ctx context.Context, w http.ResponseWriter, projectKey string, requiredPerm int, routeVars map[string]string) error {
+	return api.checkProjectAdvancedPermissionsWithOpts(ctx, w, projectKey, requiredPerm, routeVars, checkProjectPermissionsOpts{})
 }
 
 func (api *API) checkWorkflowPermissions(ctx context.Context, w http.ResponseWriter, workflowName string, perm int, routeVars map[string]string) error {
