@@ -265,7 +265,7 @@ func (api *API) getWorkflowRunHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
-		name := vars["permWorkflowName"]
+		name := vars["permWorkflowNameAdvanced"]
 		number, err := requestVarInt(r, "number")
 		if err != nil {
 			return err
@@ -311,9 +311,13 @@ func (api *API) getWorkflowRunHandler() service.Handler {
 
 func (api *API) deleteWorkflowRunHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if isHooks(ctx) {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
+
 		vars := mux.Vars(r)
 		key := vars["key"]
-		name := vars["permWorkflowName"]
+		name := vars["permWorkflowNameAdvanced"]
 		number, err := requestVarInt(r, "number")
 		if err != nil {
 			return err

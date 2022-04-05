@@ -243,9 +243,9 @@ func testRunWorkflowForProject(t *testing.T, api *API, router *Router, proj *sdk
 	cpt := 0
 	for {
 		varsGet := map[string]string{
-			"key":              proj.Key,
-			"permWorkflowName": w1.Name,
-			"number":           fmt.Sprintf("%d", wr.Number),
+			"key":                      proj.Key,
+			"permWorkflowNameAdvanced": w1.Name,
+			"number":                   fmt.Sprintf("%d", wr.Number),
 		}
 		uriGet := router.GetRoute("GET", api.getWorkflowRunHandler, varsGet)
 		require.NotEmpty(t, uriGet)
@@ -765,9 +765,9 @@ func Test_postWorkflowJobResultHandler(t *testing.T) {
 	require.Equal(t, 204, rec.Code)
 
 	uri = router.GetRoute("GET", api.getWorkflowRunHandler, map[string]string{
-		"key":              ctx.project.Key,
-		"permWorkflowName": ctx.workflow.Name,
-		"number":           fmt.Sprintf("%d", ctx.run.Number),
+		"key":                      ctx.project.Key,
+		"permWorkflowNameAdvanced": ctx.workflow.Name,
+		"number":                   fmt.Sprintf("%d", ctx.run.Number),
 	})
 	req = assets.NewJWTAuthentifiedRequest(t, ctx.userToken, "GET", uri+"?withDetails=true", res)
 

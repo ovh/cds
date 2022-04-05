@@ -84,7 +84,7 @@ func (api *API) getWorkflowsHandler() service.Handler {
 }
 
 func (api *API) setWorkflowURLs(w1 *sdk.Workflow) {
-	w1.URLs.APIURL = api.Config.URL.API + api.Router.GetRoute("GET", api.getWorkflowHandler, map[string]string{"key": w1.ProjectKey, "permWorkflowName": w1.Name})
+	w1.URLs.APIURL = api.Config.URL.API + api.Router.GetRoute("GET", api.getWorkflowHandler, map[string]string{"key": w1.ProjectKey, "permWorkflowNameAdvanced": w1.Name})
 	w1.URLs.UIURL = api.Config.URL.UI + "/project/" + w1.ProjectKey + "/workflow/" + w1.Name
 
 	for j := range w1.Runs {
@@ -94,7 +94,7 @@ func (api *API) setWorkflowURLs(w1 *sdk.Workflow) {
 }
 
 func (api *API) setWorkflowRunURLs(r1 *sdk.WorkflowRun) {
-	r1.URLs.APIURL = api.Config.URL.API + api.Router.GetRoute("GET", api.getWorkflowRunHandler, map[string]string{"key": r1.Workflow.ProjectKey, "permWorkflowName": r1.Workflow.Name, "number": strconv.FormatInt(r1.Number, 10)})
+	r1.URLs.APIURL = api.Config.URL.API + api.Router.GetRoute("GET", api.getWorkflowRunHandler, map[string]string{"key": r1.Workflow.ProjectKey, "permWorkflowNameAdvanced": r1.Workflow.Name, "number": strconv.FormatInt(r1.Number, 10)})
 	r1.URLs.UIURL = api.Config.URL.UI + "/project/" + r1.Workflow.ProjectKey + "/workflow/" + r1.Workflow.Name + "/run/" + strconv.FormatInt(r1.Number, 10)
 }
 

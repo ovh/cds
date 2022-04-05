@@ -667,9 +667,9 @@ func Test_getWorkflowRunHandler(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": w1.Name,
-		"number":           "9",
+		"key":                      proj.Key,
+		"permWorkflowNameAdvanced": w1.Name,
+		"number":                   "9",
 	}
 	uri := router.GetRoute("GET", api.getWorkflowRunHandler, vars)
 	test.NotEmpty(t, uri)
@@ -1429,9 +1429,9 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 	for {
 		t.Logf("Attempt getWorkflowRunHandler #%d", cpt)
 		varsGet := map[string]string{
-			"key":              proj.Key,
-			"permWorkflowName": w1.Name,
-			"number":           "1",
+			"key":                      proj.Key,
+			"permWorkflowNameAdvanced": w1.Name,
+			"number":                   "1",
 		}
 		uriGet := router.GetRoute("GET", api.getWorkflowRunHandler, varsGet)
 		reqGet := assets.NewAuthentifiedRequest(t, u, pass, "GET", uriGet, nil)
@@ -1969,9 +1969,9 @@ func Test_postWorkflowRunHandlerMutexRelease(t *testing.T) {
 		try++
 		t.Logf("Attempt #%d on getWorkflowRunHandler for run 1", try)
 		uri := router.GetRoute("GET", api.getWorkflowRunHandler, map[string]string{
-			"key":              proj.Key,
-			"permWorkflowName": wkf.Name,
-			"number":           "1",
+			"key":                      proj.Key,
+			"permWorkflowNameAdvanced": wkf.Name,
+			"number":                   "1",
 		})
 		req := assets.NewAuthentifiedRequest(t, u, jwt, "GET", uri, nil)
 		rec := httptest.NewRecorder()
@@ -2015,9 +2015,9 @@ func Test_postWorkflowRunHandlerMutexRelease(t *testing.T) {
 		try++
 		t.Logf("Attempt #%d on getWorkflowRunHandler for run 2", try)
 		uri := router.GetRoute("GET", api.getWorkflowRunHandler, map[string]string{
-			"key":              proj.Key,
-			"permWorkflowName": wkf.Name,
-			"number":           "2",
+			"key":                      proj.Key,
+			"permWorkflowNameAdvanced": wkf.Name,
+			"number":                   "2",
 		})
 		req := assets.NewAuthentifiedRequest(t, u, jwt, "GET", uri, nil)
 		rec := httptest.NewRecorder()
@@ -2064,9 +2064,9 @@ func Test_postWorkflowRunHandlerMutexRelease(t *testing.T) {
 		try++
 		t.Logf("Attempt #%d on getWorkflowRunHandler for run 3", try)
 		uri := router.GetRoute("GET", api.getWorkflowRunHandler, map[string]string{
-			"key":              proj.Key,
-			"permWorkflowName": wkf.Name,
-			"number":           "3",
+			"key":                      proj.Key,
+			"permWorkflowNameAdvanced": wkf.Name,
+			"number":                   "3",
 		})
 		req := assets.NewAuthentifiedRequest(t, u, jwt, "GET", uri, nil)
 		rec := httptest.NewRecorder()
@@ -2110,9 +2110,9 @@ func Test_postWorkflowRunHandlerMutexRelease(t *testing.T) {
 		try++
 		t.Logf("Attempt #%d on getWorkflowRunHandler for run 1", try)
 		uri := router.GetRoute("GET", api.getWorkflowRunHandler, map[string]string{
-			"key":              proj.Key,
-			"permWorkflowName": wkf.Name,
-			"number":           "1",
+			"key":                      proj.Key,
+			"permWorkflowNameAdvanced": wkf.Name,
+			"number":                   "1",
 		})
 		req := assets.NewAuthentifiedRequest(t, u, jwt, "GET", uri, nil)
 		rec := httptest.NewRecorder()
@@ -2142,9 +2142,9 @@ func Test_postWorkflowRunHandlerMutexRelease(t *testing.T) {
 		try++
 		t.Logf("Attempt #%d on getWorkflowRunHandler for run 2", try)
 		uri := router.GetRoute("GET", api.getWorkflowRunHandler, map[string]string{
-			"key":              proj.Key,
-			"permWorkflowName": wkf.Name,
-			"number":           "2",
+			"key":                      proj.Key,
+			"permWorkflowNameAdvanced": wkf.Name,
+			"number":                   "2",
 		})
 		req := assets.NewAuthentifiedRequest(t, u, jwt, "GET", uri, nil)
 		rec := httptest.NewRecorder()
@@ -2174,9 +2174,9 @@ func Test_postWorkflowRunHandlerMutexRelease(t *testing.T) {
 		try++
 		t.Logf("Attempt #%d on getWorkflowRunHandler for run 3", try)
 		uri := router.GetRoute("GET", api.getWorkflowRunHandler, map[string]string{
-			"key":              proj.Key,
-			"permWorkflowName": wkf.Name,
-			"number":           "3",
+			"key":                      proj.Key,
+			"permWorkflowNameAdvanced": wkf.Name,
+			"number":                   "3",
 		})
 		req := assets.NewAuthentifiedRequest(t, u, jwt, "GET", uri, nil)
 		rec := httptest.NewRecorder()
@@ -2827,9 +2827,9 @@ func Test_deleteWorkflowRunHandler(t *testing.T) {
 
 	//Prepare request
 	vars = map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": w1.Name,
-		"number":           fmt.Sprintf("%d", wr.Number),
+		"key":                      proj.Key,
+		"permWorkflowNameAdvanced": w1.Name,
+		"number":                   fmt.Sprintf("%d", wr.Number),
 	}
 	uri = router.GetRoute("GET", api.getWorkflowRunHandler, vars)
 	test.NotEmpty(t, uri)
