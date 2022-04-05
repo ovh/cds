@@ -133,6 +133,8 @@ func (api *API) postAuthBuiltinSigninHandler() service.Handler {
 		if hasService {
 			ctx = context.WithValue(ctx, cdslog.AuthServiceName, srv.Name)
 			SetTracker(w, cdslog.AuthServiceName, srv.Name)
+			ctx = context.WithValue(ctx, cdslog.AuthServiceType, srv.Type)
+			SetTracker(w, cdslog.AuthServiceType, srv.Type)
 
 			if err := api.serviceRegister(ctx, tx, &srv); err != nil {
 				return err

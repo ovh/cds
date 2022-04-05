@@ -262,8 +262,8 @@ func Test_getWorkflowRunsHandler(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": w1.Name,
+		"key":                      proj.Key,
+		"permWorkflowNameAdvanced": w1.Name,
 	}
 	uri := router.GetRoute("GET", api.getWorkflowRunsHandler, vars)
 	test.NotEmpty(t, uri)
@@ -282,8 +282,8 @@ func Test_getWorkflowRunsHandler(t *testing.T) {
 
 	//Prepare request
 	vars = map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": w1.Name,
+		"key":                      proj.Key,
+		"permWorkflowNameAdvanced": w1.Name,
 	}
 	uri = router.GetRoute("GET", api.getWorkflowRunsHandler, vars)
 	test.NotEmpty(t, uri)
@@ -415,8 +415,8 @@ func Test_getWorkflowRunsHandlerWithFilter(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": w1.Name,
+		"key":                      proj.Key,
+		"permWorkflowNameAdvanced": w1.Name,
 	}
 	uri := router.GetRoute("GET", api.getWorkflowRunsHandler, vars)
 	test.NotEmpty(t, uri)
@@ -1073,8 +1073,8 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": w1.Name,
+		"key":                      proj.Key,
+		"permWorkflowNameAdvanced": w1.Name,
 	}
 	uri := router.GetRoute("POST", api.postWorkflowRunHandler, vars)
 	test.NotEmpty(t, uri)
@@ -1413,8 +1413,8 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 
 	// Prepare request
 	uri := router.GetRoute("POST", api.postWorkflowRunHandler, map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": w1.Name,
+		"key":                      proj.Key,
+		"permWorkflowNameAdvanced": w1.Name,
 	})
 	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, &sdk.WorkflowRunPostHandlerOption{})
 	rec := httptest.NewRecorder()
@@ -1557,8 +1557,8 @@ func Test_postWorkflowRunHandlerWithoutRightOnEnvironment(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": w1.Name,
+		"key":                      proj.Key,
+		"permWorkflowNameAdvanced": w1.Name,
 	}
 	uri := router.GetRoute("POST", api.postWorkflowRunHandler, vars)
 	test.NotEmpty(t, uri)
@@ -1717,8 +1717,8 @@ func Test_postWorkflowRunHandlerWithoutRightConditionsOnHook(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": w1.Name,
+		"key":                      proj.Key,
+		"permWorkflowNameAdvanced": w1.Name,
 	}
 	uri := router.GetRoute("POST", api.postWorkflowRunHandler, vars)
 	test.NotEmpty(t, uri)
@@ -1860,8 +1860,8 @@ func Test_postWorkflowRunHandlerHookWithMutex(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": w1.Name,
+		"key":                      proj.Key,
+		"permWorkflowNameAdvanced": w1.Name,
 	}
 	uri := router.GetRoute("POST", api.postWorkflowRunHandler, vars)
 	test.NotEmpty(t, uri)
@@ -1946,8 +1946,8 @@ func Test_postWorkflowRunHandlerMutexRelease(t *testing.T) {
 
 	// Run workflow 1
 	uri := router.GetRoute("POST", api.postWorkflowRunHandler, map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": wkf.Name,
+		"key":                      proj.Key,
+		"permWorkflowNameAdvanced": wkf.Name,
 	})
 	require.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, u, jwt, "POST", uri, sdk.WorkflowRunPostHandlerOption{})
@@ -1992,8 +1992,8 @@ func Test_postWorkflowRunHandlerMutexRelease(t *testing.T) {
 
 	// Run workflow 2
 	uri = router.GetRoute("POST", api.postWorkflowRunHandler, map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": wkf.Name,
+		"key":                      proj.Key,
+		"permWorkflowNameAdvanced": wkf.Name,
 	})
 	require.NotEmpty(t, uri)
 	req = assets.NewAuthentifiedRequest(t, u, jwt, "POST", uri, sdk.WorkflowRunPostHandlerOption{})
@@ -2041,8 +2041,8 @@ func Test_postWorkflowRunHandlerMutexRelease(t *testing.T) {
 
 	// Run workflow 3
 	uri = router.GetRoute("POST", api.postWorkflowRunHandler, map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": wkf.Name,
+		"key":                      proj.Key,
+		"permWorkflowNameAdvanced": wkf.Name,
 	})
 	require.NotEmpty(t, uri)
 	req = assets.NewAuthentifiedRequest(t, u, jwt, "POST", uri, sdk.WorkflowRunPostHandlerOption{})
@@ -2317,8 +2317,8 @@ func Test_postWorkflowRunHandlerHook(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": w1.Name,
+		"key":                      proj.Key,
+		"permWorkflowNameAdvanced": w1.Name,
 	}
 	uri := router.GetRoute("POST", api.postWorkflowRunHandler, vars)
 	test.NotEmpty(t, uri)
@@ -2426,8 +2426,8 @@ func Test_postWorkflowRunHandler_Forbidden(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": w.Name,
+		"key":                      proj.Key,
+		"permWorkflowNameAdvanced": w.Name,
 	}
 	uri := router.GetRoute("POST", api.postWorkflowRunHandler, vars)
 	test.NotEmpty(t, uri)
@@ -2489,8 +2489,8 @@ func Test_postWorkflowRunHandler_ConditionNotOK(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": w.Name,
+		"key":                      proj.Key,
+		"permWorkflowNameAdvanced": w.Name,
 	}
 	uri := router.GetRoute("POST", api.postWorkflowRunHandler, vars)
 	test.NotEmpty(t, uri)
@@ -2586,8 +2586,8 @@ func Test_postWorkflowRunHandler_BadPayload(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": w.Name,
+		"key":                      proj.Key,
+		"permWorkflowNameAdvanced": w.Name,
 	}
 	uri := router.GetRoute("POST", api.postWorkflowRunHandler, vars)
 	test.NotEmpty(t, uri)
@@ -2724,152 +2724,6 @@ func initGetWorkflowNodeRunJobTest(t *testing.T, api *API, db gorpmapper.SqlExec
 	return u, pass, proj, w1, lastRun, jobRun
 }
 
-func Test_deleteWorkflowRunsBranchHandler(t *testing.T) {
-	api, db, router := newTestAPI(t)
-
-	u, pass := assets.InsertAdminUser(t, db)
-	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
-
-	//First pipeline
-	pip := sdk.Pipeline{
-		ProjectID:  proj.ID,
-		ProjectKey: proj.Key,
-		Name:       "pip1",
-	}
-	require.NoError(t, pipeline.InsertPipeline(api.mustDB(), &pip))
-
-	s := sdk.NewStage("stage 1")
-	s.Enabled = true
-	s.PipelineID = pip.ID
-	require.NoError(t, pipeline.InsertStage(api.mustDB(), s))
-	j := &sdk.Job{
-		Enabled: true,
-		Action: sdk.Action{
-			Enabled: true,
-		},
-	}
-	require.NoError(t, pipeline.InsertJob(api.mustDB(), j, s.ID, &pip))
-	s.Jobs = append(s.Jobs, *j)
-
-	pip.Stages = append(pip.Stages, *s)
-
-	//Second pipeline
-	pip2 := sdk.Pipeline{
-		ProjectID:  proj.ID,
-		ProjectKey: proj.Key,
-		Name:       "pip2",
-	}
-	require.NoError(t, pipeline.InsertPipeline(api.mustDB(), &pip2))
-	s = sdk.NewStage("stage 1")
-	s.Enabled = true
-	s.PipelineID = pip2.ID
-	require.NoError(t, pipeline.InsertStage(api.mustDB(), s))
-	j = &sdk.Job{
-		Enabled: true,
-		Action: sdk.Action{
-			Enabled: true,
-		},
-	}
-	require.NoError(t, pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2))
-	s.Jobs = append(s.Jobs, *j)
-
-	w := sdk.Workflow{
-		Name:       "test_1",
-		ProjectID:  proj.ID,
-		ProjectKey: proj.Key,
-		WorkflowData: sdk.WorkflowData{
-			Node: sdk.Node{
-				Name: "root",
-				Type: sdk.NodeTypePipeline,
-				Context: &sdk.NodeContext{
-					PipelineID: pip.ID,
-				},
-				Triggers: []sdk.NodeTrigger{
-					{
-						ChildNode: sdk.Node{
-							Name: "child",
-							Type: sdk.NodeTypePipeline,
-							Context: &sdk.NodeContext{
-								PipelineID: pip.ID,
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
-
-	proj2, errP := project.Load(context.TODO(), api.mustDB(), proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
-	require.NoError(t, errP)
-
-	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, *proj2, &w))
-	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, *proj, "test_1", workflow.LoadOptions{})
-	require.NoError(t, err)
-
-	wr, err := workflow.CreateRun(api.mustDB(), w1, sdk.WorkflowRunPostHandlerOption{AuthConsumerID: consumer.ID})
-	assert.NoError(t, err)
-	wr.Workflow = *w1
-	wr.Tag("git.branch", "master")
-	assert.NoError(t, workflow.UpdateWorkflowRun(context.TODO(), api.mustDB(), wr))
-	_, err = workflow.StartWorkflowRun(context.TODO(), db, api.Cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
-		Manual: &sdk.WorkflowNodeRunManual{
-			Username: u.GetUsername(),
-			Payload:  `{"git.branch": "master"}`,
-		},
-	}, *consumer, nil)
-	require.NoError(t, err)
-
-	mockHookService, _ := assets.InsertService(t, db, "Test_deleteWorkflowRunsBranchHandler", sdk.TypeHooks, sdk.AuthConsumerScopeRun)
-	defer func() {
-		_ = services.Delete(db, mockHookService) // nolint
-	}()
-
-	serviceConsumer, err := authentication.LoadConsumerByID(context.TODO(), db, *mockHookService.ConsumerID)
-	require.NoError(t, err)
-
-	session, err := authentication.NewSession(context.TODO(), db, serviceConsumer, 5*time.Minute)
-	require.NoError(t, err)
-
-	jwt, err := authentication.NewSessionJWT(session, "")
-	require.NoError(t, err)
-
-	//Prepare request
-	vars := map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": w1.Name,
-		"branch":           "master",
-	}
-	uri := router.GetRoute("DELETE", api.deleteWorkflowRunsBranchHandler, vars)
-	require.NotEmpty(t, uri)
-	req := assets.NewAuthentifiedRequest(t, nil, jwt, "DELETE", uri, vars)
-
-	//Do the request
-	rec := httptest.NewRecorder()
-	router.Mux.ServeHTTP(rec, req)
-	require.Equal(t, 200, rec.Code)
-
-	//Prepare request
-	vars = map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": w1.Name,
-	}
-	uri = router.GetRoute("GET", api.getWorkflowRunsHandler, vars)
-	require.NotEmpty(t, uri)
-	req = assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, vars)
-
-	//Do the request
-	rec = httptest.NewRecorder()
-	router.Mux.ServeHTTP(rec, req)
-	require.Equal(t, 200, rec.Code)
-
-	var wfRuns []sdk.WorkflowRun
-	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &wfRuns))
-	require.Equal(t, 0, len(wfRuns))
-}
-
 func Test_deleteWorkflowRunHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
@@ -2997,8 +2851,8 @@ func Test_postWorkflowRunHandlerBadResyncOptions(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": w.Name,
+		"key":                      proj.Key,
+		"permWorkflowNameAdvanced": w.Name,
 	}
 	uri := router.GetRoute("POST", api.postWorkflowRunHandler, vars)
 	test.NotEmpty(t, uri)
@@ -3079,8 +2933,8 @@ func Test_postWorkflowRunHandlerRestartOnlyFailed(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": w1.Name,
+		"key":                      proj.Key,
+		"permWorkflowNameAdvanced": w1.Name,
 	}
 	uri := router.GetRoute("POST", api.postWorkflowRunHandler, vars)
 	test.NotEmpty(t, uri)
@@ -3236,8 +3090,8 @@ func Test_CheckRegionDuringInitWorkflow(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": w1.Name,
+		"key":                      proj.Key,
+		"permWorkflowNameAdvanced": w1.Name,
 	}
 	uri := router.GetRoute("POST", api.postWorkflowRunHandler, vars)
 	test.NotEmpty(t, uri)
@@ -3343,8 +3197,8 @@ func Test_postWorkflowRunHandlerRestartResync(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": w1.Name,
+		"key":                      proj.Key,
+		"permWorkflowNameAdvanced": w1.Name,
 	}
 	uri := router.GetRoute("POST", api.postWorkflowRunHandler, vars)
 	test.NotEmpty(t, uri)

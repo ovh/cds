@@ -731,8 +731,8 @@ func Test_PermissionOnWorkflowInferiorOfProject(t *testing.T) {
 
 	// Try to update workflow
 	vars = map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": wfLoaded.Name,
+		"key":                      proj.Key,
+		"permWorkflowNameAdvanced": wfLoaded.Name,
 	}
 	uri = router.GetRoute("PUT", api.putWorkflowHandler, vars)
 	require.NotEmpty(t, uri)
@@ -751,8 +751,8 @@ func Test_PermissionOnWorkflowInferiorOfProject(t *testing.T) {
 
 	// Try to run workflow
 	vars = map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": wfLoaded.Name,
+		"key":                      proj.Key,
+		"permWorkflowNameAdvanced": wfLoaded.Name,
 	}
 	uri = router.GetRoute("POST", api.postWorkflowRunHandler, vars)
 	require.NotEmpty(t, uri)
@@ -792,8 +792,8 @@ func Test_PermissionOnWorkflowInferiorOfProject(t *testing.T) {
 
 	// try to run the workflow with user in read only
 	vars = map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": wfLoaded.Name,
+		"key":                      proj.Key,
+		"permWorkflowNameAdvanced": wfLoaded.Name,
 	}
 	uri = router.GetRoute("POST", api.postWorkflowRunHandler, vars)
 	require.NotEmpty(t, uri)
@@ -839,8 +839,8 @@ func Test_postWorkflowRunHandler_WithRestrictionOnNode(t *testing.T) {
 		Permission: sdk.PermissionReadExecute,
 	}}
 	uri := router.GetRoute(http.MethodPut, api.putWorkflowHandler, map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": w.Name,
+		"key":                      proj.Key,
+		"permWorkflowNameAdvanced": w.Name,
 	})
 	require.NotEmpty(t, uri)
 	req := assets.NewJWTAuthentifiedRequest(t, jwtLambda1, http.MethodPut, uri, &w)
@@ -860,8 +860,8 @@ func Test_postWorkflowRunHandler_WithRestrictionOnNode(t *testing.T) {
 
 	// User 1 should be able to run the workflow
 	uri = router.GetRoute(http.MethodPost, api.postWorkflowRunHandler, map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": w.Name,
+		"key":                      proj.Key,
+		"permWorkflowNameAdvanced": w.Name,
 	})
 	require.NotEmpty(t, uri)
 	req = assets.NewJWTAuthentifiedRequest(t, jwtLambda1, http.MethodPost, uri, &sdk.WorkflowRunPostHandlerOption{
@@ -878,8 +878,8 @@ func Test_postWorkflowRunHandler_WithRestrictionOnNode(t *testing.T) {
 
 	// User 2 should not be able to run the workflow
 	uri = router.GetRoute(http.MethodPost, api.postWorkflowRunHandler, map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": w.Name,
+		"key":                      proj.Key,
+		"permWorkflowNameAdvanced": w.Name,
 	})
 	require.NotEmpty(t, uri)
 	req = assets.NewJWTAuthentifiedRequest(t, jwtLambda2, http.MethodPost, uri, &sdk.WorkflowRunPostHandlerOption{

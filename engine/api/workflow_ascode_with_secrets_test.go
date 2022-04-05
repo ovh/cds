@@ -323,8 +323,8 @@ version: v1.0`),
 
 	// RUN IT
 	vars := map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": w.Name,
+		"key":                      proj.Key,
+		"permWorkflowNameAdvanced": w.Name,
 	}
 	uri := router.GetRoute("POST", api.postWorkflowRunHandler, vars)
 	test.NotEmpty(t, uri)

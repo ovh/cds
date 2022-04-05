@@ -17,7 +17,7 @@ import (
 func (api *API) getProjectIntegrationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		projectKey := vars[permProjectKey]
+		projectKey := vars["permProjectKeyWithHooksAllowed"]
 		integrationName := vars["integrationName"]
 
 		var integ sdk.ProjectIntegration
@@ -25,7 +25,7 @@ func (api *API) getProjectIntegrationHandler() service.Handler {
 
 		clearPassword := service.FormBool(r, "clearPassword")
 		if clearPassword {
-			if !isService(ctx) && !isWorker(ctx) {
+			if !isHooks(ctx) && !isWorker(ctx) {
 				return sdk.WithStack(sdk.ErrForbidden)
 			}
 			integ, err = integration.LoadProjectIntegrationByNameWithClearPassword(ctx, api.mustDB(), projectKey, integrationName)
@@ -52,7 +52,7 @@ func (api *API) getProjectIntegrationHandler() service.Handler {
 func (api *API) putProjectIntegrationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		projectKey := vars[permProjectKey]
+		projectKey := vars["permProjectKeyWithHooksAllowed"]
 		integrationName := vars["integrationName"]
 
 		var projectIntegration sdk.ProjectIntegration
@@ -141,7 +141,7 @@ func (api *API) putProjectIntegrationHandler() service.Handler {
 func (api *API) deleteProjectIntegrationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		projectKey := vars[permProjectKey]
+		projectKey := vars["permProjectKeyWithHooksAllowed"]
 		integrationName := vars["integrationName"]
 
 		p, err := project.Load(ctx, api.mustDB(), projectKey, project.LoadOptions.WithIntegrations)

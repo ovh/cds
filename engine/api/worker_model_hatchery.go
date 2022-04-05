@@ -14,8 +14,7 @@ import (
 
 func (api *API) putBookWorkerModelHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// this handler should only answer to an hatchery
-		if ok := isHatchery(ctx); !ok {
+		if !isHatchery(ctx) {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 

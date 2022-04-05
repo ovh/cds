@@ -119,6 +119,10 @@ func (api *API) postGroupHandler() service.Handler {
 
 func (api *API) putGroupHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if isService(ctx) {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
+
 		vars := mux.Vars(r)
 		groupName := vars["permGroupName"]
 

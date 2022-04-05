@@ -85,6 +85,14 @@ func isHatchery(ctx context.Context) bool {
 	return c.Service != nil && c.Service.Type == sdk.TypeHatchery
 }
 
+func isHatcheryShared(ctx context.Context) bool {
+	c := getAPIConsumer(ctx)
+	if c == nil {
+		return false
+	}
+	return isHatchery(ctx) && c.GroupIDs.Contains(group.SharedInfraGroup.ID)
+}
+
 func isCDN(ctx context.Context) bool {
 	c := getAPIConsumer(ctx)
 	if c == nil {

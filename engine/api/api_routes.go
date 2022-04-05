@@ -168,7 +168,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{permProjectKey}/variable/{name}/audit", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getVariableAuditInProjectHandler))
 	r.Handle("/project/{permProjectKey}/applications", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getApplicationsHandler), r.POST(api.addApplicationHandler))
 	r.Handle("/project/{permProjectKey}/integrations", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getProjectIntegrationsHandler), r.POST(api.postProjectIntegrationHandler))
-	r.Handle("/project/{permProjectKey}/integrations/{integrationName}", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getProjectIntegrationHandler), r.PUT(api.putProjectIntegrationHandler), r.DELETE(api.deleteProjectIntegrationHandler))
+	r.Handle("/project/{permProjectKeyWithHooksAllowed}/integrations/{integrationName}", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getProjectIntegrationHandler), r.PUT(api.putProjectIntegrationHandler), r.DELETE(api.deleteProjectIntegrationHandler))
 	r.Handle("/project/{permProjectKey}/integrations/{integrationName}/workerhooks", Scopes(sdk.AuthConsumerScopeProject, sdk.AuthConsumerScopeRunExecution), r.GET(api.getProjectIntegrationWorkerHookHandler), r.POST(api.postProjectIntegrationWorkerHookHandler))
 	r.Handle("/project/{permProjectKey}/notifications", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getProjectNotificationsHandler, DEPRECATED))
 	r.Handle("/project/{permProjectKey}/keys", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getKeysInProjectHandler), r.POST(api.addKeyInProjectHandler))
@@ -223,7 +223,7 @@ func (api *API) InitRouter() {
 
 	r.Handle("/project/{key}/type/{type}/access", Scope(sdk.AuthConsumerScopeService), r.GET(api.getProjectAccessHandler))
 	r.Handle("/project/{permProjectKey}/workflows", Scope(sdk.AuthConsumerScopeProject), r.POST(api.postWorkflowHandler), r.GET(api.getWorkflowsHandler))
-	r.Handle("/project/{key}/workflows/{permWorkflowName}", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getWorkflowHandler), r.PUT(api.putWorkflowHandler), r.DELETE(api.deleteWorkflowHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowNameAdvanced}", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getWorkflowHandler), r.PUT(api.putWorkflowHandler), r.DELETE(api.deleteWorkflowHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/delete/dependencies", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getWorkflowDependenciesHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/retention/maxruns", Scope(sdk.AuthConsumerScopeProject), r.POST(api.postWorkflowMaxRunHandler, service.OverrideAuth(api.authAdminMiddleware)))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/retention/dryrun", Scope(sdk.AuthConsumerScopeProject), r.POST(api.postWorkflowRetentionPolicyDryRun))
@@ -265,7 +265,7 @@ func (api *API) InitRouter() {
 
 	// Workflows run
 	r.Handle("/project/{permProjectKey}/runs", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getWorkflowAllRunsHandler))
-	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowRunsHandler), r.POSTEXECUTE(api.postWorkflowRunHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowNameAdvanced}/runs", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowRunsHandler), r.POSTEXECUTE(api.postWorkflowRunHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/branch/{branch}", Scope(sdk.AuthConsumerScopeRun), r.DELETE(api.deleteWorkflowRunsBranchHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/latest", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getLatestWorkflowRunHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/tags", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowRunTagsHandler))
@@ -289,7 +289,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/hook/triggers/condition", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowTriggerHookConditionHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/triggers/condition", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowTriggerConditionHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}/release", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.releaseApplicationWorkflowHandler, MaintenanceAware()))
-	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/hooks/{hookRunID}/callback", Scope(sdk.AuthConsumerScopeRun), r.POST(api.postWorkflowJobHookCallbackHandler, MaintenanceAware()))
+	r.Handle("/project/{key}/workflows/{permWorkflowNameAdvanced}/runs/{number}/hooks/{hookRunID}/callback", Scope(sdk.AuthConsumerScopeRun), r.POST(api.postWorkflowJobHookCallbackHandler, MaintenanceAware()))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/hooks/{hookRunID}/details", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getWorkflowJobHookDetailsHandler))
 
 	// Environment

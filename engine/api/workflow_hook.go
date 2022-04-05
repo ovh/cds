@@ -242,9 +242,13 @@ func (api *API) putWorkflowHookModelHandler() service.Handler {
 
 func (api *API) postWorkflowJobHookCallbackHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if !isHooks(ctx) {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
+
 		vars := mux.Vars(r)
 		key := vars["key"]
-		workflowName := vars["permWorkflowName"]
+		workflowName := vars["permWorkflowNameAdvanced"]
 		hookRunID := vars["hookRunID"]
 		number, err := requestVarInt(r, "number")
 		if err != nil {
@@ -279,7 +283,7 @@ func (api *API) postWorkflowJobHookCallbackHandler() service.Handler {
 			DisableDetailledNodeRun: true,
 		})
 		if err != nil {
-			return sdk.WrapError(err, "cannot load workflow run")
+			return sdk.WrapError(err, "cannot load workflow %s/%s run %d", key, workflowName, number)
 		}
 
 		secrets, err := workflow.LoadDecryptSecrets(ctx, tx, wr, nil)

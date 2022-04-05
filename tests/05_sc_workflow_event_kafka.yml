@@ -30,6 +30,7 @@ testcases:
   - script: kafkacat -b localhost:9092 -t test.hook -T -P -l ./fixtures/ITSCWRKFLW18/input-kafka.json
     retry: 10
     delay: 10
+    timeout: 100
 
 - name: check event in topic test.eventsproject
   steps:
@@ -37,10 +38,11 @@ testcases:
     info: "kafka message is: {{.result.systemout}}"
     assertions:
     - result.code ShouldEqual 0
+    - 'result.systemout MustNotContainSubstring "Leader not available"'
     - "result.systemoutjson.id ShouldNotBeEmpty"
     retry: 10
     delay: 10
-    timeout: 300
+    timeout: 100
 
 - name: check event in topic test.eventspublic
   steps:

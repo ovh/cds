@@ -82,8 +82,8 @@ func Test_postUserFavoriteHandler(t *testing.T) {
 	assert.True(t, pRes.Favorite, "project favorite flag should be set")
 
 	uri = api.Router.GetRoute(http.MethodGet, api.getWorkflowHandler, map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": wkf.Name,
+		"key":                      proj.Key,
+		"permWorkflowNameAdvanced": wkf.Name,
 	})
 	req = assets.NewJWTAuthentifiedRequest(t, jwt, http.MethodGet, uri, nil)
 	w = httptest.NewRecorder()

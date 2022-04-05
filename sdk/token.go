@@ -523,11 +523,12 @@ func (c AuthConsumer) GetGroupIDs() []int64 {
 }
 
 func (c AuthConsumer) Admin() bool {
-	return c.AuthentifiedUser.Ring == UserRingAdmin && c.Worker == nil
+	// Worker and Service can't be considered as admin
+	return c.AuthentifiedUser.Ring == UserRingAdmin && c.Worker == nil && c.Service == nil
 }
 
 func (c AuthConsumer) Maintainer() bool {
-	return (c.AuthentifiedUser.Ring == UserRingMaintainer || c.AuthentifiedUser.Ring == UserRingAdmin) && c.Worker == nil
+	return (c.AuthentifiedUser.Ring == UserRingMaintainer || c.AuthentifiedUser.Ring == UserRingAdmin) && c.Worker == nil && c.Service == nil
 }
 
 func (c AuthConsumer) GetUsername() string {

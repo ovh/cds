@@ -706,9 +706,7 @@ func UpdateRunNum(db gorp.SqlExecutor, w *sdk.Workflow, num int64) error {
 		return nil
 	}
 
-	query := `
-		UPDATE workflow_sequences set current_val = $1 WHERE workflow_id = $2
-	`
+	query := `UPDATE workflow_sequences set current_val = $1 WHERE workflow_id = $2`
 	if _, err := db.Exec(query, num, w.ID); err != nil {
 		return sdk.WrapError(err, "Cannot update run number")
 	}
