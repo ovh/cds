@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/jfrog/jfrog-client-go/distribution/services"
@@ -34,7 +35,7 @@ func (actPlugin *artifactoryReleaseBundleDistributePlugin) Manifest(_ context.Co
 	}, nil
 }
 
-func (actPlugin *artifactoryReleaseBundleDistributePlugin) Run(_ context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
+func (actPlugin *artifactoryReleaseBundleDistributePlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
 	name := q.GetOptions()["name"]
 	version := q.GetOptions()["version"]
 	url := q.GetOptions()["url"]
@@ -63,8 +64,11 @@ func (actPlugin *artifactoryReleaseBundleDistributePlugin) Run(_ context.Context
 		return actionplugin.Fail("missing Artifactory Distribution Token")
 	}
 
+	ctx, cancel := context.WithTimeout(ctx, 15*time.Minute)
+	defer cancel()
+
 	log.SetLogger(log.NewLogger(log.INFO, os.Stdout))
-	distriClient, err := art.CreateDistributionClient(url, token)
+	distriClient, err := art.CreateDistributionClient(ctx, url, token)
 	if err != nil {
 		return actionplugin.Fail("unable to create distribution client: %v", err)
 	}
