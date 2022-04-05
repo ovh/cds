@@ -28,6 +28,7 @@ func main() {
 		encrypt(),
 		contexts(),
 		environment(),
+		experimental(),
 		events(),
 		group(),
 		health(),

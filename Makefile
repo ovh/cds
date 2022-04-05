@@ -115,3 +115,5 @@ tidy:
 	done;
 	@echo "Running tidy on tests/fixtures/04SCWorkflowRunSimplePlugin"
 	@(cd tests/fixtures/04SCWorkflowRunSimplePlugin && go mod tidy)
+	@(cd sdk/interpolate && go mod tidy)
+	@(cd tools/smtpmock && go mod tidy)

@@ -1,0 +1,8 @@
+version: v1.0
+name: my_vcs_server
+type: bitbucketserver
+description: "it's the test vcs server on project"
+url: "http://my-vcs-server.localhost"
+auth:
+    user: the-username
+    password: the-password
