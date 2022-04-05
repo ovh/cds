@@ -2812,9 +2812,9 @@ func Test_deleteWorkflowRunHandler(t *testing.T) {
 	assert.NoError(t, err)
 	//Prepare request
 	vars := map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": w1.Name,
-		"number":           fmt.Sprintf("%d", wr.Number),
+		"key":                      proj.Key,
+		"permWorkflowNameAdvanced": w1.Name,
+		"number":                   fmt.Sprintf("%d", wr.Number),
 	}
 	uri := router.GetRoute("DELETE", api.deleteWorkflowRunHandler, vars)
 	test.NotEmpty(t, uri)
