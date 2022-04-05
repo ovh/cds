@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/jfrog/jfrog-client-go/artifactory/services"
@@ -60,7 +61,7 @@ func (e *artifactoryDownloadArtifactPlugin) Manifest(_ context.Context, _ *empty
 	}, nil
 }
 
-func (e *artifactoryDownloadArtifactPlugin) Run(_ context.Context, opts *integrationplugin.RunQuery) (*integrationplugin.RunResult, error) {
+func (e *artifactoryDownloadArtifactPlugin) Run(ctx context.Context, opts *integrationplugin.RunQuery) (*integrationplugin.RunResult, error) {
 	cdsRepo := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactoryConfigCdsRepository)]
 	artifactoryURL := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactoryConfigURL)]
 	token := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactoryConfigToken)]
@@ -75,11 +76,14 @@ func (e *artifactoryDownloadArtifactPlugin) Run(_ context.Context, opts *integra
 		return fail("unable to read file permission %s: %v", permS, err)
 	}
 
-	artiClient, err := art.CreateArtifactoryClient(artifactoryURL, token)
+	ctx, cancel := context.WithTimeout(ctx, 15*time.Minute)
+	defer cancel()
+
+	artiClient, err := art.CreateArtifactoryClient(ctx, artifactoryURL, token)
 	if err != nil {
 		return fail("unable to create artifactory client: %v", err)
 	}
-	log.SetLogger(log.NewLogger(log.ERROR, os.Stdout))
+	log.SetLogger(log.NewLogger(log.INFO, os.Stdout))
 	fileutils.SetTempDirBase(opts.GetOptions()["cds.workspace"])
 
 	params := services.NewDownloadParams()

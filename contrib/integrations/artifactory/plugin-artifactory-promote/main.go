@@ -6,6 +6,7 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/jfrog/jfrog-client-go/utils/log"
@@ -48,7 +49,7 @@ func (e *artifactoryPromotePlugin) Manifest(_ context.Context, _ *empty.Empty) (
 	}, nil
 }
 
-func (e *artifactoryPromotePlugin) Run(_ context.Context, opts *integrationplugin.RunQuery) (*integrationplugin.RunResult, error) {
+func (e *artifactoryPromotePlugin) Run(ctx context.Context, opts *integrationplugin.RunQuery) (*integrationplugin.RunResult, error) {
 	artifactoryURL := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactoryConfigURL)]
 	token := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactoryConfigToken)]
 
@@ -68,9 +69,12 @@ func (e *artifactoryPromotePlugin) Run(_ context.Context, opts *integrationplugi
 		return fail("unable to list run results: %v", err)
 	}
 
-	log.SetLogger(log.NewLogger(log.ERROR, os.Stdout))
+	log.SetLogger(log.NewLogger(log.INFO, os.Stdout))
 
-	artiClient, err := art.CreateArtifactoryClient(artifactoryURL, token)
+	ctx, cancel := context.WithTimeout(ctx, 15*time.Minute)
+	defer cancel()
+
+	artiClient, err := art.CreateArtifactoryClient(ctx, artifactoryURL, token)
 	if err != nil {
 		return fail("unable to create artifactory client: %v", err)
 	}

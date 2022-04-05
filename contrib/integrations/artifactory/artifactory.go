@@ -1,6 +1,7 @@
 package art
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"strings"
@@ -50,7 +51,7 @@ type DistribClient struct {
 	ServiceConfig config.Config
 }
 
-func CreateDistributionClient(url, token string) (DistribClient, error) {
+func CreateDistributionClient(ctx context.Context, url, token string) (DistribClient, error) {
 	dtb := authdistrib.NewDistributionDetails()
 	dtb.SetUrl(strings.Replace(url, "/artifactory/", "/distribution/", -1))
 	dtb.SetAccessToken(token)
@@ -58,6 +59,9 @@ func CreateDistributionClient(url, token string) (DistribClient, error) {
 		SetServiceDetails(dtb).
 		SetThreads(1).
 		SetDryRun(false).
+		SetContext(ctx).
+		SetHttpTimeout(60 * time.Second).
+		SetHttpRetries(5).
 		Build()
 	if err != nil {
 		return DistribClient{}, fmt.Errorf("unable to create service config: %v", err)
@@ -69,7 +73,7 @@ func CreateDistributionClient(url, token string) (DistribClient, error) {
 	return DistribClient{Dsm: dsm, ServiceConfig: serviceConfig}, nil
 }
 
-func CreateArtifactoryClient(url, token string) (artifactory.ArtifactoryServicesManager, error) {
+func CreateArtifactoryClient(ctx context.Context, url, token string) (artifactory.ArtifactoryServicesManager, error) {
 	rtDetails := auth.NewArtifactoryDetails()
 	rtDetails.SetUrl(strings.TrimSuffix(url, "/") + "/") // ensure having '/' at the end
 	rtDetails.SetAccessToken(token)
@@ -77,6 +81,9 @@ func CreateArtifactoryClient(url, token string) (artifactory.ArtifactoryServices
 		SetServiceDetails(rtDetails).
 		SetThreads(1).
 		SetDryRun(false).
+		SetContext(ctx).
+		SetHttpTimeout(60 * time.Second).
+		SetHttpRetries(5).
 		Build()
 	if err != nil {
 		return nil, fmt.Errorf("unable to create service config: %v", err)
