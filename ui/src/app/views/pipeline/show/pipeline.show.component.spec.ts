@@ -18,18 +18,18 @@ import { AddPipelineParameter, DeletePipelineParameter, FetchPipeline, UpdatePip
 import { NgxsStoreModule } from 'app/store/store.module';
 import { of } from 'rxjs';
 import 'rxjs/add/observable/of';
-import { Parameter } from '../../../model/parameter.model';
-import { Pipeline } from '../../../model/pipeline.model';
-import { Project } from '../../../model/project.model';
-import { KeyService } from '../../../service/keys/keys.service';
-import { NavbarService } from '../../../service/navbar/navbar.service';
-import { PipelineCoreService } from '../../../service/pipeline/pipeline.core.service';
-import { PipelineService } from '../../../service/pipeline/pipeline.service';
-import { ProjectService } from '../../../service/project/project.service';
-import { ProjectStore } from '../../../service/project/project.store';
-import { ParameterEvent } from '../../../shared/parameter/parameter.event.model';
-import { SharedModule } from '../../../shared/shared.module';
-import { ToastService } from '../../../shared/toast/ToastService';
+import { Parameter } from 'app/model/parameter.model';
+import { Pipeline } from 'app/model/pipeline.model';
+import { Project } from 'app/model/project.model';
+import { KeyService } from 'app/service/keys/keys.service';
+import { NavbarService } from 'app/service/navbar/navbar.service';
+import { PipelineCoreService } from 'app/service/pipeline/pipeline.core.service';
+import { PipelineService } from 'app/service/pipeline/pipeline.service';
+import { ProjectService } from 'app/service/project/project.service';
+import { ProjectStore } from 'app/service/project/project.store';
+import { ParameterEvent } from 'app/shared/parameter/parameter.event.model';
+import { SharedModule } from 'app/shared/shared.module';
+import { ToastService } from 'app/shared/toast/ToastService';
 import { PipelineModule } from '../pipeline.module';
 import { PipelineShowComponent } from './pipeline.show.component';
 
@@ -96,7 +96,7 @@ describe('CDS: Pipeline Show', () => {
         fixture.componentInstance.project = project;
         fixture.componentInstance.ngOnInit();
 
-        expect(fixture.componentInstance.selectedTab).toBe('workflow');
+        expect(fixture.componentInstance.selectedTab.key).toBe('workflow');
         expect(fixture.componentInstance.pipeline.name).toBe('pip1');
         expect(fixture.componentInstance.project.key).toBe('key1');
 
