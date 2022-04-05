@@ -173,8 +173,9 @@ export class WorkflowNodeRunComponent implements OnInit, OnDestroy {
         }
 
         let testTitle = this.nodeRunTests?.total > 1? 'Tests' : 'Test';
-        let testIcon = 'green check no-mrr';
+        let testIcon: string
         if (this.nodeRunTests?.total > 0) {
+            testIcon = 'green check no-mrr';
             testTitle = this.nodeRunTests?.total + ' ' + testTitle;
         }
         if (this.nodeRunTests.ko > 0) {
