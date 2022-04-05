@@ -96,7 +96,6 @@ describe('CDS: Pipeline Show', () => {
         fixture.componentInstance.project = project;
         fixture.componentInstance.ngOnInit();
 
-        expect(fixture.componentInstance.selectedTab.key).toBe('workflow');
         expect(fixture.componentInstance.pipeline.name).toBe('pip1');
         expect(fixture.componentInstance.project.key).toBe('key1');
 
