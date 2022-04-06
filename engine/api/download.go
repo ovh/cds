@@ -24,11 +24,15 @@ func (api *API) downloadsHandler() service.Handler {
 func (api *API) downloadHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		name := vars["name"]
-		os := vars["os"]
-		arch := vars["arch"]
+		name := sdk.NoPath(vars["name"])
+		os := sdk.NoPath(vars["os"])
+		arch := sdk.NoPath(vars["arch"])
 		r.ParseForm() // nolint
-		variant := r.Form.Get("variant")
+		variant := sdk.NoPath(r.Form.Get("variant"))
+
+		if !sdk.IsInArray(variant, []string{"", "nokeychain", "keychain"}) {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid variant: %s", variant)
+		}
 
 		if err := download.CheckBinary(ctx, api.getDownloadConf(), name, os, arch, variant); err != nil {
 			return err

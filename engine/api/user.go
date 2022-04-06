@@ -83,7 +83,6 @@ func (api *API) putUserHandler() service.Handler {
 		}
 
 		newUser := *oldUser
-		newUser.Username = data.Username
 		newUser.Fullname = data.Fullname
 
 		// Only an admin can change the ring of a user
