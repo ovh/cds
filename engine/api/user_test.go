@@ -65,7 +65,6 @@ func Test_putUserHandler(t *testing.T) {
 	assets.DeleteAdmins(t, db)
 
 	initial, jwtInitialRaw := assets.InsertLambdaUser(t, db)
-	initialNewUsername := sdk.RandomString(10)
 	initialNewFullname := sdk.RandomString(10)
 	admin1, jwtAdmin1Raw := assets.InsertAdminUser(t, db)
 	admin2, jwtAdmin2Raw := assets.InsertAdminUser(t, db)
@@ -79,25 +78,25 @@ func Test_putUserHandler(t *testing.T) {
 		ExpectedStatus int
 	}{
 		{
-			Name:           "A lambda user can change its username or fullname",
+			Name:           "A lambda user can't change username but can change fullname",
 			JWT:            jwtInitialRaw,
 			TargetUsername: initial.Username,
 			Data: sdk.AuthentifiedUser{
-				Username: initialNewUsername,
+				Username: sdk.RandomString(10),
 				Fullname: initialNewFullname,
 				Ring:     initial.Ring,
 			},
 			Expected: sdk.AuthentifiedUser{
-				Username: initialNewUsername,
+				Username: initial.Username,
 				Fullname: initialNewFullname,
 				Ring:     initial.Ring,
 			},
 			ExpectedStatus: http.StatusOK,
 		},
 		{
-			Name:           "A lambda user can rename to an existing username",
+			Name:           "A lambda user can't rename to an existing username",
 			JWT:            jwtInitialRaw,
-			TargetUsername: initialNewUsername,
+			TargetUsername: initial.Username,
 			Data: sdk.AuthentifiedUser{
 				Username: admin1.Username,
 				Fullname: initialNewFullname,
@@ -108,14 +107,14 @@ func Test_putUserHandler(t *testing.T) {
 		{
 			Name:           "A lambda user can't change its ring",
 			JWT:            jwtInitialRaw,
-			TargetUsername: initialNewUsername,
+			TargetUsername: initial.Username,
 			Data: sdk.AuthentifiedUser{
-				Username: initialNewUsername,
+				Username: initial.Username,
 				Fullname: initialNewFullname,
 				Ring:     sdk.UserRingAdmin,
 			},
 			Expected: sdk.AuthentifiedUser{
-				Username: initialNewUsername,
+				Username: initial.Username,
 				Fullname: initialNewFullname,
 				Ring:     initial.Ring,
 			},
@@ -124,14 +123,14 @@ func Test_putUserHandler(t *testing.T) {
 		{
 			Name:           "A admin user can change the ring of a user",
 			JWT:            jwtAdmin1Raw,
-			TargetUsername: initialNewUsername,
+			TargetUsername: initial.Username,
 			Data: sdk.AuthentifiedUser{
-				Username: initialNewUsername,
+				Username: initial.Username,
 				Fullname: initialNewFullname,
 				Ring:     sdk.UserRingMaintainer,
 			},
 			Expected: sdk.AuthentifiedUser{
-				Username: initialNewUsername,
+				Username: initial.Username,
 				Fullname: initialNewFullname,
 				Ring:     sdk.UserRingMaintainer,
 			},
@@ -167,15 +166,15 @@ func Test_putUserHandler(t *testing.T) {
 		{
 			Name:           "A lambda user can't change its organization",
 			JWT:            jwtInitialRaw,
-			TargetUsername: initialNewUsername,
+			TargetUsername: initial.Username,
 			Data: sdk.AuthentifiedUser{
-				Username:     initialNewUsername,
+				Username:     initial.Username,
 				Fullname:     initialNewFullname,
 				Ring:         sdk.UserRingMaintainer,
 				Organization: "my-org",
 			},
 			Expected: sdk.AuthentifiedUser{
-				Username:     initialNewUsername,
+				Username:     initial.Username,
 				Fullname:     initialNewFullname,
 				Ring:         sdk.UserRingMaintainer,
 				Organization: "",
@@ -185,15 +184,15 @@ func Test_putUserHandler(t *testing.T) {
 		{
 			Name:           "A admin user can set user organization",
 			JWT:            jwtAdmin2Raw,
-			TargetUsername: initialNewUsername,
+			TargetUsername: initial.Username,
 			Data: sdk.AuthentifiedUser{
-				Username:     initialNewUsername,
+				Username:     initial.Username,
 				Fullname:     initialNewFullname,
 				Ring:         sdk.UserRingMaintainer,
 				Organization: "my-org",
 			},
 			Expected: sdk.AuthentifiedUser{
-				Username:     initialNewUsername,
+				Username:     initial.Username,
 				Fullname:     initialNewFullname,
 				Ring:         sdk.UserRingMaintainer,
 				Organization: "my-org",
@@ -203,9 +202,9 @@ func Test_putUserHandler(t *testing.T) {
 		{
 			Name:           "A admin user can't change user organization",
 			JWT:            jwtAdmin2Raw,
-			TargetUsername: initialNewUsername,
+			TargetUsername: initial.Username,
 			Data: sdk.AuthentifiedUser{
-				Username:     initialNewUsername,
+				Username:     initial.Username,
 				Fullname:     initialNewFullname,
 				Ring:         sdk.UserRingMaintainer,
 				Organization: "my-other-org",
