@@ -56,7 +56,7 @@ func NewCheck() (*Check, error) {
 	state.PreloadModule("json", luajson.Loader)
 
 	// Sandboxing lua engine
-	if err := state.DoString("coroutine=nil;debug=nil;io=nil;open=nil;os.rename=nil;os.remove=nil;os.exit=nil;os.clock=nil;os.execute=nil;os.getenv=nil;os.setlocale=nil;os.tmpname=nil"); err != nil {
+	if err := state.DoString("coroutine=nil;debug=nil;io=nil;open=nil;dofile=nil;loadfile=nil;getfenv=nil;print=nil;pcall=nil;os.rename=nil;os.remove=nil;os.exit=nil;os.clock=nil;os.execute=nil;os.getenv=nil;os.setlocale=nil;os.tmpname=nil"); err != nil {
 		return nil, err
 	}
 
