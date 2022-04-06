@@ -71,7 +71,7 @@ func TestCleanPath(t *testing.T) {
 			want: "foobar",
 		},
 		{
-			name: "test1",
+			name: "test2",
 			args: args{
 				path: "/foo/bar/biz",
 			},
@@ -102,6 +102,20 @@ func TestNoPath(t *testing.T) {
 				path: "/foo/bar/biz",
 			},
 			want: "biz",
+		},
+		{
+			name: "test2",
+			args: args{
+				path: "",
+			},
+			want: "",
+		},
+		{
+			name: "test3",
+			args: args{
+				path: ".",
+			},
+			want: ".",
 		},
 	}
 	for _, tt := range tests {

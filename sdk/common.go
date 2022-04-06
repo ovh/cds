@@ -364,5 +364,8 @@ func CleanPath(path string) string {
 }
 
 func NoPath(path string) string {
+	if path == "" {
+		return ""
+	}
 	return filepath.Base(CleanPath(path))
 }
