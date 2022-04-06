@@ -141,7 +141,8 @@ func CheckAndExecuteTemplate(ctx context.Context, db *gorp.DbMap, store cache.St
 
 	// Check if the template can be used by the current consumer
 	var groupPermissionValid bool
-	if consumer.Maintainer() {
+	// Maintainer and the Hooks micro-service are allowed
+	if consumer.Maintainer() || (consumer.Service != nil && consumer.Service.Type == sdk.TypeHooks) {
 		groupPermissionValid = true
 	} else if grp.ID == group.SharedInfraGroup.ID {
 		groupPermissionValid = true
@@ -155,6 +156,7 @@ func CheckAndExecuteTemplate(ctx context.Context, db *gorp.DbMap, store cache.St
 		}
 	}
 	if !groupPermissionValid {
+		log.Error(ctx, "invalid permission for template %s/%s %s and consumer %s (%+v)", groupName, templateSlug, templateVersion, consumer.ID, consumer.GetGroupIDs())
 		return allMsgs, nil, sdk.NewErrorFrom(sdk.ErrWrongRequest, "could not find given workflow template")
 	}
 
