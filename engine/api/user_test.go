@@ -94,17 +94,6 @@ func Test_putUserHandler(t *testing.T) {
 			ExpectedStatus: http.StatusOK,
 		},
 		{
-			Name:           "A lambda user can't rename to an existing username",
-			JWT:            jwtInitialRaw,
-			TargetUsername: initial.Username,
-			Data: sdk.AuthentifiedUser{
-				Username: admin1.Username,
-				Fullname: initialNewFullname,
-				Ring:     initial.Ring,
-			},
-			ExpectedStatus: http.StatusBadRequest,
-		},
-		{
 			Name:           "A lambda user can't change its ring",
 			JWT:            jwtInitialRaw,
 			TargetUsername: initial.Username,
