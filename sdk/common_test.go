@@ -46,3 +46,69 @@ func TestPathIsAbs(t *testing.T) {
 	assert.True(t, PathIsAbs(`/tmp`))
 	assert.False(t, PathIsAbs(`tmp`))
 }
+
+func TestCleanPath(t *testing.T) {
+	type args struct {
+		path string
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "test1",
+			args: args{
+				path: "../../foobar",
+			},
+			want: "foobar",
+		},
+		{
+			name: "test1",
+			args: args{
+				path: "./foobar",
+			},
+			want: "foobar",
+		},
+		{
+			name: "test1",
+			args: args{
+				path: "/foo/bar/biz",
+			},
+			want: "/foo/bar/biz",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := CleanPath(tt.args.path); got != tt.want {
+				t.Errorf("CleanPath() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestNoPath(t *testing.T) {
+	type args struct {
+		path string
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "test1",
+			args: args{
+				path: "/foo/bar/biz",
+			},
+			want: "biz",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := NoPath(tt.args.path); got != tt.want {
+				t.Errorf("NoPath() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

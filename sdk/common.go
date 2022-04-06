@@ -13,6 +13,7 @@ import (
 	"io"
 	"os"
 	"path"
+	"path/filepath"
 	"reflect"
 	"regexp"
 	"runtime"
@@ -337,4 +338,31 @@ func JSONUnmarshal(btes []byte, i interface{}) error {
 type KeyValues struct {
 	Key    string
 	Values []string
+}
+
+func CleanPath(path string) string {
+	// Deal with empty strings nicely.
+	if path == "" {
+		return ""
+	}
+
+	// Ensure that all paths are cleaned (especially problematic ones like
+	// "/../../../../../" which can cause lots of issues).
+	path = filepath.Clean(path)
+
+	// If the path isn't absolute, we need to do more processing to fix paths
+	// such as "../../../../<etc>/some/path". We also shouldn't convert absolute
+	// paths to relative ones.
+	if !filepath.IsAbs(path) {
+		path = filepath.Clean(string(os.PathSeparator) + path)
+		// This can't fail, as (by definition) all paths are relative to root.
+		path, _ = filepath.Rel(string(os.PathSeparator), path)
+	}
+
+	// Clean the path again for good measure.
+	return filepath.Clean(path)
+}
+
+func NoPath(path string) string {
+	return filepath.Base(CleanPath(path))
 }

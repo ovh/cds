@@ -124,12 +124,12 @@ func BinaryFilename(name, os, arch, variant string) string {
 	if os == "windows" {
 		suffix = ".exe"
 	}
-	return fmt.Sprintf("%s%s-%s-%s%s%s", prefix, name, os, getArchName(arch), variant, suffix)
+	return NoPath(fmt.Sprintf("%s%s-%s-%s%s%s", prefix, name, os, getArchName(arch), variant, suffix))
 }
 
 // IsDownloadedBinary returns true if the binary is already downloaded, false otherwise
 func IsDownloadedBinary(directoriesDownload, filename string) bool {
-	if _, err := os.Stat(path.Join(directoriesDownload, filename)); err == nil {
+	if _, err := os.Stat(CleanPath(path.Join(directoriesDownload, filename))); err == nil {
 		return true
 	}
 	return false
