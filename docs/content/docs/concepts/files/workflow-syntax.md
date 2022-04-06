@@ -27,6 +27,9 @@ workflow:
 hooks:
   build:
   - type: RepositoryWebHook
+integrations:
+  my-artifactory-integration-name:
+    type: artifact_manager
 notifications:
 - type: email
   pipelines:
@@ -80,6 +83,10 @@ Example with using LUA syntax as advanced condition:
     script: return cds_manual == "true" or (cds_status == "Success" and git_branch
       == "master" and git_repository == "ovh/cds")
 ```
+
+## Integrations
+
+[Artifactory Integration]({{<relref "/docs/integrations/artifact-manager.md">}})
 
 ## Notifications
 
