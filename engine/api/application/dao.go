@@ -27,7 +27,7 @@ func (e dbApplication) Canonical() gorpmapper.CanonicalForms {
 }
 
 // LoadOptionFunc is a type for all options in LoadOptions
-type LoadOptionFunc *func(gorp.SqlExecutor, *sdk.Application) error
+type LoadOptionFunc *func(context.Context, gorp.SqlExecutor, *sdk.Application) error
 
 // LoadOptions provides all options on project loads functions
 var LoadOptions = struct {
@@ -137,14 +137,14 @@ func getWithClearVCSStrategyPassword(ctx context.Context, db gorp.SqlExecutor, k
 		return nil, err
 	}
 	if !isValid {
-		log.Error(context.Background(), "application.get> application %d data corrupted", dbApp.ID)
+		log.Error(ctx, "application.get> application %d data corrupted", dbApp.ID)
 		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 	dbApp.ProjectKey = key
-	return unwrap(db, opts, &dbApp)
+	return unwrap(ctx, db, opts, &dbApp)
 }
 
-func unwrap(db gorp.SqlExecutor, opts []LoadOptionFunc, dbApp *dbApplication) (*sdk.Application, error) {
+func unwrap(ctx context.Context, db gorp.SqlExecutor, opts []LoadOptionFunc, dbApp *dbApplication) (*sdk.Application, error) {
 	app := &dbApp.Application
 	if app.ProjectKey == "" {
 		pkey, errP := db.SelectStr("SELECT projectkey FROM project WHERE id = $1", app.ProjectID)
@@ -155,7 +155,7 @@ func unwrap(db gorp.SqlExecutor, opts []LoadOptionFunc, dbApp *dbApplication) (*
 	}
 
 	for _, f := range opts {
-		if err := (*f)(db, app); err != nil && sdk.Cause(err) != sql.ErrNoRows {
+		if err := (*f)(ctx, db, app); err != nil && sdk.Cause(err) != sql.ErrNoRows {
 			return nil, sdk.WrapError(err, "application.unwrap")
 		}
 	}
@@ -283,7 +283,7 @@ func getAllWithClearVCS(ctx context.Context, db gorp.SqlExecutor, opts []LoadOpt
 			continue
 		}
 		a := &res[i]
-		app, err := unwrap(db, opts, a)
+		app, err := unwrap(ctx, db, opts, a)
 		if err != nil {
 			return nil, sdk.WrapError(err, "application.getAllWithClearVCS")
 		}
@@ -310,7 +310,7 @@ func getAll(ctx context.Context, db gorp.SqlExecutor, opts []LoadOptionFunc, que
 		}
 
 		a := &res[i]
-		app, err := unwrap(db, opts, a)
+		app, err := unwrap(ctx, db, opts, a)
 		if err != nil {
 			return nil, sdk.WrapError(err, "application.getAll")
 		}

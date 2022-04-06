@@ -75,4 +75,23 @@ func Test_LoadAllDeploymentAllApps(t *testing.T) {
 	require.Len(t, deps[app2.ID], 1)
 	require.Equal(t, "secret1", deps[app1.ID][pp.ID]["token"].Value)
 	require.Equal(t, "secret2", deps[app2.ID][pp.ID]["token"].Value)
+
+	pf.AdditionalDefaultConfig = sdk.IntegrationConfig{
+		"token": sdk.IntegrationConfigValue{
+			Type:  sdk.IntegrationConfigTypePassword,
+			Value: "my-secret-token",
+		},
+		"bar": sdk.IntegrationConfigValue{
+			Type:  sdk.IntegrationConfigTypeString,
+			Value: "foo",
+		},
+	}
+
+	test.NoError(t, integration.UpdateModel(context.TODO(), db, &pf))
+
+	st, err := application.LoadDeploymentStrategies(context.TODO(), db, app1.ID, false)
+	require.NoError(t, err)
+	require.Len(t, st, 1)
+	require.Equal(t, st[pf.Name]["token"].Value, "**********")
+	require.Equal(t, st[pf.Name]["bar"].Value, "foo")
 }
