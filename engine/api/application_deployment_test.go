@@ -353,7 +353,7 @@ func Test_postApplicationDeploymentStrategyConfigHandlerAsProvider(t *testing.T)
 	})
 	test.NoError(t, err)
 
-	cfg, err := application.LoadDeploymentStrategies(api.mustDB(), app.ID, true)
+	cfg, err := application.LoadDeploymentStrategies(context.TODO(), api.mustDB(), app.ID, true)
 	test.NoError(t, err)
 
 	var assertCfg = func(key string, cfg sdk.IntegrationConfig, expected sdk.IntegrationConfigValue) {

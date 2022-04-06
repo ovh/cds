@@ -1,6 +1,7 @@
 package application
 
 import (
+	"context"
 	"database/sql"
 
 	"github.com/go-gorp/gorp"
@@ -9,14 +10,14 @@ import (
 )
 
 var (
-	loadDefaultDependencies = func(db gorp.SqlExecutor, app *sdk.Application) error {
-		if err := loadVariables(db, app); err != nil && sdk.Cause(err) != sql.ErrNoRows {
+	loadDefaultDependencies = func(ctx context.Context, db gorp.SqlExecutor, app *sdk.Application) error {
+		if err := loadVariables(ctx, db, app); err != nil && sdk.Cause(err) != sql.ErrNoRows {
 			return sdk.WrapError(err, "application.loadDefaultDependencies %s", app.Name)
 		}
 		return nil
 	}
 
-	loadVariables = func(db gorp.SqlExecutor, app *sdk.Application) error {
+	loadVariables = func(ctx context.Context, db gorp.SqlExecutor, app *sdk.Application) error {
 		variables, err := LoadAllVariables(db, app.ID)
 		if err != nil && sdk.Cause(err) != sql.ErrNoRows {
 			return sdk.WrapError(err, "Unable to load variables for application %d", app.ID)
@@ -25,7 +26,7 @@ var (
 		return nil
 	}
 
-	loadVariablesWithClearPassword = func(db gorp.SqlExecutor, app *sdk.Application) error {
+	loadVariablesWithClearPassword = func(ctx context.Context, db gorp.SqlExecutor, app *sdk.Application) error {
 		variables, err := LoadAllVariablesWithDecrytion(db, app.ID)
 		if err != nil && sdk.Cause(err) != sql.ErrNoRows {
 			return sdk.WrapError(err, "Unable to load variables for application %d", app.ID)
@@ -34,7 +35,7 @@ var (
 		return nil
 	}
 
-	loadKeys = func(db gorp.SqlExecutor, app *sdk.Application) error {
+	loadKeys = func(ctx context.Context, db gorp.SqlExecutor, app *sdk.Application) error {
 		keys, err := LoadAllKeys(db, app.ID)
 		if err != nil {
 			return err
@@ -43,7 +44,7 @@ var (
 		return nil
 	}
 
-	loadClearKeys = func(db gorp.SqlExecutor, app *sdk.Application) error {
+	loadClearKeys = func(ctx context.Context, db gorp.SqlExecutor, app *sdk.Application) error {
 		keys, err := LoadAllKeysWithPrivateContent(db, app.ID)
 		if err != nil {
 			return err
@@ -52,16 +53,16 @@ var (
 		return nil
 	}
 
-	loadDeploymentStrategies = func(db gorp.SqlExecutor, app *sdk.Application) error {
+	loadDeploymentStrategies = func(ctx context.Context, db gorp.SqlExecutor, app *sdk.Application) error {
 		var err error
-		app.DeploymentStrategies, err = LoadDeploymentStrategies(db, app.ID, false)
+		app.DeploymentStrategies, err = LoadDeploymentStrategies(ctx, db, app.ID, false)
 		if err != nil && sdk.Cause(err) != sql.ErrNoRows {
 			return sdk.WrapError(err, "Unable to load deployment strategies for application %d", app.ID)
 		}
 		return nil
 	}
 
-	loadIcon = func(db gorp.SqlExecutor, app *sdk.Application) error {
+	loadIcon = func(ctx context.Context, db gorp.SqlExecutor, app *sdk.Application) error {
 		var err error
 		app.Icon, err = LoadIcon(db, app.ID)
 		if err != nil && sdk.Cause(err) != sql.ErrNoRows {
@@ -70,7 +71,7 @@ var (
 		return nil
 	}
 
-	loadVulnerabilities = func(db gorp.SqlExecutor, app *sdk.Application) error {
+	loadVulnerabilities = func(ctx context.Context, db gorp.SqlExecutor, app *sdk.Application) error {
 		var err error
 		app.Vulnerabilities, err = LoadVulnerabilities(db, app.ID)
 		if err != nil {
@@ -79,9 +80,9 @@ var (
 		return nil
 	}
 
-	loadDeploymentStrategiesWithClearPassword = func(db gorp.SqlExecutor, app *sdk.Application) error {
+	loadDeploymentStrategiesWithClearPassword = func(ctx context.Context, db gorp.SqlExecutor, app *sdk.Application) error {
 		var err error
-		app.DeploymentStrategies, err = LoadDeploymentStrategies(db, app.ID, true)
+		app.DeploymentStrategies, err = LoadDeploymentStrategies(ctx, db, app.ID, true)
 		if err != nil && sdk.Cause(err) != sql.ErrNoRows {
 			return sdk.WrapError(err, "Unable to load deployment strategies for application %d", app.ID)
 		}

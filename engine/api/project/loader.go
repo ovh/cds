@@ -101,7 +101,7 @@ func loadApplicationWithDeploymentStrategies(ctx context.Context, db gorp.SqlExe
 	}
 	for i := range proj.Applications {
 		a := &proj.Applications[i]
-		if err := (*application.LoadOptions.WithDeploymentStrategies)(db, a); err != nil {
+		if err := (*application.LoadOptions.WithDeploymentStrategies)(ctx, db, a); err != nil {
 			return sdk.WithStack(err)
 		}
 	}
@@ -134,7 +134,7 @@ func loadApplicationVariables(ctx context.Context, db gorp.SqlExecutor, proj *sd
 	}
 
 	for _, a := range proj.Applications {
-		if err := (*application.LoadOptions.WithVariables)(db, &a); err != nil {
+		if err := (*application.LoadOptions.WithVariables)(ctx, db, &a); err != nil {
 			return sdk.WithStack(err)
 		}
 	}
@@ -150,7 +150,7 @@ func loadApplicationKeys(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Pro
 	}
 
 	for _, a := range proj.Applications {
-		if err := (*application.LoadOptions.WithKeys)(db, &a); err != nil {
+		if err := (*application.LoadOptions.WithKeys)(ctx, db, &a); err != nil {
 			return sdk.WithStack(err)
 		}
 	}

@@ -8,6 +8,7 @@ import (
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 )
@@ -46,7 +47,7 @@ func (e *dbApplicationDeploymentStrategy) IntegrationConfig() sdk.IntegrationCon
 }
 
 // LoadDeploymentStrategies loads the deployment strategies for an application
-func LoadDeploymentStrategies(db gorp.SqlExecutor, appID int64, withClearPassword bool) (map[string]sdk.IntegrationConfig, error) {
+func LoadDeploymentStrategies(ctx context.Context, db gorp.SqlExecutor, appID int64, withClearPassword bool) (map[string]sdk.IntegrationConfig, error) {
 	query := gorpmapping.NewQuery(`
     SELECT *
 	  FROM application_deployment_strategy
@@ -54,7 +55,7 @@ func LoadDeploymentStrategies(db gorp.SqlExecutor, appID int64, withClearPasswor
   `).Args(appID)
 
 	var res []dbApplicationDeploymentStrategy
-	if err := gorpmapping.GetAll(context.Background(), db, query, &res, gorpmapping.GetOptions.WithDecryption); err != nil {
+	if err := gorpmapping.GetAll(ctx, db, query, &res, gorpmapping.GetOptions.WithDecryption); err != nil {
 		return nil, sdk.WrapError(err, "unable to load deployment strategies")
 	}
 
@@ -65,7 +66,7 @@ func LoadDeploymentStrategies(db gorp.SqlExecutor, appID int64, withClearPasswor
 			return nil, err
 		}
 		if !isValid {
-			log.Error(context.Background(), "application.LoadDeploymentStrategies> application_deployment_strategy %d data corrupted", appID)
+			log.Error(ctx, "application.LoadDeploymentStrategies> application_deployment_strategy %d data corrupted", appID)
 			continue
 		}
 
@@ -85,12 +86,16 @@ func LoadDeploymentStrategies(db gorp.SqlExecutor, appID int64, withClearPasswor
 				newCfg[k] = v
 			}
 		}
-		// Sorry about that :(
-		projectIntegrationName, err := db.SelectStr("SELECT name FROM project_integration WHERE id = $1 ", r.ProjectIntegrationID)
+		projectIntegration, err := integration.LoadProjectIntegrationByID(ctx, db, r.ProjectIntegrationID)
 		if err != nil {
 			return nil, sdk.WrapError(err, "unable to find project integration name for ID=%d", r.ProjectIntegrationID)
 		}
-		deps[projectIntegrationName] = newCfg
+		for name, val := range projectIntegration.Model.AdditionalDefaultConfig {
+			if _, ok := newCfg[name]; !ok {
+				newCfg[name] = val
+			}
+		}
+		deps[projectIntegration.Name] = newCfg
 	}
 
 	return deps, nil
