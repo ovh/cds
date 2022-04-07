@@ -367,6 +367,10 @@ func (api *API) checkGroupPermissions(ctx context.Context, w http.ResponseWriter
 			}
 		}
 	} else {
+		// Hatcheries started for "shared.infra" group are granted for group "shared.infra"
+		if isHatcheryShared(ctx) {
+			return nil
+		}
 		if !isGroupMember(ctx, g) && !isMaintainer(ctx) { // Only group member or CDS maintainer can get a group or its dependencies
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
