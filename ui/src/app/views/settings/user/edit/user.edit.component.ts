@@ -244,7 +244,7 @@ export class UserEditComponent implements OnInit {
             },
             <Column<AuthConsumer>>{
                 type: ColumnType.BUTTON,
-                name: 'common_action',
+                name: 'Action',
                 class: 'two right aligned',
                 selector: (c: AuthConsumer) => ({
                     title: 'common_details',
@@ -345,7 +345,7 @@ export class UserEditComponent implements OnInit {
             },
             <Column<AuthSession>>{
                 type: ColumnType.CONFIRM_BUTTON,
-                name: 'common_action',
+                name: 'Action',
                 class: 'two right aligned',
                 disabled: true,
                 selector: (s: AuthSession) => ({

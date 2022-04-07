@@ -97,46 +97,48 @@ export class ProjectShowComponent implements OnInit, OnDestroy, AfterViewInit {
 
     ngOnInit() {
         this.tabs = [<Tab>{
-            translate: 'common_workflows',
+            title: 'Workflows',
             icon: 'share alternate',
             key: 'workflows',
             default: true,
         }, <Tab>{
-            translate: 'common_applications',
+            title: 'Applications',
             icon: 'rocket',
             key: 'applications'
         }, <Tab>{
-            translate: 'common_pipelines',
+            title: 'Pipelines',
             icon: 'sitemap',
             key: 'pipelines'
         }, <Tab>{
-            translate: 'common_environments',
+            title: 'Environments',
             icon: 'tree',
             key: 'environments'
         }, <Tab>{
-            translate: 'common_variables',
+            title: 'Variables',
             icon: 'font',
             key: 'variables'
         }, <Tab>{
             key: 'permissions',
         }, <Tab>{
-            translate: 'common_keys',
+            title: 'Keys',
             icon: 'privacy',
             key: 'keys'
         }, <Tab>{
-            translate: 'common_integrations',
+            title: 'Integrations',
             icon: 'plug',
             key: 'integrations'
         }, <Tab>{
-            translate: 'common_warnings',
+            title: 'Warnings',
             icon: 'bug',
             key: 'warnings'
-        }, <Tab>{
-            translate: 'common_advanced',
-            icon: 'graduation',
-            key: 'advanced'
-        }];
-
+        }]
+        if (this.project?.permissions?.writable) {
+            this.tabs.push(<Tab>{
+                title: 'Advanced',
+                icon: 'graduation',
+                key: 'advanced'
+            })
+        }
         this._route.queryParams.subscribe((queryParams) => {
             if (queryParams['tab']) {
                 let current_tab = this.tabs.find((tab) => tab.key === queryParams['tab']);

@@ -116,6 +116,8 @@ import { ZoneComponent } from './zone/zone.component';
 import { NgxAutoScrollDirective } from 'app/shared/directives/auto-scroll.directive';
 import { NZ_CONFIG, NzConfig } from 'ng-zorro-antd/core/config';
 import { NzNotificationModule } from 'ng-zorro-antd/notification';
+import { NzMenuModule } from 'ng-zorro-antd/menu';
+import { NzButtonModule } from 'ng-zorro-antd/button';
 
 const ngZorroConfig: NzConfig = {
     notification: {nzPauseOnHover: true, nzPlacement: "topRight"}
@@ -125,7 +127,9 @@ const ngZorroConfig: NzConfig = {
 
 @NgModule({
     imports: [
+        NzButtonModule,
         NzNotificationModule,
+        NzMenuModule,
         CommonModule,
         ClipboardModule,
         NgxSemanticModule,
@@ -296,6 +300,8 @@ const ngZorroConfig: NzConfig = {
         NgForNumber,
         NgxSemanticModule,
         NgxAutoScrollDirective,
+        NzButtonModule,
+        NzMenuModule,
         NzNotificationModule,
         PaginationComponent,
         ParameterFormComponent,

@@ -1,4 +1,13 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import {
+    AfterViewInit,
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    OnDestroy,
+    OnInit,
+    TemplateRef,
+    ViewChild
+} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
@@ -19,6 +28,7 @@ import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
 import { finalize, first, tap } from 'rxjs/operators';
+import { Tab } from 'app/shared/tabs/tabs.component';
 
 @Component({
     selector: 'app-workflow',
@@ -27,7 +37,7 @@ import { finalize, first, tap } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowShowComponent implements OnInit, OnDestroy {
+export class WorkflowShowComponent implements OnInit, OnDestroy, AfterViewInit {
 
     project: Project;
     detailedWorkflow: Workflow;
@@ -51,9 +61,12 @@ export class WorkflowShowComponent implements OnInit, OnDestroy {
     @ViewChild('updateAsCode')
     updateAsCodeModal: AsCodeSaveModalComponent;
 
+    @ViewChild('warnPermission') warnPermission: TemplateRef<any>;
+
     selectedHookRef: string;
 
-    selectedTab = 'workflows';
+    tabs: Array<Tab>;
+    selectedTab: Tab;
 
     permFormLoading = false;
 
@@ -71,6 +84,12 @@ export class WorkflowShowComponent implements OnInit, OnDestroy {
         private _workflowCoreService: WorkflowCoreService,
         private _cd: ChangeDetectorRef
     ) { }
+
+    ngAfterViewInit(): void {
+        if (this.detailedWorkflow) {
+            this.initTabs();
+        }
+    }
 
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
@@ -114,6 +133,8 @@ export class WorkflowShowComponent implements OnInit, OnDestroy {
 
                 this.usageCount = Object.keys(this.detailedWorkflow.usage).reduce((total, key) =>
                     total + this.detailedWorkflow.usage[key].length, 0);
+
+                this.initTabs();
             }
         });
 
@@ -125,7 +146,10 @@ export class WorkflowShowComponent implements OnInit, OnDestroy {
 
         this.qpsSubs = this.activatedRoute.queryParams.subscribe(params => {
             if (params['tab']) {
-                this.selectedTab = params['tab'];
+                let current_tab = this.tabs.find((t) => t.key === params['tab']);
+                if (current_tab) {
+                    this.selectTab(current_tab);
+                }
             }
             if (params['hook_ref']) {
                 this.selectedHookRef = params['hook_ref'];
@@ -143,6 +167,54 @@ export class WorkflowShowComponent implements OnInit, OnDestroy {
             });
     }
 
+    initTabs() {
+        let graphTab = <Tab> {
+            title: 'Workflows',
+            key: 'workflows',
+            icon: 'share alternate',
+            default: true
+        }
+        if (this.previewWorkflow) {
+            graphTab.warningText = this._translate.instant('workflow_preview_mode');
+        }
+        let notificationTab = <Tab>{
+            title: 'Notifications',
+            key: 'notifications',
+            icon: 'alarm'
+        };
+        let permissionTab = <Tab>{
+            title: 'Permissions',
+            key: 'permissions',
+            icon: 'users'
+        }
+        if (this.groupsOutsideOrganization && this.groupsOutsideOrganization.length > 0) {
+            permissionTab.warningTemplate = this.warnPermission
+        }
+
+        this.tabs = new Array<Tab>();
+        this.tabs.push(graphTab, notificationTab, permissionTab)
+
+        if (!this.detailedWorkflow.from_repository)   {
+            this.tabs.push(<Tab>{
+                title: 'Audit',
+                icon: 'history',
+                key: 'audits',
+            });
+        }
+        this.tabs.push(<Tab>{
+            title: 'Usage',
+            icon: 'map signs',
+            key: 'usage'
+        });
+        if (this.detailedWorkflow.permissions.writable) {
+            this.tabs.push( <Tab>{
+                title: 'Advanced',
+                icon: 'graduation',
+                key: 'advanced'
+            });
+        }
+    }
+
     savePreview() {
         this._workflowCoreService.toggleAsCodeEditor({ open: false, save: true });
     }
@@ -151,8 +223,8 @@ export class WorkflowShowComponent implements OnInit, OnDestroy {
         this.direction = this.direction === 'LR' ? 'TB' : 'LR';
     }
 
-    showTab(tab: string): void {
-        this._router.navigateByUrl('/project/' + this.project.key + '/workflow/' + this.detailedWorkflow.name + '?tab=' + tab);
+    selectTab(tab: Tab): void {
+        this.selectedTab = tab;
     }
 
     showAsCodeEditor() {

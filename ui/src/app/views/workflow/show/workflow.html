@@ -1,63 +1,16 @@
 <div *ngIf="detailedWorkflow && project; then workflowPart;else loadingPart"></div>
 <ng-template #workflowPart>
     <div class="workflowShow">
-        <div class="CDSmenu">
-            <sm-menu title="" class="pointing secondary">
-                <a sm-item [class.active]="selectedTab === 'workflows'" id="WorkflowGraphTabs"
-                    (click)="showTab('workflows')">
-                    <i class="share alternate icon"></i>
-                    {{'common_workflows' | translate }}
-                    <i class="orange warning sign icon ml5" *ngIf="previewWorkflow" suiPopup
-                        [popupText]="'workflow_preview_mode' | translate" popupPlacement="top center">
-                    </i>
-                </a>
-                <a sm-item [class.active]="selectedTab === 'notifications'" id="WorkflowNotificationTabs"
-                    (click)="showTab('notifications')">
-                    <i class="alarm icon"></i>
-                    {{'common_notifications' | translate }}</a>
-                <a sm-item [class.active]="selectedTab === 'permissions'" id="WorkflowPermissionsTabs"
-                    (click)="showTab('permissions')">
-                    <i class="users icon"></i>
-                    {{'common_permissions' | translate }}
-                    <ng-template let-popup #warnPermission>
-                        Following groups that are not from organization "{{detailedWorkflow.organization}}" can read the
-                        workflow:
-                        <span *ngFor="let gp of groupsOutsideOrganization;let i = index">{{gp.group.name}}
-                            ({{gp.group.organization}}){{ i < groupsOutsideOrganization.length - 1 ? ', ' : '' }}</span>
-                                .
-                    </ng-template>
-                    <i *ngIf="detailedWorkflow && groupsOutsideOrganization && groupsOutsideOrganization.length > 0"
-                        class="exclamation triangle orange icon" suiPopup [popupTemplate]="warnPermission"
-                        popupPlacement="bottom left"></i>
-                </a>
-                <ng-container *ngIf="!detailedWorkflow.from_repository">
-                    <a sm-item [class.active]="selectedTab === 'audits'" id="WorkflowAuditsTabs"
-                        (click)="showTab('audits')">
-                        <i class="history icon"></i>
-                        {{'common_audit' | translate }}
-                    </a>
+        <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)"></app-tabs>
+        <ng-container *ngIf="editMode && !isReadOnly">
+            <nz-button-group class="ascodeButton">
+                <ng-container *ngIf="editModeWorkflowChanged">
+                    <button nz-button nzType="default" (click)="rollbackWorkflow()">{{'common_cancel' | translate }}</button>
                 </ng-container>
-
-                <a sm-item [class.active]="selectedTab === 'usage'" id="WorkflowUsageTabs"
-                    [class.disabled]="usageCount === 0" (click)="usageCount !== 0 && showTab('usage')">
-                    <i class="map signs icon"></i>
-                    {{'common_usage' | translate }}{{ ' (' + usageCount + ')' }}
-                </a>
-                <a sm-item [class.active]="selectedTab === 'advanced'" id="WorkflowAdvancesTabs"
-                    (click)="showTab('advanced')" *ngIf="detailedWorkflow.permissions.writable">
-                    <i class="graduation icon"></i>
-                    {{'common_advanced' | translate }}</a>
-                <div class="ui small buttons" *ngIf="editMode && !isReadOnly">
-                    <ng-container *ngIf="editModeWorkflowChanged">
-                        <button class="ui button" (click)="rollbackWorkflow()">{{'common_cancel' | translate }}</button>
-                        <div class="or"></div>
-                    </ng-container>
-                    <button class="ui green button" [disabled]="!editModeWorkflowChanged"
-                        (click)="saveWorkflow()">{{'btn_save_workflow' | translate }}</button>
-                </div>
-            </sm-menu>
-        </div>
-        <div *ngIf="selectedTab === 'workflows'" class="workflowShowGraph">
+                    <button nz-button nzType="primary" [disabled]="!editModeWorkflowChanged" (click)="saveWorkflow()">{{'btn_save_workflow' | translate }}</button>
+            </nz-button-group>
+        </ng-container>
+        <div *ngIf="selectedTab.key === 'workflows'" class="workflowShowGraph">
             <div class="ui grid">
                 <div class="row">
                     <div class="two wide column"></div>
@@ -117,7 +70,7 @@
             <app-workflow-graph *ngIf="detailedWorkflow" [workflowData]="previewWorkflow || detailedWorkflow"
                 [project]="project" [direction]="direction"></app-workflow-graph>
         </div>
-        <app-scrollview class="scrollview" *ngIf="selectedTab !== 'workflows'" [ngSwitch]="selectedTab">
+        <app-scrollview class="scrollview" *ngIf="selectedTab.key !== 'workflows'" [ngSwitch]="selectedTab.key">
             <div *ngSwitchCase="'notifications'">
                 <app-workflow-notification-list [project]="project" [workflow]="detailedWorkflow" [editMode]="editMode"
                     [readOnly]="isReadOnly"></app-workflow-notification-list>
@@ -173,3 +126,9 @@
     <app-ascode-save-modal [project]="project" [workflow]="detailedWorkflow" [name]="detailedWorkflow.name"
         #updateAsCode></app-ascode-save-modal>
 </ng-container>
+<ng-template #warnPermission>
+    Following groups that are not from organization "{{detailedWorkflow.organization}}" can read the workflow:
+    <span *ngFor="let gp of groupsOutsideOrganization;let i = index">{{gp.group.name}}
+        ({{gp.group.organization}}){{ i < groupsOutsideOrganization.length - 1 ? ', ' : '' }}
+    </span>
+</ng-template>

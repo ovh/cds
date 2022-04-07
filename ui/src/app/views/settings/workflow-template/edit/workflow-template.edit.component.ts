@@ -76,20 +76,20 @@ export class WorkflowTemplateEditComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.tabs = [<Tab>{
-            translate: 'workflow_template',
+            title: 'Workflow template',
             icon: 'paste',
             key: 'workflow_template',
             default: true
         }, <Tab>{
-            translate: 'workflow_template_instances',
+            title: 'Instances',
             icon: 'file outline',
             key: 'instances'
         }, <Tab>{
-            translate: 'common_audit',
+            title: 'Audit',
             icon: 'history',
             key: 'audits'
         }, <Tab>{
-            translate: 'common_usage',
+            title: 'Usage',
             icon: 'map signs',
             key: 'usage'
         }];
@@ -172,7 +172,7 @@ export class WorkflowTemplateEditComponent implements OnInit, OnDestroy {
                 }
             }, <Column<WorkflowTemplateInstance>>{
                 type: ColumnType.BUTTON,
-                name: 'common_action',
+                name: 'Action',
                 class: 'two right aligned',
                 selector: (i: WorkflowTemplateInstance) => ({
                         title: 'common_update',
@@ -208,7 +208,7 @@ export class WorkflowTemplateEditComponent implements OnInit, OnDestroy {
                 if (this.workflowTemplate.editable) {
                     this.columnsAudits.push(<Column<AuditWorkflowTemplate>>{
                         type: ColumnType.CONFIRM_BUTTON,
-                        name: 'common_action',
+                        name: 'Action',
                         class: 'two right aligned',
                         selector: (a: AuditWorkflowTemplate) => ({
                                 title: 'common_rollback',
@@ -349,10 +349,7 @@ export class WorkflowTemplateEditComponent implements OnInit, OnDestroy {
                 this.tabs = this.tabs.map((tab) => {
                     tab.default = false;
                     if (tab.key === 'instances') {
-                        tab.translate = 'workflow_template_instances_with_nb';
-                        tab.translate_args = {
-                            nb: this.instances.length,
-                        };
+                        tab.title = 'Instances ' + this.instances.length;
                     }
 
                     return tab;

@@ -58,16 +58,16 @@ export class WorkflowV3RunComponent implements OnInit, OnDestroy {
         private _toast: ToastService
     ) {
         this.tabs = [<Tab>{
-            translate: 'common_problems',
+            title: 'Problems',
             icon: 'exclamation triangle',
             key: 'problems',
             default: true
         }, <Tab>{
-            translate: 'common_infos',
+            title: 'Infos',
             icon: 'exclamation circle',
             key: 'infos'
         }, <Tab>{
-            translate: 'common_results',
+            title: 'Results',
             icon: 'list',
             key: 'results'
         }];

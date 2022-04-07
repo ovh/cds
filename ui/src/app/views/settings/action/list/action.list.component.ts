@@ -28,12 +28,12 @@ export class ActionListComponent {
         private _cd: ChangeDetectorRef
     ) {
         this.tabs = [<Tab>{
-            translate: 'action_custom',
+            title: 'Custom',
             icon: '',
             key: 'custom',
             default: true
         }, <Tab>{
-            translate: 'action_builtin',
+            title: 'Builtin',
             icon: '',
             key: 'builtin'
         }];

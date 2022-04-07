@@ -34,43 +34,20 @@
                 </ng-template>
             </div>
         </app-project-breadcrumb>
-
-        <div class="CDSmenu" *ngIf="application">
-            <sm-menu title="" class="pointing secondary">
-                <a sm-item [class.active]="selectedTab === 'home'" (click)="showTab('home')">
-                    <i class=""></i>{{ 'common_home' | translate }}
-                </a>
-                <a sm-item [class.active]="selectedTab === 'variables'" (click)="showTab('variables')">
-                    <i class="font icon"></i>{{ 'common_variables' | translate }}
-                </a>
-                <a sm-item [class.active]="selectedTab === 'vuln'" (click)="showTab('vuln')">
-                    {{ 'common_vulnerabilities' | translate}}
-                </a>
-                <a sm-item [class.active]="selectedTab === 'usage'" (click)="showTab('usage')">
-                    <i class="map signs icon"></i>{{ 'common_usage' | translate }}{{ ' (' + usageCount + ')' }}
-                </a>
-                <a sm-item [class.active]="selectedTab === 'keys'" id="ApplicationKeysTab" (click)="showTab('keys')"><i
-                        class="privacy icon"></i>
-                    {{ 'common_keys' | translate }}
-                </a>
-                <a sm-item [class.active]="selectedTab === 'advanced'" (click)="showTab('advanced')">
-                    <i class="graduation icon"></i>{{ 'common_advanced' | translate }}
-                </a>
-                <div class="ui small buttons" *ngIf="editMode && !readOnly">
-                    <ng-container *ngIf="application.editModeChanged">
-                        <button class="ui button" (click)="cancelApplication()">{{'common_cancel' | translate }}</button>
-                        <div class="or"></div>
-                    </ng-container>
-                    <button class="ui green button" [disabled]="!application.editModeChanged"
-                            (click)="saveEditMode()">{{'btn_save_application' | translate }}</button>
-                </div>
-            </sm-menu>
-        </div>
+        <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)"></app-tabs>
+        <ng-container *ngIf="editMode && !readOnly">
+            <nz-button-group class="ascodeButton">
+                <ng-container *ngIf="application.editModeChanged">
+                    <button nz-button nzType="default" (click)="cancelApplication()">{{'common_cancel' | translate }}</button>
+                </ng-container>
+                <button nz-button nzType="primary" [disabled]="!application.editModeChanged" (click)="saveEditMode()">{{'btn_save_application' | translate }}</button>
+            </nz-button-group>
+        </ng-container>
 
         <div class="scrollingContent">
             <div class="paddingContent">
                 <div class="viewContent">
-                    <div [ngSwitch]="selectedTab">
+                    <div [ngSwitch]="selectedTab.key">
                         <div *ngSwitchCase="'home'">
                             <app-home [project]="project" [application]="application"></app-home>
                         </div>

@@ -4,12 +4,14 @@ import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { Subscription } from 'rxjs/Subscription';
 
 export class Tab {
-    translate: string;
-    translate_args?: {};
+    title: string;
     icon: string;
     key: string;
     default: boolean;
     template: TemplateRef<any>;
+    warningText: string;
+    warningTemplate: TemplateRef<any>;
+    disabled: boolean;
 }
 
 @Component({
@@ -52,6 +54,9 @@ export class TabsComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     clickSelect(tab: Tab) {
+        if (tab.disabled) {
+            return;
+        }
         if (!this.disableNavigation) {
             this._router.navigate([], {
                 relativeTo: this._route,

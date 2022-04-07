@@ -11,6 +11,7 @@ import { ProjectState } from 'app/store/project.state';
 import { GetWorkflowNodeRun, GetWorkflowRun } from 'app/store/workflow.action';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
 import { Observable, Subscription } from 'rxjs';
+import { Tab } from 'app/shared/tabs/tabs.component';
 
 @Component({
     selector: 'app-workflow-run-node',
@@ -41,7 +42,10 @@ export class WorkflowNodeRunComponent implements OnInit, OnDestroy {
 
     // History
     nodeRunsHistory = new Array<WorkflowNodeRun>();
-    selectedTab: string;
+
+    // tabs
+    tabs: Array<Tab>;
+    selectedTab: Tab;
 
     nbVuln = 0;
     deltaVul = 0;
@@ -56,14 +60,16 @@ export class WorkflowNodeRunComponent implements OnInit, OnDestroy {
         private _titleService: Title,
         private _cd: ChangeDetectorRef
     ) {
+        this.initTabs();
         this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
 
         // Tab selection
         this._activatedRoute.queryParams.subscribe(q => {
             if (q['tab']) {
-                this.selectedTab = q['tab'];
-            } else {
-                this.selectedTab = 'pipeline';
+                let current_tab = this.tabs.find((t) => t.key === q['tab']);
+                if (current_tab) {
+                    this.selectTab(current_tab);
+                }
             }
             this.pipelineName = q['name'] || '';
             this._cd.markForCheck();
@@ -154,18 +160,62 @@ export class WorkflowNodeRunComponent implements OnInit, OnDestroy {
                 }
             }
             if (refresh) {
+                this.initTabs();
                 this._cd.markForCheck();
             }
         });
     }
 
-    showTab(tab: string): void {
-        let queryParams = Object.assign({}, this._activatedRoute.snapshot.queryParams, { tab });
-        let navExtras: NavigationExtras = { queryParams };
-        this._router.navigate(['project', this.project.key,
-            'workflow', this.workflowName,
-            'run', this.currentNodeRunNum,
-            'node', this.currentNodeRunID], navExtras);
+    initTabs() {
+        let commitTitle = this.commitsLength > 1? 'Commits' : 'Commit';
+        if (this.commitsLength > 0) {
+            commitTitle = this.commitsLength.toString() + ' ' + commitTitle;
+        }
+
+        let testTitle = this.nodeRunTests?.total > 1? 'Tests' : 'Test';
+        let testIcon: string
+        if (this.nodeRunTests?.total > 0) {
+            testIcon = 'green check no-mrr';
+            testTitle = this.nodeRunTests?.total + ' ' + testTitle;
+        }
+        if (this.nodeRunTests?.ko > 0) {
+            testTitle += ` (${this.nodeRunTests.ko} ko)`
+            testIcon = 'red remove status';
+        }
+
+        let artifactTitle = this.artifactLength > 1 ? 'Artifacts' : 'Artifact';
+        if (this.artifactLength > 0) {
+            artifactTitle = artifactTitle + ' ('+ this.artifactLength+')';
+        }
+
+        let historyTitle = 'History' + ' ('+ this.historyLength+')';
+
+        this.tabs = [<Tab>{
+            title: 'Pipeline',
+            key: 'pipeline',
+            default: true,
+            icon: 'sitemap'
+        }, <Tab>{
+            title: commitTitle,
+            key: 'commit',
+            disabled: this.commitsLength === 0
+        }, <Tab>{
+            title: testTitle,
+            key: 'test',
+            icon: testIcon,
+            disabled: !this.nodeRunTests || this.nodeRunTests?.total === 0
+        }, <Tab>{
+            title: artifactTitle,
+            key: 'artifact',
+            disabled: this.artifactLength === 0
+        }, <Tab>{
+            title: historyTitle,
+            key: 'history'
+        }]
+    }
+
+    selectTab(tab: Tab): void {
+        this.selectedTab = tab;
     }
 
     initVulnerabilitySummary(nodeRun: WorkflowNodeRun): any[] {

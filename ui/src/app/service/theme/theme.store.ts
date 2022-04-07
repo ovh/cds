@@ -25,7 +25,7 @@ export class ThemeStore {
             style.type = 'text/css';
             style.rel = 'stylesheet';
             style.id = 'dark-theme';
-            style.href = 'assets/ng-zorro-antd.dark.min.css';
+            style.href = 'ngzorro.dark.css';
             document.body.appendChild(style);
         } else {
             const dom = document.getElementById('dark-theme');

@@ -131,7 +131,7 @@
                 </div>
                 <div *ngIf="(workflowTemplate.editable && !importFromURL) || pipelineKeys.length > 0"
                     class="wide field">
-                    <label>{{ 'common_pipelines' | translate }}</label>
+                    <label>Pipelines</label>
                     <div class="codeContainer field" *ngFor="let k of pipelineKeys">
                         <app-workflow-template-editor name="pipeline-value-{{k}}"
                             [editable]="workflowTemplate.editable && !importFromURL" [removable]="true"
@@ -146,7 +146,7 @@
                 </div>
                 <div *ngIf="(workflowTemplate.editable && !importFromURL) || applicationKeys.length > 0"
                     class="wide field">
-                    <label>{{ 'common_applications' | translate }}</label>
+                    <label>Applications</label>
                     <div class="codeContainer field" *ngFor="let k of applicationKeys">
                         <app-workflow-template-editor name="application-value-{{k}}"
                             [editable]="workflowTemplate.editable && !importFromURL" [removable]="true"
@@ -161,7 +161,7 @@
                 </div>
                 <div *ngIf="(workflowTemplate.editable && !importFromURL) || environmentKeys.length > 0"
                     class="wide field">
-                    <label>{{ 'common_environments' | translate }}</label>
+                    <label>Environments</label>
                     <div class="codeContainer field" *ngFor="let k of environmentKeys">
                         <app-workflow-template-editor name="environment-value-{{k}}"
                             [editable]="workflowTemplate.editable && !importFromURL" [removable]="true"

@@ -1,3 +1,7 @@
-<sm-menu class="pointing secondary stackable">
-    <app-tab *ngFor="let t of tabs" [tab]="t" [active]="selected.key === t.key" (onSelect)="clickSelect(t)"></app-tab>
-</sm-menu>
+<ul nz-menu nzMode="horizontal">
+    <ng-container *ngFor="let t of tabs">
+        <li nz-menu-item [nzSelected]="selected.key === t.key" (click)="clickSelect(t)" [nzDisabled]="t.disabled">
+            <app-tab [tab]="t"></app-tab>
+        </li>
+    </ng-container>
+</ul>
