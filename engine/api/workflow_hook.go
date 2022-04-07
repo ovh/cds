@@ -325,7 +325,7 @@ func (api *API) getWorkflowJobHookDetailsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
-		workflowName := vars["permWorkflowName"]
+		workflowName := vars["permWorkflowNameAdvanced"]
 		hookRunID := vars["hookRunID"]
 		number, errnum := requestVarInt(r, "number")
 		if errnum != nil {
