@@ -48,7 +48,7 @@ export class ToastService {
         .subscribe(help => {
             this._toastQueue.next( {
                 nzPauseOnHover: true,
-                nzDuration: status < 500 ? 3000 : 0,
+                nzDuration: request_id != null && request_id !== '' ? 0: 3000,
                 nzData: {
                     status,
                     from,

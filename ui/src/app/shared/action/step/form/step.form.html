@@ -1,34 +1,36 @@
-<div class="ui form">
-    <div class="field" *ngIf="expended">
-        <sm-card class="ui card" *ngIf="selected">
-            <card-title><b>{{selected.group ? selected.group.name + '/' + selected.name : selected?.name}}</b></card-title>
-            <card-subtitle>{{selected?.type}}</card-subtitle>
-            <card-content>
-                <markdown [data]="selected?.description"></markdown>
-            </card-content>
-        </sm-card>
-        <sm-select name="step" class="search" [options]="{'fullTextSearch': true}" [model]="selectedID" (onChange)="selectAction($event)">
-            <option *ngFor="let a of actions" [value]="a.id" [disabled]="a.deprecated">
-                {{a.group ? a.group.name + '/' + a.name : a.name}}
-                <span class="right floated" *ngIf="a.deprecated">
-                    <i class="warning orange sign icon"></i>
-                    {{'common_deprecated' | translate}}
-                </span>
-            </option>
-        </sm-select>
-    </div>
-    <div class="field" *ngIf="expended">
-        <div class="ui buttons fluid">
-            <button class="ui green button" (click)="clickAddStep()" [disabled]="!selected">
-                <i class="plus icon"></i>{{ 'job_add_step' | translate }}
-            </button>
-            <div class="or"></div>
-            <button class="ui grey button" (click)="clickCancel()">{{'btn_cancel' | translate}}</button>
-        </div>
-    </div>
-    <div class="field" *ngIf="!expended">
-        <button class="ui fluid blue button" (click)="showActions()">
-            <i class="plus icon"></i>{{ 'job_add_step' | translate }}
+<div>
+    <ng-container *ngIf="expended">
+        <form nz-form>
+            <nz-form-item *ngIf="expended">
+                <nz-form-control nzSpan="24">
+                    <nz-card *ngIf="selected">
+                        <nz-card-meta [nzTitle]="selected.group ? selected.group.name + '/' + selected.name : selected?.name"
+                                      [nzDescription]="selected?.type"></nz-card-meta>
+                        <markdown [data]="selected?.description"></markdown>
+                    </nz-card>
+                </nz-form-control>
+
+            </nz-form-item>
+            <nz-form-item *ngIf="selected && actions.length > 0">
+                <nz-select [(ngModel)]="selected" name="action" nzShowSearch>
+                    <ng-container *ngFor="let a of actions">
+                        <nz-option nzCustomContent [nzValue]="a" [nzLabel]="a.name" [nzDisabled]="a.deprecated">
+                            {{a.group ? a.group.name + '/' + a.name : a.name}}
+                            <span class="right floated" *ngIf="a.deprecated">
+                        <i class="warning orange sign icon"></i>
+                                {{'common_deprecated' | translate}}
+                        </span>
+                        </nz-option>
+                    </ng-container>
+                </nz-select>
+            </nz-form-item>
+            <button (click)="clickCancel()" class="validButton" nz-button>Cancel</button>
+            <button (click)="clickAddStep()" class="validButton ml10" nzType="primary" [disabled]="!selected" name="addStepBtn" nz-button>Add step</button>
+        </form>
+    </ng-container>
+    <ng-container *ngIf="!expended">
+        <button nz-button nzType="default" (click)="showActions()" name="addStepMenuBtn" nzBlock>
+            <i nz-icon nzType="plus-square" nzTheme="outline"></i>Add Step
         </button>
-    </div>
+    </ng-container>
 </div>

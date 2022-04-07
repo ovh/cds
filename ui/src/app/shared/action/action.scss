@@ -56,20 +56,20 @@
 }
 
 .bottomBtnsWrapper {
-  background-color: #f9f9f9;
   position: fixed;
   bottom: 0;
   right: 0;
   width: 430px;
-  padding-top: 20px;
-  padding-bottom: 20px;
-  padding-left: 21px;
-  padding-right: 21px;
-  .column {
-    padding-top: 5px;
-    padding-bottom: 5px;
-    padding-left: 7px;
-    padding-right: 7px;
+  padding: 10px 10px 10px 10px;
+  .ant-row {
+    padding-bottom: 4px;
+    padding-top: 4px;
+  }
+  .saveBtn {
+    width: 100%;
+  }
+  .menuBtn {
+    width: 100%;
   }
 }
 

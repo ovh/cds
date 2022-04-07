@@ -118,18 +118,38 @@ import { NZ_CONFIG, NzConfig } from 'ng-zorro-antd/core/config';
 import { NzNotificationModule } from 'ng-zorro-antd/notification';
 import { NzMenuModule } from 'ng-zorro-antd/menu';
 import { NzButtonModule } from 'ng-zorro-antd/button';
+import { NzCardModule } from 'ng-zorro-antd/card';
+import { NzSelectModule } from 'ng-zorro-antd/select';
+import { NzFormModule } from 'ng-zorro-antd/form';
+import { NzLayoutModule } from 'ng-zorro-antd/layout';
+import { NzGridModule } from 'ng-zorro-antd/grid';
+import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
+import { en_US, NZ_I18N } from 'ng-zorro-antd/i18n';
+import { NzIconModule } from 'ng-zorro-antd/icon';
+import { IconDefinition } from '@ant-design/icons-angular';
+import { PlusSquareOutline, RestOutline, SaveOutline, ShareAltOutline } from '@ant-design/icons-angular/icons'
+import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
 
 const ngZorroConfig: NzConfig = {
-    notification: {nzPauseOnHover: true, nzPlacement: "topRight"}
+    notification: {nzPauseOnHover: true, nzPlacement: "topRight"},
+    icon: {nzTheme: "outline"}
 };
 
-
+const icons: IconDefinition[] = [ PlusSquareOutline, RestOutline, SaveOutline, ShareAltOutline ];
 
 @NgModule({
     imports: [
         NzButtonModule,
+        NzCardModule,
+        NzDropDownModule,
+        NzFormModule,
+        NzGridModule,
+        NzIconModule.forRoot(icons),
+        NzLayoutModule,
         NzNotificationModule,
         NzMenuModule,
+        NzPopconfirmModule,
+        NzSelectModule,
         CommonModule,
         ClipboardModule,
         NgxSemanticModule,
@@ -253,6 +273,7 @@ const ngZorroConfig: NzConfig = {
         NoAuthenticationGuard,
         FeatureGuard,
         { provide: NZ_CONFIG, useValue: ngZorroConfig },
+        { provide: NZ_I18N, useValue: en_US }
     ],
     schemas: [
         CUSTOM_ELEMENTS_SCHEMA
@@ -301,8 +322,16 @@ const ngZorroConfig: NzConfig = {
         NgxSemanticModule,
         NgxAutoScrollDirective,
         NzButtonModule,
+        NzCardModule,
+        NzDropDownModule,
+        NzFormModule,
+        NzGridModule,
+        NzIconModule,
+        NzLayoutModule,
         NzMenuModule,
         NzNotificationModule,
+        NzPopconfirmModule,
+        NzSelectModule,
         PaginationComponent,
         ParameterFormComponent,
         ParameterListComponent,
