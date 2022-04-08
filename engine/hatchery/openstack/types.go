@@ -25,7 +25,7 @@ type HatcheryConfiguration struct {
 	User string `mapstructure:"user" toml:"user" default:"" commented:"false" comment:"Openstack User" json:"user"`
 
 	// Address  openstack-auth-endpoint
-	Address string `mapstructure:"address" toml:"address" default:"https://auth.cloud.ovh.net/v2.0" commented:"false" comment:"Opentack Auth Endpoint" json:"address"`
+	Address string `mapstructure:"address" toml:"address" default:"https://auth.cloud.ovh.net/v3.0" commented:"false" comment:"Opentack Auth Endpoint" json:"address"`
 
 	// Password openstack-password
 	Password string `mapstructure:"password" toml:"password" default:"" commented:"false" comment:"Openstack Password" json:"-"`
