@@ -1,7 +1,7 @@
 import { APP_BASE_HREF } from '@angular/common';
 import { HttpRequest } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
 import { Action } from 'app/model/action.model';
@@ -24,8 +24,14 @@ import { SharedService } from '../shared.service';
 import { ActionComponent } from './action.component';
 import { ActionEvent } from './action.event.model';
 import { StepEvent } from './step/step.event';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { By } from '@angular/platform-browser';
+import { NzDropDownDirective } from 'ng-zorro-antd/dropdown';
+import { OverlayContainer } from '@angular/cdk/overlay';
+import { Inject } from '@angular/core';
 
 describe('CDS: Action Component', () => {
+
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             declarations: [],
@@ -46,6 +52,7 @@ describe('CDS: Action Component', () => {
                 AuthenticationService
             ],
             imports: [
+                BrowserAnimationsModule,
                 RouterTestingModule.withRoutes([]),
                 SharedModule,
                 TranslateModule.forRoot(),
@@ -67,9 +74,6 @@ describe('CDS: Action Component', () => {
         fixture.componentInstance.editableAction = action;
         fixture.componentInstance.edit = true;
         fixture.componentInstance.project = <Project>{ key: 'key' };
-
-        fixture.detectChanges();
-        tick(50);
 
         let r: Requirement = new Requirement('binary');
         r.name = 'npm';
@@ -105,9 +109,6 @@ describe('CDS: Action Component', () => {
         fixture.componentInstance.edit = true;
         fixture.componentInstance.project = <Project>{ key: 'key' };
 
-        fixture.detectChanges();
-        tick(50);
-
         let p: Parameter = new Parameter();
         p.name = 'gitUrl';
         p.type = 'string';
@@ -125,43 +126,6 @@ describe('CDS: Action Component', () => {
         expect(fixture.componentInstance.editableAction.parameters.length).toBe(0, 'Action must have 0 parameter');
     }));
 
-    it('should send delete action event', fakeAsync(() => {
-        // Create component
-        let fixture = TestBed.createComponent(ActionComponent);
-        let component = fixture.debugElement.componentInstance;
-        expect(component).toBeTruthy();
-
-        let action: Action = new Action();
-        action.name = 'FooAction';
-        action.requirements = new Array<Requirement>();
-        action.id = 1;
-        fixture.componentInstance.editableAction = action;
-        fixture.componentInstance.project = <Project>{ key: 'key' };
-
-        fixture.componentInstance._cd.detectChanges();
-        tick(50);
-
-        // readonly , no button
-        expect(fixture.debugElement.nativeElement.querySelector('.ui.red.button')).toBeFalsy();
-        expect(fixture.debugElement.nativeElement.querySelector('button[name="updatebtn"]')).toBeFalsy();
-
-        fixture.componentInstance.edit = true;
-
-        fixture.componentInstance._cd.detectChanges();
-        tick(50);
-
-        let compiled = fixture.debugElement.nativeElement;
-
-        spyOn(fixture.componentInstance.actionEvent, 'emit');
-        compiled.querySelector('.ui.red.button').click();
-        fixture.componentInstance._cd.detectChanges();
-        tick(50);
-        compiled.querySelector('.ui.red.button.active').click();
-
-        expect(compiled.querySelector('button[name="updatebtn"]')).toBeTruthy();
-        expect(fixture.componentInstance.actionEvent.emit).toHaveBeenCalledWith(new ActionEvent('delete', action));
-    }));
-
     it('should send insert action event', fakeAsync(() => {
         // Create component
         let fixture = TestBed.createComponent(ActionComponent);
@@ -176,7 +140,7 @@ describe('CDS: Action Component', () => {
         fixture.componentInstance.project = <Project>{ key: 'key' };
 
         fixture.detectChanges();
-        tick(50);
+        tick(100);
 
         let compiled = fixture.debugElement.nativeElement;
 
@@ -190,10 +154,12 @@ describe('CDS: Action Component', () => {
         expect(compiled.querySelector('button[name="deletebtn"]')).toBeFalsy();
         expect(compiled.querySelector('button[name="updatebtn"]')).toBeFalsy();
 
-        let btn = compiled.querySelector('button[name="addbtn"]');
+        let btn = compiled.querySelector('button[name="updateBtn"]');
         btn.click();
 
-        expect(fixture.componentInstance.actionEvent.emit).toHaveBeenCalledWith(new ActionEvent('insert', action));
+        expect(fixture.componentInstance.actionEvent.emit).toHaveBeenCalledWith(new ActionEvent('update', action));
+
+        flush();
     }));
 
     it('should add and then remove a step', fakeAsync(() => {
@@ -210,13 +176,10 @@ describe('CDS: Action Component', () => {
         let component = fixture.debugElement.componentInstance;
         expect(component).toBeTruthy();
 
-        // TODO
-        // http.expectOne(((req: HttpRequest<any>) => {
-        //    return req.url === '/requirement/types';
-        // })).flush(actionMock);
 
         fixture.componentInstance.ngOnInit();
         http.expectOne(((req: HttpRequest<any>) => req.url === '/project/key/action')).flush(actionMock);
+
 
         let action: Action = <Action>{
             name: 'FooAction',
@@ -224,9 +187,6 @@ describe('CDS: Action Component', () => {
         };
         fixture.componentInstance.editableAction = action;
         fixture.componentInstance.edit = true;
-
-        fixture.detectChanges();
-        tick(50);
 
         let step = <Action>{
             always_executed: false,

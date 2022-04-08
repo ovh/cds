@@ -38,12 +38,17 @@
     </ng-container>
 </div>
 <ng-template #templateRootToast let-data="data">
-    <div class="toastTitle">{{data.title}}</div>
+    <div class="toastTitle">
+        <i nz-icon
+           nzType="exclamation-circle"
+        class="ant-notification-notice-icon-error"></i>
+        {{data.title}}
+    </div>
     <span *ngIf="data.from">{{data.from}}<br /></span>
     <div *ngIf="data?.help && data?.help?.length > 0">
         <markdown [data]="data.help"></markdown>
     </div>
-    <span *ngIf="data.status === 500">
+    <span>
         {{'toast_http_error_request_id' | translate}}
         <pre style="font-size: 10px">{{data.request_id}}</pre>
     </span>

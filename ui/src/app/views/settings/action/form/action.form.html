@@ -2,7 +2,7 @@
     {{'common_help_no_group' | translate}}
 </div>
 
-<form class="ui form">
+<form class="ui form" #myform>
     <div class="ui segment">
         <div class="field">
             <div class="fields">
@@ -111,29 +111,29 @@
     <div class="ui info message" *ngIf="steps.length === 0">
         {{ 'step_nonfinal_no' | translate }}
     </div>
-
-    <div class="ui bottomBtnsWrapper segment" *ngIf="action.editable">
-        <div class="ui grid">
-            <div class="sixteen wide column" *ngIf="actions.length > 0">
-                <app-action-step-form [actions]="actions" (onEvent)="stepManagement($event)"></app-action-step-form>
-            </div>
-            <ng-container *ngIf="!stepFormExpended">
-                <div class="eight wide column" *ngIf="action.id">
-                    <button class="ui fluid green button" name="updatebtn" (click)="saveAction()"
-                        [class.loading]="loading">
-                        <i class="save icon"></i>{{ 'btn_save' | translate }}
-                    </button>
-                </div>
-                <div class="eight wide column" *ngIf="action.id">
-                    <app-delete-button (event)="deleteAction()" [loading]="loading" [class]="'fluid'" title="action_delete">
-                    </app-delete-button>
-                </div>
-                <div class="sixteen wide column" *ngIf="!action.id">
-                    <button class="ui green button" name="addbtn" (click)="saveAction()" [class.loading]="loading">
-                        <i class="save icon"></i>{{ 'btn_create' | translate }}
-                    </button>
-                </div>
-            </ng-container>
+</form>
+<nz-layout class="bottomBtnsWrapper"  *ngIf="action.editable">
+    <div nz-row>
+        <div nz-col nzSpan="24" *ngIf="actions.length > 0">
+            <app-action-step-form [actions]="actions" (onEvent)="stepManagement($event)"></app-action-step-form>
         </div>
     </div>
-</form>
+    <div nz-row *ngIf="!stepFormExpended">
+            <ng-container *ngIf="action.id">
+                <button (click)="saveAction()" nzType="primary" class="validButton" name="updatebtn" [nzLoading]="loading" nz-button>
+                    <i nz-icon nzType="save" nzTheme="outline"></i>Save
+                </button>
+                <button nz-popconfirm nzDanger  class="validButton ml10"
+                                nzType="default"
+                                nzPopconfirmTitle="Are you sure you want to delete this action?"
+                                (nzOnConfirm)="deleteAction()"
+                                nzPopconfirmPlacement="topLeft"
+                                nz-button><i nz-icon nzType="rest" nzTheme="outline"></i>Delete</button>
+            </ng-container>
+            <ng-container *ngIf="!action.id">
+                <div nz-col nzSpan="24">
+                    <button nz-button nzType="primary"  name="addbtn" (click)="saveAction()" [nzLoading]="loading" nzBlock><i class="save icon"></i>Create</button>
+                </div>
+            </ng-container>
+    </div>
+</nz-layout>

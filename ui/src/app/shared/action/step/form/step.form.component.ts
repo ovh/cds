@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    EventEmitter,
+    Input,
+    OnInit,
+    Output
+} from '@angular/core';
 import { Action } from 'app/model/action.model';
 import { StepEvent } from 'app/shared/action/step/step.event';
 
@@ -13,14 +21,16 @@ export class ActionStepFormComponent implements OnInit {
     @Output() onEvent = new EventEmitter<StepEvent>();
 
     expended: boolean;
-    selectedID: number;
     selected: Action;
+
+    constructor(private _cd: ChangeDetectorRef) {
+    }
 
     ngOnInit(): void {
         let script = this.actions.find(a => a.name === 'Script' && a.type === 'Builtin');
         if (script) {
-            this.selectedID = script.id;
             this.selected = script;
+            this._cd.markForCheck();
         }
     }
 

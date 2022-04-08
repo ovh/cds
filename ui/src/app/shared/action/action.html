@@ -110,55 +110,51 @@
     <div class="ui info message" *ngIf="steps.length === 0">
         {{ 'step_nonfinal_no' | translate }}
     </div>
-
-    <div class="ui bottomBtnsWrapper segment"
-        *ngIf="edit && !(pipeline && pipeline.previewMode)">
-        <div class="ui grid">
-            <div [ngClass]="editableAction.showAddStep ? 'sixteen wide column' : ( (editableAction.id || pipeline?.from_repository) ? 'seven wide column' : 'eight wide column')"
-                *ngIf="publicActions.length > 0">
-                <app-action-step-form [actions]="publicActions" (onEvent)="stepManagement($event)">
-                </app-action-step-form>
-            </div>
-
-            <ng-container *ngIf="(editableAction.id || pipeline?.from_repository) && !editableAction.showAddStep">
-                <div [ngClass]="publicActions.length > 0 ? 'seven wide column' : 'fourteen wide column'">
-                    <button class="ui fluid green button" name="updatebtn"
-                            (click)="sendActionEvent('update')"
-                        [disabled]="!editableAction.hasChanged || editableAction.loading"
-                        [class.loading]="editableAction.loading">
-                        <i class="save icon"></i>
-                        <span *ngIf="!editPipelineMode">{{ 'btn_save' | translate }}</span>
-                        <span *ngIf="editPipelineMode">{{ 'btn_apply' | translate }}</span>
-                    </button>
-                </div>
-                <div class="two wide column">
-                    <div class="ui grey pointing dropdown button bottom right icon buttonOptions" suiDropdown
-                        autoClose="outsideClick">
-                        <i class="ellipsis vertical icon"></i>
-                        <div class="menu" suiDropdownMenu>
-                            <div class="item">
-                                <button class="ui fluid blue button"
-                                    (click)="$event.stopPropagation(); initActionFromJob()">
-                                    <i class="share icon"></i>
-                                    {{ 'action_btn_init_from_job' | translate }}
-                                </button>
-                            </div>
-                            <div class="item">
-                                <app-delete-button
-                                    (event)="sendActionEvent('delete')" [loading]="editableAction.loading"
-                                    [class]="'fluid'" title="job_delete"></app-delete-button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </ng-container>
-
-            <div class="eight wide column" *ngIf="!editableAction.id && !pipeline?.from_repository && !editableAction.showAddStep">
-                <button class="ui green button" name="addbtn" (click)="sendActionEvent('insert')"
-                    [disabled]="editableAction.loading" [class.loading]="editableAction.loading">
-                    <i class="save icon"></i>{{ 'btn_create' | translate }}
-                </button>
-            </div>
+</form>
+<nz-layout class="bottomBtnsWrapper"
+     *ngIf="edit && !(pipeline && pipeline.previewMode)">
+    <div nz-row *ngIf="publicActions.length > 0">
+        <div nz-col nzSpan="24">
+            <app-action-step-form [actions]="publicActions" (onEvent)="stepManagement($event)"></app-action-step-form>
         </div>
     </div>
-</form>
+    <div nz-row *ngIf="!editableAction.showAddStep">
+        <div nz-col nzSpan="20">
+            <button name="updateBtn"
+                    nzType="primary"
+                    nz-button
+                    (click)="sendActionEvent('update')"
+                    [disabled]="!editableAction.hasChanged || editableAction.loading"
+                    [nzLoading]="editableAction.loading" nzBlock>
+                <i nz-icon nzType="save" nzTheme="outline"></i>
+                <span *ngIf="!editPipelineMode">Save</span>
+                <span *ngIf="editPipelineMode">Apply</span>
+            </button>
+        </div>
+        <div nz-col nzSpan="4">
+            <button nz-button nz-dropdown class="menuBtn" [nzDropdownMenu]="menu" nzPlacement="topRight" nzTrigger="click" name="menuBtn">
+                <i nz-icon nzType="ellipsis" nzTheme="outline"></i>
+            </button>
+            <nz-dropdown-menu #menu="nzDropdownMenu" >
+                <ul nz-menu>
+                    <li nz-menu-item>
+                        <button nz-button nzBlock nzType="primary"
+                                (click)="$event.stopPropagation(); initActionFromJob()">
+                            <i nz-icon nzType="share-alt" nzTheme="outline"></i>Init a new action from job
+                        </button>
+                    </li>
+                    <li nz-menu-item>
+                        <button nz-popconfirm nzDanger nzBlock
+                                name="deleteBtn"
+                                nzPopconfirmTitle="Are you sure delete this action?"
+                                (nzOnConfirm)="sendActionEvent('delete')"
+                                nzPopconfirmPlacement="topLeft"
+                                nz-button>
+                            <i nz-icon nzType="rest" nzTheme="outline"></i>Delete
+                        </button>
+                    </li>
+                </ul>
+            </nz-dropdown-menu>
+        </div>
+    </div>
+</nz-layout>
