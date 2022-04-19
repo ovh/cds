@@ -60,6 +60,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
     projectsSubscription: Subscription;
     workflowsSubscription: Subscription;
 
+
+    showNotif = false;
+
     constructor(
         private _navbarService: NavbarService,
         private _store: Store,

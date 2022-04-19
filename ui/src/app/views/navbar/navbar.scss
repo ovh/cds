@@ -1,4 +1,5 @@
 @import "../../../common";
+
 #navbar {
   background-color: $polar_grey_0;
   border-radius: 0;
@@ -44,15 +45,29 @@
     padding-right: 16px;
   }
 
-  .help {
+  .icon.popover {
     width: 45px;
     display: flex;
     justify-content: center;
+  }
+  .head-example {
+    width: 42px;
+    height: 42px;
+    border-radius: 4px;
+    background: #eee;
+    display: inline-block;
+    vertical-align: middle;
   }
 
   nz-tag {
     font-weight: bold;
   }
+
+  .search {
+    width: 200px;
+    margin-right: 15px;
+  }
+
 
   /*
 
@@ -189,6 +204,69 @@ li {
   }
 }
 
+nz-switch {
+  margin-right: 10px;
+}
+
+nz-list-item {
+  width: 100%;
+
+  a {
+    width: 100%;
+  }
+  .notif {
+    width: 100%;
+    font-size: 0.8em;
+
+    &.bold {
+      font-weight: bold;
+    }
+
+    i {
+      &.check {
+        font-size: 1.5em;
+        color: black;
+        opacity: 0.3;
+
+        &:hover {
+          opacity: 1;
+        }
+      }
+    }
+
+    .title {
+      font-size: 1.3em;
+
+      &.bold {
+        font-weight: bold;
+      }
+
+      &.blue {
+        color: $cds_color_teal !important;
+      }
+
+      &.orange {
+        color: $cds_color_orange !important;
+      }
+    }
+
+    .info {
+      font-size: 1em;
+      color: inherit;
+      text-decoration: underline;
+      display: block;
+
+      &.mt {
+        margin-top: 4px;
+      }
+    }
+
+    a {
+      width: 100%;
+    }
+  }
+}
+
 .details {
   .ring {
     height: 100%;
@@ -206,22 +284,6 @@ li {
     }
   }
 
-  .notif {
-    font-size: 0.8em;
-
-    &.bold {
-      font-weight: bold;
-    }
-
-    &.blue {
-      color: $cds_color_teal !important;
-    }
-
-    &.orange {
-      color: $cds_color_orange !important
-    }
-  }
-
   .info {
     font-size: 0.8em;
 
@@ -231,56 +293,8 @@ li {
   }
 }
 
-
 .mt5 {
     margin-top: 5px;
-}
-
-.notif {
-    font-size: 0.8em;
-
-    &.bold {
-        font-weight: bold;
-    }
-
-    i {
-        &.check {
-            font-size: 1.5em;
-            color: black;
-            opacity: 0.3;
-
-            &:hover {
-                opacity: 1;
-            }
-        }
-    }
-
-    .title {
-        font-size: 1.3em;
-
-        &.bold {
-            font-weight: bold;
-        }
-
-        &.blue {
-            color: $cds_color_teal !important;
-        }
-
-        &.orange {
-            color: $cds_color_orange !important;
-        }
-    }
-
-    .info {
-        font-size: 1em;
-        color: inherit;
-        text-decoration: underline;
-        display: block;
-
-        &.mt {
-            margin-top: 4px;
-        }
-    }
 }
 
 .searchpopup {
@@ -300,4 +314,8 @@ li {
 
 .helppopup {
     width: 400px;
+}
+
+.borderRight {
+  border-right: 1px solid dimgrey;
 }

@@ -127,33 +127,45 @@ import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
 import { en_US, NZ_I18N } from 'ng-zorro-antd/i18n';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { IconDefinition } from '@ant-design/icons-angular';
-import { CaretUpFill, PhoneFill, PlusSquareOutline, RestOutline, SaveOutline, SettingFill, ShareAltOutline, ToolFill } from '@ant-design/icons-angular/icons'
+import { BellFill, CaretUpFill, CheckOutline, PhoneFill, PlusSquareOutline, RestOutline, SaveOutline, SettingFill, ShareAltOutline, ToolFill } from '@ant-design/icons-angular/icons'
 import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
 import {NzTagModule} from 'ng-zorro-antd/tag';
 import { NzPopoverModule } from 'ng-zorro-antd/popover';
+import { NzBadgeModule } from 'ng-zorro-antd/badge';
+import { NzTabsModule } from 'ng-zorro-antd/tabs';
+import { NzListModule } from 'ng-zorro-antd/list';
+import { NzSwitchModule } from 'ng-zorro-antd/switch';
+import { NzInputModule } from 'ng-zorro-antd/input';
+import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 
 const ngZorroConfig: NzConfig = {
     notification: {nzPauseOnHover: true, nzPlacement: "topRight"},
     icon: {nzTheme: "outline"}
 };
 
-const icons: IconDefinition[] = [ CaretUpFill, PhoneFill, PlusSquareOutline, RestOutline, SaveOutline, SettingFill, ShareAltOutline, ToolFill ];
+const icons: IconDefinition[] = [ BellFill, CaretUpFill, CheckOutline, PhoneFill, PlusSquareOutline, RestOutline, SaveOutline, SettingFill, ShareAltOutline, ToolFill ];
 
 @NgModule({
     imports: [
+        NzBadgeModule,
         NzButtonModule,
         NzCardModule,
         NzDropDownModule,
         NzFormModule,
         NzGridModule,
         NzIconModule.forRoot(icons),
+        NzInputModule,
         NzLayoutModule,
+        NzListModule,
         NzNotificationModule,
         NzMenuModule,
         NzPopconfirmModule,
         NzPopoverModule,
         NzSelectModule,
+        NzSwitchModule,
+        NzTabsModule,
         NzTagModule,
+        NzToolTipModule,
         CommonModule,
         ClipboardModule,
         NgxSemanticModule,
@@ -325,19 +337,25 @@ const icons: IconDefinition[] = [ CaretUpFill, PhoneFill, PlusSquareOutline, Res
         NgForNumber,
         NgxSemanticModule,
         NgxAutoScrollDirective,
+        NzBadgeModule,
         NzButtonModule,
         NzCardModule,
         NzDropDownModule,
         NzFormModule,
         NzGridModule,
         NzIconModule,
+        NzInputModule,
         NzLayoutModule,
+        NzListModule,
         NzMenuModule,
         NzNotificationModule,
         NzPopconfirmModule,
         NzPopoverModule,
         NzSelectModule,
+        NzSwitchModule,
+        NzTabsModule,
         NzTagModule,
+        NzToolTipModule,
         PaginationComponent,
         ParameterFormComponent,
         ParameterListComponent,
