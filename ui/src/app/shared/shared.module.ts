@@ -127,15 +127,17 @@ import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
 import { en_US, NZ_I18N } from 'ng-zorro-antd/i18n';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { IconDefinition } from '@ant-design/icons-angular';
-import { PlusSquareOutline, RestOutline, SaveOutline, ShareAltOutline } from '@ant-design/icons-angular/icons'
+import { CaretUpFill, PhoneFill, PlusSquareOutline, RestOutline, SaveOutline, SettingFill, ShareAltOutline, ToolFill } from '@ant-design/icons-angular/icons'
 import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
+import {NzTagModule} from 'ng-zorro-antd/tag';
+import { NzPopoverModule } from 'ng-zorro-antd/popover';
 
 const ngZorroConfig: NzConfig = {
     notification: {nzPauseOnHover: true, nzPlacement: "topRight"},
     icon: {nzTheme: "outline"}
 };
 
-const icons: IconDefinition[] = [ PlusSquareOutline, RestOutline, SaveOutline, ShareAltOutline ];
+const icons: IconDefinition[] = [ CaretUpFill, PhoneFill, PlusSquareOutline, RestOutline, SaveOutline, SettingFill, ShareAltOutline, ToolFill ];
 
 @NgModule({
     imports: [
@@ -149,7 +151,9 @@ const icons: IconDefinition[] = [ PlusSquareOutline, RestOutline, SaveOutline, S
         NzNotificationModule,
         NzMenuModule,
         NzPopconfirmModule,
+        NzPopoverModule,
         NzSelectModule,
+        NzTagModule,
         CommonModule,
         ClipboardModule,
         NgxSemanticModule,
@@ -331,7 +335,9 @@ const icons: IconDefinition[] = [ PlusSquareOutline, RestOutline, SaveOutline, S
         NzMenuModule,
         NzNotificationModule,
         NzPopconfirmModule,
+        NzPopoverModule,
         NzSelectModule,
+        NzTagModule,
         PaginationComponent,
         ParameterFormComponent,
         ParameterListComponent,
