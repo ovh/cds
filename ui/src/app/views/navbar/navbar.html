@@ -82,7 +82,7 @@
             <nz-tag *ngIf="currentAuthSummary.user.ring === 'ADMIN' && !currentAuthSummary.isAdmin()"
                     nzColor="orange">
                 Maintainer
-                <a class="detail" (click)="mfaLogin()" title="Elevate to admin"><i class="key icon"></i></a>
+                <a class="detail" (click)="mfaLogin()" title="Elevate to admin"><i nz-icon nzType="key" nzTheme="outline"></i></a>
             </nz-tag>
             <nz-tag *ngIf="currentAuthSummary.isAdmin()" nzColor="red">Admin</nz-tag>
         </div>
@@ -100,96 +100,73 @@
         </div>
         <ng-template #popupSearchTemplate>
             <div class="content searchpopup">
-                <div class="ui right floated" nz-tooltip nzTooltipPlacement="left"
-                     [nzTooltipTitle]="'navbar_search_help_details' | translate">
-                    <i class="help icon"></i>
-                    {{ 'navbar_search_help' | translate }}
+                <div nz-row class="header">
+                    <div nz-col nzSpan="12">
+                        <div *ngIf="containsResult && isSearch">
+                            <i nz-icon nzType="search"></i> {{'navbar_results' | translate}}
+                        </div>
+                        <div *ngIf="containsResult && !isSearch">
+                            <i nz-icon nzType="history" nzTheme="outline"></i>Seen recently
+                        </div>
+                        <div *ngIf="!containsResult">
+                            <i nz-icon nzType="search"></i>{{'navbar_no_result' | translate}}
+                        </div>
+                    </div>
+                    <div nz-col nzSpan="12">
+                        <div nz-tooltip nzTooltipPlacement="left" class="right"
+                             [nzTooltipTitle]="'navbar_search_help_details' | translate">
+                            <i nz-icon nzType="question-circle" nzTheme="outline"></i>
+                            {{ 'navbar_search_help' | translate }}
+                        </div>
+                    </div>
                 </div>
 
-                <div *ngIf="containsResult && isSearch">
-                    <div class="ui left"><i class="search icon"></i> {{'navbar_results' | translate}}</div>
-                </div>
-                <div *ngIf="containsResult && !isSearch">
-                    <div class="ui left"><i class="history icon"></i>{{'navbar_seen_recently' | translate}}</div>
-                </div>
-                <div *ngIf="!containsResult">
-                    <div class="ui center"><i class="search icon"></i>{{'navbar_no_result' | translate}}</div>
-                </div>
                 <div nz-row *ngIf="containsResult">
                     <div nz-col nzSpan="12" class="borderRight">
-                        <div class="ui secondary pointing menu">
-                            <div class="ui relaxed divided list">
-                                <div class="item">
-                                    <div class="content">
-                                        {{ 'common_projects' | translate }}
-                                    </div>
-                                </div>
-                            </div>
+                        <div class="title">
+                            <div class="content">Projects</div>
                         </div>
-                        <div class="ui secondary pointing menu" *ngIf="!searchProjects || searchProjects.length <= 0">
-                            <div class="ui relaxed divided list">
-                                <div class="item">
-                                    <div class="content">
-                                        {{ 'navbar_no_project' | translate}}
-                                    </div>
-                                </div>
-                            </div>
+                        <div class="item" *ngIf="!searchProjects || searchProjects.length <= 0">
+                            <div class="content">No project</div>
                         </div>
-                        <div class="ui secondary pointing menu" *ngFor="let el of searchProjects">
-                            <div class="ui relaxed divided list">
-                                <div class="item">
-                                    <i class="pointing star icon favorite" *ngIf="el.favorite"></i>
-                                    <div class="content">
-                                        <a class="header" (click)="$event.stopPropagation()"
-                                           [routerLink]="['/project', el.projectKey]"
-                                           title="{{ 'common_project_title' | translate }}{{el.title}}">
-                                            {{el.title}}
-                                        </a>
-                                    </div>
-                                </div>
+                        <div class="item" *ngFor="let el of searchProjects">
+                            <i nz-icon nzType="star" nzTheme="outline" *ngIf="el.favorite"></i>
+                            <div class="content">
+                                <a class="header" (click)="$event.stopPropagation()"
+                                   [routerLink]="['/project', el.projectKey]"
+                                   title="{{ 'common_project_title' | translate }}{{el.title}}">
+                                    {{el.title}}
+                                </a>
                             </div>
                         </div>
                     </div>
                     <div nz-col nzSpan="12">
-                        <div class="ui secondary pointing menu">
-                            <div class="ui relaxed divided list">
-                                <div class="item">
-                                    <div class="content">
-                                        Workflows
-                                    </div>
+                        <div nz-col nzSpan="12">
+                            <div class="title">
+                                <div class="content">Workflows</div>
+                            </div>
+                        </div>
+                        <div class="item" *ngIf="!searchWorkflows || searchWorkflows.length <= 0">
+                            <div class="content">No workflow</div>
+                        </div>
+                        <div class="item" *ngFor="let el of searchWorkflows">
+                            <i nz-icon nzType="star" nzTheme="outline" *ngIf="el.favorite"></i>
+                            <div class="content">
+                                <a class="header" (click)="$event.stopPropagation()"
+                                   [routerLink]="['/project', el.projectKey, 'workflow', el.title]"
+                                   title="{{ 'common_workflow_title' | translate }}{{el.title}}">
+                                    {{el.title}}
+                                </a>
+                                <div class="description">{{'navbar_in_project' | translate}}
+                                    <a (click)="$event.stopPropagation()"
+                                       [routerLink]="['/project', el.projectKey]"
+                                       title="{{ 'common_project_title' | translate }}{{el.title}}">
+                                        {{el.projectKey}}
+                                    </a>
                                 </div>
                             </div>
                         </div>
-                        <div class="ui secondary pointing menu" *ngIf="!searchWorkflows || searchWorkflows.length <= 0">
-                            <div class="ui relaxed divided list">
-                                <div class="item">
-                                    <div class="content">
-                                        {{ 'navbar_no_workflow' | translate}}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="ui secondary pointing menu" *ngFor="let el of searchWorkflows">
-                            <div class="ui relaxed divided list">
-                                <div class="item">
-                                    <i class="pointing star icon favorite" *ngIf="el.favorite"></i>
-                                    <div class="content">
-                                        <a class="header" (click)="$event.stopPropagation()"
-                                           [routerLink]="['/project', el.projectKey, 'workflow', el.title]"
-                                           title="{{ 'common_workflow_title' | translate }}{{el.title}}">
-                                            {{el.title}}
-                                        </a>
-                                        <div class="description">{{'navbar_in_project' | translate}}
-                                            <a (click)="$event.stopPropagation()"
-                                               [routerLink]="['/project', el.projectKey]"
-                                               title="{{ 'common_project_title' | translate }}{{el.title}}">
-                                                {{el.projectKey}}
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+
                     </div>
                 </div>
             </div>
