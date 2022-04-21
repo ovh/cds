@@ -14,8 +14,8 @@ On the root pipeline only, you can add hooks:
 * [scheduler]({{< relref "/docs/concepts/workflow/hooks/scheduler.md" >}})
 * [git repository webhooks]({{< relref "/docs/concepts/workflow/hooks/git-repo-webhook.md" >}})
 * [git repository poller]({{< relref "/docs/concepts/workflow/hooks/git-repo-poller.md" >}})
-* [kafka hook] ({{< relref "/docs/concepts/workflow/hooks/kafka-hook.md" >}})
-* [RabbitMQ hook] ({{< relref "/docs/concepts/workflow/hooks/rabbitmq-hook.md" >}})
+* [kafka hook]({{< relref "/docs/concepts/workflow/hooks/kafka-hook.md" >}})
+* [RabbitMQ hook]({{< relref "/docs/concepts/workflow/hooks/rabbitmq-hook.md" >}})
 
 There are two hooks on this pipeline, a repository webhook (GitHub here) and a webhook:
 
