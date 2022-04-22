@@ -1094,7 +1094,7 @@ func (i vcsInfos) String() string {
 	return fmt.Sprintf("%s:%s:%s:%s", i.Server, i.Repository, i.Branch, i.Hash)
 }
 
-func getVCSInfos(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, projectKey string, vcsServer sdk.ProjectVCSServerLink, gitValues map[string]string, applicationName, applicationVCSServer, applicationRepositoryFullname string) (*vcsInfos, error) {
+func getVCSInfos(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, projectKey string, gitValues map[string]string, applicationName, applicationVCSServer, applicationRepositoryFullname string) (*vcsInfos, error) {
 	var vcsInfos vcsInfos
 	vcsInfos.Repository = gitValues[tagGitRepository]
 	vcsInfos.Branch = gitValues[tagGitBranch]
@@ -1104,9 +1104,9 @@ func getVCSInfos(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cac
 	vcsInfos.Message = gitValues[tagGitMessage]
 	vcsInfos.URL = gitValues[tagGitURL]
 	vcsInfos.HTTPUrl = gitValues[tagGitHTTPURL]
-	vcsInfos.Server = vcsServer.Name
+	vcsInfos.Server = applicationVCSServer
 
-	if applicationName == "" || applicationVCSServer == "" || vcsServer.ID == 0 {
+	if applicationName == "" || applicationVCSServer == "" {
 		return &vcsInfos, nil
 	}
 
@@ -1130,7 +1130,7 @@ func getVCSInfos(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cac
 	}
 
 	//Get the RepositoriesManager Client
-	client, errclient := repositoriesmanager.AuthorizedClient(ctx, db, store, projectKey, vcsServer)
+	client, errclient := repositoriesmanager.AuthorizedClient(ctx, db, store, projectKey, applicationVCSServer)
 	if errclient != nil {
 		return nil, sdk.WrapError(errclient, "cannot get client")
 	}
@@ -1194,10 +1194,6 @@ func getVCSInfos(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cac
 	if vcsInfos.Hash != "" && (vcsInfos.Author == "" || vcsInfos.Message == "") {
 		commit, errCm := client.Commit(ctx, vcsInfos.Repository, vcsInfos.Hash)
 		if errCm != nil {
-			// log to debug random 401
-			log.Error(ctx, "cannot get commit infos for %s %s - vcsServer.Name:%s vcsServer.Username:%s: %v",
-				vcsInfos.Repository, vcsInfos.Hash, vcsServer.Name, vcsServer.Username, errCm)
-
 			return nil, sdk.WrapError(errCm, "cannot get commit infos for %s %s", vcsInfos.Repository, vcsInfos.Hash)
 		}
 		vcsInfos.Author = commit.Author.Name

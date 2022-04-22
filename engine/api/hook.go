@@ -51,11 +51,7 @@ func (api *API) getHookPollingVCSEvents() service.Handler {
 		defer tx.Rollback() // nolint
 
 		//get the client for the repositories manager
-		vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, tx, proj.Key, vcsServerParam)
-		if err != nil {
-			return err
-		}
-		client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, proj.Key, vcsServer)
+		client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, proj.Key, vcsServerParam)
 		if err != nil {
 			return err
 		}
@@ -68,7 +64,7 @@ func (api *API) getHookPollingVCSEvents() service.Handler {
 		if info, err := repositoriesmanager.GetPollingInfos(ctx, client, *proj); err != nil {
 			return sdk.WrapError(err, "cannot check if polling is enabled")
 		} else if info.PollingDisabled || !info.PollingSupported {
-			log.Info(ctx, "getHookPollingVCSEvents> %s polling is disabled", vcsServer.Name)
+			log.Info(ctx, "getHookPollingVCSEvents> %s polling is disabled", vcsServerParam)
 			return service.WriteJSON(w, nil, http.StatusOK)
 		}
 

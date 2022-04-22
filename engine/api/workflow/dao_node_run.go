@@ -531,15 +531,9 @@ func GetNodeRunBuildCommits(ctx context.Context, db gorpmapper.SqlExecutorWithTx
 	}
 	cur.BuildNumber = number
 
-	vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, proj.Key, app.VCSServer)
-	if err != nil {
-		log.Debug(ctx, "GetNodeRunBuildCommits> No vcsServer found: %v", err)
-		return nil, cur, nil
-	}
-
 	res := []sdk.VCSCommit{}
 	//Get the RepositoriesManager Client
-	client, err := repositoriesmanager.AuthorizedClient(ctx, db, store, proj.Key, vcsServer)
+	client, err := repositoriesmanager.AuthorizedClient(ctx, db, store, proj.Key, app.VCSServer)
 	if err != nil {
 		return nil, cur, sdk.WrapError(err, "cannot get client")
 	}

@@ -72,12 +72,7 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "cannot find the root application of the workflow")
 		}
 
-		vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, tx1, key, rootApp.VCSServer)
-		if err != nil {
-			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "postWorkflowAsCodeHandler> cannot get client got %s %s : %v", key, rootApp.VCSServer, err)
-		}
-
-		client, err := repositoriesmanager.AuthorizedClient(ctx, tx1, api.Cache, key, vcsServer)
+		client, err := repositoriesmanager.AuthorizedClient(ctx, tx1, api.Cache, key, rootApp.VCSServer)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "postWorkflowAsCodeHandler> cannot get client got %s %s : %v", key, rootApp.VCSServer, err)
 		}

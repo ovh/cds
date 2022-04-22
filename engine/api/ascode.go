@@ -59,11 +59,7 @@ func (api *API) postImportAsCodeHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load project")
 		}
 
-		vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, tx, p.Key, ope.VCSServer)
-		if err != nil {
-			return err
-		}
-		client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, p.Key, vcsServer)
+		client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, p.Key, ope.VCSServer)
 		if err != nil {
 			return sdk.NewErrorWithStack(err,
 				sdk.NewErrorFrom(sdk.ErrNoReposManagerClientAuth, "cannot get client for %s %s", key, ope.VCSServer))
@@ -215,11 +211,7 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 
 		// Grant CDS as a repository collaborator
 		// TODO for this moment, this step is not mandatory. If it's failed, continue the ascode process
-		vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, tx, proj.Key, ope.VCSServer)
-		if err != nil {
-			return err
-		}
-		client, erra := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, proj.Key, vcsServer)
+		client, erra := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, proj.Key, ope.VCSServer)
 		if erra != nil {
 			log.Error(ctx, "postPerformImportAsCodeHandler> Cannot get client for %s %s : %s", proj.Key, ope.VCSServer, erra)
 		} else {
