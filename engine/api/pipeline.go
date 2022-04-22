@@ -81,7 +81,7 @@ func (api *API) updateAsCodePipelineHandler() service.Handler {
 
 		var rootApp *sdk.Application
 		if wkHolder.WorkflowData.Node.Context != nil && wkHolder.WorkflowData.Node.Context.ApplicationID != 0 {
-			rootApp, err = application.LoadByIDWithClearVCSStrategyPassword(tx, wkHolder.WorkflowData.Node.Context.ApplicationID)
+			rootApp, err = application.LoadByIDWithClearVCSStrategyPassword(ctx, tx, wkHolder.WorkflowData.Node.Context.ApplicationID)
 			if err != nil {
 				return err
 			}

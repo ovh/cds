@@ -74,7 +74,7 @@ func ApplyRetentionPolicyOnWorkflow(ctx context.Context, store cache.Store, db *
 	if wf.WorkflowData.Node.Context != nil {
 		appID := wf.WorkflowData.Node.Context.ApplicationID
 		if appID != 0 {
-			appDB, err := application.LoadByID(db, appID)
+			appDB, err := application.LoadByID(ctx, db, appID)
 			if err != nil {
 				return err
 			}

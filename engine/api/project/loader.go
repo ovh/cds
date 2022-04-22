@@ -101,7 +101,7 @@ func loadApplicationWithDeploymentStrategies(ctx context.Context, db gorp.SqlExe
 	}
 	for i := range proj.Applications {
 		a := &proj.Applications[i]
-		if err := (*application.LoadOptions.WithDeploymentStrategies)(ctx, db, a); err != nil {
+		if err := application.LoadOptions.WithDeploymentStrategies(ctx, db, a); err != nil {
 			return sdk.WithStack(err)
 		}
 	}
@@ -134,7 +134,7 @@ func loadApplicationVariables(ctx context.Context, db gorp.SqlExecutor, proj *sd
 	}
 
 	for _, a := range proj.Applications {
-		if err := (*application.LoadOptions.WithVariables)(ctx, db, &a); err != nil {
+		if err := application.LoadOptions.WithVariables(ctx, db, &a); err != nil {
 			return sdk.WithStack(err)
 		}
 	}
@@ -150,7 +150,7 @@ func loadApplicationKeys(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Pro
 	}
 
 	for _, a := range proj.Applications {
-		if err := (*application.LoadOptions.WithKeys)(ctx, db, &a); err != nil {
+		if err := application.LoadOptions.WithKeys(ctx, db, &a); err != nil {
 			return sdk.WithStack(err)
 		}
 	}
@@ -212,9 +212,9 @@ func loadWorkflowNames(_ context.Context, db gorp.SqlExecutor, proj *sdk.Project
 	return nil
 }
 
-func loadApplicationsWithOpts(_ context.Context, db gorp.SqlExecutor, proj *sdk.Project, opts ...application.LoadOptionFunc) error {
-	apps, err := application.LoadAll(db, proj.Key, opts...)
-	if err != nil && sdk.Cause(err) != sql.ErrNoRows && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+func loadApplicationsWithOpts(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project, opts ...application.LoadOptionFunc) error {
+	apps, err := application.LoadAll(ctx, db, proj.Key, opts...)
+	if err != nil {
 		return sdk.WithStack(err)
 	}
 	proj.Applications = apps

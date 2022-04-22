@@ -82,7 +82,7 @@ func migrateRuns(ctx context.Context, dbFunc func() *gorp.DbMap) (int, error) {
 		return 0, err
 	}
 
-	appVCS, err := application.LoadAllByIDsWithDecryption(dbPrepare, appIds)
+	appVCS, err := application.LoadAllByIDsWithDecryption(ctx, dbPrepare, appIds)
 	if err != nil {
 		return 0, err
 	}

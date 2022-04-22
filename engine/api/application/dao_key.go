@@ -45,8 +45,7 @@ func UpdateKey(ctx context.Context, db gorpmapper.SqlExecutorWithTx, key *sdk.Ap
 	return nil
 }
 
-func getAllKeys(db gorp.SqlExecutor, query gorpmapping.Query) ([]sdk.ApplicationKey, error) {
-	var ctx = context.Background()
+func getAllKeys(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query) ([]sdk.ApplicationKey, error) {
 	var res []dbApplicationKey
 	keys := make([]sdk.ApplicationKey, 0, len(res))
 
@@ -69,17 +68,17 @@ func getAllKeys(db gorp.SqlExecutor, query gorpmapping.Query) ([]sdk.Application
 }
 
 // LoadAllKeys load all keys for the given application
-func LoadAllKeys(db gorp.SqlExecutor, appID int64) ([]sdk.ApplicationKey, error) {
+func LoadAllKeys(ctx context.Context, db gorp.SqlExecutor, appID int64) ([]sdk.ApplicationKey, error) {
 	query := gorpmapping.NewQuery(`
 	SELECT *
 	FROM application_key
 	WHERE application_id = $1`).Args(appID)
-	return getAllKeys(db, query)
+	return getAllKeys(ctx, db, query)
 }
 
 // LoadAllKeysWithPrivateContent load all keys for the given application
-func LoadAllKeysWithPrivateContent(db gorp.SqlExecutor, appID int64) ([]sdk.ApplicationKey, error) {
-	keys, err := LoadAllKeys(db, appID)
+func LoadAllKeysWithPrivateContent(ctx context.Context, db gorp.SqlExecutor, appID int64) ([]sdk.ApplicationKey, error) {
+	keys, err := LoadAllKeys(ctx, db, appID)
 	if err != nil {
 		return nil, err
 	}

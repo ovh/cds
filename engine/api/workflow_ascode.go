@@ -63,7 +63,7 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 
 		var rootApp *sdk.Application
 		if wfDB.WorkflowData.Node.Context != nil && wfDB.WorkflowData.Node.Context.ApplicationID != 0 {
-			rootApp, err = application.LoadByIDWithClearVCSStrategyPassword(tx1, wfDB.WorkflowData.Node.Context.ApplicationID)
+			rootApp, err = application.LoadByIDWithClearVCSStrategyPassword(ctx, tx1, wfDB.WorkflowData.Node.Context.ApplicationID)
 			if err != nil {
 				return err
 			}

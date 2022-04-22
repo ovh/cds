@@ -47,7 +47,7 @@ func (api *API) getApplicationOverviewHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		app, err := application.LoadByName(tx, projectKey, appName)
+		app, err := application.LoadByName(ctx, tx, projectKey, appName)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load application")
 		}

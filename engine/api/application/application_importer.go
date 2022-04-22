@@ -25,13 +25,13 @@ func Import(ctx context.Context, db gorpmapper.SqlExecutorWithTx, proj sdk.Proje
 	}
 
 	if doUpdate {
-		oldApp, errlo := LoadByName(db, proj.Key, app.Name, LoadOptions.WithKeys, LoadOptions.WithVariablesWithClearPassword, LoadOptions.WithClearDeploymentStrategies)
-		if errlo != nil {
-			return sdk.WrapError(errlo, "application.Import> Unable to load application by name: %s", app.Name)
+		oldApp, err := LoadByName(ctx, db, proj.Key, app.Name, LoadOptions.WithKeys, LoadOptions.WithVariablesWithClearPassword, LoadOptions.WithClearDeploymentStrategies)
+		if err != nil {
+			return sdk.WrapError(err, "unable to load application by name: %s", app.Name)
 		}
 		//Delete all Variables
 		if err := DeleteAllVariables(db, oldApp.ID); err != nil {
-			return sdk.WrapError(err, "Cannot delete application variable")
+			return sdk.WrapError(err, "cannot delete application variable")
 		}
 
 		///Delete all Keys
@@ -43,7 +43,7 @@ func Import(ctx context.Context, db gorpmapper.SqlExecutorWithTx, proj sdk.Proje
 		app.ID = oldApp.ID
 
 		//Save app in database
-		if err := Update(db, app); err != nil {
+		if err := Update(ctx, db, app); err != nil {
 			return sdk.WrapError(err, "Unable to update application")
 		}
 
@@ -53,7 +53,7 @@ func Import(ctx context.Context, db gorpmapper.SqlExecutorWithTx, proj sdk.Proje
 	} else {
 		//Save application in database
 		if err := Insert(db, proj, app); err != nil {
-			return sdk.WrapError(err, "application.Import")
+			return err
 		}
 
 		if msgChan != nil {

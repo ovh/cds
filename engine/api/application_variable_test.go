@@ -7,9 +7,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
 )
@@ -27,9 +27,7 @@ func Test_getVariableAuditInApplicationHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	if err := application.Insert(db, *proj, app); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, application.Insert(db, *proj, app))
 
 	// Add variable
 	v := sdk.ApplicationVariable{
@@ -50,7 +48,7 @@ func Test_getVariableAuditInApplicationHandler(t *testing.T) {
 	uri := router.GetRoute("GET", api.getVariableAuditInApplicationHandler, vars)
 
 	req, err := http.NewRequest("GET", uri, nil)
-	test.NoError(t, err)
+	require.NoError(t, err)
 	assets.AuthentifyRequest(t, req, u, pass)
 
 	// Do the request
@@ -59,7 +57,7 @@ func Test_getVariableAuditInApplicationHandler(t *testing.T) {
 	assert.Equal(t, 200, w.Code)
 
 	var audits []sdk.ApplicationVariableAudit
-	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &audits))
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &audits))
 	assert.Equal(t, len(audits), 1)
 
 	assert.Nil(t, audits[0].VariableBefore)

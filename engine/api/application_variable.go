@@ -29,26 +29,26 @@ func (api *API) getVariablesAuditInApplicationHandler() service.Handler {
 
 func (api *API) getVariableAuditInApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// Get project name in URL
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 		appName := vars["applicationName"]
 		varName := vars["name"]
 
-		app, errA := application.LoadByName(api.mustDB(), key, appName)
-		if errA != nil {
-			return sdk.WrapError(errA, "getVariableAuditInApplicationHandler> Cannot load application %s on project %s", appName, key)
+		app, err := application.LoadByName(ctx, api.mustDB(), key, appName)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load application %s on project %s", appName, key)
 		}
 
-		variable, errV := application.LoadVariable(api.mustDB(), app.ID, varName)
-		if errV != nil {
-			return sdk.WrapError(errV, "getVariableAuditInApplicationHandler> Cannot load variable %s", varName)
+		variable, err := application.LoadVariable(ctx, api.mustDB(), app.ID, varName)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load variable %s", varName)
 		}
 
-		audits, errA := application.LoadVariableAudits(api.mustDB(), app.ID, variable.ID)
-		if errA != nil {
-			return sdk.WrapError(errA, "getVariableAuditInApplicationHandler> Cannot load audit for variable %s", varName)
+		audits, err := application.LoadVariableAudits(api.mustDB(), app.ID, variable.ID)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load audit for variable %s", varName)
 		}
+
 		return service.WriteJSON(w, audits, http.StatusOK)
 	}
 }
@@ -60,14 +60,14 @@ func (api *API) getVariableInApplicationHandler() service.Handler {
 		appName := vars["applicationName"]
 		varName := vars["name"]
 
-		app, err := application.LoadByName(api.mustDB(), key, appName)
+		app, err := application.LoadByName(ctx, api.mustDB(), key, appName)
 		if err != nil {
-			return sdk.WrapError(err, "Cannot load application %s", appName)
+			return sdk.WrapError(err, "cannot load application %s", appName)
 		}
 
-		variable, err := application.LoadVariable(api.mustDB(), app.ID, varName)
+		variable, err := application.LoadVariable(ctx, api.mustDB(), app.ID, varName)
 		if err != nil {
-			return sdk.WrapError(err, "Cannot get variable %s for application %s", varName, appName)
+			return sdk.WrapError(err, "cannot get variable %s for application %s", varName, appName)
 		}
 
 		return service.WriteJSON(w, variable, http.StatusOK)
@@ -80,9 +80,9 @@ func (api *API) getVariablesInApplicationHandler() service.Handler {
 		key := vars[permProjectKey]
 		appName := vars["applicationName"]
 
-		app, err := application.LoadByName(api.mustDB(), key, appName, application.LoadOptions.WithVariables)
+		app, err := application.LoadByName(ctx, api.mustDB(), key, appName, application.LoadOptions.WithVariables)
 		if err != nil {
-			return sdk.WrapError(err, "Cannot load application %s", appName)
+			return sdk.WrapError(err, "cannot load application %s", appName)
 		}
 
 		return service.WriteJSON(w, app.Variables, http.StatusOK)
@@ -96,9 +96,9 @@ func (api *API) deleteVariableFromApplicationHandler() service.Handler {
 		appName := vars["applicationName"]
 		varName := vars["name"]
 
-		app, err := application.LoadByName(api.mustDB(), key, appName)
+		app, err := application.LoadByName(ctx, api.mustDB(), key, appName)
 		if err != nil {
-			return sdk.WrapError(err, "Cannot load application: %s", appName)
+			return sdk.WrapError(err, "cannot load application: %s", appName)
 		}
 		if app.FromRepository != "" {
 			return sdk.WithStack(sdk.ErrForbidden)
@@ -106,17 +106,17 @@ func (api *API) deleteVariableFromApplicationHandler() service.Handler {
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			return sdk.WrapError(err, "Cannot start transaction")
+			return sdk.WrapError(err, "cannot start transaction")
 		}
 		defer tx.Rollback() // nolint
 
-		varToDelete, errV := application.LoadVariable(api.mustDB(), app.ID, varName)
-		if errV != nil {
-			return sdk.WrapError(errV, "deleteVariableFromApplicationHandler> Cannot load variable %s", varName)
+		varToDelete, err := application.LoadVariable(ctx, api.mustDB(), app.ID, varName)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load variable %s", varName)
 		}
 
 		if err := application.DeleteVariable(tx, app.ID, varToDelete, getAPIConsumer(ctx)); err != nil {
-			return sdk.WrapError(err, "Cannot delete %s", varName)
+			return sdk.WrapError(err, "cannot delete %s", varName)
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -147,27 +147,27 @@ func (api *API) updateVariableInApplicationHandler() service.Handler {
 			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "cannot change variable name")
 		}
 
-		app, err := application.LoadByName(api.mustDB(), key, appName)
+		app, err := application.LoadByName(ctx, api.mustDB(), key, appName)
 		if err != nil {
-			return sdk.WrapError(err, "Cannot load application: %s", appName)
+			return sdk.WrapError(err, "cannot load application: %s", appName)
 		}
 		if app.FromRepository != "" {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
-		variableBefore, err := application.LoadVariableWithDecryption(api.mustDB(), app.ID, newVar.ID, varName)
+		variableBefore, err := application.LoadVariableWithDecryption(ctx, api.mustDB(), app.ID, newVar.ID, varName)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load variable with id %d", newVar.ID)
 		}
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			return sdk.WrapError(err, "Cannot create transaction")
+			return sdk.WrapError(err, "cannot create transaction")
 		}
 		defer tx.Rollback() // nolint
 
 		if err := application.UpdateVariable(tx, app.ID, &newVar, variableBefore, getAPIConsumer(ctx)); err != nil {
-			return sdk.WrapError(err, "Cannot update variable %s for application %s", varName, appName)
+			return sdk.WrapError(err, "cannot update variable %s for application %s", varName, appName)
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -196,7 +196,7 @@ func (api *API) addVariableInApplicationHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrWrongRequest)
 		}
 
-		app, err := application.LoadByName(api.mustDB(), key, appName)
+		app, err := application.LoadByName(ctx, api.mustDB(), key, appName)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load application %s ", appName)
 		}

@@ -20,9 +20,9 @@ func (api *API) getApplicationDeploymentStrategiesConfigHandler() service.Handle
 		key := vars[permProjectKey]
 		appName := vars["applicationName"]
 
-		app, err := application.LoadByName(api.mustDB(), key, appName, application.LoadOptions.WithDeploymentStrategies)
+		app, err := application.LoadByName(ctx, api.mustDB(), key, appName, application.LoadOptions.WithDeploymentStrategies)
 		if err != nil {
-			return sdk.WrapError(err, "getApplicationDeploymentStrategiesConfigHandler")
+			return err
 		}
 
 		return service.WriteJSON(w, app.DeploymentStrategies, http.StatusOK)
@@ -41,9 +41,9 @@ func (api *API) postApplicationDeploymentStrategyConfigHandler() service.Handler
 			return err
 		}
 
-		tx, errtx := api.mustDB().Begin()
-		if errtx != nil {
-			return errtx
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return err
 		}
 		defer tx.Rollback() // nolint
 
@@ -68,7 +68,7 @@ func (api *API) postApplicationDeploymentStrategyConfigHandler() service.Handler
 			return sdk.WrapError(sdk.ErrForbidden, "postApplicationDeploymentStrategyConfigHandler> integration doesn't support deployment")
 		}
 
-		app, err := application.LoadByName(tx, key, appName, application.LoadOptions.WithClearDeploymentStrategies)
+		app, err := application.LoadByName(ctx, tx, key, appName, application.LoadOptions.WithClearDeploymentStrategies)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load application")
 		}
@@ -87,10 +87,10 @@ func (api *API) postApplicationDeploymentStrategyConfigHandler() service.Handler
 		oldPfConfig.MergeWith(pfConfig)
 
 		if err := application.SetDeploymentStrategy(tx, proj.ID, app.ID, pf.Model.ID, pfName, oldPfConfig); err != nil {
-			return sdk.WrapError(err, "postApplicationDeploymentStrategyConfigHandler")
+			return err
 		}
 
-		app, err = application.LoadByName(tx, key, appName, application.LoadOptions.WithDeploymentStrategies)
+		app, err = application.LoadByName(ctx, tx, key, appName, application.LoadOptions.WithDeploymentStrategies)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load application")
 		}
@@ -110,9 +110,9 @@ func (api *API) deleteApplicationDeploymentStrategyConfigHandler() service.Handl
 		appName := vars["applicationName"]
 		pfName := vars["integration"]
 
-		tx, errtx := api.mustDB().Begin()
-		if errtx != nil {
-			return errtx
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return err
 		}
 		defer tx.Rollback() // nolint
 
@@ -130,14 +130,14 @@ func (api *API) deleteApplicationDeploymentStrategyConfigHandler() service.Handl
 		}
 
 		if pf == nil {
-			return sdk.WrapError(sdk.ErrNotFound, "deleteApplicationDeploymentStrategyConfigHandler> integration not found on project")
+			return sdk.WrapError(sdk.ErrNotFound, "integration not found on project")
 		}
 
 		if !pf.Model.Deployment {
-			return sdk.WrapError(sdk.ErrForbidden, "deleteApplicationDeploymentStrategyConfigHandler> integration doesn't support deployment")
+			return sdk.WrapError(sdk.ErrForbidden, "integration doesn't support deployment")
 		}
 
-		app, err := application.LoadByName(tx, key, appName, application.LoadOptions.WithDeploymentStrategies)
+		app, err := application.LoadByName(ctx, tx, key, appName, application.LoadOptions.WithDeploymentStrategies)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load application")
 		}
@@ -155,12 +155,12 @@ func (api *API) deleteApplicationDeploymentStrategyConfigHandler() service.Handl
 		}
 
 		if _, has := app.DeploymentStrategies[pfName]; !has {
-			return sdk.WrapError(sdk.ErrNotFound, "deleteApplicationDeploymentStrategyConfigHandler> unable to find strategy")
+			return sdk.WrapError(sdk.ErrNotFound, "unable to find strategy")
 		}
 
 		delete(app.DeploymentStrategies, pfName)
 		if err := application.DeleteDeploymentStrategy(tx, proj.ID, app.ID, pf.ID); err != nil {
-			return sdk.WrapError(err, "deleteApplicationDeploymentStrategyConfigHandler")
+			return sdk.WithStack(err)
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -186,7 +186,7 @@ func (api *API) getApplicationDeploymentStrategyConfigHandler() service.Handler 
 			opts = []application.LoadOptionFunc{application.LoadOptions.WithClearDeploymentStrategies}
 		}
 
-		app, err := application.LoadByName(api.mustDB(), key, appName, opts...)
+		app, err := application.LoadByName(ctx, api.mustDB(), key, appName, opts...)
 		if err != nil {
 			return sdk.WrapError(err, "getApplicationDeploymentStrategyConfigHandler")
 		}

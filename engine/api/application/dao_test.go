@@ -28,10 +28,10 @@ func TestLoadByNameAsAdmin(t *testing.T) {
 		Name: "my-app",
 	}
 
-	test.NoError(t, application.Insert(db, *proj, &app))
+	require.NoError(t, application.Insert(db, *proj, &app))
 
-	actual, err := application.LoadByName(db, key, "my-app")
-	test.NoError(t, err)
+	actual, err := application.LoadByName(context.TODO(), db, key, "my-app")
+	require.NoError(t, err)
 
 	assert.Equal(t, app.Name, actual.Name)
 	assert.Equal(t, proj.ID, actual.ProjectID)
@@ -51,8 +51,8 @@ func TestLoadByNameAsUser(t *testing.T) {
 
 	_, _ = assets.InsertLambdaUser(t, db, &proj.ProjectGroups[0].Group)
 
-	actual, err := application.LoadByName(db, key, "my-app")
-	assert.NoError(t, err)
+	actual, err := application.LoadByName(context.TODO(), db, key, "my-app")
+	require.NoError(t, err)
 
 	assert.Equal(t, app.Name, actual.Name)
 	assert.Equal(t, proj.ID, actual.ProjectID)
@@ -70,7 +70,7 @@ func TestLoadByIDAsAdmin(t *testing.T) {
 
 	require.NoError(t, application.Insert(db, *proj, &app))
 
-	actual, err := application.LoadByID(db, app.ID)
+	actual, err := application.LoadByID(context.TODO(), db, app.ID)
 	require.NoError(t, err)
 
 	assert.Equal(t, app.Name, actual.Name)
@@ -92,7 +92,7 @@ func TestLoadByIDAsUser(t *testing.T) {
 
 	_, _ = assets.InsertLambdaUser(t, db, &proj.ProjectGroups[0].Group)
 
-	actual, err := application.LoadByID(db, app.ID)
+	actual, err := application.LoadByID(context.TODO(), db, app.ID)
 	assert.NoError(t, err)
 
 	assert.Equal(t, app.Name, actual.Name)
@@ -122,7 +122,7 @@ func TestLoadAllAsAdmin(t *testing.T) {
 	require.NoError(t, application.Insert(db, *proj, &app))
 	require.NoError(t, application.Insert(db, *proj, &app2))
 
-	actual, err := application.LoadAll(db, proj.Key)
+	actual, err := application.LoadAll(context.TODO(), db, proj.Key)
 	require.NoError(t, err)
 
 	assert.Equal(t, 2, len(actual))
@@ -151,8 +151,8 @@ func TestLoadAllAsUser(t *testing.T) {
 
 	_, _ = assets.InsertLambdaUser(t, db, &proj.ProjectGroups[0].Group)
 
-	actual, err := application.LoadAll(db, proj.Key)
-	test.NoError(t, err)
+	actual, err := application.LoadAll(context.TODO(), db, proj.Key)
+	require.NoError(t, err)
 
 	assert.Equal(t, 2, len(actual))
 }
@@ -193,16 +193,16 @@ func TestLoadByWorkflowID(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.RenameNode(context.TODO(), db, &w))
+	require.NoError(t, workflow.RenameNode(context.TODO(), db, &w))
 
 	proj, _ = project.LoadByID(db, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	require.NoError(t, workflow.Insert(context.TODO(), db, cache, *proj, &w))
 
-	actuals, err := application.LoadByWorkflowID(db, w.ID)
-	assert.NoError(t, err)
+	actuals, err := application.LoadByWorkflowID(context.TODO(), db, w.ID)
+	require.NoError(t, err)
 
-	assert.Equal(t, 1, len(actuals))
+	require.Len(t, actuals, 1)
 	assert.Equal(t, app.Name, actuals[0].Name)
 	assert.Equal(t, proj.ID, actuals[0].ProjectID)
 
@@ -230,25 +230,25 @@ func TestWithRepositoryStrategy(t *testing.T) {
 		SSHKeyContent:  "content",
 	}
 
-	require.NoError(t, application.Update(db, app))
+	require.NoError(t, application.Update(context.TODO(), db, app))
 	require.Equal(t, "user", app.RepositoryStrategy.User)
 	require.Equal(t, sdk.PasswordPlaceholder, app.RepositoryStrategy.Password)
 	require.Equal(t, "", app.RepositoryStrategy.SSHKeyContent) // it depends on the connection type
 
 	var err error
 
-	app, err = application.LoadByID(db, app.ID)
+	app, err = application.LoadByID(context.TODO(), db, app.ID)
 	require.NoError(t, err)
 	app.RepositoryStrategy.Password = "password2"
-	require.NoError(t, application.Update(db, app))
+	require.NoError(t, application.Update(context.TODO(), db, app))
 
-	app, err = application.LoadByIDWithClearVCSStrategyPassword(db, app.ID)
+	app, err = application.LoadByIDWithClearVCSStrategyPassword(context.TODO(), db, app.ID)
 	require.NoError(t, err)
 	require.Equal(t, "user", app.RepositoryStrategy.User)
 	require.Equal(t, "password2", app.RepositoryStrategy.Password)
 	require.Equal(t, "", app.RepositoryStrategy.SSHKeyContent) // it depends on the connection type
 
-	app, err = application.LoadByID(db, app.ID)
+	app, err = application.LoadByID(context.TODO(), db, app.ID)
 	require.NoError(t, err)
 	require.Equal(t, "user", app.RepositoryStrategy.User)
 	require.Equal(t, sdk.PasswordPlaceholder, app.RepositoryStrategy.Password)
@@ -258,7 +258,7 @@ func TestWithRepositoryStrategy(t *testing.T) {
 	app.RepositoryStrategy.SSHKeyContent = "ssh_key"
 	app.RepositoryStrategy.SSHKey = "ssh_key"
 
-	require.NoError(t, application.Update(db, app))
+	require.NoError(t, application.Update(context.TODO(), db, app))
 	require.Equal(t, "user", app.RepositoryStrategy.User)
 	require.Equal(t, sdk.PasswordPlaceholder, app.RepositoryStrategy.Password)
 	require.Equal(t, "", app.RepositoryStrategy.SSHKeyContent) // it depends on the connection type
@@ -280,7 +280,7 @@ func Test_LoadAllVCStrategyAllApps(t *testing.T) {
 	require.NoError(t, application.Insert(db, *proj, app1))
 	require.NoError(t, application.Insert(db, *proj, app2))
 
-	apps, err := application.LoadAllByIDsWithDecryption(db, []int64{app1.ID, app2.ID})
+	apps, err := application.LoadAllByIDsWithDecryption(context.TODO(), db, []int64{app1.ID, app2.ID})
 	require.NoError(t, err)
 
 	require.Len(t, apps, 2)

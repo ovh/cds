@@ -6,10 +6,10 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/keys"
-	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_getApplicationExportHandler(t *testing.T) {
@@ -17,14 +17,12 @@ func Test_getApplicationExportHandler(t *testing.T) {
 
 	u, pass := assets.InsertAdminUser(t, db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
-	test.NotNil(t, proj)
+	require.NotNil(t, proj)
 	appName := sdk.RandomString(10)
 	app := &sdk.Application{
 		Name: appName,
 	}
-	if err := application.Insert(db, *proj, app); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, application.Insert(db, *proj, app))
 
 	v1 := sdk.ApplicationVariable{
 		Name:  "var1",
@@ -32,7 +30,7 @@ func Test_getApplicationExportHandler(t *testing.T) {
 		Type:  sdk.StringVariable,
 	}
 
-	test.NoError(t, application.InsertVariable(db, app.ID, &v1, u))
+	require.NoError(t, application.InsertVariable(db, app.ID, &v1, u))
 
 	v2 := sdk.ApplicationVariable{
 		Name:  "var2",
@@ -40,7 +38,7 @@ func Test_getApplicationExportHandler(t *testing.T) {
 		Type:  sdk.SecretVariable,
 	}
 
-	test.NoError(t, application.InsertVariable(db, app.ID, &v2, u))
+	require.NoError(t, application.InsertVariable(db, app.ID, &v2, u))
 
 	//Insert ssh and gpg keys
 	k := &sdk.ApplicationKey{
@@ -49,12 +47,12 @@ func Test_getApplicationExportHandler(t *testing.T) {
 		ApplicationID: app.ID,
 	}
 	kk, err := keys.GeneratePGPKeyPair(k.Name)
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	k.Public = kk.Public
 	k.Private = kk.Private
 	k.KeyID = kk.KeyID
-	test.NoError(t, application.InsertKey(db, k))
+	require.NoError(t, application.InsertKey(db, k))
 
 	k2 := &sdk.ApplicationKey{
 		Name:          "mykey-ssh",
@@ -62,12 +60,12 @@ func Test_getApplicationExportHandler(t *testing.T) {
 		ApplicationID: app.ID,
 	}
 	kssh, err := keys.GenerateSSHKey(k2.Name)
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	k2.Public = kssh.Public
 	k2.Private = kssh.Private
 	k2.KeyID = kssh.KeyID
-	test.NoError(t, application.InsertKey(db, k2))
+	require.NoError(t, application.InsertKey(db, k2))
 
 	//Prepare request
 	vars := map[string]string{
@@ -75,7 +73,7 @@ func Test_getApplicationExportHandler(t *testing.T) {
 		"applicationName": app.Name,
 	}
 	uri := api.Router.GetRoute("GET", api.getApplicationExportHandler, vars)
-	test.NotEmpty(t, uri)
+	require.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
 
 	//Do the request

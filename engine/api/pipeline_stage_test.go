@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/group"
@@ -15,54 +16,34 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func deleteAll(t *testing.T, api *API, key string) error {
-	// Delete all apps
+func deleteAll(t *testing.T, api *API, key string) {
 	t.Logf("start deleted : %s", key)
-	proj, errl := project.Load(context.TODO(), api.mustDB(), key, project.LoadOptions.WithGroups)
-	if errl != nil {
-		return errl
+	proj, _ := project.Load(context.TODO(), api.mustDB(), key, project.LoadOptions.WithGroups)
+	if proj == nil {
+		return
 	}
 
-	apps, errloadall := application.LoadAll(api.mustDB(), key)
-	if errloadall != nil {
-		t.Logf("Cannot list app: %s", errloadall)
-		return errloadall
-	}
+	// Delete all apps
+	apps, err := application.LoadAll(context.TODO(), api.mustDB(), proj.Key)
+	require.NoError(t, err)
 	for _, app := range apps {
-		tx, _ := api.mustDB().Begin()
-		if err := application.DeleteApplication(tx, app.ID); err != nil {
-			t.Logf("DeleteApplication: %s", err)
-			return err
-		}
-		_ = tx.Commit()
+		require.NoError(t, application.DeleteApplication(api.mustDB(), app.ID))
 	}
 
 	// Delete all pipelines
-	pips, errload := pipeline.LoadPipelines(api.mustDB(), proj.ID, false)
-	if errload != nil {
-		t.Logf("ListPipelines: %s", errload)
-		return errload
-	}
+	pips, err := pipeline.LoadPipelines(api.mustDB(), proj.ID, false)
+	require.NoError(t, err)
 	for _, pip := range pips {
-		if err := pipeline.DeletePipeline(context.TODO(), api.mustDB(), pip.ID); err != nil {
-			t.Logf("DeletePipeline: %s", err)
-			return err
-		}
+		require.NoError(t, pipeline.DeletePipeline(context.TODO(), api.mustDB(), pip.ID))
 	}
 
 	for _, g := range proj.ProjectGroups {
-		if err := group.Delete(context.TODO(), api.mustDB(), &g.Group); err != nil {
-			return err
-		}
+		require.NoError(t, group.Delete(context.TODO(), api.mustDB(), &g.Group))
 	}
 
-	// Delete project
-	if err := project.Delete(api.mustDB(), key); err != nil {
-		t.Logf("RemoveProject: %s", err)
-		return err
-	}
+	require.NoError(t, project.Delete(api.mustDB(), key))
+
 	t.Logf("All deleted")
-	return nil
 }
 
 func TestInsertAndLoadPipelineWith1StageAnd0ActionWithoutCondition(t *testing.T) {

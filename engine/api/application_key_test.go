@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/keys"
@@ -30,9 +31,7 @@ func Test_getKeysInApplicationHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	if err := application.Insert(db, *proj, app); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, application.Insert(db, *proj, app))
 
 	k := &sdk.ApplicationKey{
 		Name:          "mykey",
@@ -88,9 +87,7 @@ func Test_deleteKeyInApplicationHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	if err := application.Insert(db, *proj, app); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, application.Insert(db, *proj, app))
 
 	k := &sdk.ApplicationKey{
 		Name:          "mykey",
@@ -140,9 +137,7 @@ func Test_addKeyInApplicationHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	if err := application.Insert(db, *proj, app); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, application.Insert(db, *proj, app))
 
 	k := &sdk.ApplicationKey{
 		Name: "mykey",

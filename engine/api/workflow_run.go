@@ -1079,7 +1079,7 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 			event.PublishWorkflowUpdate(ctx, p.Key, *wf, oldWf, c)
 		} else {
 			// Get all secrets for non ascode run
-			workflowSecrets, err = workflow.RetrieveSecrets(api.mustDB(), *wf)
+			workflowSecrets, err = workflow.RetrieveSecrets(ctx, api.mustDB(), *wf)
 			if err != nil {
 				r1 := failInitWorkflowRun(ctx, api.mustDB(), wfRun, sdk.WrapError(err, "unable to retrieve workflow secret"))
 				report.Merge(ctx, r1)

@@ -19,14 +19,14 @@ func (api *API) getApplicationMetricHandler() service.Handler {
 		appName := vars["applicationName"]
 		metricName := vars["metricName"]
 
-		app, errA := application.LoadByName(api.mustDB(), key, appName)
-		if errA != nil {
-			return sdk.WrapError(errA, "getApplicationMetricHandler> unable to load application")
+		app, err := application.LoadByName(ctx, api.mustDB(), key, appName)
+		if err != nil {
+			return err
 		}
 
 		result, err := metrics.GetMetrics(ctx, api.mustDB(), key, app.ID, metricName)
 		if err != nil {
-			return sdk.WrapError(err, "Cannot get metrics")
+			return sdk.WrapError(err, "cannot get metrics")
 
 		}
 		return service.WriteJSON(w, result, http.StatusOK)
