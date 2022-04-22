@@ -13,10 +13,9 @@ import (
 
 //const
 const (
-	EmailUserNotification  = "email"
-	JabberUserNotification = "jabber"
-	VCSUserNotification    = "vcs"
-	EventsNotification     = "event"
+	EmailUserNotification = "email"
+	VCSUserNotification   = "vcs"
+	EventsNotification    = "event"
 )
 
 //const
@@ -35,7 +34,7 @@ type UserNotification struct {
 	Notifications         map[string]UserNotificationSettings `json:"notifications"`
 }
 
-// UserNotificationSettings are jabber or email settings
+// UserNotificationSettings --> email settings
 type UserNotificationSettings struct {
 	OnSuccess    string                    `json:"on_success,omitempty" yaml:"on_success,omitempty"`         // default is "onChange", empty means onChange
 	OnFailure    string                    `json:"on_failure,omitempty" yaml:"on_failure,omitempty"`         // default is "always", empty means always
@@ -96,14 +95,8 @@ Triggered by : {{.cds.triggered_by.username}}
 Branch : {{.git.branch | default "n/a"}}`,
 	}
 
-	UserNotificationTemplateJabber = UserNotificationTemplate{
-		Subject: "{{.cds.project}}/{{.cds.workflow}}#{{.cds.version}} {{.cds.status}}",
-		Body:    `{{.cds.buildURL}}`,
-	}
-
 	UserNotificationTemplateMap = map[string]UserNotificationTemplate{
-		EmailUserNotification:  UserNotificationTemplateEmail,
-		JabberUserNotification: UserNotificationTemplateJabber,
+		EmailUserNotification: UserNotificationTemplateEmail,
 		VCSUserNotification: {
 			Body: DefaultWorkflowNodeRunReport,
 		},
