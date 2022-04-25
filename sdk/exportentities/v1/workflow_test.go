@@ -1,6 +1,7 @@
 package v1_test
 
 import (
+	"context"
 	"sort"
 	"strings"
 	"testing"
@@ -812,7 +813,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 				OneAtATime:             tt.fields.OneAtATime,
 			}
 
-			got, err := exportentities.ParseWorkflow(w)
+			got, err := exportentities.ParseWorkflow(context.TODO(), w)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Workflow.GetWorkflow() error = %v, wantErr %v", err, tt.wantErr)
 				return
