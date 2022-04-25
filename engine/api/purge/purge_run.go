@@ -85,12 +85,7 @@ func ApplyRetentionPolicyOnWorkflow(ctx context.Context, store cache.Store, db *
 					return sdk.WithStack(err)
 				}
 				//Get the RepositoriesManager Client
-				vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, tx, wf.ProjectKey, app.VCSServer)
-				if err != nil {
-					_ = tx.Rollback()
-					return err
-				}
-				vcsClient, err = repositoriesmanager.AuthorizedClient(ctx, tx, store, wf.ProjectKey, vcsServer)
+				vcsClient, err = repositoriesmanager.AuthorizedClient(ctx, tx, store, wf.ProjectKey, app.VCSServer)
 				if err != nil {
 					_ = tx.Rollback()
 					return sdk.WithStack(err)

@@ -64,6 +64,8 @@ export class ProjectShowComponent implements OnInit, OnDestroy, AfterViewInit {
                 this.project = proj;
                 this._projectStore.updateRecentProject(this.project);
 
+                this.initTabs();
+
                 if (this.project.integrations) {
                     this.project.integrations.forEach(integ => {
                         if (!integ.model.default_config) {
@@ -96,6 +98,38 @@ export class ProjectShowComponent implements OnInit, OnDestroy, AfterViewInit {
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit() {
+        this.initTabs();
+        this._route.queryParams.subscribe((queryParams) => {
+            if (queryParams['tab']) {
+                let current_tab = this.tabs.find((tab) => tab.key === queryParams['tab']);
+                if (current_tab) {
+                    this.selectTab(current_tab);
+                }
+                this._cd.markForCheck();
+            }
+            this._route.params.subscribe(routeParams => {
+                const key = routeParams['key'];
+                if (key) {
+                    if (this.project && this.project.key !== key) {
+                        this.project = undefined;
+                    }
+                    if (!this.project) {
+                        this.refreshDatas(key);
+                    }
+                    this._cd.markForCheck();
+                }
+            });
+        });
+
+        if (this._route.snapshot && this._route.snapshot.queryParams) {
+            this.workflowName = this._route.snapshot.queryParams['workflow'];
+            this.workflowNum = this._route.snapshot.queryParams['run'];
+            this.workflowNodeRun = this._route.snapshot.queryParams['node'];
+            this.workflowPipeline = this._route.snapshot.queryParams['wpipeline'];
+        }
+    }
+
+    initTabs(): void {
         this.tabs = [<Tab>{
             title: 'Workflows',
             icon: 'share alternate',
@@ -138,34 +172,6 @@ export class ProjectShowComponent implements OnInit, OnDestroy, AfterViewInit {
                 icon: 'graduation',
                 key: 'advanced'
             })
-        }
-        this._route.queryParams.subscribe((queryParams) => {
-            if (queryParams['tab']) {
-                let current_tab = this.tabs.find((tab) => tab.key === queryParams['tab']);
-                if (current_tab) {
-                    this.selectTab(current_tab);
-                }
-                this._cd.markForCheck();
-            }
-            this._route.params.subscribe(routeParams => {
-                const key = routeParams['key'];
-                if (key) {
-                    if (this.project && this.project.key !== key) {
-                        this.project = undefined;
-                    }
-                    if (!this.project) {
-                        this.refreshDatas(key);
-                    }
-                    this._cd.markForCheck();
-                }
-            });
-        });
-
-        if (this._route.snapshot && this._route.snapshot.queryParams) {
-            this.workflowName = this._route.snapshot.queryParams['workflow'];
-            this.workflowNum = this._route.snapshot.queryParams['run'];
-            this.workflowNodeRun = this._route.snapshot.queryParams['node'];
-            this.workflowPipeline = this._route.snapshot.queryParams['wpipeline'];
         }
     }
 

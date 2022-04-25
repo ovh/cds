@@ -170,12 +170,7 @@ func ComputeNewReport(ctx context.Context, db gorpmapper.SqlExecutorWithTx, cach
 // ComputeLatestDefaultBranchReport add the default branch coverage report into  the given report
 func ComputeLatestDefaultBranchReport(ctx context.Context, db gorpmapper.SqlExecutorWithTx, cache cache.Store, proj sdk.Project, wnr *sdk.WorkflowNodeRun, covReport *sdk.WorkflowNodeRunCoverage) error {
 	// Get report latest report on previous branch
-	var defaultBranch string
-	projectVCSServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, proj.Key, wnr.VCSServer)
-	if err != nil {
-		return err
-	}
-	client, erra := repositoriesmanager.AuthorizedClient(ctx, db, cache, proj.Key, projectVCSServer)
+	client, erra := repositoriesmanager.AuthorizedClient(ctx, db, cache, proj.Key, wnr.VCSServer)
 	if erra != nil {
 		return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "ComputeLatestDefaultBranchReport> Cannot get repo client %s : %s", wnr.VCSServer, erra)
 	}
@@ -184,7 +179,7 @@ func ComputeLatestDefaultBranchReport(ctx context.Context, db gorpmapper.SqlExec
 	if err != nil {
 		return err
 	}
-	defaultBranch = branch.DisplayID
+	defaultBranch := branch.DisplayID
 
 	if defaultBranch != wnr.VCSBranch {
 		defaultCoverage, errD := loadLatestCoverageReport(db, wnr.WorkflowID, wnr.VCSRepository, defaultBranch, covReport.ApplicationID)

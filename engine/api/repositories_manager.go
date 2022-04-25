@@ -247,7 +247,7 @@ func (api *API) repositoriesManagerAuthorizeBasicHandler() service.Handler {
 			return sdk.WrapError(err, "error inserting vcs server link")
 		}
 
-		client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, proj.Key, *vcsServerForProject)
+		client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, proj.Key, rmName)
 		if err != nil {
 			return sdk.NewErrorWithStack(sdk.WrapError(err, "cannot get client for project %s", proj.Key), sdk.ErrNoReposManagerClientAuth)
 		}
@@ -438,13 +438,7 @@ func (api *API) getRepoFromRepositoriesManagerHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, tx, projectKey, rmName)
-		if err != nil {
-			return sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrNoReposManagerClientAuth,
-				"cannot get client got %s %s", projectKey, rmName))
-		}
-
-		client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, projectKey, vcsServer)
+		client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, projectKey, rmName)
 		if err != nil {
 			return sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrNoReposManagerClientAuth,
 				"cannot get client got %s %s", projectKey, rmName))
@@ -454,7 +448,7 @@ func (api *API) getRepoFromRepositoriesManagerHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		log.Info(ctx, "getRepoFromRepositoriesManagerHandler> Loading repository on %s", vcsServer.Name)
+		log.Info(ctx, "getRepoFromRepositoriesManagerHandler> Loading repository on %s", rmName)
 
 		repo, err := client.RepoByFullname(ctx, repoName)
 		if err != nil {
@@ -510,14 +504,8 @@ func (api *API) attachRepositoriesManagerHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load application %s", appName)
 		}
 
-		//Load the repositoriesManager for the project
-		rm, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, tx, projectKey, rmName)
-		if err != nil {
-			return sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrNoReposManagerClientAuth, "cannot get vcs server %s for project %s", rmName, projectKey))
-		}
-
 		//Get an authorized Client
-		client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, projectKey, rm)
+		client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, projectKey, rmName)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "cannot get client got %s %s : %s", projectKey, rmName, err)
 		}
@@ -526,7 +514,7 @@ func (api *API) attachRepositoriesManagerHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrRepoNotFound, "cannot get repo %s: %s", fullname, err)
 		}
 
-		app.VCSServer = rm.Name
+		app.VCSServer = rmName
 		app.RepositoryFullname = fullname
 
 		if err := repositoriesmanager.InsertForApplication(tx, app); err != nil {

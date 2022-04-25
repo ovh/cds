@@ -80,6 +80,12 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj sdk.
 		}
 		app.Keys = keys
 
+		deploymentStrategies, err := application.LoadDeploymentStrategies(ctx, db, app.ID, true)
+		if err != nil {
+			return wp, sdk.WrapError(err, "cannot load deployment strategies for application %s", app.Name)
+		}
+		app.DeploymentStrategies = deploymentStrategies
+
 		wf.Applications[i] = app
 	}
 

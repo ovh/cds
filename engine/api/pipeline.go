@@ -90,12 +90,7 @@ func (api *API) updateAsCodePipelineHandler() service.Handler {
 			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "cannot find the root application of the workflow %s that hold the pipeline", wkHolder.Name)
 		}
 
-		vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, tx, key, rootApp.VCSServer)
-		if err != nil {
-			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "updateAsCodePipelineHandler> cannot get client got %s %s : %v", key, rootApp.VCSServer, err)
-		}
-
-		client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, key, vcsServer)
+		client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, key, rootApp.VCSServer)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "updateAsCodePipelineHandler> cannot get client got %s %s : %v", key, rootApp.VCSServer, err)
 		}

@@ -79,18 +79,13 @@ type Options struct {
 func GetReposForProjectVCSServer(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, proj sdk.Project, vcsServerName string, opts Options) ([]sdk.VCSRepo, error) {
 	log.Debug(ctx, "GetReposForProjectVCSServer> Loading repo for %s", vcsServerName)
 
-	vcsServer, err := LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, proj.Key, vcsServerName)
-	if err != nil {
-		return nil, sdk.NewError(sdk.ErrNoReposManagerClientAuth, err)
-	}
-
-	client, err := AuthorizedClient(ctx, db, store, proj.Key, vcsServer)
+	client, err := AuthorizedClient(ctx, db, store, proj.Key, vcsServerName)
 	if err != nil {
 		return nil, sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrNoReposManagerClientAuth,
-			"cannot get client got %s %s", proj.Key, vcsServer.Name))
+			"cannot get client got %s %s", proj.Key, vcsServerName))
 	}
 
-	cacheKey := cache.Key("reposmanager", "repos", proj.Key, vcsServer.Name)
+	cacheKey := cache.Key("reposmanager", "repos", proj.Key, vcsServerName)
 	if opts.Sync {
 		if err := store.Delete(cacheKey); err != nil {
 			log.Error(ctx, "GetReposForProjectVCSServer> error on delete cache key %v: %s", cacheKey, err)
@@ -180,12 +175,17 @@ func (c *vcsConsumer) GetAuthorizedClient(ctx context.Context, token, secret str
 }
 
 //AuthorizedClient returns an implementation of AuthorizedClient wrapping calls to vcs uService
-func AuthorizedClient(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, projectKey string, repo sdk.ProjectVCSServerLink) (sdk.VCSAuthorizedClientService, error) {
-	repoData, err := LoadProjectVCSServerLinksData(ctx, db, repo.ID, gorpmapping.GetOptions.WithDecryption)
+func AuthorizedClient(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, projectKey string, vcsName string) (sdk.VCSAuthorizedClientService, error) {
+	vcsServer, err := LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, projectKey, vcsName)
+	if err != nil {
+		return nil, sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "cannot get client got %s %s : %s", projectKey, vcsName, err)
+	}
+
+	repoData, err := LoadProjectVCSServerLinksData(ctx, db, vcsServer.ID, gorpmapping.GetOptions.WithDecryption)
 	if err != nil {
 		return nil, err
 	}
-	repo.ProjectVCSServerLinkData = repoData
+	vcsServer.ProjectVCSServerLinkData = repoData
 
 	srvs, err := services.LoadAllByType(ctx, db, sdk.TypeVCS)
 	if err != nil {
@@ -193,7 +193,7 @@ func AuthorizedClient(ctx context.Context, db gorpmapper.SqlExecutorWithTx, stor
 	}
 	var created int64
 
-	if createdS, ok := repo.Get("created"); ok {
+	if createdS, ok := vcsServer.Get("created"); ok {
 		created, err = strconv.ParseInt(createdS, 10, 64)
 		if err != nil {
 			return nil, sdk.WithStack(err)
@@ -201,15 +201,15 @@ func AuthorizedClient(ctx context.Context, db gorpmapper.SqlExecutorWithTx, stor
 	}
 
 	vcs := &vcsClient{
-		name:       repo.Name,
+		name:       vcsServer.Name,
 		created:    created,
 		srvs:       srvs,
 		db:         db,
 		projectKey: projectKey,
 	}
 
-	vcs.token, _ = repo.Get("token")
-	vcs.secret, _ = repo.Get("secret")
+	vcs.token, _ = vcsServer.Get("token")
+	vcs.secret, _ = vcsServer.Get("secret")
 
 	return vcs, nil
 }

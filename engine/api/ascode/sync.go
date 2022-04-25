@@ -33,11 +33,7 @@ func SyncEvents(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk
 	}
 	defer tx.Rollback() //nolint
 
-	vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, tx, proj.Key, rootApp.VCSServer)
-	if err != nil {
-		return res, err
-	}
-	client, err := repositoriesmanager.AuthorizedClient(ctx, tx, store, proj.Key, vcsServer)
+	client, err := repositoriesmanager.AuthorizedClient(ctx, tx, store, proj.Key, rootApp.VCSServer)
 	if err != nil {
 		return res, err
 	}
