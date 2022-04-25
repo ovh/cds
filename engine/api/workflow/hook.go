@@ -41,12 +41,8 @@ func hookUnregistration(ctx context.Context, db gorpmapper.SqlExecutorWithTx, st
 	for _, h := range hookToDelete {
 		if h.HookModelName == sdk.RepositoryWebHookModelName || h.HookModelName == sdk.GerritHookModelName {
 			// Call VCS to know if repository allows webhook and get the configuration fields
-			projectVCSServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, proj.Key, h.Config["vcsServer"].Value)
+			client, err := repositoriesmanager.AuthorizedClient(ctx, db, store, proj.Key, h.Config["vcsServer"].Value)
 			if err == nil {
-				client, errclient := repositoriesmanager.AuthorizedClient(ctx, db, store, proj.Key, projectVCSServer)
-				if errclient != nil {
-					return errclient
-				}
 				vcsHook := sdk.VCSHook{
 					Method:   "POST",
 					URL:      h.Config["webHookURL"].Value,
@@ -298,15 +294,10 @@ func createVCSConfiguration(ctx context.Context, db gorpmapper.SqlExecutorWithTx
 	ctx, end := telemetry.Span(ctx, "workflow.createVCSConfiguration", telemetry.Tag("UUID", h.UUID))
 	defer end()
 	// Call VCS to know if repository allows webhook and get the configuration fields
-	projectVCSServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, proj.Key, h.Config["vcsServer"].Value)
+	client, err := repositoriesmanager.AuthorizedClient(ctx, db, store, proj.Key, h.Config["vcsServer"].Value)
 	if err != nil {
 		log.Debug(ctx, "createVCSConfiguration> No vcsServer found: %v", err)
 		return nil
-	}
-
-	client, err := repositoriesmanager.AuthorizedClient(ctx, db, store, proj.Key, projectVCSServer)
-	if err != nil {
-		return sdk.WrapError(err, "cannot get vcs client")
 	}
 	// We have to check the repository to know if webhooks are supported and how (events)
 	webHookInfo, err := repositoriesmanager.GetWebhooksInfos(ctx, client)
@@ -362,15 +353,10 @@ func updateVCSConfiguration(ctx context.Context, db gorpmapper.SqlExecutorWithTx
 	ctx, end := telemetry.Span(ctx, "workflow.updateVCSConfiguration", telemetry.Tag("UUID", h.UUID))
 	defer end()
 	// Call VCS to know if repository allows webhook and get the configuration fields
-	projectVCSServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, proj.Key, h.Config["vcsServer"].Value)
+	client, err := repositoriesmanager.AuthorizedClient(ctx, db, store, proj.Key, h.Config["vcsServer"].Value)
 	if err != nil {
 		log.Debug(ctx, "createVCSConfiguration> No vcsServer found: %v", err)
 		return nil
-	}
-
-	client, err := repositoriesmanager.AuthorizedClient(ctx, db, store, proj.Key, projectVCSServer)
-	if err != nil {
-		return sdk.WrapError(err, "cannot get vcs client")
 	}
 	webHookInfo, errWH := repositoriesmanager.GetWebhooksInfos(ctx, client)
 	if errWH != nil {
@@ -417,13 +403,8 @@ func DefaultPayload(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store 
 
 	if app.RepositoryFullname != "" {
 		defaultBranch := "master"
-		projectVCSServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, proj.Key, app.VCSServer)
+		client, err := repositoriesmanager.AuthorizedClient(ctx, db, store, proj.Key, app.VCSServer)
 		if err == nil {
-			client, err := repositoriesmanager.AuthorizedClient(ctx, db, store, proj.Key, projectVCSServer)
-			if err != nil {
-				return wf.WorkflowData.Node.Context.DefaultPayload, sdk.WrapError(err, "cannot get authorized client")
-			}
-
 			branch, err := repositoriesmanager.DefaultBranch(ctx, client, app.RepositoryFullname)
 			if err != nil {
 				return wf.WorkflowData.Node.Context.DefaultPayload, err

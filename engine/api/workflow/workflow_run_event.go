@@ -92,16 +92,10 @@ loopNotif:
 	vcsServerName := wr.Workflow.Applications[node.Context.ApplicationID].VCSServer
 	repoFullName := wr.Workflow.Applications[node.Context.ApplicationID].RepositoryFullname
 
-	vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, tx, proj.Key, vcsServerName)
-	if err != nil {
-		log.Debug(ctx, "SendVCSEvent> No vcsServer found: %v", err)
-		return nil
-	}
-
 	//Get the RepositoriesManager Client
 	if e.vcsClient == nil {
 		var err error
-		e.vcsClient, err = repositoriesmanager.AuthorizedClient(ctx, tx, store, proj.Key, vcsServer)
+		e.vcsClient, err = repositoriesmanager.AuthorizedClient(ctx, tx, store, proj.Key, vcsServerName)
 		if err != nil {
 			return err
 		}
@@ -134,7 +128,7 @@ loopNotif:
 	}
 
 	if statusFound == nil || statusFound.State == "" {
-		if err := e.sendVCSEventStatus(ctx, tx, store, proj.Key, wr, &nodeRun, notif, vcsServer.Name); err != nil {
+		if err := e.sendVCSEventStatus(ctx, tx, store, proj.Key, wr, &nodeRun, notif, vcsServerName); err != nil {
 			return err
 		}
 	} else {
@@ -159,7 +153,7 @@ loopNotif:
 		}
 
 		if !skipStatus {
-			if err := e.sendVCSEventStatus(ctx, tx, store, proj.Key, wr, &nodeRun, notif, vcsServer.Name); err != nil {
+			if err := e.sendVCSEventStatus(ctx, tx, store, proj.Key, wr, &nodeRun, notif, vcsServerName); err != nil {
 				return err
 			}
 		}
@@ -168,7 +162,7 @@ loopNotif:
 	if !sdk.StatusIsTerminated(nodeRun.Status) {
 		return nil
 	}
-	if err := e.sendVCSPullRequestComment(ctx, tx, wr, &nodeRun, notif, vcsServer.Name); err != nil {
+	if err := e.sendVCSPullRequestComment(ctx, tx, wr, &nodeRun, notif, vcsServerName); err != nil {
 		return err
 	}
 
