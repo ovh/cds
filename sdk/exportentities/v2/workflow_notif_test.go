@@ -250,7 +250,7 @@ notifications:
 				t.Error("Unmarshal should return an error but it doesn't")
 				return
 			}
-			w, err := exportentities.ParseWorkflow(yamlWorkflow)
+			w, err := exportentities.ParseWorkflow(context.TODO(), yamlWorkflow)
 			if err != nil {
 				if !tst.wantErr {
 					t.Error("GetWorkflow raised an error", err)

@@ -402,7 +402,7 @@ func (w Workflow) GetVersion() string {
 }
 
 // GetWorkflow returns a fresh sdk.Workflow
-func (w Workflow) GetWorkflow() (*sdk.Workflow, error) {
+func (w Workflow) GetWorkflow(ctx context.Context) (*sdk.Workflow, error) {
 	var wf = new(sdk.Workflow)
 	wf.Name = w.Name
 	wf.Description = w.Description
@@ -489,7 +489,7 @@ func (w Workflow) GetWorkflow() (*sdk.Workflow, error) {
 	}
 
 	//Compute notifications
-	if err := w.processNotifications(wf); err != nil {
+	if err := w.processNotifications(ctx, wf); err != nil {
 		return nil, err
 	}
 

@@ -642,7 +642,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 				HistoryLength:   &tt.fields.HistoryLength,
 				RetentionPolicy: &tt.fields.RetentionPolicy,
 			}
-			got, err := exportentities.ParseWorkflow(w)
+			got, err := exportentities.ParseWorkflow(context.TODO(), w)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Workflow.GetWorkflow() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -1077,7 +1077,7 @@ workflow:
 				t.Error("Unmarshal should return an error but it doesn't")
 				return
 			}
-			w, err := exportentities.ParseWorkflow(yamlWorkflow)
+			w, err := exportentities.ParseWorkflow(context.TODO(), yamlWorkflow)
 			if err != nil {
 				if !tst.wantErr {
 					t.Error("GetWorkflow raised an error", err)
@@ -1159,7 +1159,7 @@ notifications:
 	require.NoError(t, err)
 
 	t.Logf("yamlWorkflow> %+v", yamlWorkflow)
-	_, err = exportentities.ParseWorkflow(yamlWorkflow)
+	_, err = exportentities.ParseWorkflow(context.TODO(), yamlWorkflow)
 	require.Error(t, err)
 	t.Log(err)
 
