@@ -20,7 +20,7 @@
                                 <a class="item" href="#"
                                    [routerLink]="['project', prj.key, 'workflow', prj.workflow_name]">
                                     <div class="details">
-                                        <div class="title bold">
+                                        <div class="title">
                                             {{prj.workflow_name}}
                                         </div>
                                     </div>
@@ -35,7 +35,7 @@
                                 <a class="item" href="#"
                                    [routerLink]="['project', prj.key, 'application', prj.application_name]">
                                     <div class="details">
-                                        <div class="title bold">
+                                        <div class="title">
                                             {{prj.application_name}}}
                                         </div>
                                         <div class="info mt">
@@ -49,7 +49,7 @@
                             <li nz-menu-item>
                                 <a class="item" href="#" [routerLink]="['project', prj.key]">
                                     <div class="details">
-                                        <div class="title bold">
+                                        <div class="title">
                                             {{prj.name}}
                                         </div>
                                         <div class="info mt">
@@ -192,7 +192,7 @@
                                             nzPopoverPlacement="bottom" (click)="markAsRead($event, broadcast.id)"
                                         ></i>
                                     </span>
-                                    <a class="title bold" (click)="showNotif = false" [routerLink]="['broadcast', broadcast.id]"
+                                    <a class="title" (click)="showNotif = false" [routerLink]="['broadcast', broadcast.id]"
                                        [class.blue]="broadcast.level === 'info'"
                                        [class.orange]="broadcast.level === 'warning'">
                                         {{broadcast.title}}
@@ -227,7 +227,7 @@
                                 <a class="item"
                                    [routerLink]="['broadcast', broadcast.id]" (click)="showNotif = false">
                                 <div class="notif">
-                                    <div class="title bold" [class.blue]="broadcast.level === 'info'"
+                                    <div class="title" [class.blue]="broadcast.level === 'info'"
                                          [class.orange]="broadcast.level === 'warning'">
                                         {{broadcast.title}}
                                     </div>
