@@ -32,7 +32,7 @@ func Parse(ctx context.Context, proj sdk.Project, oldW *sdk.Workflow, ew exporte
 	log.Debug(ctx, "Parse>> Workflow: %+v", ew)
 
 	//Parse workflow
-	w, errW := exportentities.ParseWorkflow(ew)
+	w, errW := exportentities.ParseWorkflow(ctx, ew)
 	if errW != nil {
 		return nil, sdk.NewError(sdk.ErrWrongRequest, errW)
 	}
