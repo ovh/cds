@@ -118,7 +118,9 @@ export class ProjectShowComponent implements OnInit, OnDestroy, AfterViewInit {
             icon: 'font',
             key: 'variables'
         }, <Tab>{
+            title: 'Permissions',
             key: 'permissions',
+            icon: 'users',
         }, <Tab>{
             title: 'Keys',
             icon: 'privacy',
