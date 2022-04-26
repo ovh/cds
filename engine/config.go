@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -306,12 +307,17 @@ func configSetStartupData(conf *Configuration) (string, error) {
 	validityPediod := sdk.NewAuthConsumerValidityPeriod(time.Now(), 0)
 	startupCfg := api.StartupConfig{IAT: validityPediod.Latest().IssuedAt.Unix()}
 
-	if err := authentication.Init("cds-api", apiPrivateKeyPEM); err != nil {
+	if err := authentication.Init(context.TODO(), "cds-api", []authentication.KeyConfig{{Key: string(apiPrivateKeyPEM)}}); err != nil {
 		return "", err
 	}
 
 	if conf.API != nil {
-		conf.API.Auth.RSAPrivateKey = string(apiPrivateKeyPEM)
+		conf.API.Auth.RSAPrivateKeys = []authentication.KeyConfig{
+			{
+				Timestamp: time.Now().Unix(),
+				Key:       string(apiPrivateKeyPEM),
+			},
+		}
 
 		key, _ := keyloader.GenerateKey("hmac", gorpmapper.KeySignIdentifier, false, time.Now())
 		conf.API.Database.SignatureKey = database.RollingKeyConfig{Cipher: "hmac"}
@@ -658,13 +664,23 @@ func getInitTokenFromExistingConfiguration(conf Configuration) (string, error) {
 	if conf.API == nil {
 		return "", fmt.Errorf("cannot load configuration")
 	}
-	apiPrivateKeyPEM := []byte(conf.API.Auth.RSAPrivateKey)
 
 	now := time.Now()
 	globalIAT := now.Unix()
 	startupCfg := api.StartupConfig{}
 
-	if err := authentication.Init("cds-api", apiPrivateKeyPEM); err != nil {
+	var RSAKeyConfigs []authentication.KeyConfig
+	if conf.API.Auth.RSAPrivateKey != "" {
+		RSAKeyConfigs = append(RSAKeyConfigs, authentication.KeyConfig{
+			Key:       conf.API.Auth.RSAPrivateKey,
+			Timestamp: 0,
+		})
+	}
+	if len(conf.API.Auth.RSAPrivateKeys) > 0 {
+		RSAKeyConfigs = append(RSAKeyConfigs, conf.API.Auth.RSAPrivateKeys...)
+	}
+
+	if err := authentication.Init(context.TODO(), "cds-api", RSAKeyConfigs); err != nil {
 		return "", err
 	}
 

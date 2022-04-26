@@ -93,12 +93,13 @@ type Configuration struct {
 		InsecureSkipVerifyTLS bool `toml:"insecureSkipVerifyTLS" json:"insecureSkipVerifyTLS" default:"false"`
 	} `toml:"internalServiceMesh" json:"internalServiceMesh"`
 	Auth struct {
-		TokenDefaultDuration         int64           `toml:"tokenDefaultDuration" default:"30" comment:"The default duration of a token (in days)" json:"tokenDefaultDuration"`
-		TokenOverlapDefaultDuration  string          `toml:"tokenOverlapDefaultDuration" default:"24h" comment:"The default overlap duration when a token is regen" json:"tokenOverlapDefaultDuration"`
-		DefaultGroup                 string          `toml:"defaultGroup" default:"" comment:"The default group is the group in which every new user will be granted at signup" json:"defaultGroup"`
-		DisableAddUserInDefaultGroup bool            `toml:"disableAddUserInDefaultGroup" default:"false" comment:"If false, user are automatically added in the default group" json:"disableAddUserInDefaultGroup"`
-		RSAPrivateKey                string          `toml:"rsaPrivateKey" default:"" comment:"The RSA Private Key used to sign and verify the JWT Tokens issued by the API \nThis is mandatory." json:"-"`
-		AllowedOrganizations         sdk.StringSlice `toml:"allowedOrganizations" default:"" comment:"The list of allowed organizations for CDS users, let empty to authorize all organizations." json:"allowedOrganizations"`
+		TokenDefaultDuration         int64                      `toml:"tokenDefaultDuration" default:"30" comment:"The default duration of a token (in days)" json:"tokenDefaultDuration"`
+		TokenOverlapDefaultDuration  string                     `toml:"tokenOverlapDefaultDuration" default:"24h" comment:"The default overlap duration when a token is regen" json:"tokenOverlapDefaultDuration"`
+		DefaultGroup                 string                     `toml:"defaultGroup" default:"" comment:"The default group is the group in which every new user will be granted at signup" json:"defaultGroup"`
+		DisableAddUserInDefaultGroup bool                       `toml:"disableAddUserInDefaultGroup" default:"false" comment:"If false, user are automatically added in the default group" json:"disableAddUserInDefaultGroup"`
+		RSAPrivateKey                string                     `toml:"rsaPrivateKey" default:"" comment:"The RSA Private Key used to sign and verify the JWT Tokens issued by the API \nThis is mandatory." json:"-"`
+		RSAPrivateKeys               []authentication.KeyConfig `toml:"rsaPrivateKeys" default:"" comment:"RSA Private Keys used to sign and verify the JWT Tokens issued by the API \nThis is mandatory." json:"-" mapstructure:"rsaPrivateKeys"`
+		AllowedOrganizations         sdk.StringSlice            `toml:"allowedOrganizations" default:"" comment:"The list of allowed organizations for CDS users, let empty to authorize all organizations." json:"allowedOrganizations"`
 		LDAP                         struct {
 			Enabled         bool   `toml:"enabled" default:"false" json:"enabled"`
 			SignupDisabled  bool   `toml:"signupDisabled" default:"false" json:"signupDisabled"`
@@ -363,7 +364,7 @@ func (a *API) CheckConfiguration(config interface{}) error {
 		return fmt.Errorf("You can't specify just defaultArch without defaultOS in your configuration and vice versa")
 	}
 
-	if aConfig.Auth.RSAPrivateKey == "" {
+	if aConfig.Auth.RSAPrivateKey == "" && len(aConfig.Auth.RSAPrivateKeys) == 0 {
 		return errors.New("invalid given authentication rsa private key")
 	}
 
@@ -420,7 +421,17 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 
 	// Initialize the jwt layer
-	if err := authentication.Init(a.ServiceName, []byte(a.Config.Auth.RSAPrivateKey)); err != nil {
+	var RSAKeyConfigs []authentication.KeyConfig
+	if a.Config.Auth.RSAPrivateKey != "" {
+		RSAKeyConfigs = append(RSAKeyConfigs, authentication.KeyConfig{
+			Key:       a.Config.Auth.RSAPrivateKey,
+			Timestamp: 0,
+		})
+	}
+	if len(a.Config.Auth.RSAPrivateKeys) > 0 {
+		RSAKeyConfigs = append(RSAKeyConfigs, a.Config.Auth.RSAPrivateKeys...)
+	}
+	if err := authentication.Init(ctx, a.ServiceName, RSAKeyConfigs); err != nil {
 		return sdk.WrapError(err, "unable to initialize the JWT Layer")
 	}
 
