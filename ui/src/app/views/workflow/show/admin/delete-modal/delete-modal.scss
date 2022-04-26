@@ -1,0 +1,27 @@
+.content {
+  max-height: 900px;
+  overflow: hidden;
+  overflow-y: scroll;
+
+  .row {
+    margin-bottom: 15px;
+  }
+
+  .right {
+    float: right;
+  }
+
+  nz-list {
+    list-style: inside;
+  }
+
+  nz-list-item {
+    justify-content: normal;
+
+    .bold {
+      font-weight: bold;
+      margin-left: 10px;
+    }
+  }
+}
+

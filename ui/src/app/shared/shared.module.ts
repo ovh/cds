@@ -137,6 +137,7 @@ import { NzListModule } from 'ng-zorro-antd/list';
 import { NzSwitchModule } from 'ng-zorro-antd/switch';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
+import { NzModalModule } from 'ng-zorro-antd/modal';
 
 const ngZorroConfig: NzConfig = {
     notification: {nzPauseOnHover: true, nzPlacement: "topRight"},
@@ -157,6 +158,7 @@ const icons: IconDefinition[] = [ BellFill, CaretUpFill, CheckOutline, KeyOutlin
         NzInputModule,
         NzLayoutModule,
         NzListModule,
+        NzModalModule,
         NzNotificationModule,
         NzMenuModule,
         NzPopconfirmModule,
@@ -347,6 +349,7 @@ const icons: IconDefinition[] = [ BellFill, CaretUpFill, CheckOutline, KeyOutlin
         NzInputModule,
         NzLayoutModule,
         NzListModule,
+        NzModalModule,
         NzMenuModule,
         NzNotificationModule,
         NzPopconfirmModule,

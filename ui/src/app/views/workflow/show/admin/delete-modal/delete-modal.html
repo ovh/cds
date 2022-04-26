@@ -1,66 +1,87 @@
-<ng-template let-context let-modal="modal" #workflowDeleteModal>
-    <div class="header">
-        Deleting workflow {{workflow.name}}
-    </div>
-    <div class="content scrolling" [loading]="loading">
-        <ng-container *ngIf="!dependencies || (dependencies.deleted_dependencies.isEmpty() && dependencies.unlinked_as_code_dependencies.isEmpty())">
-            <div class="ui grid">
-                <div class="row">
-                    <div class="sixteen wide column">
-                        <h3>Please confirm</h3>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="sixteen wide right aligned column">
-                        <app-delete-button title="Delete" [loading]="loading" (event)="deleteWorkflow(false)"></app-delete-button>
-                    </div>
-                </div>
+<div class="content scrolling">
+    <ng-container *ngIf="!dependencies || (dependencies.deleted_dependencies.isEmpty() && dependencies.unlinked_as_code_dependencies.isEmpty())">
+        <div nz-row class="row">
+            <div nz-col nzSpan="24">
+                <h3>Please confirm</h3>
             </div>
-        </ng-container>
-
-        <ng-container *ngIf="dependencies?.deleted_dependencies && (!dependencies.deleted_dependencies.isEmpty() || !dependencies.unlinked_as_code_dependencies.isEmpty())">
-            <div class="ui grid">
-                <div class="row">
-                    <div class="sixteen wide column">
-                        <h3>Do you want to delete the workflow and clean its dependencies ?</h3>
-                        <ng-container *ngIf="dependencies?.deleted_dependencies && !dependencies.deleted_dependencies.isEmpty()">
-                            <p>The following objects will be deleted:
-                                <sm-list class="bulleted">
-                                    <sm-item *ngFor="let pip of dependencies.deleted_dependencies.pipelines">pipeline <strong>{{pip.name}}</strong></sm-item>
-                                    <sm-item *ngFor="let app of dependencies.deleted_dependencies.applications">application <strong>{{app.name}}</strong></sm-item>
-                                    <sm-item *ngFor="let env of dependencies.deleted_dependencies.environments">environment <strong>{{env.name}}</strong></sm-item>
-                                </sm-list>
-                            </p>
-                        </ng-container>
-
-                        <ng-container *ngIf="dependencies?.unlinked_as_code_dependencies && !dependencies.unlinked_as_code_dependencies.isEmpty()">
-                            <p>The following objects will be unlinked from repository "{{workflow.from_repository}}":
-                            <sm-list class="bulleted">
-                                <sm-item *ngFor="let pip of dependencies.unlinked_as_code_dependencies.pipelines">pipeline {{pip.name}}</sm-item>
-                                <sm-item *ngFor="let app of dependencies.unlinked_as_code_dependencies.applications">application {{app.name}}</sm-item>
-                                <sm-item *ngFor="let env of dependencies.unlinked_as_code_dependencies.environments">environment {{env.name}}</sm-item>
-                            </sm-list>
-                            </p>
-                        </ng-container>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="sixteen wide right aligned column">
-                        <app-delete-button title="Delete workflow and clean dependencies" [loading]="loading" (event)="deleteWorkflow(true)"></app-delete-button>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="sixteen wide column">
-                        <h3>Do you prefer to keep the dependencies ?</h3>
-                        <p>Only the workflow {{workflow.name}} will be deleted.</p>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="sixteen wide right aligned column">
-                        <app-delete-button title="Delete only the workflow" [loading]="loading" (event)="deleteWorkflow(false)"></app-delete-button>
-                    </div>
-                </div>
+        </div>
+        <div nz-row class="row">
+            <div nz-col nzSpan="24">
+                <ng-container *ngIf="!confirm">
+                    <button nz-button nzType="primary" nzDanger class="right"
+                           (click)="confirm = true"
+                            nzPopconfirmPlacement="top">Delete</button>
+                </ng-container>
+                <ng-container *ngIf="confirm">
+                    <nz-button-group>
+                        <button nz-button (click)="confirm = false">Cancel</button>
+                        <button nz-button nzType="primary" [nzLoading]="loading"  nzDanger (click)="deleteWorkflow(false)">Delete</button>
+                    </nz-button-group>
+                </ng-container>
             </div>
-        </ng-container>
-    </div>
-</ng-template>
+        </div>
+    </ng-container>
+    <ng-container *ngIf="dependencies?.deleted_dependencies && (!dependencies.deleted_dependencies.isEmpty() || !dependencies.unlinked_as_code_dependencies.isEmpty())">
+        <div nz-row class="row">
+            <div nz-col nzSpan="24">
+                <h3>Do you want to delete the workflow and clean its dependencies ?</h3>
+                <ng-container *ngIf="dependencies?.deleted_dependencies && !dependencies.deleted_dependencies.isEmpty()">
+                    <h4>The following objects will be deleted:</h4>
+                    <nz-list>
+                        <nz-list-item *ngFor="let pip of dependencies.deleted_dependencies.pipelines">
+                            pipeline: <span class="bold">{{pip.name}}</span>
+                        </nz-list-item>
+                        <nz-list-item *ngFor="let app of dependencies.deleted_dependencies.applications">
+                            application <span class="bold">{{app.name}}</span>
+                        </nz-list-item>
+                        <nz-list-item *ngFor="let env of dependencies.deleted_dependencies.environments">
+                            environment <span class="bold">{{env.name}}</span>
+                        </nz-list-item>
+                    </nz-list>
+                </ng-container>
+                <ng-container *ngIf="dependencies?.unlinked_as_code_dependencies && !dependencies.unlinked_as_code_dependencies.isEmpty()">
+                    <h4>The following objects will be unlinked from repository "{{workflow.from_repository}}":</h4>
+                    <nz-list>
+                        <nz-list-item *ngFor="let pip of dependencies.unlinked_as_code_dependencies.pipelines">pipeline <span class="bold">{{pip.name}}</span></nz-list-item>
+                        <nz-list-item *ngFor="let app of dependencies.unlinked_as_code_dependencies.applications">application <span class="bold">{{app.name}}</span></nz-list-item>
+                        <nz-list-item *ngFor="let env of dependencies.unlinked_as_code_dependencies.environments">environment <span class="bold">{{env.name}}</span></nz-list-item>
+                    </nz-list>
+                </ng-container>
+            </div>
+        </div>
+        <div nz-row class="row">
+            <div nz-col nzSpan="24">
+                <ng-container *ngIf="!confirmDeps">
+                    <button nz-button nzType="primary" nzDanger class="right"
+                            (click)="confirmDeps = true">Delete workflow and clean dependencies</button>
+                </ng-container>
+                <ng-container *ngIf="confirmDeps">
+                    <nz-button-group class="right">
+                        <button nz-button (click)="confirmDeps = false">Cancel</button>
+                        <button nz-button nzType="primary" nzDanger [nzLoading]="loading" (click)="deleteWorkflow(true)">Delete</button>
+                    </nz-button-group>
+                </ng-container>
+            </div>
+        </div>
+        <div nz-row class="row">
+            <div nz-col nzSpan="24">
+                <h3>Do you prefer to keep the dependencies ?</h3>
+                <p>Only the workflow {{workflow.name}} will be deleted.</p>
+            </div>
+        </div>
+        <div nz-row class="row">
+            <div nz-col nzSpan="24">
+                <ng-container *ngIf="!confirmNoDeps">
+                    <button nz-button nzType="primary" nzDanger class="right"
+                            (click)="confirmNoDeps = true">Delete only the workflow</button>
+                </ng-container>
+                <ng-container *ngIf="confirmNoDeps">
+                    <nz-button-group class="right">
+                        <button nz-button (click)="confirmNoDeps = false">Cancel</button>
+                        <button nz-button nzType="primary" nzDanger [nzLoading]="loading" (click)="deleteWorkflow(false)">Delete</button>
+                    </nz-button-group>
+                </ng-container>
+            </div>
+        </div>
+    </ng-container>
+</div>

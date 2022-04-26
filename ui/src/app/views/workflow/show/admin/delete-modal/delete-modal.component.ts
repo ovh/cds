@@ -1,13 +1,11 @@
 import {
     ChangeDetectionStrategy,
     ChangeDetectorRef,
-    Component,
-    ViewChild
+    Component, OnInit,
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { Project } from 'app/model/project.model';
 import { WorkflowDeletedDependencies } from 'app/model/purge.model';
 import { Workflow } from 'app/model/workflow.model';
@@ -17,11 +15,7 @@ import { ProjectState } from 'app/store/project.state';
 import { DeleteWorkflow } from 'app/store/workflow.action';
 import { WorkflowState } from 'app/store/workflow.state';
 import { finalize } from 'rxjs/operators';
-
-class WorkflowDeleteModalComponentDependency {
-    type: string; // application, pipeline, environment
-    name: string;
-}
+import { NzModalRef } from 'ng-zorro-antd/modal';
 
 @Component({
     selector: 'app-workflow-delete-modal',
@@ -29,14 +23,15 @@ class WorkflowDeleteModalComponentDependency {
     styleUrls: ['./delete-modal.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class WorkflowDeleteModalComponent {
-    @ViewChild('workflowDeleteModal') workflowDeleteModal: ModalTemplate<boolean, boolean, void>;
-    modal: SuiActiveModal<boolean, boolean, void>;
-    open: boolean;
+export class WorkflowDeleteModalComponent implements OnInit {
     loading: boolean;
     dependencies: WorkflowDeletedDependencies;
     project: Project;
     workflow: Workflow;
+
+    confirm = false;
+    confirmDeps = false;
+    confirmNoDeps = false;
 
     constructor(
         private store: Store,
@@ -44,27 +39,13 @@ export class WorkflowDeleteModalComponent {
         public _translate: TranslateService,
         private _toast: ToastService,
         private _router: Router,
-        private _modalService: SuiModalService,
-        private _workflowService: WorkflowService
+        private _workflowService: WorkflowService,
+        private _modal: NzModalRef
     ) {}
 
-    show() {
-        if (this.open) {
-            return;
-        }
-
-        this.open = true;
+    ngOnInit() {
         this.project = this.store.selectSnapshot(ProjectState.projectSnapshot);
         this.workflow = this.store.selectSnapshot(WorkflowState.workflowSnapshot);
-        const config = new TemplateModalConfig<boolean, boolean, void>(this.workflowDeleteModal);
-        config.mustScroll = true;
-        this.modal = this._modalService.open(config);
-        this.modal.onApprove(_ => {
-             this.closeCallback();
-        });
-        this.modal.onDeny(_ => {
-            this.closeCallback();
-        });
         this._workflowService.getDeletedDependencies(this.workflow).pipe(
             finalize(() => {
                 this.loading = false;
@@ -90,13 +71,9 @@ export class WorkflowDeleteModalComponent {
                 this._cd.markForCheck();
             }))
             .subscribe(() => {
-                this.modal.approve(true);
                 this._toast.success('', this._translate.instant('workflow_deleted'));
                 this._router.navigate(['/project', this.project.key], { queryParams: { tab: 'workflows' } });
+                this._modal.destroy();
         });
-    }
-
-    closeCallback(): void {
-        this.open = false;
     }
 }
