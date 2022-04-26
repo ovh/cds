@@ -7,7 +7,6 @@ import (
 	"time"
 
 	jwt "github.com/golang-jwt/jwt"
-	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/authentication"
 )
@@ -37,8 +36,6 @@ func Init(ctx context.Context, issuer string, keys []KeyConfig) error {
 		}
 		signers[i] = s
 	}
-
-	log.Info(ctx, "%d RSA Keys loaded for authentication token signatures", len(signers))
 
 	return nil
 }

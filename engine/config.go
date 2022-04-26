@@ -664,13 +664,23 @@ func getInitTokenFromExistingConfiguration(conf Configuration) (string, error) {
 	if conf.API == nil {
 		return "", fmt.Errorf("cannot load configuration")
 	}
-	apiPrivateKeyPEM := conf.API.Auth.RSAPrivateKey
 
 	now := time.Now()
 	globalIAT := now.Unix()
 	startupCfg := api.StartupConfig{}
 
-	if err := authentication.Init(context.TODO(), "cds-api", []authentication.KeyConfig{{Key: apiPrivateKeyPEM}}); err != nil {
+	var RSAKeyConfigs []authentication.KeyConfig
+	if conf.API.Auth.RSAPrivateKey != "" {
+		RSAKeyConfigs = append(RSAKeyConfigs, authentication.KeyConfig{
+			Key:       conf.API.Auth.RSAPrivateKey,
+			Timestamp: 0,
+		})
+	}
+	if len(conf.API.Auth.RSAPrivateKeys) > 0 {
+		RSAKeyConfigs = append(RSAKeyConfigs, conf.API.Auth.RSAPrivateKeys...)
+	}
+
+	if err := authentication.Init(context.TODO(), "cds-api", RSAKeyConfigs); err != nil {
 		return "", err
 	}
 
