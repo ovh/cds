@@ -96,22 +96,33 @@ func (consumer *bitbucketcloudConsumer) RefreshToken(ctx context.Context, refres
 var instancesAuthorizedClient = map[string]*bitbucketcloudClient{}
 
 //GetAuthorized returns an authorized client
-func (consumer *bitbucketcloudConsumer) GetAuthorizedClient(ctx context.Context, accessToken, refreshToken string, created int64) (sdk.VCSAuthorizedClient, error) {
-	createdTime := time.Unix(created, 0)
+func (consumer *bitbucketcloudConsumer) GetAuthorizedClient(ctx context.Context, vcsAuth sdk.VCSAuth) (sdk.VCSAuthorizedClient, error) {
+	token := vcsAuth.PersonalAccessTokens
+	if vcsAuth.PersonalAccessTokens == "" { // DEPRECATED
+		token = vcsAuth.AccessToken
+	}
 
-	c, ok := instancesAuthorizedClient[accessToken]
+	createdTime := time.Unix(vcsAuth.AccessTokenCreated, 0)
+
+	c, ok := instancesAuthorizedClient[token]
 	if createdTime.Add(2 * time.Hour).Before(time.Now()) {
 		if ok {
-			delete(instancesAuthorizedClient, accessToken)
+			delete(instancesAuthorizedClient, token)
 		}
-		newAccessToken, _, err := consumer.RefreshToken(ctx, refreshToken)
-		if err != nil {
-			return nil, sdk.WrapError(err, "cannot refresh token")
+		var newAccessToken string
+		if vcsAuth.AccessToken != "" { // DEPRECATED
+			var err error
+			newAccessToken, _, err = consumer.RefreshToken(ctx, vcsAuth.AccessTokenSecret)
+			if err != nil {
+				return nil, sdk.WrapError(err, "cannot refresh token")
+			}
 		}
+
 		c = &bitbucketcloudClient{
-			ClientID:            consumer.ClientID,
-			OAuthToken:          newAccessToken,
-			RefreshToken:        refreshToken,
+			PersonalAccessToken: vcsAuth.PersonalAccessTokens,
+			ClientID:            consumer.ClientID,         // DEPRECATED
+			OAuthToken:          newAccessToken,            // DEPRECATED
+			RefreshToken:        vcsAuth.AccessTokenSecret, // DEPRECATED
 			Cache:               consumer.Cache,
 			apiURL:              consumer.apiURL,
 			uiURL:               consumer.uiURL,
@@ -123,9 +134,10 @@ func (consumer *bitbucketcloudConsumer) GetAuthorizedClient(ctx context.Context,
 	} else {
 		if !ok {
 			c = &bitbucketcloudClient{
-				ClientID:            consumer.ClientID,
-				OAuthToken:          accessToken,
-				RefreshToken:        refreshToken,
+				PersonalAccessToken: vcsAuth.PersonalAccessTokens,
+				ClientID:            consumer.ClientID,         // DEPRECATED
+				OAuthToken:          vcsAuth.AccessToken,       // DEPRECATED
+				RefreshToken:        vcsAuth.AccessTokenSecret, // DEPRECATED
 				Cache:               consumer.Cache,
 				apiURL:              consumer.apiURL,
 				uiURL:               consumer.uiURL,
@@ -133,9 +145,8 @@ func (consumer *bitbucketcloudConsumer) GetAuthorizedClient(ctx context.Context,
 				DisableStatusDetail: consumer.disableStatusDetail,
 				proxyURL:            consumer.proxyURL,
 			}
-			instancesAuthorizedClient[accessToken] = c
+			instancesAuthorizedClient[token] = c
 		}
-
 	}
 
 	return c, nil

@@ -139,7 +139,10 @@ func (c *githubClient) post(ctx context.Context, path string, bodyType string, b
 	req.Header.Set("Content-Type", bodyType)
 	req.Header.Set("User-Agent", "CDS-gh_client_id="+c.ClientID)
 	req.Header.Add("Accept", "application/json")
-	if opts.asUser && c.token != "" {
+	if c.personalAccessToken != "" {
+		req.Header.Add("Authorization", fmt.Sprintf("token %s", c.personalAccessToken))
+		log.Debug(ctx, "Github API>> Request URL %s with personalAccessToken len:%d", req.URL.String(), len(c.personalAccessToken))
+	} else if opts.asUser && c.token != "" {
 		req.SetBasicAuth(c.username, c.token)
 		log.Debug(ctx, "Github API>> Request URL %s with basicAuth username:%v len:%d", req.URL.String(), c.username, len(c.token))
 	} else {

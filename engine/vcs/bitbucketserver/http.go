@@ -93,9 +93,6 @@ func (c *bitbucketClient) do(ctx context.Context, method, api, path string, para
 		uri.RawQuery = params.Encode()
 	}
 
-	// create the access token
-	token := NewAccessToken(c.accessToken, c.accessTokenSecret, nil)
-
 	// create the request
 	req := &http.Request{
 		URL:        uri,
@@ -114,11 +111,15 @@ func (c *bitbucketClient) do(ctx context.Context, method, api, path string, para
 		req.ContentLength = int64(buf.Len())
 	}
 
-	// sign the request
+	var token string
 	if opts != nil && opts.asUser && c.token != "" {
+		token = c.token
 		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.token))
 	} else {
-		if err := c.consumer.Sign(req, token); err != nil {
+		// Deprecated. This section use the vcs configured with oauth2 on a cds project
+		accessToken := NewAccessToken(c.accessToken, c.accessTokenSecret, nil)
+		token = accessToken.token
+		if err := c.consumer.Sign(req, accessToken); err != nil {
 			return err
 		}
 	}
@@ -129,7 +130,7 @@ func (c *bitbucketClient) do(ctx context.Context, method, api, path string, para
 		req.Header.Set("Content-Type", "application/json")
 	}
 
-	cacheKey := cache.Key("vcs", "bitbucket", "request", req.URL.String(), token.Token())
+	cacheKey := cache.Key("vcs", "bitbucket", "request", req.URL.String(), token)
 	if v != nil && method == "GET" {
 		find, err := c.consumer.cache.Get(cacheKey, v)
 		if err != nil {
@@ -160,14 +161,6 @@ func (c *bitbucketClient) do(ctx context.Context, method, api, path string, para
 	case 403:
 		return sdk.WithStack(sdk.ErrForbidden)
 	case 401:
-		var debugAT, debugAS string
-		if len(c.accessToken) > 4 {
-			debugAT = c.accessToken[:4]
-		}
-		if len(c.accessTokenSecret) > 4 {
-			debugAS = c.accessTokenSecret[:4]
-		}
-		log.Info(ctx, "debug_auth accessToken_http lenat:%d lenas:%d at:%v as:%v", len(c.accessToken), len(c.accessTokenSecret), debugAT, debugAS)
 		return sdk.WithStack(sdk.ErrUnauthorized)
 	case 400:
 		log.Warn(ctx, "bitbucketClient.do> %s", string(body))

@@ -205,10 +205,19 @@ type VCSServerCommon interface {
 	AuthorizeToken(context.Context, string, string) (string, string, error)
 }
 
+// VCSAuth contains tokens (oauth2 tokens or personalAccessToken)
+type VCSAuth struct {
+	PersonalAccessTokens string // DEPRECATED
+
+	AccessToken        string // DEPRECATED
+	AccessTokenSecret  string // DEPRECATED
+	AccessTokenCreated int64  // DEPRECATED
+}
+
 // VCSServer is an interface for a OAuth VCS Server. The goal of this interface is to return a VCSAuthorizedClient.
 type VCSServer interface {
 	VCSServerCommon
-	GetAuthorizedClient(context.Context, string, string, int64) (VCSAuthorizedClient, error)
+	GetAuthorizedClient(context.Context, VCSAuth) (VCSAuthorizedClient, error)
 }
 
 type VCSServerService interface {

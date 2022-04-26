@@ -15,9 +15,10 @@ import (
 type contextKey string
 
 var (
-	contextKeyAccessToken        contextKey = "access-token"
-	contextKeyAccessTokenCreated contextKey = "access-token-created"
-	contextKeyAccessTokenSecret  contextKey = "access-token-secret"
+	contextKeyPersonalAccessToken contextKey = "personnal-access-token"
+	contextKeyAccessToken         contextKey = "access-token"
+	contextKeyAccessTokenCreated  contextKey = "access-token-created"
+	contextKeyAccessTokenSecret   contextKey = "access-token-secret"
 )
 
 func (s *Service) authMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig) (context.Context, error) {
@@ -51,24 +52,37 @@ func (s *Service) authMiddleware(ctx context.Context, w http.ResponseWriter, req
 	return ctx, nil
 }
 
-func getAccessTokens(ctx context.Context) (string, string, int64, bool) {
-	var created int64
-	accessToken, ok := ctx.Value(contextKeyAccessToken).(string)
-	if !ok {
-		return "", "", created, false
-	}
-	accessTokenSecret, ok := ctx.Value(contextKeyAccessTokenSecret).(string)
-	if !ok {
-		return "", "", created, false
-	}
-	accessTokenCreated, ok := ctx.Value(contextKeyAccessTokenCreated).(string)
-	if ok && accessTokenCreated != "" {
-		var err error
-		created, err = strconv.ParseInt(accessTokenCreated, 10, 64)
-		if err != nil {
-			return "", "", created, false
-		}
+func getAccessTokens(ctx context.Context) (sdk.VCSAuth, error) {
+	var vcsAuth sdk.VCSAuth
+
+	personalAccessTokens, _ := ctx.Value(contextKeyPersonalAccessToken).(string)
+	vcsAuth.PersonalAccessTokens = personalAccessTokens
+
+	if vcsAuth.PersonalAccessTokens != "" {
+		return vcsAuth, nil
 	}
 
-	return string(accessToken), string(accessTokenSecret), created, len(accessToken) > 0
+	// DEPRECATED
+	accessToken, _ := ctx.Value(contextKeyAccessToken).(string)
+	vcsAuth.AccessToken = accessToken
+
+	accessTokenSecret, _ := ctx.Value(contextKeyAccessTokenSecret).(string)
+	vcsAuth.AccessTokenSecret = accessTokenSecret
+
+	accessTokenCreated, _ := ctx.Value(contextKeyAccessTokenCreated).(string)
+	if accessTokenCreated != "" {
+		created, err := strconv.ParseInt(accessTokenCreated, 10, 64)
+		if err != nil {
+			return vcsAuth, sdk.WrapError(sdk.ErrUnauthorized, "invalid token created header: %v err:%v", accessTokenCreated, err)
+		}
+		vcsAuth.AccessTokenCreated = created
+	}
+
+	if vcsAuth.AccessToken != "" &&
+		vcsAuth.AccessTokenSecret != "" &&
+		vcsAuth.AccessTokenCreated > 0 {
+		return vcsAuth, nil
+	}
+
+	return vcsAuth, sdk.WrapError(sdk.ErrUnauthorized, "invalid access token headers")
 }

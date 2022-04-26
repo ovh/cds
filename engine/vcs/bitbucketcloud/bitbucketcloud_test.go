@@ -67,7 +67,12 @@ func getNewAuthorizedClient(t *testing.T) sdk.VCSAuthorizedClient {
 	}
 
 	bbConsumer := New(clientID, clientSecret, "http://localhost", "", "", cache, true, true)
-	cli, err := bbConsumer.GetAuthorizedClient(context.Background(), currentAccessToken, currentRefreshToken, time.Now().Unix())
+	vcsAuth := sdk.VCSAuth{
+		AccessToken:        currentAccessToken,
+		AccessTokenSecret:  currentRefreshToken,
+		AccessTokenCreated: time.Now().Unix(),
+	}
+	cli, err := bbConsumer.GetAuthorizedClient(context.Background(), vcsAuth)
 	if err != nil {
 		t.Fatalf("Unable to init authorized client (%s): %v", redisHost, err)
 	}
@@ -119,7 +124,12 @@ func TestClientAuthorizeToken(t *testing.T) {
 	currentRefreshToken = refreshToken
 	t.Logf("Token is %s", accessToken)
 
-	bbClient, err := bbConsumer.GetAuthorizedClient(context.Background(), accessToken, refreshToken, time.Now().Unix())
+	vcsAuth := sdk.VCSAuth{
+		AccessToken:        accessToken,
+		AccessTokenSecret:  refreshToken,
+		AccessTokenCreated: time.Now().Unix(),
+	}
+	bbClient, err := bbConsumer.GetAuthorizedClient(context.Background(), vcsAuth)
 	require.NoError(t, err)
 	assert.NotNil(t, bbClient)
 }

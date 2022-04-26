@@ -179,7 +179,11 @@ func (client *bitbucketcloudClient) do(ctx context.Context, method, api, path st
 		req.Body = io.NopCloser(buf)
 		req.ContentLength = int64(buf.Len())
 	}
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", client.OAuthToken))
+	if client.PersonalAccessToken != "" {
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", client.PersonalAccessToken))
+	} else {
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", client.OAuthToken))
+	}
 
 	// ensure the appropriate content-type is set for POST,
 	// assuming the field is not populated

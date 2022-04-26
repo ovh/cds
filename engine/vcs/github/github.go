@@ -21,6 +21,7 @@ type githubClient struct {
 	proxyURL            string
 	username            string
 	token               string
+	personalAccessToken string
 }
 
 //GithubConsumer implements vcs.Server and it's used to instantiate a githubClient

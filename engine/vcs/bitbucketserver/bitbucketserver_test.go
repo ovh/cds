@@ -66,7 +66,12 @@ func getAuthorizedClient(t *testing.T) sdk.VCSAuthorizedClient {
 	}
 
 	consumer := New(consumerKey, []byte(privateKey), url, "", "", "", username, password, cache, true)
-	cli, err := consumer.GetAuthorizedClient(context.Background(), token, secret, 0)
+
+	vcsAuth := sdk.VCSAuth{
+		AccessToken:       token,
+		AccessTokenSecret: secret,
+	}
+	cli, err := consumer.GetAuthorizedClient(context.Background(), vcsAuth)
 	require.NoError(t, err)
 	return cli
 }

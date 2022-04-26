@@ -16,6 +16,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
@@ -63,6 +64,7 @@ type vcsClient struct {
 	srvs       []sdk.Service
 	cache      *gocache.Cache
 	db         gorpmapper.SqlExecutorWithTx
+	vcsProject *sdk.VCSProject
 }
 
 func (c *vcsClient) Cache() *gocache.Cache {
@@ -176,6 +178,29 @@ func (c *vcsConsumer) GetAuthorizedClient(ctx context.Context, token, secret str
 
 //AuthorizedClient returns an implementation of AuthorizedClient wrapping calls to vcs uService
 func AuthorizedClient(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, projectKey string, vcsName string) (sdk.VCSAuthorizedClientService, error) {
+	vcsProject, err := vcs.LoadVCSByProject(ctx, db, projectKey, vcsName, gorpmapping.GetOptions.WithDecryption)
+
+	if sdk.ErrorIs(err, sdk.ErrNotFound) {
+		return deprecatedAuthorizedClient(ctx, db, store, projectKey, vcsName)
+	}
+
+	srvs, err := services.LoadAllByType(ctx, db, sdk.TypeVCS)
+	if err != nil {
+		return nil, sdk.WithStack(err)
+	}
+
+	vcs := &vcsClient{
+		name:       vcsProject.Name,
+		srvs:       srvs,
+		db:         db,
+		projectKey: projectKey,
+		vcsProject: vcsProject,
+	}
+
+	return vcs, nil
+}
+
+func deprecatedAuthorizedClient(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, projectKey string, vcsName string) (sdk.VCSAuthorizedClientService, error) {
 	vcsServer, err := LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, projectKey, vcsName)
 	if err != nil {
 		return nil, sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "cannot get client got %s %s : %s", projectKey, vcsName, err)

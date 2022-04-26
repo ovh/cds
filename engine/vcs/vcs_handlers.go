@@ -221,9 +221,9 @@ func (s *Service) getReposHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		name := muxVar(r, "name")
 
-		accessToken, accessTokenSecret, created, ok := getAccessTokens(ctx)
-		if !ok {
-			return sdk.WrapError(sdk.ErrUnauthorized, "VCS> getReposHandler> Unable to get access token headers")
+		vcsAuth, err := getAccessTokens(ctx)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
 		}
 
 		consumer, err := s.getConsumer(name)
@@ -231,12 +231,12 @@ func (s *Service) getReposHandler() service.Handler {
 			return sdk.WrapError(err, "VCS server unavailable")
 		}
 
-		client, err := consumer.GetAuthorizedClient(ctx, accessToken, accessTokenSecret, created)
+		client, err := consumer.GetAuthorizedClient(ctx, vcsAuth)
 		if err != nil {
 			return sdk.WrapError(err, "Unable to get authorized client")
 		}
 		// Check if access token has been refreshed
-		if accessToken != client.GetAccessToken(ctx) {
+		if vcsAuth.AccessToken != client.GetAccessToken(ctx) {
 			w.Header().Set(sdk.HeaderXAccessToken, client.GetAccessToken(ctx))
 		}
 
@@ -255,9 +255,9 @@ func (s *Service) getRepoHandler() service.Handler {
 		owner := muxVar(r, "owner")
 		repo := muxVar(r, "repo")
 
-		accessToken, accessTokenSecret, created, ok := getAccessTokens(ctx)
-		if !ok {
-			return sdk.WrapError(sdk.ErrUnauthorized, "VCS> getRepoHandler> Unable to get access token headers %s %s/%s", name, owner, repo)
+		vcsAuth, err := getAccessTokens(ctx)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
 		}
 
 		consumer, err := s.getConsumer(name)
@@ -265,12 +265,12 @@ func (s *Service) getRepoHandler() service.Handler {
 			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
 		}
 
-		client, err := consumer.GetAuthorizedClient(ctx, accessToken, accessTokenSecret, created)
+		client, err := consumer.GetAuthorizedClient(ctx, vcsAuth)
 		if err != nil {
 			return sdk.WrapError(err, "Unable to get authorized client %s %s/%s", name, owner, repo)
 		}
 		// Check if access token has been refreshed
-		if accessToken != client.GetAccessToken(ctx) {
+		if vcsAuth.AccessToken != client.GetAccessToken(ctx) {
 			w.Header().Set(sdk.HeaderXAccessToken, client.GetAccessToken(ctx))
 		}
 
@@ -299,9 +299,9 @@ func (s *Service) getBranchesHandler() service.Handler {
 			limit = int64(l)
 		}
 
-		accessToken, accessTokenSecret, created, ok := getAccessTokens(ctx)
-		if !ok {
-			return sdk.WrapError(sdk.ErrUnauthorized, "VCS> getBranchesHandler> Unable to get access token headers %s %s/%s", name, owner, repo)
+		vcsAuth, err := getAccessTokens(ctx)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
 		}
 
 		consumer, err := s.getConsumer(name)
@@ -309,27 +309,19 @@ func (s *Service) getBranchesHandler() service.Handler {
 			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
 		}
 
-		client, err := consumer.GetAuthorizedClient(ctx, accessToken, accessTokenSecret, created)
+		client, err := consumer.GetAuthorizedClient(ctx, vcsAuth)
 		if err != nil {
 			return sdk.WrapError(err, "Unable to get authorized client %s %s/%s", name, owner, repo)
 		}
 		// Check if access token has been refreshed
-		if accessToken != client.GetAccessToken(ctx) {
+		if vcsAuth.AccessToken != client.GetAccessToken(ctx) {
 			log.Info(ctx, "debug_auth accessToken_diff")
 			w.Header().Set(sdk.HeaderXAccessToken, client.GetAccessToken(ctx))
 		}
 
 		branches, err := client.Branches(ctx, fmt.Sprintf("%s/%s", owner, repo), sdk.VCSBranchesFilter{Limit: limit})
 		if err != nil {
-			var debugat, debugas string
-			if len(accessToken) > 4 {
-				debugat = accessToken[:4]
-			}
-			if len(accessTokenSecret) > 4 {
-				debugas = accessTokenSecret[:4]
-			}
-			debug := fmt.Sprintf("debug_auth handler lenat:%d lenat2:%d lenas:%d debugat:%v debugas:%v", len(accessToken), len(client.GetAccessToken(ctx)), len(accessTokenSecret), debugat, debugas)
-			return sdk.WrapError(err, "Unable to get repo %s/%s branches debug: %v", owner, repo, debug)
+			return sdk.WrapError(err, "Unable to get repo %s/%s", owner, repo)
 		}
 		return service.WriteJSON(w, branches, http.StatusOK)
 	}
@@ -348,9 +340,9 @@ func (s *Service) getBranchHandler() service.Handler {
 			defaultBranch = true
 		}
 
-		accessToken, accessTokenSecret, created, ok := getAccessTokens(ctx)
-		if !ok {
-			return sdk.WrapError(sdk.ErrUnauthorized, "VCS> getBranchHandler> Unable to get access token headers %s %s/%s", name, owner, repo)
+		vcsAuth, err := getAccessTokens(ctx)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
 		}
 
 		consumer, err := s.getConsumer(name)
@@ -358,12 +350,12 @@ func (s *Service) getBranchHandler() service.Handler {
 			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
 		}
 
-		client, err := consumer.GetAuthorizedClient(ctx, accessToken, accessTokenSecret, created)
+		client, err := consumer.GetAuthorizedClient(ctx, vcsAuth)
 		if err != nil {
 			return sdk.WrapError(err, "Unable to get authorized client %s %s/%s", name, owner, repo)
 		}
 		// Check if access token has been refreshed
-		if accessToken != client.GetAccessToken(ctx) {
+		if vcsAuth.AccessToken != client.GetAccessToken(ctx) {
 			w.Header().Set(sdk.HeaderXAccessToken, client.GetAccessToken(ctx))
 		}
 
@@ -383,9 +375,9 @@ func (s *Service) getTagsHandler() service.Handler {
 
 		log.Debug(ctx, "getTagsHandler>")
 
-		accessToken, accessTokenSecret, created, ok := getAccessTokens(ctx)
-		if !ok {
-			return sdk.WrapError(sdk.ErrUnauthorized, "VCS> getTagsHandler> Unable to get access token headers %s %s/%s", name, owner, repo)
+		vcsAuth, err := getAccessTokens(ctx)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
 		}
 
 		consumer, err := s.getConsumer(name)
@@ -393,12 +385,12 @@ func (s *Service) getTagsHandler() service.Handler {
 			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
 		}
 
-		client, err := consumer.GetAuthorizedClient(ctx, accessToken, accessTokenSecret, created)
+		client, err := consumer.GetAuthorizedClient(ctx, vcsAuth)
 		if err != nil {
 			return sdk.WrapError(err, "Unable to get authorized client %s %s/%s", name, owner, repo)
 		}
 		// Check if access token has been refreshed
-		if accessToken != client.GetAccessToken(ctx) {
+		if vcsAuth.AccessToken != client.GetAccessToken(ctx) {
 			w.Header().Set(sdk.HeaderXAccessToken, client.GetAccessToken(ctx))
 		}
 
@@ -421,9 +413,9 @@ func (s *Service) getCommitsHandler() service.Handler {
 
 		log.Debug(ctx, "getCommitsHandler>")
 
-		accessToken, accessTokenSecret, created, ok := getAccessTokens(ctx)
-		if !ok {
-			return sdk.WrapError(sdk.ErrUnauthorized, "VCS> getCommitsHandler> Unable to get access token headers %s %s/%s", name, owner, repo)
+		vcsAuth, err := getAccessTokens(ctx)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
 		}
 
 		consumer, err := s.getConsumer(name)
@@ -431,12 +423,12 @@ func (s *Service) getCommitsHandler() service.Handler {
 			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
 		}
 
-		client, err := consumer.GetAuthorizedClient(ctx, accessToken, accessTokenSecret, created)
+		client, err := consumer.GetAuthorizedClient(ctx, vcsAuth)
 		if err != nil {
 			return sdk.WrapError(err, "Unable to get authorized client %s %s/%s", name, owner, repo)
 		}
 		// Check if access token has been refreshed
-		if accessToken != client.GetAccessToken(ctx) {
+		if vcsAuth.AccessToken != client.GetAccessToken(ctx) {
 			w.Header().Set(sdk.HeaderXAccessToken, client.GetAccessToken(ctx))
 		}
 
@@ -458,9 +450,9 @@ func (s *Service) getCommitsBetweenRefsHandler() service.Handler {
 
 		log.Debug(ctx, "getCommitsBetweenRefsHandler>")
 
-		accessToken, accessTokenSecret, created, ok := getAccessTokens(ctx)
-		if !ok {
-			return sdk.WrapError(sdk.ErrUnauthorized, "VCS> getCommitsBetweenRefsHandler> Unable to get access token headers %s %s/%s", name, owner, repo)
+		vcsAuth, err := getAccessTokens(ctx)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
 		}
 
 		consumer, err := s.getConsumer(name)
@@ -468,12 +460,12 @@ func (s *Service) getCommitsBetweenRefsHandler() service.Handler {
 			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
 		}
 
-		client, err := consumer.GetAuthorizedClient(ctx, accessToken, accessTokenSecret, created)
+		client, err := consumer.GetAuthorizedClient(ctx, vcsAuth)
 		if err != nil {
 			return sdk.WrapError(err, "Unable to get authorized client %s %s/%s", name, owner, repo)
 		}
 		// Check if access token has been refreshed
-		if accessToken != client.GetAccessToken(ctx) {
+		if vcsAuth.AccessToken != client.GetAccessToken(ctx) {
 			w.Header().Set(sdk.HeaderXAccessToken, client.GetAccessToken(ctx))
 		}
 
@@ -492,9 +484,9 @@ func (s *Service) getCommitHandler() service.Handler {
 		repo := muxVar(r, "repo")
 		commit := muxVar(r, "commit")
 
-		accessToken, accessTokenSecret, created, ok := getAccessTokens(ctx)
-		if !ok {
-			return sdk.WrapError(sdk.ErrUnauthorized, "VCS> getCommitHandler> Unable to get access token headers %s %s/%s", name, owner, repo)
+		vcsAuth, err := getAccessTokens(ctx)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
 		}
 
 		consumer, err := s.getConsumer(name)
@@ -502,12 +494,12 @@ func (s *Service) getCommitHandler() service.Handler {
 			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
 		}
 
-		client, err := consumer.GetAuthorizedClient(ctx, accessToken, accessTokenSecret, created)
+		client, err := consumer.GetAuthorizedClient(ctx, vcsAuth)
 		if err != nil {
 			return sdk.WrapError(err, "Unable to get authorized client %s %s/%s", name, owner, repo)
 		}
 		// Check if access token has been refreshed
-		if accessToken != client.GetAccessToken(ctx) {
+		if vcsAuth.AccessToken != client.GetAccessToken(ctx) {
 			w.Header().Set(sdk.HeaderXAccessToken, client.GetAccessToken(ctx))
 		}
 
@@ -526,9 +518,9 @@ func (s *Service) getCommitStatusHandler() service.Handler {
 		repo := muxVar(r, "repo")
 		commit := muxVar(r, "commit")
 
-		accessToken, accessTokenSecret, created, ok := getAccessTokens(ctx)
-		if !ok {
-			return sdk.WrapError(sdk.ErrUnauthorized, "VCS> getCommitStatusHandler> Unable to get access token headers %s %s/%s", name, owner, repo)
+		vcsAuth, err := getAccessTokens(ctx)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
 		}
 
 		consumer, err := s.getConsumer(name)
@@ -536,12 +528,12 @@ func (s *Service) getCommitStatusHandler() service.Handler {
 			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
 		}
 
-		client, err := consumer.GetAuthorizedClient(ctx, accessToken, accessTokenSecret, created)
+		client, err := consumer.GetAuthorizedClient(ctx, vcsAuth)
 		if err != nil {
 			return sdk.WrapError(err, "Unable to get authorized client %s %s/%s", name, owner, repo)
 		}
 		// Check if access token has been refreshed
-		if accessToken != client.GetAccessToken(ctx) {
+		if vcsAuth.AccessToken != client.GetAccessToken(ctx) {
 			w.Header().Set(sdk.HeaderXAccessToken, client.GetAccessToken(ctx))
 		}
 
@@ -561,9 +553,9 @@ func (s *Service) getPullRequestHandler() service.Handler {
 		repo := muxVar(r, "repo")
 		id := muxVar(r, "id")
 
-		accessToken, accessTokenSecret, created, ok := getAccessTokens(ctx)
-		if !ok {
-			return sdk.WrapError(sdk.ErrUnauthorized, "Unable to get access token headers %s %s/%s", name, owner, repo)
+		vcsAuth, err := getAccessTokens(ctx)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
 		}
 
 		consumer, err := s.getConsumer(name)
@@ -571,13 +563,13 @@ func (s *Service) getPullRequestHandler() service.Handler {
 			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
 		}
 
-		client, err := consumer.GetAuthorizedClient(ctx, accessToken, accessTokenSecret, created)
+		client, err := consumer.GetAuthorizedClient(ctx, vcsAuth)
 		if err != nil {
 			return sdk.WrapError(err, "Unable to get authorized client %s %s/%s", name, owner, repo)
 		}
 
 		// Check if access token has been refreshed
-		if accessToken != client.GetAccessToken(ctx) {
+		if vcsAuth.AccessToken != client.GetAccessToken(ctx) {
 			w.Header().Set(sdk.HeaderXAccessToken, client.GetAccessToken(ctx))
 		}
 
@@ -600,9 +592,9 @@ func (s *Service) getPullRequestsHandler() service.Handler {
 			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given pull request state %s", state)
 		}
 
-		accessToken, accessTokenSecret, created, ok := getAccessTokens(ctx)
-		if !ok {
-			return sdk.WrapError(sdk.ErrUnauthorized, "VCS> getPullRequestsHandler> Unable to get access token headers %s %s/%s", name, owner, repo)
+		vcsAuth, err := getAccessTokens(ctx)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
 		}
 
 		consumer, err := s.getConsumer(name)
@@ -610,12 +602,12 @@ func (s *Service) getPullRequestsHandler() service.Handler {
 			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
 		}
 
-		client, err := consumer.GetAuthorizedClient(ctx, accessToken, accessTokenSecret, created)
+		client, err := consumer.GetAuthorizedClient(ctx, vcsAuth)
 		if err != nil {
 			return sdk.WrapError(err, "Unable to get authorized client %s %s/%s", name, owner, repo)
 		}
 		// Check if access token has been refreshed
-		if accessToken != client.GetAccessToken(ctx) {
+		if vcsAuth.AccessToken != client.GetAccessToken(ctx) {
 			w.Header().Set(sdk.HeaderXAccessToken, client.GetAccessToken(ctx))
 		}
 
@@ -640,9 +632,9 @@ func (s *Service) postPullRequestsHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		accessToken, accessTokenSecret, created, ok := getAccessTokens(ctx)
-		if !ok {
-			return sdk.WrapError(sdk.ErrUnauthorized, "VCS> getPullRequestsHandler> Unable to get access token headers %s %s/%s", name, owner, repo)
+		vcsAuth, err := getAccessTokens(ctx)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
 		}
 
 		consumer, err := s.getConsumer(name)
@@ -650,12 +642,12 @@ func (s *Service) postPullRequestsHandler() service.Handler {
 			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
 		}
 
-		client, err := consumer.GetAuthorizedClient(ctx, accessToken, accessTokenSecret, created)
+		client, err := consumer.GetAuthorizedClient(ctx, vcsAuth)
 		if err != nil {
 			return sdk.WrapError(err, "Unable to get authorized client %s %s/%s", name, owner, repo)
 		}
 		// Check if access token has been refreshed
-		if accessToken != client.GetAccessToken(ctx) {
+		if vcsAuth.AccessToken != client.GetAccessToken(ctx) {
 			w.Header().Set(sdk.HeaderXAccessToken, client.GetAccessToken(ctx))
 		}
 
@@ -678,9 +670,9 @@ func (s *Service) postPullRequestCommentHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		accessToken, accessTokenSecret, created, ok := getAccessTokens(ctx)
-		if !ok {
-			return sdk.WrapError(sdk.ErrUnauthorized, "Unable to get access token headers %s %s/%s", name, owner, repo)
+		vcsAuth, err := getAccessTokens(ctx)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
 		}
 
 		consumer, err := s.getConsumer(name)
@@ -688,12 +680,12 @@ func (s *Service) postPullRequestCommentHandler() service.Handler {
 			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
 		}
 
-		client, err := consumer.GetAuthorizedClient(ctx, accessToken, accessTokenSecret, created)
+		client, err := consumer.GetAuthorizedClient(ctx, vcsAuth)
 		if err != nil {
 			return sdk.WrapError(err, "Unable to get authorized client %s %s/%s", name, owner, repo)
 		}
 		// Check if access token has been refreshed
-		if accessToken != client.GetAccessToken(ctx) {
+		if vcsAuth.AccessToken != client.GetAccessToken(ctx) {
 			w.Header().Set(sdk.HeaderXAccessToken, client.GetAccessToken(ctx))
 		}
 
@@ -721,9 +713,9 @@ func (s *Service) getEventsHandler() service.Handler {
 			dateRef = time.Unix(int64(dateRefInt), 0)
 		}
 
-		accessToken, accessTokenSecret, created, ok := getAccessTokens(ctx)
-		if !ok {
-			return sdk.WrapError(sdk.ErrUnauthorized, "VCS> getEventsHandler> Unable to get access token headers %s %s/%s", name, owner, repo)
+		vcsAuth, err := getAccessTokens(ctx)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
 		}
 
 		consumer, err := s.getConsumer(name)
@@ -731,12 +723,12 @@ func (s *Service) getEventsHandler() service.Handler {
 			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
 		}
 
-		client, err := consumer.GetAuthorizedClient(ctx, accessToken, accessTokenSecret, created)
+		client, err := consumer.GetAuthorizedClient(ctx, vcsAuth)
 		if err != nil {
 			return sdk.WrapError(err, "Unable to get authorized client %s %s/%s", name, owner, repo)
 		}
 		// Check if access token has been refreshed
-		if accessToken != client.GetAccessToken(ctx) {
+		if vcsAuth.AccessToken != client.GetAccessToken(ctx) {
 			w.Header().Set(sdk.HeaderXAccessToken, client.GetAccessToken(ctx))
 		}
 
@@ -766,9 +758,9 @@ func (s *Service) postFilterEventsHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to read body")
 		}
 
-		accessToken, accessTokenSecret, created, ok := getAccessTokens(ctx)
-		if !ok {
-			return sdk.WrapError(sdk.ErrUnauthorized, "Unable to get access token headers %s %s/%s", name, owner, repo)
+		vcsAuth, err := getAccessTokens(ctx)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
 		}
 
 		consumer, err := s.getConsumer(name)
@@ -776,12 +768,12 @@ func (s *Service) postFilterEventsHandler() service.Handler {
 			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
 		}
 
-		client, err := consumer.GetAuthorizedClient(ctx, accessToken, accessTokenSecret, created)
+		client, err := consumer.GetAuthorizedClient(ctx, vcsAuth)
 		if err != nil {
 			return sdk.WrapError(err, "Unable to get authorized client %s %s/%s", name, owner, repo)
 		}
 		// Check if access token has been refreshed
-		if accessToken != client.GetAccessToken(ctx) {
+		if vcsAuth.AccessToken != client.GetAccessToken(ctx) {
 			w.Header().Set(sdk.HeaderXAccessToken, client.GetAccessToken(ctx))
 		}
 
@@ -827,9 +819,9 @@ func (s *Service) postStatusHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to read body")
 		}
 
-		accessToken, accessTokenSecret, created, ok := getAccessTokens(ctx)
-		if !ok {
-			return sdk.WrapError(sdk.ErrUnauthorized, "Unable to get access token headers")
+		vcsAuth, err := getAccessTokens(ctx)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
 		}
 
 		consumer, err := s.getConsumer(name)
@@ -837,12 +829,12 @@ func (s *Service) postStatusHandler() service.Handler {
 			return sdk.WrapError(err, "VCS server unavailable")
 		}
 
-		client, err := consumer.GetAuthorizedClient(ctx, accessToken, accessTokenSecret, created)
+		client, err := consumer.GetAuthorizedClient(ctx, vcsAuth)
 		if err != nil {
 			return sdk.WrapError(err, "Unable to get authorized client")
 		}
 		// Check if access token has been refreshed
-		if accessToken != client.GetAccessToken(ctx) {
+		if vcsAuth.AccessToken != client.GetAccessToken(ctx) {
 			w.Header().Set(sdk.HeaderXAccessToken, client.GetAccessToken(ctx))
 		}
 
@@ -860,9 +852,9 @@ func (s *Service) postReleaseHandler() service.Handler {
 		owner := muxVar(r, "owner")
 		repo := muxVar(r, "repo")
 
-		accessToken, accessTokenSecret, created, ok := getAccessTokens(ctx)
-		if !ok {
-			return sdk.WrapError(sdk.ErrUnauthorized, "VCS> postReleaseHandler> Unable to get access token headers %s %s/%s", name, owner, repo)
+		vcsAuth, err := getAccessTokens(ctx)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
 		}
 
 		consumer, err := s.getConsumer(name)
@@ -870,12 +862,12 @@ func (s *Service) postReleaseHandler() service.Handler {
 			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
 		}
 
-		client, err := consumer.GetAuthorizedClient(ctx, accessToken, accessTokenSecret, created)
+		client, err := consumer.GetAuthorizedClient(ctx, vcsAuth)
 		if err != nil {
 			return sdk.WrapError(err, "Unable to get authorized client %s %s/%s", name, owner, repo)
 		}
 		// Check if access token has been refreshed
-		if accessToken != client.GetAccessToken(ctx) {
+		if vcsAuth.AccessToken != client.GetAccessToken(ctx) {
 			w.Header().Set(sdk.HeaderXAccessToken, client.GetAccessToken(ctx))
 		}
 
@@ -921,9 +913,9 @@ func (s *Service) postUploadReleaseFileHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		accessToken, accessTokenSecret, created, ok := getAccessTokens(ctx)
-		if !ok {
-			return sdk.WrapError(sdk.ErrUnauthorized, "Unable to get access token headers %s %s/%s", name, owner, repo)
+		vcsAuth, err := getAccessTokens(ctx)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
 		}
 
 		consumer, err := s.getConsumer(name)
@@ -931,12 +923,12 @@ func (s *Service) postUploadReleaseFileHandler() service.Handler {
 			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
 		}
 
-		client, err := consumer.GetAuthorizedClient(ctx, accessToken, accessTokenSecret, created)
+		client, err := consumer.GetAuthorizedClient(ctx, vcsAuth)
 		if err != nil {
 			return sdk.WrapError(err, "Unable to get authorized client %s %s/%s", name, owner, repo)
 		}
 		// Check if access token has been refreshed
-		if accessToken != client.GetAccessToken(ctx) {
+		if vcsAuth.AccessToken != client.GetAccessToken(ctx) {
 			w.Header().Set(sdk.HeaderXAccessToken, client.GetAccessToken(ctx))
 		}
 
@@ -958,9 +950,9 @@ func (s *Service) getHookHandler() service.Handler {
 			return err
 		}
 
-		accessToken, accessTokenSecret, created, ok := getAccessTokens(ctx)
-		if !ok {
-			return sdk.WrapError(sdk.ErrUnauthorized, "Unable to get access token headers %s %s/%s", name, owner, repo)
+		vcsAuth, err := getAccessTokens(ctx)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
 		}
 
 		consumer, err := s.getConsumer(name)
@@ -968,12 +960,12 @@ func (s *Service) getHookHandler() service.Handler {
 			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
 		}
 
-		client, err := consumer.GetAuthorizedClient(ctx, accessToken, accessTokenSecret, created)
+		client, err := consumer.GetAuthorizedClient(ctx, vcsAuth)
 		if err != nil {
 			return sdk.WrapError(err, "Unable to get authorized client %s %s/%s", name, owner, repo)
 		}
 		// Check if access token has been refreshed
-		if accessToken != client.GetAccessToken(ctx) {
+		if vcsAuth.AccessToken != client.GetAccessToken(ctx) {
 			w.Header().Set(sdk.HeaderXAccessToken, client.GetAccessToken(ctx))
 		}
 
@@ -992,9 +984,9 @@ func (s *Service) putHookHandler() service.Handler {
 		owner := muxVar(r, "owner")
 		repo := muxVar(r, "repo")
 
-		accessToken, accessTokenSecret, created, ok := getAccessTokens(ctx)
-		if !ok {
-			return sdk.WrapError(sdk.ErrUnauthorized, "Unable to get access token headers %s %s/%s", name, owner, repo)
+		vcsAuth, err := getAccessTokens(ctx)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
 		}
 
 		consumer, err := s.getConsumer(name)
@@ -1002,12 +994,12 @@ func (s *Service) putHookHandler() service.Handler {
 			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
 		}
 
-		client, err := consumer.GetAuthorizedClient(ctx, accessToken, accessTokenSecret, created)
+		client, err := consumer.GetAuthorizedClient(ctx, vcsAuth)
 		if err != nil {
 			return sdk.WrapError(err, "Unable to get authorized client %s %s/%s", name, owner, repo)
 		}
 		// Check if access token has been refreshed
-		if accessToken != client.GetAccessToken(ctx) {
+		if vcsAuth.AccessToken != client.GetAccessToken(ctx) {
 			w.Header().Set(sdk.HeaderXAccessToken, client.GetAccessToken(ctx))
 		}
 
@@ -1029,9 +1021,9 @@ func (s *Service) postHookHandler() service.Handler {
 		owner := muxVar(r, "owner")
 		repo := muxVar(r, "repo")
 
-		accessToken, accessTokenSecret, created, ok := getAccessTokens(ctx)
-		if !ok {
-			return sdk.WrapError(sdk.ErrUnauthorized, "Unable to get access token headers %s %s/%s", name, owner, repo)
+		vcsAuth, err := getAccessTokens(ctx)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
 		}
 
 		consumer, err := s.getConsumer(name)
@@ -1039,12 +1031,12 @@ func (s *Service) postHookHandler() service.Handler {
 			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
 		}
 
-		client, err := consumer.GetAuthorizedClient(ctx, accessToken, accessTokenSecret, created)
+		client, err := consumer.GetAuthorizedClient(ctx, vcsAuth)
 		if err != nil {
 			return sdk.WrapError(err, "Unable to get authorized client %s %s/%s", name, owner, repo)
 		}
 		// Check if access token has been refreshed
-		if accessToken != client.GetAccessToken(ctx) {
+		if vcsAuth.AccessToken != client.GetAccessToken(ctx) {
 			w.Header().Set(sdk.HeaderXAccessToken, client.GetAccessToken(ctx))
 		}
 
@@ -1073,9 +1065,9 @@ func (s *Service) deleteHookHandler() service.Handler {
 
 		hookID := r.URL.Query().Get("id")
 
-		accessToken, accessTokenSecret, created, ok := getAccessTokens(ctx)
-		if !ok {
-			return sdk.WrapError(sdk.ErrUnauthorized, "VCS> deleteHookHandler> Unable to get access token headers %s %s/%s", name, owner, repo)
+		vcsAuth, err := getAccessTokens(ctx)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
 		}
 
 		consumer, err := s.getConsumer(name)
@@ -1083,12 +1075,12 @@ func (s *Service) deleteHookHandler() service.Handler {
 			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
 		}
 
-		client, err := consumer.GetAuthorizedClient(ctx, accessToken, accessTokenSecret, created)
+		client, err := consumer.GetAuthorizedClient(ctx, vcsAuth)
 		if err != nil {
 			return sdk.WrapError(err, "Unable to get authorized client %s %s/%s", name, owner, repo)
 		}
 		// Check if access token has been refreshed
-		if accessToken != client.GetAccessToken(ctx) {
+		if vcsAuth.AccessToken != client.GetAccessToken(ctx) {
 			w.Header().Set(sdk.HeaderXAccessToken, client.GetAccessToken(ctx))
 		}
 
@@ -1116,9 +1108,9 @@ func (s *Service) getListForks() service.Handler {
 		owner := muxVar(r, "owner")
 		repo := muxVar(r, "repo")
 
-		accessToken, accessTokenSecret, created, ok := getAccessTokens(ctx)
-		if !ok {
-			return sdk.WrapError(sdk.ErrUnauthorized, "VCS> getListForks> Unable to get access token headers %s %s/%s", name, owner, repo)
+		vcsAuth, err := getAccessTokens(ctx)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
 		}
 
 		consumer, err := s.getConsumer(name)
@@ -1126,12 +1118,12 @@ func (s *Service) getListForks() service.Handler {
 			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
 		}
 
-		client, err := consumer.GetAuthorizedClient(ctx, accessToken, accessTokenSecret, created)
+		client, err := consumer.GetAuthorizedClient(ctx, vcsAuth)
 		if err != nil {
 			return sdk.WrapError(err, "Unable to get authorized client %s %s/%s", name, owner, repo)
 		}
 		// Check if access token has been refreshed
-		if accessToken != client.GetAccessToken(ctx) {
+		if vcsAuth.AccessToken != client.GetAccessToken(ctx) {
 			w.Header().Set(sdk.HeaderXAccessToken, client.GetAccessToken(ctx))
 		}
 
@@ -1168,9 +1160,9 @@ func (s *Service) postRepoGrantHandler() service.Handler {
 		owner := muxVar(r, "owner")
 		repo := muxVar(r, "repo")
 
-		accessToken, accessTokenSecret, created, ok := getAccessTokens(ctx)
-		if !ok {
-			return sdk.WrapError(sdk.ErrUnauthorized, "VCS> postRepoGrantHandler> Unable to get access token headers %s %s/%s", name, owner, repo)
+		vcsAuth, err := getAccessTokens(ctx)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
 		}
 
 		consumer, err := s.getConsumer(name)
@@ -1178,12 +1170,12 @@ func (s *Service) postRepoGrantHandler() service.Handler {
 			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
 		}
 
-		client, err := consumer.GetAuthorizedClient(ctx, accessToken, accessTokenSecret, created)
+		client, err := consumer.GetAuthorizedClient(ctx, vcsAuth)
 		if err != nil {
 			return sdk.WrapError(err, "Unable to get authorized client %s %s/%s", name, owner, repo)
 		}
 		// Check if access token has been refreshed
-		if accessToken != client.GetAccessToken(ctx) {
+		if vcsAuth.AccessToken != client.GetAccessToken(ctx) {
 			w.Header().Set(sdk.HeaderXAccessToken, client.GetAccessToken(ctx))
 		}
 

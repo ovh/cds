@@ -21,12 +21,12 @@ func (g *gerritConsumer) AuthorizeToken(ctx context.Context, state, code string)
 }
 
 //GetAuthorized returns an authorized client
-func (g *gerritConsumer) GetAuthorizedClient(ctx context.Context, username, password string, _ int64) (sdk.VCSAuthorizedClient, error) {
+func (g *gerritConsumer) GetAuthorizedClient(ctx context.Context, vcsAuth sdk.VCSAuth) (sdk.VCSAuthorizedClient, error) {
 	client, err := ger.NewClient(g.URL, nil)
 	if err != nil {
 		return nil, sdk.WrapError(err, "unable to create gerrit client")
 	}
-	client.Authentication.SetBasicAuth(username, password)
+	client.Authentication.SetBasicAuth(vcsAuth.AccessToken, vcsAuth.AccessTokenSecret)
 
 	c := &gerritClient{
 		client:              client,
@@ -34,7 +34,7 @@ func (g *gerritConsumer) GetAuthorizedClient(ctx context.Context, username, pass
 		disableStatus:       g.disableStatus,
 		disableStatusDetail: g.disableStatusDetail,
 		sshPort:             g.sshPort,
-		username:            username,
+		username:            vcsAuth.AccessToken,
 		reviewerToken:       g.reviewerToken,
 		reviewerName:        g.reviewerName,
 	}

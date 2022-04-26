@@ -64,17 +64,12 @@ func (api *API) putVCSProjectHandler() ([]service.RbacChecker, service.Handler) 
 			}
 			defer tx.Rollback() // nolint
 
-			project, err := project.Load(ctx, tx, pKey)
-			if err != nil {
-				return sdk.WithStack(err)
-			}
-
 			var vcsProject sdk.VCSProject
 			if err := service.UnmarshalRequest(ctx, req, &vcsProject); err != nil {
 				return err
 			}
 
-			vcsOld, err := vcs.LoadVCSByProject(context.Background(), tx, project.ID, vcsName, gorpmapping.GetOptions.WithDecryption)
+			vcsOld, err := vcs.LoadVCSByProject(ctx, tx, pKey, vcsName, gorpmapping.GetOptions.WithDecryption)
 			if err != nil {
 				return err
 			}
@@ -113,7 +108,7 @@ func (api *API) deleteVCSProjectHandler() ([]service.RbacChecker, service.Handle
 				return sdk.WithStack(err)
 			}
 
-			vcsOld, err := vcs.LoadVCSByProject(context.Background(), tx, project.ID, vcsName, gorpmapping.GetOptions.WithDecryption)
+			vcsOld, err := vcs.LoadVCSByProject(context.Background(), tx, project.Key, vcsName, gorpmapping.GetOptions.WithDecryption)
 			if err != nil {
 				return err
 			}
@@ -159,12 +154,7 @@ func (api *API) getVCSProjectHandler() ([]service.RbacChecker, service.Handler) 
 			}
 			defer tx.Rollback() // nolint
 
-			project, err := project.Load(ctx, tx, pKey)
-			if err != nil {
-				return sdk.WithStack(err)
-			}
-
-			vcsProject, err := vcs.LoadVCSByProject(context.Background(), tx, project.ID, vcsProjectName, gorpmapping.GetOptions.WithDecryption)
+			vcsProject, err := vcs.LoadVCSByProject(context.Background(), tx, pKey, vcsProjectName, gorpmapping.GetOptions.WithDecryption)
 			if err != nil {
 				return err
 			}

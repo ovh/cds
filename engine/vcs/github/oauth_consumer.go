@@ -86,12 +86,13 @@ func (g *githubConsumer) AuthorizeToken(ctx context.Context, state, code string)
 var instancesAuthorizedClient = map[string]*githubClient{}
 
 //GetAuthorized returns an authorized client
-func (g *githubConsumer) GetAuthorizedClient(ctx context.Context, accessToken, accessTokenSecret string, _ int64) (sdk.VCSAuthorizedClient, error) {
-	c, ok := instancesAuthorizedClient[accessToken]
+func (g *githubConsumer) GetAuthorizedClient(ctx context.Context, vcsAuth sdk.VCSAuth) (sdk.VCSAuthorizedClient, error) {
+	token := vcsAuth.PersonalAccessTokens
+	c, ok := instancesAuthorizedClient[token]
 	if !ok {
 		c = &githubClient{
 			ClientID:            g.ClientID,
-			OAuthToken:          accessToken,
+			OAuthToken:          vcsAuth.AccessToken, // DEPRECATED
 			GitHubURL:           g.GitHubURL,
 			GitHubAPIURL:        g.GitHubAPIURL,
 			Cache:               g.Cache,
@@ -100,10 +101,11 @@ func (g *githubConsumer) GetAuthorizedClient(ctx context.Context, accessToken, a
 			DisableStatusDetail: g.disableStatusDetail,
 			apiURL:              g.apiURL,
 			proxyURL:            g.proxyURL,
-			username:            g.username,
-			token:               g.token,
+			username:            g.username, // used by a "cds user on github" to write comment on PR
+			token:               g.token,    // used by a "cds user on github" to write comment on PR
+			personalAccessToken: vcsAuth.PersonalAccessTokens,
 		}
-		instancesAuthorizedClient[accessToken] = c
+		instancesAuthorizedClient[token] = c
 	}
 	return c, c.RateLimit(ctx)
 }

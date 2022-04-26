@@ -12,8 +12,9 @@ const rootURL = "https://api.bitbucket.org/2.0"
 // bitbucketcloudClient is a https://bitbucket.org wrapper for CDS vcs. interface
 type bitbucketcloudClient struct {
 	ClientID            string
-	OAuthToken          string
-	RefreshToken        string
+	PersonalAccessToken string
+	OAuthToken          string // DEPRECATED
+	RefreshToken        string // DEPRECATED
 	DisableStatus       bool
 	DisableStatusDetail bool
 	Cache               cache.Store

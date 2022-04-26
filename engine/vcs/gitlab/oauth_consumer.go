@@ -122,20 +122,28 @@ func (g *gitlabConsumer) AuthorizeToken(ctx context.Context, state, code string)
 var instancesAuthorizedClient = map[string]*gitlabClient{}
 
 //GetAuthorized returns an authorized client
-func (g *gitlabConsumer) GetAuthorizedClient(ctx context.Context, accessToken, accessTokenSecret string, _created int64) (sdk.VCSAuthorizedClient, error) {
-	c, ok := instancesAuthorizedClient[accessToken]
+func (g *gitlabConsumer) GetAuthorizedClient(ctx context.Context, vcsAuth sdk.VCSAuth) (sdk.VCSAuthorizedClient, error) {
+	token := vcsAuth.PersonalAccessTokens
+
+	c, ok := instancesAuthorizedClient[token]
 	httpClient := &http.Client{
 		Timeout: 60 * time.Second,
 	}
 	if !ok {
+		var gclient *gitlab.Client
+		if vcsAuth.PersonalAccessTokens != "" {
+			gclient = gitlab.NewClient(httpClient, vcsAuth.PersonalAccessTokens)
+		} else {
+			gclient = gitlab.NewOAuthClient(httpClient, vcsAuth.AccessToken)
+		}
 		c = &gitlabClient{
-			client:              gitlab.NewOAuthClient(httpClient, accessToken),
+			client:              gclient,
 			uiURL:               g.uiURL,
 			disableStatus:       g.disableStatus,
 			disableStatusDetail: g.disableStatusDetail,
 		}
 		c.client.SetBaseURL(g.URL + "/api/v4")
-		instancesAuthorizedClient[accessToken] = c
+		instancesAuthorizedClient[token] = c
 	}
 	return c, nil
 }
