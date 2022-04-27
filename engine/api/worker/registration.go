@@ -110,6 +110,15 @@ func RegisterWorker(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store 
 				return nil, sdk.WrapError(sdk.ErrForbidden, "hatchery can't register job (id: %q) with model (path: %q) for a group that is not in job's exec groups", spawnArgs.JobID, model.Path())
 			}
 		}
+
+		// Check additional information based on the consumer if a region is set, allows to register only job with same region.
+		// TODO add another information on the consumer to allow job with a specific region requirement or no region (runNodeJob.Region == nil).
+		if hatcheryConsumer.ServiceRegion != nil && *hatcheryConsumer.ServiceRegion != "" {
+			canTakeJobWithRegion := runNodeJob.Region != nil && *runNodeJob.Region == *hatcheryConsumer.ServiceRegion
+			if !canTakeJobWithRegion {
+				return nil, sdk.WrapError(sdk.ErrForbidden, "hatchery can't register job with id %q for region %s", spawnArgs.JobID, *runNodeJob.Region)
+			}
+		}
 	}
 
 	// Instanciate a new worker
