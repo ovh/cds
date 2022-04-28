@@ -1,6 +1,7 @@
 package test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/rockbears/log"
@@ -26,7 +27,7 @@ func SetupPGWithFactory(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*test.F
 	db, factory, cache, cancel := test.SetupPGToCancel(t, gorpmapping.Mapper, sdk.TypeAPI, bootstrapFunc...)
 	t.Cleanup(cancel)
 
-	err := authentication.Init("cds-api-test", test.SigningKey)
+	err := authentication.Init(context.TODO(), "cds-api-test", []authentication.KeyConfig{{Key: string(test.SigningKey)}})
 	require.NoError(t, err, "unable to init authentication layer")
 
 	return db, factory, cache

@@ -186,7 +186,7 @@ func ProcessNotificationValues(notif NotificationEntry) (sdk.WorkflowNotificatio
 	return n, nil
 }
 
-func (w *Workflow) processNotifications(wrkflw *sdk.Workflow) error {
+func (w *Workflow) processNotifications(ctx context.Context, wrkflw *sdk.Workflow) error {
 	for _, notif := range w.Notifications {
 		if notif.Type == sdk.EventsNotification {
 			if notif.Integration == "" {
@@ -199,7 +199,8 @@ func (w *Workflow) processNotifications(wrkflw *sdk.Workflow) error {
 		}
 		n, err := ProcessNotificationValues(notif)
 		if err != nil {
-			return sdk.WrapError(err, "unable to process notification")
+			log.Error(ctx, "unable to process notification err:", err)
+			continue
 		}
 		n.SourceNodeRefs = notif.Pipelines
 		wrkflw.Notifications = append(wrkflw.Notifications, n)

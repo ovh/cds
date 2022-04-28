@@ -1,9 +1,10 @@
 package v1_test
 
 import (
-	v1 "github.com/ovh/cds/sdk/exportentities/v1"
 	"reflect"
 	"testing"
+
+	v1 "github.com/ovh/cds/sdk/exportentities/v1"
 
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
@@ -48,7 +49,7 @@ metadata:
   default_tags: git.branch,git.author
 notifications:
   DDOS-me,DDOS-me_2:
-  - type: jabber
+  - type: email
     settings:
       on_success: always
       on_failure: change

@@ -72,12 +72,8 @@ func processEvent(ctx context.Context, db gorpmapper.SqlExecutorWithTx, event sd
 	if eventWNR.RepositoryManagerName == "" {
 		return nil
 	}
-	vcsServer, err := LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, event.ProjectKey, eventWNR.RepositoryManagerName)
-	if err != nil {
-		return sdk.WrapError(err, "AuthorizedClient (%s, %s)", event.ProjectKey, eventWNR.RepositoryManagerName)
-	}
 
-	c, err := AuthorizedClient(ctx, db, store, event.ProjectKey, vcsServer)
+	c, err := AuthorizedClient(ctx, db, store, event.ProjectKey, eventWNR.RepositoryManagerName)
 	if err != nil {
 		return sdk.WrapError(err, "AuthorizedClient (%s, %s)", event.ProjectKey, eventWNR.RepositoryManagerName)
 	}

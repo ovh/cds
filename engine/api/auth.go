@@ -275,7 +275,11 @@ func (api *API) postAuthSigninHandler() service.Handler {
 		sessionDuration := driver.GetSessionDuration()
 		var session *sdk.AuthSession
 		if userInfo.MFA {
+			trackSudo(ctx, w)
 			session, err = authentication.NewSessionWithMFA(ctx, tx, api.Cache, consumer, sessionDuration)
+			if err == nil {
+				log.Info(ctx, "starting new session %s with MFA for consumer %s", session.ID, consumer.ID)
+			}
 		} else {
 			session, err = authentication.NewSession(ctx, tx, consumer, sessionDuration)
 		}

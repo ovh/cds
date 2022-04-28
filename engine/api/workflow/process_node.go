@@ -9,7 +9,6 @@ import (
 
 	"github.com/rockbears/log"
 
-	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
@@ -240,17 +239,12 @@ func processNode(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cac
 	var vcsInf *vcsInfos
 	var errVcs error
 	if needVCSInfo && app.VCSServer != "" {
-		vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, proj.Key, app.VCSServer)
-		if err != nil {
-			return nil, false, sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "cannot get client %s %s got: %v", proj.Key, app.VCSServer, err)
-		}
-
 		// We can't have both git.branch and git.tag values
 		if currentJobGitValues["git.branch"] != "" && currentJobGitValues["git.tag"] != "" {
 			return nil, false, sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("invalid git variables"))
 		}
 
-		vcsInf, errVcs = getVCSInfos(ctx, db, store, proj.Key, vcsServer, currentJobGitValues, app.Name, app.VCSServer, app.RepositoryFullname)
+		vcsInf, errVcs = getVCSInfos(ctx, db, store, proj.Key, currentJobGitValues, app.Name, app.VCSServer, app.RepositoryFullname)
 		if errVcs != nil {
 			AddWorkflowRunInfo(wr, sdk.SpawnMsgNew(*sdk.MsgWorkflowError, sdk.ExtractHTTPError(errVcs)))
 			return nil, false, sdk.WrapError(errVcs, "unable to get git informations")

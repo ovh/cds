@@ -129,7 +129,7 @@ import { NzIconModule } from 'ng-zorro-antd/icon';
 import { IconDefinition } from '@ant-design/icons-angular';
 import { BellFill, CaretUpFill, CheckOutline, KeyOutline, HistoryOutline, PhoneFill, PlusSquareOutline, QuestionOutline, RestOutline, SaveOutline, SettingFill, ShareAltOutline, StarOutline, ToolFill, UnlockFill } from '@ant-design/icons-angular/icons'
 import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
-import {NzTagModule} from 'ng-zorro-antd/tag';
+import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzPopoverModule } from 'ng-zorro-antd/popover';
 import { NzBadgeModule } from 'ng-zorro-antd/badge';
 import { NzTabsModule } from 'ng-zorro-antd/tabs';

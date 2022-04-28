@@ -26,11 +26,7 @@ func pushOperation(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store c
 		ope.RepositoryStrategy.SSHKeyContent = key.Private
 	}
 
-	vcsServer, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, proj.Key, ope.VCSServer)
-	if err != nil {
-		return nil, err
-	}
-	client, err := repositoriesmanager.AuthorizedClient(ctx, db, store, proj.Key, vcsServer)
+	client, err := repositoriesmanager.AuthorizedClient(ctx, db, store, proj.Key, ope.VCSServer)
 	if err != nil {
 		return nil, err
 	}

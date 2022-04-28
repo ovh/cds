@@ -29,7 +29,7 @@
                     [readonly]="true">
             </div>
         </div>
-        <ng-container *ngIf="notification.type === 'jabber' || notification.type === 'email'">
+        <ng-container *ngIf="notification.type === 'email'">
             <div class="three fields">
                 <div class="six wide field">
                     <label>{{ 'workflow_notification_on_success' | translate}}</label>
@@ -64,8 +64,6 @@
             </div>
             <div class="three fields">
                 <div class="eight wide field">
-                    <label
-                        *ngIf="notification.type === 'jabber'">{{ 'workflow_notification_jabber_user' | translate}}</label>
                     <label
                         *ngIf="notification.type === 'email'">{{ 'workflow_notification_email_user' | translate}}</label>
                     <input type="text" name="users" [(ngModel)]="selectedUsers" [readonly]="readOnly">

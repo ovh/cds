@@ -65,12 +65,7 @@ func (api *API) releaseApplicationWorkflowHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		rm, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, api.mustDB(), key, app.VCSServer)
-		if err != nil {
-			return sdk.NewErrorWithStack(err, sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "cannot get client %s %s", key, app.VCSServer))
-		}
-
-		client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, proj.Key, rm)
+		client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, proj.Key, app.VCSServer)
 		if err != nil {
 			return sdk.WrapError(err, "cannot get client got %s %s", key, app.VCSServer)
 		}

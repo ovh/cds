@@ -52,7 +52,7 @@ workflow:
 metadata:
   default_tags: git.branch,git.author
 notifications:
-- type: jabber
+- type: email
   pipelines:
   - DDOS-me
   - DDOS-me_2
@@ -158,7 +158,7 @@ workflow:
     - success
     pipeline: test
 notifications:
-- type: jabber
+- type: email
   pipelines:
   - test
   - test_2
@@ -198,7 +198,7 @@ notifications:
         Details : {{.cds.buildURL}}
         Triggered by : {{.cds.triggered_by.username}}
         Branch : {{.git.branch}}
-- type: jabber
+- type: email
   pipelines:
   - test
   - test_2
@@ -231,7 +231,7 @@ workflow:
     - success
     pipeline: test
 notifications:
-- type: jabber
+- type: email
 - type: event
   integration: my-integration
 `,
@@ -250,7 +250,7 @@ notifications:
 				t.Error("Unmarshal should return an error but it doesn't")
 				return
 			}
-			w, err := exportentities.ParseWorkflow(yamlWorkflow)
+			w, err := exportentities.ParseWorkflow(context.TODO(), yamlWorkflow)
 			if err != nil {
 				if !tst.wantErr {
 					t.Error("GetWorkflow raised an error", err)

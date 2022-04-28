@@ -850,7 +850,6 @@
   "workflow_notification_body": "Message",
   "workflow_notification_to_group": "Send to group",
   "workflow_notification_to_initiator": "Send to initiator",
-  "workflow_notification_jabber_user": "Jabber users",
   "workflow_notification_email_user": "Mails",
   "workflow_notification_form": "Add a notification",
   "workflow_notification_copy": "Copy",

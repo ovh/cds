@@ -71,12 +71,12 @@ func UnmarshalWorkflow(body []byte, format Format) (Workflow, error) {
 	return nil, sdk.WrapError(sdk.ErrWrongRequest, "invalid workflow version: %s", workflowVersion.Version)
 }
 
-func ParseWorkflow(exportWorkflow Workflow) (*sdk.Workflow, error) {
+func ParseWorkflow(ctx context.Context, exportWorkflow Workflow) (*sdk.Workflow, error) {
 	switch exportWorkflow.GetVersion() {
 	case WorkflowVersion2:
 		workflowV2, ok := exportWorkflow.(v2.Workflow)
 		if ok {
-			return workflowV2.GetWorkflow()
+			return workflowV2.GetWorkflow(ctx)
 		}
 	case WorkflowVersion1:
 		workflowV1, ok := exportWorkflow.(v1.Workflow)

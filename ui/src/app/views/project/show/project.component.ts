@@ -64,6 +64,8 @@ export class ProjectShowComponent implements OnInit, OnDestroy, AfterViewInit {
                 this.project = proj;
                 this._projectStore.updateRecentProject(this.project);
 
+                this.initTabs();
+
                 if (this.project.integrations) {
                     this.project.integrations.forEach(integ => {
                         if (!integ.model.default_config) {
@@ -96,49 +98,7 @@ export class ProjectShowComponent implements OnInit, OnDestroy, AfterViewInit {
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit() {
-        this.tabs = [<Tab>{
-            title: 'Workflows',
-            icon: 'share alternate',
-            key: 'workflows',
-            default: true,
-        }, <Tab>{
-            title: 'Applications',
-            icon: 'rocket',
-            key: 'applications'
-        }, <Tab>{
-            title: 'Pipelines',
-            icon: 'sitemap',
-            key: 'pipelines'
-        }, <Tab>{
-            title: 'Environments',
-            icon: 'tree',
-            key: 'environments'
-        }, <Tab>{
-            title: 'Variables',
-            icon: 'font',
-            key: 'variables'
-        }, <Tab>{
-            key: 'permissions',
-        }, <Tab>{
-            title: 'Keys',
-            icon: 'privacy',
-            key: 'keys'
-        }, <Tab>{
-            title: 'Integrations',
-            icon: 'plug',
-            key: 'integrations'
-        }, <Tab>{
-            title: 'Warnings',
-            icon: 'bug',
-            key: 'warnings'
-        }]
-        if (this.project?.permissions?.writable) {
-            this.tabs.push(<Tab>{
-                title: 'Advanced',
-                icon: 'graduation',
-                key: 'advanced'
-            })
-        }
+        this.initTabs();
         this._route.queryParams.subscribe((queryParams) => {
             if (queryParams['tab']) {
                 let current_tab = this.tabs.find((tab) => tab.key === queryParams['tab']);
@@ -166,6 +126,54 @@ export class ProjectShowComponent implements OnInit, OnDestroy, AfterViewInit {
             this.workflowNum = this._route.snapshot.queryParams['run'];
             this.workflowNodeRun = this._route.snapshot.queryParams['node'];
             this.workflowPipeline = this._route.snapshot.queryParams['wpipeline'];
+        }
+    }
+
+    initTabs(): void {
+        this.tabs = [<Tab>{
+            title: 'Workflows',
+            icon: 'share alternate',
+            key: 'workflows',
+            default: true,
+        }, <Tab>{
+            title: 'Applications',
+            icon: 'rocket',
+            key: 'applications'
+        }, <Tab>{
+            title: 'Pipelines',
+            icon: 'sitemap',
+            key: 'pipelines'
+        }, <Tab>{
+            title: 'Environments',
+            icon: 'tree',
+            key: 'environments'
+        }, <Tab>{
+            title: 'Variables',
+            icon: 'font',
+            key: 'variables'
+        }, <Tab>{
+            title: 'Permissions',
+            key: 'permissions',
+            icon: 'users',
+        }, <Tab>{
+            title: 'Keys',
+            icon: 'privacy',
+            key: 'keys'
+        }, <Tab>{
+            title: 'Integrations',
+            icon: 'plug',
+            key: 'integrations'
+        }, <Tab>{
+            title: 'Warnings',
+            icon: 'bug',
+            key: 'warnings'
+        }]
+        if (this.project?.permissions?.writable) {
+            this.tabs.push(<Tab>{
+                title: 'Advanced',
+                icon: 'graduation',
+                key: 'advanced'
+            })
         }
     }
 
