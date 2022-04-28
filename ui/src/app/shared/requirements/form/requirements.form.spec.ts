@@ -11,6 +11,7 @@ import {SharedModule} from '../../shared.module';
 import {RequirementService} from '../../../service/requirement/requirement.service';
 import {RequirementStore} from '../../../service/requirement/requirement.store';
 import {RequirementsFormComponent} from './requirements.form.component';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 describe('CDS: Requirement Form Component', () => {
 
@@ -30,6 +31,7 @@ describe('CDS: Requirement Form Component', () => {
                 SharedModule,
                 TranslateModule.forRoot(),
                 RouterTestingModule.withRoutes([]),
+                BrowserAnimationsModule,
                 HttpClientTestingModule
             ]
         }).compileComponents();
