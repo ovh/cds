@@ -1,314 +1,349 @@
-<div class="ui inverted menu navbar">
-    <a href="#" [routerLink]="['/']"><img src="assets/images/cds.png" class="item"
-            title="{{'navbar_home' | translate}}" /></a>
+<nz-header id="navbar">
+    <a href="#" [routerLink]="['/']">
+        <img src="assets/images/cds.png" class="item" alt="CDS logo"
+            title="{{'navbar_home' | translate}}" />
+    </a>
     <ng-container *ngIf="currentAuthSummary">
-        <a class="item link" href="#" [routerLink]="['project', 'list', 'all']">
+        <a nz-button nzType="link" class="item link" href="#" [routerLink]="['project', 'list', 'all']">
             {{ 'navbar_projects' | translate }}
         </a>
-        <div class="ui pointing dropdown link item" suiDropdown>
-            <div class="text">{{'navbar_favorites' | translate}}</div>
-            <i class="dropdown icon"></i>
-            <div class="menu" suiDropdownMenu>
-                <ng-container *ngIf="loading">
-                    <div class="item">{{'common_loading' | translate}}</div>
-                </ng-container>
+
+        <button nz-dropdown [nzDropdownMenu]="bookmarks" nzTrigger="click" nz-button nzType="text" [nzClickHide]="true" class="dropdown title">
+            Bookmarks <i nz-icon nzType="caret-down" nzTheme="fill"></i>
+        </button>
+        <nz-dropdown-menu #bookmarks="nzDropdownMenu">
+            <ul nz-menu class="bookmark">
                 <ng-container *ngFor="let prj of listFavs">
                     <ng-container [ngSwitch]="prj.type">
                         <ng-container *ngSwitchCase="'workflow'">
-                            <a class="item" sm-item href="#"
-                                [routerLink]="['project', prj.key, 'workflow', prj.workflow_name]">
-                                <div class="details">
-                                    <div class="title bold">
-                                        {{prj.workflow_name}}
+                            <li nz-menu-item>
+                                <a class="item" href="#"
+                                   [routerLink]="['project', prj.key, 'workflow', prj.workflow_name]">
+                                    <div class="details">
+                                        <div class="title">
+                                            {{prj.workflow_name}}
+                                        </div>
                                     </div>
                                     <div class="info mt">
                                         {{'navbar_workflow_in' | translate}} {{prj.key}}
                                     </div>
-                                </div>
-                            </a>
+                                </a>
+                            </li>
                         </ng-container>
                         <ng-container *ngSwitchCase="'application'">
-                            <a class="item" sm-item href="#"
-                                [routerLink]="['project', prj.key, 'application', prj.application_name]">
-                                <div class="details">
-                                    <div class="title bold">
-                                        {{prj.application_name}}}
+                            <li nz-menu-item>
+                                <a class="item" href="#"
+                                   [routerLink]="['project', prj.key, 'application', prj.application_name]">
+                                    <div class="details">
+                                        <div class="title">
+                                            {{prj.application_name}}}
+                                        </div>
+                                        <div class="info mt">
+                                            {{'navbar_application_in' | translate}} {{prj.key}}
+                                        </div>
                                     </div>
-                                    <div class="info mt">
-                                        {{'navbar_application_in' | translate}} {{prj.key}}
-                                    </div>
-                                </div>
-                            </a>
+                                </a>
+                            </li>
                         </ng-container>
                         <ng-container *ngSwitchDefault>
-                            <a class="item" sm-item href="#" [routerLink]="['project', prj.key]">
-                                <div class="details">
-                                    <div class="title bold">
-                                        {{prj.name}}
+                            <li nz-menu-item>
+                                <a class="item" href="#" [routerLink]="['project', prj.key]">
+                                    <div class="details">
+                                        <div class="title">
+                                            {{prj.name}}
+                                        </div>
+                                        <div class="info mt">
+                                            {{'common_project' | translate}}
+                                        </div>
                                     </div>
-                                    <div class="info mt">
-                                        {{'common_project' | translate}}
-                                    </div>
-                                </div>
-                            </a>
+                                </a>
+                            </li>
                         </ng-container>
                     </ng-container>
                 </ng-container>
-                <a class="item" sm-item href="#" [routerLink]="['favorite']">
-                    {{'common_favorites_all' | translate}}
-                </a>
-            </div>
-        </div>
+                <li nz-menu-item>
+                    <a class="item" href="#" [routerLink]="['favorite']">
+                        {{'common_favorites_all' | translate}}
+                    </a>
+                </li>
+            </ul>
+        </nz-dropdown-menu>
+
     </ng-container>
     <a class="item link" href="#" [routerLink]="['/project']" *ngIf="currentAuthSummary">
         {{ 'navbar_project_create' | translate }}
     </a>
     <div class="right menu details">
+
+        <!-- RING -->
         <div class="ring" *ngIf="currentAuthSummary">
-            <div *ngIf="currentAuthSummary.isMaintainer() && currentAuthSummary.user.ring !== 'ADMIN'"
-                class="ui orange horizontal label">Maintainer</div>
-            <div *ngIf="currentAuthSummary.user.ring === 'ADMIN' && !currentAuthSummary.isAdmin()"
-                class="ui label orange">
+            <nz-tag *ngIf="currentAuthSummary.isMaintainer() && currentAuthSummary.user.ring !== 'ADMIN'"
+                nzColor="orange">Maintainer</nz-tag>
+            <nz-tag *ngIf="currentAuthSummary.user.ring === 'ADMIN' && !currentAuthSummary.isAdmin()"
+                    nzColor="orange">
                 Maintainer
-                <a class="detail" (click)="mfaLogin()" title="Elevate to admin"><i class="key icon"></i></a>
-            </div>
-            <div *ngIf="currentAuthSummary.isAdmin()" class="ui red horizontal label">Admin</div>
+                <a class="detail" (click)="mfaLogin()" title="Elevate to admin"><i nz-icon nzType="unlock" nzTheme="fill"></i></a>
+            </nz-tag>
+            <nz-tag *ngIf="currentAuthSummary.isAdmin()" nzColor="red">Admin</nz-tag>
         </div>
 
-        <div class="ui search" suiPopup popupPlacement="bottom" [popupTemplate]="popupSearchTemplate"
-            popupTrigger="outsideClick" #popup="suiPopup">
-            <div class="ui icon input">
-                <input class="prompt" type="text" placeholder="{{'navbar_search' | translate}}"
-                    [(ngModel)]="searchValue" (blur)="search()" (click)="search()" (keyup)="search()">
-                <i class="search icon"></i>
-            </div>
+        <!-- SEARCH AREA -->
+        <div class="search">
+            <nz-input-group [nzSuffix]="suffixIconSearch" nz-popover [nzPopoverContent]="popupSearchTemplate"
+                            nzPopoverPlacement="bottom" nzPopoverTrigger="click">
+                <input type="text" nz-input placeholder="Search..."
+                       [(ngModel)]="searchValue" (blur)="search()" (click)="search()" (keyup)="search()" />
+            </nz-input-group>
+            <ng-template #suffixIconSearch>
+                <i nz-icon nzType="search"></i>
+            </ng-template>
         </div>
-
-        <ng-template let-popup #popupSearchTemplate>
+        <ng-template #popupSearchTemplate>
             <div class="content searchpopup">
-                <div class="ui right floated" suiPopup popupPlacement="left"
-                    [popupText]="'navbar_search_help_details' | translate"><i class="help icon"></i>
-                    {{ 'navbar_search_help' | translate }}
+                <div nz-row class="header">
+                    <div nz-col nzSpan="12">
+                        <div *ngIf="containsResult && isSearch">
+                            <i nz-icon nzType="search"></i> {{'navbar_results' | translate}}
+                        </div>
+                        <div *ngIf="containsResult && !isSearch">
+                            <i nz-icon nzType="history" nzTheme="outline"></i>Seen recently
+                        </div>
+                        <div *ngIf="!containsResult">
+                            <i nz-icon nzType="search"></i>{{'navbar_no_result' | translate}}
+                        </div>
+                    </div>
+                    <div nz-col nzSpan="12">
+                        <div nz-tooltip nzTooltipPlacement="left" class="right"
+                             [nzTooltipTitle]="'navbar_search_help_details' | translate">
+                            <i nz-icon nzType="question-circle" nzTheme="outline"></i>
+                            {{ 'navbar_search_help' | translate }}
+                        </div>
+                    </div>
                 </div>
 
-                <div *ngIf="containsResult && isSearch">
-                    <div class="ui left"><i class="search icon"></i> {{'navbar_results' | translate}}</div>
-                </div>
-                <div *ngIf="containsResult && !isSearch">
-                    <div class="ui left"><i class="history icon"></i>{{'navbar_seen_recently' | translate}}</div>
-                </div>
-                <div *ngIf="!containsResult">
-                    <div class="ui center"><i class="search icon"></i>{{'navbar_no_result' | translate}}</div>
-                </div>
-                <div class="ui internally celled grid" *ngIf="containsResult">
-                    <div class="eight wide column">
-                        <div class="ui secondary pointing menu">
-                            <div class="ui relaxed divided list">
-                                <div class="item">
-                                    <div class="content">
-                                        {{ 'common_projects' | translate }}
-                                    </div>
-                                </div>
-                            </div>
+                <div nz-row *ngIf="containsResult">
+                    <div nz-col nzSpan="12" class="borderRight">
+                        <div class="title">
+                            <div class="content">Projects</div>
                         </div>
-                        <div class="ui secondary pointing menu" *ngIf="!searchProjects || searchProjects.length <= 0">
-                            <div class="ui relaxed divided list">
-                                <div class="item">
-                                    <div class="content">
-                                        {{ 'navbar_no_project' | translate}}
-                                    </div>
-                                </div>
-                            </div>
+                        <div class="item" *ngIf="!searchProjects || searchProjects.length <= 0">
+                            <div class="content">No project</div>
                         </div>
-                        <div class="ui secondary pointing menu" *ngFor="let el of searchProjects">
-                            <div class="ui relaxed divided list">
-                                <div class="item">
-                                    <i class="pointing star icon favorite" *ngIf="el.favorite"></i>
-                                    <div class="content">
-                                        <a class="header" (click)="$event.stopPropagation()"
-                                            [routerLink]="['/project', el.projectKey]"
-                                            title="{{ 'common_project_title' | translate }}{{el.title}}">
-                                            {{el.title}}
-                                        </a>
-                                    </div>
-                                </div>
+                        <div class="item" *ngFor="let el of searchProjects">
+                            <i nz-icon nzType="star" nzTheme="outline" *ngIf="el.favorite"></i>
+                            <div class="content">
+                                <a class="header" (click)="$event.stopPropagation()"
+                                   [routerLink]="['/project', el.projectKey]"
+                                   title="{{ 'common_project_title' | translate }}{{el.title}}">
+                                    {{el.title}}
+                                </a>
                             </div>
                         </div>
                     </div>
+                    <div nz-col nzSpan="12">
+                        <div nz-col nzSpan="12">
+                            <div class="title">
+                                <div class="content">Workflows</div>
+                            </div>
+                        </div>
+                        <div class="item" *ngIf="!searchWorkflows || searchWorkflows.length <= 0">
+                            <div class="content">No workflow</div>
+                        </div>
+                        <div class="item" *ngFor="let el of searchWorkflows">
+                            <i nz-icon nzType="star" nzTheme="outline" *ngIf="el.favorite"></i>
+                            <div class="content">
+                                <a class="header" (click)="$event.stopPropagation()"
+                                   [routerLink]="['/project', el.projectKey, 'workflow', el.title]"
+                                   title="{{ 'common_workflow_title' | translate }}{{el.title}}">
+                                    {{el.title}}
+                                </a>
+                                <div class="description">{{'navbar_in_project' | translate}}
+                                    <a (click)="$event.stopPropagation()"
+                                       [routerLink]="['/project', el.projectKey]"
+                                       title="{{ 'common_project_title' | translate }}{{el.title}}">
+                                        {{el.projectKey}}
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
 
-                    <div class="eight wide column">
-                        <div class="ui secondary pointing menu">
-                            <div class="ui relaxed divided list">
-                                <div class="item">
-                                    <div class="content">
-                                        Workflows
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="ui secondary pointing menu" *ngIf="!searchWorkflows || searchWorkflows.length <= 0">
-                            <div class="ui relaxed divided list">
-                                <div class="item">
-                                    <div class="content">
-                                        {{ 'navbar_no_workflow' | translate}}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="ui secondary pointing menu" *ngFor="let el of searchWorkflows">
-                            <div class="ui relaxed divided list">
-                                <div class="item">
-                                    <i class="pointing star icon favorite" *ngIf="el.favorite"></i>
-                                    <div class="content">
-                                        <a class="header" (click)="$event.stopPropagation()"
-                                            [routerLink]="['/project', el.projectKey, 'workflow', el.title]"
-                                            title="{{ 'common_workflow_title' | translate }}{{el.title}}">
-                                            {{el.title}}
-                                        </a>
-                                        <div class="description">{{'navbar_in_project' | translate}}
-                                            <a (click)="$event.stopPropagation()"
-                                                [routerLink]="['/project', el.projectKey]"
-                                                title="{{ 'common_project_title' | translate }}{{el.title}}">
-                                                {{el.projectKey}}
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
         </ng-template>
 
-        <button class="ui icon button link item notification" suiPopup popupPlacement="bottom right"
-            [popupTemplate]="popupTemplateBroadcasts" popupTrigger="outsideClick" #popup="suiPopup">
+        <!-- NOTIFICATION -->
+        <div nz-popover [nzPopoverContent]="popupTemplateBroadcasts" [nzPopoverVisible]="showNotif"
+            nzPopoverPlacement="bottomRight" class="icon popover">
             <div>
-                <i class="bell icon" [ngClass]="{'animated bounceIn': broadcasts && broadcasts.length > 0}"></i>
-                <div class="ui floating red circular label animated bounceIn"
-                    *ngIf="broadcasts && broadcasts.length > 0">{{broadcasts.length}}</div>
+                <i nz-icon nzType="bell" nzTheme="fill"></i>
             </div>
-        </button>
-        <ng-template let-popup #popupTemplateBroadcasts>
+            <nz-badge *ngIf="broadcasts && broadcasts.length > 0" [nzCount]="broadcasts.length" nzStandalone [nzOffset]="[5,10]"></nz-badge>
+        </div>
+        <ng-template #popupTemplateBroadcasts>
             <div class="content notifpopup">
-                <div class="ui secondary pointing menu">
-                    <a class="item" [class.active]="recentView" (click)="recentView = true">
-                        {{'broadcast_recent' | translate}}
-                    </a>
-                    <a class="item" [class.active]="!recentView" (click)="recentView = false">
-                        {{'broadcast_seen' | translate}}
-                    </a>
-                </div>
-                <div *ngIf="recentView" class="notification mt5">
-                    <div class="ui relaxed divided list"
-                        *ngIf="recentBroadcastsToDisplay && recentBroadcastsToDisplay.length > 0">
-                        <div class="item" *ngFor="let broadcast of recentBroadcastsToDisplay">
-                            <div class="notif">
-                                <span class="right floated pointing">
-                                    <i class="check icon" suiPopup [popupText]="'navbar_mark_read' | translate"
-                                        [popupInverted]="true" popupPlacement="bottom center"
-                                        (click)="markAsRead($event, broadcast.id)"></i>
-                                </span>
-                                <a class="title bold" (click)="popup.close()" [routerLink]="['broadcast', broadcast.id]"
-                                    [class.blue]="broadcast.level === 'info'"
-                                    [class.orange]="broadcast.level === 'warning'">
-                                    {{broadcast.title}}
-                                </a>
-                                <a class="info mt" [routerLink]="['broadcast', broadcast.id]" (click)="popup.close()">
+                <nz-tabset [nzAnimated]="false">
+                    <nz-tab nzTitle="Recent">
+                        <nz-list *ngIf="recentBroadcastsToDisplay && recentBroadcastsToDisplay.length > 0">
+                            <nz-list-item *ngFor="let broadcast of recentBroadcastsToDisplay">
+                                <div class="notif">
+                                    <span class="right floated pointing">
+                                        <i nz-icon nzType="check" nzTheme="outline" nz-popover nzPopoverContent="Mark as read"
+                                            nzPopoverPlacement="bottom" (click)="markAsRead($event, broadcast.id)"
+                                        ></i>
+                                    </span>
+                                    <a class="title" (click)="showNotif = false" [routerLink]="['broadcast', broadcast.id]"
+                                       [class.blue]="broadcast.level === 'info'"
+                                       [class.orange]="broadcast.level === 'warning'">
+                                        {{broadcast.title}}
+                                    </a>
+                                    <a class="info mt" [routerLink]="['broadcast', broadcast.id]" (click)="showNotif = false">
                                     <span *ngIf="broadcast.project_key">
                                         {{'common_project' | translate}} {{broadcast.project_key}}
                                     </span>
-                                    <span *ngIf="!broadcast.project_key">
+                                        <span *ngIf="!broadcast.project_key">
                                         {{'navbar_general' | translate}}
                                     </span>
-                                    <span class="right floated">
+                                        <span class="right floated">
                                         {{broadcast.updated | amTimeAgo}}
                                     </span>
+                                    </a>
+                                </div>
+                            </nz-list-item>
+                            <nz-list-item>
+                                <a class="item" *ngIf="broadcasts.length > 4" [routerLink]="['broadcast']"
+                                   (click)="showNotif = false">
+                                    {{'navbar_see_all' | translate}}
                                 </a>
-                            </div>
+                            </nz-list-item>
+                        </nz-list>
+                        <div *ngIf="!recentBroadcastsToDisplay || recentBroadcastsToDisplay.length === 0">
+                            {{'broadcast_none' | translate}}
                         </div>
-                        <a class="item" *ngIf="broadcasts.length > 4" [routerLink]="['broadcast']"
-                            (click)="popup.close()">
-                            {{'navbar_see_all' | translate}}
-                        </a>
-                    </div>
-                    <div *ngIf="!recentBroadcastsToDisplay || recentBroadcastsToDisplay.length === 0">
-                        {{'broadcast_none' | translate}}
-                    </div>
-                </div>
-                <div *ngIf="!recentView">
-                    <div class="ui relaxed divided list"
-                        *ngIf="previousBroadcastsToDisplay && previousBroadcastsToDisplay.length > 0">
-                        <a class="item" *ngFor="let broadcast of previousBroadcastsToDisplay"
-                            [routerLink]="['broadcast', broadcast.id]" (click)="popup.close()">
-                            <div class="notif">
-                                <div class="title bold" [class.blue]="broadcast.level === 'info'"
-                                    [class.orange]="broadcast.level === 'warning'">
-                                    {{broadcast.title}}
-                                </div>
-                                <div class="info mt">
+                    </nz-tab>
+                    <nz-tab nzTitle="Seen">
+                        <nz-list *ngIf="previousBroadcastsToDisplay && previousBroadcastsToDisplay.length > 0">
+                            <nz-list-item *ngFor="let broadcast of previousBroadcastsToDisplay">
+                                <a class="item"
+                                   [routerLink]="['broadcast', broadcast.id]" (click)="showNotif = false">
+                                <div class="notif">
+                                    <div class="title" [class.blue]="broadcast.level === 'info'"
+                                         [class.orange]="broadcast.level === 'warning'">
+                                        {{broadcast.title}}
+                                    </div>
+                                    <div class="info mt">
                                     <span *ngIf="broadcast.project_key">
                                         {{'common_project' | translate}} {{broadcast.project_key}}
                                     </span>
-                                    <span *ngIf="!broadcast.project_key">
+                                        <span *ngIf="!broadcast.project_key">
                                         {{'navbar_general' | translate}}
                                     </span>
-                                    <span class="right floated">
+                                        <span class="right floated">
                                         {{broadcast.updated | amTimeAgo}}
                                     </span>
+                                    </div>
                                 </div>
-                            </div>
-                        </a>
-                        <a class="item" [routerLink]="['broadcast']" (click)="popup.close()">
-                            {{'navbar_see_all' | translate}}
-                        </a>
-                    </div>
-                </div>
+                                </a>
+                            </nz-list-item>
+                            <nz-list-item>
+                                <a class="item" [routerLink]="['broadcast']" (click)="showNotif = false">
+                                    {{'navbar_see_all' | translate}}
+                                </a>
+                            </nz-list-item>
+                        </nz-list>
+                    </nz-tab>
+                </nz-tabset>
+
             </div>
         </ng-template>
 
-        <button *ngIf="help?.content?.length > 0" class="ui icon button link item" suiPopup
-            popupPlacement="bottom right" [popupTemplate]="popupTemplateHelp" popupTrigger="outsideClick"
-            #popup="suiPopup">
-            <div>
-                <i class="phone icon"></i>
+        <!-- HELP -->
+        <ng-container *ngIf="help?.content?.length > 0">
+            <div nz-popover [nzPopoverContent]="popupTemplateHelp" class="icon popover">
+                <i nz-icon nzType="phone" nzTheme="fill"></i>
             </div>
-        </button>
-        <ng-template let-popup #popupTemplateHelp>
+        </ng-container>
+        <ng-template #popupTemplateHelp>
             <div class="content helppopup">
                 <markdown [data]="help.content"></markdown>
             </div>
         </ng-template>
 
-        <sm-dropdown icon="settings" *ngIf="currentAuthSummary">
-            <a sm-item href="#" [routerLink]="['settings', 'user', currentAuthSummary.user.username]">{{
-                'navbar_profile' | translate }}</a>
-            <a sm-item href="#" [routerLink]="['settings', 'cdsctl']">{{ 'navbar_cdsctl' | translate }}</a>
-            <a sm-item href="#" [routerLink]="['settings', 'action']">{{ 'navbar_actions' | translate }}</a>
-            <a sm-item href="#" [routerLink]="['settings', 'user']">{{ 'navbar_users' | translate }}</a>
-            <a sm-item href="#" [routerLink]="['settings', 'group']">{{ 'navbar_groups' | translate }}</a>
-            <a sm-item href="#" [routerLink]="['settings', 'worker-model']">{{ 'navbar_worker_models' | translate }}</a>
-            <a sm-item href="#" [routerLink]="['settings', 'workflow-template']">{{ 'navbar_workflow_templates' |
-                translate }}</a>
-            <div class="divider"></div>
-            <a sm-item href="#" [routerLink]="['settings', 'queue']">{{ 'admin_queue_title' | translate }}</a>
-            <div class="divider"></div>
-            <a sm-item href="#" [routerLink]="['settings', 'downloads']">{{ 'navbar_downloads' | translate }}</a>
-            <a sm-item href="#" [routerLink]="['docs', '']" target="_blank" rel="noopener noreferrer">{{
-                'navbar_documentation' | translate }}</a>
-            <div class="divider"></div>
-            <sui-checkbox class="toggle theme-switch" [ngModel]="darkActive" (ngModelChange)="changeTheme()">
-                {{'navbar_dark_mode' | translate}}</sui-checkbox>
-            <div class="divider"></div>
-            <a sm-item (click)="clickLogout()">{{ 'navbar_disconnect' | translate }}</a>
-        </sm-dropdown>
+        <!-- Settings -->
+        <div nz-dropdown [nzDropdownMenu]="settings" class="icon dropdown">
+            <i nz-icon nzType="setting" nzTheme="fill"></i>
+            <i nz-icon nzType="caret-down" nzTheme="fill" class="ml12"></i>
+        </div>
+        <nz-dropdown-menu #settings="nzDropdownMenu">
+            <ul nz-menu>
+                <li nz-menu-item>
+                    <a href="#" [routerLink]="['settings', 'user', currentAuthSummary.user.username]">{{
+                    'navbar_profile' | translate }}</a>
+                </li>
+                <li nz-menu-item>
+                    <a href="#" [routerLink]="['settings', 'cdsctl']">{{ 'navbar_cdsctl' | translate }}</a>
+                </li>
+                <li nz-menu-item>
+                    <a href="#" [routerLink]="['settings', 'action']">{{ 'navbar_actions' | translate }}</a>
+                </li>
+                <li nz-menu-item>
+                    <a href="#" [routerLink]="['settings', 'user']">{{ 'navbar_users' | translate }}</a>
+                </li>
+                <li nz-menu-item>
+                    <a href="#" [routerLink]="['settings', 'group']">{{ 'navbar_groups' | translate }}</a>
+                </li>
+                <li nz-menu-item>
+                    <a href="#" [routerLink]="['settings', 'worker-model']">{{ 'navbar_worker_models' | translate }}</a>
+                </li>
+                <li nz-menu-item>
+                    <a href="#" [routerLink]="['settings', 'workflow-template']">{{ 'navbar_workflow_templates' |
+                        translate }}</a>
+                </li>
+                <li nz-menu-divider></li>
+                <li nz-menu-item>
+                    <a href="#" [routerLink]="['settings', 'queue']">{{ 'admin_queue_title' | translate }}</a>
+                </li>
 
-        <sm-dropdown icon="student" *ngIf="currentAuthSummary && currentAuthSummary.isMaintainer()">
-            <a sm-item href="#" [routerLink]="['admin', 'broadcast']">{{ 'navbar_admin_broadcast' | translate }}</a>
-            <a sm-item href="#" [routerLink]="['admin', 'worker-model-pattern']">{{ 'worker_model_pattern_title' |
-                translate }}</a>
-            <a sm-item href="#" [routerLink]="['admin', 'hooks-tasks']">{{ 'hook_tasks_summary' | translate }}</a>
-            <a sm-item href="#" [routerLink]="['admin', 'services']">{{ 'monitoring' | translate }}</a>
-        </sm-dropdown>
+                <li nz-menu-divider></li>
+                <li nz-menu-item>
+                    <a href="#" [routerLink]="['settings', 'downloads']">{{ 'navbar_downloads' | translate }}</a>
+                </li>
+                <li nz-menu-item>
+                    <a href="#" [routerLink]="['docs', '']" target="_blank" rel="noopener noreferrer">{{
+                        'navbar_documentation' | translate }}</a>
+                </li>
+
+                <li nz-menu-divider></li>
+                <li nz-menu-item>
+                    <nz-switch [ngModel]="darkActive" (ngModelChange)="changeTheme()"></nz-switch>Dark Model
+                </li>
+
+                <li nz-menu-divider></li>
+                <li nz-menu-item>
+                    <a (click)="clickLogout()">{{ 'navbar_disconnect' | translate }}</a>
+                </li>
+            </ul>
+        </nz-dropdown-menu>
+
+        <!-- Maintainer part -->
+        <ng-container *ngIf="currentAuthSummary && currentAuthSummary.isMaintainer()">
+            <div nz-dropdown [nzDropdownMenu]="adminMenu" class="icon dropdown">
+                <i nz-icon nzType="tool" nzTheme="fill"></i>
+                <i nz-icon nzType="caret-down" nzTheme="fill" class="ml12"></i>
+            </div>
+            <nz-dropdown-menu #adminMenu="nzDropdownMenu">
+                <ul nz-menu>
+                    <li nz-menu-item>
+                        <a href="#" [routerLink]="['admin', 'broadcast']">{{ 'navbar_admin_broadcast' | translate }}</a>
+                    </li>
+                    <li nz-menu-item>
+                        <a href="#" [routerLink]="['admin', 'hooks-tasks']">{{ 'hook_tasks_summary' | translate }}</a>
+                    </li>
+                    <li nz-menu-item>
+                        <a href="#" [routerLink]="['admin', 'services']">{{ 'monitoring' | translate }}</a>
+                    </li>
+                </ul>
+            </nz-dropdown-menu>
+        </ng-container>
     </div>
-</div>
+</nz-header>
