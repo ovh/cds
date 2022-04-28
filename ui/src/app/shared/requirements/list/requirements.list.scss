@@ -1,6 +1,7 @@
-@import '../../../../common';
+nz-select {
+  width: 100%;
+}
 
-.ui.grid > .column.valign {
-    display: flex;
-    align-items: center;
+.center {
+  text-align: end;
 }

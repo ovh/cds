@@ -66,6 +66,7 @@ export class ActionComponent implements OnDestroy, OnInit {
 
     @Output() actionEvent = new EventEmitter<ActionEvent>();
 
+    requirementModalVisible = false;
     collapsed = true;
     configRequirements: { disableModel?: boolean, disableHostname?: boolean, disableRegion?: boolean } = {};
     workerModels: Array<WorkerModel>;
@@ -151,6 +152,7 @@ export class ActionComponent implements OnDestroy, OnInit {
             case 'delete':
                 let indexDelete = this.editableAction.requirements.indexOf(r.requirement);
                 if (indexDelete >= 0) {
+                    this.editableAction.requirements = Object.assign([], this.editableAction.requirements);
                     this.editableAction.requirements.splice(indexDelete, 1);
                 }
                 if (r.requirement.type === 'model') {

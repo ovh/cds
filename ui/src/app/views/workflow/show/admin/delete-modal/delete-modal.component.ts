@@ -29,10 +29,6 @@ export class WorkflowDeleteModalComponent implements OnInit {
     project: Project;
     workflow: Workflow;
 
-    confirm = false;
-    confirmDeps = false;
-    confirmNoDeps = false;
-
     constructor(
         private store: Store,
         private _cd: ChangeDetectorRef,

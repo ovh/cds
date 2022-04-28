@@ -4,7 +4,6 @@ import { Requirement } from 'app/model/requirement.model';
 import { WorkerModel } from 'app/model/worker-model.model';
 import { RequirementStore } from 'app/service/requirement/requirement.store';
 import { RequirementEvent } from 'app/shared/requirements/requirement.event.model';
-import { Table } from 'app/shared/table/table';
 import { first } from 'rxjs/operators';
 
 export const OSArchitecture = 'os-architecture';
@@ -15,7 +14,7 @@ export const OSArchitecture = 'os-architecture';
     styleUrls: ['./requirements.list.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class RequirementsListComponent extends Table<Requirement> implements OnInit {
+export class RequirementsListComponent implements OnInit {
     @Input() requirements: Requirement[];
     @Input() edit: boolean;
 
@@ -28,8 +27,8 @@ export class RequirementsListComponent extends Table<Requirement> implements OnI
         }
     }
     get suggest() {
- return this._suggest;
-}
+        return this._suggest;
+    }
 
     _workerModels: Array<WorkerModel>;
     @Input() set workerModels(wms: Array<WorkerModel>) {
@@ -45,8 +44,8 @@ export class RequirementsListComponent extends Table<Requirement> implements OnI
         }
     }
     get workerModels() {
- return this._workerModels;
-}
+        return this._workerModels;
+    }
 
     @Output() event = new EventEmitter<RequirementEvent>();
     @Output() onChange = new EventEmitter<Requirement[]>();
@@ -58,9 +57,6 @@ export class RequirementsListComponent extends Table<Requirement> implements OnI
     constructor(
         private _requirementStore: RequirementStore,
     ) {
-        super();
-        this.nbElementsByPage = 5;
-
         this._requirementStore.getAvailableRequirements()
             .subscribe(r => {
                 this.availableRequirements = new Array<string>();
@@ -72,10 +68,6 @@ export class RequirementsListComponent extends Table<Requirement> implements OnI
         this._requirementStore.getRequirementsTypeValues('os-architecture').pipe(first()).subscribe(values => {
             this.suggestWithOSArch = values.concat(this.suggest);
         });
-    }
-
-    getData(): Array<Requirement> {
-        return this.requirements;
     }
 
     deleteEvent(r: Requirement): void {

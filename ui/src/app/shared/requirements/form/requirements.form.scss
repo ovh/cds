@@ -1,5 +1,18 @@
-.requirementForm {
-  .mtop8 {
-    margin-top: 8px;
+nz-form-item {
+  padding-left: 15px;
+
+  nz-select {
+    width: 100%;
+  }
+
+  .container {
+    width: 100%;
+  }
+
+  input {
+    width: 100%;
+  }
+  textarea {
+    width: 100%;
   }
 }

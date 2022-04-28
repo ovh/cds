@@ -138,6 +138,8 @@ import { NzSwitchModule } from 'ng-zorro-antd/switch';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 import { NzModalModule } from 'ng-zorro-antd/modal';
+import { NzTableModule } from 'ng-zorro-antd/table';
+import { NzAutocompleteModule } from 'ng-zorro-antd/auto-complete';
 
 const ngZorroConfig: NzConfig = {
     notification: {nzPauseOnHover: true, nzPlacement: "topRight"},
@@ -148,6 +150,7 @@ const icons: IconDefinition[] = [ BellFill, CaretUpFill, CheckOutline, KeyOutlin
 
 @NgModule({
     imports: [
+        NzAutocompleteModule,
         NzBadgeModule,
         NzButtonModule,
         NzCardModule,
@@ -166,6 +169,7 @@ const icons: IconDefinition[] = [ BellFill, CaretUpFill, CheckOutline, KeyOutlin
         NzSelectModule,
         NzSwitchModule,
         NzTabsModule,
+        NzTableModule,
         NzTagModule,
         NzToolTipModule,
         CommonModule,
@@ -336,6 +340,7 @@ const icons: IconDefinition[] = [ BellFill, CaretUpFill, CheckOutline, KeyOutlin
         MarkdownModule,
         MenuComponent,
         MomentModule,
+        NzAutocompleteModule,
         NgForNumber,
         NgxSemanticModule,
         NgxAutoScrollDirective,
@@ -358,6 +363,7 @@ const icons: IconDefinition[] = [ BellFill, CaretUpFill, CheckOutline, KeyOutlin
         NzSwitchModule,
         NzTabsModule,
         NzTagModule,
+        NzTableModule,
         NzToolTipModule,
         PaginationComponent,
         ParameterFormComponent,
