@@ -103,6 +103,24 @@ func CanUploadRunResult(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 			continue
 		}
 
+		// We accept same names for artifact-manager managed artifacts for different repository types
+		// It means that we can have docker image and help chart with the same name
+		if runResultCheck.ResultType == sdk.WorkflowRunResultTypeArtifactManager {
+			resultCheckArt, err := result.GetArtifactManager()
+			if err != nil {
+				return false, err
+			}
+
+			resultArt, err := result.GetArtifactManager()
+			if err != nil {
+				return false, err
+			}
+
+			if resultCheckArt.RepoType != resultArt.RepoType {
+				continue
+			}
+		}
+
 		// If we find a run result with same check, check subnumber
 		var previousNodeRunUpload *sdk.WorkflowNodeRun
 		for _, nr := range nrs {
