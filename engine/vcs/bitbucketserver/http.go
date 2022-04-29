@@ -112,11 +112,13 @@ func (c *bitbucketClient) do(ctx context.Context, method, api, path string, para
 	}
 
 	var token string
-	if opts != nil && opts.asUser && c.token != "" {
+	if c.vcsProject != nil && c.vcsProject.Auth["token"] != "" {
+		token = c.vcsProject.Auth["token"]
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	} else if opts != nil && opts.asUser && c.token != "" { // DEPRECATED VCS
 		token = c.token
-		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.token))
-	} else {
-		// Deprecated. This section use the vcs configured with oauth2 on a cds project
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	} else { // DEPRECATED VCS
 		accessToken := NewAccessToken(c.accessToken, c.accessTokenSecret, nil)
 		token = accessToken.token
 		if err := c.consumer.Sign(req, accessToken); err != nil {

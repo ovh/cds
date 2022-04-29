@@ -41,7 +41,31 @@ type githubConsumer struct {
 }
 
 //New creates a new GithubConsumer
-func New(ClientID, ClientSecret, githubURL, githubAPIURL, apiURL, uiURL, proxyURL, username, token string, store cache.Store, disableStatus, disableStatusDetail bool) sdk.VCSServer {
+func New(githubURL, githubAPIURL, apiURL, uiURL, proxyURL string, store cache.Store) sdk.VCSServer {
+	//Github const
+	const (
+		publicURL    = "https://github.com"
+		publicAPIURL = "https://api.github.com"
+	)
+	// if the githubURL is passed as an empty string default it to public GitHub
+	if githubURL == "" {
+		githubURL = publicURL
+	}
+	// if the githubAPIURL is passed as an empty string default it to public GitHub
+	if githubAPIURL == "" {
+		githubAPIURL = publicAPIURL
+	}
+	return &githubConsumer{
+		GitHubURL:    githubURL,
+		GitHubAPIURL: githubAPIURL,
+		Cache:        store,
+		apiURL:       apiURL,
+		uiURL:        uiURL,
+		proxyURL:     proxyURL,
+	}
+}
+
+func NewDeprecated(ClientID, ClientSecret, githubURL, githubAPIURL, apiURL, uiURL, proxyURL, username, token string, store cache.Store, disableStatus, disableStatusDetail bool) sdk.VCSServer {
 	//Github const
 	const (
 		publicURL    = "https://github.com"

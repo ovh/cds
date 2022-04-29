@@ -83,6 +83,61 @@ func (s *Service) getVCSServersHandler() service.Handler {
 
 func (s *Service) getVCSServersHooksHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vcsAuth, err := getVCSAuth(ctx)
+		if err != nil {
+			return sdk.WrapError(err, "unable to get access token header")
+		}
+
+		if vcsAuth.VCSProject != nil {
+			res := struct {
+				WebhooksSupported  bool     `json:"webhooks_supported"`
+				WebhooksDisabled   bool     `json:"webhooks_disabled"`
+				WebhooksIcon       string   `json:"webhooks_icon"`
+				GerritHookDisabled bool     `json:"gerrithook_disabled"`
+				Events             []string `json:"events"`
+			}{}
+
+			switch {
+			case vcsAuth.VCSProject.Type == "bitbucketserver":
+				res.WebhooksSupported = true
+				res.WebhooksIcon = sdk.BitbucketIcon
+				// https://confluence.atlassian.com/bitbucketserver/event-payload-938025882.html
+				res.Events = sdk.BitbucketEvents
+			case vcsAuth.VCSProject.Type == "bitbucketcloud":
+				res.WebhooksSupported = true
+				res.WebhooksIcon = sdk.BitbucketIcon
+				// https://developer.atlassian.com/bitbucket/api/2/reference/resource/hook_events/%7Bsubject_type%7D
+				res.Events = sdk.BitbucketCloudEvents
+			case vcsAuth.VCSProject.Type == "github":
+				res.WebhooksSupported = true
+				res.WebhooksIcon = sdk.GitHubIcon
+				// https://developer.github.com/v3/activity/events/types/
+				res.Events = sdk.GitHubEvents
+			case vcsAuth.VCSProject.Type == "gitlab":
+				res.WebhooksSupported = true
+				res.WebhooksIcon = sdk.GitlabIcon
+				// https://docs.gitlab.com/ee/user/project/integrations/webhooks.html
+				res.Events = []string{
+					string(gitlab.EventTypePush),
+					string(gitlab.EventTypeTagPush),
+					string(gitlab.EventTypeIssue),
+					string(gitlab.EventTypeNote),
+					string(gitlab.EventTypeMergeRequest),
+					string(gitlab.EventTypeWikiPage),
+					string(gitlab.EventTypePipeline),
+					"Job Hook", // TODO update gitlab sdk
+				}
+			case vcsAuth.VCSProject.Type == "gerrit":
+				res.WebhooksSupported = false
+				res.WebhooksIcon = sdk.GerritIcon
+				// https://git.eclipse.org/r/Documentation/cmd-stream-events.html#events
+				res.Events = sdk.GerritEvents
+			}
+
+			return service.WriteJSON(w, res, http.StatusOK)
+		}
+
+		// DEPRECATED VCS
 		name := muxVar(r, "name")
 		cfg, ok := s.Cfg.Servers[name]
 		if !ok {
@@ -144,6 +199,32 @@ func (s *Service) getVCSServersHooksHandler() service.Handler {
 
 func (s *Service) getVCSServersPollingHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vcsAuth, err := getVCSAuth(ctx)
+		if err != nil {
+			return sdk.WrapError(err, "unable to get access token header")
+		}
+
+		if vcsAuth.VCSProject != nil {
+			res := struct {
+				PollingSupported bool `json:"polling_supported"`
+				PollingDisabled  bool `json:"polling_disabled"`
+			}{}
+
+			switch {
+			case vcsAuth.VCSProject.Type == "bitbucketserver":
+				res.PollingSupported = false
+			case vcsAuth.VCSProject.Type == "bitbucketcloud":
+				res.PollingSupported = false
+			case vcsAuth.VCSProject.Type == "github":
+				res.PollingSupported = true
+			case vcsAuth.VCSProject.Type == "gitlab":
+				res.PollingSupported = false
+			}
+
+			return service.WriteJSON(w, res, http.StatusOK)
+		}
+
+		// DEPRECATED VCS
 		name := muxVar(r, "name")
 		cfg, ok := s.Cfg.Servers[name]
 		if !ok {
@@ -175,7 +256,7 @@ func (s *Service) getVCSServersPollingHandler() service.Handler {
 func (s *Service) getAuthorizeHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		name := muxVar(r, "name")
-		consumer, err := s.getConsumer(name)
+		consumer, err := s.getConsumer(name, sdk.VCSAuth{})
 		if err != nil {
 			return sdk.WrapError(err, "VCS server unavailable %s", name)
 		}
@@ -192,10 +273,10 @@ func (s *Service) getAuthorizeHandler() service.Handler {
 	}
 }
 
-func (s *Service) postAuhorizeHandler() service.Handler {
+func (s *Service) postAuthorizeHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		name := muxVar(r, "name")
-		consumer, err := s.getConsumer(name)
+		consumer, err := s.getConsumer(name, sdk.VCSAuth{})
 		if err != nil {
 			return sdk.WrapError(err, "VCS server unavailable")
 		}
@@ -221,12 +302,12 @@ func (s *Service) getReposHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		name := muxVar(r, "name")
 
-		vcsAuth, err := getAccessTokens(ctx)
+		vcsAuth, err := getVCSAuth(ctx)
 		if err != nil {
-			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
+			return sdk.WrapError(err, "unable to get access token header")
 		}
 
-		consumer, err := s.getConsumer(name)
+		consumer, err := s.getConsumer(name, vcsAuth)
 		if err != nil {
 			return sdk.WrapError(err, "VCS server unavailable")
 		}
@@ -255,12 +336,12 @@ func (s *Service) getRepoHandler() service.Handler {
 		owner := muxVar(r, "owner")
 		repo := muxVar(r, "repo")
 
-		vcsAuth, err := getAccessTokens(ctx)
+		vcsAuth, err := getVCSAuth(ctx)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
 		}
 
-		consumer, err := s.getConsumer(name)
+		consumer, err := s.getConsumer(name, vcsAuth)
 		if err != nil {
 			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
 		}
@@ -299,12 +380,12 @@ func (s *Service) getBranchesHandler() service.Handler {
 			limit = int64(l)
 		}
 
-		vcsAuth, err := getAccessTokens(ctx)
+		vcsAuth, err := getVCSAuth(ctx)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
 		}
 
-		consumer, err := s.getConsumer(name)
+		consumer, err := s.getConsumer(name, vcsAuth)
 		if err != nil {
 			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
 		}
@@ -340,12 +421,12 @@ func (s *Service) getBranchHandler() service.Handler {
 			defaultBranch = true
 		}
 
-		vcsAuth, err := getAccessTokens(ctx)
+		vcsAuth, err := getVCSAuth(ctx)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
 		}
 
-		consumer, err := s.getConsumer(name)
+		consumer, err := s.getConsumer(name, vcsAuth)
 		if err != nil {
 			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
 		}
@@ -375,12 +456,12 @@ func (s *Service) getTagsHandler() service.Handler {
 
 		log.Debug(ctx, "getTagsHandler>")
 
-		vcsAuth, err := getAccessTokens(ctx)
+		vcsAuth, err := getVCSAuth(ctx)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
 		}
 
-		consumer, err := s.getConsumer(name)
+		consumer, err := s.getConsumer(name, vcsAuth)
 		if err != nil {
 			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
 		}
@@ -413,12 +494,12 @@ func (s *Service) getCommitsHandler() service.Handler {
 
 		log.Debug(ctx, "getCommitsHandler>")
 
-		vcsAuth, err := getAccessTokens(ctx)
+		vcsAuth, err := getVCSAuth(ctx)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
 		}
 
-		consumer, err := s.getConsumer(name)
+		consumer, err := s.getConsumer(name, vcsAuth)
 		if err != nil {
 			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
 		}
@@ -450,12 +531,12 @@ func (s *Service) getCommitsBetweenRefsHandler() service.Handler {
 
 		log.Debug(ctx, "getCommitsBetweenRefsHandler>")
 
-		vcsAuth, err := getAccessTokens(ctx)
+		vcsAuth, err := getVCSAuth(ctx)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
 		}
 
-		consumer, err := s.getConsumer(name)
+		consumer, err := s.getConsumer(name, vcsAuth)
 		if err != nil {
 			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
 		}
@@ -484,12 +565,12 @@ func (s *Service) getCommitHandler() service.Handler {
 		repo := muxVar(r, "repo")
 		commit := muxVar(r, "commit")
 
-		vcsAuth, err := getAccessTokens(ctx)
+		vcsAuth, err := getVCSAuth(ctx)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
 		}
 
-		consumer, err := s.getConsumer(name)
+		consumer, err := s.getConsumer(name, vcsAuth)
 		if err != nil {
 			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
 		}
@@ -518,12 +599,12 @@ func (s *Service) getCommitStatusHandler() service.Handler {
 		repo := muxVar(r, "repo")
 		commit := muxVar(r, "commit")
 
-		vcsAuth, err := getAccessTokens(ctx)
+		vcsAuth, err := getVCSAuth(ctx)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
 		}
 
-		consumer, err := s.getConsumer(name)
+		consumer, err := s.getConsumer(name, vcsAuth)
 		if err != nil {
 			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
 		}
@@ -553,12 +634,12 @@ func (s *Service) getPullRequestHandler() service.Handler {
 		repo := muxVar(r, "repo")
 		id := muxVar(r, "id")
 
-		vcsAuth, err := getAccessTokens(ctx)
+		vcsAuth, err := getVCSAuth(ctx)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
 		}
 
-		consumer, err := s.getConsumer(name)
+		consumer, err := s.getConsumer(name, vcsAuth)
 		if err != nil {
 			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
 		}
@@ -592,12 +673,12 @@ func (s *Service) getPullRequestsHandler() service.Handler {
 			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given pull request state %s", state)
 		}
 
-		vcsAuth, err := getAccessTokens(ctx)
+		vcsAuth, err := getVCSAuth(ctx)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
 		}
 
-		consumer, err := s.getConsumer(name)
+		consumer, err := s.getConsumer(name, vcsAuth)
 		if err != nil {
 			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
 		}
@@ -632,12 +713,12 @@ func (s *Service) postPullRequestsHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		vcsAuth, err := getAccessTokens(ctx)
+		vcsAuth, err := getVCSAuth(ctx)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
 		}
 
-		consumer, err := s.getConsumer(name)
+		consumer, err := s.getConsumer(name, vcsAuth)
 		if err != nil {
 			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
 		}
@@ -670,12 +751,12 @@ func (s *Service) postPullRequestCommentHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		vcsAuth, err := getAccessTokens(ctx)
+		vcsAuth, err := getVCSAuth(ctx)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
 		}
 
-		consumer, err := s.getConsumer(name)
+		consumer, err := s.getConsumer(name, vcsAuth)
 		if err != nil {
 			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
 		}
@@ -713,12 +794,12 @@ func (s *Service) getEventsHandler() service.Handler {
 			dateRef = time.Unix(int64(dateRefInt), 0)
 		}
 
-		vcsAuth, err := getAccessTokens(ctx)
+		vcsAuth, err := getVCSAuth(ctx)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
 		}
 
-		consumer, err := s.getConsumer(name)
+		consumer, err := s.getConsumer(name, vcsAuth)
 		if err != nil {
 			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
 		}
@@ -758,12 +839,12 @@ func (s *Service) postFilterEventsHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to read body")
 		}
 
-		vcsAuth, err := getAccessTokens(ctx)
+		vcsAuth, err := getVCSAuth(ctx)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
 		}
 
-		consumer, err := s.getConsumer(name)
+		consumer, err := s.getConsumer(name, vcsAuth)
 		if err != nil {
 			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
 		}
@@ -819,12 +900,12 @@ func (s *Service) postStatusHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to read body")
 		}
 
-		vcsAuth, err := getAccessTokens(ctx)
+		vcsAuth, err := getVCSAuth(ctx)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
 		}
 
-		consumer, err := s.getConsumer(name)
+		consumer, err := s.getConsumer(name, vcsAuth)
 		if err != nil {
 			return sdk.WrapError(err, "VCS server unavailable")
 		}
@@ -852,12 +933,12 @@ func (s *Service) postReleaseHandler() service.Handler {
 		owner := muxVar(r, "owner")
 		repo := muxVar(r, "repo")
 
-		vcsAuth, err := getAccessTokens(ctx)
+		vcsAuth, err := getVCSAuth(ctx)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
 		}
 
-		consumer, err := s.getConsumer(name)
+		consumer, err := s.getConsumer(name, vcsAuth)
 		if err != nil {
 			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
 		}
@@ -913,12 +994,12 @@ func (s *Service) postUploadReleaseFileHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		vcsAuth, err := getAccessTokens(ctx)
+		vcsAuth, err := getVCSAuth(ctx)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
 		}
 
-		consumer, err := s.getConsumer(name)
+		consumer, err := s.getConsumer(name, vcsAuth)
 		if err != nil {
 			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
 		}
@@ -950,12 +1031,12 @@ func (s *Service) getHookHandler() service.Handler {
 			return err
 		}
 
-		vcsAuth, err := getAccessTokens(ctx)
+		vcsAuth, err := getVCSAuth(ctx)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
 		}
 
-		consumer, err := s.getConsumer(name)
+		consumer, err := s.getConsumer(name, vcsAuth)
 		if err != nil {
 			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
 		}
@@ -984,12 +1065,12 @@ func (s *Service) putHookHandler() service.Handler {
 		owner := muxVar(r, "owner")
 		repo := muxVar(r, "repo")
 
-		vcsAuth, err := getAccessTokens(ctx)
+		vcsAuth, err := getVCSAuth(ctx)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
 		}
 
-		consumer, err := s.getConsumer(name)
+		consumer, err := s.getConsumer(name, vcsAuth)
 		if err != nil {
 			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
 		}
@@ -1021,12 +1102,12 @@ func (s *Service) postHookHandler() service.Handler {
 		owner := muxVar(r, "owner")
 		repo := muxVar(r, "repo")
 
-		vcsAuth, err := getAccessTokens(ctx)
+		vcsAuth, err := getVCSAuth(ctx)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
 		}
 
-		consumer, err := s.getConsumer(name)
+		consumer, err := s.getConsumer(name, vcsAuth)
 		if err != nil {
 			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
 		}
@@ -1065,12 +1146,12 @@ func (s *Service) deleteHookHandler() service.Handler {
 
 		hookID := r.URL.Query().Get("id")
 
-		vcsAuth, err := getAccessTokens(ctx)
+		vcsAuth, err := getVCSAuth(ctx)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
 		}
 
-		consumer, err := s.getConsumer(name)
+		consumer, err := s.getConsumer(name, vcsAuth)
 		if err != nil {
 			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
 		}
@@ -1108,12 +1189,12 @@ func (s *Service) getListForks() service.Handler {
 		owner := muxVar(r, "owner")
 		repo := muxVar(r, "repo")
 
-		vcsAuth, err := getAccessTokens(ctx)
+		vcsAuth, err := getVCSAuth(ctx)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
 		}
 
-		consumer, err := s.getConsumer(name)
+		consumer, err := s.getConsumer(name, vcsAuth)
 		if err != nil {
 			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
 		}
@@ -1160,12 +1241,12 @@ func (s *Service) postRepoGrantHandler() service.Handler {
 		owner := muxVar(r, "owner")
 		repo := muxVar(r, "repo")
 
-		vcsAuth, err := getAccessTokens(ctx)
+		vcsAuth, err := getVCSAuth(ctx)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
 		}
 
-		consumer, err := s.getConsumer(name)
+		consumer, err := s.getConsumer(name, vcsAuth)
 		if err != nil {
 			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
 		}

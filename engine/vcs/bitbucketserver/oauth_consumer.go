@@ -73,10 +73,10 @@ func (g *bitbucketConsumer) AuthorizeToken(ctx context.Context, token, verifier 
 
 //GetAuthorized returns an authorized client
 func (g *bitbucketConsumer) GetAuthorizedClient(ctx context.Context, vcsAuth sdk.VCSAuth) (sdk.VCSAuthorizedClient, error) {
-	if vcsAuth.PersonalAccessTokens != "" {
+	if vcsAuth.VCSProject != nil {
 		return &bitbucketClient{
-			consumer: *g,
-			token:    vcsAuth.PersonalAccessTokens,
+			consumer:   *g,
+			vcsProject: vcsAuth.VCSProject,
 		}, nil
 	}
 	return &bitbucketClient{

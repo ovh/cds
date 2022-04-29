@@ -36,7 +36,8 @@ type Configuration struct {
 			Password string `toml:"password" json:"-"`
 		} `toml:"redis" json:"redis"`
 	} `toml:"cache" comment:"######################\n CDS VCS Cache Settings \n######################" json:"cache"`
-	Servers map[string]ServerConfiguration `toml:"servers" comment:"######################\n CDS VCS Server Settings \n######################" json:"servers"`
+	ProxyWebhook string                         `toml:"proxyWebhook" default:"" commented:"true" comment:"If you want to have a reverse proxy url for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK" json:"proxy_webhook"`
+	Servers      map[string]ServerConfiguration `toml:"servers" comment:"######################\n CDS VCS Server Settings \n######################" json:"servers"`
 }
 
 // ServerConfiguration is the configuration for a VCS server

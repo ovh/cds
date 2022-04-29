@@ -35,10 +35,23 @@ type gitlabConsumer struct {
 	proxyURL                 string
 	disableStatus            bool
 	disableStatusDetail      bool
+	username                 string
+	personalAccessToken      string
 }
 
 // New instantiate a new gitlab consumer
-func New(appID, clientSecret, URL, callbackURL, uiURL, proxyURL string, store cache.Store, disableStatus bool, disableStatusDetail bool) sdk.VCSServer {
+func New(URL, uiURL, proxyURL string, store cache.Store, username, token string) sdk.VCSServer {
+	return &gitlabConsumer{
+		URL:                 URL,
+		cache:               store,
+		uiURL:               uiURL,
+		proxyURL:            proxyURL,
+		username:            username,
+		personalAccessToken: token,
+	}
+}
+
+func NewDeprecated(appID, clientSecret, URL, callbackURL, uiURL, proxyURL string, store cache.Store, disableStatus bool, disableStatusDetail bool) sdk.VCSServer {
 	return &gitlabConsumer{
 		URL:                      URL,
 		secret:                   clientSecret,

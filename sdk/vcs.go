@@ -6,13 +6,16 @@ import (
 	"io"
 	"net/http"
 	"time"
+
+	"github.com/go-gorp/gorp"
 )
 
 // HTTP Headers
 const (
-	HeaderXAccessToken        = "X-CDS-ACCESS-TOKEN"
-	HeaderXAccessTokenCreated = "X-CDS-ACCESS-TOKEN-CREATED"
-	HeaderXAccessTokenSecret  = "X-CDS-ACCESS-TOKEN-SECRET"
+	HeaderXVCSProjectConf     = "X-CDS-PERSONAL-ACCESS-TOKEN"
+	HeaderXAccessToken        = "X-CDS-ACCESS-TOKEN"         // DEPRECATED
+	HeaderXAccessTokenCreated = "X-CDS-ACCESS-TOKEN-CREATED" // DEPRECATED
+	HeaderXAccessTokenSecret  = "X-CDS-ACCESS-TOKEN-SECRET"  // DEPRECATED
 )
 
 var (
@@ -188,7 +191,7 @@ type VCSProject struct {
 	ProjectID    int64             `json:"-" db:"project_id"`
 	Description  string            `json:"description" db:"description"`
 	URL          string            `json:"url" db:"url"`
-	Auth         map[string]string `json:"-" db:"auth" gorpmapping:"encrypted,ProjectID"`
+	Auth         map[string]string `json:"auth" db:"auth" gorpmapping:"encrypted,ProjectID"`
 }
 
 // VCSConfiguration represent a small vcs configuration
@@ -207,7 +210,7 @@ type VCSServerCommon interface {
 
 // VCSAuth contains tokens (oauth2 tokens or personalAccessToken)
 type VCSAuth struct {
-	PersonalAccessTokens string // DEPRECATED
+	VCSProject *VCSProject
 
 	AccessToken        string // DEPRECATED
 	AccessTokenSecret  string // DEPRECATED
@@ -296,6 +299,7 @@ type VCSAuthorizedClient interface {
 type VCSAuthorizedClientService interface {
 	VCSAuthorizedClientCommon
 	PullRequests(ctx context.Context, repo string, mods ...VCSRequestModifier) ([]VCSPullRequest, error)
+	IsGerrit(ctx context.Context, db gorp.SqlExecutor) (bool, error)
 }
 
 type VCSRequestModifier func(r *http.Request)

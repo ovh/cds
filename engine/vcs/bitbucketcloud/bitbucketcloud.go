@@ -36,7 +36,17 @@ type bitbucketcloudConsumer struct {
 }
 
 //New creates a new GithubConsumer
-func New(ClientID, ClientSecret, apiURL, uiURL, proxyURL string, store cache.Store, disableStatus, disableStatusDetail bool) sdk.VCSServer {
+func New(apiURL, uiURL, proxyURL string, store cache.Store) sdk.VCSServer {
+	return &bitbucketcloudConsumer{
+		Cache:    store,
+		apiURL:   apiURL,
+		uiURL:    uiURL,
+		proxyURL: proxyURL,
+	}
+}
+
+// DEPRECATED VCS
+func NewDeprecated(ClientID, ClientSecret, apiURL, uiURL, proxyURL string, store cache.Store, disableStatus, disableStatusDetail bool) sdk.VCSServer {
 	return &bitbucketcloudConsumer{
 		ClientID:            ClientID,
 		ClientSecret:        ClientSecret,

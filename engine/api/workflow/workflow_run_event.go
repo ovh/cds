@@ -93,14 +93,19 @@ loopNotif:
 	repoFullName := wr.Workflow.Applications[node.Context.ApplicationID].RepositoryFullname
 
 	//Get the RepositoriesManager Client
+	log.Info(ctx, "######## SendVCSEvent: AAAA")
 	if e.vcsClient == nil {
+		log.Info(ctx, "######## SendVCSEvent: BBBBB")
 		var err error
 		e.vcsClient, err = repositoriesmanager.AuthorizedClient(ctx, tx, store, proj.Key, vcsServerName)
 		if err != nil {
-			return err
+			log.Info(ctx, "######## SendVCSEvent: CCCC")
+			return sdk.WrapError(err, "can't get AuthorizedClient for %v/%v", proj.Key, vcsServerName)
 		}
+		log.Info(ctx, "######## SendVCSEvent: DDDDD")
 	}
 
+	log.Info(ctx, "######## SendVCSEvent: EEEEE")
 	ref := nodeRun.VCSHash
 	if nodeRun.VCSTag != "" {
 		ref = nodeRun.VCSTag
@@ -111,7 +116,7 @@ loopNotif:
 		var err error
 		statuses, err = e.vcsClient.ListStatuses(ctx, repoFullName, ref)
 		if err != nil {
-			return err
+			return sdk.WrapError(err, "can't ListStatuses for %v with vcs %v/%v", repoFullName, proj.Key, vcsServerName)
 		}
 		e.commitsStatuses[ref] = statuses
 	}
@@ -129,7 +134,7 @@ loopNotif:
 
 	if statusFound == nil || statusFound.State == "" {
 		if err := e.sendVCSEventStatus(ctx, tx, store, proj.Key, wr, &nodeRun, notif, vcsServerName); err != nil {
-			return err
+			return sdk.WrapError(err, "can't sendVCSEventStatus vcs %v/%v", proj.Key, vcsServerName)
 		}
 	} else {
 		skipStatus := false
@@ -154,7 +159,7 @@ loopNotif:
 
 		if !skipStatus {
 			if err := e.sendVCSEventStatus(ctx, tx, store, proj.Key, wr, &nodeRun, notif, vcsServerName); err != nil {
-				return err
+				return sdk.WrapError(err, "can't sendVCSEventStatus vcs %v/%v", proj.Key, vcsServerName)
 			}
 		}
 	}
@@ -163,7 +168,7 @@ loopNotif:
 		return nil
 	}
 	if err := e.sendVCSPullRequestComment(ctx, tx, wr, &nodeRun, notif, vcsServerName); err != nil {
-		return err
+		return sdk.WrapError(err, "can't sendVCSPullRequestComment vcs %v/%v", proj.Key, vcsServerName)
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -237,12 +242,11 @@ func (e *VCSEventMessenger) sendVCSEventStatus(ctx context.Context, db gorp.SqlE
 	}
 
 	// Check if it's a gerrit or not
-	vcsConf, err := repositoriesmanager.LoadByName(ctx, db, vcsServerName)
+	isGerrit, err := e.vcsClient.IsGerrit(ctx, db)
 	if err != nil {
 		return err
 	}
-
-	if vcsConf.Type == "gerrit" {
+	if isGerrit {
 		// Get gerrit variable
 		var project, changeID, branch, revision, url string
 		projectParam := sdk.ParameterFind(nodeRun.BuildParameters, "git.repository")
@@ -275,7 +279,6 @@ func (e *VCSEventMessenger) sendVCSEventStatus(ctx context.Context, db gorp.SqlE
 				URL:        url,
 			}
 		}
-
 	}
 
 	payload, _ := json.Marshal(eventWNR)
@@ -329,12 +332,6 @@ func (e *VCSEventMessenger) sendVCSPullRequestComment(ctx context.Context, db go
 		return err
 	}
 
-	// Check if it's a gerrit or not
-	vcsConf, err := repositoriesmanager.LoadByName(ctx, db, vcsServerName)
-	if err != nil {
-		return err
-	}
-
 	var changeID string
 	changeIDParam := sdk.ParameterFind(nodeRun.BuildParameters, "gerrit.change.id")
 	if changeIDParam != nil {
@@ -350,13 +347,17 @@ func (e *VCSEventMessenger) sendVCSPullRequestComment(ctx context.Context, db go
 	reqComment := sdk.VCSPullRequestCommentRequest{Message: report}
 	reqComment.Revision = revision
 
-	// If we are on Gerrit
-	if changeID != "" && vcsConf.Type == "gerrit" {
+	isGerrit, err := e.vcsClient.IsGerrit(ctx, db)
+	if err != nil {
+		return err
+	}
+
+	if changeID != "" && isGerrit {
 		reqComment.ChangeID = changeID
 		if err := e.vcsClient.PullRequestComment(ctx, app.RepositoryFullname, reqComment); err != nil {
 			return err
 		}
-	} else if vcsConf.Type != "gerrit" {
+	} else if !isGerrit {
 		//Check if this branch and this commit is a pullrequest
 		prs, err := e.vcsClient.PullRequests(ctx, app.RepositoryFullname)
 		if err != nil {

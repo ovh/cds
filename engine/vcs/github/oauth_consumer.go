@@ -82,30 +82,38 @@ func (g *githubConsumer) AuthorizeToken(ctx context.Context, state, code string)
 	return ghResponse["access_token"], state, nil
 }
 
-//keep client in memory
-var instancesAuthorizedClient = map[string]*githubClient{}
-
 //GetAuthorized returns an authorized client
 func (g *githubConsumer) GetAuthorizedClient(ctx context.Context, vcsAuth sdk.VCSAuth) (sdk.VCSAuthorizedClient, error) {
-	token := vcsAuth.PersonalAccessTokens
-	c, ok := instancesAuthorizedClient[token]
-	if !ok {
-		c = &githubClient{
-			ClientID:            g.ClientID,
-			OAuthToken:          vcsAuth.AccessToken, // DEPRECATED
+	if vcsAuth.VCSProject != nil {
+		c := &githubClient{
 			GitHubURL:           g.GitHubURL,
 			GitHubAPIURL:        g.GitHubAPIURL,
 			Cache:               g.Cache,
 			uiURL:               g.uiURL,
-			DisableStatus:       g.disableStatus,
-			DisableStatusDetail: g.disableStatusDetail,
 			apiURL:              g.apiURL,
 			proxyURL:            g.proxyURL,
-			username:            g.username, // used by a "cds user on github" to write comment on PR
-			token:               g.token,    // used by a "cds user on github" to write comment on PR
-			personalAccessToken: vcsAuth.PersonalAccessTokens,
+			username:            vcsAuth.VCSProject.Auth["usename"],
+			personalAccessToken: vcsAuth.VCSProject.Auth["token"],
 		}
-		instancesAuthorizedClient[token] = c
+
+		return c, c.RateLimit(ctx)
 	}
+
+	// DEPRECATED VCS
+	c := &githubClient{
+		ClientID:            g.ClientID,
+		OAuthToken:          vcsAuth.AccessToken, // DEPRECATED
+		GitHubURL:           g.GitHubURL,
+		GitHubAPIURL:        g.GitHubAPIURL,
+		Cache:               g.Cache,
+		uiURL:               g.uiURL,
+		DisableStatus:       g.disableStatus,
+		DisableStatusDetail: g.disableStatusDetail,
+		apiURL:              g.apiURL,
+		proxyURL:            g.proxyURL,
+		username:            g.username, // used by a "cds user on github" to write comment on PR
+		token:               g.token,    // used by a "cds user on github" to write comment on PR
+	}
+
 	return c, c.RateLimit(ctx)
 }

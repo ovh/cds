@@ -3,6 +3,7 @@ package repositoriesmanager
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -23,16 +24,22 @@ import (
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
-func LoadByName(ctx context.Context, db gorp.SqlExecutor, vcsName string) (sdk.VCSConfiguration, error) {
+func (c *vcsClient) IsGerrit(ctx context.Context, db gorp.SqlExecutor) (bool, error) {
+	if c.vcsProject != nil {
+		return c.vcsProject.Type == "gerrit", nil
+	}
+
+	// DEPRECATED VCS
 	var vcsServer sdk.VCSConfiguration
 	srvs, err := services.LoadAllByType(ctx, db, sdk.TypeVCS)
 	if err != nil {
-		return vcsServer, sdk.WrapError(err, "Unable to load services")
+		return false, sdk.WrapError(err, "Unable to load services")
 	}
-	if _, _, err := services.NewClient(db, srvs).DoJSONRequest(ctx, "GET", fmt.Sprintf("/vcs/%s", vcsName), nil, &vcsServer); err != nil {
-		return vcsServer, sdk.WithStack(err)
+	if _, _, err := services.NewClient(db, srvs).DoJSONRequest(ctx, "GET", fmt.Sprintf("/vcs/%s", c.name), nil, &vcsServer); err != nil {
+		return false, sdk.WrapError(err, "error on requesting vcs service")
 	}
-	return vcsServer, nil
+
+	return vcsServer.Type == "gerrit", nil
 }
 
 //LoadAll Load all RepositoriesManager from the database
@@ -241,10 +248,20 @@ func deprecatedAuthorizedClient(ctx context.Context, db gorpmapper.SqlExecutorWi
 
 func (c *vcsClient) doJSONRequest(ctx context.Context, method, path string, in interface{}, out interface{}) (int, error) {
 	headers, code, err := services.NewClient(c.db, c.srvs).DoJSONRequest(ctx, method, path, in, out, func(req *http.Request) {
-		req.Header.Set(sdk.HeaderXAccessToken, base64.StdEncoding.EncodeToString([]byte(c.token)))
-		req.Header.Set(sdk.HeaderXAccessTokenSecret, base64.StdEncoding.EncodeToString([]byte(c.secret)))
-		if c.created != 0 {
-			req.Header.Set(sdk.HeaderXAccessTokenCreated, base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%d", c.created))))
+		if c.vcsProject != nil {
+			log.Debug(ctx, "requesting vcs via vcs project")
+			btes, err := json.Marshal(c.vcsProject)
+			if err != nil {
+				log.Error(ctx, "invalid vcs project conf. err: %v", err)
+			}
+			req.Header.Set(sdk.HeaderXVCSProjectConf, base64.StdEncoding.EncodeToString(btes))
+		} else {
+			log.Debug(ctx, "requesting vcs via vcs oauth2")
+			req.Header.Set(sdk.HeaderXAccessToken, base64.StdEncoding.EncodeToString([]byte(c.token)))
+			req.Header.Set(sdk.HeaderXAccessTokenSecret, base64.StdEncoding.EncodeToString([]byte(c.secret)))
+			if c.created != 0 {
+				req.Header.Set(sdk.HeaderXAccessTokenCreated, base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%d", c.created))))
+			}
 		}
 	})
 
@@ -274,8 +291,14 @@ func (c *vcsClient) doJSONRequest(ctx context.Context, method, path string, in i
 
 func (c *vcsClient) postBinary(ctx context.Context, path string, fileLength int, r io.Reader, out interface{}) (int, error) {
 	return services.PostBinary(ctx, c.srvs, path, r, out, func(req *http.Request) {
-		req.Header.Set(sdk.HeaderXAccessToken, base64.StdEncoding.EncodeToString([]byte(c.token)))
-		req.Header.Set(sdk.HeaderXAccessTokenSecret, base64.StdEncoding.EncodeToString([]byte(c.secret)))
+		if c.vcsProject != nil {
+			if token, ok := c.vcsProject.Auth["token"]; ok {
+				req.Header.Set(sdk.HeaderXVCSProjectConf, base64.StdEncoding.EncodeToString([]byte(token)))
+			}
+		} else {
+			req.Header.Set(sdk.HeaderXAccessToken, base64.StdEncoding.EncodeToString([]byte(c.token)))
+			req.Header.Set(sdk.HeaderXAccessTokenSecret, base64.StdEncoding.EncodeToString([]byte(c.secret)))
+		}
 		req.Header.Set("Content-Type", "application/octet-stream")
 		req.Header.Set("Content-Length", strconv.Itoa(fileLength))
 	})

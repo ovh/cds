@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/url"
-	"time"
 
 	"github.com/rockbears/log"
 
@@ -92,61 +91,38 @@ func (consumer *bitbucketcloudConsumer) RefreshToken(ctx context.Context, refres
 	return resp.AccessToken, resp.RefreshToken, nil
 }
 
-//keep client in memory
-var instancesAuthorizedClient = map[string]*bitbucketcloudClient{}
-
 //GetAuthorized returns an authorized client
 func (consumer *bitbucketcloudConsumer) GetAuthorizedClient(ctx context.Context, vcsAuth sdk.VCSAuth) (sdk.VCSAuthorizedClient, error) {
-	token := vcsAuth.PersonalAccessTokens
-	if vcsAuth.PersonalAccessTokens == "" { // DEPRECATED
-		token = vcsAuth.AccessToken
-	}
-
-	createdTime := time.Unix(vcsAuth.AccessTokenCreated, 0)
-
-	c, ok := instancesAuthorizedClient[token]
-	if createdTime.Add(2 * time.Hour).Before(time.Now()) {
-		if ok {
-			delete(instancesAuthorizedClient, token)
-		}
-		var newAccessToken string
-		if vcsAuth.AccessToken != "" { // DEPRECATED
-			var err error
-			newAccessToken, _, err = consumer.RefreshToken(ctx, vcsAuth.AccessTokenSecret)
-			if err != nil {
-				return nil, sdk.WrapError(err, "cannot refresh token")
-			}
-		}
-
-		c = &bitbucketcloudClient{
-			PersonalAccessToken: vcsAuth.PersonalAccessTokens,
-			ClientID:            consumer.ClientID,         // DEPRECATED
-			OAuthToken:          newAccessToken,            // DEPRECATED
-			RefreshToken:        vcsAuth.AccessTokenSecret, // DEPRECATED
+	if vcsAuth.VCSProject != nil {
+		c := &bitbucketcloudClient{
+			PersonalAccessToken: vcsAuth.VCSProject.Auth["token"],
 			Cache:               consumer.Cache,
 			apiURL:              consumer.apiURL,
 			uiURL:               consumer.uiURL,
-			DisableStatus:       consumer.disableStatus,
-			DisableStatusDetail: consumer.disableStatusDetail,
-			proxyURL:            consumer.proxyURL,
 		}
-		instancesAuthorizedClient[newAccessToken] = c
-	} else {
-		if !ok {
-			c = &bitbucketcloudClient{
-				PersonalAccessToken: vcsAuth.PersonalAccessTokens,
-				ClientID:            consumer.ClientID,         // DEPRECATED
-				OAuthToken:          vcsAuth.AccessToken,       // DEPRECATED
-				RefreshToken:        vcsAuth.AccessTokenSecret, // DEPRECATED
-				Cache:               consumer.Cache,
-				apiURL:              consumer.apiURL,
-				uiURL:               consumer.uiURL,
-				DisableStatus:       consumer.disableStatus,
-				DisableStatusDetail: consumer.disableStatusDetail,
-				proxyURL:            consumer.proxyURL,
-			}
-			instancesAuthorizedClient[token] = c
+		return c, nil
+	}
+
+	// DEPRECATED VCS
+	var newAccessToken string
+	if vcsAuth.AccessToken != "" {
+		var err error
+		newAccessToken, _, err = consumer.RefreshToken(ctx, vcsAuth.AccessTokenSecret)
+		if err != nil {
+			return nil, sdk.WrapError(err, "cannot refresh token")
 		}
+	}
+
+	c := &bitbucketcloudClient{
+		ClientID:            consumer.ClientID,
+		OAuthToken:          newAccessToken,
+		RefreshToken:        vcsAuth.AccessTokenSecret,
+		Cache:               consumer.Cache,
+		apiURL:              consumer.apiURL,
+		uiURL:               consumer.uiURL,
+		DisableStatus:       consumer.disableStatus,
+		DisableStatusDetail: consumer.disableStatusDetail,
+		proxyURL:            consumer.proxyURL,
 	}
 
 	return c, nil

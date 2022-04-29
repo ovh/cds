@@ -35,26 +35,26 @@ type Project struct {
 	Created      time.Time `json:"created" yaml:"created" db:"created" `
 	LastModified time.Time `json:"last_modified" yaml:"last_modified" db:"last_modified"`
 	// aggregates
-	Workflows        []Workflow             `json:"workflows,omitempty" yaml:"workflows,omitempty" db:"-" cli:"-"`
-	WorkflowNames    IDNames                `json:"workflow_names,omitempty" yaml:"workflow_names,omitempty" db:"-" cli:"-"`
-	Pipelines        []Pipeline             `json:"pipelines,omitempty" yaml:"pipelines,omitempty" db:"-"  cli:"-"`
-	PipelineNames    IDNames                `json:"pipeline_names,omitempty" yaml:"pipeline_names,omitempty" db:"-"  cli:"-"`
-	Applications     []Application          `json:"applications,omitempty" yaml:"applications,omitempty" db:"-"  cli:"-"`
-	ApplicationNames IDNames                `json:"application_names,omitempty" yaml:"application_names,omitempty" db:"-"  cli:"-"`
-	ProjectGroups    GroupPermissions       `json:"groups,omitempty" yaml:"permissions,omitempty" db:"-"  cli:"-"`
-	Variables        []ProjectVariable      `json:"variables,omitempty" yaml:"variables,omitempty" db:"-"  cli:"-"`
-	Environments     []Environment          `json:"environments,omitempty" yaml:"environments,omitempty" db:"-"  cli:"-"`
-	EnvironmentNames IDNames                `json:"environment_names,omitempty" yaml:"environment_names,omitempty" db:"-"  cli:"-"`
-	Labels           []Label                `json:"labels,omitempty" yaml:"labels,omitempty" db:"-"  cli:"-"`
-	Permissions      Permissions            `json:"permissions" yaml:"-" db:"-"  cli:"-"`
-	Metadata         Metadata               `json:"metadata" yaml:"metadata" db:"metadata" cli:"-"`
-	Keys             []ProjectKey           `json:"keys,omitempty" yaml:"keys" db:"-" cli:"-"`
-	VCSServers       []ProjectVCSServerLink `json:"vcs_servers" yaml:"vcs_servers" db:"-" cli:"-"`
-	Integrations     []ProjectIntegration   `json:"integrations" yaml:"integrations" db:"-" cli:"-"`
-	Features         map[string]bool        `json:"features" yaml:"features" db:"-" cli:"-"`
-	Favorite         bool                   `json:"favorite" yaml:"favorite" db:"-" cli:"favorite"`
-	URLs             URL                    `json:"urls" yaml:"-" db:"-" cli:"-"`
-	Organization     string                 `json:"organization" yaml:"-" db:"-" cli:"-"`
+	Workflows        []Workflow           `json:"workflows,omitempty" yaml:"workflows,omitempty" db:"-" cli:"-"`
+	WorkflowNames    IDNames              `json:"workflow_names,omitempty" yaml:"workflow_names,omitempty" db:"-" cli:"-"`
+	Pipelines        []Pipeline           `json:"pipelines,omitempty" yaml:"pipelines,omitempty" db:"-"  cli:"-"`
+	PipelineNames    IDNames              `json:"pipeline_names,omitempty" yaml:"pipeline_names,omitempty" db:"-"  cli:"-"`
+	Applications     []Application        `json:"applications,omitempty" yaml:"applications,omitempty" db:"-"  cli:"-"`
+	ApplicationNames IDNames              `json:"application_names,omitempty" yaml:"application_names,omitempty" db:"-"  cli:"-"`
+	ProjectGroups    GroupPermissions     `json:"groups,omitempty" yaml:"permissions,omitempty" db:"-"  cli:"-"`
+	Variables        []ProjectVariable    `json:"variables,omitempty" yaml:"variables,omitempty" db:"-"  cli:"-"`
+	Environments     []Environment        `json:"environments,omitempty" yaml:"environments,omitempty" db:"-"  cli:"-"`
+	EnvironmentNames IDNames              `json:"environment_names,omitempty" yaml:"environment_names,omitempty" db:"-"  cli:"-"`
+	Labels           []Label              `json:"labels,omitempty" yaml:"labels,omitempty" db:"-"  cli:"-"`
+	Permissions      Permissions          `json:"permissions" yaml:"-" db:"-"  cli:"-"`
+	Metadata         Metadata             `json:"metadata" yaml:"metadata" db:"metadata" cli:"-"`
+	Keys             []ProjectKey         `json:"keys,omitempty" yaml:"keys" db:"-" cli:"-"`
+	VCSServers       []VCSProject         `json:"vcs_servers" yaml:"vcs_servers" db:"-" cli:"-"`
+	Integrations     []ProjectIntegration `json:"integrations" yaml:"integrations" db:"-" cli:"-"`
+	Features         map[string]bool      `json:"features" yaml:"features" db:"-" cli:"-"`
+	Favorite         bool                 `json:"favorite" yaml:"favorite" db:"-" cli:"favorite"`
+	URLs             URL                  `json:"urls" yaml:"-" db:"-" cli:"-"`
+	Organization     string               `json:"organization" yaml:"-" db:"-" cli:"-"`
 }
 
 type GroupPermissions []GroupPermission

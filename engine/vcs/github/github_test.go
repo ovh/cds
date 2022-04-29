@@ -40,7 +40,7 @@ func getNewConsumer(t *testing.T) sdk.VCSServer {
 		t.Fatalf("Unable to init cache (%s): %v", redisHost, err)
 	}
 
-	ghConsummer := New(clientID, clientSecret, "", "", "http://localhost", "", "", "", "", cache, true, true)
+	ghConsummer := NewDeprecated(clientID, clientSecret, "", "", "http://localhost", "", "", "", "", cache, true, true)
 	return ghConsummer
 }
 
@@ -63,7 +63,7 @@ func getNewAuthorizedClient(t *testing.T) sdk.VCSAuthorizedClient {
 		t.Fatalf("Unable to init cache (%s): %v", redisHost, err)
 	}
 
-	ghConsummer := New(clientID, clientSecret, "", "", "http://localhost", "", "", "", "", cache, true, true)
+	ghConsummer := NewDeprecated(clientID, clientSecret, "", "", "http://localhost", "", "", "", "", cache, true, true)
 	vcsAuth := sdk.VCSAuth{
 		AccessToken: accessToken,
 	}

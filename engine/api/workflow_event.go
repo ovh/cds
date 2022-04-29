@@ -61,7 +61,7 @@ func (api *API) WorkflowSendEvent(ctx context.Context, proj sdk.Project, report 
 		event.PublishWorkflowNodeRun(ctx, *nr, wr.Workflow, eventsNotif)
 		e := &workflow.VCSEventMessenger{}
 		if err := e.SendVCSEvent(ctx, db, api.Cache, proj, *wr, wnr); err != nil {
-			log.Warn(ctx, "WorkflowSendEvent> Cannot send vcs notification")
+			log.Warn(ctx, "WorkflowSendEvent> Cannot send vcs notification err:%v", err)
 		}
 	}
 

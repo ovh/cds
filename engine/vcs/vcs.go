@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -80,14 +82,66 @@ func (s *Service) CheckConfiguration(config interface{}) error {
 	return nil
 }
 
-func (s *Service) getConsumer(name string) (sdk.VCSServer, error) {
+func (s *Service) getConsumer(name string, vcsAuth sdk.VCSAuth) (sdk.VCSServer, error) {
+	if vcsAuth.VCSProject != nil {
+		switch vcsAuth.VCSProject.Type {
+		case "bitbucketcloud":
+			return bitbucketcloud.New(
+				strings.TrimSuffix(vcsAuth.VCSProject.URL, "/"),
+				s.UI.HTTP.URL,
+				s.Cfg.ProxyWebhook,
+				s.Cache,
+			), nil
+		case "bitbucketserver":
+			return bitbucketserver.New(
+				strings.TrimSuffix(vcsAuth.VCSProject.URL, "/"),
+				s.Cfg.API.HTTP.URL,
+				s.UI.HTTP.URL,
+				s.Cfg.ProxyWebhook,
+				s.Cache,
+			), nil
+		case "gerrit":
+			sshPort, err := strconv.Atoi(vcsAuth.VCSProject.Auth["ssh-port"])
+			if err != nil {
+				return nil, sdk.WrapError(err, "invalid gerrit ssh port configuration")
+			}
+			return gerrit.New(
+				vcsAuth.VCSProject.URL,
+				s.Cache,
+				sshPort,
+				vcsAuth.VCSProject.Auth["reviewer-user"],
+				vcsAuth.VCSProject.Auth["reviewer-token"],
+			), nil
+		case "github":
+			return github.New(
+				vcsAuth.VCSProject.URL,
+				vcsAuth.VCSProject.Auth["github-api-url"],
+				s.Cfg.API.HTTP.URL,
+				s.UI.HTTP.URL,
+				s.Cfg.ProxyWebhook,
+				s.Cache,
+			), nil
+		case "gitlab":
+			return gitlab.New(
+				vcsAuth.VCSProject.URL,
+				s.UI.HTTP.URL,
+				s.Cfg.ProxyWebhook,
+				s.Cache,
+				vcsAuth.VCSProject.Auth["username"],
+				vcsAuth.VCSProject.Auth["token"],
+			), nil
+		}
+		return nil, sdk.WithStack(sdk.ErrNotFound)
+	}
+
+	// DEPRECATED VCS
 	serverCfg, has := s.Cfg.Servers[name]
 	if !has {
 		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 
 	if serverCfg.Github != nil {
-		return github.New(
+		return github.NewDeprecated(
 			serverCfg.Github.ClientID,
 			serverCfg.Github.ClientSecret,
 			serverCfg.URL,
@@ -103,9 +157,9 @@ func (s *Service) getConsumer(name string) (sdk.VCSServer, error) {
 		), nil
 	}
 	if serverCfg.Bitbucket != nil {
-		return bitbucketserver.New(serverCfg.Bitbucket.ConsumerKey,
+		return bitbucketserver.NewDeprecated(serverCfg.Bitbucket.ConsumerKey,
 			[]byte(serverCfg.Bitbucket.PrivateKey),
-			serverCfg.URL,
+			strings.TrimSuffix(serverCfg.URL, "/"),
 			s.Cfg.API.HTTP.URL,
 			s.UI.HTTP.URL,
 			serverCfg.Bitbucket.ProxyWebhook,
@@ -116,7 +170,7 @@ func (s *Service) getConsumer(name string) (sdk.VCSServer, error) {
 		), nil
 	}
 	if serverCfg.BitbucketCloud != nil {
-		return bitbucketcloud.New(serverCfg.BitbucketCloud.ClientID,
+		return bitbucketcloud.NewDeprecated(serverCfg.BitbucketCloud.ClientID,
 			serverCfg.BitbucketCloud.ClientSecret,
 			serverCfg.URL,
 			s.UI.HTTP.URL,
@@ -127,7 +181,7 @@ func (s *Service) getConsumer(name string) (sdk.VCSServer, error) {
 		), nil
 	}
 	if serverCfg.Gitlab != nil {
-		return gitlab.New(serverCfg.Gitlab.AppID,
+		return gitlab.NewDeprecated(serverCfg.Gitlab.AppID,
 			serverCfg.Gitlab.Secret,
 			serverCfg.URL,
 			serverCfg.Gitlab.CallbackURL,
@@ -139,7 +193,7 @@ func (s *Service) getConsumer(name string) (sdk.VCSServer, error) {
 		), nil
 	}
 	if serverCfg.Gerrit != nil {
-		return gerrit.New(
+		return gerrit.NewDeprecated(
 			serverCfg.URL,
 			s.Cache,
 			serverCfg.Gerrit.Status.Disable,

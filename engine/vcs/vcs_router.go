@@ -29,7 +29,7 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Handle("/vcs/{name}/webhooks", nil, r.GET(s.getVCSServersHooksHandler))
 	r.Handle("/vcs/{name}/polling", nil, r.GET(s.getVCSServersPollingHandler))
 
-	r.Handle("/vcs/{name}/authorize", nil, r.GET(s.getAuthorizeHandler), r.POST(s.postAuhorizeHandler))
+	r.Handle("/vcs/{name}/authorize", nil, r.GET(s.getAuthorizeHandler), r.POST(s.postAuthorizeHandler))
 
 	r.Handle("/vcs/{name}/repos", nil, r.GET(s.getReposHandler))
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}", nil, r.GET(s.getRepoHandler))

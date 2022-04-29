@@ -11,14 +11,16 @@ import (
 
 // bitbucketClient is a bitbucket wrapper for CDS vcs. interface
 type bitbucketClient struct {
-	consumer          bitbucketConsumer
-	accessToken       string
-	accessTokenSecret string
-	proxyURL          string
-	username          string
-	token             string
+	consumer          bitbucketConsumer // DEPRECATED VCS
+	vcsProject        *sdk.VCSProject
+	accessToken       string // DEPRECATED VCS
+	accessTokenSecret string // DEPRECATED VCS
+	proxyURL          string // DEPRECATED VCS
+	username          string // DEPRECATED VCS
+	token             string // DEPRECATED VCS
 }
 
+// DEPRECATED VCS
 //bitbucketConsumer implements vcs.Server and it's used to instantiate a bitbucketClient
 type bitbucketConsumer struct {
 	ConsumerKey      string `json:"consumer_key"`
@@ -38,7 +40,18 @@ type bitbucketConsumer struct {
 }
 
 //New creates a new bitbucketConsumer
-func New(consumerKey string, privateKey []byte, URL, apiURL, uiURL, proxyURL, username, token string, store cache.Store, disableStatus bool) sdk.VCSServer {
+func New(URL, apiURL, uiURL, proxyURL string, store cache.Store) sdk.VCSServer {
+	return &bitbucketConsumer{
+		URL:      URL,
+		apiURL:   apiURL,
+		uiURL:    uiURL,
+		proxyURL: proxyURL,
+		cache:    store,
+	}
+}
+
+// DEPRECATED VCS
+func NewDeprecated(consumerKey string, privateKey []byte, URL, apiURL, uiURL, proxyURL, username, token string, store cache.Store, disableStatus bool) sdk.VCSServer {
 	return &bitbucketConsumer{
 		ConsumerKey:      consumerKey,
 		PrivateKey:       privateKey,

@@ -32,7 +32,18 @@ type gerritConsumer struct {
 }
 
 // New instantiate a new gerrit consumer
-func New(URL string, store cache.Store, disableStatus bool, disableStatusDetail bool, sshPort int, reviewerName, reviewerToken string) sdk.VCSServer {
+func New(URL string, store cache.Store, sshPort int, reviewerName, reviewerToken string) sdk.VCSServer {
+	return &gerritConsumer{
+		URL:           URL,
+		cache:         store,
+		sshPort:       sshPort,
+		reviewerName:  reviewerName,
+		reviewerToken: reviewerToken,
+	}
+}
+
+// DEPRECATED VCS
+func NewDeprecated(URL string, store cache.Store, disableStatus bool, disableStatusDetail bool, sshPort int, reviewerName, reviewerToken string) sdk.VCSServer {
 	return &gerritConsumer{
 		URL:                 URL,
 		cache:               store,

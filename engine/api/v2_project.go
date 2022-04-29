@@ -154,7 +154,7 @@ func (api *API) getVCSProjectHandler() ([]service.RbacChecker, service.Handler) 
 			}
 			defer tx.Rollback() // nolint
 
-			vcsProject, err := vcs.LoadVCSByProject(context.Background(), tx, pKey, vcsProjectName, gorpmapping.GetOptions.WithDecryption)
+			vcsProject, err := vcs.LoadVCSByProject(context.Background(), tx, pKey, vcsProjectName)
 			if err != nil {
 				return err
 			}

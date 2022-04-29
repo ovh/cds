@@ -1171,9 +1171,6 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	}))
 	u.Groups = append(u.Groups, proj.ProjectGroups[0].Group)
 
-	// Add repo manager
-	proj.VCSServers = make([]sdk.ProjectVCSServerLink, 0, 1)
-
 	vcsServer := sdk.ProjectVCSServerLink{
 		ProjectID: proj.ID,
 		Name:      "repoManServ",
