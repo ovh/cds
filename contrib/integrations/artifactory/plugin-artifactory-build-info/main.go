@@ -148,8 +148,17 @@ func (e *artifactoryBuildInfoPlugin) Run(ctx context.Context, opts *integrationp
 		return fail("unable to compute build info: %v", err)
 	}
 	buildInfoRequest.Modules = modules
-	if _, err := artiClient.PublishBuildInfo(buildInfoRequest, artifactoryProjectKey); err != nil {
-		return fail("unable to push build info: %v", err)
+	var nbAttempts int
+	for {
+		nbAttempts++
+		_, err := artiClient.PublishBuildInfo(buildInfoRequest, artifactoryProjectKey)
+		if err == nil {
+			break
+		} else if nbAttempts >= 3 {
+			return fail("unable to push build info: %v", err)
+		} else {
+			fmt.Printf("Error while pushing buildinfo %s %s. Retrying...\n", buildInfoName, version)
+		}
 	}
 
 	// Temporary code
