@@ -65,34 +65,33 @@ func CanUploadRunResult(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 		return false, sdk.WrapError(sdk.ErrInvalidData, "unable to upload artifact on a terminated job")
 	}
 
+	// We don't check duplicate filename duplicates for artifact manager
+	if runResultCheck.ResultType == sdk.WorkflowRunResultTypeArtifactManager {
+		return true, nil
+	}
+
 	// Check File Name
 	runResults, err := LoadRunResultsByRunIDAndType(ctx, db, runResultCheck.RunID, runResultCheck.ResultType)
 	if err != nil {
 		return false, sdk.WrapError(err, "unable to load run results for run %d", runResultCheck.RunID)
 	}
-	for _, result := range runResults {
+	for _, runResult := range runResults {
 		var fileName string
 		switch runResultCheck.ResultType {
 		case sdk.WorkflowRunResultTypeArtifact:
-			refArt, err := result.GetArtifact()
+			refArt, err := runResult.GetArtifact()
 			if err != nil {
 				return false, err
 			}
 			fileName = refArt.Name
 		case sdk.WorkflowRunResultTypeCoverage:
-			refCov, err := result.GetCoverage()
+			refCov, err := runResult.GetCoverage()
 			if err != nil {
 				return false, err
 			}
 			fileName = refCov.Name
-		case sdk.WorkflowRunResultTypeArtifactManager:
-			refArt, err := result.GetArtifactManager()
-			if err != nil {
-				return false, err
-			}
-			fileName = refArt.Name
 		case sdk.WorkflowRunResultTypeStaticFile:
-			refArt, err := result.GetStaticFile()
+			refArt, err := runResult.GetStaticFile()
 			if err != nil {
 				return false, err
 			}
@@ -103,28 +102,10 @@ func CanUploadRunResult(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 			continue
 		}
 
-		// We accept same names for artifact-manager managed artifacts for different repository types
-		// It means that we can have docker image and help chart with the same name
-		if runResultCheck.ResultType == sdk.WorkflowRunResultTypeArtifactManager {
-			resultCheckArt, err := result.GetArtifactManager()
-			if err != nil {
-				return false, err
-			}
-
-			resultArt, err := result.GetArtifactManager()
-			if err != nil {
-				return false, err
-			}
-
-			if resultCheckArt.RepoType != resultArt.RepoType {
-				continue
-			}
-		}
-
 		// If we find a run result with same check, check subnumber
 		var previousNodeRunUpload *sdk.WorkflowNodeRun
 		for _, nr := range nrs {
-			if nr.ID != result.WorkflowNodeRunID {
+			if nr.ID != runResult.WorkflowNodeRunID {
 				continue
 			}
 			previousNodeRunUpload = &nr
@@ -135,10 +116,10 @@ func CanUploadRunResult(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 		}
 
 		// Check Sub num
-		if result.SubNum == nrs[0].SubNumber {
+		if runResult.SubNum == nrs[0].SubNumber {
 			return false, sdk.WrapError(sdk.ErrConflictData, "artifact %s has already been uploaded", runResultCheck.Name)
 		}
-		if result.SubNum > nrs[0].SubNumber {
+		if runResult.SubNum > nrs[0].SubNumber {
 			return false, sdk.WrapError(sdk.ErrConflictData, "artifact %s cannot be uploaded into a previous run", runResultCheck.Name)
 		}
 	}
@@ -192,8 +173,8 @@ func AddResult(ctx context.Context, db *gorp.DbMap, store cache.Store, wr *sdk.W
 }
 
 // Check validity of the request + complete runResuklt with md5,size,type
-func verifyAddResultArtifactManager(ctx context.Context, db gorp.SqlExecutor, store cache.Store, wr *sdk.WorkflowRun, runResult *sdk.WorkflowRunResult) (string, error) {
-	artResult, err := runResult.GetArtifactManager()
+func verifyAddResultArtifactManager(ctx context.Context, db gorp.SqlExecutor, store cache.Store, wr *sdk.WorkflowRun, newRunResult *sdk.WorkflowRunResult) (string, error) {
+	artNewResult, err := newRunResult.GetArtifactManager()
 	if err != nil {
 		return "", err
 	}
@@ -227,24 +208,72 @@ func verifyAddResultArtifactManager(ctx context.Context, db gorp.SqlExecutor, st
 	if err != nil {
 		return "", err
 	}
-	fileInfo, err := artifactClient.GetFileInfo(artResult.RepoName, artResult.Path)
+	fileInfo, err := artifactClient.GetFileInfo(artNewResult.RepoName, artNewResult.Path)
 	if err != nil {
 		return "", err
 	}
-	artResult.Size = fileInfo.Size
-	artResult.MD5 = fileInfo.Md5
-	artResult.RepoType = fileInfo.Type
-	if artResult.FileType == "" {
-		artResult.FileType = artResult.RepoType
+	artNewResult.Size = fileInfo.Size
+	artNewResult.MD5 = fileInfo.Md5
+	artNewResult.RepoType = fileInfo.Type
+	if artNewResult.FileType == "" {
+		artNewResult.FileType = artNewResult.RepoType
 	}
 
-	if err := artResult.IsValid(); err != nil {
+	if err := artNewResult.IsValid(); err != nil {
 		return "", err
 	}
-	dataUpdated, _ := json.Marshal(artResult)
-	runResult.DataRaw = dataUpdated
+	dataUpdated, _ := json.Marshal(artNewResult)
+	newRunResult.DataRaw = dataUpdated
 
-	cacheKey := GetRunResultKey(runResult.WorkflowRunID, runResult.Type, artResult.Name)
+	// Check existing run-result duplicates
+	var nrs []sdk.WorkflowNodeRun
+	for _, nodeRuns := range wr.WorkflowNodeRuns {
+		if len(nodeRuns) < 1 {
+			continue
+		}
+		// Get last noderun
+		nodeRun := nodeRuns[0]
+		if nodeRun.ID != newRunResult.WorkflowNodeRunID {
+			continue
+		}
+		nrs = nodeRuns
+	}
+	runResults, err := LoadRunResultsByRunIDAndType(ctx, db, wr.ID, newRunResult.Type)
+	if err != nil {
+		return "", sdk.WrapError(err, "unable to load run results for run %d", wr.ID)
+	}
+	for _, runResult := range runResults {
+		artRunResult, _ := runResult.GetArtifactManager()
+		// if name is different: no problem
+		if artRunResult.Name != artNewResult.Name {
+			continue
+		}
+		// if name is the same but type is different: no problem
+		if artRunResult.RepoType != artNewResult.RepoType {
+			continue
+		}
+		// It can also be a new run
+		var previousNodeRunUpload *sdk.WorkflowNodeRun
+		for _, nr := range nrs {
+			if nr.ID != runResult.WorkflowNodeRunID {
+				continue
+			}
+			previousNodeRunUpload = &nr
+			break
+		}
+		if previousNodeRunUpload == nil {
+			return "", sdk.NewErrorFrom(sdk.ErrConflictData, "run-result %s has already been created from another pipeline", artNewResult.Name)
+		}
+		// Check Sub num
+		if runResult.SubNum == nrs[0].SubNumber {
+			return "", sdk.NewErrorFrom(sdk.ErrConflictData, "run-result %s has already been created", artNewResult.Name)
+		}
+		if runResult.SubNum > nrs[0].SubNumber {
+			return "", sdk.NewErrorFrom(sdk.ErrConflictData, "run-result %s cannot be created into a previous run", artNewResult.Name)
+		}
+	}
+
+	cacheKey := GetRunResultKey(newRunResult.WorkflowRunID, newRunResult.Type, artNewResult.Name)
 	b, err := store.Exist(cacheKey)
 	if err != nil {
 		return cacheKey, err
