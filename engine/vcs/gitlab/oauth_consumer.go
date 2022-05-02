@@ -131,6 +131,7 @@ func (g *gitlabConsumer) GetAuthorizedClient(ctx context.Context, vcsAuth sdk.VC
 			uiURL:               g.uiURL,
 			disableStatus:       g.disableStatus,
 			disableStatusDetail: g.disableStatusDetail,
+			proxyURL:            g.proxyURL,
 		}
 		c.client.SetBaseURL(g.URL + "/api/v4")
 		return c, nil
@@ -143,6 +144,7 @@ func (g *gitlabConsumer) GetAuthorizedClient(ctx context.Context, vcsAuth sdk.VC
 		uiURL:               g.uiURL,
 		disableStatus:       g.disableStatus,
 		disableStatusDetail: g.disableStatusDetail,
+		proxyURL:            g.proxyURL,
 	}
 	c.client.SetBaseURL(g.URL + "/api/v4")
 	return c, nil

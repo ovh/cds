@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/telemetry"
@@ -81,6 +82,14 @@ func (b *bitbucketClient) CreateHook(ctx context.Context, repo string, hook *sdk
 		return err
 	}
 
+	if b.proxyURL != "" {
+		lastIndexSlash := strings.LastIndex(hook.URL, "/")
+		if b.proxyURL[len(b.proxyURL)-1] == '/' {
+			lastIndexSlash++
+		}
+		hook.URL = b.proxyURL + hook.URL[lastIndexSlash:]
+	}
+
 	for _, h := range hooks {
 		if h.URL == hook.URL {
 			return nil
@@ -91,7 +100,7 @@ func (b *bitbucketClient) CreateHook(ctx context.Context, repo string, hook *sdk
 		hook.Events = sdk.BitbucketEventsDefault
 	}
 
-	url := fmt.Sprintf("/projects/%s/repos/%s/webhooks", project, slug)
+	urlc := fmt.Sprintf("/projects/%s/repos/%s/webhooks", project, slug)
 	request := WebHook{
 		URL:           hook.URL,
 		Events:        hook.Events,
@@ -104,7 +113,7 @@ func (b *bitbucketClient) CreateHook(ctx context.Context, repo string, hook *sdk
 	if err != nil {
 		return sdk.WithStack(err)
 	}
-	if err := b.do(ctx, "POST", "core", url, nil, values, &request, nil); err != nil {
+	if err := b.do(ctx, "POST", "core", urlc, nil, values, &request, nil); err != nil {
 		return sdk.WrapError(err, "unable to get enable webhook")
 	}
 	hook.ID = fmt.Sprintf("%d", request.ID)

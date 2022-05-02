@@ -338,7 +338,8 @@ func unwrap(ctx context.Context, db gorp.SqlExecutor, p *dbProject, opts []LoadO
 		}
 		if !found {
 			toadd := sdk.VCSProject{
-				Name: vcsDeprecated.Name,
+				Name:      vcsDeprecated.Name,
+				CreatedBy: vcsDeprecated.Username,
 			}
 			proj.VCSServers = append(proj.VCSServers, toadd)
 		}

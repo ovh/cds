@@ -93,7 +93,6 @@ func (b *bitbucketClient) PullRequests(ctx context.Context, repo string, opts sd
 
 // PullRequestComment push a new comment on a pull request
 func (b *bitbucketClient) PullRequestComment(ctx context.Context, repo string, prRequest sdk.VCSPullRequestCommentRequest) error {
-
 	project, slug, err := getRepo(repo)
 	if err != nil {
 		return sdk.WithStack(err)

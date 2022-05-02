@@ -77,6 +77,7 @@ func (g *bitbucketConsumer) GetAuthorizedClient(ctx context.Context, vcsAuth sdk
 		return &bitbucketClient{
 			consumer:   *g,
 			vcsProject: vcsAuth.VCSProject,
+			proxyURL:   g.proxyURL,
 		}, nil
 	}
 	return &bitbucketClient{
@@ -85,5 +86,6 @@ func (g *bitbucketConsumer) GetAuthorizedClient(ctx context.Context, vcsAuth sdk
 		accessTokenSecret: vcsAuth.AccessTokenSecret,
 		token:             g.token,
 		username:          g.username,
+		proxyURL:          g.proxyURL,
 	}, nil
 }

@@ -153,12 +153,14 @@ func (g *githubClient) repoByFullname(ctx context.Context, fullname string) (Rep
 
 func (g *githubClient) UserHasWritePermission(ctx context.Context, fullname string) (bool, error) {
 	owner := strings.SplitN(fullname, "/", 2)[0]
-	if g.username == "" {
-		return false, sdk.WrapError(sdk.ErrUserNotFound, "No user found in configuration")
-	}
-	if g.username == owner {
-		log.Debug(ctx, "githubClient.UserHasWritePermission> nothing to do ¯\\_(ツ)_/¯")
-		return true, nil
+	if g.personalAccessToken == "" { // DEPRECATED VCS
+		if g.username == "" {
+			return false, sdk.WrapError(sdk.ErrUserNotFound, "No user found in configuration")
+		}
+		if g.username == owner {
+			log.Debug(ctx, "githubClient.UserHasWritePermission> nothing to do ¯\\_(ツ)_/¯")
+			return true, nil
+		}
 	}
 
 	url := "/repos/" + fullname + "/collaborators/" + g.username + "/permission"

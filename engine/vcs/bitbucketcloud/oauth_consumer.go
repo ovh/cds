@@ -99,6 +99,7 @@ func (consumer *bitbucketcloudConsumer) GetAuthorizedClient(ctx context.Context,
 			Cache:               consumer.Cache,
 			apiURL:              consumer.apiURL,
 			uiURL:               consumer.uiURL,
+			proxyURL:            consumer.proxyURL,
 		}
 		return c, nil
 	}
