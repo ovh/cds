@@ -31,37 +31,27 @@
                 </div>
                 <div class="two wide right aligned field labelPadding">
                     <a class="pointing"
-                        (click)="prepareEditRequirements(); requirementModal.show({inverted: false, closable: false, autofocus: false})">
+                        (click)="prepareEditRequirements(); requirementModalVisible = true">
                         {{ editableAction.requirements.length + ' '}}{{'common_requirements' | translate }}
                     </a>
-                    <sm-modal class="large" title="{{ 'common_requirements' | translate }}" #requirementModal>
-                        <modal-content>
-                            <div class="ui form">
-                                <div class="field">
-                                    <app-requirements-list [workerModels]="workerModels" [suggest]="suggest"
-                                        [requirements]="editableAction.requirements" [edit]="edit"
-                                        (onChange)="editableAction.hasChanged = true"
-                                        (event)="requirementEvent($event)"></app-requirements-list>
-                                    <div class="requirementForm" *ngIf="edit && pipeline">
-                                        <h3>{{ 'requirement_add' | translate }}</h3>
-                                        <app-requirements-form [workerModels]="workerModels"
-                                            [config]="configRequirements" [suggest]="suggest" [modal]="requirementModal"
-                                            (event)="requirementEvent($event)"></app-requirements-form>
-                                    </div>
-                                    <div class="requirementForm" *ngIf="edit && !pipeline">
-                                        <app-requirements-form [workerModels]="workerModels" [suggest]="suggest"
-                                            [config]="configRequirements" [modal]="requirementModal"
-                                            (event)="requirementEvent($event)">
-                                        </app-requirements-form>
-                                    </div>
-                                </div>
+                    <nz-modal [nzVisible]="requirementModalVisible" nzTitle="Action requirements" nzWidth="900px"
+                              (nzOnCancel)="requirementModalVisible = false">
+                        <div *nzModalContent class="modalContent">
+                            <app-requirements-list [workerModels]="workerModels" [suggest]="suggest"
+                                                   [requirements]="editableAction.requirements" [edit]="edit"
+                                                   (onChange)="editableAction.hasChanged = true" (event)="requirementEvent($event)">
+                            </app-requirements-list>
+                            <div class="requirementForm" *ngIf="edit && pipeline">
+                                <app-requirements-form [workerModels]="workerModels" [suggest]="suggest"
+                                                       [config]="configRequirements"
+                                                       (event)="requirementEvent($event)">
+                                </app-requirements-form>
                             </div>
-                        </modal-content>
-                        <modal-actions>
-                            <button class="ui grey button"
-                                (click)="requirementModal.hide();parseRequirements();">{{ 'common_close' | translate }}</button>
-                        </modal-actions>
-                    </sm-modal>
+                        </div>
+                        <div *nzModalFooter>
+                            <button nz-button (click)="requirementModalVisible = false;parseRequirements();">Close</button>
+                        </div>
+                    </nz-modal>
                 </div>
             </div>
         </div>

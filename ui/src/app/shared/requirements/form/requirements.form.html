@@ -1,85 +1,86 @@
-<form class="ui form requirementForm" #formAddRequirement="ngForm">
-    <div class="fields">
-        <div class="three wide field">
-            <div class="field">
-                <sm-select class="search" *ngIf="availableRequirements.length > 0" (onChange)="selectType()" [(model)]="newRequirement.type" [options]="{'fullTextSearch': true}" placeholder="{{ 'requirement_type' | translate }}">
-                    <option *ngFor="let r of availableRequirements" value="{{r}}">{{r}}</option>
-                </sm-select>
-            </div>
+<form nz-form name="addReqForm" *ngIf="availableRequirements.length > 0" #formAddRequirement="ngForm">
+    <div nz-row>
+        <div nz-col nzSpan="6">
+            <nz-form-item>
+                <nz-select [(ngModel)]="newRequirement.type" (ngModelChange)="selectType()" name="selectType"
+                           nzPlaceHolder="{{ 'requirement_type' | translate }}">
+                    <nz-option *ngFor="let r of availableRequirements" [nzValue]="r" [nzLabel]="r"></nz-option>
+                </nz-select>
+            </nz-form-item>
         </div>
-        <div class="ten wide field">
-            <div class="field" *ngIf="newRequirement.type === 'service'">
-                <label for="requirementname">
-                        {{ 'requirement_hostname_service' | translate }}
-                    </label>
-                <input name="requirementname" id="requirementname" [disabled]="newRequirement.type !== 'service'" auto-complete autocomplete="off" type="text" required pattern="[a-zA-Z0-9\-\._]*" placeholder="{{placeholderTypeName[newRequirement.type]}}" [source]="suggest"
-                    [min-chars]="3" [(ngModel)]="newRequirement.name" [no-match-found-text]="false">
-                <div *ngIf="formAddRequirement.invalid && !formAddRequirement.pristine" class="ui error message">
-                    <p>{{'requirement_hostname_error' | translate}}</p>
+        <div nz-col nzSpan="12">
+            <nz-form-item>
+                <div *ngIf="newRequirement.type === 'service'" class="container">
+                    {{ 'requirement_hostname_service' | translate }}
+                    <input nz-input [nzAutocomplete]="autoSuggestService" name="requirementname" id="requirementname" [disabled]="newRequirement.type !== 'service'" type="text" required pattern="[a-zA-Z0-9\-\._]*" placeholder="{{placeholderTypeName[newRequirement.type]}}" [(ngModel)]="newRequirement.name">
+                    <nz-autocomplete [nzDataSource]="suggest" nzBackfill #autoSuggestService></nz-autocomplete>
+                    <div *ngIf="formAddRequirement.invalid && !formAddRequirement.pristine" class="ui error message">
+                        <p>{{'requirement_hostname_error' | translate}}</p>
+                    </div>
                 </div>
-            </div>
-            <div class="field" *ngIf="newRequirement.type === 'os-architecture'">
-                <input name="name" [disabled]="newRequirement.type !== 'os-architecture'" auto-complete autocomplete="off" type="text" required placeholder="{{'requirement_placeholder_name_' + newRequirement.type | translate}}" [source]="suggestWithOsArch" [min-chars]="0"
-                    [(ngModel)]="newRequirement.value" (keyup)="setName(formAddRequirement)" (blur)="setName(formAddRequirement)">
-                <div *ngIf="formAddRequirement.invalid && !formAddRequirement.pristine" class="ui error message">
-                    <p>{{'requirement_os-architecture_error' | translate}}</p>
+                <div class="container" *ngIf="newRequirement.type === 'os-architecture'">
+                    <input nz-input [nzAutocomplete]="autoSuggestArch"  name="name" [disabled]="newRequirement.type !== 'os-architecture'" type="text" required placeholder="{{'requirement_placeholder_name_' + newRequirement.type | translate}}"
+                           [(ngModel)]="newRequirement.value" (keyup)="setName(formAddRequirement)" (blur)="setName(formAddRequirement)">
+                    <nz-autocomplete [nzDataSource]="suggestWithOsArch" nzBackfill #autoSuggestArch></nz-autocomplete>
+                    <div *ngIf="formAddRequirement.invalid && !formAddRequirement.pristine" class="ui error message">
+                        <p>{{'requirement_os-architecture_error' | translate}}</p>
+                    </div>
                 </div>
-            </div>
-            <div *ngIf="newRequirement.type !== 'model' && newRequirement.type !== 'os-architecture'">
-                <label for="value" *ngIf="newRequirement.type === 'service'">
-                        {{ 'requirement_value_service' | translate }}
-                    </label>
-                <div class="field">
-                    <input name="value" id="value" auto-complete autocomplete="off" type="text" [source]="suggest" [min-chars]="3" [(ngModel)]="newRequirement.value" (keyup)="setName(formAddRequirement)" placeholder="{{placeholderTypeValue[newRequirement.type]}}"
-                        [no-match-found-text]="false">
+                <div class="container" *ngIf="newRequirement.type !== 'model' && newRequirement.type !== 'os-architecture'">
+                    <span *ngIf="newRequirement.type === 'service'">{{ 'requirement_value_service' | translate }}</span>
+                    <input nz-input name="value" id="value" [nzAutocomplete]="autoServiceImage" type="text" [(ngModel)]="newRequirement.value" (keyup)="setName(formAddRequirement)" placeholder="{{placeholderTypeValue[newRequirement.type]}}">
+                    <nz-autocomplete [nzDataSource]="suggest" nzBackfill #autoServiceImage></nz-autocomplete>
                 </div>
-            </div>
 
-            <div *ngIf="newRequirement.type === 'model' && workerModels != null">
-                <input name="value-workermodel" auto-complete autocomplete="off" type="text" [source]="suggestWithWorkerModel" [min-chars]="0" [(ngModel)]="newRequirement.value" (keyup)="setName(formAddRequirement)" (blur)="setName(formAddRequirement)" placeholder="{{'requirement_placeholder_value_model' | translate}}"
-                    [no-match-found-text]="false">
-                <p *ngIf="workerModelLinked != null">
-                    <a class="ui" [routerLink]="['/settings', 'worker-model', newRequirement.value]" target="_blank" (click)="closeModal()">
+                <div class="container" *ngIf="newRequirement.type === 'model' && workerModels != null">
+                    <input nz-input name="value-workermodel" [nzAutocomplete]="autoModel" type="text" [(ngModel)]="newRequirement.value" (keyup)="setName(formAddRequirement)" (blur)="setName(formAddRequirement)" placeholder="{{'requirement_placeholder_value_model' | translate}}">
+                    <nz-autocomplete [nzDataSource]="suggestWithWorkerModel" nzBackfill #autoModel></nz-autocomplete>
+                    <p *ngIf="workerModelLinked != null">
+                        <a class="ui" [routerLink]="['/settings', 'worker-model', newRequirement.value]" target="_blank">
                             {{ 'requirement_settings_worker_model' | translate }} {{ newRequirement.value }}
                         </a>
-                </p>
-                <label for="opts">
-                        {{ 'requirement_options' | translate }}
-                    </label>
-                <textarea name="opts" id="opts" [(ngModel)]="newRequirement.opts" rows="3" placeholder="{{'requirement_placeholder_opts_model' | translate}}"></textarea>
-            </div>
-            <div *ngIf="newRequirement.type === 'service'">
-                <label for="servopts">
-                        {{ 'requirement_options' | translate }}
-                    </label>
-                <textarea name="servopts" id="servopts" [(ngModel)]="newRequirement.opts" rows="3" placeholder="{{'requirement_placeholder_opts_service' | translate}}"></textarea>
-            </div>
+                    </p>
+                    {{ 'requirement_options' | translate }}
+                    <textarea nz-input name="opts" id="opts" [(ngModel)]="newRequirement.opts" rows="3" placeholder="{{'requirement_placeholder_opts_model' | translate}}"></textarea>
+                </div>
+                <div class="container" *ngIf="newRequirement.type === 'service'">
+                    {{ 'requirement_options' | translate }}
+                    <textarea nz-input name="servopts" id="servopts" [(ngModel)]="newRequirement.opts" rows="3" placeholder="{{'requirement_placeholder_opts_service' | translate}}"></textarea>
+                </div>
+            </nz-form-item>
         </div>
-        <div class="one wide center mtop8" *ngIf="newRequirement.type === 'model' && workerModelLinked != null">
-            <span *ngIf="workerModelLinked.is_official" [smDirTooltip]="'worker_model_official_tooltip' | translate" smDirPosition="top center"><i class="check circle outline icon large green"></i></span>
-            <span *ngIf="!workerModelLinked.is_official" [smDirTooltip]="'worker_model_unofficial' | translate" smDirPosition="top center"><i class="remove circle outline icon large red"></i></span>
-            <span *ngIf="workerModelLinked.is_deprecated" [smDirTooltip]="'worker_model_deprecated_tooltip' | translate" smDirPosition="top center"><i class="exclamation circle icon large orange"></i></span>
+        <div nz-col nzSpan="2">
+            <nz-form-item *ngIf="workerModelLinked">
+                <span *ngIf="workerModelLinked.is_official" nz-tooltip nzTooltipTitle="{{'worker_model_official_tooltip' | translate}}" nzTooltipPlacement="top"><i class="check circle outline icon large green"></i></span>
+                <span *ngIf="!workerModelLinked.is_official" nz-tooltip nzTooltipTitle="{{'worker_model_unofficial' | translate}}" nzTooltipPlacement="top"><i class="remove circle outline icon large red"></i></span>
+                <span *ngIf="workerModelLinked.is_deprecated" nz-tooltip nzTooltipTitle="{{'worker_model_deprecated_tooltip' | translate}}" nzTooltipPlacement="top"><i class="exclamation circle icon large orange"></i></span>
+            </nz-form-item>
         </div>
-        <div class="two wide center field">
-            <div suiPopup
-            [popupText]="popupText"
-            popupPlacement="top"
-            *ngIf="(newRequirement.type === 'model' && config.disableModel) || (newRequirement.type === 'hostname' && config.disableHostname) || (newRequirement.type === 'region' && config.disableRegion)">
-                <button class="ui blue icon button"
-                    [disabled]="!isFormValid"
-                    (click)="onSubmitAddRequirement(formAddRequirement)">
-                    <i class="plus icon"></i>
-                </button>
-            </div>
-            <div *ngIf="(newRequirement.type !== 'model' || !config.disableModel) && (newRequirement.type !== 'hostname' || !config.disableHostname) && (newRequirement.type !== 'region' || !config.disableRegion)">
-                <button class="ui blue icon button"
-                    [disabled]="!isFormValid"
-                    (click)="onSubmitAddRequirement(formAddRequirement)">
-                    <i class="plus icon"></i>
-                </button>
-            </div>
+        <div nz-col nzSpan="4">
+            <nz-form-item>
+                <div suiPopup
+                     [popupText]="popupText"
+                     popupPlacement="top"
+                     *ngIf="(newRequirement.type === 'model' && config.disableModel) || (newRequirement.type === 'hostname' && config.disableHostname) || (newRequirement.type === 'region' && config.disableRegion)">
+                    <button class="ui blue icon button"
+                            [disabled]="!isFormValid"
+                            (click)="onSubmitAddRequirement(formAddRequirement)">
+                        <i class="plus icon"></i>
+                    </button>
+                </div>
+                <div *ngIf="(newRequirement.type !== 'model' || !config.disableModel) && (newRequirement.type !== 'hostname' || !config.disableHostname) && (newRequirement.type !== 'region' || !config.disableRegion)">
+                    <button class="ui blue icon button"
+                            [disabled]="!isFormValid"
+                            (click)="onSubmitAddRequirement(formAddRequirement)">
+                        <i class="plus icon"></i>
+                    </button>
+                </div>
+            </nz-form-item>
         </div>
     </div>
+
+
+
     <p>
         <i class="fa fa-book"></i>
         <a href="#" [routerLink]="['/docs', 'docs', 'concepts', 'requirement']" target="_blank" rel="noopener noreferrer">

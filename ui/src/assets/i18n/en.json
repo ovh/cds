@@ -550,7 +550,6 @@
   "repoman_modal_verif_code_placeholder": "Verification code",
   "repoman_modal_verif_text": "Click on the following link to finalize the link between CDS and the repository manager: ",
   "repoman_modal_verif_title": "Repository manager authorization",
-  "requirement_add": "Add a requirement",
   "requirement_type": "Type",
   "requirement_value": "Value",
   "requirement_help_binary_0": "Requirement type 'binary': CDS will choose a worker with this binary in his path.",

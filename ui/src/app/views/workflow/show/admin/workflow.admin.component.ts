@@ -42,6 +42,7 @@ import { ProjectIntegration } from 'app/model/integration.model';
 import { ConfigService } from 'app/service/config/config.service';
 import { APIConfig } from 'app/model/config.service';
 import { WorkflowDeleteModalComponent } from './delete-modal/delete-modal.component';
+import { NzModalService } from 'ng-zorro-antd/modal';
 
 declare let CodeMirror: any;
 
@@ -53,9 +54,6 @@ declare let CodeMirror: any;
 })
 @AutoUnsubscribe()
 export class WorkflowAdminComponent implements OnInit, OnDestroy {
-
-    @ViewChild('workflowDeleteModal')
-    workflowDeleteModal: WorkflowDeleteModalComponent;
 
     _project: Project;
     @Input()
@@ -143,6 +141,7 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
         private _cd: ChangeDetectorRef,
         private _dragularService: DragulaService,
         private _theme: ThemeStore,
+        private _nzModalService: NzModalService,
         private _modalService: SuiModalService,
         private _eventService: EventService,
         private _configService: ConfigService
@@ -434,7 +433,12 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
     }
 
     deleteWorkflow(): void {
-        this.workflowDeleteModal.show();
+        this._nzModalService.create({
+            nzTitle: 'Deleting workflow ' + this._workflow.name,
+            nzContent: WorkflowDeleteModalComponent,
+            nzFooter: null,
+            nzWidth: 900
+        });
     }
 
     addIntegration() {

@@ -5,7 +5,6 @@ import { Requirement } from 'app/model/requirement.model';
 import { WorkerModel } from 'app/model/worker-model.model';
 import { RequirementStore } from 'app/service/requirement/requirement.store';
 import { RequirementEvent } from 'app/shared/requirements/requirement.event.model';
-import { SemanticModalComponent } from '@sgu/ng-semantic';
 import { finalize, first } from 'rxjs/operators';
 
 export const OSArchitecture = 'os-architecture';
@@ -26,8 +25,8 @@ export class RequirementsFormComponent implements OnInit {
         }
     }
     get suggest() {
- return this._suggest;
-}
+        return this._suggest;
+    }
 
     _workerModels: Array<WorkerModel>;
     @Input() set workerModels(wms: Array<WorkerModel>) {
@@ -43,11 +42,9 @@ export class RequirementsFormComponent implements OnInit {
         }
     }
     get workerModels() {
- return this._workerModels;
-}
+        return this._workerModels;
+    }
 
-
-    @Input() modal: SemanticModalComponent;
     @Input() config: { disableModel?: boolean, disableHostname?: boolean, disableRegion?: boolean };
 
     @Output() event = new EventEmitter<RequirementEvent>();
@@ -59,7 +56,6 @@ export class RequirementsFormComponent implements OnInit {
     suggestWithOsArch: Array<string> = [];
     workerModelLinked: WorkerModel;
     isFormValid = false;
-    modelTypeClass: string;
     popupText: string;
     placeholderTypeName: {};
     placeholderTypeValue: {};
@@ -104,6 +100,7 @@ export class RequirementsFormComponent implements OnInit {
                 this.placeholderTypeName[a] = placeHolderName;
                 this.placeholderTypeValue[a] = placeHolderValue;
             });
+            this._cd.markForCheck();
         });
     }
 
@@ -166,12 +163,6 @@ export class RequirementsFormComponent implements OnInit {
                 this.newRequirement.name = this.newRequirement.value;
         }
         this.computeFormValid(form);
-    }
-
-    closeModal() {
-        if (this.modal) {
-            this.modal.hide();
-        }
     }
 
     computeDisplayLinkWorkerModel(): WorkerModel {

@@ -68,6 +68,7 @@ export class ActionFormComponent implements OnDestroy {
     configRequirements: { disableModel?: boolean, disableHostname?: boolean, disableRegion?: boolean } = {};
     stepFormExpended: boolean;
     workerModels: Array<WorkerModel>;
+    requirementModalVisible = false;
 
     constructor(
         private sharedService: SharedService,
@@ -152,6 +153,7 @@ export class ActionFormComponent implements OnDestroy {
             case 'delete':
                 let indexDelete = this.action.requirements.indexOf(r.requirement);
                 if (indexDelete >= 0) {
+                    this.action.requirements = Object.assign([], this.action.requirements);
                     this.action.requirements.splice(indexDelete, 1);
                 }
                 if (r.requirement.type === 'model') {
@@ -165,6 +167,7 @@ export class ActionFormComponent implements OnDestroy {
                 }
                 break;
         }
+        this._cd.markForCheck();
     }
 
     prepareEditRequirements(): void {

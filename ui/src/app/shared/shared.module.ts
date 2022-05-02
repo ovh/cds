@@ -129,7 +129,7 @@ import { NzIconModule } from 'ng-zorro-antd/icon';
 import { IconDefinition } from '@ant-design/icons-angular';
 import { BellFill, CaretUpFill, CheckOutline, KeyOutline, HistoryOutline, PhoneFill, PlusSquareOutline, QuestionOutline, RestOutline, SaveOutline, SettingFill, ShareAltOutline, StarOutline, ToolFill, UnlockFill } from '@ant-design/icons-angular/icons'
 import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
-import {NzTagModule} from 'ng-zorro-antd/tag';
+import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzPopoverModule } from 'ng-zorro-antd/popover';
 import { NzBadgeModule } from 'ng-zorro-antd/badge';
 import { NzTabsModule } from 'ng-zorro-antd/tabs';
@@ -137,6 +137,9 @@ import { NzListModule } from 'ng-zorro-antd/list';
 import { NzSwitchModule } from 'ng-zorro-antd/switch';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
+import { NzModalModule } from 'ng-zorro-antd/modal';
+import { NzTableModule } from 'ng-zorro-antd/table';
+import { NzAutocompleteModule } from 'ng-zorro-antd/auto-complete';
 
 const ngZorroConfig: NzConfig = {
     notification: {nzPauseOnHover: true, nzPlacement: "topRight"},
@@ -147,6 +150,7 @@ const icons: IconDefinition[] = [ BellFill, CaretUpFill, CheckOutline, KeyOutlin
 
 @NgModule({
     imports: [
+        NzAutocompleteModule,
         NzBadgeModule,
         NzButtonModule,
         NzCardModule,
@@ -157,6 +161,7 @@ const icons: IconDefinition[] = [ BellFill, CaretUpFill, CheckOutline, KeyOutlin
         NzInputModule,
         NzLayoutModule,
         NzListModule,
+        NzModalModule,
         NzNotificationModule,
         NzMenuModule,
         NzPopconfirmModule,
@@ -164,6 +169,7 @@ const icons: IconDefinition[] = [ BellFill, CaretUpFill, CheckOutline, KeyOutlin
         NzSelectModule,
         NzSwitchModule,
         NzTabsModule,
+        NzTableModule,
         NzTagModule,
         NzToolTipModule,
         CommonModule,
@@ -334,6 +340,7 @@ const icons: IconDefinition[] = [ BellFill, CaretUpFill, CheckOutline, KeyOutlin
         MarkdownModule,
         MenuComponent,
         MomentModule,
+        NzAutocompleteModule,
         NgForNumber,
         NgxSemanticModule,
         NgxAutoScrollDirective,
@@ -347,6 +354,7 @@ const icons: IconDefinition[] = [ BellFill, CaretUpFill, CheckOutline, KeyOutlin
         NzInputModule,
         NzLayoutModule,
         NzListModule,
+        NzModalModule,
         NzMenuModule,
         NzNotificationModule,
         NzPopconfirmModule,
@@ -355,6 +363,7 @@ const icons: IconDefinition[] = [ BellFill, CaretUpFill, CheckOutline, KeyOutlin
         NzSwitchModule,
         NzTabsModule,
         NzTagModule,
+        NzTableModule,
         NzToolTipModule,
         PaginationComponent,
         ParameterFormComponent,

@@ -2,7 +2,7 @@
 
 import { APP_BASE_HREF } from '@angular/common';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
 import { Requirement } from '../../../model/requirement.model';
@@ -12,6 +12,7 @@ import { WorkerModelService } from '../../../service/worker-model/worker-model.s
 import { SharedModule } from '../../shared.module';
 import { RequirementEvent } from '../requirement.event.model';
 import { RequirementsListComponent } from './requirements.list.component';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 describe('CDS: Requirement List Component', () => {
 
@@ -32,6 +33,7 @@ describe('CDS: Requirement List Component', () => {
                 TranslateModule.forRoot(),
                 RouterTestingModule.withRoutes([]),
                 SharedModule,
+                BrowserAnimationsModule,
                 HttpClientTestingModule
             ]
         }).compileComponents();
@@ -69,20 +71,17 @@ describe('CDS: Requirement List Component', () => {
         fixture.detectChanges();
         tick(50);
 
-        let compiled = fixture.debugElement.nativeElement;
-        expect(compiled.querySelector('.ui.red.button')).toBeTruthy('Delete button must be displayed');
-        compiled.querySelector('.ui.red.button').click();
-
-        fixture.detectChanges();
-        tick(50);
-
         spyOn(fixture.componentInstance.event, 'emit');
 
-        expect(compiled.querySelector('.ui.buttons')).toBeTruthy('Confirmation buttons must be displayed');
-        compiled.querySelector('.ui.red.button.active').click();
+        let compiled = fixture.debugElement.nativeElement;
+        let button = compiled.querySelector('button[name="deleteBtn"]')
+        expect(button).toBeTruthy('Delete button must be displayed');
+        button.click();
 
         expect(fixture.componentInstance.event.emit).toHaveBeenCalledWith(
             new RequirementEvent('delete', fixture.componentInstance.requirements[0])
         );
+
+        flush()
     }));
 });
