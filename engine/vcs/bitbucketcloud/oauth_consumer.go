@@ -95,11 +95,12 @@ func (consumer *bitbucketcloudConsumer) RefreshToken(ctx context.Context, refres
 func (consumer *bitbucketcloudConsumer) GetAuthorizedClient(ctx context.Context, vcsAuth sdk.VCSAuth) (sdk.VCSAuthorizedClient, error) {
 	if vcsAuth.VCSProject != nil {
 		c := &bitbucketcloudClient{
-			PersonalAccessToken: vcsAuth.VCSProject.Auth["token"],
-			Cache:               consumer.Cache,
-			apiURL:              consumer.apiURL,
-			uiURL:               consumer.uiURL,
-			proxyURL:            consumer.proxyURL,
+			appPassword: vcsAuth.VCSProject.Auth["token"],
+			username:    vcsAuth.VCSProject.Auth["username"],
+			Cache:       consumer.Cache,
+			apiURL:      consumer.apiURL,
+			uiURL:       consumer.uiURL,
+			proxyURL:    consumer.proxyURL,
 		}
 		return c, nil
 	}

@@ -64,9 +64,9 @@ type postOptions struct {
 }
 
 func (client *bitbucketcloudClient) setAuth(ctx context.Context, req *http.Request) error {
-	if client.PersonalAccessToken != "" {
-		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", client.PersonalAccessToken))
-		log.Debug(ctx, "Bitbucketcloud API>> Request with token url:%s len:%d", req.URL.String(), len(client.PersonalAccessToken))
+	if client.appPassword != "" && client.username != "" {
+		req.SetBasicAuth(client.username, client.appPassword)
+		log.Debug(ctx, "Bitbucketcloud API>> Request with basicAuth url:%s username:%v len:%d", req.URL.String(), client.username, len(client.appPassword))
 	} else if client.OAuthToken != "" {
 		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", client.OAuthToken))
 		log.Debug(ctx, "Bitbucketcloud API>> Request with OAuthToken url:%s len: %d", req.URL.String(), len(client.OAuthToken))

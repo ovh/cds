@@ -83,6 +83,14 @@ func (client *bitbucketcloudClient) PullRequests(ctx context.Context, fullname s
 	return responsePullRequest, nil
 }
 
+type BitbucketCloudPullRequestComment struct {
+	Content struct {
+		Raw    string `json:"raw,omitempty"`
+		Markup string `json:"markup,omitempty"`
+		HTML   string `json:"html,omitempty"`
+	} `json:"content,omitempty"`
+}
+
 // PullRequestComment push a new comment on a pull request
 func (client *bitbucketcloudClient) PullRequestComment(ctx context.Context, repo string, prRequest sdk.VCSPullRequestCommentRequest) error {
 	if client.DisableStatus {
@@ -90,10 +98,10 @@ func (client *bitbucketcloudClient) PullRequestComment(ctx context.Context, repo
 		return nil
 	}
 
-	path := fmt.Sprintf("/repos/%s/pullrequests/%d/comments", repo, prRequest.ID)
-	payload := map[string]string{
-		"body": prRequest.Message,
-	}
+	path := fmt.Sprintf("/repositories/%s/pullrequests/%d/comments", repo, prRequest.ID)
+	payload := BitbucketCloudPullRequestComment{}
+	payload.Content.Raw = prRequest.Message
+
 	values, _ := json.Marshal(payload)
 	res, err := client.post(ctx, path, "application/json", bytes.NewReader(values), &postOptions{skipDefaultBaseURL: false, asUser: true})
 	if err != nil {
@@ -110,7 +118,7 @@ func (client *bitbucketcloudClient) PullRequestComment(ctx context.Context, repo
 	log.Debug(ctx, "%v", string(body))
 
 	if res.StatusCode != 201 {
-		return sdk.WrapError(err, "Unable to add comment on bitbucketcloud. Status code : %d - Body: %s", res.StatusCode, body)
+		return sdk.WrapError(err, "Unable to add comment. Status code : %d - Body: %s", res.StatusCode, body)
 	}
 
 	return nil
