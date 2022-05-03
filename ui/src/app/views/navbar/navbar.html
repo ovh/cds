@@ -8,7 +8,7 @@
             {{ 'navbar_projects' | translate }}
         </a>
 
-        <button nz-dropdown [nzDropdownMenu]="bookmarks" nzTrigger="click" nz-button nzType="text" [nzClickHide]="true" class="dropdown title">
+        <button nz-dropdown [nzDropdownMenu]="bookmarks" nz-button nzType="text" [nzClickHide]="true" class="dropdown title">
             Bookmarks <i nz-icon nzType="caret-down" nzTheme="fill"></i>
         </button>
         <nz-dropdown-menu #bookmarks="nzDropdownMenu">
@@ -260,7 +260,9 @@
         <!-- HELP -->
         <ng-container *ngIf="help?.content?.length > 0">
             <div nz-popover [nzPopoverContent]="popupTemplateHelp" class="icon popover">
-                <i nz-icon nzType="phone" nzTheme="fill"></i>
+                <div>
+                    <i nz-icon nzType="phone" nzTheme="fill"></i>
+                </div>
             </div>
         </ng-container>
         <ng-template #popupTemplateHelp>
