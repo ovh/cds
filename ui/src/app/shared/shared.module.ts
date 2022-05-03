@@ -140,6 +140,7 @@ import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 import { NzModalModule } from 'ng-zorro-antd/modal';
 import { NzTableModule } from 'ng-zorro-antd/table';
 import { NzAutocompleteModule } from 'ng-zorro-antd/auto-complete';
+import { NzAlertModule } from 'ng-zorro-antd/alert';
 
 const ngZorroConfig: NzConfig = {
     notification: {nzPauseOnHover: true, nzPlacement: "topRight"},
@@ -151,6 +152,7 @@ const icons: IconDefinition[] = [ BellFill, CaretUpFill, CheckOutline, KeyOutlin
 @NgModule({
     imports: [
         NzAutocompleteModule,
+        NzAlertModule,
         NzBadgeModule,
         NzButtonModule,
         NzCardModule,
@@ -344,6 +346,7 @@ const icons: IconDefinition[] = [ BellFill, CaretUpFill, CheckOutline, KeyOutlin
         NgForNumber,
         NgxSemanticModule,
         NgxAutoScrollDirective,
+        NzAlertModule,
         NzBadgeModule,
         NzButtonModule,
         NzCardModule,

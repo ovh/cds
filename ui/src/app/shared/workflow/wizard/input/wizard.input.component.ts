@@ -91,7 +91,7 @@ export class WorkflowWizardNodeInputComponent implements OnInit, OnDestroy {
             this.editableNode = cloneDeep(n);
             if (this.editableNode) {
                 this.init();
-            } else {
+            } else if (this.noderun) {
                 this.payloadString = JSON.stringify(this.noderun.payload, undefined, 4);
             }
             this._cd.markForCheck();
@@ -155,10 +155,6 @@ export class WorkflowWizardNodeInputComponent implements OnInit, OnDestroy {
         }
     }
 
-    reindent(): void {
-        this.updateValue(this.payloadString);
-    }
-
     pushEvent(): void {
         this.inputChange.emit(true);
     }
@@ -167,8 +163,8 @@ export class WorkflowWizardNodeInputComponent implements OnInit, OnDestroy {
         this.pushEvent();
     }
 
-    changeCodeMirror(eventRoot: Event, sendEvent: boolean): void {
-        if (eventRoot.type !== 'click') {
+    changeCodeMirror(eventRoot: any, sendEvent: boolean): void {
+        if (eventRoot.type !== 'click' && eventRoot.type !== 'change') {
             this.updateValue(eventRoot);
         }
         if (!this.codemirror || !this.codemirror.instance) {
@@ -212,7 +208,6 @@ export class WorkflowWizardNodeInputComponent implements OnInit, OnDestroy {
         if (!payload) {
             return;
         }
-
         let previousPayload = JSON.stringify(cloneDeep(this.editableNode.context.default_payload), undefined, 4);
         try {
             newPayload = JSON.parse(payload);
@@ -223,8 +218,7 @@ export class WorkflowWizardNodeInputComponent implements OnInit, OnDestroy {
         }
         this.payloadString = JSON.stringify(newPayload, undefined, 4);
         this.editableNode.context.default_payload = JSON.parse(this.payloadString);
-
-        if (this.payloadString !== previousPayload) {
+        if (previousPayload !== payload) {
             this.pushEvent();
         }
     }

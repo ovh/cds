@@ -1,86 +1,42 @@
-<ng-template let-context let-modal="modal" #nodeEditModal>
-    <ng-container *ngIf="currentNodeName">
-        <div class="header">
-            <div class="modalHeader">
-                <ng-container *ngIf="!hookSelected">{{currentNodeName}}</ng-container>
-                <ng-container *ngIf="hookSelected">{{ 'workflow_node_hook_modal_title' | translate }}</ng-container>
-            </div>
-        </div>
-        <div class="content">
-            <div class="ui grid">
-                <div class="four wide column">
-                    <div class="ui secondary vertical pointing menu">
-                        <ng-container *ngIf="!hookSelected">
-                            <ng-container *ngIf="currentNodeType === 'pipeline' || currentNodeType === 'fork'">
-                                <a class="item" [class.active]="selected === 'context'" (click)="changeView('context')">
-                                    {{ 'workflow_node_context_label' | translate }}
-                                </a>
-                            </ng-container>
-                            <ng-container *ngIf="currentNodeType === 'pipeline'">
-                                <a class="item" [class.active]="selected === 'input'" (click)="changeView('input')">
-                                    {{ 'workflow_node_input' | translate }}
-                                </a>
-                            </ng-container>
-                            <ng-container *ngIf="currentNodeType === 'outgoinghook'">
-                                <a class="item" [class.active]="selected === 'outgoinghook'"
-                                    (click)="changeView('outgoinghook')">
-                                    {{ 'workflow_node_type_outgoing_hook' | translate }}
-                                </a>
-                            </ng-container>
-                            <a class="item" [class.active]="selected === 'conditions'"
-                                (click)="changeView('conditions')">
-                                {{ 'workflow_node_condition_label' | translate }}
-                            </a>
-                            <a class="item" [class.active]="selected === 'permissions'"
-                                (click)="changeView('permissions')">
-                                Permissions
-                            </a>
-                        </ng-container>
-                        <ng-container *ngIf="hookSelected">
-                            <a class="item" [class.active]="selected === 'hook'" (click)="changeView('hook')">
-                                Hook
-                            </a>
-                            <a class="item" [class.active]="selected === 'conditions'"
-                                (click)="changeView('conditions')">
-                                {{ 'workflow_node_condition_label' | translate }}
-                            </a>
-                        </ng-container>
-                    </div>
-                </div>
-                <div class="twelve wide column">
-                    <div [ngSwitch]="selected">
-                        <ng-container *ngSwitchCase="'context'">
-                            <app-workflow-node-context [workflow]="workflow" [readonly]="readonly" (contextChange)="pushChange($event)"></app-workflow-node-context>
-                        </ng-container>
-                        <ng-container *ngSwitchCase="'input'">
-                            <app-workflow-node-input [workflow]="workflow" [readonly]="readonly" (inputChange)="pushChange($event)"></app-workflow-node-input>
-                        </ng-container>
-                        <ng-container *ngSwitchCase="'outgoinghook'">
-                            <app-workflow-node-outgoinghook [workflow]="workflow" [mode]="readonly?'ro':'update'" (outgoinghookChange)="pushChange($event)" [display]="true"></app-workflow-node-outgoinghook>
-                        </ng-container>
-                        <ng-container *ngSwitchCase="'conditions'">
-                            <app-workflow-node-conditions [workflow]="workflow" [readonly]="readonly" (conditionsChange)="pushChange($event)"></app-workflow-node-conditions>
-                        </ng-container>
-                        <ng-container *ngSwitchCase="'permissions'">
-                            <ng-container *ngIf="groups">
-                                <app-permission-list [permissions]="groups" (event)="groupManagement($event)"
-                                    (permissionChange)="pushChange($event)"
-                                    [edit]="!readonly && !(workflow.from_repository && workflow.from_repository.length > 0)">
-                                </app-permission-list>
-                            </ng-container>
-                            <ng-container
-                                *ngIf="!readonly && !(workflow.from_repository && workflow.from_repository.length > 0)">
-                                <h3>{{ 'workflow_node_permissions_form_title' | translate }}</h3>
-                                <app-workflow-permission-form [groups]="workflow.groups" (createGroupPermissionEvent)="groupManagement($event)"
-                                    [loading]="loading"></app-workflow-permission-form>
-                            </ng-container>
-                        </ng-container>
-                        <ng-container *ngSwitchCase="'hook'">
-                            <app-workflow-node-hook-form [workflow]="workflow" [mode]="readonly?'ro':'update'" ></app-workflow-node-hook-form>
-                        </ng-container>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </ng-container>
-</ng-template>
+<nz-modal [(nzVisible)]="openModal" [nzFooter]="null" nzWidth="1080px" [nzTitle]="hookSelected?'Hook edition':currentNodeName" (nzOnCancel)="close()">
+    <div *nzModalContent>
+        <nz-tabset nzTabPosition="left" *ngIf="currentNodeName">
+            <ng-container *ngIf="!hookSelected">
+                <nz-tab nzTitle="Execution context">
+                    <app-workflow-node-context [workflow]="workflow" [readonly]="readonly" (contextChange)="pushChange($event)"></app-workflow-node-context>
+                </nz-tab>
+                <nz-tab nzTitle="Inputs">
+                    <app-workflow-node-input [workflow]="workflow" [readonly]="readonly" (inputChange)="pushChange($event)"></app-workflow-node-input>
+                </nz-tab>
+                <nz-tab nzTitle="Outgoing Hook" *ngIf="currentNodeType === 'outgoinghook'">
+                    <app-workflow-node-outgoinghook [workflow]="workflow" [mode]="readonly?'ro':'update'" (outgoinghookChange)="pushChange($event)" [display]="true"></app-workflow-node-outgoinghook>
+                </nz-tab>
+                <nz-tab nzTitle="Run conditions">
+                    <app-workflow-node-conditions [workflow]="workflow" [readonly]="readonly" (conditionsChange)="pushChange($event)"></app-workflow-node-conditions>
+                </nz-tab>
+                <nz-tab nzTitle="Permissions">
+                    <ng-container *ngIf="groups">
+                        <app-permission-list [permissions]="groups" (event)="groupManagement($event)"
+                                             (permissionChange)="pushChange($event)"
+                                             [edit]="!readonly && !(workflow.from_repository && workflow.from_repository.length > 0)">
+                        </app-permission-list>
+                    </ng-container>
+                    <ng-container
+                            *ngIf="!readonly && !(workflow.from_repository && workflow.from_repository.length > 0)">
+                        <h3>{{ 'workflow_node_permissions_form_title' | translate }}</h3>
+                        <app-workflow-permission-form [groups]="workflow.groups" (createGroupPermissionEvent)="groupManagement($event)"
+                                                      [loading]="loading"></app-workflow-permission-form>
+                    </ng-container>
+                </nz-tab>
+            </ng-container>
+            <ng-container *ngIf="hookSelected">
+                <nz-tab nzTitle="Hook">
+                    <app-workflow-node-hook-form [workflow]="workflow" [mode]="readonly?'ro':'update'" ></app-workflow-node-hook-form>
+                </nz-tab>
+                <nz-tab nzTitle="Run conditions">
+                    <app-workflow-node-conditions [workflow]="workflow" [readonly]="readonly" (conditionsChange)="pushChange($event)"></app-workflow-node-conditions>
+                </nz-tab>
+            </ng-container>
+        </nz-tabset>
+    </div>
+</nz-modal>

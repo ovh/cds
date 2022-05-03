@@ -14,7 +14,6 @@ import { WorkflowWNodeMenuEditComponent } from 'app/shared/workflow/menu/edit-no
 import { WorkflowDeleteNodeComponent } from 'app/shared/workflow/modal/delete/workflow.node.delete.component';
 import { WorkflowHookModalComponent } from 'app/shared/workflow/modal/hook-add/hook.modal.component';
 import { WorkflowTriggerComponent } from 'app/shared/workflow/modal/node-add/workflow.trigger.component';
-import { WorkflowNodeEditModalComponent } from 'app/shared/workflow/modal/node-edit/node.edit.modal.component';
 import { WorkflowNodeRunParamComponent } from 'app/shared/workflow/node/run/node.run.param.component';
 import { ProjectState } from 'app/store/project.state';
 import {
@@ -64,8 +63,6 @@ export class WorkflowWNodeComponent implements OnInit, OnDestroy {
     workflowTrigger: WorkflowTriggerComponent;
     @ViewChild('workflowAddHook')
     workflowAddHook: WorkflowHookModalComponent;
-    @ViewChild('nodeEditModal')
-    nodeEditModal: WorkflowNodeEditModalComponent;
 
     constructor(
         private _activatedRoute: ActivatedRoute,

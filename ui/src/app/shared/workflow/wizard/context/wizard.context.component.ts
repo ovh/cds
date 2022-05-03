@@ -62,7 +62,7 @@ export class WorkflowWizardNodeContextComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.nodeSub = this.node$.subscribe(n => {
            this.node = cloneDeep(n);
-            if (this.node.context.application_id !== 0 && this.applications) {
+            if (this.node?.context?.application_id !== 0 && this.applications) {
                 this.change();
             }
             this.updateVCSStatusCheck();
@@ -124,6 +124,9 @@ export class WorkflowWizardNodeContextComponent implements OnInit, OnDestroy {
     }
 
     change(): void {
+        if (!this.node) {
+            return;
+        }
         this.node.context.application_id = Number(this.node.context.application_id) || 0;
         this.node.context.environment_id = Number(this.node.context.environment_id) || 0;
         this.node.context.pipeline_id = Number(this.node.context.pipeline_id) || 0;
