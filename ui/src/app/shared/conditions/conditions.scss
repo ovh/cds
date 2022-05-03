@@ -1,18 +1,36 @@
-@import '../../../common';
+.header {
+  height: 25px;
+  text-align: end;
+  margin-bottom: 25px;
+}
+.content {
+  .title h4 {
+    display: inline;
+  }
 
-td {
-    &.middle-aligned {
-        vertical-align: middle !important;
+  nz-table {
+    th {
+      button {
+        float: right;
+      }
     }
+    td {
+      nz-select {
+        width: 100%;
+      }
+      button {
+        float: right;
+      }
+    }
+  }
+
+  .helper {
+    float: right;
+
+    i {
+      margin-right: 5px;
+    }
+  }
+
 }
 
-.mb {
-    margin-bottom: 20px;
-}
-
-.empty {
-    display: flex;
-    align-items: center;
-    flex-direction: row;
-    justify-content: space-between
-}

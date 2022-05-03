@@ -127,7 +127,7 @@ import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
 import { en_US, NZ_I18N } from 'ng-zorro-antd/i18n';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { IconDefinition } from '@ant-design/icons-angular';
-import { BellFill, CaretUpFill, CheckOutline, KeyOutline, HistoryOutline, PhoneFill, PlusSquareOutline, QuestionOutline, RestOutline, SaveOutline, SettingFill, ShareAltOutline, StarOutline, ToolFill, UnlockFill } from '@ant-design/icons-angular/icons'
+import { BellFill, BookOutline, CaretUpFill, CheckOutline, KeyOutline, HistoryOutline, PhoneFill, PlusOutline, PlusSquareOutline, QuestionOutline, RestOutline, SaveOutline, SettingFill, ShareAltOutline, StarOutline, ToolFill, UnlockFill } from '@ant-design/icons-angular/icons'
 import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzPopoverModule } from 'ng-zorro-antd/popover';
@@ -141,13 +141,14 @@ import { NzModalModule } from 'ng-zorro-antd/modal';
 import { NzTableModule } from 'ng-zorro-antd/table';
 import { NzAutocompleteModule } from 'ng-zorro-antd/auto-complete';
 import { NzAlertModule } from 'ng-zorro-antd/alert';
+import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
 
 const ngZorroConfig: NzConfig = {
     notification: {nzPauseOnHover: true, nzPlacement: "topRight"},
     icon: {nzTheme: "outline"}
 };
 
-const icons: IconDefinition[] = [ BellFill, CaretUpFill, CheckOutline, KeyOutline, HistoryOutline, PhoneFill, PlusSquareOutline, QuestionOutline, RestOutline, SaveOutline, SettingFill, ShareAltOutline, StarOutline, ToolFill, UnlockFill ];
+const icons: IconDefinition[] = [ BellFill, BookOutline, CaretUpFill, CheckOutline, KeyOutline, HistoryOutline, PhoneFill, PlusOutline, PlusSquareOutline, QuestionOutline, RestOutline, SaveOutline, SettingFill, ShareAltOutline, StarOutline, ToolFill, UnlockFill ];
 
 @NgModule({
     imports: [
@@ -156,6 +157,7 @@ const icons: IconDefinition[] = [ BellFill, CaretUpFill, CheckOutline, KeyOutlin
         NzBadgeModule,
         NzButtonModule,
         NzCardModule,
+        NzCheckboxModule,
         NzDropDownModule,
         NzFormModule,
         NzGridModule,
@@ -350,6 +352,7 @@ const icons: IconDefinition[] = [ BellFill, CaretUpFill, CheckOutline, KeyOutlin
         NzBadgeModule,
         NzButtonModule,
         NzCardModule,
+        NzCheckboxModule,
         NzDropDownModule,
         NzFormModule,
         NzGridModule,

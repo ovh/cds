@@ -1,130 +1,98 @@
-<div class="mb">
-    <div class="ui right aligned field">
-        <sui-checkbox class="toggle" [(ngModel)]="isAdvanced">{{'workflow_node_condition_advanced' | translate }}
-        </sui-checkbox>
-    </div>
-    <div class="ui warning message" *ngIf="conditions.plain && conditions.plain.length && conditions.lua_script">
-        <p>
-            {{'workflow_node_condition_warning' | translate}}
-        </p>
-    </div>
+<div class="header">
+    {{'workflow_node_condition_advanced' | translate }}
+    <nz-switch name="mutex" [(ngModel)]="isAdvanced"></nz-switch>
+</div>
+<div class="content">
+    <ng-container *ngIf="conditions.plain && conditions.plain.length && conditions.lua_script">
+        <nz-alert nzType="warning" nzMessage="{{'workflow_node_condition_warning' | translate}}"></nz-alert>
+    </ng-container>
     <ng-container *ngIf="!isAdvanced">
-        <div class="ui info message" *ngIf="!conditions || !conditions.plain || conditions.plain.length === 0">
-            <div class="empty">
-                {{ 'workflow_node_trigger_condition_no' | translate }}
-                <button class="ui right floated blue button" (click)="addEmptyCondition()" *ngIf="!readonly">
-                    {{ 'btn_add' | translate }}
-                </button>
-            </div>
-        </div>
-        <ng-container *ngIf="conditions?.plain?.length > 0">
-            <table class="ui fixed celled table">
-                <thead>
-                    <tr>
-                        <th class="four wide">{{ 'workflow_node_trigger_condition_name' | translate }}</th>
-                        <th class="three wide">{{ 'workflow_node_trigger_condition_operator' | translate }}</th>
-                        <th class="five wide">{{ 'workflow_node_trigger_condition_value' | translate }}</th>
-                        <th class="three wide" *ngIf="!readonly">
-                            <button class="ui right floated blue icon button" (click)="addEmptyCondition()">
-                                <i class="plus icon"></i>
-                            </button>
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr *ngFor="let c of conditions?.plain; let i = index">
-                        <td class="middle-aligned">
-                            <div class="field">
-                                <ng-container *ngIf="conditionNames">
-                                    <app-select-filter [disabled]="readonly" [searchable]="true" [(value)]="c.variable"
-                                        [options]="conditionNames" (valueChange)="pushChange('name')">
-                                    </app-select-filter>
-                                </ng-container>
-                            </div>
-                        </td>
-                        <td>
-                            <div *ngIf="c && operators && !readonly; then operatorWrite;else operatorRead">
-                            </div>
-                            <ng-template #operatorWrite>
-                                <sui-select class="fluid selection" [(ngModel)]="c.operator"
-                                    (ngModelChange)="pushChange('operator')" [options]="operators" [isSearchable]="true"
-                                    [isDisabled]="readonly" labelField="value" valueField="key" #operatorSelect>
-                                    <sui-select-option *ngFor="let option of operatorSelect.filteredOptions"
-                                        [value]="option"></sui-select-option>
-                                </sui-select>
-                            </ng-template>
-                            <ng-template #operatorRead>
-                                <div class="ui input">{{c.operator}}</div>
-                            </ng-template>
-                        </td>
-                        <td>
-                            <div *ngIf="!readonly; then valueWrite;else valueRead"></div>
-                            <ng-template #valueWrite>
-                                <div class="ui fluid input">
-                                    <ng-container *ngIf="c.variable === 'cds.status' && statuses">
-                                        <sui-select class="selection" name="value" [(ngModel)]="c.value"
-                                            (ngModelChange)="pushChange('value')" [options]="statuses" #selectStatus>
-                                            <sui-select-option *ngFor="let s of selectStatus.filteredOptions"
-                                                [value]="s">
-                                            </sui-select-option>
-                                        </sui-select>
-                                    </ng-container>
-                                    <ng-container *ngIf="c.variable === 'cds.manual'">
-                                        <input class="ui checkbox" type="checkbox" [(ngModel)]="c.value"
-                                            (ngModelChange)="pushChange('manual')">
-                                    </ng-container>
-                                    <input type="text" [(ngModel)]="c.value" (ngModelChange)="pushChange('all')"
-                                        *ngIf="c.variable !== 'cds.status' && c.variable !== 'cds.manual'">
-                                </div>
-                            </ng-template>
-                            <ng-template #valueRead>
-                                <div class="ui input">{{c.value}}</div>
-                            </ng-template>
-                        </td>
-                        <td class="center" *ngIf="!readonly">
-                            <app-delete-button (event)="removeCondition(i)"></app-delete-button>
-                        </td>
-                    </tr>
-                </tbody>
-                <tfoot *ngIf="getNbOfPages() > 1">
-                    <tr>
-                        <th colspan="4">
-                            <div class="ui right floated pagination menu">
-                                <a class="icon item" (click)="downPage()">
-                                    <i class="left chevron icon"></i>
-                                </a>
-                                <a class="item" *ngFor="let page of getNbOfPages() | ngForNumber"
-                                    (click)="goTopage(page)" [class.active]="currentPage === page">{{page}}</a>
-                                <a class="icon item" (click)="upPage()">
-                                    <i class="right chevron icon"></i>
-                                </a>
-                            </div>
-                        </th>
-                    </tr>
-                </tfoot>
-            </table>
-        </ng-container>
+        <nz-table [nzData]="conditions?.plain" #condTab *ngIf="conditionNames">
+            <thead>
+            <tr>
+                <th>Variable name</th>
+                <th>Operator</th>
+                <th>Expected value</th>
+                <th *ngIf="!readonly">
+                    <button nz-button nzType="primary" (click)="addEmptyCondition()">
+                        <i nz-icon nzType="plus" nzTheme="outline"></i>
+                    </button>
+                </th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr *ngFor="let c of condTab.data; let i = index">
+                <td>
+                    <nz-select nzShowSearch (nzOnSearch)="onSearchName($event)" [(ngModel)]="c.variable" (ngModelChange)="pushChange('name')" [nzDisabled]="readonly">
+                        <nz-option *ngFor="let n of conditionNames" [nzValue]="n" [nzLabel]="n"></nz-option>
+                    </nz-select>
+                </td>
+                <td>
+                    <div *ngIf="c && operators && !readonly; then operatorWrite;else operatorRead">
+                    </div>
+                    <ng-template #operatorWrite>
+                        <nz-select nzShowSearch  [(ngModel)]="c.operator"  (ngModelChange)="pushChange('operator')" [nzDisabled]="readonly">
+                            <nz-option *ngFor="let o of operators" [nzValue]="o.key" [nzLabel]="o.value"></nz-option>
+                        </nz-select>
+                    </ng-template>
+                    <ng-template #operatorRead>
+                        {{c.operator}}
+                    </ng-template>
+                </td>
+                <td>
+                    <div *ngIf="!readonly; then valueWrite;else valueRead"></div>
+                    <ng-template #valueWrite>
+                        <ng-container *ngIf="c.variable === 'cds.status' && statuses">
+                            <nz-select name="value" nzShowSearch [(ngModel)]="c.value" (ngModelChange)="pushChange('value')">
+                                <nz-option *ngFor="let s of statuses" [nzLabel]="s" [nzValue]="s"></nz-option>
+                            </nz-select>
+                        </ng-container>
+                        <ng-container *ngIf="c.variable === 'cds.manual'">
+                            <label name="value" nz-checkbox [(ngModel)]="c.value"></label>
+                        </ng-container>
+                        <ng-container *ngIf="c.variable !== 'cds.status' && c.variable !== 'cds.manual'">
+                            <input name="value" nz-input [(ngModel)]="c.value" (ngModelChange)="pushChange('all')" />
+                        </ng-container>
+                    </ng-template>
+                    <ng-template #valueRead>
+                        {{c.value}}
+                    </ng-template>
+                </td>
+                <td *ngIf="!readonly">
+                    <button nz-button nzDanger nzType="primary" (click)="removeCondition(i)">Remove</button>
+                </td>
+            </tr>
+            </tbody>
+        </nz-table>
     </ng-container>
     <ng-container *ngIf="isAdvanced">
-        <div>
-            <div class="mb">
-                <h4 class="inline">{{'workflow_node_condition_lua_title' | translate}}</h4>
-                <em> {{'workflow_node_condition_lua_help' | translate}}</em>
-                <div class="right floated">
+        <div class="title">
+            <h4>Lua script</h4>
+            <em>(should return a boolean)</em>
+            <h4>:</h4>
+        </div>
+
+        <nz-row>
+            <nz-col [nzSpan]="18">
+                <codemirror [(ngModel)]="conditions.lua_script"
+                            (ngModelChange)="pushChange('codemirror', $event)" (change)="changeCodeMirror()"
+                            [config]="codeMirrorConfig" #textareaCodeMirror></codemirror>
+            </nz-col>
+            <nz-col [nzSpan]="6">
+                <div class="helper" *ngIf="isAdvanced">
                     <div>
-                        <i class="book icon"></i><a href="https://devhints.io/lua" target="_blank"
-                            rel="noopener noreferrer">Lua Cheatsheet</a>
+                        <i nz-icon nzType="book" nzTheme="outline"></i><a href="https://devhints.io/lua" target="_blank" rel="noopener noreferrer">Lua Cheatsheet</a>
                     </div>
                     <div>
-                        <i class="book icon"></i><a
+                        <i nz-icon nzType="book" nzTheme="outline"></i><a
                             href="#" [routerLink]="['/docs', 'docs', 'concepts', 'workflow', 'run-conditions']" target="_blank"
                             rel="noopener noreferrer">{{'common_cds_documentation' | translate}}</a>
                     </div>
                 </div>
-            </div>
-            <codemirror [(ngModel)]="conditions.lua_script" (ngModelChange)="pushChange('codemirror', $event)"
-                (change)="changeCodeMirror()" [config]="codeMirrorConfig" #textareaCodeMirror>
-            </codemirror>
-        </div>
+            </nz-col>
+        </nz-row>
+
+
     </ng-container>
 </div>
+

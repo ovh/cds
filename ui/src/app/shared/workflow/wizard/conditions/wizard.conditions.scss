@@ -1,18 +1,8 @@
-@import '../../../../../common';
-
-td {
-    &.middle-aligned {
-        vertical-align: middle !important;
-    }
+.conditions {
+  margin-left: 25px;
+  margin-right: 25px;
 }
-
-.mb {
-    margin-bottom: 20px;
-}
-
-.empty {
-    display:flex;
-    align-items:center;
-    flex-direction: row;
-    justify-content: space-between
+.button {
+  padding-top: 20px;
+  text-align: end;
 }
