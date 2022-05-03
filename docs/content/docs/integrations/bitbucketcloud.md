@@ -18,14 +18,14 @@ This integration enables some features:
 
 ## How to configure Bitbucket Cloud integration
 
-+ Follow documentation on https://support.atlassian.com/bitbucket-cloud/docs/use-oauth-on-bitbucket-cloud/, section **Create a consumer**
-+ Bitbucket requests some informations:
-++ **name** you can simply write CDS
-++ **description** is optional
-++ **callback url** must be the URL of your CDS -> `{CDS_UI_URL}/cdsapi/repositories_manager/oauth2/callback` (if you are in development mode you have to omit /cdsapi and replace {CDS_UI_URL} with your API URL)
-++ **URL** is optional.
-++ **Permissions** : select `Account Read`, `Workspace membership Read`, `Repositories Read`, `Webhooks Read and Write`
-+ Click on Save and toggle the consumer name to see the generated `Key` and `Secret`. It correspond to `clientId` and `clientSecret` in the CDS config.toml file.
+- Follow the section **Create a consumer** on documentation https://support.atlassian.com/bitbucket-cloud/docs/use-oauth-on-bitbucket-cloud/  
+- Bitbucket requests some informations:
+ - **name** you can simply write CDS
+ - **description** is optional
+ - **callback url** must be the URL of your CDS -> `{CDS_UI_URL}/cdsapi/repositories_manager/oauth2/callback` (if you are in development mode you have to omit /cdsapi and replace {CDS_UI_URL} with your API URL)
+ - **URL** is optional.
+ - **Permissions** : select `Account Read`, `Workspace membership Read`, `Repositories Read`, `Pull requests Read`, `Webhooks Read and Write`
+- Click on Save and toggle the consumer name to see the generated `Key` and `Secret`. It correspond to `clientId` and `clientSecret` in the CDS config.toml file.
 
 ### Complete CDS Configuration File
 

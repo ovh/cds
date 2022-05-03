@@ -14,7 +14,7 @@ import (
 func (client *bitbucketcloudClient) User(ctx context.Context, username string) (User, error) {
 	var user User
 	url := fmt.Sprintf("/users/%s", username)
-	status, body, _, err := client.get(url)
+	status, body, _, err := client.get(ctx, url)
 	if err != nil {
 		log.Warn(ctx, "bitbucketcloudClient.User> Error %s", err)
 		return user, err
@@ -34,14 +34,14 @@ func (client *bitbucketcloudClient) User(ctx context.Context, username string) (
 func (client *bitbucketcloudClient) CurrentUser(ctx context.Context) (User, error) {
 	var user User
 	url := "/user"
-	cacheKey := cache.Key("vcs", "bitbucketcloud", "users", client.OAuthToken, url)
+	cacheKey := cache.Key("vcs", "bitbucketcloud", "users", client.OAuthToken+client.PersonalAccessToken, url)
 
 	find, err := client.Cache.Get(cacheKey, &user)
 	if err != nil {
 		log.Error(ctx, "cannot get from cache %s: %v", cacheKey, err)
 	}
 	if !find {
-		status, body, _, err := client.get(url)
+		status, body, _, err := client.get(ctx, url)
 		if err != nil {
 			log.Warn(ctx, "bitbucketcloudClient.CurrentUser> Error %s", err)
 			return user, sdk.WithStack(err)
@@ -61,33 +61,33 @@ func (client *bitbucketcloudClient) CurrentUser(ctx context.Context) (User, erro
 	return user, nil
 }
 
-// User Get a current user
-func (client *bitbucketcloudClient) Teams(ctx context.Context) (Teams, error) {
-	var teams Teams
-	url := "/teams?role=member"
-	cacheKey := cache.Key("vcs", "bitbucketcloud", "users", "teams", client.OAuthToken, url)
+// Workspaces Returns a list of workspaces accessible by the authenticated user.
+func (client *bitbucketcloudClient) Workspaces(ctx context.Context) (Workspaces, error) {
+	var workspaces Workspaces
+	url := "/workspaces?role=member"
+	cacheKey := cache.Key("vcs", "bitbucketcloud", "users", "workspaces", client.OAuthToken+client.PersonalAccessToken, url)
 
-	find, err := client.Cache.Get(cacheKey, &teams)
+	find, err := client.Cache.Get(cacheKey, &workspaces)
 	if err != nil {
 		log.Error(ctx, "cannot get from cache %s: %v", cacheKey, err)
 	}
 	if !find {
-		status, body, _, err := client.get(url)
+		status, body, _, err := client.get(ctx, url)
 		if err != nil {
 			log.Warn(ctx, "bitbucketcloudClient.Teams> Error %s", err)
-			return teams, sdk.WithStack(err)
+			return workspaces, sdk.WithStack(err)
 		}
 		if status >= 400 {
-			return teams, sdk.NewError(sdk.ErrNotFound, errorAPI(body))
+			return workspaces, sdk.NewError(sdk.ErrNotFound, errorAPI(body))
 		}
-		if err := sdk.JSONUnmarshal(body, &teams); err != nil {
-			return teams, sdk.WithStack(err)
+		if err := sdk.JSONUnmarshal(body, &workspaces); err != nil {
+			return workspaces, sdk.WithStack(err)
 		}
 		//Put the body on cache for 1 hour
-		if err := client.Cache.SetWithTTL(cacheKey, teams, 60*60); err != nil {
+		if err := client.Cache.SetWithTTL(cacheKey, workspaces, 60*60); err != nil {
 			log.Error(ctx, "cannot SetWithTTL: %s: %v", cacheKey, err)
 		}
 	}
 
-	return teams, nil
+	return workspaces, nil
 }

@@ -86,7 +86,7 @@ func (client *bitbucketcloudClient) Branch(ctx context.Context, fullname string,
 	}
 
 	url := fmt.Sprintf("/repositories/%s/refs/branches/%s", fullname, filters.BranchName)
-	status, body, _, err := client.get(url)
+	status, body, _, err := client.get(ctx, url)
 	if err != nil {
 		return nil, err
 	}

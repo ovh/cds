@@ -221,10 +221,6 @@ func (api *API) getApplicationVCSInfosHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getApplicationVCSInfosHandler> Cannot get client got %s %s : %s", projectKey, app.VCSServer, err)
 		}
 
-		if err := tx.Commit(); err != nil {
-			return sdk.WithStack(err)
-		}
-
 		repositoryFullname := app.RepositoryFullname
 		if remote != "" && remote != app.RepositoryFullname {
 			repositoryFullname = remote
@@ -246,6 +242,10 @@ func (api *API) getApplicationVCSInfosHandler() service.Handler {
 			return sdk.WrapError(errR, "getApplicationVCSInfosHandler> Cannot get remotes from repository %s", repositoryFullname)
 		}
 		resp.Remotes = remotes
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WithStack(err)
+		}
 
 		return service.WriteJSON(w, resp, http.StatusOK)
 	}

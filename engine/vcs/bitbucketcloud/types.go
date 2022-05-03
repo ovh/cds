@@ -190,21 +190,20 @@ type Link struct {
 	Name string `json:"name"`
 }
 
-// Team represent a tema inside bitbucket cloud
-type Team struct {
-	Username    string `json:"username"`
-	DisplayName string `json:"display_name"`
-	UUID        string `json:"uuid"`
-	Type        string `json:"type"`
+// Workspace represent a workspace inside bitbucket cloud. https://developer.atlassian.com/cloud/bitbucket/rest/api-group-workspaces/#api-user-permissions-workspaces-get
+type Workspace struct {
+	Name string `json:"name"`
+	Slug string `json:"slug"`
+	Type string `json:"type"`
 }
 
-type Teams struct {
-	Pagelen  int    `json:"pagelen"`
-	Page     int    `json:"page"`
-	Size     int64  `json:"size"`
-	Values   []Team `json:"values"`
-	Next     string `json:"next"`
-	Previous string `json:"previous,omitempty"`
+type Workspaces struct {
+	Pagelen  int         `json:"pagelen"`
+	Page     int         `json:"page"`
+	Size     int64       `json:"size"`
+	Values   []Workspace `json:"values"`
+	Next     string      `json:"next"`
+	Previous string      `json:"previous,omitempty"`
 }
 
 type Repositories struct {

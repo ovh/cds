@@ -37,7 +37,7 @@ func (client *bitbucketcloudClient) CreateHook(ctx context.Context, repo string,
 	if err != nil {
 		return sdk.WrapError(err, "Cannot marshal body %+v", r)
 	}
-	res, err := client.post(url, "application/json", bytes.NewBuffer(b), nil)
+	res, err := client.post(ctx, url, "application/json", bytes.NewBuffer(b), nil)
 	if err != nil {
 		return sdk.WrapError(err, "bitbucketcloud.CreateHook")
 	}
@@ -149,7 +149,7 @@ func (client *bitbucketcloudClient) UpdateHook(ctx context.Context, repo string,
 	if err != nil {
 		return sdk.WrapError(err, "cannot marshal body %+v", bitbucketHook)
 	}
-	res, err := client.put(url, "application/json", bytes.NewBuffer(b), nil)
+	res, err := client.put(ctx, url, "application/json", bytes.NewBuffer(b), nil)
 	if err != nil {
 		return sdk.WrapError(err, "bitbucketcloud.UpdateHook")
 	}
@@ -167,5 +167,5 @@ func (client *bitbucketcloudClient) UpdateHook(ctx context.Context, repo string,
 }
 
 func (client *bitbucketcloudClient) DeleteHook(ctx context.Context, repo string, hook sdk.VCSHook) error {
-	return client.delete(fmt.Sprintf("/repositories/%s/hooks/%s", repo, hook.ID))
+	return client.delete(ctx, fmt.Sprintf("/repositories/%s/hooks/%s", repo, hook.ID))
 }

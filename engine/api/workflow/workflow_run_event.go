@@ -93,19 +93,14 @@ loopNotif:
 	repoFullName := wr.Workflow.Applications[node.Context.ApplicationID].RepositoryFullname
 
 	//Get the RepositoriesManager Client
-	log.Info(ctx, "######## SendVCSEvent: AAAA")
 	if e.vcsClient == nil {
-		log.Info(ctx, "######## SendVCSEvent: BBBBB")
 		var err error
 		e.vcsClient, err = repositoriesmanager.AuthorizedClient(ctx, tx, store, proj.Key, vcsServerName)
 		if err != nil {
-			log.Info(ctx, "######## SendVCSEvent: CCCC")
 			return sdk.WrapError(err, "can't get AuthorizedClient for %v/%v", proj.Key, vcsServerName)
 		}
-		log.Info(ctx, "######## SendVCSEvent: DDDDD")
 	}
 
-	log.Info(ctx, "######## SendVCSEvent: EEEEE")
 	ref := nodeRun.VCSHash
 	if nodeRun.VCSTag != "" {
 		ref = nodeRun.VCSTag
@@ -366,7 +361,7 @@ func (e *VCSEventMessenger) sendVCSPullRequestComment(ctx context.Context, db go
 
 		//Send comment on pull request
 		for _, pr := range prs {
-			if pr.Head.Branch.DisplayID == nodeRun.VCSBranch && pr.Head.Branch.LatestCommit == nodeRun.VCSHash && !pr.Merged && !pr.Closed {
+			if pr.Head.Branch.DisplayID == nodeRun.VCSBranch && IsSameCommit(pr.Head.Branch.LatestCommit, nodeRun.VCSHash) && !pr.Merged && !pr.Closed {
 				reqComment.ID = pr.ID
 				if err := e.vcsClient.PullRequestComment(ctx, app.RepositoryFullname, reqComment); err != nil {
 					return err
@@ -376,4 +371,17 @@ func (e *VCSEventMessenger) sendVCSPullRequestComment(ctx context.Context, db go
 		}
 	}
 	return nil
+}
+
+func IsSameCommit(sha1, sha1b string) bool {
+	if len(sha1) == len(sha1b) {
+		return sha1 == sha1b
+	}
+	if len(sha1) == 12 && len(sha1b) >= 12 {
+		return sha1 == sha1b[0:len(sha1)]
+	}
+	if len(sha1b) == 12 && len(sha1) >= 12 {
+		return sha1b == sha1[0:len(sha1b)]
+	}
+	return false
 }

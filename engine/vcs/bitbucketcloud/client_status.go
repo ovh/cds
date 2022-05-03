@@ -63,7 +63,7 @@ func (client *bitbucketcloudClient) SetStatus(ctx context.Context, event sdk.Eve
 	}
 	buf := bytes.NewBuffer(b)
 
-	res, err := client.post(path, "application/json", buf, nil)
+	res, err := client.post(ctx, path, "application/json", buf, nil)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to post status")
 	}
@@ -89,7 +89,7 @@ func (client *bitbucketcloudClient) SetStatus(ctx context.Context, event sdk.Eve
 
 func (client *bitbucketcloudClient) ListStatuses(ctx context.Context, repo string, ref string) ([]sdk.VCSCommitStatus, error) {
 	url := fmt.Sprintf("/repositories/%s/commit/%s/statuses", repo, ref)
-	status, body, _, err := client.get(url)
+	status, body, _, err := client.get(ctx, url)
 	if err != nil {
 		return []sdk.VCSCommitStatus{}, sdk.WrapError(err, "bitbucketcloudClient.ListStatuses")
 	}

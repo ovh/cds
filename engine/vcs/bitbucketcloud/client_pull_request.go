@@ -15,7 +15,7 @@ import (
 
 func (client *bitbucketcloudClient) PullRequest(ctx context.Context, fullname string, id string) (sdk.VCSPullRequest, error) {
 	url := fmt.Sprintf("/repositories/%s/pullrequests/%s", fullname, id)
-	status, body, _, err := client.get(url)
+	status, body, _, err := client.get(ctx, url)
 	if err != nil {
 		log.Warn(ctx, "bitbucketcloudClient.Pullrequest> Error %s", err)
 		return sdk.VCSPullRequest{}, err
@@ -90,14 +90,14 @@ func (client *bitbucketcloudClient) PullRequestComment(ctx context.Context, repo
 		return nil
 	}
 
-	path := fmt.Sprintf("/repos/%s/issues/%d/comments", repo, prRequest.ID)
+	path := fmt.Sprintf("/repos/%s/pullrequests/%d/comments", repo, prRequest.ID)
 	payload := map[string]string{
 		"body": prRequest.Message,
 	}
 	values, _ := json.Marshal(payload)
-	res, err := client.post(path, "application/json", bytes.NewReader(values), &postOptions{skipDefaultBaseURL: false, asUser: true})
+	res, err := client.post(ctx, path, "application/json", bytes.NewReader(values), &postOptions{skipDefaultBaseURL: false, asUser: true})
 	if err != nil {
-		return sdk.WrapError(err, "Unable to post status")
+		return sdk.WrapError(err, "Unable to post comment")
 	}
 
 	defer res.Body.Close()
@@ -110,7 +110,7 @@ func (client *bitbucketcloudClient) PullRequestComment(ctx context.Context, repo
 	log.Debug(ctx, "%v", string(body))
 
 	if res.StatusCode != 201 {
-		return sdk.WrapError(err, "Unable to create status on bitbucketcloud. Status code : %d - Body: %s", res.StatusCode, body)
+		return sdk.WrapError(err, "Unable to add comment on bitbucketcloud. Status code : %d - Body: %s", res.StatusCode, body)
 	}
 
 	return nil
@@ -124,7 +124,7 @@ func (client *bitbucketcloudClient) PullRequestCreate(ctx context.Context, repo 
 		"base":  pr.Base.Branch.DisplayID,
 	}
 	values, _ := json.Marshal(payload)
-	res, err := client.post(path, "application/json", bytes.NewReader(values), &postOptions{skipDefaultBaseURL: false, asUser: true})
+	res, err := client.post(ctx, path, "application/json", bytes.NewReader(values), &postOptions{skipDefaultBaseURL: false, asUser: true})
 	if err != nil {
 		return sdk.VCSPullRequest{}, sdk.WrapError(err, "Unable to post status")
 	}

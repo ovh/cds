@@ -396,7 +396,6 @@ func (s *Service) getBranchesHandler() service.Handler {
 		}
 		// Check if access token has been refreshed
 		if vcsAuth.AccessToken != client.GetAccessToken(ctx) {
-			log.Info(ctx, "debug_auth accessToken_diff")
 			w.Header().Set(sdk.HeaderXAccessToken, client.GetAccessToken(ctx))
 		}
 
