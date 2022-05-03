@@ -13,7 +13,7 @@ import (
 
 func isRateLimitReached() bool {
 	if RateLimitReset > 0 && RateLimitReset < int(time.Now().Unix()) {
-		log.Debug(context.Background(), "RateLimitReset reached, it's ok to call github")
+		log.Debug(context.Background(), "RateLimitReset not reached, it's ok to call github")
 		return false
 	}
 	return RateLimitRemaining < 100

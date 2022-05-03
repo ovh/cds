@@ -153,7 +153,7 @@ func (g *githubClient) repoByFullname(ctx context.Context, fullname string) (Rep
 
 func (g *githubClient) UserHasWritePermission(ctx context.Context, fullname string) (bool, error) {
 	owner := strings.SplitN(fullname, "/", 2)[0]
-	if g.personalAccessToken == "" { // DEPRECATED VCS
+	if g.token != "" {
 		if g.username == "" {
 			return false, sdk.WrapError(sdk.ErrUserNotFound, "No user found in configuration")
 		}

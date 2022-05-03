@@ -86,14 +86,14 @@ func (g *githubConsumer) AuthorizeToken(ctx context.Context, state, code string)
 func (g *githubConsumer) GetAuthorizedClient(ctx context.Context, vcsAuth sdk.VCSAuth) (sdk.VCSAuthorizedClient, error) {
 	if vcsAuth.VCSProject != nil {
 		c := &githubClient{
-			GitHubURL:           g.GitHubURL,
-			GitHubAPIURL:        g.GitHubAPIURL,
-			Cache:               g.Cache,
-			uiURL:               g.uiURL,
-			apiURL:              g.apiURL,
-			proxyURL:            g.proxyURL,
-			username:            vcsAuth.VCSProject.Auth["usename"],
-			personalAccessToken: vcsAuth.VCSProject.Auth["token"],
+			GitHubURL:    g.GitHubURL,
+			GitHubAPIURL: g.GitHubAPIURL,
+			Cache:        g.Cache,
+			uiURL:        g.uiURL,
+			apiURL:       g.apiURL,
+			proxyURL:     g.proxyURL,
+			username:     vcsAuth.VCSProject.Auth["username"],
+			token:        vcsAuth.VCSProject.Auth["token"],
 		}
 
 		return c, c.RateLimit(ctx)
