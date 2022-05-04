@@ -1173,8 +1173,7 @@ func (s *Service) deleteHookHandler() service.Handler {
 			}
 		} else {
 			hook = sdk.VCSHook{
-				ID:       hookID,
-				Workflow: true,
+				ID: hookID,
 			}
 		}
 

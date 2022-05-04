@@ -41,8 +41,12 @@ type gitlabConsumer struct {
 
 // New instantiate a new gitlab consumer
 func New(URL, uiURL, proxyURL string, store cache.Store, username, token string) sdk.VCSServer {
+	var url = URL
+	if url == "" {
+		url = "https://gitlab.com"
+	}
 	return &gitlabConsumer{
-		URL:                 URL,
+		URL:                 url,
 		cache:               store,
 		uiURL:               uiURL,
 		proxyURL:            proxyURL,

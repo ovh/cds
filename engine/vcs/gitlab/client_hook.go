@@ -3,7 +3,6 @@ package gitlab
 import (
 	"context"
 	"fmt"
-	"net/url"
 	"strconv"
 	"strings"
 
@@ -31,16 +30,7 @@ func (c *gitlabClient) GetHookByID(ctx context.Context, repo, idS string) (*gitl
 
 //CreateHook enables the defaut HTTP POST Hook in Gitlab
 func (c *gitlabClient) CreateHook(ctx context.Context, repo string, hook *sdk.VCSHook) error {
-	var url string
-	if !hook.Workflow {
-		var err error
-		url, err = buildGitlabURL(hook.URL)
-		if err != nil {
-			return err
-		}
-	} else {
-		url = hook.URL
-	}
+	url := c.buildUrlWithProxy(hook.URL)
 
 	// if the hook already exists, do not recreate it
 	hs, resp, err := c.client.Projects.ListProjectHooks(repo, nil)
@@ -114,6 +104,7 @@ func (c *gitlabClient) UpdateHook(ctx context.Context, repo string, hook *sdk.VC
 	if err != nil {
 		return err
 	}
+	url := c.buildUrlWithProxy(hook.URL)
 
 	var pushEvent, mergeRequestEvent, TagPushEvent, issueEvent, noteEvent, wikiPageEvent, pipelineEvent, jobEvent bool
 	if len(hook.Events) == 0 {
@@ -142,7 +133,7 @@ func (c *gitlabClient) UpdateHook(ctx context.Context, repo string, hook *sdk.VC
 	}
 
 	opt := gitlab.EditProjectHookOptions{
-		URL:                      &gitlabHook.URL,
+		URL:                      &url,
 		PushEvents:               &pushEvent,
 		MergeRequestsEvents:      &mergeRequestEvent,
 		TagPushEvents:            &TagPushEvent,
@@ -168,37 +159,8 @@ func (c *gitlabClient) UpdateHook(ctx context.Context, repo string, hook *sdk.VC
 
 //DeleteHook disables the defaut HTTP POST Hook in Gitlab
 func (c *gitlabClient) DeleteHook(ctx context.Context, repo string, hook sdk.VCSHook) error {
-	if !hook.Workflow {
-		if c.proxyURL != "" {
-			lastIndexSlash := strings.LastIndex(hook.URL, "/")
-			if c.proxyURL[len(c.proxyURL)-1] == '/' {
-				lastIndexSlash++
-			}
-			hook.URL = c.proxyURL + hook.URL[lastIndexSlash:]
-		}
+	c.buildUrlWithProxy(hook.URL)
 
-		var url string
-		var err error
-		url, err = buildGitlabURL(hook.URL)
-		if err != nil {
-			return sdk.WrapError(err, "buildGitlabURL")
-		}
-
-		hooks, _, err := c.client.Projects.ListProjectHooks(repo, nil)
-		if err != nil {
-			return sdk.WrapError(err, "ListProjectHooks")
-		}
-
-		log.Debug(ctx, "GitlabClient.DeleteHook: Got '%s'", url)
-		for _, h := range hooks {
-			log.Debug(ctx, "GitlabClient.DeleteHook: Found '%s'", h.URL)
-			if h.URL == url {
-				_, err = c.client.Projects.DeleteProjectHook(repo, h.ID)
-				return sdk.WrapError(err, "DeleteProjectHook")
-			}
-		}
-		return fmt.Errorf("GitlabClient.DeleteHook> not found")
-	}
 	hookID, errI := strconv.Atoi(hook.ID)
 	if errI != nil {
 		return sdk.WrapError(sdk.ErrInvalidID, "GitlabClient.DeleteHook > Wrong gitlab webhook ID: %s", hook.ID)
@@ -210,23 +172,14 @@ func (c *gitlabClient) DeleteHook(ctx context.Context, repo string, hook sdk.VCS
 	return nil
 }
 
-func buildGitlabURL(givenURL string) (string, error) {
-	u, err := url.Parse(givenURL)
-	if err != nil {
-		return "", sdk.WithStack(err)
-	}
-	q, err := url.ParseQuery(u.RawQuery)
-	if err != nil {
-		return "", sdk.WithStack(err)
-	}
-
-	url := fmt.Sprintf("%s://%s/%s?uid=%s", u.Scheme, u.Host, u.Path, q.Get("uid"))
-
-	for k := range q {
-		if k != "uid" && !strings.Contains(q.Get(k), "{") {
-			url = fmt.Sprintf("%s&%s=%s", url, k, q.Get(k))
+func (c *gitlabClient) buildUrlWithProxy(hookURL string) string {
+	if c.proxyURL != "" {
+		lastIndexSlash := strings.LastIndex(hookURL, "/")
+		if c.proxyURL[len(c.proxyURL)-1] == '/' {
+			lastIndexSlash++
 		}
+		return c.proxyURL + hookURL[lastIndexSlash:]
 	}
 
-	return url, nil
+	return hookURL
 }

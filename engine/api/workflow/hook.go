@@ -44,10 +44,9 @@ func hookUnregistration(ctx context.Context, db gorpmapper.SqlExecutorWithTx, st
 			client, err := repositoriesmanager.AuthorizedClient(ctx, db, store, proj.Key, h.Config["vcsServer"].Value)
 			if err == nil {
 				vcsHook := sdk.VCSHook{
-					Method:   "POST",
-					URL:      h.Config["webHookURL"].Value,
-					Workflow: true,
-					ID:       h.Config[sdk.HookConfigWebHookID].Value,
+					Method: "POST",
+					URL:    h.Config["webHookURL"].Value,
+					ID:     h.Config[sdk.HookConfigWebHookID].Value,
 				}
 				if err := client.DeleteHook(ctx, h.Config["repoFullName"].Value, vcsHook); err != nil {
 					log.Error(ctx, "hookUnregistration> Cannot delete hook on repository %s", err)
@@ -318,9 +317,8 @@ func createVCSConfiguration(ctx context.Context, db gorpmapper.SqlExecutorWithTx
 
 	// Prepare the hook that will be send to VCS
 	vcsHook := sdk.VCSHook{
-		Method:   "POST",
-		URL:      h.Config["webHookURL"].Value,
-		Workflow: true,
+		Method: "POST",
+		URL:    h.Config["webHookURL"].Value,
 	}
 
 	// Set given event filters if exists, else default values will be set by CreateHook func.
@@ -364,10 +362,9 @@ func updateVCSConfiguration(ctx context.Context, db gorpmapper.SqlExecutorWithTx
 	}
 
 	vcsHook := sdk.VCSHook{
-		ID:       h.Config[sdk.HookConfigWebHookID].Value,
-		Method:   "POST",
-		URL:      h.Config["webHookURL"].Value,
-		Workflow: true,
+		ID:     h.Config[sdk.HookConfigWebHookID].Value,
+		Method: "POST",
+		URL:    h.Config["webHookURL"].Value,
 	}
 
 	// Set given event filters if exists, else default values will be set by CreateHook func.
