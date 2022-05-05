@@ -94,7 +94,7 @@ func (api *API) importPipelineHandler() service.Handler {
 				return globalError
 			}
 			sdkErr := sdk.ExtractHTTPError(globalError)
-			return service.WriteJSON(w, append(msgListString, sdkErr.Message), sdkErr.Status)
+			return service.WriteJSON(w, append(msgListString, sdkErr.Error()), sdkErr.Status)
 		}
 
 		if err := tx.Commit(); err != nil {
