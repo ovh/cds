@@ -40,7 +40,7 @@ type githubConsumer struct {
 }
 
 //New creates a new GithubConsumer
-func New(githubURL, githubAPIURL, apiURL, uiURL, proxyURL string, store cache.Store) sdk.VCSServer {
+func New(githubURL, githubAPIURL, apiURL, uiURL, proxyURL string, store cache.Store, disableStatus, disableStatusDetail bool) sdk.VCSServer {
 	//Github const
 	const (
 		publicURL    = "https://github.com"
@@ -55,12 +55,14 @@ func New(githubURL, githubAPIURL, apiURL, uiURL, proxyURL string, store cache.St
 		githubAPIURL = publicAPIURL
 	}
 	return &githubConsumer{
-		GitHubURL:    githubURL,
-		GitHubAPIURL: githubAPIURL,
-		Cache:        store,
-		apiURL:       apiURL,
-		uiURL:        uiURL,
-		proxyURL:     proxyURL,
+		GitHubURL:           githubURL,
+		GitHubAPIURL:        githubAPIURL,
+		Cache:               store,
+		apiURL:              apiURL,
+		uiURL:               uiURL,
+		proxyURL:            proxyURL,
+		disableStatus:       disableStatus,
+		disableStatusDetail: disableStatusDetail,
 	}
 }
 

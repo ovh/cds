@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -91,6 +90,8 @@ func (s *Service) getConsumer(name string, vcsAuth sdk.VCSAuth) (sdk.VCSServer, 
 				s.UI.HTTP.URL,
 				s.Cfg.ProxyWebhook,
 				s.Cache,
+				vcsAuth.VCSProject.Options.DisableStatus,
+				!vcsAuth.VCSProject.Options.ShowStatusDetail,
 			), nil
 		case "bitbucketserver":
 			return bitbucketserver.New(
@@ -99,16 +100,15 @@ func (s *Service) getConsumer(name string, vcsAuth sdk.VCSAuth) (sdk.VCSServer, 
 				s.UI.HTTP.URL,
 				s.Cfg.ProxyWebhook,
 				s.Cache,
+				vcsAuth.VCSProject.Options.DisableStatus,
 			), nil
 		case "gerrit":
-			sshPort, err := strconv.Atoi(vcsAuth.VCSProject.Auth["ssh-port"])
-			if err != nil {
-				return nil, sdk.WrapError(err, "invalid gerrit ssh port configuration")
-			}
 			return gerrit.New(
 				vcsAuth.VCSProject.URL,
 				s.Cache,
-				sshPort,
+				vcsAuth.VCSProject.Options.DisableStatus,
+				!vcsAuth.VCSProject.Options.ShowStatusDetail,
+				vcsAuth.VCSProject.Options.GerritSSHPort,
 				vcsAuth.VCSProject.Auth["reviewer-user"],
 				vcsAuth.VCSProject.Auth["reviewer-token"],
 			), nil
@@ -120,6 +120,8 @@ func (s *Service) getConsumer(name string, vcsAuth sdk.VCSAuth) (sdk.VCSServer, 
 				s.UI.HTTP.URL,
 				s.Cfg.ProxyWebhook,
 				s.Cache,
+				vcsAuth.VCSProject.Options.DisableStatus,
+				!vcsAuth.VCSProject.Options.ShowStatusDetail,
 			), nil
 		case "gitlab":
 			return gitlab.New(
@@ -129,6 +131,8 @@ func (s *Service) getConsumer(name string, vcsAuth sdk.VCSAuth) (sdk.VCSServer, 
 				s.Cache,
 				vcsAuth.VCSProject.Auth["username"],
 				vcsAuth.VCSProject.Auth["token"],
+				vcsAuth.VCSProject.Options.DisableStatus,
+				!vcsAuth.VCSProject.Options.ShowStatusDetail,
 			), nil
 		}
 		return nil, sdk.WithStack(sdk.ErrNotFound)
@@ -193,7 +197,7 @@ func (s *Service) getConsumer(name string, vcsAuth sdk.VCSAuth) (sdk.VCSServer, 
 		), nil
 	}
 	if serverCfg.Gerrit != nil {
-		return gerrit.NewDeprecated(
+		return gerrit.New(
 			serverCfg.URL,
 			s.Cache,
 			serverCfg.Gerrit.Status.Disable,

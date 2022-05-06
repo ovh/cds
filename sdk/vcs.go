@@ -2,6 +2,8 @@ package sdk
 
 import (
 	"context"
+	"database/sql/driver"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -192,6 +194,31 @@ type VCSProject struct {
 	Description  string            `json:"description" db:"description"`
 	URL          string            `json:"url" db:"url"`
 	Auth         map[string]string `json:"auth" db:"auth" gorpmapping:"encrypted,ProjectID"`
+	Options      VCSOptionsProject `json:"options" db:"options"`
+}
+
+type VCSOptionsProject struct {
+	DisableWebhooks  bool `json:"disableWebhooks,omitempty" db:"-"`
+	DisableStatus    bool `json:"disableStatus,omitempty" db:"-"`
+	ShowStatusDetail bool `json:"showStatusDetail,omitempty" db:"-"`
+	DisablePolling   bool `json:"disablePolling,omitempty" db:"-"`
+	GerritSSHPort    int  `json:"gerritSSHport,omitempty" db:"-"`
+}
+
+func (v VCSOptionsProject) Value() (driver.Value, error) {
+	j, err := json.Marshal(v)
+	return j, WrapError(err, "cannot marshal VCSOptionsProject")
+}
+
+func (v *VCSOptionsProject) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
+	}
+	return WrapError(JSONUnmarshal(source, v), "cannot unmarshal VCSOptionsProject")
 }
 
 // VCSConfiguration represent a small vcs configuration
