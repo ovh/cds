@@ -35,7 +35,7 @@ name: github-local
 type: github
 description: "github local dev"
 auth:
-    username: yesnault
+    username: your-username
     token: ghp_your-token-here
 options:
     disableStatus: false    # Set to true if you don't want CDS to push statuses on the VCS server - optional
@@ -55,7 +55,7 @@ cdsctl experimental project vcs import YOUR_CDS_PROJET_KEY vcs-github.yml
 
 *As a user, with writing rights on a CDS project* 
 
-Select the first pipeline, then click on `Add a hook` in the sidebar.
+Select the first pipeline, then click on `Add a hook`.
 
 ![github-wf-select-pipeline.png](../../images/github-wf-select-pipeline.png?height=500px)
 
