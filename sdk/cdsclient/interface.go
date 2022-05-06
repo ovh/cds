@@ -314,6 +314,7 @@ type CDNClient interface {
 type HookClient interface {
 	PollVCSEvents(uuid string, workflowID int64, vcsServer string, timestamp int64) (events sdk.RepositoryEvents, interval time.Duration, err error)
 	VCSConfiguration() (map[string]sdk.VCSConfiguration, error)
+	VCSGerritConfiguration() (map[string]sdk.VCSGerritConfiguration, error)
 }
 
 // ServiceClient exposes functions used for services

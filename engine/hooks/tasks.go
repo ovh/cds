@@ -131,21 +131,21 @@ func (s *Service) synchronizeTasks(ctx context.Context) error {
 	}
 
 	// Start listening to gerrit event stream
-	vcsConfig, err := s.Client.VCSConfiguration()
+	vcsGerritConfig, err := s.Client.VCSGerritConfiguration()
 	if err != nil {
 		return sdk.WrapError(err, "unable to get vcs configuration")
 	}
 
-	for k, v := range vcsConfig {
-		if v.Type == "gerrit" && v.Username != "" && v.Password != "" && v.SSHPort != 0 {
-			s.initGerritStreamEvent(ctx, k, vcsConfig)
+	for k, v := range vcsGerritConfig {
+		if v.Username != "" && v.SSHPrivateKey != "" && v.SSHPort != 0 {
+			s.initGerritStreamEvent(ctx, k, vcsGerritConfig)
 		}
 	}
 
 	return nil
 }
 
-func (s *Service) initGerritStreamEvent(ctx context.Context, vcsName string, vcsConfig map[string]sdk.VCSConfiguration) {
+func (s *Service) initGerritStreamEvent(ctx context.Context, vcsName string, vcsGerritConfig map[string]sdk.VCSGerritConfiguration) {
 	// Create channel to store gerrit event
 	gerritEventChan := make(chan GerritEvent, 20)
 	// Listen to gerrit event stream
@@ -158,7 +158,7 @@ func (s *Service) initGerritStreamEvent(ctx context.Context, vcsName string, vcs
 				}
 				return
 			default:
-				if err := ListenGerritStreamEvent(ctx, s.Cache, s.GoRoutines, vcsConfig[vcsName], gerritEventChan); err != nil {
+				if err := ListenGerritStreamEvent(ctx, s.Cache, s.GoRoutines, vcsGerritConfig[vcsName], gerritEventChan); err != nil {
 					log.Error(ctx, "hook:initGerritStreamEvent: failed listening gerrit event stream: %v", err)
 				}
 				time.Sleep(10 * time.Second)

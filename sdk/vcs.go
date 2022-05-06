@@ -202,7 +202,7 @@ type VCSOptionsProject struct {
 	DisableStatus    bool `json:"disableStatus,omitempty" db:"-"`
 	ShowStatusDetail bool `json:"showStatusDetail,omitempty" db:"-"`
 	DisablePolling   bool `json:"disablePolling,omitempty" db:"-"`
-	GerritSSHPort    int  `json:"gerritSSHport,omitempty" db:"-"`
+	GerritSSHPort    int  `json:"gerritSSHPort,omitempty" db:"-"`
 }
 
 func (v VCSOptionsProject) Value() (driver.Value, error) {
@@ -223,11 +223,15 @@ func (v *VCSOptionsProject) Scan(src interface{}) error {
 
 // VCSConfiguration represent a small vcs configuration
 type VCSConfiguration struct {
-	Type     string `json:"type"`
-	Username string `json:"username"`
-	Password string `json:"password"`
-	URL      string `json:"url"`
-	SSHPort  int    `json:"sshport"`
+	Type string `json:"type"`
+	URL  string `json:"url"`
+}
+
+type VCSGerritConfiguration struct {
+	Username      string `json:"username"`
+	SSHPrivateKey string `json:"sshPrivateKey"`
+	URL           string `json:"url"`
+	SSHPort       int    `json:"sshport"`
 }
 
 type VCSServerCommon interface {

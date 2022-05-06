@@ -82,3 +82,27 @@ func LoadVCSByProject(ctx context.Context, db gorp.SqlExecutor, projectKey strin
 	}
 	return &res.VCSProject, nil
 }
+
+func LoadAllVCSGerrit(ctx context.Context, db gorp.SqlExecutor, opts ...gorpmapping.GetOptionFunc) ([]sdk.VCSProject, error) {
+	var res []dbVCSProject
+
+	query := gorpmapping.NewQuery(`SELECT vcs_project.* FROM vcs_project WHERE vcs_project.type = 'gerrit'`)
+
+	if err := gorpmapping.GetAll(ctx, db, query, &res, opts...); err != nil {
+		return nil, err
+	}
+	vcsGerritProjects := make([]sdk.VCSProject, 0, len(res))
+
+	for _, res := range res {
+		isValid, err := gorpmapping.CheckSignature(res, res.Signature)
+		if err != nil {
+			return nil, sdk.WrapError(err, "error when checking signature for vcs_project %s", res.ID)
+		}
+		if !isValid {
+			log.Error(ctx, "vcs_project %d data corrupted", res.ID)
+			continue
+		}
+		vcsGerritProjects = append(vcsGerritProjects, res.VCSProject)
+	}
+	return vcsGerritProjects, nil
+}

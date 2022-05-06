@@ -3902,6 +3902,21 @@ func (mr *MockHookClientMockRecorder) VCSConfiguration() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VCSConfiguration", reflect.TypeOf((*MockHookClient)(nil).VCSConfiguration))
 }
 
+// VCSGerritConfiguration mocks base method.
+func (m *MockHookClient) VCSGerritConfiguration() (map[string]sdk.VCSGerritConfiguration, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "VCSGerritConfiguration")
+	ret0, _ := ret[0].(map[string]sdk.VCSGerritConfiguration)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// VCSGerritConfiguration indicates an expected call of VCSGerritConfiguration.
+func (mr *MockHookClientMockRecorder) VCSGerritConfiguration() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VCSGerritConfiguration", reflect.TypeOf((*MockHookClient)(nil).VCSGerritConfiguration))
+}
+
 // MockServiceClient is a mock of ServiceClient interface.
 type MockServiceClient struct {
 	ctrl     *gomock.Controller
@@ -7814,6 +7829,21 @@ func (m *MockInterface) VCSConfiguration() (map[string]sdk.VCSConfiguration, err
 func (mr *MockInterfaceMockRecorder) VCSConfiguration() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VCSConfiguration", reflect.TypeOf((*MockInterface)(nil).VCSConfiguration))
+}
+
+// VCSGerritConfiguration mocks base method.
+func (m *MockInterface) VCSGerritConfiguration() (map[string]sdk.VCSGerritConfiguration, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "VCSGerritConfiguration")
+	ret0, _ := ret[0].(map[string]sdk.VCSGerritConfiguration)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// VCSGerritConfiguration indicates an expected call of VCSGerritConfiguration.
+func (mr *MockInterfaceMockRecorder) VCSGerritConfiguration() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VCSGerritConfiguration", reflect.TypeOf((*MockInterface)(nil).VCSGerritConfiguration))
 }
 
 // VariableEncrypt mocks base method.

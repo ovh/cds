@@ -27,17 +27,31 @@ func QueryString(r *http.Request, s string) string {
 	return r.FormValue(s)
 }
 
+func (s *Service) getVCSGerritHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		servers := make(map[string]sdk.VCSGerritConfiguration, len(s.Cfg.Servers))
+		for k, v := range s.Cfg.Servers {
+			if v.Gerrit == nil {
+				continue
+			}
+			servers[k] = sdk.VCSGerritConfiguration{
+				Username:      v.Gerrit.EventStream.User,
+				SSHPrivateKey: v.Gerrit.EventStream.PrivateKey,
+				URL:           v.URL,
+				SSHPort:       v.Gerrit.SSHPort,
+			}
+		}
+		return service.WriteJSON(w, servers, http.StatusOK)
+	}
+}
+
 func (s *Service) getAllVCSServersHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		servers := make(map[string]sdk.VCSConfiguration, len(s.Cfg.Servers))
 		for k, v := range s.Cfg.Servers {
-			var vcsType, user, privateKey string
-			var sshPort int
+			var vcsType string
 			if v.Gerrit != nil {
 				vcsType = "gerrit"
-				user = v.Gerrit.EventStream.User
-				privateKey = v.Gerrit.EventStream.PrivateKey
-				sshPort = v.Gerrit.SSHPort
 			} else if v.Bitbucket != nil {
 				vcsType = "bitbucket"
 			} else if v.Github != nil {
@@ -47,11 +61,8 @@ func (s *Service) getAllVCSServersHandler() service.Handler {
 			}
 
 			servers[k] = sdk.VCSConfiguration{
-				Type:     vcsType,
-				Username: user,
-				Password: privateKey,
-				URL:      v.URL,
-				SSHPort:  sshPort,
+				Type: vcsType,
+				URL:  v.URL,
 			}
 		}
 		return service.WriteJSON(w, servers, http.StatusOK)
