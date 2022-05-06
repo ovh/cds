@@ -42,13 +42,13 @@ func (s *Service) authMiddleware(ctx context.Context, w http.ResponseWriter, req
 	encodedAccessToken := req.Header.Get(sdk.HeaderXAccessToken)
 	accessToken, err := base64.StdEncoding.DecodeString(encodedAccessToken)
 	if err != nil {
-		return ctx, fmt.Errorf("bad header syntax: %s", err)
+		return ctx, fmt.Errorf("bad header syntax for access token: %s", err)
 	}
 
 	encodedAccessTokenSecret := req.Header.Get(sdk.HeaderXAccessTokenSecret)
 	accessTokenSecret, err := base64.StdEncoding.DecodeString(encodedAccessTokenSecret)
 	if err != nil {
-		return ctx, fmt.Errorf("bad header syntax: %s", err)
+		return ctx, fmt.Errorf("bad header syntax for access token secret: %s", err)
 	}
 
 	encodedAccessTokenCreated := req.Header.Get(sdk.HeaderXAccessTokenCreated)
@@ -94,8 +94,7 @@ func getVCSAuth(ctx context.Context) (sdk.VCSAuth, error) {
 	}
 
 	if vcsAuth.AccessToken != "" &&
-		vcsAuth.AccessTokenSecret != "" &&
-		vcsAuth.AccessTokenCreated > 0 {
+		vcsAuth.AccessTokenSecret != "" {
 		return vcsAuth, nil
 	}
 

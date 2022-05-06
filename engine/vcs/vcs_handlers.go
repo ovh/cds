@@ -103,19 +103,23 @@ func (s *Service) getVCSServersHooksHandler() service.Handler {
 				res.WebhooksIcon = sdk.BitbucketIcon
 				// https://confluence.atlassian.com/bitbucketserver/event-payload-938025882.html
 				res.Events = sdk.BitbucketEvents
+				res.WebhooksDisabled = vcsAuth.VCSProject.Options.DisableWebhooks
 			case vcsAuth.VCSProject.Type == "bitbucketcloud":
 				res.WebhooksSupported = true
 				res.WebhooksIcon = sdk.BitbucketIcon
 				// https://developer.atlassian.com/bitbucket/api/2/reference/resource/hook_events/%7Bsubject_type%7D
 				res.Events = sdk.BitbucketCloudEvents
+				res.WebhooksDisabled = vcsAuth.VCSProject.Options.DisableWebhooks
 			case vcsAuth.VCSProject.Type == "github":
 				res.WebhooksSupported = true
 				res.WebhooksIcon = sdk.GitHubIcon
 				// https://developer.github.com/v3/activity/events/types/
 				res.Events = sdk.GitHubEvents
+				res.WebhooksDisabled = vcsAuth.VCSProject.Options.DisableWebhooks
 			case vcsAuth.VCSProject.Type == "gitlab":
 				res.WebhooksSupported = true
 				res.WebhooksIcon = sdk.GitlabIcon
+				res.WebhooksDisabled = vcsAuth.VCSProject.Options.DisableWebhooks
 				// https://docs.gitlab.com/ee/user/project/integrations/webhooks.html
 				res.Events = []string{
 					string(gitlab.EventTypePush),

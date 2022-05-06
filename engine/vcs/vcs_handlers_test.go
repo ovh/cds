@@ -59,7 +59,7 @@ func Test_getAllVCSServersHandler(t *testing.T) {
 	s.Router.Mux.ServeHTTP(rec, req)
 
 	//Asserts
-	assert.Equal(t, 200, rec.Code)
+	require.Equal(t, 200, rec.Code)
 
 	var servers = map[string]ServerConfiguration{}
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &servers))
@@ -81,7 +81,7 @@ func Test_getAllVCSServersHandler(t *testing.T) {
 	s.Router.Mux.ServeHTTP(rec, req)
 
 	//Asserts
-	assert.Equal(t, 200, rec.Code)
+	require.Equal(t, 200, rec.Code)
 
 	var srv = ServerConfiguration{}
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &srv))
@@ -95,13 +95,15 @@ func Test_getAllVCSServersHandler(t *testing.T) {
 	uri = s.Router.GetRoute("GET", s.getVCSServersHooksHandler, vars)
 	require.NotEmpty(t, uri)
 	req = newRequest(t, s, "GET", uri, nil)
+	req.Header.Set(sdk.HeaderXAccessToken, base64.StdEncoding.EncodeToString([]byte("foo")))
+	req.Header.Set(sdk.HeaderXAccessTokenSecret, base64.StdEncoding.EncodeToString([]byte("foo")))
 
 	//Do the request
 	rec = httptest.NewRecorder()
 	s.Router.Mux.ServeHTTP(rec, req)
 
 	//Asserts
-	assert.Equal(t, 200, rec.Code)
+	require.Equal(t, 200, rec.Code)
 
 	//Prepare request
 	vars = map[string]string{
@@ -110,13 +112,15 @@ func Test_getAllVCSServersHandler(t *testing.T) {
 	uri = s.Router.GetRoute("GET", s.getVCSServersPollingHandler, vars)
 	require.NotEmpty(t, uri)
 	req = newRequest(t, s, "GET", uri, nil)
+	req.Header.Set(sdk.HeaderXAccessToken, base64.StdEncoding.EncodeToString([]byte("foo")))
+	req.Header.Set(sdk.HeaderXAccessTokenSecret, base64.StdEncoding.EncodeToString([]byte("foo")))
 
 	//Do the request
 	rec = httptest.NewRecorder()
 	s.Router.Mux.ServeHTTP(rec, req)
 
 	//Asserts
-	assert.Equal(t, 200, rec.Code)
+	require.Equal(t, 200, rec.Code)
 }
 
 func Test_accessTokenAuth(t *testing.T) {
