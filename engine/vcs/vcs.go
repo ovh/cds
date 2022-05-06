@@ -109,8 +109,8 @@ func (s *Service) getConsumer(name string, vcsAuth sdk.VCSAuth) (sdk.VCSServer, 
 				vcsAuth.VCSProject.Options.DisableStatus,
 				!vcsAuth.VCSProject.Options.ShowStatusDetail,
 				vcsAuth.VCSProject.Options.GerritSSHPort,
-				vcsAuth.VCSProject.Auth["reviewer-user"],
-				vcsAuth.VCSProject.Auth["reviewer-token"],
+				vcsAuth.VCSProject.Auth["reviewerUser"],
+				vcsAuth.VCSProject.Auth["reviewerToken"],
 			), nil
 		case "github":
 			return github.New(

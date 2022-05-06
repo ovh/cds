@@ -32,9 +32,9 @@ Create a yml file:
 
 ```yaml
 version: v1.0
-name: gitlab-local
+name: gitlab
 type: gitlab
-description: "gitlab local dev"
+description: "my gitlab"
 auth:
     username: your-username
     token: glpat_your-token-here
@@ -43,7 +43,8 @@ options:
     showStatusDetail: false # Set to true if you don't want CDS to push CDS URL in statuses on the VCS server - optional
     disablePolling: false   # Does polling is supported by VCS Server - optional
     disableWebHooks: false  # Does webhooks are supported by VCS Server - optional
+```
 
-    # If you want to have a reverse proxy url for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK
-    proxyWebhook: "" # optional
+```sh
+cdsctl experimental project vcs import YOUR_CDS_PROJECT_KEY vcs-gitlab.yml
 ```
