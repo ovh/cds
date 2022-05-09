@@ -2,6 +2,7 @@
 
 #navbar {
   padding-left: 0;
+  padding-right: 0;
   background-color: $darkTheme_grey_0;
   border-radius: 0;
   height: 50px;
@@ -26,7 +27,7 @@
   }
 
   .icon.dropdown {
-    width: 77px;
+    width: 55px;
     display: flex;
     height: 50px;
     align-items: center;
@@ -53,7 +54,7 @@
   }
 
   .icon.popover {
-    width: 45px;
+    width: 55px;
     display: flex;
     justify-content: center;
   }
