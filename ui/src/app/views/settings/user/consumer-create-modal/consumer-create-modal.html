@@ -92,7 +92,12 @@
                                         <div class="six wide field">
                                             <label>Region</label>
                                             <input class="ui input" type="text" name="region"
-                                                [(ngModel)]="newConsumer.service_region">
+                                            [(ngModel)]="newConsumer.service_region">
+                                            <div class="ui checkbox">
+                                                <input type="checkbox" name="ignore_no_region"
+                                                    [(ngModel)]="newConsumer.service_ignore_job_with_no_region">
+                                                <label>Ignore job with no region</label>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -109,7 +114,8 @@
     <div class="actions">
         <div class="ui grid">
             <div class="four wide column left aligned">
-                <button *ngIf="activeStep === formStepName.GROUPS || activeStep === formStepName.SCOPES || activeStep === formStepName.SERVICE"
+                <button
+                    *ngIf="activeStep === formStepName.GROUPS || activeStep === formStepName.SCOPES || activeStep === formStepName.SERVICE"
                     class="ui primary button" (click)="clickBack()">
                     {{ 'btn_back' | translate }}
                 </button>

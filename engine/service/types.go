@@ -106,21 +106,22 @@ func (hcc HatcheryCommonConfiguration) Check() error {
 
 // Common is the struct representing a CDS µService
 type Common struct {
-	Client               cdsclient.Interface
-	APIPublicKey         []byte
-	ParsedAPIPublicKey   *rsa.PublicKey
-	StartupTime          time.Time
-	HTTPURL              string
-	MaxHeartbeatFailures int
-	ServiceName          string
-	ServiceType          string
-	ServiceInstance      *sdk.Service
-	PrivateKey           *rsa.PrivateKey
-	Signer               jose.Signer
-	CDNLogsURL           string
-	ServiceLogger        *logrus.Logger
-	GoRoutines           *sdk.GoRoutines
-	Region               string
+	Client                cdsclient.Interface
+	APIPublicKey          []byte
+	ParsedAPIPublicKey    *rsa.PublicKey
+	StartupTime           time.Time
+	HTTPURL               string
+	MaxHeartbeatFailures  int
+	ServiceName           string
+	ServiceType           string
+	ServiceInstance       *sdk.Service
+	PrivateKey            *rsa.PrivateKey
+	Signer                jose.Signer
+	CDNLogsURL            string
+	ServiceLogger         *logrus.Logger
+	GoRoutines            *sdk.GoRoutines
+	Region                string
+	IgnoreJobWithNoRegion bool
 }
 
 // Service is the interface for a engine service

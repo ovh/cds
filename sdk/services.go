@@ -21,14 +21,15 @@ const (
 )
 
 type CanonicalService struct {
-	ID         int64         `json:"id" db:"id" mapstructure:"id"`
-	Name       string        `json:"name" db:"name" cli:"name,key" mapstructure:"name"`
-	ConsumerID *string       `json:"-" db:"auth_consumer_id" mapstructure:"-"`
-	Type       string        `json:"type" db:"type" cli:"type" mapstructure:"type"`
-	HTTPURL    string        `json:"http_url" db:"http_url" cli:"url" mapstructure:"http_url"`
-	Config     ServiceConfig `json:"config" db:"config" cli:"-" mapstructure:"config"`
-	PublicKey  []byte        `json:"public_key" db:"public_key" mapstructure:"public_key"`
-	Region     *string       `json:"region" db:"region" mapstructure:"region"`
+	ID                    int64         `json:"id" db:"id" mapstructure:"id"`
+	Name                  string        `json:"name" db:"name" cli:"name,key" mapstructure:"name"`
+	ConsumerID            *string       `json:"-" db:"auth_consumer_id" mapstructure:"-"`
+	Type                  string        `json:"type" db:"type" cli:"type" mapstructure:"type"`
+	HTTPURL               string        `json:"http_url" db:"http_url" cli:"url" mapstructure:"http_url"`
+	Config                ServiceConfig `json:"config" db:"config" cli:"-" mapstructure:"config"`
+	PublicKey             []byte        `json:"public_key" db:"public_key" mapstructure:"public_key"`
+	Region                *string       `json:"region" db:"region" mapstructure:"region"`
+	IgnoreJobWithNoRegion *bool         `json:"ignore_job_with_no_region" db:"ignore_job_with_no_region" mapstructure:"ignore_job_with_no_region"`
 }
 
 // Service is a µService registered on CDS API.

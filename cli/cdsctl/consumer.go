@@ -194,6 +194,11 @@ func authConsumerNewRun(v cli.Values) error {
 		svcRegion = cli.AskValue("Service region")
 	}
 
+	var svcIgnoreJobWithNoRegion = v.GetBool("service-ignore-job-with-no-region")
+	if !svcIgnoreJobWithNoRegion && !v.GetBool("no-interactive") {
+		svcIgnoreJobWithNoRegion = cli.AskConfirm("Service ignore job with no region")
+	}
+
 	var consumer = sdk.AuthConsumer{
 		Name:            name,
 		Description:     description,
@@ -210,6 +215,9 @@ func authConsumerNewRun(v cli.Values) error {
 	}
 	if svcRegion != "" {
 		consumer.ServiceRegion = &svcRegion
+	}
+	if svcIgnoreJobWithNoRegion {
+		consumer.ServiceIgnoreJobWithNoRegion = &svcIgnoreJobWithNoRegion
 	}
 
 	res, err := client.AuthConsumerCreateForUser(username, consumer)

@@ -77,11 +77,24 @@ func (api *API) postAuthBuiltinSigninHandler() service.Handler {
 			if consumer.ServiceType != nil && *consumer.ServiceType != srv.Type {
 				return sdk.NewErrorFrom(sdk.ErrForbidden, "service type %q doesn't match with consumer %q", srv.Type, *consumer.ServiceType)
 			}
-			if consumer.ServiceRegion != nil && *consumer.ServiceRegion != *srv.Region {
-				return sdk.NewErrorFrom(sdk.ErrForbidden, "service region %q doesn't match with consumer %q", srv.Type, *consumer.ServiceRegion)
+			if consumer.ServiceRegion != nil {
+				if srv.Region == nil {
+					return sdk.NewErrorFrom(sdk.ErrForbidden, "unknown service region doesn't match with consumer %q", *consumer.ServiceRegion)
+				}
+				if *consumer.ServiceRegion != *srv.Region {
+					return sdk.NewErrorFrom(sdk.ErrForbidden, "service region %q doesn't match with consumer %q", *srv.Region, *consumer.ServiceRegion)
+				}
+			}
+			if consumer.ServiceIgnoreJobWithNoRegion != nil {
+				if srv.IgnoreJobWithNoRegion == nil {
+					return sdk.NewErrorFrom(sdk.ErrForbidden, "unknown service ignore job with no region value doesn't match with consumer '%t'", *consumer.ServiceIgnoreJobWithNoRegion)
+				}
+				if *consumer.ServiceIgnoreJobWithNoRegion != *srv.IgnoreJobWithNoRegion {
+					return sdk.NewErrorFrom(sdk.ErrForbidden, "service ignore job with no region flag value '%t' doesn't match with consumer '%t'", *srv.IgnoreJobWithNoRegion, *consumer.ServiceIgnoreJobWithNoRegion)
+				}
 			}
 		} else {
-			if consumer.ServiceName != nil || consumer.ServiceType != nil || consumer.ServiceRegion != nil {
+			if consumer.ServiceName != nil || consumer.ServiceType != nil || consumer.ServiceRegion != nil || consumer.ServiceIgnoreJobWithNoRegion != nil {
 				return sdk.NewErrorFrom(sdk.ErrForbidden, "signing request doesn't match with consumer %q service definition. missing service payload", consumer.Name)
 			}
 		}

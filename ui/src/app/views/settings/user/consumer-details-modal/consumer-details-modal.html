@@ -37,12 +37,13 @@
                             <label>Last authentication</label>
                             {{consumer.last_authentication ? consumer.last_authentication : 'never'}}
                         </div>
-                        <div class="field" *ngIf="consumer.service_name || consumer.service_type || consumer.service_region">
+                        <div class="field" *ngIf="consumer.service_name || consumer.service_type || consumer.service_region || consumer.service_ignore_job_with_no_region">
                             <label>Service detail</label>
                             <ul>
                                 <li>Name: {{consumer.service_name}}</li>
                                 <li>Type: {{consumer.service_type}}</li>
                                 <li>Region: {{consumer.service_region}}</li>
+                                <li>Ignore job with no region: {{consumer.service_ignore_job_with_no_region}}</li>
                             </ul>
                         </div>
                     </div>

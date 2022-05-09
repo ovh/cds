@@ -111,12 +111,15 @@ func RegisterWorker(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store 
 			}
 		}
 
-		// Check additional information based on the consumer if a region is set, allows to register only job with same region.
-		// TODO add another information on the consumer to allow job with a specific region requirement or no region (runNodeJob.Region == nil).
+		// Check additional information based on the consumer if a region is set.
+		// Allows to register only job with same region or job without region if ServiceIgnoreJobWithNoRegion is not true.
 		if hatcheryConsumer.ServiceRegion != nil && *hatcheryConsumer.ServiceRegion != "" {
-			canTakeJobWithRegion := runNodeJob.Region != nil && *runNodeJob.Region == *hatcheryConsumer.ServiceRegion
-			if !canTakeJobWithRegion {
-				return nil, sdk.WrapError(sdk.ErrForbidden, "hatchery can't register job with id %q for region %s", spawnArgs.JobID, *runNodeJob.Region)
+			if runNodeJob.Region == nil {
+				if hatcheryConsumer.ServiceIgnoreJobWithNoRegion != nil && *hatcheryConsumer.ServiceIgnoreJobWithNoRegion {
+					return nil, sdk.WrapError(sdk.ErrForbidden, "hatchery can't register job with id %d without region requirement", spawnArgs.JobID)
+				}
+			} else if *runNodeJob.Region != *hatcheryConsumer.ServiceRegion {
+				return nil, sdk.WrapError(sdk.ErrForbidden, "hatchery can't register job with id %d for region %s", spawnArgs.JobID, *runNodeJob.Region)
 			}
 		}
 	}
