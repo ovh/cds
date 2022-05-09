@@ -111,16 +111,16 @@ func (c *bitbucketClient) do(ctx context.Context, method, api, path string, para
 		req.ContentLength = int64(buf.Len())
 	}
 
-	var token string
+	var cacheKey string
 	if c.vcsProject != nil && c.vcsProject.Auth["token"] != "" {
-		token = c.vcsProject.Auth["token"]
-		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.vcsProject.Auth["token"]))
+		cacheKey = cache.Key("vcs", "bitbucket", "request", req.URL.String(), c.vcsProject.Auth["username"])
 	} else if opts != nil && opts.asUser && c.token != "" { // DEPRECATED VCS
-		token = c.token
-		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.token))
+		cacheKey = cache.Key("vcs", "bitbucket", "request", req.URL.String(), c.token)
 	} else { // DEPRECATED VCS
 		accessToken := NewAccessToken(c.accessToken, c.accessTokenSecret, nil)
-		token = accessToken.token
+		cacheKey = cache.Key("vcs", "bitbucket", "request", req.URL.String(), accessToken.token)
 		if err := c.consumer.Sign(req, accessToken); err != nil {
 			return err
 		}
@@ -132,7 +132,6 @@ func (c *bitbucketClient) do(ctx context.Context, method, api, path string, para
 		req.Header.Set("Content-Type", "application/json")
 	}
 
-	cacheKey := cache.Key("vcs", "bitbucket", "request", req.URL.String(), token)
 	if v != nil && method == "GET" {
 		find, err := c.consumer.cache.Get(cacheKey, v)
 		if err != nil {
