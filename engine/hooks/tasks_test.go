@@ -90,7 +90,7 @@ func Test_dequeueTaskExecutions_ScheduledTask(t *testing.T) {
 	// It will remove all the tasks from the database
 	m.EXPECT().WorkflowAllHooksList().Return([]sdk.NodeHook{}, nil)
 	m.EXPECT().WorkflowAllHooksExecutions().Return([]string{}, nil)
-	m.EXPECT().VCSConfiguration().Return(nil, nil).AnyTimes()
+	m.EXPECT().VCSGerritConfiguration().Return(nil, nil).AnyTimes()
 	require.NoError(t, s.synchronizeTasks(ctx))
 
 	// Start the goroutine
@@ -192,7 +192,7 @@ func Test_synchronizeTasks(t *testing.T) {
 	// Get the mock
 	m := s.Client.(*mock_cdsclient.MockInterface)
 
-	m.EXPECT().VCSConfiguration().Return(nil, nil).AnyTimes()
+	m.EXPECT().VCSGerritConfiguration().Return(nil, nil).AnyTimes()
 
 	m.EXPECT().WorkflowAllHooksList().Return([]sdk.NodeHook{}, nil)
 	m.EXPECT().WorkflowAllHooksExecutions().Return([]string{}, nil)
