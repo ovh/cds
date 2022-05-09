@@ -88,7 +88,7 @@ func LoadVulnerability(db gorp.SqlExecutor, appID int64, vulnID int64) (sdk.Vuln
 		if err != sql.ErrNoRows {
 			return sdk.Vulnerability{}, sdk.WrapError(err, "unable to load vulnerability %d for application %d", vulnID, appID)
 		}
-		return sdk.Vulnerability{}, sdk.ErrNotFound
+		return sdk.Vulnerability{}, sdk.WithStack(sdk.ErrNotFound)
 	}
 	return sdk.Vulnerability(dbVuln), nil
 }

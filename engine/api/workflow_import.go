@@ -162,7 +162,7 @@ func (api *API) postWorkflowImportHandler() service.Handler {
 		if globalError != nil {
 			if len(msgListString) != 0 {
 				sdkErr := sdk.ExtractHTTPError(globalError)
-				return service.WriteJSON(w, append(msgListString, sdkErr.Message), sdkErr.Status)
+				return service.WriteJSON(w, append(msgListString, sdkErr.Error()), sdkErr.Status)
 			}
 			return sdk.WrapError(globalError, "Unable to import workflow %s", ew.GetName())
 		}

@@ -33,7 +33,7 @@ func workflowTransformAsCodeRun(v cli.Values) (interface{}, error) {
 		return nil, err
 	}
 	if w.FromRepository != "" {
-		return nil, sdk.ErrWorkflowAlreadyAsCode
+		return nil, sdk.WithStack(sdk.ErrWorkflowAlreadyAsCode)
 	}
 
 	noInteractive := v.GetBool("no-interactive")

@@ -14,39 +14,27 @@ func (c *client) PipelineImport(projectKey string, content io.Reader, mods ...Re
 	url := fmt.Sprintf("/project/%s/import/pipeline", projectKey)
 
 	btes, _, _, err := c.Request(context.Background(), "POST", url, content, mods...)
-	if err != nil {
-		return nil, err
-	}
-
 	messages := []string{}
 	_ = sdk.JSONUnmarshal(btes, &messages)
-	return messages, nil
+	return messages, err
 }
 
 func (c *client) ApplicationImport(projectKey string, content io.Reader, mods ...RequestModifier) ([]string, error) {
 	url := fmt.Sprintf("/project/%s/import/application", projectKey)
 
 	btes, _, _, err := c.Request(context.Background(), "POST", url, content, mods...)
-	if err != nil {
-		return nil, err
-	}
-
 	messages := []string{}
 	_ = sdk.JSONUnmarshal(btes, &messages)
-	return messages, nil
+	return messages, err
 }
 
 func (c *client) EnvironmentImport(projectKey string, content io.Reader, mods ...RequestModifier) ([]string, error) {
 	url := fmt.Sprintf("/project/%s/import/environment", projectKey)
 
 	btes, _, _, err := c.Request(context.Background(), "POST", url, content, mods...)
-	if err != nil {
-		return nil, err
-	}
-
 	messages := []string{}
 	_ = sdk.JSONUnmarshal(btes, &messages)
-	return messages, nil
+	return messages, err
 }
 
 // WorkerModelImport import a worker model via as code
