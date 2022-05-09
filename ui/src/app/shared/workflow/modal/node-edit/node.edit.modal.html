@@ -2,10 +2,10 @@
     <div *nzModalContent>
         <nz-tabset nzTabPosition="left" *ngIf="currentNodeName">
             <ng-container *ngIf="!hookSelected">
-                <nz-tab nzTitle="Execution context">
+                <nz-tab nzTitle="Execution context" *ngIf="currentNodeType === 'pipeline' || currentNodeType === 'fork'">
                     <app-workflow-node-context [workflow]="workflow" [readonly]="readonly" (contextChange)="pushChange($event)"></app-workflow-node-context>
                 </nz-tab>
-                <nz-tab nzTitle="Inputs">
+                <nz-tab nzTitle="Inputs" *ngIf="currentNodeType === 'pipeline'">
                     <app-workflow-node-input [workflow]="workflow" [readonly]="readonly" (inputChange)="pushChange($event)"></app-workflow-node-input>
                 </nz-tab>
                 <nz-tab nzTitle="Outgoing Hook" *ngIf="currentNodeType === 'outgoinghook'">
@@ -21,12 +21,12 @@
                                              [edit]="!readonly && !(workflow.from_repository && workflow.from_repository.length > 0)">
                         </app-permission-list>
                     </ng-container>
-                    <ng-container
+                    <div class="permForm"
                             *ngIf="!readonly && !(workflow.from_repository && workflow.from_repository.length > 0)">
-                        <h3>{{ 'workflow_node_permissions_form_title' | translate }}</h3>
+                        <h4>{{ 'workflow_node_permissions_form_title' | translate }}</h4>
                         <app-workflow-permission-form [groups]="workflow.groups" (createGroupPermissionEvent)="groupManagement($event)"
                                                       [loading]="loading"></app-workflow-permission-form>
-                    </ng-container>
+                    </div>
                 </nz-tab>
             </ng-container>
             <ng-container *ngIf="hookSelected">

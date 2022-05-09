@@ -242,8 +242,10 @@ export class WorkflowShowComponent implements OnInit, OnDestroy, AfterViewInit {
                         projectKey: this.project.key,
                         workflowName: this.detailedWorkflow.name,
                         group: event.gp
-                    })).pipe(finalize(() => this.permFormLoading = false))
-                        .subscribe(() => this._toast.success('', this._translate.instant('permission_added')));
+                    })).pipe(finalize(() => {
+                        this.permFormLoading = false;
+                        this._cd.markForCheck();
+                    })).subscribe(() => this._toast.success('', this._translate.instant('permission_added')));
 
                     break;
                 case 'update':
@@ -251,6 +253,9 @@ export class WorkflowShowComponent implements OnInit, OnDestroy, AfterViewInit {
                         projectKey: this.project.key,
                         workflowName: this.detailedWorkflow.name,
                         group: event.gp
+                    })).pipe(finalize( () => {
+                        this.permFormLoading = false;
+                        this._cd.markForCheck();
                     })).subscribe(() => this._toast.success('', this._translate.instant('permission_updated')));
                     break;
                 case 'delete':
@@ -258,6 +263,9 @@ export class WorkflowShowComponent implements OnInit, OnDestroy, AfterViewInit {
                         projectKey: this.project.key,
                         workflowName: this.detailedWorkflow.name,
                         group: event.gp
+                    })).pipe(finalize( () => {
+                        this.permFormLoading = false;
+                        this._cd.markForCheck();
                     })).subscribe(() => this._toast.success('', this._translate.instant('permission_deleted')));
                     break;
             }
