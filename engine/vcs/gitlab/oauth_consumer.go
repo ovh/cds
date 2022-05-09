@@ -129,7 +129,6 @@ func (g *gitlabConsumer) GetAuthorizedClient(ctx context.Context, vcsAuth sdk.VC
 		c := &gitlabClient{
 			client:              gclient,
 			uiURL:               g.uiURL,
-			disableStatus:       g.disableStatus,
 			disableStatusDetail: g.disableStatusDetail,
 			proxyURL:            g.proxyURL,
 		}

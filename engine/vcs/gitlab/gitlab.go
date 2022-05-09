@@ -40,7 +40,7 @@ type gitlabConsumer struct {
 }
 
 // New instantiate a new gitlab consumer
-func New(URL, uiURL, proxyURL string, store cache.Store, username, token string, disableStatus, disableStatusDetail bool) sdk.VCSServer {
+func New(URL, uiURL, proxyURL string, store cache.Store, username, token string, disableStatusDetail bool) sdk.VCSServer {
 	var url = URL
 	if url == "" {
 		url = "https://gitlab.com"
@@ -52,7 +52,6 @@ func New(URL, uiURL, proxyURL string, store cache.Store, username, token string,
 		proxyURL:            proxyURL,
 		username:            username,
 		personalAccessToken: token,
-		disableStatus:       disableStatus,
 		disableStatusDetail: disableStatusDetail,
 	}
 }

@@ -12,7 +12,6 @@ import (
 type gerritClient struct {
 	client              *g.Client
 	url                 string
-	disableStatus       bool
 	disableStatusDetail bool
 	sshPort             int
 	username            string
@@ -24,7 +23,6 @@ type gerritClient struct {
 type gerritConsumer struct {
 	URL                 string `json:"url"`
 	cache               cache.Store
-	disableStatus       bool
 	disableStatusDetail bool
 	sshPort             int
 	reviewerName        string
@@ -32,11 +30,10 @@ type gerritConsumer struct {
 }
 
 // New instantiate a new gerrit consumer
-func New(URL string, store cache.Store, disableStatus bool, disableStatusDetail bool, sshPort int, reviewerName, reviewerToken string) sdk.VCSServer {
+func New(URL string, store cache.Store, disableStatusDetail bool, sshPort int, reviewerName, reviewerToken string) sdk.VCSServer {
 	return &gerritConsumer{
 		URL:                 URL,
 		cache:               store,
-		disableStatus:       disableStatus,
 		disableStatusDetail: disableStatusDetail,
 		sshPort:             sshPort,
 		reviewerName:        reviewerName,

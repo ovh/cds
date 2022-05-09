@@ -90,7 +90,6 @@ func (s *Service) getConsumer(name string, vcsAuth sdk.VCSAuth) (sdk.VCSServer, 
 				s.UI.HTTP.URL,
 				s.Cfg.ProxyWebhook,
 				s.Cache,
-				vcsAuth.VCSProject.Options.DisableStatus,
 				!vcsAuth.VCSProject.Options.ShowStatusDetail,
 			), nil
 		case "bitbucketserver":
@@ -100,13 +99,11 @@ func (s *Service) getConsumer(name string, vcsAuth sdk.VCSAuth) (sdk.VCSServer, 
 				s.UI.HTTP.URL,
 				s.Cfg.ProxyWebhook,
 				s.Cache,
-				vcsAuth.VCSProject.Options.DisableStatus,
 			), nil
 		case "gerrit":
 			return gerrit.New(
 				vcsAuth.VCSProject.URL,
 				s.Cache,
-				vcsAuth.VCSProject.Options.DisableStatus,
 				!vcsAuth.VCSProject.Options.ShowStatusDetail,
 				vcsAuth.VCSProject.Options.GerritSSHPort,
 				vcsAuth.VCSProject.Auth["reviewerUser"],
@@ -120,7 +117,6 @@ func (s *Service) getConsumer(name string, vcsAuth sdk.VCSAuth) (sdk.VCSServer, 
 				s.UI.HTTP.URL,
 				s.Cfg.ProxyWebhook,
 				s.Cache,
-				vcsAuth.VCSProject.Options.DisableStatus,
 				!vcsAuth.VCSProject.Options.ShowStatusDetail,
 			), nil
 		case "gitlab":
@@ -131,7 +127,6 @@ func (s *Service) getConsumer(name string, vcsAuth sdk.VCSAuth) (sdk.VCSServer, 
 				s.Cache,
 				vcsAuth.VCSProject.Auth["username"],
 				vcsAuth.VCSProject.Auth["token"],
-				vcsAuth.VCSProject.Options.DisableStatus,
 				!vcsAuth.VCSProject.Options.ShowStatusDetail,
 			), nil
 		}
@@ -200,7 +195,6 @@ func (s *Service) getConsumer(name string, vcsAuth sdk.VCSAuth) (sdk.VCSServer, 
 		return gerrit.New(
 			serverCfg.URL,
 			s.Cache,
-			serverCfg.Gerrit.Status.Disable,
 			serverCfg.Gerrit.Status.ShowDetail,
 			serverCfg.Gerrit.SSHPort,
 			serverCfg.Gerrit.Reviewer.User,

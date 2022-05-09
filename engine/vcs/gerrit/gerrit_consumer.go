@@ -31,7 +31,6 @@ func (g *gerritConsumer) GetAuthorizedClient(ctx context.Context, vcsAuth sdk.VC
 	c := &gerritClient{
 		client:              client,
 		url:                 g.URL,
-		disableStatus:       g.disableStatus,
 		disableStatusDetail: g.disableStatusDetail,
 		sshPort:             g.sshPort,
 		username:            vcsAuth.AccessToken,

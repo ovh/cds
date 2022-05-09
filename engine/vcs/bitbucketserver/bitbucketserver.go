@@ -40,14 +40,13 @@ type bitbucketConsumer struct {
 }
 
 //New creates a new bitbucket Consumer
-func New(URL, apiURL, uiURL, proxyURL string, store cache.Store, disableStatus bool) sdk.VCSServer {
+func New(URL, apiURL, uiURL, proxyURL string, store cache.Store) sdk.VCSServer {
 	return &bitbucketConsumer{
-		URL:           URL,
-		apiURL:        apiURL,
-		uiURL:         uiURL,
-		proxyURL:      proxyURL,
-		cache:         store,
-		disableStatus: disableStatus,
+		URL:      URL,
+		apiURL:   apiURL,
+		uiURL:    uiURL,
+		proxyURL: proxyURL,
+		cache:    store,
 	}
 }
 

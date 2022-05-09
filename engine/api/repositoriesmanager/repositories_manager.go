@@ -579,6 +579,9 @@ func (c *vcsClient) PullRequestEvents(ctx context.Context, fullname string, evts
 }
 
 func (c *vcsClient) SetStatus(ctx context.Context, event sdk.Event) error {
+	if c.vcsProject != nil && c.vcsProject.Options.DisableStatus {
+		return nil
+	}
 	path := fmt.Sprintf("/vcs/%s/status", c.name)
 	_, err := c.doJSONRequest(ctx, "POST", path, event, nil)
 	return sdk.NewErrorFrom(err, "unable to set status on %s (workflow: %s, application: %s)", event.WorkflowName, event.ApplicationName, c.name)
