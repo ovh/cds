@@ -27,7 +27,7 @@ func (g *githubClient) User(ctx context.Context, username string) (User, error) 
 	//Github may return 304 status because we are using conditional request with ETag based headers
 	if status == http.StatusNotModified {
 		//If repo isn't updated, lets get them from cache
-		k := cache.Key("vcs", "github", "users", g.OAuthToken, url)
+		k := cache.Key("vcs", "github", "users", sdk.Hash512(g.OAuthToken+g.username), url)
 		if _, err := g.Cache.Get(k, &user); err != nil {
 			log.Error(ctx, "cannot get from cache %s: %v", k, err)
 		}
@@ -36,7 +36,7 @@ func (g *githubClient) User(ctx context.Context, username string) (User, error) 
 			return User{}, err
 		}
 		//Put the body on cache for one hour and one minute
-		k := cache.Key("vcs", "github", "users", g.OAuthToken, url)
+		k := cache.Key("vcs", "github", "users", sdk.Hash512(g.OAuthToken+g.username), url)
 		if err := g.Cache.SetWithTTL(k, user, 61*60); err != nil {
 			log.Error(ctx, "cannot SetWithTTL: %s: %v", k, err)
 		}

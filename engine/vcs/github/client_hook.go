@@ -107,7 +107,7 @@ func (g *githubClient) UpdateHook(ctx context.Context, repo string, hook *sdk.VC
 
 func (g *githubClient) getHooks(ctx context.Context, fullname string) ([]Webhook, error) {
 	var webhooks = []Webhook{}
-	cacheKey := cache.Key("vcs", "github", "hooks", g.OAuthToken, "/repos/"+fullname+"/hooks")
+	cacheKey := cache.Key("vcs", "github", "hooks", sdk.Hash512(g.OAuthToken+g.username), "/repos/"+fullname+"/hooks")
 	opts := []getArgFunc{withETag}
 
 	var nextPage = "/repos/" + fullname + "/hooks"
@@ -182,7 +182,7 @@ func (g *githubClient) GetHook(ctx context.Context, fullname, webhookURL string)
 func (g *githubClient) getHookByID(ctx context.Context, fullname, id string) (Webhook, error) {
 	var webhook Webhook
 	url := "/repos/" + fullname + "/hooks/" + id
-	cacheKey := cache.Key("vcs", "github", "hooks", id, g.OAuthToken, "/repos/"+fullname+"/hooks/"+id)
+	cacheKey := cache.Key("vcs", "github", "hooks", id, sdk.Hash512(g.OAuthToken+g.username), "/repos/"+fullname+"/hooks/"+id)
 	opts := []getArgFunc{withETag}
 
 	status, body, _, err := g.get(ctx, url, opts...)

@@ -75,7 +75,7 @@ func (c *githubClient) setETag(ctx context.Context, path string, headers http.He
 
 	if etag != "" {
 		//Put etag for this path in cache for 15 minutes
-		k := cache.Key("vcs", "github", "etag", c.OAuthToken, strings.Replace(path, "https://", "", -1))
+		k := cache.Key("vcs", "github", "etag", sdk.Hash512(c.OAuthToken+c.username), strings.Replace(path, "https://", "", -1))
 		if err := c.Cache.SetWithTTL(k, etag, 15*60); err != nil {
 			log.Error(ctx, "cannot SetWithTTL: %s: %v", k, err)
 		}
@@ -84,7 +84,7 @@ func (c *githubClient) setETag(ctx context.Context, path string, headers http.He
 
 func (c *githubClient) getETag(ctx context.Context, path string) string {
 	var s string
-	k := cache.Key("vcs", "github", "etag", c.OAuthToken, strings.Replace(path, "https://", "", -1))
+	k := cache.Key("vcs", "github", "etag", sdk.Hash512(c.OAuthToken+c.username), strings.Replace(path, "https://", "", -1))
 	if _, err := c.Cache.Get(k, &s); err != nil {
 		log.Error(ctx, "cannot get from cache %s: %v", k, err)
 	}

@@ -48,7 +48,7 @@ func (g *githubClient) Repos(ctx context.Context) ([]sdk.VCSRepo, error) {
 		//Github may return 304 status because we are using conditional request with ETag based headers
 		if status == http.StatusNotModified {
 			//If repos aren't updated, lets get them from cache
-			k := cache.Key("vcs", "github", "repos", g.OAuthToken, "/user/repos")
+			k := cache.Key("vcs", "github", "repos", sdk.Hash512(g.OAuthToken+g.username), "/user/repos")
 			if _, err := g.Cache.Get(k, &repos); err != nil {
 				log.Error(ctx, "cannot get from cache %s: %v", k, err)
 			}
@@ -71,7 +71,7 @@ func (g *githubClient) Repos(ctx context.Context) ([]sdk.VCSRepo, error) {
 	}
 
 	//Put the body on cache for one hour and one minute
-	k := cache.Key("vcs", "github", "repos", g.OAuthToken, "/user/repos")
+	k := cache.Key("vcs", "github", "repos", sdk.Hash512(g.OAuthToken+g.username), "/user/repos")
 	if err := g.Cache.SetWithTTL(k, repos, 61*60); err != nil {
 		log.Error(ctx, "cannot SetWithTTL: %s: %v", k, err)
 	}
@@ -132,7 +132,7 @@ func (g *githubClient) repoByFullname(ctx context.Context, fullname string) (Rep
 	//Github may return 304 status because we are using conditional request with ETag based headers
 	if status == http.StatusNotModified {
 		//If repo isn't updated, lets get them from cache
-		k := cache.Key("vcs", "github", "repo", g.OAuthToken, url)
+		k := cache.Key("vcs", "github", "repo", sdk.Hash512(g.OAuthToken+g.username), url)
 		if _, err := g.Cache.Get(k, &repo); err != nil {
 			log.Error(ctx, "cannot get from cache %s: %v", k, err)
 		}
@@ -142,7 +142,7 @@ func (g *githubClient) repoByFullname(ctx context.Context, fullname string) (Rep
 			return Repository{}, err
 		}
 		//Put the body on cache for one hour and one minute
-		k := cache.Key("vcs", "github", "repo", g.OAuthToken, url)
+		k := cache.Key("vcs", "github", "repo", sdk.Hash512(g.OAuthToken+g.username), url)
 		if err := g.Cache.SetWithTTL(k, repo, 61*60); err != nil {
 			log.Error(ctx, "cannot SetWithTTL: %s: %v", k, err)
 		}
@@ -164,7 +164,7 @@ func (g *githubClient) UserHasWritePermission(ctx context.Context, fullname stri
 	}
 
 	url := "/repos/" + fullname + "/collaborators/" + g.username + "/permission"
-	k := cache.Key("vcs", "github", "user-write", g.OAuthToken, url)
+	k := cache.Key("vcs", "github", "user-write", sdk.Hash512(g.OAuthToken+g.username), url)
 
 	status, resp, _, err := g.get(ctx, url)
 	if err != nil {

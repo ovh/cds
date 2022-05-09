@@ -110,7 +110,7 @@ func (g *githubClient) ListStatuses(ctx context.Context, repo string, ref string
 	//Github may return 304 status because we are using conditional request with ETag based headers
 	if status == http.StatusNotModified {
 		//If repo isn't updated, lets get them from cache
-		k := cache.Key("vcs", "github", "statuses", g.OAuthToken, url)
+		k := cache.Key("vcs", "github", "statuses", sdk.Hash512(g.OAuthToken+g.username), url)
 		if _, err := g.Cache.Get(k, &ss); err != nil {
 			log.Error(ctx, "cannot get from cache %s: %v", k, err)
 		}
@@ -119,7 +119,7 @@ func (g *githubClient) ListStatuses(ctx context.Context, repo string, ref string
 			return []sdk.VCSCommitStatus{}, sdk.WrapError(err, "Unable to parse github commit: %s", ref)
 		}
 		//Put the body on cache for one hour and one minute
-		k := cache.Key("vcs", "github", "statuses", g.OAuthToken, url)
+		k := cache.Key("vcs", "github", "statuses", sdk.Hash512(g.OAuthToken+g.username), url)
 		if err := g.Cache.SetWithTTL(k, ss, 61*60); err != nil {
 			log.Error(ctx, "cannot SetWithTTL: %s: %v", k, err)
 		}

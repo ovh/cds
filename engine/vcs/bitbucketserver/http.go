@@ -117,10 +117,10 @@ func (c *bitbucketClient) do(ctx context.Context, method, api, path string, para
 		cacheKey = cache.Key("vcs", "bitbucket", "request", req.URL.String(), c.vcsProject.Auth["username"])
 	} else if opts != nil && opts.asUser && c.token != "" { // DEPRECATED VCS
 		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.token))
-		cacheKey = cache.Key("vcs", "bitbucket", "request", req.URL.String(), c.token)
+		cacheKey = cache.Key("vcs", "bitbucket", "request", req.URL.String(), sdk.Hash512(c.token))
 	} else { // DEPRECATED VCS
 		accessToken := NewAccessToken(c.accessToken, c.accessTokenSecret, nil)
-		cacheKey = cache.Key("vcs", "bitbucket", "request", req.URL.String(), accessToken.token)
+		cacheKey = cache.Key("vcs", "bitbucket", "request", req.URL.String(), sdk.Hash512(accessToken.token))
 		if err := c.consumer.Sign(req, accessToken); err != nil {
 			return err
 		}
