@@ -23,7 +23,7 @@ func TestCrud(t *testing.T) {
 	vcsProject := &sdk.VCSProject{
 		Name:        "the-name",
 		Type:        "github",
-		Auth:        map[string]string{"username": "the-username", "token": "the-token"},
+		Auth:        sdk.VCSAuthProject{Username: "the-username", Token: "the-token"},
 		Description: "the-username",
 		ProjectID:   proj1.ID,
 	}
@@ -41,10 +41,10 @@ func TestCrud(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 1, len(all))
 	require.Equal(t, "the-username", all[0].Description)
-	require.Equal(t, "", all[0].Auth["username"]) // not decrypted
+	require.Equal(t, "", all[0].Auth.Username) // not decrypted
 
 	all[0].Description = "the-username-updated"
-	all[0].Auth = map[string]string{"username": "the-username-updated", "token": "the-token-updated"}
+	all[0].Auth = sdk.VCSAuthProject{Username: "the-username-updated", Token: "the-token-updated"}
 
 	err = vcs.Update(context.TODO(), db, &all[0])
 	require.NoError(t, err)
@@ -52,8 +52,8 @@ func TestCrud(t *testing.T) {
 	vcsProject2, err := vcs.LoadVCSByProject(context.Background(), db, proj1.Key, "the-name", gorpmapping.GetOptions.WithDecryption)
 	require.NoError(t, err)
 	require.Equal(t, "the-username-updated", vcsProject2.Description)
-	require.Equal(t, "the-username-updated", vcsProject2.Auth["username"]) // decrypted
-	require.Equal(t, "the-token-updated", vcsProject2.Auth["token"])       // decrypted
+	require.Equal(t, "the-username-updated", vcsProject2.Auth.Username) // decrypted
+	require.Equal(t, "the-token-updated", vcsProject2.Auth.Token)       // decrypted
 
 	err = vcs.Delete(db, proj1.ID, "the-name")
 	require.NoError(t, err)

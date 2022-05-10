@@ -35,7 +35,7 @@ func (s *Service) getVCSGerritHandler() service.Handler {
 				continue
 			}
 			servers[k] = sdk.VCSGerritConfiguration{
-				Username:      v.Gerrit.EventStream.User,
+				SSHUsername:   v.Gerrit.EventStream.User,
 				SSHPrivateKey: v.Gerrit.EventStream.PrivateKey,
 				URL:           v.URL,
 				SSHPort:       v.Gerrit.SSHPort,
@@ -92,65 +92,12 @@ func (s *Service) getVCSServersHandler() service.Handler {
 	}
 }
 
+// DEPRECATED VCS
 func (s *Service) getVCSServersHooksHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vcsAuth, err := getVCSAuth(ctx)
-		if err != nil {
-			return sdk.WrapError(err, "unable to get access token header")
-		}
 
-		if vcsAuth.VCSProject != nil {
-			res := struct {
-				WebhooksSupported  bool     `json:"webhooks_supported"`
-				WebhooksDisabled   bool     `json:"webhooks_disabled"`
-				WebhooksIcon       string   `json:"webhooks_icon"`
-				GerritHookDisabled bool     `json:"gerrithook_disabled"`
-				Events             []string `json:"events"`
-			}{}
-
-			switch {
-			case vcsAuth.VCSProject.Type == "bitbucketserver":
-				res.WebhooksSupported = true
-				res.WebhooksIcon = sdk.BitbucketIcon
-				// https://confluence.atlassian.com/bitbucketserver/event-payload-938025882.html
-				res.Events = sdk.BitbucketEvents
-				res.WebhooksDisabled = vcsAuth.VCSProject.Options.DisableWebhooks
-			case vcsAuth.VCSProject.Type == "bitbucketcloud":
-				res.WebhooksSupported = true
-				res.WebhooksIcon = sdk.BitbucketIcon
-				// https://developer.atlassian.com/bitbucket/api/2/reference/resource/hook_events/%7Bsubject_type%7D
-				res.Events = sdk.BitbucketCloudEvents
-				res.WebhooksDisabled = vcsAuth.VCSProject.Options.DisableWebhooks
-			case vcsAuth.VCSProject.Type == "github":
-				res.WebhooksSupported = true
-				res.WebhooksIcon = sdk.GitHubIcon
-				// https://developer.github.com/v3/activity/events/types/
-				res.Events = sdk.GitHubEvents
-				res.WebhooksDisabled = vcsAuth.VCSProject.Options.DisableWebhooks
-			case vcsAuth.VCSProject.Type == "gitlab":
-				res.WebhooksSupported = true
-				res.WebhooksIcon = sdk.GitlabIcon
-				res.WebhooksDisabled = vcsAuth.VCSProject.Options.DisableWebhooks
-				// https://docs.gitlab.com/ee/user/project/integrations/webhooks.html
-				res.Events = []string{
-					string(gitlab.EventTypePush),
-					string(gitlab.EventTypeTagPush),
-					string(gitlab.EventTypeIssue),
-					string(gitlab.EventTypeNote),
-					string(gitlab.EventTypeMergeRequest),
-					string(gitlab.EventTypeWikiPage),
-					string(gitlab.EventTypePipeline),
-					"Job Hook", // TODO update gitlab sdk
-				}
-			case vcsAuth.VCSProject.Type == "gerrit":
-				res.WebhooksSupported = false
-				res.WebhooksIcon = sdk.GerritIcon
-				// https://git.eclipse.org/r/Documentation/cmd-stream-events.html#events
-				res.Events = sdk.GerritEvents
-			}
-
-			return service.WriteJSON(w, res, http.StatusOK)
-		}
+		// This handler is not called by the 'new VCS'
+		// it's managed by GetWebhooksInfos() in API
 
 		// DEPRECATED VCS
 		name := muxVar(r, "name")
@@ -212,32 +159,11 @@ func (s *Service) getVCSServersHooksHandler() service.Handler {
 	}
 }
 
+// DEPRECATED VCS
 func (s *Service) getVCSServersPollingHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vcsAuth, err := getVCSAuth(ctx)
-		if err != nil {
-			return sdk.WrapError(err, "unable to get access token header")
-		}
-
-		if vcsAuth.VCSProject != nil {
-			res := struct {
-				PollingSupported bool `json:"polling_supported"`
-				PollingDisabled  bool `json:"polling_disabled"`
-			}{}
-
-			switch {
-			case vcsAuth.VCSProject.Type == "bitbucketserver":
-				res.PollingSupported = false
-			case vcsAuth.VCSProject.Type == "bitbucketcloud":
-				res.PollingSupported = false
-			case vcsAuth.VCSProject.Type == "github":
-				res.PollingSupported = true
-			case vcsAuth.VCSProject.Type == "gitlab":
-				res.PollingSupported = false
-			}
-
-			return service.WriteJSON(w, res, http.StatusOK)
-		}
+		// This handler is not called by the 'new VCS'
+		// it's managed by GetPollingInfos() in API
 
 		// DEPRECATED VCS
 		name := muxVar(r, "name")
@@ -933,7 +859,15 @@ func (s *Service) postStatusHandler() service.Handler {
 			w.Header().Set(sdk.HeaderXAccessToken, client.GetAccessToken(ctx))
 		}
 
-		if err := client.SetStatus(ctx, evt); err != nil {
+		var disableStatusDetails bool
+		d := r.URL.Query().Get("disableStatusDetails")
+		if d == "" {
+			disableStatusDetails, _ = strconv.ParseBool(d)
+		} else {
+			disableStatusDetails = client.IsDisableStatusDetails(ctx)
+		}
+
+		if err := client.SetStatus(ctx, evt, disableStatusDetails); err != nil {
 			return sdk.WrapError(err, "Unable to set status on %s", name)
 		}
 

@@ -35,13 +35,12 @@ version: v1.0
 name: gerrit
 type: gerrit
 description: "gerrit new dev"
-options:
-    gerritSSHPort: 29418 
 auth:
-    username: gerrit-username # # User to access to gerrit event stream
+    sshUsername: gerrit-username # # User to access to gerrit event stream
+    sshPort: 29418
     sshPrivateKey: foofoofoo\non\none\nline\nhere # Private key of the user who access to gerrit event stream
-    reviewerUser: admin # User that review changes
-    reviewerToken: gerrit-generated-password # Http Password of the user that comment changes
+    user: admin # User that review changes
+    token: gerrit-generated-password # Http Password of the user that comment changes
 ```
 
 ```sh

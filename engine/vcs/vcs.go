@@ -82,52 +82,51 @@ func (s *Service) CheckConfiguration(config interface{}) error {
 }
 
 func (s *Service) getConsumer(name string, vcsAuth sdk.VCSAuth) (sdk.VCSServer, error) {
-	if vcsAuth.VCSProject != nil {
-		switch vcsAuth.VCSProject.Type {
+	if vcsAuth.URL != "" {
+		switch vcsAuth.Type {
 		case "bitbucketcloud":
 			return bitbucketcloud.New(
-				strings.TrimSuffix(vcsAuth.VCSProject.URL, "/"),
+				strings.TrimSuffix(vcsAuth.URL, "/"),
 				s.UI.HTTP.URL,
 				s.Cfg.ProxyWebhook,
 				s.Cache,
-				!vcsAuth.VCSProject.Options.ShowStatusDetail,
 			), nil
 		case "bitbucketserver":
 			return bitbucketserver.New(
-				strings.TrimSuffix(vcsAuth.VCSProject.URL, "/"),
+				strings.TrimSuffix(vcsAuth.URL, "/"),
 				s.Cfg.API.HTTP.URL,
 				s.UI.HTTP.URL,
 				s.Cfg.ProxyWebhook,
 				s.Cache,
+				vcsAuth.Username,
+				vcsAuth.Token,
 			), nil
 		case "gerrit":
 			return gerrit.New(
-				vcsAuth.VCSProject.URL,
+				vcsAuth.URL,
 				s.Cache,
-				!vcsAuth.VCSProject.Options.ShowStatusDetail,
-				vcsAuth.VCSProject.Options.GerritSSHPort,
-				vcsAuth.VCSProject.Auth["reviewerUser"],
-				vcsAuth.VCSProject.Auth["reviewerToken"],
+				vcsAuth.SSHUsername,
+				vcsAuth.SSHPort,
+				vcsAuth.Username,
+				vcsAuth.Token,
 			), nil
 		case "github":
 			return github.New(
-				vcsAuth.VCSProject.URL,
-				vcsAuth.VCSProject.Auth["github-api-url"],
+				vcsAuth.URL,
+				vcsAuth.URLApi,
 				s.Cfg.API.HTTP.URL,
 				s.UI.HTTP.URL,
 				s.Cfg.ProxyWebhook,
 				s.Cache,
-				!vcsAuth.VCSProject.Options.ShowStatusDetail,
 			), nil
 		case "gitlab":
 			return gitlab.New(
-				vcsAuth.VCSProject.URL,
+				vcsAuth.URL,
 				s.UI.HTTP.URL,
 				s.Cfg.ProxyWebhook,
 				s.Cache,
-				vcsAuth.VCSProject.Auth["username"],
-				vcsAuth.VCSProject.Auth["token"],
-				!vcsAuth.VCSProject.Options.ShowStatusDetail,
+				vcsAuth.Username,
+				vcsAuth.Token,
 			), nil
 		}
 		return nil, sdk.WithStack(sdk.ErrNotFound)
@@ -192,7 +191,7 @@ func (s *Service) getConsumer(name string, vcsAuth sdk.VCSAuth) (sdk.VCSServer, 
 		), nil
 	}
 	if serverCfg.Gerrit != nil {
-		return gerrit.New(
+		return gerrit.NewDeprecated(
 			serverCfg.URL,
 			s.Cache,
 			serverCfg.Gerrit.Status.ShowDetail,

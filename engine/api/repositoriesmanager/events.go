@@ -78,7 +78,7 @@ func processEvent(ctx context.Context, db gorpmapper.SqlExecutorWithTx, event sd
 		return sdk.WrapError(err, "AuthorizedClient (%s, %s)", event.ProjectKey, eventWNR.RepositoryManagerName)
 	}
 
-	if err := c.SetStatus(ctx, event); err != nil {
+	if err := c.SetStatus(ctx, event, c.IsDisableStatusDetails(ctx)); err != nil {
 		if err := RetryEvent(&event, err, store); err != nil {
 			log.Error(ctx, "repositoriesmanager>processEvent> err while retry event: %v", err)
 		}

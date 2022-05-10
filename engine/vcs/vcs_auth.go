@@ -3,7 +3,6 @@ package vcs
 import (
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -16,26 +15,28 @@ import (
 type contextKey string
 
 var (
-	contextKeyVCSProjectConf     contextKey = "vcs-project-conf"
-	contextKeyAccessToken        contextKey = "access-token"
-	contextKeyAccessTokenCreated contextKey = "access-token-created"
-	contextKeyAccessTokenSecret  contextKey = "access-token-secret"
+	contextKeyVCSURL             contextKey = "vcs-url"
+	contextKeyVCSURLApi          contextKey = "vcs-url-api"
+	contextKeyVCSType            contextKey = "vcs-type"
+	contextKeyVCSUsername        contextKey = "vcs-username"
+	contextKeyVCSToken           contextKey = "vcs-token"
+	contextKeyAccessToken        contextKey = "access-token"         // DEPRECATED VCS
+	contextKeyAccessTokenCreated contextKey = "access-token-created" // DEPRECATED VCS
+	contextKeyAccessTokenSecret  contextKey = "access-token-secret"  // DEPRECATED VCS
 )
 
 func (s *Service) authMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig) (context.Context, error) {
-	encodedVCSProjectConf := req.Header.Get(sdk.HeaderXVCSProjectConf)
-	if encodedVCSProjectConf != "" {
-		vcsProjectConf, err := base64.StdEncoding.DecodeString(encodedVCSProjectConf)
-		if err != nil {
-			return ctx, fmt.Errorf("bad header syntax: %s", err)
-		}
-		if len(vcsProjectConf) != 0 {
-			var vcsProject sdk.VCSProject
-			if err := json.Unmarshal(vcsProjectConf, &vcsProject); err != nil {
-				return nil, sdk.WrapError(sdk.ErrUnauthorized, "invalid vcs project configuration err:%v", err)
-			}
-			ctx = context.WithValue(ctx, contextKeyVCSProjectConf, vcsProject)
-		}
+	encodedVCSURL := req.Header.Get(sdk.HeaderXVCSURL)
+	encodedVCSURLApi := req.Header.Get(sdk.HeaderXVCSURLApi)
+	encodedVCSType := req.Header.Get(sdk.HeaderXVCSType)
+	encodedVCSUsername := req.Header.Get(sdk.HeaderXVCSUsername)
+	encodedVCSToken := req.Header.Get(sdk.HeaderXVCSToken)
+	if encodedVCSURL != "" {
+		ctx = context.WithValue(ctx, contextKeyVCSURL, encodedVCSURL)
+		ctx = context.WithValue(ctx, contextKeyVCSURLApi, encodedVCSURLApi)
+		ctx = context.WithValue(ctx, contextKeyVCSType, encodedVCSType)
+		ctx = context.WithValue(ctx, contextKeyVCSUsername, encodedVCSUsername)
+		ctx = context.WithValue(ctx, contextKeyVCSToken, encodedVCSToken)
 		return ctx, nil
 	}
 
@@ -71,9 +72,23 @@ func (s *Service) authMiddleware(ctx context.Context, w http.ResponseWriter, req
 
 func getVCSAuth(ctx context.Context) (sdk.VCSAuth, error) {
 	var vcsAuth sdk.VCSAuth
-	vcsProject, ok := ctx.Value(contextKeyVCSProjectConf).(sdk.VCSProject)
+	vcsURL, ok := ctx.Value(contextKeyVCSURL).(string)
+
 	if ok {
-		vcsAuth.VCSProject = &vcsProject
+		vcsAuth.URL = vcsURL
+
+		username, _ := ctx.Value(contextKeyVCSUsername).(string)
+		vcsAuth.Username = username
+
+		vcsURLApi, _ := ctx.Value(contextKeyVCSURLApi).(string)
+		vcsAuth.URLApi = vcsURLApi
+
+		vcsType, _ := ctx.Value(contextKeyVCSType).(string)
+		vcsAuth.URLApi = vcsType
+
+		token, _ := ctx.Value(contextKeyVCSToken).(string)
+		vcsAuth.Token = token
+
 		return vcsAuth, nil
 	}
 

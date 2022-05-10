@@ -93,10 +93,10 @@ func (consumer *bitbucketcloudConsumer) RefreshToken(ctx context.Context, refres
 
 //GetAuthorized returns an authorized client
 func (consumer *bitbucketcloudConsumer) GetAuthorizedClient(ctx context.Context, vcsAuth sdk.VCSAuth) (sdk.VCSAuthorizedClient, error) {
-	if vcsAuth.VCSProject != nil {
+	if vcsAuth.URL != "" {
 		c := &bitbucketcloudClient{
-			appPassword: vcsAuth.VCSProject.Auth["token"],
-			username:    vcsAuth.VCSProject.Auth["username"],
+			appPassword: vcsAuth.Token,
+			username:    vcsAuth.Username,
 			Cache:       consumer.Cache,
 			apiURL:      consumer.apiURL,
 			uiURL:       consumer.uiURL,
@@ -116,15 +116,15 @@ func (consumer *bitbucketcloudConsumer) GetAuthorizedClient(ctx context.Context,
 	}
 
 	c := &bitbucketcloudClient{
-		ClientID:            consumer.ClientID,
-		OAuthToken:          newAccessToken,
-		RefreshToken:        vcsAuth.AccessTokenSecret,
-		Cache:               consumer.Cache,
-		apiURL:              consumer.apiURL,
-		uiURL:               consumer.uiURL,
-		DisableStatus:       consumer.disableStatus,
-		DisableStatusDetail: consumer.disableStatusDetail,
-		proxyURL:            consumer.proxyURL,
+		ClientID:             consumer.ClientID,
+		OAuthToken:           newAccessToken,
+		RefreshToken:         vcsAuth.AccessTokenSecret,
+		Cache:                consumer.Cache,
+		apiURL:               consumer.apiURL,
+		uiURL:                consumer.uiURL,
+		DisableStatus:        consumer.disableStatus,
+		DisableStatusDetails: consumer.disableStatusDetails,
+		proxyURL:             consumer.proxyURL,
 	}
 
 	return c, nil

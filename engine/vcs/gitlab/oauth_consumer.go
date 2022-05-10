@@ -124,13 +124,12 @@ func (g *gitlabConsumer) GetAuthorizedClient(ctx context.Context, vcsAuth sdk.VC
 	httpClient := &http.Client{
 		Timeout: 60 * time.Second,
 	}
-	if vcsAuth.VCSProject != nil {
-		gclient := gitlab.NewClient(httpClient, vcsAuth.VCSProject.Auth["token"])
+	if vcsAuth.URL != "" {
+		gclient := gitlab.NewClient(httpClient, vcsAuth.Token)
 		c := &gitlabClient{
-			client:              gclient,
-			uiURL:               g.uiURL,
-			disableStatusDetail: g.disableStatusDetail,
-			proxyURL:            g.proxyURL,
+			client:   gclient,
+			uiURL:    g.uiURL,
+			proxyURL: g.proxyURL,
 		}
 		c.client.SetBaseURL(g.URL + "/api/v4")
 		return c, nil
@@ -139,11 +138,11 @@ func (g *gitlabConsumer) GetAuthorizedClient(ctx context.Context, vcsAuth sdk.VC
 	// DEPRECATED VCS
 	gclient := gitlab.NewOAuthClient(httpClient, vcsAuth.AccessToken)
 	c := &gitlabClient{
-		client:              gclient,
-		uiURL:               g.uiURL,
-		disableStatus:       g.disableStatus,
-		disableStatusDetail: g.disableStatusDetail,
-		proxyURL:            g.proxyURL,
+		client:               gclient,
+		uiURL:                g.uiURL,
+		disableStatus:        g.disableStatus,
+		disableStatusDetails: g.disableStatusDetails,
+		proxyURL:             g.proxyURL,
 	}
 	c.client.SetBaseURL(g.URL + "/api/v4")
 	return c, nil

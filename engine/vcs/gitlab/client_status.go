@@ -43,8 +43,13 @@ func getGitlabStateFromStatus(s string) gitlab.BuildStateValue {
 	return gitlab.Failed
 }
 
+// DEPRECATED VCS
+func (c *gitlabClient) IsDisableStatusDetails(ctx context.Context) bool {
+	return c.disableStatusDetails
+}
+
 //SetStatus set build status on Gitlab
-func (c *gitlabClient) SetStatus(ctx context.Context, event sdk.Event) error {
+func (c *gitlabClient) SetStatus(ctx context.Context, event sdk.Event, disabledStatusDetail bool) error {
 	if c.disableStatus {
 		log.Warn(ctx, "disableStatus.SetStatus>  ⚠ Gitlab statuses are disabled")
 		return nil
@@ -64,7 +69,7 @@ func (c *gitlabClient) SetStatus(ctx context.Context, event sdk.Event) error {
 		return sdk.WrapError(err, "cannot process event %v", event)
 	}
 
-	if c.disableStatusDetail {
+	if disabledStatusDetail {
 		data.url = ""
 	}
 

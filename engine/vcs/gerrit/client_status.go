@@ -11,8 +11,13 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+// DEPRECATED VCS
+func (client *gerritClient) IsDisableStatusDetails(ctx context.Context) bool {
+	return client.disableStatusDetails
+}
+
 // SetStatus set build status on Gerrit
-func (c *gerritClient) SetStatus(ctx context.Context, event sdk.Event) error {
+func (c *gerritClient) SetStatus(ctx context.Context, event sdk.Event, disableStatusDetails bool) error {
 	var eventNR sdk.EventRunWorkflowNode
 	if err := sdk.JSONUnmarshal(event.Payload, &eventNR); err != nil {
 		return sdk.WrapError(err, "cannot unmarshal payload")

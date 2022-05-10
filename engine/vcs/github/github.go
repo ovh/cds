@@ -9,38 +9,38 @@ import (
 
 // githubClient is a github.com wrapper for CDS vcs. interface
 type githubClient struct {
-	GitHubURL           string
-	GitHubAPIURL        string
-	ClientID            string
-	OAuthToken          string
-	DisableStatus       bool
-	DisableStatusDetail bool
-	Cache               cache.Store
-	apiURL              string
-	uiURL               string
-	proxyURL            string
-	username            string
-	token               string
+	GitHubURL            string
+	GitHubAPIURL         string
+	ClientID             string
+	OAuthToken           string
+	DisableStatus        bool
+	DisableStatusDetails bool
+	Cache                cache.Store
+	apiURL               string
+	uiURL                string
+	proxyURL             string
+	username             string
+	token                string
 }
 
 //GithubConsumer implements vcs.Server and it's used to instantiate a githubClient
 type githubConsumer struct {
-	ClientID            string `json:"client-id"`
-	ClientSecret        string `json:"-"`
-	Cache               cache.Store
-	GitHubURL           string
-	GitHubAPIURL        string
-	uiURL               string
-	apiURL              string
-	proxyURL            string
-	disableStatus       bool
-	disableStatusDetail bool
-	username            string
-	token               string
+	ClientID             string `json:"client-id"`
+	ClientSecret         string `json:"-"`
+	Cache                cache.Store
+	GitHubURL            string
+	GitHubAPIURL         string
+	uiURL                string
+	apiURL               string
+	proxyURL             string
+	disableStatus        bool
+	disableStatusDetails bool
+	username             string
+	token                string
 }
 
 //New creates a new GithubConsumer
-func New(githubURL, githubAPIURL, apiURL, uiURL, proxyURL string, store cache.Store, disableStatusDetail bool) sdk.VCSServer {
+func New(githubURL, githubAPIURL, apiURL, uiURL, proxyURL string, store cache.Store) sdk.VCSServer {
 	//Github const
 	const (
 		publicURL    = "https://github.com"
@@ -55,17 +55,16 @@ func New(githubURL, githubAPIURL, apiURL, uiURL, proxyURL string, store cache.St
 		githubAPIURL = publicAPIURL
 	}
 	return &githubConsumer{
-		GitHubURL:           githubURL,
-		GitHubAPIURL:        githubAPIURL,
-		Cache:               store,
-		apiURL:              apiURL,
-		uiURL:               uiURL,
-		proxyURL:            proxyURL,
-		disableStatusDetail: disableStatusDetail,
+		GitHubURL:    githubURL,
+		GitHubAPIURL: githubAPIURL,
+		Cache:        store,
+		apiURL:       apiURL,
+		uiURL:        uiURL,
+		proxyURL:     proxyURL,
 	}
 }
 
-func NewDeprecated(ClientID, ClientSecret, githubURL, githubAPIURL, apiURL, uiURL, proxyURL, username, token string, store cache.Store, disableStatus, disableStatusDetail bool) sdk.VCSServer {
+func NewDeprecated(ClientID, ClientSecret, githubURL, githubAPIURL, apiURL, uiURL, proxyURL, username, token string, store cache.Store, disableStatus, disableStatusDetails bool) sdk.VCSServer {
 	//Github const
 	const (
 		publicURL    = "https://github.com"
@@ -80,18 +79,18 @@ func NewDeprecated(ClientID, ClientSecret, githubURL, githubAPIURL, apiURL, uiUR
 		githubAPIURL = publicAPIURL
 	}
 	return &githubConsumer{
-		ClientID:            ClientID,
-		ClientSecret:        ClientSecret,
-		GitHubURL:           githubURL,
-		GitHubAPIURL:        githubAPIURL,
-		Cache:               store,
-		apiURL:              apiURL,
-		uiURL:               uiURL,
-		proxyURL:            proxyURL,
-		disableStatus:       disableStatus,
-		disableStatusDetail: disableStatusDetail,
-		username:            username,
-		token:               token,
+		ClientID:             ClientID,
+		ClientSecret:         ClientSecret,
+		GitHubURL:            githubURL,
+		GitHubAPIURL:         githubAPIURL,
+		Cache:                store,
+		apiURL:               apiURL,
+		uiURL:                uiURL,
+		proxyURL:             proxyURL,
+		disableStatus:        disableStatus,
+		disableStatusDetails: disableStatusDetails,
+		username:             username,
+		token:                token,
 	}
 }
 

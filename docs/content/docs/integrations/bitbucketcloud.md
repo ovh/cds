@@ -51,7 +51,7 @@ auth:
     token: the-long-token-here
 options:
     disableStatus: false    # Set to true if you don't want CDS to push statuses on the VCS server - optional
-    showStatusDetail: false # Set to true if you don't want CDS to push CDS URL in statuses on the VCS server - optional
+    disableStatusDetails: false # Set to true if you don't want CDS to push CDS URL in statuses on the VCS server - optional
     disablePolling: false   # Does polling is supported by VCS Server - optional
     disableWebHooks: false  # Does webhooks are supported by VCS Server - optional
 ```

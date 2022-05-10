@@ -47,7 +47,7 @@ func (c *gerritClient) ToVCSRepo(name string, repo gg.ProjectInfo) sdk.VCSRepo {
 		ID:           repo.ID,
 		Name:         name,
 		URL:          fmt.Sprintf("%s/%s", c.url, name),
-		SSHCloneURL:  fmt.Sprintf("ssh://%s@%s:%d/%s", c.username, url.Hostname(), c.sshPort, name),
+		SSHCloneURL:  fmt.Sprintf("ssh://%s@%s:%d/%s", c.sshUsername, url.Hostname(), c.sshPort, name),
 		HTTPCloneURL: fmt.Sprintf("%s/%s", c.url, name),
 		Slug:         name,
 		Fullname:     name,

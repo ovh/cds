@@ -59,10 +59,10 @@ func (api *API) configVCSGerritHandler() service.Handler {
 
 		for _, v := range vcsGerritProjects {
 			vcsGerritConfigurationServers[v.Name] = sdk.VCSGerritConfiguration{
-				Username:      v.Auth["username"],
-				SSHPrivateKey: v.Auth["sshPrivateKey"],
 				URL:           v.URL,
-				SSHPort:       v.Options.GerritSSHPort,
+				SSHUsername:   v.Auth.SSHUsername,
+				SSHPrivateKey: v.Auth.SSHPrivateKey,
+				SSHPort:       v.Auth.SSHPort,
 			}
 		}
 

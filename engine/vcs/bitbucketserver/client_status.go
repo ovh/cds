@@ -23,7 +23,12 @@ type statusData struct {
 	description string
 }
 
-func (b *bitbucketClient) SetStatus(ctx context.Context, event sdk.Event) error {
+// DEPRECATED VCS
+func (client *bitbucketClient) IsDisableStatusDetails(ctx context.Context) bool {
+	return false
+}
+
+func (b *bitbucketClient) SetStatus(ctx context.Context, event sdk.Event, disableStatusDetails bool) error {
 	ctx, end := telemetry.Span(ctx, "bitbucketserver.SetStatus")
 	defer end()
 
@@ -36,7 +41,7 @@ func (b *bitbucketClient) SetStatus(ctx context.Context, event sdk.Event) error 
 	var err error
 	switch event.EventType {
 	case fmt.Sprintf("%T", sdk.EventRunWorkflowNode{}):
-		statusData, err = processWorkflowNodeRunEvent(event, b.consumer.uiURL)
+		statusData, err = processWorkflowNodeRunEvent(event, b.consumer.uiURL, disableStatusDetails)
 	default:
 		return nil
 	}
@@ -129,7 +134,7 @@ const (
 	failed     = "FAILED"
 )
 
-func processWorkflowNodeRunEvent(event sdk.Event, uiURL string) (statusData, error) {
+func processWorkflowNodeRunEvent(event sdk.Event, uiURL string, disableStatusDetails bool) (statusData, error) {
 	data := statusData{}
 	var eventNR sdk.EventRunWorkflowNode
 	if err := sdk.JSONUnmarshal(event.Payload, &eventNR); err != nil {
@@ -140,12 +145,14 @@ func processWorkflowNodeRunEvent(event sdk.Event, uiURL string) (statusData, err
 		event.WorkflowName,
 		eventNR.NodeName,
 	)
-	data.url = fmt.Sprintf("%s/project/%s/workflow/%s/run/%d",
-		uiURL,
-		event.ProjectKey,
-		event.WorkflowName,
-		eventNR.Number,
-	)
+	if !disableStatusDetails {
+		data.url = fmt.Sprintf("%s/project/%s/workflow/%s/run/%d",
+			uiURL,
+			event.ProjectKey,
+			event.WorkflowName,
+			eventNR.Number,
+		)
+	}
 	data.buildNumber = eventNR.Number
 	data.status = eventNR.Status
 	data.hash = eventNR.Hash

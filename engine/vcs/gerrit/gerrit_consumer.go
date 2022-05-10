@@ -29,13 +29,13 @@ func (g *gerritConsumer) GetAuthorizedClient(ctx context.Context, vcsAuth sdk.VC
 	client.Authentication.SetBasicAuth(vcsAuth.AccessToken, vcsAuth.AccessTokenSecret)
 
 	c := &gerritClient{
-		client:              client,
-		url:                 g.URL,
-		disableStatusDetail: g.disableStatusDetail,
-		sshPort:             g.sshPort,
-		username:            vcsAuth.AccessToken,
-		reviewerToken:       g.reviewerToken,
-		reviewerName:        g.reviewerName,
+		client:               client,
+		url:                  g.URL,
+		disableStatusDetails: g.disableStatusDetails,
+		sshPort:              g.sshPort,
+		sshUsername:          g.sshUsername,
+		reviewerToken:        g.reviewerToken,
+		reviewerName:         g.reviewerName,
 	}
 	return c, nil
 }

@@ -23,8 +23,13 @@ type statusData struct {
 	context      string
 }
 
+// DEPRECATED VCS
+func (client *bitbucketcloudClient) IsDisableStatusDetails(ctx context.Context) bool {
+	return client.DisableStatusDetails
+}
+
 //SetStatus Users with push access can create commit statuses for a given ref:
-func (client *bitbucketcloudClient) SetStatus(ctx context.Context, event sdk.Event) error {
+func (client *bitbucketcloudClient) SetStatus(ctx context.Context, event sdk.Event, disableStatusDetails bool) error {
 	if client.DisableStatus {
 		log.Warn(ctx, "bitbucketcloud.SetStatus>  ⚠ bitbucketcloud statuses are disabled")
 		return nil
@@ -34,7 +39,7 @@ func (client *bitbucketcloudClient) SetStatus(ctx context.Context, event sdk.Eve
 	var err error
 	switch event.EventType {
 	case fmt.Sprintf("%T", sdk.EventRunWorkflowNode{}):
-		data, err = processEventWorkflowNodeRun(event, client.uiURL, client.DisableStatusDetail)
+		data, err = processEventWorkflowNodeRun(event, client.uiURL, disableStatusDetails)
 	default:
 		log.Error(ctx, "bitbucketcloud.SetStatus> Unknown event %v", event)
 		return nil
@@ -130,7 +135,7 @@ func processBbitbucketState(s Status) string {
 	}
 }
 
-func processEventWorkflowNodeRun(event sdk.Event, cdsUIURL string, disabledStatusDetail bool) (statusData, error) {
+func processEventWorkflowNodeRun(event sdk.Event, cdsUIURL string, disableStatusDetails bool) (statusData, error) {
 	data := statusData{}
 	var eventNR sdk.EventRunWorkflowNode
 	if err := sdk.JSONUnmarshal(event.Payload, &eventNR); err != nil {
@@ -160,16 +165,18 @@ func processEventWorkflowNodeRun(event sdk.Event, cdsUIURL string, disabledStatu
 	data.repoFullName = eventNR.RepositoryFullName
 	data.pipName = eventNR.NodeName
 
-	data.urlPipeline = fmt.Sprintf("%s/project/%s/workflow/%s/run/%d",
-		cdsUIURL,
-		event.ProjectKey,
-		event.WorkflowName,
-		eventNR.Number,
-	)
-
-	//CDS can avoid sending bitbucket target url in status, if it's disable
-	if disabledStatusDetail {
-		data.urlPipeline = "https://ovh.github.io/cds/" // because it's mandatory
+	if !disableStatusDetails {
+		data.urlPipeline = fmt.Sprintf("%s/project/%s/workflow/%s/run/%d",
+			cdsUIURL,
+			event.ProjectKey,
+			event.WorkflowName,
+			eventNR.Number,
+		)
+	} else {
+		//CDS can avoid sending bitbucket target url in status, if it's disable
+		if disableStatusDetails {
+			data.urlPipeline = "https://ovh.github.io/cds/" // because it's mandatory
+		}
 	}
 
 	data.context = sdk.VCSCommitStatusDescription(event.ProjectKey, event.WorkflowName, eventNR)

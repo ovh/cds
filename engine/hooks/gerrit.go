@@ -254,7 +254,7 @@ func ListenGerritStreamEvent(ctx context.Context, store cache.Store, goRoutines 
 
 	// Create config
 	config := &ssh.ClientConfig{
-		User: vcsGerritConfig.Username,
+		User: vcsGerritConfig.SSHUsername,
 		Auth: []ssh.AuthMethod{
 			ssh.PublicKeys(signer),
 		},

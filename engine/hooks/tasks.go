@@ -137,7 +137,7 @@ func (s *Service) synchronizeTasks(ctx context.Context) error {
 	}
 
 	for k, v := range vcsGerritConfig {
-		if v.Username != "" && v.SSHPrivateKey != "" && v.SSHPort != 0 {
+		if v.SSHUsername != "" && v.SSHPrivateKey != "" && v.SSHPort != 0 {
 			s.initGerritStreamEvent(ctx, k, vcsGerritConfig)
 		}
 	}

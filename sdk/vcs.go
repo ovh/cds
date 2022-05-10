@@ -14,7 +14,15 @@ import (
 
 // HTTP Headers
 const (
-	HeaderXVCSProjectConf     = "X-CDS-PERSONAL-ACCESS-TOKEN"
+	HeaderXVCSURL           = "X-CDS-VCS-URL"
+	HeaderXVCSURLApi        = "X-CDS-VCS-URL-API"
+	HeaderXVCSType          = "X-CDS-VCS-TYPE"
+	HeaderXVCSToken         = "X-CDS-VCS-TOKEN"
+	HeaderXVCSUsername      = "X-CDS-VCS-USERNAME"
+	HeaderXVCSSSHUsername   = "X-CDS-VCS-SSH-USERNAME"
+	HeaderXVCSSSHPort       = "X-CDS-VCS-SSH-PORT"
+	HeaderXVCSSSHPrivateKey = "X-CDS-VCS-SSH-PRIVATE-KEY"
+
 	HeaderXAccessToken        = "X-CDS-ACCESS-TOKEN"         // DEPRECATED
 	HeaderXAccessTokenCreated = "X-CDS-ACCESS-TOKEN-CREATED" // DEPRECATED
 	HeaderXAccessTokenSecret  = "X-CDS-ACCESS-TOKEN-SECRET"  // DEPRECATED
@@ -193,16 +201,24 @@ type VCSProject struct {
 	ProjectID    int64             `json:"-" db:"project_id"`
 	Description  string            `json:"description" db:"description"`
 	URL          string            `json:"url" db:"url"`
-	Auth         map[string]string `json:"auth" db:"auth" gorpmapping:"encrypted,ProjectID"`
+	Auth         VCSAuthProject    `json:"auth" db:"auth" gorpmapping:"encrypted,ProjectID"`
 	Options      VCSOptionsProject `json:"options" db:"options"`
 }
 
+type VCSAuthProject struct {
+	Username      string `json:"username,omitempty" db:"-"`
+	Token         string `json:"token,omitempty" db:"-"`
+	SSHUsername   string `json:"sshUsername,omitempty" db:"-"`
+	SSHPort       int    `json:"sshPort,omitempty" db:"-"`
+	SSHPrivateKey string `json:"sshPrivateKey,omitempty" db:"-"`
+}
+
 type VCSOptionsProject struct {
-	DisableWebhooks  bool `json:"disableWebhooks,omitempty" db:"-"`
-	DisableStatus    bool `json:"disableStatus,omitempty" db:"-"`
-	ShowStatusDetail bool `json:"showStatusDetail,omitempty" db:"-"`
-	DisablePolling   bool `json:"disablePolling,omitempty" db:"-"`
-	GerritSSHPort    int  `json:"gerritSSHPort,omitempty" db:"-"`
+	DisableWebhooks      bool   `json:"disableWebhooks,omitempty" db:"-"`
+	DisableStatus        bool   `json:"disableStatus,omitempty" db:"-"`
+	DisableStatusDetails bool   `json:"disableStatusDetails,omitempty" db:"-"`
+	DisablePolling       bool   `json:"disablePolling,omitempty" db:"-"`
+	URLAPI               string `json:"urlApi,omitempty" db:"-"` // optional
 }
 
 func (v VCSOptionsProject) Value() (driver.Value, error) {
@@ -228,7 +244,7 @@ type VCSConfiguration struct {
 }
 
 type VCSGerritConfiguration struct {
-	Username      string `json:"username"`
+	SSHUsername   string `json:"sshUsername"`
 	SSHPrivateKey string `json:"sshPrivateKey"`
 	URL           string `json:"url"`
 	SSHPort       int    `json:"sshport"`
@@ -241,7 +257,14 @@ type VCSServerCommon interface {
 
 // VCSAuth contains tokens (oauth2 tokens or personalAccessToken)
 type VCSAuth struct {
-	VCSProject *VCSProject
+	Type     string
+	URL      string
+	URLApi   string // optional
+	Username string
+	Token    string
+
+	SSHUsername string
+	SSHPort     int
 
 	AccessToken        string // DEPRECATED
 	AccessTokenSecret  string // DEPRECATED
@@ -305,7 +328,8 @@ type VCSAuthorizedClientCommon interface {
 	PullRequestEvents(context.Context, string, []interface{}) ([]VCSPullRequestEvent, error)
 
 	// Set build status on repository
-	SetStatus(context.Context, Event) error
+	SetStatus(ctx context.Context, event Event, disableStatusDetails bool) error
+	IsDisableStatusDetails(ctx context.Context) bool
 	ListStatuses(ctx context.Context, repo string, ref string) ([]VCSCommitStatus, error)
 
 	// Release

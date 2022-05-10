@@ -84,16 +84,16 @@ func (g *githubConsumer) AuthorizeToken(ctx context.Context, state, code string)
 
 //GetAuthorized returns an authorized client
 func (g *githubConsumer) GetAuthorizedClient(ctx context.Context, vcsAuth sdk.VCSAuth) (sdk.VCSAuthorizedClient, error) {
-	if vcsAuth.VCSProject != nil {
+	if vcsAuth.URL != "" {
 		c := &githubClient{
-			GitHubURL:    g.GitHubURL,
-			GitHubAPIURL: g.GitHubAPIURL,
+			GitHubURL:    vcsAuth.URL,
+			GitHubAPIURL: vcsAuth.URLApi,
 			Cache:        g.Cache,
 			uiURL:        g.uiURL,
 			apiURL:       g.apiURL,
 			proxyURL:     g.proxyURL,
-			username:     vcsAuth.VCSProject.Auth["username"],
-			token:        vcsAuth.VCSProject.Auth["token"],
+			username:     vcsAuth.Username,
+			token:        vcsAuth.Token,
 		}
 
 		return c, c.RateLimit(ctx)
@@ -101,18 +101,18 @@ func (g *githubConsumer) GetAuthorizedClient(ctx context.Context, vcsAuth sdk.VC
 
 	// DEPRECATED VCS
 	c := &githubClient{
-		ClientID:            g.ClientID,
-		OAuthToken:          vcsAuth.AccessToken, // DEPRECATED
-		GitHubURL:           g.GitHubURL,
-		GitHubAPIURL:        g.GitHubAPIURL,
-		Cache:               g.Cache,
-		uiURL:               g.uiURL,
-		DisableStatus:       g.disableStatus,
-		DisableStatusDetail: g.disableStatusDetail,
-		apiURL:              g.apiURL,
-		proxyURL:            g.proxyURL,
-		username:            g.username, // used by a "cds user on github" to write comment on PR
-		token:               g.token,    // used by a "cds user on github" to write comment on PR
+		ClientID:             g.ClientID,
+		OAuthToken:           vcsAuth.AccessToken, // DEPRECATED
+		GitHubURL:            g.GitHubURL,
+		GitHubAPIURL:         g.GitHubAPIURL,
+		Cache:                g.Cache,
+		uiURL:                g.uiURL,
+		DisableStatus:        g.disableStatus,
+		DisableStatusDetails: g.disableStatusDetails,
+		apiURL:               g.apiURL,
+		proxyURL:             g.proxyURL,
+		username:             g.username, // used by a "cds user on github" to write comment on PR
+		token:                g.token,    // used by a "cds user on github" to write comment on PR
 	}
 
 	return c, c.RateLimit(ctx)
