@@ -47,6 +47,8 @@ func New(URL, apiURL, uiURL, proxyURL string, store cache.Store, username, token
 		uiURL:    uiURL,
 		proxyURL: proxyURL,
 		cache:    store,
+		username: username,
+		token:    token,
 	}
 }
 

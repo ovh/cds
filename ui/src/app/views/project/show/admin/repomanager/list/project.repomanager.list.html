@@ -14,7 +14,7 @@
                         {{ 'project_repoman_created_by' | translate }}{{r.created_by}}</span>
                 </td>
                 <td class="right aligned">
-                    <app-delete-button (event)="clickDeleteButton(r.name)" [loading]="deleteLoading">
+                    <app-delete-button (event)="clickDeleteButton(r.name)" [loading]="deleteLoading" *ngIf="r.type === ''">
                     </app-delete-button>
                 </td>
             </tr>

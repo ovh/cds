@@ -26,17 +26,32 @@ var (
 )
 
 func (s *Service) authMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig) (context.Context, error) {
-	encodedVCSURL := req.Header.Get(sdk.HeaderXVCSURL)
-	encodedVCSURLApi := req.Header.Get(sdk.HeaderXVCSURLApi)
-	encodedVCSType := req.Header.Get(sdk.HeaderXVCSType)
-	encodedVCSUsername := req.Header.Get(sdk.HeaderXVCSUsername)
-	encodedVCSToken := req.Header.Get(sdk.HeaderXVCSToken)
-	if encodedVCSURL != "" {
-		ctx = context.WithValue(ctx, contextKeyVCSURL, encodedVCSURL)
-		ctx = context.WithValue(ctx, contextKeyVCSURLApi, encodedVCSURLApi)
-		ctx = context.WithValue(ctx, contextKeyVCSType, encodedVCSType)
-		ctx = context.WithValue(ctx, contextKeyVCSUsername, encodedVCSUsername)
-		ctx = context.WithValue(ctx, contextKeyVCSToken, encodedVCSToken)
+	vcsURL, err := base64.StdEncoding.DecodeString(req.Header.Get(sdk.HeaderXVCSURL))
+	if err != nil {
+		return nil, sdk.WrapError(err, "bad header syntax for HeaderXVCSURL")
+	}
+	vcsURLApi, err := base64.StdEncoding.DecodeString(req.Header.Get(sdk.HeaderXVCSURLApi))
+	if err != nil {
+		return nil, sdk.WrapError(err, "bad header syntax for HeaderXVCSURLApi")
+	}
+	vcsType, err := base64.StdEncoding.DecodeString(req.Header.Get(sdk.HeaderXVCSType))
+	if err != nil {
+		return nil, sdk.WrapError(err, "bad header syntax for HeaderXVCSType")
+	}
+	vcsUsername, err := base64.StdEncoding.DecodeString(req.Header.Get(sdk.HeaderXVCSUsername))
+	if err != nil {
+		return nil, sdk.WrapError(err, "bad header syntax for HeaderXVCSUsername")
+	}
+	vcsToken, err := base64.StdEncoding.DecodeString(req.Header.Get(sdk.HeaderXVCSToken))
+	if err != nil {
+		return nil, sdk.WrapError(err, "bad header syntax for HeaderXVCSToken")
+	}
+	if string(vcsURL) != "" {
+		ctx = context.WithValue(ctx, contextKeyVCSURL, string(vcsURL))
+		ctx = context.WithValue(ctx, contextKeyVCSURLApi, string(vcsURLApi))
+		ctx = context.WithValue(ctx, contextKeyVCSType, string(vcsType))
+		ctx = context.WithValue(ctx, contextKeyVCSUsername, string(vcsUsername))
+		ctx = context.WithValue(ctx, contextKeyVCSToken, string(vcsToken))
 		return ctx, nil
 	}
 
@@ -84,7 +99,7 @@ func getVCSAuth(ctx context.Context) (sdk.VCSAuth, error) {
 		vcsAuth.URLApi = vcsURLApi
 
 		vcsType, _ := ctx.Value(contextKeyVCSType).(string)
-		vcsAuth.URLApi = vcsType
+		vcsAuth.Type = vcsType
 
 		token, _ := ctx.Value(contextKeyVCSToken).(string)
 		vcsAuth.Token = token
