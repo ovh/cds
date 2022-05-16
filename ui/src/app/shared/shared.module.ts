@@ -127,7 +127,7 @@ import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
 import { en_US, NZ_I18N } from 'ng-zorro-antd/i18n';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { IconDefinition } from '@ant-design/icons-angular';
-import { BellFill, BookOutline, CaretUpFill, CheckOutline, KeyOutline, HistoryOutline, PhoneFill, PlusOutline, PlusSquareOutline, QuestionOutline, RestOutline, SaveOutline, SettingFill, ShareAltOutline, StarOutline, ToolFill, UnlockFill } from '@ant-design/icons-angular/icons'
+import { BellFill, BookOutline, CaretUpFill, CheckOutline, DeleteOutline, KeyOutline, HistoryOutline, PhoneFill, PlusOutline, PlusSquareOutline, QuestionOutline, RestOutline, SaveOutline, SettingFill, ShareAltOutline, StarOutline, ToolFill, UnlockFill } from '@ant-design/icons-angular/icons'
 import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzPopoverModule } from 'ng-zorro-antd/popover';
@@ -148,7 +148,7 @@ const ngZorroConfig: NzConfig = {
     icon: {nzTheme: "outline"}
 };
 
-const icons: IconDefinition[] = [ BellFill, BookOutline, CaretUpFill, CheckOutline, KeyOutline, HistoryOutline, PhoneFill, PlusOutline, PlusSquareOutline, QuestionOutline, RestOutline, SaveOutline, SettingFill, ShareAltOutline, StarOutline, ToolFill, UnlockFill ];
+const icons: IconDefinition[] = [ BellFill, BookOutline, CaretUpFill, CheckOutline, DeleteOutline, KeyOutline, HistoryOutline, PhoneFill, PlusOutline, PlusSquareOutline, QuestionOutline, RestOutline, SaveOutline, SettingFill, ShareAltOutline, StarOutline, ToolFill, UnlockFill ];
 
 @NgModule({
     imports: [

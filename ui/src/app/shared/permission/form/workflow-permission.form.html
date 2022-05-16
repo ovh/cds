@@ -1,6 +1,6 @@
 <form nz-form *ngIf="groups.length > 0" (ngSubmit)="create()" nzLayout="vertical">
-    <div nz-row nzJustify="space-between">
-        <div nz-col [nzSpan]="8">
+    <nz-row>
+        <nz-col [nzSpan]="10">
             <nz-form-item>
                 <nz-form-label>Group name</nz-form-label>
                 <nz-form-control *ngIf="newGroupPermission && groups">
@@ -9,8 +9,8 @@
                     </nz-select>
                 </nz-form-control>
             </nz-form-item>
-        </div>
-        <div nz-col [nzSpan]="6">
+        </nz-col>
+        <nz-col [nzSpan]="10">
             <nz-form-item>
                 <nz-form-label>Group permission</nz-form-label>
                 <nz-form-control>
@@ -19,8 +19,8 @@
                     </nz-select>
                 </nz-form-control>
             </nz-form-item>
-        </div>
-        <div nz-col [nzSpan]="4">
+        </nz-col>
+        <nz-col [nzSpan]="2">
             <nz-form-label></nz-form-label>
             <nz-form-control>
                 <ng-container *ngIf="buttonType === 'submit'" >
@@ -32,6 +32,6 @@
                         <i nz-icon nzType="plus" nzTheme="outline"></i></button>
                 </ng-container>
             </nz-form-control>
-        </div>
-    </div>
+        </nz-col>
+    </nz-row>
 </form>

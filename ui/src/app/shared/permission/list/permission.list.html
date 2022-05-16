@@ -1,23 +1,22 @@
 <div class="permission">
-    <nz-table [nzData]="permissionsList" #permList>
+    <nz-table [nzData]="permissions" #permList>
         <thead>
             <tr>
-                <th>Group name</th>
-                <th>Group permission</th>
-                <th>Actions</th>
+                <th nzWidth="300px">Group name</th>
+                <th nzWidth="300px">Group permission</th>
+                <th nzWidth="50px">Actions</th>
             </tr>
         </thead>
         <tbody>
             <tr *ngFor="let gp of permList.data">
                 <td>
-                    {{gp | json}}
-                    <!--a [routerLink]="['/settings/group', gp.group.name]">{{ gp.group.name }}</a-->
+                    <a [routerLink]="['/settings/group', gp.group.name]">{{ gp.group.name }}</a>
                 </td>
                 <td>
                     <div *ngIf="edit;then wPermission;else rPermission"></div>
                     <ng-template #wPermission>
                         <nz-select [nzDisabled]="gp.updating" [(ngModel)]="gp.permission"  (ngModelChange)="pushChange();gp.hasChanged = true">
-                            <nz-option *ngFor="let pp of permissionsList" [nzValue]="pp" nzLabel="{{pp.name | translate}}"></nz-option>
+                            <nz-option *ngFor="let pp of permissionsList" [nzValue]="pp.value" nzLabel="{{pp.name | translate}}"></nz-option>
                         </nz-select>
                     </ng-template>
                     <ng-template #rPermission>
@@ -34,39 +33,21 @@
                             <i nz-icon nzType="save" nzTheme="outline"></i>
                             {{ 'btn_save' | translate}}
                         </button>
-                        <app-delete-button *ngIf="mode === 'submit' && !gp.hasChanged" [loading]="gp.updating"
-                                           (event)="sendEvent('delete', gp)"></app-delete-button>
-                        <button nz-button *ngIf="mode === 'form'" (click)="sendEvent('delete', gp)"><i
-                                class="trash icon"></i></button>
+                        <ng-container *ngIf="mode === 'form'">
+                            <button nz-button  nzType="primary" nzDanger [nzLoading]="gp.updating" (click)="sendEvent('delete', gp)">
+                                <i nz-icon nzType="delete" nzTheme="outline"></i>Delete
+                            </button>
+                        </ng-container>
+                        <ng-container *ngIf="mode === 'submit' && !gp.hasChanged">
+                            <button nz-button  nzType="primary" nzDanger [nzLoading]="gp.updating"
+                                    nz-popconfirm nzPopconfirmTitle="Are you sure to delete this permission ?"
+                                    (nzOnConfirm)="sendEvent('delete', gp)" nzPopconfirmPlacement="topLeft">
+                                <i nz-icon nzType="delete" nzTheme="outline"></i>Delete
+                            </button>
+                        </ng-container>
                     </ng-container>
                 </td>
             </tr>
         </tbody>
     </nz-table>
-    <!--table class="ui fixed single line celled table">
-
-        <tbody>
-            <tr *ngFor="let gp of getDataForCurrentPage()">
-
-                <td>
-
-                </td>
-                <td class="center">
-                    <ng-container *ngIf="edit">
-                        <button *ngIf="mode === 'submit' && gp.hasChanged" class="ui green button"
-                            [class.loading]="gp.updating" [class.disabled]="gp.updating" name="btnupdateperm"
-                            (click)="sendEvent('update', gp)">
-                            <i class="save icon"></i>
-                            {{ 'btn_save' | translate}}
-                        </button>
-                        <app-delete-button *ngIf="mode === 'submit' && !gp.hasChanged" [loading]="gp.updating"
-                            (event)="sendEvent('delete', gp)"></app-delete-button>
-                        <button *ngIf="mode === 'form'" class="ui icon blue button" (click)="sendEvent('delete', gp)"><i
-                                class="trash icon"></i></button>
-                    </ng-container>
-                </td>
-            </tr>
-        </tbody>
-
-    </table-->
 </div>

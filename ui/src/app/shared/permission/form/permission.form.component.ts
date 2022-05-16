@@ -13,10 +13,12 @@ import { finalize, first } from 'rxjs/operators';
 })
 export class PermissionFormComponent {
     public ready = false;
-    permissionList: {};
+    public permissionList;
     groupList: Group[];
     newGroupPermission: GroupPermission;
     manual: boolean;
+
+    helpVisible = false;
 
     @Input() loading = false;
 
