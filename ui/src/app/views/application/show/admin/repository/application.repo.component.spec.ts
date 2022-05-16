@@ -116,7 +116,7 @@ describe('CDS: Application Repo Component', () => {
         p.key = 'key1';
         p.name = 'proj1';
 
-        let repoMan: RepositoriesManager = { name: 'RepoManager' };
+        let repoMan: RepositoriesManager = { name: 'RepoManager', type: ''};
         p.vcs_servers = new Array<RepositoriesManager>();
         p.vcs_servers.push(repoMan);
 
