@@ -74,7 +74,7 @@ All data are stored in the database - nothing on filesystem. Just backup your da
 
 ### Need some help?
 
-Core Team is available on [Gitter](https://gitter.im/ovh-cds/Lobby)
+Core Team is available on [GitHub](https://github.com/ovh/cds/discussions)
 
 ### CDS User features
 
