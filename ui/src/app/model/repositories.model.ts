@@ -1,5 +1,6 @@
 export class RepositoriesManager {
     name: string;
+    type: string;
 }
 
 export interface Repository {
