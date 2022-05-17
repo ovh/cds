@@ -12,7 +12,6 @@ import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { WorkflowWNodeMenuEditComponent } from 'app/shared/workflow/menu/edit-node/menu.edit.node.component';
 import { WorkflowDeleteNodeComponent } from 'app/shared/workflow/modal/delete/workflow.node.delete.component';
-import { WorkflowHookModalComponent } from 'app/shared/workflow/modal/hook-add/hook.modal.component';
 import { WorkflowTriggerComponent } from 'app/shared/workflow/modal/node-add/workflow.trigger.component';
 import { WorkflowNodeRunParamComponent } from 'app/shared/workflow/node/run/node.run.param.component';
 import { ProjectState } from 'app/store/project.state';
@@ -27,6 +26,8 @@ import {
 import { WorkflowState } from 'app/store/workflow.state';
 import { Subscription } from 'rxjs';
 import { finalize, map, tap } from 'rxjs/operators';
+import { NzModalRef, NzModalService } from 'ng-zorro-antd/modal';
+import { WorkflowHookModalComponent } from 'app/shared/workflow/modal/hook-add/hook.modal.component';
 
 @Component({
     selector: 'app-workflow-wnode',
@@ -61,8 +62,6 @@ export class WorkflowWNodeComponent implements OnInit, OnDestroy {
     workflowDeleteNode: WorkflowDeleteNodeComponent;
     @ViewChild('workflowTrigger')
     workflowTrigger: WorkflowTriggerComponent;
-    @ViewChild('workflowAddHook')
-    workflowAddHook: WorkflowHookModalComponent;
 
     constructor(
         private _activatedRoute: ActivatedRoute,
@@ -72,7 +71,8 @@ export class WorkflowWNodeComponent implements OnInit, OnDestroy {
         private _workflowCoreService: WorkflowCoreService,
         private _toast: ToastService,
         private _translate: TranslateService,
-        private _cd: ChangeDetectorRef
+        private _cd: ChangeDetectorRef,
+        private _modalService: NzModalService
     ) {
         this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
         let paramSnamp = this._routerActivated.snapshot.params;
@@ -242,35 +242,18 @@ export class WorkflowWNodeComponent implements OnInit, OnDestroy {
     }
 
     openAddHookModal(): void {
-        if (this.canEdit() && this.workflowAddHook) {
-            this.workflowAddHook.show();
+        if (this.canEdit()) {
+            this._modalService.create({
+                nzTitle: 'Hook creation',
+                nzWidth: '900px',
+                nzContent: WorkflowHookModalComponent,
+                nzComponentParams: {
+                    project: this.project,
+                    workflow: this.workflow,
+                    node: this.node
+                }
+            });
         }
-    }
-
-    addHook(hook: WNodeHook, modal: SuiActiveModal<boolean, boolean, void>): void {
-        this.loading = true;
-
-        let action = new AddHookWorkflow({
-            projectKey: this.project.key,
-            workflowName: this.workflow.name,
-            hook
-        });
-
-        let editMode = this._store.selectSnapshot(WorkflowState).editMode;
-        this._store.dispatch(action).pipe(finalize(() => {
-            this.loading = false;
-            this._cd.markForCheck();
-        })).subscribe(() => {
-            if (!editMode) {
-                this._toast.success('', this._translate.instant('workflow_updated'));
-            } else {
-                   this._toast.info('', this._translate.instant('workflow_ascode_updated'));
-            }
-            if (modal) {
-                modal.approve(null);
-            }
-            this._cd.markForCheck();
-        });
     }
 
     createFork(): void {
