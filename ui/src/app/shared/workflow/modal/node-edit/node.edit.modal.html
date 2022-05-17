@@ -9,7 +9,7 @@
                     <app-workflow-node-input [workflow]="workflow" [readonly]="readonly" (inputChange)="pushChange($event)"></app-workflow-node-input>
                 </nz-tab>
                 <nz-tab nzTitle="Outgoing Hook" *ngIf="currentNodeType === 'outgoinghook'">
-                    <app-workflow-node-outgoinghook [workflow]="workflow" [mode]="readonly?'ro':'update'" (outgoinghookChange)="pushChange($event)" [display]="true"></app-workflow-node-outgoinghook>
+                    <app-workflow-node-outgoinghook [workflow]="workflow" [mode]="readonly?'ro':'update'" (outgoinghookChange)="pushChange($event)"></app-workflow-node-outgoinghook>
                 </nz-tab>
                 <nz-tab nzTitle="Run conditions">
                     <app-workflow-node-conditions [workflow]="workflow" [readonly]="readonly" (conditionsChange)="pushChange($event)"></app-workflow-node-conditions>

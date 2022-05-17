@@ -38,7 +38,6 @@ export class WorkflowWizardOutgoingHookComponent implements OnInit, OnDestroy {
 
     @Input() workflow: Workflow;
     @Input() mode = 'create'; // create / edit / ro
-    @Input() display: boolean;
 
     @Output() outgoinghookEvent = new EventEmitter<WNode>();
     @Output() outgoinghookChange = new EventEmitter<boolean>();

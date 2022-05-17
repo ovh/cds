@@ -3,7 +3,7 @@
     <div class="header" *ngIf="!source">{{ 'workflow_node_parent' | translate }}</div>
     <div class="content">
         <div class="ui form">
-            <ng-container>
+            <ng-container *ngIf="selectedType === 'pipeline'">
                 <h3>{{ 'workflow_node_form_title' | translate }}</h3>
                 <app-workflow-node-add-wizard
                         [project]="project"
@@ -14,10 +14,9 @@
                         (pipelineSectionChanged)="pipelineSectionChanged($event)" #nodeWizard>
                 </app-workflow-node-add-wizard>
             </ng-container>
-            <ng-container>
+            <ng-container *ngIf="selectedType === 'outgoinghook'">
                 <app-workflow-node-outgoinghook
                         [workflow]="workflow"
-                        [display]="selectedType === 'outgoinghook'"
                         (outgoinghookEvent)="destNodeChange($event)"
                         #worklflowAddOutgoingHook></app-workflow-node-outgoinghook>
             </ng-container>

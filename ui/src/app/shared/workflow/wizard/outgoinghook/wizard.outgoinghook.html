@@ -1,103 +1,81 @@
-<div class="content" *ngIf="display">
-    <div class="ui form">
-        <h3 class="inline">{{ 'workflow_node_hook_form_title' | translate }}</h3>
-        <div class="right floated mb15">
-            <i class="book icon"></i><a href="#" [routerLink]="['/docs', 'docs', 'workflow', 'hooks']" target="_blank"
-                rel="noopener noreferrer">{{'common_documentation' | translate}}</a>
-        </div>
-        <ng-container *ngIf="!loadingModels">
-            <sui-select class="selection" placeholder="{{'workflow_node_hook_select' | translate}}"
-                [(ngModel)]="selectedOutgoingHookModel" (ngModelChange)="updateOutgoingHook()"
-                [options]="outgoingHookModels" [isSearchable]="true" [isDisabled]="mode === 'update' || mode === 'ro'"
-                labelField="name" #select>
-                <sui-select-option *ngFor="let option of select.filteredOptions" [value]="option">{{option.name}}
-                </sui-select-option>
-            </sui-select>
-        </ng-container>
-        <ng-container *ngIf="loadingModels">
-            <sui-select class="selection" placeholder="{{'common_loading' | translate}}">
-                <sui-select-option value="">{{'common_loading' | translate}}</sui-select-option>
-            </sui-select>
-        </ng-container>
-
-        <ng-container *ngIf="selectedOutgoingHookModel && displayConfig && outgoingHook && outgoingHook.outgoing_hook">
-            <h3>{{ 'workflow_node_hook_form_config' | translate }}</h3>
-            <ng-container *ngIf="outgoingHook.outgoing_hook.config && selectedOutgoingHookModel.name !== 'Workflow'">
-                <div class="inline fields" *ngFor="let k of outgoingHook.outgoing_hook.config | keys">
-                    <div class="four wide field"><label>{{k}}</label></div>
-                    <div class="twelve wide field">
-                        <input type="text" [(ngModel)]="outgoingHook.outgoing_hook.config[k].value"
-                            (ngModelChange)="pushChange()"
-                            [readonly]="!outgoingHook.outgoing_hook.config[k].configurable || mode === 'ro'"
-                            *ngIf="k !== 'payload' && (outgoingHook.outgoing_hook.config[k].type === 'string' || !outgoingHook.outgoing_hook.config[k].type)" />
-                        <input type="password" [(ngModel)]="outgoingHook.outgoing_hook.config[k].value"
-                            (ngModelChange)="pushChange()"
-                            [readonly]="!outgoingHook.outgoing_hook.config[k].configurable || mode === 'ro'"
-                            *ngIf="k !== 'payload' && outgoingHook.outgoing_hook.config[k].type === 'password'" />
+<form nz-form>
+    <div class="link">
+        <i nz-icon nzType="book" nzTheme="outline"></i>
+        <a href="#" [routerLink]="['/docs', 'docs', 'workflow', 'hooks']" target="_blank"
+                                    rel="noopener noreferrer">{{'common_documentation' | translate}}</a>
+    </div>
+    <h3>Hook configuration</h3>
+    <nz-form-item>
+        <nz-form-label [nzSm]="6" [nzXs]="24">Hook type: {{mode}} {{selectedOutgoingHookModel?.name}} {{outgoingHookModels?.length}}</nz-form-label>
+        <nz-form-control [nzSm]="14" [nzXs]="24" *ngIf="outgoingHookModels">
+                <nz-select name="hookType" [(ngModel)]="selectedOutgoingHookModel" (ngModelChange)="updateOutgoingHook()" [disabled]="mode === 'update' || mode === 'ro'" nzPlaceHolder="{{'workflow_node_hook_select' | translate}}">
+                    <nz-option *ngFor="let m of outgoingHookModels" [nzLabel]="m.name" [nzValue]="m"></nz-option>
+                </nz-select>
+        </nz-form-control>
+    </nz-form-item>
+    <ng-container *ngIf="selectedOutgoingHookModel && displayConfig && outgoingHook && outgoingHook.outgoing_hook">
+        <ng-container *ngIf="outgoingHook.outgoing_hook.config && selectedOutgoingHookModel.name !== 'Workflow'">
+            <ng-container *ngFor="let k of outgoingHook.outgoing_hook.config | keys">
+                <nz-form-item>
+                    <nz-form-label [nzSm]="6" [nzXs]="24">{{k}}</nz-form-label>
+                    <nz-form-control [nzSm]="14" [nzXs]="24">
+                        <input nz-input name="{{k}}" [(ngModel)]="outgoingHook.outgoing_hook.config[k].value"
+                               (ngModelChange)="pushChange()"
+                               [readonly]="!outgoingHook.outgoing_hook.config[k].configurable || mode === 'ro'"
+                               *ngIf="k !== 'payload' && (outgoingHook.outgoing_hook.config[k].type === 'string' || !outgoingHook.outgoing_hook.config[k].type)" />
+                        <input nz-input name="{{k}}" type="password" [(ngModel)]="outgoingHook.outgoing_hook.config[k].value"
+                               (ngModelChange)="pushChange()"
+                               [readonly]="!outgoingHook.outgoing_hook.config[k].configurable || mode === 'ro'"
+                               *ngIf="k !== 'payload' && outgoingHook.outgoing_hook.config[k].type === 'password'" />
                         <ng-container *ngIf="k === 'payload' && outgoingHook.outgoing_hook.config[k].type === 'string'">
-                            <codemirror [class.invalid]="invalidJSON"
-                                [(ngModel)]="outgoingHook.outgoing_hook.config[k].value" [config]="codeMirrorConfig"
-                                (change)="changeCodeMirror($event)" #textareaCodeMirror>
+                            <codemirror name="{{k}}" [class.invalid]="invalidJSON"
+                                        [(ngModel)]="outgoingHook.outgoing_hook.config[k].value" [config]="codeMirrorConfig"
+                                        (change)="changeCodeMirror($event)" #textareaCodeMirror>
                             </codemirror>
                         </ng-container>
-                    </div>
-                </div>
+                    </nz-form-control>
+                </nz-form-item>
             </ng-container>
-
-
-            <ng-container *ngIf="selectedOutgoingHookModel.name === 'Workflow'">
-                <div class="inline fields">
-                    <div class="four wide field"><label>project</label></div>
-                    <div class="twelve wide field">
-                        <input type="text" [(ngModel)]="outgoingHook.outgoing_hook.config['target_project'].value"
-                            [disabled]="true" />
-                    </div>
-                </div>
-                <div class="inline fields" *ngIf="availableWorkflows">
-                    <div class="four wide field"><label>workflow</label></div>
-                    <div class="twelve wide field">
-                        <sui-select class="selection" placeholder="{{'workflow_name' | translate}}"
-                            [(ngModel)]="outgoingHook.outgoing_hook.config['target_workflow'].value"
-                            (ngModelChange)="updateWorkflowData(true)" [options]="availableWorkflows"
-                            [isSearchable]="true" [isDisabled]="mode === 'ro'" labelField="name" #selectWorkflow
-                            valueField="name">
-                            <sui-select-option *ngFor="let option of selectWorkflow.filteredOptions" [value]="option">
-                                {{option.name}}</sui-select-option>
-                        </sui-select>
-                    </div>
-                </div>
-                <div class="inline fields" *ngIf="availableHooks">
-                    <div class="four wide field"><label>hook</label></div>
-                    <div class="twelve wide field">
-                        <sui-select class="selection" placeholder="Hook"
-                            [(ngModel)]="outgoingHook.outgoing_hook.config['target_hook'].value"
-                            (ngModelChange)="updateWorkflowOutgoingHook()" [options]="availableHooks"
-                            [isSearchable]="true" [isDisabled]="mode === 'ro'" labelField="uuid" valueField="uuid"
-                            #selectHook>
-                            <sui-select-option *ngFor="let option of selectHook.filteredOptions" [value]="option">
-                                {{option.name}} </sui-select-option>
-                        </sui-select>
-                    </div>
-                </div>
-                <div class="inline fields"
-                    *ngIf="availableHooks && outgoingHook.outgoing_hook.config['target_hook'].value">
-                    <div class="four wide field"><label>payload</label></div>
-                    <div class="twelve wide field">
-                        <codemirror [class.invalid]="invalidJSON"
-                            [(ngModel)]="outgoingHook.outgoing_hook.config['payload'].value" [config]="codeMirrorConfig"
-                            (change)="changeCodeMirror($event)" #textareaCodeMirror>
-                        </codemirror>
-                    </div>
-                </div>
-            </ng-container>
-            <div class="ui info message" *ngIf="!outgoingHook.outgoing_hook.config">
-                {{ 'workflow_node_hook_no_configuration' | translate }}</div>
         </ng-container>
-        <ng-container *ngIf="mode === 'update' && workflow.permissions.writable">
-            <button class="ui right floated green button" *ngIf="workflow.permissions.writable" [disabled]="loading"
-                [class.loading]="loading" (click)="updateWorkflow()">
-                {{ 'btn_save' | translate }}
-            </button>
+
+        <ng-container *ngIf="selectedOutgoingHookModel.name === 'Workflow'">
+            <nz-form-item>
+                <nz-form-label [nzSm]="6" [nzXs]="24">project</nz-form-label>
+                <nz-form-control [nzSm]="14" [nzXs]="24">
+                    <input nz-input name="project" [(ngModel)]="outgoingHook.outgoing_hook.config['target_project'].value" [disabled]="true"/>
+                </nz-form-control>
+            </nz-form-item>
+            <nz-form-item *ngIf="availableWorkflows">
+                <nz-form-label [nzSm]="6" [nzXs]="24">workflow</nz-form-label>
+                <nz-form-control [nzSm]="14" [nzXs]="24">
+                    <nz-select nzShowSearch name="workflow" nzPlaceHolder="Workflow name" [(ngModel)]="outgoingHook.outgoing_hook.config['target_workflow'].value"
+                               (ngModelChange)="updateWorkflowData(true)" [disabled]="mode === 'ro'">
+                        <nz-option *ngFor="let option of availableWorkflows" [nzLabel]="option.name" [nzValue]="option.name"></nz-option>
+                    </nz-select>
+                </nz-form-control>
+            </nz-form-item>
+            <nz-form-item *ngIf="availableHooks">
+                <nz-form-label [nzSm]="6" [nzXs]="24">hook</nz-form-label>
+                <nz-form-control [nzSm]="14" [nzXs]="24">
+                    <nz-select nzShowSearch name="hook" nzPlaceHolder="Hook"  [(ngModel)]="outgoingHook.outgoing_hook.config['target_hook'].value"
+                               (ngModelChange)="updateWorkflowOutgoingHook()" [disabled]="mode === 'ro'">
+                        <nz-option *ngFor="let option of availableHooks" [nzLabel]="option.uuid" [nzValue]="option.uuid"></nz-option>
+                    </nz-select>
+                </nz-form-control>
+            </nz-form-item>
+            <nz-form-item *ngIf="availableHooks && outgoingHook.outgoing_hook.config['target_hook'].value">
+                <nz-form-label [nzSm]="6" [nzXs]="24">payload</nz-form-label>
+                <nz-form-control [nzSm]="14" [nzXs]="24">
+                    <codemirror [class.invalid]="invalidJSON" name="payload"
+                                [(ngModel)]="outgoingHook.outgoing_hook.config['payload'].value" [config]="codeMirrorConfig"
+                                (change)="changeCodeMirror($event)" #textareaCodeMirror>
+                    </codemirror>
+                </nz-form-control>
+            </nz-form-item>
         </ng-container>
-    </div>
-</div>
+        <nz-alert *ngIf="!outgoingHook.outgoing_hook.config" nzType="info" nzMessage="No configuration"></nz-alert>
+    </ng-container>
+    <nz-form-item nzJustify="end"  *ngIf="mode === 'update' && workflow.permissions.writable">
+        <button nz-button nzType="primary" [nzLoading]="loading" [disabled]="loading" *ngIf="workflow.permissions.writable" (click)="updateWorkflow()">Save</button>
+    </nz-form-item>
+</form>
