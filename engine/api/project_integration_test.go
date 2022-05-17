@@ -45,7 +45,7 @@ func TestAddUpdateAndDeleteProjectIntegration(t *testing.T) {
 	assert.Equal(t, 200, w.Code)
 
 	// UPDATE integration
-	pp.Name = "kafkaTest2"
+	pp.Name = "kafkaTest"
 	pp.ProjectID = proj.ID
 
 	vars = map[string]string{}

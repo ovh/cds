@@ -75,6 +75,7 @@ func (api *API) putProjectIntegrationHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
+		projectIntegration.Name = ppDB.Name
 		projectIntegration.ID = ppDB.ID
 
 		for kkBody := range projectIntegration.Config {
@@ -208,6 +209,11 @@ func (api *API) postProjectIntegrationHandler() service.Handler {
 		var pp sdk.ProjectIntegration
 		if err := service.UnmarshalBody(r, &pp); err != nil {
 			return sdk.WrapError(err, "Cannot read body")
+		}
+
+		regexp := sdk.NamePatternRegex
+		if !regexp.MatchString(pp.Name) {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "name %q do not respect pattern %s", pp.Name, sdk.NamePattern)
 		}
 
 		pp.ProjectID = p.ID
