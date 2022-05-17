@@ -13,6 +13,7 @@ import (
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	cdslog "github.com/ovh/cds/sdk/log"
 )
 
 func (api *API) getAuthDriversHandler() service.Handler {
@@ -276,6 +277,7 @@ func (api *API) postAuthSigninHandler() service.Handler {
 		var session *sdk.AuthSession
 		if userInfo.MFA {
 			trackSudo(ctx, w)
+			ctx = context.WithValue(ctx, cdslog.Sudo, true)
 			session, err = authentication.NewSessionWithMFA(ctx, tx, api.Cache, consumer, sessionDuration)
 			if err == nil {
 				log.Info(ctx, "starting new session %s with MFA for consumer %s", session.ID, consumer.ID)
