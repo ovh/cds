@@ -55,6 +55,7 @@ func (h *HatcherySwarm) ApplyConfiguration(cfg interface{}) error {
 		return fmt.Errorf("unable to parse RSA private Key: %v", err)
 	}
 	h.Common.Common.Region = h.Config.Provision.Region
+	h.Common.Common.IgnoreJobWithNoRegion = h.Config.Provision.IgnoreJobWithNoRegion
 
 	return nil
 }

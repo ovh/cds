@@ -111,6 +111,9 @@ func (c *Common) Signin(ctx context.Context, cdsclientConfig cdsclient.ServiceCo
 	if c.Region != "" {
 		registerPayload.CanonicalService.Region = &c.Region
 	}
+	if c.IgnoreJobWithNoRegion {
+		registerPayload.CanonicalService.IgnoreJobWithNoRegion = &c.IgnoreJobWithNoRegion
+	}
 
 	initClient := func(ctx context.Context) error {
 		var err error

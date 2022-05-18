@@ -399,25 +399,26 @@ type AuthConsumers []AuthConsumer
 
 // AuthConsumer issues session linked to an authentified user.
 type AuthConsumer struct {
-	ID                 string                      `json:"id" cli:"id,key" db:"id"`
-	Name               string                      `json:"name" cli:"name" db:"name"`
-	Description        string                      `json:"description" cli:"description" db:"description"`
-	ParentID           *string                     `json:"parent_id,omitempty" db:"parent_id"`
-	AuthentifiedUserID string                      `json:"user_id,omitempty" db:"user_id"`
-	Type               AuthConsumerType            `json:"type" cli:"type" db:"type"`
-	Data               AuthConsumerData            `json:"-" db:"data"` // NEVER returns auth consumer data in json, TODO this fields should be visible only in auth package
-	Created            time.Time                   `json:"created" cli:"created" db:"created"`
-	GroupIDs           Int64Slice                  `json:"group_ids,omitempty" cli:"group_ids" db:"group_ids"`
-	InvalidGroupIDs    Int64Slice                  `json:"invalid_group_ids,omitempty" db:"invalid_group_ids"`
-	ScopeDetails       AuthConsumerScopeDetails    `json:"scope_details,omitempty" cli:"scope_details" db:"scope_details"`
-	DeprecatedIssuedAt time.Time                   `json:"issued_at" cli:"issued_at" db:"issued_at"`
-	Disabled           bool                        `json:"disabled" cli:"disabled" db:"disabled"`
-	Warnings           AuthConsumerWarnings        `json:"warnings,omitempty" db:"warnings"`
-	LastAuthentication *time.Time                  `json:"last_authentication,omitempty" db:"last_authentication"`
-	ValidityPeriods    AuthConsumerValidityPeriods `json:"validity_periods,omitempty" db:"validity_periods"`
-	ServiceName        *string                     `json:"service_name,omitempty" db:"service_name"`
-	ServiceType        *string                     `json:"service_type,omitempty" db:"service_type"`
-	ServiceRegion      *string                     `json:"service_region,omitempty" db:"service_region"`
+	ID                           string                      `json:"id" cli:"id,key" db:"id"`
+	Name                         string                      `json:"name" cli:"name" db:"name"`
+	Description                  string                      `json:"description" cli:"description" db:"description"`
+	ParentID                     *string                     `json:"parent_id,omitempty" db:"parent_id"`
+	AuthentifiedUserID           string                      `json:"user_id,omitempty" db:"user_id"`
+	Type                         AuthConsumerType            `json:"type" cli:"type" db:"type"`
+	Data                         AuthConsumerData            `json:"-" db:"data"` // NEVER returns auth consumer data in json, TODO this fields should be visible only in auth package
+	Created                      time.Time                   `json:"created" cli:"created" db:"created"`
+	GroupIDs                     Int64Slice                  `json:"group_ids,omitempty" cli:"group_ids" db:"group_ids"`
+	InvalidGroupIDs              Int64Slice                  `json:"invalid_group_ids,omitempty" db:"invalid_group_ids"`
+	ScopeDetails                 AuthConsumerScopeDetails    `json:"scope_details,omitempty" cli:"scope_details" db:"scope_details"`
+	DeprecatedIssuedAt           time.Time                   `json:"issued_at" cli:"issued_at" db:"issued_at"`
+	Disabled                     bool                        `json:"disabled" cli:"disabled" db:"disabled"`
+	Warnings                     AuthConsumerWarnings        `json:"warnings,omitempty" db:"warnings"`
+	LastAuthentication           *time.Time                  `json:"last_authentication,omitempty" db:"last_authentication"`
+	ValidityPeriods              AuthConsumerValidityPeriods `json:"validity_periods,omitempty" db:"validity_periods"`
+	ServiceName                  *string                     `json:"service_name,omitempty" db:"service_name"`
+	ServiceType                  *string                     `json:"service_type,omitempty" db:"service_type"`
+	ServiceRegion                *string                     `json:"service_region,omitempty" db:"service_region"`
+	ServiceIgnoreJobWithNoRegion *bool                       `json:"service_ignore_job_with_no_region,omitempty" db:"service_ignore_job_with_no_region"`
 	// aggregates
 	AuthentifiedUser *AuthentifiedUser `json:"user,omitempty" db:"-"`
 	Groups           Groups            `json:"groups,omitempty" db:"-"`

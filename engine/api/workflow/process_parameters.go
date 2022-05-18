@@ -190,10 +190,10 @@ func getParentParameters(w *sdk.WorkflowRun, nodeRuns []*sdk.WorkflowNodeRun) ([
 			return nil, sdk.WithStack(fmt.Errorf("unable to find node %d in workflow", parentNodeRun.WorkflowNodeID))
 		}
 		nodeName = node.Name
+		prefix := "workflow." + nodeName + "."
 
 		parentParams := make([]sdk.Parameter, 0, len(parentNodeRun.BuildParameters))
 		for _, param := range parentNodeRun.BuildParameters {
-			prefix := "workflow." + nodeName + "."
 			if param.Name == "" || param.Name == "cds.semver" || param.Name == "cds.release.version" ||
 				strings.HasPrefix(param.Name, "cds.proj") ||
 				strings.HasPrefix(param.Name, "cds.version") || strings.HasPrefix(param.Name, "cds.run.number") ||
@@ -222,11 +222,22 @@ func getParentParameters(w *sdk.WorkflowRun, nodeRuns []*sdk.WorkflowNodeRun) ([
 
 			if param.Name == "payload" || strings.HasPrefix(param.Name, "cds.triggered") || strings.HasPrefix(param.Name, "cds.release") {
 				// keep p.Name as is
+			} else if param.Name == "cds.status" {
+				// do not use input status value for parent param
+				continue
 			} else if strings.HasPrefix(param.Name, "cds.") {
 				param.Name = strings.Replace(param.Name, "cds.", prefix, 1)
 			}
 			parentParams = append(parentParams, param)
 		}
+
+		// inject parent final status as parameter
+		parentParams = append(parentParams, sdk.Parameter{
+			Name:  prefix + "status",
+			Type:  sdk.StringParameter,
+			Value: parentNodeRun.Status,
+		})
+
 		params = append(params, parentParams...)
 	}
 	return params, nil

@@ -12,7 +12,9 @@ type service struct {
 }
 
 func (s service) Canonical() gorpmapper.CanonicalForms {
+	_ = []interface{}{s.ID, s.Name, s.Type, s.Region, s.IgnoreJobWithNoRegion} // Checks that fields exists at compilation
 	return []gorpmapper.CanonicalForm{
+		//"{{.ID}}{{.Name}}{{.Type}}{{.Region}}{{.IgnoreJobWithNoRegion}}",
 		"{{.ID}}{{.Name}}{{.Type}}",
 	}
 }

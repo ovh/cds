@@ -59,7 +59,7 @@ func Parse(ctx context.Context, db gorp.SqlExecutor, projID int64, kname string,
 			}
 			k.Public = string(pubBytes)
 		default:
-			return nil, sdk.ErrUnknownKeyType
+			return nil, sdk.WithStack(sdk.ErrUnknownKeyType)
 		}
 	} else if kval.Regen == nil || *kval.Regen == true {
 		ktemp, err := GenerateKey(kname, k.Type)

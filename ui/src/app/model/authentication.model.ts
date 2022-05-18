@@ -91,6 +91,7 @@ export class AuthConsumer {
     service_name: string;
     service_type: string;
     service_region: string;
+    service_ignore_job_with_no_region: boolean;
 
     // UI fields
     parent: AuthConsumer;
