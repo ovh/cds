@@ -101,7 +101,5 @@
             </tr>
         </tfoot>
     </table>
-    <div class="ui info message" *ngIf="data.length === 0">
-        {{ 'parameter_no' | translate }}
-    </div>
+    <nz-alert nzMessage="No parameters" *ngIf="data.length === 0"></nz-alert>
 </div>

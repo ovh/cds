@@ -9,6 +9,7 @@ import { PermissionEvent } from 'app/shared/permission/permission.event.model';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { AddGroupInProject, DeleteGroupInProject, UpdateGroupInProject } from 'app/store/project.action';
 import { finalize } from 'rxjs/operators';
+import cloneDeep from 'lodash-es/cloneDeep';
 
 @Component({
     selector: 'app-project-permissions',
@@ -19,7 +20,17 @@ export class ProjectPermissionsComponent implements OnChanges {
     @ViewChild('permWarning') permWarningModal: WarningModalComponent;
     @ViewChild('confirmPropagationModal') confirmPropagationModal: ConfirmModalComponent;
 
-    @Input() project: Project;
+    groups: Array<GroupPermission> = [];
+    _project: Project;
+    @Input() set project(data: Project) {
+        this._project = data;
+        if (data) {
+            this.groups = cloneDeep(data.groups);
+        }
+    };
+    get project() {
+        return this._project;
+    }
 
     loading = false;
     permFormLoading = false;
@@ -52,10 +63,18 @@ export class ProjectPermissionsComponent implements OnChanges {
                     break;
                 case 'update':
                     this.store.dispatch(new UpdateGroupInProject({ projectKey: this.project.key, group: event.gp }))
+                        .pipe(finalize(() => {
+                            this.groups = cloneDeep(this.project.groups);
+                            this._cd.markForCheck();
+                        }))
                         .subscribe(() => this._toast.success('', this._translate.instant('permission_updated')));
                     break;
                 case 'delete':
                     this.store.dispatch(new DeleteGroupInProject({ projectKey: this.project.key, group: event.gp }))
+                        .pipe(finalize(() => {
+                            this.groups = cloneDeep(this.project.groups);
+                            this._cd.markForCheck();
+                        }))
                         .subscribe(() => this._toast.success('', this._translate.instant('permission_deleted')));
                     break;
             }

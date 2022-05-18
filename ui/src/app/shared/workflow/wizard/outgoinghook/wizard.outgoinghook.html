@@ -6,7 +6,7 @@
     </div>
     <h3>Hook configuration</h3>
     <nz-form-item>
-        <nz-form-label [nzSm]="6" [nzXs]="24">Hook type: {{mode}} {{selectedOutgoingHookModel?.name}} {{outgoingHookModels?.length}}</nz-form-label>
+        <nz-form-label [nzSm]="6" [nzXs]="24">Hook type</nz-form-label>
         <nz-form-control [nzSm]="14" [nzXs]="24" *ngIf="outgoingHookModels">
                 <nz-select name="hookType" [(ngModel)]="selectedOutgoingHookModel" (ngModelChange)="updateOutgoingHook()" [disabled]="mode === 'update' || mode === 'ro'" nzPlaceHolder="{{'workflow_node_hook_select' | translate}}">
                     <nz-option *ngFor="let m of outgoingHookModels" [nzLabel]="m.name" [nzValue]="m"></nz-option>

@@ -168,7 +168,8 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit, OnDestroy 
             changes: workflow
         })).pipe(finalize(() => {
             this.loading = false;
-            event.gp.updating = false;
+            let stateSnap: WorkflowStateModel = this._store.selectSnapshot(WorkflowState);
+            this.groups = cloneDeep(stateSnap.node.groups);
             this._cd.markForCheck();
         })).subscribe(() => {
             this.hasModification = false;

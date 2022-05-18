@@ -255,6 +255,7 @@ export class WorkflowShowComponent implements OnInit, OnDestroy, AfterViewInit {
                         group: event.gp
                     })).pipe(finalize( () => {
                         this.permFormLoading = false;
+                        this.groups = cloneDeep(this.detailedWorkflow.groups);
                         this._cd.markForCheck();
                     })).subscribe(() => this._toast.success('', this._translate.instant('permission_updated')));
                     break;
@@ -265,6 +266,7 @@ export class WorkflowShowComponent implements OnInit, OnDestroy, AfterViewInit {
                         group: event.gp
                     })).pipe(finalize( () => {
                         this.permFormLoading = false;
+                        this.groups = cloneDeep(this.detailedWorkflow.groups);
                         this._cd.markForCheck();
                     })).subscribe(() => this._toast.success('', this._translate.instant('permission_deleted')));
                     break;

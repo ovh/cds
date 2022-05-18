@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { Store } from '@ngxs/store';
-import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { Application } from 'app/model/application.model';
 import { Environment } from 'app/model/environment.model';
 import { ProjectIntegration } from 'app/model/integration.model';
@@ -22,6 +21,10 @@ import { WorkflowWizardOutgoingHookComponent } from 'app/shared/workflow/wizard/
 import { WorkflowState } from 'app/store/workflow.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { forkJoin, Observable, of } from 'rxjs';
+import { UpdateWorkflow } from 'app/store/workflow.action';
+import { finalize } from 'rxjs/operators';
+import { ToastService } from 'app/shared/toast/ToastService';
+import { NzModalRef } from 'ng-zorro-antd/modal';
 
 @Component({
     selector: 'app-workflow-trigger',
@@ -30,15 +33,10 @@ import { forkJoin, Observable, of } from 'rxjs';
 })
 export class WorkflowTriggerComponent {
 
-    @ViewChild('triggerModal')
-    triggerModal: ModalTemplate<boolean, boolean, void>;
-    modal: SuiActiveModal<boolean, boolean, void>;
-
     @ViewChild('nodeWizard') nodeWizard: WorkflowNodeAddWizardComponent;
     @ViewChild('worklflowAddOutgoingHook')
     worklflowAddOutgoingHook: WorkflowWizardOutgoingHookComponent;
 
-    @Output() triggerEvent = new EventEmitter<Workflow>();
     @Input() source: WNode;
     @Input() workflow: Workflow;
     @Input() project: Project;
@@ -50,20 +48,11 @@ export class WorkflowTriggerComponent {
     selectedType: string;
     isParent: boolean;
 
-    constructor(private _modalService: SuiModalService, private _pipService: PipelineService, private _store: Store,
+    constructor(private _pipService: PipelineService, private _store: Store, private _toast: ToastService, private _modal: NzModalRef,
                 private _envService: EnvironmentService, private _appService: ApplicationService, private _cd: ChangeDetectorRef) { }
 
-    show(t: string, isP: boolean): void {
-        this.selectedType = t;
-        this.isParent = isP;
-        const config = new TemplateModalConfig<boolean, boolean, void>(this.triggerModal);
-        config.mustScroll = true;
-        this.modal = this._modalService.open(config);
-        this._cd.detectChanges();
-    }
-
     hide(): void {
-        this.modal.approve(true);
+        this._modal.close();
     }
 
     destNodeChange(node: WNode): void {
@@ -163,10 +152,10 @@ export class WorkflowTriggerComponent {
                 if (projIn) {
                     clonedWorkflow.project_integrations[projIn.id] = projIn;
                 }
-                this.triggerEvent.emit(clonedWorkflow);
+                this.updateWorkflow(clonedWorkflow);
             });
         } else {
-            this.triggerEvent.emit(clonedWorkflow);
+            this.updateWorkflow(clonedWorkflow);
         }
 
     }
@@ -220,5 +209,27 @@ export class WorkflowTriggerComponent {
             return of(this.project.integrations.find(i => i.id === this.destNode.context.project_integration_id));
         }
         return of(null);
+    }
+
+    updateWorkflow(w: Workflow): void {
+        this.loading = true;
+        let editMode = this._store.selectSnapshot(WorkflowState).editMode;
+        this._store.dispatch(new UpdateWorkflow({
+            projectKey: this.project.key,
+            workflowName: this.workflow.name,
+            changes: w
+        })).pipe(finalize(() => {
+            this.loading = false;
+            this._cd.markForCheck();
+        })).subscribe(() => {
+            if (!editMode) {
+                this._toast.success('', 'Workflow updated');
+                this._modal.triggerOk().then();
+            }
+        }, () => {
+            if (Array.isArray(this.source.hooks) && this.source.hooks.length) {
+                this.source.hooks.pop();
+            }
+        });
     }
 }

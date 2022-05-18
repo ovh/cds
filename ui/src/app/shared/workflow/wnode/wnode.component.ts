@@ -5,7 +5,7 @@ import { Store } from '@ngxs/store';
 import { IPopup, SuiActiveModal } from '@richardlt/ng2-semantic-ui';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
-import { WNode, WNodeHook, WNodeJoin, WNodeTrigger, WNodeType, Workflow } from 'app/model/workflow.model';
+import { WNode, WNodeJoin, WNodeTrigger, WNodeType, Workflow } from 'app/model/workflow.model';
 import { WorkflowNodeRun } from 'app/model/workflow.run.model';
 import { WorkflowCoreService } from 'app/service/workflow/workflow.core.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
@@ -16,7 +16,6 @@ import { WorkflowTriggerComponent } from 'app/shared/workflow/modal/node-add/wor
 import { WorkflowNodeRunParamComponent } from 'app/shared/workflow/node/run/node.run.param.component';
 import { ProjectState } from 'app/store/project.state';
 import {
-    AddHookWorkflow,
     AddJoinWorkflow,
     AddNodeTriggerWorkflow,
     OpenEditModal, SelectWorkflowNode,
@@ -26,7 +25,7 @@ import {
 import { WorkflowState } from 'app/store/workflow.state';
 import { Subscription } from 'rxjs';
 import { finalize, map, tap } from 'rxjs/operators';
-import { NzModalRef, NzModalService } from 'ng-zorro-antd/modal';
+import { NzModalService } from 'ng-zorro-antd/modal';
 import { WorkflowHookModalComponent } from 'app/shared/workflow/modal/hook-add/hook.modal.component';
 
 @Component({
@@ -60,8 +59,6 @@ export class WorkflowWNodeComponent implements OnInit, OnDestroy {
     // Modal
     @ViewChild('workflowDeleteNode')
     workflowDeleteNode: WorkflowDeleteNodeComponent;
-    @ViewChild('workflowTrigger')
-    workflowTrigger: WorkflowTriggerComponent;
 
     constructor(
         private _activatedRoute: ActivatedRoute,
@@ -233,11 +230,23 @@ export class WorkflowWNodeComponent implements OnInit, OnDestroy {
     }
 
     openTriggerModal(t: string, parent: boolean): void {
-        if (!this.canEdit()) {
-            return;
-        }
-        if (this.workflowTrigger) {
-            this.workflowTrigger.show(t, parent);
+        if (this.canEdit()) {
+            let title = 'Add trigger from' + this.node.name;
+            if (parent) {
+                title = 'Add parent to ' + this.node.name;
+            }
+            this._modalService.create({
+                nzTitle: title,
+                nzWidth: '900px',
+                nzContent: WorkflowTriggerComponent,
+                nzComponentParams: {
+                    project: this.project,
+                    workflow: this.workflow,
+                    source: this.node,
+                    isParent: parent,
+                    selectedType: t,
+                }
+            });
         }
     }
 

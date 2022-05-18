@@ -7,8 +7,8 @@
         *ngFor="let gp of groupsOutsideOrganization;let i = index">{{gp.group.name}}
         ({{gp.group.organization}}){{ i < groupsOutsideOrganization.length - 1 ? ', ' : '' }}</span>.
 </div>
-<app-permission-list [permissions]="project.groups" (event)="groupEvent($event)" [edit]="project.permissions.writable">
-</app-permission-list>
+<app-permission-list [permissions]="groups" (event)="groupEvent($event)" [edit]="project.permissions.writable"></app-permission-list>
+
 <ng-container *ngIf="project.permissions.writable">
     <h3>{{ 'project_permission_form_title' | translate }}</h3>
     <app-permission-form (createGroupPermissionEvent)="groupEvent($event)" [loading]="permFormLoading">
