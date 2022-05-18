@@ -39,7 +39,7 @@
                             </button>
                         </ng-container>
                         <ng-container *ngIf="mode === 'submit' && !gp.hasChanged">
-                            <button nz-button  nzType="primary" nzDanger [nzLoading]="gp.updating"
+                            <button nz-button nzType="primary" nzDanger [nzLoading]="gp.updating" name="deleteButton"
                                     nz-popconfirm nzPopconfirmTitle="Are you sure to delete this permission ?"
                                     (nzOnConfirm)="sendEvent('delete', gp)" nzPopconfirmPlacement="topLeft">
                                 <i nz-icon nzType="delete" nzTheme="outline"></i>Delete

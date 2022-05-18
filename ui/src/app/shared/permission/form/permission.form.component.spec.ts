@@ -1,14 +1,15 @@
 import { HttpRequest } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
-import { Group, GroupPermission } from '../../../model/group.model';
-import { GroupService } from '../../../service/group/group.service';
+import { Group, GroupPermission } from 'app/model/group.model';
+import { GroupService } from 'app/service/group/group.service';
 import { SharedModule } from '../../shared.module';
 import { PermissionEvent } from '../permission.event.model';
 import { PermissionService } from '../permission.service';
 import { PermissionFormComponent } from './permission.form.component';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 describe('CDS: Permission From Component', () => {
 
@@ -25,6 +26,7 @@ describe('CDS: Permission From Component', () => {
             ],
             imports: [
                 SharedModule,
+                BrowserAnimationsModule,
                 TranslateModule.forRoot(),
                 RouterTestingModule.withRoutes([]),
                 HttpClientTestingModule
@@ -56,28 +58,33 @@ describe('CDS: Permission From Component', () => {
         fixture.detectChanges();
         tick(50);
 
-        expect(fixture.debugElement.nativeElement.querySelector('.ui.button.disabled')).toBeTruthy();
+        let saveButton = fixture.debugElement.nativeElement.querySelector('button[disabled="true"][name="saveBtn"]');
+        expect(saveButton).toBeTruthy();
 
-        let compiled = fixture.debugElement.nativeElement;
 
         // Permission to add
         let gp = new GroupPermission();
         gp.group.name = 'grp1';
         gp.permission = 7;
 
-        fixture.detectChanges();
-        tick(50);
-
         // Emulate typing
         fixture.componentInstance.newGroupPermission = gp;
 
+        fixture.detectChanges();
+        tick(50);
+
         // Click on create button
         spyOn(fixture.componentInstance.createGroupPermissionEvent, 'emit');
-        compiled.querySelector('.ui.green.button').click();
+        saveButton = fixture.debugElement.nativeElement.querySelector('button[disabled="true"][name="saveBtn"]');
+        expect(saveButton).toBeFalsy();
+        saveButton = fixture.debugElement.nativeElement.querySelector('button[name="saveBtn"]');
+        expect(saveButton).toBeTruthy();
+        saveButton.click();
 
-        // Check if creation evant has been emitted
+        // Check if creation event has been emitted
         expect(fixture.componentInstance.createGroupPermissionEvent.emit).toHaveBeenCalledWith(new PermissionEvent('add', gp));
 
+        flush();
     }));
 });
 

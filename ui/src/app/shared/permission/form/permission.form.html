@@ -6,7 +6,7 @@
                     Group name
                     <a class="group-help" nzPopoverTrigger="click"
                                    nz-popover [nzPopoverContent]="popupHelp" [(nzPopoverVisible)]="helpVisible" nzPopoverPlacement="top">(My group is not listed)</a>
-                        <ng-template let-popup #popupHelp>
+                        <ng-template #popupHelp>
                             <div class="group-help-popup">
                                 <span>You'll see only your groups in this list.</span>
                                 <span>If you need to add read permission to another group you can manually enter its name.</span>
@@ -41,7 +41,7 @@
             <nz-form-item>
                 <nz-form-label></nz-form-label>
                 <nz-form-control>
-                    <button *ngIf="buttonType === 'submit'" nz-button nzType="primary" [nzLoading]="loading" [disabled]="loading || !newGroupPermission.group.name || newGroupPermission.group.name === ''">
+                    <button name="saveBtn" *ngIf="buttonType === 'submit'" (click)="create()" nz-button nzType="primary" [nzLoading]="loading" [disabled]="loading || !newGroupPermission.group.name || newGroupPermission.group.name === ''">
                         <i nz-icon nzType="save" nzTheme="outline"></i>Save
                     </button>
                     <button *ngIf="buttonType === 'button'" nz-button nzType="primary" [nzLoading]="loading"
