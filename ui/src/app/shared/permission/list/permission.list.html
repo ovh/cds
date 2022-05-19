@@ -1,28 +1,23 @@
 <div class="permission">
-    <table class="ui fixed single line celled table">
+    <nz-table [nzData]="permissions" #permList>
         <thead>
             <tr>
-                <th class="four wide">{{ 'group_name' | translate }}</th>
-                <th class="four wide">{{ 'group_permission' | translate }}</th>
-                <th class="two wide"></th>
+                <th nzWidth="300px">Group name</th>
+                <th nzWidth="300px">Group permission</th>
+                <th nzWidth="50px">Actions</th>
             </tr>
         </thead>
         <tbody>
-            <tr *ngFor="let gp of getDataForCurrentPage()">
-                <td class="middle-aligned">
+            <tr *ngFor="let gp of permList.data">
+                <td>
                     <a [routerLink]="['/settings/group', gp.group.name]">{{ gp.group.name }}</a>
                 </td>
                 <td>
                     <div *ngIf="edit;then wPermission;else rPermission"></div>
                     <ng-template #wPermission>
-                        <div class="ui form">
-                            <sui-select class="selection" [isDisabled]="gp.updating" [(ngModel)]="gp.permission"
-                                (ngModelChange)="pushChange()" (selectedOptionChange)="gp.hasChanged = true"
-                                [optionFormatter]="formatPermission()" [hasLabels]="true" [options]="permissionsList"
-                                labelField="name" valueField="value">
-                                <sui-select-option *ngFor="let p of permissionsList" [value]="p"></sui-select-option>
-                            </sui-select>
-                        </div>
+                        <nz-select [nzDisabled]="gp.updating" [(ngModel)]="gp.permission"  (ngModelChange)="pushChange();gp.hasChanged = true">
+                            <nz-option *ngFor="let pp of permissionsList" [nzValue]="pp.value" nzLabel="{{pp.name | translate}}"></nz-option>
+                        </nz-select>
                     </ng-template>
                     <ng-template #rPermission>
                         <div class="ui fluid input">
@@ -30,37 +25,29 @@
                         </div>
                     </ng-template>
                 </td>
-                <td class="center">
+                <td>
                     <ng-container *ngIf="edit">
-                        <button *ngIf="mode === 'submit' && gp.hasChanged" class="ui green button"
-                            [class.loading]="gp.updating" [class.disabled]="gp.updating" name="btnupdateperm"
-                            (click)="sendEvent('update', gp)">
-                            <i class="save icon"></i>
+                        <button nz-button nzType="primary" *ngIf="mode === 'submit' && gp.hasChanged" [nzLoading]="gp.updating"
+                                 [disabled]="gp.updating" name="btnupdateperm"
+                                (click)="sendEvent('update', gp)">
+                            <i nz-icon nzType="save" nzTheme="outline"></i>
                             {{ 'btn_save' | translate}}
                         </button>
-                        <app-delete-button *ngIf="mode === 'submit' && !gp.hasChanged" [loading]="gp.updating"
-                            (event)="sendEvent('delete', gp)"></app-delete-button>
-                        <button *ngIf="mode === 'form'" class="ui icon blue button" (click)="sendEvent('delete', gp)"><i
-                                class="trash icon"></i></button>
+                        <ng-container *ngIf="mode === 'form'">
+                            <button nz-button  nzType="primary" nzDanger [nzLoading]="gp.updating" (click)="sendEvent('delete', gp)">
+                                <i nz-icon nzType="delete" nzTheme="outline"></i>Delete
+                            </button>
+                        </ng-container>
+                        <ng-container *ngIf="mode === 'submit' && !gp.hasChanged">
+                            <button nz-button nzType="primary" nzDanger [nzLoading]="gp.updating" name="deleteButton"
+                                    nz-popconfirm nzPopconfirmTitle="Are you sure to delete this permission ?"
+                                    (nzOnConfirm)="sendEvent('delete', gp)" nzPopconfirmPlacement="topLeft">
+                                <i nz-icon nzType="delete" nzTheme="outline"></i>Delete
+                            </button>
+                        </ng-container>
                     </ng-container>
                 </td>
             </tr>
         </tbody>
-        <tfoot *ngIf="getNbOfPages() > 1">
-            <tr>
-                <th colspan="3">
-                    <div class="ui right floated pagination menu">
-                        <a class="icon item" (click)="downPage()">
-                            <i class="left chevron icon"></i>
-                        </a>
-                        <a class="item" *ngFor="let page of getNbOfPages() | ngForNumber" (click)="goTopage(page)"
-                            [class.active]="currentPage === page">{{page}}</a>
-                        <a class="icon item" (click)="upPage()">
-                            <i class="right chevron icon"></i>
-                        </a>
-                    </div>
-                </th>
-            </tr>
-        </tfoot>
-    </table>
+    </nz-table>
 </div>

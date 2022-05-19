@@ -1,21 +1,24 @@
-<div class="conditions ui form">
-    <ng-container *ngIf="editableHook">
-        <div class="ui info message">
-            <p>{{'workflow_run_conditions_hook' | translate}}</p>
-        </div>
-        <app-conditions [project]="project" [readonly]="readonly" [triggerConditions]="triggerConditions"
-            [(conditions)]="editableHook.conditions" (conditionsChange)="pushChange($event)">
-        </app-conditions>
-    </ng-container>
-    <ng-container *ngIf="!editableHook && editableNode">
-        <app-conditions [project]="project" [readonly]="readonly" [triggerConditions]="triggerConditions"
-            [(conditions)]="editableNode.context.conditions" (conditionsChange)="pushChange($event)">
-        </app-conditions>
-    </ng-container>
+<div>
+    <div class="conditions">
+        <ng-container *ngIf="editableHook">
+            <nz-alert nzType="info" nzMessage="{{'workflow_run_conditions_hook' | translate}}"></nz-alert>
+            <app-conditions [project]="project" [readonly]="readonly" [triggerConditions]="triggerConditions"
+                            [(conditions)]="editableHook.conditions" (conditionsChange)="pushChange($event)">
+            </app-conditions>
+        </ng-container>
+        <ng-container *ngIf="!editableHook && editableNode">
+            <app-conditions [project]="project" [readonly]="readonly" [triggerConditions]="triggerConditions"
+                            [(conditions)]="editableNode.context.conditions" (conditionsChange)="pushChange($event)">
+            </app-conditions>
+        </ng-container>
+    </div>
 
-    <button class="ui right floated green button" (click)="updateWorkflow()" *ngIf="!readonly" [class.loading]="loading"
-        [disabled]="loading">
+<div class="button">
+    <button nz-button nzType="primary" (click)="updateWorkflow()" *ngIf="!readonly" [nzLoading]="loading"
+            [disabled]="loading">
         <span *ngIf="editMode">{{ 'btn_apply' | translate }}</span>
         <span *ngIf="!editMode">{{ 'btn_save' | translate }}</span>
     </button>
+</div>
+
 </div>

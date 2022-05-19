@@ -1,26 +1,7 @@
-.header {
-  .deleteButton {
-    position: absolute;
-    top: 12px;
-    right: 12px;
+.link {
+  float: right;
+
+  i {
+    margin-right: 5px;
   }
-}
-
-codemirror {
-  width: 100%;
-  &.invalid {
-    border: 1px solid red;
-  }
-}
-
-.mb15 {
-  margin-bottom: 15px;
-}
-
-.ui.form .inline.fields .field > .selection.dropdown, .ui.form .inline.field > .selection.dropdown {
-  width: 100%;
-}
-
-.ui.form .inline.fields.uuid {
-    margin-top: 10px;
 }

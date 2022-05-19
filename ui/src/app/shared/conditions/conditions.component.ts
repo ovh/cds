@@ -1,4 +1,14 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    EventEmitter,
+    Input,
+    OnDestroy,
+    OnInit,
+    Output,
+    ViewChild
+} from '@angular/core';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { WorkflowNodeCondition, WorkflowNodeConditions, WorkflowTriggerConditionCache } from 'app/model/workflow.model';
@@ -23,6 +33,7 @@ export class ConditionsComponent extends Table<WorkflowNodeCondition> implements
         if (data) {
             this.operators = Object.keys(data.operators).map(k => ({ key: k, value: data.operators[k] }));
             this.conditionNames = data.names;
+            this.clearConditionNames = data.names;
             if (this.conditionNames) {
                 this.suggest = this.conditionNames.map((d) => d.replace(/-|\./g, '_'));
             }
@@ -64,6 +75,7 @@ export class ConditionsComponent extends Table<WorkflowNodeCondition> implements
     loadingConditions = false;
     operators: Array<any>;
     conditionNames: Array<string>;
+    clearConditionNames: Array<string>;
     statuses = [PipelineStatus.SUCCESS, PipelineStatus.FAIL, PipelineStatus.SKIPPED];
     loading = false;
     previousValue: string;
@@ -72,7 +84,8 @@ export class ConditionsComponent extends Table<WorkflowNodeCondition> implements
     _triggerCondition: WorkflowTriggerConditionCache;
 
     constructor(
-        private _theme: ThemeStore
+        private _theme: ThemeStore,
+        private _cd: ChangeDetectorRef
     ) {
         super();
     }
@@ -81,6 +94,13 @@ export class ConditionsComponent extends Table<WorkflowNodeCondition> implements
 
     getData(): Array<WorkflowNodeCondition> {
         return undefined;
+    }
+
+    onSearchName(value: string): void {
+        if (this.conditionNames.indexOf(value) === -1) {
+            this.conditionNames = [].concat(this.clearConditionNames);
+            this.conditionNames.push(value);
+        }
     }
 
     ngOnInit(): void {
@@ -116,6 +136,7 @@ export class ConditionsComponent extends Table<WorkflowNodeCondition> implements
     }
 
     removeCondition(index: number): void {
+        this.conditions.plain = Object.assign([], this.conditions.plain);
         this.conditions.plain.splice(index, 1);
         this.pushChange('remove');
     }
@@ -127,9 +148,11 @@ export class ConditionsComponent extends Table<WorkflowNodeCondition> implements
         if (!this.conditions.plain) {
             this.conditions.plain = [emptyCond];
         } else {
+            this.conditions.plain = Object.assign([], this.conditions.plain)
             this.conditions.plain.push(emptyCond);
         }
         this.conditionsChange.emit(this.conditions);
+        this._cd.markForCheck();
     }
 
     filterConditionVariables(opts: string[], query: string) {

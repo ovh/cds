@@ -1,14 +1,10 @@
-<ng-template let-context let-modal="modal" #hookModalComponent>
-    <div class="header">{{ 'workflow_node_hook_modal_title' | translate }}</div>
-    <div class="content">
-        <app-workflow-node-hook-form [workflow]="workflow" #hookFormComponent></app-workflow-node-hook-form>
-    </div>
-    <div class="actions">
-        <button class="ui grey button" [disabled]="loading"
-            (click)="modal.approve(true)">{{ 'common_close' | translate }}</button>
-        <button class="ui green button" [disabled]="loading" [class.loading]="loading" (click)="saveHook()">
-            <span *ngIf="editMode">{{ 'btn_apply' | translate }}</span>
-            <span *ngIf="!editMode">{{ 'btn_save' | translate }}</span>
+<div>
+    <app-workflow-node-hook-form [workflow]="workflow" #hookFormComponent></app-workflow-node-hook-form>
+    <div *nzModalFooter>
+        <button nz-button [disabled]="loading" (click)="close()">Close</button>
+        <button nz-button nzType="primary" [disabled]="loading" [nzLoading]="loading" (click)="saveHook()">
+            <span *ngIf="editMode">Apply</span>
+            <span *ngIf="!editMode">Save</span>
         </button>
     </div>
-</ng-template>
+</div>

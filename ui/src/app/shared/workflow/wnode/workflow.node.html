@@ -16,15 +16,6 @@
 <!-- MODALS -->
 <ng-container *ngIf="project && node && workflow && !hasWorkflowRun">
 
-    <!-- Add trigger -->
-    <app-workflow-trigger [loading]="loading" [project]="project" [workflow]="workflow" [source]="node"
-        (triggerEvent)="updateWorkflow($event, workflowTrigger.modal)" #workflowTrigger></app-workflow-trigger>
-    <!-- Add hook -->
-    <ng-container *ngIf="node.id === workflow.workflow_data.node.id">
-        <app-hook-modal [loading]="loading" [project]="project" [workflow]="workflow" [node]="node"
-                        (hookEvent)="addHook($event, workflowAddHook.modal)" #workflowAddHook></app-hook-modal>
-    </ng-container>
-
     <!-- Delete Node -->
     <app-workflow-node-delete [loading]="loading" [node]="node" [workflow]="workflow"
         (deleteEvent)="updateWorkflow($event, workflowDeleteNode.modal)" #workflowDeleteNode></app-workflow-node-delete>

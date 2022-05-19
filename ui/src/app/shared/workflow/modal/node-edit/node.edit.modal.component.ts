@@ -1,13 +1,6 @@
-import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Select, Store } from '@ngxs/store';
-import {
-    ModalSize,
-    ModalTemplate,
-    SuiActiveModal,
-    SuiModalService,
-    TemplateModalConfig
-} from '@richardlt/ng2-semantic-ui';
 import { GroupPermission } from 'app/model/group.model';
 import { Project } from 'app/model/project.model';
 import { WNode, Workflow } from 'app/model/workflow.model';
@@ -45,14 +38,6 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit, OnDestroy 
     currentNodeType: string;
     hookSelected: boolean;
 
-
-
-
-    @ViewChild('nodeEditModal')
-    public nodeEditModal: ModalTemplate<boolean, boolean, void>;
-    modal: SuiActiveModal<boolean, boolean, void>;
-    modalConfig: TemplateModalConfig<boolean, boolean, void>;
-
     selected: string;
     hasModification = false;
 
@@ -62,7 +47,9 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit, OnDestroy 
     storeSub: Subscription;
     readonly = true;
 
-    constructor(private _modalService: SuiModalService, private _store: Store, private _cd: ChangeDetectorRef,
+    openModal : boolean = false;
+
+    constructor(private _store: Store, private _cd: ChangeDetectorRef,
         private _translate: TranslateService, private _toast: ToastService) {
         this.projectSubscriber = this._store.select(ProjectState)
             .subscribe((projState: ProjectStateModel) => {
@@ -95,9 +82,7 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit, OnDestroy 
                 delete this.hookSelected;
                 this.readonly = true;
                 delete this.selected;
-                if (this.modal) {
-                    this.modal.approve(true);
-                }
+                this.openModal = false
                 this._cd.markForCheck();
                 return;
             }
@@ -141,31 +126,18 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit, OnDestroy 
         });
     }
 
-    show(): void {
-        if (this.nodeEditModal) {
-            this.modalConfig = new TemplateModalConfig<boolean, boolean, void>(this.nodeEditModal);
-            this.modalConfig.mustScroll = true;
-            this.modalConfig.size = ModalSize.Large;
-            this.modalConfig.isClosable = true;
-            this.modal = this._modalService.open(this.modalConfig);
-            this.modal.onApprove(() => {
-                this._store.dispatch(new CloseEditModal({}));
-            });
-            this.modal.onDeny(() => {
-                this._store.dispatch(new CloseEditModal({}));
-            });
-        } else {
-            this.modal = this._modalService.open(this.modalConfig);
-            this.modal.onApprove(() => {
-                this._store.dispatch(new CloseEditModal({}));
-            });
-            this.modal.onDeny(() => {
-                this._store.dispatch(new CloseEditModal({}));
-            });
-        }
+    close(): void {
+        this.openModal = false;
+        this._store.dispatch(new CloseEditModal({}));
+        this._cd.markForCheck()
     }
 
-    groupManagement(event: PermissionEvent, skip?: boolean): void {
+    show(): void {
+        this.openModal = true
+        this._cd.markForCheck();
+    }
+
+    groupManagement(event: PermissionEvent): void {
         let snapNode = cloneDeep(this._store.selectSnapshot(WorkflowState).node);
         this.loading = true;
         switch (event.type) {
@@ -196,7 +168,8 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit, OnDestroy 
             changes: workflow
         })).pipe(finalize(() => {
             this.loading = false;
-            event.gp.updating = false;
+            let stateSnap: WorkflowStateModel = this._store.selectSnapshot(WorkflowState);
+            this.groups = cloneDeep(stateSnap.node.groups);
             this._cd.markForCheck();
         })).subscribe(() => {
             this.hasModification = false;

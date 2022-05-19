@@ -1,35 +1,24 @@
-<ng-template let-context let-modal="modal" #triggerModal>
-    <div class="header" *ngIf="source">{{ 'workflow_node_trigger_title' | translate: {pip: source.name} }}</div>
-    <div class="header" *ngIf="!source">{{ 'workflow_node_parent' | translate }}</div>
-    <div class="content">
-        <div class="ui form">
-            <ng-container>
-                <h3>{{ 'workflow_node_form_title' | translate }}</h3>
-                <app-workflow-node-add-wizard
-                        [project]="project"
-                        [hideCancel]="true"
-                        [hideNext]="true"
-                        [display]="selectedType === 'pipeline'"
-                        (nodeCreated)="destNodeChange($event)"
-                        (pipelineSectionChanged)="pipelineSectionChanged($event)" #nodeWizard>
+<div>
+    <ng-container *ngIf="selectedType === 'pipeline'">
+        <h3>{{ 'workflow_node_form_title' | translate }}</h3>
+        <app-workflow-node-add-wizard
+                [project]="project" [hideCancel]="true" [hideNext]="true" [display]="selectedType === 'pipeline'"
+                (nodeCreated)="destNodeChange($event)" (pipelineSectionChanged)="pipelineSectionChanged($event)" #nodeWizard>
                 </app-workflow-node-add-wizard>
-            </ng-container>
-            <ng-container>
-                <app-workflow-node-outgoinghook
-                        [workflow]="workflow"
-                        [display]="selectedType === 'outgoinghook'"
-                        (outgoinghookEvent)="destNodeChange($event)"
-                        #worklflowAddOutgoingHook></app-workflow-node-outgoinghook>
-            </ng-container>
-        </div>
-    </div>
-    <div class="actions">
-        <button class="ui grey button" [disabled]="loading" (click)="hide()">{{ 'common_close' | translate }}</button>
+    </ng-container>
+    <ng-container *ngIf="selectedType === 'outgoinghook'">
+        <app-workflow-node-outgoinghook
+                [workflow]="workflow"
+                (outgoinghookEvent)="destNodeChange($event)"
+                #worklflowAddOutgoingHook></app-workflow-node-outgoinghook>
+    </ng-container>
+    <div *nzModalFooter>
+        <button nz-button [disabled]="loading" (click)="hide()">Close</button>
         <ng-container *ngIf="selectedType === 'pipeline'">
-            <button class="ui green button" [disabled]="loading" [class.loading]="loading" (click)="nextStep()">{{ 'btn_next' | translate }}</button>
+            <button nz-button nzType="primary" [disabled]="loading" [nzLoading]="loading" (click)="nextStep()">Next</button>
         </ng-container>
         <ng-container *ngIf="selectedType === 'outgoinghook'">
-            <button class="ui green button" [disabled]="loading" [class.loading]="loading" (click)="addOutgoingHook()">{{ 'btn_save' | translate }}</button>
+            <button nz-button nzType="primary" [disabled]="loading" [nzLoading]="loading" (click)="addOutgoingHook()">{{ 'btn_save' | translate }}</button>
         </ng-container>
     </div>
-</ng-template>
+</div>

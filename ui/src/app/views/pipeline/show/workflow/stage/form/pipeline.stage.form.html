@@ -17,6 +17,7 @@
             </div>
         </div>
         <div class="field">
+            <h4>Conditions: </h4>
             <app-conditions *ngIf="!loading" [project]="project" [readonly]="readOnly"
                 [triggerConditions]="triggerConditions" [(conditions)]="stage.conditions">
             </app-conditions>

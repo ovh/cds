@@ -1,68 +1,73 @@
-<div class="ui form">
+<form nz-form>
     <ng-container
         *ngIf="noderun || pipParamsReady">
-        <h3>{{ 'workflow_node_context_pipeline_parameter' | translate}}</h3>
-        <ng-container *ngIf="noderun == null && editableNode?.context">
-            <app-parameter-list
-                [project]="project"
-                [parameters]="editableNode.context.default_pipeline_parameters"
-                [paramsRef]="currentPipeline.parameters"
-                [mode]="readonly?'ro':'launcher'"
-                [suggest]="suggest"
-                [canDelete]="false"
-                (event)="parameterEvent($event)">
-            </app-parameter-list>
-        </ng-container>
-        <ng-container *ngIf="noderun != null">
-            <app-parameter-list
-                [project]="project"
-                [parameters]="noderun.pipeline_parameters"
-                [paramsRef]="noderun.pipeline_parameters"
-                [mode]="readonly?'ro':'launcher'"
-                [suggest]="suggest"
-                [canDelete]="false"
-                (event)="parameterEvent($event)">
-            </app-parameter-list>
-        </ng-container>
+        <nz-form-item>
+            <nz-form-label [nzSpan]="6">{{ 'workflow_node_context_pipeline_parameter' | translate}}</nz-form-label>
+            <nz-form-control [nzSpan]="12">
+                <ng-container *ngIf="noderun == null && editableNode?.context">
+                    <app-parameter-list
+                            [project]="project"
+                            [parameters]="editableNode.context.default_pipeline_parameters"
+                            [paramsRef]="currentPipeline.parameters"
+                            [mode]="readonly?'ro':'launcher'"
+                            [suggest]="suggest"
+                            [canDelete]="false"
+                            (event)="parameterEvent($event)">
+                    </app-parameter-list>
+                </ng-container>
+                <ng-container *ngIf="noderun != null">
+                    <app-parameter-list
+                            [project]="project"
+                            [parameters]="noderun.pipeline_parameters"
+                            [paramsRef]="noderun.pipeline_parameters"
+                            [mode]="readonly?'ro':'launcher'"
+                            [suggest]="suggest"
+                            [canDelete]="false"
+                            (event)="parameterEvent($event)">
+                    </app-parameter-list>
+                </ng-container>
+            </nz-form-control>
+        </nz-form-item>
     </ng-container>
     <ng-container
         *ngIf="(editableNode?.hooks && editableNode?.hooks.length > 0) || (editableNode?.id === workflow.workflow_data?.node?.id) || noderun">
-        <h3>{{ 'workflow_node_context_payload' | translate}}</h3>
-        <ng-container *ngIf="!loadingBranches">
-            <codemirror
-                [class.invalid]="invalidJSON"
-                [(ngModel)]="payloadString"
-                [config]="codeMirrorConfig"
-                (click)="changeCodeMirror($event, false)"
-                (change)="changeCodeMirror($event, true)"
-                #textareaCodeMirror>
-            </codemirror>
-        </ng-container>
-        <ng-container *ngIf="loadingBranches">
-            <div class="ui info message">
-                {{ 'common_loading' | translate }}
-            </div>
-        </ng-container>
-        <div class="extra">
-            <ng-container *ngIf="invalidJSON">
-                {{ 'workflow_context_invalid' | translate}}
-            </ng-container>
-            <ng-container *ngIf="!invalidJSON">
-                <button class="ui small blue button" (click)="reindent()">Reindent</button>
-            </ng-container>
-        </div>
+        <nz-form-item>
+            <nz-form-label [nzSpan]="6">{{ 'workflow_node_context_payload' | translate}}</nz-form-label>
+            <nz-form-control [nzSpan]="12">
+                <ng-container *ngIf="!loadingBranches">
+                    <codemirror
+                            name="payload"
+                            [class.invalid]="invalidJSON"
+                            [(ngModel)]="payloadString"
+                            [config]="codeMirrorConfig"
+                            (click)="changeCodeMirror($event, false)"
+                            (change)="changeCodeMirror($event, true)"
+                            #textareaCodeMirror>
+                    </codemirror>
+                </ng-container>
+                <ng-container *ngIf="loadingBranches">
+                    <nz-alert nzType="info" nzMessage="Loading..."></nz-alert>
+                </ng-container>
+                <div class="extra">
+                    <ng-container *ngIf="invalidJSON">
+                        <nz-alert nzType="error" nzMessage="Invalid json payload"></nz-alert>
+                    </ng-container>
+                </div>
+            </nz-form-control>
+        </nz-form-item>
     </ng-container>
     <ng-container *ngIf="!readonly">
-        <button class="ui right floated green button"
-                [disabled]="loadingBranches || loading"
-                [class.loading]="loading" (click)="updateWorkflow()">
+        <nz-form-item nzJustify="end">
+            <button nz-button nzType="primary"
+                    [disabled]="loadingBranches || loading"
+                    [nzLoading]="loading" (click)="updateWorkflow()">
             <span *ngIf="editMode">
                 {{ 'btn_apply' | translate }}
             </span>
-            <span *ngIf="!editMode">
+                <span *ngIf="!editMode">
                 {{ 'btn_save' | translate }}
             </span>
-
-        </button>
+            </button>
+        </nz-form-item>
     </ng-container>
-</div>
+</form>

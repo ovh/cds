@@ -1,19 +1,22 @@
-.ui.form {
-    .field>label {
-        color: grey;
-    }
+nz-col {
+  padding-right: 20px;
 
-    .field {
-        .ui.button {
-            margin-top: 1.7em;
-        }
-    }
+}
 
-    .group-help {
-        float: right;
-        cursor: pointer;
-        font-size: 11px;
-    }
+nz-form-label {
+
+  a {
+    margin-left: 10px;
+  }
+  .group-help {
+    float: right;
+    cursor: pointer;
+    font-size: 11px;
+  }
+}
+
+nz-select {
+  width: 100%;
 }
 
 .group-help-popup {

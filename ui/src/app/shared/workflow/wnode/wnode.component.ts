@@ -5,20 +5,17 @@ import { Store } from '@ngxs/store';
 import { IPopup, SuiActiveModal } from '@richardlt/ng2-semantic-ui';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
-import { WNode, WNodeHook, WNodeJoin, WNodeTrigger, WNodeType, Workflow } from 'app/model/workflow.model';
+import { WNode, WNodeJoin, WNodeTrigger, WNodeType, Workflow } from 'app/model/workflow.model';
 import { WorkflowNodeRun } from 'app/model/workflow.run.model';
 import { WorkflowCoreService } from 'app/service/workflow/workflow.core.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { WorkflowWNodeMenuEditComponent } from 'app/shared/workflow/menu/edit-node/menu.edit.node.component';
 import { WorkflowDeleteNodeComponent } from 'app/shared/workflow/modal/delete/workflow.node.delete.component';
-import { WorkflowHookModalComponent } from 'app/shared/workflow/modal/hook-add/hook.modal.component';
 import { WorkflowTriggerComponent } from 'app/shared/workflow/modal/node-add/workflow.trigger.component';
-import { WorkflowNodeEditModalComponent } from 'app/shared/workflow/modal/node-edit/node.edit.modal.component';
 import { WorkflowNodeRunParamComponent } from 'app/shared/workflow/node/run/node.run.param.component';
 import { ProjectState } from 'app/store/project.state';
 import {
-    AddHookWorkflow,
     AddJoinWorkflow,
     AddNodeTriggerWorkflow,
     OpenEditModal, SelectWorkflowNode,
@@ -28,6 +25,8 @@ import {
 import { WorkflowState } from 'app/store/workflow.state';
 import { Subscription } from 'rxjs';
 import { finalize, map, tap } from 'rxjs/operators';
+import { NzModalService } from 'ng-zorro-antd/modal';
+import { WorkflowHookModalComponent } from 'app/shared/workflow/modal/hook-add/hook.modal.component';
 
 @Component({
     selector: 'app-workflow-wnode',
@@ -60,12 +59,6 @@ export class WorkflowWNodeComponent implements OnInit, OnDestroy {
     // Modal
     @ViewChild('workflowDeleteNode')
     workflowDeleteNode: WorkflowDeleteNodeComponent;
-    @ViewChild('workflowTrigger')
-    workflowTrigger: WorkflowTriggerComponent;
-    @ViewChild('workflowAddHook')
-    workflowAddHook: WorkflowHookModalComponent;
-    @ViewChild('nodeEditModal')
-    nodeEditModal: WorkflowNodeEditModalComponent;
 
     constructor(
         private _activatedRoute: ActivatedRoute,
@@ -75,7 +68,8 @@ export class WorkflowWNodeComponent implements OnInit, OnDestroy {
         private _workflowCoreService: WorkflowCoreService,
         private _toast: ToastService,
         private _translate: TranslateService,
-        private _cd: ChangeDetectorRef
+        private _cd: ChangeDetectorRef,
+        private _modalService: NzModalService
     ) {
         this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
         let paramSnamp = this._routerActivated.snapshot.params;
@@ -236,44 +230,39 @@ export class WorkflowWNodeComponent implements OnInit, OnDestroy {
     }
 
     openTriggerModal(t: string, parent: boolean): void {
-        if (!this.canEdit()) {
-            return;
-        }
-        if (this.workflowTrigger) {
-            this.workflowTrigger.show(t, parent);
+        if (this.canEdit()) {
+            let title = 'Add trigger from' + this.node.name;
+            if (parent) {
+                title = 'Add parent to ' + this.node.name;
+            }
+            this._modalService.create({
+                nzTitle: title,
+                nzWidth: '900px',
+                nzContent: WorkflowTriggerComponent,
+                nzComponentParams: {
+                    project: this.project,
+                    workflow: this.workflow,
+                    source: this.node,
+                    isParent: parent,
+                    selectedType: t,
+                }
+            });
         }
     }
 
     openAddHookModal(): void {
-        if (this.canEdit() && this.workflowAddHook) {
-            this.workflowAddHook.show();
+        if (this.canEdit()) {
+            this._modalService.create({
+                nzTitle: 'Hook creation',
+                nzWidth: '900px',
+                nzContent: WorkflowHookModalComponent,
+                nzComponentParams: {
+                    project: this.project,
+                    workflow: this.workflow,
+                    node: this.node
+                }
+            });
         }
-    }
-
-    addHook(hook: WNodeHook, modal: SuiActiveModal<boolean, boolean, void>): void {
-        this.loading = true;
-
-        let action = new AddHookWorkflow({
-            projectKey: this.project.key,
-            workflowName: this.workflow.name,
-            hook
-        });
-
-        let editMode = this._store.selectSnapshot(WorkflowState).editMode;
-        this._store.dispatch(action).pipe(finalize(() => {
-            this.loading = false;
-            this._cd.markForCheck();
-        })).subscribe(() => {
-            if (!editMode) {
-                this._toast.success('', this._translate.instant('workflow_updated'));
-            } else {
-                   this._toast.info('', this._translate.instant('workflow_ascode_updated'));
-            }
-            if (modal) {
-                modal.approve(null);
-            }
-            this._cd.markForCheck();
-        });
     }
 
     createFork(): void {

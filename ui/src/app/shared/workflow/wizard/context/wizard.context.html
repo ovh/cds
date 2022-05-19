@@ -1,119 +1,62 @@
 <ng-container *ngIf="node && project">
-    <div class="ui form">
-        <div class="inline fields">
-            <div class="four wide field">
-                <label>{{ 'workflow_root_context_pipeline' | translate}}</label>
-            </div>
-            <div class="twelve wide field">
-                <ng-container
-                    *ngIf="node.id > 0 && node.context && node.context.pipeline_id && workflow.pipelines[node.context.pipeline_id]">
-                    <div class="ui input">{{workflow.pipelines[node.context.pipeline_id].name}}</div>
-                </ng-container>
-            </div>
-        </div>
-        <div class="inline fields">
-            <div class="four wide field">
-                <label>{{ 'common_name' | translate}}</label>
-            </div>
-            <div class="twelve wide field">
-                <ng-container>
-                    <div class="ui input">
-                        <input type="text" [(ngModel)]="node.name" (ngModelChange)="pushChange()" [disabled]="readonly">
-                    </div>
-                </ng-container>
-            </div>
-        </div>
-        <div class="inline fields">
-            <div class="four wide field">
-                <label>{{ 'workflow_root_context_application' | translate}}</label>
-            </div>
-            <div class="twelve wide field">
-                <sui-select class="fluid selection"
-                            [(ngModel)]="node.context.application_id"
-                            (ngModelChange)="change();pushChange()"
-                            [options]="applications"
-                            labelField="name"
-                            valueField="id"
-                            [isSearchable]="true"
-                            [isDisabled]="readonly"
-                            #select>
-                    <sui-select-option *ngFor="let option of select.filteredOptions"
-                                       [value]="option">
-                    </sui-select-option>
-                </sui-select>
-            </div>
-        </div>
-        <div class="inline fields">
-            <div class="four wide field">
-                <label>{{ 'workflow_root_context_integration' | translate}}</label>
-            </div>
-            <div class="twelve wide field">
-                <ng-container *ngIf="integrations">
-                    <sui-select class="fluid selection"
-                                name="selectIntegration"
-                                [(ngModel)]="node.context.project_integration_id"
-                                (ngModelChange)="pushChange()"
-                                [options]="integrations"
-                                labelField="name"
-                                valueField="id"
-                                [isSearchable]="true"
-                                [isDisabled]="readonly"
-                                #selectIntegration>
-                        <sui-select-option *ngFor="let t of selectIntegration.filteredOptions"
-                                           [value]="t">
-                        </sui-select-option>
-                    </sui-select>
-                </ng-container>
-            </div>
-        </div>
-        <div class="inline fields">
-            <div class="four wide field">
-                <label>{{ 'workflow_root_context_environment' | translate}}</label>
-            </div>
-            <div class="twelve wide field">
-                <sui-select class="fluid selection"
-                            name="selectIntegration"
-                            [(ngModel)]="node.context.environment_id"
-                            (ngModelChange)="pushChange()"
-                            [options]="environments"
-                            labelField="name"
-                            valueField="id"
-                            [isSearchable]="true"
-                            [isDisabled]="readonly"
-                            #selectEnv>
-                    <sui-select-option *ngFor="let t of selectEnv.filteredOptions"
-                                       [value]="t">
-                    </sui-select-option>
-                </sui-select>
-            </div>
-        </div>
+    <form nz-form>
+        <nz-form-item>
+            <nz-form-label [nzSpan]="6">Pipeline</nz-form-label>
+            <nz-form-control [nzSpan]="12"
+                *ngIf="node?.context?.pipeline_id && workflow?.pipelines[node.context.pipeline_id]">
+                {{workflow.pipelines[node.context.pipeline_id].name}}
+            </nz-form-control>
+        </nz-form-item>
+        <nz-form-item>
+            <nz-form-label [nzSpan]="6">Name</nz-form-label>
+            <nz-form-control [nzSpan]="12">
+                <input name="name" nz-input [(ngModel)]="node.name" (ngModelChange)="pushChange()" [disabled]="readonly">
+            </nz-form-control>
+        </nz-form-item>
+        <nz-form-item>
+            <nz-form-label [nzSpan]="6">Application (optional)</nz-form-label>
+            <nz-form-control *ngIf="applications" [nzSpan]="12">
+                <nz-select name="application" nzShowSearch [nzDisabled]="readonly" [(ngModel)]="node.context.application_id" (ngModelChange)="change();pushChange()">
+                    <nz-option *ngFor="let app of applications" [nzLabel]="app.name" [nzValue]="app.id" ></nz-option>
+                </nz-select>
+            </nz-form-control>
+        </nz-form-item>
+        <nz-form-item>
+            <nz-form-label [nzSpan]="6">Integration (optional)</nz-form-label>
+            <nz-form-control *ngIf="integrations && node.context.application_id" [nzSpan]="12">
+                <nz-select name="selectIntegration" nzShowSearch [nzDisabled]="readonly"  [(ngModel)]="node.context.project_integration_id" (ngModelChange)="pushChange()">
+                    <nz-option *ngFor="let inte of integrations" [nzLabel]="inte.name" [nzValue]="inte.id"></nz-option>
+                </nz-select>
+            </nz-form-control>
+            <nz-form-control *ngIf="!node.context.application_id"  [nzSpan]="12">
+                <nz-alert nzType="info" nzMessage="You must select an application first"></nz-alert>
+            </nz-form-control>
+        </nz-form-item>
+        <nz-form-item>
+            <nz-form-label [nzSpan]="6">Environment</nz-form-label>
+            <nz-form-control *ngIf="environments"  [nzSpan]="12">
+                <nz-select name="selectEnv" nzShowSearch [nzDisabled]="readonly" [(ngModel)]="node.context.environment_id" (ngModelChange)="pushChange()">
+                    <nz-option *ngFor="let env of environments" [nzLabel]="env.name" [nzValue]="env.id"></nz-option>
+                </nz-select>
+            </nz-form-control>
+        </nz-form-item>
+        <nz-form-item>
+            <nz-form-label [nzSpan]="6">
+                <a href="#" [routerLink]="['/docs', 'docs', 'workflow', 'mutex']" target="_blank" rel="noopener noreferrer">
+                    {{ 'workflow_root_context_mutex' | translate }}
+                    <i class="external icon"></i>
+                </a>
+            </nz-form-label>
+            <nz-form-control  [nzSpan]="12">
+                <nz-switch name="mutex" [ngModel]="node.context.mutex" (ngModelChange)="pushChange()" [nzDisabled]="readonly"></nz-switch>
+            </nz-form-control>
+        </nz-form-item>
+        <nz-form-item nzJustify="end">
+            <button nz-button nzType="primary" *ngIf="!readonly" [nzLoading]="loading" (click)="updateWorkflow()">
+                <span *ngIf="!editMode">{{ 'btn_save' | translate }}</span>
+                <span *ngIf="editMode">{{ 'btn_apply' | translate }}</span>
+            </button>
+        </nz-form-item>
+    </form>
 
-        <div class="inline fields">
-            <div class="four wide field">
-                <label>
-                    <a href="#" [routerLink]="['/docs', 'docs', 'workflow', 'mutex']" target="_blank" rel="noopener noreferrer">
-                        {{ 'workflow_root_context_mutex' | translate }}
-                        <i class="external icon"></i>
-                    </a>
-                </label>
-            </div>
-            <div class="twelve wide field">
-                <div class="ui toggle checkbox ml10">
-                    <input type="checkbox" id="mutex" name="mutex"
-                           [disabled]="readonly"
-                           [(ngModel)]="node.context.mutex" (ngModelChange)="pushChange()">
-                    <label></label>
-                </div>
-            </div>
-        </div>
-    </div>
-
-
-    <button class="ui right floated green button"
-            *ngIf="!readonly"
-            [disabled]="loading"
-            [class.loading]="loading" (click)="updateWorkflow()">
-        <span *ngIf="!editMode">{{ 'btn_save' | translate }}</span>
-        <span *ngIf="editMode">{{ 'btn_apply' | translate }}</span>
-    </button>
 </ng-container>
