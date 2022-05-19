@@ -69,6 +69,13 @@ type CurrentWorker struct {
 	}
 	client cdsclient.WorkerInterface
 	blur   *sdk.Blur
+	hooks  []workerHook
+}
+
+type workerHook struct {
+	Config       sdk.WorkerHookSetupTeardownScripts
+	SetupPath    string
+	TeardownPath string
 }
 
 // BuiltInAction defines builtin action signature
