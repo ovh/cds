@@ -4,7 +4,6 @@ import { Store } from '@ngxs/store';
 import { GroupPermission } from 'app/model/group.model';
 import { Project } from 'app/model/project.model';
 import { ConfirmModalComponent } from 'app/shared/modal/confirm/confirm.component';
-import { WarningModalComponent } from 'app/shared/modal/warning/warning.component';
 import { PermissionEvent } from 'app/shared/permission/permission.event.model';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { AddGroupInProject, DeleteGroupInProject, UpdateGroupInProject } from 'app/store/project.action';
@@ -17,7 +16,6 @@ import cloneDeep from 'lodash-es/cloneDeep';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProjectPermissionsComponent implements OnChanges {
-    @ViewChild('permWarning') permWarningModal: WarningModalComponent;
     @ViewChild('confirmPropagationModal') confirmPropagationModal: ConfirmModalComponent;
 
     groups: Array<GroupPermission> = [];
@@ -28,6 +26,7 @@ export class ProjectPermissionsComponent implements OnChanges {
             this.groups = cloneDeep(data.groups);
         }
     };
+
     get project() {
         return this._project;
     }
@@ -42,7 +41,8 @@ export class ProjectPermissionsComponent implements OnChanges {
         private _toast: ToastService,
         private store: Store,
         private _cd: ChangeDetectorRef
-    ) { }
+    ) {
+    }
 
     ngOnChanges(): void {
         if (this.project && !!this.project.organization) {
@@ -52,32 +52,30 @@ export class ProjectPermissionsComponent implements OnChanges {
         }
     }
 
-    groupEvent(event: PermissionEvent, skip?: boolean): void {
+    groupEvent(event: PermissionEvent): void {
         this.currentPermEvent = event;
-        if (!skip && this.project.externalChange) {
-            this.permWarningModal.show(event);
-        } else {
-            switch (event.type) {
-                case 'add':
-                    this.confirmPropagationModal.show();
-                    break;
-                case 'update':
-                    this.store.dispatch(new UpdateGroupInProject({ projectKey: this.project.key, group: event.gp }))
-                        .pipe(finalize(() => {
-                            this.groups = cloneDeep(this.project.groups);
-                            this._cd.markForCheck();
-                        }))
-                        .subscribe(() => this._toast.success('', this._translate.instant('permission_updated')));
-                    break;
-                case 'delete':
-                    this.store.dispatch(new DeleteGroupInProject({ projectKey: this.project.key, group: event.gp }))
-                        .pipe(finalize(() => {
-                            this.groups = cloneDeep(this.project.groups);
-                            this._cd.markForCheck();
-                        }))
-                        .subscribe(() => this._toast.success('', this._translate.instant('permission_deleted')));
-                    break;
-            }
+
+        switch (event.type) {
+            case 'add':
+                this.confirmPropagationModal.show();
+                break;
+            case 'update':
+                this.store.dispatch(new UpdateGroupInProject({projectKey: this.project.key, group: event.gp}))
+                    .pipe(finalize(() => {
+                        this.groups = cloneDeep(this.project.groups);
+                        this._cd.markForCheck();
+                    }))
+                    .subscribe(() => this._toast.success('', this._translate.instant('permission_updated')));
+                break;
+            case 'delete':
+                this.store.dispatch(new DeleteGroupInProject({projectKey: this.project.key, group: event.gp}))
+                    .pipe(finalize(() => {
+                        this.groups = cloneDeep(this.project.groups);
+                        this._cd.markForCheck();
+                    }))
+                    .subscribe(() => this._toast.success('', this._translate.instant('permission_deleted')));
+                break;
+
         }
     }
 

@@ -12,7 +12,7 @@
                         </div>
                     </div>
                     <div class="eight wide right aligned field">
-                        <button (click)="cloneModal.show()" type="button" name="clonebtn" class="ui blue button"
+                        <button (click)="cloneModalVisible = true" type="button" name="clonebtn" class="ui blue button"
                             [class.loading]="loading" [class.disabled]="loading"><i
                                 class="copy icon"></i>{{'common_clone' | translate}}
                         </button>
@@ -38,17 +38,24 @@
             </div>
         </app-zone-content>
     </app-zone>
-    <sm-modal title="{{'environment_title_clone' | translate}} '{{environment.name}}'" class="small" #cloneModal>
-        <modal-content>
-            <div class="ui fluid action input">
-                <input type="text" placeholder="{{'environment_clone_placeholder' | translate}}"
-                    [(ngModel)]="cloneName">
-                <button class="ui blue right labeled icon button" [class.disabled]="!cloneName"
-                    [class.loading]="loading" (click)="cloneEnvironment(cloneModal)">
-                    <i class="copy icon"></i>
-                    {{'common_clone' | translate}}
-                </button>
-            </div>
-        </modal-content>
-    </sm-modal>
+    <nz-modal nzTitle="{{'environment_title_clone' | translate}} '{{environment.name}}'" [nzVisible]="cloneModalVisible">
+        <div *nzModalContent>
+            <form nz-form>
+                <nz-form-item>
+                    <nz-form-label>Name</nz-form-label>
+                    <nz-form-control>
+                        <input nz-input type="text" name="name" placeholder="{{'environment_clone_placeholder' | translate}}"
+                               [(ngModel)]="cloneName">
+                    </nz-form-control>
+                </nz-form-item>
+            </form>
+        </div>
+        <div *nzModalFooter>
+            <button nz-button (click)="cloneModalVisible = false">Cancel</button>
+            <button nz-button nzType="primary" [disabled]="!cloneName"
+                    [nzLoading]="loading" (click)="cloneEnvironment()">
+                <i nz-icon nzType="copy" nzTheme="outline"></i>Clone
+            </button>
+        </div>
+    </nz-modal>
 </div>

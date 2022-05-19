@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
+import { NzUploadFile } from 'ng-zorro-antd/upload';
 
 @Component({
     selector: 'app-upload-button',
@@ -16,24 +17,25 @@ export class UploadButtonComponent  {
 
     showConfirmation = false;
 
-    constructor() {}
+    that: UploadButtonComponent
 
-    fileEvent(event) {
-      if (!event || !event.target || !event.target.files || !event.target.files[0]) {
-        return;
-      }
-      let file = event.target.files[0];
-      let reader = new FileReader();
-      let that = this;
+    constructor() {
+        this.that = this;
+    }
 
-      reader.onloadend = function(e: any) {
-        that.event.emit({content: e.target.result, file});
-      };
+    fileEvent = (file: NzUploadFile): boolean => {
+        const myReader = new FileReader();
+        let that = this;
+        myReader.onloadend = (e) => {
+            // @ts-ignore
+            this.event.emit({content: myReader.result, file: file as any})
+        };
 
-      if (this.image) {
-        reader.readAsDataURL(file);
-      } else {
-        reader.readAsText(file);
-      }
+        if (this.image) {
+            myReader.readAsDataURL(file as any);
+        } else {
+            myReader.readAsText(file as any);
+        }
+        return false;
     }
 }

@@ -1,15 +1,14 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { AddProject } from 'app/store/project.action';
-import { SemanticModalComponent } from '@sgu/ng-semantic';
 import { finalize, first } from 'rxjs/operators';
-import { Group, GroupPermission } from '../../../model/group.model';
-import { Project } from '../../../model/project.model';
-import { GroupService } from '../../../service/group/group.service';
-import { PermissionService } from '../../../shared/permission/permission.service';
-import { ToastService } from '../../../shared/toast/ToastService';
+import { Group, GroupPermission } from 'app/model/group.model';
+import { Project } from 'app/model/project.model';
+import { GroupService } from 'app/service/group/group.service';
+import { PermissionService } from 'app/shared/permission/permission.service';
+import { ToastService } from 'app/shared/toast/ToastService';
 
 @Component({
     selector: 'app-project-add',
@@ -30,8 +29,7 @@ export class ProjectAddComponent {
 
     groupList: Group[];
 
-    @ViewChild('createGroupModal')
-    modalCreateGroup: SemanticModalComponent;
+    groupModalVisible: boolean = false;
 
     constructor(
         private _toast: ToastService,
@@ -140,7 +138,7 @@ export class ProjectAddComponent {
             .subscribe(() => {
             this._toast.success('', this._translate.instant('group_added'));
             this.loadGroups(this.newGroup.name);
-            this.modalCreateGroup.hide();
+            this.groupModalVisible = false;
         });
     }
 

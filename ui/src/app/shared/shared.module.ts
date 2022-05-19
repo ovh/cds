@@ -14,7 +14,6 @@ import { AsCodeEventComponent } from 'app/shared/ascode/events/ascode.event.comp
 import { AsCodeSaveFormComponent } from 'app/shared/ascode/save-form/ascode.save-form.component';
 import { AsCodeSaveModalComponent } from 'app/shared/ascode/save-modal/ascode.save-modal.component';
 import { ConditionsComponent } from 'app/shared/conditions/conditions.component';
-import { GroupFormComponent } from 'app/shared/group/form/group.form.component';
 import { AutoFocusInputComponent } from 'app/shared/input/autofocus/autofocus.input.component';
 import { CallbackPipe } from 'app/shared/pipes/callback.pipe';
 import { SelectFilterComponent } from 'app/shared/select/select.component';
@@ -48,7 +47,6 @@ import { LabelsEditComponent } from './labels/edit/labels.edit.component';
 import { MenuComponent } from './menu/menu.component';
 import { ConfirmModalComponent } from './modal/confirm/confirm.component';
 import { DeleteModalComponent } from './modal/delete/delete.component';
-import { WarningModalComponent } from './modal/warning/warning.component';
 import { ParameterFormComponent } from './parameter/form/parameter.form';
 import { ParameterListComponent } from './parameter/list/parameter.component';
 import { ParameterValueComponent } from './parameter/value/parameter.value.component';
@@ -127,7 +125,7 @@ import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
 import { en_US, NZ_I18N } from 'ng-zorro-antd/i18n';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { IconDefinition } from '@ant-design/icons-angular';
-import { BellFill, BookOutline, CaretUpFill, CheckOutline, DeleteOutline, KeyOutline, HistoryOutline, PhoneFill, PlusOutline, PlusSquareOutline, QuestionOutline, RestOutline, SaveOutline, SettingFill, ShareAltOutline, StarOutline, ToolFill, UnlockFill } from '@ant-design/icons-angular/icons'
+import { BellFill, BookOutline, CaretUpFill, CheckOutline, CopyOutline, DeleteOutline, KeyOutline, HistoryOutline, PhoneFill, PlusOutline, PlusSquareOutline, QuestionOutline, RestOutline, SaveOutline, SettingFill, ShareAltOutline, StarOutline, ToolFill, UnlockFill, UploadOutline } from '@ant-design/icons-angular/icons'
 import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzPopoverModule } from 'ng-zorro-antd/popover';
@@ -142,13 +140,15 @@ import { NzTableModule } from 'ng-zorro-antd/table';
 import { NzAutocompleteModule } from 'ng-zorro-antd/auto-complete';
 import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
+import { NzUploadModule } from 'ng-zorro-antd/upload';
+import { NzSpinModule } from 'ng-zorro-antd/spin';
 
 const ngZorroConfig: NzConfig = {
     notification: {nzPauseOnHover: true, nzPlacement: "topRight"},
     icon: {nzTheme: "outline"}
 };
 
-const icons: IconDefinition[] = [ BellFill, BookOutline, CaretUpFill, CheckOutline, DeleteOutline, KeyOutline, HistoryOutline, PhoneFill, PlusOutline, PlusSquareOutline, QuestionOutline, RestOutline, SaveOutline, SettingFill, ShareAltOutline, StarOutline, ToolFill, UnlockFill ];
+const icons: IconDefinition[] = [ BellFill, BookOutline, CaretUpFill, CheckOutline, CopyOutline, DeleteOutline, KeyOutline, HistoryOutline, PhoneFill, PlusOutline, PlusSquareOutline, QuestionOutline, RestOutline, SaveOutline, SettingFill, ShareAltOutline, StarOutline, ToolFill, UnlockFill, UploadOutline ];
 
 @NgModule({
     imports: [
@@ -171,11 +171,13 @@ const icons: IconDefinition[] = [ BellFill, BookOutline, CaretUpFill, CheckOutli
         NzPopconfirmModule,
         NzPopoverModule,
         NzSelectModule,
+        NzSpinModule,
         NzSwitchModule,
         NzTabsModule,
         NzTableModule,
         NzTagModule,
         NzToolTipModule,
+        NzUploadModule,
         CommonModule,
         ClipboardModule,
         NgxSemanticModule,
@@ -218,7 +220,6 @@ const icons: IconDefinition[] = [ BellFill, BookOutline, CaretUpFill, CheckOutli
         DurationMsPipe,
         FavoriteCardsComponent,
         ForMapPipe,
-        GroupFormComponent,
         KeysFormComponent,
         KeysListComponent,
         KeysPipe,
@@ -260,7 +261,6 @@ const icons: IconDefinition[] = [ BellFill, BookOutline, CaretUpFill, CheckOutli
         VCSStrategyComponent,
         VulnerabilitiesComponent,
         VulnerabilitiesListComponent,
-        WarningModalComponent,
         WorkflowDeleteNodeComponent,
         WorkflowHookMenuEditComponent,
         WorkflowHookModalComponent,
@@ -335,7 +335,6 @@ const icons: IconDefinition[] = [ BellFill, BookOutline, CaretUpFill, CheckOutli
         FavoriteCardsComponent,
         ForMapPipe,
         FormsModule,
-        GroupFormComponent,
         InfiniteScrollModule,
         KeysFormComponent,
         KeysListComponent,
@@ -366,11 +365,13 @@ const icons: IconDefinition[] = [ BellFill, BookOutline, CaretUpFill, CheckOutli
         NzPopconfirmModule,
         NzPopoverModule,
         NzSelectModule,
+        NzSpinModule,
         NzSwitchModule,
         NzTabsModule,
         NzTagModule,
         NzTableModule,
         NzToolTipModule,
+        NzUploadModule,
         PaginationComponent,
         ParameterFormComponent,
         ParameterListComponent,
@@ -404,7 +405,6 @@ const icons: IconDefinition[] = [ BellFill, BookOutline, CaretUpFill, CheckOutli
         VCSStrategyComponent,
         VulnerabilitiesComponent,
         VulnerabilitiesListComponent,
-        WarningModalComponent,
         WorkflowDeleteNodeComponent,
         WorkflowNodeAddWizardComponent,
         WorkflowNodeEditModalComponent,

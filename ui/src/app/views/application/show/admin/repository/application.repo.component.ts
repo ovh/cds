@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import {
@@ -7,12 +7,11 @@ import {
     UpdateApplication
 } from 'app/store/applications.action';
 import { finalize, first } from 'rxjs/operators';
-import { Application } from '../../../../../model/application.model';
-import { Project } from '../../../../../model/project.model';
-import { Repository } from '../../../../../model/repositories.model';
-import { RepoManagerService } from '../../../../../service/repomanager/project.repomanager.service';
-import { WarningModalComponent } from '../../../../../shared/modal/warning/warning.component';
-import { ToastService } from '../../../../../shared/toast/ToastService';
+import { Application } from 'app/model/application.model';
+import { Project } from 'app/model/project.model';
+import { Repository } from 'app/model/repositories.model';
+import { RepoManagerService } from 'app/service/repomanager/project.repomanager.service';
+import { ToastService } from 'app/shared/toast/ToastService';
 
 @Component({
     selector: 'app-application-repo',
@@ -36,9 +35,6 @@ export class ApplicationRepositoryComponent implements OnInit {
     model: string;
     displayVCSStrategy = false;
 
-    @ViewChild('removeWarning') removeWarningModal: WarningModalComponent;
-    @ViewChild('linkWarning') linkWarningModal: WarningModalComponent;
-
     constructor(
         private _repoManagerService: RepoManagerService,
         private _toast: ToastService,
@@ -57,21 +53,19 @@ export class ApplicationRepositoryComponent implements OnInit {
         this.updateListRepo(false);
     }
 
-    removeRepository(skip?: boolean): void {
-        if (!skip && this.application.externalChange) {
-            this.removeWarningModal.show();
-        } else {
-            this.loadingBtn = true;
-            this.store.dispatch(new DeleteVcsRepoOnApplication({
-                projectKey: this.project.key,
-                applicationName: this.application.name,
-                repoManager: this.application.vcs_server
-            })).pipe(finalize(() => {
-                this.loadingBtn = false;
-                this._cd.markForCheck();
-            }))
-                .subscribe(() => this._toast.success('', this._translate.instant('application_repo_detach_ok')));
-        }
+    removeRepository(): void {
+
+        this.loadingBtn = true;
+        this.store.dispatch(new DeleteVcsRepoOnApplication({
+            projectKey: this.project.key,
+            applicationName: this.application.name,
+            repoManager: this.application.vcs_server
+        })).pipe(finalize(() => {
+            this.loadingBtn = false;
+            this._cd.markForCheck();
+        }))
+            .subscribe(() => this._toast.success('', this._translate.instant('application_repo_detach_ok')));
+
     }
 
     filterRepositories(filter: string): void {
@@ -100,25 +94,23 @@ export class ApplicationRepositoryComponent implements OnInit {
         }
     }
 
-    linkRepository(skip?: boolean): void {
-        if (!skip && this.application.externalChange) {
-            this.linkWarningModal.show();
-        } else {
-            this.loadingBtn = true;
-            this.store.dispatch(new ConnectVcsRepoOnApplication({
-                projectKey: this.project.key,
-                applicationName: this.application.name,
-                repoManager: this.selectedRepoManager,
-                repoFullName: this.selectedRepo
-            })).pipe(finalize(() => {
-                this.loadingBtn = false;
-                this._cd.markForCheck();
-            }))
-                .subscribe(() => {
-                    this.displayVCSStrategy = !this.application.vcs_strategy || !this.application.vcs_strategy.connection_type;
-                    this._toast.success('', this._translate.instant('application_repo_attach_ok'));
-                });
-        }
+    linkRepository(): void {
+
+        this.loadingBtn = true;
+        this.store.dispatch(new ConnectVcsRepoOnApplication({
+            projectKey: this.project.key,
+            applicationName: this.application.name,
+            repoManager: this.selectedRepoManager,
+            repoFullName: this.selectedRepo
+        })).pipe(finalize(() => {
+            this.loadingBtn = false;
+            this._cd.markForCheck();
+        }))
+            .subscribe(() => {
+                this.displayVCSStrategy = !this.application.vcs_strategy || !this.application.vcs_strategy.connection_type;
+                this._toast.success('', this._translate.instant('application_repo_attach_ok'));
+            });
+
     }
 
     saveVCSConfiguration(): void {

@@ -4,8 +4,7 @@ import {
     Component,
     EventEmitter,
     Input,
-    Output,
-    ViewChild
+    Output
 } from '@angular/core';
 import { Project } from 'app/model/project.model';
 import { Variable, VariableAudit } from 'app/model/variable.model';
@@ -15,8 +14,9 @@ import { ProjectAuditService } from 'app/service/project/project.audit.service';
 import { VariableService } from 'app/service/variable/variable.service';
 import { Table } from 'app/shared/table/table';
 import { VariableEvent } from 'app/shared/variable/variable.event.model';
-import { SemanticModalComponent } from '@sgu/ng-semantic';
 import { finalize } from 'rxjs/operators';
+import { NzModalService } from 'ng-zorro-antd/modal';
+import { VariableAuditComponent } from 'app/shared/variable/audit/audit.component';
 
 @Component({
     selector: 'app-variable',
@@ -49,16 +49,12 @@ export class VariableComponent extends Table<Variable> {
 
     @Output() event = new EventEmitter<VariableEvent>();
 
-    @ViewChild('auditModal')
-    auditModal: SemanticModalComponent;
-
     public ready = false;
     public variableTypes: string[];
-    public currentVariableAudits: Array<VariableAudit>;
     private _variables: Variable[];
     filter: string;
 
-    constructor(private _variableService: VariableService, private _projAudit: ProjectAuditService,
+    constructor(private _variableService: VariableService, private _projAudit: ProjectAuditService, private _modalService: NzModalService,
         private _envAudit: EnvironmentAuditService, private _appAudit: ApplicationAuditService, public _cd: ChangeDetectorRef) {
         super();
         this.variableTypes = this._variableService.getTypesFromCache();
@@ -97,39 +93,34 @@ export class VariableComponent extends Table<Variable> {
      * Open audit modal
      */
     showAudit(event: any, v: Variable): void {
-        if (this.auditModal) {
-            this.currentVariableAudits = undefined;
-            switch (this.auditContext) {
-                case 'project':
-                    this._projAudit.getVariableAudit(this.project.key, v.name).subscribe(audits => {
-                        this.currentVariableAudits = audits;
-                        this._cd.markForCheck();
-                        setTimeout(() => {
-                            this.auditModal.show({ observeChanges: true });
-                        }, 100);
-                    });
-                    break;
-                case 'environment':
-                    this._envAudit.getVariableAudit(this.project.key, this.environmentName, v.name).subscribe(audits => {
-                        this.currentVariableAudits = audits;
-                        this._cd.markForCheck();
-                        setTimeout(() => {
-                            this.auditModal.show({ observeChanges: true });
-                        }, 100);
-                    });
-                    break;
-                case 'application':
-                    this._appAudit.getVariableAudit(this.project.key, this.applicationName, v.name).subscribe(audits => {
-                        this.currentVariableAudits = audits;
-                        this._cd.markForCheck();
-                        setTimeout(() => {
-                            this.auditModal.show({ observeChanges: true });
-                        }, 100);
-                    });
-                    break;
+        switch (this.auditContext) {
+            case 'project':
+                this._projAudit.getVariableAudit(this.project.key, v.name).subscribe(audits => {
+                    this.openAuditModal(audits);
+                });
+                break;
+            case 'environment':
+                this._envAudit.getVariableAudit(this.project.key, this.environmentName, v.name).subscribe(audits => {
+                    this.openAuditModal(audits);
+                });
+                break;
+            case 'application':
+                this._appAudit.getVariableAudit(this.project.key, this.applicationName, v.name).subscribe(audits => {
+                    this.openAuditModal(audits);
+                })
+                break;
             }
-        }
+    }
 
+    openAuditModal(audits: Array<VariableAudit>): void {
+        this._modalService.create({
+            nzWidth: '900px',
+            nzTitle: 'Variable audit',
+            nzContent: VariableAuditComponent,
+            nzComponentParams: {
+                audits: audits
+            }
+        });
     }
 
 }

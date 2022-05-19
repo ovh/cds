@@ -1,9 +1,8 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { Project } from 'app/model/project.model';
 import { RepoManagerService } from 'app/service/repomanager/project.repomanager.service';
-import { WarningModalComponent } from 'app/shared/modal/warning/warning.component';
 import { ToastService } from 'app/shared/toast/ToastService';
 import {
     CallbackRepositoryManagerBasicAuthInProject,
@@ -24,10 +23,6 @@ export class RepoManagerFormComponent {
     // project
     @Input() project: Project;
 
-    // Warning modal
-    @ViewChild('linkRepoWarning')
-    linkRepoWarningModal: WarningModalComponent;
-
     public ready = false;
     public connectLoading = false;
     public verificationLoading = false;
@@ -39,10 +34,11 @@ export class RepoManagerFormComponent {
     // Repo manager validation
     public addRepoResponse: any;
     validationToken: string;
-    private modalInstance: any;
 
     basicUser: string;
     basicPassword: string;
+
+    repoModalVisible: boolean;
 
     constructor(
         private _repoManService: RepoManagerService,
@@ -52,35 +48,30 @@ export class RepoManagerFormComponent {
         private store: Store) {
         this._repoManService.getAll()
             .pipe(finalize(() => this._cd.markForCheck()))
-            .subscribe( res => {
-            this.ready = true;
-            this.reposManagerList = res;
-        });
+            .subscribe(res => {
+                this.ready = true;
+                this.reposManagerList = res;
+            });
     }
 
-    create(verificationModal: any, skip?: boolean): void {
+    create(): void {
         if (this.selectedRepoId && this.reposManagerList[this.selectedRepoId]) {
-            if (!skip && this.project.externalChange) {
-                this.linkRepoWarningModal.show();
-            } else {
-                this.connectLoading = true;
-                this.store.dispatch(new ConnectRepositoryManagerInProject({
-                    projectKey: this.project.key,
-                    repoManager: this.reposManagerList[this.selectedRepoId]
-                })).pipe(
-                    flatMap(() => this.store.selectOnce(ProjectState)),
-                    finalize(() => {
-                        this.connectLoading = false;
-                        this._cd.markForCheck();
-                    })
-                ).subscribe((projState: ProjectStateModel) => {
-                    this.addRepoResponse = projState.repoManager;
-                    this.modalInstance = verificationModal;
-                    setTimeout(() => {
-                        verificationModal.show();
-                    }, 1);
-                });
-            }
+
+            this.connectLoading = true;
+            this.store.dispatch(new ConnectRepositoryManagerInProject({
+                projectKey: this.project.key,
+                repoManager: this.reposManagerList[this.selectedRepoId]
+            })).pipe(
+                flatMap(() => this.store.selectOnce(ProjectState)),
+                finalize(() => {
+                    this.connectLoading = false;
+                    this._cd.markForCheck();
+                })
+            ).subscribe((projState: ProjectStateModel) => {
+                this.addRepoResponse = projState.repoManager;
+                this.repoModalVisible = true;
+            });
+
         }
     }
 
@@ -94,9 +85,10 @@ export class RepoManagerFormComponent {
         }))
             .pipe(finalize(() => {
                 this.verificationLoading = false;
+                this._cd.markForCheck();
             }))
-            .subscribe( () => {
-                this.modalInstance.hide();
+            .subscribe(() => {
+                this.repoModalVisible = false;
                 this.basicUser = '';
                 this.basicPassword = '';
                 this._toast.success('', this._translate.instant('repoman_verif_msg_ok'));
@@ -110,9 +102,12 @@ export class RepoManagerFormComponent {
             repoManager: this.reposManagerList[this.selectedRepoId],
             requestToken: this.addRepoResponse.request_token,
             code: this.validationToken
-        })).pipe(finalize(() => this.verificationLoading = false))
+        })).pipe(finalize(() => {
+            this.verificationLoading = false;
+            this.repoModalVisible = false;
+            this._cd.markForCheck();
+        }))
             .subscribe(() => {
-                this.modalInstance.hide();
                 this._toast.success('', this._translate.instant('repoman_verif_msg_ok'));
             });
     }

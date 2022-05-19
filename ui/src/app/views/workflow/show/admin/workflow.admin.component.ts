@@ -20,13 +20,12 @@ import { ThemeStore } from 'app/service/theme/theme.store';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
-import { WarningModalComponent } from 'app/shared/modal/warning/warning.component';
 import { Column, ColumnType } from 'app/shared/table/data-table.component';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { FeatureState } from 'app/store/feature.state';
 import {
-    CleanRetentionDryRun, DeleteIntegrationWorkflow,
-    DeleteWorkflow,
+    CleanRetentionDryRun,
+    DeleteIntegrationWorkflow,
     DeleteWorkflowIcon,
     UpdateIntegrationsWorkflow,
     UpdateWorkflow,
@@ -63,6 +62,7 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
             this.filteredIntegrations = cloneDeep(project.integrations.filter(p => p.model.artifact_manager));
         }
     }
+
     get project(): Project {
         return this._project;
     }
@@ -75,6 +75,7 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
             this.nbEventIntegrations = this._workflow?.integrations?.filter(i => i.project_integration.model.event).length;
         }
     }
+
     get workflow() {
         return this._workflow;
     }
@@ -104,8 +105,6 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
 
     apiConfig: APIConfig;
 
-    @ViewChild('updateWarning')
-    private warningUpdateModal: WarningModalComponent;
     @ViewChild('codemirrorRetentionPolicy') codemirror: CodemirrorComponent;
     themeSubscription: Subscription;
 
@@ -157,7 +156,7 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
             }
         });
 
-        this.dragulaSubscription = this._dragularService.drop('bag-tag').subscribe(({ }) => {
+        this.dragulaSubscription = this._dragularService.drop('bag-tag').subscribe(({}) => {
             setTimeout(() => {
                 this.updateTagMetadata();
             });
@@ -212,7 +211,7 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
         }
 
         if (!this.project.permissions.writable) {
-            this._router.navigate(['/project', this.project.key], { queryParams: { tab: 'applications' } });
+            this._router.navigate(['/project', this.project.key], {queryParams: {tab: 'applications'}});
         }
         this.oldName = this.workflow.name;
 
@@ -226,17 +225,17 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
             });
         this._workflowRunService.getRunNumber(this.project.key, this.workflow)
             .pipe(first(), finalize(() => this._cd.markForCheck())).subscribe(n => {
-                this.originalRunNumber = n.num;
-                this.runnumber = n.num;
-            });
+            this.originalRunNumber = n.num;
+            this.runnumber = n.num;
+        });
 
         this.initDryRunSubscription();
 
         let featRetentionRunsPolicyResult = this.store.selectSnapshot(FeatureState.featureProject(FeatureNames.WorkflowRetentionPolicy,
-            JSON.stringify({ project_key: this.project.key })));
+            JSON.stringify({project_key: this.project.key})));
         this.retentionRunsPolicyEnabled = featRetentionRunsPolicyResult?.enabled;
         let featMaxRunsResult = this.store.selectSnapshot(FeatureState.featureProject(FeatureNames.WorkflowRetentionMaxRuns,
-            JSON.stringify({ project_key: this.project.key })));
+            JSON.stringify({project_key: this.project.key})));
         this.maxRunsEnabled = featMaxRunsResult?.enabled;
 
         this._cd.markForCheck();
@@ -391,45 +390,41 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
             });
     }
 
-    onSubmitWorkflowUpdate(skip?: boolean) {
-        if (!skip && this.workflow.externalChange) {
-            this.warningUpdateModal.show();
-        } else {
-            this.loading = true;
-            let actions = [];
-            if (this.runnumber !== this.originalRunNumber) {
-                actions.push(this._workflowRunService.updateRunNumber(this.project.key, this.workflow, this.runnumber));
-            }
-            if (this.selectedTagsPurge) {
-                this._workflow.purge_tags = this.selectedTagsPurge;
-            }
-
-            if (!this._workflow.purge_tags || this._workflow.purge_tags.length === 0) {
-                delete this._workflow.purge_tags;
-            }
-
-            actions.push(this.store.dispatch(new UpdateWorkflow({
-                projectKey: this.project.key,
-                workflowName: this.oldName,
-                changes: this.workflow
-            })));
-
-            forkJoin(...actions)
-                .pipe(finalize(() => {
-                    this.loading = false;
-                    this._cd.markForCheck();
-                }))
-                .subscribe(() => {
-                    if (this.editMode) {
-                        this._toast.info('', this._translate.instant('workflow_ascode_updated'));
-                    } else {
-                        this._toast.success('', this._translate.instant('workflow_updated'));
-                    }
-                    this._router.navigate([
-                        '/project', this.project.key, 'workflow', this.workflow.name
-                    ], { queryParams: { tab: 'advanced' } });
-                });
+    onSubmitWorkflowUpdate() {
+        this.loading = true;
+        let actions = [];
+        if (this.runnumber !== this.originalRunNumber) {
+            actions.push(this._workflowRunService.updateRunNumber(this.project.key, this.workflow, this.runnumber));
         }
+        if (this.selectedTagsPurge) {
+            this._workflow.purge_tags = this.selectedTagsPurge;
+        }
+
+        if (!this._workflow.purge_tags || this._workflow.purge_tags.length === 0) {
+            delete this._workflow.purge_tags;
+        }
+
+        actions.push(this.store.dispatch(new UpdateWorkflow({
+            projectKey: this.project.key,
+            workflowName: this.oldName,
+            changes: this.workflow
+        })));
+
+        forkJoin(...actions)
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
+            .subscribe(() => {
+                if (this.editMode) {
+                    this._toast.info('', this._translate.instant('workflow_ascode_updated'));
+                } else {
+                    this._toast.success('', this._translate.instant('workflow_updated'));
+                }
+                this._router.navigate([
+                    '/project', this.project.key, 'workflow', this.workflow.name
+                ], {queryParams: {tab: 'advanced'}});
+            });
     }
 
     deleteWorkflow(): void {

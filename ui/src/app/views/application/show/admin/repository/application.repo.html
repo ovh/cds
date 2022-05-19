@@ -32,7 +32,6 @@
             </div>
             <div class="four wide right aligned field">
                 <button name="addrepobtn" class="ui green button" [class.loading]="loadingBtn" [disabled]="loadingBtn || application.from_repository" type="submit">{{ 'btn_link' | translate }}</button>
-                <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="linkRepository(true)" #linkWarning></app-warning-modal>
             </div>
         </div>
     </form>
@@ -46,7 +45,6 @@
                 </div>
                 <div class="eight wide right aligned field">
                     <app-delete-button [loading]="loadingBtn" [disabled]="loadingBtn || application.from_repository" (event)="removeRepository()"></app-delete-button>
-                    <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="removeRepository(true)" #removeWarning></app-warning-modal>
                 </div>
             </div>
         </form>

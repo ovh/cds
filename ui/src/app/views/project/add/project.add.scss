@@ -1,16 +1,16 @@
-#AddProject {
-  display: flex;
-  flex-direction: column;
-  align-content: stretch;
-  height: 100%;
-  padding-top: 20px;
+.AddProject {
+  margin-top: 20px;
 
   h2 {
     text-align: center;
   }
 
-  .proj-icon {
-    height: 5em;
-    width: 5em;
+  hr {
+    margin-top: 20px;
+    margin-bottom: 20px;
+  }
+
+  nz-alert {
+    margin-bottom: 20px;
   }
 }
