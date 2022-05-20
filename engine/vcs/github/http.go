@@ -2,6 +2,7 @@ package github
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -74,7 +75,7 @@ func (c *githubClient) setETag(ctx context.Context, path string, headers http.He
 
 	if etag != "" {
 		//Put etag for this path in cache for 15 minutes
-		k := cache.Key("vcs", "github", "etag", c.OAuthToken, strings.Replace(path, "https://", "", -1))
+		k := cache.Key("vcs", "github", "etag", sdk.Hash512(c.OAuthToken+c.username), strings.Replace(path, "https://", "", -1))
 		if err := c.Cache.SetWithTTL(k, etag, 15*60); err != nil {
 			log.Error(ctx, "cannot SetWithTTL: %s: %v", k, err)
 		}
@@ -83,7 +84,7 @@ func (c *githubClient) setETag(ctx context.Context, path string, headers http.He
 
 func (c *githubClient) getETag(ctx context.Context, path string) string {
 	var s string
-	k := cache.Key("vcs", "github", "etag", c.OAuthToken, strings.Replace(path, "https://", "", -1))
+	k := cache.Key("vcs", "github", "etag", sdk.Hash512(c.OAuthToken+c.username), strings.Replace(path, "https://", "", -1))
 	if _, err := c.Cache.Get(k, &s); err != nil {
 		log.Error(ctx, "cannot get from cache %s: %v", k, err)
 	}
@@ -139,12 +140,9 @@ func (c *githubClient) post(ctx context.Context, path string, bodyType string, b
 	req.Header.Set("Content-Type", bodyType)
 	req.Header.Set("User-Agent", "CDS-gh_client_id="+c.ClientID)
 	req.Header.Add("Accept", "application/json")
-	if opts.asUser && c.token != "" {
-		req.SetBasicAuth(c.username, c.token)
-		log.Debug(ctx, "Github API>> Request URL %s with basicAuth username:%v len:%d", req.URL.String(), c.username, len(c.token))
-	} else {
-		req.Header.Add("Authorization", fmt.Sprintf("token %s", c.OAuthToken))
-		log.Debug(ctx, "Github API>> Request URL %s with Authorization", req.URL.String())
+
+	if err := c.setAuth(ctx, req, opts); err != nil {
+		return nil, err
 	}
 
 	for k, v := range headers {
@@ -183,15 +181,28 @@ func (c *githubClient) patch(ctx context.Context, path string, bodyType string, 
 	}
 	req.Header.Set("User-Agent", "CDS-gh_client_id="+c.ClientID)
 	req.Header.Add("Accept", "application/json")
-	if opts.asUser && c.token != "" {
-		req.SetBasicAuth(c.username, c.token)
-	} else {
-		req.Header.Add("Authorization", fmt.Sprintf("token %s", c.OAuthToken))
+
+	if err := c.setAuth(ctx, req, opts); err != nil {
+		return nil, err
 	}
 
-	log.Debug(ctx, "Github API>> Request URL %s", req.URL.String())
-
 	return httpClient.Do(req)
+}
+
+func (c *githubClient) setAuth(ctx context.Context, req *http.Request, opts *postOptions) error {
+	if opts != nil && opts.asUser && c.username != "" && c.token != "" {
+		req.SetBasicAuth(c.username, c.token)
+		log.Debug(ctx, "Github API>> Request with basicAuth url:%s username:%v len:%d", req.URL.String(), c.username, len(c.token))
+	} else if c.token != "" {
+		req.Header.Add("Authorization", fmt.Sprintf("token %s", c.token))
+		log.Debug(ctx, "Github API>> Request with token url:%s len:%d", req.URL.String(), len(c.token))
+	} else if c.OAuthToken != "" {
+		req.Header.Add("Authorization", fmt.Sprintf("token %s", c.OAuthToken))
+		log.Debug(ctx, "Github API>> Request with Authorization url:%s", req.URL.String())
+	} else {
+		return sdk.NewError(sdk.ErrWrongRequest, errors.New("invalid configuration - github authentication"))
+	}
+	return nil
 }
 
 func (c *githubClient) put(ctx context.Context, path string, bodyType string, body io.Reader, opts *postOptions) (*http.Response, error) {
@@ -210,13 +221,10 @@ func (c *githubClient) put(ctx context.Context, path string, bodyType string, bo
 	req.Header.Set("Content-Type", bodyType)
 	req.Header.Set("User-Agent", "CDS-gh_client_id="+c.ClientID)
 	req.Header.Add("Accept", "application/json")
-	if opts.asUser && c.token != "" {
-		req.SetBasicAuth(c.username, c.token)
-	} else {
-		req.Header.Add("Authorization", fmt.Sprintf("token %s", c.OAuthToken))
-	}
 
-	log.Debug(ctx, "Github API>> Request URL %s", req.URL.String())
+	if err := c.setAuth(ctx, req, opts); err != nil {
+		return nil, err
+	}
 
 	return httpClient.Do(req)
 }
@@ -242,7 +250,10 @@ func (c *githubClient) get(ctx context.Context, path string, opts ...getArgFunc)
 
 	req.Header.Set("User-Agent", "CDS-gh_client_id="+c.ClientID)
 	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Authorization", fmt.Sprintf("token %s", c.OAuthToken))
+
+	if err := c.setAuth(ctx, req, nil); err != nil {
+		return 0, nil, nil, err
+	}
 
 	if opts == nil {
 		withETag(ctx, c, req, path)
@@ -251,8 +262,6 @@ func (c *githubClient) get(ctx context.Context, path string, opts ...getArgFunc)
 			o(ctx, c, req, path)
 		}
 	}
-
-	log.Debug(ctx, "Github API>> Request GitHubURL %s", req.URL.String())
 
 	res, err := httpClient.Do(req)
 	if err != nil {
@@ -308,8 +317,10 @@ func (c *githubClient) delete(ctx context.Context, path string) error {
 	}
 
 	req.Header.Set("User-Agent", "CDS-gh_client_id="+c.ClientID)
-	req.Header.Add("Authorization", fmt.Sprintf("token %s", c.OAuthToken))
-	log.Debug(ctx, "Github API>> Request URL %s", req.URL.String())
+
+	if err := c.setAuth(ctx, req, nil); err != nil {
+		return err
+	}
 
 	res, err := httpClient.Do(req)
 	if err != nil {

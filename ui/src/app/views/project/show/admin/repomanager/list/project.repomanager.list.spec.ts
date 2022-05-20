@@ -96,7 +96,7 @@ describe('CDS: Project RepoManager List Component', () => {
             }
         };
         fixture.componentInstance.reposmanagers = [
-            <RepositoriesManager>{ name: 'stash' }
+            <RepositoriesManager>{ name: 'stash', 'type': '' }
         ];
 
         fixture.detectChanges(true);

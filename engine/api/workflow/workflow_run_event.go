@@ -97,7 +97,7 @@ loopNotif:
 		var err error
 		e.vcsClient, err = repositoriesmanager.AuthorizedClient(ctx, tx, store, proj.Key, vcsServerName)
 		if err != nil {
-			return err
+			return sdk.WrapError(err, "can't get AuthorizedClient for %v/%v", proj.Key, vcsServerName)
 		}
 	}
 
@@ -111,7 +111,7 @@ loopNotif:
 		var err error
 		statuses, err = e.vcsClient.ListStatuses(ctx, repoFullName, ref)
 		if err != nil {
-			return err
+			return sdk.WrapError(err, "can't ListStatuses for %v with vcs %v/%v", repoFullName, proj.Key, vcsServerName)
 		}
 		e.commitsStatuses[ref] = statuses
 	}
@@ -129,7 +129,7 @@ loopNotif:
 
 	if statusFound == nil || statusFound.State == "" {
 		if err := e.sendVCSEventStatus(ctx, tx, store, proj.Key, wr, &nodeRun, notif, vcsServerName); err != nil {
-			return err
+			return sdk.WrapError(err, "can't sendVCSEventStatus vcs %v/%v", proj.Key, vcsServerName)
 		}
 	} else {
 		skipStatus := false
@@ -154,7 +154,7 @@ loopNotif:
 
 		if !skipStatus {
 			if err := e.sendVCSEventStatus(ctx, tx, store, proj.Key, wr, &nodeRun, notif, vcsServerName); err != nil {
-				return err
+				return sdk.WrapError(err, "can't sendVCSEventStatus vcs %v/%v", proj.Key, vcsServerName)
 			}
 		}
 	}
@@ -163,7 +163,7 @@ loopNotif:
 		return nil
 	}
 	if err := e.sendVCSPullRequestComment(ctx, tx, wr, &nodeRun, notif, vcsServerName); err != nil {
-		return err
+		return sdk.WrapError(err, "can't sendVCSPullRequestComment vcs %v/%v", proj.Key, vcsServerName)
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -237,12 +237,11 @@ func (e *VCSEventMessenger) sendVCSEventStatus(ctx context.Context, db gorp.SqlE
 	}
 
 	// Check if it's a gerrit or not
-	vcsConf, err := repositoriesmanager.LoadByName(ctx, db, vcsServerName)
+	isGerrit, err := e.vcsClient.IsGerrit(ctx, db)
 	if err != nil {
 		return err
 	}
-
-	if vcsConf.Type == "gerrit" {
+	if isGerrit {
 		// Get gerrit variable
 		var project, changeID, branch, revision, url string
 		projectParam := sdk.ParameterFind(nodeRun.BuildParameters, "git.repository")
@@ -275,7 +274,6 @@ func (e *VCSEventMessenger) sendVCSEventStatus(ctx context.Context, db gorp.SqlE
 				URL:        url,
 			}
 		}
-
 	}
 
 	payload, _ := json.Marshal(eventWNR)
@@ -291,7 +289,7 @@ func (e *VCSEventMessenger) sendVCSEventStatus(ctx context.Context, db gorp.SqlE
 		EnvironmentName: envName,
 	}
 
-	if err := e.vcsClient.SetStatus(ctx, evt); err != nil {
+	if err := e.vcsClient.SetStatus(ctx, evt, e.vcsClient.IsDisableStatusDetails(ctx)); err != nil {
 		if err2 := repositoriesmanager.RetryEvent(&evt, err, store); err2 != nil {
 			return err2
 		}
@@ -329,12 +327,6 @@ func (e *VCSEventMessenger) sendVCSPullRequestComment(ctx context.Context, db go
 		return err
 	}
 
-	// Check if it's a gerrit or not
-	vcsConf, err := repositoriesmanager.LoadByName(ctx, db, vcsServerName)
-	if err != nil {
-		return err
-	}
-
 	var changeID string
 	changeIDParam := sdk.ParameterFind(nodeRun.BuildParameters, "gerrit.change.id")
 	if changeIDParam != nil {
@@ -350,13 +342,17 @@ func (e *VCSEventMessenger) sendVCSPullRequestComment(ctx context.Context, db go
 	reqComment := sdk.VCSPullRequestCommentRequest{Message: report}
 	reqComment.Revision = revision
 
-	// If we are on Gerrit
-	if changeID != "" && vcsConf.Type == "gerrit" {
+	isGerrit, err := e.vcsClient.IsGerrit(ctx, db)
+	if err != nil {
+		return err
+	}
+
+	if changeID != "" && isGerrit {
 		reqComment.ChangeID = changeID
 		if err := e.vcsClient.PullRequestComment(ctx, app.RepositoryFullname, reqComment); err != nil {
 			return err
 		}
-	} else if vcsConf.Type != "gerrit" {
+	} else if !isGerrit {
 		//Check if this branch and this commit is a pullrequest
 		prs, err := e.vcsClient.PullRequests(ctx, app.RepositoryFullname)
 		if err != nil {
@@ -365,7 +361,7 @@ func (e *VCSEventMessenger) sendVCSPullRequestComment(ctx context.Context, db go
 
 		//Send comment on pull request
 		for _, pr := range prs {
-			if pr.Head.Branch.DisplayID == nodeRun.VCSBranch && pr.Head.Branch.LatestCommit == nodeRun.VCSHash && !pr.Merged && !pr.Closed {
+			if pr.Head.Branch.DisplayID == nodeRun.VCSBranch && IsSameCommit(pr.Head.Branch.LatestCommit, nodeRun.VCSHash) && !pr.Merged && !pr.Closed {
 				reqComment.ID = pr.ID
 				if err := e.vcsClient.PullRequestComment(ctx, app.RepositoryFullname, reqComment); err != nil {
 					return err
@@ -375,4 +371,17 @@ func (e *VCSEventMessenger) sendVCSPullRequestComment(ctx context.Context, db go
 		}
 	}
 	return nil
+}
+
+func IsSameCommit(sha1, sha1b string) bool {
+	if len(sha1) == len(sha1b) {
+		return sha1 == sha1b
+	}
+	if len(sha1) == 12 && len(sha1b) >= 12 {
+		return sha1 == sha1b[0:len(sha1)]
+	}
+	if len(sha1b) == 12 && len(sha1) >= 12 {
+		return sha1b == sha1[0:len(sha1b)]
+	}
+	return false
 }

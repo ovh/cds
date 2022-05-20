@@ -324,6 +324,12 @@ func (api *API) repositoriesManagerAuthorizeCallbackHandler() service.Handler {
 			return sdk.WrapError(err, "Error with InsertForProject")
 		}
 
+		// reload project with the vcs
+		proj, err = project.Load(ctx, tx, projectKey)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load project")
+		}
+
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "cannot commit transaction")
 		}
@@ -374,6 +380,12 @@ func (api *API) deleteRepositoriesManagerHandler() service.Handler {
 
 		if err := repositoriesmanager.DeleteProjectVCSServerLink(ctx, tx, &vcsServer); err != nil {
 			return sdk.WrapError(err, "error deleting %s-%s", projectKey, rmName)
+		}
+
+		// reload project
+		p, err = project.Load(ctx, tx, projectKey)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load project %s", projectKey)
 		}
 
 		if err := tx.Commit(); err != nil {

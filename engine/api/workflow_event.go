@@ -30,6 +30,7 @@ func (api *API) WorkflowSendEvent(ctx context.Context, proj sdk.Project, report 
 			DisableDetailledNodeRun: true,
 		})
 		if err != nil {
+			ctx := sdk.ContextWithStacktrace(ctx, err)
 			log.Warn(ctx, "workflowSendEvent> Cannot load workflow run %d: %s", wnr.WorkflowRunID, err)
 			continue
 		}
@@ -40,6 +41,7 @@ func (api *API) WorkflowSendEvent(ctx context.Context, proj sdk.Project, report 
 		} else {
 			previousNodeRun, err = workflow.PreviousNodeRun(db, wnr, wnr.WorkflowNodeName, wr.WorkflowID)
 			if err != nil {
+				ctx := sdk.ContextWithStacktrace(ctx, err)
 				log.Warn(ctx, "workflowSendEvent> Cannot load previous node run: %v", err)
 			}
 		}
@@ -48,12 +50,14 @@ func (api *API) WorkflowSendEvent(ctx context.Context, proj sdk.Project, report 
 			DisableDetailledNodeRun: false, // load build parameters, used in notif interpolate below
 		})
 		if err != nil {
+			ctx := sdk.ContextWithStacktrace(ctx, err)
 			log.Warn(ctx, "workflowSendEvent > Cannot load workflow node run: %v", err)
 			continue
 		}
 
 		workDB, err := workflow.LoadWorkflowFromWorkflowRunID(db, wr.ID)
 		if err != nil {
+			ctx := sdk.ContextWithStacktrace(ctx, err)
 			log.Warn(ctx, "WorkflowSendEvent> Unable to load workflow for event: %v", err)
 			continue
 		}
@@ -61,13 +65,15 @@ func (api *API) WorkflowSendEvent(ctx context.Context, proj sdk.Project, report 
 		event.PublishWorkflowNodeRun(ctx, *nr, wr.Workflow, eventsNotif)
 		e := &workflow.VCSEventMessenger{}
 		if err := e.SendVCSEvent(ctx, db, api.Cache, proj, *wr, wnr); err != nil {
-			log.Warn(ctx, "WorkflowSendEvent> Cannot send vcs notification")
+			ctx := sdk.ContextWithStacktrace(ctx, err)
+			log.Warn(ctx, "WorkflowSendEvent> Cannot send vcs notification err:%v", err)
 		}
 	}
 
 	for _, jobrun := range report.Jobs() {
 		noderun, err := workflow.LoadNodeRunByID(ctx, db, jobrun.WorkflowNodeRunID, workflow.LoadRunOptions{})
 		if err != nil {
+			ctx := sdk.ContextWithStacktrace(ctx, err)
 			log.Warn(ctx, "workflowSendEvent> Cannot load workflow node run %d: %s", jobrun.WorkflowNodeRunID, err)
 			continue
 		}
@@ -75,6 +81,7 @@ func (api *API) WorkflowSendEvent(ctx context.Context, proj sdk.Project, report 
 			WithLightTests: true,
 		})
 		if err != nil {
+			ctx := sdk.ContextWithStacktrace(ctx, err)
 			log.Warn(ctx, "workflowSendEvent> Cannot load workflow run %d: %s", noderun.WorkflowRunID, err)
 			continue
 		}

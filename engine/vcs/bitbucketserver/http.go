@@ -93,9 +93,6 @@ func (c *bitbucketClient) do(ctx context.Context, method, api, path string, para
 		uri.RawQuery = params.Encode()
 	}
 
-	// create the access token
-	token := NewAccessToken(c.accessToken, c.accessTokenSecret, nil)
-
 	// create the request
 	req := &http.Request{
 		URL:        uri,
@@ -114,11 +111,17 @@ func (c *bitbucketClient) do(ctx context.Context, method, api, path string, para
 		req.ContentLength = int64(buf.Len())
 	}
 
-	// sign the request
-	if opts != nil && opts.asUser && c.token != "" {
+	var cacheKey string
+	if c.accessToken == "" && c.token != "" {
 		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.token))
-	} else {
-		if err := c.consumer.Sign(req, token); err != nil {
+		cacheKey = cache.Key("vcs", "bitbucket", "request", req.URL.String(), c.username)
+	} else if opts != nil && opts.asUser && c.token != "" { // DEPRECATED VCS
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.token))
+		cacheKey = cache.Key("vcs", "bitbucket", "request", req.URL.String(), sdk.Hash512(c.token))
+	} else { // DEPRECATED VCS
+		accessToken := NewAccessToken(c.accessToken, c.accessTokenSecret, nil)
+		cacheKey = cache.Key("vcs", "bitbucket", "request", req.URL.String(), sdk.Hash512(accessToken.token))
+		if err := c.consumer.Sign(req, accessToken); err != nil {
 			return err
 		}
 	}
@@ -129,7 +132,6 @@ func (c *bitbucketClient) do(ctx context.Context, method, api, path string, para
 		req.Header.Set("Content-Type", "application/json")
 	}
 
-	cacheKey := cache.Key("vcs", "bitbucket", "request", req.URL.String(), token.Token())
 	if v != nil && method == "GET" {
 		find, err := c.consumer.cache.Get(cacheKey, v)
 		if err != nil {
@@ -160,14 +162,6 @@ func (c *bitbucketClient) do(ctx context.Context, method, api, path string, para
 	case 403:
 		return sdk.WithStack(sdk.ErrForbidden)
 	case 401:
-		var debugAT, debugAS string
-		if len(c.accessToken) > 4 {
-			debugAT = c.accessToken[:4]
-		}
-		if len(c.accessTokenSecret) > 4 {
-			debugAS = c.accessTokenSecret[:4]
-		}
-		log.Info(ctx, "debug_auth accessToken_http lenat:%d lenas:%d at:%v as:%v", len(c.accessToken), len(c.accessTokenSecret), debugAT, debugAS)
 		return sdk.WithStack(sdk.ErrUnauthorized)
 	case 400:
 		log.Warn(ctx, "bitbucketClient.do> %s", string(body))

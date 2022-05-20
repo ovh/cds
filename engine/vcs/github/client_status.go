@@ -25,9 +25,14 @@ type statusData struct {
 	context      string
 }
 
+// DEPRECATED VCS
+func (client *githubClient) IsDisableStatusDetails(ctx context.Context) bool {
+	return client.DisableStatusDetails
+}
+
 //SetStatus Users with push access can create commit statuses for a given ref:
 //https://developer.github.com/v3/repos/statuses/#create-a-status
-func (g *githubClient) SetStatus(ctx context.Context, event sdk.Event) error {
+func (g *githubClient) SetStatus(ctx context.Context, event sdk.Event, disableStatusDetails bool) error {
 	if g.DisableStatus {
 		log.Warn(ctx, "github.SetStatus>  ⚠ Github statuses are disabled")
 		return nil
@@ -37,7 +42,7 @@ func (g *githubClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	var err error
 	switch event.EventType {
 	case fmt.Sprintf("%T", sdk.EventRunWorkflowNode{}):
-		data, err = processEventWorkflowNodeRun(event, g.uiURL, g.DisableStatusDetail)
+		data, err = processEventWorkflowNodeRun(event, g.uiURL, disableStatusDetails)
 	default:
 		log.Error(ctx, "github.SetStatus> Unknown event %v", event)
 		return nil
@@ -110,7 +115,7 @@ func (g *githubClient) ListStatuses(ctx context.Context, repo string, ref string
 	//Github may return 304 status because we are using conditional request with ETag based headers
 	if status == http.StatusNotModified {
 		//If repo isn't updated, lets get them from cache
-		k := cache.Key("vcs", "github", "statuses", g.OAuthToken, url)
+		k := cache.Key("vcs", "github", "statuses", sdk.Hash512(g.OAuthToken+g.username), url)
 		if _, err := g.Cache.Get(k, &ss); err != nil {
 			log.Error(ctx, "cannot get from cache %s: %v", k, err)
 		}
@@ -119,7 +124,7 @@ func (g *githubClient) ListStatuses(ctx context.Context, repo string, ref string
 			return []sdk.VCSCommitStatus{}, sdk.WrapError(err, "Unable to parse github commit: %s", ref)
 		}
 		//Put the body on cache for one hour and one minute
-		k := cache.Key("vcs", "github", "statuses", g.OAuthToken, url)
+		k := cache.Key("vcs", "github", "statuses", sdk.Hash512(g.OAuthToken+g.username), url)
 		if err := g.Cache.SetWithTTL(k, ss, 61*60); err != nil {
 			log.Error(ctx, "cannot SetWithTTL: %s: %v", k, err)
 		}
@@ -180,15 +185,15 @@ func processEventWorkflowNodeRun(event sdk.Event, cdsUIURL string, disabledStatu
 	data.repoFullName = eventNR.RepositoryFullName
 	data.pipName = eventNR.NodeName
 
-	data.urlPipeline = fmt.Sprintf("%s/project/%s/workflow/%s/run/%d",
-		cdsUIURL,
-		event.ProjectKey,
-		event.WorkflowName,
-		eventNR.Number,
-	)
-
-	//CDS can avoid sending github targer url in status, if it's disable
-	if disabledStatusDetail {
+	if !disabledStatusDetail {
+		data.urlPipeline = fmt.Sprintf("%s/project/%s/workflow/%s/run/%d",
+			cdsUIURL,
+			event.ProjectKey,
+			event.WorkflowName,
+			eventNR.Number,
+		)
+	} else {
+		//CDS can avoid sending github targer url in status, if it's disable
 		data.urlPipeline = ""
 	}
 

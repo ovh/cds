@@ -25,35 +25,26 @@ You will have to create 2 users on gerrit: <a href="https://gerrit-review.google
  - An User on gerrit ( with httpPassword ), to comment changes with workflow result
  
 
-### Complete CDS Configuration File
+
+### Import configuration
+
+Create a yml file:
 
 ```yaml
- [vcs.servers]
-     [vcs.servers.gerrit]
-       # URL of Gerrit
-       url = "http://localhost:9080"
- 
-       [vcs.servers.gerrit.gerrit]
-         # Disable event listener
-         disableGerritEvent = false
- 
-         # SSH port of gerrit
-         sshport = 29418
- 
-         [vcs.servers.gerrit.gerrit.EventStream]
-           # Private key of the user who access to gerrit event stream
-           privateKey = "XXXXXXX"
- 
-           # User to access to gerrit event stream
-           user = "admin"
- 
-         [vcs.servers.gerrit.gerrit.Reviewer]
-           # Http Password of the user that comment changes
-           token = "XXXXXXXXXX"
- 
-           # User that review changes
-           user = "Verifier"
+version: v1.0
+name: gerrit
+type: gerrit
+description: "gerrit new dev"
+auth:
+    sshUsername: gerrit-username # # User to access to gerrit event stream
+    sshPort: 29418
+    sshPrivateKey: foofoofoo\non\none\nline\nhere # Private key of the user who access to gerrit event stream
+    user: admin # User that review changes
+    token: gerrit-generated-password # Http Password of the user that comment changes
+```
 
+```sh
+cdsctl experimental project vcs import YOUR_CDS_PROJECT_KEY vcs-gerrit.yml
 ```
 
 See how to generate **[Configuration File]({{<relref "/hosting/configuration.md" >}})**

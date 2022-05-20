@@ -2,8 +2,15 @@ package sdk
 
 import (
 	"crypto/rand"
+	"crypto/sha512"
 	"encoding/hex"
 )
+
+func Hash512(in string) string {
+	hasher := sha512.New()
+	hasher.Write([]byte(in))
+	return hex.EncodeToString(hasher.Sum(nil))
+}
 
 func GenerateHash() (string, error) {
 	size := 128

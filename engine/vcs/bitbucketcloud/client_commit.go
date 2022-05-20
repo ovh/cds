@@ -82,7 +82,7 @@ func (client *bitbucketcloudClient) allCommitBetween(ctx context.Context, repo, 
 func (client *bitbucketcloudClient) Commit(ctx context.Context, repo, hash string) (sdk.VCSCommit, error) {
 	var commit sdk.VCSCommit
 	url := fmt.Sprintf("/repositories/%s/commit/%s", repo, hash)
-	status, body, _, err := client.get(url)
+	status, body, _, err := client.get(ctx, url)
 	if err != nil {
 		log.Warn(ctx, "bitbucketcloudClient.Commit> Error %s", err)
 		return commit, err

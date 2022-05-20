@@ -241,7 +241,7 @@ func (g *githubClient) Commit(ctx context.Context, repo, hash string) (sdk.VCSCo
 	//Github may return 304 status because we are using conditional request with ETag based headers
 	if status == http.StatusNotModified {
 		//If repo isn't updated, lets get them from cache
-		k := cache.Key("vcs", "github", "commit", g.OAuthToken, url)
+		k := cache.Key("vcs", "github", "commit", sdk.Hash512(g.OAuthToken+g.username), url)
 		if _, err := g.Cache.Get(k, &c); err != nil {
 			log.Error(ctx, "cannot get from cache %s: %v", k, err)
 		}
@@ -251,7 +251,7 @@ func (g *githubClient) Commit(ctx context.Context, repo, hash string) (sdk.VCSCo
 			return sdk.VCSCommit{}, err
 		}
 		//Put the body on cache for one hour and one minute
-		k := cache.Key("vcs", "github", "commit", g.OAuthToken, url)
+		k := cache.Key("vcs", "github", "commit", sdk.Hash512(g.OAuthToken+g.username), url)
 		if err := g.Cache.SetWithTTL(k, c, 61*60); err != nil {
 			log.Error(ctx, "cannot SetWithTTL: %s: %v", k, err)
 		}
@@ -289,7 +289,7 @@ func (g *githubClient) CommitsBetweenRefs(ctx context.Context, repo, base, head 
 	//Github may return 304 status because we are using conditional request with ETag based headers
 	if status == http.StatusNotModified {
 		//If repo isn't updated, lets get them from cache
-		k := cache.Key("vcs", "github", "commitdiff", g.OAuthToken, url)
+		k := cache.Key("vcs", "github", "commitdiff", sdk.Hash512(g.OAuthToken+g.username), url)
 		if _, err := g.Cache.Get(k, &commits); err != nil {
 			log.Error(ctx, "cannot get from cache %s: %v", k, err)
 		}
@@ -315,7 +315,7 @@ func (g *githubClient) CommitsBetweenRefs(ctx context.Context, repo, base, head 
 			}
 		}
 		//Put the body on cache for one hour and one minute
-		k := cache.Key("vcs", "github", "commitdiff", g.OAuthToken, url)
+		k := cache.Key("vcs", "github", "commitdiff", sdk.Hash512(g.OAuthToken+g.username), url)
 		if err := g.Cache.SetWithTTL(k, &commits, 61*60); err != nil {
 			log.Error(ctx, "cannot SetWithTTL: %s: %v", k, err)
 		}

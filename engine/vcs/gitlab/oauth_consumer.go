@@ -119,23 +119,31 @@ func (g *gitlabConsumer) AuthorizeToken(ctx context.Context, state, code string)
 	return glResponse.AccessToken, state, nil
 }
 
-var instancesAuthorizedClient = map[string]*gitlabClient{}
-
 //GetAuthorized returns an authorized client
-func (g *gitlabConsumer) GetAuthorizedClient(ctx context.Context, accessToken, accessTokenSecret string, _created int64) (sdk.VCSAuthorizedClient, error) {
-	c, ok := instancesAuthorizedClient[accessToken]
+func (g *gitlabConsumer) GetAuthorizedClient(ctx context.Context, vcsAuth sdk.VCSAuth) (sdk.VCSAuthorizedClient, error) {
 	httpClient := &http.Client{
 		Timeout: 60 * time.Second,
 	}
-	if !ok {
-		c = &gitlabClient{
-			client:              gitlab.NewOAuthClient(httpClient, accessToken),
-			uiURL:               g.uiURL,
-			disableStatus:       g.disableStatus,
-			disableStatusDetail: g.disableStatusDetail,
+	if vcsAuth.URL != "" {
+		gclient := gitlab.NewClient(httpClient, vcsAuth.Token)
+		c := &gitlabClient{
+			client:   gclient,
+			uiURL:    g.uiURL,
+			proxyURL: g.proxyURL,
 		}
 		c.client.SetBaseURL(g.URL + "/api/v4")
-		instancesAuthorizedClient[accessToken] = c
+		return c, nil
 	}
+
+	// DEPRECATED VCS
+	gclient := gitlab.NewOAuthClient(httpClient, vcsAuth.AccessToken)
+	c := &gitlabClient{
+		client:               gclient,
+		uiURL:                g.uiURL,
+		disableStatus:        g.disableStatus,
+		disableStatusDetails: g.disableStatusDetails,
+		proxyURL:             g.proxyURL,
+	}
+	c.client.SetBaseURL(g.URL + "/api/v4")
 	return c, nil
 }

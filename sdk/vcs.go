@@ -2,17 +2,30 @@ package sdk
 
 import (
 	"context"
+	"database/sql/driver"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"time"
+
+	"github.com/go-gorp/gorp"
 )
 
 // HTTP Headers
 const (
-	HeaderXAccessToken        = "X-CDS-ACCESS-TOKEN"
-	HeaderXAccessTokenCreated = "X-CDS-ACCESS-TOKEN-CREATED"
-	HeaderXAccessTokenSecret  = "X-CDS-ACCESS-TOKEN-SECRET"
+	HeaderXVCSURL           = "X-CDS-VCS-URL"
+	HeaderXVCSURLApi        = "X-CDS-VCS-URL-API"
+	HeaderXVCSType          = "X-CDS-VCS-TYPE"
+	HeaderXVCSToken         = "X-CDS-VCS-TOKEN"
+	HeaderXVCSUsername      = "X-CDS-VCS-USERNAME"
+	HeaderXVCSSSHUsername   = "X-CDS-VCS-SSH-USERNAME"
+	HeaderXVCSSSHPort       = "X-CDS-VCS-SSH-PORT"
+	HeaderXVCSSSHPrivateKey = "X-CDS-VCS-SSH-PRIVATE-KEY"
+
+	HeaderXAccessToken        = "X-CDS-ACCESS-TOKEN"         // DEPRECATED
+	HeaderXAccessTokenCreated = "X-CDS-ACCESS-TOKEN-CREATED" // DEPRECATED
+	HeaderXAccessTokenSecret  = "X-CDS-ACCESS-TOKEN-SECRET"  // DEPRECATED
 )
 
 var (
@@ -188,16 +201,53 @@ type VCSProject struct {
 	ProjectID    int64             `json:"-" db:"project_id"`
 	Description  string            `json:"description" db:"description"`
 	URL          string            `json:"url" db:"url"`
-	Auth         map[string]string `json:"-" db:"auth" gorpmapping:"encrypted,ProjectID"`
+	Auth         VCSAuthProject    `json:"auth" db:"auth" gorpmapping:"encrypted,ProjectID"`
+	Options      VCSOptionsProject `json:"options" db:"options"`
+}
+
+type VCSAuthProject struct {
+	Username      string `json:"username,omitempty" db:"-"`
+	Token         string `json:"token,omitempty" db:"-"`
+	SSHUsername   string `json:"sshUsername,omitempty" db:"-"`
+	SSHPort       int    `json:"sshPort,omitempty" db:"-"`
+	SSHPrivateKey string `json:"sshPrivateKey,omitempty" db:"-"`
+}
+
+type VCSOptionsProject struct {
+	DisableWebhooks      bool   `json:"disableWebhooks,omitempty" db:"-"`
+	DisableStatus        bool   `json:"disableStatus,omitempty" db:"-"`
+	DisableStatusDetails bool   `json:"disableStatusDetails,omitempty" db:"-"`
+	DisablePolling       bool   `json:"disablePolling,omitempty" db:"-"`
+	URLAPI               string `json:"urlApi,omitempty" db:"-"` // optional
+}
+
+func (v VCSOptionsProject) Value() (driver.Value, error) {
+	j, err := json.Marshal(v)
+	return j, WrapError(err, "cannot marshal VCSOptionsProject")
+}
+
+func (v *VCSOptionsProject) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
+	}
+	return WrapError(JSONUnmarshal(source, v), "cannot unmarshal VCSOptionsProject")
 }
 
 // VCSConfiguration represent a small vcs configuration
 type VCSConfiguration struct {
-	Type     string `json:"type"`
-	Username string `json:"username"`
-	Password string `json:"password"`
-	URL      string `json:"url"`
-	SSHPort  int    `json:"sshport"`
+	Type string `json:"type"`
+	URL  string `json:"url"`
+}
+
+type VCSGerritConfiguration struct {
+	SSHUsername   string `json:"sshUsername"`
+	SSHPrivateKey string `json:"sshPrivateKey"`
+	URL           string `json:"url"`
+	SSHPort       int    `json:"sshport"`
 }
 
 type VCSServerCommon interface {
@@ -205,10 +255,26 @@ type VCSServerCommon interface {
 	AuthorizeToken(context.Context, string, string) (string, string, error)
 }
 
+// VCSAuth contains tokens (oauth2 tokens or personalAccessToken)
+type VCSAuth struct {
+	Type     string
+	URL      string
+	URLApi   string // optional
+	Username string
+	Token    string
+
+	SSHUsername string
+	SSHPort     int
+
+	AccessToken        string // DEPRECATED
+	AccessTokenSecret  string // DEPRECATED
+	AccessTokenCreated int64  // DEPRECATED
+}
+
 // VCSServer is an interface for a OAuth VCS Server. The goal of this interface is to return a VCSAuthorizedClient.
 type VCSServer interface {
 	VCSServerCommon
-	GetAuthorizedClient(context.Context, string, string, int64) (VCSAuthorizedClient, error)
+	GetAuthorizedClient(context.Context, VCSAuth) (VCSAuthorizedClient, error)
 }
 
 type VCSServerService interface {
@@ -262,7 +328,8 @@ type VCSAuthorizedClientCommon interface {
 	PullRequestEvents(context.Context, string, []interface{}) ([]VCSPullRequestEvent, error)
 
 	// Set build status on repository
-	SetStatus(context.Context, Event) error
+	SetStatus(ctx context.Context, event Event, disableStatusDetails bool) error
+	IsDisableStatusDetails(ctx context.Context) bool
 	ListStatuses(ctx context.Context, repo string, ref string) ([]VCSCommitStatus, error)
 
 	// Release
@@ -287,6 +354,7 @@ type VCSAuthorizedClient interface {
 type VCSAuthorizedClientService interface {
 	VCSAuthorizedClientCommon
 	PullRequests(ctx context.Context, repo string, mods ...VCSRequestModifier) ([]VCSPullRequest, error)
+	IsGerrit(ctx context.Context, db gorp.SqlExecutor) (bool, error)
 }
 
 type VCSRequestModifier func(r *http.Request)
@@ -316,5 +384,8 @@ func VCSCommitStatusDescription(projKey, workflowName string, evt EventRunWorkfl
 		workflowName,
 		evt.NodeName,
 	)
+	if len(key) > 36 { // 40 maxlength on bitbucket cloud
+		key = key[:36]
+	}
 	return fmt.Sprintf("CDS/%s", key)
 }

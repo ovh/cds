@@ -119,7 +119,7 @@ func (b *bitbucketClient) RepoByFullname(ctx context.Context, fullname string) (
 }
 
 func (b *bitbucketClient) UserHasWritePermission(ctx context.Context, repo string) (bool, error) {
-	if b.username == "" {
+	if b.accessToken != "" && b.username == "" { // DEPRECATED VCS
 		return false, sdk.WrapError(sdk.ErrUserNotFound, "No user found in configuration")
 	}
 

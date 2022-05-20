@@ -14,25 +14,15 @@ import (
 func (client *bitbucketcloudClient) Repos(ctx context.Context) ([]sdk.VCSRepo, error) {
 	var repos []Repository
 
-	user, err := client.CurrentUser(ctx)
+	workspaces, err := client.Workspaces(ctx)
 	if err != nil {
-		return nil, sdk.WrapError(err, "cannot load user info")
-	}
-	reposForUser, err := client.reposForUser(ctx, user.Username)
-	if err != nil {
-		return nil, sdk.WrapError(err, "cannot load repositories for user %s", user.Username)
-	}
-	repos = append(repos, reposForUser...)
-
-	teams, err := client.Teams(ctx)
-	if err != nil {
-		return nil, sdk.WrapError(err, "cannot teams info")
+		return nil, sdk.WrapError(err, "cannot get workspaces list")
 	}
 
-	for _, team := range teams.Values {
-		reposForTeam, err := client.reposForUser(ctx, team.Username)
+	for _, workspace := range workspaces.Values {
+		reposForTeam, err := client.reposForWorkspace(ctx, workspace.Slug)
 		if err != nil {
-			return nil, sdk.WrapError(err, "cannot load repositories for team %s", team.Username)
+			return nil, sdk.WrapError(err, "cannot load repositories for workspace %s", workspace.Name)
 		}
 		repos = append(repos, reposForTeam...)
 	}
@@ -55,9 +45,9 @@ func (client *bitbucketcloudClient) Repos(ctx context.Context) ([]sdk.VCSRepo, e
 }
 
 // reposForUser list repositories that are accessible for an user
-func (client *bitbucketcloudClient) reposForUser(ctx context.Context, username string) ([]Repository, error) {
+func (client *bitbucketcloudClient) reposForWorkspace(ctx context.Context, workspace string) ([]Repository, error) {
 	var repos []Repository
-	path := fmt.Sprintf("/repositories/%s", username)
+	path := fmt.Sprintf("/repositories/%s", workspace)
 	params := url.Values{}
 	params.Set("pagelen", "100")
 	params.Set("role", "member")
@@ -117,7 +107,7 @@ func (client *bitbucketcloudClient) RepoByFullname(ctx context.Context, fullname
 func (client *bitbucketcloudClient) repoByFullname(ctx context.Context, fullname string) (Repository, error) {
 	var repo Repository
 	url := fmt.Sprintf("/repositories/%s", fullname)
-	status, body, _, err := client.get(url)
+	status, body, _, err := client.get(ctx, url)
 	if err != nil {
 		log.Warn(ctx, "bitbucketcloudClient.Repos> Error %s", err)
 		return repo, err

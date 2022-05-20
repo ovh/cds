@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+
+	"github.com/ovh/cds/sdk"
 )
 
 // Token is an interface for RequestToken and AccessToken
@@ -118,7 +120,7 @@ func ParseRequestToken(reader io.ReadCloser) (*RequestToken, error) {
 	body, err := io.ReadAll(reader)
 	reader.Close()
 	if err != nil {
-		return nil, err
+		return nil, sdk.WithStack(err)
 	}
 
 	return ParseRequestTokenStr(string(body))
@@ -130,7 +132,7 @@ func ParseRequestTokenStr(str string) (*RequestToken, error) {
 	//parse the request token from the body
 	parts, err := url.ParseQuery(str)
 	if err != nil {
-		return nil, err
+		return nil, sdk.WithStack(err)
 	}
 
 	token := RequestToken{}

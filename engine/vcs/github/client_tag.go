@@ -48,7 +48,7 @@ func (g *githubClient) Tags(ctx context.Context, fullname string) ([]sdk.VCSTag,
 		//Github may return 304 status because we are using conditional request with ETag based headers
 		if status == http.StatusNotModified {
 			//If repos aren't updated, lets get them from cache
-			k := cache.Key("vcs", "github", "tags", g.OAuthToken, "/repos/"+fullname+"/tags")
+			k := cache.Key("vcs", "github", "tags", sdk.Hash512(g.OAuthToken+g.username), "/repos/"+fullname+"/tags")
 			if _, err := g.Cache.Get(k, &tags); err != nil {
 				log.Error(ctx, "cannot get from cache %s:%v", k, err)
 			}
@@ -71,7 +71,7 @@ func (g *githubClient) Tags(ctx context.Context, fullname string) ([]sdk.VCSTag,
 	}
 
 	//Put the body on cache for one hour and one minute
-	k := cache.Key("vcs", "github", "tags", g.OAuthToken, "/repos/"+fullname+"/tags")
+	k := cache.Key("vcs", "github", "tags", sdk.Hash512(g.OAuthToken+g.username), "/repos/"+fullname+"/tags")
 	if err := g.Cache.SetWithTTL(k, tags, 61*60); err != nil {
 		log.Error(ctx, "cannot SetWithTTL: %s: %v", k, err)
 	}

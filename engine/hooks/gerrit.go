@@ -66,14 +66,14 @@ func (s *Service) startGerritHookTask(t *sdk.Task) error {
 	}
 	s.Dao.RegisterGerritRepoHook(t.Config[sdk.HookConfigVCSServer].Value, t.Config[sdk.HookConfigRepoFullName].Value, g)
 
-	// Check that stream is open
+	// Check if the stream is open
 	if _, has := gerritRepoHooks[t.Config[sdk.HookConfigVCSServer].Value]; !has {
 		// Start listening to gerrit event stream
-		vcsConfig, err := s.Client.VCSConfiguration()
+		vcsGerritConfig, err := s.Client.VCSGerritConfiguration()
 		if err != nil {
 			return sdk.WrapError(err, "unable to get vcs configuration")
 		}
-		s.initGerritStreamEvent(context.Background(), t.Config[sdk.HookConfigVCSServer].Value, vcsConfig)
+		s.initGerritStreamEvent(context.Background(), t.Config[sdk.HookConfigVCSServer].Value, vcsGerritConfig)
 	}
 	return nil
 }
@@ -244,27 +244,27 @@ func (s *Service) ComputeGerritStreamEvent(ctx context.Context, vcsServer string
 }
 
 // ListenGerritStreamEvent listen the gerrit event stream
-func ListenGerritStreamEvent(ctx context.Context, store cache.Store, goRoutines *sdk.GoRoutines, v sdk.VCSConfiguration, gerritEventChan chan<- GerritEvent) error {
+func ListenGerritStreamEvent(ctx context.Context, store cache.Store, goRoutines *sdk.GoRoutines, vcsGerritConfig sdk.VCSGerritConfiguration, gerritEventChan chan<- GerritEvent) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
-	signer, err := ssh.ParsePrivateKey([]byte(v.Password))
+	signer, err := ssh.ParsePrivateKey([]byte(vcsGerritConfig.SSHPrivateKey))
 	if err != nil {
 		return sdk.WithStack(err)
 	}
 
 	// Create config
 	config := &ssh.ClientConfig{
-		User: v.Username,
+		User: vcsGerritConfig.SSHUsername,
 		Auth: []ssh.AuthMethod{
 			ssh.PublicKeys(signer),
 		},
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
 
-	URL, _ := url.Parse(v.URL)
+	URL, _ := url.Parse(vcsGerritConfig.URL)
 
 	// Dial TCP
-	conn, err := ssh.Dial("tcp", fmt.Sprintf("%s:%d", URL.Hostname(), v.SSHPort), config)
+	conn, err := ssh.Dial("tcp", fmt.Sprintf("%s:%d", URL.Hostname(), vcsGerritConfig.SSHPort), config)
 	if err != nil {
 		return sdk.WithStack(err)
 	}
@@ -285,7 +285,7 @@ func ListenGerritStreamEvent(ctx context.Context, store cache.Store, goRoutines 
 
 	goRoutines.Exec(ctx, "gerrit-ssh-run", func(ctx context.Context) {
 		// Run command
-		log.Debug(ctx, "Listening to gerrit event stream %s", v.URL)
+		log.Debug(ctx, "Listening to gerrit event stream %s", vcsGerritConfig.URL)
 		if err := session.Run("gerrit stream-events"); err != nil {
 			log.Error(ctx, "ListenGerritStreamEvent> unable to run gerrit stream-events command: %v", err)
 		}

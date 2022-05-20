@@ -10,40 +10,50 @@ import (
 
 // gerritClient implements VCSAuthorizedClient interface
 type gerritClient struct {
-	client              *g.Client
-	url                 string
-	disableStatus       bool
-	disableStatusDetail bool
-	sshPort             int
-	username            string
-	reviewerName        string
-	reviewerToken       string
+	client               *g.Client
+	url                  string
+	disableStatusDetails bool
+	sshUsername          string
+	sshPort              int
+	reviewerName         string
+	reviewerToken        string
 }
 
 // gerritConsumer implements vcs.Server and it's used to instantiate a gerritClient
 type gerritConsumer struct {
-	URL                 string `json:"url"`
-	cache               cache.Store
-	disableStatus       bool
-	disableStatusDetail bool
-	sshPort             int
-	reviewerName        string
-	reviewerToken       string
+	URL                  string `json:"url"`
+	cache                cache.Store
+	disableStatusDetails bool
+	sshUsername          string
+	sshPort              int
+	reviewerName         string
+	reviewerToken        string
 }
 
 // New instantiate a new gerrit consumer
-func New(URL string, store cache.Store, disableStatus bool, disableStatusDetail bool, sshPort int, reviewerName, reviewerToken string) sdk.VCSServer {
+func New(URL string, store cache.Store, sshUsername string, sshPort int, reviewerName, reviewerToken string) sdk.VCSServer {
 	return &gerritConsumer{
-		URL:                 URL,
-		cache:               store,
-		disableStatus:       disableStatus,
-		disableStatusDetail: disableStatusDetail,
-		sshPort:             sshPort,
-		reviewerName:        reviewerName,
-		reviewerToken:       reviewerToken,
+		URL:           URL,
+		cache:         store,
+		sshUsername:   sshUsername,
+		sshPort:       sshPort,
+		reviewerName:  reviewerName,
+		reviewerToken: reviewerToken,
+	}
+}
+
+// DEPRECATED VCS
+func NewDeprecated(URL string, store cache.Store, disableStatusDetails bool, sshPort int, reviewerName, reviewerToken string) sdk.VCSServer {
+	return &gerritConsumer{
+		URL:                  URL,
+		cache:                store,
+		disableStatusDetails: disableStatusDetails,
+		sshPort:              sshPort,
+		reviewerName:         reviewerName,
+		reviewerToken:        reviewerToken,
 	}
 }
 
 func (c *gerritClient) GetAccessToken(_ context.Context) string {
-	return c.username
+	return c.sshUsername
 }

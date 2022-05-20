@@ -40,7 +40,7 @@ func getNewConsumer(t *testing.T) sdk.VCSServer {
 		t.Fatalf("Unable to init cache (%s): %v", redisHost, err)
 	}
 
-	glConsummer := New(appID, secret, "https://gitlab.com", "http://localhost:8081", "", "", cache, true, true)
+	glConsummer := NewDeprecated(appID, secret, "https://gitlab.com", "http://localhost:8081", "", "", cache, true, true)
 	return glConsummer
 }
 
@@ -63,8 +63,12 @@ func getNewAuthorizedClient(t *testing.T) sdk.VCSAuthorizedClient {
 		t.Fatalf("Unable to init cache (%s): %v", redisHost, err)
 	}
 
-	glConsummer := New(appID, secret, "https://gitlab.com", "http://localhost:8081", "", "", cache, true, true)
-	cli, err := glConsummer.GetAuthorizedClient(context.Background(), accessToken, "", 0)
+	glConsummer := NewDeprecated(appID, secret, "https://gitlab.com", "http://localhost:8081", "", "", cache, true, true)
+
+	vcsAuth := sdk.VCSAuth{
+		AccessToken: accessToken,
+	}
+	cli, err := glConsummer.GetAuthorizedClient(context.Background(), vcsAuth)
 	if err != nil {
 		t.Fatalf("Unable to init authorized client (%s): %v", redisHost, err)
 	}
@@ -117,7 +121,12 @@ func TestClientAuthorizeToken(t *testing.T) {
 
 	t.Logf("Token is %s", accessToken)
 
-	ghClient, err := glConsumer.GetAuthorizedClient(context.Background(), accessToken, accessTokenSecret, 0)
+	vcsAuth := sdk.VCSAuth{
+		AccessToken:        accessToken,
+		AccessTokenSecret:  accessTokenSecret,
+		AccessTokenCreated: time.Now().Unix(),
+	}
+	ghClient, err := glConsumer.GetAuthorizedClient(context.Background(), vcsAuth)
 	require.NoError(t, err)
 	assert.NotNil(t, ghClient)
 }

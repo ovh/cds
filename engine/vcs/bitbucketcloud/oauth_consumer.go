@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/url"
-	"time"
 
 	"github.com/rockbears/log"
 
@@ -92,50 +91,40 @@ func (consumer *bitbucketcloudConsumer) RefreshToken(ctx context.Context, refres
 	return resp.AccessToken, resp.RefreshToken, nil
 }
 
-//keep client in memory
-var instancesAuthorizedClient = map[string]*bitbucketcloudClient{}
-
 //GetAuthorized returns an authorized client
-func (consumer *bitbucketcloudConsumer) GetAuthorizedClient(ctx context.Context, accessToken, refreshToken string, created int64) (sdk.VCSAuthorizedClient, error) {
-	createdTime := time.Unix(created, 0)
-
-	c, ok := instancesAuthorizedClient[accessToken]
-	if createdTime.Add(2 * time.Hour).Before(time.Now()) {
-		if ok {
-			delete(instancesAuthorizedClient, accessToken)
+func (consumer *bitbucketcloudConsumer) GetAuthorizedClient(ctx context.Context, vcsAuth sdk.VCSAuth) (sdk.VCSAuthorizedClient, error) {
+	if vcsAuth.URL != "" {
+		c := &bitbucketcloudClient{
+			appPassword: vcsAuth.Token,
+			username:    vcsAuth.Username,
+			Cache:       consumer.Cache,
+			apiURL:      consumer.apiURL,
+			uiURL:       consumer.uiURL,
+			proxyURL:    consumer.proxyURL,
 		}
-		newAccessToken, _, err := consumer.RefreshToken(ctx, refreshToken)
+		return c, nil
+	}
+
+	// DEPRECATED VCS
+	var newAccessToken string
+	if vcsAuth.AccessToken != "" {
+		var err error
+		newAccessToken, _, err = consumer.RefreshToken(ctx, vcsAuth.AccessTokenSecret)
 		if err != nil {
 			return nil, sdk.WrapError(err, "cannot refresh token")
 		}
-		c = &bitbucketcloudClient{
-			ClientID:            consumer.ClientID,
-			OAuthToken:          newAccessToken,
-			RefreshToken:        refreshToken,
-			Cache:               consumer.Cache,
-			apiURL:              consumer.apiURL,
-			uiURL:               consumer.uiURL,
-			DisableStatus:       consumer.disableStatus,
-			DisableStatusDetail: consumer.disableStatusDetail,
-			proxyURL:            consumer.proxyURL,
-		}
-		instancesAuthorizedClient[newAccessToken] = c
-	} else {
-		if !ok {
-			c = &bitbucketcloudClient{
-				ClientID:            consumer.ClientID,
-				OAuthToken:          accessToken,
-				RefreshToken:        refreshToken,
-				Cache:               consumer.Cache,
-				apiURL:              consumer.apiURL,
-				uiURL:               consumer.uiURL,
-				DisableStatus:       consumer.disableStatus,
-				DisableStatusDetail: consumer.disableStatusDetail,
-				proxyURL:            consumer.proxyURL,
-			}
-			instancesAuthorizedClient[accessToken] = c
-		}
+	}
 
+	c := &bitbucketcloudClient{
+		ClientID:             consumer.ClientID,
+		OAuthToken:           newAccessToken,
+		RefreshToken:         vcsAuth.AccessTokenSecret,
+		Cache:                consumer.Cache,
+		apiURL:               consumer.apiURL,
+		uiURL:                consumer.uiURL,
+		DisableStatus:        consumer.disableStatus,
+		DisableStatusDetails: consumer.disableStatusDetails,
+		proxyURL:             consumer.proxyURL,
 	}
 
 	return c, nil

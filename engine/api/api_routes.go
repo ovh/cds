@@ -360,10 +360,11 @@ func (api *API) InitRouter() {
 	r.Handle("/requirement/types/{type}", ScopeNone(), r.GET(api.getRequirementTypeValuesHandler))
 
 	// config
-	r.Handle("/config/user", ScopeNone(), r.GET(api.ConfigUserHandler, service.OverrideAuth(service.NoAuthMiddleware)))
-	r.Handle("/config/vcs", ScopeNone(), r.GET(api.ConfigVCShandler))
-	r.Handle("/config/cdn", ScopeNone(), r.GET(api.ConfigCDNHandler))
-	r.Handle("/config/api", ScopeNone(), r.GET(api.ConfigAPIHandler))
+	r.Handle("/config/user", ScopeNone(), r.GET(api.configUserHandler, service.OverrideAuth(service.NoAuthMiddleware)))
+	r.Handle("/config/vcs", ScopeNone(), r.GET(api.configVCShandler))
+	r.Handle("/config/vcsgerrit", ScopeNone(), r.GET(api.configVCSGerritHandler))
+	r.Handle("/config/cdn", ScopeNone(), r.GET(api.configCDNHandler))
+	r.Handle("/config/api", ScopeNone(), r.GET(api.configAPIHandler))
 
 	// Users
 	r.Handle("/user", Scope(sdk.AuthConsumerScopeUser), r.GET(api.getUsersHandler))

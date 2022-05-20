@@ -18,7 +18,7 @@ import (
 
 func (g *githubClient) PullRequest(ctx context.Context, fullname string, id string) (sdk.VCSPullRequest, error) {
 	var pr PullRequest
-	cachePullRequestKey := cache.Key("vcs", "github", "pullrequests", g.OAuthToken, fmt.Sprintf("/repos/%s/pulls/%s", fullname, id))
+	cachePullRequestKey := cache.Key("vcs", "github", "pullrequests", sdk.Hash512(g.OAuthToken+g.username), fmt.Sprintf("/repos/%s/pulls/%s", fullname, id))
 	opts := []getArgFunc{withETag}
 
 	for {
@@ -84,7 +84,7 @@ func (g *githubClient) PullRequest(ctx context.Context, fullname string, id stri
 // PullRequests fetch all the pull request for a repository
 func (g *githubClient) PullRequests(ctx context.Context, fullname string, opts sdk.VCSPullRequestOptions) ([]sdk.VCSPullRequest, error) {
 	var pullRequests = []PullRequest{}
-	cacheKey := cache.Key("vcs", "github", "pullrequests", g.OAuthToken, "/repos/"+fullname+"/pulls")
+	cacheKey := cache.Key("vcs", "github", "pullrequests", sdk.Hash512(g.OAuthToken+g.username), "/repos/"+fullname+"/pulls")
 	githubOpts := []getArgFunc{withETag}
 
 	var nextPage = "/repos/" + fullname + "/pulls"
@@ -130,7 +130,7 @@ func (g *githubClient) PullRequests(ctx context.Context, fullname string, opts s
 	}
 
 	//Put the body on cache for one hour and one minute
-	k := cache.Key("vcs", "github", "pullrequests", g.OAuthToken, "/repos/"+fullname+"/pulls")
+	k := cache.Key("vcs", "github", "pullrequests", sdk.Hash512(g.OAuthToken+g.username), "/repos/"+fullname+"/pulls")
 	if err := g.Cache.SetWithTTL(k, pullRequests, 61*60); err != nil {
 		log.Error(ctx, "cannot SetWithTTL: %s: %v", k, err)
 	}

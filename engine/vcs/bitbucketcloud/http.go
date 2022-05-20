@@ -3,6 +3,7 @@ package bitbucketcloud
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -62,7 +63,20 @@ type postOptions struct {
 	asUser             bool
 }
 
-func (client *bitbucketcloudClient) post(path string, bodyType string, body io.Reader, opts *postOptions) (*http.Response, error) {
+func (client *bitbucketcloudClient) setAuth(ctx context.Context, req *http.Request) error {
+	if client.appPassword != "" && client.username != "" {
+		req.SetBasicAuth(client.username, client.appPassword)
+		log.Debug(ctx, "Bitbucketcloud API>> Request with basicAuth url:%s username:%v len:%d", req.URL.String(), client.username, len(client.appPassword))
+	} else if client.OAuthToken != "" {
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", client.OAuthToken))
+		log.Debug(ctx, "Bitbucketcloud API>> Request with OAuthToken url:%s len: %d", req.URL.String(), len(client.OAuthToken))
+	} else {
+		return sdk.NewError(sdk.ErrWrongRequest, errors.New("invalid configuration - bitbucketcloud authentication"))
+	}
+	return nil
+}
+
+func (client *bitbucketcloudClient) post(ctx context.Context, path string, bodyType string, body io.Reader, opts *postOptions) (*http.Response, error) {
 	req, err := http.NewRequest(http.MethodPost, rootURL+path, body)
 	if err != nil {
 		return nil, err
@@ -70,14 +84,16 @@ func (client *bitbucketcloudClient) post(path string, bodyType string, body io.R
 
 	req.Header.Set("Content-Type", bodyType)
 	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", client.OAuthToken))
+	if err := client.setAuth(ctx, req); err != nil {
+		return nil, err
+	}
 
-	log.Debug(context.TODO(), "Bitbucket Cloud API>> Request URL %s", req.URL.String())
+	log.Debug(ctx, "Bitbucket Cloud API>> Request URL %s", req.URL.String())
 
 	return httpClient.Do(req)
 }
 
-func (client *bitbucketcloudClient) put(path string, bodyType string, body io.Reader, opts *postOptions) (*http.Response, error) {
+func (client *bitbucketcloudClient) put(ctx context.Context, path string, bodyType string, body io.Reader, opts *postOptions) (*http.Response, error) {
 	req, err := http.NewRequest(http.MethodPut, rootURL+path, body)
 	if err != nil {
 		return nil, err
@@ -85,14 +101,16 @@ func (client *bitbucketcloudClient) put(path string, bodyType string, body io.Re
 
 	req.Header.Set("Content-Type", bodyType)
 	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", client.OAuthToken))
+	if err := client.setAuth(ctx, req); err != nil {
+		return nil, err
+	}
 
 	log.Debug(context.TODO(), "Bitbucket Cloud API>> Request URL %s", req.URL.String())
 
 	return httpClient.Do(req)
 }
 
-func (client *bitbucketcloudClient) get(path string) (int, []byte, http.Header, error) {
+func (client *bitbucketcloudClient) get(ctx context.Context, path string) (int, []byte, http.Header, error) {
 	callURL, err := url.ParseRequestURI(rootURL + path)
 	if err != nil {
 		return 0, nil, nil, sdk.WithStack(err)
@@ -104,7 +122,9 @@ func (client *bitbucketcloudClient) get(path string) (int, []byte, http.Header, 
 	}
 
 	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", client.OAuthToken))
+	if err := client.setAuth(ctx, req); err != nil {
+		return 0, nil, nil, sdk.WithStack(err)
+	}
 
 	res, err := httpClient.Do(req)
 	if err != nil {
@@ -118,8 +138,8 @@ func (client *bitbucketcloudClient) get(path string) (int, []byte, http.Header, 
 	case http.StatusMovedPermanently, http.StatusTemporaryRedirect, http.StatusFound:
 		location := res.Header.Get("Location")
 		if location != "" {
-			log.Debug(context.TODO(), "Bitbucket Cloud API>> Response Follow redirect :%s", location)
-			return client.get(location)
+			log.Debug(ctx, "Bitbucket Cloud API>> Response Follow redirect :%s", location)
+			return client.get(ctx, location)
 		}
 	case http.StatusUnauthorized:
 		return res.StatusCode, nil, nil, sdk.WithStack(ErrorUnauthorized)
@@ -133,14 +153,16 @@ func (client *bitbucketcloudClient) get(path string) (int, []byte, http.Header, 
 	return res.StatusCode, resBody, res.Header, nil
 }
 
-func (client *bitbucketcloudClient) delete(path string) error {
+func (client *bitbucketcloudClient) delete(ctx context.Context, path string) error {
 	req, err := http.NewRequest(http.MethodDelete, rootURL+path, nil)
 	if err != nil {
 		return sdk.WithStack(err)
 	}
 
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", client.OAuthToken))
-	log.Debug(context.TODO(), "Bitbucket Cloud API>> Request URL %s", req.URL.String())
+	if err := client.setAuth(ctx, req); err != nil {
+		return err
+	}
+	log.Debug(ctx, "Bitbucket Cloud API>> Request URL %s", req.URL.String())
 
 	res, err := httpClient.Do(req)
 	if err != nil {
@@ -179,7 +201,9 @@ func (client *bitbucketcloudClient) do(ctx context.Context, method, api, path st
 		req.Body = io.NopCloser(buf)
 		req.ContentLength = int64(buf.Len())
 	}
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", client.OAuthToken))
+	if err := client.setAuth(ctx, req); err != nil {
+		return err
+	}
 
 	// ensure the appropriate content-type is set for POST,
 	// assuming the field is not populated

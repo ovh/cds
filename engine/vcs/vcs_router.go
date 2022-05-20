@@ -25,11 +25,12 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Handle("/mon/metrics/all", nil, r.GET(service.GetMetricsHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 
 	r.Handle("/vcs", nil, r.GET(s.getAllVCSServersHandler))
+	r.Handle("/vcsgerrit", nil, r.GET(s.getVCSGerritHandler))
 	r.Handle("/vcs/{name}", nil, r.GET(s.getVCSServersHandler))
 	r.Handle("/vcs/{name}/webhooks", nil, r.GET(s.getVCSServersHooksHandler))
 	r.Handle("/vcs/{name}/polling", nil, r.GET(s.getVCSServersPollingHandler))
 
-	r.Handle("/vcs/{name}/authorize", nil, r.GET(s.getAuthorizeHandler), r.POST(s.postAuhorizeHandler))
+	r.Handle("/vcs/{name}/authorize", nil, r.GET(s.getAuthorizeHandler), r.POST(s.postAuthorizeHandler))
 
 	r.Handle("/vcs/{name}/repos", nil, r.GET(s.getReposHandler))
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}", nil, r.GET(s.getRepoHandler))

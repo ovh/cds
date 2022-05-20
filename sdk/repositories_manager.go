@@ -162,7 +162,6 @@ type VCSHook struct {
 	Body        string   `json:"body"`
 	Disable     bool     `json:"disable"`
 	InsecureSSL bool     `json:"insecure_ssl"`
-	Workflow    bool     `json:"workflow"`
 }
 
 // VCSCommitStatus represents a status on a VCS repository
