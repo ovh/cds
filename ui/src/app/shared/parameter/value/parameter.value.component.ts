@@ -64,10 +64,7 @@ export class ParameterValueComponent implements OnInit, AfterViewChecked, OnDest
         if (data) {
             this.projectKey = data.key;
         }
-        this.projectRo = data;
     }
-
-    projectRo: Project;
 
     @Output() valueChange = new EventEmitter<string | number | boolean>();
     @Output() valueUpdating = new EventEmitter<boolean>();
