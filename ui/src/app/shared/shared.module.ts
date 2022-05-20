@@ -142,6 +142,7 @@ import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
 import { NzUploadModule } from 'ng-zorro-antd/upload';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
+import { NzCollapseModule } from 'ng-zorro-antd/collapse';
 
 const ngZorroConfig: NzConfig = {
     notification: {nzPauseOnHover: true, nzPlacement: "topRight"},
@@ -158,6 +159,7 @@ const icons: IconDefinition[] = [ BellFill, BookOutline, CaretUpFill, CheckOutli
         NzButtonModule,
         NzCardModule,
         NzCheckboxModule,
+        NzCollapseModule,
         NzDropDownModule,
         NzFormModule,
         NzGridModule,
@@ -352,6 +354,7 @@ const icons: IconDefinition[] = [ BellFill, BookOutline, CaretUpFill, CheckOutli
         NzButtonModule,
         NzCardModule,
         NzCheckboxModule,
+        NzCollapseModule,
         NzDropDownModule,
         NzFormModule,
         NzGridModule,

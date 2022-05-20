@@ -1,71 +1,78 @@
 <div class="AppRepository" [hidden]="!project.vcs_servers || project.vcs_servers.length === 0">
+    <form nz-form  (ngSubmit)="linkRepository()" nzLayout="inline" [hidden]="application.vcs_server" *ngIf="!application.from_repository">
+        <div nz-row>
+            <div nz-col [nzSpan]="8">
+                <nz-form-item>
+                    <nz-form-label>Repository manager</nz-form-label>
+                    <nz-form-control>
+                        <nz-select nzShowSearch name="repomanname" [(ngModel)]="selectedRepoManager" (ngModelChange)="updateListRepo(false)" [disabled]="loadingRepos || application.from_repository">
+                            <nz-option *ngFor="let r of project?.vcs_servers" [nzValue]="r.name" [nzLabel]="r.name"></nz-option>
+                        </nz-select>
+                    </nz-form-control>
+                </nz-form-item>
+            </div>
+            <div nz-col [nzSpan]="8">
+                <nz-form-item>
+                    <nz-form-label>Repository</nz-form-label>
+                    <nz-form-control>
+                        <nz-select nzShowSearch name="repository" nzPlaceHolder="Choose a repository"  (nzOnSearch)="filterRepositories($event)"
+                                   [(ngModel)]="selectedRepo" [disabled]="loadingRepos || application.from_repository">
+                            <nz-option *ngFor="let r of reposFiltered" [nzValue]="r.fullname" [nzLabel]="r.fullname"></nz-option>
+                        </nz-select>
+                    </nz-form-control>
 
-    <form class="ui form" (ngSubmit)="linkRepository()" [hidden]="application.vcs_server" *ngIf="!application.from_repository">
-        <div class="fields">
-            <div class="three wide field">
-                <label>{{'repoman_name' | translate}}</label>
-                <sm-select class="fluid search"
-                    name="repomanname"
-                    [disabled]="loadingRepos || application.from_repository"
-                    [(model)]="selectedRepoManager"
-                    [options]="{'fullTextSearch': true}"
-                    (onChange)="updateListRepo(false)">
-                    <option *ngFor="let r of project?.vcs_servers" value="{{r.name}}">{{r.name}}</option>
-                </sm-select>
+                </nz-form-item>
             </div>
-            <div class="five wide field">
-                <label>{{'repo_name' | translate}}</label>
-                <sm-select
-                    class="search item"
-                    placeholder="{{'application_repo_choose' | translate}}"
-                    [(model)]="selectedRepo"
-                    [options]="{'fullTextSearch': true}"
-                    (onSearchChange)="filterRepositories($event)"
-                    [disabled]="loadingRepos || application.from_repository">
-                    <option *ngFor="let r of reposFiltered"  value="{{r.fullname}}">{{r.fullname}}</option>
-                </sm-select>
+            <div nz-col [nzSpan]="4">
+                <nz-form-item>
+                    <button nz-button name="resync" [nzLoading]="loadingRepos" type="button"
+                        (click)="updateListRepo(true)">Resynchronize</button>
+                </nz-form-item>
+
             </div>
-            <div class="four wide field">
-                <button name="resync" class="ui blue button" [class.loading]="loadingRepos" type="button"
-                    (click)="updateListRepo(true)"
-                >{{ 'btn_resync_repo' | translate }}</button>
-            </div>
-            <div class="four wide right aligned field">
-                <button name="addrepobtn" class="ui green button" [class.loading]="loadingBtn" [disabled]="loadingBtn || application.from_repository" type="submit">{{ 'btn_link' | translate }}</button>
+            <div nz-col [nzSpan]="4">
+                <nz-form-item nzJustify="end">
+                    <button nz-button nzType="primary" name="addrepobtn"[nzLoading]="loadingBtn" [disabled]="loadingBtn || application.from_repository" type="submit">Connect</button>
+                </nz-form-item>
             </div>
         </div>
     </form>
     <div [hidden]="!application.vcs_server">
-        <form class="ui form" [hidden]="!application.vcs_server">
-            <div class="fields">
-                <div class="eight wide field">
+        <form nz-form [hidden]="!application.vcs_server">
+            <nz-form-item>
+                <nz-form-label>
                     <span>{{application.vcs_server}}</span>
                     <span> &#10145; </span>
                     <span>{{application.repository_fullname}}</span>
-                </div>
-                <div class="eight wide right aligned field">
-                    <app-delete-button [loading]="loadingBtn" [disabled]="loadingBtn || application.from_repository" (event)="removeRepository()"></app-delete-button>
-                </div>
-            </div>
+                </nz-form-label>
+                <nz-form-control>
+                    <button nz-button nzType="primary" class="unlink" name="deleteBtn" nzDanger [nzLoading]="loadingBtn" [disabled]="loadingBtn || application.from_repository"
+                            nz-popconfirm nzPopconfirmTitle="Are you sure to unlink this repository?" (nzOnConfirm)="removeRepository()"  nzPopconfirmPlacement="topLeft">
+                        Unkink
+                    </button>
+                </nz-form-control>
+            </nz-form-item>
         </form>
         <div *ngIf="application.repository_fullname" class="strategy">
-            <div class="ui orange icon message mt5" *ngIf="!application.vcs_strategy || !application.vcs_strategy.connection_type">
-              <i class="warning sign icon"></i>
-              <div class="content">
-                <div class="header">
-                  {{'application_repo_missing_conf' | translate}}
+            <nz-alert nzType="warning" [nzMessage]="repoTemp" *ngIf="!application.vcs_strategy || !application.vcs_strategy.connection_type || true"></nz-alert>
+            <ng-template #repoTemp>
+                <div nz-row class="alert">
+                    <div nz-col [nzSpan]="2">
+                        <i class="warning sign icon"></i>
+                    </div>
+                    <div nz-col [nzSpan]="22">
+                        <div class="header">Missing configuration</div>
+                        <p>Almost done ! You have to configure at least the connection protocol to your repository just below and save your changes</p>
+                    </div>
                 </div>
-                <p>{{'application_repo_missing_conf_details' | translate}}</p>
-              </div>
-            </div>
-            <h4 class="pointing" (click)="displayVCSStrategy = !displayVCSStrategy">
-                <i class="right caret icon" *ngIf="!displayVCSStrategy"></i>
-                <i class="down caret icon" *ngIf="displayVCSStrategy"></i>
-                {{ 'application_repo_strat_title' | translate }}
-            </h4>
-            <div class="detail" [class.active]="displayVCSStrategy">
-                <app-vcs-strategy [project]="project" [(strategy)]="application.vcs_strategy" (strategyChange)="saveVCSConfiguration()" [appName]="application.name" [loading]="loadingBtn"></app-vcs-strategy>
-            </div>
+            </ng-template>
+            <nz-collapse [nzBordered]="false">
+                <nz-collapse-panel nzHeader="Configuration" [nzActive]="true">
+                    <ng-container>
+                        <app-vcs-strategy [project]="project" [(strategy)]="application.vcs_strategy" (strategyChange)="saveVCSConfiguration()" [appName]="application.name" [loading]="loadingBtn"></app-vcs-strategy>
+                    </ng-container>
+                </nz-collapse-panel>
+            </nz-collapse>
         </div>
     </div>
 </div>

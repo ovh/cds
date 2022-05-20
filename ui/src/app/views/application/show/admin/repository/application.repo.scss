@@ -1,26 +1,17 @@
-.ui.form .fields {
-  margin-bottom: 0;
-  .field {
-    .ui.button {
-      margin-top: 1.7em;
-    }
-  }
-}
-.strategy {
-  min-height: 20px;
 
-  .detail {
-    max-height: 0;
-    transition: all 0.15s ease-out;
-    opacity: 0;
-  }
-
-  .detail.active {
-    max-height: 500px;
-    transition: all 0.25s ease-in;
-    opacity: 1;
-  }
+form div {
+  width: 100%;
 }
-.mt5 {
-  margin-top: 5px !important;
+.unlink {
+  float:right;
+}
+nz-alert {
+  margin-bottom: 10px;
+  i {
+    font-size: 2em;
+  }
+  .header {
+    font-size: 1.15em;
+    font-weight: 700;
+  }
 }
