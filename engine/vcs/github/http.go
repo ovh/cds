@@ -195,7 +195,7 @@ func (c *githubClient) setAuth(ctx context.Context, req *http.Request, opts *pos
 		log.Debug(ctx, "Github API>> Request with basicAuth url:%s username:%v len:%d", req.URL.String(), c.username, len(c.token))
 	} else if c.OAuthToken != "" {
 		req.Header.Add("Authorization", fmt.Sprintf("token %s", c.OAuthToken))
-		log.Debug(ctx, "Github API>> Request with Authorization url:%s", req.URL.String())
+		log.Debug(ctx, "Github API>> Request with OAuthToken url:%s", req.URL.String())
 	} else if c.token != "" {
 		req.Header.Add("Authorization", fmt.Sprintf("token %s", c.token))
 		log.Debug(ctx, "Github API>> Request with token url:%s len:%d", req.URL.String(), len(c.token))
