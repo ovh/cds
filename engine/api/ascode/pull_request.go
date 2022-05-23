@@ -45,7 +45,7 @@ func UpdateAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 		globalErr = err
 	}
 
-	if ope.Status == sdk.OperationStatusError {
+	if ope != nil && ope.Status == sdk.OperationStatusError {
 		globalErr = ope.Error.ToError()
 	}
 

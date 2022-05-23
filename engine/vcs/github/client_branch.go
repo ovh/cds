@@ -159,7 +159,7 @@ func (g *githubClient) Branch(ctx context.Context, fullname string, filters sdk.
 	}
 
 	//Put the body on cache for one hour and one minute
-	k := cache.Key("vcs", "github", "branches", (g.OAuthToken + g.username), "/repos/"+fullname+"/branch/"+filters.BranchName)
+	k := cache.Key("vcs", "github", "branches", sdk.Hash512(g.OAuthToken+g.username), "/repos/"+fullname+"/branch/"+filters.BranchName)
 	if err := g.Cache.SetWithTTL(k, branch, 61*60); err != nil {
 		log.Error(ctx, "cannot SetWithTTL: %s: %v", k, err)
 	}
