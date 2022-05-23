@@ -98,7 +98,7 @@ Example on the `hatchery.local`:
 ```toml
       [hatchery.local.commonConfiguration.provision]
 
-        # Maximum attempts to start a same job. -1 to disable failing jobs when to many attempts
+        # Maximum attempts to start a same job. -1 to disable failing jobs when too many attempts
         # maxAttemptsNumberBeforeFailure = 5
 ```
 
