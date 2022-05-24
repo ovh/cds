@@ -384,8 +384,5 @@ func VCSCommitStatusDescription(projKey, workflowName string, evt EventRunWorkfl
 		workflowName,
 		evt.NodeName,
 	)
-	if len(key) > 36 { // 40 maxlength on bitbucket cloud
-		key = key[:36]
-	}
 	return fmt.Sprintf("CDS/%s", key)
 }
