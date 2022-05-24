@@ -152,7 +152,9 @@ func (s *Service) storeFile(ctx context.Context, sig cdn.Signature, reader io.Re
 			switch runResultApiRef.RunResultType {
 			case sdk.WorkflowRunResultTypeArtifact:
 				result = sdk.WorkflowRunResultArtifact{
-					Name:       apiRef.ToFilename(),
+					WorkflowRunResultArtifactCommon: sdk.WorkflowRunResultArtifactCommon{
+						Name: apiRef.ToFilename(),
+					},
 					Size:       it.Size,
 					MD5:        it.MD5,
 					CDNRefHash: it.APIRefHash,
@@ -160,7 +162,9 @@ func (s *Service) storeFile(ctx context.Context, sig cdn.Signature, reader io.Re
 				}
 			case sdk.WorkflowRunResultTypeCoverage:
 				result = sdk.WorkflowRunResultCoverage{
-					Name:       apiRef.ToFilename(),
+					WorkflowRunResultArtifactCommon: sdk.WorkflowRunResultArtifactCommon{
+						Name: apiRef.ToFilename(),
+					},
 					Size:       it.Size,
 					MD5:        it.MD5,
 					CDNRefHash: it.APIRefHash,

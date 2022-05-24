@@ -1348,7 +1348,7 @@ func (api *API) getWorkflowRunResultsHandler() service.Handler {
 			return sdk.WrapError(err, "unable to load workflow run for workflow %s and number %d", name, number)
 		}
 
-		results, err := workflow.LoadRunResultsByRunID(ctx, api.mustDB(), wr.ID)
+		results, err := workflow.LoadRunResultsByRunIDUnique(ctx, api.mustDB(), wr.ID)
 		if err != nil {
 			return err
 		}
