@@ -25,6 +25,13 @@ import (
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
+func (c *vcsClient) IsBitbucketCloud() bool {
+	if c.vcsProject != nil {
+		return c.vcsProject.Type == "bitbucketcloud"
+	}
+	return false
+}
+
 func (c *vcsClient) IsGerrit(ctx context.Context, db gorp.SqlExecutor) (bool, error) {
 	if c.vcsProject != nil {
 		return c.vcsProject.Type == "gerrit", nil

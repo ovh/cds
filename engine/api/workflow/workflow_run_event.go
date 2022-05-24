@@ -119,6 +119,12 @@ loopNotif:
 		NodeName: nodeRun.WorkflowNodeName,
 	})
 
+	if e.vcsClient.IsBitbucketCloud() {
+		if len(expected) > 36 { // 40 maxlength on bitbucket cloud
+			expected = expected[:36]
+		}
+	}
+
 	var statusFound *sdk.VCSCommitStatus
 	for i, status := range statuses {
 		if status.Decription == expected {
