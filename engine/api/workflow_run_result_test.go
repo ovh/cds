@@ -38,7 +38,9 @@ func Test_getWorkflowRunAndNodeRunResults(t *testing.T) {
 	require.NoError(t, err)
 
 	artiData := sdk.WorkflowRunResultArtifact{
-		Name:       "myarti",
+		WorkflowRunResultArtifactCommon: sdk.WorkflowRunResultArtifactCommon{
+			Name: "myarti",
+		},
 		CDNRefHash: "123",
 		MD5:        "123",
 		Size:       1,

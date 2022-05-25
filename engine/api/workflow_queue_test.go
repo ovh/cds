@@ -1556,10 +1556,12 @@ func Test_workflowRunResultsAdd(t *testing.T) {
 	}
 
 	artiData := sdk.WorkflowRunResultArtifact{
+		WorkflowRunResultArtifactCommon: sdk.WorkflowRunResultArtifactCommon{
+			Name: "myartifact",
+		},
 		Size:       1,
 		MD5:        "AA",
 		CDNRefHash: "AA",
-		Name:       "myartifact",
 		Perm:       0777,
 	}
 	bts, err := json.Marshal(artiData)

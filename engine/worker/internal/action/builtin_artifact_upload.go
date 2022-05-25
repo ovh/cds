@@ -250,7 +250,9 @@ func addWorkflowRunResult(ctx context.Context, wk workerruntime.Runtime, filePat
 	}
 
 	data := sdk.WorkflowRunResultArtifactManager{
-		Name:     uploadResult.Outputs[sdk.ArtifactUploadPluginOutputPathFileName],
+		WorkflowRunResultArtifactCommon: sdk.WorkflowRunResultArtifactCommon{
+			Name: uploadResult.Outputs[sdk.ArtifactUploadPluginOutputPathFileName],
+		},
 		Perm:     uint32(perm),
 		RepoName: uploadResult.Outputs[sdk.ArtifactUploadPluginOutputPathRepoName],
 		Path:     uploadResult.Outputs[sdk.ArtifactUploadPluginOutputPathFilePath],
