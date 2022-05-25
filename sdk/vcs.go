@@ -355,6 +355,7 @@ type VCSAuthorizedClientService interface {
 	VCSAuthorizedClientCommon
 	PullRequests(ctx context.Context, repo string, mods ...VCSRequestModifier) ([]VCSPullRequest, error)
 	IsGerrit(ctx context.Context, db gorp.SqlExecutor) (bool, error)
+	IsBitbucketCloud() bool
 }
 
 type VCSRequestModifier func(r *http.Request)

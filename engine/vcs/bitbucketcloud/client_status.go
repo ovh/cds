@@ -39,7 +39,7 @@ func (client *bitbucketcloudClient) SetStatus(ctx context.Context, event sdk.Eve
 	var err error
 	switch event.EventType {
 	case fmt.Sprintf("%T", sdk.EventRunWorkflowNode{}):
-		data, err = processEventWorkflowNodeRun(event, client.uiURL, disableStatusDetails)
+		data, err = client.processEventWorkflowNodeRun(event, client.uiURL, disableStatusDetails)
 	default:
 		log.Error(ctx, "bitbucketcloud.SetStatus> Unknown event %v", event)
 		return nil
@@ -135,7 +135,7 @@ func processBbitbucketState(s Status) string {
 	}
 }
 
-func processEventWorkflowNodeRun(event sdk.Event, cdsUIURL string, disableStatusDetails bool) (statusData, error) {
+func (client *bitbucketcloudClient) processEventWorkflowNodeRun(event sdk.Event, cdsUIURL string, disableStatusDetails bool) (statusData, error) {
 	data := statusData{}
 	var eventNR sdk.EventRunWorkflowNode
 	if err := sdk.JSONUnmarshal(event.Payload, &eventNR); err != nil {
@@ -180,6 +180,9 @@ func processEventWorkflowNodeRun(event sdk.Event, cdsUIURL string, disableStatus
 	}
 
 	data.context = sdk.VCSCommitStatusDescription(event.ProjectKey, event.WorkflowName, eventNR)
+	if len(data.context) > 36 { // 40 maxlength on bitbucket cloud
+		data.context = data.context[:36]
+	}
 	data.desc = eventNR.NodeName + ": " + eventNR.Status
 	return data, nil
 }
