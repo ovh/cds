@@ -143,6 +143,7 @@ import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
 import { NzUploadModule } from 'ng-zorro-antd/upload';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { NzCollapseModule } from 'ng-zorro-antd/collapse';
+import { RequirementsValueComponent } from 'app/shared/requirements/value/requirements.value.component';
 
 const ngZorroConfig: NzConfig = {
     notification: {nzPauseOnHover: true, nzPlacement: "topRight"},
@@ -240,6 +241,7 @@ const icons: IconDefinition[] = [ BellFill, BookOutline, CaretUpFill, CheckOutli
         RepoManagerFormComponent,
         RequirementsFormComponent,
         RequirementsListComponent,
+        RequirementsValueComponent,
         SafeHtmlPipe,
         ScrollviewComponent,
         SelectFilterComponent,
@@ -387,6 +389,7 @@ const icons: IconDefinition[] = [ BellFill, BookOutline, CaretUpFill, CheckOutli
         RepoManagerFormComponent,
         RequirementsFormComponent,
         RequirementsListComponent,
+        RequirementsValueComponent,
         SafeHtmlPipe,
         ScrollviewComponent,
         SelectorPipe,

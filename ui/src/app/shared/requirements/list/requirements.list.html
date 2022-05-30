@@ -10,65 +10,18 @@
         <tbody>
             <tr *ngFor="let r of reqList.data">
                 <td>
-                    <div *ngIf="edit;else rType">
-                        <ng-container  *ngIf="availableRequirements.length > 0">
-                            <nz-select [(ngModel)]="r.type" (ngModelChange)="change(r)" nzShowSearch>
-                                <nz-option *ngFor="let r of availableRequirements" [nzValue]="r" [nzLabel]="r"></nz-option>
-                            </nz-select>
-                        </ng-container>
-                    </div>
-                    <ng-template #rType>
-                        <span>{{r.type}}</span>
-                    </ng-template>
+                    {{r.type}}
                 </td>
                 <td>
-                    <div *ngIf="r.type === 'service'">
-                        <div *ngIf="edit;else rName">
-                            Hostname:
-                            <input nz-input [nzAutocomplete]="autoSuggestService" [(ngModel)]="r.name" (ngModelChange)="change(r)">
-                            <nz-autocomplete [nzDataSource]="suggest" nzBackfill #autoSuggestService></nz-autocomplete>
-                        </div>
-                        <ng-template #rName>
-                            <span>{{r.name}}</span>
-                        </ng-template>
-                    </div>
-                    <div *ngIf="edit;else rValue">
-                        <div *ngIf="r.type !== 'model' && r.type !== 'os-architecture'">
-                            <ng-container *ngIf="r.type === 'service'">
-                                Docker Image:
-                            </ng-container>
-                            <input nz-input [nzAutocomplete]="autoSuggestImage" [(ngModel)]="r.value" (ngModelChange)="change(r)">
-                            <nz-autocomplete [nzDataSource]="suggest" nzBackfill #autoSuggestImage></nz-autocomplete>
-                        </div>
-                        <div *ngIf="r.type === 'os-architecture'">
-                            <input nz-input [nzAutocomplete]="autoOsArch" name="value-os-architecture" [(ngModel)]="r.value" (ngModelChange)="change(r)">
-                            <nz-autocomplete [nzDataSource]="suggestWithOSArch" nzBackfill #autoOsArch></nz-autocomplete>
-                        </div>
-                        <div *ngIf="r.type === 'model' && workerModels">
-                            <div class="ui grid">
-                                <div class="ui fourteen wide column">
-                                    <input nz-input name="value-workermodel" [nzAutocomplete]="autoWorkerModel" [(ngModel)]="r.value" (ngModelChange)="change(r)">
-                                    <nz-autocomplete [nzDataSource]="suggestWithWorkerModel" nzBackfill #autoWorkerModel></nz-autocomplete>
-                                </div>
-                                <div class="ui two wide column valign">
-                                    <span *ngIf="getWorkerModel(r.value)?.nb_spawn_err > 0" nz-tooltip nzTooltipTitle="{{'worker_model_spawn_error_tooltip' | translate}}" nzTooltipPlacement="top"><i class="exclamation triangle icon large red"></i></span>
-                                    <span *ngIf="getWorkerModel(r.value)?.is_official" nz-tooltip nzTooltipTitle="{{'worker_model_official_tooltip' | translate}}" nzTooltipPlacement="top"><i class="check circle outline icon large green"></i></span>
-                                    <span *ngIf="getWorkerModel(r.value)?.is_deprecated" nz-tooltip nzTooltipTitle="{{'worker_model_deprecated_tooltip' | translate}}}" nzTooltipPlacement="top"><i class="exclamation circle icon large orange"></i></span>
-                                </div>
-                            </div>
-                        </div>
-                        <div *ngIf="r.type === 'model' || r.type === 'service'">
-                            {{ 'requirement_options' | translate }}
-                            <textarea nz-input [(ngModel)]="r.opts" (ngModelChange)="change(r)" rows="3" placeholder="{{'requirement_placeholder_opts_' + r.type | translate}}"></textarea>
-                        </div>
-                    </div>
-                    <ng-template #rValue>
-                        <span>{{r.value}}</span>
-                        <div *ngIf="r.type === 'model' || r.type === 'service'">
-                            {{ 'requirement_options' | translate }}
-                            <span>{{r.opts}}</span>
-                        </div>
-                    </ng-template>
+                    <ng-container *ngIf="suggest && suggestWithWorkerModel && suggestWithOSArch">
+                        <app-requirements-value [requirement]="r"
+                                                (requirementChange)="change(r)"
+                                                [edit]="edit"
+                                                [suggest]="suggest"
+                                                [workerModels]="workerModelsMap"
+                                                [suggestArchOs]="suggestWithOSArch"
+                                                [suggestWorkerModels]="suggestWithWorkerModel"></app-requirements-value>
+                    </ng-container>
                 </td>
                 <td>
                     <div *ngIf="edit" class="center">
