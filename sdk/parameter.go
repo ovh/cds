@@ -14,7 +14,6 @@ const (
 	BooleanParameter = "boolean"
 	KeySSHParameter  = "ssh-key"
 	KeyPGPParameter  = "pgp-key"
-	KeyParameter     = "key"
 )
 
 var (
