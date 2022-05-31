@@ -121,6 +121,8 @@ func executeNodeRun(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store 
 		return nil, sdk.WrapError(err, "unable to load workflow run with id %d", workflowNodeRun.WorkflowRunID)
 	}
 
+	n := wr.Workflow.WorkflowData.NodeByID(workflowNodeRun.WorkflowNodeID)
+
 	report := new(ProcessorReport)
 	defer func(wnr *sdk.WorkflowNodeRun) {
 		report.Add(ctx, *wnr)
@@ -133,10 +135,12 @@ func executeNodeRun(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store 
 
 	var newStatus = workflowNodeRun.Status
 
-	// If no stages ==> success
-	if len(workflowNodeRun.Stages) == 0 {
+	// For join and fork, reuse the status from parent
+	if n.Type == sdk.NodeTypeJoin || n.Type == sdk.NodeTypeFork {
+		parentStatus := sdk.ParameterFind(workflowNodeRun.BuildParameters, "cds.status")
+		newStatus = parentStatus.Value
+	} else if len(workflowNodeRun.Stages) == 0 { // If no stages ==> success
 		newStatus = sdk.StatusSuccess
-		workflowNodeRun.Done = time.Now()
 	}
 
 	stagesTerminated := 0
