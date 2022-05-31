@@ -31,15 +31,15 @@
                 <div nz-tooltip [nzTooltipTitle]="popupText"
                      nzTooltipPlacement="top"
                      *ngIf="(newRequirement.type === 'model' && config.disableModel) || (newRequirement.type === 'hostname' && config.disableHostname) || (newRequirement.type === 'region' && config.disableRegion)">
-                    <button class="ui blue icon button"
+                    <button nz-button nzType="primary" name="addBtn"
                             (click)="onSubmitAddRequirement()">
-                        <i class="plus icon"></i>
+                        <i nz-icon nzType="plus" nzTheme="outline"></i>
                     </button>
                 </div>
                 <div *ngIf="(newRequirement.type !== 'model' || !config.disableModel) && (newRequirement.type !== 'hostname' || !config.disableHostname) && (newRequirement.type !== 'region' || !config.disableRegion)">
-                    <button class="ui blue icon button"
+                    <button nz-button nzType="primary" name="addBtn"
                             (click)="onSubmitAddRequirement()">
-                        <i class="plus icon"></i>
+                        <i nz-icon nzType="plus" nzTheme="outline"></i>
                     </button>
                 </div>
             </nz-form-item>

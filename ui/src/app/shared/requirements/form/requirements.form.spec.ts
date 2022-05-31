@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import {TestBed, tick, fakeAsync} from '@angular/core/testing';
+import { TestBed, tick, fakeAsync, flush } from '@angular/core/testing';
 import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
 import {RouterTestingModule} from '@angular/router/testing';
 import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
@@ -48,27 +48,22 @@ describe('CDS: Requirement Form Component', () => {
 
         http.expectOne('/requirement/types').flush(['binary']);
 
-        let compiled = fixture.debugElement.nativeElement;
-
         let r = new Requirement('binary');
         r.name = 'foo';
         r.value = 'foo';
 
+        fixture.componentInstance.newRequirement = r;
+
+        tick(250)
         fixture.detectChanges();
-        tick(250);
 
-        // simulate typing new variable
-        let inputName = compiled.querySelector('input[name="value"]');
-        inputName.value = r.value;
-        inputName.dispatchEvent(new Event('input'));
-        inputName.dispatchEvent(new Event('keyup'));
-
-        fixture.detectChanges();
-        tick(250);
-
+        let compiled = fixture.debugElement.nativeElement;
         spyOn(fixture.componentInstance.event, 'emit');
-        compiled.querySelector('.ui.blue.button').click();
+        console.log(compiled);
+        compiled.querySelector('button[name="addBtn"]').click();
 
         expect(fixture.componentInstance.event.emit).toHaveBeenCalledWith(new RequirementEvent('add', r));
+
+        flush();
     }));
 });
