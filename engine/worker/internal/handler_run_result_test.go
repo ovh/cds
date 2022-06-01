@@ -54,7 +54,9 @@ func Test_addRunResultStaticFileHandler(t *testing.T) {
 	).Times(1)
 
 	v := sdk.WorkflowRunResultStaticFile{
-		Name:      "foo",
+		WorkflowRunResultArtifactCommon: sdk.WorkflowRunResultArtifactCommon{
+			Name: "foo",
+		},
 		RemoteURL: "http://locat.local/static/foo.html",
 	}
 	buf, err := json.Marshal(v)
@@ -107,7 +109,9 @@ func Test_addRunResultArtifactManagerHandler(t *testing.T) {
 	).Times(1)
 
 	v := sdk.WorkflowRunResultArtifactManager{
-		Name:     "foo",
+		WorkflowRunResultArtifactCommon: sdk.WorkflowRunResultArtifactCommon{
+			Name: "foo",
+		},
 		RepoName: "my-repo",
 	}
 	buf, err := json.Marshal(v)

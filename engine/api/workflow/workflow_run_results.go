@@ -354,42 +354,38 @@ func insertResult(tx gorpmapper.SqlExecutorWithTx, runResult *sdk.WorkflowRunRes
 	return nil
 }
 
-func getAll(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query) ([]sdk.WorkflowRunResult, error) {
+func getAll(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query) (sdk.WorkflowRunResults, error) {
 	var dbResults []dbRunResult
 	if err := gorpmapping.GetAll(ctx, db, query, &dbResults); err != nil {
 		return nil, err
 	}
-	results := make([]sdk.WorkflowRunResult, 0, len(dbResults))
+	results := make(sdk.WorkflowRunResults, 0, len(dbResults))
 	for _, r := range dbResults {
 		results = append(results, sdk.WorkflowRunResult(r))
 	}
 	return results, nil
 }
 
-func LoadRunResultsByRunID(ctx context.Context, db gorp.SqlExecutor, runID int64) ([]sdk.WorkflowRunResult, error) {
-	dbQuery := `
-	WITH allResults AS (
-		SELECT data->>'name' AS name, sub_num, id
-		FROM workflow_run_result
-		WHERE workflow_run_id = $1
-	),
-	deduplication AS (
-		SELECT distinct on (name) *
-		FROM allResults
-		ORDER BY name, sub_num DESC
-	)
-	SELECT * FROM workflow_run_result WHERE id IN (SELECT id FROM deduplication);`
-	query := gorpmapping.NewQuery(dbQuery).Args(runID)
+func LoadRunResultsByRunID(ctx context.Context, db gorp.SqlExecutor, runID int64) (sdk.WorkflowRunResults, error) {
+	query := gorpmapping.NewQuery("SELECT * FROM workflow_run_result WHERE workflow_run_id = $1 ORDER BY sub_num DESC").Args(runID)
 	return getAll(ctx, db, query)
 }
 
-func LoadRunResultsByNodeRunID(ctx context.Context, db gorp.SqlExecutor, nodeRunID int64) ([]sdk.WorkflowRunResult, error) {
-	query := gorpmapping.NewQuery("SELECT * FROM workflow_run_result where workflow_node_run_id = $1").Args(nodeRunID)
+func LoadRunResultsByRunIDUnique(ctx context.Context, db gorp.SqlExecutor, runID int64) (sdk.WorkflowRunResults, error) {
+	query := gorpmapping.NewQuery("SELECT * FROM workflow_run_result WHERE workflow_run_id = $1 ORDER BY sub_num DESC").Args(runID)
+	rs, err := getAll(ctx, db, query)
+	if err != nil {
+		return nil, err
+	}
+	return rs.Unique()
+}
+
+func LoadRunResultsByNodeRunID(ctx context.Context, db gorp.SqlExecutor, nodeRunID int64) (sdk.WorkflowRunResults, error) {
+	query := gorpmapping.NewQuery("SELECT * FROM workflow_run_result WHERE workflow_node_run_id = $1").Args(nodeRunID)
 	return getAll(ctx, db, query)
 }
 
-func LoadRunResultsByRunIDAndType(ctx context.Context, db gorp.SqlExecutor, runID int64, t sdk.WorkflowRunResultType) ([]sdk.WorkflowRunResult, error) {
-	query := gorpmapping.NewQuery("SELECT * FROM workflow_run_result where workflow_run_id = $1 AND type = $2").Args(runID, t)
+func LoadRunResultsByRunIDAndType(ctx context.Context, db gorp.SqlExecutor, runID int64, t sdk.WorkflowRunResultType) (sdk.WorkflowRunResults, error) {
+	query := gorpmapping.NewQuery("SELECT * FROM workflow_run_result WHERE workflow_run_id = $1 AND type = $2").Args(runID, t)
 	return getAll(ctx, db, query)
-
 }

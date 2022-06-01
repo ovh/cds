@@ -2,6 +2,8 @@ package sdk
 
 import (
 	"encoding/json"
+	"fmt"
+	"sort"
 	"time"
 )
 
@@ -15,6 +17,28 @@ const (
 type WorkflowRunResultType string
 type WorkflowRunResultDataKey string
 
+type WorkflowRunResults []WorkflowRunResult
+
+// Unique returns the last version of each results
+func (w WorkflowRunResults) Unique() (WorkflowRunResults, error) {
+	m := make(map[string]WorkflowRunResult, len(w))
+	for i := range w {
+		key, err := w[i].ComputeUniqueKey()
+		if err != nil {
+			return nil, err
+		}
+		if v, ok := m[key]; !ok || v.SubNum < w[i].SubNum {
+			m[key] = w[i]
+		}
+	}
+	filtered := make(WorkflowRunResults, 0, len(m))
+	for _, v := range m {
+		filtered = append(filtered, v)
+	}
+	sort.Slice(filtered, func(i, j int) bool { return filtered[i].Created.Before(filtered[j].Created) })
+	return filtered, nil
+}
+
 type WorkflowRunResult struct {
 	ID                string                `json:"id" db:"id"`
 	Created           time.Time             `json:"created" db:"created"`
@@ -26,12 +50,47 @@ type WorkflowRunResult struct {
 	DataRaw           json.RawMessage       `json:"data" db:"data"`
 }
 
+func (r WorkflowRunResult) ComputeUniqueKey() (string, error) {
+	key := fmt.Sprintf("%d-%s", r.WorkflowRunID, r.Type)
+	switch r.Type {
+	case WorkflowRunResultTypeArtifactManager:
+		var data WorkflowRunResultArtifactManager
+		if err := json.Unmarshal(r.DataRaw, &data); err != nil {
+			return "", WithStack(err)
+		}
+		key = key + "-" + data.Name + "-" + data.RepoType
+	default:
+		var data WorkflowRunResultArtifactCommon
+		if err := json.Unmarshal(r.DataRaw, &data); err != nil {
+			return "", WithStack(err)
+		}
+		key = key + "-" + data.Name
+	}
+	return key, nil
+}
+
+func (r WorkflowRunResult) ComputeName() (string, error) {
+	switch r.Type {
+	case WorkflowRunResultTypeArtifactManager:
+		var data WorkflowRunResultArtifactManager
+		if err := json.Unmarshal(r.DataRaw, &data); err != nil {
+			return "", WithStack(err)
+		}
+		return fmt.Sprintf("%s (%s: %s)", data.Name, r.Type, data.RepoType), nil
+	default:
+		var data WorkflowRunResultArtifactCommon
+		if err := json.Unmarshal(r.DataRaw, &data); err != nil {
+			return "", WithStack(err)
+		}
+		return fmt.Sprintf("%s (%s)", data.Name, r.Type), nil
+	}
+}
+
 func (r *WorkflowRunResult) GetArtifact() (WorkflowRunResultArtifact, error) {
 	var data WorkflowRunResultArtifact
 	if err := JSONUnmarshal(r.DataRaw, &data); err != nil {
 		return data, WithStack(err)
 	}
-
 	return data, nil
 }
 
@@ -70,8 +129,12 @@ type WorkflowRunResultCheck struct {
 	ResultType WorkflowRunResultType `json:"result_type"`
 }
 
+type WorkflowRunResultArtifactCommon struct {
+	Name string `json:"name"`
+}
+
 type WorkflowRunResultArtifactManager struct {
-	Name     string `json:"name"`
+	WorkflowRunResultArtifactCommon
 	Size     int64  `json:"size"`
 	MD5      string `json:"md5"`
 	Path     string `json:"path"`
@@ -98,7 +161,7 @@ func (a *WorkflowRunResultArtifactManager) IsValid() error {
 }
 
 type WorkflowRunResultStaticFile struct {
-	Name      string `json:"name"`
+	WorkflowRunResultArtifactCommon
 	RemoteURL string `json:"remote_url"`
 }
 
@@ -113,7 +176,7 @@ func (a *WorkflowRunResultStaticFile) IsValid() error {
 }
 
 type WorkflowRunResultArtifact struct {
-	Name       string `json:"name"`
+	WorkflowRunResultArtifactCommon
 	Size       int64  `json:"size"`
 	MD5        string `json:"md5"`
 	CDNRefHash string `json:"cdn_hash"`
@@ -138,7 +201,7 @@ func (a *WorkflowRunResultArtifact) IsValid() error {
 }
 
 type WorkflowRunResultCoverage struct {
-	Name       string `json:"name"`
+	WorkflowRunResultArtifactCommon
 	Size       int64  `json:"size"`
 	MD5        string `json:"md5"`
 	CDNRefHash string `json:"cdn_hash"`

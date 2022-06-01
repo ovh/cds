@@ -68,7 +68,9 @@ func addStaticFileRunResultCmd() func(cmd *cobra.Command, args []string) {
 		}
 
 		payload := sdk.WorkflowRunResultStaticFile{
-			Name:      name,
+			WorkflowRunResultArtifactCommon: sdk.WorkflowRunResultArtifactCommon{
+				Name: name,
+			},
 			RemoteURL: remoteURL.String(),
 		}
 		data, _ := json.Marshal(payload)
@@ -109,7 +111,9 @@ func addArtifactManagerRunResultCmd() func(cmd *cobra.Command, args []string) {
 		}
 
 		payload := sdk.WorkflowRunResultArtifactManager{
-			Name:     fileName,
+			WorkflowRunResultArtifactCommon: sdk.WorkflowRunResultArtifactCommon{
+				Name: fileName,
+			},
 			Perm:     0,
 			Path:     filePath,
 			RepoName: repositoryName,

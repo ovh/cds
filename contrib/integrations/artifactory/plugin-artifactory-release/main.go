@@ -86,6 +86,8 @@ func (e *artifactoryReleasePlugin) Run(ctx context.Context, opts *integrationplu
 		return fail("unable to list run results: %v", err)
 	}
 
+	fmt.Printf("Found %d run results\n", len(runResult))
+
 	log.SetLogger(log.NewLogger(log.INFO, os.Stdout))
 	if distributionURL == "" {
 		fmt.Printf("Using %s to release\n", artifactoryURL)
@@ -137,8 +139,15 @@ func (e *artifactoryReleasePlugin) Run(ctx context.Context, opts *integrationplu
 				break
 			}
 		}
+		name, err := r.ComputeName()
+		if err != nil {
+			return fail("unable to read result %s: %v", r.ID, err)
+		}
 		if skip {
+			fmt.Printf("Result %q skipped\n", name)
 			continue
+		} else {
+			fmt.Printf("Result %q to promote\n", name)
 		}
 		switch rData.RepoType {
 		case "docker":

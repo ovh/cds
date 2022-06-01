@@ -125,7 +125,9 @@ func TestCanUploadArtifactAlreadyExist(t *testing.T) {
 		Type:              sdk.WorkflowRunResultTypeArtifact,
 	}
 	artiData := sdk.WorkflowRunResultArtifact{
-		Name:       "myartifact",
+		WorkflowRunResultArtifactCommon: sdk.WorkflowRunResultArtifactCommon{
+			Name: "myartifact",
+		},
 		CDNRefHash: "123",
 		MD5:        "123",
 		Size:       1,
@@ -171,7 +173,9 @@ func TestCanUploadArtifactAlreadyExistInMoreRecentSubNum(t *testing.T) {
 		Type:              sdk.WorkflowRunResultTypeArtifact,
 	}
 	artiData := sdk.WorkflowRunResultArtifact{
-		Name:       "myartifact",
+		WorkflowRunResultArtifactCommon: sdk.WorkflowRunResultArtifactCommon{
+			Name: "myartifact",
+		},
 		CDNRefHash: "123",
 		MD5:        "123",
 		Size:       1,
@@ -230,7 +234,9 @@ func TestCanUploadArtifactAlreadyExistInAPreviousSubNum(t *testing.T) {
 		Type:              sdk.WorkflowRunResultTypeArtifact,
 	}
 	artiData := sdk.WorkflowRunResultArtifact{
-		Name:       "myartifact",
+		WorkflowRunResultArtifactCommon: sdk.WorkflowRunResultArtifactCommon{
+			Name: "myartifact",
+		},
 		CDNRefHash: "123",
 		MD5:        "123",
 		Size:       1,
@@ -275,7 +281,9 @@ func TestCanUploadStaticFile(t *testing.T) {
 		Type:              sdk.WorkflowRunResultTypeStaticFile,
 	}
 	artiData := sdk.WorkflowRunResultStaticFile{
-		Name:      "my title static file",
+		WorkflowRunResultArtifactCommon: sdk.WorkflowRunResultArtifactCommon{
+			Name: "my title static file",
+		},
 		RemoteURL: "https://foo/bar",
 	}
 	bts, err := json.Marshal(artiData)
@@ -309,7 +317,9 @@ func TestCanUploadStaticFileInvalid(t *testing.T) {
 		Type:              sdk.WorkflowRunResultTypeStaticFile,
 	}
 	artiData := sdk.WorkflowRunResultStaticFile{
-		Name:      "my title static file",
+		WorkflowRunResultArtifactCommon: sdk.WorkflowRunResultArtifactCommon{
+			Name: "my title static file",
+		},
 		RemoteURL: "",
 	}
 	bts, err := json.Marshal(artiData)

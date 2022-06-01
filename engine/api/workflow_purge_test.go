@@ -234,8 +234,10 @@ func Test_Purge_DeleteArtifactsFromRepositoryManager(t *testing.T) {
 	require.NoError(t, err)
 
 	data := sdk.WorkflowRunResultArtifactManager{
+		WorkflowRunResultArtifactCommon: sdk.WorkflowRunResultArtifactCommon{
+			Name: "foo",
+		},
 		Path:     "path/to/foo",
-		Name:     "foo",
 		RepoName: "repository",
 	}
 	rawData, _ := json.Marshal(data)
