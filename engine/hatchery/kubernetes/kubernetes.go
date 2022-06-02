@@ -192,6 +192,7 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 				log.Warn(ctx, "spawnKubernetesDockerWorker> %s unable to parse memory requirement %d: %v", logJob, memory, err)
 				return err
 			}
+			break
 		}
 	}
 
@@ -283,6 +284,11 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 					Args:            []string{cmd},
 					Resources: apiv1.ResourceRequirements{
 						Requests: apiv1.ResourceList{
+							apiv1.ResourceCPU:    resource.MustParse(h.Config.DefaultCPU),
+							apiv1.ResourceMemory: resource.MustParse(fmt.Sprintf("%d", memory)),
+						},
+						Limits: apiv1.ResourceList{
+							apiv1.ResourceCPU:    resource.MustParse(h.Config.DefaultCPU),
 							apiv1.ResourceMemory: resource.MustParse(fmt.Sprintf("%d", memory)),
 						},
 					},
@@ -318,23 +324,30 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 		//value= "postgres:latest env_1=blabla env_2=blabla"" => we can add env variables in requirement name
 		img, envm := hatchery.ParseRequirementModel(serv.Value)
 
-		servContainer := apiv1.Container{
-			Name:  fmt.Sprintf("service-%d-%s", serv.ID, strings.ToLower(serv.Name)),
-			Image: img,
-		}
-
+		serviceMemory := resource.MustParse(fmt.Sprintf("%d", h.Config.DefaultServiceMemory))
 		if sm, ok := envm["CDS_SERVICE_MEMORY"]; ok {
-			mq, err := resource.ParseQuantity(sm)
+			var err error
+			serviceMemory, err = resource.ParseQuantity(sm)
 			if err != nil {
 				log.Warn(ctx, "hatchery> kubernetes> SpawnWorker> Unable to parse CDS_SERVICE_MEMORY value '%s': %s", sm, err)
 				continue
 			}
-			servContainer.Resources = apiv1.ResourceRequirements{
-				Requests: apiv1.ResourceList{
-					apiv1.ResourceMemory: mq,
-				},
-			}
 			delete(envm, "CDS_SERVICE_MEMORY")
+		}
+
+		servContainer := apiv1.Container{
+			Name:  fmt.Sprintf("service-%d-%s", serv.ID, strings.ToLower(serv.Name)),
+			Image: img,
+			Resources: apiv1.ResourceRequirements{
+				Requests: apiv1.ResourceList{
+					apiv1.ResourceCPU:    resource.MustParse(h.Config.DefaultServiceCPU),
+					apiv1.ResourceMemory: serviceMemory,
+				},
+				Limits: apiv1.ResourceList{
+					apiv1.ResourceCPU:    resource.MustParse(h.Config.DefaultServiceCPU),
+					apiv1.ResourceMemory: serviceMemory,
+				},
+			},
 		}
 
 		if sa, ok := envm["CDS_SERVICE_ARGS"]; ok {
