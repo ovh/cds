@@ -183,7 +183,15 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 		logJob = fmt.Sprintf("for workflow job %d,", spawnArgs.JobID)
 	}
 
+	cpu := h.Config.DefaultCPU
+	if cpu == "" {
+		cpu = "500m"
+	}
+
 	memory := int64(h.Config.DefaultMemory)
+	if memory == 0 {
+		memory = 1024
+	}
 	for _, r := range spawnArgs.Requirements {
 		if r.Type == sdk.MemoryRequirement {
 			var err error
@@ -284,11 +292,11 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 					Args:            []string{cmd},
 					Resources: apiv1.ResourceRequirements{
 						Requests: apiv1.ResourceList{
-							apiv1.ResourceCPU:    resource.MustParse(h.Config.DefaultCPU),
+							apiv1.ResourceCPU:    resource.MustParse(cpu),
 							apiv1.ResourceMemory: resource.MustParse(fmt.Sprintf("%d", memory)),
 						},
 						Limits: apiv1.ResourceList{
-							apiv1.ResourceCPU:    resource.MustParse(h.Config.DefaultCPU),
+							apiv1.ResourceCPU:    resource.MustParse(cpu),
 							apiv1.ResourceMemory: resource.MustParse(fmt.Sprintf("%d", memory)),
 						},
 					},
@@ -324,6 +332,11 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 		//value= "postgres:latest env_1=blabla env_2=blabla"" => we can add env variables in requirement name
 		img, envm := hatchery.ParseRequirementModel(serv.Value)
 
+		serviceCPU := h.Config.DefaultServiceCPU
+		if serviceCPU == "" {
+			serviceCPU = "256m"
+		}
+
 		serviceMemory := resource.MustParse(fmt.Sprintf("%d", h.Config.DefaultServiceMemory))
 		if sm, ok := envm["CDS_SERVICE_MEMORY"]; ok {
 			var err error
@@ -340,11 +353,11 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 			Image: img,
 			Resources: apiv1.ResourceRequirements{
 				Requests: apiv1.ResourceList{
-					apiv1.ResourceCPU:    resource.MustParse(h.Config.DefaultServiceCPU),
+					apiv1.ResourceCPU:    resource.MustParse(serviceCPU),
 					apiv1.ResourceMemory: serviceMemory,
 				},
 				Limits: apiv1.ResourceList{
-					apiv1.ResourceCPU:    resource.MustParse(h.Config.DefaultServiceCPU),
+					apiv1.ResourceCPU:    resource.MustParse(serviceCPU),
 					apiv1.ResourceMemory: serviceMemory,
 				},
 			},
