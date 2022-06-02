@@ -6,7 +6,6 @@ import (
 	"context"
 	"crypto/md5"
 	"fmt"
-	"io/fs"
 	"os"
 	"os/exec"
 	"os/user"
@@ -738,64 +737,82 @@ func (w *CurrentWorker) setupHooks(ctx context.Context, jobInfo sdk.WorkflowNode
 				// The error contains 'Executable file not found', the capa is not on the worker
 				continue
 			}
+
 			hookFilename := fmt.Sprintf("%d-%s-%s", hookConfig.Priority, integrationName, slug.Convert(hookConfig.Label))
-			hookFilePath := path.Join(workingDir, "setup", hookFilename)
-			log.Info(ctx, "setting up hook %q", hookFilePath)
 
-			hookFile, err := fs.Create(hookFilePath)
-			if err != nil {
-				return errors.Errorf("unable to open hook file %q in %q: %v", hookFilePath, w.basedir.Name(), err)
+			w.hooks = append(w.hooks, workerHook{
+				Config:       hookConfig,
+				SetupPath:    path.Join(workingDir, "setup", hookFilename),
+				TeardownPath: path.Join(workingDir, "teardown", hookFilename),
+			})
+		}
+
+		for _, h := range w.hooks {
+			infos := []sdk.SpawnInfo{{
+				RemoteTime: time.Now(),
+				Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerHookSetup.ID, Args: []interface{}{h.Config.Label}},
+			}}
+			if err := w.Client().QueueJobSendSpawnInfo(ctx, w.currentJob.wJob.ID, infos); err != nil {
+				return sdk.WrapError(err, "cannot record QueueJobSendSpawnInfo for job (err spawn): %d", w.currentJob.wJob.ID)
 			}
-			if _, err := hookFile.WriteString(hookConfig.Setup); err != nil {
+
+			log.Info(ctx, "setting up hook at %q", h.SetupPath)
+
+			hookFile, err := fs.Create(h.SetupPath)
+			if err != nil {
+				return errors.Errorf("unable to open hook file %q in %q: %v", h.SetupPath, w.basedir.Name(), err)
+			}
+			if _, err := hookFile.WriteString(h.Config.Setup); err != nil {
 				_ = hookFile.Close
-				return errors.Errorf("unable to setup hook %q: %v", hookFilePath, err)
+				return errors.Errorf("unable to setup hook %q: %v", h.SetupPath, err)
 			}
 			if err := hookFile.Close(); err != nil {
-				return errors.Errorf("unable to setup hook %q: %v", hookFilePath, err)
+				return errors.Errorf("unable to setup hook %q: %v", h.SetupPath, err)
 			}
 
-			hookFilePath = path.Join(workingDir, "teardown", hookFilename)
-			hookFile, err = fs.Create(hookFilePath)
+			hookFile, err = fs.Create(h.TeardownPath)
 			if err != nil {
-				return errors.Errorf("unable to open hook file %q: %v", hookFilePath, err)
+				return errors.Errorf("unable to open hook file %q: %v", h.TeardownPath, err)
 			}
-			if _, err := hookFile.WriteString(hookConfig.Teardown); err != nil {
+			if _, err := hookFile.WriteString(h.Config.Teardown); err != nil {
 				_ = hookFile.Close
-				return errors.Errorf("unable to setup hook %q: %v", hookFilePath, err)
+				return errors.Errorf("unable to setup hook %q: %v", h.TeardownPath, err)
 			}
 			if err := hookFile.Close(); err != nil {
-				return errors.Errorf("unable to setup hook %q: %v", hookFilePath, err)
+				return errors.Errorf("unable to setup hook %q: %v", h.TeardownPath, err)
 			}
 		}
 	}
 	return nil
 }
 
-func (w *CurrentWorker) executeHooksSetup(ctx context.Context, basedir afero.Fs, workingDir string) error {
+func (w *CurrentWorker) executeHooksSetup(ctx context.Context, fs afero.Fs, workingDir string) error {
 	if strings.EqualFold(runtime.GOOS, "windows") {
 		log.Warn(ctx, "hooks are not supported on windows")
 		return nil
 	}
 
 	var result = make(map[string]string)
-	var setupDir = path.Join(workingDir, "setup")
 
-	var absPath string
-	if x, ok := basedir.(*afero.BasePathFs); ok {
-		absPath, _ = x.RealPath(setupDir)
-		absPath, _ = filepath.Abs(path.Dir(absPath))
+	basedir, ok := fs.(*afero.BasePathFs)
+	if !ok {
+		return sdk.WithStack(fmt.Errorf("invalid given basedir"))
 	}
-
-	setupDir = filepath.Join(absPath, filepath.Base(setupDir))
 
 	workerEnv := w.Environ()
 
-	err := filepath.Walk(setupDir, func(filepath string, info os.FileInfo, err error) error {
+	for _, h := range w.hooks {
+		filepath, err := basedir.RealPath(h.SetupPath)
 		if err != nil {
-			return err
+			return sdk.WrapError(err, "cannot get real path for: %s", h.SetupPath)
 		}
-		if info.IsDir() {
-			return nil
+
+		infos := []sdk.SpawnInfo{{
+			RemoteTime: time.Now(),
+			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerHookRun.ID, Args: []interface{}{h.Config.Label}},
+		}}
+		if err := w.Client().QueueJobSendSpawnInfo(ctx, w.currentJob.wJob.ID, infos); err != nil {
+			return sdk.WrapError(err, "cannot record QueueJobSendSpawnInfo for job (err spawn): %d", w.currentJob.wJob.ID)
 		}
 
 		str := fmt.Sprintf("source %s ; echo '<<<ENVIRONMENT>>>' ; env", filepath)
@@ -821,22 +838,35 @@ func (w *CurrentWorker) executeHooksSetup(ctx context.Context, basedir afero.Fs,
 				}
 			}
 		}
-		return nil
-	})
+	}
 	w.currentJob.envFromHooks = result
-	return errors.WithStack(err)
+	return nil
 }
 
-func (w *CurrentWorker) executeHooksTeardown(_ context.Context, basedir afero.Fs, workingDir string) error {
-	err := afero.Walk(basedir, path.Join(workingDir, "setup"), func(path string, info fs.FileInfo, err error) error {
-		if info.IsDir() {
-			return nil
+func (w *CurrentWorker) executeHooksTeardown(ctx context.Context, fs afero.Fs, workingDir string) error {
+	basedir, ok := fs.(*afero.BasePathFs)
+	if !ok {
+		return sdk.WithStack(fmt.Errorf("invalid given basedir"))
+	}
+
+	for _, h := range w.hooks {
+		filepath, err := basedir.RealPath(h.SetupPath)
+		if err != nil {
+			return sdk.WrapError(err, "cannot get real path for: %s", h.SetupPath)
 		}
-		cmd := exec.Command("bash", "-c", path)
+
+		infos := []sdk.SpawnInfo{{
+			RemoteTime: time.Now(),
+			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerHookRunTeardown.ID, Args: []interface{}{h.Config.Label}},
+		}}
+		if err := w.Client().QueueJobSendSpawnInfo(ctx, w.currentJob.wJob.ID, infos); err != nil {
+			return sdk.WrapError(err, "cannot record QueueJobSendSpawnInfo for job (err spawn): %d", w.currentJob.wJob.ID)
+		}
+
+		cmd := exec.Command("bash", "-c", filepath)
 		if output, err := cmd.CombinedOutput(); err != nil {
 			return errors.WithMessage(err, w.blur.String(string(output)))
 		}
-		return nil
-	})
-	return err
+	}
+	return nil
 }

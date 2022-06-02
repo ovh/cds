@@ -86,6 +86,11 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 			Status: sdk.StatusBuilding,
 		})
 
+	gock.New("http://cds-api.local").Post("/queue/workflows/42/spawn/infos").Times(3).
+		HeaderPresent("Authorization").
+		Reply(200).
+		JSON(nil)
+
 	gock.New("http://cds-api.local").Get("project/proj_key/workflows/workflow_name/runs/0").Times(1).
 		HeaderPresent("Authorization").
 		Reply(200).
@@ -284,14 +289,14 @@ export FOO_FROM_HOOK=BAR`,
 
 	var checkRequest gock.ObserverFunc = func(request *http.Request, mock gock.Mock) {
 		bodyContent, err := io.ReadAll(request.Body)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		request.Body = io.NopCloser(bytes.NewReader(bodyContent))
 		if mock != nil {
 			switch mock.Request().URLStruct.String() {
 			case "http://cds-api.local/queue/workflows/42/step":
 				var result sdk.StepStatus
 				err := json.Unmarshal(bodyContent, &result)
-				assert.NoError(t, err)
+				require.NoError(t, err)
 
 				switch result.StepOrder {
 				case 0:
@@ -320,15 +325,14 @@ export FOO_FROM_HOOK=BAR`,
 				}
 			case "http://cds-api.local/queue/workflows/42/result":
 				var result sdk.Result
-				err := json.Unmarshal(bodyContent, &result)
-				assert.NoError(t, err)
-				assert.Equal(t, int64(42), result.BuildID)
-				assert.Equal(t, sdk.StatusFail, result.Status)
+				require.NoError(t, json.Unmarshal(bodyContent, &result))
+				require.Equal(t, int64(42), result.BuildID)
+				require.Equal(t, sdk.StatusFail, result.Status)
 				if len(result.NewVariables) > 0 {
-					assert.Equal(t, "cds.build.newvar", result.NewVariables[0].Name)
+					require.Equal(t, "cds.build.newvar", result.NewVariables[0].Name)
 					// assert.Equal(t, "cds.semver", result.NewVariables[0].Name)
 					// assert.Equal(t, "git.describe", result.NewVariables[0].Name)
-					assert.Equal(t, "newval", result.NewVariables[0].Value)
+					require.Equal(t, "newval", result.NewVariables[0].Value)
 				} else {
 					t.Error("missing new variables")
 				}
@@ -363,8 +367,7 @@ export FOO_FROM_HOOK=BAR`,
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	err = internal.StartWorker(ctx, w, 42)
-	assert.NoError(t, err)
+	require.NoError(t, internal.StartWorker(ctx, w, 42))
 
 	var isDone bool
 	if gock.IsDone() {
@@ -380,7 +383,7 @@ export FOO_FROM_HOOK=BAR`,
 			}
 		}
 	}
-	assert.True(t, isDone)
+	require.True(t, isDone)
 	if gock.HasUnmatchedRequest() {
 		reqs := gock.GetUnmatchedRequests()
 		for _, req := range reqs {
@@ -426,5 +429,4 @@ export FOO_FROM_HOOK=BAR`,
 	assert.Equal(t, 1, strings.Count(logBuffer.String(), "HATCHERY_REGION=local-test"))
 	assert.Equal(t, 1, strings.Count(logBuffer.String(), "BASEDIR="))
 	assert.Equal(t, 1, strings.Count(logBuffer.String(), "FOO_FROM_HOOK=BAR"))
-
 }
