@@ -74,7 +74,11 @@ loopModels:
 
 		if err := h.CDSClient().WorkerModelBook(models[k].Group.Name, models[k].Name); err != nil {
 			ctx := log.ContextWithStackTrace(ctx, err)
-			log.Info(ctx, "cannot book model %s with id %d: %v", models[k].Path(), models[k].ID, err)
+			if sdk.ErrorIs(err, sdk.ErrWorkerModelAlreadyBooked) {
+				log.Info(ctx, "worker model already booked. model %s with id %d: %v", models[k].Path(), models[k].ID, err)
+			} else {
+				log.Error(ctx, "cannot book model %s with id %d: %v", models[k].Path(), models[k].ID, err)
+			}
 			continue
 		}
 
