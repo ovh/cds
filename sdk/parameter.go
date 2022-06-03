@@ -54,7 +54,7 @@ func (p Parameter) IsValid() error {
 		}
 	}
 	if !found {
-		return NewErrorFrom(ErrWrongRequest, "invalid given parameter type")
+		return NewErrorFrom(ErrWrongRequest, "invalid given parameter type: %s", p.Type)
 	}
 
 	if p.Name == "" && p.Value == "" {

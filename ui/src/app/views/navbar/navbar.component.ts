@@ -1,12 +1,10 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { Store } from '@ngxs/store';
-import { Broadcast } from 'app/model/broadcast.model';
 import { Help } from 'app/model/help.model';
 import { NavbarProjectData, NavbarRecentData, NavbarSearchItem } from 'app/model/navbar.model';
 import { Project } from 'app/model/project.model';
 import { AuthSummary } from 'app/model/user.model';
-import { BroadcastStore } from 'app/service/broadcast/broadcast.store';
 import { NavbarService } from 'app/service/navbar/navbar.service';
 import { RouterService } from 'app/service/router/router.service';
 import { ProjectStore } from 'app/service/services.module';
@@ -35,17 +33,11 @@ export class NavbarComponent implements OnInit, OnDestroy {
     searchItems: Array<NavbarSearchItem> = [];
     recentItems: Array<NavbarSearchItem> = [];
     items: Array<NavbarSearchItem> = [];
-    broadcasts: Array<Broadcast> = new Array<Broadcast>();
     help: Help = new Help();
-    recentBroadcastsToDisplay: Array<Broadcast> = new Array<Broadcast>();
-    previousBroadcastsToDisplay: Array<Broadcast> = new Array<Broadcast>();
     loading = true;
     listWorkflows: List<NavbarRecentData>;
     navbarSubscription: Subscription;
     authSubscription: Subscription;
-    sessionSubcription: Subscription;
-    consumerSubcription: Subscription;
-    broadcastSubscription: Subscription;
     currentRoute: {};
     recentView = true;
     currentAuthSummary: AuthSummary;
@@ -68,7 +60,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
         private _store: Store,
         private _projectStore: ProjectStore,
         private _workflowStore: WorkflowStore,
-        private _broadcastStore: BroadcastStore,
         private _router: Router,
         private _theme: ThemeStore,
         private _routerService: RouterService,
@@ -309,19 +300,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
             this.loading = false;
             this._cd.markForCheck();
         });
-
-        this.broadcastSubscription = this._broadcastStore.getBroadcasts()
-            .subscribe((broadcasts) => {
-                let broadcastsToRead = broadcasts.valueSeq().toArray().filter(br => !br.read && !br.archived);
-                let previousBroadcasts = broadcasts.valueSeq().toArray().filter(br => br.read && !br.archived);
-                this.recentBroadcastsToDisplay = broadcastsToRead
-                    .sort((a, b) => (new Date(b.updated)).getTime() - (new Date(a.updated)).getTime()).slice(0, 4);
-                this.previousBroadcastsToDisplay = previousBroadcasts
-                    .sort((a, b) => (new Date(b.updated)).getTime() - (new Date(a.updated)).getTime()).slice(0, 4);
-                this.broadcasts = broadcastsToRead
-                    .sort((a, b) => (new Date(b.updated)).getTime() - (new Date(a.updated)).getTime());
-                this._cd.markForCheck();
-            });
     }
 
     /**
@@ -338,12 +316,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
      */
     navigateToWorkflow(key: string, workflowName: string): void {
         this._router.navigate(['project', key, 'workflow', workflowName]);
-    }
-
-    markAsRead(event: Event, id: number) {
-        event.stopPropagation();
-        this._broadcastStore.markAsRead(id)
-            .subscribe();
     }
 
     clickLogout(): void {

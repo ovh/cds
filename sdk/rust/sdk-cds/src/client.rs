@@ -63,13 +63,6 @@ impl Client {
             .await
     }
 
-    /// Get the list of broadcasts
-    pub async fn broadcasts(&self) -> Result<Vec<models::Broadcast>> {
-        let body: Vec<u8> = vec![];
-        self.stream_json("GET".to_string(), "/broadcast".to_string(), body)
-            .await
-    }
-
     /// Get the list of projects
     pub async fn projects(&self) -> Result<Vec<models::Project>> {
         let body: Vec<u8> = vec![];

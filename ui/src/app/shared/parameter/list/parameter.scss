@@ -1,18 +1,6 @@
-@import '../../../../common';
-
-:host {
-    display: block;
+nz-select {
+  width: 100%;
 }
-
-.ui.input {
-    position: inherit;
-}
-
-.ui.form textarea.lock {
-    resize: none;
-    border: none;
-}
-
-.middle-aligned {
-    vertical-align: middle !important;
+.hidden {
+  display: none;
 }

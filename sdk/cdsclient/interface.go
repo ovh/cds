@@ -185,14 +185,6 @@ type GroupClient interface {
 	GroupMemberRemove(groupName, username string) error
 }
 
-// BroadcastClient expose all function for CDS Broadcasts
-type BroadcastClient interface {
-	Broadcasts() ([]sdk.Broadcast, error)
-	BroadcastCreate(broadcast *sdk.Broadcast) error
-	BroadcastGet(id string) (*sdk.Broadcast, error)
-	BroadcastDelete(id string) error
-}
-
 // PipelineClient exposes pipelines related functions
 type PipelineClient interface {
 	PipelineGet(projectKey, name string, mods ...RequestModifier) (*sdk.Pipeline, error)
@@ -395,7 +387,6 @@ type Interface interface {
 	FeatureEnabled(name sdk.FeatureName, params map[string]string) (sdk.FeatureEnabledResponse, error)
 	GroupClient
 	GRPCPluginsClient
-	BroadcastClient
 	MaintenanceClient
 	PipelineClient
 	IntegrationClient

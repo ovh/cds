@@ -172,91 +172,6 @@
             </div>
         </ng-template>
 
-        <!-- NOTIFICATION -->
-        <div nz-popover [nzPopoverContent]="popupTemplateBroadcasts" [nzPopoverVisible]="showNotif"
-            nzPopoverPlacement="bottomRight" class="icon popover">
-            <div>
-                <i nz-icon nzType="bell" nzTheme="fill"></i>
-            </div>
-            <nz-badge *ngIf="broadcasts && broadcasts.length > 0" [nzCount]="broadcasts.length" nzStandalone [nzOffset]="[5,10]"></nz-badge>
-        </div>
-        <ng-template #popupTemplateBroadcasts>
-            <div class="content notifpopup">
-                <nz-tabset [nzAnimated]="false">
-                    <nz-tab nzTitle="Recent">
-                        <nz-list *ngIf="recentBroadcastsToDisplay && recentBroadcastsToDisplay.length > 0">
-                            <nz-list-item *ngFor="let broadcast of recentBroadcastsToDisplay">
-                                <div class="notif">
-                                    <span class="right floated pointing">
-                                        <i nz-icon nzType="check" nzTheme="outline" nz-popover nzPopoverContent="Mark as read"
-                                            nzPopoverPlacement="bottom" (click)="markAsRead($event, broadcast.id)"
-                                        ></i>
-                                    </span>
-                                    <a class="title" (click)="showNotif = false" [routerLink]="['broadcast', broadcast.id]"
-                                       [class.blue]="broadcast.level === 'info'"
-                                       [class.orange]="broadcast.level === 'warning'">
-                                        {{broadcast.title}}
-                                    </a>
-                                    <a class="info mt" [routerLink]="['broadcast', broadcast.id]" (click)="showNotif = false">
-                                    <span *ngIf="broadcast.project_key">
-                                        {{'common_project' | translate}} {{broadcast.project_key}}
-                                    </span>
-                                        <span *ngIf="!broadcast.project_key">
-                                        {{'navbar_general' | translate}}
-                                    </span>
-                                        <span class="right floated">
-                                        {{broadcast.updated | amTimeAgo}}
-                                    </span>
-                                    </a>
-                                </div>
-                            </nz-list-item>
-                            <nz-list-item>
-                                <a class="item" *ngIf="broadcasts.length > 4" [routerLink]="['broadcast']"
-                                   (click)="showNotif = false">
-                                    {{'navbar_see_all' | translate}}
-                                </a>
-                            </nz-list-item>
-                        </nz-list>
-                        <div *ngIf="!recentBroadcastsToDisplay || recentBroadcastsToDisplay.length === 0">
-                            {{'broadcast_none' | translate}}
-                        </div>
-                    </nz-tab>
-                    <nz-tab nzTitle="Seen">
-                        <nz-list *ngIf="previousBroadcastsToDisplay && previousBroadcastsToDisplay.length > 0">
-                            <nz-list-item *ngFor="let broadcast of previousBroadcastsToDisplay">
-                                <a class="item"
-                                   [routerLink]="['broadcast', broadcast.id]" (click)="showNotif = false">
-                                <div class="notif">
-                                    <div class="title" [class.blue]="broadcast.level === 'info'"
-                                         [class.orange]="broadcast.level === 'warning'">
-                                        {{broadcast.title}}
-                                    </div>
-                                    <div class="info mt">
-                                    <span *ngIf="broadcast.project_key">
-                                        {{'common_project' | translate}} {{broadcast.project_key}}
-                                    </span>
-                                        <span *ngIf="!broadcast.project_key">
-                                        {{'navbar_general' | translate}}
-                                    </span>
-                                        <span class="right floated">
-                                        {{broadcast.updated | amTimeAgo}}
-                                    </span>
-                                    </div>
-                                </div>
-                                </a>
-                            </nz-list-item>
-                            <nz-list-item>
-                                <a class="item" [routerLink]="['broadcast']" (click)="showNotif = false">
-                                    {{'navbar_see_all' | translate}}
-                                </a>
-                            </nz-list-item>
-                        </nz-list>
-                    </nz-tab>
-                </nz-tabset>
-
-            </div>
-        </ng-template>
-
         <!-- HELP -->
         <ng-container *ngIf="help?.content?.length > 0">
             <div nz-popover [nzPopoverContent]="popupTemplateHelp" class="icon popover">
@@ -335,9 +250,6 @@
             </div>
             <nz-dropdown-menu #adminMenu="nzDropdownMenu">
                 <ul nz-menu>
-                    <li nz-menu-item>
-                        <a href="#" [routerLink]="['admin', 'broadcast']">{{ 'navbar_admin_broadcast' | translate }}</a>
-                    </li>
                     <li nz-menu-item>
                         <a href="#" [routerLink]="['admin', 'hooks-tasks']">{{ 'hook_tasks_summary' | translate }}</a>
                     </li>

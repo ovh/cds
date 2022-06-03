@@ -30,7 +30,6 @@ import (
 	"github.com/ovh/cds/engine/api/authentication/local"
 	"github.com/ovh/cds/engine/api/authentication/oidc"
 	"github.com/ovh/cds/engine/api/bootstrap"
-	"github.com/ovh/cds/engine/api/broadcast"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/download"
 	"github.com/ovh/cds/engine/api/event"
@@ -739,9 +738,6 @@ func (a *API) Serve(ctx context.Context) error {
 	})
 	a.GoRoutines.RunWithRestart(ctx, "services.KillDeadServices", func(ctx context.Context) {
 		services.KillDeadServices(ctx, a.mustDB)
-	})
-	a.GoRoutines.Run(ctx, "broadcast.Initialize", func(ctx context.Context) {
-		broadcast.Initialize(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper))
 	})
 	a.GoRoutines.RunWithRestart(ctx, "api.serviceAPIHeartbeat", func(ctx context.Context) {
 		a.serviceAPIHeartbeat(ctx)

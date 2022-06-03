@@ -1,32 +1,54 @@
-<form class="ui form" (ngSubmit)="create()">
-    <div class="fields">
-        <div class="four wide field">
-            <label>{{'parameter_name' | translate}}</label>
-            <input type="text" name="name" [(ngModel)]="newParameter.name">
-        </div>
-        <div class="two wide field">
-            <label>{{'parameter_type' | translate}}</label>
-            <sm-select class="fluid search" name="type" [options]="{'fullTextSearch': true}" [(model)]="newParameter.type">
-                <option *ngFor="let type of parameterTypes" value="{{type}}">{{type}}</option>
-            </sm-select>
-        </div>
-        <div class="four wide field">
-            <label>{{'parameter_value' | translate}}</label>
-            <app-parameter-value [project]="project" [suggest]="suggest" [type]="newParameter.type" [(value)]="newParameter.value" [editList]="true" [keys]="keys"></app-parameter-value>
-        </div>
-        <div class="four wide field">
-            <label>{{'parameter_description' | translate}}</label>
-            <textarea [(ngModel)]="newParameter.description" name="description" rows="{{ _sharedService.getTextAreaheight(newParameter.description)}}"></textarea>
-        </div>
-        <div class="two wide field" *ngIf="!project">
-            <label>{{'parameter_advanced' | translate}}</label>
-            <div class="ui checkbox">
-                <input type="checkbox" name="advanced" [(ngModel)]="newParameter.advanced">
-                <label></label>
+<form nz-form (ngSubmit)="create()" nzLayout="vertical">
+    <nz-row>
+        <nz-col [nzSpan]="4">
+            <nz-form-item>
+                <nz-form-label>Name</nz-form-label>
+                <nz-form-control>
+                    <input nz-input type="text" name="name" [(ngModel)]="newParameter.name">
+                </nz-form-control>
+            </nz-form-item>
+        </nz-col>
+        <nz-col [nzSpan]="4">
+            <nz-form-item>
+                <nz-form-label>Type</nz-form-label>
+                <nz-form-control>
+                    <nz-select nzShowSearch name="type" [(ngModel)]="newParameter.type">
+                        <nz-option *ngFor="let type of parameterTypes" [nzValue]="type" [nzLabel]="type"></nz-option>
+                    </nz-select>
+                </nz-form-control>
+            </nz-form-item>
+        </nz-col>
+        <nz-col [nzSpan]="4">
+            <nz-form-item>
+                <nz-form-label>Value</nz-form-label>
+                <nz-form-control>
+                    <app-parameter-value [project]="project" [suggest]="suggest" [type]="newParameter.type" [(value)]="newParameter.value" [editList]="true" [keys]="keys"></app-parameter-value>
+                </nz-form-control>
+            </nz-form-item>
+        </nz-col>
+        <nz-col [nzSpan]="6">
+            <nz-form-item>
+                <nz-form-label>Description</nz-form-label>
+                <nz-form-control>
+                    <textarea nz-input [(ngModel)]="newParameter.description" name="description" rows="{{ _sharedService.getTextAreaheight(newParameter.description)}}"></textarea>
+                </nz-form-control>
+            </nz-form-item>
+        </nz-col>
+        <nz-col [nzSpan]="4" *ngIf="!project">
+            <nz-form-label>Advanced parameter</nz-form-label>
+            <div class="checkbox">
+                <label nz-checkbox name="advanced" [(nzChecked)]="newParameter.advanced"></label>
             </div>
-        </div>
-        <div class="two wide center field">
-            <button class="ui blue button" [disabled]="!newParameter.name"><i class="plus icon"></i>{{ 'btn_add' | translate}}</button>
-        </div>
-    </div>
+        </nz-col>
+        <nz-col [nzSpan]="2">
+            <nz-form-item>
+                <nz-form-label></nz-form-label>
+                <nz-form-control>
+                    <button name="addBtn" nz-button nzType="primary" [disabled]="!newParameter.name">
+                        <i nz-icon nzType="plus" nzTheme="outline"></i>Add
+                    </button>
+                </nz-form-control>
+            </nz-form-item>
+        </nz-col>
+    </nz-row>
 </form>
