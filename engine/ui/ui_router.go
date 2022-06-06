@@ -123,7 +123,7 @@ func (r *reverseProxyWithFilter) ServeHTTP(rw http.ResponseWriter, req *http.Req
 }
 
 func (s *Service) uiServe(fs http.FileSystem, dir string) http.Handler {
-	fsh := http.FileServer(fs)
+	fsh := http.FileServer(uiFileSystem{fs})
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if dir == s.DocsDir {
 			r.URL.Path = strings.TrimPrefix(r.URL.Path, "/docs")
@@ -138,4 +138,33 @@ func (s *Service) uiServe(fs http.FileSystem, dir string) http.Handler {
 		}
 		fsh.ServeHTTP(w, r)
 	})
+}
+
+type uiFileSystem struct {
+	base http.FileSystem
+}
+
+func (uifs uiFileSystem) Open(path string) (http.File, error) {
+	f, err := uifs.base.Open(path)
+	if err != nil {
+		return nil, os.ErrNotExist
+	}
+
+	s, err := f.Stat()
+	if err != nil {
+		return nil, os.ErrNotExist
+	}
+	if s.IsDir() {
+		index := filepath.Join(path, "index.html")
+		if _, err := uifs.base.Open(index); err != nil {
+			closeErr := f.Close()
+			if closeErr != nil {
+				return nil, closeErr
+			}
+
+			return nil, os.ErrNotExist
+		}
+	}
+
+	return f, nil
 }
