@@ -74,22 +74,28 @@
         </app-action>
     </div>
 </div>
-
-<sm-modal title="{{ 'pipeline_stage_edit' | translate }}" class="fluid" #editStageModal>
-    <modal-content>
+<nz-modal [nzVisible]="stageModalVisible" (nzOnCancel)="stageModalVisible = false" [nzWidth]="900">
+    <div *nzModalContent>
         <app-pipeline-stage-form [project]="project" [pipeline]="pipeline" [stage]="selectedStage"
-            [readOnly]="readOnly">
+                                 [readOnly]="readOnly">
         </app-pipeline-stage-form>
-    </modal-content>
-    <modal-actions>
-        <button class="ui grey button" [disabled]="loadingStage"
-            (click)="editStageModal.hide()">{{ 'btn_cancel' | translate }}</button>
-        <button *ngIf="!readOnly" class="ui green button" [disabled]="loadingStage" [class.loading]="loadingStage"
-            (click)="stageEvent('update')">
-            <span *ngIf="!editMode">{{ 'btn_save' | translate }}</span>
-            <span *ngIf="editMode">{{ 'btn_apply' | translate }}</span>
+    </div>
+    <div *nzModalFooter>
+        <button nz-button [disabled]="loadingStage"
+                (click)="stageModalVisible = false">Cancel</button>
+        <button nz-button nzType="primary" *ngIf="!readOnly" [disabled]="loadingStage" [nzLoading]="loadingStage"
+                (click)="stageEvent('update')">
+            <span *ngIf="!editMode">Save</span>
+            <span *ngIf="editMode">Apply</span>
         </button>
-        <app-delete-button (event)="stageEvent('delete')" *ngIf="!selectedStage?.hasChanged && !readOnly">
-        </app-delete-button>
-    </modal-actions>
-</sm-modal>
+
+        <button nz-popconfirm nzDanger *ngIf="!selectedStage?.hasChanged && !readOnly"
+                name="deleteBtn"
+                nzPopconfirmTitle="Are you sure delete this stage?"
+                (nzOnConfirm)="stageEvent('delete')"
+                nzPopconfirmPlacement="topLeft"
+                nz-button>
+            <i nz-icon nzType="delete" nzTheme="outline"></i>Delete
+        </button>
+    </div>
+</nz-modal>

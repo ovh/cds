@@ -18,7 +18,6 @@ import { WorkflowCoreService } from 'app/service/workflow/workflow.core.service'
 import { WorkflowStore } from 'app/service/workflow/workflow.store';
 import { AsCodeSaveModalComponent } from 'app/shared/ascode/save-modal/ascode.save-modal.component';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
-import { WarningModalComponent } from 'app/shared/modal/warning/warning.component';
 import { PermissionEvent } from 'app/shared/permission/permission.event.model';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { WorkflowNodeRunParamComponent } from 'app/shared/workflow/node/run/node.run.param.component';
@@ -27,7 +26,7 @@ import { CancelWorkflowEditMode, SelectWorkflowNode } from 'app/store/workflow.a
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
-import { finalize, first, tap } from 'rxjs/operators';
+import { finalize, first } from 'rxjs/operators';
 import { Tab } from 'app/shared/tabs/tabs.component';
 
 @Component({
@@ -56,8 +55,6 @@ export class WorkflowShowComponent implements OnInit, OnDestroy, AfterViewInit {
 
     @ViewChild('workflowStartParam')
     runWithParamComponent: WorkflowNodeRunParamComponent;
-    @ViewChild('permWarning')
-    permWarningModal: WarningModalComponent;
     @ViewChild('updateAsCode')
     updateAsCodeModal: AsCodeSaveModalComponent;
 
@@ -83,7 +80,8 @@ export class WorkflowShowComponent implements OnInit, OnDestroy, AfterViewInit {
         private _toast: ToastService,
         private _workflowCoreService: WorkflowCoreService,
         private _cd: ChangeDetectorRef
-    ) { }
+    ) {
+    }
 
     ngAfterViewInit(): void {
         if (this.detailedWorkflow) {
@@ -91,7 +89,8 @@ export class WorkflowShowComponent implements OnInit, OnDestroy, AfterViewInit {
         }
     }
 
-    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void {
+    } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
         // Update data if route change
@@ -140,7 +139,7 @@ export class WorkflowShowComponent implements OnInit, OnDestroy, AfterViewInit {
 
 
         this.paramsSubs = this.activatedRoute.params.subscribe(() => {
-            this._workflowCoreService.toggleAsCodeEditor({ open: false, save: false });
+            this._workflowCoreService.toggleAsCodeEditor({open: false, save: false});
             this._workflowCoreService.setWorkflowPreview(null);
         });
 
@@ -162,13 +161,13 @@ export class WorkflowShowComponent implements OnInit, OnDestroy, AfterViewInit {
         this.workflowPreviewSubscription = this._workflowCoreService.getWorkflowPreview()
             .subscribe((wfPreview) => {
                 if (wfPreview != null) {
-                    this._workflowCoreService.toggleAsCodeEditor({ open: false, save: false });
+                    this._workflowCoreService.toggleAsCodeEditor({open: false, save: false});
                 }
             });
     }
 
     initTabs() {
-        let graphTab = <Tab> {
+        let graphTab = <Tab>{
             title: 'Workflows',
             key: 'workflows',
             icon: 'share alternate',
@@ -194,7 +193,7 @@ export class WorkflowShowComponent implements OnInit, OnDestroy, AfterViewInit {
         this.tabs = new Array<Tab>();
         this.tabs.push(graphTab, notificationTab, permissionTab)
 
-        if (!this.detailedWorkflow.from_repository)   {
+        if (!this.detailedWorkflow.from_repository) {
             this.tabs.push(<Tab>{
                 title: 'Audit',
                 icon: 'history',
@@ -207,7 +206,7 @@ export class WorkflowShowComponent implements OnInit, OnDestroy, AfterViewInit {
             key: 'usage'
         });
         if (this.detailedWorkflow.permissions.writable) {
-            this.tabs.push( <Tab>{
+            this.tabs.push(<Tab>{
                 title: 'Advanced',
                 icon: 'graduation',
                 key: 'advanced'
@@ -216,7 +215,7 @@ export class WorkflowShowComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     savePreview() {
-        this._workflowCoreService.toggleAsCodeEditor({ open: false, save: true });
+        this._workflowCoreService.toggleAsCodeEditor({open: false, save: true});
     }
 
     changeDirection() {
@@ -228,49 +227,45 @@ export class WorkflowShowComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     showAsCodeEditor() {
-        this._workflowCoreService.toggleAsCodeEditor({ open: true, save: false });
+        this._workflowCoreService.toggleAsCodeEditor({open: true, save: false});
     }
 
-    groupManagement(event: PermissionEvent, skip?: boolean): void {
-        if (!skip && this.detailedWorkflow.externalChange) {
-            this.permWarningModal.show(event);
-        } else {
-            switch (event.type) {
-                case 'add':
-                    this.permFormLoading = true;
-                    this._store.dispatch(new actionsWorkflow.AddGroupInWorkflow({
-                        projectKey: this.project.key,
-                        workflowName: this.detailedWorkflow.name,
-                        group: event.gp
-                    })).pipe(finalize(() => {
-                        this.permFormLoading = false;
-                        this._cd.markForCheck();
-                    })).subscribe(() => this._toast.success('', this._translate.instant('permission_added')));
+    groupManagement(event: PermissionEvent): void {
+        switch (event.type) {
+            case 'add':
+                this.permFormLoading = true;
+                this._store.dispatch(new actionsWorkflow.AddGroupInWorkflow({
+                    projectKey: this.project.key,
+                    workflowName: this.detailedWorkflow.name,
+                    group: event.gp
+                })).pipe(finalize(() => {
+                    this.permFormLoading = false;
+                    this._cd.markForCheck();
+                })).subscribe(() => this._toast.success('', this._translate.instant('permission_added')));
 
-                    break;
-                case 'update':
-                    this._store.dispatch(new actionsWorkflow.UpdateGroupInWorkflow({
-                        projectKey: this.project.key,
-                        workflowName: this.detailedWorkflow.name,
-                        group: event.gp
-                    })).pipe(finalize( () => {
-                        this.permFormLoading = false;
-                        this.groups = cloneDeep(this.detailedWorkflow.groups);
-                        this._cd.markForCheck();
-                    })).subscribe(() => this._toast.success('', this._translate.instant('permission_updated')));
-                    break;
-                case 'delete':
-                    this._store.dispatch(new actionsWorkflow.DeleteGroupInWorkflow({
-                        projectKey: this.project.key,
-                        workflowName: this.detailedWorkflow.name,
-                        group: event.gp
-                    })).pipe(finalize( () => {
-                        this.permFormLoading = false;
-                        this.groups = cloneDeep(this.detailedWorkflow.groups);
-                        this._cd.markForCheck();
-                    })).subscribe(() => this._toast.success('', this._translate.instant('permission_deleted')));
-                    break;
-            }
+                break;
+            case 'update':
+                this._store.dispatch(new actionsWorkflow.UpdateGroupInWorkflow({
+                    projectKey: this.project.key,
+                    workflowName: this.detailedWorkflow.name,
+                    group: event.gp
+                })).pipe(finalize(() => {
+                    this.permFormLoading = false;
+                    this.groups = cloneDeep(this.detailedWorkflow.groups);
+                    this._cd.markForCheck();
+                })).subscribe(() => this._toast.success('', this._translate.instant('permission_updated')));
+                break;
+            case 'delete':
+                this._store.dispatch(new actionsWorkflow.DeleteGroupInWorkflow({
+                    projectKey: this.project.key,
+                    workflowName: this.detailedWorkflow.name,
+                    group: event.gp
+                })).pipe(finalize(() => {
+                    this.permFormLoading = false;
+                    this.groups = cloneDeep(this.detailedWorkflow.groups);
+                    this._cd.markForCheck();
+                })).subscribe(() => this._toast.success('', this._translate.instant('permission_deleted')));
+                break;
         }
     }
 

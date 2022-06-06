@@ -212,10 +212,6 @@
                         <span *ngIf="editMode">{{'btn_apply' | translate}}</span>
                     </button>
                 </div>
-                <app-warning-modal [title]="_translate.instant('warning_modal_title')"
-                    [msg]="_translate.instant('warning_modal_body')" (event)="onSubmitWorkflowUpdate(true)"
-                    #updateWarning>
-                </app-warning-modal>
             </form>
         </app-zone-content>
     </app-zone>

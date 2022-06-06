@@ -311,9 +311,6 @@ func (wk *CurrentWorker) Environ() []string {
 		if strings.HasPrefix(p.Name, "cds.key.") && strings.HasSuffix(p.Name, ".priv") {
 			continue
 		}
-		if p.Type == sdk.KeyParameter && !strings.HasSuffix(p.Name, ".pub") {
-			continue
-		}
 
 		newEnv = append(newEnv, sdk.EnvVartoENV(p)...)
 

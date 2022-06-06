@@ -62,7 +62,7 @@
               <i class="share alternate icon"></i>
             </div>
             <img class="right floated mini ui image" [src]="favorite.icon" *ngIf="favorite.icon">
-            <a class="header" sm-item href="#" [routerLink]="['/project', favorite.key, 'workflow', favorite.workflow_name]">
+            <a class="header" href="#" [routerLink]="['/project', favorite.key, 'workflow', favorite.workflow_name]">
               {{favorite.workflow_name}}
             </a>
             <div class="meta">
@@ -77,7 +77,7 @@
               <i class="browser icon"></i>
             </div>
             <img class="right floated mini ui image" [src]="favorite.icon" *ngIf="favorite.icon">
-            <a class="header" sm-item href="#" [routerLink]="['/project', favorite.key]">
+            <a class="header" href="#" [routerLink]="['/project', favorite.key]">
               {{favorite.name}}
             </a>
             <div class="meta">

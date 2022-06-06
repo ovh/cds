@@ -1,4 +1,4 @@
-<form class="ui form" *ngIf="ready" (ngSubmit)="create(verificationModal)" novalidate>
+<form class="ui form" *ngIf="ready" (ngSubmit)="create()" novalidate>
     <div class="fields">
         <div class="seven wide field">
             <sm-select [(model)]="selectedRepoId" [disabled]="connectLoading">
@@ -11,33 +11,45 @@
             </button>
         </div>
     </div>
-    <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="create(verificationModal, true)" #linkRepoWarning></app-warning-modal>
 </form>
-<sm-modal title="{{ 'repoman_modal_verif_title' | translate }}" class="small" #verificationModal>
-    <modal-content>
+<nz-modal nzTitle="{{ 'repoman_modal_verif_title' | translate }}" [nzVisible]="repoModalVisible" (nzOnCancel)="repoModalVisible = false">
+    <div *nzModalContent>
+        <form nz-form>
+            <ng-container *ngIf="addRepoResponse?.auth_type === 'basic'">
+                <nz-form-item>
+                    <nz-form-label>Username</nz-form-label>
+                    <nz-form-control>
+                        <input nz-input type="text" name="first-name" placeholder="Username" [(ngModel)]="basicUser">
+                    </nz-form-control>
+                </nz-form-item>
+                <nz-form-item>
+                    <nz-form-label>Password</nz-form-label>
+                    <nz-form-control>
+                        <input nz-input type="password" name="last-name" placeholder="Password" [(ngModel)]="basicPassword">
+                    </nz-form-control>
+                </nz-form-item>
+            </ng-container>
+            <ng-container *ngIf="addRepoResponse?.auth_type === 'oauth'">
+                <p>
+                    {{ 'repoman_modal_verif_text' | translate}}
+                    <a href="{{addRepoResponse?.url}}" target="_blank">{{ 'common_click_here' | translate}}</a>
+                </p>
+                <nz-form-item  *ngIf="selectedRepoId != null">
+                    <nz-form-label>Verification code</nz-form-label>
+                    <nz-form-control>
+                        <input nz-input type="text" name="verifiercode" placeholder="{{ 'repoman_modal_verif_code_placeholder' | translate }}" [(ngModel)]="validationToken">
+                    </nz-form-control>
+                </nz-form-item>
+            </ng-container>
+        </form>
+    </div>
+    <div *nzModalFooter>
+        <button nz-button name="cancel" (click)="repoModalVisible = false">Cancel</button>
         <ng-container *ngIf="addRepoResponse?.auth_type === 'basic'">
-            <div class="ui form">
-                <div class="field">
-                    <label>{{ 'user_label_username' | translate }}</label>
-                    <input type="text" name="first-name" placeholder="Username" [(ngModel)]="basicUser">
-                </div>
-                <div class="field">
-                    <label>{{ 'user_label_password' | translate }}</label>
-                    <input type="password" name="last-name" placeholder="Password" [(ngModel)]="basicPassword">
-                </div>
-                <button class="ui green button" name="validationbtn" [class.loading]="verificationLoading" (click)="sendBasicAuth()">{{ 'btn_validate' | translate }}</button>
-            </div>
+            <button nz-button nzType="primary" name="validationbtn" [nzLoading]="verificationLoading" (click)="sendBasicAuth()">Validate</button>
         </ng-container>
-        <ng-container *ngIf="addRepoResponse?.auth_type === 'oauth'">
-            <div>
-                {{ 'repoman_modal_verif_text' | translate}}
-                <a href="{{addRepoResponse?.url}}" target="_blank">{{ 'common_click_here' | translate}}</a>
-            </div>
-            <div class="ui input" *ngIf="selectedRepoId != null">
-                <input type="text" name="verifiercode" placeholder="{{ 'repoman_modal_verif_code_placeholder' | translate }}" [(ngModel)]="validationToken">
-                <button name="validationbtn" class="ui green button" [class.loading]="verificationLoading" (click)="sendVerificationCode()">{{ 'btn_validate' | translate }}</button>
-            </div>
+        <ng-container *ngIf="selectedRepoId != null">
+            <button nz-button nzType="primary" name="validationbtn" [nzLoading]="verificationLoading" (click)="sendVerificationCode()">Validate</button>
         </ng-container>
-
-    </modal-content>
-</sm-modal>
+    </div>
+</nz-modal>

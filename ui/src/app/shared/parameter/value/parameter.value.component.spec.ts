@@ -68,52 +68,5 @@ describe('CDS: Parameter Value Component', () => {
         expect(compiled.querySelector('input[type=checkbox]')).toBeTruthy('Input type checkbox must be displayed');
     }));
 
-    /*
-    it('should create a textarea', fakeAsync( () => {
-        // Create component
-        let fixture = TestBed.createComponent(ParameterValueComponent);
-        let component = fixture.debugElement.componentInstance;
-        expect(component).toBeTruthy();
-
-        fixture.componentInstance.type = 'text';
-
-        fixture.detectChanges();
-        tick(50);
-
-        let compiled = fixture.debugElement.nativeElement;
-        expect(compiled.querySelector('codemirror')).toBeTruthy('textarea must be displayed');
-
-    }));
-    */
-
-    it('should create a select for pipeline', fakeAsync(() => {
-        // Create component
-        let fixture = TestBed.createComponent(ParameterValueComponent);
-        let component = fixture.debugElement.componentInstance;
-        expect(component).toBeTruthy();
-
-        fixture.componentInstance.type = 'pipeline';
-
-        fixture.detectChanges();
-        tick(50);
-
-        let compiled = fixture.debugElement.nativeElement;
-        expect(compiled.querySelector('select')).toBeTruthy('select must be displayed');
-    }));
-
-    it('should create a select for environments', fakeAsync(() => {
-        // Create component
-        let fixture = TestBed.createComponent(ParameterValueComponent);
-        let component = fixture.debugElement.componentInstance;
-        expect(component).toBeTruthy();
-
-        fixture.componentInstance.type = 'env';
-
-        fixture.detectChanges();
-        tick(50);
-
-        let compiled = fixture.debugElement.nativeElement;
-        expect(compiled.querySelector('select')).toBeTruthy('select must be displayed');
-    }));
 });
 

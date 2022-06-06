@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    EventEmitter,
+    Input,
+    OnInit,
+    Output
+} from '@angular/core';
 import { SharedInfraGroupName } from 'app/model/group.model';
 import { Requirement } from 'app/model/requirement.model';
 import { WorkerModel } from 'app/model/worker-model.model';
@@ -18,34 +26,25 @@ export class RequirementsListComponent implements OnInit {
     @Input() requirements: Requirement[];
     @Input() edit: boolean;
 
-    _suggest: string[] = [];
-    @Input() set suggest(data: string[]) {
-        if (data) {
-            this._suggest = data;
-        } else {
-            this._suggest = [];
-        }
-    }
-    get suggest() {
-        return this._suggest;
-    }
+    @Input() suggest: Array<string> = [];
 
-    _workerModels: Array<WorkerModel>;
     @Input() set workerModels(wms: Array<WorkerModel>) {
         if (wms) {
-            this._workerModels = wms;
-
-            this.suggestWithWorkerModel = wms.map(wm => {
-                if (wm.group.name !== SharedInfraGroupName) {
-                    return `${wm.group.name}/${wm.name}`;
-                }
-                return wm.name;
-            }).concat(this._suggest);
+            this.workerModelsMap = new Map<string, WorkerModel>();
+            this.suggestWithWorkerModel = new Array<string>();
+            if (wms) {
+                wms.forEach(wm => {
+                    let name = wm.name;
+                    if (wm.group.name !== SharedInfraGroupName) {
+                        name = `${wm.group.name}/${wm.name}`;
+                    }
+                    this.suggestWithWorkerModel.push(name);
+                    this.workerModelsMap.set(name, wm);
+                })
+            }
         }
     }
-    get workerModels() {
-        return this._workerModels;
-    }
+    workerModelsMap: Map<string, WorkerModel> = new Map();
 
     @Output() event = new EventEmitter<RequirementEvent>();
     @Output() onChange = new EventEmitter<Requirement[]>();
@@ -56,6 +55,7 @@ export class RequirementsListComponent implements OnInit {
 
     constructor(
         private _requirementStore: RequirementStore,
+        private _cd: ChangeDetectorRef
     ) {
         this._requirementStore.getAvailableRequirements()
             .subscribe(r => {
@@ -67,6 +67,7 @@ export class RequirementsListComponent implements OnInit {
     ngOnInit() {
         this._requirementStore.getRequirementsTypeValues('os-architecture').pipe(first()).subscribe(values => {
             this.suggestWithOSArch = values.concat(this.suggest);
+            this._cd.markForCheck();
         });
     }
 
@@ -93,10 +94,8 @@ export class RequirementsListComponent implements OnInit {
                 // else, name is the value of the requirement
                 req.name = req.value;
         }
-        this.onChange.emit(this.requirements);
-    }
 
-    getWorkerModel(name: string): WorkerModel {
-        return this.workerModels.find(m => m.name === name);
+        this.onChange.emit(this.requirements);
+        this._cd.markForCheck();
     }
 }

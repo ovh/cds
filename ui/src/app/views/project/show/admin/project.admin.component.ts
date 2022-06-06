@@ -1,9 +1,8 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { Project } from 'app/model/project.model';
-import { WarningModalComponent } from 'app/shared/modal/warning/warning.component';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { DeleteProject, UpdateProject } from 'app/store/project.action';
 import { finalize } from 'rxjs/operators';
@@ -17,8 +16,6 @@ import { finalize } from 'rxjs/operators';
 export class ProjectAdminComponent implements OnInit {
 
     @Input() project: Project;
-    @ViewChild('updateWarning')
-    private warningUpdateModal: WarningModalComponent;
 
     loading = false;
     fileTooLarge = false;
@@ -29,31 +26,28 @@ export class ProjectAdminComponent implements OnInit {
         private _router: Router,
         private _store: Store,
         private _cd: ChangeDetectorRef
-    ) { }
+    ) {
+    }
 
     ngOnInit(): void {
         if (!this.project.permissions.writable) {
-            this._router.navigate(['/project', this.project.key], { queryParams: { tab: 'applications' } });
+            this._router.navigate(['/project', this.project.key], {queryParams: {tab: 'applications'}});
         }
     }
 
-    onSubmitProjectUpdate(skip?: boolean) {
-        if (!skip && this.project.externalChange) {
-            this.warningUpdateModal.show();
-        } else {
-            this.loading = true;
-            this._store.dispatch(new UpdateProject(this.project))
-                .pipe(finalize(() => {
-                    this.loading = false;
-                    this._cd.markForCheck();
-                }))
-                .subscribe(() => this._toast.success('', this._translate.instant('project_update_msg_ok')));
-        }
+    onSubmitProjectUpdate() {
+        this.loading = true;
+        this._store.dispatch(new UpdateProject(this.project))
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
+            .subscribe(() => this._toast.success('', this._translate.instant('project_update_msg_ok')));
     }
 
     deleteProject(): void {
         this.loading = true;
-        this._store.dispatch(new DeleteProject({ projectKey: this.project.key }))
+        this._store.dispatch(new DeleteProject({projectKey: this.project.key}))
             .pipe(finalize(() => {
                 this.loading = false;
                 this._cd.markForCheck();

@@ -470,9 +470,6 @@ func (s Step) IsValid() bool {
 	if s.isCheckout() {
 		count++
 	}
-	if s.isInstallKey() {
-		count++
-	}
 	if s.isDeploy() {
 		count++
 	}
@@ -515,8 +512,6 @@ func (s Step) toAction() (*sdk.Action, error) {
 		a, err = s.asRelease()
 	} else if s.isCheckout() {
 		a = s.asCheckoutApplication()
-	} else if s.isInstallKey() {
-		a = s.asInstallKey()
 	} else if s.isDeploy() {
 		a = s.asDeployApplication()
 	} else if s.isCoverage() {
@@ -608,49 +603,6 @@ func (s Step) asCheckoutApplication() sdk.Action {
 		},
 	}
 }
-
-func (s Step) asInstallKey() sdk.Action {
-	switch v := (*s.InstallKey).(type) {
-	case string:
-		return sdk.Action{
-			Name: sdk.InstallKeyAction,
-			Type: sdk.BuiltinAction,
-			Parameters: []sdk.Parameter{
-				{
-					Name:  "key",
-					Value: v,
-					Type:  sdk.KeyParameter,
-				},
-			},
-		}
-	case map[string]string:
-		params := make([]sdk.Parameter, 0, len(v))
-
-		for paramName, paramValue := range v {
-			paramType := sdk.StringParameter
-			if paramName == "name" {
-				paramType = sdk.KeyParameter
-			}
-			params = append(params, sdk.Parameter{
-				Name:  paramName,
-				Value: paramValue,
-				Type:  paramType,
-			})
-		}
-		return sdk.Action{
-			Name:       sdk.InstallKeyAction,
-			Type:       sdk.BuiltinAction,
-			Parameters: params,
-		}
-	}
-
-	return sdk.Action{
-		Name: sdk.InstallKeyAction,
-		Type: sdk.BuiltinAction,
-	}
-}
-
-func (s Step) isInstallKey() bool { return s.InstallKey != nil }
 
 func (s Step) isPushBuildInfo() bool { return s.PushBuildInfo != nil }
 

@@ -100,8 +100,7 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
     }
     @Input() queryParams: {};
 
-    @ViewChild('editStageModal')
-    editStageModal: SemanticModalComponent;
+    stageModalVisible: boolean = false;
 
     pipeline: Pipeline;
     selectedStage: Stage;
@@ -292,7 +291,7 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
                         } else {
                             this._toast.info('', this._translate.instant('pipeline_ascode_updated'));
                         }
-                        this.editStageModal.hide();
+                        this.stageModalVisible = false;
                     });
                 break;
             case 'delete':
@@ -310,7 +309,7 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
                         } else {
                             this._toast.info('', this._translate.instant('pipeline_ascode_updated'));
                         }
-                        this.editStageModal.hide();
+                        this.stageModalVisible = false;
                         this.selectedStage = null;
                         this.selectedJob = null;
                     });
@@ -320,9 +319,7 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
 
     openEditModal(s: Stage): void {
         this.selectedStage = cloneDeep(s);
-        if (this.editStageModal) {
-            this.editStageModal.show({ autofocus: false, closable: false, observeChanges: true });
-        }
+        this.stageModalVisible = true;
     }
 
     selectStage(s: Stage): void {

@@ -28,17 +28,22 @@ export class RequirementsFormComponent implements OnInit {
         return this._suggest;
     }
 
+    workerModelsMap: Map<string, WorkerModel> = new Map();
     _workerModels: Array<WorkerModel>;
     @Input() set workerModels(wms: Array<WorkerModel>) {
         if (wms) {
-            this._workerModels = wms;
-
-            this.suggestWithWorkerModel = wms.map(wm => {
-                if (wm.group.name !== SharedInfraGroupName) {
-                    return `${wm.group.name}/${wm.name}`;
-                }
-                return wm.name;
-            }).concat(this._suggest);
+            this.workerModelsMap = new Map<string, WorkerModel>();
+            this.suggestWithWorkerModel = new Array<string>();
+            if (wms) {
+                wms.forEach(wm => {
+                    let name = wm.name;
+                    if (wm.group.name !== SharedInfraGroupName) {
+                        name = `${wm.group.name}/${wm.name}`;
+                    }
+                    this.suggestWithWorkerModel.push(name);
+                    this.workerModelsMap.set(name, wm);
+                })
+            }
         }
     }
     get workerModels() {
@@ -104,8 +109,8 @@ export class RequirementsFormComponent implements OnInit {
         });
     }
 
-    onSubmitAddRequirement(form): void {
-        this.computeFormValid(form);
+    onSubmitAddRequirement(): void {
+        this.setName();
         if (this.isFormValid) {
             this.event.emit(new RequirementEvent('add', this.newRequirement));
             this.newRequirement = new Requirement('binary');
@@ -118,12 +123,12 @@ export class RequirementsFormComponent implements OnInit {
         });
     }
 
-    computeFormValid(form): void {
+    computeFormValid(): void {
         this.popupText = '';
         let goodModel = this.newRequirement.type !== 'model' || !this.config.disableModel;
         let goodHostname = this.newRequirement.type !== 'hostname' || !this.config.disableHostname;
         let goodRegion = this.newRequirement.type !== 'region' || !this.config.disableRegion;
-        this.isFormValid = (form.valid === true && this.newRequirement.name !== '' && this.newRequirement.value !== '')
+        this.isFormValid = (this.newRequirement.name !== '' && this.newRequirement.value !== '')
             && goodModel && goodHostname && goodRegion;
         if (!goodModel) {
             this.popupText = this._translate.instant('requirement_error_model');
@@ -136,13 +141,12 @@ export class RequirementsFormComponent implements OnInit {
         }
     }
 
-    selectType(): void {
-        this.newRequirement.value = '';
-        this.newRequirement.opts = '';
-        this.newRequirement.name = '';
+    selectType(reqType: string): void {
+        this.newRequirement = new Requirement(reqType);
+        this._cd.markForCheck();
     }
 
-    setName(form): void {
+    setName(): void {
         switch (this.newRequirement.type) {
             case 'service':
                 // if type service, user have to choose a hostname
@@ -162,7 +166,7 @@ export class RequirementsFormComponent implements OnInit {
                 // else, name is the value of the requirement
                 this.newRequirement.name = this.newRequirement.value;
         }
-        this.computeFormValid(form);
+        this.computeFormValid();
     }
 
     computeDisplayLinkWorkerModel(): WorkerModel {

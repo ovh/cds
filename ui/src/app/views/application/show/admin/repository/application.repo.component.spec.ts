@@ -2,7 +2,7 @@ import { APP_BASE_HREF } from '@angular/common';
 import { HttpRequest } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { Component, Injector, NO_ERRORS_SCHEMA } from '@angular/core';
-import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
+import { fakeAsync, flush, getTestBed, TestBed, tick } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
@@ -31,6 +31,7 @@ import { ProjectModule } from 'app/views/project/project.module';
 import { of } from 'rxjs';
 import 'rxjs/add/observable/of';
 import { ApplicationRepositoryComponent } from './application.repo.component';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 @Component({
     template: ''
@@ -76,6 +77,7 @@ describe('CDS: Application Repo Component', () => {
                 RouterTestingModule.withRoutes([
                     { path: 'project/:key', component: DummyComponent }
                 ]),
+                BrowserAnimationsModule,
                 ProjectModule,
                 ApplicationModule,
                 SharedModule,
@@ -149,22 +151,7 @@ describe('CDS: Application Repo Component', () => {
 
         expect(toast.success).toHaveBeenCalledTimes(1);
 
-        tick(100);
-        fixture.componentInstance.application.vcs_server = repoMan.name;
-        fixture.componentInstance.application.repository_fullname = 'frepo3';
-
-        tick(100);
-
-        // Detach repo
-        compiled.querySelector('.ui.red.button').click();
-        fixture.detectChanges();
-        tick(50);
-        compiled.querySelector('.ui.red.button.active').click();
-        http.expectOne(((req: HttpRequest<any>) => req.url === '/project/key1/repositories_manager/RepoManager/application/app/detach')).flush({
-            name: 'app',
-        });
-        tick(100);
-        expect(toast.success).toHaveBeenCalledTimes(2);
+        flush()
     }));
 });
 

@@ -1,10 +1,9 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { Application } from 'app/model/application.model';
 import { Project } from 'app/model/project.model';
-import { WarningModalComponent } from 'app/shared/modal/warning/warning.component';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { DeleteApplication, UpdateApplication } from 'app/store/applications.action';
 import { FetchIntegrationsInProject } from 'app/store/project.action';
@@ -21,8 +20,6 @@ export class ApplicationAdminComponent implements OnInit {
     @Input() application: Application;
     @Input() project: Project;
     @Input() editMode: boolean;
-    @ViewChild('updateWarning')
-    private updateWarningModal: WarningModalComponent;
 
     newName: string;
     fileTooLarge = false;
@@ -34,59 +31,60 @@ export class ApplicationAdminComponent implements OnInit {
         private _router: Router,
         private _store: Store,
         private _cd: ChangeDetectorRef
-    ) { }
+    ) {
+    }
 
     ngOnInit() {
         // Fetch project integration
-        this._store.dispatch(new FetchIntegrationsInProject({ projectKey: this.project.key }));
+        this._store.dispatch(new FetchIntegrationsInProject({projectKey: this.project.key}));
 
         this.newName = this.application.name;
         if (!this.project.permissions.writable) {
             this._router.navigate(['/project', this.project.key, 'application', this.application.name],
-                { queryParams: { tab: 'workflow' } });
+                {queryParams: {tab: 'workflow'}});
         }
     }
 
-    onSubmitApplicationUpdate(skip?: boolean): void {
-        if (!skip && this.application.externalChange) {
-            this.updateWarningModal.show();
-        } else {
-            this.loading = true;
-            let nameUpdated = this.application.name !== this.newName;
-            let app = cloneDeep(this.application);
-            app.name = this.newName;
-            this._store.dispatch(new UpdateApplication({
-                projectKey: this.project.key,
-                applicationName: this.application.name,
-                changes: app
-            })).pipe(finalize(() => {
-                this.loading = false;
-                this._cd.markForCheck();
-            }))
-                .subscribe(() => {
-                    if (this.editMode) {
-                        this._toast.info('', this._translate.instant('application_ascode_updated'));
-                    } else {
-                        this._toast.success('', this._translate.instant('application_update_ok'));
-                        if (nameUpdated) {
-                            this._router.navigate(['/project', this.project.key, 'application', this.newName]);
-                        }
+    onSubmitApplicationUpdate(): void {
+        this.loading = true;
+        let nameUpdated = this.application.name !== this.newName;
+        let app = cloneDeep(this.application);
+        app.name = this.newName;
+        this._store.dispatch(new UpdateApplication({
+            projectKey: this.project.key,
+            applicationName: this.application.name,
+            changes: app
+        })).pipe(finalize(() => {
+            this.loading = false;
+            this._cd.markForCheck();
+        }))
+            .subscribe(() => {
+                if (this.editMode) {
+                    this._toast.info('', this._translate.instant('application_ascode_updated'));
+                } else {
+                    this._toast.success('', this._translate.instant('application_update_ok'));
+                    if (nameUpdated) {
+                        this._router.navigate(['/project', this.project.key, 'application', this.newName]);
                     }
+                }
 
-                });
-        }
+            });
+
     }
 
     deleteApplication(): void {
         this.loading = true;
-        this._store.dispatch(new DeleteApplication({ projectKey: this.project.key, applicationName: this.application.name }))
+        this._store.dispatch(new DeleteApplication({
+            projectKey: this.project.key,
+            applicationName: this.application.name
+        }))
             .pipe(finalize(() => {
                 this.loading = false;
                 this._cd.markForCheck();
             }))
             .subscribe(() => {
                 this._toast.success('', this._translate.instant('application_deleted'));
-                this._router.navigate(['/project', this.project.key], { queryParams: { tab: 'applications' } });
+                this._router.navigate(['/project', this.project.key], {queryParams: {tab: 'applications'}});
             });
     }
 

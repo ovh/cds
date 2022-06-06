@@ -26,7 +26,6 @@ func init() {
 	mapBuiltinActions[sdk.CheckoutApplicationAction] = action.RunCheckoutApplication
 	mapBuiltinActions[sdk.DeployApplicationAction] = action.RunDeployApplication
 	mapBuiltinActions[sdk.CoverageAction] = action.RunParseCoverageResultAction
-	mapBuiltinActions[sdk.InstallKeyAction] = action.RunInstallKey
 	mapBuiltinActions[sdk.PushBuildInfo] = action.PushBuildInfo
 }
 

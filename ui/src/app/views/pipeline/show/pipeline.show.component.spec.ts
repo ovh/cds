@@ -126,7 +126,7 @@ describe('CDS: Pipeline Show', () => {
         let event: ParameterEvent = new ParameterEvent('add', param);
         let store: Store = TestBed.get(Store);
         spyOn(store, 'dispatch').and.callFake(() => of(new Pipeline()));
-        fixture.componentInstance.parameterEvent(event, true);
+        fixture.componentInstance.parameterEvent(event);
         expect(store.dispatch).toHaveBeenCalledWith(new AddPipelineParameter({
             projectKey: 'key1',
             pipelineName: 'pip1',
@@ -136,7 +136,7 @@ describe('CDS: Pipeline Show', () => {
         // Update
 
         event.type = 'update';
-        fixture.componentInstance.parameterEvent(event, true);
+        fixture.componentInstance.parameterEvent(event);
         expect(store.dispatch).toHaveBeenCalledWith(new UpdatePipelineParameter({
             projectKey: 'key1',
             pipelineName: 'pip1',
@@ -146,7 +146,7 @@ describe('CDS: Pipeline Show', () => {
 
         // Delete
         event.type = 'delete';
-        fixture.componentInstance.parameterEvent(event, true);
+        fixture.componentInstance.parameterEvent(event);
         expect(store.dispatch).toHaveBeenCalledWith(new DeletePipelineParameter({
             projectKey: 'key1',
             pipelineName: 'pip1',

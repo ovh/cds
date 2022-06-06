@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import {
@@ -8,11 +8,10 @@ import {
 } from 'app/store/applications.action';
 import { cloneDeep } from 'lodash-es';
 import { finalize } from 'rxjs/operators';
-import { Application } from '../../../../../model/application.model';
-import { ProjectIntegration } from '../../../../../model/integration.model';
-import { Project } from '../../../../../model/project.model';
-import { WarningModalComponent } from '../../../../../shared/modal/warning/warning.component';
-import { ToastService } from '../../../../../shared/toast/ToastService';
+import { Application } from 'app/model/application.model';
+import { ProjectIntegration } from 'app/model/integration.model';
+import { Project } from 'app/model/project.model';
+import { ToastService } from 'app/shared/toast/ToastService';
 
 @Component({
     selector: 'app-application-deployment',
@@ -30,14 +29,13 @@ export class ApplicationDeploymentComponent {
             this.filteredIntegrations = cloneDeep(project.integrations.filter(p => p.model.deployment));
         }
     }
+
     get project(): Project {
         return this._project;
     }
+
     @Input() application: Application;
     @Input() editMode: boolean;
-
-    @ViewChild('removeWarning') removeWarningModal: WarningModalComponent;
-    @ViewChild('linkWarning') linkWarningModal: WarningModalComponent;
 
     filteredIntegrations: Array<ProjectIntegration>;
     selectedIntegration: ProjectIntegration;

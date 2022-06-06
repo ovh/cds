@@ -12,11 +12,11 @@ import { KeyService } from 'app/service/keys/keys.service';
 import { PipelineCoreService } from 'app/service/pipeline/pipeline.core.service';
 import { AsCodeSaveModalComponent } from 'app/shared/ascode/save-modal/ascode.save-modal.component';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
-import { WarningModalComponent } from 'app/shared/modal/warning/warning.component';
 import { ParameterEvent } from 'app/shared/parameter/parameter.event.model';
 import { ToastService } from 'app/shared/toast/ToastService';
 import {
-    AddPipelineParameter, CancelPipelineEdition,
+    AddPipelineParameter,
+    CancelPipelineEdition,
     DeletePipelineParameter,
     FetchPipeline,
     UpdatePipelineParameter
@@ -65,8 +65,6 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
     pipName: string;
 
     queryParams: Params;
-    @ViewChild('paramWarning')
-    parameterModalWarning: WarningModalComponent;
     @ViewChild('updateEditMode')
     asCodeSaveModal: AsCodeSaveModalComponent;
 
@@ -119,7 +117,8 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
             });
     }
 
-    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void {
+    } // Should be set to use @AutoUnsubscribe with AOT
 
     refreshDatas(key: string, pipName: string) {
         this._store.dispatch(new FetchPipeline({
@@ -208,7 +207,7 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
                 this.initTabs();
                 this._cd.markForCheck();
             }, () => {
-                this._router.navigate(['/project', this.projectKey], { queryParams: { tab: 'pipelines' } });
+                this._router.navigate(['/project', this.projectKey], {queryParams: {tab: 'pipelines'}});
             });
     }
 
@@ -239,7 +238,7 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
             })
         }
         if (this.project?.permissions?.writable) {
-            this.tabs.push( <Tab>{
+            this.tabs.push(<Tab>{
                 title: 'Advanced',
                 icon: 'graduation',
                 key: 'advanced'
@@ -251,59 +250,55 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
         this.selectedTab = tab;
     }
 
-    parameterEvent(event: ParameterEvent, skip?: boolean): void {
-        if (!skip && this.pipeline.externalChange) {
-            this.parameterModalWarning.show(event);
-        } else {
-            if (event.parameter) {
-                event.parameter.value = String(event.parameter.value);
-            }
-            switch (event.type) {
-                case 'add':
-                    this.paramFormLoading = true;
-                    this._store.dispatch(new AddPipelineParameter({
-                        projectKey: this.project.key,
-                        pipelineName: this.pipeline.name,
-                        parameter: event.parameter
-                    })).pipe(finalize(() => {
-                        this.paramFormLoading = false;
-                        this._cd.markForCheck();
-                    })).subscribe(() => {
-                        if (this.editMode) {
-                            this._toast.info('', this._translate.instant('pipeline_ascode_updated'));
-                        } else {
-                            this._toast.success('', this._translate.instant('parameter_added'));
-                        }
-                    });
-                    break;
-                case 'update':
-                    this._store.dispatch(new UpdatePipelineParameter({
-                        projectKey: this.project.key,
-                        pipelineName: this.pipeline.name,
-                        parameterName: event.parameter.previousName || event.parameter.name,
-                        parameter: event.parameter
-                    })).subscribe(() => {
-                        if (this.editMode) {
-                            this._toast.info('', this._translate.instant('pipeline_ascode_updated'));
-                        } else {
-                            this._toast.success('', this._translate.instant('parameter_updated'));
-                        }
-                    });
-                    break;
-                case 'delete':
-                    this._store.dispatch(new DeletePipelineParameter({
-                        projectKey: this.project.key,
-                        pipelineName: this.pipeline.name,
-                        parameter: event.parameter
-                    })).subscribe(() => {
-                        if (this.editMode) {
-                            this._toast.info('', this._translate.instant('pipeline_ascode_updated'));
-                        } else {
-                            this._toast.success('', this._translate.instant('parameter_deleted'));
-                        }
-                    });
-                    break;
-            }
+    parameterEvent(event: ParameterEvent): void {
+        if (event.parameter) {
+            event.parameter.value = String(event.parameter.value);
+        }
+        switch (event.type) {
+            case 'add':
+                this.paramFormLoading = true;
+                this._store.dispatch(new AddPipelineParameter({
+                    projectKey: this.project.key,
+                    pipelineName: this.pipeline.name,
+                    parameter: event.parameter
+                })).pipe(finalize(() => {
+                    this.paramFormLoading = false;
+                    this._cd.markForCheck();
+                })).subscribe(() => {
+                    if (this.editMode) {
+                        this._toast.info('', this._translate.instant('pipeline_ascode_updated'));
+                    } else {
+                        this._toast.success('', this._translate.instant('parameter_added'));
+                    }
+                });
+                break;
+            case 'update':
+                this._store.dispatch(new UpdatePipelineParameter({
+                    projectKey: this.project.key,
+                    pipelineName: this.pipeline.name,
+                    parameterName: event.parameter.previousName || event.parameter.name,
+                    parameter: event.parameter
+                })).subscribe(() => {
+                    if (this.editMode) {
+                        this._toast.info('', this._translate.instant('pipeline_ascode_updated'));
+                    } else {
+                        this._toast.success('', this._translate.instant('parameter_updated'));
+                    }
+                });
+                break;
+            case 'delete':
+                this._store.dispatch(new DeletePipelineParameter({
+                    projectKey: this.project.key,
+                    pipelineName: this.pipeline.name,
+                    parameter: event.parameter
+                })).subscribe(() => {
+                    if (this.editMode) {
+                        this._toast.info('', this._translate.instant('pipeline_ascode_updated'));
+                    } else {
+                        this._toast.success('', this._translate.instant('parameter_deleted'));
+                    }
+                });
+                break;
         }
     }
 

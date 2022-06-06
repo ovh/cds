@@ -10,7 +10,6 @@ import { Workflow } from 'app/model/workflow.model';
 import { ApplicationStore } from 'app/service/application/application.store';
 import { AsCodeSaveModalComponent } from 'app/shared/ascode/save-modal/ascode.save-modal.component';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
-import { WarningModalComponent } from 'app/shared/modal/warning/warning.component';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { VariableEvent } from 'app/shared/variable/variable.event.model';
 import * as applicationsActions from 'app/store/applications.action';
@@ -53,8 +52,6 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
     tabs: Array<Tab>;
     selectedTab: Tab;
 
-    @ViewChild('varWarning')
-    private varWarningModal: WarningModalComponent;
     @ViewChild('updateEditMode')
     asCodeSaveModal: AsCodeSaveModalComponent;
 
@@ -102,10 +99,14 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                 this.application = null;
             }
             if (projectKey && this.urlAppName) {
-                this._store.dispatch(new applicationsActions.FetchApplication({ projectKey, applicationName: this.urlAppName }))
+                this._store.dispatch(new applicationsActions.FetchApplication({
+                    projectKey,
+                    applicationName: this.urlAppName
+                }))
                     .subscribe(
-                        () => {},
-                        () => this._router.navigate(['/project', projectKey], { queryParams: { tab: 'applications' } }),
+                        () => {
+                        },
+                        () => this._router.navigate(['/project', projectKey], {queryParams: {tab: 'applications'}}),
                         null
                     );
             }
@@ -137,8 +138,8 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                 // Update recent application viewed
                 this._applicationStore.updateRecentApplication(s.currentProjectKey, this.application);
                 this._cd.markForCheck();
-        }, () => {
-                this._router.navigate(['/project', this.project.key], { queryParams: { tab: 'applications' } });
+            }, () => {
+                this._router.navigate(['/project', this.project.key], {queryParams: {tab: 'applications'}});
             });
     }
 
@@ -199,64 +200,61 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
      *
      * @param event
      */
-    variableEvent(event: VariableEvent, skip?: boolean) {
-        if (!skip && this.application.externalChange) {
-            this.varWarningModal.show(event);
-        } else {
-            event.variable.value = String(event.variable.value);
-            switch (event.type) {
-                case 'add':
-                    this.varFormLoading = true;
-                    this._store.dispatch(new applicationsActions.AddApplicationVariable({
-                        projectKey: this.project.key,
-                        applicationName: this.application.name,
-                        variable: event.variable
-                    })).pipe(finalize(() => {
-                        event.variable.updating = false;
-                        this.varFormLoading = false;
-                        this._cd.markForCheck();
-                    })).subscribe(() => {
+    variableEvent(event: VariableEvent) {
+        event.variable.value = String(event.variable.value);
+        switch (event.type) {
+            case 'add':
+                this.varFormLoading = true;
+                this._store.dispatch(new applicationsActions.AddApplicationVariable({
+                    projectKey: this.project.key,
+                    applicationName: this.application.name,
+                    variable: event.variable
+                })).pipe(finalize(() => {
+                    event.variable.updating = false;
+                    this.varFormLoading = false;
+                    this._cd.markForCheck();
+                })).subscribe(() => {
+                    if (this.editMode) {
+                        this._toast.info('', this._translate.instant('application_ascode_updated'));
+                    } else {
+                        this._toast.success('', this._translate.instant('variable_added'));
+                    }
+
+                });
+                break;
+            case 'update':
+                this._store.dispatch(new applicationsActions.UpdateApplicationVariable({
+                    projectKey: this.project.key,
+                    applicationName: this.application.name,
+                    variableName: event.variable.name,
+                    variable: event.variable
+                })).pipe(finalize(() => {
+                    event.variable.updating = false;
+                    this._cd.markForCheck();
+                }))
+                    .subscribe(() => {
                         if (this.editMode) {
                             this._toast.info('', this._translate.instant('application_ascode_updated'));
                         } else {
-                            this._toast.success('', this._translate.instant('variable_added'));
+                            this._toast.success('', this._translate.instant('variable_updated'));
                         }
-
                     });
-                    break;
-                case 'update':
-                    this._store.dispatch(new applicationsActions.UpdateApplicationVariable({
-                        projectKey: this.project.key,
-                        applicationName: this.application.name,
-                        variableName: event.variable.name,
-                        variable: event.variable
-                    })).pipe(finalize(() => {
-                        event.variable.updating = false;
-                        this._cd.markForCheck();
-                    }))
-                        .subscribe(() => {
-                            if (this.editMode) {
-                                this._toast.info('', this._translate.instant('application_ascode_updated'));
-                            } else {
-                                this._toast.success('', this._translate.instant('variable_updated'));
-                            }
-                        });
-                    break;
-                case 'delete':
-                    this._store.dispatch(new applicationsActions.DeleteApplicationVariable({
-                        projectKey: this.project.key,
-                        applicationName: this.application.name,
-                        variable: event.variable
-                    })).pipe(finalize(() => this._cd.markForCheck()))
-                        .subscribe(() => {
-                            if (this.editMode) {
-                                this._toast.info('', this._translate.instant('application_ascode_updated'));
-                            } else {
-                                this._toast.success('', this._translate.instant('variable_deleted'));
-                            }
-                        });
-                    break;
-            }
+                break;
+            case 'delete':
+                this._store.dispatch(new applicationsActions.DeleteApplicationVariable({
+                    projectKey: this.project.key,
+                    applicationName: this.application.name,
+                    variable: event.variable
+                })).pipe(finalize(() => this._cd.markForCheck()))
+                    .subscribe(() => {
+                        if (this.editMode) {
+                            this._toast.info('', this._translate.instant('application_ascode_updated'));
+                        } else {
+                            this._toast.success('', this._translate.instant('variable_deleted'));
+                        }
+                    });
+                break;
+
         }
     }
 

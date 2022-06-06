@@ -84,9 +84,6 @@ func RunGRPCPlugin(ctx context.Context, actionName string, params []sdk.Paramete
 		if (p.Type == sdk.KeyPGPParameter || p.Type == sdk.KeySSHParameter) && strings.HasSuffix(p.Name, ".priv") {
 			continue
 		}
-		if p.Type == sdk.KeyParameter && !strings.HasSuffix(p.Name, ".pub") {
-			continue
-		}
 		envs = append(envs, sdk.EnvVartoENV(p)...)
 		envName := strings.Replace(p.Name, ".", "_", -1)
 		envName = strings.ToUpper(envName)

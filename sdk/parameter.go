@@ -7,16 +7,13 @@ import (
 
 // Different type of Parameter
 const (
-	EnvironmentParameter = "env"
-	PipelineParameter    = "pipeline"
-	ListParameter        = "list"
-	NumberParameter      = "number"
-	StringParameter      = "string"
-	TextParameter        = "text"
-	BooleanParameter     = "boolean"
-	KeySSHParameter      = "ssh-key"
-	KeyPGPParameter      = "pgp-key"
-	KeyParameter         = "key"
+	ListParameter    = "list"
+	NumberParameter  = "number"
+	StringParameter  = "string"
+	TextParameter    = "text"
+	BooleanParameter = "boolean"
+	KeySSHParameter  = "ssh-key"
+	KeyPGPParameter  = "pgp-key"
 )
 
 var (
@@ -25,13 +22,10 @@ var (
 		StringParameter,
 		NumberParameter,
 		TextParameter,
-		EnvironmentParameter,
 		BooleanParameter,
 		ListParameter,
-		PipelineParameter,
 		KeySSHParameter,
 		KeyPGPParameter,
-		KeyParameter,
 	}
 )
 

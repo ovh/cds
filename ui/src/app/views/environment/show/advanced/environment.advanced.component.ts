@@ -27,6 +27,8 @@ export class EnvironmentAdvancedComponent implements OnInit {
     cloneName: string;
     public loading = false;
 
+    cloneModalVisible: boolean = false;
+
     constructor(
         private _toast: ToastService,
         public _translate: TranslateService,
@@ -58,7 +60,7 @@ export class EnvironmentAdvancedComponent implements OnInit {
             });
     }
 
-    cloneEnvironment(cloneModal?: any): void {
+    cloneEnvironment(): void {
         this.loading = true;
         this.store.dispatch(new CloneEnvironment({
             projectKey: this.project.key,
@@ -67,7 +69,7 @@ export class EnvironmentAdvancedComponent implements OnInit {
         })).pipe(finalize(() => {
             this.loading = false;
             this.cloneName = '';
-            cloneModal.hide();
+            this.cloneModalVisible = false;
             this._cd.markForCheck();
         })).subscribe(() => {
             this._toast.success('', this._translate.instant('environment_cloned'));
