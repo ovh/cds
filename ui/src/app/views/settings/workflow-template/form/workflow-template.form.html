@@ -6,14 +6,14 @@
                 <div *ngIf="workflowTemplate.editable && groups && groups.length === 0" class="ui orange message">
                     {{'common_help_no_group' | translate}}
                 </div>
-                <div *ngIf="workflowTemplate.editable && importFromURL" class="ui blue message">
+                <div *ngIf="workflowTemplate.editable" class="ui blue message">
                     {{'workflow_template_help_edit_from' | translate}}
                 </div>
                 <div class="four fields">
                     <div class="field">
                         <label>{{'common_name' | translate}} *</label>
                         <input class="ui input" type="text" name="name" [(ngModel)]="workflowTemplate.name"
-                            [readonly]="!workflowTemplate.editable || importFromURL">
+                            [readonly]="!workflowTemplate.editable">
                     </div>
                     <div class="field">
                         <label>{{'common_slug' | translate}} *</label>
@@ -23,11 +23,11 @@
                     <div class="field">
                         <label>{{'common_group' | translate}} *</label>
                         <sm-select class="fluid search" name="group"
-                            *ngIf="groups && workflowTemplate.editable && !importFromURL" [disabled]="loading"
+                            *ngIf="groups && workflowTemplate.editable" [disabled]="loading"
                             [(model)]="workflowTemplate.group_id" [options]="{'fullTextSearch': true}">
                             <option *ngFor="let group of groups" [value]="group.id">{{group.name}}</option>
                         </sm-select>
-                        <input *ngIf="!workflowTemplate.editable || importFromURL" class="ui input" type="text"
+                        <input *ngIf="!workflowTemplate.editable" class="ui input" type="text"
                             name="group" [ngModel]="workflowTemplate.group?.name" [readonly]="true">
                     </div>
                     <div class="field">
@@ -40,31 +40,14 @@
                     <label>{{'common_description' | translate}}</label>
                     <textarea name="description" [(ngModel)]="workflowTemplate.description"
                         (ngModelChange)="descriptionChange()" [rows]="descriptionRows"
-                        [readonly]="!workflowTemplate.editable || importFromURL"></textarea>
+                        [readonly]="!workflowTemplate.editable"></textarea>
                 </div>
             </div>
             <div *ngIf="workflowTemplate.editable" class="ui horizontal divider">
                 {{'common_or' | translate}}
             </div>
-            <div *ngIf="workflowTemplate.editable || importFromURL" class="sixteen wide column">
-                <div class="wide fields">
-                    <div class="four wide field centeredField">
-                        <sui-checkbox *ngIf="workflowTemplate.editable" name="import-from-url" [ngModel]="importFromURL"
-                            class="toggle" (ngModelChange)="changeFromURL()">
-                            {{'workflow_template_import_from_url' | translate}}
-                        </sui-checkbox>
-                        <span *ngIf="!workflowTemplate.editable">{{'workflow_template_imported_from_url' |
-                            translate}}</span>
-                    </div>
-                    <div class="twelve wide field">
-                        <input class="ui input" type="text" name="import-url" placeholder="https://host/my-template.yml"
-                            [(ngModel)]="workflowTemplate.import_url"
-                            [readonly]="!workflowTemplate.editable || !importFromURL">
-                    </div>
-                </div>
-            </div>
-            <div class="sixteen wide column" *ngIf="!(mode === 'add' && importFromURL)">
-                <div *ngIf="(workflowTemplate.editable && !importFromURL) || parameterKeys.length > 0"
+            <div class="sixteen wide column" *ngIf="!(mode === 'add')">
+                <div *ngIf="(workflowTemplate.editable) || parameterKeys.length > 0"
                     class="wide field">
                     <label>{{ 'common_parameters' | translate }}</label>
                 </div>
@@ -72,33 +55,33 @@
                     <div class="eleven wide field">
                         <input type="text" name="parameter-key-{{index}}" [placeholder]="'common_name' | translate"
                             [(ngModel)]="parameterValues[k].key"
-                            [readonly]="!workflowTemplate.editable || importFromURL">
+                            [readonly]="!workflowTemplate.editable">
                     </div>
                     <div class="three wide field">
-                        <sui-select *ngIf="workflowTemplate.editable && !importFromURL" class="selection"
+                        <sui-select *ngIf="workflowTemplate.editable" class="selection"
                             name="parameter-type-{{index}}" placeholder="{{'common_select' | translate}}"
                             [options]="templateParameterTypes" isSearchable="true" [(ngModel)]="parameterValues[k].type"
                             #selectType>
                             <sui-select-option *ngFor="let option of selectType.filteredOptions" [value]="option">
                             </sui-select-option>
                         </sui-select>
-                        <input *ngIf="!workflowTemplate.editable || importFromURL" class="ui input" type="text"
+                        <input *ngIf="!workflowTemplate.editable" class="ui input" type="text"
                             name="parameter-type-{{index}}" [ngModel]="parameterValues[k].type" [readonly]="true">
                     </div>
                     <div class="two wide field centeredField">
                         <div class="ui checked checkbox">
                             <input type="checkbox" name="parameter-required-{{index}}"
                                 [(ngModel)]="parameterValues[k].required"
-                                [disabled]="!workflowTemplate.editable || importFromURL">
+                                [disabled]="!workflowTemplate.editable">
                             <label>{{'common_required' | translate}}</label>
                         </div>
                     </div>
-                    <button *ngIf="workflowTemplate.editable && !importFromURL" class="ui icon red button"
+                    <button *ngIf="workflowTemplate.editable" class="ui icon red button"
                         (click)="clickRemoveParameter(k)">
                         <i class="trash icon"></i>
                     </button>
                 </div>
-                <div *ngIf="workflowTemplate.editable && !importFromURL" class="sixteen wide fields">
+                <div *ngIf="workflowTemplate.editable" class="sixteen wide fields">
                     <div class="eleven wide field">
                         <input type="text" name="parameter-key-add" [placeholder]="'common_name' | translate"
                             [(ngModel)]="parameterValueAdd.key">
@@ -125,56 +108,56 @@
                 <div class="wide field">
                     <label>{{ 'common_workflow' | translate }}</label>
                     <app-workflow-template-editor name="workflow-value"
-                        [editable]="workflowTemplate.editable && !importFromURL" [value]="workflowValue"
+                        [editable]="workflowTemplate.editable" [value]="workflowValue"
                         (changeValue)="workflowValueChange($event)" [error]="workflowError">
                     </app-workflow-template-editor>
                 </div>
-                <div *ngIf="(workflowTemplate.editable && !importFromURL) || pipelineKeys.length > 0"
+                <div *ngIf="(workflowTemplate.editable) || pipelineKeys.length > 0"
                     class="wide field">
                     <label>Pipelines</label>
                     <div class="codeContainer field" *ngFor="let k of pipelineKeys">
                         <app-workflow-template-editor name="pipeline-value-{{k}}"
-                            [editable]="workflowTemplate.editable && !importFromURL" [removable]="true"
+                            [editable]="workflowTemplate.editable" [removable]="true"
                             [value]="pipelineValues[k]" (changeValue)="pipelineValueChange(k, $event)"
                             (remove)="clickRemovePipeline(k)" [error]="pipelineErrors[k]">
                         </app-workflow-template-editor>
                     </div>
-                    <button *ngIf="workflowTemplate.editable && !importFromURL" class="ui icon green button"
+                    <button *ngIf="workflowTemplate.editable" class="ui icon green button"
                         (click)="clickAddPipeline()">
                         <i class="plus icon"></i>
                     </button>
                 </div>
-                <div *ngIf="(workflowTemplate.editable && !importFromURL) || applicationKeys.length > 0"
+                <div *ngIf="(workflowTemplate.editable) || applicationKeys.length > 0"
                     class="wide field">
                     <label>Applications</label>
                     <div class="codeContainer field" *ngFor="let k of applicationKeys">
                         <app-workflow-template-editor name="application-value-{{k}}"
-                            [editable]="workflowTemplate.editable && !importFromURL" [removable]="true"
+                            [editable]="workflowTemplate.editable" [removable]="true"
                             [value]="applicationValues[k]" (changeValue)="applicationValueChange(k, $event)"
                             (remove)="clickRemoveApplication(k)" [error]="applicationErrors[k]">
                         </app-workflow-template-editor>
                     </div>
-                    <button *ngIf="workflowTemplate.editable && !importFromURL" class="ui icon green button"
+                    <button *ngIf="workflowTemplate.editable" class="ui icon green button"
                         (click)="clickAddApplication()">
                         <i class="plus icon"></i>
                     </button>
                 </div>
-                <div *ngIf="(workflowTemplate.editable && !importFromURL) || environmentKeys.length > 0"
+                <div *ngIf="(workflowTemplate.editable) || environmentKeys.length > 0"
                     class="wide field">
                     <label>Environments</label>
                     <div class="codeContainer field" *ngFor="let k of environmentKeys">
                         <app-workflow-template-editor name="environment-value-{{k}}"
-                            [editable]="workflowTemplate.editable && !importFromURL" [removable]="true"
+                            [editable]="workflowTemplate.editable" [removable]="true"
                             [value]="environmentValues[k]" (changeValue)="environmentValueChange(k, $event)"
                             (remove)="clickRemoveEnvironment(k)" [error]="environmentErrors[k]">
                         </app-workflow-template-editor>
                     </div>
-                    <button *ngIf="workflowTemplate.editable && !importFromURL" class="ui icon green button"
+                    <button *ngIf="workflowTemplate.editable" class="ui icon green button"
                         (click)="clickAddEnvironment()">
                         <i class="plus icon"></i>
                     </button>
                 </div>
-                <div *ngIf="workflowTemplate.editable && !importFromURL && mode === 'edit'" class="wide field">
+                <div *ngIf="workflowTemplate.editable && mode === 'edit'" class="wide field">
                     <textarea name="changeMessage" [(ngModel)]="changeMessage"
                         [placeholder]="'workflow_template_change_message' | translate" [rows]="3"></textarea>
                 </div>
@@ -184,11 +167,8 @@
                     <app-delete-button *ngIf="mode === 'edit'" class="left floated" (event)="clickDelete()"
                         [loading]="loading"></app-delete-button>
                     <button class="ui positive right floated button" [class.loading]="loading" (click)="clickSave()">
-                        <ng-container *ngIf="!importFromURL">
+                        <ng-container>
                             <i class="ui icon save"></i>{{ 'btn_save' | translate }}
-                        </ng-container>
-                        <ng-container *ngIf="importFromURL">
-                            <i class="ui icon cloud download"></i>{{ 'btn_synchronize' | translate }}
                         </ng-container>
                     </button>
                 </div>

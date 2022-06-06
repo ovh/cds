@@ -57,7 +57,6 @@ type WorkflowTemplate struct {
 	Applications ApplicationTemplates       `json:"applications" db:"applications"`
 	Environments EnvironmentTemplates       `json:"environments" db:"environments"`
 	Version      int64                      `json:"version" db:"version"`
-	ImportURL    string                     `json:"import_url" db:"import_url"`
 	// aggregates
 	Group         *Group                 `json:"group,omitempty" db:"-"`
 	FirstAudit    *AuditWorkflowTemplate `json:"first_audit,omitempty" db:"-"`
@@ -86,14 +85,6 @@ func (w *WorkflowTemplate) Scan(src interface{}) error {
 
 // IsValid returns workflow template validity.
 func (w *WorkflowTemplate) IsValid() error {
-	// no more checks if import url is set, fields will be overrited by downloaded files
-	if w.ImportURL != "" {
-		if !IsURL(w.ImportURL) || !strings.HasSuffix(w.ImportURL, ".yml") {
-			return NewErrorFrom(ErrWrongRequest, "invalid given import url")
-		}
-		return nil
-	}
-
 	if w.GroupID == 0 {
 		return NewErrorFrom(ErrWrongRequest, "invalid group id for template")
 	}
@@ -188,7 +179,6 @@ func (w *WorkflowTemplate) Update(data WorkflowTemplate) {
 	w.Applications = data.Applications
 	w.Environments = data.Environments
 	w.Version = w.Version + 1
-	w.ImportURL = data.ImportURL
 }
 
 func (w WorkflowTemplate) Path() string {
