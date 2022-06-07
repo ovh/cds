@@ -1,135 +1,160 @@
-<div *ngIf="action.editable && groups && groups.length === 0" class="ui orange message">
-    {{'common_help_no_group' | translate}}
-</div>
-
-<form class="ui form" id="ActionEdit" #myform>
-    <div class="ui segment">
-        <div class="field">
-            <div class="fields">
-                <div class="six wide field">
-                    <label>{{'common_name' | translate}} *</label>
-                    <input type="text" name="actionName" [(ngModel)]="action.name"
-                        (keydown)="action.hasChanged = true; keyEvent($event)" [readonly]="!action.editable">
-                </div>
-                <div class="six wide field">
-                    <label>{{'common_group' | translate}} *</label>
-                    <sm-select class="fluid search" name="group" *ngIf="groups && action.editable"
-                        [(model)]="action.group_id" [options]="{'fullTextSearch': true}" (onChange)="refreshActions()">
-                        <option *ngFor="let group of groups" [value]="group.id">{{group.name}}</option>
-                    </sm-select>
-                    <input *ngIf="!action.editable" type="text" name="group" [ngModel]="action.group?.name"
-                        [readonly]="true">
-                </div>
-                <div class="one wide field">
-                    <label>{{ 'common_deprecated' | translate }}</label>
-                    <div class="ui checkbox">
-                        <input type="checkbox" id="deprecated_{{action.id}}" name="deprecated"
-                            [(ngModel)]="action.deprecated" (change)="action.hasChanged = true"
-                            [disabled]="!action.editable">
-                        <label> </label>
+<div id="ActionEdit" class="nzSegment">
+    <form nz-form>
+        <nz-row>
+            <nz-col [nzSpan]="8">
+                <nz-form-item>
+                    <nz-form-label>Name</nz-form-label>
+                    <nz-form-control>
+                        <input nz-input name="actionName" placeholder="Action name" [(ngModel)]="action.name"
+                               (keydown)="action.hasChanged = true; keyEvent($event)" [readonly]="!action.editable">
+                    </nz-form-control>
+                </nz-form-item>
+            </nz-col>
+            <nz-col [nzSpan]="8">
+                <nz-form-item>
+                    <nz-form-label>Group</nz-form-label>
+                    <nz-form-control>
+                        <ng-container *ngIf="groups && action.editable">
+                            <nz-select nzShowSearch name="group" nzPlaceHolder="Group name"
+                                       [(ngModel)]="action.group_id" (ngModelChange)="refreshActions()">
+                                <nz-option *ngFor="let group of groups" [nzValue]="group.id"
+                                           [nzLabel]="group.name"></nz-option>
+                            </nz-select>
+                        </ng-container>
+                        <ng-container *ngIf="!action.editable">
+                            <input *ngIf="!action.editable" type="text" name="group" [ngModel]="action.group?.name"
+                                   [readonly]="true">
+                        </ng-container>
+                    </nz-form-control>
+                </nz-form-item>
+            </nz-col>
+            <nz-col [nzSpan]="4">
+                <label nz-checkbox name="deprecated" [disabled]="!action.editable" class="checkbox"
+                       [(ngModel)]="action.deprecated" (ngModelChange)="action.hasChanged = true">Deprecated</label>
+            </nz-col>
+            <nz-col [nzSpan]="4">
+                <nz-form-item>
+                    <nz-form-control>
+                        <a class="pointing"
+                           (click)="prepareEditRequirements(); requirementModalVisible = true">
+                            {{ action.requirements.length + ' '}}{{'common_requirements' | translate }}
+                        </a>
+                    </nz-form-control>
+                </nz-form-item>
+                <nz-modal [nzVisible]="requirementModalVisible" nzTitle="Action requirements" nzWidth="900px"
+                          (nzOnCancel)="requirementModalVisible = false">
+                    <div *nzModalContent>
+                        <app-requirements-list [workerModels]="workerModels" [suggest]="suggest"
+                                               [requirements]="action.requirements" [edit]="action.editable"
+                                               (onChange)="action.hasChanged = true" (event)="requirementEvent($event)">
+                        </app-requirements-list>
+                        <div class="requirementForm" *ngIf="action.editable">
+                            <app-requirements-form [workerModels]="workerModels" [suggest]="suggest"
+                                                   [config]="configRequirements"
+                                                   [modalVisible]="requirementModalVisible"
+                                                   (event)="requirementEvent($event)">
+                            </app-requirements-form>
+                        </div>
                     </div>
-                </div>
-                <div class="three wide right aligned field labelPadding">
-                    <a class="pointing"
-                        (click)="prepareEditRequirements(); requirementModalVisible = true">
-                        {{ action.requirements.length + ' '}}{{'common_requirements' | translate }}
-                    </a>
-                    <nz-modal [nzVisible]="requirementModalVisible" nzTitle="Action requirements" nzWidth="900px"
-                     (nzOnCancel)="requirementModalVisible = false">
-                        <div *nzModalContent>
-                            <app-requirements-list [workerModels]="workerModels" [suggest]="suggest"
-                                [requirements]="action.requirements" [edit]="action.editable"
-                                (onChange)="action.hasChanged = true" (event)="requirementEvent($event)">
-                            </app-requirements-list>
-                            <div class="requirementForm" *ngIf="action.editable">
-                                <app-requirements-form [workerModels]="workerModels" [suggest]="suggest"
-                                    [config]="configRequirements" [modalVisible]="requirementModalVisible"
-                                    (event)="requirementEvent($event)">
-                                </app-requirements-form>
-                            </div>
-                        </div>
-                        <div *nzModalFooter>
-                            <button nz-button (click)="requirementModalVisible = false;parseRequirements();">Close</button>
-                        </div>
-                    </nz-modal>
-                </div>
-            </div>
-        </div>
-        <div class="field">
-            <label class="labelPadding">{{'common_description' | translate}}</label>
-            <textarea *ngIf="action.editable;" [disabled]="!action.editable" name="actionDescription"
-                [(ngModel)]="action.description" rows="{{getDescriptionHeight()}}"
-                (keydown)="action.hasChanged = true; keyEvent($event)"></textarea>
-            <markdown *ngIf="!action.editable;" [data]="action.description"></markdown>
-        </div>
-    </div>
-    <div class="ui segment">
-        <div class="field">
-            <label>{{ 'common_parameters' | translate }}</label>
-            <div>
-                <app-parameter-list [parameters]="action.parameters" [mode]="action.editable? 'edit': 'ro'"
-                    [hideSave]="true" (event)="parameterEvent($event)">
-                </app-parameter-list>
-            </div>
-            <div>
-                <app-parameter-form *ngIf="action.editable" (createParameterEvent)="parameterEvent($event)">
-                </app-parameter-form>
-            </div>
-        </div>
-    </div>
+                    <div *nzModalFooter>
+                        <button nz-button (click)="requirementModalVisible = false;parseRequirements();">Close</button>
+                    </div>
+                </nz-modal>
+            </nz-col>
+        </nz-row>
+        <nz-row>
+            <nz-col [nzSpan]="16">
+                <nz-form-item>
+                    <nz-form-label>Description</nz-form-label>
+                    <nz-form-control>
+                        <ng-container *ngIf="action.editable;">
+                    <textarea nz-input [disabled]="!action.editable" name="actionDescription"
+                              placeholder="Markdown description"
+                              [(ngModel)]="action.description" rows="{{getDescriptionHeight()}}"
+                              (keydown)="action.hasChanged = true; keyEvent($event)"></textarea>
+                        </ng-container>
+                        <ng-container *ngIf="!action.editable;">
+                            <markdown [data]="action.description"></markdown>
+                        </ng-container>
+                    </nz-form-control>
+                </nz-form-item>
+            </nz-col>
+        </nz-row>
 
-    <div class="subtitle normalStep">
-        <h3 class="inline">{{ 'action_step_title' | translate }}</h3>
-        <div class="right floated" *ngIf="steps && steps.length > 0">
-            <button class="ui blue button" (click)="collapsed = !collapsed">
+        <nz-divider nzOrientation="left" nzType="horizontal" nzText="Parameters list"></nz-divider>
+        <nz-row>
+            <nz-col [nzSpan]="24">
+                <div>
+                    <app-parameter-list [parameters]="action.parameters" [mode]="action.editable? 'edit': 'ro'"
+                                        [hideSave]="true" (event)="parameterEvent($event)">
+                    </app-parameter-list>
+                </div>
+            </nz-col>
+        </nz-row>
+
+        <nz-divider nzOrientation="left" nzType="horizontal" nzText="Add Parameter"></nz-divider>
+        <nz-row>
+            <nz-col [nzSpan]="24">
+                <div class="paramForm">
+                    <app-parameter-form *ngIf="action.editable" (createParameterEvent)="parameterEvent($event)">
+                    </app-parameter-form>
+                </div>
+            </nz-col>
+        </nz-row>
+
+        <nz-divider nzOrientation="left" nzType="horizontal" nzText="Job steps"></nz-divider>
+        <div class="jobSectionTitle" *ngIf="steps && steps.length > 0">
+            <button nz-button (click)="collapsed = !collapsed" class="hideButton">
                 <ng-container *ngIf="collapsed">
-                    <i class="hide icon"></i>
-                    {{'common_hide_all' | translate}}
+                    <i nz-icon nzType="eye-invisible" nzTheme="outline"></i>
+                        Hide all
                 </ng-container>
                 <ng-container *ngIf="!collapsed">
-                    <i class="eye icon"></i>
-                    {{'common_show_all' | translate}}
+                    <i nz-icon nzType="eye" nzTheme="outline"></i>
+                    Show all
                 </ng-container>
             </button>
         </div>
-    </div>
-    <div class="ui segment" *ngIf="steps.length > 0 && actions">
-        <div class="dragula-container" [dragula]="'bag-nonfinal'" [(dragulaModel)]="steps" *ngIf="steps">
-            <div *ngFor="let step of steps; let idxStep = index" class="step" [class.off]="!step.enabled">
-                <app-action-step [action]="action" [step]="step" [edit]="action.editable" [suggest]="suggest"
-                    [publicActions]="actions" [collapsed]="collapsed" [order]="idxStep" [keys]="keys"
-                    (keydown)="keyEvent($event)" (removeEvent)="stepManagement($event)">
-                </app-action-step>
-                <hr>
+        <div *ngIf="steps.length > 0 && actions" class="jobSection">
+            <div class="dragula-container" [dragula]="'bag-nonfinal'" [(dragulaModel)]="steps" *ngIf="steps">
+                <div *ngFor="let step of steps; let idxStep = index" class="step" [class.off]="!step.enabled">
+                    <app-action-step [action]="action" [step]="step" [edit]="action.editable" [suggest]="suggest"
+                                     [publicActions]="actions" [collapsed]="collapsed" [order]="idxStep" [keys]="keys"
+                                     (keydown)="keyEvent($event)" (removeEvent)="stepManagement($event)">
+                    </app-action-step>
+                    <nz-divider *ngIf="idxStep !== steps.length -1"></nz-divider>
+                </div>
             </div>
         </div>
-    </div>
-    <div class="ui info message" *ngIf="steps.length === 0">
-        {{ 'step_nonfinal_no' | translate }}
-    </div>
-</form>
-<nz-layout class="bottomBtnsWrapper"  *ngIf="action.editable">
+        <nz-alert nzType="info" nzMessage="There is no step." *ngIf="steps.length === 0"></nz-alert>
+    </form>
+</div>
+<nz-layout class="bottomBtnsWrapper" *ngIf="action.editable">
     <div nz-row>
         <div nz-col nzSpan="24" *ngIf="actions.length > 0">
             <app-action-step-form [actions]="actions" (onEvent)="stepManagement($event)"></app-action-step-form>
         </div>
     </div>
     <div nz-row *ngIf="!stepFormExpended">
-            <ng-container *ngIf="action.id">
-                <button (click)="saveAction()" nzType="primary" class="validButton" name="updatebtn" [nzLoading]="loading" nz-button>
-                    <i nz-icon nzType="save" nzTheme="outline"></i>Save
+        <ng-container *ngIf="action.id">
+            <button (click)="saveAction()" nzType="primary" class="validButton" name="updatebtn" [nzLoading]="loading"
+                    nz-button>
+                <i nz-icon nzType="save" nzTheme="outline"></i>Save
+            </button>
+            <button nz-popconfirm nzDanger class="validButton ml10"
+                    nzType="default"
+                    nzPopconfirmTitle="Are you sure you want to delete this action?"
+                    (nzOnConfirm)="deleteAction()"
+                    nzPopconfirmPlacement="topLeft"
+                    nz-button><i nz-icon nzType="delete" nzTheme="outline"></i>Delete
+            </button>
+        </ng-container>
+        <ng-container *ngIf="!action.id">
+            <div nz-col nzSpan="24">
+                <button nz-button nzType="primary" name="addbtn" (click)="saveAction()" [nzLoading]="loading" nzBlock>
+                    <i nz-icon nzType="save" nzTheme="outline"></i>Create
                 </button>
-                <button nz-popconfirm nzDanger  class="validButton ml10"
-                                nzType="default"
-                                nzPopconfirmTitle="Are you sure you want to delete this action?"
-                                (nzOnConfirm)="deleteAction()"
-                                nzPopconfirmPlacement="topLeft"
-                                nz-button><i nz-icon nzType="delete" nzTheme="outline"></i>Delete</button>
-            </ng-container>
-            <ng-container *ngIf="!action.id">
-                <div nz-col nzSpan="24">
-                    <button nz-button nzType="primary"  name="addbtn" (click)="saveAction()" [nzLoading]="loading" nzBlock><i class="save icon"></i>Create</button>
-                </div>
-            </ng-container>
+            </div>
+        </ng-container>
     </div>
 </nz-layout>

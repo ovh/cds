@@ -70,7 +70,7 @@
     <ng-container *ngSwitchCase="'boolean'">
         <label nz-checkbox [(ngModel)]="editableValue" name="value" [nzDisabled]="true"></label>
     </ng-container>
-    <ng-container *ngSwitchDefault class="ui fluid input">
+    <ng-container *ngSwitchDefault>
         <input nz-input readonly [ngModel]="editableValue">
     </ng-container>
 </ng-container>

@@ -1,105 +1,91 @@
-<div class="parameter" *ngIf="ready">
-    <table class="ui fixed celled table" *ngIf="data.length > 0">
-        <thead [hidden]="mode === 'launcher' || mode === 'job'">
-            <tr>
-                <th class="wide" [class.four]="mode !== 'launcher' && mode !== 'job'"
-                    [class.eight]="mode === 'launcher' || mode === 'job'">{{ 'parameter_name' | translate }}</th>
-                <th class="two wide" *ngIf="mode !=='launcher' && mode !== 'job'">{{ 'parameter_type' | translate }}
-                </th>
-                <th class="wide" [class.four]="mode !== 'launcher' && mode !== 'job'"
-                    [class.eight]="mode === 'launcher' || mode === 'job'">{{ 'parameter_value' | translate }}</th>
-                <th class="four wide" *ngIf="mode !== 'launcher' && mode !== 'job'">
-                    {{ 'parameter_description' | translate }}</th>
-                <th class="two wide" *ngIf="mode !== 'launcher' && mode !== 'job' && !project">
-                    {{ 'parameter_advanced' | translate }}</th>
-                <th class="two wide"></th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr *ngFor="let p of data" class="ui form">
-                <td class="middle-aligned">
-                    <div class="ui fluid input" *ngIf="mode === 'edit'">
-                        <input class="ui input" [(ngModel)]="p.name" (keydown)="p.hasChanged = true"
-                            [disabled]="p.updating">
-                    </div>
-                    <span class="help" *ngIf="mode === 'launcher'" suiPopup
-                        [popupText]="p.description || ('common_no_description' | translate)" popupPlacement="left">
-                        <i class="info circle icon"></i>
-                    </span>
-                    <span *ngIf="mode !== 'edit'">
-                        {{p.name}}
-                    </span>
-                </td>
-                <td *ngIf="mode !=='launcher' && mode !== 'job'">
-                    <div class="ui form" *ngIf="mode === 'edit'">
-                        <sui-select class="selection" isSearchable="true" [isDisabled]="p.updating" [(ngModel)]="p.type"
-                            (ngModelChange)="p.hasChanged = true" [options]="parameterTypes" #selectType>
-                            <sui-select-option *ngFor="let option of selectType.filteredOptions" [value]="option">
-                            </sui-select-option>
-                        </sui-select>
-                    </div>
-                    <span *ngIf="mode !== 'edit'">
-                        {{p.type}}
-                    </span>
-                </td>
-                <td>
-                    <app-parameter-value [project]="project" [suggest]="suggest" [ref]="p.ref"
-                        [editList]="mode !== 'launcher'" [edit]="mode !== 'ro' && mode !== 'job'" [keys]="keys"
-                        [type]="p.type" [(value)]="p.value" (valueUpdating)="p.hasChanged = true;">
-                    </app-parameter-value>
-                </td>
-                <td *ngIf="mode !== 'launcher' && mode !== 'job'">
-                    <textarea *ngIf="mode !== 'launcher'" class="ui textarea" (keydown)="p.hasChanged = true;"
+<nz-table nzShowPagination [nzData]="parameters" nzPageSize="5" #paramsList *ngIf="ready && parameters?.length > 0">
+    <thead>
+    <tr *ngIf="mode !== 'launcher' && mode !== 'job'">
+        <th nzWidth="200px">Name</th>
+        <th nzWidth="100px" *ngIf="mode !=='launcher' && mode !== 'job'">Type</th>
+        <th nzWidth="300px">Value</th>
+        <th nzWidth="300px" *ngIf="mode !== 'launcher' && mode !== 'job'">Description</th>
+        <th nzWidth="200px" *ngIf="mode !== 'launcher' && mode !== 'job' && !project">Advanced parameter</th>
+        <th nzWidth="100px" *ngIf="mode !== 'launcher'">Action</th>
+    </tr>
+    </thead>
+    <tbody>
+        <tr *ngFor="let p of paramsList.data">
+            <td>
+                <ng-container *ngIf="mode === 'edit'">
+                    <input nz-input [(ngModel)]="p.name" (keydown)="p.hasChanged = true"
+                           [disabled]="p.updating">
+                </ng-container>
+                <span class="help" *ngIf="mode === 'launcher'" nz-tooltip [nzTooltipTitle]="p.description || 'No description'" nzTooltipPlacement="left">
+                    <i nz-icon nzType="question-circle" nzTheme="outline"></i>
+                </span>
+                <span *ngIf="mode !== 'edit'">
+                    {{p.name}}
+                </span>
+            </td>
+            <td *ngIf="mode !=='launcher' && mode !== 'job'">
+                <ng-container *ngIf="mode === 'edit'">
+                    <nz-select nzShowSearch [nzDisabled]="p.updating" [(ngModel)]="p.type"
+                               (ngModelChange)="p.hasChanged = true">
+                        <nz-option *ngFor="let option of parameterTypes" [nzValue]="option" [nzLabel]="option"></nz-option>
+                    </nz-select>
+                </ng-container>
+                <span *ngIf="mode !== 'edit'">
+                    {{p.type}}
+                </span>
+            </td>
+            <td>
+                <app-parameter-value [project]="project" [suggest]="suggest" [ref]="p.ref"
+                                     [editList]="mode !== 'launcher'" [edit]="mode !== 'ro' && mode !== 'job'" [keys]="keys"
+                                     [type]="p.type" [(value)]="p.value" (valueUpdating)="p.hasChanged = true;">
+                </app-parameter-value>
+            </td>
+            <td *ngIf="mode !== 'launcher' && mode !== 'job'">
+                <ng-container *ngIf="mode !== 'launcher'">
+                     <textarea nz-input (keydown)="p.hasChanged = true;"
                         [class.lock]="mode !== 'edit'" [(ngModel)]="p.description"
                         rows="{{_sharedService.getTextAreaheight(p.description)}}" [readonly]="mode === 'launcher'">
-                </textarea>
-                    <span
-                        *ngIf="mode === 'launcher' && (!p.description && p.description === '')">{{'common_no_description' | translate}}</span>
-                </td>
-                <td class="center" *ngIf="mode !== 'launcher' && mode !== 'job' && !project">
-                    <div class="ui checkbox">
-                        <input type="checkbox" name="advanced" [(ngModel)]="p.advanced"
-                            [readonly]="mode === 'launcher'">
-                        <label></label>
-                    </div>
-                </td>
-                <td class="center" *ngIf="mode !== 'launcher' && mode !== 'job'">
-                    <ng-container *ngIf="mode === 'edit'">
-                        <div *ngIf="p.hasChanged && !hideSave;then save;else remove"></div>
-                        <ng-template #save>
-                            <button class="ui green button" [class.loading]="p.updating" [class.disabled]="p.updating"
+                    </textarea>
+                </ng-container>
+                <ng-container *ngIf="mode === 'launcher' && (!p.description && p.description === '')">
+                    No Description
+                </ng-container>
+            </td>
+            <td *ngIf="mode !== 'launcher' && mode !== 'job' && !project">
+                <label nz-checkbox name="advanced" class="checkbox"
+                       [nzDisabled]="mode === 'launcher'"
+                       [(ngModel)]="p.advanced"></label>
+            </td>
+            <td>
+                <ng-container *ngIf="mode === 'edit'">
+                    <div *ngIf="p.hasChanged && !hideSave;then save;else remove"></div>
+                    <ng-template #save>
+                        <button nz-button nzType="primary" [nzLoading]="p.updating" [disabled]="p.updating"
                                 name="btnupdatevparam" (click)="sendEvent('update', p)">
-                                <i class="save icon"></i>
-                                {{ 'btn_save' | translate}}
-                            </button>
-                        </ng-template>
-                        <ng-template #remove>
-                            <app-delete-button (event)="sendEvent('delete', p)" [loading]="p.updating">
-                            </app-delete-button>
-                        </ng-template>
-                    </ng-container>
-                </td>
-                <td class="center" *ngIf="mode === 'launcher' && canDelete">
+                            Save
+                        </button>
+                    </ng-template>
+                    <ng-template #remove>
+                        <button nz-button nzDanger nzType="primary"
+                                name="deleteBtn"
+                                nz-popconfirm
+                                [nzLoading]="p.updating"
+                                nzPopconfirmTitle="Are you sure you want to remove this parameter ?"
+                                (nzOnConfirm)="sendEvent('delete', p)"
+                                nzPopconfirmPlacement="topLeft">Delete</button>
+                    </ng-template>
+                </ng-container>
+                <ng-container *ngIf="mode === 'launcher' && canDelete">
+                    <button nz-button nzDanger nzType="primary"
+                            nz-popconfirm [nzLoading]="p.updating"
+                            nzPopconfirmTitle="Are you sure you want to remove this parameter ?"
+                            (nzOnConfirm)="sendEvent('delete', p)"
+                            nzPopconfirmPlacement="topLeft">Delete</button>
                     <app-delete-button (event)="sendEvent('delete', p)" [loading]="p.updating"></app-delete-button>
-                </td>
-            </tr>
-        </tbody>
-        <tfoot *ngIf="getNbOfPages() > 1 && mode !== 'job'">
-            <tr>
-                <th [attr.colspan]="getColspan()">
-                    <div class="ui right floated pagination menu">
-                        <a class="icon item" (click)="downPage()">
-                            <i class="left chevron icon"></i>
-                        </a>
-                        <a class="item" *ngFor="let page of getNbOfPages() | ngForNumber" (click)="goTopage(page)"
-                            [class.active]="currentPage === page">{{page}}</a>
-                        <a class="icon item" (click)="upPage()">
-                            <i class="right chevron icon"></i>
-                        </a>
-                    </div>
-                </th>
-            </tr>
-        </tfoot>
-    </table>
-    <nz-alert nzMessage="There is no parameters" *ngIf="data.length === 0"></nz-alert>
-</div>
+                </ng-container>
+            </td>
+        </tr>
+    </tbody>
+</nz-table>
+<nz-alert nzMessage="There is no parameters" *ngIf="data.length === 0"></nz-alert>
+

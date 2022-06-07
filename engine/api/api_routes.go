@@ -129,11 +129,6 @@ func (api *API) InitRouter() {
 	r.Handle("/integration/models", ScopeNone(), r.GET(api.getIntegrationModelsHandler), r.POST(api.postIntegrationModelHandler, service.OverrideAuth(api.authAdminMiddleware)))
 	r.Handle("/integration/models/{name}", ScopeNone(), r.GET(api.getIntegrationModelHandler), r.PUT(api.putIntegrationModelHandler, service.OverrideAuth(api.authAdminMiddleware)), r.DELETE(api.deleteIntegrationModelHandler, service.OverrideAuth(api.authAdminMiddleware)))
 
-	// Broadcast
-	r.Handle("/broadcast", Scope(sdk.AuthConsumerScopeUser), r.POST(api.addBroadcastHandler, service.OverrideAuth(api.authAdminMiddleware)), r.GET(api.getBroadcastsHandler))
-	r.Handle("/broadcast/{id}", Scope(sdk.AuthConsumerScopeUser), r.GET(api.getBroadcastHandler), r.PUT(api.updateBroadcastHandler, service.OverrideAuth(api.authAdminMiddleware)), r.DELETE(api.deleteBroadcastHandler, service.OverrideAuth(api.authAdminMiddleware)))
-	r.Handle("/broadcast/{id}/mark", Scope(sdk.AuthConsumerScopeUser), r.POST(api.postMarkAsReadBroadcastHandler))
-
 	// Overall health
 	r.Handle("/mon/status", ScopeNone(), r.GET(api.statusHandler, service.OverrideAuth(api.authOptionalMiddleware)))
 	r.Handle("/mon/version", ScopeNone(), r.GET(service.VersionHandler, service.OverrideAuth(service.NoAuthMiddleware)))

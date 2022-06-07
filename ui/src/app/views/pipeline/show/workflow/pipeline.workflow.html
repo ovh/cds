@@ -91,7 +91,7 @@
 
         <button nz-popconfirm nzDanger *ngIf="!selectedStage?.hasChanged && !readOnly"
                 name="deleteBtn"
-                nzPopconfirmTitle="Are you sure delete this stage?"
+                nzPopconfirmTitle="Are you sure you want to delete this stage?"
                 (nzOnConfirm)="stageEvent('delete')"
                 nzPopconfirmPlacement="topLeft"
                 nz-button>
