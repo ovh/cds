@@ -19,8 +19,18 @@ var containerServiceNameRegexp = regexp.MustCompile(`service-([0-9]+)-(.*)`)
 // HatcheryConfiguration is the configuration for local hatchery
 type HatcheryConfiguration struct {
 	service.HatcheryCommonConfiguration `mapstructure:"commonConfiguration" toml:"commonConfiguration" json:"commonConfiguration"`
+	// DefaultCPU Worker default CPU
+	DefaultCPU string `mapstructure:"defaultCPU" toml:"defaultCPU" default:"500m" commented:"false" comment:"Worker default CPU" json:"defaultCPU"`
 	// DefaultMemory Worker default memory
 	DefaultMemory int `mapstructure:"defaultMemory" toml:"defaultMemory" default:"1024" commented:"false" comment:"Worker default memory in Mo" json:"defaultMemory"`
+	// DefaultEphemeralStorage Worker default ephemeral storage size
+	DefaultEphemeralStorage string `mapstructure:"defaultEphemeralStorage" toml:"defaultEphemeralStorage" default:"1Gi" commented:"false" comment:"Worker default ephemeral storage size" json:"defaultEphemeralStorage"`
+	// DefaultServiceCPU Service default CPU
+	DefaultServiceCPU string `mapstructure:"defaultServiceCPU" toml:"defaultServiceCPU" default:"256m" commented:"false" comment:"Service default CPU" json:"defaultServiceCPU"`
+	// DefaultServiceMemory Service default memory
+	DefaultServiceMemory int `mapstructure:"defaultServiceMemory" toml:"defaultServiceMemory" default:"512" commented:"false" comment:"Service default memory in Mo" json:"defaultServiceMemory"`
+	// DefaultServiceEphemeralStorage Service default ephemeral storage size
+	DefaultServiceEphemeralStorage string `mapstructure:"defaultServiceEphemeralStorage" toml:"defaultServiceEphemeralStorage" default:"512Mi" commented:"false" comment:"Service default ephemeral storage size" json:"defaultServiceEphemeralStorage"`
 	// Namespace is the kubernetes namespace in which workers are spawned"
 	Namespace string `mapstructure:"namespace" toml:"namespace" default:"cds" commented:"false" comment:"Kubernetes namespace in which workers are spawned" json:"namespace"`
 	// KubernetesMasterURL Address of kubernetes master
