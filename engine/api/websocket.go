@@ -148,19 +148,6 @@ func (c *websocketClientData) checkEventPermission(ctx context.Context, db gorp.
 		return event.Username == c.AuthConsumer.AuthentifiedUser.Username, nil
 	}
 
-	if strings.HasPrefix(event.EventType, "sdk.EventBroadcast") {
-		if event.ProjectKey == "" {
-			return true, nil
-		}
-		if isMaintainer && !isHatcheryWithGroups {
-			return true, nil
-		}
-		perms, err := permission.LoadProjectMaxLevelPermission(ctx, db, []string{event.ProjectKey}, c.AuthConsumer.GetGroupIDs())
-		if err != nil {
-			return false, err
-		}
-		return perms.Level(event.ProjectKey) >= sdk.PermissionRead, nil
-	}
 	if event.EventType == fmt.Sprintf("%T", sdk.EventRunWorkflow{}) || event.EventType == fmt.Sprintf("%T", sdk.EventRunWorkflowJob{}) {
 		// We need to check the permission on project here
 		if isMaintainer && !isHatcheryWithGroups {
@@ -315,11 +302,6 @@ func (a *API) websocketComputeEventKeys(event sdk.Event) []string {
 		}.Key())
 	}
 	if event.EventType == fmt.Sprintf("%T", sdk.EventMaintenance{}) {
-		keys = append(keys, sdk.WebsocketFilter{
-			Type: sdk.WebsocketFilterTypeGlobal,
-		}.Key())
-	}
-	if strings.HasPrefix(event.EventType, "sdk.EventBroadcast") {
 		keys = append(keys, sdk.WebsocketFilter{
 			Type: sdk.WebsocketFilterTypeGlobal,
 		}.Key())

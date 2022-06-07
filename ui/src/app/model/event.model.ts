@@ -56,11 +56,6 @@ export class EventType {
 
     static WORKFLOW_RETENTION_DRYRUN = 'sdk.EventRetentionWorkflowDryRun';
 
-    static BROADCAST_PREFIX = 'sdk.EventBroadcast';
-    static BROADCAST_ADD = 'sdk.EventBroadcastAdd';
-    static BROADCAST_UPDATE = 'sdk.EventBroadcastUpdate';
-    static BROADCAST_DELETE = 'sdk.EventBroadcastDelete';
-
     static ACTION_PREFIX = 'sdk.EventAction';
 
     static OPERATION = 'sdk.EventOperation';

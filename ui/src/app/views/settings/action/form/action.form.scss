@@ -1,60 +1,37 @@
-@import '../../../../../common';
 #ActionEdit {
-  padding-bottom: 100px;
+  padding: 30px 30px 30px 30px;
+  margin-bottom: 70px;
 }
-.requirementForm {
+
+.hideButton {
+  float: right;
+}
+
+nz-alert {
   margin-top: 10px;
-  h3 {
-    margin-top: 10px;
-  }
 }
 
-.mt10 {
-  margin-top: 10px;
+.jobSection, .jobSectionTitle {
+  margin-top: 15px;
 }
-
-.paramName {
-  font-weight: 600;
-}
-
-.dragula-container {
-  .gu-transit {
-    opacity: 0.3;
-  }
-  .step.off {
-    border-radius: 3px;
-    background-color: rgba(189, 189, 189, 0.3);
-  }
-  .step hr {
-    margin-top: 20px;
-    margin-bottom: 20px;
-  }
-}
-
-.inline.field input {
-  width: 80%;
-}
-
-.inline.field textarea {
-  width: 80%;
-}
-
-.labelPadding {
-  padding-top: 8px;
-}
-
-.subtitle {
+.jobSectionTitle {
   height: 40px;
-  line-height: 40px;
-  margin-top: 10px;
-  margin-bottom: 5px;
-  vertical-align: middle;
 }
 
-.ui.segment.off {
-  background-color: rgba(189, 189, 189, 0.3);
-  .step.off {
-    background-color: transparent;
+nz-row {
+
+  min-height: 60px;
+
+  nz-col {
+    padding: 0 10px 0 10px;
+
+    .checkbox {
+      padding-top: 5px;
+    }
+
+    .paramForm {
+      padding-top: 10px;
+    }
   }
 }
 
@@ -74,9 +51,6 @@
 
     .validButton {
       width: 200px;
-    }
-    .ml10 {
-      margin-left: 10px;
     }
   }
 }

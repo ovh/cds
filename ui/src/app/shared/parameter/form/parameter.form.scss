@@ -1,15 +1,11 @@
-.ui.form {
-
-  .field > label {
-    color: grey;
-  }
-
-  .field {
-    .ui.button {
-      margin-top: 1.75em;
-    }
-  }
-
+nz-form-item {
+  padding: 0 10px;
 }
 
+nz-form-item {
+  min-height: 40px;
+}
+.checkbox {
+  padding-left: 20px;
+}
 

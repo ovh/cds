@@ -1,26 +1,44 @@
 @import '../../../../common';
 
-.move.icon {
-  margin-right: 10px !important;
-  cursor: hand;
+i.move {
+  margin-right: 5px !important;
+  cursor: move;
+}
+a {
+   i {
+     margin-left: 5px;
+   }
 }
 
-.ui.grid {
-  .row {
-    padding-top: 5px;
-    padding-bottom: 5px;
+.removeStepBtn {
+  float: right;
+}
+
+label {
+  span {
+    i {
+      margin-left: 5px;
+    }
   }
 }
+nz-row.stepParams {
+  margin-bottom: 30px;
 
-.textOrange {
-  color: $cds_color_orange;
+  nz-col {
+    height: 32px;
+    line-height: 32px;
+  }
+
+  .textOrange {
+    color: $cds_color_orange;
+
+    i {
+      margin-right: 5px;
+    }
+  }
 }
-
-.stepname {
-  font-size: 0.85em;
-  color: grey;
-}
-
-.inputStepname {
-  padding-right: 2px !important;
+.parameters {
+  i {
+    margin-left: 5px;
+  }
 }

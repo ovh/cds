@@ -17,6 +17,15 @@ body {
     overflow-y: hidden;
 }
 
+.nzSegment {
+  display: flex;
+  flex: auto;
+  flex-direction: column;
+  min-height: 0;
+  border: 1px solid rgba(34,36,38,.15);
+  border-radius: 2px;
+}
+
 a.disabled {
     color: gray;
     cursor: not-allowed;

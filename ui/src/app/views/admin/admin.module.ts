@@ -4,9 +4,6 @@ import { MaintainerGuard } from 'app/guard/admin.guard';
 import { SharedModule } from '../../shared/shared.module';
 import { AdminComponent } from './admin.component';
 import { AdminRouting } from './admin.routing';
-import { BroadcastAddComponent } from './broadcast/add/broadcast.add.component';
-import { BroadcastEditComponent } from './broadcast/edit/broadcast.edit.component';
-import { BroadcastListComponent } from './broadcast/list/broadcast.list.component';
 import { HookTaskListComponent } from './hook-task/list/hook-task.list.component';
 import { HookTaskShowComponent } from './hook-task/show/hook-task.show.component';
 import { ServiceListComponent } from './service/list/service.list.component';
@@ -23,9 +20,6 @@ import { WorkerModelPatternListComponent } from './worker-model-pattern/list/wor
         WorkerModelPatternAddComponent,
         WorkerModelPatternEditComponent,
         WorkerModelPatternFormComponent,
-        BroadcastAddComponent,
-        BroadcastEditComponent,
-        BroadcastListComponent,
         HookTaskListComponent,
         HookTaskShowComponent,
         ServiceListComponent,

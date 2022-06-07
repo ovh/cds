@@ -161,61 +161,6 @@ nz-switch {
   }
 }
 
-.notifpopup {
-    width: 400px;
-    nz-list-item {
-      width: 100%;
-
-      a {
-        width: 100%;
-      }
-      .notif {
-        width: 100%;
-        font-size: 0.8em;
-
-        i {
-          font-size: 1.5em;
-          opacity: 0.5;
-
-          &:hover {
-            opacity: 1;
-          }
-        }
-
-        .title {
-          font-size: 1.3em;
-
-          &.bold {
-            font-weight: bold;
-          }
-
-          &.blue {
-            color: $cds_color_teal !important;
-          }
-
-          &.orange {
-            color: $cds_color_orange !important;
-          }
-        }
-
-        .info {
-          font-size: 1em;
-          color: inherit;
-          text-decoration: underline;
-          display: block;
-
-          &.mt {
-            margin-top: 4px;
-          }
-        }
-
-        a {
-          width: 100%;
-        }
-      }
-    }
-}
-
 .helppopup {
     width: 400px;
 }

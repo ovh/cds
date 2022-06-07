@@ -4,9 +4,6 @@ import { MaintainerGuard } from 'app/guard/admin.guard';
 import { AuthenticationGuard } from 'app/guard/authentication.guard';
 import { AdminModule } from 'app/views/admin/admin.module';
 import { AdminComponent } from './admin.component';
-import { BroadcastAddComponent } from './broadcast/add/broadcast.add.component';
-import { BroadcastEditComponent } from './broadcast/edit/broadcast.edit.component';
-import { BroadcastListComponent } from './broadcast/list/broadcast.list.component';
 import { HookTaskListComponent } from './hook-task/list/hook-task.list.component';
 import { HookTaskShowComponent } from './hook-task/show/hook-task.show.component';
 import { ServiceListComponent } from './service/list/service.list.component';
@@ -36,21 +33,6 @@ const routes: Routes = [
                 path: 'worker-model-pattern/:type/:name',
                 component: WorkerModelPatternEditComponent,
                 data: { title: '{name} • Edit • Worker Model Pattern' }
-            },
-            {
-                path: 'broadcast',
-                component: BroadcastListComponent,
-                data: { title: 'List • Broadcast' }
-            },
-            {
-                path: 'broadcast/add',
-                component: BroadcastAddComponent,
-                data: { title: 'Add • Broadcast' }
-            },
-            {
-                path: 'broadcast/:id',
-                component: BroadcastEditComponent,
-                data: { title: 'Edit {id} • Broadcast' }
             },
             {
                 path: 'hooks-tasks',

@@ -567,18 +567,3 @@ pub struct Report {
     pub total_branches: i64,
     pub covered_branches: i64,
 }
-
-#[derive(Serialize, Deserialize, Default, Debug)]
-#[serde(default)]
-pub struct Broadcast {
-    pub id: i64,
-    pub title: String,
-    pub content: String,
-    pub level: String,
-    pub project_key: String,
-    pub created: String,
-    pub updated: Option<DateTime<Utc>>,
-    pub project_id: Option<i64>,
-    pub archived: bool,
-    pub read: bool,
-}

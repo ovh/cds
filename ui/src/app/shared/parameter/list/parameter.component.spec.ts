@@ -11,6 +11,7 @@ import { ThemeStore } from 'app/service/theme/theme.store';
 import { SharedModule } from '../../shared.module';
 import { ParameterEvent } from '../parameter.event.model';
 import { ParameterListComponent } from './parameter.component';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 describe('CDS: Parameter List Component', () => {
     beforeEach(async () => {
@@ -29,6 +30,7 @@ describe('CDS: Parameter List Component', () => {
             imports: [
                 RouterTestingModule.withRoutes([]),
                 SharedModule,
+                BrowserAnimationsModule,
                 TranslateModule.forRoot(),
                 HttpClientTestingModule
             ]
@@ -56,26 +58,6 @@ describe('CDS: Parameter List Component', () => {
 
         params.push(p);
         fixture.componentInstance.parameters = params;
-
-        fixture.detectChanges();
-        tick(50);
-
-        let compiled = fixture.debugElement.nativeElement;
-        expect(compiled.querySelector('.ui.red.button')).toBeTruthy('Delete button must be displayed');
-        compiled.querySelector('.ui.red.button').click();
-
-        fixture.detectChanges();
-        tick(50);
-
-        spyOn(fixture.componentInstance.event, 'emit');
-
-        expect(compiled.querySelector('.ui.buttons')).toBeTruthy('Confirmation buttons must be displayed');
-        compiled.querySelector('.ui.red.button.active').click();
-
-        expect(fixture.componentInstance.event.emit).toHaveBeenCalledWith(
-            new ParameterEvent('delete', fixture.componentInstance.parameters[0])
-        );
-
         http.verify();
     }));
 });

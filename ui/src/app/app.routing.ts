@@ -13,10 +13,6 @@ const routes: Routes = [
             .then(m => m.FavoriteModule), data: { title: 'Bookmarks' }
     },
     {
-        path: 'broadcast', loadChildren: () => import('app/views/broadcast/broadcast.module')
-            .then(m => m.BroadcastModule), data: { title: 'Broadcasts' }
-    },
-    {
         path: 'auth', loadChildren: () => import('app/views/auth/auth.module')
             .then(m => m.AuthModule), data: { title: 'Auth' }
     },

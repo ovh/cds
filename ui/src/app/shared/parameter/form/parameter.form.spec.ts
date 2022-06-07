@@ -1,5 +1,5 @@
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
 import { Parameter } from 'app/model/parameter.model';
@@ -10,6 +10,7 @@ import { Observable, of } from 'rxjs';
 import { SharedModule } from '../../shared.module';
 import { ParameterEvent } from '../parameter.event.model';
 import { ParameterFormComponent } from './parameter.form';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 describe('CDS: parameter From Component', () => {
 
@@ -28,6 +29,7 @@ describe('CDS: parameter From Component', () => {
             ],
             imports: [
                 SharedModule,
+                BrowserAnimationsModule,
                 TranslateModule.forRoot(),
                 RouterTestingModule.withRoutes([]),
                 HttpClientTestingModule
@@ -68,10 +70,12 @@ describe('CDS: parameter From Component', () => {
         tick(50);
 
         spyOn(fixture.componentInstance.createParameterEvent, 'emit');
-        compiled.querySelector('.ui.blue.button').click();
+        compiled.querySelector('button[name="addBtn"]').click();
 
         parameter.value = '';
         expect(fixture.componentInstance.createParameterEvent.emit).toHaveBeenCalledWith(new ParameterEvent('add', parameter));
+
+        flush();
     }));
 });
 

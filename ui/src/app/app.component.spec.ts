@@ -23,8 +23,6 @@ import { Project } from './model/project.model';
 import { AuthSummary } from './model/user.model';
 import { ApplicationService } from './service/application/application.service';
 import { AuthenticationService } from './service/authentication/authentication.service';
-import { BroadcastService } from './service/broadcast/broadcast.service';
-import { BroadcastStore } from './service/broadcast/broadcast.store';
 import { NavbarService } from './service/navbar/navbar.service';
 import { NotificationService } from './service/notification/notification.service';
 import { PipelineService } from './service/pipeline/pipeline.service';
@@ -66,8 +64,6 @@ describe('App: CDS', () => {
                 AppService,
                 RouterService,
                 ToastService,
-                BroadcastStore,
-                BroadcastService,
                 TimelineStore,
                 TimelineService,
                 { provide: ActivatedRoute, useClass: MockActivatedRoutes },

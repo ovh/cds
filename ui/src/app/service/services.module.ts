@@ -20,8 +20,6 @@ import { ErrorInterceptor } from './authentication/error.interceptor';
 import { LogoutInterceptor } from './authentication/logout.interceptor';
 import { ProxyInterceptor } from './authentication/proxy.interceptor';
 import { XSRFInterceptor } from './authentication/xsrf.interceptor';
-import { BroadcastService } from './broadcast/broadcast.service';
-import { BroadcastStore } from './broadcast/broadcast.store';
 import { ConfigService } from './config/config.service';
 import { DownloadService } from './download/download.service';
 import { EnvironmentAuditService } from './environment/environment.audit.service';
@@ -99,8 +97,6 @@ export class ServicesModule {
                 HookService,
                 HelpersService,
                 ImportAsCodeService,
-                BroadcastService,
-                BroadcastStore,
                 KeyService,
                 ThemeStore,
                 NavbarService,
@@ -170,7 +166,6 @@ export {
     HelpersService,
     HookService,
     ImportAsCodeService,
-    BroadcastStore,
     KeyService,
     ThemeStore,
     ParameterService,

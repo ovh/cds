@@ -135,8 +135,6 @@ var (
 	ErrInvalidGitBranch                              = Error{ID: 127, Status: http.StatusBadRequest}
 	ErrInvalidFavoriteType                           = Error{ID: 128, Status: http.StatusBadRequest}
 	ErrUnsupportedOSArchPlugin                       = Error{ID: 129, Status: http.StatusNotFound}
-	ErrNoBroadcast                                   = Error{ID: 130, Status: http.StatusNotFound}
-	ErrBroadcastNotFound                             = Error{ID: 131, Status: http.StatusNotFound}
 	ErrInvalidPatternModel                           = Error{ID: 132, Status: http.StatusBadRequest}
 	ErrWorkerModelNoAdmin                            = Error{ID: 133, Status: http.StatusForbidden}
 	ErrWorkerModelNoPattern                          = Error{ID: 134, Status: http.StatusForbidden}
@@ -326,8 +324,6 @@ var errorsAmericanEnglish = map[int]string{
 	ErrInvalidGitBranch.ID:                              "Invalid git.branch value, you cannot have an empty git.branch value in your default payload",
 	ErrInvalidFavoriteType.ID:                           "Invalid favorite type: must be 'project' or 'workflow'",
 	ErrUnsupportedOSArchPlugin.ID:                       "Unsupported os/architecture for this plugin",
-	ErrNoBroadcast.ID:                                   "Invalid broadcast",
-	ErrBroadcastNotFound.ID:                             "Broadcast not found",
 	ErrInvalidPatternModel.ID:                           "Invalid worker model pattern: name, type and main command are mandatory",
 	ErrWorkerModelNoAdmin.ID:                            "Forbidden: you are neither a CDS administrator or the administrator for the group in which you want to create the worker model",
 	ErrWorkerModelNoPattern.ID:                          "Forbidden: you must select a pattern of configuration scripts. If you have specific needs, please contact a CDS administrator",
