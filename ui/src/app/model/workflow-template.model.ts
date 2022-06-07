@@ -21,7 +21,6 @@ export class WorkflowTemplate {
     last_audit: AuditWorkflowTemplate;
     editable: boolean;
     change_message: string;
-    import_url: string;
 }
 
 export class WorkflowTemplateParameter {

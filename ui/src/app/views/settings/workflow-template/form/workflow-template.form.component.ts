@@ -29,8 +29,6 @@ export class WorkflowTemplateFormComponent {
             this._workflowTemplate = <WorkflowTemplate>{ editable: true };
         }
 
-        this.importFromURL = !!this._workflowTemplate.import_url;
-
         this.changeMessage = null;
 
         this.parameterKeys = [];
@@ -125,7 +123,6 @@ export class WorkflowTemplateFormComponent {
     environmentErrors: { [key: number]: WorkflowTemplateError; };
     environmentKeys: Array<number>;
     changeMessage: string;
-    importFromURL: boolean;
 
     constructor(
         private _sharedService: SharedService,
@@ -149,11 +146,6 @@ export class WorkflowTemplateFormComponent {
     }
 
     clickSave() {
-        if (this.importFromURL) {
-            this.save.emit({ import_url: this.workflowTemplate.import_url });
-            return;
-        }
-
         if (!this.workflowTemplate.name || !this.workflowTemplate.group_id) {
             return;
         }
@@ -228,10 +220,5 @@ export class WorkflowTemplateFormComponent {
 
     environmentValueChange(key: number, value: string) {
         this.environmentValues[key] = value;
-    }
-
-    changeFromURL() {
-        this.importFromURL = !this.importFromURL;
-        this._cd.markForCheck();
     }
 }

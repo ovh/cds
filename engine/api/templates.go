@@ -60,41 +60,9 @@ func (api *API) postTemplateHandler() service.Handler {
 			return err
 		}
 
-		var grp *sdk.Group
-		var err error
-		// if imported from url try to download files then overrides request
-		if data.ImportURL != "" {
-			t := new(bytes.Buffer)
-			if err := exportentities.DownloadTemplate(data.ImportURL, t); err != nil {
-				return sdk.NewError(sdk.ErrWrongRequest, err)
-			}
-			wt, err := exportentities.ReadTemplateFromTar(tar.NewReader(t))
-			if err != nil {
-				return err
-			}
-			wt.ImportURL = data.ImportURL
-			data = wt
-
-			// group name should be set
-			if data.Group == nil {
-				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing group name")
-			}
-
-			grp, err = group.LoadByName(ctx, api.mustDB(), data.Group.Name, group.LoadOptions.WithMembers)
-			if err != nil {
-				return sdk.NewError(sdk.ErrWrongRequest, err)
-			}
-			data.GroupID = grp.ID
-
-			// check the workflow template extracted
-			if err := data.IsValid(); err != nil {
-				return err
-			}
-		} else {
-			grp, err = group.LoadByID(ctx, api.mustDB(), data.GroupID, group.LoadOptions.WithMembers)
-			if err != nil {
-				return err
-			}
+		grp, err := group.LoadByID(ctx, api.mustDB(), data.GroupID, group.LoadOptions.WithMembers)
+		if err != nil {
+			return err
 		}
 
 		data.Version = 1
@@ -201,42 +169,10 @@ func (api *API) putTemplateHandler() service.Handler {
 			return err
 		}
 
-		var grp *sdk.Group
-		// if imported from url try to download files then overrides request
-		if data.ImportURL != "" {
-			t := new(bytes.Buffer)
-			if err := exportentities.DownloadTemplate(data.ImportURL, t); err != nil {
-				return sdk.NewError(sdk.ErrWrongRequest, err)
-			}
-			wt, err := exportentities.ReadTemplateFromTar(tar.NewReader(t))
-			if err != nil {
-				return err
-			}
-			wt.ImportURL = data.ImportURL
-			data = wt
-
-			// group name should be set
-			if data.Group == nil {
-				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing group name")
-			}
-
-			// check that the user is admin on the given template's group
-			grp, err = group.LoadByName(ctx, api.mustDB(), data.Group.Name, group.LoadOptions.WithMembers)
-			if err != nil {
-				return sdk.NewError(sdk.ErrWrongRequest, err)
-			}
-			data.GroupID = grp.ID
-
-			// check the workflow template extracted
-			if err := data.IsValid(); err != nil {
-				return err
-			}
-		} else {
-			// check that the group exists and user is admin for group id
-			grp, err = group.LoadByID(ctx, api.mustDB(), data.GroupID, group.LoadOptions.WithMembers)
-			if err != nil {
-				return err
-			}
+		// check that the group exists and user is admin for group id
+		grp, err := group.LoadByID(ctx, api.mustDB(), data.GroupID, group.LoadOptions.WithMembers)
+		if err != nil {
+			return err
 		}
 
 		if !isGroupAdmin(ctx, grp) {
