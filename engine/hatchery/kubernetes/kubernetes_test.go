@@ -100,7 +100,7 @@ func TestHatcheryKubernetes_Status(t *testing.T) {
 
 			require.Equal(t, 2, len(podRequest.Spec.Containers))
 			require.Equal(t, "my-worker", podRequest.Spec.Containers[0].Name)
-			require.Equal(t, int64(4096), podRequest.Spec.Containers[0].Resources.Requests.Memory().Value())
+			require.Equal(t, int64(4096000000), podRequest.Spec.Containers[0].Resources.Requests.Memory().Value())
 			var foundEnv, foundSecret bool
 			for _, env := range podRequest.Spec.Containers[0].Env {
 				if env.Name == "PROVISION_ENV" && env.Value == "MYVALUE" {
