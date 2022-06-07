@@ -307,7 +307,7 @@ vcs_ssh_key: proj-blabla
 	assert.NoError(t, globalError)
 
 	app.FromRepository = repoURL
-	assert.NoError(t, application.Update(db, app))
+	assert.NoError(t, application.Update(context.TODO(), db, app))
 
 	//First pipeline
 	pip := sdk.Pipeline{

@@ -35,27 +35,27 @@ func Test_DAOVariable(t *testing.T) {
 	require.NoError(t, application.InsertVariable(db, app.ID, v2, u))
 	assert.Equal(t, sdk.PasswordPlaceholder, v2.Value)
 
-	vs, err := application.LoadAllVariables(db, app.ID)
+	vs, err := application.LoadAllVariables(context.TODO(), db, app.ID)
 	require.NoError(t, err)
 	assert.Equal(t, "clear_value", vs[0].Value)
 	assert.Equal(t, sdk.PasswordPlaceholder, vs[1].Value)
 
-	vs, err = application.LoadAllVariablesWithDecrytion(db, app.ID)
+	vs, err = application.LoadAllVariablesWithDecrytion(context.TODO(), db, app.ID)
 	require.NoError(t, err)
 	assert.Equal(t, "clear_value", vs[0].Value)
 	assert.Equal(t, "secret_value", vs[1].Value)
 
 	require.NoError(t, application.UpdateVariable(db, app.ID, &vs[1], &vs[1], u))
 
-	v1, err = application.LoadVariable(db, app.ID, "clear")
+	v1, err = application.LoadVariable(context.TODO(), db, app.ID, "clear")
 	require.NoError(t, err)
 	assert.Equal(t, "clear_value", v1.Value)
 
-	v2, err = application.LoadVariable(db, app.ID, "secret")
+	v2, err = application.LoadVariable(context.TODO(), db, app.ID, "secret")
 	require.NoError(t, err)
 	assert.Equal(t, sdk.PasswordPlaceholder, v2.Value)
 
-	v2, err = application.LoadVariableWithDecryption(db, app.ID, v2.ID, "secret")
+	v2, err = application.LoadVariableWithDecryption(context.TODO(), db, app.ID, v2.ID, "secret")
 	require.NoError(t, err)
 	assert.Equal(t, "secret_value", v2.Value)
 

@@ -425,7 +425,7 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 				if existingWorkflow.FromRepository != "" {
 					var rootApp *sdk.Application
 					if existingWorkflow.WorkflowData.Node.Context != nil && existingWorkflow.WorkflowData.Node.Context.ApplicationID != 0 {
-						rootApp, err = application.LoadByIDWithClearVCSStrategyPassword(api.mustDB(), existingWorkflow.WorkflowData.Node.Context.ApplicationID)
+						rootApp, err = application.LoadByIDWithClearVCSStrategyPassword(ctx, api.mustDB(), existingWorkflow.WorkflowData.Node.Context.ApplicationID)
 						if err != nil {
 							return err
 						}
@@ -661,7 +661,7 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 						if existingWorkflow.FromRepository != "" {
 							var rootApp *sdk.Application
 							if existingWorkflow.WorkflowData.Node.Context != nil && existingWorkflow.WorkflowData.Node.Context.ApplicationID != 0 {
-								rootApp, err = application.LoadByIDWithClearVCSStrategyPassword(api.mustDB(), existingWorkflow.WorkflowData.Node.Context.ApplicationID)
+								rootApp, err = application.LoadByIDWithClearVCSStrategyPassword(ctx, api.mustDB(), existingWorkflow.WorkflowData.Node.Context.ApplicationID)
 								if err != nil {
 									if errD := errorDefer(err); errD != nil {
 										log.Error(ctx, "%v", errD)

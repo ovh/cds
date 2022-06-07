@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -107,7 +108,7 @@ func Test_releaseApplicationWorkflowHandler(t *testing.T) {
 		app.RepositoryStrategy = sdk.RepositoryStrategy{
 			ConnectionType: "https",
 		}
-		require.NoError(t, application.Update(db, app))
+		require.NoError(t, application.Update(context.TODO(), db, app))
 	}
 
 	ctx := testRunWorkflow(t, api, router, f)

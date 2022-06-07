@@ -729,25 +729,21 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: appName,
 	}
-	if err := application.Insert(db, *proj, app); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, application.Insert(db, *proj, app))
 
 	v1 := sdk.ApplicationVariable{
 		Name:  "var1",
 		Value: "value 1",
 		Type:  sdk.StringVariable,
 	}
-
-	test.NoError(t, application.InsertVariable(db, app.ID, &v1, u))
+	require.NoError(t, application.InsertVariable(db, app.ID, &v1, u))
 
 	v2 := sdk.ApplicationVariable{
 		Name:  "var2",
 		Value: "value 2",
 		Type:  sdk.SecretVariable,
 	}
-
-	test.NoError(t, application.InsertVariable(db, app.ID, &v2, u))
+	require.NoError(t, application.InsertVariable(db, app.ID, &v2, u))
 
 	//Insert ssh and gpg keys
 	k := &sdk.ApplicationKey{
@@ -757,12 +753,12 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 	}
 
 	kpgp, err := keys.GeneratePGPKeyPair(k.Name)
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	k.Public = kpgp.Public
 	k.Private = kpgp.Private
 	k.KeyID = kpgp.KeyID
-	test.NoError(t, application.InsertKey(db, k))
+	require.NoError(t, application.InsertKey(db, k))
 
 	k2 := &sdk.ApplicationKey{
 		Name:          "app-mykey-ssh",
@@ -770,12 +766,12 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 		ApplicationID: app.ID,
 	}
 	kssh, errK := keys.GenerateSSHKey(k2.Name)
-	test.NoError(t, errK)
+	require.NoError(t, errK)
 
 	k2.Public = kssh.Public
 	k2.Private = kssh.Private
 	k2.KeyID = kssh.KeyID
-	test.NoError(t, application.InsertKey(db, k2))
+	require.NoError(t, application.InsertKey(db, k2))
 
 	w := sdk.Workflow{
 		Name:       "test_1",

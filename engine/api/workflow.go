@@ -249,7 +249,7 @@ func (api *API) getWorkflowHandler() service.Handler {
 		}
 
 		if withUsage {
-			usage, err := loadWorkflowUsage(api.mustDB(), w1.ID)
+			usage, err := loadWorkflowUsage(ctx, api.mustDB(), w1.ID)
 			if err != nil {
 				return sdk.WrapError(err, "cannot load usage for workflow %s", name)
 			}
@@ -285,7 +285,7 @@ func (api *API) getWorkflowHandler() service.Handler {
 	}
 }
 
-func loadWorkflowUsage(db gorp.SqlExecutor, workflowID int64) (sdk.Usage, error) {
+func loadWorkflowUsage(ctx context.Context, db gorp.SqlExecutor, workflowID int64) (sdk.Usage, error) {
 	usage := sdk.Usage{}
 	pips, errP := pipeline.LoadByWorkflowID(db, workflowID)
 	if errP != nil {
@@ -299,7 +299,7 @@ func loadWorkflowUsage(db gorp.SqlExecutor, workflowID int64) (sdk.Usage, error)
 	}
 	usage.Environments = envs
 
-	apps, errA := application.LoadByWorkflowID(db, workflowID)
+	apps, errA := application.LoadByWorkflowID(ctx, db, workflowID)
 	if errA != nil {
 		return usage, sdk.WrapError(errA, "Cannot load applications linked to a workflow id %d", workflowID)
 	}
@@ -608,7 +608,7 @@ func (api *API) putWorkflowHandler() service.Handler {
 		wf1.Permissions.Writable = true
 		wf1.Permissions.Executable = true
 
-		usage, err := loadWorkflowUsage(api.mustDB(), wf1.ID)
+		usage, err := loadWorkflowUsage(ctx, api.mustDB(), wf1.ID)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load usage")
 		}
@@ -977,7 +977,7 @@ func (api *API) getWorkflowDependenciesHandler() service.Handler {
 			return err
 		}
 
-		usage, err := loadWorkflowUsage(api.mustDB(), wf.ID)
+		usage, err := loadWorkflowUsage(ctx, api.mustDB(), wf.ID)
 		if err != nil {
 			return err
 		}

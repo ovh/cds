@@ -1,6 +1,7 @@
 package workflow
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/go-gorp/gorp"
@@ -10,14 +11,14 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func RetrieveSecrets(db gorp.SqlExecutor, wf sdk.Workflow) (*PushSecrets, error) {
+func RetrieveSecrets(ctx context.Context, db gorp.SqlExecutor, wf sdk.Workflow) (*PushSecrets, error) {
 	secrets := &PushSecrets{
 		ApplicationsSecrets: make(map[int64][]sdk.Variable),
 		EnvironmentdSecrets: make(map[int64][]sdk.Variable),
 	}
 
 	for _, app := range wf.Applications {
-		appSecrets, err := LoadApplicationSecrets(db, app.ID)
+		appSecrets, err := LoadApplicationSecrets(ctx, db, app.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -34,8 +35,8 @@ func RetrieveSecrets(db gorp.SqlExecutor, wf sdk.Workflow) (*PushSecrets, error)
 	return secrets, nil
 }
 
-func LoadApplicationSecrets(db gorp.SqlExecutor, id int64) ([]sdk.Variable, error) {
-	appDB, err := application.LoadByIDWithClearVCSStrategyPassword(db, id,
+func LoadApplicationSecrets(ctx context.Context, db gorp.SqlExecutor, id int64) ([]sdk.Variable, error) {
+	appDB, err := application.LoadByIDWithClearVCSStrategyPassword(ctx, db, id,
 		application.LoadOptions.WithVariablesWithClearPassword,
 		application.LoadOptions.WithClearDeploymentStrategies,
 		application.LoadOptions.WithClearKeys)

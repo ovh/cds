@@ -57,48 +57,29 @@ func TestLoadAllByRepo(t *testing.T) {
 
 	_ = event.Initialize(context.Background(), db.DbMap, cache, nil)
 
-	app, _ := application.LoadByName(db, "TestLoadAllByRepo", "TestLoadAllByRepo")
-	if app != nil {
-		application.DeleteApplication(db, app.ID)
-	}
-	project.Delete(db, "TestLoadAllByRepo")
-	defer project.Delete(db, "TestLoadAllByRepo")
 	proj := &sdk.Project{
-		Key:  "TestLoadAllByRepo",
-		Name: "TestLoadAllByRepo",
+		Key:  sdk.RandomString(10),
+		Name: sdk.RandomString(10),
 	}
+	require.NoError(t, project.Insert(db, proj))
 
-	g := sdk.Group{
-		Name: "test_TestLoadAll_group",
-	}
-
-	eg, _ := group.LoadByName(context.TODO(), db, g.Name)
-	if eg != nil {
-		g = *eg
-	} else if err := group.Insert(context.TODO(), db, &g); err != nil {
-		t.Fatalf("Cannot insert group : %s", err)
-	}
-
-	app = &sdk.Application{
-		Name:               "TestLoadAllByRepo",
-		RepositoryFullname: "ovh/cds",
-	}
-
-	test.NoError(t, project.Insert(db, proj))
+	g := assets.InsertGroup(t, db)
 	require.NoError(t, group.InsertLinkGroupProject(context.TODO(), db, &group.LinkGroupProject{
 		GroupID:   g.ID,
 		ProjectID: proj.ID,
 		Role:      sdk.PermissionReadWriteExecute,
 	}))
-	proj, _ = project.LoadByID(db, proj.ID, project.LoadOptions.WithGroups)
 
-	u, _ := assets.InsertLambdaUser(t, db, &proj.ProjectGroups[0].Group)
-
+	app := &sdk.Application{
+		Name:               sdk.RandomString(10),
+		RepositoryFullname: "ovh/cds",
+	}
 	test.NoError(t, application.Insert(db, *proj, app))
 
-	projs, err := project.LoadAllByRepoAndGroupIDs(context.TODO(), db, u.GetGroupIDs(), "ovh/cds")
-	assert.NoError(t, err)
-	assert.Len(t, projs, 1)
+	projs, err := project.LoadAllByRepoAndGroupIDs(context.TODO(), db, []int64{g.ID}, "ovh/cds")
+	require.NoError(t, err)
+	require.Len(t, projs, 1)
+	assert.Equal(t, proj.ID, projs[0].ID)
 }
 
 func TestLoadAll(t *testing.T) {
