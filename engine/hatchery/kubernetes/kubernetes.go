@@ -204,6 +204,11 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 		}
 	}
 
+	ephemeralStorage := h.Config.DefaultEphemeralStorage
+	if ephemeralStorage == "" {
+		ephemeralStorage = "1Gi"
+	}
+
 	workerConfig := h.GenerateWorkerConfig(ctx, h, spawnArgs)
 	udataParam := struct {
 		API string
@@ -292,12 +297,14 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 					Args:            []string{cmd},
 					Resources: apiv1.ResourceRequirements{
 						Requests: apiv1.ResourceList{
-							apiv1.ResourceCPU:    resource.MustParse(cpu),
-							apiv1.ResourceMemory: *resource.NewScaledQuantity(memory, resource.Mega),
+							apiv1.ResourceCPU:              resource.MustParse(cpu),
+							apiv1.ResourceMemory:           *resource.NewScaledQuantity(memory, resource.Mega),
+							apiv1.ResourceEphemeralStorage: resource.MustParse(ephemeralStorage),
 						},
 						Limits: apiv1.ResourceList{
-							apiv1.ResourceCPU:    resource.MustParse(cpu),
-							apiv1.ResourceMemory: *resource.NewScaledQuantity(memory, resource.Mega),
+							apiv1.ResourceCPU:              resource.MustParse(cpu),
+							apiv1.ResourceMemory:           *resource.NewScaledQuantity(memory, resource.Mega),
+							apiv1.ResourceEphemeralStorage: resource.MustParse(ephemeralStorage),
 						},
 					},
 				},
@@ -327,20 +334,25 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 		podSchema.Spec.HostAliases[0].Hostnames[0] = "worker"
 	}
 
+	serviceCPU := h.Config.DefaultServiceCPU
+	if serviceCPU == "" {
+		serviceCPU = "256m"
+	}
+
+	serviceMemory := int64(h.Config.DefaultServiceMemory)
+	if serviceMemory == 0 {
+		serviceMemory = 512
+	}
+
+	serviceEphemeralStorage := h.Config.DefaultServiceEphemeralStorage
+	if serviceEphemeralStorage == "" {
+		serviceEphemeralStorage = "512Mi"
+	}
+
 	for i, serv := range services {
 		//name= <alias> => the name of the host put in /etc/hosts of the worker
 		//value= "postgres:latest env_1=blabla env_2=blabla"" => we can add env variables in requirement name
 		img, envm := hatchery.ParseRequirementModel(serv.Value)
-
-		serviceCPU := h.Config.DefaultServiceCPU
-		if serviceCPU == "" {
-			serviceCPU = "256m"
-		}
-
-		serviceMemory := int64(h.Config.DefaultServiceMemory)
-		if serviceMemory == 0 {
-			serviceMemory = 512
-		}
 
 		if sm, ok := envm["CDS_SERVICE_MEMORY"]; ok {
 			var err error
@@ -357,12 +369,14 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 			Image: img,
 			Resources: apiv1.ResourceRequirements{
 				Requests: apiv1.ResourceList{
-					apiv1.ResourceCPU:    resource.MustParse(serviceCPU),
-					apiv1.ResourceMemory: *resource.NewScaledQuantity(serviceMemory, resource.Mega),
+					apiv1.ResourceCPU:              resource.MustParse(serviceCPU),
+					apiv1.ResourceMemory:           *resource.NewScaledQuantity(serviceMemory, resource.Mega),
+					apiv1.ResourceEphemeralStorage: resource.MustParse(serviceEphemeralStorage),
 				},
 				Limits: apiv1.ResourceList{
-					apiv1.ResourceCPU:    resource.MustParse(serviceCPU),
-					apiv1.ResourceMemory: *resource.NewScaledQuantity(serviceMemory, resource.Mega),
+					apiv1.ResourceCPU:              resource.MustParse(serviceCPU),
+					apiv1.ResourceMemory:           *resource.NewScaledQuantity(serviceMemory, resource.Mega),
+					apiv1.ResourceEphemeralStorage: resource.MustParse(serviceEphemeralStorage),
 				},
 			},
 		}
