@@ -293,11 +293,11 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 					Resources: apiv1.ResourceRequirements{
 						Requests: apiv1.ResourceList{
 							apiv1.ResourceCPU:    resource.MustParse(cpu),
-							apiv1.ResourceMemory: resource.MustParse(fmt.Sprintf("%d", memory)),
+							apiv1.ResourceMemory: *resource.NewScaledQuantity(memory, resource.Mega),
 						},
 						Limits: apiv1.ResourceList{
 							apiv1.ResourceCPU:    resource.MustParse(cpu),
-							apiv1.ResourceMemory: resource.MustParse(fmt.Sprintf("%d", memory)),
+							apiv1.ResourceMemory: *resource.NewScaledQuantity(memory, resource.Mega),
 						},
 					},
 				},
@@ -337,10 +337,14 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 			serviceCPU = "256m"
 		}
 
-		serviceMemory := resource.MustParse(fmt.Sprintf("%d", h.Config.DefaultServiceMemory))
+		serviceMemory := int64(h.Config.DefaultServiceMemory)
+		if serviceMemory == 0 {
+			serviceMemory = 512
+		}
+
 		if sm, ok := envm["CDS_SERVICE_MEMORY"]; ok {
 			var err error
-			serviceMemory, err = resource.ParseQuantity(sm)
+			serviceMemory, err = strconv.ParseInt(sm, 10, 64)
 			if err != nil {
 				log.Warn(ctx, "hatchery> kubernetes> SpawnWorker> Unable to parse CDS_SERVICE_MEMORY value '%s': %s", sm, err)
 				continue
@@ -354,11 +358,11 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 			Resources: apiv1.ResourceRequirements{
 				Requests: apiv1.ResourceList{
 					apiv1.ResourceCPU:    resource.MustParse(serviceCPU),
-					apiv1.ResourceMemory: serviceMemory,
+					apiv1.ResourceMemory: *resource.NewScaledQuantity(serviceMemory, resource.Mega),
 				},
 				Limits: apiv1.ResourceList{
 					apiv1.ResourceCPU:    resource.MustParse(serviceCPU),
-					apiv1.ResourceMemory: serviceMemory,
+					apiv1.ResourceMemory: *resource.NewScaledQuantity(serviceMemory, resource.Mega),
 				},
 			},
 		}
