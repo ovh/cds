@@ -1,7 +1,7 @@
 <section class="step">
     <nz-row class="stepParams">
         <!-- Move and collapse -->
-        <nz-col [nzSpan]="2" class="move">
+        <nz-col [nzSpan]="1" class="move">
             <i class="move icon" *ngIf="edit"></i>
             <span class="pointing" (click)="collapsed = !collapsed">
                 <i nz-icon nzType="caret-right" nzTheme="fill" *ngIf="!collapsed"></i>
@@ -9,7 +9,7 @@
             </span>
         </nz-col>
         <!-- Step name -->
-        <nz-col [nzSpan]="4">
+        <nz-col [nzSpan]="5">
                 <ng-container *ngIf="edit">
                     <input nz-input name="stepName" [(ngModel)]="step.name"  (keydown)="action.hasChanged = true">
                 </ng-container>
@@ -25,7 +25,7 @@
         </nz-col>
         <!-- deprecated icon -->
         <nz-col [nzSpan]="3">
-            <span class="textOrange" *ngIf="step.deprecated || true">
+            <span class="textOrange" *ngIf="step.deprecated">
                 <i nz-icon nzType="warning" nzTheme="outline"></i>{{'common_deprecated' | translate}}
             </span>
         </nz-col>
@@ -84,13 +84,13 @@
         <ng-container *ngFor="let p of step.parameters">
             <form nz-form *ngIf="!p.advanced" class="parameters">
                 <nz-form-item>
-                    <nz-form-label [nzSpan]="4">
+                    <nz-form-label [nzSpan]="3">
                         <b>{{p.name}}</b>
                         <span *ngIf="p.description" nz-tooltip nzTooltipPlacement="right" [nzTooltipTitle]="p.description">
                                     <i nz-icon nzType="info-circle" nzTheme="outline"></i>
                                 </span>
                     </nz-form-label>
-                    <nz-form-control [nzSpan]="14" [nzOffset]="3">
+                    <nz-form-control [nzSpan]="21">
                         <app-parameter-value [edit]="edit" [type]="p.type" [keys]="keys" [(value)]="p.value" [editList]="false"
                                              [suggest]="suggest" (valueUpdating)="action.hasChanged = true" [ref]="originalParam.get(p.name)">
                         </app-parameter-value>
@@ -101,7 +101,7 @@
 
         <!-- collapser for advanced parameters -->
         <nz-row *ngIf="withAdvanced"  (click)="collapsed_advanced = !collapsed_advanced">
-            <nz-col [nzOffset]="2" [nzSpan]="20">
+            <nz-col [nzOffset]="1" [nzSpan]="20">
                 <nz-divider [nzText]="advancedDivider" nzOrientation="left"></nz-divider>
                 <ng-template #advancedDivider>
                     <a>Advanced parameters</a>
@@ -115,13 +115,13 @@
             <ng-container *ngFor="let p of step.parameters">
                 <form nz-form *ngIf="p.advanced" class="parameters">
                         <nz-form-item>
-                            <nz-form-label [nzSpan]="4">
+                            <nz-form-label [nzSpan]="3">
                                 <b>{{p.name}}</b>
                                 <span *ngIf="p.description" nz-tooltip nzTooltipPlacement="right" [nzTooltipTitle]="p.description">
                                     <i nz-icon nzType="info-circle" nzTheme="outline"></i>
                                 </span>
                             </nz-form-label>
-                            <nz-form-control [nzSpan]="14" [nzOffset]="3">
+                            <nz-form-control [nzSpan]="21">
                                 <app-parameter-value [edit]="edit" [type]="p.type" [keys]="keys" [(value)]="p.value"
                                                      [editList]="false" [suggest]="suggest" (valueUpdating)="action.hasChanged = true"
                                                      [ref]="originalParam.get(p.name)">
