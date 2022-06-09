@@ -22,8 +22,3 @@ See [Worker Models Documentation](https://ovh.github.io/cds/docs/concepts/worker
 ## Workflow Templates
 
 See [Workflow Templates Documentation](https://ovh.github.io/cds/docs/concepts/template/)
-
-## µServices
-
-- [badge](https://github.com/ovh/cds/tree/master/contrib/uservices/badge)
-- [Hubot XMPP](https://github.com/ovh/cds/tree/master/contrib/uservices/hubot-xmpp)
