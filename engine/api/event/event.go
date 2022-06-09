@@ -98,10 +98,10 @@ func ResetEventIntegration(ctx context.Context, db gorp.SqlExecutor, eventIntegr
 	kafkaCfg := getKafkaConfig(projInt.Config)
 	kafkaBroker, err := getBroker(ctx, "kafka", kafkaCfg)
 	if err != nil {
-		return sdk.WrapError(sdk.ErrBadBrokerConfiguration, "cannot get broker for %s and user %s : %v", projInt.Config["broker url"].Value, projInt.Config["username"].Value, err)
+		return sdk.WrapError(sdk.ErrBadBrokerConfiguration, "cannot get broker for %q and user %q : %v", projInt.Config["broker url"].Value, projInt.Config["username"].Value, err)
 	}
 	if err := brokersConnectionCache.Add(brokerConnectionKey, kafkaBroker, gocache.DefaultExpiration); err != nil {
-		return sdk.WrapError(sdk.ErrBadBrokerConfiguration, "cannot add broker in cache for %s and user %s : %v", projInt.Config["broker url"].Value, projInt.Config["username"].Value, err)
+		return sdk.WrapError(sdk.ErrBadBrokerConfiguration, "cannot add broker in cache for %q and user %q : %v", projInt.Config["broker url"].Value, projInt.Config["username"].Value, err)
 	}
 	return nil
 }
@@ -213,11 +213,11 @@ func DequeueEvent(ctx context.Context, db *gorp.DbMap) {
 				kafkaCfg := getKafkaConfig(projInt.Config)
 				kafkaBroker, err := getBroker(ctx, "kafka", kafkaCfg)
 				if err != nil {
-					log.Error(ctx, "Event.DequeueEvent> cannot get broker for %s and user %s : %v", projInt.Config["broker url"].Value, projInt.Config["username"].Value, err)
+					log.Error(ctx, "Event.DequeueEvent> cannot get broker for %q and user %q : %v", projInt.Config["broker url"].Value, projInt.Config["username"].Value, err)
 					continue
 				}
 				if err := brokersConnectionCache.Add(brokerConnectionKey, kafkaBroker, gocache.DefaultExpiration); err != nil {
-					log.Error(ctx, "Event.DequeueEvent> cannot add broker in cache for %s and user %s : %v", projInt.Config["broker url"].Value, projInt.Config["username"].Value, err)
+					log.Error(ctx, "Event.DequeueEvent> cannot add broker in cache for %q and user %q : %v", projInt.Config["broker url"].Value, projInt.Config["username"].Value, err)
 					continue
 				}
 				brokerConnection = kafkaBroker
