@@ -27,7 +27,7 @@
             </nz-form-item>
         </nz-col>
         <nz-col [nzSpan]="4">
-            <button nz-button nzType="primary" [nzLoading]="loading" [disabled]="loading || !newVariable.name || newVariable.name === '' ||
+            <button nz-button nzType="primary" name="saveBtn" [nzLoading]="loading" [disabled]="loading || !newVariable.name || newVariable.name === '' ||
                 !newVariable.type || newVariable.type === ''">
                 <i nz-icon nzType="save" nzTheme="outline"></i>Save
             </button>

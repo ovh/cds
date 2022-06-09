@@ -30,6 +30,10 @@ export class WorkerModelFormComponent implements OnInit, OnDestroy {
             if (this.patterns) {
                 this.typeChange();
             }
+
+            if (!this.workerModelAsCode) {
+                this.loadAsCode();
+            }
         }
     }
     get workerModel(): WorkerModel {
