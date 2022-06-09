@@ -5,7 +5,6 @@ import { RouterModule } from '@angular/router';
 import { NguiAutoCompleteModule } from '@sgu/auto-complete';
 import { TranslateModule } from '@ngx-translate/core';
 import { SuiModule } from '@richardlt/ng2-semantic-ui';
-import { NgxSemanticModule } from '@sgu/ng-semantic';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { AuthenticationGuard } from 'app/guard/authentication.guard';
 import { FeatureGuard } from 'app/guard/feature.guard';
@@ -189,7 +188,6 @@ const icons: IconDefinition[] = [ BellFill, BookOutline, CaretDownFill, CaretRig
         NzUploadModule,
         CommonModule,
         ClipboardModule,
-        NgxSemanticModule,
         FormsModule,
         TranslateModule,
         DragulaModule.forRoot(),
@@ -355,7 +353,6 @@ const icons: IconDefinition[] = [ BellFill, BookOutline, CaretDownFill, CaretRig
         MomentModule,
         NzAutocompleteModule,
         NgForNumber,
-        NgxSemanticModule,
         NgxAutoScrollDirective,
         NzAlertModule,
         NzBadgeModule,
