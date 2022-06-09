@@ -7,6 +7,7 @@ import { Pipeline } from 'app/model/pipeline.model';
 import { Label, LoadOpts, Project } from 'app/model/project.model';
 import { Variable } from 'app/model/variable.model';
 import { Workflow } from 'app/model/workflow.model';
+import { Environment } from 'app/model/environment.model';
 
 // Use to load fetched Project in our app
 export class LoadProject {
@@ -81,6 +82,12 @@ export class UpdateVariableInProject {
 export class DeleteVariableInProject {
     static readonly type = '[Project] Delete Variable in Project';
     constructor(public payload: Variable) { }
+}
+
+// ---------Environment --------- //
+export class AddEnvironmentInProject {
+    static readonly type = '[Project] Add environment in Project';
+    constructor(public payload: Environment) { }
 }
 
 //  ------- Application --------- //

@@ -9,6 +9,7 @@ import { EnvironmentService } from 'app/service/environment/environment.service'
 import { cloneDeep } from 'lodash-es';
 import { tap } from 'rxjs/operators';
 import * as ActionEnvironment from './environment.action';
+import * as ActionProject from 'app/store/project.action';
 
 export class EnvironmentStateModel {
     public environment: Environment;
@@ -49,14 +50,16 @@ export class EnvironmentState {
         return this._http.post<Project>('/project/' + action.payload.projectKey + '/environment', action.payload.environment)
             .pipe(tap((project: Project) => {
                 const state = ctx.getState();
+                let env = project.environments.find(e => e.name === action.payload.environment.name);
                 ctx.setState({
                     ...state,
                     currentProjectKey: action.payload.projectKey,
-                    environment: project.environments.find(e => e.name === action.payload.environment.name),
+                    environment: env,
                     loading: false,
                     editEnvironment: null,
                     editMode: false
                 });
+                ctx.dispatch(new ActionProject.AddEnvironmentInProject(env));
             }));
     }
 

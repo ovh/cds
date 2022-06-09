@@ -146,6 +146,7 @@ import { NzCollapseModule } from 'ng-zorro-antd/collapse';
 import { RequirementsValueComponent } from 'app/shared/requirements/value/requirements.value.component';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzRadioModule } from 'ng-zorro-antd/radio';
+import { NzStepsModule } from 'ng-zorro-antd/steps';
 
 const ngZorroConfig: NzConfig = {
     notification: {nzPauseOnHover: true, nzPlacement: "topRight"},
@@ -179,6 +180,7 @@ const icons: IconDefinition[] = [ BellFill, BookOutline, CaretDownFill, CaretRig
         NzRadioModule,
         NzSelectModule,
         NzSpinModule,
+        NzStepsModule,
         NzSwitchModule,
         NzTabsModule,
         NzTableModule,
@@ -377,6 +379,7 @@ const icons: IconDefinition[] = [ BellFill, BookOutline, CaretDownFill, CaretRig
         NzRadioModule,
         NzSelectModule,
         NzSpinModule,
+        NzStepsModule,
         NzSwitchModule,
         NzTabsModule,
         NzTagModule,

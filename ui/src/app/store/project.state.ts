@@ -424,6 +424,24 @@ export class ProjectState {
         }));
     }
 
+    //  ------- Environment --------- //
+    @Action(ProjectAction.AddEnvironmentInProject)
+    addEnvironment(ctx: StateContext<ProjectStateModel>, action: ProjectAction.AddEnvironmentInProject) {
+        const state = ctx.getState();
+        let environments = state.project.environments ? state.project.environments.concat([action.payload]) : [action.payload];
+        let environment_names = state.project.environment_names ? state.project.environment_names.concat([]) : [];
+
+        let idName = new IdName();
+        idName.id = action.payload.id;
+        idName.name = action.payload.name;
+        environment_names.push(idName);
+
+        return ctx.setState({
+            ...state,
+            project: Object.assign({}, state.project, { environments, environment_names }),
+        });
+    }
+
     //  ------- Application --------- //
     @Action(ProjectAction.AddApplicationInProject)
     addApplication(ctx: StateContext<ProjectStateModel>, action: ProjectAction.AddApplicationInProject) {

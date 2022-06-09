@@ -45,9 +45,8 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
   @Input() hideCancel: boolean;
   @Input() hideNext: boolean;
   @Input() loading: boolean;
-  @Input() canCreateFork: boolean;
   @Output() nodeCreated: EventEmitter<WNode> = new EventEmitter<WNode>();
-  @Output() pipelineSectionChanged: EventEmitter<string> = new EventEmitter<string>();
+  @Output() pipelineSectionChanged: EventEmitter<number> = new EventEmitter<number>();
 
   _project: Project;
   node: WNode = new WNode();
@@ -55,60 +54,29 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
   applicationsName: IdName[] = [];
   environmentsName: IdName[] = [];
 
-  // Pipeline section
-  set createNewPipeline(data: boolean) {
-    this._createNewPipeline = data;
-    if (data) {
-      this.newPipeline = new Pipeline();
-      this.node.context.pipeline_id = null;
-    }
-  }
-  get createNewPipeline() {
-    return this._createNewPipeline;
-  }
+    pipIndexTab: number;
+    appIndexTab: number;
+    envIndexTab: number;
+
   errorPipelineNamePattern = false;
   loadingCreatePipeline = false;
   newPipeline: Pipeline = new Pipeline();
-  set pipelineSection(data: 'pipeline' | 'application' | 'environment' | 'integration') {
+  set pipelineSection(data: number) {
     this._pipelineSection = data;
     this.pipelineSectionChanged.emit(data);
   }
   get pipelineSection() {
     return this._pipelineSection;
   }
-  _pipelineSection: 'pipeline' | 'application' | 'environment' | 'integration' = 'pipeline';
-  _createNewPipeline = false;
+  _pipelineSection: number = 0;
 
-  // Application details
-  set createNewApplication(data: boolean) {
-    this._createNewApplication = data;
-    if (data) {
-      this.newApplication = new Application();
-      this.node.context.application_id = null;
-    }
-  }
-  get createNewApplication() {
-    return this._createNewApplication;
-  }
+
   errorApplicationNamePattern = false;
   loadingCreateApplication = false;
   newApplication: Application = new Application();
-  _createNewApplication = false;
 
-  // Environment details
-  set createNewEnvironment(data: boolean) {
-    this._createNewEnvironment = data;
-    if (data) {
-      this.newEnvironment = new Environment();
-      this.node.context.environment_id = null;
-    }
-  }
-  get createNewEnvironment() {
-    return this._createNewEnvironment;
-  }
   loadingCreateEnvironment = false;
   newEnvironment: Environment = new Environment();
-  _createNewEnvironment = false;
   integrations: IdName[] = [];
   loadingIntegrations = false;
   createFork = false;
@@ -125,16 +93,6 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
   }
 
   ngOnInit() {
-    if (!this.project.pipeline_names || !this.project.pipeline_names.length) {
-      this.createNewPipeline = true;
-    }
-    if (!this.project.application_names || !this.project.application_names.length) {
-      this.createNewApplication = true;
-    }
-    if (!this.project.environments || !this.project.environments.length) {
-      this.createNewEnvironment = true;
-    }
-
     if (Array.isArray(this.project.application_names)) {
       let voidApp = new IdName();
       voidApp.id = 0;
@@ -194,18 +152,19 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
         map((pip: PipelinesStateModel) => {
           this._toast.success('', this._translate.instant('pipeline_added'));
           this.node.context.pipeline_id = pip.pipeline.id;
-          this.pipelineSection = 'application';
+          this.pipelineSection = 1;
           return pip.pipeline;
         }));
   }
 
-  selectOrCreatePipeline(): Observable<string> {
-    if (this.createNewPipeline) {
+  selectOrCreatePipeline(): Observable<number> {
+    if (this.pipIndexTab === 1) {
       return this.createPipeline().pipe(
-        map(() => 'application'));
+        map(() => 1));
     }
-    this.pipelineSection = 'application';
-    return observableOf('application');
+    this.pipelineSection = 1;
+    this._cd.markForCheck();
+    return observableOf(1);
   }
 
   createApplication(): Observable<Application> {
@@ -229,20 +188,21 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
       map((s: ApplicationStateModel) => {
         this._toast.success('', this._translate.instant('application_created'));
         this.node.context.application_id = s.application.id;
-        this.pipelineSection = 'environment';
+        this.pipelineSection = 2;
         return s.application;
       })
     );
   }
 
-  selectOrCreateApplication(): Observable<string> {
-    if (this.createNewApplication && this.newApplication.name) {
+  selectOrCreateApplication(): Observable<number> {
+    if (this.appIndexTab && this.newApplication.name) {
       return this.createApplication().pipe(
-        map(() => 'environment'));
+        map(() => 2));
     }
     this.getIntegrations();
-    this.pipelineSection = 'environment';
-    return observableOf('environment');
+    this.pipelineSection = 2;
+      this._cd.markForCheck();
+    return observableOf(2);
   }
 
   getIntegrations() {
@@ -277,9 +237,6 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
             this.integrations.push(idName);
           }
         });
-        if (this.integrations.length) {
-          this.integrations.unshift(new IdName());
-        }
       }
     );
   }
@@ -302,7 +259,7 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
         if (!this.node.context.application_id) {
           this.createNode();
         } else {
-          this.pipelineSection = 'integration';
+          this.pipelineSection = 3;
         }
         return proj;
       })
@@ -310,33 +267,40 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
   }
 
   selectOrCreateEnvironment() {
-    if (this.createNewEnvironment && this.newEnvironment.name) {
+    if (this.envIndexTab === 1 && this.newEnvironment.name) {
       return this.createEnvironment().pipe(
-        map(() => 'integration'));
+        map(() => 3));
     }
     let noIntegrationsAvailable = !this.loadingIntegrations && (!this.integrations || !this.integrations.length);
     if (!this.node.context.application_id || noIntegrationsAvailable) {
       this.createNode();
-      return observableOf('done');
+      return observableOf(4);
     }
-    this.pipelineSection = 'integration';
-    return observableOf('integration');
+    this.pipelineSection = 3;
+    this._cd.markForCheck();
+    return observableOf(3);
   }
 
   selectOrCreateIntegration() {
     this.createNode();
-    return observableOf('done');
+    return observableOf(4);
   }
 
-  public goToNextSection(): Observable<string> {
+  public goToPreviousSection() {
+      this.pipelineSection--;
+      this._cd.markForCheck();
+
+  }
+
+  public goToNextSection(): Observable<number> {
     switch (this.pipelineSection) {
-      case 'pipeline':
+      case 0:
         return this.selectOrCreatePipeline();
-      case 'application':
+      case 1:
         return this.selectOrCreateApplication();
-      case 'environment':
+      case 2:
         return this.selectOrCreateEnvironment();
-      case 'integration':
+      case 3:
         return this.selectOrCreateIntegration();
     }
   }
