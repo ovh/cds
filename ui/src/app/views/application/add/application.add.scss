@@ -10,15 +10,14 @@
     text-align: center;
   }
 
-  .ui.radio.checkbox {
-    border: 1px solid $darkGreyColor;
-    padding: 10px 30px;
+  nz-select {
     width: 100%;
   }
 
-  .ui.radio.checkbox.active {
-    border-color: #202f3c;
+  nz-form-item {
+    margin-top: 24px;
   }
+
   .app-icon {
     height: 5em;
     width: 5em;

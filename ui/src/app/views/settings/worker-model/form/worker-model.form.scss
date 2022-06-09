@@ -3,3 +3,40 @@
 .content.error {
   overflow: auto;
 }
+
+form {
+  padding: 30px 10px;
+}
+
+nz-row {
+  margin-bottom: 20px;
+  nz-col {
+
+    padding: 0 20px;
+
+    button {
+      float: right;
+      margin-left: 20px;
+    }
+  }
+}
+
+nz-alert {
+  width: 100%;
+
+  i {
+    font-size: 1.5em;
+  }
+
+  nz-row {
+    margin-bottom: 0;
+  }
+}
+
+i.success {
+  color: $cds_color_green;
+}
+i.fail {
+  color: $cds_color_red
+}
+

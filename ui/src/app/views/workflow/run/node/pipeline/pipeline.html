@@ -33,7 +33,8 @@
                                                 (click)="selectedJobManual(j.pipeline_action_id)">
                                                 <div class="warningPip"
                                                     *ngIf="mapJobStatus?.get(j.pipeline_action_id)?.warnings > 0"
-                                                    [smDirTooltip]="'warning_build_title' | translate: {nb: mapJobStatus?.get(j.pipeline_action_id)?.warnings}">
+                                                     nz-tooltip nzTooltipTitle="The build is in success state but there are/is {{mapJobStatus?.get(j.pipeline_action_id)?.warnings}} optional step(s) in error"
+                                                     nzTooltipPlacement="top">
                                                     <i class="warning sign icon orange"></i>
                                                 </div>
                                                 <div class="title">

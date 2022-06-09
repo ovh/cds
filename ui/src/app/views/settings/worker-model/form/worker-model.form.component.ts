@@ -27,6 +27,9 @@ export class WorkerModelFormComponent implements OnInit, OnDestroy {
             if (this._workerModel && this._workerModel.model_docker && this._workerModel.model_docker.envs) {
                 this.envNames = Object.keys(this._workerModel.model_docker.envs);
             }
+            if (this.patterns) {
+                this.typeChange();
+            }
         }
     }
     get workerModel(): WorkerModel {
@@ -36,7 +39,18 @@ export class WorkerModelFormComponent implements OnInit, OnDestroy {
     @Input() loading: boolean;
     @Input() types: Array<string>;
     @Input() groups: Array<Group>;
-    @Input() patterns: Array<ModelPattern>;
+
+    _patterns: Array<ModelPattern>
+    @Input() set patterns(data: Array<ModelPattern>) {
+        this._patterns = data;
+        if (this.workerModel?.type) {
+            this.typeChange();
+        }
+    };
+    get patterns() {
+        return this._patterns;
+    }
+
     @Output() save = new EventEmitter();
     @Output() saveAsCode = new EventEmitter();
     @Output() delete = new EventEmitter();
@@ -149,6 +163,7 @@ pattern_name: basic_unix`;
 
     typeChange(): void {
         this.patternsFiltered = this.patterns.filter((pattern) => pattern.type === this.workerModel.type);
+        this._cd.markForCheck();
     }
 
     patternChange(): void {

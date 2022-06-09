@@ -22,7 +22,7 @@
                             </nz-select>
                         </ng-container>
                         <ng-container *ngIf="!action.editable">
-                            <input *ngIf="!action.editable" type="text" name="group" [ngModel]="action.group?.name"
+                            <input nz-input *ngIf="!action.editable" type="text" name="group" [ngModel]="action.group?.name"
                                    [readonly]="true">
                         </ng-container>
                     </nz-form-control>

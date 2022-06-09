@@ -1,15 +1,8 @@
-.ui.form {
+nz-col {
+  padding: 0 10px;
 
-  .field > label {
-    color: grey;
+  button {
+    float: right;
   }
-
-  .field {
-    .ui.button {
-      margin-top: 1.75em;
-    }
-  }
-
 }
-
 

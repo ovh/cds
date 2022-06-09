@@ -12,7 +12,7 @@
         <tr *ngFor="let p of getDataForCurrentPage()">
             <td class="border">
                 {{ p.name }}
-                <span *ngIf="p.model.public" [smDirTooltip]="'integration_official_tooltip' | translate" smDirPosition="top center"> <i class="check circle outline icon large green"></i> </span>
+                <span *ngIf="p.model.public" nz-tooltip nzTooltipTitle="Public integration" nzTooltipPlacement="top"> <i class="check circle outline icon large green"></i> </span>
             </td>
             <td class="border">
                 {{ p.model.name}}
