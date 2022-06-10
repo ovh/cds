@@ -221,7 +221,10 @@ type ProjectClient interface {
 	ProjectVCSImport(ctx context.Context, projectKey string, content io.Reader, mods ...RequestModifier) (sdk.VCSProject, error)
 	ProjectVCSGet(ctx context.Context, projectKey string, integrationName string) (sdk.VCSProject, error)
 	ProjectVCSList(ctx context.Context, projectKey string) ([]sdk.VCSProject, error)
-	ProjectVCSDelete(ctx context.Context, projectKey string, integrationName string) error
+	ProjectVCSDelete(ctx context.Context, projectKey string, vcsName string) error
+	ProjectVCSRepositoryAdd(ctx context.Context, projectKey string, vcsName string, repoName string) error
+	ProjectVCSRepositoryList(ctx context.Context, projectKey string, vcsName string) ([]sdk.ProjectRepository, error)
+	ProjectRepositoryDelete(ctx context.Context, projectKey string, vcsName string, repositoryName string) error
 }
 
 // ProjectKeysClient exposes project keys related functions

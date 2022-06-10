@@ -62,7 +62,7 @@ func LoadAllVCSByProject(ctx context.Context, db gorp.SqlExecutor, projectKey st
 	return vcsProjects, nil
 }
 
-func LoadVCSByProject(ctx context.Context, db gorp.SqlExecutor, projectKey string, vcsName string, opts ...gorpmapping.GetOptionFunc) (*sdk.VCSProject, error) {
+func LoadVCSByProject(_ context.Context, db gorp.SqlExecutor, projectKey string, vcsName string, opts ...gorpmapping.GetOptionFunc) (*sdk.VCSProject, error) {
 	query := gorpmapping.NewQuery(`SELECT vcs_project.* FROM vcs_project JOIN project ON project.id = vcs_project.project_id WHERE project.projectkey = $1 AND vcs_project.name = $2`).Args(projectKey, vcsName)
 	var res dbVCSProject
 	found, err := gorpmapping.Get(context.Background(), db, query, &res, opts...)

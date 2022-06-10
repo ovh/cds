@@ -4,5 +4,5 @@ type: bitbucketserver
 description: "it's the test vcs server on project"
 url: "http://my-vcs-server.localhost"
 auth:
-    user: the-username
-    password: the-password
+    username: the-username
+    token: the-password

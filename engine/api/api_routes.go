@@ -32,6 +32,8 @@ func (api *API) InitRouter() {
 	api.Router.PostAuthMiddlewares = append(api.Router.PostAuthMiddlewares, api.xsrfMiddleware, api.maintenanceMiddleware, api.rbacMiddleware)
 	api.Router.PostMiddlewares = append(api.Router.PostMiddlewares, service.TracingPostMiddleware)
 
+	// https://pkg.go.dev/github.com/gorilla/mux#Router.UseEncodedPath
+	api.Router.Mux.UseEncodedPath()
 	r := api.Router
 
 	// Auth
@@ -431,6 +433,8 @@ func (api *API) InitRouter() {
 
 	r.Handle("/v2/project/{projectKey}/vcs", nil, r.POSTv2(api.postVCSProjectHandler), r.GETv2(api.getVCSProjectAllHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsProjectName}", nil, r.PUTv2(api.putVCSProjectHandler), r.DELETEv2(api.deleteVCSProjectHandler), r.GETv2(api.getVCSProjectHandler))
+	r.Handle("/v2/project/{projectKey}/vcs/{vcsProjectName}/repository", nil, r.POSTv2(api.postProjectRepositoryHandler), r.GETv2(api.getVCSProjectRepositoryAllHandler))
+	r.Handle("/v2/project/{projectKey}/vcs/{vcsProjectName}/repository/{repositoryName}", nil, r.DELETEv2(api.deleteProjectRepositoryHandler))
 
 	//Not Found handler
 	r.Mux.NotFoundHandler = http.HandlerFunc(r.NotFoundHandler)

@@ -9,6 +9,7 @@ import (
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/rbac"
+	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -40,6 +41,15 @@ func (api *API) postVCSProjectHandler() ([]service.RbacChecker, service.Handler)
 			vcsProject.CreatedBy = getAPIConsumer(ctx).GetUsername()
 
 			if err := vcs.Insert(ctx, tx, &vcsProject); err != nil {
+				return err
+			}
+
+			vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, pKey, vcsProject.Name)
+			if err != nil {
+				return err
+			}
+
+			if _, err := vcsClient.Repos(ctx); err != nil {
 				return err
 			}
 
@@ -128,7 +138,7 @@ func (api *API) deleteVCSProjectHandler() ([]service.RbacChecker, service.Handle
 
 // getVCSProjectAllHandler returns list of vcs of one project key
 func (api *API) getVCSProjectAllHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(rbac.ProjectManage),
+	return service.RBAC(rbac.ProjectRead),
 		func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 			vars := mux.Vars(r)
 			pKey := vars["projectKey"]
@@ -143,7 +153,7 @@ func (api *API) getVCSProjectAllHandler() ([]service.RbacChecker, service.Handle
 }
 
 func (api *API) getVCSProjectHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(rbac.ProjectManage),
+	return service.RBAC(rbac.ProjectRead),
 		func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 			vars := mux.Vars(r)
 			pKey := vars["projectKey"]

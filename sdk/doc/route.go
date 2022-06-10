@@ -89,6 +89,8 @@ func CleanURLParameter(u string) string {
 		u = "vcs-server"
 	case "vcsProjectName":
 		u = "vcs-project-name"
+	case "repositoryName":
+		u = "repository-name"
 	case "metricName":
 		u = "metric-name"
 	case "cloneName":

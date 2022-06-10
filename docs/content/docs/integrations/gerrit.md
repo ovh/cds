@@ -39,7 +39,7 @@ auth:
     sshUsername: gerrit-username # # User to access to gerrit event stream
     sshPort: 29418
     sshPrivateKey: foofoofoo\non\none\nline\nhere # Private key of the user who access to gerrit event stream
-    user: admin # User that review changes
+    username: admin # User that review changes
     token: gerrit-generated-password # Http Password of the user that comment changes
 ```
 
