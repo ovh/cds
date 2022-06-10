@@ -70,36 +70,36 @@ That's all for a local Redis installation.
 
 ## Node.js
 
-Download the latest stable Node.js from https://nodejs.org/en/download/current/, version >= 12.0.0
+Download the latest stable Node.js from https://nodejs.org/en/download/current/, version >= 16.4.2
 
-Example with version 12.4.0 on macOS:
+Example with version 16.4.2 on macOS:
 
 ```bash
-$ curl -O https://nodejs.org/dist/v12.4.0/node-v12.4.0-darwin-x64.tar.gz
-$ tar xzf node-v12.4.0-darwin-x64.tar.gz
-# directory node-v12.4.0-darwin-x64 is created
-# You should add node-v12.4.0-darwin-x64/bin to your PATH
+$ curl -O https://nodejs.org/dist/v16.4.2/node-v16.4.2-darwin-x64.tar.gz
+$ tar xzf node-v16.4.2-darwin-x64.tar.gz
+# directory node-v16.4.2-darwin-x64 is created
+# You should add node-v16.4.2-darwin-x64/bin to your PATH
 ```
 
 ## Golang
 
-Download the latest Golang version from https://golang.org/dl/, version >= 1.14
+Download the latest Golang version from https://golang.org/dl/, version >= 1.18
 
-Example with version 1.14 on macOS:
+Example with version 1.18 on macOS:
 
 ```bash
 $ export GOROOT=~/go
 $ export PATH=$PATH:$GOROOT/bin
 $ cd ~
-$ curl -O https://dl.google.com/go/go1.14.darwin-amd64.tar.gz
-$ tar xzf go1.14.darwin-amd64.tar.gz
+$ curl -O https://dl.google.com/go/go1.18.darwin-amd64.tar.gz
+$ tar xzf go1.18.darwin-amd64.tar.gz
 ```
 
 Check if Go installation is ok
 
 ```bash
 $ go version
-go version go1.14 darwin/amd64
+go version go1.18 darwin/amd64
 ```
 
 ## CDS

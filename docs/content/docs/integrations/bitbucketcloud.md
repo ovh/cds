@@ -47,7 +47,7 @@ name: bitbucket-cloud
 type: bitbucketcloud
 description: "My Bitbucket Cloud"
 auth:
-    user: my-user-on-bitbucket-cloud
+    username: my-user-on-bitbucket-cloud
     token: the-long-token-here
 options:
     disableStatus: false    # Set to true if you don't want CDS to push statuses on the VCS server - optional
