@@ -1,12 +1,10 @@
-modal-content {
-    .ui.input {
-      margin-top: 20px;
-    }
 
-    input[type=text] {
-      margin-right: 30px;
-    }
+nz-select {
+  width: 100%;
 }
-.ui.form .fields {
-  margin-bottom: 0px;
+
+nz-col {
+  button {
+    float: right;
+  }
 }

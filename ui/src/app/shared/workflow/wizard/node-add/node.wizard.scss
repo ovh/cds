@@ -1,3 +1,31 @@
-.mb20 {
-  margin-bottom: 20px;
+nz-row {
+  width: 100%;
+  margin-bottom: 15px;
+
+  nz-col {
+    padding: 0 10px;
+
+    form {
+      margin-top: 10px;
+    }
+
+    button {
+      float: right;
+      margin-left: 15px;
+    }
+  }
 }
+nz-tabset {
+  width: 100%;
+}
+nz-select {
+  width: 100%;
+}
+nz-form-item {
+  padding-bottom: 15px;
+  padding-top: 15px;
+}
+form {
+  width: 100%;
+}
+

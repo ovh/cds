@@ -4,13 +4,40 @@
     flex-direction: column;
     align-content: stretch;
     height: 100%;
-    .buttons {
-        margin-top: 23px;
+
+    nz-row {
+      nz-col {
+        padding: 10px;
+
+        button {
+          float: right;
+          margin-left: 10px;
+        }
+      }
+      nz-col.projectList {
+        h3 {
+          margin-top: 5px;
+          margin-bottom: 28px;
+        }
+      }
+
     }
-    h2 {
-        text-align: center;
-    }
-    h4.ui.header {
-        text-align: center;
-    }
+}
+
+.search-box {
+  padding: 8px;
+}
+
+.search-box input {
+  width: 188px;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.search-box button {
+  width: 90px;
+}
+
+.search-button {
+  margin-right: 8px;
 }

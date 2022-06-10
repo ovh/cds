@@ -54,7 +54,7 @@
             </nz-form-item>
         </form>
         <div *ngIf="application.repository_fullname" class="strategy">
-            <nz-alert nzType="warning" [nzMessage]="repoTemp" *ngIf="!application.vcs_strategy || !application.vcs_strategy.connection_type || true"></nz-alert>
+            <nz-alert nzType="warning" [nzMessage]="repoTemp" *ngIf="!application.vcs_strategy || !application.vcs_strategy.connection_type"></nz-alert>
             <ng-template #repoTemp>
                 <div nz-row class="alert">
                     <div nz-col [nzSpan]="2">

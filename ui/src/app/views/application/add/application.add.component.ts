@@ -149,6 +149,10 @@ export class ApplicationAddComponent implements OnInit, OnDestroy {
         }
     }
 
+    goToProject(): void {
+        this._router.navigate(['/project', this.project.key], {queryParams: {tab: 'applications'}});
+    }
+
     fileEvent(event: { content: string, file: File }) {
         this.fileTooLarge = event.file.size > 100000;
         if (this.fileTooLarge) {

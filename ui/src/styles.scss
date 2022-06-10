@@ -26,6 +26,13 @@ body {
   border-radius: 2px;
 }
 
+input[type=radio]:read-only {
+  opacity: 0;
+}
+input[type=checkbox]:read-only {
+  opacity: 0;
+}
+
 a.disabled {
     color: gray;
     cursor: not-allowed;

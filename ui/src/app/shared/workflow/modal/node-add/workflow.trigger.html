@@ -1,6 +1,5 @@
 <div>
     <ng-container *ngIf="selectedType === 'pipeline'">
-        <h3>{{ 'workflow_node_form_title' | translate }}</h3>
         <app-workflow-node-add-wizard
                 [project]="project" [hideCancel]="true" [hideNext]="true" [display]="selectedType === 'pipeline'"
                 (nodeCreated)="destNodeChange($event)" (pipelineSectionChanged)="pipelineSectionChanged($event)" #nodeWizard>

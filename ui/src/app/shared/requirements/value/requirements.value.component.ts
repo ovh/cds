@@ -3,9 +3,9 @@ import {
     ChangeDetectorRef,
     Component,
     EventEmitter,
-    Input,
+    Input, OnChanges,
     OnInit,
-    Output
+    Output, SimpleChanges
 } from '@angular/core';
 import { Requirement } from 'app/model/requirement.model';
 import { WorkerModel } from 'app/model/worker-model.model';
@@ -16,7 +16,7 @@ import { WorkerModel } from 'app/model/worker-model.model';
     styleUrls: ['./requirements.value.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class RequirementsValueComponent implements OnInit {
+export class RequirementsValueComponent implements OnInit, OnChanges {
 
     @Input() requirement: Requirement
     @Output() requirementChange = new EventEmitter<Requirement>();
@@ -35,6 +35,11 @@ export class RequirementsValueComponent implements OnInit {
     }
 
     ngOnInit(): void {
+        this.initFilter(this.requirement);
+        this._cd.markForCheck();
+    }
+
+    ngOnChanges(changes: SimpleChanges) {
         this.initFilter(this.requirement);
         this._cd.markForCheck();
     }

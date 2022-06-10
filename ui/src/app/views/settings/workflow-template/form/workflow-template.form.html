@@ -6,9 +6,6 @@
                 <div *ngIf="workflowTemplate.editable && groups && groups.length === 0" class="ui orange message">
                     {{'common_help_no_group' | translate}}
                 </div>
-                <div *ngIf="workflowTemplate.editable" class="ui blue message">
-                    {{'workflow_template_help_edit_from' | translate}}
-                </div>
                 <div class="four fields">
                     <div class="field">
                         <label>{{'common_name' | translate}} *</label>
@@ -22,11 +19,11 @@
                     </div>
                     <div class="field">
                         <label>{{'common_group' | translate}} *</label>
-                        <sm-select class="fluid search" name="group"
-                            *ngIf="groups && workflowTemplate.editable" [disabled]="loading"
-                            [(model)]="workflowTemplate.group_id" [options]="{'fullTextSearch': true}">
-                            <option *ngFor="let group of groups" [value]="group.id">{{group.name}}</option>
-                        </sm-select>
+                        <nz-select nzShowSearch *ngIf="groups && workflowTemplate.editable"
+                                   [nzDisabled]="loading"
+                                   [(ngModel)]="workflowTemplate.group_id" >
+                            <nz-option *ngFor="let group of groups" [nzValue]="group.id" [nzLabel]="group.name"></nz-option>
+                        </nz-select>
                         <input *ngIf="!workflowTemplate.editable" class="ui input" type="text"
                             name="group" [ngModel]="workflowTemplate.group?.name" [readonly]="true">
                     </div>
@@ -42,9 +39,6 @@
                         (ngModelChange)="descriptionChange()" [rows]="descriptionRows"
                         [readonly]="!workflowTemplate.editable"></textarea>
                 </div>
-            </div>
-            <div *ngIf="workflowTemplate.editable" class="ui horizontal divider">
-                {{'common_or' | translate}}
             </div>
             <div class="sixteen wide column" *ngIf="!(mode === 'add')">
                 <div *ngIf="(workflowTemplate.editable) || parameterKeys.length > 0"

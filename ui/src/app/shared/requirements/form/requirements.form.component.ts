@@ -55,6 +55,7 @@ export class RequirementsFormComponent implements OnInit {
     @Output() event = new EventEmitter<RequirementEvent>();
 
     newRequirement: Requirement = new Requirement('binary');
+    requirementType: string = 'binary';
     availableRequirements: Array<string>;
     _suggest: Array<string> = [];
     suggestWithWorkerModel: Array<string> = [];

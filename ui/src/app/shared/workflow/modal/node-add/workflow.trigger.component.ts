@@ -29,6 +29,7 @@ import { NzModalRef } from 'ng-zorro-antd/modal';
 @Component({
     selector: 'app-workflow-trigger',
     templateUrl: './workflow.trigger.html',
+    styleUrls: ['workflow.trigger.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WorkflowTriggerComponent {
@@ -44,7 +45,7 @@ export class WorkflowTriggerComponent {
     @Input() destination: string;
 
     destNode: WNode;
-    currentSection = 'pipeline';
+    currentSection: number;
     selectedType: string;
     isParent: boolean;
 
@@ -59,7 +60,7 @@ export class WorkflowTriggerComponent {
         this.destNode = node;
     }
 
-    pipelineSectionChanged(pipSection: string) {
+    pipelineSectionChanged(pipSection: number) {
         this.currentSection = pipSection;
     }
 
@@ -162,7 +163,7 @@ export class WorkflowTriggerComponent {
 
     nextStep() {
         this.nodeWizard.goToNextSection().subscribe((section) => {
-            if (section === 'done') {
+            if (section === 4) {
                 this.saveTrigger();
             } else {
                 this.currentSection = section;

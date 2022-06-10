@@ -2,7 +2,7 @@
     <div nz-row>
         <div nz-col nzSpan="6">
             <nz-form-item>
-                <nz-select [(ngModel)]="newRequirement.type" (ngModelChange)="selectType($event)" name="selectType"
+                <nz-select [(ngModel)]="requirementType" (ngModelChange)="selectType($event)" name="selectType"
                            nzPlaceHolder="{{ 'requirement_type' | translate }}">
                     <nz-option *ngFor="let r of availableRequirements" [nzValue]="r" [nzLabel]="r"></nz-option>
                 </nz-select>

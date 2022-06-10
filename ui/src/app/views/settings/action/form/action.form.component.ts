@@ -38,7 +38,6 @@ export class ActionFormComponent implements OnDestroy {
     _action: Action;
     @Input() set action(a: Action) {
         this._action = { ...a };
-
         if (!this._action) {
             this._action = <Action>{ editable: true };
         }

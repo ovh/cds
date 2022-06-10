@@ -5,7 +5,6 @@ import { RouterModule } from '@angular/router';
 import { NguiAutoCompleteModule } from '@sgu/auto-complete';
 import { TranslateModule } from '@ngx-translate/core';
 import { SuiModule } from '@richardlt/ng2-semantic-ui';
-import { NgxSemanticModule } from '@sgu/ng-semantic';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { AuthenticationGuard } from 'app/guard/authentication.guard';
 import { FeatureGuard } from 'app/guard/feature.guard';
@@ -145,6 +144,8 @@ import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { NzCollapseModule } from 'ng-zorro-antd/collapse';
 import { RequirementsValueComponent } from 'app/shared/requirements/value/requirements.value.component';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
+import { NzRadioModule } from 'ng-zorro-antd/radio';
+import { NzStepsModule } from 'ng-zorro-antd/steps';
 
 const ngZorroConfig: NzConfig = {
     notification: {nzPauseOnHover: true, nzPlacement: "topRight"},
@@ -175,8 +176,10 @@ const icons: IconDefinition[] = [ BellFill, BookOutline, CaretDownFill, CaretRig
         NzMenuModule,
         NzPopconfirmModule,
         NzPopoverModule,
+        NzRadioModule,
         NzSelectModule,
         NzSpinModule,
+        NzStepsModule,
         NzSwitchModule,
         NzTabsModule,
         NzTableModule,
@@ -185,7 +188,6 @@ const icons: IconDefinition[] = [ BellFill, BookOutline, CaretDownFill, CaretRig
         NzUploadModule,
         CommonModule,
         ClipboardModule,
-        NgxSemanticModule,
         FormsModule,
         TranslateModule,
         DragulaModule.forRoot(),
@@ -351,7 +353,6 @@ const icons: IconDefinition[] = [ BellFill, BookOutline, CaretDownFill, CaretRig
         MomentModule,
         NzAutocompleteModule,
         NgForNumber,
-        NgxSemanticModule,
         NgxAutoScrollDirective,
         NzAlertModule,
         NzBadgeModule,
@@ -372,8 +373,10 @@ const icons: IconDefinition[] = [ BellFill, BookOutline, CaretDownFill, CaretRig
         NzNotificationModule,
         NzPopconfirmModule,
         NzPopoverModule,
+        NzRadioModule,
         NzSelectModule,
         NzSpinModule,
+        NzStepsModule,
         NzSwitchModule,
         NzTabsModule,
         NzTagModule,

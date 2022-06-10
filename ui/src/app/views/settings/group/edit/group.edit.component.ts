@@ -6,7 +6,7 @@ import { AuthenticationState } from 'app/store/authentication.state';
 import { finalize } from 'rxjs/operators';
 import { Project } from 'app/model/project.model';
 import { Group, GroupMember } from '../../../../model/group.model';
-import { AuthentifiedUser, AuthSummary } from '../../../../model/user.model';
+import { AuthentifiedUser, AuthSummary, User } from '../../../../model/user.model';
 import { GroupService } from '../../../../service/group/group.service';
 import { UserService } from '../../../../service/user/user.service';
 import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
@@ -31,6 +31,10 @@ export class GroupEditComponent implements OnInit {
     groupPatternError = false;
     path: Array<PathItem>;
     projects: Array<Project>;
+
+    displayedMembers: User[] = [];
+    usernameFilterVisible: boolean;
+    usernameFilter: string = '';
 
     constructor(
         private _userService: UserService,
@@ -73,6 +77,7 @@ export class GroupEditComponent implements OnInit {
             this.group = grp;
             this.updateDataFromGroup();
             this.updatePath();
+            this.searchUsername()
             this._cd.markForCheck();
         });
         this._groupService.getProjectsInGroup(this.groupName).subscribe(projs => {
@@ -166,6 +171,7 @@ export class GroupEditComponent implements OnInit {
                 this._toast.success('', this._translate.instant('group_add_user_saved'));
                 this.group = g;
                 this.updateDataFromGroup();
+                this.searchUsername();
                 this._cd.markForCheck();
             });
     }
@@ -188,6 +194,7 @@ export class GroupEditComponent implements OnInit {
                 }
                 this.group = g;
                 this.updateDataFromGroup();
+                this.searchUsername();
                 this._cd.markForCheck();
             });
     }
@@ -208,6 +215,7 @@ export class GroupEditComponent implements OnInit {
             .subscribe(g => {
                 this.group = g;
                 this.updateDataFromGroup();
+                this.searchUsername();
                 this._cd.markForCheck();
                 this._toast.success('', this._translate.instant('group_add_admin_saved'));
             });
@@ -227,6 +235,7 @@ export class GroupEditComponent implements OnInit {
         ).subscribe(g => {
             this.group = g;
             this.updateDataFromGroup();
+            this.searchUsername();
             this._cd.markForCheck();
             this._toast.success('', this._translate.instant('group_remove_admin_saved'));
         });
@@ -252,5 +261,15 @@ export class GroupEditComponent implements OnInit {
                 });
             }
         }
+    }
+
+    searchUsername(): void {
+        this.usernameFilterVisible = false;
+        if (this.usernameFilter.length === 0) {
+            this.displayedMembers = this.group.members;
+        } else {
+            this.displayedMembers = this.group.members.filter((mu: User) => mu.username.indexOf(this.usernameFilter) !== -1);
+        }
+        this._cd.markForCheck();
     }
 }
