@@ -15,7 +15,6 @@ import { ToastService } from 'app/shared/toast/ToastService';
 import * as pipelineActions from 'app/store/pipelines.action';
 import { PipelinesStateModel } from 'app/store/pipelines.state';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { SemanticModalComponent } from '@sgu/ng-semantic';
 import { DragulaService } from 'ng2-dragula-sgu';
 import { Subscription } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';

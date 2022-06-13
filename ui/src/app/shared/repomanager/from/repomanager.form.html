@@ -1,16 +1,21 @@
-<form class="ui form" *ngIf="ready" (ngSubmit)="create()" novalidate>
-    <div class="fields">
-        <div class="seven wide field">
-            <sm-select [(model)]="selectedRepoId" [disabled]="connectLoading">
-                <option *ngFor="let r of reposManagerList; let i = index;" [value]="i">{{r}}</option>
-            </sm-select>
-        </div>
-        <div class="nine wide right aligned field">
-            <button type="submit" [class.disabled]="selectedRepoId == null" class="ui green button" [class.loading]="connectLoading" name="addrepo">
-                {{ 'btn_link' | translate }}
+<form nz-form *ngIf="ready" (ngSubmit)="create()" novalidate>
+    <nz-row>
+        <nz-col [nzSpan]="10">
+            <nz-form-item>
+                <nz-form-label>Add a repository manager</nz-form-label>
+                <nz-form-control>
+                    <nz-select [(ngModel)]="selectedRepoId" [nzDisabled]="connectLoading" name="repo">
+                        <nz-option *ngFor="let r of reposManagerList; let i = index;" [nzValue]="i" [nzLabel]="r"></nz-option>
+                    </nz-select>
+                </nz-form-control>
+            </nz-form-item>
+        </nz-col>
+        <nz-col [nzSpan]="2" [nzOffset]="12">
+            <button nz-button nzType="primary" type="submit" [disabled]="selectedRepoId == null"  [nzLoading]="connectLoading" name="addrepo">
+                Connect
             </button>
-        </div>
-    </div>
+        </nz-col>
+    </nz-row>
 </form>
 <nz-modal nzTitle="{{ 'repoman_modal_verif_title' | translate }}" [nzVisible]="repoModalVisible" (nzOnCancel)="repoModalVisible = false">
     <div *nzModalContent>

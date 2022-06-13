@@ -647,6 +647,13 @@ export class WNodeContext {
     default_pipeline_parameters: Array<Parameter>;
     conditions: WorkflowNodeConditions;
     mutex: boolean;
+
+    constructor() {
+        this.pipeline_id = 0;
+        this.application_id = 0;
+        this.project_integration_id = 0;
+        this.environment_id = 0;
+    }
 }
 
 export class WNodeOutgoingHook {

@@ -1,339 +1,473 @@
 <div *ngIf="workerModel;then showWorkerModel;else loadWorkerModel"></div>
 <ng-template #showWorkerModel>
-    <form class="ui form">
-        <div class="ui grid">
-            <div class="sixteen wide column">
-                <div *ngIf="workerModel.editable && groups && groups.length === 0" class="ui orange message">
-                    {{'common_help_no_group' | translate}}
-                </div>
-
-                <div class="field">
-                    <div class="two ui buttons">
-                        <button class="ui button" type="button" [class.active]="!asCode" [class.blue]="!asCode"
-                            [class.disabled]="" (click)="asCode = false">
-                            {{'common_edit_ui' | translate}}
-                        </button>
-                        <button class="ui button" type="button" [class.active]="asCode" [class.blue]="asCode"
-                            (click)="loadAsCode()">
-                            {{'common_edit_as_code' | translate}}
-                        </button>
-                    </div>
-                </div>
-
-                <ng-container *ngIf="!asCode">
-                    <div class="four fields">
-                        <div class="field">
-                            <label>{{'common_name' | translate}} *</label>
-                            <input class="ui input" type="text" name="name" [(ngModel)]="workerModel.name"
-                                [readonly]="!workerModel.editable">
-                        </div>
-                        <div class="field">
-                            <label>{{'common_group' | translate}} *</label>
-                            <sm-select class="fluid search" name="group" *ngIf="groups && workerModel.editable"
-                                [disabled]="loading" [(model)]="workerModel.group_id"
-                                [options]="{'fullTextSearch': true}">
-                                <option *ngFor="let group of groups" [value]="group.id">{{group.name}}</option>
-                            </sm-select>
-                            <input *ngIf="!workerModel.editable" class="ui input" type="text" name="group"
-                                [ngModel]="workerModel.group?.name" [readonly]="true">
-                        </div>
-                        <div class="field">
-                            <label>{{ 'worker_model_restricted' | translate }}</label>
-                            <div class="ui checkbox">
-                                <input type="checkbox" id="restricted" name="restricted"
-                                    [(ngModel)]="workerModel.restricted" [disabled]="!workerModel.editable">
-                                <label for="restricted">{{'worker_model_restricted_help' | translate}} <a
-                                        target="_blank" rel="noopener noreferrer"
-                                        href="#" [routerLink]="['/docs', 'docs', 'concepts', 'worker-model', '#what-s-a-restricted-worker-model']">
-                                        {{'common_see_documentation' | translate}}</a></label>
-                            </div>
-                        </div>
-                        <div class="field">
-                            <label>{{ 'worker_model_is_deprecated' | translate }}</label>
-                            <div class="ui checkbox">
-                                <input type="checkbox" id="deprecated" name="deprecated"
-                                    [(ngModel)]="workerModel.is_deprecated" [disabled]="!workerModel.editable">
-                                <label for="deprecated">{{'worker_model_deprecated_help' | translate}}</label>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="field">
-                        <label>{{'common_description' | translate}}</label>
-                        <textarea name="description" [(ngModel)]="workerModel.description"
-                            (ngModelChange)="descriptionChange()" [rows]="descriptionRows"
-                            [readonly]="!workerModel.editable"></textarea>
-                    </div>
-                    <div class="two fields">
-                        <div class="field">
-                            <label>{{'worker_model_os' | translate}}</label>
-                            <input class="ui input" type="text" name="os" [(ngModel)]="workerModel.registered_os"
-                                [disabled]="true">
-                        </div>
-                        <div class="field">
-                            <label>{{'worker_model_arch' | translate}}</label>
-                            <input class="ui input" type="text" name="arch" [(ngModel)]="workerModel.registered_arch"
-                                [disabled]="true">
-                        </div>
-                    </div>
-                    <div class="field" *ngIf="workerModel.id">
-                        <label>{{'worker_model_status' | translate}}</label>
-                        <div class="ui icon message" *ngIf="!workerModel.disabled">
-                            <i class="check green icon"></i>
-                            <div class="content">
-                                <p>{{ 'worker_model_enabled' | translate }}</p>
-                            </div>
-                            <button *ngIf="workerModel.editable" class="ui right floated button"
-                                (click)="workerModel.disabled=true;clickSave()">{{
-                'worker_model_disable' | translate }}</button>
-                        </div>
-
-                        <div class="ui icon message" *ngIf="workerModel.disabled">
-                            <i class="warning red icon"></i>
-                            <div class="content">
-                                <p>{{ 'worker_model_disabled' | translate }}</p>
-                            </div>
-                            <button *ngIf="workerModel.editable" class="ui right floated button"
-                                (click)="workerModel.disabled=false;clickSave()">{{
-                'worker_model_enable' | translate }}</button>
-                        </div>
-                        <div class="ui icon message" *ngIf="workerModel.nb_spawn_err > 0">
-                            <i class="exclamation triangle icon large red"></i>
-                            <div class="content error">
-                                <h3>{{ 'worker_model_error' | translate }}</h3>
-                                <p>{{workerModel.last_spawn_err}}</p>
-                                <div>
-                                    <h4>{{'worker_model_help_error' | translate}}</h4>
-                                    <div class="ui list">
-                                        <div class="item" *ngIf="workerModel.type === 'docker'">{{'worker_model_help_error_docker_1' |
-                      translate}}</div>
-                                        <div class="item" *ngIf="workerModel.type === 'docker'">{{'worker_model_help_error_docker_2' |
-                      translate}}</div>
-                                        <div class="item" *ngIf="workerModel.type === 'host'">{{'worker_model_help_error_host_1' |
-                      translate}}</div>
-                                        <div class="item" *ngIf="workerModel.type === 'host'">{{'worker_model_help_error_host_2' |
-                      translate}}</div>
-                                        <div class="item" *ngIf="workerModel.type === 'openstack'">{{'worker_model_help_error_openstack_1'
-                      | translate}}</div>
-                                        <div class="item" *ngIf="workerModel.type === 'openstack'">{{'worker_model_help_error_openstack_2'
-                      | translate}}</div>
-                                    </div>
-                                </div>
-                                <h4 *ngIf="workerModel.last_spawn_err_log">{{ 'worker_model_error_log' | translate }}
-                                </h4>
-                                <div class="logs" *ngIf="workerModel.last_spawn_err_log">
-                                    <pre>{{workerModel.last_spawn_err_log}}</pre>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="three fields">
-                        <div class="seven wide field">
-                            <label>{{'worker_model_type' | translate}} *</label>
-                            <sm-select class="fluid search" name="type" *ngIf="types && workerModel.editable"
-                                [disabled]="loading" [(model)]="workerModel.type" [options]="{'fullTextSearch': true}"
-                                (onChange)="typeChange()">
-                                <option *ngFor="let type of types" [value]="type">{{type}}</option>
-                            </sm-select>
-                            <input *ngIf="!workerModel.editable" class="ui input" type="text" name="type"
-                                [ngModel]="workerModel.type" [readonly]="true">
-                        </div>
-                    </div>
-                    <ng-container *ngIf="workerModel.type === 'docker'">
-                        <div class="two fields">
-                            <div class="fifteen wide field">
-                                <label>{{'worker_model_image' | translate}} *</label>
-                                <input class="ui input" type="text" name="image"
-                                    [(ngModel)]="workerModel.model_docker.image" [readonly]="!workerModel.editable">
-                            </div>
-                            <div class="one wide field">
-                                <label suiPopup [popupText]="'worker_model_private_tooltip' | translate"
-                                    popupPlacement="top left">
-                                    Private Registry <i _ngcontent-c5="" class="fa fa-question-circle"></i>
-                                </label>
-                                <sui-checkbox name="private" [(ngModel)]="workerModel.model_docker.private"
-                                    [isDisabled]="!workerModel.editable" [isReadonly]="!workerModel.editable">
-                                </sui-checkbox>
-                            </div>
-                        </div>
-                        <ng-container *ngIf="workerModel.model_docker.private">
-                            <div class="field">
-                                <label>Registry URL</label>
-                                <input class="ui input" type="text" name="registry_url"
-                                    placeholder="https://index.docker.io/v1/"
-                                    [(ngModel)]="workerModel.model_docker.registry"
-                                    [disabled]="loading || (!currentAuthSummary.isAdmin() && !workerModel.restricted)">
-                            </div>
-                            <div class="field">
-                                <label>{{'worker_model_username' | translate}}</label>
-                                <input class="ui input" type="text" name="registry_username"
-                                    [(ngModel)]="workerModel.model_docker.username"
-                                    [disabled]="loading || (!currentAuthSummary.isAdmin() && !workerModel.restricted)">
-                            </div>
-                            <div class="field">
-                                <label>{{'worker_model_password' | translate}}</label>
-                                <input class="ui input" type="password" name="registry_password"
-                                    [(ngModel)]="workerModel.model_docker.password"
-                                    [disabled]="loading || (!currentAuthSummary.isAdmin() && !workerModel.restricted)">
-                            </div>
-                        </ng-container>
-                        <div class="field" *ngIf="workerModel.editable">
-                            <label>{{'worker_model_pattern_title' | translate}}</label>
-                            <sui-select class="selection" name="pattern" placeholder="{{'common_select' | translate}}"
-                                [options]="patternsFiltered" isSearchable="true" [(ngModel)]="patternSelected"
-                                (selectedOptionChange)="patternChange()" [optionFormatter]="formatPattern()"
-                                #selectPattern>
-                                <sui-select-option *ngFor="let option of selectPattern.filteredOptions"
-                                    [value]="option">
-                                </sui-select-option>
-                            </sui-select>
-                        </div>
-                        <div class="field">
-                            <label>{{'worker_model_shell_docker' | translate}} *</label>
-                            <input class="ui input" type="text" name="shell" placeholder="sh -c"
-                                [(ngModel)]="workerModel.model_docker.shell"
-                                [disabled]="loading || (!currentAuthSummary.isAdmin() && !workerModel.restricted)">
-                        </div>
-                        <div class="field">
-                            <label suiPopup [popupText]="'worker_model_cmd_tooltip' | translate"
-                                popupPlacement="top left">
-                                {{'worker_model_cmd_docker' | translate}} * <i _ngcontent-c5=""
-                                    class="fa fa-question-circle"></i>
+    <form nz-form class="nzSegment">
+        <!-- Alert group -->
+        <nz-row *ngIf="workerModel.editable && groups && groups.length === 0">
+            <nz-col [nzSpan]="24">
+                <nz-alert nzType="warning" nzMessage="No group can be found, you will not be able to save current resource."></nz-alert>
+            </nz-col>
+        </nz-row>
+        <nz-tabset [nzAnimated]="false">
+            <nz-tab nzTitle="Edit with UI">
+                <nz-row>
+                    <nz-col [nzSpan]="6">
+                        <nz-form-item>
+                            <nz-form-label>Name</nz-form-label>
+                            <nz-form-control>
+                                <input nz-input type="text" name="name" [(ngModel)]="workerModel.name"
+                                       [readonly]="!workerModel.editable">
+                            </nz-form-control>
+                        </nz-form-item>
+                    </nz-col>
+                    <nz-col [nzSpan]="6">
+                        <nz-form-item>
+                            <nz-form-label>Group</nz-form-label>
+                            <nz-form-control>
+                                <ng-container *ngIf="groups && workerModel.editable">
+                                    <nz-select nzShowSearch name="group" [nzLoading]="loading" [(ngModel)]="workerModel.group_id">
+                                        <nz-option *ngFor="let group of groups" [nzValue]="group.id" [nzLabel]="group.name"></nz-option>
+                                    </nz-select>
+                                </ng-container>
+                                <ng-container *ngIf="!workerModel.editable">
+                                    <input  nz-input type="text" name="group"
+                                            [ngModel]="workerModel.group?.name" [readonly]="true">
+                                </ng-container>
+                            </nz-form-control>
+                        </nz-form-item>
+                    </nz-col>
+                    <nz-col [nzSpan]="6">
+                        <nz-form-item>
+                            <label nz-checkbox name="restricted" [(ngModel)]="workerModel.restricted" [disabled]="!workerModel.editable">
+                                {{'worker_model_restricted_help' | translate}} <a
+                                    target="_blank" rel="noopener noreferrer"
+                                    href="#" [routerLink]="['/docs', 'docs', 'concepts', 'worker-model', '#what-s-a-restricted-worker-model']">
+                                {{'common_see_documentation' | translate}}</a>
                             </label>
-                            <input class="ui input" type="text" name="cmd" [(ngModel)]="workerModel.model_docker.cmd"
-                                [disabled]="loading || (!currentAuthSummary.isAdmin() && !workerModel.restricted)">
-                        </div>
-                        <div class="field">
-                            <label suiPopup [popupText]="'worker_model_env_tooltip' | translate"
-                                popupPlacement="top left">
-                                {{'worker_model_env' | translate}} <i _ngcontent-c5=""
-                                    class="fa fa-question-circle"></i>
+                        </nz-form-item>
+
+                    </nz-col>
+                    <nz-col [nzSpan]="6">
+                        <nz-form-item>
+                            <label nz-checkbox name="deprecated" [(ngModel)]="workerModel.is_deprecated" [disabled]="!workerModel.editable">
+                                Set the worker model as deprecated
                             </label>
-                            <ng-container *ngIf="workerModel.model_docker.envs">
-                                <div class="two fields" *ngFor="let envName of envNames; let index = index">
-                                    <div class="field">
-                                        <input type="text" name="name-{{envName}}"
-                                            [placeholder]="'common_name' | translate" [value]="envName" disabled>
-                                    </div>
-                                    <div class="field">
-                                        <input type="text" name="value-{{envName}}"
-                                            [placeholder]="'common_value' | translate"
-                                            [(ngModel)]="workerModel.model_docker.envs[envName]"
-                                            [disabled]="!workerModel.editable">
-                                    </div>
-                                    <button class="ui icon red button" (click)="deleteEnv(envName, index)"
+                        </nz-form-item>
+                    </nz-col>
+                </nz-row>
+                <nz-row>
+                    <nz-col [nzSpan]="24">
+                        <nz-form-item>
+                            <nz-form-label>Description</nz-form-label>
+                            <nz-form-control>
+                        <textarea nz-input name="description" [(ngModel)]="workerModel.description"
+                                  (ngModelChange)="descriptionChange()" [rows]="descriptionRows"
+                                  [readonly]="!workerModel.editable"></textarea>
+                            </nz-form-control>
+                        </nz-form-item>
+                    </nz-col>
+                </nz-row>
+                <nz-row>
+                    <nz-col [nzSpan]="12">
+                        <nz-form-item>
+                            <nz-form-label>Operating system</nz-form-label>
+                            <nz-form-control>
+                                <input nz-input type="text" name="os" [(ngModel)]="workerModel.registered_os"
+                                       [disabled]="true">
+                            </nz-form-control>
+                        </nz-form-item>
+                    </nz-col>
+                    <nz-col [nzSpan]="12">
+                        <nz-form-item>
+                            <nz-form-label>Architecture</nz-form-label>
+                            <nz-form-control>
+                                <input nz-input type="text" name="arch" [(ngModel)]="workerModel.registered_arch"
+                                       [disabled]="true">
+                            </nz-form-control>
+                        </nz-form-item>
+                    </nz-col>
+                </nz-row>
+                <ng-container *ngIf="workerModel.id">
+                    <nz-row>
+                        <nz-col [nzSpan]="24">
+                            <nz-form-item>
+                                <nz-form-label>Status</nz-form-label>
+                                <nz-alert [nzMessage]="statusTpl" [nzType]="!workerModel.disabled?'success':'error'"></nz-alert>
+                                <ng-template #statusTpl>
+                                    <ng-container *ngIf="!workerModel.disabled">
+                                        <nz-row nzAlign="middle">
+                                            <nz-col [nzSpan]="4">
+                                                <i nz-icon nzType="check" nzTheme="outline" class="success"></i>
+                                            </nz-col>
+                                            <nz-col [nzSpan]="16">
+                                                <p>This worker model is enabled</p>
+                                            </nz-col>
+                                            <nz-col [nzSpan]="4">
+                                                <button nz-button nzDanger nzType="primary" *ngIf="workerModel.editable" (click)="workerModel.disabled=true;clickSave()">Disable it</button>
+                                            </nz-col>
+                                        </nz-row>
+                                    </ng-container>
+                                    <ng-container *ngIf="workerModel.disabled">
+                                        <nz-row nzAlign="middle">
+                                            <nz-col [nzSpan]="4">
+                                                <i nz-icon nzType="warning" nzTheme="outline" class="fail"></i>
+                                            </nz-col>
+                                            <nz-col [nzSpan]="16">
+                                                <p>This worker model is disabled</p>
+                                            </nz-col>
+                                            <nz-col>
+                                                <button nz-button nzType="primary" *ngIf="workerModel.editable" (click)="workerModel.disabled=false;clickSave()">Enable it</button>
+                                            </nz-col>
+                                        </nz-row>
+                                    </ng-container>
+                                </ng-template>
+                            </nz-form-item>
+                        </nz-col>
+                    </nz-row>
+                    <nz-row *ngIf="workerModel?.nb_spawn_err > 0">
+                        <nz-col [nzSpan]="24">
+                            <nz-form-item>
+                                <nz-alert nzType="error" [nzMessage]="errorTpl">
+                                    <ng-template #errorTpl>
+                                        <nz-row>
+                                            <nz-col [nzSpan]="4">
+                                                <i nz-icon nzType="warning" nzTheme="outline" class="fail"></i>
+                                            </nz-col>
+                                            <nz-col [nzSpan]="20">
+                                                <h3>{{ 'worker_model_error' | translate }}</h3>
+                                                <p>{{workerModel.last_spawn_err}}</p>
+                                                <nz-list>
+                                                    <nz-list-header>Checklist:</nz-list-header>
+                                                    <nz-list-item *ngIf="workerModel.type === 'docker'">Check that you have the right to write on $TMPDIR in your image</nz-list-item>
+                                                    <nz-list-item *ngIf="workerModel.type === 'docker'">Check that curl is in $PATH in your image</nz-list-item>
+                                                    <nz-list-item *ngIf="workerModel.type === 'host'">Check worker binary, it must be in your $PATH, on host, where you launched Local Hatchery</nz-list-item>
+                                                    <nz-list-item *ngIf="workerModel.type === 'host'">Check that you have the right to write on $TMPDIR or update 'basedir' parameter on your Local hatchery</nz-list-item>
+                                                    <nz-list-item *ngIf="workerModel.type === 'openstack'">Check that curl is in $PATH in your Openstack image</nz-list-item>
+                                                    <nz-list-item *ngIf="workerModel.type === 'openstack'">Check that you have the right to write on $TMPDIR or update 'basedir' parameter on your Openstack Hatchery</nz-list-item>
+                                                </nz-list>
+                                                <h4 *ngIf="workerModel.last_spawn_err_log">{{ 'worker_model_error_log' | translate }}
+                                                </h4>
+                                                <div class="logs" *ngIf="workerModel.last_spawn_err_log">
+                                                    <pre>{{workerModel.last_spawn_err_log}}</pre>
+                                                </div>
+                                            </nz-col>
+                                        </nz-row>
+                                    </ng-template>
+                                </nz-alert>
+                            </nz-form-item>
+                        </nz-col>
+                    </nz-row>
+                </ng-container>
+                <nz-row>
+                    <nz-col [nzSpan]="12">
+                        <nz-form-item>
+                            <nz-form-label>Type</nz-form-label>
+                            <nz-form-control>
+                                <ng-container *ngIf="types && workerModel.editable">
+                                    <nz-select name="modelType" nzShowSearch [nzLoading]="loading" [(ngModel)]="workerModel.type"
+                                               (ngModelChange)="typeChange()">
+                                        <nz-option *ngFor="let type of types" [nzValue]="type" [nzLabel]="type"></nz-option>
+                                    </nz-select>
+                                </ng-container>
+                                <ng-container *ngIf="!workerModel.editable">
+                                    <input nz-input type="text" name="type"
+                                           [ngModel]="workerModel.type" [readonly]="true">
+                                </ng-container>
+                            </nz-form-control>
+                        </nz-form-item>
+                    </nz-col>
+
+                </nz-row>
+                <!-- DOCKER MODEL -->
+                <ng-container *ngIf="workerModel.type === 'docker'">
+                    <nz-row>
+                        <nz-col [nzSpan]="20">
+                            <nz-form-item>
+                                <nz-form-label>Image</nz-form-label>
+                                <nz-form-control>
+                                    <input nz-input type="text" name="image"
+                                           [(ngModel)]="workerModel.model_docker.image" [readonly]="!workerModel.editable">
+                                </nz-form-control>
+                            </nz-form-item>
+                        </nz-col>
+                        <nz-col [nzSpan]="4">
+                            <label nz-checkbox name="private" [(ngModel)]="workerModel.model_docker.private" [disabled]="!workerModel.editable" nz-tooltip
+                                   nzTooltipTitle="If your image comes from a private registry requiring some credentials">
+                                Private registry <i nz-icon nzType="question-circle" nzTheme="outline" class="tooltip"></i>
+                            </label>
+                        </nz-col>
+                    </nz-row>
+                    <!-- Private registry -->
+                    <nz-row *ngIf="workerModel.model_docker.private">
+                        <nz-col [nzSpan]="8">
+                            <nz-form-item>
+                                <nz-form-label>Registry URL</nz-form-label>
+                                <nz-form-control>
+                                    <input nz-input type="text" name="registry_url"
+                                           placeholder="https://index.docker.io/v1/"
+                                           [(ngModel)]="workerModel.model_docker.registry"
+                                           [disabled]="loading || (!currentAuthSummary.isAdmin() && !workerModel.restricted)">
+                                </nz-form-control>
+                            </nz-form-item>
+                        </nz-col>
+                        <nz-col [nzSpan]="8">
+                            <nz-form-item>
+                                <nz-form-label>Username</nz-form-label>
+                                <nz-form-control>
+                                    <input nz-input type="text" name="registry_username"
+                                           [(ngModel)]="workerModel.model_docker.username"
+                                           [disabled]="loading || (!currentAuthSummary.isAdmin() && !workerModel.restricted)">
+                                </nz-form-control>
+                            </nz-form-item>
+                        </nz-col>
+                        <nz-col [nzSpan]="8">
+                            <nz-form-item>
+                                <nz-form-label>Password</nz-form-label>
+                                <nz-form-control>
+                                    <input nz-input type="password" name="registry_password"
+                                           [(ngModel)]="workerModel.model_docker.password"
+                                           [disabled]="loading || (!currentAuthSummary.isAdmin() && !workerModel.restricted)">
+                                </nz-form-control>
+                            </nz-form-item>
+                        </nz-col>
+                    </nz-row>
+                    <!-- Pattern and shell -->
+                    <nz-row>
+                        <nz-col [nzSpan]="12">
+                            <nz-form-item>
+                                <nz-form-label>Pattern of configuration scripts</nz-form-label>
+                                <nz-form-control>
+                                    <nz-select nzShowSearch  name="pattern" [(ngModel)]="patternSelected" [nzDisabled]="!workerModel.editable"
+                                               (ngModelChange)="patternChange()" nzPlaceHolder="Select...">
+                                        <nz-option *ngFor="let p of patternsFiltered" [nzValue]="p" [nzLabel]="p.name"></nz-option>
+                                    </nz-select>
+                                </nz-form-control>
+                            </nz-form-item>
+                        </nz-col>
+                        <nz-col [nzSpan]="12">
+                            <nz-form-item>
+                                <nz-form-label>Shell command</nz-form-label>
+                                <nz-form-control>
+                                    <input nz-input type="text" name="shell" placeholder="sh -c"
+                                           [(ngModel)]="workerModel.model_docker.shell"
+                                           [disabled]="loading || (!currentAuthSummary.isAdmin() && !workerModel.restricted)">
+                                </nz-form-control>
+                            </nz-form-item>
+                        </nz-col>
+                    </nz-row>
+                    <nz-row>
+                        <nz-col [nzSpan]="24">
+                            <nz-form-item>
+                                <nz-form-label>
+                                <span nz-tooltip nzTooltipTitle="The command must end with ./worker">
+                                    Command <i nz-icon nzType="question-circle" nzTheme="outline" class="tooltip"></i>
+                                </span>
+                                </nz-form-label>
+                                <nz-form-control>
+                                    <input nz-input type="text" name="cmd" [(ngModel)]="workerModel.model_docker.cmd"
+                                           [disabled]="loading || (!currentAuthSummary.isAdmin() && !workerModel.restricted)">
+                                </nz-form-control>
+                            </nz-form-item>
+                        </nz-col>
+                    </nz-row>
+                    <nz-row>
+                        <nz-col [nzSpan]="24">
+                            <nz-form-item>
+                                <nz-form-label>
+                                <span nz-tooltip nzTooltipTitle="You can set environment variables to put in your worker. If you have no specific need, the default environment variables will be added automatically at the creation">
+                                    Environment variables <i nz-icon nzType="question-circle" nzTheme="outline" class="tooltip"></i>
+                                </span>
+                                </nz-form-label>
+                            </nz-form-item>
+                        </nz-col>
+                    </nz-row>
+                    <!-- ENV LIST -->
+                    <ng-container *ngIf="workerModel.model_docker?.envs">
+                        <nz-row *ngFor="let envName of envNames; let index = index">
+                            <nz-col [nzSpan]="10">
+                                <input nz-input type="text" name="name-{{envName}}"
+                                       [placeholder]="'common_name' | translate" [value]="envName" readonly>
+                            </nz-col>
+                            <nz-col [nzSpan]="10">
+                                <input nz-input type="text" name="value-{{envName}}"
+                                       [placeholder]="'common_value' | translate"
+                                       [(ngModel)]="workerModel.model_docker?.envs[envName]"
+                                       [readonly]="!workerModel.editable">
+                            </nz-col>
+                            <nz-col [nzSpan]="4">
+                                <button nz-button nzDanger (click)="deleteEnv(envName, index)"
                                         *ngIf="workerModel.editable">
-                                        <i class="trash icon"></i>
-                                    </button>
-                                </div>
-                            </ng-container>
-                            <div class="two fields" *ngIf="workerModel.editable">
-                                <div class="field">
-                                    <input type="text" name="newEnvName" [placeholder]="'common_name' | translate"
-                                        [(ngModel)]="newEnvName">
-                                </div>
-                                <div class="field">
-                                    <input type="text" name="newEnvValue" [placeholder]="'common_value' | translate"
-                                        [(ngModel)]="newEnvValue">
-                                </div>
-                                <button class="ui icon green button" (click)="addEnv(newEnvName, newEnvValue)">
-                                    <i class="plus icon"></i>
+                                    <i nz-icon nzType="delete" nzTheme="outline"></i>
                                 </button>
-                            </div>
-                        </div>
+                            </nz-col>
+                        </nz-row>
                     </ng-container>
-                    <ng-container *ngIf="workerModel.type && workerModel.type !== 'docker'">
-                        <div class="field">
-                            <label>{{'worker_model_image' | translate}} *</label>
-                            <input class="ui input" type="text" name="image"
-                                [(ngModel)]="workerModel.model_virtual_machine.image"
-                                [readonly]="!workerModel.editable">
-                        </div>
-                        <div class="field" *ngIf="workerModel.type === 'openstack'">
-                            <label>Flavor</label>
-                            <input class="ui input" type="text" name="flavor"
-                                [(ngModel)]="workerModel.model_virtual_machine.flavor"
-                                [readonly]="!workerModel.editable">
-                        </div>
-                        <div class="field">
-                            <label>{{'worker_model_pattern_title' | translate}}</label>
-                            <sui-select class="selection" name="pattern" placeholder="{{'common_select' | translate}}"
-                                [options]="patternsFiltered" isSearchable="true" [(ngModel)]="patternSelected"
-                                (selectedOptionChange)="patternChange()" [optionFormatter]="formatPattern()"
-                                #selectPattern>
-                                <sui-select-option *ngFor="let option of selectPattern.filteredOptions"
-                                    [value]="option">
-                                </sui-select-option>
-                            </sui-select>
-                        </div>
-                        <ng-container *ngIf="workerModel.type === 'vsphere'">
-                            <div class="field">
-                                <label>{{'worker_model_username' | translate}}</label>
-                                <input class="ui input" type="text" name="registry_username"
-                                       [(ngModel)]="workerModel.model_virtual_machine.user"
-                                       [disabled]="loading || !currentAuthSummary.isAdmin()">
-                            </div>
-                            <div class="field">
-                                <label>{{'worker_model_password' | translate}}</label>
-                                <input class="ui input" type="password" name="registry_password"
-                                       [(ngModel)]="workerModel.model_virtual_machine.password"
-                                       [disabled]="loading || !currentAuthSummary.isAdmin()">
-                            </div>
-                        </ng-container>
-                        <div class="field">
-                            <label>{{'worker_model_pre_cmd' | translate}}</label>
-                            <textarea class="ui input" name="pre_cmd"
-                                [(ngModel)]="workerModel.model_virtual_machine.pre_cmd"
-                                [disabled]="loading || (!currentAuthSummary.isAdmin() && !workerModel.restricted)">
-                            </textarea>
-                        </div>
-                        <div class="field">
-                            <label suiPopup [popupText]="'worker_model_cmd_tooltip' | translate"
-                                popupPlacement="top left">
-                                {{'worker_model_cmd' | translate}} * <i _ngcontent-c5=""
-                                    class="fa fa-question-circle"></i>
-                            </label>
-                            <input class="ui input" type="text" name="cmd"
-                                [(ngModel)]="workerModel.model_virtual_machine.cmd"
-                                [disabled]="loading || (!currentAuthSummary.isAdmin() && !workerModel.restricted)">
-                        </div>
-                        <div class="field">
-                            <label>{{'worker_model_post_cmd' | translate}}</label>
-                            <textarea class="ui input" name="post_cmd"
-                                [(ngModel)]="workerModel.model_virtual_machine.post_cmd"
-                                [disabled]="loading || (!currentAuthSummary.isAdmin() && !workerModel.restricted)">
-                            </textarea>
-                        </div>
-                    </ng-container>
-                    <div *ngIf="workerModel.editable" class="field">
-                        <app-delete-button *ngIf="workerModel.id" class="left floated" (event)="clickDelete()"></app-delete-button>
-                        <button class="ui green right floated button" [class.loading]="loading"
-                            [class.disabled]="!canSave()" (click)="clickSave()">
-                            <i class="save icon"></i>{{ 'btn_save' | translate }}
-                        </button>
-                    </div>
+                    <!-- ENV Form -->
+                    <nz-row>
+                        <nz-col [nzSpan]="10">
+                            <nz-form-item>
+                                <nz-form-label>Name</nz-form-label>
+                                <nz-form-control>
+                                    <input nz-input type="text" name="newEnvName" [(ngModel)]="newEnvName">
+                                </nz-form-control>
+                            </nz-form-item>
+                        </nz-col>
+                        <nz-col [nzSpan]="10">
+                            <nz-form-item>
+                                <nz-form-label>Value</nz-form-label>
+                                <nz-form-control>
+                                    <input nz-input type="text" name="newEnvValue" [(ngModel)]="newEnvValue">
+                                </nz-form-control>
+                            </nz-form-item>
+                        </nz-col>
+                        <nz-col [nzSpan]="4">
+                            <button nz-button nzType="primary" (click)="addEnv(newEnvName, newEnvValue)">
+                                <i nz-icon nzType="plus" nzTheme="outline"></i>
+                            </button>
+                        </nz-col>
+                    </nz-row>
                 </ng-container>
 
-                <ng-container *ngIf="asCode">
-                    <div class="field">
+                <!-- NON DOCKER MODEL -->
+                <ng-container *ngIf="workerModel.type && workerModel.type !== 'docker'">
+                    <nz-row>
+                        <nz-col [nzSpan]="12">
+                            <nz-form-item>
+                                <nz-form-label>Image</nz-form-label>
+                                <nz-form-control>
+                                    <input nz-input type="text" name="image"
+                                           [(ngModel)]="workerModel.model_virtual_machine.image"
+                                           [readonly]="!workerModel.editable">
+                                </nz-form-control>
+                            </nz-form-item>
+                        </nz-col>
+                        <nz-col [nzSpan]="12" *ngIf="workerModel.type === 'openstack'">
+                            <nz-form-item>
+                                <nz-form-label>Flavor</nz-form-label>
+                                <nz-form-control>
+                                    <input nz-input type="text" name="flavor"
+                                           [(ngModel)]="workerModel.model_virtual_machine.flavor"
+                                           [readonly]="!workerModel.editable">
+                                </nz-form-control>
+                            </nz-form-item>
+                        </nz-col>
+                    </nz-row>
+                    <nz-row>
+                        <nz-col [nzSpan]="12">
+                            <nz-form-item>
+                                <nz-form-label>Patterns of configuration scripts</nz-form-label>
+                                <nz-form-control>
+                                    <nz-select nzShowSearch name="pattern" [(ngModel)]="patternSelected" nzPlaceHolder="Select..."
+                                               (ngModelChange)="patternChange()">
+                                        <nz-option *ngFor="let p of patterns" [nzValue]="p" [nzLabel]="p.name"></nz-option>
+                                    </nz-select>
+                                </nz-form-control>
+                            </nz-form-item>
+                        </nz-col>
+                    </nz-row>
+                    <ng-container *ngIf="workerModel.type === 'vsphere'">
+                        <nz-row>
+                            <nz-col [nzSpan]="12">
+                                <nz-form-item>
+                                    <nz-form-label>Username</nz-form-label>
+                                    <nz-form-control>
+                                        <input nz-input type="text" name="registry_username"
+                                               [(ngModel)]="workerModel.model_virtual_machine.user"
+                                               [readonly]="loading || !currentAuthSummary.isAdmin()">
+                                    </nz-form-control>
+                                </nz-form-item>
+                            </nz-col>
+                            <nz-col [nzSpan]="12">
+                                <nz-form-item>
+                                    <nz-form-label>Password</nz-form-label>
+                                    <nz-form-control>
+                                        <input nz-input type="password" name="registry_password"
+                                               [(ngModel)]="workerModel.model_virtual_machine.password"
+                                               [disabled]="loading || !currentAuthSummary.isAdmin()">
+                                    </nz-form-control>
+                                </nz-form-item>
+                            </nz-col>
+                        </nz-row>
+                    </ng-container>
+                    <nz-row>
+                        <nz-col [nzSpan]="24">
+                            <nz-form-item>
+                                <nz-form-label>Pre worker command</nz-form-label>
+                                <nz-form-control>
+                                <textarea nz-input name="pre_cmd"
+                                          [(ngModel)]="workerModel.model_virtual_machine.pre_cmd"
+                                          [disabled]="loading || (!currentAuthSummary.isAdmin() && !workerModel.restricted)">
+                            </textarea>
+                                </nz-form-control>
+                            </nz-form-item>
+                        </nz-col>
+                    </nz-row>
+                    <nz-row>
+                        <nz-col [nzSpan]="24">
+                            <nz-form-item>
+                                <nz-form-label>
+                                <span nz-tooltip nzTooltipTitle="The command must end with ./worker">
+                                    Main worker command <i nz-icon nzType="question-circle" nzTheme="outline" class="tooltip"></i>
+                                </span>
+                                </nz-form-label>
+                                <nz-form-control>
+                                    <input nz-input type="text" name="cmd"
+                                           [(ngModel)]="workerModel.model_virtual_machine.cmd"
+                                           [disabled]="loading || (!currentAuthSummary.isAdmin() && !workerModel.restricted)">
+                                </nz-form-control>
+                            </nz-form-item>
+                        </nz-col>
+                    </nz-row>
+                    <nz-row>
+                        <nz-col [nzSpan]="24">
+                            <nz-form-item>
+                                <nz-form-label>Post worker command</nz-form-label>
+                                <nz-form-control>
+                                <textarea nz-input name="post_cmd"
+                                          [(ngModel)]="workerModel.model_virtual_machine.post_cmd"
+                                          [disabled]="loading || (!currentAuthSummary.isAdmin() && !workerModel.restricted)">
+                            </textarea>
+                                </nz-form-control>
+                            </nz-form-item>
+                        </nz-col>
+                    </nz-row>
+                </ng-container>
+                <nz-row *ngIf="workerModel.editable">
+                    <nz-col [nzSpan]="24">
+                        <button nz-button nzType="primary" [class.loading]="loading"
+                                [class.disabled]="!canSave()" (click)="clickSave()">
+                            <i nz-icon nzType="save" nzTheme="outline"></i>{{ 'btn_save' | translate }}
+                        </button>
+                        <button nz-button nzDanger nzType="primary" *ngIf="workerModel.id" nz-popconfirm nzPopconfirmTitle="Are you sure you want to delete this worker model? "
+                                (nzOnConfirm)="clickDelete()"> <i nz-icon nzType="delete" nzTheme="outline"></i>Delete</button>
+
+                    </nz-col>
+                </nz-row>
+            </nz-tab>
+            <nz-tab nzTitle="Edit as code">
+                <nz-row>
+                    <nz-col [nzSpan]="24">
                         <ng-container *ngIf="!loadingAsCode">
                             <codemirror [(ngModel)]="workerModelAsCode" [config]="codeMirrorConfig"
-                                name="asCodeCodeMirror" #codeMirror>
+                                        name="asCodeCodeMirror" #codeMirror>
                             </codemirror>
                         </ng-container>
-                        <div class="ui active centered inline loader" *ngIf="loadingAsCode"></div>
-                    </div>
-                    <div *ngIf="workerModel.editable" class="field">
-                        <app-delete-button *ngIf="workerModel.id" class="left floated" (event)="clickDelete()"></app-delete-button>
-                        <button class="ui green right floated button" [class.loading]="loading"
-                            (click)="clickSaveAsCode()" [class.disabled]="!workerModel.editable">
-                            <i class="save icon"></i>{{ 'btn_save' | translate }}
+                        <nz-alert nzType="info" *ngIf="loadingAsCode">Loading...</nz-alert>
+                    </nz-col>
+                </nz-row>
+                <nz-row *ngIf="workerModel.editable">
+                    <nz-col [nzSpan]="24">
+                        <button nz-button nzType="primary" [nzLoading]="loading" (click)="clickSaveAsCode()" [disabled]="!workerModel.editable">
+                            <i nz-icon nzType="save" nzTheme="outline"></i>{{ 'btn_save' | translate }}
                         </button>
-                    </div>
-                </ng-container>
-            </div>
-        </div>
+                        <button nz-button nzType="primary" nzDanger *ngIf="workerModel.id" nz-popconfirm (nzOnConfirm)="clickDelete()" nzPopconfirmTitle="Are you sure you want to delete this worker model ?">
+                            <i nz-icon nzType="delete" nzTheme="outline"></i>Delete
+                        </button>
+                    </nz-col>
+                </nz-row>
+            </nz-tab>
+        </nz-tabset>
     </form>
 </ng-template>
 <ng-template #loadWorkerModel>
-    <div class="ui text active loader">{{ 'common_loading' | translate }}</div>
+    <nz-alert nzType="info" nzMessage="Loading model...."></nz-alert>
 </ng-template>

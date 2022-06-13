@@ -237,7 +237,7 @@ export class WorkflowWNodeComponent implements OnInit, OnDestroy {
             }
             this._modalService.create({
                 nzTitle: title,
-                nzWidth: '900px',
+                nzWidth: '1300px',
                 nzContent: WorkflowTriggerComponent,
                 nzComponentParams: {
                     project: this.project,

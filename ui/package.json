@@ -45,7 +45,6 @@
     "@ngxs/store": "3.7.3",
     "@richardlt/ng2-semantic-ui": "0.10.0-alpha.6-fork-6",
     "@sgu/auto-complete": "13.0.0-rc",
-    "@sgu/ng-semantic": "13.0.0-rc2",
     "@swimlane/ngx-charts": "16.0.0",
     "@types/dagre-d3": "0.6.2",
     "@types/js-yaml": "3.12.2",

@@ -4,5 +4,6 @@ type: gitea
 description: "it's the test vcs server on project"
 url: "http://localhost:3000"
 auth:
-    username: gituser
-    token: gitpwd
+  username: gituser
+  password: gitpwd
+

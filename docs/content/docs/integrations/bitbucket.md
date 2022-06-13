@@ -34,7 +34,7 @@ type: bitbucketserver
 description: "My Bitbucket Datacenter"
 url: "http://localhost:7990/bitbucket"
 auth:
-    user: username-on-bitbucket
+    username: username-on-bitbucket
     token: the-long-token-here
 options:
     disableStatus: false    # Set to true if you don't want CDS to push statuses on the VCS server - optional

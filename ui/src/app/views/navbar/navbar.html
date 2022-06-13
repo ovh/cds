@@ -251,10 +251,13 @@
             <nz-dropdown-menu #adminMenu="nzDropdownMenu">
                 <ul nz-menu>
                     <li nz-menu-item>
-                        <a href="#" [routerLink]="['admin', 'hooks-tasks']">{{ 'hook_tasks_summary' | translate }}</a>
+                        <a href="#" [routerLink]="['admin', 'worker-model-pattern']">Patterns of configuration scripts</a>
                     </li>
                     <li nz-menu-item>
-                        <a href="#" [routerLink]="['admin', 'services']">{{ 'monitoring' | translate }}</a>
+                        <a href="#" [routerLink]="['admin', 'hooks-tasks']">Hooks tasks summary</a>
+                    </li>
+                    <li nz-menu-item>
+                        <a href="#" [routerLink]="['admin', 'services']">Monitoring</a>
                     </li>
                 </ul>
             </nz-dropdown-menu>

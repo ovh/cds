@@ -1,7 +1,7 @@
 <ng-container [ngSwitch]="type">
     <!-- Number -->
-    <div *ngSwitchCase="'number'" class="ui fluid input">
-        <input type="number" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" [disabled]="disabled" name="value">
+    <div *ngSwitchCase="'number'">
+        <input nz-input type="number" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" [disabled]="disabled" name="value">
     </div>
 
     <!-- Boolean -->
@@ -11,23 +11,18 @@
     </div>
 
     <!-- Password -->
-    <div class="ui fluid input" *ngSwitchCase="'password'">
-        <input type="password" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value" [disabled]="disabled">
+    <div *ngSwitchCase="'password'">
+        <input nz-input type="password" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value" [disabled]="disabled">
     </div>
 
     <!-- Text -->
-    <div class="ui form" *ngSwitchCase="'text'">
-        <textarea [disabled]="disabled" rows="{{_sharedService.getTextAreaheight(value?.toString())}}" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value"></textarea>
-    </div>
-
-    <!-- Key -->
-    <div class="ui form" *ngSwitchCase="'key'">
-        <input type="password" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" [disabled]="true" name="value">
+    <div *ngSwitchCase="'text'">
+        <textarea nz-input [disabled]="disabled" rows="{{_sharedService.getTextAreaheight(value?.toString())}}" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value"></textarea>
     </div>
 
     <!-- String -->
-    <div class="ui fluid input" *ngSwitchDefault>
-        <input [disabled]="disabled" type="text" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value">
+    <div *ngSwitchDefault>
+        <input nz-input [disabled]="disabled" type="text" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value">
     </div>
 
 </ng-container>

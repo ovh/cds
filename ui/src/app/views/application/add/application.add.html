@@ -1,76 +1,68 @@
 <div id="AddApplication" class="scrollingContent">
     <div class="paddingContent">
         <div class="viewContent">
-            <form class="ui form" (ngSubmit)="createApplication()">
-                <h2>{{ 'application_create' | translate }}</h2>
-                <div class="ui grid">
-                    <div class="one wide column">
+            <form nz-form (ngSubmit)="createApplication()" class="nzSegment">
+                <h2>Create new application</h2>
+                <nz-row>
+                    <nz-col [nzSpan]="16" [nzOffset]="4">
+                        <nz-form-item>
+                            <nz-form-label [nzSpan]="6">Application name *</nz-form-label>
+                            <nz-form-control>
+                                <input nz-input type="text" name="appname" [(ngModel)]="selectedName">
+                            </nz-form-control>
+                        </nz-form-item>
+                        <nz-alert *ngIf="appPatternError" nzType="error" nzMessage="Invalid application name. Allowed pattern is: a-zA-Z0-9._-"></nz-alert>
 
-                    </div>
-                    <div class="fourteen wide column">
-                        <div class="field">
-                            <label>{{'application_name' | translate}} *</label>
-                            <input type="text" name="appname" [(ngModel)]="selectedName">
-                            <div class="ui error message" *ngIf="appPatternError">
-                                {{ 'application_name_error' | translate }}
-                            </div>
-                        </div>
+                        <nz-form-item>
+                            <nz-form-label [nzSpan]="6">Description</nz-form-label>
+                            <nz-form-control>
+                                <textarea nz-input type="text" name="applicationdescription" [(ngModel)]="description"></textarea>
+                            </nz-form-control>
+                        </nz-form-item>
 
-                        <div class="field">
-                            <label>{{ 'application_description' | translate }}</label>
-                            <textarea type="text" name="applicationdescription" [(ngModel)]="description"></textarea>
-                        </div>
-
-                        <div class="field center aligned">
-                            <label>{{ 'application_icon' | translate }} ({{'common_optional' | translate}})</label>
-                            <div>
+                        <nz-form-item>
+                            <nz-form-label [nzSpan]="6">Icon (Optional)</nz-form-label>
+                            <nz-form-control>
                                 <div *ngIf="!fileTooLarge && img">
                                     <img class="app-icon" [src]="img" alt="icon" />
                                 </div>
                                 <app-upload-button accept=".png,.jpg,.jpeg" image="true" (event)="fileEvent($event)">
                                 </app-upload-button>
-                            </div>
-                        </div>
-                        <div class="ui red message field" *ngIf="fileTooLarge" [textContent]="'common_file_too_large' | translate"></div>
+                            </nz-form-control>
+                        </nz-form-item>
+                        <nz-alert nzType="error" *ngIf="fileTooLarge" nzMessage="Your file is too large (max 100Ko)"></nz-alert>
 
-                        <div class="grouped fields">
-                            <label>{{ 'application_new_title' | translate }}</label>
-                            <div class="field">
-                                <input type="radio" name="creation" value="empty" [(ngModel)]="typeofCreation" (change)="updateSelection('empty')">
-                                {{ 'wizard_app_empty' | translate }}
-                            </div>
-                            <div class="field" *ngIf="project.application_names && project.application_names.length > 0">
-                                <input type="radio" name="creation" value="clone" [(ngModel)]="typeofCreation" (change)="updateSelection('clone')">
-                                {{ 'wizard_app_clone' | translate }}
-                            </div>
-                        </div>
+                        <nz-form-item>
+                            <nz-form-label [nzSpan]="6">New Application</nz-form-label>
+                            <nz-form-control>
+                                <nz-radio-group [(ngModel)]="typeofCreation" (ngModelChange)="updateSelection(typeofCreation)" name="type">
+                                    <label nz-radio nzValue="empty">Empty application</label>
+                                    <label nz-radio nzValue="clone" *ngIf="project.application_names && project.application_names.length > 0">Clone</label>
+                                </nz-radio-group>
+                            </nz-form-control>
+                        </nz-form-item>
 
-                        <div class="ui grid">
-                            <div class="wide column sixteen">
 
-                                <div class="field" *ngIf="typeofCreation === 'clone'">
-                                    <sm-select [options]="{'fullTextSearch': true}" [model]="selectedApplicationName"
-                                        (modelChange)="updateSelectedApplicationToClone($event)">
-                                        <option *ngFor="let app of project.application_names" [value]="app.name">{{app.name}}</option>
-                                    </sm-select>
-                                </div>
-
-                                <div class="field" *ngIf="variables && variables.length > 0">
-                                    <app-variable [variables]="variables" mode="launcher"></app-variable>
-                                </div>
-                                <div class="field">
-                                    <a class="ui button" [routerLink]="['/project', project.key]" [queryParams]="{ tab: 'applications'}">{{
-                                        'btn_cancel' | translate }}</a>
-                                    <button class="ui green right floated button" [class.loading]="loadingCreate"
-                                        [class.disabled]="!selectedName || selectedName === ''">{{ 'btn_create' |
-                                        translate }}
-                                    </button>
-                                </div>
-                            </div>
-
-                        </div>
-                    </div>
-                </div>
+                        <nz-form-item *ngIf="typeofCreation === 'clone'">
+                            <nz-form-label>Application to clone</nz-form-label>
+                            <nz-form-control>
+                                <nz-select nzShowSearch name="appClone" [ngModel]="selectedApplicationName" (ngModelChange)="updateSelectedApplicationToClone($event)">
+                                    <nz-option *ngFor="let app of project.application_names" [nzValue]="app.name" [nzLabel]="app.name"></nz-option>
+                                </nz-select>
+                            </nz-form-control>
+                        </nz-form-item>
+                        <nz-form-item *ngIf="variables && variables.length > 0 && typeofCreation === 'clone'">
+                            <nz-form-label>Variables</nz-form-label>
+                            <app-variable [variables]="variables" mode="launcher"></app-variable>
+                        </nz-form-item>
+                        <nz-form-item nzJustify="end">
+                            <button nz-button (click)="goToProject()">Cancel</button>
+                            <button nz-button nzType="primary" [nzLoading]="loadingCreate"
+                                    [disabled]="!selectedName || selectedName === ''">Create
+                            </button>
+                        </nz-form-item>
+                    </nz-col>
+                </nz-row>
             </form>
         </div>
     </div>

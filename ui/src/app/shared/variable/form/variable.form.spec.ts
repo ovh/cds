@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import {TestBed, tick, fakeAsync} from '@angular/core/testing';
+import {TestBed, tick, fakeAsync, flush} from '@angular/core/testing';
 import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
 import {RouterTestingModule} from '@angular/router/testing';
 import {HttpClientTestingModule} from '@angular/common/http/testing';
@@ -12,6 +12,7 @@ import {SharedModule} from '../../shared.module';
 import {SharedService} from '../../shared.service';
 import {VariableService} from '../../../service/variable/variable.service';
 import {VariableFormComponent} from './variable.form';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 describe('CDS: Variable From Component', () => {
 
@@ -28,6 +29,7 @@ describe('CDS: Variable From Component', () => {
                 TranslateParser
             ],
             imports : [
+                BrowserAnimationsModule,
                 SharedModule,
                 TranslateModule.forRoot(),
                 RouterTestingModule.withRoutes([]),
@@ -47,7 +49,7 @@ describe('CDS: Variable From Component', () => {
         fixture.detectChanges();
         tick(50);
 
-        expect(fixture.debugElement.nativeElement.querySelector('.ui.button.disabled')).toBeTruthy();
+        expect(fixture.debugElement.nativeElement.querySelector('button[name="saveBtn"][disabled="true"]')).toBeTruthy();
 
         let compiled = fixture.debugElement.nativeElement;
 
@@ -75,9 +77,11 @@ describe('CDS: Variable From Component', () => {
         inputValue.dispatchEvent(new Event('change'));
 
         spyOn(fixture.componentInstance.createVariableEvent, 'emit');
-        compiled.querySelector('.ui.green.button').click();
+        compiled.querySelector('button[name="saveBtn"]').click();
 
         expect(fixture.componentInstance.createVariableEvent.emit).toHaveBeenCalledWith(new VariableEvent('add', variable));
+
+        flush()
     }));
 });
 
