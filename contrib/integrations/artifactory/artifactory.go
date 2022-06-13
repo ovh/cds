@@ -2,6 +2,7 @@ package art
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"strings"
@@ -13,6 +14,7 @@ import (
 	"github.com/jfrog/jfrog-client-go/config"
 	"github.com/jfrog/jfrog-client-go/distribution"
 	authdistrib "github.com/jfrog/jfrog-client-go/distribution/auth"
+	"github.com/pkg/errors"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -149,19 +151,67 @@ func PromoteFile(artiClient artifactory.ArtifactoryServicesManager, data sdk.Wor
 	if err != nil {
 		return err
 	}
+
 	if !exist {
-		fmt.Printf("Promoting file %s from %s to %s\n", data.Name, srcRepo, targetRepo)
-		nbSuccess, nbFailed, err := artiClient.Move(params)
+		// If source repository is a release repository, we should not move but copy the artifact
+		// Get the properties of the source reposiytory
+		maturity, err := GetRepositoryMaturity(artiClient, srcRepo)
 		if err != nil {
-			return err
+			fmt.Printf("Warning: unable to get repository maturity: %v\n", err)
 		}
-		if nbFailed > 0 || nbSuccess == 0 {
-			return fmt.Errorf("%s: copy failed with no reason", data.Name)
+
+		if maturity == "release" {
+			fmt.Printf("Copying file %s from %s to %s\n", data.Name, srcRepo, targetRepo)
+			nbSuccess, nbFailed, err := artiClient.Copy(params)
+			if err != nil {
+				return err
+			}
+			if nbFailed > 0 || nbSuccess == 0 {
+				return fmt.Errorf("%s: copy failed with no reason", data.Name)
+			}
+		} else {
+			fmt.Printf("Promoting file %s from %s to %s\n", data.Name, srcRepo, targetRepo)
+			nbSuccess, nbFailed, err := artiClient.Move(params)
+			if err != nil {
+				return err
+			}
+			if nbFailed > 0 || nbSuccess == 0 {
+				return fmt.Errorf("%s: copy failed with no reason", data.Name)
+			}
 		}
 		return nil
 	}
 	fmt.Printf("%s has been already promoted\n", data.Name)
 	return nil
+}
+
+type PropertiesResponse struct {
+	Properties map[string][]string
+}
+
+func GetRepositoryMaturity(artiClient artifactory.ArtifactoryServicesManager, repoName string) (string, error) {
+	httpDetails := artiClient.GetConfig().GetServiceDetails().CreateHttpClientDetails()
+	uri := fmt.Sprintf(artiClient.GetConfig().GetServiceDetails().GetUrl()+"/api/storage/%s/?properties", repoName)
+	re, body, _, err := artiClient.Client().SendGet(uri, true, &httpDetails)
+	if err != nil {
+		return "", errors.Errorf("unable to get properties %s: %v", repoName, err)
+	}
+	if re.StatusCode == 404 {
+		return "", errors.Errorf("repository %s properties not foud", repoName)
+	}
+	if re.StatusCode >= 400 {
+		return "", errors.Errorf("unable to call artifactory [HTTP: %d] %s %s", re.StatusCode, uri, string(body))
+	}
+	var props PropertiesResponse
+	if err := json.Unmarshal(body, &props); err != nil {
+		return "", errors.WithStack(err)
+	}
+	for k, p := range props.Properties {
+		if k == "maturity" {
+			return p[0], nil
+		}
+	}
+	return "", nil
 }
 
 func PromoteDockerImage(artiClient artifactory.ArtifactoryServicesManager, data sdk.WorkflowRunResultArtifactManager, lowMaturity, highMaturity string) error {
