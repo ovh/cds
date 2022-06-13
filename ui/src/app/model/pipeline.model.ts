@@ -163,9 +163,17 @@ export class Pipeline {
                     s.jobs.forEach(j => {
                         let nextJobRef;
                         let loopAgain = true;
+                        let idxJob;
                         do {
                             nextJobRef = Math.random();
-                            loopAgain = editPipeline.stages.findIndex(st => st.jobs.findIndex(jb => jb.ref === nextRef) !== -1) !== -1;
+                            idxJob = editPipeline.stages.findIndex(st => {
+                                if (st && st.jobs) {
+                                    return st.jobs.findIndex(jb => jb.ref === nextRef);
+                                } else {
+                                    return -1;
+                                }
+                            });
+                            loopAgain = idxJob !== -1;
                         } while (loopAgain);
                         j.ref = nextJobRef;
                     });
