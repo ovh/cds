@@ -8,15 +8,21 @@ export AWS_ENDPOINT_URL=http://$$(hostname):9000
 endef
 
 MINIO_CONTAINER_ID = $(shell docker ps -f name=minio1 -q)
+GITEA_CONTAINER_ID = $(shell docker ps -f name=gitea -q)
+GITEA_VERSION = 1.16
 
 UNAME_S := $(shell uname -s| tr A-Z a-z)
 VERSION := $(if ${CDS_VERSION},${CDS_VERSION},snapshot)
+
+GITEA_USER := $(if ${GITEA_USER},${GITEA_USER},gituser)
+GITEA_PASSWORD := $(if ${GITEA_PASSWORD},${GITEA_PASSWORD},gitpwd)
 
 COVER_FILES = $(shell find . -name "*.coverprofile")
 
 clean:
 	@rm -f $(MINIO_CONTAINER_ID) $(MINIO_RC)
 	@docker kill minio1 || true && docker rm minio1 || true
+	@docker kill gitea || true && docker rm gitea || true
 
 minio_start: $(MINIO_RC)
 	@if [ -z "$(MINIO_CONTAINER_ID)" ]; then \
@@ -38,6 +44,15 @@ minio_reset_bucket:
 		mc rm -r --force myminio/cds-it  || true && \
 		mc mb myminio/cds-it || true \
 		"
+
+gitea_start:
+	@if [ -z "$(GITEA_CONTAINER_ID)" ]; then \
+  		docker run -d -p 3000:3000 -e INSTALL_LOCK=true --name gitea gitea/gitea:$(GITEA_VERSION); \
+  		echo "Starting gitea..."; \
+  		sleep 5; \
+  		docker exec gitea su-exec git /app/gitea/gitea admin user create --username $(GITEA_USER) --password $(GITEA_PASSWORD) --email $(GITEA_USER)@gitea.eu --config /data/gitea/conf/app.ini; \
+  		echo "Gitea started"; \
+  	fi
 
 test-docker-compose:
 	(cd ../tools/smtpmock/ && docker build -t smtpmock . && docker run -d -p 2023:2023 -p 2024:2024 smtpmock) && \

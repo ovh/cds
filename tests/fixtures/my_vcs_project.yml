@@ -1,8 +1,8 @@
 version: v1.0
 name: my_vcs_server
-type: bitbucketserver
+type: gitea
 description: "it's the test vcs server on project"
-url: "http://my-vcs-server.localhost"
+url: "http://localhost:3000"
 auth:
-    username: the-username
-    token: the-password
+    username: gituser
+    token: gitpwd

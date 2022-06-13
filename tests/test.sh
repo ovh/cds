@@ -39,6 +39,8 @@ CDSCTL_CONFIG="${CDSCTL_CONFIG:-.cdsrc}"
 CDS_ENGINE_CTL="${CDS_ENGINE_CTL:-`which cds-engine`}"
 SMTP_MOCK_URL="${SMTP_MOCK_URL:-http://localhost:2024}"
 INIT_TOKEN="${INIT_TOKEN:-}"
+GITEA_USER="${GITEA_USER:-gituser}"
+GITEA_PASSWORD="${GITEA_PASSWORD:-gitpwd}"
 
 # If you want to run some tests with a specific model requirements, set CDS_MODEL_REQ
 CDS_MODEL_REQ="${CDS_MODEL_REQ:-buildpack-deps}"
@@ -133,6 +135,8 @@ smoke_tests_services() {
 }
 
 cli_tests() {
+    echo "Check if gitea is running"
+    curl --fail http://localhost:3000/api/swagger
     echo "Running CLI tests:"
     for f in $(ls -1 03_cli*.yml); do
         CMD="${VENOM} run ${VENOM_OPTS} ${f} --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}_admin --var engine.ctl=${CDS_ENGINE_CTL} --var api.url=${CDS_API_URL} --var ui.url=${CDS_UI_URL}  --var smtpmock.url=${SMTP_MOCK_URL}"
