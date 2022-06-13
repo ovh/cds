@@ -15,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/vcs/bitbucketcloud"
 	"github.com/ovh/cds/engine/vcs/bitbucketserver"
 	"github.com/ovh/cds/engine/vcs/gerrit"
+	"github.com/ovh/cds/engine/vcs/gitea"
 	"github.com/ovh/cds/engine/vcs/github"
 	"github.com/ovh/cds/engine/vcs/gitlab"
 	"github.com/ovh/cds/sdk"
@@ -84,6 +85,15 @@ func (s *Service) CheckConfiguration(config interface{}) error {
 func (s *Service) getConsumer(name string, vcsAuth sdk.VCSAuth) (sdk.VCSServer, error) {
 	if vcsAuth.URL != "" {
 		switch vcsAuth.Type {
+		case "gitea":
+			return gitea.New(strings.TrimSuffix(vcsAuth.URL, "/"),
+				s.Cfg.API.HTTP.URL,
+				s.UI.HTTP.URL,
+				s.Cfg.ProxyWebhook,
+				s.Cache,
+				vcsAuth.Username,
+				vcsAuth.Token,
+			), nil
 		case "bitbucketcloud":
 			return bitbucketcloud.New(
 				strings.TrimSuffix(vcsAuth.URL, "/"),
