@@ -9,7 +9,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func fillWithIDs(ctx context.Context, db gorp.SqlExecutor, r *sdk.RBAC) error {
+func FillWithIDs(ctx context.Context, db gorp.SqlExecutor, r *sdk.RBAC) error {
 	// Check existing permission
 	rbacDB, err := LoadRbacByName(ctx, db, r.Name)
 	if err != nil {
