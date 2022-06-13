@@ -12,7 +12,7 @@
 
     <!-- Password -->
     <div *ngSwitchCase="'password'">
-        <input nz-type type="password" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value" [disabled]="disabled">
+        <input nz-input type="password" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value" [disabled]="disabled">
     </div>
 
     <!-- Text -->
