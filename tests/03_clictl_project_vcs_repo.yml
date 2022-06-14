@@ -11,7 +11,7 @@ testcases:
 
 - name: import / export vcs server
   steps:
-  - envsubst < ./fixtures/my_vcs_project.yml > ./fixtures/my_vcs_project_replaced.yml
+  - script: envsubst < ./fixtures/my_vcs_project.yml > ./fixtures/my_vcs_project_replaced.yml
   - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental project vcs import ITCLIPRJVCS ./fixtures/my_vcs_project_replaced.yml
   - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental project vcs list ITCLIPRJVCS --format json
     assertions:
