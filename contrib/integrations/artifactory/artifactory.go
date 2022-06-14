@@ -191,7 +191,7 @@ type PropertiesResponse struct {
 
 func GetRepositoryMaturity(artiClient artifactory.ArtifactoryServicesManager, repoName string) (string, error) {
 	httpDetails := artiClient.GetConfig().GetServiceDetails().CreateHttpClientDetails()
-	uri := fmt.Sprintf(artiClient.GetConfig().GetServiceDetails().GetUrl()+"/api/storage/%s/?properties", repoName)
+	uri := fmt.Sprintf(artiClient.GetConfig().GetServiceDetails().GetUrl()+"api/storage/%s?properties", repoName)
 	re, body, _, err := artiClient.Client().SendGet(uri, true, &httpDetails)
 	if err != nil {
 		return "", errors.Errorf("unable to get properties %s: %v", repoName, err)
@@ -206,8 +206,9 @@ func GetRepositoryMaturity(artiClient artifactory.ArtifactoryServicesManager, re
 	if err := json.Unmarshal(body, &props); err != nil {
 		return "", errors.WithStack(err)
 	}
+	fmt.Printf("Repository %q has properties: %+v\n", repoName, props.Properties)
 	for k, p := range props.Properties {
-		if k == "maturity" {
+		if k == "ovh.maturity" {
 			return p[0], nil
 		}
 	}
