@@ -5,7 +5,7 @@ import (
 )
 
 type ProjectRepository struct {
-	ID           string    `json:"-" db:"id"`
+	ID           string    `json:"id" db:"id"`
 	Name         string    `json:"name" db:"name" cli:"name,key"`
 	Created      time.Time `json:"created" db:"created"`
 	CreatedBy    string    `json:"created_by" db:"created_by"`

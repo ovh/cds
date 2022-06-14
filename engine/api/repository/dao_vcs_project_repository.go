@@ -27,10 +27,10 @@ func Delete(db gorpmapper.SqlExecutorWithTx, vcsProjectID string, name string) e
 	return sdk.WrapError(err, "cannot delete project_repository %s / %s", vcsProjectID, name)
 }
 
-func LoadRepositoryByName(_ context.Context, db gorp.SqlExecutor, vcsProjectID string, repoName string) (*sdk.ProjectRepository, error) {
+func LoadRepositoryByName(ctx context.Context, db gorp.SqlExecutor, vcsProjectID string, repoName string) (*sdk.ProjectRepository, error) {
 	query := gorpmapping.NewQuery(`SELECT project_repository.* FROM project_repository WHERE project_repository.vcs_project_id = $1 AND project_repository.name = $2`).Args(vcsProjectID, repoName)
 	var res dbProjectRepository
-	if _, err := gorpmapping.Get(context.Background(), db, query, &res); err != nil {
+	if _, err := gorpmapping.Get(ctx, db, query, &res); err != nil {
 		return nil, err
 	}
 
@@ -39,16 +39,16 @@ func LoadRepositoryByName(_ context.Context, db gorp.SqlExecutor, vcsProjectID s
 		return nil, err
 	}
 	if !isValid {
-		log.Error(context.Background(), "project_repository %d / %s data corrupted", res.ID, res.Name)
+		log.Error(ctx, "project_repository %d / %s data corrupted", res.ID, res.Name)
 		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 	return &res.ProjectRepository, nil
 }
 
-func LoadAllRepositoriesByVCSProjectID(_ context.Context, db gorp.SqlExecutor, vcsProjectID string) ([]sdk.ProjectRepository, error) {
+func LoadAllRepositoriesByVCSProjectID(ctx context.Context, db gorp.SqlExecutor, vcsProjectID string) ([]sdk.ProjectRepository, error) {
 	query := gorpmapping.NewQuery(`SELECT project_repository.* FROM project_repository WHERE project_repository.vcs_project_id = $1`).Args(vcsProjectID)
 	var res []dbProjectRepository
-	if err := gorpmapping.GetAll(context.Background(), db, query, &res); err != nil {
+	if err := gorpmapping.GetAll(ctx, db, query, &res); err != nil {
 		return nil, err
 	}
 
@@ -59,8 +59,8 @@ func LoadAllRepositoriesByVCSProjectID(_ context.Context, db gorp.SqlExecutor, v
 			return nil, err
 		}
 		if !isValid {
-			log.Error(context.Background(), "project_repository %d / %s data corrupted", r.ID, r.Name)
-			return nil, sdk.WithStack(sdk.ErrNotFound)
+			log.Error(ctx, "project_repository %d / %s data corrupted", r.ID, r.Name)
+			continue
 		}
 		repositories = append(repositories, r.ProjectRepository)
 	}
