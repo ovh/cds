@@ -41,6 +41,7 @@ SMTP_MOCK_URL="${SMTP_MOCK_URL:-http://localhost:2024}"
 INIT_TOKEN="${INIT_TOKEN:-}"
 GITEA_USER="${GITEA_USER:-gituser}"
 GITEA_PASSWORD="${GITEA_PASSWORD:-gitpwd}"
+GITEA_HOST="${GITEA_HOST:-localhost}"
 
 # If you want to run some tests with a specific model requirements, set CDS_MODEL_REQ
 CDS_MODEL_REQ="${CDS_MODEL_REQ:-buildpack-deps}"
