@@ -73,8 +73,3 @@
 <ng-template #loadEnv>
     <div class="ui text active loader">Loading environment...</div>
 </ng-template>
-<ng-container *ngIf="environment?.workflow_ascode_holder">
-    <app-ascode-save-modal [project]="project" [workflow]="environment.workflow_ascode_holder" [name]="environment.name"
-                           #updateEditMode>
-    </app-ascode-save-modal>
-</ng-container>

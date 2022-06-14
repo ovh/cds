@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
@@ -17,6 +17,7 @@ import { cloneDeep } from 'lodash-es';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { Tab } from 'app/shared/tabs/tabs.component';
+import { NzModalService } from 'ng-zorro-antd/modal';
 
 @Component({
     selector: 'app-environment-show',
@@ -26,9 +27,6 @@ import { Tab } from 'app/shared/tabs/tabs.component';
 })
 @AutoUnsubscribe()
 export class EnvironmentShowComponent implements OnInit, OnDestroy {
-
-    @ViewChild('updateEditMode')
-    asCodeSaveModal: AsCodeSaveModalComponent;
 
     // Flag to show the page or not
     public readyEnv = false;
@@ -68,7 +66,8 @@ export class EnvironmentShowComponent implements OnInit, OnDestroy {
         private _toast: ToastService,
         public _translate: TranslateService,
         private _store: Store,
-        private _cd: ChangeDetectorRef
+        private _cd: ChangeDetectorRef,
+        private _modalService: NzModalService
     ) {
         this.project = this._route.snapshot.data['project'];
         this.projectSubscription = this._store.select(ProjectState)// Update data if route change
@@ -259,9 +258,20 @@ export class EnvironmentShowComponent implements OnInit, OnDestroy {
     }
 
     saveEditMode(): void {
-        if (this.editMode && this.environment.from_repository && this.asCodeSaveModal) {
+        if (this.editMode && this.environment.from_repository) {
             // show modal to save as code
-            this.asCodeSaveModal.show(this.environment, 'environment');
+            this._modalService.create({
+                nzWidth: '900px',
+                nzTitle: 'Save environment as code',
+                nzContent: AsCodeSaveModalComponent,
+                nzComponentParams: {
+                    dataToSave: this.environment,
+                    dataType: 'environment',
+                    project: this.project,
+                    workflow: this.environment.workflow_ascode_holder,
+                    name: this.environment.name,
+                }
+            });
         }
     }
 }

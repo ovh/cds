@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
@@ -20,6 +20,7 @@ import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
 import { filter, finalize } from 'rxjs/operators';
 import { Tab } from 'app/shared/tabs/tabs.component';
+import { NzModalService } from 'ng-zorro-antd/modal';
 
 @Component({
     selector: 'app-application-show',
@@ -52,9 +53,6 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
     tabs: Array<Tab>;
     selectedTab: Tab;
 
-    @ViewChild('updateEditMode')
-    asCodeSaveModal: AsCodeSaveModalComponent;
-
     // queryparam for breadcrum
     workflowName: string;
     workflowNum: string;
@@ -75,7 +73,8 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
         private _toast: ToastService,
         public _translate: TranslateService,
         private _store: Store,
-        private _cd: ChangeDetectorRef
+        private _cd: ChangeDetectorRef,
+        private _modalService: NzModalService
     ) {
         this.project = this._routeActivated.snapshot.data['project'];
 
@@ -265,9 +264,19 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
     }
 
     saveEditMode(): void {
-        if (this.editMode && this.application.from_repository && this.asCodeSaveModal) {
-            // show modal to save as code
-            this.asCodeSaveModal.show(this.application, 'application');
+        if (this.editMode && this.application.from_repository) {
+            this._modalService.create({
+                nzWidth: '900px',
+                nzTitle: 'Save application as code',
+                nzContent: AsCodeSaveModalComponent,
+                nzComponentParams: {
+                    dataToSave: this.application,
+                    dataType: 'application',
+                    project: this.project,
+                    workflow: this.application.workflow_ascode_holder,
+                    name: this.readOnlyApplication.name,
+                }
+            });
         }
     }
 

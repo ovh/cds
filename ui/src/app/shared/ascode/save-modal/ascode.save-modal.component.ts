@@ -1,7 +1,6 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { EventService } from 'app/event.service';
 import { Application } from 'app/model/application.model';
 import { Environment } from 'app/model/environment.model';
@@ -20,6 +19,7 @@ import { EventState } from 'app/store/event.state';
 import { Subscription } from 'rxjs';
 import { filter, finalize, first, map } from 'rxjs/operators';
 import { ParamData } from '../save-form/ascode.save-form.component';
+import { NzModalRef } from 'ng-zorro-antd/modal';
 
 @Component({
     selector: 'app-ascode-save-modal',
@@ -28,10 +28,6 @@ import { ParamData } from '../save-form/ascode.save-form.component';
 })
 @AutoUnsubscribe()
 export class AsCodeSaveModalComponent implements OnDestroy {
-    @ViewChild('updateAsCodeModal')
-    public myModalTemplate: ModalTemplate<boolean, boolean, void>;
-    modal: SuiActiveModal<boolean, boolean, void>;
-    modalConfig: TemplateModalConfig<boolean, boolean, void>;
 
     @Input() project: Project;
     @Input() workflow: Workflow;
@@ -48,7 +44,7 @@ export class AsCodeSaveModalComponent implements OnDestroy {
     displayCloseButton = false;
 
     constructor(
-        private _modalService: SuiModalService,
+        private _modal: NzModalRef,
         private _cd: ChangeDetectorRef,
         private _toast: ToastService,
         private _translate: TranslateService,
@@ -62,11 +58,7 @@ export class AsCodeSaveModalComponent implements OnDestroy {
 
     ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
-    show(data: any, type: string) {
-        this.loading = false;
-        this.dataToSave = data;
-        this.dataType = type;
-
+    ngOnInit(): void {
         if (this.workflow && this.workflow.workflow_data.node.context) {
             let rootAppID = this.workflow.workflow_data.node.context.application_id;
             if (rootAppID) {
@@ -76,14 +68,11 @@ export class AsCodeSaveModalComponent implements OnDestroy {
                 }
             }
         }
-
-        this.modalConfig = new TemplateModalConfig<boolean, boolean, void>(this.myModalTemplate);
-        this.modal = this._modalService.open(this.modalConfig);
     }
 
     close() {
         delete this.parameters;
-        this.modal.approve(true);
+        this._modal.destroy();
     }
 
     save(): void {

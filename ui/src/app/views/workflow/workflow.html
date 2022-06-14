@@ -36,8 +36,7 @@
                             </div>
                             <div class="migrate">
                                 <button class="ui right floated green mini button"
-                                    (click)="openSaveAsCodeModal();popup.close()">{{'common_migrate'
-                                    | translate}}</button>
+                                    (click)="openSaveAsCodeModal();popup.close()">Migrate</button>
                             </div>
                         </div>
                     </ng-container>
@@ -108,7 +107,4 @@
             </ng-container>
         </div>
     </div>
-    <!-- Migrate as code -->
-    <app-ascode-save-modal [project]="project" [workflow]="workflow" [name]="workflow?.name" #updateAsCode>
-    </app-ascode-save-modal>
 </div>

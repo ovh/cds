@@ -1,28 +1,25 @@
-<ng-template let-context let-modal="modal" #updateAsCodeModal>
-    <div class="header">{{ 'ascode_modal_title' | translate }}</div>
-    <div class="content">
-        <div *ngIf="repositoryFullname" class="ui blue message">
-            A pull request will be created to the repository {{repositoryFullname}}.<br>
-            Notice that you can't push on the default branch of your git repository.
-        </div>
-        <app-ascode-save-form [project]="project" [workflow]="workflow" [operation]="asCodeOperation"
-            (paramChange)="onParamChange($event)">
-        </app-ascode-save-form>
-    </div>
-    <div class="actions">
-        <ng-container *ngIf="!displayCloseButton">
-            <div class="ui blue button" [class.loading]="loading" [class.disabled]="loading" (click)="close()">
-                {{'common_cancel' | translate}}
-            </div>
-            <div class="ui green button" [class.loading]="loading"
-                 [class.disabled]="loading || !canSave"
+<div class="content">
+    <nz-alert *ngIf="repositoryFullname" nzType="info" [nzMessage]="infoPr"></nz-alert>
+    <ng-template #infoPr>
+        A pull request will be created to the repository {{repositoryFullname}}.<br>
+        Notice that you can't push on the default branch of your git repository.
+    </ng-template>
+    <app-ascode-save-form [project]="project" [workflow]="workflow" [operation]="asCodeOperation" (paramChange)="onParamChange($event)"></app-ascode-save-form>
+</div>
+<div *nzModalFooter>
+    <ng-container *ngIf="!displayCloseButton">
+        <button nz-button [nzLoading]="loading" [disabled]="loading" (click)="close()">
+            Cancel
+        </button>
+        <button nz-button nzType="primary" [nzLoading]="loading"
+                 [disabled]="loading || !canSave"
                  (click)="save()">
-                {{'btn_save' | translate}}</div>
-        </ng-container>
-        <ng-container *ngIf="displayCloseButton">
-            <div class="ui blue button" (click)="close()">
-                {{'common_close' | translate}}
-            </div>
-        </ng-container>
-    </div>
-</ng-template>
+                Save
+        </button>
+    </ng-container>
+    <ng-container *ngIf="displayCloseButton">
+        <button nz-button (click)="close()">
+            Close
+        </button>
+    </ng-container>
+</div>
