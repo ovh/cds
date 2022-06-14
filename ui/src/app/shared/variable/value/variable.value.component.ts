@@ -8,7 +8,16 @@ import { SharedService } from 'app/shared/shared.service';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class VariableValueComponent implements OnInit {
-    @Input() type: string;
+    _type: string;
+    @Input() set type (t: string) {
+        this._type = t;
+        if (t === 'boolean') {
+            this.value = this.value === 'true';
+        }
+    }
+    get type(): string{
+        return this._type;
+    }
     @Input() value: string | number | boolean;
     @Input() disabled: boolean;
     @Output() valueChange = new EventEmitter<string | number | boolean>();
