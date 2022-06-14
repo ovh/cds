@@ -10,10 +10,23 @@ import (
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/repository"
-	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
+
+func (api *API) getRepositoryByIdentifier(ctx context.Context, vcsID string, repositoryIdentifier string) (*sdk.ProjectRepository, error) {
+	var repo *sdk.ProjectRepository
+	var err error
+	if sdk.IsValidUUID(repositoryIdentifier) {
+		repo, err = repository.LoadRepositoryByVCSAndID(ctx, api.mustDB(), vcsID, repositoryIdentifier)
+	} else {
+		repo, err = repository.LoadRepositoryByName(ctx, api.mustDB(), vcsID, repositoryIdentifier)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return repo, nil
+}
 
 // deleteProjectRepositoryHandler Delete a repository from a project
 func (api *API) deleteProjectRepositoryHandler() ([]service.RbacChecker, service.Handler) {
@@ -21,18 +34,21 @@ func (api *API) deleteProjectRepositoryHandler() ([]service.RbacChecker, service
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
-			vcsName := vars["vcsProjectName"]
-			repositoryName, err := url.PathUnescape(vars["repositoryName"])
+			vcsIdentifier, err := url.PathUnescape(vars["vcsIdentifier"])
+			if err != nil {
+				return sdk.NewError(sdk.ErrWrongRequest, err)
+			}
+			repositoryIdentifier, err := url.PathUnescape(vars["repositoryIdentifier"])
 			if err != nil {
 				return sdk.WithStack(err)
 			}
 
-			vcsProject, err := vcs.LoadVCSByProject(ctx, api.mustDB(), pKey, vcsName)
+			vcsProject, err := api.getVCSByIdentifier(ctx, pKey, vcsIdentifier)
 			if err != nil {
 				return err
 			}
 
-			repo, err := repository.LoadRepositoryByName(ctx, api.mustDB(), vcsProject.ID, repositoryName)
+			repo, err := api.getRepositoryByIdentifier(ctx, vcsProject.ID, repositoryIdentifier)
 			if err != nil {
 				return err
 			}
@@ -60,9 +76,12 @@ func (api *API) postProjectRepositoryHandler() ([]service.RbacChecker, service.H
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
-			vcsName := vars["vcsProjectName"]
 
-			vcsProject, err := vcs.LoadVCSByProject(ctx, api.mustDB(), pKey, vcsName)
+			vcsIdentifier, err := url.PathUnescape(vars["vcsIdentifier"])
+			if err != nil {
+				return sdk.NewError(sdk.ErrWrongRequest, err)
+			}
+			vcsProject, err := api.getVCSByIdentifier(ctx, pKey, vcsIdentifier)
 			if err != nil {
 				return err
 			}
@@ -85,7 +104,7 @@ func (api *API) postProjectRepositoryHandler() ([]service.RbacChecker, service.H
 			}
 
 			// Check if repo exist
-			vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, pKey, vcsName)
+			vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, pKey, vcsProject.Name)
 			if err != nil {
 				return err
 			}
@@ -106,9 +125,12 @@ func (api *API) getVCSProjectRepositoryAllHandler() ([]service.RbacChecker, serv
 		func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 			vars := mux.Vars(r)
 			pKey := vars["projectKey"]
-			vcsName := vars["vcsProjectName"]
 
-			vcsProject, err := vcs.LoadVCSByProject(ctx, api.mustDB(), pKey, vcsName)
+			vcsIdentifier, err := url.PathUnescape(vars["vcsIdentifier"])
+			if err != nil {
+				return sdk.NewError(sdk.ErrWrongRequest, err)
+			}
+			vcsProject, err := api.getVCSByIdentifier(ctx, pKey, vcsIdentifier)
 			if err != nil {
 				return err
 			}

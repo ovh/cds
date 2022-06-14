@@ -3,10 +3,10 @@ package api
 import (
 	"context"
 	"net/http"
+	"net/url"
 
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
@@ -14,6 +14,20 @@ import (
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
+
+func (api *API) getVCSByIdentifier(ctx context.Context, projectKey string, vcsIdentifier string) (*sdk.VCSProject, error) {
+	var vcsProject *sdk.VCSProject
+	var err error
+	if sdk.IsValidUUID(vcsIdentifier) {
+		vcsProject, err = vcs.LoadVCSByID(ctx, api.mustDB(), projectKey, vcsIdentifier)
+	} else {
+		vcsProject, err = vcs.LoadVCSByProject(ctx, api.mustDB(), projectKey, vcsIdentifier)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return vcsProject, nil
+}
 
 func (api *API) postVCSProjectHandler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(rbac.ProjectManage),
@@ -66,7 +80,16 @@ func (api *API) putVCSProjectHandler() ([]service.RbacChecker, service.Handler) 
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
-			vcsName := vars["vcsProjectName"]
+
+			vcsIdentifier, err := url.PathUnescape(vars["vcsIdentifier"])
+			if err != nil {
+				return sdk.NewError(sdk.ErrWrongRequest, err)
+			}
+
+			vcsOld, err := api.getVCSByIdentifier(ctx, pKey, vcsIdentifier)
+			if err != nil {
+				return err
+			}
 
 			tx, err := api.mustDB().Begin()
 			if err != nil {
@@ -76,11 +99,6 @@ func (api *API) putVCSProjectHandler() ([]service.RbacChecker, service.Handler) 
 
 			var vcsProject sdk.VCSProject
 			if err := service.UnmarshalRequest(ctx, req, &vcsProject); err != nil {
-				return err
-			}
-
-			vcsOld, err := vcs.LoadVCSByProject(ctx, tx, pKey, vcsName, gorpmapping.GetOptions.WithDecryption)
-			if err != nil {
 				return err
 			}
 
@@ -106,7 +124,16 @@ func (api *API) deleteVCSProjectHandler() ([]service.RbacChecker, service.Handle
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
-			vcsName := vars["vcsProjectName"]
+
+			vcsIdentifier, err := url.PathUnescape(vars["vcsIdentifier"])
+			if err != nil {
+				return sdk.NewError(sdk.ErrWrongRequest, err)
+			}
+
+			vcsProject, err := api.getVCSByIdentifier(ctx, pKey, vcsIdentifier)
+			if err != nil {
+				return err
+			}
 
 			tx, err := api.mustDB().Begin()
 			if err != nil {
@@ -119,12 +146,7 @@ func (api *API) deleteVCSProjectHandler() ([]service.RbacChecker, service.Handle
 				return sdk.WithStack(err)
 			}
 
-			vcsOld, err := vcs.LoadVCSByProject(context.Background(), tx, project.Key, vcsName, gorpmapping.GetOptions.WithDecryption)
-			if err != nil {
-				return err
-			}
-
-			if err := vcs.Delete(tx, project.ID, vcsOld.Name); err != nil {
+			if err := vcs.Delete(tx, project.ID, vcsProject.Name); err != nil {
 				return err
 			}
 
@@ -157,19 +179,16 @@ func (api *API) getVCSProjectHandler() ([]service.RbacChecker, service.Handler) 
 		func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 			vars := mux.Vars(r)
 			pKey := vars["projectKey"]
-			vcsProjectName := vars["vcsProjectName"]
 
-			tx, err := api.mustDB().Begin()
+			vcsIdentifier, err := url.PathUnescape(vars["vcsIdentifier"])
 			if err != nil {
-				return sdk.WithStack(err)
+				return sdk.NewError(sdk.ErrWrongRequest, err)
 			}
-			defer tx.Rollback() // nolint
 
-			vcsProject, err := vcs.LoadVCSByProject(context.Background(), tx, pKey, vcsProjectName)
+			vcsProject, err := api.getVCSByIdentifier(ctx, pKey, vcsIdentifier)
 			if err != nil {
 				return err
 			}
-
 			return service.WriteMarshal(w, r, vcsProject, http.StatusOK)
 		}
 }

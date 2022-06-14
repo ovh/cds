@@ -65,8 +65,8 @@ func Test_crudRepositoryOnProjectLambdaUserOK(t *testing.T) {
 	}
 
 	vars := map[string]string{
-		"projectKey":     proj.Key,
-		"vcsProjectName": vcsProj.Name,
+		"projectKey":    proj.Key,
+		"vcsIdentifier": vcsProj.ID,
 	}
 	uri := api.Router.GetRouteV2("POST", api.postProjectRepositoryHandler, vars)
 	test.NotEmpty(t, uri)
@@ -95,7 +95,7 @@ func Test_crudRepositoryOnProjectLambdaUserOK(t *testing.T) {
 
 	// Then Delete repository
 	varsDelete := vars
-	varsDelete["repositoryName"] = url.PathEscape("ovh/cds")
+	varsDelete["repositoryIdentifier"] = url.PathEscape("ovh/cds")
 	uriDelete := api.Router.GetRouteV2("DELETE", api.deleteProjectRepositoryHandler, varsDelete)
 	test.NotEmpty(t, uriDelete)
 	reqDelete := assets.NewAuthentifiedRequest(t, user1, pass, "DELETE", uriDelete, nil)

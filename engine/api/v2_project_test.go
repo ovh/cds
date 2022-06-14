@@ -187,7 +187,7 @@ auth:
 	require.Len(t, vcsProjects, 1)
 
 	// Then, try to get the vcs server directly
-	vars["vcsProjectName"] = "my_vcs_server"
+	vars["vcsIdentifier"] = "my_vcs_server"
 	uriGet := api.Router.GetRouteV2("GET", api.getVCSProjectHandler, vars)
 	test.NotEmpty(t, uriGet)
 
