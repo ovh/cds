@@ -137,7 +137,7 @@ smoke_tests_services() {
 
 cli_tests() {
     echo "Check if gitea is running"
-    curl --fail http://localhost:3000/api/swagger
+    curl --fail http://${GITEA_HOST}:3000/api/swagger
     echo "Running CLI tests:"
     for f in $(ls -1 03_cli*.yml); do
         CMD="${VENOM} run ${VENOM_OPTS} ${f} --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}_admin --var engine.ctl=${CDS_ENGINE_CTL} --var api.url=${CDS_API_URL} --var ui.url=${CDS_UI_URL}  --var smtpmock.url=${SMTP_MOCK_URL}"
