@@ -408,7 +408,6 @@
   "pipeline_job_variable_pip": "Pipeline variables",
   "pipeline_job_variable_project": "Project variables",
   "pipeline_job_variable_workflow": "Workflow variables",
-  "pipeline_job_variable_title": "Job variables",
   "pipeline_label_run_with_parameter": "Run pipeline with parameters",
   "pipeline_label_stop": "Stop pipeline",
   "pipeline_loading": "Loading pipeline...",

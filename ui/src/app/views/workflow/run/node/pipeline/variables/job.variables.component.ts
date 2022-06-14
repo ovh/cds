@@ -1,7 +1,6 @@
-import { ChangeDetectionStrategy, Component, Input, ViewChild } from '@angular/core';
-import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { Parameter } from 'app/model/parameter.model';
-import { cloneDeep } from 'lodash-es';
+import { NzModalRef } from 'ng-zorro-antd/modal';
 
 @Component({
     selector: 'app-workflow-run-job-variable',
@@ -9,16 +8,38 @@ import { cloneDeep } from 'lodash-es';
     styleUrls: ['./job.variable.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class WorkflowRunJobVariableComponent {
-    @ViewChild('jobVariablesModal') jobVariablesModal: ModalTemplate<boolean, boolean, void>;
-    modal: SuiActiveModal<boolean, boolean, void>;
-    open: boolean;
+export class WorkflowRunJobVariableComponent implements OnInit {
 
-    @Input()
-    set variables(data: Array<Parameter>) {
-        this.init();
-        if (data) {
-            cloneDeep(data).forEach(p => {
+    @Input() variables: Array<Parameter>;
+
+
+    varGit: Array<Parameter>;
+    varCDS: Array<Parameter>;
+    varBuild: Array<Parameter>;
+    varEnvironment: Array<Parameter>;
+    varApplication: Array<Parameter>;
+    varPipeline: Array<Parameter>;
+    varProject: Array<Parameter>;
+    varParent: Array<Parameter>;
+    varWorkflow: Array<Parameter>;
+
+    constructor(
+        private _modal: NzModalRef,
+        private _cd: ChangeDetectorRef
+    ) { }
+
+    ngOnInit() {
+        this.varGit = new Array<Parameter>();
+        this.varCDS = new Array<Parameter>();
+        this.varBuild = new Array<Parameter>();
+        this.varEnvironment = new Array<Parameter>();
+        this.varApplication = new Array<Parameter>();
+        this.varPipeline = new Array<Parameter>();
+        this.varProject = new Array<Parameter>();
+        this.varParent = new Array<Parameter>();
+        this.varWorkflow = new Array<Parameter>();
+        if (this.variables) {
+            this.variables.forEach(p => {
                 if (p.name.indexOf('cds.proj.', 0) === 0) {
                     this.varProject.push(p);
                 } else if (p.name.indexOf('cds.app.', 0) === 0) {
@@ -40,57 +61,7 @@ export class WorkflowRunJobVariableComponent {
                 }
             });
         }
-
-        this.varProject = this.sort(this.varProject);
-        this.varApplication = this.sort(this.varApplication);
-        this.varPipeline = this.sort(this.varPipeline);
-        this.varEnvironment = this.sort(this.varEnvironment);
-        this.varParent = this.sort(this.varParent);
-        this.varBuild = this.sort(this.varBuild);
-        this.varGit = this.sort(this.varGit);
-        this.varWorkflow = this.sort(this.varWorkflow);
-        this.varCDS = this.sort(this.varCDS);
-    }
-
-    varGit: Array<Parameter>;
-    varCDS: Array<Parameter>;
-    varBuild: Array<Parameter>;
-    varEnvironment: Array<Parameter>;
-    varApplication: Array<Parameter>;
-    varPipeline: Array<Parameter>;
-    varProject: Array<Parameter>;
-    varParent: Array<Parameter>;
-    varWorkflow: Array<Parameter>;
-
-    constructor(
-        private _modalService: SuiModalService,
-    ) { }
-
-    init(): void {
-        this.varGit = new Array<Parameter>();
-        this.varCDS = new Array<Parameter>();
-        this.varBuild = new Array<Parameter>();
-        this.varEnvironment = new Array<Parameter>();
-        this.varApplication = new Array<Parameter>();
-        this.varPipeline = new Array<Parameter>();
-        this.varProject = new Array<Parameter>();
-        this.varParent = new Array<Parameter>();
-        this.varWorkflow = new Array<Parameter>();
-    }
-
-    show(): void {
-        this.open = true;
-
-        const config = new TemplateModalConfig<boolean, boolean, void>(this.jobVariablesModal);
-        config.mustScroll = true;
-
-        this.modal = this._modalService.open(config);
-        this.modal.onApprove(() => {
-            this.open = false;
-        });
-        this.modal.onDeny(() => {
-            this.open = false;
-        });
+        this._cd.markForCheck();
     }
 
     sort(params: Array<Parameter>): Array<Parameter> {
@@ -106,6 +77,6 @@ export class WorkflowRunJobVariableComponent {
     }
 
     clickClose() {
-        this.modal.approve(true);
+        this._modal.destroy();
     }
 }
