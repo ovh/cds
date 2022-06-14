@@ -219,7 +219,11 @@ func PromoteDockerImage(artiClient artifactory.ArtifactoryServicesManager, data 
 	sourceRepo := fmt.Sprintf("%s-%s", data.RepoName, lowMaturity)
 	targetRepo := fmt.Sprintf("%s-%s", data.RepoName, highMaturity)
 	params := services.NewDockerPromoteParams(data.Path, sourceRepo, targetRepo)
-	params.Copy = false
+
+	maturity, err := GetRepositoryMaturity(artiClient, sourceRepo)
+	if err != nil {
+		fmt.Printf("Warning: unable to get repository maturity: %v\n", err)
+	}
 
 	// Check if artifact already exist on destination
 	exist, err := checkArtifactExists(artiClient, targetRepo, data.Path)
@@ -227,7 +231,13 @@ func PromoteDockerImage(artiClient artifactory.ArtifactoryServicesManager, data 
 		return err
 	}
 	if !exist {
-		fmt.Printf("Promoting docker image %s from %s to %s\n", data.Name, params.SourceRepo, params.TargetRepo)
+		if maturity == "release" {
+			fmt.Printf("Copying docker image %s from %s to %s\n", data.Name, params.SourceRepo, params.TargetRepo)
+			params.Copy = true
+		} else {
+			fmt.Printf("Promoting docker image %s from %s to %s\n", data.Name, params.SourceRepo, params.TargetRepo)
+			params.Copy = false
+		}
 		return artiClient.PromoteDocker(params)
 	}
 	fmt.Printf("%s has been already promoted\n", data.Name)
