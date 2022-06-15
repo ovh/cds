@@ -54,9 +54,6 @@ export class WorkflowShowComponent implements OnInit, OnDestroy, AfterViewInit {
     editModeWorkflowChanged: boolean;
     isReadOnly: boolean;
 
-    @ViewChild('workflowStartParam')
-    runWithParamComponent: WorkflowNodeRunParamComponent;
-
     @ViewChild('warnPermission') warnPermission: TemplateRef<any>;
 
     selectedHookRef: string;
@@ -270,10 +267,17 @@ export class WorkflowShowComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     runWithParameter(): void {
-        if (this.runWithParamComponent && this.detailedWorkflow?.workflow_data?.node) {
+        if (this.detailedWorkflow?.workflow_data?.node) {
             this._store.dispatch(new SelectWorkflowNode({
                 node: this.detailedWorkflow.workflow_data.node
-            })).pipe(first()).subscribe(() => this.runWithParamComponent.show());
+            })).pipe(first()).subscribe(() => {
+                this._modalService.create({
+                    nzWidth: '900px',
+                    nzTitle: 'Run worklow',
+                    nzContent: WorkflowNodeRunParamComponent,
+                    nzComponentParams: {}
+                })
+            });
         }
     }
 

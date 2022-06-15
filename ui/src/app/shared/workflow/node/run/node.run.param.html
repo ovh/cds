@@ -1,69 +1,54 @@
-<ng-template let-context let-modal="modal" #runWithParamModal>
-    <div class="header">
-        {{'workflow_run_with_parameters' | translate}}
-    </div>
-    <div class="content scrolling">
-        <div class="ui form payload">
-            <ng-container *ngIf="nodeToRun && nodeToRun.type === nodeTypeEnum.PIPELINE && parameters?.length > 0 ">
-                <h3>{{ 'workflow_node_context_pipeline_parameter' | translate}}</h3>
-                <app-parameter-list [parameters]="parameters"
-                    [paramsRef]="workflow.pipelines[nodeToRun.context.pipeline_id]?.parameters" mode="launcher"
-                    [suggest]="[]"></app-parameter-list>
-            </ng-container>
-            <h3 *ngIf="!readOnly">{{ 'workflow_node_context_payload' | translate}}</h3>
-            <h3 *ngIf="readOnly">{{ 'workflow_node_context_payload_read_only' | translate}}</h3>
-            <ng-container *ngIf="!loadingBranches">
-                <codemirror [class.invalid]="invalidJSON" [(ngModel)]="payloadString" [config]="codeMirrorConfig"
+<div class="content">
+
+    <ng-container *ngIf="nodeToRun && nodeToRun.type === nodeTypeEnum.PIPELINE && parameters?.length > 0 ">
+        <h3>{{ 'workflow_node_context_pipeline_parameter' | translate}}</h3>
+        <app-parameter-list [parameters]="parameters"
+                            [paramsRef]="workflow.pipelines[nodeToRun.context.pipeline_id]?.parameters"
+                            mode="launcher"
+                            [suggest]="[]"></app-parameter-list>
+    </ng-container>
+    <h3 *ngIf="!readOnly">{{ 'workflow_node_context_payload' | translate}}</h3>
+    <h3 *ngIf="readOnly">{{ 'workflow_node_context_payload_read_only' | translate}}</h3>
+    <ng-container *ngIf="!loadingBranches">
+        <codemirror [class.invalid]="invalidJSON" [(ngModel)]="payloadString" [config]="codeMirrorConfig"
                     (click)="changeCodeMirror(textareaCodeMirror, $event)"
                     (change)="changeCodeMirror(textareaCodeMirror, $event)" #textareaCodeMirror>
-                </codemirror>
-            </ng-container>
-            <ng-container *ngIf="loadingBranches">
-                <div class="ui info message">
-                    {{ 'common_loading' | translate }}
-                </div>
-            </ng-container>
-            <div class="extra">
-                <ng-container *ngIf="invalidJSON">
-                    {{ 'workflow_context_invalid' | translate}}
-                </ng-container>
-                <ng-container *ngIf="!invalidJSON">
-                    <button class="ui small blue button" (click)="reindent()">{{ 'common_format' | translate }}</button>
-                </ng-container>
-            </div>
-        </div>
-        <div class="ui wide" *ngIf="linkedToRepo">
-            <h3>{{ 'pipeline_parent_commit_to_deploy' | translate}}</h3>
-            <div class="scrollable" *ngIf="!loadingCommits && commits != null && commits.length !== 0">
-                <app-commit-list [commits]="commits"></app-commit-list>
-            </div>
-            <ng-container *ngIf="!loadingCommits && (commits == null || commits.length === 0)">
-                <div class="ui info message">
-                    {{ 'pipeline_commit_no' | translate }}
-                </div>
-            </ng-container>
-            <ng-container *ngIf="loadingCommits">
-                <div class="ui info message">
-                    {{ 'pipeline_commits_loading' | translate }}
-                </div>
-            </ng-container>
-        </div>
+        </codemirror>
+    </ng-container>
+    <div class="payloadInfo">
+        <nz-alert *ngIf="loadingBranches" nzType="info" nzMessage="Loading..."></nz-alert>
+        <nz-alert *ngIf="invalidJSON" nzType="error" nzMessage="Invalid JSON"></nz-alert>
+        <ng-container *ngIf="!invalidJSON">
+            <button nz-button (click)="reindent()" class="reindent">Format</button>
+        </ng-container>
     </div>
-    <div class="actions">
-        <button class="ui button" [disabled]="loading"
-            (click)="modal.approve(false)">{{'common_cancel' | translate}}</button>
-        <div class="ui green buttons">
-            <div class="ui button" [class.loading]="loading" [class.disabled]="loading"
-                 (click)="run(false, false)" autofocus>{{'common_run' | translate}}</div>
-            <div class="ui floating dropdown icon button" suiDropdown>
-                <i class="dropdown icon"></i>
-                <div class="menu" suiDropdownMenu>
-                    <div class="item" [class.disabled]="!currentNodeRun || loading || workflow.from_repository" (click)="run(true, false)" suiPopup [popupText]="'workflow_run_resync_help' | translate">
-                        <i class="sync icon"></i>{{'workflow_resync' | translate }}
-                    </div>
-                    <div class="item" [class.disabled]="loading || !currentNodeRun || currentNodeRun.status !== 'Fail'" (click)="run(false, true)"><i class="bug icon"></i>{{'workflow_run_only_failed' | translate }}</div>
-                </div>
-            </div>
-        </div>
+
+    <h3>Commit list</h3>
+    <div class="scrollable" *ngIf="!loadingCommits && commits != null && commits.length !== 0">
+        <app-commit-list [commits]="commits"></app-commit-list>
     </div>
-</ng-template>
+    <nz-alert *ngIf="!loadingCommits && (commits == null || commits.length === 0)" nzType="info" nzMessage="There is no commit"></nz-alert>
+    <nz-alert *ngIf="loadingCommits" nzType="info" nzMessage="Loading commits..."></nz-alert>
+</div>
+<div *nzModalFooter>
+    <button nz-button [disabled]="loading" (click)="close()">Cancel</button>
+    <nz-button-group>
+        <button nz-button nzType="primary" [nzLoading]="loading" [disabled]="loading"
+                (click)="run(false, false)" autofocus>Run
+        </button>
+        <button *ngIf="!loading && currentNodeRun" nz-button nzType="primary" nz-dropdown [nzDropdownMenu]="menu"
+                nzPlacement="bottomRight">
+            <i nz-icon nzType="down"></i>
+        </button>
+        <nz-dropdown-menu #menu="nzDropdownMenu">
+            <ul nz-menu>
+                <li nz-menu-item [nzDisabled]="workflow?.from_repository" (click)="run(true, false)">
+                    <i class="sync icon"></i>{{'workflow_resync' | translate }}
+                </li>
+                <li nz-menu-item [nzDisabled]="currentNodeRun?.status !== 'Fail'" (click)="run(false, true)">
+                    <i class="bug icon"></i>{{'workflow_run_only_failed' | translate }}
+                </li>
+            </ul>
+        </nz-dropdown-menu>
+    </nz-button-group>
+</div>
