@@ -152,6 +152,7 @@ export class Pipeline {
     }
 
     static InitRef(editPipeline: Pipeline) {
+
         if (editPipeline && editPipeline.stages) {
             editPipeline.stages.forEach(s => {
                 let nextRef;
@@ -162,18 +163,23 @@ export class Pipeline {
                 if (s.jobs) {
                     s.jobs.forEach(j => {
                         let nextJobRef;
-                        let loopAgain = true;
-                        let idxJob;
+                        let loopAgain = false;
                         do {
+                            loopAgain = false;
                             nextJobRef = Math.random();
-                            idxJob = editPipeline.stages.findIndex(st => {
-                                if (st && st.jobs) {
-                                    return st.jobs.findIndex(jb => jb.ref === nextRef);
-                                } else {
-                                    return -1;
+                            stageLoop: for (let stageIndex = 0; stageIndex < editPipeline.stages.length; stageIndex++) {
+                                let currentStage = editPipeline.stages[stageIndex];
+                                if (!currentStage.jobs) {
+                                    continue;
                                 }
-                            });
-                            loopAgain = idxJob !== -1;
+                                for (let jobIndex = 0; jobIndex < currentStage.jobs.length; jobIndex++) {
+                                    let currentJob = currentStage[jobIndex];
+                                    if (currentJob?.ref === nextRef) {
+                                        loopAgain = true;
+                                        break stageLoop;
+                                    }
+                                }
+                            }
                         } while (loopAgain);
                         j.ref = nextJobRef;
                     });
