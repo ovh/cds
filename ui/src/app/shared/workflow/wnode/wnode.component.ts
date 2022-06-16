@@ -43,8 +43,6 @@ export class WorkflowWNodeComponent implements OnInit, OnDestroy {
 
     @ViewChild('menu')
     menu: WorkflowWNodeMenuEditComponent;
-    @ViewChild('workflowRunNode')
-    workflowRunNode: WorkflowNodeRunParamComponent;
 
     project: Project;
 
@@ -340,6 +338,11 @@ export class WorkflowWNodeComponent implements OnInit, OnDestroy {
     }
 
     run(): void {
-        this.workflowRunNode.show();
+        this._modalService.create({
+            nzWidth: '900px',
+            nzTitle: 'Run worklow',
+            nzContent: WorkflowNodeRunParamComponent,
+            nzComponentParams: {}
+        });
     }
 }

@@ -1,22 +1,11 @@
-@import '../../../../../common';
-
-.header {
-  .extra {
-    position: absolute;
-    right: 20px;
-    top: 10px;
-    color: black;
-  }
-
-  p {
-    padding-top: 5px;
-    color: $cds_color_green;
-    font-size: 0.75em;
-  }
+.content {
+  max-height: 650px;
+  overflow-y: auto;
 }
-
-.extra {
-  padding-top: 5px;
-  text-align: right;
-  color: red;
+.payloadInfo {
+  min-height: 32px;
+  padding-top: 10px;
+}
+.reindent {
+  float: right;
 }

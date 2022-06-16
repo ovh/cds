@@ -30,6 +30,7 @@ import {
 import { WorkflowState } from 'app/store/workflow.state';
 import { Observable, Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
+import { NzModalService } from 'ng-zorro-antd/modal';
 
 
 @Component({
@@ -62,9 +63,6 @@ export class WorkflowComponent implements OnInit, OnDestroy {
     asCodeEditorSubscription: Subscription;
     asCodeEditorOpen = false;
 
-    @ViewChild('updateAsCode')
-    saveAsCode: AsCodeSaveModalComponent;
-
     @ViewChild('popupFromRepo')
     popupFromRepository: SuiPopup;
     @ViewChild('popupFromTemp')
@@ -84,7 +82,8 @@ export class WorkflowComponent implements OnInit, OnDestroy {
         private _translate: TranslateService,
         private _store: Store,
         private _cd: ChangeDetectorRef,
-        private _featureService: FeatureService
+        private _featureService: FeatureService,
+        private _modalService: NzModalService
     ) { }
 
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
@@ -236,9 +235,17 @@ export class WorkflowComponent implements OnInit, OnDestroy {
             return;
         }
 
-
-        if (this.saveAsCode) {
-            this.saveAsCode.show(null, 'workflow');
-        }
+        this._modalService.create({
+            nzTitle: 'Migrate as code',
+            nzWidth: '900px',
+            nzContent: AsCodeSaveModalComponent,
+            nzComponentParams: {
+                dataToSave: null,
+                dataType: 'workflow',
+                project: this.project,
+                workflow: this.workflow,
+                name: this.workflow.name,
+            }
+        });
     }
 }

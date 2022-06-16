@@ -109,20 +109,12 @@
                     [canRollback]="detailedWorkflow.permissions.writable"></app-audit-list>
             </div>
         </app-scrollview>
-        <ng-container>
-            <app-workflow-node-run-param #workflowStartParam></app-workflow-node-run-param>
-        </ng-container>
     </div>
 </ng-template>
 <ng-template #loadingPart>
     <div class="ui text active loader">Loading workflow...</div>
 </ng-template>
 
-<!-- EDIT AS CODE -->
-<ng-container *ngIf="detailedWorkflow?.from_repository">
-    <app-ascode-save-modal [project]="project" [workflow]="detailedWorkflow" [name]="detailedWorkflow.name"
-        #updateAsCode></app-ascode-save-modal>
-</ng-container>
 <ng-template #warnPermission>
     Following groups that are not from organization "{{detailedWorkflow.organization}}" can read the workflow:
     <span *ngFor="let gp of groupsOutsideOrganization;let i = index">{{gp.group.name}}

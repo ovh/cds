@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
@@ -27,6 +27,7 @@ import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
 import { filter, finalize, first } from 'rxjs/operators';
 import { Tab } from 'app/shared/tabs/tabs.component';
+import { NzModalService } from 'ng-zorro-antd/modal';
 
 @Component({
     selector: 'app-pipeline-show',
@@ -65,8 +66,6 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
     pipName: string;
 
     queryParams: Params;
-    @ViewChild('updateEditMode')
-    asCodeSaveModal: AsCodeSaveModalComponent;
 
     keys: AllKeys;
     asCodeEditorOpen: boolean;
@@ -85,7 +84,8 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
         public _translate: TranslateService,
         private _keyService: KeyService,
         private _pipCoreService: PipelineCoreService,
-        private _cd: ChangeDetectorRef
+        private _cd: ChangeDetectorRef,
+        private _modalService: NzModalService
     ) {
         this.project = this._routeActivated.snapshot.data['project'];
         this.application = this._routeActivated.snapshot.data['application'];
@@ -309,9 +309,20 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
     }
 
     saveEditMode(): void {
-        if (this.editMode && this.pipeline.from_repository && this.asCodeSaveModal) {
+        if (this.editMode && this.pipeline.from_repository) {
             // show modal to save as code
-            this.asCodeSaveModal.show(this.pipeline, 'pipeline');
+            this._modalService.create({
+                nzWidth: '900px',
+                nzTitle: 'Save pipeline as code',
+                nzContent: AsCodeSaveModalComponent,
+                nzComponentParams: {
+                    dataToSave: this.pipeline,
+                    dataType: 'pipeline',
+                    project: this.project,
+                    workflow: this.pipeline.workflow_ascode_holder,
+                    name: this.pipeline.name,
+                }
+            });
         }
     }
 }

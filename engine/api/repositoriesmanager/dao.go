@@ -137,6 +137,7 @@ func LoadAllProjectVCSServerLinksByProjectKey(ctx context.Context, db gorp.SqlEx
 	return getAllProjectVCSServerLinks(ctx, db, query)
 }
 
+// DEPRECATED
 func LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx context.Context, db gorp.SqlExecutor, projectKey, rmName string) (sdk.ProjectVCSServerLink, error) {
 	var query = gorpmapping.NewQuery(`
 	SELECT project_vcs_server_link.*

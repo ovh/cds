@@ -1,4 +1,4 @@
-<nz-table nzShowPagination [nzData]="parameters" nzPageSize="5" #paramsList *ngIf="ready && parameters?.length > 0"  [nzFrontPagination]="mode === 'job'?false:true">
+<nz-table [nzSize]="mode === 'launcher' || mode === 'job'?'small':'default'" nzShowPagination [nzData]="parameters" nzPageSize="5" #paramsList *ngIf="ready && parameters?.length > 0"  [nzFrontPagination]="mode === 'job' || mode === 'launcher'?false:true">
     <thead>
     <tr *ngIf="mode !== 'launcher' && mode !== 'job'">
         <th nzWidth="200px">Name</th>

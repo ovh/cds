@@ -1,7 +1,15 @@
-import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, ViewChild } from '@angular/core';
+import {
+    AfterViewInit,
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    OnDestroy,
+    OnInit,
+    ViewChild
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { Store } from '@ngxs/store';
-import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
+import { ModalTemplate, SuiActiveModal, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { Parameter } from 'app/model/parameter.model';
 import { Pipeline } from 'app/model/pipeline.model';
 import { Commit } from 'app/model/repositories.model';
@@ -16,6 +24,7 @@ import { WorkflowState } from 'app/store/workflow.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { debounceTime, finalize, first } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
+import { NzModalRef } from 'ng-zorro-antd/modal';
 
 declare let CodeMirror: any;
 
@@ -26,7 +35,7 @@ declare let CodeMirror: any;
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowNodeRunParamComponent implements AfterViewInit, OnDestroy {
+export class WorkflowNodeRunParamComponent implements OnInit, AfterViewInit, OnDestroy {
     @ViewChild('runWithParamModal')
     runWithParamModal: ModalTemplate<boolean, boolean, void>;
     modal: SuiActiveModal<boolean, boolean, void>;
@@ -62,11 +71,10 @@ export class WorkflowNodeRunParamComponent implements AfterViewInit, OnDestroy {
     readOnly = false;
     linkedToRepo = false;
     nodeTypeEnum = WNodeType;
-    open: boolean;
     themeSubscription: Subscription;
 
     constructor(
-        private _modalService: SuiModalService,
+        private _modal: NzModalRef,
         private _workflowRunService: WorkflowRunService,
         private _router: Router,
         private _appWorkflowService: ApplicationWorkflowService,
@@ -96,11 +104,7 @@ export class WorkflowNodeRunParamComponent implements AfterViewInit, OnDestroy {
             });
     }
 
-    show(): void {
-        if (this.open) {
-            return;
-        }
-        this.open = true;
+    ngOnInit(): void {
         this.nodeToRun = cloneDeep(this._store.selectSnapshot(WorkflowState.nodeSnapshot));
         this.currentNodeRun = this._store.selectSnapshot(WorkflowState.nodeRunSnapshot);
         this.currentWorkflowRun = this._store.selectSnapshot(WorkflowState.workflowRunSnapshot);
@@ -201,14 +205,6 @@ export class WorkflowNodeRunParamComponent implements AfterViewInit, OnDestroy {
             }
             this.payloadString = JSON.stringify(currentPayload, undefined, 4);
         }
-
-        this.modal = this._modalService.open(config);
-        this.modal.onApprove(() => {
-            this.open = false;
-        });
-        this.modal.onDeny(() => {
-            this.open = false;
-        });
 
         this.codeMirrorConfig = Object.assign({}, this.codeMirrorConfig, { readOnly: this.readOnly });
 
@@ -343,6 +339,12 @@ export class WorkflowNodeRunParamComponent implements AfterViewInit, OnDestroy {
     }
 
     run(resync: boolean, onlyFailedJobs: boolean): void {
+        if (resync && this.workflow?.from_repository) {
+            return;
+        }
+        if (onlyFailedJobs && this.currentNodeRun?.status !== 'Fail') {
+            return;
+        }
         if (this.payloadString && this.payloadString !== '') {
             this.reindent();
             if (this.invalidJSON) {
@@ -370,7 +372,7 @@ export class WorkflowNodeRunParamComponent implements AfterViewInit, OnDestroy {
         this._workflowRunService.runWorkflow(this.projectKey, this.workflow.name, request).subscribe(wr => {
             this.loading = false;
             this._cd.detectChanges();
-            this.modal.approve(true);
+            this.close();
             this._router.navigate(['/project', this.projectKey, 'workflow', this.workflow.name, 'run', wr.num]);
         });
     }
@@ -454,5 +456,9 @@ export class WorkflowNodeRunParamComponent implements AfterViewInit, OnDestroy {
             },
             specialChars: ''
         });
+    }
+
+    close(): void {
+        this._modal.destroy();
     }
 }
