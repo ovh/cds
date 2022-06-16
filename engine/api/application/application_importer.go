@@ -70,10 +70,15 @@ func Import(ctx context.Context, db gorpmapper.SqlExecutorWithTx, proj sdk.Proje
 	app.VCSServer = repomanager
 	if app.VCSServer != "" && app.RepositoryFullname != "" {
 		if _, err := vcs.LoadVCSByProject(ctx, db, proj.Key, app.VCSServer); err != nil {
-			// Check old way
-			if _, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, proj.Key, app.VCSServer); err != nil {
-				return sdk.NewError(sdk.ErrNoReposManager, err)
+			if sdk.ErrorIs(err, sdk.ErrNotFound) {
+				// Check old way
+				if _, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, proj.Key, app.VCSServer); err != nil {
+					return sdk.NewError(sdk.ErrNoReposManager, err)
+				}
+			} else {
+				return err
 			}
+
 		}
 
 		if err := repositoriesmanager.InsertForApplication(db, app); err != nil {
