@@ -1,113 +1,122 @@
-<div class="ui centered grid signin">
-    <div class="row">
-        <div class="column">
-            <div *ngIf="loading;then load;else loaded"></div>
-            <ng-template #load>
-                <div class="loading">
-                    <div class="ui active small inline loader"></div>
-                    <div>{{ 'common_loading' | translate }}</div>
-                </div>
-            </ng-template>
-            <ng-template #loaded>
-                <ng-container *ngIf="localDriver || ldapDriver">
-                    <div class="ui top attached tabular menu">
-                        <a *ngIf="localDriver" class="item" [class.active]="localSigninActive"
-                            (click)="clickShowLocalSignin()">{{ 'account_btn_signin' | translate}}</a>
-                        <a *ngIf="localDriver && !localDriver.signup_disabled" class="item"
-                            [class.active]="localSignupActive"
-                            (click)="clickShowLocalSignup()">{{ 'account_btn_signup' | translate}}</a>
-                        <a *ngIf="ldapDriver" class="item" [class.active]="ldapSigninActive"
-                            (click)="clickShowLDAPSignin()">{{ 'account_btn_signin_ldap' | translate}}</a>
-                    </div>
-                    <div *ngIf="localDriver" class="ui bottom attached tab segment" [class.active]="localSigninActive">
-                        <form class="ui form" (ngSubmit)="signin(signinForm)" #signinForm="ngForm">
-                            <div class="field">
-                                <label>{{ 'user_label_username' | translate }}*</label>
-                                <input type="text" name="username" ngModel required>
-                            </div>
-                            <div class="field">
-                                <label>{{ 'user_label_password' | translate }}*</label>
-                                <input type="password" name="password" ngModel required>
-                            </div>
-                            <div class="field right aligned">
+<nz-row>
+    <nz-col [nzSpan]="24">
+        <div *ngIf="loading;then load;else loaded"></div>
+        <ng-template #load>
+            <div class="loading">
+                <nz-spin nzTip=""></nz-spin>
+            </div>
+        </ng-template>
+        <ng-template #loaded>
+            <ng-container *ngIf="localDriver || ldapDriver">
+                <nz-tabset [nzAnimated]="false">
+                    <nz-tab *ngIf="localDriver" nzTitle="Sign in" (click)="clickShowLocalSignin()">
+                        <form nz-form (ngSubmit)="signin(signinForm)" #signinForm="ngForm">
+                            <nz-form-item>
+                                <nz-form-label [nzSpan]="4">Username*</nz-form-label>
+                                <nz-form-control>
+                                    <input nz-input type="text" name="username" ngModel required>
+                                </nz-form-control>
+                            </nz-form-item>
+                            <nz-form-item>
+                                <nz-form-label [nzSpan]="4">Password*</nz-form-label>
+                                <nz-form-control>
+                                    <input nz-input type="password" name="password" ngModel required>
+                                </nz-form-control>
+                            </nz-form-item>
+                            <nz-form-item>
+                            </nz-form-item>
+                            <nz-form-item nzJustify="end">
                                 <a class="pointing"
-                                    (click)="navigateToAskReset()">{{ 'account_btn_password' | translate }}</a>
-                                &nbsp;&nbsp;&nbsp;
-                                <button class="ui green button"
-                                    type="submit">{{ 'account_login_btn_connect' | translate }}</button>
-                            </div>
+                                   (click)="navigateToAskReset()">Forgotten password</a>
+                                <button nz-button nzType="primary" type="submit">Sign in</button>
+                            </nz-form-item>
                         </form>
-                    </div>
-                    <div *ngIf="localDriver && !localDriver.signup_disabled" class="ui bottom attached tab segment"
-                        [class.active]="localSignupActive">
-                        <form *ngIf="!showSuccessSignup" class="ui form" (ngSubmit)="signup(signupForm)"
-                            #signupForm="ngForm">
-                            <div class="field">
-                                <label>{{ 'user_label_username' | translate }}*</label>
-                                <input type="text" name="username" ngModel required>
-                            </div>
-                            <div class="field">
-                                <label>{{ 'user_label_fullname' | translate }}*</label>
-                                <input type="text" name="fullname" ngModel required>
-                            </div>
-                            <div class="field">
-                                <label>{{ 'user_label_email' | translate }}*</label>
-                                <input type="email" name="email" ngModel required>
-                            </div>
-                            <div class="field">
-                                <label>{{ 'user_label_password' | translate }}*</label>
-                                <input type="password" name="password" (keyup)="onChangeSignupPassword($event)" ngModel required>
-                                <sui-progress *ngIf="!passwordError && passwordLevel !== null"
-                                    class="bottom attached indicating active" [maximum]="5" [value]="passwordLevel + 1">
-                                </sui-progress>
-                            </div>
-                            <div *ngIf="passwordError" class="ui error message">
-                                <p>{{ passwordError | translate }}</p>
-                            </div>
-                            <div class="field right aligned">
-                                <button class="ui green button"
-                                    type="submit">{{ 'account_signup_btn_create' | translate }}</button>
-                            </div>
+                    </nz-tab>
+                    <nz-tab *ngIf="localDriver && !localDriver.signup_disabled" nzTitle="Sign up" (click)="clickShowLocalSignup()">
+                        <form nz-form *ngIf="!showSuccessSignup" (ngSubmit)="signup(signupForm)"
+                              #signupForm="ngForm">
+                            <nz-form-item>
+                                <nz-form-label [nzSpan]="4">Username*</nz-form-label>
+                                <nz-form-control>
+                                    <input nz-input type="text" name="username" ngModel required>
+                                </nz-form-control>
+                            </nz-form-item>
+                            <nz-form-item>
+                                <nz-form-label [nzSpan]="4">Fullname*</nz-form-label>
+                                <nz-form-control>
+                                    <input nz-input type="text" name="fullname" ngModel required>
+                                </nz-form-control>
+                            </nz-form-item>
+                            <nz-form-item>
+                                <nz-form-label [nzSpan]="4">Email*</nz-form-label>
+                                <nz-form-control>
+                                    <input nz-input type="email" name="email" ngModel required>
+                                </nz-form-control>
+                            </nz-form-item>
+                            <nz-form-item>
+                                <nz-form-label [nzSpan]="4">Password*</nz-form-label>
+                                <nz-form-control>
+                                    <input nz-input type="password" name="password" (keyup)="onChangeSignupPassword($event)" ngModel required>
+                                    <nz-progress *ngIf="!passwordError && passwordLevel !== null"
+                                                 (keyup)="onChangeSignupPassword($event)"
+                                                 [nzShowInfo]="false"
+                                                 [nzStatus]="passwordLevel<3?'exception': 'success'"
+                                                 [nzPercent]="100 * (passwordLevel + 1)/5"></nz-progress>
+                                </nz-form-control>
+                            </nz-form-item>
+
+                            <nz-alert *ngIf="passwordError" nzType="error" nzMessage="{{ passwordError | translate }}"></nz-alert>
+                            <nz-form-item nzJustify="end">
+                                <button nz-button nzType="primary" [disabled]="passwordError != null"
+                                        type="submit">Create</button>
+                            </nz-form-item>
                         </form>
                         <div *ngIf="showSuccessSignup" class="ui green message">
                             <p>{{ 'auth_signup_success' | translate }}</p>
                         </div>
-                    </div>
-                    <div *ngIf="ldapDriver" class="ui bottom attached tab segment" [class.active]="ldapSigninActive">
-                        <form class="ui form" (ngSubmit)="ldapSignin(signinForm)" #signinForm="ngForm">
-                            <div class="field">
-                                <label>LDAP Bind*</label>
-                                <input type="text" name="bind" ngModel required>
-                            </div>
-                            <div class="field">
-                                <label>{{ 'user_label_password' | translate }}*</label>
-                                <input type="password" name="password" ngModel required>
-                            </div>
-                            <div class="field" *ngIf="isFirstConnection">
-                                <label>{{ 'account_signup_init_token' | translate }}</label>
-                                <input type="password" name="init_token" ngModel required>
-                            </div>
-                            <div class="field right aligned">
-                                <button class="ui green button"
-                                    type="submit">{{ 'account_login_btn_connect' | translate }}</button>
-                            </div>
+                    </nz-tab>
+                    <nz-tab *ngIf="ldapDriver" nzTitle="LDAP Sign in" (click)="clickShowLDAPSignin()">
+                        <form nz-form (ngSubmit)="ldapSignin(signinForm)" #signinForm="ngForm">
+                            <nz-form-item>
+                                <nz-form-label [nzSpan]="4">LDAP Bind*</nz-form-label>
+                                <nz-form-control>
+                                    <input nz-input type="text" name="bind" ngModel required>
+                                </nz-form-control>
+
+                            </nz-form-item>
+                            <nz-form-item>
+                                <nz-form-label [nzSpan]="4">Password*</nz-form-label>
+                                <nz-form-control>
+                                    <input nz-input type="password" name="password" ngModel required>
+                                </nz-form-control>
+                            </nz-form-item>
+                            <nz-form-item *ngIf="isFirstConnection">
+                                <nz-form-label [nzSpan]="4">Initialization token</nz-form-label>
+                                <nz-form-control>
+                                    <input nz-input type="password" name="init_token" ngModel required>
+                                </nz-form-control>
+                            </nz-form-item>
+                            <nz-form-item nzJustify="end">
+                                <button nz-button nzType="primary"
+                                        type="submit">Sign in</button>
+                            </nz-form-item>
                         </form>
+                    </nz-tab>
+                </nz-tabset>
+            </ng-container>
+            <div *ngIf="!loading && externalDrivers && externalDrivers.length > 0"
+                 class="ui bottom attached segment">
+                <form class="ui form">
+                    <div *ngFor="let driver of externalDrivers" class="field">
+                        <a class="fluid ui {{driver.type}} button primary"
+                           [routerLink]="'/auth/ask-signin/'+driver.type"
+                           [queryParams]="{redirect_uri: redirect, require_mfa: mfa}">
+                            <i class="{{driver.icon}} icon"></i>
+                            {{ 'auth_button_signin_with' | translate: {consumer: driver.type} }}
+                        </a>
                     </div>
-                </ng-container>
-                <div *ngIf="!loading && externalDrivers && externalDrivers.length > 0"
-                    class="ui bottom attached segment">
-                    <form class="ui form">
-                        <div *ngFor="let driver of externalDrivers" class="field">
-                            <a class="fluid ui {{driver.type}} button primary"
-                                [routerLink]="'/auth/ask-signin/'+driver.type"
-                                [queryParams]="{redirect_uri: redirect, require_mfa: mfa}">
-                                <i class="{{driver.icon}} icon"></i>
-                                {{ 'auth_button_signin_with' | translate: {consumer: driver.type} }}
-                            </a>
-                        </div>
-                    </form>
-                </div>
-            </ng-template>
-        </div>
-    </div>
-</div>
+                </form>
+            </div>
+        </ng-template>
+    </nz-col>
+</nz-row>

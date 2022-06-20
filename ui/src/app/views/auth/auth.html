@@ -1,10 +1,9 @@
 <div class="wrapper auth">
     <app-scrollview class="scrollview">
-        <div class="ui padded centered grid">
-            <div class="column">
-                <img class="logo ui centered image" src="assets/images/cds.png">
+        <nz-row>
+            <nz-col [nzSpan]="10" [nzOffset]="7" class="nzSegment">
                 <router-outlet></router-outlet>
-            </div>
-        </div>
+            </nz-col>
+        </nz-row>
     </app-scrollview>
 </div>

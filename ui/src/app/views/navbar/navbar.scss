@@ -3,14 +3,12 @@
 #navbar {
   padding-left: 0;
   padding-right: 0;
-  background-color: $darkTheme_grey_0;
   border-radius: 0;
-  height: 50px;
+  height: 64px;
   display: flex;
   align-items: center;
 
   :host-context(.night) &, :host-context(.night){
-    background-color: $darkTheme_grey_0;
     box-shadow: none;
   }
 

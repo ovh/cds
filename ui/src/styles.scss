@@ -26,6 +26,14 @@ body {
   border-radius: 2px;
 }
 
+.inner-content {
+  background-color: #fff;
+}
+
+.ant-layout-header {
+  padding: 0 !important;
+}
+
 input[type=radio]:read-only {
   opacity: 0;
 }
