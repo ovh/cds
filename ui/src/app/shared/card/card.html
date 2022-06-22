@@ -1,0 +1,12 @@
+<div class="entity-card">
+    <img src="{{image}}">
+    <div class="title">{{title}}</div>
+    <div class="description">
+        <span *ngIf="description">
+             <span [innerText]="description.slice(0, 90)"></span><span *ngIf="description.length > 90">...</span>
+        </span>
+        <span *ngIf="!description">
+            No description available
+        </span>
+    </div>
+</div>

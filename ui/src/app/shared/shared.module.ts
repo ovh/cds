@@ -147,6 +147,7 @@ import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzRadioModule } from 'ng-zorro-antd/radio';
 import { NzStepsModule } from 'ng-zorro-antd/steps';
 import { NzProgressModule } from 'ng-zorro-antd/progress';
+import { CardComponent } from 'app/shared/card/card.component';
 
 const ngZorroConfig: NzConfig = {
     notification: {nzPauseOnHover: true, nzPlacement: "topRight"},
@@ -215,6 +216,7 @@ const icons: IconDefinition[] = [ BellFill, BookOutline, CaretDownFill, CaretRig
         AutoFocusInputComponent,
         BreadcrumbComponent,
         CallbackPipe,
+        CardComponent,
         ChartComponentComponent,
         CommitListComponent,
         ConditionsComponent,
@@ -326,6 +328,7 @@ const icons: IconDefinition[] = [ BellFill, BookOutline, CaretDownFill, CaretRig
         AutoFocusInputComponent,
         BreadcrumbComponent,
         CallbackPipe,
+        CardComponent,
         ChartComponentComponent,
         ClipboardModule,
         CodemirrorModule,
