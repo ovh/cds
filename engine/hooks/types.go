@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"crypto/rsa"
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/service"
@@ -17,11 +18,12 @@ const (
 // Service is the stuct representing a hooks µService
 type Service struct {
 	service.Common
-	Cfg         Configuration
-	Router      *api.Router
-	Cache       cache.Store
-	Dao         dao
-	Maintenance bool
+	Cfg                     Configuration
+	Router                  *api.Router
+	Cache                   cache.Store
+	Dao                     dao
+	Maintenance             bool
+	WebHooksParsedPublicKey *rsa.PublicKey
 }
 
 // Configuration is the hooks configuration structure
@@ -42,4 +44,5 @@ type Configuration struct {
 			Password string `toml:"password" json:"-"`
 		} `toml:"redis" comment:"Connect CDS to a redis cache If you more than one CDS instance and to avoid losing data at startup" json:"redis"`
 	} `toml:"cache" comment:"######################\n CDS Hooks Cache Settings \n######################" json:"cache"`
+	WebhooksPublicKeySign string `toml:"webhooksPublicKeySign" comment:"Public key to check call signature on handler /v2/webhook/repository"`
 }

@@ -8,7 +8,7 @@ import (
 
 const indexNotFoundException = "index_not_found_exception"
 
-// Service is the repostories service
+// Service is the elasticsearch service
 type Service struct {
 	service.Common
 	Cfg    Configuration

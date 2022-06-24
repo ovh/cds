@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -14,9 +15,110 @@ import (
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
+
+func (s *Service) registerRepositoryHookHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+
+		var newHook sdk.RepositoryWebHook
+		//Read the body
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to read request")
+		}
+		if err := json.Unmarshal(body, &newHook); err != nil {
+			return sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to unmarshal request")
+		}
+
+		if len(newHook.Configuration) == 0 {
+			return sdk.NewErrorFrom(sdk.ErrInvalidData, "missing hook configuration")
+		}
+
+		vcsType, has := newHook.Configuration[sdk.HookConfigVCSType]
+		if !has || vcsType.Value == "" {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing vcs type")
+		}
+
+		vcsName, has := newHook.Configuration[sdk.HookConfigVCSServer]
+		if !has || vcsName.Value == "" {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing vcs name")
+		}
+
+		repoName, has := newHook.Configuration[sdk.HookConfigRepoFullName]
+		if !has || repoName.Value == "" {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing repository name")
+		}
+
+		project, has := newHook.Configuration[sdk.HookConfigProject]
+		if !has || project.Value == "" {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing project key")
+		}
+
+		if err := s.addTaskFromRepositoryHook(newHook); err != nil {
+			return sdk.WithStack(err)
+		}
+		return nil
+	}
+}
+
+func (s *Service) repositoryHooksHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		vcsType := vars["vcsType"]
+
+		// Get repository data
+		vcsName := r.Header.Get(SignHeaderVCSName)
+		repoName := r.Header.Get(SignHeaderRepoName)
+
+		defer r.Body.Close()
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			return sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to read body: %v", err)
+		}
+
+		// Search for existing hooks
+		hookKey := cache.Key(EntitiesHookRootKey, vcsType, vcsName, repoName, "*")
+		uuids, err := s.Dao.GetAllEntitiesHookByKey(hookKey)
+		if err != nil {
+			log.Error(ctx, "unable to check if a hook exist for %s: %v", hookKey, err)
+			return err
+		}
+		for _, uuid := range uuids {
+			hook := s.Dao.FindTask(ctx, uuid)
+			if hook == nil {
+				return sdk.WrapError(sdk.ErrNotFound, "no hook found on")
+			}
+
+			// Enqueue execution
+			exec := &sdk.TaskExecution{
+				Timestamp:     time.Now().UnixNano(),
+				Type:          hook.Type,
+				UUID:          hook.UUID,
+				Configuration: hook.Configuration,
+				Status:        TaskExecutionScheduled,
+				WebHook: &sdk.WebHookExecution{
+					RequestBody:   body,
+					RequestHeader: r.Header,
+					RequestURL:    r.URL.RawQuery,
+				},
+			}
+			log.Debug(ctx, "Save execution for task %v", hook.Configuration)
+			if err := s.Dao.SaveTaskExecution(exec); err != nil {
+				return err
+			}
+		}
+		return service.WriteJSON(w, nil, http.StatusAccepted)
+	}
+}
+
+func (s *Service) repositoryWebHookHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		return sdk.WithStack(sdk.ErrNotImplemented)
+	}
+}
 
 func (s *Service) webhookHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
@@ -428,6 +530,24 @@ func (s *Service) addTask(ctx context.Context, h *sdk.NodeHook) error {
 	//Start the task
 	if _, err := s.startTask(ctx, t); err != nil {
 		return sdk.WrapError(err, "Unable start task %v", t)
+	}
+	return nil
+}
+
+func (s *Service) addTaskFromRepositoryHook(h sdk.RepositoryWebHook) error {
+	t, err := s.repositoryHookToTask(h)
+	if err != nil {
+		return err
+	}
+
+	entitiesHookKey := cache.Key(EntitiesHookRootKey,
+		h.Configuration[sdk.HookConfigVCSType].Value,
+		h.Configuration[sdk.HookConfigVCSServer].Value,
+		h.Configuration[sdk.HookConfigRepoFullName].Value,
+		h.Configuration[sdk.HookConfigTypeProject].Value)
+
+	if err := s.Dao.SaveRepoWebHook(entitiesHookKey, t); err != nil {
+		return err
 	}
 	return nil
 }

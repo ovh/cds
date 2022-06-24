@@ -26,6 +26,7 @@ const (
 	TypeWorkflowHook       = "Workflow"
 	TypeOutgoingWebHook    = "OutgoingWebhook"
 	TypeOutgoingWorkflow   = "OutgoingWorkflow"
+	TypeEntitiesHook       = "EntitiesHook"
 
 	GithubHeader         = "X-Github-Event"
 	GitlabHeader         = "X-Gitlab-Event"
@@ -174,6 +175,19 @@ func (s *Service) initGerritStreamEvent(ctx context.Context, vcsName string, vcs
 	gerritRepoHooks[vcsName] = true
 }
 
+func (s *Service) repositoryHookToTask(r sdk.RepositoryWebHook) (*sdk.Task, error) {
+	switch r.HookType {
+	case sdk.RepositoryEntitiesHook:
+		return &sdk.Task{
+			UUID:          r.UUID,
+			Type:          TypeEntitiesHook,
+			Configuration: r.Configuration,
+		}, nil
+	default:
+		return nil, sdk.WithStack(sdk.ErrNotImplemented)
+	}
+}
+
 func (s *Service) hookToTask(h *sdk.NodeHook) (*sdk.Task, error) {
 	switch h.HookModelName {
 	case sdk.GerritHookModelName:
@@ -284,7 +298,7 @@ func (s *Service) startTask(ctx context.Context, t *sdk.Task) (*sdk.TaskExecutio
 	}
 
 	switch t.Type {
-	case TypeWebHook, TypeRepoManagerWebHook, TypeWorkflowHook:
+	case TypeWebHook, TypeRepoManagerWebHook, TypeWorkflowHook, TypeEntitiesHook:
 		return nil, nil
 	case TypeScheduler, TypeRepoPoller:
 		return nil, s.prepareNextScheduledTaskExecution(ctx, t)
@@ -407,6 +421,9 @@ func (s *Service) doTask(ctx context.Context, t *sdk.Task, e *sdk.TaskExecution)
 	switch {
 	case e.GerritEvent != nil:
 		h, err = s.doGerritExecution(e)
+	case e.Type == TypeEntitiesHook:
+		log.Debug(ctx, "Entities hook received")
+		return false, nil
 	case e.WebHook != nil && e.Type == TypeOutgoingWebHook:
 		err = s.doOutgoingWebHookExecution(ctx, e)
 	case e.Type == TypeOutgoingWorkflow:

@@ -1,15 +1,38 @@
 package sdk
 
+const (
+	RepositoryEntitiesHook = "EntitiesHook"
+	SignHeaderVCSName      = "X-Cds-Hooks-Vcs-Name"
+	SignHeaderRepoName     = "X-Cds-Hooks-Repo-Name"
+)
+
+type RepositoryWebHook struct {
+	UUID          string
+	HookType      string
+	Configuration HookConfiguration
+}
+type HookConfiguration map[string]WorkflowNodeHookConfigValue
+
+// HookConfigValue represents the value of a node hook config
+type HookConfigValue struct {
+	Value              string   `json:"value"`
+	Configurable       bool     `json:"configurable"`
+	Type               string   `json:"type"`
+	MultipleChoiceList []string `json:"multiple_choice_list"`
+}
+
 // Task is a generic hook tasks such as webhook, scheduler,... which will be started and wait for execution
 type Task struct {
 	UUID              string                 `json:"uuid" cli:"UUID,key"`
 	Type              string                 `json:"type" cli:"Type"`
-	Config            WorkflowNodeHookConfig `json:"config" cli:"Config"`
 	Conditions        WorkflowNodeConditions `json:"conditions" cli:"Conditions"`
 	Stopped           bool                   `json:"stopped" cli:"Stopped"`
 	Executions        []TaskExecution        `json:"executions"`
 	NbExecutionsTotal int                    `json:"nb_executions_total" cli:"nb_executions_total"`
 	NbExecutionsTodo  int                    `json:"nb_executions_todo" cli:"nb_executions_todo"`
+	Configuration     HookConfiguration      `json:"configuration" cli:"configuration"`
+	// DEPRECATED
+	Config WorkflowNodeHookConfig `json:"config" cli:"Config"`
 }
 
 // TaskExecution represents an execution instance of a task. It the task is a webhook; this represents the call of the webhook
@@ -21,13 +44,15 @@ type TaskExecution struct {
 	LastError           string                  `json:"last_error,omitempty" cli:"last_error"`
 	ProcessingTimestamp int64                   `json:"processing_timestamp" cli:"processing_timestamp"`
 	WorkflowRun         int64                   `json:"workflow_run" cli:"workflow_run"`
-	Config              WorkflowNodeHookConfig  `json:"config" cli:"-"`
 	WebHook             *WebHookExecution       `json:"webhook,omitempty" cli:"-"`
 	Kafka               *KafkaTaskExecution     `json:"kafka,omitempty" cli:"-"`
 	RabbitMQ            *RabbitMQTaskExecution  `json:"rabbitmq,omitempty" cli:"-"`
 	ScheduledTask       *ScheduledTaskExecution `json:"scheduled_task,omitempty" cli:"-"`
 	GerritEvent         *GerritEventExecution   `json:"gerrit,omitempty" cli:"-"`
 	Status              string                  `json:"status" cli:"status"`
+	Configuration       HookConfiguration       `json:"configuration" cli:"-"`
+	// DEPRECATED
+	Config WorkflowNodeHookConfig `json:"config" cli:"-"`
 }
 
 // GerritEventExecution contains specific data for a gerrit event execution

@@ -17,6 +17,7 @@ const (
 	HookConfigTargetHook          = "target_hook"
 	HookConfigWorkflowID          = "workflow_id"
 	HookConfigWebHookID           = "webHookID"
+	HookConfigVCSType             = "vcsType"
 	HookConfigVCSServer           = "vcsServer"
 	HookConfigEventFilter         = "eventFilter"
 	HookConfigRepoFullName        = "repoFullName"
