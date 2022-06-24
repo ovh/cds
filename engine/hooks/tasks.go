@@ -67,6 +67,12 @@ func (s *Service) synchronizeTasks(ctx context.Context) error {
 		log.Info(ctx, "Hooks> All tasks has been resynchronized (%.3fs)", time.Since(t0).Seconds())
 	}()
 
+	log.Info(ctx, "Hooks> Synchronizing entities hooks from CDS API (%s)", s.Cfg.API.HTTP.URL)
+	repos, err := s.Client.RepositoriesListAll(ctx)
+	if err != nil {
+		return sdk.WrapError(err, "unable to list all repositories")
+	}
+
 	log.Info(ctx, "Hooks> Synchronizing tasks from CDS API (%s)", s.Cfg.API.HTTP.URL)
 
 	// Get all hooks from CDS, and synchronize the tasks in cache
@@ -77,6 +83,9 @@ func (s *Service) synchronizeTasks(ctx context.Context) error {
 	mHookIDs := make(map[string]struct{}, len(hooks))
 	for i := range hooks {
 		mHookIDs[hooks[i].UUID] = struct{}{}
+	}
+	for i := range repos {
+		mHookIDs[repos[i].ID] = struct{}{}
 	}
 
 	// Get all node run execution ids from CDS, and synchronize the outgoing tasks in cache
@@ -126,6 +135,17 @@ func (s *Service) synchronizeTasks(ctx context.Context) error {
 			continue
 		}
 		if err := s.Dao.SaveTask(t); err != nil {
+			log.Error(ctx, "Hook> Unable to save task %+v: %v", h, err)
+			continue
+		}
+	}
+	for _, r := range repos {
+		h := sdk.RepositoryWebHook{
+			UUID:          r.ID,
+			HookType:      sdk.RepositoryEntitiesHook,
+			Configuration: r.HookConfiguration,
+		}
+		if err := s.addTaskFromRepositoryHook(h); err != nil {
 			log.Error(ctx, "Hook> Unable to save task %+v: %v", h, err)
 			continue
 		}

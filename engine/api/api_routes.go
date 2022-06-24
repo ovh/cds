@@ -431,6 +431,7 @@ func (api *API) InitRouter() {
 	r.Handle("/template/{groupName}/{templateSlug}/instance/{instanceID}", Scope(sdk.AuthConsumerScopeTemplate), r.DELETE(api.deleteTemplateInstanceHandler))
 	r.Handle("/template/{groupName}/{templateSlug}/usage", Scope(sdk.AuthConsumerScopeTemplate), r.GET(api.getTemplateUsageHandler))
 
+	r.Handle("/v2/project/repositories", Scope(sdk.AuthConsumerScopeHooks), r.GETv2(api.getAllRepositoriesHandler))
 	r.Handle("/v2/project/{projectKey}/vcs", nil, r.POSTv2(api.postVCSProjectHandler), r.GETv2(api.getVCSProjectAllHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}", nil, r.PUTv2(api.putVCSProjectHandler), r.DELETEv2(api.deleteVCSProjectHandler), r.GETv2(api.getVCSProjectHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository", nil, r.POSTv2(api.postProjectRepositoryHandler), r.GETv2(api.getVCSProjectRepositoryAllHandler))

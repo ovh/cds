@@ -34,6 +34,7 @@ func Test_crudRepositoryOnProjectLambdaUserOK(t *testing.T) {
 
 	// Mock VCS
 	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	sHooks, _ := assets.InsertService(t, db, t.Name()+"_HOOK", sdk.TypeHooks)
 	// Setup a mock for all services called by the API
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -43,6 +44,7 @@ func Test_crudRepositoryOnProjectLambdaUserOK(t *testing.T) {
 	}
 	defer func() {
 		_ = services.Delete(db, s)
+		_ = services.Delete(db, sHooks)
 		services.NewClient = services.NewDefaultClient
 	}()
 
@@ -58,6 +60,7 @@ func Test_crudRepositoryOnProjectLambdaUserOK(t *testing.T) {
 				return nil, 200, nil
 			},
 		).MaxTimes(1)
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "POST", "/v2/task", gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
 
 	// Creation request
 	repo := sdk.ProjectRepository{
@@ -92,6 +95,8 @@ func Test_crudRepositoryOnProjectLambdaUserOK(t *testing.T) {
 	var repositories []sdk.ProjectRepository
 	require.NoError(t, json.Unmarshal(w2.Body.Bytes(), &repositories))
 	require.Len(t, repositories, 1)
+
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "DELETE", "/task/"+repositories[0].ID, gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
 
 	// Then Delete repository
 	varsDelete := vars

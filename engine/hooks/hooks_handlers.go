@@ -70,8 +70,8 @@ func (s *Service) repositoryHooksHandler() service.Handler {
 		vcsType := vars["vcsType"]
 
 		// Get repository data
-		vcsName := r.Header.Get(SignHeaderVCSName)
-		repoName := r.Header.Get(SignHeaderRepoName)
+		vcsName := r.Header.Get(sdk.SignHeaderVCSName)
+		repoName := r.Header.Get(sdk.SignHeaderRepoName)
 
 		defer r.Body.Close()
 		body, err := io.ReadAll(r.Body)
@@ -484,9 +484,11 @@ func (s *Service) deleteTaskBulkHandler() service.Handler {
 			if err := s.stopTask(ctx, t); err != nil {
 				return sdk.WrapError(sdk.ErrNotFound, "Stop task %s", err)
 			}
+
 			if err := s.deleteTask(ctx, t); err != nil {
 				return err
 			}
+
 		}
 
 		return nil
@@ -540,13 +542,7 @@ func (s *Service) addTaskFromRepositoryHook(h sdk.RepositoryWebHook) error {
 		return err
 	}
 
-	entitiesHookKey := cache.Key(EntitiesHookRootKey,
-		h.Configuration[sdk.HookConfigVCSType].Value,
-		h.Configuration[sdk.HookConfigVCSServer].Value,
-		h.Configuration[sdk.HookConfigRepoFullName].Value,
-		h.Configuration[sdk.HookConfigTypeProject].Value)
-
-	if err := s.Dao.SaveRepoWebHook(entitiesHookKey, t); err != nil {
+	if err := s.Dao.SaveRepoWebHook(t); err != nil {
 		return err
 	}
 	return nil
@@ -610,6 +606,15 @@ func (s *Service) deleteTask(ctx context.Context, t *sdk.Task) error {
 	switch t.Type {
 	case TypeGerrit:
 		s.stopGerritHookTask(t)
+	case TypeEntitiesHook:
+		entitiesHookKey := cache.Key(EntitiesHookRootKey,
+			t.Configuration[sdk.HookConfigVCSType].Value,
+			t.Configuration[sdk.HookConfigVCSServer].Value,
+			t.Configuration[sdk.HookConfigRepoFullName].Value,
+			t.Configuration[sdk.HookConfigTypeProject].Value)
+		if err := s.Dao.store.Delete(entitiesHookKey); err != nil {
+			return err
+		}
 	}
 
 	//Delete the task

@@ -1,6 +1,7 @@
 package cdsclient
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"time"
@@ -24,4 +25,11 @@ func (c *client) PollVCSEvents(uuid string, workflowID int64, vcsServer string, 
 	}
 
 	return events, interval, nil
+}
+
+func (c *client) RepositoriesListAll(ctx context.Context) ([]sdk.ProjectRepository, error) {
+	url := fmt.Sprintf("/v2/project/repositories")
+	var repos []sdk.ProjectRepository
+	_, err := c.GetJSON(ctx, url, &repos)
+	return repos, err
 }

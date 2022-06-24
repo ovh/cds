@@ -1,5 +1,12 @@
 package sdk
 
+import (
+	"encoding/json"
+	"fmt"
+
+	"database/sql/driver"
+)
+
 const (
 	RepositoryEntitiesHook = "EntitiesHook"
 	SignHeaderVCSName      = "X-Cds-Hooks-Vcs-Name"
@@ -12,6 +19,51 @@ type RepositoryWebHook struct {
 	Configuration HookConfiguration
 }
 type HookConfiguration map[string]WorkflowNodeHookConfigValue
+
+func (hc HookConfiguration) Value() (driver.Value, error) {
+	j, err := json.Marshal(hc)
+	return j, WrapError(err, "cannot marshal HookConfiguration")
+}
+
+func (hc *HookConfiguration) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
+	}
+	return WrapError(JSONUnmarshal(source, hc), "cannot unmarshal HookConfiguration")
+}
+
+func NewEntitiesHook(uuid, projectKey, vcsType, vcsName, repoName string) RepositoryWebHook {
+	return RepositoryWebHook{
+		UUID:     uuid,
+		HookType: RepositoryEntitiesHook,
+		Configuration: map[string]WorkflowNodeHookConfigValue{
+			HookConfigProject: {
+				Value:        projectKey,
+				Type:         HookConfigTypeString,
+				Configurable: false,
+			},
+			HookConfigVCSServer: {
+				Value:        vcsName,
+				Type:         HookConfigTypeString,
+				Configurable: false,
+			},
+			HookConfigVCSType: {
+				Value:        vcsType,
+				Type:         HookConfigTypeString,
+				Configurable: false,
+			},
+			HookConfigRepoFullName: {
+				Value:        repoName,
+				Type:         HookConfigTypeString,
+				Configurable: false,
+			},
+		},
+	}
+}
 
 // HookConfigValue represents the value of a node hook config
 type HookConfigValue struct {

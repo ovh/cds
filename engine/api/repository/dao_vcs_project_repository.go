@@ -22,6 +22,15 @@ func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, repo *sdk.Proj
 	return nil
 }
 
+func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, repo *sdk.ProjectRepository) error {
+	dbData := &dbProjectRepository{ProjectRepository: *repo}
+	if err := gorpmapping.UpdateAndSign(ctx, db, dbData); err != nil {
+		return err
+	}
+	*repo = dbData.ProjectRepository
+	return nil
+}
+
 func Delete(db gorpmapper.SqlExecutorWithTx, vcsProjectID string, name string) error {
 	_, err := db.Exec("DELETE FROM project_repository WHERE vcs_project_id = $1 AND name = $2", vcsProjectID, name)
 	return sdk.WrapError(err, "cannot delete project_repository %s / %s", vcsProjectID, name)
@@ -65,6 +74,28 @@ func LoadRepositoryByName(ctx context.Context, db gorp.SqlExecutor, vcsProjectID
 
 func LoadAllRepositoriesByVCSProjectID(ctx context.Context, db gorp.SqlExecutor, vcsProjectID string) ([]sdk.ProjectRepository, error) {
 	query := gorpmapping.NewQuery(`SELECT project_repository.* FROM project_repository WHERE project_repository.vcs_project_id = $1`).Args(vcsProjectID)
+	var res []dbProjectRepository
+	if err := gorpmapping.GetAll(ctx, db, query, &res); err != nil {
+		return nil, err
+	}
+
+	repositories := make([]sdk.ProjectRepository, 0, len(res))
+	for _, r := range res {
+		isValid, err := gorpmapping.CheckSignature(r, r.Signature)
+		if err != nil {
+			return nil, err
+		}
+		if !isValid {
+			log.Error(ctx, "project_repository %d / %s data corrupted", r.ID, r.Name)
+			continue
+		}
+		repositories = append(repositories, r.ProjectRepository)
+	}
+	return repositories, nil
+}
+
+func LoadAllRepositories(ctx context.Context, db gorp.SqlExecutor) ([]sdk.ProjectRepository, error) {
+	query := gorpmapping.NewQuery(`SELECT project_repository.* FROM project_repository`)
 	var res []dbProjectRepository
 	if err := gorpmapping.GetAll(ctx, db, query, &res); err != nil {
 		return nil, err

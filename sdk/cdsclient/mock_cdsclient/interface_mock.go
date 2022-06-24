@@ -3849,6 +3849,21 @@ func (mr *MockHookClientMockRecorder) PollVCSEvents(uuid, workflowID, vcsServer,
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PollVCSEvents", reflect.TypeOf((*MockHookClient)(nil).PollVCSEvents), uuid, workflowID, vcsServer, timestamp)
 }
 
+// RepositoriesListAll mocks base method.
+func (m *MockHookClient) RepositoriesListAll(ctx context.Context) ([]sdk.ProjectRepository, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RepositoriesListAll", ctx)
+	ret0, _ := ret[0].([]sdk.ProjectRepository)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RepositoriesListAll indicates an expected call of RepositoriesListAll.
+func (mr *MockHookClientMockRecorder) RepositoriesListAll(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RepositoriesListAll", reflect.TypeOf((*MockHookClient)(nil).RepositoriesListAll), ctx)
+}
+
 // VCSConfiguration mocks base method.
 func (m *MockHookClient) VCSConfiguration() (map[string]sdk.VCSConfiguration, error) {
 	m.ctrl.T.Helper()
@@ -7251,6 +7266,21 @@ func (m *MockInterface) RepositoriesList(projectKey, repoManager string, resync 
 func (mr *MockInterfaceMockRecorder) RepositoriesList(projectKey, repoManager, resync interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RepositoriesList", reflect.TypeOf((*MockInterface)(nil).RepositoriesList), projectKey, repoManager, resync)
+}
+
+// RepositoriesListAll mocks base method.
+func (m *MockInterface) RepositoriesListAll(ctx context.Context) ([]sdk.ProjectRepository, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RepositoriesListAll", ctx)
+	ret0, _ := ret[0].([]sdk.ProjectRepository)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RepositoriesListAll indicates an expected call of RepositoriesListAll.
+func (mr *MockInterfaceMockRecorder) RepositoriesListAll(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RepositoriesListAll", reflect.TypeOf((*MockInterface)(nil).RepositoriesListAll), ctx)
 }
 
 // Request mocks base method.

@@ -3,192 +3,19 @@ package api
 import (
 	"context"
 	"net/http"
-	"net/url"
 
-	"github.com/gorilla/mux"
-
-	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/rbac"
-	"github.com/ovh/cds/engine/api/repositoriesmanager"
-	"github.com/ovh/cds/engine/api/vcs"
+	"github.com/ovh/cds/engine/api/repository"
 	"github.com/ovh/cds/engine/service"
-	"github.com/ovh/cds/sdk"
 )
 
-func (api *API) getVCSByIdentifier(ctx context.Context, projectKey string, vcsIdentifier string) (*sdk.VCSProject, error) {
-	var vcsProject *sdk.VCSProject
-	var err error
-	if sdk.IsValidUUID(vcsIdentifier) {
-		vcsProject, err = vcs.LoadVCSByID(ctx, api.mustDB(), projectKey, vcsIdentifier)
-	} else {
-		vcsProject, err = vcs.LoadVCSByProject(ctx, api.mustDB(), projectKey, vcsIdentifier)
-	}
-	if err != nil {
-		return nil, err
-	}
-	return vcsProject, nil
-}
-
-func (api *API) postVCSProjectHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(rbac.ProjectManage),
+// getAllRepositoriesHandler Get all repositories
+func (api *API) getAllRepositoriesHandler() ([]service.RbacChecker, service.Handler) {
+	return nil,
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
-			vars := mux.Vars(req)
-			pKey := vars["projectKey"]
-
-			tx, err := api.mustDB().Begin()
-			if err != nil {
-				return sdk.WithStack(err)
-			}
-			defer tx.Rollback() // nolint
-
-			project, err := project.Load(ctx, tx, pKey)
-			if err != nil {
-				return sdk.WithStack(err)
-			}
-
-			var vcsProject sdk.VCSProject
-			if err := service.UnmarshalRequest(ctx, req, &vcsProject); err != nil {
-				return err
-			}
-
-			vcsProject.ProjectID = project.ID
-			vcsProject.CreatedBy = getAPIConsumer(ctx).GetUsername()
-
-			if err := vcs.Insert(ctx, tx, &vcsProject); err != nil {
-				return err
-			}
-
-			vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, pKey, vcsProject.Name)
+			repos, err := repository.LoadAllRepositories(ctx, api.mustDB())
 			if err != nil {
 				return err
 			}
-
-			if _, err := vcsClient.Repos(ctx); err != nil {
-				return err
-			}
-
-			if err := tx.Commit(); err != nil {
-				return sdk.WithStack(err)
-			}
-
-			return service.WriteMarshal(w, req, vcsProject, http.StatusCreated)
-		}
-}
-
-func (api *API) putVCSProjectHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(rbac.ProjectManage),
-		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
-			vars := mux.Vars(req)
-			pKey := vars["projectKey"]
-
-			vcsIdentifier, err := url.PathUnescape(vars["vcsIdentifier"])
-			if err != nil {
-				return sdk.NewError(sdk.ErrWrongRequest, err)
-			}
-
-			vcsOld, err := api.getVCSByIdentifier(ctx, pKey, vcsIdentifier)
-			if err != nil {
-				return err
-			}
-
-			tx, err := api.mustDB().Begin()
-			if err != nil {
-				return sdk.WithStack(err)
-			}
-			defer tx.Rollback() // nolint
-
-			var vcsProject sdk.VCSProject
-			if err := service.UnmarshalRequest(ctx, req, &vcsProject); err != nil {
-				return err
-			}
-
-			vcsProject.ID = vcsOld.ID
-			vcsProject.Created = vcsOld.Created
-			vcsProject.CreatedBy = vcsOld.CreatedBy
-			vcsProject.ProjectID = vcsOld.ProjectID
-
-			if err := vcs.Update(ctx, tx, &vcsProject); err != nil {
-				return err
-			}
-
-			if err := tx.Commit(); err != nil {
-				return sdk.WithStack(err)
-			}
-
-			return service.WriteMarshal(w, req, vcsProject, http.StatusCreated)
-		}
-}
-
-func (api *API) deleteVCSProjectHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(rbac.ProjectManage),
-		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
-			vars := mux.Vars(req)
-			pKey := vars["projectKey"]
-
-			vcsIdentifier, err := url.PathUnescape(vars["vcsIdentifier"])
-			if err != nil {
-				return sdk.NewError(sdk.ErrWrongRequest, err)
-			}
-
-			vcsProject, err := api.getVCSByIdentifier(ctx, pKey, vcsIdentifier)
-			if err != nil {
-				return err
-			}
-
-			tx, err := api.mustDB().Begin()
-			if err != nil {
-				return sdk.WithStack(err)
-			}
-			defer tx.Rollback() // nolint
-
-			project, err := project.Load(ctx, tx, pKey)
-			if err != nil {
-				return sdk.WithStack(err)
-			}
-
-			if err := vcs.Delete(tx, project.ID, vcsProject.Name); err != nil {
-				return err
-			}
-
-			if err := tx.Commit(); err != nil {
-				return sdk.WithStack(err)
-			}
-
-			return nil
-		}
-}
-
-// getVCSProjectAllHandler returns list of vcs of one project key
-func (api *API) getVCSProjectAllHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(rbac.ProjectRead),
-		func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-			vars := mux.Vars(r)
-			pKey := vars["projectKey"]
-
-			vcsProjects, err := vcs.LoadAllVCSByProject(ctx, api.mustDB(), pKey)
-			if err != nil {
-				return sdk.WrapError(err, "unable to load vcs server on project %s", pKey)
-			}
-
-			return service.WriteJSON(w, vcsProjects, http.StatusOK)
-		}
-}
-
-func (api *API) getVCSProjectHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(rbac.ProjectRead),
-		func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-			vars := mux.Vars(r)
-			pKey := vars["projectKey"]
-
-			vcsIdentifier, err := url.PathUnescape(vars["vcsIdentifier"])
-			if err != nil {
-				return sdk.NewError(sdk.ErrWrongRequest, err)
-			}
-
-			vcsProject, err := api.getVCSByIdentifier(ctx, pKey, vcsIdentifier)
-			if err != nil {
-				return err
-			}
-			return service.WriteMarshal(w, r, vcsProject, http.StatusOK)
+			return service.WriteJSON(w, repos, http.StatusOK)
 		}
 }

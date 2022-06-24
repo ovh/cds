@@ -37,7 +37,7 @@ func (d *dao) TaskExecutionsBalance() (int64, int64) {
 func (d *dao) FindAllTasks(ctx context.Context) ([]sdk.Task, error) {
 	nbTasks, err := d.store.SetCard(rootKey)
 	if err != nil {
-		return nil, sdk.WrapError(err, "unsable to setCard %v", rootKey)
+		return nil, sdk.WrapError(err, "unable to setCard %v", rootKey)
 	}
 	tasks := make([]*sdk.Task, nbTasks, nbTasks)
 	for i := 0; i < nbTasks; i++ {
