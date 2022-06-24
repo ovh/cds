@@ -30,8 +30,8 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Handle("/mon/metrics", nil, r.GET(service.GetPrometheustMetricsHandler(s), service.OverrideAuth(service.NoAuthMiddleware)))
 	r.Handle("/mon/metrics/all", nil, r.GET(service.GetMetricsHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 
-	r.Handle("/v2/webhook/repository/{vcsType}", nil, r.POST(s.repositoryHooksHandler, service.OverrideAuth(CheckWebhookRequestSignatureMiddleware(s.WebHooksParsedPublicKey))))
-	r.Handle("/v2/webhook/repository/{vcsType}/{uuid}", nil, r.POST(s.repositoryWebHookHandler, service.OverrideAuth(service.NoAuthMiddleware)))
+	r.Handle("/v2/webhook/repository", nil, r.POST(s.repositoryHooksHandler, service.OverrideAuth(CheckWebhookRequestSignatureMiddleware(s.WebHooksParsedPublicKey))))
+	r.Handle("/v2/webhook/repository/{uuid}", nil, r.POST(s.repositoryWebHookHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 	r.Handle("/v2/task", nil, r.POST(s.registerRepositoryHookHandler))
 
 	r.Handle("/webhook/{uuid}", nil, r.POST(s.webhookHandler, service.OverrideAuth(service.NoAuthMiddleware)), r.GET(s.webhookHandler, service.OverrideAuth(service.NoAuthMiddleware)), r.DELETE(s.webhookHandler, service.OverrideAuth(service.NoAuthMiddleware)), r.PUT(s.webhookHandler, service.OverrideAuth(service.NoAuthMiddleware)))
@@ -74,7 +74,7 @@ func CheckWebhookRequestSignatureMiddleware(pubKey *rsa.PublicKey) service.Middl
 	webhookHTTPVerifier.SetKey(pubKey)
 
 	verifier := httpsig.NewVerifier(webhookHTTPVerifier)
-	verifier.SetRequiredHeaders([]string{"(request-target)", "host", "date", sdk.SignHeaderRepoName, sdk.SignHeaderVCSName})
+	verifier.SetRequiredHeaders([]string{"(request-target)", "host", "date", sdk.SignHeaderVCSType, sdk.SignHeaderVCSName, sdk.SignHeaderRepoName})
 
 	return func(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig) (context.Context, error) {
 		if err := verifier.Verify(req); err != nil {

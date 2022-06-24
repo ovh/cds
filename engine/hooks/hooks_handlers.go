@@ -66,12 +66,10 @@ func (s *Service) registerRepositoryHookHandler() service.Handler {
 
 func (s *Service) repositoryHooksHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		vcsType := vars["vcsType"]
-
 		// Get repository data
 		vcsName := r.Header.Get(sdk.SignHeaderVCSName)
 		repoName := r.Header.Get(sdk.SignHeaderRepoName)
+		vcsType := r.Header.Get(sdk.SignHeaderVCSType)
 
 		defer r.Body.Close()
 		body, err := io.ReadAll(r.Body)
@@ -116,7 +114,39 @@ func (s *Service) repositoryHooksHandler() service.Handler {
 
 func (s *Service) repositoryWebHookHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return sdk.WithStack(sdk.ErrNotImplemented)
+		vars := mux.Vars(r)
+		uuid := vars["uuid"]
+
+		defer r.Body.Close()
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			return sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to read body: %v", err)
+		}
+
+		hook := s.Dao.FindTask(ctx, uuid)
+		if hook == nil {
+			return sdk.WrapError(sdk.ErrNotFound, "no hook found on")
+		}
+
+		// Enqueue execution
+		exec := &sdk.TaskExecution{
+			Timestamp:     time.Now().UnixNano(),
+			Type:          hook.Type,
+			UUID:          hook.UUID,
+			Configuration: hook.Configuration,
+			Status:        TaskExecutionScheduled,
+			WebHook: &sdk.WebHookExecution{
+				RequestBody:   body,
+				RequestHeader: r.Header,
+				RequestURL:    r.URL.RawQuery,
+			},
+		}
+		log.Debug(ctx, "Save execution for task %v", hook.Configuration)
+		if err := s.Dao.SaveTaskExecution(exec); err != nil {
+			return err
+		}
+
+		return service.WriteJSON(w, exec, http.StatusAccepted)
 	}
 }
 

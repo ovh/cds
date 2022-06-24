@@ -11,6 +11,7 @@ const (
 	RepositoryEntitiesHook = "EntitiesHook"
 	SignHeaderVCSName      = "X-Cds-Hooks-Vcs-Name"
 	SignHeaderRepoName     = "X-Cds-Hooks-Repo-Name"
+	SignHeaderVCSType      = "X-Cds-Hooks-Vcs-Type"
 )
 
 type RepositoryWebHook struct {
