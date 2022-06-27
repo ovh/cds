@@ -26,6 +26,13 @@ const (
 	HeaderXAccessToken        = "X-CDS-ACCESS-TOKEN"         // DEPRECATED
 	HeaderXAccessTokenCreated = "X-CDS-ACCESS-TOKEN-CREATED" // DEPRECATED
 	HeaderXAccessTokenSecret  = "X-CDS-ACCESS-TOKEN-SECRET"  // DEPRECATED
+
+	VCSTypeGitea           = "gitea"
+	VCSTypeGerrit          = "gerrit"
+	VCSTypeGitlab          = "gitlab"
+	VCSTypeBitbucketServer = "bitbucketserver"
+	VCSTypeBitbucketCloud  = "bitbucketcloud"
+	VCSTypeGithub          = "github"
 )
 
 var (

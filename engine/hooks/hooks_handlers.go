@@ -84,6 +84,9 @@ func (s *Service) repositoryHooksHandler() service.Handler {
 			log.Error(ctx, "unable to check if a hook exist for %s: %v", hookKey, err)
 			return err
 		}
+		if len(uuids) == 0 {
+			log.Warn(ctx, "Receive hook from %s, but there is no tasks", hookKey)
+		}
 		for _, uuid := range uuids {
 			hook := s.Dao.FindTask(ctx, uuid)
 			if hook == nil {
@@ -103,7 +106,7 @@ func (s *Service) repositoryHooksHandler() service.Handler {
 					RequestURL:    r.URL.RawQuery,
 				},
 			}
-			log.Debug(ctx, "Save execution for task %v", hook.Configuration)
+			log.Info(ctx, "Save Entities hook execution for task %v", hook.Configuration)
 			if err := s.Dao.SaveTaskExecution(exec); err != nil {
 				return err
 			}

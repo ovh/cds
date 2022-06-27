@@ -442,7 +442,7 @@ func (s *Service) doTask(ctx context.Context, t *sdk.Task, e *sdk.TaskExecution)
 	case e.GerritEvent != nil:
 		h, err = s.doGerritExecution(e)
 	case e.Type == TypeEntitiesHook:
-		log.Debug(ctx, "Entities hook received")
+		log.Info(ctx, "Entities hook executed")
 		return false, nil
 	case e.WebHook != nil && e.Type == TypeOutgoingWebHook:
 		err = s.doOutgoingWebHookExecution(ctx, e)
