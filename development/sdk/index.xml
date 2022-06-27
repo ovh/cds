@@ -29,17 +29,5 @@ client := cdsclient.New(cdsclient.Config{ Host: host, }) res, err := client.Auth
 Example  Create a file main.</description>
     </item>
     
-    <item>
-      <title>SDK Rust</title>
-      <link>/development/sdk/rust/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>/development/sdk/rust/</guid>
-      <description>Prerequisites Rust CDS SDK uses async/await from Rust stable version so you need a compatible version with async/await.
-How to use it? You have to initialize a cdsclient:
-use std::env; use sdk_cds::Client; fn main() { let cds_host = &amp;#34;http://localhost:8081&amp;#34;; let cds_token = &amp;#34;mytoken&amp;#34;; let client = Client::new(cds_host, cds_token); } and then, you can use it:
-// list projects let projects = client.projects().await.unwrap(); // list applications of project with key TEST let applications = client.</description>
-    </item>
-    
   </channel>
 </rss>

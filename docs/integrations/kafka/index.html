@@ -454,7 +454,6 @@
     <li><a href="#configure-with-cdsctl">Configure with cdsctl</a>
       <ul>
         <li><a href="#import-a-kafka-integration-on-your-cds-project">Import a Kafka Integration on your CDS Project</a></li>
-        <li><a href="#create-a-public-kafka-integration-for-whole-cds-projects">Create a Public Kafka Integration for whole CDS Projects</a></li>
         <li><a href="#one-integration-two-use-case">One Integration, two use case</a></li>
         <li><a href="#sasl--tls">SASL / TLS</a></li>
         <li><a href="#kafka-version">Kafka Version</a></li>
@@ -467,7 +466,7 @@
 If you are a CDS Administrator, you can configue this integration to be available on all CDS Projects.</p>
 <p>An example of use case could be that you want to generate some svg badge. Then you can just add an event
 integration for your workflow and plug the
-<a href="https://github.com/ovh/cds/tree/0.50.0/contrib/uservices/badge">badge microservice</a> on this kafka topic.</p>
+<a href="https://github.com/ovh/cds/tree/master/contrib/uservices/badge">badge microservice</a> on this kafka topic.</p>
 <p>Notice that Kafka communication is done using SASL and TLS enable only.</p>
 <h2 id="configure-with-webui">Configure with WebUI</h2>
 <p>You can add a Kafka Integration on your CDS Project.</p>
@@ -498,31 +497,7 @@ integration for your workflow and plug the
     <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
 </code></pre></div><p>Import the integration on your CDS Project with:</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">cdsctl project integration import PROJECT_KEY project-configuration.yml
-</code></pre></div><p>Then, as a standard user, you can add a <a href="../../../docs/concepts/workflow/hooks/kafka-hook/">Kafka Hook</a> on your workflow.</p>
-<h3 id="create-a-public-kafka-integration-for-whole-cds-projects">Create a Public Kafka Integration for whole CDS Projects</h3>
-<p>You can also add a Kafka Integration with cdsctl. As a CDS Administrator,
-this allows you to propose a Public Kafka Integration, available on all CDS Projects.</p>
-<p>Create a file <code>public-configuration.yml</code>:</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yml" data-lang="yml"><span style="color:#f92672">name</span>: <span style="color:#ae81ff">your-kafka-integration</span>
-<span style="color:#f92672">event</span>: <span style="color:#66d9ef">true</span>
-<span style="color:#f92672">public</span>: <span style="color:#66d9ef">true</span>
-<span style="color:#f92672">public_configurations</span>:
-  <span style="color:#f92672">name-of-integration</span>:
-    <span style="color:#e6db74">&#34;broker url&#34;</span>:
-      <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
-      <span style="color:#f92672">value</span>: <span style="color:#e6db74">&#34;n1.o1.your-broker:9093,n2.o1.n1.o1.your-broker:9093,n3.o1.n1.o1.your-broker:9093&#34;</span>
-    <span style="color:#e6db74">&#34;topic&#34;</span>:
-      <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
-      <span style="color:#f92672">value</span>: <span style="color:#e6db74">&#34;your-topic.events&#34;</span>
-    <span style="color:#e6db74">&#34;username&#34;</span>:
-      <span style="color:#f92672">type</span>: <span style="color:#ae81ff">string</span>
-      <span style="color:#f92672">value</span>: <span style="color:#e6db74">&#34;your-topic.cds-reader&#34;</span>
-    <span style="color:#e6db74">&#34;password&#34;</span>:
-      <span style="color:#f92672">type</span>: <span style="color:#ae81ff">password</span>
-      <span style="color:#f92672">value</span>: <span style="color:#ae81ff">xxxxxxxx</span>
-</code></pre></div><p>Import the integration with :</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">cdsctl admin integration-model import public-configuration.yml
-</code></pre></div><p>Then, as a standard user, you can add a <a href="../../../docs/concepts/workflow/hooks/kafka-hook/">Kafka Hook</a> on your workflow.</p>
+</code></pre></div><p>Then, as a standard user, you can use your kafka integration for workflow notifications.</p>
 <h3 id="one-integration-two-use-case">One Integration, two use case</h3>
 <p>You can use an integration kafka for two use cases: <a href="../../../docs/integrations/kafka/kafka_events/">Event</a> and <a href="../../../docs/integrations/kafka/kafka_hooks/">Hooks</a>. Example of file <code>public-configuration.yml</code>:</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yml" data-lang="yml"><span style="color:#f92672">name</span>: <span style="color:#ae81ff">your-kafka-integration</span>

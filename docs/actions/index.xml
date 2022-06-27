@@ -200,6 +200,27 @@ Parameters  action: &amp;ldquo;compress&amp;rdquo; or &amp;ldquo;uncompress&amp;
     </item>
     
     <item>
+      <title>plugin-arsenal-delete-alternative</title>
+      <link>/docs/actions/plugin-arsenal-delete-alternative/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/actions/plugin-arsenal-delete-alternative/</guid>
+      <description>OVH Arsenal Delete Alternative Plugin
+Parameters  alternative_name: alternative name to delete, defaults to alternative from deployment integration if not set  </description>
+    </item>
+    
+    <item>
+      <title>plugin-artifactory-release-bundle-create</title>
+      <link>/docs/actions/plugin-artifactory-release-bundle-create/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/actions/plugin-artifactory-release-bundle-create/</guid>
+      <description>Creates and sign a Artifactory Release Bundle from a specification.
+Read more: https://www.jfrog.com/confluence/display/CLI/CLI+for+JFrog+Artifactory#CLIforJFrogArtifactory-UsingFileSpecs
+Parameters  description: Release Bundle description name: Release Bundle name release_notes: Release Notes (markdown format) specification: Spec Schema (yaml or json). see https://www.jfrog.com/confluence/display/CLI/CLI+for+JFrog+Artifactory#CLIforJFrogArtifactory-UsingFileSpecs token_variable: JFrog Distribution token variable name. Leave empty to use integration. url: JFrog Artifactory URL. Leave empty to use integration. version: Release Bundle version  </description>
+    </item>
+    
+    <item>
       <title>plugin-artifactory-release-bundle-distribute</title>
       <link>/docs/actions/plugin-artifactory-release-bundle-distribute/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
@@ -353,17 +374,6 @@ This action executes a given script with a given interpreter.
 Parameters  script: Content of your script. You can put #!/bin/bash, or #!/bin/perl at first line. Make sure that the binary used is in the pre-requisites of action.  Requirements No Requirement
 YAML example Example of a pipeline using Script action:
 version: v1.0 name: Pipeline1 stages: - Stage1 jobs: - job: Job1 stage: Stage1 steps: - script: - &amp;#39;#!</description>
-    </item>
-    
-    <item>
-      <title>Serve Static Files</title>
-      <link>/docs/actions/builtin-serve-static-files/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>/docs/actions/builtin-serve-static-files/</guid>
-      <description>Serve Static Files is a builtin action, you can&amp;rsquo;t modify it.
-This action can be used to upload static files and serve them. For example your HTML report about coverage, tests, performances, &amp;hellip;
-Parameters  destination: (optional) Destination of uploading. Use the name of integration attached on your project. entrypoint: (optional) Filename (and not path) for the entrypoint when serving static files (default: if empty it would be index.html). name: Name to display in CDS UI and identify your static files.</description>
     </item>
     
   </channel>

@@ -2,7 +2,7 @@
 <html id="docs" lang="en" class="">
 	<head>
 	<meta charset="utf-8">
-<title>Serve Static Files - CDS - Continuous Delivery Service</title>
+<title>plugin-artifactory-release-bundle-create - CDS - Continuous Delivery Service</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="shortcut icon" type="image/png" href="../../../images/favicon.png">
 
@@ -17,20 +17,20 @@
 <link rel="stylesheet" href="../../../css/solarized-light.css">
 
 <meta name="description"
-    content="Serve Static Files is a builtin action, you can&rsquo;t modify it.
-This action can be used to upload static files and serve them. For example your HTML report about coverage, tests, performances, &hellip;
-Parameters  destination: (optional) Destination of uploading. Use the name of integration attached on your project. entrypoint: (optional) Filename (and not path) for the entrypoint when serving static files (default: if empty it would be index.html). name: Name to display in CDS UI and identify your static files.">
+    content="Creates and sign a Artifactory Release Bundle from a specification.
+Read more: https://www.jfrog.com/confluence/display/CLI/CLI&#43;for&#43;JFrog&#43;Artifactory#CLIforJFrogArtifactory-UsingFileSpecs
+Parameters  description: Release Bundle description name: Release Bundle name release_notes: Release Notes (markdown format) specification: Spec Schema (yaml or json). see https://www.jfrog.com/confluence/display/CLI/CLI&#43;for&#43;JFrog&#43;Artifactory#CLIforJFrogArtifactory-UsingFileSpecs token_variable: JFrog Distribution token variable name. Leave empty to use integration. url: JFrog Artifactory URL. Leave empty to use integration. version: Release Bundle version  ">
 <meta property="og:description"
-    content="Serve Static Files is a builtin action, you can&rsquo;t modify it.
-This action can be used to upload static files and serve them. For example your HTML report about coverage, tests, performances, &hellip;
-Parameters  destination: (optional) Destination of uploading. Use the name of integration attached on your project. entrypoint: (optional) Filename (and not path) for the entrypoint when serving static files (default: if empty it would be index.html). name: Name to display in CDS UI and identify your static files.">
+    content="Creates and sign a Artifactory Release Bundle from a specification.
+Read more: https://www.jfrog.com/confluence/display/CLI/CLI&#43;for&#43;JFrog&#43;Artifactory#CLIforJFrogArtifactory-UsingFileSpecs
+Parameters  description: Release Bundle description name: Release Bundle name release_notes: Release Notes (markdown format) specification: Spec Schema (yaml or json). see https://www.jfrog.com/confluence/display/CLI/CLI&#43;for&#43;JFrog&#43;Artifactory#CLIforJFrogArtifactory-UsingFileSpecs token_variable: JFrog Distribution token variable name. Leave empty to use integration. url: JFrog Artifactory URL. Leave empty to use integration. version: Release Bundle version  ">
 <meta name="twitter:description"
-    content="Serve Static Files is a builtin action, you can&rsquo;t modify it.
-This action can be used to upload static files and serve them. For example your HTML report about coverage, tests, performances, &hellip;
-Parameters  destination: (optional) Destination of uploading. Use the name of integration attached on your project. entrypoint: (optional) Filename (and not path) for the entrypoint when serving static files (default: if empty it would be index.html). name: Name to display in CDS UI and identify your static files.">
-<meta property="og:url" content="/docs/actions/builtin-serve-static-files/">
-<meta property="og:title" content="Serve Static Files">
-<meta name="twitter:title" content="Serve Static Files">
+    content="Creates and sign a Artifactory Release Bundle from a specification.
+Read more: https://www.jfrog.com/confluence/display/CLI/CLI&#43;for&#43;JFrog&#43;Artifactory#CLIforJFrogArtifactory-UsingFileSpecs
+Parameters  description: Release Bundle description name: Release Bundle name release_notes: Release Notes (markdown format) specification: Spec Schema (yaml or json). see https://www.jfrog.com/confluence/display/CLI/CLI&#43;for&#43;JFrog&#43;Artifactory#CLIforJFrogArtifactory-UsingFileSpecs token_variable: JFrog Distribution token variable name. Leave empty to use integration. url: JFrog Artifactory URL. Leave empty to use integration. version: Release Bundle version  ">
+<meta property="og:url" content="/docs/actions/plugin-artifactory-release-bundle-create/">
+<meta property="og:title" content="plugin-artifactory-release-bundle-create">
+<meta name="twitter:title" content="plugin-artifactory-release-bundle-create">
 <meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
 <meta property="og:image" content="/images/cds-transparent.png">
 <script type="text/javascript" src="../../../js/anchor-4.1.1.min.js"></script>
@@ -319,6 +319,18 @@ Parameters  destination: (optional) Destination of uploading. Use the name of in
 	
 		
 			
+<a class="item" data-title="plugin-arsenal-delete-alternative" href="../../../docs/actions/plugin-arsenal-delete-alternative/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="plugin-artifactory-release-bundle-create" href="../../../docs/actions/plugin-artifactory-release-bundle-create/"></a>
+
+		
+	
+		
+			
 <a class="item" data-title="plugin-artifactory-release-bundle-distribute" href="../../../docs/actions/plugin-artifactory-release-bundle-distribute/"></a>
 
 		
@@ -401,12 +413,6 @@ Parameters  destination: (optional) Destination of uploading. Use the name of in
 
 		
 	
-		
-			
-<a class="item" data-title="Serve Static Files" href="../../../docs/actions/builtin-serve-static-files/"></a>
-
-		
-	
 
 
 
@@ -419,61 +425,28 @@ Parameters  destination: (optional) Destination of uploading. Use the name of in
 			<div id="docsContent">
         		
 
-<h1>Serve Static Files</h1>
+<h1>plugin-artifactory-release-bundle-create</h1>
 
 
 
 <nav id="TableOfContents">
   <ul>
     <li><a href="#parameters">Parameters</a></li>
-    <li><a href="#requirements">Requirements</a></li>
-    <li><a href="#yaml-example">YAML example</a></li>
-    <li><a href="#example">Example</a></li>
-    <li><a href="#notes">Notes</a></li>
   </ul>
 </nav>
 
-<p><strong>Serve Static Files</strong> is a builtin action, you can&rsquo;t modify it.</p>
-<p>This action can be used to upload static files and serve them. For example your HTML report about coverage, tests, performances, &hellip;</p>
+<p>Creates and sign a Artifactory Release Bundle from a specification.</p>
+<p>Read more: <a href="https://www.jfrog.com/confluence/display/CLI/CLI+for+JFrog+Artifactory#CLIforJFrogArtifactory-UsingFileSpecs">https://www.jfrog.com/confluence/display/CLI/CLI+for+JFrog+Artifactory#CLIforJFrogArtifactory-UsingFileSpecs</a></p>
 <h2 id="parameters">Parameters</h2>
 <ul>
-<li><strong>destination</strong>: (optional) Destination of uploading. Use the name of integration attached on your project.</li>
-<li><strong>entrypoint</strong>: (optional) Filename (and not path) for the entrypoint when serving static files (default: if empty it would be index.html).</li>
-<li><strong>name</strong>: Name to display in CDS UI and identify your static files.</li>
-<li><strong>path</strong>: Path where static files will be uploaded (example: mywebsite/*). If it&rsquo;s a file, the entrypoint would be set to this filename by default.</li>
-<li><strong>static-key</strong>: (optional) Indicate a static-key which will be a reference to keep the same generated URL. Example: {{.git.branch}}.</li>
+<li><strong>description</strong>: Release Bundle description</li>
+<li><strong>name</strong>: Release Bundle name</li>
+<li><strong>release_notes</strong>: Release Notes (markdown format)</li>
+<li><strong>specification</strong>: Spec Schema (yaml or json). see <a href="https://www.jfrog.com/confluence/display/CLI/CLI+for+JFrog+Artifactory#CLIforJFrogArtifactory-UsingFileSpecs">https://www.jfrog.com/confluence/display/CLI/CLI+for+JFrog+Artifactory#CLIforJFrogArtifactory-UsingFileSpecs</a></li>
+<li><strong>token_variable</strong>: JFrog Distribution token variable name. Leave empty to use integration.</li>
+<li><strong>url</strong>: JFrog Artifactory URL. Leave empty to use integration.</li>
+<li><strong>version</strong>: Release Bundle version</li>
 </ul>
-<h2 id="requirements">Requirements</h2>
-<p>No Requirement</p>
-<h2 id="yaml-example">YAML example</h2>
-<p>Example of a pipeline using Serve Static Files action:</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yml" data-lang="yml"><span style="color:#f92672">version</span>: <span style="color:#ae81ff">v1.0</span>
-<span style="color:#f92672">name</span>: <span style="color:#ae81ff">Pipeline1</span>
-<span style="color:#f92672">stages</span>:
-- <span style="color:#ae81ff">Stage1</span>
-<span style="color:#f92672">jobs</span>:
-- <span style="color:#f92672">job</span>: <span style="color:#ae81ff">Job1</span>
-  <span style="color:#f92672">stage</span>: <span style="color:#ae81ff">Stage1</span>
-  <span style="color:#f92672">steps</span>:
-  - <span style="color:#f92672">serveStaticFiles</span>:
-      <span style="color:#f92672">name</span>: <span style="color:#ae81ff">mywebsite</span>
-      <span style="color:#f92672">path</span>: <span style="color:#ae81ff">mywebsite/*</span>
-
-</code></pre></div><h2 id="example">Example</h2>
-<ul>
-<li>In this example I created a website with script in bash and use action <code>Serve Static Files</code>. If you want to keep the same URL by .git.branch for example you can indicate in the advanced parameters a <code>static-key</code> equals to <code>{{.git.branch}}</code>.</li>
-</ul>
-<p><img src="../../../images/workflows.pipelines.actions.builtin.serve-static-files-job.png" alt="img"></p>
-<ul>
-<li>Launch pipeline, check logs</li>
-</ul>
-<p><img src="../../../images/workflows.pipelines.actions.builtin.serve-static-files-logs.png" alt="img"></p>
-<ul>
-<li>View your static files with links in the tab artifact</li>
-</ul>
-<p><img src="../../../images/workflows.pipelines.actions.builtin.serve-static-files-tab.png" alt="img"></p>
-<h2 id="notes">Notes</h2>
-<p>Pay attention this action is only available if your objectstore is configured to use <a href="../../../docs/integrations/openstack/openstack_swift/">Openstack Swift</a> or <a href="../../../docs/integrations/aws/aws_s3/">AWS S3</a>. And for now by default your static files will be deleted after 2 months.</p>
 
 
 

@@ -18,13 +18,13 @@
 
 <meta name="description"
     content="On a workflow you can have 2 kinds of notifications:
- User notifications: they are useful to notify users by email or with a message of an event on your workflow (success, fail, change, etc&hellip;). Events: linked to event integrations to let you write microservices which can interact with these events plugged on your event integrations.  User notifications You can configure user notifications to send email or a message on jabber with different parameters.">
+ User notifications: they are useful to notify users by email or with a message of an event on your workflow (success, fail, change, etc&hellip;). Events: linked to event integrations to let you write microservices which can interact with these events plugged on your event integrations.  User notifications You can configure user notifications to send email with different parameters. Inside the body of the notification you can customise the message thanks to the CDS variable templating with syntax like {{.">
 <meta property="og:description"
     content="On a workflow you can have 2 kinds of notifications:
- User notifications: they are useful to notify users by email or with a message of an event on your workflow (success, fail, change, etc&hellip;). Events: linked to event integrations to let you write microservices which can interact with these events plugged on your event integrations.  User notifications You can configure user notifications to send email or a message on jabber with different parameters.">
+ User notifications: they are useful to notify users by email or with a message of an event on your workflow (success, fail, change, etc&hellip;). Events: linked to event integrations to let you write microservices which can interact with these events plugged on your event integrations.  User notifications You can configure user notifications to send email with different parameters. Inside the body of the notification you can customise the message thanks to the CDS variable templating with syntax like {{.">
 <meta name="twitter:description"
     content="On a workflow you can have 2 kinds of notifications:
- User notifications: they are useful to notify users by email or with a message of an event on your workflow (success, fail, change, etc&hellip;). Events: linked to event integrations to let you write microservices which can interact with these events plugged on your event integrations.  User notifications You can configure user notifications to send email or a message on jabber with different parameters.">
+ User notifications: they are useful to notify users by email or with a message of an event on your workflow (success, fail, change, etc&hellip;). Events: linked to event integrations to let you write microservices which can interact with these events plugged on your event integrations.  User notifications You can configure user notifications to send email with different parameters. Inside the body of the notification you can customise the message thanks to the CDS variable templating with syntax like {{.">
 <meta property="og:url" content="/docs/concepts/workflow/notifications/">
 <meta property="og:title" content="Notifications">
 <meta name="twitter:title" content="Notifications">
@@ -540,7 +540,7 @@
 <li>Events: linked to event integrations to let you write microservices which can interact with these events plugged on your event integrations.</li>
 </ul>
 <h2 id="user-notifications">User notifications</h2>
-<p>You can configure user notifications to send email or a message on jabber with different parameters. Inside the body of the notification you can customise the message thanks to the CDS variable templating with syntax like <code>{{.cds.myvar}}</code>. You can also use <code>HTML</code> to customise the message, then in order to let CDS interpret your message as an <code>HTML</code> one you just need to wrap all your message inside html tag like this <code>&lt;html&gt;MyContentHere&lt;/html&gt;</code>.</p>
+<p>You can configure user notifications to send email with different parameters. Inside the body of the notification you can customise the message thanks to the CDS variable templating with syntax like <code>{{.cds.myvar}}</code>. You can also use <code>HTML</code> to customise the message, then in order to let CDS interpret your message as an <code>HTML</code> one you just need to wrap all your message inside html tag like this <code>&lt;html&gt;MyContentHere&lt;/html&gt;</code>.</p>
 <h2 id="vcs-notifications">VCS Notifications</h2>
 <p>You can configure for which node in your workflow CDS have to send a status on your repository service provider (Github, Bitbucket, &hellip;). You can configure if you want to have a comment on your pull-request when your workflow fails or you can just disable pull-request comment to only have status of your pipelines. By default you already have a default template for your pull-request comment but you can customize it with different kinds of templating. To have access about the <code>node run</code> data and write some loops and conditions you can use the standard syntax as the <a href="https://golang.org/pkg/text/template/#hdr-Actions">go templating</a> but with <code>[[</code> <code>]]</code> delimitters. You can also use the CDS interpolation engine with the same syntax you already know and use inside pipelines, for example: <code>{{.cds.workflow}}</code> to get the name of the workflow.</p>
 <p>For the go templating you have few variables you can use/iterate over.</p>
@@ -564,7 +564,7 @@
 </ul>
 </li>
 </ul>
-<p>If you need to know about other variable you can check <code>WorkflowNodeRun</code> data structure <a href="https://github.com/ovh/cds/blob/0.50.0/sdk/workflow_run.go">here</a>.</p>
+<p>If you need to know about other variable you can check <code>WorkflowNodeRun</code> data structure <a href="https://github.com/ovh/cds/blob/master/sdk/workflow_run.go">here</a>.</p>
 <p>For example by default the template of pull-request comment is:</p>
 <pre><code>[[- if .Stages ]]
 CDS Report [[.WorkflowNodeName]]#[[.Number]].[[.SubNumber]] [[ if eq .Status &quot;Success&quot; -]] ✔ [[ else ]][[ if eq .Status &quot;Fail&quot; -]] ✘ [[ else ]][[ if eq .Status &quot;Stopped&quot; -]] ■ [[ else ]]- [[ end ]] [[ end ]] [[ end ]]
@@ -597,7 +597,7 @@ Unit Tests Report
 </code></pre><p>And displayed on GitHub:</p>
 <p><img src="../images/example_pr_comment.png?height=200px" alt="example_pr_comment.png"></p>
 <h2 id="events">Events</h2>
-<p>If you need to trigger some specific actions on the technical side, like for example use a microservice which listens to all events in your workflow (updates, launch, stop, etc.), you can add an event integration like, for example, <a href="../../../../docs/integrations/kafka/kafka_events/">Kafka</a> and listen to the kafka topic to trigger some actions on your side. Events are more like sending notifications to machines instead of user notifications which are made for users. The see structure of sent events, you can look <a href="https://github.com/ovh/cds/blob/0.50.0/sdk/event.go">here</a> and <a href="https://github.com/ovh/cds/blob/0.50.0/sdk/event_workflow.go">here</a>.</p>
+<p>If you need to trigger some specific actions on the technical side, like for example use a microservice which listens to all events in your workflow (updates, launch, stop, etc.), you can add an event integration like, for example, <a href="../../../../docs/integrations/kafka/kafka_events/">Kafka</a> and listen to the kafka topic to trigger some actions on your side. Events are more like sending notifications to machines instead of user notifications which are made for users. The see structure of sent events, you can look <a href="https://github.com/ovh/cds/blob/master/sdk/event.go">here</a> and <a href="https://github.com/ovh/cds/blob/master/sdk/event_workflow.go">here</a>.</p>
 
 
 

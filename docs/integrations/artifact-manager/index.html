@@ -512,7 +512,7 @@ This integration allows you:
 <h3 id="enable-artifactory-integration-on-your-workflow">Enable Artifactory integration on your workflow</h3>
 <p>On the workflow advanced view, you can link your workflow to project integration.</p>
 <h2 id="integration-actions">Integration actions</h2>
-<p>The artifactory integration comes with 5 actions (<a href="https://github.com/ovh/cds/tree/master/contrib/integrations/artifactory">https://github.com/ovh/cds/tree/master/contrib/integrations/artifactory</a>)</p>
+<p>The artifactory integration comes with 5 actions: <a href="https://github.com/ovh/cds/tree/master/contrib/integrations/artifactory">https://github.com/ovh/cds/tree/master/contrib/integrations/artifactory</a></p>
 <h3 id="artifactory-upload-artifact">Artifactory-Upload-Artifact</h3>
 <p>This plugin is used by CDS Upload Artifact action to send artifact into artifactory.</p>
 <p>The artifacts will be stored in the cds repository provided during the integration configuration (cds.repository)</p>
@@ -520,8 +520,8 @@ This integration allows you:
 <p>This plugin is used by CDS Download Artifact action to retrieve artifact from artifactory.</p>
 <p>The artifacts will be downloaded from the cds repository provided during the integration configuration (cds.repository)</p>
 <h3 id="artifactory-push-build-info">Artifactory-Push-Build-Info</h3>
-<p>This plugin is used by CDS Push Build Info action to create inside artifactory a build-info (<a href="https://www.jfrog.com/confluence/display/JFROG/Build+Integration)">https://www.jfrog.com/confluence/display/JFROG/Build+Integration)</a>.</p>
-<p>This action must be run after all the artifacts have been uploaded</p>
+<p>This plugin is used by CDS Push Build Info action to create inside artifactory a build-info. JFrog documentation: <a href="https://www.jfrog.com/confluence/display/JFROG/Build+Integration">https://www.jfrog.com/confluence/display/JFROG/Build+Integration</a></p>
+<p>This action must be run after all the artifacts have been uploaded.</p>
 <p>The build name computed by CDS will be: [build.info.path]/[cds.projectkey]/[cds.workflow.name]</p>
 <h3 id="artifactory-promote">Artifactory-Promote</h3>
 <p>This plugin is used by CDS Promote action to move artifacts from 1 repository to another. The two repositories must share the name but having a different suffix.</p>
@@ -532,8 +532,8 @@ This integration allows you:
 </ul>
 <h3 id="artifactory-release">Artifactory-Release</h3>
 <p>This plugin is used by CDS Release action.</p>
-<p>It promotes the provided artifacts, create a release bundle and distributes it on all the edges.</p>
-<p>This action use both the artifactory and distribution APIs.</p>
+<p>It promotes the provided artifacts, creates a release bundle and distributes it to all edges.</p>
+<p>This action uses both the artifactory and distribution APIs.</p>
 
 
 

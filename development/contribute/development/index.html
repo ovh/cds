@@ -321,23 +321,23 @@ $ src/redis-server
 <span style="color:#75715e"># you should add src/ to your PATH</span>
 </code></pre></div><p>That&rsquo;s all for a local Redis installation.</p>
 <h2 id="nodejs">Node.js</h2>
-<p>Download the latest stable Node.js from <a href="https://nodejs.org/en/download/current/,">https://nodejs.org/en/download/current/,</a> version &gt;= 12.0.0</p>
-<p>Example with version 12.4.0 on macOS:</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ curl -O https://nodejs.org/dist/v12.4.0/node-v12.4.0-darwin-x64.tar.gz
-$ tar xzf node-v12.4.0-darwin-x64.tar.gz
-<span style="color:#75715e"># directory node-v12.4.0-darwin-x64 is created</span>
-<span style="color:#75715e"># You should add node-v12.4.0-darwin-x64/bin to your PATH</span>
+<p>Download the latest stable Node.js from <a href="https://nodejs.org/en/download/current/,">https://nodejs.org/en/download/current/,</a> version &gt;= 16.4.2</p>
+<p>Example with version 16.4.2 on macOS:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ curl -O https://nodejs.org/dist/v16.4.2/node-v16.4.2-darwin-x64.tar.gz
+$ tar xzf node-v16.4.2-darwin-x64.tar.gz
+<span style="color:#75715e"># directory node-v16.4.2-darwin-x64 is created</span>
+<span style="color:#75715e"># You should add node-v16.4.2-darwin-x64/bin to your PATH</span>
 </code></pre></div><h2 id="golang">Golang</h2>
-<p>Download the latest Golang version from <a href="https://golang.org/dl/,">https://golang.org/dl/,</a> version &gt;= 1.14</p>
-<p>Example with version 1.14 on macOS:</p>
+<p>Download the latest Golang version from <a href="https://golang.org/dl/,">https://golang.org/dl/,</a> version &gt;= 1.18</p>
+<p>Example with version 1.18 on macOS:</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ export GOROOT<span style="color:#f92672">=</span>~/go
 $ export PATH<span style="color:#f92672">=</span>$PATH:$GOROOT/bin
 $ cd ~
-$ curl -O https://dl.google.com/go/go1.14.darwin-amd64.tar.gz
-$ tar xzf go1.14.darwin-amd64.tar.gz
+$ curl -O https://dl.google.com/go/go1.18.darwin-amd64.tar.gz
+$ tar xzf go1.18.darwin-amd64.tar.gz
 </code></pre></div><p>Check if Go installation is ok</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ go version
-go version go1.14 darwin/amd64
+go version go1.18 darwin/amd64
 </code></pre></div><h2 id="cds">CDS</h2>
 <p>Compile CDS:</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#75715e"># Checkout code</span>

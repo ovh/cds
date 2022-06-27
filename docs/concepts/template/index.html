@@ -581,7 +581,7 @@ Each yaml file of a template is evaluated as a Golang template (with [[ and ]] d
 <h2 id="importcreateexport">Import/Create/Export</h2>
 <p>With cdsctl you can import/export a template from/to yaml files, you can also create a template in the UI from the <strong>settings</strong> menu:</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">cdsctl template push ./my-template/*.yml <span style="color:#75715e">#from local files</span>
-cdsctl template push https://raw.githubusercontent.com/ovh/cds/0.50.0/tests/fixtures/template/simple/example-simple.yml <span style="color:#75715e">#from remote files</span>
+cdsctl template push https://raw.githubusercontent.com/ovh/cds/master/tests/fixtures/template/simple/example-simple.yml <span style="color:#75715e">#from remote files</span>
 
 cdsctl template pull shared.infra/my-template --output-dir ./my-template
 </code></pre></div><p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>

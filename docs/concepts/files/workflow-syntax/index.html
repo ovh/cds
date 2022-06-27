@@ -18,13 +18,13 @@
 
 <meta name="description"
     content="A CDS workflow file only contains the description of pipelines orchestration, hooks, run conditions, etc. Consider the following workflow wich implements a basic two-stage workflow:
-name: my-workflow workflow: build: pipeline: build application: my-application deploy: depends_on: - build when: - success pipeline: deploy application: my-application environment: my-production one_at_a_time: true hooks: build: - type: RepositoryWebHook notifications: - type: email pipelines: - deploy settings: on_success: never recipients: - me@foo.bar retention_policy: return run_days_before &lt; 7 There are two major things to understand: workflow and hooks.">
+name: my-workflow workflow: build: pipeline: build application: my-application deploy: depends_on: - build when: - success pipeline: deploy application: my-application environment: my-production one_at_a_time: true hooks: build: - type: RepositoryWebHook integrations: my-artifactory-integration-name: type: artifact_manager notifications: - type: email pipelines: - deploy settings: on_success: never recipients: - me@foo.bar retention_policy: return run_days_before &lt; 7 There are two major things to understand: workflow and hooks.">
 <meta property="og:description"
     content="A CDS workflow file only contains the description of pipelines orchestration, hooks, run conditions, etc. Consider the following workflow wich implements a basic two-stage workflow:
-name: my-workflow workflow: build: pipeline: build application: my-application deploy: depends_on: - build when: - success pipeline: deploy application: my-application environment: my-production one_at_a_time: true hooks: build: - type: RepositoryWebHook notifications: - type: email pipelines: - deploy settings: on_success: never recipients: - me@foo.bar retention_policy: return run_days_before &lt; 7 There are two major things to understand: workflow and hooks.">
+name: my-workflow workflow: build: pipeline: build application: my-application deploy: depends_on: - build when: - success pipeline: deploy application: my-application environment: my-production one_at_a_time: true hooks: build: - type: RepositoryWebHook integrations: my-artifactory-integration-name: type: artifact_manager notifications: - type: email pipelines: - deploy settings: on_success: never recipients: - me@foo.bar retention_policy: return run_days_before &lt; 7 There are two major things to understand: workflow and hooks.">
 <meta name="twitter:description"
     content="A CDS workflow file only contains the description of pipelines orchestration, hooks, run conditions, etc. Consider the following workflow wich implements a basic two-stage workflow:
-name: my-workflow workflow: build: pipeline: build application: my-application deploy: depends_on: - build when: - success pipeline: deploy application: my-application environment: my-production one_at_a_time: true hooks: build: - type: RepositoryWebHook notifications: - type: email pipelines: - deploy settings: on_success: never recipients: - me@foo.bar retention_policy: return run_days_before &lt; 7 There are two major things to understand: workflow and hooks.">
+name: my-workflow workflow: build: pipeline: build application: my-application deploy: depends_on: - build when: - success pipeline: deploy application: my-application environment: my-production one_at_a_time: true hooks: build: - type: RepositoryWebHook integrations: my-artifactory-integration-name: type: artifact_manager notifications: - type: email pipelines: - deploy settings: on_success: never recipients: - me@foo.bar retention_policy: return run_days_before &lt; 7 There are two major things to understand: workflow and hooks.">
 <meta property="og:url" content="/docs/concepts/files/workflow-syntax/">
 <meta property="og:title" content="Workflow configuration file">
 <meta name="twitter:title" content="Workflow configuration file">
@@ -529,6 +529,7 @@ name: my-workflow workflow: build: pipeline: build application: my-application d
 <nav id="TableOfContents">
   <ul>
     <li><a href="#run-conditions">Run Conditions</a></li>
+    <li><a href="#integrations">Integrations</a></li>
     <li><a href="#notifications">Notifications</a></li>
     <li><a href="#mutex">Mutex</a></li>
     <li><a href="#retention-policy">Retention Policy</a></li>
@@ -554,6 +555,9 @@ Consider the following workflow wich implements a basic two-stage workflow:</p>
 <span style="color:#f92672">hooks</span>:
   <span style="color:#f92672">build</span>:
   - <span style="color:#f92672">type</span>: <span style="color:#ae81ff">RepositoryWebHook</span>
+<span style="color:#f92672">integrations</span>:
+  <span style="color:#f92672">my-artifactory-integration-name</span>:
+    <span style="color:#f92672">type</span>: <span style="color:#ae81ff">artifact_manager</span>
 <span style="color:#f92672">notifications</span>:
 - <span style="color:#f92672">type</span>: <span style="color:#ae81ff">email</span>
   <span style="color:#f92672">pipelines</span>:
@@ -592,7 +596,9 @@ Consider the following workflow wich implements a basic two-stage workflow:</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-lua" data-lang="lua">  conditions:
     script: <span style="color:#66d9ef">return</span> cds_manual <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;true&#34;</span> <span style="color:#f92672">or</span> (cds_status <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;Success&#34;</span> <span style="color:#f92672">and</span> git_branch
       <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;master&#34;</span> <span style="color:#f92672">and</span> git_repository <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;ovh/cds&#34;</span>)
-</code></pre></div><h2 id="notifications">Notifications</h2>
+</code></pre></div><h2 id="integrations">Integrations</h2>
+<p><a href="../../../../docs/integrations/artifact-manager/">Artifactory Integration</a></p>
+<h2 id="notifications">Notifications</h2>
 <p><a href="../../../../docs/concepts/workflow/notifications/">Notifications documentation</a></p>
 <p>Example of email notification.</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yml" data-lang="yml">- <span style="color:#f92672">type</span>: <span style="color:#ae81ff">email</span>
@@ -602,20 +608,6 @@ Consider the following workflow wich implements a basic two-stage workflow:</p>
     <span style="color:#f92672">on_success</span>: <span style="color:#ae81ff">never</span>
     <span style="color:#f92672">recipients</span>:
     - <span style="color:#ae81ff">me@foo.bar</span>
-</code></pre></div><p>Example of jabber notification. Note that you can add <code>conditions</code> on every notifications</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yml" data-lang="yml">- <span style="color:#f92672">type</span>: <span style="color:#ae81ff">jabber</span>
-  <span style="color:#f92672">pipelines</span>:
-  - <span style="color:#ae81ff">deploy</span>
-  <span style="color:#f92672">settings</span>:
-    <span style="color:#f92672">on_start</span>: <span style="color:#66d9ef">true</span>
-    <span style="color:#f92672">send_to_groups</span>: <span style="color:#66d9ef">true</span>
-    <span style="color:#f92672">recipients</span>:
-    - <span style="color:#ae81ff">me@jabber.com</span>
-    <span style="color:#f92672">conditions</span>:
-      <span style="color:#f92672">check</span>:
-      - <span style="color:#f92672">variable</span>: <span style="color:#ae81ff">cds.triggered_by.email</span>
-        <span style="color:#f92672">operator</span>: <span style="color:#ae81ff">eq</span>
-        <span style="color:#f92672">value</span>: <span style="color:#ae81ff">me@localhost.local</span>
 </code></pre></div><p>Example of vcs notification. Note that <code>pipelines</code> list is optional on every notifications. When it&rsquo;s not specified, notification will be triggered for each pipeline</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yml" data-lang="yml">- <span style="color:#f92672">type</span>: <span style="color:#ae81ff">vcs</span>
   <span style="color:#f92672">settings</span>:

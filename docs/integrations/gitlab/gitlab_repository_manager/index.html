@@ -20,17 +20,17 @@
     content="The GitLab Repository Manager Integration have to be configured on your CDS by a CDS Administrator.
 This integration allows you to link a Git Repository hosted by GitLab to a CDS Application.
 This integration enables some features:
- Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on GitLab. More informations  How to configure GitLab integration What you need to perform the following steps:">
+ Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on GitLab. More informations  Create the Personal Access Token on GitLab Generate a new token on https://gitlab.">
 <meta property="og:description"
     content="The GitLab Repository Manager Integration have to be configured on your CDS by a CDS Administrator.
 This integration allows you to link a Git Repository hosted by GitLab to a CDS Application.
 This integration enables some features:
- Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on GitLab. More informations  How to configure GitLab integration What you need to perform the following steps:">
+ Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on GitLab. More informations  Create the Personal Access Token on GitLab Generate a new token on https://gitlab.">
 <meta name="twitter:description"
     content="The GitLab Repository Manager Integration have to be configured on your CDS by a CDS Administrator.
 This integration allows you to link a Git Repository hosted by GitLab to a CDS Application.
 This integration enables some features:
- Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on GitLab. More informations  How to configure GitLab integration What you need to perform the following steps:">
+ Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on GitLab. More informations  Create the Personal Access Token on GitLab Generate a new token on https://gitlab.">
 <meta property="og:url" content="/docs/integrations/gitlab/gitlab_repository_manager/">
 <meta property="og:title" content="GitLab Repository Manager">
 <meta name="twitter:title" content="GitLab Repository Manager">
@@ -456,13 +456,12 @@ This integration enables some features:
 
 <nav id="TableOfContents">
   <ul>
-    <li><a href="#how-to-configure-gitlab-integration">How to configure GitLab integration</a>
+    <li>
       <ul>
-        <li><a href="#create-a-cds-application-on-gitlab">Create a CDS application on GitLab</a></li>
-        <li><a href="#complete-cds-configuration-file">Complete CDS Configuration File</a></li>
+        <li><a href="#create-the-personal-access-token-on-gitlab">Create the Personal Access Token on GitLab</a></li>
+        <li><a href="#import-configuration">Import configuration</a></li>
       </ul>
     </li>
-    <li><a href="#start-the-vcs-µservice">Start the vcs µService</a></li>
   </ul>
 </nav>
 
@@ -475,64 +474,30 @@ to a CDS Application.</p>
 <li>Easy to use action <a href="../../../../docs/actions/builtin-checkoutapplication/">CheckoutApplication</a> and <a href="../../../../docs/actions/builtin-gitclone/">GitClone</a> for advanced usage</li>
 <li>Send build notifications on your Pull-Requests and Commits on GitLab. <a href="../../../../docs/concepts/workflow/notifications/#vcs-notifications">More informations</a></li>
 </ul>
-<h2 id="how-to-configure-gitlab-integration">How to configure GitLab integration</h2>
-<p>What you need to perform the following steps:</p>
+<h3 id="create-the-personal-access-token-on-gitlab">Create the Personal Access Token on GitLab</h3>
+<p>Generate a new token on <a href="https://gitlab.com/-/profile/personal_access_tokens">https://gitlab.com/-/profile/personal_access_tokens</a> with the following scopes:</p>
 <ul>
-<li>GitLab admin privileges</li>
-</ul>
-<h3 id="create-a-cds-application-on-gitlab">Create a CDS application on GitLab</h3>
-<p>Notice: if you have already a CDS Application in GitLab for CDS Authentication, you can&rsquo;t reuse it for Repository Manager.</p>
-<p>In GitLab go to <em>Settings</em> / <em>Application</em> section. Create a new application with:</p>
-<ul>
-<li>Name: <strong>CDS VCS</strong></li>
-<li>Redirect URI: <strong>https://your-cds-api/repositories_manager/oauth2/callback</strong></li>
-</ul>
-<p>Example for a local configuration:</p>
-<ul>
-<li>with API through /cdsapi proxy on ui, Redirect URI will be <code>http://localhost:8080/cdsapi/repositories_manager/oauth2/callback</code></li>
-</ul>
-<p>Scopes:</p>
-<ul>
-<li>API</li>
+<li>api</li>
+<li>read_api</li>
 <li>read_user</li>
-<li>read_registry</li>
+<li>read_repository</li>
+<li>write_repository</li>
 </ul>
-<h3 id="complete-cds-configuration-file">Complete CDS Configuration File</h3>
-<p>Set value to <code>appId</code> and <code>secret</code></p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml">    [<span style="color:#ae81ff">vcs.servers.Gitlab]</span>
-
-      <span style="color:#75715e"># URL of this VCS Server</span>
-      <span style="color:#ae81ff">url = &#34;https://gitlab.com&#34;</span>
-
-      [<span style="color:#ae81ff">vcs.servers.Gitlab.gitlab]</span>
-
-        <span style="color:#75715e">#######</span>
-        <span style="color:#75715e"># CDS &lt;-&gt; GitLab. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/gitlab/</span>
-        <span style="color:#75715e">########</span>
-        <span style="color:#ae81ff">appId = &#34;xxxx&#34;</span>
-
-        <span style="color:#75715e"># Does polling is supported by VCS Server</span>
-        <span style="color:#ae81ff">disablePolling = false</span>
-
-        <span style="color:#75715e"># Does webhooks are supported by VCS Server</span>
-        <span style="color:#ae81ff">disableWebHooks = false</span>
-
-        <span style="color:#75715e"># If you want to have a reverse proxy URL for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK</span>
-        <span style="color:#75715e"># proxyWebhook = &#34;&#34;</span>
-        <span style="color:#ae81ff">secret = &#34;xxxx&#34;</span>
-
-        [<span style="color:#ae81ff">vcs.servers.Gitlab.gitlab.Status]</span>
-
-          <span style="color:#75715e"># Set to true if you don&#39;t want CDS to push statuses on the VCS server</span>
-          <span style="color:#75715e"># disable = false</span>
-
-          <span style="color:#75715e"># Set to true if you don&#39;t want CDS to push CDS URL in statuses on the VCS server</span>
-          <span style="color:#75715e"># showDetail = false</span>
-</code></pre></div><h2 id="start-the-vcs-µservice">Start the vcs µService</h2>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ engine start vcs
-
-<span style="color:#75715e"># you can also start CDS api and vcs in the same process:</span>
-$ engine start api vcs
+<h3 id="import-configuration">Import configuration</h3>
+<p>Create a yml file:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#f92672">version</span>: <span style="color:#ae81ff">v1.0</span>
+<span style="color:#f92672">name</span>: <span style="color:#ae81ff">gitlab</span>
+<span style="color:#f92672">type</span>: <span style="color:#ae81ff">gitlab</span>
+<span style="color:#f92672">description</span>: <span style="color:#e6db74">&#34;my gitlab&#34;</span>
+<span style="color:#f92672">auth</span>:
+    <span style="color:#f92672">username</span>: <span style="color:#ae81ff">your-username</span>
+    <span style="color:#f92672">token</span>: <span style="color:#ae81ff">glpat_your-token-here</span>
+<span style="color:#f92672">options</span>:
+    <span style="color:#f92672">disableStatus</span>: <span style="color:#66d9ef">false</span>    <span style="color:#75715e"># Set to true if you don&#39;t want CDS to push statuses on the VCS server - optional</span>
+    <span style="color:#f92672">disableStatusDetails</span>: <span style="color:#66d9ef">false</span> <span style="color:#75715e"># Set to true if you don&#39;t want CDS to push CDS URL in statuses on the VCS server - optional</span>
+    <span style="color:#f92672">disablePolling</span>: <span style="color:#66d9ef">false</span>   <span style="color:#75715e"># Does polling is supported by VCS Server - optional</span>
+    <span style="color:#f92672">disableWebHooks</span>: <span style="color:#66d9ef">false</span>  <span style="color:#75715e"># Does webhooks are supported by VCS Server - optional</span>
+</code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">cdsctl experimental project vcs import YOUR_CDS_PROJECT_KEY vcs-gitlab.yml
 </code></pre></div>
 
 

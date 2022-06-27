@@ -24,6 +24,8 @@
   </url><url>
     <loc>/hosting/upgrade/migrate_0.50/</loc>
   </url><url>
+    <loc>/hosting/upgrade/migrate_0.51/</loc>
+  </url><url>
     <loc>/docs/concepts/workflow/payload/</loc>
   </url><url>
     <loc>/docs/concepts/workflow/hooks/webhook/</loc>
@@ -250,10 +252,6 @@
   </url><url>
     <loc>/development/rest/bookmarks/</loc>
   </url><url>
-    <loc>/development/rest/broadcast/</loc>
-  </url><url>
-    <loc>/docs/components/cdsctl/admin/broadcasts/</loc>
-  </url><url>
     <loc>/docs/components/cdsctl/action/builtin/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/template/bulk/</loc>
@@ -265,8 +263,6 @@
     <loc>/docs/components/cdsctl/admin/migration/cancel/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/admin/cdn/</loc>
-  </url><url>
-    <loc>/docs/components/cdsctl/workflow/artifact/cdn-migrate/</loc>
   </url><url>
     <loc>/docs/actions/cds-docker-package/</loc>
   </url><url>
@@ -314,8 +310,6 @@
   </url><url>
     <loc>/docs/actions/builtin-coverage/</loc>
   </url><url>
-    <loc>/docs/components/cdsctl/admin/broadcasts/create/</loc>
-  </url><url>
     <loc>/docs/components/cdsctl/application/create/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/environment/create/</loc>
@@ -335,8 +329,6 @@
     <loc>/docs/components/cdsctl/health/dbmigrate/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/action/delete/</loc>
-  </url><url>
-    <loc>/docs/components/cdsctl/admin/broadcasts/delete/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/admin/cdn/unit/delete/</loc>
   </url><url>
@@ -436,8 +428,6 @@
   </url><url>
     <loc>/docs/components/cdsctl/environment/</loc>
   </url><url>
-    <loc>/docs/components/cdsctl/admin/errors/</loc>
-  </url><url>
     <loc>/docs/components/cdsctl/events/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/admin/hooks/executions/</loc>
@@ -461,8 +451,6 @@
     <loc>/docs/components/cdsctl/application/export/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/environment/export/</loc>
-  </url><url>
-    <loc>/docs/components/cdsctl/group/export/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/pipeline/export/</loc>
   </url><url>
@@ -488,8 +476,6 @@
   </url><url>
     <loc>/docs/integrations/gerrit/</loc>
   </url><url>
-    <loc>/docs/components/cdsctl/admin/errors/get/</loc>
-  </url><url>
     <loc>/docs/actions/builtin-gitclone/</loc>
   </url><url>
     <loc>/docs/integrations/github/</loc>
@@ -511,8 +497,6 @@
     <loc>/development/rest/group/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/group/</loc>
-  </url><url>
-    <loc>/docs/components/cdsctl/project/group/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/health/</loc>
   </url><url>
@@ -540,11 +524,7 @@
   </url><url>
     <loc>/docs/components/cdsctl/environment/import/</loc>
   </url><url>
-    <loc>/docs/components/cdsctl/group/import/</loc>
-  </url><url>
     <loc>/docs/components/cdsctl/pipeline/import/</loc>
-  </url><url>
-    <loc>/docs/components/cdsctl/project/group/import/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/project/integration/import/</loc>
   </url><url>
@@ -601,8 +581,6 @@
     <loc>/docs/components/cdsctl/action/builtin/list/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/action/list/</loc>
-  </url><url>
-    <loc>/docs/components/cdsctl/admin/broadcasts/list/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/admin/cdn/unit/list/</loc>
   </url><url>
@@ -664,8 +642,6 @@
   </url><url>
     <loc>/docs/components/cdsctl/worker/model/list/</loc>
   </url><url>
-    <loc>/docs/components/cdsctl/workflow/artifact/list/</loc>
-  </url><url>
     <loc>/docs/components/cdsctl/workflow/label/list/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/workflow/list/</loc>
@@ -725,6 +701,10 @@
     <loc>/docs/components/cdsctl/pipeline/</loc>
   </url><url>
     <loc>/docs/actions/plugin-archive/</loc>
+  </url><url>
+    <loc>/docs/actions/plugin-arsenal-delete-alternative/</loc>
+  </url><url>
+    <loc>/docs/actions/plugin-artifactory-release-bundle-create/</loc>
   </url><url>
     <loc>/docs/actions/plugin-artifactory-release-bundle-distribute/</loc>
   </url><url>
@@ -820,10 +800,6 @@
   </url><url>
     <loc>/development/sdk/golang/</loc>
   </url><url>
-    <loc>/development/sdk/rust/</loc>
-  </url><url>
-    <loc>/docs/actions/builtin-serve-static-files/</loc>
-  </url><url>
     <loc>/development/rest/services/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/admin/services/</loc>
@@ -841,8 +817,6 @@
     <loc>/docs/components/cdsctl/action/builtin/show/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/action/show/</loc>
-  </url><url>
-    <loc>/docs/components/cdsctl/admin/broadcasts/show/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/admin/integration-model/show/</loc>
   </url><url>

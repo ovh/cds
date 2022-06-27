@@ -89,7 +89,7 @@ Inside a job, a user can add a Tag with the worker command</description>
       
       <guid>/docs/concepts/workflow/notifications/</guid>
       <description>On a workflow you can have 2 kinds of notifications:
- User notifications: they are useful to notify users by email or with a message of an event on your workflow (success, fail, change, etc&amp;hellip;). Events: linked to event integrations to let you write microservices which can interact with these events plugged on your event integrations.  User notifications You can configure user notifications to send email or a message on jabber with different parameters.</description>
+ User notifications: they are useful to notify users by email or with a message of an event on your workflow (success, fail, change, etc&amp;hellip;). Events: linked to event integrations to let you write microservices which can interact with these events plugged on your event integrations.  User notifications You can configure user notifications to send email with different parameters. Inside the body of the notification you can customise the message thanks to the CDS variable templating with syntax like {{.</description>
     </item>
     
     <item>

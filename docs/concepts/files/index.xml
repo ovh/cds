@@ -13,7 +13,7 @@
       
       <guid>/docs/concepts/files/workflow-syntax/</guid>
       <description>A CDS workflow file only contains the description of pipelines orchestration, hooks, run conditions, etc. Consider the following workflow wich implements a basic two-stage workflow:
-name: my-workflow workflow: build: pipeline: build application: my-application deploy: depends_on: - build when: - success pipeline: deploy application: my-application environment: my-production one_at_a_time: true hooks: build: - type: RepositoryWebHook notifications: - type: email pipelines: - deploy settings: on_success: never recipients: - me@foo.bar retention_policy: return run_days_before &amp;lt; 7 There are two major things to understand: workflow and hooks.</description>
+name: my-workflow workflow: build: pipeline: build application: my-application deploy: depends_on: - build when: - success pipeline: deploy application: my-application environment: my-production one_at_a_time: true hooks: build: - type: RepositoryWebHook integrations: my-artifactory-integration-name: type: artifact_manager notifications: - type: email pipelines: - deploy settings: on_success: never recipients: - me@foo.bar retention_policy: return run_days_before &amp;lt; 7 There are two major things to understand: workflow and hooks.</description>
     </item>
     
     <item>
@@ -35,7 +35,7 @@ version: v1.0 name: build parameters: param_name: type: string default: default_
       <description>Example:
 name: go-official-1.17 group: shared.infra image: golang:1.17 description: official from https://hub.docker.com/_/golang/ type: docker pattern_name: basic_unix Import a worker model:
 cdsctl worker model import ./go-official-1.17.yml or with a remote file:
-cdsctl worker model import https://raw.githubusercontent.com/ovh/cds/0.50.0/contrib/worker-models/go-official-1.17.yml   If you want to specify an image using a private registry or a private image, you need to fill credentials in field username and password to access your image. And if your image is not on docker hub but from a private registry, you need to fill the registry info (the registry api url, for example for docker hub it&amp;rsquo;s https://index.</description>
+cdsctl worker model import https://raw.githubusercontent.com/ovh/cds/master/contrib/worker-models/go-official-1.17.yml   If you want to specify an image using a private registry or a private image, you need to fill credentials in field username and password to access your image. And if your image is not on docker hub but from a private registry, you need to fill the registry info (the registry api url, for example for docker hub it&amp;rsquo;s https://index.</description>
     </item>
     
     <item>

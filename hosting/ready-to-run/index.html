@@ -297,7 +297,7 @@ chmod +x cds-engine cdsctl
 </code></pre></div><p>You will probably need to update some values in this file. If you need to automatize some update, you
 can use the <code>./cds-engine config edit</code> command.</p>
 <p>Example:</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">mkdir -p $HOME/cds/download $HOME/cds/download $HOME/cds/hatchery-basedir
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">mkdir -p $HOME/cds/artifacts $HOME/cds/download $HOME/cds/hatchery-basedir
 ./cds-engine config edit conf.toml --output conf.toml <span style="color:#ae81ff">\
 </span><span style="color:#ae81ff"></span>  api.artifact.local.baseDirectory<span style="color:#f92672">=</span>$HOME/cds/artifacts <span style="color:#ae81ff">\
 </span><span style="color:#ae81ff"></span>  api.directories.download<span style="color:#f92672">=</span>$HOME/cds/download <span style="color:#ae81ff">\

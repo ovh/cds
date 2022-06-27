@@ -36,7 +36,7 @@ cdsctl consumer list [USERNAME] [flags] Options  --fields string Only display sp
       <guid>/docs/components/cdsctl/consumer/new/</guid>
       <description>cdsctl consumer new Create a new auth consumer for current user
 Synopsis Create a new auth consumer for current user
-cdsctl consumer new [USERNAME] [flags] Options  --description string What is the purpose of this consumer --duration string Validity period of the token generated for the consumer (in days) --groups strings Define the list of groups for the consumer --name string What is the name of this consumer --scopes strings Define the list of scopes for the consumer Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+cdsctl consumer new [USERNAME] [flags] Options  --description string What is the purpose of this consumer --duration string Validity period of the token generated for the consumer (in days) --groups strings Define the list of groups for the consumer --name string What is the name of this consumer --scopes strings Define the list of scopes for the consumer --service-name string Name of the service --service-region string Region where the service will be started --service-type string Type of service (hatchery, etc.</description>
     </item>
     
     <item>
