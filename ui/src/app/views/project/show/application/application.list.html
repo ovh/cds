@@ -1,47 +1,25 @@
-<div class="ui grid" *ngIf="!loading">
-    <div class="ui row">
-        <div class="six wide column">
-            <h3>{{ 'project_applications_list' | translate }}</h3>
-        </div>
-        <div class="four wide column centered">
-            <a class="ui blue button" [routerLink]="['./application']"
-                [class.disabled]="!project.permissions.writable">{{ 'application_create' | translate }}</a>
-        </div>
-        <div class="right aligned six wide column">
+<div class="applicationList" *ngIf="!loading">
+    <nz-row>
+        <nz-col [nzSpan]="8">
+            <h3>List of applications in the project</h3>
+        </nz-col>
+        <nz-col [nzSpan]="8" class="center">
+            <button nz-button nzType="primary" [routerLink]="['./application']"
+                [disabled]="!project.permissions.writable">Create a new application</button>
+        </nz-col>
+        <nz-col [nzSpan]="8">
             <app-input-autofocus [model]="filter" (modelChange)="filterChanged($event)"></app-input-autofocus>
-        </div>
-    </div>
-
-    <div class="ui row">
-        <div class="ui sixteen wide column">
-            <div
-                *ngIf="project.application_names && project.application_names.length > 0;then applications;else noapplications">
-            </div>
-            <ng-template #applications>
-                <div class="ui stackable four cards">
-                    <a [routerLink]="['./application', app.name]" class="ui link card"
-                        *ngFor="let app of filteredApplications">
-                        <div class="content">
-                            <img *ngIf="app.icon" class="right floated mini ui image" [src]="app.icon">
-                            <div class="header">
-                                <span [innerText]="app.name"></span>
-                            </div>
-                            <div class="meta" *ngIf="app.description">
-                                <span [innerText]="app.description.slice(0, 90)"></span><span
-                                    *ngIf="app.description.length > 90">...</span>
-                            </div>
-                            <div class="meta" *ngIf="!app.description"
-                                [innerText]="'common_no_description' | translate"></div>
-                        </div>
-                    </a>
-                </div>
-            </ng-template>
-            <ng-template #noapplications>
-                <div class="ui segment">
-                    <span>{{ 'project_no_application' | translate }}</span>
-                </div>
-            </ng-template>
-        </div>
-    </div>
+        </nz-col>
+    </nz-row>
+    <nz-row *ngIf="project.application_names && project.application_names.length > 0" [nzGutter]="{ xs: 8, sm: 16, md: 24, lg: 32 }">
+        <nz-col class="cardContainer" [routerLink]="['./application', app.name]" *ngFor="let app of filteredApplications" [nzSpan]="6">
+            <app-card [title]="app.name" [description]="app.description" [image]="app.icon"></app-card>
+        </nz-col>
+    </nz-row>
+    <nz-row *ngIf="!project.application_names || project.application_names.length === 0">
+        <nz-col [nzSpan]="24">
+            <nz-alert nzType="info" nzMessage="No application"></nz-alert>
+        </nz-col>
+    </nz-row>
 </div>
-<div class="ui text active loader" *ngIf="loading">{{'common_loading' | translate}}</div>
+<nz-spin *ngIf="loading" nzTip="Loading applications..."></nz-spin>

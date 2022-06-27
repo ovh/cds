@@ -1,0 +1,14 @@
+.pipelineList {
+  display: flex;
+  flex-direction: column;
+  align-content: stretch;
+  height: 100%;
+
+  nz-col {
+    margin-bottom: 20px;
+  }
+
+  nz-col.center {
+    text-align: center;
+  }
+}

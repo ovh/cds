@@ -1,41 +1,26 @@
-<div class="ui grid" *ngIf="!loading">
-    <div class="ui row">
-        <div class="six wide column">
-            <h3>{{ 'project_env_list_title' | translate }}</h3>
-        </div>
-        <div class="four wide column centered">
-            <a class="ui blue button" [routerLink]="['./environment']"
-                [class.disabled]="!project.permissions.writable">{{ 'environment_create' | translate }}</a>
-        </div>
-        <div class="right aligned six wide column">
+<div class="environmentList" *ngIf="!loading">
+    <nz-row>
+        <nz-col [nzSpan]="8">
+            <h3>List of environments in the project</h3>
+        </nz-col>
+        <nz-col [nzSpan]="8" class="center">
+            <button nz-button nzType="primary" [routerLink]="['./environment']"
+                [disabled]="!project.permissions.writable">Create an environment</button>
+        </nz-col>
+        <nz-col [nzSpan]="8">
             <app-input-autofocus [model]="filter" (modelChange)="filterChanged($event)"></app-input-autofocus>
-        </div>
-    </div>
+        </nz-col>
+    </nz-row>
 
-    <div class="ui row">
-        <div class="ui sixteen wide column">
-            <div
-                *ngIf="project.environment_names && project.environment_names.length > 0;then environments;else noenvironments">
-            </div>
-            <ng-template #environments>
-                <div class="ui stackable four cards">
-                    <a [routerLink]="['./environment', env.name]" class="ui link card"
-                        *ngFor="let env of filteredEnvironments">
-                        <div class="content">
-                            <div class="header">
-                                <span [innerText]="env.name"></span>
-                            </div>
-                            <div class="meta"></div>
-                        </div>
-                    </a>
-                </div>
-            </ng-template>
-            <ng-template #noenvironments>
-                <div class="ui segment">
-                    <span>{{ 'environment_no' | translate }}</span>
-                </div>
-            </ng-template>
-        </div>
-    </div>
+    <nz-row *ngIf="project.environment_names && project.environment_names.length > 0" [nzGutter]="{ xs: 8, sm: 16, md: 24, lg: 32 }">
+        <nz-col class="cardContainer" [routerLink]="['./environment', env.name]" *ngFor="let env of filteredEnvironments" [nzSpan]="6">
+            <app-card [title]="env.name" [onlyTitle]="true"></app-card>
+        </nz-col>
+    </nz-row>
+    <nz-row *ngIf="!project.environment_names || project.environment_names.length === 0">
+        <nz-col [nzSpan]="24">
+            <nz-alert nzType="info" nzMessage="No environment"></nz-alert>
+        </nz-col>
+    </nz-row>
 </div>
-<div class="ui text active loader" *ngIf="loading">{{'common_loading' | translate}}</div>
+<nz-spin *ngIf="loading" nzTip="Loading environments..."></nz-spin>

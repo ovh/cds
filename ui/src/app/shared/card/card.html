@@ -1,7 +1,7 @@
-<div class="entity-card">
+<div class="entity-card" [class.short]="onlyTitle">
     <img src="{{image}}">
     <div class="title">{{title}}</div>
-    <div class="description">
+    <div class="description" *ngIf="!onlyTitle">
         <span *ngIf="description">
              <span [innerText]="description.slice(0, 90)"></span><span *ngIf="description.length > 90">...</span>
         </span>
