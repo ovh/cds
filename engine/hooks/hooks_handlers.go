@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -78,16 +79,21 @@ func (s *Service) repositoryHooksHandler() service.Handler {
 		}
 
 		// Search for existing hooks
-		hookKey := cache.Key(EntitiesHookRootKey, vcsType, vcsName, repoName, "*")
-		uuids, err := s.Dao.GetAllEntitiesHookByKey(hookKey)
+		hookKey := strings.ToLower(cache.Key(EntitiesHookRootKey, vcsType, vcsName, repoName, "*"))
+		keys, err := s.Dao.GetAllEntitiesHookKeysByPattern(hookKey)
 		if err != nil {
 			log.Error(ctx, "unable to check if a hook exist for %s: %v", hookKey, err)
 			return err
 		}
-		if len(uuids) == 0 {
+		if len(keys) == 0 {
 			log.Warn(ctx, "Receive hook from %s, but there is no tasks", hookKey)
 		}
-		for _, uuid := range uuids {
+		for _, k := range keys {
+			var uuid string
+			if _, err := s.Dao.store.Get(k, &uuid); err != nil {
+				log.Error(ctx, "unable to retrieve hook uuid for %s: %v", k, err)
+				continue
+			}
 			hook := s.Dao.FindTask(ctx, uuid)
 			if hook == nil {
 				return sdk.WrapError(sdk.ErrNotFound, "no hook found on")

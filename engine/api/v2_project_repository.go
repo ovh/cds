@@ -69,7 +69,7 @@ func (api *API) deleteProjectRepositoryHandler() ([]service.RbacChecker, service
 				return sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find hook uservice")
 			}
 			_, code, errHooks := services.NewClient(tx, srvs).DoJSONRequest(ctx, http.MethodDelete, "/task/"+repo.ID, nil, nil)
-			if errHooks != nil || code >= 400 {
+			if (errHooks != nil || code >= 400) && code != 404 {
 				return sdk.WrapError(errHooks, "unable to delete hook [HTTP: %d]", code)
 			}
 
