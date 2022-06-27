@@ -1,59 +1,61 @@
-<div class="ui grid" *ngIf="!loading">
-    <div class="ui row">
-        <div class="six wide column">
-            <h3>{{ 'project_workflows_list' | translate }}</h3>
-        </div>
-    </div>
-    <div class="ui row">
-        <div class="six wide column">
-            <div class="ui icon buttons">
-                <button class="ui button" [class.active]="viewMode === 'blocs'" (click)="setViewMode('blocs')">
-                    <i class="table icon"></i>
+<div class="workflowList" *ngIf="!loading">
+    <nz-row>
+        <nz-col [nzSpan]="12">
+            <h3>List of workflows in the project</h3>
+        </nz-col>
+    </nz-row>
+    <nz-row class="ui row">
+        <nz-col [nzSpan]="8">
+            <nz-button-group>
+                <button nz-button [nzType]="viewMode === 'blocs'?'primary':'default'" (click)="setViewMode('blocs')">
+                    <i nz-icon nzType="table" nzTheme="outline"></i>
                 </button>
-                <button class="ui button" [class.active]="viewMode === 'labels'" (click)="setViewMode('labels')">
-                    <i class="tags icon"></i>
+                <button nz-button [nzType]="viewMode === 'labels'?'primary':'default'" (click)="setViewMode('labels')">
+                    <i nz-icon nzType="tags" nzTheme="outline"></i>
                 </button>
-                <button class="ui button" [class.active]="viewMode === 'lines'" (click)="setViewMode('lines')">
-                    <i class="th list icon"></i>
+                <button nz-button [nzType]="viewMode === 'lines'?'primary':'default'" (click)="setViewMode('lines')">
+                    <i nz-icon nzType="unordered-list" nzTheme="outline"></i>
                 </button>
-            </div>
-        </div>
-        <div class="four wide column centered">
-            <a class="ui blue button" [routerLink]="['./workflow']" [class.disabled]="!project.permissions.writable">{{
-                'workflow_create_btn' | translate }}</a>
-        </div>
-        <div class="right aligned six wide column">
+            </nz-button-group>
+        </nz-col>
+        <nz-col class="center" [nzSpan]="8">
+            <button nz-button nzType="primary" [routerLink]="['./workflow']" [disabled]="!project.permissions.writable">
+                Create a workflow
+            </button>
+        </nz-col>
+        <nz-col [nzSpan]="8">
             <app-input-autofocus [(model)]="filter"></app-input-autofocus>
-        </div>
-    </div>
-    <div class="ui row">
-        <div class="ui sixteen wide column">
-            <ng-container *ngIf="project && project.workflow_names && project.workflow_names.length > 0">
-                <ng-container [ngSwitch]="viewMode">
-                    <ng-container *ngSwitchCase="'blocs'">
-                        <app-project-workflows-blocs [project]="project" [workflows]="filteredWorkflows"
-                            (edit)="editLabels()">
-                        </app-project-workflows-blocs>
-                    </ng-container>
-                    <ng-container *ngSwitchCase="'labels'">
-                        <app-project-workflows-labels [project]="project" [labels]="project.labels"
-                            [workflows]="filteredWorkflows" (edit)="editLabels()">
-                        </app-project-workflows-labels>
-                    </ng-container>
-                    <ng-container *ngSwitchCase="'lines'">
-                        <app-project-workflows-lines [project]="project" [labels]="project.labels"
-                            [workflows]="filteredWorkflows" (edit)="editLabels()">
-                        </app-project-workflows-lines>
-                    </ng-container>
+        </nz-col>
+    </nz-row>
+    <nz-row *ngIf="project && project.workflow_names && project.workflow_names.length > 0">
+        <nz-col [nzSpan]="24">
+            <ng-container [ngSwitch]="viewMode">
+                <ng-container *ngSwitchCase="'blocs'">
+                    <app-project-workflows-blocs [project]="project" [workflows]="filteredWorkflows"
+                                                 (edit)="editLabels()">
+                    </app-project-workflows-blocs>
+                </ng-container>
+                <ng-container *ngSwitchCase="'labels'">
+                    <app-project-workflows-labels [project]="project" [labels]="project.labels"
+                                                  [workflows]="filteredWorkflows" (edit)="editLabels()">
+                    </app-project-workflows-labels>
+                </ng-container>
+                <ng-container *ngSwitchCase="'lines'">
+                    <app-project-workflows-lines [project]="project" [labels]="project.labels"
+                                                 [workflows]="filteredWorkflows" (edit)="editLabels()">
+                    </app-project-workflows-lines>
                 </ng-container>
             </ng-container>
-            <div class="ui segment" *ngIf="!project || !project.workflow_names || project.workflow_names.length === 0">
-                <span>{{ 'project_no_workflow' | translate }}</span>
-            </div>
-        </div>
-    </div>
+
+        </nz-col>
+    </nz-row>
+    <nz-row *ngIf="!project || !project.workflow_names || project.workflow_names.length === 0">
+        <nz-col [nzSpan]="24">
+            <nz-alert nzType="info" nzMessage="No application"></nz-alert>
+        </nz-col>
+    </nz-row>
 </div>
-<div class="ui text active loader" *ngIf="loading">{{'common_loading' | translate}}</div>
+<nz-spin *ngIf="loading" nzTip="Loading workflows..."></nz-spin>
 <ng-container *ngIf="project">
     <app-labels-edit [project]="project" #projectLabels>
     </app-labels-edit>
