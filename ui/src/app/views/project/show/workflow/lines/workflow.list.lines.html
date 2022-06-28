@@ -1,18 +1,17 @@
 <div class="workflow-list-lines">
-    <div class="ui celled relaxed selection list">
-        <div class="item pointing" [routerLink]="['./workflow', wf.name]" *ngFor="let wf of workflows">
-            <div class="right floated content">
-                <div class="ui horizontal label" [style.background-color]="label.color" [style.color]="label.font_color"
-                    *ngFor="let label of wf?.labels?.slice(0, 3)">
-                    {{label.name}}
-                </div>
-                <div class="ui horizontal label" *ngIf="wf?.labels?.length > 4">
-                    ...
-                </div>
-            </div>
+    <nz-list nzBordered nzSize="small">
+        <a nz-list-item *ngFor="let wf of workflows" [routerLink]="['./workflow', wf.name]">
             <div class="content">
                 {{wf.name}}
             </div>
-        </div>
-    </div>
+            <div>
+                <nz-tag [nzColor]="label.color" *ngFor="let label of wf?.labels?.slice(0, 3)">
+                    <span style="color: {{label.font_color}}">{{label.name}}</span>
+                </nz-tag>
+                <nz-tag>
+                    ...
+                </nz-tag>
+            </div>
+        </a>
+    </nz-list>
 </div>

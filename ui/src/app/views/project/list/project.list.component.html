@@ -30,5 +30,5 @@
     </div>
 </ng-template>
 <ng-template #loadingPart>
-    <div class="ui text active loader" translate="common_loading_projects"></div>
+    <nz-spin *ngIf="loading" nzTip="Loading projects..."></nz-spin>
 </ng-template>
