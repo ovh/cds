@@ -1,4 +1,4 @@
-package rbac
+package rbac_test
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"github.com/ghodss/yaml"
 	"github.com/stretchr/testify/require"
 
+	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
@@ -51,18 +52,18 @@ projects:
 	var r sdk.RBAC
 	require.NoError(t, yaml.Unmarshal([]byte(perm), &r))
 
-	err = fillWithIDs(context.TODO(), db, &r)
+	err = rbac.FillWithIDs(context.TODO(), db, &r)
 	require.NoError(t, err)
 
-	require.NoError(t, Insert(context.Background(), db, &r))
+	require.NoError(t, rbac.Insert(context.Background(), db, &r))
 
-	projectKeysForUser1, err := LoadProjectKeysByRoleAndUserID(context.TODO(), db, sdk.RoleRead, user1.ID)
+	projectKeysForUser1, err := rbac.LoadProjectKeysByRoleAndUserID(context.TODO(), db, sdk.RoleRead, user1.ID)
 	require.NoError(t, err)
 	t.Logf("%+v", projectKeysForUser1)
 	require.Len(t, projectKeysForUser1, 1)
 	require.Equal(t, projectKeysForUser1[0], proj1.Key)
 
-	projectKeysForUser2, err := LoadProjectKeysByRoleAndUserID(context.TODO(), db, sdk.RoleManage, user2.ID)
+	projectKeysForUser2, err := rbac.LoadProjectKeysByRoleAndUserID(context.TODO(), db, sdk.RoleManage, user2.ID)
 	require.NoError(t, err)
 	require.Len(t, projectKeysForUser2, 1)
 	require.Equal(t, projectKeysForUser2[0], proj2.Key)
@@ -101,12 +102,12 @@ globals:
 
 	var r sdk.RBAC
 	require.NoError(t, yaml.Unmarshal([]byte(perm), &r))
-	err = fillWithIDs(context.TODO(), db, &r)
+	err = rbac.FillWithIDs(context.TODO(), db, &r)
 	require.NoError(t, err)
 
-	require.NoError(t, Insert(context.Background(), db, &r))
+	require.NoError(t, rbac.Insert(context.Background(), db, &r))
 
-	rbacDB, err := LoadRbacByName(context.TODO(), db, r.Name, LoadOptions.Default)
+	rbacDB, err := rbac.LoadRbacByName(context.TODO(), db, r.Name, rbac.LoadOptions.Default)
 	require.NoError(t, err)
 
 	// Global part
@@ -168,12 +169,12 @@ projects:
 
 	var r sdk.RBAC
 	require.NoError(t, yaml.Unmarshal([]byte(perm), &r))
-	err = fillWithIDs(context.TODO(), db, &r)
+	err = rbac.FillWithIDs(context.TODO(), db, &r)
 	require.NoError(t, err)
 
-	require.NoError(t, Insert(context.Background(), db, &r))
+	require.NoError(t, rbac.Insert(context.Background(), db, &r))
 
-	rbacDB, err := LoadRbacByName(context.TODO(), db, r.Name, LoadOptions.Default)
+	rbacDB, err := rbac.LoadRbacByName(context.TODO(), db, r.Name, rbac.LoadOptions.Default)
 	require.NoError(t, err)
 
 	require.Equal(t, "read", rbacDB.Projects[0].Role)
@@ -189,12 +190,12 @@ projects:
 
 	var rUpdated sdk.RBAC
 	require.NoError(t, yaml.Unmarshal([]byte(permUpdated), &rUpdated))
-	err = fillWithIDs(context.TODO(), db, &rUpdated)
+	err = rbac.FillWithIDs(context.TODO(), db, &rUpdated)
 	require.NoError(t, err)
 
-	require.NoError(t, Update(context.TODO(), db, &rUpdated))
+	require.NoError(t, rbac.Update(context.TODO(), db, &rUpdated))
 
-	rbacDBUpdate, err := LoadRbacByName(context.TODO(), db, r.Name, LoadOptions.Default)
+	rbacDBUpdate, err := rbac.LoadRbacByName(context.TODO(), db, r.Name, rbac.LoadOptions.Default)
 	require.NoError(t, err)
 	require.Equal(t, "manage", rbacDBUpdate.Projects[0].Role)
 

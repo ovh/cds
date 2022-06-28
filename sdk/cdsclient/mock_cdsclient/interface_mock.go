@@ -2563,6 +2563,20 @@ func (mr *MockProjectClientMockRecorder) ProjectList(withApplications, withWorkf
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectList", reflect.TypeOf((*MockProjectClient)(nil).ProjectList), varargs...)
 }
 
+// ProjectRepositoryDelete mocks base method.
+func (m *MockProjectClient) ProjectRepositoryDelete(ctx context.Context, projectKey, vcsName, repositoryName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectRepositoryDelete", ctx, projectKey, vcsName, repositoryName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectRepositoryDelete indicates an expected call of ProjectRepositoryDelete.
+func (mr *MockProjectClientMockRecorder) ProjectRepositoryDelete(ctx, projectKey, vcsName, repositoryName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryDelete", reflect.TypeOf((*MockProjectClient)(nil).ProjectRepositoryDelete), ctx, projectKey, vcsName, repositoryName)
+}
+
 // ProjectRepositoryManagerDelete mocks base method.
 func (m *MockProjectClient) ProjectRepositoryManagerDelete(projectKey, repoManagerName string, force bool) error {
 	m.ctrl.T.Helper()
@@ -2607,17 +2621,17 @@ func (mr *MockProjectClientMockRecorder) ProjectUpdate(key, project interface{})
 }
 
 // ProjectVCSDelete mocks base method.
-func (m *MockProjectClient) ProjectVCSDelete(ctx context.Context, projectKey, integrationName string) error {
+func (m *MockProjectClient) ProjectVCSDelete(ctx context.Context, projectKey, vcsName string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ProjectVCSDelete", ctx, projectKey, integrationName)
+	ret := m.ctrl.Call(m, "ProjectVCSDelete", ctx, projectKey, vcsName)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // ProjectVCSDelete indicates an expected call of ProjectVCSDelete.
-func (mr *MockProjectClientMockRecorder) ProjectVCSDelete(ctx, projectKey, integrationName interface{}) *gomock.Call {
+func (mr *MockProjectClientMockRecorder) ProjectVCSDelete(ctx, projectKey, vcsName interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVCSDelete", reflect.TypeOf((*MockProjectClient)(nil).ProjectVCSDelete), ctx, projectKey, integrationName)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVCSDelete", reflect.TypeOf((*MockProjectClient)(nil).ProjectVCSDelete), ctx, projectKey, vcsName)
 }
 
 // ProjectVCSGet mocks base method.
@@ -2668,6 +2682,35 @@ func (m *MockProjectClient) ProjectVCSList(ctx context.Context, projectKey strin
 func (mr *MockProjectClientMockRecorder) ProjectVCSList(ctx, projectKey interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVCSList", reflect.TypeOf((*MockProjectClient)(nil).ProjectVCSList), ctx, projectKey)
+}
+
+// ProjectVCSRepositoryAdd mocks base method.
+func (m *MockProjectClient) ProjectVCSRepositoryAdd(ctx context.Context, projectKey, vcsName, repoName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectVCSRepositoryAdd", ctx, projectKey, vcsName, repoName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectVCSRepositoryAdd indicates an expected call of ProjectVCSRepositoryAdd.
+func (mr *MockProjectClientMockRecorder) ProjectVCSRepositoryAdd(ctx, projectKey, vcsName, repoName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVCSRepositoryAdd", reflect.TypeOf((*MockProjectClient)(nil).ProjectVCSRepositoryAdd), ctx, projectKey, vcsName, repoName)
+}
+
+// ProjectVCSRepositoryList mocks base method.
+func (m *MockProjectClient) ProjectVCSRepositoryList(ctx context.Context, projectKey, vcsName string) ([]sdk.ProjectRepository, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectVCSRepositoryList", ctx, projectKey, vcsName)
+	ret0, _ := ret[0].([]sdk.ProjectRepository)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectVCSRepositoryList indicates an expected call of ProjectVCSRepositoryList.
+func (mr *MockProjectClientMockRecorder) ProjectVCSRepositoryList(ctx, projectKey, vcsName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVCSRepositoryList", reflect.TypeOf((*MockProjectClient)(nil).ProjectVCSRepositoryList), ctx, projectKey, vcsName)
 }
 
 // ProjectVariableCreate mocks base method.
@@ -6685,6 +6728,20 @@ func (mr *MockInterfaceMockRecorder) ProjectList(withApplications, withWorkflow 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectList", reflect.TypeOf((*MockInterface)(nil).ProjectList), varargs...)
 }
 
+// ProjectRepositoryDelete mocks base method.
+func (m *MockInterface) ProjectRepositoryDelete(ctx context.Context, projectKey, vcsName, repositoryName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectRepositoryDelete", ctx, projectKey, vcsName, repositoryName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectRepositoryDelete indicates an expected call of ProjectRepositoryDelete.
+func (mr *MockInterfaceMockRecorder) ProjectRepositoryDelete(ctx, projectKey, vcsName, repositoryName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryDelete", reflect.TypeOf((*MockInterface)(nil).ProjectRepositoryDelete), ctx, projectKey, vcsName, repositoryName)
+}
+
 // ProjectRepositoryManagerDelete mocks base method.
 func (m *MockInterface) ProjectRepositoryManagerDelete(projectKey, repoManagerName string, force bool) error {
 	m.ctrl.T.Helper()
@@ -6729,17 +6786,17 @@ func (mr *MockInterfaceMockRecorder) ProjectUpdate(key, project interface{}) *go
 }
 
 // ProjectVCSDelete mocks base method.
-func (m *MockInterface) ProjectVCSDelete(ctx context.Context, projectKey, integrationName string) error {
+func (m *MockInterface) ProjectVCSDelete(ctx context.Context, projectKey, vcsName string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ProjectVCSDelete", ctx, projectKey, integrationName)
+	ret := m.ctrl.Call(m, "ProjectVCSDelete", ctx, projectKey, vcsName)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // ProjectVCSDelete indicates an expected call of ProjectVCSDelete.
-func (mr *MockInterfaceMockRecorder) ProjectVCSDelete(ctx, projectKey, integrationName interface{}) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) ProjectVCSDelete(ctx, projectKey, vcsName interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVCSDelete", reflect.TypeOf((*MockInterface)(nil).ProjectVCSDelete), ctx, projectKey, integrationName)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVCSDelete", reflect.TypeOf((*MockInterface)(nil).ProjectVCSDelete), ctx, projectKey, vcsName)
 }
 
 // ProjectVCSGet mocks base method.
@@ -6790,6 +6847,35 @@ func (m *MockInterface) ProjectVCSList(ctx context.Context, projectKey string) (
 func (mr *MockInterfaceMockRecorder) ProjectVCSList(ctx, projectKey interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVCSList", reflect.TypeOf((*MockInterface)(nil).ProjectVCSList), ctx, projectKey)
+}
+
+// ProjectVCSRepositoryAdd mocks base method.
+func (m *MockInterface) ProjectVCSRepositoryAdd(ctx context.Context, projectKey, vcsName, repoName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectVCSRepositoryAdd", ctx, projectKey, vcsName, repoName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectVCSRepositoryAdd indicates an expected call of ProjectVCSRepositoryAdd.
+func (mr *MockInterfaceMockRecorder) ProjectVCSRepositoryAdd(ctx, projectKey, vcsName, repoName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVCSRepositoryAdd", reflect.TypeOf((*MockInterface)(nil).ProjectVCSRepositoryAdd), ctx, projectKey, vcsName, repoName)
+}
+
+// ProjectVCSRepositoryList mocks base method.
+func (m *MockInterface) ProjectVCSRepositoryList(ctx context.Context, projectKey, vcsName string) ([]sdk.ProjectRepository, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectVCSRepositoryList", ctx, projectKey, vcsName)
+	ret0, _ := ret[0].([]sdk.ProjectRepository)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectVCSRepositoryList indicates an expected call of ProjectVCSRepositoryList.
+func (mr *MockInterfaceMockRecorder) ProjectVCSRepositoryList(ctx, projectKey, vcsName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVCSRepositoryList", reflect.TypeOf((*MockInterface)(nil).ProjectVCSRepositoryList), ctx, projectKey, vcsName)
 }
 
 // ProjectVariableCreate mocks base method.

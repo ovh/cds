@@ -14,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ghodss/yaml"
 	"github.com/go-gorp/gorp"
 	"github.com/rockbears/log"
 	"github.com/stretchr/testify/assert"
@@ -27,8 +28,10 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/user"
+	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/cache"
@@ -36,6 +39,21 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/jws"
 )
+
+func InsertRBAcProject(t *testing.T, db gorpmapper.SqlExecutorWithTx, role string, projKey string, user sdk.AuthentifiedUser) {
+	perm := fmt.Sprintf(`name: perm-%s-project-%s
+projects:
+  - role: %s
+    projects: [%s]
+    users: [%s]
+`, role, projKey, role, projKey, user.Username)
+
+	var rb sdk.RBAC
+	require.NoError(t, yaml.Unmarshal([]byte(perm), &rb))
+	rb.Projects[0].RBACProjectKeys = []string{projKey}
+	rb.Projects[0].RBACUsersIDs = []string{user.ID}
+	require.NoError(t, rbac.Insert(context.Background(), db, &rb))
+}
 
 // InsertTestProject create a test project.
 func InsertTestProject(t *testing.T, db gorpmapper.SqlExecutorWithTx, store cache.Store, key, name string) *sdk.Project {
@@ -76,6 +94,20 @@ func InsertTestProject(t *testing.T, db gorpmapper.SqlExecutorWithTx, store cach
 	require.NoError(t, err)
 
 	return proj
+}
+
+func InsertTestVCSProject(t *testing.T, db gorpmapper.SqlExecutorWithTx, projID int64, name string, vcsType string) *sdk.VCSProject {
+	vcsProj := sdk.VCSProject{
+		Name:         name,
+		Type:         vcsType,
+		Created:      time.Now(),
+		LastModified: time.Now(),
+		CreatedBy:    "InsertTestVCSProject",
+		ProjectID:    projID,
+	}
+	err := vcs.Insert(context.TODO(), db, &vcsProj)
+	require.NoError(t, err)
+	return &vcsProj
 }
 
 // DeleteTestProject delete a test project

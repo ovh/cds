@@ -5,4 +5,5 @@ api
 cdn
 hooks
 hatchery:swarm
+vcs
 ui

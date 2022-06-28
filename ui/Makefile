@@ -7,7 +7,6 @@ clean:
 	@rm -rf node_modules
 	@find semantic -name "*" -not -path "*/site/globals/site.variables" -delete
 	@rm -rf semantic\\
-	@rm -f package-lock.json
 
 NG = node_modules/@angular/cli/bin/ng
 $(NG):

@@ -3,14 +3,16 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
+	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
-	yaml "github.com/ghodss/yaml"
-	"github.com/ovh/cds/engine/api/rbac"
+	"github.com/go-gorp/gorp"
+	"github.com/golang/mock/gomock"
+	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/api/services/mock_services"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
@@ -50,20 +52,32 @@ func Test_crudVCSOnProjectLambdaUserOK(t *testing.T) {
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	user1, pass := assets.InsertLambdaUser(t, db)
 
-	perm := fmt.Sprintf(`name: perm-test-%s
-projects:
-  - role: manage
-    projects: [%s]
-    users: [%s]
-`, proj.Key, proj.Key, user1.Username)
+	assets.InsertRBAcProject(t, db, "manage", proj.Key, *user1)
+	assets.InsertRBAcProject(t, db, "read", proj.Key, *user1)
 
-	var rb sdk.RBAC
-	require.NoError(t, yaml.Unmarshal([]byte(perm), &rb))
+	// Mock VCS
+	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	// Setup a mock for all services called by the API
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		_ = services.Delete(db, s)
+		services.NewClient = services.NewDefaultClient
+	}()
 
-	rb.Projects[0].RBACProjectKeys = []string{proj.Key}
-	rb.Projects[0].RBACUsersIDs = []string{user1.ID}
-
-	require.NoError(t, rbac.Insert(context.Background(), db, &rb))
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/my_vcs_server/repos", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+				repos := []sdk.VCSRepo{}
+				out = repos
+				return nil, 200, nil
+			},
+		).MaxTimes(1)
 
 	vars := map[string]string{
 		"projectKey": proj.Key,
@@ -110,6 +124,30 @@ func Test_crudVCSOnProjectAdminOk(t *testing.T) {
 	u, pass := assets.InsertAdminUser(t, db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 
+	// Mock VCS
+	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	// Setup a mock for all services called by the API
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		_ = services.Delete(db, s)
+		services.NewClient = services.NewDefaultClient
+	}()
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/my_vcs_server/repos", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+				repos := []sdk.VCSRepo{}
+				out = repos
+				return nil, 200, nil
+			},
+		).MaxTimes(1)
+
 	vars := map[string]string{
 		"projectKey": proj.Key,
 	}
@@ -149,7 +187,7 @@ auth:
 	require.Len(t, vcsProjects, 1)
 
 	// Then, try to get the vcs server directly
-	vars["vcsProjectName"] = "my_vcs_server"
+	vars["vcsIdentifier"] = "my_vcs_server"
 	uriGet := api.Router.GetRouteV2("GET", api.getVCSProjectHandler, vars)
 	test.NotEmpty(t, uriGet)
 

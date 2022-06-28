@@ -40,3 +40,9 @@ func ProjectManage(ctx context.Context, auth *sdk.AuthConsumer, store cache.Stor
 	projectKey := vars["projectKey"]
 	return hasRoleOnProject(ctx, auth, store, db, projectKey, sdk.RoleManage)
 }
+
+// ProjectRead return nil if the current AuthConsumer have the RoleRead on current project KEY
+func ProjectRead(ctx context.Context, auth *sdk.AuthConsumer, store cache.Store, db gorp.SqlExecutor, vars map[string]string) error {
+	projectKey := vars["projectKey"]
+	return hasRoleOnProject(ctx, auth, store, db, projectKey, sdk.RoleRead)
+}
