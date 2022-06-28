@@ -31,7 +31,7 @@ import { finalize } from 'rxjs/operators';
 })
 export class ActionFormComponent implements OnDestroy {
     @Input() keys: AllKeys;
-    @Input() suggest: Array<string>;
+    @Input() suggest: Array<string> = [];
     @Input() groups: Array<Group>;
     @Input() loading: boolean;
 
