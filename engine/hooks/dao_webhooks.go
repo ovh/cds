@@ -17,7 +17,7 @@ func (d *dao) SaveRepoWebHook(t *sdk.Task) error {
 		t.Configuration[sdk.HookConfigVCSServer].Value,
 		t.Configuration[sdk.HookConfigRepoFullName].Value,
 		t.Configuration[sdk.HookConfigTypeProject].Value))
-	// Need this to be able to retrieve a task when comming from /v2/webhook/repository/{vcsType}, route without uuid
+	// Need this to be able to retrieve a task when comming from /v2/webhook/repository, route without uuid
 	if err := d.store.SetWithTTL(entitiesHookKey, t.UUID, 0); err != nil {
 		return err
 	}
