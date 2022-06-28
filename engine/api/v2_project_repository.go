@@ -127,7 +127,7 @@ func (api *API) postProjectRepositoryHandler() ([]service.RbacChecker, service.H
 			if _, err := vcsClient.RepoByFullname(ctx, repo.Name); err != nil {
 				return err
 			}
-
+			
 			// Create hook
 			srvs, err := services.LoadAllByType(ctx, tx, sdk.TypeHooks)
 			if err != nil {

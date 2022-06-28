@@ -96,8 +96,3 @@
 <ng-template #loadApp>
     <div class="ui text active loader">Loading application...</div>
 </ng-template>
-<ng-container *ngIf="application?.workflow_ascode_holder">
-    <app-ascode-save-modal [project]="project" [workflow]="application.workflow_ascode_holder" [name]="readOnlyApplication.name"
-                           #updateEditMode>
-    </app-ascode-save-modal>
-</ng-container>

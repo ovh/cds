@@ -1,0 +1,21 @@
+.entity-card {
+  img {
+    display: inline-block;
+    vertical-align: middle;
+    width: 35px;
+    height: auto;
+    float: right;
+  }
+  .title {
+    word-wrap: break-word;
+    font-weight: 700;
+    font-size: 1.2em;
+    line-height: 1.2em;
+  }
+  .description {
+    font-size: 0.9em;
+  }
+}
+.entity-card.short {
+  height: 50px;
+}

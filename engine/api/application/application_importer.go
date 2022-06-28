@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
+	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 )
@@ -68,8 +69,16 @@ func Import(ctx context.Context, db gorpmapper.SqlExecutorWithTx, proj sdk.Proje
 	//Set repositories manager
 	app.VCSServer = repomanager
 	if app.VCSServer != "" && app.RepositoryFullname != "" {
-		if _, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, proj.Key, app.VCSServer); err != nil {
-			return sdk.NewError(sdk.ErrNoReposManager, err)
+		if _, err := vcs.LoadVCSByProject(ctx, db, proj.Key, app.VCSServer); err != nil {
+			if sdk.ErrorIs(err, sdk.ErrNotFound) {
+				// Check old way
+				if _, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, proj.Key, app.VCSServer); err != nil {
+					return sdk.NewError(sdk.ErrNoReposManager, err)
+				}
+			} else {
+				return err
+			}
+
 		}
 
 		if err := repositoriesmanager.InsertForApplication(db, app); err != nil {

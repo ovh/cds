@@ -1,4 +1,4 @@
-import { ElementRef, OnDestroy, Output, ViewChild } from '@angular/core';
+import { ElementRef, OnDestroy, Output } from '@angular/core';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { CDNLine, CDNLogLink, PipelineStatus, SpawnInfo } from 'app/model/pipeline.model';
@@ -10,6 +10,7 @@ import * as moment from 'moment';
 import { from, interval, Subject, Subscription } from 'rxjs';
 import { concatMap } from 'rxjs/operators';
 import { WorkflowRunJobVariableComponent } from '../variables/job.variables.component';
+import { NzModalService } from 'ng-zorro-antd/modal';
 
 export enum DisplayMode {
     ANSI = 'ansi',
@@ -67,8 +68,6 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
     readonly displayModes = DisplayMode;
     readonly scrollTargets = ScrollTarget
 
-    @ViewChild('jobVariable') jobVariable: WorkflowRunJobVariableComponent;
-
     @Input() projectKey: string;
     @Input() workflowName: string;
     @Input() workflowRunNumber: number;
@@ -98,7 +97,8 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
         private ref: ElementRef,
         private _cd: ChangeDetectorRef,
         private _workflowService: WorkflowService,
-        private _router: Router
+        private _router: Router,
+        private _modaService: NzModalService
     ) {
         this.subjectChannel = new Subject<WorkflowNodeJobRun>();
         this.subscriptionChannel = this.subjectChannel.pipe(
@@ -478,9 +478,14 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
     }
 
     clickVariables(): void {
-        if (this.jobVariable) {
-            this.jobVariable.show();
-        }
+        this._modaService.create({
+            nzWidth: '900px',
+            nzTitle: 'Job variables',
+            nzContent: WorkflowRunJobVariableComponent,
+            nzComponentParams: {
+                variables: this._nodeJobRun?.parameters
+            }
+        })
     }
 
     async clickOpen(step: LogBlock) {

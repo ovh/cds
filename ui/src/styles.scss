@@ -17,6 +17,18 @@ body {
     overflow-y: hidden;
 }
 
+.entity-card {
+  width: 100%;
+  height: 100px;
+  padding: 1em;
+  border-radius: 3px;
+  border: 1px solid #d4d4d5;
+  background: #fff;
+}
+.entity-card:hover {
+  margin-top: -2px;
+}
+
 .nzSegment {
   display: flex;
   flex: auto;
@@ -24,6 +36,14 @@ body {
   min-height: 0;
   border: 1px solid rgba(34,36,38,.15);
   border-radius: 2px;
+}
+
+.inner-content {
+  background-color: #fff;
+}
+
+.ant-layout-header {
+  padding: 0 !important;
 }
 
 input[type=radio]:read-only {

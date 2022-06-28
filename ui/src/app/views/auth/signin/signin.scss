@@ -1,20 +1,10 @@
-@import "../../../../common";
+button {
+  margin-left: 20px;
+}
+a {
+  margin-top: 5px;
+}
 
-.signin {
-    .loading {
-        text-align: center;
-        color: white;
-    }
-
-    .ui.tabular.menu .item {
-        color: white;
-
-        &.active {
-            color: black;
-        }
-
-        :host-context(.night) & {
-            color: inherit;
-        }
-    }
+nz-alert {
+  margin-bottom: 10px;
 }

@@ -4,39 +4,31 @@
         <div class="scrollingContent">
             <div class="paddingContent">
                 <div class="viewContent">
-                    <div class="ui grid">
-                        <div class="eight wide column">
+                    <nz-row>
+                        <nz-col [nzSpan]="12">
                             <h1 translate="project_list"></h1>
-                        </div>
-                        <div class="eight wide column" *ngIf="projects && projects.length > 0">
-                            <div class="floated right">
+                        </nz-col>
+                        <nz-col [nzSpan]="12" >
+                            <div class="floated right" *ngIf="projects && projects.length > 0">
                                 <app-input-autofocus [(model)]="filter"></app-input-autofocus>
                             </div>
-                        </div>
-                    </div>
-                    <div *ngIf="projects && projects.length > 0;then projectslist;else noprojectslist"></div>
-                    <ng-template #projectslist>
-                        <div class="ui stackable four cards">
-                            <a [routerLink]="['/project', proj.key]" class="ui link card" *ngFor="let proj of filteredProjects">
-                                <div class="content">
-                                    <img *ngIf="proj.icon" class="right floated mini ui image" [src]="proj.icon">
-                                    <div class="header" [innerText]="proj.name"></div>
-                                    <div class="meta" *ngIf="proj.description">
-                                        <span [innerText]="proj.description.slice(0, 90)"></span><span *ngIf="proj.description.length > 90">...</span>
-                                    </div>
-                                    <div class="meta" *ngIf="!proj.description" [innerText]="'common_no_description' | translate"></div>
-                                </div>
-                            </a>
-                        </div>
-                    </ng-template>
-                    <ng-template #noprojectslist>
-                        <span translate="project_no"></span>
-                    </ng-template>
+                        </nz-col>
+                    </nz-row>
+                    <nz-row *ngIf="projects && projects.length > 0" [nzGutter]="{ xs: 8, sm: 16, md: 24, lg: 32 }">
+                        <nz-col class="cardContainer" [routerLink]="['/project', proj.key]" *ngFor="let proj of filteredProjects;let i = index" [nzSpan]="6">
+                            <app-card [title]="proj.name" [description]="proj.description" [image]="proj.icon"></app-card>
+                        </nz-col>
+                    </nz-row>
+                    <nz-row *ngIf="!projects || projects.length === 0">
+                        <nz-col [nzSpan]="24">
+                            <nz-alert nzType="info" nzMessage="No project"></nz-alert>
+                        </nz-col>
+                    </nz-row>
                 </div>
             </div>
         </div>
     </div>
 </ng-template>
 <ng-template #loadingPart>
-    <div class="ui text active loader" translate="common_loading_projects"></div>
+    <nz-spin *ngIf="loading" nzTip="Loading projects..."></nz-spin>
 </ng-template>

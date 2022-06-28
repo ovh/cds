@@ -1,40 +1,49 @@
-.workflow-list-blocs {
-  .link {
-    &.card {
-      min-height: 6em;
-      .btn-label {
-        &:hover {
-          color: black;
-        }
-      }
-      .ui.label > .icon {
-        margin-right: 2px;
-      }
-    }
-  }
-}
-.popup-label {
-  width: 12em;
-  max-height: 12em;
-  overflow: auto;
-}
-.label-item {
-  &:hover {
-    background-color: grey;
-  }
-  &.active {
-    background-color: lightgrey;
-  }
-  .content {
-    width: 100%;
-    .icon {
-      color: grey;
-      &:hover {
-        color: black;
+.list {
+  display: flex;
+  flex-direction: column;
+  align-content: stretch;
+  height: 100%;
+
+  nz-col {
+    margin-bottom: 20px;
+
+    .nzSegment.extra {
+      height: 40px;
+      margin-top: -5px;
+      border-radius: 3px;
+      border-top: none;
+      display: flex;
+      flex-direction: row;
+      padding-top: 4px;
+      padding-left: 6px;
+      padding-right: 2px;
+      align-items: center;
+
+      .right {
+        margin-left: auto;
+        padding-right: 5px;
       }
     }
   }
 }
-.mt5 {
-  margin-top: 5px;
+
+app-card {
+  cursor: pointer;
+}
+.content {
+  width: 100%;
+}
+
+.alignRight {
+  float: right;
+}
+
+nz-list {
+  height: 250px;
+  overflow: hidden;
+  overflow-y: auto;
+}
+
+.footer {
+  height: 15px;
 }

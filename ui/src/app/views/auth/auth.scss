@@ -1,10 +1,14 @@
 @import '../../../common';
 
 .auth {
-  background-color: $darkBackground;
+
 
   .column {
     width: 600px;
+  }
+
+  .nzSegment {
+    padding: 30px 30px;
   }
 
   .logo {

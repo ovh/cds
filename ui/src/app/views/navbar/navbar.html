@@ -1,4 +1,4 @@
-<nz-header id="navbar">
+<div id="navbar">
     <a href="#" [routerLink]="['/']">
         <img src="assets/images/cds.png" class="item" alt="CDS logo"
             title="{{'navbar_home' | translate}}" />
@@ -88,7 +88,7 @@
         </div>
 
         <!-- SEARCH AREA -->
-        <div class="search">
+        <div class="search" *ngIf="currentAuthSummary">
             <nz-input-group [nzSuffix]="suffixIconSearch" nz-popover [nzPopoverContent]="popupSearchTemplate"
                             nzPopoverPlacement="bottom" nzPopoverTrigger="click">
                 <input type="text" nz-input placeholder="Search..."
@@ -193,52 +193,57 @@
         </div>
         <nz-dropdown-menu #settings="nzDropdownMenu">
             <ul nz-menu>
-                <li nz-menu-item>
-                    <a href="#" [routerLink]="['settings', 'user', currentAuthSummary.user.username]">{{
-                    'navbar_profile' | translate }}</a>
-                </li>
-                <li nz-menu-item>
-                    <a href="#" [routerLink]="['settings', 'cdsctl']">{{ 'navbar_cdsctl' | translate }}</a>
-                </li>
-                <li nz-menu-item>
-                    <a href="#" [routerLink]="['settings', 'action']">{{ 'navbar_actions' | translate }}</a>
-                </li>
-                <li nz-menu-item>
-                    <a href="#" [routerLink]="['settings', 'user']">{{ 'navbar_users' | translate }}</a>
-                </li>
-                <li nz-menu-item>
-                    <a href="#" [routerLink]="['settings', 'group']">{{ 'navbar_groups' | translate }}</a>
-                </li>
-                <li nz-menu-item>
-                    <a href="#" [routerLink]="['settings', 'worker-model']">{{ 'navbar_worker_models' | translate }}</a>
-                </li>
-                <li nz-menu-item>
-                    <a href="#" [routerLink]="['settings', 'workflow-template']">{{ 'navbar_workflow_templates' |
-                        translate }}</a>
-                </li>
-                <li nz-menu-divider></li>
-                <li nz-menu-item>
-                    <a href="#" [routerLink]="['settings', 'queue']">{{ 'admin_queue_title' | translate }}</a>
-                </li>
+                <ng-container *ngIf="currentAuthSummary">
+                    <li nz-menu-item>
+                        <a href="#" [routerLink]="['settings', 'user', currentAuthSummary.user.username]">{{
+                            'navbar_profile' | translate }}</a>
+                    </li>
+                    <li nz-menu-item>
+                        <a href="#" [routerLink]="['settings', 'cdsctl']">{{ 'navbar_cdsctl' | translate }}</a>
+                    </li>
+                    <li nz-menu-item>
+                        <a href="#" [routerLink]="['settings', 'action']">{{ 'navbar_actions' | translate }}</a>
+                    </li>
+                    <li nz-menu-item>
+                        <a href="#" [routerLink]="['settings', 'user']">{{ 'navbar_users' | translate }}</a>
+                    </li>
+                    <li nz-menu-item>
+                        <a href="#" [routerLink]="['settings', 'group']">{{ 'navbar_groups' | translate }}</a>
+                    </li>
+                    <li nz-menu-item>
+                        <a href="#" [routerLink]="['settings', 'worker-model']">{{ 'navbar_worker_models' | translate }}</a>
+                    </li>
+                    <li nz-menu-item>
+                        <a href="#" [routerLink]="['settings', 'workflow-template']">{{ 'navbar_workflow_templates' |
+                            translate }}</a>
+                    </li>
+                    <li nz-menu-divider></li>
+                    <li nz-menu-item>
+                        <a href="#" [routerLink]="['settings', 'queue']">{{ 'admin_queue_title' | translate }}</a>
+                    </li>
 
-                <li nz-menu-divider></li>
-                <li nz-menu-item>
-                    <a href="#" [routerLink]="['settings', 'downloads']">{{ 'navbar_downloads' | translate }}</a>
-                </li>
-                <li nz-menu-item>
-                    <a href="#" [routerLink]="['docs', '']" target="_blank" rel="noopener noreferrer">{{
-                        'navbar_documentation' | translate }}</a>
-                </li>
+                    <li nz-menu-divider></li>
+                    <li nz-menu-item>
+                        <a href="#" [routerLink]="['settings', 'downloads']">{{ 'navbar_downloads' | translate }}</a>
+                    </li>
+                    <li nz-menu-item>
+                        <a href="#" [routerLink]="['docs', '']" target="_blank" rel="noopener noreferrer">{{
+                            'navbar_documentation' | translate }}</a>
+                    </li>
 
-                <li nz-menu-divider></li>
+                    <li nz-menu-divider></li>
+                </ng-container>
+
                 <li nz-menu-item>
                     <nz-switch [ngModel]="darkActive" (ngModelChange)="changeTheme()"></nz-switch>Dark Model
                 </li>
 
-                <li nz-menu-divider></li>
-                <li nz-menu-item>
-                    <a (click)="clickLogout()">{{ 'navbar_disconnect' | translate }}</a>
-                </li>
+                <ng-container *ngIf="currentAuthSummary">
+                    <li nz-menu-divider></li>
+                    <li nz-menu-item>
+                        <a (click)="clickLogout()">{{ 'navbar_disconnect' | translate }}</a>
+                    </li>
+                </ng-container>
             </ul>
         </nz-dropdown-menu>
 
@@ -263,4 +268,4 @@
             </nz-dropdown-menu>
         </ng-container>
     </div>
-</nz-header>
+</div>

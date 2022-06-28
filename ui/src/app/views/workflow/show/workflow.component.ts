@@ -28,6 +28,7 @@ import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
 import { Tab } from 'app/shared/tabs/tabs.component';
+import { NzModalService } from 'ng-zorro-antd/modal';
 
 @Component({
     selector: 'app-workflow',
@@ -53,11 +54,6 @@ export class WorkflowShowComponent implements OnInit, OnDestroy, AfterViewInit {
     editModeWorkflowChanged: boolean;
     isReadOnly: boolean;
 
-    @ViewChild('workflowStartParam')
-    runWithParamComponent: WorkflowNodeRunParamComponent;
-    @ViewChild('updateAsCode')
-    updateAsCodeModal: AsCodeSaveModalComponent;
-
     @ViewChild('warnPermission') warnPermission: TemplateRef<any>;
 
     selectedHookRef: string;
@@ -79,7 +75,8 @@ export class WorkflowShowComponent implements OnInit, OnDestroy, AfterViewInit {
         public _translate: TranslateService,
         private _toast: ToastService,
         private _workflowCoreService: WorkflowCoreService,
-        private _cd: ChangeDetectorRef
+        private _cd: ChangeDetectorRef,
+        private _modalService: NzModalService
     ) {
     }
 
@@ -270,10 +267,17 @@ export class WorkflowShowComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     runWithParameter(): void {
-        if (this.runWithParamComponent && this.detailedWorkflow?.workflow_data?.node) {
+        if (this.detailedWorkflow?.workflow_data?.node) {
             this._store.dispatch(new SelectWorkflowNode({
                 node: this.detailedWorkflow.workflow_data.node
-            })).pipe(first()).subscribe(() => this.runWithParamComponent.show());
+            })).pipe(first()).subscribe(() => {
+                this._modalService.create({
+                    nzWidth: '900px',
+                    nzTitle: 'Run worklow',
+                    nzContent: WorkflowNodeRunParamComponent,
+                    nzComponentParams: {}
+                })
+            });
         }
     }
 
@@ -295,8 +299,17 @@ export class WorkflowShowComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     saveWorkflow(): void {
-        if (this.updateAsCodeModal) {
-            this.updateAsCodeModal.show(this.detailedWorkflow, 'workflow');
-        }
+        this._modalService.create({
+            nzWidth: '900px',
+            nzTitle: 'Save workflow as code',
+            nzContent: AsCodeSaveModalComponent,
+            nzComponentParams: {
+                dataToSave: this.detailedWorkflow,
+                dataType: 'workflow',
+                project: this.project,
+                workflow: this.detailedWorkflow,
+                name: this.detailedWorkflow.name,
+            }
+        });
     }
 }

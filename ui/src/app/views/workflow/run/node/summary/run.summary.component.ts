@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Select, Store } from '@ngxs/store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
@@ -7,13 +7,14 @@ import { ProjectState } from 'app/store/project.state';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
 import { Observable, Subscription } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
-import { PipelineStatus } from '../../../../../model/pipeline.model';
-import { Project } from '../../../../../model/project.model';
-import { WNode, Workflow } from '../../../../../model/workflow.model';
-import { WorkflowNodeRun } from '../../../../../model/workflow.run.model';
-import { WorkflowRunService } from '../../../../../service/workflow/run/workflow.run.service';
-import { ToastService } from '../../../../../shared/toast/ToastService';
-import { WorkflowNodeRunParamComponent } from '../../../../../shared/workflow/node/run/node.run.param.component';
+import { PipelineStatus } from 'app/model/pipeline.model';
+import { Project } from 'app/model/project.model';
+import { WNode, Workflow } from 'app/model/workflow.model';
+import { WorkflowNodeRun } from 'app/model/workflow.run.model';
+import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
+import { ToastService } from 'app/shared/toast/ToastService';
+import { WorkflowNodeRunParamComponent } from 'app/shared/workflow/node/run/node.run.param.component';
+import { NzModalService } from 'ng-zorro-antd/modal';
 
 @Component({
     selector: 'app-workflow-node-run-summary',
@@ -25,9 +26,6 @@ import { WorkflowNodeRunParamComponent } from '../../../../../shared/workflow/no
 export class WorkflowNodeRunSummaryComponent implements OnInit, OnDestroy {
 
     duration: string;
-
-    @ViewChild('workflowNodeRunParam')
-    runWithParamComponent: WorkflowNodeRunParamComponent;
 
     @Select(WorkflowState.getSelectedNodeRun()) nodeRun$: Observable<WorkflowNodeRun>;
     nodeRunSubs: Subscription;
@@ -48,6 +46,7 @@ export class WorkflowNodeRunSummaryComponent implements OnInit, OnDestroy {
     readOnlyRun: boolean;
 
     constructor(
+        private _modalService: NzModalService,
         private _wrService: WorkflowRunService,
         private _toast: ToastService,
         private _translate: TranslateService,
@@ -104,8 +103,11 @@ export class WorkflowNodeRunSummaryComponent implements OnInit, OnDestroy {
     }
 
     runNewWithParameter(): void {
-        if (this.runWithParamComponent) {
-            this.runWithParamComponent.show();
-        }
+        this._modalService.create({
+            nzWidth: '900px',
+            nzTitle: 'Run worklow',
+            nzContent: WorkflowNodeRunParamComponent,
+            nzComponentParams: {}
+        });
     }
 }

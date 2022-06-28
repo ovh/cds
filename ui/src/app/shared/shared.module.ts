@@ -124,7 +124,7 @@ import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
 import { en_US, NZ_I18N } from 'ng-zorro-antd/i18n';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { IconDefinition } from '@ant-design/icons-angular';
-import { BellFill, BookOutline, CaretDownFill, CaretRightFill, CaretUpFill, CheckOutline, CopyOutline, DeleteOutline, DragOutline, EyeInvisibleOutline, EyeOutline, KeyOutline, HistoryOutline, InfoCircleOutline, PhoneFill, PlusOutline, PlusSquareOutline, QuestionOutline, QuestionCircleOutline, RestOutline, SaveOutline, SettingFill, ShareAltOutline, StarOutline, ToolFill, UnlockFill, UploadOutline, WarningOutline } from '@ant-design/icons-angular/icons'
+import { BellFill, BookOutline, CaretDownFill, CaretRightFill, CaretUpFill, CheckOutline, CopyOutline, DeleteOutline, DragOutline, EyeInvisibleOutline, EyeOutline, KeyOutline, HistoryOutline, InfoCircleOutline, PhoneFill, PlusOutline, PlusSquareOutline, QuestionOutline, QuestionCircleOutline, RestOutline, SaveOutline, SettingFill, ShareAltOutline, StarOutline, TableOutline, TagsOutline, ToolFill, UnlockFill, UnorderedListOutline, UploadOutline, WarningOutline } from '@ant-design/icons-angular/icons'
 import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzPopoverModule } from 'ng-zorro-antd/popover';
@@ -146,13 +146,15 @@ import { RequirementsValueComponent } from 'app/shared/requirements/value/requir
 import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzRadioModule } from 'ng-zorro-antd/radio';
 import { NzStepsModule } from 'ng-zorro-antd/steps';
+import { NzProgressModule } from 'ng-zorro-antd/progress';
+import { CardComponent } from 'app/shared/card/card.component';
 
 const ngZorroConfig: NzConfig = {
     notification: {nzPauseOnHover: true, nzPlacement: "topRight"},
     icon: {nzTheme: "outline"}
 };
 
-const icons: IconDefinition[] = [ BellFill, BookOutline, CaretDownFill, CaretRightFill, CaretUpFill, CheckOutline, CopyOutline, DeleteOutline, DragOutline, EyeInvisibleOutline, EyeOutline, KeyOutline, HistoryOutline, InfoCircleOutline, PhoneFill, PlusOutline, PlusSquareOutline, QuestionOutline, QuestionCircleOutline, RestOutline, SaveOutline, SettingFill, ShareAltOutline, StarOutline, ToolFill, UnlockFill, UploadOutline, WarningOutline ];
+const icons: IconDefinition[] = [ BellFill, BookOutline, CaretDownFill, CaretRightFill, CaretUpFill, CheckOutline, CopyOutline, DeleteOutline, DragOutline, EyeInvisibleOutline, EyeOutline, KeyOutline, HistoryOutline, InfoCircleOutline, PhoneFill, PlusOutline, PlusSquareOutline, QuestionOutline, QuestionCircleOutline, RestOutline, SaveOutline, SettingFill, ShareAltOutline, StarOutline, TableOutline, TagsOutline, ToolFill, UnlockFill, UnorderedListOutline, UploadOutline, WarningOutline ];
 
 @NgModule({
     imports: [
@@ -175,6 +177,7 @@ const icons: IconDefinition[] = [ BellFill, BookOutline, CaretDownFill, CaretRig
         NzNotificationModule,
         NzMenuModule,
         NzPopconfirmModule,
+        NzProgressModule,
         NzPopoverModule,
         NzRadioModule,
         NzSelectModule,
@@ -213,6 +216,7 @@ const icons: IconDefinition[] = [ BellFill, BookOutline, CaretDownFill, CaretRig
         AutoFocusInputComponent,
         BreadcrumbComponent,
         CallbackPipe,
+        CardComponent,
         ChartComponentComponent,
         CommitListComponent,
         ConditionsComponent,
@@ -324,6 +328,7 @@ const icons: IconDefinition[] = [ BellFill, BookOutline, CaretDownFill, CaretRig
         AutoFocusInputComponent,
         BreadcrumbComponent,
         CallbackPipe,
+        CardComponent,
         ChartComponentComponent,
         ClipboardModule,
         CodemirrorModule,
@@ -373,6 +378,7 @@ const icons: IconDefinition[] = [ BellFill, BookOutline, CaretDownFill, CaretRig
         NzNotificationModule,
         NzPopconfirmModule,
         NzPopoverModule,
+        NzProgressModule,
         NzRadioModule,
         NzSelectModule,
         NzSpinModule,

@@ -32,7 +32,7 @@
         <!-- Enable -->
         <nz-col [nzSpan]="3">
             <ng-container *ngIf="edit">
-                <label  id="enabled_step_{{order}}" name="enabled" nz-checkbox [(ngModel)]="step.enabled">Enabled</label>
+                <label  id="enabled_step_{{order}}" name="enabled" nz-checkbox [(ngModel)]="step.enabled" (ngModelChange)="action.hasChanged = true">Enabled</label>
             </ng-container>
             <ng-container *ngIf="!edit">
                 <ng-container *ngIf="step.enabled">
@@ -46,7 +46,7 @@
         <!-- Optional -->
         <nz-col [nzSpan]="3" [nzOffset]="1">
             <ng-container *ngIf="edit">
-                <label id="active_{{order}}" name="active" nz-checkbox [(ngModel)]="step.optional">
+                <label id="active_{{order}}" name="active" nz-checkbox [(ngModel)]="step.optional" (ngModelChange)="action.hasChanged = true">
                     <span nz-tooltip nzTooltipPlacement="top" nzTooltipTitle="If checked, even if this step fails, the stage execution will continue">
                         Optional<i nz-icon nzType="info-circle" nzTheme="outline"></i>
                     </span>
@@ -57,7 +57,7 @@
         <!-- Always executed -->
         <nz-col [nzSpan]="4" [nzOffset]="1">
             <ng-container *ngIf="edit">
-                <label id="always_executed_{{order}}" name="always_executed" nz-checkbox [(ngModel)]="step.always_executed">
+                <label id="always_executed_{{order}}" name="always_executed" nz-checkbox [(ngModel)]="step.always_executed" (ngModelChange)="action.hasChanged = true">
                      <span nz-tooltip nzTooltipPlacement="top" nzTooltipTitle="If checked, this step will be executed even if previous steps fail">
                          Always executed<i nz-icon nzType="info-circle" nzTheme="outline"></i>
                      </span>

@@ -5,10 +5,9 @@
     </div>
 
     <!-- Boolean -->
-    <div class="ui checkbox" *ngSwitchCase="'boolean'">
-        <input type="checkbox" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" [disabled]="disabled" name="value">
-        <label>{{ ' '}}</label>
-    </div>
+    <ng-container *ngSwitchCase="'boolean'">
+        <label nz-checkbox [(ngModel)]="value" (ngModelChange)="valueChanged()" [nzDisabled]="disabled" name="value"></label>
+    </ng-container>
 
     <!-- Password -->
     <div *ngSwitchCase="'password'">
