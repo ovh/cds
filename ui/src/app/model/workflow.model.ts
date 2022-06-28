@@ -372,7 +372,7 @@ export class WorkflowNodeConditions {
 export class WorkflowNodeCondition {
     variable: string;
     operator: string;
-    value: string;
+    value: any;
 
     constructor() {
         this.value = '';

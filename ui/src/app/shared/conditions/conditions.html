@@ -23,7 +23,7 @@
             <tbody>
             <tr *ngFor="let c of condTab.data; let i = index">
                 <td>
-                    <nz-select nzShowSearch (nzOnSearch)="onSearchName($event)" [(ngModel)]="c.variable" (ngModelChange)="pushChange('name')" [nzDisabled]="readonly">
+                    <nz-select nzShowSearch (nzOnSearch)="onSearchName($event)" [(ngModel)]="c.variable" (ngModelChange)="pushChange('name');castValue(i)" [nzDisabled]="readonly">
                         <nz-option *ngFor="let n of conditionNames" [nzValue]="n" [nzLabel]="n"></nz-option>
                     </nz-select>
                 </td>

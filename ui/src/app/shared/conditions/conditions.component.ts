@@ -163,6 +163,13 @@ export class ConditionsComponent extends Table<WorkflowNodeCondition> implements
         return result;
     }
 
+    castValue(index: number): void {
+        if (this.conditions.plain[index].variable === 'cds.manual') {
+            this.conditions.plain[index].value = true;
+            this.conditions.plain = Object.assign([], this.conditions.plain);
+        }
+    }
+
     pushChange(event: string, e?: string): void {
         if (event !== 'codemirror') {
             this.conditionsChange.emit(this.conditions);
