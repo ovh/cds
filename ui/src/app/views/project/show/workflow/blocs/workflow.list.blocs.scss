@@ -21,6 +21,7 @@
 
       .right {
         margin-left: auto;
+        padding-right: 5px;
       }
     }
   }
@@ -28,4 +29,21 @@
 
 app-card {
   cursor: pointer;
+}
+.content {
+  width: 100%;
+}
+
+.alignRight {
+  float: right;
+}
+
+nz-list {
+  height: 250px;
+  overflow: hidden;
+  overflow-y: auto;
+}
+
+.footer {
+  height: 15px;
 }
