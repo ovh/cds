@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import {TestBed, tick, fakeAsync} from '@angular/core/testing';
+import { TestBed, tick, fakeAsync, flush } from '@angular/core/testing';
 import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
 import {RouterTestingModule} from '@angular/router/testing';
 import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
@@ -15,6 +15,7 @@ import {ProjectAuditService} from '../../../service/project/project.audit.servic
 import {EnvironmentAuditService} from '../../../service/environment/environment.audit.service';
 import {ApplicationAuditService} from '../../../service/application/application.audit.service';
 import {VariableComponent} from './variable.component';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 describe('CDS: Variable List Component', () => {
 
@@ -34,6 +35,7 @@ describe('CDS: Variable List Component', () => {
                 { provide: APP_BASE_HREF, useValue : '/' }
             ],
             imports : [
+                BrowserAnimationsModule,
                 RouterTestingModule.withRoutes([]),
                 SharedModule,
                 TranslateModule.forRoot(),
@@ -67,22 +69,9 @@ describe('CDS: Variable List Component', () => {
         fixture.componentInstance._cd.detectChanges();
         tick(50);
 
-        let compiled = fixture.debugElement.nativeElement;
-
-        expect(compiled.querySelector('.ui.red.button')).toBeTruthy('Delete button must be displayed');
-        compiled.querySelector('.ui.red.button').click();
-
-        fixture.detectChanges();
-        tick(50);
-
         spyOn(fixture.componentInstance.event, 'emit');
 
-        expect(compiled.querySelector('.ui.buttons')).toBeTruthy('Confirmation buttons must be displayed');
-        compiled.querySelector('.ui.red.button.active').click();
-
-        expect(fixture.componentInstance.event.emit).toHaveBeenCalledWith(
-            new VariableEvent('delete', fixture.componentInstance.variables[0])
-        );
+        let compiled = fixture.debugElement.nativeElement;
 
 
         expect(fixture.componentInstance.variables[0].hasChanged).toBeFalsy('No update yet on this variable');
@@ -101,6 +90,8 @@ describe('CDS: Variable List Component', () => {
         expect(fixture.componentInstance.event.emit).toHaveBeenCalledWith(
             new VariableEvent('update', fixture.componentInstance.variables[0])
         );
+
+        flush()
     }));
 });
 
