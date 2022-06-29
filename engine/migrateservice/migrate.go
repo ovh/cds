@@ -60,19 +60,7 @@ func doMigrate(ctx context.Context, dbConfig database.DBConfiguration, directory
 	}
 
 	log.Info(ctx, "DBMigrate> Starting Database migration...")
-	dbConn, err := database.Init(
-		ctx,
-		dbConfig.User,
-		dbConfig.Role,
-		dbConfig.Password,
-		dbConfig.Name,
-		dbConfig.Schema,
-		dbConfig.Host,
-		dbConfig.Port,
-		dbConfig.SSLMode,
-		dbConfig.ConnectTimeout,
-		dbConfig.Timeout,
-		dbConfig.MaxConn)
+	dbConn, err := database.Init(ctx, dbConfig)
 	if err != nil {
 		return nil, sdk.WrapError(err, "cannot connect to database with name %s", dbConfig.Name)
 	}

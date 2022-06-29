@@ -17,19 +17,21 @@ import (
 
 // DBConnectionFactory is a database connection factory on postgres with gorp
 type DBConnectionFactory struct {
-	DBRole           string
-	DBUser           string
-	DBPassword       string
-	DBName           string
-	DBSchema         string
-	DBHost           string
-	DBPort           int
-	DBSSLMode        string
-	DBTimeout        int
-	DBConnectTimeout int
-	DBMaxConn        int
-	Database         *sql.DB
-	mutex            *sync.Mutex
+	DBRole            string
+	DBUser            string
+	DBPassword        string
+	DBName            string
+	DBSchema          string
+	DBHost            string
+	DBPort            int
+	DBSSLMode         string
+	DBTimeout         int
+	DBConnectTimeout  int
+	DBConnMaxIdleTime string
+	DBConnMaxLifetime string
+	DBMaxConn         int
+	Database          *sql.DB
+	mutex             *sync.Mutex
 }
 
 // DB returns the current sql.DB object
@@ -38,7 +40,21 @@ func (f *DBConnectionFactory) DB() *sql.DB {
 		if f.DBName == "" {
 			return nil
 		}
-		newF, err := Init(context.TODO(), f.DBUser, f.DBRole, f.DBPassword, f.DBName, f.DBSchema, f.DBHost, f.DBPort, f.DBSSLMode, f.DBConnectTimeout, f.DBTimeout, f.DBMaxConn)
+		newF, err := Init(context.TODO(), DBConfiguration{
+			User:            f.DBUser,
+			Role:            f.DBRole,
+			Password:        f.DBPassword,
+			Name:            f.DBName,
+			Schema:          f.DBSchema,
+			Host:            f.DBHost,
+			Port:            f.DBPort,
+			SSLMode:         f.DBSSLMode,
+			MaxConn:         f.DBMaxConn,
+			ConnectTimeout:  f.DBConnectTimeout,
+			ConnMaxIdleTime: f.DBConnMaxIdleTime,
+			ConnMaxLifetime: f.DBConnMaxLifetime,
+			Timeout:         f.DBTimeout,
+		})
 		if err != nil {
 			err = sdk.WithStack(err)
 			ctx := sdk.ContextWithStacktrace(context.TODO(), err)
@@ -68,24 +84,26 @@ func (f *DBConnectionFactory) Set(d *sql.DB) {
 }
 
 // Init initialize sql.DB object by checking environment variables and connecting to database
-func Init(ctx context.Context, user, role, password, name, schema, host string, port int, sslmode string, connectTimeout, timeout, maxconn int) (*DBConnectionFactory, error) {
-	if schema == "" {
-		schema = "public"
+func Init(ctx context.Context, dbConfig DBConfiguration) (*DBConnectionFactory, error) {
+	if dbConfig.Schema == "" {
+		dbConfig.Schema = "public"
 	}
 
 	f := &DBConnectionFactory{
-		DBRole:           role,
-		DBUser:           user,
-		DBPassword:       password,
-		DBName:           name,
-		DBSchema:         schema,
-		DBHost:           host,
-		DBPort:           port,
-		DBSSLMode:        sslmode,
-		DBTimeout:        timeout,
-		DBConnectTimeout: connectTimeout,
-		DBMaxConn:        maxconn,
-		mutex:            &sync.Mutex{},
+		DBRole:            dbConfig.Role,
+		DBUser:            dbConfig.User,
+		DBPassword:        dbConfig.Password,
+		DBName:            dbConfig.Name,
+		DBSchema:          dbConfig.Schema,
+		DBHost:            dbConfig.Host,
+		DBPort:            dbConfig.Port,
+		DBSSLMode:         dbConfig.SSLMode,
+		DBTimeout:         dbConfig.Timeout,
+		DBConnectTimeout:  dbConfig.ConnectTimeout,
+		DBConnMaxIdleTime: dbConfig.ConnMaxIdleTime,
+		DBConnMaxLifetime: dbConfig.ConnMaxLifetime,
+		DBMaxConn:         dbConfig.MaxConn,
+		mutex:             &sync.Mutex{},
 	}
 
 	f.mutex.Lock()
@@ -105,7 +123,7 @@ func Init(ctx context.Context, user, role, password, name, schema, host string, 
 		f.DBName == "" ||
 		f.DBHost == "" ||
 		f.DBPort == 0 {
-		return nil, fmt.Errorf("Missing database infos")
+		return nil, fmt.Errorf("missing database infos")
 	}
 
 	if f.DBTimeout < 200 || f.DBTimeout > 30000 {
@@ -139,6 +157,20 @@ func Init(ctx context.Context, user, role, password, name, schema, host string, 
 
 	f.Database.SetMaxOpenConns(f.DBMaxConn)
 	f.Database.SetMaxIdleConns(int(f.DBMaxConn / 2))
+	if f.DBConnMaxIdleTime != "" {
+		connMaxIdleTime, err := time.ParseDuration(f.DBConnMaxIdleTime)
+		if err != nil {
+			return nil, sdk.WrapError(err, "unable to parse connMaxIdleTime with %s on database.", f.DBConnMaxIdleTime)
+		}
+		f.Database.SetConnMaxIdleTime(connMaxIdleTime)
+	}
+	if f.DBConnMaxLifetime != "" {
+		connMaxLifetime, err := time.ParseDuration(f.DBConnMaxLifetime)
+		if err != nil {
+			return nil, sdk.WrapError(err, "unable to parse connMaxLifetime with %s on database.", f.DBConnMaxIdleTime)
+		}
+		f.Database.SetConnMaxLifetime(connMaxLifetime)
+	}
 
 	if _, err := f.Database.Exec(fmt.Sprintf("SET statement_timeout = %d", f.DBTimeout)); err != nil {
 		log.Error(ctx, "unable to set statement_timeout with %d on database: %s", f.DBTimeout, err)
@@ -146,11 +178,11 @@ func Init(ctx context.Context, user, role, password, name, schema, host string, 
 	}
 
 	// Set role if specified
-	if role != "" {
-		log.Debug(ctx, "database> setting role %s on database", role)
-		if _, err := f.Database.Exec("SET ROLE '" + role + "'"); err != nil {
-			log.Error(ctx, "unable to set role %s on database: %v", role, err)
-			return nil, sdk.WrapError(err, "unable to set role %s", role)
+	if f.DBRole != "" {
+		log.Debug(ctx, "database> setting role %s on database", f.DBRole)
+		if _, err := f.Database.Exec("SET ROLE '" + f.DBRole + "'"); err != nil {
+			log.Error(ctx, "unable to set role %s on database: %v", f.DBRole, err)
+			return nil, sdk.WrapError(err, "unable to set role %s", f.DBRole)
 		}
 	}
 

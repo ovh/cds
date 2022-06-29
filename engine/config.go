@@ -320,14 +320,14 @@ func configSetStartupData(conf *Configuration) (string, error) {
 		}
 
 		key, _ := keyloader.GenerateKey("hmac", gorpmapper.KeySignIdentifier, false, time.Now())
-		conf.API.Database.SignatureKey = database.RollingKeyConfig{Cipher: "hmac"}
+		conf.API.Database.SignatureKey = &database.RollingKeyConfig{Cipher: "hmac"}
 		conf.API.Database.SignatureKey.Keys = append(conf.API.Database.SignatureKey.Keys, database.KeyConfig{
 			Key:       key.Key,
 			Timestamp: key.Timestamp,
 		})
 
 		key, _ = keyloader.GenerateKey("xchacha20-poly1305", gorpmapper.KeyEcnryptionIdentifier, false, time.Now())
-		conf.API.Database.EncryptionKey = database.RollingKeyConfig{Cipher: "xchacha20-poly1305"}
+		conf.API.Database.EncryptionKey = &database.RollingKeyConfig{Cipher: "xchacha20-poly1305"}
 		conf.API.Database.EncryptionKey.Keys = append(conf.API.Database.EncryptionKey.Keys, database.KeyConfig{
 			Key:       key.Key,
 			Timestamp: key.Timestamp,
@@ -336,14 +336,14 @@ func configSetStartupData(conf *Configuration) (string, error) {
 
 	if conf.CDN != nil {
 		key, _ := keyloader.GenerateKey("hmac", gorpmapper.KeySignIdentifier, false, time.Now())
-		conf.CDN.Database.SignatureKey = database.RollingKeyConfig{Cipher: "hmac"}
+		conf.CDN.Database.SignatureKey = &database.RollingKeyConfig{Cipher: "hmac"}
 		conf.CDN.Database.SignatureKey.Keys = append(conf.CDN.Database.SignatureKey.Keys, database.KeyConfig{
 			Key:       key.Key,
 			Timestamp: key.Timestamp,
 		})
 
 		key, _ = keyloader.GenerateKey("xchacha20-poly1305", gorpmapper.KeyEcnryptionIdentifier, false, time.Now())
-		conf.CDN.Database.EncryptionKey = database.RollingKeyConfig{Cipher: "xchacha20-poly1305"}
+		conf.CDN.Database.EncryptionKey = &database.RollingKeyConfig{Cipher: "xchacha20-poly1305"}
 		conf.CDN.Database.EncryptionKey.Keys = append(conf.CDN.Database.EncryptionKey.Keys, database.KeyConfig{
 			Key:       key.Key,
 			Timestamp: key.Timestamp,

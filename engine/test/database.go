@@ -120,7 +120,21 @@ func SetupPGToCancel(t require.TestingT, m *gorpmapper.Mapper, serviceType strin
 	factory, ok := mDBConnectionFactories[dbConnectionConfigKey]
 	mDBConnectionFactoriesMutex.RUnlock()
 	if !ok {
-		factory, err = database.Init(context.TODO(), dbUser, dbRole, dbPassword, dbName, dbSchema, dbHost, int(dbPort), dbSSLMode, 10, 2000, 100)
+		factory, err = database.Init(context.TODO(),
+			database.DBConfiguration{
+				User:           dbUser,
+				Role:           dbRole,
+				Password:       dbPassword,
+				Name:           dbName,
+				Schema:         dbSchema,
+				Host:           dbHost,
+				Port:           int(dbPort),
+				SSLMode:        dbSSLMode,
+				MaxConn:        10,
+				ConnectTimeout: 100,
+				Timeout:        2000,
+			})
+
 		require.NoError(t, err, "cannot open database")
 		mDBConnectionFactoriesMutex.Lock()
 		mDBConnectionFactories[dbConnectionConfigKey] = factory

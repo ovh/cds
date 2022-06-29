@@ -212,8 +212,22 @@ func databaseDowngradeCmdFunc(cmd *cobra.Command, args []string) {
 
 func databaseStatusCmdFunc(cmd *cobra.Command, args []string) {
 	var err error
-	connFactory, err = database.Init(context.TODO(), connFactory.DBUser, connFactory.DBRole, connFactory.DBPassword, connFactory.DBName, connFactory.DBSchema,
-		connFactory.DBHost, connFactory.DBPort, connFactory.DBSSLMode, connFactory.DBConnectTimeout, connFactory.DBTimeout, connFactory.DBMaxConn)
+
+	dbConf := database.DBConfiguration{
+		User:           connFactory.DBUser,
+		Role:           connFactory.DBRole,
+		Password:       connFactory.DBPassword,
+		Name:           connFactory.DBName,
+		Schema:         connFactory.DBSchema,
+		Host:           connFactory.DBHost,
+		Port:           int(connFactory.DBPort),
+		SSLMode:        connFactory.DBSSLMode,
+		MaxConn:        connFactory.DBTimeout,
+		ConnectTimeout: connFactory.DBConnectTimeout,
+		Timeout:        connFactory.DBMaxConn,
+	}
+
+	connFactory, err = database.Init(context.TODO(), dbConf)
 	if err != nil {
 		sdk.Exit("Error: %v\n", err)
 	}
@@ -280,8 +294,20 @@ func databaseStatusCmdFunc(cmd *cobra.Command, args []string) {
 //ApplyMigrations applies migration (or not depending on dryrun flag)
 func ApplyMigrations(dir migrate.MigrationDirection, dryrun bool, limit int) error {
 	var err error
-	connFactory, err = database.Init(context.TODO(), connFactory.DBUser, connFactory.DBRole, connFactory.DBPassword, connFactory.DBName, connFactory.DBSchema,
-		connFactory.DBHost, connFactory.DBPort, connFactory.DBSSLMode, connFactory.DBConnectTimeout, connFactory.DBTimeout, connFactory.DBMaxConn)
+	dbConf := database.DBConfiguration{
+		User:           connFactory.DBUser,
+		Role:           connFactory.DBRole,
+		Password:       connFactory.DBPassword,
+		Name:           connFactory.DBName,
+		Schema:         connFactory.DBSchema,
+		Host:           connFactory.DBHost,
+		Port:           int(connFactory.DBPort),
+		SSLMode:        connFactory.DBSSLMode,
+		MaxConn:        connFactory.DBTimeout,
+		ConnectTimeout: connFactory.DBConnectTimeout,
+		Timeout:        connFactory.DBMaxConn,
+	}
+	connFactory, err = database.Init(context.TODO(), dbConf)
 	if err != nil {
 		sdk.Exit("Error: %+v\n", err)
 	}
