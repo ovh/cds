@@ -123,7 +123,7 @@ func Init(ctx context.Context, dbConfig DBConfiguration) (*DBConnectionFactory, 
 		f.DBName == "" ||
 		f.DBHost == "" ||
 		f.DBPort == 0 {
-		return nil, fmt.Errorf("missing database infos")
+		return nil, errors.Errorf("missing database infos")
 	}
 
 	if f.DBTimeout < 200 || f.DBTimeout > 30000 {
