@@ -222,7 +222,7 @@ func databaseStatusCmdFunc(cmd *cobra.Command, args []string) {
 		Host:           connFactory.DBHost,
 		Port:           int(connFactory.DBPort),
 		SSLMode:        connFactory.DBSSLMode,
-		MaxConn:        connFactory.DBTimeout,
+		MaxConn:        connFactory.DBMaxConn,
 		ConnectTimeout: connFactory.DBConnectTimeout,
 		Timeout:        connFactory.DBTimeout,
 	}
