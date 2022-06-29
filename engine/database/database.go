@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
+	"github.com/pkg/errors"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/gorpmapper"
