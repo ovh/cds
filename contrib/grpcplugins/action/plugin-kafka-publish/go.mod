@@ -4,7 +4,7 @@ replace github.com/ovh/cds => ../../../../
 
 replace github.com/go-gorp/gorp => github.com/yesnault/gorp v2.0.1-0.20200325154225-2dc6d8c2da37+incompatible
 
-go 1.17
+go 1.18
 
 require (
 	github.com/Shopify/sarama v1.30.0
