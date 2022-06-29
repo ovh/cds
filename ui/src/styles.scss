@@ -17,6 +17,11 @@ body {
     overflow-y: hidden;
 }
 
+textarea:read-only {
+  color: rgba(0,0,0,.85);
+  opacity: 0.45;
+}
+
 .entity-card {
   width: 100%;
   height: 100px;

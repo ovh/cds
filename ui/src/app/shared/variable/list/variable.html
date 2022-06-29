@@ -1,108 +1,71 @@
 <div class="variable" *ngIf="ready && variableTypes">
-    <div class="ui grid">
-        <div class="ui right aligned column">
-            <div class="ui input">
-                <input type="text" placeholder="{{ 'filter' | translate }}" [(ngModel)]="filter">
-            </div>
-        </div>
-    </div>
-
-    <table class="ui fixed celled table" *ngIf="getDataForCurrentPage().length > 0">
+    <nz-row class="ui grid">
+        <nz-col [nzOffset]="20" [nzSpan]="4" class="alignRight">
+            <input nz-input type="text" placeholder="Filter" [(ngModel)]="filter" (ngModelChange)="filterVariables()">
+        </nz-col>
+    </nz-row>
+    <nz-table  [nzData]="filteredVariables" [nzNoResult]="novars" #varlist>
         <thead>
         <tr>
-            <th class="one wide" *ngIf="auditContext"></th>
-            <th class="four wide">{{ 'variable_name' | translate }}</th>
-            <th class="three wide">{{ 'variable_type' | translate }}</th>
-            <th class="five wide">{{ 'variable_value' | translate }}</th>
-            <th class="three wide" *ngIf="mode === 'edit'"></th>
+            <th nzWidth="100px" *ngIf="auditContext"></th>
+            <th nzWidth="200px">Name</th>
+            <th nzWidth="200px">Type</th>
+            <th nzWidth="300px">Value</th>
+            <th nzWidth="200px" *ngIf="mode === 'edit'"></th>
         </tr>
         </thead>
         <tbody>
-        <tr *ngFor="let v of getDataForCurrentPage()">
+        <tr *ngFor="let v of varlist.data">
             <td *ngIf="auditContext">
-                <button class="ui basic icon button" (click)="showAudit($event, v)">
-                    <i class="calendar icon"></i>
+                <button nz-button (click)="showAudit($event, v)">
+                    <i nz-icon nzType="calendar" nzTheme="outline"></i>
                 </button>
             </td>
             <td>
                 <div class="warname">
                     <div class="varname">
-                        <div class="ui fluid input" *ngIf="mode === 'edit'">
-                            <input [(ngModel)]="v.name" (keydown)="v.hasChanged = true" name="varname" [disabled]="true">
-                        </div>
+                        <ng-container *ngIf="mode === 'edit'">
+                            <input nz-input [(ngModel)]="v.name" (keydown)="v.hasChanged = true" name="varname" [disabled]="true">
+                        </ng-container>
                     </div>
                 </div>
-
-                <div class="ui input field" *ngIf="mode !== 'edit'">{{v.name}}</div>
+                <span *ngIf="mode !== 'edit'">{{v.name}}</span>
             </td>
             <td>
-                <div class="ui form" *ngIf="mode === 'edit'">
-                    <sui-select class="selection"
-                                isSearchable="true"
-                                [isDisabled]="v.updating"
-                                [(ngModel)]="v.type"
-                                (ngModelChange)="v.hasChanged = true"
-                                [options]="variableTypes"
-                                #selectType>
-                        <sui-select-option *ngFor="let option of selectType.filteredOptions"
-                                           [value]="option">
-                        </sui-select-option>
-                    </sui-select>
-                </div>
-                <div class="ui input field" *ngIf="mode !== 'edit'">{{v.type}}</div>
+                <ng-container *ngIf="mode === 'edit'">
+                    <nz-select nzShowSearch [nzDisabled]="v.updating" [(ngModel)]="v.type" (ngModelChange)="v.hasChanged = true">
+                        <nz-option *ngFor="let t of variableTypes" [nzLabel]="t" [nzValue]="t"></nz-option>
+                    </nz-select>
+                </ng-container>
+                <ng-container *ngIf="mode !== 'edit'">{{v.type}}</ng-container>
             </td>
             <td>
                 <app-variable-value *ngIf="mode !== 'ro'" [type]="v.type" [(value)]="v.value" (valueUpdating)="v.hasChanged = true"></app-variable-value>
-                <div class="ui input field" *ngIf="mode === 'ro'">{{v.value}}</div>
+                <ng-container *ngIf="mode === 'ro'">{{v.value}}</ng-container>
             </td>
             <td class="center" *ngIf="mode === 'edit'">
                 <div *ngIf="v.hasChanged;then save;else remove"></div>
                 <ng-template #save>
-                    <div suiPopup *ngIf="v.type === 'key'"
-                        [popupText]="'action_always_executed_details' | translate"
-                        popupPlacement="top center">
-                        <button class="ui green button"
-                            [class.loading]="v.updating"
-                            [class.disabled]="v.updating || v.type === 'key'"
+                    <button nz-button nzType="primary"
+                            [nzLoading]="v.updating"
+                            [disabled]="v.updating || v.type === 'key'"
                             name="btnupdatevar"
                             (click)="sendEvent('update', v)">
-                            <i class="save icon"></i>
-                            {{ 'btn_save' | translate}}
-                        </button>
-                    </div>
-                    <button class="ui green button"
-                        *ngIf="v.type !== 'key'"
-                        [class.loading]="v.updating"
-                        [class.disabled]="v.updating || v.type === 'key'"
-                        name="btnupdatevar"
-                        (click)="sendEvent('update', v)">
-                        <i class="save icon"></i>
-                        {{ 'btn_save' | translate}}
+                        <i nz-icon nzType="save" nzTheme="outline"></i>
+                        Save
                     </button>
                 </ng-template>
                 <ng-template #remove>
-                    <app-delete-button (event)="sendEvent('delete', v)" [loading]="v.updating"></app-delete-button>
+                    <button nz-button nzDanger nzType="primary" [nzLoading]="v.updating" (nzOnConfirm)="sendEvent('delete', v)"
+                    nz-popconfirm nzPopconfirmTitle="Are you sure you want to remove this variable ?">
+                        Delete
+                    </button>
                 </ng-template>
             </td>
         </tr>
         </tbody>
-        <tfoot *ngIf="getNbOfPages() > 1">
-        <tr>
-            <th colspan="4">
-                <div class="ui right floated pagination menu" >
-                    <a class="icon item" (click)="downPage()">
-                        <i class="left chevron icon"></i>
-                    </a>
-                    <a class="item" *ngFor="let page of getNbOfPages() | ngForNumber" (click)="goTopage(page)" [class.active]="currentPage === page">{{page}}</a>
-                    <a class="icon item" (click)="upPage()">
-                        <i class="right chevron icon"></i>
-                    </a>
-                </div>
-            </th>
-        </tr>
-        </tfoot>
-    </table>
-    <div class="ui info message" *ngIf="getDataForCurrentPage().length === 0">
-        {{ 'variable_no' | translate }}
-    </div>
+    </nz-table>
+    <ng-template #novars>
+        <nz-alert *ngIf="!filteredVariables || filteredVariables.length === 0" nzType="info" nzMessage="There is no variable"></nz-alert>
+    </ng-template>
 </div>

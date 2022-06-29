@@ -1,22 +1,10 @@
-@import '../../../../common';
-.ui.input {
-  position: inherit;
+.alignRight {
+  text-align: right;
 }
 
-.ui.table tbody tr td {
-  vertical-align: top;
+nz-table {
+  margin-top: 30px;
 }
-
-.warname {
-  display: flex;
-
-  app-warning-mark {
-    padding-top: 10px;
-  }
-
-  .varname {
-    width: 100%;
-  }
+nz-select {
+  width: 100%;
 }
-
-
