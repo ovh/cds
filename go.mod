@@ -46,7 +46,7 @@ require (
 	github.com/keybase/go-keychain v0.0.0-20190828020956-aa639f275ae1
 	github.com/keybase/go.dbus v0.0.0-20190710215703-a33a09c8a604
 	github.com/lib/pq v1.9.0
-	github.com/maruel/panicparse/v2 v2.2.0
+	github.com/maruel/panicparse/v2 v2.2.2
 	github.com/mattn/go-sqlite3 v1.9.0
 	github.com/mattn/go-zglob v0.0.1
 	github.com/mcuadros/go-defaults v0.0.0-20161116231230-e1c978be3307
