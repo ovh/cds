@@ -56,7 +56,7 @@
                     </button>
                 </ng-template>
                 <ng-template #remove>
-                    <button nz-button nzDanger nzType="primary" [nzLoading]="v.updating" (nzOnConfirm)="sendEvent('delete', v)"
+                    <button nz-button nzDanger nzType="primary" name="delVarButton" [nzLoading]="v.updating" (nzOnConfirm)="sendEvent('delete', v)"
                     nz-popconfirm nzPopconfirmTitle="Are you sure you want to remove this variable ?">
                         Delete
                     </button>
