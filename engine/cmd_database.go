@@ -224,7 +224,7 @@ func databaseStatusCmdFunc(cmd *cobra.Command, args []string) {
 		SSLMode:        connFactory.DBSSLMode,
 		MaxConn:        connFactory.DBTimeout,
 		ConnectTimeout: connFactory.DBConnectTimeout,
-		Timeout:        connFactory.DBMaxConn,
+		Timeout:        connFactory.DBTimeout,
 	}
 
 	connFactory, err = database.Init(context.TODO(), dbConf)
@@ -303,9 +303,9 @@ func ApplyMigrations(dir migrate.MigrationDirection, dryrun bool, limit int) err
 		Host:           connFactory.DBHost,
 		Port:           int(connFactory.DBPort),
 		SSLMode:        connFactory.DBSSLMode,
-		MaxConn:        connFactory.DBTimeout,
+		MaxConn:        connFactory.DBMaxConn,
 		ConnectTimeout: connFactory.DBConnectTimeout,
-		Timeout:        connFactory.DBMaxConn,
+		Timeout:        connFactory.DBTimeout,
 	}
 	connFactory, err = database.Init(context.TODO(), dbConf)
 	if err != nil {

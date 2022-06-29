@@ -4,7 +4,7 @@ import (
 	"github.com/ovh/symmecrypt/keyloader"
 )
 
-// DBConfigurationW is the exposed type for database configuration.
+// DBConfiguration is the exposed type for database configuration.
 type DBConfiguration struct {
 	User            string            `toml:"user" default:"cds" json:"user"`
 	Role            string            `toml:"role" default:"" commented:"true" comment:"Set a specific role to run SET ROLE for each connection" json:"role"`
