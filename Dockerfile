@@ -1,7 +1,11 @@
-FROM debian:bullseye-slim
-RUN apt-get update && \
-    apt-get install -y curl ca-certificates gpg git && rm -rf /var/lib/apt/lists/* && \
-    mkdir -p /app/sql /app/ui_static_files
+FROM alpine:3.16
+RUN apk update && apk update && \
+    apk --no-cache add curl && \
+    apk --no-cache add gpg && \
+    apk --no-cache add git && \
+    apk --no-cache add ca-certificates && rm -rf /var/cache/apk/* 
+RUN update-ca-certificates
+RUN mkdir -p /app/sql /app/ui_static_files
 COPY dist/cds-engine-* /app/
 COPY dist/cdsctl-* /app/
 COPY dist/cds-worker-* /app/
