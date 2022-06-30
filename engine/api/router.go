@@ -17,7 +17,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"github.com/rockbears/log"
-	uuid "github.com/satori/go.uuid"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
 
@@ -103,10 +102,8 @@ func (r *Router) compress(fn http.HandlerFunc) http.HandlerFunc {
 func (r *Router) setRequestID(h http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var requestID string
-		if existingRequestID := r.Header.Get(cdslog.HeaderRequestID); existingRequestID != "" {
-			if _, err := uuid.FromString(existingRequestID); err == nil {
-				requestID = existingRequestID
-			}
+		if existingRequestID := r.Header.Get(cdslog.HeaderRequestID); sdk.IsValidUUID(existingRequestID) {
+			requestID = existingRequestID
 		}
 		if requestID == "" {
 			requestID = sdk.UUID()

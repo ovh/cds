@@ -68,7 +68,6 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/rockbears/log v0.6.0
 	github.com/rubenv/sql-migrate v0.0.0-20160620083229-6f4757563362
-	github.com/satori/go.uuid v1.2.0
 	github.com/sguiheux/go-coverage v0.0.0-20190710153556-287b082a7197
 	github.com/shirou/gopsutil v0.0.0-20170406131756-e49a95f3d5f8
 	github.com/sirupsen/logrus v1.8.1

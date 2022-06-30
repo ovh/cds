@@ -3,9 +3,9 @@ package main
 import (
 	"time"
 
+	"github.com/gofrs/uuid"
 	jwt "github.com/golang-jwt/jwt"
 	"github.com/pkg/errors"
-	uuid "github.com/satori/go.uuid"
 )
 
 type tokenType string
@@ -21,7 +21,7 @@ type Claims struct {
 }
 
 func NewSigninToken() (string, string, error) {
-	subjectID := uuid.NewV4().String()
+	subjectID := uuid.Must(uuid.NewV4()).String()
 
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodRS512, Claims{
 		Type: signinToken,
