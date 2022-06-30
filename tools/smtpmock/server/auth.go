@@ -54,7 +54,7 @@ func CheckSigninToken(token string) (string, error) {
 }
 
 func NewSessionToken(subjectID string) (string, string, error) {
-	sessionID := uuid.NewV4().String()
+	sessionID := uuid.Must(uuid.NewV4()).String()
 
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodRS512, Claims{
 		Type: sessionToken,
