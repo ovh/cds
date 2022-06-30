@@ -13,7 +13,7 @@ COPY dist/sql.tar.gz /app/
 COPY dist/ui.tar.gz /app/
 COPY dist/cds-docs.tar.gz /app/
 
-RUN addgroup cds && adduser cds cds
+RUN addgroup cds && adduser cds -G cds -D
 RUN chmod +x /app/cds-engine-linux-amd64 && \
     tar xzf /app/sql.tar.gz -C /app/sql && \
     tar xzf /app/ui.tar.gz -C /app/ui_static_files && \
