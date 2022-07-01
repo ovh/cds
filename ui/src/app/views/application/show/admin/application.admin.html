@@ -28,7 +28,7 @@
                     <nz-alert *ngIf="fileTooLarge" nzType="error" nzMessage="Your file is too large (max 100Ko)"></nz-alert>
                 </nz-form-control>
             </nz-form-item>
-            <nz-form-item>
+            <nz-form-item nzJustify="end">
                 <button nz-button nzType="primary" [nzLoading]="loading" name="updateDescriptionButton" (click)="onSubmitApplicationUpdate()" [disabled]="loading || application.from_repository">
                     Save
                 </button>

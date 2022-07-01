@@ -1,17 +1,15 @@
 <div id="Applicationkey">
     <h3>{{ 'keys_list_title' | translate}}</h3>
     <ng-container *ngIf="application.keys && application.keys.length === 0">
-        <div class="ui info message">
-            {{'keys_no' | translate}}
-        </div>
+        <nz-alert nzType="info" nzMessage="There is no key"></nz-alert>
     </ng-container>
     <ng-container *ngIf="application.keys && application.keys.length > 0">
         <app-keys-list [keys]="application.keys" [loading]="loading"
             [edit]="!readOnly" (deleteEvent)="manageKeyEvent($event)">
         </app-keys-list>
     </ng-container>
-    <ng-container *ngIf="!readOnly">
+    <div class="keyAddTitle" *ngIf="!readOnly">
         <h3>{{ 'keys_add_title' | translate }}</h3>
         <app-keys-form [loading]="loading" (keyEvent)="manageKeyEvent($event)" prefix="app-"></app-keys-form>
-    </ng-container>
+    </div>
 </div>
