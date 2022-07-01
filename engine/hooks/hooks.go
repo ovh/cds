@@ -126,11 +126,13 @@ func (s *Service) Serve(c context.Context) error {
 		}()
 	}
 
-	webhookKey, err := jws.NewPublicKeyFromPEM([]byte(s.Cfg.WebhooksPublicKeySign))
-	if err != nil {
-		return sdk.WithStack(err)
+	if s.Cfg.WebhooksPublicKeySign != "" {
+		webhookKey, err := jws.NewPublicKeyFromPEM([]byte(s.Cfg.WebhooksPublicKeySign))
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		s.WebHooksParsedPublicKey = webhookKey
 	}
-	s.WebHooksParsedPublicKey = webhookKey
 
 	//Init the http server
 	s.initRouter(ctx)
