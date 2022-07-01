@@ -1,95 +1,101 @@
-<div class="AppRepository ui form">
-    <div class="fields">
-        <div class="four wide field">
-            <label>{{'deployment_integration_name' | translate}}</label>
-            <sui-select class="selection" name="selectIntegration" [(ngModel)]="selectedIntegration" [options]="filteredIntegrations"
-                [isSearchable]="true" labelField="name" #selectIntegration>
-                <sui-select-option *ngFor="let t of selectIntegration.filteredOptions" [value]="t">
-                </sui-select-option>
-            </sui-select>
-        </div>
-        <div class="six wide field">
+<form nz-form class="AppRepository">
+    <nz-row>
+        <h3>Link an new integration</h3>
+    </nz-row>
+    <nz-row>
+        <nz-col [nzSpan]="8">
+            <nz-form-item>
+                <nz-form-label>Integration/Deployment</nz-form-label>
+                <nz-form-control>
+                    <nz-select nzShowSearch name="selectIntegration" [(ngModel)]="selectedIntegration" >
+                        <nz-option *ngFor="let t of filteredIntegrations" [nzLabel]="t.name" [nzValue]="t"></nz-option>
+                    </nz-select>
+                </nz-form-control>
+            </nz-form-item>
+        </nz-col>
+        <nz-col [nzSpan]="13" class="configPadding">
             <ng-container *ngIf="selectedIntegration?.model">
-                <label>{{ 'integration_configuration' | translate }}</label>
-                <div class="inline fields" *ngFor="let k of selectedIntegration.model.additional_default_config | keys">
+                <h3>{{ 'integration_configuration' | translate }}</h3>
+                <div *ngFor="let k of selectedIntegration.model.additional_default_config | keys">
                     <div class="six wide field">
-                        <label>
-                            {{k}}
-                            <span *ngIf="selectedIntegration.model.additional_default_config[k].description" suiPopup
-                                [popupText]="selectedIntegration.model.additional_default_config[k].description"
-                                popupPlacement="right center">
-                                <i class="info circle icon"></i>
-                            </span>
-                        </label>
-                    </div>
-                    <div class="ten wide field">
-                        <input type="text" [(ngModel)]="selectedIntegration.model.additional_default_config[k].value"
-                            *ngIf="selectedIntegration.model.additional_default_config[k].type === 'string'">
-                        <input type="password" [(ngModel)]="selectedIntegration.model.additional_default_config[k].value"
-                            *ngIf="selectedIntegration.model.additional_default_config[k].type === 'password'">
-                        <textarea class="ui textarea" rows="3" [(ngModel)]="selectedIntegration.model.additional_default_config[k].value"
-                            *ngIf="selectedIntegration.model.additional_default_config[k].type === 'text'"></textarea>
+                        <nz-form-item>
+                            <nz-form-label [nzSpan]="6">
+                                {{k}}
+                                <i nz-icon nzType="info-circle" nzTheme="outline" nz-tooltip nzTooltipPlacement="right" *ngIf="selectedIntegration.model.additional_default_config[k].description"
+                                   [nzTooltipTitle]="selectedIntegration.model.additional_default_config[k].description"></i>
+                            </nz-form-label>
+                            <nz-form-control>
+                                <input nz-input name="{{k}}-value" type="text" [(ngModel)]="selectedIntegration.model.additional_default_config[k].value"
+                                       *ngIf="selectedIntegration.model.additional_default_config[k].type === 'string'">
+                                <input nz-input name="{{k}}-value" type="password" [(ngModel)]="selectedIntegration.model.additional_default_config[k].value"
+                                       *ngIf="selectedIntegration.model.additional_default_config[k].type === 'password'">
+                                <textarea nz-input name="{{k}}-value" class="ui textarea" rows="3" [(ngModel)]="selectedIntegration.model.additional_default_config[k].value"
+                                          *ngIf="selectedIntegration.model.additional_default_config[k].type === 'text'"></textarea>
+                            </nz-form-control>
+                        </nz-form-item>
                     </div>
                 </div>
             </ng-container>
-        </div>
-        <div class="six wide right aligned field">
-            <button name="savebtn" class="ui green button" [class.loading]="loadingBtn" type="button" (click)="addIntegration()"
-                [disabled]="!selectedIntegration || loadingBtn">{{ 'btn_add' | translate }}</button>
-        </div>
-    </div>
+        </nz-col>
+        <nz-col [nzSpan]="3" class="alignRight">
+            <button nz-button nzType="primary" name="savebtn" [nzLoading]="loadingBtn" type="button" (click)="addIntegration()"
+                    [disabled]="!selectedIntegration || loadingBtn">Add</button>
+        </nz-col>
+    </nz-row>
+</form>
     <div class="fields">
         <div [hidden]="!application.deployment_strategies">
             <ng-container *ngIf="application.deployment_strategies">
-                <table class="ui fixed single line celled table">
+                <h3>Linked integration</h3>
+                <nz-table [nzData]="getIntegrationNames()" #integList>
                     <thead>
-                        <tr>
-                            <th class="four wide">{{ 'common_name' | translate }}</th>
-                            <th class="nine wide">{{ 'integration_configuration' | translate }}</th>
-                            <th class="three wide"></th>
-                        </tr>
+                    <tr>
+                        <th>Name</th>
+                        <th>Configuration</th>
+                        <th></th>
+                    </tr>
                     </thead>
                     <tbody>
-                        <tr *ngFor="let pf of getIntegrationNames()">
-                            <td>
-                                {{pf}}
-                            </td>
-                            <td>
-                                <div class="inline fields" *ngFor="let k of application.deployment_strategies[pf] | keys">
-
-                                    <div class="six wide field">
-                                        <label>
+                    <tr *ngFor="let pf of integList.data">
+                        <td>
+                            {{pf}}
+                        </td>
+                        <td>
+                            <form nz-form>
+                                <ng-container *ngFor="let k of application.deployment_strategies[pf] | keys">
+                                    <nz-form-item>
+                                        <nz-form-label [nzSpan]="6">
                                             {{k}}
-                                            <span *ngIf="application.deployment_strategies[pf][k].description" suiPopup
-                                                [popupText]="application.deployment_strategies[pf][k].description"
-                                                popupPlacement="right center">
-                                                <i class="info circle icon"></i>
-                                            </span>
-                                        </label>
-                                    </div>
-                                    <div class="ten wide field">
-                                        <input type="text" [(ngModel)]="application.deployment_strategies[pf][k].value"
-                                            *ngIf="application.deployment_strategies[pf][k].type === 'string'">
-                                        <input type="password" [(ngModel)]="application.deployment_strategies[pf][k].value"
-                                            *ngIf="application.deployment_strategies[pf][k].type === 'password'">
-                                        <textarea class="ui textarea" rows="3" [(ngModel)]="application.deployment_strategies[pf][k].value"
-                                            *ngIf="application.deployment_strategies[pf][k].type === 'text'"></textarea>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="center aligned">
-                                <div>
-                                    <button class="ui green button mb5" [disabled]="loadingBtn" [class.loading]="loadingBtn"
-                                        type="button" (click)="updateIntegration(pf)">{{ 'btn_save' | translate }}</button>
-                                </div>
-                                <div>
-                                    <app-delete-button (event)="clickDeleteIntegration(pf)" [loading]="loadingBtn" [disabled]="loadingBtn"></app-delete-button>
-                                </div>
-                            </td>
-                        </tr>
+                                            <i *ngIf="application.deployment_strategies[pf][k].description" nz-icon nzType="info-circle" nzTheme="outline" nz-tooltip
+                                              [nzTooltipTitle]="application.deployment_strategies[pf][k].description"></i>
+                                        </nz-form-label>
+                                        <nz-form-control>
+                                            <input nz-input type="text" name="{{k}}-value" [(ngModel)]="application.deployment_strategies[pf][k].value"
+                                                   *ngIf="application.deployment_strategies[pf][k].type === 'string'">
+                                            <input nz-input type="password" name="{{k}}-value" [(ngModel)]="application.deployment_strategies[pf][k].value"
+                                                   *ngIf="application.deployment_strategies[pf][k].type === 'password'">
+                                            <textarea nz-input class="ui textarea" name="{{k}}-value" rows="3" [(ngModel)]="application.deployment_strategies[pf][k].value"
+                                                      *ngIf="application.deployment_strategies[pf][k].type === 'text'"></textarea>
+                                        </nz-form-control>
+                                    </nz-form-item>
+                                </ng-container>
+                            </form>
+                        </td>
+                        <td>
+                            <div class="action alignRight">
+                                <button nz-button nzType="primary" [disabled]="loadingBtn" [nzLoading]="loadingBtn"
+                                        type="button" (click)="updateIntegration(pf)">Save</button>
+                            </div>
+                            <div class="alignRight">
+                                <button nz-button nzDanger nzType="primary" [nzLoading]="loadingBtn"
+                                    nz-popconfirm nzPopconfirmTitle="Are you sure you want to delete this integration ?"
+                                    (nzOnConfirm)="clickDeleteIntegration(pf)">Delete</button>
+                            </div>
+                        </td>
+                    </tr>
                     </tbody>
-                </table>
+                </nz-table>
             </ng-container>
         </div>
     </div>
-</div>
+

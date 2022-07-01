@@ -2,7 +2,7 @@
     <nz-card nzTitle="Settings">
         <form nz-form #applicationUpdateFrom="ngForm">
             <nz-form-item>
-                <nz-form-label>Name</nz-form-label>
+                <nz-form-label [nzSpan]="3">Name</nz-form-label>
                 <nz-form-control>
                     <input nz-input type="text" name="formApplicationUpdateName" [(ngModel)]="newName" required #formApplicationUpdateName="ngModel"
                            pattern="[a-zA-Z0-9._-]*"
@@ -11,7 +11,7 @@
                 </nz-form-control>
             </nz-form-item>
             <nz-form-item>
-                <nz-form-label>Description</nz-form-label>
+                <nz-form-label [nzSpan]="3">Description</nz-form-label>
                 <nz-form-control>
                     <textarea nz-input class="app-description" type="text" name="formApplicationUpdateDescription"
                               [(ngModel)]="application.description" required #formApplicationUpdateDescription="ngModel" [disabled]="loading">
@@ -19,7 +19,7 @@
                 </nz-form-control>
             </nz-form-item>
             <nz-form-item>
-                <nz-form-label>Icon</nz-form-label>
+                <nz-form-label [nzSpan]="3">Icon</nz-form-label>
                 <nz-form-control>
                     <div>
                         <img class="app-icon" [src]="application.icon" alt="application icon" *ngIf="application.icon">
