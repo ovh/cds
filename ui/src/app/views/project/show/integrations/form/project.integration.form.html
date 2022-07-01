@@ -1,69 +1,61 @@
 <div class="IntegrationForm">
-    <div class="ui form" *ngIf="newIntegration && models">
-        <ng-template let-option #optionTemplate>
-            <div><i class="option.icon icon" *ngIf="option.icon"></i>{{ option.name }}</div>
-            <ul>
-                <li *ngIf="option.storage">
-                    <div class="ui green label">{{'integration_storage' | translate}}</div>
-                </li>
-                <li *ngIf="option.hook">
-                    <div class="ui green label">{{'integration_hook' | translate}}</div>
-                </li>
-                <li *ngIf="option.event">
-                    <div class="ui green label">{{'integration_event' | translate}}</div>
-                </li>
-                <li *ngIf="option.deployment">
-                    <div class="ui purple label">{{'integration_deployment' | translate}}</div>
-                </li>
-            </ul>
-        </ng-template>
-        <div class="fields">
-            <div class="four wide field">
-                <label>{{ 'integration_model' | translate }}</label>
-                <sui-select class="selection" name="model" [(ngModel)]="newIntegration.model"
-                    (ngModelChange)="updateConfig()" [options]="models" labelField="name"
-                    [optionTemplate]="optionTemplate" [isSearchable]="true" #select>
-                    <sui-select-option *ngFor="let n of select.filteredOptions" [value]="n">
-                    </sui-select-option>
-                </sui-select>
-            </div>
-            <div class="six wide field">
-                <ng-container *ngIf="newIntegration.model">
-                    <div class="inline fields">
-                        <div class="six wide field">
-                            <label>{{ 'integration_name' | translate }}</label>
-                        </div>
-                        <div class="ten wide field">
-                            <input name="name" type="text" [(ngModel)]="newIntegration.name">
-                        </div>
-                    </div>
-                    <label>{{ 'integration_configuration' | translate }}</label>
-                    <div class="inline fields" *ngFor="let k of newIntegration.model.default_config | keys">
-                        <div class="six wide field">
-                            <label>
-                                <b>{{k}}</b>
-                                <span *ngIf="newIntegration.config[k].description" suiPopup
-                                    [popupText]="newIntegration.config[k].description" popupPlacement="right center">
-                                    <i class="info circle icon"></i>
-                                </span>
-                            </label>
-                        </div>
-                        <div class="ten wide field">
-                            <input type="checkbox" [(ngModel)]="newIntegration.config[k].value"  *ngIf="newIntegration.config[k].type === 'boolean'">
-                            <input type="text" [(ngModel)]="newIntegration.config[k].value"  *ngIf="newIntegration.config[k].type === 'string'">
-                            <ng-container *ngIf="newIntegration.config[k].type === 'text'">
-                                <codemirror [(ngModel)]="newIntegration.config[k].value" [config]="codeMirrorConfig" #codeMirror></codemirror>
+    <form nz-form *ngIf="newIntegration && models">
+        <nz-form-item>
+            <nz-form-label>Model</nz-form-label>
+            <nz-form-control>
+                <nz-select nzShowSearch name="model" [(ngModel)]="newIntegration.model" (ngModelChange)="updateConfig()">
+                    <nz-option *ngFor="let m of models" [nzLabel]="m.name" nzCustomContent [nzValue]="m">
+                        <div><i class="option.icon icon" *ngIf="m.icon"></i>{{ m.name }}</div>
+                            <ng-container *ngIf="m.storage">
+                                <nz-tag nzColor="success">storage</nz-tag>
                             </ng-container>
-                            <input type="password" [(ngModel)]="newIntegration.config[k].value" *ngIf="newIntegration.config[k].type === 'password'">
-                        </div>
-                    </div>
-                </ng-container>
-            </div>
-            <div class="two wide right aligned field">
-                <button class="ui green button" type="button" (click)="create()" [class.loading]="loading"
-                    [disabled]="loading || !newIntegration.name || newIntegration.name === '' || !newIntegration.model">{{ 'btn_add' | translate }}</button>
-            </div>
-        </div>
+                            <ng-container *ngIf="m.hook">
+                                <nz-tag nzColor="success">hook</nz-tag>
+                            </ng-container>
+                            <ng-container *ngIf="m.event">
+                                <nz-tag nzColor="success">event</nz-tag>
+                            </ng-container>
+                            <ng-container *ngIf="m.deployment">
+                                <nz-tag nzColor="success">deployment</nz-tag>
+                            </ng-container>
+                    </nz-option>
+                </nz-select>
+            </nz-form-control>
+        </nz-form-item>
+        <ng-container *ngIf="newIntegration.model">
+            <nz-form-item>
+                <nz-form-label [nzSpan]="5">Integration name</nz-form-label>
+                <nz-form-control>
+                    <input nz-input name="name" type="text" [(ngModel)]="newIntegration.name">
+                </nz-form-control>
+            </nz-form-item>
+            <nz-form-item *ngFor="let k of newIntegration.model.default_config | keys">
+                <nz-form-label [nzSpan]="5">
+                    {{k}}
+                    <span *ngIf="newIntegration.config[k].description" nz-tooltip
+                          [nzTooltipTitle]="newIntegration.config[k].description" nzTooltipPlacement="right">
+                                    <i nz-icon nzType="info-circle" nzTheme="outline"></i>
+                    </span>
+                </nz-form-label>
+                <nz-form-control>
+                    <label *ngIf="newIntegration.config[k].type === 'boolean'" nz-checkbox name="{{k}}" [(ngModel)]="newIntegration.config[k].value"></label>
+                    <input nz-input type="text" name="{{k}}" [(ngModel)]="newIntegration.config[k].value"  *ngIf="newIntegration.config[k].type === 'string'">
+                    <ng-container *ngIf="newIntegration.config[k].type === 'text'">
+                        <codemirror [(ngModel)]="newIntegration.config[k].value" [config]="codeMirrorConfig" #codeMirror></codemirror>
+                    </ng-container>
+                    <input nz-input type="password" name="{{k}}" [(ngModel)]="newIntegration.config[k].value" *ngIf="newIntegration.config[k].type === 'password'">
+                </nz-form-control>
+            </nz-form-item>
 
-    </div>
+            <nz-form-item nzJustify="end">
+                <nz-form-control class="alignRight">
+                    <button nz-button nzType="primary" type="button" (click)="create()" [nzLoading]="loading"
+                            [disabled]="loading || !newIntegration.name || newIntegration.name === '' || !newIntegration.model">Add</button>
+
+                </nz-form-control>
+            </nz-form-item>
+        </ng-container>
+        <nz-form-item>
+        </nz-form-item>
+    </form>
 </div>

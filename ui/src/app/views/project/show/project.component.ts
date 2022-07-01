@@ -163,10 +163,6 @@ export class ProjectShowComponent implements OnInit, OnDestroy, AfterViewInit {
             title: 'Integrations',
             icon: 'plug',
             key: 'integrations'
-        }, <Tab>{
-            title: 'Warnings',
-            icon: 'bug',
-            key: 'warnings'
         }]
         if (this.project?.permissions?.writable) {
             this.tabs.push(<Tab>{

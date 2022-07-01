@@ -5,7 +5,6 @@ import { ProjectIntegration } from 'app/model/integration.model';
 import { Project } from 'app/model/project.model';
 import { ThemeStore } from 'app/service/theme/theme.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
-import { Table } from 'app/shared/table/table';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { DeleteIntegrationInProject, UpdateIntegrationInProject } from 'app/store/project.action';
 import { Subscription } from 'rxjs';
@@ -18,7 +17,7 @@ import { finalize, first } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class ProjectIntegrationListComponent extends Table<ProjectIntegration> implements OnInit, OnDestroy {
+export class ProjectIntegrationListComponent implements OnInit, OnDestroy {
     @ViewChild('codeMirror') codemirror: any;
 
     @Input() project: Project;
@@ -34,7 +33,6 @@ export class ProjectIntegrationListComponent extends Table<ProjectIntegration> i
         private _theme: ThemeStore,
         private _cd: ChangeDetectorRef
     ) {
-        super();
         this.codeMirrorConfig = {
             mode: 'shell',
             lineWrapping: true,
@@ -53,10 +51,6 @@ export class ProjectIntegrationListComponent extends Table<ProjectIntegration> i
             }
             this._cd.markForCheck();
         });
-    }
-
-    getData(): Array<ProjectIntegration> {
-        return this.project.integrations;
     }
 
     deleteIntegration(p: ProjectIntegration): void {

@@ -1,41 +1,31 @@
 <div id="projectRepoManagers">
-    <table class="ui fixed single line celled table">
+    <nz-table [nzData]="reposmanagers" nzSize="small" #listrepos>
         <thead>
-            <tr>
-                <th class="seven wide">{{ 'common_name' | translate }}</th>
-                <th class="two wide"></th>
-            </tr>
+        <tr>
+            <th nzWidth="400px">Name</th>
+            <th nzWidth="50px"></th>
+        </tr>
         </thead>
         <tbody>
-            <tr *ngFor="let r of getDataForCurrentPage()">
-                <td>
-                    {{r.name}}
-                    <span *ngIf="r.created_by !== ''"> -
-                        {{ 'project_repoman_created_by' | translate }}{{r.created_by}}</span>
-                </td>
-                <td class="right aligned">
-                    <app-delete-button (event)="clickDeleteButton(r.name)" [loading]="deleteLoading" *ngIf="r.type === ''">
-                    </app-delete-button>
-                </td>
-            </tr>
+        <tr *ngFor="let r of listrepos.data">
+            <td>
+                {{r.name}}
+                <span *ngIf="r.created_by !== ''"> -
+                    {{ 'project_repoman_created_by' | translate }}{{r.created_by}}</span>
+            </td>
+            <td class="rightAlign">
+                <button nz-button nzDanger nzType="primary" [nzLoading]="deleteLoading" *ngIf="r.type === ''" (click)="clickDeleteButton(r.name)">Remove</button>
+            </td>
+        </tr>
         </tbody>
-        <tfoot *ngIf="getNbOfPages() > 1">
-            <tr>
-                <th colspan="4">
-                    <div class="ui right floated pagination menu">
-                        <a class="icon item" (click)="downPage()">
-                            <i class="left chevron icon"></i>
-                        </a>
-                        <a class="item" *ngFor="let page of getNbOfPages() | ngForNumber" (click)="goTopage(page)"
-                            [class.active]="currentPage === page">{{page}}</a>
-                        <a class="icon item" (click)="upPage()">
-                            <i class="right chevron icon"></i>
-                        </a>
-                    </div>
-                </th>
-            </tr>
-        </tfoot>
-    </table>
+    </nz-table>
 </div>
-<app-confirm-modal [loading]="loadingDependencies" [title]="'repoman_delete_confirm_title' | translate"
-    [msg]="confirmationMessage" (event)="confirmDeletion($event)" #confirmDeletionModal></app-confirm-modal>
+<nz-modal [(nzVisible)]="deleteModal" nzTitle="Repository manager deletion" (nzOnCancel)="deleteModal = false">
+    <div *nzModalContent>
+        {{confirmationMessage}}
+    </div>
+    <div *nzModalFooter>
+        <button nz-button (click)="deleteModal = false">{{'common_no' | translate}}</button>
+        <button nz-button nzType="primary" (click)="confirmDeletion(true)">{{'common_yes' | translate}}</button>
+    </div>
+</nz-modal>
