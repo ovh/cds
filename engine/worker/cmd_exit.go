@@ -18,7 +18,7 @@ func cmdExit() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "exit",
 		Short: "worker exit",
-		Long:  "worker exit command lets job finish current step and disabled all further steps",
+    Long:  "worker exit command lets job finish current step with exit code 0 (success) and disabled all further steps",
 		Run:   exitCmd(),
 	}
 	return c
