@@ -122,19 +122,7 @@ func (s *Service) Start(ctx context.Context) error {
 
 	log.Info(ctx, "Initializing database connection...")
 	// Intialize database
-	s.DBConnectionFactory, err = database.Init(
-		ctx,
-		s.Cfg.Database.User,
-		s.Cfg.Database.Role,
-		s.Cfg.Database.Password,
-		s.Cfg.Database.Name,
-		s.Cfg.Database.Schema,
-		s.Cfg.Database.Host,
-		s.Cfg.Database.Port,
-		s.Cfg.Database.SSLMode,
-		s.Cfg.Database.ConnectTimeout,
-		s.Cfg.Database.Timeout,
-		s.Cfg.Database.MaxConn)
+	s.DBConnectionFactory, err = database.Init(ctx, s.Cfg.Database)
 	if err != nil {
 		return sdk.WrapError(err, "cannot connect to database")
 	}
