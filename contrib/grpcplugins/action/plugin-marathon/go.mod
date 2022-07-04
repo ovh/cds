@@ -2,7 +2,7 @@ module github.com/ovh/cds/contrib/grpcplugins/action/marathon
 
 replace github.com/ovh/cds => ../../../../
 
-go 1.17
+go 1.18
 
 require (
 	github.com/gambol99/go-marathon v0.7.1
