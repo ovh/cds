@@ -1,36 +1,46 @@
-<div class="KeyForm">
-    <div class="ui form">
-        <div class="ui info message" *ngIf="newKey.type === 'ssh'">
-            {{ 'keys_ssh_key_help' | translate }} <a href="#" [routerLink]="['/docs', 'docs', 'components', 'worker', 'key', 'install']">Worker Install Key</a>
-        </div>
-        <div class="ui info message" *ngIf="newKey.type === 'pgp'">
-            {{ 'keys_pgp_key_help' | translate }} <a href="#" [routerLink]="['/docs', 'docs', 'components', 'worker', 'key', 'install']">Worker Install Key</a>
-        </div>
-        <div class="fields">
-            <div class="seven wide field">
-                <label>{{ 'keys_name' | translate}}</label>
-                <div class="ui labeled input">
-                    <div class="ui label">{{prefix}}</div>
-                    <input type="text" name="name" [(ngModel)]="newKey.name">
-                </div>
-            </div>
-            <div class="seven wide field">
-                <label>{{ 'keys_type' | translate }}</label>
-                <ng-container *ngIf="keyTypes">
-                    <sui-select class="selection"
-                                name="type"
-                                [(ngModel)]="newKey.type"
-                                [options]="keyTypes"
-                                [isSearchable]="true"
-                                #selectKeyType>
-                        <sui-select-option *ngFor="let t of selectKeyType.filteredOptions" [value]="t">
-                        </sui-select-option>
-                    </sui-select>
-                </ng-container>
-            </div>
-            <div class="two wide right aligned field">
-                <button class="ui green button" type="button" [class.loading]="loading" [disabled]="loading || newKey.name === ''" (click)="addKey()">{{ 'btn_add' | translate }}</button>
-            </div>
-        </div>
-    </div>
-</div>
+<form nz-form>
+    <nz-alert nzType="info" *ngIf="newKey.type === 'ssh'" [nzMessage]="sshHelp"></nz-alert>
+    <ng-template #sshHelp>
+        {{ 'keys_ssh_key_help' | translate }} <a href="#"
+                                                 [routerLink]="['/docs', 'docs', 'components', 'worker', 'key', 'install']">Worker
+        Install Key</a>
+    </ng-template>
+    <nz-alert nzType="info" *ngIf="newKey.type === 'pgp'" [nzMessage]="pgpHelp"></nz-alert>
+    <ng-template #pgpHelp>
+        {{ 'keys_pgp_key_help' | translate }} <a href="#"
+                                                 [routerLink]="['/docs', 'docs', 'components', 'worker', 'key', 'install']">Worker
+        Install Key</a>
+    </ng-template>
+    <nz-row>
+        <nz-col [nzSpan]="8">
+            <nz-form-item>
+                <nz-form-label>Key name</nz-form-label>
+                <nz-form-control>
+                    <nz-input-group nzAddOnBefore="{{prefix}}">
+                        <input type="text" nz-input [(ngModel)]="newKey.name" name="keyname"/>
+                    </nz-input-group>
+                </nz-form-control>
+            </nz-form-item>
+        </nz-col>
+        <nz-col [nzSpan]="7" [nzOffset]="1">
+            <nz-form-item>
+                <nz-form-label>Key type</nz-form-label>
+                <nz-form-control>
+                    <nz-select nzShowSearch [(ngModel)]="newKey.type" name="type">
+                        <nz-option *ngFor="let t of keyTypes" [nzValue]="t" [nzLabel]="t"></nz-option>
+                    </nz-select>
+                </nz-form-control>
+            </nz-form-item>
+        </nz-col>
+        <nz-col [nzSpan]="2" [nzOffset]="1">
+            <nz-form-item>
+                <nz-form-control>
+                    <button nz-button nzType="primary" [nzLoading]="loading" [disabled]="loading || newKey.name === ''"
+                            (click)="addKey()">Add
+                    </button>
+                </nz-form-control>
+            </nz-form-item>
+        </nz-col>
+    </nz-row>
+</form>
+

@@ -64,14 +64,14 @@ type Service struct {
 
 // Configuration is the hooks configuration structure
 type Configuration struct {
-	Name               string                                 `toml:"name" default:"cds-cdn" comment:"Name of this CDS CDN Service\n Enter a name to enable this service" json:"name"`
-	TCP                sdk.TCPServer                          `toml:"tcp" comment:"######################\n CDS CDN TCP Configuration \n######################" json:"tcp"`
-	HTTP               service.HTTPRouterConfiguration        `toml:"http" comment:"######################\n CDS CDN HTTP Configuration \n######################" json:"http"`
-	URL                string                                 `default:"http://localhost:8089" json:"url" comment:"Private URL for communication with API"`
-	PublicTCP          string                                 `toml:"publicTCP" default:"localhost:8090" comment:"Public address to access to CDN TCP server" json:"public_tcp"`
-	PublicTCPEnableTLS bool                                   `toml:"publicTCPEnableTLS" comment:"Enable TLS on public address to access to CDN TCP server" json:"public_tcp_enable_tls"`
-	PublicHTTP         string                                 `toml:"publicHTTP" default:"http://localhost:8089" comment:"Public address to access to CDN HTTP server" json:"public_http"`
-	Database           database.DBConfigurationWithEncryption `toml:"database" comment:"################################\n Postgresql Database settings \n###############################" json:"database"`
+	Name               string                          `toml:"name" default:"cds-cdn" comment:"Name of this CDS CDN Service\n Enter a name to enable this service" json:"name"`
+	TCP                sdk.TCPServer                   `toml:"tcp" comment:"######################\n CDS CDN TCP Configuration \n######################" json:"tcp"`
+	HTTP               service.HTTPRouterConfiguration `toml:"http" comment:"######################\n CDS CDN HTTP Configuration \n######################" json:"http"`
+	URL                string                          `default:"http://localhost:8089" json:"url" comment:"Private URL for communication with API"`
+	PublicTCP          string                          `toml:"publicTCP" default:"localhost:8090" comment:"Public address to access to CDN TCP server" json:"public_tcp"`
+	PublicTCPEnableTLS bool                            `toml:"publicTCPEnableTLS" comment:"Enable TLS on public address to access to CDN TCP server" json:"public_tcp_enable_tls"`
+	PublicHTTP         string                          `toml:"publicHTTP" default:"http://localhost:8089" comment:"Public address to access to CDN HTTP server" json:"public_http"`
+	Database           database.DBConfiguration        `toml:"database" comment:"################################\n Postgresql Database settings \n###############################" json:"database"`
 	Cache              struct {
 		TTL     int   `toml:"ttl" default:"60" json:"ttl"`
 		LruSize int64 `toml:"lruSize" default:"134217728" json:"lruSize" comment:"Redis LRU cache for logs items in bytes (default: 128MB)"`

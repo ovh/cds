@@ -68,7 +68,7 @@ type Configuration struct {
 	Secrets struct {
 		SkipProjectSecretsOnRegion []string `toml:"skipProjectSecretsOnRegion" json:"-"`
 	} `toml:"secrets" json:"secrets"`
-	Database database.DBConfigurationWithEncryption `toml:"database" comment:"################################\n Postgresql Database settings \n###############################" json:"database"`
+	Database database.DBConfiguration `toml:"database" comment:"################################\n Postgresql Database settings \n###############################" json:"database"`
 	Cache    struct {
 		TTL   int `toml:"ttl" default:"60" json:"ttl"`
 		Redis struct {
@@ -512,19 +512,7 @@ func (a *API) Serve(ctx context.Context) error {
 
 	log.Info(ctx, "Initializing database connection...")
 	//Intialize database
-	a.DBConnectionFactory, err = database.Init(
-		ctx,
-		a.Config.Database.User,
-		a.Config.Database.Role,
-		a.Config.Database.Password,
-		a.Config.Database.Name,
-		a.Config.Database.Schema,
-		a.Config.Database.Host,
-		a.Config.Database.Port,
-		a.Config.Database.SSLMode,
-		a.Config.Database.ConnectTimeout,
-		a.Config.Database.Timeout,
-		a.Config.Database.MaxConn)
+	a.DBConnectionFactory, err = database.Init(ctx, a.Config.Database)
 	if err != nil {
 		return fmt.Errorf("cannot connect to database: %v", err)
 	}

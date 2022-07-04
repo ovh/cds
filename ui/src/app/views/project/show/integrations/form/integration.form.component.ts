@@ -66,6 +66,7 @@ export class ProjectIntegrationFormComponent implements OnInit, OnDestroy {
 
     updateConfig(): void {
         ProjectIntegration.mergeConfig(this.newIntegration.model.default_config, this.newIntegration.config);
+        this._cd.markForCheck();
     }
 
     create(): void {

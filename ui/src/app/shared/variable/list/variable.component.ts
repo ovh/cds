@@ -12,7 +12,6 @@ import { ApplicationAuditService } from 'app/service/application/application.aud
 import { EnvironmentAuditService } from 'app/service/environment/environment.audit.service';
 import { ProjectAuditService } from 'app/service/project/project.audit.service';
 import { VariableService } from 'app/service/variable/variable.service';
-import { Table } from 'app/shared/table/table';
 import { VariableEvent } from 'app/shared/variable/variable.event.model';
 import { finalize } from 'rxjs/operators';
 import { NzModalService } from 'ng-zorro-antd/modal';
@@ -24,20 +23,17 @@ import { VariableAuditComponent } from 'app/shared/variable/audit/audit.componen
     styleUrls: ['./variable.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class VariableComponent extends Table<Variable> {
+export class VariableComponent {
 
     @Input()
     set variables(data: Variable[]) {
         this._variables = data;
-        this.goTopage(1);
+        this.filterVariables();
     }
     get variables() {
         return this._variables;
     }
-    @Input()
-    set maxPerPage(data: number) {
-        this.nbElementsByPage = data;
-    }
+
     // display mode:   edit (edit all field) / launcher (only type value) /ro (display field, no edit)
     @Input() mode = 'edit';
 
@@ -52,11 +48,11 @@ export class VariableComponent extends Table<Variable> {
     public ready = false;
     public variableTypes: string[];
     private _variables: Variable[];
+    filteredVariables: Variable[] = [];
     filter: string;
 
     constructor(private _variableService: VariableService, private _projAudit: ProjectAuditService, private _modalService: NzModalService,
         private _envAudit: EnvironmentAuditService, private _appAudit: ApplicationAuditService, public _cd: ChangeDetectorRef) {
-        super();
         this.variableTypes = this._variableService.getTypesFromCache();
         if (!this.variableTypes) {
             this._variableService.getTypesFromAPI().pipe(finalize(() => {
@@ -70,12 +66,13 @@ export class VariableComponent extends Table<Variable> {
         }
     }
 
-    getData(): Array<Variable> {
+    filterVariables(): void {
         if (!this.filter || this.filter === '') {
-            return this.variables;
+            this.filteredVariables = Object.assign([], this.variables);
         } else {
-            return this.variables.filter(v => v.name.toLowerCase().indexOf(this.filter.toLowerCase()) !== -1);
+            this.filteredVariables = Object.assign([], this.variables.filter(v => v.name.toLowerCase().indexOf(this.filter.toLowerCase()) !== -1));
         }
+        this._cd.markForCheck();
     }
 
     /**
