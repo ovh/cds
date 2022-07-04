@@ -23,7 +23,7 @@ func Test_getAllRepositoriesHandler(t *testing.T) {
 	require.NoError(t, err)
 
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
-	user1, pass := assets.InsertLambdaUser(t, db)
+	user1, pass := assets.InsertAdminUser(t, db)
 
 	vcsProj := assets.InsertTestVCSProject(t, db, proj.ID, "vcs-github", "github")
 
