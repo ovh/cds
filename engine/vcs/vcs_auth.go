@@ -87,9 +87,10 @@ func (s *Service) authMiddleware(ctx context.Context, w http.ResponseWriter, req
 
 func getVCSAuth(ctx context.Context) (sdk.VCSAuth, error) {
 	var vcsAuth sdk.VCSAuth
-	vcsURL, ok := ctx.Value(contextKeyVCSURL).(string)
+	vcsType, ok := ctx.Value(contextKeyVCSType).(string)
 
 	if ok {
+		vcsURL, _ := ctx.Value(contextKeyVCSURL).(string)
 		vcsAuth.URL = vcsURL
 
 		username, _ := ctx.Value(contextKeyVCSUsername).(string)
@@ -98,7 +99,6 @@ func getVCSAuth(ctx context.Context) (sdk.VCSAuth, error) {
 		vcsURLApi, _ := ctx.Value(contextKeyVCSURLApi).(string)
 		vcsAuth.URLApi = vcsURLApi
 
-		vcsType, _ := ctx.Value(contextKeyVCSType).(string)
 		vcsAuth.Type = vcsType
 
 		token, _ := ctx.Value(contextKeyVCSToken).(string)
