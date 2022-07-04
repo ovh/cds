@@ -2,8 +2,10 @@
     <nz-form-item>
         <nz-form-label>Connection</nz-form-label>
         <nz-form-control>
-            <nz-radio-group [(ngModel)]="strategy.connection_type">
-                <label nz-radio [nzValue]="c" *ngFor="let c of connectionType.values()">{{c}}</label>
+            <nz-radio-group  [(ngModel)]="strategy.connection_type" name="radioConnecion">
+                <ng-container *ngFor="let c of connectionType.values()">
+                    <label nz-radio [nzValue]="c" >{{c}}</label>
+                </ng-container>
             </nz-radio-group>
         </nz-form-control>
     </nz-form-item>
@@ -11,42 +13,42 @@
     <ng-container [ngSwitch]="strategy.connection_type">
         <ng-container *ngSwitchCase="connectionType.SSH">
             <nz-form-item>
-                <nz-form-label>
+                <nz-form-label [nzSpan]="3">
                     SSH key*
                     <span class="keyLink" (click)="openCreateKeyModal('ssh')"
                           *ngIf="createOnProject">{{ 'key_or_create' | translate }}</span>
                 </nz-form-label>
-                <nz-form-control>
+                <nz-form-control [nzSpan]="7">
                     <app-parameter-value [editList]="false" [edit]="true" [type]="'ssh-key'" [keys]="keys"
                                          [(value)]="strategy.ssh_key" (valueChange)="updatePublicKey($event)">
                     </app-parameter-value>
-                    <ng-container *ngIf="selectedPublicKey">
-                        <button nz-button [title]="'key_copy_public' | translate" ngxClipboard
-                                [cbContent]="selectedPublicKey" (click)="clickCopyKey()">
-                            <i nz-icon nzType="copy" nzTheme="outline"></i>
-                        </button>
-                    </ng-container>
                 </nz-form-control>
+                <ng-container *ngIf="selectedPublicKey">
+                    <button nz-button [title]="'key_copy_public' | translate" ngxClipboard
+                            [cbContent]="selectedPublicKey" (click)="clickCopyKey()">
+                        <i nz-icon nzType="copy" nzTheme="outline"></i>
+                    </button>
+                </ng-container>
             </nz-form-item>
         </ng-container>
         <ng-container *ngSwitchCase="connectionType.HTTPS">
             <nz-form-item>
-                <nz-form-label>User</nz-form-label>
-                <nz-form-control>
-                    <input nz-input type="text" class="ui input" [(ngModel)]="strategy.user">
+                <nz-form-label [nzSpan]="3">User</nz-form-label>
+                <nz-form-control [nzSpan]="7">
+                    <input nz-input name="user" type="text" class="ui input" [(ngModel)]="strategy.user">
                 </nz-form-control>
             </nz-form-item>
             <nz-form-item>
-                <nz-form-label>Password</nz-form-label>
-                <nz-form-control>
-                    <input nz-input type="password" class="ui input" [(ngModel)]="strategy.password">
+                <nz-form-label [nzSpan]="3">Password</nz-form-label>
+                <nz-form-control [nzSpan]="7">
+                    <input nz-input name="password" type="password" class="ui input" [(ngModel)]="strategy.password">
                 </nz-form-control>
             </nz-form-item>
         </ng-container>
     </ng-container>
     <nz-form-item>
-        <nz-form-label>PGP key</nz-form-label>
-        <nz-form-control>
+        <nz-form-label [nzSpan]="3">PGP key</nz-form-label>
+        <nz-form-control [nzSpan]="7">
             <app-parameter-value [editList]="false" [edit]="true" [type]="'pgp-key'" [keys]="keys"
                                  [(value)]="strategy.pgp_key"></app-parameter-value>
         </nz-form-control>
