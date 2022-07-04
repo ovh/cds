@@ -1,84 +1,66 @@
-<div class="ui form">
-    <div class="inline fields">
-        <div class="two wide field">
-            <label>{{ 'vcs_connection' | translate }}</label>
-        </div>
-        <div class="fourteen wide field">
-            <ng-container *ngFor="let c of connectionType.values()">
-                <div class="ui radio checkbox">
-                    <input type="radio" id="connection-{{c}}" name="connection" [value]="c"
-                        [(ngModel)]="strategy.connection_type">
-                    <label for="connection-{{c}}">{{c}}</label>
-                </div>
-            </ng-container>
-        </div>
-    </div>
-    <div class="field">
-        <ng-container [ngSwitch]="strategy.connection_type">
-            <ng-container *ngSwitchCase="connectionType.SSH">
-                <div class="inline fields">
-                    <div class="two wide field">
-                        <label>{{ 'vcs_ssh_key' | translate }} *<span class="keyLink"
-                                (click)="openCreateKeyModal('ssh')"
-                                *ngIf="createOnProject">{{ 'key_or_create' | translate }}</span></label>
-                    </div>
-                    <div class="thirteen wide field">
-                        <div class="ssh">
-                            <app-parameter-value [editList]="false" [edit]="true" [type]="'ssh-key'" [keys]="keys"
-                                [(value)]="strategy.ssh_key" (valueChange)="updatePublicKey($event)">
-                            </app-parameter-value>
-                        </div>
-                    </div>
-                    <div class="one wide field" *ngIf="selectedPublicKey">
-                        <button class="ui icon button copyButton" [title]="'key_copy_public' | translate" ngxClipboard
-                            [cbContent]="selectedPublicKey" (click)="clickCopyKey()">
-                            <i class="copy icon"></i>
+<form nz-form>
+    <nz-form-item>
+        <nz-form-label>Connection</nz-form-label>
+        <nz-form-control>
+            <nz-radio-group [(ngModel)]="strategy.connection_type">
+                <label nz-radio [nzValue]="c" *ngFor="let c of connectionType.values()">{{c}}</label>
+            </nz-radio-group>
+        </nz-form-control>
+    </nz-form-item>
+
+    <ng-container [ngSwitch]="strategy.connection_type">
+        <ng-container *ngSwitchCase="connectionType.SSH">
+            <nz-form-item>
+                <nz-form-label>
+                    SSH key*
+                    <span class="keyLink" (click)="openCreateKeyModal('ssh')"
+                          *ngIf="createOnProject">{{ 'key_or_create' | translate }}</span>
+                </nz-form-label>
+                <nz-form-control>
+                    <app-parameter-value [editList]="false" [edit]="true" [type]="'ssh-key'" [keys]="keys"
+                                         [(value)]="strategy.ssh_key" (valueChange)="updatePublicKey($event)">
+                    </app-parameter-value>
+                    <ng-container *ngIf="selectedPublicKey">
+                        <button nz-button [title]="'key_copy_public' | translate" ngxClipboard
+                                [cbContent]="selectedPublicKey" (click)="clickCopyKey()">
+                            <i nz-icon nzType="copy" nzTheme="outline"></i>
                         </button>
-                    </div>
-                </div>
-            </ng-container>
-            <ng-container *ngSwitchCase="connectionType.HTTPS">
-                <div class="inline fields">
-                    <div class="two wide field">
-                        <label>{{ 'vcs_user' | translate }}</label>
-                    </div>
-                    <div class="fourteen wide field">
-                        <input type="text" class="ui input" [(ngModel)]="strategy.user">
-                    </div>
-                </div>
-                <div class="inline fields">
-                    <div class="two wide field">
-                        <label>{{ 'vcs_password' | translate }}</label>
-                    </div>
-                    <div class="fourteen wide field">
-                        <input type="password" class="ui input" [(ngModel)]="strategy.password">
-                    </div>
-                </div>
-            </ng-container>
-            <div class="inline fields">
-                <div class="two wide field">
-                    <label>{{ 'vcs_pgp_key' | translate }}<span class="keyLink" (click)="openCreateKeyModal('pgp')"
-                            *ngIf="createOnProject">{{ 'key_or_create' | translate }}</span></label>
-                </div>
-                <div class="fourteen wide field">
-                    <div class="ssh">
-                        <app-parameter-value [editList]="false" [edit]="true" [type]="'pgp-key'" [keys]="keys"
-                            [(value)]="strategy.pgp_key"></app-parameter-value>
-                    </div>
-                </div>
-            </div>
+                    </ng-container>
+                </nz-form-control>
+            </nz-form-item>
         </ng-container>
-    </div>
-    <div class="field" *ngIf="sshWarning && strategy.connection_type === 'ssh'">
-        <div class="ui warning message">
-            {{ 'key_warning_add_repo_title' | translate }}
-        </div>
-    </div>
-    <div class="right aligned field" *ngIf="!hideButton">
-        <button class="ui green button" [class.loading]="loading" [disabled]="loading || !strategy.connection_type"
-            (click)="saveStrategy()">{{ 'btn_save' | translate }}</button>
-    </div>
-</div>
+        <ng-container *ngSwitchCase="connectionType.HTTPS">
+            <nz-form-item>
+                <nz-form-label>User</nz-form-label>
+                <nz-form-control>
+                    <input nz-input type="text" class="ui input" [(ngModel)]="strategy.user">
+                </nz-form-control>
+            </nz-form-item>
+            <nz-form-item>
+                <nz-form-label>Password</nz-form-label>
+                <nz-form-control>
+                    <input nz-input type="password" class="ui input" [(ngModel)]="strategy.password">
+                </nz-form-control>
+            </nz-form-item>
+        </ng-container>
+    </ng-container>
+    <nz-form-item>
+        <nz-form-label>PGP key</nz-form-label>
+        <nz-form-control>
+            <app-parameter-value [editList]="false" [edit]="true" [type]="'pgp-key'" [keys]="keys"
+                                 [(value)]="strategy.pgp_key"></app-parameter-value>
+        </nz-form-control>
+    </nz-form-item>
+
+    <ng-container *ngIf="sshWarning && strategy.connection_type === 'ssh'">
+        <nz-alert nzType="info" nzMessage="Don't forget to add your ssh key on your repository"></nz-alert>
+    </ng-container>
+    <nz-form-item nzJustify="end">
+        <button nz-button nzType="primary" [nzLoading]="loading" [disabled]="loading || !strategy.connection_type"
+                (click)="saveStrategy()">Save
+        </button>
+    </nz-form-item>
+</form>
 <ng-template let-context let-modal="modal" #createKey>
     <div class="header">{{ 'keys_add_title' | translate }}</div>
     <div class="content scrolling">
