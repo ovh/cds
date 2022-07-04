@@ -14,7 +14,7 @@ const (
 	SignHeaderVCSType      = "X-Cds-Hooks-Vcs-Type"
 )
 
-type RepositoryWebHook struct {
+type Hook struct {
 	UUID          string
 	HookType      string
 	Configuration HookConfiguration
@@ -37,8 +37,8 @@ func (hc *HookConfiguration) Scan(src interface{}) error {
 	return WrapError(JSONUnmarshal(source, hc), "cannot unmarshal HookConfiguration")
 }
 
-func NewEntitiesHook(uuid, projectKey, vcsType, vcsName, repoName string) RepositoryWebHook {
-	return RepositoryWebHook{
+func NewEntitiesHook(uuid, projectKey, vcsType, vcsName, repoName string) Hook {
+	return Hook{
 		UUID:     uuid,
 		HookType: RepositoryEntitiesHook,
 		Configuration: map[string]WorkflowNodeHookConfigValue{

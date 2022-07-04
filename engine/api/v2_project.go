@@ -4,13 +4,14 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/repository"
 	"github.com/ovh/cds/engine/service"
 )
 
 // getAllRepositoriesHandler Get all repositories
 func (api *API) getAllRepositoriesHandler() ([]service.RbacChecker, service.Handler) {
-	return nil,
+	return service.RBAC(rbac.IsHookService),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			repos, err := repository.LoadAllRepositories(ctx, api.mustDB())
 			if err != nil {

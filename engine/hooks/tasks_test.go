@@ -121,7 +121,7 @@ func Test_dequeueTaskExecutions_ScheduledTask(t *testing.T) {
 	}
 
 	// Create a new task
-	scheduledTask, err := s.hookToTask(h)
+	scheduledTask, err := s.nodeHookToTask(h)
 	require.NoError(t, s.Dao.SaveTask(scheduledTask))
 	require.NoError(t, s.startTasks(ctx))
 

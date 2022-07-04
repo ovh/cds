@@ -129,7 +129,7 @@ func (s *Service) synchronizeTasks(ctx context.Context) error {
 			log.Error(ctx, "Hook> Unable to synchronize task %+v: %v", h, err)
 			continue
 		}
-		t, err := s.hookToTask(&h)
+		t, err := s.nodeHookToTask(&h)
 		if err != nil {
 			log.Error(ctx, "Hook> Unable to transform hook to task %+v: %v", h, err)
 			continue
@@ -140,12 +140,12 @@ func (s *Service) synchronizeTasks(ctx context.Context) error {
 		}
 	}
 	for _, r := range repos {
-		h := sdk.RepositoryWebHook{
+		h := sdk.Hook{
 			UUID:          r.ID,
 			HookType:      sdk.RepositoryEntitiesHook,
 			Configuration: r.HookConfiguration,
 		}
-		if err := s.addTaskFromRepositoryHook(h); err != nil {
+		if err := s.addTaskFromHook(h); err != nil {
 			log.Error(ctx, "Hook> Unable to save task %+v: %v", h, err)
 			continue
 		}
@@ -195,7 +195,7 @@ func (s *Service) initGerritStreamEvent(ctx context.Context, vcsName string, vcs
 	gerritRepoHooks[vcsName] = true
 }
 
-func (s *Service) repositoryHookToTask(r sdk.RepositoryWebHook) (*sdk.Task, error) {
+func (s *Service) hookToTask(r sdk.Hook) (*sdk.Task, error) {
 	switch r.HookType {
 	case sdk.RepositoryEntitiesHook:
 		return &sdk.Task{
@@ -208,7 +208,7 @@ func (s *Service) repositoryHookToTask(r sdk.RepositoryWebHook) (*sdk.Task, erro
 	}
 }
 
-func (s *Service) hookToTask(h *sdk.NodeHook) (*sdk.Task, error) {
+func (s *Service) nodeHookToTask(h *sdk.NodeHook) (*sdk.Task, error) {
 	switch h.HookModelName {
 	case sdk.GerritHookModelName:
 		return &sdk.Task{

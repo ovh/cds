@@ -32,7 +32,7 @@ func (s *Service) initRouter(ctx context.Context) {
 
 	r.Handle("/v2/webhook/repository", nil, r.POST(s.repositoryHooksHandler, service.OverrideAuth(CheckWebhookRequestSignatureMiddleware(s.WebHooksParsedPublicKey))))
 	r.Handle("/v2/webhook/repository/{uuid}", nil, r.POST(s.repositoryWebHookHandler, service.OverrideAuth(service.NoAuthMiddleware)))
-	r.Handle("/v2/task", nil, r.POST(s.registerRepositoryHookHandler))
+	r.Handle("/v2/task", nil, r.POST(s.registerHookHandler))
 
 	r.Handle("/webhook/{uuid}", nil, r.POST(s.webhookHandler, service.OverrideAuth(service.NoAuthMiddleware)), r.GET(s.webhookHandler, service.OverrideAuth(service.NoAuthMiddleware)), r.DELETE(s.webhookHandler, service.OverrideAuth(service.NoAuthMiddleware)), r.PUT(s.webhookHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 	r.Handle("/task", nil, r.POST(s.postTaskHandler), r.GET(s.getTasksHandler))

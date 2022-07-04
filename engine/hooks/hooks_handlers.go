@@ -21,10 +21,10 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func (s *Service) registerRepositoryHookHandler() service.Handler {
+func (s *Service) registerHookHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-		var newHook sdk.RepositoryWebHook
+		var newHook sdk.Hook
 		//Read the body
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
@@ -58,7 +58,7 @@ func (s *Service) registerRepositoryHookHandler() service.Handler {
 			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing project key")
 		}
 
-		if err := s.addTaskFromRepositoryHook(newHook); err != nil {
+		if err := s.addTaskFromHook(newHook); err != nil {
 			return sdk.WithStack(err)
 		}
 		return nil
@@ -558,7 +558,7 @@ func (s *Service) postTaskBulkHandler() service.Handler {
 
 func (s *Service) addTask(ctx context.Context, h *sdk.NodeHook) error {
 	//Parse the hook as a task
-	t, err := s.hookToTask(h)
+	t, err := s.nodeHookToTask(h)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to parse hook")
 	}
@@ -575,8 +575,8 @@ func (s *Service) addTask(ctx context.Context, h *sdk.NodeHook) error {
 	return nil
 }
 
-func (s *Service) addTaskFromRepositoryHook(h sdk.RepositoryWebHook) error {
-	t, err := s.repositoryHookToTask(h)
+func (s *Service) addTaskFromHook(h sdk.Hook) error {
+	t, err := s.hookToTask(h)
 	if err != nil {
 		return err
 	}
@@ -611,7 +611,7 @@ var errNoTask = errors.New("task not found")
 
 func (s *Service) updateTask(ctx context.Context, h *sdk.NodeHook) error {
 	//Parse the hook as a task
-	t, err := s.hookToTask(h)
+	t, err := s.nodeHookToTask(h)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to parse hook")
 	}
