@@ -1,6 +1,6 @@
 module github.com/ovh/cds/contrib/grpcplugins/action/artifactoryreleasebundlecreate
 
-go 1.17
+go 1.18
 
 replace github.com/ovh/cds => ../../../../
 
