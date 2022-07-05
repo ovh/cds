@@ -1,12 +1,12 @@
 import { HttpErrorResponse, HttpEvent, HttpHandler, HttpInterceptor, HttpRequest } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Router } from '@angular/router';
+import { NavigationError, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { SignoutCurrentUser } from 'app/store/authentication.action';
 import { Observable, throwError as observableThrowError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, filter, first } from 'rxjs/operators';
 
 @Injectable()
 export class ErrorInterceptor implements HttpInterceptor {
@@ -15,8 +15,8 @@ export class ErrorInterceptor implements HttpInterceptor {
         private _toast: ToastService,
         private _translate: TranslateService,
         private _store: Store,
-        private _router: Router) {
-    }
+        private _router: Router
+    ) { }
 
     intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
         return next.handle(req).pipe(
@@ -40,15 +40,22 @@ export class ErrorInterceptor implements HttpInterceptor {
                     if (e.error.message) {
                         // 194 is the error for "MFA required. See https://github.com/ovh/cds/blob/master/sdk/error.go#L205"
                         if (e.error.id === 194 && confirm(`${e.error.message}.\nDo you want to login using MFA ?`)) {
-                            let currentURL = this._router.url;
-                            this._store.dispatch(new SignoutCurrentUser()).subscribe(() => {
-                                this._router.navigate(['/auth/ask-signin/corporate-sso'], {
-                                    queryParams: {
-                                        redirect_uri: currentURL,
-                                        require_mfa: true
-                                    }
+                            this._router.events
+                                .pipe(
+                                    filter((e): e is NavigationError => e instanceof NavigationError),
+                                    first()
+                                )
+                                .subscribe(e => {
+                                    this._store.dispatch(new SignoutCurrentUser()).subscribe(() => {
+                                        this._router.navigate(['/auth/ask-signin/corporate-sso'], {
+                                            queryParams: {
+                                                redirect_uri: e.url,
+                                                require_mfa: true
+                                            }
+                                        });
+                                    });
                                 });
-                            });
+
                             return observableThrowError(e);
                         }
                         this._toast.errorHTTP(e.status, e.error.message, e.error.from, e.error.request_id);

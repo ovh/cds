@@ -327,9 +327,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 
     mfaLogin(): void {
+        const consumerType = this.currentAuthSummary.consumer.type;
         this._store.dispatch(new SignoutCurrentUser()).subscribe(
             () => {
-                this._router.navigate(['/auth/ask-signin/' + this.currentAuthSummary.consumer.type], {
+                this._router.navigate([`/auth/ask-signin/${consumerType}`], {
                     queryParams: {
                         redirect_uri: this._router.url,
                         require_mfa: true
