@@ -12,7 +12,7 @@ import (
 
 type ProjectIdentifiers struct {
 	ID  int64  `json:"-" yaml:"-" db:"id"`
-	Key string `json:"-" yaml:"-"db:"projectkey"`
+	Key string `json:"-" yaml:"-" db:"projectkey"`
 }
 
 type Projects []Project

@@ -91,6 +91,7 @@ func Test_dequeueTaskExecutions_ScheduledTask(t *testing.T) {
 	m.EXPECT().WorkflowAllHooksList().Return([]sdk.NodeHook{}, nil)
 	m.EXPECT().WorkflowAllHooksExecutions().Return([]string{}, nil)
 	m.EXPECT().VCSGerritConfiguration().Return(nil, nil).AnyTimes()
+	m.EXPECT().RepositoriesListAll(gomock.Any()).Return([]sdk.ProjectRepository{}, nil).Times(2)
 	require.NoError(t, s.synchronizeTasks(ctx))
 
 	// Start the goroutine
@@ -120,7 +121,7 @@ func Test_dequeueTaskExecutions_ScheduledTask(t *testing.T) {
 	}
 
 	// Create a new task
-	scheduledTask, err := s.hookToTask(h)
+	scheduledTask, err := s.nodeHookToTask(h)
 	require.NoError(t, s.Dao.SaveTask(scheduledTask))
 	require.NoError(t, s.startTasks(ctx))
 
@@ -196,6 +197,7 @@ func Test_synchronizeTasks(t *testing.T) {
 
 	m.EXPECT().WorkflowAllHooksList().Return([]sdk.NodeHook{}, nil)
 	m.EXPECT().WorkflowAllHooksExecutions().Return([]string{}, nil)
+	m.EXPECT().RepositoriesListAll(gomock.Any()).Return([]sdk.ProjectRepository{}, nil).Times(2)
 	require.NoError(t, s.synchronizeTasks(ctx))
 
 	tasks, err := s.Dao.FindAllTasks(ctx)

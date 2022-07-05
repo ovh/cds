@@ -85,7 +85,7 @@ func (s *Service) CheckConfiguration(config interface{}) error {
 func (s *Service) getConsumer(name string, vcsAuth sdk.VCSAuth) (sdk.VCSServer, error) {
 	if vcsAuth.URL != "" {
 		switch vcsAuth.Type {
-		case "gitea":
+		case sdk.VCSTypeGitea:
 			return gitea.New(strings.TrimSuffix(vcsAuth.URL, "/"),
 				s.Cfg.API.HTTP.URL,
 				s.UI.HTTP.URL,
@@ -94,14 +94,14 @@ func (s *Service) getConsumer(name string, vcsAuth sdk.VCSAuth) (sdk.VCSServer, 
 				vcsAuth.Username,
 				vcsAuth.Token,
 			), nil
-		case "bitbucketcloud":
+		case sdk.VCSTypeBitbucketCloud:
 			return bitbucketcloud.New(
 				strings.TrimSuffix(vcsAuth.URL, "/"),
 				s.UI.HTTP.URL,
 				s.Cfg.ProxyWebhook,
 				s.Cache,
 			), nil
-		case "bitbucketserver":
+		case sdk.VCSTypeBitbucketServer:
 			return bitbucketserver.New(
 				strings.TrimSuffix(vcsAuth.URL, "/"),
 				s.Cfg.API.HTTP.URL,
@@ -111,7 +111,7 @@ func (s *Service) getConsumer(name string, vcsAuth sdk.VCSAuth) (sdk.VCSServer, 
 				vcsAuth.Username,
 				vcsAuth.Token,
 			), nil
-		case "gerrit":
+		case sdk.VCSTypeGerrit:
 			return gerrit.New(
 				vcsAuth.URL,
 				s.Cache,
@@ -120,7 +120,7 @@ func (s *Service) getConsumer(name string, vcsAuth sdk.VCSAuth) (sdk.VCSServer, 
 				vcsAuth.Username,
 				vcsAuth.Token,
 			), nil
-		case "github":
+		case sdk.VCSTypeGithub:
 			return github.New(
 				vcsAuth.URL,
 				vcsAuth.URLApi,
@@ -129,7 +129,7 @@ func (s *Service) getConsumer(name string, vcsAuth sdk.VCSAuth) (sdk.VCSServer, 
 				s.Cfg.ProxyWebhook,
 				s.Cache,
 			), nil
-		case "gitlab":
+		case sdk.VCSTypeGitlab:
 			return gitlab.New(
 				vcsAuth.URL,
 				s.UI.HTTP.URL,

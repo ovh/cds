@@ -10,6 +10,7 @@ import (
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/repository"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
@@ -59,6 +60,19 @@ func (api *API) deleteProjectRepositoryHandler() ([]service.RbacChecker, service
 			}
 			defer tx.Rollback() // nolint
 
+			// Remove hooks
+			srvs, err := services.LoadAllByType(ctx, tx, sdk.TypeHooks)
+			if err != nil {
+				return err
+			}
+			if len(srvs) < 1 {
+				return sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find hook uservice")
+			}
+			_, code, errHooks := services.NewClient(tx, srvs).DoJSONRequest(ctx, http.MethodDelete, "/task/"+repo.ID, nil, nil)
+			if (errHooks != nil || code >= 400) && code != 404 {
+				return sdk.WrapError(errHooks, "unable to delete hook [HTTP: %d]", code)
+			}
+
 			if err := repository.Delete(tx, repo.VCSProjectID, repo.Name); err != nil {
 				return err
 			}
@@ -99,6 +113,8 @@ func (api *API) postProjectRepositoryHandler() ([]service.RbacChecker, service.H
 
 			repo.VCSProjectID = vcsProject.ID
 			repo.CreatedBy = getAPIConsumer(ctx).GetUsername()
+
+			// Insert Repository
 			if err := repository.Insert(ctx, tx, &repo); err != nil {
 				return err
 			}
@@ -109,6 +125,26 @@ func (api *API) postProjectRepositoryHandler() ([]service.RbacChecker, service.H
 				return err
 			}
 			if _, err := vcsClient.RepoByFullname(ctx, repo.Name); err != nil {
+				return err
+			}
+			
+			// Create hook
+			srvs, err := services.LoadAllByType(ctx, tx, sdk.TypeHooks)
+			if err != nil {
+				return err
+			}
+			if len(srvs) < 1 {
+				return sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find hook uservice")
+			}
+			repositoryHookRegister := sdk.NewEntitiesHook(repo.ID, pKey, vcsProject.Type, vcsProject.Name, repo.Name)
+			_, code, errHooks := services.NewClient(tx, srvs).DoJSONRequest(ctx, http.MethodPost, "/v2/task", repositoryHookRegister, nil)
+			if errHooks != nil || code >= 400 {
+				return sdk.WrapError(errHooks, "unable to create hooks [HTTP: %d]", code)
+			}
+
+			// Update repository with Hook configuration
+			repo.HookConfiguration = repositoryHookRegister.Configuration
+			if err := repository.Update(ctx, tx, &repo); err != nil {
 				return err
 			}
 

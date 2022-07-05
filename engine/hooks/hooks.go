@@ -13,6 +13,7 @@ import (
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/ovh/cds/sdk/jws"
 )
 
 // New returns a new service
@@ -123,6 +124,14 @@ func (s *Service) Serve(c context.Context) error {
 				cancel()
 			}
 		}()
+	}
+
+	if s.Cfg.WebhooksPublicKeySign != "" {
+		webhookKey, err := jws.NewPublicKeyFromPEM([]byte(s.Cfg.WebhooksPublicKeySign))
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		s.WebHooksParsedPublicKey = webhookKey
 	}
 
 	//Init the http server

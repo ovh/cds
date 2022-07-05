@@ -2,21 +2,162 @@ package hooks
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
+
+func (s *Service) registerHookHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+
+		var newHook sdk.Hook
+		//Read the body
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to read request")
+		}
+		if err := json.Unmarshal(body, &newHook); err != nil {
+			return sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to unmarshal request")
+		}
+
+		if len(newHook.Configuration) == 0 {
+			return sdk.NewErrorFrom(sdk.ErrInvalidData, "missing hook configuration")
+		}
+
+		vcsType, has := newHook.Configuration[sdk.HookConfigVCSType]
+		if !has || vcsType.Value == "" {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing vcs type")
+		}
+
+		vcsName, has := newHook.Configuration[sdk.HookConfigVCSServer]
+		if !has || vcsName.Value == "" {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing vcs name")
+		}
+
+		repoName, has := newHook.Configuration[sdk.HookConfigRepoFullName]
+		if !has || repoName.Value == "" {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing repository name")
+		}
+
+		project, has := newHook.Configuration[sdk.HookConfigProject]
+		if !has || project.Value == "" {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing project key")
+		}
+
+		if err := s.addTaskFromHook(newHook); err != nil {
+			return sdk.WithStack(err)
+		}
+		return nil
+	}
+}
+
+func (s *Service) repositoryHooksHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		// Get repository data
+		vcsName := r.Header.Get(sdk.SignHeaderVCSName)
+		repoName := r.Header.Get(sdk.SignHeaderRepoName)
+		vcsType := r.Header.Get(sdk.SignHeaderVCSType)
+
+		defer r.Body.Close()
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			return sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to read body: %v", err)
+		}
+
+		// Search for existing hooks
+		hookKey := strings.ToLower(cache.Key(EntitiesHookRootKey, vcsType, vcsName, repoName, "*"))
+		keys, err := s.Dao.GetAllEntitiesHookKeysByPattern(hookKey)
+		if err != nil {
+			log.Error(ctx, "unable to check if a hook exist for %s: %v", hookKey, err)
+			return err
+		}
+		if len(keys) == 0 {
+			log.Warn(ctx, "Receive hook from %s, but there is no tasks", hookKey)
+		}
+		for _, k := range keys {
+			var uuid string
+			if _, err := s.Dao.store.Get(k, &uuid); err != nil {
+				log.Error(ctx, "unable to retrieve hook uuid for %s: %v", k, err)
+				continue
+			}
+			hook := s.Dao.FindTask(ctx, uuid)
+			if hook == nil {
+				return sdk.WrapError(sdk.ErrNotFound, "no hook found on")
+			}
+
+			// Enqueue execution
+			exec := &sdk.TaskExecution{
+				Timestamp:     time.Now().UnixNano(),
+				Type:          hook.Type,
+				UUID:          hook.UUID,
+				Configuration: hook.Configuration,
+				Status:        TaskExecutionScheduled,
+				WebHook: &sdk.WebHookExecution{
+					RequestBody:   body,
+					RequestHeader: r.Header,
+					RequestURL:    r.URL.RawQuery,
+				},
+			}
+			log.Info(ctx, "Save Entities hook execution for task %v", hook.Configuration)
+			if err := s.Dao.SaveTaskExecution(exec); err != nil {
+				return err
+			}
+		}
+		return service.WriteJSON(w, nil, http.StatusAccepted)
+	}
+}
+
+func (s *Service) repositoryWebHookHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		uuid := vars["uuid"]
+
+		defer r.Body.Close()
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			return sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to read body: %v", err)
+		}
+
+		hook := s.Dao.FindTask(ctx, uuid)
+		if hook == nil {
+			return sdk.WrapError(sdk.ErrNotFound, "no hook found on")
+		}
+
+		// Enqueue execution
+		exec := &sdk.TaskExecution{
+			Timestamp:     time.Now().UnixNano(),
+			Type:          hook.Type,
+			UUID:          hook.UUID,
+			Configuration: hook.Configuration,
+			Status:        TaskExecutionScheduled,
+			WebHook: &sdk.WebHookExecution{
+				RequestBody:   body,
+				RequestHeader: r.Header,
+				RequestURL:    r.URL.RawQuery,
+			},
+		}
+		log.Debug(ctx, "Save execution for task %v", hook.Configuration)
+		if err := s.Dao.SaveTaskExecution(exec); err != nil {
+			return err
+		}
+
+		return service.WriteJSON(w, exec, http.StatusAccepted)
+	}
+}
 
 func (s *Service) webhookHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
@@ -382,9 +523,11 @@ func (s *Service) deleteTaskBulkHandler() service.Handler {
 			if err := s.stopTask(ctx, t); err != nil {
 				return sdk.WrapError(sdk.ErrNotFound, "Stop task %s", err)
 			}
+
 			if err := s.deleteTask(ctx, t); err != nil {
 				return err
 			}
+
 		}
 
 		return nil
@@ -415,7 +558,7 @@ func (s *Service) postTaskBulkHandler() service.Handler {
 
 func (s *Service) addTask(ctx context.Context, h *sdk.NodeHook) error {
 	//Parse the hook as a task
-	t, err := s.hookToTask(h)
+	t, err := s.nodeHookToTask(h)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to parse hook")
 	}
@@ -428,6 +571,18 @@ func (s *Service) addTask(ctx context.Context, h *sdk.NodeHook) error {
 	//Start the task
 	if _, err := s.startTask(ctx, t); err != nil {
 		return sdk.WrapError(err, "Unable start task %v", t)
+	}
+	return nil
+}
+
+func (s *Service) addTaskFromHook(h sdk.Hook) error {
+	t, err := s.hookToTask(h)
+	if err != nil {
+		return err
+	}
+
+	if err := s.Dao.SaveRepoWebHook(t); err != nil {
+		return err
 	}
 	return nil
 }
@@ -456,7 +611,7 @@ var errNoTask = errors.New("task not found")
 
 func (s *Service) updateTask(ctx context.Context, h *sdk.NodeHook) error {
 	//Parse the hook as a task
-	t, err := s.hookToTask(h)
+	t, err := s.nodeHookToTask(h)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to parse hook")
 	}
@@ -490,6 +645,15 @@ func (s *Service) deleteTask(ctx context.Context, t *sdk.Task) error {
 	switch t.Type {
 	case TypeGerrit:
 		s.stopGerritHookTask(t)
+	case TypeEntitiesHook:
+		entitiesHookKey := cache.Key(EntitiesHookRootKey,
+			t.Configuration[sdk.HookConfigVCSType].Value,
+			t.Configuration[sdk.HookConfigVCSServer].Value,
+			t.Configuration[sdk.HookConfigRepoFullName].Value,
+			t.Configuration[sdk.HookConfigTypeProject].Value)
+		if err := s.Dao.store.Delete(entitiesHookKey); err != nil {
+			return err
+		}
 	}
 
 	//Delete the task
