@@ -1,85 +1,64 @@
 <div id="ApplicationAdmin">
-    <app-zone header="{{ 'application_rename_title' | translate }}">
-        <app-zone-content class="bottom">
-            <form class="ui form" #applicationUpdateFrom="ngForm">
-                <div class="fields">
-                    <div class="eight wide field">
-                        <input type="text" name="formApplicationUpdateName" [(ngModel)]="newName" required #formApplicationUpdateName="ngModel"
-                               pattern="[a-zA-Z0-9._-]*"
-                               [disabled]="loading">
-                        <div *ngIf="formApplicationUpdateName.invalid && !formApplicationUpdateName.pristine"
-                             class="ui error message">
-                            <p>{{'application_update_name_error' | translate}}</p>
-                        </div>
+    <nz-card nzTitle="Settings">
+        <form nz-form #applicationUpdateFrom="ngForm">
+            <nz-form-item>
+                <nz-form-label [nzSpan]="3">Name</nz-form-label>
+                <nz-form-control>
+                    <input nz-input type="text" name="formApplicationUpdateName" [(ngModel)]="newName" required #formApplicationUpdateName="ngModel"
+                           pattern="[a-zA-Z0-9._-]*"
+                           [disabled]="loading">
+                    <nz-alert nzType="error" *ngIf="formApplicationUpdateName.invalid && !formApplicationUpdateName.pristine" nzMessage="Application name is mandatory and must respect the alphanumeric pattern + the following characters: .-_ ([a-zA-Z0-9._-]*)"></nz-alert>
+                </nz-form-control>
+            </nz-form-item>
+            <nz-form-item>
+                <nz-form-label [nzSpan]="3">Description</nz-form-label>
+                <nz-form-control>
+                    <textarea nz-input class="app-description" type="text" name="formApplicationUpdateDescription"
+                              [(ngModel)]="application.description" required #formApplicationUpdateDescription="ngModel" [disabled]="loading">
+                    </textarea>
+                </nz-form-control>
+            </nz-form-item>
+            <nz-form-item>
+                <nz-form-label [nzSpan]="3">Icon</nz-form-label>
+                <nz-form-control>
+                    <div>
+                        <img class="app-icon" [src]="application.icon" alt="application icon" *ngIf="application.icon">
                     </div>
-                    <div class="eight wide right aligned field">
-                        <button class="ui green button" [class.loading]="loading" name="updateNameButton" (click)="onSubmitApplicationUpdate()" [disabled]="applicationUpdateFrom.invalid">{{ 'btn_rename' | translate }}
-                        </button>
-                    </div>
-                </div>
-            </form>
-        </app-zone-content>
-    </app-zone>
-    <app-zone header="{{ 'application_description' | translate }}">
-        <app-zone-content class="bottom">
-            <form class="ui form" #applicationUpdateForm="ngForm">
-                <div class="fields">
-                    <div class="fourteen wide field">
-                        <textarea class="app-description" type="text" name="formApplicationUpdateDescription" [(ngModel)]="application.description" required #formApplicationUpdateDescription="ngModel"
-                               [disabled]="loading">
-                        </textarea>
-                    </div>
-                    <div class="two wide right aligned field">
-                        <button class="ui green button" [class.loading]="loading" name="updateDescriptionButton" (click)="onSubmitApplicationUpdate()" [disabled]="loading">{{ 'btn_save' | translate }}
-                        </button>
-                    </div>
-                </div>
-            </form>
-        </app-zone-content>
-    </app-zone>
-    <app-zone header="{{ 'application_icon' | translate }}">
-        <app-zone-content class="bottom">
-            <form class="ui form" #applicationUpdateForm="ngForm">
-                <div class="fields">
-                    <div class="fourteen wide field center aligned" *ngIf="!fileTooLarge">
-                        <div>
-                            <img class="app-icon" [src]="application.icon" alt="application icon" *ngIf="application.icon">
-                        </div>
-                        <app-upload-button accept=".png,.jpg,.jpeg" image="true" (event)="fileEvent($event)">
-                        </app-upload-button>
-                    </div>
-                    <div class="ui fourteen wide red message field center aligned" *ngIf="fileTooLarge" [textContent]="'common_file_too_large' | translate"></div>
-                    <div class="two wide right aligned field">
-                        <button class="ui green button" [class.loading]="loading" name="updateDescriptionButton" (click)="onSubmitApplicationUpdate()" [disabled]="loading || application.from_repository">{{ 'btn_save' | translate }}
-                        </button>
-                    </div>
-                </div>
-            </form>
-        </app-zone-content>
-    </app-zone>
-    <app-zone header="{{ 'application_repo_title' | translate }}">
-        <app-zone-content class="bottom">
-            <app-application-repo [project]="project" [application]="application" [editMode]="editMode"></app-application-repo>
-        </app-zone-content>
-    </app-zone>
-    <ng-container *ngIf="project.integrations && project.integrations.length > 0">
-        <app-zone header="{{ 'application_deployment_title' | translate }}">
-            <app-zone-content class="bottom">
-                <app-application-deployment [project]="project" [application]="application" [editMode]="editMode"></app-application-deployment>
-            </app-zone-content>
-        </app-zone>
-    </ng-container>
-    <app-zone header="{{ 'danger_zone' | translate }}" headerClass="red inverted">
-        <app-zone-content class="bottom">
-            <div class="ui grid">
-                <div class="eight wide column">
-                    <div class="title">{{ 'application_delete_label' | translate}}</div>
-                    <div class="description">{{ 'application_delete_description' | translate}}</div>
-                </div>
-                <div class="eight wide right aligned column">
-                    <app-delete-button [loading]="loading" (event)="deleteApplication()"></app-delete-button>
-                </div>
-            </div>
-        </app-zone-content>
-    </app-zone>
+                    <app-upload-button accept=".png,.jpg,.jpeg" image="true" (event)="fileEvent($event)"></app-upload-button>
+                    <nz-alert *ngIf="fileTooLarge" nzType="error" nzMessage="Your file is too large (max 100Ko)"></nz-alert>
+                </nz-form-control>
+            </nz-form-item>
+            <nz-form-item nzJustify="end">
+                <button nz-button nzType="primary" [nzLoading]="loading" name="updateNameButton" (click)="onSubmitApplicationUpdate()" [disabled]="loading || application.from_repository">
+                    Save
+                </button>
+            </nz-form-item>
+        </form>
+    </nz-card>
+
+    <nz-card nzTitle="Repository">
+        <app-application-repo [project]="project" [application]="application" [editMode]="editMode"></app-application-repo>
+    </nz-card>
+
+    <nz-card nzTitle="Integrations">
+        <ng-container *ngIf="project.integrations && project.integrations.length > 0">
+            <app-application-deployment [project]="project" [application]="application" [editMode]="editMode"></app-application-deployment>
+        </ng-container>
+        <ng-container *ngIf="!project.integrations || project.integrations.length === 0">
+            <nz-alert nzType="info" nzMessage="There is no available integration for your application on your project"></nz-alert>
+        </ng-container>
+    </nz-card>
+
+    <nz-card nzTitle="Danger zone">
+        <nz-row>
+            <nz-col [nzSpan]="12">
+                <div class="title">Delete application</div>
+                <div class="description">Once you delete an application, there is no going back. Please be certain.</div>
+            </nz-col>
+            <nz-col [nzSpan]="12" class="alignRight">
+                <button nz-button nzType="primary" nzDanger nz-popconfirm nzPopconfirmTitle="Are you sure you want to delete this application ?"
+                       [nzLoading]="loading" (nzOnConfirm)="deleteApplication()">Delete</button>
+            </nz-col>
+        </nz-row>
+    </nz-card>
 </div>

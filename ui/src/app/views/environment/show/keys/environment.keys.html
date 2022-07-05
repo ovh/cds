@@ -1,17 +1,15 @@
 <div id="Environmentkey">
     <h3>{{ 'keys_list_title' | translate}}</h3>
     <ng-container *ngIf="environment.keys && environment.keys.length === 0">
-        <div class="ui info message">
-            {{'keys_no' | translate}}
-        </div>
+        <nz-alert nzType="info" nzMessage="There is no key"></nz-alert>
     </ng-container>
     <ng-container *ngIf="environment.keys && environment.keys.length > 0">
         <app-keys-list [keys]="environment.keys" [loading]="loading"
             [edit]="!readonly" (deleteEvent)="manageKeyEvent($event)">
         </app-keys-list>
     </ng-container>
-    <ng-container *ngIf="!readonly">
+    <div class="keyAddTitle" *ngIf="!readonly">
         <h3>{{ 'keys_add_title' | translate }}</h3>
         <app-keys-form [loading]="loading" (keyEvent)="manageKeyEvent($event)" prefix="env-"></app-keys-form>
-    </ng-container>
+    </div>
 </div>

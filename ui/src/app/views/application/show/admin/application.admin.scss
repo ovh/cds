@@ -1,13 +1,6 @@
-.applicationRepo {
-  margin-top : 50px;
-}
-.ui.inverted.attached  {
-  border-color: #DB2828;
-}
-
-.app-description {
-  min-height: 4em !important;
-  max-height: 6em !important;
+nz-card {
+  margin-top: 15px;
+  margin-bottom: 15px;
 }
 
 .app-icon {
@@ -15,11 +8,14 @@
   width: 5em;
 }
 
-.ui.grid {
-  .column {
-    .title {
-      font-size: 1.1rem;
-      font-weight: 600;
-    }
-  }
+.alignRight {
+  text-align: right;
+}
+
+.applicationRepo {
+  margin-top : 50px;
+}
+
+.title {
+  font-weight: bold;
 }

@@ -1,7 +1,7 @@
 import { APP_BASE_HREF } from '@angular/common';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { Component, Injector } from '@angular/core';
-import { getTestBed, TestBed } from '@angular/core/testing';
+import { fakeAsync, flush, getTestBed, TestBed, tick } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
@@ -33,6 +33,9 @@ import { SharedModule } from '../../../../shared/shared.module';
 import { ToastService } from '../../../../shared/toast/ToastService';
 import { ApplicationModule } from '../../application.module';
 import { ApplicationAdminComponent } from './application.admin.component';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { Permission } from 'app/model/permission.model';
+import { of } from 'rxjs';
 
 @Component({
     template: ''
@@ -83,6 +86,7 @@ describe('CDS: Application Admin Component', () => {
                 ApplicationModule,
                 ServicesModule,
                 SharedModule,
+                BrowserAnimationsModule,
                 TranslateModule.forRoot(),
                 HttpClientTestingModule
             ]
@@ -98,7 +102,7 @@ describe('CDS: Application Admin Component', () => {
         router = undefined;
     });
 
-    it('Load component + renamed app', () => {
+    it('Load component + renamed app', fakeAsync(() => {
         const http = TestBed.get(HttpTestingController);
 
         let appRenamed = new Application();
@@ -122,22 +126,29 @@ describe('CDS: Application Admin Component', () => {
         pip.name = 'myPipeline';
         p.pipelines = new Array<Pipeline>();
         p.pipelines.push(pip);
+        p.permissions = new Permission();
+        p.permissions.writable = true;
 
         fixture.componentInstance.application = app;
         fixture.componentInstance.project = p;
+
+        tick(250)
+        fixture.detectChanges();
+
         fixture.componentInstance.newName = 'appRenamed';
 
-
         spyOn(router, 'navigate');
+        let store: Store = injector.get(Store);
+        spyOn(store, 'dispatch').and.callFake(() => of(null));
 
         let compiled = fixture.debugElement.nativeElement;
 
         compiled.querySelector('button[name="updateNameButton"]').click();
 
-        http.expectOne('/project/key1/application/app').flush(appRenamed);
-
         expect(router.navigate).toHaveBeenCalledWith(['/project', 'key1', 'application', 'appRenamed']);
-    });
+
+        flush()
+    }));
 });
 
 class MockToast {
