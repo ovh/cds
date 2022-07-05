@@ -1,6 +1,6 @@
 module github.com/ovh/cds
 
-go 1.17
+go 1.18
 
 require (
 	code.gitea.io/sdk/gitea v0.15.1
@@ -46,7 +46,7 @@ require (
 	github.com/keybase/go-keychain v0.0.0-20190828020956-aa639f275ae1
 	github.com/keybase/go.dbus v0.0.0-20190710215703-a33a09c8a604
 	github.com/lib/pq v1.9.0
-	github.com/maruel/panicparse/v2 v2.2.0
+	github.com/maruel/panicparse/v2 v2.2.2
 	github.com/mattn/go-sqlite3 v1.9.0
 	github.com/mattn/go-zglob v0.0.1
 	github.com/mcuadros/go-defaults v0.0.0-20161116231230-e1c978be3307
@@ -68,7 +68,6 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/rockbears/log v0.6.0
 	github.com/rubenv/sql-migrate v0.0.0-20160620083229-6f4757563362
-	github.com/satori/go.uuid v1.2.0
 	github.com/sguiheux/go-coverage v0.0.0-20190710153556-287b082a7197
 	github.com/shirou/gopsutil v0.0.0-20170406131756-e49a95f3d5f8
 	github.com/sirupsen/logrus v1.8.1

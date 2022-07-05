@@ -53,7 +53,7 @@ services:
   cds-prepare:
     image: ${CDS_DOCKER_IMAGE:-ovhcom/cds-engine:latest}
     command: >
-        bash -c "
+        sh -c "
         if [ ! -f /app/conf/conf.toml ]; then
           /app/cds-engine-linux-amd64 config new api cdn ui hooks repositories vcs elasticsearch hatchery:local hatchery:swarm > /app/conf/conf.toml;
         else
