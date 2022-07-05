@@ -20,6 +20,9 @@
             </ul>
         </li>
     </ul>
-    <button class="ui right floated mini green button" [disabled]="loadingPopupButton"
-            [class.loading]="loadingPopupButton" (click)="resyncEvents()">{{'btn_resync_ascode_event' | translate }}</button>
+    <div class="footer">
+        <button nz-button nzType="primary" nzSize="small" [disabled]="loadingPopupButton"
+                [nzLoading]="loadingPopupButton" (click)="resyncEvents()">{{'btn_resync_ascode_event' | translate }}</button>
+    </div>
+
 </div>

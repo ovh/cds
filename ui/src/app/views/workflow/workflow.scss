@@ -1,5 +1,9 @@
 @import "../../../common";
 
+.floatRight {
+  float: right;
+}
+
 .workflow-page {
     height: 100%;
     display: flex;
@@ -23,24 +27,6 @@ $sidebarWidth: 255px;
 .sidebar {
     width: $sidebarWidth;
     height: 100%;
-
-    .closeButton {
-        position: absolute;
-        display: block;
-        top: 0;
-        right: 0;
-        padding: 5px;
-        font-size: 30px;
-        line-height: 30px;
-        height: 40px;
-        width: 40px;
-        margin: 0;
-        cursor: pointer;
-
-        &:hover {
-            opacity: 0.6;
-        }
-    }
 }
 
 .content-wrap {
@@ -62,50 +48,40 @@ $sidebarWidth: 255px;
     }
 }
 
-i.star {
-    color: black;
-    margin-left: 15px;
-    font-size: 1.3em;
-
-    &.favorite {
-        color: $cds_favorite_color;
-
-        &:hover {
-            opacity: 0.4;
-        }
-    }
-
-    &.unfavorite {
-        opacity: 0.3;
-
-        &:hover {
-            color: $cds_favorite_color;
-            opacity: 1;
-        }
-    }
-}
-
 .labelFeature {
     position: relative;
     top: -3px;
     margin-left: 10px;
+    margin-top: 5px;
 
-    &.preview {
-        top: -2px;
-        margin: 0 10px;
+    nz-tag {
+      cursor: pointer;
     }
+}
+
+i.favorite {
+  color: $cds_favorite_color;
+  &:hover {
+    opacity: 0.4;
+  }
+}
+.star {
+  cursor: pointer;
+  margin-left: 15px;
+  font-size: 1.3em;
 }
 
 .infoPopup {
     width: 450px;
     word-break: break-word;
-
+    app-ascode-event {
+      min-height: 100px;
+    }
     .footer {
         display: flex;
-
-        div {
-            flex-grow: 1;
-            flex-basis: 0;
-        }
+        align-items: center;
+        button {
+          margin-left: auto;
+      }
     }
 }

@@ -73,6 +73,9 @@ export class WorkflowComponent implements OnInit, OnDestroy {
     selectecHookRef: string;
 
     workflowV3Enabled: boolean;
+    asCodeTagColor: string = '';
+    templateTagColor: string = '';
+    previewV3TagColor: string = '';
 
     constructor(
         private _activatedRoute: ActivatedRoute,
@@ -162,6 +165,13 @@ export class WorkflowComponent implements OnInit, OnDestroy {
                     this._store.dispatch(new SelectHook({ hook: h, node: this.workflow.workflow_data.node }));
                 }
             }
+            if (this.workflow && this.workflow.from_repository && (!this.workflow.as_code_events || this.workflow.as_code_events.length === 0)) {
+                this.asCodeTagColor = 'green';
+            } else if (this.workflow && this.workflow.as_code_events && this.workflow.as_code_events.length > 0) {
+                this.asCodeTagColor = 'orange';
+            } else if (this.workflow && !this.workflow.from_repository && (!this.workflow.as_code_events || this.workflow.as_code_events.length === 0)) {
+                this.asCodeTagColor = '';
+            }
             this._cd.markForCheck();
         });
 
@@ -199,7 +209,10 @@ export class WorkflowComponent implements OnInit, OnDestroy {
         this._store.dispatch(new UpdateFavoriteWorkflow({
             projectKey: this.project.key,
             workflowName: this.workflow.name
-        })).pipe(finalize(() => this.loadingFav = false))
+        })).pipe(finalize(() => {
+            this.loadingFav = false;
+            this._cd.markForCheck()
+        }))
             .subscribe(() => this._toast.success('', this._translate.instant('common_favorites_updated')));
     }
 
