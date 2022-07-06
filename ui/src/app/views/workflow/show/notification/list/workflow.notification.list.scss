@@ -1,12 +1,57 @@
 .Notifications {
     padding: 20px;
-}
 
-.full {
-    width: 100%
-}
+  .section {
+    margin-bottom: 10px;
+    h3 {
+      display: inline;
+    }
+    button {
+      float: right;
+    }
+  }
+  .section:not(:first-child) {
+    margin-top: 50px;
+  }
 
-.intname {
-    font-size: 1.2em;
-    margin-top: 0.5em;
+  .item {
+    padding: 10px;
+    cursor: pointer;
+
+    .content {
+      display: flex;
+      flex-direction: column;
+
+      .title {
+        font-weight: bold;
+
+        button {
+          float: right;
+        }
+      }
+
+      .description {
+        font-size: 0.8em;
+      }
+    }
+  }
+  .item.active, .item:hover {
+    background-color: #eeeeee;
+    :host-context(.night) & {
+      background-color: #1f1f1f;
+    }
+
+  }
+
+  .form {
+    padding-left: 30px;
+
+    .help {
+      margin-bottom: 15px;
+    }
+
+    .integrationsList {
+      width: 500px;
+    }
+  }
 }

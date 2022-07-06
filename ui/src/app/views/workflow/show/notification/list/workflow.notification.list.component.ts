@@ -90,12 +90,6 @@ export class WorkflowNotificationListComponent {
         });
     }
 
-    copy(index: number) {
-        this.newNotification = cloneDeep(this.workflow.notifications[index]);
-        delete this.selectedNotification;
-        delete this.newNotification.id;
-    }
-
     setNotificationTemplate() {
         this.loadingNotifTemplate = true;
         this._notificationService.getNotificationTypes().pipe(first(), finalize(() => {

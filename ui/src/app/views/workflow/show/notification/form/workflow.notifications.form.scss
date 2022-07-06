@@ -1,11 +1,21 @@
-.centered {
-    text-align: center;
+nz-row {
+  nz-col {
+    padding: 0 5px;
+
+    nz-select {
+      width: 100%;
+    }
+
+    nz-switch {
+      margin-right: 10px;
+    }
+
+  }
+}
+.help {
+  margin-bottom: 20px;
 }
 
-sui-checkbox {
-    margin-top: 32px;
-
-    &.no-mt {
-        margin-top: 0px;
-    }
+.floatRight {
+  float: right;
 }
