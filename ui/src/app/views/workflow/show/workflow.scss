@@ -3,36 +3,32 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  .ml5 {
-    margin-left: 5px;
-  }
+
   .workflowShowGraph {
     width: 100%;
     flex: 1;
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    .cardinfo {
-      margin-top: 1px;
-      border-radius: 0 0 0.28571429rem 0.28571429rem;
-    }
+
     .center {
       text-align: center;
     }
+    .alignRight {
+      text-align: right;
+    }
+
     app-workflow-graph {
       margin-top: 10px;
       flex: 1;
     }
-  }
-  .scrollingContent {
-    overflow-x: auto;
-    .paddingContent {
-      padding: 0;
-      .viewContent {
-        .padded {
-          padding: 0 100px 0 100px;
-        }
-      }
+
+    .savePreview {
+      margin-left: 10px;
+    }
+
+    .orange {
+      color: orange;
     }
   }
 

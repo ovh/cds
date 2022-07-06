@@ -9,7 +9,7 @@
         </div>
         <div class="floatRight labelFeature" [title]="'workflow_from_repository_btn' | translate">
             <nz-tag [nzColor]="asCodeTagColor" nz-popover nzPopoverTrigger="click" [nzPopoverContent]="popupFromRepository"
-            nzPopoverPlacement="rightBottom"><i class="code icon"></i>as code</nz-tag>
+            nzPopoverPlacement="rightBottom"><i nz-icon nzType="code" nzTheme="outline"></i>as code</nz-tag>
             <ng-template #popupFromRepository>
                 <div class="content infoPopup">
                     <ng-container
@@ -34,7 +34,7 @@
         <div class="floatRight labelFeature" [title]="'workflow_from_template_btn' | translate">
             <nz-tag [nzColor]="workflow && workflow.from_template ? (workflow.template_up_to_date ? 'green' : 'orange') : ''"
                     nz-popover nzPopoverTrigger="click" [nzPopoverContent]="popupFromTemplate"
-                    nzPopoverPlacement="rightBottom"><i class="paste icon"></i>template</nz-tag>
+                    nzPopoverPlacement="rightBottom"><i nz-icon nzType="copy" nzTheme="outline"></i>template</nz-tag>
             <ng-template #popupFromTemplate>
                 <div class="content infoPopup">
                     <div *ngIf="workflow && workflow.from_template;then fromTemplateInfo;else fromTemplateHelp"></div>
@@ -42,9 +42,8 @@
                         <p>{{ 'workflow_from_template' | translate}}
                             <a
                                 [routerLink]="['/settings/workflow-template/' + workflow.from_template.split('@')[0]]">{{workflow.from_template}}</a>
-                            <span *ngIf="!workflow.template_up_to_date"
-                                class="ui orange label mini">{{'common_not_up_to_date'
-                                | translate }}</span>
+                                <nz-tag *ngIf="!workflow.template_up_to_date" nzColor="orange">{{'common_not_up_to_date'
+                                    | translate }}</nz-tag>
                         </p>
                         <div class="footer">
                             <button nz-button nzType="primary" nzSize="small" (click)="showTemplateFrom()">Update</button>

@@ -11,62 +11,48 @@
             </nz-button-group>
         </ng-container>
         <div *ngIf="selectedTab.key === 'workflows'" class="workflowShowGraph">
-            <div class="ui grid">
-                <div class="row">
-                    <div class="two wide column"></div>
-                    <div class="twelve wide column winfo">
-                        <div class="ui raised card cardinfo">
-                            <div class="content">
-                                <div class="ui grid">
-                                    <div class="row">
-                                        <div class="five wide column" title="{{'common_orientation' | translate}}">
-                                            <button class="ui icon button" *ngIf="direction === 'TB'"
-                                                (click)="changeDirection()">
-                                                <i class="resize horizontal icon"></i>
-                                            </button>
-                                            <button class="ui icon button" *ngIf="direction === 'LR'"
-                                                (click)="changeDirection()">
-                                                <i class="resize vertical icon"></i>
-                                            </button>
-                                        </div>
-                                        <div class="six wide column centered">
-                                            <div class="ui buttons" *ngIf="!detailedWorkflow.from_repository">
-                                                <div class="ui blue button" (click)="showAsCodeEditor()"
-                                                    [class.loading]="loading">
-                                                    <i class="terminal icon"></i>
-                                                    {{'workflow_edit_as_code' | translate}}
-                                                    <i class="orange warning sign icon ml5" *ngIf="previewWorkflow"
-                                                        suiPopup [popupText]="'workflow_preview_mode' | translate"
-                                                        popupPlacement="top center">
-                                                    </i>
-                                                </div>
-                                                <div *ngIf="previewWorkflow" class="ui green button"
-                                                    (click)="savePreview()"
-                                                    [class.disabled]="loading || !detailedWorkflow.permissions.writable"
-                                                    [class.loading]="loading">
-                                                    <i class="save icon"></i> {{'btn_save' |
-                                                    translate}}
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="right aligned five wide column"
-                                            title="{{'btn_run_workflow' | translate}}">
-                                            <div class="ui green buttons">
-                                                <div class="ui button"
-                                                    [class.disabled]="!detailedWorkflow.permissions.executable || editModeWorkflowChanged"
-                                                    (click)="runWithParameter()" [class.loading]="loading">
-                                                    {{'btn_run_workflow' | translate }}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="two wide column"></div>
-                </div>
-            </div>
+            <nz-row>
+                <nz-col [nzSpan]="18" [nzOffset]="3" >
+                    <nz-card [nzTitle]="null">
+                        <nz-row>
+                            <nz-col [nzSpan]="7">
+                                <button nz-button *ngIf="direction === 'TB'" class="direction"
+                                        (click)="changeDirection()">
+                                    <i nz-icon nzType="arrow-right" nzTheme="outline"></i>
+                                    Workflow layout
+                                </button>
+                                <button nz-button *ngIf="direction === 'LR'" class="direction"
+                                        (click)="changeDirection()">
+                                    <i nz-icon nzType="arrow-down" nzTheme="outline"></i>
+                                    Workflow layout
+                                </button>
+                            </nz-col>
+                            <nz-col [nzSpan]="10" class="center">
+                                <button nz-button nzType="primary" (click)="showAsCodeEditor()"
+                                     [nzLoading]="loading">
+                                    <i nz-icon nzType="code" nzTheme="outline"></i>
+                                    Edit as code
+                                    <i nz-icon nzType="warning" nzTheme="outline" class="orange" *ngIf="previewWorkflow"
+                                        nz-tooltip nzTooltipTitle="Your workflow is in preview mode"></i>
+                                </button>
+                                <button nz-button nzType="primary" *ngIf="previewWorkflow"
+                                     (click)="savePreview()" class="savePreview"
+                                     [class.disabled]="!detailedWorkflow.permissions.writable"
+                                     [nzLoading]="loading">
+                                    <i nz-icon nzType="save" nzTheme="outline"></i>Save
+                                </button>
+                            </nz-col>
+                            <nz-col [nzSpan]="7" class="alignRight">
+                                <button nz-button nzType="primary"
+                                     [disabled]="!detailedWorkflow.permissions.executable || editModeWorkflowChanged"
+                                     (click)="runWithParameter()" [nzLoading]="loading">
+                                    Run workflow
+                                </button>
+                            </nz-col>
+                        </nz-row>
+                    </nz-card>
+                </nz-col>
+            </nz-row>
             <app-workflow-graph *ngIf="detailedWorkflow" [workflowData]="previewWorkflow || detailedWorkflow"
                 [project]="project" [direction]="direction"></app-workflow-graph>
         </div>
