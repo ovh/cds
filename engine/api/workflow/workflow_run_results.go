@@ -213,7 +213,7 @@ func verifyAddResultArtifactManager(ctx context.Context, db gorp.SqlExecutor, st
 		return "", err
 	}
 	artNewResult.Size = fileInfo.Size
-	artNewResult.MD5 = fileInfo.Md5
+	artNewResult.MD5 = fileInfo.Checksums.Md5
 	artNewResult.RepoType = fileInfo.Type
 	if artNewResult.FileType == "" {
 		artNewResult.FileType = artNewResult.RepoType
@@ -388,4 +388,104 @@ func LoadRunResultsByNodeRunID(ctx context.Context, db gorp.SqlExecutor, nodeRun
 func LoadRunResultsByRunIDAndType(ctx context.Context, db gorp.SqlExecutor, runID int64, t sdk.WorkflowRunResultType) (sdk.WorkflowRunResults, error) {
 	query := gorpmapping.NewQuery("SELECT * FROM workflow_run_result WHERE workflow_run_id = $1 AND type = $2").Args(runID, t)
 	return getAll(ctx, db, query)
+}
+
+func FindOldestRunResultToSync(ctx context.Context, dbmap *gorp.DbMap) (string, error) {
+	query := gorpmapping.NewQuery("select id from workflow_run_result where sync is NULL order by created asc limit 1")
+	var result dbRunResult
+	found, err := gorpmapping.Get(ctx, dbmap, query, &result)
+	if err != nil {
+		return "", err
+	}
+	if !found {
+		return "", nil
+	}
+	return result.ID, nil
+}
+
+func SyncRunResultArtifactManagerByID(ctx context.Context, dbmap *gorp.DbMap, id string) error {
+	db, err := dbmap.Begin()
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+
+	defer db.Rollback() // nolint
+
+	query := gorpmapping.NewQuery("select * from workflow_run_result where id = $1 for update skip locked").Args(id)
+	var result dbRunResult
+	found, err := gorpmapping.Get(ctx, db, query, &result)
+	if err != nil {
+		return err
+	}
+	if !found {
+		return nil
+	}
+	// If the result is not an artifact manager, we do nothing but we consider it as synchronized
+	if result.Type != sdk.WorkflowRunResultTypeArtifactManager {
+		result.DataSync.Link = ""
+		result.DataSync.Sync = true
+		if err := gorpmapping.Update(db, &result); err != nil {
+			return err
+		}
+		return sdk.WithStack(db.Commit())
+	}
+
+	wr, err := LoadAndLockRunByID(ctx, db, result.WorkflowRunID, LoadRunOptions{})
+	if err != nil {
+		return err
+	}
+
+	var artifactManagerInteg *sdk.WorkflowProjectIntegration
+	for i := range wr.Workflow.Integrations {
+		if wr.Workflow.Integrations[i].ProjectIntegration.Model.ArtifactManager {
+			artifactManagerInteg = &wr.Workflow.Integrations[i]
+		}
+	}
+	if artifactManagerInteg == nil {
+		return sdk.WrapError(sdk.ErrNotFound, "artifact manager integration is not found for this workflow")
+	}
+
+	var (
+		rtName = artifactManagerInteg.ProjectIntegration.Config[sdk.ArtifactoryConfigPlatform].Value
+		rtURL  = artifactManagerInteg.ProjectIntegration.Config[sdk.ArtifactoryConfigURL].Value
+	)
+
+	// Load the token from secrets
+	secrets, err := LoadDecryptSecrets(ctx, db, wr, nil)
+	if err != nil {
+		return err
+	}
+
+	var rtToken string
+	for _, s := range secrets {
+		if s.Name == fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactoryConfigToken) {
+			rtToken = string(s.Value)
+			break
+		}
+	}
+	if rtToken == "" {
+		return sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find artifact manager token")
+	}
+
+	// Instanciate artifactory client
+	artifactClient, err := artifact_manager.NewClient(rtName, rtURL, rtToken)
+	if err != nil {
+		return err
+	}
+
+	buildInfo := artifactManagerInteg.Config[sdk.ArtifactoryConfigBuildInfoPrefix].Value
+	rtProjectKey := artifactManagerInteg.Config[sdk.ArtifactoryConfigProjectKey].Value
+	buildInfoName := fmt.Sprintf("%s/%s/%s", buildInfo, wr.Workflow.ProjectKey, wr.Workflow.Name)
+	var version string
+	if wr.Version != nil {
+		version = *wr.Version
+	} else {
+		version = fmt.Sprintf("%d", wr.Number)
+	}
+
+	if err := artifactClient.DeleteBuild(rtProjectKey, buildInfoName, version); err != nil {
+		return err
+	}
+
+	return nil
 }

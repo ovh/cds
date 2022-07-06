@@ -8,6 +8,8 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
+	buildinfo "github.com/jfrog/jfrog-client-go/artifactory/buildinfo"
+	services "github.com/jfrog/jfrog-client-go/artifactory/services"
 	sdk "github.com/ovh/cds/sdk"
 )
 
@@ -34,6 +36,20 @@ func (m *MockArtifactManager) EXPECT() *MockArtifactManagerMockRecorder {
 	return m.recorder
 }
 
+// DeleteBuild mocks base method.
+func (m *MockArtifactManager) DeleteBuild(project, buildName, buildVersion string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteBuild", project, buildName, buildVersion)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteBuild indicates an expected call of DeleteBuild.
+func (mr *MockArtifactManagerMockRecorder) DeleteBuild(project, buildName, buildVersion interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteBuild", reflect.TypeOf((*MockArtifactManager)(nil).DeleteBuild), project, buildName, buildVersion)
+}
+
 // GetFileInfo mocks base method.
 func (m *MockArtifactManager) GetFileInfo(repoName, filePath string) (sdk.FileInfo, error) {
 	m.ctrl.T.Helper()
@@ -47,6 +63,34 @@ func (m *MockArtifactManager) GetFileInfo(repoName, filePath string) (sdk.FileIn
 func (mr *MockArtifactManagerMockRecorder) GetFileInfo(repoName, filePath interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFileInfo", reflect.TypeOf((*MockArtifactManager)(nil).GetFileInfo), repoName, filePath)
+}
+
+// GetURL mocks base method.
+func (m *MockArtifactManager) GetURL() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetURL")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// GetURL indicates an expected call of GetURL.
+func (mr *MockArtifactManagerMockRecorder) GetURL() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetURL", reflect.TypeOf((*MockArtifactManager)(nil).GetURL))
+}
+
+// PublishBuildInfo mocks base method.
+func (m *MockArtifactManager) PublishBuildInfo(project string, request *buildinfo.BuildInfo) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PublishBuildInfo", project, request)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PublishBuildInfo indicates an expected call of PublishBuildInfo.
+func (mr *MockArtifactManagerMockRecorder) PublishBuildInfo(project, request interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PublishBuildInfo", reflect.TypeOf((*MockArtifactManager)(nil).PublishBuildInfo), project, request)
 }
 
 // SetProperties mocks base method.
@@ -66,4 +110,19 @@ func (mr *MockArtifactManagerMockRecorder) SetProperties(repoName, filePath inte
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{repoName, filePath}, values...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetProperties", reflect.TypeOf((*MockArtifactManager)(nil).SetProperties), varargs...)
+}
+
+// XrayScanBuild mocks base method.
+func (m *MockArtifactManager) XrayScanBuild(params services.XrayScanParams) ([]byte, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "XrayScanBuild", params)
+	ret0, _ := ret[0].([]byte)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// XrayScanBuild indicates an expected call of XrayScanBuild.
+func (mr *MockArtifactManagerMockRecorder) XrayScanBuild(params interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "XrayScanBuild", reflect.TypeOf((*MockArtifactManager)(nil).XrayScanBuild), params)
 }

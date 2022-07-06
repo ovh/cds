@@ -1,6 +1,7 @@
 package sdk
 
 import (
+	"database/sql/driver"
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -48,6 +49,30 @@ type WorkflowRunResult struct {
 	SubNum            int64                 `json:"sub_num" db:"sub_num"`
 	Type              WorkflowRunResultType `json:"type" db:"type"`
 	DataRaw           json.RawMessage       `json:"data" db:"data"`
+	DataSync          WorkflowRunResultSync `json:"sync" db:"sync"`
+}
+
+type WorkflowRunResultSync struct {
+	Sync bool   `json:"sync"`
+	Link string `json:"link"`
+}
+
+// Value returns driver.Value from WorkflowRunResultSync
+func (s WorkflowRunResultSync) Value() (driver.Value, error) {
+	j, err := json.Marshal(s)
+	return j, WrapError(err, "cannot marshal WorkflowRunResultSync")
+}
+
+// Scan WorkflowRunResultSync
+func (s *WorkflowRunResultSync) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
+	}
+	return WrapError(JSONUnmarshal(source, s), "cannot unmarshal WorkflowRunResultSync")
 }
 
 func (r WorkflowRunResult) ComputeUniqueKey() (string, error) {

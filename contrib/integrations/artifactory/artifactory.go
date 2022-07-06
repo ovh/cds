@@ -5,48 +5,23 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/jfrog/jfrog-client-go/artifactory"
 	"github.com/jfrog/jfrog-client-go/artifactory/auth"
+	"github.com/jfrog/jfrog-client-go/artifactory/buildinfo"
 	"github.com/jfrog/jfrog-client-go/artifactory/services"
 	"github.com/jfrog/jfrog-client-go/config"
 	"github.com/jfrog/jfrog-client-go/distribution"
 	authdistrib "github.com/jfrog/jfrog-client-go/distribution/auth"
 	"github.com/pkg/errors"
 
+	"github.com/ovh/cds/engine/api/integration/artifact_manager"
 	"github.com/ovh/cds/sdk"
 )
-
-type FileInfoResponse struct {
-	Checksums         *FileInfoChecksum `json:"checksums,omitempty"`
-	Created           time.Time         `json:"created"`
-	CreatedBy         string            `json:"createdBy"`
-	DownloadURI       string            `json:"downloadUri"`
-	LastModified      time.Time         `json:"lastModified"`
-	LastUpdated       time.Time         `json:"lastUpdated"`
-	MimeType          string            `json:"mimeType"`
-	ModifiedBy        string            `json:"modifiedBy"`
-	OriginalChecksums *FileInfoChecksum `json:"originalChecksums,omitempty"`
-	Path              string            `json:"path"`
-	RemoteURL         string            `json:"remoteUrl"`
-	Repo              string            `json:"repo"`
-	Size              string            `json:"size"`
-	URI               string            `json:"uri"`
-	Children          []FileChildren    `json:"children,omitempty"`
-}
-
-type FileInfoChecksum struct {
-	Md5    string `json:"md5"`
-	Sha1   string `json:"sha1"`
-	Sha256 string `json:"sha256"`
-}
-
-type FileChildren struct {
-	Uri    string `json:"uri"`
-	Folder bool   `json:"folder"`
-}
 
 type DistribClient struct {
 	Dsm           *distribution.DistributionServicesManager
@@ -91,32 +66,6 @@ func CreateArtifactoryClient(ctx context.Context, url, token string) (artifactor
 		return nil, fmt.Errorf("unable to create service config: %v", err)
 	}
 	return artifactory.New(serviceConfig)
-}
-
-func GetFileInfo(artiClient artifactory.ArtifactoryServicesManager, repoName string, filePath string) (FileInfoResponse, error) {
-	var resp FileInfoResponse
-	fi := sdk.FileInfo{}
-	repoDetails := services.RepositoryDetails{}
-	if err := artiClient.GetRepository(repoName, &repoDetails); err != nil {
-		return resp, sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to get repository %s: %v", repoName, err)
-	}
-	fi.Type = repoDetails.PackageType
-
-	fileInfoURL := fmt.Sprintf("%sapi/storage/%s/%s", artiClient.GetConfig().GetServiceDetails().GetUrl(), repoName, filePath)
-	httpDetails := artiClient.GetConfig().GetServiceDetails().CreateHttpClientDetails()
-	re, body, _, err := artiClient.Client().SendGet(fileInfoURL, true, &httpDetails)
-	if err != nil {
-		return resp, sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to call artifactory: %v", err)
-	}
-
-	if re.StatusCode >= 400 {
-		return resp, sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to call artifactory [HTTP: %d] %s", re.StatusCode, string(body))
-	}
-
-	if err := sdk.JSONUnmarshal(body, &resp); err != nil {
-		return resp, sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to read artifactory response %s: %v", string(body), err)
-	}
-	return resp, nil
 }
 
 func SetProperties(artiClient artifactory.ArtifactoryServicesManager, repoName string, filePath string, props map[string]string) error {
@@ -258,4 +207,166 @@ func checkArtifactExists(artiClient artifactory.ArtifactoryServicesManager, repo
 		return false, fmt.Errorf("unable to call artifactory [HTTP: %d] %s %s", re.StatusCode, fileInfoURL, string(body))
 	}
 	return true, nil
+}
+
+type executionContext struct {
+	buildInfo         string
+	projectKey        string
+	workflowName      string
+	version           string
+	lowMaturitySuffix string
+}
+
+type BuildInfoRequest struct {
+	BuildInfoPrefix   string
+	ProjectKey        string
+	WorkflowName      string
+	Version           string
+	AgentName         string
+	TokenName         string
+	RunURL            string
+	GitBranch         string
+	GitMessage        string
+	GitURL            string
+	GitHash           string
+	LowMaturitySuffix string
+	RunResults        []sdk.WorkflowRunResult
+}
+
+func PrepareBuildInfo(artiClient artifact_manager.ArtifactManager, r BuildInfoRequest) (*buildinfo.BuildInfo, error) {
+	buildInfoName := fmt.Sprintf("%s/%s/%s", r.BuildInfoPrefix, r.ProjectKey, r.WorkflowName)
+
+	buildInfoRequest := &buildinfo.BuildInfo{
+		Properties: map[string]string{},
+		Name:       buildInfoName,
+		Agent: &buildinfo.Agent{
+			Name:    "artifactory-build-info-plugin",
+			Version: sdk.VERSION,
+		},
+		BuildAgent: &buildinfo.Agent{
+			Name:    r.AgentName,
+			Version: sdk.VERSION,
+		},
+		ArtifactoryPrincipal:     fmt.Sprintf("token:%s", r.TokenName),
+		ArtifactoryPluginVersion: sdk.VERSION,
+		Started:                  time.Now().Format("2006-01-02T15:04:05.999-07:00"),
+		Number:                   r.Version,
+		BuildUrl:                 r.RunURL,
+		Modules:                  []buildinfo.Module{},
+		VcsList:                  make([]buildinfo.Vcs, 0),
+	}
+
+	buildInfoRequest.VcsList = append(buildInfoRequest.VcsList, buildinfo.Vcs{
+		Branch:   r.GitBranch,
+		Message:  r.GitMessage,
+		Url:      r.GitURL,
+		Revision: r.GitHash,
+	})
+
+	execContext := executionContext{
+		buildInfo:         r.BuildInfoPrefix,
+		lowMaturitySuffix: r.LowMaturitySuffix,
+		workflowName:      r.WorkflowName,
+		version:           r.Version,
+		projectKey:        r.ProjectKey,
+	}
+	modules, err := computeBuildInfoModules(artiClient, execContext, r.RunResults)
+	if err != nil {
+		return nil, err
+	}
+	buildInfoRequest.Modules = modules
+
+	return buildInfoRequest, nil
+}
+
+func computeBuildInfoModules(client artifact_manager.ArtifactManager, execContext executionContext, runResults []sdk.WorkflowRunResult) ([]buildinfo.Module, error) {
+	modules := make([]buildinfo.Module, 0)
+	for _, r := range runResults {
+		if r.Type != sdk.WorkflowRunResultTypeArtifactManager {
+			continue
+		}
+		data, err := r.GetArtifactManager()
+		if err != nil {
+			return nil, err
+		}
+
+		mod := buildinfo.Module{
+			Id:           fmt.Sprintf("%s:%s", data.RepoType, data.Name),
+			Artifacts:    make([]buildinfo.Artifact, 0, len(runResults)),
+			Dependencies: nil,
+		}
+		switch data.RepoType {
+		case "docker":
+			mod.Type = buildinfo.Docker
+			props := make(map[string]string)
+			parsedUrl, err := url.Parse(client.GetURL())
+			if err != nil {
+				return nil, fmt.Errorf("unable to parse artifactory url [%s]: %v", client.GetURL(), err)
+			}
+			urlArtifactory := parsedUrl.Host
+			if parsedUrl.Port() != "" {
+				urlArtifactory += ":" + parsedUrl.Port()
+			}
+			props["docker.image.tag"] = fmt.Sprintf("%s.%s/%s", data.RepoName, urlArtifactory, data.Name)
+			mod.Properties = props
+		}
+
+		artifacts, err := retrieveModulesArtifacts(client, data.RepoName, data.Path, execContext)
+		if err != nil {
+			return nil, err
+		}
+		mod.Artifacts = artifacts
+		modules = append(modules, mod)
+	}
+
+	return modules, nil
+}
+
+func retrieveModulesArtifacts(client artifact_manager.ArtifactManager, repoName string, path string, execContext executionContext) ([]buildinfo.Artifact, error) {
+	fileInfo, err := client.GetFileInfo(repoName, path)
+	if err != nil {
+		return nil, err
+	}
+	artifacts := make([]buildinfo.Artifact, 0)
+
+	// If no children, it's a file, so we have checksum
+	_, objectName := filepath.Split(path)
+
+	if len(fileInfo.Children) == 0 {
+		props := []sdk.KeyValues{
+			{
+				Key:    "build.name",
+				Values: []string{fmt.Sprintf("%s/%s/%s", execContext.buildInfo, execContext.projectKey, execContext.workflowName)},
+			}, {
+				Key:    "build.number",
+				Values: []string{execContext.version},
+			}, {
+				Key:    "build.timestamp",
+				Values: []string{strconv.FormatInt(time.Now().Unix(), 10)},
+			},
+		}
+		repoSrc := repoName
+		repoSrc += "-" + execContext.lowMaturitySuffix
+		if err := client.SetProperties(repoSrc, objectName, props...); err != nil {
+			return nil, err
+		}
+
+		currentArtifact := buildinfo.Artifact{
+			Name: objectName,
+			Type: strings.TrimPrefix(filepath.Ext(objectName), "."),
+			Checksum: &buildinfo.Checksum{
+				Md5: fileInfo.Checksums.Md5,
+			},
+		}
+		artifacts = append(artifacts, currentArtifact)
+	} else {
+		for _, c := range fileInfo.Children {
+			artsChildren, err := retrieveModulesArtifacts(client, repoName, fmt.Sprintf("%s%s", path, c.Uri), execContext)
+			if err != nil {
+				return nil, err
+			}
+			artifacts = append(artifacts, artsChildren...)
+		}
+	}
+	return artifacts, nil
 }
