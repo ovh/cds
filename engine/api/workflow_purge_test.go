@@ -251,7 +251,8 @@ func Test_Purge_DeleteArtifactsFromRepositoryManager(t *testing.T) {
 
 	mockArtifactory.EXPECT().GetFileInfo("repository", "path/to/foo").Return(
 		sdk.FileInfo{
-			Type: "generic",
+			Type:      "generic",
+			Checksums: &sdk.FileInfoChecksum{},
 		},
 		nil)
 

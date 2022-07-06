@@ -311,7 +311,6 @@ func deleteRunHistory(ctx context.Context, db *gorp.DbMap, workflowRunID int64, 
 }
 
 func DeleteArtifactsFromRepositoryManager(ctx context.Context, db gorp.SqlExecutor, wr *sdk.WorkflowRun) error {
-
 	// Check if the run is linked to an artifact manager integration
 	var artifactManagerInteg *sdk.WorkflowProjectIntegration
 	for _, integ := range wr.Workflow.Integrations {
@@ -359,6 +358,8 @@ func DeleteArtifactsFromRepositoryManager(ctx context.Context, db gorp.SqlExecut
 	if err != nil {
 		return err
 	}
+
+	log.Debug(ctx, "found %d results to delete", len(runResults))
 
 	lowMaturity := artifactManagerInteg.ProjectIntegration.Config[sdk.ArtifactoryConfigPromotionLowMaturity].Value
 	highMaturity := artifactManagerInteg.ProjectIntegration.Config[sdk.ArtifactoryConfigPromotionHighMaturity].Value
