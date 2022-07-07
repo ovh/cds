@@ -85,7 +85,7 @@
                            #formWorkflowUpdateHistory="ngModel" min="1" max="500">
                 </nz-form-control>
             </nz-form-item>
-            <nz-form-item *ngIf="true || !retentionRunsPolicyEnabled">
+            <nz-form-item *ngIf="!retentionRunsPolicyEnabled">
                 <nz-form-label [nzSpan]="6">Purge tags</nz-form-label>
                 <nz-form-control>
                     <div class="selectTag">
@@ -97,7 +97,7 @@
                     </div>
                 </nz-form-control>
             </nz-form-item>
-            <nz-form-item *ngIf="true || !retentionRunsPolicyEnabled">
+            <nz-form-item *ngIf="!retentionRunsPolicyEnabled">
                 <nz-form-label [nzSpan]="6">Current purge tags</nz-form-label>
                 <nz-form-control>
                     <ng-container *ngIf="selectedTagsPurge && selectedTagsPurge.length > 0">
