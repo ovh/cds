@@ -189,6 +189,9 @@ workflow_with_third_parties() {
 
     if [ -z "$CDS_MODEL_REQ" ]; then echo "missing CDS_MODEL_REQ variable"; exit 1; fi
     if [ -z "$CDS_REGION_REQ" ]; then echo "missing CDS_REGION_REQ variable"; exit 1; fi
+    if [ -z "$VENOM_VAR_projectKey" ]; then echo "missing VENOM_VAR_projectKey variable"; exit 1; fi
+    if [ -z "$VENOM_VAR_integrationName" ]; then echo "missing VENOM_VAR_integrationName variable"; exit 1; fi
+
     echo "Running Workflow with third parties:"
     for f in $(ls -1 06_*.yml); do
         CMD="${VENOM} run ${VENOM_OPTS} ${f} --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}"
