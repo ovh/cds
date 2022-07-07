@@ -1,5 +1,5 @@
 <div id="WorkflowAdmin">
-    <nz-card nzTitle="Icon">
+    <nz-card nzTitle="Icon" class="coloredTitle">
         <form nz-form>
             <nz-form-item>
                 <nz-form-label [nzSpan]="3">Select icon</nz-form-label>
@@ -23,7 +23,7 @@
             </nz-form-item>
         </form>
     </nz-card>
-    <nz-card nzTitle="Workflow configuration">
+    <nz-card nzTitle="Settings" class="coloredTitle">
         <form nz-form (ngSubmit)="onSubmitWorkflowUpdate()">
             <nz-form-item>
                 <nz-form-label [nzSpan]="6">Workflow name</nz-form-label>
@@ -200,7 +200,7 @@
             </nz-form-item>
         </form>
     </nz-card>
-    <nz-card nzTitle="Integrations">
+    <nz-card nzTitle="Integrations" class="coloredTitle">
         <form nz-form>
             <nz-form-item>
                 <nz-form-label>Link an integration</nz-form-label>
@@ -247,7 +247,7 @@
             </nz-form-item>
         </form>
     </nz-card>
-    <nz-card nzTitle="Danger zone">
+    <nz-card nzTitle="Danger zone" class="redTitle">
         <nz-row>
             <nz-col [nzSpan]="12">
                 <div class="title">Delete workflow</div>

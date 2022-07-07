@@ -1,5 +1,5 @@
 <div id="EnvironmentAdmin">
-    <nz-card nzTitle="Configuration">
+    <nz-card nzTitle="Settings" class="coloredTitle">
         <form nz-form #environmentUpdateFrom="ngForm">
             <nz-form-item>
                 <nz-form-label>Name</nz-form-label>
@@ -23,7 +23,7 @@
             </nz-form-item>
         </form>
     </nz-card>
-    <nz-card nzTitle="Danger zone">
+    <nz-card nzTitle="Danger zone" class="redTitle">
         <nz-row>
             <nz-col [nzSpan]="12">
                 <div class="title">{{ 'environment_delete_label' | translate}}</div>

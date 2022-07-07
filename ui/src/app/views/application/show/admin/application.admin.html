@@ -1,5 +1,5 @@
 <div id="ApplicationAdmin">
-    <nz-card nzTitle="Settings">
+    <nz-card nzTitle="Settings" class="coloredTitle">
         <form nz-form #applicationUpdateFrom="ngForm">
             <nz-form-item>
                 <nz-form-label [nzSpan]="3">Name</nz-form-label>
@@ -36,11 +36,11 @@
         </form>
     </nz-card>
 
-    <nz-card nzTitle="Repository">
+    <nz-card nzTitle="Repository" class="coloredTitle">
         <app-application-repo [project]="project" [application]="application" [editMode]="editMode"></app-application-repo>
     </nz-card>
 
-    <nz-card nzTitle="Integrations">
+    <nz-card nzTitle="Integrations" class="coloredTitle">
         <ng-container *ngIf="project.integrations && project.integrations.length > 0">
             <app-application-deployment [project]="project" [application]="application" [editMode]="editMode"></app-application-deployment>
         </ng-container>
@@ -49,7 +49,7 @@
         </ng-container>
     </nz-card>
 
-    <nz-card nzTitle="Danger zone">
+    <nz-card nzTitle="Danger zone" class="redTitle">
         <nz-row>
             <nz-col [nzSpan]="12">
                 <div class="title">Delete application</div>
