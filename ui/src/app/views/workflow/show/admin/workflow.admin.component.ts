@@ -332,7 +332,6 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
     }
 
     updateTagMetadata(): void {
-        console.log(this.tagsToAdd);
         if (this.tagsToAdd && this.tagsToAdd.length > 0) {
             if (!this.selectedTags) {
                 this.selectedTags = [];
