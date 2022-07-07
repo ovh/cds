@@ -123,7 +123,7 @@
                 </nz-form-control>
             </nz-form-item>
             <nz-form-item  *ngIf="retentionRunsPolicyEnabled && apiConfig">
-                <nz-form-label [nzSpan]="6">Workflow run retention policy <i nz-icon nzType="question-circle" nzTheme="outline" nz-tooltip [nzTooltipTitle]="popupRetention" nzTooltipOverlayClassName="retentionTooltip"></i></nz-form-label>
+                <nz-form-label [nzSpan]="6">Workflow run retention policy <i nz-icon nzType="question-circle" nzTheme="outline" nz-popover [nzPopoverContent]="popupRetention"  nzPopoverTrigger="hover"></i></nz-form-label>
                 <ng-template #popupRetention>
                     <div class="retentionTooltip">
                         You can set a custom lua retention policy rule for this workflow.
