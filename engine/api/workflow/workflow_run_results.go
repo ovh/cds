@@ -425,14 +425,9 @@ func ResyncWorkflowRunResultsRoutine(ctx context.Context, DBFunc func() *gorp.Db
 }
 
 func FindOldestWorkflowRunWithResultToSync(ctx context.Context, dbmap *gorp.DbMap) (int64, error) {
-	query := gorpmapping.NewQuery("select distinct workflow_run_id from workflow_run_result where sync is NULL order by workflow_run_id asc limit 1")
-	var result int64
-	found, err := gorpmapping.Get(ctx, dbmap, query, &result)
+	result, err := dbmap.SelectInt("select distinct workflow_run_id from workflow_run_result where sync is NULL order by workflow_run_id asc limit 1")
 	if err != nil {
 		return 0, err
-	}
-	if !found {
-		return 0, nil
 	}
 	return result, nil
 }
