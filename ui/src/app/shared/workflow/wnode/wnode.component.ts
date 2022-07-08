@@ -96,7 +96,7 @@ export class WorkflowWNodeComponent implements OnInit, OnDestroy {
         });
     }
 
-        clickOnNode(popover: any): void {
+        clickOnNode(): void {
         if (this.workflow.previewMode) {
             return;
         }

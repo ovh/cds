@@ -1,4 +1,4 @@
-<div class="node-wrapper" (click)="clickOnNode(popupNode)" (dblclick)="$event.stopPropagation(); dblClickOnNode()"
+<div class="node-wrapper" (click)="clickOnNode()" (dblclick)="$event.stopPropagation(); dblClickOnNode()"
     [ngSwitch]="node.type" nz-popover [nzPopoverContent]="popupNode" nzPopoverPlacement="right" nzPopoverTrigger="click" [(nzPopoverVisible)]="menuVisible">
     <app-workflow-wnode-pipeline *ngSwitchCase="'pipeline'" [workflow]="workflow" [node]="node"
         [noderun]="currentNodeRun" [warnings]="warnings"></app-workflow-wnode-pipeline>
