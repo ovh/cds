@@ -347,7 +347,7 @@ func retrieveModulesArtifacts(client artifact_manager.ArtifactManager, repoName 
 		}
 		repoSrc := repoName
 		repoSrc += "-" + execContext.lowMaturitySuffix
-		if err := client.SetProperties(repoSrc, objectName, props...); err != nil {
+		if err := client.SetProperties(repoSrc, path, props...); err != nil {
 			return nil, err
 		}
 

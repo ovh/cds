@@ -58,7 +58,7 @@ func (c *Client) SetProperties(repoName string, filePath string, values ...sdk.K
 	var properties string
 	for i, kv := range values {
 		if i > 0 {
-			properties += "|" // https://www.jfrog.com/confluence/display/JFROG/Artifactory+REST+API#ArtifactoryRESTAPI-SetItemProperties
+			properties += ";" // https://www.jfrog.com/confluence/display/JFROG/Artifactory+REST+API#ArtifactoryRESTAPI-SetItemProperties
 		}
 		properties += url.QueryEscape(kv.Key) + "=" + url.QueryEscape(strings.Join(kv.Values, ","))
 	}
