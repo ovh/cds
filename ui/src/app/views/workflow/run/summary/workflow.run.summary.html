@@ -1,104 +1,88 @@
 <div class="workflowRunStatus" *ngIf="workflowName">
-    <div class="ui grid">
-        <div class="row">
-            <div class="two wide column"></div>
-            <div class="twelve wide column animated fadeInDown winfo" *ngIf="workflowRun">
-                <div class="ui raised card cardinfo"
-                    [class.building]="workflowRun.status === pipelineStatusEnum.PENDING ||workflowRun.status === pipelineStatusEnum.BUILDING || workflowRun.status === pipelineStatusEnum.WAITING"
-                    [class.success]="workflowRun.status === pipelineStatusEnum.SUCCESS"
-                    [class.fail]="workflowRun.status === pipelineStatusEnum.FAIL || workflowRun.status === pipelineStatusEnum.STOPPED"
-                    [class.inactive]="workflowRun.status === pipelineStatusEnum.DISABLED || workflowRun.status === pipelineStatusEnum.SKIPPED || workflowRun.status === pipelineStatusEnum.NEVER_BUILT">
-                    <div class="content">
-                        <div class="ui grid">
-                            <div class="row">
-                                <div class="five wide column" title="{{'workflow_first_execution' | translate}}">
-                                    <i class="calendar icon"></i>
-                                    <span>{{workflowRun.start | amLocal | amDateFormat: 'DD/MM/YYYY HH:mm' }}</span>
-                                </div>
-                                <div class="six wide column centered" title="{{'common_version' | translate}}">
-                                    <i class="tag icon"></i>
-                                    <span>{{workflowRun.num}}.{{workflowRun.last_subnumber}}</span>
-                                </div>
-                                <div class="five wide column" title="{{'workflow_last_execution' | translate}}">
-                                    <div class="right floated"
-                                        *ngIf="workflowRun.status !== pipelineStatusEnum.BUILDING && workflowRun.status !== pipelineStatusEnum.WAITING">
-                                        <i class="checked calendar icon"></i>
-                                        <span>{{workflowRun.last_execution | amLocal | amDateFormat: 'DD/MM/YYYY HH:mm' }}</span>
-                                    </div>
-                                </div>
+    <nz-row>
+        <nz-col [nzSpan]="18" [nzOffset]="3" *ngIf="workflowRun">
+            <nz-card [nzTitle]="null" class="cardInfo"
+                     [class.building]="workflowRun.status === pipelineStatusEnum.PENDING ||workflowRun.status === pipelineStatusEnum.BUILDING || workflowRun.status === pipelineStatusEnum.WAITING"
+                     [class.success]="workflowRun.status === pipelineStatusEnum.SUCCESS"
+                     [class.fail]="workflowRun.status === pipelineStatusEnum.FAIL || workflowRun.status === pipelineStatusEnum.STOPPED"
+                     [class.inactive]="workflowRun.status === pipelineStatusEnum.DISABLED || workflowRun.status === pipelineStatusEnum.SKIPPED || workflowRun.status === pipelineStatusEnum.NEVER_BUILT">
+                <nz-row>
+                    <nz-col [nzSpan]="7">
+                        <i nz-icon nzType="calendar" nzTheme="outline"></i>
+                        <span>{{workflowRun.start | amLocal | amDateFormat: 'DD/MM/YYYY HH:mm' }}</span>
+                    </nz-col>
+                    <nz-col [nzSpan]="10" class="center">
+                        <span>#{{workflowRun.num}}.{{workflowRun.last_subnumber}}</span>
+                    </nz-col>
+                    <nz-col [nzSpan]="7" class="alignRight">
+                        <ng-container *ngIf="workflowRun.status !== pipelineStatusEnum.BUILDING && workflowRun.status !== pipelineStatusEnum.WAITING">
+                            <i nz-icon nzType="calendar" nzTheme="outline"></i>
+                            <span>{{workflowRun.last_execution | amLocal | amDateFormat: 'DD/MM/YYYY HH:mm' }}</span>
+                        </ng-container>
+                    </nz-col>
+                </nz-row>
+                <nz-row class="bordered">
+                    <nz-col [nzSpan]="7">
+                        <button nz-button *ngIf="direction === 'TB'" class="direction"
+                                (click)="changeDirection()">
+                            <i nz-icon nzType="arrow-right" nzTheme="outline"></i>
+                            Workflow layout
+                        </button>
+                        <button nz-button *ngIf="direction === 'LR'" class="direction"
+                                (click)="changeDirection()">
+                            <i nz-icon nzType="arrow-down" nzTheme="outline"></i>
+                            Workflow layout
+                        </button>
+                    </nz-col>
+                    <nz-col [nzSpan]="10" class="center">
+                        <ng-container *ngIf="author">
+                            <div>
+                                <i nz-icon nzType="user" nzTheme="outline"></i>
                             </div>
-                        </div>
-                    </div>
-                    <div class="extra content">
-                        <div class="ui grid">
-                            <div class="row">
-                                <div class="five wide column" title="{{'common_orientation' | translate}}">
-                                    <button class="ui icon button" *ngIf="direction === 'TB'"
-                                        (click)="changeDirection()">
-                                        <i class="resize horizontal icon"></i>
-                                    </button>
-                                    <button class="ui icon button" *ngIf="direction === 'LR'"
-                                        (click)="changeDirection()">
-                                        <i class="resize vertical icon"></i>
-                                    </button>
-                                </div>
-                                <div class="six wide column centered" title="{{ 'commit_author' | translate }}">
-                                    <ng-container *ngIf="author">
-                                        <div>
-                                            <i class="user circle outline icon centered"></i>
-                                        </div>
-                                        {{author}}
-                                    </ng-container>
-                                </div>
-                                <div class="five wide column">
-                                    <div class="right floated">
-                                        <button class="ui labeled icon button red"
-                                            [disabled]="loadingAction || !canExecute"
-                                            [class.loading]="loadingAction" (click)="stopWorkflow()" *ngIf="workflowRun.status === pipelineStatusEnum.WAITING ||
-                                                workflowRun.status === pipelineStatusEnum.BUILDING">
-                                            <i class="stop icon"></i>
-                                            {{ 'common_stop' | translate }}
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="info content animated fadeIn spawninfo" *ngIf="showInfos">
-                        <div class="ui grid">
-                            <div class="ui row">
-                                <div class="three wide column">
-                                </div>
-                                <div class="ten wide column center aligned">
-                                    <button class="ui labeled icon button" suiPopup
-                                        [popupText]="'workflow_resync_vcs_tooltip' | translate"
-                                        popupPlacement="top center" [class.loading]="loadingAction"
-                                        (click)="resyncVCSStatus()">
-                                        <i class="handshake outline icon"></i>
-                                        {{ 'workflow_resync_vcs' | translate }}
-                                    </button>
-                                </div>
-                                <div class="three wide column right aligned">
-                                    <app-delete-button [disabled]="loadingDelete" [loading]="loadingDelete" (event)="delete()"></app-delete-button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="ui black message scrollable">
+                            {{author}}
+                        </ng-container>
+                    </nz-col>
+                    <nz-col [nzSpan]="7" class="alignRight">
+                        <button nz-button nzType="primary" nzDanger
+                                [disabled]="loadingAction || !canExecute"
+                                [class.loading]="loadingAction" (click)="stopWorkflow()"
+                                *ngIf="workflowRun.status === pipelineStatusEnum.WAITING || workflowRun.status === pipelineStatusEnum.BUILDING">
+                            <i class="stop icon"></i>
+                            Stop
+                        </button>
+                    </nz-col>
+                </nz-row>
+                <nz-row *ngIf="showInfos" class="bordered">
+                    <nz-col [nzSpan]="18" [nzOffset]="3" class="center">
+                        <button nz-button nz-tooltip nzTooltipTitle="This action will resend to your repository manager the current status of all your pipelines"
+                                [nzLoading]="loadingAction"
+                                (click)="resyncVCSStatus()">
+                            <i nz-icon nzType="sync" nzTheme="outline"></i>
+                            {{ 'workflow_resync_vcs' | translate }}
+                        </button>
+                    </nz-col>
+                    <nz-col [nzSpan]="3" class="alignRight">
+                        <button nz-button nzDanger nzType="primary"
+                                [nzLoading]="loadingDelete" nz-popconfirm nzPopconfirmTitle="Are you sure you want to delete this run ?"
+                        (nzOnConfirm)="delete()">Delete</button>
+                    </nz-col>
+                </nz-row>
+                <nz-row *ngIf="showInfos">
+                    <nz-col [nzSpan]="20" [nzOffset]="2">
+                        <div class="black scrollable">
                             <pre [innerHTML]="getSpawnInfos()"></pre>
                         </div>
-                    </div>
-                    <div class="pointing semicircle bottom aligned" (click)="showInfos = !showInfos"
-                        [class.building]="workflowRun.status === pipelineStatusEnum.PENDING || workflowRun.status === pipelineStatusEnum.BUILDING || workflowRun.status === pipelineStatusEnum.WAITING"
-                        [class.success]="workflowRun.status === pipelineStatusEnum.SUCCESS"
-                        [class.fail]="workflowRun.status === pipelineStatusEnum.FAIL || workflowRun.status === pipelineStatusEnum.STOPPED"
-                        [class.inactive]="workflowRun.status === pipelineStatusEnum.DISABLED || workflowRun.status === pipelineStatusEnum.SKIPPED || workflowRun.status === pipelineStatusEnum.NEVER_BUILT">
-                        <i class="large angle down icon" *ngIf="!showInfos"></i>
-                        <i class="large angle up icon" *ngIf="showInfos"></i>
-                    </div>
-                </div>
+                    </nz-col>
+                </nz-row>
+            </nz-card>
+            <div class="semicircle" (click)="showInfos = !showInfos"
+                 [class.building]="workflowRun.status === pipelineStatusEnum.PENDING || workflowRun.status === pipelineStatusEnum.BUILDING || workflowRun.status === pipelineStatusEnum.WAITING"
+                 [class.success]="workflowRun.status === pipelineStatusEnum.SUCCESS"
+                 [class.fail]="workflowRun.status === pipelineStatusEnum.FAIL || workflowRun.status === pipelineStatusEnum.STOPPED"
+                 [class.inactive]="workflowRun.status === pipelineStatusEnum.DISABLED || workflowRun.status === pipelineStatusEnum.SKIPPED || workflowRun.status === pipelineStatusEnum.NEVER_BUILT">
+                <i nz-icon nzType="down" nzTheme="outline" *ngIf="!showInfos"></i>
+                <i nz-icon nzType="up" nzTheme="outline" *ngIf="showInfos"></i>
             </div>
-            <div class="four wide column"></div>
-        </div>
-    </div>
+        </nz-col>
+    </nz-row>
 </div>

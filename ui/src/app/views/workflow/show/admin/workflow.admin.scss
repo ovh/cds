@@ -1,26 +1,61 @@
 #WorkflowAdmin {
+
+    nz-card {
+      margin-top: 15px;
+      margin-bottom: 15px;
+    }
+
+    .selectTag {
+      width: 500px;
+      display: flex;
+
+      button {
+        margin-left: 10px;
+      }
+    }
+
     textarea {
         height: 8em;
     }
 
-    .app-icon {
+    .wf-icon {
         height: 5em;
         width: 5em;
     }
 
-    .submitbutton {
-        height: 2em;
+    .multipleButtons {
+      margin-right: 10px;
     }
 
-    .ui.horizontal.list > .item {
-        margin-right: 0.5em;
+    i {
+      margin-left: 5px;
     }
-
-  .field {
-    margin-top: 10px;
-  }
+    button {
+      i {
+        margin-left: 0;
+      }
+    }
 }
+
 
 .dryrun {
   min-height: 460px;
+}
+
+.retentionTooltip {
+  width: 600px;
+}
+
+.alignRight {
+  text-align: right;
+}
+
+.green {
+  color: green;
+}
+.red {
+  color: red;
+}
+.blue {
+  color: #0D82F8FF;
 }

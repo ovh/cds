@@ -10,7 +10,6 @@ import {
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Select, Store } from '@ngxs/store';
-import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { EventService } from 'app/event.service';
 import { Project } from 'app/model/project.model';
 import { RunToKeep } from 'app/model/purge.model';
@@ -115,7 +114,6 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
     dryRunsStatusSubs: Subscription;
     @Select(WorkflowState.getRetentionProgress()) dryRunProgress$: Observable<number>;
     dryRunProgressSub: Subscription;
-    @ViewChild('modalDryRun') dryRunModal: ModalTemplate<boolean, boolean, void>;
     dryRunColumns = [];
     dryRunDatas: Array<RunToKeep>;
     dryRunMaxDatas: number;
@@ -124,7 +122,8 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
     availableVariables: Array<string>;
     availableStringVariables: string;
     _keyUpListener: any;
-    modal: SuiActiveModal<boolean, boolean, void>;
+
+    dryRunModalVisible: boolean = false;
 
     loading = false;
     fileTooLarge = false;
@@ -141,7 +140,6 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
         private _dragularService: DragulaService,
         private _theme: ThemeStore,
         private _nzModalService: NzModalService,
-        private _modalService: SuiModalService,
         private _eventService: EventService,
         private _configService: ConfigService
     ) {
@@ -344,6 +342,7 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
 
         this._workflow.metadata['default_tags'] = this.selectedTags.join(',');
         this.tagsToAdd = [];
+        this._cd.markForCheck();
     }
 
     updateTagPurge(): void {
@@ -357,6 +356,7 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
 
         this._workflow.purge_tags = this.selectedTagsPurge;
         this.tagsToAddPurge = [];
+        this._cd.markForCheck();
     }
 
     removeFromSelectedTags(ind: number): void {
@@ -383,9 +383,7 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
             }))
             .subscribe(result => {
                 this.dryRunMaxDatas = result.nb_runs_to_analyze;
-                const config = new TemplateModalConfig<boolean, boolean, void>(this.dryRunModal);
-                config.mustScroll = true;
-                this.modal = this._modalService.open(config);
+                this.dryRunModalVisible = true;
                 this._cd.markForCheck();
             });
     }

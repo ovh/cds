@@ -1,111 +1,139 @@
 @import '../../../../../common';
-
 .workflowRunStatus {
-    :host-context(.night) & {
-        .success {
-            background-color: $darkTheme_night_green;
-            border: 2px solid $darkTheme_green;
-            border-top: none;
-        }
 
-        .fail {
-            background-color: $darkTheme_night_red;
-            border: 2px solid $darkTheme_red;
-            border-top: none;
-        }
-
-        .building {
-            background-color: $darkTheme_night_blue;
-            border: 2px solid $darkTheme_blue;
-            border-top: none;
-        }
-
-        .inactive {
-            background-color: $darkTheme_night_grey;
-            border: 2px solid grey;
-            border-top: none;
-        }
+  :host-context(.night) & {
+    button {
+      border-color: rgba(255, 255, 255, 0.85);
     }
-
-
-    .winfo {
-        z-index: 1;
-    }
-    .cardinfo {
-        border-radius: 0 0 0.28571429rem 0.28571429rem;
-    }
-
-    .running {
-        border: none;
-    }
-
     .success {
-        background-color: $cds_color_light_green;
-        border: 2px solid $cds_color_green;
-        border-top: none;
+      background-color: $darkTheme_night_green;
+      border: 2px solid $darkTheme_green;
+      border-top: none;
     }
 
     .fail {
-        background-color: $cds_color_light_red;
-        border: 2px solid $cds_color_red;
-        border-top: none;
-    }
-
-    .inactive {
-        background-color: $cds_color_light_grey;
-        border: 2px solid grey;
-        border-top: none;
+      background-color: $darkTheme_night_red;
+      border: 2px solid $darkTheme_red;
+      border-top: none;
     }
 
     .building {
-        background-color: $cds_color_light_teal;
-        border: 2px solid $cds_color_teal;
-        border-top: none;
+      background-color: $darkTheme_night_blue;
+      border: 2px solid $darkTheme_blue;
+      border-top: none;
     }
 
-    .semicircle {
-        width: 3em;
-        position: absolute;
-        height: 3em;
-        border: 2px solid black;
-        border-radius: 50% !important;
-        margin: 0 auto 0em auto;
-        bottom: -1.5em;
-        left: calc(50% - 1.5em);
-        z-index: -1;
+    .inactive {
+      background-color: $darkTheme_night_grey;
+      border: 2px solid grey;
+      border-top: none;
+    }
+  }
 
-        .icon {
-            position: absolute;
-            bottom: 0;
-            left: 17%;
-        }
+  .center {
+    text-align: center;
+  }
 
-        &.success {
-            border-color: $cds_color_green;
-        }
+  .alignRight {
+    text-align: right;
+  }
 
-        &.fail {
-            border-color: $cds_color_red;
-        }
+  nz-card {
+    z-index: 2;
+  }
 
-        &.inactive {
-            border-color: grey;
-        }
+  nz-row:not(:last-child) {
+    margin-bottom: 15px;
+  }
 
-        &.building {
-            border-color: $cds_color_teal;
-        }
+  nz-row.bordered {
+    padding-top: 15px;
+    border-top: 1px solid rgba(34,36,38,.1);
+  }
+
+  button {
+    i {
+      margin-right: inherit;
+    }
+  }
+
+  i {
+    margin-right: 5px;
+  }
+
+  .success {
+    background-color: $cds_color_light_green;
+    border: 2px solid $cds_color_green;
+    border-top: none;
+  }
+
+  .fail {
+    background-color: $cds_color_light_red;
+    border: 2px solid $cds_color_red;
+    border-top: none;
+  }
+
+  .inactive {
+    background-color: $cds_color_light_grey;
+    border: 2px solid grey;
+    border-top: none;
+  }
+
+  .building {
+    background-color: $cds_color_light_teal;
+    border: 2px solid $cds_color_teal;
+    border-top: none;
+  }
+
+  .semicircle {
+    width: 3em;
+    position: absolute;
+    height: 3em;
+    border: 2px solid black;
+    border-radius: 50% !important;
+    margin: 0 auto 0em auto;
+    bottom: -1.5em;
+    left: calc(50% - 1.5em);
+    z-index: 1;
+    cursor: pointer;
+
+    i {
+      font-size: 1em;
+      position: absolute;
+      bottom: 3px;
+      left: 30%;
     }
 
-    .spawninfo {
-        .scrollable {
-            max-height: 300px;
-            overflow-y: auto;
-        }
-
-        pre {
-            white-space: pre-line;
-            font-size: 0.85em;
-        }
+    &.success {
+      border-color: $cds_color_green;
     }
+
+    &.fail {
+      border-color: $cds_color_red;
+    }
+
+    &.inactive {
+      border-color: grey;
+    }
+
+    &.building {
+      border-color: $cds_color_teal;
+    }
+  }
+
+  .black {
+    background-color: #141414;
+  }
+  .scrollable {
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 1em 1.5em;
+    color: white;
+    border-radius: 3px;
+  }
+
+  pre {
+    white-space: pre-line;
+    font-size: 0.9em;
+  }
 }

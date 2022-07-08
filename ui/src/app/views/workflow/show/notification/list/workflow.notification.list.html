@@ -1,101 +1,81 @@
 <div class="Notifications">
-    <div class="ui two column grid">
-        <div class="four wide column">
-            <div class="ui fluid vertical steps">
-                <div class="step pointing" [class.disabled]="readOnly" [class.active]="tab === 'newNotification'"
-                    (click)="openNewNotifArea()">
-                    <div class="title">
-                        {{'workflow_notification_form' | translate }}
-                    </div>
-                </div>
-                <ng-container *ngFor="let n of workflow.notifications; let i = index">
-                    <div class="step pointing" [class.active]="selectedNotification === i" (click)="openEditionArea(i)">
-                        <div class="content full">
-                            <div class="title">
-                                {{n.type}}
-                                <div class="ui right floated">
-                                    <i class="copy icon pointing" title="{{ 'workflow_notification_copy' | translate}}"
-                                        (click)="copy(i); $event.stopPropagation();"></i>
-                                </div>
-                            </div>
-                            <div class="description">
-                                <ng-container *ngFor="let node of mapNodesNotif.get(n.id); let i = index">
-                                    <span *ngIf="i > 0">{{'/'}}</span>
-                                    {{ node }}
-                                </ng-container>
-                            </div>
-                        </div>
-                    </div>
-                </ng-container>
+    <nz-row>
+        <nz-col [nzSpan]="6">
+            <div class="section">
+                <h3>Workflow notifications</h3>
+                <button nz-button [disabled]="readOnly" (click)="openNewNotifArea()"><i nz-icon nzType="plus" nzTheme="outline"></i></button>
             </div>
-            <div class="ui fluid vertical steps">
-                <div class="step pointing" [class.disabled]="readOnly" [class.active]="tab === 'newEvent'"
-                    (click)="openNewEventArea()">
+            <div class="item" *ngFor="let n of workflow.notifications; let i = index" (click)="openEditionArea(i)" [class.active]="this.selectedNotification === i">
+                <div class="content">
                     <div class="title">
-                        {{'workflow_event_form' | translate }}
+                        {{n.type}}
+                    </div>
+                    <div class="description">
+                        <ng-container *ngFor="let node of mapNodesNotif.get(n.id); let i = index">
+                            <span *ngIf="i > 0">{{'/'}}</span>
+                            {{ node }}
+                        </ng-container>
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="twelve wide column">
+            <div class="section">
+                <h3>Events integration</h3>
+                <button nz-button (click)="openNewEventArea()"><i nz-icon nzType="plus" nzTheme="outline"></i></button>
+            </div>
+            <div class="item" *ngFor="let eventIntegration of workflow.integrations | callback: filterEvent">
+                <div class="content">
+                    <div class="title">
+                        {{eventIntegration.project_integration.name}}
+                        <button nz-button nzDanger nzType="primary" [nzLoading]="loading" nz-popconfirm
+                                nzPopconfirmTitle="Are you sure you want to remove this event integration ?"
+                         (nzOnConfirm)="deleteEvent(eventIntegration.project_integration_id)">Delete</button>
+                    </div>
+                </div>
+            </div>
+        </nz-col>
+        <nz-col [nzSpan]="18" class="form">
             <ng-container *ngIf="selectedNotification != null">
                 <app-workflow-notifications-form [project]="project" [workflow]="workflow"
-                    [notification]="workflow.notifications[selectedNotification]" [loading]="loading"
-                    [editMode]="editMode" (updatedNotification)="updateNotification($event)" [readOnly]="readOnly"
-                    (deleteNotificationEvent)="deleteNotification($event)" [canDelete]="true">
+                                                 [notification]="workflow.notifications[selectedNotification]" [loading]="loading"
+                                                 [editMode]="editMode" (updatedNotification)="updateNotification($event)" [readOnly]="readOnly"
+                                                 (deleteNotificationEvent)="deleteNotification($event)" [canDelete]="true">
                 </app-workflow-notifications-form>
             </ng-container>
             <ng-container *ngIf="tab === 'newNotification' && !loadingNotifTemplate">
                 <app-workflow-notifications-form [project]="project" [workflow]="workflow" [loading]="loading"
-                    [canDelete]="false" [notification]="newNotification" [editMode]="editMode"
-                    (updatedNotification)="createNotification($event)"></app-workflow-notifications-form>
+                                                 [canDelete]="false" [notification]="newNotification" [editMode]="editMode"
+                                                 (updatedNotification)="createNotification($event)"></app-workflow-notifications-form>
             </ng-container>
             <ng-container *ngIf="tab === 'newEvent'">
-                <div class="ui form">
-                    <div class="field">
+                <form nz-form nzLayout="inline">
+                    <div class="help">
                         <div markdown [data]="'workflow_event_explanation' | translate"></div>
                     </div>
-                    <div class="fields">
-                        <div class="fifteen wide field" *ngIf="eventIntegrations && eventIntegrations.length > 0">
-                            <sui-select class="selection" [(ngModel)]="selectedIntegration"
-                                [options]="eventIntegrations" labelField="name" [isSearchable]="true" #select>
-                                <sui-select-option *ngFor="let option of select.filteredOptions" [value]="option">
-                                </sui-select-option>
-                            </sui-select>
-                        </div>
-                        <div class="fifteen wide field center ui info message"
-                            *ngIf="!eventIntegrations || eventIntegrations.length === 0">
-                            {{'workflow_no_event_integration' | translate }} <a
-                                href="#" [routerLink]="['/docs', 'docs', 'concepts', 'workflow', 'notifications']"
-                                target="_blank" rel="noopener noreferrer">{{'common_click_more_informations' | translate }}</a>
-                        </div>
-                        <div class="one wide field" *ngIf="eventIntegrations && eventIntegrations.length > 0">
-                            <button class="ui blue icon button right floated" [class.loading]="loading"
-                                [class.disabled]="!selectedIntegration || loading"
+
+                    <nz-alert *ngIf="!eventIntegrations || eventIntegrations.length === 0"
+                              nzType="info" [nzMessage]="alertMsg"></nz-alert>
+                    <ng-template #alertMsg>
+                        You haven't any event integration on your project. <a
+                            href="#" [routerLink]="['/docs', 'docs', 'concepts', 'workflow', 'notifications']"
+                            target="_blank" rel="noopener noreferrer">{{'common_click_more_informations' | translate }}</a>
+                    </ng-template>
+
+                    <nz-form-item *ngIf="eventIntegrations && eventIntegrations.length > 0">
+                        <nz-form-control>
+                            <nz-select nzShowSearch [(ngModel)]="selectedIntegration" name="integ" class="integrationsList">
+                                <nz-option *ngFor="let o of eventIntegrations" [nzLabel]="o.name" [nzValue]="o"></nz-option>
+                            </nz-select>
+                        </nz-form-control>
+                    </nz-form-item>
+                    <nz-form-item nzJustify="end">
+                        <button nz-button nzType="primary" [nzLoading]="loading"
+                                [disabled]="!selectedIntegration || loading"
                                 (click)="addEvent(selectedIntegration)">
-                                <i class="plus icon"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <div class="ui row">
-                    <div class="ui sixteen wide column">
-                        <div class="ui middle aligned celled list"
-                            *ngIf="workflow.integrations && workflow.integrations.length > 0">
-                            <div class="item" *ngFor="let eventIntegration of workflow.integrations | callback: filterEvent">
-                                <div class="right floated content">
-                                    <app-delete-button type="icon" [loading]="loading"
-                                                       (event)="deleteEvent(eventIntegration.project_integration_id)">
-                                    </app-delete-button>
-                                </div>
-                                <div class="middle aligned content intname">
-                                    {{eventIntegration.project_integration.name}}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                            <i nz-icon nzType="save" nzTheme="outline"></i>Add
+                        </button>
+                    </nz-form-item>
+                </form>
             </ng-container>
-        </div>
-    </div>
+        </nz-col>
+    </nz-row>
 </div>

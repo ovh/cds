@@ -1,322 +1,262 @@
 <div id="WorkflowAdmin">
-    <app-zone header="{{ 'common_icon' | translate }}">
-        <app-zone-content class="bottom">
-            <div class="ui form">
-                <div class="fields">
-                    <div class="eleven wide field center aligned" *ngIf="!fileTooLarge">
-                        <div>
-                            <img class="app-icon" [src]="_workflow.icon" alt="application icon" *ngIf="_workflow.icon">
-                        </div>
-                        <app-upload-button accept=".png,.jpg,.jpeg" image="true" (event)="fileEvent($event)">
-                        </app-upload-button>
-                    </div>
-                    <div class="ui sixteen wide red message field center aligned" *ngIf="fileTooLarge"
-                        [textContent]="'common_file_too_large' | translate"></div>
-                    <div class="five wide right aligned field" *ngIf="!fileTooLarge">
-                        <button class="ui green button" [class.loading]="loading" name="updateiconButton"
-                            (click)="updateIcon()" [class.loading]="loading" [disabled]="loading">{{
-                            'btn_save' | translate }}
-                        </button>
-                        <button class="ui red button" [class.loading]="loading" *ngIf="!iconUpdated && workflow.icon"
-                            name="deleteiconButton" (click)="deleteIcon()" [class.loading]="loading"
-                            [disabled]="loading">{{
-                            'btn_delete' | translate }}
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </app-zone-content>
-    </app-zone>
-    <app-zone header="Administration">
-        <app-zone-content class="bottom">
-            <form class="ui form" (ngSubmit)="onSubmitWorkflowUpdate()" #workflowUpdateFrom="ngForm">
-                <div class="field">
-                    <label>{{'workflow_name' | translate}}</label>
-                    <input type="text" name="formWorkflowUpdateName" placeholder="{{ 'workflow_name' | translate}}"
-                        [disabled]="loading || (workflow.from_repository && workflow.from_repository.length > 0)"
-                        [(ngModel)]="workflow.name" [disabled]="loading" required #formWorkflowUpdateName="ngModel"
-                        pattern="^[a-zA-Z0-9._-]{1,}$">
-                    <div *ngIf="formWorkflowUpdateName && formWorkflowUpdateName.invalid && !formWorkflowUpdateName.pristine"
-                        class="ui error message">
-                        <p>{{'workflow_update_name_error' | translate}}</p>
-                    </div>
-                </div>
-                <div class="field">
-                    <label>{{'common_description' | translate}}</label>
-                    <textarea name="description" class="ui" [(ngModel)]="_workflow.description"
+    <nz-card nzTitle="Icon" class="coloredTitle">
+        <form nz-form>
+            <nz-form-item>
+                <nz-form-label [nzSpan]="3">Select icon</nz-form-label>
+                <nz-form-control>
+                    <app-upload-button accept=".png,.jpg,.jpeg" image="true" (event)="fileEvent($event)">
+                    </app-upload-button>
+                </nz-form-control>
+            </nz-form-item>
+            <nz-form-item>
+                <img class="wf-icon" [src]="_workflow.icon" alt="application icon" *ngIf="_workflow.icon">
+            </nz-form-item>
+            <nz-alert nzType="error" nzMessage="Your file is too large (max 100Ko)" *ngIf="fileTooLarge"></nz-alert>
+            <nz-form-item nzJustify="end">
+                <button nz-button nzDanger nzType="primary" class="multipleButtons"  [nzLoading]="loading" *ngIf="!iconUpdated && workflow.icon"
+                        name="deleteiconButton" (nzOnConfirm)="deleteIcon()" nz-popconfirm
+                        nzPopconfirmTitle="Are you sure you want to delete the workflow icon ?">Delete
+                </button>
+                <button nz-button nzType="primary" [nzLoading]="loading" name="updateiconButton"
+                        (click)="updateIcon()" >Save
+                </button>
+            </nz-form-item>
+        </form>
+    </nz-card>
+    <nz-card nzTitle="Settings" class="coloredTitle">
+        <form nz-form (ngSubmit)="onSubmitWorkflowUpdate()">
+            <nz-form-item>
+                <nz-form-label [nzSpan]="6">Workflow name</nz-form-label>
+                <nz-form-control>
+                    <input nz-input type="text" name="formWorkflowUpdateName"
+                           [disabled]="loading || (workflow.from_repository && workflow.from_repository.length > 0)"
+                           [(ngModel)]="workflow.name" [disabled]="loading" required #formWorkflowUpdateName="ngModel"
+                           pattern="^[a-zA-Z0-9._-]{1,}$">
+                    <nz-alert nzType="error" *ngIf="formWorkflowUpdateName && formWorkflowUpdateName.invalid && !formWorkflowUpdateName.pristine"
+                        nzMessage="Invalid workflow name. Allowed pattern is: ^[a-zA-Z0-9._-]{1,}$"></nz-alert>
+                </nz-form-control>
+            </nz-form-item>
+            <nz-form-item>
+                <nz-form-label [nzSpan]="6">Description</nz-form-label>
+                <nz-form-control>
+                    <textarea nz-input name="description" [(ngModel)]="_workflow.description"
                         [disabled]="loading"></textarea>
-                </div>
-                <div class="field">
-                    <label>
-                        {{ 'workflow_sidebar_tag_zone' | translate }}
-                        <i class="circle outline question icon" suiPopup
-                            [popupText]="'workflow_tag_dragdrop' | translate"></i>
-                    </label>
+                </nz-form-control>
+            </nz-form-item>
+            <nz-form-item>
+                <nz-form-label [nzSpan]="6">
+                    Add sidebar's tags
+                </nz-form-label>
+                <nz-form-control>
+                    <ng-container *ngIf="existingTags.length > 0">
+                        <div class="selectTag">
+                            <nz-select name="tags" nzShowSearch [nzLoading]="loading" [(ngModel)]="tagsToAdd" nzMode="multiple">
+                                <nz-option *ngFor="let i of existingTags" [nzValue]="i" [nzLabel]="i"></nz-option>
+                            </nz-select>
+                            <button nz-button (click)="updateTagMetadata()" type="button" [disabled]="!tagsToAdd">
+                                <i nz-icon nzType="plus" nzTheme="outline"></i>
+                            </button>
+                        </div>
+                    </ng-container>
+                </nz-form-control>
+            </nz-form-item>
+            <nz-form-item>
+                <nz-form-label [nzSpan]="6">Current tags <i nz-icon nzType="question-circle" nzTheme="outline" nz-tooltip nzTooltipTitle="Drag & drop to modify tags order (order by priority)"></i></nz-form-label>
+                <nz-form-control>
                     <ng-container *ngIf="selectedTags && selectedTags.length > 0">
-                        <div class="ui horizontal list dragula-container" [dragula]="'bag-tag'"
-                            [(dragulaModel)]="selectedTags">
-                            <div class="item" *ngFor="let t of selectedTags; let i = index">
-                                <div class="ui label">
-                                    {{t + ' '}}
-                                    <i class="close icon" *ngIf="workflow.permissions.writable"
-                                        (click)="removeFromSelectedTags(i)"></i>
-                                </div>
-                            </div>
+                        <div class="dragula-container" [dragula]="'bag-tag'"
+                             [(dragulaModel)]="selectedTags">
+                            <nz-tag *ngFor="let t of selectedTags; let i = index">
+                                {{t + ' '}}
+                                <i nz-icon nzType="close" nzTheme="outline"  *ngIf="workflow.permissions.writable" (click)="removeFromSelectedTags(i)"></i>
+                            </nz-tag>
                         </div>
                     </ng-container>
                     <ng-container *ngIf="!selectedTags || selectedTags.length === 0">
-                        <div class="ui info message">
-                            {{ 'workfow_tag_no' | translate }}
-                        </div>
+                        <nz-alert nzType="info" nzMessage="There is no sidebar's tag"></nz-alert>
                     </ng-container>
-                    <div class="ui inline fields" *ngIf="existingTags.length > 0">
-                        <div class="ui twelve wide field">
-                            <sui-multi-select name="sidebartagzone" class="fluid selection" [isDisabled]="loading"
-                                [options]="existingTags" [isSearchable]="true" [(ngModel)]="tagsToAdd" #tagSelect>
-                                <sui-select-option *ngFor="let i of tagSelect.filteredOptions" [value]="i">
-                                </sui-select-option>
-                            </sui-multi-select>
-                        </div>
-                        <div class="ui four wide field">
-                            <div class="ui icon blue button" [class.disabled]="!tagsToAdd"
-                                (click)="updateTagMetadata()">
-                                <i class="plus icon"></i>
-                            </div>
-                        </div>
+                </nz-form-control>
+            </nz-form-item>
+            <nz-form-item *ngIf="!retentionRunsPolicyEnabled">
+                <nz-form-label [nzSpan]="6">Maximum number of workflow runs</nz-form-label>
+                <nz-form-control>
+                    <input nz-input type="number" name="formWorkflowUpdateHistory" [disabled]="loading"
+                           [(ngModel)]="_workflow.history_length" required
+                           #formWorkflowUpdateHistory="ngModel" min="1" max="500">
+                </nz-form-control>
+            </nz-form-item>
+            <nz-form-item *ngIf="!retentionRunsPolicyEnabled">
+                <nz-form-label [nzSpan]="6">Purge tags</nz-form-label>
+                <nz-form-control>
+                    <div class="selectTag">
+                        <nz-select nzShowSearch nzMode="multiple" name="sidebartagzonehistory" [(ngModel)]="tagsToAddPurge" [nzLoading]="loading">
+                            <nz-option *ngFor="let i of existingTagsPurge" [nzValue]="i" [nzLabel]="i">
+                            </nz-option>
+                        </nz-select>
+                        <button nz-button (click)="updateTagPurge()" type="button" [disabled]="!tagsToAddPurge"><i nz-icon nzType="plus" nzTheme="outline"></i></button>
                     </div>
-                </div>
-                <div class="field" *ngIf="!retentionRunsPolicyEnabled">
-                    <label>{{ 'workflow_history_length_title' | translate }}</label>
-                    <div class="three wide field">
-                        <input type="number" name="formWorkflowUpdateHistory"
-                            placeholder="{{ 'workflow_history_length' | translate}}" [disabled]="loading"
-                            [(ngModel)]="_workflow.history_length" [disabled]="loading" required
-                            #formWorkflowUpdateHistory="ngModel" min="1" max="500">
-                    </div>
-                    <ng-container *ngIf="!selectedTagsPurge || selectedTagsPurge.length === 0">
-                        <div class="field three wide ui info message">
-                            {{ 'workfow_tag_no' | translate }}
-                        </div>
-                    </ng-container>
+                </nz-form-control>
+            </nz-form-item>
+            <nz-form-item *ngIf="!retentionRunsPolicyEnabled">
+                <nz-form-label [nzSpan]="6">Current purge tags</nz-form-label>
+                <nz-form-control>
                     <ng-container *ngIf="selectedTagsPurge && selectedTagsPurge.length > 0">
-                        <div class="field ui horizontal list dragula-container" [dragula]="'bag-tag'"
-                            [(dragulaModel)]="selectedTagsPurge">
-                            <div class="item" *ngFor="let t of selectedTagsPurge; let i = index">
-                                <div class="ui label">
-                                    {{t + ' '}}
-                                    <i class="close icon" *ngIf="workflow.permissions.writable"
-                                        (click)="removeFromSelectedTagsPurge(i)"></i>
-                                </div>
-                            </div>
+                        <div class="dragula-container" [dragula]="'bag-tag'"
+                             [(dragulaModel)]="selectedTagsPurge">
+                            <nz-tag *ngFor="let t of selectedTagsPurge; let i = index">
+                                {{t + ' '}}
+                                <i nz-icon nzType="close" nzTheme="outline"  *ngIf="workflow.permissions.writable"
+                                       (click)="removeFromSelectedTagsPurge(i)"></i>
+                            </nz-tag>
                         </div>
                     </ng-container>
-                    <div class="ui inline fields" *ngIf="existingTagsPurge.length > 0">
-                        <div class="ui twelve wide field">
-                            <sui-multi-select name="sidebartagzonehistory" class="fluid selection"
-                                [isDisabled]="loading" [options]="existingTagsPurge" [isSearchable]="true"
-                                [(ngModel)]="tagsToAddPurge" #tagSelectPurge>
-                                <sui-select-option *ngFor="let i of tagSelectPurge.filteredOptions" [value]="i">
-                                </sui-select-option>
-                            </sui-multi-select>
-                        </div>
-                        <div class="ui four wide field">
-                            <div class="ui icon blue button" [class.disabled]="!tagsToAddPurge"
-                                (click)="updateTagPurge()">
-                                <i class="plus icon"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="field" *ngIf="maxRunsEnabled">
-                    <label>
-                        {{ 'workflow_retention_maxruns' | translate }}
-                        {{workflow.max_runs}}
-                        <i class="circle outline question icon" suiPopup
-                            [popupText]="'workflow_retention_maxruns_admin' | translate"></i>
-                    </label>
-                </div>
-                <ng-container *ngIf="retentionRunsPolicyEnabled && apiConfig">
-                    <div class="field">
-                        <label>
-                            {{ 'workflow_retention_policy' | translate }}
-                            <i class="circle outline question icon" suiPopup [popupTemplate]="popupRetention"
-                                popupTrigger="outsideClick"></i>
-                        </label>
-                        <ng-template #popupRetention>
-                            You can set a custom lua retention policy rule for this workflow.
-                            Available variables are: {{availableStringVariables}}.
-                            <br />
-                            <br />
-                            More informations and examples in CDS documentation
-                            <a class="item" target="_blank" rel="noopener noreferrer" href="#"
-                                [routerLink]="['/docs', 'docs', 'concepts', 'workflow', 'retention']">
-                                here</a>.
-                        </ng-template>
-                        <codemirror name="policy" [placeholder]="apiConfig?.default_run_retention_policy"
-                                    (change)="changeCodeMirror(codemirrorRetentionPolicy)"
-                            [(ngModel)]="workflow.retention_policy" [config]="codeMirrorConfig"
-                            #codemirrorRetentionPolicy></codemirror>
-                    </div>
-                    <div class="field">
-                        <button class="ui blue button" type="button" name="dryrun" [class.loading]="loading"
-                            [disabled]="loading" (click)="retentionPolicyDryRun()">
-                            <span>{{'btn_dry_run' | translate}}</span>
-                        </button>
-                        <ng-template let-context let-modal="modal" #modalDryRun>
-                            <div class="header">{{ 'workflow_retention_policy' | translate }}</div>
-                            <div class="content">
-                                <ng-container>
-                                    <div class="ui right aligned field ">
-                                        <ng-container *ngIf="dryRunStatus === 'INCOMING'">
-                                            <i class="circle notch loading blue icon"></i>
-                                        </ng-container>
-                                        <ng-container *ngIf="dryRunStatus === 'ERROR'">
-                                            <i class="close red icon"></i>
-                                        </ng-container>
-                                        <ng-container *ngIf="dryRunStatus === 'DONE'">
-                                            <i class="check green icon"></i>
-                                        </ng-container>
-                                        {{dryRunAnalyzedRuns + ' / ' + dryRunMaxDatas + ' run analyzed ( ' +
-                                        dryRunDatas.length + ' runs kept )'}}
-                                    </div>
-                                </ng-container>
-                                <ng-container
-                                    *ngIf="dryRunStatus === 'DONE' && (!dryRunDatas || dryRunDatas.length === 0)">
-                                    <div class="ui info message">All runs would be deleted</div>
-                                </ng-container>
-                                <ng-container *ngIf="dryRunDatas?.length > 0">
-                                    <div class="dryrun">
-                                        <h4>{{'workflow_retention_result_title' | translate }}</h4>
-                                        <app-data-table [withFilter]="" [columns]="dryRunColumns" [data]="dryRunDatas"
-                                            [withPagination]="10"></app-data-table>
-                                    </div>
-                                </ng-container>
-                            </div>
-                            <div class="actions">
-                                <button class="ui green button" (click)="modal.approve('')" autofocus>{{'btn_close' |
-                                    translate }}</button>
-                            </div>
-                        </ng-template>
-                    </div>
-                </ng-container>
-                <div class="field">
-                    <label>{{ 'workflow_runnumber_title' | translate }}</label>
-                    <input type="number" name="formWorkflowRunNumUpdateNumber"
-                        placeholder="{{ 'common_loading' | translate}}" [(ngModel)]="runnumber" required
-                        #formWorkflowRunNumUpdateNumber="ngModel">
-                </div>
-                <div class="submitbutton">
-                    <button class="ui green right floated button" type="submit" name="savebtn" [class.loading]="loading"
-                        [disabled]="loading">
-                        <span *ngIf="!editMode">{{'btn_save' | translate}}</span>
-                        <span *ngIf="editMode">{{'btn_apply' | translate}}</span>
-                    </button>
-                </div>
-            </form>
-        </app-zone-content>
-    </app-zone>
-    <app-zone header="Integrations">
-        <app-zone-content>
-            <div class="ui form">
-                <h4 class="ui dividing header">Link an integration</h4>
-                <div class="field">
-                    <div class="two fields">
-                        <div class="twelve wide field">
-                            <sui-select class="fluid selection" name="selectIntegration" [(ngModel)]="selectedIntegration" [options]="filteredIntegrations"
-                                        [isSearchable]="true" labelField="name" #selectIntegration placeholder="Link an integration...">
-                                <sui-select-option *ngFor="let t of selectIntegration.filteredOptions" [value]="t">
-                                </sui-select-option>
-                            </sui-select>
-                        </div>
-                        <div class="four wide field">
-                            <div class="ui icon green button" (click)="addIntegration()">
-                                <i class="plus icon"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <h4 class="ui dividing header">Configuration</h4>
-                <ng-container *ngIf="!_workflow?.integrations || _workflow.integrations.length === nbEventIntegrations">
-                    <div class="ui info message">There is no linked integration on this workflow</div>
-                </ng-container>
-                <div class="fields">
-                    <ng-container *ngIf="_workflow?.integrations?.length > nbEventIntegrations">
-
-                        <table class="ui fixed single line celled table">
-                            <thead>
-                            <tr>
-                                <th class="four wide">Name</th>
-                                <th class="nine wide">Configuration</th>
-                                <th class="three wide"></th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            <tr *ngFor="let integ of _workflow.integrations | callback: filterIntegration">
-                                <td>
-                                    {{integ.project_integration.name}}
-                                </td>
-                                <td>
-                                    <ng-container *ngIf="integ.config">
-                                        <div class="inline fields" *ngFor="let k of integ.config | keys">
-                                            <div class="six wide field">
-                                                <label>
-                                                    <b>{{k}}</b>
-                                                    <span *ngIf="integ.config[k].description" suiPopup
-                                                          [popupText]="integ.config[k].description"
-                                                          popupPlacement="right center">
-                                                        <i class="info circle icon"></i>
-                                                    </span>
-                                                </label>
-                                            </div>
-                                            <div class="ten wide field">
-                                                <input type="text" [(ngModel)]="integ.config[k].value" name="{{k}}"
-                                                       *ngIf="integ.config[k].type === 'string'">
-                                                <input type="password" [(ngModel)]="integ.config[k].value" name="{{k}}"
-                                                       *ngIf="integ.config[k].type === 'password'">
-                                                <textarea class="ui textarea" rows="3" [(ngModel)]="integ.config[k].value" name="{{k}}"
-                                                          *ngIf="integ.config[k].type === 'text'"></textarea>
-                                            </div>
-                                        </div>
-                                    </ng-container>
-                                </td>
-                                <td class="center aligned">
-                                    <div>
-                                        <button class="ui green button md5" type="button" name="savebtn" [class.loading]="loading"
-                                                [disabled]="loading"
-                                                (click)="onSubmitWorkflowUpdate()">
-                                            <span *ngIf="!editMode">Save</span>
-                                            <span *ngIf="editMode">Apply</span>
-                                        </button>
-                                    </div>
-                                    <div>
-                                        <app-delete-button (event)="clickDeleteIntegration(integ)" [loading]="loading" [disabled]="loading"></app-delete-button>
-                                    </div>
-                                </td>
-                            </tr>
-                            </tbody>
-                        </table>
+                    <ng-container *ngIf="!selectedTagsPurge || selectedTagsPurge.length === 0">
+                        <nz-alert nzType="info" nzMessage="There is no purge tag"></nz-alert>
                     </ng-container>
-                </div>
-            </div>
-        </app-zone-content>
-    </app-zone>
-    <app-zone header="{{ 'danger_zone' | translate }}" headerClass="red inverted">
-        <app-zone-content class="bottom">
-            <div class="ui grid">
-                <div class="eight wide column">
-                    <div class="title">{{ 'workflow_delete_label' | translate}}</div>
-                    <div class="description">{{ 'workflow_delete_description' | translate}}</div>
-                </div>
-                <div class="eight wide right aligned column">
-                    <button class="ui red button active" [class.disabled]="loading" (click)="deleteWorkflow()">
-                        <i class="trash icon"></i>
-                        <ng-container >
-                            <span>{{ 'btn_delete' | translate }}</span>
+                </nz-form-control>
+            </nz-form-item>
+            <nz-form-item *ngIf="maxRunsEnabled">
+                <nz-form-label [nzSpan]="6">Maximum number of workflow runs</nz-form-label>
+                <nz-form-control>
+                    {{workflow.max_runs}}
+                    <i nz-icon nzType="question-circle" nzTheme="outline" nz-tooltip nzTooltipTitle="You can contact a CDS administrator to customize this value"></i>
+                </nz-form-control>
+            </nz-form-item>
+            <nz-form-item  *ngIf="retentionRunsPolicyEnabled && apiConfig">
+                <nz-form-label [nzSpan]="6">Workflow run retention policy <i nz-icon nzType="question-circle" nzTheme="outline" nz-popover [nzPopoverContent]="popupRetention"  nzPopoverTrigger="hover"></i></nz-form-label>
+                <ng-template #popupRetention>
+                    <div class="retentionTooltip">
+                        You can set a custom lua retention policy rule for this workflow.
+                        Available variables are: {{availableStringVariables}}.
+                        <br />
+                        <br />
+                        More informations and examples in CDS documentation
+                        <a class="item" target="_blank" rel="noopener noreferrer" href="#"
+                           [routerLink]="['/docs', 'docs', 'concepts', 'workflow', 'retention']">
+                            here</a>.
+                    </div>
+
+                </ng-template>
+                <nz-form-control>
+                    <codemirror name="policy" [placeholder]="apiConfig?.default_run_retention_policy"
+                                (change)="changeCodeMirror(codemirrorRetentionPolicy)"
+                                [(ngModel)]="workflow.retention_policy" [config]="codeMirrorConfig"
+                                #codemirrorRetentionPolicy></codemirror>
+                </nz-form-control>
+            </nz-form-item>
+            <nz-form-item  *ngIf="retentionRunsPolicyEnabled && apiConfig" nzJustify="end">
+                <button nz-button  type="button" name="dryrun" [nzLoading]="loading"
+                        (click)="retentionPolicyDryRun()">
+                    Dry run
+                </button>
+                <nz-modal [(nzVisible)]="dryRunModalVisible" (nzOnCancel)="dryRunModalVisible = false" nzTitle="{{ 'workflow_retention_policy' | translate }}" nzWidth="900px">
+                    <div *nzModalContent>
+                        <ng-container>
+                            <div class="alignRight">
+                                <ng-container *ngIf="dryRunStatus === 'INCOMING'">
+                                    <i nz-icon [nzType]="'sync'" [nzSpin]="true" class="blue"></i>
+                                </ng-container>
+                                <ng-container *ngIf="dryRunStatus === 'ERROR'">
+                                    <i nz-icon nzType="close-circle" nzTheme="outline" class="red"></i>
+                                </ng-container>
+                                <ng-container *ngIf="dryRunStatus === 'DONE'">
+                                    <i nz-icon nzType="check-circle" nzTheme="outline" class="green"></i>
+                                </ng-container>
+                                {{dryRunAnalyzedRuns + ' / ' + dryRunMaxDatas + ' run analyzed ( ' +
+                            dryRunDatas.length + ' runs kept )'}}
+                            </div>
                         </ng-container>
-                    </button>
-                </div>
-            </div>
-        </app-zone-content>
-    </app-zone>
+                        <ng-container
+                                *ngIf="dryRunStatus === 'DONE' && (!dryRunDatas || dryRunDatas.length === 0)">
+                            <nz-alert nzType="info" nzMessage="All runs would be deleted"></nz-alert>
+                        </ng-container>
+                        <ng-container *ngIf="dryRunDatas?.length > 0">
+                            <div class="dryrun">
+                                <h4>{{'workflow_retention_result_title' | translate }}</h4>
+                                <app-data-table [withFilter]="" [columns]="dryRunColumns" [data]="dryRunDatas"
+                                                [withPagination]="10"></app-data-table>
+                            </div>
+                        </ng-container>
+                    </div>
+                    <div *nzModalFooter>
+                        <button nz-button (click)="dryRunModalVisible = false" autofocus>Close</button>
+                    </div>
+                </nz-modal>
+            </nz-form-item>
+            <nz-form-item>
+                <nz-form-label>Current run number</nz-form-label>
+                <nz-form-control>
+                    <input nz-input type="number" name="formWorkflowRunNumUpdateNumber"
+                           [(ngModel)]="runnumber" required
+                           #formWorkflowRunNumUpdateNumber="ngModel">
+                </nz-form-control>
+            </nz-form-item>
+            <nz-form-item nzJustify="end">
+                <button nz-button nzType="primary" type="submit" name="savebtn" [nzLoading]="loading"
+                        [disabled]="loading">
+                    <span *ngIf="!editMode">Save</span>
+                    <span *ngIf="editMode">Apply</span>
+                </button>
+            </nz-form-item>
+        </form>
+    </nz-card>
+    <nz-card nzTitle="Integrations" class="coloredTitle">
+        <form nz-form>
+            <nz-form-item>
+                <nz-form-label>Link an integration</nz-form-label>
+                <nz-form-control>
+                    <div class="selectTag">
+                        <nz-select nzShowSearch name="selectIntegration" [(ngModel)]="selectedIntegration" placeholder="Link an integration...">
+                            <nz-option *ngFor="let t of filteredIntegrations" [nzValue]="t" [nzLabel]="t.name"></nz-option>
+                        </nz-select>
+                        <button nz-button type="button" nzType="primary" [nzLoading]="loading" (click)="addIntegration()"><i nz-icon nzType="plus" nzTheme="outline"></i>Link</button>
+                    </div>
+                </nz-form-control>
+            </nz-form-item>
+            <nz-form-item *ngIf="_workflow?.integrations?.length > nbEventIntegrations">
+                <nz-form-label>Configuration</nz-form-label>
+                <nz-form-control>
+                    <nz-table [nzData]="_workflow.integrations | callback: filterIntegration" #integList>
+                        <thead>
+                        <tr>
+                            <th nzWidth="100px">Name</th>
+                            <th nzWidth="10px"></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr *ngFor="let integ of integList.data">
+                            <td>
+                                {{integ.project_integration.name}}
+                            </td>
+                            <td class="alignRight">
+                                <button nz-button nzDanger nzType="primary" type="button" name="deleteBtn" [nzLoading]="loading"
+                                        nz-popconfirm nzPopconfirmTitle="Are you sure you want to unlink this integration ?"
+                                        (nzOnConfirm)="clickDeleteIntegration(integ)">
+                                    Unlink
+                                </button>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </nz-table>
+                </nz-form-control>
+            </nz-form-item>
+            <nz-form-item  *ngIf="!_workflow?.integrations || _workflow.integrations.length === nbEventIntegrations">
+                <nz-form-control>
+                    <nz-alert nzType="info" nzMessage="There is no linked integration on this workflow"></nz-alert>
+                </nz-form-control>
+            </nz-form-item>
+        </form>
+    </nz-card>
+    <nz-card nzTitle="Danger zone" class="redTitle">
+        <nz-row>
+            <nz-col [nzSpan]="12">
+                <div class="title">Delete workflow</div>
+                <div class="description">Once you delete a workflow, there is no going back. Please be certain.</div>
+            </nz-col>
+            <nz-col [nzSpan]="12" class="alignRight">
+                <button nz-button nzDanger nzType="primary" [nzLoading]="loading"
+                        (click)="deleteWorkflow()">Delete</button>
+            </nz-col>
+        </nz-row>
+    </nz-card>
 </div>

@@ -43,6 +43,28 @@ textarea:read-only {
   border-radius: 2px;
 }
 
+nz-card.redTitle {
+  .ant-card-head {
+    min-height: 44px;
+    background-color: #ff4d4f;
+    color: white;
+
+  }
+  .ant-card-head-title {
+    padding: 8px 0;
+  }
+}
+nz-card.coloredTitle {
+  .ant-card-head {
+    min-height: 44px;
+    background-color: #EEEEEE;
+
+  }
+  .ant-card-head-title {
+    padding: 8px 0;
+  }
+}
+
 .inner-content {
   background-color: #fff;
 }

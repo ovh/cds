@@ -1,9 +1,7 @@
 <ng-container *ngIf="ready">
-    <sui-multi-select class="selection" [(ngModel)]="selectedTags" [options]="tagsSelectable" [isSearchable]="true"
-        (ngModelChange)="filterRuns()" [optionsFilter]="filterTags" #multiSelect>
-        <sui-select-option *ngFor="let option of multiSelect.filteredOptions" [value]="option">
-        </sui-select-option>
-    </sui-multi-select>
+    <nz-select nzShowSearch nzMode="multiple" [(ngModel)]="selectedTags" (ngModelChange)="filterRuns()" nzPlaceHolder="Filter...">
+        <nz-option *ngFor="let o of tagsSelectable" [nzLabel]="o" [nzValue]="o"></nz-option>
+    </nz-select>
     <div class="runs" #tagsList infiniteScroll [infiniteScrollDistance]="2" [infiniteScrollThrottle]="50"
         [scrollWindow]="false" (scrolled)="scroll()">
         <ng-container *ngIf="workflowRuns.length > 0">

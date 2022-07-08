@@ -356,6 +356,7 @@ export class WorkflowState {
             return;
         }
 
+
         // Update Non as code workflow
         return this._http.put<Workflow>(
             `/project/${action.payload.projectKey}/workflows/${action.payload.workflowName}`,
@@ -389,7 +390,6 @@ export class WorkflowState {
                 ctx.dispatch(new UpdateModal({ workflow: wf }));
             } else {
                 let wfUpdated: Workflow = {
-                    ...state.workflow,
                     ...wf,
                     preview: null
                 };

@@ -252,17 +252,6 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
         }
     }
 
-    filterTags(options: Array<string>, query: string): Array<string> | false {
-        if (!options) {
-            return false;
-        }
-        if (!query || query.length < 3) {
-            return options.slice(0, 100);
-        }
-        let queryLowerCase = query.toLowerCase();
-        return options.filter(o => o.toLowerCase().indexOf(queryLowerCase) !== -1);
-    }
-
     confirmCopy() {
         this._toast.success('', 'Workflow run version copied!');
     }

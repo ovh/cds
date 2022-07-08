@@ -99,7 +99,7 @@ export class WorkflowGraphComponent implements AfterViewInit, OnDestroy {
         // https://github.com/cpettitt/dagre/wiki#configuring-the-layout
         this.g = new dagreD3.graphlib.Graph().setGraph({ rankdir: this.direction, nodesep: 10, ranksep: 15, edgesep: 5 });
         // Create all nodes
-        if (this.workflow.workflow_data && this.workflow.workflow_data.node && this.workflow.workflow_data.node.id > 0) {
+        if (this.workflow.workflow_data && this.workflow.workflow_data.node) {
             this.createNode(this.workflow.workflow_data.node);
         }
         if (this.workflow.workflow_data && this.workflow.workflow_data.joins) {
