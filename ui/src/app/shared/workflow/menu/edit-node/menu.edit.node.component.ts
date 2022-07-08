@@ -3,13 +3,11 @@ import {
     ChangeDetectorRef,
     Component,
     EventEmitter,
-    Input,
     OnDestroy,
     OnInit,
     Output
 } from '@angular/core';
 import { Select, Store } from '@ngxs/store';
-import { IPopup } from '@richardlt/ng2-semantic-ui';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { WNode, Workflow } from 'app/model/workflow.model';
@@ -30,7 +28,6 @@ import { map } from 'rxjs/operators';
 export class WorkflowWNodeMenuEditComponent implements OnInit, OnDestroy {
 
     // Project that contains the workflow
-    @Input() popup: IPopup;
     @Output() event = new EventEmitter<string>();
 
     project: Project;
@@ -95,7 +92,6 @@ export class WorkflowWNodeMenuEditComponent implements OnInit, OnDestroy {
     }
 
     sendEvent(e: string): void {
-        this.popup.close();
         this.event.emit(e);
     }
 

@@ -18,7 +18,6 @@ export class WorkflowHookMenuEditComponent implements OnInit, OnDestroy {
     // Project that contains the workflow
     @Input() workflow: Workflow;
     @Input() hook: WNodeHook;
-    @Input() popup: IPopup;
     @Input() readonly = true;
     @Input() hookEventUUID: string;
     @Output() event = new EventEmitter<string>();
@@ -43,7 +42,6 @@ export class WorkflowHookMenuEditComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     sendEvent(e: string): void {
-        this.popup.close();
         this.event.emit(e);
     }
 }
