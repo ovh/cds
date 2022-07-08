@@ -454,13 +454,15 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, dbmap *gorp.DbMap,
 	}
 
 	var runResults sdk.WorkflowRunResults
-	for _, result := range allRunResults {
+	for i := range allRunResults {
+		result := allRunResults[i]
 		// If the result is not an artifact manager, we do nothing but we consider it as synchronized
 		if result.Type != sdk.WorkflowRunResultTypeArtifactManager {
-			result.DataSync = new(sdk.WorkflowRunResultSync)
-			result.DataSync.Link = ""
-			result.DataSync.Sync = true
-			if err := gorpmapping.Update(db, &result); err != nil {
+			dbResult := dbRunResult(result)
+			dbResult.DataSync = new(sdk.WorkflowRunResultSync)
+			dbResult.DataSync.Link = ""
+			dbResult.DataSync.Sync = true
+			if err := gorpmapping.Update(db, &dbResult); err != nil {
 				return err
 			}
 		} else {
@@ -565,10 +567,11 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, dbmap *gorp.DbMap,
 	}
 
 	for _, result := range runResults {
-		result.DataSync = new(sdk.WorkflowRunResultSync)
-		result.DataSync.Link = buildInfoRequest.Name + "/" + buildInfoRequest.Number
-		result.DataSync.Sync = true
-		if err := gorpmapping.Update(db, &result); err != nil {
+		dbResult := dbRunResult(result)
+		dbResult.DataSync = new(sdk.WorkflowRunResultSync)
+		dbResult.DataSync.Link = buildInfoRequest.Name + "/" + buildInfoRequest.Number
+		dbResult.DataSync.Sync = true
+		if err := gorpmapping.Update(db, &dbResult); err != nil {
 			return err
 		}
 	}
