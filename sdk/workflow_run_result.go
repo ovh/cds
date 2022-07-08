@@ -41,15 +41,15 @@ func (w WorkflowRunResults) Unique() (WorkflowRunResults, error) {
 }
 
 type WorkflowRunResult struct {
-	ID                string                `json:"id" db:"id"`
-	Created           time.Time             `json:"created" db:"created"`
-	WorkflowRunID     int64                 `json:"workflow_run_id" db:"workflow_run_id"`
-	WorkflowNodeRunID int64                 `json:"workflow_node_run_id" db:"workflow_node_run_id"`
-	WorkflowRunJobID  int64                 `json:"workflow_run_job_id" db:"workflow_run_job_id"`
-	SubNum            int64                 `json:"sub_num" db:"sub_num"`
-	Type              WorkflowRunResultType `json:"type" db:"type"`
-	DataRaw           json.RawMessage       `json:"data" db:"data"`
-	DataSync          WorkflowRunResultSync `json:"sync" db:"sync"`
+	ID                string                 `json:"id" db:"id"`
+	Created           time.Time              `json:"created" db:"created"`
+	WorkflowRunID     int64                  `json:"workflow_run_id" db:"workflow_run_id"`
+	WorkflowNodeRunID int64                  `json:"workflow_node_run_id" db:"workflow_node_run_id"`
+	WorkflowRunJobID  int64                  `json:"workflow_run_job_id" db:"workflow_run_job_id"`
+	SubNum            int64                  `json:"sub_num" db:"sub_num"`
+	Type              WorkflowRunResultType  `json:"type" db:"type"`
+	DataRaw           json.RawMessage        `json:"data" db:"data"`
+	DataSync          *WorkflowRunResultSync `json:"sync,omitmpty" db:"sync"`
 }
 
 type WorkflowRunResultSync struct {

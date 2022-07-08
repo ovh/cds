@@ -457,6 +457,7 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, dbmap *gorp.DbMap,
 	for _, result := range allRunResults {
 		// If the result is not an artifact manager, we do nothing but we consider it as synchronized
 		if result.Type != sdk.WorkflowRunResultTypeArtifactManager {
+			result.DataSync = new(sdk.WorkflowRunResultSync)
 			result.DataSync.Link = ""
 			result.DataSync.Sync = true
 			if err := gorpmapping.Update(db, &result); err != nil {
@@ -564,13 +565,12 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, dbmap *gorp.DbMap,
 	}
 
 	for _, result := range runResults {
-		// If the result is not an artifact manager, we do nothing but we consider it as synchronized
+		result.DataSync = new(sdk.WorkflowRunResultSync)
 		result.DataSync.Link = buildInfoRequest.Name + "/" + buildInfoRequest.Number
 		result.DataSync.Sync = true
 		if err := gorpmapping.Update(db, &result); err != nil {
 			return err
 		}
-
 	}
 
 	return sdk.WithStack(db.Commit())
