@@ -22,7 +22,7 @@
 
             <h4>Heartbeat</h4>
             <p>
-                <span suiPopup [popupText]="service.last_heartbeat| date:'short'" popupPlacement="top left">{{service.last_heartbeat
+                <span nz-tooltip [nzTooltipTitle]="service.last_heartbeat| date:'short'" nzTooltipPlacement="topLeft">{{service.last_heartbeat
                     | amTimeAgo}}</span>
             </p>
 

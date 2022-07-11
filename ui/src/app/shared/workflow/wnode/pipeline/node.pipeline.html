@@ -16,8 +16,8 @@
                 {{node.type + '-' + node.outgoing_hook.model.name}}
             </ng-container>
         </div>
-        <div *ngIf="warnings > 0" suiPopup popupPlacement="right center"
-            [popupText]="'warning_build_title' | translate: {nb: warnings}" class="warn">
+        <div *ngIf="warnings > 0" nz-tooltip nzTooltipPlacement="right"
+             [nzTooltipTitle]="'warning_build_title' | translate: {nb: warnings}" class="warn">
             <i class="ui icon warning sign orange"></i>
         </div>
         <div *ngIf="noderun && noderun.subnumber" class="count">

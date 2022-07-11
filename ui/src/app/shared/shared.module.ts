@@ -126,7 +126,7 @@ import { NzIconModule } from 'ng-zorro-antd/icon';
 import { IconDefinition } from '@ant-design/icons-angular';
 import { ArrowDownOutline, ArrowRightOutline, BellFill, BookOutline, CalendarOutline, CaretDownFill, CaretRightFill, CaretUpFill, CheckOutline, CodeOutline, CopyOutline, DeleteOutline, DragOutline, EyeInvisibleOutline, EyeOutline, KeyOutline,
     HistoryOutline, InfoCircleOutline, PhoneFill, PlusOutline, PlusSquareOutline, QuestionOutline, QuestionCircleOutline, RestOutline, SaveOutline, SettingFill, ShareAltOutline, StarOutline, StarFill, SyncOutline,
-    TableOutline, TagsOutline, ToolFill, UnlockFill, UnorderedListOutline, UploadOutline, UserOutline, WarningOutline } from '@ant-design/icons-angular/icons'
+    TableOutline, TagsOutline, ToolFill, UnlockFill, UnorderedListOutline, UploadOutline, UserOutline, WarningOutline, WarningFill } from '@ant-design/icons-angular/icons'
 import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzPopoverModule } from 'ng-zorro-antd/popover';
@@ -158,7 +158,7 @@ const ngZorroConfig: NzConfig = {
 
 const icons: IconDefinition[] = [ ArrowDownOutline, ArrowRightOutline, BellFill, BookOutline, CalendarOutline, CaretDownFill, CaretRightFill, CaretUpFill, CheckOutline, CodeOutline, CopyOutline, DeleteOutline, DragOutline,
     EyeInvisibleOutline, EyeOutline, KeyOutline, HistoryOutline, InfoCircleOutline, PhoneFill, PlusOutline, PlusSquareOutline, QuestionOutline, QuestionCircleOutline,
-    RestOutline, SaveOutline, SettingFill, ShareAltOutline, StarOutline, StarFill, SyncOutline, TableOutline, TagsOutline, ToolFill, UnlockFill, UnorderedListOutline, UploadOutline, UserOutline, WarningOutline ];
+    RestOutline, SaveOutline, SettingFill, ShareAltOutline, StarOutline, StarFill, SyncOutline, TableOutline, TagsOutline, ToolFill, UnlockFill, UnorderedListOutline, UploadOutline, UserOutline, WarningOutline, WarningFill ];
 
 @NgModule({
     imports: [

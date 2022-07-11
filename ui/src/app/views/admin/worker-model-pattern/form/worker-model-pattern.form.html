@@ -31,13 +31,13 @@
               </textarea>
                 </div>
                 <div class="field">
-                    <label suiPopup [popupText]="'worker_model_cmd_tooltip' | translate" popupPlacement="top left">
+                    <label nz-tooltip  [nzTooltipTitle]="'worker_model_cmd_tooltip' | translate" nzTooltipPlacement="topLeft">
                         {{'worker_model_cmd' | translate}} <i _ngcontent-c5="" class="fa fa-question-circle"></i>
                     </label>
                     <input class="ui input" type="text" name="cmd" [(ngModel)]="pattern.model.cmd" [disabled]="loading">
                 </div>
                 <div class="field" *ngIf="pattern.type && pattern.type === 'docker'">
-                    <label suiPopup [popupText]="'worker_model_env_tooltip' | translate" popupPlacement="top left">
+                    <label nz-tooltip [nzTooltipTitle]="'worker_model_env_tooltip' | translate" nzTooltipPlacement="topLeft">
                         {{'worker_model_env' | translate}} <i _ngcontent-c5="" class="fa fa-question-circle"></i>
                     </label>
                     <ng-container *ngIf="pattern.model.envs">

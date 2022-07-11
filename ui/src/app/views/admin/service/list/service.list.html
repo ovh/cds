@@ -26,7 +26,7 @@
 
                     <div class="ui stackable four cards">
                         <div class="ui card" *ngFor="let g of globals">
-                            <div class="content pointer" suiPopup [popupText]="'filter_list_click' | translate"
+                            <div class="content pointer" nz-tooltip nzTooltipTitle="Click to filter list"
                                 (click)="filter=g.name">
                                 <div class="ui horizontal label right floated" [ngClass]="{'red': g.status==='AL', 'orange': g.status==='WARN', 'green': g.status==='OK'}">
                                     {{g.status}}
@@ -40,11 +40,11 @@
                                 <div class="ui middle aligned divided list" *ngFor="let srv of g.services; index as idx; first as isFirst">
                                     <div class="item">
                                         <div class="right floated content">
-                                            <i class="filter icon pointer" suiPopup [popupText]="'filter_list_click' | translate"
+                                            <i class="filter icon pointer" nz-tooltip nzTooltipTitle="Click for filter list"
                                                 popupPlacement="top left" (click)="filter=srv.name"></i>
                                         </div>
                                         <div class="content">
-                                            <a class="ui basic" [routerLink]="[srv.name]" suiPopup [popupText]="'service_view_details' | translate">
+                                            <a class="ui basic" [routerLink]="[srv.name]" nz-tooltip nzTooltipTitle="See details">
                                                 <ng-container [ngSwitch]="srv.status">
                                                     <i class="check green icon" *ngSwitchCase="'OK'" title="{{srv.status}}"></i>
                                                     <i class="remove red icon" *ngSwitchCase="'AL'" title="{{srv.status}}"></i>

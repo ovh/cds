@@ -26,7 +26,7 @@
                         <div class="field">
                             <label>{{'user_auth_groups' | translate}}</label>
                             {{groups}}
-                            <span *ngIf="consumer.warnings" suiPopup [popupText]="warningText">
+                            <span *ngIf="consumer.warnings" nz-tooltip [nzTooltipTitle]="warningText">
                                 {{' '}}<i class="info exclamation triangle icon yellow link"
                                     title="{{warningText}}"></i>
                             </span>

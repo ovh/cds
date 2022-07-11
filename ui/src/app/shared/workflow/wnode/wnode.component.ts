@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { IPopup, SuiActiveModal } from '@richardlt/ng2-semantic-ui';
+import { SuiActiveModal } from '@richardlt/ng2-semantic-ui';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { WNode, WNodeJoin, WNodeTrigger, WNodeType, Workflow } from 'app/model/workflow.model';
@@ -24,7 +24,7 @@ import {
 } from 'app/store/workflow.action';
 import { WorkflowState } from 'app/store/workflow.state';
 import { Subscription } from 'rxjs';
-import { finalize, map, tap } from 'rxjs/operators';
+import { finalize, map } from 'rxjs/operators';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { WorkflowHookModalComponent } from 'app/shared/workflow/modal/hook-add/hook.modal.component';
 
@@ -50,6 +50,7 @@ export class WorkflowWNodeComponent implements OnInit, OnDestroy {
     loading: boolean;
 
     hasWorkflowRun: boolean;
+    menuVisible: boolean = false;
 
     currentNodeRun: WorkflowNodeRun;
     nodeRunSub: Subscription;
@@ -95,19 +96,19 @@ export class WorkflowWNodeComponent implements OnInit, OnDestroy {
         });
     }
 
-    clickOnNode(popup: IPopup): void {
-        if (this.workflow.previewMode || !popup) {
+        clickOnNode(): void {
+        if (this.workflow.previewMode) {
             return;
         }
         if (!this.currentNodeRun) {
             this._store.dispatch(new SelectWorkflowNode({
                 node: this.node
-            })).pipe(tap(popup.open));
+            }));
         } else {
             this._store.dispatch(new SelectWorkflowNodeRun({
                 workflowNodeRun: this.currentNodeRun,
                 node: this.node
-            })).pipe(tap(popup.open));
+            }));
         }
 
     }
@@ -148,6 +149,7 @@ export class WorkflowWNodeComponent implements OnInit, OnDestroy {
     }
 
     receivedEvent(e: string): void {
+        this.menuVisible = false;
         switch (e) {
             case 'pipeline':
                 this.openTriggerModal('pipeline', false);
@@ -189,6 +191,7 @@ export class WorkflowWNodeComponent implements OnInit, OnDestroy {
                 });
                 break;
         }
+        this._cd.markForCheck()
     }
 
 
