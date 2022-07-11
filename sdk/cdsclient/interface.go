@@ -277,6 +277,10 @@ type UserClient interface {
 	UserGetGroups(ctx context.Context, username string) (map[string][]sdk.Group, error)
 	UpdateFavorite(ctx context.Context, params sdk.FavoriteParams) (interface{}, error)
 	UserGetSchema(ctx context.Context) (sdk.SchemaResponse, error)
+	UserGpgKeyList(ctx context.Context, username string) ([]sdk.UserGPGKey, error)
+	UserGpgKeyGet(ctx context.Context, keyID string) (sdk.UserGPGKey, error)
+	UserGpgKeyDelete(ctx context.Context, username string, keyID string) error
+	UserGpgKeyCreate(ctx context.Context, username string, publicKey string) (sdk.UserGPGKey, error)
 }
 
 // WorkerClient exposes workers functions

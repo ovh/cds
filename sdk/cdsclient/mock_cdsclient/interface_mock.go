@@ -3423,6 +3423,65 @@ func (mr *MockUserClientMockRecorder) UserGetSchema(ctx interface{}) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGetSchema", reflect.TypeOf((*MockUserClient)(nil).UserGetSchema), ctx)
 }
 
+// UserGpgKeyCreate mocks base method.
+func (m *MockUserClient) UserGpgKeyCreate(ctx context.Context, username, publicKey string) (sdk.UserGPGKey, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UserGpgKeyCreate", ctx, username, publicKey)
+	ret0, _ := ret[0].(sdk.UserGPGKey)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UserGpgKeyCreate indicates an expected call of UserGpgKeyCreate.
+func (mr *MockUserClientMockRecorder) UserGpgKeyCreate(ctx, username, publicKey interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGpgKeyCreate", reflect.TypeOf((*MockUserClient)(nil).UserGpgKeyCreate), ctx, username, publicKey)
+}
+
+// UserGpgKeyDelete mocks base method.
+func (m *MockUserClient) UserGpgKeyDelete(ctx context.Context, username, keyID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UserGpgKeyDelete", ctx, username, keyID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UserGpgKeyDelete indicates an expected call of UserGpgKeyDelete.
+func (mr *MockUserClientMockRecorder) UserGpgKeyDelete(ctx, username, keyID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGpgKeyDelete", reflect.TypeOf((*MockUserClient)(nil).UserGpgKeyDelete), ctx, username, keyID)
+}
+
+// UserGpgKeyGet mocks base method.
+func (m *MockUserClient) UserGpgKeyGet(ctx context.Context, keyID string) (sdk.UserGPGKey, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UserGpgKeyGet", ctx, keyID)
+	ret0, _ := ret[0].(sdk.UserGPGKey)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UserGpgKeyGet indicates an expected call of UserGpgKeyGet.
+func (mr *MockUserClientMockRecorder) UserGpgKeyGet(ctx, keyID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGpgKeyGet", reflect.TypeOf((*MockUserClient)(nil).UserGpgKeyGet), ctx, keyID)
+}
+
+// UserGpgKeyList mocks base method.
+func (m *MockUserClient) UserGpgKeyList(ctx context.Context, username string) ([]sdk.UserGPGKey, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UserGpgKeyList", ctx, username)
+	ret0, _ := ret[0].([]sdk.UserGPGKey)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UserGpgKeyList indicates an expected call of UserGpgKeyList.
+func (mr *MockUserClientMockRecorder) UserGpgKeyList(ctx, username interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGpgKeyList", reflect.TypeOf((*MockUserClient)(nil).UserGpgKeyList), ctx, username)
+}
+
 // UserList mocks base method.
 func (m *MockUserClient) UserList(ctx context.Context) ([]sdk.AuthentifiedUser, error) {
 	m.ctrl.T.Helper()
@@ -7762,6 +7821,65 @@ func (m *MockInterface) UserGetSchema(ctx context.Context) (sdk.SchemaResponse, 
 func (mr *MockInterfaceMockRecorder) UserGetSchema(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGetSchema", reflect.TypeOf((*MockInterface)(nil).UserGetSchema), ctx)
+}
+
+// UserGpgKeyCreate mocks base method.
+func (m *MockInterface) UserGpgKeyCreate(ctx context.Context, username, publicKey string) (sdk.UserGPGKey, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UserGpgKeyCreate", ctx, username, publicKey)
+	ret0, _ := ret[0].(sdk.UserGPGKey)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UserGpgKeyCreate indicates an expected call of UserGpgKeyCreate.
+func (mr *MockInterfaceMockRecorder) UserGpgKeyCreate(ctx, username, publicKey interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGpgKeyCreate", reflect.TypeOf((*MockInterface)(nil).UserGpgKeyCreate), ctx, username, publicKey)
+}
+
+// UserGpgKeyDelete mocks base method.
+func (m *MockInterface) UserGpgKeyDelete(ctx context.Context, username, keyID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UserGpgKeyDelete", ctx, username, keyID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UserGpgKeyDelete indicates an expected call of UserGpgKeyDelete.
+func (mr *MockInterfaceMockRecorder) UserGpgKeyDelete(ctx, username, keyID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGpgKeyDelete", reflect.TypeOf((*MockInterface)(nil).UserGpgKeyDelete), ctx, username, keyID)
+}
+
+// UserGpgKeyGet mocks base method.
+func (m *MockInterface) UserGpgKeyGet(ctx context.Context, keyID string) (sdk.UserGPGKey, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UserGpgKeyGet", ctx, keyID)
+	ret0, _ := ret[0].(sdk.UserGPGKey)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UserGpgKeyGet indicates an expected call of UserGpgKeyGet.
+func (mr *MockInterfaceMockRecorder) UserGpgKeyGet(ctx, keyID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGpgKeyGet", reflect.TypeOf((*MockInterface)(nil).UserGpgKeyGet), ctx, keyID)
+}
+
+// UserGpgKeyList mocks base method.
+func (m *MockInterface) UserGpgKeyList(ctx context.Context, username string) ([]sdk.UserGPGKey, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UserGpgKeyList", ctx, username)
+	ret0, _ := ret[0].([]sdk.UserGPGKey)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UserGpgKeyList indicates an expected call of UserGpgKeyList.
+func (mr *MockInterfaceMockRecorder) UserGpgKeyList(ctx, username interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGpgKeyList", reflect.TypeOf((*MockInterface)(nil).UserGpgKeyList), ctx, username)
 }
 
 // UserList mocks base method.
