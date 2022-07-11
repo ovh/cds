@@ -42,6 +42,7 @@ func (s *Service) processor(ctx context.Context) error {
 
 func (s *Service) do(ctx context.Context, op sdk.Operation) error {
 	ctx = context.WithValue(ctx, cdslog.Operation, op.UUID)
+	ctx = context.WithValue(ctx, cdslog.VCSServer, op.VCSServer)
 	ctx = context.WithValue(ctx, cdslog.Repository, op.RepoFullName)
 
 	log.Debug(ctx, "processing > %v", op.UUID)
