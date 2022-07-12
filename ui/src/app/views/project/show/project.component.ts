@@ -197,8 +197,7 @@ export class ProjectShowComponent implements OnInit, OnDestroy, AfterViewInit {
 
     refreshDatas(key: string): void {
         let opts = [new LoadOpts('withLabels', 'labels')];
-        this._store.dispatch(new FetchProject({ projectKey: key, opts }))
-            .subscribe(null, () => this._router.navigate(['/home']));
+        this._store.dispatch(new FetchProject({ projectKey: key, opts }));
     }
 
     updateFav() {
