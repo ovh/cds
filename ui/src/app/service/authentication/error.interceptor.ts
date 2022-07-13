@@ -44,19 +44,22 @@ export class ErrorInterceptor implements HttpInterceptor {
 
                     if (e.error.message) {
                         // 194 is the error for "MFA required. See https://github.com/ovh/cds/blob/master/sdk/error.go#L205"
-                        if (e.error.id === 194 && confirm(`${e.error.message}.\nDo you want to login using MFA ?`)) {
-                            this._store.dispatch(new SignoutCurrentUser()).subscribe(() => {
-                                this._router.navigate(['/auth/ask-signin/corporate-sso'], {
-                                    queryParams: {
-                                        redirect_uri: this.lastNavigatedURL,
-                                        require_mfa: true
-                                    }
+                        if (e.error.id === 194) {
+                            if (confirm(`${e.error.message}.\nDo you want to login using MFA ?`)) {
+                                this._store.dispatch(new SignoutCurrentUser()).subscribe(() => {
+                                    this._router.navigate(['/auth/ask-signin/corporate-sso'], {
+                                        queryParams: {
+                                            redirect_uri: this.lastNavigatedURL,
+                                            require_mfa: true
+                                        }
+                                    });
                                 });
-                            });
+                            } else {
+                                this._router.navigate(['/home']);
+                            }
                             return observableThrowError(e);
                         }
                         this._toast.errorHTTP(e.status, e.error.message, e.error.from, e.error.request_id);
-                        this._router.navigate(['/home']);
                         return observableThrowError(e);
                     }
 
