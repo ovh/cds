@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/repository"
@@ -91,6 +92,11 @@ func (api *API) postProjectRepositoryHandler() ([]service.RbacChecker, service.H
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
 
+			proj, err := project.Load(ctx, api.mustDB(), pKey, project.LoadOptions.WithKeys)
+			if err != nil {
+				return err
+			}
+
 			vcsIdentifier, err := url.PathUnescape(vars["vcsIdentifier"])
 			if err != nil {
 				return sdk.NewError(sdk.ErrWrongRequest, err)
@@ -103,6 +109,13 @@ func (api *API) postProjectRepositoryHandler() ([]service.RbacChecker, service.H
 			var repo sdk.ProjectRepository
 			if err := service.UnmarshalRequest(ctx, req, &repo); err != nil {
 				return err
+			}
+
+			if repo.Auth.SSHKeyName != "" {
+				projKey := proj.GetSSHKey(repo.Auth.SSHKeyName)
+				if projKey == nil {
+					return sdk.NewErrorFrom(sdk.ErrNotFound, "ssh key %s not found", repo.Auth.SSHKeyName)
+				}
 			}
 
 			tx, err := api.mustDB().Begin()

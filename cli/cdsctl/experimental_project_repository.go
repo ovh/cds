@@ -33,11 +33,23 @@ var projectRepositoryAddCmd = cli.Command{
 		{Name: "vcs-name"},
 		{Name: "repository-name"},
 	},
+	Flags: []cli.Flag{
+		{Name: "ssh-key", Usage: "Project SSH key you want to use to clone the repository"},
+		{Name: "user", Usage: "User you want to use to clone the repository"},
+		{Name: "password", Usage: "User password"},
+	},
 }
 
 func projectRepositoryAddFunc(v cli.Values) error {
-	err := client.ProjectVCSRepositoryAdd(context.Background(), v.GetString(_ProjectKey), v.GetString("vcs-name"), v.GetString("repository-name"))
-	return err
+	repo := sdk.ProjectRepository{
+		Name: v.GetString("repository-name"),
+		Auth: sdk.ProjectRepositoryAuth{
+			SSHKeyName: v.GetString("ssh-key"),
+			Username:   v.GetString("user"),
+			Token:      v.GetString("password"),
+		},
+	}
+	return client.ProjectVCSRepositoryAdd(context.Background(), v.GetString(_ProjectKey), v.GetString("vcs-name"), repo)
 }
 
 var projectRepositoryListCmd = cli.Command{
@@ -47,7 +59,7 @@ var projectRepositoryListCmd = cli.Command{
 		{Name: _ProjectKey},
 	},
 	Flags: []cli.Flag{
-		{Name: "vcs-name"},
+		{Name: "vcs-name", Usage: "Specified a VCS by his name"},
 	},
 }
 

@@ -8,10 +8,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func (c *client) ProjectVCSRepositoryAdd(ctx context.Context, projectKey string, vcsName string, repoName string) error {
-	repo := sdk.ProjectRepository{
-		Name: repoName,
-	}
+func (c *client) ProjectVCSRepositoryAdd(ctx context.Context, projectKey string, vcsName string, repo sdk.ProjectRepository) error {
 	path := fmt.Sprintf("/v2/project/%s/vcs/%s/repository", projectKey, url.PathEscape(vcsName))
 	_, err := c.PostJSON(ctx, path, &repo, nil)
 	return err

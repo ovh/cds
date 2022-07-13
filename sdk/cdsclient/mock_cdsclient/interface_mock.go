@@ -2564,11 +2564,12 @@ func (mr *MockProjectClientMockRecorder) ProjectList(withApplications, withWorkf
 }
 
 // ProjectRepositoryAnalyze mocks base method.
-func (m *MockProjectClient) ProjectRepositoryAnalyze(ctx context.Context, analyze sdk.AnalyzeRequest) error {
+func (m *MockProjectClient) ProjectRepositoryAnalyze(ctx context.Context, analyze sdk.AnalyzeRequest) (sdk.AnalyzeResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ProjectRepositoryAnalyze", ctx, analyze)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(sdk.AnalyzeResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // ProjectRepositoryAnalyze indicates an expected call of ProjectRepositoryAnalyze.
@@ -2699,17 +2700,17 @@ func (mr *MockProjectClientMockRecorder) ProjectVCSList(ctx, projectKey interfac
 }
 
 // ProjectVCSRepositoryAdd mocks base method.
-func (m *MockProjectClient) ProjectVCSRepositoryAdd(ctx context.Context, projectKey, vcsName, repoName string) error {
+func (m *MockProjectClient) ProjectVCSRepositoryAdd(ctx context.Context, projectKey, vcsName string, repo sdk.ProjectRepository) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ProjectVCSRepositoryAdd", ctx, projectKey, vcsName, repoName)
+	ret := m.ctrl.Call(m, "ProjectVCSRepositoryAdd", ctx, projectKey, vcsName, repo)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // ProjectVCSRepositoryAdd indicates an expected call of ProjectVCSRepositoryAdd.
-func (mr *MockProjectClientMockRecorder) ProjectVCSRepositoryAdd(ctx, projectKey, vcsName, repoName interface{}) *gomock.Call {
+func (mr *MockProjectClientMockRecorder) ProjectVCSRepositoryAdd(ctx, projectKey, vcsName, repo interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVCSRepositoryAdd", reflect.TypeOf((*MockProjectClient)(nil).ProjectVCSRepositoryAdd), ctx, projectKey, vcsName, repoName)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVCSRepositoryAdd", reflect.TypeOf((*MockProjectClient)(nil).ProjectVCSRepositoryAdd), ctx, projectKey, vcsName, repo)
 }
 
 // ProjectVCSRepositoryList mocks base method.
@@ -6817,11 +6818,12 @@ func (mr *MockInterfaceMockRecorder) ProjectList(withApplications, withWorkflow 
 }
 
 // ProjectRepositoryAnalyze mocks base method.
-func (m *MockInterface) ProjectRepositoryAnalyze(ctx context.Context, analyze sdk.AnalyzeRequest) error {
+func (m *MockInterface) ProjectRepositoryAnalyze(ctx context.Context, analyze sdk.AnalyzeRequest) (sdk.AnalyzeResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ProjectRepositoryAnalyze", ctx, analyze)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(sdk.AnalyzeResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // ProjectRepositoryAnalyze indicates an expected call of ProjectRepositoryAnalyze.
@@ -6952,17 +6954,17 @@ func (mr *MockInterfaceMockRecorder) ProjectVCSList(ctx, projectKey interface{})
 }
 
 // ProjectVCSRepositoryAdd mocks base method.
-func (m *MockInterface) ProjectVCSRepositoryAdd(ctx context.Context, projectKey, vcsName, repoName string) error {
+func (m *MockInterface) ProjectVCSRepositoryAdd(ctx context.Context, projectKey, vcsName string, repo sdk.ProjectRepository) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ProjectVCSRepositoryAdd", ctx, projectKey, vcsName, repoName)
+	ret := m.ctrl.Call(m, "ProjectVCSRepositoryAdd", ctx, projectKey, vcsName, repo)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // ProjectVCSRepositoryAdd indicates an expected call of ProjectVCSRepositoryAdd.
-func (mr *MockInterfaceMockRecorder) ProjectVCSRepositoryAdd(ctx, projectKey, vcsName, repoName interface{}) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) ProjectVCSRepositoryAdd(ctx, projectKey, vcsName, repo interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVCSRepositoryAdd", reflect.TypeOf((*MockInterface)(nil).ProjectVCSRepositoryAdd), ctx, projectKey, vcsName, repoName)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVCSRepositoryAdd", reflect.TypeOf((*MockInterface)(nil).ProjectVCSRepositoryAdd), ctx, projectKey, vcsName, repo)
 }
 
 // ProjectVCSRepositoryList mocks base method.
