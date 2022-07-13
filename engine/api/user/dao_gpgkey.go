@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"time"
 
 	"github.com/go-gorp/gorp"
 	"github.com/rockbears/log"
@@ -73,6 +74,7 @@ func LoadGPGKeyByKeyID(ctx context.Context, db gorp.SqlExecutor, keyID string) (
 
 func InsertGPGKey(ctx context.Context, db gorpmapper.SqlExecutorWithTx, gpgKey *sdk.UserGPGKey) error {
 	gpgKey.ID = sdk.UUID()
+	gpgKey.Created = time.Now()
 	dbKey := dbGpgKey{UserGPGKey: *gpgKey}
 	return sdk.WrapError(gorpmapping.InsertAndSign(ctx, db, &dbKey), "unable to insert authentified user gpg key")
 }

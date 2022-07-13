@@ -682,25 +682,25 @@ func GetWebhooksInfos(ctx context.Context, c sdk.VCSAuthorizedClientService) (We
 	if client.vcsProject != nil {
 		res := WebhooksInfos{}
 		switch {
-		case client.vcsProject.Type == "bitbucketserver":
+		case client.vcsProject.Type == sdk.VCSTypeBitbucketServer:
 			res.WebhooksSupported = true
 			res.Icon = sdk.BitbucketIcon
 			// https://confluence.atlassian.com/bitbucketserver/event-payload-938025882.html
 			res.Events = sdk.BitbucketEvents
 			res.WebhooksDisabled = client.vcsProject.Options.DisableWebhooks
-		case client.vcsProject.Type == "bitbucketcloud":
+		case client.vcsProject.Type == sdk.VCSTypeBitbucketCloud:
 			res.WebhooksSupported = true
 			res.Icon = sdk.BitbucketIcon
 			// https://developer.atlassian.com/bitbucket/api/2/reference/resource/hook_events/%7Bsubject_type%7D
 			res.Events = sdk.BitbucketCloudEvents
 			res.WebhooksDisabled = client.vcsProject.Options.DisableWebhooks
-		case client.vcsProject.Type == "github":
+		case client.vcsProject.Type == sdk.VCSTypeGithub:
 			res.WebhooksSupported = true
 			res.Icon = sdk.GitHubIcon
 			// https://developer.github.com/v3/activity/events/types/
 			res.Events = sdk.GitHubEvents
 			res.WebhooksDisabled = client.vcsProject.Options.DisableWebhooks
-		case client.vcsProject.Type == "gitlab":
+		case client.vcsProject.Type == sdk.VCSTypeGitlab:
 			res.WebhooksSupported = true
 			res.Icon = sdk.GitlabIcon
 			res.WebhooksDisabled = client.vcsProject.Options.DisableWebhooks
@@ -715,7 +715,7 @@ func GetWebhooksInfos(ctx context.Context, c sdk.VCSAuthorizedClientService) (We
 				string(gitlab.EventTypePipeline),
 				"Job Hook", // TODO update gitlab sdk
 			}
-		case client.vcsProject.Type == "gerrit":
+		case client.vcsProject.Type == sdk.VCSTypeGerrit:
 			res.WebhooksSupported = false
 			res.Icon = sdk.GerritIcon
 			// https://git.eclipse.org/r/Documentation/cmd-stream-events.html#events

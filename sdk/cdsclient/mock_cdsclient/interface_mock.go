@@ -2563,6 +2563,20 @@ func (mr *MockProjectClientMockRecorder) ProjectList(withApplications, withWorkf
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectList", reflect.TypeOf((*MockProjectClient)(nil).ProjectList), varargs...)
 }
 
+// ProjectRepositoryAnalyze mocks base method.
+func (m *MockProjectClient) ProjectRepositoryAnalyze(ctx context.Context, analyze sdk.AnalyzeRequest) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectRepositoryAnalyze", ctx, analyze)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectRepositoryAnalyze indicates an expected call of ProjectRepositoryAnalyze.
+func (mr *MockProjectClientMockRecorder) ProjectRepositoryAnalyze(ctx, analyze interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryAnalyze", reflect.TypeOf((*MockProjectClient)(nil).ProjectRepositoryAnalyze), ctx, analyze)
+}
+
 // ProjectRepositoryDelete mocks base method.
 func (m *MockProjectClient) ProjectRepositoryDelete(ctx context.Context, projectKey, vcsName, repositoryName string) error {
 	m.ctrl.T.Helper()
@@ -6800,6 +6814,20 @@ func (mr *MockInterfaceMockRecorder) ProjectList(withApplications, withWorkflow 
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{withApplications, withWorkflow}, filters...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectList", reflect.TypeOf((*MockInterface)(nil).ProjectList), varargs...)
+}
+
+// ProjectRepositoryAnalyze mocks base method.
+func (m *MockInterface) ProjectRepositoryAnalyze(ctx context.Context, analyze sdk.AnalyzeRequest) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectRepositoryAnalyze", ctx, analyze)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectRepositoryAnalyze indicates an expected call of ProjectRepositoryAnalyze.
+func (mr *MockInterfaceMockRecorder) ProjectRepositoryAnalyze(ctx, analyze interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryAnalyze", reflect.TypeOf((*MockInterface)(nil).ProjectRepositoryAnalyze), ctx, analyze)
 }
 
 // ProjectRepositoryDelete mocks base method.

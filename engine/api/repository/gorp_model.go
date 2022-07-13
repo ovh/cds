@@ -8,6 +8,7 @@ import (
 
 func init() {
 	gorpmapping.Register(gorpmapping.New(dbProjectRepository{}, "project_repository", false, "id"))
+	gorpmapping.Register(gorpmapping.New(sdk.ProjectRepositoryAnalyze{}, "project_repository_analyze", false, "id"))
 }
 
 type dbProjectRepository struct {

@@ -124,10 +124,11 @@ func (api *API) postProjectRepositoryHandler() ([]service.RbacChecker, service.H
 			if err != nil {
 				return err
 			}
-			if _, err := vcsClient.RepoByFullname(ctx, repo.Name); err != nil {
+			vcsRepo, err := vcsClient.RepoByFullname(ctx, repo.Name)
+			if err != nil {
 				return err
 			}
-			
+
 			// Create hook
 			srvs, err := services.LoadAllByType(ctx, tx, sdk.TypeHooks)
 			if err != nil {
@@ -140,6 +141,12 @@ func (api *API) postProjectRepositoryHandler() ([]service.RbacChecker, service.H
 			_, code, errHooks := services.NewClient(tx, srvs).DoJSONRequest(ctx, http.MethodPost, "/v2/task", repositoryHookRegister, nil)
 			if errHooks != nil || code >= 400 {
 				return sdk.WrapError(errHooks, "unable to create hooks [HTTP: %d]", code)
+			}
+
+			if repo.Auth.SSHKeyName != "" {
+				repo.CloneURL = vcsRepo.SSHCloneURL
+			} else {
+				repo.CloneURL = vcsRepo.HTTPCloneURL
 			}
 
 			// Update repository with Hook configuration

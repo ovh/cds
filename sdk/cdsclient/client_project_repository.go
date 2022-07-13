@@ -33,3 +33,10 @@ func (c *client) ProjectRepositoryDelete(ctx context.Context, projectKey string,
 	}
 	return nil
 }
+
+func (c *client) ProjectRepositoryAnalyze(ctx context.Context, analyze sdk.AnalyzeRequest) (sdk.AnalyzeResponse, error) {
+	path := "/v2/repository/analyze"
+	var resp sdk.AnalyzeResponse
+	_, err := c.PostJSON(ctx, path, &analyze, &resp)
+	return resp, err
+}

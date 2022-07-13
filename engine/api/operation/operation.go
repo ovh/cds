@@ -149,7 +149,7 @@ func GetRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, uuid strin
 	return &ope, nil
 }
 
-// Poll repository operatino for given uuid.
+// Poll repository operation for given uuid.
 func Poll(ctx context.Context, db gorp.SqlExecutor, operationUUID string) (*sdk.Operation, error) {
 	f := func() (*sdk.Operation, error) {
 		ope, err := GetRepositoryOperation(ctx, db, operationUUID)

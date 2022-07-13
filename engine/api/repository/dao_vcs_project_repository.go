@@ -54,10 +54,10 @@ func LoadRepositoryByVCSAndID(ctx context.Context, db gorp.SqlExecutor, vcsProje
 	return &res.ProjectRepository, nil
 }
 
-func LoadRepositoryByName(ctx context.Context, db gorp.SqlExecutor, vcsProjectID string, repoName string) (*sdk.ProjectRepository, error) {
+func LoadRepositoryByName(ctx context.Context, db gorp.SqlExecutor, vcsProjectID string, repoName string, opts ...gorpmapping.GetOptionFunc) (*sdk.ProjectRepository, error) {
 	query := gorpmapping.NewQuery(`SELECT project_repository.* FROM project_repository WHERE project_repository.vcs_project_id = $1 AND project_repository.name = $2`).Args(vcsProjectID, repoName)
 	var res dbProjectRepository
-	if _, err := gorpmapping.Get(ctx, db, query, &res); err != nil {
+	if _, err := gorpmapping.Get(ctx, db, query, &res, opts...); err != nil {
 		return nil, err
 	}
 

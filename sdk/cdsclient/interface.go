@@ -225,6 +225,7 @@ type ProjectClient interface {
 	ProjectVCSRepositoryAdd(ctx context.Context, projectKey string, vcsName string, repoName string) error
 	ProjectVCSRepositoryList(ctx context.Context, projectKey string, vcsName string) ([]sdk.ProjectRepository, error)
 	ProjectRepositoryDelete(ctx context.Context, projectKey string, vcsName string, repositoryName string) error
+	ProjectRepositoryAnalyze(ctx context.Context, analyze sdk.AnalyzeRequest) (sdk.AnalyzeResponse, error)
 }
 
 // ProjectKeysClient exposes project keys related functions
