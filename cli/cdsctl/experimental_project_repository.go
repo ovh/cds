@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
@@ -79,14 +78,24 @@ func projectRepositoryListFunc(v cli.Values) (cli.ListResult, error) {
 		allVCS = append(allVCS, vcsGivenName)
 	}
 
+	type CliRepo struct {
+		VcsName  string `cli:"vcsName" json:"vcsName"`
+		RepoName string `cli:"repoName" json:"repoName"`
+	}
+
 	// GET REPOS
-	repositories := make([]sdk.ProjectRepository, 0)
+	repositories := make([]CliRepo, 0)
 	for _, vcsName := range allVCS {
 		repos, err := client.ProjectVCSRepositoryList(context.Background(), v.GetString(_ProjectKey), vcsName)
 		if err != nil {
 			return nil, err
 		}
-		repositories = append(repositories, repos...)
+		for _, r := range repos {
+			repositories = append(repositories, CliRepo{
+				VcsName:  vcsName,
+				RepoName: r.Name,
+			})
+		}
 	}
 	return cli.AsListResult(repositories), nil
 }

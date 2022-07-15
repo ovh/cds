@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"context"
+	"strings"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -34,7 +35,7 @@ func (s *Service) doAnalyzeExecution(ctx context.Context, t *sdk.TaskExecution) 
 		RepoName:   t.Configuration[sdk.HookConfigRepoFullName].Value,
 		VcsName:    t.Configuration[sdk.HookConfigVCSServer].Value,
 		ProjectKey: t.Configuration[sdk.HookConfigProject].Value,
-		Branch:     branch,
+		Branch:     strings.TrimPrefix(branch, "refs/heads/"),
 		Commit:     commit,
 	}
 	resp, err := s.Client.ProjectRepositoryAnalyze(ctx, analyze)

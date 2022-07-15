@@ -139,7 +139,7 @@ func (k PrivateKey) SignMessage(msg []byte) ([]byte, error) {
 }
 
 func (k PrivateKey) KeyId() string {
-	return PublicKey(k).KeyId()
+	return PublicKey(k).KeyFingerprint()
 }
 
 func (k PrivateKey) GetKey() interface{} {
@@ -284,8 +284,12 @@ func (k PublicKey) ReadSignedMessage(msg []byte) ([]byte, *packet.Signature, err
 	return data, md.Signature, nil
 }
 
-func (k PublicKey) KeyId() string {
+func (k PublicKey) KeyFingerprint() string {
 	return fmt.Sprintf("%X", k.Entity.PrimaryKey.Fingerprint)
+}
+
+func (k PublicKey) KeyShortID() string {
+	return fmt.Sprintf("%s", k.Entity.PrimaryKey.KeyIdString())
 }
 
 func (k PublicKey) Serialize() ([]byte, error) {

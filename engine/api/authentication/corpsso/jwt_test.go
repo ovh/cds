@@ -65,7 +65,7 @@ func TestIsSignedBy(t *testing.T) {
 		t.Errorf("unable to parse key: %v", err)
 	}
 
-	t.Log("master key: ", MasterKey.KeyId())
+	t.Log("master key: ", MasterKey.KeyFingerprint())
 
 	privKey, err := gpg.NewPrivateKeyFromPem(AuthKey, "")
 	if err != nil {
@@ -86,7 +86,7 @@ func TestGPGLib(t *testing.T) {
 		t.Errorf("unable to parse key: %v", err)
 	}
 
-	t.Log("master key: ", MasterKey.KeyId())
+	t.Log("master key: ", MasterKey.KeyFingerprint())
 
 	privKey, err := gpg.NewPrivateKeyFromPem(AuthKey, "")
 	if err != nil {

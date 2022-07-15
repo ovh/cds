@@ -275,6 +275,35 @@ func (c *vcsClient) setAuthHeader(ctx context.Context, req *http.Request) {
 		}
 	}
 }
+
+func (c *vcsClient) doStreamRequest(ctx context.Context, method, path string, in interface{}) (io.Reader, http.Header, error) {
+	reader, headers, code, err := services.NewClient(c.db, c.srvs).StreamRequest(ctx, method, path, in, func(req *http.Request) {
+		c.setAuthHeader(ctx, req)
+	})
+	if code >= 400 {
+		log.Warn(ctx, "repositories manager %s HTTP %s %s error %d", c.name, method, path, code)
+		switch code {
+		case http.StatusUnauthorized:
+			err = sdk.NewError(sdk.ErrNoReposManagerClientAuth, err)
+		case http.StatusBadRequest:
+			err = sdk.NewError(sdk.ErrWrongRequest, err)
+		case http.StatusNotFound:
+			err = sdk.NewError(sdk.ErrNotFound, err)
+		case http.StatusForbidden:
+			err = sdk.NewError(sdk.ErrForbidden, err)
+		default:
+			err = sdk.NewError(sdk.ErrUnknownError, err)
+		}
+	}
+
+	if err != nil {
+		return nil, nil, sdk.WithStack(err)
+	}
+	err = c.checkAccessToken(ctx, headers)
+
+	return reader, headers, sdk.WithStack(err)
+}
+
 func (c *vcsClient) doJSONRequest(ctx context.Context, method, path string, in interface{}, out interface{}) (int, error) {
 	headers, code, err := services.NewClient(c.db, c.srvs).DoJSONRequest(ctx, method, path, in, out, func(req *http.Request) {
 		c.setAuthHeader(ctx, req)
@@ -661,6 +690,16 @@ func (c *vcsClient) GrantWritePermission(ctx context.Context, repo string) error
 
 func (c *vcsClient) GetAccessToken(_ context.Context) string {
 	return ""
+}
+
+func (c *vcsClient) GetArchive(ctx context.Context, repo string, dir string, format string, commit string) (io.Reader, http.Header, error) {
+	archiveRequest := sdk.VCSArchiveRequest{
+		Path:   dir,
+		Commit: commit,
+		Format: format,
+	}
+	urlPath := fmt.Sprintf("/vcs/%s/repos/%s/archive", c.name, repo)
+	return c.doStreamRequest(ctx, "POST", urlPath, archiveRequest)
 }
 
 // WebhooksInfos is a set of info about webhooks

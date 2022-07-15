@@ -47,6 +47,8 @@ func TestDeleteOldest(t *testing.T) {
 	for i := 0; i < 50; i++ {
 		a := sdk.ProjectRepositoryAnalyze{
 			ProjectRepositoryID: repo.ID,
+			ProjectKey:          proj1.Key,
+			VCSProjectID:        vcsProject.ID,
 		}
 		require.NoError(t, repository.InsertAnalyze(context.TODO(), db, &a))
 	}
@@ -59,6 +61,8 @@ func TestDeleteOldest(t *testing.T) {
 	a := sdk.ProjectRepositoryAnalyze{
 		ProjectRepositoryID: repo.ID,
 		Branch:              "lastbranch",
+		VCSProjectID:        vcsProject.ID,
+		ProjectKey:          proj1.Key,
 	}
 	require.NoError(t, repository.InsertAnalyze(context.TODO(), db, &a))
 

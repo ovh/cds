@@ -199,3 +199,67 @@ func (c *bitbucketClient) do(ctx context.Context, method, api, path string, para
 
 	return nil
 }
+
+func (c *bitbucketClient) stream(ctx context.Context, method, api, path string, params url.Values, values []byte) (io.Reader, http.Header, error) {
+	ctx, end := telemetry.Span(ctx, "bitbucketserver.stream")
+	defer end()
+
+	// create the URI
+	apiURL := c.getFullAPIURL(api)
+	uri, err := url.Parse(apiURL + path)
+	if err != nil {
+		return nil, nil, sdk.WithStack(err)
+	}
+
+	if params != nil && len(params) > 0 {
+		uri.RawQuery = params.Encode()
+	}
+
+	// create the request
+	req := &http.Request{
+		URL:        uri,
+		Method:     method,
+		ProtoMajor: 1,
+		ProtoMinor: 1,
+		Close:      true,
+		Header:     http.Header{},
+	}
+
+	log.Info(ctx, "%s %s", req.Method, req.URL.String())
+
+	if values != nil && len(values) > 0 {
+		buf := bytes.NewBuffer(values)
+		req.Body = io.NopCloser(buf)
+		req.ContentLength = int64(buf.Len())
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.token))
+
+	// ensure the appropriate content-type is set for POST,
+	// assuming the field is not populated
+	if (req.Method == "POST" || req.Method == "PUT") && len(req.Header.Get("Content-Type")) == 0 {
+		req.Header.Set("Content-Type", "application/json")
+	}
+
+	// make the request using the default http client
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return nil, nil, sdk.WrapError(err, "HTTP Error")
+	}
+
+	// Check for an http error status (ie not 200 StatusOK)
+	switch resp.StatusCode {
+	case 404:
+		return nil, nil, sdk.WithStack(sdk.ErrNotFound)
+	case 403:
+		return nil, nil, sdk.WithStack(sdk.ErrForbidden)
+	case 401:
+		return nil, nil, sdk.WithStack(sdk.ErrUnauthorized)
+	case 400:
+		defer resp.Body.Close()
+		body, _ := io.ReadAll(resp.Body)
+		log.Warn(ctx, "bitbucketClient.do> %s", string(body))
+		return nil, nil, sdk.WithStack(sdk.ErrWrongRequest)
+	}
+	return resp.Body, resp.Header, nil
+}

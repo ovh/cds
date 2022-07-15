@@ -41,7 +41,6 @@ func TestDecryption(t *testing.T) {
 		Created:      time.Now(),
 		VCSProjectID: vcsProject.ID,
 		CreatedBy:    "me",
-		CloneURL:     "myurl",
 	}
 	require.NoError(t, repository.Insert(context.TODO(), db, &repo))
 

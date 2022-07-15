@@ -77,6 +77,7 @@ func (s *Service) processCheckout(ctx context.Context, op *sdk.Operation) error 
 			return sdk.NewErrorFrom(sdk.ErrUnauthorized, "no signature on commit")
 		}
 		ctx = context.WithValue(ctx, cdslog.GpgKey, c.GPGKeyID)
+		op.Setup.Checkout.Result.SignKeyID = c.GPGKeyID
 
 		// Retrieve gpg public key
 		key, err := s.Client.UserGpgKeyGet(ctx, c.GPGKeyID)

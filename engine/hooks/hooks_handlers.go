@@ -96,7 +96,7 @@ func (s *Service) repositoryHooksHandler() service.Handler {
 			}
 			hook := s.Dao.FindTask(ctx, uuid)
 			if hook == nil {
-				return sdk.WrapError(sdk.ErrNotFound, "no hook found on")
+				return sdk.WrapError(sdk.ErrNotFound, "no task found for %s", uuid)
 			}
 
 			// Enqueue execution

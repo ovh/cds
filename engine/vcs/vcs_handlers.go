@@ -3,6 +3,7 @@ package vcs
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -1179,6 +1180,48 @@ func (s *Service) statusHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var status = http.StatusOK
 		return service.WriteJSON(w, s.Status(ctx), status)
+	}
+}
+
+func (s *Service) archiveHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		name := muxVar(r, "name")
+		owner := muxVar(r, "owner")
+		repo := muxVar(r, "repo")
+
+		vcsAuth, err := getVCSAuth(ctx)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
+		}
+
+		consumer, err := s.getConsumer(name, vcsAuth)
+		if err != nil {
+			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
+		}
+
+		client, err := consumer.GetAuthorizedClient(ctx, vcsAuth)
+		if err != nil {
+			return sdk.WrapError(err, "Unable to get authorized client %s %s/%s", name, owner, repo)
+		}
+		// Check if access token has been refreshed
+		if vcsAuth.AccessToken != client.GetAccessToken(ctx) {
+			w.Header().Set(sdk.HeaderXAccessToken, client.GetAccessToken(ctx))
+		}
+
+		body := sdk.VCSArchiveRequest{}
+		if err := service.UnmarshalBody(r, &body); err != nil {
+			return sdk.WrapError(err, "unable to read body %s %s/%s", name, owner, repo)
+		}
+
+		reader, header, err := client.GetArchive(ctx, owner+"/"+repo, body.Path, body.Format, body.Commit)
+		if err != nil {
+			return err
+		}
+		w.Header().Set("Content-Disposition", header.Get("Content-Disposition"))
+		if _, err := io.Copy(w, reader); err != nil {
+			return err
+		}
+		return nil
 	}
 }
 

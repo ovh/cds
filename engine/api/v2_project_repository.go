@@ -106,15 +106,15 @@ func (api *API) postProjectRepositoryHandler() ([]service.RbacChecker, service.H
 				return err
 			}
 
-			var repo sdk.ProjectRepository
-			if err := service.UnmarshalRequest(ctx, req, &repo); err != nil {
+			var repoBody sdk.ProjectRepository
+			if err := service.UnmarshalRequest(ctx, req, &repoBody); err != nil {
 				return err
 			}
 
-			if repo.Auth.SSHKeyName != "" {
-				projKey := proj.GetSSHKey(repo.Auth.SSHKeyName)
+			if repoBody.Auth.SSHKeyName != "" {
+				projKey := proj.GetSSHKey(repoBody.Auth.SSHKeyName)
 				if projKey == nil {
-					return sdk.NewErrorFrom(sdk.ErrNotFound, "ssh key %s not found", repo.Auth.SSHKeyName)
+					return sdk.NewErrorFrom(sdk.ErrNotFound, "ssh key %s not found", repoBody.Auth.SSHKeyName)
 				}
 			}
 
@@ -124,11 +124,12 @@ func (api *API) postProjectRepositoryHandler() ([]service.RbacChecker, service.H
 			}
 			defer tx.Rollback() // nolint
 
-			repo.VCSProjectID = vcsProject.ID
-			repo.CreatedBy = getAPIConsumer(ctx).GetUsername()
+			repoDB := repoBody
+			repoDB.VCSProjectID = vcsProject.ID
+			repoDB.CreatedBy = getAPIConsumer(ctx).GetUsername()
 
 			// Insert Repository
-			if err := repository.Insert(ctx, tx, &repo); err != nil {
+			if err := repository.Insert(ctx, tx, &repoDB); err != nil {
 				return err
 			}
 
@@ -137,7 +138,7 @@ func (api *API) postProjectRepositoryHandler() ([]service.RbacChecker, service.H
 			if err != nil {
 				return err
 			}
-			vcsRepo, err := vcsClient.RepoByFullname(ctx, repo.Name)
+			vcsRepo, err := vcsClient.RepoByFullname(ctx, repoDB.Name)
 			if err != nil {
 				return err
 			}
@@ -150,21 +151,28 @@ func (api *API) postProjectRepositoryHandler() ([]service.RbacChecker, service.H
 			if len(srvs) < 1 {
 				return sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find hook uservice")
 			}
-			repositoryHookRegister := sdk.NewEntitiesHook(repo.ID, pKey, vcsProject.Type, vcsProject.Name, repo.Name)
+			repositoryHookRegister := sdk.NewEntitiesHook(repoDB.ID, pKey, vcsProject.Type, vcsProject.Name, repoDB.Name)
 			_, code, errHooks := services.NewClient(tx, srvs).DoJSONRequest(ctx, http.MethodPost, "/v2/task", repositoryHookRegister, nil)
 			if errHooks != nil || code >= 400 {
 				return sdk.WrapError(errHooks, "unable to create hooks [HTTP: %d]", code)
 			}
 
-			if repo.Auth.SSHKeyName != "" {
-				repo.CloneURL = vcsRepo.SSHCloneURL
+			if repoBody.Auth.SSHKeyName != "" {
+				if vcsRepo.SSHCloneURL == "" {
+					return sdk.NewErrorFrom(sdk.ErrInvalidData, "this repo cannot be cloned using ssh.")
+				}
+				repoDB.CloneURL = vcsRepo.SSHCloneURL
 			} else {
-				repo.CloneURL = vcsRepo.HTTPCloneURL
+				if vcsRepo.HTTPCloneURL == "" {
+					return sdk.NewErrorFrom(sdk.ErrInvalidData, "this repo cannot be cloned using https. Please provide a sshkey.")
+				}
+				repoDB.CloneURL = vcsRepo.HTTPCloneURL
 			}
+			repoDB.Auth = repoBody.Auth
 
 			// Update repository with Hook configuration
-			repo.HookConfiguration = repositoryHookRegister.Configuration
-			if err := repository.Update(ctx, tx, &repo); err != nil {
+			repoDB.HookConfiguration = repositoryHookRegister.Configuration
+			if err := repository.Update(ctx, tx, &repoDB); err != nil {
 				return err
 			}
 

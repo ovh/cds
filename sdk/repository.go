@@ -31,26 +31,31 @@ type ProjectRepositoryAuth struct {
 }
 
 type ProjectRepositoryAnalyze struct {
-	ID                  string                `json:"id" db:"id"`
-	Created             time.Time             `json:"created" db:"created"`
+	ID                  string                `json:"id" db:"id" cli:"id"`
+	Created             time.Time             `json:"created" db:"created" cli:"created"`
 	LastModified        time.Time             `json:"last_modified" db:"last_modified"`
 	ProjectRepositoryID string                `json:"project_repository_id" db:"project_repository_id"`
+	VCSProjectID        string                `json:"vcs_project_id" db:"vcs_project_id"`
+	ProjectKey          string                `json:"project_key" db:"project_key"`
 	Status              string                `json:"status" db:"status"`
-	Branch              string                `json:"branch" db:"branch"`
-	Commit              string                `json:"commit" db:"commit"`
+	Branch              string                `json:"branch" db:"branch" cli:"branch"`
+	Commit              string                `json:"commit" db:"commit" cli:"commit"`
 	Data                ProjectRepositoryData `json:"data" db:"data"`
 }
 
 type ProjectRepositoryData struct {
-	OperationUUID string                       `json:"operation_uuid"`
-	CommitCheck   bool                         `json:"commit_check"`
-	Error         string                       `json:"error"`
-	Entities      []ProjectRepositoryDataEnity `json:"entities"`
+	OperationUUID string                        `json:"operation_uuid"`
+	CommitCheck   bool                          `json:"commit_check"`
+	SignKeyID     string                        `json:"sign_key_id"`
+	Error         string                        `json:"error"`
+	Entities      []ProjectRepositoryDataEntity `json:"entities"`
 }
 
-type ProjectRepositoryDataEnity struct {
+type ProjectRepositoryDataEntity struct {
 	FileName string `json:"file_name"`
 	Path     string `json:"path"`
+	Content  string `json:"content"`
+	Md5Sum   string `json:"md5"`
 }
 
 func (prd ProjectRepositoryData) Value() (driver.Value, error) {

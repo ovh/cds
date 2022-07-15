@@ -21,7 +21,7 @@ require (
 	github.com/eapache/go-resiliency v1.2.0
 	github.com/fatih/color v1.13.0
 	github.com/fsamin/go-dump v1.0.9
-	github.com/fsamin/go-repo v0.1.11-0.20220711144833-3595c34dcbde
+	github.com/fsamin/go-repo v0.1.11-0.20220715092716-99f295919954
 	github.com/fsamin/go-shredder v0.0.0-20180118184739-b2488aedb5be
 	github.com/fujiwara/shapeio v0.0.0-20170602072123-c073257dd745
 	github.com/gambol99/go-marathon v0.0.0-20170922093320-ec4a50170df7
