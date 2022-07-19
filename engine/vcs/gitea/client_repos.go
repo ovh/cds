@@ -2,6 +2,7 @@ package gitea
 
 import (
 	"context"
+	"fmt"
 
 	gg "code.gitea.io/sdk/gitea"
 
@@ -44,7 +45,7 @@ func (g *giteaClient) ToVCSRepo(repo *gg.Repository) sdk.VCSRepo {
 	return sdk.VCSRepo{
 		URL:          repo.HTMLURL,
 		Name:         repo.Name,
-		ID:           string(repo.ID),
+		ID:           fmt.Sprintf("%d", repo.ID),
 		Fullname:     repo.FullName,
 		HTTPCloneURL: repo.CloneURL,
 		SSHCloneURL:  repo.SSHURL,

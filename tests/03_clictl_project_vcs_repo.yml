@@ -2,12 +2,17 @@ name: Project VCS Command TestSuite
 testcases:
 - name: prepare test
   steps:
+  - script: gpg --batch --yes --delete-secret-key E023B5A70E60A8A67B07FDAFA868963169F700D9 || true
+  - script: gpg --batch --yes --delete-key E023B5A70E60A8A67B07FDAFA868963169F700D9 || true
   - script: curl -X DELETE "http://localhost:3000/api/v1/repos/gituser/myrepo" -u "gituser:gitpwd"
   - script: {{.cdsctl}} -f {{.cdsctl.config}} project remove --force ITCLIPRJVCS
   - script: {{.cdsctl}} -f {{.cdsctl.config}} group remove ITCLIPRJVCS --force
   - script: {{.cdsctl}} -f {{.cdsctl.config}} group add ITCLIPRJVCS
   - script: {{.cdsctl}} -f {{.cdsctl.config}} project create ITCLIPRJVCS "Test Project" ITCLIPRJVCS
   - script: 'curl --fail -X POST "http://localhost:3000/api/v1/user/repos" -u "gituser:gitpwd" -d "{\"name\": \"myrepo\", \"auto_init\": true}" -H "Content-Type: application/json"'
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} user gpg import --file ./fixtures/gpg/key.pub
+  - script: gpg --import ./fixtures/gpg/key.priv
+  - script: gpg --import ./fixtures/gpg/key.pub
 
 - name: import / export vcs server
   steps:
@@ -27,6 +32,35 @@ testcases:
       assertions:
         - result.code ShouldEqual 0
         - result.systemoutjson.systemoutjson0.name ShouldEqual "gituser/myrepo"
+
+- name: commitStep
+  steps:
+    - script: git clone "http://localhost:3000/gituser/myrepo.git" /tmp/myrepo
+    - script: mkdir -p /tmp/myrepo/.cds/models && echo 'new file' > /tmp/myrepo/.cds/models/my-worker-model.yml
+    - script: cd /tmp/myrepo && git add /tmp/myrepo/.cds/models/my-worker-model.yml && git commit .  --gpg-sign=E023B5A70E60A8A67B07FDAFA868963169F700D9 -m "add file and sign" && git push
+    - script: 'curl -H "Content-Type: application/json" -u "gituser:gitpwd" -X POST http://localhost:3000/api/v1/repos/sgu/myrepo/hooks -d "{\"active\":true, \"type\":\"gitea\", \"config\": {\"content_type\": \"json\", \"url\": \"http://google.fr\"}}"'
+      vars:
+        hookID:
+          from: result.systemoutjson.id
+    - script: 'curl -X POST http://localhost:3000/api/v1/repos/gituser/myrepo/hooks/{{.commitStep.hookID}}/tests -u "sgu:xxxxxx"'
+
+- name: analyze
+  steps:
+    - script: sleep 5
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental project analyze list ITCLIPRJVCS my_vcs_server gituser/myrep --format json
+      vars:
+        analyzeID:
+          from: result.systemoutjson.systemoutjson0.id
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental project analyze show ITCLIPRJVCS my_vcs_server gituser/myrep {{.analyze.analyzeID}}
+      retry: 10
+      delay: 2
+      assertions:
+        - result.code ShouldEqual 0
+        - 'result.systemout ShouldContainSubstring "status: Success"'
+        - 'result.systemout ShouldContainSubstring "key_sign_id: A868963169F700D9"'
+        - result.systemout ShouldContainSubstring my-worker-model.yml
+
+- name: delete repository on project
     - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental project repository delete ITCLIPRJVCS my_vcs_server gituser/myrepo --force
     - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental project repository list ITCLIPRJVCS --vcs-name my_vcs_server --format json
       assertions:

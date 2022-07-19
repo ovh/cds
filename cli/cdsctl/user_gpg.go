@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -88,21 +89,37 @@ func userGpgKeyDelete(v cli.Values) error {
 var userGpgKeyImportCmd = cli.Command{
 	Name:  "import",
 	Short: "Import a CDS user gpg key",
+	Flags: []cli.Flag{
+		{
+			Name: "file",
+		},
+	},
 }
 
 func userGpgKeyImport(v cli.Values) error {
-	fmt.Printf("Copy your public key here: \n")
+	var publicKey string
+	if v.GetString("file") == "" {
+		// read from stdin
+		fmt.Printf("Copy your public key here: \n")
 
-	publicKey := strings.Builder{}
-	for {
-		keyPart := cli.ReadLine()
-		publicKey.WriteString(keyPart)
+		keyBuilder := strings.Builder{}
+		for {
+			keyPart := cli.ReadLine()
+			keyBuilder.WriteString(keyPart)
 
-		if strings.Contains(keyPart, "END PGP") {
-			break
+			if strings.Contains(keyPart, "END PGP") {
+				break
 
+			}
+			keyBuilder.WriteString("\n")
 		}
-		publicKey.WriteString("\n")
+		publicKey = keyBuilder.String()
+	} else {
+		keyBts, err := ioutil.ReadFile(v.GetString("file"))
+		if err != nil {
+			return err
+		}
+		publicKey = string(keyBts)
 	}
 
 	u, err := client.UserGetMe(context.Background())
@@ -110,7 +127,7 @@ func userGpgKeyImport(v cli.Values) error {
 		return err
 	}
 
-	key, err := client.UserGpgKeyCreate(context.Background(), u.Username, publicKey.String())
+	key, err := client.UserGpgKeyCreate(context.Background(), u.Username, publicKey)
 	if err != nil {
 		return err
 	}
