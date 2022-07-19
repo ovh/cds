@@ -61,6 +61,7 @@ testcases:
         - result.systemout ShouldContainSubstring my-worker-model.yml
 
 - name: delete repository on project
+  steps:
     - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental project repository delete ITCLIPRJVCS my_vcs_server gituser/myrepo --force
     - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental project repository list ITCLIPRJVCS --vcs-name my_vcs_server --format json
       assertions:
