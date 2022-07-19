@@ -52,11 +52,11 @@ func UpdateAnalyze(ctx context.Context, db gorpmapper.SqlExecutorWithTx, analyze
 }
 
 func getAnalyze(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query) (*sdk.ProjectRepositoryAnalyze, error) {
-	var dbData *dbProjectRepositoryAnalyze
-	if _, err := gorpmapping.Get(ctx, db, query, dbData); err != nil {
+	var dbData dbProjectRepositoryAnalyze
+	if _, err := gorpmapping.Get(ctx, db, query, &dbData); err != nil {
 		return nil, err
 	}
-	if dbData == nil {
+	if dbData.ID == "" {
 		return nil, sdk.ErrNotFound
 	}
 	isValid, err := gorpmapping.CheckSignature(dbData, dbData.Signature)
