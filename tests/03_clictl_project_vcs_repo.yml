@@ -56,9 +56,9 @@ testcases:
       delay: 2
       assertions:
         - result.code ShouldEqual 0
-        - 'result.systemout ShouldContainSubstring "status: Success"'
+        - 'result.systemout ShouldContainSubstring "status: Skipped"'
         - 'result.systemout ShouldContainSubstring "key_sign_id: A868963169F700D9"'
-        - result.systemout ShouldContainSubstring my-worker-model.yml
+        - result.systemout ShouldContainSubstring "doesn't have enough right on project ITCLIPRJVCS"
 
 - name: delete repository on project
   steps:
