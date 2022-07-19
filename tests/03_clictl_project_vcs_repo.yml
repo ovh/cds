@@ -31,7 +31,7 @@ testcases:
     - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental project repository list ITCLIPRJVCS --vcs-name my_vcs_server --format json
       assertions:
         - result.code ShouldEqual 0
-        - result.systemoutjson.systemoutjson0.name ShouldEqual "gituser/myrepo"
+        - result.systemoutjson.systemoutjson0.reponame ShouldEqual "gituser/myrepo"
 
 - name: commitStep
   steps:
