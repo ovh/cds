@@ -278,7 +278,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 	}
 	if err != nil {
 		next()
-		return sdk.WrapError(err, "unable to load analyze %d", analyze.ID)
+		return sdk.WrapError(err, "unable to load analyze %s", analyze.ID)
 	}
 	next()
 
