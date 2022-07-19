@@ -37,12 +37,13 @@ testcases:
   steps:
     - script: git clone "http://localhost:3000/gituser/myrepo.git" /tmp/myrepo
     - script: mkdir -p /tmp/myrepo/.cds/models && echo 'new file' > /tmp/myrepo/.cds/models/my-worker-model.yml
+    - script: cd /tmp/myrepo && git config user.email "gituser@gitea.eu" && git config user.name "gituser"
     - script: cd /tmp/myrepo && git add /tmp/myrepo/.cds/models/my-worker-model.yml && git commit .  --gpg-sign=E023B5A70E60A8A67B07FDAFA868963169F700D9 -m "add file and sign" && git push
-    - script: 'curl -H "Content-Type: application/json" -u "gituser:gitpwd" -X POST http://localhost:3000/api/v1/repos/sgu/myrepo/hooks -d "{\"active\":true, \"type\":\"gitea\", \"config\": {\"content_type\": \"json\", \"url\": \"http://google.fr\"}}"'
+    - script: 'curl -H "Content-Type: application/json" -u "gituser:gitpwd" -X POST http://localhost:3000/api/v1/repos/gituser/myrepo/hooks -d "{\"active\":true, \"type\":\"gitea\", \"config\": {\"content_type\": \"json\", \"url\": \"http://google.fr\"}}"'
       vars:
         hookID:
           from: result.systemoutjson.id
-    - script: 'curl -X POST http://localhost:3000/api/v1/repos/gituser/myrepo/hooks/{{.commitStep.hookID}}/tests -u "sgu:xxxxxx"'
+    - script: 'curl -X POST http://localhost:3000/api/v1/repos/gituser/myrepo/hooks/{{.hookID}}/tests -u "gituser:gitpwd"'
 
 - name: analyze
   steps:
