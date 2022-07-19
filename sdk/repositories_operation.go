@@ -88,7 +88,9 @@ type OperationCheckout struct {
 	Commit         string `json:"commit,omitempty"`
 	CheckSignature bool   `json:"check_signature,omitempty"`
 	Result         struct {
-		SignKeyID string `json:"sign_key_id"`
+		SignKeyID      string `json:"sign_key_id"`
+		CommitVerified bool   `json:"verified"`
+		Msg            string `json:"msg"`
 	}
 }
 

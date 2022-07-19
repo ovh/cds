@@ -53,7 +53,7 @@ func TestDeleteOldest(t *testing.T) {
 		require.NoError(t, repository.InsertAnalyze(context.TODO(), db, &a))
 	}
 
-	analyzes, err := repository.ListAnalyzesByRepo(context.TODO(), db, repo.ID)
+	analyzes, err := repository.LoadAllAnalyzesByRepo(context.TODO(), db, repo.ID)
 	require.NoError(t, err)
 	require.Len(t, analyzes, 50)
 
@@ -66,9 +66,9 @@ func TestDeleteOldest(t *testing.T) {
 	}
 	require.NoError(t, repository.InsertAnalyze(context.TODO(), db, &a))
 
-	analyzes, err = repository.ListAnalyzesByRepo(context.TODO(), db, repo.ID)
+	analyzes, err = repository.LoadAllAnalyzesByRepo(context.TODO(), db, repo.ID)
 	require.NoError(t, err)
 	require.Len(t, analyzes, 50)
-	require.Equal(t, "lastbranch", analyzes[0].Branch)
+	require.Equal(t, "lastbranch", analyzes[49].Branch)
 
 }

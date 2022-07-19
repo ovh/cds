@@ -294,14 +294,27 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 			return err
 		}
 		next()
-		if ope.Status == sdk.OperationStatusDone {
+
+		stopAnalyze := false
+		if ope.Status == sdk.OperationStatusDone && ope.Setup.Checkout.Result.CommitVerified {
 			analyze.Data.CommitCheck = true
 			analyze.Data.SignKeyID = ope.Setup.Checkout.Result.SignKeyID
 		}
+		if ope.Status == sdk.OperationStatusDone && !ope.Setup.Checkout.Result.CommitVerified {
+			analyze.Data.CommitCheck = false
+			analyze.Data.SignKeyID = ope.Setup.Checkout.Result.SignKeyID
+			analyze.Data.Error = ope.Setup.Checkout.Result.Msg
+			analyze.Status = sdk.RepositoryAnalyzeStatusSkipped
+			stopAnalyze = true
+		}
+
 		if ope.Status == sdk.OperationStatusError {
 			analyze.Data.Error = ope.Error.Message
 			analyze.Status = sdk.RepositoryAnalyzeStatusError
+			stopAnalyze = true
+		}
 
+		if stopAnalyze {
 			tx, err := api.mustDB().Begin()
 			if err != nil {
 				return sdk.WrapError(err, "unable to start transaction")

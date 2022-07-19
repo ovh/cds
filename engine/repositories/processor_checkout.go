@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"fmt"
 	"os"
 
 	"github.com/rockbears/log"
@@ -74,7 +75,9 @@ func (s *Service) processCheckout(ctx context.Context, op *sdk.Operation) error 
 		}
 
 		if c.GPGKeyID == "" {
-			return sdk.NewErrorFrom(sdk.ErrUnauthorized, "no signature on commit")
+			op.Setup.Checkout.Result.CommitVerified = false
+			op.Setup.Checkout.Result.Msg = "commit not signed"
+			return nil
 		}
 		ctx = context.WithValue(ctx, cdslog.GpgKey, c.GPGKeyID)
 		op.Setup.Checkout.Result.SignKeyID = c.GPGKeyID
@@ -82,7 +85,9 @@ func (s *Service) processCheckout(ctx context.Context, op *sdk.Operation) error 
 		// Retrieve gpg public key
 		key, err := s.Client.UserGpgKeyGet(ctx, c.GPGKeyID)
 		if err != nil {
-			return err
+			op.Setup.Checkout.Result.CommitVerified = false
+			op.Setup.Checkout.Result.Msg = fmt.Sprintf("commit signed but key %s not found in CDS: %v", c.GPGKeyID, err)
+			return nil
 		}
 
 		// Import gpg public key
