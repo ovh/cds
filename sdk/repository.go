@@ -38,7 +38,7 @@ type ProjectRepositoryAnalyze struct {
 	ProjectRepositoryID string                `json:"project_repository_id" db:"project_repository_id"`
 	VCSProjectID        string                `json:"vcs_project_id" db:"vcs_project_id"`
 	ProjectKey          string                `json:"project_key" db:"project_key"`
-	Status              string                `json:"status" db:"status"`
+	Status              string                `json:"status" db:"status" cli:"status"`
 	Branch              string                `json:"branch" db:"branch" cli:"branch"`
 	Commit              string                `json:"commit" db:"commit" cli:"commit"`
 	Data                ProjectRepositoryData `json:"data" db:"data"`
@@ -57,8 +57,6 @@ type ProjectRepositoryData struct {
 type ProjectRepositoryDataEntity struct {
 	FileName string `json:"file_name"`
 	Path     string `json:"path"`
-	Content  string `json:"content"`
-	Md5Sum   string `json:"md5"`
 }
 
 func (prd ProjectRepositoryData) Value() (driver.Value, error) {

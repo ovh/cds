@@ -63,9 +63,7 @@ func projectRepositoryGetFunc(v cli.Values) error {
 		return err
 	}
 	type AnalyzeFile struct {
-		File    string `json:"file"`
-		Md5     string `json:"md5"`
-		Content string `json:"content,omitempty"`
+		File string `json:"file"`
 	}
 	type AnalyzeCli struct {
 		ID          string    `json:"id"`
@@ -96,7 +94,6 @@ func projectRepositoryGetFunc(v cli.Values) error {
 		files := make([]AnalyzeFile, 0, len(analyze.Data.Entities))
 		for _, f := range analyze.Data.Entities {
 			files = append(files, AnalyzeFile{
-				Md5:  f.Md5Sum,
 				File: f.Path + f.FileName,
 			})
 		}

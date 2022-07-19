@@ -2,12 +2,8 @@ package api
 
 import (
 	"archive/tar"
-	"bytes"
 	"compress/gzip"
 	"context"
-	"crypto/md5"
-	"encoding/base64"
-	"encoding/hex"
 	"fmt"
 	"io"
 	"net/http"
@@ -425,20 +421,9 @@ func (api *API) getCdsFilesOnVCSDirectory(ctx context.Context, client sdk.VCSAut
 	}
 	for _, c := range contents {
 		if c.IsFile && strings.HasSuffix(c.Name, ".yml") {
-			file, err := client.GetContent(ctx, repoName, commit, directory+"/"+c.Name)
-			if err != nil {
-				return err
-			}
-			hash := md5.Sum([]byte(file.Content))
-			decodedContent, err := base64.StdEncoding.DecodeString(file.Content)
-			if err != nil {
-				return sdk.WrapError(err, "unable to decode string %s", file.Content)
-			}
 			analyze.Data.Entities = append(analyze.Data.Entities, sdk.ProjectRepositoryDataEntity{
-				FileName: file.Name,
+				FileName: c.Name,
 				Path:     directory + "/",
-				Content:  string(decodedContent),
-				Md5Sum:   hex.EncodeToString(hash[:]),
 			})
 		}
 		if c.IsDirectory {
@@ -472,28 +457,11 @@ func (api *API) getCdsArchiveFileOnRepo(ctx context.Context, client sdk.VCSAutho
 			return sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to read tar file"))
 		}
 
-		log.Debug(ctx, "extract cds files> Reading %s", hdr.Name)
-		buff := new(bytes.Buffer)
-		if _, err := io.Copy(buff, tarReader); err != nil {
-			return sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to read tar file"))
-		}
-
-		b := buff.Bytes()
-		if len(b) == 0 {
-			continue
-		}
-		hash := md5.New()
-		if _, err := io.Copy(hash, buff); err != nil {
-			return sdk.WrapError(err, "unable to compute md5 for %s", hdr.Name)
-		}
-
 		dir, fileName := filepath.Split(hdr.Name)
 		if strings.HasSuffix(fileName, ".yml") {
 			entity := sdk.ProjectRepositoryDataEntity{
 				FileName: fileName,
 				Path:     dir,
-				Content:  string(b),
-				Md5Sum:   hex.EncodeToString(hash.Sum(nil)),
 			}
 			analyze.Data.Entities = append(analyze.Data.Entities, entity)
 		}
