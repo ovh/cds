@@ -59,7 +59,7 @@ var projectRepositoryGetCmd = cli.Command{
 
 func projectRepositoryGetFunc(v cli.Values) error {
 	analyze, err := client.ProjectRepositoryAnalyzeGet(context.Background(), v.GetString(_ProjectKey), v.GetString("vcs-name"), v.GetString("repository-name"), v.GetString("analyse-id"))
-	if err != err {
+	if err != nil {
 		return err
 	}
 	type AnalyzeFile struct {
