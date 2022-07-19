@@ -6,11 +6,14 @@ import (
 	"compress/gzip"
 	"context"
 	"crypto/md5"
+	"encoding/base64"
 	"encoding/hex"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -23,6 +26,7 @@ import (
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/repository"
+	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/service"
@@ -118,16 +122,32 @@ func (api *API) postRepositoryAnalyzeHandler() ([]service.RbacChecker, service.H
 				return err
 			}
 
-			var repositoryID string
-			var operationUUID string
+			clearRepo, err := repository.LoadRepositoryByName(ctx, api.mustDB(), vcsProject.ID, analyze.RepoName, gorpmapping.GetOptions.WithDecryption)
+			if err != nil {
+				return err
+			}
+
+			tx, err := api.mustDB().Begin()
+			if err != nil {
+				return sdk.WrapError(err, "unable to start db transaction")
+			}
+			defer tx.Rollback() // nolint
+
+			// Save analyze
+			repoAnalyze := sdk.ProjectRepositoryAnalyze{
+				Status:              sdk.RepositoryAnalyzeStatusInProgress,
+				ProjectRepositoryID: clearRepo.ID,
+				VCSProjectID:        vcsProject.ID,
+				ProjectKey:          proj.Key,
+				Branch:              analyze.Branch,
+				Commit:              analyze.Commit,
+				Data: sdk.ProjectRepositoryData{
+					OperationUUID: "",
+				},
+			}
+
 			switch vcsProject.Type {
 			case sdk.VCSTypeBitbucketServer, sdk.VCSTypeBitbucketCloud, sdk.VCSTypeGitlab, sdk.VCSTypeGerrit:
-				clearRepo, err := repository.LoadRepositoryByName(ctx, api.mustDB(), vcsProject.ID, analyze.RepoName, gorpmapping.GetOptions.WithDecryption)
-				if err != nil {
-					return err
-				}
-				repositoryID = clearRepo.ID
-
 				ope := &sdk.Operation{
 					VCSServer:    vcsProject.Name,
 					RepoFullName: clearRepo.Name,
@@ -152,33 +172,38 @@ func (api *API) postRepositoryAnalyzeHandler() ([]service.RbacChecker, service.H
 					ope.RepositoryStrategy.ConnectionType = "https"
 				}
 
-				if err := operation.PostRepositoryOperation(ctx, api.mustDB(), *proj, ope, nil); err != nil {
+				if err := operation.PostRepositoryOperation(ctx, tx, *proj, ope, nil); err != nil {
 					return err
 				}
-				operationUUID = ope.UUID
+				repoAnalyze.Data.OperationUUID = ope.UUID
 			case sdk.VCSTypeGitea, sdk.VCSTypeGithub:
+				// Check commit signature
+				client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, analyze.ProjectKey, vcsProject.Name)
+				if err != nil {
+					return err
+				}
+				vcsCommit, err := client.Commit(ctx, analyze.RepoName, analyze.Commit)
+				if err != nil {
+					return err
+				}
+				if vcsCommit.Hash == "" {
+					repoAnalyze.Status = sdk.RepositoryAnalyzeStatusError
+					repoAnalyze.Data.Error = fmt.Sprintf("commit %s not found", analyze.Commit)
+				} else {
+					if vcsCommit.Verified && vcsCommit.KeySignID != "" {
+						repoAnalyze.Data.SignKeyID = vcsCommit.KeySignID
+						repoAnalyze.Data.CommitCheck = true
+					} else {
+						repoAnalyze.Data.SignKeyID = vcsCommit.KeySignID
+						repoAnalyze.Data.CommitCheck = false
+						repoAnalyze.Status = sdk.RepositoryAnalyzeStatusSkipped
+						repoAnalyze.Data.Error = fmt.Sprintf("commit %s is not signed", vcsCommit.Hash)
+					}
+				}
+
 			default:
 				return sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to analyze vcs type: %s", vcsProject.Type)
 			}
-
-			// Save analyze
-			repoAnalyze := sdk.ProjectRepositoryAnalyze{
-				Status:              sdk.RepositoryAnalyzeStatusInProgress,
-				ProjectRepositoryID: repositoryID,
-				VCSProjectID:        vcsProject.ID,
-				ProjectKey:          proj.Key,
-				Branch:              analyze.Branch,
-				Commit:              analyze.Commit,
-				Data: sdk.ProjectRepositoryData{
-					OperationUUID: operationUUID,
-				},
-			}
-
-			tx, err := api.mustDB().Begin()
-			if err != nil {
-				return sdk.WrapError(err, "unable to start db transaction")
-			}
-			defer tx.Rollback() // nolint
 
 			if err := repository.InsertAnalyze(ctx, tx, &repoAnalyze); err != nil {
 				return err
@@ -186,7 +211,7 @@ func (api *API) postRepositoryAnalyzeHandler() ([]service.RbacChecker, service.H
 
 			response := sdk.AnalyzeResponse{
 				AnalyzeID:   repoAnalyze.ID,
-				OperationID: operationUUID,
+				OperationID: repoAnalyze.Data.OperationUUID,
 			}
 
 			if err := tx.Commit(); err != nil {
@@ -218,7 +243,7 @@ func (api *API) repositoryAnalyzePoller(ctx context.Context, tick time.Duration)
 					func(ctx context.Context) {
 						ctx = telemetry.New(ctx, api, "api.repositoryAnalyzePoller", nil, trace.SpanKindUnspecified)
 						if err := api.analyzeRepository(ctx, a.ProjectRepositoryID, a.ID); err != nil {
-							log.Error(ctx, "WorkflowRunCraft> error on workflow run %d: %v", a.ID, err)
+							log.ErrorWithStackTrace(ctx, err)
 						}
 					},
 				)
@@ -309,36 +334,107 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 	if err != nil {
 		return sdk.WrapError(err, "unable to start transaction")
 	}
+	defer tx.Rollback() // nolint
 
-	client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, analyze.ProjectKey, vcsProject.Name)
+	// Search User by gpgkey
+	var cdsUser *sdk.AuthentifiedUser
+	gpgKey, err := user.LoadGPGKeyByKeyID(ctx, tx, analyze.Data.SignKeyID)
 	if err != nil {
-		return err
-	}
-
-	switch vcsProject.Type {
-	case sdk.VCSTypeBitbucketServer, sdk.VCSTypeBitbucketCloud:
-		// get archive
-		err = api.getCdsArchiveFileOnRepo(ctx, client, *repo, analyze)
-
-	case sdk.VCSTypeGitlab, sdk.VCSTypeGithub, sdk.VCSTypeGitea:
-		return sdk.WithStack(sdk.ErrNotImplemented)
-	case sdk.VCSTypeGerrit:
-		return sdk.WithStack(sdk.ErrNotImplemented)
-	}
-
-	// Update analyze
-	if err != nil {
+		if !sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return sdk.WrapError(err, "unable to find gpg key: %s", analyze.Data.SignKeyID)
+		}
 		analyze.Status = sdk.RepositoryAnalyzeStatusError
-		analyze.Data.Error = err.Error()
-	} else {
-		analyze.Status = sdk.RepositoryAnalyzeStatusSucceed
+		analyze.Data.Error = fmt.Sprintf("gpgkey %s not found", analyze.Data.SignKeyID)
+	}
+
+	if gpgKey != nil {
+		cdsUser, err = user.LoadByID(ctx, tx, gpgKey.AuthentifiedUserID)
+		if err != nil {
+			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return sdk.WrapError(err, "unable to find user %s", gpgKey.AuthentifiedUserID)
+			}
+			analyze.Status = sdk.RepositoryAnalyzeStatusError
+			analyze.Data.Error = fmt.Sprintf("user %s not found", gpgKey.AuthentifiedUserID)
+		}
+	}
+
+	if cdsUser != nil {
+		analyze.Data.CDSUserID = cdsUser.ID
+		analyze.Data.CDSUserName = cdsUser.Username
+
+		// Check user right
+		b, err := rbac.HasRoleOnProjectAndUserID(ctx, tx, sdk.RoleManage, cdsUser.ID, analyze.ProjectKey)
+		if err != nil {
+			return err
+		}
+		if !b {
+			analyze.Status = sdk.RepositoryAnalyzeStatusSkipped
+			analyze.Data.Error = fmt.Sprintf("user %s doesn't have enough right on project %s", cdsUser.ID, analyze.ProjectKey)
+		}
+
+		if analyze.Status != sdk.RepositoryAnalyzeStatusSkipped {
+			client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, analyze.ProjectKey, vcsProject.Name)
+			if err != nil {
+				return err
+			}
+
+			switch vcsProject.Type {
+			case sdk.VCSTypeBitbucketServer, sdk.VCSTypeBitbucketCloud:
+				// get archive
+				err = api.getCdsArchiveFileOnRepo(ctx, client, *repo, analyze)
+			case sdk.VCSTypeGitlab, sdk.VCSTypeGithub, sdk.VCSTypeGitea:
+				analyze.Data.Entities = make([]sdk.ProjectRepositoryDataEntity, 0)
+				err = api.getCdsFilesOnVCSDirectory(ctx, client, analyze, repo.Name, analyze.Commit, ".cds")
+			case sdk.VCSTypeGerrit:
+				return sdk.WithStack(sdk.ErrNotImplemented)
+			}
+
+			// Update analyze
+			if err != nil {
+				analyze.Status = sdk.RepositoryAnalyzeStatusError
+				analyze.Data.Error = err.Error()
+			} else {
+				analyze.Status = sdk.RepositoryAnalyzeStatusSucceed
+			}
+		}
 	}
 
 	if err := repository.UpdateAnalyze(ctx, tx, analyze); err != nil {
 		return err
 	}
-
 	return sdk.WrapError(tx.Commit(), "unable to commit")
+}
+
+func (api *API) getCdsFilesOnVCSDirectory(ctx context.Context, client sdk.VCSAuthorizedClientService, analyze *sdk.ProjectRepositoryAnalyze, repoName, commit, directory string) error {
+	contents, err := client.ListContent(ctx, repoName, commit, directory)
+	if err != nil {
+		return sdk.WrapError(err, "unable to list content on commit [%s] in directory %s: %v", commit, directory, err)
+	}
+	for _, c := range contents {
+		if c.IsFile && strings.HasSuffix(c.Name, ".yml") {
+			file, err := client.GetContent(ctx, repoName, commit, directory+"/"+c.Name)
+			if err != nil {
+				return err
+			}
+			hash := md5.Sum([]byte(file.Content))
+			decodedContent, err := base64.StdEncoding.DecodeString(file.Content)
+			if err != nil {
+				return sdk.WrapError(err, "unable to decode string %s", file.Content)
+			}
+			analyze.Data.Entities = append(analyze.Data.Entities, sdk.ProjectRepositoryDataEntity{
+				FileName: file.Name,
+				Path:     directory + "/",
+				Content:  string(decodedContent),
+				Md5Sum:   hex.EncodeToString(hash[:]),
+			})
+		}
+		if c.IsDirectory {
+			if err := api.getCdsFilesOnVCSDirectory(ctx, client, analyze, repoName, commit, directory+"/"+c.Name); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func (api *API) getCdsArchiveFileOnRepo(ctx context.Context, client sdk.VCSAuthorizedClientService, repo sdk.ProjectRepository, analyze *sdk.ProjectRepositoryAnalyze) error {
@@ -379,13 +475,16 @@ func (api *API) getCdsArchiveFileOnRepo(ctx context.Context, client sdk.VCSAutho
 		}
 
 		dir, fileName := filepath.Split(hdr.Name)
-		entity := sdk.ProjectRepositoryDataEntity{
-			FileName: fileName,
-			Path:     dir,
-			Content:  string(b),
-			Md5Sum:   hex.EncodeToString(hash.Sum(nil)),
+		if strings.HasSuffix(fileName, ".yml") {
+			entity := sdk.ProjectRepositoryDataEntity{
+				FileName: fileName,
+				Path:     dir,
+				Content:  string(b),
+				Md5Sum:   hex.EncodeToString(hash.Sum(nil)),
+			}
+			analyze.Data.Entities = append(analyze.Data.Entities, entity)
 		}
-		analyze.Data.Entities = append(analyze.Data.Entities, entity)
+
 	}
 	return nil
 }

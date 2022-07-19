@@ -2,7 +2,6 @@ package vcs
 
 import (
 	"context"
-
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/service"
@@ -18,6 +17,7 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.DefaultAuthMiddleware = service.CheckRequestSignatureMiddleware(s.ParsedAPIPublicKey)
 	r.PostAuthMiddlewares = append(r.PostAuthMiddlewares, s.authMiddleware)
 	r.PostMiddlewares = append(r.PostMiddlewares, service.TracingPostMiddleware)
+	r.Mux.UseEncodedPath()
 
 	r.Handle("/mon/version", nil, r.GET(service.VersionHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 	r.Handle("/mon/status", nil, r.GET(s.statusHandler, service.OverrideAuth(service.NoAuthMiddleware)))
@@ -41,6 +41,8 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/commits", nil, r.GET(s.getCommitsBetweenRefsHandler))
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/commits/{commit}", nil, r.GET(s.getCommitHandler))
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/commits/{commit}/statuses", nil, r.GET(s.getCommitStatusHandler))
+	r.Handle("/vcs/{name}/repos/{owner}/{repo}/contents/{filePath}", nil, r.GET(s.getListContentsHandler))
+	r.Handle("/vcs/{name}/repos/{owner}/{repo}/content/{filePath}", nil, r.GET(s.getFileContentHandler))
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/archive", nil, r.POST(s.archiveHandler))
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/grant", nil, r.POST(s.postRepoGrantHandler))
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/pullrequests", nil, r.GET(s.getPullRequestsHandler), r.POST(s.postPullRequestsHandler))

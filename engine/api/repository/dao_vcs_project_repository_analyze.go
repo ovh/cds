@@ -110,7 +110,7 @@ func countAnalyzeByRepo(db gorp.SqlExecutor, projectRepositoryID string) (int64,
 }
 
 func LoadAllAnalyzesByRepo(ctx context.Context, db gorp.SqlExecutor, projectRepositoryID string) ([]sdk.ProjectRepositoryAnalyze, error) {
-	query := gorpmapping.NewQuery("SELECT * from project_repository_analyze where project_repository_id = $1 ORDER BY created DESC").Args(projectRepositoryID)
+	query := gorpmapping.NewQuery("SELECT * from project_repository_analyze where project_repository_id = $1 ORDER BY created ASC").Args(projectRepositoryID)
 	return getAllAnalyzes(ctx, db, query)
 }
 

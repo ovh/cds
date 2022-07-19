@@ -692,6 +692,24 @@ func (c *vcsClient) GetAccessToken(_ context.Context) string {
 	return ""
 }
 
+func (c *vcsClient) ListContent(ctx context.Context, repo string, commit, dir string) ([]sdk.VCSContent, error) {
+	path := fmt.Sprintf("/vcs/%s/repos/%s/contents/%s?commit=%s", c.name, repo, url.PathEscape(dir), commit)
+	var contents []sdk.VCSContent
+	if _, err := c.doJSONRequest(ctx, "GET", path, nil, &contents); err != nil {
+		return nil, sdk.WithStack(err)
+	}
+	return contents, nil
+}
+
+func (c *vcsClient) GetContent(ctx context.Context, repo string, commit, dir string) (sdk.VCSContent, error) {
+	path := fmt.Sprintf("/vcs/%s/repos/%s/content/%s?commit=%s", c.name, repo, url.PathEscape(dir), commit)
+	var content sdk.VCSContent
+	if _, err := c.doJSONRequest(ctx, "GET", path, nil, &content); err != nil {
+		return content, sdk.WithStack(err)
+	}
+	return content, nil
+}
+
 func (c *vcsClient) GetArchive(ctx context.Context, repo string, dir string, format string, commit string) (io.Reader, http.Header, error) {
 	archiveRequest := sdk.VCSArchiveRequest{
 		Path:   dir,

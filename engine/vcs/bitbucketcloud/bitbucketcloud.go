@@ -60,6 +60,6 @@ func NewDeprecated(ClientID, ClientSecret, apiURL, uiURL, proxyURL string, store
 	}
 }
 
-func (c *bitbucketcloudClient) GetAccessToken(_ context.Context) string {
-	return c.OAuthToken
+func (client *bitbucketcloudClient) GetAccessToken(_ context.Context) string {
+	return client.OAuthToken
 }

@@ -19,6 +19,8 @@ func (s *Service) doAnalyzeExecution(ctx context.Context, t *sdk.TaskExecution) 
 		return sdk.WithStack(sdk.ErrNotImplemented)
 	case sdk.VCSTypeBitbucketCloud:
 		return sdk.WithStack(sdk.ErrNotImplemented)
+	case sdk.VCSTypeGitea:
+		branch, commit, err = s.extractAnalyzeDataFromGiteaRequest(t.EntitiesHook.RequestBody)
 	case sdk.VCSTypeBitbucketServer:
 		branch, commit, err = s.extractAnalyzeDataFromBitbucketRequest(t.EntitiesHook.RequestBody)
 	default:
@@ -58,4 +60,12 @@ func (s *Service) extractAnalyzeDataFromBitbucketRequest(body []byte) (string, s
 	}
 
 	return request.Changes[0].RefID, request.Changes[0].ToHash, nil
+}
+
+func (s *Service) extractAnalyzeDataFromGiteaRequest(body []byte) (string, string, error) {
+	var request GiteaEventPayload
+	if err := sdk.JSONUnmarshal(body, &request); err != nil {
+		return "", "", sdk.WrapError(err, "unable ro read gitea request: %s", string(body))
+	}
+	return request.Ref, request.After, nil
 }

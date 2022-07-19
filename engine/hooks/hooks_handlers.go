@@ -134,6 +134,7 @@ func (s *Service) repositoryWebHookHandler() service.Handler {
 
 		hook := s.Dao.FindTask(ctx, uuid)
 		if hook == nil {
+			log.Error(ctx, "unable to find task for hook uuid %s", uuid)
 			return sdk.WrapError(sdk.ErrNotFound, "no hook found on")
 		}
 
@@ -144,7 +145,7 @@ func (s *Service) repositoryWebHookHandler() service.Handler {
 			UUID:          hook.UUID,
 			Configuration: hook.Configuration,
 			Status:        TaskExecutionScheduled,
-			WebHook: &sdk.WebHookExecution{
+			EntitiesHook: &sdk.EntitiesHookExecution{
 				RequestBody:   body,
 				RequestHeader: r.Header,
 				RequestURL:    r.URL.RawQuery,

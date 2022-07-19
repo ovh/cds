@@ -360,6 +360,8 @@ type VCSAuthorizedClientCommon interface {
 
 	// File
 	GetArchive(ctx context.Context, repo string, dir string, format string, commit string) (io.Reader, http.Header, error)
+	ListContent(ctx context.Context, repo string, commit, dir string) ([]VCSContent, error)
+	GetContent(ctx context.Context, repo string, commit, dir string) (VCSContent, error)
 }
 
 type VCSAuthorizedClient interface {

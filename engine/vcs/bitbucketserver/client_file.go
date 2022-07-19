@@ -12,6 +12,14 @@ import (
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
+func (b *bitbucketClient) ListContent(_ context.Context, repo string, commit, dir string) ([]sdk.VCSContent, error) {
+	return nil, sdk.WithStack(sdk.ErrNotImplemented)
+}
+
+func (b *bitbucketClient) GetContent(ctx context.Context, repo string, commit, file string) (sdk.VCSContent, error) {
+	return sdk.VCSContent{}, sdk.WithStack(sdk.ErrNotImplemented)
+}
+
 func (b *bitbucketClient) GetArchive(ctx context.Context, repo string, dir string, format string, commit string) (io.Reader, http.Header, error) {
 	_, end := telemetry.Span(ctx, "bitbucketserver.GetArchive", telemetry.Tag(telemetry.TagRepository, repo))
 	defer end()

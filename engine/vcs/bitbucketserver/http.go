@@ -51,17 +51,17 @@ func requestString(method string, uri string, params map[string]string) string {
 	return result
 }
 
-func (c *bitbucketClient) getFullAPIURL(api string) string {
+func (b *bitbucketClient) getFullAPIURL(api string) string {
 	var url string
 	switch api {
 	case "keys":
-		url = fmt.Sprintf("%s/rest/keys/1.0", c.consumer.URL)
+		url = fmt.Sprintf("%s/rest/keys/1.0", b.consumer.URL)
 	case "ssh":
-		url = fmt.Sprintf("%s/rest/ssh/1.0", c.consumer.URL)
+		url = fmt.Sprintf("%s/rest/ssh/1.0", b.consumer.URL)
 	case "core":
-		url = fmt.Sprintf("%s/rest/api/1.0", c.consumer.URL)
+		url = fmt.Sprintf("%s/rest/api/1.0", b.consumer.URL)
 	case "build-status":
-		url = fmt.Sprintf("%s/rest/build-status/1.0", c.consumer.URL)
+		url = fmt.Sprintf("%s/rest/build-status/1.0", b.consumer.URL)
 	}
 
 	return url
@@ -71,7 +71,7 @@ type options struct {
 	asUser bool
 }
 
-func (c *bitbucketClient) do(ctx context.Context, method, api, path string, params url.Values, values []byte, v interface{}, opts *options) error {
+func (b *bitbucketClient) do(ctx context.Context, method, api, path string, params url.Values, values []byte, v interface{}, opts *options) error {
 	ctx, end := telemetry.Span(ctx, "bitbucketserver.do_http")
 	defer end()
 
@@ -83,7 +83,7 @@ func (c *bitbucketClient) do(ctx context.Context, method, api, path string, para
 	}
 
 	// create the URI
-	apiURL := c.getFullAPIURL(api)
+	apiURL := b.getFullAPIURL(api)
 	uri, err := url.Parse(apiURL + path)
 	if err != nil {
 		return sdk.WithStack(err)
@@ -112,16 +112,16 @@ func (c *bitbucketClient) do(ctx context.Context, method, api, path string, para
 	}
 
 	var cacheKey string
-	if c.accessToken == "" && c.token != "" {
-		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.token))
-		cacheKey = cache.Key("vcs", "bitbucket", "request", req.URL.String(), c.username)
-	} else if opts != nil && opts.asUser && c.token != "" { // DEPRECATED VCS
-		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.token))
-		cacheKey = cache.Key("vcs", "bitbucket", "request", req.URL.String(), sdk.Hash512(c.token))
+	if b.accessToken == "" && b.token != "" {
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", b.token))
+		cacheKey = cache.Key("vcs", "bitbucket", "request", req.URL.String(), b.username)
+	} else if opts != nil && opts.asUser && b.token != "" { // DEPRECATED VCS
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", b.token))
+		cacheKey = cache.Key("vcs", "bitbucket", "request", req.URL.String(), sdk.Hash512(b.token))
 	} else { // DEPRECATED VCS
-		accessToken := NewAccessToken(c.accessToken, c.accessTokenSecret, nil)
+		accessToken := NewAccessToken(b.accessToken, b.accessTokenSecret, nil)
 		cacheKey = cache.Key("vcs", "bitbucket", "request", req.URL.String(), sdk.Hash512(accessToken.token))
-		if err := c.consumer.Sign(req, accessToken); err != nil {
+		if err := b.consumer.Sign(req, accessToken); err != nil {
 			return err
 		}
 	}
@@ -133,7 +133,7 @@ func (c *bitbucketClient) do(ctx context.Context, method, api, path string, para
 	}
 
 	if v != nil && method == "GET" {
-		find, err := c.consumer.cache.Get(cacheKey, v)
+		find, err := b.consumer.cache.Get(cacheKey, v)
 		if err != nil {
 			log.Error(ctx, "cannot get from cache %s: %v", cacheKey, err)
 		}
@@ -169,7 +169,7 @@ func (c *bitbucketClient) do(ctx context.Context, method, api, path string, para
 	}
 
 	if method != "GET" {
-		if err := c.consumer.cache.Delete(cacheKey); err != nil {
+		if err := b.consumer.cache.Delete(cacheKey); err != nil {
 			log.Error(ctx, "bitbucketClient.do> unable to delete cache key %v: %v", cacheKey, err)
 		}
 	}
@@ -191,7 +191,7 @@ func (c *bitbucketClient) do(ctx context.Context, method, api, path string, para
 			}
 		}
 		if method == "GET" {
-			if err := c.consumer.cache.Set(cacheKey, v); err != nil {
+			if err := b.consumer.cache.Set(cacheKey, v); err != nil {
 				log.Error(ctx, "unable to cache set %v: %v", cacheKey, err)
 			}
 		}
@@ -200,12 +200,12 @@ func (c *bitbucketClient) do(ctx context.Context, method, api, path string, para
 	return nil
 }
 
-func (c *bitbucketClient) stream(ctx context.Context, method, api, path string, params url.Values, values []byte) (io.Reader, http.Header, error) {
+func (b *bitbucketClient) stream(ctx context.Context, method, api, path string, params url.Values, values []byte) (io.Reader, http.Header, error) {
 	ctx, end := telemetry.Span(ctx, "bitbucketserver.stream")
 	defer end()
 
 	// create the URI
-	apiURL := c.getFullAPIURL(api)
+	apiURL := b.getFullAPIURL(api)
 	uri, err := url.Parse(apiURL + path)
 	if err != nil {
 		return nil, nil, sdk.WithStack(err)
@@ -233,7 +233,7 @@ func (c *bitbucketClient) stream(ctx context.Context, method, api, path string, 
 		req.ContentLength = int64(buf.Len())
 	}
 
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.token))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", b.token))
 
 	// ensure the appropriate content-type is set for POST,
 	// assuming the field is not populated

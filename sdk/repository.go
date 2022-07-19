@@ -11,6 +11,7 @@ const (
 	RepositoryAnalyzeStatusInProgress = "InProgress"
 	RepositoryAnalyzeStatusSucceed    = "Success"
 	RepositoryAnalyzeStatusError      = "Error"
+	RepositoryAnalyzeStatusSkipped    = "Skipped"
 )
 
 type ProjectRepository struct {
@@ -47,6 +48,8 @@ type ProjectRepositoryData struct {
 	OperationUUID string                        `json:"operation_uuid"`
 	CommitCheck   bool                          `json:"commit_check"`
 	SignKeyID     string                        `json:"sign_key_id"`
+	CDSUserName   string                        `json:"cds_username"`
+	CDSUserID     string                        `json:"cds_username_id"`
 	Error         string                        `json:"error"`
 	Entities      []ProjectRepositoryDataEntity `json:"entities"`
 }
