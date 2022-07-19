@@ -91,14 +91,15 @@ var userGpgKeyImportCmd = cli.Command{
 	Short: "Import a CDS user gpg key",
 	Flags: []cli.Flag{
 		{
-			Name: "file",
+			Name:      "key-file",
+			ShortHand: "k",
 		},
 	},
 }
 
 func userGpgKeyImport(v cli.Values) error {
 	var publicKey string
-	if v.GetString("file") == "" {
+	if v.GetString("key-file") == "" {
 		// read from stdin
 		fmt.Printf("Copy your public key here: \n")
 
@@ -115,7 +116,7 @@ func userGpgKeyImport(v cli.Values) error {
 		}
 		publicKey = keyBuilder.String()
 	} else {
-		keyBts, err := ioutil.ReadFile(v.GetString("file"))
+		keyBts, err := ioutil.ReadFile(v.GetString("key-file"))
 		if err != nil {
 			return err
 		}

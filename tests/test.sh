@@ -137,7 +137,7 @@ smoke_tests_services() {
 
 cli_tests() {
     echo "Check if gitea is running"
-    curl --fail http://${GITEA_HOST}:3000/api/swagger
+    curl --fail -I -X GET http://${GITEA_HOST}:3000/api/swagger
     echo "Running CLI tests:"
     for f in $(ls -1 03_cli*.yml); do
         CMD="${VENOM} run ${VENOM_OPTS} ${f} --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}_admin --var engine.ctl=${CDS_ENGINE_CTL} --var api.url=${CDS_API_URL} --var ui.url=${CDS_UI_URL}  --var smtpmock.url=${SMTP_MOCK_URL}"
@@ -204,7 +204,7 @@ workflow_with_third_parties() {
 }
 
 admin_tests() {
-    echo "Running Workflow tests:"
+    echo "Running Admin tests:"
     for f in $(ls -1 07_*.yml); do
         CMD="${VENOM} run ${VENOM_OPTS} ${f} --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}_admin --var api.url=${CDS_API_URL} --var ui.url=${CDS_UI_URL} --var smtpmock.url=${SMTP_MOCK_URL} --var ro_username=cds.integration.tests.ro --var cdsctl.config_ro_user=${CDSCTL_CONFIG}_user"
         echo -e "  ${YELLOW}${f} ${DARKGRAY}[${CMD}]${NOCOLOR}"
@@ -216,6 +216,20 @@ admin_tests() {
     done
 }
 
+cds_v2_tests() {
+    echo "Check if gitea is running"
+    curl --fail -I -X GET http://${GITEA_HOST}:3000/api/swagger
+    echo "Running CDS v2 tests:"
+    for f in $(ls -1 08_*.yml); do
+        CMD="${VENOM} run ${VENOM_OPTS} ${f} --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}_admin --var api.url=${CDS_API_URL} --var ui.url=${CDS_UI_URL} --var smtpmock.url=${SMTP_MOCK_URL} --var ro_username=cds.integration.tests.ro --var cdsctl.config_ro_user=${CDSCTL_CONFIG}_user"
+        echo -e "  ${YELLOW}${f} ${DARKGRAY}[${CMD}]${NOCOLOR}"
+        START="$(date +%s)"
+        ${CMD} >${f}.output 2>&1
+        check_failure $? ${f}.output
+        echo -e "  ${DARKGRAY}duration: $[ $(date +%s) - ${START} ]${NOCOLOR}"
+        mv_results ${f}
+    done
+}
 
 rm -rf ./results
 mkdir results
@@ -246,6 +260,8 @@ for target in $@; do
             workflow_with_third_parties;;
         admin)
             admin_tests;;
+        v2)
+            cds_v2_tests;;
         *) echo -e "${RED}Error: unknown target: $target${NOCOLOR}"
             usage
             exit 1;;

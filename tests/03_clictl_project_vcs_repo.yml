@@ -10,7 +10,7 @@ testcases:
   - script: {{.cdsctl}} -f {{.cdsctl.config}} group add ITCLIPRJVCS
   - script: {{.cdsctl}} -f {{.cdsctl.config}} project create ITCLIPRJVCS "Test Project" ITCLIPRJVCS
   - script: 'curl --fail -X POST "http://localhost:3000/api/v1/user/repos" -u "gituser:gitpwd" -d "{\"name\": \"myrepo\", \"auto_init\": true}" -H "Content-Type: application/json"'
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} user gpg import --file ./fixtures/gpg/key.pub
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} user gpg import --key-file ./fixtures/gpg/key.pub
   - script: gpg --import ./fixtures/gpg/key.priv
   - script: gpg --import ./fixtures/gpg/key.pub
 
