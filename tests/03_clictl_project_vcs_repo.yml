@@ -52,7 +52,7 @@ testcases:
       vars:
         analyzeID:
           from: result.systemoutjson.systemoutjson0.id
-    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental project analyze show ITCLIPRJVCS my_vcs_server gituser/myrep {{.analyze.analyzeID}}
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental project analyze show ITCLIPRJVCS my_vcs_server gituser/myrep {{.analyzeID}}
       retry: 10
       delay: 2
       assertions:
