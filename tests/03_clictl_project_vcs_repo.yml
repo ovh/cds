@@ -57,7 +57,7 @@ testcases:
       delay: 5
       assertions:
         - result.code ShouldEqual 0
-        - result.systemoutjson.__len__ ShouldEqual 1
+        - result.systemoutjson ShouldNotBeEmpty
       vars:
         analyzeID:
           from: result.systemoutjson.systemoutjson0.id
