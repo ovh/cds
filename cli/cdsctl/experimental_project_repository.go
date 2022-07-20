@@ -79,6 +79,7 @@ func projectRepositoryListFunc(v cli.Values) (cli.ListResult, error) {
 	}
 
 	type CliRepo struct {
+		ID       string `cli:"id" json:"id"`
 		VcsName  string `cli:"vcsName" json:"vcsName"`
 		RepoName string `cli:"repoName" json:"repoName"`
 	}
@@ -94,6 +95,7 @@ func projectRepositoryListFunc(v cli.Values) (cli.ListResult, error) {
 			repositories = append(repositories, CliRepo{
 				VcsName:  vcsName,
 				RepoName: r.Name,
+				ID:       r.ID,
 			})
 		}
 	}
