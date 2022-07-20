@@ -43,7 +43,7 @@ testcases:
     - script: mkdir -p /tmp/myrepo/.cds/models && echo 'new file' > /tmp/myrepo/.cds/models/my-worker-model.yml
     - script: cd /tmp/myrepo && git config user.email "gituser@gitea.eu" && git config user.name "gituser"
     - script: cd /tmp/myrepo && git add /tmp/myrepo/.cds/models/my-worker-model.yml && git commit .  --gpg-sign=E023B5A70E60A8A67B07FDAFA868963169F700D9 -m "add file and sign" && git push
-    - script: 'curl -H "Content-Type: application/json" -u "gituser:gitpwd" -X POST http://localhost:3000/api/v1/repos/gituser/myrepo/hooks -d "{\"active\":true, \"type\":\"gitea\", \"config\": {\"content_type\": \"json\", \"url\": \"http://{{gitea.hook.url}}:8083/v2/webhook/repository/gitea/{{.repositoryProject.repoID}}\"}}"'
+    - script: 'curl -H "Content-Type: application/json" -u "gituser:gitpwd" -X POST http://localhost:3000/api/v1/repos/gituser/myrepo/hooks -d "{\"active\":true, \"type\":\"gitea\", \"config\": {\"content_type\": \"json\", \"url\": \"http://{{.gitea.hook.url}}:8083/v2/webhook/repository/gitea/{{.repositoryProject.repoID}}\"}}"'
       vars:
         hookID:
           from: result.systemoutjson.id
@@ -53,6 +53,9 @@ testcases:
   steps:
     - script: sleep 5
     - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental project analyze list ITCLIPRJVCS my_vcs_server gituser/myrepo --format json
+      assertions:
+        - result.code ShouldEqual 0
+        - result.systemoutjson.__len__ ShouldEqual 1
       vars:
         analyzeID:
           from: result.systemoutjson.systemoutjson0.id
