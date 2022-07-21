@@ -2,8 +2,8 @@ name: Project VCS Command TestSuite
 testcases:
 - name: prepare test
   steps:
-  - script: gpg --batch --yes --delete-secret-key E023B5A70E60A8A67B07FDAFA868963169F700D9 || true
-  - script: gpg --batch --yes --delete-key E023B5A70E60A8A67B07FDAFA868963169F700D9 || true
+  - script: gpg --batch --yes --delete-secret-key 6C272F3497BC075A810DCE4B6D63384924654E0A || true
+  - script: gpg --batch --yes --delete-key 6C272F3497BC075A810DCE4B6D63384924654E0A || true
   - script: curl -X DELETE "http://localhost:3000/api/v1/repos/gituser/myrepo" -u "gituser:gitpwd"
   - script: {{.cdsctl}} -f {{.cdsctl.config}} project remove --force ITCLIPRJVCS
   - script: {{.cdsctl}} -f {{.cdsctl.config}} group remove ITCLIPRJVCS --force
@@ -13,6 +13,8 @@ testcases:
   - script: {{.cdsctl}} -f {{.cdsctl.config}} user gpg import --key-file ./fixtures/gpg/key.pub
   - script: gpg --import ./fixtures/gpg/key.priv
   - script: gpg --import ./fixtures/gpg/key.pub
+  - script: 'curl -i -X POST http://localhost:3000/api/v1/user/gpg_keys -u "gituser:gitpwd" -H "Content-type: application/json" -d @./fixtures/gpg/key.pub.json'
+
 
 - name: import / export vcs server
   steps:
@@ -42,7 +44,7 @@ testcases:
     - script: git clone "http://gituser:gitpwd@localhost:3000/gituser/myrepo.git" /tmp/myrepo
     - script: mkdir -p /tmp/myrepo/.cds/models && echo 'new file' > /tmp/myrepo/.cds/models/my-worker-model.yml
     - script: cd /tmp/myrepo && git config user.email "gituser@gitea.eu" && git config user.name "gituser"
-    - script: cd /tmp/myrepo && git add /tmp/myrepo/.cds/models/my-worker-model.yml && git commit .  --gpg-sign=E023B5A70E60A8A67B07FDAFA868963169F700D9 -m "add file and sign" && git push
+    - script: cd /tmp/myrepo && git add /tmp/myrepo/.cds/models/my-worker-model.yml && git commit .  --gpg-sign=6C272F3497BC075A810DCE4B6D63384924654E0A -m "add file and sign" && git push
     - script: 'curl -H "Content-Type: application/json" -u "gituser:gitpwd" -X POST http://localhost:3000/api/v1/repos/gituser/myrepo/hooks -d "{\"active\":true, \"type\":\"gitea\", \"config\": {\"content_type\": \"json\", \"url\": \"{{.gitea.hook.url}}/v2/webhook/repository/gitea/{{.repositoryProject.repoID}}\"}}"'
       vars:
         hookID:
@@ -53,11 +55,11 @@ testcases:
   steps:
     - script: sleep 5
     - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental project analyze list ITCLIPRJVCS my_vcs_server gituser/myrepo --format json
-      retry: 3
-      delay: 5
       assertions:
         - result.code ShouldEqual 0
-        - result.systemoutjson ShouldNotBeEmpty
+        - result.systemoutjson.__len__ ShouldBeGreaterThan 0
+      retry: 3
+      delay: 5
       vars:
         analyzeID:
           from: result.systemoutjson.systemoutjson0.id
@@ -67,7 +69,7 @@ testcases:
       assertions:
         - result.code ShouldEqual 0
         - 'result.systemout ShouldContainSubstring "status: Skipped"'
-        - 'result.systemout ShouldContainSubstring "key_sign_id: A868963169F700D9"'
+        - 'result.systemout ShouldContainSubstring "key_sign_id: 6D63384924654E0A"'
         - result.systemout ShouldContainSubstring "doesn't have enough right on project ITCLIPRJVCS"
 
 - name: delete repository on project
