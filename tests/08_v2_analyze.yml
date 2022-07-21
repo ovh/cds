@@ -4,16 +4,16 @@ testcases:
   steps:
   - script: gpg --batch --yes --delete-secret-key 2B74B3591CEFB2F534265465E027B500E97E52E7 || true
   - script: gpg --batch --yes --delete-key 2B74B3591CEFB2F534265465E027B500E97E52E7 || true
-  - script: curl -X DELETE "http://localhost:3000/api/v1/repos/gituser/myrepo" -u "gituser:gitpwd"
+  - script: curl -X DELETE "{{.git.host}}/api/v1/repos/{{.git.user}}/myrepo" -u "{{.git.user}}:{{.git.password}}"
   - script: {{.cdsctl}} -f {{.cdsctl.config}} project remove --force ITCLIPRJVCS
   - script: {{.cdsctl}} -f {{.cdsctl.config}} group remove ITCLIPRJVCS --force
   - script: {{.cdsctl}} -f {{.cdsctl.config}} group add ITCLIPRJVCS
   - script: {{.cdsctl}} -f {{.cdsctl.config}} project create ITCLIPRJVCS "Test Project" ITCLIPRJVCS
-  - script: 'curl --fail -X POST "http://localhost:3000/api/v1/user/repos" -u "gituser:gitpwd" -d "{\"name\": \"myrepo\", \"auto_init\": true}" -H "Content-Type: application/json"'
+  - script: 'curl --fail -X POST "{{.git.host}}/api/v1/user/repos" -u "{{.git.user}}:{{.git.password}}" -d "{\"name\": \"myrepo\", \"auto_init\": true}" -H "Content-Type: application/json"'
   - script: {{.cdsctl}} -f {{.cdsctl.config}} user gpg import --key-file ./fixtures/gpg/key.pub
   - script: gpg --import ./fixtures/gpg/key.priv
   - script: gpg --import ./fixtures/gpg/key.pub
-  - script: 'curl -i -X POST http://localhost:3000/api/v1/user/gpg_keys -u "gituser:gitpwd" -H "Content-type: application/json" -d @./fixtures/gpg/key.pub.json'
+  - script: 'curl -i -X POST {{.git.host}}/api/v1/user/gpg_keys -u "{{.git.user}}:{{.git.password}}" -H "Content-type: application/json" -d @./fixtures/gpg/key.pub.json'
 
 
 - name: import / export vcs server
@@ -29,11 +29,11 @@ testcases:
 
 - name: repositoryProject
   steps:
-    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental project repository add ITCLIPRJVCS my_vcs_server gituser/myrepo
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental project repository add ITCLIPRJVCS my_vcs_server {{.git.user}}/myrepo
     - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental project repository list ITCLIPRJVCS --vcs-name my_vcs_server --format json
       assertions:
         - result.code ShouldEqual 0
-        - result.systemoutjson.systemoutjson0.reponame ShouldEqual "gituser/myrepo"
+        - result.systemoutjson.systemoutjson0.reponame ShouldEqual "{{.git.user}}/myrepo"
       vars:
         repoID:
           from: result.systemoutjson.systemoutjson0.id
@@ -41,20 +41,20 @@ testcases:
 - name: commitStep
   steps:
     - script: echo {{.repositoryProject.repoID}}
-    - script: rm -Rf /tmp/myrepo && git clone "http://gituser:gitpwd@localhost:3000/gituser/myrepo.git" /tmp/myrepo
+    - script: git clone "http://{{.git.user}}:{{.git.password}}@localhost:3000/{{.git.user}}/myrepo.git" /tmp/myrepo
     - script: mkdir -p /tmp/myrepo/.cds/models && echo 'new file' > /tmp/myrepo/.cds/models/my-worker-model.yml
-    - script: cd /tmp/myrepo && git config user.email "gituser@gitea.eu" && git config user.name "gituser"
+    - script: cd /tmp/myrepo && git config user.email "{{.git.user}}@gitea.eu" && git config user.name "{{.git.user}}"
     - script: cd /tmp/myrepo && git add /tmp/myrepo/.cds/models/my-worker-model.yml && git commit .  --gpg-sign=2B74B3591CEFB2F534265465E027B500E97E52E7 -m "add file and sign" && git push
-    - script: 'curl -H "Content-Type: application/json" -u "gituser:gitpwd" -X POST http://localhost:3000/api/v1/repos/gituser/myrepo/hooks -d "{\"active\":true, \"type\":\"gitea\", \"config\": {\"content_type\": \"json\", \"url\": \"{{.gitea.hook.url}}/v2/webhook/repository/gitea/{{.repositoryProject.repoID}}\"}}"'
+    - script: 'curl -H "Content-Type: application/json" -u "{{.git.user}}:{{.git.password}}" -X POST {{.git.host}}/api/v1/repos/{{.git.user}}/myrepo/hooks -d "{\"active\":true, \"type\":\"gitea\", \"config\": {\"content_type\": \"json\", \"url\": \"{{.gitea.hook.url}}/v2/webhook/repository/gitea/{{.repositoryProject.repoID}}\"}}"'
       vars:
         hookID:
           from: result.systemoutjson.id
-    - script: 'curl -X POST http://localhost:3000/api/v1/repos/gituser/myrepo/hooks/{{.hookID}}/tests -u "gituser:gitpwd"'
+    - script: 'curl -X POST {{.git.host}}/api/v1/repos/{{.git.user}}/myrepo/hooks/{{.hookID}}/tests -u "{{.git.user}}:{{.git.password}}"'
 
 - name: analyze
   steps:
     - script: sleep 5
-    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental project analyze list ITCLIPRJVCS my_vcs_server gituser/myrepo --format json
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental project analyze list ITCLIPRJVCS my_vcs_server {{.git.user}}/myrepo --format json
       assertions:
         - result.code ShouldEqual 0
         - result.systemoutjson.__len__ ShouldBeGreaterThan 0
@@ -63,7 +63,7 @@ testcases:
       vars:
         analyzeID:
           from: result.systemoutjson.systemoutjson0.id
-    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental project analyze show ITCLIPRJVCS my_vcs_server gituser/myrepo {{.analyzeID}}
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental project analyze show ITCLIPRJVCS my_vcs_server {{.git.user}}/myrepo {{.analyzeID}}
       retry: 10
       delay: 2
       assertions:
@@ -74,11 +74,11 @@ testcases:
 
 - name: delete repository on project
   steps:
-    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental project repository delete ITCLIPRJVCS my_vcs_server gituser/myrepo --force
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental project repository delete ITCLIPRJVCS my_vcs_server {{.git.user}}/myrepo --force
     - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental project repository list ITCLIPRJVCS --vcs-name my_vcs_server --format json
       assertions:
         - result.code ShouldEqual 0
-        - result.systemoutjson.systemoutjson0.name ShouldNotEqual "gituser/myrepo"
+        - result.systemoutjson.systemoutjson0.name ShouldNotEqual "{{.git.user}}/myrepo"
 
 - name: delete vcs project
   steps:
