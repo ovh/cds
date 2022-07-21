@@ -238,6 +238,7 @@
                                 <nz-form-control>
                                     <nz-select nzShowSearch  name="pattern" [(ngModel)]="patternSelected" [nzDisabled]="!workerModel.editable"
                                                (ngModelChange)="patternChange()" nzPlaceHolder="Select...">
+                                        <nz-option></nz-option>
                                         <nz-option *ngFor="let p of patternsFiltered" [nzValue]="p" [nzLabel]="p.name"></nz-option>
                                     </nz-select>
                                 </nz-form-control>

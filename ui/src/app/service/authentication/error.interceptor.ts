@@ -6,7 +6,7 @@ import { Store } from '@ngxs/store';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { SignoutCurrentUser } from 'app/store/authentication.action';
 import { Observable, throwError as observableThrowError } from 'rxjs';
-import { catchError, filter, first } from 'rxjs/operators';
+import { catchError, filter } from 'rxjs/operators';
 
 @Injectable()
 export class ErrorInterceptor implements HttpInterceptor {
@@ -76,6 +76,8 @@ export class ErrorInterceptor implements HttpInterceptor {
                     this._toast.error(e.statusText, this._translate.instant('common_error'));
                     return observableThrowError(e);
                 }
+
+                return observableThrowError(e);
             }));
     }
 }

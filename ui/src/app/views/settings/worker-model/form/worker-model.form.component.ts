@@ -167,11 +167,6 @@ pattern_name: basic_unix`;
 
     typeChange(): void {
         this.patternsFiltered = this.patterns.filter((pattern) => pattern.type === this.workerModel.type);
-        if (this.patternsFiltered.length > 0) {
-            this.patternSelected = this.patternsFiltered[0];
-        } else {
-            delete this.patternSelected;
-        }
         this._cd.markForCheck();
     }
 
