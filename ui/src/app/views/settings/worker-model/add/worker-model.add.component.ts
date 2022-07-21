@@ -25,7 +25,6 @@ export class WorkerModelAddComponent implements OnInit {
     types: Array<string>;
     groups: Array<Group>;
     patterns: Array<ModelPattern>;
-    patternSelected: ModelPattern;
     currentAuthSummary: AuthSummary;
     path: Array<PathItem>;
 
