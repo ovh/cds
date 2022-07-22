@@ -38,7 +38,7 @@ var projectRepositoryAnalyzeListCmd = cli.Command{
 
 func projectRepositoryAnalyzeListFunc(v cli.Values) (cli.ListResult, error) {
 	analyzes, err := client.ProjectRepositoryAnalyzeList(context.Background(), v.GetString(_ProjectKey), v.GetString("vcs-name"), v.GetString("repository-name"))
-	if err != err {
+	if err != nil {
 		return nil, err
 	}
 	return cli.AsListResult(analyzes), nil
