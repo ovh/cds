@@ -126,10 +126,14 @@ func (s *Service) repositoryWebHookHandler() service.Handler {
 		vars := mux.Vars(r)
 		uuid := vars["uuid"]
 
-		defer r.Body.Close()
-		body, err := io.ReadAll(r.Body)
-		if err != nil {
-			return sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to read body: %v", err)
+		body, ok := ctx.Value("body").([]byte)
+		if !ok {
+			defer r.Body.Close()
+			var err error
+			body, err = io.ReadAll(r.Body)
+			if err != nil {
+				return sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to read body: %v", err)
+			}
 		}
 
 		hook := s.Dao.FindTask(ctx, uuid)

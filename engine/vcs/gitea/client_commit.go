@@ -21,8 +21,8 @@ func (g *giteaClient) Commit(_ context.Context, repo, hash string) (sdk.VCSCommi
 	if err != nil {
 		return sdk.VCSCommit{}, err
 	}
-	if giteaCommit.RepoCommit == nil || giteaCommit.RepoCommit.Author == nil {
-		return sdk.VCSCommit{}, sdk.NewErrorFrom(sdk.ErrNotFound, "commit data not found")
+	if giteaCommit.RepoCommit == nil {
+		return sdk.VCSCommit{}, sdk.NewErrorFrom(sdk.ErrNotFound, "commit %s data not found", hash)
 	}
 	return g.toVCSCommit(giteaCommit), nil
 }
@@ -32,19 +32,30 @@ func (g *giteaClient) CommitsBetweenRefs(ctx context.Context, repo, base, head s
 }
 
 func (g *giteaClient) toVCSCommit(commit *gg.Commit) sdk.VCSCommit {
+
 	vcsCommit := sdk.VCSCommit{
 		KeySignID: "",
 		Verified:  false,
 		Message:   commit.RepoCommit.Message,
 		Hash:      commit.SHA,
 		URL:       commit.URL,
-		Author: sdk.VCSAuthor{
+		Timestamp: commit.Created.Unix() * 1000,
+	}
+	if commit.Committer != nil {
+		vcsCommit.Author = sdk.VCSAuthor{
 			Name:        commit.Committer.UserName,
 			Avatar:      commit.Committer.AvatarURL,
 			Email:       commit.Committer.Email,
 			DisplayName: commit.Committer.UserName,
-		},
-		Timestamp: commit.Created.Unix() * 1000,
+		}
+	} else {
+		if commit.RepoCommit.Committer != nil {
+			vcsCommit.Author = sdk.VCSAuthor{
+				Name:        commit.RepoCommit.Committer.Name,
+				Email:       commit.RepoCommit.Committer.Email,
+				DisplayName: commit.RepoCommit.Committer.Name,
+			}
+		}
 	}
 	if commit.RepoCommit.Verification != nil && commit.RepoCommit.Verification.Signature != "" {
 		reasonSplitted := strings.Split(commit.RepoCommit.Verification.Reason, " ")

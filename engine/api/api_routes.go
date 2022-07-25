@@ -434,12 +434,16 @@ func (api *API) InitRouter() {
 	r.Handle("/template/{groupName}/{templateSlug}/instance/{instanceID}", Scope(sdk.AuthConsumerScopeTemplate), r.DELETE(api.deleteTemplateInstanceHandler))
 	r.Handle("/template/{groupName}/{templateSlug}/usage", Scope(sdk.AuthConsumerScopeTemplate), r.GET(api.getTemplateUsageHandler))
 
+	// v2 Hooks
 	r.Handle("/v2/repository/analyze", Scope(sdk.AuthConsumerScopeHooks), r.POSTv2(api.postRepositoryAnalyzeHandler))
 	r.Handle("/v2/project/repositories", Scope(sdk.AuthConsumerScopeHooks), r.GETv2(api.getAllRepositoriesHandler))
+	r.Handle("/v2/project/repositories/{repositoryIdentifier}/hook", Scope(sdk.AuthConsumerScopeHooks), r.GETv2(api.getRepositoryHookHandler))
+
 	r.Handle("/v2/project/{projectKey}/vcs", nil, r.POSTv2(api.postVCSProjectHandler), r.GETv2(api.getVCSProjectAllHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}", nil, r.PUTv2(api.putVCSProjectHandler), r.DELETEv2(api.deleteVCSProjectHandler), r.GETv2(api.getVCSProjectHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository", nil, r.POSTv2(api.postProjectRepositoryHandler), r.GETv2(api.getVCSProjectRepositoryAllHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}", nil, r.DELETEv2(api.deleteProjectRepositoryHandler))
+	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/hook/link", nil, r.GETv2(api.getRepositoryHookLinkHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/analyze", nil, r.GETv2(api.getProjectRepositoryAnalyzesHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/analyze/{analyzeID}", nil, r.GETv2(api.getProjectRepositoryAnalyzeHandler))
 

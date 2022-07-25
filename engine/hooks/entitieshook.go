@@ -12,7 +12,7 @@ func (s *Service) doAnalyzeExecution(ctx context.Context, t *sdk.TaskExecution) 
 	var err error
 	switch t.Configuration[sdk.HookConfigVCSType].Value {
 	case sdk.VCSTypeGithub:
-		return sdk.WithStack(sdk.ErrNotImplemented)
+		branch, commit, err = s.extractAnalyzeDataFromGithubRequest(t.EntitiesHook.RequestBody)
 	case sdk.VCSTypeGerrit:
 		return sdk.WithStack(sdk.ErrNotImplemented)
 	case sdk.VCSTypeGitlab:
@@ -49,16 +49,22 @@ func (s *Service) doAnalyzeExecution(ctx context.Context, t *sdk.TaskExecution) 
 	return nil
 }
 
+func (s *Service) extractAnalyzeDataFromGithubRequest(body []byte) (string, string, error) {
+	var request GithubWebHookEvent
+	if err := sdk.JSONUnmarshal(body, &request); err != nil {
+		return "", "", sdk.WrapError(err, "unable ro read bitbucket request: %s", string(body))
+	}
+	return request.Ref, request.After, nil
+}
+
 func (s *Service) extractAnalyzeDataFromBitbucketRequest(body []byte) (string, string, error) {
 	var request sdk.BitbucketServerWebhookEvent
 	if err := sdk.JSONUnmarshal(body, &request); err != nil {
 		return "", "", sdk.WrapError(err, "unable ro read bitbucket request: %s", string(body))
 	}
-
 	if len(request.Changes) == 0 {
 		return "", "", sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to know branch and commit: %s", string(body))
 	}
-
 	return request.Changes[0].RefID, request.Changes[0].ToHash, nil
 }
 
