@@ -13,16 +13,16 @@ func (s *Service) doAnalyzeExecution(ctx context.Context, t *sdk.TaskExecution) 
 	switch t.Configuration[sdk.HookConfigVCSType].Value {
 	case sdk.VCSTypeGithub:
 		branch, commit, err = s.extractAnalyzeDataFromGithubRequest(t.EntitiesHook.RequestBody)
-	case sdk.VCSTypeGerrit:
-		return sdk.WithStack(sdk.ErrNotImplemented)
 	case sdk.VCSTypeGitlab:
-		return sdk.WithStack(sdk.ErrNotImplemented)
-	case sdk.VCSTypeBitbucketCloud:
-		return sdk.WithStack(sdk.ErrNotImplemented)
+		branch, commit, err = s.extractAnalyzeDataFromGitlabRequest(t.EntitiesHook.RequestBody)
 	case sdk.VCSTypeGitea:
 		branch, commit, err = s.extractAnalyzeDataFromGiteaRequest(t.EntitiesHook.RequestBody)
 	case sdk.VCSTypeBitbucketServer:
 		branch, commit, err = s.extractAnalyzeDataFromBitbucketRequest(t.EntitiesHook.RequestBody)
+	case sdk.VCSTypeGerrit:
+		return sdk.WithStack(sdk.ErrNotImplemented)
+	case sdk.VCSTypeBitbucketCloud:
+		return sdk.WithStack(sdk.ErrNotImplemented)
 	default:
 		return sdk.NewErrorFrom(sdk.ErrInvalidData, "unknown vcs of type: %s", t.Configuration[sdk.HookConfigVCSType].Value)
 	}
@@ -49,10 +49,18 @@ func (s *Service) doAnalyzeExecution(ctx context.Context, t *sdk.TaskExecution) 
 	return nil
 }
 
+func (s *Service) extractAnalyzeDataFromGitlabRequest(body []byte) (string, string, error) {
+	var request GitlabEvent
+	if err := sdk.JSONUnmarshal(body, &request); err != nil {
+		return "", "", sdk.WrapError(err, "unable ro read gitlab request: %s", string(body))
+	}
+	return request.Ref, request.After, nil
+}
+
 func (s *Service) extractAnalyzeDataFromGithubRequest(body []byte) (string, string, error) {
 	var request GithubWebHookEvent
 	if err := sdk.JSONUnmarshal(body, &request); err != nil {
-		return "", "", sdk.WrapError(err, "unable ro read bitbucket request: %s", string(body))
+		return "", "", sdk.WrapError(err, "unable ro read github request: %s", string(body))
 	}
 	return request.Ref, request.After, nil
 }
