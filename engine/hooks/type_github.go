@@ -7,6 +7,25 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+type ShortPushEvent struct {
+	PushId       int64  `json:"push_id"`
+	Size         int    `json:"size"`
+	DistinctSize int    `json:"distinct_size"`
+	Ref          string `json:"ref"`
+	Head         string `json:"head"`
+	Before       string `json:"before"`
+	Commits      []struct {
+		Sha    string `json:"sha"`
+		Author struct {
+			Email string `json:"email"`
+			Name  string `json:"name"`
+		} `json:"author"`
+		Message  string `json:"message"`
+		Distinct bool   `json:"distinct"`
+		Url      string `json:"url"`
+	} `json:"commits"`
+}
+
 // GithubWebHookEvent represents payload send by github on a push event
 type GithubWebHookEvent struct {
 	Ref        string            `json:"ref"`
