@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 	"context"
 	"fmt"
+
 	"io"
 	"net/http"
 	"net/url"
@@ -27,6 +28,7 @@ import (
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gpg"
 	cdslog "github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
@@ -186,11 +188,17 @@ func (api *API) postRepositoryAnalyzeHandler() ([]service.RbacChecker, service.H
 					repoAnalyze.Status = sdk.RepositoryAnalyzeStatusError
 					repoAnalyze.Data.Error = fmt.Sprintf("commit %s not found", analyze.Commit)
 				} else {
-					if vcsCommit.Verified && vcsCommit.KeySignID != "" {
-						repoAnalyze.Data.SignKeyID = vcsCommit.KeySignID
-						repoAnalyze.Data.CommitCheck = true
+					if vcsCommit.Signature != "" {
+						keyId, err := gpg.GetKeyIdFromSignature(vcsCommit.Signature)
+						if err != nil {
+							repoAnalyze.Status = sdk.RepositoryAnalyzeStatusError
+							repoAnalyze.Data.Error = fmt.Sprintf("unable to extract keyID from signature")
+						} else {
+							repoAnalyze.Data.SignKeyID = keyId
+							repoAnalyze.Data.CommitCheck = true
+						}
+
 					} else {
-						repoAnalyze.Data.SignKeyID = vcsCommit.KeySignID
 						repoAnalyze.Data.CommitCheck = false
 						repoAnalyze.Status = sdk.RepositoryAnalyzeStatusSkipped
 						repoAnalyze.Data.Error = fmt.Sprintf("commit %s is not signed", vcsCommit.Hash)

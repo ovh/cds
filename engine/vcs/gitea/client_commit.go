@@ -2,9 +2,9 @@ package gitea
 
 import (
 	"context"
-	"strings"
-
+	
 	gg "code.gitea.io/sdk/gitea"
+
 	"github.com/ovh/cds/sdk"
 )
 
@@ -34,7 +34,7 @@ func (g *giteaClient) CommitsBetweenRefs(ctx context.Context, repo, base, head s
 func (g *giteaClient) toVCSCommit(commit *gg.Commit) sdk.VCSCommit {
 
 	vcsCommit := sdk.VCSCommit{
-		KeySignID: "",
+		Signature: "",
 		Verified:  false,
 		Message:   commit.RepoCommit.Message,
 		Hash:      commit.SHA,
@@ -58,10 +58,8 @@ func (g *giteaClient) toVCSCommit(commit *gg.Commit) sdk.VCSCommit {
 		}
 	}
 	if commit.RepoCommit.Verification != nil && commit.RepoCommit.Verification.Signature != "" {
-		reasonSplitted := strings.Split(commit.RepoCommit.Verification.Reason, " ")
-		vcsCommit.KeySignID = reasonSplitted[len(reasonSplitted)-1]
+		vcsCommit.Signature = commit.RepoCommit.Verification.Signature
 		vcsCommit.Verified = commit.RepoCommit.Verification.Verified
-
 	}
 	return vcsCommit
 }
