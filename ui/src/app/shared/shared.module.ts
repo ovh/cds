@@ -44,8 +44,6 @@ import { KeysFormComponent } from './keys/form/keys.form.component';
 import { KeysListComponent } from './keys/list/keys.list.component';
 import { LabelsEditComponent } from './labels/edit/labels.edit.component';
 import { MenuComponent } from './menu/menu.component';
-import { ConfirmModalComponent } from './modal/confirm/confirm.component';
-import { DeleteModalComponent } from './modal/delete/delete.component';
 import { ParameterFormComponent } from './parameter/form/parameter.form';
 import { ParameterListComponent } from './parameter/list/parameter.component';
 import { ParameterValueComponent } from './parameter/value/parameter.value.component';
@@ -225,11 +223,9 @@ const icons: IconDefinition[] = [ ArrowDownOutline, ArrowRightOutline, BellFill,
         CommitListComponent,
         ConditionsComponent,
         ConfirmButtonComponent,
-        ConfirmModalComponent,
         CutPipe,
         DataTableComponent,
         DeleteButtonComponent,
-        DeleteModalComponent,
         DiffItemComponent,
         DiffListComponent,
         DurationMsPipe,
@@ -340,11 +336,9 @@ const icons: IconDefinition[] = [ ArrowDownOutline, ArrowRightOutline, BellFill,
         CommonModule,
         ConditionsComponent,
         ConfirmButtonComponent,
-        ConfirmModalComponent,
         CutPipe,
         DataTableComponent,
         DeleteButtonComponent,
-        DeleteModalComponent,
         DiffItemComponent,
         DiffListComponent,
         DragulaModule,

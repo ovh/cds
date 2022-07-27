@@ -1,6 +1,5 @@
-.item:hover {
-    text-decoration: underline;
-}
-.item.disabled {
-    text-decoration: none;
+ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }

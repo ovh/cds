@@ -1,11 +1,9 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Select, Store } from '@ngxs/store';
-import { SuiActiveModal } from '@richardlt/ng2-semantic-ui';
 import { WNode, WNodeHook, Workflow, WorkflowNodeHookConfigValue } from 'app/model/workflow.model';
 import { WorkflowNodeRunHookEvent, WorkflowRun } from 'app/model/workflow.run.model';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
-import { DeleteModalComponent } from 'app/shared/modal/delete/delete.component';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { WorkflowNodeHookDetailsComponent } from 'app/shared/workflow/node/hook/details/hook.details.component';
 import { ProjectState } from 'app/store/project.state';
@@ -13,6 +11,7 @@ import { DeleteHookWorkflow, OpenEditModal } from 'app/store/workflow.action';
 import { WorkflowState } from 'app/store/workflow.state';
 import { Observable } from 'rxjs';
 import { Subscription } from 'rxjs/Subscription';
+import { NzModalService } from 'ng-zorro-antd/modal';
 
 @Component({
     selector: 'app-workflow-node-hook',
@@ -30,11 +29,6 @@ export class WorkflowNodeHookComponent implements OnInit, OnDestroy {
     @Select(WorkflowState.getSelectedWorkflowRun()) workflowRun$: Observable<WorkflowRun>;
     workflowRunSub: Subscription;
 
-    @Select(WorkflowState.getWorkflow()) workflow$: Observable<Workflow>;
-    workflowSub: Subscription;
-
-    @ViewChild('deleteHookModal')
-    deleteHookModal: DeleteModalComponent;
     @ViewChild('workflowDetailsHook')
     workflowDetailsHook: WorkflowNodeHookDetailsComponent;
 
@@ -43,12 +37,14 @@ export class WorkflowNodeHookComponent implements OnInit, OnDestroy {
     currentRunID: number;
     isReadOnly: boolean;
     icon: string;
+    menuVisible: boolean = false;
 
     constructor(
         private _store: Store,
         private _toast: ToastService,
         private _translate: TranslateService,
-        private _cd: ChangeDetectorRef
+        private _cd: ChangeDetectorRef,
+        private _modalService: NzModalService
     ) {
         this.projectKey = this._store.selectSnapshot(ProjectState.projectSnapshot).key;
         let workflow = this._store.selectSnapshot(WorkflowState.workflowSnapshot);
@@ -87,10 +83,18 @@ export class WorkflowNodeHookComponent implements OnInit, OnDestroy {
     }
 
     receivedEvent(e: string): void {
+        this.menuVisible = false;
         switch (e) {
             case 'logs':
                 // display logs
-                this.workflowDetailsHook.show(this.hook);
+                this._modalService.create({
+                    nzTitle: 'Hook\'s details',
+                    nzWidth: '900px',
+                    nzContent: WorkflowNodeHookDetailsComponent,
+                    nzComponentParams: {
+                        currentHook: this.hook
+                    }
+                });
                 break;
             case 'edit':
                 this._store.dispatch(new OpenEditModal({
@@ -99,14 +103,13 @@ export class WorkflowNodeHookComponent implements OnInit, OnDestroy {
                 }));
                 break;
             case 'delete':
-                if (this.deleteHookModal) {
-                    this.deleteHookModal.show();
-                }
+                this.deleteHook();
                 break;
         }
+        this._cd.markForCheck();
     }
 
-    deleteHook(modal: SuiActiveModal<boolean, boolean, void>) {
+    deleteHook() {
         let editMode = this._store.selectSnapshot(WorkflowState).editMode;
         this._cd.markForCheck();
         this._store.dispatch(new DeleteHookWorkflow({
@@ -119,7 +122,6 @@ export class WorkflowNodeHookComponent implements OnInit, OnDestroy {
             } else {
                 this._toast.success('', this._translate.instant('workflow_updated'));
             }
-            modal.approve(null);
         });
     }
 }
