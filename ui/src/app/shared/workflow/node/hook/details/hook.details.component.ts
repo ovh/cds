@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Store } from '@ngxs/store';
-import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { HookStatus, TaskExecution } from 'app/model/workflow.hook.model';
 import { WNodeHook, Workflow } from 'app/model/workflow.model';
 import { HookService } from 'app/service/hook/hook.service';
@@ -10,6 +9,7 @@ import { ProjectState } from 'app/store/project.state';
 import { WorkflowState } from 'app/store/workflow.state';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
+import { NzModalRef } from 'ng-zorro-antd/modal';
 
 @Component({
     selector: 'app-workflow-node-hook-details',
@@ -20,10 +20,8 @@ import { finalize } from 'rxjs/operators';
 @AutoUnsubscribe()
 export class WorkflowNodeHookDetailsComponent implements OnInit, OnDestroy {
     @ViewChild('code') codemirror: any;
-    @ViewChild('nodeHookDetailsModal') nodeHookDetailsModal: ModalTemplate<boolean, boolean, void>;
 
-    modal: SuiActiveModal<boolean, boolean, void>;
-    modalConfig: TemplateModalConfig<boolean, boolean, void>;
+    currentHook: WNodeHook;
     task: TaskExecution;
     executions: Array<TaskExecution>;
     codeMirrorConfig: any;
@@ -35,7 +33,7 @@ export class WorkflowNodeHookDetailsComponent implements OnInit, OnDestroy {
     hookStatus = HookStatus;
 
     constructor(
-        private _modalService: SuiModalService,
+        public _modal: NzModalRef,
         private _theme: ThemeStore,
         private _cd: ChangeDetectorRef,
         private _store: Store,
@@ -55,17 +53,6 @@ export class WorkflowNodeHookDetailsComponent implements OnInit, OnDestroy {
     } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
-        this.themeSubscription = this._theme.get()
-            .pipe(finalize(() => this._cd.markForCheck()))
-            .subscribe(t => {
-                this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
-                if (this.codemirror && this.codemirror.instance) {
-                    this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);
-                }
-            });
-    }
-
-    show(hook: WNodeHook): void {
         let project = this._store.selectSnapshot(ProjectState.projectSnapshot);
         let workflow: Workflow;
         let run = this._store.selectSnapshot(WorkflowState.workflowRunSnapshot);
@@ -75,7 +62,7 @@ export class WorkflowNodeHookDetailsComponent implements OnInit, OnDestroy {
         } else {
             workflow = this._store.selectSnapshot(WorkflowState.workflowSnapshot);
         }
-        this._hookService.getHookLogs(project.key, workflow.name, hook.uuid)
+        this._hookService.getHookLogs(project.key, workflow.name, this.currentHook.uuid)
             .pipe(finalize(() => {
                 this.loading = false;
                 this._cd.markForCheck();
@@ -94,9 +81,7 @@ export class WorkflowNodeHookDetailsComponent implements OnInit, OnDestroy {
                     this._cd.markForCheck();
                 }
             });
-        this.modalConfig = new TemplateModalConfig<boolean, boolean, void>(this.nodeHookDetailsModal);
-        this.modalConfig.size = 'large';
-        this.modal = this._modalService.open(this.modalConfig);
+
     }
 
     initDiplayTask(): void {

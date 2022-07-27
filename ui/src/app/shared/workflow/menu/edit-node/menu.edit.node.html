@@ -1,65 +1,88 @@
-<div class="menu-node">
-    <div class="ui list" *ngIf="workflow">
-        <ng-container *ngIf="workflowrun">
-            <a class="item" (click)="sendEvent('run')" [class.disabled]="!runnable">
-                {{'btn_run' | translate }}
+<ul *ngIf="workflow">
+    <ng-container *ngIf="workflowrun">
+        <li>
+            <a (click)="sendEvent('run')" [class.disabled]="!runnable">
+                Run pipeline
             </a>
-            <hr>
-        </ng-container>
-        <ng-container *ngIf="node && !workflowrun">
-            <a class="item" (click)="sendEvent('pipeline')"
-                [class.disabled]="readonly">
-                    {{ 'workflow_node_trigger_add' | translate }}
+        </li>
+        <hr>
+    </ng-container>
+    <ng-container *ngIf="node && !workflowrun">
+        <li>
+            <a (click)="sendEvent('pipeline')"
+               [class.disabled]="readonly">
+                Add a pipeline
             </a>
-            <a class="item" (click)="sendEvent('parent')"
-                [class.disabled]="workflow.workflow_data.node.id !== node.id || readonly">
-                    {{ 'workflow_node_parent' | translate }}
+        </li>
+        <li>
+            <a (click)="sendEvent('parent')"
+               [class.disabled]="workflow.workflow_data.node.id !== node.id || readonly">
+                Add a parent pipeline
             </a>
-            <a class="item" (click)="sendEvent('fork')" [class.disabled]="readonly">
-                    {{ 'workflow_node_fork_add' | translate }}
+        </li>
+        <li>
+            <a (click)="sendEvent('fork')" [class.disabled]="readonly">
+                Add a fork
             </a>
-            <a class="item" (click)="sendEvent('join')" [class.disabled]="readonly">
-                    {{ 'workflow_node_join_add' | translate }}
+        </li>
+        <li>
+            <a (click)="sendEvent('join')" [class.disabled]="readonly">
+                Add a join
             </a>
-            <a class="item" (click)="sendEvent('join_link')" [class.disabled]="readonly">
-                {{ 'workflow_node_join_link' | translate }}
+        </li>
+        <li>
+            <a (click)="sendEvent('join_link')" [class.disabled]="readonly">
+                Link to a join
             </a>
-            <hr>
-            <a class="item" (click)="sendEvent('hook')"
-                [class.disabled]="!workflow.workflow_data || workflow.workflow_data.node.id !== node.id || readonly">
-                {{ 'workflow_node_hook_add' | translate }}
+        </li>
+        <hr>
+        <li>
+            <a (click)="sendEvent('hook')"
+               [class.disabled]="!workflow.workflow_data || workflow.workflow_data.node.id !== node.id || readonly">
+                Add a hook
             </a>
-            <a class="item" (click)="sendEvent('outgoinghook')" [class.disabled]="readonly">
-                    {{ 'workflow_node_outgoing_hook' | translate }}
+        </li>
+        <li>
+            <a (click)="sendEvent('outgoinghook')" [class.disabled]="readonly">
+                Add an outgoing hook
             </a>
-            <hr>
+        </li>
+        <hr>
+        <li>
             <a class="item" (click)="sendEvent('edit')">
-                    <span *ngIf="readonly">{{ 'workflow_node_menu_edit_ro' | translate }}</span>
-                    <span *ngIf="!readonly">{{ 'workflow_node_menu_edit' | translate }}</span>
+                <span *ngIf="readonly">Show context configuration</span>
+                <span *ngIf="!readonly">Edit the context</span>
             </a>
-            <ng-container *ngIf="node.type === 'pipeline' && workflow && workflow.pipelines && node && node.context && workflow.pipelines[node.context.pipeline_id]">
-                <a class="item"
-                    [routerLink]="['/project', project.key, 'pipeline', workflow.pipelines[node.context.pipeline_id].name]"
-                    [queryParams]="{workflow: workflow.name}">
-                        {{ 'workflow_node_menu_edit_pipeline' | translate }}
+        </li>
+
+        <ng-container *ngIf="node.type === 'pipeline' && workflow && workflow.pipelines && node && node.context && workflow.pipelines[node.context.pipeline_id]">
+            <li>
+                <a [routerLink]="['/project', project.key, 'pipeline', workflow.pipelines[node.context.pipeline_id].name]"
+                   [queryParams]="{workflow: workflow.name}">
+                    Edit the pipeline
                 </a>
-            </ng-container>
-            <hr>
-            <a class="item" (click)="sendEvent('delete')" [class.disabled]="readonly
-                || node.id === workflow.workflow_data.node.id">
-                    {{ 'btn_delete' | translate }}
+            </li>
+        </ng-container>
+        <hr>
+        <li>
+            <a (click)="sendEvent('delete')" *ngIf="!readonly && node.id !== workflow.workflow_data.node.id">
+                Delete
             </a>
-        </ng-container>
-        <ng-container *ngIf="node && noderun && node.type === 'pipeline'">
-                <a class="item" (click)="sendEvent('logs')">
-                    {{'btn_logs' | translate }}
-                </a>
-                <hr>
-        </ng-container>
-        <ng-container *ngIf="node && workflowrun">
-            <a class="item" (click)="sendEvent('edit')">
-                    {{ 'workflow_node_menu_edit_ro' | translate }}
+        </li>
+    </ng-container>
+    <ng-container *ngIf="node && noderun && node.type === 'pipeline'">
+        <li>
+            <a (click)="sendEvent('logs')">
+                Display logs
             </a>
-        </ng-container>
-    </div>
-</div>
+        </li>
+        <hr>
+    </ng-container>
+    <ng-container *ngIf="node && workflowrun">
+        <li>
+            <a (click)="sendEvent('edit')">
+                Show context configuration
+            </a>
+        </li>
+    </ng-container>
+</ul>
