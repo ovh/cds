@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { SuiActiveModal } from '@richardlt/ng2-semantic-ui';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { WNode, WNodeJoin, WNodeTrigger, WNodeType, Workflow } from 'app/model/workflow.model';
@@ -54,6 +53,8 @@ export class WorkflowWNodeComponent implements OnInit, OnDestroy {
 
     currentNodeRun: WorkflowNodeRun;
     nodeRunSub: Subscription;
+
+    deleteNodeModalVisible: boolean = false;
 
     // Modal
     @ViewChild('workflowDeleteNode')
@@ -225,9 +226,16 @@ export class WorkflowWNodeComponent implements OnInit, OnDestroy {
         if (!this.canEdit()) {
             return;
         }
-        if (this.workflowDeleteNode) {
-            this.workflowDeleteNode.show();
-        }
+        this._modalService.create({
+            nzTitle: 'Delete ' + this.node.name,
+            nzWidth: '900px',
+            nzContent: WorkflowDeleteNodeComponent,
+            nzComponentParams: {
+                project: this.project,
+                node: this.node,
+                workflow: this.workflow
+            }
+        });
     }
 
     openTriggerModal(t: string, parent: boolean): void {
@@ -307,30 +315,6 @@ export class WorkflowWNodeComponent implements OnInit, OnDestroy {
             workflowName: this.workflow.name,
             join
         }));
-    }
-
-    updateWorkflow(w: Workflow, modal: SuiActiveModal<boolean, boolean, void>): void {
-        this.loading = true;
-        let editMode = this._store.selectSnapshot(WorkflowState).editMode;
-        this._store.dispatch(new UpdateWorkflow({
-            projectKey: this.project.key,
-            workflowName: this.workflow.name,
-            changes: w
-        })).pipe(finalize(() => {
-            this.loading = false;
-            this._cd.markForCheck();
-        })).subscribe(() => {
-            if (!editMode) {
-                this._toast.success('', this._translate.instant('workflow_updated'));
-            }
-            if (modal) {
-                modal.approve(null);
-            }
-        }, () => {
-            if (Array.isArray(this.node.hooks) && this.node.hooks.length) {
-                this.node.hooks.pop();
-            }
-        });
     }
 
     linkJoin(): void {

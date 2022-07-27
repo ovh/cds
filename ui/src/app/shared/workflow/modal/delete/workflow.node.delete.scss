@@ -1,6 +1,9 @@
 @import '../../../../../common';
-.field {
-  .red {
-    color: $cds_color_red;
-  }
+.red {
+  color: $cds_color_red;
+}
+[nz-radio] {
+  display: block;
+  height: 32px;
+  line-height: 32px;
 }

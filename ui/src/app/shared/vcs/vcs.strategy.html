@@ -15,8 +15,8 @@
             <nz-form-item>
                 <nz-form-label [nzSpan]="3">
                     SSH key*
-                    <span class="keyLink" (click)="openCreateKeyModal('ssh')"
-                          *ngIf="createOnProject">{{ 'key_or_create' | translate }}</span>
+                    <a class="keyLink" (click)="openCreateKeyModal('ssh')"
+                          *ngIf="createOnProject">Create</a>
                 </nz-form-label>
                 <nz-form-control [nzSpan]="7">
                     <app-parameter-value [editList]="false" [edit]="true" [type]="'ssh-key'" [keys]="keys"
@@ -63,10 +63,9 @@
         </button>
     </nz-form-item>
 </form>
-<ng-template let-context let-modal="modal" #createKey>
-    <div class="header">{{ 'keys_add_title' | translate }}</div>
-    <div class="content scrolling">
+<nz-modal [(nzVisible)]="modalKeyVisible" nzTitle="Add a key" [nzFooter]="null" nzWidth="900px">
+    <div *nzModalContent>
         <app-keys-form [loading]="loading" (keyEvent)="addKey($event)" [defaultType]="defaultKeyType" prefix="proj-">
         </app-keys-form>
     </div>
-</ng-template>
+</nz-modal>

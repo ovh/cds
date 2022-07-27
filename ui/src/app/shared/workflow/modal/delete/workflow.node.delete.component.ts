@@ -1,7 +1,20 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
-import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    Input,
+    OnInit,
+    ViewChild
+} from '@angular/core';
 import { WNode, Workflow } from 'app/model/workflow.model';
 import cloneDeep from 'lodash-es/cloneDeep';
+import { WorkflowState } from 'app/store/workflow.state';
+import { UpdateWorkflow } from 'app/store/workflow.action';
+import { finalize } from 'rxjs/operators';
+import { NzModalRef } from 'ng-zorro-antd/modal';
+import { Store } from '@ngxs/store';
+import { Project } from 'app/model/project.model';
+import { ToastService } from 'app/shared/toast/ToastService';
 
 @Component({
     selector: 'app-workflow-node-delete',
@@ -11,27 +24,19 @@ import cloneDeep from 'lodash-es/cloneDeep';
 })
 export class WorkflowDeleteNodeComponent implements OnInit {
 
-    @ViewChild('deleteModal')
-    deleteModalTemplate: ModalTemplate<boolean, boolean, void>;
-    modal: SuiActiveModal<boolean, boolean, void>;
-
+    @Input() project: Project;
     @Input() node: WNode;
     @Input() workflow: Workflow;
-    @Input() loading: boolean;
-    @Output() deleteEvent = new EventEmitter<Workflow>();
+    loading: boolean = false;
 
     deleteAll = 'only';
     isRoot = false;
 
-    constructor(private _modalService: SuiModalService) { }
+    constructor(public _modal: NzModalRef, private _store: Store, private _cd: ChangeDetectorRef,
+        private _toast: ToastService) { }
 
     ngOnInit(): void {
         this.isRoot = this.node?.id === this.workflow?.workflow_data?.node?.id;
-    }
-
-    show(): void {
-        const config = new TemplateModalConfig<boolean, boolean, void>(this.deleteModalTemplate);
-        this.modal = this._modalService.open(config);
     }
 
     deleteNode(): void {
@@ -42,6 +47,24 @@ export class WorkflowDeleteNodeComponent implements OnInit {
         } else {
             Workflow.removeNodeWithChild(clonedWorkflow, this.node.id);
         }
-        this.deleteEvent.emit(clonedWorkflow);
+        this.updateWorkflow(clonedWorkflow);
+    }
+
+    updateWorkflow(w: Workflow): void {
+        this.loading = true;
+        let editMode = this._store.selectSnapshot(WorkflowState).editMode;
+        this._store.dispatch(new UpdateWorkflow({
+            projectKey: this.project.key,
+            workflowName: this.workflow.name,
+            changes: w
+        })).pipe(finalize(() => {
+            this.loading = false;
+            this._cd.markForCheck();
+        })).subscribe(() => {
+            if (!editMode) {
+                this._toast.success('', 'Workflow updated');
+            }
+            this._modal.destroy();
+        });
     }
 }

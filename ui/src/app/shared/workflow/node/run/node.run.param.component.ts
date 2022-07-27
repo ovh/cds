@@ -9,7 +9,6 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { Store } from '@ngxs/store';
-import { ModalTemplate, SuiActiveModal, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { Parameter } from 'app/model/parameter.model';
 import { Pipeline } from 'app/model/pipeline.model';
 import { Commit } from 'app/model/repositories.model';
@@ -36,9 +35,6 @@ declare let CodeMirror: any;
 })
 @AutoUnsubscribe()
 export class WorkflowNodeRunParamComponent implements OnInit, AfterViewInit, OnDestroy {
-    @ViewChild('runWithParamModal')
-    runWithParamModal: ModalTemplate<boolean, boolean, void>;
-    modal: SuiActiveModal<boolean, boolean, void>;
 
     @ViewChild('textareaCodeMirror') codemirror: any;
 
@@ -194,8 +190,6 @@ export class WorkflowNodeRunParamComponent implements OnInit, AfterViewInit, OnD
     prepareDisplay(payload): void {
         this._firstCommitLoad = false;
         this._previousBranch = null;
-        const config = new TemplateModalConfig<boolean, boolean, void>(this.runWithParamModal);
-        config.mustScroll = true;
 
         let currentPayload = payload;
         if (!currentPayload) {
