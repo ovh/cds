@@ -23,6 +23,8 @@ import {
     CloseEventType as DetailsCloseEventType,
     ConsumerDetailsModalComponent
 } from '../consumer-details-modal/consumer-details-modal.component';
+import { NzModalService } from 'ng-zorro-antd/modal';
+import { AsCodeSaveModalComponent } from 'app/shared/ascode/save-modal/ascode.save-modal.component';
 
 const defaultMenuItems = [<Item>{
     translate: 'user_profile_btn',
@@ -43,12 +45,6 @@ const usernamePattern = new RegExp('^[a-zA-Z0-9._-]{1,}$');
 })
 export class UserEditComponent implements OnInit {
     transitionController = new TransitionController();
-
-    @ViewChild('consumerDetailsModal')
-    consumerDetailsModal: ConsumerDetailsModalComponent;
-
-    @ViewChild('consumerCreateModal')
-    consumerCreateModal: ConsumerCreateModalComponent;
 
     @ViewChild('ldapSigninForm')
     ldapSigninForm: NgForm;
@@ -93,7 +89,8 @@ export class UserEditComponent implements OnInit {
         private _router: Router,
         private _store: Store,
         private _toast: ToastService,
-        private _cd: ChangeDetectorRef
+        private _cd: ChangeDetectorRef,
+        private _modalService: NzModalService
     ) {
         this.currentAuthSummary = this._store.selectSnapshot(AuthenticationState.summary);
 
@@ -374,7 +371,19 @@ export class UserEditComponent implements OnInit {
         this.selectedConsumer.sessions = this.sessions.filter(s => s.consumer_id === this.selectedConsumer.id);
 
         this._cd.detectChanges(); // manually ask for detect changes to allow modal data to be set before opening
-        this.consumerDetailsModal.show();
+        let modal = this._modalService.create({
+            nzTitle: 'Consumer detail',
+            nzWidth: '900px',
+            nzContent: ConsumerDetailsModalComponent,
+            nzComponentParams: {
+                consumer: this.selectedConsumer,
+                user: this.user,
+            },
+            nzFooter: null,
+        });
+        modal.afterClose.subscribe(t => {
+            this.modalDetailsClose(t);
+        })
     }
 
     clickConsumerLocalReset(): void {
@@ -429,7 +438,17 @@ export class UserEditComponent implements OnInit {
     }
 
     clickConsumerCreate(): void {
-        this.consumerCreateModal.show();
+        this._modalService.create({
+            nzTitle: 'Create a consumer',
+            nzWidth: '900px',
+            nzContent: ConsumerCreateModalComponent,
+            nzComponentParams: {
+                user: this.user
+            },
+            nzOnOk: () => {
+                this.getAuthData();
+            }
+        });
     }
 
     clickSessionRevoke(s: AuthSession): void {
@@ -615,12 +634,6 @@ export class UserEditComponent implements OnInit {
                     return s;
                 });
             });
-    }
-
-    modalCreateClose(eventType: CloseEventType) {
-        if (eventType === CloseEventType.CREATED) {
-            this.getAuthData();
-        }
     }
 
     modalDetailsClose(event: CloseEvent) {

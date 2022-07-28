@@ -4,12 +4,9 @@
         <app-project-breadcrumb [project]="project" [application]="readOnlyApplication" [workflow]="workflowName"
             [workflowRun]="workflowNum" [workflowRunNode]="workflowNodeRun" [wPipeline]="workflowPipeline">
             <div class="right floated labelFeature" [title]="'workflow_from_repository_btn' | translate">
-                <a class="ui label small basic" [class.green]="application && application.from_repository" suiPopup
-                    [popupTemplate]="popupFromRepository" popupPlacement="bottom right" popupTrigger="outsideClick"
-                    #popup="suiPopup">
-                    <i class="code icon"></i>as code
-                </a>
-                <ng-template let-popup #popupFromRepository>
+                <nz-tag [nzColor]="application?.from_repository?'green':''" nz-popover nzPopoverTrigger="click" [nzPopoverContent]="popupFromRepository"
+                        nzPopoverPlacement="leftBottom"><i nz-icon nzType="code" nzTheme="outline"></i>as code</nz-tag>
+                <ng-template #popupFromRepository>
                     <div class="content infoPopup">
                         <ng-container *ngIf="application && application.from_repository">
                             <p>
@@ -21,12 +18,10 @@
                             <p>{{'workflow_repository_help_line_2' | translate}}</p>
                             <div class="footer">
                                 <div>
-                                    <div class="ui list">
-                                        <a class="item" target="_blank" rel="noopener noreferrer"
+                                    <a class="item" target="_blank" rel="noopener noreferrer"
                                             href="#" [routerLink]="['/docs', 'tutorials', 'init_workflow_with_cdsctl']">
-                                            {{'common_read_more'| translate}}
-                                        </a>
-                                    </div>
+                                            Read more
+                                    </a>
                                 </div>
                             </div>
                         </ng-container>

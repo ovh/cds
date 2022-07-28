@@ -2,13 +2,9 @@ import {
     ChangeDetectionStrategy,
     ChangeDetectorRef,
     Component,
-    EventEmitter,
-    Input,
-    Output,
-    ViewChild
+    Input, OnInit,
 } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { AuthConsumer, AuthConsumerScopeDetail } from 'app/model/authentication.model';
 import { Group } from 'app/model/group.model';
 import { AuthentifiedUser } from 'app/model/user.model';
@@ -18,6 +14,7 @@ import { UserService } from 'app/service/user/user.service';
 import { Column, Select } from 'app/shared/table/data-table.component';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { finalize } from 'rxjs/operators';
+import { NzModalRef } from 'ng-zorro-antd/modal';
 
 export enum CloseEventType {
     CREATED = 'CREATED',
@@ -38,13 +35,9 @@ export enum FormStepName {
     styleUrls: ['./consumer-create-modal.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ConsumerCreateModalComponent {
-    @ViewChild('consumerCreateModal') consumerDetailsModal: ModalTemplate<boolean, boolean, void>;
-    modal: SuiActiveModal<boolean, boolean, void>;
-    open: boolean;
+export class ConsumerCreateModalComponent implements OnInit {
 
     @Input() user: AuthentifiedUser;
-    @Output() close = new EventEmitter<CloseEventType>();
 
     newConsumer: AuthConsumer = new AuthConsumer();
     signinToken: string;
@@ -62,7 +55,7 @@ export class ConsumerCreateModalComponent {
     maxActivedStep: FormStepName;
 
     constructor(
-        private _modalService: SuiModalService,
+        private _modal: NzModalRef,
         private _userService: UserService,
         private _groupService: GroupService,
         private _authenticationService: AuthenticationService,
@@ -79,36 +72,15 @@ export class ConsumerCreateModalComponent {
         ];
     }
 
-    show() {
-        if (this.open) {
-            return;
-        }
-
-        this.open = true;
-
-        const config = new TemplateModalConfig<boolean, boolean, void>(this.consumerDetailsModal);
-        config.mustScroll = true;
-        this.modal = this._modalService.open(config);
-        this.modal.onApprove(_ => {
- this.closeCallback();
-});
-        this.modal.onDeny(_ => {
- this.closeCallback();
-});
-
-        this.init();
-    }
-
     closeCallback(): void {
-        this.open = false;
         if (this.newConsumer.id) {
-            this.close.emit(CloseEventType.CREATED);
+            this._modal.triggerOk();
         } else {
-            this.close.emit(CloseEventType.CLOSED);
+            this._modal.triggerCancel();
         }
     }
 
-    init(): void {
+    ngOnInit(): void {
         this.newConsumer = new AuthConsumer();
         this.signinToken = null;
         this.selectedGroupKeys = null;
@@ -256,9 +228,5 @@ export class ConsumerCreateModalComponent {
             }
         }
         this.selectedScopeDetails.push(detail);
-    }
-
-    clickClose() {
-        this.modal.approve(true);
     }
 }

@@ -2,92 +2,74 @@
     <app-workflow-run-summary [(direction)]="direction" [project]="project"
         [class.above]="workflowRunData['status'] === pipelineStatusEnum.PENDING">
     </app-workflow-run-summary>
-    <div *ngIf="displayError" class="ui grid">
-        <div class="ui row">
-            <div class="ui one wide column mt">
-            </div>
-            <div class="ui fourteen wide column mt">
-                <!-- ERRORS PANEL -->
-                <sui-accordion class="styled fluid">
-                    <ng-container *ngFor="let info of workflowRunData['infos']; let first = first">
-                        <sui-accordion-panel [isOpen]="first" *ngIf="info.type === 'Error'">
-                            <div title>
-                                <i class="dropdown icon"></i>
-                                <i class="red exclamation triangle icon"></i>
-                                <span *ngIf="!errorsMap[info.message.id]">{{info.message.id}}</span>
-                                <span *ngIf="errorsMap[info.message.id]">{{errorsMap[info.message.id].title |
-                                    translate}}</span>
-                            </div>
-                            <div content>
-                                <p>
-                                    {{info.user_message}}. <span
-                                        *ngIf="errorsMap[info.message.id] && errorsMap[info.message.id].description">{{errorsMap[info.message.id].description
-                                        | translate}}</span>
-                                </p>
-                                <p *ngIf="errorsMap[info.message.id] && errorsMap[info.message.id].link">
-                                    <i class="book open icon"></i>{{'common_find_help' | translate}} <a target="_blank"
-                                        rel="noopener noreferrer"
-                                        [href]="errorsMap[info.message.id].link">{{'common_here' |
-                                        translate}}</a>.
-                                </p>
-                            </div>
-                        </sui-accordion-panel>
-                    </ng-container>
-                </sui-accordion>
-            </div>
-        </div>
-    </div>
-    <div *ngIf="warnings && warnings.length > 0" class="ui grid">
-        <div class="ui row">
-            <div class="ui one wide column mt"></div>
-            <div class="ui fourteen wide column mt">
-                <!-- Warning PANEL -->
-                <sui-accordion class="styled fluid">
-                    <ng-container *ngFor="let info of warnings; let first = first">
-                        <sui-accordion-panel [isOpen]="first">
-                            <div title>
-                                <i class="dropdown icon"></i>
-                                <i class="yellow exclamation triangle icon"></i>
-                                <span *ngIf="warningsMap[info.message.id]">{{warningsMap[info.message.id].title |
-                                    translate}}</span>
-                                <span *ngIf="!warningsMap[info.message.id]">{{info.message.id}}</span>
-                            </div>
-                            <div content>
-                                <p>
-                                    {{info.user_message}}.
-                                </p>
-                                <p *ngIf="warningsMap[info.message.id]">
-                                    <i class="book open icon"></i>{{'common_find_help' | translate}} <a target="_blank"
-                                        rel="noopener noreferrer"
-                                        [href]="warningsMap[info.message.id].link">{{'common_here' |
-                                        translate}}</a>
-                                </p>
-                            </div>
-                        </sui-accordion-panel>
-                    </ng-container>
-                </sui-accordion>
-            </div>
-        </div>
-    </div>
-    <div *ngIf="workflowRunData && workflowRunData['read_only']" class="ui grid">
-        <div class="ui row">
-            <div class="ui one wide column mt"></div>
-            <div class="ui fourteen wide column mt">
-                <sui-accordion class="styled fluid">
-                    <sui-accordion-panel>
-                        <div title>
-                            <i class="dropdown icon"></i>
-                            <i class="blue exclamation circle icon"></i>
-                            <span>{{'workflow_run_readonly_title' | translate}}</span>
+    <nz-row *ngIf="displayError">
+        <nz-col [nzOffset]="2" [nzSpan]="20">
+            <nz-collapse *ngIf="workflowRunData['infos']">
+                <ng-container *ngFor="let info of workflowRunData['infos']; let first = first">
+                    <nz-collapse-panel [nzActive]="first" *ngIf="info.type === 'Error'" [nzHeader]="headerTmpl">
+                        <ng-template #headerTmpl>
+                            <i nz-icon nzType="warning" nzTheme="fill" class="header"></i>
+                            <span *ngIf="!errorsMap[info.message.id]">{{info.message.id}}</span>
+                            <span *ngIf="errorsMap[info.message.id]">{{errorsMap[info.message.id].title |
+                                translate}}</span>
+                        </ng-template>
+                        <div>
+                            <p>
+                                {{info.user_message}}. <span
+                                    *ngIf="errorsMap[info.message.id] && errorsMap[info.message.id].description">{{errorsMap[info.message.id].description
+                                | translate}}</span>
+                            </p>
+                            <p>
+                                <span *ngIf="errorsMap[info.message.id] && errorsMap[info.message.id].link">
+                                    <i nz-icon nzType="book" nzTheme="outline"></i>{{'common_find_help' | translate}}
+                                    <a target="_blank" rel="noopener noreferrer" [href]="errorsMap[info.message.id]?.link">{{'common_here' | translate}}</a>.
+                                </span>
+                            </p>
                         </div>
-                        <div content>
-                            <p>{{'workflow_run_readonly_content' | translate}}</p>
+                    </nz-collapse-panel>
+                </ng-container>
+            </nz-collapse>
+        </nz-col>
+    </nz-row>
+    <nz-row *ngIf="warnings && warnings.length > 0" class="ui grid">
+        <nz-col [nzOffset]="2" [nzSpan]="20">
+            <!-- Warning PANEL -->
+            <nz-collapse>
+                <ng-container *ngFor="let info of warnings; let first = first">
+                    <nz-collapse-panel [nzActive]="first" [nzHeader]="headerWarnTmpl">
+                        <ng-template #headerWarnTmpl>
+                            <i nz-icon nzType="warning" nzTheme="fill" class="header warning"></i>
+                            <span *ngIf="warningsMap[info.message.id]">{{warningsMap[info.message.id].title |
+                                translate}}</span>
+                            <span *ngIf="!warningsMap[info.message.id]">{{info.message.id}}</span>
+                        </ng-template>
+                        <div>
+                            <p>
+                                {{info.user_message}}.
+                            </p>
+                            <p *ngIf="warningsMap[info.message.id]">
+                                <i nz-icon nzType="book" nzTheme="outline"></i>{{'common_find_help' | translate}}
+                                <a target="_blank" rel="noopener noreferrer" [href]="warningsMap[info.message.id].link">{{'common_here' | translate}}</a>
+                            </p>
                         </div>
-                    </sui-accordion-panel>
-                </sui-accordion>
-            </div>
-        </div>
-    </div>
+                    </nz-collapse-panel>
+                </ng-container>
+            </nz-collapse>
+        </nz-col>
+    </nz-row>
+    <nz-row *ngIf="workflowRunData && workflowRunData['read_only']">
+        <nz-col [nzOffset]="2" [nzSpan]="20">
+            <nz-collapse>
+                <nz-collapse-panel [nzHeader]="headerROTmpl">
+                    <ng-template #headerROTmpl>
+                        <i nz-icon nzType="warning" nzTheme="outline" class="header info"></i>
+                        <span>{{'workflow_run_readonly_title' | translate}}</span>
+                    </ng-template>
+                    <p>{{'workflow_run_readonly_content' | translate}}</p>
+                </nz-collapse-panel>
+            </nz-collapse>
+        </nz-col>
+    </nz-row>
     <div class="graph-wrapper">
         <app-workflow-graph
             *ngIf="workflowRunData['status'] !== pipelineStatusEnum.PENDING && workflowRunData['workflow'] && workflowRunData['workflow'].workflow_data"
@@ -102,15 +84,14 @@
                         <div class="sk-fold-cube"></div>
                         <div class="sk-fold-cube"></div>
                     </div>
-                    {{'workflow_run_scheduling' | translate }}
+                    {{'workflow_run_scheduling' | translate }}
                 </ng-container>
                 <div *ngIf="runDelayed">
                     <i class="hourglass half icon"></i>
-                    {{'workflow_run_delayed' | translate }}
+                    {{'workflow_run_delayed' | translate }}
                 </div>
             </div>
         </div>
     </div>
 </div>
-<div class="ui text active loader" *ngIf="!workflowRunData || !workflowRunData['id']">
-    Loading workflow...</div>
+<nz-spin *ngIf="!workflowRunData || !workflowRunData['id']" nzTip="Loading workflow..."></nz-spin>

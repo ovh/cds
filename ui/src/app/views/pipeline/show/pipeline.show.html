@@ -5,14 +5,10 @@
             [workflow]="workflowName" [version]="version" [buildNumber]="buildNumber" [envName]="envName"
             [remote]="remote" [branch]="branch">
             <div class="right floated labelFeature" [title]="'workflow_from_repository_btn' | translate">
-                <a class="ui label small basic"
-                    [class.green]="pipeline && pipeline.from_repository && (!pipeline.ascode_events || pipeline.ascode_events.length ===0)"
-                    [class.orange]="pipeline && pipeline.from_repository && pipeline?.ascode_events?.length > 0"
-                    [class.grey]="pipeline && !pipeline.from_repository && (!pipeline.ascode_events || pipeline.ascode_events.length === 0)"
-                    nz-popover [nzPopoverContent]="popupFromRepository" nzPopoverPlacement="bottomLeft" nzPopoverTrigger="click">
-                    <i class="code icon"></i>as code
-                </a>
-                <ng-template let-popup #popupFromRepository>
+                <nz-tag [nzColor]="nzTagColor" nz-popover nzPopoverTrigger="click" [nzPopoverContent]="popupFromRepository"
+                        nzPopoverPlacement="bottom"><i nz-icon nzType="code" nzTheme="outline"></i>as code</nz-tag>
+
+                <ng-template #popupFromRepository>
                     <div class="content infoPopup">
                         <ng-container *ngIf="pipeline?.workflow_ascode_holder">
                             <app-ascode-event [project]="project" [workflow]="pipeline.workflow_ascode_holder"
