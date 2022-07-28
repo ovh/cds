@@ -26,7 +26,7 @@
                             <a title="Copy version" ngxClipboard [cbContent]="r.version ? r.version : r.num"
                                 (click)="confirmCopy();$event.stopPropagation();"><i class="copy outline icon"></i></a>
                         </div>
-                        <ng-template let-popup #popupTemplate>
+                        <ng-template #popupTemplate>
                             <div class="content">
                                 <div class="ui bulleted list">
                                     <div class="item"
@@ -36,8 +36,8 @@
                                 </div>
                             </div>
                         </ng-template>
-                        <div class="line" *ngIf="filteredTags[r.id] && filteredTags[r.id].length" suiPopup
-                            [popupTemplate]="popupTemplate" popupPlacement="right">
+                        <div class="line" *ngIf="filteredTags[r.id] && filteredTags[r.id].length" nz-popover
+                            [nzPopoverContent]="popupTemplate" nzPopoverPlacement="right">
                             <ng-container *ngFor="let t of filteredTags[r.id]; let i = index; let last = last">
                                 {{t.value}}<ng-container *ngIf="!last">,</ng-container>
                             </ng-container>
