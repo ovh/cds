@@ -1,101 +1,101 @@
-<div class="ui cards" [class.centered]="centered">
-  <div class="card" *ngIf="(workflows && workflows.length) || (projects && projects.length)">
-    <div class="content">
-      <div class="header">
-        {{'favorite_add' | translate}}
-      </div>
-      <div class="description">
-        <sui-select class="selection"
-                    placeholder="{{'favorite_select_type' | translate}}"
-                    [(ngModel)]="newFav.type">
-            <sui-select-option value="project"></sui-select-option>
-            <sui-select-option value="workflow"></sui-select-option>
-        </sui-select>
-        <ng-container *ngIf="newFav.type === 'project'">
-          <sui-select class="selection mt5"
-                      placeholder="{{'favorite_project_select' | translate}}"
-                      labelField="name"
-                      [options]="filteredProjects"
-                      [isSearchable]="true"
-                      [(ngModel)]="newFav"
-                      #selectProj>
-              <sui-select-option *ngFor="let option of selectProj.filteredOptions" [value]="option"></sui-select-option>
-          </sui-select>
-        </ng-container>
-        <ng-container *ngIf="newFav.type === 'workflow'">
-          <sui-select class="selection mt5"
-                      placeholder="{{'favorite_project_select' | translate}}"
-                      labelField="name"
-                      valueField="key"
-                      [options]="projects"
-                      [isSearchable]="true"
-                      [(ngModel)]="projectKeySelected"
-                      #selectProj>
-              <sui-select-option *ngFor="let option of selectProj.filteredOptions" [value]="option"></sui-select-option>
-          </sui-select>
-        </ng-container>
-        <ng-container *ngIf="newFav.type === 'workflow' && projectKeySelected">
-          <sui-select class="selection mt5"
-                      placeholder="{{'favorite_workflow_select' | translate}}"
-                      labelField="workflow_name"
-                      [options]="filteredWf"
-                      [isSearchable]="true"
-                      [(ngModel)]="newFav"
-                      #selectWf>
-              <sui-select-option *ngFor="let option of selectWf.filteredOptions" [value]="option"></sui-select-option>
-          </sui-select>
-        </ng-container>
-      </div>
-    </div>
-    <div class="ui bottom green attached button" [class.disabled]="loading[newFav.key + newFav.workflow_name]" (click)="updateFav(newFav)">
-      <i class="plus icon" *ngIf="!loading[newFav.key + newFav.workflow_name]"></i>
-      <div class="ui active small inline loader" *ngIf="loading[newFav.key + newFav.workflow_name]"></div>
-      {{'favorite_add_btn' | translate}}
-    </div>
-  </div>
-  <ng-container *ngFor="let favorite of favorites">
-    <div class="card">
-      <div class="content">
-        <ng-container [ngSwitch]="favorite.type">
-          <ng-container *ngSwitchCase="'workflow'">
-            <div class="right floated" *ngIf="!favorite.icon">
-              <i class="share alternate icon"></i>
-            </div>
-            <img class="right floated mini ui image" [src]="favorite.icon" *ngIf="favorite.icon">
-            <a class="header" href="#" [routerLink]="['/project', favorite.key, 'workflow', favorite.workflow_name]">
-              {{favorite.workflow_name}}
-            </a>
-            <div class="meta">
-              {{'navbar_workflow_in' | translate}} <a class="projectLink" href="" [routerLink]="['/project', favorite.key]">{{favorite.key}}</a>
-            </div>
-            <div class="description">
-              {{favorite.description}}
-            </div>
-          </ng-container>
-          <ng-container *ngSwitchDefault>
-            <div class="right floated" *ngIf="!favorite.icon">
-              <i class="browser icon"></i>
-            </div>
-            <img class="right floated mini ui image" [src]="favorite.icon" *ngIf="favorite.icon">
-            <a class="header" href="#" [routerLink]="['/project', favorite.key]">
-              {{favorite.name}}
-            </a>
-            <div class="meta">
-              {{'common_project' | translate}}
-            </div>
-            <div class="description">
-              {{favorite.description}}
-            </div>
-          </ng-container>
-        </ng-container>
-      </div>
-      <div class="ui bottom attached vertical animated button" (click)="updateFav(favorite)" [class.disabled]="loading[favorite.key + favorite.workflow_name]" tabindex="0">
-        <div class="hidden content">{{'common_favorites_delete' | translate}}</div>
-        <div class="visible content">
-          <div class="ui active small inline loader" *ngIf="loading[favorite.key + favorite.workflow_name]"></div>
-          <i class="trash icon" *ngIf="!loading[favorite.key + favorite.workflow_name]"></i>
-        </div>
-      </div>
-    </div>
-  </ng-container>
-</div>
+<ng-container *ngIf="(workflows && workflows.length) || (projects && projects.length)">
+    <nz-row>
+        <nz-col [nzSpan]="6">
+            <nz-card [nzActions]="[actionSetting]">
+                <nz-card-meta
+                        nzTitle="Add a bookmark"
+                        [nzDescription]="descriptionTmpl"
+                ></nz-card-meta>
+            </nz-card>
+            <ng-template #descriptionTmpl>
+                <nz-select [(ngModel)]="newFav.type" nzPlaceHolder="Select a favorite type">
+                    <nz-option nzLabel="project" nzValue="project"></nz-option>
+                    <nz-option nzLabel="workflow" nzValue="workflow"></nz-option>
+                </nz-select>
+                <ng-container *ngIf="newFav.type === 'project'">
+                    <nz-select nzShowSearch nzPlaceHolder="Select a project"
+                               [(ngModel)]="newFav"
+                               #selectProj>
+                        <nz-option *ngFor="let p of filteredProjects" [nzLabel]="p.name" [nzValue]="p"></nz-option>
+                    </nz-select>
+                </ng-container>
+                <ng-container *ngIf="newFav.type === 'workflow'">
+                    <nz-select nzShowSearch nzPlaceHolder="Select a project" [(ngModel)]="projectKeySelected">
+                        <nz-option *ngFor="let p of projects" [nzLabel]="p.name" [nzValue]="p.key"></nz-option>
+                    </nz-select>
+                </ng-container>
+                <ng-container *ngIf="newFav.type === 'workflow' && projectKeySelected">
+                    <nz-select nzShowSearch nzPlaceHolder="Select a workflow"
+                               [(ngModel)]="newFav"
+                               #selectWf>
+                        <nz-option *ngFor="let w of filteredWf" [nzLabel]="w.workflow_name" [nzValue]="w"></nz-option>
+                    </nz-select>
+                </ng-container>
+            </ng-template>
+            <ng-template #actionSetting>
+                <button nz-button nzType="link" (click)="updateFav(newFav)">
+                    <i nz-icon nzType="plus"></i> Add to my bookmarks
+                </button>
+            </ng-template>
+        </nz-col>
+        <nz-col [nzSpan]="6" *ngFor="let favorite of favorites">
+            <ng-template #extraTmpl>
+                <ng-container [ngSwitch]="favorite.type">
+                    <ng-container *ngSwitchCase="'workflow'">
+                        <i class="share alternate icon" *ngIf="!favorite.icon"></i>
+                        <img width="32" [src]="favorite.icon" *ngIf="favorite.icon">
+                    </ng-container>
+                    <ng-container *ngSwitchDefault>
+                        <i class="browser icon" *ngIf="!favorite.icon"></i>
+                        <img  width="32" [src]="favorite.icon" *ngIf="favorite.icon">
+                    </ng-container>
+                </ng-container>
+            </ng-template>
+            <ng-template #favTitle>
+                <ng-container *ngIf="favorite.type === 'workflow'">
+                    <a class="header" href="#"
+                       [routerLink]="['/project', favorite.key, 'workflow', favorite.workflow_name]">
+                        {{favorite.workflow_name}}
+                    </a>
+                </ng-container>
+                <ng-container *ngIf="favorite.type === 'project'">
+                    <a class="header" href="#" [routerLink]="['/project', favorite.key]">
+                        {{favorite.name}}
+                    </a>
+                </ng-container>
+            </ng-template>
+            <ng-template #favDescTmpl>
+                <ng-container *ngIf="favorite.type === 'workflow'">
+                    <div>
+                        Workflow in <a class="projectLink" href="" [routerLink]="['/project', favorite.key]">{{favorite.key}}</a>
+                    </div>
+                    <div>
+                        {{favorite.description}}
+                    </div>
+                </ng-container>
+                <ng-container *ngIf="favorite.type === 'project'">
+                    <div>
+                       Project
+                    </div>
+                    <div>
+                        {{favorite.description}}
+                    </div>
+                </ng-container>
+            </ng-template>
+            <ng-template #favActionsTmpl>
+                <button nz-button nzType="link" (click)="updateFav(favorite)" [disabled]="loading[favorite.key + favorite.workflow_name]">
+                    <i nz-icon nzType="delete"></i>Delete from bookmarks
+                </button>
+            </ng-template>
+            <nz-card [nzActions]="[favActionsTmpl]">
+                <nz-card-meta
+                        [nzTitle]="favTitle"
+                        [nzDescription]="favDescTmpl"
+                        [nzAvatar]="extraTmpl"
+                ></nz-card-meta>
+            </nz-card>
+        </nz-col>
+    </nz-row>
+</ng-container>
+
+
