@@ -1,7 +1,7 @@
 @import '../../../../../common';
 .codeButton {
   position: absolute;
-  top: 2px;
-  right: -1px;
+  top: 4px;
+  right: 4px;
   z-index: 10; // to be over code mirror editor
 }
