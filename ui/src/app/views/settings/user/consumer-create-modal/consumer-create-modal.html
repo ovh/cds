@@ -1,4 +1,4 @@
-<ng-template let-context let-modal="modal" #consumerCreateModal>
+<div>
     <div class="header">
         {{ 'auth_consumer_create_modal_title' | translate }}
     </div>
@@ -111,33 +111,33 @@
             </div>
         </div>
     </div>
-    <div class="actions">
-        <div class="ui grid">
-            <div class="four wide column left aligned">
-                <button
+</div>
+<div *nzModalFooter>
+    <div class="ui grid">
+        <div class="four wide column left aligned">
+            <button
                     *ngIf="activeStep === formStepName.GROUPS || activeStep === formStepName.SCOPES || activeStep === formStepName.SERVICE"
                     class="ui primary button" (click)="clickBack()">
-                    {{ 'btn_back' | translate }}
-                </button>
-            </div>
-            <div class="eight wide column centered">
-                <button *ngIf="activeStep !== formStepName.TOKEN" class="ui green button" [class.loading]="loading"
+                {{ 'btn_back' | translate }}
+            </button>
+        </div>
+        <div class="eight wide column centered">
+            <button *ngIf="activeStep !== formStepName.TOKEN" class="ui green button" [class.loading]="loading"
                     (click)="clickNext()">
-                    <ng-container *ngIf="activeStep === formStepName.SERVICE; then createButton; else nextButton">
-                    </ng-container>
-                    <ng-template #createButton>
-                        <i class="save icon"></i>{{ 'btn_create' | translate }}
-                    </ng-template>
-                    <ng-template #nextButton>
-                        {{ 'btn_next' | translate }}
-                    </ng-template>
-                </button>
-            </div>
-            <div class="four wide column right aligned">
-                <button class="ui secondary button" (click)="clickClose()">
-                    {{ 'btn_close' | translate }}
-                </button>
-            </div>
+                <ng-container *ngIf="activeStep === formStepName.SERVICE; then createButton; else nextButton">
+                </ng-container>
+                <ng-template #createButton>
+                    <i class="save icon"></i>{{ 'btn_create' | translate }}
+                </ng-template>
+                <ng-template #nextButton>
+                    {{ 'btn_next' | translate }}
+                </ng-template>
+            </button>
+        </div>
+        <div class="four wide column right aligned">
+            <button class="ui secondary button" (click)="closeCallback()">
+                {{ 'btn_close' | translate }}
+            </button>
         </div>
     </div>
-</ng-template>
+</div>

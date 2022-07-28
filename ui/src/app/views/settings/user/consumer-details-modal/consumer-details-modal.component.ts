@@ -2,14 +2,10 @@ import {
     ChangeDetectionStrategy,
     ChangeDetectorRef,
     Component,
-    EventEmitter,
-    Input,
-    Output,
-    ViewChild
+    Input, OnInit,
 } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { AuthConsumer, AuthConsumerValidityPeriod, AuthSession } from 'app/model/authentication.model';
 import { Group } from 'app/model/group.model';
 import { AuthentifiedUser, AuthSummary } from 'app/model/user.model';
@@ -20,6 +16,7 @@ import { Column, ColumnType, Filter } from 'app/shared/table/data-table.componen
 import { ToastService } from 'app/shared/toast/ToastService';
 import { AuthenticationState } from 'app/store/authentication.state';
 import * as moment from 'moment';
+import { NzModalRef } from 'ng-zorro-antd/modal';
 
 export enum CloseEventType {
     CHILD_DETAILS = 'CHILD_DETAILS',
@@ -45,14 +42,10 @@ const defaultMenuItems = [<Item>{
     styleUrls: ['./consumer-details-modal.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ConsumerDetailsModalComponent {
-    @ViewChild('consumerDetailsModal') consumerDetailsModal: ModalTemplate<boolean, boolean, void>;
-    modal: SuiActiveModal<boolean, boolean, void>;
-    open: boolean;
+export class ConsumerDetailsModalComponent implements OnInit {
 
     @Input() user: AuthentifiedUser;
     @Input() consumer: AuthConsumer;
-    @Output() close = new EventEmitter<CloseEvent>();
 
     loading: boolean;
     currentAuthSummary: AuthSummary;
@@ -71,7 +64,7 @@ export class ConsumerDetailsModalComponent {
     columnsValidityPeriods: Array<Column<AuthConsumerValidityPeriod>>;
 
     constructor(
-        private _modalService: SuiModalService,
+        private _modal: NzModalRef,
         private _authenticationService: AuthenticationService,
         private _userService: UserService,
         private _cd: ChangeDetectorRef,
@@ -197,62 +190,11 @@ export class ConsumerDetailsModalComponent {
         ];
     }
 
-    show() {
-        if (this.open) {
-            return;
-        }
-
-        this.open = true;
-        this.regenConsumerSigninToken = null;
-        const config = new TemplateModalConfig<boolean, boolean, void>(this.consumerDetailsModal);
-        config.mustScroll = true;
-        this.modal = this._modalService.open(config);
-        this.modal.onApprove(_ => {
- this.closeCallback();
-});
-        this.modal.onDeny(_ => {
- this.closeCallback();
-});
-
-        this.init();
-    }
-
-    closeCallback(): void {
-        this.open = false;
-
-        if (this.consumerDeletedOrDetached) {
-            this.close.emit(<CloseEvent>{
-                type: CloseEventType.DELETE_OR_DETACH,
-                payload: this.consumer.id
-            });
-            return;
-        }
-
-        if (this.selectedChildDetails) {
-            this.close.emit(<CloseEvent>{
-                type: CloseEventType.CHILD_DETAILS,
-                payload: this.selectedChildDetails
-            });
-            return;
-        }
-
-        if (this.regenConsumerSigninToken) {
-            this.close.emit(<CloseEvent>{
-                type: CloseEventType.REGEN,
-                payload: this.consumer.id
-            });
-            return;
-        }
-
-        this.close.emit(<CloseEvent>{
-            type: CloseEventType.CLOSED
-        });
-    }
-
-    init(): void {
+    ngOnInit(): void {
         if (!this.consumer) {
             return;
         }
+        this.regenConsumerSigninToken = null;
 
         this.selectedChildDetails = null;
         this.consumerDeletedOrDetached = false;
@@ -302,7 +244,10 @@ export class ConsumerDetailsModalComponent {
 
     clickConsumerDetails(c: AuthConsumer): void {
         this.selectedChildDetails = c;
-        this.modal.approve(true);
+        this._modal.close(<CloseEvent>{
+            type: CloseEventType.CHILD_DETAILS,
+            payload: this.selectedChildDetails
+        });
     }
 
     clickResetPassword(): void {
@@ -315,7 +260,10 @@ export class ConsumerDetailsModalComponent {
     clickDelete(): void {
         this._userService.deleteConsumer(this.user.username, this.consumer).subscribe(() => {
             this.consumerDeletedOrDetached = true;
-            this.modal.approve(true);
+            this._modal.close(<CloseEvent>{
+                type: CloseEventType.DELETE_OR_DETACH,
+                payload: this.consumer.id
+            })
         });
     }
 
@@ -324,12 +272,25 @@ export class ConsumerDetailsModalComponent {
         this._authenticationService.detach(this.consumer.type).subscribe(() => {
             this.consumerDeletedOrDetached = true;
             this.loading = false;
-            this.modal.approve(true);
+            this._modal.close(<CloseEvent>{
+                type: CloseEventType.DELETE_OR_DETACH,
+                payload: this.consumer.id
+            });
         });
     }
 
     clickClose(): void {
-        this.modal.approve(true);
+        if (this.regenConsumerSigninToken) {
+            this._modal.close (<CloseEvent>{
+                type: CloseEventType.REGEN,
+                payload: this.consumer.id
+            });
+            return;
+        }
+        this._modal.close(<CloseEvent>{
+            type: CloseEventType.CLOSED,
+            payload: this.consumer.id
+        })
     }
 
     clickRegen(revokeSession: boolean): void {
@@ -337,6 +298,7 @@ export class ConsumerDetailsModalComponent {
         this._userService.regenConsumer(this.user.username, this.consumer, revokeSession).subscribe(res => {
             this.consumer = res.consumer;
             this.regenConsumerSigninToken = res.token;
+            this._cd.markForCheck();
         });
     }
 }

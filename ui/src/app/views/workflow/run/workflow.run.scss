@@ -1,5 +1,27 @@
 @import '../../../../common';
 
+i {
+  margin-right: 5px;
+}
+i.header {
+    color: red;
+    margin-top: 3px;
+}
+i.header.warning {
+  color: orange;
+}
+i.header.info {
+  color: #3c9ae8;
+}
+
+nz-spin {
+  margin-top: 30px;
+}
+
+nz-collapse {
+  margin-top: 20px;
+}
+
 .workflow-run {
     width: 100%;
     height: 100%;
