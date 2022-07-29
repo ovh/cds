@@ -61,6 +61,7 @@ workflow:
     asCodeResult: PerformAsCodeResponse;
     projectSubscription: Subscription;
     templates: Array<WorkflowTemplate>;
+    filteredTemplate: Array<WorkflowTemplate>;
     selectedTemplatePath: string;
     selectedTemplate: WorkflowTemplate;
     descriptionRows: number;
@@ -185,19 +186,18 @@ workflow:
         this._cd.markForCheck();
     }
 
-    filterTemplate(options: Array<WorkflowTemplate>, query: string): Array<WorkflowTemplate> | false {
-        if (!options) {
-            return false;
-        }
+    filterTemplate(query: string): void {
         if (!query) {
-            return options.sort();
-        }
+            this.filteredTemplate = Object.assign([], this.templates);
 
-        let lowerQuery = query.toLowerCase();
-        return options.filter(wt => wt.name.toLowerCase().indexOf(lowerQuery) !== -1 ||
-            wt.slug.toLowerCase().indexOf(lowerQuery) !== -1 ||
-            wt.group.name.toLowerCase().indexOf(lowerQuery) !== -1 ||
-            `${wt.group.name}/${wt.slug}`.toLowerCase().indexOf(lowerQuery) !== -1).sort();
+        } else {
+            let lowerQuery = query.toLowerCase();
+            this.filteredTemplate = this.templates.filter(wt => wt.name.toLowerCase().indexOf(lowerQuery) !== -1 ||
+                wt.slug.toLowerCase().indexOf(lowerQuery) !== -1 ||
+                wt.group.name.toLowerCase().indexOf(lowerQuery) !== -1 ||
+                `${wt.group.name}/${wt.slug}`.toLowerCase().indexOf(lowerQuery) !== -1).sort()
+        }
+        this._cd.markForCheck();
     }
 
     createWorkflowFromRepo() {
@@ -285,6 +285,7 @@ workflow:
     fetchTemplates() {
         this._workflowTemplateService.getAll().subscribe(ts => {
             this.templates = ts;
+            this.filteredTemplate = Object.assign([], this.templates);
             this._cd.markForCheck();
         });
     }

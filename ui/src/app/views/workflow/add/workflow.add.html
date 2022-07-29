@@ -218,69 +218,71 @@
                                         </ng-container>
                                     </nz-col>
                                 </nz-row>
-                            </div>
 
-
-                            <form class="ui form" *ngSwitchCase="0">
-                                <div class="ui grid">
-                                    <div class="ui row">
-                                        <div class="one wide column"></div>
-
-
-
-                                        <div class="fourteen wide column" *ngIf="creationMode === 'template'">
-                                            <ng-container>
-                                                <div class="ui grid">
-                                                    <div class="sixteen wide column">
-                                                        <div class="ui wide eighteen field">
-                                                            <label>{{ 'workflow_wizard_select_template' |
-                                                                translate}}</label>
-                                                            <sui-select class="selection"
-                                                                        name="selectedTemplatePath"
-                                                                        [(ngModel)]="selectedTemplatePath"
-                                                                        (selectedOptionChange)="showTemplateForm($event)"
-                                                                        [optionsFilter]="filterTemplate"
-                                                                        [options]="templates" [isSearchable]="true"
-                                                                        #select>
-                                                                <sui-select-option
-                                                                        *ngFor="let t of select.filteredOptions"
-                                                                        [value]="t.group.name + '/' + t.slug">
-                                                                </sui-select-option>
-                                                            </sui-select>
-                                                        </div>
-                                                        <div class="ui wide eighteen field"
-                                                             *ngIf="selectedTemplate">
-                                                            <div class="fields">
-                                                                <div class="nine wide field">
-                                                                    <label>{{'common_name' | translate}}</label>
-                                                                    <input class="ui input" type="text"
-                                                                           name="name" [disabled]="true"
-                                                                           [ngModel]="selectedTemplate.name">
-                                                                </div>
-                                                                <div class="nine wide field">
-                                                                    <label>{{'common_group' | translate}}</label>
-                                                                    <input class="ui input" type="text"
-                                                                           name="group" [disabled]="true"
-                                                                           [ngModel]="selectedTemplate.group.name">
-                                                                </div>
-                                                            </div>
-                                                            <div class="field">
-                                                                <label>{{'common_description' | translate}}</label>
+                                <nz-row *ngIf="creationMode === 'template'">
+                                    <nz-col [nzSpan]="20" [nzOffset]="2">
+                                        <nz-row>
+                                            <nz-col [nzSpan]="24">
+                                                <nz-form-item>
+                                                    <nz-form-label>{{ 'workflow_wizard_select_template' | translate}}</nz-form-label>
+                                                    <nz-form-control>
+                                                        <nz-select name="selectedTemplatePath" nzShowSearch
+                                                                    [(ngModel)]="selectedTemplatePath"
+                                                                    (ngModelChange)="showTemplateForm($event)"
+                                                                   (nzOnSearch)="filterTemplate($event)"
+                                                                    #select>
+                                                            <nz-option *ngFor="let t of filteredTemplate"
+                                                                [nzLabel]="t.group.name + '/' + t.slug"
+                                                                [nzValue]="t.group.name + '/' + t.slug"></nz-option>
+                                                        </nz-select>
+                                                    </nz-form-control>
+                                                </nz-form-item>
+                                            </nz-col>
+                                            <nz-col [nzSpan]="24" *ngIf="selectedTemplate">
+                                                <nz-row>
+                                                    <nz-col [nzSpan]="12">
+                                                        <nz-form-item>
+                                                            <nz-form-label>Name</nz-form-label>
+                                                            <nz-form-control>
+                                                                <input nz-input type="text"
+                                                                       name="name" [disabled]="true"
+                                                                       [ngModel]="selectedTemplate.name">
+                                                            </nz-form-control>
+                                                        </nz-form-item>
+                                                    </nz-col>
+                                                    <nz-col [nzSpan]="11" [nzOffset]="1">
+                                                        <nz-form-label>Group</nz-form-label>
+                                                        <nz-form-control>
+                                                            <input nz-input type="text"
+                                                                   name="group" [disabled]="true"
+                                                                   [ngModel]="selectedTemplate.group.name">
+                                                        </nz-form-control>
+                                                    </nz-col>
+                                                </nz-row>
+                                                <nz-row>
+                                                    <nz-col [nzSpan]="24">
+                                                        <nz-form-item>
+                                                            <nz-form-label>Description</nz-form-label>
+                                                            <nz-form-control>
                                                                 <markdown [data]="selectedTemplate.description">
                                                                 </markdown>
-                                                            </div>
-                                                            <app-workflow-template-apply-form
-                                                                    [project]="project"
-                                                                    [workflowTemplate]="selectedTemplate">
-                                                            </app-workflow-template-apply-form>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </ng-container>
-                                        </div>
-                                    </div>
-                                </div>
-                            </form>
+                                                            </nz-form-control>
+                                                        </nz-form-item>
+                                                    </nz-col>
+                                                </nz-row>
+                                                <nz-row>
+                                                    <nz-col [nzSpan]="24">
+                                                        <app-workflow-template-apply-form
+                                                                [project]="project"
+                                                                [workflowTemplate]="selectedTemplate">
+                                                        </app-workflow-template-apply-form>
+                                                    </nz-col>
+                                                </nz-row>
+                                            </nz-col>
+                                        </nz-row>
+                                    </nz-col>
+                                </nz-row>
+                            </div>
 
                             <!-- ######### WORKFLOW PIPELINE SECOND STEP ######### -->
                             <ng-container *ngSwitchCase="1">
