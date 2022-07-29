@@ -4,7 +4,6 @@ import {
     Component,
     OnDestroy,
     OnInit,
-    ViewChild,
 } from '@angular/core';
 import { ActivatedRoute, NavigationStart, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -16,7 +15,6 @@ import { WorkflowCoreService } from 'app/service/workflow/workflow.core.service'
 import { AsCodeSaveModalComponent } from 'app/shared/ascode/save-modal/ascode.save-modal.component';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
-import { WorkflowTemplateApplyModalComponent } from 'app/shared/workflow-template/apply-modal/workflow-template.apply-modal.component';
 import { AddFeatureResult, FeaturePayload } from 'app/store/feature.action';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import {
@@ -30,6 +28,9 @@ import { WorkflowState } from 'app/store/workflow.state';
 import { Observable, Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { NzModalService } from 'ng-zorro-antd/modal';
+import {
+    WorkflowTemplateApplyModalComponent
+} from 'app/shared/workflow-template/apply-modal/workflow-template.apply-modal.component';
 
 
 @Component({
@@ -40,8 +41,6 @@ import { NzModalService } from 'ng-zorro-antd/modal';
 })
 @AutoUnsubscribe()
 export class WorkflowComponent implements OnInit, OnDestroy {
-    @ViewChild('templateApplyModal')
-    templateApplyModal: WorkflowTemplateApplyModalComponent;
 
     project: Project;
 
@@ -211,9 +210,16 @@ export class WorkflowComponent implements OnInit, OnDestroy {
     }
 
     showTemplateFrom(): void {
-        if (this.templateApplyModal) {
-            this.templateApplyModal.show();
-        }
+        this._modalService.create({
+            nzTitle: 'Update workflow from template',
+            nzWidth: '1100px',
+            nzContent: WorkflowTemplateApplyModalComponent,
+            nzComponentParams: {
+                projectIn: this.project,
+                workflowIn: this.workflow
+            },
+            nzFooter: null
+        });
     }
 
     initTemplateFromWorkflow(): void {

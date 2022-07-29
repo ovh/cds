@@ -1,46 +1,50 @@
-<form class="ui form">
-    <div class="ui grid">
-        <div class="wide column">
-            <div class="field">
-                <label>{{'workflow_name' | translate}}*</label>
-                <input class="ui input" type="text" name="workflow_name" [(ngModel)]="parameterName"
-                    [disabled]="workflowTemplateInstance">
-            </div>
-            <app-workflow-template-param-form [project]="project" [workflowTemplate]="workflowTemplate"
-                [workflowTemplateInstance]="workflowTemplateInstance" (paramChange)="changeParam($event)">
-            </app-workflow-template-param-form>
-            <div class="wide field">
-                <app-ascode-save-form *ngIf="asCodeApply" [project]="project" [workflow]="workflow"
-                    [operation]="asCodeOperation" (paramChange)="onAsCodeParamChange($event)">
-                </app-ascode-save-form>
-            </div>
-            <div class="wide field" *ngIf="result">
-                <div class="ui message">
-                    <ul>
-                        <li *ngFor="let s of result.msgs">{{s}}</li>
-                    </ul>
-                </div>
-            </div>
-            <div class="wide field">
-                <div class="ui wide field">
-                    <app-delete-button *ngIf="workflowTemplateInstance?.id && !asCodeApply"
-                        class="left floated" (event)="clickDetach()" [loading]="loading"
-                        [title]="'workflow_template_detach'"></app-delete-button>
-                    <div class="ui checked checkbox" *ngIf="!workflowTemplateInstance && !result">
-                        <input type="checkbox" [ngModel]="detached" [ngModelOptions]="{standalone: true}"
-                            (ngModelChange)="onSelectDetachChange()">
-                        <label>{{'workflow_template_apply_detach' | translate}}</label>
-                    </div>
-                    <button class="ui green button right floated" type="button" (click)="applyTemplate()"
-                        [class.loading]="loading" [disabled]="!validFields">{{ 'btn_apply' | translate }}</button>
-                    <button class="ui primary button right floated" type="button" (click)="goToWorkflow()"
-                        *ngIf="result && !withClose">{{
-                        'btn_goto_workflow' | translate}}</button>
-                    <button class="ui secondary button right floated" [disabled]="loading" (click)="clickClose()"
-                        *ngIf="withClose">{{
-                        'btn_close' | translate }}</button>
-                </div>
-            </div>
-        </div>
-    </div>
-</form>
+<nz-row>
+    <nz-col [nzSpan]="24">
+        <nz-form-item>
+            <nz-form-label>Workflow name*</nz-form-label>
+            <nz-form-control>
+                <input nz-input type="text" name="workflow_name" [(ngModel)]="parameterName"
+                       [disabled]="workflowTemplateInstance">
+            </nz-form-control>
+        </nz-form-item>
+    </nz-col>
+</nz-row>
+<nz-row>
+    <nz-col [nzSpan]="24">
+        <app-workflow-template-param-form [project]="project" [workflowTemplate]="workflowTemplate"
+                                          [workflowTemplateInstance]="workflowTemplateInstance" (paramChange)="changeParam($event)">
+        </app-workflow-template-param-form>
+    </nz-col>
+</nz-row>
+<nz-row *ngIf="asCodeApply">
+    <nz-col [nzSpan]="24">
+        <app-ascode-save-form  [project]="project" [workflow]="workflow"
+                              [operation]="asCodeOperation" (paramChange)="onAsCodeParamChange($event)">
+        </app-ascode-save-form>
+    </nz-col>
+</nz-row>
+<nz-row *ngIf="result">
+    <nz-col [nzSpan]="24">
+        <ul>
+            <li *ngFor="let s of result.msgs">{{s}}</li>
+        </ul>
+    </nz-col>
+</nz-row>
+<nz-row>
+    <nz-col [nzSpan]="12">
+        <button nz-button nzDanger nzType="primary" [nzLoading]="loading" *ngIf="workflowTemplateInstance?.id && !asCodeApply"
+                class="floatLeft" nz-popconfirm nzPopconfirmTitle="Are you sure you want to detach the workflow ?"
+                (nzOnConfirm)="clickDetach()" [title]="'workflow_template_detach'">Delete</button>
+        <label nz-checkbox [(ngModel)]="detached" (ngModelChange)="onSelectDetachChange()"
+               *ngIf="!workflowTemplateInstance && !result">{{'workflow_template_apply_detach' | translate}}</label>
+
+    </nz-col>
+    <nz-col [nzSpan]="12">
+        <button nz-button nzType="primary" class="floatRight" type="button" (click)="applyTemplate()"
+                [nzLoading]="loading" [disabled]="!validFields">Apply</button>
+        <button nz-button nzType="primary" class="floatRight" type="button" (click)="goToWorkflow()"
+                *ngIf="result && !withClose">See workflow</button>
+        <button nz-button nzType="primary" class="floatRight" [disabled]="loading" (click)="clickClose()"
+                *ngIf="withClose">Close</button>
+    </nz-col>
+</nz-row>
