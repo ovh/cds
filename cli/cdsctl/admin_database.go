@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"sort"
+	"strconv"
 
 	"github.com/spf13/cobra"
 
@@ -129,6 +131,19 @@ var adminDatabaseSignatureRoll = cli.Command{
 		Name:       "entity",
 		AllowEmpty: true,
 	},
+	Flags: []cli.Flag{
+		{
+			Name:  "index",
+			Usage: "Resume from a specific index (only available for one entity)",
+			IsValid: func(s string) bool {
+				if s == "" {
+					return true
+				}
+				_, err := strconv.Atoi(s)
+				return err == nil
+			},
+		},
+	},
 }
 
 func adminDatabaseSignatureRollFunc(args cli.Values) error {
@@ -136,9 +151,13 @@ func adminDatabaseSignatureRollFunc(args cli.Values) error {
 	if len(entities) == 0 {
 		return client.AdminDatabaseSignaturesRollAllEntities(args.GetString(argServiceName))
 	}
-
+	idx, _ := args.GetInt64("index")
+	if len(entities) > 1 && idx > 0 {
+		return fmt.Errorf("--index can only be used with one entity")
+	}
+	sort.Strings(entities)
 	for _, e := range entities {
-		if err := client.AdminDatabaseSignaturesRollEntity(args.GetString(argServiceName), e); err != nil {
+		if err := client.AdminDatabaseSignaturesRollEntity(args.GetString(argServiceName), e, &idx); err != nil {
 			return err
 		}
 	}
@@ -182,6 +201,19 @@ var adminDatabaseEncryptionRoll = cli.Command{
 		Name:       "entity",
 		AllowEmpty: true,
 	},
+	Flags: []cli.Flag{
+		{
+			Name:  "index",
+			Usage: "Resume from a specific index (only available for one entity)",
+			IsValid: func(s string) bool {
+				if s == "" {
+					return true
+				}
+				_, err := strconv.Atoi(s)
+				return err == nil
+			},
+		},
+	},
 }
 
 func adminDatabaseEncryptionRollFunc(args cli.Values) error {
@@ -189,9 +221,13 @@ func adminDatabaseEncryptionRollFunc(args cli.Values) error {
 	if len(entities) == 0 {
 		return client.AdminDatabaseRollAllEncryptedEntities(args.GetString(argServiceName))
 	}
-
+	idx, _ := args.GetInt64("index")
+	if len(entities) > 1 && idx > 0 {
+		return fmt.Errorf("--index can only be used with one entity")
+	}
+	sort.Strings(entities)
 	for _, e := range entities {
-		if err := client.AdminDatabaseRollEncryptedEntity(args.GetString(argServiceName), e); err != nil {
+		if err := client.AdminDatabaseRollEncryptedEntity(args.GetString(argServiceName), e, &idx); err != nil {
 			return err
 		}
 	}
