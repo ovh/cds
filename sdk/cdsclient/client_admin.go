@@ -8,7 +8,9 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"time"
 
+	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -234,7 +236,7 @@ func (c *client) AdminDatabaseSignaturesResume(service string) (sdk.CanonicalFor
 	return res, err
 }
 
-func (c *client) AdminDatabaseSignaturesRollEntity(service string, e string) error {
+func (c *client) AdminDatabaseSignaturesRollEntity(service string, e string, idx *int64) error {
 	resume, err := c.AdminDatabaseSignaturesResume(service)
 	if err != nil {
 		return err
@@ -245,6 +247,13 @@ func (c *client) AdminDatabaseSignaturesRollEntity(service string, e string) err
 	}
 
 	for _, s := range resume[e] {
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		var display = new(cli.Display)
+		display.Printf("Rolling %v...", e)
+		display.Do(ctx)
+
 		url := fmt.Sprintf("/admin/database/signature/%s/%s", e, s.Signer)
 		var pks []string
 		var f = c.switchServiceCallFunc(service, http.MethodGet, url, nil, &pks)
@@ -252,11 +261,19 @@ func (c *client) AdminDatabaseSignaturesRollEntity(service string, e string) err
 			return err
 		}
 
-		for _, pk := range pks {
+		for i, pk := range pks {
+			if idx != nil && *idx > int64(i) {
+				continue
+			}
+			display.Printf("Rolling %v (%d/%d)...", e, i+1, len(pks))
 			url := fmt.Sprintf("/admin/database/signature/%s/roll/%s", e, pk)
 			var f = c.switchServiceCallFunc(service, http.MethodPost, url, nil, nil)
 			if _, err := f(); err != nil {
 				return err
+			}
+			if i == len(pks)-1 {
+				display.Printf("Rolling %v (%d/%d) - DONE\n", e, i+1, len(pks))
+				time.Sleep(time.Second)
 			}
 		}
 	}
@@ -270,7 +287,7 @@ func (c *client) AdminDatabaseSignaturesRollAllEntities(service string) error {
 	}
 
 	for e := range resume {
-		if err := c.AdminDatabaseSignaturesRollEntity(service, e); err != nil {
+		if err := c.AdminDatabaseSignaturesRollEntity(service, e, nil); err != nil {
 			return err
 		}
 	}
@@ -284,7 +301,7 @@ func (c *client) AdminDatabaseListEncryptedEntities(service string) ([]string, e
 	return res, err
 }
 
-func (c *client) AdminDatabaseRollEncryptedEntity(service string, e string) error {
+func (c *client) AdminDatabaseRollEncryptedEntity(service string, e string, idx *int64) error {
 	url := fmt.Sprintf("/admin/database/encryption/%s", e)
 	var pks []string
 
@@ -293,11 +310,25 @@ func (c *client) AdminDatabaseRollEncryptedEntity(service string, e string) erro
 		return err
 	}
 
-	for _, pk := range pks {
+	for i, pk := range pks {
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		var display = new(cli.Display)
+		display.Printf("Rolling %v...", e)
+		display.Do(ctx)
+		if idx != nil && *idx > int64(i) {
+			continue
+		}
+		display.Printf("Rolling %v (%d/%d)...", e, i+1, len(pks))
 		url := fmt.Sprintf("/admin/database/encryption/%s/roll/%s", e, pk)
 		var f = c.switchServiceCallFunc(service, http.MethodPost, url, nil, nil)
 		if _, err := f(); err != nil {
 			return err
+		}
+		if i == len(pks)-1 {
+			display.Printf("Rolling %v (%d/%d) - DONE\n", e, i+1, len(pks))
+			time.Sleep(time.Second)
 		}
 	}
 
@@ -310,7 +341,7 @@ func (c *client) AdminDatabaseRollAllEncryptedEntities(service string) error {
 		return err
 	}
 	for _, e := range entities {
-		if err := c.AdminDatabaseRollEncryptedEntity(service, e); err != nil {
+		if err := c.AdminDatabaseRollEncryptedEntity(service, e, nil); err != nil {
 			return err
 		}
 	}
