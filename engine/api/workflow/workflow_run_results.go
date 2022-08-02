@@ -470,6 +470,8 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, dbmap *gorp.DbMap,
 		}
 	}
 
+	log.Debug(ctx, "%d run results to sync on run %d", len(runResults), id)
+
 	var artifactManagerInteg *sdk.WorkflowProjectIntegration
 	for i := range wr.Workflow.Integrations {
 		if wr.Workflow.Integrations[i].ProjectIntegration.Model.ArtifactManager {
