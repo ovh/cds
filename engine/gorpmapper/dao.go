@@ -78,6 +78,10 @@ func (m *Mapper) UpdateColumns(db gorp.SqlExecutor, i interface{}, columnFilter 
 			hasPlaceHolder = true
 			break
 		}
+		if field.Kind() == reflect.Struct && field.IsZero() {
+			hasPlaceHolder = true
+			break
+		}
 	}
 
 	// If the data has encrypted data
@@ -99,8 +103,9 @@ func (m *Mapper) UpdateColumns(db gorp.SqlExecutor, i interface{}, columnFilter 
 		for _, f := range mapping.EncryptedFields {
 			// Reset the field to the decrypted value if the value is set to the placeholder
 			field := val.FieldByName(f.Name)
-			if field.Interface() == sdk.PasswordPlaceholder {
-				oldVal := valTuple.FieldByName(f.Name)
+			oldVal := valTuple.FieldByName(f.Name)
+
+			if field.Interface() == sdk.PasswordPlaceholder || field.Kind() == reflect.Struct && field.IsZero() {
 				field.Set(oldVal)
 			}
 		}
