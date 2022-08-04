@@ -34,7 +34,7 @@ func (c *client) TemplateGetAll() ([]sdk.WorkflowTemplate, error) {
 	return wts, nil
 }
 
-func (c *client) TemplateApply(groupName, templateSlug string, req sdk.WorkflowTemplateRequest) (*tar.Reader, error) {
+func (c *client) TemplateApply(groupName, templateSlug string, req sdk.WorkflowTemplateRequest, mods ...RequestModifier) (*tar.Reader, error) {
 	url := fmt.Sprintf("/template/%s/%s/apply", groupName, templateSlug)
 
 	bs, err := json.Marshal(req)
@@ -42,7 +42,7 @@ func (c *client) TemplateApply(groupName, templateSlug string, req sdk.WorkflowT
 		return nil, err
 	}
 
-	body, _, _, err := c.Request(context.Background(), "POST", url, bytes.NewReader(bs))
+	body, _, _, err := c.Request(context.Background(), "POST", url, bytes.NewReader(bs), mods...)
 	if err != nil {
 		return nil, err
 	}
