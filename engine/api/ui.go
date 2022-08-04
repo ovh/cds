@@ -91,32 +91,34 @@ func (api *API) getApplicationOverviewHandler() service.Handler {
 			Datas: mCoverage,
 		})
 
-		// GET VCS URL
-		// Get vcs info to known if we are on the default branch or not
-		client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, projectKey, app.VCSServer)
-		if err != nil {
-			return sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrNoReposManagerClientAuth,
-				"cannot get repo client %s", app.VCSServer))
-		}
-		vcsRepo, err := client.RepoByFullname(ctx, app.RepositoryFullname)
-		if err != nil {
-			return sdk.WrapError(err, "unable to get repo")
-		}
-		appOverview.GitURL = vcsRepo.URL
-		defaultBranch, err := repositoriesmanager.DefaultBranch(ctx, client, app.RepositoryFullname)
-		if err != nil {
-			return sdk.WrapError(err, "unable to get default branch")
-		}
-
-		// GET LAST BUILD
-		tagFilter := make(map[string]string, 1)
-		tagFilter["git.branch"] = defaultBranch.DisplayID
-		for _, w := range app.Usage.Workflows {
-			runs, _, _, _, err := workflow.LoadRunsSummaries(ctx, tx, projectKey, w.Name, 0, 5, tagFilter)
+		if app.VCSServer != "" {
+			// GET VCS URL
+			// Get vcs info to known if we are on the default branch or not
+			client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, projectKey, app.VCSServer)
 			if err != nil {
-				return sdk.WrapError(err, "unable to load runs")
+				return sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrNoReposManagerClientAuth,
+					"cannot get repo client %s", app.VCSServer))
 			}
-			appOverview.History[w.Name] = runs
+			vcsRepo, err := client.RepoByFullname(ctx, app.RepositoryFullname)
+			if err != nil {
+				return sdk.WrapError(err, "unable to get repo")
+			}
+			appOverview.GitURL = vcsRepo.URL
+			defaultBranch, err := repositoriesmanager.DefaultBranch(ctx, client, app.RepositoryFullname)
+			if err != nil {
+				return sdk.WrapError(err, "unable to get default branch")
+			}
+
+			// GET LAST BUILD
+			tagFilter := make(map[string]string, 1)
+			tagFilter["git.branch"] = defaultBranch.DisplayID
+			for _, w := range app.Usage.Workflows {
+				runs, _, _, _, err := workflow.LoadRunsSummaries(ctx, tx, projectKey, w.Name, 0, 5, tagFilter)
+				if err != nil {
+					return sdk.WrapError(err, "unable to load runs")
+				}
+				appOverview.History[w.Name] = runs
+			}
 		}
 
 		if err := tx.Commit(); err != nil {

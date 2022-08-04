@@ -93,7 +93,7 @@ func (consumer *bitbucketcloudConsumer) RefreshToken(ctx context.Context, refres
 
 //GetAuthorized returns an authorized client
 func (consumer *bitbucketcloudConsumer) GetAuthorizedClient(ctx context.Context, vcsAuth sdk.VCSAuth) (sdk.VCSAuthorizedClient, error) {
-	if vcsAuth.URL != "" {
+	if vcsAuth.Type != "" {
 		c := &bitbucketcloudClient{
 			appPassword: vcsAuth.Token,
 			username:    vcsAuth.Username,
