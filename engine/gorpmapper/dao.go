@@ -76,7 +76,10 @@ func (m *Mapper) UpdateColumns(db gorp.SqlExecutor, i interface{}, columnFilter 
 		field := val.FieldByName(f.Name)
 		if field.Interface() == sdk.PasswordPlaceholder ||
 			field.Kind() == reflect.Struct && field.IsZero() ||
-			field.Kind() == reflect.Map && field.Len() == 0 {
+			field.Kind() == reflect.Map && field.Len() == 0 ||
+			field.Kind() == reflect.Slice && field.Len() == 0 ||
+			field.Kind() == reflect.Array && field.Len() == 0 {
+
 			hasPlaceHolder = true
 			break
 		}
@@ -105,7 +108,9 @@ func (m *Mapper) UpdateColumns(db gorp.SqlExecutor, i interface{}, columnFilter 
 
 			if field.Interface() == sdk.PasswordPlaceholder ||
 				field.Kind() == reflect.Struct && field.IsZero() ||
-				field.Kind() == reflect.Map && field.Len() == 0 {
+				field.Kind() == reflect.Map && field.Len() == 0 ||
+				field.Kind() == reflect.Slice && field.Len() == 0 ||
+				field.Kind() == reflect.Array && field.Len() == 0 {
 				field.Set(oldVal)
 			}
 		}
