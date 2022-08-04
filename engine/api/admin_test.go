@@ -205,6 +205,41 @@ func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForApplication(t *test
 	_, jwt := assets.InsertAdminUser(t, db)
 
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(6), sdk.RandomString(6))
+
+	pf := sdk.IntegrationModel{
+		Name:       "test-deploy-post-2" + proj.Key,
+		Deployment: true,
+		DefaultConfig: sdk.IntegrationConfig{
+			"token": sdk.IntegrationConfigValue{
+				Type: sdk.IntegrationConfigTypePassword,
+			},
+			"url": sdk.IntegrationConfigValue{
+				Type: sdk.IntegrationConfigTypeString,
+			},
+		},
+	}
+	require.NoError(t, integration.InsertModel(db, &pf))
+	defer func() { _ = integration.DeleteModel(context.TODO(), db, pf.ID) }()
+
+	pp := sdk.ProjectIntegration{
+		Model:              pf,
+		Name:               pf.Name,
+		IntegrationModelID: pf.ID,
+		ProjectID:          proj.ID,
+	}
+	require.NoError(t, integration.InsertIntegration(db, &pp))
+
+	var err error
+	proj, err = project.Load(context.Background(), db, proj.Key, project.LoadOptions.WithIntegrations)
+	require.NoError(t, err)
+
+	for i := range proj.Integrations {
+		if proj.Integrations[i].Name == pf.Name {
+			pp = proj.Integrations[i]
+			break
+		}
+	}
+
 	app := &sdk.Application{
 		Name:               "my-amm",
 		RepositoryFullname: "ovh/cds",
@@ -216,20 +251,39 @@ func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForApplication(t *test
 	}
 	require.NoError(t, application.Insert(db, *proj, app))
 
-	var err error
-	app, err = application.LoadByIDWithClearVCSStrategyPassword(context.Background(), db, app.ID)
+	var pfConfig = sdk.IntegrationConfig{
+		"token": sdk.IntegrationConfigValue{
+			Type:  sdk.IntegrationConfigTypePassword,
+			Value: "my-secret-token",
+		},
+		"url": sdk.IntegrationConfigValue{
+			Type:  sdk.IntegrationConfigTypeString,
+			Value: "my-url",
+		},
+	}
+	err = application.SetDeploymentStrategy(db, proj.ID, app.ID, pp.Model.ID, pp.Name, pfConfig)
 	require.NoError(t, err)
 
-	uri := api.Router.GetRoute("POST", api.postAdminDatabaseRollEncryptedEntityByPrimaryKey, map[string]string{"entity": "application.dbApplication", "pk": fmt.Sprintf("%d", app.ID)})
+	app, err = application.LoadByName(context.Background(), db, proj.Key, app.Name, application.LoadOptions.WithClearDeploymentStrategies)
+	require.NoError(t, err)
+
+	adsID, err := db.SelectInt("select id from application_deployment_strategy where application_id = $1 and project_integration_id = $2", app.ID, pp.ID)
+	require.NoError(t, err)
+
+	t.Logf("deployment strategies before rollover: %+v", app.DeploymentStrategies)
+
+	uri := api.Router.GetRoute("POST", api.postAdminDatabaseRollEncryptedEntityByPrimaryKey, map[string]string{"entity": "application.dbApplicationDeploymentStrategy", "pk": fmt.Sprintf("%d", adsID)})
 	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, nil)
 	// Do the request
 	w := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 204, w.Code)
 
-	app2, err := application.LoadByIDWithClearVCSStrategyPassword(context.Background(), db, app.ID)
+	app2, err := application.LoadByName(context.Background(), db, proj.Key, app.Name, application.LoadOptions.WithClearDeploymentStrategies)
 	require.NoError(t, err)
-	require.Equal(t, app.RepositoryStrategy, app2.RepositoryStrategy)
+	t.Logf("deployment strategies after rollover: %+v", app2.DeploymentStrategies)
+
+	require.Equal(t, app.DeploymentStrategies, app2.DeploymentStrategies)
 }
 
 func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForProjectIntegration(t *testing.T) {
