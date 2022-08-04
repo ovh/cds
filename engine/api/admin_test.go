@@ -3,13 +3,17 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/api/integration"
+	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/gorpmapper"
@@ -189,6 +193,100 @@ func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKey(t *testing.T) {
 		w := httptest.NewRecorder()
 		api.Router.Mux.ServeHTTP(w, req)
 		assert.Equal(t, 204, w.Code)
+	}
+}
+
+func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForApplication(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+	_, jwt := assets.InsertAdminUser(t, db)
+
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(6), sdk.RandomString(6))
+	app := &sdk.Application{
+		Name:               "my-amm",
+		RepositoryFullname: "ovh/cds",
+		RepositoryStrategy: sdk.RepositoryStrategy{
+			ConnectionType: "https",
+			User:           "foo",
+			Password:       "bar",
+		},
+	}
+	require.NoError(t, application.Insert(db, *proj, app))
+
+	var err error
+	app, err = application.LoadByIDWithClearVCSStrategyPassword(context.Background(), db, app.ID)
+	require.NoError(t, err)
+
+	uri := api.Router.GetRoute("POST", api.postAdminDatabaseRollEncryptedEntityByPrimaryKey, map[string]string{"entity": "application.dbApplication", "pk": fmt.Sprintf("%d", app.ID)})
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, nil)
+	// Do the request
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 204, w.Code)
+
+	app2, err := application.LoadByIDWithClearVCSStrategyPassword(context.Background(), db, app.ID)
+	require.NoError(t, err)
+	require.Equal(t, app.RepositoryStrategy, app2.RepositoryStrategy)
+}
+
+func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForProjectIntegration(t *testing.T) {
+	api, db, router := newTestAPI(t)
+	u, jwt := assets.InsertAdminUser(t, db)
+
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(6), sdk.RandomString(6))
+
+	integrationModel, err := integration.LoadModelByName(context.TODO(), db, sdk.KafkaIntegration.Name)
+	if err != nil {
+		assert.NoError(t, integration.CreateBuiltinModels(context.TODO(), api.mustDB()))
+		models, _ := integration.LoadModels(db)
+		assert.True(t, len(models) > 0)
+	}
+
+	integrationModel, err = integration.LoadModelByName(context.TODO(), db, sdk.AWSIntegration.Name)
+	test.NoError(t, err)
+
+	pp := sdk.ProjectIntegration{
+		Name:               "test",
+		Config:             sdk.AWSIntegration.DefaultConfig.Clone(),
+		IntegrationModelID: integrationModel.ID,
+	}
+
+	for k, v := range pp.Config {
+		v.Value = sdk.RandomString(5)
+		pp.Config[k] = v
+	}
+
+	t.Logf("%+v", pp.Config)
+
+	// ADD integration
+	vars := map[string]string{}
+	vars[permProjectKey] = proj.Key
+	uri := router.GetRoute("POST", api.postProjectIntegrationHandler, vars)
+	req := assets.NewAuthentifiedRequest(t, u, jwt, "POST", uri, pp)
+	w := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+
+	require.NoError(t, err)
+
+	integ, err := integration.LoadIntegrationsByProjectIDWithClearPassword(context.TODO(), db, proj.ID)
+	t.Logf("%+v", integ[0].Config)
+	require.NoError(t, err)
+
+	uri = api.Router.GetRoute("POST", api.postAdminDatabaseRollEncryptedEntityByPrimaryKey, map[string]string{"entity": "integration.dbProjectIntegration", "pk": fmt.Sprintf("%d", integ[0].ID)})
+	req = assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, nil)
+	// Do the request
+	w = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 204, w.Code)
+
+	integ2, err := integration.LoadIntegrationsByProjectIDWithClearPassword(context.TODO(), db, proj.ID)
+	require.NoError(t, err)
+
+	t.Logf("%+v", integ2[0].Config)
+
+	require.Len(t, integ2[0].Config, len(pp.Config))
+	for k, v := range pp.Config {
+		assert.Equal(t, integ2[0].Config[k], v)
 	}
 }
 
