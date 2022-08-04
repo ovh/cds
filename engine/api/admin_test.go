@@ -13,12 +13,14 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/environment"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/plugin"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
+	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
@@ -284,6 +286,96 @@ func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForApplication(t *test
 	t.Logf("deployment strategies after rollover: %+v", app2.DeploymentStrategies)
 
 	require.Equal(t, app.DeploymentStrategies, app2.DeploymentStrategies)
+}
+
+func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForWorkerModelSecret(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	//Loading all models
+	models, errlw := workermodel.LoadAll(context.Background(), api.mustDB(), nil)
+	if errlw != nil {
+		t.Fatalf("Error getting models : %s", errlw)
+	}
+
+	//Delete all of them
+	for _, m := range models {
+		if err := workermodel.DeleteByID(api.mustDB(), m.ID); err != nil {
+			t.Fatalf("Error deleting model : %s", err)
+		}
+	}
+
+	//Create admin user
+	u, jwt := assets.InsertAdminUser(t, db)
+	assert.NotZero(t, u)
+	assert.NotZero(t, jwt)
+
+	g, err := group.LoadByName(context.TODO(), api.mustDB(), "shared.infra")
+	if err != nil {
+		t.Fatalf("Error getting group : %s", err)
+	}
+
+	model := sdk.Model{
+		Name:    "Test1",
+		GroupID: g.ID,
+		Type:    sdk.Docker,
+		ModelDocker: sdk.ModelDocker{
+			Image: "buildpack-deps:jessie",
+			Shell: "sh -c",
+			Cmd:   "worker --api={{.API}}",
+			Envs: map[string]string{
+				"CDS_TEST": "THIS IS A TEST",
+			},
+			Private:  true,
+			Username: "test",
+			Password: "pwtest",
+		},
+		RegisteredCapabilities: sdk.RequirementList{
+			{
+				Name:  "capa1",
+				Type:  sdk.BinaryRequirement,
+				Value: "1",
+			},
+		},
+	}
+
+	//Prepare request
+	uri := api.Router.GetRoute("POST", api.postWorkerModelHandler, nil)
+	test.NotEmpty(t, uri)
+
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, model)
+
+	//Do the request
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+
+	var newModel sdk.Model
+	assert.NoError(t, json.Unmarshal(w.Body.Bytes(), &newModel))
+
+	require.Equal(t, "worker --api={{.API}}", newModel.ModelDocker.Cmd, "Main worker command is not good")
+	require.Equal(t, "THIS IS A TEST", newModel.ModelDocker.Envs["CDS_TEST"], "Worker model envs are not good")
+	require.Equal(t, "{{.secrets.registry_password}}", newModel.ModelDocker.Password)
+
+	secrets, err := workermodel.LoadSecretsByModelID(context.TODO(), api.mustDB(), newModel.ID)
+	require.NoError(t, err)
+	require.Len(t, secrets, 1)
+	assert.Equal(t, "secrets.registry_password", secrets[0].Name)
+	assert.Equal(t, "pwtest", secrets[0].Value)
+
+	uri = api.Router.GetRoute("POST", api.postAdminDatabaseRollEncryptedEntityByPrimaryKey, map[string]string{"entity": "workermodel.workerModelSecret", "pk": secrets[0].ID})
+	req = assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, nil)
+	// Do the request
+	w = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 204, w.Code)
+
+	secrets, err = workermodel.LoadSecretsByModelID(context.TODO(), api.mustDB(), newModel.ID)
+	require.NoError(t, err)
+	require.Len(t, secrets, 1)
+	assert.Equal(t, "secrets.registry_password", secrets[0].Name)
+	assert.Equal(t, "pwtest", secrets[0].Value)
+
 }
 
 func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForProjectIntegration(t *testing.T) {
