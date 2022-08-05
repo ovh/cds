@@ -84,10 +84,10 @@ func (g *githubConsumer) AuthorizeToken(ctx context.Context, state, code string)
 
 //GetAuthorized returns an authorized client
 func (g *githubConsumer) GetAuthorizedClient(ctx context.Context, vcsAuth sdk.VCSAuth) (sdk.VCSAuthorizedClient, error) {
-	if vcsAuth.URL != "" {
+	if vcsAuth.Type != "" {
 		c := &githubClient{
-			GitHubURL:    vcsAuth.URL,
-			GitHubAPIURL: vcsAuth.URLApi,
+			GitHubURL:    g.GitHubURL,    // default value of this field is computed in github.New() func
+			GitHubAPIURL: g.GitHubAPIURL, // default value of this field is computed in github.New() func
 			Cache:        g.Cache,
 			uiURL:        g.uiURL,
 			apiURL:       g.apiURL,

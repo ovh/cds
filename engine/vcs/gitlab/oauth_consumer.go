@@ -124,7 +124,7 @@ func (g *gitlabConsumer) GetAuthorizedClient(ctx context.Context, vcsAuth sdk.VC
 	httpClient := &http.Client{
 		Timeout: 60 * time.Second,
 	}
-	if vcsAuth.URL != "" {
+	if vcsAuth.Type != "" {
 		gclient := gitlab.NewClient(httpClient, vcsAuth.Token)
 		c := &gitlabClient{
 			client:   gclient,
