@@ -407,29 +407,29 @@ func ResyncWorkflowRunResultsRoutine(ctx context.Context, DBFunc func() *gorp.Db
 		case <-tick.C:
 			db := DBFunc()
 			if db != nil {
-				id, err := FindOldestWorkflowRunWithResultToSync(ctx, DBFunc())
+				ids, err := FindOldestWorkflowRunsWithResultToSync(ctx, DBFunc())
 				if err != nil {
 					log.ErrorWithStackTrace(ctx, err)
 					continue
 				}
-				if id == 0 {
-					continue
-				}
-				if err := SyncRunResultArtifactManagerByRunID(ctx, DBFunc(), id); err != nil {
-					log.ErrorWithStackTrace(ctx, err)
-					continue
+				for _, id := range ids {
+					if err := SyncRunResultArtifactManagerByRunID(ctx, DBFunc(), id); err != nil {
+						log.ErrorWithStackTrace(ctx, err)
+						continue
+					}
 				}
 			}
 		}
 	}
 }
 
-func FindOldestWorkflowRunWithResultToSync(ctx context.Context, dbmap *gorp.DbMap) (int64, error) {
-	result, err := dbmap.SelectInt("select distinct workflow_run_id from workflow_run_result where sync is NULL order by workflow_run_id asc limit 1")
+func FindOldestWorkflowRunsWithResultToSync(ctx context.Context, dbmap *gorp.DbMap) ([]int64, error) {
+	var results []int64
+	_, err := dbmap.Select(&results, "select distinct workflow_run_id from workflow_run_result where sync is NULL order by workflow_run_id asc limit 100")
 	if err != nil {
-		return 0, err
+		return nil, sdk.WithStack(err)
 	}
-	return result, nil
+	return results, nil
 }
 
 func SyncRunResultArtifactManagerByRunID(ctx context.Context, dbmap *gorp.DbMap, id int64) error {
