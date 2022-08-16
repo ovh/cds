@@ -465,12 +465,21 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, dbmap *gorp.DbMap,
 			dbResult.DataSync = new(sdk.WorkflowRunResultSync)
 			dbResult.DataSync.Link = ""
 			dbResult.DataSync.Sync = true
+			log.Debug(ctx, "updating run result %s", dbResult.ID)
 			if err := gorpmapping.Update(db, &dbResult); err != nil {
 				return err
 			}
 		} else {
 			runResults = append(runResults, result)
 		}
+	}
+
+	// Nothing more to do with artifact manager
+	if len(runResults) == 0 {
+		if err := db.Commit(); err != nil {
+			return err
+		}
+		return nil
 	}
 
 	log.Debug(ctx, "%d run results to sync on run %d", len(runResults), id)
@@ -579,6 +588,7 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, dbmap *gorp.DbMap,
 		dbResult.DataSync = new(sdk.WorkflowRunResultSync)
 		dbResult.DataSync.Link = buildInfoRequest.Name + "/" + buildInfoRequest.Number
 		dbResult.DataSync.Sync = true
+		log.Debug(ctx, "updating run result %s", dbResult.ID)
 		if err := gorpmapping.Update(db, &dbResult); err != nil {
 			return err
 		}
