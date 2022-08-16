@@ -38,7 +38,7 @@ var Promote = Manifest{
 			Steps: []exportentities.Step{
 				{
 					Promote: &exportentities.StepPromote{
-						Artifacts: "*.zip",
+						Artifacts: "(.*).zip",
 					},
 				},
 			},
