@@ -454,7 +454,7 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, dbmap *gorp.DbMap,
 		return err
 	}
 
-	log.Debug(ctx, "%d run results found")
+	log.Debug(ctx, "%d run results found", allRunResults)
 
 	var runResults sdk.WorkflowRunResults
 	for i := range allRunResults {
