@@ -506,7 +506,7 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, dbmap *gorp.DbMap,
 	)
 
 	// Load the token from secrets
-	secrets, err := LoadDecryptSecrets(ctx, db, wr, nil)
+	secrets, err := LoadDecryptSecrets(ctx, db, wr, wr.RootRun())
 	if err != nil {
 		return err
 	}
