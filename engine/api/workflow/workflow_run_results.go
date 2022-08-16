@@ -536,6 +536,11 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, dbmap *gorp.DbMap,
 
 	parameters := wr.GetAllParameters()
 
+	log.Debug(ctx, "workflow run is holding %d parameters", len(parameters))
+	for k, v := range parameters {
+		log.Debug(ctx, "%s=%v", k, v)
+	}
+
 	// Compute git url
 	gitUrl := parameters["git.url"][0]
 	if gitUrl == "" {
