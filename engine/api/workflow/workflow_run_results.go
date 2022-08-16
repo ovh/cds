@@ -542,9 +542,25 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, dbmap *gorp.DbMap,
 	}
 
 	// Compute git url
-	gitUrl := parameters["git.url"][0]
-	if gitUrl == "" {
-		gitUrl = parameters["git.http_url"][0]
+	var gitUrl, gitBranch, gitMessage, gitHash string
+	gitUrlParam, has := parameters["git.url"]
+	if has {
+		gitUrl = gitUrlParam[0]
+		if gitUrl == "" {
+			gitUrl = parameters["git.http_url"][0]
+		}
+	}
+	gitBranchParam, has := parameters["git.branch"]
+	if has {
+		gitBranch = gitBranchParam[0]
+	}
+	gitMessageParam, has := parameters["git.message"]
+	if has {
+		gitMessage = gitMessageParam[0]
+	}
+	gitHashParam, has := parameters["git.hash"]
+	if has {
+		gitHash = gitHashParam[0]
 	}
 
 	nodeRunURL := parameters["cds.ui.pipeline.run"][0]
@@ -558,10 +574,10 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, dbmap *gorp.DbMap,
 		AgentName:         "cds-api",
 		TokenName:         tokenName,
 		RunURL:            runURL,
-		GitBranch:         parameters["git.branch"][0],
-		GitMessage:        parameters["git.message"][0],
+		GitBranch:         gitBranch,
+		GitMessage:        gitMessage,
 		GitURL:            gitUrl,
-		GitHash:           parameters["git.hash"][0],
+		GitHash:           gitHash,
 		RunResults:        runResults,
 		LowMaturitySuffix: lowMaturitySuffix,
 	})
