@@ -433,6 +433,7 @@ func FindOldestWorkflowRunWithResultToSync(ctx context.Context, dbmap *gorp.DbMa
 }
 
 func SyncRunResultArtifactManagerByRunID(ctx context.Context, dbmap *gorp.DbMap, id int64) error {
+	log.Info(ctx, "sync run result for workflow run id %d", id)
 	db, err := dbmap.Begin()
 	if err != nil {
 		return sdk.WithStack(err)
@@ -452,6 +453,8 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, dbmap *gorp.DbMap,
 	if err != nil {
 		return err
 	}
+
+	log.Debug(ctx, "%d run results found")
 
 	var runResults sdk.WorkflowRunResults
 	for i := range allRunResults {
@@ -482,6 +485,8 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, dbmap *gorp.DbMap,
 		return sdk.WrapError(sdk.ErrNotFound, "artifact manager integration is not found for this workflow")
 	}
 
+	log.Info(ctx, "artifact manager %q found for workflow run", artifactManagerInteg.ProjectIntegration.Name)
+
 	var (
 		rtName                = artifactManagerInteg.ProjectIntegration.Config[sdk.ArtifactoryConfigPlatform].Value
 		rtURL                 = artifactManagerInteg.ProjectIntegration.Config[sdk.ArtifactoryConfigURL].Value
@@ -499,6 +504,7 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, dbmap *gorp.DbMap,
 
 	var rtToken string
 	for _, s := range secrets {
+		log.Debug(ctx, "checking secret %q", s.Name)
 		if s.Name == fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactoryConfigToken) {
 			rtToken = string(s.Value)
 			break
