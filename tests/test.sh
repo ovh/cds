@@ -83,7 +83,6 @@ check_failure() {
 
 mv_results() {
     tsuite_file=$1
-    mv ./results/test_results.xml ./results/${tsuite_file}-test_results.xml
     mv ./results/venom.log ./results/${tsuite_file}-venom.log
 }
 
