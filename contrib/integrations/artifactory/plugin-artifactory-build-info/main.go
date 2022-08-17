@@ -90,7 +90,7 @@ func (e *artifactoryBuildInfoPlugin) Run(ctx context.Context, opts *integrationp
 		return fail("unable to get run results: %v", err)
 	}
 
-	buildInfoRequest, err := art.PrepareBuildInfo(artifactClient, art.BuildInfoRequest{
+	buildInfoRequest, err := art.PrepareBuildInfo(ctx, artifactClient, art.BuildInfoRequest{
 		BuildInfoPrefix:   buildInfo,
 		ProjectKey:        opts.GetOptions()["cds.project"],
 		WorkflowName:      opts.GetOptions()["cds.workflow"],

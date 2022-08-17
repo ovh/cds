@@ -501,7 +501,7 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, dbmap *gorp.DbMap,
 		rtURL                 = artifactManagerInteg.ProjectIntegration.Config[sdk.ArtifactoryConfigURL].Value
 		buildInfoPrefix       = artifactManagerInteg.ProjectIntegration.Config[sdk.ArtifactoryConfigBuildInfoPrefix].Value
 		tokenName             = artifactManagerInteg.ProjectIntegration.Config[sdk.ArtifactoryConfigTokenName].Value
-		lowMaturitySuffix     = artifactManagerInteg.ProjectIntegration.Config[sdk.ArtifactoryConfigRepositoryPrefix].Value
+		lowMaturitySuffix     = artifactManagerInteg.ProjectIntegration.Config[sdk.ArtifactoryConfigPromotionLowMaturity].Value
 		artifactoryProjectKey = artifactManagerInteg.ProjectIntegration.Config[sdk.ArtifactoryConfigProjectKey].Value
 	)
 
@@ -566,7 +566,7 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, dbmap *gorp.DbMap,
 	nodeRunURL := parameters["cds.ui.pipeline.run"][0]
 	runURL := nodeRunURL[0:strings.Index(nodeRunURL, "/node/")]
 
-	buildInfoRequest, err := art.PrepareBuildInfo(artifactClient, art.BuildInfoRequest{
+	buildInfoRequest, err := art.PrepareBuildInfo(ctx, artifactClient, art.BuildInfoRequest{
 		BuildInfoPrefix:   buildInfoPrefix,
 		ProjectKey:        wr.Workflow.ProjectKey,
 		WorkflowName:      wr.Workflow.Name,

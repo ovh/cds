@@ -17,6 +17,7 @@ import (
 	"github.com/jfrog/jfrog-client-go/config"
 	"github.com/jfrog/jfrog-client-go/distribution"
 	authdistrib "github.com/jfrog/jfrog-client-go/distribution/auth"
+	"github.com/jfrog/jfrog-client-go/utils/log"
 	"github.com/pkg/errors"
 
 	"github.com/ovh/cds/engine/api/integration/artifact_manager"
@@ -233,8 +234,9 @@ type BuildInfoRequest struct {
 	RunResults        []sdk.WorkflowRunResult
 }
 
-func PrepareBuildInfo(artiClient artifact_manager.ArtifactManager, r BuildInfoRequest) (*buildinfo.BuildInfo, error) {
+func PrepareBuildInfo(ctx context.Context, artiClient artifact_manager.ArtifactManager, r BuildInfoRequest) (*buildinfo.BuildInfo, error) {
 	buildInfoName := fmt.Sprintf("%s/%s/%s", r.BuildInfoPrefix, r.ProjectKey, r.WorkflowName)
+	log.Debug(ctx, "PrepareBuildInfo %q", buildInfoName)
 
 	buildInfoRequest := &buildinfo.BuildInfo{
 		Properties: map[string]string{},
@@ -270,7 +272,7 @@ func PrepareBuildInfo(artiClient artifact_manager.ArtifactManager, r BuildInfoRe
 		version:           r.Version,
 		projectKey:        r.ProjectKey,
 	}
-	modules, err := computeBuildInfoModules(artiClient, execContext, r.RunResults)
+	modules, err := computeBuildInfoModules(ctx, artiClient, execContext, r.RunResults)
 	if err != nil {
 		return nil, err
 	}
@@ -279,7 +281,7 @@ func PrepareBuildInfo(artiClient artifact_manager.ArtifactManager, r BuildInfoRe
 	return buildInfoRequest, nil
 }
 
-func computeBuildInfoModules(client artifact_manager.ArtifactManager, execContext executionContext, runResults []sdk.WorkflowRunResult) ([]buildinfo.Module, error) {
+func computeBuildInfoModules(ctx context.Context, client artifact_manager.ArtifactManager, execContext executionContext, runResults []sdk.WorkflowRunResult) ([]buildinfo.Module, error) {
 	modules := make([]buildinfo.Module, 0)
 	for _, r := range runResults {
 		if r.Type != sdk.WorkflowRunResultTypeArtifactManager {
@@ -311,7 +313,7 @@ func computeBuildInfoModules(client artifact_manager.ArtifactManager, execContex
 			mod.Properties = props
 		}
 
-		artifacts, err := retrieveModulesArtifacts(client, data.RepoName, data.Path, execContext)
+		artifacts, err := retrieveModulesArtifacts(ctx, client, data.RepoName, data.Path, execContext)
 		if err != nil {
 			return nil, err
 		}
@@ -322,7 +324,8 @@ func computeBuildInfoModules(client artifact_manager.ArtifactManager, execContex
 	return modules, nil
 }
 
-func retrieveModulesArtifacts(client artifact_manager.ArtifactManager, repoName string, path string, execContext executionContext) ([]buildinfo.Artifact, error) {
+func retrieveModulesArtifacts(ctx context.Context, client artifact_manager.ArtifactManager, repoName string, path string, execContext executionContext) ([]buildinfo.Artifact, error) {
+	log.Debug(ctx, "retrieve:ModulesArtifacts repoName:%s path:%s execContext:%+v", repoName, path, execContext)
 	fileInfo, err := client.GetFileInfo(repoName, path)
 	if err != nil {
 		return nil, err
@@ -347,6 +350,7 @@ func retrieveModulesArtifacts(client artifact_manager.ArtifactManager, repoName 
 		}
 		repoSrc := repoName
 		repoSrc += "-" + execContext.lowMaturitySuffix
+		log.Debug(ctx, "setting properties %+v on repoSrc:%s path:%s", props, repoSrc, props)
 		if err := client.SetProperties(repoSrc, path, props...); err != nil {
 			return nil, err
 		}
@@ -361,7 +365,7 @@ func retrieveModulesArtifacts(client artifact_manager.ArtifactManager, repoName 
 		artifacts = append(artifacts, currentArtifact)
 	} else {
 		for _, c := range fileInfo.Children {
-			artsChildren, err := retrieveModulesArtifacts(client, repoName, fmt.Sprintf("%s%s", path, c.Uri), execContext)
+			artsChildren, err := retrieveModulesArtifacts(ctx, client, repoName, fmt.Sprintf("%s%s", path, c.Uri), execContext)
 			if err != nil {
 				return nil, err
 			}
