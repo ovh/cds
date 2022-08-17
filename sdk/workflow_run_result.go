@@ -54,6 +54,7 @@ type WorkflowRunResult struct {
 
 type WorkflowRunResultSync struct {
 	Sync  bool   `json:"sync"`
+	Link  string `json:"link"`
 	Error string `json:"error"`
 }
 
