@@ -3,7 +3,6 @@ package workflow
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -490,21 +489,18 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, dbmap *gorp.DbMap,
 		}
 	}
 	if artifactManagerInteg == nil {
-		var err = errors.New("artifact manager integration is not found for this workflow")
+		var err = sdk.Errorf("artifact manager integration is not found for workflow %s/%s", wr.Workflow.ProjectKey, wr.Workflow.Name)
 		log.ErrorWithStackTrace(ctx, err)
 		for i := range runResults {
 			result := runResults[i]
 			// If the result is not an artifact manager, we do nothing but we consider it as synchronized
-			if result.Type != sdk.WorkflowRunResultTypeArtifactManager {
-				dbResult := dbRunResult(result)
-				dbResult.DataSync = new(sdk.WorkflowRunResultSync)
-				dbResult.DataSync.Sync = false
-				dbResult.DataSync.Error = err.Error()
-
-				log.Debug(ctx, "updating run result %s", dbResult.ID)
-				if err := gorpmapping.Update(db, &dbResult); err != nil {
-					return err
-				}
+			dbResult := dbRunResult(result)
+			dbResult.DataSync = new(sdk.WorkflowRunResultSync)
+			dbResult.DataSync.Sync = false
+			dbResult.DataSync.Error = err.Error()
+			log.Debug(ctx, "updating run result %s", dbResult.ID)
+			if err := gorpmapping.Update(db, &dbResult); err != nil {
+				return err
 			}
 		}
 		if err := db.Commit(); err != nil {
@@ -538,21 +534,17 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, dbmap *gorp.DbMap,
 		}
 	}
 	if rtToken == "" {
-		err := errors.New("unable to find artifact manager token")
+		err := sdk.Errorf("unable to find artifact manager %q token", artifactManagerInteg.ProjectIntegration.Name)
 		log.ErrorWithStackTrace(ctx, err)
 		for i := range runResults {
 			result := runResults[i]
-			// If the result is not an artifact manager, we do nothing but we consider it as synchronized
-			if result.Type != sdk.WorkflowRunResultTypeArtifactManager {
-				dbResult := dbRunResult(result)
-				dbResult.DataSync = new(sdk.WorkflowRunResultSync)
-				dbResult.DataSync.Sync = false
-				dbResult.DataSync.Error = err.Error()
-
-				log.Debug(ctx, "updating run result %s", dbResult.ID)
-				if err := gorpmapping.Update(db, &dbResult); err != nil {
-					return err
-				}
+			dbResult := dbRunResult(result)
+			dbResult.DataSync = new(sdk.WorkflowRunResultSync)
+			dbResult.DataSync.Sync = false
+			dbResult.DataSync.Error = err.Error()
+			log.Debug(ctx, "updating run result %s", dbResult.ID)
+			if err := gorpmapping.Update(db, &dbResult); err != nil {
+				return err
 			}
 		}
 		if err := db.Commit(); err != nil {

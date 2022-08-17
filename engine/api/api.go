@@ -259,26 +259,27 @@ type API struct {
 	WSServer            *websocketServer
 	Cache               cache.Store
 	Metrics             struct {
-		WorkflowRunFailed        *stats.Int64Measure
-		WorkflowRunStarted       *stats.Int64Measure
-		Sessions                 *stats.Int64Measure
-		nbUsers                  *stats.Int64Measure
-		nbApplications           *stats.Int64Measure
-		nbProjects               *stats.Int64Measure
-		nbGroups                 *stats.Int64Measure
-		nbPipelines              *stats.Int64Measure
-		nbWorkflows              *stats.Int64Measure
-		nbArtifacts              *stats.Int64Measure
-		nbWorkerModels           *stats.Int64Measure
-		nbWorkflowRuns           *stats.Int64Measure
-		nbWorkflowNodeRuns       *stats.Int64Measure
-		nbMaxWorkersBuilding     *stats.Int64Measure
-		queue                    *stats.Int64Measure
-		WorkflowRunsMarkToDelete *stats.Int64Measure
-		WorkflowRunsDeleted      *stats.Int64Measure
-		DatabaseConns            *stats.Int64Measure
-		RunResultToSynchronized  *stats.Int64Measure
-		RunResultSynchronized    *stats.Int64Measure
+		WorkflowRunFailed          *stats.Int64Measure
+		WorkflowRunStarted         *stats.Int64Measure
+		Sessions                   *stats.Int64Measure
+		nbUsers                    *stats.Int64Measure
+		nbApplications             *stats.Int64Measure
+		nbProjects                 *stats.Int64Measure
+		nbGroups                   *stats.Int64Measure
+		nbPipelines                *stats.Int64Measure
+		nbWorkflows                *stats.Int64Measure
+		nbArtifacts                *stats.Int64Measure
+		nbWorkerModels             *stats.Int64Measure
+		nbWorkflowRuns             *stats.Int64Measure
+		nbWorkflowNodeRuns         *stats.Int64Measure
+		nbMaxWorkersBuilding       *stats.Int64Measure
+		queue                      *stats.Int64Measure
+		WorkflowRunsMarkToDelete   *stats.Int64Measure
+		WorkflowRunsDeleted        *stats.Int64Measure
+		DatabaseConns              *stats.Int64Measure
+		RunResultToSynchronized    *stats.Int64Measure
+		RunResultSynchronized      *stats.Int64Measure
+		RunResultSynchronizedError *stats.Int64Measure
 	}
 	AuthenticationDrivers map[sdk.AuthConsumerType]sdk.AuthDriver
 }
