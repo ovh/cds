@@ -538,7 +538,27 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, dbmap *gorp.DbMap,
 		}
 	}
 	if rtToken == "" {
-		return sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find artifact manager token")
+		err := errors.New("unable to find artifact manager token")
+		log.ErrorWithStackTrace(ctx, err)
+		for i := range runResults {
+			result := runResults[i]
+			// If the result is not an artifact manager, we do nothing but we consider it as synchronized
+			if result.Type != sdk.WorkflowRunResultTypeArtifactManager {
+				dbResult := dbRunResult(result)
+				dbResult.DataSync = new(sdk.WorkflowRunResultSync)
+				dbResult.DataSync.Sync = false
+				dbResult.DataSync.Error = err.Error()
+
+				log.Debug(ctx, "updating run result %s", dbResult.ID)
+				if err := gorpmapping.Update(db, &dbResult); err != nil {
+					return err
+				}
+			}
+		}
+		if err := db.Commit(); err != nil {
+			return err
+		}
+		return nil
 	}
 
 	// Instanciate artifactory client
