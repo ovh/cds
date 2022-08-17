@@ -3,6 +3,7 @@ package workflow
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -489,7 +490,27 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, dbmap *gorp.DbMap,
 		}
 	}
 	if artifactManagerInteg == nil {
-		return sdk.WrapError(sdk.ErrNotFound, "artifact manager integration is not found for this workflow")
+		var err = errors.New("artifact manager integration is not found for this workflow")
+		log.ErrorWithStackTrace(ctx, err)
+		for i := range runResults {
+			result := runResults[i]
+			// If the result is not an artifact manager, we do nothing but we consider it as synchronized
+			if result.Type != sdk.WorkflowRunResultTypeArtifactManager {
+				dbResult := dbRunResult(result)
+				dbResult.DataSync = new(sdk.WorkflowRunResultSync)
+				dbResult.DataSync.Sync = false
+				dbResult.DataSync.Error = err.Error()
+
+				log.Debug(ctx, "updating run result %s", dbResult.ID)
+				if err := gorpmapping.Update(db, &dbResult); err != nil {
+					return err
+				}
+			}
+		}
+		if err := db.Commit(); err != nil {
+			return err
+		}
+		return nil
 	}
 
 	log.Info(ctx, "artifact manager %q found for workflow run", artifactManagerInteg.ProjectIntegration.Name)

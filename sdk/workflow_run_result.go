@@ -53,8 +53,8 @@ type WorkflowRunResult struct {
 }
 
 type WorkflowRunResultSync struct {
-	Sync bool   `json:"sync"`
-	Link string `json:"link"`
+	Sync  bool   `json:"sync"`
+	Error string `json:"error"`
 }
 
 // Value returns driver.Value from WorkflowRunResultSync
