@@ -70,7 +70,7 @@
     "jsrsasign": "10.2.0",
     "lodash-es": "4.17.21",
     "modernizr": "3.12.0",
-    "moment": "2.29.2",
+    "moment": "2.29.4",
     "ng-event-source": "1.0.14",
     "ng-zorro-antd": "13.1.1",
     "ng2-codemirror-typescript": "3.13.1",
