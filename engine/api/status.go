@@ -238,6 +238,14 @@ func (api *API) initMetrics(ctx context.Context) error {
 		fmt.Sprintf("cds/cds-api/%s/database_conn", api.Name()),
 		"number database connections",
 		stats.UnitDimensionless)
+	api.Metrics.RunResultSynchronized = stats.Int64(
+		fmt.Sprintf("cds/cds-api/%s/run_results_synchronized", api.Name()),
+		"number of synchronized run results",
+		stats.UnitDimensionless)
+	api.Metrics.RunResultToSynchronized = stats.Int64(
+		fmt.Sprintf("cds/cds-api/%s/run_results_to_synchronized", api.Name()),
+		"number of non synchronized run results",
+		stats.UnitDimensionless)
 
 	tagRange, _ = tag.NewKey("range")
 	tagStatus, _ = tag.NewKey("status")
@@ -265,6 +273,8 @@ func (api *API) initMetrics(ctx context.Context) error {
 		telemetry.NewViewLast("cds/workflow_runs_mark_to_delete", api.Metrics.WorkflowRunsMarkToDelete, tagsService),
 		telemetry.NewViewCount("cds/workflow_runs_deleted", api.Metrics.WorkflowRunsDeleted, tagsService),
 		telemetry.NewViewLast("cds/database_conn", api.Metrics.DatabaseConns, tagsService),
+		telemetry.NewViewLast("cds/run_results_synchronized", api.Metrics.RunResultSynchronized, tagsService),
+		telemetry.NewViewLast("cds/run_results_to_synchronized", api.Metrics.RunResultToSynchronized, tagsService),
 	)
 
 	api.computeMetrics(ctx)
@@ -302,6 +312,9 @@ func (api *API) computeMetrics(ctx context.Context) {
 				api.countMetric(ctx, api.Metrics.nbMaxWorkersBuilding, "SELECT COUNT(1) FROM worker where status = 'Building'")
 
 				telemetry.Record(ctx, api.Metrics.DatabaseConns, int64(api.DBConnectionFactory.DB().Stats().OpenConnections))
+
+				api.countMetric(ctx, api.Metrics.RunResultSynchronized, "SELECT COUNT(1) FROM workflow_run_result where sync is NOT NULL")
+				api.countMetric(ctx, api.Metrics.RunResultToSynchronized, "SELECT COUNT(1) FROM workflow_run_result where sync is NULL")
 
 				now := time.Now()
 				now10s := now.Add(-10 * time.Second)

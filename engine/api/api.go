@@ -277,6 +277,8 @@ type API struct {
 		WorkflowRunsMarkToDelete *stats.Int64Measure
 		WorkflowRunsDeleted      *stats.Int64Measure
 		DatabaseConns            *stats.Int64Measure
+		RunResultToSynchronized  *stats.Int64Measure
+		RunResultSynchronized    *stats.Int64Measure
 	}
 	AuthenticationDrivers map[sdk.AuthConsumerType]sdk.AuthDriver
 }

@@ -454,8 +454,6 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, dbmap *gorp.DbMap,
 		return err
 	}
 
-	log.Debug(ctx, "%d run results found", len(allRunResults))
-
 	var runResults sdk.WorkflowRunResults
 	for i := range allRunResults {
 		result := allRunResults[i]
@@ -513,7 +511,6 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, dbmap *gorp.DbMap,
 
 	var rtToken string
 	for _, s := range secrets {
-		log.Debug(ctx, "checking secret %q", s.Name)
 		if s.Name == fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactoryConfigToken) {
 			rtToken = string(s.Value)
 			break
@@ -535,12 +532,6 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, dbmap *gorp.DbMap,
 	}
 
 	parameters := wr.GetAllParameters()
-
-	log.Debug(ctx, "workflow run is holding %d parameters", len(parameters))
-	for k, v := range parameters {
-		log.Debug(ctx, "%s=%v", k, v)
-	}
-
 	// Compute git url
 	var gitUrl, gitBranch, gitMessage, gitHash string
 	gitUrlParam, has := parameters["git.url"]
