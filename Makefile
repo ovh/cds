@@ -1,4 +1,4 @@
-.PHONY: clean doc modclean mod goinstall build dist deb package_contrib
+.PHONY: clean doc modclean mod goinstall build dist deb
 
 TARGET_OS = $(if ${OS},${OS},windows darwin linux freebsd)
 TARGET_ARCH = $(if ${ARCH},${ARCH},amd64 arm 386 arm64)
@@ -40,8 +40,6 @@ ALL_DIST := $(ALL_DIST) $(UI_DIST)
 ALL_DIST := $(ALL_DIST) $(CONTRIB_DIST)
 ALL_TARGETS := $(foreach DIST,$(ALL_DIST),$(addprefix $(TARGET_DIR),$(notdir $(DIST))))
 
-CONTRIB_ALL_FILES := $(wildcard contrib/dist/*)
-
 build:
 	$(info Building CDS Components for $(TARGET_OS) - $(TARGET_ARCH))
 	$(MAKE) build_ui -j1
@@ -49,11 +47,7 @@ build:
 	$(MAKE) build_worker -j4
 	$(MAKE) build_cli -j4
 	$(MAKE) build_contrib -j4
-	$(MAKE) package_contrib
-
-package_contrib: $(TARGET_DIR)
-	$(info copying $(CONTRIB_ALL_FILES))
-	@for f in ${CONTRIB_ALL_FILES} ; do echo "copying $$f to ${TARGET_DIR}`basename $$f`"; cp $$f ${TARGET_DIR}`basename $$f`; done
+	$(MAKE) package -C contrib TARGET_DIST="$(abspath $(TARGET_DIR))"
 
 build_ui:
 	$(MAKE) build -C ui
@@ -74,10 +68,8 @@ define get_dist_from_target
 $(filter %/$(notdir $(1)), $(ALL_DIST))
 endef
 
-$(TARGET_DIR):
+$(ALL_TARGETS):
 	@mkdir -p $(TARGET_DIR)
-
-$(ALL_TARGETS): $(TARGET_DIR)
 	$(info copying $(call get_dist_from_target, $@) to $@)
 	@cp -f $(call get_dist_from_target, $@) $@
 
