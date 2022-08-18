@@ -283,7 +283,6 @@ func PrepareBuildInfo(ctx context.Context, artiClient artifact_manager.ArtifactM
 
 func computeBuildInfoModules(ctx context.Context, client artifact_manager.ArtifactManager, execContext executionContext, runResults []sdk.WorkflowRunResult) ([]buildinfo.Module, error) {
 	modules := make([]buildinfo.Module, 0)
-runResults:
 	for _, r := range runResults {
 		if r.Type != sdk.WorkflowRunResultTypeArtifactManager {
 			continue
@@ -292,17 +291,20 @@ runResults:
 		if err != nil {
 			return nil, err
 		}
-		for _, mod := range modules {
-			for _, art := range mod.Artifacts {
-				if art.Md5 == data.Path && art.Path == data.Path {
-					continue runResults
-				}
-			}
-		}
+		var moduleExists bool
 		mod := buildinfo.Module{
 			Id:           fmt.Sprintf("%s:%s", data.RepoType, data.Name),
 			Artifacts:    make([]buildinfo.Artifact, 0, len(runResults)),
 			Dependencies: nil,
+		}
+		for _, m := range modules {
+			if m.Id == mod.Id {
+				moduleExists = true
+				break
+			}
+		}
+		if moduleExists {
+			continue
 		}
 		switch data.RepoType {
 		case "docker":
