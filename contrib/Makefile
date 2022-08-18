@@ -13,15 +13,6 @@ ALL_FILES := $(foreach d, $(ALL_DISTS), $(wildcard $(d)/*))
 build:
 	$(MAKE) build -C grpcplugins/action OS="$(OS)" ARCH="$(ARCH)"
 	$(MAKE) build -C integrations OS="$(OS)" ARCH="$(ARCH)"
-	$(MAKE) package
 
 $(TARGET_DIST):
 	@mkdir -p $(TARGET_DIST)
-	
-ALL_TARGETS := $(foreach f, $(ALL_FILES), $(TARGET_DIST)/$(notdir $(f)))
-
-$(ALL_TARGETS): $(TARGET_DIST)
-	$(info copying $(filter %/$(notdir $@), $(ALL_FILES)) to $@)
-	@mv -f $(filter %/$(notdir $@), $(ALL_FILES)) $@
-
-package: $(ALL_TARGETS) $(TARGET_DIST)
