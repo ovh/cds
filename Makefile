@@ -52,7 +52,8 @@ build:
 	$(MAKE) package_contrib
 
 package_contrib: $(TARGET_DIR)
-	for f in ${CONTRIB_ALL_FILES} ; do echo "copying $$f to ${TARGET_DIR}`basename $$f`"; cp $$f ${TARGET_DIR}`basename $$f`; done
+	$(info copying $(CONTRIB_ALL_FILES))
+	@for f in ${CONTRIB_ALL_FILES} ; do echo "copying $$f to ${TARGET_DIR}`basename $$f`"; cp $$f ${TARGET_DIR}`basename $$f`; done
 
 build_ui:
 	$(MAKE) build -C ui
