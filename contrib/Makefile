@@ -22,6 +22,6 @@ ALL_TARGETS := $(foreach f, $(ALL_FILES), $(TARGET_DIST)/$(notdir $(f)))
 
 $(ALL_TARGETS): $(TARGET_DIST)
 	$(info copying $(filter %/$(notdir $@), $(ALL_FILES)) to $@)
-	@cp -f $(filter %/$(notdir $@), $(ALL_FILES)) $@
+	@mv -f $(filter %/$(notdir $@), $(ALL_FILES)) $@
 
 package: $(ALL_TARGETS) $(TARGET_DIST)
