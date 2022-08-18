@@ -73,8 +73,10 @@ define get_dist_from_target
 $(filter %/$(notdir $(1)), $(ALL_DIST))
 endef
 
-$(ALL_TARGETS):
+$(TARGET_DIR):
 	@mkdir -p $(TARGET_DIR)
+
+$(ALL_TARGETS): $(TARGET_DIR)
 	$(info copying $(call get_dist_from_target, $@) to $@)
 	@cp -f $(call get_dist_from_target, $@) $@
 
