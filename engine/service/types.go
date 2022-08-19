@@ -45,6 +45,13 @@ type HatcheryCommonConfiguration struct {
 		RequestTimeout       int    `toml:"requestTimeout" default:"10" comment:"Request CDS API: timeout in seconds" json:"requestTimeout"`
 		MaxHeartbeatFailures int    `toml:"maxHeartbeatFailures" default:"10" comment:"Maximum allowed consecutives failures on heatbeat routine" json:"maxHeartbeatFailures"`
 	} `toml:"api" json:"api"`
+	CDN struct {
+		URL string `toml:"url" default:"http://localhost:8089" commented:"true" comment:"Address to access CDN HTTP server, let empty or commented to use the public URL that is returned by the CDS API." json:"url"`
+		TCP struct {
+			EnableTLS bool   `toml:"enableTLS" commented:"true" comment:"Enable TLS for CDN TCP connection" json:"enable_tls"`
+			URL       string `toml:"url" default:"localhost:8090" commented:"true" comment:"Address to access CDN TCP server, let empty or commented to use the public URL that is returned by the CDS API." json:"url"`
+		} `toml:"tcp" json:"tcp"`
+	} `toml:"cdn" json:"cdn"`
 	Provision struct {
 		InjectEnvVars             []string `toml:"injectEnvVars" commented:"true" comment:"Inject env variables in workers" json:"-" mapstructure:"injectEnvVars"`
 		MaxWorker                 int      `toml:"maxWorker" default:"10" comment:"Maximum allowed simultaneous workers" json:"maxWorker"`
@@ -57,6 +64,13 @@ type HatcheryCommonConfiguration struct {
 			URL      string `toml:"url" default:"" commented:"false" comment:"CDS API URL for worker, let empty or commented to use the same URL that is used by the Hatchery. Example: http://localhost:8081" json:"url"`
 			Insecure bool   `toml:"insecure" default:"false" commented:"true" comment:"sslInsecureSkipVerify, set to true if you use a self-signed SSL on CDS API" json:"insecure"`
 		} `toml:"workerApiHttp" json:"workerApiHttp"`
+		WorkerCDN struct {
+			URL string `toml:"url" default:"" commented:"true" comment:"Address to access CDN HTTP server for worker, let empty or commented to use the same URL that is used by the Hatchery." json:"url"`
+			TCP struct {
+				EnableTLS bool   `toml:"enableTLS" commented:"true" comment:"Enable TLS for CDN TCP connection" json:"enable_tls"`
+				URL       string `toml:"url" default:"" commented:"true" comment:"Address to access CDN TCP server, let empty or commented to use the same URL that is used by the Hatchery." json:"url"`
+			} `toml:"tcp" json:"tcp"`
+		} `toml:"workerCdn" json:"workerCdn"`
 		WorkerBasedir     string `toml:"workerBasedir" commented:"true" comment:"Worker Basedir" json:"workerBasedir"`
 		WorkerLogsOptions struct {
 			Level   string `toml:"level" comment:"Worker log level" json:"level"`
@@ -117,7 +131,7 @@ type Common struct {
 	ServiceInstance       *sdk.Service
 	PrivateKey            *rsa.PrivateKey
 	Signer                jose.Signer
-	CDNLogsURL            string
+	CDNConfig             sdk.CDNConfig
 	ServiceLogger         *logrus.Logger
 	GoRoutines            *sdk.GoRoutines
 	Region                string

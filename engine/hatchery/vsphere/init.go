@@ -14,6 +14,10 @@ import (
 
 // InitHatchery create new client for vsphere
 func (h *HatcheryVSphere) InitHatchery(ctx context.Context) error {
+	if err := h.Common.Init(ctx, h); err != nil {
+		return err
+	}
+
 	// Connect and login to ESX or vCenter
 	c, err := h.newGovmomiClient(ctx)
 	if err != nil {
@@ -30,12 +34,6 @@ func (h *HatcheryVSphere) InitHatchery(ctx context.Context) error {
 		}
 	}
 
-	if err := h.RefreshServiceLogger(ctx); err != nil {
-		ctx = sdk.ContextWithStacktrace(ctx, err)
-		log.Error(ctx, "unable get cdn configuration : %v", err)
-	}
-
-	cdnConfTick := time.NewTicker(60 * time.Second)
 	killAwolServersTick := time.NewTicker(2 * time.Minute)
 	killDisabledWorkersTick := time.NewTicker(2 * time.Minute)
 	provisioningTick := time.NewTicker(2 * time.Minute)
@@ -82,23 +80,6 @@ func (h *HatcheryVSphere) InitHatchery(ctx context.Context) error {
 		},
 	)
 
-	h.GoRoutines.Run(ctx, "hatchery-vsphere-refresh-service-logger",
-		func(ctx context.Context) {
-			defer cdnConfTick.Stop()
-			for {
-				select {
-				case <-ctx.Done():
-					return
-				case <-cdnConfTick.C:
-					if err := h.RefreshServiceLogger(ctx); err != nil {
-						ctx = sdk.ContextWithStacktrace(ctx, err)
-						log.Error(ctx, "unable to get cdn configuration : %v", err)
-					}
-				}
-			}
-		},
-	)
-
 	log.Info(ctx, "vSphere hatchery initialized")
 
 	return nil
@@ -114,7 +95,7 @@ func (h *HatcheryVSphere) newGovmomiClient(ctx context.Context) (*govmomi.Client
 		return nil, sdk.WrapError(err, "cannot parse url")
 	}
 
-  log.Info(ctx, "initializing connection to https://%v", h.Config.VSphereEndpoint)
+	log.Info(ctx, "initializing connection to https://%v", h.Config.VSphereEndpoint)
 
 	// Connect and log in to ESX or vCenter
 	return govmomi.NewClient(ctx, u, false)

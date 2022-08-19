@@ -34,7 +34,8 @@ func Test_serviceLogs(t *testing.T) {
 	gock.New("https://cds-api.local").Get("/worker").Reply(http.StatusOK).JSON([]sdk.Worker{{Name: "swarmy-model1-w1"}})
 
 	gock.New("https://cds-api.local").Get("/config/cdn").Reply(http.StatusOK).JSON(sdk.CDNConfig{TCPURL: "tcphost:8090"})
-	require.NoError(t, h.RefreshServiceLogger(context.TODO()))
+
+	require.NoError(t, h.Common.Init(context.TODO(), h))
 
 	containers := []types.Container{
 		{

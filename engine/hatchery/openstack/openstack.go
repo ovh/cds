@@ -13,7 +13,6 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
 	"github.com/gorilla/mux"
 	"github.com/rockbears/log"
-	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/service"
@@ -214,13 +213,8 @@ func (h *HatcheryOpenstack) CanSpawn(ctx context.Context, model *sdk.Model, jobI
 	return true
 }
 
-func (h *HatcheryOpenstack) GetLogger() *logrus.Logger {
-	return h.ServiceLogger
-}
-
 func (h *HatcheryOpenstack) main(ctx context.Context) {
 	serverListTick := time.NewTicker(10 * time.Second).C
-	cdnConfTick := time.NewTicker(10 * time.Second).C
 	killAwolServersTick := time.NewTicker(30 * time.Second).C
 	killErrorServersTick := time.NewTicker(60 * time.Second).C
 	killDisabledWorkersTick := time.NewTicker(60 * time.Second).C
@@ -235,10 +229,6 @@ func (h *HatcheryOpenstack) main(ctx context.Context) {
 			h.killErrorServers(ctx)
 		case <-killDisabledWorkersTick:
 			h.killDisabledWorkers()
-		case <-cdnConfTick:
-			if err := h.RefreshServiceLogger(ctx); err != nil {
-				log.Error(ctx, "Hatchery> openstack> Cannot get cdn configuration : %v", err)
-			}
 		case <-ctx.Done():
 			if ctx.Err() != nil {
 				log.Error(ctx, "Hatchery> openstack> Exiting routines")

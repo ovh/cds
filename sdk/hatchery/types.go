@@ -6,7 +6,6 @@ import (
 
 	jwt "github.com/golang-jwt/jwt"
 	"github.com/rockbears/log"
-	"github.com/sirupsen/logrus"
 	"go.opencensus.io/stats"
 
 	"github.com/ovh/cds/engine/service"
@@ -112,7 +111,6 @@ type Interface interface {
 	Configuration() service.HatcheryCommonConfiguration
 	Serve(ctx context.Context) error
 	GetPrivateKey() *rsa.PrivateKey
-	GetLogger() *logrus.Logger
 	GetGoRoutines() *sdk.GoRoutines
 }
 

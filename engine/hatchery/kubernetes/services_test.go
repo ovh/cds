@@ -34,7 +34,8 @@ func Test_serviceLogs(t *testing.T) {
 	gock.New("http://lolcat.api").Get("/worker").Reply(http.StatusOK).JSON([]sdk.Worker{{Name: "pod-name"}})
 
 	gock.New("http://lolcat.api").Get("/config/cdn").Reply(http.StatusOK).JSON(sdk.CDNConfig{TCPURL: "tcphost:8090"})
-	require.NoError(t, h.RefreshServiceLogger(context.TODO()))
+
+	require.NoError(t, h.Common.Init(context.TODO(), h))
 
 	podsList := v1.PodList{
 		Items: []v1.Pod{
