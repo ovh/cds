@@ -740,6 +740,10 @@ func (a *API) Serve(ctx context.Context) error {
 		a.repositoryAnalyzePoller(ctx, 1*time.Second)
 	})
 
+	a.GoRoutines.RunWithRestart(ctx, "api.cleanRepositoyAnalyzis", func(ctx context.Context) {
+		a.cleanRepositoyAnalyzis(ctx, 1*time.Hour)
+	})
+
 	log.Info(ctx, "Bootstrapping database...")
 	defaultValues := sdk.DefaultValues{
 		DefaultGroupName: a.Config.Auth.DefaultGroup,

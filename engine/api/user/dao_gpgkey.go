@@ -12,7 +12,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func getAllGpgKeys(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query) ([]sdk.UserGPGKey, error) {
+func getAllGPGKeys(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query) ([]sdk.UserGPGKey, error) {
 	var keys []dbGpgKey
 	if err := gorpmapping.GetAll(ctx, db, q, &keys); err != nil {
 		return nil, sdk.WrapError(err, "cannot get user gpg keys")
@@ -32,7 +32,7 @@ func getAllGpgKeys(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query
 	return gpgKeys, nil
 }
 
-func getGpgKey(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query) (*sdk.UserGPGKey, error) {
+func getGPGKey(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query) (*sdk.UserGPGKey, error) {
 	var key dbGpgKey
 	found, err := gorpmapping.Get(ctx, db, q, &key)
 	if err != nil {
@@ -60,7 +60,7 @@ func LoadGPGKeysByUserID(ctx context.Context, db gorp.SqlExecutor, userID string
     FROM user_gpg_key
     WHERE authentified_user_id = $1
   `).Args(userID)
-	return getAllGpgKeys(ctx, db, query)
+	return getAllGPGKeys(ctx, db, query)
 }
 
 func LoadGPGKeyByKeyID(ctx context.Context, db gorp.SqlExecutor, keyID string) (*sdk.UserGPGKey, error) {
@@ -69,7 +69,7 @@ func LoadGPGKeyByKeyID(ctx context.Context, db gorp.SqlExecutor, keyID string) (
     FROM user_gpg_key
     WHERE key_id = $1
   `).Args(keyID)
-	return getGpgKey(ctx, db, query)
+	return getGPGKey(ctx, db, query)
 }
 
 func InsertGPGKey(ctx context.Context, db gorpmapper.SqlExecutorWithTx, gpgKey *sdk.UserGPGKey) error {

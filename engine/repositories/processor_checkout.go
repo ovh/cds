@@ -99,7 +99,9 @@ func (s *Service) processCheckout(ctx context.Context, op *sdk.Operation) error 
 
 		// Check commit signature
 		if err := gitRepo.VerifyCommit(ctx, op.Setup.Checkout.Commit); err != nil {
-			return sdk.NewErrorFrom(sdk.ErrUnauthorized, "unable to verify commit signature")
+			op.Setup.Checkout.Result.CommitVerified = false
+			op.Setup.Checkout.Result.Msg = fmt.Sprintf("%v", err)
+			return nil
 		}
 		op.Setup.Checkout.Result.CommitVerified = true
 	}

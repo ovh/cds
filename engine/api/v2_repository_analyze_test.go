@@ -1,23 +1,23 @@
-package repository_test
+package api
 
 import (
 	"context"
-	"testing"
-	"time"
-
 	"github.com/ovh/cds/engine/api/repository"
-	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/sdk"
 	"github.com/stretchr/testify/require"
+	"testing"
+	"time"
 )
 
-func TestDeleteOldest(t *testing.T) {
-	db, cache := test.SetupPG(t)
+func TestCleanAnalyze(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 
 	key1 := sdk.RandomString(10)
-	proj1 := assets.InsertTestProject(t, db, cache, key1, key1)
+	proj1 := assets.InsertTestProject(t, db, api.Cache, key1, key1)
 
 	vcsProject := &sdk.VCSProject{
 		Name:        "the-name",
@@ -44,7 +44,7 @@ func TestDeleteOldest(t *testing.T) {
 	}
 	require.NoError(t, repository.Insert(context.TODO(), db, &repo))
 
-	for i := 0; i < 50; i++ {
+	for i := 0; i < 60; i++ {
 		a := sdk.ProjectRepositoryAnalyze{
 			ProjectRepositoryID: repo.ID,
 			ProjectKey:          proj1.Key,
@@ -52,23 +52,9 @@ func TestDeleteOldest(t *testing.T) {
 		}
 		require.NoError(t, repository.InsertAnalyze(context.TODO(), db, &a))
 	}
+	api.cleanRepositoyAnalyzis(ctx, 1*time.Second)
 
 	analyzes, err := repository.LoadAllAnalyzesByRepo(context.TODO(), db, repo.ID)
 	require.NoError(t, err)
 	require.Len(t, analyzes, 50)
-
-	// Add 51
-	a := sdk.ProjectRepositoryAnalyze{
-		ProjectRepositoryID: repo.ID,
-		Branch:              "lastbranch",
-		VCSProjectID:        vcsProject.ID,
-		ProjectKey:          proj1.Key,
-	}
-	require.NoError(t, repository.InsertAnalyze(context.TODO(), db, &a))
-
-	analyzes, err = repository.LoadAllAnalyzesByRepo(context.TODO(), db, repo.ID)
-	require.NoError(t, err)
-	require.Len(t, analyzes, 50)
-	require.Equal(t, "lastbranch", analyzes[49].Branch)
-
 }

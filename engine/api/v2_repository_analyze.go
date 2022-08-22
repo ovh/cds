@@ -31,6 +31,50 @@ import (
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
+func (api *API) cleanRepositoyAnalyzis(ctx context.Context, delay time.Duration) error {
+	ticker := time.NewTicker(delay)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-ticker.C:
+			repositories, err := repository.LoadAllRepositories(ctx, api.mustDB())
+			if err != nil {
+				log.ErrorWithStackTrace(ctx, err)
+				continue
+			}
+			for _, r := range repositories {
+				nb, err := repository.CountAnalyzeByRepo(api.mustDB(), r.ID)
+				if err != nil {
+					log.ErrorWithStackTrace(ctx, err)
+					break
+				}
+				if nb > 50 {
+					toDelete := int(nb - 50)
+					tx, err := api.mustDB().Begin()
+					if err != nil {
+						log.ErrorWithStackTrace(ctx, err)
+						break
+					}
+					for i := 0; i < toDelete; i++ {
+						if err := repository.DeleteOldestAnalyze(ctx, tx, r.ID); err != nil {
+							log.ErrorWithStackTrace(ctx, err)
+							break
+						}
+					}
+
+					if err := tx.Commit(); err != nil {
+						log.ErrorWithStackTrace(ctx, err)
+						break
+					}
+				}
+			}
+		}
+	}
+}
+
 func (api *API) getProjectRepositoryAnalyzesHandler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(rbac.ProjectRead),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {

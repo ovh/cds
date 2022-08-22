@@ -99,7 +99,7 @@ func doStreamRequest(ctx context.Context, srvs []sdk.Service, method, path strin
 			break
 		}
 	}
-
+	ctx = log.ContextWithStackTrace(ctx, lastErr)
 	log.Error(ctx, "unable to call service: maximum attempt exceed: %+v lastCode:%d attempts:%d", lastErr, lastCode, attempts)
 	return nil, nil, lastCode, sdk.WithStack(lastErr)
 }
@@ -367,7 +367,7 @@ func doStreamFromURL(ctx context.Context, srv *sdk.Service, method string, path 
 	}
 
 	defer resp.Body.Close()
-	
+
 	// Try to catch the CDS Error
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
