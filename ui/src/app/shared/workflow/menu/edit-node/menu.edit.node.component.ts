@@ -3,13 +3,11 @@ import {
     ChangeDetectorRef,
     Component,
     EventEmitter,
-    Input,
     OnDestroy,
     OnInit,
     Output
 } from '@angular/core';
 import { Select, Store } from '@ngxs/store';
-import { IPopup } from '@richardlt/ng2-semantic-ui';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { WNode, Workflow } from 'app/model/workflow.model';
@@ -30,7 +28,6 @@ import { map } from 'rxjs/operators';
 export class WorkflowWNodeMenuEditComponent implements OnInit, OnDestroy {
 
     // Project that contains the workflow
-    @Input() popup: IPopup;
     @Output() event = new EventEmitter<string>();
 
     project: Project;
@@ -95,7 +92,37 @@ export class WorkflowWNodeMenuEditComponent implements OnInit, OnDestroy {
     }
 
     sendEvent(e: string): void {
-        this.popup.close();
+        switch (e) {
+            case 'run':
+                if (!this.runnable) {
+                    return;
+                }
+                break;
+            case 'fork':
+            case 'join':
+            case 'join_link':
+            case 'outgoinghook':
+            case 'pipeline':
+                if (this.readonly) {
+                    return;
+                }
+                break;
+            case 'parent':
+                if (this.workflow.workflow_data.node.id !== this.node.id || this.readonly) {
+                    return;
+                }
+                break;
+            case 'hook':
+                if(!this.workflow.workflow_data || this.workflow.workflow_data.node.id !== this.node.id || this.readonly) {
+                    return;
+                }
+                break;
+            case 'delete':
+                if(this.readonly || this.node.id === this.workflow.workflow_data.node.id) {
+                    return;
+                }
+
+        }
         this.event.emit(e);
     }
 

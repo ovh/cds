@@ -1,10 +1,11 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { Store } from '@ngxs/store';
 import { IdName, Label, LoadOpts, Project } from 'app/model/project.model';
 import { ProjectStore } from 'app/service/project/project.store';
 import { LabelsEditComponent } from 'app/shared/labels/edit/labels.edit.component';
 import { EnrichProject } from 'app/store/project.action';
 import { finalize } from 'rxjs/operators';
+import { NzModalService } from 'ng-zorro-antd/modal';
 
 @Component({
     selector: 'app-project-workflows',
@@ -55,10 +56,6 @@ export class ProjectWorkflowListComponent implements OnInit {
         return this._filterLabel;
     }
 
-    // Modal
-    @ViewChild('projectLabels')
-    projectLabels: LabelsEditComponent;
-
     _project: Project;
     _filter = '';
     _filterLabel = '';
@@ -71,7 +68,8 @@ export class ProjectWorkflowListComponent implements OnInit {
     constructor(
         private store: Store,
         private _cd: ChangeDetectorRef,
-        private _projectStore: ProjectStore
+        private _projectStore: ProjectStore,
+        private _modalService: NzModalService
     ) { }
 
     ngOnInit(): void {
@@ -86,9 +84,14 @@ export class ProjectWorkflowListComponent implements OnInit {
     }
 
     editLabels() {
-        if (this.projectLabels && this.projectLabels.show) {
-            this.projectLabels.show();
-        }
+        this._modalService.create({
+                nzTitle: 'Labels',
+                nzWidth: '900px',
+                nzContent: LabelsEditComponent,
+                nzComponentParams: {
+                    project: this.project
+                }
+            });
     }
 
     setViewMode(mode: 'blocs' | 'labels' | 'lines') {

@@ -1,4 +1,4 @@
-<ng-template let-context let-modal="modal" #consumerDetailsModal>
+<div>
     <div class="header">
         {{ 'auth_consumer_details_modal_title' | translate: { name: consumer.name } }} <div *ngIf="consumer.disabled"
             class="ui red label">
@@ -26,7 +26,7 @@
                         <div class="field">
                             <label>{{'user_auth_groups' | translate}}</label>
                             {{groups}}
-                            <span *ngIf="consumer.warnings" suiPopup [popupText]="warningText">
+                            <span *ngIf="consumer.warnings" nz-tooltip [nzTooltipTitle]="warningText">
                                 {{' '}}<i class="info exclamation triangle icon yellow link"
                                     title="{{warningText}}"></i>
                             </span>
@@ -114,4 +114,4 @@
             </div>
         </div>
     </div>
-</ng-template>
+</div>

@@ -1,50 +1,78 @@
-<ng-template let-context let-modal="modal" #labelsEditModal>
-    <div class="header">{{ 'common_labels' | translate }}</div>
-    <div class="content scrolling">
-        <div class="ui form">
-            <div class="ui info message" *ngIf="!labels || labels.length === 0">{{ 'project_label_no' | translate }}
-            </div>
-            <div class="inline fields" *ngFor="let label of labels">
-                <div class="field">
-                    <label>{{'common_name' | translate}}</label>
-                    <input type="text" [placeholder]="'common_name' | translate" [(ngModel)]="label.name">
-                </div>
-                <div class="field">
-                    <label>{{'common_color' | translate}}</label>
-                    <input type="text" [placeholder]="'common_color' | translate" [(ngModel)]="label.color">
-                </div>
-                <div class="field">
-                    <i class="circle icon" [style.color]="label.color"></i>
-                </div>
-                <div class="field">
-                    <app-delete-button (event)="deleteLabel(label)"></app-delete-button>
-                </div>
-            </div>
-            <div class="inline fields" [class.mt5]="!labels || labels.length === 0">
-                <div class="field">
-                    <label>{{'common_name' | translate}}</label>
-                    <input type="text" [placeholder]="'common_name' | translate" [(ngModel)]="newLabel.name">
-                </div>
-                <div class="field">
-                    <label>{{'common_color' | translate}}</label>
-                    <input type="text" placeholder="#FF0000" [(ngModel)]="newLabel.color">
-                </div>
-                <div class="field">
-                    <i class="circle icon" [style.color]="newLabel.color"></i>
-                </div>
-                <div class="field">
-                    <button class="ui green button" [disabled]="loading" [class.loading]="loading"
-                        (click)="createLabel()"><i class="plus icon"></i>{{ 'btn_add' | translate}}</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="actions">
-        <button class="ui grey button" [disabled]="loading" [class.loading]="loading"
-            (click)="modal.approve(true)">{{ 'common_close' | translate }}</button>
-        <button class="ui green button" *ngIf="project.permissions.writable" [disabled]="loading"
-            [class.loading]="loading" (click)="saveLabels(true)">
-            {{ 'btn_save' | translate }}
-        </button>
-    </div>
-</ng-template>
+<div class="content">
+    <form nz-form>
+        <nz-alert nzType="info" *ngIf="!labels || labels.length === 0" nzMessage="There is no label"></nz-alert>
+        <nz-row *ngFor="let label of labels">
+            <nz-col [nzSpan]="8">
+                <nz-form-item>
+                    <nz-form-label>Name</nz-form-label>
+                    <nz-form-control>
+                        <input nz-input type="text" name="{{label.name}}" placeholder="name" [(ngModel)]="label.name">
+                    </nz-form-control>
+                </nz-form-item>
+            </nz-col>
+            <nz-col [nzSpan]="8">
+                <nz-form-item>
+                    <nz-form-label>Color</nz-form-label>
+                    <nz-form-control>
+                        <input nz-input type="text" name="color-{{label.name}}" placeholder="color" [(ngModel)]="label.color">
+                    </nz-form-control>
+                </nz-form-item>
+            </nz-col>
+            <nz-col [nzSpan]="1">
+                <nz-form-item>
+                    <nz-form-control>
+                        <i nz-icon nzType="highlight" nzTheme="fill" [style.color]="label.color"></i>
+                    </nz-form-control>
+                </nz-form-item>
+            </nz-col>
+            <nz-col [nzSpan]="7">
+                <nz-form-item nzJustify="end">
+                    <button nz-button nzDanger nzType="primary" (click)="deleteLabel(label)">Delete</button>
+                </nz-form-item>
+            </nz-col>
+        </nz-row>
+        <nz-row>
+            <nz-col [nzSpan]="8">
+                <nz-form-item>
+                    <nz-form-label>Name</nz-form-label>
+                    <nz-form-control>
+                        <input nz-input type="text" name="newName" placeholder="Name" [(ngModel)]="newLabel.name">
+                    </nz-form-control>
+                </nz-form-item>
+            </nz-col>
+            <nz-col [nzSpan]="8">
+                <nz-form-item>
+                    <nz-form-label>Color</nz-form-label>
+                    <nz-form-control>
+                        <input nz-input type="text" name="newColor" placeholder="#FF0000" [(ngModel)]="newLabel.color">
+                    </nz-form-control>
+                </nz-form-item>
+            </nz-col>
+            <nz-col [nzSpan]="1">
+                <nz-form-item>
+                    <nz-form-control>
+                        <i nz-icon nzType="highlight" nzTheme="fill" [style.color]="newLabel.color"></i>
+                    </nz-form-control>
+                </nz-form-item>
+            </nz-col>
+            <nz-col [nzSpan]="7">
+                <nz-form-item>
+                    <nz-form-control>
+                        <button nz-button nzType="primary" [disabled]="loading" [nzLoading]="loading"
+                                (click)="createLabel()"><i class="plus icon"></i>Add</button>
+                    </nz-form-control>
+                </nz-form-item>
+            </nz-col>
+        </nz-row>
+    </form>
+</div>
+<div *nzModalFooter>
+    <button nz-button [disabled]="loading" [nzLoading]="loading"
+            (click)="_modal.destroy()">Close
+    </button>
+    <button nz-button nzType="primary" *ngIf="project.permissions.writable" [disabled]="loading"
+            [nzLoading]="loading" (click)="saveLabels(true)">
+        Save
+    </button>
+</div>
+

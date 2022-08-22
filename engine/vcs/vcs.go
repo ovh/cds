@@ -83,7 +83,7 @@ func (s *Service) CheckConfiguration(config interface{}) error {
 }
 
 func (s *Service) getConsumer(name string, vcsAuth sdk.VCSAuth) (sdk.VCSServer, error) {
-	if vcsAuth.URL != "" {
+	if vcsAuth.Type != "" {
 		switch vcsAuth.Type {
 		case sdk.VCSTypeGitea:
 			return gitea.New(strings.TrimSuffix(vcsAuth.URL, "/"),

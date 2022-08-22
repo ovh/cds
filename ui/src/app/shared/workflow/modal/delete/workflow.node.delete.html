@@ -1,22 +1,12 @@
-<ng-template let-context let-modal="modal" #deleteModal>
-    <div class="header">{{ 'workflow_node_delete_title' | translate: { node: node.name} }}</div>
-    <div class="content scrolling">
-        <div class="ui orange message" *ngIf="deleteAll === 'all' && isRoot">
-          {{'workflow_deleted_warning' | translate}}
-        </div>
-        <div class="ui form">
-            <div class="grouped fields">
-                <div class="field">
-                    <sui-radio-button name="only" value="only" [(ngModel)]="deleteAll">{{ 'workflow_node_delete_alert_soft' | translate }}</sui-radio-button>
-                </div>
-                <div class="field">
-                    <sui-radio-button name="all" value="all" [(ngModel)]="deleteAll"><span class="red">{{ 'workflow_node_delete_alert' | translate }}</span></sui-radio-button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="actions">
-        <button class="ui grey button" [disabled]="loading" (click)="modal.approve(true)">{{ 'common_close' | translate }}</button>
-        <button class="ui red button" [disabled]="loading" [class.loading]="loading" (click)="deleteNode()">{{ 'btn_delete' | translate }}</button>
-    </div>
-</ng-template>
+<div>
+    <nz-alert nzType="warning" *ngIf="deleteAll === 'all' && isRoot" nzMessage="Warning, if you delete this pipeline with all its children you are going to delete all the workflow and its configuration"></nz-alert>
+
+    <nz-radio-group [(ngModel)]="deleteAll">
+        <label nz-radio nzValue="only">{{ 'workflow_node_delete_alert_soft' | translate }}</label>
+        <label nz-radio nzValue="all"><span class="red">{{ 'workflow_node_delete_alert' | translate }}</span></label>
+    </nz-radio-group>
+</div>
+<div *nzModalFooter>
+    <button nz-button [disabled]="loading" (click)="_modal.destroy()">Close</button>
+    <button nz-button nzDanger nzType="primary" [disabled]="loading" [nzLoading]="loading" (click)="deleteNode()">Delete</button>
+</div>

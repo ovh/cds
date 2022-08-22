@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { IPopup, SuiActiveModal } from '@richardlt/ng2-semantic-ui';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { WNode, WNodeJoin, WNodeTrigger, WNodeType, Workflow } from 'app/model/workflow.model';
@@ -24,7 +23,7 @@ import {
 } from 'app/store/workflow.action';
 import { WorkflowState } from 'app/store/workflow.state';
 import { Subscription } from 'rxjs';
-import { finalize, map, tap } from 'rxjs/operators';
+import { finalize, map } from 'rxjs/operators';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { WorkflowHookModalComponent } from 'app/shared/workflow/modal/hook-add/hook.modal.component';
 
@@ -50,9 +49,12 @@ export class WorkflowWNodeComponent implements OnInit, OnDestroy {
     loading: boolean;
 
     hasWorkflowRun: boolean;
+    menuVisible: boolean = false;
 
     currentNodeRun: WorkflowNodeRun;
     nodeRunSub: Subscription;
+
+    deleteNodeModalVisible: boolean = false;
 
     // Modal
     @ViewChild('workflowDeleteNode')
@@ -95,19 +97,19 @@ export class WorkflowWNodeComponent implements OnInit, OnDestroy {
         });
     }
 
-    clickOnNode(popup: IPopup): void {
-        if (this.workflow.previewMode || !popup) {
+        clickOnNode(): void {
+        if (this.workflow.previewMode) {
             return;
         }
         if (!this.currentNodeRun) {
             this._store.dispatch(new SelectWorkflowNode({
                 node: this.node
-            })).pipe(tap(popup.open));
+            }));
         } else {
             this._store.dispatch(new SelectWorkflowNodeRun({
                 workflowNodeRun: this.currentNodeRun,
                 node: this.node
-            })).pipe(tap(popup.open));
+            }));
         }
 
     }
@@ -148,6 +150,7 @@ export class WorkflowWNodeComponent implements OnInit, OnDestroy {
     }
 
     receivedEvent(e: string): void {
+        this.menuVisible = false;
         switch (e) {
             case 'pipeline':
                 this.openTriggerModal('pipeline', false);
@@ -189,6 +192,7 @@ export class WorkflowWNodeComponent implements OnInit, OnDestroy {
                 });
                 break;
         }
+        this._cd.markForCheck()
     }
 
 
@@ -222,9 +226,16 @@ export class WorkflowWNodeComponent implements OnInit, OnDestroy {
         if (!this.canEdit()) {
             return;
         }
-        if (this.workflowDeleteNode) {
-            this.workflowDeleteNode.show();
-        }
+        this._modalService.create({
+            nzTitle: 'Delete ' + this.node.name,
+            nzWidth: '900px',
+            nzContent: WorkflowDeleteNodeComponent,
+            nzComponentParams: {
+                project: this.project,
+                node: this.node,
+                workflow: this.workflow
+            }
+        });
     }
 
     openTriggerModal(t: string, parent: boolean): void {
@@ -304,30 +315,6 @@ export class WorkflowWNodeComponent implements OnInit, OnDestroy {
             workflowName: this.workflow.name,
             join
         }));
-    }
-
-    updateWorkflow(w: Workflow, modal: SuiActiveModal<boolean, boolean, void>): void {
-        this.loading = true;
-        let editMode = this._store.selectSnapshot(WorkflowState).editMode;
-        this._store.dispatch(new UpdateWorkflow({
-            projectKey: this.project.key,
-            workflowName: this.workflow.name,
-            changes: w
-        })).pipe(finalize(() => {
-            this.loading = false;
-            this._cd.markForCheck();
-        })).subscribe(() => {
-            if (!editMode) {
-                this._toast.success('', this._translate.instant('workflow_updated'));
-            }
-            if (modal) {
-                modal.approve(null);
-            }
-        }, () => {
-            if (Array.isArray(this.node.hooks) && this.node.hooks.length) {
-                this.node.hooks.pop();
-            }
-        });
     }
 
     linkJoin(): void {

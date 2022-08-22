@@ -74,7 +74,12 @@ func (m *Mapper) UpdateColumns(db gorp.SqlExecutor, i interface{}, columnFilter 
 	for _, f := range mapping.EncryptedFields {
 		// Reset the field to the decrypted value if the value is set to the placeholder
 		field := val.FieldByName(f.Name)
-		if field.Interface() == sdk.PasswordPlaceholder {
+		if field.Interface() == sdk.PasswordPlaceholder ||
+			field.Kind() == reflect.Struct && field.IsZero() ||
+			field.Kind() == reflect.Map && field.Len() == 0 ||
+			field.Kind() == reflect.Slice && field.Len() == 0 ||
+			field.Kind() == reflect.Array && field.Len() == 0 {
+
 			hasPlaceHolder = true
 			break
 		}
@@ -99,8 +104,13 @@ func (m *Mapper) UpdateColumns(db gorp.SqlExecutor, i interface{}, columnFilter 
 		for _, f := range mapping.EncryptedFields {
 			// Reset the field to the decrypted value if the value is set to the placeholder
 			field := val.FieldByName(f.Name)
-			if field.Interface() == sdk.PasswordPlaceholder {
-				oldVal := valTuple.FieldByName(f.Name)
+			oldVal := valTuple.FieldByName(f.Name)
+
+			if field.Interface() == sdk.PasswordPlaceholder ||
+				field.Kind() == reflect.Struct && field.IsZero() ||
+				field.Kind() == reflect.Map && field.Len() == 0 ||
+				field.Kind() == reflect.Slice && field.Len() == 0 ||
+				field.Kind() == reflect.Array && field.Len() == 0 {
 				field.Set(oldVal)
 			}
 		}

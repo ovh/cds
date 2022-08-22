@@ -46,7 +46,7 @@ func (s *Service) authMiddleware(ctx context.Context, w http.ResponseWriter, req
 	if err != nil {
 		return nil, sdk.WrapError(err, "bad header syntax for HeaderXVCSToken")
 	}
-	if string(vcsURL) != "" {
+	if string(vcsType) != "" {
 		ctx = context.WithValue(ctx, contextKeyVCSURL, string(vcsURL))
 		ctx = context.WithValue(ctx, contextKeyVCSURLApi, string(vcsURLApi))
 		ctx = context.WithValue(ctx, contextKeyVCSType, string(vcsType))

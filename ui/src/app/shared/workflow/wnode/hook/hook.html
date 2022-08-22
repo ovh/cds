@@ -1,20 +1,16 @@
-<div class="workflowHook pointing"
-     suiPopup [popupTemplate]="popupHook"
-     popupPlacement="right" popupTrigger="outsideClick" #popup="suiPopup">
+<div class="workflowHook pointing" nz-popover nzPopoverTrigger="click" nzPopoverPlacement="right"
+     [nzPopoverContent]="popupHook" [(nzPopoverVisible)]="menuVisible">
     <ng-container *ngIf="hookEvent && hookEvent.parent_workflow && !hookEvent.parent_workflow.name">
         <i class="ui icon {{icon | lowercase }}" [class.green]="hookEvent.uuid === hook.uuid"></i>
     </ng-container>
     <ng-container *ngIf="hookEvent && hookEvent.parent_workflow && hookEvent.parent_workflow.name">
-        <i class="ui icon {{icon | lowercase}}" [class.green]="hookEvent.uuid === hook.uuid" suiPopup popupHeader="Workflow" popupText="{{hookEvent.parent_workflow.key}}/{{hookEvent.parent_workflow.name}} #{{hookEvent.parent_workflow.run}}"></i>
+        <i class="ui icon {{icon | lowercase}}" [class.green]="hookEvent.uuid === hook.uuid"
+           nz-tooltip nzTooltipTitle="{{hookEvent.parent_workflow.key}}/{{hookEvent.parent_workflow.name}} #{{hookEvent.parent_workflow.run}}"></i>
     </ng-container>
     <ng-container *ngIf="!hookEvent || !hookEvent.parent_workflow">
         <i class="ui icon {{icon | lowercase}}"></i>
     </ng-container>
 </div>
-<ng-template let-popup #popupHook>
-    <app-workflow-menu-hook-edit (event)="receivedEvent($event)" [readonly]="isReadOnly" [workflow]="workflow" [popup]="popup" [hook]="hook" [hookEventUUID]="hookEvent?.uuid" #menuHook></app-workflow-menu-hook-edit>
+<ng-template #popupHook>
+    <app-workflow-menu-hook-edit (event)="receivedEvent($event)" [readonly]="isReadOnly" [workflow]="workflow" [hook]="hook" [hookEventUUID]="hookEvent?.uuid" #menuHook></app-workflow-menu-hook-edit>
 </ng-template>
-<app-delete-modal [title]="'workflow_hook_delete_title' | translate" [msg]="'workflow_hook_delete_msg' | translate"
-                  [autoclose]="false" (event)="deleteHook(deleteHookModal.modal)" #deleteHookModal>
-</app-delete-modal>
-<app-workflow-node-hook-details #workflowDetailsHook></app-workflow-node-hook-details>

@@ -90,7 +90,7 @@
                         *ngSwitchCase="'label'">{{c.selector.value | translate}}</span>
                     <ng-container *ngSwitchCase="'router-link-with-icons'">
                         <a class="ui" [routerLink]="c.selector.link">{{c.selector.value}}</a>
-                        <span *ngFor="let i of c.selector.icons" suiPopup [popupText]="i.label | translate">
+                        <span *ngFor="let i of c.selector.icons" nz-tooltip [nzTooltipTitle]="i.label | translate">
                             {{' '}}<i [ngClass]="i.class" title="{{i.title | translate }}"></i>
                         </span>
                     </ng-container>
@@ -115,8 +115,7 @@
                     </span>
                     <span *ngSwitchCase="'text-icons'">
                         {{c.selector.value | translate}}
-                        <span *ngFor="let i of c.selector.icons" suiPopup [popupText]="i.label | translate"
-                            popupTrigger="{{i.trigger ? i.trigger : 'hover'}}">
+                        <span *ngFor="let i of c.selector.icons" nz-tooltip [nzTooltipTitle]="i.label | translate" nzTooltipTrigger="{{i.trigger ? i.trigger : 'hover'}}">
                             {{' '}}<i [ngClass]="i.class" title="{{i.title | translate }}"></i>
                         </span>
                     </span>
@@ -135,8 +134,8 @@
     <tfoot tfoot *ngIf="nbElementsByPage && pagesCount > 1">
         <tr>
             <td [colSpan]="columnsCount">
-                <app-pagination [collectionSize]="filteredData.length" [pageSize]="nbElementsByPage" [maxSize]="20"
-                    [hasEllipses]="true" (pageChange)="pageChange($event)" [page]="currentPage">
+                <app-pagination [collectionSize]="filteredData.length" [pageSize]="nbElementsByPage"
+                    (pageChange)="pageChange($event)" [page]="currentPage">
                 </app-pagination>
             </td>
         </tr>

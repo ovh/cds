@@ -15,7 +15,12 @@
     </app-permission-form>
 </ng-container>
 <div *ngIf="loading" class="ui text active loader">{{'common_loading_environments' | translate}}...</div>
-<app-confirm-modal [title]="'project_permission_propagate_title' | translate"
-    [msg]="'project_permission_propagate_question' | translate" (event)="confirmPermPropagation($event)"
-    #confirmPropagationModal>
-</app-confirm-modal>
+<nz-modal [(nzVisible)]="confirmModalVisible" nzTitle="Project's permission propagation" (nzOnCancel)="confirmModalVisible = false">
+    <div *nzModalContent>
+        Do you want to propagate your new permission to all your existing workflows ?
+    </div>
+    <div *nzModalFooter>
+        <button nz-button (click)="confirmPermPropagation(false)">No</button>
+        <button nz-button nzType="primary" (click)="confirmPermPropagation(true)">Yes</button>
+    </div>
+</nz-modal>

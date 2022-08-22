@@ -1,26 +1,23 @@
-<div class="sidebar-node-edit">
-    <div class="ui list">
-        <ng-container *ngIf="hook.hook_model_name !== 'Workflow'">
-            <a class="item" (click)="sendEvent('logs')" [class.disabled]="isRun && (!hookEventUUID || hookEventUUID !== hook.uuid)">
-                {{ 'btn_logs' | translate }}
-            </a>
-        </ng-container>
-        <ng-container *ngIf="hook.hook_model_name === 'Workflow' && hookEvent?.parent_workflow?.key">
-            <a
-               [routerLink]="['/project', hookEvent.parent_workflow.key, 'workflow', hookEvent.parent_workflow.name, 'run', hookEvent.parent_workflow.run]">
-                Display parent workflow run
-            </a>
-        </ng-container>
+<ul>
+        <li *ngIf="hook.hook_model_name !== 'Workflow'">
+           <a [class.disabled]="isRun && (!hookEventUUID || hookEventUUID !== hook.uuid)" (click)="sendEvent('logs')">Display logs</a>
+
+        </li>
+        <li  *ngIf="hook.hook_model_name === 'Workflow' && hookEvent?.parent_workflow?.key">
+            <a [routerLink]="['/project', hookEvent.parent_workflow.key, 'workflow', hookEvent.parent_workflow.name, 'run', hookEvent.parent_workflow.run]">Display parent workflow run</a>
+        </li>
         <hr>
-        <a class="item" (click)="sendEvent('edit')">
-                <span *ngIf="readonly">{{ 'workflow_node_menu_edit_ro' | translate }}</span>
-                <span *ngIf="!readonly">{{ 'workflow_node_menu_edit' | translate }}</span>
-        </a>
+        <li>
+            <a (click)="sendEvent('edit')">
+                <span *ngIf="readonly">Show context configuration</span>
+                <span *ngIf="!readonly">Edit the context</span>
+            </a>
+        </li>
         <hr>
-        <a class="item" (click)="sendEvent('delete')"
-           [class.disabled]="readonly">
-                {{ 'btn_delete' | translate }}
-        </a>
-    </div>
-</div>
+        <li>
+            <a *ngIf="!readonly" nz-popconfirm nzPopconfirmTitle="Are you sure you want to delete this hook ?" (nzOnConfirm)="sendEvent('delete')">Delete</a>
+            <span *ngIf="readonly"><a disabled>Delete</a></span>
+        </li>
+    </ul>
+
 

@@ -10,7 +10,6 @@ import {
 } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { AllKeys } from 'app/model/keys.model';
 import { Project } from 'app/model/project.model';
 import { VCSConnections, VCSStrategy } from 'app/model/vcs.model';
@@ -19,6 +18,7 @@ import { KeyEvent } from 'app/shared/keys/key.event';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { AddKeyInProject } from 'app/store/project.action';
 import { finalize } from 'rxjs/operators';
+import { NzModalService } from 'ng-zorro-antd/modal';
 
 @Component({
     selector: 'app-vcs-strategy',
@@ -54,18 +54,15 @@ export class VCSStrategyComponent implements OnInit {
     keys: AllKeys;
     connectionType = VCSConnections;
     defaultKeyType = 'ssh';
-
-    @ViewChild('createKey')
-    sshModalTemplate: ModalTemplate<boolean, boolean, void>;
-    sshModal: SuiActiveModal<boolean, boolean, void>;
+    modalKeyVisible: boolean = false;
 
     constructor(
         private store: Store,
         private _keyService: KeyService,
-        private _modalService: SuiModalService,
         private _toast: ToastService,
         private _translate: TranslateService,
-        private _cd: ChangeDetectorRef
+        private _cd: ChangeDetectorRef,
+        private _modalService: NzModalService
     ) { }
 
     ngOnInit() {
@@ -103,10 +100,8 @@ export class VCSStrategyComponent implements OnInit {
 
     openCreateKeyModal(k): void {
         this.defaultKeyType = k;
-        if (this.sshModalTemplate) {
-            const config = new TemplateModalConfig<boolean, boolean, void>(this.sshModalTemplate);
-            this.sshModal = this._modalService.open(config);
-        }
+        this.modalKeyVisible = true;
+        this._cd.markForCheck();
     }
 
     addKey(event: KeyEvent): void {
@@ -116,8 +111,9 @@ export class VCSStrategyComponent implements OnInit {
             key: event.key
         })).pipe(finalize(() => {
             this.loading = false;
-            this.sshModal.approve(true);
+            this.modalKeyVisible = false;
             this.loadKeys();
+            this._cd.markForCheck();
         })).subscribe(() => this._toast.success('', this._translate.instant('keys_added')));
     }
 

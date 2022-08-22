@@ -8,5 +8,20 @@
 .ascodeButton {
   position: absolute;
   right: 15px;
-  top: 121px;
+  top: 135px;
+}
+
+.labelFeature {
+  position: relative;
+  top: -3px;
+  margin-left: 10px;
+  margin-top: 5px;
+
+  nz-tag {
+    cursor: pointer;
+  }
+
+  i {
+    margin-right: 5px;
+  }
 }

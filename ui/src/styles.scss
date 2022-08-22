@@ -225,6 +225,9 @@ body ::-webkit-scrollbar-thumb {
 }
 
 // icon
+i.warning {
+  color: $cds_color_red !important;
+}
 .ui {
     i.icon.blue {
         color: $cds_color_teal !important;

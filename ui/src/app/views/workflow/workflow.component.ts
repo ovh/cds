@@ -9,7 +9,6 @@ import {
 import { ActivatedRoute, NavigationStart, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Select, Store } from '@ngxs/store';
-import { SuiPopup } from '@richardlt/ng2-semantic-ui';
 import { Project } from 'app/model/project.model';
 import { Workflow } from 'app/model/workflow.model';
 import { FeatureNames, FeatureService } from 'app/service/feature/feature.service';
@@ -62,11 +61,6 @@ export class WorkflowComponent implements OnInit, OnDestroy {
 
     asCodeEditorSubscription: Subscription;
     asCodeEditorOpen = false;
-
-    @ViewChild('popupFromRepo')
-    popupFromRepository: SuiPopup;
-    @ViewChild('popupFromTemp')
-    popupFromTemplate: SuiPopup;
 
     selectedNodeID: number;
     selectedNodeRef: string;

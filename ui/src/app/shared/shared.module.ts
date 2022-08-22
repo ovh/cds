@@ -44,8 +44,6 @@ import { KeysFormComponent } from './keys/form/keys.form.component';
 import { KeysListComponent } from './keys/list/keys.list.component';
 import { LabelsEditComponent } from './labels/edit/labels.edit.component';
 import { MenuComponent } from './menu/menu.component';
-import { ConfirmModalComponent } from './modal/confirm/confirm.component';
-import { DeleteModalComponent } from './modal/delete/delete.component';
 import { ParameterFormComponent } from './parameter/form/parameter.form';
 import { ParameterListComponent } from './parameter/list/parameter.component';
 import { ParameterValueComponent } from './parameter/value/parameter.value.component';
@@ -125,8 +123,8 @@ import { en_US, NZ_I18N } from 'ng-zorro-antd/i18n';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { IconDefinition } from '@ant-design/icons-angular';
 import { ArrowDownOutline, ArrowRightOutline, BellFill, BookOutline, CalendarOutline, CaretDownFill, CaretRightFill, CaretUpFill, CheckOutline, CodeOutline, CopyOutline, DeleteOutline, DragOutline, EyeInvisibleOutline, EyeOutline, KeyOutline,
-    HistoryOutline, InfoCircleOutline, PhoneFill, PlusOutline, PlusSquareOutline, QuestionOutline, QuestionCircleOutline, RestOutline, SaveOutline, SettingFill, ShareAltOutline, StarOutline, StarFill, SyncOutline,
-    TableOutline, TagsOutline, ToolFill, UnlockFill, UnorderedListOutline, UploadOutline, UserOutline, WarningOutline } from '@ant-design/icons-angular/icons'
+    HighlightFill, HistoryOutline, InfoCircleOutline, PhoneFill, PlusOutline, PlusSquareOutline, QuestionOutline, QuestionCircleOutline, RestOutline, SaveOutline, SettingFill, ShareAltOutline, StarOutline, StarFill, SyncOutline,
+    TableOutline, TagsOutline, ToolFill, UnlockFill, UnorderedListOutline, UploadOutline, UserOutline, WarningOutline, WarningFill } from '@ant-design/icons-angular/icons'
 import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzPopoverModule } from 'ng-zorro-antd/popover';
@@ -157,8 +155,8 @@ const ngZorroConfig: NzConfig = {
 };
 
 const icons: IconDefinition[] = [ ArrowDownOutline, ArrowRightOutline, BellFill, BookOutline, CalendarOutline, CaretDownFill, CaretRightFill, CaretUpFill, CheckOutline, CodeOutline, CopyOutline, DeleteOutline, DragOutline,
-    EyeInvisibleOutline, EyeOutline, KeyOutline, HistoryOutline, InfoCircleOutline, PhoneFill, PlusOutline, PlusSquareOutline, QuestionOutline, QuestionCircleOutline,
-    RestOutline, SaveOutline, SettingFill, ShareAltOutline, StarOutline, StarFill, SyncOutline, TableOutline, TagsOutline, ToolFill, UnlockFill, UnorderedListOutline, UploadOutline, UserOutline, WarningOutline ];
+    EyeInvisibleOutline, EyeOutline, KeyOutline, HighlightFill, HistoryOutline, InfoCircleOutline, PhoneFill, PlusOutline, PlusSquareOutline, QuestionOutline, QuestionCircleOutline,
+    RestOutline, SaveOutline, SettingFill, ShareAltOutline, StarOutline, StarFill, SyncOutline, TableOutline, TagsOutline, ToolFill, UnlockFill, UnorderedListOutline, UploadOutline, UserOutline, WarningOutline, WarningFill ];
 
 @NgModule({
     imports: [
@@ -225,11 +223,9 @@ const icons: IconDefinition[] = [ ArrowDownOutline, ArrowRightOutline, BellFill,
         CommitListComponent,
         ConditionsComponent,
         ConfirmButtonComponent,
-        ConfirmModalComponent,
         CutPipe,
         DataTableComponent,
         DeleteButtonComponent,
-        DeleteModalComponent,
         DiffItemComponent,
         DiffListComponent,
         DurationMsPipe,
@@ -340,11 +336,9 @@ const icons: IconDefinition[] = [ ArrowDownOutline, ArrowRightOutline, BellFill,
         CommonModule,
         ConditionsComponent,
         ConfirmButtonComponent,
-        ConfirmModalComponent,
         CutPipe,
         DataTableComponent,
         DeleteButtonComponent,
-        DeleteModalComponent,
         DiffItemComponent,
         DiffListComponent,
         DragulaModule,

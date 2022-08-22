@@ -1,6 +1,5 @@
-<div class="node-wrapper" (click)="clickOnNode(popup)" (dblclick)="$event.stopPropagation(); dblClickOnNode()"
-    [ngSwitch]="node.type" suiPopup [popupTemplate]="popupNode" popupPlacement="right" popupTrigger="outsideClick"
-    #popup="suiPopup">
+<div class="node-wrapper" (click)="clickOnNode()" (dblclick)="$event.stopPropagation(); dblClickOnNode()"
+    [ngSwitch]="node.type" nz-popover [nzPopoverContent]="popupNode" nzPopoverPlacement="right" nzPopoverTrigger="click" [(nzPopoverVisible)]="menuVisible">
     <app-workflow-wnode-pipeline *ngSwitchCase="'pipeline'" [workflow]="workflow" [node]="node"
         [noderun]="currentNodeRun" [warnings]="warnings"></app-workflow-wnode-pipeline>
     <app-workflow-wnode-join *ngSwitchCase="'join'" [workflow]="workflow" [node]="node"
@@ -9,14 +8,7 @@
     <app-workflow-wnode-outgoing-hook *ngSwitchCase="'outgoinghook'" [workflow]="workflow"
         [node]="node" [noderun]="currentNodeRun"></app-workflow-wnode-outgoing-hook>
 </div>
-<ng-template let-popup #popupNode>
-    <app-workflow-menu-wnode-edit (event)="receivedEvent($event)" [popup]="popup" #menu></app-workflow-menu-wnode-edit>
+<ng-template #popupNode>
+    <app-workflow-menu-wnode-edit (event)="receivedEvent($event)" #menu></app-workflow-menu-wnode-edit>
 </ng-template>
 
-<!-- MODALS -->
-<ng-container *ngIf="project && node && workflow && !hasWorkflowRun">
-
-    <!-- Delete Node -->
-    <app-workflow-node-delete [loading]="loading" [node]="node" [workflow]="workflow"
-        (deleteEvent)="updateWorkflow($event, workflowDeleteNode.modal)" #workflowDeleteNode></app-workflow-node-delete>
-</ng-container>

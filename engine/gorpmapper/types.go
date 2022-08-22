@@ -37,10 +37,15 @@ func (fs CanonicalForms) Latest() (*CanonicalForm, CanonicalForms) {
 
 type TestEncryptedData struct {
 	SignedEntity
-	ID                   int64  `db:"id"`
-	Data                 string `db:"data"`
-	SensitiveData        string `db:"sensitive_data" gorpmapping:"encrypted,Data"`
-	AnotherSensitiveData string `db:"another_sensitive_data" gorpmapping:"encrypted,ID,Data"`
+	ID                   int64             `db:"id"`
+	Data                 string            `db:"data"`
+	SensitiveData        string            `db:"sensitive_data" gorpmapping:"encrypted,Data"`
+	AnotherSensitiveData string            `db:"another_sensitive_data" gorpmapping:"encrypted,ID,Data"`
+	SensitiveJsonData    SensitiveJsonData `db:"sensitive_json_data" gorpmapping:"encrypted,ID"`
+}
+
+type SensitiveJsonData struct {
+	Data string
 }
 
 func (e TestEncryptedData) Canonical() CanonicalForms {

@@ -69,6 +69,7 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
 
     keys: AllKeys;
     asCodeEditorOpen: boolean;
+    nzTagColor: string = '';
 
     // tabs
     tabs: Array<Tab>;
@@ -102,7 +103,6 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
                 this.project = projectState.project;
                 this._cd.markForCheck();
             });
-
 
         this.asCodeEditorSubscription = this._pipCoreService.getAsCodeEditor()
             .subscribe((state) => {
@@ -195,6 +195,14 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
                     }
                 } else {
                     this.pipeline = cloneDeep(pip.pipeline);
+                }
+
+                if (this.pipeline.from_repository && (!this.pipeline.ascode_events || this.pipeline.ascode_events.length ===0)) {
+                    this.nzTagColor = 'green';
+                } else if (this.pipeline.from_repository && this.pipeline?.ascode_events?.length > 0) {
+                    this.nzTagColor = 'orange';
+                } else {
+                    this.nzTagColor = '';
                 }
 
                 if (this.pipeline.usage) {
