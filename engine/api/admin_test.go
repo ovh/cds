@@ -4,11 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"net/http/httptest"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
@@ -20,6 +21,7 @@ import (
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
+	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/gorpmapper"
@@ -881,6 +883,45 @@ func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForWorkflowRunSecrets(
 	require.Equal(t, sshkeypriv, sdk.VariableFind(secrets, "cds.key.proj-sshkey.priv"))
 	require.Equal(t, projvar, sdk.VariableFind(secrets, "cds.proj.projvar"))
 
+}
+
+func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForProjectVCS(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+	_, jwt := assets.InsertAdminUser(t, db)
+
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(6), sdk.RandomString(6))
+
+	vcsProject := &sdk.VCSProject{
+		Name:      "myserver",
+		Created:   time.Now(),
+		Type:      sdk.VCSTypeGitea,
+		URL:       "http://localhost:3000",
+		CreatedBy: "sgu",
+		ProjectID: proj.ID,
+		Auth: sdk.VCSAuthProject{
+			Username:      "myuser",
+			Token:         "mytoken",
+			SSHPrivateKey: "myprivatekey",
+		},
+	}
+	require.NoError(t, vcs.Insert(context.TODO(), db, vcsProject))
+
+	vcsProject, err := vcs.LoadVCSByID(context.TODO(), db, proj.Key, vcsProject.ID, gorpmapper.GetOptions.WithDecryption)
+	require.NoError(t, err)
+
+	uri := api.Router.GetRoute("POST", api.postAdminDatabaseRollEncryptedEntityByPrimaryKey, map[string]string{"entity": "vcs.dbVCSProject", "pk": fmt.Sprintf("%s", vcsProject.ID)})
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, nil)
+	// Do the request
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 204, w.Code)
+
+	vcsProject2, err := vcs.LoadVCSByID(context.TODO(), db, proj.Key, vcsProject.ID, gorpmapper.GetOptions.WithDecryption)
+	require.NoError(t, err)
+
+	require.Equal(t, vcsProject.Auth.SSHPrivateKey, vcsProject2.Auth.SSHPrivateKey)
+	require.Equal(t, vcsProject.Auth.Token, vcsProject2.Auth.Token)
+	require.Equal(t, vcsProject.Auth.Username, vcsProject2.Auth.Username)
 }
 
 func Test_postWorkflowMaxRunHandler(t *testing.T) {
