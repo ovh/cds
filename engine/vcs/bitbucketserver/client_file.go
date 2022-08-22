@@ -26,7 +26,7 @@ func (b *bitbucketClient) GetArchive(ctx context.Context, repo string, dir strin
 
 	t := strings.Split(repo, "/")
 	if len(t) != 2 {
-		return nil, nil, sdk.ErrRepoNotFound
+		return nil, nil, sdk.WithStack(sdk.ErrRepoNotFound)
 	}
 
 	path := fmt.Sprintf("/projects/%s/repos/%s/archive", t[0], t[1])

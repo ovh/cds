@@ -54,7 +54,7 @@ func TestCleanAnalyze(t *testing.T) {
 	}
 	api.cleanRepositoyAnalyzis(ctx, 1*time.Second)
 
-	analyzes, err := repository.LoadAllAnalyzesByRepo(context.TODO(), db, repo.ID)
+	analyzes, err := repository.LoadAnalyzesByRepo(context.TODO(), db, repo.ID)
 	require.NoError(t, err)
 	require.Len(t, analyzes, 50)
 }

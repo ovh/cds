@@ -91,7 +91,7 @@ type OperationCheckout struct {
 		SignKeyID      string `json:"sign_key_id"`
 		CommitVerified bool   `json:"verified"`
 		Msg            string `json:"msg"`
-	}
+	} `json:"result"`
 }
 
 // OperationPush represents information about push operation

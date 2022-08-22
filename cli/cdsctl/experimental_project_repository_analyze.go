@@ -53,12 +53,12 @@ var projectRepositoryGetCmd = cli.Command{
 	Args: []cli.Arg{
 		{Name: "vcs-name"},
 		{Name: "repository-name"},
-		{Name: "analyse-id"},
+		{Name: "analyze-id"},
 	},
 }
 
 func projectRepositoryGetFunc(v cli.Values) error {
-	analyze, err := client.ProjectRepositoryAnalyzeGet(context.Background(), v.GetString(_ProjectKey), v.GetString("vcs-name"), v.GetString("repository-name"), v.GetString("analyse-id"))
+	analyze, err := client.ProjectRepositoryAnalyzeGet(context.Background(), v.GetString(_ProjectKey), v.GetString("vcs-name"), v.GetString("repository-name"), v.GetString("analyze-id"))
 	if err != nil {
 		return err
 	}

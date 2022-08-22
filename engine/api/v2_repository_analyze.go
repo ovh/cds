@@ -99,7 +99,7 @@ func (api *API) getProjectRepositoryAnalyzesHandler() ([]service.RbacChecker, se
 				return err
 			}
 
-			analyzes, err := repository.LoadAllAnalyzesByRepo(ctx, api.mustDB(), repo.ID)
+			analyzes, err := repository.LoadAnalyzesByRepo(ctx, api.mustDB(), repo.ID)
 			if err != nil {
 				return err
 			}

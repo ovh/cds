@@ -58,7 +58,7 @@ func getAnalyze(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Quer
 	return &dbData.ProjectRepositoryAnalyze, nil
 }
 
-func getAllAnalyzes(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query) ([]sdk.ProjectRepositoryAnalyze, error) {
+func getAnalyzes(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query) ([]sdk.ProjectRepositoryAnalyze, error) {
 	var dbData []dbProjectRepositoryAnalyze
 	if err := gorpmapping.GetAll(ctx, db, query, &dbData); err != nil {
 		return nil, err
@@ -100,14 +100,14 @@ func CountAnalyzeByRepo(db gorp.SqlExecutor, projectRepositoryID string) (int64,
 	return nb, nil
 }
 
-func LoadAllAnalyzesByRepo(ctx context.Context, db gorp.SqlExecutor, projectRepositoryID string) ([]sdk.ProjectRepositoryAnalyze, error) {
+func LoadAnalyzesByRepo(ctx context.Context, db gorp.SqlExecutor, projectRepositoryID string) ([]sdk.ProjectRepositoryAnalyze, error) {
 	query := gorpmapping.NewQuery("SELECT * from project_repository_analyze where project_repository_id = $1 ORDER BY created ASC").Args(projectRepositoryID)
-	return getAllAnalyzes(ctx, db, query)
+	return getAnalyzes(ctx, db, query)
 }
 
 func LoadRepositoryIDsAnalysisInProgress(ctx context.Context, db gorp.SqlExecutor) ([]sdk.ProjectRepositoryAnalyze, error) {
-	query := gorpmapping.NewQuery("SELECT * FROM project_repository_analyze WHERE status = $1").Args(sdk.RepositoryAnalyzeStatusInProgress)
-	return getAllAnalyzes(ctx, db, query)
+	query := gorpmapping.NewQuery("SELECT * FROM project_repository_analyze WHERE status = $1 LIMIT 100").Args(sdk.RepositoryAnalyzeStatusInProgress)
+	return getAnalyzes(ctx, db, query)
 }
 
 func LoadRepositoryAnalyzeById(ctx context.Context, db gorp.SqlExecutor, projectRepoID, analyzeID string) (*sdk.ProjectRepositoryAnalyze, error) {

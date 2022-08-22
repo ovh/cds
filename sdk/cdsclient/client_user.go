@@ -81,7 +81,7 @@ func (c *client) UserUpdate(ctx context.Context, username string, u *sdk.Authent
 
 func (c *client) UserGpgKeyList(ctx context.Context, username string) ([]sdk.UserGPGKey, error) {
 	var keys []sdk.UserGPGKey
-	if _, err := c.GetJSON(ctx, fmt.Sprintf("/user/%s/gpgkey", url.QueryEscape(username)), &keys); err != nil {
+	if _, err := c.GetJSON(ctx, fmt.Sprintf("/v2/user/%s/gpgkey", url.QueryEscape(username)), &keys); err != nil {
 		return nil, err
 	}
 	return keys, nil
@@ -89,14 +89,14 @@ func (c *client) UserGpgKeyList(ctx context.Context, username string) ([]sdk.Use
 
 func (c *client) UserGpgKeyGet(ctx context.Context, keyID string) (sdk.UserGPGKey, error) {
 	var key sdk.UserGPGKey
-	if _, err := c.GetJSON(ctx, "/user/gpgkey/"+keyID, &key); err != nil {
+	if _, err := c.GetJSON(ctx, "/v2/user/gpgkey/"+keyID, &key); err != nil {
 		return key, err
 	}
 	return key, nil
 }
 
 func (c *client) UserGpgKeyDelete(ctx context.Context, username string, keyID string) error {
-	if _, err := c.DeleteJSON(ctx, fmt.Sprintf("/user/%s/gpgkey/%s", username, keyID), nil); err != nil {
+	if _, err := c.DeleteJSON(ctx, fmt.Sprintf("/v2/user/%s/gpgkey/%s", username, keyID), nil); err != nil {
 		return err
 	}
 	return nil
@@ -106,7 +106,7 @@ func (c *client) UserGpgKeyCreate(ctx context.Context, username string, publicKe
 	key := sdk.UserGPGKey{
 		PublicKey: publicKey,
 	}
-	if _, err := c.PostJSON(ctx, fmt.Sprintf("/user/%s/gpgkey", username), key, &key); err != nil {
+	if _, err := c.PostJSON(ctx, fmt.Sprintf("/v2/user/%s/gpgkey", username), key, &key); err != nil {
 		return key, err
 	}
 	return key, nil

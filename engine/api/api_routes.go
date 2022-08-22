@@ -369,10 +369,7 @@ func (api *API) InitRouter() {
 	r.Handle("/user/schema", Scope(sdk.AuthConsumerScopeUser), r.GET(api.getUserJSONSchema))
 	r.Handle("/user/timeline", Scope(sdk.AuthConsumerScopeUser), r.GET(api.getTimelineHandler))
 	r.Handle("/user/timeline/filter", Scope(sdk.AuthConsumerScopeUser), r.GET(api.getTimelineFilterHandler), r.POST(api.postTimelineFilterHandler))
-	r.Handle("/user/gpgkey/{gpgKeyID}", Scope(sdk.AuthConsumerScopeUser), r.GETv2(api.getUserGPGKeyHandler))
 	r.Handle("/user/{permUsernamePublic}", Scope(sdk.AuthConsumerScopeUser), r.GET(api.getUserHandler), r.PUT(api.putUserHandler), r.DELETE(api.deleteUserHandler))
-	r.Handle("/user/{user}/gpgkey", Scope(sdk.AuthConsumerScopeUser), r.GETv2(api.getUserGPGKeysHandler), r.POSTv2(api.postUserGPGGKeyHandler))
-	r.Handle("/user/{user}/gpgkey/{gpgKeyID}", Scope(sdk.AuthConsumerScopeUser), r.DELETEv2(api.deleteUserGPGKey))
 	r.Handle("/user/{permUsernamePublic}/group", Scope(sdk.AuthConsumerScopeUser), r.GET(api.getUserGroupsHandler))
 	r.Handle("/user/{permUsername}/contact", Scope(sdk.AuthConsumerScopeUser), r.GET(api.getUserContactsHandler))
 	r.Handle("/user/{permUsername}/auth/consumer", Scope(sdk.AuthConsumerScopeAccessToken), r.GET(api.getConsumersByUserHandler), r.POST(api.postConsumerByUserHandler))
@@ -443,6 +440,9 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/analyze", nil, r.GETv2(api.getProjectRepositoryAnalyzesHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/analyze/{analyzeID}", nil, r.GETv2(api.getProjectRepositoryAnalyzeHandler))
 
+	r.Handle("/v2/user/gpgkey/{gpgKeyID}", Scope(sdk.AuthConsumerScopeUser), r.GETv2(api.getUserGPGKeyHandler))
+	r.Handle("/v2/user/{user}/gpgkey", Scope(sdk.AuthConsumerScopeUser), r.GETv2(api.getUserGPGKeysHandler), r.POSTv2(api.postUserGPGGKeyHandler))
+	r.Handle("/v2/user/{user}/gpgkey/{gpgKeyID}", Scope(sdk.AuthConsumerScopeUser), r.DELETEv2(api.deleteUserGPGKey))
 	//Not Found handler
 	r.Mux.NotFoundHandler = http.HandlerFunc(r.NotFoundHandler)
 

@@ -46,7 +46,7 @@ func userGpgKeyList(v cli.Values) (cli.ListResult, error) {
 
 var userGpgKeyShowCmd = cli.Command{
 	Name:  "show",
-	Short: "Show Current CDS user pgp key",
+	Short: "Show Current CDS user gpg key",
 	Args: []cli.Arg{
 		{
 			Name: "keyId",
@@ -91,7 +91,7 @@ var userGpgKeyImportCmd = cli.Command{
 	Short: "Import a CDS user gpg key",
 	Flags: []cli.Flag{
 		{
-			Name:      "key-file",
+			Name:      "pub-key-file",
 			ShortHand: "k",
 		},
 	},
@@ -99,7 +99,7 @@ var userGpgKeyImportCmd = cli.Command{
 
 func userGpgKeyImport(v cli.Values) error {
 	var publicKey string
-	if v.GetString("key-file") == "" {
+	if v.GetString("pub-key-file") == "" {
 		// read from stdin
 		fmt.Printf("Copy your public key here: \n")
 

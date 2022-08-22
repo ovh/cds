@@ -58,7 +58,7 @@ var projectRepositoryListCmd = cli.Command{
 		{Name: _ProjectKey},
 	},
 	Flags: []cli.Flag{
-		{Name: "vcs-name", Usage: "Specified a VCS by his name"},
+		{Name: "vcs-name", Usage: "Specified a VCS by its name"},
 	},
 }
 
