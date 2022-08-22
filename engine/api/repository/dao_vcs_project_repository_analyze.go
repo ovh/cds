@@ -12,35 +12,35 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func InsertAnalyze(ctx context.Context, db gorpmapper.SqlExecutorWithTx, analyze *sdk.ProjectRepositoryAnalyze) error {
-	analyze.ID = sdk.UUID()
-	analyze.Created = time.Now()
-	analyze.LastModified = time.Now()
-	if analyze.Status == "" {
-		analyze.Status = sdk.RepositoryAnalyzeStatusInProgress
+func InsertAnalysis(ctx context.Context, db gorpmapper.SqlExecutorWithTx, analysis *sdk.ProjectRepositoryAnalysis) error {
+	analysis.ID = sdk.UUID()
+	analysis.Created = time.Now()
+	analysis.LastModified = time.Now()
+	if analysis.Status == "" {
+		analysis.Status = sdk.RepositoryAnalysisStatusInProgress
 	}
 
-	dbData := dbProjectRepositoryAnalyze{ProjectRepositoryAnalyze: *analyze}
+	dbData := dbProjectRepositoryAnalysis{ProjectRepositoryAnalysis: *analysis}
 	if err := gorpmapping.InsertAndSign(ctx, db, &dbData); err != nil {
 		return err
 	}
 
-	*analyze = dbData.ProjectRepositoryAnalyze
+	*analysis = dbData.ProjectRepositoryAnalysis
 	return nil
 }
 
-func UpdateAnalyze(ctx context.Context, db gorpmapper.SqlExecutorWithTx, analyze *sdk.ProjectRepositoryAnalyze) error {
-	analyze.LastModified = time.Now()
-	dbData := dbProjectRepositoryAnalyze{ProjectRepositoryAnalyze: *analyze}
+func UpdateAnalysis(ctx context.Context, db gorpmapper.SqlExecutorWithTx, analysis *sdk.ProjectRepositoryAnalysis) error {
+	analysis.LastModified = time.Now()
+	dbData := dbProjectRepositoryAnalysis{ProjectRepositoryAnalysis: *analysis}
 	if err := gorpmapping.UpdateAndSign(ctx, db, &dbData); err != nil {
 		return err
 	}
-	*analyze = dbData.ProjectRepositoryAnalyze
+	*analysis = dbData.ProjectRepositoryAnalysis
 	return nil
 }
 
-func getAnalyze(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query) (*sdk.ProjectRepositoryAnalyze, error) {
-	var dbData dbProjectRepositoryAnalyze
+func getAnalysis(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query) (*sdk.ProjectRepositoryAnalysis, error) {
+	var dbData dbProjectRepositoryAnalysis
 	if _, err := gorpmapping.Get(ctx, db, query, &dbData); err != nil {
 		return nil, err
 	}
@@ -52,65 +52,65 @@ func getAnalyze(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Quer
 		return nil, err
 	}
 	if !isValid {
-		log.Error(ctx, "project_repository_analyze %d data corrupted", dbData.ID)
+		log.Error(ctx, "project_repository_analysis %d data corrupted", dbData.ID)
 		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
-	return &dbData.ProjectRepositoryAnalyze, nil
+	return &dbData.ProjectRepositoryAnalysis, nil
 }
 
-func getAnalyzes(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query) ([]sdk.ProjectRepositoryAnalyze, error) {
-	var dbData []dbProjectRepositoryAnalyze
+func getAnalyses(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query) ([]sdk.ProjectRepositoryAnalysis, error) {
+	var dbData []dbProjectRepositoryAnalysis
 	if err := gorpmapping.GetAll(ctx, db, query, &dbData); err != nil {
 		return nil, err
 	}
-	analyzes := make([]sdk.ProjectRepositoryAnalyze, 0, len(dbData))
+	analyses := make([]sdk.ProjectRepositoryAnalysis, 0, len(dbData))
 	for _, a := range dbData {
 		isValid, err := gorpmapping.CheckSignature(a, a.Signature)
 		if err != nil {
 			return nil, err
 		}
 		if !isValid {
-			log.Error(ctx, "project_repository_analyze %d data corrupted", a.ID)
+			log.Error(ctx, "project_repository_analysis %d data corrupted", a.ID)
 			continue
 		}
-		analyzes = append(analyzes, a.ProjectRepositoryAnalyze)
+		analyses = append(analyses, a.ProjectRepositoryAnalysis)
 	}
-	return analyzes, nil
+	return analyses, nil
 }
 
-func DeleteOldestAnalyze(ctx context.Context, db gorpmapper.SqlExecutorWithTx, projectRepositoryID string) error {
-	query := gorpmapping.NewQuery("SELECT * from project_repository_analyze WHERE project_repository_id = $1 ORDER BY created asc LIMIT 1").Args(projectRepositoryID)
-	analyze, err := getAnalyze(ctx, db, query)
+func DeleteOldestAnalysis(ctx context.Context, db gorpmapper.SqlExecutorWithTx, projectRepositoryID string) error {
+	query := gorpmapping.NewQuery("SELECT * from project_repository_analysis WHERE project_repository_id = $1 ORDER BY created asc LIMIT 1").Args(projectRepositoryID)
+	analysis, err := getAnalysis(ctx, db, query)
 	if err != nil {
 		return err
 	}
 
-	dbData := dbProjectRepositoryAnalyze{ProjectRepositoryAnalyze: *analyze}
+	dbData := dbProjectRepositoryAnalysis{ProjectRepositoryAnalysis: *analysis}
 	if err := gorpmapping.Delete(db, &dbData); err != nil {
 		return err
 	}
 	return nil
 }
 
-func CountAnalyzeByRepo(db gorp.SqlExecutor, projectRepositoryID string) (int64, error) {
-	nb, err := gorpmapping.GetInt(db, gorpmapping.NewQuery("SELECT count(id) FROM project_repository_analyze WHERE project_repository_id = $1").Args(projectRepositoryID))
+func CountAnalysesByRepo(db gorp.SqlExecutor, projectRepositoryID string) (int64, error) {
+	nb, err := gorpmapping.GetInt(db, gorpmapping.NewQuery("SELECT count(id) FROM project_repository_analysis WHERE project_repository_id = $1").Args(projectRepositoryID))
 	if err != nil {
 		return 0, err
 	}
 	return nb, nil
 }
 
-func LoadAnalyzesByRepo(ctx context.Context, db gorp.SqlExecutor, projectRepositoryID string) ([]sdk.ProjectRepositoryAnalyze, error) {
-	query := gorpmapping.NewQuery("SELECT * from project_repository_analyze where project_repository_id = $1 ORDER BY created ASC").Args(projectRepositoryID)
-	return getAnalyzes(ctx, db, query)
+func LoadAnalysesByRepo(ctx context.Context, db gorp.SqlExecutor, projectRepositoryID string) ([]sdk.ProjectRepositoryAnalysis, error) {
+	query := gorpmapping.NewQuery("SELECT * from project_repository_analysis where project_repository_id = $1 ORDER BY created ASC").Args(projectRepositoryID)
+	return getAnalyses(ctx, db, query)
 }
 
-func LoadRepositoryIDsAnalysisInProgress(ctx context.Context, db gorp.SqlExecutor) ([]sdk.ProjectRepositoryAnalyze, error) {
-	query := gorpmapping.NewQuery("SELECT * FROM project_repository_analyze WHERE status = $1 LIMIT 100").Args(sdk.RepositoryAnalyzeStatusInProgress)
-	return getAnalyzes(ctx, db, query)
+func LoadRepositoryIDsAnalysisInProgress(ctx context.Context, db gorp.SqlExecutor) ([]sdk.ProjectRepositoryAnalysis, error) {
+	query := gorpmapping.NewQuery("SELECT * FROM project_repository_analysis WHERE status = $1 LIMIT 100").Args(sdk.RepositoryAnalysisStatusInProgress)
+	return getAnalyses(ctx, db, query)
 }
 
-func LoadRepositoryAnalyzeById(ctx context.Context, db gorp.SqlExecutor, projectRepoID, analyzeID string) (*sdk.ProjectRepositoryAnalyze, error) {
-	query := gorpmapping.NewQuery("SELECT * FROM project_repository_analyze WHERE project_repository_id = $1 AND id = $2").Args(projectRepoID, analyzeID)
-	return getAnalyze(ctx, db, query)
+func LoadRepositoryAnalysisById(ctx context.Context, db gorp.SqlExecutor, projectRepoID, analysisID string) (*sdk.ProjectRepositoryAnalysis, error) {
+	query := gorpmapping.NewQuery("SELECT * FROM project_repository_analysis WHERE project_repository_id = $1 AND id = $2").Args(projectRepoID, analysisID)
+	return getAnalysis(ctx, db, query)
 }

@@ -14,7 +14,7 @@ SELECT create_foreign_key_idx_cascade('fk_gpg_key_user', 'user_gpg_key', 'authen
 ALTER TABLE project_repository ADD COLUMN auth BYTEA;
 ALTER TABLE project_repository ADD COLUMN clone_url TEXT;
 
-CREATE TABLE IF NOT EXISTS "project_repository_analyze" (
+CREATE TABLE IF NOT EXISTS "project_repository_analysis" (
     "id" uuid PRIMARY KEY,
     "created" TIMESTAMP WITH TIME ZONE DEFAULT LOCALTIMESTAMP,
     "last_modified" TIMESTAMP WITH TIME ZONE DEFAULT LOCALTIMESTAMP,
@@ -28,10 +28,10 @@ CREATE TABLE IF NOT EXISTS "project_repository_analyze" (
     "sig"           BYTEA,
     "signer"        TEXT
 );
-SELECT create_foreign_key_idx_cascade('fk_project_repository_analyze_repository', 'project_repository_analyze', 'project_repository', 'project_repository_id', 'id');
+SELECT create_foreign_key_idx_cascade('fk_project_repository_analysis_repository', 'project_repository_analysis', 'project_repository', 'project_repository_id', 'id');
 
 -- +migrate Down
 DROP TABLE user_gpg_key;
 ALTER TABLE project_repository DROP COLUMN auth;
 ALTER TABLE project_repository DROP COLUMN clone_url;
-DROP TABLE project_repository_analyze;
+DROP TABLE project_repository_analysis;

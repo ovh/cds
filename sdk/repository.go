@@ -8,10 +8,10 @@ import (
 )
 
 const (
-	RepositoryAnalyzeStatusInProgress = "InProgress"
-	RepositoryAnalyzeStatusSucceed    = "Success"
-	RepositoryAnalyzeStatusError      = "Error"
-	RepositoryAnalyzeStatusSkipped    = "Skipped"
+	RepositoryAnalysisStatusInProgress = "InProgress"
+	RepositoryAnalysisStatusSucceed    = "Success"
+	RepositoryAnalysisStatusError      = "Error"
+	RepositoryAnalysisStatusSkipped    = "Skipped"
 )
 
 type ProjectRepository struct {
@@ -31,7 +31,7 @@ type ProjectRepositoryAuth struct {
 	SSHKeyName string `json:"sshPrivateKey,omitempty" db:"-"`
 }
 
-type ProjectRepositoryAnalyze struct {
+type ProjectRepositoryAnalysis struct {
 	ID                  string                `json:"id" db:"id" cli:"id"`
 	Created             time.Time             `json:"created" db:"created" cli:"created"`
 	LastModified        time.Time             `json:"last_modified" db:"last_modified"`

@@ -8,7 +8,7 @@ import (
 
 func init() {
 	gorpmapping.Register(gorpmapping.New(dbProjectRepository{}, "project_repository", false, "id"))
-	gorpmapping.Register(gorpmapping.New(dbProjectRepositoryAnalyze{}, "project_repository_analyze", false, "id"))
+	gorpmapping.Register(gorpmapping.New(dbProjectRepositoryAnalysis{}, "project_repository_analysis", false, "id"))
 }
 
 type dbProjectRepository struct {
@@ -23,12 +23,12 @@ func (v dbProjectRepository) Canonical() gorpmapper.CanonicalForms {
 	}
 }
 
-type dbProjectRepositoryAnalyze struct {
-	sdk.ProjectRepositoryAnalyze
+type dbProjectRepositoryAnalysis struct {
+	sdk.ProjectRepositoryAnalysis
 	gorpmapper.SignedEntity
 }
 
-func (v dbProjectRepositoryAnalyze) Canonical() gorpmapper.CanonicalForms {
+func (v dbProjectRepositoryAnalysis) Canonical() gorpmapper.CanonicalForms {
 	_ = []interface{}{v.ID, v.ProjectRepositoryID, v.VCSProjectID, v.ProjectKey, v.Commit}
 	return []gorpmapper.CanonicalForm{
 		"{{.ID}}{{.ProjectRepositoryID}}{{.VCSProjectID}}{{.ProjectKey}}{{.Commit}}",

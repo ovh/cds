@@ -11,22 +11,22 @@ import (
 	"github.com/ovh/cds/cli"
 )
 
-var projectAnalyzeCmd = cli.Command{
-	Name:    "analyze",
+var projectAnalysisCmd = cli.Command{
+	Name:    "analysis",
 	Aliases: []string{"a"},
-	Short:   "Manage repository analyze",
+	Short:   "Manage repository analysis",
 }
 
-func projectRepositoryAnalyze() *cobra.Command {
-	return cli.NewCommand(projectAnalyzeCmd, nil, []*cobra.Command{
-		cli.NewListCommand(projectRepositoryAnalyzeListCmd, projectRepositoryAnalyzeListFunc, nil, withAllCommandModifiers()...),
+func projectRepositoryAnalysis() *cobra.Command {
+	return cli.NewCommand(projectAnalysisCmd, nil, []*cobra.Command{
+		cli.NewListCommand(projectRepositoryAnalysisListCmd, projectRepositoryAnalysisListFunc, nil, withAllCommandModifiers()...),
 		cli.NewCommand(projectRepositoryGetCmd, projectRepositoryGetFunc, nil, withAllCommandModifiers()...),
 	})
 }
 
-var projectRepositoryAnalyzeListCmd = cli.Command{
+var projectRepositoryAnalysisListCmd = cli.Command{
 	Name:  "list",
-	Short: "List all repository analyze",
+	Short: "List all repository analysis",
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
 	},
@@ -36,12 +36,12 @@ var projectRepositoryAnalyzeListCmd = cli.Command{
 	},
 }
 
-func projectRepositoryAnalyzeListFunc(v cli.Values) (cli.ListResult, error) {
-	analyzes, err := client.ProjectRepositoryAnalyzeList(context.Background(), v.GetString(_ProjectKey), v.GetString("vcs-name"), v.GetString("repository-name"))
+func projectRepositoryAnalysisListFunc(v cli.Values) (cli.ListResult, error) {
+	analyses, err := client.ProjectRepositoryAnalysisList(context.Background(), v.GetString(_ProjectKey), v.GetString("vcs-name"), v.GetString("repository-name"))
 	if err != nil {
 		return nil, err
 	}
-	return cli.AsListResult(analyzes), nil
+	return cli.AsListResult(analyses), nil
 }
 
 var projectRepositoryGetCmd = cli.Command{
@@ -53,19 +53,19 @@ var projectRepositoryGetCmd = cli.Command{
 	Args: []cli.Arg{
 		{Name: "vcs-name"},
 		{Name: "repository-name"},
-		{Name: "analyze-id"},
+		{Name: "analysis-id"},
 	},
 }
 
 func projectRepositoryGetFunc(v cli.Values) error {
-	analyze, err := client.ProjectRepositoryAnalyzeGet(context.Background(), v.GetString(_ProjectKey), v.GetString("vcs-name"), v.GetString("repository-name"), v.GetString("analyze-id"))
+	analysis, err := client.ProjectRepositoryAnalysisGet(context.Background(), v.GetString(_ProjectKey), v.GetString("vcs-name"), v.GetString("repository-name"), v.GetString("analysis-id"))
 	if err != nil {
 		return err
 	}
-	type AnalyzeFile struct {
+	type AnalysisFile struct {
 		File string `json:"file"`
 	}
-	type AnalyzeCli struct {
+	type AnalysisCli struct {
 		ID          string    `json:"id"`
 		Created     time.Time `json:"created"`
 		Branch      string    `json:"branch"`
@@ -76,24 +76,24 @@ func projectRepositoryGetFunc(v cli.Values) error {
 		KeySignID   string    `json:"key_sign_id"`
 	}
 
-	resp := AnalyzeCli{
-		Branch:      analyze.Branch,
-		ID:          analyze.ID,
-		Error:       analyze.Data.Error,
-		Commit:      analyze.Commit,
-		Created:     analyze.Created,
-		Status:      analyze.Status,
-		CommitCheck: analyze.Data.CommitCheck,
-		KeySignID:   analyze.Data.SignKeyID,
+	resp := AnalysisCli{
+		Branch:      analysis.Branch,
+		ID:          analysis.ID,
+		Error:       analysis.Data.Error,
+		Commit:      analysis.Commit,
+		Created:     analysis.Created,
+		Status:      analysis.Status,
+		CommitCheck: analysis.Data.CommitCheck,
+		KeySignID:   analysis.Data.SignKeyID,
 	}
-	analyzeYaml, _ := yaml.Marshal(resp)
-	fmt.Println(string(analyzeYaml))
+	analysisYaml, _ := yaml.Marshal(resp)
+	fmt.Println(string(analysisYaml))
 
-	if len(analyze.Data.Entities) > 0 {
+	if len(analysis.Data.Entities) > 0 {
 		fmt.Println("Files found:")
-		files := make([]AnalyzeFile, 0, len(analyze.Data.Entities))
-		for _, f := range analyze.Data.Entities {
-			files = append(files, AnalyzeFile{
+		files := make([]AnalysisFile, 0, len(analysis.Data.Entities))
+		for _, f := range analysis.Data.Entities {
+			files = append(files, AnalysisFile{
 				File: f.Path + f.FileName,
 			})
 		}

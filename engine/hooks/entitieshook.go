@@ -33,18 +33,18 @@ func (s *Service) doAnalyzeExecution(ctx context.Context, t *sdk.TaskExecution) 
 		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to find branch and commit from payload: %s", string(t.EntitiesHook.RequestBody))
 	}
 
-	analyze := sdk.AnalyzeRequest{
+	analyze := sdk.AnalysisRequest{
 		RepoName:   t.Configuration[sdk.HookConfigRepoFullName].Value,
 		VcsName:    t.Configuration[sdk.HookConfigVCSServer].Value,
 		ProjectKey: t.Configuration[sdk.HookConfigProject].Value,
 		Branch:     strings.TrimPrefix(branch, "refs/heads/"),
 		Commit:     commit,
 	}
-	resp, err := s.Client.ProjectRepositoryAnalyze(ctx, analyze)
+	resp, err := s.Client.ProjectRepositoryAnalysis(ctx, analyze)
 	if err != nil {
 		return err
 	}
-	t.EntitiesHook.AnalyzeID = resp.AnalyzeID
+	t.EntitiesHook.AnalysisID = resp.AnalysisID
 	t.EntitiesHook.OperationID = resp.OperationID
 	return nil
 }

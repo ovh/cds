@@ -736,8 +736,8 @@ func (a *API) Serve(ctx context.Context) error {
 	a.GoRoutines.RunWithRestart(ctx, "api.WorkflowRunCraft", func(ctx context.Context) {
 		a.WorkflowRunCraft(ctx, 100*time.Millisecond)
 	})
-	a.GoRoutines.RunWithRestart(ctx, "api.repositoryAnalyzePoller", func(ctx context.Context) {
-		a.repositoryAnalyzePoller(ctx, 1*time.Second)
+	a.GoRoutines.RunWithRestart(ctx, "api.repositoryAnalysisPoller", func(ctx context.Context) {
+		a.repositoryAnalysisPoller(ctx, 1*time.Second)
 	})
 
 	a.GoRoutines.RunWithRestart(ctx, "api.cleanRepositoyAnalyzis", func(ctx context.Context) {

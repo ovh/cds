@@ -52,10 +52,10 @@ testcases:
           from: result.systemoutjson.id
     - script: 'curl -X POST {{.git.host}}/api/v1/repos/{{.git.user}}/myrepo/hooks/{{.hookID}}/tests -u "{{.git.user}}:{{.git.password}}"'
 
-- name: analyze
+- name: analysis
   steps:
     - script: sleep 5
-    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental project analyze list ITCLIPRJVCS my_vcs_server {{.git.user}}/myrepo --format json
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list ITCLIPRJVCS my_vcs_server {{.git.user}}/myrepo --format json
       assertions:
         - result.code ShouldEqual 0
         - result.systemoutjson.__len__ ShouldBeGreaterThan 0
@@ -64,7 +64,7 @@ testcases:
       vars:
         analyzeID:
           from: result.systemoutjson.systemoutjson0.id
-    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental project analyze show ITCLIPRJVCS my_vcs_server {{.git.user}}/myrepo {{.analyzeID}}
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis show ITCLIPRJVCS my_vcs_server {{.git.user}}/myrepo {{.analyzeID}}
       retry: 10
       delay: 2
       assertions:

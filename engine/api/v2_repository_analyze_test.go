@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-func TestCleanAnalyze(t *testing.T) {
+func TestCleanAnalysis(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
@@ -45,16 +45,16 @@ func TestCleanAnalyze(t *testing.T) {
 	require.NoError(t, repository.Insert(context.TODO(), db, &repo))
 
 	for i := 0; i < 60; i++ {
-		a := sdk.ProjectRepositoryAnalyze{
+		a := sdk.ProjectRepositoryAnalysis{
 			ProjectRepositoryID: repo.ID,
 			ProjectKey:          proj1.Key,
 			VCSProjectID:        vcsProject.ID,
 		}
-		require.NoError(t, repository.InsertAnalyze(context.TODO(), db, &a))
+		require.NoError(t, repository.InsertAnalysis(context.TODO(), db, &a))
 	}
 	api.cleanRepositoyAnalyzis(ctx, 1*time.Second)
 
-	analyzes, err := repository.LoadAnalyzesByRepo(context.TODO(), db, repo.ID)
+	analyses, err := repository.LoadAnalysesByRepo(context.TODO(), db, repo.ID)
 	require.NoError(t, err)
-	require.Len(t, analyzes, 50)
+	require.Len(t, analyses, 50)
 }

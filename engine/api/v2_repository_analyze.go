@@ -46,7 +46,7 @@ func (api *API) cleanRepositoyAnalyzis(ctx context.Context, delay time.Duration)
 				continue
 			}
 			for _, r := range repositories {
-				nb, err := repository.CountAnalyzeByRepo(api.mustDB(), r.ID)
+				nb, err := repository.CountAnalysesByRepo(api.mustDB(), r.ID)
 				if err != nil {
 					log.ErrorWithStackTrace(ctx, err)
 					break
@@ -59,7 +59,7 @@ func (api *API) cleanRepositoyAnalyzis(ctx context.Context, delay time.Duration)
 						break
 					}
 					for i := 0; i < toDelete; i++ {
-						if err := repository.DeleteOldestAnalyze(ctx, tx, r.ID); err != nil {
+						if err := repository.DeleteOldestAnalysis(ctx, tx, r.ID); err != nil {
 							log.ErrorWithStackTrace(ctx, err)
 							break
 						}
@@ -75,7 +75,7 @@ func (api *API) cleanRepositoyAnalyzis(ctx context.Context, delay time.Duration)
 	}
 }
 
-func (api *API) getProjectRepositoryAnalyzesHandler() ([]service.RbacChecker, service.Handler) {
+func (api *API) getProjectRepositoryAnalysesHandler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(rbac.ProjectRead),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
@@ -99,15 +99,15 @@ func (api *API) getProjectRepositoryAnalyzesHandler() ([]service.RbacChecker, se
 				return err
 			}
 
-			analyzes, err := repository.LoadAnalyzesByRepo(ctx, api.mustDB(), repo.ID)
+			analyses, err := repository.LoadAnalysesByRepo(ctx, api.mustDB(), repo.ID)
 			if err != nil {
 				return err
 			}
-			return service.WriteJSON(w, analyzes, http.StatusOK)
+			return service.WriteJSON(w, analyses, http.StatusOK)
 		}
 }
 
-func (api *API) getProjectRepositoryAnalyzeHandler() ([]service.RbacChecker, service.Handler) {
+func (api *API) getProjectRepositoryAnalysisHandler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(rbac.ProjectRead),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
@@ -120,7 +120,7 @@ func (api *API) getProjectRepositoryAnalyzeHandler() ([]service.RbacChecker, ser
 			if err != nil {
 				return sdk.WithStack(err)
 			}
-			analyseID := vars["analyzeID"]
+			analysisID := vars["analysisID"]
 
 			vcsProject, err := api.getVCSByIdentifier(ctx, pKey, vcsIdentifier)
 			if err != nil {
@@ -132,37 +132,37 @@ func (api *API) getProjectRepositoryAnalyzeHandler() ([]service.RbacChecker, ser
 				return err
 			}
 
-			analyze, err := repository.LoadRepositoryAnalyzeById(ctx, api.mustDB(), repo.ID, analyseID)
+			analysis, err := repository.LoadRepositoryAnalysisById(ctx, api.mustDB(), repo.ID, analysisID)
 			if err != nil {
 				return err
 			}
-			return service.WriteJSON(w, analyze, http.StatusOK)
+			return service.WriteJSON(w, analysis, http.StatusOK)
 		}
 }
 
-// postRepositoryAnalyzeHandler Trigger repository analysis
-func (api *API) postRepositoryAnalyzeHandler() ([]service.RbacChecker, service.Handler) {
+// postRepositoryAnalysisHandler Trigger repository analysis
+func (api *API) postRepositoryAnalysisHandler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(rbac.IsHookService),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
-			var analyze sdk.AnalyzeRequest
-			if err := service.UnmarshalBody(req, &analyze); err != nil {
+			var analysis sdk.AnalysisRequest
+			if err := service.UnmarshalBody(req, &analysis); err != nil {
 				return err
 			}
 
-			ctx = context.WithValue(ctx, cdslog.VCSServer, analyze.VcsName)
-			ctx = context.WithValue(ctx, cdslog.Repository, analyze.RepoName)
+			ctx = context.WithValue(ctx, cdslog.VCSServer, analysis.VcsName)
+			ctx = context.WithValue(ctx, cdslog.Repository, analysis.RepoName)
 
-			proj, err := project.Load(ctx, api.mustDB(), analyze.ProjectKey, project.LoadOptions.WithClearKeys)
+			proj, err := project.Load(ctx, api.mustDB(), analysis.ProjectKey, project.LoadOptions.WithClearKeys)
 			if err != nil {
 				return err
 			}
 
-			vcsProject, err := vcs.LoadVCSByProject(ctx, api.mustDB(), analyze.ProjectKey, analyze.VcsName)
+			vcsProject, err := vcs.LoadVCSByProject(ctx, api.mustDB(), analysis.ProjectKey, analysis.VcsName)
 			if err != nil {
 				return err
 			}
 
-			clearRepo, err := repository.LoadRepositoryByName(ctx, api.mustDB(), vcsProject.ID, analyze.RepoName, gorpmapping.GetOptions.WithDecryption)
+			clearRepo, err := repository.LoadRepositoryByName(ctx, api.mustDB(), vcsProject.ID, analysis.RepoName, gorpmapping.GetOptions.WithDecryption)
 			if err != nil {
 				return err
 			}
@@ -174,13 +174,13 @@ func (api *API) postRepositoryAnalyzeHandler() ([]service.RbacChecker, service.H
 			defer tx.Rollback() // nolint
 
 			// Save analyze
-			repoAnalyze := sdk.ProjectRepositoryAnalyze{
-				Status:              sdk.RepositoryAnalyzeStatusInProgress,
+			repoAnalysis := sdk.ProjectRepositoryAnalysis{
+				Status:              sdk.RepositoryAnalysisStatusInProgress,
 				ProjectRepositoryID: clearRepo.ID,
 				VCSProjectID:        vcsProject.ID,
 				ProjectKey:          proj.Key,
-				Branch:              analyze.Branch,
-				Commit:              analyze.Commit,
+				Branch:              analysis.Branch,
+				Commit:              analysis.Commit,
 				Data: sdk.ProjectRepositoryData{
 					OperationUUID: "",
 				},
@@ -199,8 +199,8 @@ func (api *API) postRepositoryAnalyzeHandler() ([]service.RbacChecker, service.H
 					},
 					Setup: sdk.OperationSetup{
 						Checkout: sdk.OperationCheckout{
-							Commit:         analyze.Commit,
-							Branch:         analyze.Branch,
+							Commit:         analysis.Commit,
+							Branch:         analysis.Branch,
 							CheckSignature: true,
 						},
 					},
@@ -215,29 +215,29 @@ func (api *API) postRepositoryAnalyzeHandler() ([]service.RbacChecker, service.H
 				if err := operation.PostRepositoryOperation(ctx, tx, *proj, ope, nil); err != nil {
 					return err
 				}
-				repoAnalyze.Data.OperationUUID = ope.UUID
+				repoAnalysis.Data.OperationUUID = ope.UUID
 			case sdk.VCSTypeGitea, sdk.VCSTypeGithub:
 				// Check commit signature
-				client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, analyze.ProjectKey, vcsProject.Name)
+				client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, analysis.ProjectKey, vcsProject.Name)
 				if err != nil {
 					return err
 				}
-				vcsCommit, err := client.Commit(ctx, analyze.RepoName, analyze.Commit)
+				vcsCommit, err := client.Commit(ctx, analysis.RepoName, analysis.Commit)
 				if err != nil {
 					return err
 				}
 				if vcsCommit.Hash == "" {
-					repoAnalyze.Status = sdk.RepositoryAnalyzeStatusError
-					repoAnalyze.Data.Error = fmt.Sprintf("commit %s not found", analyze.Commit)
+					repoAnalysis.Status = sdk.RepositoryAnalysisStatusError
+					repoAnalysis.Data.Error = fmt.Sprintf("commit %s not found", analysis.Commit)
 				} else {
 					if vcsCommit.Verified && vcsCommit.KeySignID != "" {
-						repoAnalyze.Data.SignKeyID = vcsCommit.KeySignID
-						repoAnalyze.Data.CommitCheck = true
+						repoAnalysis.Data.SignKeyID = vcsCommit.KeySignID
+						repoAnalysis.Data.CommitCheck = true
 					} else {
-						repoAnalyze.Data.SignKeyID = vcsCommit.KeySignID
-						repoAnalyze.Data.CommitCheck = false
-						repoAnalyze.Status = sdk.RepositoryAnalyzeStatusSkipped
-						repoAnalyze.Data.Error = fmt.Sprintf("commit %s is not signed", vcsCommit.Hash)
+						repoAnalysis.Data.SignKeyID = vcsCommit.KeySignID
+						repoAnalysis.Data.CommitCheck = false
+						repoAnalysis.Status = sdk.RepositoryAnalysisStatusSkipped
+						repoAnalysis.Data.Error = fmt.Sprintf("commit %s is not signed", vcsCommit.Hash)
 					}
 				}
 
@@ -245,13 +245,13 @@ func (api *API) postRepositoryAnalyzeHandler() ([]service.RbacChecker, service.H
 				return sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to analyze vcs type: %s", vcsProject.Type)
 			}
 
-			if err := repository.InsertAnalyze(ctx, tx, &repoAnalyze); err != nil {
+			if err := repository.InsertAnalysis(ctx, tx, &repoAnalysis); err != nil {
 				return err
 			}
 
-			response := sdk.AnalyzeResponse{
-				AnalyzeID:   repoAnalyze.ID,
-				OperationID: repoAnalyze.Data.OperationUUID,
+			response := sdk.AnalysisResponse{
+				AnalysisID:  repoAnalysis.ID,
+				OperationID: repoAnalysis.Data.OperationUUID,
 			}
 
 			if err := tx.Commit(); err != nil {
@@ -261,7 +261,7 @@ func (api *API) postRepositoryAnalyzeHandler() ([]service.RbacChecker, service.H
 		}
 }
 
-func (api *API) repositoryAnalyzePoller(ctx context.Context, tick time.Duration) error {
+func (api *API) repositoryAnalysisPoller(ctx context.Context, tick time.Duration) error {
 	ticker := time.NewTicker(tick)
 	defer ticker.Stop()
 
@@ -279,9 +279,9 @@ func (api *API) repositoryAnalyzePoller(ctx context.Context, tick time.Duration)
 			for _, a := range analysis {
 				api.GoRoutines.Exec(
 					ctx,
-					"repositoryAnalyzePoller-"+a.ID,
+					"repositoryAnalysisPoller-"+a.ID,
 					func(ctx context.Context) {
-						ctx = telemetry.New(ctx, api, "api.repositoryAnalyzePoller", nil, trace.SpanKindUnspecified)
+						ctx = telemetry.New(ctx, api, "api.repositoryAnalysisPoller", nil, trace.SpanKindUnspecified)
 						if err := api.analyzeRepository(ctx, a.ProjectRepositoryID, a.ID); err != nil {
 							log.ErrorWithStackTrace(ctx, err)
 						}
@@ -292,16 +292,16 @@ func (api *API) repositoryAnalyzePoller(ctx context.Context, tick time.Duration)
 	}
 }
 
-func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, analyzeID string) error {
+func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, analysisID string) error {
 	_, next := telemetry.Span(ctx, "api.analyzeRepository.lock")
-	lockKey := cache.Key("api:analyzeRepository", analyzeID)
+	lockKey := cache.Key("api:analyzeRepository", analysisID)
 	b, err := api.Cache.Lock(lockKey, 5*time.Minute, 0, 1)
 	if err != nil {
 		next()
 		return err
 	}
 	if !b {
-		log.Debug(ctx, "api.analyzeRepository> analyze %s is locked in cache", analyzeID)
+		log.Debug(ctx, "api.analyzeRepository> analyze %s is locked in cache", analysisID)
 		next()
 		return nil
 	}
@@ -310,25 +310,25 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 		_ = api.Cache.Unlock(lockKey)
 	}()
 
-	_, next = telemetry.Span(ctx, "api.analyzeRepository.LoadRepositoryAnalyzeById")
-	analyze, err := repository.LoadRepositoryAnalyzeById(ctx, api.mustDB(), projectRepoID, analyzeID)
+	_, next = telemetry.Span(ctx, "api.analyzeRepository.LoadRepositoryAnalysisById")
+	analysis, err := repository.LoadRepositoryAnalysisById(ctx, api.mustDB(), projectRepoID, analysisID)
 	if sdk.ErrorIs(err, sdk.ErrNotFound) {
 		next()
 		return nil
 	}
 	if err != nil {
 		next()
-		return sdk.WrapError(err, "unable to load analyze %s", analyze.ID)
+		return sdk.WrapError(err, "unable to load analyze %s", analysis.ID)
 	}
 	next()
 
-	if analyze.Status != sdk.RepositoryAnalyzeStatusInProgress {
+	if analysis.Status != sdk.RepositoryAnalysisStatusInProgress {
 		return nil
 	}
 
-	if analyze.Data.OperationUUID != "" {
+	if analysis.Data.OperationUUID != "" {
 		_, next = telemetry.Span(ctx, "api.analyzeRepository.Poll")
-		ope, err := operation.Poll(ctx, api.mustDB(), analyze.Data.OperationUUID)
+		ope, err := operation.Poll(ctx, api.mustDB(), analysis.Data.OperationUUID)
 		if err != nil {
 			next()
 			return err
@@ -337,20 +337,20 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 
 		stopAnalyze := false
 		if ope.Status == sdk.OperationStatusDone && ope.Setup.Checkout.Result.CommitVerified {
-			analyze.Data.CommitCheck = true
-			analyze.Data.SignKeyID = ope.Setup.Checkout.Result.SignKeyID
+			analysis.Data.CommitCheck = true
+			analysis.Data.SignKeyID = ope.Setup.Checkout.Result.SignKeyID
 		}
 		if ope.Status == sdk.OperationStatusDone && !ope.Setup.Checkout.Result.CommitVerified {
-			analyze.Data.CommitCheck = false
-			analyze.Data.SignKeyID = ope.Setup.Checkout.Result.SignKeyID
-			analyze.Data.Error = ope.Setup.Checkout.Result.Msg
-			analyze.Status = sdk.RepositoryAnalyzeStatusSkipped
+			analysis.Data.CommitCheck = false
+			analysis.Data.SignKeyID = ope.Setup.Checkout.Result.SignKeyID
+			analysis.Data.Error = ope.Setup.Checkout.Result.Msg
+			analysis.Status = sdk.RepositoryAnalysisStatusSkipped
 			stopAnalyze = true
 		}
 
 		if ope.Status == sdk.OperationStatusError {
-			analyze.Data.Error = ope.Error.Message
-			analyze.Status = sdk.RepositoryAnalyzeStatusError
+			analysis.Data.Error = ope.Error.Message
+			analysis.Status = sdk.RepositoryAnalysisStatusError
 			stopAnalyze = true
 		}
 
@@ -360,7 +360,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 				return sdk.WrapError(err, "unable to start transaction")
 			}
 			defer tx.Rollback()
-			if err := repository.UpdateAnalyze(ctx, tx, analyze); err != nil {
+			if err := repository.UpdateAnalysis(ctx, tx, analysis); err != nil {
 				return sdk.WrapError(err, "unable to failed analyze")
 			}
 			return sdk.WithStack(tx.Commit())
@@ -369,14 +369,14 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 
 	// Retrieve cds files
 	_, next = telemetry.Span(ctx, "api.analyzeRepository.LoadRepositoryByVCSAndID")
-	repo, err := repository.LoadRepositoryByVCSAndID(ctx, api.mustDB(), analyze.VCSProjectID, analyze.ProjectRepositoryID)
+	repo, err := repository.LoadRepositoryByVCSAndID(ctx, api.mustDB(), analysis.VCSProjectID, analysis.ProjectRepositoryID)
 	if err != nil {
 		next()
 		return err
 	}
 	next()
 	_, next = telemetry.Span(ctx, "api.analyzeRepository.LoadVCSByID")
-	vcsProject, err := vcs.LoadVCSByID(ctx, api.mustDB(), analyze.ProjectKey, analyze.VCSProjectID, gorpmapping.GetOptions.WithDecryption)
+	vcsProject, err := vcs.LoadVCSByID(ctx, api.mustDB(), analysis.ProjectKey, analysis.VCSProjectID, gorpmapping.GetOptions.WithDecryption)
 	if err != nil {
 		next()
 		return err
@@ -391,13 +391,13 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 
 	// Search User by gpgkey
 	var cdsUser *sdk.AuthentifiedUser
-	gpgKey, err := user.LoadGPGKeyByKeyID(ctx, tx, analyze.Data.SignKeyID)
+	gpgKey, err := user.LoadGPGKeyByKeyID(ctx, tx, analysis.Data.SignKeyID)
 	if err != nil {
 		if !sdk.ErrorIs(err, sdk.ErrNotFound) {
-			return sdk.WrapError(err, "unable to find gpg key: %s", analyze.Data.SignKeyID)
+			return sdk.WrapError(err, "unable to find gpg key: %s", analysis.Data.SignKeyID)
 		}
-		analyze.Status = sdk.RepositoryAnalyzeStatusError
-		analyze.Data.Error = fmt.Sprintf("gpgkey %s not found", analyze.Data.SignKeyID)
+		analysis.Status = sdk.RepositoryAnalysisStatusError
+		analysis.Data.Error = fmt.Sprintf("gpgkey %s not found", analysis.Data.SignKeyID)
 	}
 
 	if gpgKey != nil {
@@ -406,27 +406,27 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
 				return sdk.WrapError(err, "unable to find user %s", gpgKey.AuthentifiedUserID)
 			}
-			analyze.Status = sdk.RepositoryAnalyzeStatusError
-			analyze.Data.Error = fmt.Sprintf("user %s not found", gpgKey.AuthentifiedUserID)
+			analysis.Status = sdk.RepositoryAnalysisStatusError
+			analysis.Data.Error = fmt.Sprintf("user %s not found", gpgKey.AuthentifiedUserID)
 		}
 	}
 
 	if cdsUser != nil {
-		analyze.Data.CDSUserID = cdsUser.ID
-		analyze.Data.CDSUserName = cdsUser.Username
+		analysis.Data.CDSUserID = cdsUser.ID
+		analysis.Data.CDSUserName = cdsUser.Username
 
 		// Check user right
-		b, err := rbac.HasRoleOnProjectAndUserID(ctx, tx, sdk.RoleManage, cdsUser.ID, analyze.ProjectKey)
+		b, err := rbac.HasRoleOnProjectAndUserID(ctx, tx, sdk.RoleManage, cdsUser.ID, analysis.ProjectKey)
 		if err != nil {
 			return err
 		}
 		if !b {
-			analyze.Status = sdk.RepositoryAnalyzeStatusSkipped
-			analyze.Data.Error = fmt.Sprintf("user %s doesn't have enough right on project %s", cdsUser.ID, analyze.ProjectKey)
+			analysis.Status = sdk.RepositoryAnalysisStatusSkipped
+			analysis.Data.Error = fmt.Sprintf("user %s doesn't have enough right on project %s", cdsUser.ID, analysis.ProjectKey)
 		}
 
-		if analyze.Status != sdk.RepositoryAnalyzeStatusSkipped {
-			client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, analyze.ProjectKey, vcsProject.Name)
+		if analysis.Status != sdk.RepositoryAnalysisStatusSkipped {
+			client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, analysis.ProjectKey, vcsProject.Name)
 			if err != nil {
 				return err
 			}
@@ -434,44 +434,44 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 			switch vcsProject.Type {
 			case sdk.VCSTypeBitbucketServer, sdk.VCSTypeBitbucketCloud:
 				// get archive
-				err = api.getCdsArchiveFileOnRepo(ctx, client, *repo, analyze)
+				err = api.getCdsArchiveFileOnRepo(ctx, client, *repo, analysis)
 			case sdk.VCSTypeGitlab, sdk.VCSTypeGithub, sdk.VCSTypeGitea:
-				analyze.Data.Entities = make([]sdk.ProjectRepositoryDataEntity, 0)
-				err = api.getCdsFilesOnVCSDirectory(ctx, client, analyze, repo.Name, analyze.Commit, ".cds")
+				analysis.Data.Entities = make([]sdk.ProjectRepositoryDataEntity, 0)
+				err = api.getCdsFilesOnVCSDirectory(ctx, client, analysis, repo.Name, analysis.Commit, ".cds")
 			case sdk.VCSTypeGerrit:
 				return sdk.WithStack(sdk.ErrNotImplemented)
 			}
 
 			// Update analyze
 			if err != nil {
-				analyze.Status = sdk.RepositoryAnalyzeStatusError
-				analyze.Data.Error = err.Error()
+				analysis.Status = sdk.RepositoryAnalysisStatusError
+				analysis.Data.Error = err.Error()
 			} else {
-				analyze.Status = sdk.RepositoryAnalyzeStatusSucceed
+				analysis.Status = sdk.RepositoryAnalysisStatusSucceed
 			}
 		}
 	}
 
-	if err := repository.UpdateAnalyze(ctx, tx, analyze); err != nil {
+	if err := repository.UpdateAnalysis(ctx, tx, analysis); err != nil {
 		return err
 	}
 	return sdk.WrapError(tx.Commit(), "unable to commit")
 }
 
-func (api *API) getCdsFilesOnVCSDirectory(ctx context.Context, client sdk.VCSAuthorizedClientService, analyze *sdk.ProjectRepositoryAnalyze, repoName, commit, directory string) error {
+func (api *API) getCdsFilesOnVCSDirectory(ctx context.Context, client sdk.VCSAuthorizedClientService, analysis *sdk.ProjectRepositoryAnalysis, repoName, commit, directory string) error {
 	contents, err := client.ListContent(ctx, repoName, commit, directory)
 	if err != nil {
 		return sdk.WrapError(err, "unable to list content on commit [%s] in directory %s: %v", commit, directory, err)
 	}
 	for _, c := range contents {
 		if c.IsFile && strings.HasSuffix(c.Name, ".yml") {
-			analyze.Data.Entities = append(analyze.Data.Entities, sdk.ProjectRepositoryDataEntity{
+			analysis.Data.Entities = append(analysis.Data.Entities, sdk.ProjectRepositoryDataEntity{
 				FileName: c.Name,
 				Path:     directory + "/",
 			})
 		}
 		if c.IsDirectory {
-			if err := api.getCdsFilesOnVCSDirectory(ctx, client, analyze, repoName, commit, directory+"/"+c.Name); err != nil {
+			if err := api.getCdsFilesOnVCSDirectory(ctx, client, analysis, repoName, commit, directory+"/"+c.Name); err != nil {
 				return err
 			}
 		}
@@ -479,9 +479,9 @@ func (api *API) getCdsFilesOnVCSDirectory(ctx context.Context, client sdk.VCSAut
 	return nil
 }
 
-func (api *API) getCdsArchiveFileOnRepo(ctx context.Context, client sdk.VCSAuthorizedClientService, repo sdk.ProjectRepository, analyze *sdk.ProjectRepositoryAnalyze) error {
-	analyze.Data.Entities = make([]sdk.ProjectRepositoryDataEntity, 0)
-	reader, _, err := client.GetArchive(ctx, repo.Name, ".cds", "tar.gz", analyze.Commit)
+func (api *API) getCdsArchiveFileOnRepo(ctx context.Context, client sdk.VCSAuthorizedClientService, repo sdk.ProjectRepository, analysis *sdk.ProjectRepositoryAnalysis) error {
+	analysis.Data.Entities = make([]sdk.ProjectRepositoryDataEntity, 0)
+	reader, _, err := client.GetArchive(ctx, repo.Name, ".cds", "tar.gz", analysis.Commit)
 	if err != nil {
 		return err
 	}
@@ -507,7 +507,7 @@ func (api *API) getCdsArchiveFileOnRepo(ctx context.Context, client sdk.VCSAutho
 				FileName: fileName,
 				Path:     dir,
 			}
-			analyze.Data.Entities = append(analyze.Data.Entities, entity)
+			analysis.Data.Entities = append(analysis.Data.Entities, entity)
 		}
 
 	}

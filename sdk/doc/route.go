@@ -101,8 +101,8 @@ func CleanURLParameter(u string) string {
 		u = "session-id"
 	case "gpgKeyID":
 		u = "gpg-key-id"
-	case "analyzeID":
-		u = "analyze-id"
+	case "analysisID":
+		u = "analysis-id"
 	}
 	return u
 }

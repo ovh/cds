@@ -129,7 +129,7 @@ type EntitiesHookExecution struct {
 	RequestMethod string              `json:"request_method"`
 
 	// Execution result
-	AnalyzeID   string `json:"analyze_id"`
+	AnalysisID  string `json:"analysis_id"`
 	OperationID string `json:"operation_id"`
 }
 
@@ -148,7 +148,7 @@ type ScheduledTaskExecution struct {
 	DateScheduledExecution string `json:"date_scheduled_execution"`
 }
 
-type AnalyzeRequest struct {
+type AnalysisRequest struct {
 	ProjectKey string `json:"projectKey"`
 	VcsName    string `json:"vcsName"`
 	RepoName   string `json:"repoName"`
@@ -156,7 +156,7 @@ type AnalyzeRequest struct {
 	Commit     string `json:"commit"`
 }
 
-type AnalyzeResponse struct {
-	AnalyzeID   string `json:"analyze_id"`
+type AnalysisResponse struct {
+	AnalysisID  string `json:"analysis_id"`
 	OperationID string `json:"operation_id"`
 }
