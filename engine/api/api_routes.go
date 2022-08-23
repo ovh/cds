@@ -433,12 +433,15 @@ func (api *API) InitRouter() {
 
 	r.Handle("/v2/repository/analyze", Scope(sdk.AuthConsumerScopeHooks), r.POSTv2(api.postRepositoryAnalysisHandler))
 	r.Handle("/v2/project/repositories", Scope(sdk.AuthConsumerScopeHooks), r.GETv2(api.getAllRepositoriesHandler))
+	r.Handle("/v2/project/repositories/{repositoryIdentifier}/hook", Scope(sdk.AuthConsumerScopeHooks), r.GETv2(api.getRepositoryHookHandler))
+
 	r.Handle("/v2/project/{projectKey}/vcs", nil, r.POSTv2(api.postVCSProjectHandler), r.GETv2(api.getVCSProjectAllHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}", nil, r.PUTv2(api.putVCSProjectHandler), r.DELETEv2(api.deleteVCSProjectHandler), r.GETv2(api.getVCSProjectHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository", nil, r.POSTv2(api.postProjectRepositoryHandler), r.GETv2(api.getVCSProjectRepositoryAllHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}", nil, r.DELETEv2(api.deleteProjectRepositoryHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/analysis", nil, r.GETv2(api.getProjectRepositoryAnalysesHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/analysis/{analysisID}", nil, r.GETv2(api.getProjectRepositoryAnalysisHandler))
+	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/hook/link", nil, r.GETv2(api.getRepositoryHookLinkHandler))
 
 	r.Handle("/v2/user/gpgkey/{gpgKeyID}", Scope(sdk.AuthConsumerScopeUser), r.GETv2(api.getUserGPGKeyHandler))
 	r.Handle("/v2/user/{user}/gpgkey", Scope(sdk.AuthConsumerScopeUser), r.GETv2(api.getUserGPGKeysHandler), r.POSTv2(api.postUserGPGGKeyHandler))

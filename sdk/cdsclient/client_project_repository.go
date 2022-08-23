@@ -51,3 +51,10 @@ func (c *client) ProjectRepositoryAnalysisGet(ctx context.Context, projectKey st
 	_, err := c.GetJSON(ctx, path, &analysis)
 	return analysis, err
 }
+
+func (c *client) ProjectRepositoryHookAccessLink(ctx context.Context, projectKey, vcsName, repoName string) (sdk.HookAccessData, error) {
+	path := fmt.Sprintf("/v2/project/%s/vcs/%s/repository/%s/hook/link", projectKey, url.PathEscape(vcsName), url.PathEscape(repoName))
+	var hookData sdk.HookAccessData
+	_, err := c.GetJSON(ctx, path, &hookData)
+	return hookData, err
+}

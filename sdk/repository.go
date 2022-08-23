@@ -21,6 +21,7 @@ type ProjectRepository struct {
 	CreatedBy         string                `json:"created_by" db:"created_by"`
 	VCSProjectID      string                `json:"-" db:"vcs_project_id"`
 	HookConfiguration HookConfiguration     `json:"hook_configuration" db:"hook_configuration"`
+	HookSignKey       string                `json:"hook_sign_key" db:"hook_sign_key" gorpmapping:"encrypted,ID,VCSProjectID"`
 	CloneURL          string                `json:"clone_url" db:"clone_url"`
 	Auth              ProjectRepositoryAuth `json:"auth" db:"auth" gorpmapping:"encrypted,ID,VCSProjectID"`
 }

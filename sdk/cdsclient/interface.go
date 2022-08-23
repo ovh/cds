@@ -224,6 +224,7 @@ type ProjectClient interface {
 	ProjectVCSDelete(ctx context.Context, projectKey string, vcsName string) error
 	ProjectVCSRepositoryAdd(ctx context.Context, projectKey string, vcsName string, repo sdk.ProjectRepository) error
 	ProjectVCSRepositoryList(ctx context.Context, projectKey string, vcsName string) ([]sdk.ProjectRepository, error)
+	ProjectRepositoryHookAccessLink(ctx context.Context, projectKey, vcsName, repoName string) (sdk.HookAccessData, error)
 	ProjectRepositoryDelete(ctx context.Context, projectKey string, vcsName string, repositoryName string) error
 	ProjectRepositoryAnalysis(ctx context.Context, analysis sdk.AnalysisRequest) (sdk.AnalysisResponse, error)
 	ProjectRepositoryAnalysisList(ctx context.Context, projectKey string, vcsIdentifier string, repositoryIdentifier string) ([]sdk.ProjectRepositoryAnalysis, error)
@@ -318,6 +319,7 @@ type HookClient interface {
 	VCSConfiguration() (map[string]sdk.VCSConfiguration, error)
 	VCSGerritConfiguration() (map[string]sdk.VCSGerritConfiguration, error)
 	RepositoriesListAll(ctx context.Context) ([]sdk.ProjectRepository, error)
+	RepositoryHook(ctx context.Context, uuid string) (sdk.Hook, error)
 }
 
 // ServiceClient exposes functions used for services

@@ -19,6 +19,7 @@ func projectRepository() *cobra.Command {
 		cli.NewListCommand(projectRepositoryListCmd, projectRepositoryListFunc, nil, withAllCommandModifiers()...),
 		cli.NewDeleteCommand(projectRepositoryDeleteCmd, projectRepositoryDeleteFunc, nil, withAllCommandModifiers()...),
 		cli.NewCommand(projectRepositoryAddCmd, projectRepositoryAddFunc, nil, withAllCommandModifiers()...),
+		cli.NewGetCommand(projectRepositoryHookCreateCmd, projectRepositoryHookCreateFunc, nil, withAllCommandModifiers()...),
 	})
 }
 
@@ -117,4 +118,20 @@ var projectRepositoryDeleteCmd = cli.Command{
 
 func projectRepositoryDeleteFunc(v cli.Values) error {
 	return client.ProjectRepositoryDelete(context.Background(), v.GetString(_ProjectKey), v.GetString("vcs-name"), v.GetString("repository-name"))
+}
+
+var projectRepositoryHookCreateCmd = cli.Command{
+	Name:  "hook",
+	Short: "Display data to be able to create a hook",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+	},
+	Args: []cli.Arg{
+		{Name: "vcs-name"},
+		{Name: "repository-name"},
+	},
+}
+
+func projectRepositoryHookCreateFunc(v cli.Values) (interface{}, error) {
+	return client.ProjectRepositoryHookAccessLink(context.Background(), v.GetString(_ProjectKey), v.GetString("vcs-name"), v.GetString("repository-name"))
 }

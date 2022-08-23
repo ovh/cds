@@ -58,7 +58,7 @@ type VCSCommit struct {
 	Message   string    `json:"message"`
 	URL       string    `json:"url"`
 	Verified  bool      `json:"verified"`
-	KeySignID string    `json:"keySignID"`
+	Signature string    `json:"signature"`
 }
 
 //VCSRemote represents remotes known by the repositories manager
