@@ -116,7 +116,7 @@ func userGpgKeyImport(v cli.Values) error {
 		}
 		publicKey = keyBuilder.String()
 	} else {
-		keyBts, err := ioutil.ReadFile(v.GetString("key-file"))
+		keyBts, err := ioutil.ReadFile(v.GetString("pub-key-file"))
 		if err != nil {
 			return err
 		}
