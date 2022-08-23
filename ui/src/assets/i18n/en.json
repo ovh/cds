@@ -84,7 +84,6 @@
   "btn_goto_workflow": "See workflow",
   "btn_logs": "Display logs",
   "btn_resync_ascode_event": "Resynchronize repository modifications",
-  "btn_run": "Run pipeline",
   "btn_save": "Save",
   "btn_save_application": "Save application",
   "btn_save_pipeline": "Save pipeline",
