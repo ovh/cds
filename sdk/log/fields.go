@@ -19,6 +19,7 @@ const (
 	AuthUsername       = log.Field("auth_user_name")
 	AuthWorkerName     = log.Field("auth_worker_name")
 	RbackCheckerName   = log.Field("rbac_checker_name")
+	Commit             = log.Field("commit")
 	Deprecated         = log.Field("deprecated")
 	Duration           = log.Field("duration_milliseconds_num")
 	Goroutine          = log.Field("goroutine")
@@ -27,6 +28,7 @@ const (
 	Latency            = log.Field("latency")
 	LatencyNum         = log.Field("latency_num")
 	Method             = log.Field("method")
+	GpgKey             = log.Field("gpg_key")
 	RequestID          = log.Field("request_id")
 	RequestURI         = log.Field("request_uri")
 	Repository         = log.Field("repository")
@@ -38,6 +40,7 @@ const (
 	Status             = log.Field("status")
 	StatusNum          = log.Field("status_num")
 	Sudo               = log.Field("sudo")
+	VCSServer          = log.Field("vcs_server")
 )
 
 func init() {
@@ -52,9 +55,11 @@ func init() {
 		AuthSessionID,
 		AuthSessionIAT,
 		AuthSessionTokenID,
+		Commit,
 		Deprecated,
 		Duration,
 		Goroutine,
+		GpgKey,
 		Handler,
 		IPAddress,
 		Latency,
@@ -70,6 +75,7 @@ func init() {
 		Status,
 		StatusNum,
 		Sudo,
+		VCSServer,
 	)
 }
 

@@ -30,6 +30,18 @@ func (c userContact) Canonical() gorpmapper.CanonicalForms {
 	}
 }
 
+type dbGpgKey struct {
+	sdk.UserGPGKey
+	gorpmapper.SignedEntity
+}
+
+func (g dbGpgKey) Canonical() gorpmapper.CanonicalForms {
+	_ = []interface{}{g.ID, g.AuthentifiedUserID, g.KeyID, g.PublicKey} // Checks that fields exists at compilation
+	return []gorpmapper.CanonicalForm{
+		"{{print .ID}}{{.AuthentifiedUserID}}{{.KeyID}}{{.PublicKey}}",
+	}
+}
+
 type Organization struct {
 	ID                 int64  `db:"id"`
 	AuthentifiedUserID string `db:"authentified_user_id"`
@@ -48,4 +60,5 @@ func init() {
 	gorpmapping.Register(gorpmapping.New(authentifiedUser{}, "authentified_user", false, "id"))
 	gorpmapping.Register(gorpmapping.New(userContact{}, "user_contact", true, "id"))
 	gorpmapping.Register(gorpmapping.New(Organization{}, "authentified_user_organization", true, "id"))
+	gorpmapping.Register(gorpmapping.New(dbGpgKey{}, "user_gpg_key", false, "id"))
 }

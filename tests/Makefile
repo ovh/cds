@@ -9,7 +9,7 @@ endef
 
 MINIO_CONTAINER_ID = $(shell docker ps -f name=minio1 -q)
 GITEA_CONTAINER_ID = $(shell docker ps -f name=gitea -q)
-GITEA_VERSION = 1.16
+GITEA_VERSION = latest
 
 UNAME_S := $(shell uname -s| tr A-Z a-z)
 VERSION := $(if ${CDS_VERSION},${CDS_VERSION},snapshot)
@@ -47,7 +47,7 @@ minio_reset_bucket:
 
 gitea_start:
 	@if [ -z "$(GITEA_CONTAINER_ID)" ]; then \
-  		docker run -d -p 3000:3000 -e INSTALL_LOCK=true --name gitea gitea/gitea:$(GITEA_VERSION); \
+  		docker run -d -p 3000:3000 -e INSTALL_LOCK=true -e GITEA__webhook__ALLOWED_HOST_LIST=* --name gitea gitea/gitea:$(GITEA_VERSION); \
   		echo "Starting gitea..."; \
   		sleep 5; \
   		docker exec gitea su-exec git /app/gitea/gitea admin user create --username $(GITEA_USER) --password $(GITEA_PASSWORD) --email $(GITEA_USER)@gitea.eu --config /data/gitea/conf/app.ini; \

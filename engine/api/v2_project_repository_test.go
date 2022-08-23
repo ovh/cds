@@ -53,10 +53,10 @@ func Test_crudRepositoryOnProjectLambdaUserOK(t *testing.T) {
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 				r := sdk.VCSRepo{
-					Name: "ovh/cds",
+					Name:         "ovh/cds",
+					HTTPCloneURL: "http://fakeURL",
 				}
-
-				out = r
+				*(out.(*sdk.VCSRepo)) = r
 				return nil, 200, nil
 			},
 		).MaxTimes(1)
@@ -65,6 +65,10 @@ func Test_crudRepositoryOnProjectLambdaUserOK(t *testing.T) {
 	// Creation request
 	repo := sdk.ProjectRepository{
 		Name: "ovh/cds",
+		Auth: sdk.ProjectRepositoryAuth{
+			Username: "myuser",
+			Token:    "mytoken",
+		},
 	}
 
 	vars := map[string]string{

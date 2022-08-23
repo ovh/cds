@@ -82,6 +82,6 @@ func getRepo(fullname string) (string, string, error) {
 	return project, slug, nil
 }
 
-func (c *bitbucketClient) GetAccessToken(_ context.Context) string {
-	return c.accessToken
+func (b *bitbucketClient) GetAccessToken(_ context.Context) string {
+	return b.accessToken
 }

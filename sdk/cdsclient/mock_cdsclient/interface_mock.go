@@ -2568,6 +2568,51 @@ func (mr *MockProjectClientMockRecorder) ProjectList(withApplications, withWorkf
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectList", reflect.TypeOf((*MockProjectClient)(nil).ProjectList), varargs...)
 }
 
+// ProjectRepositoryAnalyze mocks base method.
+func (m *MockProjectClient) ProjectRepositoryAnalysis(ctx context.Context, analyze sdk.AnalysisRequest) (sdk.AnalysisResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectRepositoryAnalysis", ctx, analyze)
+	ret0, _ := ret[0].(sdk.AnalysisResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectRepositoryAnalyze indicates an expected call of ProjectRepositoryAnalyze.
+func (mr *MockProjectClientMockRecorder) ProjectRepositoryAnalyze(ctx, analyze interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryAnalysis", reflect.TypeOf((*MockProjectClient)(nil).ProjectRepositoryAnalysis), ctx, analyze)
+}
+
+// ProjectRepositoryAnalyzeGet mocks base method.
+func (m *MockProjectClient) ProjectRepositoryAnalysisGet(ctx context.Context, projectKey, vcsName, repositoryName, analyzeID string) (sdk.ProjectRepositoryAnalysis, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectRepositoryAnalysisGet", ctx, projectKey, vcsName, repositoryName, analyzeID)
+	ret0, _ := ret[0].(sdk.ProjectRepositoryAnalysis)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectRepositoryAnalyzeGet indicates an expected call of ProjectRepositoryAnalyzeGet.
+func (mr *MockProjectClientMockRecorder) ProjectRepositoryAnalyzeGet(ctx, projectKey, vcsName, repositoryName, analyzeID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryAnalysisGet", reflect.TypeOf((*MockProjectClient)(nil).ProjectRepositoryAnalysisGet), ctx, projectKey, vcsName, repositoryName, analyzeID)
+}
+
+// ProjectRepositoryAnalyzeList mocks base method.
+func (m *MockProjectClient) ProjectRepositoryAnalysisList(ctx context.Context, projectKey, vcsName, repositoryName string) ([]sdk.ProjectRepositoryAnalysis, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectRepositoryAnalysisList", ctx, projectKey, vcsName, repositoryName)
+	ret0, _ := ret[0].([]sdk.ProjectRepositoryAnalysis)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectRepositoryAnalyzeList indicates an expected call of ProjectRepositoryAnalyzeList.
+func (mr *MockProjectClientMockRecorder) ProjectRepositoryAnalyzeList(ctx, projectKey, vcsName, repositoryName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryAnalysisList", reflect.TypeOf((*MockProjectClient)(nil).ProjectRepositoryAnalysisList), ctx, projectKey, vcsName, repositoryName)
+}
+
 // ProjectRepositoryDelete mocks base method.
 func (m *MockProjectClient) ProjectRepositoryDelete(ctx context.Context, projectKey, vcsName, repositoryName string) error {
 	m.ctrl.T.Helper()
@@ -2690,17 +2735,17 @@ func (mr *MockProjectClientMockRecorder) ProjectVCSList(ctx, projectKey interfac
 }
 
 // ProjectVCSRepositoryAdd mocks base method.
-func (m *MockProjectClient) ProjectVCSRepositoryAdd(ctx context.Context, projectKey, vcsName, repoName string) error {
+func (m *MockProjectClient) ProjectVCSRepositoryAdd(ctx context.Context, projectKey, vcsName string, repo sdk.ProjectRepository) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ProjectVCSRepositoryAdd", ctx, projectKey, vcsName, repoName)
+	ret := m.ctrl.Call(m, "ProjectVCSRepositoryAdd", ctx, projectKey, vcsName, repo)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // ProjectVCSRepositoryAdd indicates an expected call of ProjectVCSRepositoryAdd.
-func (mr *MockProjectClientMockRecorder) ProjectVCSRepositoryAdd(ctx, projectKey, vcsName, repoName interface{}) *gomock.Call {
+func (mr *MockProjectClientMockRecorder) ProjectVCSRepositoryAdd(ctx, projectKey, vcsName, repo interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVCSRepositoryAdd", reflect.TypeOf((*MockProjectClient)(nil).ProjectVCSRepositoryAdd), ctx, projectKey, vcsName, repoName)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVCSRepositoryAdd", reflect.TypeOf((*MockProjectClient)(nil).ProjectVCSRepositoryAdd), ctx, projectKey, vcsName, repo)
 }
 
 // ProjectVCSRepositoryList mocks base method.
@@ -3426,6 +3471,65 @@ func (m *MockUserClient) UserGetSchema(ctx context.Context) (sdk.SchemaResponse,
 func (mr *MockUserClientMockRecorder) UserGetSchema(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGetSchema", reflect.TypeOf((*MockUserClient)(nil).UserGetSchema), ctx)
+}
+
+// UserGpgKeyCreate mocks base method.
+func (m *MockUserClient) UserGpgKeyCreate(ctx context.Context, username, publicKey string) (sdk.UserGPGKey, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UserGpgKeyCreate", ctx, username, publicKey)
+	ret0, _ := ret[0].(sdk.UserGPGKey)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UserGpgKeyCreate indicates an expected call of UserGpgKeyCreate.
+func (mr *MockUserClientMockRecorder) UserGpgKeyCreate(ctx, username, publicKey interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGpgKeyCreate", reflect.TypeOf((*MockUserClient)(nil).UserGpgKeyCreate), ctx, username, publicKey)
+}
+
+// UserGpgKeyDelete mocks base method.
+func (m *MockUserClient) UserGpgKeyDelete(ctx context.Context, username, keyID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UserGpgKeyDelete", ctx, username, keyID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UserGpgKeyDelete indicates an expected call of UserGpgKeyDelete.
+func (mr *MockUserClientMockRecorder) UserGpgKeyDelete(ctx, username, keyID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGpgKeyDelete", reflect.TypeOf((*MockUserClient)(nil).UserGpgKeyDelete), ctx, username, keyID)
+}
+
+// UserGpgKeyGet mocks base method.
+func (m *MockUserClient) UserGpgKeyGet(ctx context.Context, keyID string) (sdk.UserGPGKey, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UserGpgKeyGet", ctx, keyID)
+	ret0, _ := ret[0].(sdk.UserGPGKey)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UserGpgKeyGet indicates an expected call of UserGpgKeyGet.
+func (mr *MockUserClientMockRecorder) UserGpgKeyGet(ctx, keyID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGpgKeyGet", reflect.TypeOf((*MockUserClient)(nil).UserGpgKeyGet), ctx, keyID)
+}
+
+// UserGpgKeyList mocks base method.
+func (m *MockUserClient) UserGpgKeyList(ctx context.Context, username string) ([]sdk.UserGPGKey, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UserGpgKeyList", ctx, username)
+	ret0, _ := ret[0].([]sdk.UserGPGKey)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UserGpgKeyList indicates an expected call of UserGpgKeyList.
+func (mr *MockUserClientMockRecorder) UserGpgKeyList(ctx, username interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGpgKeyList", reflect.TypeOf((*MockUserClient)(nil).UserGpgKeyList), ctx, username)
 }
 
 // UserList mocks base method.
@@ -6748,6 +6852,51 @@ func (mr *MockInterfaceMockRecorder) ProjectList(withApplications, withWorkflow 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectList", reflect.TypeOf((*MockInterface)(nil).ProjectList), varargs...)
 }
 
+// ProjectRepositoryAnalyze mocks base method.
+func (m *MockInterface) ProjectRepositoryAnalysis(ctx context.Context, analyze sdk.AnalysisRequest) (sdk.AnalysisResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectRepositoryAnalysis", ctx, analyze)
+	ret0, _ := ret[0].(sdk.AnalysisResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectRepositoryAnalyze indicates an expected call of ProjectRepositoryAnalyze.
+func (mr *MockInterfaceMockRecorder) ProjectRepositoryAnalyze(ctx, analyze interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryAnalysis", reflect.TypeOf((*MockInterface)(nil).ProjectRepositoryAnalysis), ctx, analyze)
+}
+
+// ProjectRepositoryAnalyzeGet mocks base method.
+func (m *MockInterface) ProjectRepositoryAnalysisGet(ctx context.Context, projectKey, vcsName, repositoryName, analyzeID string) (sdk.ProjectRepositoryAnalysis, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectRepositoryAnalysisGet", ctx, projectKey, vcsName, repositoryName, analyzeID)
+	ret0, _ := ret[0].(sdk.ProjectRepositoryAnalysis)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectRepositoryAnalyzeGet indicates an expected call of ProjectRepositoryAnalyzeGet.
+func (mr *MockInterfaceMockRecorder) ProjectRepositoryAnalyzeGet(ctx, projectKey, vcsName, repositoryName, analyzeID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryAnalysisGet", reflect.TypeOf((*MockInterface)(nil).ProjectRepositoryAnalysisGet), ctx, projectKey, vcsName, repositoryName, analyzeID)
+}
+
+// ProjectRepositoryAnalyzeList mocks base method.
+func (m *MockInterface) ProjectRepositoryAnalysisList(ctx context.Context, projectKey, vcsName, repositoryName string) ([]sdk.ProjectRepositoryAnalysis, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectRepositoryAnalysisList", ctx, projectKey, vcsName, repositoryName)
+	ret0, _ := ret[0].([]sdk.ProjectRepositoryAnalysis)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectRepositoryAnalyzeList indicates an expected call of ProjectRepositoryAnalyzeList.
+func (mr *MockInterfaceMockRecorder) ProjectRepositoryAnalyzeList(ctx, projectKey, vcsName, repositoryName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryAnalysisList", reflect.TypeOf((*MockInterface)(nil).ProjectRepositoryAnalysisList), ctx, projectKey, vcsName, repositoryName)
+}
+
 // ProjectRepositoryDelete mocks base method.
 func (m *MockInterface) ProjectRepositoryDelete(ctx context.Context, projectKey, vcsName, repositoryName string) error {
 	m.ctrl.T.Helper()
@@ -6870,17 +7019,17 @@ func (mr *MockInterfaceMockRecorder) ProjectVCSList(ctx, projectKey interface{})
 }
 
 // ProjectVCSRepositoryAdd mocks base method.
-func (m *MockInterface) ProjectVCSRepositoryAdd(ctx context.Context, projectKey, vcsName, repoName string) error {
+func (m *MockInterface) ProjectVCSRepositoryAdd(ctx context.Context, projectKey, vcsName string, repo sdk.ProjectRepository) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ProjectVCSRepositoryAdd", ctx, projectKey, vcsName, repoName)
+	ret := m.ctrl.Call(m, "ProjectVCSRepositoryAdd", ctx, projectKey, vcsName, repo)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // ProjectVCSRepositoryAdd indicates an expected call of ProjectVCSRepositoryAdd.
-func (mr *MockInterfaceMockRecorder) ProjectVCSRepositoryAdd(ctx, projectKey, vcsName, repoName interface{}) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) ProjectVCSRepositoryAdd(ctx, projectKey, vcsName, repo interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVCSRepositoryAdd", reflect.TypeOf((*MockInterface)(nil).ProjectVCSRepositoryAdd), ctx, projectKey, vcsName, repoName)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVCSRepositoryAdd", reflect.TypeOf((*MockInterface)(nil).ProjectVCSRepositoryAdd), ctx, projectKey, vcsName, repo)
 }
 
 // ProjectVCSRepositoryList mocks base method.
@@ -7772,6 +7921,65 @@ func (m *MockInterface) UserGetSchema(ctx context.Context) (sdk.SchemaResponse, 
 func (mr *MockInterfaceMockRecorder) UserGetSchema(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGetSchema", reflect.TypeOf((*MockInterface)(nil).UserGetSchema), ctx)
+}
+
+// UserGpgKeyCreate mocks base method.
+func (m *MockInterface) UserGpgKeyCreate(ctx context.Context, username, publicKey string) (sdk.UserGPGKey, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UserGpgKeyCreate", ctx, username, publicKey)
+	ret0, _ := ret[0].(sdk.UserGPGKey)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UserGpgKeyCreate indicates an expected call of UserGpgKeyCreate.
+func (mr *MockInterfaceMockRecorder) UserGpgKeyCreate(ctx, username, publicKey interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGpgKeyCreate", reflect.TypeOf((*MockInterface)(nil).UserGpgKeyCreate), ctx, username, publicKey)
+}
+
+// UserGpgKeyDelete mocks base method.
+func (m *MockInterface) UserGpgKeyDelete(ctx context.Context, username, keyID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UserGpgKeyDelete", ctx, username, keyID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UserGpgKeyDelete indicates an expected call of UserGpgKeyDelete.
+func (mr *MockInterfaceMockRecorder) UserGpgKeyDelete(ctx, username, keyID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGpgKeyDelete", reflect.TypeOf((*MockInterface)(nil).UserGpgKeyDelete), ctx, username, keyID)
+}
+
+// UserGpgKeyGet mocks base method.
+func (m *MockInterface) UserGpgKeyGet(ctx context.Context, keyID string) (sdk.UserGPGKey, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UserGpgKeyGet", ctx, keyID)
+	ret0, _ := ret[0].(sdk.UserGPGKey)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UserGpgKeyGet indicates an expected call of UserGpgKeyGet.
+func (mr *MockInterfaceMockRecorder) UserGpgKeyGet(ctx, keyID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGpgKeyGet", reflect.TypeOf((*MockInterface)(nil).UserGpgKeyGet), ctx, keyID)
+}
+
+// UserGpgKeyList mocks base method.
+func (m *MockInterface) UserGpgKeyList(ctx context.Context, username string) ([]sdk.UserGPGKey, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UserGpgKeyList", ctx, username)
+	ret0, _ := ret[0].([]sdk.UserGPGKey)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UserGpgKeyList indicates an expected call of UserGpgKeyList.
+func (mr *MockInterfaceMockRecorder) UserGpgKeyList(ctx, username interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGpgKeyList", reflect.TypeOf((*MockInterface)(nil).UserGpgKeyList), ctx, username)
 }
 
 // UserList mocks base method.

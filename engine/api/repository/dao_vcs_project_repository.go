@@ -39,8 +39,12 @@ func Delete(db gorpmapper.SqlExecutorWithTx, vcsProjectID string, name string) e
 func LoadRepositoryByVCSAndID(ctx context.Context, db gorp.SqlExecutor, vcsProjectID, repoID string) (*sdk.ProjectRepository, error) {
 	query := gorpmapping.NewQuery(`SELECT project_repository.* FROM project_repository WHERE project_repository.vcs_project_id = $1 AND project_repository.id = $2`).Args(vcsProjectID, repoID)
 	var res dbProjectRepository
-	if _, err := gorpmapping.Get(ctx, db, query, &res); err != nil {
+	found, err := gorpmapping.Get(ctx, db, query, &res)
+	if err != nil {
 		return nil, err
+	}
+	if !found {
+		return nil, sdk.NewErrorFrom(sdk.ErrNotFound, "repository: %s", repoID)
 	}
 
 	isValid, err := gorpmapping.CheckSignature(res, res.Signature)
@@ -54,11 +58,15 @@ func LoadRepositoryByVCSAndID(ctx context.Context, db gorp.SqlExecutor, vcsProje
 	return &res.ProjectRepository, nil
 }
 
-func LoadRepositoryByName(ctx context.Context, db gorp.SqlExecutor, vcsProjectID string, repoName string) (*sdk.ProjectRepository, error) {
+func LoadRepositoryByName(ctx context.Context, db gorp.SqlExecutor, vcsProjectID string, repoName string, opts ...gorpmapping.GetOptionFunc) (*sdk.ProjectRepository, error) {
 	query := gorpmapping.NewQuery(`SELECT project_repository.* FROM project_repository WHERE project_repository.vcs_project_id = $1 AND project_repository.name = $2`).Args(vcsProjectID, repoName)
 	var res dbProjectRepository
-	if _, err := gorpmapping.Get(ctx, db, query, &res); err != nil {
+	found, err := gorpmapping.Get(ctx, db, query, &res, opts...)
+	if err != nil {
 		return nil, err
+	}
+	if !found {
+		return nil, sdk.WrapError(sdk.ErrNotFound, "repository %s", repoName)
 	}
 
 	isValid, err := gorpmapping.CheckSignature(res, res.Signature)

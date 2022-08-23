@@ -275,6 +275,35 @@ func (c *vcsClient) setAuthHeader(ctx context.Context, req *http.Request) {
 		}
 	}
 }
+
+func (c *vcsClient) doStreamRequest(ctx context.Context, method, path string, in interface{}) (io.Reader, http.Header, error) {
+	reader, headers, code, err := services.NewClient(c.db, c.srvs).StreamRequest(ctx, method, path, in, func(req *http.Request) {
+		c.setAuthHeader(ctx, req)
+	})
+	if code >= 400 {
+		log.Warn(ctx, "repositories manager %s HTTP %s %s error %d", c.name, method, path, code)
+		switch code {
+		case http.StatusUnauthorized:
+			err = sdk.NewError(sdk.ErrNoReposManagerClientAuth, err)
+		case http.StatusBadRequest:
+			err = sdk.NewError(sdk.ErrWrongRequest, err)
+		case http.StatusNotFound:
+			err = sdk.NewError(sdk.ErrNotFound, err)
+		case http.StatusForbidden:
+			err = sdk.NewError(sdk.ErrForbidden, err)
+		default:
+			err = sdk.NewError(sdk.ErrUnknownError, err)
+		}
+	}
+
+	if err != nil {
+		return nil, nil, sdk.WithStack(err)
+	}
+	err = c.checkAccessToken(ctx, headers)
+
+	return reader, headers, sdk.WithStack(err)
+}
+
 func (c *vcsClient) doJSONRequest(ctx context.Context, method, path string, in interface{}, out interface{}) (int, error) {
 	headers, code, err := services.NewClient(c.db, c.srvs).DoJSONRequest(ctx, method, path, in, out, func(req *http.Request) {
 		c.setAuthHeader(ctx, req)
@@ -663,6 +692,34 @@ func (c *vcsClient) GetAccessToken(_ context.Context) string {
 	return ""
 }
 
+func (c *vcsClient) ListContent(ctx context.Context, repo string, commit, dir string) ([]sdk.VCSContent, error) {
+	path := fmt.Sprintf("/vcs/%s/repos/%s/contents/%s?commit=%s", c.name, repo, url.PathEscape(dir), commit)
+	var contents []sdk.VCSContent
+	if _, err := c.doJSONRequest(ctx, "GET", path, nil, &contents); err != nil {
+		return nil, sdk.WithStack(err)
+	}
+	return contents, nil
+}
+
+func (c *vcsClient) GetContent(ctx context.Context, repo string, commit, dir string) (sdk.VCSContent, error) {
+	path := fmt.Sprintf("/vcs/%s/repos/%s/content/%s?commit=%s", c.name, repo, url.PathEscape(dir), commit)
+	var content sdk.VCSContent
+	if _, err := c.doJSONRequest(ctx, "GET", path, nil, &content); err != nil {
+		return content, sdk.WithStack(err)
+	}
+	return content, nil
+}
+
+func (c *vcsClient) GetArchive(ctx context.Context, repo string, dir string, format string, commit string) (io.Reader, http.Header, error) {
+	archiveRequest := sdk.VCSArchiveRequest{
+		Path:   dir,
+		Commit: commit,
+		Format: format,
+	}
+	urlPath := fmt.Sprintf("/vcs/%s/repos/%s/archive", c.name, repo)
+	return c.doStreamRequest(ctx, "POST", urlPath, archiveRequest)
+}
+
 // WebhooksInfos is a set of info about webhooks
 type WebhooksInfos struct {
 	WebhooksSupported  bool     `json:"webhooks_supported"`
@@ -682,25 +739,25 @@ func GetWebhooksInfos(ctx context.Context, c sdk.VCSAuthorizedClientService) (We
 	if client.vcsProject != nil {
 		res := WebhooksInfos{}
 		switch {
-		case client.vcsProject.Type == "bitbucketserver":
+		case client.vcsProject.Type == sdk.VCSTypeBitbucketServer:
 			res.WebhooksSupported = true
 			res.Icon = sdk.BitbucketIcon
 			// https://confluence.atlassian.com/bitbucketserver/event-payload-938025882.html
 			res.Events = sdk.BitbucketEvents
 			res.WebhooksDisabled = client.vcsProject.Options.DisableWebhooks
-		case client.vcsProject.Type == "bitbucketcloud":
+		case client.vcsProject.Type == sdk.VCSTypeBitbucketCloud:
 			res.WebhooksSupported = true
 			res.Icon = sdk.BitbucketIcon
 			// https://developer.atlassian.com/bitbucket/api/2/reference/resource/hook_events/%7Bsubject_type%7D
 			res.Events = sdk.BitbucketCloudEvents
 			res.WebhooksDisabled = client.vcsProject.Options.DisableWebhooks
-		case client.vcsProject.Type == "github":
+		case client.vcsProject.Type == sdk.VCSTypeGithub:
 			res.WebhooksSupported = true
 			res.Icon = sdk.GitHubIcon
 			// https://developer.github.com/v3/activity/events/types/
 			res.Events = sdk.GitHubEvents
 			res.WebhooksDisabled = client.vcsProject.Options.DisableWebhooks
-		case client.vcsProject.Type == "gitlab":
+		case client.vcsProject.Type == sdk.VCSTypeGitlab:
 			res.WebhooksSupported = true
 			res.Icon = sdk.GitlabIcon
 			res.WebhooksDisabled = client.vcsProject.Options.DisableWebhooks
@@ -715,7 +772,7 @@ func GetWebhooksInfos(ctx context.Context, c sdk.VCSAuthorizedClientService) (We
 				string(gitlab.EventTypePipeline),
 				"Job Hook", // TODO update gitlab sdk
 			}
-		case client.vcsProject.Type == "gerrit":
+		case client.vcsProject.Type == sdk.VCSTypeGerrit:
 			res.WebhooksSupported = false
 			res.Icon = sdk.GerritIcon
 			// https://git.eclipse.org/r/Documentation/cmd-stream-events.html#events

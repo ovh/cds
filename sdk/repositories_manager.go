@@ -57,6 +57,8 @@ type VCSCommit struct {
 	Timestamp int64     `json:"authorTimestamp"`
 	Message   string    `json:"message"`
 	URL       string    `json:"url"`
+	Verified  bool      `json:"verified"`
+	KeySignID string    `json:"keySignID"`
 }
 
 //VCSRemote represents remotes known by the repositories manager
@@ -96,6 +98,13 @@ type VCSPullRequest struct {
 	Closed   bool         `json:"closed"`
 	Revision string       `json:"revision"`
 	Updated  time.Time    `json:"updated"`
+}
+
+type VCSContent struct {
+	Name        string
+	IsDirectory bool
+	IsFile      bool
+	Content     string
 }
 
 type VCSPullRequestOptions struct {

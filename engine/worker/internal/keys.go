@@ -125,47 +125,13 @@ func (wk *CurrentWorker) InstallKeyTo(key sdk.Variable, destinationPath string) 
 		}, nil
 
 	case string(sdk.KeyTypePGP):
-		gpg2Found := false
-
-		if _, err := exec.LookPath("gpg2"); err == nil {
-			gpg2Found = true
-		}
-
-		if !gpg2Found {
-			if _, err := exec.LookPath("gpg"); err != nil {
-				return nil, sdk.NewError(sdk.ErrWorkerErrorCommand, fmt.Errorf("Cannot use gpg in your worker because you haven't gpg or gpg2 binary"))
-			}
-		}
-		content := []byte(key.Value)
-		tmpfile, errTmpFile := os.CreateTemp("", key.Name)
-		if errTmpFile != nil {
-			return nil, sdk.NewError(sdk.ErrWorkerErrorCommand, fmt.Errorf("Cannot setup pgp key %s : %v", key.Name, errTmpFile))
-		}
-		defer func() {
-			_ = os.Remove(tmpfile.Name())
-		}()
-
-		if _, err := tmpfile.Write(content); err != nil {
-			return nil, sdk.NewError(sdk.ErrWorkerErrorCommand, fmt.Errorf("Cannot setup pgp key file %s : %v", key.Name, err))
-		}
-
-		if err := tmpfile.Close(); err != nil {
-			return nil, sdk.NewError(sdk.ErrWorkerErrorCommand, fmt.Errorf("Cannot setup pgp key file %s (close) : %v", key.Name, err))
-		}
-
-		gpgBin := "gpg"
-		if gpg2Found {
-			gpgBin = "gpg2"
-		}
-		cmd := exec.Command(gpgBin, "--import", tmpfile.Name())
-		var out bytes.Buffer
-		cmd.Stdout = &out
-		if err := cmd.Run(); err != nil {
-			return nil, sdk.NewError(sdk.ErrWorkerErrorCommand, fmt.Errorf("Cannot import pgp key %s : %v", key.Name, err))
+		tmpFileName, content, err := sdk.ImportGPGKey("", key.Name, key.Value)
+		if err != nil {
+			return nil, sdk.NewError(sdk.ErrWorkerErrorCommand, err)
 		}
 		return &workerruntime.KeyResponse{
 			Type:    sdk.KeyTypePGP,
-			PKey:    tmpfile.Name(),
+			PKey:    tmpFileName,
 			Content: content,
 		}, nil
 

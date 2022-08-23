@@ -6,6 +6,7 @@ package mock_services
 
 import (
 	context "context"
+	io "io"
 	http "net/http"
 	reflect "reflect"
 
@@ -14,30 +15,30 @@ import (
 	cdsclient "github.com/ovh/cds/sdk/cdsclient"
 )
 
-// MockClient is a mock of Client interface
+// MockClient is a mock of Client interface.
 type MockClient struct {
 	ctrl     *gomock.Controller
 	recorder *MockClientMockRecorder
 }
 
-// MockClientMockRecorder is the mock recorder for MockClient
+// MockClientMockRecorder is the mock recorder for MockClient.
 type MockClientMockRecorder struct {
 	mock *MockClient
 }
 
-// NewMockClient creates a new mock instance
+// NewMockClient creates a new mock instance.
 func NewMockClient(ctrl *gomock.Controller) *MockClient {
 	mock := &MockClient{ctrl: ctrl}
 	mock.recorder = &MockClientMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockClient) EXPECT() *MockClientMockRecorder {
 	return m.recorder
 }
 
-// DoJSONRequest mocks base method
+// DoJSONRequest mocks base method.
 func (m *MockClient) DoJSONRequest(ctx context.Context, method, path string, in, out interface{}, mods ...cdsclient.RequestModifier) (http.Header, int, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, method, path, in, out}
@@ -51,14 +52,14 @@ func (m *MockClient) DoJSONRequest(ctx context.Context, method, path string, in,
 	return ret0, ret1, ret2
 }
 
-// DoJSONRequest indicates an expected call of DoJSONRequest
+// DoJSONRequest indicates an expected call of DoJSONRequest.
 func (mr *MockClientMockRecorder) DoJSONRequest(ctx, method, path, in, out interface{}, mods ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, method, path, in, out}, mods...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DoJSONRequest", reflect.TypeOf((*MockClient)(nil).DoJSONRequest), varargs...)
 }
 
-// DoMultiPartRequest mocks base method
+// DoMultiPartRequest mocks base method.
 func (m *MockClient) DoMultiPartRequest(ctx context.Context, method, path string, multiPartData *services.MultiPartData, in, out interface{}, mods ...cdsclient.RequestModifier) (int, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, method, path, multiPartData, in, out}
@@ -71,9 +72,31 @@ func (m *MockClient) DoMultiPartRequest(ctx context.Context, method, path string
 	return ret0, ret1
 }
 
-// DoMultiPartRequest indicates an expected call of DoMultiPartRequest
+// DoMultiPartRequest indicates an expected call of DoMultiPartRequest.
 func (mr *MockClientMockRecorder) DoMultiPartRequest(ctx, method, path, multiPartData, in, out interface{}, mods ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, method, path, multiPartData, in, out}, mods...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DoMultiPartRequest", reflect.TypeOf((*MockClient)(nil).DoMultiPartRequest), varargs...)
+}
+
+// StreamRequest mocks base method.
+func (m *MockClient) StreamRequest(ctx context.Context, method, path string, in interface{}, mods ...cdsclient.RequestModifier) (io.Reader, http.Header, int, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, method, path, in}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "StreamRequest", varargs...)
+	ret0, _ := ret[0].(io.Reader)
+	ret1, _ := ret[1].(http.Header)
+	ret2, _ := ret[2].(int)
+	ret3, _ := ret[3].(error)
+	return ret0, ret1, ret2, ret3
+}
+
+// StreamRequest indicates an expected call of StreamRequest.
+func (mr *MockClientMockRecorder) StreamRequest(ctx, method, path, in interface{}, mods ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, method, path, in}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StreamRequest", reflect.TypeOf((*MockClient)(nil).StreamRequest), varargs...)
 }

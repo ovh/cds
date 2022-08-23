@@ -83,9 +83,15 @@ type OperationLoadFiles struct {
 
 // OperationCheckout represents a smart git checkout
 type OperationCheckout struct {
-	Tag    string `json:"tag,omitempty"`
-	Branch string `json:"branch,omitempty"`
-	Commit string `json:"commit,omitempty"`
+	Tag            string `json:"tag,omitempty"`
+	Branch         string `json:"branch,omitempty"`
+	Commit         string `json:"commit,omitempty"`
+	CheckSignature bool   `json:"check_signature,omitempty"`
+	Result         struct {
+		SignKeyID      string `json:"sign_key_id"`
+		CommitVerified bool   `json:"verified"`
+		Msg            string `json:"msg"`
+	} `json:"result"`
 }
 
 // OperationPush represents information about push operation
