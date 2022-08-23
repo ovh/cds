@@ -740,8 +740,8 @@ func (a *API) Serve(ctx context.Context) error {
 		a.repositoryAnalysisPoller(ctx, 1*time.Second)
 	})
 
-	a.GoRoutines.RunWithRestart(ctx, "api.cleanRepositoyAnalyzis", func(ctx context.Context) {
-		a.cleanRepositoyAnalyzis(ctx, 1*time.Hour)
+	a.GoRoutines.RunWithRestart(ctx, "api.cleanRepositoryAnalysis", func(ctx context.Context) {
+		a.cleanRepositoryAnalysis(ctx, 1*time.Hour)
 	})
 
 	log.Info(ctx, "Bootstrapping database...")

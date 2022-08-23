@@ -45,7 +45,7 @@ func getAnalysis(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Que
 		return nil, err
 	}
 	if dbData.ID == "" {
-		return nil, sdk.ErrNotFound
+		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 	isValid, err := gorpmapping.CheckSignature(dbData, dbData.Signature)
 	if err != nil {

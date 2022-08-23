@@ -52,7 +52,7 @@ func TestCleanAnalysis(t *testing.T) {
 		}
 		require.NoError(t, repository.InsertAnalysis(context.TODO(), db, &a))
 	}
-	api.cleanRepositoyAnalyzis(ctx, 1*time.Second)
+	api.cleanRepositoryAnalysis(ctx, 1*time.Second)
 
 	analyses, err := repository.LoadAnalysesByRepo(context.TODO(), db, repo.ID)
 	require.NoError(t, err)

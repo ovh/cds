@@ -31,7 +31,7 @@ import (
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
-func (api *API) cleanRepositoyAnalyzis(ctx context.Context, delay time.Duration) error {
+func (api *API) cleanRepositoryAnalysis(ctx context.Context, delay time.Duration) error {
 	ticker := time.NewTicker(delay)
 	defer ticker.Stop()
 
