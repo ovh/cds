@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { AuditWorkflowTemplate } from 'app/model/audit.model';
@@ -35,9 +35,6 @@ import { NzModalService } from 'ng-zorro-antd/modal';
 })
 @AutoUnsubscribe()
 export class WorkflowTemplateEditComponent implements OnInit, OnDestroy {
-
-    @ViewChild('templateBulkModal')
-    templateBulkModal: WorkflowTemplateBulkModalComponent;
 
     oldWorkflowTemplate: WorkflowTemplate;
     workflowTemplate: WorkflowTemplate;
@@ -358,7 +355,14 @@ export class WorkflowTemplateEditComponent implements OnInit, OnDestroy {
     }
 
     clickCreateBulk() {
-        this.templateBulkModal.show();
+        this._modalService.create({
+            nzTitle: 'Workflow template apply bulk request',
+            nzWidth: '1100px',
+            nzContent: WorkflowTemplateBulkModalComponent,
+            nzComponentParams: {
+                workflowTemplate: this.workflowTemplate
+            }
+        });
     }
 
     clickUpdate(i: WorkflowTemplateInstance) {

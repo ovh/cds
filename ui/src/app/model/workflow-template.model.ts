@@ -89,7 +89,7 @@ export class WorkflowTemplateInstance implements WithKey {
         if (!this.workflow) {
             return InstanceStatus.NOT_IMPORTED;
         }
-        return this.workflow_template_version === wt.version ? InstanceStatus.UP_TO_DATE : InstanceStatus.NOT_UP_TO_DATE;
+        return this.workflow_template_version === wt?.version ? InstanceStatus.UP_TO_DATE : InstanceStatus.NOT_UP_TO_DATE;
     }
 }
 

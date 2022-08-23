@@ -1,101 +1,68 @@
-<ng-template let-context let-modal="modal" #workflowTemplateBulkModal>
-    <div class="header">
-        {{'workflow_template_bulk_create_title' | translate}}
-    </div>
-    <div class="content scrolling">
-        <div class="ui grid">
-            <div class="sixteen wide column">
-                <div class="ui three ordered steps">
-                    <div class="step" [class.completed]="currentStep > 0" [class.active]="currentStep === 0">
-                        <div class="content">
-                            <div class="title">{{ 'workflow_template_bulk_select_instances' | translate }}</div>
-                        </div>
-                    </div>
-                    <div class="step" [class.completed]="currentStep > 1" [class.active]="currentStep === 1">
-                        <div class="content">
-                            <div class="title">{{ 'workflow_template_bulk_fill_parameters' | translate }}</div>
-                        </div>
-                    </div>
-                    <div class="step" [class.completed]="currentStep > 2" [class.active]="currentStep === 2">
-                        <div class="content">
-                            <div class="title">{{ 'workflow_template_bulk_fill_run' | translate }}</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div *ngIf="currentStep === 0" class="sixteen wide column centered">
-                <div class="ui grid">
-                    <div class="sixteen wide column">
-                        <app-data-table [withSelect]="selectFunc" (selectChange)="selectChange($event)"
-                            [withPagination]="10" [columns]="columnsInstances" [data]="instances"
-                            [loading]="loadingInstances"></app-data-table>
-                    </div>
-                    <div class="sixteen wide column centered">
-                        <button class="ui positive button" [class.disabled]="selectedInstanceKeys.length === 0"
-                            (click)="clickGoToParam()">
-                            {{ 'btn_next' | translate }}
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <div *ngIf="currentStep === 1" class="sixteen wide column">
-                <div class="ui grid">
-                    <div *ngIf="withAsCodeWorkflow" class="sixteen wide column">
-                        <div class="ui blue message">
-                            {{'workflow_template_bulk_info_line_ascode' | translate}}
-                        </div>
-                        <app-ascode-save-form (paramChange)="onAsCodeParamChange($event)">
-                        </app-ascode-save-form>
-                    </div>
-                    <div class="sixteen wide column">
-                        <div class="ui styled fluid accordion">
-                            <ng-container *ngFor="let instance of selectedInstances;let i = index">
-                                <div class="title" [class.active]="accordionOpenedIndex === i"
-                                    (click)="accordionOpen($event, i)">
-                                    <i class="dropdown icon"></i>{{instance.request.workflow_name}}
-                                </div>
-                                <div class="content" [class.active]="accordionOpenedIndex === i">
-                                    <app-workflow-template-param-form *ngIf="accordionOpenedIndex === i"
-                                        [project]="instance.project" [workflowTemplate]="workflowTemplate"
-                                        [workflowTemplateInstance]="instance"
-                                        [parameters]="parameters[instance.id] ? parameters[instance.id] : null"
-                                        (paramChange)="changeParam(instance.id, $event)">
-                                    </app-workflow-template-param-form>
-                                </div>
-                            </ng-container>
-                        </div>
-                    </div>
-                    <div class="four wide column left floated">
-                        <button class="ui primary button" (click)="clickGoToInstance()">
-                            {{ 'btn_back' | translate }}
-                        </button>
-                    </div>
-                    <div class="eight wide column centered">
-                        <button class="ui positive button" [disabled]="!validFields" (click)="clickRunBulk()">
-                            {{ 'workflow_template_btn_run_bulk' | translate }}
-                        </button>
-                    </div>
-                    <div class="four wide column"></div>
-                </div>
-            </div>
-            <div *ngIf="currentStep === 2" class="sixteen wide column">
-                <div class="ui grid">
-                    <div class="sixteen wide column">
-                        <app-data-table *ngIf="response" [withPagination]="10" [columns]="columnsOperations"
-                            [data]="response.operations"></app-data-table>
-                    </div>
-                    <div class="four wide column left floated">
-                        <button class="ui primary button" (click)="clickGoToInstanceReset()">
-                            {{ 'btn_back' | translate }}
-                        </button>
-                    </div>
-                    <div class="four wide column right aligned">
-                        <button class="ui secondary button" (click)="clickClose()">
-                            {{ 'btn_close' | translate }}
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</ng-template>
+ <div class="content scrolling">
+     <nz-row>
+         <nz-col [nzSpan]="24">
+             <nz-steps [nzCurrent]="currentStep">
+                 <nz-step nzTitle="Select instances"></nz-step>
+                 <nz-step nzTitle="Fill parameters"></nz-step>
+                 <nz-step nzTitle="Run"></nz-step>
+             </nz-steps>
+         </nz-col>
+     </nz-row>
+     <nz-row *ngIf="currentStep === 0">
+         <nz-col [nzSpan]="24">
+             <app-data-table [withSelect]="selectFunc" (selectChange)="selectChange($event)"
+                             [withPagination]="10" [columns]="columnsInstances" [data]="instances"
+                             [loading]="loadingInstances"></app-data-table>
+         </nz-col>
+     </nz-row>
+     <nz-row *ngIf="currentStep === 1">
+         <nz-col [nzSpan]="24">
+             <div *ngIf="withAsCodeWorkflow">
+                 <nz-alert nzType="info" nzMessage="Some selected instances refer to ascode workflow. A pull request will be made on each workflow's repository. Please fill the branch and commit message to proceed."></nz-alert>
+                 <app-ascode-save-form (paramChange)="onAsCodeParamChange($event)">
+                 </app-ascode-save-form>
+             </div>
+         </nz-col>
+         <nz-col [nzSpan]="24">
+             <nz-collapse nzAccordion>
+                <nz-collapse-panel *ngFor="let instance of selectedInstances;let i = index" [nzActive]="accordionOpenedIndex === i" [nzHeader]="instance.request.workflow_name" (click)="accordionOpen($event, i)">
+                    <app-workflow-template-param-form *ngIf="accordionOpenedIndex === i"
+                                                      [project]="instance.project" [workflowTemplate]="workflowTemplate"
+                                                      [workflowTemplateInstance]="instance"
+                                                      [parameters]="parameters[instance.id] ? parameters[instance.id] : null"
+                                                      (paramChange)="changeParam(instance.id, $event)">
+                    </app-workflow-template-param-form>
+                </nz-collapse-panel>
+             </nz-collapse>
+             <div class="ui styled fluid accordion">
+                 <ng-container *ngFor="let instance of selectedInstances;let i = index">
+
+                     <div class="content" [class.active]="accordionOpenedIndex === i">
+
+                     </div>
+                 </ng-container>
+             </div>
+         </nz-col>
+
+     </nz-row>
+     <nz-row *ngIf="currentStep === 2">
+         <nz-col [nzSpan]="24">
+             <app-data-table *ngIf="response" [withPagination]="10" [columns]="columnsOperations"
+                             [data]="response.operations"></app-data-table>
+         </nz-col>
+     </nz-row>
+ </div>
+ <div *nzModalFooter>
+     <ng-container *ngIf="currentStep === 0">
+         <button nz-button nzType="primary" [disabled]="selectedInstanceKeys.length === 0"
+                 (click)="clickGoToParam()">Next</button>
+     </ng-container>
+     <ng-container *ngIf="currentStep === 1">
+         <button nz-button nzType="primary"  (click)="clickGoToInstance()">Back</button>
+         <button nz-button nzType="primary" [disabled]="!validFields" (click)="clickRunBulk()">Run bulk update</button>
+     </ng-container>
+     <ng-container *ngIf="currentStep === 2">
+         <button nz-button nzType="primary"  (click)="clickGoToInstanceReset()">Back</button>
+         <button nz-button (click)="clickClose()">Close</button>
+     </ng-container>
+ </div>
