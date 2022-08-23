@@ -321,6 +321,7 @@ func (api *API) InitRouter() {
 	r.Handle("/queue/workflows/{permJobID}/coverage", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobCoverageResultsHandler, MaintenanceAware()))
 	r.Handle("/queue/workflows/{permJobID}/run/results", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.postWorkflowRunResultsHandler))
 	r.Handle("/queue/workflows/{permJobID}/run/results/check", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.workflowRunResultCheckUploadHandler))
+	r.Handle("/queue/workflows/{permJobID}/run/results/release", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.workflowRunResultReleaseHandler))
 	r.Handle("/queue/workflows/{permJobID}/test", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobTestsResultsHandler, MaintenanceAware()))
 	r.Handle("/queue/workflows/{permJobID}/tag", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobTagsHandler, MaintenanceAware()))
 	r.Handle("/queue/workflows/{permJobID}/step", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobStepStatusHandler, MaintenanceAware()))

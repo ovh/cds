@@ -486,6 +486,7 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, dbmap *gorp.DbMap,
 	for i := range wr.Workflow.Integrations {
 		if wr.Workflow.Integrations[i].ProjectIntegration.Model.ArtifactManager {
 			artifactManagerInteg = &wr.Workflow.Integrations[i]
+			break
 		}
 	}
 	if artifactManagerInteg == nil {

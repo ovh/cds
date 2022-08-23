@@ -1121,6 +1121,30 @@ func (api *API) workflowRunResultCheckUploadHandler() service.Handler {
 	}
 }
 
+func (api *API) workflowRunResultReleaseHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if !isWorker(ctx) {
+			return sdk.WrapError(sdk.ErrForbidden, "only workers can call this route")
+		}
+
+		jobID, err := requestVarInt(r, "permJobID")
+		if err != nil {
+			return err
+		}
+
+		wr, err := workflow.LoadRunByJobID(ctx, api.mustDBWithCtx(ctx), jobID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
+		if err != nil {
+			return err
+		}
+
+		if err := workflow.SyncRunResultArtifactManagerByRunID(ctx, api.mustDBWithCtx(ctx), wr.ID); err != nil {
+			return err
+		}
+
+		return nil
+	}
+}
+
 func (api *API) postWorkflowRunResultsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		jobID, err := requestVarInt(r, "permJobID")
