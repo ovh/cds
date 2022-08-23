@@ -107,13 +107,11 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 			return sdk.WrapError(err, "cannot takeJob nodeJobRunID:%d", id)
 		}
 
-		// Get CDN TCP Addr
-		// Get CDN TCP Addr
+		// FIXME remove CDN info from payload, this information should be injected by the hatchery
 		pbji.GelfServiceAddr, pbji.GelfServiceAddrEnableTLS, err = services.GetCDNPublicTCPAdress(ctx, api.mustDB())
 		if err != nil {
 			return err
 		}
-
 		pbji.CDNHttpAddr, err = services.GetCDNPublicHTTPAdress(ctx, api.mustDB())
 		if err != nil {
 			return err

@@ -9,7 +9,6 @@ import (
 	jwt "github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
 	"github.com/rockbears/log"
-	"github.com/sirupsen/logrus"
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/types"
 
@@ -46,10 +45,6 @@ func (h *HatcheryVSphere) Init(config interface{}) (cdsclient.ServiceConfig, err
 	cfg.InsecureSkipVerifyTLS = sConfig.API.HTTP.Insecure
 	cfg.RequestSecondsTimeout = sConfig.API.RequestTimeout
 	return cfg, nil
-}
-
-func (h *HatcheryVSphere) GetLogger() *logrus.Logger {
-	return h.ServiceLogger
 }
 
 // ApplyConfiguration apply an object of type HatcheryConfiguration after checking it

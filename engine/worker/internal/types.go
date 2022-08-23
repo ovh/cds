@@ -42,7 +42,7 @@ type CurrentWorker struct {
 	basedir     afero.Fs
 	manualExit  bool
 	gelfLogger  *logger
-	cdnHttpAddr string
+	cdnHttpAddr string // FIXME get CDN information from worker config
 	stepLogLine int64
 	httpPort    int32
 	currentJob  struct {

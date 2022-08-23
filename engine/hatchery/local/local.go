@@ -16,7 +16,6 @@ import (
 	jwt "github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
 	"github.com/rockbears/log"
-	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/service"
@@ -258,18 +257,13 @@ func (h *HatcheryLocal) WorkersStarted(ctx context.Context) ([]string, error) {
 // InitHatchery register local hatchery with its worker model
 func (h *HatcheryLocal) InitHatchery(ctx context.Context) error {
 	h.workers = make(map[string]workerCmd)
-	if err := h.RefreshServiceLogger(ctx); err != nil {
-		log.Error(ctx, "Hatchery> local> Cannot get cdn configuration : %v", err)
+	if err := h.Common.Init(ctx, h); err != nil {
+		return nil
 	}
 	h.GoRoutines.Run(ctx, "hatchery locale routines", func(ctx context.Context) {
 		h.routines(ctx)
 	})
 	return nil
-}
-
-// GetLogger retuns the hatchery local logger
-func (h *HatcheryLocal) GetLogger() *logrus.Logger {
-	return h.ServiceLogger
 }
 
 func (h *HatcheryLocal) routines(ctx context.Context) {
@@ -282,11 +276,6 @@ func (h *HatcheryLocal) routines(ctx context.Context) {
 			h.GoRoutines.Exec(ctx, "local-killAwolWorkers", func(ctx context.Context) {
 				if err := h.killAwolWorkers(); err != nil {
 					log.Warn(ctx, "Cannot kill awol workers: %s", err)
-				}
-			})
-			h.GoRoutines.Exec(ctx, "local-refreshCDNConfiguration", func(ctx context.Context) {
-				if err := h.RefreshServiceLogger(ctx); err != nil {
-					log.Error(ctx, "Hatchery> local> Cannot get cdn configuration : %v", err)
 				}
 			})
 		case <-ctx.Done():

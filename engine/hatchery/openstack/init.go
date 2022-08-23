@@ -17,6 +17,10 @@ import (
 // then list available models
 // then list available images
 func (h *HatcheryOpenstack) InitHatchery(ctx context.Context) error {
+	if err := h.Common.Init(ctx, h); err != nil {
+		return err
+	}
+
 	workersAlive = map[string]int64{}
 
 	authOpts := gophercloud.AuthOptions{
@@ -51,9 +55,6 @@ func (h *HatcheryOpenstack) InitHatchery(ctx context.Context) error {
 		log.Warn(ctx, "Error on initIPStatus(): %v", err)
 	}
 
-	if err := h.RefreshServiceLogger(ctx); err != nil {
-		log.Error(ctx, "Hatchery> openstack> Cannot get cdn configuration : %v", err)
-	}
 	h.GoRoutines.Run(ctx, "hatchery openstack routines", func(ctx context.Context) {
 		h.main(ctx)
 	})
