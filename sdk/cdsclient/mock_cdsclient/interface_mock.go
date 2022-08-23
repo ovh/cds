@@ -45,18 +45,23 @@ func (m *MockTemplateClient) EXPECT() *MockTemplateClientMockRecorder {
 }
 
 // TemplateApply mocks base method.
-func (m *MockTemplateClient) TemplateApply(groupName, templateSlug string, req sdk.WorkflowTemplateRequest) (*tar.Reader, error) {
+func (m *MockTemplateClient) TemplateApply(groupName, templateSlug string, req sdk.WorkflowTemplateRequest, mods ...cdsclient.RequestModifier) (*tar.Reader, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TemplateApply", groupName, templateSlug, req)
+	varargs := []interface{}{groupName, templateSlug, req}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "TemplateApply", varargs...)
 	ret0, _ := ret[0].(*tar.Reader)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // TemplateApply indicates an expected call of TemplateApply.
-func (mr *MockTemplateClientMockRecorder) TemplateApply(groupName, templateSlug, req interface{}) *gomock.Call {
+func (mr *MockTemplateClientMockRecorder) TemplateApply(groupName, templateSlug, req interface{}, mods ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TemplateApply", reflect.TypeOf((*MockTemplateClient)(nil).TemplateApply), groupName, templateSlug, req)
+	varargs := append([]interface{}{groupName, templateSlug, req}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TemplateApply", reflect.TypeOf((*MockTemplateClient)(nil).TemplateApply), varargs...)
 }
 
 // TemplateBulk mocks base method.
@@ -7541,18 +7546,23 @@ func (mr *MockInterfaceMockRecorder) Stream(ctx, httpClient, method, path, body 
 }
 
 // TemplateApply mocks base method.
-func (m *MockInterface) TemplateApply(groupName, templateSlug string, req sdk.WorkflowTemplateRequest) (*tar.Reader, error) {
+func (m *MockInterface) TemplateApply(groupName, templateSlug string, req sdk.WorkflowTemplateRequest, mods ...cdsclient.RequestModifier) (*tar.Reader, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TemplateApply", groupName, templateSlug, req)
+	varargs := []interface{}{groupName, templateSlug, req}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "TemplateApply", varargs...)
 	ret0, _ := ret[0].(*tar.Reader)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // TemplateApply indicates an expected call of TemplateApply.
-func (mr *MockInterfaceMockRecorder) TemplateApply(groupName, templateSlug, req interface{}) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) TemplateApply(groupName, templateSlug, req interface{}, mods ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TemplateApply", reflect.TypeOf((*MockInterface)(nil).TemplateApply), groupName, templateSlug, req)
+	varargs := append([]interface{}{groupName, templateSlug, req}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TemplateApply", reflect.TypeOf((*MockInterface)(nil).TemplateApply), varargs...)
 }
 
 // TemplateBulk mocks base method.
