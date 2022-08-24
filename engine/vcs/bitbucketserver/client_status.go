@@ -24,7 +24,7 @@ type statusData struct {
 }
 
 // DEPRECATED VCS
-func (client *bitbucketClient) IsDisableStatusDetails(ctx context.Context) bool {
+func (b *bitbucketClient) IsDisableStatusDetails(ctx context.Context) bool {
 	return false
 }
 

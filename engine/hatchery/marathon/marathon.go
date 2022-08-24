@@ -16,7 +16,6 @@ import (
 	jwt "github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
 	"github.com/rockbears/log"
-	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/service"
@@ -34,11 +33,6 @@ func New() *HatcheryMarathon {
 }
 
 var _ hatchery.InterfaceWithModels = new(HatcheryMarathon)
-
-// GetLogger return the logger
-func (h *HatcheryMarathon) GetLogger() *logrus.Logger {
-	return h.ServiceLogger
-}
 
 // Init cdsclient config.
 func (h *HatcheryMarathon) Init(config interface{}) (cdsclient.ServiceConfig, error) {
@@ -441,8 +435,8 @@ func (h *HatcheryMarathon) WorkersStarted(ctx context.Context) ([]string, error)
 
 // InitHatchery only starts killing routine of worker not registered
 func (h *HatcheryMarathon) InitHatchery(ctx context.Context) error {
-	if err := h.RefreshServiceLogger(ctx); err != nil {
-		log.Error(ctx, "Hatchery> marathon> Cannot get cdn configuration : %v", err)
+	if err := h.Common.Init(ctx, h); err != nil {
+		return err
 	}
 	h.GoRoutines.Run(ctx, "marathon-routines", func(ctx context.Context) {
 		h.routines(ctx)
@@ -465,11 +459,6 @@ func (h *HatcheryMarathon) routines(ctx context.Context) {
 			h.GoRoutines.Exec(ctx, "marathon-killAwolWorkers", func(ctx context.Context) {
 				if err := h.killAwolWorkers(); err != nil {
 					log.Warn(context.Background(), "Cannot kill awol workers: %s", err)
-				}
-			})
-			h.GoRoutines.Exec(ctx, "marathon-refreshCDNConfiguration", func(ctx context.Context) {
-				if err := h.RefreshServiceLogger(ctx); err != nil {
-					log.Error(ctx, "Hatchery> marathon> Cannot get cdn configuration : %v", err)
 				}
 			})
 		case <-ctx.Done():

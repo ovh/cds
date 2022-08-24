@@ -178,13 +178,13 @@ func GetArtifactFromIntegrationPlugin(ctx context.Context, wk workerruntime.Runt
 		if err != nil {
 			wk.SendLog(ctx, workerruntime.LevelInfo, "Can read run result data: "+err.Error())
 			wg.Done()
-			return res, err
+			continue
 		}
 		opts := sdk.ParametersToMap(wk.Parameters())
 		repoName := opts[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactoryConfigCdsRepository)]
 		if repoName != artData.RepoName {
-			wg.Done()
 			wk.SendLog(ctx, workerruntime.LevelDebug, fmt.Sprintf("%s does not match configured repo name %s - skipped", repoName, artData.RepoName))
+			wg.Done()
 			continue
 		}
 

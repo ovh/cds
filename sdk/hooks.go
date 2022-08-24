@@ -102,6 +102,7 @@ type TaskExecution struct {
 	RabbitMQ            *RabbitMQTaskExecution  `json:"rabbitmq,omitempty" cli:"-"`
 	ScheduledTask       *ScheduledTaskExecution `json:"scheduled_task,omitempty" cli:"-"`
 	GerritEvent         *GerritEventExecution   `json:"gerrit,omitempty" cli:"-"`
+	EntitiesHook        *EntitiesHookExecution  `json:"entities_hook_execution,omitempty" cli:"-"`
 	Status              string                  `json:"status" cli:"status"`
 	Configuration       HookConfiguration       `json:"configuration" cli:"-"`
 	// DEPRECATED
@@ -121,6 +122,17 @@ type WebHookExecution struct {
 	RequestMethod string              `json:"request_method"`
 }
 
+type EntitiesHookExecution struct {
+	RequestURL    string              `json:"request_url"`
+	RequestBody   []byte              `json:"request_body"`
+	RequestHeader map[string][]string `json:"request_header"`
+	RequestMethod string              `json:"request_method"`
+
+	// Execution result
+	AnalysisID  string `json:"analysis_id"`
+	OperationID string `json:"operation_id"`
+}
+
 // KafkaTaskExecution contains specific data for a kafka hook
 type KafkaTaskExecution struct {
 	Message []byte `json:"message"`
@@ -134,4 +146,17 @@ type RabbitMQTaskExecution struct {
 // ScheduledTaskExecution contains specific data for a scheduled task execution
 type ScheduledTaskExecution struct {
 	DateScheduledExecution string `json:"date_scheduled_execution"`
+}
+
+type AnalysisRequest struct {
+	ProjectKey string `json:"projectKey"`
+	VcsName    string `json:"vcsName"`
+	RepoName   string `json:"repoName"`
+	Branch     string `json:"branch"`
+	Commit     string `json:"commit"`
+}
+
+type AnalysisResponse struct {
+	AnalysisID  string `json:"analysis_id"`
+	OperationID string `json:"operation_id"`
 }

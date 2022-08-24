@@ -47,7 +47,7 @@ var Release = Manifest{
 			Steps: []exportentities.Step{
 				{
 					Release: &exportentities.StepRelease{
-						Artifacts: "*.zip",
+						Artifacts: "(.*).zip",
 					},
 				},
 			},

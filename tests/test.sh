@@ -41,7 +41,8 @@ SMTP_MOCK_URL="${SMTP_MOCK_URL:-http://localhost:2024}"
 INIT_TOKEN="${INIT_TOKEN:-}"
 GITEA_USER="${GITEA_USER:-gituser}"
 GITEA_PASSWORD="${GITEA_PASSWORD:-gitpwd}"
-GITEA_HOST="${GITEA_HOST:-localhost}"
+GITEA_HOST="${GITEA_HOST:-http://localhost:3000}"
+GITEA_CDS_HOOKS_URL="${GITEA_CDS_HOOKS_URL:-http://localhost:8083}"
 
 # If you want to run some tests with a specific model requirements, set CDS_MODEL_REQ
 CDS_MODEL_REQ="${CDS_MODEL_REQ:-buildpack-deps}"
@@ -83,7 +84,6 @@ check_failure() {
 
 mv_results() {
     tsuite_file=$1
-    mv ./results/test_results.xml ./results/${tsuite_file}-test_results.xml
     mv ./results/venom.log ./results/${tsuite_file}-venom.log
 }
 
@@ -136,8 +136,6 @@ smoke_tests_services() {
 }
 
 cli_tests() {
-    echo "Check if gitea is running"
-    curl --fail http://${GITEA_HOST}:3000/api/swagger
     echo "Running CLI tests:"
     for f in $(ls -1 03_cli*.yml); do
         CMD="${VENOM} run ${VENOM_OPTS} ${f} --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}_admin --var engine.ctl=${CDS_ENGINE_CTL} --var api.url=${CDS_API_URL} --var ui.url=${CDS_UI_URL}  --var smtpmock.url=${SMTP_MOCK_URL}"
@@ -204,7 +202,7 @@ workflow_with_third_parties() {
 }
 
 admin_tests() {
-    echo "Running Workflow tests:"
+    echo "Running Admin tests:"
     for f in $(ls -1 07_*.yml); do
         CMD="${VENOM} run ${VENOM_OPTS} ${f} --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}_admin --var api.url=${CDS_API_URL} --var ui.url=${CDS_UI_URL} --var smtpmock.url=${SMTP_MOCK_URL} --var ro_username=cds.integration.tests.ro --var cdsctl.config_ro_user=${CDSCTL_CONFIG}_user"
         echo -e "  ${YELLOW}${f} ${DARKGRAY}[${CMD}]${NOCOLOR}"
@@ -216,6 +214,20 @@ admin_tests() {
     done
 }
 
+cds_v2_tests() {
+    echo "Check if gitea is running"
+    curl --fail -I -X GET ${GITEA_HOST}/api/swagger
+    echo "Running CDS v2 tests:"
+    for f in $(ls -1 08_*.yml); do
+        CMD="${VENOM} run ${VENOM_OPTS} ${f} --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}_admin --var api.url=${CDS_API_URL} --var ui.url=${CDS_UI_URL} --var smtpmock.url=${SMTP_MOCK_URL} --var ro_username=cds.integration.tests.ro --var cdsctl.config_ro_user=${CDSCTL_CONFIG}_user --var gitea.hook.url=${GITEA_CDS_HOOKS_URL} --var git.host=${GITEA_HOST} --var git.user=${GITEA_USER} --var git.password=${GITEA_PASSWORD}"
+        echo -e "  ${YELLOW}${f} ${DARKGRAY}[${CMD}]${NOCOLOR}"
+        START="$(date +%s)"
+        ${CMD} >${f}.output 2>&1
+        check_failure $? ${f}.output
+        echo -e "  ${DARKGRAY}duration: $[ $(date +%s) - ${START} ]${NOCOLOR}"
+        mv_results ${f}
+    done
+}
 
 rm -rf ./results
 mkdir results
@@ -246,6 +258,8 @@ for target in $@; do
             workflow_with_third_parties;;
         admin)
             admin_tests;;
+        v2)
+            cds_v2_tests;;
         *) echo -e "${RED}Error: unknown target: $target${NOCOLOR}"
             usage
             exit 1;;

@@ -12,7 +12,6 @@ import (
 	jwt "github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
 	"github.com/rockbears/log"
-	"github.com/sirupsen/logrus"
 
 	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -38,8 +37,8 @@ var _ hatchery.InterfaceWithModels = new(HatcheryKubernetes)
 
 // InitHatchery register local hatchery with its worker model
 func (h *HatcheryKubernetes) InitHatchery(ctx context.Context) error {
-	if err := h.Common.RefreshServiceLogger(ctx); err != nil {
-		log.Error(ctx, "hatchery> kubernetes> cannot get cdn configuration : %v", err)
+	if err := h.Common.Init(ctx, h); err != nil {
+		return err
 	}
 	h.GoRoutines.Run(context.Background(), "hatchery kubernetes routines", func(ctx context.Context) {
 		h.routines(ctx)
@@ -411,10 +410,6 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 	return sdk.WithStack(err)
 }
 
-func (h *HatcheryKubernetes) GetLogger() *logrus.Logger {
-	return h.ServiceLogger
-}
-
 // WorkersStarted returns the number of instances started but
 // not necessarily register on CDS yet
 func (h *HatcheryKubernetes) WorkersStarted(ctx context.Context) ([]string, error) {
@@ -446,12 +441,6 @@ func (h *HatcheryKubernetes) routines(ctx context.Context) {
 	for {
 		select {
 		case <-ticker.C:
-			h.GoRoutines.Exec(ctx, "getCDNConfiguration", func(ctx context.Context) {
-				if err := h.Common.RefreshServiceLogger(ctx); err != nil {
-					log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "cannot get cdn configuration"))
-				}
-			})
-
 			h.GoRoutines.Exec(ctx, "getServicesLogs", func(ctx context.Context) {
 				if err := h.getServicesLogs(ctx); err != nil {
 					log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "cannot get service logs"))

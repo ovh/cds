@@ -146,10 +146,6 @@ func Create(ctx context.Context, h Interface) error {
 				if j.ID == 0 {
 					continue
 				}
-				if h.GetLogger() == nil {
-					log.Error(ctx, "logger not found, don't spawn workers")
-					continue
-				}
 
 				currentCtx, currentCancel := context.WithTimeout(context.Background(), 10*time.Minute)
 				fields := log.FieldValues(ctx)

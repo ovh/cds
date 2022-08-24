@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/rockbears/log"
-	"gopkg.in/square/go-jose.v2"
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/service"
@@ -116,23 +115,40 @@ func (c *Common) GetPrivateKey() *rsa.PrivateKey {
 	return c.Common.PrivateKey
 }
 
-func (c *Common) RefreshServiceLogger(ctx context.Context) error {
-	cdnConfig, err := c.Client.ConfigCDN()
-	if err != nil {
-		if sdk.ErrorIs(err, sdk.ErrNotFound) {
-			c.CDNLogsURL = ""
-			c.ServiceLogger = nil
-		}
-		return err
-	}
-	if cdnConfig.TCPURL == c.CDNLogsURL {
-		return nil
-	}
-	c.CDNLogsURL = cdnConfig.TCPURL
+func (c *Common) Init(ctx context.Context, h hatchery.Interface) error {
+	c.CDNConfig.HTTPURL = h.Configuration().CDN.URL
+	c.CDNConfig.TCPURL = h.Configuration().CDN.TCP.URL
+	c.CDNConfig.TCPURLEnableTLS = h.Configuration().CDN.TCP.EnableTLS
 
+	// Init CDN config from Hatchery config or public CDN information
+	if c.CDNConfig.HTTPURL == "" || c.CDNConfig.TCPURL == "" {
+		// Load CDN information from CDS API
+		var cfg sdk.CDNConfig
+		var err error
+		for {
+			cfg, err = c.Client.ConfigCDN()
+			if err == nil {
+				break
+			}
+			err = sdk.NewErrorFrom(err, "cannot get CDN config from CDS API, retrying...")
+			log.ErrorWithStackTrace(ctx, err)
+			time.Sleep(2 * time.Second)
+		}
+		if c.CDNConfig.HTTPURL == "" {
+			c.CDNConfig.HTTPURL = cfg.HTTPURL
+		}
+		if c.CDNConfig.TCPURL == "" {
+			c.CDNConfig.TCPURL = cfg.TCPURL
+			c.CDNConfig.TCPURLEnableTLS = cfg.TCPURLEnableTLS
+		}
+	}
+
+	return c.initServiceLogger(ctx)
+}
+
+func (c *Common) initServiceLogger(ctx context.Context) error {
 	if c.Signer == nil {
-		var signer jose.Signer
-		signer, err = jws.NewSigner(c.Common.PrivateKey)
+		signer, err := jws.NewSigner(c.Common.PrivateKey)
 		if err != nil {
 			return sdk.WithStack(err)
 		}
@@ -140,12 +156,12 @@ func (c *Common) RefreshServiceLogger(ctx context.Context) error {
 	}
 
 	var graylogCfg = &hook.Config{
-		Addr:     c.CDNLogsURL,
+		Addr:     c.CDNConfig.TCPURL,
 		Protocol: "tcp",
 	}
 
-	if cdnConfig.TCPURLEnableTLS {
-		tcpCDNUrl := c.CDNLogsURL
+	if c.CDNConfig.TCPURLEnableTLS {
+		tcpCDNUrl := c.CDNConfig.TCPURL
 		// Check if the url has a scheme
 		// We have to remove if to retrieve the hostname
 		if i := strings.Index(tcpCDNUrl, "://"); i > -1 {
@@ -260,6 +276,17 @@ func (c *Common) GenerateWorkerConfig(ctx context.Context, h hatchery.Interface,
 		httpInsecure = h.Configuration().API.HTTP.Insecure
 	}
 
+	cdnURL := h.Configuration().Provision.WorkerCDN.URL
+	if cdnURL == "" {
+		cdnURL = c.CDNConfig.HTTPURL
+	}
+	cdnTCP := h.Configuration().Provision.WorkerCDN.TCP.URL
+	cdnTCPEnableTLS := h.Configuration().Provision.WorkerCDN.TCP.EnableTLS
+	if cdnTCP == "" {
+		cdnTCP = c.CDNConfig.TCPURL
+		cdnTCPEnableTLS = c.CDNConfig.TCPURLEnableTLS
+	}
+
 	envvars := make(map[string]string, len(h.Configuration().Provision.InjectEnvVars))
 
 	for _, e := range h.Configuration().Provision.InjectEnvVars {
@@ -272,16 +299,19 @@ func (c *Common) GenerateWorkerConfig(ctx context.Context, h hatchery.Interface,
 	}
 
 	cfg := workerruntime.WorkerConfig{
-		Name:                spawnArgs.WorkerName,
-		BookedJobID:         spawnArgs.JobID,
-		HatcheryName:        h.Name(),
-		Model:               spawnArgs.ModelName(),
-		APIToken:            spawnArgs.WorkerToken,
-		APIEndpoint:         apiURL,
-		APIEndpointInsecure: httpInsecure,
-		InjectEnvVars:       envvars,
-		Region:              h.Configuration().Provision.Region,
-		Basedir:             h.Configuration().Provision.WorkerBasedir,
+		Name:                     spawnArgs.WorkerName,
+		BookedJobID:              spawnArgs.JobID,
+		HatcheryName:             h.Name(),
+		Model:                    spawnArgs.ModelName(),
+		APIToken:                 spawnArgs.WorkerToken,
+		APIEndpoint:              apiURL,
+		APIEndpointInsecure:      httpInsecure,
+		CDNEndpoint:              cdnURL,
+		GelfServiceAddr:          cdnTCP,
+		GelfServiceAddrEnableTLS: cdnTCPEnableTLS,
+		InjectEnvVars:            envvars,
+		Region:                   h.Configuration().Provision.Region,
+		Basedir:                  h.Configuration().Provision.WorkerBasedir,
 		Log: cdslog.Conf{
 			GraylogHost:                h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
 			GraylogPort:                strconv.Itoa(h.Configuration().Provision.WorkerLogsOptions.Graylog.Port),

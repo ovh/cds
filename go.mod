@@ -3,7 +3,7 @@ module github.com/ovh/cds
 go 1.18
 
 require (
-	code.gitea.io/sdk/gitea v0.15.1
+	code.gitea.io/sdk/gitea v0.15.1-0.20220530220844-359c771ce3d2
 	contrib.go.opencensus.io/exporter/jaeger v0.1.0
 	contrib.go.opencensus.io/exporter/prometheus v0.1.0
 	github.com/Shopify/sarama v1.30.0
@@ -21,7 +21,7 @@ require (
 	github.com/eapache/go-resiliency v1.2.0
 	github.com/fatih/color v1.13.0
 	github.com/fsamin/go-dump v1.0.9
-	github.com/fsamin/go-repo v0.1.10
+	github.com/fsamin/go-repo v0.1.11-0.20220715092716-99f295919954
 	github.com/fsamin/go-shredder v0.0.0-20180118184739-b2488aedb5be
 	github.com/fujiwara/shapeio v0.0.0-20170602072123-c073257dd745
 	github.com/gambol99/go-marathon v0.0.0-20170922093320-ec4a50170df7
@@ -173,7 +173,7 @@ require (
 	github.com/hashicorp/go-rootcerts v1.0.2 // indirect
 	github.com/hashicorp/go-sockaddr v1.0.2 // indirect
 	github.com/hashicorp/go-uuid v1.0.2 // indirect
-	github.com/hashicorp/go-version v1.2.1 // indirect
+	github.com/hashicorp/go-version v1.5.0 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/hashicorp/serf v0.9.6 // indirect

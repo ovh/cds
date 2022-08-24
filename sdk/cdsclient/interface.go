@@ -25,7 +25,7 @@ type Filter struct {
 type TemplateClient interface {
 	TemplateGet(groupName, templateSlug string) (*sdk.WorkflowTemplate, error)
 	TemplateGetAll() ([]sdk.WorkflowTemplate, error)
-	TemplateApply(groupName, templateSlug string, req sdk.WorkflowTemplateRequest) (*tar.Reader, error)
+	TemplateApply(groupName, templateSlug string, req sdk.WorkflowTemplateRequest, mods ...RequestModifier) (*tar.Reader, error)
 	TemplateBulk(groupName, templateSlug string, req sdk.WorkflowTemplateBulk) (*sdk.WorkflowTemplateBulk, error)
 	TemplateGetBulk(groupName, templateSlug string, id int64) (*sdk.WorkflowTemplateBulk, error)
 	TemplatePull(groupName, templateSlug string) (*tar.Reader, error)
@@ -41,10 +41,10 @@ type Admin interface {
 	AdminDatabaseMigrationUnlock(service string, id string) error
 	AdminDatabaseMigrationsList(service string) ([]sdk.DatabaseMigrationStatus, error)
 	AdminDatabaseSignaturesResume(service string) (sdk.CanonicalFormUsageResume, error)
-	AdminDatabaseSignaturesRollEntity(service string, e string) error
+	AdminDatabaseSignaturesRollEntity(service string, e string, idx *int64) error
 	AdminDatabaseSignaturesRollAllEntities(service string) error
 	AdminDatabaseListEncryptedEntities(service string) ([]string, error)
-	AdminDatabaseRollEncryptedEntity(service string, e string) error
+	AdminDatabaseRollEncryptedEntity(service string, e string, idx *int64) error
 	AdminDatabaseRollAllEncryptedEntities(service string) error
 	AdminCDSMigrationList() ([]sdk.Migration, error)
 	AdminCDSMigrationCancel(id int64) error
@@ -222,9 +222,12 @@ type ProjectClient interface {
 	ProjectVCSGet(ctx context.Context, projectKey string, integrationName string) (sdk.VCSProject, error)
 	ProjectVCSList(ctx context.Context, projectKey string) ([]sdk.VCSProject, error)
 	ProjectVCSDelete(ctx context.Context, projectKey string, vcsName string) error
-	ProjectVCSRepositoryAdd(ctx context.Context, projectKey string, vcsName string, repoName string) error
+	ProjectVCSRepositoryAdd(ctx context.Context, projectKey string, vcsName string, repo sdk.ProjectRepository) error
 	ProjectVCSRepositoryList(ctx context.Context, projectKey string, vcsName string) ([]sdk.ProjectRepository, error)
 	ProjectRepositoryDelete(ctx context.Context, projectKey string, vcsName string, repositoryName string) error
+	ProjectRepositoryAnalysis(ctx context.Context, analysis sdk.AnalysisRequest) (sdk.AnalysisResponse, error)
+	ProjectRepositoryAnalysisList(ctx context.Context, projectKey string, vcsIdentifier string, repositoryIdentifier string) ([]sdk.ProjectRepositoryAnalysis, error)
+	ProjectRepositoryAnalysisGet(ctx context.Context, projectKey string, vcsIdentifier string, repositoryIdentifier string, analysisID string) (sdk.ProjectRepositoryAnalysis, error)
 }
 
 // ProjectKeysClient exposes project keys related functions
@@ -277,6 +280,10 @@ type UserClient interface {
 	UserGetGroups(ctx context.Context, username string) (map[string][]sdk.Group, error)
 	UpdateFavorite(ctx context.Context, params sdk.FavoriteParams) (interface{}, error)
 	UserGetSchema(ctx context.Context) (sdk.SchemaResponse, error)
+	UserGpgKeyList(ctx context.Context, username string) ([]sdk.UserGPGKey, error)
+	UserGpgKeyGet(ctx context.Context, keyID string) (sdk.UserGPGKey, error)
+	UserGpgKeyDelete(ctx context.Context, username string, keyID string) error
+	UserGpgKeyCreate(ctx context.Context, username string, publicKey string) (sdk.UserGPGKey, error)
 }
 
 // WorkerClient exposes workers functions

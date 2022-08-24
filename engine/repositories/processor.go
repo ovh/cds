@@ -42,6 +42,7 @@ func (s *Service) processor(ctx context.Context) error {
 
 func (s *Service) do(ctx context.Context, op sdk.Operation) error {
 	ctx = context.WithValue(ctx, cdslog.Operation, op.UUID)
+	ctx = context.WithValue(ctx, cdslog.VCSServer, op.VCSServer)
 	ctx = context.WithValue(ctx, cdslog.Repository, op.RepoFullName)
 
 	log.Debug(ctx, "processing > %v", op.UUID)
@@ -64,6 +65,10 @@ func (s *Service) do(ctx context.Context, op sdk.Operation) error {
 			op.Error = nil
 			op.Status = sdk.OperationStatusDone
 			switch {
+			case op.LoadFiles.Pattern == "" && op.Setup.Checkout.CheckSignature:
+				op.Error = nil
+				op.Status = sdk.OperationStatusDone
+				// do nothing
 			case op.LoadFiles.Pattern != "":
 				if err := s.processLoadFiles(ctx, &op); err != nil {
 					ctx := sdk.ContextWithStacktrace(ctx, err)

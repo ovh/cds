@@ -298,6 +298,12 @@ type VCSBranchesFilter struct {
 	Limit int64
 }
 
+type VCSArchiveRequest struct {
+	Path   string `json:"path"`
+	Format string `json:"format"`
+	Commit string `json:"commit"`
+}
+
 // VCSAuthorizedClientCommon is an interface for a connected client on a VCS Server.
 type VCSAuthorizedClientCommon interface {
 	//Repos
@@ -351,6 +357,11 @@ type VCSAuthorizedClientCommon interface {
 
 	// Access Token
 	GetAccessToken(ctx context.Context) string
+
+	// File
+	GetArchive(ctx context.Context, repo string, dir string, format string, commit string) (io.Reader, http.Header, error)
+	ListContent(ctx context.Context, repo string, commit, dir string) ([]VCSContent, error)
+	GetContent(ctx context.Context, repo string, commit, dir string) (VCSContent, error)
 }
 
 type VCSAuthorizedClient interface {

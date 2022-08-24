@@ -22,6 +22,7 @@ func usr() *cobra.Command {
 		cli.NewListCommand(userListCmd, userListRun, nil),
 		cli.NewGetCommand(userShowCmd, userShowRun, nil),
 		cli.NewCommand(userFavoriteCmd, userFavoriteRun, nil),
+		userGpg(),
 	})
 }
 

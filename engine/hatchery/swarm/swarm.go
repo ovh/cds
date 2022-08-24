@@ -39,6 +39,10 @@ var _ hatchery.InterfaceWithModels = new(HatcherySwarm)
 
 // InitHatchery connect the hatchery to the docker api
 func (h *HatcherySwarm) InitHatchery(ctx context.Context) error {
+	if err := h.Common.Init(ctx, h); err != nil {
+		return err
+	}
+
 	h.dockerClients = map[string]*dockerClient{}
 
 	if len(h.Config.DockerEngines) == 0 {
@@ -173,9 +177,6 @@ func (h *HatcherySwarm) InitHatchery(ctx context.Context) error {
 		}
 	}
 
-	if err := h.RefreshServiceLogger(ctx); err != nil {
-		log.Error(ctx, "Hatchery> swarm> Cannot get cdn configuration : %v", err)
-	}
 	h.GoRoutines.Run(ctx, "swarm", func(ctx context.Context) {
 		h.routines(ctx)
 	})
@@ -506,10 +507,6 @@ func (h *HatcherySwarm) WorkersStarted(ctx context.Context) ([]string, error) {
 	return res, nil
 }
 
-func (h *HatcherySwarm) GetLogger() *logrus.Logger {
-	return h.ServiceLogger
-}
-
 // Start inits client and routines for hatchery
 func (h *HatcherySwarm) Start(ctx context.Context) error {
 	return hatchery.Create(ctx, h)
@@ -550,12 +547,6 @@ func (h *HatcherySwarm) routines(ctx context.Context) {
 
 			h.GoRoutines.Exec(ctx, "killAwolWorker", func(ctx context.Context) {
 				_ = h.killAwolWorker(ctx)
-			})
-
-			h.GoRoutines.Exec(ctx, "refreshCDNConfiguration", func(ctx context.Context) {
-				if err := h.RefreshServiceLogger(ctx); err != nil {
-					log.Error(ctx, "Hatchery> swarm> Cannot get cdn configuration : %v", err)
-				}
 			})
 		case <-ctx.Done():
 			if ctx.Err() != nil {

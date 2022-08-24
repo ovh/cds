@@ -16,17 +16,20 @@ import (
 )
 
 type WorkerConfig struct {
-	Name                string            `json:"name"`
-	Basedir             string            `json:"basedir"`
-	Log                 cdslog.Conf       `json:"log"`
-	HatcheryName        string            `json:"hatchery_name"`
-	APIEndpoint         string            `json:"api_endpoint"`
-	APIEndpointInsecure bool              `json:"api_endpoint_insecure,omitempty"`
-	APIToken            string            `json:"api_token"`
-	Model               string            `json:"model"`
-	BookedJobID         int64             `json:"booked_job_id,omitempty"`
-	Region              string            `json:"region,omitempty"`
-	InjectEnvVars       map[string]string `json:"inject_env_vars,omitempty"`
+	Name                     string            `json:"name"`
+	Basedir                  string            `json:"basedir"`
+	Log                      cdslog.Conf       `json:"log"`
+	HatcheryName             string            `json:"hatchery_name"`
+	APIEndpoint              string            `json:"api_endpoint"`
+	APIEndpointInsecure      bool              `json:"api_endpoint_insecure,omitempty"`
+	APIToken                 string            `json:"api_token"`
+	CDNEndpoint              string            `json:"cdn_endpoint"`
+	GelfServiceAddr          string            `json:"gelf_service_addr"`
+	GelfServiceAddrEnableTLS bool              `json:"gelf_service_addr_enable_tls,omitempty"`
+	Model                    string            `json:"model"`
+	BookedJobID              int64             `json:"booked_job_id,omitempty"`
+	Region                   string            `json:"region,omitempty"`
+	InjectEnvVars            map[string]string `json:"inject_env_vars,omitempty"`
 }
 
 func (cfg WorkerConfig) EncodeBase64() string {

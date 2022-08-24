@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
@@ -33,11 +32,23 @@ var projectRepositoryAddCmd = cli.Command{
 		{Name: "vcs-name"},
 		{Name: "repository-name"},
 	},
+	Flags: []cli.Flag{
+		{Name: "ssh-key", Usage: "Project SSH key you want to use to clone the repository"},
+		{Name: "user", Usage: "User you want to use to clone the repository"},
+		{Name: "password", Usage: "User password"},
+	},
 }
 
 func projectRepositoryAddFunc(v cli.Values) error {
-	err := client.ProjectVCSRepositoryAdd(context.Background(), v.GetString(_ProjectKey), v.GetString("vcs-name"), v.GetString("repository-name"))
-	return err
+	repo := sdk.ProjectRepository{
+		Name: v.GetString("repository-name"),
+		Auth: sdk.ProjectRepositoryAuth{
+			SSHKeyName: v.GetString("ssh-key"),
+			Username:   v.GetString("user"),
+			Token:      v.GetString("password"),
+		},
+	}
+	return client.ProjectVCSRepositoryAdd(context.Background(), v.GetString(_ProjectKey), v.GetString("vcs-name"), repo)
 }
 
 var projectRepositoryListCmd = cli.Command{
@@ -47,7 +58,7 @@ var projectRepositoryListCmd = cli.Command{
 		{Name: _ProjectKey},
 	},
 	Flags: []cli.Flag{
-		{Name: "vcs-name"},
+		{Name: "vcs-name", Usage: "Specified a VCS by its name"},
 	},
 }
 
@@ -67,14 +78,26 @@ func projectRepositoryListFunc(v cli.Values) (cli.ListResult, error) {
 		allVCS = append(allVCS, vcsGivenName)
 	}
 
+	type CliRepo struct {
+		ID       string `cli:"id" json:"id"`
+		VcsName  string `cli:"vcsName" json:"vcsName"`
+		RepoName string `cli:"repoName" json:"repoName"`
+	}
+
 	// GET REPOS
-	repositories := make([]sdk.ProjectRepository, 0)
+	repositories := make([]CliRepo, 0)
 	for _, vcsName := range allVCS {
 		repos, err := client.ProjectVCSRepositoryList(context.Background(), v.GetString(_ProjectKey), vcsName)
 		if err != nil {
 			return nil, err
 		}
-		repositories = append(repositories, repos...)
+		for _, r := range repos {
+			repositories = append(repositories, CliRepo{
+				VcsName:  vcsName,
+				RepoName: r.Name,
+				ID:       r.ID,
+			})
+		}
 	}
 	return cli.AsListResult(repositories), nil
 }

@@ -736,6 +736,13 @@ func (a *API) Serve(ctx context.Context) error {
 	a.GoRoutines.RunWithRestart(ctx, "api.WorkflowRunCraft", func(ctx context.Context) {
 		a.WorkflowRunCraft(ctx, 100*time.Millisecond)
 	})
+	a.GoRoutines.RunWithRestart(ctx, "api.repositoryAnalysisPoller", func(ctx context.Context) {
+		a.repositoryAnalysisPoller(ctx, 1*time.Second)
+	})
+
+	a.GoRoutines.RunWithRestart(ctx, "api.cleanRepositoryAnalysis", func(ctx context.Context) {
+		a.cleanRepositoryAnalysis(ctx, 1*time.Hour)
+	})
 
 	log.Info(ctx, "Bootstrapping database...")
 	defaultValues := sdk.DefaultValues{

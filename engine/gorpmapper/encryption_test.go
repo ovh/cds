@@ -23,11 +23,15 @@ func TestEncryption(t *testing.T) {
 		Data:                 "data",
 		SensitiveData:        "sensitive-data",
 		AnotherSensitiveData: "another-sensitive-data",
+		SensitiveJsonData: gorpmapper.SensitiveJsonData{
+			Data: "some-data",
+		},
 	}
 
 	require.NoError(t, m.InsertAndSign(context.TODO(), db, &d))
 	assert.Equal(t, sdk.PasswordPlaceholder, d.SensitiveData)
 	assert.Equal(t, sdk.PasswordPlaceholder, d.AnotherSensitiveData)
+	assert.Zero(t, d.SensitiveJsonData)
 
 	// UpdateAndSign should not save place holders
 	require.NoError(t, m.UpdateAndSign(context.TODO(), db, &d))
@@ -82,6 +86,7 @@ func TestEncryption(t *testing.T) {
 	require.Equal(t, d.Data, d2.Data)
 	require.Equal(t, "sensitive--data", d2.SensitiveData)
 	require.Equal(t, "another-sensitive-data", d2.AnotherSensitiveData)
+	assert.Equal(t, "some-data", d2.SensitiveJsonData.Data)
 }
 
 func TestEncryption_Multiple(t *testing.T) {
@@ -94,6 +99,7 @@ func TestEncryption_Multiple(t *testing.T) {
 		Data:                 "data-1",
 		SensitiveData:        "sensitive-data-1",
 		AnotherSensitiveData: "another-sensitive-data-1",
+		SensitiveJsonData:    gorpmapper.SensitiveJsonData{Data: "json-sentitive-data-1"},
 	}
 	require.NoError(t, m.InsertAndSign(context.TODO(), db, &d1))
 
@@ -101,6 +107,7 @@ func TestEncryption_Multiple(t *testing.T) {
 		Data:                 "data-2",
 		SensitiveData:        "sensitive-data-2",
 		AnotherSensitiveData: "another-sensitive-data-2",
+		SensitiveJsonData:    gorpmapper.SensitiveJsonData{Data: "json-sentitive-data-2"},
 	}
 	require.NoError(t, m.InsertAndSign(context.TODO(), db, &d2))
 
@@ -114,11 +121,13 @@ func TestEncryption_Multiple(t *testing.T) {
 	require.Equal(t, "data-1", dslice[0].Data)
 	require.Equal(t, sdk.PasswordPlaceholder, dslice[0].SensitiveData)
 	require.Equal(t, sdk.PasswordPlaceholder, dslice[0].AnotherSensitiveData)
+	require.Zero(t, dslice[0].SensitiveJsonData)
 
 	require.Equal(t, d2.ID, dslice[1].ID)
 	require.Equal(t, "data-2", dslice[1].Data)
 	require.Equal(t, sdk.PasswordPlaceholder, dslice[1].SensitiveData)
 	require.Equal(t, sdk.PasswordPlaceholder, dslice[1].AnotherSensitiveData)
+	require.Zero(t, dslice[1].SensitiveJsonData)
 
 	// Test that GetAll replaces encrypted values with clearValue if WithDecryption options is used
 	query = gorpmapper.NewQuery("SELECT * FROM test_encrypted_data WHERE id IN ($1, $2) ORDER BY id").Args(d1.ID, d2.ID)
@@ -138,9 +147,44 @@ func TestEncryption_Multiple(t *testing.T) {
 	require.Equal(t, "data-1", dslice[0].Data)
 	require.Equal(t, "sensitive-data-1", dslice[0].SensitiveData)
 	require.Equal(t, "another-sensitive-data-1", dslice[0].AnotherSensitiveData)
+	require.Equal(t, "json-sentitive-data-1", dslice[0].SensitiveJsonData.Data)
 
 	require.Equal(t, d2.ID, dslice[1].ID)
 	require.Equal(t, "data-2", dslice[1].Data)
 	require.Equal(t, "sensitive-data-2", dslice[1].SensitiveData)
 	require.Equal(t, "another-sensitive-data-2", dslice[1].AnotherSensitiveData)
+	require.Equal(t, "json-sentitive-data-2", dslice[1].SensitiveJsonData.Data)
+}
+
+func TestRollEncryptedTupleByPrimaryKey(t *testing.T) {
+	m := gorpmapper.New()
+	m.Register(m.NewTableMapping(gorpmapper.TestEncryptedData{}, "test_encrypted_data", true, "id"))
+
+	db, _ := test.SetupPGWithMapper(t, m, sdk.TypeAPI)
+
+	var d1 = gorpmapper.TestEncryptedData{
+		Data:                 "data-1",
+		SensitiveData:        "sensitive-data-1",
+		AnotherSensitiveData: "another-sensitive-data-1",
+		SensitiveJsonData:    gorpmapper.SensitiveJsonData{Data: "json-sentitive-data-1"},
+	}
+	require.NoError(t, m.InsertAndSign(context.TODO(), db, &d1))
+	require.NoError(t, m.UpdateAndSign(context.TODO(), db, &d1))
+
+	require.NoError(t, m.RollEncryptedTupleByPrimaryKey(context.Background(), db, "gorpmapper.TestEncryptedData", d1.ID))
+
+	var query = gorpmapper.NewQuery("select * from test_encrypted_data where id = $1").Args(d1.ID)
+	var d2 gorpmapper.TestEncryptedData
+	_, err := m.Get(context.TODO(), db, query, &d2, gorpmapping.GetOptions.WithDecryption)
+	require.NoError(t, err)
+
+	isValid, err := m.CheckSignature(d2, d2.Signature)
+	require.NoError(t, err)
+	require.True(t, isValid)
+
+	require.Equal(t, d1.ID, d2.ID)
+	require.Equal(t, d1.Data, d2.Data)
+	require.Equal(t, "sensitive-data-1", d2.SensitiveData)
+	require.Equal(t, "another-sensitive-data-1", d2.AnotherSensitiveData)
+	assert.Equal(t, "json-sentitive-data-1", d2.SensitiveJsonData.Data)
 }
