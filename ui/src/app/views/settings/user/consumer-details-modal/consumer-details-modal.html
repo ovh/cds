@@ -1,117 +1,140 @@
-<div>
-    <div class="header">
-        {{ 'auth_consumer_details_modal_title' | translate: { name: consumer.name } }} <div *ngIf="consumer.disabled"
-            class="ui red label">
-            {{'user_auth_consumer_disabled' | translate}}</div>
-    </div>
-    <div class="content scrolling">
-        <div class="ui grid">
-            <div class="ui wide column">
-                <div class="ui form">
-                    <div class="two fields">
-                        <div class="field">
-                            <label>{{'common_id' | translate}}</label>
-                            {{consumer.id}}
-                        </div>
-                        <div class="field">
-                            <label>{{'common_description' | translate}}</label>
-                            {{consumer.description}}
-                        </div>
-                    </div>
-                    <div class="two fields">
-                        <div class="field">
-                            <label>{{'user_auth_scopes' | translate}}</label>
-                            {{scopes}}
-                        </div>
-                        <div class="field">
-                            <label>{{'user_auth_groups' | translate}}</label>
-                            {{groups}}
-                            <span *ngIf="consumer.warnings" nz-tooltip [nzTooltipTitle]="warningText">
+<div class="content scrolling">
+    <form nz-form nzLayout="vertical">
+        <nz-row>
+            <nz-col [nzSpan]="12">
+                <nz-form-item>
+                    <nz-form-label>ID</nz-form-label>
+                    <nz-form-control>{{consumer.id}}</nz-form-control>
+                </nz-form-item>
+            </nz-col>
+            <nz-col [nzSpan]="12">
+                <nz-form-item>
+                    <nz-form-label>Description</nz-form-label>
+                    <nz-form-control>{{consumer.description}}</nz-form-control>
+                </nz-form-item>
+            </nz-col>
+        </nz-row>
+        <nz-row>
+            <nz-col [nzSpan]="12">
+                <nz-form-item>
+                    <nz-form-label>Scopes</nz-form-label>
+                    <nz-form-control>{{scopes}}</nz-form-control>
+                </nz-form-item>
+            </nz-col>
+            <nz-col [nzSpan]="12">
+                <nz-form-item>
+                    <nz-form-label>Groups</nz-form-label>
+                    <nz-form-control>
+                        {{groups}}
+                        <span *ngIf="consumer.warnings" nz-tooltip [nzTooltipTitle]="warningText">
                                 {{' '}}<i class="info exclamation triangle icon yellow link"
-                                    title="{{warningText}}"></i>
+                                          title="{{warningText}}"></i>
                             </span>
-                        </div>
-                    </div>
-                    <div class="two fields">
-                        <div class="field">
-                            <label>Last authentication</label>
-                            {{consumer.last_authentication ? consumer.last_authentication : 'never'}}
-                        </div>
-                        <div class="field" *ngIf="consumer.service_name || consumer.service_type || consumer.service_region || consumer.service_ignore_job_with_no_region">
-                            <label>Service detail</label>
-                            <ul>
-                                <li>Name: {{consumer.service_name}}</li>
-                                <li>Type: {{consumer.service_type}}</li>
-                                <li>Region: {{consumer.service_region}}</li>
-                                <li>Ignore job with no region: {{consumer.service_ignore_job_with_no_region}}</li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="field">
-                        <app-menu class="menu" [items]="menuItems" (onSelect)="selectMenuItem($event)"></app-menu>
-                    </div>
-                    <div class="field" [ngSwitch]="selectedItem.key">
-                        <app-data-table *ngSwitchCase="'sessions'" [withFilter]="filterSessions" [withPagination]="5"
-                            [columns]="columnsSessions" [data]="consumer.sessions">
+                    </nz-form-control>
+                </nz-form-item>
+            </nz-col>
+        </nz-row>
+        <nz-row>
+            <nz-col [nzSpan]="12">
+                <nz-form-item>
+                    <nz-form-label>Last authentication</nz-form-label>
+                    <nz-form-control>{{consumer.last_authentication ? consumer.last_authentication : 'never'}}</nz-form-control>
+                </nz-form-item>
+            </nz-col>
+            <nz-col [nzSpan]="12" *ngIf="consumer.service_name || consumer.service_type || consumer.service_region || consumer.service_ignore_job_with_no_region">
+                <nz-form-item>
+                    <nz-form-label>Service detail</nz-form-label>
+                    <nz-form-control>
+                        <ul>
+                            <li>Name: {{consumer.service_name}}</li>
+                            <li>Type: {{consumer.service_type}}</li>
+                            <li>Region: {{consumer.service_region}}</li>
+                            <li>Ignore job with no region: {{consumer.service_ignore_job_with_no_region}}</li>
+                        </ul>
+                    </nz-form-control>
+                </nz-form-item>
+            </nz-col>
+        </nz-row>
+        <nz-row>
+            <nz-col [nzSpan]="24">
+                <app-menu class="menu" [items]="menuItems" (onSelect)="selectMenuItem($event)"></app-menu>
+            </nz-col>
+        </nz-row>
+        <nz-row>
+            <nz-col [nzSpan]="24">
+                <div class="field" [ngSwitch]="selectedItem.key">
+                    <app-data-table *ngSwitchCase="'sessions'" [withFilter]="filterSessions" [withPagination]="5"
+                                    [columns]="columnsSessions" [data]="consumer.sessions">
+                    </app-data-table>
+                    <ng-container *ngSwitchCase="'parent'">
+                        <app-data-table *ngIf="consumer.parent" [columns]="columnsConsumers"
+                                        [data]="[consumer.parent]">
                         </app-data-table>
-                        <ng-container *ngSwitchCase="'parent'">
-                            <app-data-table *ngIf="consumer.parent" [columns]="columnsConsumers"
-                                [data]="[consumer.parent]">
-                            </app-data-table>
-                        </ng-container>
-                        <ng-container *ngSwitchCase="'validity_periods'">
-                            <app-data-table *ngIf="consumer.validity_periods" [columns]="columnsValidityPeriods"
-                                [data]="consumer.validity_periods">
-                            </app-data-table>
-                        </ng-container>
-                        <app-data-table *ngSwitchCase="'children'" [withFilter]="filterChildren" [withPagination]="5"
-                            [columns]="columnsConsumers" [data]="consumer.children">
+                    </ng-container>
+                    <ng-container *ngSwitchCase="'validity_periods'">
+                        <app-data-table *ngIf="consumer.validity_periods" [columns]="columnsValidityPeriods"
+                                        [data]="consumer.validity_periods">
                         </app-data-table>
-                    </div>
-                    <div class="wide field">
-                        <div class="ui wide field">
-                            <ng-container *ngIf="user.id === currentAuthSummary.user.id || currentAuthSummary.isAdmin()"
-                                [ngSwitch]="consumer.type">
-                                <ng-container *ngSwitchCase="'local'">
-                                    <button *ngIf="user.id === currentAuthSummary.user.id" class="ui button green left floated"
-                                        (click)="clickResetPassword()">{{'account_password_btn_reset' | translate }}</button>
-                                </ng-container>
-                                <ng-container *ngSwitchCase="'builtin'">
-                                    <app-delete-button class="left floated" (event)="clickDelete()"
-                                        [title]="'user_auth_consumer_delete_btn'">
-                                    </app-delete-button>
-                                    <div *ngIf="!consumer.disabled" class="ui green right floated buttons">
-                                        <div class="ui button" (click)="clickRegen(false)">
-                                            {{'auth_consumer_regen' | translate }}</div>
-                                        <div class="ui floating icon dropdown button" suiDropdown>
-                                            <i class="dropdown icon"></i>
-                                            <div class="menu" suiDropdownMenu>
-                                                <div class="ui item" (click)="clickRegen(true)">
-                                                    {{'auth_consumer_regen_revoke' | translate }}</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </ng-container>
-                                <ng-container *ngSwitchDefault>
-                                    <app-delete-button *ngIf="user.id === currentAuthSummary.user.id" class="left floated"
-                                        (event)="clickDetach()" [loading]="loading"
-                                        [title]="'user_auth_consumer_detach_btn'">
-                                    </app-delete-button>
-                                </ng-container>
-                            </ng-container>
-                            <button class="ui secondary button right floated"
-                                (click)="clickClose()">{{'btn_close' | translate }}</button>
-                        </div>
-                    </div>
-                    <div *ngIf="regenConsumerSigninToken" class="wide field">
-                        <div class="ui wide field">
-                            <app-consumer-display-signin-token [consumer]="consumer"
-                                [signinToken]="regenConsumerSigninToken">
-                            </app-consumer-display-signin-token>
-                        </div>
-                    </div>
+                    </ng-container>
+                    <app-data-table *ngSwitchCase="'children'" [withFilter]="filterChildren" [withPagination]="5"
+                                    [columns]="columnsConsumers" [data]="consumer.children">
+                    </app-data-table>
                 </div>
-            </div>
-        </div>
-    </div>
+            </nz-col>
+        </nz-row>
+
+        <nz-row>
+            <nz-col [nzSpan]="24">
+                <ng-container *ngIf="user.id === currentAuthSummary.user.id || currentAuthSummary.isAdmin()"
+                              [ngSwitch]="consumer.type">
+                    <ng-container *ngSwitchCase="'local'">
+                        <button *ngIf="user.id === currentAuthSummary.user.id"
+                                nz-button nzType="primary"
+                                (click)="clickResetPassword()">Reset password</button>
+                    </ng-container>
+                    <ng-container *ngSwitchCase="'builtin'">
+                        <button nz-button nzDanger nzType="primary"
+                                nz-popconfirm nzPopconfirmTitle="Are you sure you want to delete this consumer ?"
+                                (nzOnConfirm)="clickDelete()">Delete</button>
+                        <div *ngIf="!consumer.disabled" class="floatRight">
+                            <nz-button-group>
+                                <button nz-button nzType="primary" (click)="clickRegen(false)">Regen
+                                </button>
+                                <button nz-button nzType="primary" nz-dropdown [nzDropdownMenu]="menu"
+                                        nzPlacement="bottomRight">
+                                    <i nz-icon nzType="down"></i>
+                                </button>
+                                <nz-dropdown-menu #menu="nzDropdownMenu">
+                                    <ul nz-menu>
+                                        <li nz-menu-item (click)="clickRegen(true)">
+                                            {{'auth_consumer_regen_revoke' | translate }}
+                                        </li>
+                                    </ul>
+                                </nz-dropdown-menu>
+                            </nz-button-group>
+                        </div>
+                    </ng-container>
+                    <ng-container *ngSwitchDefault>
+                        <button nz-button nzDanger nzType="primary" *ngIf="user.id === currentAuthSummary.user.id"
+                                [nzLoading]="loading"
+                                nz-popconfirm nzPopconfirmTitle="Are you sure you want to detach this consumer ?"
+                                (nzOnConfirm)="clickDetach()">
+                            Detach
+                        </button>
+                    </ng-container>
+                </ng-container>
+                <button nz-button class="floatRight"
+                        (click)="clickClose()">Close</button>
+            </nz-col>
+        </nz-row>
+        <nz-row *ngIf="regenConsumerSigninToken">
+            <nz-col [nzSpan]="24">
+                <app-consumer-display-signin-token [consumer]="consumer"
+                                                   [signinToken]="regenConsumerSigninToken">
+                </app-consumer-display-signin-token>
+            </nz-col>
+        </nz-row>
+    </form>
+
 </div>
+
