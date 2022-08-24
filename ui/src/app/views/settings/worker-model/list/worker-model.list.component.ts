@@ -8,6 +8,7 @@ import { finalize } from 'rxjs/operators';
 @Component({
     selector: 'app-worker-model-list',
     templateUrl: './worker-model.list.html',
+    styleUrls: ['./worker-model.list.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WorkerModelListComponent {

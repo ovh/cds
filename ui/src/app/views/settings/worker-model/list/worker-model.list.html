@@ -4,29 +4,25 @@
       }}</a>
   </app-breadcrumb>
   <app-scrollview class="scrollview">
-    <div class="ui grid">
-      <div class="ui row">
-        <div class="ui eight wide column">
-          <div class="ui fluid action input">
-            <input type="text" [placeholder]="'worker_model_binary_capability' | translate" [(ngModel)]="binaryValue">
-            <button *ngIf="!binarySelected" class="ui blue button" (click)="searchBinary()">
-              {{'common_search' | translate}}
-            </button>
-            <button *ngIf="binarySelected" class="ui button" (click)="resetBinary()">
-              {{'common_cancel' | translate}}
-            </button>
-          </div>
-        </div>
-        <div class="ui eight wide column">
-          <sui-select class="selection" [placeholder]="'worker_model_state' | translate" [(ngModel)]="selectedState"
-            [options]="['', 'official', 'disabled', 'register', 'error', 'deprecated']" [isSearchable]="true"
-            (selectedOptionChange)="selectState()" #selectFilter>
-            <sui-select-option *ngFor="let option of selectFilter.filteredOptions" [value]="option">
-            </sui-select-option>
-          </sui-select>
-        </div>
-      </div>
-    </div>
+      <nz-row>
+          <nz-col [nzSpan]="12">
+              <nz-input-group nzSearch [nzAddOnAfter]="suffixButton">
+                  <input nz-input type="text" [placeholder]="'worker_model_binary_capability' | translate" [(ngModel)]="binaryValue">
+              </nz-input-group>
+              <ng-template #suffixButton>
+                  <button *ngIf="!binarySelected" nz-button nzType="primary" (click)="searchBinary()">Search</button>
+                  <button *ngIf="binarySelected" nz-button nzType="primary" (click)="resetBinary()">Clear</button>
+              </ng-template>
+          </nz-col>
+          <nz-col [nzSpan]="11" [nzOffset]="1">
+              <nz-select nzShowSearch [nzPlaceHolder]="'worker_model_state' | translate" [(ngModel)]="selectedState"
+                         (ngModelChange)="selectState()">
+                  <nz-option *ngFor="let option of ['', 'official', 'disabled', 'register', 'error', 'deprecated']" [nzLabel]="option" [nzValue]="option">
+                  </nz-option>
+              </nz-select>
+          </nz-col>
+      </nz-row>
+
     <app-data-table [withFilter]="filter" [withPagination]="25" [columns]="columns" [data]="workerModels"
       [loading]="loading"></app-data-table>
   </app-scrollview>
