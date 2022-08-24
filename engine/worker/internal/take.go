@@ -46,8 +46,6 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 	// Reset build variables
 	w.currentJob.newVariables = nil
 
-	w.cdnHttpAddr = info.CDNHttpAddr
-
 	secretKey := make([]byte, 32)
 	if _, err := base64.StdEncoding.Decode(secretKey, []byte(info.SigningKey)); err != nil {
 		return sdk.WithStack(err)
@@ -58,11 +56,11 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 	}
 	w.currentJob.signer = signer
 
-	log.Info(ctx, "Setup step logger %s", info.GelfServiceAddr)
+	log.Info(ctx, "Setup step logger %s", w.cfg.GelfServiceAddr)
 	throttlePolicy := hook.NewDefaultThrottlePolicy()
 
 	var graylogCfg = &hook.Config{
-		Addr:     info.GelfServiceAddr,
+		Addr:     w.cfg.GelfServiceAddr,
 		Protocol: "tcp",
 		ThrottlePolicy: &hook.ThrottlePolicyConfig{
 			Amount: 100,
@@ -71,8 +69,8 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 		},
 	}
 
-	if info.GelfServiceAddrEnableTLS {
-		tcpCDNUrl := info.GelfServiceAddr
+	if w.cfg.GelfServiceAddrEnableTLS {
+		tcpCDNUrl := w.cfg.GelfServiceAddr
 		// Check if the url has a scheme
 		// We have to remove if to retrieve the hostname
 		if i := strings.Index(tcpCDNUrl, "://"); i > -1 {

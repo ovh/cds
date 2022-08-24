@@ -107,8 +107,8 @@ func Test_cachePushPullHandler(t *testing.T) {
 	m := mock_cdsclient.NewMockWorkerInterface(ctrl)
 	wkPush.client = m
 	wkPull.client = m
-	wkPush.cdnHttpAddr = "https://cdn.local"
-	wkPull.cdnHttpAddr = "https://cdn.local"
+	wkPush.cfg = &workerruntime.WorkerConfig{CDNEndpoint: "https://cdn.local"}
+	wkPull.cfg = &workerruntime.WorkerConfig{CDNEndpoint: "https://cdn.local"}
 
 	var bodyBytes []byte
 	m.EXPECT().CDNItemUpload(gomock.Any(), "https://cdn.local", gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(

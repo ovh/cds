@@ -357,6 +357,7 @@ export FOO_FROM_HOOK=BAR`,
 		Model:               "my-model",
 		Region:              "local-test",
 		Basedir:             basedir,
+		GelfServiceAddr:     "localhost:8090",
 	}
 	if err := w.Init(cfg, afero.NewBasePathFs(fs, basedir)); err != nil {
 		t.Fatalf("worker init failed: %v", err)
