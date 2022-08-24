@@ -45,7 +45,6 @@ func (s *Service) doAnalyzeExecution(ctx context.Context, t *sdk.TaskExecution) 
 		return err
 	}
 	t.EntitiesHook.AnalysisID = resp.AnalysisID
-	t.EntitiesHook.OperationID = resp.OperationID
 	return nil
 }
 

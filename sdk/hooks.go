@@ -140,8 +140,7 @@ type EntitiesHookExecution struct {
 	RequestMethod string              `json:"request_method"`
 
 	// Execution result
-	AnalysisID  string `json:"analysis_id"`
-	OperationID string `json:"operation_id"`
+	AnalysisID string `json:"analysis_id"`
 }
 
 // KafkaTaskExecution contains specific data for a kafka hook
@@ -168,6 +167,5 @@ type AnalysisRequest struct {
 }
 
 type AnalysisResponse struct {
-	AnalysisID  string `json:"analysis_id"`
-	OperationID string `json:"operation_id"`
+	AnalysisID string `json:"analysis_id"`
 }

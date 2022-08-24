@@ -5,7 +5,6 @@ import (
 	"compress/gzip"
 	"context"
 	"fmt"
-
 	"io"
 	"net/http"
 	"net/url"
@@ -183,74 +182,7 @@ func (api *API) postRepositoryAnalysisHandler() ([]service.RbacChecker, service.
 				ProjectKey:          proj.Key,
 				Branch:              analysis.Branch,
 				Commit:              analysis.Commit,
-				Data: sdk.ProjectRepositoryData{
-					OperationUUID: "",
-				},
-			}
-
-			switch vcsProject.Type {
-			case sdk.VCSTypeBitbucketServer, sdk.VCSTypeBitbucketCloud, sdk.VCSTypeGitlab, sdk.VCSTypeGerrit:
-				ope := &sdk.Operation{
-					VCSServer:    vcsProject.Name,
-					RepoFullName: clearRepo.Name,
-					URL:          clearRepo.CloneURL,
-					RepositoryStrategy: sdk.RepositoryStrategy{
-						SSHKey:   clearRepo.Auth.SSHKeyName,
-						User:     clearRepo.Auth.Username,
-						Password: clearRepo.Auth.Token,
-					},
-					Setup: sdk.OperationSetup{
-						Checkout: sdk.OperationCheckout{
-							Commit:         analysis.Commit,
-							Branch:         analysis.Branch,
-							CheckSignature: true,
-						},
-					},
-				}
-
-				if clearRepo.Auth.SSHKeyName != "" {
-					ope.RepositoryStrategy.ConnectionType = "ssh"
-				} else {
-					ope.RepositoryStrategy.ConnectionType = "https"
-				}
-
-				if err := operation.PostRepositoryOperation(ctx, tx, *proj, ope, nil); err != nil {
-					return err
-				}
-				repoAnalysis.Data.OperationUUID = ope.UUID
-			case sdk.VCSTypeGitea, sdk.VCSTypeGithub:
-				// Check commit signature
-				client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, analysis.ProjectKey, vcsProject.Name)
-				if err != nil {
-					return err
-				}
-				vcsCommit, err := client.Commit(ctx, analysis.RepoName, analysis.Commit)
-				if err != nil {
-					return err
-				}
-				if vcsCommit.Hash == "" {
-					repoAnalysis.Status = sdk.RepositoryAnalysisStatusError
-					repoAnalysis.Data.Error = fmt.Sprintf("commit %s not found", analysis.Commit)
-				} else {
-					if vcsCommit.Signature != "" {
-						keyId, err := gpg.GetKeyIdFromSignature(vcsCommit.Signature)
-						if err != nil {
-							repoAnalysis.Status = sdk.RepositoryAnalysisStatusError
-							repoAnalysis.Data.Error = fmt.Sprintf("unable to extract keyID from signature")
-						} else {
-							repoAnalysis.Data.SignKeyID = keyId
-							repoAnalysis.Data.CommitCheck = true
-						}
-
-					} else {
-						repoAnalysis.Data.CommitCheck = false
-						repoAnalysis.Status = sdk.RepositoryAnalysisStatusSkipped
-						repoAnalysis.Data.Error = fmt.Sprintf("commit %s is not signed", vcsCommit.Hash)
-					}
-				}
-
-			default:
-				return sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to analyze vcs type: %s", vcsProject.Type)
+				Data:                sdk.ProjectRepositoryData{},
 			}
 
 			if err := repository.InsertAnalysis(ctx, tx, &repoAnalysis); err != nil {
@@ -258,8 +190,7 @@ func (api *API) postRepositoryAnalysisHandler() ([]service.RbacChecker, service.
 			}
 
 			response := sdk.AnalysisResponse{
-				AnalysisID:  repoAnalysis.ID,
-				OperationID: repoAnalysis.Data.OperationUUID,
+				AnalysisID: repoAnalysis.ID,
 			}
 
 			if err := tx.Commit(); err != nil {
@@ -334,136 +265,261 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 		return nil
 	}
 
-	if analysis.Data.OperationUUID != "" {
-		_, next = telemetry.Span(ctx, "api.analyzeRepository.Poll")
-		ope, err := operation.Poll(ctx, api.mustDB(), analysis.Data.OperationUUID)
-		if err != nil {
+	_, next = telemetry.Span(ctx, "api.analyzeRepository.LoadVCSByID")
+	vcsProject, err := vcs.LoadVCSByID(ctx, api.mustDB(), analysis.ProjectKey, analysis.VCSProjectID)
+	if err != nil {
+		next()
+		if sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return api.stopAnalysis(ctx, analysis, err)
+		}
+		return err
+	}
+	next()
+
+	_, next = telemetry.Span(ctx, "api.analyzeRepository.LoadRepositoryByID")
+	repoWithSecret, err := repository.LoadRepositoryByID(ctx, api.mustDB(), analysis.ProjectRepositoryID, gorpmapping.GetOptions.WithDecryption)
+	if err != nil {
+		next()
+		if sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return api.stopAnalysis(ctx, analysis, err)
+		}
+		return err
+	}
+	next()
+
+	switch vcsProject.Type {
+	case sdk.VCSTypeBitbucketServer, sdk.VCSTypeBitbucketCloud, sdk.VCSTypeGitlab, sdk.VCSTypeGerrit:
+		_, next = telemetry.Span(ctx, "api.analyzeRepository.analyzeCommitSignatureThroughOperation")
+		if err := api.analyzeCommitSignatureThroughOperation(ctx, analysis, *vcsProject, repoWithSecret); err != nil {
 			next()
 			return err
 		}
 		next()
-
-		stopAnalyze := false
-		if ope.Status == sdk.OperationStatusDone && ope.Setup.Checkout.Result.CommitVerified {
-			analysis.Data.CommitCheck = true
-			analysis.Data.SignKeyID = ope.Setup.Checkout.Result.SignKeyID
+	case sdk.VCSTypeGitea, sdk.VCSTypeGithub:
+		_, next = telemetry.Span(ctx, "api.analyzeRepository.analyzeCommitSignatureThroughVcsAPI")
+		if err := api.analyzeCommitSignatureThroughVcsAPI(ctx, analysis, *vcsProject, repoWithSecret); err != nil {
+			next()
+			return err
 		}
-		if ope.Status == sdk.OperationStatusDone && !ope.Setup.Checkout.Result.CommitVerified {
-			analysis.Data.CommitCheck = false
-			analysis.Data.SignKeyID = ope.Setup.Checkout.Result.SignKeyID
-			analysis.Data.Error = ope.Setup.Checkout.Result.Msg
-			analysis.Status = sdk.RepositoryAnalysisStatusSkipped
-			stopAnalyze = true
-		}
-
-		if ope.Status == sdk.OperationStatusError {
-			analysis.Data.Error = ope.Error.Message
-			analysis.Status = sdk.RepositoryAnalysisStatusError
-			stopAnalyze = true
-		}
-
-		if stopAnalyze {
-			tx, err := api.mustDB().Begin()
-			if err != nil {
-				return sdk.WrapError(err, "unable to start transaction")
-			}
-			defer tx.Rollback()
-			if err := repository.UpdateAnalysis(ctx, tx, analysis); err != nil {
-				return sdk.WrapError(err, "unable to failed analyze")
-			}
-			return sdk.WithStack(tx.Commit())
-		}
-	}
-
-	// Retrieve cds files
-	_, next = telemetry.Span(ctx, "api.analyzeRepository.LoadRepositoryByVCSAndID")
-	repo, err := repository.LoadRepositoryByVCSAndID(ctx, api.mustDB(), analysis.VCSProjectID, analysis.ProjectRepositoryID)
-	if err != nil {
 		next()
-		return err
+	default:
+		return sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to analyze vcs type: %s", vcsProject.Type)
 	}
-	next()
-	_, next = telemetry.Span(ctx, "api.analyzeRepository.LoadVCSByID")
-	vcsProject, err := vcs.LoadVCSByID(ctx, api.mustDB(), analysis.ProjectKey, analysis.VCSProjectID, gorpmapping.GetOptions.WithDecryption)
-	if err != nil {
-		next()
-		return err
-	}
-	next()
+
+	// remove secret from repo
+	repoWithSecret.Auth = sdk.ProjectRepositoryAuth{}
 
 	tx, err := api.mustDB().Begin()
 	if err != nil {
-		return sdk.WrapError(err, "unable to start transaction")
+		return sdk.WithStack(err)
 	}
-	defer tx.Rollback() // nolint
+	defer tx.Rollback() //nolint
 
-	// Search User by gpgkey
-	var cdsUser *sdk.AuthentifiedUser
-	gpgKey, err := user.LoadGPGKeyByKeyID(ctx, tx, analysis.Data.SignKeyID)
-	if err != nil {
-		if !sdk.ErrorIs(err, sdk.ErrNotFound) {
-			return sdk.WrapError(err, "unable to find gpg key: %s", analysis.Data.SignKeyID)
-		}
-		analysis.Status = sdk.RepositoryAnalysisStatusError
-		analysis.Data.Error = fmt.Sprintf("gpgkey %s not found", analysis.Data.SignKeyID)
-	}
-
-	if gpgKey != nil {
-		cdsUser, err = user.LoadByID(ctx, tx, gpgKey.AuthentifiedUserID)
+	if analysis.Status == sdk.RepositoryAnalysisStatusInProgress {
+		var cdsUser *sdk.AuthentifiedUser
+		_, next = telemetry.Span(ctx, "api.analyzeRepository.LoadGPGKeyByKeyID")
+		gpgKey, err := user.LoadGPGKeyByKeyID(ctx, tx, analysis.Data.SignKeyID)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
-				return sdk.WrapError(err, "unable to find user %s", gpgKey.AuthentifiedUserID)
+				next()
+				return sdk.WrapError(err, "unable to find gpg key: %s", analysis.Data.SignKeyID)
 			}
-			analysis.Status = sdk.RepositoryAnalysisStatusError
-			analysis.Data.Error = fmt.Sprintf("user %s not found", gpgKey.AuthentifiedUserID)
-		}
-	}
-
-	if cdsUser != nil {
-		analysis.Data.CDSUserID = cdsUser.ID
-		analysis.Data.CDSUserName = cdsUser.Username
-
-		// Check user right
-		b, err := rbac.HasRoleOnProjectAndUserID(ctx, tx, sdk.RoleManage, cdsUser.ID, analysis.ProjectKey)
-		if err != nil {
-			return err
-		}
-		if !b {
 			analysis.Status = sdk.RepositoryAnalysisStatusSkipped
-			analysis.Data.Error = fmt.Sprintf("user %s doesn't have enough right on project %s", cdsUser.ID, analysis.ProjectKey)
+			analysis.Data.Error = fmt.Sprintf("gpgkey %s not found", analysis.Data.SignKeyID)
+		}
+		next()
+
+		if gpgKey != nil {
+			_, next = telemetry.Span(ctx, "api.analyzeRepository.LoadByID")
+			cdsUser, err = user.LoadByID(ctx, tx, gpgKey.AuthentifiedUserID)
+			if err != nil {
+				if !sdk.ErrorIs(err, sdk.ErrNotFound) {
+					next()
+					return sdk.WrapError(err, "unable to find user %s", gpgKey.AuthentifiedUserID)
+				}
+				analysis.Status = sdk.RepositoryAnalysisStatusError
+				analysis.Data.Error = fmt.Sprintf("user %s not found", gpgKey.AuthentifiedUserID)
+			}
+			next()
 		}
 
-		if analysis.Status != sdk.RepositoryAnalysisStatusSkipped {
-			client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, analysis.ProjectKey, vcsProject.Name)
+		if cdsUser != nil {
+			analysis.Data.CDSUserID = cdsUser.ID
+			analysis.Data.CDSUserName = cdsUser.Username
+
+			// Check user right
+			_, next = telemetry.Span(ctx, "api.analyzeRepository.HasRoleOnProjectAndUserID")
+			b, err := rbac.HasRoleOnProjectAndUserID(ctx, tx, sdk.RoleManage, cdsUser.ID, analysis.ProjectKey)
 			if err != nil {
+				next()
 				return err
 			}
-
-			switch vcsProject.Type {
-			case sdk.VCSTypeBitbucketServer, sdk.VCSTypeBitbucketCloud:
-				// get archive
-				err = api.getCdsArchiveFileOnRepo(ctx, client, *repo, analysis)
-			case sdk.VCSTypeGitlab, sdk.VCSTypeGithub, sdk.VCSTypeGitea:
-				analysis.Data.Entities = make([]sdk.ProjectRepositoryDataEntity, 0)
-				err = api.getCdsFilesOnVCSDirectory(ctx, client, analysis, repo.Name, analysis.Commit, ".cds")
-			case sdk.VCSTypeGerrit:
-				return sdk.WithStack(sdk.ErrNotImplemented)
+			next()
+			if !b {
+				analysis.Status = sdk.RepositoryAnalysisStatusSkipped
+				analysis.Data.Error = fmt.Sprintf("user %s doesn't have enough right on project %s", cdsUser.ID, analysis.ProjectKey)
 			}
 
-			// Update analyze
-			if err != nil {
-				analysis.Status = sdk.RepositoryAnalysisStatusError
-				analysis.Data.Error = err.Error()
-			} else {
-				analysis.Status = sdk.RepositoryAnalysisStatusSucceed
+			if analysis.Status == sdk.RepositoryAnalysisStatusInProgress {
+				client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, analysis.ProjectKey, vcsProject.Name)
+				if err != nil {
+					return err
+				}
+
+				switch vcsProject.Type {
+				case sdk.VCSTypeBitbucketServer, sdk.VCSTypeBitbucketCloud:
+					// get archive
+					_, next = telemetry.Span(ctx, "api.analyzeRepository.getCdsArchiveFileOnRepo")
+					err = api.getCdsArchiveFileOnRepo(ctx, client, repoWithSecret, analysis)
+					next()
+				case sdk.VCSTypeGitlab, sdk.VCSTypeGithub, sdk.VCSTypeGitea:
+					analysis.Data.Entities = make([]sdk.ProjectRepositoryDataEntity, 0)
+					_, next = telemetry.Span(ctx, "api.analyzeRepository.getCdsFilesOnVCSDirectory")
+					err = api.getCdsFilesOnVCSDirectory(ctx, client, analysis, repoWithSecret.Name, analysis.Commit, ".cds")
+					next()
+				case sdk.VCSTypeGerrit:
+					return sdk.WithStack(sdk.ErrNotImplemented)
+				}
+				if err != nil {
+					analysis.Status = sdk.RepositoryAnalysisStatusError
+					analysis.Data.Error = err.Error()
+				} else {
+					analysis.Status = sdk.RepositoryAnalysisStatusSucceed
+				}
 			}
 		}
 	}
 
+	_, next = telemetry.Span(ctx, "api.analyzeRepository.getCdsFilesOnVCSDirectory")
 	if err := repository.UpdateAnalysis(ctx, tx, analysis); err != nil {
+		next()
+		return sdk.WrapError(err, "unable to failed analyze")
+	}
+	next()
+	return sdk.WithStack(tx.Commit())
+}
+
+func (api *API) analyzeCommitSignatureThroughVcsAPI(ctx context.Context, analysis *sdk.ProjectRepositoryAnalysis, vcsProject sdk.VCSProject, repoWithSecret sdk.ProjectRepository) error {
+	tx, err := api.mustDB().Begin()
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+
+	// Check commit signature
+	client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, analysis.ProjectKey, vcsProject.Name)
+	if err != nil {
+		_ = tx.Rollback() // nolint
 		return err
 	}
-	return sdk.WrapError(tx.Commit(), "unable to commit")
+	vcsCommit, err := client.Commit(ctx, repoWithSecret.Name, analysis.Commit)
+	if err != nil {
+		_ = tx.Rollback() // nolint
+		return err
+	}
+	if err := tx.Commit(); err != nil {
+		return sdk.WithStack(err)
+	}
+
+	if vcsCommit.Hash == "" {
+		analysis.Status = sdk.RepositoryAnalysisStatusError
+		analysis.Data.Error = fmt.Sprintf("commit %s not found", analysis.Commit)
+	} else {
+		if vcsCommit.Signature != "" {
+			keyId, err := gpg.GetKeyIdFromSignature(vcsCommit.Signature)
+			if err != nil {
+				log.ErrorWithStackTrace(ctx, err)
+				analysis.Status = sdk.RepositoryAnalysisStatusError
+				analysis.Data.Error = fmt.Sprintf("unable to extract keyID from signature: %v", err)
+			} else {
+				analysis.Data.SignKeyID = keyId
+				analysis.Data.CommitCheck = true
+			}
+		} else {
+			analysis.Data.CommitCheck = false
+			analysis.Status = sdk.RepositoryAnalysisStatusSkipped
+			analysis.Data.Error = fmt.Sprintf("commit %s is not signed", vcsCommit.Hash)
+		}
+	}
+	return nil
+}
+
+func (api *API) analyzeCommitSignatureThroughOperation(ctx context.Context, analysis *sdk.ProjectRepositoryAnalysis, vcsProject sdk.VCSProject, repoWithSecret sdk.ProjectRepository) error {
+	if analysis.Data.OperationUUID == "" {
+		proj, err := project.Load(ctx, api.mustDB(), analysis.ProjectKey)
+		if err != nil {
+			if sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return api.stopAnalysis(ctx, analysis, err)
+			}
+			return err
+		}
+
+		ope := &sdk.Operation{
+			VCSServer:    vcsProject.Name,
+			RepoFullName: repoWithSecret.Name,
+			URL:          repoWithSecret.CloneURL,
+			RepositoryStrategy: sdk.RepositoryStrategy{
+				SSHKey:   repoWithSecret.Auth.SSHKeyName,
+				User:     repoWithSecret.Auth.Username,
+				Password: repoWithSecret.Auth.Token,
+			},
+			Setup: sdk.OperationSetup{
+				Checkout: sdk.OperationCheckout{
+					Commit:         analysis.Commit,
+					Branch:         analysis.Branch,
+					CheckSignature: true,
+				},
+			},
+		}
+		if repoWithSecret.Auth.SSHKeyName != "" {
+			ope.RepositoryStrategy.ConnectionType = "ssh"
+		} else {
+			ope.RepositoryStrategy.ConnectionType = "https"
+		}
+
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+
+		_, next := telemetry.Span(ctx, "api.analyzeCheckCommitThroughOperation.PostRepositoryOperation")
+		if err := operation.PostRepositoryOperation(ctx, tx, *proj, ope, nil); err != nil {
+			return err
+		}
+		next()
+		analysis.Data.OperationUUID = ope.UUID
+
+		_, next = telemetry.Span(ctx, "api.analyzeCheckCommitThroughOperation.UpdateAnalysis")
+		if err := repository.UpdateAnalysis(ctx, tx, analysis); err != nil {
+			return err
+		}
+		next()
+		if err := tx.Commit(); err != nil {
+			return sdk.WithStack(err)
+		}
+	}
+	_, next := telemetry.Span(ctx, "api.analyzeRepository.Poll")
+	ope, err := operation.Poll(ctx, api.mustDB(), analysis.Data.OperationUUID)
+	if err != nil {
+		next()
+		return err
+	}
+	next()
+
+	if ope.Status == sdk.OperationStatusDone && ope.Setup.Checkout.Result.CommitVerified {
+		analysis.Data.CommitCheck = true
+		analysis.Data.SignKeyID = ope.Setup.Checkout.Result.SignKeyID
+	}
+	if ope.Status == sdk.OperationStatusDone && !ope.Setup.Checkout.Result.CommitVerified {
+		analysis.Data.CommitCheck = false
+		analysis.Data.SignKeyID = ope.Setup.Checkout.Result.SignKeyID
+		analysis.Data.Error = ope.Setup.Checkout.Result.Msg
+		analysis.Status = sdk.RepositoryAnalysisStatusSkipped
+	}
+	if ope.Status == sdk.OperationStatusError {
+		analysis.Data.Error = ope.Error.Message
+		analysis.Status = sdk.RepositoryAnalysisStatusError
+	}
+	return nil
 }
 
 func (api *API) getCdsFilesOnVCSDirectory(ctx context.Context, client sdk.VCSAuthorizedClientService, analysis *sdk.ProjectRepositoryAnalysis, repoName, commit, directory string) error {
@@ -520,4 +576,21 @@ func (api *API) getCdsArchiveFileOnRepo(ctx context.Context, client sdk.VCSAutho
 
 	}
 	return nil
+}
+
+func (api *API) stopAnalysis(ctx context.Context, analysis *sdk.ProjectRepositoryAnalysis, originalError error) error {
+	tx, err := api.mustDB().Begin()
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+	defer tx.Rollback() // nolint
+	analysis.Status = sdk.RepositoryAnalysisStatusError
+	analysis.Data.Error = fmt.Sprintf("%v", originalError)
+	if err := repository.UpdateAnalysis(ctx, tx, analysis); err != nil {
+		return err
+	}
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+	return originalError
 }
