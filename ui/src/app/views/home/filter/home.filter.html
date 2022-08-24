@@ -1,56 +1,51 @@
 <h4>{{'timeline_filter_project' | translate}}</h4>
-<div class="ui stackable four cards">
-    <div class="ui card">
-        <div class="content">
+<nz-row [nzGutter]="{ xs: 8, sm: 16, md: 24, lg: 32 }">
+    <nz-col [nzSpan]="6" class="cardContainer">
+        <div class="entity-card nohover">
             <div class="description">
-                <div class="ui form">
-                    <div class="fields">
-                        <div class="field">
-                            <sui-select class="selection" name="project" placeholder="{{'timeline_filter_project_select' | translate}}"
-                                labelField="name" valueField="key" [options]="projects" [isSearchable]="true"
-                                [(ngModel)]="selectedProjectKey" #selectProj>
-                                <sui-select-option *ngFor="let option of selectProj.filteredOptions" [value]="option"></sui-select-option>
-                            </sui-select>
-                        </div>
-                        <button class="ui blue button" type="button" (click)="addProject()">{{'btn_add' | translate}}</button>
-                    </div>
+                <div>
+                    <nz-select nzShowSearch [(ngModel)]="selectedProjectKey" nzPlaceHolder="Project...">
+                        <nz-option *ngFor="let p of projects" [nzValue]="p.key" [nzLabel]="p.key"></nz-option>
+                    </nz-select>
+                </div>
+                <div>
+                    <button nz-button nzType="primary" type="button" (click)="addProject()" nzBlock>Add</button>
                 </div>
             </div>
         </div>
-    </div>
-    <div class="ui card" *ngFor="let p of filter.projects">
-        <div class="content">
-            <div class="header">
+
+    </nz-col>
+    <nz-col [nzSpan]="6" *ngFor="let p of filter.projects">
+        <div class="entity-card">
+            <div class="title">
                 {{p.key}}
-                <div class="ui right floated">
-                    <i class="close icon pointing" (click)="removeProject(p)"></i>
+                <div class="right">
+                    <i nz-icon nzType="close" nzTheme="outline" (click)="removeProject(p)" nz-tooltip nzTooltipTitle="Remove filter"></i>
                 </div>
             </div>
-            <div class="meta">
-                <div class="ui dropdown" suiDropdown (isOpenChange)="loadProjectWorkflow(p, false)" autoClose="outsideClick">
-                    <div class="text">
-                        <span *ngIf="!p.workflow_names || p.workflow_names.length === 0"> All workflows</span>
-                        <span *ngIf="p.workflow_names && p.workflow_names.length > 0">{{ p.workflow_names.length }}
-                            workflows</span>
-                    </div>
-                    <div class="menu" suiDropdownMenu>
-                        <div class="item" *ngFor="let w of p?.project?.workflow_names" (click)="updateWorkflowInFilter(w, p)">
-                            <i class="microphone icon" [class.slash]="w.mute"></i>{{w.name}}
-                        </div>
-                        <div class="item" *ngIf="p.loading">
-                            <div class="ui active loader"></div>
-                        </div>
-                    </div>
+            <div class="description">
+                <div nz-popover nzPopoverTrigger="click" nzPopoverPlacement="bottom" (click)="loadProjectWorkflow(p, false)"
+                     [nzPopoverContent]="workflowTmpl">
+                    <span *ngIf="!p.workflow_names || p.workflow_names.length === 0"> All workflows</span>
+                    <span *ngIf="p.workflow_names && p.workflow_names.length > 0">{{ p.workflow_names.length }}
+                        workflows
+                    </span>
                 </div>
-
+                <ng-template #workflowTmpl>
+                    <div *ngFor="let w of p?.project?.workflow_names" (click)="updateWorkflowInFilter(w, p)">
+                        <i nz-icon nzType="audio" nzTheme="outline" *ngIf="!w.mute"></i>
+                        <i nz-icon nzType="audio-muted" nzTheme="outline" *ngIf="w.mute"></i>{{w.name}}
+                    </div>
+                    <nz-spin nzTip="Loading..." *ngIf="p.loading"></nz-spin>
+                </ng-template>
             </div>
         </div>
-    </div>
-</div>
+    </nz-col>
+</nz-row>
 
-<div class="ui form mt25">
-    <div class="right aligned field">
-        <button class="ui green button" type="button" (click)="saveFilter()">{{'btn_save' | translate }}</button>
-    </div>
 
-</div>
+<nz-row>
+    <nz-col [nzSpan]="24" class="alignRight">
+        <button nz-button nzType="primary" type="button" (click)="saveFilter()">Save</button>
+    </nz-col>
+</nz-row>

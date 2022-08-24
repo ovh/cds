@@ -2,3 +2,17 @@
 .scrollview {
     margin-bottom: 1em;
 }
+[nz-radio] {
+  display: block;
+  height: 32px;
+  line-height: 32px;
+}
+
+nz-row {
+  margin-bottom: 20px;
+}
+
+nz-alert {
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
