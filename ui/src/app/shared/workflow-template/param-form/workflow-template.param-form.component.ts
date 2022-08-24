@@ -9,7 +9,6 @@ import {
     Output,
     ViewChild
 } from '@angular/core';
-import { FormControl } from '@angular/forms';
 import { Project } from 'app/model/project.model';
 import {
     ParamData,
@@ -54,6 +53,8 @@ export class WorkflowTemplateParamFormComponent implements OnInit, OnDestroy {
     result: WorkflowTemplateApplyResult;
     codeMirrorConfig: any;
     themeSubscription: Subscription;
+    focusParam: string;
+    filteredRepo: any[] = [];
 
     constructor(
         private _repoManagerService: RepoManagerService,
@@ -177,15 +178,19 @@ export class WorkflowTemplateParamFormComponent implements OnInit, OnDestroy {
         }
     }
 
-    filterRepo(options: Array<string>, query: string): Array<string> | false {
-        if (!options) {
-            return false;
-        }
+    focusRepo(key: string) {
+        this.focusParam = key;
+        this.filteredRepo = this.parameterValues[this.focusParam + '-repositories'].splice(0, 100);
+        this._cd.markForCheck();
+    }
+
+    filterRepo(query: string): void {
         if (!query || query.length < 3) {
-            return options.slice(0, 100);
+            return;
         }
         let queryLowerCase = query.toLowerCase();
-        return options.filter(name => name.toLowerCase().indexOf(queryLowerCase) !== -1);
+        this.filteredRepo = this.parameterValues[this.focusParam + '-repositories'].filter(name => name.toLowerCase().indexOf(queryLowerCase) !== -1)
+        this._cd.markForCheck()
     }
 
     changeParam() {

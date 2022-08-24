@@ -28,6 +28,7 @@ import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { EventState } from 'app/store/event.state';
 import { Subscription } from 'rxjs';
 import { filter, finalize, first, map } from 'rxjs/operators';
+import { ToastService } from 'app/shared/toast/ToastService';
 
 @Component({
     selector: 'app-workflow-template-apply-form',
@@ -61,7 +62,8 @@ export class WorkflowTemplateApplyFormComponent implements OnChanges, OnDestroy 
         private _router: Router,
         private _cd: ChangeDetectorRef,
         private _eventService: EventService,
-        private _store: Store
+        private _store: Store,
+        private _toast: ToastService
     ) { }
 
     ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
@@ -99,6 +101,7 @@ export class WorkflowTemplateApplyFormComponent implements OnChanges, OnDestroy 
                 this._cd.markForCheck();
             }))
             .subscribe(res => {
+                this._toast.success('', 'Template applied with success');
                 // if the workflow name changed move to new workflow page
                 this.result = res;
 
@@ -136,9 +139,15 @@ export class WorkflowTemplateApplyFormComponent implements OnChanges, OnDestroy 
     }
 
     clickDetach() {
+        this.loading = true;
         this._workflowTemplateService.deleteInstance(this.workflowTemplate, this.workflowTemplateInstance)
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
             .subscribe(() => {
                 this.clickClose();
+                this._toast.success('', 'workflow updated');
             });
     }
 

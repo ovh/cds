@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { AuditWorkflowTemplate } from 'app/model/audit.model';
@@ -26,6 +26,7 @@ import { WorkflowTemplateBulkModalComponent } from 'app/shared/workflow-template
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { first } from 'rxjs/operators';
+import { NzModalService } from 'ng-zorro-antd/modal';
 
 @Component({
     selector: 'app-workflow-template-edit',
@@ -34,11 +35,6 @@ import { first } from 'rxjs/operators';
 })
 @AutoUnsubscribe()
 export class WorkflowTemplateEditComponent implements OnInit, OnDestroy {
-
-    @ViewChild('templateApplyModal')
-    templateApplyModal: WorkflowTemplateApplyModalComponent;
-    @ViewChild('templateBulkModal')
-    templateBulkModal: WorkflowTemplateBulkModalComponent;
 
     oldWorkflowTemplate: WorkflowTemplate;
     workflowTemplate: WorkflowTemplate;
@@ -69,7 +65,8 @@ export class WorkflowTemplateEditComponent implements OnInit, OnDestroy {
         private _toast: ToastService,
         private _translate: TranslateService,
         private _router: Router,
-        private _cd: ChangeDetectorRef
+        private _cd: ChangeDetectorRef,
+        private _modalService: NzModalService
     ) {}
 
     ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
@@ -358,12 +355,33 @@ export class WorkflowTemplateEditComponent implements OnInit, OnDestroy {
     }
 
     clickCreateBulk() {
-        this.templateBulkModal.show();
+        this._modalService.create({
+            nzTitle: 'Workflow template apply bulk request',
+            nzWidth: '1100px',
+            nzContent: WorkflowTemplateBulkModalComponent,
+            nzComponentParams: {
+                workflowTemplate: this.workflowTemplate
+            }
+        });
     }
 
     clickUpdate(i: WorkflowTemplateInstance) {
         this.selectedWorkflowTemplateInstance = i;
-        this.templateApplyModal.show();
+        this._cd.detectChanges();
+         this._modalService.create({
+            nzTitle: 'Update workflow from template',
+            nzWidth: '1100px',
+            nzContent: WorkflowTemplateApplyModalComponent,
+            nzComponentParams: {
+                workflowTemplateIn: this.workflowTemplate,
+                workflowTemplateInstanceIn: this.selectedWorkflowTemplateInstance
+            },
+            nzFooter: null,
+            nzOnOk: () => {
+                // trigger page refresh
+                this.selectTab(this.selectedTab);
+            }
+        });
     }
 
     modalClose() {

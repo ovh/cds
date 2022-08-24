@@ -1,67 +1,57 @@
-<form class="ui form">
-    <div class="ui grid">
-        <div class="wide column">
-            <div *ngIf="workflowTemplate.parameters && workflowTemplate.parameters.length > 0" class="wide field">
-                <label>{{'common_parameters' | translate}}</label>
-            </div>
-            <ng-container *ngFor="let parameter of workflowTemplate.parameters; let index = index">
-                <div class="wide fields">
-                    <div class="eight wide field">
-                        {{parameter.key}}<span *ngIf="parameter.required">*</span>
-                    </div>
-                    <div class="eight wide field" [ngSwitch]="parameter.type">
-                        <input *ngSwitchDefault type="text" name="parameter-{{parameter.key}}"
-                            [(ngModel)]="parameterValues[parameter.key]" (change)="changeParam()">
-                        <sui-checkbox *ngSwitchCase="'boolean'" name="parameter-{{parameter.key}}"
-                            [(ngModel)]="parameterValues[parameter.key]" class="toggle" (ngModelChange)="changeParam()">
-                        </sui-checkbox>
-                        <sui-select *ngSwitchCase="'repository'" class="selection" name="parameter-{{parameter.key}}"
-                            placeholder="{{'workflow_wizard_select_repo_man' | translate}}" [options]="vcsNames"
-                            isSearchable="true" [(ngModel)]="parameterValues[parameter.key]"
-                            (selectedOptionChange)="fetchRepos(parameter.key, $event)" #select>
-                            <sui-select-option *ngFor="let vcs of select.filteredOptions" [value]="vcs">
-                            </sui-select-option>
-                        </sui-select>
-                        <codemirror *ngSwitchCase="'json'" name="parameter-{{parameter.key}}"
-                            [(ngModel)]="parameterValues[parameter.key]" [config]="codeMirrorConfig"
-                            (change)="changeParam()" #codemirror>
-                        </codemirror>
-                        <sui-select *ngSwitchCase="'ssh-key'" class="selection" name="parameter-{{parameter.key}}"
-                            placeholder="{{'workflow_template_param_select_key' | translate}}" [options]="sshKeys"
-                            (selectedOptionChange)="changeParam()" isSearchable="true"
-                            [(ngModel)]="parameterValues[parameter.key]" #select>
-                            <sui-select-option *ngFor="let key of select.filteredOptions" [value]="key">
-                            </sui-select-option>
-                        </sui-select>
-                        <sui-select *ngSwitchCase="'pgp-key'" class="selection" name="parameter-{{parameter.key}}"
-                            placeholder="{{'workflow_template_param_select_key' | translate}}" [options]="pgpKeys"
-                            (selectedOptionChange)="changeParam()" isSearchable="true"
-                            [(ngModel)]="parameterValues[parameter.key]" #select>
-                            <sui-select-option *ngFor="let key of select.filteredOptions" [value]="key">
-                            </sui-select-option>
-                        </sui-select>
-                    </div>
-                </div>
-                <div class="wide fields" *ngIf="parameter.type === 'repository'">
-                    <div class="eight wide field"></div>
-                    <div class="four wide field">
-                        <sui-select class="selection" name="parameter-{{parameter.key}}-repo"
-                            [(ngModel)]="parameterValues[parameter.key + '-repository']"
-                            [options]="parameterValues[parameter.key + '-repositories']" [isSearchable]="true"
-                            [optionsFilter]="filterRepo" (selectedOptionChange)="changeParam()" #repositorySelect>
-                            <sui-select-option *ngFor="let repository of repositorySelect.filteredOptions"
-                                [value]="repository">
-                            </sui-select-option>
-                        </sui-select>
-                    </div>
-                    <div class="four wide field">
-                        <button class="ui primary button resync" name="resync" type="button" [class.loading]="loading"
+<nz-row *ngIf="workflowTemplate.parameters && workflowTemplate.parameters.length > 0">
+    <nz-col [nzSpan]="24">
+        <h3>Parameters</h3>
+    </nz-col>
+</nz-row>
+<nz-row *ngFor="let parameter of workflowTemplate.parameters; let index = index">
+    <nz-col [nzSpan]="12">
+        {{parameter.key}}<span *ngIf="parameter.required">*</span>
+    </nz-col>
+    <nz-col [nzSpan]="12">
+        <div [ngSwitch]="parameter.type">
+            <input nz-input *ngSwitchDefault type="text" name="parameter-{{parameter.key}}"
+                   [(ngModel)]="parameterValues[parameter.key]" (change)="changeParam()">
+            <label *ngSwitchCase="'boolean'" nz-checkbox name="parameter-{{parameter.key}}" [(ngModel)]="parameterValues[parameter.key]"
+                   (ngModelChange)="changeParam()"></label>
+            <codemirror *ngSwitchCase="'json'" name="parameter-{{parameter.key}}"
+                        [(ngModel)]="parameterValues[parameter.key]" [config]="codeMirrorConfig"
+                        (change)="changeParam()" #codemirror>
+            </codemirror>
+            <nz-select *ngSwitchCase="'repository'" name="parameter-{{parameter.key}}" nzShowSearch
+                       nzPlaceHolder="{{'workflow_wizard_select_repo_man' | translate}}"
+                       [(ngModel)]="parameterValues[parameter.key]" (ngModelChange)="fetchRepos(parameter.key, $event)">
+                <nz-option *ngFor="let vcs of vcsNames" [nzValue]="vcs" [nzLabel]="vcs"></nz-option>
+            </nz-select>
+            <nz-select *ngSwitchCase="'ssh-key'" name="parameter-{{parameter.key}}" nzShowSearch
+                        nzPlaceHolder="{{'workflow_template_param_select_key' | translate}}"
+                        (ngModelChange)="changeParam()"
+                        [(ngModel)]="parameterValues[parameter.key]">
+                <nz-option *ngFor="let key of sshKeys" [nzValue]="key" [nzLabel]="key"></nz-option>
+            </nz-select>
+            <nz-select *ngSwitchCase="'pgp-key'" name="parameter-{{parameter.key}}" nzShowSearch
+                        nzPlaceHolder="{{'workflow_template_param_select_key' | translate}}"
+                        (ngModelChange)="changeParam()"
+                        [(ngModel)]="parameterValues[parameter.key]" #select>
+                <nz-option *ngFor="let key of pgpKeys" [nzValue]="key" [nzLabel]="key"></nz-option>
+            </nz-select>
+            <nz-row *ngIf="parameter.type === 'repository'">
+                <nz-col [nzSpan]="18">
+                    <nz-select name="parameter-{{parameter.key}}-repo" nzShowSearch
+                                [(ngModel)]="parameterValues[parameter.key + '-repository']"
+                               (nzFocus)="focusRepo(parameter.key)"
+                               (nzOnSearch)="filterRepo($event)" (ngModelChange)="changeParam()">
+                        <nz-option *ngFor="let repository of filteredRepo"
+                                           [nzValue]="repository" [nzLabel]="repository">
+                        </nz-option>
+                    </nz-select>
+                </nz-col>
+                <nz-col [nzSpan]="6">
+                    <button nz-button  nzType="primary" name="resync" type="button" [nzLoading]="loading"
                             [disabled]="loading" (click)="resyncRepos(parameter.key)">
-                            {{'btn_resync_repo' | translate }}
-                        </button>
-                    </div>
-                </div>
-            </ng-container>
+                        Resynchronize
+                    </button>
+                </nz-col>
+            </nz-row>
         </div>
-    </div>
-</form>
+    </nz-col>
+</nz-row>

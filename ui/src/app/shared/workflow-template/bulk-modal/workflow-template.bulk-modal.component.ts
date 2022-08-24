@@ -4,11 +4,9 @@ import {
     Component,
     EventEmitter,
     Input,
-    OnDestroy,
-    Output,
-    ViewChild
+    OnDestroy, OnInit,
+    Output
 } from '@angular/core';
-import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import {
     InstanceStatus,
     InstanceStatusUtil,
@@ -26,6 +24,7 @@ import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { Column, ColumnType, Select } from 'app/shared/table/data-table.component';
 import { interval, Observable, Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
+import { NzModalRef } from 'ng-zorro-antd/modal';
 
 @Component({
     selector: 'app-workflow-template-bulk-modal',
@@ -34,11 +33,7 @@ import { finalize } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowTemplateBulkModalComponent implements OnDestroy {
-    @ViewChild('workflowTemplateBulkModal') workflowTemplateBulkModal: ModalTemplate<boolean, boolean, void>;
-    modal: SuiActiveModal<boolean, boolean, void>;
-    open: boolean;
-
+export class WorkflowTemplateBulkModalComponent implements OnInit, OnDestroy {
     @Input() workflowTemplate: WorkflowTemplate;
     @Output() close = new EventEmitter();
 
@@ -58,7 +53,7 @@ export class WorkflowTemplateBulkModalComponent implements OnDestroy {
     validFields: boolean;
 
     constructor(
-        private _modalService: SuiModalService,
+        private _modal: NzModalRef,
         private _workflowTemplateService: WorkflowTemplateService,
         private _cd: ChangeDetectorRef
     ) {
@@ -104,31 +99,12 @@ export class WorkflowTemplateBulkModalComponent implements OnDestroy {
 
     ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
-    show() {
-        if (this.open) {
-            return;
-        }
-
-        this.open = true;
-
-        const config = new TemplateModalConfig<boolean, boolean, void>(this.workflowTemplateBulkModal);
-        config.mustScroll = true;
-
-        this.modal = this._modalService.open(config);
-        this.modal.onApprove(() => {
-            this.open = false;
-            this.close.emit();
-        });
-        this.modal.onDeny(() => {
-            this.open = false;
-            this.close.emit();
-        });
-
+    ngOnInit(): void {
         this.clickGoToInstanceReset();
     }
 
     clickClose() {
-        this.modal.approve(true);
+        this._modal.destroy();
     }
 
     selectFunc: Select<WorkflowTemplateInstance> = (d: WorkflowTemplateInstance): boolean => {
@@ -151,6 +127,7 @@ export class WorkflowTemplateBulkModalComponent implements OnDestroy {
 
     clickGoToInstance() {
         this.moveToStep(0);
+        this._cd.markForCheck();
     }
 
     clickGoToInstanceReset() {
@@ -163,8 +140,8 @@ export class WorkflowTemplateBulkModalComponent implements OnDestroy {
             .subscribe(is => this.instances = is.sort((a, b) => a.key() < b.key() ? -1 : 1));
 
         this.selectedInstanceKeys = [];
-
         this.clickGoToInstance();
+        this._cd.markForCheck();
     }
 
     clickGoToParam() {
@@ -177,6 +154,7 @@ export class WorkflowTemplateBulkModalComponent implements OnDestroy {
             }
         }
         this.moveToStep(1);
+        this._cd.markForCheck();
     }
 
     clickRunBulk() {
@@ -210,9 +188,10 @@ export class WorkflowTemplateBulkModalComponent implements OnDestroy {
     accordionOpen(e: any, index: number) {
         if (this.accordionOpenedIndex === index) {
             this.accordionOpenedIndex = -1; // close all accordion items
-            return;
+        } else {
+            this.accordionOpenedIndex = index;
         }
-        this.accordionOpenedIndex = index;
+        this._cd.markForCheck();
     }
 
     changeParam(instanceID: number, params: ParamData) {

@@ -1,4 +1,4 @@
-<form nz-form>
+<form nz-form *ngIf="!withoutForm">
     <nz-form-item>
         <nz-form-label>Connection</nz-form-label>
         <nz-form-control>
@@ -16,7 +16,7 @@
                 <nz-form-label [nzSpan]="3">
                     SSH key*
                     <a class="keyLink" (click)="openCreateKeyModal('ssh')"
-                          *ngIf="createOnProject">Create</a>
+                          *ngIf="createOnProject">(Create)</a>
                 </nz-form-label>
                 <nz-form-control [nzSpan]="7">
                     <app-parameter-value [editList]="false" [edit]="true" [type]="'ssh-key'" [keys]="keys"
@@ -58,12 +58,70 @@
         <nz-alert nzType="info" nzMessage="Don't forget to add your ssh key on your repository"></nz-alert>
     </ng-container>
     <nz-form-item nzJustify="end">
-        <button nz-button nzType="primary" [nzLoading]="loading" [disabled]="loading || !strategy.connection_type"
+        <button *ngIf="!hideButton" nz-button nzType="primary" [nzLoading]="loading" [disabled]="loading || !strategy.connection_type"
                 (click)="saveStrategy()">Save
         </button>
     </nz-form-item>
 </form>
-<nz-modal [(nzVisible)]="modalKeyVisible" nzTitle="Add a key" [nzFooter]="null" nzWidth="900px">
+
+<div *ngIf="withoutForm" class="noform">
+    <nz-row>
+        <nz-col [nzSpan]="24">
+            Connection:
+            <nz-radio-group  [(ngModel)]="strategy.connection_type" name="radioConnecion">
+                <ng-container *ngFor="let c of connectionType.values()">
+                    <label nz-radio [nzValue]="c" >{{c}}</label>
+                </ng-container>
+            </nz-radio-group>
+        </nz-col>
+    </nz-row>
+    <nz-row *ngIf="strategy.connection_type === connectionType.SSH">
+        <nz-col [nzSpan]="3" [nzOffset]="2">
+            SSH key*
+            <a class="keyLink" (click)="openCreateKeyModal('ssh')"
+               *ngIf="createOnProject">(Create)
+            </a>
+        </nz-col>
+        <nz-col [nzSpan]="6" [nzOffset]="1">
+            <app-parameter-value [editList]="false" [edit]="true" [type]="'ssh-key'" [keys]="keys"
+                                 [(value)]="strategy.ssh_key" (valueChange)="updatePublicKey($event)">
+            </app-parameter-value>
+
+        </nz-col>
+        <nz-col [nzSpan]="1">
+            <button nz-button [title]="'key_copy_public' | translate" ngxClipboard
+                    [cbContent]="selectedPublicKey" (click)="clickCopyKey()">
+                <i nz-icon nzType="copy" nzTheme="outline"></i>
+            </button>
+        </nz-col>
+    </nz-row>
+    <nz-row *ngIf="strategy.connection_type === connectionType.HTTPS">
+        <nz-col [nzSpan]="3" [nzOffset]="2">
+            User:
+        </nz-col>
+        <nz-col [nzSpan]="7"  [nzOffset]="1">
+            <input nz-input name="user" type="text" [(ngModel)]="strategy.user">
+        </nz-col>
+    </nz-row>
+    <nz-row *ngIf="strategy.connection_type === connectionType.HTTPS">
+        <nz-col [nzSpan]="3" [nzOffset]="2">
+            Password:
+        </nz-col>
+        <nz-col [nzSpan]="7" [nzOffset]="1">
+            <input nz-input name="password" type="password"[(ngModel)]="strategy.password">
+        </nz-col>
+    </nz-row>
+    <nz-row>
+        <nz-col [nzSpan]="3" [nzOffset]="2">
+            PGP key:
+        </nz-col>
+        <nz-col [nzSpan]="7" [nzOffset]="1">
+            <app-parameter-value [editList]="false" [edit]="true" [type]="'pgp-key'" [keys]="keys"
+                                         [(value)]="strategy.pgp_key"></app-parameter-value>
+        </nz-col>
+    </nz-row>
+</div>
+<nz-modal [(nzVisible)]="modalKeyVisible" nzTitle="Add a key" [nzFooter]="null" nzWidth="900px" (nzOnCancel)="modalKeyVisible = false">
     <div *nzModalContent>
         <app-keys-form [loading]="loading" (keyEvent)="addKey($event)" [defaultType]="defaultKeyType" prefix="proj-">
         </app-keys-form>

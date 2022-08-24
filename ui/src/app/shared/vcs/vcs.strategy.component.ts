@@ -30,11 +30,11 @@ export class VCSStrategyComponent implements OnInit {
     @Input() project: Project;
     @Input() appName: string;
     @Input() loading: boolean;
-    @Input() hideBranch = false;
     @Input() hideButton = false;
     @Input() createOnProject = false;
     @Input() sshWarning = false;
     @Input() projectKeysOnly = false;
+    @Input() withoutForm = false;
 
     selectedPublicKey: string;
 

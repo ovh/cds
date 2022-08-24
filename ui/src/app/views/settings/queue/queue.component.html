@@ -5,37 +5,33 @@
                 jobs)</span></h2>
         <div *ngIf="!loading && nodeJobRuns;then showQueue;else loadQueue"></div>
         <ng-template #showQueue>
-            <div class="model">
-                <div class="ui grid">
-                    <div class="ui row">
-                        <div class="ui wide column">
-                            <sui-multi-select class="selection" [(ngModel)]="status" [options]="statusOptions"
-                                [isSearchable]="true" (ngModelChange)="statusFilterChange()" #multiSelect>
-                                <sui-select-option *ngFor="let option of multiSelect.filteredOptions" [value]="option">
-                                </sui-select-option>
-                            </sui-multi-select>
-                        </div>
-                    </div>
-                </div>
-
-                <table class="ui fixed celled table">
-                    <thead>
+            <nz-row>
+                <nz-col [nzSpan]="24">
+                    <nz-select nzShowSearch nzMode="multiple" [(ngModel)]="status" (ngModelChange)="statusFilterChange()">
+                        <nz-option *ngFor="let opt of statusOptions" [nzValue]="opt" [nzLabel]="opt"></nz-option>
+                    </nz-select>
+                </nz-col>
+            </nz-row>
+            <nz-row>
+                <nz-col [nzSpan]="24">
+                    <nz-table [nzData]="nodeJobRuns" nzPageSize="100" #jobrunTab>
+                        <thead>
                         <tr>
-                            <th class="two wide">since</th>
-                            <th class="two wide">status</th>
-                            <th class="two wide">by</th>
-                            <th class="one wide">run</th>
-                            <th class="two wide">project/workflow</th>
-                            <th
-                                [ngClass]="{'four wide': !currentAuthSummary.isAdmin(), 'one wide': currentAuthSummary.isAdmin()}">
+                            <th nzWidth="20px">since</th>
+                            <th nzWidth="20px">status</th>
+                            <th nzWidth="20px">by</th>
+                            <th nzWidth="10px">run</th>
+                            <th nzWidth="20px">project/workflow</th>
+                            <th [nzWidth]="currentAuthSummary.isAdmin()?'10px':'40px'"
+                                    [ngClass]="{'four wide': !currentAuthSummary.isAdmin(), 'one wide': currentAuthSummary.isAdmin()}">
                                 node</th>
-                            <th class="two wide">triggered_by</th>
-                            <th class="three wide" *ngIf="currentAuthSummary.isAdmin()">requirements</th>
-                            <th class="two wide"></th>
+                            <th nzWidth="20px">triggered_by</th>
+                            <th nzWidth="30px" *ngIf="currentAuthSummary.isAdmin()">requirements</th>
+                            <th nzWidth="20px"></th>
                         </tr>
-                    </thead>
-                    <tbody>
-                        <tr *ngFor="let wNodeJobRun of nodeJobRuns; let index = index">
+                        </thead>
+                        <tbody>
+                        <tr *ngFor="let wNodeJobRun of jobrunTab.data; let index = index">
                             <td>
                                 {{wNodeJobRun.queued | amTimeAgo}}
                             </td>
@@ -46,50 +42,48 @@
                                 {{bookedOrBuildingByList[index]}}
                             </td>
                             <td>
-                                <a class="ui"
-                                    [routerLink]="['/project', parametersMaps[index]['cds.project'], 'workflow', parametersMaps[index]['cds.workflow'], 'run', parametersMaps[index]['cds.run.number']]"
-                                    *ngIf="parametersMaps[index] != null">
+                                <a [routerLink]="['/project', parametersMaps[index]['cds.project'], 'workflow', parametersMaps[index]['cds.workflow'], 'run', parametersMaps[index]['cds.run.number']]"
+                                   *ngIf="parametersMaps[index] != null">
                                     {{parametersMaps[index]['cds.run.number']}}
                                 </a>
                             </td>
                             <td>
-                                <a class="ui"
-                                    [routerLink]="['/project', parametersMaps[index]['cds.project'], 'workflow', parametersMaps[index]['cds.workflow']]"
-                                    *ngIf="parametersMaps[index] != null">
+                                <a [routerLink]="['/project', parametersMaps[index]['cds.project'], 'workflow', parametersMaps[index]['cds.workflow']]"
+                                   *ngIf="parametersMaps[index] != null">
                                     {{parametersMaps[index]['cds.project']}}/{{parametersMaps[index]['cds.workflow']}}
                                 </a>
                             </td>
                             <td>
-                                <a class="ui" [href]="parametersMaps[index]['cds.ui.pipeline.run']">
+                                <a [href]="parametersMaps[index]['cds.ui.pipeline.run']">
                                     {{parametersMaps[index]['cds.node']}}
                                 </a>
                             </td>
                             <td>
                                 <span *ngIf="parametersMaps[index] != null">
                                     {{parametersMaps[index]['cds.triggered_by'] ||
-                                    parametersMaps[index]['cds.triggered_by.username']}}
+                                parametersMaps[index]['cds.triggered_by.username']}}
                                 </span>
                             </td>
                             <td *ngIf="currentAuthSummary.isAdmin()">
                                 <span
-                                    *ngIf="wNodeJobRun.job != null && wNodeJobRun.job.action != null && wNodeJobRun.job.action.requirements != null">
+                                        *ngIf="wNodeJobRun.job != null && wNodeJobRun.job.action != null && wNodeJobRun.job.action.requirements != null">
                                     {{requirementsList[index]}}
                                 </span>
                             </td>
-                            <td class="center aligned">
-                                <button class="ui labeled icon button red" [class.loading]="wNodeJobRun.updating"
-                                    [disabled]="wNodeJobRun.updating" (click)="stopNode(index)">
-                                    <i class="stop icon"></i>
-                                    {{ 'common_stop' | translate }}
+                            <td class="alignRight">
+                                <button nz-button nzDanger nzType="primary" [nzLoading]="wNodeJobRun.updating"
+                                        [disabled]="wNodeJobRun.updating" (click)="stopNode(index)">
+                                    <i nz-icon nzType="stop" nzTheme="outline"></i>Stop
                                 </button>
                             </td>
                         </tr>
-                    </tbody>
-                </table>
-            </div>
+                        </tbody>
+                    </nz-table>
+                </nz-col>
+            </nz-row>
         </ng-template>
         <ng-template #loadQueue>
-            <div class="ui text active loader">{{ 'common_loading' | translate }}</div>
+            <nz-spin nzTip="Loading..."></nz-spin>
         </ng-template>
     </app-scrollview>
 </div>

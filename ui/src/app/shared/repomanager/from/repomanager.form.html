@@ -2,7 +2,7 @@
     <nz-row>
         <nz-col [nzSpan]="10">
             <nz-form-item>
-                <nz-form-label>Add a repository manager</nz-form-label>
+                <nz-form-label *ngIf="!disableLabel">Add a repository manager</nz-form-label>
                 <nz-form-control>
                     <nz-select [(ngModel)]="selectedRepoId" [nzDisabled]="connectLoading" name="repo">
                         <nz-option *ngFor="let r of reposManagerList; let i = index;" [nzValue]="i" [nzLabel]="r"></nz-option>
@@ -11,9 +11,13 @@
             </nz-form-item>
         </nz-col>
         <nz-col [nzSpan]="2" [nzOffset]="12">
-            <button nz-button nzType="primary" type="submit" [disabled]="selectedRepoId == null"  [nzLoading]="connectLoading" name="addrepo">
-                Connect
-            </button>
+            <nz-form-item>
+                <nz-form-item>
+                    <button nz-button nzType="primary" type="submit" [disabled]="selectedRepoId == null"  [nzLoading]="connectLoading" name="addrepo">
+                        Connect
+                    </button>
+                </nz-form-item>
+            </nz-form-item>
         </nz-col>
     </nz-row>
 </form>

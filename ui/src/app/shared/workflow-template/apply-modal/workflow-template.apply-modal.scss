@@ -2,3 +2,22 @@
 .loading {
     height: 100px;
 }
+
+.content {
+  max-height: 900px;
+  padding: 0 10px;
+  overflow-y: auto;
+}
+
+nz-row {
+  margin: 15px 0;
+}
+
+nz-tag {
+  font-size: 1.1em;
+  float:right;
+}
+
+nz-tag.pointer {
+  cursor: pointer;
+}

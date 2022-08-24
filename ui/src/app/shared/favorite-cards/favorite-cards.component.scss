@@ -1,18 +1,7 @@
-.mt5 {
+nz-select {
+  width: 100%;
   margin-top: 5px;
 }
-
-.projectLink {
-  color: rgba(0, 0, 0, 0.68);
-  &:hover {
-    text-decoration: underline;
-  }
-}
-
-.ui.cards > .card {
-  margin-right: auto;
-}
-
-.text-black {
-  color: black;
+nz-card {
+  margin: 10px 10px;
 }

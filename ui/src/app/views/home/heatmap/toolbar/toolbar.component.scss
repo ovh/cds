@@ -1,0 +1,16 @@
+.nzSegment {
+  padding: 5px;
+
+  nz-col {
+    padding: 5px;
+
+    nz-select {
+      width: 100%;
+    }
+  }
+
+  nz-col.alignRight {
+    text-align: right;
+  }
+}
+

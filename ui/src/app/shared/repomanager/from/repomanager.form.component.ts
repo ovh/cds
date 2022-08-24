@@ -22,6 +22,7 @@ export class RepoManagerFormComponent {
 
     // project
     @Input() project: Project;
+    @Input() disableLabel: boolean = false;
 
     public ready = false;
     public connectLoading = false;
