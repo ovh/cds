@@ -1,0 +1,38 @@
+version: v1.0
+name: push-artifact
+stages:
+- Stage 1
+- Stage 2
+- Stage 3
+- Stage 4
+jobs:
+- job: Push-artifact
+  stage: Stage 1
+  steps:
+  - script:
+    - env > env.txt
+  - artifactUpload:
+      path: env.txt
+      tag: '{{.cds.version}}'
+- job: Release-to-staging
+  stage: Stage 2
+  steps:
+  - pushBuildInfo: '{{.cds.workflow}}'
+  - promote:
+      artifacts: .*
+      srcMaturity: snapshot
+      destMaturity: staging
+- job: Release-to-rc
+  stage: Stage 3
+  steps:
+  - release:
+      artifacts: .*
+      srcMaturity: staging
+      destMaturity: rc
+- job: Release-to-release
+  stage: Stage 4
+  steps:
+  - release:
+      artifacts: .*
+      srcMaturity: rc
+      destMaturity: release

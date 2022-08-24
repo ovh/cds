@@ -1,0 +1,8 @@
+name: test-artifactory-multiple-maturity
+version: v2.0
+workflow:
+  push-artifact:
+    pipeline: push-artifact
+integrations:
+  ${INTEGRATION}:
+    type: artifact_manager

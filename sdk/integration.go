@@ -4,6 +4,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
+	"time"
 )
 
 // This is the buitin integration model
@@ -455,7 +456,32 @@ func (config *IntegrationConfig) HideSecrets() {
 }
 
 type FileInfo struct {
-	Size int64
-	Md5  string
-	Type string
+	Type              string
+	Checksums         *FileInfoChecksum `json:"checksums,omitempty"`
+	Created           time.Time         `json:"created"`
+	CreatedBy         string            `json:"createdBy"`
+	DownloadURI       string            `json:"downloadUri"`
+	LastModified      time.Time         `json:"lastModified"`
+	LastUpdated       time.Time         `json:"lastUpdated"`
+	MimeType          string            `json:"mimeType"`
+	ModifiedBy        string            `json:"modifiedBy"`
+	OriginalChecksums *FileInfoChecksum `json:"originalChecksums,omitempty"`
+	Path              string            `json:"path"`
+	RemoteURL         string            `json:"remoteUrl"`
+	Repo              string            `json:"repo"`
+	SizeString        string            `json:"size"`
+	Size              int64
+	URI               string         `json:"uri"`
+	Children          []FileChildren `json:"children,omitempty"`
+}
+
+type FileInfoChecksum struct {
+	Md5    string `json:"md5"`
+	Sha1   string `json:"sha1"`
+	Sha256 string `json:"sha256"`
+}
+
+type FileChildren struct {
+	Uri    string `json:"uri"`
+	Folder bool   `json:"folder"`
 }

@@ -314,6 +314,26 @@ func (r *WorkflowRun) GetOutgoingHookRun(uuid string) *WorkflowNodeRun {
 	return nil
 }
 
+func (r *WorkflowRun) GetAllParameters() map[string][]string {
+	params := make(map[string][]string)
+	for i := range r.WorkflowNodeRuns {
+		nodeRuns := r.WorkflowNodeRuns[i]
+		for j := range nodeRuns {
+			nodeRun := &nodeRuns[j]
+			for _, stage := range nodeRun.Stages {
+				for _, job := range stage.RunJobs {
+					for _, param := range job.Parameters {
+						if param.Value != "" {
+							params[param.Name] = append(params[param.Name], param.Value)
+						}
+					}
+				}
+			}
+		}
+	}
+	return params
+}
+
 const (
 	RunInfoTypInfo     = "Info"
 	RunInfoTypeWarning = "Warning"

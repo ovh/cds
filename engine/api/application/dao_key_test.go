@@ -52,6 +52,7 @@ func Test_DAOKey(t *testing.T) {
 }
 
 func Test_DAOAllKeysAllApps(t *testing.T) {
+	t.SkipNow() // skipping this test because the DAO is only used in a migration func
 	db, cache := test.SetupPG(t)
 
 	key := sdk.RandomString(10)

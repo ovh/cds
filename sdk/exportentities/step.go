@@ -690,7 +690,7 @@ func (s Step) isPromote() bool { return s.Promote != nil }
 
 func (s Step) asPromote() (sdk.Action, error) {
 	var a sdk.Action
-	m, err := stepToMap(s.Release)
+	m, err := stepToMap(s.Promote)
 	if err != nil {
 		return a, err
 	}
