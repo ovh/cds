@@ -30,8 +30,8 @@ func (client *githubClient) IsDisableStatusDetails(ctx context.Context) bool {
 	return client.DisableStatusDetails
 }
 
-//SetStatus Users with push access can create commit statuses for a given ref:
-//https://developer.github.com/v3/repos/statuses/#create-a-status
+// SetStatus Users with push access can create commit statuses for a given ref:
+// https://developer.github.com/v3/repos/statuses/#create-a-status
 func (g *githubClient) SetStatus(ctx context.Context, event sdk.Event, disableStatusDetails bool) error {
 	if g.DisableStatus {
 		log.Warn(ctx, "github.SetStatus>  ⚠ Github statuses are disabled")
@@ -58,11 +58,13 @@ func (g *githubClient) SetStatus(ctx context.Context, event sdk.Event, disableSt
 
 	ghStatus := CreateStatus{
 		Description: data.desc,
-		TargetURL:   data.urlPipeline,
 		State:       data.status,
 		Context:     data.context,
 	}
 
+	if !disableStatusDetails {
+		ghStatus.TargetURL = data.urlPipeline
+	}
 	path := fmt.Sprintf("/repos/%s/statuses/%s", data.repoFullName, data.hash)
 
 	b, err := json.Marshal(ghStatus)

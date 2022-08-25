@@ -1,40 +1,20 @@
 package artifactory
 
 import (
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/jfrog/jfrog-client-go/artifactory"
+	"github.com/jfrog/jfrog-client-go/artifactory/buildinfo"
 	"github.com/jfrog/jfrog-client-go/artifactory/services"
+	"github.com/jfrog/jfrog-client-go/artifactory/services/utils"
 
 	"github.com/ovh/cds/sdk"
 )
-
-type FileInfoResponse struct {
-	Checksums         *FileInfoChecksum `json:"checksums"`
-	Created           time.Time         `json:"created"`
-	CreatedBy         string            `json:"createdBy"`
-	DownloadURI       string            `json:"downloadUri"`
-	LastModified      time.Time         `json:"lastModified"`
-	LastUpdated       time.Time         `json:"lastUpdated"`
-	MimeType          string            `json:"mimeType"`
-	ModifiedBy        string            `json:"modifiedBy"`
-	OriginalChecksums *FileInfoChecksum `json:"originalChecksums"`
-	Path              string            `json:"path"`
-	RemoteURL         string            `json:"remoteUrl"`
-	Repo              string            `json:"repo"`
-	Size              string            `json:"size"`
-	URI               string            `json:"uri"`
-}
-
-type FileInfoChecksum struct {
-	Md5    string `json:"md5"`
-	Sha1   string `json:"sha1"`
-	Sha256 string `json:"sha256"`
-}
 
 type Client struct {
 	Asm artifactory.ArtifactoryServicesManager
@@ -46,7 +26,6 @@ func (c *Client) GetFileInfo(repoName string, filePath string) (sdk.FileInfo, er
 	if err := c.Asm.GetRepository(repoName, &repoDetails); err != nil {
 		return fi, sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to get repository %s: %v", repoName, err)
 	}
-	fi.Type = repoDetails.PackageType
 
 	fileInfoURL := fmt.Sprintf("%sapi/storage/%s/%s", c.Asm.GetConfig().GetServiceDetails().GetUrl(), repoName, filePath)
 	httpDetails := c.Asm.GetConfig().GetServiceDetails().CreateHttpClientDetails()
@@ -59,21 +38,19 @@ func (c *Client) GetFileInfo(repoName string, filePath string) (sdk.FileInfo, er
 		return fi, sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to call artifactory [HTTP: %d] %s %s", re.StatusCode, fileInfoURL, string(body))
 	}
 
-	var resp FileInfoResponse
-	if err := sdk.JSONUnmarshal(body, &resp); err != nil {
+	if err := sdk.JSONUnmarshal(body, &fi); err != nil {
 		return fi, sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to read artifactory response %s: %v", string(body), err)
 	}
 
-	if resp.Size != "" {
-		s, err := strconv.ParseInt(resp.Size, 10, 64)
+	if fi.SizeString != "" {
+		s, err := strconv.ParseInt(fi.SizeString, 10, 64)
 		if err != nil {
-			return fi, sdk.NewErrorFrom(sdk.ErrInvalidData, "size return by artifactory is not an integer %s: %v", resp.Size, err)
+			return fi, sdk.NewErrorFrom(sdk.ErrInvalidData, "size return by artifactory is not an integer %s: %v", fi.SizeString, err)
 		}
 		fi.Size = s
 	}
-	if resp.Checksums != nil {
-		fi.Md5 = resp.Checksums.Md5
-	}
+	fi.Type = repoDetails.PackageType
+
 	return fi, nil
 }
 
@@ -81,7 +58,7 @@ func (c *Client) SetProperties(repoName string, filePath string, values ...sdk.K
 	var properties string
 	for i, kv := range values {
 		if i > 0 {
-			properties += "|" // https://www.jfrog.com/confluence/display/JFROG/Artifactory+REST+API#ArtifactoryRESTAPI-SetItemProperties
+			properties += ";" // https://www.jfrog.com/confluence/display/JFROG/Artifactory+REST+API#ArtifactoryRESTAPI-SetItemProperties
 		}
 		properties += url.QueryEscape(kv.Key) + "=" + url.QueryEscape(strings.Join(kv.Values, ","))
 	}
@@ -97,4 +74,54 @@ func (c *Client) SetProperties(repoName string, filePath string, values ...sdk.K
 	}
 
 	return nil
+}
+
+type DeleteBuildRequest struct {
+	Project         string   `json:"project"`
+	BuildName       string   `json:"buildName"`
+	BuildNumbers    []string `json:"buildNumbers"`
+	DeleteArtifacts bool     `json:"deleteArtifacts"`
+	DeleteAll       bool     `json:"deleteAll"`
+}
+
+func (c *Client) DeleteBuild(project string, buildName string, buildVersion string) error {
+	httpDetails := c.Asm.GetConfig().GetServiceDetails().CreateHttpClientDetails()
+	utils.SetContentType("application/json", &httpDetails.Headers)
+	request := DeleteBuildRequest{
+		Project:      project,
+		BuildName:    buildName,
+		BuildNumbers: []string{buildVersion},
+	}
+	bts, _ := json.Marshal(request)
+	deleteBuildURL := fmt.Sprintf("%sapi/build/delete", c.Asm.GetConfig().GetServiceDetails().GetUrl())
+	re, body, err := c.Asm.Client().SendPost(deleteBuildURL, bts, &httpDetails)
+	if err != nil {
+		return err
+	}
+	if re.StatusCode == http.StatusNotFound || re.StatusCode < 400 {
+		return nil
+	}
+	return fmt.Errorf("unable to delete build: %s", string(body))
+}
+
+func (c *Client) PublishBuildInfo(project string, request *buildinfo.BuildInfo) error {
+	var nbAttempts int
+	for {
+		nbAttempts++
+		_, err := c.Asm.PublishBuildInfo(request, project)
+		if err == nil {
+			break
+		} else if nbAttempts >= 3 {
+			return err
+		}
+	}
+	return nil
+}
+
+func (c *Client) XrayScanBuild(params services.XrayScanParams) ([]byte, error) {
+	return c.Asm.XrayScanBuild(params)
+}
+
+func (c *Client) GetURL() string {
+	return c.Asm.GetConfig().GetServiceDetails().GetUrl()
 }

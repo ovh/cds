@@ -1,0 +1,35 @@
+name: run_workflow_with_artifactory (ITSCWRKFLWRT1)
+vars:
+  projectKey: MYPROJ
+  integrationName: artifactory-myproj-default
+testcases:
+- name: assert_fixtures
+  steps:
+  - script: '[ -f ./fixtures/ITSCWRKFLWRT1/push-artifact.pip.yml ]' # check file exists
+  - script: '[ -f ./fixtures/ITSCWRKFLWRT1/test-artifactory-multiple-maturity.yml ]' # check file exists
+- name: assert_artifactory_integration_is_available
+  steps:
+  - script: '{{.cdsctl}} -f {{.cdsctl.config}} project integration list {{.projectKey}}' # check artifactory integration is available in the project
+    assertions:
+    - result.systemout ShouldContainSubstring {{.integrationName}}
+- name: import_workflow_from_yaml_files
+  steps:
+  - script: INTEGRATION={{.integrationName}} envsubst < ./fixtures/ITSCWRKFLWRT1/test-artifactory-multiple-maturity.yml > ./fixtures/ITSCWRKFLWRT1/test-artifactory-multiple-maturity.replaced.yml # replace variable in the yaml file
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} pipeline import --force {{.projectKey}} ./fixtures/ITSCWRKFLWRT1/push-artifact.pip.yml # import the pipeline
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow import --force {{.projectKey}} ./fixtures/ITSCWRKFLWRT1/test-artifactory-multiple-maturity.replaced.yml # import the workflow
+- name: run_workflow
+  steps:
+  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow run {{.projectKey}} test-artifactory-multiple-maturity # trigger the workflow
+    info: "{{.result.systemout}}"
+    assertions:
+    - result.code ShouldEqual 0
+    - "result.systemout ShouldContainSubstring Workflowtest-artifactory-multiple-maturity #1 has been launched"
+- name: check_workflow_is_success
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow status {{.projectKey}}  test-artifactory-multiple-maturity 1 --format json # check the workflow status
+    retry: 120
+    delay: 5
+    info: "{{.result.systemout}}"
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemoutjson.status ShouldEqual Success

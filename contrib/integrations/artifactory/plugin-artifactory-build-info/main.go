@@ -2,25 +2,16 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"net/http"
-	"net/url"
 	"os"
-	"path/filepath"
-	"strconv"
 	"strings"
-	"time"
 
 	"github.com/golang/protobuf/ptypes/empty"
-	"github.com/jfrog/jfrog-client-go/artifactory"
-	"github.com/jfrog/jfrog-client-go/artifactory/buildinfo"
 	"github.com/jfrog/jfrog-client-go/artifactory/services"
-	"github.com/jfrog/jfrog-client-go/artifactory/services/utils"
-	"github.com/jfrog/jfrog-client-go/utils/log"
 
 	"github.com/ovh/cds/contrib/grpcplugins"
 	art "github.com/ovh/cds/contrib/integrations/artifactory"
+	"github.com/ovh/cds/engine/api/integration/artifact_manager"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/grpcplugin/integrationplugin"
 )
@@ -73,30 +64,13 @@ func (e *artifactoryBuildInfoPlugin) Run(ctx context.Context, opts *integrationp
 	artifactoryProjectKey := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactoryConfigProjectKey)]
 	buildInfo := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactoryConfigBuildInfoPrefix)]
 
-	version := opts.GetOptions()["cds.version"]
-	projectKey := opts.GetOptions()["cds.project"]
-	workflowName := opts.GetOptions()["cds.workflow"]
-
-	ctx, cancel := context.WithTimeout(ctx, 15*time.Minute)
-	defer cancel()
-
-	artiClient, err := art.CreateArtifactoryClient(ctx, artifactoryURL, token)
+	artifactClient, err := artifact_manager.NewClient("artifactory", artifactoryURL, token)
 	if err != nil {
-		return fail("unable to create artifactory client: %v", err)
-	}
-	log.SetLogger(log.NewLogger(log.INFO, os.Stdout))
-
-	buildInfoName := fmt.Sprintf("%s/%s/%s", buildInfo, projectKey, workflowName)
-
-	// Check existing build info
-	if err := e.deleteExistingBuild(artiClient, artifactoryProjectKey, buildInfoName, version); err != nil {
-		return fail("unable to clean existing build: %v", err)
+		return fail("Failed to create artifactory client: %s", err)
 	}
 
 	nodeRunURL := opts.GetOptions()["cds.ui.pipeline.run"]
 	runURL := nodeRunURL[0:strings.Index(nodeRunURL, "/node/")]
-
-	fmt.Printf("Creating Artifactory Build %s %s on project %s...\n", buildInfoName, version, artifactoryProjectKey)
 
 	// Get the build agent from env variable set by worker
 	workerName := os.Getenv("CDS_WORKER")
@@ -104,73 +78,65 @@ func (e *artifactoryBuildInfoPlugin) Run(ctx context.Context, opts *integrationp
 		workerName = "CDS"
 	}
 
-	buildInfoRequest := &buildinfo.BuildInfo{
-		Properties: map[string]string{},
-		Name:       buildInfoName,
-		Agent: &buildinfo.Agent{
-			Name:    "artifactory-build-info-plugin",
-			Version: sdk.VERSION,
-		},
-		BuildAgent: &buildinfo.Agent{
-			Name:    workerName,
-			Version: sdk.VERSION,
-		},
-		ArtifactoryPrincipal:     fmt.Sprintf("token:%s", tokenName),
-		ArtifactoryPluginVersion: sdk.VERSION,
-		Started:                  time.Now().Format("2006-01-02T15:04:05.999-07:00"),
-		Number:                   version,
-		BuildUrl:                 runURL,
-		Modules:                  []buildinfo.Module{},
-		VcsList:                  make([]buildinfo.Vcs, 0),
-	}
-
+	// Compute git url
 	gitUrl := opts.GetOptions()["git.url"]
 	if gitUrl == "" {
 		gitUrl = opts.GetOptions()["git.http_url"]
 	}
 
-	buildInfoRequest.VcsList = append(buildInfoRequest.VcsList, buildinfo.Vcs{
-		Branch:   opts.GetOptions()["git.branch"],
-		Message:  opts.GetOptions()["git.message"],
-		Url:      gitUrl,
-		Revision: opts.GetOptions()["git.hash"],
-	})
-
-	execContext := executionContext{
-		buildInfo:         buildInfo,
-		lowMaturitySuffix: lowMaturitySuffix,
-		workflowName:      workflowName,
-		version:           version,
-		projectKey:        projectKey,
-	}
-	modules, err := e.computeBuildInfoModules(artiClient, execContext)
+	// Get run results
+	runResults, err := grpcplugins.GetRunResults(e.HTTPPort)
 	if err != nil {
-		return fail("unable to compute build info: %v", err)
+		return fail("unable to get run results: %v", err)
 	}
-	buildInfoRequest.Modules = modules
+
+	buildInfoRequest, err := art.PrepareBuildInfo(ctx, artifactClient, art.BuildInfoRequest{
+		BuildInfoPrefix:   buildInfo,
+		ProjectKey:        opts.GetOptions()["cds.project"],
+		WorkflowName:      opts.GetOptions()["cds.workflow"],
+		Version:           opts.GetOptions()["cds.version"],
+		AgentName:         workerName,
+		TokenName:         tokenName,
+		RunURL:            runURL,
+		GitBranch:         opts.GetOptions()["git.branch"],
+		GitMessage:        opts.GetOptions()["git.message"],
+		GitURL:            gitUrl,
+		GitHash:           opts.GetOptions()["git.hash"],
+		RunResults:        runResults,
+		LowMaturitySuffix: lowMaturitySuffix,
+	})
+	if err != nil {
+		return fail("unable to prepare build info: %v", err)
+	}
+	fmt.Printf("Creating Artifactory Build %s %s on project %s...\n", buildInfoRequest.Name, buildInfoRequest.Number, artifactoryProjectKey)
+
+	if err := artifactClient.DeleteBuild(artifactoryProjectKey, buildInfoRequest.Name, buildInfoRequest.Number); err != nil {
+		return fail("unable to clean existing build: %v", err)
+	}
+
 	var nbAttempts int
 	for {
 		nbAttempts++
-		_, err := artiClient.PublishBuildInfo(buildInfoRequest, artifactoryProjectKey)
+		err := artifactClient.PublishBuildInfo(artifactoryProjectKey, buildInfoRequest)
 		if err == nil {
 			break
 		} else if nbAttempts >= 3 {
 			return fail("unable to push build info: %v", err)
 		} else {
-			fmt.Printf("Error while pushing buildinfo %s %s. Retrying...\n", buildInfoName, version)
+			fmt.Printf("Error while pushing buildinfo %s %s. Retrying...\n", buildInfoRequest.Name, buildInfoRequest.Number)
 		}
 	}
 
 	// Temporary code
 	if opts.GetOptions()["cds.proj.xray.enabled"] == "true" {
-		fmt.Printf("Triggering XRay Build %s %s scan...\n", buildInfoName, version)
+		fmt.Printf("Triggering XRay Build %s %s scan...\n", buildInfoRequest.Name, buildInfoRequest.Number)
 
 		// Scan build info
 		scanBuildRequest := services.NewXrayScanParams()
 		scanBuildRequest.BuildName = buildInfoRequest.Name
 		scanBuildRequest.BuildNumber = buildInfoRequest.Number
 		scanBuildRequest.ProjectKey = artifactoryProjectKey
-		scanBuildResponseBtes, err := artiClient.XrayScanBuild(scanBuildRequest)
+		scanBuildResponseBtes, err := artifactClient.XrayScanBuild(scanBuildRequest)
 		if err != nil {
 			fmt.Println(err.Error())
 		} else {
@@ -181,122 +147,6 @@ func (e *artifactoryBuildInfoPlugin) Run(ctx context.Context, opts *integrationp
 	return &integrationplugin.RunResult{
 		Status: sdk.StatusSuccess,
 	}, nil
-}
-
-type DeleteBuildRequest struct {
-	Project         string   `json:"project"`
-	BuildName       string   `json:"buildName"`
-	BuildNumbers    []string `json:"buildNumbers"`
-	DeleteArtifacts bool     `json:"deleteArtifacts"`
-	DeleteAll       bool     `json:"deleteAll"`
-}
-
-func (e *artifactoryBuildInfoPlugin) deleteExistingBuild(client artifactory.ArtifactoryServicesManager, artifactoryProjectKey string, buildName string, buildVersion string) error {
-	httpDetails := client.GetConfig().GetServiceDetails().CreateHttpClientDetails()
-	utils.SetContentType("application/json", &httpDetails.Headers)
-	request := DeleteBuildRequest{
-		Project:      artifactoryProjectKey,
-		BuildName:    buildName,
-		BuildNumbers: []string{buildVersion},
-	}
-	bts, _ := json.Marshal(request)
-	deleteBuildURL := fmt.Sprintf("%sapi/build/delete", client.GetConfig().GetServiceDetails().GetUrl())
-	re, body, err := client.Client().SendPost(deleteBuildURL, bts, &httpDetails)
-	if err != nil {
-		return err
-	}
-	if re.StatusCode == http.StatusNotFound || re.StatusCode < 400 {
-		return nil
-	}
-	return fmt.Errorf("unable to delete build: %s", string(body))
-}
-
-func (e *artifactoryBuildInfoPlugin) computeBuildInfoModules(client artifactory.ArtifactoryServicesManager, execContext executionContext) ([]buildinfo.Module, error) {
-	modules := make([]buildinfo.Module, 0)
-	runResults, err := grpcplugins.GetRunResults(e.HTTPPort)
-	if err != nil {
-		return nil, err
-	}
-	for _, r := range runResults {
-		if r.Type != sdk.WorkflowRunResultTypeArtifactManager {
-			continue
-		}
-		data, err := r.GetArtifactManager()
-		if err != nil {
-			return nil, err
-		}
-
-		mod := buildinfo.Module{
-			Id:           fmt.Sprintf("%s:%s", data.RepoType, data.Name),
-			Artifacts:    make([]buildinfo.Artifact, 0, len(runResults)),
-			Dependencies: nil,
-		}
-		switch data.RepoType {
-		case "docker":
-			mod.Type = buildinfo.Docker
-			props := make(map[string]string)
-			parsedUrl, err := url.Parse(client.GetConfig().GetServiceDetails().GetUrl())
-			if err != nil {
-				return nil, fmt.Errorf("unable to parse artifactory url [%s]: %v", client.GetConfig().GetServiceDetails().GetUrl(), err)
-			}
-			urlArtifactory := parsedUrl.Host
-			if parsedUrl.Port() != "" {
-				urlArtifactory += ":" + parsedUrl.Port()
-			}
-			props["docker.image.tag"] = fmt.Sprintf("%s.%s/%s", data.RepoName, urlArtifactory, data.Name)
-			mod.Properties = props
-		}
-
-		artifacts, err := e.retrieveModulesArtifacts(client, data.RepoName, data.Path, execContext)
-		if err != nil {
-			return nil, err
-		}
-		mod.Artifacts = artifacts
-		modules = append(modules, mod)
-	}
-
-	return modules, nil
-}
-
-func (e *artifactoryBuildInfoPlugin) retrieveModulesArtifacts(client artifactory.ArtifactoryServicesManager, repoName string, path string, execContext executionContext) ([]buildinfo.Artifact, error) {
-	fileInfo, err := art.GetFileInfo(client, repoName, path)
-	if err != nil {
-		return nil, err
-	}
-	artifacts := make([]buildinfo.Artifact, 0)
-
-	// If no children, it's a file, so we have checksum
-	_, objectName := filepath.Split(path)
-
-	if len(fileInfo.Children) == 0 {
-		props := make(map[string]string)
-		props["build.name"] = fmt.Sprintf("%s/%s/%s", execContext.buildInfo, execContext.projectKey, execContext.workflowName)
-		props["build.number"] = execContext.version
-		props["build.timestamp"] = strconv.FormatInt(time.Now().Unix(), 10)
-		repoSrc := repoName
-		repoSrc += "-" + execContext.lowMaturitySuffix
-		if err := art.SetProperties(client, repoSrc, path, props); err != nil {
-			return nil, err
-		}
-
-		currentArtifact := buildinfo.Artifact{
-			Name: objectName,
-			Type: strings.TrimPrefix(filepath.Ext(objectName), "."),
-			Checksum: &buildinfo.Checksum{
-				Md5: fileInfo.Checksums.Md5,
-			},
-		}
-		artifacts = append(artifacts, currentArtifact)
-	} else {
-		for _, c := range fileInfo.Children {
-			artsChildren, err := e.retrieveModulesArtifacts(client, repoName, fmt.Sprintf("%s%s", path, c.Uri), execContext)
-			if err != nil {
-				return nil, err
-			}
-			artifacts = append(artifacts, artsChildren...)
-		}
-	}
-	return artifacts, nil
 }
 
 func main() {

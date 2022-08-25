@@ -1,6 +1,7 @@
 package sdk
 
 import (
+	"database/sql/driver"
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -40,14 +41,39 @@ func (w WorkflowRunResults) Unique() (WorkflowRunResults, error) {
 }
 
 type WorkflowRunResult struct {
-	ID                string                `json:"id" db:"id"`
-	Created           time.Time             `json:"created" db:"created"`
-	WorkflowRunID     int64                 `json:"workflow_run_id" db:"workflow_run_id"`
-	WorkflowNodeRunID int64                 `json:"workflow_node_run_id" db:"workflow_node_run_id"`
-	WorkflowRunJobID  int64                 `json:"workflow_run_job_id" db:"workflow_run_job_id"`
-	SubNum            int64                 `json:"sub_num" db:"sub_num"`
-	Type              WorkflowRunResultType `json:"type" db:"type"`
-	DataRaw           json.RawMessage       `json:"data" db:"data"`
+	ID                string                 `json:"id" db:"id"`
+	Created           time.Time              `json:"created" db:"created"`
+	WorkflowRunID     int64                  `json:"workflow_run_id" db:"workflow_run_id"`
+	WorkflowNodeRunID int64                  `json:"workflow_node_run_id" db:"workflow_node_run_id"`
+	WorkflowRunJobID  int64                  `json:"workflow_run_job_id" db:"workflow_run_job_id"`
+	SubNum            int64                  `json:"sub_num" db:"sub_num"`
+	Type              WorkflowRunResultType  `json:"type" db:"type"`
+	DataRaw           json.RawMessage        `json:"data" db:"data"`
+	DataSync          *WorkflowRunResultSync `json:"sync,omitmpty" db:"sync"`
+}
+
+type WorkflowRunResultSync struct {
+	Sync  bool   `json:"sync"`
+	Link  string `json:"link"`
+	Error string `json:"error"`
+}
+
+// Value returns driver.Value from WorkflowRunResultSync
+func (s WorkflowRunResultSync) Value() (driver.Value, error) {
+	j, err := json.Marshal(s)
+	return j, WrapError(err, "cannot marshal WorkflowRunResultSync")
+}
+
+// Scan WorkflowRunResultSync
+func (s *WorkflowRunResultSync) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
+	}
+	return WrapError(JSONUnmarshal(source, s), "cannot unmarshal WorkflowRunResultSync")
 }
 
 func (r WorkflowRunResult) ComputeUniqueKey() (string, error) {

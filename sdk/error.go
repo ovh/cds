@@ -513,6 +513,10 @@ func IsErrorWithStack(err error) bool {
 	return ok
 }
 
+func Errorf(format string, args ...interface{}) error {
+	return WithStack(fmt.Errorf(format, args...))
+}
+
 // NewError returns a merge of given err with new http error.
 func NewError(httpError Error, err error) error {
 	// if the given error is nil do nothing
