@@ -42,13 +42,23 @@ export class HookTaskShowComponent {
             <Column<TaskExecution>>{
                 type: ColumnType.ICON,
                 selector: (d: TaskExecution) => ({
-                    icon: (() => {
+                    iconTheme: 'outline',
+                    iconType: (() => {
                         if (d.status === HookStatus.DONE) {
-                            return ['check', 'green', 'icon'];
+                            return 'check';
                         } else if (d.status === HookStatus.FAIL) {
-                            return ['ban', 'red', 'icon'];
+                            return 'stop';
                         } else {
-                            return ['wait', 'blue', 'icon'];
+                            return 'field-time';
+                        }
+                    })(),
+                    iconColor: (() => {
+                        if (d.status === HookStatus.DONE) {
+                            return 'green';
+                        } else if (d.status === HookStatus.FAIL) {
+                            return 'red';
+                        } else {
+                            return 'blue';
                         }
                     })()
                 })

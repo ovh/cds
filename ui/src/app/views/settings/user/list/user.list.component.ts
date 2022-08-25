@@ -24,10 +24,10 @@ export class UserListComponent {
         this.columns = [
             <Column<AuthentifiedUser>>{
                 type: ColumnType.ICON,
-                class: 'one',
                 selector: (u: AuthentifiedUser) => ({
                     title: u.ring,
-                    icon: u.ring === 'ADMIN' ? ['user', 'outline', 'icon'] : ['user', 'icon']
+                    iconTheme: 'outline',
+                    iconType: u.ring === 'ADMIN' ? 'crown' : 'user'
                 })
             },
             <Column<AuthentifiedUser>>{

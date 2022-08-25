@@ -18,7 +18,7 @@
             <app-card [title]="pip.name" [description]="pip.description"></app-card>
         </nz-col>
     </nz-row>
-    <nz-row *ngIf="!project.application_names || project.application_names.length === 0">
+    <nz-row *ngIf="!project.pipeline_names || project.pipeline_names.length === 0">
         <nz-col [nzSpan]="24">
             <nz-alert nzType="info" nzMessage="No pipeline"></nz-alert>
         </nz-col>

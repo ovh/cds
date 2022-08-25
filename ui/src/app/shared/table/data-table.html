@@ -29,9 +29,8 @@
     </thead>
     <tbody *ngIf="loading">
         <tr>
-            <td class="center aligned" [colSpan]="columnsCount">
-                <div class="ui active small inline loader"></div>
-                <div>{{ 'common_loading' | translate }}</div>
+            <td>
+                <nz-spin nzTip="Loading..."></nz-spin>
             </td>
         </tr>
     </tbody>
@@ -55,7 +54,7 @@
             <ng-container *ngFor="let c of (columns | selector:d:i)">
                 <td *ngIf="!c.disabled && c.hidden"></td>
                 <td *ngIf="!c.disabled && !c.hidden" [ngSwitch]="c.type" class="wide" [ngClass]="c.class">
-                    <i *ngSwitchCase="'icon'" [ngClass]="c.selector.icon" [title]="c.selector.title"></i>
+                    <i *ngSwitchCase="'icon'" nz-icon nzType="{{c.selector.iconType}}" nzTheme="{{c.selector.iconTheme}}" class="{{c.selector.iconColor}}"></i>
                     <a *ngSwitchCase="'router-link'" class="ui" [routerLink]="c.selector.link">
                         {{c.selector.value}}
                     </a>
@@ -77,7 +76,7 @@
                     </ng-container>
                     <ng-container *ngSwitchCase="'time-ago'"> {{c.selector | amTimeAgo}} </ng-container>
                     <ng-container *ngSwitchCase="'date'"> {{c.selector | amCalendar}} </ng-container>
-                    <button class="ui button" [ngClass]="c.selector.class" *ngSwitchCase="'button'"
+                    <button *ngSwitchCase="'button'" class="ui button" [ngClass]="c.selector.class"
                         (click)="c.selector.click()">
                         {{c.selector.title | translate}}
                         <i class="icon" [ngClass]="c.selector.icon" *ngIf="c.selector.icon"></i>
@@ -86,8 +85,7 @@
                         [color]="c.selector.color ? c.selector.color : 'primary'" (event)="c.selector.click()"
                         [title]="c.selector.title">
                     </app-confirm-button>
-                    <span class="ui label" [ngClass]="c.selector.class"
-                        *ngSwitchCase="'label'">{{c.selector.value | translate}}</span>
+                    <span *ngSwitchCase="'label'"class="ui label" [ngClass]="c.selector.class">{{c.selector.value | translate}}</span>
                     <ng-container *ngSwitchCase="'router-link-with-icons'">
                         <a class="ui" [routerLink]="c.selector.link">{{c.selector.value}}</a>
                         <span *ngFor="let i of c.selector.icons" nz-tooltip [nzTooltipTitle]="i.label | translate">

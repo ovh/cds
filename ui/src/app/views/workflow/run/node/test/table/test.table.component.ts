@@ -5,6 +5,7 @@ import { Column, ColumnType, Filter } from 'app/shared/table/data-table.componen
 import { cloneDeep } from 'lodash-es';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
+import { HookStatus } from 'app/model/workflow.hook.model';
 
 
 @Component({
@@ -66,15 +67,25 @@ export class WorkflowRunTestTableComponent implements OnInit {
         this.columns = [
             <Column<TestCase>>{
                 type: ColumnType.ICON,
-                class: 'one',
                 selector: (tc: TestCase) => ({
-                    icon: (() => {
+                    iconTheme: 'outline',
+                    iconType: (() => {
                         if (tc.status === 'success') {
-                            return ['green', 'check', 'icon'];
+                            return 'check';
                         } else if (tc.status === 'failed') {
-                            return ['red', 'remove', 'circle', 'icon'];
+                            return 'stop';
+                        } else {
+                            return 'stop';
                         }
-                        return ['grey', 'ban', 'icon'];
+                    })(),
+                    iconColor: (() => {
+                        if (tc.status === 'success') {
+                            return 'green';
+                        } else if (tc.status === 'failed') {
+                            return 'red';
+                        } else {
+                            return 'grey';
+                        }
                     })()
                 })
             },
