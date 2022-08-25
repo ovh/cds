@@ -32,7 +32,7 @@ func (api *API) getRepositoryHookHandler() ([]service.RbacChecker, service.Handl
 			vars := mux.Vars(req)
 			repoIdentifier, err := url.PathUnescape(vars["repositoryIdentifier"])
 			if !sdk.IsValidUUID(repoIdentifier) {
-				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "this handler need the repository uuid")
+				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "this handler needs the repository uuid")
 			}
 			repo, err := repository.LoadRepositoryByID(ctx, api.mustDB(), repoIdentifier, gorpmapping.GetOptions.WithDecryption)
 			if err != nil {
