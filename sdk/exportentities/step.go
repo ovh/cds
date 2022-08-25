@@ -467,6 +467,9 @@ func (s Step) IsValid() bool {
 	if s.isRelease() {
 		count++
 	}
+	if s.isPromote() {
+		count++
+	}
 	if s.isCheckout() {
 		count++
 	}
