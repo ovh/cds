@@ -444,7 +444,7 @@ export class UserEditComponent implements OnInit {
 
     clickConsumerCreate(): void {
         this._modalService.create({
-            nzTitle: 'Create a consumer',
+            nzTitle: 'Create a new consumer',
             nzWidth: '900px',
             nzContent: ConsumerCreateModalComponent,
             nzComponentParams: {

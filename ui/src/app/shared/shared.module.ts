@@ -15,7 +15,6 @@ import { AsCodeSaveModalComponent } from 'app/shared/ascode/save-modal/ascode.sa
 import { ConditionsComponent } from 'app/shared/conditions/conditions.component';
 import { AutoFocusInputComponent } from 'app/shared/input/autofocus/autofocus.input.component';
 import { CallbackPipe } from 'app/shared/pipes/callback.pipe';
-import { SelectFilterComponent } from 'app/shared/select/select.component';
 import { WorkflowHookMenuEditComponent } from 'app/shared/workflow/menu/edit-hook/menu.edit.hook.component';
 import { WorkflowWizardNodeConditionComponent } from 'app/shared/workflow/wizard/conditions/wizard.conditions.component';
 import { WorkflowWizardOutgoingHookComponent } from 'app/shared/workflow/wizard/outgoinghook/wizard.outgoinghook.component';
@@ -252,7 +251,6 @@ const icons: IconDefinition[] = [ ArrowDownOutline, ArrowRightOutline, AudioOutl
         RequirementsValueComponent,
         SafeHtmlPipe,
         ScrollviewComponent,
-        SelectFilterComponent,
         SelectorPipe,
         SelectPipe,
         StatusIconComponent,
