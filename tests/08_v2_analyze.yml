@@ -46,7 +46,7 @@ testcases:
     - script: mkdir -p /tmp/myrepo/.cds/models && echo 'new file' > /tmp/myrepo/.cds/models/my-worker-model.yml
     - script: cd /tmp/myrepo && git config user.email "{{.git.user}}@gitea.eu" && git config user.name "{{.git.user}}"
     - script: cd /tmp/myrepo && git add /tmp/myrepo/.cds/models/my-worker-model.yml && git commit .  --gpg-sign=2B74B3591CEFB2F534265465E027B500E97E52E7 -m "add file and sign" && git push
-    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental project repository hook ITCLIPRJVCS my_vcs_server {{.git.user}}/myrepo --format json
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental project repository hook-regen ITCLIPRJVCS my_vcs_server {{.git.user}}/myrepo --format json
       vars:
         hookSecret:
           from: result.systemoutjson.hook_sign_key

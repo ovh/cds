@@ -214,7 +214,7 @@ func (api *API) getVCSProjectRepositoryAllHandler() ([]service.RbacChecker, serv
 		}
 }
 
-func (api *API) postRepositoryHookLinkHandler() ([]service.RbacChecker, service.Handler) {
+func (api *API) postRepositoryHookRegenKeyHandler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(rbac.ProjectManage),
 		func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 			vars := mux.Vars(r)
@@ -263,7 +263,7 @@ func (api *API) postRepositoryHookLinkHandler() ([]service.RbacChecker, service.
 			}
 			hook := sdk.HookAccessData{
 				URL:         fmt.Sprintf("%s/v2/webhook/repository/%s/%s", srvs[0].HTTPURL, vcsProject.Type, repo.ID),
-				HookSignKey: repo.HookSignKey,
+				HookSignKey: newSecret,
 			}
 			return service.WriteJSON(w, hook, http.StatusOK)
 		}

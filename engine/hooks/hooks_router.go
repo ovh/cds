@@ -12,7 +12,6 @@ import (
 	"net/http"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/rockbears/log"
@@ -106,12 +105,10 @@ func (s *Service) CheckHmac256Signature(headerName string) service.Middleware {
 		newRequestBody := ioutil.NopCloser(bytes.NewBuffer(body))
 		req.Body = newRequestBody
 
-		log.Warn(ctx, ">>>[%v]", time.Now())
 		// Create a new HMAC by defining the hash type and the key (as byte array)
 		h := hmac.New(sha256.New, []byte(hook.HookSignKey))
 		h.Write(body)
 		sha := hex.EncodeToString(h.Sum(nil))
-		log.Warn(ctx, ">>>[%v]", time.Now())
 
 		if strings.TrimPrefix(signHeaderValue, "sha256=") != sha {
 			log.Error(ctx, "signature mismatch: got %s, compute %s", signHeaderValue, sha)
