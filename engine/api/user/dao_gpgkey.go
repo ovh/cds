@@ -65,7 +65,7 @@ func LoadGPGKeysByUserID(ctx context.Context, db gorp.SqlExecutor, userID string
 }
 
 func LoadGPGKeyByKeyID(ctx context.Context, db gorp.SqlExecutor, keyID string) (*sdk.UserGPGKey, error) {
-	_, next := telemetry.Span(ctx, "user.LoadGPGKeyByKeyID")
+	ctx, next := telemetry.Span(ctx, "user.LoadGPGKeyByKeyID")
 	defer next()
 	query := gorpmapping.NewQuery(`
     SELECT *

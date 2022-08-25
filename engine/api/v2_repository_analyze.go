@@ -360,7 +360,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 }
 
 func (api *API) analyzeCommitSignatureThroughVcsAPI(ctx context.Context, analysis *sdk.ProjectRepositoryAnalysis, vcsProject sdk.VCSProject, repoWithSecret sdk.ProjectRepository) error {
-	_, next := telemetry.Span(ctx, "api.analyzeCommitSignatureThroughVcsAPI")
+	ctx, next := telemetry.Span(ctx, "api.analyzeCommitSignatureThroughVcsAPI")
 	defer next()
 	tx, err := api.mustDB().Begin()
 	if err != nil {
@@ -406,7 +406,7 @@ func (api *API) analyzeCommitSignatureThroughVcsAPI(ctx context.Context, analysi
 }
 
 func (api *API) analyzeCommitSignatureThroughOperation(ctx context.Context, analysis *sdk.ProjectRepositoryAnalysis, vcsProject sdk.VCSProject, repoWithSecret sdk.ProjectRepository) error {
-	_, next := telemetry.Span(ctx, "api.analyzeCommitSignatureThroughOperation")
+	ctx, next := telemetry.Span(ctx, "api.analyzeCommitSignatureThroughOperation")
 	defer next()
 	if analysis.Data.OperationUUID == "" {
 		proj, err := project.Load(ctx, api.mustDB(), analysis.ProjectKey)
@@ -442,18 +442,14 @@ func (api *API) analyzeCommitSignatureThroughOperation(ctx context.Context, anal
 			return sdk.WithStack(err)
 		}
 
-		_, next := telemetry.Span(ctx, "api.analyzeCheckCommitThroughOperation.PostRepositoryOperation")
 		if err := operation.PostRepositoryOperation(ctx, tx, *proj, ope, nil); err != nil {
 			return err
 		}
-		next()
 		analysis.Data.OperationUUID = ope.UUID
 
-		_, next = telemetry.Span(ctx, "api.analyzeCheckCommitThroughOperation.UpdateAnalysis")
 		if err := repository.UpdateAnalysis(ctx, tx, analysis); err != nil {
 			return err
 		}
-		next()
 		if err := tx.Commit(); err != nil {
 			return sdk.WithStack(err)
 		}

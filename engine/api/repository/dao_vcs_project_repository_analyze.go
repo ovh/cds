@@ -112,7 +112,7 @@ func LoadRepositoryIDsAnalysisInProgress(ctx context.Context, db gorp.SqlExecuto
 }
 
 func LoadRepositoryAnalysisById(ctx context.Context, db gorp.SqlExecutor, projectRepoID, analysisID string) (*sdk.ProjectRepositoryAnalysis, error) {
-	_, next := telemetry.Span(ctx, "repository.LoadRepositoryAnalysisById")
+	ctx, next := telemetry.Span(ctx, "repository.LoadRepositoryAnalysisById")
 	defer next()
 	query := gorpmapping.NewQuery("SELECT * FROM project_repository_analysis WHERE project_repository_id = $1 AND id = $2").Args(projectRepoID, analysisID)
 	return getAnalysis(ctx, db, query)

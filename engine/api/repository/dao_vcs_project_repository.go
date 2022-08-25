@@ -99,7 +99,7 @@ func LoadAllRepositoriesByVCSProjectID(ctx context.Context, db gorp.SqlExecutor,
 }
 
 func LoadRepositoryByID(ctx context.Context, db gorp.SqlExecutor, id string, opts ...gorpmapping.GetOptionFunc) (*sdk.ProjectRepository, error) {
-	_, next := telemetry.Span(ctx, "repository.LoadRepositoryByID")
+	ctx, next := telemetry.Span(ctx, "repository.LoadRepositoryByID")
 	defer next()
 	query := gorpmapping.NewQuery(`SELECT project_repository.* FROM project_repository WHERE id = $1`).Args(id)
 	repo, err := getRepository(ctx, db, query, opts...)

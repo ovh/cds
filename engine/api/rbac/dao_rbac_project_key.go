@@ -52,7 +52,7 @@ func loadRRBACProjectKeys(ctx context.Context, db gorp.SqlExecutor, rbacProjectI
 }
 
 func HasRoleOnProjectAndUserID(ctx context.Context, db gorp.SqlExecutor, role string, userID string, projectKey string) (bool, error) {
-	_, next := telemetry.Span(ctx, "rbac.HasRoleOnProjectAndUserID")
+	ctx, next := telemetry.Span(ctx, "rbac.HasRoleOnProjectAndUserID")
 	defer next()
 	projectKeys, err := LoadProjectKeysByRoleAndUserID(ctx, db, role, userID)
 	if err != nil {
