@@ -50,7 +50,7 @@ func (c *vcsClient) IsGerrit(ctx context.Context, db gorp.SqlExecutor) (bool, er
 	return vcsServer.Type == "gerrit", nil
 }
 
-//LoadAll Load all RepositoriesManager from the database
+// LoadAll Load all RepositoriesManager from the database
 func LoadAll(ctx context.Context, db *gorp.DbMap, store cache.Store) (map[string]sdk.VCSConfiguration, error) {
 	srvs, err := services.LoadAllByType(ctx, db, sdk.TypeVCS)
 	if err != nil {
@@ -191,7 +191,7 @@ func (c *vcsConsumer) GetAuthorizedClient(ctx context.Context, token, secret str
 	}, nil
 }
 
-//AuthorizedClient returns an implementation of AuthorizedClient wrapping calls to vcs uService
+// AuthorizedClient returns an implementation of AuthorizedClient wrapping calls to vcs uService
 func AuthorizedClient(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, projectKey string, vcsName string) (sdk.VCSAuthorizedClientService, error) {
 	vcsProject, err := vcs.LoadVCSByProject(ctx, db, projectKey, vcsName, gorpmapping.GetOptions.WithDecryption)
 
@@ -622,14 +622,16 @@ func (c *vcsClient) IsDisableStatusDetails(ctx context.Context) bool {
 	return true
 }
 
-func (c *vcsClient) SetStatus(ctx context.Context, event sdk.Event, disableStatusDetails bool) error {
+func (c *vcsClient) SetStatus(ctx context.Context, event sdk.Event, _ bool) error {
 	if c.vcsProject != nil && c.vcsProject.Options.DisableStatus {
 		return nil
 	}
 
-	// query param disableStatusDetails
-
 	path := fmt.Sprintf("/vcs/%s/status", c.name)
+	if c.vcsProject != nil && c.vcsProject.Options.DisableStatusDetails {
+		path += "?disableStatusDetails=true"
+	}
+
 	_, err := c.doJSONRequest(ctx, "POST", path, event, nil)
 	return sdk.NewErrorFrom(err, "unable to set status on %s (workflow: %s, application: %s)", event.WorkflowName, event.ApplicationName, c.name)
 }
