@@ -2,6 +2,7 @@ package vcs
 
 import (
 	"context"
+	"github.com/ovh/cds/sdk/telemetry"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -84,6 +85,8 @@ func LoadVCSByProject(ctx context.Context, db gorp.SqlExecutor, projectKey strin
 }
 
 func LoadVCSByID(ctx context.Context, db gorp.SqlExecutor, projectKey string, vcsID string, opts ...gorpmapping.GetOptionFunc) (*sdk.VCSProject, error) {
+	_, next := telemetry.Span(ctx, "vcs.LoadVCSByID")
+	defer next()
 	query := gorpmapping.NewQuery(`SELECT vcs_project.* FROM vcs_project JOIN project ON project.id = vcs_project.project_id WHERE project.projectkey = $1 AND vcs_project.id = $2`).Args(projectKey, vcsID)
 	var res dbVCSProject
 	found, err := gorpmapping.Get(ctx, db, query, &res, opts...)

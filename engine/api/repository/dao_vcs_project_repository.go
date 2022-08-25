@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"github.com/ovh/cds/sdk/telemetry"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -97,13 +98,15 @@ func LoadAllRepositoriesByVCSProjectID(ctx context.Context, db gorp.SqlExecutor,
 	return repositories, nil
 }
 
-func LoadRepositoryByID(ctx context.Context, db gorp.SqlExecutor, id string, opts ...gorpmapping.GetOptionFunc) (sdk.ProjectRepository, error) {
+func LoadRepositoryByID(ctx context.Context, db gorp.SqlExecutor, id string, opts ...gorpmapping.GetOptionFunc) (*sdk.ProjectRepository, error) {
+	_, next := telemetry.Span(ctx, "repository.LoadRepositoryByID")
+	defer next()
 	query := gorpmapping.NewQuery(`SELECT project_repository.* FROM project_repository WHERE id = $1`).Args(id)
 	repo, err := getRepository(ctx, db, query, opts...)
 	if err != nil {
-		return sdk.ProjectRepository{}, sdk.WrapError(err, "unable to get repository %s", id)
+		return nil, sdk.WrapError(err, "unable to get repository %s", id)
 	}
-	return *repo, nil
+	return repo, nil
 }
 
 func LoadAllRepositories(ctx context.Context, db gorp.SqlExecutor) ([]sdk.ProjectRepository, error) {

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/ovh/cds/sdk/telemetry"
 	"net/http"
 	"time"
 
@@ -151,6 +152,8 @@ func GetRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, uuid strin
 
 // Poll repository operation for given uuid.
 func Poll(ctx context.Context, db gorp.SqlExecutor, operationUUID string) (*sdk.Operation, error) {
+	_, next := telemetry.Span(ctx, "operation.Poll")
+	defer next()
 	f := func() (*sdk.Operation, error) {
 		ope, err := GetRepositoryOperation(ctx, db, operationUUID)
 		if err != nil {

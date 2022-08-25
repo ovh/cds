@@ -214,7 +214,7 @@ func (api *API) getVCSProjectRepositoryAllHandler() ([]service.RbacChecker, serv
 		}
 }
 
-func (api *API) getRepositoryHookLinkHandler() ([]service.RbacChecker, service.Handler) {
+func (api *API) postRepositoryHookLinkHandler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(rbac.ProjectManage),
 		func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 			vars := mux.Vars(r)
@@ -237,6 +237,23 @@ func (api *API) getRepositoryHookLinkHandler() ([]service.RbacChecker, service.H
 			if err != nil {
 				return err
 			}
+			newSecret, err := sdk.GenerateHookSecret()
+			if err != nil {
+				return err
+			}
+			repo.HookSignKey = newSecret
+
+			tx, err := api.mustDB().Begin()
+			if err != nil {
+				return sdk.WithStack(err)
+			}
+			if err := repository.Update(ctx, tx, repo); err != nil {
+				return err
+			}
+			if err := tx.Commit(); err != nil {
+				return sdk.WithStack(err)
+			}
+
 			srvs, err := services.LoadAllByType(ctx, api.mustDB(), sdk.TypeHooks)
 			if err != nil {
 				return err

@@ -1,15 +1,18 @@
 package hooks
 
 import (
+	"bytes"
 	"context"
 	"crypto/hmac"
 	"crypto/rsa"
 	"crypto/sha256"
 	"encoding/hex"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/rockbears/log"
@@ -76,13 +79,6 @@ func (s *Service) CheckHeaderToken(headerName string) service.Middleware {
 		if tokenHeaderValue != hook.HookSignKey {
 			return ctx, sdk.NewErrorFrom(sdk.ErrUnauthorized, "token mismatch")
 		}
-
-		body, err := io.ReadAll(req.Body)
-		if err != nil {
-			return ctx, sdk.NewErrorFrom(sdk.ErrUnauthorized, "unable to check signature")
-		}
-
-		ctx = context.WithValue(ctx, "body", body)
 		return ctx, nil
 	}
 }
@@ -107,17 +103,20 @@ func (s *Service) CheckHmac256Signature(headerName string) service.Middleware {
 			return ctx, sdk.NewErrorFrom(sdk.ErrUnauthorized, "unable to check signature")
 		}
 
+		newRequestBody := ioutil.NopCloser(bytes.NewBuffer(body))
+		req.Body = newRequestBody
+
+		log.Warn(ctx, ">>>[%v]", time.Now())
 		// Create a new HMAC by defining the hash type and the key (as byte array)
 		h := hmac.New(sha256.New, []byte(hook.HookSignKey))
 		h.Write(body)
 		sha := hex.EncodeToString(h.Sum(nil))
+		log.Warn(ctx, ">>>[%v]", time.Now())
 
 		if strings.TrimPrefix(signHeaderValue, "sha256=") != sha {
 			log.Error(ctx, "signature mismatch: got %s, compute %s", signHeaderValue, sha)
 			return ctx, sdk.NewErrorFrom(sdk.ErrUnauthorized, "wrong signature")
 		}
-
-		ctx = context.WithValue(ctx, "body", body)
 		return ctx, nil
 	}
 }

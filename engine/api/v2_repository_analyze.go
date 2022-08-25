@@ -233,75 +233,58 @@ func (api *API) repositoryAnalysisPoller(ctx context.Context, tick time.Duration
 
 func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, analysisID string) error {
 	_, next := telemetry.Span(ctx, "api.analyzeRepository.lock")
+	defer next()
+
 	lockKey := cache.Key("api:analyzeRepository", analysisID)
 	b, err := api.Cache.Lock(lockKey, 5*time.Minute, 0, 1)
 	if err != nil {
-		next()
 		return err
 	}
 	if !b {
 		log.Debug(ctx, "api.analyzeRepository> analyze %s is locked in cache", analysisID)
-		next()
 		return nil
 	}
-	next()
 	defer func() {
 		_ = api.Cache.Unlock(lockKey)
 	}()
 
-	_, next = telemetry.Span(ctx, "api.analyzeRepository.LoadRepositoryAnalysisById")
 	analysis, err := repository.LoadRepositoryAnalysisById(ctx, api.mustDB(), projectRepoID, analysisID)
 	if sdk.ErrorIs(err, sdk.ErrNotFound) {
-		next()
 		return nil
 	}
 	if err != nil {
-		next()
 		return sdk.WrapError(err, "unable to load analyze %s", analysis.ID)
 	}
-	next()
 
 	if analysis.Status != sdk.RepositoryAnalysisStatusInProgress {
 		return nil
 	}
 
-	_, next = telemetry.Span(ctx, "api.analyzeRepository.LoadVCSByID")
 	vcsProject, err := vcs.LoadVCSByID(ctx, api.mustDB(), analysis.ProjectKey, analysis.VCSProjectID)
 	if err != nil {
-		next()
 		if sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return api.stopAnalysis(ctx, analysis, err)
 		}
 		return err
 	}
-	next()
 
-	_, next = telemetry.Span(ctx, "api.analyzeRepository.LoadRepositoryByID")
 	repoWithSecret, err := repository.LoadRepositoryByID(ctx, api.mustDB(), analysis.ProjectRepositoryID, gorpmapping.GetOptions.WithDecryption)
 	if err != nil {
-		next()
 		if sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return api.stopAnalysis(ctx, analysis, err)
 		}
 		return err
 	}
-	next()
 
 	switch vcsProject.Type {
 	case sdk.VCSTypeBitbucketServer, sdk.VCSTypeBitbucketCloud, sdk.VCSTypeGitlab, sdk.VCSTypeGerrit:
-		_, next = telemetry.Span(ctx, "api.analyzeRepository.analyzeCommitSignatureThroughOperation")
-		if err := api.analyzeCommitSignatureThroughOperation(ctx, analysis, *vcsProject, repoWithSecret); err != nil {
-			next()
+		if err := api.analyzeCommitSignatureThroughOperation(ctx, analysis, *vcsProject, *repoWithSecret); err != nil {
 			return err
 		}
-		next()
 	case sdk.VCSTypeGitea, sdk.VCSTypeGithub:
-		_, next = telemetry.Span(ctx, "api.analyzeRepository.analyzeCommitSignatureThroughVcsAPI")
-		if err := api.analyzeCommitSignatureThroughVcsAPI(ctx, analysis, *vcsProject, repoWithSecret); err != nil {
-			next()
+		if err := api.analyzeCommitSignatureThroughVcsAPI(ctx, analysis, *vcsProject, *repoWithSecret); err != nil {
 			return err
 		}
-		next()
 	default:
 		return sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to analyze vcs type: %s", vcsProject.Type)
 	}
@@ -317,30 +300,24 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 
 	if analysis.Status == sdk.RepositoryAnalysisStatusInProgress {
 		var cdsUser *sdk.AuthentifiedUser
-		_, next = telemetry.Span(ctx, "api.analyzeRepository.LoadGPGKeyByKeyID")
 		gpgKey, err := user.LoadGPGKeyByKeyID(ctx, tx, analysis.Data.SignKeyID)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
-				next()
 				return sdk.WrapError(err, "unable to find gpg key: %s", analysis.Data.SignKeyID)
 			}
 			analysis.Status = sdk.RepositoryAnalysisStatusSkipped
 			analysis.Data.Error = fmt.Sprintf("gpgkey %s not found", analysis.Data.SignKeyID)
 		}
-		next()
 
 		if gpgKey != nil {
-			_, next = telemetry.Span(ctx, "api.analyzeRepository.LoadByID")
 			cdsUser, err = user.LoadByID(ctx, tx, gpgKey.AuthentifiedUserID)
 			if err != nil {
 				if !sdk.ErrorIs(err, sdk.ErrNotFound) {
-					next()
 					return sdk.WrapError(err, "unable to find user %s", gpgKey.AuthentifiedUserID)
 				}
 				analysis.Status = sdk.RepositoryAnalysisStatusError
 				analysis.Data.Error = fmt.Sprintf("user %s not found", gpgKey.AuthentifiedUserID)
 			}
-			next()
 		}
 
 		if cdsUser != nil {
@@ -348,13 +325,10 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 			analysis.Data.CDSUserName = cdsUser.Username
 
 			// Check user right
-			_, next = telemetry.Span(ctx, "api.analyzeRepository.HasRoleOnProjectAndUserID")
 			b, err := rbac.HasRoleOnProjectAndUserID(ctx, tx, sdk.RoleManage, cdsUser.ID, analysis.ProjectKey)
 			if err != nil {
-				next()
 				return err
 			}
-			next()
 			if !b {
 				analysis.Status = sdk.RepositoryAnalysisStatusSkipped
 				analysis.Data.Error = fmt.Sprintf("user %s doesn't have enough right on project %s", cdsUser.ID, analysis.ProjectKey)
@@ -369,14 +343,10 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 				switch vcsProject.Type {
 				case sdk.VCSTypeBitbucketServer, sdk.VCSTypeBitbucketCloud:
 					// get archive
-					_, next = telemetry.Span(ctx, "api.analyzeRepository.getCdsArchiveFileOnRepo")
-					err = api.getCdsArchiveFileOnRepo(ctx, client, repoWithSecret, analysis)
-					next()
+					err = api.getCdsArchiveFileOnRepo(ctx, client, *repoWithSecret, analysis)
 				case sdk.VCSTypeGitlab, sdk.VCSTypeGithub, sdk.VCSTypeGitea:
 					analysis.Data.Entities = make([]sdk.ProjectRepositoryDataEntity, 0)
-					_, next = telemetry.Span(ctx, "api.analyzeRepository.getCdsFilesOnVCSDirectory")
 					err = api.getCdsFilesOnVCSDirectory(ctx, client, analysis, repoWithSecret.Name, analysis.Commit, ".cds")
-					next()
 				case sdk.VCSTypeGerrit:
 					return sdk.WithStack(sdk.ErrNotImplemented)
 				}
@@ -390,16 +360,15 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 		}
 	}
 
-	_, next = telemetry.Span(ctx, "api.analyzeRepository.getCdsFilesOnVCSDirectory")
 	if err := repository.UpdateAnalysis(ctx, tx, analysis); err != nil {
-		next()
 		return sdk.WrapError(err, "unable to failed analyze")
 	}
-	next()
 	return sdk.WithStack(tx.Commit())
 }
 
 func (api *API) analyzeCommitSignatureThroughVcsAPI(ctx context.Context, analysis *sdk.ProjectRepositoryAnalysis, vcsProject sdk.VCSProject, repoWithSecret sdk.ProjectRepository) error {
+	_, next := telemetry.Span(ctx, "api.analyzeCommitSignatureThroughVcsAPI")
+	defer next()
 	tx, err := api.mustDB().Begin()
 	if err != nil {
 		return sdk.WithStack(err)
@@ -444,6 +413,8 @@ func (api *API) analyzeCommitSignatureThroughVcsAPI(ctx context.Context, analysi
 }
 
 func (api *API) analyzeCommitSignatureThroughOperation(ctx context.Context, analysis *sdk.ProjectRepositoryAnalysis, vcsProject sdk.VCSProject, repoWithSecret sdk.ProjectRepository) error {
+	_, next := telemetry.Span(ctx, "api.analyzeCommitSignatureThroughOperation")
+	defer next()
 	if analysis.Data.OperationUUID == "" {
 		proj, err := project.Load(ctx, api.mustDB(), analysis.ProjectKey)
 		if err != nil {
@@ -497,13 +468,10 @@ func (api *API) analyzeCommitSignatureThroughOperation(ctx context.Context, anal
 			return sdk.WithStack(err)
 		}
 	}
-	_, next := telemetry.Span(ctx, "api.analyzeRepository.Poll")
 	ope, err := operation.Poll(ctx, api.mustDB(), analysis.Data.OperationUUID)
 	if err != nil {
-		next()
 		return err
 	}
-	next()
 
 	if ope.Status == sdk.OperationStatusDone && ope.Setup.Checkout.Result.CommitVerified {
 		analysis.Data.CommitCheck = true
@@ -523,6 +491,8 @@ func (api *API) analyzeCommitSignatureThroughOperation(ctx context.Context, anal
 }
 
 func (api *API) getCdsFilesOnVCSDirectory(ctx context.Context, client sdk.VCSAuthorizedClientService, analysis *sdk.ProjectRepositoryAnalysis, repoName, commit, directory string) error {
+	_, next := telemetry.Span(ctx, "api.getCdsFilesOnVCSDirectory")
+	defer next()
 	contents, err := client.ListContent(ctx, repoName, commit, directory)
 	if err != nil {
 		return sdk.WrapError(err, "unable to list content on commit [%s] in directory %s: %v", commit, directory, err)
@@ -544,6 +514,8 @@ func (api *API) getCdsFilesOnVCSDirectory(ctx context.Context, client sdk.VCSAut
 }
 
 func (api *API) getCdsArchiveFileOnRepo(ctx context.Context, client sdk.VCSAuthorizedClientService, repo sdk.ProjectRepository, analysis *sdk.ProjectRepositoryAnalysis) error {
+	_, next := telemetry.Span(ctx, "api.getCdsArchiveFileOnRepo")
+	defer next()
 	analysis.Data.Entities = make([]sdk.ProjectRepositoryDataEntity, 0)
 	reader, _, err := client.GetArchive(ctx, repo.Name, ".cds", "tar.gz", analysis.Commit)
 	if err != nil {
@@ -579,6 +551,7 @@ func (api *API) getCdsArchiveFileOnRepo(ctx context.Context, client sdk.VCSAutho
 }
 
 func (api *API) stopAnalysis(ctx context.Context, analysis *sdk.ProjectRepositoryAnalysis, originalError error) error {
+	log.ErrorWithStackTrace(ctx, originalError)
 	tx, err := api.mustDB().Begin()
 	if err != nil {
 		return sdk.WithStack(err)
@@ -592,5 +565,5 @@ func (api *API) stopAnalysis(ctx context.Context, analysis *sdk.ProjectRepositor
 	if err := tx.Commit(); err != nil {
 		return err
 	}
-	return originalError
+	return nil
 }
