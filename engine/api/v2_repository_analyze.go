@@ -253,7 +253,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 		return nil
 	}
 	if err != nil {
-		return sdk.WrapError(err, "unable to load analyze %s", analysis.ID)
+		return api.stopAnalysis(ctx, analysis, sdk.WrapError(err, "unable to load analyze %s", analysis.ID))
 	}
 
 	if analysis.Status != sdk.RepositoryAnalysisStatusInProgress {
@@ -262,31 +262,25 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 
 	vcsProject, err := vcs.LoadVCSByID(ctx, api.mustDB(), analysis.ProjectKey, analysis.VCSProjectID)
 	if err != nil {
-		if sdk.ErrorIs(err, sdk.ErrNotFound) {
-			return api.stopAnalysis(ctx, analysis, err)
-		}
-		return err
+		return api.stopAnalysis(ctx, analysis, err)
 	}
 
 	repoWithSecret, err := repository.LoadRepositoryByID(ctx, api.mustDB(), analysis.ProjectRepositoryID, gorpmapping.GetOptions.WithDecryption)
 	if err != nil {
-		if sdk.ErrorIs(err, sdk.ErrNotFound) {
-			return api.stopAnalysis(ctx, analysis, err)
-		}
-		return err
+		return api.stopAnalysis(ctx, analysis, err)
 	}
 
 	switch vcsProject.Type {
 	case sdk.VCSTypeBitbucketServer, sdk.VCSTypeBitbucketCloud, sdk.VCSTypeGitlab, sdk.VCSTypeGerrit:
 		if err := api.analyzeCommitSignatureThroughOperation(ctx, analysis, *vcsProject, *repoWithSecret); err != nil {
-			return err
+			return api.stopAnalysis(ctx, analysis, err)
 		}
 	case sdk.VCSTypeGitea, sdk.VCSTypeGithub:
 		if err := api.analyzeCommitSignatureThroughVcsAPI(ctx, analysis, *vcsProject, *repoWithSecret); err != nil {
-			return err
+			return api.stopAnalysis(ctx, analysis, err)
 		}
 	default:
-		return sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to analyze vcs type: %s", vcsProject.Type)
+		return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to analyze vcs type: %s", vcsProject.Type))
 	}
 
 	// remove secret from repo
@@ -294,7 +288,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 
 	tx, err := api.mustDB().Begin()
 	if err != nil {
-		return sdk.WithStack(err)
+		return api.stopAnalysis(ctx, analysis, sdk.WithStack(err))
 	}
 	defer tx.Rollback() //nolint
 
@@ -303,7 +297,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 		gpgKey, err := user.LoadGPGKeyByKeyID(ctx, tx, analysis.Data.SignKeyID)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
-				return sdk.WrapError(err, "unable to find gpg key: %s", analysis.Data.SignKeyID)
+				return api.stopAnalysis(ctx, analysis, sdk.WrapError(err, "unable to find gpg key: %s", analysis.Data.SignKeyID))
 			}
 			analysis.Status = sdk.RepositoryAnalysisStatusSkipped
 			analysis.Data.Error = fmt.Sprintf("gpgkey %s not found", analysis.Data.SignKeyID)
@@ -313,7 +307,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 			cdsUser, err = user.LoadByID(ctx, tx, gpgKey.AuthentifiedUserID)
 			if err != nil {
 				if !sdk.ErrorIs(err, sdk.ErrNotFound) {
-					return sdk.WrapError(err, "unable to find user %s", gpgKey.AuthentifiedUserID)
+					return api.stopAnalysis(ctx, analysis, sdk.WrapError(err, "unable to find user %s", gpgKey.AuthentifiedUserID))
 				}
 				analysis.Status = sdk.RepositoryAnalysisStatusError
 				analysis.Data.Error = fmt.Sprintf("user %s not found", gpgKey.AuthentifiedUserID)
@@ -327,7 +321,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 			// Check user right
 			b, err := rbac.HasRoleOnProjectAndUserID(ctx, tx, sdk.RoleManage, cdsUser.ID, analysis.ProjectKey)
 			if err != nil {
-				return err
+				return api.stopAnalysis(ctx, analysis, err)
 			}
 			if !b {
 				analysis.Status = sdk.RepositoryAnalysisStatusSkipped
@@ -337,7 +331,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 			if analysis.Status == sdk.RepositoryAnalysisStatusInProgress {
 				client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, analysis.ProjectKey, vcsProject.Name)
 				if err != nil {
-					return err
+					return api.stopAnalysis(ctx, analysis, err)
 				}
 
 				switch vcsProject.Type {
@@ -351,8 +345,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 					return sdk.WithStack(sdk.ErrNotImplemented)
 				}
 				if err != nil {
-					analysis.Status = sdk.RepositoryAnalysisStatusError
-					analysis.Data.Error = err.Error()
+					return api.stopAnalysis(ctx, analysis, err)
 				} else {
 					analysis.Status = sdk.RepositoryAnalysisStatusSucceed
 				}
@@ -418,9 +411,6 @@ func (api *API) analyzeCommitSignatureThroughOperation(ctx context.Context, anal
 	if analysis.Data.OperationUUID == "" {
 		proj, err := project.Load(ctx, api.mustDB(), analysis.ProjectKey)
 		if err != nil {
-			if sdk.ErrorIs(err, sdk.ErrNotFound) {
-				return api.stopAnalysis(ctx, analysis, err)
-			}
 			return err
 		}
 
