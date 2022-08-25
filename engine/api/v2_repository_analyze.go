@@ -232,7 +232,7 @@ func (api *API) repositoryAnalysisPoller(ctx context.Context, tick time.Duration
 }
 
 func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, analysisID string) error {
-	_, next := telemetry.Span(ctx, "api.analyzeRepository.lock")
+	ctx, next := telemetry.Span(ctx, "api.analyzeRepository.lock")
 	defer next()
 
 	lockKey := cache.Key("api:analyzeRepository", analysisID)
@@ -477,7 +477,7 @@ func (api *API) analyzeCommitSignatureThroughOperation(ctx context.Context, anal
 }
 
 func (api *API) getCdsFilesOnVCSDirectory(ctx context.Context, client sdk.VCSAuthorizedClientService, analysis *sdk.ProjectRepositoryAnalysis, repoName, commit, directory string) error {
-	_, next := telemetry.Span(ctx, "api.getCdsFilesOnVCSDirectory")
+	ctx, next := telemetry.Span(ctx, "api.getCdsFilesOnVCSDirectory")
 	defer next()
 	contents, err := client.ListContent(ctx, repoName, commit, directory)
 	if err != nil {
@@ -500,7 +500,7 @@ func (api *API) getCdsFilesOnVCSDirectory(ctx context.Context, client sdk.VCSAut
 }
 
 func (api *API) getCdsArchiveFileOnRepo(ctx context.Context, client sdk.VCSAuthorizedClientService, repo sdk.ProjectRepository, analysis *sdk.ProjectRepositoryAnalysis) error {
-	_, next := telemetry.Span(ctx, "api.getCdsArchiveFileOnRepo")
+	ctx, next := telemetry.Span(ctx, "api.getCdsArchiveFileOnRepo")
 	defer next()
 	analysis.Data.Entities = make([]sdk.ProjectRepositoryDataEntity, 0)
 	reader, _, err := client.GetArchive(ctx, repo.Name, ".cds", "tar.gz", analysis.Commit)
