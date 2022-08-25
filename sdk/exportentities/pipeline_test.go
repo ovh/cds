@@ -617,6 +617,58 @@ jobs:
 	assert.Len(t, p.Stages[0].Jobs[0].Action.Requirements, 2)
 }
 
+func Test_ImportPipelineWithPromote(t *testing.T) {
+	in := `version: v1.0
+name: push-artifact
+stages:
+- Stage 1
+- Stage 2
+- Stage 3
+- Stage 4
+jobs:
+- job: Push-artifact
+  stage: Stage 1
+  steps:
+  - script:
+    - env > env.txt
+  - artifactUpload:
+      path: env.txt
+      tag: '{{.cds.version}}'
+- job: Release-to-staging
+  stage: Stage 2
+  steps:
+  - promote:
+      artifacts: .*
+      srcMaturity: snapshot
+      destMaturity: staging
+- job: Release-to-rc
+  stage: Stage 3
+  steps:
+  - release:
+      artifacts: .*
+      srcMaturity: staging
+      destMaturity: rc
+- job: Release-to-release
+  stage: Stage 4
+  steps:
+  - release:
+      artifacts: .*
+      srcMaturity: rc
+      destMaturity: release
+`
+
+	payload := &exportentities.PipelineV1{}
+	test.NoError(t, yaml.Unmarshal([]byte(in), payload))
+
+	p, err := payload.Pipeline()
+	test.NoError(t, err)
+
+	assert.Len(t, p.Stages[0].Jobs[0].Action.Actions, 2)
+	assert.Len(t, p.Stages[1].Jobs[0].Action.Actions, 1)
+	assert.Len(t, p.Stages[2].Jobs[0].Action.Actions, 1)
+	assert.Len(t, p.Stages[3].Jobs[0].Action.Actions, 1)
+}
+
 func Test_ImportPipelineWithGitClone(t *testing.T) {
 	in := `name: build-all-images
 jobs:
