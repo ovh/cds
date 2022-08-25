@@ -3390,6 +3390,20 @@ func (mr *MockQueueClientMockRecorder) QueueWorkflowRunResultsAdd(ctx, jobID, ad
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueWorkflowRunResultsAdd", reflect.TypeOf((*MockQueueClient)(nil).QueueWorkflowRunResultsAdd), ctx, jobID, addRequest)
 }
 
+// QueueWorkflowRunResultsRelease mocks base method.
+func (m *MockQueueClient) QueueWorkflowRunResultsRelease(ctx context.Context, permJobID int64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "QueueWorkflowRunResultsRelease", ctx, permJobID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// QueueWorkflowRunResultsRelease indicates an expected call of QueueWorkflowRunResultsRelease.
+func (mr *MockQueueClientMockRecorder) QueueWorkflowRunResultsRelease(ctx, permJobID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueWorkflowRunResultsRelease", reflect.TypeOf((*MockQueueClient)(nil).QueueWorkflowRunResultsRelease), ctx, permJobID)
+}
+
 // MockUserClient is a mock of UserClient interface.
 type MockUserClient struct {
 	ctrl     *gomock.Controller
@@ -7452,6 +7466,20 @@ func (mr *MockInterfaceMockRecorder) QueueWorkflowRunResultsAdd(ctx, jobID, addR
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueWorkflowRunResultsAdd", reflect.TypeOf((*MockInterface)(nil).QueueWorkflowRunResultsAdd), ctx, jobID, addRequest)
 }
 
+// QueueWorkflowRunResultsRelease mocks base method.
+func (m *MockInterface) QueueWorkflowRunResultsRelease(ctx context.Context, permJobID int64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "QueueWorkflowRunResultsRelease", ctx, permJobID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// QueueWorkflowRunResultsRelease indicates an expected call of QueueWorkflowRunResultsRelease.
+func (mr *MockInterfaceMockRecorder) QueueWorkflowRunResultsRelease(ctx, permJobID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueWorkflowRunResultsRelease", reflect.TypeOf((*MockInterface)(nil).QueueWorkflowRunResultsRelease), ctx, permJobID)
+}
+
 // RepositoriesList mocks base method.
 func (m *MockInterface) RepositoriesList(projectKey, repoManager string, resync bool) ([]sdk.VCSRepo, error) {
 	m.ctrl.T.Helper()
@@ -9553,6 +9581,20 @@ func (m *MockWorkerInterface) QueueWorkflowRunResultsAdd(ctx context.Context, jo
 func (mr *MockWorkerInterfaceMockRecorder) QueueWorkflowRunResultsAdd(ctx, jobID, addRequest interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueWorkflowRunResultsAdd", reflect.TypeOf((*MockWorkerInterface)(nil).QueueWorkflowRunResultsAdd), ctx, jobID, addRequest)
+}
+
+// QueueWorkflowRunResultsRelease mocks base method.
+func (m *MockWorkerInterface) QueueWorkflowRunResultsRelease(ctx context.Context, permJobID int64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "QueueWorkflowRunResultsRelease", ctx, permJobID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// QueueWorkflowRunResultsRelease indicates an expected call of QueueWorkflowRunResultsRelease.
+func (mr *MockWorkerInterfaceMockRecorder) QueueWorkflowRunResultsRelease(ctx, permJobID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueWorkflowRunResultsRelease", reflect.TypeOf((*MockWorkerInterface)(nil).QueueWorkflowRunResultsRelease), ctx, permJobID)
 }
 
 // Requirements mocks base method.

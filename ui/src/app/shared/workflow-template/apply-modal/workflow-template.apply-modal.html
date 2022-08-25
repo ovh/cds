@@ -1,56 +1,63 @@
-<ng-template let-context let-modal="modal" #workflowTemplateApplyModal>
-    <div class="header">
-        {{'workflow_template_update_title' | translate}}
-    </div>
-    <div class="content scrolling">
-        <div class="ui form">
-            <div class="ui grid">
-                <div class="sixteen wide column">
-                    <div *ngIf="!this.workflow || !this.workflow.from_repository" class="ui blue message">
-                        {{'workflow_template_update_info_line_1' | translate}}
-                    </div>
-                    <div *ngIf="this.workflow && this.workflow.from_repository" class="ui blue message">
-                        {{'workflow_template_update_info_line_2' | translate}}
-                    </div>
-                </div>
-                <div class="sixteen wide column loading" *ngIf="!project || !workflowTemplate || !workflowTemplateInstance">
-                    <div class="ui active dimmer">
-                        <div class="ui text loader">{{ 'common_loading' | translate }}</div>
-                    </div>
-                </div>
-                <div class="sixteen wide column" *ngIf="project && workflowTemplate && workflowTemplateInstance">
-                    <div class="ui wide sixteen field">
-                        <div class="fields">
-                            <div class="six wide field">
-                                <label>{{'common_name' | translate}}</label>
-                                <input class="ui input" type="text" name="name" [disabled]="true" [ngModel]="workflowTemplate.name">
-                            </div>
-                            <div class="six wide field">
-                                <label>{{'common_group' | translate}}</label>
-                                <input class="ui input" type="text" name="group" [disabled]="true" [ngModel]="workflowTemplate.group.name">
-                            </div>
-                            <div class="four wide field right aligned">
-                                <div *ngIf="workflowTemplateInstance.workflow_template_version === workflowTemplate.version"
-                                    class="ui label green"> {{'common_up_to_date' | translate}}</div>
-                                <a *ngIf="workflowTemplateInstance.workflow_template_version !== workflowTemplate.version"
-                                    class="ui orange label" (click)="toggleDiff()" [title]="'workflow_template_update_info_btn' | translate">
-                                    {{'common_not_up_to_date' | translate }}</a>
-                            </div>
-                        </div>
-                        <div *ngIf="workflowTemplateAuditMessages && workflowTemplateAuditMessages.length > 0" class="sixteen wide field">
-                            <div class="ui orange message">
-                                <markdown *ngFor="let m of workflowTemplateAuditMessages">{{m}}</markdown>
-                            </div>
-                        </div>
-                        <div *ngIf="diffVisible" class="ui wide sixteen field">
-                            <app-diff-list [items]="diffItems"></app-diff-list>
-                        </div>
-                        <app-workflow-template-apply-form [project]="project" [workflow]="workflow" [workflowTemplate]="workflowTemplate"
-                            [workflowTemplateInstance]="workflowTemplateInstance" [withClose]="true" (close)="clickClose()"
-                            (apply)="onApply()"></app-workflow-template-apply-form>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</ng-template>
+<nz-spin nzTip="Loading..." *ngIf="!project || !workflowTemplate || !workflowTemplateInstance"></nz-spin>
+
+<div class="content" *ngIf="project && workflowTemplate && workflowTemplateInstance">
+    <nz-row>
+        <nz-col [nzSpan]="24">
+            <nz-alert *ngIf="!this.workflow || !this.workflow.from_repository"
+                      nzType="info" nzMessage="{{'workflow_template_update_info_line_1' | translate}}">
+            </nz-alert>
+            <nz-alert *ngIf="this.workflow && this.workflow.from_repository"
+                      nzType="info" nzMessage="{{'workflow_template_update_info_line_2' | translate}}">
+            </nz-alert>
+        </nz-col>
+    </nz-row>
+    <nz-row>
+        <nz-col [nzSpan]="4">
+            Name
+        </nz-col>
+        <nz-col [nzSpan]="8">
+            <input nz-input type="text" name="name" [disabled]="true" [ngModel]="workflowTemplate.name">
+        </nz-col>
+    </nz-row>
+    <nz-row>
+        <nz-col [nzSpan]="4">
+            Group
+        </nz-col>
+        <nz-col [nzSpan]="8">
+            <input nz-input type="text" name="group" [disabled]="true" [ngModel]="workflowTemplate.group.name">
+        </nz-col>
+        <nz-col [nzSpan]="4" [nzOffset]="8">
+            <nz-tag [nzColor]="'green'"
+                    *ngIf="workflowTemplateInstance.workflow_template_version === workflowTemplate.version">
+                Up to date
+            </nz-tag>
+            <nz-tag class="pointer" nzColor="orange"
+                    *ngIf="workflowTemplateInstance.workflow_template_version !== workflowTemplate.version"
+                    (click)="toggleDiff()" [title]="'workflow_template_update_info_btn' | translate">
+                {{'common_not_up_to_date' | translate }}
+            </nz-tag>
+        </nz-col>
+    </nz-row>
+    <nz-row *ngIf="workflowTemplateAuditMessages && workflowTemplateAuditMessages.length > 0">
+        <nz-col [nzSpan]="24">
+            <nz-alert nzType="warning" [nzMessage]="auditTmpl"></nz-alert>
+            <ng-template #auditTmpl>
+                <markdown *ngFor="let m of workflowTemplateAuditMessages">{{m}}</markdown>
+            </ng-template>
+        </nz-col>
+    </nz-row>
+    <nz-row *ngIf="diffVisible">
+        <nz-col [nzSpan]="24">
+            <app-diff-list [items]="diffItems"></app-diff-list>
+        </nz-col>
+    </nz-row>
+    <nz-row>
+        <nz-col [nzSpan]="24">
+            <app-workflow-template-apply-form [project]="project" [workflow]="workflow"
+                                              [workflowTemplate]="workflowTemplate"
+                                              [workflowTemplateInstance]="workflowTemplateInstance" [withClose]="true"
+                                              (close)="clickClose()"
+                                              (apply)="onApply()"></app-workflow-template-apply-form>
+        </nz-col>
+    </nz-row>
+</div>

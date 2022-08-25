@@ -1,4 +1,7 @@
 @import '../../../../../common';
+nz-form-item {
+  padding: 0 10px;
+}
 .codeContainer {
     position: relative;
 }
@@ -7,12 +10,17 @@ nz-select {
   width: 100%;
 }
 
-h2 {
-    text-align: center;
+h3 {
+  margin-bottom: 10px;
 }
 
-.centeredField {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
+.subItem {
+  margin-top: 10px;
+}
+
+button {
+  margin-left: 20px;
+}
+button.floatRight {
+  float: right;
 }

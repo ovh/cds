@@ -4,11 +4,9 @@ import {
     Component,
     EventEmitter,
     Input,
-    OnChanges,
+    OnChanges, OnInit,
     Output,
-    ViewChild
 } from '@angular/core';
-import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { LoadOpts, Project } from 'app/model/project.model';
 import { WorkflowTemplate, WorkflowTemplateInstance } from 'app/model/workflow-template.model';
 import { Workflow } from 'app/model/workflow.model';
@@ -19,6 +17,8 @@ import { calculateWorkflowTemplateDiff } from 'app/shared/diff/diff';
 import { Item } from 'app/shared/diff/list/diff.list.component';
 import { forkJoin } from 'rxjs';
 import { finalize } from 'rxjs/operators';
+import { NzModalRef } from 'ng-zorro-antd/modal';
+import { ToastService } from 'app/shared/toast/ToastService';
 
 @Component({
     selector: 'app-workflow-template-apply-modal',
@@ -26,12 +26,7 @@ import { finalize } from 'rxjs/operators';
     styleUrls: ['./workflow-template.apply-modal.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class WorkflowTemplateApplyModalComponent implements OnChanges {
-
-    @ViewChild('workflowTemplateApplyModal') workflowTemplateApplyModal: ModalTemplate<boolean, boolean, void>;
-
-    modal: SuiActiveModal<boolean, boolean, void>;
-    open: boolean;
+export class WorkflowTemplateApplyModalComponent implements OnInit, OnChanges {
 
     // eslint-disable-next-line @angular-eslint/no-input-rename
     @Input('project') projectIn: Project;
@@ -53,44 +48,19 @@ export class WorkflowTemplateApplyModalComponent implements OnChanges {
     workflowTemplateInstance: WorkflowTemplateInstance;
 
     constructor(
-        private _modalService: SuiModalService,
+        private _modal: NzModalRef,
         private _projectService: ProjectService,
         private _workflowService: WorkflowService,
         private _templateService: WorkflowTemplateService,
-        private _cd: ChangeDetectorRef
+        private _cd: ChangeDetectorRef,
+        private _toast: ToastService
     ) { }
 
     ngOnChanges() {
-        if (this.open) {
-            this.load();
-        }
+        this.ngOnInit();
     }
 
-    show() {
-        if (this.open) {
-            return;
-        }
-
-        this.open = true;
-
-        const config = new TemplateModalConfig<boolean, boolean, void>(this.workflowTemplateApplyModal);
-        config.mustScroll = true;
-        this.modal = this._modalService.open(config);
-        this.modal.onApprove(() => {
-            this.diffVisible = false;
-            this.open = false;
-            this.close.emit();
-        });
-        this.modal.onDeny(() => {
-            this.diffVisible = false;
-            this.open = false;
-            this.close.emit();
-        });
-
-        this.load();
-    }
-
-    load() {
+    ngOnInit() {
         if (this.workflowTemplateIn && this.workflowTemplateInstanceIn) {
             this.workflowTemplate = this.workflowTemplateIn;
             this.workflowTemplateInstance = this.workflowTemplateInstanceIn;
@@ -101,6 +71,7 @@ export class WorkflowTemplateApplyModalComponent implements OnChanges {
                     .subscribe(p => {
                         this.project = p;
                         this.loadAudits();
+                        this._cd.markForCheck();
                     });
                 return;
             }
@@ -130,13 +101,16 @@ export class WorkflowTemplateApplyModalComponent implements OnChanges {
                     this.loadAudits();
                 });
         }
+        this._cd.markForCheck();
     }
 
     onApply() {
         this._workflowService.getWorkflow(this.workflowTemplateInstance.project.key,
             this.workflowTemplateInstance.workflow_name).subscribe(w => {
-                this.workflowTemplateInstance = w.template_instance;
+                this.workflowTemplateInstance = Object.assign({}, w.template_instance);
+                this._cd.markForCheck();
             });
+
     }
 
     loadAudits() {
@@ -157,7 +131,7 @@ export class WorkflowTemplateApplyModalComponent implements OnChanges {
     }
 
     clickClose() {
-        this.modal.approve(true);
+        this._modal.triggerOk();
     }
 
     toggleDiff() {

@@ -68,9 +68,7 @@
             </ng-template>
             <nz-collapse [nzBordered]="false">
                 <nz-collapse-panel nzHeader="Configuration" [nzActive]="true">
-                    <ng-container>
-                        <app-vcs-strategy [project]="project" [(strategy)]="application.vcs_strategy" (strategyChange)="saveVCSConfiguration()" [appName]="application.name" [loading]="loadingBtn"></app-vcs-strategy>
-                    </ng-container>
+                    <app-vcs-strategy [project]="project" [(strategy)]="application.vcs_strategy" (strategyChange)="saveVCSConfiguration()" [appName]="application.name" [loading]="loadingBtn"></app-vcs-strategy>
                 </nz-collapse-panel>
             </nz-collapse>
         </div>

@@ -1,175 +1,232 @@
 <div *ngIf="workflowTemplate;then showWorkflowTemplate;else loadWorkflowTemplate"></div>
 <ng-template #showWorkflowTemplate>
-    <form class="ui form">
-        <div class="ui grid">
-            <div class="sixteen wide column">
-                <div *ngIf="workflowTemplate.editable && groups && groups.length === 0" class="ui orange message">
-                    {{'common_help_no_group' | translate}}
-                </div>
-                <div class="four fields">
-                    <div class="field">
-                        <label>{{'common_name' | translate}} *</label>
-                        <input class="ui input" type="text" name="name" [(ngModel)]="workflowTemplate.name"
-                            [readonly]="!workflowTemplate.editable">
-                    </div>
-                    <div class="field">
-                        <label>{{'common_slug' | translate}} *</label>
-                        <input class="ui input" type="text" name="slug" [ngModel]="workflowTemplate.slug"
-                            [disabled]="true">
-                    </div>
-                    <div class="field">
-                        <label>{{'common_group' | translate}} *</label>
+    <nz-alert *ngIf="workflowTemplate.editable && groups && groups.length === 0" nzType="warning"
+              nzMessage="No group can be found, you will not be able to save current resource.">
+    </nz-alert>
+    <form nz-form nzLayout="vertical">
+        <nz-row>
+           <nz-col [nzSpan]="6">
+               <nz-form-item>
+                   <nz-form-label>Name*</nz-form-label>
+                   <nz-form-control>
+                       <input nz-input type="text" name="name" [(ngModel)]="workflowTemplate.name"
+                              [readonly]="!workflowTemplate.editable">
+                   </nz-form-control>
+               </nz-form-item>
+           </nz-col>
+            <nz-col [nzSpan]="6">
+                <nz-form-item>
+                    <nz-form-label>Slug*</nz-form-label>
+                    <nz-form-control>
+                        <input nz-input type="text" name="slug" [ngModel]="workflowTemplate.slug"
+                               [disabled]="true">
+                    </nz-form-control>
+                </nz-form-item>
+            </nz-col>
+            <nz-col [nzSpan]="6">
+                <nz-form-item>
+                    <nz-form-label>Group*</nz-form-label>
+                    <nz-form-control>
                         <nz-select nzShowSearch *ngIf="groups && workflowTemplate.editable"
                                    [nzDisabled]="loading"
+                                   name="group"
                                    [(ngModel)]="workflowTemplate.group_id" >
                             <nz-option *ngFor="let group of groups" [nzValue]="group.id" [nzLabel]="group.name"></nz-option>
                         </nz-select>
-                        <input *ngIf="!workflowTemplate.editable" class="ui input" type="text"
-                            name="group" [ngModel]="workflowTemplate.group?.name" [readonly]="true">
-                    </div>
-                    <div class="field">
-                        <label>{{'common_version' | translate}}</label>
-                        <input class="ui input" type="text" name="version" [ngModel]="workflowTemplate.version"
-                            [disabled]="true">
-                    </div>
-                </div>
-                <div class="field">
-                    <label>{{'common_description' | translate}}</label>
-                    <textarea name="description" [(ngModel)]="workflowTemplate.description"
-                        (ngModelChange)="descriptionChange()" [rows]="descriptionRows"
-                        [readonly]="!workflowTemplate.editable"></textarea>
-                </div>
-            </div>
-            <div class="sixteen wide column" *ngIf="!(mode === 'add')">
-                <div *ngIf="(workflowTemplate.editable) || parameterKeys.length > 0"
-                    class="wide field">
-                    <label>{{ 'common_parameters' | translate }}</label>
-                </div>
-                <div class="sixteen wide fields" *ngFor="let k of parameterKeys; let index = index">
-                    <div class="eleven wide field">
-                        <input type="text" name="parameter-key-{{index}}" [placeholder]="'common_name' | translate"
-                            [(ngModel)]="parameterValues[k].key"
-                            [readonly]="!workflowTemplate.editable">
-                    </div>
-                    <div class="three wide field">
-                        <sui-select *ngIf="workflowTemplate.editable" class="selection"
-                            name="parameter-type-{{index}}" placeholder="{{'common_select' | translate}}"
-                            [options]="templateParameterTypes" isSearchable="true" [(ngModel)]="parameterValues[k].type"
-                            #selectType>
-                            <sui-select-option *ngFor="let option of selectType.filteredOptions" [value]="option">
-                            </sui-select-option>
-                        </sui-select>
-                        <input *ngIf="!workflowTemplate.editable" class="ui input" type="text"
-                            name="parameter-type-{{index}}" [ngModel]="parameterValues[k].type" [readonly]="true">
-                    </div>
-                    <div class="two wide field centeredField">
-                        <div class="ui checked checkbox">
-                            <input type="checkbox" name="parameter-required-{{index}}"
-                                [(ngModel)]="parameterValues[k].required"
-                                [disabled]="!workflowTemplate.editable">
-                            <label>{{'common_required' | translate}}</label>
-                        </div>
-                    </div>
-                    <button *ngIf="workflowTemplate.editable" class="ui icon red button"
-                        (click)="clickRemoveParameter(k)">
-                        <i class="trash icon"></i>
-                    </button>
-                </div>
-                <div *ngIf="workflowTemplate.editable" class="sixteen wide fields">
-                    <div class="eleven wide field">
-                        <input type="text" name="parameter-key-add" [placeholder]="'common_name' | translate"
-                            [(ngModel)]="parameterValueAdd.key">
-                    </div>
-                    <div class="three wide field">
-                        <sui-select class="selection" name="parameter-type-add"
-                            placeholder="{{'common_select' | translate}}" [options]="templateParameterTypes"
-                            isSearchable="true" [(ngModel)]="parameterValueAdd.type" #selectType>
-                            <sui-select-option *ngFor="let option of selectType.filteredOptions" [value]="option">
-                            </sui-select-option>
-                        </sui-select>
-                    </div>
-                    <div class="two wide field centeredField">
-                        <div class="ui checked checkbox">
-                            <input type="checkbox" name="parameter-required-add"
-                                [(ngModel)]="parameterValueAdd.required">
-                            <label>{{'common_required' | translate}}</label>
-                        </div>
-                    </div>
-                    <button class="ui icon green button" (click)="clickAddParameter()">
-                        <i class="plus icon"></i>
-                    </button>
-                </div>
-                <div class="wide field">
-                    <label>{{ 'common_workflow' | translate }}</label>
+                        <input nz-input *ngIf="!workflowTemplate.editable" type="text"
+                               name="group" [ngModel]="workflowTemplate.group?.name" [readonly]="true">
+                    </nz-form-control>
+                </nz-form-item>
+            </nz-col>
+            <nz-col [nzSpan]="6">
+                <nz-form-item>
+                    <nz-form-label>Version</nz-form-label>
+                    <nz-form-control>
+                        <input nz-input type="text" name="version" [ngModel]="workflowTemplate.version"
+                               [disabled]="true">
+                    </nz-form-control>
+                </nz-form-item>
+            </nz-col>
+        </nz-row>
+        <nz-row>
+            <nz-col [nzSpan]="24">
+                <nz-form-item>
+                    <nz-form-label>Description</nz-form-label>
+                    <nz-form-control>
+                        <textarea nz-input name="description" [(ngModel)]="workflowTemplate.description"
+                                  (ngModelChange)="descriptionChange()" [rows]="descriptionRows"
+                                  [readonly]="!workflowTemplate.editable"></textarea>
+                    </nz-form-control>
+                </nz-form-item>
+            </nz-col>
+        </nz-row>
+        <ng-container *ngIf="!(mode === 'add')">
+            <nz-row *ngIf="(workflowTemplate.editable) || parameterKeys.length > 0">
+                <h3>Parameters</h3>
+            </nz-row>
+            <nz-row *ngFor="let k of parameterKeys; let index = index">
+                <nz-col [nzSpan]="12">
+                    <nz-form-item>
+                        <nz-form-control>
+                            <input nz-input type="text" name="parameter-key-{{index}}" placeholder="Name"
+                                   [(ngModel)]="parameterValues[k].key"
+                                   [readonly]="!workflowTemplate.editable">
+                        </nz-form-control>
+                    </nz-form-item>
+                </nz-col>
+                <nz-col [nzSpan]="6">
+                    <nz-form-item>
+                        <nz-form-control>
+                            <nz-select *ngIf="workflowTemplate.editable" nzShowSearch
+                                       name="parameter-type-{{index}}" nzPlaceHolder="{{'common_select' | translate}}"
+                                       [(ngModel)]="parameterValues[k].type">
+                                <nz-option *ngFor="let opt of templateParameterTypes" [nzLabel]="opt" [nzValue]="opt"></nz-option>
+                            </nz-select>
+                            <input nz-input *ngIf="!workflowTemplate.editable" type="text"
+                                   name="parameter-type-{{index}}" [ngModel]="parameterValues[k].type" [readonly]="true">
+                        </nz-form-control>
+                    </nz-form-item>
+                </nz-col>
+                <nz-col [nzSpan]="4">
+                    <nz-form-item>
+                        <nz-form-control>
+                            <label nz-checkbox name="parameter-required-{{index}}" [(ngModel)]="parameterValues[k].required" [disabled]="!workflowTemplate.editable">Required</label>
+                        </nz-form-control>
+                    </nz-form-item>
+                </nz-col>
+                <nz-col [nzSpan]="2">
+                    <nz-form-item nzJustify="end">
+                        <button nz-button *ngIf="workflowTemplate.editable" nzDanger nzType="primary"
+                                (click)="clickRemoveParameter(k)">
+                            <i nz-icon nzType="delete" nzTheme="outline"></i>
+                        </button>
+                    </nz-form-item>
+                </nz-col>
+            </nz-row>
+            <nz-row>
+                <nz-col [nzSpan]="12">
+                    <nz-form-item>
+                        <nz-form-control>
+                            <input nz-input type="text" name="parameter-key-add" placeholder="Name"
+                                   [(ngModel)]="parameterValueAdd.key">
+                        </nz-form-control>
+                    </nz-form-item>
+                </nz-col>
+                <nz-col [nzSpan]="6">
+                    <nz-form-item>
+                        <nz-form-control>
+                            <nz-select name="parameter-type-add" nzShowSearch
+                                        nzPlaceHolder="{{'common_select' | translate}}"
+                                       [(ngModel)]="parameterValueAdd.type">
+                                <nz-option *ngFor="let opt of templateParameterTypes" [nzValue]="opt" [nzLabel]="opt"></nz-option>
+                            </nz-select>
+                        </nz-form-control>
+                    </nz-form-item>
+                </nz-col>
+                <nz-col [nzSpan]="4">
+                    <nz-form-item>
+                        <nz-form-control>
+                            <label nz-checkbox name="parameter-required-add" [(ngModel)]="parameterValueAdd.required">Required</label>
+                        </nz-form-control>
+                    </nz-form-item>
+                </nz-col>
+                <nz-col [nzSpan]="2">
+                    <nz-form-item nzJustify="end">
+                        <button nz-button nzType="primary" (click)="clickAddParameter()">
+                            <i nz-icon nzType="plus" nzTheme="outline"></i>
+                        </button>
+                    </nz-form-item>
+                </nz-col>
+            </nz-row>
+            <nz-row>
+                <h3>Workflow</h3>
+            </nz-row>
+            <nz-row>
+                <nz-col [nzSpan]="24">
                     <app-workflow-template-editor name="workflow-value"
-                        [editable]="workflowTemplate.editable" [value]="workflowValue"
-                        (changeValue)="workflowValueChange($event)" [error]="workflowError">
+                                                  [editable]="workflowTemplate.editable" [value]="workflowValue"
+                                                  (changeValue)="workflowValueChange($event)" [error]="workflowError">
                     </app-workflow-template-editor>
-                </div>
-                <div *ngIf="(workflowTemplate.editable) || pipelineKeys.length > 0"
-                    class="wide field">
-                    <label>Pipelines</label>
-                    <div class="codeContainer field" *ngFor="let k of pipelineKeys">
+                </nz-col>
+            </nz-row>
+            <ng-container *ngIf="(workflowTemplate.editable) || pipelineKeys.length > 0">
+                <nz-row>
+                    <h3 class="subItem">Pipelines</h3>
+                </nz-row>
+                <nz-row *ngFor="let k of pipelineKeys" class="codeContainer">
+                    <nz-col [nzSpan]="24">
                         <app-workflow-template-editor name="pipeline-value-{{k}}"
-                            [editable]="workflowTemplate.editable" [removable]="true"
-                            [value]="pipelineValues[k]" (changeValue)="pipelineValueChange(k, $event)"
-                            (remove)="clickRemovePipeline(k)" [error]="pipelineErrors[k]">
+                                                      [editable]="workflowTemplate.editable" [removable]="true"
+                                                      [value]="pipelineValues[k]" (changeValue)="pipelineValueChange(k, $event)"
+                                                      (remove)="clickRemovePipeline(k)" [error]="pipelineErrors[k]">
                         </app-workflow-template-editor>
-                    </div>
-                    <button *ngIf="workflowTemplate.editable" class="ui icon green button"
-                        (click)="clickAddPipeline()">
-                        <i class="plus icon"></i>
+                    </nz-col>
+                </nz-row>
+                <nz-row>
+                    <button nz-button nzType="primary" *ngIf="workflowTemplate.editable" (click)="clickAddPipeline()">
+                        <i nz-icon nzType="plus" nzTheme="outline"></i>
                     </button>
-                </div>
-                <div *ngIf="(workflowTemplate.editable) || applicationKeys.length > 0"
-                    class="wide field">
-                    <label>Applications</label>
-                    <div class="codeContainer field" *ngFor="let k of applicationKeys">
+                </nz-row>
+            </ng-container>
+            <ng-container *ngIf="(workflowTemplate.editable) || applicationKeys.length > 0">
+                <nz-row>
+                    <h3 class="subItem">Applications</h3>
+                </nz-row>
+                <nz-row class="codeContainer" *ngFor="let k of applicationKeys">
+                    <nz-col [nzSpan]="24">
                         <app-workflow-template-editor name="application-value-{{k}}"
-                            [editable]="workflowTemplate.editable" [removable]="true"
-                            [value]="applicationValues[k]" (changeValue)="applicationValueChange(k, $event)"
-                            (remove)="clickRemoveApplication(k)" [error]="applicationErrors[k]">
+                                                      [editable]="workflowTemplate.editable" [removable]="true"
+                                                      [value]="applicationValues[k]" (changeValue)="applicationValueChange(k, $event)"
+                                                      (remove)="clickRemoveApplication(k)" [error]="applicationErrors[k]">
                         </app-workflow-template-editor>
-                    </div>
-                    <button *ngIf="workflowTemplate.editable" class="ui icon green button"
-                        (click)="clickAddApplication()">
-                        <i class="plus icon"></i>
+                    </nz-col>
+                </nz-row>
+                <nz-row>
+                    <button nz-button nzType="primary" *ngIf="workflowTemplate.editable" (click)="clickAddApplication()">
+                        <i nz-icon nzType="plus" nzTheme="outline"></i>
                     </button>
-                </div>
-                <div *ngIf="(workflowTemplate.editable) || environmentKeys.length > 0"
-                    class="wide field">
-                    <label>Environments</label>
-                    <div class="codeContainer field" *ngFor="let k of environmentKeys">
+                </nz-row>
+            </ng-container>
+            <ng-container *ngIf="(workflowTemplate.editable) || environmentKeys.length > 0">
+                <nz-row>
+                    <h3 class="subItem">Environments</h3>
+                </nz-row>
+                <nz-row class="codeContainer" *ngFor="let k of environmentKeys">
+                    <nz-col [nzSpan]="24">
                         <app-workflow-template-editor name="environment-value-{{k}}"
-                            [editable]="workflowTemplate.editable" [removable]="true"
-                            [value]="environmentValues[k]" (changeValue)="environmentValueChange(k, $event)"
-                            (remove)="clickRemoveEnvironment(k)" [error]="environmentErrors[k]">
+                                                      [editable]="workflowTemplate.editable" [removable]="true"
+                                                      [value]="environmentValues[k]" (changeValue)="environmentValueChange(k, $event)"
+                                                      (remove)="clickRemoveEnvironment(k)" [error]="environmentErrors[k]">
                         </app-workflow-template-editor>
-                    </div>
-                    <button *ngIf="workflowTemplate.editable" class="ui icon green button"
-                        (click)="clickAddEnvironment()">
-                        <i class="plus icon"></i>
+                    </nz-col>
+                </nz-row>
+                <nz-row>
+                    <button nz-button nzType="primary" *ngIf="workflowTemplate.editable"
+                            (click)="clickAddEnvironment()">
+                        <i nz-icon nzType="plus" nzTheme="outline"></i>
                     </button>
-                </div>
-                <div *ngIf="workflowTemplate.editable && mode === 'edit'" class="wide field">
-                    <textarea name="changeMessage" [(ngModel)]="changeMessage"
-                        [placeholder]="'workflow_template_change_message' | translate" [rows]="3"></textarea>
-                </div>
-            </div>
-            <div class="sixteen wide column">
-                <div *ngIf="workflowTemplate.editable" class="wide field">
-                    <app-delete-button *ngIf="mode === 'edit'" class="left floated" (event)="clickDelete()"
-                        [loading]="loading"></app-delete-button>
-                    <button class="ui positive right floated button" [class.loading]="loading" (click)="clickSave()">
-                        <ng-container>
-                            <i class="ui icon save"></i>{{ 'btn_save' | translate }}
-                        </ng-container>
-                    </button>
-                </div>
-            </div>
-        </div>
+                </nz-row>
+            </ng-container>
+            <nz-row  *ngIf="workflowTemplate.editable && mode === 'edit'" class="subItem">
+                <nz-col [nzSpan]="24">
+                    <textarea nz-input name="changeMessage" [(ngModel)]="changeMessage"
+                              [placeholder]="'workflow_template_change_message' | translate" [rows]="3"></textarea>
+                </nz-col>
+            </nz-row>
+        </ng-container>
+        <nz-row *ngIf="workflowTemplate.editable" class="subItem">
+            <nz-col [nzSpan]="24">
+                <button nz-button nzType="primary" class="floatRight" [nzLoading]="loading" (click)="clickSave()">
+                    <i nz-icon nzType="save" nzTheme="outline"></i>Save
+                </button>
+                <button  *ngIf="mode === 'edit'" class="floatRight" nz-button nzDanger nzType="primary" [nzLoading]="loading"
+                                 nz-popconfirm nzPopconfirmTitle="Are you sure you want to delete this template ?" (nzOnConfirm)="clickDelete()">
+                    <i nz-icon nzType="delete" nzTheme="outline"></i>Delete
+                </button>
+            </nz-col>
+        </nz-row>
     </form>
 </ng-template>
 <ng-template #loadWorkflowTemplate>
-    <div class="ui text active loader">{{ 'common_loading' | translate }}</div>
+    <nz-spin nzTip="Loading..."></nz-spin>
 </ng-template>

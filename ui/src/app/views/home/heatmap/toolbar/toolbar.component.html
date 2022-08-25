@@ -1,26 +1,20 @@
-<div class="ui segment">
-  <div class="ui grid">
-    <div class="ten wide column">
-      <sui-multi-select class="selection"
-          name="project"
-          placeholder="{{'timeline_filter_project_select' | translate}}"
-          labelField="name"
-          valueField="key"
-          [options]="projects"
-          [isSearchable]="true"
-          [(ngModel)]="selectedProjectKeys" #selectProj>
-          <sui-select-option *ngFor="let option of selectProj.filteredOptions"
-              [value]="option"></sui-select-option>
-      </sui-multi-select>
-    </div>
-    <div class="four wide column">
-      <div class="ui fluid icon input">
-        <input type="text" placeholder="{{'common_search' | translate}}..." [(ngModel)]="searchCriterion">
-        <i class="search icon"></i>
-      </div>
-    </div>
-    <div class="two wide column">
-      <button class="ui blue button fluid" type="button" (click)="search()">{{'btn_filter' | translate}}</button>
-    </div>
-  </div>
+<div class="nzSegment">
+    <nz-row>
+        <nz-col [nzSpan]="12">
+            <nz-select nzShowSearch nzMode="multiple" nzPlaceHolder="Select a project"  name="project"  [(ngModel)]="selectedProjectKeys">
+                <nz-option *ngFor="let p of projects" [nzLabel]="p.name" [nzValue]="p.key"></nz-option>
+            </nz-select>
+        </nz-col>
+        <nz-col [nzSpan]="8">
+            <nz-input-group [nzSuffix]="suffixIconSearch">
+                <input nz-input type="text" placeholder="Search..." [(ngModel)]="searchCriterion">
+            </nz-input-group>
+            <ng-template #suffixIconSearch>
+                <i nz-icon nzType="search"></i>
+            </ng-template>
+        </nz-col>
+        <nz-col [nzSpan]="4" class="alignRight">
+            <button nz-button nzType="primary" (click)="search()">Filter</button>
+        </nz-col>
+    </nz-row>
 </div>

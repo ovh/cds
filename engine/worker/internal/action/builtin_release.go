@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
@@ -14,6 +15,16 @@ import (
 )
 
 func RunRelease(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, _ []sdk.Variable) (sdk.Result, error) {
+	jobID, err := workerruntime.JobID(ctx)
+	if err != nil {
+		return sdk.Result{Status: sdk.StatusFail}, err
+	}
+
+	log.Debug(ctx, "RunRelease> preparing run result for release ")
+	if err := wk.Client().QueueWorkflowRunResultsRelease(ctx, jobID); err != nil {
+		return sdk.Result{Status: sdk.StatusFail}, err
+	}
+
 	pfName := sdk.ParameterFind(wk.Parameters(), "cds.integration.artifact_manager")
 	if pfName == nil {
 		return sdk.Result{}, errors.New("unable to retrieve artifact manager integration... Aborting")

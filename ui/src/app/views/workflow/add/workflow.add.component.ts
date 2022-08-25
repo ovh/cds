@@ -51,6 +51,7 @@ workflow:
     pipeline: test`;
 
     repos: Array<Repository>;
+    filteredRepos: Array<Repository>
     selectedRepoManager: string;
     selectedRepo: Repository;
     selectedStrategy: VCSStrategy;
@@ -60,6 +61,7 @@ workflow:
     asCodeResult: PerformAsCodeResponse;
     projectSubscription: Subscription;
     templates: Array<WorkflowTemplate>;
+    filteredTemplate: Array<WorkflowTemplate>;
     selectedTemplatePath: string;
     selectedTemplate: WorkflowTemplate;
     descriptionRows: number;
@@ -135,6 +137,9 @@ workflow:
     }
 
     goToNextStep(stepNum: number): void {
+        if (stepNum == 1 && (!this.workflow.name || this.duplicateWorkflowName)) {
+            return;
+        }
         if (Array.isArray(this.project.workflow_names) && this.project.workflow_names.find((w) => w.name === this.workflow.name)) {
             this.duplicateWorkflowName = true;
             return;
@@ -169,33 +174,30 @@ workflow:
             this._cd.markForCheck();
         })).subscribe(rs => {
             this.repos = rs;
+            this.filteredRepos = this.repos.slice(0, 100);
         });
     }
 
-    filterRepo(options: Array<Repository>, query: string): Array<Repository> | false {
-        if (!options) {
-            return false;
-        }
+    filterRepo(query: string): void{
         if (!query || query.length < 3) {
-            return options.slice(0, 100);
+            return;
         }
-        let lowerQuery = query.toLowerCase();
-        return options.filter(repo => repo.fullname.toLowerCase().indexOf(lowerQuery) !== -1);
+        this.filteredRepos = this.repos.filter(repo => repo.fullname.toLowerCase().indexOf(query.toLowerCase()) !== -1);
+        this._cd.markForCheck();
     }
 
-    filterTemplate(options: Array<WorkflowTemplate>, query: string): Array<WorkflowTemplate> | false {
-        if (!options) {
-            return false;
-        }
+    filterTemplate(query: string): void {
         if (!query) {
-            return options.sort();
-        }
+            this.filteredTemplate = Object.assign([], this.templates);
 
-        let lowerQuery = query.toLowerCase();
-        return options.filter(wt => wt.name.toLowerCase().indexOf(lowerQuery) !== -1 ||
-            wt.slug.toLowerCase().indexOf(lowerQuery) !== -1 ||
-            wt.group.name.toLowerCase().indexOf(lowerQuery) !== -1 ||
-            `${wt.group.name}/${wt.slug}`.toLowerCase().indexOf(lowerQuery) !== -1).sort();
+        } else {
+            let lowerQuery = query.toLowerCase();
+            this.filteredTemplate = this.templates.filter(wt => wt.name.toLowerCase().indexOf(lowerQuery) !== -1 ||
+                wt.slug.toLowerCase().indexOf(lowerQuery) !== -1 ||
+                wt.group.name.toLowerCase().indexOf(lowerQuery) !== -1 ||
+                `${wt.group.name}/${wt.slug}`.toLowerCase().indexOf(lowerQuery) !== -1).sort()
+        }
+        this._cd.markForCheck();
     }
 
     createWorkflowFromRepo() {
@@ -283,6 +285,7 @@ workflow:
     fetchTemplates() {
         this._workflowTemplateService.getAll().subscribe(ts => {
             this.templates = ts;
+            this.filteredTemplate = Object.assign([], this.templates);
             this._cd.markForCheck();
         });
     }

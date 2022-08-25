@@ -862,7 +862,7 @@ func (s *Service) postStatusHandler() service.Handler {
 
 		var disableStatusDetails bool
 		d := r.URL.Query().Get("disableStatusDetails")
-		if d == "" {
+		if d != "" {
 			disableStatusDetails, _ = strconv.ParseBool(d)
 		} else {
 			disableStatusDetails = client.IsDisableStatusDetails(ctx)

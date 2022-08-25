@@ -5,3 +5,20 @@
   padding-left:  10px;
   cursor: pointer;
 }
+
+.noform {
+  nz-radio-group {
+    margin-left: 10px;
+  }
+
+  input {
+    width: 300px;
+  }
+  nz-select {
+    width: 300px;
+  }
+  nz-row {
+    margin-top: 5px;
+    margin-bottom: 10px;
+  }
+}
