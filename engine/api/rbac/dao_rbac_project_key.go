@@ -2,6 +2,7 @@ package rbac
 
 import (
 	"context"
+	"github.com/ovh/cds/sdk/telemetry"
 
 	"github.com/lib/pq"
 
@@ -51,6 +52,8 @@ func loadRRBACProjectKeys(ctx context.Context, db gorp.SqlExecutor, rbacProjectI
 }
 
 func HasRoleOnProjectAndUserID(ctx context.Context, db gorp.SqlExecutor, role string, userID string, projectKey string) (bool, error) {
+	ctx, next := telemetry.Span(ctx, "rbac.HasRoleOnProjectAndUserID")
+	defer next()
 	projectKeys, err := LoadProjectKeysByRoleAndUserID(ctx, db, role, userID)
 	if err != nil {
 		return false, err

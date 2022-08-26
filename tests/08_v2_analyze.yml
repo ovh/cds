@@ -46,7 +46,11 @@ testcases:
     - script: mkdir -p /tmp/myrepo/.cds/models && echo 'new file' > /tmp/myrepo/.cds/models/my-worker-model.yml
     - script: cd /tmp/myrepo && git config user.email "{{.git.user}}@gitea.eu" && git config user.name "{{.git.user}}"
     - script: cd /tmp/myrepo && git add /tmp/myrepo/.cds/models/my-worker-model.yml && git commit .  --gpg-sign=2B74B3591CEFB2F534265465E027B500E97E52E7 -m "add file and sign" && git push
-    - script: 'curl -H "Content-Type: application/json" -u "{{.git.user}}:{{.git.password}}" -X POST {{.git.host}}/api/v1/repos/{{.git.user}}/myrepo/hooks -d "{\"active\":true, \"type\":\"gitea\", \"config\": {\"content_type\": \"json\", \"url\": \"{{.gitea.hook.url}}/v2/webhook/repository/gitea/{{.repositoryProject.repoID}}\"}}"'
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental project repository hook-regen ITCLIPRJVCS my_vcs_server {{.git.user}}/myrepo --format json
+      vars:
+        hookSecret:
+          from: result.systemoutjson.hook_sign_key
+    - script: 'curl -H "Content-Type: application/json" -u "{{.git.user}}:{{.git.password}}" -X POST {{.git.host}}/api/v1/repos/{{.git.user}}/myrepo/hooks -d "{\"active\":true, \"type\":\"gitea\", \"config\": {\"secret\": \"{{.hookSecret}}\", \"content_type\": \"json\", \"url\": \"{{.gitea.hook.url}}/v2/webhook/repository/gitea/{{.repositoryProject.repoID}}\"}}"'
       vars:
         hookID:
           from: result.systemoutjson.id

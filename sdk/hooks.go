@@ -14,10 +14,16 @@ const (
 	SignHeaderVCSType      = "X-Cds-Hooks-Vcs-Type"
 )
 
+type HookAccessData struct {
+	URL         string `json:"url" cli:"url"`
+	HookSignKey string `json:"hook_sign_key" cli:"hook_sign_key"`
+}
+
 type Hook struct {
-	UUID          string
-	HookType      string
-	Configuration HookConfiguration
+	UUID          string            `json:"uuid"`
+	HookType      string            `json:"hook_type"`
+	Configuration HookConfiguration `json:"configuration"`
+	HookSignKey   string            `json:"hook_sign_key,omitempty"`
 }
 type HookConfiguration map[string]WorkflowNodeHookConfigValue
 
@@ -37,7 +43,11 @@ func (hc *HookConfiguration) Scan(src interface{}) error {
 	return WrapError(JSONUnmarshal(source, hc), "cannot unmarshal HookConfiguration")
 }
 
-func NewEntitiesHook(uuid, projectKey, vcsType, vcsName, repoName string) Hook {
+func NewEntitiesHook(uuid, projectKey, vcsType, vcsName, repoName string) (Hook, error) {
+	hookSignKey, err := GenerateHookSecret()
+	if err != nil {
+		return Hook{}, err
+	}
 	return Hook{
 		UUID:     uuid,
 		HookType: RepositoryEntitiesHook,
@@ -63,7 +73,8 @@ func NewEntitiesHook(uuid, projectKey, vcsType, vcsName, repoName string) Hook {
 				Configurable: false,
 			},
 		},
-	}
+		HookSignKey: hookSignKey,
+	}, nil
 }
 
 // HookConfigValue represents the value of a node hook config
@@ -129,8 +140,7 @@ type EntitiesHookExecution struct {
 	RequestMethod string              `json:"request_method"`
 
 	// Execution result
-	AnalysisID  string `json:"analysis_id"`
-	OperationID string `json:"operation_id"`
+	AnalysisID string `json:"analysis_id"`
 }
 
 // KafkaTaskExecution contains specific data for a kafka hook
@@ -157,6 +167,5 @@ type AnalysisRequest struct {
 }
 
 type AnalysisResponse struct {
-	AnalysisID  string `json:"analysis_id"`
-	OperationID string `json:"operation_id"`
+	AnalysisID string `json:"analysis_id"`
 }

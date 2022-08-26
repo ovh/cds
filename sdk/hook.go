@@ -1,5 +1,10 @@
 package sdk
 
+import (
+	"crypto/rand"
+	"encoding/base64"
+)
+
 // These are constants about hooks
 const (
 	WebHookModelName              = "WebHook"
@@ -285,4 +290,12 @@ func GetDefaultHookModel(modelName string) WorkflowHookModel {
 	}
 
 	return WebHookModel
+}
+
+func GenerateHookSecret() (string, error) {
+	b := make([]byte, 128)
+	if _, err := rand.Read(b); err != nil {
+		return "", WrapError(err, "unable to generate hook secret")
+	}
+	return base64.URLEncoding.EncodeToString(b), nil
 }

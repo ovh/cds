@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/ovh/cds/sdk/telemetry"
 	"net/http"
 	"time"
 
@@ -100,6 +101,8 @@ func PushOperationUpdate(ctx context.Context, db gorpmapper.SqlExecutorWithTx, s
 
 // PostRepositoryOperation creates a new repository operation
 func PostRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, prj sdk.Project, ope *sdk.Operation, multipartData *services.MultiPartData) error {
+	ctx, next := telemetry.Span(ctx, "operation.PostRepositoryOperation")
+	defer next()
 	srvs, err := services.LoadAllByType(ctx, db, sdk.TypeRepositories)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to found repositories service")
@@ -151,6 +154,8 @@ func GetRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, uuid strin
 
 // Poll repository operation for given uuid.
 func Poll(ctx context.Context, db gorp.SqlExecutor, operationUUID string) (*sdk.Operation, error) {
+	ctx, next := telemetry.Span(ctx, "operation.Poll")
+	defer next()
 	f := func() (*sdk.Operation, error) {
 		ope, err := GetRepositoryOperation(ctx, db, operationUUID)
 		if err != nil {

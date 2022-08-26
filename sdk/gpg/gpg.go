@@ -309,3 +309,25 @@ func (k PublicKey) GetKey() interface{} {
 	}
 	return fmt.Errorf("unsupported key type/format: %T", pk)
 }
+
+func GetKeyIdFromSignature(signature string) (string, error) {
+	block, err := armor.Decode(bytes.NewReader([]byte(signature)))
+	if err != nil {
+		return "", errors.Wrapf(err, "unable to decode signature %s", signature)
+	}
+	if block == nil {
+		return "", errors.Wrapf(err, "unable to decode signature, block nil: %s", signature)
+	}
+
+	reader := packet.NewReader(block.Body)
+	pkt, err := reader.Next()
+	if err != nil {
+		return "", errors.Wrap(err, "unable to read block body")
+	}
+
+	key, ok := pkt.(*packet.Signature)
+	if !ok || key == nil {
+		return "", errors.Wrap(err, "unable to cast packet")
+	}
+	return fmt.Sprintf("%X", *key.IssuerKeyId), nil
+}

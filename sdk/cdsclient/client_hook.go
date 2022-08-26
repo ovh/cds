@@ -33,3 +33,10 @@ func (c *client) RepositoriesListAll(ctx context.Context) ([]sdk.ProjectReposito
 	_, err := c.GetJSON(ctx, url, &repos)
 	return repos, err
 }
+
+func (c *client) RepositoryHook(ctx context.Context, uuid string) (sdk.Hook, error) {
+	url := fmt.Sprintf("/v2/project/repositories/%s/hook", uuid)
+	var h sdk.Hook
+	_, err := c.GetJSON(ctx, url, &h)
+	return h, err
+}
