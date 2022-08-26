@@ -1,7 +1,17 @@
 @import '../../../../../common';
 
-.header {
-    .label:first-child {
-        margin-left: 5px;
-    }
+nz-row {
+  margin-top: 10px;
+}
+
+.floatRight {
+  float: right;
+}
+
+button.floatRight {
+  margin-right: 10px;
+}
+
+nz-form-label {
+  font-weight: bold;
 }

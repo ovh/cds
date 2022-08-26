@@ -1,8 +1,34 @@
-ul {
-  list-style: none;
-  padding-left: 0;
+.alignRight {
+  text-align: right;
+}
+nz-col {
+  margin-bottom: 20px;
+
+  nz-select {
+    width: 100%;
+    margin-bottom: 5px;
+  }
+
+  .right {
+    float: right;
+
+    i {
+      cursor: pointer;
+    }
+  }
 }
 
-.mt25 {
- margin-top: 25px;
+.entity-card {
+  .title {
+    word-wrap: break-word;
+    font-weight: 700;
+    font-size: 1.2em;
+    line-height: 1.2em;
+  }
+  .description {
+    font-size: 0.9em;
+  }
+}
+.entity-card.nohover:hover {
+
 }

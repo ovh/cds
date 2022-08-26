@@ -123,7 +123,6 @@ export class HomeFilterComponent implements OnDestroy {
                     projFilter.workflow_names = projFilter.project.workflow_names.map(idname => idname.name);
                 }
             }
-
         });
     }
 

@@ -54,6 +54,8 @@ export class ConsumerCreateModalComponent implements OnInit {
     activeStep: FormStepName;
     maxActivedStep: FormStepName;
 
+    panels = [true, false, false, false, false];
+
     constructor(
         private _modal: NzModalRef,
         private _userService: UserService,
@@ -150,12 +152,18 @@ export class ConsumerCreateModalComponent implements OnInit {
     clickBack() {
         switch (this.activeStep) {
             case FormStepName.GROUPS:
+                this.panels[this.activeStep] = false;
+                this.panels[FormStepName.INFORMATIONS] = true;
                 this.activeStep = FormStepName.INFORMATIONS;
                 break;
             case FormStepName.SCOPES:
+                this.panels[this.activeStep] = false;
+                this.panels[FormStepName.GROUPS] = true;
                 this.activeStep = FormStepName.GROUPS;
                 break;
             case FormStepName.SERVICE:
+                this.panels[this.activeStep] = false;
+                this.panels[FormStepName.SCOPES] = true;
                 this.activeStep = FormStepName.SCOPES;
                 break;
             default:
@@ -171,12 +179,18 @@ export class ConsumerCreateModalComponent implements OnInit {
 
         switch (this.activeStep) {
             case FormStepName.INFORMATIONS:
+                this.panels[this.activeStep] = false;
+                this.panels[FormStepName.GROUPS] = true;
                 this.activeStep = FormStepName.GROUPS;
                 break;
             case FormStepName.GROUPS:
+                this.panels[this.activeStep] = false;
+                this.panels[FormStepName.SCOPES] = true;
                 this.activeStep = FormStepName.SCOPES;
                 break;
             case FormStepName.SCOPES:
+                this.panels[this.activeStep] = false;
+                this.panels[FormStepName.SERVICE] = true;
                     this.activeStep = FormStepName.SERVICE;
                     break;
             case FormStepName.SERVICE:
@@ -193,15 +207,22 @@ export class ConsumerCreateModalComponent implements OnInit {
     }
 
     clickOpenStep(step: FormStepName) {
-        if (step > this.activeStep && !this.isValidStep(this.activeStep)) {
-            return;
+        if (step > this.activeStep) {
+            if (step > 0) {
+                for (let i = 0; i < step ; i++) {
+                    if (!this.isValidStep(i)) {
+                        this.panels[this.activeStep] = true;
+                        this.panels[step] = false;
+                        this._cd.markForCheck();
+                        return;
+                    }
+                }
+            }
         }
         if (step === this.activeStep) {
             return;
         }
-        if (step <= this.maxActivedStep) {
-            this.activeStep = step;
-        }
+        this.activeStep = step;
         this._cd.markForCheck();
     }
 

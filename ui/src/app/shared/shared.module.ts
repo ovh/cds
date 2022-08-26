@@ -15,7 +15,6 @@ import { AsCodeSaveModalComponent } from 'app/shared/ascode/save-modal/ascode.sa
 import { ConditionsComponent } from 'app/shared/conditions/conditions.component';
 import { AutoFocusInputComponent } from 'app/shared/input/autofocus/autofocus.input.component';
 import { CallbackPipe } from 'app/shared/pipes/callback.pipe';
-import { SelectFilterComponent } from 'app/shared/select/select.component';
 import { WorkflowHookMenuEditComponent } from 'app/shared/workflow/menu/edit-hook/menu.edit.hook.component';
 import { WorkflowWizardNodeConditionComponent } from 'app/shared/workflow/wizard/conditions/wizard.conditions.component';
 import { WorkflowWizardOutgoingHookComponent } from 'app/shared/workflow/wizard/outgoinghook/wizard.outgoinghook.component';
@@ -122,7 +121,7 @@ import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
 import { en_US, NZ_I18N } from 'ng-zorro-antd/i18n';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { IconDefinition } from '@ant-design/icons-angular';
-import { ArrowDownOutline, ArrowRightOutline, BellFill, BookOutline, CalendarOutline, CaretDownFill, CaretRightFill, CaretUpFill, CheckOutline, CodeOutline, CopyOutline, DeleteOutline, DragOutline, EyeInvisibleOutline, EyeOutline, KeyOutline,
+import { ArrowDownOutline, ArrowRightOutline, AudioOutline, AudioMutedOutline, BellFill, BookOutline, CalendarOutline, CaretDownFill, CaretRightFill, CaretUpFill, CheckOutline, CodeOutline, CopyOutline, DeleteOutline, DragOutline, EyeInvisibleOutline, EyeOutline, KeyOutline,
     HighlightFill, HistoryOutline, InfoCircleOutline, PhoneFill, PlusOutline, PlusSquareOutline, QuestionOutline, QuestionCircleOutline, RestOutline, SaveOutline, SettingFill, ShareAltOutline, StarOutline, StarFill, StopOutline, SyncOutline,
     TableOutline, TagsOutline, ToolFill, UnlockFill, UnorderedListOutline, UploadOutline, UserOutline, WarningOutline, WarningFill } from '@ant-design/icons-angular/icons'
 import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
@@ -154,7 +153,7 @@ const ngZorroConfig: NzConfig = {
     icon: {nzTheme: "outline"}
 };
 
-const icons: IconDefinition[] = [ ArrowDownOutline, ArrowRightOutline, BellFill, BookOutline, CalendarOutline, CaretDownFill, CaretRightFill, CaretUpFill, CheckOutline, CodeOutline, CopyOutline, DeleteOutline, DragOutline,
+const icons: IconDefinition[] = [ ArrowDownOutline, ArrowRightOutline, AudioOutline, AudioMutedOutline, BellFill, BookOutline, CalendarOutline, CaretDownFill, CaretRightFill, CaretUpFill, CheckOutline, CodeOutline, CopyOutline, DeleteOutline, DragOutline,
     EyeInvisibleOutline, EyeOutline, KeyOutline, HighlightFill, HistoryOutline, InfoCircleOutline, PhoneFill, PlusOutline, PlusSquareOutline, QuestionOutline, QuestionCircleOutline,
     RestOutline, SaveOutline, SettingFill, ShareAltOutline, StarOutline, StarFill, StopOutline, SyncOutline, TableOutline, TagsOutline, ToolFill, UnlockFill, UnorderedListOutline, UploadOutline, UserOutline, WarningOutline, WarningFill ];
 
@@ -252,7 +251,6 @@ const icons: IconDefinition[] = [ ArrowDownOutline, ArrowRightOutline, BellFill,
         RequirementsValueComponent,
         SafeHtmlPipe,
         ScrollviewComponent,
-        SelectFilterComponent,
         SelectorPipe,
         SelectPipe,
         StatusIconComponent,
