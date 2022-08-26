@@ -125,10 +125,10 @@ export class UserEditComponent implements OnInit {
                     let labels = [];
 
                     if (c.primary) {
-                        labels.push({ color: 'green', title: 'user_contact_primary' });
+                        labels.push({ color: 'success', title: 'user_contact_primary' });
                     }
                     if (!c.verified) {
-                        labels.push({ color: 'red', title: 'user_contact_not_verified' });
+                        labels.push({ color: 'error', title: 'user_contact_not_verified' });
                     }
 
                     return {
@@ -152,14 +152,12 @@ export class UserEditComponent implements OnInit {
         this.columnsConsumers = [
             <Column<AuthConsumer>>{
                 type: ColumnType.TEXT_LABELS,
-                name: 'common_name',
+                name: 'Name',
                 selector: (c: AuthConsumer) => {
                     let labels = [];
-
                     if (c.disabled) {
-                        labels.push({ color: 'red', title: 'user_auth_consumer_disabled' });
+                        labels.push({ color: 'error', title: 'user_auth_consumer_disabled' });
                     }
-
                     return {
                         value: c.name,
                         labels
@@ -195,7 +193,9 @@ export class UserEditComponent implements OnInit {
 
                         icons.push({
                             label: text,
-                            class: ['info', 'exclamation', 'triangle', 'icon', 'yellow', 'link'],
+                            type: 'warning',
+                            theme: 'outline',
+                            class: ['orange'],
                             title: text
                         });
                     }
@@ -273,27 +273,28 @@ export class UserEditComponent implements OnInit {
                         let consumer = this.mConsumers[s.consumer_id];
 
                         let icon = {
+                            theme: 'outline',
+                            type: '',
                             label: `ID: ${s.consumer_id}`,
-                            title: `ID: ${s.consumer_id}`
+                            title: `ID: ${s.consumer_id}`,
                         };
                         switch (consumer.type) {
                             case 'builtin':
-                                icon['class'] = ['info', 'circle', 'icon', 'link'];
+                                icon.type = 'info-circle';
                                 break;
                             case 'local':
-                                icon['class'] = ['lock', 'icon'];
+                                icon.type = 'lock';
                                 break;
                             case 'ldap':
-                                icon['class'] = ['address', 'book', 'icon'];
+                                icon.type = 'audit';
                                 break;
                             case 'corporate-sso':
-                                icon['class'] = ['shield', 'alternate', 'icon'];
+                                icon.type = 'safety-certificate';
                                 break;
                             case 'openid-connect':
-                                icon['class'] = ['openid', 'icon'];
+                                icon.type = 'safety-certificate';
                                 break;
                             default:
-                                icon['class'] = [consumer.type, 'icon'];
                                 break;
                         }
 

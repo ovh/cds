@@ -158,7 +158,7 @@ export class WorkflowTemplateEditComponent implements OnInit, OnDestroy {
                 }
             }, <Column<WorkflowTemplateInstance>>{
                 type: ColumnType.LABEL,
-                name: 'common_status',
+                name: 'Status',
                 class: 'three',
                 selector: (i: WorkflowTemplateInstance) => {
                     let status = i.status(this.workflowTemplate);

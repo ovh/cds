@@ -94,7 +94,7 @@ export class ConsumerDetailsModalComponent implements OnInit {
                     let labels = [];
 
                     if (c.disabled) {
-                        labels.push({ color: 'red', title: 'user_auth_consumer_disabled' });
+                        labels.push({ color: 'error', title: 'user_auth_consumer_disabled' });
                     }
 
                     return {

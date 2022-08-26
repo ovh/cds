@@ -59,13 +59,13 @@ export class WorkflowTemplateBulkModalComponent implements OnInit, OnDestroy {
     ) {
         this.columnsInstances = [
             <Column<WorkflowTemplateInstance>>{
-                name: 'common_workflow',
+                name: 'Workflow',
                 class: 'ten',
                 selector: (i: WorkflowTemplateInstance) => i.key()
             }, <Column<WorkflowTemplateInstance>>{
                 type: ColumnType.LABEL,
-                name: 'common_status',
-                class: 'five right aligned',
+                name: 'Status',
+                class: 'rightAlign',
                 selector: (i: WorkflowTemplateInstance) => {
                     let status = i.status(this.workflowTemplate);
                     return {
@@ -85,8 +85,8 @@ export class WorkflowTemplateBulkModalComponent implements OnInit, OnDestroy {
                 selector: (i: WorkflowTemplateBulkOperation) => i.error
             }, <Column<WorkflowTemplateBulkOperation>>{
                 type: ColumnType.LABEL,
-                name: 'common_status',
-                class: 'right aligned',
+                name: 'Status',
+                class: 'rightAlign',
                 selector: (i: WorkflowTemplateBulkOperation) => ({
                         class: OperationStatusUtil.color(i.status),
                         value: OperationStatusUtil.translate(i.status)

@@ -4,21 +4,11 @@
                    (keyup)="filterKeyUp()">
         </nz-col>
 </nz-row>
-<!--
-LINE CLICK
-With SELECT / SELECT ALL
-SORT COLUMN
-
-
--->
 <nz-table [nzLoading]="loading" [nzData]="filteredData" #table>
     <thead>
     <tr>
         <th *ngIf="withSelect" class="wide">
-            <div class="ui checked checkbox">
-                <input type="checkbox" [ngModel]="selectedAll" (ngModelChange)="onSelectAllChange($event)">
-                <label></label>
-            </div>
+            <label nz-checkbox [ngModel]="selectedAll" (ngModelChange)="onSelectAllChange($event)"></label>
         </th>
         <ng-container *ngFor="let c of columns">
             <th *ngIf="!c.disabled" class="wide {{c.class}}" [class.sortable]="c.sortable && c !== sortedColumn"
@@ -34,11 +24,7 @@ SORT COLUMN
     <tr *ngFor="let d of table.data; let i = index" (click)="lineClick(i, d)"
         [class.pointing]="withLineClick" [class.active]="withLineClick && indexSelected === i">
         <td *ngIf="withSelect" class="wide">
-            <div class="ui checked checkbox">
-                <input type="checkbox" [ngModel]="selected[d.key()]"
-                       (ngModelChange)="onSelectChange($event, d.key())">
-                <label></label>
-            </div>
+            <label nz-checkbox [ngModel]="selected[d.key()]" (ngModelChange)="onSelectChange($event, d.key())"></label>
         </td>
         <ng-container *ngFor="let c of (columns | selector:d:i)">
             <td *ngIf="!c.disabled && c.hidden"></td>
@@ -70,7 +56,7 @@ SORT COLUMN
                 </ng-container>
                 <ng-container *ngSwitchCase="'router-link-with-labels'">
                     <a [routerLink]="c.selector.link">{{c.selector.value}}</a>
-                    {{' '}}<nz-tag *ngFor="let l of c.selector.labels" class="{{l.color}}">{{l.title | translate}}</nz-tag>
+                    {{' '}}<nz-tag *ngFor="let l of c.selector.labels" nzColor="{{l.color}}">{{l.title | translate}}</nz-tag>
                 </ng-container>
                 <markdown *ngSwitchCase="'markdown'" [data]="c.selector"></markdown>
                 <ng-container *ngSwitchCase="'date'"> {{c.selector | amCalendar}} </ng-container>
@@ -83,34 +69,29 @@ SORT COLUMN
                 <button *ngSwitchCase="'confirm-button'" class="{{c.class}}"
                         nz-button nzType="{{c.selector.buttonType}}" [nzDanger]="c.selector.buttonDanger"
                         nz-popconfirm nzPopconfirmTitle="{{c.selector.buttonConfirmationMessage}}" (nzOnConfirm)="c.selector.click()">{{c.selector.title}}</button>
-
-
-                <ng-container *ngSwitchCase="'time-ago'"> {{c.selector | amTimeAgo}} </ng-container>
-
-
-
-                <span *ngSwitchCase="'label'"class="ui label" [ngClass]="c.selector.class">{{c.selector.value | translate}}</span>
-                <div *ngSwitchCase="'text-copy'" class="ui fluid action input">
+                <nz-tag nzColor="{{c.selector.class}}" *ngSwitchCase="'label'" class="{{c.class}}" >{{c.selector.value | translate}}</nz-tag>
+                <div *ngSwitchCase="'text-copy'">
                     <ng-container *ngIf="c.selector">
-                        <input type="text" value="{{c.selector}}">
-                        <button class="ui icon button copyButton" [title]="'common_copy_clipboard' | translate"
-                                ngxClipboard [cbContent]="c.selector">
-                            <i class="copy icon"></i>
-                        </button>
+                        <nz-input-group nzSearch [nzAddOnAfter]="suffixIconButton">
+                            <input nz-input type="text" value="{{c.selector}}"  />
+                        </nz-input-group>
+                        <ng-template #suffixIconButton>
+                            <button nzSearch nz-button nzType="primary" ngxClipboard [cbContent]="c.selector"><i nz-icon nzType="copy"></i></button>
+                        </ng-template>
                     </ng-container>
                 </div>
                 <span *ngSwitchCase="'text-labels'" class="text-labels">
                         {{c.selector.value |
                     translate}}
-                    <span *ngFor="let l of c.selector.labels"
-                          class="ui label {{l.color}}">{{l.title | translate}}</span>
-                    </span>
+                    <nz-tag *ngFor="let l of c.selector.labels" nzColor="{{l.color}}">{{l.title | translate}}</nz-tag>
+                </span>
                 <span *ngSwitchCase="'text-icons'">
                         {{c.selector.value | translate}}
                     <span *ngFor="let i of c.selector.icons" nz-tooltip [nzTooltipTitle]="i.label | translate" nzTooltipTrigger="{{i.trigger ? i.trigger : 'hover'}}">
-                            {{' '}}<i [ngClass]="i.class" title="{{i.title | translate }}"></i>
+                            {{' '}}<i *ngIf="i.type" nz-icon nzType="{{i.type}}" nzTheme="{{i.theme}}" class="{{i.class}}"></i>
                         </span>
-                    </span>
+                </span>
+                <ng-container *ngSwitchCase="'time-ago'"> {{c.selector | amTimeAgo}} </ng-container>
                 <ng-container *ngSwitchDefault>
                     <ng-container *ngIf="c.selector && c.translate">
                         {{c.selector | translate}}
@@ -124,114 +105,3 @@ SORT COLUMN
     </tr>
     </tbody>
 </nz-table>
-<!--table class="ui striped fixed table" [class.selectable]="withLineClick">
-    <thead>
-        <tr>
-            <th *ngIf="withSelect" class="wide">
-                <div class="ui checked checkbox">
-                    <input type="checkbox" [ngModel]="selectedAll" (ngModelChange)="onSelectAllChange($event)">
-                    <label></label>
-                </div>
-            </th>
-            <ng-container *ngFor="let c of columns">
-                <th *ngIf="!c.disabled" class="wide {{c.class}}" [class.sortable]="c.sortable && c !== sortedColumn"
-                    [class.ascending]="c === sortedColumn && sortedColumnDirection === 'asc'"
-                    [class.descending]="c === sortedColumn && sortedColumnDirection === 'desc'"
-                    (click)="columnClick($event, c)">
-                    {{ c.name | translate }}
-                </th>
-            </ng-container>
-        </tr>
-    </thead>
-    <tbody *ngIf="!loading && dataForCurrentPage.length > 0">
-        <tr *ngFor="let d of dataForCurrentPage; let i = index" (click)="lineClick(i, d)"
-            [class.pointing]="withLineClick" [class.active]="withLineClick && indexSelected === i">
-            <td *ngIf="withSelect" class="wide">
-                <div class="ui checked checkbox">
-                    <input type="checkbox" [ngModel]="selected[d.key()]"
-                        (ngModelChange)="onSelectChange($event, d.key())">
-                    <label></label>
-                </div>
-            </td>
-            <ng-container *ngFor="let c of (columns | selector:d:i)">
-                <td *ngIf="!c.disabled && c.hidden"></td>
-                <td *ngIf="!c.disabled && !c.hidden" [ngSwitch]="c.type" class="wide" [ngClass]="c.class">
-                    <ng-container *ngSwitchCase="'text-html'">
-                        <pre [innerHTML]="c.selector"></pre>
-                    </ng-container>
-                    <i *ngSwitchCase="'icon'" nz-icon nzType="{{c.selector.iconType}}" nzTheme="{{c.selector.iconTheme}}" class="{{c.selector.iconColor}}"></i>
-                    <div *ngSwitchCase="'img-text'" class="vcenter">
-                        <img *ngIf="c.selector.img" [src]="c.selector.img">
-                        <div class="{{c.selector.valueclass}}">
-                            {{ c.selector.value }}
-                        </div>
-                    </div>
-                    <a *ngSwitchCase="'link-click'" (click)="c.selector.callback()">
-                        {{c.selector.value}}
-                    </a>
-                    <a *ngSwitchCase="'link'" [href]="c.selector.link" target="_blank">
-                        {{c.selector.value}}
-                    </a>
-                    <a *ngSwitchCase="'router-link'" [routerLink]="c.selector.link">
-                        {{c.selector.value}}
-                    </a>
-                    <ng-container *ngSwitchCase="'router-link-with-icons'">
-                        <a [routerLink]="c.selector.link">{{c.selector.value}}</a>
-                        <span *ngFor="let i of c.selector.icons" nz-tooltip [nzTooltipTitle]="i.label | translate">
-                            {{' '}}<i nz-icon nzType="{{i.iconType}}" nzTheme="{{i.iconTheme}}" class="{{i.iconColor}}"></i>
-                        </span>
-                    </ng-container>
-
-                    <markdown *ngSwitchCase="'markdown'" [data]="c.selector"></markdown>
-
-
-                    <ng-container *ngSwitchCase="'time-ago'"> {{c.selector | amTimeAgo}} </ng-container>
-                    <ng-container *ngSwitchCase="'date'"> {{c.selector | amCalendar}} </ng-container>
-                    <button *ngSwitchCase="'button'" class="ui button" [ngClass]="c.selector.class"
-                        (click)="c.selector.click()">
-                        {{c.selector.title | translate}}
-                        <i class="icon" [ngClass]="c.selector.icon" *ngIf="c.selector.icon"></i>
-                    </button>
-                    <app-confirm-button *ngSwitchCase="'confirm-button'" [class]="'small'"
-                        [color]="c.selector.color ? c.selector.color : 'primary'" (event)="c.selector.click()"
-                        [title]="c.selector.title">
-                    </app-confirm-button>
-                    <span *ngSwitchCase="'label'"class="ui label" [ngClass]="c.selector.class">{{c.selector.value | translate}}</span>
-                    <ng-container *ngSwitchCase="'router-link-with-labels'">
-                        <a class="ui" [routerLink]="c.selector.link">{{c.selector.value}}</a>
-                        {{' '}}<span *ngFor="let l of c.selector.labels" class="ui label {{l.color}}">{{l.title | translate}}</span>
-                    </ng-container>
-                    <div *ngSwitchCase="'text-copy'" class="ui fluid action input">
-                        <ng-container *ngIf="c.selector">
-                            <input type="text" value="{{c.selector}}">
-                            <button class="ui icon button copyButton" [title]="'common_copy_clipboard' | translate"
-                                    ngxClipboard [cbContent]="c.selector">
-                                <i class="copy icon"></i>
-                            </button>
-                        </ng-container>
-                    </div>
-                    <span *ngSwitchCase="'text-labels'" class="text-labels">
-                        {{c.selector.value |
-                                translate}}
-                        <span *ngFor="let l of c.selector.labels"
-                            class="ui label {{l.color}}">{{l.title | translate}}</span>
-                    </span>
-                    <span *ngSwitchCase="'text-icons'">
-                        {{c.selector.value | translate}}
-                        <span *ngFor="let i of c.selector.icons" nz-tooltip [nzTooltipTitle]="i.label | translate" nzTooltipTrigger="{{i.trigger ? i.trigger : 'hover'}}">
-                            {{' '}}<i [ngClass]="i.class" title="{{i.title | translate }}"></i>
-                        </span>
-                    </span>
-                    <ng-container *ngSwitchDefault>
-                        <ng-container *ngIf="c.selector && c.translate">
-                            {{c.selector | translate}}
-                        </ng-container>
-                        <ng-container *ngIf="c.selector && !c.translate">
-                            {{c.selector}}
-                        </ng-container>
-                    </ng-container>
-                </td>
-            </ng-container>
-        </tr>
-    </tbody>
-</table-->
