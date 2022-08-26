@@ -3,7 +3,6 @@ import { NgForm } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { Transition, TransitionController, TransitionDirection } from '@richardlt/ng2-semantic-ui';
 import { AuthConsumer, AuthDriverManifest, AuthDriverManifests, AuthSession } from 'app/model/authentication.model';
 import { Group } from 'app/model/group.model';
 import { AuthentifiedUser, AuthSummary, UserContact } from 'app/model/user.model';
@@ -17,14 +16,13 @@ import { AuthenticationState } from 'app/store/authentication.state';
 import * as moment from 'moment';
 import { forkJoin } from 'rxjs';
 import { finalize } from 'rxjs/operators';
-import { CloseEventType, ConsumerCreateModalComponent } from '../consumer-create-modal/consumer-create-modal.component';
+import { ConsumerCreateModalComponent } from '../consumer-create-modal/consumer-create-modal.component';
 import {
     CloseEvent,
     CloseEventType as DetailsCloseEventType,
     ConsumerDetailsModalComponent
 } from '../consumer-details-modal/consumer-details-modal.component';
 import { NzModalService } from 'ng-zorro-antd/modal';
-import { AsCodeSaveModalComponent } from 'app/shared/ascode/save-modal/ascode.save-modal.component';
 
 const defaultMenuItems = [<Item>{
     translate: 'user_profile_btn',
@@ -44,7 +42,6 @@ const usernamePattern = new RegExp('^[a-zA-Z0-9._-]{1,}$');
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class UserEditComponent implements OnInit {
-    transitionController = new TransitionController();
 
     @ViewChild('ldapSigninForm')
     ldapSigninForm: NgForm;
@@ -54,7 +51,6 @@ export class UserEditComponent implements OnInit {
 
     loading = false;
     deleteLoading = false;
-    groupsAdmin: Array<Group>;
     userPatternError = false;
     username: string;
     currentAuthSummary: AuthSummary;
@@ -417,16 +413,8 @@ export class UserEditComponent implements OnInit {
             });
             return;
         }
-
-        this.transitionController.animate(
-            new Transition('scale', 150, TransitionDirection.Out, () => {
-                this.showLDAPSigninForm = true;
-                this._cd.detectChanges();
-                this.transitionController.animate(
-                    new Transition('scale', 150, TransitionDirection.In, () => { })
-                );
-            })
-        );
+        this.showLDAPSigninForm = true;
+        this._cd.detectChanges();
     }
 
     clickConsumerDetach(c: AuthConsumer): void {

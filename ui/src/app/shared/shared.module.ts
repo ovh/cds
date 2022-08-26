@@ -4,7 +4,6 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { NguiAutoCompleteModule } from '@sgu/auto-complete';
 import { TranslateModule } from '@ngx-translate/core';
-import { SuiModule } from '@richardlt/ng2-semantic-ui';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { AuthenticationGuard } from 'app/guard/authentication.guard';
 import { FeatureGuard } from 'app/guard/feature.guard';
@@ -199,7 +198,6 @@ const icons: IconDefinition[] = [ ArrowDownOutline, ArrowRightOutline, AudioOutl
         MarkdownModule.forRoot(),
         NguiAutoCompleteModule,
         RouterModule,
-        SuiModule,
         InfiniteScrollModule,
         NgxChartsModule
     ],
@@ -397,7 +395,6 @@ const icons: IconDefinition[] = [ ArrowDownOutline, ArrowRightOutline, AudioOutl
         SelectorPipe,
         SelectPipe,
         StatusIconComponent,
-        SuiModule,
         TabsComponent,
         TranslateModule,
         TruncatePipe,
