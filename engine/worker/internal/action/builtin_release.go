@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/golang/protobuf/ptypes/empty"
@@ -34,7 +35,13 @@ func RunRelease(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, _ [
 
 	projectKey := sdk.ParameterValue(wk.Parameters(), "cds.project")
 	wName := sdk.ParameterValue(wk.Parameters(), "cds.workflow")
-	runResult, err := wk.Client().WorkflowRunResultsList(ctx, projectKey, wName, jobID)
+	runNumberString := sdk.ParameterValue(wk.Parameters(), "cds.run.number")
+	runNumber, err := strconv.ParseInt(runNumberString, 10, 64)
+	if err != nil {
+		newError := sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("cannot parse '%s' as run number: %s", runNumberString, err))
+		return sdk.Result{Status: sdk.StatusFail}, newError
+	}
+	runResult, err := wk.Client().WorkflowRunResultsList(ctx, projectKey, wName, runNumber)
 	if err != nil {
 		return sdk.Result{Status: sdk.StatusFail}, sdk.Errorf("unable to get run result list: %v", err)
 	}
