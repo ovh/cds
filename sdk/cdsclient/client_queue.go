@@ -271,7 +271,7 @@ func (c *client) QueueJobSetVersion(ctx context.Context, jobID int64, version sd
 	return err
 }
 
-func (c *client) QueueWorkflowRunResultsRelease(ctx context.Context, permJobID int64) error {
+func (c *client) QueueWorkflowRunResultsRelease(ctx context.Context, permJobID int64, runResultIDs []string, from, to string) error {
 	uri := fmt.Sprintf("/queue/workflows/%d/run/results/release", permJobID)
 	_, err := c.PostJSON(ctx, uri, nil, nil)
 	return err

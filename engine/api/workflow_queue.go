@@ -1121,6 +1121,13 @@ func (api *API) workflowRunResultCheckUploadHandler() service.Handler {
 	}
 }
 
+func (api *API) workflowRunResultPromoteHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		// TODO
+		return nil
+	}
+}
+
 func (api *API) workflowRunResultReleaseHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if !isWorker(ctx) {
@@ -1132,16 +1139,48 @@ func (api *API) workflowRunResultReleaseHandler() service.Handler {
 			return err
 		}
 
-		wr, err := workflow.LoadRunByJobID(ctx, api.mustDBWithCtx(ctx), jobID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
+		var releaseRequest sdk.WorkflowRunResultPromotionRequest
+		if err := service.UnmarshalBody(r, &releaseRequest); err != nil {
+			return sdk.WithStack(err)
+		}
+
+		tx, err := api.mustDBWithCtx(ctx).Begin()
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		defer tx.Rollback()
+
+		wr, err := workflow.LoadRunByJobID(ctx, tx, jobID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
 		if err != nil {
 			return err
 		}
 
-		if err := workflow.SyncRunResultArtifactManagerByRunID(ctx, api.mustDBWithCtx(ctx), wr.ID); err != nil {
+		runResults, err := workflow.LoadRunResultsByRunIDFilterByIDs(ctx, tx, wr.ID, releaseRequest.IDs...)
+		if err != nil {
 			return err
 		}
 
-		return nil
+		if len(runResults) == 0 {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to find any run results among %v", releaseRequest.IDs)
+		}
+
+		releaseRequest.WorkflowRunResultPromotion.Date = time.Now()
+		for _, r := range runResults {
+			for _, id := range releaseRequest.IDs {
+				if id == r.ID {
+					r.DataSync.Releases = append(r.DataSync.Releases, releaseRequest.WorkflowRunResultPromotion)
+				}
+			}
+			if err := workflow.UpdateRunResult(ctx, tx, &r); err != nil {
+				return err
+			}
+		}
+
+		if err := workflow.SyncRunResultArtifactManagerByRunID(ctx, tx, wr.ID); err != nil {
+			return err
+		}
+
+		return sdk.WithStack(tx.Commit())
 	}
 }
 

@@ -2,11 +2,12 @@ package action
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/pkg/errors"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
@@ -20,8 +21,51 @@ func RunRelease(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, _ [
 		return sdk.Result{Status: sdk.StatusFail}, err
 	}
 
-	log.Debug(ctx, "RunRelease> preparing run result for release ")
-	if err := wk.Client().QueueWorkflowRunResultsRelease(ctx, jobID); err != nil {
+	artifactList := sdk.ParameterValue(a.Parameters, "artifacts")
+	artSplitted := strings.Split(artifactList, ",")
+	artRegs := make([]*regexp.Regexp, 0, len(artSplitted))
+	for _, arti := range artSplitted {
+		r, err := regexp.Compile(arti)
+		if err != nil {
+			return sdk.Result{Status: sdk.StatusFail}, sdk.Errorf("unable to compile regexp in artifact list: %v", err)
+		}
+		artRegs = append(artRegs, r)
+	}
+
+	projectKey := sdk.ParameterValue(wk.Parameters(), "cds.project")
+	wName := sdk.ParameterValue(wk.Parameters(), "cds.workflow")
+	runResult, err := wk.Client().WorkflowRunResultsList(ctx, projectKey, wName, jobID)
+	if err != nil {
+		return sdk.Result{Status: sdk.StatusFail}, sdk.Errorf("unable to get run result list: %v", err)
+	}
+
+	promotedRunResultIDs := make([]string, 0)
+	for _, r := range runResult {
+		// static-file type does not need to be released
+		if r.Type == sdk.WorkflowRunResultTypeStaticFile {
+			continue
+		}
+		rData, err := r.GetArtifactManager()
+		if err != nil {
+			return sdk.Result{Status: sdk.StatusFail}, sdk.Errorf("unable to read artifacts data: %v", err)
+		}
+		skip := true
+		for _, reg := range artRegs {
+			if reg.MatchString(rData.Name) {
+				skip = false
+				break
+			}
+		}
+		if !skip {
+			promotedRunResultIDs = append(promotedRunResultIDs, r.ID)
+		}
+	}
+
+	log.Info(ctx, "RunRelease> preparing run result %+v for release", promotedRunResultIDs)
+	if err := wk.Client().QueueWorkflowRunResultsRelease(ctx,
+		jobID, promotedRunResultIDs,
+		sdk.ParameterValue(a.Parameters, "srcMaturity"), sdk.ParameterValue(a.Parameters, "destMaturity"),
+	); err != nil {
 		return sdk.Result{Status: sdk.StatusFail}, err
 	}
 
