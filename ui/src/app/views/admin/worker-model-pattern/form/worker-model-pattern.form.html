@@ -1,102 +1,140 @@
 <div *ngIf="!loadingPatterns;then showPatterns;else loadPatterns"></div>
 <ng-template #showPatterns>
-    <form class="ui form">
-        <div class="ui grid">
-            <div class="twelve wide column">
-                <div class="two fields">
-                    <div class="field">
-                        <label>{{'worker_model_name' | translate}}</label>
-                        <input class="ui input" type="text" name="name" [(ngModel)]="pattern.name" [disabled]="loading">
-                    </div>
-                    <div class="field">
-                        <label>{{'worker_model_type' | translate}}</label>
-                        <ng-container *ngIf="workerModelTypes">
-                            <sui-select class="selection" name="type" placeholder="{{'common_select' | translate}}"
-                                [isDisabled]="loading" [options]="workerModelTypes" isSearchable="true"
-                                [(ngModel)]="pattern.type" #selectType>
-                                <sui-select-option *ngFor="let option of selectType.filteredOptions" [value]="option">
-                                </sui-select-option>
-                            </sui-select>
-                        </ng-container>
-                    </div>
-                </div>
-                <div class="field" *ngIf="pattern.type && pattern.type === 'docker'">
-                    <label>{{'worker_model_shell_docker' | translate}}</label>
-                    <input class="ui input" type="text" placeholder="sh -c" name="shell"
-                        [(ngModel)]="pattern.model.shell">
-                </div>
-                <div class="field" *ngIf="pattern.type && pattern.type !== 'docker'">
-                    <label>{{'worker_model_pre_cmd' | translate}}</label>
-                    <textarea class="ui input" name="pre_cmd" [(ngModel)]="pattern.model.pre_cmd" [disabled]="loading">
-              </textarea>
-                </div>
-                <div class="field">
-                    <label nz-tooltip  [nzTooltipTitle]="'worker_model_cmd_tooltip' | translate" nzTooltipPlacement="topLeft">
-                        {{'worker_model_cmd' | translate}} <i _ngcontent-c5="" class="fa fa-question-circle"></i>
-                    </label>
-                    <input class="ui input" type="text" name="cmd" [(ngModel)]="pattern.model.cmd" [disabled]="loading">
-                </div>
-                <div class="field" *ngIf="pattern.type && pattern.type === 'docker'">
-                    <label nz-tooltip [nzTooltipTitle]="'worker_model_env_tooltip' | translate" nzTooltipPlacement="topLeft">
-                        {{'worker_model_env' | translate}} <i _ngcontent-c5="" class="fa fa-question-circle"></i>
-                    </label>
+    <form nz-form nzLayout="vertical">
+        <nz-row>
+            <nz-col [nzSpan]="17">
+                <nz-row>
+                    <nz-col [nzSpan]="12">
+                        <nz-form-item>
+                            <nz-form-label>Name</nz-form-label>
+                            <nz-form-control>
+                                <input nz-input type="text" name="name" [(ngModel)]="pattern.name" [disabled]="loading">
+                            </nz-form-control>
+                        </nz-form-item>
+                    </nz-col>
+                    <nz-col [nzSpan]="11" [nzOffset]="1">
+                        <nz-form-item>
+                            <nz-form-label>Type</nz-form-label>
+                            <nz-form-control>
+                                <nz-select nzShowSearch name="type" nzPlaceHolder="{{'common_select' | translate}}"
+                                           [nzDisabled]="loading" [(ngModel)]="pattern.type" #selectType>
+                                    <nz-option *ngFor="let option of workerModelTypes" [nzValue]="option" [nzLabel]="option">
+                                    </nz-option>
+                                </nz-select>
+                            </nz-form-control>
+                        </nz-form-item>
+                    </nz-col>
+                </nz-row>
+                <nz-row *ngIf="pattern.type && pattern.type === 'docker'">
+                   <nz-col [nzSpan]="24">
+                       <nz-form-item>
+                           <nz-form-label>Shell command</nz-form-label>
+                           <nz-form-control>
+                               <input nz-input name="shell" type="text" placeholder="sh -c" name="shell"
+                                      [(ngModel)]="pattern.model.shell">
+                           </nz-form-control>
+                       </nz-form-item>
+                   </nz-col>
+                </nz-row>
+                <nz-row>
+                    <nz-col [nzSpan]="24">
+                        <nz-form-item>
+                            <nz-form-label>Pre worker command</nz-form-label>
+                            <nz-form-control>
+                                 <textarea nz-input name="pre_cmd" [(ngModel)]="pattern.model.pre_cmd" [disabled]="loading"></textarea>
+                            </nz-form-control>
+                        </nz-form-item>
+                    </nz-col>
+                </nz-row>
+                <nz-row>
+                    <nz-col [nzSpan]="24">
+                        <nz-form-item>
+                            <nz-form-label>Main worker command <i _ngcontent-c5="" class="fa fa-question-circle"></i></nz-form-label>
+                            <nz-form-control>
+                                <input nz-input type="text" name="cmd" [(ngModel)]="pattern.model.cmd" [disabled]="loading">
+                            </nz-form-control>
+                        </nz-form-item>
+                    </nz-col>
+                </nz-row>
+                <ng-container *ngIf="pattern.type && pattern.type === 'docker'">
+                    <nz-row>
+                        <nz-form-item>
+                            <nz-form-label nz-tooltip [nzTooltipTitle]="'worker_model_env_tooltip' | translate"> {{'worker_model_env' | translate}} <i _ngcontent-c5="" class="fa fa-question-circle"></i></nz-form-label>
+                        </nz-form-item>
+                    </nz-row>
                     <ng-container *ngIf="pattern.model.envs">
-                        <div class="two fields" *ngFor="let envName of envNames">
-                            <div class="field">
-                                <input type="text" name="name-{{envName}}" [placeholder]="'common_name' | translate"
-                                    [value]="envName" disabled>
-                            </div>
-                            <div class="field">
-                                <input type="text" name="value-{{envName}}" [placeholder]="'common_value' | translate"
-                                    [(ngModel)]="pattern.model.envs[envName]">
-                            </div>
-                            <button class="ui icon red button" (click)="clickDeleteEnv(envName)">
-                                <i class="trash icon"></i>
-                            </button>
-                        </div>
+                        <nz-row *ngFor="let envName of envNames" class="envLine">
+                            <nz-col [nzSpan]="11">
+                                <input nz-input type="text" name="name-{{envName}}" [placeholder]="'common_name' | translate"
+                                       [value]="envName" disabled>
+                            </nz-col>
+                            <nz-col [nzSpan]="10" nzOffset="1">
+                                <input nz-input type="text" name="value-{{envName}}" [placeholder]="'common_value' | translate"
+                                       [(ngModel)]="pattern.model.envs[envName]">
+                            </nz-col>
+                            <nz-col [nzSpan]="1" nzOffset="1">
+                                <button nz-button nzDanger nzType="primary" (click)="clickDeleteEnv(envName)">
+                                    <i nz-icon nzType="delete" nzTheme="outline"></i>
+                                </button>
+                            </nz-col>
+                        </nz-row>
                     </ng-container>
-                    <div class="two fields">
-                        <div class="field">
-                            <input type="text" name="newEnvName" [placeholder]="'common_name' | translate"
-                                [(ngModel)]="newEnvName">
-                        </div>
-                        <div class="field">
-                            <input type="text" name="newEnvValue" [placeholder]="'common_value' | translate"
-                                [(ngModel)]="newEnvValue">
-                        </div>
-                        <button class="ui icon green button" (click)="clickAddEnv()">
-                            <i class="plus icon"></i>
+                    <nz-row class="envLine">
+                        <nz-col [nzSpan]="11">
+                            <input nz-input type="text" name="newEnvName" [placeholder]="'common_name' | translate"
+                                   [(ngModel)]="newEnvName">
+                        </nz-col>
+                        <nz-col [nzSpan]="10" nzOffset="1">
+                            <input nz-input type="text" name="newEnvValue" [placeholder]="'common_value' | translate"
+                                   [(ngModel)]="newEnvValue">
+                        </nz-col>
+                        <nz-col [nzSpan]="1" nzOffset="1">
+                            <button nz-button nzType="primary"  (click)="clickAddEnv()">
+                                <i nz-icon nzType="plus" nzTheme="outline"></i>
+                            </button>
+                        </nz-col>
+                    </nz-row>
+                </ng-container>
+                <nz-row *ngIf="pattern.type && pattern.type !== 'docker'">
+                    <nz-col [nzSpan]="24">
+                        <nz-form-item>
+                            <nz-form-label>{{'worker_model_post_cmd' | translate}}</nz-form-label>
+                            <nz-form-control>
+                                <textarea nz-input name="post_cmd" [(ngModel)]="pattern.model.post_cmd"
+                                          [disabled]="loading"></textarea>
+                            </nz-form-control>
+                        </nz-form-item>
+                    </nz-col>
+                </nz-row>
+                <nz-row class="footer">
+                    <nz-col [nzSpan]="12">
+                        <button nz-button nzDanger nzType="primary" nz-popconfirm
+                        nzPopconfirmTitle="Are you sure you want to delete this pattern ?" (nzOnConfirm)="clickDeleteButton()">
+                            <i nz-icon nzType="delete" nzTheme="outline"></i>Delete
                         </button>
-                    </div>
-                </div>
-                <div class="field" *ngIf="pattern.type && pattern.type !== 'docker'">
-                    <label>{{'worker_model_post_cmd' | translate}}</label>
-                    <textarea class="ui input" name="post_cmd" [(ngModel)]="pattern.model.post_cmd"
-                        [disabled]="loading"></textarea>
-                </div>
-                <div class="field">
-                    <app-delete-button *ngIf="pattern.id" [loading]="loading" (event)="clickDeleteButton()">
-                    </app-delete-button>
-                    <button class="ui green right floated button" [class.loading]="loading"
-                        [class.disabled]="!pattern.type || !pattern.name || !pattern.model.cmd"
-                        (click)="clickSaveButton()">
-                        <i class="save icon"></i>{{ (pattern.id ? 'btn_save' : 'btn_add') | translate }}
-                    </button>
-                </div>
-            </div>
-            <div class="four wide column">
-                <div class="ui segment">
-                    <h2 class="ui header"><i class="fa fa-book"></i> {{ 'settings_tips' | translate }}</h2>
-                    <p>{{'worker_model_pattern_help_line_1' | translate}}
-                        <a class="item" target="_blank" rel="noopener noreferrer" 
-                            href="#" [routerLink]="['/docs', 'docs', 'concepts', 'worker-model', 'patterns']">
-                            {{'common_here' | translate}}</a>
+                    </nz-col>
+                    <nz-col [nzSpan]="12" class="alignRight">
+                        <button nz-button nzType="primary" [nzLoading]="loading"
+                                [disabled]="!pattern.type || !pattern.name || !pattern.model.cmd"
+                                (click)="clickSaveButton()">
+                            <i nz-icon nzType="save" nzTheme="outline"></i>{{ (pattern.id ? 'btn_save' : 'btn_add') | translate }}
+                        </button>
+                    </nz-col>
+                </nz-row>
+            </nz-col>
+            <nz-col [nzSpan]="6" [nzOffset]="1">
+                <div class="nzSegment">
+                    <h2><i class="fa fa-book"></i>Tips</h2>
+                    <p>See Worker Model Pattern documentation:
+                        <a class="item" target="_blank" rel="noopener noreferrer"
+                           href="#" [routerLink]="['/docs', 'docs', 'concepts', 'worker-model', 'patterns']">
+                            here</a>
                     </p>
                 </div>
-            </div>
-        </div>
+            </nz-col>
+        </nz-row>
     </form>
 </ng-template>
 <ng-template #loadPatterns>
-    <div class="ui text active loader">{{ 'common_loading' | translate }}</div>
+    <nz-spin nzTip="loading..."></nz-spin>
 </ng-template>

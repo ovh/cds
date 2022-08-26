@@ -1,130 +1,111 @@
 <div class="wrapper">
     <app-breadcrumb [path]="path"></app-breadcrumb>
     <app-scrollview class="scrollview">
-        <div *ngIf="loading" class="ui active text loader">{{ 'common_loading' | translate }}</div>
+        <nz-spin *ngIf="loading" nzTip="Loading..."></nz-spin>
         <div *ngIf="!loading">
-            <div class="ui info message">
-                <b>cdsctl</b> {{ 'cdsctl_info_title' | translate }}
+            <nz-alert nzType="info" [nzMessage]="infoListTmpl"></nz-alert>
+            <ng-template #infoListTmpl>
+                <b>cdsctl</b> is the CDS Command Line tool. It has the same features, and even more than the web ui. It allows you to do everything:
                 <ul>
-                    <li>{{ 'cdsctl_info_list_1' | translate }}</li>
-                    <li>{{ 'cdsctl_info_list_2' | translate }}</li>
-                    <li>{{ 'cdsctl_info_list_3' | translate }}</li>
-                    <li>{{ 'cdsctl_info_list_4' | translate }}</li>
+                    <li>Administrate users, groups, actions, worker models, workflow templates, ...</li>
+                    <li>Manage your projects, workflows, applications, environments, ...</li>
+                    <li>Monitore & operate your CDS platform</li>
+                    <li>Script everything</li>
                 </ul>
-            </div>
+            </ng-template>
 
-            <h1>{{ 'cdsctl_title_1' | translate }}</h1>
-
-            <div class="ui form">
-                <div class="ui grid">
-                    <div class="four wide column">
-                        <div class="grouped fields">
-                            <label>{{ 'cdsctl_choice_os' | translate }}</label>
+            <h1>1 - Download cdsctl</h1>
+            <nz-form>
+                <nz-row>
+                    <nz-col [nzSpan]="6">
+                        <h3>Choose your OS</h3>
+                        <nz-radio-group [(ngModel)]="osChoice" (ngModelChange)="buildData()">
                             <ng-container *ngFor="let o of os">
-                                <div class="field">
-                                    <div class="ui radio checkbox">
-                                        <sui-radio-button type="radio" id="os-{{o}}" name="os" [value]="o"
-                                            [(ngModel)]="osChoice" (ngModelChange)="buildData()">
-                                            {{o}}
-                                        </sui-radio-button>
-                                    </div>
-                                </div>
+                                <label nz-radio [nzValue]="o"  id="os-{{o}}">{{o}}</label>
                             </ng-container>
-                        </div>
-                    </div>
-                    <div class="four wide column">
-                        <div class="grouped fields">
-                            <label for="arch">{{ 'cdsctl_choice_arch' | translate }}</label>
+                        </nz-radio-group>
+                    </nz-col>
+                    <nz-col [nzSpan]="6">
+                        <h3>Choose your architecture</h3>
+                        <nz-radio-group [(ngModel)]="archChoice" (ngModelChange)="buildData()">
                             <ng-container *ngFor="let a of arch">
-                                <div class="field">
-                                    <div class="ui radio checkbox">
-                                        <sui-radio-button type="radio" id="arch-{{a}}" name="arch" [value]="a"
-                                            [(ngModel)]="archChoice" (ngModelChange)="buildData()">
-                                            {{a}}
-                                        </sui-radio-button>
-                                    </div>
-                                </div>
+                                <label nz-radio [nzValue]="a"  id="os-{{a}}">{{a}}</label>
                             </ng-container>
-                        </div>
-                    </div>
-                    <div class="four wide column">
-                        <div class="grouped fields">
-                            <label for="arch">{{ 'cdsctl_choice_arch' | translate }}</label>
-                            <div class="field">
-                                <sui-checkbox id="withKeychain" name="withKeychain" [(ngModel)]="withKeychain"
-                                    (ngModelChange)="buildData()">
-                                    {{ 'cdsctl_choice_options_with_keychain' | translate }}
-                                </sui-checkbox>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
+                        </nz-radio-group>
+                    </nz-col>
+                    <nz-col [nzSpan]="6">
+                        <h3>Keychain</h3>
+                        <label nz-checkbox [(ngModel)]="withKeychain" (ngModelChange)="buildData()">With OS keychain enabled</label>
+                    </nz-col>
+                </nz-row>
+            </nz-form>
             <codemirror [(ngModel)]="tutorials['part1']" [config]="codeMirrorConfig" #codemirror1>
             </codemirror>
 
-            <div class="ui info message">
-                {{ 'cdsctl_notice' | translate }}
+            <nz-alert nzType="info" [nzMessage]="noticeTmpl"></nz-alert>
+            <ng-template #noticeTmpl>
+                Notice
                 <ul>
-                    <li>{{ 'cdsctl_notice_1_1' | translate }}<a href=""
-                            [routerLink]="['/settings', 'downloads']">{{ 'downloads_title' | translate }}</a>
+                    <li>Binaries available on current installation:<a href=""
+                            [routerLink]="['/settings', 'downloads']">Download</a>
                 </ul>
-            </div>
+            </ng-template>
 
-            <h1>{{ 'cdsctl_title_2' | translate }}</h1>
+            <h1>Login</h1>
 
             <codemirror [(ngModel)]="tutorials['part2']" [config]="codeMirrorConfig" #codemirror2>
             </codemirror>
 
-            <div class="ui info message">
-                {{ 'cdsctl_notice' | translate }}
+            <nz-alert nzType="info" [nzMessage]="notice2Tmpl"></nz-alert>
+            <ng-template #notice2Tmpl>
+                Notice
                 <ul>
-                    <li>{{ 'cdsctl_notice_2_1' | translate }} {{currentAuthSummary.user.username}}`</li>
-                    <li>{{ 'cdsctl_notice_2_2' | translate }} `CDS_API_URL="{{apiURL}}"
+                    <li>If you use many instances of CDS, you can use the -f flag, example: `./cdsctl -f .cds/anotherInstance login --api-url http://another-instance:8081 -u aaa`</li>
+                    <li>ByPass Keychain or file configuration: `CDS_API_URL="{{apiURL}}"
                         CDS_USER="{{currentAuthSummary.user.username}}" CDS_TOKEN="yourtoken" cdsctl [command]`</li>
-                    <li>{{ 'cdsctl_notice_2_3' | translate }} `CDS_VERBOSE=true ./cdsctl [command]`</li>
+                    <li>Want to debug something? You can use `CDS_VERBOSE=true ./cdsctl [command]`</li>
                 </ul>
-            </div>
+            </ng-template>
 
-            <h1>{{ 'cdsctl_title_3' | translate }}</h1>
+            <h1>Play with cdsctl</h1>
 
             <codemirror [(ngModel)]="tutorials['part3']" [config]="codeMirrorConfig" #codemirror3>
             </codemirror>
 
-            <h1>{{ 'cdsctl_title_4' | translate }}</h1>
+            <h1>Run a workflow</h1>
 
             <codemirror [(ngModel)]="tutorials['part4']" [config]="codeMirrorConfig" #codemirror4>
             </codemirror>
 
-            <h1>{{ 'cdsctl_title_5' | translate }}</h1>
+            <h1>Check the workflow status</h1>
 
             <codemirror [(ngModel)]="tutorials['part5']" [config]="codeMirrorConfig" #codemirror5>
             </codemirror>
 
-            <h1>{{ 'cdsctl_title_6' | translate }}</h1>
+            <h1>Git track</h1>
 
-            {{ 'cdsctl_title_6_info_1' | translate }}
+            Imagine now that you develop something and you have a CDS Workflow triggered on each git push
             (<a href="#" [routerLink]="['/docs', 'docs', 'concepts', 'workflow', 'hooks', 'git-repo-webhook']">Git Repository
                 Webhook</a>).
-            {{ 'cdsctl_title_6_info_2' | translate }}
+            The `git track` alias allows you to see the workflow status without opening a browser.
 
             <codemirror [(ngModel)]="tutorials['part6']" [config]="codeMirrorConfig" #codemirror6>
             </codemirror>
 
-            <div class="ui info message">
-                {{ 'cdsctl_notice' | translate }}
+            <nz-alert nzType="info" [nzMessage]="trackTmpl"></nz-alert>
+            <ng-template #trackTmpl>
+                Notice
                 <ul>
-                    <li>{{ 'cdsctl_notice_6_1' | translate }}</li>
+                    <li>By setting this new alias in your gitconfig file, you can now use: git push && git track</li>
                 </ul>
-            </div>
+            </ng-template>
 
-            <h1>{{ 'cdsctl_title_7' | translate }}</h1>
+            <h1>Update cdsctl</h1>
 
             <codemirror [(ngModel)]="tutorials['part7']" [config]="codeMirrorConfig" #codemirror7>
             </codemirror>
 
-            <h1>{{ 'cdsctl_title_8' | translate }}</h1>
+            <h1>Scripting</h1>
 
             <codemirror [(ngModel)]="tutorials['part8']" [config]="codeMirrorConfig" #codemirror8>
             </codemirror>

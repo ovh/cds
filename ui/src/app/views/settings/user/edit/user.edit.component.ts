@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -48,6 +48,9 @@ export class UserEditComponent implements OnInit {
 
     @ViewChild('ldapSigninForm')
     ldapSigninForm: NgForm;
+
+    @ViewChild('modalHeaderTmpl')
+    modalTitleTmpl: TemplateRef<any>
 
     loading = false;
     deleteLoading = false;
@@ -376,7 +379,7 @@ export class UserEditComponent implements OnInit {
 
         this._cd.detectChanges(); // manually ask for detect changes to allow modal data to be set before opening
         let modal = this._modalService.create({
-            nzTitle: 'Consumer detail',
+            nzTitle: this.modalTitleTmpl,
             nzWidth: '900px',
             nzContent: ConsumerDetailsModalComponent,
             nzComponentParams: {
@@ -385,6 +388,8 @@ export class UserEditComponent implements OnInit {
             },
             nzFooter: null,
         });
+
+
         modal.afterClose.subscribe(t => {
             this.modalDetailsClose(t);
         })
@@ -443,7 +448,7 @@ export class UserEditComponent implements OnInit {
 
     clickConsumerCreate(): void {
         this._modalService.create({
-            nzTitle: 'Create a consumer',
+            nzTitle: 'Create a new consumer',
             nzWidth: '900px',
             nzContent: ConsumerCreateModalComponent,
             nzComponentParams: {
@@ -644,12 +649,12 @@ export class UserEditComponent implements OnInit {
         this.selectedConsumer = null;
         this._cd.markForCheck();
 
-        if (event.type === DetailsCloseEventType.CHILD_DETAILS) {
+        if (event?.type === DetailsCloseEventType.CHILD_DETAILS) {
             this.clickConsumerDetails(event.payload);
             return;
         }
 
-        if (event.type === DetailsCloseEventType.DELETE_OR_DETACH) {
+        if (event?.type === DetailsCloseEventType.DELETE_OR_DETACH) {
             let currentSession = this.sessions.find(s => s.current);
             if (currentSession && currentSession.consumer_id === event.payload) {
                 this._router.navigate(['/auth/signin']);
@@ -659,7 +664,7 @@ export class UserEditComponent implements OnInit {
             return;
         }
 
-        if (event.type === DetailsCloseEventType.REGEN) {
+        if (event?.type === DetailsCloseEventType.REGEN) {
             this.getAuthData();
             return;
         }

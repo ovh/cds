@@ -217,3 +217,8 @@
         </app-scrollview>
     </div>
 </div>
+<ng-template #modalHeaderTmpl>
+    {{ 'auth_consumer_details_modal_title' | translate: { name: selectedConsumer?.name } }} <div *ngIf="selectedConsumer?.disabled"
+                                                                                        class="ui red label">
+    {{'user_auth_consumer_disabled' | translate}}</div>
+</ng-template>
