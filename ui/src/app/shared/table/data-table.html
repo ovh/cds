@@ -80,14 +80,15 @@ SORT COLUMN
                     {{c.selector.title | translate}}
 
                 </button>
+                <button *ngSwitchCase="'confirm-button'" class="{{c.class}}"
+                        nz-button nzType="{{c.selector.buttonType}}" [nzDanger]="c.selector.buttonDanger"
+                        nz-popconfirm nzPopconfirmTitle="{{c.selector.buttonConfirmationMessage}}" (nzOnConfirm)="c.selector.click()">{{c.selector.title}}</button>
+
 
                 <ng-container *ngSwitchCase="'time-ago'"> {{c.selector | amTimeAgo}} </ng-container>
 
 
-                <app-confirm-button *ngSwitchCase="'confirm-button'" [class]="'small'"
-                                    [color]="c.selector.color ? c.selector.color : 'primary'" (event)="c.selector.click()"
-                                    [title]="c.selector.title">
-                </app-confirm-button>
+
                 <span *ngSwitchCase="'label'"class="ui label" [ngClass]="c.selector.class">{{c.selector.value | translate}}</span>
                 <div *ngSwitchCase="'text-copy'" class="ui fluid action input">
                     <ng-container *ngIf="c.selector">

@@ -32,7 +32,6 @@ import { ActionStepFormComponent } from './action/step/form/step.form.component'
 import { ActionStepComponent } from './action/step/step.component';
 import { AuditListComponent } from './audit/list/audit.list.component';
 import { BreadcrumbComponent } from './breadcrumb/breadcrumb.component';
-import { ConfirmButtonComponent } from './button/confirm/confirm.button';
 import { DeleteButtonComponent } from './button/delete/delete.button';
 import { UploadButtonComponent } from './button/upload/upload.button.component';
 import { ChartComponentComponent } from './chart/chart.component';
@@ -221,7 +220,6 @@ const icons: IconDefinition[] = [ ArrowDownOutline, ArrowRightOutline, BellFill,
         ChartComponentComponent,
         CommitListComponent,
         ConditionsComponent,
-        ConfirmButtonComponent,
         CutPipe,
         DataTableComponent,
         DeleteButtonComponent,
@@ -333,7 +331,6 @@ const icons: IconDefinition[] = [ ArrowDownOutline, ArrowRightOutline, BellFill,
         CommitListComponent,
         CommonModule,
         ConditionsComponent,
-        ConfirmButtonComponent,
         CutPipe,
         DataTableComponent,
         DeleteButtonComponent,

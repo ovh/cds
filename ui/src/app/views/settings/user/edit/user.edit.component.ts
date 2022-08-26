@@ -347,8 +347,10 @@ export class UserEditComponent implements OnInit {
                 class: 'two right aligned',
                 disabled: true,
                 selector: (s: AuthSession) => ({
-                    title: 'user_auth_revoke_btn',
-                    color: 'red',
+                    buttonType: 'primary',
+                    buttonDanger: true,
+                    buttonConfirmationMessage: 'Are you sure you want to revoke this session ?',
+                    title: 'Revoke',
                     click: () => {
                         this.clickSessionRevoke(s);
                     }

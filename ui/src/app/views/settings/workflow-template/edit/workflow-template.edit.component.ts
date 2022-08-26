@@ -207,13 +207,16 @@ export class WorkflowTemplateEditComponent implements OnInit, OnDestroy {
                     this.columnsAudits.push(<Column<AuditWorkflowTemplate>>{
                         type: ColumnType.CONFIRM_BUTTON,
                         name: 'Action',
-                        class: 'two right aligned',
+                        class: 'rightAlign',
                         selector: (a: AuditWorkflowTemplate) => ({
-                                title: 'common_rollback',
-                                click: () => {
-                                    this.clickRollback(a);
-                                }
-                            })
+                            buttonType: 'primary',
+                            buttonDanger: false,
+                            buttonConfirmationMessage: 'Are you sure you want to rollback this workflow template ?',
+                            title: 'Rollback',
+                            click: () => {
+                                this.clickRollback(a);
+                            }
+                        })
                     });
                 }
 
