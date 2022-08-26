@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/url"
 
@@ -12,17 +13,18 @@ import (
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/repository"
 	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
 
-func (api *API) getRepositoryByIdentifier(ctx context.Context, vcsID string, repositoryIdentifier string) (*sdk.ProjectRepository, error) {
+func (api *API) getRepositoryByIdentifier(ctx context.Context, vcsID string, repositoryIdentifier string, opts ...gorpmapper.GetOptionFunc) (*sdk.ProjectRepository, error) {
 	var repo *sdk.ProjectRepository
 	var err error
 	if sdk.IsValidUUID(repositoryIdentifier) {
-		repo, err = repository.LoadRepositoryByVCSAndID(ctx, api.mustDB(), vcsID, repositoryIdentifier)
+		repo, err = repository.LoadRepositoryByVCSAndID(ctx, api.mustDB(), vcsID, repositoryIdentifier, opts...)
 	} else {
-		repo, err = repository.LoadRepositoryByName(ctx, api.mustDB(), vcsID, repositoryIdentifier)
+		repo, err = repository.LoadRepositoryByName(ctx, api.mustDB(), vcsID, repositoryIdentifier, opts...)
 	}
 	if err != nil {
 		return nil, err
@@ -151,7 +153,11 @@ func (api *API) postProjectRepositoryHandler() ([]service.RbacChecker, service.H
 			if len(srvs) < 1 {
 				return sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find hook uservice")
 			}
-			repositoryHookRegister := sdk.NewEntitiesHook(repoDB.ID, pKey, vcsProject.Type, vcsProject.Name, repoDB.Name)
+			repositoryHookRegister, err := sdk.NewEntitiesHook(repoDB.ID, pKey, vcsProject.Type, vcsProject.Name, repoDB.Name)
+			if err != nil {
+				return err
+			}
+
 			_, code, errHooks := services.NewClient(tx, srvs).DoJSONRequest(ctx, http.MethodPost, "/v2/task", repositoryHookRegister, nil)
 			if errHooks != nil || code >= 400 {
 				return sdk.WrapError(errHooks, "unable to create hooks [HTTP: %d]", code)
@@ -169,6 +175,7 @@ func (api *API) postProjectRepositoryHandler() ([]service.RbacChecker, service.H
 				repoDB.CloneURL = vcsRepo.HTTPCloneURL
 			}
 			repoDB.Auth = repoBody.Auth
+			repoDB.HookSignKey = repositoryHookRegister.HookSignKey
 
 			// Update repository with Hook configuration
 			repoDB.HookConfiguration = repositoryHookRegister.Configuration
@@ -204,5 +211,60 @@ func (api *API) getVCSProjectRepositoryAllHandler() ([]service.RbacChecker, serv
 				return err
 			}
 			return service.WriteJSON(w, repositories, http.StatusOK)
+		}
+}
+
+func (api *API) postRepositoryHookRegenKeyHandler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(rbac.ProjectManage),
+		func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+			vars := mux.Vars(r)
+			pKey := vars["projectKey"]
+			vcsIdentifier, err := url.PathUnescape(vars["vcsIdentifier"])
+			if err != nil {
+				return sdk.NewError(sdk.ErrWrongRequest, err)
+			}
+			repositoryIdentifier, err := url.PathUnescape(vars["repositoryIdentifier"])
+			if err != nil {
+				return sdk.WithStack(err)
+			}
+
+			vcsProject, err := api.getVCSByIdentifier(ctx, pKey, vcsIdentifier)
+			if err != nil {
+				return err
+			}
+
+			repo, err := api.getRepositoryByIdentifier(ctx, vcsProject.ID, repositoryIdentifier, gorpmapper.GetOptions.WithDecryption)
+			if err != nil {
+				return err
+			}
+			newSecret, err := sdk.GenerateHookSecret()
+			if err != nil {
+				return err
+			}
+			repo.HookSignKey = newSecret
+
+			tx, err := api.mustDB().Begin()
+			if err != nil {
+				return sdk.WithStack(err)
+			}
+			if err := repository.Update(ctx, tx, repo); err != nil {
+				return err
+			}
+			if err := tx.Commit(); err != nil {
+				return sdk.WithStack(err)
+			}
+
+			srvs, err := services.LoadAllByType(ctx, api.mustDB(), sdk.TypeHooks)
+			if err != nil {
+				return err
+			}
+			if len(srvs) == 0 {
+				return sdk.NewErrorFrom(sdk.ErrNotFound, "no hook service found")
+			}
+			hook := sdk.HookAccessData{
+				URL:         fmt.Sprintf("%s/v2/webhook/repository/%s/%s", srvs[0].HTTPURL, vcsProject.Type, repo.ID),
+				HookSignKey: newSecret,
+			}
+			return service.WriteJSON(w, hook, http.StatusOK)
 		}
 }
