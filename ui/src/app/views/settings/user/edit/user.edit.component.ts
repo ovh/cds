@@ -242,9 +242,10 @@ export class UserEditComponent implements OnInit {
             <Column<AuthConsumer>>{
                 type: ColumnType.BUTTON,
                 name: 'Action',
-                class: 'two right aligned',
+                class: 'rightAlign',
                 selector: (c: AuthConsumer) => ({
-                    title: 'common_details',
+                    title: 'Details',
+                    buttonDanger: false,
                     click: () => {
                         this.clickConsumerDetails(c);
                     }

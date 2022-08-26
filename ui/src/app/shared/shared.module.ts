@@ -67,7 +67,6 @@ import { ScrollviewComponent } from './scrollview/scrollview.component';
 import { SharedService } from './shared.service';
 import { StatusIconComponent } from './status/status.component';
 import { DataTableComponent, SelectorPipe, SelectPipe } from './table/data-table.component';
-import { PaginationComponent } from './table/pagination.component';
 import { TabComponent } from './tabs/tab.component';
 import { TabsComponent } from './tabs/tabs.component';
 import { ToastService } from './toast/ToastService';
@@ -238,7 +237,6 @@ const icons: IconDefinition[] = [ ArrowDownOutline, ArrowRightOutline, BellFill,
         MenuComponent,
         NgForNumber,
         NgxAutoScrollDirective,
-        PaginationComponent,
         ParameterFormComponent,
         ParameterListComponent,
         ParameterValueComponent,
@@ -387,7 +385,6 @@ const icons: IconDefinition[] = [ ArrowDownOutline, ArrowRightOutline, BellFill,
         NzTableModule,
         NzToolTipModule,
         NzUploadModule,
-        PaginationComponent,
         ParameterFormComponent,
         ParameterListComponent,
         ParameterValueComponent,

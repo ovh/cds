@@ -1,5 +1,8 @@
 @import '../../../common';
-
+nz-row {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
 th.sortable:after {
     font-family: Icons;
     content: '\f0dc';
@@ -62,9 +65,21 @@ pre {
   color: $cds_trigger_color;
 }
 
+.orange {
+  color: $cds_color_orange;
+}
+
 td {
   i {
     font-size: 1.3em;
-    font-weight: 600;
+  }
+  button {
+    i {
+      font-size: 1em;
+    }
+  }
+
+  .rightAlign {
+    float: right;
   }
 }

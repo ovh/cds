@@ -95,11 +95,12 @@ export class WorkflowRunTestTableComponent implements OnInit {
             },
             <Column<TestCase>>{
                 type: ColumnType.BUTTON,
-                name: '',
-                class: 'two right aligned',
+                name: 'Action',
+                class: 'rightAlign',
                 selector: (tc: TestCase) => ({
-                    icon: 'eye',
-                    class: 'icon small',
+                    buttonDanger: false,
+                    iconType: 'eye',
+                    iconTheme: 'outline',
                     click: () => this.clickTestCase(tc)
                 })
             },

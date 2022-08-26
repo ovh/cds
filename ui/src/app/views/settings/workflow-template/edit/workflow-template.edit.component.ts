@@ -170,10 +170,11 @@ export class WorkflowTemplateEditComponent implements OnInit, OnDestroy {
             }, <Column<WorkflowTemplateInstance>>{
                 type: ColumnType.BUTTON,
                 name: 'Action',
-                class: 'two right aligned',
+                class: 'rightAlign',
                 selector: (i: WorkflowTemplateInstance) => ({
-                        title: 'common_update',
-                        class: 'primary small',
+                        title: 'Update',
+                        buttonType: 'primary',
+                        buttonDanger: false,
                         click: () => {
                             this.clickUpdate(i);
                         }
