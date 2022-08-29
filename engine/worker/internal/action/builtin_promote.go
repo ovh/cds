@@ -14,6 +14,10 @@ import (
 )
 
 func RunPromote(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, _ []sdk.Variable) (sdk.Result, error) {
+	if err := RunReleaseActionPrepare(ctx, wk, a); err != nil {
+		return sdk.Result{Status: sdk.StatusFail}, err
+	}
+
 	pfName := sdk.ParameterFind(wk.Parameters(), "cds.integration.artifact_manager")
 	if pfName == nil {
 		return sdk.Result{}, errors.New("unable to retrieve artifact manager integration... Aborting")

@@ -16,10 +16,10 @@ import (
 	"github.com/ovh/cds/sdk/grpcplugin/integrationplugin"
 )
 
-func RunRelease(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, _ []sdk.Variable) (sdk.Result, error) {
+func RunReleaseActionPrepare(ctx context.Context, wk workerruntime.Runtime, a sdk.Action) error {
 	jobID, err := workerruntime.JobID(ctx)
 	if err != nil {
-		return sdk.Result{Status: sdk.StatusFail}, err
+		return err
 	}
 
 	artifactList := sdk.ParameterValue(a.Parameters, "artifacts")
@@ -28,7 +28,7 @@ func RunRelease(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, _ [
 	for _, arti := range artSplitted {
 		r, err := regexp.Compile(arti)
 		if err != nil {
-			return sdk.Result{Status: sdk.StatusFail}, sdk.Errorf("unable to compile regexp in artifact list: %v", err)
+			return sdk.Errorf("unable to compile regexp in artifact list: %v", err)
 		}
 		artRegs = append(artRegs, r)
 	}
@@ -39,11 +39,11 @@ func RunRelease(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, _ [
 	runNumber, err := strconv.ParseInt(runNumberString, 10, 64)
 	if err != nil {
 		newError := sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("cannot parse '%s' as run number: %s", runNumberString, err))
-		return sdk.Result{Status: sdk.StatusFail}, newError
+		return newError
 	}
 	runResult, err := wk.Client().WorkflowRunResultsList(ctx, projectKey, wName, runNumber)
 	if err != nil {
-		return sdk.Result{Status: sdk.StatusFail}, sdk.Errorf("unable to get run result list: %v", err)
+		return sdk.Errorf("unable to get run result list: %v", err)
 	}
 
 	promotedRunResultIDs := make([]string, 0)
@@ -54,7 +54,7 @@ func RunRelease(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, _ [
 		}
 		rData, err := r.GetArtifactManager()
 		if err != nil {
-			return sdk.Result{Status: sdk.StatusFail}, sdk.Errorf("unable to read artifacts data: %v", err)
+			return sdk.Errorf("unable to read artifacts data: %v", err)
 		}
 		skip := true
 		for _, reg := range artRegs {
@@ -73,6 +73,13 @@ func RunRelease(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, _ [
 		jobID, promotedRunResultIDs,
 		sdk.ParameterValue(a.Parameters, "srcMaturity"), sdk.ParameterValue(a.Parameters, "destMaturity"),
 	); err != nil {
+		return err
+	}
+	return nil
+}
+
+func RunRelease(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, _ []sdk.Variable) (sdk.Result, error) {
+	if err := RunReleaseActionPrepare(ctx, wk, a); err != nil {
 		return sdk.Result{Status: sdk.StatusFail}, err
 	}
 
