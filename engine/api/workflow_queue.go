@@ -1168,6 +1168,7 @@ func (api *API) workflowRunResultReleaseHandler() service.Handler {
 		for _, r := range runResults {
 			for _, id := range releaseRequest.IDs {
 				if id == r.ID {
+					log.Debug(ctx, "adding release data: %+v", releaseRequest)
 					r.DataSync.Releases = append(r.DataSync.Releases, releaseRequest.WorkflowRunResultPromotion)
 				}
 			}
