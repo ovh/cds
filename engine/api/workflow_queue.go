@@ -1165,14 +1165,15 @@ func (api *API) workflowRunResultReleaseHandler() service.Handler {
 		}
 
 		releaseRequest.WorkflowRunResultPromotion.Date = time.Now()
-		for _, r := range runResults {
+		for i := range runResults {
+			r := &runResults[i]
 			for _, id := range releaseRequest.IDs {
 				if id == r.ID {
 					log.Debug(ctx, "adding release data: %+v", releaseRequest)
 					r.DataSync.Releases = append(r.DataSync.Releases, releaseRequest.WorkflowRunResultPromotion)
 				}
 			}
-			if err := workflow.UpdateRunResult(ctx, tx, &r); err != nil {
+			if err := workflow.UpdateRunResult(ctx, tx, r); err != nil {
 				return err
 			}
 		}
