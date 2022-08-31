@@ -653,7 +653,9 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorp.SqlExecuto
 	}
 
 	for _, result := range runResults {
-		result.DataSync = new(sdk.WorkflowRunResultSync)
+		if result.DataSync == nil {
+			result.DataSync = new(sdk.WorkflowRunResultSync)
+		}
 		result.DataSync.Link = buildInfoRequest.Name + "/" + buildInfoRequest.Number
 		result.DataSync.Sync = true
 		if err := UpdateRunResult(ctx, db, &result); err != nil {
