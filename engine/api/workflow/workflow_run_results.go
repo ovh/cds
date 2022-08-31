@@ -451,7 +451,7 @@ func FindOldestWorkflowRunsWithResultToSync(ctx context.Context, dbmap *gorp.DbM
 
 func UpdateRunResult(ctx context.Context, db gorp.SqlExecutor, result *sdk.WorkflowRunResult) error {
 	dbResult := dbRunResult(*result)
-	log.Debug(ctx, "updating run result %s", dbResult.ID)
+	log.Debug(ctx, "updating run result %s: %v", dbResult.ID, result)
 	if err := gorpmapping.Update(db, &dbResult); err != nil {
 		return err
 	}
