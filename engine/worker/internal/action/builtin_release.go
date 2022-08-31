@@ -16,19 +16,14 @@ import (
 	"github.com/ovh/cds/sdk/grpcplugin/integrationplugin"
 )
 
-func RunReleaseActionPrepare(ctx context.Context, wk workerruntime.Runtime, a sdk.Action) error {
-	jobID, err := workerruntime.JobID(ctx)
-	if err != nil {
-		return err
-	}
-
+func RunReleaseActionPrepare(ctx context.Context, wk workerruntime.Runtime, a sdk.Action) ([]string, error) {
 	artifactList := sdk.ParameterValue(a.Parameters, "artifacts")
 	artSplitted := strings.Split(artifactList, ",")
 	artRegs := make([]*regexp.Regexp, 0, len(artSplitted))
 	for _, arti := range artSplitted {
 		r, err := regexp.Compile(arti)
 		if err != nil {
-			return sdk.Errorf("unable to compile regexp in artifact list: %v", err)
+			return nil, sdk.Errorf("unable to compile regexp in artifact list: %v", err)
 		}
 		artRegs = append(artRegs, r)
 	}
@@ -39,11 +34,11 @@ func RunReleaseActionPrepare(ctx context.Context, wk workerruntime.Runtime, a sd
 	runNumber, err := strconv.ParseInt(runNumberString, 10, 64)
 	if err != nil {
 		newError := sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("cannot parse '%s' as run number: %s", runNumberString, err))
-		return newError
+		return nil, newError
 	}
 	runResult, err := wk.Client().WorkflowRunResultsList(ctx, projectKey, wName, runNumber)
 	if err != nil {
-		return sdk.Errorf("unable to get run result list: %v", err)
+		return nil, sdk.Errorf("unable to get run result list: %v", err)
 	}
 
 	promotedRunResultIDs := make([]string, 0)
@@ -54,7 +49,7 @@ func RunReleaseActionPrepare(ctx context.Context, wk workerruntime.Runtime, a sd
 		}
 		rData, err := r.GetArtifactManager()
 		if err != nil {
-			return sdk.Errorf("unable to read artifacts data: %v", err)
+			return nil, sdk.Errorf("unable to read artifacts data: %v", err)
 		}
 		skip := true
 		for _, reg := range artRegs {
@@ -68,18 +63,25 @@ func RunReleaseActionPrepare(ctx context.Context, wk workerruntime.Runtime, a sd
 		}
 	}
 
+	return promotedRunResultIDs, nil
+}
+
+func RunRelease(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, _ []sdk.Variable) (sdk.Result, error) {
+	jobID, err := workerruntime.JobID(ctx)
+	if err != nil {
+		return sdk.Result{Status: sdk.StatusFail}, err
+	}
+
+	promotedRunResultIDs, err := RunReleaseActionPrepare(ctx, wk, a)
+	if err != nil {
+		return sdk.Result{Status: sdk.StatusFail}, err
+	}
+
 	log.Info(ctx, "RunRelease> preparing run result %+v for release", promotedRunResultIDs)
 	if err := wk.Client().QueueWorkflowRunResultsRelease(ctx,
 		jobID, promotedRunResultIDs,
 		sdk.ParameterValue(a.Parameters, "srcMaturity"), sdk.ParameterValue(a.Parameters, "destMaturity"),
 	); err != nil {
-		return err
-	}
-	return nil
-}
-
-func RunRelease(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, _ []sdk.Variable) (sdk.Result, error) {
-	if err := RunReleaseActionPrepare(ctx, wk, a); err != nil {
 		return sdk.Result{Status: sdk.StatusFail}, err
 	}
 
