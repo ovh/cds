@@ -1123,8 +1123,59 @@ func (api *API) workflowRunResultCheckUploadHandler() service.Handler {
 
 func (api *API) workflowRunResultPromoteHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// TODO
-		return nil
+		if !isWorker(ctx) {
+			return sdk.WrapError(sdk.ErrForbidden, "only workers can call this route")
+		}
+
+		jobID, err := requestVarInt(r, "permJobID")
+		if err != nil {
+			return err
+		}
+
+		var releaseRequest sdk.WorkflowRunResultPromotionRequest
+		if err := service.UnmarshalBody(r, &releaseRequest); err != nil {
+			return sdk.WithStack(err)
+		}
+
+		tx, err := api.mustDBWithCtx(ctx).Begin()
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		defer tx.Rollback()
+
+		wr, err := workflow.LoadRunByJobID(ctx, tx, jobID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
+		if err != nil {
+			return err
+		}
+
+		runResults, err := workflow.LoadRunResultsByRunIDFilterByIDs(ctx, tx, wr.ID, releaseRequest.IDs...)
+		if err != nil {
+			return err
+		}
+
+		if len(runResults) == 0 {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to find any run results among %v", releaseRequest.IDs)
+		}
+
+		releaseRequest.WorkflowRunResultPromotion.Date = time.Now()
+		for i := range runResults {
+			r := &runResults[i]
+			for _, id := range releaseRequest.IDs {
+				if id == r.ID {
+					log.Debug(ctx, "adding promotion data: %+v", releaseRequest)
+					r.DataSync.Releases = append(r.DataSync.Promotions, releaseRequest.WorkflowRunResultPromotion)
+				}
+			}
+			if err := workflow.UpdateRunResult(ctx, tx, r); err != nil {
+				return err
+			}
+		}
+
+		if err := workflow.SyncRunResultArtifactManagerByRunID(ctx, tx, wr.ID); err != nil {
+			return err
+		}
+
+		return sdk.WithStack(tx.Commit())
 	}
 }
 
