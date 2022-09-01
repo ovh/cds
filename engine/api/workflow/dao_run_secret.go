@@ -49,3 +49,20 @@ func loadRunSecretWithDecryption(ctx context.Context, db gorp.SqlExecutor, runID
 	}
 	return secrets, nil
 }
+
+func CountRunSecretsByWorkflowRunID(ctx context.Context, db gorp.SqlExecutor, workflowRunID int64) (int64, error) {
+	query := `SELECT COUNT(1) FROM workflow_run_secret WHERE workflow_run_id = $1`
+	count, err := db.SelectInt(query, workflowRunID)
+	if err != nil {
+		return 0, sdk.WrapError(err, "unable to count workflow run secret for workflow run id %d", workflowRunID)
+	}
+	return count, nil
+}
+
+func DeleteRunSecretsByWorkflowRunID(ctx context.Context, db gorpmapper.SqlExecutorWithTx, workflowRunID int64) error {
+	query := `DELETE FROM workflow_run_secret WHERE workflow_run_id = $1`
+	if _, err := db.Exec(query, workflowRunID); err != nil {
+		return sdk.WrapError(err, "unable to delete workflow run secret for workflow run id %d", workflowRunID)
+	}
+	return nil
+}
