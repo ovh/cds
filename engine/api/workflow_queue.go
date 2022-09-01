@@ -1132,8 +1132,8 @@ func (api *API) workflowRunResultPromoteHandler() service.Handler {
 			return err
 		}
 
-		var releaseRequest sdk.WorkflowRunResultPromotionRequest
-		if err := service.UnmarshalBody(r, &releaseRequest); err != nil {
+		var promotionRequest sdk.WorkflowRunResultPromotionRequest
+		if err := service.UnmarshalBody(r, &promotionRequest); err != nil {
 			return sdk.WithStack(err)
 		}
 
@@ -1148,22 +1148,22 @@ func (api *API) workflowRunResultPromoteHandler() service.Handler {
 			return err
 		}
 
-		runResults, err := workflow.LoadRunResultsByRunIDFilterByIDs(ctx, tx, wr.ID, releaseRequest.IDs...)
+		runResults, err := workflow.LoadRunResultsByRunIDFilterByIDs(ctx, tx, wr.ID, promotionRequest.IDs...)
 		if err != nil {
 			return err
 		}
 
 		if len(runResults) == 0 {
-			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to find any run results among %v", releaseRequest.IDs)
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to find any run results among %v", promotionRequest.IDs)
 		}
 
-		releaseRequest.WorkflowRunResultPromotion.Date = time.Now()
+		promotionRequest.WorkflowRunResultPromotion.Date = time.Now()
 		for i := range runResults {
 			r := &runResults[i]
-			for _, id := range releaseRequest.IDs {
+			for _, id := range promotionRequest.IDs {
 				if id == r.ID {
-					log.Debug(ctx, "adding promotion data: %+v", releaseRequest)
-					r.DataSync.Promotions = append(r.DataSync.Promotions, releaseRequest.WorkflowRunResultPromotion)
+					log.Debug(ctx, "adding promotion data: %+v", promotionRequest)
+					r.DataSync.Promotions = append(r.DataSync.Promotions, promotionRequest.WorkflowRunResultPromotion)
 				}
 			}
 			if err := workflow.UpdateRunResult(ctx, tx, r); err != nil {

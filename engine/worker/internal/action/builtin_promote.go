@@ -25,7 +25,7 @@ func RunPromote(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, _ [
 		return sdk.Result{Status: sdk.StatusFail}, err
 	}
 
-	log.Info(ctx, "RunRelease> preparing run result %+v for release", promotedRunResultIDs)
+	log.Info(ctx, "RunPromote> preparing run result %+v for promotion", promotedRunResultIDs)
 	if err := wk.Client().QueueWorkflowRunResultsPromote(ctx,
 		jobID, promotedRunResultIDs,
 		sdk.ParameterValue(a.Parameters, "srcMaturity"), sdk.ParameterValue(a.Parameters, "destMaturity"),
