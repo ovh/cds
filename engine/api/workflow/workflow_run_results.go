@@ -479,7 +479,9 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorp.SqlExecuto
 		result := allRunResults[i]
 		// If the result is not an artifact manager, we do nothing but we consider it as synchronized
 		if result.Type != sdk.WorkflowRunResultTypeArtifactManager {
-			result.DataSync = new(sdk.WorkflowRunResultSync)
+			if result.DataSync == nil {
+				result.DataSync = new(sdk.WorkflowRunResultSync)
+			}
 			result.DataSync.Link = ""
 			result.DataSync.Sync = true
 			if err := UpdateRunResult(ctx, db, &result); err != nil {
@@ -510,7 +512,9 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorp.SqlExecuto
 		for i := range runResults {
 			result := runResults[i]
 			// If the result is not an artifact manager, we do nothing but we consider it as synchronized
-			result.DataSync = new(sdk.WorkflowRunResultSync)
+			if result.DataSync == nil {
+				result.DataSync = new(sdk.WorkflowRunResultSync)
+			}
 			result.DataSync.Sync = false
 			result.DataSync.Error = err.Error()
 			if err := UpdateRunResult(ctx, db, &result); err != nil {
@@ -549,7 +553,9 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorp.SqlExecuto
 		log.ErrorWithStackTrace(ctx, err)
 		for i := range runResults {
 			result := runResults[i]
-			result.DataSync = new(sdk.WorkflowRunResultSync)
+			if result.DataSync == nil {
+				result.DataSync = new(sdk.WorkflowRunResultSync)
+			}
 			result.DataSync.Sync = false
 			result.DataSync.Error = err.Error()
 			if err := UpdateRunResult(ctx, db, &result); err != nil {
@@ -598,6 +604,7 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorp.SqlExecuto
 
 	var lowMaturitySuffix string
 	for i := range runResults {
+		log.Debug(ctx, "checking for earlier maturity in %+v", runResults[i].DataSync)
 		if runResults[i].DataSync != nil {
 			p := runResults[i].DataSync.LatestPromotionOrRelease()
 			if p != nil {
@@ -605,6 +612,7 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorp.SqlExecuto
 					if p.ToMaturity != lowMaturitySuffix {
 						return sdk.NewErrorFrom(sdk.ErrWrongRequest, "several maturities (%q, %q) detected among your artifacts", p.ToMaturity, lowMaturitySuffix)
 					}
+					log.Debug(ctx, "low maturity is %+v", p.ToMaturity)
 					lowMaturitySuffix = p.ToMaturity
 				}
 			}

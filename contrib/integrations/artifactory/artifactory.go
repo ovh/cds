@@ -236,7 +236,7 @@ type BuildInfoRequest struct {
 
 func PrepareBuildInfo(ctx context.Context, artiClient artifact_manager.ArtifactManager, r BuildInfoRequest) (*buildinfo.BuildInfo, error) {
 	buildInfoName := fmt.Sprintf("%s/%s/%s", r.BuildInfoPrefix, r.ProjectKey, r.WorkflowName)
-	log.Debug(ctx, "PrepareBuildInfo %q", buildInfoName)
+	log.Debug(ctx, "PrepareBuildInfo %q maturity:%q", buildInfoName, r.LowMaturitySuffix)
 
 	buildInfoRequest := &buildinfo.BuildInfo{
 		Properties: map[string]string{},
