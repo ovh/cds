@@ -17,8 +17,8 @@ import (
 	"github.com/jfrog/jfrog-client-go/config"
 	"github.com/jfrog/jfrog-client-go/distribution"
 	authdistrib "github.com/jfrog/jfrog-client-go/distribution/auth"
-	"github.com/jfrog/jfrog-client-go/utils/log"
 	"github.com/pkg/errors"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/integration/artifact_manager"
 	"github.com/ovh/cds/sdk"
@@ -272,7 +272,7 @@ func PrepareBuildInfo(ctx context.Context, artiClient artifact_manager.ArtifactM
 		version:           r.Version,
 		projectKey:        r.ProjectKey,
 	}
-	log.Info("comute build infos for %+v", execContext)
+	log.Info(ctx, "compute build infos for %+v", execContext)
 	modules, err := computeBuildInfoModules(ctx, artiClient, execContext, r.RunResults)
 	if err != nil {
 		return nil, err
