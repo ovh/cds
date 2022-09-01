@@ -612,9 +612,10 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorp.SqlExecuto
 					if p.ToMaturity != lowMaturitySuffix {
 						return sdk.NewErrorFrom(sdk.ErrWrongRequest, "several maturities (%q, %q) detected among your artifacts", p.ToMaturity, lowMaturitySuffix)
 					}
-					log.Debug(ctx, "low maturity is %+v", p.ToMaturity)
-					lowMaturitySuffix = p.ToMaturity
 				}
+				log.Debug(ctx, "low maturity is %+v", p.ToMaturity)
+				lowMaturitySuffix = p.ToMaturity
+				// we don't break the loop to let us to check all the maturities
 			}
 		}
 	}

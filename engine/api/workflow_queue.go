@@ -1163,7 +1163,7 @@ func (api *API) workflowRunResultPromoteHandler() service.Handler {
 			for _, id := range releaseRequest.IDs {
 				if id == r.ID {
 					log.Debug(ctx, "adding promotion data: %+v", releaseRequest)
-					r.DataSync.Releases = append(r.DataSync.Promotions, releaseRequest.WorkflowRunResultPromotion)
+					r.DataSync.Promotions = append(r.DataSync.Promotions, releaseRequest.WorkflowRunResultPromotion)
 				}
 			}
 			if err := workflow.UpdateRunResult(ctx, tx, r); err != nil {
