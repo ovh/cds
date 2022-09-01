@@ -272,7 +272,6 @@ func PrepareBuildInfo(ctx context.Context, artiClient artifact_manager.ArtifactM
 		version:           r.Version,
 		projectKey:        r.ProjectKey,
 	}
-	log.Info(ctx, "compute build infos for %+v", execContext)
 	modules, err := computeBuildInfoModules(ctx, artiClient, execContext, r.RunResults)
 	if err != nil {
 		return nil, err
