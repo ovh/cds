@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"path"
 	"reflect"
+	"strconv"
 	"strings"
 	"text/template"
 
@@ -66,6 +67,7 @@ func init() {
 		"b64enc":       base64encode,
 		"b64dec":       base64decode,
 		"escape":       escape,
+		"stringQuote":  stringQuote,
 		"add": func(i ...interface{}) int64 {
 			var a int64 = 0
 			for _, b := range i {
@@ -373,6 +375,10 @@ func escape(s string) string {
 	s1 = strings.Replace(s1, "/", "-", -1)
 	s1 = strings.Replace(s1, ".", "-", -1)
 	return s1
+}
+
+func stringQuote(s string) string {
+	return strconv.Quote(s)
 }
 
 func ternary(v, v2, a interface{}) interface{} {
