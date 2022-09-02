@@ -67,6 +67,7 @@ require (
 	github.com/pkg/browser v0.0.0-20170505125900-c90ca0c84f15
 	github.com/pkg/errors v0.9.1
 	github.com/rockbears/log v0.6.0
+	github.com/rockbears/yaml v0.1.1-0.20220901090137-13dadb408625
 	github.com/rubenv/sql-migrate v0.0.0-20160620083229-6f4757563362
 	github.com/sguiheux/go-coverage v0.0.0-20190710153556-287b082a7197
 	github.com/shirou/gopsutil v0.0.0-20170406131756-e49a95f3d5f8
@@ -76,7 +77,7 @@ require (
 	github.com/spf13/cobra v1.1.1
 	github.com/spf13/viper v1.10.1
 	github.com/streadway/amqp v0.0.0-20180528204448-e5adc2ada8b8
-	github.com/stretchr/testify v1.7.0
+	github.com/stretchr/testify v1.8.0
 	github.com/studio-b12/gowebdav v0.0.0-20200303150724-9380631c29a1
 	github.com/tevino/abool v0.0.0-20170917061928-9b9efcf221b5
 	github.com/urfave/cli v1.20.0
@@ -252,7 +253,7 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.66.4 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gotest.tools v2.1.0+incompatible // indirect
 	k8s.io/klog/v2 v2.8.0 // indirect
 	k8s.io/utils v0.0.0-20201110183641-67b214c5f920 // indirect

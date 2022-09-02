@@ -231,6 +231,10 @@ type ProjectClient interface {
 	ProjectRepositoryAnalysisGet(ctx context.Context, projectKey string, vcsIdentifier string, repositoryIdentifier string, analysisID string) (sdk.ProjectRepositoryAnalysis, error)
 }
 
+type RbacClient interface {
+	RbacImport(ctx context.Context, content io.Reader, mods ...RequestModifier) (sdk.RBAC, error)
+}
+
 // ProjectKeysClient exposes project keys related functions
 type ProjectKeysClient interface {
 	ProjectKeysList(projectKey string) ([]sdk.ProjectKey, error)
@@ -405,6 +409,7 @@ type Interface interface {
 	PipelineClient
 	IntegrationClient
 	ProjectClient
+	RbacClient
 	QueueClient
 	Navbar() ([]sdk.NavbarProjectData, error)
 	Requirements() ([]sdk.Requirement, error)

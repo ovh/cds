@@ -17,7 +17,9 @@ func FillWithIDs(ctx context.Context, db gorp.SqlExecutor, r *sdk.RBAC) error {
 			return err
 		}
 	}
-	r.ID = rbacDB.ID
+	if rbacDB != nil {
+		r.ID = rbacDB.ID
+	}
 
 	userCache := make(map[string]string)
 	groupCache := make(map[string]int64)

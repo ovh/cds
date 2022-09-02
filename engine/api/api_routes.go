@@ -432,6 +432,8 @@ func (api *API) InitRouter() {
 	r.Handle("/template/{groupName}/{templateSlug}/instance/{instanceID}", Scope(sdk.AuthConsumerScopeTemplate), r.DELETE(api.deleteTemplateInstanceHandler))
 	r.Handle("/template/{groupName}/{templateSlug}/usage", Scope(sdk.AuthConsumerScopeTemplate), r.GET(api.getTemplateUsageHandler))
 
+	r.Handle("/v2/rbac/import", nil, r.POSTv2(api.postImportRbacHandler))
+
 	r.Handle("/v2/repository/analyze", Scope(sdk.AuthConsumerScopeHooks), r.POSTv2(api.postRepositoryAnalysisHandler))
 	r.Handle("/v2/project/repositories", Scope(sdk.AuthConsumerScopeHooks), r.GETv2(api.getAllRepositoriesHandler))
 	r.Handle("/v2/project/repositories/{repositoryIdentifier}/hook", Scope(sdk.AuthConsumerScopeHooks), r.GETv2(api.getRepositoryHookHandler))

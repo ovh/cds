@@ -84,10 +84,10 @@ func loadRbacGlobal(ctx context.Context, db gorp.SqlExecutor, rbac *rbac) error 
 			log.Error(ctx, "rbac.loadRbacGlobal> rbac_global %d data corrupted", rg.ID)
 			continue
 		}
-		if err := getAllRBACGlobalUsers(ctx, db, rg); err != nil {
+		if err := loadRBACGlobalUsers(ctx, db, rg); err != nil {
 			return err
 		}
-		if err := getAllRBACGlobalGroups(ctx, db, rg); err != nil {
+		if err := loadRBACGlobalGroups(ctx, db, rg); err != nil {
 			return err
 		}
 		rbac.Globals = append(rbac.Globals, rg.RBACGlobal)

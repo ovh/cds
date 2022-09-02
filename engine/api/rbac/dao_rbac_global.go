@@ -2,10 +2,11 @@ package rbac
 
 import (
 	"context"
-
-	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
+	"github.com/ovh/cds/sdk/telemetry"
 	"github.com/rockbears/log"
 
+	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
@@ -51,44 +52,64 @@ func insertRbacGlobalGroup(ctx context.Context, db gorpmapper.SqlExecutorWithTx,
 	return nil
 }
 
-func getAllRBACGlobalUsers(ctx context.Context, db gorp.SqlExecutor, rbacGlobal *rbacGlobal) error {
-	q := gorpmapping.NewQuery("SELECT * FROM  rbac_global_users WHERE rbac_global_id = $1").Args(rbacGlobal.ID)
-	var rbacUserIDS []rbacGlobalUser
-	if err := gorpmapping.GetAll(ctx, db, q, &rbacUserIDS); err != nil {
-		return err
+func HasGlobalRole(ctx context.Context, db gorp.SqlExecutor, role string, userID string) (bool, error) {
+	ctx, next := telemetry.Span(ctx, "rbac.HasGlobalRole")
+	defer next()
+
+	// Get rbac_global_groups
+	rbacGlobalGroups, err := loadRbacGlobalGroupsByUserID(ctx, db, userID)
+	if err != nil {
+		return false, err
 	}
-	rbacGlobal.RBACGlobal.RBACUsersIDs = make([]string, 0, len(rbacUserIDS))
-	for _, rbacUsers := range rbacUserIDS {
-		isValid, err := gorpmapping.CheckSignature(rbacUsers, rbacUsers.Signature)
-		if err != nil {
-			return sdk.WrapError(err, "error when checking signature for rbac_global_users %d", rbacUsers.ID)
-		}
-		if !isValid {
-			log.Error(ctx, "rbac.getAllRBACGlobalUsers> rbac_global_users %d data corrupted", rbacUsers.ID)
-			continue
-		}
-		rbacGlobal.RBACGlobal.RBACUsersIDs = append(rbacGlobal.RBACGlobal.RBACUsersIDs, rbacUsers.RbacGlobalUserID)
+	// Get rbac_global_users
+	rbacGlobalUsers, err := loadRbacGlobalUsersByUserID(ctx, db, userID)
+	if err != nil {
+		return false, err
 	}
-	return nil
+
+	// Deduplicate rbac_global.id
+	mapRbacGlobalID := make(map[int64]struct{})
+	rbacGlobalIDs := make([]int64, 0)
+	for _, rgg := range rbacGlobalGroups {
+		mapRbacGlobalID[rgg.RbacGlobalID] = struct{}{}
+		rbacGlobalIDs = append(rbacGlobalIDs, rgg.RbacGlobalID)
+	}
+	for _, rgu := range rbacGlobalUsers {
+		if _, has := mapRbacGlobalID[rgu.RbacGlobalID]; !has {
+			mapRbacGlobalID[rgu.RbacGlobalID] = struct{}{}
+			rbacGlobalIDs = append(rbacGlobalIDs, rgu.RbacGlobalID)
+		}
+	}
+
+	rgs, err := loadRbacGlobalsByRoleAndIDs(ctx, db, role, rbacGlobalIDs)
+	if err != nil {
+		return false, err
+	}
+
+	return len(rgs) > 0, nil
 }
 
-func getAllRBACGlobalGroups(ctx context.Context, db gorp.SqlExecutor, rbacGlobal *rbacGlobal) error {
-	q := gorpmapping.NewQuery("SELECT * FROM rbac_global_groups WHERE rbac_global_id = $1").Args(rbacGlobal.ID)
-	var rbacGroupIDs []rbacGlobalGroup
-	if err := gorpmapping.GetAll(ctx, db, q, &rbacGroupIDs); err != nil {
-		return err
+func loadRbacGlobalsByRoleAndIDs(ctx context.Context, db gorp.SqlExecutor, role string, rbacGlobalIDs []int64) ([]rbacGlobal, error) {
+	q := gorpmapping.NewQuery(`SELECT * from rbac_global WHERE role = $1 AND id = ANY($2)`).Args(role, pq.Int64Array(rbacGlobalIDs))
+	return getAllRbacGlobals(ctx, db, q)
+}
+
+func getAllRbacGlobals(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query) ([]rbacGlobal, error) {
+	var rbacGlobals []rbacGlobal
+	if err := gorpmapping.GetAll(ctx, db, q, &rbacGlobals); err != nil {
+		return nil, err
 	}
-	rbacGlobal.RBACGlobal.RBACGroupsIDs = make([]int64, 0, len(rbacGroupIDs))
-	for _, rbacGroups := range rbacGroupIDs {
-		isValid, err := gorpmapping.CheckSignature(rbacGroups, rbacGroups.Signature)
+
+	for _, rg := range rbacGlobals {
+		isValid, err := gorpmapping.CheckSignature(rg, rg.Signature)
 		if err != nil {
-			return sdk.WrapError(err, "error when checking signature for rbac_global_groups %d", rbacGroups.ID)
+			return nil, sdk.WrapError(err, "error when checking signature for rbac_global %d", rg.ID)
 		}
 		if !isValid {
-			log.Error(ctx, "rbac.getAllRBACGlobalGroups> rbac_global_groups %d data corrupted", rbacGroups.ID)
+			log.Error(ctx, "rbac.getAllRbacGlobals> rbac_global %d data corrupted", rg.ID)
 			continue
 		}
-		rbacGlobal.RBACGlobal.RBACGroupsIDs = append(rbacGlobal.RBACGlobal.RBACGroupsIDs, rbacGroups.RbacGlobalGroupID)
+		rbacGlobals = append(rbacGlobals, rg)
 	}
-	return nil
+	return rbacGlobals, nil
 }
