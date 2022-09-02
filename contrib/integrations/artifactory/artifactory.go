@@ -17,8 +17,8 @@ import (
 	"github.com/jfrog/jfrog-client-go/config"
 	"github.com/jfrog/jfrog-client-go/distribution"
 	authdistrib "github.com/jfrog/jfrog-client-go/distribution/auth"
-	"github.com/jfrog/jfrog-client-go/utils/log"
 	"github.com/pkg/errors"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/integration/artifact_manager"
 	"github.com/ovh/cds/sdk"
@@ -236,7 +236,7 @@ type BuildInfoRequest struct {
 
 func PrepareBuildInfo(ctx context.Context, artiClient artifact_manager.ArtifactManager, r BuildInfoRequest) (*buildinfo.BuildInfo, error) {
 	buildInfoName := fmt.Sprintf("%s/%s/%s", r.BuildInfoPrefix, r.ProjectKey, r.WorkflowName)
-	log.Debug(ctx, "PrepareBuildInfo %q", buildInfoName)
+	log.Debug(ctx, "PrepareBuildInfo %q maturity:%q", buildInfoName, r.LowMaturitySuffix)
 
 	buildInfoRequest := &buildinfo.BuildInfo{
 		Properties: map[string]string{},

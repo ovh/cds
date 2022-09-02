@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 	"github.com/rockbears/log"
 
 	art "github.com/ovh/cds/contrib/integrations/artifactory"
@@ -369,6 +370,11 @@ func getAll(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query) (
 	return results, nil
 }
 
+func LoadRunResultsByRunIDFilterByIDs(ctx context.Context, db gorp.SqlExecutor, runID int64, resultIDs ...string) (sdk.WorkflowRunResults, error) {
+	query := gorpmapping.NewQuery("SELECT * FROM workflow_run_result WHERE workflow_run_id = $1 AND id = ANY($2) ORDER BY sub_num DESC").Args(runID, pq.StringArray(resultIDs))
+	return getAll(ctx, db, query)
+}
+
 func LoadRunResultsByRunID(ctx context.Context, db gorp.SqlExecutor, runID int64) (sdk.WorkflowRunResults, error) {
 	query := gorpmapping.NewQuery("SELECT * FROM workflow_run_result WHERE workflow_run_id = $1 ORDER BY sub_num DESC").Args(runID)
 	return getAll(ctx, db, query)
@@ -413,8 +419,19 @@ func ResyncWorkflowRunResultsRoutine(ctx context.Context, DBFunc func() *gorp.Db
 					continue
 				}
 				for _, id := range ids {
-					if err := SyncRunResultArtifactManagerByRunID(ctx, DBFunc(), id); err != nil {
+					tx, err := DBFunc().Begin()
+					if err != nil {
 						log.ErrorWithStackTrace(ctx, err)
+						continue
+					}
+					if err := SyncRunResultArtifactManagerByRunID(ctx, tx, id); err != nil {
+						log.ErrorWithStackTrace(ctx, err)
+						tx.Rollback()
+						continue
+					}
+					if err := tx.Commit(); err != nil {
+						log.ErrorWithStackTrace(ctx, err)
+						tx.Rollback()
 						continue
 					}
 				}
@@ -432,14 +449,17 @@ func FindOldestWorkflowRunsWithResultToSync(ctx context.Context, dbmap *gorp.DbM
 	return results, nil
 }
 
-func SyncRunResultArtifactManagerByRunID(ctx context.Context, dbmap *gorp.DbMap, id int64) error {
-	log.Info(ctx, "sync run result for workflow run id %d", id)
-	db, err := dbmap.Begin()
-	if err != nil {
-		return sdk.WithStack(err)
+func UpdateRunResult(ctx context.Context, db gorp.SqlExecutor, result *sdk.WorkflowRunResult) error {
+	dbResult := dbRunResult(*result)
+	log.Debug(ctx, "updating run result %s: %v", dbResult.ID, result)
+	if err := gorpmapping.Update(db, &dbResult); err != nil {
+		return err
 	}
-	defer db.Rollback() // nolint
+	return nil
+}
 
+func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorp.SqlExecutor, id int64) error {
+	log.Info(ctx, "sync run result for workflow run id %d", id)
 	wr, err := LoadAndLockRunByID(ctx, db, id, LoadRunOptions{})
 	if err != nil {
 		return err
@@ -459,12 +479,12 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, dbmap *gorp.DbMap,
 		result := allRunResults[i]
 		// If the result is not an artifact manager, we do nothing but we consider it as synchronized
 		if result.Type != sdk.WorkflowRunResultTypeArtifactManager {
-			dbResult := dbRunResult(result)
-			dbResult.DataSync = new(sdk.WorkflowRunResultSync)
-			dbResult.DataSync.Link = ""
-			dbResult.DataSync.Sync = true
-			log.Debug(ctx, "updating run result %s", dbResult.ID)
-			if err := gorpmapping.Update(db, &dbResult); err != nil {
+			if result.DataSync == nil {
+				result.DataSync = new(sdk.WorkflowRunResultSync)
+			}
+			result.DataSync.Link = ""
+			result.DataSync.Sync = true
+			if err := UpdateRunResult(ctx, db, &result); err != nil {
 				return err
 			}
 		} else {
@@ -474,9 +494,6 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, dbmap *gorp.DbMap,
 
 	// Nothing more to do with artifact manager
 	if len(runResults) == 0 {
-		if err := db.Commit(); err != nil {
-			return err
-		}
 		return nil
 	}
 
@@ -495,17 +512,14 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, dbmap *gorp.DbMap,
 		for i := range runResults {
 			result := runResults[i]
 			// If the result is not an artifact manager, we do nothing but we consider it as synchronized
-			dbResult := dbRunResult(result)
-			dbResult.DataSync = new(sdk.WorkflowRunResultSync)
-			dbResult.DataSync.Sync = false
-			dbResult.DataSync.Error = err.Error()
-			log.Debug(ctx, "updating run result %s", dbResult.ID)
-			if err := gorpmapping.Update(db, &dbResult); err != nil {
+			if result.DataSync == nil {
+				result.DataSync = new(sdk.WorkflowRunResultSync)
+			}
+			result.DataSync.Sync = false
+			result.DataSync.Error = err.Error()
+			if err := UpdateRunResult(ctx, db, &result); err != nil {
 				return err
 			}
-		}
-		if err := db.Commit(); err != nil {
-			return err
 		}
 		return nil
 	}
@@ -513,12 +527,12 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, dbmap *gorp.DbMap,
 	log.Info(ctx, "artifact manager %q found for workflow run", artifactManagerInteg.ProjectIntegration.Name)
 
 	var (
-		rtName                = artifactManagerInteg.ProjectIntegration.Config[sdk.ArtifactoryConfigPlatform].Value
-		rtURL                 = artifactManagerInteg.ProjectIntegration.Config[sdk.ArtifactoryConfigURL].Value
-		buildInfoPrefix       = artifactManagerInteg.ProjectIntegration.Config[sdk.ArtifactoryConfigBuildInfoPrefix].Value
-		tokenName             = artifactManagerInteg.ProjectIntegration.Config[sdk.ArtifactoryConfigTokenName].Value
-		lowMaturitySuffix     = artifactManagerInteg.ProjectIntegration.Config[sdk.ArtifactoryConfigPromotionLowMaturity].Value
-		artifactoryProjectKey = artifactManagerInteg.ProjectIntegration.Config[sdk.ArtifactoryConfigProjectKey].Value
+		rtName                      = artifactManagerInteg.ProjectIntegration.Config[sdk.ArtifactoryConfigPlatform].Value
+		rtURL                       = artifactManagerInteg.ProjectIntegration.Config[sdk.ArtifactoryConfigURL].Value
+		buildInfoPrefix             = artifactManagerInteg.ProjectIntegration.Config[sdk.ArtifactoryConfigBuildInfoPrefix].Value
+		tokenName                   = artifactManagerInteg.ProjectIntegration.Config[sdk.ArtifactoryConfigTokenName].Value
+		lowMaturitySuffixFromConfig = artifactManagerInteg.ProjectIntegration.Config[sdk.ArtifactoryConfigPromotionLowMaturity].Value
+		artifactoryProjectKey       = artifactManagerInteg.ProjectIntegration.Config[sdk.ArtifactoryConfigProjectKey].Value
 	)
 
 	// Load the token from secrets
@@ -539,17 +553,14 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, dbmap *gorp.DbMap,
 		log.ErrorWithStackTrace(ctx, err)
 		for i := range runResults {
 			result := runResults[i]
-			dbResult := dbRunResult(result)
-			dbResult.DataSync = new(sdk.WorkflowRunResultSync)
-			dbResult.DataSync.Sync = false
-			dbResult.DataSync.Error = err.Error()
-			log.Debug(ctx, "updating run result %s", dbResult.ID)
-			if err := gorpmapping.Update(db, &dbResult); err != nil {
+			if result.DataSync == nil {
+				result.DataSync = new(sdk.WorkflowRunResultSync)
+			}
+			result.DataSync.Sync = false
+			result.DataSync.Error = err.Error()
+			if err := UpdateRunResult(ctx, db, &result); err != nil {
 				return err
 			}
-		}
-		if err := db.Commit(); err != nil {
-			return err
 		}
 		return nil
 	}
@@ -591,6 +602,27 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, dbmap *gorp.DbMap,
 	nodeRunURL := parameters["cds.ui.pipeline.run"][0]
 	runURL := nodeRunURL[0:strings.Index(nodeRunURL, "/node/")]
 
+	var lowMaturitySuffix string
+	for i := range runResults {
+		log.Debug(ctx, "checking for earlier maturity in %+v", runResults[i].DataSync)
+		if runResults[i].DataSync != nil {
+			p := runResults[i].DataSync.LatestPromotionOrRelease()
+			if p != nil {
+				if lowMaturitySuffix != "" {
+					if p.FromMaturity != lowMaturitySuffix {
+						return sdk.NewErrorFrom(sdk.ErrWrongRequest, "several maturities (%q, %q) detected among your artifacts", p.ToMaturity, lowMaturitySuffix)
+					}
+				}
+				log.Debug(ctx, "low maturity is %+v", p.FromMaturity)
+				lowMaturitySuffix = p.FromMaturity
+				// we don't break the loop to let us to check all the maturities
+			}
+		}
+	}
+	if lowMaturitySuffix == "" {
+		lowMaturitySuffix = lowMaturitySuffixFromConfig
+	}
+
 	buildInfoRequest, err := art.PrepareBuildInfo(ctx, artifactClient, art.BuildInfoRequest{
 		BuildInfoPrefix:   buildInfoPrefix,
 		ProjectKey:        wr.Workflow.ProjectKey,
@@ -630,15 +662,15 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, dbmap *gorp.DbMap,
 	}
 
 	for _, result := range runResults {
-		dbResult := dbRunResult(result)
-		dbResult.DataSync = new(sdk.WorkflowRunResultSync)
-		dbResult.DataSync.Link = buildInfoRequest.Name + "/" + buildInfoRequest.Number
-		dbResult.DataSync.Sync = true
-		log.Debug(ctx, "updating run result %s", dbResult.ID)
-		if err := gorpmapping.Update(db, &dbResult); err != nil {
+		if result.DataSync == nil {
+			result.DataSync = new(sdk.WorkflowRunResultSync)
+		}
+		result.DataSync.Link = buildInfoRequest.Name + "/" + buildInfoRequest.Number
+		result.DataSync.Sync = true
+		if err := UpdateRunResult(ctx, db, &result); err != nil {
 			return err
 		}
 	}
 
-	return sdk.WithStack(db.Commit())
+	return nil
 }

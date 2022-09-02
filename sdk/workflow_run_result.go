@@ -53,9 +53,38 @@ type WorkflowRunResult struct {
 }
 
 type WorkflowRunResultSync struct {
-	Sync  bool   `json:"sync"`
-	Link  string `json:"link"`
-	Error string `json:"error"`
+	Sync       bool                         `json:"sync"`
+	Link       string                       `json:"link"`
+	Error      string                       `json:"error"`
+	Promotions []WorkflowRunResultPromotion `json:"promotions"`
+	Releases   []WorkflowRunResultPromotion `json:"releases"`
+}
+
+type WorkflowRunResultPromotionRequest struct {
+	WorkflowRunResultPromotion
+	IDs []string
+}
+
+type WorkflowRunResultPromotion struct {
+	FromMaturity string    `json:"from_maturity"`
+	ToMaturity   string    `json:"to_maturity"`
+	Date         time.Time `json:"date"`
+}
+
+func (s *WorkflowRunResultSync) LatestPromotionOrRelease() *WorkflowRunResultPromotion {
+	sort.Slice(s.Promotions, func(i, j int) bool {
+		return s.Promotions[i].Date.Before(s.Promotions[j].Date)
+	})
+	sort.Slice(s.Releases, func(i, j int) bool {
+		return s.Releases[i].Date.Before(s.Releases[j].Date)
+	})
+	if len(s.Releases) > 0 {
+		return &s.Releases[len(s.Releases)-1]
+	}
+	if len(s.Promotions) > 0 {
+		return &s.Promotions[len(s.Promotions)-1]
+	}
+	return nil
 }
 
 // Value returns driver.Value from WorkflowRunResultSync

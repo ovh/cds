@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
@@ -14,6 +15,24 @@ import (
 )
 
 func RunPromote(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, _ []sdk.Variable) (sdk.Result, error) {
+	jobID, err := workerruntime.JobID(ctx)
+	if err != nil {
+		return sdk.Result{Status: sdk.StatusFail}, err
+	}
+
+	promotedRunResultIDs, err := RunReleaseActionPrepare(ctx, wk, a)
+	if err != nil {
+		return sdk.Result{Status: sdk.StatusFail}, err
+	}
+
+	log.Info(ctx, "RunPromote> preparing run result %+v for promotion", promotedRunResultIDs)
+	if err := wk.Client().QueueWorkflowRunResultsPromote(ctx,
+		jobID, promotedRunResultIDs,
+		sdk.ParameterValue(a.Parameters, "srcMaturity"), sdk.ParameterValue(a.Parameters, "destMaturity"),
+	); err != nil {
+		return sdk.Result{Status: sdk.StatusFail}, err
+	}
+
 	pfName := sdk.ParameterFind(wk.Parameters(), "cds.integration.artifact_manager")
 	if pfName == nil {
 		return sdk.Result{}, errors.New("unable to retrieve artifact manager integration... Aborting")
