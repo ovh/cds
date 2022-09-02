@@ -75,7 +75,6 @@ testcases:
         - result.code ShouldEqual 0
         - 'result.systemout ShouldContainSubstring "status: Success"'
         - 'result.systemout ShouldContainSubstring "key_sign_id: E027B500E97E52E7"'
-        - result.systemout ShouldContainSubstring "doesn't have enough right on project ITCLIPRJVCS"
 
 - name: delete repository on project
   steps:
