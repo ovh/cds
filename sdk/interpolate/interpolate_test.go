@@ -680,5 +680,5 @@ func TestStringQuote(t *testing.T) {
 	}
 	got, err := Do("content is {{.content | stringQuote}}", vars)
 	assert.NoError(t, err)
-	assert.Equal(t, `content is "{\"foo\": \"{\\\"bar\\\":\\\"baz\\\"}\"}"`, got)
+	assert.Equal(t, `content is {\"foo\": \"{\\\"bar\\\":\\\"baz\\\"}\"}`, got)
 }

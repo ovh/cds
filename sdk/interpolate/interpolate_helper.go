@@ -378,7 +378,10 @@ func escape(s string) string {
 }
 
 func stringQuote(s string) string {
-	return strconv.Quote(s)
+	x := strconv.Quote(s)
+	x = strings.TrimPrefix(x, `"`)
+	x = strings.TrimSuffix(x, `"`)
+	return x
 }
 
 func ternary(v, v2, a interface{}) interface{} {
