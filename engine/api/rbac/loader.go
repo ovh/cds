@@ -16,25 +16,25 @@ type LoadOptionFunc func(context.Context, gorp.SqlExecutor, *rbac) error
 // LoadOptions provides all options on rbac loads functions
 var LoadOptions = struct {
 	Default         LoadOptionFunc
-	LoadRbacGlobal  LoadOptionFunc
-	LoadRbacProject LoadOptionFunc
+	LoadRBACGlobal  LoadOptionFunc
+	LoadRBACProject LoadOptionFunc
 }{
 	Default:         loadDefault,
-	LoadRbacGlobal:  loadRbacGlobal,
-	LoadRbacProject: loadRbacProject,
+	LoadRBACGlobal:  loadRBACGlobal,
+	LoadRBACProject: loadRBACProject,
 }
 
 func loadDefault(ctx context.Context, db gorp.SqlExecutor, rbac *rbac) error {
-	if err := loadRbacGlobal(ctx, db, rbac); err != nil {
+	if err := loadRBACGlobal(ctx, db, rbac); err != nil {
 		return err
 	}
-	if err := loadRbacProject(ctx, db, rbac); err != nil {
+	if err := loadRBACProject(ctx, db, rbac); err != nil {
 		return err
 	}
 	return nil
 }
 
-func loadRbacProject(ctx context.Context, db gorp.SqlExecutor, rbac *rbac) error {
+func loadRBACProject(ctx context.Context, db gorp.SqlExecutor, rbac *rbac) error {
 	query := "SELECT * FROM rbac_project WHERE rbac_id = $1"
 	var rbacProjects []rbacProject
 	if err := gorpmapping.GetAll(ctx, db, gorpmapping.NewQuery(query).Args(rbac.ID), &rbacProjects); err != nil {
@@ -67,7 +67,7 @@ func loadRbacProject(ctx context.Context, db gorp.SqlExecutor, rbac *rbac) error
 	return nil
 }
 
-func loadRbacGlobal(ctx context.Context, db gorp.SqlExecutor, rbac *rbac) error {
+func loadRBACGlobal(ctx context.Context, db gorp.SqlExecutor, rbac *rbac) error {
 	query := "SELECT * FROM rbac_global WHERE rbac_id = $1"
 	var rbacGbl []rbacGlobal
 	if err := gorpmapping.GetAll(ctx, db, gorpmapping.NewQuery(query).Args(rbac.ID), &rbacGbl); err != nil {
@@ -81,7 +81,7 @@ func loadRbacGlobal(ctx context.Context, db gorp.SqlExecutor, rbac *rbac) error 
 			return sdk.WrapError(err, "error when checking signature for rbac_global %d", rg.ID)
 		}
 		if !isValid {
-			log.Error(ctx, "rbac.loadRbacGlobal> rbac_global %d data corrupted", rg.ID)
+			log.Error(ctx, "rbac.loadRBACGlobal> rbac_global %d data corrupted", rg.ID)
 			continue
 		}
 		if err := loadRBACGlobalUsers(ctx, db, rg); err != nil {

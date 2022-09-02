@@ -12,7 +12,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func loadRbacGlobalGroupsByUserID(ctx context.Context, db gorp.SqlExecutor, userID string) ([]rbacGlobalGroup, error) {
+func loadRBACGlobalGroupsByUserID(ctx context.Context, db gorp.SqlExecutor, userID string) ([]rbacGlobalGroup, error) {
 	groups, err := group.LoadAllByUserID(ctx, db, userID)
 	if err != nil {
 		return nil, err
@@ -21,10 +21,10 @@ func loadRbacGlobalGroupsByUserID(ctx context.Context, db gorp.SqlExecutor, user
 	for _, g := range groups {
 		groupIDs = append(groupIDs, g.ID)
 	}
-	return loadRbacGlobalGroupsByGroupIDs(ctx, db, groupIDs)
+	return loadRBACGlobalGroupsByGroupIDs(ctx, db, groupIDs)
 }
 
-func loadRbacGlobalGroupsByGroupIDs(ctx context.Context, db gorp.SqlExecutor, groupIDs []int64) ([]rbacGlobalGroup, error) {
+func loadRBACGlobalGroupsByGroupIDs(ctx context.Context, db gorp.SqlExecutor, groupIDs []int64) ([]rbacGlobalGroup, error) {
 	q := gorpmapping.NewQuery("SELECT * FROM rbac_global_groups WHERE group_id = ANY ($1)").Args(pq.Int64Array(groupIDs))
 	return getAllRBACGlobalGroups(ctx, db, q)
 }
@@ -53,6 +53,7 @@ func loadRBACGlobalGroups(ctx context.Context, db gorp.SqlExecutor, rbacGlobal *
 	if err != nil {
 		return err
 	}
+	rbacGlobal.RBACGroupsIDs = make([]int64, 0, len(rbacGlobalGroups))
 	for _, rgg := range rbacGlobalGroups {
 		rbacGlobal.RBACGroupsIDs = append(rbacGlobal.RBACGroupsIDs, rgg.RbacGlobalGroupID)
 	}

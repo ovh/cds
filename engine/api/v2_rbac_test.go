@@ -50,7 +50,7 @@ globals:
 	api.Router.Mux.ServeHTTP(w, req)
 	require.Equal(t, 201, w.Code)
 
-	rbacDB, err := rbac.LoadRbacByName(context.TODO(), db, "perm-test", rbac.LoadOptions.LoadRbacProject, rbac.LoadOptions.LoadRbacGlobal)
+	rbacDB, err := rbac.LoadRBACByName(context.TODO(), db, "perm-test", rbac.LoadOptions.LoadRBACProject, rbac.LoadOptions.LoadRBACGlobal)
 	require.NoError(t, err)
 
 	require.Equal(t, 1, len(rbacDB.Globals))

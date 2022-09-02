@@ -9,7 +9,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func (c *client) RbacImport(ctx context.Context, content io.Reader, mods ...RequestModifier) (sdk.RBAC, error) {
+func (c *client) RBACImport(ctx context.Context, content io.Reader, mods ...RequestModifier) (sdk.RBAC, error) {
 	var rbacRule sdk.RBAC
 
 	body, err := io.ReadAll(content)

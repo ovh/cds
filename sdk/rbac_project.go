@@ -15,7 +15,7 @@ type RBACProject struct {
 	RBACGroupsIDs []int64  `json:"-" db:"-"`
 }
 
-func isValidRbacProject(rbacName string, rbacProject RBACProject) error {
+func isValidRBACProject(rbacName string, rbacProject RBACProject) error {
 	// Check empty group and users
 	if len(rbacProject.RBACGroupsIDs) == 0 && len(rbacProject.RBACUsersIDs) == 0 {
 		return NewErrorFrom(ErrInvalidData, "rbac %s: missing groups or users on project permission", rbacName)

@@ -12,7 +12,7 @@ type RBACGlobal struct {
 	RBACGroupsIDs  []int64  `json:"-" db:"-"`
 }
 
-func isValidRbacGlobal(rbacName string, rg RBACGlobal) error {
+func isValidRBACGlobal(rbacName string, rg RBACGlobal) error {
 	if len(rg.RBACGroupsIDs) == 0 && len(rg.RBACUsersIDs) == 0 {
 		return NewErrorFrom(ErrInvalidData, "rbac %s: missing groups or users on global permission", rbacName)
 	}

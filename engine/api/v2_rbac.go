@@ -20,7 +20,7 @@ func (api *API) postImportRbacHandler() ([]service.RbacChecker, service.Handler)
 				return err
 			}
 
-			existingRule, err := rbac.LoadRbacByName(ctx, api.mustDB(), rbacRule.Name)
+			existingRule, err := rbac.LoadRBACByName(ctx, api.mustDB(), rbacRule.Name)
 			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 				return err
 			}

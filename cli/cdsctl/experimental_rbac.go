@@ -45,6 +45,6 @@ func rbacImportFunc(v cli.Values) error {
 	if v.GetBool("force") {
 		mods = append(mods, cdsclient.Force())
 	}
-	_, err = client.RbacImport(context.Background(), f, mods...)
+	_, err = client.RBACImport(context.Background(), f, mods...)
 	return err
 }

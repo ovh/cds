@@ -2894,7 +2894,7 @@ func (mr *MockProjectClientMockRecorder) VariableListEncrypt(projectKey interfac
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VariableListEncrypt", reflect.TypeOf((*MockProjectClient)(nil).VariableListEncrypt), projectKey)
 }
 
-// MockRbacClient is a mock of RbacClient interface.
+// MockRbacClient is a mock of RBACClient interface.
 type MockRbacClient struct {
 	ctrl     *gomock.Controller
 	recorder *MockRbacClientMockRecorder
@@ -2918,13 +2918,13 @@ func (m *MockRbacClient) EXPECT() *MockRbacClientMockRecorder {
 }
 
 // RbacImport mocks base method.
-func (m *MockRbacClient) RbacImport(ctx context.Context, content io.Reader, mods ...cdsclient.RequestModifier) (sdk.RBAC, error) {
+func (m *MockRbacClient) RBACImport(ctx context.Context, content io.Reader, mods ...cdsclient.RequestModifier) (sdk.RBAC, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, content}
 	for _, a := range mods {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "RbacImport", varargs...)
+	ret := m.ctrl.Call(m, "RBACImport", varargs...)
 	ret0, _ := ret[0].(sdk.RBAC)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
@@ -2934,7 +2934,7 @@ func (m *MockRbacClient) RbacImport(ctx context.Context, content io.Reader, mods
 func (mr *MockRbacClientMockRecorder) RbacImport(ctx, content interface{}, mods ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, content}, mods...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RbacImport", reflect.TypeOf((*MockRbacClient)(nil).RbacImport), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RBACImport", reflect.TypeOf((*MockRbacClient)(nil).RBACImport), varargs...)
 }
 
 // MockProjectKeysClient is a mock of ProjectKeysClient interface.
@@ -7524,13 +7524,13 @@ func (mr *MockInterfaceMockRecorder) QueueWorkflowRunResultsRelease(ctx, permJob
 }
 
 // RbacImport mocks base method.
-func (m *MockInterface) RbacImport(ctx context.Context, content io.Reader, mods ...cdsclient.RequestModifier) (sdk.RBAC, error) {
+func (m *MockInterface) RBACImport(ctx context.Context, content io.Reader, mods ...cdsclient.RequestModifier) (sdk.RBAC, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, content}
 	for _, a := range mods {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "RbacImport", varargs...)
+	ret := m.ctrl.Call(m, "RBACImport", varargs...)
 	ret0, _ := ret[0].(sdk.RBAC)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
@@ -7540,7 +7540,7 @@ func (m *MockInterface) RbacImport(ctx context.Context, content io.Reader, mods 
 func (mr *MockInterfaceMockRecorder) RbacImport(ctx, content interface{}, mods ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, content}, mods...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RbacImport", reflect.TypeOf((*MockInterface)(nil).RbacImport), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RBACImport", reflect.TypeOf((*MockInterface)(nil).RBACImport), varargs...)
 }
 
 // RepositoriesList mocks base method.
