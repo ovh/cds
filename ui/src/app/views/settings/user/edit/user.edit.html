@@ -8,52 +8,65 @@
             <ng-container *ngSwitchCase="'profile'" class="ui grid">
                 <div *ngIf="user;then showUser;else loadUser"></div>
                 <ng-template #showUser>
-                    <form class="ui form">
-                        <div class="ui grid">
-                            <div class="ui row">
-                                <div class="wide column">
-                                    <div class="field">
-                                        <label>{{'user_label_username' | translate}}</label>
-                                        <input class="ui input" type="text" name="username" [(ngModel)]="user.username"
-                                            [disabled]="loading" readonly>
-                                    </div>
-                                    <div class="field">
-                                        <label>{{'user_label_fullname' | translate}}</label>
-                                        <input class="ui input" type="text" name="fullname" [(ngModel)]="user.fullname"
-                                            [disabled]="loading" [readonly]="!editable">
-                                    </div>
-                                    <div *ngIf="user.organization" class="field">
-                                        <label>Organization</label>
-                                        <input class="ui input" type="text" name="organization"
-                                            [ngModel]="user.organization" readonly>
-                                    </div>
-                                    <div class="field">
-                                        <label for="admin">{{'user_label_ring' | translate}}</label>
+                    <form nz-form>
+                        <nz-row>
+                            <nz-col [nzSpan]="24">
+                                <nz-form-item>
+                                    <nz-form-label>Username</nz-form-label>
+                                    <nz-form-control>
+                                        <input nz-input type="text" name="username" [(ngModel)]="user.username"
+                                               [disabled]="loading" readonly>
+                                    </nz-form-control>
+                                </nz-form-item>
+                                <nz-form-item>
+                                    <nz-form-label>Fullname</nz-form-label>
+                                    <nz-form-control>
+                                        <input nz-input type="text" name="fullname" [(ngModel)]="user.fullname"
+                                               [disabled]="loading" [readonly]="!editable">
+                                    </nz-form-control>
+                                </nz-form-item>
+                                <nz-form-item *ngIf="user.organization">
+                                    <nz-form-label>Organization</nz-form-label>
+                                    <nz-form-control>
+                                        <input nz-input type="text" name="organization"
+                                               [ngModel]="user.organization" readonly>
+                                    </nz-form-control>
+                                </nz-form-item>
+                                <nz-form-item>
+                                    <nz-form-label>Ring</nz-form-label>
+                                    <nz-form-control>
                                         <nz-select name="admin" [nzDisabled]="loading" *ngIf="currentAuthSummary.isAdmin()"
-                                                [(ngModel)]="user.ring">
+                                                   [(ngModel)]="user.ring">
                                             <nz-option nzValue="USER" nzLabel="USER"></nz-option>
                                             <nz-option nzValue="MAINTAINER" nzLabel="MAINTAINER"></nz-option>
                                             <nz-option nzValue="ADMIN" nzLabel="ADMIN"></nz-option>
                                         </nz-select>
-                                        <input *ngIf="!currentAuthSummary.isAdmin()" class="ui input" type="text"
-                                            name="admin" [ngModel]="user.ring" [readonly]="true">
-                                    </div>
-                                    <div class="field inline" *ngIf="editable">
-                                        <app-delete-button class="left floated" (event)="clickDelete()"
-                                            [loading]="deleteLoading">
-                                        </app-delete-button>
-                                        <button class="ui green right floated button" [class.loading]="loading"
-                                            (click)="clickSave()">
-                                            <i class="save icon"></i>{{ 'btn_save' | translate }}
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                                        <input *ngIf="!currentAuthSummary.isAdmin()"nz-input type="text"
+                                               name="admin" [ngModel]="user.ring" [readonly]="true">
+                                    </nz-form-control>
+                                </nz-form-item>
+                            </nz-col>
+                        </nz-row>
+                        <nz-row *ngIf="editable">
+                            <nz-col [nzSpan]="12">
+                                <button nz-button nzDanger nzType="primary"
+                                        nz-popconfirm nzPopconfirmTitle="Are you sure you want to delete this user ?"
+                                        (nzOnConfirm)="clickDelete()">
+                                    <i nz-icon nzType="delete" nzTheme="outline"></i>
+                                    Delete
+                                </button>
+                            </nz-col>
+                            <nz-col [nzSpan]="12" class="alignRight">
+                                <button nz-button nzType="primary" [nzLoading]="loading"
+                                        (click)="clickSave()">
+                                    <i nz-icon nzType="save" nzTheme="outline"></i>Save
+                                </button>
+                            </nz-col>
+                        </nz-row>
                     </form>
                 </ng-template>
                 <ng-template #loadUser>
-                    <div class="ui text active loader">{{ 'user_load_user' | translate }}</div>
+                    <nz-spin nzTip="Loading user..."></nz-spin>
                 </ng-template>
             </ng-container>
             <div *ngSwitchCase="'groups'" class="ui grid">
@@ -89,7 +102,7 @@
                                         </div>
                                     </ng-container>
                                     <ng-container *ngSwitchCase="'ldap'">
-                                        <div [suiTransition]="transitionController">
+                                        <div>
                                             <ng-container *ngIf="!showLDAPSigninForm">
                                                 <div class="center aligned header">
                                                     <i class="ui address book icon huge"></i>
@@ -140,23 +153,19 @@
                                 <div class="extra content center aligned">
                                     <ng-container *ngIf="mConsumers[d.type]" [ngSwitch]="d.type">
                                         <ng-container *ngSwitchCase="'local'">
-                                            <button class="ui primary button small"
-                                                (click)="clickConsumerDetails(mConsumers[d.type])">{{'common_details' |
-                                                translate}}</button>
+                                            <button nz-button
+                                                (click)="clickConsumerDetails(mConsumers[d.type])">Details</button>
                                             <button *ngIf="user.id === currentAuthSummary.user.id"
-                                                class="ui green button small"
+                                                nz-button nzType="primary"
                                                 (click)="clickConsumerLocalReset()">{{'account_password_btn_reset' |
                                                 translate}}</button>
                                         </ng-container>
                                         <ng-container *ngSwitchDefault>
-                                            <button class="ui primary button small"
-                                                (click)="clickConsumerDetails(mConsumers[d.type])">{{'common_details' |
-                                                translate}}</button>
-                                            <app-confirm-button *ngIf="user.id === currentAuthSummary.user.id"
-                                                [class]="'small'" [color]="'red'"
-                                                (event)="clickConsumerDetach(mConsumers[d.type])"
-                                                [title]="'user_auth_consumer_detach_btn'">
-                                            </app-confirm-button>
+                                            <button nz-button
+                                                (click)="clickConsumerDetails(mConsumers[d.type])">Details</button>
+                                            <button *ngIf="user.id === currentAuthSummary.user.id" nz-button nzDanger nzType="primary"
+                                                    nz-popconfirm nzPopconfirmTitle="Are you sure you want to detach it ?"
+                                                    (nzOnConfirm)="clickConsumerDetach(mConsumers[d.type])">Detach</button>
                                         </ng-container>
                                     </ng-container>
                                     <ng-container *ngIf="!mConsumers[d.type]" [ngSwitch]="d.type">

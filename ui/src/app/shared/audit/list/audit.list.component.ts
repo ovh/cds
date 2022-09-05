@@ -43,9 +43,12 @@ export class AuditListComponent implements OnInit {
                 name: '',
                 disabled: !this.canRollback,
                 selector: (audit: AuditWorkflow) => ({
-                        title: 'common_rollback',
-                        click: () => this.rollback.emit(audit.id)
-                    }),
+                    buttonType: 'primary',
+                    buttonDanger: false,
+                    buttonConfirmationMessage: 'Are you sure you want to rollback this workflow ?',
+                    title: 'Rollback',
+                    click: () => this.rollback.emit(audit.id)
+                }),
             },
         ];
     }

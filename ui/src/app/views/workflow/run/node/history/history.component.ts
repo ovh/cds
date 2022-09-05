@@ -41,20 +41,28 @@ export class WorkflowNodeRunHistoryComponent implements OnInit {
                 type: ColumnType.ICON,
                 name: 'common_status',
                 selector: (nodeRun: WorkflowNodeRun) => ({
-                    icon: (() => {
-                        if (nodeRun.status === PipelineStatus.FAIL || nodeRun.status === PipelineStatus.STOPPED) {
-                            return ['remove', 'red', 'icon'];
-                        }
+                    iconTheme: 'outline',
+                    iconType: (() => {
                         if (nodeRun.status === PipelineStatus.SUCCESS) {
-                            return ['check', 'green', 'icon'];
+                            return 'check';
+                        } else if (nodeRun.status === PipelineStatus.FAIL || nodeRun.status === PipelineStatus.STOPPED) {
+                            return 'stop';
+                        } else if (nodeRun.status === PipelineStatus.WAITING || nodeRun.status === PipelineStatus.BUILDING) {
+                            return 'field-time';
+                        } else {
+                            return 'stop';
                         }
-                        if (nodeRun.status === PipelineStatus.WAITING || nodeRun.status === PipelineStatus.BUILDING) {
-                            return ['wait', 'blue', 'icon'];
+                    })(),
+                    iconColor: (() => {
+                        if (nodeRun.status === PipelineStatus.SUCCESS) {
+                            return 'green';
+                        } else if (nodeRun.status === PipelineStatus.FAIL || nodeRun.status === PipelineStatus.STOPPED) {
+                            return 'red';
+                        } else if (nodeRun.status === PipelineStatus.WAITING || nodeRun.status === PipelineStatus.BUILDING) {
+                            return 'blue';
+                        } else {
+                            return 'grey';
                         }
-                        if (PipelineStatus.neverRun(nodeRun.status)) {
-                            return ['ban', 'grey', 'icon'];
-                        }
-                        return ['stop', 'grey', 'icon'];
                     })()
                 })
             },

@@ -1,5 +1,8 @@
 @import '../../../common';
-
+nz-row {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
 th.sortable:after {
     font-family: Icons;
     content: '\f0dc';
@@ -47,4 +50,36 @@ pre {
     white-space: pre-wrap;
     word-wrap: break-word;
     font-family: 'Lato', 'Helvetica Neue', Arial, Helvetica, sans-serif;
+}
+
+.green {
+  color: $cds_color_green;
+}
+.red {
+  color: $cds_color_red;
+}
+.blue {
+  color: $cds_color_teal;
+}
+.grey {
+  color: $cds_trigger_color;
+}
+
+.orange {
+  color: $cds_color_orange;
+}
+
+td {
+  i {
+    font-size: 1.3em;
+  }
+  button {
+    i {
+      font-size: 1em;
+    }
+  }
+
+  .rightAlign {
+    float: right;
+  }
 }

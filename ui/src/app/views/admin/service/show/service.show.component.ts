@@ -63,7 +63,7 @@ export class ServiceShowComponent implements OnInit, OnDestroy {
                 selector: (c: MonitoringStatusLine) => c.hostname
             },
             <Column<MonitoringStatusLine>>{
-                name: 'common_status',
+                name: 'Status',
                 type: ColumnType.LABEL,
                 selector: (c: MonitoringStatusLine) => ({
                         class: MonitoringStatusLineUtil.color(c),

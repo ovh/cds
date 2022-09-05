@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
-import { WorkflowHookTask } from 'app/model/workflow.hook.model';
+import { HookStatus, WorkflowHookTask } from 'app/model/workflow.hook.model';
 import { HookService } from 'app/service/hook/hook.service';
 import { PathItem } from 'app/shared/breadcrumb/breadcrumb.component';
 import { Column, ColumnType, Filter } from 'app/shared/table/data-table.component';
@@ -42,7 +42,9 @@ export class HookTaskListComponent {
             <Column<WorkflowHookTask>>{
                 type: ColumnType.ICON,
                 selector: (d: WorkflowHookTask) => ({
-                    icon: d.stopped ? ['stop', 'red', 'icon'] : ['play', 'green', 'icon']
+                    iconTheme: 'outline',
+                    iconType: d.stopped ? 'stop' : 'play-circle',
+                    iconColor: d.stopped ? 'red' : 'green'
                 })
             },
             <Column<WorkflowHookTask>>{

@@ -103,9 +103,9 @@ export class InstanceStatusUtil {
     public static color(status: InstanceStatus): string {
         switch (status) {
             case InstanceStatus.UP_TO_DATE:
-                return 'green';
+                return 'success';
             case InstanceStatus.NOT_UP_TO_DATE:
-                return 'red';
+                return 'error';
             case InstanceStatus.NOT_IMPORTED:
                 return 'orange';
         }

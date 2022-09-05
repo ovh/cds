@@ -4,7 +4,6 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { NguiAutoCompleteModule } from '@sgu/auto-complete';
 import { TranslateModule } from '@ngx-translate/core';
-import { SuiModule } from '@richardlt/ng2-semantic-ui';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { AuthenticationGuard } from 'app/guard/authentication.guard';
 import { FeatureGuard } from 'app/guard/feature.guard';
@@ -31,7 +30,6 @@ import { ActionStepFormComponent } from './action/step/form/step.form.component'
 import { ActionStepComponent } from './action/step/step.component';
 import { AuditListComponent } from './audit/list/audit.list.component';
 import { BreadcrumbComponent } from './breadcrumb/breadcrumb.component';
-import { ConfirmButtonComponent } from './button/confirm/confirm.button';
 import { DeleteButtonComponent } from './button/delete/delete.button';
 import { UploadButtonComponent } from './button/upload/upload.button.component';
 import { ChartComponentComponent } from './chart/chart.component';
@@ -66,7 +64,6 @@ import { ScrollviewComponent } from './scrollview/scrollview.component';
 import { SharedService } from './shared.service';
 import { StatusIconComponent } from './status/status.component';
 import { DataTableComponent, SelectorPipe, SelectPipe } from './table/data-table.component';
-import { PaginationComponent } from './table/pagination.component';
 import { TabComponent } from './tabs/tab.component';
 import { TabsComponent } from './tabs/tabs.component';
 import { ToastService } from './toast/ToastService';
@@ -121,8 +118,8 @@ import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
 import { en_US, NZ_I18N } from 'ng-zorro-antd/i18n';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { IconDefinition } from '@ant-design/icons-angular';
-import { ArrowDownOutline, ArrowRightOutline, AudioOutline, AudioMutedOutline, BellFill, BookOutline, CalendarOutline, CaretDownFill, CaretRightFill, CaretUpFill, CheckOutline, CodeOutline, CopyOutline, DeleteOutline, DragOutline, EyeInvisibleOutline, EyeOutline, KeyOutline,
-    HighlightFill, HistoryOutline, InfoCircleOutline, PhoneFill, PlusOutline, PlusSquareOutline, QuestionOutline, QuestionCircleOutline, RestOutline, SaveOutline, SettingFill, ShareAltOutline, StarOutline, StarFill, StopOutline, SyncOutline,
+import { ArrowDownOutline, ArrowRightOutline, AudioOutline, AudioMutedOutline, BellFill, BookOutline, CalendarOutline, CaretDownFill, CaretRightFill, CaretUpFill, CheckOutline, CodeOutline, CopyOutline, CrownOutline, DeleteOutline, DragOutline, EyeInvisibleOutline, EyeOutline, FieldTimeOutline, KeyOutline,
+    HighlightFill, HistoryOutline, InfoCircleOutline, LockOutline, PhoneFill, PlayCircleOutline, PlusOutline, PlusSquareOutline, QuestionOutline, QuestionCircleOutline, RestOutline, SafetyCertificateOutline, SaveOutline, SettingFill, ShareAltOutline, StarOutline, StarFill, StopOutline, SyncOutline,
     TableOutline, TagsOutline, ToolFill, UnlockFill, UnorderedListOutline, UploadOutline, UserOutline, WarningOutline, WarningFill } from '@ant-design/icons-angular/icons'
 import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
 import { NzTagModule } from 'ng-zorro-antd/tag';
@@ -153,9 +150,9 @@ const ngZorroConfig: NzConfig = {
     icon: {nzTheme: "outline"}
 };
 
-const icons: IconDefinition[] = [ ArrowDownOutline, ArrowRightOutline, AudioOutline, AudioMutedOutline, BellFill, BookOutline, CalendarOutline, CaretDownFill, CaretRightFill, CaretUpFill, CheckOutline, CodeOutline, CopyOutline, DeleteOutline, DragOutline,
-    EyeInvisibleOutline, EyeOutline, KeyOutline, HighlightFill, HistoryOutline, InfoCircleOutline, PhoneFill, PlusOutline, PlusSquareOutline, QuestionOutline, QuestionCircleOutline,
-    RestOutline, SaveOutline, SettingFill, ShareAltOutline, StarOutline, StarFill, StopOutline, SyncOutline, TableOutline, TagsOutline, ToolFill, UnlockFill, UnorderedListOutline, UploadOutline, UserOutline, WarningOutline, WarningFill ];
+const icons: IconDefinition[] = [ ArrowDownOutline, ArrowRightOutline, AudioOutline, AudioMutedOutline, BellFill, BookOutline, CalendarOutline, CaretDownFill, CaretRightFill, CaretUpFill, CheckOutline, CodeOutline, CopyOutline, CrownOutline, DeleteOutline, DragOutline,
+    EyeInvisibleOutline, EyeOutline, FieldTimeOutline, KeyOutline, HighlightFill, HistoryOutline, InfoCircleOutline, LockOutline, PhoneFill, PlayCircleOutline, PlusOutline, PlusSquareOutline, QuestionOutline, QuestionCircleOutline,
+    RestOutline, SafetyCertificateOutline, SaveOutline, SettingFill, ShareAltOutline, StarOutline, StarFill, StopOutline, SyncOutline, TableOutline, TagsOutline, ToolFill, UnlockFill, UnorderedListOutline, UploadOutline, UserOutline, WarningOutline, WarningFill ];
 
 @NgModule({
     imports: [
@@ -201,7 +198,6 @@ const icons: IconDefinition[] = [ ArrowDownOutline, ArrowRightOutline, AudioOutl
         MarkdownModule.forRoot(),
         NguiAutoCompleteModule,
         RouterModule,
-        SuiModule,
         InfiniteScrollModule,
         NgxChartsModule
     ],
@@ -221,7 +217,6 @@ const icons: IconDefinition[] = [ ArrowDownOutline, ArrowRightOutline, AudioOutl
         ChartComponentComponent,
         CommitListComponent,
         ConditionsComponent,
-        ConfirmButtonComponent,
         CutPipe,
         DataTableComponent,
         DeleteButtonComponent,
@@ -237,7 +232,6 @@ const icons: IconDefinition[] = [ ArrowDownOutline, ArrowRightOutline, AudioOutl
         MenuComponent,
         NgForNumber,
         NgxAutoScrollDirective,
-        PaginationComponent,
         ParameterFormComponent,
         ParameterListComponent,
         ParameterValueComponent,
@@ -333,7 +327,6 @@ const icons: IconDefinition[] = [ ArrowDownOutline, ArrowRightOutline, AudioOutl
         CommitListComponent,
         CommonModule,
         ConditionsComponent,
-        ConfirmButtonComponent,
         CutPipe,
         DataTableComponent,
         DeleteButtonComponent,
@@ -385,7 +378,6 @@ const icons: IconDefinition[] = [ ArrowDownOutline, ArrowRightOutline, AudioOutl
         NzTableModule,
         NzToolTipModule,
         NzUploadModule,
-        PaginationComponent,
         ParameterFormComponent,
         ParameterListComponent,
         ParameterValueComponent,
@@ -403,7 +395,6 @@ const icons: IconDefinition[] = [ ArrowDownOutline, ArrowRightOutline, AudioOutl
         SelectorPipe,
         SelectPipe,
         StatusIconComponent,
-        SuiModule,
         TabsComponent,
         TranslateModule,
         TruncatePipe,

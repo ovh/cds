@@ -493,36 +493,6 @@ foreignObject {
     overflow: visible;
 }
 
-// Ovveride of ng2-semantic-ui
-sui-search {
-    .results {
-        margin-top: 1.5em !important;
-    }
-
-    .ui.input {
-        .prompt {
-            background-color: rgba(225, 226, 229, 0.1);
-            border-color: transparent;
-
-            &:focus {
-                border: 1.5px solid #50cfd9;
-            }
-
-            color: white;
-            opacity: 1;
-        }
-
-        i {
-            &.search.icon {
-                opacity: 1;
-            }
-
-            color: white;
-            opacity: 1;
-        }
-    }
-}
-
 .codeAdded {
     background-color: #cdffd8;
 
