@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"path"
 	"strconv"
 	"strings"
 
@@ -25,6 +26,11 @@ func (c *Client) GetFileInfo(repoName string, filePath string) (sdk.FileInfo, er
 	repoDetails := services.RepositoryDetails{}
 	if err := c.Asm.GetRepository(repoName, &repoDetails); err != nil {
 		return fi, sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to get repository %s: %v", repoName, err)
+	}
+
+	// To get FileInfo for a docker image, we have to check the manifest file
+	if repoDetails.PackageType == "docker" && strings.HasSuffix(filePath, "manifest.json") {
+		filePath = path.Join(filePath, "manifest.json")
 	}
 
 	fileInfoURL := fmt.Sprintf("%sapi/storage/%s/%s", c.Asm.GetConfig().GetServiceDetails().GetUrl(), repoName, filePath)
