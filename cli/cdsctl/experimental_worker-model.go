@@ -2,10 +2,11 @@ package main
 
 import (
 	"context"
-	"github.com/ovh/cds/sdk/cdsclient"
+
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
+	"github.com/ovh/cds/sdk/cdsclient"
 )
 
 var experimentalWorkerModelCmd = cli.Command{
