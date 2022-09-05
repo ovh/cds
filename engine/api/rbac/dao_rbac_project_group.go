@@ -12,7 +12,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func loadRbacProjectGroupsByUserID(ctx context.Context, db gorp.SqlExecutor, userID string) ([]rbacProjectGroup, error) {
+func loadRBACProjectGroupsByUserID(ctx context.Context, db gorp.SqlExecutor, userID string) ([]rbacProjectGroup, error) {
 	groups, err := group.LoadAllByUserID(ctx, db, userID)
 	if err != nil {
 		return nil, err
@@ -21,10 +21,10 @@ func loadRbacProjectGroupsByUserID(ctx context.Context, db gorp.SqlExecutor, use
 	for _, g := range groups {
 		groupIDs = append(groupIDs, g.ID)
 	}
-	return loadRbacProjectGroupsByGroupIDs(ctx, db, groupIDs)
+	return loadRBACProjectGroupsByGroupIDs(ctx, db, groupIDs)
 }
 
-func loadRbacProjectGroupsByGroupIDs(ctx context.Context, db gorp.SqlExecutor, groupIDs []int64) ([]rbacProjectGroup, error) {
+func loadRBACProjectGroupsByGroupIDs(ctx context.Context, db gorp.SqlExecutor, groupIDs []int64) ([]rbacProjectGroup, error) {
 	q := gorpmapping.NewQuery("SELECT * FROM rbac_project_groups WHERE group_id = ANY ($1)").Args(pq.Int64Array(groupIDs))
 	return getAllRBACProjectGroups(ctx, db, q)
 }

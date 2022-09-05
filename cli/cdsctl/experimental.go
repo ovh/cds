@@ -15,6 +15,7 @@ var experimentalCmd = cli.Command{
 
 func experimentalCommands() []*cobra.Command {
 	return []*cobra.Command{
+		experimentalRbac(),
 		experimentalProject(),
 	}
 }

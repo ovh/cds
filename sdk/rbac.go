@@ -19,17 +19,17 @@ type RBAC struct {
 	Projects     []RBACProject `json:"projects" db:"-"`
 }
 
-func IsValidRbac(rbac *RBAC) error {
+func IsValidRBAC(rbac *RBAC) error {
 	if rbac.Name == "" {
 		return WrapError(ErrInvalidData, "missing permission name")
 	}
 	for _, g := range rbac.Globals {
-		if err := isValidRbacGlobal(rbac.Name, g); err != nil {
+		if err := isValidRBACGlobal(rbac.Name, g); err != nil {
 			return err
 		}
 	}
 	for _, p := range rbac.Projects {
-		if err := isValidRbacProject(rbac.Name, p); err != nil {
+		if err := isValidRBACProject(rbac.Name, p); err != nil {
 			return err
 		}
 	}

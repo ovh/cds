@@ -2894,6 +2894,49 @@ func (mr *MockProjectClientMockRecorder) VariableListEncrypt(projectKey interfac
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VariableListEncrypt", reflect.TypeOf((*MockProjectClient)(nil).VariableListEncrypt), projectKey)
 }
 
+// MockRbacClient is a mock of RBACClient interface.
+type MockRbacClient struct {
+	ctrl     *gomock.Controller
+	recorder *MockRbacClientMockRecorder
+}
+
+// MockRbacClientMockRecorder is the mock recorder for MockRbacClient.
+type MockRbacClientMockRecorder struct {
+	mock *MockRbacClient
+}
+
+// NewMockRbacClient creates a new mock instance.
+func NewMockRbacClient(ctrl *gomock.Controller) *MockRbacClient {
+	mock := &MockRbacClient{ctrl: ctrl}
+	mock.recorder = &MockRbacClientMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockRbacClient) EXPECT() *MockRbacClientMockRecorder {
+	return m.recorder
+}
+
+// RbacImport mocks base method.
+func (m *MockRbacClient) RBACImport(ctx context.Context, content io.Reader, mods ...cdsclient.RequestModifier) (sdk.RBAC, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, content}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "RBACImport", varargs...)
+	ret0, _ := ret[0].(sdk.RBAC)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RbacImport indicates an expected call of RbacImport.
+func (mr *MockRbacClientMockRecorder) RbacImport(ctx, content interface{}, mods ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, content}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RBACImport", reflect.TypeOf((*MockRbacClient)(nil).RBACImport), varargs...)
+}
+
 // MockProjectKeysClient is a mock of ProjectKeysClient interface.
 type MockProjectKeysClient struct {
 	ctrl     *gomock.Controller
@@ -7506,6 +7549,26 @@ func (m *MockInterface) QueueWorkflowRunResultsRelease(ctx context.Context, perm
 func (mr *MockInterfaceMockRecorder) QueueWorkflowRunResultsRelease(ctx, permJobID, runResultIDs, from, to interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueWorkflowRunResultsRelease", reflect.TypeOf((*MockInterface)(nil).QueueWorkflowRunResultsRelease), ctx, permJobID, runResultIDs, from, to)
+}
+
+// RbacImport mocks base method.
+func (m *MockInterface) RBACImport(ctx context.Context, content io.Reader, mods ...cdsclient.RequestModifier) (sdk.RBAC, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, content}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "RBACImport", varargs...)
+	ret0, _ := ret[0].(sdk.RBAC)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RbacImport indicates an expected call of RbacImport.
+func (mr *MockInterfaceMockRecorder) RbacImport(ctx, content interface{}, mods ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, content}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RBACImport", reflect.TypeOf((*MockInterface)(nil).RBACImport), varargs...)
 }
 
 // RepositoriesList mocks base method.

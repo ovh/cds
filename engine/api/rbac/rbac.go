@@ -11,32 +11,34 @@ import (
 
 func FillWithIDs(ctx context.Context, db gorp.SqlExecutor, r *sdk.RBAC) error {
 	// Check existing permission
-	rbacDB, err := LoadRbacByName(ctx, db, r.Name)
+	rbacDB, err := LoadRBACByName(ctx, db, r.Name)
 	if err != nil {
 		if !sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return err
 		}
 	}
-	r.ID = rbacDB.ID
+	if rbacDB != nil {
+		r.ID = rbacDB.ID
+	}
 
 	userCache := make(map[string]string)
 	groupCache := make(map[string]int64)
 	for gID := range r.Globals {
 		rbacGbl := &r.Globals[gID]
-		if err := fillRbacGlobalWithID(ctx, db, rbacGbl, userCache, groupCache); err != nil {
+		if err := fillRBACGlobalWithID(ctx, db, rbacGbl, userCache, groupCache); err != nil {
 			return err
 		}
 	}
 	for pID := range r.Projects {
 		rbacPrj := &r.Projects[pID]
-		if err := fillRbacProjectWithID(ctx, db, rbacPrj, userCache, groupCache); err != nil {
+		if err := fillRBACProjectWithID(ctx, db, rbacPrj, userCache, groupCache); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func fillRbacProjectWithID(ctx context.Context, db gorp.SqlExecutor, rbacPrj *sdk.RBACProject, userCache map[string]string, groupCache map[string]int64) error {
+func fillRBACProjectWithID(ctx context.Context, db gorp.SqlExecutor, rbacPrj *sdk.RBACProject, userCache map[string]string, groupCache map[string]int64) error {
 	rbacPrj.RBACUsersIDs = make([]string, 0, len(rbacPrj.RBACUsersName))
 	for _, userName := range rbacPrj.RBACUsersName {
 		userID := userCache[userName]
@@ -66,7 +68,7 @@ func fillRbacProjectWithID(ctx context.Context, db gorp.SqlExecutor, rbacPrj *sd
 	return nil
 }
 
-func fillRbacGlobalWithID(ctx context.Context, db gorp.SqlExecutor, rbacGbl *sdk.RBACGlobal, userCache map[string]string, groupCache map[string]int64) error {
+func fillRBACGlobalWithID(ctx context.Context, db gorp.SqlExecutor, rbacGbl *sdk.RBACGlobal, userCache map[string]string, groupCache map[string]int64) error {
 	rbacGbl.RBACUsersIDs = make([]string, 0, len(rbacGbl.RBACUsersName))
 	for _, rbacUserName := range rbacGbl.RBACUsersName {
 		userID := userCache[rbacUserName]

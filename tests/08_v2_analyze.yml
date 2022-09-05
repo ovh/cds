@@ -15,7 +15,7 @@ testcases:
   - script: gpg --import ./fixtures/gpg/key.priv
   - script: gpg --import ./fixtures/gpg/key.pub
   - script: 'curl -X POST {{.git.host}}/api/v1/user/gpg_keys -u "{{.git.user}}:{{.git.password}}" -H "Content-type: application/json" -d @./fixtures/gpg/key.pub.json'
-
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental rbac import ./fixtures/rbac/rbac_admin.yml --force
 
 - name: import / export vcs server
   steps:
@@ -73,9 +73,8 @@ testcases:
       delay: 2
       assertions:
         - result.code ShouldEqual 0
-        - 'result.systemout ShouldContainSubstring "status: Skipped"'
+        - 'result.systemout ShouldContainSubstring "status: Success"'
         - 'result.systemout ShouldContainSubstring "key_sign_id: E027B500E97E52E7"'
-        - result.systemout ShouldContainSubstring "doesn't have enough right on project ITCLIPRJVCS"
 
 - name: delete repository on project
   steps:

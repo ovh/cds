@@ -12,14 +12,14 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func LoadRbacByName(ctx context.Context, db gorp.SqlExecutor, name string, opts ...LoadOptionFunc) (sdk.RBAC, error) {
+func LoadRBACByName(ctx context.Context, db gorp.SqlExecutor, name string, opts ...LoadOptionFunc) (*sdk.RBAC, error) {
 	query := `SELECT * FROM rbac WHERE name = $1`
 	return get(ctx, db, gorpmapping.NewQuery(query).Args(name), opts...)
 }
 
 // Insert a RBAC permission in database
 func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, rb *sdk.RBAC) error {
-	if err := sdk.IsValidRbac(rb); err != nil {
+	if err := sdk.IsValidRBAC(rb); err != nil {
 		return err
 	}
 	if rb.ID == "" {
@@ -39,7 +39,7 @@ func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, rb *sdk.RBAC) 
 			RbacID:     dbRb.ID,
 			RBACGlobal: rb.Globals[i],
 		}
-		if err := insertRbacGlobal(ctx, db, &dbRbGlobal); err != nil {
+		if err := insertRBACGlobal(ctx, db, &dbRbGlobal); err != nil {
 			return err
 		}
 	}
@@ -48,7 +48,7 @@ func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, rb *sdk.RBAC) 
 			RbacID:      dbRb.ID,
 			RBACProject: rb.Projects[i],
 		}
-		if err := insertRbacProject(ctx, db, &dbRbProject); err != nil {
+		if err := insertRBACProject(ctx, db, &dbRbProject); err != nil {
 			return err
 		}
 	}
@@ -71,30 +71,30 @@ func Delete(_ context.Context, db gorpmapper.SqlExecutorWithTx, rb sdk.RBAC) err
 	return nil
 }
 
-func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) (sdk.RBAC, error) {
+func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) (*sdk.RBAC, error) {
 	var r sdk.RBAC
 	var rbacDB rbac
 	found, err := gorpmapping.Get(ctx, db, q, &rbacDB)
 	if err != nil {
-		return r, err
+		return nil, err
 	}
 	if !found {
-		return r, sdk.WithStack(sdk.ErrNotFound)
+		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 
 	isValid, err := gorpmapping.CheckSignature(rbacDB, rbacDB.Signature)
 	if err != nil {
-		return r, sdk.WrapError(err, "error when checking signature for rbac %s", rbacDB.ID)
+		return nil, sdk.WrapError(err, "error when checking signature for rbac %s", rbacDB.ID)
 	}
 	if !isValid {
 		log.Error(ctx, "rbac.get> rbac %s (%s) data corrupted", rbacDB.Name, rbacDB.ID)
-		return r, sdk.WithStack(sdk.ErrNotFound)
+		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 	for _, f := range opts {
 		if err := f(ctx, db, &rbacDB); err != nil {
-			return r, err
+			return nil, err
 		}
 	}
 	r = rbacDB.RBAC
-	return r, nil
+	return &r, nil
 }

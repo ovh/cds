@@ -107,7 +107,7 @@ globals:
 
 	require.NoError(t, rbac.Insert(context.Background(), db, &r))
 
-	rbacDB, err := rbac.LoadRbacByName(context.TODO(), db, r.Name, rbac.LoadOptions.Default)
+	rbacDB, err := rbac.LoadRBACByName(context.TODO(), db, r.Name, rbac.LoadOptions.Default)
 	require.NoError(t, err)
 
 	// Global part
@@ -174,7 +174,7 @@ projects:
 
 	require.NoError(t, rbac.Insert(context.Background(), db, &r))
 
-	rbacDB, err := rbac.LoadRbacByName(context.TODO(), db, r.Name, rbac.LoadOptions.Default)
+	rbacDB, err := rbac.LoadRBACByName(context.TODO(), db, r.Name, rbac.LoadOptions.Default)
 	require.NoError(t, err)
 
 	require.Equal(t, "read", rbacDB.Projects[0].Role)
@@ -195,7 +195,7 @@ projects:
 
 	require.NoError(t, rbac.Update(context.TODO(), db, &rUpdated))
 
-	rbacDBUpdate, err := rbac.LoadRbacByName(context.TODO(), db, r.Name, rbac.LoadOptions.Default)
+	rbacDBUpdate, err := rbac.LoadRBACByName(context.TODO(), db, r.Name, rbac.LoadOptions.Default)
 	require.NoError(t, err)
 	require.Equal(t, "manage", rbacDBUpdate.Projects[0].Role)
 
