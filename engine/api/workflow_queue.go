@@ -1162,6 +1162,9 @@ func (api *API) workflowRunResultPromoteHandler() service.Handler {
 			r := &runResults[i]
 			for _, id := range promotionRequest.IDs {
 				if id == r.ID {
+					if r.DataSync == nil {
+						r.DataSync = new(sdk.WorkflowRunResultSync)
+					}
 					log.Debug(ctx, "adding promotion data: %+v", promotionRequest)
 					r.DataSync.Promotions = append(r.DataSync.Promotions, promotionRequest.WorkflowRunResultPromotion)
 				}
@@ -1220,6 +1223,9 @@ func (api *API) workflowRunResultReleaseHandler() service.Handler {
 			r := &runResults[i]
 			for _, id := range releaseRequest.IDs {
 				if id == r.ID {
+					if r.DataSync == nil {
+						r.DataSync = new(sdk.WorkflowRunResultSync)
+					}
 					log.Debug(ctx, "adding release data: %+v", releaseRequest)
 					r.DataSync.Releases = append(r.DataSync.Releases, releaseRequest.WorkflowRunResultPromotion)
 				}

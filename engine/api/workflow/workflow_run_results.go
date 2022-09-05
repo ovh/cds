@@ -176,7 +176,7 @@ func AddResult(ctx context.Context, db *gorp.DbMap, store cache.Store, wr *sdk.W
 	return sdk.WithStack(store.Delete(cacheKey))
 }
 
-// Check validity of the request + complete runResuklt with md5,size,type
+// Check validity of the request + complete runResult with md5,size,type
 func verifyAddResultArtifactManager(ctx context.Context, db gorp.SqlExecutor, store cache.Store, wr *sdk.WorkflowRun, newRunResult *sdk.WorkflowRunResult) (string, error) {
 	artNewResult, err := newRunResult.GetArtifactManager()
 	if err != nil {
