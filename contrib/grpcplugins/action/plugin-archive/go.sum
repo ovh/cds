@@ -271,6 +271,8 @@ github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZN
 github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4/go.mod h1:xMI15A0UPsDsEKsMN9yxemIoYk6Tm2C1GtYGdfGttqA=
 github.com/rockbears/log v0.6.0 h1:Wzpu7nbrZFFJy14ku41jI2/UEh3d0CJwvIED9/FQZKQ=
 github.com/rockbears/log v0.6.0/go.mod h1:z46IOEOh914gJvg256Vm3F4s8K7D3ePaEAzuMYcfk98=
+github.com/rockbears/yaml v0.1.1-0.20220901090137-13dadb408625 h1:HQAWw/D9RItCYSoWFs8E7IrGKrX9ivqAlCq47DM3IVU=
+github.com/rockbears/yaml v0.1.1-0.20220901090137-13dadb408625/go.mod h1:8cDJx2PWQJMtfGgsRCvHVbIB61SV3dvy8o6EGv2cIpg=
 github.com/rogpeppe/fastuuid v1.2.0/go.mod h1:jVj6XXZzXRy/MSR5jhDC/2q6DgLz+nrA6LYCDYWNEvQ=
 github.com/rogpeppe/go-internal v1.3.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
 github.com/sergi/go-diff v1.1.0 h1:we8PVUC3FE2uYfodKH/nBHMSetSfHDR6scGdBi+erh0=

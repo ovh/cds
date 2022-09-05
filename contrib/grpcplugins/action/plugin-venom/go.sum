@@ -337,6 +337,8 @@ github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 h1:N/ElC8H3+5X
 github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
 github.com/rockbears/log v0.6.0 h1:Wzpu7nbrZFFJy14ku41jI2/UEh3d0CJwvIED9/FQZKQ=
 github.com/rockbears/log v0.6.0/go.mod h1:z46IOEOh914gJvg256Vm3F4s8K7D3ePaEAzuMYcfk98=
+github.com/rockbears/yaml v0.1.1-0.20220901090137-13dadb408625 h1:HQAWw/D9RItCYSoWFs8E7IrGKrX9ivqAlCq47DM3IVU=
+github.com/rockbears/yaml v0.1.1-0.20220901090137-13dadb408625/go.mod h1:8cDJx2PWQJMtfGgsRCvHVbIB61SV3dvy8o6EGv2cIpg=
 github.com/rogpeppe/fastuuid v1.2.0/go.mod h1:jVj6XXZzXRy/MSR5jhDC/2q6DgLz+nrA6LYCDYWNEvQ=
 github.com/rogpeppe/go-internal v1.3.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
 github.com/rubenv/sql-migrate v0.0.0-20160620083229-6f4757563362 h1:lmOdpLt3XS6QyVoY6xNfOOTNWE2xtUBees+OAO+HFOg=

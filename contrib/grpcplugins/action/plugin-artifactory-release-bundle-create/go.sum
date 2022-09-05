@@ -425,6 +425,8 @@ github.com/prometheus/procfs v0.0.0-20190507164030-5867b95ac084/go.mod h1:TjEm7z
 github.com/prometheus/tsdb v0.7.1/go.mod h1:qhTCs0VvXwvX/y3TZrWD7rabWM+ijKTux40TwIPHuXU=
 github.com/rockbears/log v0.6.0 h1:Wzpu7nbrZFFJy14ku41jI2/UEh3d0CJwvIED9/FQZKQ=
 github.com/rockbears/log v0.6.0/go.mod h1:z46IOEOh914gJvg256Vm3F4s8K7D3ePaEAzuMYcfk98=
+github.com/rockbears/yaml v0.1.1-0.20220901090137-13dadb408625 h1:HQAWw/D9RItCYSoWFs8E7IrGKrX9ivqAlCq47DM3IVU=
+github.com/rockbears/yaml v0.1.1-0.20220901090137-13dadb408625/go.mod h1:8cDJx2PWQJMtfGgsRCvHVbIB61SV3dvy8o6EGv2cIpg=
 github.com/rogpeppe/fastuuid v0.0.0-20150106093220-6724a57986af/go.mod h1:XWv6SoW27p1b0cqNHllgS5HIMJraePCO15w5zCzIWYg=
 github.com/rogpeppe/fastuuid v1.2.0/go.mod h1:jVj6XXZzXRy/MSR5jhDC/2q6DgLz+nrA6LYCDYWNEvQ=
 github.com/rogpeppe/go-internal v1.3.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
