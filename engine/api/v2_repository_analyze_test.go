@@ -65,7 +65,7 @@ func TestCleanAnalysis(t *testing.T) {
 	require.Len(t, analyses, 50)
 }
 
-func TestAnalyzeBitbucketServerWithoutHash(t *testing.T) {
+func TestAnalyzeGithubWithoutHash(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 	ctx := context.TODO()
 
@@ -136,7 +136,7 @@ func TestAnalyzeBitbucketServerWithoutHash(t *testing.T) {
 	require.Equal(t, sdk.RepositoryAnalysisStatusError, analysisUpdated.Status)
 }
 
-func TestAnalyzeBitbucketServerWrongSignature(t *testing.T) {
+func TestAnalyzeGithubWrongSignature(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 	ctx := context.TODO()
 
@@ -208,7 +208,7 @@ func TestAnalyzeBitbucketServerWrongSignature(t *testing.T) {
 	require.Contains(t, analysisUpdated.Data.Error, "unable to extract keyID from signature")
 }
 
-func TestAnalyzeBitbucketServerGPGKeyNotFound(t *testing.T) {
+func TestAnalyzeGithubGPGKeyNotFound(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 	ctx := context.TODO()
 
@@ -288,7 +288,7 @@ func TestAnalyzeBitbucketServerGPGKeyNotFound(t *testing.T) {
 	require.Equal(t, "gpgkey F344BDDCE15F17D7 not found", analysisUpdated.Data.Error)
 }
 
-func TestAnalyzeBitbucketServerUserNotEnoughPerm(t *testing.T) {
+func TestAnalyzeGithubUserNotEnoughPerm(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 	ctx := context.TODO()
 
@@ -426,7 +426,7 @@ GDFkaTe3nUJdYV4=
 	require.Contains(t, analysisUpdated.Data.Error, "doesn't have enough right on project")
 }
 
-func TestAnalyzeBitbucketServerCommitNotSigned(t *testing.T) {
+func TestAnalyzeGithubServerCommitNotSigned(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 	ctx := context.TODO()
 

@@ -43,9 +43,11 @@ testcases:
   steps:
     - script: echo {{.repositoryProject.repoID}}
     - script: rm -Rf /tmp/myrepo && git clone "http://{{.git.user}}:{{.git.password}}@localhost:3000/{{.git.user}}/myrepo.git" /tmp/myrepo
-    - script: mkdir -p /tmp/myrepo/.cds/models && echo 'new file' > /tmp/myrepo/.cds/models/my-worker-model.yml
+    - script: mkdir -p /tmp/myrepo/.cds/worker-model-templates && mkdir -p /tmp/myrepo/.cds/worker-models
+    - script: cat ./fixtures/worker-model-template/tmpl-docker.yml > /tmp/myrepo/.cds/worker-model-templates/tmpl-docker.yml
+    - script: cat ./fixtures/worker-model/docker-debian9.yml > /tmp/myrepo/.cds/worker-models/docker-debian9.yml
     - script: cd /tmp/myrepo && git config user.email "{{.git.user}}@gitea.eu" && git config user.name "{{.git.user}}"
-    - script: cd /tmp/myrepo && git add /tmp/myrepo/.cds/models/my-worker-model.yml && git commit .  --gpg-sign=2B74B3591CEFB2F534265465E027B500E97E52E7 -m "add file and sign" && git push
+    - script: cd /tmp/myrepo && git add /tmp/myrepo/.cds/worker-model-templates/tmpl-docker.yml && git commit .  --gpg-sign=2B74B3591CEFB2F534265465E027B500E97E52E7 -m "add file and sign" && git push
     - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental project repository hook-regen ITCLIPRJVCS my_vcs_server {{.git.user}}/myrepo --format json
       vars:
         hookSecret:
@@ -75,7 +77,14 @@ testcases:
         - result.code ShouldEqual 0
         - 'result.systemout ShouldContainSubstring "status: Success"'
         - 'result.systemout ShouldContainSubstring "key_sign_id: E027B500E97E52E7"'
-
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental worker-model template list ITCLIPRJVCS my_vcs_server {{.git.user}}/myrepo
+      assertions:
+        - result.code ShouldEqual 0
+        - result.systemoutjson.systemoutjson0.name ShouldEqual docker-unix
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental worker-model list ITCLIPRJVCS my_vcs_server {{.git.user}}/myrepo
+      assertions:
+        - result.code ShouldEqual 0
+        - result.systemoutjson.systemoutjson0.name ShouldEqual docker-debian
 - name: delete repository on project
   steps:
     - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental project repository delete ITCLIPRJVCS my_vcs_server {{.git.user}}/myrepo --force

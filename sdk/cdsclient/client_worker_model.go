@@ -132,3 +132,28 @@ func (c *client) WorkerModelSecretList(groupName, name string) (sdk.WorkerModelS
 	}
 	return secrets, nil
 }
+
+type WorkerModelV2Filter struct {
+	Branch string
+}
+
+func (c *client) WorkerModelv2List(ctx context.Context, projKey string, vcsIdentifier string, repoIdentifier string, filter *WorkerModelV2Filter) ([]sdk.V2WorkerModel, error) {
+	var mods []RequestModifier
+	if filter != nil {
+		mods = []RequestModifier{
+			func(req *http.Request) {
+				q := req.URL.Query()
+				if filter.Branch != "" {
+					q.Add("branch", url.QueryEscape(filter.Branch))
+				}
+				req.URL.RawQuery = q.Encode()
+			},
+		}
+	}
+	var models []sdk.V2WorkerModel
+	uri := fmt.Sprintf("/v2/project/%s/vcs/%s/repository/%s/workermodel", projKey, url.PathEscape(vcsIdentifier), url.PathEscape(repoIdentifier))
+	if _, err := c.GetJSON(ctx, uri, &models, mods...); err != nil {
+		return nil, err
+	}
+	return models, nil
+}

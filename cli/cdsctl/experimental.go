@@ -17,6 +17,7 @@ func experimentalCommands() []*cobra.Command {
 	return []*cobra.Command{
 		experimentalRbac(),
 		experimentalProject(),
+		experimentalWorkerModel(),
 	}
 }
 
