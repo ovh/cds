@@ -408,13 +408,13 @@ func (api *API) handleEntitiesFiles(_ context.Context, filesContent map[string][
 		dir, fileName := filepath.Split(filePath)
 		fileName = strings.TrimSuffix(fileName, ".yml")
 		switch {
-		case strings.HasPrefix(filePath, "worker-model-templates"):
+		case strings.HasPrefix(filePath, ".cds/worker-model-templates/"):
 			var tmpls []sdk.WorkerModelTemplate
 			entities, err = sdk.ReadEntityFile(dir, fileName, content, &tmpls, sdk.EntityTypeWorkerModelTemplate, analysis)
 			if err != nil {
 				return nil, err
 			}
-		case strings.HasPrefix(filePath, "worker-models"):
+		case strings.HasPrefix(filePath, ".cds/worker-models/"):
 			var wms []sdk.V2WorkerModel
 			entities, err = sdk.ReadEntityFile(dir, fileName, content, &wms, sdk.EntityTypeWorkerModel, analysis)
 			if err != nil {
@@ -423,6 +423,7 @@ func (api *API) handleEntitiesFiles(_ context.Context, filesContent map[string][
 		}
 	}
 	return entities, nil
+
 }
 
 // analyzeCommitSignatureThroughVcsAPI analyzes commit.

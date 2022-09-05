@@ -24,6 +24,7 @@ type Entity struct {
 
 type Lintable interface {
 	Lint() error
+	GetName() string
 }
 
 func ReadEntityFile[T Lintable](directory, fileName string, content []byte, out *[]T, t string, analysis ProjectRepositoryAnalysis) ([]Entity, error) {
@@ -37,7 +38,7 @@ func ReadEntityFile[T Lintable](directory, fileName string, content []byte, out 
 		}
 		entities = append(entities, Entity{
 			Data:                string(content),
-			Name:                fileName,
+			Name:                o.GetName(),
 			Branch:              analysis.Branch,
 			Commit:              analysis.Commit,
 			ProjectKey:          analysis.ProjectKey,
