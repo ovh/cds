@@ -122,7 +122,7 @@ func cachePushHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 			writeError(w, r, err)
 			return
 		}
-		duration, err := wk.client.CDNItemUpload(ctx, wk.cdnHttpAddr, sig, wk.BaseDir(), tarF.Name())
+		duration, err := wk.client.CDNItemUpload(ctx, wk.cfg.CDNEndpoint, sig, wk.BaseDir(), tarF.Name())
 		if err != nil {
 			log.Error(ctx, "%v", err)
 			writeError(w, r, err)
@@ -177,7 +177,7 @@ func cachePullHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 			writeError(w, req, err)
 			return
 		}
-		if err := wk.client.CDNItemDownload(ctx, wk.cdnHttpAddr, items.Items[0].APIRefHash, sdk.CDNTypeItemWorkerCache, items.Items[0].MD5, f); err != nil {
+		if err := wk.client.CDNItemDownload(ctx, wk.cfg.CDNEndpoint, items.Items[0].APIRefHash, sdk.CDNTypeItemWorkerCache, items.Items[0].MD5, f); err != nil {
 			_ = f.Close()
 			err = sdk.Error{
 				Message: "worker cache pull > Cannot pull cache: " + err.Error(),

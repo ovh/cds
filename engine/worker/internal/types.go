@@ -42,7 +42,6 @@ type CurrentWorker struct {
 	basedir     afero.Fs
 	manualExit  bool
 	gelfLogger  *logger
-	cdnHttpAddr string // FIXME get CDN information from worker config
 	stepLogLine int64
 	httpPort    int32
 	currentJob  struct {
@@ -194,7 +193,7 @@ func (wk *CurrentWorker) SendLog(ctx context.Context, level workerruntime.Level,
 }
 
 func (wk *CurrentWorker) CDNHttpURL() string {
-	return wk.cdnHttpAddr
+	return wk.cfg.CDNEndpoint
 }
 
 func (wk *CurrentWorker) prepareLog(ctx context.Context, level workerruntime.Level, s string) (cdslog.Message, string, error) {
