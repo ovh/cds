@@ -29,7 +29,7 @@ func (c *Client) GetFileInfo(repoName string, filePath string) (sdk.FileInfo, er
 	}
 
 	// To get FileInfo for a docker image, we have to check the manifest file
-	if repoDetails.PackageType == "docker" && strings.HasSuffix(filePath, "manifest.json") {
+	if repoDetails.PackageType == "docker" && !strings.HasSuffix(filePath, "manifest.json") {
 		filePath = path.Join(filePath, "manifest.json")
 	}
 
