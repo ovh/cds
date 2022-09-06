@@ -47,7 +47,6 @@
   "application_home_no_repo": "Link a repository",
   "application_home_integration": "Linked integrations",
   "application_home_no_integration": "Link an integration",
-  "application_home_no_graph": "No graph to display (vulnerabilities, unit tests)",
   "application_home_no_usage": "Application is not used",
   "application_integration_added": "Integration added",
   "application_integration_deleted": "Integration deleted",

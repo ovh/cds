@@ -66,6 +66,7 @@ func init() {
 		LatencyNum,
 		Method,
 		RbackCheckerName,
+		Repository,
 		Route,
 		RequestID,
 		RequestURI,

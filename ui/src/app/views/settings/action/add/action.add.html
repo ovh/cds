@@ -1,17 +1,15 @@
 <div class="wrapper">
     <app-breadcrumb [path]="path"></app-breadcrumb>
     <app-scrollview class="scrollview">
-        <div class="ui grid">
-            <div class="thirteen wide column">
-                <div *ngIf="job" class="ui blue message">
-                    {{'action_help_add_from' | translate: {projectKey: projectKey, pipelineName: pipeline.name, jobName: job.action.name} }}
-                </div>
+        <nz-row>
+            <nz-col [nzSpan]="19">
+                <nz-alert *ngIf="job" nzType="info" nzMessage="{{'action_help_add_from' | translate: {projectKey: projectKey, pipelineName: pipeline.name, jobName: job.action.name} }}"></nz-alert>
                 <app-action-form [groups]="groups" [action]="action" (save)="actionSave($event)" [loading]="loading">
                 </app-action-form>
-            </div>
-            <div class="three wide column">
+            </nz-col>
+            <nz-col [nzSpan]="5">
                 <app-action-help></app-action-help>
-            </div>
-        </div>
+            </nz-col>
+        </nz-row>
     </app-scrollview>
 </div>
