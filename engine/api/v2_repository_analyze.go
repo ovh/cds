@@ -403,24 +403,23 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 
 func (api *API) handleEntitiesFiles(_ context.Context, filesContent map[string][]byte, analysis sdk.ProjectRepositoryAnalysis) ([]sdk.Entity, error) {
 	entities := make([]sdk.Entity, 0)
-	var err error
 	for filePath, content := range filesContent {
 		dir, fileName := filepath.Split(filePath)
 		fileName = strings.TrimSuffix(fileName, ".yml")
+		var es []sdk.Entity
+		var err error
 		switch {
 		case strings.HasPrefix(filePath, ".cds/worker-model-templates/"):
 			var tmpls []sdk.WorkerModelTemplate
-			entities, err = sdk.ReadEntityFile(dir, fileName, content, &tmpls, sdk.EntityTypeWorkerModelTemplate, analysis)
-			if err != nil {
-				return nil, err
-			}
+			es, err = sdk.ReadEntityFile(dir, fileName, content, &tmpls, sdk.EntityTypeWorkerModelTemplate, analysis)
 		case strings.HasPrefix(filePath, ".cds/worker-models/"):
 			var wms []sdk.V2WorkerModel
-			entities, err = sdk.ReadEntityFile(dir, fileName, content, &wms, sdk.EntityTypeWorkerModel, analysis)
-			if err != nil {
-				return nil, err
-			}
+			es, err = sdk.ReadEntityFile(dir, fileName, content, &wms, sdk.EntityTypeWorkerModel, analysis)
 		}
+		if err != nil {
+			return nil, err
+		}
+		entities = append(entities, es...)
 	}
 	return entities, nil
 

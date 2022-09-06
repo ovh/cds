@@ -629,6 +629,13 @@ docker:
 `
 	encodedModel := base64.StdEncoding.EncodeToString([]byte(model))
 
+	modelTemplate := `name: openstack-debian
+openstack:
+    pre_cmd: apt-get install docker-ce
+    cmd: ./worker
+    post_cmd: sudo shutdown -h now`
+	encodedTemplate := base64.StdEncoding.EncodeToString([]byte(modelTemplate))
+
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/commits/abcdef", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(
@@ -650,6 +657,10 @@ docker:
 					{
 						IsDirectory: true,
 						Name:        "worker-models",
+					},
+					{
+						IsDirectory: true,
+						Name:        "worker-model-templates",
 					},
 				}
 				*(out.(*[]sdk.VCSContent)) = contents
@@ -687,6 +698,37 @@ docker:
 			},
 		).MaxTimes(1)
 
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/contents/.cds%2Fworker-model-templates?commit=abcdef", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+				contents := []sdk.VCSContent{
+					{
+						IsDirectory: false,
+						IsFile:      true,
+						Name:        "mytemplate.yml",
+					},
+				}
+				*(out.(*[]sdk.VCSContent)) = contents
+				return nil, 200, nil
+			},
+		).MaxTimes(1)
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/content/.cds%2Fworker-model-templates%2Fmytemplate.yml?commit=abcdef", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+
+				content := sdk.VCSContent{
+					IsDirectory: false,
+					IsFile:      true,
+					Name:        "mytemplate.yml",
+					Content:     encodedTemplate,
+				}
+				*(out.(*sdk.VCSContent)) = content
+				return nil, 200, nil
+			},
+		).MaxTimes(1)
+
 	require.NoError(t, api.analyzeRepository(ctx, repo.ID, analysis.ID))
 
 	analysisUpdated, err := repository.LoadRepositoryAnalysisById(ctx, db, repo.ID, analysis.ID)
@@ -704,4 +746,8 @@ docker:
 	require.NoError(t, err)
 	require.Equal(t, model, e.Data)
 
+	esTempalte, err := entity.LoadByType(context.TODO(), db, repo.ID, sdk.EntityTypeWorkerModelTemplate)
+	require.NoError(t, err)
+	t.Logf("%+v", es[0])
+	require.Equal(t, 1, len(esTempalte))
 }
