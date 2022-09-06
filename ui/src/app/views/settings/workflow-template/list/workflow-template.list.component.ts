@@ -8,6 +8,7 @@ import { finalize } from 'rxjs/operators';
 @Component({
     selector: 'app-workflow-template-list',
     templateUrl: './workflow-template.list.html',
+    styleUrls: ['./workflow-template.list.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WorkflowTemplateListComponent {

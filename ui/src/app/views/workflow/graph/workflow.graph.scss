@@ -23,8 +23,12 @@
   cursor: all-scroll;
 }
 
-.button {
+.origin {
   position: fixed;
   bottom: 20px;
   right: 20px;
+
+  i {
+    margin: 0;
+  }
 }

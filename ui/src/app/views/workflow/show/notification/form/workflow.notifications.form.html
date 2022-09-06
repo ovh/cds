@@ -22,7 +22,7 @@
                     <nz-select nzShowSearch *ngIf="!readOnly" name="nodes" nzMode="multiple" [(ngModel)]="notification.source_node_ref">
                         <nz-option *ngFor="let n of nodes" [nzLabel]="n.name" [nzValue]="n.name"></nz-option>
                     </nz-select>
-                    <input *ngIf="readOnly" class="ui input" type="text" name="nodes"
+                    <input nz-input *ngIf="readOnly" type="text" name="nodes"
                            [ngModel]="notification.source_node_ref ? notification.source_node_ref.join(',') : ''"
                            [readonly]="true">
                 </nz-form-control>
