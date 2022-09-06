@@ -77,11 +77,11 @@ testcases:
         - result.code ShouldEqual 0
         - 'result.systemout ShouldContainSubstring "status: Success"'
         - 'result.systemout ShouldContainSubstring "key_sign_id: E027B500E97E52E7"'
-    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental worker-model template list ITCLIPRJVCS my_vcs_server {{.git.user}}/myrepo
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental worker-model template list ITCLIPRJVCS my_vcs_server {{.git.user}}/myrepo --format json
       assertions:
         - result.code ShouldEqual 0
         - result.systemoutjson.systemoutjson0.name ShouldEqual docker-unix
-    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental worker-model list ITCLIPRJVCS my_vcs_server {{.git.user}}/myrepo
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental worker-model list ITCLIPRJVCS my_vcs_server {{.git.user}}/myrepo --format json
       assertions:
         - result.code ShouldEqual 0
         - result.systemoutjson.systemoutjson0.name ShouldEqual docker-debian
