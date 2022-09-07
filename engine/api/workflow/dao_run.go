@@ -353,27 +353,27 @@ func LoadRunsSummaries(ctx context.Context, db gorp.SqlExecutor, projectkey, wor
 				SELECT workflow.id FROM workflow
 				JOIN project ON project.id = workflow.project_id
 				WHERE workflow.name = $2 AND project.projectkey = $1
-			), 
+			),
 			runs as (
-				SELECT %s 
+				SELECT %s
 				FROM workflow_run wr
 				JOIN workflowID ON workflowID.id = wr.workflow_id
 				WHERE wr.to_delete = false
 			),
 			tags as (
-				SELECT workflow_run_id, tag || '=' || value "all_tags" 
+				SELECT workflow_run_id, tag || '=' || value "all_tags"
 				FROM workflow_run_tag
 				JOIN runs ON runs.id = workflow_run_id
 			),
 			aggTags as (
-				SELECT workflow_run_id, string_agg(all_tags, ',') as tags 
+				SELECT workflow_run_id, string_agg(all_tags, ',') as tags
 				FROM tags
 				GROUP BY workflow_run_id
 			)
 			SELECT runs.*
 			FROM runs
 			JOIN aggTags ON aggTags.workflow_run_id = runs.id
-			WHERE string_to_array($5, ',') <@ string_to_array(aggTags.tags, ',') 
+			WHERE string_to_array($5, ',') <@ string_to_array(aggTags.tags, ',')
 			ORDER BY runs.start DESC OFFSET $4 LIMIT $3`, selectedColumn)
 		var tags []string
 		for k, v := range tagFilter {
@@ -1092,6 +1092,31 @@ func stopRunsBlocked(ctx context.Context, db *gorp.DbMap) error {
 
 	if err := tx.Commit(); err != nil {
 		return sdk.WrapError(err, "Unable to commit transaction")
+	}
+	return nil
+}
+
+// LoadRunsIDsCreatedBefore returns the first workflow runs created before given date.
+func LoadRunsIDsCreatedBefore(ctx context.Context, db gorp.SqlExecutor, date time.Time, limit int64) ([]int64, error) {
+	var ids []int64
+	query := `
+    SELECT id
+    FROM workflow_run
+		WHERE read_only = false AND start < $1
+		ORDER BY start ASC
+    LIMIT $2
+  `
+	if _, err := db.Select(&ids, query, date, limit); err != nil {
+		return nil, sdk.WithStack(err)
+	}
+	return ids, nil
+}
+
+// SetRunReadOnly set read only flag of a workflow run, this run cannot be restarted anymore.
+func SetRunReadOnlyByID(ctx context.Context, db gorpmapper.SqlExecutorWithTx, workflowRunID int64) error {
+	query := `UPDATE workflow_run SET read_only = true WHERE id = $1`
+	if _, err := db.Exec(query, workflowRunID); err != nil {
+		return sdk.WrapError(err, "unable to set read only for workflow run with id %d", workflowRunID)
 	}
 	return nil
 }
