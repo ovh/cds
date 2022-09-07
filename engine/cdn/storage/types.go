@@ -222,6 +222,7 @@ type WebdavStorageConfiguration struct {
 type RedisBufferConfiguration struct {
 	Host     string `toml:"host" comment:"If your want to use a redis-sentinel based cluster, follow this syntax ! <clustername>@sentinel1:26379,sentinel2:26379sentinel3:26379" json:"host"`
 	Password string `toml:"password" json:"-"`
+	DbIndex  int    `toml:"dbindex" default:"0" json:"dbindex"`
 }
 
 type LocalBufferConfiguration struct {

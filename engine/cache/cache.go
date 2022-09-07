@@ -96,8 +96,8 @@ type SetValueWithScore struct {
 }
 
 //New init a cache
-func New(redisHost, redisPassword string, TTL int) (Store, error) {
-	return NewRedisStore(redisHost, redisPassword, TTL)
+func New(redisHost, redisPassword string, dbindex, TTL int) (Store, error) {
+	return NewRedisStore(redisHost, redisPassword, dbindex, TTL)
 }
 
 //NewWriteCloser returns a write closer

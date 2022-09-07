@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"crypto/rsa"
+
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/service"
@@ -42,6 +43,7 @@ type Configuration struct {
 		Redis struct {
 			Host     string `toml:"host" default:"localhost:6379" comment:"If your want to use a redis-sentinel based cluster, follow this syntax! <clustername>@sentinel1:26379,sentinel2:26379,sentinel3:26379" json:"host"`
 			Password string `toml:"password" json:"-"`
+			DbIndex  int    `toml:"dbindex" default:"0" json:"dbindex"`
 		} `toml:"redis" comment:"Connect CDS to a redis cache If you more than one CDS instance and to avoid losing data at startup" json:"redis"`
 	} `toml:"cache" comment:"######################\n CDS Hooks Cache Settings \n######################" json:"cache"`
 	WebhooksPublicKeySign string `toml:"webhooksPublicKeySign" comment:"Public key to check call signature on handler /v2/webhook/repository"`

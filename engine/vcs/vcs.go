@@ -226,7 +226,7 @@ func (s *Service) Serve(c context.Context) error {
 
 	//Init the cache
 	var errCache error
-	s.Cache, errCache = cache.New(s.Cfg.Cache.Redis.Host, s.Cfg.Cache.Redis.Password, s.Cfg.Cache.TTL)
+	s.Cache, errCache = cache.New(s.Cfg.Cache.Redis.Host, s.Cfg.Cache.Redis.Password, s.Cfg.Cache.Redis.DbIndex, s.Cfg.Cache.TTL)
 	if errCache != nil {
 		return fmt.Errorf("Cannot connect to redis instance : %v", errCache)
 	}

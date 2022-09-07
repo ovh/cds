@@ -55,6 +55,7 @@ func TestLoadAllItemIDUnknownByUnit(t *testing.T) {
 				Redis: &storage.RedisBufferConfiguration{
 					Host:     cfg["redisHost"],
 					Password: cfg["redisPassword"],
+					DbIndex:  0,
 				},
 				BufferType: storage.CDNBufferTypeLog,
 			},

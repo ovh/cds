@@ -90,6 +90,8 @@ func SetupPGToCancel(t require.TestingT, m *gorpmapper.Mapper, serviceType strin
 	dbSSLMode := cfg["sslMode"]
 	redisHost := cfg["redisHost"]
 	redisPassword := cfg["redisPassword"]
+	redisDbIndex, err := strconv.ParseInt(cfg["redisDbIndex"], 10, 64)
+	require.NoError(t, err, "error when unmarshal config")
 
 	sigKeys := database.RollingKeyConfig{
 		Cipher: "hmac",
@@ -145,7 +147,7 @@ func SetupPGToCancel(t require.TestingT, m *gorpmapper.Mapper, serviceType strin
 		require.NoError(t, f(context.TODO(), sdk.DefaultValues{}, factory.GetDBMap(m)))
 	}
 
-	store, err := cache.NewRedisStore(redisHost, redisPassword, 60)
+	store, err := cache.NewRedisStore(redisHost, redisPassword, int(redisDbIndex), 60)
 	require.NoError(t, err, "unable to connect to redis")
 
 	cancel := func() {

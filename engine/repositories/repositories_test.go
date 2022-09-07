@@ -44,6 +44,7 @@ func newTestService(t *testing.T) (*Service, error) {
 	cfg.Cache.TTL = 30
 	cfg.Cache.Redis.Host = RedisHost
 	cfg.Cache.Redis.Password = RedisPassword
+	cfg.Cache.Redis.DbIndex = 0
 
 	ctx := context.Background()
 	r := &api.Router{
@@ -64,7 +65,7 @@ func newTestService(t *testing.T) (*Service, error) {
 
 	//Init the cache
 	var errCache error
-	service.Cache, errCache = cache.New(service.Cfg.Cache.Redis.Host, service.Cfg.Cache.Redis.Password, service.Cfg.Cache.TTL)
+	service.Cache, errCache = cache.New(service.Cfg.Cache.Redis.Host, service.Cfg.Cache.Redis.Password, service.Cfg.Cache.Redis.DbIndex, service.Cfg.Cache.TTL)
 	if errCache != nil {
 		log.Error(ctx, "Unable to init cache (%s): %v", service.Cfg.Cache.Redis.Host, errCache)
 		return nil, errCache

@@ -15,7 +15,7 @@ import (
 func TestReader_EOF(t *testing.T) {
 	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
 
-	c, err := cache.New(cfg["redisHost"], cfg["redisPassword"], -1)
+	c, err := cache.New(cfg["redisHost"], cfg["redisPassword"], 0, -1)
 	require.NoError(t, err)
 
 	cacheKey := cache.Key("test:cdn:item")
