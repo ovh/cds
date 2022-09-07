@@ -46,7 +46,7 @@ func loadRBACProjectKeys(ctx context.Context, db gorp.SqlExecutor, rbacProject *
 	return nil
 }
 
-func loadRRBACProjectKeys(ctx context.Context, db gorp.SqlExecutor, rbacProjectIDs []int64) ([]rbacProjectKey, error) {
+func loadAllRBACProjectKeys(ctx context.Context, db gorp.SqlExecutor, rbacProjectIDs []int64) ([]rbacProjectKey, error) {
 	query := gorpmapping.NewQuery(`SELECT * FROM rbac_project_keys WHERE rbac_project_id = ANY($1)`).Args(pq.Int64Array(rbacProjectIDs))
 	return getAllRBACProjectKeys(ctx, db, query)
 }
@@ -63,32 +63,28 @@ func HasRoleOnProjectAndUserID(ctx context.Context, db gorp.SqlExecutor, role st
 
 func LoadProjectKeysByRoleAndUserID(ctx context.Context, db gorp.SqlExecutor, role string, userID string) ([]string, error) {
 	// Get rbac_project_groups
-	rbacProjectGroups, err := loadRbacProjectGroupsByUserID(ctx, db, userID)
+	rbacProjectGroups, err := loadRBACProjectGroupsByUserID(ctx, db, userID)
 	if err != nil {
 		return nil, err
 	}
 	// Get rbac_project_users
-	rbacProjectUsers, err := loadRbacProjectUsersByUserID(ctx, db, userID)
+	rbacProjectUsers, err := loadRBACProjectUsersByUserID(ctx, db, userID)
 	if err != nil {
 		return nil, err
 	}
 
 	// Deduplicate rbac_project.id
-	mapRbacProjectID := make(map[int64]struct{})
-	rbacProjectIDs := make([]int64, 0)
+	rbacProjectIDs := make(sdk.Int64Slice, 0)
 	for _, rpg := range rbacProjectGroups {
-		mapRbacProjectID[rpg.RbacProjectID] = struct{}{}
 		rbacProjectIDs = append(rbacProjectIDs, rpg.RbacProjectID)
 	}
 	for _, rpu := range rbacProjectUsers {
-		if _, has := mapRbacProjectID[rpu.RbacProjectID]; !has {
-			mapRbacProjectID[rpu.RbacProjectID] = struct{}{}
-			rbacProjectIDs = append(rbacProjectIDs, rpu.RbacProjectID)
-		}
+		rbacProjectIDs = append(rbacProjectIDs, rpu.RbacProjectID)
 	}
+	rbacProjectIDs.Unique()
 
 	// Get rbac_project
-	rbacProjects, err := loadRbacProjectsByRoleAndIDs(ctx, db, role, rbacProjectIDs)
+	rbacProjects, err := loadRBACProjectsByRoleAndIDs(ctx, db, role, rbacProjectIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +94,7 @@ func LoadProjectKeysByRoleAndUserID(ctx context.Context, db gorp.SqlExecutor, ro
 	for _, rp := range rbacProjects {
 		rbacProjectIDs = append(rbacProjectIDs, rp.ID)
 	}
-	rbacProjectKeys, err := loadRRBACProjectKeys(ctx, db, rbacProjectIDs)
+	rbacProjectKeys, err := loadAllRBACProjectKeys(ctx, db, rbacProjectIDs)
 	if err != nil {
 		return nil, err
 	}

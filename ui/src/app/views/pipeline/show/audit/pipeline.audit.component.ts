@@ -80,9 +80,12 @@ export class PipelineAuditComponent implements OnInit {
                 name: '',
                 disabled: !this.project.permissions.writable,
                 selector: (audit: PipelineAudit) => ({
-                        title: 'common_rollback',
-                        click: () => this.rollback(audit.id)
-                    }),
+                    buttonType: 'primary',
+                    buttonDanger: false,
+                    buttonConfirmationMessage: 'Are you sure you want to rollback this pipeline ?',
+                    title: 'Rollback',
+                    click: () => this.rollback(audit.id)
+                }),
             },
         ];
     }

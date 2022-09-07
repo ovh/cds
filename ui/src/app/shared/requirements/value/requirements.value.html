@@ -35,7 +35,7 @@
     </ng-container>
     <ng-container *ngIf="requirement.type === 'model' || requirement.type === 'service'">
         {{ 'requirement_options' | translate }}
-        <textarea nz-input [ngModel]="requirement.opts" (ngModelChange)="change(requirement)" rows="3" placeholder="{{'requirement_placeholder_opts_' + requirement.type | translate}}"></textarea>
+        <textarea nz-input [(ngModel)]="requirement.opts" (ngModelChange)="change(requirement)" rows="3" placeholder="{{'requirement_placeholder_opts_' + requirement.type | translate}}"></textarea>
     </ng-container>
 </ng-container>
 <ng-template #rValue>

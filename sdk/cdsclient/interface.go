@@ -231,6 +231,10 @@ type ProjectClient interface {
 	ProjectRepositoryAnalysisGet(ctx context.Context, projectKey string, vcsIdentifier string, repositoryIdentifier string, analysisID string) (sdk.ProjectRepositoryAnalysis, error)
 }
 
+type RBACClient interface {
+	RBACImport(ctx context.Context, content io.Reader, mods ...RequestModifier) (sdk.RBAC, error)
+}
+
 // ProjectKeysClient exposes project keys related functions
 type ProjectKeysClient interface {
 	ProjectKeysList(projectKey string) ([]sdk.ProjectKey, error)
@@ -270,7 +274,8 @@ type QueueClient interface {
 	QueueWorkerCacheLink(ctx context.Context, jobID int64, tag string) (sdk.CDNItemLinks, error)
 	QueueWorkflowRunResultsAdd(ctx context.Context, jobID int64, addRequest sdk.WorkflowRunResult) error
 	QueueWorkflowRunResultCheck(ctx context.Context, jobID int64, runResultCheck sdk.WorkflowRunResultCheck) (int, error)
-	QueueWorkflowRunResultsRelease(ctx context.Context, permJobID int64) error
+	QueueWorkflowRunResultsRelease(ctx context.Context, permJobID int64, runResultIDs []string, from, to string) error
+	QueueWorkflowRunResultsPromote(ctx context.Context, permJobID int64, runResultIDs []string, from, to string) error
 }
 
 // UserClient exposes users functions
@@ -405,6 +410,7 @@ type Interface interface {
 	PipelineClient
 	IntegrationClient
 	ProjectClient
+	RBACClient
 	QueueClient
 	Navbar() ([]sdk.NavbarProjectData, error)
 	Requirements() ([]sdk.Requirement, error)

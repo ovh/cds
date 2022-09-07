@@ -1,143 +1,107 @@
-<div *ngIf="filterFunc && allData && allData.length > 1" class="ui grid">
-    <div class="ui row">
-        <div class="ui wide column">
-            <div class="ui fluid input">
-                <input type="text" placeholder="{{ 'filter' | translate }}" [(ngModel)]="filter"
-                    (keyup)="filterKeyUp()">
-            </div>
-        </div>
-    </div>
-</div>
-<table class="ui striped fixed table" [class.selectable]="withLineClick">
+<nz-row *ngIf="filterFunc && allData && allData.length > 1">
+        <nz-col [nzSpan]="24">
+            <input nz-input type="text" placeholder="Filter" [(ngModel)]="filter"
+                   (keyup)="filterKeyUp()">
+        </nz-col>
+</nz-row>
+<nz-table [nzLoading]="loading" [nzData]="filteredData" #table>
     <thead>
-        <tr>
-            <th *ngIf="withSelect" class="wide">
-                <div class="ui checked checkbox">
-                    <input type="checkbox" [ngModel]="selectedAll" (ngModelChange)="onSelectAllChange($event)">
-                    <label></label>
-                </div>
+    <tr>
+        <th *ngIf="withSelect" class="wide">
+            <label nz-checkbox [ngModel]="selectedAll" (ngModelChange)="onSelectAllChange($event)"></label>
+        </th>
+        <ng-container *ngFor="let c of columns">
+            <th *ngIf="!c.disabled" class="wide {{c.class}}" [class.sortable]="c.sortable && c !== sortedColumn"
+                [class.ascending]="c === sortedColumn && sortedColumnDirection === 'asc'"
+                [class.descending]="c === sortedColumn && sortedColumnDirection === 'desc'"
+                (click)="columnClick($event, c)">
+                {{ c.name | translate }}
             </th>
-            <ng-container *ngFor="let c of columns">
-                <th *ngIf="!c.disabled" class="wide {{c.class}}" [class.sortable]="c.sortable && c !== sortedColumn"
-                    [class.ascending]="c === sortedColumn && sortedColumnDirection === 'asc'"
-                    [class.descending]="c === sortedColumn && sortedColumnDirection === 'desc'"
-                    (click)="columnClick($event, c)">
-                    {{ c.name | translate }}
-                </th>
-            </ng-container>
-        </tr>
+        </ng-container>
+    </tr>
     </thead>
-    <tbody *ngIf="loading">
-        <tr>
-            <td class="center aligned" [colSpan]="columnsCount">
-                <div class="ui active small inline loader"></div>
-                <div>{{ 'common_loading' | translate }}</div>
-            </td>
-        </tr>
-    </tbody>
-    <tbody *ngIf="!loading && dataForCurrentPage.length === 0">
-        <tr>
-            <td class="center" [colSpan]="columnsCount">
-                <div>{{ 'common_no_data' | translate }}</div>
-            </td>
-        </tr>
-    </tbody>
     <tbody *ngIf="!loading && dataForCurrentPage.length > 0">
-        <tr *ngFor="let d of dataForCurrentPage; let i = index" (click)="lineClick(i, d)"
-            [class.pointing]="withLineClick" [class.active]="withLineClick && indexSelected === i">
-            <td *ngIf="withSelect" class="wide">
-                <div class="ui checked checkbox">
-                    <input type="checkbox" [ngModel]="selected[d.key()]"
-                        (ngModelChange)="onSelectChange($event, d.key())">
-                    <label></label>
+    <tr *ngFor="let d of table.data; let i = index" (click)="lineClick(i, d)"
+        [class.pointing]="withLineClick" [class.active]="withLineClick && indexSelected === i">
+        <td *ngIf="withSelect" class="wide">
+            <label nz-checkbox [ngModel]="selected[d.key()]" (ngModelChange)="onSelectChange($event, d.key())"></label>
+        </td>
+        <ng-container *ngFor="let c of (columns | selector:d:i)">
+            <td *ngIf="!c.disabled && c.hidden"></td>
+            <td *ngIf="!c.disabled && !c.hidden" [ngSwitch]="c.type" class="wide" [ngClass]="c.class">
+                <ng-container *ngSwitchCase="'text-html'">
+                    <pre [innerHTML]="c.selector"></pre>
+                </ng-container>
+                <i *ngSwitchCase="'icon'" nz-icon nzType="{{c.selector.iconType}}" nzTheme="{{c.selector.iconTheme}}" class="{{c.selector.iconColor}}"></i>
+                <div *ngSwitchCase="'img-text'" class="vcenter">
+                    <img *ngIf="c.selector.img" [src]="c.selector.img">
+                    <div class="{{c.selector.valueclass}}">
+                        {{ c.selector.value }}
+                    </div>
                 </div>
-            </td>
-            <ng-container *ngFor="let c of (columns | selector:d:i)">
-                <td *ngIf="!c.disabled && c.hidden"></td>
-                <td *ngIf="!c.disabled && !c.hidden" [ngSwitch]="c.type" class="wide" [ngClass]="c.class">
-                    <i *ngSwitchCase="'icon'" [ngClass]="c.selector.icon" [title]="c.selector.title"></i>
-                    <a *ngSwitchCase="'router-link'" class="ui" [routerLink]="c.selector.link">
-                        {{c.selector.value}}
-                    </a>
-                    <a *ngSwitchCase="'link-click'" class="ui pointing" (click)="c.selector.callback()">
-                        {{c.selector.value}}
-                    </a>
-                    <a *ngSwitchCase="'link'" class="ui pointing" [href]="c.selector.link" target="_blank">
-                        {{c.selector.value}}
-                    </a>
-                    <markdown *ngSwitchCase="'markdown'" [data]="c.selector"></markdown>
-                    <div *ngSwitchCase="'img-text'" class="vcenter">
-                        <img *ngIf="c.selector.img" [src]="c.selector.img">
-                        <div class="{{c.selector.valueclass}}">
-                            {{ c.selector.value }}
-                        </div>
-                    </div>
-                    <ng-container *ngSwitchCase="'text-html'">
-                        <pre [innerHTML]="c.selector"></pre>
-                    </ng-container>
-                    <ng-container *ngSwitchCase="'time-ago'"> {{c.selector | amTimeAgo}} </ng-container>
-                    <ng-container *ngSwitchCase="'date'"> {{c.selector | amCalendar}} </ng-container>
-                    <button class="ui button" [ngClass]="c.selector.class" *ngSwitchCase="'button'"
+                <a *ngSwitchCase="'link-click'" (click)="c.selector.callback()">
+                    {{c.selector.value}}
+                </a>
+                <a *ngSwitchCase="'link'" [href]="c.selector.link" target="_blank">
+                    {{c.selector.value}}
+                </a>
+                <a *ngSwitchCase="'router-link'" [routerLink]="c.selector.link">
+                    {{c.selector.value}}
+                </a>
+                <ng-container *ngSwitchCase="'router-link-with-icons'">
+                    <a [routerLink]="c.selector.link">{{c.selector.value}}</a>
+                    <span *ngFor="let i of c.selector.icons" nz-tooltip [nzTooltipTitle]="i.label | translate">
+                            {{' '}}<i nz-icon nzType="{{i.iconType}}" nzTheme="{{i.iconTheme}}" class="{{i.iconColor}}"></i>
+                        </span>
+                </ng-container>
+                <ng-container *ngSwitchCase="'router-link-with-labels'">
+                    <a [routerLink]="c.selector.link">{{c.selector.value}}</a>
+                    {{' '}}<nz-tag *ngFor="let l of c.selector.labels" nzColor="{{l.color}}">{{l.title | translate}}</nz-tag>
+                </ng-container>
+                <markdown *ngSwitchCase="'markdown'" [data]="c.selector"></markdown>
+                <ng-container *ngSwitchCase="'date'"> {{c.selector | amCalendar}} </ng-container>
+                <button *ngSwitchCase="'button'" nz-button nzType="{{c.selector.buttonType}}" [nzDanger]="c.selector.buttonDanger" class="{{c.class}}"
                         (click)="c.selector.click()">
-                        {{c.selector.title | translate}}
-                        <i class="icon" [ngClass]="c.selector.icon" *ngIf="c.selector.icon"></i>
-                    </button>
-                    <app-confirm-button *ngSwitchCase="'confirm-button'" [class]="'small'"
-                        [color]="c.selector.color ? c.selector.color : 'primary'" (event)="c.selector.click()"
-                        [title]="c.selector.title">
-                    </app-confirm-button>
-                    <span class="ui label" [ngClass]="c.selector.class"
-                        *ngSwitchCase="'label'">{{c.selector.value | translate}}</span>
-                    <ng-container *ngSwitchCase="'router-link-with-icons'">
-                        <a class="ui" [routerLink]="c.selector.link">{{c.selector.value}}</a>
-                        <span *ngFor="let i of c.selector.icons" nz-tooltip [nzTooltipTitle]="i.label | translate">
-                            {{' '}}<i [ngClass]="i.class" title="{{i.title | translate }}"></i>
-                        </span>
+                    <i nz-icon nzType="{{c.selector.iconType}}" nzTheme="{{c.selector.iconTheme}}" class="{{c.selector.iconColor}}"></i>
+                    {{c.selector.title | translate}}
+
+                </button>
+                <button *ngSwitchCase="'confirm-button'" class="{{c.class}}"
+                        nz-button nzType="{{c.selector.buttonType}}" [nzDanger]="c.selector.buttonDanger"
+                        nz-popconfirm nzPopconfirmTitle="{{c.selector.buttonConfirmationMessage}}" (nzOnConfirm)="c.selector.click()">{{c.selector.title}}</button>
+                <nz-tag nzColor="{{c.selector.class}}" *ngSwitchCase="'label'" class="{{c.class}}" >{{c.selector.value | translate}}</nz-tag>
+                <div *ngSwitchCase="'text-copy'">
+                    <ng-container *ngIf="c.selector">
+                        <nz-input-group nzSearch [nzAddOnAfter]="suffixIconButton">
+                            <input nz-input type="text" value="{{c.selector}}"  />
+                        </nz-input-group>
+                        <ng-template #suffixIconButton>
+                            <button nzSearch nz-button nzType="primary" ngxClipboard [cbContent]="c.selector"><i nz-icon nzType="copy"></i></button>
+                        </ng-template>
                     </ng-container>
-                    <ng-container *ngSwitchCase="'router-link-with-labels'">
-                        <a class="ui" [routerLink]="c.selector.link">{{c.selector.value}}</a>
-                        {{' '}}<span *ngFor="let l of c.selector.labels" class="ui label {{l.color}}">{{l.title | translate}}</span>
-                    </ng-container>
-                    <div *ngSwitchCase="'text-copy'" class="ui fluid action input">
-                        <ng-container *ngIf="c.selector">
-                            <input type="text" value="{{c.selector}}">
-                            <button class="ui icon button copyButton" [title]="'common_copy_clipboard' | translate"
-                                    ngxClipboard [cbContent]="c.selector">
-                                <i class="copy icon"></i>
-                            </button>
-                        </ng-container>
-                    </div>
-                    <span *ngSwitchCase="'text-labels'" class="text-labels">
+                </div>
+                <span *ngSwitchCase="'text-labels'" class="text-labels">
                         {{c.selector.value |
-                                translate}}
-                        <span *ngFor="let l of c.selector.labels"
-                            class="ui label {{l.color}}">{{l.title | translate}}</span>
-                    </span>
-                    <span *ngSwitchCase="'text-icons'">
+                    translate}}
+                    <nz-tag *ngFor="let l of c.selector.labels" nzColor="{{l.color}}">{{l.title | translate}}</nz-tag>
+                </span>
+                <span *ngSwitchCase="'text-icons'">
                         {{c.selector.value | translate}}
-                        <span *ngFor="let i of c.selector.icons" nz-tooltip [nzTooltipTitle]="i.label | translate" nzTooltipTrigger="{{i.trigger ? i.trigger : 'hover'}}">
-                            {{' '}}<i [ngClass]="i.class" title="{{i.title | translate }}"></i>
+                    <span *ngFor="let i of c.selector.icons" nz-tooltip [nzTooltipTitle]="i.label | translate" nzTooltipTrigger="{{i.trigger ? i.trigger : 'hover'}}">
+                            {{' '}}<i *ngIf="i.type" nz-icon nzType="{{i.type}}" nzTheme="{{i.theme}}" class="{{i.class}}"></i>
                         </span>
-                    </span>
-                    <ng-container *ngSwitchDefault>
-                        <ng-container *ngIf="c.selector && c.translate">
-                            {{c.selector | translate}}
-                        </ng-container>
-                        <ng-container *ngIf="c.selector && !c.translate">
-                            {{c.selector}}
-                        </ng-container>
+                </span>
+                <ng-container *ngSwitchCase="'time-ago'"> {{c.selector | amTimeAgo}} </ng-container>
+                <ng-container *ngSwitchDefault>
+                    <ng-container *ngIf="c.selector && c.translate">
+                        {{c.selector | translate}}
                     </ng-container>
-                </td>
-            </ng-container>
-        </tr>
-    </tbody>
-    <tfoot tfoot *ngIf="nbElementsByPage && pagesCount > 1">
-        <tr>
-            <td [colSpan]="columnsCount">
-                <app-pagination [collectionSize]="filteredData.length" [pageSize]="nbElementsByPage"
-                    (pageChange)="pageChange($event)" [page]="currentPage">
-                </app-pagination>
+                    <ng-container *ngIf="c.selector && !c.translate">
+                        {{c.selector}}
+                    </ng-container>
+                </ng-container>
             </td>
-        </tr>
-    </tfoot>
-</table>
+        </ng-container>
+    </tr>
+    </tbody>
+</nz-table>

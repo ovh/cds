@@ -331,7 +331,7 @@ func DeleteArtifactsFromRepositoryManager(ctx context.Context, db gorp.SqlExecut
 	)
 
 	// Load the token from secrets
-	secrets, err := workflow.LoadDecryptSecrets(ctx, db, wr, nil)
+	secrets, err := workflow.LoadDecryptSecrets(ctx, db, wr, wr.RootRun())
 	if err != nil {
 		return err
 	}

@@ -58,30 +58,39 @@ export class WorkerModelListComponent {
 
                     if (wm.disabled) {
                         icons.push({
-                            label: 'worker_model_disabled',
-                            class: ['grey', 'ban', 'icon'],
-                            title: 'worker_model_disabled'
+                            label: 'This worker model is disabled',
+                            iconTheme: 'outline',
+                            iconType: 'stop',
+                            iconColor: 'grey',
+                            title: 'This worker model is disabled'
                         });
                     }
                     if (wm.nb_spawn_err > 0) {
                         icons.push({
-                            label: 'worker_model_spawn_error_tooltip',
-                            class: ['exclamation', 'triangle', 'icon', 'red'],
-                            title: 'worker_model_warning'
+                            label: 'Model in error',
+                            iconTheme: 'outline',
+                            iconType: 'warning',
+                            iconColor: 'red',
+                            title: 'This worker model is in error. Please check it'
                         });
                     }
                     if (wm.is_official) {
                         icons.push({
-                            label: 'worker_model_official_tooltip',
+                            label: 'Official worker model maintained by CDS Administrators',
+                            iconTheme: 'outline',
+                            iconType: 'check-circle',
+                            iconColor: 'green',
                             class: ['check', 'circle', 'outline', 'icon', 'green'],
-                            title: 'worker_model_official_tooltip'
+                            title: 'Official worker model maintained by CDS Administrators'
                         });
                     }
                     if (wm.is_deprecated) {
                         icons.push({
-                            label: 'worker_model_deprecated_tooltip',
-                            class: ['exclamation', 'circle', 'icon', 'orange'],
-                            title: 'worker_model_official_tooltip'
+                            label: 'This worker model is deprecated',
+                            iconTheme: 'outline',
+                            iconType: 'warning',
+                            iconColor: 'orange',
+                            title: 'This worker model is deprecated'
                         });
                     }
 

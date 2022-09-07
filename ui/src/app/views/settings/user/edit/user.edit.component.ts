@@ -3,7 +3,6 @@ import { NgForm } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { Transition, TransitionController, TransitionDirection } from '@richardlt/ng2-semantic-ui';
 import { AuthConsumer, AuthDriverManifest, AuthDriverManifests, AuthSession } from 'app/model/authentication.model';
 import { Group } from 'app/model/group.model';
 import { AuthentifiedUser, AuthSummary, UserContact } from 'app/model/user.model';
@@ -17,14 +16,13 @@ import { AuthenticationState } from 'app/store/authentication.state';
 import * as moment from 'moment';
 import { forkJoin } from 'rxjs';
 import { finalize } from 'rxjs/operators';
-import { CloseEventType, ConsumerCreateModalComponent } from '../consumer-create-modal/consumer-create-modal.component';
+import { ConsumerCreateModalComponent } from '../consumer-create-modal/consumer-create-modal.component';
 import {
     CloseEvent,
     CloseEventType as DetailsCloseEventType,
     ConsumerDetailsModalComponent
 } from '../consumer-details-modal/consumer-details-modal.component';
 import { NzModalService } from 'ng-zorro-antd/modal';
-import { AsCodeSaveModalComponent } from 'app/shared/ascode/save-modal/ascode.save-modal.component';
 
 const defaultMenuItems = [<Item>{
     translate: 'user_profile_btn',
@@ -44,7 +42,6 @@ const usernamePattern = new RegExp('^[a-zA-Z0-9._-]{1,}$');
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class UserEditComponent implements OnInit {
-    transitionController = new TransitionController();
 
     @ViewChild('ldapSigninForm')
     ldapSigninForm: NgForm;
@@ -54,7 +51,6 @@ export class UserEditComponent implements OnInit {
 
     loading = false;
     deleteLoading = false;
-    groupsAdmin: Array<Group>;
     userPatternError = false;
     username: string;
     currentAuthSummary: AuthSummary;
@@ -128,10 +124,10 @@ export class UserEditComponent implements OnInit {
                     let labels = [];
 
                     if (c.primary) {
-                        labels.push({ color: 'green', title: 'user_contact_primary' });
+                        labels.push({ color: 'success', title: 'user_contact_primary' });
                     }
                     if (!c.verified) {
-                        labels.push({ color: 'red', title: 'user_contact_not_verified' });
+                        labels.push({ color: 'error', title: 'user_contact_not_verified' });
                     }
 
                     return {
@@ -155,14 +151,12 @@ export class UserEditComponent implements OnInit {
         this.columnsConsumers = [
             <Column<AuthConsumer>>{
                 type: ColumnType.TEXT_LABELS,
-                name: 'common_name',
+                name: 'Name',
                 selector: (c: AuthConsumer) => {
                     let labels = [];
-
                     if (c.disabled) {
-                        labels.push({ color: 'red', title: 'user_auth_consumer_disabled' });
+                        labels.push({ color: 'error', title: 'user_auth_consumer_disabled' });
                     }
-
                     return {
                         value: c.name,
                         labels
@@ -198,7 +192,9 @@ export class UserEditComponent implements OnInit {
 
                         icons.push({
                             label: text,
-                            class: ['info', 'exclamation', 'triangle', 'icon', 'yellow', 'link'],
+                            type: 'warning',
+                            theme: 'outline',
+                            class: ['orange'],
                             title: text
                         });
                     }
@@ -245,9 +241,10 @@ export class UserEditComponent implements OnInit {
             <Column<AuthConsumer>>{
                 type: ColumnType.BUTTON,
                 name: 'Action',
-                class: 'two right aligned',
+                class: 'rightAlign',
                 selector: (c: AuthConsumer) => ({
-                    title: 'common_details',
+                    title: 'Details',
+                    buttonDanger: false,
                     click: () => {
                         this.clickConsumerDetails(c);
                     }
@@ -275,27 +272,28 @@ export class UserEditComponent implements OnInit {
                         let consumer = this.mConsumers[s.consumer_id];
 
                         let icon = {
+                            theme: 'outline',
+                            type: '',
                             label: `ID: ${s.consumer_id}`,
-                            title: `ID: ${s.consumer_id}`
+                            title: `ID: ${s.consumer_id}`,
                         };
                         switch (consumer.type) {
                             case 'builtin':
-                                icon['class'] = ['info', 'circle', 'icon', 'link'];
+                                icon.type = 'info-circle';
                                 break;
                             case 'local':
-                                icon['class'] = ['lock', 'icon'];
+                                icon.type = 'lock';
                                 break;
                             case 'ldap':
-                                icon['class'] = ['address', 'book', 'icon'];
+                                icon.type = 'audit';
                                 break;
                             case 'corporate-sso':
-                                icon['class'] = ['shield', 'alternate', 'icon'];
+                                icon.type = 'safety-certificate';
                                 break;
                             case 'openid-connect':
-                                icon['class'] = ['openid', 'icon'];
+                                icon.type = 'safety-certificate';
                                 break;
                             default:
-                                icon['class'] = [consumer.type, 'icon'];
                                 break;
                         }
 
@@ -349,8 +347,10 @@ export class UserEditComponent implements OnInit {
                 class: 'two right aligned',
                 disabled: true,
                 selector: (s: AuthSession) => ({
-                    title: 'user_auth_revoke_btn',
-                    color: 'red',
+                    buttonType: 'primary',
+                    buttonDanger: true,
+                    buttonConfirmationMessage: 'Are you sure you want to revoke this session ?',
+                    title: 'Revoke',
                     click: () => {
                         this.clickSessionRevoke(s);
                     }
@@ -413,16 +413,8 @@ export class UserEditComponent implements OnInit {
             });
             return;
         }
-
-        this.transitionController.animate(
-            new Transition('scale', 150, TransitionDirection.Out, () => {
-                this.showLDAPSigninForm = true;
-                this._cd.detectChanges();
-                this.transitionController.animate(
-                    new Transition('scale', 150, TransitionDirection.In, () => { })
-                );
-            })
-        );
+        this.showLDAPSigninForm = true;
+        this._cd.detectChanges();
     }
 
     clickConsumerDetach(c: AuthConsumer): void {

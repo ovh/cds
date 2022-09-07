@@ -10,7 +10,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func loadRbacProjectUsersByUserID(ctx context.Context, db gorp.SqlExecutor, userID string) ([]rbacProjectUser, error) {
+func loadRBACProjectUsersByUserID(ctx context.Context, db gorp.SqlExecutor, userID string) ([]rbacProjectUser, error) {
 	q := gorpmapping.NewQuery("SELECT * FROM rbac_project_users WHERE user_id = $1").Args(userID)
 	return getAllRBACProjectUsers(ctx, db, q)
 }

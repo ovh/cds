@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { Store } from '@ngxs/store';
-import { IPopup } from '@richardlt/ng2-semantic-ui';
 import { WNodeHook, Workflow } from 'app/model/workflow.model';
 import { WorkflowNodeRunHookEvent } from 'app/model/workflow.run.model';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';

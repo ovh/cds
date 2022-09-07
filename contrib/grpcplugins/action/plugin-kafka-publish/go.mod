@@ -13,7 +13,7 @@ require (
 	github.com/golang/protobuf v1.5.2
 	github.com/ovh/cds v0.0.0-00010101000000-000000000000
 	github.com/phayes/permbits v0.0.0-20190612203442-39d7c581d2ee
-	github.com/stretchr/testify v1.7.0
+	github.com/stretchr/testify v1.8.0
 	gopkg.in/urfave/cli.v1 v1.20.0
 )
 
@@ -96,6 +96,7 @@ require (
 	github.com/prometheus/procfs v0.0.8 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/rockbears/log v0.6.0 // indirect
+	github.com/rockbears/yaml v0.1.1-0.20220901090137-13dadb408625 // indirect
 	github.com/rubenv/sql-migrate v0.0.0-20160620083229-6f4757563362 // indirect
 	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/sguiheux/go-coverage v0.0.0-20190710153556-287b082a7197 // indirect
@@ -128,5 +129,5 @@ require (
 	gopkg.in/square/go-jose.v2 v2.3.1 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

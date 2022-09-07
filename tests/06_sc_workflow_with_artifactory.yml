@@ -23,10 +23,14 @@ testcases:
     info: "{{.result.systemout}}"
     assertions:
     - result.code ShouldEqual 0
-    - "result.systemout ShouldContainSubstring Workflowtest-artifactory-multiple-maturity #1 has been launched"
+    - "result.systemout ShouldContainSubstring has been launched"
+  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow history {{.projectKey}} test-artifactory-multiple-maturity --format json # get the latest run number
+    vars:
+      runNumber:
+        from: result.systemoutjson.systemoutjson0.num
 - name: check_workflow_is_success
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow status {{.projectKey}}  test-artifactory-multiple-maturity 1 --format json # check the workflow status
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow status {{.projectKey}}  test-artifactory-multiple-maturity {{.run_workflow.runNumber}} --format json # check the workflow status
     retry: 120
     delay: 5
     info: "{{.result.systemout}}"

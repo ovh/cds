@@ -2894,6 +2894,49 @@ func (mr *MockProjectClientMockRecorder) VariableListEncrypt(projectKey interfac
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VariableListEncrypt", reflect.TypeOf((*MockProjectClient)(nil).VariableListEncrypt), projectKey)
 }
 
+// MockRbacClient is a mock of RBACClient interface.
+type MockRbacClient struct {
+	ctrl     *gomock.Controller
+	recorder *MockRbacClientMockRecorder
+}
+
+// MockRbacClientMockRecorder is the mock recorder for MockRbacClient.
+type MockRbacClientMockRecorder struct {
+	mock *MockRbacClient
+}
+
+// NewMockRbacClient creates a new mock instance.
+func NewMockRbacClient(ctrl *gomock.Controller) *MockRbacClient {
+	mock := &MockRbacClient{ctrl: ctrl}
+	mock.recorder = &MockRbacClientMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockRbacClient) EXPECT() *MockRbacClientMockRecorder {
+	return m.recorder
+}
+
+// RbacImport mocks base method.
+func (m *MockRbacClient) RBACImport(ctx context.Context, content io.Reader, mods ...cdsclient.RequestModifier) (sdk.RBAC, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, content}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "RBACImport", varargs...)
+	ret0, _ := ret[0].(sdk.RBAC)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RbacImport indicates an expected call of RbacImport.
+func (mr *MockRbacClientMockRecorder) RbacImport(ctx, content interface{}, mods ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, content}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RBACImport", reflect.TypeOf((*MockRbacClient)(nil).RBACImport), varargs...)
+}
+
 // MockProjectKeysClient is a mock of ProjectKeysClient interface.
 type MockProjectKeysClient struct {
 	ctrl     *gomock.Controller
@@ -3390,18 +3433,32 @@ func (mr *MockQueueClientMockRecorder) QueueWorkflowRunResultsAdd(ctx, jobID, ad
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueWorkflowRunResultsAdd", reflect.TypeOf((*MockQueueClient)(nil).QueueWorkflowRunResultsAdd), ctx, jobID, addRequest)
 }
 
-// QueueWorkflowRunResultsRelease mocks base method.
-func (m *MockQueueClient) QueueWorkflowRunResultsRelease(ctx context.Context, permJobID int64) error {
+// QueueWorkflowRunResultsPromote mocks base method.
+func (m *MockQueueClient) QueueWorkflowRunResultsPromote(ctx context.Context, permJobID int64, runResultIDs []string, from, to string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "QueueWorkflowRunResultsRelease", ctx, permJobID)
+	ret := m.ctrl.Call(m, "QueueWorkflowRunResultsPromote", ctx, permJobID, runResultIDs, from, to)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// QueueWorkflowRunResultsPromote indicates an expected call of QueueWorkflowRunResultsPromote.
+func (mr *MockQueueClientMockRecorder) QueueWorkflowRunResultsPromote(ctx, permJobID, runResultIDs, from, to interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueWorkflowRunResultsPromote", reflect.TypeOf((*MockQueueClient)(nil).QueueWorkflowRunResultsPromote), ctx, permJobID, runResultIDs, from, to)
+}
+
+// QueueWorkflowRunResultsRelease mocks base method.
+func (m *MockQueueClient) QueueWorkflowRunResultsRelease(ctx context.Context, permJobID int64, runResultIDs []string, from, to string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "QueueWorkflowRunResultsRelease", ctx, permJobID, runResultIDs, from, to)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // QueueWorkflowRunResultsRelease indicates an expected call of QueueWorkflowRunResultsRelease.
-func (mr *MockQueueClientMockRecorder) QueueWorkflowRunResultsRelease(ctx, permJobID interface{}) *gomock.Call {
+func (mr *MockQueueClientMockRecorder) QueueWorkflowRunResultsRelease(ctx, permJobID, runResultIDs, from, to interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueWorkflowRunResultsRelease", reflect.TypeOf((*MockQueueClient)(nil).QueueWorkflowRunResultsRelease), ctx, permJobID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueWorkflowRunResultsRelease", reflect.TypeOf((*MockQueueClient)(nil).QueueWorkflowRunResultsRelease), ctx, permJobID, runResultIDs, from, to)
 }
 
 // MockUserClient is a mock of UserClient interface.
@@ -7466,18 +7523,52 @@ func (mr *MockInterfaceMockRecorder) QueueWorkflowRunResultsAdd(ctx, jobID, addR
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueWorkflowRunResultsAdd", reflect.TypeOf((*MockInterface)(nil).QueueWorkflowRunResultsAdd), ctx, jobID, addRequest)
 }
 
-// QueueWorkflowRunResultsRelease mocks base method.
-func (m *MockInterface) QueueWorkflowRunResultsRelease(ctx context.Context, permJobID int64) error {
+// QueueWorkflowRunResultsPromote mocks base method.
+func (m *MockInterface) QueueWorkflowRunResultsPromote(ctx context.Context, permJobID int64, runResultIDs []string, from, to string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "QueueWorkflowRunResultsRelease", ctx, permJobID)
+	ret := m.ctrl.Call(m, "QueueWorkflowRunResultsPromote", ctx, permJobID, runResultIDs, from, to)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// QueueWorkflowRunResultsPromote indicates an expected call of QueueWorkflowRunResultsPromote.
+func (mr *MockInterfaceMockRecorder) QueueWorkflowRunResultsPromote(ctx, permJobID, runResultIDs, from, to interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueWorkflowRunResultsPromote", reflect.TypeOf((*MockInterface)(nil).QueueWorkflowRunResultsPromote), ctx, permJobID, runResultIDs, from, to)
+}
+
+// QueueWorkflowRunResultsRelease mocks base method.
+func (m *MockInterface) QueueWorkflowRunResultsRelease(ctx context.Context, permJobID int64, runResultIDs []string, from, to string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "QueueWorkflowRunResultsRelease", ctx, permJobID, runResultIDs, from, to)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // QueueWorkflowRunResultsRelease indicates an expected call of QueueWorkflowRunResultsRelease.
-func (mr *MockInterfaceMockRecorder) QueueWorkflowRunResultsRelease(ctx, permJobID interface{}) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) QueueWorkflowRunResultsRelease(ctx, permJobID, runResultIDs, from, to interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueWorkflowRunResultsRelease", reflect.TypeOf((*MockInterface)(nil).QueueWorkflowRunResultsRelease), ctx, permJobID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueWorkflowRunResultsRelease", reflect.TypeOf((*MockInterface)(nil).QueueWorkflowRunResultsRelease), ctx, permJobID, runResultIDs, from, to)
+}
+
+// RbacImport mocks base method.
+func (m *MockInterface) RBACImport(ctx context.Context, content io.Reader, mods ...cdsclient.RequestModifier) (sdk.RBAC, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, content}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "RBACImport", varargs...)
+	ret0, _ := ret[0].(sdk.RBAC)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RbacImport indicates an expected call of RbacImport.
+func (mr *MockInterfaceMockRecorder) RbacImport(ctx, content interface{}, mods ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, content}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RBACImport", reflect.TypeOf((*MockInterface)(nil).RBACImport), varargs...)
 }
 
 // RepositoriesList mocks base method.
@@ -9583,18 +9674,32 @@ func (mr *MockWorkerInterfaceMockRecorder) QueueWorkflowRunResultsAdd(ctx, jobID
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueWorkflowRunResultsAdd", reflect.TypeOf((*MockWorkerInterface)(nil).QueueWorkflowRunResultsAdd), ctx, jobID, addRequest)
 }
 
-// QueueWorkflowRunResultsRelease mocks base method.
-func (m *MockWorkerInterface) QueueWorkflowRunResultsRelease(ctx context.Context, permJobID int64) error {
+// QueueWorkflowRunResultsPromote mocks base method.
+func (m *MockWorkerInterface) QueueWorkflowRunResultsPromote(ctx context.Context, permJobID int64, runResultIDs []string, from, to string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "QueueWorkflowRunResultsRelease", ctx, permJobID)
+	ret := m.ctrl.Call(m, "QueueWorkflowRunResultsPromote", ctx, permJobID, runResultIDs, from, to)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// QueueWorkflowRunResultsPromote indicates an expected call of QueueWorkflowRunResultsPromote.
+func (mr *MockWorkerInterfaceMockRecorder) QueueWorkflowRunResultsPromote(ctx, permJobID, runResultIDs, from, to interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueWorkflowRunResultsPromote", reflect.TypeOf((*MockWorkerInterface)(nil).QueueWorkflowRunResultsPromote), ctx, permJobID, runResultIDs, from, to)
+}
+
+// QueueWorkflowRunResultsRelease mocks base method.
+func (m *MockWorkerInterface) QueueWorkflowRunResultsRelease(ctx context.Context, permJobID int64, runResultIDs []string, from, to string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "QueueWorkflowRunResultsRelease", ctx, permJobID, runResultIDs, from, to)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // QueueWorkflowRunResultsRelease indicates an expected call of QueueWorkflowRunResultsRelease.
-func (mr *MockWorkerInterfaceMockRecorder) QueueWorkflowRunResultsRelease(ctx, permJobID interface{}) *gomock.Call {
+func (mr *MockWorkerInterfaceMockRecorder) QueueWorkflowRunResultsRelease(ctx, permJobID, runResultIDs, from, to interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueWorkflowRunResultsRelease", reflect.TypeOf((*MockWorkerInterface)(nil).QueueWorkflowRunResultsRelease), ctx, permJobID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueWorkflowRunResultsRelease", reflect.TypeOf((*MockWorkerInterface)(nil).QueueWorkflowRunResultsRelease), ctx, permJobID, runResultIDs, from, to)
 }
 
 // Requirements mocks base method.

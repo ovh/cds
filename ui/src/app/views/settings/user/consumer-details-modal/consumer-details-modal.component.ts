@@ -94,7 +94,7 @@ export class ConsumerDetailsModalComponent implements OnInit {
                     let labels = [];
 
                     if (c.disabled) {
-                        labels.push({ color: 'red', title: 'user_auth_consumer_disabled' });
+                        labels.push({ color: 'error', title: 'user_auth_consumer_disabled' });
                     }
 
                     return {
@@ -114,9 +114,10 @@ export class ConsumerDetailsModalComponent implements OnInit {
             <Column<AuthConsumer>>{
                 type: ColumnType.BUTTON,
                 name: 'Action',
-                class: 'two right aligned',
+                class: 'rightAlign',
                 selector: (c: AuthConsumer) => ({
-                        title: 'common_details',
+                        title: 'Details',
+                        buttonDanger: false,
                         click: () => this.clickConsumerDetails(c)
                     })
             }

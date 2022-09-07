@@ -158,7 +158,7 @@ export class WorkflowTemplateEditComponent implements OnInit, OnDestroy {
                 }
             }, <Column<WorkflowTemplateInstance>>{
                 type: ColumnType.LABEL,
-                name: 'common_status',
+                name: 'Status',
                 class: 'three',
                 selector: (i: WorkflowTemplateInstance) => {
                     let status = i.status(this.workflowTemplate);
@@ -170,10 +170,11 @@ export class WorkflowTemplateEditComponent implements OnInit, OnDestroy {
             }, <Column<WorkflowTemplateInstance>>{
                 type: ColumnType.BUTTON,
                 name: 'Action',
-                class: 'two right aligned',
+                class: 'rightAlign',
                 selector: (i: WorkflowTemplateInstance) => ({
-                        title: 'common_update',
-                        class: 'primary small',
+                        title: 'Update',
+                        buttonType: 'primary',
+                        buttonDanger: false,
                         click: () => {
                             this.clickUpdate(i);
                         }
@@ -206,13 +207,16 @@ export class WorkflowTemplateEditComponent implements OnInit, OnDestroy {
                     this.columnsAudits.push(<Column<AuditWorkflowTemplate>>{
                         type: ColumnType.CONFIRM_BUTTON,
                         name: 'Action',
-                        class: 'two right aligned',
+                        class: 'rightAlign',
                         selector: (a: AuditWorkflowTemplate) => ({
-                                title: 'common_rollback',
-                                click: () => {
-                                    this.clickRollback(a);
-                                }
-                            })
+                            buttonType: 'primary',
+                            buttonDanger: false,
+                            buttonConfirmationMessage: 'Are you sure you want to rollback this workflow template ?',
+                            title: 'Rollback',
+                            click: () => {
+                                this.clickRollback(a);
+                            }
+                        })
                     });
                 }
 
