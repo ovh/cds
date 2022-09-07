@@ -69,9 +69,7 @@
                                     [environments]="environments"></app-usage>
                             </ng-container>
                             <ng-container *ngIf="usageCount === 0">
-                                <div class="ui info message">
-                                    {{ 'application_no_usage' | translate }}
-                                </div>
+                                <nz-alert nzType="info" nzMessage="The application is not used"></nz-alert>
                             </ng-container>
                         </div>
                         <div *ngSwitchCase="'keys'">
@@ -89,5 +87,5 @@
     </div>
 </ng-template>
 <ng-template #loadApp>
-    <div class="ui text active loader">Loading application...</div>
+    <nz-spin nzTip="Loading application..."></nz-spin>
 </ng-template>

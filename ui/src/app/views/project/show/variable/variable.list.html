@@ -12,4 +12,4 @@
       <app-variable [project]="project" [variables]="project.variables" [mode]="project.permissions.writable? 'edit': 'ro'" (event)="variableEvent($event)" auditContext="project"></app-variable>
   </div>
 </div>
-<div *ngIf="loading" class="ui text active loader">Loading variables...</div>
+<nz-spin *ngIf="loading" nzTip="Loading variables..."></nz-spin>

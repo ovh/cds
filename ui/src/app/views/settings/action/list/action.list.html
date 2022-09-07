@@ -1,7 +1,6 @@
 <div class="wrapper">
     <app-breadcrumb [path]="path">
-        <a class="ui right floated green button small buttonBreadcrumb" [routerLink]="['add']">{{ 'btn_add' | translate
-            }}</a>
+        <button nz-button nzType="primary" [routerLink]="['add']" class="alignRight">Add</button>
     </app-breadcrumb>
     <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)"></app-tabs>
     <app-scrollview class="scrollview" [ngSwitch]="selectedTab.key">

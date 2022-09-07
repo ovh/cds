@@ -1,6 +1,14 @@
 @import '../../../common';
 #ActionEdit {
   padding-bottom: 100px;
+
+  .nzSegment {
+    padding: 30px 10px;
+
+    nz-col {
+      padding: 0 10px;
+    }
+  }
 }
 .requirementForm {
   margin-top: 10px;
@@ -9,12 +17,8 @@
   }
 }
 
-.mt10 {
-  margin-top: 10px;
-}
-
-.paramName {
-  font-weight: 600;
+.alignRight {
+  float: right;
 }
 
 .dragula-container {
@@ -29,18 +33,6 @@
     margin-top: 20px;
     margin-bottom: 20px;
   }
-}
-
-.inline.field input {
-  width: 80%;
-}
-
-.inline.field textarea {
-  width: 80%;
-}
-
-.labelPadding {
-  padding-top: 8px;
 }
 
 .subtitle {

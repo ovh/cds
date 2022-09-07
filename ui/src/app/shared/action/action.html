@@ -1,37 +1,38 @@
-<form class="ui form" id="ActionEdit" *ngIf="editableAction">
-    <div class="ui segment">
-        <div class="field">
-            <div class="fields">
-                <div class="six wide inline field">
-                    <label>{{'common_name' | translate}}</label>
-                    <input *ngIf="edit;" type="text" name="actionName" [(ngModel)]="editableAction.name"
-                        (keydown)="editableAction.hasChanged = true; keyEvent($event)">
-                    <span *ngIf="!edit;" class="inline">{{editableAction.name}}</span>
-                </div>
-                <div class="seven wide inline field">
-                    <label class="labelPadding">{{'common_description' | translate}}</label>
-                    <textarea *ngIf="edit;" [disabled]="!edit" name="actionDescription"
-                        [(ngModel)]="editableAction.description" rows="{{getDescriptionHeight()}}"
-                        (keydown)="editableAction.hasChanged = true; keyEvent($event)"></textarea>
-                    <markdown *ngIf="!edit;" [data]="editableAction.description"></markdown>
-                </div>
-                <div class="one wide inline field">
+<form nz-form id="ActionEdit" *ngIf="editableAction">
+    <div class="nzSegment">
+            <nz-row>
+                <nz-col [nzSpan]="7">
+                    <nz-form-item>
+                        <nz-form-label>Name</nz-form-label>
+                        <nz-form-control>
+                            <input *ngIf="edit;" nz-input type="text" name="actionName" [(ngModel)]="editableAction.name"
+                                   (keydown)="editableAction.hasChanged = true; keyEvent($event)">
+                            <span *ngIf="!edit;" class="inline">{{editableAction.name}}</span>
+                        </nz-form-control>
+                    </nz-form-item>
+                </nz-col>
+                <nz-col [nzSpan]="10">
+                    <nz-form-item>
+                        <nz-form-label>Description</nz-form-label>
+                        <nz-form-control>
+                             <textarea *ngIf="edit;" nz-input [disabled]="!edit" name="actionDescription"
+                                       [(ngModel)]="editableAction.description" rows="{{getDescriptionHeight()}}"
+                                       (keydown)="editableAction.hasChanged = true; keyEvent($event)"></textarea>
+                            <markdown *ngIf="!edit;" [data]="editableAction.description"></markdown>
+                        </nz-form-control>
+                    </nz-form-item>
+                </nz-col>
+                <nz-col [nzSpan]="3">
                     <div class="ui checkbox">
                         <input type="checkbox" id="enabled_action_{{editableAction.id}}" name="enabled"
-                            [(ngModel)]="editableAction.enabled" (change)="editableAction.hasChanged = true"
-                            [disabled]="!edit">
+                               [(ngModel)]="editableAction.enabled" (change)="editableAction.hasChanged = true"
+                               [disabled]="!edit">
                         <label for="enabled_action_{{editableAction.id}}">{{ 'common_enable' | translate }}</label>
                     </div>
-                    <div class="ui checkbox mt10" *ngIf="editableAction.type !== 'Joined'">
-                        <input type="checkbox" id="deprecated_{{editableAction.id}}" name="deprecated"
-                            [(ngModel)]="editableAction.deprecated" (change)="editableAction.hasChanged = true"
-                            [disabled]="!edit">
-                        <label for="deprecated_{{editableAction.id}}">{{ 'common_deprecated' | translate }}</label>
-                    </div>
-                </div>
-                <div class="two wide right aligned field labelPadding">
+                </nz-col>
+                <nz-col [nzSpan]="4">
                     <a class="pointing"
-                        (click)="prepareEditRequirements(); requirementModalVisible = true">
+                       (click)="prepareEditRequirements(); requirementModalVisible = true">
                         {{ editableAction.requirements.length + ' '}}{{'common_requirements' | translate }}
                     </a>
                     <nz-modal [nzVisible]="requirementModalVisible" nzTitle="Action requirements" nzWidth="900px"
@@ -52,41 +53,26 @@
                             <button nz-button (click)="requirementModalVisible = false;parseRequirements();">Close</button>
                         </div>
                     </nz-modal>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="ui segment" *ngIf="editableAction.type !== 'Joined'">
-        <div class="field">
-            <label>{{ 'common_parameters' | translate }}</label>
-            <div>
-                <app-parameter-list [project]="project" [parameters]="editableAction.parameters"
-                    [mode]="edit? 'edit': 'ro'" [hideSave]="true" (event)="parameterEvent($event)">
-                </app-parameter-list>
-            </div>
-            <div>
-                <app-parameter-form *ngIf="edit" [project]="project" (createParameterEvent)="parameterEvent($event)">
-                </app-parameter-form>
-            </div>
-        </div>
+                </nz-col>
+            </nz-row>
     </div>
 
     <div class="subtitle normalStep">
-        <h3 class="inline">{{ 'action_step_title' | translate }}<span *ngIf="steps">{{ ' (' + steps.length + ')'}}</span></h3>
-        <div class="right floated" *ngIf="steps && steps.length > 0">
-            <button class="ui blue button" (click)="collapsed = !collapsed">
+        <h3 class="inline">Job steps<span *ngIf="steps">{{ ' (' + steps.length + ')'}}</span></h3>
+        <div class="alignRight" *ngIf="steps && steps.length > 0">
+            <button nz-button (click)="collapsed = !collapsed">
                 <ng-container *ngIf="collapsed">
-                    <i class="hide icon"></i>
+                    <span nz-icon nzType="eye-invisible" nzTheme="outline"></span>
                     {{'common_hide_all' | translate}}
                 </ng-container>
                 <ng-container *ngIf="!collapsed">
-                    <i class="eye icon"></i>
+                    <span nz-icon nzType="eye" nzTheme="outline"></span>
                     {{'common_show_all' | translate}}
                 </ng-container>
             </button>
         </div>
     </div>
-    <div class="ui segment" *ngIf="steps.length > 0 && publicActions" [class.off]="!editableAction.enabled">
+    <div class="nzSegment" *ngIf="steps.length > 0 && publicActions" [class.off]="!editableAction.enabled">
         <div class="dragula-container" [dragula]="'bag-nonfinal'" [(dragulaModel)]="steps" *ngIf="steps">
             <div *ngFor="let step of steps; let idxStep = index" class="step" [class.off]="!step.enabled">
                 <app-action-step [action]="editableAction" [step]="step" [edit]="edit" [suggest]="suggest"
@@ -97,9 +83,7 @@
             </div>
         </div>
     </div>
-    <div class="ui info message" *ngIf="steps.length === 0">
-        {{ 'step_nonfinal_no' | translate }}
-    </div>
+    <nz-alert nzType="info" nzMessage="There is no step."  *ngIf="steps.length === 0"></nz-alert>
 </form>
 <nz-layout class="bottomBtnsWrapper"
      *ngIf="edit && !(pipeline && pipeline.previewMode)">

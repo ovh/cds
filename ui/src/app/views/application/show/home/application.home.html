@@ -1,5 +1,5 @@
-<div class="ui grid">
-    <div class="ui twelve wide column">
+<nz-row>
+    <nz-col [nzSpan]="17">
         <ng-container *ngIf="dashboards && dashboards.length > 0">
             <ng-container *ngFor="let d of dashboards">
                 <div class="dashboard">
@@ -11,17 +11,15 @@
             </ng-container>
         </ng-container>
         <ng-container *ngIf="dashboards && dashboards.length === 0">
-            <div class="ui info message">
-                {{ 'application_home_no_graph' | translate }}
-            </div>
+            <nz-alert nzType="info" nzMessage="No graph to display (vulnerabilities, unit tests)"></nz-alert>
         </ng-container>
         <ng-container *ngIf="!dashboards">
-            <div class="ui text active loader">{{ 'common_loading' | translate }}</div>
+            <nz-spin nzTip="Loading..."></nz-spin>
         </ng-container>
-    </div>
-    <div class="ui four wide column">
-        <div class="ui segment">
-            <h4>{{ 'application_home_repo' | translate }}</h4>
+    </nz-col>
+    <nz-col [nzSpan]="6" [nzOffset]="1">
+        <div class="nzSegment">
+            <h4>Git repository</h4>
             <ng-container *ngIf="application.vcs_server">
                 <ul>
                     <li *ngIf="overview">
@@ -35,23 +33,23 @@
                 </ul>
             </ng-container>
             <ng-container *ngIf="!application.vcs_server">
-                <div class="ui info message">
+                <nz-alert nzType="info" [nzMessage]="gitTmpl"></nz-alert>
+                <ng-template #gitTmpl>
                     <a [routerLink]="['/project', project.key, 'application', application.name]"
-                        [queryParams]="{tab: 'advanced'}">{{
-                        'application_home_no_repo' | translate }}</a>
-                </div>
+                        [queryParams]="{tab: 'advanced'}">Link a repository</a>
+                </ng-template>
             </ng-container>
-            <h4>{{ 'application_home_integration' | translate }}</h4>
+            <h4>Linked integrations</h4>
             <ul *ngIf="application.deployment_strategies">
                 <li *ngFor="let p of application.deployment_strategies | keys">
                     {{ p }}
                 </li>
             </ul>
-            <div class="ui info message" *ngIf="!application.deployment_strategies">
+            <nz-alert *ngIf="!application.deployment_strategies" nzType="info" [nzMessage]="integTmpl"></nz-alert>
+            <ng-template #integTmpl>
                 <a [routerLink]="['/project', project.key,'application', application.name]"
-                    [queryParams]="{tab: 'advanced'}">{{
-                    'application_home_no_integration' | translate }}</a>
-            </div>
+                    [queryParams]="{tab: 'advanced'}">Link an integration</a>
+            </ng-template>
             <h4>Usage</h4>
             <ng-container *ngIf="application.usage && application.usage.workflows">
                 <ul>
@@ -62,14 +60,11 @@
             </ng-container>
             <ng-container
                 *ngIf="!application.usage || !application.usage.workflows || application.usage.workflows.length === 0">
-                <div class="ui info message">
-                    {{ 'application_home_no_usage' | translate }}
-                </div>
+                <nz-alert nzType="info" nzMessage="Application is not used"></nz-alert>
             </ng-container>
-
         </div>
-    </div>
-</div>
+    </nz-col>
+</nz-row>
 
 <!-- HISTORY -->
 <div class="history" *ngIf="overview?.history">

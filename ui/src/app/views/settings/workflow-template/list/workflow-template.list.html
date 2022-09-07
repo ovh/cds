@@ -1,7 +1,6 @@
 <div class="wrapper">
     <app-breadcrumb [path]="path">
-        <a class="ui right floated green button small buttonBreadcrumb" [routerLink]="['add']">{{ 'btn_add' | translate
-            }}</a>
+        <button nz-button nzType="primary" class="alignRight" [routerLink]="['add']">Add</button>
     </app-breadcrumb>
     <app-scrollview class="scrollview">
         <app-data-table [withFilter]="filter" [withPagination]="25" [columns]="columns" [data]="workflowTemplates"

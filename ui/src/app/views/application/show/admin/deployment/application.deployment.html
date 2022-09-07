@@ -29,7 +29,7 @@
                                        *ngIf="selectedIntegration.model.additional_default_config[k].type === 'string'">
                                 <input nz-input name="{{k}}-value" type="password" [(ngModel)]="selectedIntegration.model.additional_default_config[k].value"
                                        *ngIf="selectedIntegration.model.additional_default_config[k].type === 'password'">
-                                <textarea nz-input name="{{k}}-value" class="ui textarea" rows="3" [(ngModel)]="selectedIntegration.model.additional_default_config[k].value"
+                                <textarea nz-input name="{{k}}-value" rows="3" [(ngModel)]="selectedIntegration.model.additional_default_config[k].value"
                                           *ngIf="selectedIntegration.model.additional_default_config[k].type === 'text'"></textarea>
                             </nz-form-control>
                         </nz-form-item>
@@ -74,7 +74,7 @@
                                                    *ngIf="application.deployment_strategies[pf][k].type === 'string'">
                                             <input nz-input type="password" name="{{k}}-value" [(ngModel)]="application.deployment_strategies[pf][k].value"
                                                    *ngIf="application.deployment_strategies[pf][k].type === 'password'">
-                                            <textarea nz-input class="ui textarea" name="{{k}}-value" rows="3" [(ngModel)]="application.deployment_strategies[pf][k].value"
+                                            <textarea nz-input name="{{k}}-value" rows="3" [(ngModel)]="application.deployment_strategies[pf][k].value"
                                                       *ngIf="application.deployment_strategies[pf][k].type === 'text'"></textarea>
                                         </nz-form-control>
                                     </nz-form-item>

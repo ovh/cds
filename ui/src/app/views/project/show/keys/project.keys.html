@@ -3,9 +3,7 @@
     <ng-container *ngIf="project.keys && project.keys.length > 0">
         <app-keys-list [keys]="keys" [edit]="project.permissions.writable" (deleteEvent)="manageKeyEvent($event)"></app-keys-list>
     </ng-container>
-    <div class="ui info message" *ngIf="!loading && (!project.keys || project.keys.length === 0)">
-        {{ 'keys_no' | translate }}
-    </div>
+    <nz-alert nzType="info" nzMessage="There is no keys" *ngIf="!loading && (!project.keys || project.keys.length === 0)"></nz-alert>
     <h3 *ngIf="project.permissions.writable">
         {{ 'keys_add_title' | translate }}
     </h3>
@@ -13,4 +11,4 @@
         <app-keys-form [loading]="loading" (keyEvent)="manageKeyEvent($event)" prefix="proj-"></app-keys-form>
     </ng-container>
 </div>
-<div class="ui text active loader" *ngIf="!ready">{{ 'keys_loading' | translate}}</div>
+<nz-spin  *ngIf="!ready" nzTip="Loading..."></nz-spin>
