@@ -1096,17 +1096,17 @@ func stopRunsBlocked(ctx context.Context, db *gorp.DbMap) error {
 	return nil
 }
 
-// LoadRunsIDsCreatedBefore returns the first 100 workflow runs created before given date.
-func LoadRunsIDsCreatedBefore(ctx context.Context, db gorp.SqlExecutor, date time.Time) ([]int64, error) {
+// LoadRunsIDsCreatedBefore returns the first workflow runs created before given date.
+func LoadRunsIDsCreatedBefore(ctx context.Context, db gorp.SqlExecutor, date time.Time, limit int64) ([]int64, error) {
 	var ids []int64
 	query := `
     SELECT id
     FROM workflow_run
 		WHERE read_only = false AND start < $1
 		ORDER BY start ASC
-    LIMIT 100
+    LIMIT $2
   `
-	if _, err := db.Select(&ids, query, date); err != nil {
+	if _, err := db.Select(&ids, query, date, limit); err != nil {
 		return nil, sdk.WithStack(err)
 	}
 	return ids, nil

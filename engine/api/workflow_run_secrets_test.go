@@ -41,11 +41,11 @@ func Test_cleanSecretsSnapshotForRun(t *testing.T) {
 		AuthConsumerID: consumer.ID,
 	})
 
-	runIDs, err := workflow.LoadRunsIDsCreatedBefore(ctx, db, time.Now())
+	runIDs, err := workflow.LoadRunsIDsCreatedBefore(ctx, db, time.Now(), 100)
 	require.NoError(t, err)
 	require.Contains(t, runIDs, wr.ID)
 
-	runIDs, err = workflow.LoadRunsIDsCreatedBefore(ctx, db, wr.Start)
+	runIDs, err = workflow.LoadRunsIDsCreatedBefore(ctx, db, wr.Start, 100)
 	require.NoError(t, err)
 	require.NotContains(t, runIDs, wr.ID)
 

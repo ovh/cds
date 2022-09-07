@@ -68,6 +68,8 @@ type Configuration struct {
 	Secrets struct {
 		SkipProjectSecretsOnRegion []string `toml:"skipProjectSecretsOnRegion" json:"skipProjectSecretsOnRegion" comment:"For given region, CDS will not automatically inject project's secrets when running a job."`
 		SnapshotRetentionDelay     int64    `toml:"snapshotRetentionDelay" json:"snapshotRetentionDelay" comment:"Retention delay for workflow run secrets snapshot (in days), set to 0 will keep secrets until workflow run deletion. Removing secrets will activate the read only mode on a workflow run."`
+		SnapshotCleanInterval      int64    `toml:"snapshotCleanInterval" json:"snapshotCleanInterval" comment:"Interval for secret snapshot clean (in minutes), default: 10"`
+		SnapshotCleanBatchSize     int64    `toml:"snapshotCleanBatchSize" json:"snapshotCleanBatchSize" comment:"Batch size for secret snapshot clean, default: 100"`
 	} `toml:"secrets" json:"secrets"`
 	Database database.DBConfiguration `toml:"database" comment:"################################\n Postgresql Database settings \n###############################" json:"database"`
 	Cache    struct {
@@ -751,7 +753,7 @@ func (a *API) Serve(ctx context.Context) error {
 	})
 	if a.Config.Secrets.SnapshotRetentionDelay > 0 {
 		a.GoRoutines.RunWithRestart(ctx, "workflow.CleanSecretsSnapshot", func(ctx context.Context) {
-			a.cleanWorkflowRunSecrets(ctx, time.Minute*10)
+			a.cleanWorkflowRunSecrets(ctx)
 		})
 	}
 

@@ -11,16 +11,28 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func (api *API) cleanWorkflowRunSecrets(ctx context.Context, delay time.Duration) {
+func (api *API) cleanWorkflowRunSecrets(ctx context.Context) {
 	// Load workflow run older than now - snapshot retention delay
 	maxRetentionDate := time.Now().Add(-time.Hour * time.Duration(24*api.Config.Secrets.SnapshotRetentionDelay))
 
 	db := api.mustDB()
 
+	delay := 10 * time.Minute
+	if api.Config.Secrets.SnapshotRetentionDelay > 0 {
+		delay = time.Duration(api.Config.Secrets.SnapshotRetentionDelay) * time.Minute
+	}
+
+	limit := int64(100)
+	if api.Config.Secrets.SnapshotCleanBatchSize > 0 {
+		limit = api.Config.Secrets.SnapshotCleanBatchSize
+	}
+
+	log.Info(ctx, "Starting workflow run secrets clean routine")
+
 	ticker := time.NewTicker(delay)
 
 	for range ticker.C {
-		runIDs, err := workflow.LoadRunsIDsCreatedBefore(ctx, db, maxRetentionDate)
+		runIDs, err := workflow.LoadRunsIDsCreatedBefore(ctx, db, maxRetentionDate, limit)
 		if err != nil {
 			log.ErrorWithStackTrace(ctx, err)
 			continue
