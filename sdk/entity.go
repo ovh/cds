@@ -23,13 +23,13 @@ type Entity struct {
 }
 
 type Lintable interface {
-	Lint() error
+	Lint() []error
 	GetName() string
 }
 
-func ReadEntityFile[T Lintable](directory, fileName string, content []byte, out *[]T, t string, analysis ProjectRepositoryAnalysis) ([]Entity, error) {
+func ReadEntityFile[T Lintable](directory, fileName string, content []byte, out *[]T, t string, analysis ProjectRepositoryAnalysis) ([]Entity, MultiError) {
 	if err := yaml.UnmarshalMultipleDocuments(content, out); err != nil {
-		return nil, WrapError(err, "unable to read %s%s", directory, fileName)
+		return nil, []error{WrapError(err, "unable to read %s%s", directory, fileName)}
 	}
 	var entities []Entity
 	for _, o := range *out {

@@ -23,7 +23,7 @@ func experimentalWorkerModelTemplate() *cobra.Command {
 
 var wmTemplateListCmd = cli.Command{
 	Name:    "list",
-	Example: "cdsctl worker-model-template list",
+	Example: "cdsctl worker-model template list",
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
 	},

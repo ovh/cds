@@ -371,9 +371,9 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 		return sdk.WithStack(tx.Commit())
 	}
 
-	entities, err := api.handleEntitiesFiles(ctx, filesContent, *analysis)
-	if err != nil {
-		return api.stopAnalysis(ctx, analysis, err)
+	entities, multiErr := api.handleEntitiesFiles(ctx, filesContent, *analysis)
+	if multiErr != nil {
+		return api.stopAnalysis(ctx, analysis, multiErr...)
 	}
 
 	for i := range entities {
@@ -401,13 +401,13 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 	return sdk.WithStack(tx.Commit())
 }
 
-func (api *API) handleEntitiesFiles(_ context.Context, filesContent map[string][]byte, analysis sdk.ProjectRepositoryAnalysis) ([]sdk.Entity, error) {
+func (api *API) handleEntitiesFiles(_ context.Context, filesContent map[string][]byte, analysis sdk.ProjectRepositoryAnalysis) ([]sdk.Entity, []error) {
 	entities := make([]sdk.Entity, 0)
 	for filePath, content := range filesContent {
 		dir, fileName := filepath.Split(filePath)
 		fileName = strings.TrimSuffix(fileName, ".yml")
 		var es []sdk.Entity
-		var err error
+		var err sdk.MultiError
 		switch {
 		case strings.HasPrefix(filePath, ".cds/worker-model-templates/"):
 			var tmpls []sdk.WorkerModelTemplate
@@ -629,11 +629,11 @@ func (api *API) getCdsArchiveFileOnRepo(ctx context.Context, repo sdk.ProjectRep
 
 		dir, fileName := filepath.Split(hdr.Name)
 		if strings.HasSuffix(fileName, ".yml") {
-			entity := sdk.ProjectRepositoryDataEntity{
+			e := sdk.ProjectRepositoryDataEntity{
 				FileName: fileName,
 				Path:     dir,
 			}
-			analysis.Data.Entities = append(analysis.Data.Entities, entity)
+			analysis.Data.Entities = append(analysis.Data.Entities, e)
 		}
 
 		buff := new(bytes.Buffer)
@@ -649,15 +649,20 @@ func (api *API) getCdsArchiveFileOnRepo(ctx context.Context, repo sdk.ProjectRep
 	return filesContent, nil
 }
 
-func (api *API) stopAnalysis(ctx context.Context, analysis *sdk.ProjectRepositoryAnalysis, originalError error) error {
-	log.ErrorWithStackTrace(ctx, originalError)
+func (api *API) stopAnalysis(ctx context.Context, analysis *sdk.ProjectRepositoryAnalysis, originalErrors ...error) error {
+	me := sdk.MultiError{}
+	for _, e := range originalErrors {
+		log.ErrorWithStackTrace(ctx, e)
+		me.Append(e)
+	}
 	tx, err := api.mustDB().Begin()
 	if err != nil {
 		return sdk.WithStack(err)
 	}
 	defer tx.Rollback() // nolint
+
 	analysis.Status = sdk.RepositoryAnalysisStatusError
-	analysis.Data.Error = fmt.Sprintf("%v", originalError)
+	analysis.Data.Error = fmt.Sprintf("%s", me.Error())
 	if err := repository.UpdateAnalysis(ctx, tx, analysis); err != nil {
 		return err
 	}

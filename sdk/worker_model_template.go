@@ -1,46 +1,60 @@
 package sdk
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+
+	"github.com/xeipuuv/gojsonschema"
+)
 
 type WorkerModelTemplate struct {
-	Name   string                     `json:"name"`
-	Docker *WorkerModelTemplateDocker `json:"docker,omitempty"`
-	VM     *WorkerModelTemplateVM     `json:"vm,omitempty"`
+	Name string          `json:"name" jsonschema:"required"`
+	Type string          `json:"type" jsonschema:"required"`
+	Spec json.RawMessage `json:"spec" jsonschema:"required" jsonschema_allof_type:"type=docker:#/$defs/WorkerModelTemplateDocker,type=vm:#/$defs/WorkerModelTemplateVM"`
 }
 
 type WorkerModelTemplateDocker struct {
-	Cmd   string            `json:"cmd"`
-	Shell string            `json:"shell"`
-	Envs  map[string]string `json:"envs"`
+	Cmd   string            `json:"cmd" jsonschema:"required"`
+	Shell string            `json:"shell" jsonschema:"required"`
+	Envs  map[string]string `json:"envs,omitempty"`
 }
 
 type WorkerModelTemplateVM struct {
-	Cmd     string `json:"cmd"`
-	PreCmd  string `json:"pre_cmd"`
-	PostCmd string `json:"post_cmd"`
+	Cmd     string `json:"cmd" jsonschema:"required"`
+	PreCmd  string `json:"pre_cmd,omitempty"`
+	PostCmd string `json:"post_cmd" jsonschema:"required"`
 }
 
-func (wmt WorkerModelTemplate) Lint() error {
-	if wmt.Name == "" {
-		return WithStack(fmt.Errorf("missing worker model template name"))
+func (wmt WorkerModelTemplate) Lint() []error {
+	multipleError := MultiError{}
+
+	workerModelTemplateSchema := GetWorkerModelTemplateJsonSchema()
+	workerModelTemplateSchemaS, err := workerModelTemplateSchema.MarshalJSON()
+	if err != nil {
+		multipleError.Append(WrapError(err, "unable to load worker model template schema"))
+		return multipleError
 	}
-	if wmt.Docker != nil {
-		if wmt.Docker.Cmd == "" {
-			return WithStack(fmt.Errorf("missing docker cmd"))
-		}
-		if wmt.Docker.Shell == "" {
-			return WithStack(fmt.Errorf("missing docker shell"))
-		}
+	schemaLoader := gojsonschema.NewStringLoader(string(workerModelTemplateSchemaS))
+
+	modelJson, err := json.Marshal(wmt)
+	if err != nil {
+		multipleError.Append(WithStack(err))
+		return multipleError
 	}
-	if wmt.VM != nil {
-		if wmt.VM.Cmd == "" {
-			return WithStack(fmt.Errorf("missing vm cmd"))
-		}
-		if wmt.VM.PostCmd == "" {
-			return WithStack(fmt.Errorf("missing vm post_cmd to shutdown the VM"))
-		}
+	documentLoader := gojsonschema.NewStringLoader(string(modelJson))
+
+	result, err := gojsonschema.Validate(schemaLoader, documentLoader)
+	if err != nil {
+		multipleError.Append(WithStack(err))
+		return multipleError
 	}
-	return nil
+	if result.Valid() {
+		return nil
+	}
+	for _, e := range result.Errors() {
+		multipleError.Append(fmt.Errorf("%v", e))
+	}
+	return multipleError
 }
 
 func (wmt WorkerModelTemplate) GetName() string {
