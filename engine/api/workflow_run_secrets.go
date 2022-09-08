@@ -18,8 +18,8 @@ func (api *API) cleanWorkflowRunSecrets(ctx context.Context) {
 	db := api.mustDB()
 
 	delay := 10 * time.Minute
-	if api.Config.Secrets.SnapshotRetentionDelay > 0 {
-		delay = time.Duration(api.Config.Secrets.SnapshotRetentionDelay) * time.Minute
+	if api.Config.Secrets.SnapshotCleanInterval > 0 {
+		delay = time.Duration(api.Config.Secrets.SnapshotCleanInterval) * time.Minute
 	}
 
 	limit := int64(100)
