@@ -55,7 +55,8 @@ func TestGetWorkerModelTemplatesHandler(t *testing.T) {
 		ProjectRepositoryID: repo.ID,
 		ProjectKey:          p.Key,
 		Data: `name: docker-unix
-docker:
+type: docker
+spec:
   cmd: curl {{.API}}/download/worker/linux/$(uname -m) -o worker && chmod +x worker && exec ./worker
   shell: sh -c
   envs:
@@ -71,7 +72,8 @@ docker:
 		ProjectRepositoryID: repo.ID,
 		ProjectKey:          p.Key,
 		Data: `name: openstack-debian
-vm:
+type: vm
+spec:
   pre_cmd: apt-get install docker-ce.
   cmd: ./worker
   post_cmd: sudo shutdown -h now`,
@@ -116,8 +118,5 @@ vm:
 	require.NoError(t, json.Unmarshal(bodyOne, &tmplsOne))
 
 	require.Equal(t, 1, len(tmplsOne))
-	require.NotNil(t, tmplsOne[0].Docker)
-	require.Equal(t, "curl {{.API}}/download/worker/linux/$(uname -m) -o worker && chmod +x worker && exec ./worker", tmplsOne[0].Docker.Cmd)
-	require.Equal(t, "sh -c", tmplsOne[0].Docker.Shell)
-	require.Equal(t, 1, len(tmplsOne[0].Docker.Envs))
+	require.Equal(t, "docker", tmplsOne[0].Type)
 }

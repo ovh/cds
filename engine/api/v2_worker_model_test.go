@@ -55,7 +55,8 @@ func TestGetV2WorkerModelsHandler(t *testing.T) {
 		ProjectRepositoryID: repo.ID,
 		ProjectKey:          p.Key,
 		Data: `name: docker-unix
-docker:
+type: docker
+spec:
   image: monimage
   cmd: curl {{.API}}/download/worker/linux/$(uname -m) -o worker && chmod +x worker && exec ./worker
   shell: sh -c
@@ -72,7 +73,8 @@ docker:
 		ProjectRepositoryID: repo.ID,
 		ProjectKey:          p.Key,
 		Data: `name: openstack-debian
-vm:
+type: openstack
+spec:
   image: monimage
   flavor: maflavor
   pre_cmd: apt-get install docker-ce.
@@ -119,8 +121,5 @@ vm:
 	require.NoError(t, json.Unmarshal(bodyOne, &wm))
 
 	require.Equal(t, 1, len(wm))
-	require.NotNil(t, wm[0].Docker)
-	require.Equal(t, "curl {{.API}}/download/worker/linux/$(uname -m) -o worker && chmod +x worker && exec ./worker", wm[0].Docker.Cmd)
-	require.Equal(t, "sh -c", wm[0].Docker.Shell)
-	require.Equal(t, 1, len(wm[0].Docker.Envs))
+	require.Equal(t, "docker", wm[0].Type)
 }
