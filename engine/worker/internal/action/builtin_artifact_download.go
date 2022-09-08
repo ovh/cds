@@ -19,6 +19,7 @@ import (
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/grpcplugin/integrationplugin"
+	"github.com/ovh/cds/sdk/interpolate"
 )
 
 func RunArtifactDownload(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, _ []sdk.Variable) (sdk.Result, error) {
@@ -77,7 +78,12 @@ func RunArtifactDownload(ctx context.Context, wk workerruntime.Runtime, a sdk.Ac
 		return res, fmt.Errorf("cds.run.number variable is not valid. aborting")
 	}
 
-	reg, err := regexp.Compile(pattern)
+	interpolatedPattern, err := interpolate.Do(pattern, sdk.ParametersToMap(wk.Parameters()))
+	if err != nil {
+		return res, fmt.Errorf("unable to interpolate pattern. aborting")
+	}
+
+	reg, err := regexp.Compile(interpolatedPattern)
 	if err != nil {
 		res.Status = sdk.StatusFail
 		res.Reason = fmt.Sprintf("Invalid pattern %s, must be a regex : %v", pattern, err)

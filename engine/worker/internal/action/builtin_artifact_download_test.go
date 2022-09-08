@@ -66,6 +66,10 @@ func TestRunArtifactDownload(t *testing.T) {
 			Name:  "cds.version",
 			Value: "1",
 		},
+		{
+			Name:  "cds.build.pkg",
+			Value: "myFile.txt",
+		},
 	}...)
 	res, err := RunArtifactDownload(ctx, wk,
 		sdk.Action{
@@ -76,7 +80,7 @@ func TestRunArtifactDownload(t *testing.T) {
 				},
 				{
 					Name:  "pattern",
-					Value: ".*.txt",
+					Value: "{{.cds.build.pkg}}",
 				},
 			},
 		}, nil)

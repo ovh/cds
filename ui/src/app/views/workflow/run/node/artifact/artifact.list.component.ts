@@ -76,7 +76,6 @@ export class WorkflowRunArtifactListComponent implements OnInit, OnDestroy {
                 computeArtifact = true;
             }
             if (computeArtifact) {
-                let uiArtifacts: Array<UIArtifact>;
                 let uiRunResults: Array<UIArtifact>;
                 this.uiArtifacts = new Array<UIArtifact>();
                 if (nr.results) {
