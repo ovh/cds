@@ -54,24 +54,5 @@ func workerModelListFunc(v cli.Values) (cli.ListResult, error) {
 		return nil, err
 	}
 
-	type Result struct {
-		Name string `cli:"name"`
-		Type string `cli:"type"`
-	}
-	results := make([]Result, 0, len(wms))
-	for _, t := range wms {
-		var modelType string
-		switch {
-		case t.Docker != nil:
-			modelType = "docker"
-		case t.VSphere != nil:
-			modelType = "vsphere"
-		case t.Openstack != nil:
-			modelType = "openstack"
-		default:
-			modelType = "unknown"
-		}
-		results = append(results, Result{Name: t.Name, Type: modelType})
-	}
-	return cli.AsListResult(results), err
+	return cli.AsListResult(wms), err
 }

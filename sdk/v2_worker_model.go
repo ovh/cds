@@ -7,10 +7,10 @@ import (
 )
 
 type V2WorkerModel struct {
-	Name        string          `json:"name" jsonschema:"required"`
+	Name        string          `json:"name" cli:"name" jsonschema:"required"`
 	From        string          `json:"from"`
 	Description string          `json:"description,omitempty"`
-	Type        string          `json:"type" jsonschema:"required"`
+	Type        string          `json:"type" cli:"type" jsonschema:"required"`
 	Spec        json.RawMessage `json:"spec" jsonschema:"required" jsonschema_allof_type:"type=docker:#/$defs/V2WorkerModelDockerSpec,type=openstack:#/$defs/V2WorkerModelOpenstackSpec,type=vsphere:#/$defs/V2WorkerModelVSphereSpec"`
 }
 

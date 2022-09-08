@@ -8,8 +8,8 @@ import (
 )
 
 type WorkerModelTemplate struct {
-	Name string          `json:"name" jsonschema:"required"`
-	Type string          `json:"type" jsonschema:"required"`
+	Name string          `json:"name" cli:"mane" jsonschema:"required"`
+	Type string          `json:"type" cli:"type" jsonschema:"required"`
 	Spec json.RawMessage `json:"spec" jsonschema:"required" jsonschema_allof_type:"type=docker:#/$defs/WorkerModelTemplateDocker,type=vm:#/$defs/WorkerModelTemplateVM"`
 }
 

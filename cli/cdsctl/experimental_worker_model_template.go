@@ -52,19 +52,5 @@ func wmTemplateListFunc(v cli.Values) (cli.ListResult, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	type Result struct {
-		Name string `cli:"name"`
-		Type string `cli:"type"`
-	}
-	results := make([]Result, 0, len(tmpls))
-	for _, t := range tmpls {
-		tmplType := "docker"
-		if t.VM != nil {
-			tmplType = "vm"
-		}
-		results = append(results, Result{Name: t.Name, Type: tmplType})
-	}
-
-	return cli.AsListResult(results), err
+	return cli.AsListResult(tmpls), err
 }
