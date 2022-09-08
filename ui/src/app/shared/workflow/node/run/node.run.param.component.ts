@@ -363,9 +363,12 @@ export class WorkflowNodeRunParamComponent implements OnInit, AfterViewInit, OnD
             request.number = this.num;
         }
 
-        this._workflowRunService.runWorkflow(this.projectKey, this.workflow.name, request).subscribe(wr => {
-            this.loading = false;
-            this._cd.detectChanges();
+        this._workflowRunService.runWorkflow(this.projectKey, this.workflow.name, request)
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.detectChanges();
+            }))
+            .subscribe(wr => {
             this.close();
             this._router.navigate(['/project', this.projectKey, 'workflow', this.workflow.name, 'run', wr.num]);
         });
