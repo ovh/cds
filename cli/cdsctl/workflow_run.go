@@ -213,3 +213,30 @@ func workflowRunManualRun(v cli.Values) error {
 
 	return workflowRunInteractive(v, w, configUser.URLUI)
 }
+
+var workflowRunDeleteCmd = cli.Command{
+	Name:    "run-delete",
+	Short:   "Delete a workflow run",
+	Aliases: []string{"remove", "rm"},
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+		{Name: _WorkflowName},
+	},
+	Args: []cli.Arg{
+		{
+			Name: "run-number",
+			IsValid: func(s string) bool {
+				match, _ := regexp.MatchString(`[0-9]?`, s)
+				return match
+			},
+		},
+	},
+}
+
+func workflowRunDelete(v cli.Values) error {
+	runNumber, err := v.GetInt64("run-number")
+	if err != nil {
+		return err
+	}
+	return client.WorkflowRunDelete(v.GetString(_ProjectKey), v.GetString(_WorkflowName), runNumber)
+}

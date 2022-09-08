@@ -20,6 +20,7 @@ func workflow() *cobra.Command {
 	return cli.NewCommand(workflowCmd, nil, []*cobra.Command{
 		cli.NewCommand(workflowInitCmd, workflowInitRun, nil),
 		cli.NewCommand(templateApplyCmd("applyTemplate"), templateApplyRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(workflowRunDeleteCmd, workflowRunDelete, nil, withAllCommandModifiers()...),
 		cli.NewListCommand(workflowListCmd, workflowListRun, nil, withAllCommandModifiers()...),
 		cli.NewListCommand(workflowHistoryCmd, workflowHistoryRun, nil, withAllCommandModifiers()...),
 		cli.NewGetCommand(workflowShowCmd, workflowShowRun, nil, withAllCommandModifiers()...),

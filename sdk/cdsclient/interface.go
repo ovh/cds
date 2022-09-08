@@ -348,6 +348,7 @@ type WorkflowClient interface {
 	WorkflowRunsDeleteByBranch(projectKey string, workflowName string, branch string) error
 	WorkflowRunSearch(projectKey string, offset, limit int64, filter ...Filter) ([]sdk.WorkflowRun, error)
 	WorkflowRunList(projectKey string, workflowName string, offset, limit int64) ([]sdk.WorkflowRun, error)
+	WorkflowRunDelete(projectKey string, workflowName string, runNumber int64) error
 	WorkflowRunArtifactsLinks(projectKey string, name string, number int64) (sdk.CDNItemLinks, error)
 	WorkflowRunResultsList(ctx context.Context, projectKey string, name string, number int64) ([]sdk.WorkflowRunResult, error)
 	WorkflowRunFromHook(projectKey string, workflowName string, hook sdk.WorkflowNodeRunHookEvent) (*sdk.WorkflowRun, error)
