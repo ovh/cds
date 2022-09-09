@@ -24,6 +24,22 @@ spec:
 	require.Contains(t, fmt.Sprintf("%v", err), "cmd is required")
 }
 
+func TestWorkerModelTemplateDockerWrongType(t *testing.T) {
+	tmpl := `name: debian9
+description: "my debian worker model"
+type: marathon
+spec:
+  shell: sh -c
+`
+
+	var wmTemplate WorkerModelTemplate
+	require.NoError(t, yaml.Unmarshal([]byte(tmpl), &wmTemplate))
+
+	err := wmTemplate.Lint()
+	require.NotEqual(t, 0, len(err))
+	require.Contains(t, fmt.Sprintf("%v", err), "type must be one of the following")
+}
+
 func TestWorkerModelTemplateDockerOK(t *testing.T) {
 	tmpl := `name: debian9
 description: "my debian worker model"

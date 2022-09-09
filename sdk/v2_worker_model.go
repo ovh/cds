@@ -7,20 +7,20 @@ import (
 )
 
 type V2WorkerModel struct {
-	Name        string          `json:"name" cli:"name" jsonschema:"required"`
+	Name        string          `json:"name" cli:"name" jsonschema:"required,minLength=1"`
 	From        string          `json:"from"`
 	Description string          `json:"description,omitempty"`
-	Type        string          `json:"type" cli:"type" jsonschema:"required"`
+	Type        string          `json:"type" cli:"type" jsonschema:"required,enum=docker,enum=openstack,enum=vsphere"`
 	Spec        json.RawMessage `json:"spec" jsonschema:"required" jsonschema_allof_type:"type=docker:#/$defs/V2WorkerModelDockerSpec,type=openstack:#/$defs/V2WorkerModelOpenstackSpec,type=vsphere:#/$defs/V2WorkerModelVSphereSpec"`
 }
 
 type V2WorkerModelDockerSpec struct {
-	Image    string            `json:"image" jsonschema:"required"`
-	Registry string            `json:"registry,omitempty" jsonschema:"required"`
+	Image    string            `json:"image" jsonschema:"required,minLength=1"`
+	Registry string            `json:"registry,omitempty" jsonschema:"required,minLength=1"`
 	Username string            `json:"username,omitempty"`
 	Password string            `json:"password,omitempty"`
-	Cmd      string            `json:"cmd,omitempty" jsonschema:"required"`
-	Shell    string            `json:"shell,omitempty" jsonschema:"required"`
+	Cmd      string            `json:"cmd,omitempty" jsonschema:"required,minLength=1"`
+	Shell    string            `json:"shell,omitempty" jsonschema:"required,minLength=1"`
 	Envs     map[string]string `json:"envs,omitempty"`
 }
 

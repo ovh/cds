@@ -1,6 +1,7 @@
 name: docker-debian
 description: my debian worker model
-docker:
+type: docker
+spec:
   image: myimage:1.1
   registry: http://my-registry:9000
   cmd: curl {{.API}}/download/worker/linux/$(uname -m) -o worker && chmod +x worker && exec ./worker
