@@ -214,7 +214,6 @@ var (
 		language.AmericanEnglish,
 		language.French,
 	}
-	matcher = language.NewMatcher(SupportedLanguages)
 )
 
 //String returns formated string for the specified language

@@ -74,14 +74,6 @@ type UserNotificationTemplate struct {
 	DisableStatus  *bool `json:"disable_status,omitempty" yaml:"disable_status,omitempty"`
 }
 
-//userNotificationInput is a way to parse notification
-type userNotificationInput struct {
-	Notifications         map[string]interface{} `json:"notifications"`
-	ApplicationPipelineID int64                  `json:"application_pipeline_id"`
-	Environment           Environment            `json:"environment"`
-	Pipeline              Pipeline               `json:"pipeline"`
-}
-
 //Default template values
 var (
 	UserNotificationTemplateEmail = UserNotificationTemplate{

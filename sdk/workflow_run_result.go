@@ -49,7 +49,7 @@ type WorkflowRunResult struct {
 	SubNum            int64                  `json:"sub_num" db:"sub_num"`
 	Type              WorkflowRunResultType  `json:"type" db:"type"`
 	DataRaw           json.RawMessage        `json:"data" db:"data"`
-	DataSync          *WorkflowRunResultSync `json:"sync,omitmpty" db:"sync"`
+	DataSync          *WorkflowRunResultSync `json:"sync,omitempty" db:"sync"`
 }
 
 type WorkflowRunResultSync struct {
