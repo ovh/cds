@@ -618,7 +618,8 @@ GDFkaTe3nUJdYV4=
 
 	model := `name: docker-debian
 description: my debian worker model
-docker:
+type: docker
+spec:
   image: myimage:1.1
   registry: http://my-registry:9000
   cmd: curl {{.API}}/download/worker/linux/$(uname -m) -o worker && chmod +x worker && exec ./worker
@@ -630,10 +631,11 @@ docker:
 	encodedModel := base64.StdEncoding.EncodeToString([]byte(model))
 
 	modelTemplate := `name: openstack-debian
-openstack:
-    pre_cmd: apt-get install docker-ce
-    cmd: ./worker
-    post_cmd: sudo shutdown -h now`
+type: vm
+spec:
+  pre_cmd: apt-get install docker-ce
+  cmd: ./worker
+  post_cmd: sudo shutdown -h now`
 	encodedTemplate := base64.StdEncoding.EncodeToString([]byte(modelTemplate))
 
 	servicesClients.EXPECT().
