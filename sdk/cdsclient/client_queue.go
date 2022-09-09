@@ -271,26 +271,20 @@ func (c *client) QueueJobSetVersion(ctx context.Context, jobID int64, version sd
 	return err
 }
 
-func (c *client) QueueWorkflowRunResultsRelease(ctx context.Context, permJobID int64, runResultIDs []string, from, to string) error {
+func (c *client) QueueWorkflowRunResultsRelease(ctx context.Context, permJobID int64, runResultIDs []string, to string) error {
 	req := sdk.WorkflowRunResultPromotionRequest{
-		IDs: runResultIDs,
-		WorkflowRunResultPromotion: sdk.WorkflowRunResultPromotion{
-			FromMaturity: from,
-			ToMaturity:   to,
-		},
+		IDs:        runResultIDs,
+		ToMaturity: to,
 	}
 	uri := fmt.Sprintf("/queue/workflows/%d/run/results/release", permJobID)
 	_, err := c.PostJSON(ctx, uri, req, nil)
 	return err
 }
 
-func (c *client) QueueWorkflowRunResultsPromote(ctx context.Context, permJobID int64, runResultIDs []string, from, to string) error {
+func (c *client) QueueWorkflowRunResultsPromote(ctx context.Context, permJobID int64, runResultIDs []string, to string) error {
 	req := sdk.WorkflowRunResultPromotionRequest{
-		IDs: runResultIDs,
-		WorkflowRunResultPromotion: sdk.WorkflowRunResultPromotion{
-			FromMaturity: from,
-			ToMaturity:   to,
-		},
+		IDs:        runResultIDs,
+		ToMaturity: to,
 	}
 	uri := fmt.Sprintf("/queue/workflows/%d/run/results/promote", permJobID)
 	_, err := c.PostJSON(ctx, uri, req, nil)

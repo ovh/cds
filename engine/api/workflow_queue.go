@@ -1132,53 +1132,43 @@ func (api *API) workflowRunResultPromoteHandler() service.Handler {
 			return err
 		}
 
-		var promotionRequest sdk.WorkflowRunResultPromotionRequest
-		if err := service.UnmarshalBody(r, &promotionRequest); err != nil {
+		var promoteRequest sdk.WorkflowRunResultPromotionRequest
+		if err := service.UnmarshalBody(r, &promoteRequest); err != nil {
 			return sdk.WithStack(err)
 		}
 
-		tx, err := api.mustDBWithCtx(ctx).Begin()
+		wr, err := workflow.LoadRunByJobID(ctx, api.mustDB(), jobID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
+		if err != nil {
+			return err
+		}
+
+		// Ensure that run result are synced with the Artifact Manager
+		txSync, err := api.mustDBWithCtx(ctx).Begin()
 		if err != nil {
 			return sdk.WithStack(err)
 		}
-		defer tx.Rollback()
+		defer txSync.Rollback()
+		if err := workflow.SyncRunResultArtifactManagerByRunID(ctx, txSync, wr.ID); err != nil {
+			return err
+		}
+		if err := txSync.Commit(); err != nil {
+			return sdk.WithStack(err)
+		}
 
-		wr, err := workflow.LoadRunByJobID(ctx, tx, jobID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
+		// Process promote request
+		txPromote, err := api.mustDBWithCtx(ctx).Begin()
 		if err != nil {
+			return sdk.WithStack(err)
+		}
+		defer txPromote.Rollback()
+		if err := workflow.ProcessRunResultPromotionByRunID(ctx, txPromote, wr.ID, sdk.WorkflowRunResultPromotionTypePromote, promoteRequest); err != nil {
 			return err
 		}
-
-		runResults, err := workflow.LoadRunResultsByRunIDFilterByIDs(ctx, tx, wr.ID, promotionRequest.IDs...)
-		if err != nil {
-			return err
+		if err := txPromote.Commit(); err != nil {
+			return sdk.WithStack(err)
 		}
 
-		if len(runResults) == 0 {
-			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to find any run results among %v", promotionRequest.IDs)
-		}
-
-		promotionRequest.WorkflowRunResultPromotion.Date = time.Now()
-		for i := range runResults {
-			r := &runResults[i]
-			for _, id := range promotionRequest.IDs {
-				if id == r.ID {
-					if r.DataSync == nil {
-						r.DataSync = new(sdk.WorkflowRunResultSync)
-					}
-					log.Debug(ctx, "adding promotion data: %+v", promotionRequest)
-					r.DataSync.Promotions = append(r.DataSync.Promotions, promotionRequest.WorkflowRunResultPromotion)
-				}
-			}
-			if err := workflow.UpdateRunResult(ctx, tx, r); err != nil {
-				return err
-			}
-		}
-
-		if err := workflow.SyncRunResultArtifactManagerByRunID(ctx, tx, wr.ID); err != nil {
-			return err
-		}
-
-		return sdk.WithStack(tx.Commit())
+		return nil
 	}
 }
 
@@ -1198,48 +1188,38 @@ func (api *API) workflowRunResultReleaseHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		tx, err := api.mustDBWithCtx(ctx).Begin()
+		wr, err := workflow.LoadRunByJobID(ctx, api.mustDB(), jobID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
+		if err != nil {
+			return err
+		}
+
+		// Ensure that run result are synced with the Artifact Manager
+		txSync, err := api.mustDBWithCtx(ctx).Begin()
 		if err != nil {
 			return sdk.WithStack(err)
 		}
-		defer tx.Rollback()
+		defer txSync.Rollback()
+		if err := workflow.SyncRunResultArtifactManagerByRunID(ctx, txSync, wr.ID); err != nil {
+			return err
+		}
+		if err := txSync.Commit(); err != nil {
+			return sdk.WithStack(err)
+		}
 
-		wr, err := workflow.LoadRunByJobID(ctx, tx, jobID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
+		// Process release request
+		txRelease, err := api.mustDBWithCtx(ctx).Begin()
 		if err != nil {
+			return sdk.WithStack(err)
+		}
+		defer txRelease.Rollback()
+		if err := workflow.ProcessRunResultPromotionByRunID(ctx, txRelease, wr.ID, sdk.WorkflowRunResultPromotionTypeRelease, releaseRequest); err != nil {
 			return err
 		}
-
-		runResults, err := workflow.LoadRunResultsByRunIDFilterByIDs(ctx, tx, wr.ID, releaseRequest.IDs...)
-		if err != nil {
-			return err
+		if err := txRelease.Commit(); err != nil {
+			return sdk.WithStack(err)
 		}
 
-		if len(runResults) == 0 {
-			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to find any run results among %v", releaseRequest.IDs)
-		}
-
-		releaseRequest.WorkflowRunResultPromotion.Date = time.Now()
-		for i := range runResults {
-			r := &runResults[i]
-			for _, id := range releaseRequest.IDs {
-				if id == r.ID {
-					if r.DataSync == nil {
-						r.DataSync = new(sdk.WorkflowRunResultSync)
-					}
-					log.Debug(ctx, "adding release data: %+v", releaseRequest)
-					r.DataSync.Releases = append(r.DataSync.Releases, releaseRequest.WorkflowRunResultPromotion)
-				}
-			}
-			if err := workflow.UpdateRunResult(ctx, tx, r); err != nil {
-				return err
-			}
-		}
-
-		if err := workflow.SyncRunResultArtifactManagerByRunID(ctx, tx, wr.ID); err != nil {
-			return err
-		}
-
-		return sdk.WithStack(tx.Commit())
+		return nil
 	}
 }
 

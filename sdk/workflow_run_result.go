@@ -60,9 +60,16 @@ type WorkflowRunResultSync struct {
 	Releases   []WorkflowRunResultPromotion `json:"releases"`
 }
 
+type WorkflowRunResultPromotionType string
+
+const (
+	WorkflowRunResultPromotionTypePromote WorkflowRunResultPromotionType = "promote"
+	WorkflowRunResultPromotionTypeRelease WorkflowRunResultPromotionType = "release"
+)
+
 type WorkflowRunResultPromotionRequest struct {
-	WorkflowRunResultPromotion
-	IDs []string
+	ToMaturity string   `json:"to_maturity"`
+	IDs        []string `json:"ids"`
 }
 
 type WorkflowRunResultPromotion struct {
@@ -72,19 +79,16 @@ type WorkflowRunResultPromotion struct {
 }
 
 func (s *WorkflowRunResultSync) LatestPromotionOrRelease() *WorkflowRunResultPromotion {
-	sort.Slice(s.Promotions, func(i, j int) bool {
-		return s.Promotions[i].Date.Before(s.Promotions[j].Date)
-	})
-	sort.Slice(s.Releases, func(i, j int) bool {
-		return s.Releases[i].Date.Before(s.Releases[j].Date)
-	})
-	if len(s.Releases) > 0 {
-		return &s.Releases[len(s.Releases)-1]
+	aggregatedPromotions := make([]WorkflowRunResultPromotion, 0, len(s.Promotions)+len(s.Releases))
+	aggregatedPromotions = append(aggregatedPromotions, s.Promotions...)
+	aggregatedPromotions = append(aggregatedPromotions, s.Releases...)
+	if len(aggregatedPromotions) == 0 {
+		return nil
 	}
-	if len(s.Promotions) > 0 {
-		return &s.Promotions[len(s.Promotions)-1]
-	}
-	return nil
+	sort.Slice(aggregatedPromotions, func(i, j int) bool {
+		return aggregatedPromotions[i].Date.Before(aggregatedPromotions[j].Date)
+	})
+	return &aggregatedPromotions[len(aggregatedPromotions)-1]
 }
 
 // Value returns driver.Value from WorkflowRunResultSync

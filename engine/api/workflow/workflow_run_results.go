@@ -458,9 +458,10 @@ func UpdateRunResult(ctx context.Context, db gorp.SqlExecutor, result *sdk.Workf
 	return nil
 }
 
-func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorp.SqlExecutor, id int64) error {
-	log.Info(ctx, "sync run result for workflow run id %d", id)
-	wr, err := LoadAndLockRunByID(ctx, db, id, LoadRunOptions{})
+func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorpmapper.SqlExecutorWithTx, workflowRunID int64) error {
+	log.Info(ctx, "Sync run results for workflow run id %d", workflowRunID)
+
+	wr, err := LoadAndLockRunByID(ctx, db, workflowRunID, LoadRunOptions{})
 	if err != nil {
 		return err
 	}
@@ -497,7 +498,7 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorp.SqlExecuto
 		return nil
 	}
 
-	log.Debug(ctx, "%d run results to sync on run %d", len(runResults), id)
+	log.Debug(ctx, "%d run results to sync on run %d", len(runResults), workflowRunID)
 
 	var artifactManagerInteg *sdk.WorkflowProjectIntegration
 	for i := range wr.Workflow.Integrations {
@@ -602,41 +603,20 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorp.SqlExecuto
 	nodeRunURL := parameters["cds.ui.pipeline.run"][0]
 	runURL := nodeRunURL[0:strings.Index(nodeRunURL, "/node/")]
 
-	var lowMaturitySuffix string
-	for i := range runResults {
-		log.Debug(ctx, "checking for earlier maturity in %+v", runResults[i].DataSync)
-		if runResults[i].DataSync != nil {
-			p := runResults[i].DataSync.LatestPromotionOrRelease()
-			if p != nil {
-				if lowMaturitySuffix != "" {
-					if p.FromMaturity != lowMaturitySuffix {
-						return sdk.NewErrorFrom(sdk.ErrWrongRequest, "several maturities (%q, %q) detected among your artifacts", p.ToMaturity, lowMaturitySuffix)
-					}
-				}
-				log.Debug(ctx, "low maturity is %+v", p.FromMaturity)
-				lowMaturitySuffix = p.FromMaturity
-				// we don't break the loop to let us to check all the maturities
-			}
-		}
-	}
-	if lowMaturitySuffix == "" {
-		lowMaturitySuffix = lowMaturitySuffixFromConfig
-	}
-
 	buildInfoRequest, err := art.PrepareBuildInfo(ctx, artifactClient, art.BuildInfoRequest{
-		BuildInfoPrefix:   buildInfoPrefix,
-		ProjectKey:        wr.Workflow.ProjectKey,
-		WorkflowName:      wr.Workflow.Name,
-		Version:           version,
-		AgentName:         "cds-api",
-		TokenName:         tokenName,
-		RunURL:            runURL,
-		GitBranch:         gitBranch,
-		GitMessage:        gitMessage,
-		GitURL:            gitUrl,
-		GitHash:           gitHash,
-		RunResults:        runResults,
-		LowMaturitySuffix: lowMaturitySuffix,
+		BuildInfoPrefix:          buildInfoPrefix,
+		ProjectKey:               wr.Workflow.ProjectKey,
+		WorkflowName:             wr.Workflow.Name,
+		Version:                  version,
+		AgentName:                "cds-api",
+		TokenName:                tokenName,
+		RunURL:                   runURL,
+		GitBranch:                gitBranch,
+		GitMessage:               gitMessage,
+		GitURL:                   gitUrl,
+		GitHash:                  gitHash,
+		RunResults:               runResults,
+		DefaultLowMaturitySuffix: lowMaturitySuffixFromConfig,
 	})
 	if err != nil {
 		return err
@@ -667,6 +647,95 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorp.SqlExecuto
 		}
 		result.DataSync.Link = buildInfoRequest.Name + "/" + buildInfoRequest.Number
 		result.DataSync.Sync = true
+		if err := UpdateRunResult(ctx, db, &result); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func ProcessRunResultPromotionByRunID(ctx context.Context, db gorpmapper.SqlExecutorWithTx, workflowRunID int64, promotionType sdk.WorkflowRunResultPromotionType, promotionRequest sdk.WorkflowRunResultPromotionRequest) error {
+	log.Info(ctx, "Process promotion for run results %v and workflow run with id %d to maturity %s",
+		promotionRequest.IDs, workflowRunID, promotionRequest.ToMaturity)
+
+	wr, err := LoadAndLockRunByID(ctx, db, workflowRunID, LoadRunOptions{})
+	if err != nil {
+		return err
+	}
+
+	// Retrieve results to promote
+	rs, err := LoadRunResultsByRunIDFilterByIDs(ctx, db, wr.ID, promotionRequest.IDs...)
+	if err != nil {
+		return err
+	}
+	var filteredRunResults sdk.WorkflowRunResults
+	for i := range rs {
+		if rs[i].Type == sdk.WorkflowRunResultTypeArtifactManager {
+			filteredRunResults = append(filteredRunResults, rs[i])
+		}
+	}
+	if len(filteredRunResults) == 0 {
+		return nil
+	}
+
+	// Retrieve artifact manager integration for the workflow
+	var artifactManagerInteg *sdk.WorkflowProjectIntegration
+	for i := range wr.Workflow.Integrations {
+		if wr.Workflow.Integrations[i].ProjectIntegration.Model.ArtifactManager {
+			artifactManagerInteg = &wr.Workflow.Integrations[i]
+			break
+		}
+	}
+
+	// If no integration was found and there are existing run results of type ArtifactManager, set an error on this results
+	if artifactManagerInteg == nil {
+		var err = sdk.Errorf("artifact manager integration is not found for workflow %s/%s", wr.Workflow.ProjectKey, wr.Workflow.Name)
+		log.ErrorWithStackTrace(ctx, err)
+		for i := range filteredRunResults {
+			result := filteredRunResults[i]
+			// If the result is not an artifact manager, we do nothing but we consider it as synchronized
+			if result.DataSync == nil {
+				result.DataSync = new(sdk.WorkflowRunResultSync)
+			}
+			result.DataSync.Sync = false
+			result.DataSync.Error = err.Error()
+			if err := UpdateRunResult(ctx, db, &result); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	// If no release or promotion can be found on an run result, consider that the current maturity equals to the default low maturity from config
+	lowMaturitySuffixFromConfig := artifactManagerInteg.ProjectIntegration.Config[sdk.ArtifactoryConfigPromotionLowMaturity].Value
+
+	// Set a new promotion on each run result
+	now := time.Now()
+	for i := range filteredRunResults {
+		result := filteredRunResults[i]
+		if result.DataSync == nil {
+			result.DataSync = new(sdk.WorkflowRunResultSync)
+		}
+		currentMaturity := lowMaturitySuffixFromConfig
+		latestPromotion := result.DataSync.LatestPromotionOrRelease()
+		if latestPromotion != nil {
+			currentMaturity = latestPromotion.ToMaturity
+		}
+		switch promotionType {
+		case sdk.WorkflowRunResultPromotionTypeRelease:
+			result.DataSync.Releases = append(result.DataSync.Releases, sdk.WorkflowRunResultPromotion{
+				Date:         now,
+				FromMaturity: currentMaturity,
+				ToMaturity:   promotionRequest.ToMaturity,
+			})
+		case sdk.WorkflowRunResultPromotionTypePromote:
+			result.DataSync.Promotions = append(result.DataSync.Promotions, sdk.WorkflowRunResultPromotion{
+				Date:         now,
+				FromMaturity: currentMaturity,
+				ToMaturity:   promotionRequest.ToMaturity,
+			})
+		}
 		if err := UpdateRunResult(ctx, db, &result); err != nil {
 			return err
 		}

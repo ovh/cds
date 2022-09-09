@@ -78,10 +78,7 @@ func RunRelease(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, _ [
 	}
 
 	log.Info(ctx, "RunRelease> preparing run result %+v for release", promotedRunResultIDs)
-	if err := wk.Client().QueueWorkflowRunResultsRelease(ctx,
-		jobID, promotedRunResultIDs,
-		sdk.ParameterValue(a.Parameters, "srcMaturity"), sdk.ParameterValue(a.Parameters, "destMaturity"),
-	); err != nil {
+	if err := wk.Client().QueueWorkflowRunResultsRelease(ctx, jobID, promotedRunResultIDs, sdk.ParameterValue(a.Parameters, "destMaturity")); err != nil {
 		return sdk.Result{Status: sdk.StatusFail}, err
 	}
 
