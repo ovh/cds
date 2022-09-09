@@ -650,10 +650,8 @@ func (api *API) getCdsArchiveFileOnRepo(ctx context.Context, repo sdk.ProjectRep
 }
 
 func (api *API) stopAnalysis(ctx context.Context, analysis *sdk.ProjectRepositoryAnalysis, originalErrors ...error) error {
-	me := sdk.MultiError{}
 	for _, e := range originalErrors {
 		log.ErrorWithStackTrace(ctx, e)
-		me.Append(e)
 	}
 	tx, err := api.mustDB().Begin()
 	if err != nil {
@@ -662,7 +660,12 @@ func (api *API) stopAnalysis(ctx context.Context, analysis *sdk.ProjectRepositor
 	defer tx.Rollback() // nolint
 
 	analysis.Status = sdk.RepositoryAnalysisStatusError
-	analysis.Data.Error = fmt.Sprintf("%s", me.Error())
+
+	analysisErrors := make([]string, 0, len(originalErrors))
+	for _, e := range originalErrors {
+		analysisErrors = append(analysisErrors, e.Error())
+	}
+	analysis.Data.Error = fmt.Sprintf("%s", strings.Join(analysisErrors, ", "))
 	if err := repository.UpdateAnalysis(ctx, tx, analysis); err != nil {
 		return err
 	}
