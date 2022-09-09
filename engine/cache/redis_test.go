@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"strconv"
 	"testing"
 	"time"
 
@@ -17,7 +18,9 @@ func TestSortedSet(t *testing.T) {
 	cfg := testConfig.LoadTestingConf(t, sdk.TypeAPI)
 	redisHost := cfg["redisHost"]
 	redisPassword := cfg["redisPassword"]
-	s, err := NewRedisStore(redisHost, redisPassword, 60)
+	redisDbIndex, err := strconv.ParseInt(cfg["redisDbIndex"], 10, 64)
+	require.NoError(t, err, "error when unmarshal config")
+	s, err := NewRedisStore(redisHost, redisPassword, int(redisDbIndex), 60)
 	require.NoError(t, err)
 
 	s.Delete("test")
@@ -33,7 +36,9 @@ func TestDequeueJSONRawMessagesWithContext(t *testing.T) {
 	cfg := testConfig.LoadTestingConf(t, sdk.TypeAPI)
 	redisHost := cfg["redisHost"]
 	redisPassword := cfg["redisPassword"]
-	s, err := NewRedisStore(redisHost, redisPassword, 60)
+	redisDbIndex, err := strconv.ParseInt(cfg["redisDbIndex"], 10, 64)
+	require.NoError(t, err, "error when unmarshal config")
+	s, err := NewRedisStore(redisHost, redisPassword, int(redisDbIndex), 60)
 	require.NoError(t, err)
 
 	s.Delete("test")
@@ -71,7 +76,9 @@ func TestDequeueJSONRawMessagesWithContextMaxTimeout(t *testing.T) {
 	cfg := testConfig.LoadTestingConf(t, sdk.TypeAPI)
 	redisHost := cfg["redisHost"]
 	redisPassword := cfg["redisPassword"]
-	s, err := NewRedisStore(redisHost, redisPassword, 60)
+	redisDbIndex, err := strconv.ParseInt(cfg["redisDbIndex"], 10, 64)
+	require.NoError(t, err, "error when unmarshal config")
+	s, err := NewRedisStore(redisHost, redisPassword, int(redisDbIndex), 60)
 	require.NoError(t, err)
 
 	s.Delete("test")

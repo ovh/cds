@@ -134,6 +134,7 @@ func newRunningStorageUnits(t *testing.T, m *gorpmapper.Mapper, dbMap *gorp.DbMa
 				Redis: &storage.RedisBufferConfiguration{
 					Host:     cfg["redisHost"],
 					Password: cfg["redisPassword"],
+					DbIndex:  0,
 				},
 				BufferType: storage.CDNBufferTypeLog,
 			},

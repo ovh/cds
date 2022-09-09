@@ -43,6 +43,7 @@ TEST_DB_START_DOCKER = docker run -d -p $(TEST_DB_PORT):5432 -e POSTGRES_PASSWOR
 TEST_REDIS_PORT = 6379
 TEST_REDIS_HOST = $(if ${CDS_CACHE_REDIS_HOST},${CDS_CACHE_REDIS_HOST},localhost:$(TEST_REDIS_PORT))
 TEST_REDIS_PASS = $(if ${CDS_CACHE_REDIS_PASS},${CDS_CACHE_REDIS_PASS},)
+TEST_REDIS_DBINDEX = 0
 TEST_REDIS_START_DOCKER = docker run -d -p $(TEST_REDIS_PORT):6379 --name redis-cds redis:5
 
 TEST_KAFKA_START_DOCKER = docker run -d -p 2181:2181 -p 9092:9092 --env ADVERTISED_HOST=localhost --env ADVERTISED_PORT=9092 --name kafka-cds spotify/kafka
@@ -148,11 +149,11 @@ test-config: ${HOME}/.cds/api.tests.cfg.json ${HOME}/.cds/cdn.tests.cfg.json
 
 ${HOME}/.cds/api.tests.cfg.json:
 		@mkdir -p ${HOME}/.cds
-		@echo "{\"dbDriver\": \"postgres\", \"dbUser\" :\"$(TEST_DB_USER)\", \"dbPassword\" :\"$(TEST_DB_PASS)\" ,\"dbName\": \"$(TEST_DB_NAME)\", \"dbSchema\": \"$(TEST_API_DB_SCHEMA)\", \"dbHost\": \"$(TEST_DB_HOST)\", \"dbPort\" : \"$(TEST_DB_PORT)\", \"sslMode\": \"disable\", \"redisHost\" : \"$(TEST_REDIS_HOST)\", \"redisPassword\" : \"$(TEST_REDIS_PASSWORD)\"}" > ${HOME}/.cds/api.tests.cfg.json
+		@echo "{\"dbDriver\": \"postgres\", \"dbUser\" :\"$(TEST_DB_USER)\", \"dbPassword\" :\"$(TEST_DB_PASS)\" ,\"dbName\": \"$(TEST_DB_NAME)\", \"dbSchema\": \"$(TEST_API_DB_SCHEMA)\", \"dbHost\": \"$(TEST_DB_HOST)\", \"dbPort\" : \"$(TEST_DB_PORT)\", \"sslMode\": \"disable\", \"redisHost\" : \"$(TEST_REDIS_HOST)\", \"redisPassword\" : \"$(TEST_REDIS_PASSWORD)\", \"redisDbIndex\" : \"$(TEST_REDIS_DBINDEX)\"}" > ${HOME}/.cds/api.tests.cfg.json
 
 ${HOME}/.cds/cdn.tests.cfg.json:
 		@mkdir -p ${HOME}/.cds
-		@echo "{\"dbDriver\": \"postgres\", \"dbUser\" :\"$(TEST_DB_USER)\", \"dbPassword\" :\"$(TEST_DB_PASS)\" ,\"dbName\": \"$(TEST_DB_NAME)\", \"dbSchema\": \"$(TEST_CDN_DB_SCHEMA)\", \"dbHost\": \"$(TEST_DB_HOST)\", \"dbPort\" : \"$(TEST_DB_PORT)\", \"sslMode\": \"disable\", \"redisHost\" : \"$(TEST_REDIS_HOST)\", \"redisPassword\" : \"$(TEST_REDIS_PASSWORD)\"}" > ${HOME}/.cds/cdn.tests.cfg.json
+		@echo "{\"dbDriver\": \"postgres\", \"dbUser\" :\"$(TEST_DB_USER)\", \"dbPassword\" :\"$(TEST_DB_PASS)\" ,\"dbName\": \"$(TEST_DB_NAME)\", \"dbSchema\": \"$(TEST_CDN_DB_SCHEMA)\", \"dbHost\": \"$(TEST_DB_HOST)\", \"dbPort\" : \"$(TEST_DB_PORT)\", \"sslMode\": \"disable\", \"redisHost\" : \"$(TEST_REDIS_HOST)\", \"redisPassword\" : \"$(TEST_REDIS_PASSWORD)\", \"redisDbIndex\" : \"$(TEST_REDIS_DBINDEX)\"}" > ${HOME}/.cds/cdn.tests.cfg.json
 
 # Build a list of the first level of package in the 'engine' package, then remove the '.', 'dist' and 'sql'
 TEST_COMPONENTS = $(addprefix test-component-,$(filter-out sql,$(filter-out dist,$(filter-out .,$(shell find . -maxdepth 1 -type d -exec basename {} \;)))))

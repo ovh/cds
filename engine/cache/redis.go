@@ -26,7 +26,7 @@ type RedisStore struct {
 }
 
 //NewRedisStore initiate a new redisStore
-func NewRedisStore(host, password string, ttl int) (*RedisStore, error) {
+func NewRedisStore(host, password string, dbindex, ttl int) (*RedisStore, error) {
 	var client *redis.Client
 
 	//if host is line master@localhost:26379,localhost:26380 => it's a redis sentinel cluster
@@ -38,6 +38,7 @@ func NewRedisStore(host, password string, ttl int) (*RedisStore, error) {
 			MasterName:         masterName,
 			SentinelAddrs:      sentinels,
 			Password:           password,
+			DB:                 dbindex,
 			IdleCheckFrequency: 10 * time.Second,
 			IdleTimeout:        10 * time.Second,
 			PoolSize:           25,
@@ -50,7 +51,7 @@ func NewRedisStore(host, password string, ttl int) (*RedisStore, error) {
 		client = redis.NewClient(&redis.Options{
 			Addr:               host,
 			Password:           password, // no password set
-			DB:                 0,        // use default DB
+			DB:                 dbindex,
 			IdleCheckFrequency: 30 * time.Second,
 			MaxRetries:         10,
 			MinRetryBackoff:    30 * time.Millisecond,

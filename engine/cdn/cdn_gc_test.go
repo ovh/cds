@@ -55,6 +55,7 @@ func TestCleanSynchronizedItem(t *testing.T) {
 				Redis: &storage.RedisBufferConfiguration{
 					Host:     cfg["redisHost"],
 					Password: cfg["redisPassword"],
+					DbIndex:  0,
 				},
 				BufferType: storage.CDNBufferTypeLog,
 			},
@@ -184,6 +185,7 @@ func TestCleanSynchronizedItemWithDisabledStorage(t *testing.T) {
 				Redis: &storage.RedisBufferConfiguration{
 					Host:     cfg["redisHost"],
 					Password: cfg["redisPassword"],
+					DbIndex:  0,
 				},
 				BufferType: storage.CDNBufferTypeLog,
 			},
@@ -385,7 +387,7 @@ func TestPurgeItem(t *testing.T) {
 
 	var err error
 	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
-	s.LogCache, err = lru.NewRedisLRU(db.DbMap, 1000, cfg["redisHost"], cfg["redisPassword"])
+	s.LogCache, err = lru.NewRedisLRU(db.DbMap, 1000, cfg["redisHost"], cfg["redisPassword"], 0)
 	require.NoError(t, err)
 
 	// Add Item in CDS and FS

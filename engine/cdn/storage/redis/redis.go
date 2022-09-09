@@ -44,7 +44,7 @@ func (s *Redis) Init(_ context.Context, cfg interface{}, bufferType storage.CDNB
 	}
 	s.config = *config
 	var err error
-	s.store, err = cache.New(s.config.Host, s.config.Password, 60)
+	s.store, err = cache.New(s.config.Host, s.config.Password, s.config.DbIndex, 60)
 	if err != nil {
 		return err
 	}
