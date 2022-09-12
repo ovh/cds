@@ -11,28 +11,29 @@ jobs:
   steps:
   - script:
     - env > env.txt
+    - env > env.changes
   - artifactUpload:
-      path: env.txt
+      path: env.*
       tag: '{{.cds.version}}'
 - job: Release-to-staging
   stage: Stage 2
   steps:
   - pushBuildInfo: '{{.cds.workflow}}'
   - promote:
-      artifacts: .*
+      artifacts: .*.txt
       srcMaturity: snapshot
       destMaturity: staging
 - job: Release-to-rc
   stage: Stage 3
   steps:
   - release:
-      artifacts: .*
+      artifacts: .*.txt
       srcMaturity: staging
       destMaturity: rc
 - job: Release-to-release
   stage: Stage 4
   steps:
   - release:
-      artifacts: .*
+      artifacts: .*.txt
       srcMaturity: rc
       destMaturity: release
