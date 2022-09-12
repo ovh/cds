@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"net/http"
+	"net/url"
 	"strconv"
 
 	"github.com/rockbears/log"
@@ -406,7 +407,12 @@ func (api *API) checkActionPermissions(ctx context.Context, w http.ResponseWrite
 		return err
 	}
 
-	a, err := action.LoadTypeDefaultByNameAndGroupID(ctx, api.mustDB(), actionName, g.ID)
+	name, err := url.PathUnescape(actionName)
+	if err != nil {
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "%s", err)
+	}
+
+	a, err := action.LoadTypeDefaultByNameAndGroupID(ctx, api.mustDB(), name, g.ID)
 	if err != nil {
 		return err
 	}
@@ -422,7 +428,12 @@ func (api *API) checkActionBuiltinPermissions(ctx context.Context, w http.Respon
 		return sdk.WrapError(sdk.ErrWrongRequest, "invalid given action name")
 	}
 
-	a, err := action.LoadByTypesAndName(ctx, api.mustDB(), []string{sdk.BuiltinAction, sdk.PluginAction}, actionName)
+	name, err := url.PathUnescape(actionName)
+	if err != nil {
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "%s", err)
+	}
+
+	a, err := action.LoadByTypesAndName(ctx, api.mustDB(), []string{sdk.BuiltinAction, sdk.PluginAction}, name)
 	if err != nil {
 		return err
 	}
