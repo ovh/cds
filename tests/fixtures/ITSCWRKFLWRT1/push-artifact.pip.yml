@@ -10,10 +10,10 @@ jobs:
   stage: Stage 1
   steps:
   - script:
-    - env > env.txt
-    - env > env.changes
+    - echo "hello world" > test.txt
+    - echo "changes" > test.changes
   - artifactUpload:
-      path: env.*
+      path: test.*
       tag: '{{.cds.version}}'
 - job: Release-to-staging
   stage: Stage 2
