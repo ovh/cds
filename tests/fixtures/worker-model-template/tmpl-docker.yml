@@ -1,0 +1,7 @@
+name: docker-unix
+type: docker
+spec:
+  cmd: curl {{.API}}/download/worker/linux/$(uname -m) -o worker && chmod +x worker && exec ./worker
+  shell: sh -c
+  envs:
+    MYVAR: toto

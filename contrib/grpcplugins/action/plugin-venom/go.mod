@@ -42,7 +42,9 @@ require (
 	github.com/hashicorp/go-uuid v1.0.2 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/huandu/xstrings v1.2.0 // indirect
+	github.com/iancoleman/orderedmap v0.0.0-20190318233801-ac98e3ecb4b0 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
+	github.com/invopop/jsonschema v0.6.0 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/jcmturner/aescts/v2 v2.0.0 // indirect
 	github.com/jcmturner/dnsutils/v2 v2.0.0 // indirect
@@ -79,6 +81,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/rockbears/log v0.6.0 // indirect
+	github.com/rockbears/yaml v0.1.1-0.20220901090137-13dadb408625 // indirect
 	github.com/rubenv/sql-migrate v0.0.0-20160620083229-6f4757563362 // indirect
 	github.com/sclevine/agouti v3.0.0+incompatible // indirect
 	github.com/sergi/go-diff v1.1.0 // indirect
@@ -89,6 +92,9 @@ require (
 	github.com/spf13/cast v1.4.1 // indirect
 	github.com/ulikunitz/xz v0.5.9 // indirect
 	github.com/xanzy/ssh-agent v0.3.0 // indirect
+	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f // indirect
+	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
+	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778 // indirect
 	github.com/yesnault/go-imap v0.0.0-20160710142244-eb9bbb66bd7b // indirect

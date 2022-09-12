@@ -7,7 +7,6 @@ require (
 	contrib.go.opencensus.io/exporter/jaeger v0.1.0
 	contrib.go.opencensus.io/exporter/prometheus v0.1.0
 	github.com/Shopify/sarama v1.30.0
-	github.com/alecthomas/jsonschema v0.0.0-20200123075451-43663a393755
 	github.com/andygrunwald/go-gerrit v0.0.0-20181207071854-19ef3e9332a4
 	github.com/aws/aws-sdk-go v1.19.11
 	github.com/blang/semver v3.5.1+incompatible
@@ -39,6 +38,7 @@ require (
 	github.com/hashicorp/vault/api v1.0.4
 	github.com/iancoleman/orderedmap v0.0.0-20190318233801-ac98e3ecb4b0
 	github.com/inconshreveable/go-update v0.0.0-20160112193335-8152e7eb6ccf
+	github.com/invopop/jsonschema v0.6.0
 	github.com/jfrog/jfrog-client-go v1.5.1
 	github.com/jordan-wright/email v4.0.1-0.20200917010138-e1c00e156980+incompatible
 	github.com/kardianos/osext v0.0.0-20170510131534-ae77be60afb1
@@ -85,6 +85,7 @@ require (
 	github.com/vmware/govmomi v0.23.0
 	github.com/whilp/git-urls v0.0.0-20160530060445-31bac0d230fa
 	github.com/xanzy/go-gitlab v0.15.0
+	github.com/xeipuuv/gojsonschema v1.2.0
 	github.com/yesnault/go-toml v0.0.0-20191205182532-f5ef6cee7945
 	github.com/yuin/gluare v0.0.0-20170607022532-d7c94f1a80ed
 	github.com/yuin/gopher-lua v0.0.0-20170901023928-8c2befcd3908
@@ -233,6 +234,8 @@ require (
 	github.com/subosito/gotenv v1.2.0 // indirect
 	github.com/ulikunitz/xz v0.5.9 // indirect
 	github.com/xanzy/ssh-agent v0.3.0 // indirect
+	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f // indirect
+	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778 // indirect
 	github.com/ziutek/mymysql v1.5.4 // indirect
@@ -261,11 +264,11 @@ require (
 	sigs.k8s.io/yaml v1.2.0 // indirect
 )
 
+replace github.com/invopop/jsonschema v0.6.0 => github.com/sguiheux/jsonschema v0.0.0-20220907155307-5db145196fe8
+
 replace gopkg.in/yaml.v2 v2.4.0 => gopkg.in/yaml.v2 v2.3.0
 
 replace github.com/vmware/go-nfs-client => github.com/sguiheux/go-nfs-client v0.0.0-20210311091651-4f075a6103cc
-
-replace github.com/alecthomas/jsonschema => github.com/sguiheux/jsonschema v0.2.0
 
 replace github.com/go-gorp/gorp => github.com/yesnault/gorp v2.0.1-0.20200325154225-2dc6d8c2da37+incompatible
 
