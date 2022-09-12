@@ -324,7 +324,7 @@ func computeBuildInfoModules(ctx context.Context, client artifact_manager.Artifa
 			props := make(map[string]string)
 			parsedUrl, err := url.Parse(client.GetURL())
 			if err != nil {
-				return nil, fmt.Errorf("unable to parse artifactory url [%s]: %v", client.GetURL(), err)
+				return nil, sdk.WrapError(err, "unable to parse artifactory url [%s]: %v", client.GetURL())
 			}
 			urlArtifactory := parsedUrl.Host
 			if parsedUrl.Port() != "" {

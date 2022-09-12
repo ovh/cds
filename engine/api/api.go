@@ -745,13 +745,13 @@ func (a *API) Serve(ctx context.Context) error {
 		a.WorkflowRunCraft(ctx, 100*time.Millisecond)
 	})
 	a.GoRoutines.RunWithRestart(ctx, "api.repositoryAnalysisPoller", func(ctx context.Context) {
-		a.repositoryAnalysisPoller(ctx, 1*time.Second)
+		a.repositoryAnalysisPoller(ctx, 5*time.Second)
 	})
 	a.GoRoutines.RunWithRestart(ctx, "api.cleanRepositoryAnalysis", func(ctx context.Context) {
 		a.cleanRepositoryAnalysis(ctx, 1*time.Hour)
 	})
 	a.GoRoutines.RunWithRestart(ctx, "workflow.ResyncWorkflowRunResultsRoutine", func(ctx context.Context) {
-		workflow.ResyncWorkflowRunResultsRoutine(ctx, a.mustDB)
+		workflow.ResyncWorkflowRunResultsRoutine(ctx, a.mustDB, 5*time.Second)
 	})
 	if a.Config.Secrets.SnapshotRetentionDelay > 0 {
 		a.GoRoutines.RunWithRestart(ctx, "workflow.CleanSecretsSnapshot", func(ctx context.Context) {

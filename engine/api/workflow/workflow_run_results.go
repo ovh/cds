@@ -399,8 +399,8 @@ func LoadRunResultsByRunIDAndType(ctx context.Context, db gorp.SqlExecutor, runI
 	return getAll(ctx, db, query)
 }
 
-func ResyncWorkflowRunResultsRoutine(ctx context.Context, DBFunc func() *gorp.DbMap) {
-	tick := time.NewTicker(5 * time.Second)
+func ResyncWorkflowRunResultsRoutine(ctx context.Context, DBFunc func() *gorp.DbMap, delay time.Duration) {
+	tick := time.NewTicker(delay)
 	defer tick.Stop()
 
 	for {
@@ -421,7 +421,7 @@ func ResyncWorkflowRunResultsRoutine(ctx context.Context, DBFunc func() *gorp.Db
 				for _, id := range ids {
 					tx, err := DBFunc().Begin()
 					if err != nil {
-						log.ErrorWithStackTrace(ctx, err)
+						log.ErrorWithStackTrace(ctx, sdk.WithStack(err))
 						continue
 					}
 					if err := SyncRunResultArtifactManagerByRunID(ctx, tx, id); err != nil {
@@ -430,7 +430,7 @@ func ResyncWorkflowRunResultsRoutine(ctx context.Context, DBFunc func() *gorp.Db
 						continue
 					}
 					if err := tx.Commit(); err != nil {
-						log.ErrorWithStackTrace(ctx, err)
+						log.ErrorWithStackTrace(ctx, sdk.WithStack(err))
 						tx.Rollback()
 						continue
 					}
@@ -451,7 +451,6 @@ func FindOldestWorkflowRunsWithResultToSync(ctx context.Context, dbmap *gorp.DbM
 
 func UpdateRunResult(ctx context.Context, db gorp.SqlExecutor, result *sdk.WorkflowRunResult) error {
 	dbResult := dbRunResult(*result)
-	log.Debug(ctx, "updating run result %s: %v", dbResult.ID, result)
 	if err := gorpmapping.Update(db, &dbResult); err != nil {
 		return err
 	}
@@ -500,15 +499,7 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorpmapper.SqlE
 
 	log.Debug(ctx, "%d run results to sync on run %d", len(runResults), workflowRunID)
 
-	var artifactManagerInteg *sdk.WorkflowProjectIntegration
-	for i := range wr.Workflow.Integrations {
-		if wr.Workflow.Integrations[i].ProjectIntegration.Model.ArtifactManager {
-			artifactManagerInteg = &wr.Workflow.Integrations[i]
-			break
-		}
-	}
-	if artifactManagerInteg == nil {
-		var err = sdk.Errorf("artifact manager integration is not found for workflow %s/%s", wr.Workflow.ProjectKey, wr.Workflow.Name)
+	handleSyncError := func(err error) error {
 		log.ErrorWithStackTrace(ctx, err)
 		for i := range runResults {
 			result := runResults[i]
@@ -523,6 +514,17 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorpmapper.SqlE
 			}
 		}
 		return nil
+	}
+
+	var artifactManagerInteg *sdk.WorkflowProjectIntegration
+	for i := range wr.Workflow.Integrations {
+		if wr.Workflow.Integrations[i].ProjectIntegration.Model.ArtifactManager {
+			artifactManagerInteg = &wr.Workflow.Integrations[i]
+			break
+		}
+	}
+	if artifactManagerInteg == nil {
+		return handleSyncError(sdk.Errorf("artifact manager integration is not found for workflow %s/%s", wr.Workflow.ProjectKey, wr.Workflow.Name))
 	}
 
 	log.Info(ctx, "artifact manager %q found for workflow run", artifactManagerInteg.ProjectIntegration.Name)
@@ -550,20 +552,7 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorpmapper.SqlE
 		}
 	}
 	if rtToken == "" {
-		err := sdk.Errorf("unable to find artifact manager %q token", artifactManagerInteg.ProjectIntegration.Name)
-		log.ErrorWithStackTrace(ctx, err)
-		for i := range runResults {
-			result := runResults[i]
-			if result.DataSync == nil {
-				result.DataSync = new(sdk.WorkflowRunResultSync)
-			}
-			result.DataSync.Sync = false
-			result.DataSync.Error = err.Error()
-			if err := UpdateRunResult(ctx, db, &result); err != nil {
-				return err
-			}
-		}
-		return nil
+		return handleSyncError(sdk.Errorf("unable to find artifact manager %q token", artifactManagerInteg.ProjectIntegration.Name))
 	}
 
 	// Instanciate artifactory client
@@ -619,13 +608,17 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorpmapper.SqlE
 		DefaultLowMaturitySuffix: lowMaturitySuffixFromConfig,
 	})
 	if err != nil {
-		return err
+		ctx = log.ContextWithStackTrace(ctx, err)
+		log.Warn(ctx, err.Error())
+		return handleSyncError(sdk.Errorf("unable to prepare build info for artifact manager"))
 	}
 
 	log.Debug(ctx, "artifact manager build info request: %+v", buildInfoRequest)
 	log.Info(ctx, "Creating Artifactory Build %s %s on project %s...\n", buildInfoRequest.Name, buildInfoRequest.Number, artifactoryProjectKey)
 	if err := artifactClient.DeleteBuild(artifactoryProjectKey, buildInfoRequest.Name, buildInfoRequest.Number); err != nil {
-		return err
+		ctx = log.ContextWithStackTrace(ctx, err)
+		log.Warn(ctx, err.Error())
+		return handleSyncError(sdk.Errorf("unable to delete previous build info on artifact manager"))
 	}
 
 	var nbAttempts int
@@ -635,7 +628,9 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorpmapper.SqlE
 		if err == nil {
 			break
 		} else if nbAttempts >= 3 {
-			return err
+			ctx = log.ContextWithStackTrace(ctx, err)
+			log.Warn(ctx, err.Error())
+			return handleSyncError(sdk.Errorf("unable to publish build info on artifact manager"))
 		} else {
 			log.Error(ctx, "error while pushing buildinfo %s %s. Retrying...\n", buildInfoRequest.Name, buildInfoRequest.Number)
 		}
