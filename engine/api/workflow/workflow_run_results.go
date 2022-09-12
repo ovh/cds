@@ -484,6 +484,7 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorpmapper.SqlE
 			}
 			result.DataSync.Link = ""
 			result.DataSync.Sync = true
+			result.DataSync.Error = ""
 			if err := UpdateRunResult(ctx, db, &result); err != nil {
 				return err
 			}
@@ -642,6 +643,7 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorpmapper.SqlE
 		}
 		result.DataSync.Link = buildInfoRequest.Name + "/" + buildInfoRequest.Number
 		result.DataSync.Sync = true
+		result.DataSync.Error = ""
 		if err := UpdateRunResult(ctx, db, &result); err != nil {
 			return err
 		}
