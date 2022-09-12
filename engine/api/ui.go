@@ -82,15 +82,6 @@ func (api *API) getApplicationOverviewHandler() service.Handler {
 			Datas: mTest,
 		})
 
-		mCoverage, err := metrics.GetMetrics(ctx, tx, projectKey, app.ID, sdk.MetricKeyCoverage)
-		if err != nil {
-			return sdk.WrapError(err, "cannot list coverage metrics")
-		}
-		appOverview.Graphs = append(appOverview.Graphs, sdk.ApplicationOverviewGraph{
-			Type:  sdk.MetricKeyCoverage,
-			Datas: mCoverage,
-		})
-
 		if app.VCSServer != "" {
 			// GET VCS URL
 			// Get vcs info to known if we are on the default branch or not

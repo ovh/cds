@@ -31,9 +31,6 @@ type Notification sdk.WorkflowNotification
 // Run is a gorp wrapper around sdk.WorkflowRun
 type Run sdk.WorkflowRun
 
-// Coverage is a gorp wrapper around sdk.WorkflowNodeRunCoverage
-type Coverage sdk.WorkflowNodeRunCoverage
-
 type dbNodeRunVulenrabilitiesReport sdk.WorkflowNodeRunVulnerabilityReport
 
 type dbWorkflowProjectIntegration sdk.WorkflowProjectIntegration
@@ -221,7 +218,6 @@ func init() {
 	gorpmapping.Register(gorpmapping.New(outgoingHookModel{}, "workflow_outgoing_hook_model", true, "id"))
 	gorpmapping.Register(gorpmapping.New(Notification{}, "workflow_notification", true, "id"))
 	gorpmapping.Register(gorpmapping.New(auditWorkflow{}, "workflow_audit", true, "id"))
-	gorpmapping.Register(gorpmapping.New(Coverage{}, "workflow_node_run_coverage", false, "workflow_id", "workflow_run_id", "workflow_node_run_id", "repository", "branch"))
 	gorpmapping.Register(gorpmapping.New(dbNodeRunVulenrabilitiesReport{}, "workflow_node_run_vulnerability", true, "id"))
 	gorpmapping.Register(gorpmapping.New(dbNodeData{}, "w_node", true, "id"))
 	gorpmapping.Register(gorpmapping.New(dbNodeHookData{}, "w_node_hook", true, "id"))

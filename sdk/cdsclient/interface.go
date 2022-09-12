@@ -12,7 +12,6 @@ import (
 	"github.com/spf13/afero"
 
 	"github.com/gorilla/websocket"
-	"github.com/sguiheux/go-coverage"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -264,7 +263,6 @@ type QueueClient interface {
 	QueueJobRelease(ctx context.Context, id int64) error
 	QueueJobInfo(ctx context.Context, id int64) (*sdk.WorkflowNodeJobRun, error)
 	QueueJobSendSpawnInfo(ctx context.Context, id int64, in []sdk.SpawnInfo) error
-	QueueSendCoverage(ctx context.Context, id int64, report coverage.Report) error
 	QueueSendUnitTests(ctx context.Context, id int64, report sdk.JUnitTestsSuites) error
 	QueueSendVulnerability(ctx context.Context, id int64, report sdk.VulnerabilityWorkerReport) error
 	QueueSendStepResult(ctx context.Context, id int64, res sdk.StepStatus) error

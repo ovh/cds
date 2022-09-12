@@ -5,7 +5,6 @@ import "time"
 const (
 	MetricKeyVulnerability = "Vulnerability"
 	MetricKeyUnitTest      = "UnitTest"
-	MetricKeyCoverage      = "Coverage"
 )
 
 // Metric represent a CDS metric

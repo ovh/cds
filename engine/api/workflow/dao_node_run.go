@@ -84,17 +84,10 @@ func LoadNodeRun(db gorp.SqlExecutor, projectkey, workflowname string, noderunID
 		return nil, sdk.WithStack(err)
 	}
 
-	if loadOpts.WithCoverage {
-		cov, errCov := LoadCoverageReport(db, r.ID)
-		if errCov != nil && !sdk.ErrorIs(errCov, sdk.ErrNotFound) {
-			return nil, sdk.WrapError(errCov, "LoadNodeRun>Error loading coverage for run %d", r.ID)
-		}
-		r.Coverage = cov
-	}
 	if loadOpts.WithVulnerabilities {
 		vuln, err := loadVulnerabilityReport(db, r.ID)
 		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
-			return nil, sdk.WrapError(err, "vulnerability report coverage for run %d", r.ID)
+			return nil, sdk.WrapError(err, "vulnerability report for run %d", r.ID)
 		}
 		if vuln != nil {
 			r.VulnerabilitiesReport = *vuln
