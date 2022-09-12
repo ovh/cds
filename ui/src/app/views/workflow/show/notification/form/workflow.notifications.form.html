@@ -66,7 +66,7 @@
                         <nz-form-label>Send on start</nz-form-label>
                         <nz-form-control>
                             <nz-switch [disabled]="readOnly" name="onstart"
-                                       [ngModel]="notification.settings.on_start"
+                                       [(ngModel)]="notification.settings.on_start"
                                        [nzCheckedChildren]="checkedTemplate"
                                        [nzUnCheckedChildren]="unCheckedTemplate"
                             ></nz-switch>
@@ -88,7 +88,7 @@
                         <nz-form-label>Send to group</nz-form-label>
                         <nz-form-control>
                             <nz-switch [disabled]="readOnly" name="togroup"
-                                       [ngModel]="notification.settings.send_to_groups"
+                                       [(ngModel)]="notification.settings.send_to_groups"
                                        [nzCheckedChildren]="checkedTemplate"
                                        [nzUnCheckedChildren]="unCheckedTemplate"
                             ></nz-switch>
@@ -100,7 +100,7 @@
                         <nz-form-label>Send to initiator</nz-form-label>
                         <nz-form-control>
                             <nz-switch [disabled]="readOnly" name="toInitiator"
-                                       [ngModel]="notification.settings.send_to_author"
+                                       [(ngModel)]="notification.settings.send_to_author"
                                        [nzCheckedChildren]="checkedTemplate"
                                        [nzUnCheckedChildren]="unCheckedTemplate"
                             ></nz-switch>
@@ -151,7 +151,7 @@
                         <nz-form-label>Send status on commit</nz-form-label>
                         <nz-form-control>
                             <nz-switch [disabled]="readOnly" name="statusEnabled"
-                                       [ngModel]="statusEnabled"
+                                       [(ngModel)]="statusEnabled"
                                        [nzCheckedChildren]="checkedTemplate"
                                        [nzUnCheckedChildren]="unCheckedTemplate"
                             ></nz-switch>
@@ -163,7 +163,7 @@
                         <nz-form-label>Pull-request's comment enabled</nz-form-label>
                         <nz-form-control>
                             <nz-switch [disabled]="readOnly" name="prEnabled"
-                                       [ngModel]="commentEnabled"
+                                       [(ngModel)]="commentEnabled"
                                        [nzCheckedChildren]="checkedTemplate"
                                        [nzUnCheckedChildren]="unCheckedTemplate"
                             ></nz-switch>
@@ -175,7 +175,7 @@
                         <nz-form-label>Always send</nz-form-label>
                         <nz-form-control>
                             <nz-switch [disabled]="!commentEnabled || readOnly" name="alwaysSend"
-                                       [ngModel]="alwaysSend"
+                                       [(ngModel)]="alwaysSend"
                                        [nzCheckedChildren]="checkedTemplate"
                                        [nzUnCheckedChildren]="unCheckedTemplate"
                             ></nz-switch>
