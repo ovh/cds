@@ -274,8 +274,8 @@ type QueueClient interface {
 	QueueWorkerCacheLink(ctx context.Context, jobID int64, tag string) (sdk.CDNItemLinks, error)
 	QueueWorkflowRunResultsAdd(ctx context.Context, jobID int64, addRequest sdk.WorkflowRunResult) error
 	QueueWorkflowRunResultCheck(ctx context.Context, jobID int64, runResultCheck sdk.WorkflowRunResultCheck) (int, error)
-	QueueWorkflowRunResultsRelease(ctx context.Context, permJobID int64, runResultIDs []string, from, to string) error
-	QueueWorkflowRunResultsPromote(ctx context.Context, permJobID int64, runResultIDs []string, from, to string) error
+	QueueWorkflowRunResultsRelease(ctx context.Context, permJobID int64, runResultIDs []string, to string) error
+	QueueWorkflowRunResultsPromote(ctx context.Context, permJobID int64, runResultIDs []string, to string) error
 }
 
 // UserClient exposes users functions

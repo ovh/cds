@@ -25,10 +25,14 @@ func RunPromote(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, _ [
 		return sdk.Result{Status: sdk.StatusFail}, err
 	}
 
+	if sdk.ParameterValue(a.Parameters, "srcMaturity") != "" {
+		wk.SendLog(ctx, workerruntime.LevelInfo, "# Param: \"srcMaturity\" is deprecated, value is ignored")
+	}
+
 	log.Info(ctx, "RunPromote> preparing run result %+v for promotion", promotedRunResultIDs)
 	if err := wk.Client().QueueWorkflowRunResultsPromote(ctx,
 		jobID, promotedRunResultIDs,
-		sdk.ParameterValue(a.Parameters, "srcMaturity"), sdk.ParameterValue(a.Parameters, "destMaturity"),
+		sdk.ParameterValue(a.Parameters, "destMaturity"),
 	); err != nil {
 		return sdk.Result{Status: sdk.StatusFail}, err
 	}

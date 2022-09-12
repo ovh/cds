@@ -71,12 +71,7 @@ func (e *artifactoryReleasePlugin) Run(ctx context.Context, opts *integrationplu
 
 	artifactList := opts.GetOptions()["artifacts"]
 	releaseNote := opts.GetOptions()["releaseNote"]
-	srcMaturity := opts.GetOptions()["srcMaturity"]
 	destMaturity := opts.GetOptions()["destMaturity"]
-
-	if srcMaturity == "" {
-		srcMaturity = "snapshot"
-	}
 	if destMaturity == "" {
 		destMaturity = DefaultHighMaturity
 	}
@@ -149,19 +144,25 @@ func (e *artifactoryReleasePlugin) Run(ctx context.Context, opts *integrationplu
 		} else {
 			fmt.Printf("Result %q to promote\n", name)
 		}
+		if r.DataSync == nil {
+			return fail("unable to find an existing release for result %s", r.ID)
+		}
+		latestPromotion := r.DataSync.LatestPromotionOrRelease()
+		if latestPromotion == nil {
+			return fail("unable to find an existing release for result %s", r.ID)
+		}
 		switch rData.RepoType {
 		case "docker":
-			if err := art.PromoteDockerImage(artiClient, rData, srcMaturity, destMaturity); err != nil {
-				return fail("unable to promote docker image: %s: %v", rData.Name+"-"+destMaturity, err)
+			if err := art.PromoteDockerImage(artiClient, rData, latestPromotion.FromMaturity, latestPromotion.ToMaturity); err != nil {
+				return fail("unable to promote docker image: %s: %v", rData.Name+"-"+latestPromotion.ToMaturity, err)
 			}
-			promotedArtifacts = append(promotedArtifacts, fmt.Sprintf("%s-%s/%s/manifest.json", rData.RepoName, destMaturity, rData.Path))
+			promotedArtifacts = append(promotedArtifacts, fmt.Sprintf("%s-%s/%s/manifest.json", rData.RepoName, latestPromotion.ToMaturity, rData.Path))
 		default:
-			if err := art.PromoteFile(artiClient, rData, srcMaturity, destMaturity); err != nil {
+			if err := art.PromoteFile(artiClient, rData, latestPromotion.FromMaturity, latestPromotion.ToMaturity); err != nil {
 				return fail("unable to promote file: %s: %v", rData.Name, err)
 			}
-			promotedArtifacts = append(promotedArtifacts, fmt.Sprintf("%s-%s/%s", rData.RepoName, destMaturity, rData.Path))
+			promotedArtifacts = append(promotedArtifacts, fmt.Sprintf("%s-%s/%s", rData.RepoName, latestPromotion.ToMaturity, rData.Path))
 		}
-
 	}
 
 	if len(promotedArtifacts) == 0 {

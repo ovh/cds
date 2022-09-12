@@ -54,15 +54,6 @@ func (e *artifactoryPromotePlugin) Run(ctx context.Context, opts *integrationplu
 	token := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactoryConfigToken)]
 
 	artifactList := opts.GetOptions()["artifacts"]
-	srcMaturity := opts.GetOptions()["srcMaturity"]
-	destMaturity := opts.GetOptions()["destMaturity"]
-
-	if srcMaturity == "" {
-		srcMaturity = "snapshot"
-	}
-	if destMaturity == "" {
-		destMaturity = "release"
-	}
 
 	runResult, err := grpcplugins.GetRunResults(e.HTTPPort)
 	if err != nil {
@@ -89,7 +80,6 @@ func (e *artifactoryPromotePlugin) Run(ctx context.Context, opts *integrationplu
 		artRegs = append(artRegs, r)
 	}
 
-	promotedArtifacts := make([]string, 0)
 	for _, r := range runResult {
 		rData, err := r.GetArtifactManager()
 		if err != nil {
@@ -105,17 +95,22 @@ func (e *artifactoryPromotePlugin) Run(ctx context.Context, opts *integrationplu
 		if skip {
 			continue
 		}
+		if r.DataSync == nil {
+			return fail("unable to find an existing promotion for result %s", r.ID)
+		}
+		latestPromotion := r.DataSync.LatestPromotionOrRelease()
+		if latestPromotion == nil {
+			return fail("unable to find an existing promotion for result %s", r.ID)
+		}
 		switch rData.RepoType {
 		case "docker":
-			if err := art.PromoteDockerImage(artiClient, rData, srcMaturity, destMaturity); err != nil {
-				return fail("unable to promote docker image: %s: %v", rData.Name+"-"+destMaturity, err)
+			if err := art.PromoteDockerImage(artiClient, rData, latestPromotion.FromMaturity, latestPromotion.ToMaturity); err != nil {
+				return fail("unable to promote docker image: %s: %v", rData.Name+"-"+latestPromotion.ToMaturity, err)
 			}
-			promotedArtifacts = append(promotedArtifacts, fmt.Sprintf("%s-%s/%s/manifest.json", rData.RepoName, destMaturity, rData.Path))
 		default:
-			if err := art.PromoteFile(artiClient, rData, srcMaturity, destMaturity); err != nil {
+			if err := art.PromoteFile(artiClient, rData, latestPromotion.FromMaturity, latestPromotion.ToMaturity); err != nil {
 				return fail("unable to promote file: %s: %v", rData.Name, err)
 			}
-			promotedArtifacts = append(promotedArtifacts, fmt.Sprintf("%s-%s/%s", rData.RepoName, destMaturity, rData.Path))
 		}
 	}
 	return &integrationplugin.RunResult{

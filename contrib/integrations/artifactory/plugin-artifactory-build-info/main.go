@@ -40,11 +40,11 @@ type artifactoryBuildInfoPlugin struct {
 }
 
 type executionContext struct {
-	buildInfo         string
-	projectKey        string
-	workflowName      string
-	version           string
-	lowMaturitySuffix string
+	buildInfo                string
+	projectKey               string
+	workflowName             string
+	version                  string
+	defaultLowMaturitySuffix string
 }
 
 func (e *artifactoryBuildInfoPlugin) Manifest(_ context.Context, _ *empty.Empty) (*integrationplugin.IntegrationPluginManifest, error) {
@@ -91,19 +91,19 @@ func (e *artifactoryBuildInfoPlugin) Run(ctx context.Context, opts *integrationp
 	}
 
 	buildInfoRequest, err := art.PrepareBuildInfo(ctx, artifactClient, art.BuildInfoRequest{
-		BuildInfoPrefix:   buildInfo,
-		ProjectKey:        opts.GetOptions()["cds.project"],
-		WorkflowName:      opts.GetOptions()["cds.workflow"],
-		Version:           opts.GetOptions()["cds.version"],
-		AgentName:         workerName,
-		TokenName:         tokenName,
-		RunURL:            runURL,
-		GitBranch:         opts.GetOptions()["git.branch"],
-		GitMessage:        opts.GetOptions()["git.message"],
-		GitURL:            gitUrl,
-		GitHash:           opts.GetOptions()["git.hash"],
-		RunResults:        runResults,
-		LowMaturitySuffix: lowMaturitySuffix,
+		BuildInfoPrefix:          buildInfo,
+		ProjectKey:               opts.GetOptions()["cds.project"],
+		WorkflowName:             opts.GetOptions()["cds.workflow"],
+		Version:                  opts.GetOptions()["cds.version"],
+		AgentName:                workerName,
+		TokenName:                tokenName,
+		RunURL:                   runURL,
+		GitBranch:                opts.GetOptions()["git.branch"],
+		GitMessage:               opts.GetOptions()["git.message"],
+		GitURL:                   gitUrl,
+		GitHash:                  opts.GetOptions()["git.hash"],
+		RunResults:               runResults,
+		DefaultLowMaturitySuffix: lowMaturitySuffix,
 	})
 	if err != nil {
 		return fail("unable to prepare build info: %v", err)

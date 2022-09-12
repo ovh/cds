@@ -30,16 +30,25 @@ func (api *API) cleanWorkflowRunSecrets(ctx context.Context) {
 	log.Info(ctx, "Starting workflow run secrets clean routine")
 
 	ticker := time.NewTicker(delay)
+	defer ticker.Stop()
 
-	for range ticker.C {
-		runIDs, err := workflow.LoadRunsIDsCreatedBefore(ctx, db, maxRetentionDate, limit)
-		if err != nil {
-			log.ErrorWithStackTrace(ctx, err)
-			continue
-		}
-		for _, id := range runIDs {
-			if err := api.cleanWorkflowRunSecretsForRun(ctx, db, id); err != nil {
+	for {
+		select {
+		case <-ctx.Done():
+			if ctx.Err() != nil {
+				log.Error(ctx, "Exiting cleanWorkflowRunSecrets: %v", ctx.Err())
+			}
+			return
+		case <-ticker.C:
+			runIDs, err := workflow.LoadRunsIDsCreatedBefore(ctx, db, maxRetentionDate, limit)
+			if err != nil {
 				log.ErrorWithStackTrace(ctx, err)
+				continue
+			}
+			for _, id := range runIDs {
+				if err := api.cleanWorkflowRunSecretsForRun(ctx, db, id); err != nil {
+					log.ErrorWithStackTrace(ctx, err)
+				}
 			}
 		}
 	}

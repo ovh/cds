@@ -211,32 +211,32 @@ func checkArtifactExists(artiClient artifactory.ArtifactoryServicesManager, repo
 }
 
 type executionContext struct {
-	buildInfo         string
-	projectKey        string
-	workflowName      string
-	version           string
-	lowMaturitySuffix string
+	buildInfo                string
+	projectKey               string
+	workflowName             string
+	version                  string
+	defaultLowMaturitySuffix string
 }
 
 type BuildInfoRequest struct {
-	BuildInfoPrefix   string
-	ProjectKey        string
-	WorkflowName      string
-	Version           string
-	AgentName         string
-	TokenName         string
-	RunURL            string
-	GitBranch         string
-	GitMessage        string
-	GitURL            string
-	GitHash           string
-	LowMaturitySuffix string
-	RunResults        []sdk.WorkflowRunResult
+	BuildInfoPrefix          string
+	ProjectKey               string
+	WorkflowName             string
+	Version                  string
+	AgentName                string
+	TokenName                string
+	RunURL                   string
+	GitBranch                string
+	GitMessage               string
+	GitURL                   string
+	GitHash                  string
+	DefaultLowMaturitySuffix string
+	RunResults               []sdk.WorkflowRunResult
 }
 
 func PrepareBuildInfo(ctx context.Context, artiClient artifact_manager.ArtifactManager, r BuildInfoRequest) (*buildinfo.BuildInfo, error) {
 	buildInfoName := fmt.Sprintf("%s/%s/%s", r.BuildInfoPrefix, r.ProjectKey, r.WorkflowName)
-	log.Debug(ctx, "PrepareBuildInfo %q maturity:%q", buildInfoName, r.LowMaturitySuffix)
+	log.Debug(ctx, "PrepareBuildInfo %q maturity:%q", buildInfoName, r.DefaultLowMaturitySuffix)
 
 	buildInfoRequest := &buildinfo.BuildInfo{
 		Properties: map[string]string{},
@@ -266,11 +266,11 @@ func PrepareBuildInfo(ctx context.Context, artiClient artifact_manager.ArtifactM
 	})
 
 	execContext := executionContext{
-		buildInfo:         r.BuildInfoPrefix,
-		lowMaturitySuffix: r.LowMaturitySuffix,
-		workflowName:      r.WorkflowName,
-		version:           r.Version,
-		projectKey:        r.ProjectKey,
+		buildInfo:                r.BuildInfoPrefix,
+		defaultLowMaturitySuffix: r.DefaultLowMaturitySuffix,
+		workflowName:             r.WorkflowName,
+		version:                  r.Version,
+		projectKey:               r.ProjectKey,
 	}
 	modules, err := computeBuildInfoModules(ctx, artiClient, execContext, r.RunResults)
 	if err != nil {
@@ -287,6 +287,18 @@ func computeBuildInfoModules(ctx context.Context, client artifact_manager.Artifa
 		if r.Type != sdk.WorkflowRunResultTypeArtifactManager {
 			continue
 		}
+
+		var currentMaturity string
+		if r.DataSync != nil {
+			latestPromotion := r.DataSync.LatestPromotionOrRelease()
+			if latestPromotion != nil {
+				currentMaturity = latestPromotion.ToMaturity
+			}
+		}
+		if currentMaturity == "" {
+			currentMaturity = execContext.defaultLowMaturitySuffix
+		}
+
 		data, err := r.GetArtifactManager()
 		if err != nil {
 			return nil, err
@@ -312,7 +324,7 @@ func computeBuildInfoModules(ctx context.Context, client artifact_manager.Artifa
 			props := make(map[string]string)
 			parsedUrl, err := url.Parse(client.GetURL())
 			if err != nil {
-				return nil, fmt.Errorf("unable to parse artifactory url [%s]: %v", client.GetURL(), err)
+				return nil, sdk.WrapError(err, "unable to parse artifactory url [%s]: %v", client.GetURL())
 			}
 			urlArtifactory := parsedUrl.Host
 			if parsedUrl.Port() != "" {
@@ -322,7 +334,7 @@ func computeBuildInfoModules(ctx context.Context, client artifact_manager.Artifa
 			mod.Properties = props
 		}
 
-		artifacts, err := retrieveModulesArtifacts(ctx, client, data.RepoName, data.Path, execContext)
+		artifacts, err := retrieveModulesArtifacts(ctx, client, data.RepoName, currentMaturity, data.Path, execContext)
 		if err != nil {
 			return nil, err
 		}
@@ -333,7 +345,7 @@ func computeBuildInfoModules(ctx context.Context, client artifact_manager.Artifa
 	return modules, nil
 }
 
-func retrieveModulesArtifacts(ctx context.Context, client artifact_manager.ArtifactManager, repoName string, path string, execContext executionContext) ([]buildinfo.Artifact, error) {
+func retrieveModulesArtifacts(ctx context.Context, client artifact_manager.ArtifactManager, repoName string, maturity string, path string, execContext executionContext) ([]buildinfo.Artifact, error) {
 	log.Debug(ctx, "retrieve:ModulesArtifacts repoName:%s path:%s execContext:%+v", repoName, path, execContext)
 	fileInfo, err := client.GetFileInfo(repoName, path)
 	if err != nil {
@@ -358,7 +370,7 @@ func retrieveModulesArtifacts(ctx context.Context, client artifact_manager.Artif
 			},
 		}
 		repoSrc := repoName
-		repoSrc += "-" + execContext.lowMaturitySuffix
+		repoSrc += "-" + maturity
 		log.Debug(ctx, "setting properties %+v on repoSrc:%s path:%s", props, repoSrc, props)
 		if err := client.SetProperties(repoSrc, path, props...); err != nil {
 			return nil, err
@@ -374,7 +386,7 @@ func retrieveModulesArtifacts(ctx context.Context, client artifact_manager.Artif
 		artifacts = append(artifacts, currentArtifact)
 	} else {
 		for _, c := range fileInfo.Children {
-			artsChildren, err := retrieveModulesArtifacts(ctx, client, repoName, fmt.Sprintf("%s%s", path, c.Uri), execContext)
+			artsChildren, err := retrieveModulesArtifacts(ctx, client, repoName, maturity, fmt.Sprintf("%s%s", path, c.Uri), execContext)
 			if err != nil {
 				return nil, err
 			}
