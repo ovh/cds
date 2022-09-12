@@ -122,6 +122,14 @@ func (c *client) WorkflowRunSearch(projectKey string, offset, limit int64, filte
 	return runs, nil
 }
 
+func (c *client) WorkflowRunDelete(projectKey string, workflowName string, runNumber int64) error {
+	url := fmt.Sprintf("/project/%s/workflows/%s/runs/%d", projectKey, workflowName, runNumber)
+	if _, err := c.DeleteJSON(context.Background(), url, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (c *client) WorkflowRunList(projectKey string, workflowName string, offset, limit int64) ([]sdk.WorkflowRun, error) {
 	if offset < 0 {
 		offset = 0

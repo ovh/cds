@@ -2894,31 +2894,31 @@ func (mr *MockProjectClientMockRecorder) VariableListEncrypt(projectKey interfac
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VariableListEncrypt", reflect.TypeOf((*MockProjectClient)(nil).VariableListEncrypt), projectKey)
 }
 
-// MockRbacClient is a mock of RBACClient interface.
-type MockRbacClient struct {
+// MockRBACClient is a mock of RBACClient interface.
+type MockRBACClient struct {
 	ctrl     *gomock.Controller
-	recorder *MockRbacClientMockRecorder
+	recorder *MockRBACClientMockRecorder
 }
 
-// MockRbacClientMockRecorder is the mock recorder for MockRbacClient.
-type MockRbacClientMockRecorder struct {
-	mock *MockRbacClient
+// MockRBACClientMockRecorder is the mock recorder for MockRBACClient.
+type MockRBACClientMockRecorder struct {
+	mock *MockRBACClient
 }
 
-// NewMockRbacClient creates a new mock instance.
-func NewMockRbacClient(ctrl *gomock.Controller) *MockRbacClient {
-	mock := &MockRbacClient{ctrl: ctrl}
-	mock.recorder = &MockRbacClientMockRecorder{mock}
+// NewMockRBACClient creates a new mock instance.
+func NewMockRBACClient(ctrl *gomock.Controller) *MockRBACClient {
+	mock := &MockRBACClient{ctrl: ctrl}
+	mock.recorder = &MockRBACClientMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockRbacClient) EXPECT() *MockRbacClientMockRecorder {
+func (m *MockRBACClient) EXPECT() *MockRBACClientMockRecorder {
 	return m.recorder
 }
 
-// RbacImport mocks base method.
-func (m *MockRbacClient) RBACImport(ctx context.Context, content io.Reader, mods ...cdsclient.RequestModifier) (sdk.RBAC, error) {
+// RBACImport mocks base method.
+func (m *MockRBACClient) RBACImport(ctx context.Context, content io.Reader, mods ...cdsclient.RequestModifier) (sdk.RBAC, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, content}
 	for _, a := range mods {
@@ -2930,11 +2930,11 @@ func (m *MockRbacClient) RBACImport(ctx context.Context, content io.Reader, mods
 	return ret0, ret1
 }
 
-// RbacImport indicates an expected call of RbacImport.
-func (mr *MockRbacClientMockRecorder) RbacImport(ctx, content interface{}, mods ...interface{}) *gomock.Call {
+// RBACImport indicates an expected call of RBACImport.
+func (mr *MockRBACClientMockRecorder) RBACImport(ctx, content interface{}, mods ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, content}, mods...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RBACImport", reflect.TypeOf((*MockRbacClient)(nil).RBACImport), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RBACImport", reflect.TypeOf((*MockRBACClient)(nil).RBACImport), varargs...)
 }
 
 // MockProjectKeysClient is a mock of ProjectKeysClient interface.
@@ -4441,6 +4441,20 @@ func (m *MockWorkflowClient) WorkflowRunArtifactsLinks(projectKey, name string, 
 func (mr *MockWorkflowClientMockRecorder) WorkflowRunArtifactsLinks(projectKey, name, number interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowRunArtifactsLinks", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowRunArtifactsLinks), projectKey, name, number)
+}
+
+// WorkflowRunDelete mocks base method.
+func (m *MockWorkflowClient) WorkflowRunDelete(projectKey, workflowName string, runNumber int64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowRunDelete", projectKey, workflowName, runNumber)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WorkflowRunDelete indicates an expected call of WorkflowRunDelete.
+func (mr *MockWorkflowClientMockRecorder) WorkflowRunDelete(projectKey, workflowName, runNumber interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowRunDelete", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowRunDelete), projectKey, workflowName, runNumber)
 }
 
 // WorkflowRunFromHook mocks base method.
@@ -7551,7 +7565,7 @@ func (mr *MockInterfaceMockRecorder) QueueWorkflowRunResultsRelease(ctx, permJob
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueWorkflowRunResultsRelease", reflect.TypeOf((*MockInterface)(nil).QueueWorkflowRunResultsRelease), ctx, permJobID, runResultIDs, from, to)
 }
 
-// RbacImport mocks base method.
+// RBACImport mocks base method.
 func (m *MockInterface) RBACImport(ctx context.Context, content io.Reader, mods ...cdsclient.RequestModifier) (sdk.RBAC, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, content}
@@ -7564,8 +7578,8 @@ func (m *MockInterface) RBACImport(ctx context.Context, content io.Reader, mods 
 	return ret0, ret1
 }
 
-// RbacImport indicates an expected call of RbacImport.
-func (mr *MockInterfaceMockRecorder) RbacImport(ctx, content interface{}, mods ...interface{}) *gomock.Call {
+// RBACImport indicates an expected call of RBACImport.
+func (mr *MockInterfaceMockRecorder) RBACImport(ctx, content interface{}, mods ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, content}, mods...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RBACImport", reflect.TypeOf((*MockInterface)(nil).RBACImport), varargs...)
@@ -8957,6 +8971,20 @@ func (m *MockInterface) WorkflowRunArtifactsLinks(projectKey, name string, numbe
 func (mr *MockInterfaceMockRecorder) WorkflowRunArtifactsLinks(projectKey, name, number interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowRunArtifactsLinks", reflect.TypeOf((*MockInterface)(nil).WorkflowRunArtifactsLinks), projectKey, name, number)
+}
+
+// WorkflowRunDelete mocks base method.
+func (m *MockInterface) WorkflowRunDelete(projectKey, workflowName string, runNumber int64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowRunDelete", projectKey, workflowName, runNumber)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WorkflowRunDelete indicates an expected call of WorkflowRunDelete.
+func (mr *MockInterfaceMockRecorder) WorkflowRunDelete(projectKey, workflowName, runNumber interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowRunDelete", reflect.TypeOf((*MockInterface)(nil).WorkflowRunDelete), projectKey, workflowName, runNumber)
 }
 
 // WorkflowRunFromHook mocks base method.
