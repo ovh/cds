@@ -334,7 +334,7 @@ func computeBuildInfoModules(ctx context.Context, client artifact_manager.Artifa
 			mod.Properties = props
 		}
 
-		artifacts, err := retrieveModulesArtifacts(ctx, client, data.RepoName, data.Path, currentMaturity, execContext)
+		artifacts, err := retrieveModulesArtifacts(ctx, client, data.RepoName, currentMaturity, data.Path, execContext)
 		if err != nil {
 			return nil, err
 		}
