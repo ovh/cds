@@ -1,9 +1,7 @@
 // WorkflowRun is an execution instance of a run
-import { Coverage } from 'app/model/coverage.model';
 import { WithKey } from 'app/shared/table/data-table.component';
 import { Vulnerability } from './application.model';
 import { Event } from './event.model';
-import { Hatchery } from './hatchery.model';
 import { Job } from './job.model';
 import { Parameter } from './parameter.model';
 import { SpawnInfo, Tests } from './pipeline.model';
@@ -117,7 +115,6 @@ export class WorkflowNodeRun implements WithKey {
     tests: Tests;
     commits: Array<Commit>;
     vulnerabilities_report: WorkflowNodeRunVulnerabilityReport;
-    coverage: Coverage;
     can_be_run: boolean;
     uuid: string;
     outgoinghook: WNodeOutgoingHook;
