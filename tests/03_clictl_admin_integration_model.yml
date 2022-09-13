@@ -32,5 +32,5 @@ testcases:
       - result.systemout ShouldContainSubstring "arsenal-prod"
     retry: 10
     delay: 10
-  -- script: {{.cdsctl}} -f {{.cdsctl.config}} project integration delete ITCLIPFARSENAL2 arsenal-dev
-  -- script: {{.cdsctl}} -f {{.cdsctl.config}} project integration delete ITCLIPFARSENAL2 arsenal-prod
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project integration delete ITCLIPFARSENAL2 arsenal-dev
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project integration delete ITCLIPFARSENAL2 arsenal-prod
