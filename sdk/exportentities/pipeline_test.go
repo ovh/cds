@@ -130,11 +130,6 @@ var (
 												Type:  sdk.StringParameter,
 												Value: "lcov.info",
 											},
-											{
-												Name:  "format",
-												Type:  sdk.StringParameter,
-												Value: "lcov",
-											},
 										},
 									},
 								},
