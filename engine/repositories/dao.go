@@ -69,12 +69,6 @@ func (d *dao) lock(uuid string) error {
 	if err != nil || !ok {
 		return errLockUnavailable
 	}
-
-	_, err2 := d.store.Lock(cache.Key(lastAccessKey, uuid), 3*24*time.Hour, -1, -1)
-	if err2 != nil {
-		return sdk.WrapError(err2, "error on lock uuid: %s", uuid)
-	}
-
 	return nil
 }
 
