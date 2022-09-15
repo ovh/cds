@@ -81,7 +81,6 @@
                             nzPopconfirmTitle="Are you sure you want to remove this parameter ?"
                             (nzOnConfirm)="sendEvent('delete', p)"
                             nzPopconfirmPlacement="topLeft">Delete</button>
-                    <app-delete-button (event)="sendEvent('delete', p)" [loading]="p.updating"></app-delete-button>
                 </ng-container>
             </td>
         </tr>

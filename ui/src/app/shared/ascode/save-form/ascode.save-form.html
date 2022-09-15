@@ -1,26 +1,25 @@
-<form class="ui form">
-    <div class="ui grid">
-        <div class="sixteen wide column">
-            <div class="field">
-                <label>{{ 'ascode_modal_label_branch' | translate }}</label>
-                <input type="text" [(ngModel)]="selectedBranch" (keyup)="changeParam()" auto-complete [source]="branches" [min-chars]="1" name="branch" />
-            </div>
-            <div class="field">
-                <label>{{ 'ascode_modal_label_message' | translate }}</label>
-                <textarea rows="2" [(ngModel)]="commitMessage" (keyup)="changeParam()" name="commitMessage"></textarea>
-            </div>
-        </div>
-        <div class="sixteen wide column">
-            <div class="wide field">
-                <div class="ui message red" *ngIf="operation?.status > 2">
-                    {{operation.error_details.message}} - 
-                    {{operation.error_details.from}}
-                </div>
-                <div class="ui message green" *ngIf="operation?.status === 2">
-                    {{ 'workflow_as_code_pr_success' | translate }}
-                    <a href="{{operation.setup.push.pr_link}}" target="_blank">{{ operation.setup.push.pr_link }}</a>
-                </div>
-            </div>
-        </div>
-    </div>
+<form nz-form nzLayout="vertical">
+    <nz-row>
+        <nz-col [nzSpan]="24">
+            <nz-form-item>
+                <nz-form-label>{{ 'ascode_modal_label_branch' | translate }}</nz-form-label>
+                <nz-form-control>
+                    <input nz-input type="text" [(ngModel)]="selectedBranch" (keyup)="changeParam()" auto-complete [source]="branches" [min-chars]="1" name="branch" />
+                </nz-form-control>
+            </nz-form-item>
+            <nz-form-item>
+                <nz-form-label>{{ 'ascode_modal_label_message' | translate }}</nz-form-label>
+                <textarea nz-input rows="2" [(ngModel)]="commitMessage" (keyup)="changeParam()" name="commitMessage"></textarea>
+            </nz-form-item>
+        </nz-col>
+        <nz-col [nzSpan]="24">
+            <nz-alert nzType="error" *ngIf="operation?.status > 2"
+            nzMessage="{{operation.error_details.message}} - {{operation.error_details.from}}"></nz-alert>
+            <nz-alert nzType="success" *ngIf="operation?.status === 2" [nzMessage]="sucessTmpl"></nz-alert>
+            <ng-template #sucessTmpl>
+                {{ 'workflow_as_code_pr_success' | translate }}
+                <a href="{{operation.setup.push.pr_link}}" target="_blank">{{ operation.setup.push.pr_link }}</a>
+            </ng-template>
+        </nz-col>
+    </nz-row>
 </form>

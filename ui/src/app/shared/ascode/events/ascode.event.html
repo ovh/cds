@@ -9,12 +9,12 @@
             <ul>
                 <ng-container *ngIf="e.data && e.data.workflows">
                     <li *ngFor="let k of e?.data?.workflows | keys">
-                        <div class="ui blue horizontal mini label">Workflow</div>{{' ' + e.data.workflows[k]}}
+                        <nz-tag class="blue">Workflow</nz-tag>{{' ' + e.data.workflows[k]}}
                     </li>
                 </ng-container>
                 <ng-container *ngIf="e.data && e.data.pipelines">
                     <li *ngFor="let k of e?.data?.pipelines | keys">
-                        <div class="ui green horizontal mini label">Pipeline</div>{{' ' + e.data.pipelines[k]}}
+                        <nz-tag class="green">Pipeline</nz-tag>{{' ' + e.data.pipelines[k]}}
                     </li>
                 </ng-container>
             </ul>
@@ -22,7 +22,7 @@
     </ul>
     <div class="footer">
         <button nz-button nzType="primary" nzSize="small" [disabled]="loadingPopupButton"
-                [nzLoading]="loadingPopupButton" (click)="resyncEvents()">{{'btn_resync_ascode_event' | translate }}</button>
+                [nzLoading]="loadingPopupButton" (click)="resyncEvents()">Resynchronize repository modifications</button>
     </div>
 
 </div>
