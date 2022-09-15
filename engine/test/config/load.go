@@ -9,6 +9,17 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func ConfExist(t require.TestingT, serviceType string) bool {
+	var f string
+	u, _ := user.Current()
+	if u != nil {
+		f = path.Join(u.HomeDir, ".cds", serviceType+".tests.cfg.json")
+	}
+
+	_, err := os.Stat(f)
+	return os.IsExist(err)
+}
+
 // LoadTestingConf loads test configuration tests.cfg.json
 func LoadTestingConf(t require.TestingT, serviceType string) map[string]string {
 	var f string

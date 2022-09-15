@@ -6,9 +6,10 @@ import (
 	"strings"
 
 	"github.com/Shopify/sarama"
-	"github.com/pkg/errors"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/sdk"
+	cdslog "github.com/ovh/cds/sdk/log"
 )
 
 // KafkaConfig handles all config to connect to Kafka
@@ -28,14 +29,39 @@ type KafkaConfig struct {
 type KafkaConsumerConfig struct {
 	KafkaConfig
 	ConsumerGroup string `toml:"consumerGroup" json:"-" mapstructure:"consumerGroup"`
+	InitialOffset *int64 `toml:"initialOffset" json:"-" mapstructure:"initialOffset"`
+}
+
+type ProcessEventFunc func(interface{}) error
+type LogErrorFunc func(string, ...interface{})
+
+type SaramaLoger struct {
+	kafkaConfig KafkaConsumerConfig
+}
+
+func (s *SaramaLoger) Print(v ...interface{}) {
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, cdslog.KafkaBroker, s.kafkaConfig.BrokerAddresses)
+	ctx = context.WithValue(ctx, cdslog.KafkaTopic, s.kafkaConfig.Topic)
+	log.Debug(ctx, "%v", v)
+}
+func (s *SaramaLoger) Printf(format string, v ...interface{}) {
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, cdslog.KafkaBroker, s.kafkaConfig.BrokerAddresses)
+	ctx = context.WithValue(ctx, cdslog.KafkaTopic, s.kafkaConfig.Topic)
+	log.Debug(ctx, format, v...)
+}
+func (s *SaramaLoger) Println(v ...interface{}) {
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, cdslog.KafkaBroker, s.kafkaConfig.BrokerAddresses)
+	ctx = context.WithValue(ctx, cdslog.KafkaTopic, s.kafkaConfig.Topic)
+	log.Debug(ctx, "%v", v...)
 }
 
 // ConsumeKafka consume CDS Event from a kafka topic
-func ConsumeKafka(ctx context.Context,
-	kafkaConfig KafkaConsumerConfig,
-	messageType interface{},
-	processEventFunc func(interface{}) error, errorLogFunc func(string, ...interface{}),
-) error {
+func ConsumeKafka(ctx context.Context, goroutines *sdk.GoRoutines, kafkaConfig KafkaConsumerConfig, messageType interface{}, processEventFunc ProcessEventFunc, logErrorFunc LogErrorFunc) error {
+	ctx = context.WithValue(ctx, cdslog.KafkaBroker, kafkaConfig.BrokerAddresses)
+	ctx = context.WithValue(ctx, cdslog.KafkaTopic, kafkaConfig.Topic)
 	var config = sarama.NewConfig()
 	config.Net.TLS.Enable = !kafkaConfig.DisableTLS
 	config.Net.SASL.Enable = !kafkaConfig.DisableSASL
@@ -43,6 +69,11 @@ func ConsumeKafka(ctx context.Context,
 	config.Net.SASL.Password = kafkaConfig.Password
 	config.ClientID = kafkaConfig.User
 	config.Consumer.Return.Errors = true
+	//sarama.Logger = &SaramaLoger{kafkaConfig: kafkaConfig}
+	if kafkaConfig.InitialOffset != nil {
+		log.Debug(ctx, "consumer %q from offset %d", kafkaConfig.Topic, *kafkaConfig.InitialOffset)
+		config.Consumer.Offsets.Initial = *kafkaConfig.InitialOffset
+	}
 
 	if config.ClientID == "" {
 		config.ClientID = "cds"
@@ -51,37 +82,38 @@ func ConsumeKafka(ctx context.Context,
 	if kafkaConfig.Version != "" {
 		kafkaVersion, err := sarama.ParseKafkaVersion(kafkaConfig.Version)
 		if err != nil {
-			return errors.Wrapf(err, "error parsing Kafka version %v", kafkaConfig.Version)
+			return sdk.WrapError(err, "error parsing Kafka version %v", kafkaConfig.Version)
 		}
 		config.Version = kafkaVersion
 	} else {
 		config.Version = sarama.V0_10_2_0
 	}
 
+	log.Info(ctx, "creating consumer group %q", kafkaConfig.ConsumerGroup)
 	consumerGroup, err := sarama.NewConsumerGroup(strings.Split(kafkaConfig.BrokerAddresses, ","), kafkaConfig.ConsumerGroup, config)
 	if err != nil {
-		return errors.Wrapf(err, "error creating consumer")
+		return sdk.WithStack(err)
 	}
 
 	// Track errors
-	go func() {
+	goroutines.Exec(ctx, "kafka_consumer_group_error_"+kafkaConfig.Topic, func(ctx context.Context) {
 		for err := range consumerGroup.Errors() {
-			errorLogFunc("group.Errors:%s", err)
+			logErrorFunc("kafka errors:%s", err)
 		}
-	}()
+	})
 
 	h := handler{
 		messageType:      messageType,
 		processEventFunc: processEventFunc,
-		errorLogFunc:     errorLogFunc,
+		errorLogFunc:     logErrorFunc,
 	}
-	go func() {
-		for {
-			if err := consumerGroup.Consume(context.Background(), []string{kafkaConfig.Topic}, &h); err != nil {
-				errorLogFunc("ProcessEventFunc:%s", err)
+	goroutines.Run(ctx, "kafka_consumer_group_consume"+kafkaConfig.Topic, func(ctx context.Context) {
+		for ctx.Err() == nil {
+			if err := consumerGroup.Consume(ctx, []string{kafkaConfig.Topic}, &h); err != nil {
+				logErrorFunc("kafka consumption error:%s", err)
 			}
 		}
-	}()
+	})
 	return nil
 }
 
