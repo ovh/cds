@@ -69,7 +69,7 @@ func ConsumeKafka(ctx context.Context, goroutines *sdk.GoRoutines, kafkaConfig K
 	config.Net.SASL.Password = kafkaConfig.Password
 	config.ClientID = kafkaConfig.User
 	config.Consumer.Return.Errors = true
-	//sarama.Logger = &SaramaLoger{kafkaConfig: kafkaConfig}
+	sarama.Logger = &SaramaLoger{kafkaConfig: kafkaConfig}
 	if kafkaConfig.InitialOffset != nil {
 		log.Debug(ctx, "consumer %q from offset %d", kafkaConfig.Topic, *kafkaConfig.InitialOffset)
 		config.Consumer.Offsets.Initial = *kafkaConfig.InitialOffset
