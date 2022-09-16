@@ -41,7 +41,7 @@ func init() {
 // Broker event typed
 type Broker interface {
 	initialize(ctx context.Context, options interface{}) (Broker, error)
-	sendEvent(event interface{}) error
+	sendEvent(ctx context.Context, event interface{}) error
 	status() string
 	close(ctx context.Context)
 }
@@ -161,10 +161,12 @@ func DequeueEvent(ctx context.Context, db *gorp.DbMap) {
 	for {
 		e := sdk.Event{}
 		if err := store.DequeueWithContext(ctx, "events", 250*time.Millisecond, &e); err != nil {
+			ctx := sdk.ContextWithStacktrace(ctx, err)
 			log.Error(ctx, "Event.DequeueEvent> store.DequeueWithContext err: %v", err)
 			continue
 		}
 		if err := ctx.Err(); err != nil {
+			ctx := sdk.ContextWithStacktrace(ctx, err)
 			log.Error(ctx, "Exiting event.DequeueEvent : %v", err)
 			return
 		}
@@ -176,7 +178,8 @@ func DequeueEvent(ctx context.Context, db *gorp.DbMap) {
 			}
 			if globalBroker != nil {
 				log.Info(ctx, "sending event %q to global broker", e.EventType)
-				if err := globalBroker.sendEvent(&e); err != nil {
+				if err := globalBroker.sendEvent(ctx, &e); err != nil {
+					ctx := sdk.ContextWithStacktrace(ctx, err)
 					log.Warn(ctx, "Error while sending message [%s: %s/%s/%s/%s/%s]: %s", e.EventType, e.ProjectKey, e.WorkflowName, e.ApplicationName, e.PipelineName, e.EnvironmentName, err)
 				}
 			}
@@ -194,7 +197,8 @@ func DequeueEvent(ctx context.Context, db *gorp.DbMap) {
 		}
 		if jobSummaryBroker != nil {
 			log.Info(ctx, "sending event %+v to job summary broker", ejs)
-			if err := jobSummaryBroker.sendEvent(ejs); err != nil {
+			if err := jobSummaryBroker.sendEvent(ctx, ejs); err != nil {
+				ctx := sdk.ContextWithStacktrace(ctx, err)
 				log.Error(ctx, "Error while sending message %s: %v", string(e.Payload), err)
 			}
 		}
@@ -206,6 +210,7 @@ func DequeueEvent(ctx context.Context, db *gorp.DbMap) {
 			if !ok {
 				projInt, err := integration.LoadProjectIntegrationByIDWithClearPassword(ctx, db, eventIntegrationID)
 				if err != nil {
+					ctx := sdk.ContextWithStacktrace(ctx, err)
 					log.Error(ctx, "Event.DequeueEvent> Cannot load project integration for project %s and id %d and type event: %v", e.ProjectKey, eventIntegrationID, err)
 					continue
 				}
@@ -213,10 +218,12 @@ func DequeueEvent(ctx context.Context, db *gorp.DbMap) {
 				kafkaCfg := getKafkaConfig(projInt.Config)
 				kafkaBroker, err := getBroker(ctx, "kafka", kafkaCfg)
 				if err != nil {
-					log.Error(ctx, "Event.DequeueEvent> cannot get broker for %q and user %q : %v", projInt.Config["broker url"].Value, projInt.Config["username"].Value, err)
+					ctx := sdk.ContextWithStacktrace(ctx, err)
+					log.Error(ctx, "Event.DequeueEvent> cannot get broker %q for project %q and user %q : %v", projInt.Config["broker url"].Value, e.ProjectKey, projInt.Config["username"].Value, err)
 					continue
 				}
 				if err := brokersConnectionCache.Add(brokerConnectionKey, kafkaBroker, gocache.DefaultExpiration); err != nil {
+					ctx := sdk.ContextWithStacktrace(ctx, err)
 					log.Error(ctx, "Event.DequeueEvent> cannot add broker in cache for %q and user %q : %v", projInt.Config["broker url"].Value, projInt.Config["username"].Value, err)
 					continue
 				}
@@ -232,7 +239,8 @@ func DequeueEvent(ctx context.Context, db *gorp.DbMap) {
 
 			// Send into external brokers
 			log.Info(ctx, "sending event %q to integration broker: %s", e.EventType, brokerConfig.BrokerAddresses)
-			if err := broker.sendEvent(ejs); err != nil {
+			if err := broker.sendEvent(ctx, ejs); err != nil {
+				ctx := sdk.ContextWithStacktrace(ctx, err)
 				log.Warn(ctx, "Error while sending message %s: %v", string(e.Payload), err)
 			}
 		}
