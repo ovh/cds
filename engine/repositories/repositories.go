@@ -106,18 +106,25 @@ func (s *Service) Serve(c context.Context) error {
 	}
 
 	log.Info(ctx, "Initializing processor...")
-	go func() {
+	s.GoRoutines.RunWithRestart(ctx, "processor", func(ctx context.Context) {
 		if err := s.processor(ctx); err != nil {
-			log.Info(ctx, "Shutdown processor")
+			log.ErrorWithStackTrace(ctx, err)
 		}
-	}()
+	})
 
 	log.Info(ctx, "Initializing vacuumCleaner...")
-	go func() {
+	s.GoRoutines.RunWithRestart(ctx, "vacuumCleaner", func(ctx context.Context) {
 		if err := s.vacuumCleaner(ctx); err != nil {
-			log.Info(ctx, "Shutdown vacuumCleaner")
+			log.ErrorWithStackTrace(ctx, err)
 		}
-	}()
+	})
+
+	log.Info(ctx, "Initializing cache size...")
+	s.GoRoutines.RunWithRestart(ctx, "computeCacheSize", func(ctx context.Context) {
+		if err := s.computeCacheSize(ctx); err != nil {
+			log.ErrorWithStackTrace(ctx, err)
+		}
+	})
 
 	//Gracefully shutdown the http server
 	go func() {

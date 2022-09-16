@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/rockbears/log"
 
@@ -41,4 +42,32 @@ func (s *Service) checkOrCreateFS(r *sdk.OperationRepo) error {
 func (s *Service) cleanFS(ctx context.Context, r *sdk.OperationRepo) error {
 	log.Info(ctx, "cleaning operation basedir: %v", r.Basedir)
 	return sdk.WithStack(os.RemoveAll(r.Basedir))
+}
+
+func (s *Service) computeCacheSize(ctx context.Context) error {
+	tick := time.NewTicker(5 * time.Minute)
+
+	defer tick.Stop()
+	for {
+		select {
+		case <-tick.C:
+			var size int64
+			err := filepath.Walk(s.Cfg.Basedir, func(_ string, info os.FileInfo, err error) error {
+				if err != nil {
+					return err
+				}
+				if !info.IsDir() {
+					size += info.Size()
+				}
+				return err
+			})
+			if err != nil {
+				log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "unable to compute size"))
+				continue
+			}
+			s.cacheSize = size
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
 }
