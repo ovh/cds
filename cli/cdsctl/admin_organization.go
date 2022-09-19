@@ -10,7 +10,7 @@ import (
 
 var adminOrganizationCmd = cli.Command{
 	Name:    "organization",
-	Aliases: []string{"org", "orga"},
+	Aliases: []string{"org", "orga", "organizations"},
 	Short:   "Manage CDS Organization",
 }
 
