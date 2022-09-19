@@ -1,14 +1,10 @@
-.asCodeEvents {
-  ul {
-    li {
-      ul {
-        list-style: none;
-      }
-    }
-  }
-  .footer {
-    text-align: right;
-  }
+@import "../../../../common";
+
+.green {
+  color: $cds_color_green
 }
 
+.blue {
+  color: $cds_color_teal
+}
 

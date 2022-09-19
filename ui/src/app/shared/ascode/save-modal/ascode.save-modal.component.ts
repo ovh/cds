@@ -24,6 +24,7 @@ import { NzModalRef } from 'ng-zorro-antd/modal';
 @Component({
     selector: 'app-ascode-save-modal',
     templateUrl: './ascode.save-modal.html',
+    styleUrls: ['./ascode.save-modal.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()

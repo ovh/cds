@@ -1,17 +1,7 @@
-.ui.form {
-  .fields:last-child {
-    margin-bottom: 0px;
-  }
-
-  .fields {
-    .bottom.aligned.field {
-      display:flex;
-      justify-content:flex-end;
-      align-items:flex-end;
-    }
-  }
-  textarea {
-    min-height: 4em;
-    max-height: 8em;
-  }
+nz-card {
+  margin-top: 15px;
+  margin-bottom: 15px;
+}
+.alignRight {
+  text-align: right;
 }

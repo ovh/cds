@@ -30,7 +30,6 @@ import { ActionStepFormComponent } from './action/step/form/step.form.component'
 import { ActionStepComponent } from './action/step/step.component';
 import { AuditListComponent } from './audit/list/audit.list.component';
 import { BreadcrumbComponent } from './breadcrumb/breadcrumb.component';
-import { DeleteButtonComponent } from './button/delete/delete.button';
 import { UploadButtonComponent } from './button/upload/upload.button.component';
 import { ChartComponentComponent } from './chart/chart.component';
 import { CommitListComponent } from './commit/commit.list.component';
@@ -102,8 +101,6 @@ import { WorkflowWNodeJoinComponent } from './workflow/wnode/join/node.join.comp
 import { WorkflowWNodeOutGoingHookComponent } from './workflow/wnode/outgoinghook/node.outgoinghook.component';
 import { WorkflowWNodePipelineComponent } from './workflow/wnode/pipeline/wnode.pipeline.component';
 import { WorkflowWNodeComponent } from './workflow/wnode/wnode.component';
-import { ZoneContentComponent } from './zone/zone-content/content.component';
-import { ZoneComponent } from './zone/zone.component';
 import { NgxAutoScrollDirective } from 'app/shared/directives/auto-scroll.directive';
 import { NZ_CONFIG, NzConfig } from 'ng-zorro-antd/core/config';
 import { NzNotificationModule } from 'ng-zorro-antd/notification';
@@ -219,7 +216,6 @@ const icons: IconDefinition[] = [ AimOutline, ArrowDownOutline, ArrowRightOutlin
         ConditionsComponent,
         CutPipe,
         DataTableComponent,
-        DeleteButtonComponent,
         DiffItemComponent,
         DiffListComponent,
         DurationMsPipe,
@@ -292,8 +288,6 @@ const icons: IconDefinition[] = [ AimOutline, ArrowDownOutline, ArrowRightOutlin
         WorkflowWNodeMenuEditComponent,
         WorkflowWNodeOutGoingHookComponent,
         WorkflowWNodePipelineComponent,
-        ZoneComponent,
-        ZoneContentComponent
     ],
     providers: [
         PermissionService,
@@ -329,7 +323,6 @@ const icons: IconDefinition[] = [ AimOutline, ArrowDownOutline, ArrowRightOutlin
         ConditionsComponent,
         CutPipe,
         DataTableComponent,
-        DeleteButtonComponent,
         DiffItemComponent,
         DiffListComponent,
         DragulaModule,
@@ -426,9 +419,7 @@ const icons: IconDefinition[] = [ AimOutline, ArrowDownOutline, ArrowRightOutlin
         WorkflowTemplateParamFormComponent,
         WorkflowTriggerComponent,
         WorkflowWNodeComponent,
-        WorkflowWNodeMenuEditComponent,
-        ZoneComponent,
-        ZoneContentComponent
+        WorkflowWNodeMenuEditComponent
     ]
 })
 export class SharedModule {
