@@ -103,6 +103,11 @@ func (api *API) InitRouter() {
 	r.Handle("/admin/database/encryption/{entity}", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminDatabaseEncryptedTuplesByEntity, service.OverrideAuth(api.authAdminMiddleware)))
 	r.Handle("/admin/database/encryption/{entity}/roll/{pk}", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.postAdminDatabaseRollEncryptedEntityByPrimaryKey, service.OverrideAuth(api.authAdminMiddleware)))
 
+	// Organization
+	r.Handle("/admin/organization", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminOrganizationsHandler, service.OverrideAuth(api.authAdminMiddleware)), r.POST(api.postAdminOrganizationHandler, service.OverrideAuth(api.authAdminMiddleware)))
+	r.Handle("/admin/organization/{organizationIdentifier}", Scope(sdk.AuthConsumerScopeAdmin), r.DELETE(api.deleteAdminOrganizationsHandler, service.OverrideAuth(api.authAdminMiddleware)))
+	r.Handle("/admin/organization/{organizationIdentifier}/migrate-user", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.postOrganizationMigrateUserHandler, service.OverrideAuth(api.authAdminMiddleware)))
+
 	// Feature flipping
 	r.Handle("/admin/features", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminFeatureFlipping, service.OverrideAuth(api.authAdminMiddleware)), r.POST(api.postAdminFeatureFlipping, service.OverrideAuth(api.authAdminMiddleware)))
 	r.Handle("/admin/features/{name}", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminFeatureFlippingByName, service.OverrideAuth(api.authAdminMiddleware)), r.PUT(api.putAdminFeatureFlipping, service.OverrideAuth(api.authAdminMiddleware)), r.DELETE(api.deleteAdminFeatureFlipping, service.OverrideAuth(api.authAdminMiddleware)))
@@ -433,6 +438,8 @@ func (api *API) InitRouter() {
 	r.Handle("/template/{groupName}/{templateSlug}/instance/{instanceID}", Scope(sdk.AuthConsumerScopeTemplate), r.DELETE(api.deleteTemplateInstanceHandler))
 	r.Handle("/template/{groupName}/{templateSlug}/usage", Scope(sdk.AuthConsumerScopeTemplate), r.GET(api.getTemplateUsageHandler))
 
+	r.Handle("/v2/organization", nil, r.POSTv2(api.postOrganizationHandler), r.GETv2(api.getOrganizationsHandler))
+	r.Handle("/v2/organization/{organizationIdentifier}", nil, r.GETv2(api.getOrganizationHandler), r.DELETEv2(api.deleteOrganizationHandler))
 	r.Handle("/v2/rbac/import", nil, r.POSTv2(api.postImportRbacHandler))
 
 	r.Handle("/v2/repository/analyze", Scope(sdk.AuthConsumerScopeHooks), r.POSTv2(api.postRepositoryAnalysisHandler))

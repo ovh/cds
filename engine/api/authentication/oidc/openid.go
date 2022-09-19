@@ -18,7 +18,7 @@ var _ sdk.AuthDriverWithRedirect = (*authDriver)(nil)
 var _ sdk.AuthDriverWithSigninStateToken = (*authDriver)(nil)
 
 // NewDriver returns a new OIDC auth driver for given config.
-func NewDriver(signupDisabled bool, cdsURL, url, clientID, clientSecret string) (sdk.AuthDriver, error) {
+func NewDriver(signupDisabled bool, cdsURL, url, clientID, clientSecret, orga string) (sdk.AuthDriver, error) {
 	provider, err := oidc.NewProvider(context.Background(), url)
 	if err != nil {
 		return nil, sdk.WrapError(err, "failed to initialize OIDC driver")
@@ -43,6 +43,7 @@ func NewDriver(signupDisabled bool, cdsURL, url, clientID, clientSecret string) 
 		cdsURL:         cdsURL,
 		OAuth2Config:   oauth2Config,
 		Verifier:       verifier,
+		organization:   orga,
 	}, nil
 }
 
@@ -51,6 +52,7 @@ type authDriver struct {
 	cdsURL         string
 	OAuth2Config   oauth2.Config
 	Verifier       *oidc.IDTokenVerifier
+	organization   string
 }
 
 func (d authDriver) GetManifest() sdk.AuthDriverManifest {
@@ -137,6 +139,7 @@ func (d authDriver) GetUserInfo(ctx context.Context, req sdk.AuthConsumerSigninR
 	if info.Email, ok = tokenClaim["email"].(string); !ok {
 		return info, sdk.WithStack(errors.New("missing user's email in OIDC token claim"))
 	}
+	info.Organization = d.organization
 
 	return info, nil
 }

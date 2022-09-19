@@ -325,7 +325,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 			analysis.Data.CDSUserName = cdsUser.Username
 
 			// Check user right
-			b, err := rbac.HasRoleOnProjectAndUserID(ctx, api.mustDB(), sdk.RoleManage, cdsUser.ID, analysis.ProjectKey)
+			b, err := rbac.HasRoleOnProjectAndUserID(ctx, api.mustDB(), sdk.ProjectRoleManage, cdsUser.ID, analysis.ProjectKey)
 			if err != nil {
 				return api.stopAnalysis(ctx, analysis, err)
 			}

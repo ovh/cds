@@ -1,7 +1,7 @@
 package sdk
 
 var (
-	GlobalRoles = []string{RoleCreateProject, RoleManagePermission}
+	GlobalRoles = []string{GlobalRoleProjectCreate, RoleManagePermission}
 )
 
 type RBACGlobal struct {

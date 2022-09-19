@@ -17,7 +17,7 @@ func TestRBACGlobalInvalidGlobalRole(t *testing.T) {
 }
 func TestRBACGlobalInvalidGroupAndUsers(t *testing.T) {
 	rb := RBACGlobal{
-		Role:          RoleCreateProject,
+		Role:          GlobalRoleProjectCreate,
 		RBACGroupsIDs: []int64{},
 		RBACUsersIDs:  []string{},
 	}

@@ -17,6 +17,7 @@ func adminCommands() []*cobra.Command {
 		adminServices(),
 		adminCdn(),
 		adminHooks(),
+		adminOrganization(),
 		adminIntegrationModels(),
 		adminMaintenance(),
 		adminMetadata(),

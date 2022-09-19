@@ -102,7 +102,7 @@ type Configuration struct {
 		DisableAddUserInDefaultGroup bool                       `toml:"disableAddUserInDefaultGroup" default:"false" comment:"If false, user are automatically added in the default group" json:"disableAddUserInDefaultGroup"`
 		RSAPrivateKey                string                     `toml:"rsaPrivateKey" default:"" comment:"The RSA Private Key used to sign and verify the JWT Tokens issued by the API \nThis is mandatory." json:"-"`
 		RSAPrivateKeys               []authentication.KeyConfig `toml:"rsaPrivateKeys" default:"" comment:"RSA Private Keys used to sign and verify the JWT Tokens issued by the API \nThis is mandatory." json:"-" mapstructure:"rsaPrivateKeys"`
-		AllowedOrganizations         sdk.StringSlice            `toml:"allowedOrganizations" default:"" comment:"The list of allowed organizations for CDS users, let empty to authorize all organizations." json:"allowedOrganizations"`
+		AllowedOrganizations         sdk.StringSlice            `toml:"allowedOrganizations" default:"[default]" comment:"The list of allowed organizations for CDS users, let empty to authorize all organizations." json:"allowedOrganizations"`
 		LDAP                         struct {
 			Enabled         bool   `toml:"enabled" default:"false" json:"enabled"`
 			SignupDisabled  bool   `toml:"signupDisabled" default:"false" json:"signupDisabled"`
@@ -120,6 +120,7 @@ type Configuration struct {
 			Enabled              bool   `toml:"enabled" default:"true" json:"enabled"`
 			SignupDisabled       bool   `toml:"signupDisabled" default:"false" json:"signupDisabled"`
 			SignupAllowedDomains string `toml:"signupAllowedDomains" default:"" comment:"Allow signup from selected domains only - comma separated. Example: your-domain.com,another-domain.com" commented:"true" json:"signupAllowedDomains"`
+			Organization         string `toml:"organization" default:"default" comment:"Organization assigned to user created by local authentication" commented:"true" json:"organization"`
 		} `toml:"local" json:"local"`
 		CorporateSSO struct {
 			MFASupportEnabled bool   `json:"mfa_support_enabled" default:"false" toml:"mfaSupportEnabled"`
@@ -143,6 +144,7 @@ type Configuration struct {
 			APIURL         string `toml:"apiUrl" json:"apiUrl" default:"https://api.github.com" comment:"GitHub API URL"`
 			ClientID       string `toml:"clientId" json:"-" comment:"GitHub OAuth Client ID"`
 			ClientSecret   string `toml:"clientSecret" json:"-" comment:"GitHub OAuth Client Secret"`
+			Organization   string `toml:"organization" default:"default" comment:"Organization assigned to user created by github authentication" commented:"true" json:"organization"`
 		} `toml:"github" json:"github" comment:"#######\n CDS <-> GitHub Auth. Documentation on https://ovh.github.io/cds/docs/integrations/github/github_authentication/ \n######"`
 		Gitlab struct {
 			Enabled        bool   `toml:"enabled" default:"false" json:"enabled"`
@@ -150,6 +152,7 @@ type Configuration struct {
 			URL            string `toml:"url" json:"url" default:"https://gitlab.com" comment:"GitLab URL"`
 			ApplicationID  string `toml:"applicationID" json:"-" comment:"GitLab OAuth Application ID"`
 			Secret         string `toml:"secret" json:"-" comment:"GitLab OAuth Application Secret"`
+			Organization   string `toml:"organization" default:"default" comment:"Organization assigned to user created by gitlab authentication" commented:"true" json:"organization"`
 		} `toml:"gitlab" json:"gitlab" comment:"#######\n CDS <-> GitLab Auth. Documentation on https://ovh.github.io/cds/docs/integrations/gitlab/gitlab_authentication/ \n######"`
 		OIDC struct {
 			Enabled        bool   `toml:"enabled" default:"false" json:"enabled"`
@@ -157,6 +160,7 @@ type Configuration struct {
 			URL            string `toml:"url" json:"url" default:"" comment:"Open ID connect config URL"`
 			ClientID       string `toml:"clientId" json:"-" comment:"OIDC Client ID"`
 			ClientSecret   string `toml:"clientSecret" json:"-" comment:"OIDC Client Secret"`
+			Organization   string `toml:"organization" default:"default" comment:"Organization assigned to user created by openid authentication" commented:"true" json:"organization"`
 		} `toml:"oidc" json:"oidc" comment:"#######\n CDS <-> Open ID Connect Auth. Documentation on https://ovh.github.io/cds/docs/integrations/openid-connect/ \n######"`
 	} `toml:"auth" comment:"##############################\n CDS Authentication Settings# \n#############################" json:"auth"`
 	SMTP struct {
@@ -619,6 +623,7 @@ func (a *API) Serve(ctx context.Context) error {
 			a.Config.Auth.Local.SignupDisabled,
 			a.Config.URL.UI,
 			a.Config.Auth.Local.SignupAllowedDomains,
+			a.Config.Auth.Local.Organization,
 		)
 	}
 
@@ -650,6 +655,7 @@ func (a *API) Serve(ctx context.Context) error {
 			a.Config.Auth.Github.APIURL,
 			a.Config.Auth.Github.ClientID,
 			a.Config.Auth.Github.ClientSecret,
+			a.Config.Auth.Github.Organization,
 		)
 	}
 	if a.Config.Auth.Gitlab.Enabled {
@@ -659,6 +665,7 @@ func (a *API) Serve(ctx context.Context) error {
 			a.Config.Auth.Gitlab.URL,
 			a.Config.Auth.Gitlab.ApplicationID,
 			a.Config.Auth.Gitlab.Secret,
+			a.Config.Auth.Gitlab.Organization,
 		)
 	}
 	if a.Config.Auth.OIDC.Enabled {
@@ -668,6 +675,7 @@ func (a *API) Serve(ctx context.Context) error {
 			a.Config.Auth.OIDC.URL,
 			a.Config.Auth.OIDC.ClientID,
 			a.Config.Auth.OIDC.ClientSecret,
+			a.Config.Auth.OIDC.Organization,
 		)
 		if err != nil {
 			return err

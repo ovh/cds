@@ -12,14 +12,110 @@ import (
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/api/organization"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/database"
 	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
+
+func (api *API) postOrganizationMigrateUserHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		orgaIdentifier := vars["organizationIdentifier"]
+
+		orga, err := api.getOrganizationByIdentifier(ctx, orgaIdentifier)
+		if err != nil {
+			return err
+		}
+
+		users, err := user.LoadUsersWithoutOrganization(ctx, api.mustDB())
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		defer tx.Rollback() // nolint
+
+		for i := range users {
+			tx, err := api.mustDB().Begin()
+			if err != nil {
+				return sdk.WithStack(err)
+			}
+			u := &users[i]
+
+			organization := &user.Organization{
+				Organization:       orga.Name,
+				AuthentifiedUserID: u.ID,
+			}
+			if err := user.InsertOrganization(ctx, tx, organization); err != nil {
+				return err
+			}
+			if err := tx.Commit(); err != nil {
+				return sdk.WithStack(err)
+			}
+		}
+		return service.WriteJSON(w, nil, http.StatusOK)
+	}
+}
+
+func (api *API) postAdminOrganizationHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		var org sdk.Organization
+		if err := service.UnmarshalBody(r, &org); err != nil {
+			return err
+		}
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		defer tx.Rollback() // nolint
+
+		if err := organization.Insert(ctx, tx, &org); err != nil {
+			return err
+		}
+		if err := tx.Commit(); err != nil {
+			return sdk.WithStack(err)
+		}
+		return service.WriteMarshal(w, r, nil, http.StatusCreated)
+	}
+}
+
+func (api *API) getAdminOrganizationsHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		orgas, err := organization.LoadAllOrganizations(ctx, api.mustDB())
+		if err != nil {
+			return err
+		}
+		return service.WriteMarshal(w, r, orgas, http.StatusOK)
+	}
+}
+
+func (api *API) deleteAdminOrganizationsHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		orgaIdentifier := vars["organizationIdentifier"]
+
+		orga, err := api.getOrganizationByIdentifier(ctx, orgaIdentifier)
+		if err != nil {
+			return err
+		}
+
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		defer tx.Rollback() // nolint
+
+		if err := organization.Delete(tx, orga.ID); err != nil {
+			return err
+		}
+		return sdk.WithStack(tx.Commit())
+	}
+}
 
 func (api *API) postMaintenanceHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {

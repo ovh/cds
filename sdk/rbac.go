@@ -3,11 +3,14 @@ package sdk
 import "time"
 
 const (
-	RoleRead             = "read"
-	RoleManage           = "manage"
-	RoleDelete           = "delete"
-	RoleCreateProject    = "create-project"
-	RoleManagePermission = "manage-permission"
+	// Global Role
+	RoleManagePermission         = "manage-permission"
+	GlobalRoleManageOrganization = "manage-organization"
+	GlobalRoleProjectCreate      = "create-project"
+
+	// Project Role
+	ProjectRoleRead   = "read"
+	ProjectRoleManage = "manage"
 )
 
 type RBAC struct {

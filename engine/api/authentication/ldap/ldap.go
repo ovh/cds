@@ -83,7 +83,7 @@ func (d AuthDriver) GetUserInfo(ctx context.Context, req sdk.AuthConsumerSigninR
 		return userInfo, sdk.NewError(sdk.ErrUnauthorized, err)
 	}
 
-	entry, err := d.search(ctx, bind, "uid", "dn", "cn", "ou", "givenName", "sn", "mail", "memberOf")
+	entry, err := d.search(ctx, bind, "uid", "dn", "cn", "ou", "givenName", "sn", "mail", "memberOf", "company")
 	if err != nil && err.Error() != errUserNotFound {
 		return userInfo, sdk.NewError(sdk.ErrUnauthorized, err)
 	}
@@ -113,6 +113,7 @@ func (d AuthDriver) GetUserInfo(ctx context.Context, req sdk.AuthConsumerSigninR
 	userInfo.Email = entry[0].Attributes["mail"]
 	userInfo.ExternalID = entry[0].Attributes["uid"]
 	userInfo.Username = req.String("bind")
+	userInfo.Organization = req.String("company")
 
 	return userInfo, nil
 }

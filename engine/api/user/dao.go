@@ -80,6 +80,14 @@ func Get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...
 	return &au, nil
 }
 
+func LoadUsersWithoutOrganization(ctx context.Context, db gorp.SqlExecutor) ([]sdk.AuthentifiedUser, error) {
+	query := gorpmapping.NewQuery(`
+		SELECT au.* FROM authentified_user au
+		LEFT JOIN authentified_user_organization auo ON auo.authentified_user_id = au.id
+		WHERE auo.authentified_user_id is null`)
+	return getAll(ctx, db, query)
+}
+
 // LoadAll returns all users from database.
 func LoadAll(ctx context.Context, db gorp.SqlExecutor, opts ...LoadOptionFunc) (sdk.AuthentifiedUsers, error) {
 	query := gorpmapping.NewQuery("SELECT * FROM authentified_user")

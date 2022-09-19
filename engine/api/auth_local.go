@@ -213,6 +213,14 @@ func (api *API) postAuthLocalSigninHandler() service.Handler {
 			return sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 		}
 
+		userInfo, err := driver.GetUserInfo(ctx, reqData)
+		if err != nil {
+			return err
+		}
+		if err := api.userSetOrganization(ctx, tx, usr, userInfo.Organization); err != nil {
+			return err
+		}
+
 		// Try to load a local consumer for user
 		consumer, err := authentication.LoadConsumerByTypeAndUserID(ctx, tx, sdk.ConsumerLocal, usr.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 		if err != nil {
@@ -352,6 +360,14 @@ func (api *API) postAuthLocalVerifyHandler() service.Handler {
 			if err := group.CheckUserInDefaultGroup(ctx, tx, newUser.ID); err != nil {
 				return err
 			}
+		}
+
+		userInfo, err := driver.GetUserInfo(ctx, reqData)
+		if err != nil {
+			return err
+		}
+		if err := api.userSetOrganization(ctx, tx, &newUser, userInfo.Organization); err != nil {
+			return err
 		}
 
 		// Create new local consumer for new user, set this consumer as pending validation
