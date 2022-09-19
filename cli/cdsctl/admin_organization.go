@@ -11,7 +11,7 @@ import (
 var adminOrganizationCmd = cli.Command{
 	Name:    "organization",
 	Aliases: []string{"org", "orga"},
-	Short:   "Manage CDS CDN uService",
+	Short:   "Manage CDS Organization",
 }
 
 func adminOrganization() *cobra.Command {
