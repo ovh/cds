@@ -18,7 +18,7 @@ func adminOrganization() *cobra.Command {
 	return cli.NewCommand(adminOrganizationCmd, nil, []*cobra.Command{
 		cli.NewListCommand(adminOrganizationListCmd, adminOrganizationListRun, nil),
 		cli.NewCommand(adminOrganizationAddCmd, adminOrganizationAddRun, nil),
-		cli.NewCommand(adminOrganizationDeleteCmd, adminOrganizationDeleteRun, nil),
+		cli.NewDeleteCommand(adminOrganizationDeleteCmd, adminOrganizationDeleteRun, nil),
 		cli.NewCommand(adminOrganizationUserMigrateCmd, adminOrganizationUserMigrateRun, nil),
 	})
 }
