@@ -145,6 +145,9 @@ func (client *bitbucketcloudClient) UpdateHook(ctx context.Context, repo string,
 	}
 
 	bitbucketHook.Events = hook.Events
+	bitbucketHook.URL = hook.URL
+	bitbucketHook.Description = "CDS webhook"
+	bitbucketHook.Active = true
 	b, err := json.Marshal(bitbucketHook)
 	if err != nil {
 		return sdk.WrapError(err, "cannot marshal body %+v", bitbucketHook)
