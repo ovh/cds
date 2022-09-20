@@ -53,7 +53,7 @@ func initFlagsRun(cmd *cobra.Command) {
 	flags.String(flagGraylogPort, "", "Ex: --graylog-port=12202")
 	flags.String(flagGraylogExtraKey, "", "Ex: --graylog-extra-key=xxxx-yyyy")
 	flags.String(flagGraylogExtraValue, "", "Ex: --graylog-extra-value=xxxx-yyyy")
-	flags.String(flagLogLevel, "notice", "Log Level: debug, info, notice, warning, critical")
+	flags.String(flagLogLevel, "notice", "Log Level: debug, info, notice, warning, error")
 	flags.String(flagAPI, "", "URL of CDS API")
 	flags.Bool(flagInsecure, false, `(SSL) This option explicitly allows curl to perform "insecure" SSL connections and transfers.`)
 	flags.String(flagToken, "", "CDS Token")
