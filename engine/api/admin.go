@@ -47,11 +47,7 @@ func (api *API) postOrganizationMigrateUserHandler() service.Handler {
 			}
 			u := &users[i]
 
-			organization := &user.Organization{
-				Organization:       orga.Name,
-				AuthentifiedUserID: u.ID,
-			}
-			if err := user.InsertOrganization(ctx, tx, organization); err != nil {
+			if err := api.userSetOrganization(ctx, tx, u, orga.Name); err != nil {
 				return err
 			}
 			if err := tx.Commit(); err != nil {
