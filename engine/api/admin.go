@@ -34,11 +34,6 @@ func (api *API) postOrganizationMigrateUserHandler() service.Handler {
 		}
 
 		users, err := user.LoadUsersWithoutOrganization(ctx, api.mustDB())
-		tx, err := api.mustDB().Begin()
-		if err != nil {
-			return sdk.WithStack(err)
-		}
-		defer tx.Rollback() // nolint
 
 		for i := range users {
 			tx, err := api.mustDB().Begin()
@@ -48,9 +43,11 @@ func (api *API) postOrganizationMigrateUserHandler() service.Handler {
 			u := &users[i]
 
 			if err := api.userSetOrganization(ctx, tx, u, orga.Name); err != nil {
+				_ = tx.Rollback()
 				return err
 			}
 			if err := tx.Commit(); err != nil {
+				_ = tx.Rollback()
 				return sdk.WithStack(err)
 			}
 		}
