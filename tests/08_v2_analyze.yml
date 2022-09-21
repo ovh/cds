@@ -1,4 +1,4 @@
-name: Project VCS Command TestSuite
+name: Project Analyze testSuite
 testcases:
 - name: prepare test
   steps:

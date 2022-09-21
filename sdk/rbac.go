@@ -4,8 +4,11 @@ import "time"
 
 const (
 	// Global Role
-	RoleManagePermission         = "manage-permission"
+	GlobalRoleManagePermission   = "manage-permission"
 	GlobalRoleManageOrganization = "manage-organization"
+	GlobalRoleManageRegion       = "manage-region"
+	GlobalRoleManageUser         = "manage-user"
+	GlobalRoleManageGroup        = "manage-group"
 	GlobalRoleProjectCreate      = "create-project"
 
 	// Project Role

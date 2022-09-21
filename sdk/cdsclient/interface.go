@@ -202,6 +202,20 @@ type MaintenanceClient interface {
 	Maintenance(enable bool, hooks bool) error
 }
 
+type OrganizationClient interface {
+	OrganizationAdd(ctx context.Context, organization sdk.Organization) error
+	OrganizationGet(ctx context.Context, organizationIdentifier string) (sdk.Organization, error)
+	OrganizationList(ctx context.Context) ([]sdk.Organization, error)
+	OrganizationDelete(ctx context.Context, organizationIdentifier string) error
+}
+
+type RegionClient interface {
+	RegionAdd(ctx context.Context, region sdk.Region) error
+	RegionGet(ctx context.Context, regionIdentifier string) (sdk.Region, error)
+	RegionList(ctx context.Context) ([]sdk.Region, error)
+	RegionDelete(ctx context.Context, regionIdentifier string) error
+}
+
 // ProjectClient exposes project related functions
 type ProjectClient interface {
 	ProjectCreate(proj *sdk.Project) error
@@ -419,6 +433,8 @@ type Interface interface {
 	IntegrationClient
 	ProjectClient
 	RBACClient
+	OrganizationClient
+	RegionClient
 	QueueClient
 	Navbar() ([]sdk.NavbarProjectData, error)
 	Requirements() ([]sdk.Requirement, error)
