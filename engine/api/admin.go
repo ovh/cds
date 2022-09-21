@@ -34,6 +34,9 @@ func (api *API) postOrganizationMigrateUserHandler() service.Handler {
 		}
 
 		users, err := user.LoadUsersWithoutOrganization(ctx, api.mustDB())
+		if err != nil {
+			return err
+		}
 
 		for i := range users {
 			tx, err := api.mustDB().Begin()
