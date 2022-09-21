@@ -80,12 +80,9 @@ func (d *dao) deleteLock(ctx context.Context, uuid string) error {
 	return nil
 }
 
-func (d *dao) unlock(ctx context.Context, uuid string, retention time.Duration) error {
+func (d *dao) unlock(ctx context.Context, uuid string) error {
 	if err := d.store.Unlock(cache.Key(locksKey, uuid)); err != nil {
 		log.Error(ctx, "error on unlock uuid %s: %v", uuid, err)
-	}
-	if _, err := d.store.Lock(cache.Key(lastAccessKey, uuid), retention, -1, -1); err != nil {
-		return sdk.WrapError(err, "error on cache.lock uuid:%s", uuid)
 	}
 	return nil
 }
