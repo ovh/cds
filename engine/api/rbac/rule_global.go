@@ -30,7 +30,11 @@ func hasGlobalRole(ctx context.Context, auth *sdk.AuthConsumer, _ cache.Store, d
 	return nil
 }
 
-// PermissionManage return nil if the current AuthConsumer have the RoleManage on current project KEY
+// PermissionManage return nil if the current AuthConsumer have the ProjectRoleManage on current project KEY
 func PermissionManage(ctx context.Context, auth *sdk.AuthConsumer, store cache.Store, db gorp.SqlExecutor, _ map[string]string) error {
 	return hasGlobalRole(ctx, auth, store, db, sdk.RoleManagePermission)
+}
+
+func OrganizationManage(ctx context.Context, auth *sdk.AuthConsumer, store cache.Store, db gorp.SqlExecutor, _ map[string]string) error {
+	return hasGlobalRole(ctx, auth, store, db, sdk.GlobalRoleManageOrganization)
 }

@@ -50,6 +50,10 @@ type Admin interface {
 	AdminCDSMigrationCancel(id int64) error
 	AdminCDSMigrationReset(id int64) error
 	AdminWorkflowUpdateMaxRuns(projectKey string, workflowName string, maxRuns int64) error
+	AdminOrganizationCreate(ctx context.Context, orga sdk.Organization) error
+	AdminOrganizationList(ctx context.Context) ([]sdk.Organization, error)
+	AdminOrganizationDelete(ctx context.Context, orgaIdentifier string) error
+	AdminOrganizationMigrateUser(ctx context.Context, orgaIdentifier string) error
 	Features() ([]sdk.Feature, error)
 	FeatureCreate(f sdk.Feature) error
 	FeatureDelete(name sdk.FeatureName) error

@@ -11,19 +11,19 @@ func TestRBACProjectInvalidRole(t *testing.T) {
 	rb := RBACProject{
 		RBACProjectKeys: []string{"foo"},
 		All:             false,
-		Role:            RoleCreateProject,
+		Role:            GlobalRoleProjectCreate,
 		RBACGroupsIDs:   []int64{1},
 		RBACUsersIDs:    []string{"aa-aa-aa"},
 	}
 	err := isValidRBACProject("myRule", rb)
 	require.Error(t, err)
-	require.Contains(t, err.Error(), fmt.Sprintf("rbac myRule: role %s is not allowed on a project permission", RoleCreateProject))
+	require.Contains(t, err.Error(), fmt.Sprintf("rbac myRule: role %s is not allowed on a project permission", GlobalRoleProjectCreate))
 }
 func TestRBACProjectInvalidGroupAndUsers(t *testing.T) {
 	rb := RBACProject{
 		RBACProjectKeys: []string{"foo"},
 		All:             false,
-		Role:            RoleRead,
+		Role:            ProjectRoleRead,
 		RBACGroupsIDs:   []int64{},
 		RBACUsersIDs:    []string{},
 	}
@@ -35,7 +35,7 @@ func TestRBACProjectInvalidProjectKeys(t *testing.T) {
 	rb := RBACProject{
 		RBACProjectKeys: []string{},
 		All:             false,
-		Role:            RoleRead,
+		Role:            ProjectRoleRead,
 		RBACGroupsIDs:   []int64{1},
 		RBACUsersIDs:    []string{},
 	}
@@ -59,7 +59,7 @@ func TestRBACProjectInvalidAllAndListOfProject(t *testing.T) {
 	rb := RBACProject{
 		RBACProjectKeys: []string{"foo"},
 		All:             true,
-		Role:            RoleRead,
+		Role:            ProjectRoleRead,
 		RBACGroupsIDs:   []int64{1},
 		RBACUsersIDs:    []string{},
 	}

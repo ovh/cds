@@ -91,7 +91,7 @@ func SetupPGToCancel(t require.TestingT, m *gorpmapper.Mapper, serviceType strin
 	redisHost := cfg["redisHost"]
 	redisPassword := cfg["redisPassword"]
 	redisDbIndex, err := strconv.ParseInt(cfg["redisDbIndex"], 10, 64)
-	require.NoError(t, err, "error when unmarshal config")
+	require.NoError(t, err, "error when unmarshal redisDbIndex config")
 
 	sigKeys := database.RollingKeyConfig{
 		Cipher: "hmac",

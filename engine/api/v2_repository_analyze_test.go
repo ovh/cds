@@ -572,7 +572,7 @@ GDFkaTe3nUJdYV4=
 	}
 	require.NoError(t, user.InsertGPGKey(ctx, db, userKey))
 
-	assets.InsertRBAcProject(t, db, sdk.RoleManage, proj1.Key, *u)
+	assets.InsertRBAcProject(t, db, sdk.ProjectRoleManage, proj1.Key, *u)
 
 	// Create VCS
 	vcsProject := assets.InsertTestVCSProject(t, db, proj1.ID, "vcs-server", "github")

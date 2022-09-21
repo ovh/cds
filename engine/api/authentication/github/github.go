@@ -17,7 +17,7 @@ var _ sdk.AuthDriverWithRedirect = new(authDriver)
 var _ sdk.AuthDriverWithSigninStateToken = new(authDriver)
 
 // NewDriver returns a new Github auth driver for given config.
-func NewDriver(signupDisabled bool, cdsURL, url, urlAPI, clientID, clientSecret string) sdk.AuthDriver {
+func NewDriver(signupDisabled bool, cdsURL, url, urlAPI, clientID, clientSecret, orga string) sdk.AuthDriver {
 	return &authDriver{
 		signupDisabled: signupDisabled,
 		cdsURL:         cdsURL,
@@ -25,6 +25,7 @@ func NewDriver(signupDisabled bool, cdsURL, url, urlAPI, clientID, clientSecret 
 		urlAPI:         urlAPI,
 		clientID:       clientID,
 		clientSecret:   clientSecret,
+		organization:   orga,
 	}
 }
 
@@ -35,6 +36,7 @@ type authDriver struct {
 	urlAPI         string
 	clientID       string
 	clientSecret   string
+	organization   string
 }
 
 func (d authDriver) GetManifest() sdk.AuthDriverManifest {
@@ -136,6 +138,7 @@ func (d authDriver) GetUserInfo(ctx context.Context, req sdk.AuthConsumerSigninR
 	info.Username = githubUser.Login
 	info.Fullname = githubUser.Name
 	info.Email = githubUser.Email
+	info.Organization = d.organization
 
 	return info, nil
 }

@@ -393,6 +393,63 @@ func (mr *MockAdminMockRecorder) AdminDatabaseSignaturesRollEntity(service, e, i
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseSignaturesRollEntity", reflect.TypeOf((*MockAdmin)(nil).AdminDatabaseSignaturesRollEntity), service, e, idx)
 }
 
+// AdminOrganizationCreate mocks base method.
+func (m *MockAdmin) AdminOrganizationCreate(ctx context.Context, orga sdk.Organization) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdminOrganizationCreate", ctx, orga)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AdminOrganizationCreate indicates an expected call of AdminOrganizationCreate.
+func (mr *MockAdminMockRecorder) AdminOrganizationCreate(ctx, orga interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminOrganizationCreate", reflect.TypeOf((*MockAdmin)(nil).AdminOrganizationCreate), ctx, orga)
+}
+
+// AdminOrganizationDelete mocks base method.
+func (m *MockAdmin) AdminOrganizationDelete(ctx context.Context, orgaIdentifier string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdminOrganizationDelete", ctx, orgaIdentifier)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AdminOrganizationDelete indicates an expected call of AdminOrganizationDelete.
+func (mr *MockAdminMockRecorder) AdminOrganizationDelete(ctx, orgaIdentifier interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminOrganizationDelete", reflect.TypeOf((*MockAdmin)(nil).AdminOrganizationDelete), ctx, orgaIdentifier)
+}
+
+// AdminOrganizationList mocks base method.
+func (m *MockAdmin) AdminOrganizationList(ctx context.Context) ([]sdk.Organization, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdminOrganizationList", ctx)
+	ret0, _ := ret[0].([]sdk.Organization)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AdminOrganizationList indicates an expected call of AdminOrganizationList.
+func (mr *MockAdminMockRecorder) AdminOrganizationList(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminOrganizationList", reflect.TypeOf((*MockAdmin)(nil).AdminOrganizationList), ctx)
+}
+
+// AdminOrganizationMigrateUser mocks base method.
+func (m *MockAdmin) AdminOrganizationMigrateUser(ctx context.Context, orgaIdentifier string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdminOrganizationMigrateUser", ctx, orgaIdentifier)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AdminOrganizationMigrateUser indicates an expected call of AdminOrganizationMigrateUser.
+func (mr *MockAdminMockRecorder) AdminOrganizationMigrateUser(ctx, orgaIdentifier interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminOrganizationMigrateUser", reflect.TypeOf((*MockAdmin)(nil).AdminOrganizationMigrateUser), ctx, orgaIdentifier)
+}
+
 // AdminWorkflowUpdateMaxRuns mocks base method.
 func (m *MockAdmin) AdminWorkflowUpdateMaxRuns(projectKey, workflowName string, maxRuns int64) error {
 	m.ctrl.T.Helper()
@@ -5244,6 +5301,63 @@ func (m *MockInterface) AdminDatabaseSignaturesRollEntity(service, e string, idx
 func (mr *MockInterfaceMockRecorder) AdminDatabaseSignaturesRollEntity(service, e, idx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseSignaturesRollEntity", reflect.TypeOf((*MockInterface)(nil).AdminDatabaseSignaturesRollEntity), service, e, idx)
+}
+
+// AdminOrganizationCreate mocks base method.
+func (m *MockInterface) AdminOrganizationCreate(ctx context.Context, orga sdk.Organization) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdminOrganizationCreate", ctx, orga)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AdminOrganizationCreate indicates an expected call of AdminOrganizationCreate.
+func (mr *MockInterfaceMockRecorder) AdminOrganizationCreate(ctx, orga interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminOrganizationCreate", reflect.TypeOf((*MockInterface)(nil).AdminOrganizationCreate), ctx, orga)
+}
+
+// AdminOrganizationDelete mocks base method.
+func (m *MockInterface) AdminOrganizationDelete(ctx context.Context, orgaIdentifier string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdminOrganizationDelete", ctx, orgaIdentifier)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AdminOrganizationDelete indicates an expected call of AdminOrganizationDelete.
+func (mr *MockInterfaceMockRecorder) AdminOrganizationDelete(ctx, orgaIdentifier interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminOrganizationDelete", reflect.TypeOf((*MockInterface)(nil).AdminOrganizationDelete), ctx, orgaIdentifier)
+}
+
+// AdminOrganizationList mocks base method.
+func (m *MockInterface) AdminOrganizationList(ctx context.Context) ([]sdk.Organization, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdminOrganizationList", ctx)
+	ret0, _ := ret[0].([]sdk.Organization)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AdminOrganizationList indicates an expected call of AdminOrganizationList.
+func (mr *MockInterfaceMockRecorder) AdminOrganizationList(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminOrganizationList", reflect.TypeOf((*MockInterface)(nil).AdminOrganizationList), ctx)
+}
+
+// AdminOrganizationMigrateUser mocks base method.
+func (m *MockInterface) AdminOrganizationMigrateUser(ctx context.Context, orgaIdentifier string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdminOrganizationMigrateUser", ctx, orgaIdentifier)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AdminOrganizationMigrateUser indicates an expected call of AdminOrganizationMigrateUser.
+func (mr *MockInterfaceMockRecorder) AdminOrganizationMigrateUser(ctx, orgaIdentifier interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminOrganizationMigrateUser", reflect.TypeOf((*MockInterface)(nil).AdminOrganizationMigrateUser), ctx, orgaIdentifier)
 }
 
 // AdminWorkflowUpdateMaxRuns mocks base method.
