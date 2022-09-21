@@ -10,5 +10,5 @@ testcases:
     - result.systemoutjson.systemoutjson0.name ShouldEqual "my-org"
 - name: Remove an organization
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin organization delete my-org
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin organization delete my-org --force
 
