@@ -91,8 +91,9 @@ var organizationDeleteCmd = cli.Command{
 }
 
 func organizationDeleteFunc(v cli.Values) error {
-	if err := client.OrganizationDelete(context.Background(), v.GetString("organizationIdentifier")); err != nil {
-		return err
+	err := client.OrganizationDelete(context.Background(), v.GetString("organizationIdentifier"))
+	if v.GetBool("force") && sdk.ErrorIs(err, sdk.ErrNotFound) {
+		return nil
 	}
-	return nil
+	return err
 }

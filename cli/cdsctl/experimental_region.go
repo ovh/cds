@@ -91,8 +91,9 @@ var regionDeleteCmd = cli.Command{
 }
 
 func regionDeleteFunc(v cli.Values) error {
-	if err := client.RegionDelete(context.Background(), v.GetString("regionIdentifier")); err != nil {
-		return err
+	err := client.RegionDelete(context.Background(), v.GetString("regionIdentifier"))
+	if v.GetBool("force") && sdk.ErrorIs(err, sdk.ErrNotFound) {
+		return nil
 	}
-	return nil
+	return err
 }
