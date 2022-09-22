@@ -52,7 +52,7 @@ func (api *API) postRegionHandler() ([]service.RbacChecker, service.Handler) {
 }
 
 func (api *API) getRegionsHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(rbac.RegionManage),
+	return nil,
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			regions, err := region.LoadAllRegions(ctx, api.mustDB())
 			if err != nil {
@@ -63,7 +63,7 @@ func (api *API) getRegionsHandler() ([]service.RbacChecker, service.Handler) {
 }
 
 func (api *API) getRegionHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(rbac.RegionManage),
+	return nil,
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			regionIdentifier := vars["regionIdentifier"]
