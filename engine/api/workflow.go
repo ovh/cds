@@ -920,6 +920,7 @@ func (api *API) getSearchWorkflowHandler() service.Handler {
 		dao.Filters.WorkflowName = FormString(r, "name")
 		dao.Filters.VCSServer = FormString(r, "vcs")
 		dao.Filters.ApplicationRepository = FormString(r, "repository")
+		dao.Filters.AsCode = service.FormBool(r, "ascode")
 		dao.Loaders.WithRuns = service.FormInt(r, "runs")
 		dao.Loaders.WithFavoritesForUserID = getAPIConsumer(ctx).AuthentifiedUserID
 
