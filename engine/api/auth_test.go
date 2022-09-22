@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/ovh/cds/engine/api/organization"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -453,6 +454,10 @@ func TestUserSetOrganization_EnsureGroup(t *testing.T) {
 	u2, _ := assets.InsertLambdaUser(t, db, g1)
 	u3, _ := assets.InsertLambdaUser(t, db, g1)
 
+	require.NoError(t, organization.Insert(context.TODO(), db, &sdk.Organization{Name: "org0"}))
+	require.NoError(t, organization.Insert(context.TODO(), db, &sdk.Organization{Name: "org1"}))
+	require.NoError(t, organization.Insert(context.TODO(), db, &sdk.Organization{Name: "org2"}))
+
 	// Set not allowed org should return an error
 	api.Config.Auth.AllowedOrganizations = []string{"org0"}
 	err := api.userSetOrganization(context.TODO(), db, u1, "org1")
@@ -462,16 +467,16 @@ func TestUserSetOrganization_EnsureGroup(t *testing.T) {
 	// Set org on user should also update its group
 	api.Config.Auth.AllowedOrganizations = []string{"org1", "org2"}
 	require.NoError(t, api.userSetOrganization(context.TODO(), db, u1, "org1"))
-	orgU1, err := user.LoadOrganizationByUserID(context.TODO(), db, u1.ID)
+	orgU1, err := user.LoadByID(context.TODO(), db, u1.ID, user.LoadOptions.WithOrganization)
 	require.NoError(t, err)
 	require.Equal(t, "org1", orgU1.Organization)
-	orgG1, err := group.LoadOrganizationByGroupID(context.TODO(), db, g1.ID)
+	orgG1, err := group.LoadByID(context.TODO(), db, g1.ID, group.LoadOptions.WithOrganization)
 	require.NoError(t, err)
 	require.Equal(t, "org1", orgG1.Organization)
 
 	// Set org should be ok when no conflict on groups
 	require.NoError(t, api.userSetOrganization(context.TODO(), db, u3, "org1"))
-	orgU3, err := user.LoadOrganizationByUserID(context.TODO(), db, u3.ID)
+	orgU3, err := user.LoadByID(context.TODO(), db, u3.ID, user.LoadOptions.WithOrganization)
 	require.NoError(t, err)
 	require.Equal(t, "org1", orgU3.Organization)
 
@@ -488,6 +493,9 @@ func TestUserSetOrganization_EnsureGroup(t *testing.T) {
 
 func TestUserSetOrganization_EnsureProject(t *testing.T) {
 	api, db, _ := newTestAPI(t)
+
+	require.NoError(t, organization.Insert(context.TODO(), db, &sdk.Organization{Name: "org1"}))
+	require.NoError(t, organization.Insert(context.TODO(), db, &sdk.Organization{Name: "org2"}))
 
 	pKey := sdk.RandomString(10)
 	p1 := assets.InsertTestProject(t, db, api.Cache, pKey, pKey)

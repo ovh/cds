@@ -2,6 +2,7 @@ package organization
 
 import (
 	"context"
+	"github.com/lib/pq"
 
 	"github.com/go-gorp/gorp"
 	"github.com/rockbears/log"
@@ -81,4 +82,9 @@ func LoadOrganizationByName(ctx context.Context, db gorp.SqlExecutor, name strin
 func LoadOrganizationByID(ctx context.Context, db gorp.SqlExecutor, ID string) (*sdk.Organization, error) {
 	query := gorpmapping.NewQuery(`SELECT organization.* FROM organization WHERE organization.id = $1`).Args(ID)
 	return getOrganization(ctx, db, query)
+}
+
+func LoadOrganizationByIDs(ctx context.Context, db gorp.SqlExecutor, IDs []string) ([]sdk.Organization, error) {
+	query := gorpmapping.NewQuery(`SELECT organization.* FROM organization WHERE organization.id = ANY($1)`).Args(pq.StringArray(IDs))
+	return getAllOrganizations(ctx, db, query)
 }

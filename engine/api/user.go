@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"github.com/ovh/cds/engine/api/organization"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -154,6 +155,11 @@ func (api *API) userSetOrganization(ctx context.Context, db gorpmapper.SqlExecut
 		return sdk.NewErrorFrom(sdk.ErrForbidden, "user organization %q is not allowed", org)
 	}
 
+	existingOrg, err := organization.LoadOrganizationByName(ctx, db, org)
+	if err != nil {
+		return err
+	}
+
 	if err := user.LoadOptions.WithOrganization(ctx, db, u); err != nil {
 		return err
 	}
@@ -165,9 +171,9 @@ func (api *API) userSetOrganization(ctx context.Context, db gorpmapper.SqlExecut
 	}
 
 	u.Organization = org
-	if err := user.InsertOrganization(ctx, db, &user.Organization{
+	if err := user.InsertUserOrganization(ctx, db, &user.UserOrganization{
 		AuthentifiedUserID: u.ID,
-		Organization:       org,
+		OrganizationID:     existingOrg.ID,
 	}); err != nil {
 		return err
 	}

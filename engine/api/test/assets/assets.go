@@ -6,6 +6,7 @@ import (
 	"crypto/rsa"
 	"encoding/json"
 	"fmt"
+	"github.com/ovh/cds/engine/api/organization"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -130,6 +131,14 @@ func InsertTestGroup(t *testing.T, db gorpmapper.SqlExecutorWithTx, name string)
 		return nil
 	}
 
+	o, err := organization.LoadOrganizationByName(context.TODO(), db, "default")
+	require.NoError(t, err)
+	grpOrg := group.GroupOrganization{
+		OrganizationID: o.ID,
+		GroupID:        g.ID,
+	}
+	require.NoError(t, group.InsertGroupOrganization(context.TODO(), db, &grpOrg))
+
 	return &g
 }
 
@@ -171,6 +180,14 @@ func InsertAdminUser(t *testing.T, db gorpmapper.SqlExecutorWithTx) (*sdk.Authen
 	}
 	require.NoError(t, user.Insert(context.TODO(), db, &data), "unable to insert user")
 
+	o, err := organization.LoadOrganizationByName(context.TODO(), db, "default")
+	require.NoError(t, err)
+	uo := user.UserOrganization{
+		OrganizationID:     o.ID,
+		AuthentifiedUserID: data.ID,
+	}
+	require.NoError(t, user.InsertUserOrganization(context.TODO(), db, &uo))
+
 	u, err := user.LoadByID(context.Background(), db, data.ID, user.LoadOptions.WithContacts)
 	require.NoError(t, err, "user cannot be load for id %s", data.ID)
 
@@ -210,6 +227,14 @@ func InsertMaintainerUser(t *testing.T, db gorpmapper.SqlExecutorWithTx) (*sdk.A
 	}
 	require.NoError(t, user.Insert(context.TODO(), db, &data), "unable to insert user")
 
+	o, err := organization.LoadOrganizationByName(context.TODO(), db, "default")
+	require.NoError(t, err)
+	uo := user.UserOrganization{
+		OrganizationID:     o.ID,
+		AuthentifiedUserID: data.ID,
+	}
+	require.NoError(t, user.InsertUserOrganization(context.TODO(), db, &uo))
+
 	u, err := user.LoadByID(context.Background(), db, data.ID, user.LoadOptions.WithContacts)
 	require.NoErrorf(t, err, "user cannot be load for id %s", data.ID)
 
@@ -234,13 +259,22 @@ func InsertLambdaUser(t *testing.T, db gorpmapper.SqlExecutorWithTx, groups ...*
 	}
 	require.NoError(t, user.Insert(context.TODO(), db, u))
 
-	u, err := user.LoadByID(context.Background(), db, u.ID)
+	o, err := organization.LoadOrganizationByName(context.TODO(), db, "default")
+	require.NoError(t, err)
+	uo := user.UserOrganization{
+		OrganizationID:     o.ID,
+		AuthentifiedUserID: u.ID,
+	}
+	require.NoError(t, user.InsertUserOrganization(context.TODO(), db, &uo))
+
+	u, err = user.LoadByID(context.Background(), db, u.ID, user.LoadOptions.WithOrganization)
 	require.NoError(t, err)
 
 	for i := range groups {
 		existingGroup, _ := group.LoadByName(context.TODO(), db, groups[i].Name)
 		if existingGroup == nil {
 			require.NoError(t, group.Create(context.Background(), db, groups[i], u))
+			require.NoError(t, group.EnsureOrganization(context.TODO(), db, groups[i]))
 		} else {
 			groups[i].ID = existingGroup.ID
 			require.NoError(t, group.InsertLinkGroupUser(context.Background(), db,

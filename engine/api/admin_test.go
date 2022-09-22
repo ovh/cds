@@ -34,9 +34,6 @@ func Test_getAdminOrganizationCRUD(t *testing.T) {
 
 	_, jwt := assets.InsertAdminUser(t, db)
 
-	_, err := db.Exec("DELETE FROM organization")
-	require.NoError(t, err)
-
 	orga := sdk.Organization{
 		Name: sdk.RandomString(10),
 	}
@@ -58,10 +55,9 @@ func Test_getAdminOrganizationCRUD(t *testing.T) {
 	body := wList.Body.Bytes()
 	require.NoError(t, json.Unmarshal(body, &orgs))
 
-	require.Equal(t, 1, len(orgs))
-	require.Equal(t, orga.Name, orgs[0].Name)
+	require.Equal(t, 2, len(orgs))
 
-	uriDelete := api.Router.GetRoute("DELETE", api.deleteAdminOrganizationsHandler, map[string]string{"organizationIdentifier": orgs[0].Name})
+	uriDelete := api.Router.GetRoute("DELETE", api.deleteAdminOrganizationsHandler, map[string]string{"organizationIdentifier": orgs[1].Name})
 	reqDelete := assets.NewJWTAuthentifiedRequest(t, jwt, "DELETE", uriDelete, nil)
 	wDelete := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(wDelete, reqDelete)
@@ -69,7 +65,7 @@ func Test_getAdminOrganizationCRUD(t *testing.T) {
 
 	orgsDb, err := organization.LoadAllOrganizations(context.TODO(), db)
 	require.NoError(t, err)
-	require.Equal(t, 0, len(orgsDb))
+	require.Equal(t, 1, len(orgsDb))
 
 }
 

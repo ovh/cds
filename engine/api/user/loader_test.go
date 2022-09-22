@@ -53,7 +53,7 @@ func TestLoadOrganization(t *testing.T) {
 		require.NoError(t, user.DeleteByID(db, u.ID))
 	})
 
-	require.NoError(t, user.InsertOrganization(context.TODO(), db, &user.Organization{
+	require.NoError(t, user.InsertUserOrganization(context.TODO(), db, &user.Organization{
 		AuthentifiedUserID: u.ID,
 		Organization:       "one",
 	}))

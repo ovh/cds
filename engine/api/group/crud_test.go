@@ -19,14 +19,14 @@ func Test_CreateUpdateDelete(t *testing.T) {
 
 	u1, _ := assets.InsertLambdaUser(t, db)
 	u1.Organization = "one"
-	require.NoError(t, user.InsertOrganization(context.TODO(), db, &user.Organization{
+	require.NoError(t, user.InsertUserOrganization(context.TODO(), db, &user.Organization{
 		AuthentifiedUserID: u1.ID,
 		Organization:       u1.Organization,
 	}))
 	u2, _ := assets.InsertLambdaUser(t, db)
 	u3, _ := assets.InsertLambdaUser(t, db)
 	u3.Organization = "two"
-	require.NoError(t, user.InsertOrganization(context.TODO(), db, &user.Organization{
+	require.NoError(t, user.InsertUserOrganization(context.TODO(), db, &user.Organization{
 		AuthentifiedUserID: u3.ID,
 		Organization:       u3.Organization,
 	}))

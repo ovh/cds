@@ -3,6 +3,7 @@ package group
 import (
 	"context"
 	"database/sql"
+	"github.com/ovh/cds/engine/api/organization"
 	"strings"
 
 	"github.com/go-gorp/gorp"
@@ -187,13 +188,25 @@ func LoadWorkflowGroupsByWorkflowIDs(ctx context.Context, db gorp.SqlExecutor, w
 	for i := range dbResultSet {
 		groupIDs = append(groupIDs, dbResultSet[i].GroupID)
 	}
-	orgs, err := LoadOrganizationsByGroupIDs(ctx, db, groupIDs)
+	groupOrganizations, err := LoadGroupOrganizationsByGroupIDs(ctx, db, groupIDs)
 	if err != nil {
 		return nil, err
 	}
-	mOrgs := make(map[int64]Organization)
-	for i := range orgs {
-		mOrgs[orgs[i].GroupID] = orgs[i]
+	mGrpOrgs := make(map[int64]string)
+	groupOrganizationIDs := make(sdk.StringSlice, 0, len(groupOrganizations))
+	for i := range groupOrganizations {
+		mGrpOrgs[groupOrganizations[i].GroupID] = groupOrganizations[i].OrganizationID
+		groupOrganizationIDs = append(groupOrganizationIDs, groupOrganizations[i].OrganizationID)
+	}
+	groupOrganizationIDs.Unique()
+
+	organizations, err := organization.LoadOrganizationByIDs(ctx, db, groupOrganizationIDs)
+	if err != nil {
+		return nil, err
+	}
+	mapOrganization := make(map[string]sdk.Organization)
+	for _, o := range organizations {
+		mapOrganization[o.ID] = o
 	}
 
 	for _, row := range dbResultSet {
@@ -204,8 +217,8 @@ func LoadWorkflowGroupsByWorkflowIDs(ctx context.Context, db gorp.SqlExecutor, w
 				Name: row.GroupName,
 			},
 		}
-		if org, ok := mOrgs[gp.Group.ID]; ok {
-			gp.Group.Organization = org.Organization
+		if orgID, ok := mGrpOrgs[gp.Group.ID]; ok {
+			gp.Group.Organization = mapOrganization[orgID].Name
 		}
 		result[row.WorkflowID] = append(result[row.WorkflowID], gp)
 	}

@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"github.com/ovh/cds/engine/api/organization"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -96,14 +97,20 @@ func Test_postGroupInProjectHandler_OnlyReadForDifferentOrganization(t *testing.
 	g1 := &proj.ProjectGroups[0].Group
 	g2 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 
+	orgOne := sdk.Organization{Name: "one"}
+	require.NoError(t, organization.Insert(context.TODO(), db, &orgOne))
+
+	orgTwo := sdk.Organization{Name: "two"}
+	require.NoError(t, organization.Insert(context.TODO(), db, &orgTwo))
+
 	// Set organization for groups
-	require.NoError(t, group.InsertOrganization(context.TODO(), db, &group.Organization{
-		GroupID:      g1.ID,
-		Organization: "one",
+	require.NoError(t, group.InsertGroupOrganization(context.TODO(), db, &group.GroupOrganization{
+		GroupID:        g1.ID,
+		OrganizationID: orgOne.ID,
 	}))
-	require.NoError(t, group.InsertOrganization(context.TODO(), db, &group.Organization{
-		GroupID:      g2.ID,
-		Organization: "two",
+	require.NoError(t, group.InsertGroupOrganization(context.TODO(), db, &group.GroupOrganization{
+		GroupID:        g2.ID,
+		OrganizationID: orgTwo.ID,
 	}))
 
 	_, jwt := assets.InsertAdminUser(t, db)
@@ -240,14 +247,20 @@ func Test_putGroupRoleOnProjectHandler_OnlyReadForDifferentOrganization(t *testi
 	g1 := &proj.ProjectGroups[0].Group
 	g2 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 
+	orgOne := sdk.Organization{Name: "one"}
+	require.NoError(t, organization.Insert(context.TODO(), db, &orgOne))
+
+	orgTwo := sdk.Organization{Name: "two"}
+	require.NoError(t, organization.Insert(context.TODO(), db, &orgTwo))
+
 	// Set organization for groups
-	require.NoError(t, group.InsertOrganization(context.TODO(), db, &group.Organization{
-		GroupID:      g1.ID,
-		Organization: "one",
+	require.NoError(t, group.InsertGroupOrganization(context.TODO(), db, &group.GroupOrganization{
+		GroupID:        g1.ID,
+		OrganizationID: orgOne.ID,
 	}))
-	require.NoError(t, group.InsertOrganization(context.TODO(), db, &group.Organization{
-		GroupID:      g2.ID,
-		Organization: "two",
+	require.NoError(t, group.InsertGroupOrganization(context.TODO(), db, &group.GroupOrganization{
+		GroupID:        g2.ID,
+		OrganizationID: orgTwo.ID,
 	}))
 
 	_, jwt := assets.InsertAdminUser(t, db)

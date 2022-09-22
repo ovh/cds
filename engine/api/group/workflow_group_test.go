@@ -79,11 +79,11 @@ func TestCheckWorkflowGroups_OnlyReadForDifferentOrganization(t *testing.T) {
 	g2 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 
 	// Set organization for groups
-	require.NoError(t, group.InsertOrganization(context.TODO(), db, &group.Organization{
+	require.NoError(t, group.InsertGroupOrganization(context.TODO(), db, &group.Organization{
 		GroupID:      g1.ID,
 		Organization: "one",
 	}))
-	require.NoError(t, group.InsertOrganization(context.TODO(), db, &group.Organization{
+	require.NoError(t, group.InsertGroupOrganization(context.TODO(), db, &group.Organization{
 		GroupID:      g2.ID,
 		Organization: "two",
 	}))
@@ -187,11 +187,11 @@ func TestCheckWorkflowGroups_OnlyReadForDifferentOrganization_Node(t *testing.T)
 	g2 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 
 	// Set organization for groups
-	require.NoError(t, group.InsertOrganization(context.TODO(), db, &group.Organization{
+	require.NoError(t, group.InsertGroupOrganization(context.TODO(), db, &group.Organization{
 		GroupID:      g1.ID,
 		Organization: "one",
 	}))
-	require.NoError(t, group.InsertOrganization(context.TODO(), db, &group.Organization{
+	require.NoError(t, group.InsertGroupOrganization(context.TODO(), db, &group.Organization{
 		GroupID:      g2.ID,
 		Organization: "two",
 	}))
