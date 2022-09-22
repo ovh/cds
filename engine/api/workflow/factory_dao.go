@@ -3,6 +3,7 @@ package workflow
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -72,6 +73,7 @@ type LoadAllWorkflowsOptionsFilters struct {
 	GroupIDs                     []int64
 	WorkflowIDs                  []int64
 	DisableFilterDeletedWorkflow bool
+	AsCode                       bool
 }
 
 type LoadAllWorkflowsOptionsLoaders struct {
@@ -169,17 +171,21 @@ func (dao WorkflowDAO) Query() gorpmapping.Query {
 		args = append(args, pq.Int64Array(dao.Filters.WorkflowIDs))
 	}
 
+	queryFilters := make([]string, 0, len(filters))
 	for i, f := range filters {
-		if i == 0 {
-			queryString += " WHERE "
-		} else {
-			queryString += " AND "
-		}
-		queryString += fmt.Sprintf(f, i+1)
+		queryFilters = append(queryFilters, fmt.Sprintf(f, i+1))
 	}
 
 	if !dao.Filters.DisableFilterDeletedWorkflow {
-		queryString += " AND workflow.to_delete  = false"
+		queryFilters = append(queryFilters, "workflow.to_delete  = false")
+	}
+
+	if dao.Filters.AsCode {
+		queryFilters = append(queryFilters, "workflow.from_repository <> ''")
+	}
+
+	if len(queryFilters) > 0 {
+		queryString += "WHERE " + strings.Join(queryFilters, " AND ")
 	}
 
 	var order = " ORDER BY selected_workflow.projectkey, selected_workflow.workflow_name "
