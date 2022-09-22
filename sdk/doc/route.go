@@ -105,6 +105,8 @@ func CleanURLParameter(u string) string {
 		u = "analysis-id"
 	case "organizationIdentifier":
 		u = "organization-identifier"
+	case "regionIdentifier":
+		u = "region-identifier"
 	}
 	return u
 }
