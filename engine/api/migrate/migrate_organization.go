@@ -14,8 +14,7 @@ type UserOrganizationMigrate struct {
 	OrganizationName string
 }
 
-func GetOrganizationUsersToMigrate(ctx context.Context, dbFunc func() *gorp.DbMap) ([]UserOrganizationMigrate, error) {
-	db := dbFunc()
+func GetOrganizationUsersToMigrate(ctx context.Context, db *gorp.DbMap) ([]UserOrganizationMigrate, error) {
 	var usersToMigrate []UserOrganizationMigrate
 
 	// Load all new organization
@@ -28,20 +27,12 @@ func GetOrganizationUsersToMigrate(ctx context.Context, dbFunc func() *gorp.DbMa
 		mapNewOrgas[o.Name] = o.ID
 	}
 
-	// Check if users without organization exist
-	userWithNoOrg, err := user.LoadUsersWithoutOrganization(ctx, db)
-	if err != nil {
-		return nil, err
-	}
-	if len(userWithNoOrg) > 0 {
-		return nil, sdk.WrapError(sdk.ErrInvalidData, "You must assign organization to all users before upgrading CDS to the new version.")
-	}
-
 	// Load all users
 	allUsers, err := user.LoadAll(ctx, db)
 	if err != nil {
 		return nil, err
 	}
+
 	userIds := make([]string, len(allUsers))
 	mapUsers := make(map[string]*sdk.AuthentifiedUser)
 	for i := range allUsers {
@@ -54,6 +45,10 @@ func GetOrganizationUsersToMigrate(ctx context.Context, dbFunc func() *gorp.DbMa
 	oldOrgas, err := user.LoadOldOrganizationsByUserIDs(ctx, db, userIds)
 	if err != nil {
 		return nil, err
+	}
+
+	if len(oldOrgas) != len(allUsers) {
+		return nil, sdk.WrapError(sdk.ErrInvalidData, "You must assign organization to all users before upgrading CDS to the new version.")
 	}
 
 	// Check if all old orga exist on new organizations

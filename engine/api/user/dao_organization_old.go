@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"github.com/ovh/cds/engine/gorpmapper"
 
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
@@ -39,4 +40,12 @@ func LoadOldOrganizationsByUserIDs(ctx context.Context, db gorp.SqlExecutor, use
     WHERE authentified_user_id = ANY($1)
   `).Args(pq.StringArray(userIDs))
 	return getOldOrganizations(ctx, db, query)
+}
+
+func InsertOldUserOrganisation(ctx context.Context, db gorpmapper.SqlExecutorWithTx, userID, orgaName string) error {
+	uo := OrganizationOld{
+		AuthentifiedUserID: userID,
+		Organization:       orgaName,
+	}
+	return sdk.WithStack(gorpmapping.InsertAndSign(ctx, db, &uo))
 }

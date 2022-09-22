@@ -579,7 +579,7 @@ func (a *API) Serve(ctx context.Context) error {
 	}})
 
 	migrate.Add(ctx, sdk.Migration{Name: "OrganizationMigration", Release: "0.51.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
-		usersToMigrate, err := migrate.GetOrganizationUsersToMigrate(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper))
+		usersToMigrate, err := migrate.GetOrganizationUsersToMigrate(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)())
 		if err != nil {
 			return err
 		}

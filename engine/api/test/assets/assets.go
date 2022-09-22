@@ -303,6 +303,59 @@ func InsertLambdaUser(t *testing.T, db gorpmapper.SqlExecutorWithTx, groups ...*
 	return u, jwt
 }
 
+// InsertLambdaUserInOrganizarion have to be used only for tests.
+func InsertLambdaUserInOrganizarion(t *testing.T, db gorpmapper.SqlExecutorWithTx, orgName string, groups ...*sdk.Group) (*sdk.AuthentifiedUser, string) {
+	u := &sdk.AuthentifiedUser{
+		Username: "lambda-" + sdk.RandomString(10),
+		Fullname: "lambda-" + sdk.RandomString(10),
+		Ring:     sdk.UserRingUser,
+	}
+	require.NoError(t, user.Insert(context.TODO(), db, u))
+
+	o, err := organization.LoadOrganizationByName(context.TODO(), db, orgName)
+	require.NoError(t, err)
+	uo := user.UserOrganization{
+		OrganizationID:     o.ID,
+		AuthentifiedUserID: u.ID,
+	}
+	require.NoError(t, user.InsertUserOrganization(context.TODO(), db, &uo))
+
+	u, err = user.LoadByID(context.Background(), db, u.ID, user.LoadOptions.WithOrganization)
+	require.NoError(t, err)
+
+	for i := range groups {
+		existingGroup, _ := group.LoadByName(context.TODO(), db, groups[i].Name)
+		if existingGroup == nil {
+			require.NoError(t, group.Create(context.Background(), db, groups[i], u))
+			require.NoError(t, group.EnsureOrganization(context.TODO(), db, groups[i]))
+		} else {
+			groups[i].ID = existingGroup.ID
+			require.NoError(t, group.InsertLinkGroupUser(context.Background(), db,
+				&group.LinkGroupUser{
+					GroupID:            groups[i].ID,
+					AuthentifiedUserID: u.ID,
+					Admin:              false,
+				}), "unable to insert user in group")
+		}
+		u.Groups = append(u.Groups, *groups[i])
+	}
+
+	btes, err := json.Marshal(u)
+	require.NoError(t, err)
+	log.Debug(context.TODO(), "lambda user: %s", string(btes))
+
+	consumer, err := local.NewConsumer(context.TODO(), db, u.ID)
+	require.NoError(t, err, "cannot create auth consumer")
+
+	session, err := authentication.NewSession(context.TODO(), db, consumer, 5*time.Minute)
+	require.NoError(t, err, "cannot create session")
+
+	jwt, err := authentication.NewSessionJWT(session, "")
+	require.NoError(t, err, "cannot create jwt")
+
+	return u, jwt
+}
+
 // AuthentifyRequest  have to be used only for tests
 func AuthentifyRequest(t *testing.T, req *http.Request, _ *sdk.AuthentifiedUser, jwt string) {
 	auth := "Bearer " + jwt

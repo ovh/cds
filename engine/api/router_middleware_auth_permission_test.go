@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"github.com/ovh/cds/engine/api/organization"
 	"reflect"
 	"testing"
 	"time"
@@ -883,6 +884,8 @@ func Test_checkGroupPermissions(t *testing.T) {
 			},
 		},
 	}
+	organizations, err := organization.LoadAllOrganizations(context.TODO(), db)
+	require.NoError(t, err)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -899,14 +902,24 @@ func Test_checkGroupPermissions(t *testing.T) {
 			}
 
 			require.NoError(t, user.Insert(context.TODO(), db, &currentUser))
+			uo := user.UserOrganization{
+				AuthentifiedUserID: currentUser.ID,
+				OrganizationID:     organizations[0].ID,
+			}
+			require.NoError(t, user.InsertUserOrganization(context.TODO(), db, &uo))
 
-			groupAdmin := &sdk.AuthentifiedUser{
+			userGrpAdmin := &sdk.AuthentifiedUser{
 				Username: prefix + "auto-group-admin",
 			}
-			require.NoError(t, user.Insert(context.TODO(), db, groupAdmin))
+			require.NoError(t, user.Insert(context.TODO(), db, userGrpAdmin))
+			uoAdmin := user.UserOrganization{
+				AuthentifiedUserID: userGrpAdmin.ID,
+				OrganizationID:     organizations[0].ID,
+			}
+			require.NoError(t, user.InsertUserOrganization(context.TODO(), db, &uoAdmin))
 
 			var err error
-			groupAdmin, err = user.LoadByID(context.TODO(), api.mustDB(), groupAdmin.ID)
+			userGrpAdmin, err = user.LoadByID(context.TODO(), api.mustDB(), userGrpAdmin.ID, user.LoadOptions.WithOrganization)
 			require.NoError(t, err)
 
 			tt.args.groupName = prefix + tt.args.groupName
@@ -915,7 +928,7 @@ func Test_checkGroupPermissions(t *testing.T) {
 				Name: tt.args.groupName,
 			}
 
-			require.NoError(t, group.Create(context.TODO(), db, &g, groupAdmin))
+			require.NoError(t, group.Create(context.TODO(), db, &g, userGrpAdmin))
 
 			for _, adm := range tt.setup.groupAdmins {
 				adm = prefix + adm
@@ -1036,6 +1049,9 @@ func Test_checkTemplateSlugPermissions(t *testing.T) {
 		},
 	}
 
+	organizations, err := organization.LoadAllOrganizations(context.TODO(), db)
+	require.NoError(t, err)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			prefix := sdk.RandomString(10) + "."
@@ -1045,9 +1061,14 @@ func Test_checkTemplateSlugPermissions(t *testing.T) {
 					Username: prefix + "auto-group-admin",
 				}
 				require.NoError(t, user.Insert(context.TODO(), db, groupAdmin))
+				uo := user.UserOrganization{
+					AuthentifiedUserID: groupAdmin.ID,
+					OrganizationID:     organizations[0].ID,
+				}
+				require.NoError(t, user.InsertUserOrganization(context.TODO(), db, &uo))
 
 				var err error
-				groupAdmin, err = user.LoadByID(context.TODO(), db, groupAdmin.ID)
+				groupAdmin, err = user.LoadByID(context.TODO(), db, groupAdmin.ID, user.LoadOptions.WithOrganization)
 				require.NoError(t, err)
 				tt.setup.groupName = prefix + tt.setup.groupName
 				g := sdk.Group{
