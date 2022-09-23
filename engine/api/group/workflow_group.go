@@ -3,13 +3,13 @@ package group
 import (
 	"context"
 	"database/sql"
-	"github.com/ovh/cds/engine/api/organization"
 	"strings"
 
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/api/organization"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 )

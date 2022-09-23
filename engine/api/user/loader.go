@@ -2,10 +2,10 @@ package user
 
 import (
 	"context"
-	"github.com/ovh/cds/engine/api/organization"
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/organization"
 	"github.com/ovh/cds/sdk"
 )
 
