@@ -2,8 +2,6 @@ package user_test
 
 import (
 	"context"
-	"github.com/ovh/cds/engine/api/organization"
-	"github.com/ovh/cds/sdk"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -19,15 +17,7 @@ func TestDAO_AuthentifiedUserOrganization(t *testing.T) {
 
 	u, _ := assets.InsertLambdaUser(t, db)
 
-	o := sdk.Organization{Name: "myorg"}
-	require.NoError(t, organization.Insert(context.TODO(), db, &o))
-
-	require.NoError(t, user.InsertUserOrganization(context.TODO(), db, &user.UserOrganization{
-		AuthentifiedUserID: u.ID,
-		OrganizationID:     o.ID,
-	}))
-
 	userDB, err := user.LoadByID(context.TODO(), db, u.ID, user.LoadOptions.WithOrganization)
 	require.NoError(t, err)
-	require.Equal(t, "one", userDB.Organization)
+	require.Equal(t, "default", userDB.Organization)
 }
