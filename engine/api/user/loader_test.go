@@ -2,6 +2,7 @@ package user_test
 
 import (
 	"context"
+	"github.com/ovh/cds/engine/api/organization"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -53,12 +54,15 @@ func TestLoadOrganization(t *testing.T) {
 		require.NoError(t, user.DeleteByID(db, u.ID))
 	})
 
-	require.NoError(t, user.InsertUserOrganization(context.TODO(), db, &user.Organization{
+	o := sdk.Organization{Name: sdk.RandomString(10)}
+	require.NoError(t, organization.Insert(context.TODO(), db, &o))
+
+	require.NoError(t, user.InsertUserOrganization(context.TODO(), db, &user.UserOrganization{
 		AuthentifiedUserID: u.ID,
-		Organization:       "one",
+		OrganizationID:     o.ID,
 	}))
 
 	result, err := user.LoadByID(context.TODO(), db, u.ID, user.LoadOptions.WithOrganization)
 	require.NoError(t, err)
-	require.Equal(t, "one", result.Organization)
+	require.Equal(t, o.Name, result.Organization)
 }
