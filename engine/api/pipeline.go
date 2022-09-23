@@ -380,6 +380,8 @@ func (api *API) getPipelinesHandler() service.Handler {
 		// Get project name in URL
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
+		withUsage := service.FormBool(r, "withUsage")
+		withoutDetails := service.FormBool(r, "withoutDetails")
 
 		project, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.Default)
 		if err != nil {
@@ -389,7 +391,7 @@ func (api *API) getPipelinesHandler() service.Handler {
 			return err
 		}
 
-		pip, err := pipeline.LoadPipelines(api.mustDB(), project.ID, true)
+		pips, err := pipeline.LoadPipelines(api.mustDB(), project.ID, withoutDetails)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrPipelineNotFound) {
 				log.Warn(ctx, "getPipelinesHandler>Cannot load pipelines: %s\n", err)
@@ -397,7 +399,19 @@ func (api *API) getPipelinesHandler() service.Handler {
 			return err
 		}
 
-		return service.WriteJSON(w, pip, http.StatusOK)
+		if withUsage {
+			for i := range pips {
+				p := &pips[i]
+				wf, err := workflow.LoadByPipelineName(ctx, api.mustDB(), key, p.Name)
+				if err != nil {
+					return sdk.WrapError(err, "cannot load workflows using pipeline %s", p.Name)
+				}
+				p.Usage = &sdk.Usage{}
+				p.Usage.Workflows = wf
+			}
+		}
+
+		return service.WriteJSON(w, pips, http.StatusOK)
 	}
 }
 
