@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"github.com/ovh/cds/engine/api/organization"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -95,23 +94,7 @@ func Test_postGroupInProjectHandler_OnlyReadForDifferentOrganization(t *testing.
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 
 	g1 := &proj.ProjectGroups[0].Group
-	g2 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
-
-	orgOne := sdk.Organization{Name: "one"}
-	require.NoError(t, organization.Insert(context.TODO(), db, &orgOne))
-
-	orgTwo := sdk.Organization{Name: "two"}
-	require.NoError(t, organization.Insert(context.TODO(), db, &orgTwo))
-
-	// Set organization for groups
-	require.NoError(t, group.InsertGroupOrganization(context.TODO(), db, &group.GroupOrganization{
-		GroupID:        g1.ID,
-		OrganizationID: orgOne.ID,
-	}))
-	require.NoError(t, group.InsertGroupOrganization(context.TODO(), db, &group.GroupOrganization{
-		GroupID:        g2.ID,
-		OrganizationID: orgTwo.ID,
-	}))
+	g2 := assets.InsertTestGroupInOrganization(t, db, sdk.RandomString(10), "two")
 
 	_, jwt := assets.InsertAdminUser(t, db)
 
@@ -129,7 +112,7 @@ func Test_postGroupInProjectHandler_OnlyReadForDifferentOrganization(t *testing.
 	require.Equal(t, http.StatusForbidden, rec.Code)
 	var sdkError sdk.Error
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &sdkError))
-	require.Equal(t, "given group with organization \"two\" don't match project organization \"one\"", sdkError.From)
+	require.Equal(t, "given group with organization \"two\" don't match project organization \"default\"", sdkError.From)
 
 	// Can add R permission for g2 on project
 	uri = router.GetRoute(http.MethodPost, api.postGroupInProjectHandler, map[string]string{
@@ -244,24 +227,7 @@ func Test_putGroupRoleOnProjectHandler_OnlyReadForDifferentOrganization(t *testi
 
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 
-	g1 := &proj.ProjectGroups[0].Group
-	g2 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
-
-	orgOne := sdk.Organization{Name: "one"}
-	require.NoError(t, organization.Insert(context.TODO(), db, &orgOne))
-
-	orgTwo := sdk.Organization{Name: "two"}
-	require.NoError(t, organization.Insert(context.TODO(), db, &orgTwo))
-
-	// Set organization for groups
-	require.NoError(t, group.InsertGroupOrganization(context.TODO(), db, &group.GroupOrganization{
-		GroupID:        g1.ID,
-		OrganizationID: orgOne.ID,
-	}))
-	require.NoError(t, group.InsertGroupOrganization(context.TODO(), db, &group.GroupOrganization{
-		GroupID:        g2.ID,
-		OrganizationID: orgTwo.ID,
-	}))
+	g2 := assets.InsertTestGroupInOrganization(t, db, sdk.RandomString(10), "two")
 
 	_, jwt := assets.InsertAdminUser(t, db)
 
@@ -287,7 +253,7 @@ func Test_putGroupRoleOnProjectHandler_OnlyReadForDifferentOrganization(t *testi
 	require.Equal(t, http.StatusForbidden, rec.Code)
 	var sdkError sdk.Error
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &sdkError))
-	require.Equal(t, "given group with organization \"two\" don't match project organization \"one\"", sdkError.From)
+	require.Equal(t, "given group with organization \"two\" don't match project organization \"default\"", sdkError.From)
 }
 
 func Test_deleteGroupFromProjectHandler(t *testing.T) {

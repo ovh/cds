@@ -128,7 +128,7 @@ func InsertTestGroupInOrganization(t *testing.T, db gorpmapper.SqlExecutorWithTx
 		Name: name,
 	}
 
-	eg, _ := group.LoadByName(context.TODO(), db, g.Name)
+	eg, _ := group.LoadByName(context.TODO(), db, g.Name, group.LoadOptions.WithOrganization)
 	if eg != nil {
 		g = *eg
 	} else if err := group.Insert(context.TODO(), db, &g); err != nil {
@@ -136,17 +136,19 @@ func InsertTestGroupInOrganization(t *testing.T, db gorpmapper.SqlExecutorWithTx
 		return nil
 	}
 
-	o, err := organization.LoadOrganizationByName(context.TODO(), db, orgaName)
-	if sdk.ErrorIs(err, sdk.ErrNotFound) {
-		o = &sdk.Organization{Name: orgaName}
-		require.NoError(t, organization.Insert(context.TODO(), db, o))
-		err = nil
+	if g.Organization == "" {
+		o, err := organization.LoadOrganizationByName(context.TODO(), db, orgaName)
+		if sdk.ErrorIs(err, sdk.ErrNotFound) {
+			o = &sdk.Organization{Name: orgaName}
+			require.NoError(t, organization.Insert(context.TODO(), db, o))
+			err = nil
+		}
+		grpOrg := group.GroupOrganization{
+			OrganizationID: o.ID,
+			GroupID:        g.ID,
+		}
+		require.NoError(t, group.InsertGroupOrganization(context.TODO(), db, &grpOrg))
 	}
-	grpOrg := group.GroupOrganization{
-		OrganizationID: o.ID,
-		GroupID:        g.ID,
-	}
-	require.NoError(t, group.InsertGroupOrganization(context.TODO(), db, &grpOrg))
 
 	return &g
 }
