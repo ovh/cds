@@ -184,8 +184,10 @@ func InsertAdminUser(t *testing.T, db gorpmapper.SqlExecutorWithTx) (*sdk.Authen
 	if sdk.ErrorIs(err, sdk.ErrNotFound) {
 		o = &sdk.Organization{Name: "default"}
 		require.NoError(t, organization.Insert(context.TODO(), db, o))
+		err = nil
 	}
 	require.NoError(t, err)
+
 	uo := user.UserOrganization{
 		OrganizationID:     o.ID,
 		AuthentifiedUserID: data.ID,
