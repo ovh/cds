@@ -3,6 +3,7 @@ package group_test
 import (
 	"context"
 	"github.com/ovh/cds/engine/api/organization"
+	"github.com/ovh/cds/engine/api/test/assets"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -16,33 +17,21 @@ import (
 func TestDAO_GroupOrganization(t *testing.T) {
 	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 
-	g := &sdk.Group{Name: sdk.RandomString(10)}
-	require.NoError(t, group.Insert(context.TODO(), db, g))
+	_, err := db.Exec("DELETE FROM organization")
+	require.NoError(t, err)
 
-	_, err := group.LoadGroupOrganizationByGroupID(context.TODO(), db, g.ID)
-	require.Error(t, err)
+	g := assets.InsertTestGroupInOrganization(t, db, sdk.RandomString(10), "one")
 
-	orgaOne := sdk.Organization{
-		Name: "one",
-	}
-	require.NoError(t, organization.Insert(context.TODO(), db, &orgaOne))
-
-	orgaTwo := sdk.Organization{
-		Name: "two",
-	}
-	require.NoError(t, organization.Insert(context.TODO(), db, &orgaTwo))
-
-	grpOrga := &group.Organization{
-		GroupID:        g.ID,
-		OrganizationID: orgaOne.ID,
-	}
-	require.NoError(t, group.InsertGroupOrganization(context.TODO(), db, grpOrga))
+	orgaTwo := &sdk.Organization{Name: "two"}
+	require.NoError(t, organization.Insert(context.TODO(), db, orgaTwo))
 
 	grp, err := group.LoadByID(context.TODO(), db, g.ID, group.LoadOptions.WithOrganization)
 	require.NoError(t, err)
 	require.NotNil(t, grp)
 	require.Equal(t, "one", grp.Organization)
 
+	grpOrga, err := group.LoadGroupOrganizationByGroupID(context.TODO(), db, grp.ID)
+	require.NoError(t, err)
 	grpOrga.OrganizationID = orgaTwo.ID
 	require.NoError(t, group.UpdateGroupOrganization(context.TODO(), db, grpOrga))
 
