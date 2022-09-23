@@ -150,7 +150,7 @@ func (api *API) userSetOrganization(ctx context.Context, db gorpmapper.SqlExecut
 	if org == "" {
 		return nil
 	}
-	isAllowed := len(api.Config.Auth.AllowedOrganizations) == 0 || api.Config.Auth.AllowedOrganizations.Contains(org)
+	isAllowed := api.Config.Auth.AllowedOrganizations.Contains(org)
 	if !isAllowed {
 		return sdk.NewErrorFrom(sdk.ErrForbidden, "user organization %q is not allowed", org)
 	}

@@ -72,6 +72,7 @@ func configBootstrap(args []string) Configuration {
 			defaults.SetDefaults(conf.API)
 			conf.API.Database.Schema = "public"
 			conf.API.HTTP.Port = 8081
+			conf.API.Auth.AllowedOrganizations = []string{"default"}
 		case sdk.TypeUI:
 			conf.UI = &ui.Configuration{}
 			conf.UI.Name = "cds-ui-" + namesgenerator.GetRandomNameCDS()
