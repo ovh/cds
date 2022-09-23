@@ -47,8 +47,6 @@ A CDS µService is a process that can be launch by the `engine` binary.
 - **hatchery:kubernetes**: the kubernetes hatchery creates a CDS Worker inside a Pod. 
   - You can use [Service Requirement]({{< relref "/docs/concepts/requirement/requirement_service.md" >}}) with this hatchery. 
   - This hatchery uses the [worker model](https://ovh.github.io/cds/docs/concepts/worker-model/) docker.
-- **hatchery:marathon**: the marathon hatchery run CDS Worker as a marathon application. 
-  - This hatchery uses the [worker model](https://ovh.github.io/cds/docs/concepts/worker-model/) docker.
 - **hatchery:vsphere**: the vSphere hatchery creates Virtual Machine with a CDS Worker inside. 
   - This hatchery uses the [worker model](https://ovh.github.io/cds/docs/concepts/worker-model/) vsphere.
 - **migrate**: this µService is used to run database migrations to upgrade your CDS Installation.
