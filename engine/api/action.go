@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
@@ -186,7 +187,12 @@ func (api *API) getActionHandler() service.Handler {
 		vars := mux.Vars(r)
 
 		groupName := vars["permGroupName"]
-		actionName := vars["permActionName"]
+		actionNameEscaped := vars["permActionName"]
+
+		actionName, err := url.PathUnescape(actionNameEscaped)
+		if err != nil {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "%s", err)
+		}
 
 		g, err := group.LoadByName(ctx, api.mustDB(), groupName, group.LoadOptions.WithMembers)
 		if err != nil {
@@ -221,7 +227,13 @@ func (api *API) putActionHandler() service.Handler {
 		vars := mux.Vars(r)
 
 		groupName := vars["permGroupName"]
-		actionName := vars["permActionName"]
+
+		actionNameEscaped := vars["permActionName"]
+
+		actionName, err := url.PathUnescape(actionNameEscaped)
+		if err != nil {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "%s", err)
+		}
 
 		g, err := group.LoadByName(ctx, api.mustDB(), groupName)
 		if err != nil {
@@ -318,7 +330,13 @@ func (api *API) deleteActionHandler() service.Handler {
 		vars := mux.Vars(r)
 
 		groupName := vars["permGroupName"]
-		actionName := vars["permActionName"]
+
+		actionNameEscaped := vars["permActionName"]
+
+		actionName, err := url.PathUnescape(actionNameEscaped)
+		if err != nil {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "%s", err)
+		}
 
 		g, err := group.LoadByName(ctx, api.mustDB(), groupName)
 		if err != nil {
@@ -364,7 +382,13 @@ func (api *API) getActionAuditHandler() service.Handler {
 		vars := mux.Vars(r)
 
 		groupName := vars["permGroupName"]
-		actionName := vars["permActionName"]
+
+		actionNameEscaped := vars["permActionName"]
+
+		actionName, err := url.PathUnescape(actionNameEscaped)
+		if err != nil {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "%s", err)
+		}
 
 		g, err := group.LoadByName(ctx, api.mustDB(), groupName)
 		if err != nil {
@@ -440,7 +464,12 @@ func (api *API) postActionAuditRollbackHandler() service.Handler {
 		vars := mux.Vars(r)
 
 		groupName := vars["permGroupName"]
-		actionName := vars["permActionName"]
+		actionNameEscaped := vars["permActionName"]
+
+		actionName, err := url.PathUnescape(actionNameEscaped)
+		if err != nil {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "%s", err)
+		}
 
 		auditID, err := requestVarInt(r, "auditID")
 		if err != nil {
@@ -575,7 +604,12 @@ func (api *API) getActionUsageHandler() service.Handler {
 		vars := mux.Vars(r)
 
 		groupName := vars["permGroupName"]
-		actionName := vars["permActionName"]
+		actionNameEscaped := vars["permActionName"]
+
+		actionName, err := url.PathUnescape(actionNameEscaped)
+		if err != nil {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "%s", err)
+		}
 
 		g, err := group.LoadByName(ctx, api.mustDB(), groupName)
 		if err != nil {
@@ -604,7 +638,12 @@ func (api *API) getActionExportHandler() service.Handler {
 		vars := mux.Vars(r)
 
 		groupName := vars["permGroupName"]
-		actionName := vars["permActionName"]
+		actionNameEscaped := vars["permActionName"]
+
+		actionName, err := url.PathUnescape(actionNameEscaped)
+		if err != nil {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "%s", err)
+		}
 
 		format := FormString(r, "format")
 		if format == "" {
@@ -800,7 +839,12 @@ func (api *API) getActionBuiltinHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 
-		actionName := vars["permActionBuiltinName"]
+		actionNameEscaped := vars["permActionBuiltinName"]
+
+		actionName, err := url.PathUnescape(actionNameEscaped)
+		if err != nil {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "%s", err)
+		}
 
 		a, err := action.LoadByTypesAndName(ctx, api.mustDB(), []string{sdk.BuiltinAction, sdk.PluginAction}, actionName,
 			action.LoadOptions.WithRequirements,
@@ -822,7 +866,12 @@ func (api *API) getActionBuiltinUsageHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 
-		actionName := vars["permActionBuiltinName"]
+		actionNameEscaped := vars["permActionBuiltinName"]
+
+		actionName, err := url.PathUnescape(actionNameEscaped)
+		if err != nil {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "%s", err)
+		}
 
 		a, err := action.LoadByTypesAndName(ctx, api.mustDB(), []string{sdk.BuiltinAction, sdk.PluginAction}, actionName,
 			action.LoadOptions.WithRequirements,
