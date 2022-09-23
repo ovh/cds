@@ -181,6 +181,10 @@ func InsertAdminUser(t *testing.T, db gorpmapper.SqlExecutorWithTx) (*sdk.Authen
 	require.NoError(t, user.Insert(context.TODO(), db, &data), "unable to insert user")
 
 	o, err := organization.LoadOrganizationByName(context.TODO(), db, "default")
+	if sdk.ErrorIs(err, sdk.ErrNotFound) {
+		o = &sdk.Organization{Name: "default"}
+		require.NoError(t, organization.Insert(context.TODO(), db, o))
+	}
 	require.NoError(t, err)
 	uo := user.UserOrganization{
 		OrganizationID:     o.ID,
