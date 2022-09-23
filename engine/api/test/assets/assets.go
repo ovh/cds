@@ -119,6 +119,11 @@ func DeleteTestProject(t *testing.T, db gorp.SqlExecutor, store cache.Store, key
 
 // InsertTestGroup create a test group
 func InsertTestGroup(t *testing.T, db gorpmapper.SqlExecutorWithTx, name string) *sdk.Group {
+	return InsertTestGroupInOrganization(t, db, name, "default")
+}
+
+// InsertTestGroupInOrganization create a test group
+func InsertTestGroupInOrganization(t *testing.T, db gorpmapper.SqlExecutorWithTx, name string, orgaName string) *sdk.Group {
 	g := sdk.Group{
 		Name: name,
 	}
@@ -131,8 +136,12 @@ func InsertTestGroup(t *testing.T, db gorpmapper.SqlExecutorWithTx, name string)
 		return nil
 	}
 
-	o, err := organization.LoadOrganizationByName(context.TODO(), db, "default")
-	require.NoError(t, err)
+	o, err := organization.LoadOrganizationByName(context.TODO(), db, orgaName)
+	if sdk.ErrorIs(err, sdk.ErrNotFound) {
+		o = &sdk.Organization{Name: orgaName}
+		require.NoError(t, organization.Insert(context.TODO(), db, o))
+		err = nil
+	}
 	grpOrg := group.GroupOrganization{
 		OrganizationID: o.ID,
 		GroupID:        g.ID,
@@ -234,7 +243,11 @@ func InsertMaintainerUser(t *testing.T, db gorpmapper.SqlExecutorWithTx) (*sdk.A
 	require.NoError(t, user.Insert(context.TODO(), db, &data), "unable to insert user")
 
 	o, err := organization.LoadOrganizationByName(context.TODO(), db, "default")
-	require.NoError(t, err)
+	if sdk.ErrorIs(err, sdk.ErrNotFound) {
+		o = &sdk.Organization{Name: "default"}
+		require.NoError(t, organization.Insert(context.TODO(), db, o))
+		err = nil
+	}
 	uo := user.UserOrganization{
 		OrganizationID:     o.ID,
 		AuthentifiedUserID: data.ID,
@@ -258,59 +271,11 @@ func InsertMaintainerUser(t *testing.T, db gorpmapper.SqlExecutorWithTx) (*sdk.A
 
 // InsertLambdaUser have to be used only for tests.
 func InsertLambdaUser(t *testing.T, db gorpmapper.SqlExecutorWithTx, groups ...*sdk.Group) (*sdk.AuthentifiedUser, string) {
-	u := &sdk.AuthentifiedUser{
-		Username: "lambda-" + sdk.RandomString(10),
-		Fullname: "lambda-" + sdk.RandomString(10),
-		Ring:     sdk.UserRingUser,
-	}
-	require.NoError(t, user.Insert(context.TODO(), db, u))
-
-	o, err := organization.LoadOrganizationByName(context.TODO(), db, "default")
-	require.NoError(t, err)
-	uo := user.UserOrganization{
-		OrganizationID:     o.ID,
-		AuthentifiedUserID: u.ID,
-	}
-	require.NoError(t, user.InsertUserOrganization(context.TODO(), db, &uo))
-
-	u, err = user.LoadByID(context.Background(), db, u.ID, user.LoadOptions.WithOrganization)
-	require.NoError(t, err)
-
-	for i := range groups {
-		existingGroup, _ := group.LoadByName(context.TODO(), db, groups[i].Name)
-		if existingGroup == nil {
-			require.NoError(t, group.Create(context.Background(), db, groups[i], u))
-			require.NoError(t, group.EnsureOrganization(context.TODO(), db, groups[i]))
-		} else {
-			groups[i].ID = existingGroup.ID
-			require.NoError(t, group.InsertLinkGroupUser(context.Background(), db,
-				&group.LinkGroupUser{
-					GroupID:            groups[i].ID,
-					AuthentifiedUserID: u.ID,
-					Admin:              false,
-				}), "unable to insert user in group")
-		}
-		u.Groups = append(u.Groups, *groups[i])
-	}
-
-	btes, err := json.Marshal(u)
-	require.NoError(t, err)
-	log.Debug(context.TODO(), "lambda user: %s", string(btes))
-
-	consumer, err := local.NewConsumer(context.TODO(), db, u.ID)
-	require.NoError(t, err, "cannot create auth consumer")
-
-	session, err := authentication.NewSession(context.TODO(), db, consumer, 5*time.Minute)
-	require.NoError(t, err, "cannot create session")
-
-	jwt, err := authentication.NewSessionJWT(session, "")
-	require.NoError(t, err, "cannot create jwt")
-
-	return u, jwt
+	return InsertLambdaUserInOrganization(t, db, "default", groups...)
 }
 
-// InsertLambdaUserInOrganizarion have to be used only for tests.
-func InsertLambdaUserInOrganizarion(t *testing.T, db gorpmapper.SqlExecutorWithTx, orgName string, groups ...*sdk.Group) (*sdk.AuthentifiedUser, string) {
+// InsertLambdaUserInOrganization have to be used only for tests.
+func InsertLambdaUserInOrganization(t *testing.T, db gorpmapper.SqlExecutorWithTx, orgaName string, groups ...*sdk.Group) (*sdk.AuthentifiedUser, string) {
 	u := &sdk.AuthentifiedUser{
 		Username: "lambda-" + sdk.RandomString(10),
 		Fullname: "lambda-" + sdk.RandomString(10),
@@ -318,7 +283,12 @@ func InsertLambdaUserInOrganizarion(t *testing.T, db gorpmapper.SqlExecutorWithT
 	}
 	require.NoError(t, user.Insert(context.TODO(), db, u))
 
-	o, err := organization.LoadOrganizationByName(context.TODO(), db, orgName)
+	o, err := organization.LoadOrganizationByName(context.TODO(), db, orgaName)
+	if sdk.ErrorIs(err, sdk.ErrNotFound) {
+		o = &sdk.Organization{Name: orgaName}
+		require.NoError(t, organization.Insert(context.TODO(), db, o))
+		err = nil
+	}
 	require.NoError(t, err)
 	uo := user.UserOrganization{
 		OrganizationID:     o.ID,

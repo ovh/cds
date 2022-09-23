@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS "authentified_user_organization" (
 DROP INDEX IF EXISTS IDX_FK_AUTHENTIFIED_USER_ORGANIZATION_AUTHENTIFIED_USER;
 SELECT create_foreign_key_idx_cascade('FK_AUTHENTIFIED_USER_ORGANIZATION_AUTHENTIFIED_USER', 'authentified_user_organization', 'authentified_user', 'authentified_user_id', 'id');
 SELECT create_foreign_key_idx_cascade('FK_AUTHENTIFIED_USER_ORGANIZATION_ORGANIZATION', 'authentified_user_organization', 'organization', 'organization_id', 'id');
+SELECT create_unique_index('authentified_user_organization', 'idx_unq_authentified_user_organization', 'authentified_user_id');
 
 ALTER TABLE group_organization RENAME TO group_organization_old;
 CREATE TABLE IF NOT EXISTS "group_organization" (
@@ -23,7 +24,7 @@ CREATE TABLE IF NOT EXISTS "group_organization" (
 DROP INDEX IF EXISTS IDX_FK_GROUP_ORGANIZATION_GROUP;
 SELECT create_foreign_key_idx_cascade('FK_GROUP_ORGANIZATION_GROUP', 'group_organization', 'group', 'group_id', 'id');
 SELECT create_foreign_key_idx_cascade('FK_GROUP_ORGANIZATION_ORGANIZATION', 'group_organization', 'organization', 'organization_id', 'id');
-
+SELECT create_unique_index('group_organization', 'idx_unq_group_organization', 'group_id');
 
 -- +migrate Down
 DROP TABLE authentified_user_organization;
