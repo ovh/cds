@@ -16,7 +16,6 @@ import (
 	"github.com/ovh/cds/engine/elasticsearch"
 	"github.com/ovh/cds/engine/hatchery/kubernetes"
 	"github.com/ovh/cds/engine/hatchery/local"
-	"github.com/ovh/cds/engine/hatchery/marathon"
 	"github.com/ovh/cds/engine/hatchery/openstack"
 	"github.com/ovh/cds/engine/hatchery/swarm"
 	"github.com/ovh/cds/engine/hatchery/vsphere"
@@ -91,7 +90,7 @@ This component operates CDS CDN to handle storage
 
 Start all of this with a single command:
 
-	$ engine start [api] [cdn] [hatchery:local] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [elasticsearch] [hooks] [vcs] [repositories] [migrate] [ui]
+	$ engine start [api] [cdn] [hatchery:local] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [elasticsearch] [hooks] [vcs] [repositories] [migrate] [ui]
 
 All the services are using the same configuration file format.
 
@@ -166,14 +165,6 @@ See $ engine config command for more details.
 				}
 				serviceConfs = append(serviceConfs, serviceConf{arg: a, service: kubernetes.New(), cfg: *conf.Hatchery.Kubernetes})
 				names = append(names, conf.Hatchery.Kubernetes.Name)
-				types = append(types, sdk.TypeHatchery)
-
-			case sdk.TypeHatchery + ":marathon":
-				if conf.Hatchery.Marathon == nil {
-					sdk.Exit("Unable to start: missing service %s configuration", a)
-				}
-				serviceConfs = append(serviceConfs, serviceConf{arg: a, service: marathon.New(), cfg: *conf.Hatchery.Marathon})
-				names = append(names, conf.Hatchery.Marathon.Name)
 				types = append(types, sdk.TypeHatchery)
 
 			case sdk.TypeHatchery + ":openstack":
