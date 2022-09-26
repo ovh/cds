@@ -13,7 +13,6 @@ import (
 	"github.com/ovh/cds/engine/cdn"
 	"github.com/ovh/cds/engine/hatchery/kubernetes"
 	"github.com/ovh/cds/engine/hatchery/local"
-	"github.com/ovh/cds/engine/hatchery/marathon"
 	"github.com/ovh/cds/engine/hatchery/openstack"
 	"github.com/ovh/cds/engine/hatchery/swarm"
 	"github.com/ovh/cds/engine/hatchery/vsphere"
@@ -75,7 +74,7 @@ For advanced usage, Debug and Tracing section can be generated as:
 	$ engine config new debug tracing [µService(s)...]
 
 All options
-	$ engine config new [debug] [tracing] [api] [hatchery:local] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [elasticsearch] [hooks] [vcs] [repositories] [migrate]
+	$ engine config new [debug] [tracing] [api] [hatchery:local] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [elasticsearch] [hooks] [vcs] [repositories] [migrate]
 
 `,
 
@@ -143,14 +142,6 @@ var configCheckCmd = &cobra.Command{
 			fmt.Printf("checking hatchery:local configuration...\n")
 			if err := local.New().CheckConfiguration(*conf.Hatchery.Local); err != nil {
 				fmt.Printf("hatchery:local Configuration: %v\n", err)
-				hasError = true
-			}
-		}
-
-		if conf.Hatchery != nil && conf.Hatchery.Marathon != nil && conf.Hatchery.Marathon.API.HTTP.URL != "" {
-			fmt.Printf("checking hatchery:marathon configuration...\n")
-			if err := marathon.New().CheckConfiguration(*conf.Hatchery.Marathon); err != nil {
-				fmt.Printf("hatchery:marathon Configuration: %v\n", err)
 				hasError = true
 			}
 		}

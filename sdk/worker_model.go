@@ -222,7 +222,7 @@ func (m *ModelVirtualMachine) Scan(src interface{}) error {
 	return WrapError(JSONUnmarshal(source, m), "cannot unmarshal ModelVirtualMachine")
 }
 
-// ModelDocker for swarm, marathon and kubernetes.
+// ModelDocker for swarm and kubernetes.
 type ModelDocker struct {
 	Image    string            `json:"image,omitempty"`
 	Private  bool              `json:"private,omitempty"`

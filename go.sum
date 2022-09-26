@@ -200,8 +200,6 @@ github.com/docker/go-connections v0.3.0/go.mod h1:Gbd7IOopHjR8Iph03tsViu4nIes5Xh
 github.com/docker/go-units v0.3.2 h1:Kjm80apys7gTtfVmCvVY8gwu10uofaFSrmAKOVrtueE=
 github.com/docker/go-units v0.3.2/go.mod h1:fgPhTUdO+D/Jk86RDLlptpiXQzgHJF7gydDDbaIK4Dk=
 github.com/docopt/docopt-go v0.0.0-20180111231733-ee0de3bc6815/go.mod h1:WwZ+bS3ebgob9U8Nd0kOddGdZWjyMGR8Wziv+TBNwSE=
-github.com/donovanhide/eventsource v0.0.0-20170630084216-b8f31a59085e h1:rMOGp6HPeMHbdLrZkX2nD+94uqDunc27tXVuS+ey4mQ=
-github.com/donovanhide/eventsource v0.0.0-20170630084216-b8f31a59085e/go.mod h1:56wL82FO0bfMU5RvfXoIwSOP2ggqqxT+tAfNEIyxuHw=
 github.com/dsnet/compress v0.0.2-0.20210315054119-f66993602bf5 h1:iFaUwBSo5Svw6L7HYpRu/0lE3e0BaElwnNO1qkNQxBY=
 github.com/dsnet/compress v0.0.2-0.20210315054119-f66993602bf5/go.mod h1:qssHWj60/X5sZFNxpG4HBPDHVqxNm4DfnCKgrbZOT+s=
 github.com/dsnet/golib v0.0.0-20171103203638-1ea166775780/go.mod h1:Lj+Z9rebOhdfkVLjJ8T6VcRQv3SXugXy999NBtR9aFY=
@@ -255,8 +253,6 @@ github.com/fsnotify/fsnotify v1.5.1 h1:mZcQUHVQUQWoPXXtuf9yuEXKudkV2sx1E06UadKWp
 github.com/fsnotify/fsnotify v1.5.1/go.mod h1:T3375wBYaZdLLcVNkcVbzGHY7f1l/uK5T5Ai1i3InKU=
 github.com/fujiwara/shapeio v0.0.0-20170602072123-c073257dd745 h1:+tPNWeI7Uk5JKgSj4IYytZc0mdch+e3Yf8g1sGOg4hQ=
 github.com/fujiwara/shapeio v0.0.0-20170602072123-c073257dd745/go.mod h1:/WpqsrSkjgwEG2Es2qnZXbXwHDVbawpdlXJIjJMmnZs=
-github.com/gambol99/go-marathon v0.0.0-20170922093320-ec4a50170df7 h1:eRSo1ll7k0Kls6zIAMVImpDZ3Mqomyuk+SRvMzmEj3Y=
-github.com/gambol99/go-marathon v0.0.0-20170922093320-ec4a50170df7/go.mod h1:GLyXJD41gBO/NPKVPGQbhyyC06eugGy15QEZyUkE2/s=
 github.com/ghodss/yaml v1.0.0 h1:wQHKEahhL6wmXdzwWG11gIVCkOv05bNOh+Rxn0yngAk=
 github.com/ghodss/yaml v1.0.0/go.mod h1:4dBDuWmgqj2HViK6kFavaiC9ZROes6MMH2rRYeMEF04=
 github.com/gliderlabs/ssh v0.2.2 h1:6zsha5zo/TWhRhwqCD3+EarCAgZ2yN28ipRnGPnwkI0=

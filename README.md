@@ -250,7 +250,6 @@ Several types of hatchery are available:
  - **[hatchery kubernetes](https://ovh.github.io/cds/docs/integrations/kubernetes/kubernetes_compute/)** starts workers in pods
  - **[hatchery openstack](https://ovh.github.io/cds/docs/integrations/openstack/openstack_compute/)** starts virtual machines
  - **[hatchery swarm](https://ovh.github.io/cds/docs/integrations/swarm/)** starts docker containers
- - **[hatchery marathon](https://ovh.github.io/cds/docs/integrations/marathon/)** starts docker containers
  - **[hatchery vSphere](https://ovh.github.io/cds/docs/integrations/vsphere/)** starts virtual machines
  - **[hatchery local](https://ovh.github.io/cds/docs/components/hatchery/local/)** starts processes on a host
 
