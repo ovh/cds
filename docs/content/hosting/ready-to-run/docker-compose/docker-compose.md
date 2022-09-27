@@ -166,20 +166,10 @@ $ docker-compose restart cds-hatchery-swarm
 
 ## Setup connection with a VCS
 
+Start the VCS and Repositories services:
 ```bash
-# READ THE section https://ovh.github.io/cds/docs/integrations/github/github_repository_manager/#create-a-cds-application-on-github to generate the clientId and clientSecret.
-# Short version: 
-# go on https://github.com/settings/applications/new
-# Application name: cds-test-docker-compose
-# Homepage URL: http://localhost:8080
-# Authorization callback: http://localhost:8080/cdsapi/repositories_manager/oauth2/callback
-# send click on register application.
-$ export CDS_EDIT_CONFIG="vcs.servers.github.github.clientId=xxxxx vcs.servers.github.github.clientSecret=xxxxx " 
-$ docker-compose up cds-edit-config
 $ docker-compose up -d cds-vcs cds-repositories
 ```
-
-Notice that here, you have the VCS and Repositories services up and running.
 
 *vcs*: The aim of this µService is to communicate with Repository Manager as GitHub, GitLab, Bitbucket…
 But, as your CDS is not probably public, GitHub won't be able to call your CDS to automatically run your workflow on each git push.
@@ -187,13 +177,54 @@ But, as your CDS is not probably public, GitHub won't be able to call your CDS t
 *repositories*: this µService is used to enable the as-code feature.
 Users can store CDS Files on their repositories. This service clones user repositories on local filesystem.
 
+READ THE section https://ovh.github.io/cds/docs/integrations/github/github_repository_manager/#create-the-personal-access-token-on-github to generate a token.
+
+Short version:
+- go on https://github.com/settings/tokens/new
+- Note: "test-docker-compose"
+- Scope:
+  - `repo:status`
+  - `repo:public_repo`
+  - `admin:repo_hook write:repo_hook`
+  - `admin:repo_hook read:repo_hook`
+- Then click on Generate Token.
+
+create a file `vcs-github.yml` with:
+```yml
+version: v1.0
+name: github
+type: github
+description: "my github"
+auth:
+    username: your-github-username
+    token: the-token-generated
+options:
+    urlApi: "" # optional, default is https://api.github.com
+    disableStatus: true    # Set to true if you don't want CDS to push statuses on the VCS server - optional
+    disableStatusDetails: true # Set to true if you don't want CDS to push CDS URL in statuses on the VCS server - optional
+    disablePolling: true   # Does polling is supported by VCS Server - optional
+    disableWebHooks: false  # Does webhooks are supported by VCS Server - optional
+```
+`your-github-username` and `the-token-generated` have to be replaced with your values.
+
+Import the VCS configuration:
+
+```bash
+$ ./cdsctl experimental project vcs import DEMO vcs-github.yml
+```
+
+That's all. You will be able to go to http://localhost:8080/project/DEMO/application/MyFirstWorkflow?tab=advanced and link this application to a GitHub repository.
+
+Then, you will be able to use step `checkout Application` to git clone your  repository
+
+**Warning:** This docker-compose tutorial exposes your CDS on localhost. You won't be able to play with repository webhook and as-code feature with this docker-compose tutorial as it's not possible to create a repository webhook on GitHub with `http://localhost/...`. If you want to play with that, you will need to reconfigure the settings `urlPublic` in `[hooks]` configuration.
 
 ## Then, next with Actions, Plugins
 
 - Import actions, example:
 
 ```bash
-$ ./cdsctl action import https://raw.githubusercontent.com/ovh/cds/{{< param "version" "master" >}}/contrib/actions/cds-docker-package.yml
+$ ./cdsctl action import https://raw.githubusercontent.com/ovh/cds/master/contrib/actions/cds-docker-package.yml
 ```
 
 ## Go further
