@@ -3,10 +3,7 @@ package cdsclient
 import (
 	"context"
 	"fmt"
-	"io"
 	"net/url"
-
-	"github.com/ghodss/yaml"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -38,18 +35,7 @@ func (c *client) ProjectVCSDelete(ctx context.Context, projectKey string, vcsNam
 	return nil
 }
 
-func (c *client) ProjectVCSImport(ctx context.Context, projectKey string, content io.Reader, mods ...RequestModifier) (sdk.VCSProject, error) {
-	var vcsProject sdk.VCSProject
-
-	body, err := io.ReadAll(content)
-	if err != nil {
-		return vcsProject, err
-	}
-
-	if err := yaml.Unmarshal(body, &vcsProject); err != nil {
-		return vcsProject, err
-	}
-
+func (c *client) ProjectVCSImport(ctx context.Context, projectKey string, vcsProject sdk.VCSProject, mods ...RequestModifier) (sdk.VCSProject, error) {
 	oldvcs, _ := c.ProjectVCSGet(ctx, projectKey, vcsProject.Name)
 	if oldvcs.Name == "" {
 		path := fmt.Sprintf("/v2/project/%s/vcs", projectKey)

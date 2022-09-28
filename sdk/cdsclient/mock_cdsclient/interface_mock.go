@@ -2934,9 +2934,9 @@ func (mr *MockProjectClientMockRecorder) ProjectVCSGet(ctx, projectKey, integrat
 }
 
 // ProjectVCSImport mocks base method.
-func (m *MockProjectClient) ProjectVCSImport(ctx context.Context, projectKey string, content io.Reader, mods ...cdsclient.RequestModifier) (sdk.VCSProject, error) {
+func (m *MockProjectClient) ProjectVCSImport(ctx context.Context, projectKey string, vcs sdk.VCSProject, mods ...cdsclient.RequestModifier) (sdk.VCSProject, error) {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, projectKey, content}
+	varargs := []interface{}{ctx, projectKey, vcs}
 	for _, a := range mods {
 		varargs = append(varargs, a)
 	}
@@ -2947,9 +2947,9 @@ func (m *MockProjectClient) ProjectVCSImport(ctx context.Context, projectKey str
 }
 
 // ProjectVCSImport indicates an expected call of ProjectVCSImport.
-func (mr *MockProjectClientMockRecorder) ProjectVCSImport(ctx, projectKey, content interface{}, mods ...interface{}) *gomock.Call {
+func (mr *MockProjectClientMockRecorder) ProjectVCSImport(ctx, projectKey, vcs interface{}, mods ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, projectKey, content}, mods...)
+	varargs := append([]interface{}{ctx, projectKey, vcs}, mods...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVCSImport", reflect.TypeOf((*MockProjectClient)(nil).ProjectVCSImport), varargs...)
 }
 
@@ -7478,9 +7478,9 @@ func (mr *MockInterfaceMockRecorder) ProjectVCSGet(ctx, projectKey, integrationN
 }
 
 // ProjectVCSImport mocks base method.
-func (m *MockInterface) ProjectVCSImport(ctx context.Context, projectKey string, content io.Reader, mods ...cdsclient.RequestModifier) (sdk.VCSProject, error) {
+func (m *MockInterface) ProjectVCSImport(ctx context.Context, projectKey string, vcs sdk.VCSProject, mods ...cdsclient.RequestModifier) (sdk.VCSProject, error) {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, projectKey, content}
+	varargs := []interface{}{ctx, projectKey, vcs}
 	for _, a := range mods {
 		varargs = append(varargs, a)
 	}
@@ -7491,9 +7491,9 @@ func (m *MockInterface) ProjectVCSImport(ctx context.Context, projectKey string,
 }
 
 // ProjectVCSImport indicates an expected call of ProjectVCSImport.
-func (mr *MockInterfaceMockRecorder) ProjectVCSImport(ctx, projectKey, content interface{}, mods ...interface{}) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) ProjectVCSImport(ctx, projectKey, vcs interface{}, mods ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, projectKey, content}, mods...)
+	varargs := append([]interface{}{ctx, projectKey, vcs}, mods...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVCSImport", reflect.TypeOf((*MockInterface)(nil).ProjectVCSImport), varargs...)
 }
 
