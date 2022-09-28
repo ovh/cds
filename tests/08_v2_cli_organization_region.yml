@@ -37,7 +37,7 @@ testcases:
         - result.code ShouldEqual 0
         - result.systemoutjson.__len__ ShouldEqual 1
         - result.systemoutjson.systemoutjson0.name ShouldEqual "my-region"
-    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental organization region delete myorg my-region
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental organization region delete myorg my-region --force
       assertions:
         - result.code ShouldEqual 0
     - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental organization region list myorg --format json
