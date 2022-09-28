@@ -440,6 +440,8 @@ func (api *API) InitRouter() {
 
 	r.Handle("/v2/organization", nil, r.POSTv2(api.postOrganizationHandler), r.GETv2(api.getOrganizationsHandler))
 	r.Handle("/v2/organization/{organizationIdentifier}", nil, r.GETv2(api.getOrganizationHandler), r.DELETEv2(api.deleteOrganizationHandler))
+	r.Handle("/v2/organization/{organizationIdentifier}/region", nil, r.GETv2(api.getListRegionAllowedOnIrganizationHandler), r.POSTv2(api.postAllowRegionOnOrganizationHandler))
+	r.Handle("/v2/organization/{organizationIdentifier}/region/{regionIdentifier}", nil, r.DELETEv2(api.deleteRegionFromOrganizationHandler))
 
 	r.Handle("/v2/rbac/import", nil, r.POSTv2(api.postImportRbacHandler))
 

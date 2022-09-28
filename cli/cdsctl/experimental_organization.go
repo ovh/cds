@@ -2,10 +2,11 @@ package main
 
 import (
 	"context"
-	"github.com/ovh/cds/sdk"
+
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
+	"github.com/ovh/cds/sdk"
 )
 
 var experimentalOrganizationCmd = cli.Command{
@@ -16,6 +17,7 @@ var experimentalOrganizationCmd = cli.Command{
 
 func experimentalOrganization() *cobra.Command {
 	return cli.NewCommand(experimentalOrganizationCmd, nil, []*cobra.Command{
+		experimentalOrganizationRegion(),
 		cli.NewCommand(organizationAddCmd, organizationAddFunc, nil, withAllCommandModifiers()...),
 		cli.NewGetCommand(organizationGetCmd, organizationGetFunc, nil, withAllCommandModifiers()...),
 		cli.NewListCommand(organizationListCmd, organizationListFunc, nil, withAllCommandModifiers()...),

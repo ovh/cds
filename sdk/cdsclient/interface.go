@@ -207,6 +207,9 @@ type OrganizationClient interface {
 	OrganizationGet(ctx context.Context, organizationIdentifier string) (sdk.Organization, error)
 	OrganizationList(ctx context.Context) ([]sdk.Organization, error)
 	OrganizationDelete(ctx context.Context, organizationIdentifier string) error
+	OrganizationRegionAllow(ctx context.Context, organizationIdentifier string, reg sdk.Region) error
+	OrganizationRegionList(ctx context.Context, organizationIdentifier string) ([]sdk.Region, error)
+	OrganizationRegionRemove(ctx context.Context, organizationIdentifier string, regionIdentifier string) error
 }
 
 type RegionClient interface {

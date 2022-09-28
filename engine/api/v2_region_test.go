@@ -18,6 +18,8 @@ import (
 func Test_crudRegion(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 
+	db.Exec("DELETE FROM region")
+
 	u, pass := assets.InsertLambdaUser(t, db)
 
 	// Insert rbac

@@ -2437,6 +2437,49 @@ func (mr *MockOrganizationClientMockRecorder) OrganizationList(ctx interface{}) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OrganizationList", reflect.TypeOf((*MockOrganizationClient)(nil).OrganizationList), ctx)
 }
 
+// OrganizationRegionAllow mocks base method.
+func (m *MockOrganizationClient) OrganizationRegionAllow(ctx context.Context, organizationIdentifier string, reg sdk.Region) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "OrganizationRegionAllow", ctx, organizationIdentifier, reg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// OrganizationRegionAllow indicates an expected call of OrganizationRegionAllow.
+func (mr *MockOrganizationClientMockRecorder) OrganizationRegionAllow(ctx, organizationIdentifier, reg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OrganizationRegionAllow", reflect.TypeOf((*MockOrganizationClient)(nil).OrganizationRegionAllow), ctx, organizationIdentifier, reg)
+}
+
+// OrganizationRegionList mocks base method.
+func (m *MockOrganizationClient) OrganizationRegionList(ctx context.Context, organizationIdentifier string) ([]sdk.Region, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "OrganizationRegionList", ctx, organizationIdentifier)
+	ret0, _ := ret[0].([]sdk.Region)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// OrganizationRegionList indicates an expected call of OrganizationRegionList.
+func (mr *MockOrganizationClientMockRecorder) OrganizationRegionList(ctx, organizationIdentifier interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OrganizationRegionList", reflect.TypeOf((*MockOrganizationClient)(nil).OrganizationRegionList), ctx, organizationIdentifier)
+}
+
+// OrganizationRegionRemove mocks base method.
+func (m *MockOrganizationClient) OrganizationRegionRemove(ctx context.Context, organizationIdentifier, regionIdentifier string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "OrganizationRegionRemove", ctx, organizationIdentifier, regionIdentifier)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// OrganizationRegionRemove indicates an expected call of OrganizationRegionRemove.
+func (mr *MockOrganizationClientMockRecorder) OrganizationRegionRemove(ctx, organizationIdentifier, regionIdentifier interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OrganizationRegionRemove", reflect.TypeOf((*MockOrganizationClient)(nil).OrganizationRegionRemove), ctx, organizationIdentifier, regionIdentifier)
+}
+
 // MockRegionClient is a mock of RegionClient interface.
 type MockRegionClient struct {
 	ctrl     *gomock.Controller
@@ -6815,6 +6858,49 @@ func (m *MockInterface) OrganizationList(ctx context.Context) ([]sdk.Organizatio
 func (mr *MockInterfaceMockRecorder) OrganizationList(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OrganizationList", reflect.TypeOf((*MockInterface)(nil).OrganizationList), ctx)
+}
+
+// OrganizationRegionAllow mocks base method.
+func (m *MockInterface) OrganizationRegionAllow(ctx context.Context, organizationIdentifier string, reg sdk.Region) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "OrganizationRegionAllow", ctx, organizationIdentifier, reg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// OrganizationRegionAllow indicates an expected call of OrganizationRegionAllow.
+func (mr *MockInterfaceMockRecorder) OrganizationRegionAllow(ctx, organizationIdentifier, reg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OrganizationRegionAllow", reflect.TypeOf((*MockInterface)(nil).OrganizationRegionAllow), ctx, organizationIdentifier, reg)
+}
+
+// OrganizationRegionList mocks base method.
+func (m *MockInterface) OrganizationRegionList(ctx context.Context, organizationIdentifier string) ([]sdk.Region, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "OrganizationRegionList", ctx, organizationIdentifier)
+	ret0, _ := ret[0].([]sdk.Region)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// OrganizationRegionList indicates an expected call of OrganizationRegionList.
+func (mr *MockInterfaceMockRecorder) OrganizationRegionList(ctx, organizationIdentifier interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OrganizationRegionList", reflect.TypeOf((*MockInterface)(nil).OrganizationRegionList), ctx, organizationIdentifier)
+}
+
+// OrganizationRegionRemove mocks base method.
+func (m *MockInterface) OrganizationRegionRemove(ctx context.Context, organizationIdentifier, regionIdentifier string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "OrganizationRegionRemove", ctx, organizationIdentifier, regionIdentifier)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// OrganizationRegionRemove indicates an expected call of OrganizationRegionRemove.
+func (mr *MockInterfaceMockRecorder) OrganizationRegionRemove(ctx, organizationIdentifier, regionIdentifier interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OrganizationRegionRemove", reflect.TypeOf((*MockInterface)(nil).OrganizationRegionRemove), ctx, organizationIdentifier, regionIdentifier)
 }
 
 // PipelineCreate mocks base method.

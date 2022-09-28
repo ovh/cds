@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
@@ -81,4 +82,9 @@ func LoadRegionByName(ctx context.Context, db gorp.SqlExecutor, name string) (*s
 func LoadRegionByID(ctx context.Context, db gorp.SqlExecutor, ID string) (*sdk.Region, error) {
 	query := gorpmapping.NewQuery(`SELECT region.* FROM region WHERE region.id = $1`).Args(ID)
 	return getRegion(ctx, db, query)
+}
+
+func LoadRegionByIDs(ctx context.Context, db gorp.SqlExecutor, IDs []string) ([]sdk.Region, error) {
+	query := gorpmapping.NewQuery(`SELECT region.* FROM region WHERE region.id = ANY($1)`).Args(pq.StringArray(IDs))
+	return getAllRegions(ctx, db, query)
 }
