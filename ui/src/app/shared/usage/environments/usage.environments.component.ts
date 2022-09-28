@@ -5,6 +5,7 @@ import { Project } from 'app/model/project.model';
 @Component({
     selector: 'app-usage-environments',
     templateUrl: './usage.environments.html',
+    styleUrls: ['./usage.environments.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class UsageEnvironmentsComponent {

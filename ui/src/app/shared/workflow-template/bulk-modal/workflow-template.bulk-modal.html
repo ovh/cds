@@ -34,16 +34,7 @@
                     </app-workflow-template-param-form>
                 </nz-collapse-panel>
              </nz-collapse>
-             <div class="ui styled fluid accordion">
-                 <ng-container *ngFor="let instance of selectedInstances;let i = index">
-
-                     <div class="content" [class.active]="accordionOpenedIndex === i">
-
-                     </div>
-                 </ng-container>
-             </div>
          </nz-col>
-
      </nz-row>
      <nz-row *ngIf="currentStep === 2">
          <nz-col [nzSpan]="24">

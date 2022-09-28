@@ -11,12 +11,12 @@ import { Group } from 'app/model/group.model';
 import { AuthentifiedUser, AuthSummary } from 'app/model/user.model';
 import { AuthenticationService } from 'app/service/authentication/authentication.service';
 import { UserService } from 'app/service/user/user.service';
-import { Item } from 'app/shared/menu/menu.component';
 import { Column, ColumnType, Filter } from 'app/shared/table/data-table.component';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { AuthenticationState } from 'app/store/authentication.state';
 import * as moment from 'moment';
 import { NzModalRef } from 'ng-zorro-antd/modal';
+
 
 export enum CloseEventType {
     CHILD_DETAILS = 'CHILD_DETAILS',
@@ -29,12 +29,6 @@ export class CloseEvent {
     type: CloseEventType;
     payload: any;
 }
-
-const defaultMenuItems = [<Item>{
-    translate: 'user_auth_sessions',
-    key: 'sessions',
-    default: true
-}];
 
 @Component({
     selector: 'app-consumer-details-modal',
@@ -54,8 +48,8 @@ export class ConsumerDetailsModalComponent implements OnInit {
     columnsConsumers: Array<Column<AuthConsumer>>;
     filterChildren: Filter<AuthConsumer>;
     selectedChildDetails: AuthConsumer;
-    menuItems: Array<Item>;
-    selectedItem: Item;
+    menuItems: Map<string,string>;
+    selectedItem: String;
     columnsSessions: Array<Column<AuthSession>>;
     filterSessions: Filter<AuthSession>;
     consumerDeletedOrDetached: boolean;
@@ -73,8 +67,7 @@ export class ConsumerDetailsModalComponent implements OnInit {
         private _translate: TranslateService
     ) {
         this.currentAuthSummary = this._store.selectSnapshot(AuthenticationState.summary);
-
-        this.menuItems = [].concat(defaultMenuItems);
+        this.selectedItem = "sessions";
 
         this.filterChildren = f => {
             const lowerFilter = f.toLowerCase();
@@ -216,29 +209,21 @@ export class ConsumerDetailsModalComponent implements OnInit {
             }).join(' ');
         }
 
-        this.menuItems = [].concat(defaultMenuItems);
+        this.menuItems = new Map<string, string>();
+        this.menuItems.set("sessions", "Sessions");
         if (this.consumer.parent) {
-            this.menuItems.push(<Item>{
-                translate: 'auth_consumer_details_parent',
-                key: 'parent'
-            });
+            this.menuItems.set("parent", "Parent consumer");
         }
         if (this.consumer.children.length > 0) {
-            this.menuItems.push(<Item>{
-                translate: 'auth_consumer_details_children',
-                key: 'children'
-            });
+            this.menuItems.set("children", "Children consumers");
         }
         if (this.consumer.validity_periods.length > 0) {
-            this.menuItems.push(<Item>{
-                translate: 'validity_periods',
-                key: 'validity_periods'
-            });
+            this.menuItems.set("validity_periods", "Validity periods");
         }
         this._cd.markForCheck();
     }
 
-    selectMenuItem(item: Item): void {
+    selectMenuItem(item: string): void {
         this.selectedItem = item;
         this._cd.markForCheck();
     }

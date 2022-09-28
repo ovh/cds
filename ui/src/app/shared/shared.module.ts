@@ -39,7 +39,6 @@ import { FavoriteCardsComponent } from './favorite-cards/favorite-cards.componen
 import { KeysFormComponent } from './keys/form/keys.form.component';
 import { KeysListComponent } from './keys/list/keys.list.component';
 import { LabelsEditComponent } from './labels/edit/labels.edit.component';
-import { MenuComponent } from './menu/menu.component';
 import { ParameterFormComponent } from './parameter/form/parameter.form';
 import { ParameterListComponent } from './parameter/list/parameter.component';
 import { ParameterValueComponent } from './parameter/value/parameter.value.component';
@@ -225,7 +224,6 @@ const icons: IconDefinition[] = [ AimOutline, ArrowDownOutline, ArrowRightOutlin
         KeysListComponent,
         KeysPipe,
         LabelsEditComponent,
-        MenuComponent,
         NgForNumber,
         NgxAutoScrollDirective,
         ParameterFormComponent,
@@ -336,7 +334,6 @@ const icons: IconDefinition[] = [ AimOutline, ArrowDownOutline, ArrowRightOutlin
         KeysPipe,
         LabelsEditComponent,
         MarkdownModule,
-        MenuComponent,
         MomentModule,
         NzAutocompleteModule,
         NgForNumber,

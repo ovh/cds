@@ -52,12 +52,17 @@
                     <nz-form-item>
                         <nz-form-label [nzSpan]="4">Status</nz-form-label>
                         <nz-form-control [nzSpan]="20">
-                            <div class="ui icon read-only input">
-                                <i class="green check icon" *ngIf="task.status === hookStatus.DONE"></i>
-                                <i class="circle notch loading blue icon" *ngIf="task.status === hookStatus.DOING"></i>
-                                <i class="red close icon" *ngIf="task.status === hookStatus.FAIL"></i>
+                            <nz-input-group [nzSuffix]="suffixIconSearch">
                                 <input nz-input type="text" [value]="task.status" name="status" readonly>
-                            </div>
+                            </nz-input-group>
+                            <ng-template #suffixIconSearch>
+                                <span *ngIf="task.status === hookStatus.DONE" nz-icon nzType="check" nzTheme="outline"
+                                    class="green"></span>
+                                <span *ngIf="task.status === hookStatus.DOING" nz-icon [nzType]="'loading'"
+                                    class="blue"></span>
+                                <span *ngIf="task.status === hookStatus.FAIL" nz-icon nzType="close" nzTheme="outline"
+                                    class="red"></span>
+                            </ng-template>
                         </nz-form-control>
                     </nz-form-item>
                     <nz-form-item>

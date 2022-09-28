@@ -5,6 +5,7 @@ import { Project } from 'app/model/project.model';
 @Component({
     selector: 'app-usage-pipelines',
     templateUrl: './usage.pipelines.html',
+    styleUrls: ['./usage.pipelines.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class UsagePipelinesComponent {

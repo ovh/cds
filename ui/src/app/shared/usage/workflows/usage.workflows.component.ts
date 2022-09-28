@@ -5,6 +5,7 @@ import { Workflow } from 'app/model/workflow.model';
 @Component({
     selector: 'app-usage-workflows',
     templateUrl: './usage.workflows.html',
+    styleUrls: ['./usage.workflows.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class UsageWorkflowsComponent {
