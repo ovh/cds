@@ -114,7 +114,7 @@ import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
 import { en_US, NZ_I18N } from 'ng-zorro-antd/i18n';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { IconDefinition } from '@ant-design/icons-angular';
-import { AimOutline, ArrowDownOutline, ArrowRightOutline, AudioOutline, AudioMutedOutline, BellFill, BookOutline, CalendarOutline, CaretDownFill, CaretRightFill, CaretUpFill, CheckOutline, CodeOutline, CopyOutline, CrownOutline, DeleteOutline, DragOutline, EyeInvisibleOutline, EyeOutline, FieldTimeOutline, KeyOutline,
+import { AimOutline, ArrowDownOutline, ArrowRightOutline, AudioOutline, AudioMutedOutline, BellFill, BookOutline, CalendarOutline, CaretDownFill, CaretRightFill, CaretUpFill, CheckOutline, CodeOutline, CopyOutline, CrownOutline, DeleteOutline, DragOutline, EyeInvisibleOutline, EyeOutline, FieldTimeOutline, FileTextOutline, KeyOutline,
     HighlightFill, HistoryOutline, InfoCircleOutline, LockOutline, PhoneFill, PlayCircleOutline, PlusOutline, PlusSquareOutline, QuestionOutline, QuestionCircleOutline, RestOutline, SafetyCertificateOutline, SaveOutline, SettingFill, ShareAltOutline, StarOutline, StarFill, StopOutline, SyncOutline,
     TableOutline, TagsOutline, ToolFill, UndoOutline, UnlockFill, UnorderedListOutline, UploadOutline, UserOutline, WarningOutline, WarningFill } from '@ant-design/icons-angular/icons'
 import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
@@ -140,6 +140,7 @@ import { NzRadioModule } from 'ng-zorro-antd/radio';
 import { NzStepsModule } from 'ng-zorro-antd/steps';
 import { NzProgressModule } from 'ng-zorro-antd/progress';
 import { CardComponent } from 'app/shared/card/card.component';
+import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
 
 const ngZorroConfig: NzConfig = {
     notification: {nzPauseOnHover: true, nzPlacement: "topRight"},
@@ -147,7 +148,7 @@ const ngZorroConfig: NzConfig = {
 };
 
 const icons: IconDefinition[] = [ AimOutline, ArrowDownOutline, ArrowRightOutline, AudioOutline, AudioMutedOutline, BellFill, BookOutline, CalendarOutline, CaretDownFill, CaretRightFill, CaretUpFill, CheckOutline, CodeOutline, CopyOutline, CrownOutline, DeleteOutline, DragOutline,
-    EyeInvisibleOutline, EyeOutline, FieldTimeOutline, KeyOutline, HighlightFill, HistoryOutline, InfoCircleOutline, LockOutline, PhoneFill, PlayCircleOutline, PlusOutline, PlusSquareOutline, QuestionOutline, QuestionCircleOutline,
+    EyeInvisibleOutline, EyeOutline, FileTextOutline, FieldTimeOutline, KeyOutline, HighlightFill, HistoryOutline, InfoCircleOutline, LockOutline, PhoneFill, PlayCircleOutline, PlusOutline, PlusSquareOutline, QuestionOutline, QuestionCircleOutline,
     RestOutline, SafetyCertificateOutline, SaveOutline, SettingFill, ShareAltOutline, StarOutline, StarFill, StopOutline, SyncOutline, TableOutline, TagsOutline, ToolFill, UndoOutline, UnlockFill, UnorderedListOutline, UploadOutline, UserOutline, WarningOutline, WarningFill ];
 
 @NgModule({
@@ -155,6 +156,7 @@ const icons: IconDefinition[] = [ AimOutline, ArrowDownOutline, ArrowRightOutlin
         NzAutocompleteModule,
         NzAlertModule,
         NzBadgeModule,
+        NzBreadCrumbModule,
         NzButtonModule,
         NzCardModule,
         NzCheckboxModule,
@@ -340,6 +342,7 @@ const icons: IconDefinition[] = [ AimOutline, ArrowDownOutline, ArrowRightOutlin
         NgxAutoScrollDirective,
         NzAlertModule,
         NzBadgeModule,
+        NzBreadCrumbModule,
         NzButtonModule,
         NzCardModule,
         NzCheckboxModule,
