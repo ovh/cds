@@ -9,6 +9,7 @@ import (
 
 	yaml "github.com/ghodss/yaml"
 	"github.com/ovh/cds/cli"
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 )
 
@@ -71,18 +72,22 @@ var projectVCSImportCmd = cli.Command{
 }
 
 func projectVCSImportFunc(v cli.Values) error {
-	f, err := os.Open(v.GetString("filename"))
-	if err != nil {
-		return cli.WrapError(err, "unable to open file %s", v.GetString("filename"))
-	}
-	defer f.Close()
-
 	var mods []cdsclient.RequestModifier
 	if v.GetBool("force") {
 		mods = append(mods, cdsclient.Force())
 	}
 
-	_, err = client.ProjectVCSImport(context.Background(), v.GetString(_ProjectKey), f, mods...)
+	btes, err := os.ReadFile(v.GetString("filename"))
+	if err != nil {
+		return cli.WrapError(err, "unable to open file %s", v.GetString("filename"))
+	}
+
+	var content sdk.VCSProject
+	if err := yaml.Unmarshal(btes, &content); err != nil {
+		return cli.WrapError(err, "unable to parse file %s", v.GetString("filename"))
+	}
+
+	_, err = client.ProjectVCSImport(context.Background(), v.GetString(_ProjectKey), content, mods...)
 	return err
 }
 
