@@ -1,7 +1,6 @@
 <div class="CDSbreadcrumb">
-    <div class="ui large breadcrumb ">
-        <span *ngFor="let v of path; let i = index">
-            <i *ngIf="i > 0" class="right chevron icon divider"></i>
+    <nz-breadcrumb>
+        <nz-breadcrumb-item  *ngFor="let v of path; let i = index">
             <i *ngIf="v.icon" [ngClass]="['icon', v.icon]"></i>
             <a *ngIf="v.routerLink" class="section" [class.active]="v.active" [routerLink]="v.routerLink" [queryParams]="v.queryParams">
                 <span *ngIf="v.translate">{{v.translate | translate}}</span>
@@ -9,7 +8,7 @@
             </a>
             <span *ngIf="!v.routerLink && v.translate">{{v.translate | translate}}</span>
             <span *ngIf="!v.routerLink && v.text">{{v.text}}</span>
-        </span>
-    </div>
+        </nz-breadcrumb-item>
+    </nz-breadcrumb>
     <ng-content></ng-content>
 </div>

@@ -27,14 +27,11 @@
                                 (click)="confirmCopy();$event.stopPropagation();"><i class="copy outline icon"></i></a>
                         </div>
                         <ng-template #popupTemplate>
-                            <div class="content">
-                                <div class="ui bulleted list">
-                                    <div class="item"
-                                        *ngFor="let t of filteredTags[r.id]; let i = index; let last = last">
-                                        <b>{{t.tag}} : </b> {{t.value}}
-                                    </div>
-                                </div>
-                            </div>
+                            <ul>
+                                <li class="item" *ngFor="let t of filteredTags[r.id]; let i = index; let last = last">
+                                    <b>{{t.tag}} : </b> {{t.value}}
+                                </li>
+                            </ul>
                         </ng-template>
                         <div class="line" *ngIf="filteredTags[r.id] && filteredTags[r.id].length" nz-popover
                             [nzPopoverContent]="popupTemplate" nzPopoverPlacement="right">
@@ -60,6 +57,4 @@
         </div>
     </div>
 </ng-container>
-<div *ngIf="!ready" class="ui text active inline loader">
-    Loading runs...
-</div>
+<nz-spin nzTip="Loading runs..." *ngIf="!ready"></nz-spin>

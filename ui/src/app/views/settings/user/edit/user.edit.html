@@ -1,10 +1,18 @@
 <div class="wrapper">
     <app-breadcrumb [path]="path"></app-breadcrumb>
+    <nz-row>
+        <nz-col [nzSpan]="24">
+            <ul nz-menu nzMode="horizontal" *ngIf="menuItems?.size > 0">
+                <ng-container *ngFor="let entry of menuItems | forMap">
+                    <li nz-menu-item [nzSelected]="selectedItem === entry.key" (click)="selectMenuItem(entry.key)">
+                        {{entry.value}}
+                    </li>
+                </ng-container>
+            </ul>
+        </nz-col>
+    </nz-row>
     <div class="page-content">
-        <app-menu class="menu" [withRouting]="true" [orientation]="'VERTICAL'" [items]="menuItems"
-            (onSelect)="selectMenuItem($event)">
-        </app-menu>
-        <app-scrollview class="scrollview" *ngIf="selectedItem" [ngSwitch]="selectedItem.key">
+        <app-scrollview class="scrollview" *ngIf="selectedItem" [ngSwitch]="selectedItem">
             <ng-container *ngSwitchCase="'profile'" class="ui grid">
                 <div *ngIf="user;then showUser;else loadUser"></div>
                 <ng-template #showUser>
@@ -12,28 +20,28 @@
                         <nz-row>
                             <nz-col [nzSpan]="24">
                                 <nz-form-item>
-                                    <nz-form-label>Username</nz-form-label>
+                                    <nz-form-label [nzSpan]="2">Username</nz-form-label>
                                     <nz-form-control>
                                         <input nz-input type="text" name="username" [(ngModel)]="user.username"
                                                [disabled]="loading" readonly>
                                     </nz-form-control>
                                 </nz-form-item>
                                 <nz-form-item>
-                                    <nz-form-label>Fullname</nz-form-label>
+                                    <nz-form-label [nzSpan]="2">Fullname</nz-form-label>
                                     <nz-form-control>
                                         <input nz-input type="text" name="fullname" [(ngModel)]="user.fullname"
                                                [disabled]="loading" [readonly]="!editable">
                                     </nz-form-control>
                                 </nz-form-item>
                                 <nz-form-item *ngIf="user.organization">
-                                    <nz-form-label>Organization</nz-form-label>
+                                    <nz-form-label [nzSpan]="2">Organization</nz-form-label>
                                     <nz-form-control>
                                         <input nz-input type="text" name="organization"
                                                [ngModel]="user.organization" readonly>
                                     </nz-form-control>
                                 </nz-form-item>
                                 <nz-form-item>
-                                    <nz-form-label>Ring</nz-form-label>
+                                    <nz-form-label [nzSpan]="2">Ring</nz-form-label>
                                     <nz-form-control>
                                         <nz-select name="admin" [nzDisabled]="loading" *ngIf="currentAuthSummary.isAdmin()"
                                                    [(ngModel)]="user.ring">

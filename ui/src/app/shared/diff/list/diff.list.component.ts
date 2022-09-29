@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { Mode } from 'app/shared/diff/item/diff.item.component';
+import { TranslateService } from '@ngx-translate/core';
 
 export class Item {
     name: string;
@@ -20,7 +21,7 @@ export class DiffListComponent {
     mode: Mode = Mode.UNIFIED;
     @Input() items: Array<Item>;
 
-    constructor() { }
+    constructor(private _translate: TranslateService) { }
 
     setUnified() {
         this.mode = Mode.UNIFIED;
@@ -28,5 +29,15 @@ export class DiffListComponent {
 
     setSplit() {
         this.mode = Mode.SPLIT;
+    }
+
+    getTitle(i: Item) {
+        if (i.name) {
+            return i.name
+        }
+        if (i.translate) {
+            return this._translate.instant(i.translate, {"translate": i.translateData})
+        }
+        return "";
     }
 }
