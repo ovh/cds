@@ -21,7 +21,7 @@
                 <div class="number">
                     <i *ngIf="step.totalLinesCount > 0 && !step.loading" class="caret icon" [class.down]="step.open"
                         [class.right]="!step.open"></i>
-                    <div *ngIf="step.lines.length === 0 && step.loading" class="ui mini loader"></div>
+                    <span nz-icon [nzType]="'loading'" *ngIf="step.lines.length === 0 && step.loading"></span>
                     {{step.firstDisplayedLineNumber ? step.firstDisplayedLineNumber : ''}}
                 </div>
                 <div class="value">{{step.name}}</div>

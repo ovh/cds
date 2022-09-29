@@ -1,7 +1,7 @@
 <div class="pipeline">
     <!-- we want to autoscroll page only for building pipeline -->
     <div *ngIf="this.currentNodeRunStatus === pipelineStatusEnum.BUILDING" class="scrollingContent" ngx-auto-scroll
-        #scrollContent>
+         #scrollContent>
         <ng-container *ngTemplateOutlet="content"></ng-container>
     </div>
     <div *ngIf="this.currentNodeRunStatus !== pipelineStatusEnum.BUILDING" class="scrollingContent" #scrollContent>
@@ -12,67 +12,67 @@
 <ng-template #content>
     <div class="paddingContent">
         <div class="viewContent">
-            <div class="ui grid">
-                <div class="row">
-                    <div class="column">
-                        <ul *ngIf="stages">
-                            <li *ngFor="let stage of stages" class="stage" [class.one]="stages.length === 1"
-                                [class.two]="stages.length === 2" [class.three]="stages.length === 3"
-                                [class.four]="stages.length === 4" [class.five]="stages.length === 5"
-                                [class.six]="stages.length === 6" [class.seven]="stages.length === 7">
-                                <div class="stageItem">
-                                    {{stage.name}}
-                                    <ul>
-                                        <li *ngFor="let j of stage.jobs">
-                                            <div class="job ui segment pointing"
-                                                [class.active]="currentNodeJobRun?.job?.pipeline_action_id === j.pipeline_action_id"
-                                                [class.success]="mapJobStatus?.get(j.pipeline_action_id) && mapJobStatus?.get(j.pipeline_action_id).status === pipelineStatusEnum.SUCCESS"
-                                                [class.inactive]="mapJobStatus?.get(j.pipeline_action_id) && (mapJobStatus?.get(j.pipeline_action_id).status === pipelineStatusEnum.DISABLED || mapJobStatus?.get(j.pipeline_action_id).status === pipelineStatusEnum.SKIPPED)"
-                                                [class.fail]="mapJobStatus?.get(j.pipeline_action_id) && mapJobStatus?.get(j.pipeline_action_id).status === pipelineStatusEnum.FAIL"
-                                                [class.building]="mapJobStatus?.get(j.pipeline_action_id) && (mapJobStatus?.get(j.pipeline_action_id).status === pipelineStatusEnum.BUILDING || mapJobStatus?.get(j.pipeline_action_id).status === pipelineStatusEnum.WAITING)"
-                                                (click)="selectedJobManual(j.pipeline_action_id)">
-                                                <div class="warningPip"
-                                                    *ngIf="mapJobStatus?.get(j.pipeline_action_id)?.warnings > 0"
-                                                     nz-tooltip nzTooltipTitle="The build is in success state but there are/is {{mapJobStatus?.get(j.pipeline_action_id)?.warnings}} optional step(s) in error"
-                                                     nzTooltipPlacement="top">
-                                                    <i class="warning sign icon orange"></i>
-                                                </div>
-                                                <div class="title">
-                                                    <app-status-icon
+            <nz-row>
+                <nz-col [nzSpan]="24">
+                    <ul *ngIf="stages">
+                        <li *ngFor="let stage of stages" class="stage" [class.one]="stages.length === 1"
+                            [class.two]="stages.length === 2" [class.three]="stages.length === 3"
+                            [class.four]="stages.length === 4" [class.five]="stages.length === 5"
+                            [class.six]="stages.length === 6" [class.seven]="stages.length === 7">
+                            <div class="stageItem">
+                                {{stage.name}}
+                                <ul>
+                                    <li *ngFor="let j of stage.jobs">
+                                        <div class="job nzSegment"
+                                             [class.active]="currentNodeJobRun?.job?.pipeline_action_id === j.pipeline_action_id"
+                                             [class.success]="mapJobStatus?.get(j.pipeline_action_id) && mapJobStatus?.get(j.pipeline_action_id).status === pipelineStatusEnum.SUCCESS"
+                                             [class.inactive]="mapJobStatus?.get(j.pipeline_action_id) && (mapJobStatus?.get(j.pipeline_action_id).status === pipelineStatusEnum.DISABLED || mapJobStatus?.get(j.pipeline_action_id).status === pipelineStatusEnum.SKIPPED)"
+                                             [class.fail]="mapJobStatus?.get(j.pipeline_action_id) && mapJobStatus?.get(j.pipeline_action_id).status === pipelineStatusEnum.FAIL"
+                                             [class.building]="mapJobStatus?.get(j.pipeline_action_id) && (mapJobStatus?.get(j.pipeline_action_id).status === pipelineStatusEnum.BUILDING || mapJobStatus?.get(j.pipeline_action_id).status === pipelineStatusEnum.WAITING)"
+                                             (click)="selectedJobManual(j.pipeline_action_id)">
+                                            <div class="warningPip"
+                                                 *ngIf="mapJobStatus?.get(j.pipeline_action_id)?.warnings > 0"
+                                                 nz-tooltip
+                                                 nzTooltipTitle="The build is in success state but there are/is {{mapJobStatus?.get(j.pipeline_action_id)?.warnings}} optional step(s) in error"
+                                                 nzTooltipPlacement="top">
+                                                <span nz-icon nzType="warning" nzTheme="outline" class="orange"></span>
+                                            </div>
+                                            <div class="title">
+                                                <app-status-icon
                                                         [status]="mapJobStatus?.get(j.pipeline_action_id)?.status">
-                                                    </app-status-icon>
-                                                    <span class="ellipsis"
-                                                        title="{{j.action.name}}">{{j.action.name}}</span>
-                                                </div>
-                                                <div class="duration"
-                                                    *ngIf="mapJobStatus?.get(j.pipeline_action_id)?.status !== pipelineStatusEnum.DISABLED && mapJobStatus?.get(j.pipeline_action_id)?.status !== pipelineStatusEnum.SKIPPED">
+                                                </app-status-icon>
+                                                <span class="ellipsis"
+                                                      title="{{j.action.name}}">{{j.action.name}}</span>
+                                            </div>
+                                            <div class="duration"
+                                                 *ngIf="mapJobStatus?.get(j.pipeline_action_id)?.status !== pipelineStatusEnum.DISABLED && mapJobStatus?.get(j.pipeline_action_id)?.status !== pipelineStatusEnum.SKIPPED">
                                                     <span
-                                                        *ngIf="mapJobStatus?.get(j.pipeline_action_id)?.status === pipelineStatusEnum.WAITING">
-                                                        {{ 'workflow_run_node_job_queued' | translate: {time:
-                                                        jobTime?.get(j.pipeline_action_id)} }}
+                                                            *ngIf="mapJobStatus?.get(j.pipeline_action_id)?.status === pipelineStatusEnum.WAITING">
+                                                        {{ 'workflow_run_node_job_queued' | translate: {
+                                                        time:
+                                                            jobTime?.get(j.pipeline_action_id)
+                                                    } }}
                                                     </span>
-                                                    <span
+                                                <span
                                                         *ngIf="mapJobStatus?.get(j.pipeline_action_id)?.status !== pipelineStatusEnum.WAITING">
                                                         {{jobTime?.get(j.pipeline_action_id)}}
                                                     </span>
-                                                </div>
                                             </div>
-                                        </li>
-                                    </ul>
+                                        </div>
+                                    </li>
+                                </ul>
 
-                                </div>
-                            </li>
-                            <div class="ui info message" *ngIf="!stages || stages.length === 0">
-                                {{ 'pipeline_stage_no' | translate }}
                             </div>
-                        </ul>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="column">
-                        <app-workflow-run-job [projectKey]="project.key" [workflowName]="workflowName"
-                           [nodeJobRun]="currentNodeJobRun" (onScroll)="onJobScroll($event)" #runjobComponent></app-workflow-run-job>
-                    </div>
+                        </li>
+                        <nz-alert nzType="info" nzMessage="There is no stages" *ngIf="!stages || stages.length === 0"></nz-alert>
+                    </ul>
+                </nz-col>
+            </nz-row>
+            <div class="row">
+                <div class="column">
+                    <app-workflow-run-job [projectKey]="project.key" [workflowName]="workflowName"
+                                          [nodeJobRun]="currentNodeJobRun" (onScroll)="onJobScroll($event)"
+                                          #runjobComponent></app-workflow-run-job>
                 </div>
             </div>
         </div>

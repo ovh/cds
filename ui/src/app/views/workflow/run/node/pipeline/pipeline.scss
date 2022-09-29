@@ -110,7 +110,7 @@
                     }
                 }
 
-                .job.ui.segment {
+                .job.nzSegment {
                     height: 51px;
                     padding: 0;
 
@@ -132,7 +132,7 @@
                     .duration {
                         position: absolute;
                         right: 4px;
-                        bottom: -3px;
+                        bottom: 4px;
                         color: gray;
                         font-size: 0.8rem;
                         font-weight: 600;
@@ -140,17 +140,17 @@
 
                     .warningPip {
                         position: absolute;
-                        right: 0px;
-                        top: 2px;
+                        right: 4px;
+                        top: 4px;
                         font-size: 1rem;
                     }
                 }
 
-                .job.ui.segment {
+                .job.nzSegment {
                     border: 2px solid transparent;
                 }
 
-                .job.ui.segment.active {
+                .job.nzSegment.active {
                     border: 2px solid $cds_color_teal;
                 }
             }
@@ -220,4 +220,8 @@
             }
         }
     }
+}
+
+.orange {
+  color: $cds_color_orange;
 }

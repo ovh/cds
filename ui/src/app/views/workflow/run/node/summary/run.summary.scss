@@ -29,6 +29,17 @@
 
     .cardinfo {
         border-radius: 0 0 0.28571429rem 0.28571429rem;
+
+        nz-row {
+          padding: 14px 14px;
+        }
+
+        .rightAlign {
+          text-align: right;
+        }
+        .center {
+          text-align: center;
+        }
     }
 
     .running {
@@ -59,7 +70,7 @@
         border-top: none;
     }
 
-    .row {
+    nz-col {
         a {
             color: inherit;
             text-decoration: underline;
