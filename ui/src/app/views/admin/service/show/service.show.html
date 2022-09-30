@@ -3,47 +3,38 @@
     <app-scrollview class="scrollview">
         <div *ngIf="!loading; then servicePart;else loadingPart"></div>
         <ng-template #servicePart>
-            <div class="ui red message" *ngIf="service.status==='AL'">
-                {{'service_alert' | translate}}
-            </div>
-
-            <div class="ui orange message" *ngIf="service.status==='WARN'">
-                {{'service_warning' | translate}}
-            </div>
-
-            <div class="ui green message" *ngIf="service.status==='OK'">
-                {{'service_ok' | translate}}
-            </div>
-
+            <nz-alert nzType="error" *ngIf="service.status==='AL'" nzMessage="{{'service_alert' | translate}}"></nz-alert>
+            <nz-alert nzType="warning" *ngIf="service.status==='WARN'" nzMessage="{{'service_warning' | translate}}"></nz-alert>
+            <nz-alert nzType="success" *ngIf="service.status==='OK'" nzMessage="{{'service_ok' | translate}}"></nz-alert>
             <div *ngIf="service.group">
                 <h4>Group</h4>
                 <p><a href="#" [routerLink]="['/settings', 'group', service.group.name]">{{service.group.name}}</a></p>
             </div>
 
-            <h4>Heartbeat</h4>
+            <h2>Heartbeat</h2>
             <p>
                 <span nz-tooltip [nzTooltipTitle]="service.last_heartbeat| date:'short'" nzTooltipPlacement="topLeft">{{service.last_heartbeat
                     | amTimeAgo}}</span>
             </p>
 
-            <h4 *ngIf="service.version">Version</h4>
+            <h2 *ngIf="service.version">Version</h2>
             <p *ngIf="service.version">
                 {{service.version}}
             </p>
 
 
-            <h4>Status</h4>
+            <h2>Status</h2>
                 
             <app-data-table [filter]="filter" [withFilter]="filteredStatusLines" [withPagination]="25" [columns]="columns" [data]="service.monitoring_status.lines" [loading]="loading">
             </app-data-table>
 
-            <h4>Configuration</h4>
+            <h2>Configuration</h2>
             <codemirror [(ngModel)]="config" [config]="codeMirrorConfig" #textareaCodeMirror>
             </codemirror>
 
         </ng-template>
         <ng-template #loadingPart>
-            <div class="ui text active loader">{{ 'common_loading' | translate }}</div>
+            <nz-spin nzTip="Loading..."></nz-spin>
         </ng-template>
     </app-scrollview>
 </div>

@@ -1,12 +1,13 @@
 <h3>
     {{ 'project_permission_list_title' | translate }}
 </h3>
-<div *ngIf="project && groupsOutsideOrganization && groupsOutsideOrganization.length > 0" class="ui warning message">
+<nz-alert nzType="warning" [nzMessage]="orgaTmpl" *ngIf="project && groupsOutsideOrganization && groupsOutsideOrganization.length > 0"></nz-alert>
+<ng-template #orgaTmpl>
     Following groups that are not from organization
     "{{project.organization}}" can read the project: <span
         *ngFor="let gp of groupsOutsideOrganization;let i = index">{{gp.group.name}}
-        ({{gp.group.organization}}){{ i < groupsOutsideOrganization.length - 1 ? ', ' : '' }}</span>.
-</div>
+    ({{gp.group.organization}}){{ i < groupsOutsideOrganization.length - 1 ? ', ' : '' }}</span>.
+</ng-template>
 <app-permission-list [permissions]="groups" (event)="groupEvent($event)" [edit]="project.permissions.writable"></app-permission-list>
 
 <ng-container *ngIf="project.permissions.writable">
@@ -14,7 +15,7 @@
     <app-permission-form (createGroupPermissionEvent)="groupEvent($event)" [loading]="permFormLoading">
     </app-permission-form>
 </ng-container>
-<div *ngIf="loading" class="ui text active loader">{{'common_loading_environments' | translate}}...</div>
+<nz-spin *ngIf="loading" nzTip="Loading environment..."></nz-spin>
 <nz-modal [(nzVisible)]="confirmModalVisible" nzTitle="Project's permission propagation" (nzOnCancel)="confirmModalVisible = false">
     <div *nzModalContent>
         Do you want to propagate your new permission to all your existing workflows ?

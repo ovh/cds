@@ -5,61 +5,54 @@
         <ng-template #globalsPart>
             <div class="paddingContent">
                 <div class="viewContent">
-                    <div class="ui grid">
-                        <div class="wide column">
+                    <nz-row>
+                        <nz-col [nzSpan]="24">
                             <h1>
-                                {{'services_list' | translate}}
-                                <div class="right floated">
-                                    <div class="ui pointer label" [ngClass]="{'red': globalStatus.status==='AL', 'orange': globalStatus.status==='WARN', 'green': globalStatus.status==='OK'}"
-                                        (click)="filter=globalStatus.status">
+                                CDS Services
+                                <div class="floatRight">
+                                    <nz-tag class="pointer" [nzColor]="globalStatus.status==='AL'?'error':(globalStatus.status==='WARN'?'warning': 'success')" (click)="filter=globalStatus.status">
                                         {{globalStatus.name}} {{globalStatus.status}} - {{globalStatus.value}}
-                                    </div>
-
-                                    <div class="ui pointer label" [ngClass]="{'red': globalVersion.status==='AL', 'orange': globalVersion.status==='WARN', 'green': globalVersion.status==='OK'}"
-                                        (click)="filter='/Version'">
+                                    </nz-tag>
+                                    <nz-tag class="pointer" (click)="filter='/Version'" [ngClass]="{'red': globalVersion.status==='AL', 'orange': globalVersion.status==='WARN', 'green': globalVersion.status==='OK'}">
                                         {{globalVersion.name}} {{globalVersion.status}} - {{globalVersion.value}}
-                                    </div>
+                                    </nz-tag>
                                 </div>
                             </h1>
-                        </div>
-                    </div>
-
-                    <div class="ui stackable four cards">
-                        <div class="ui card" *ngFor="let g of globals">
-                            <div class="content pointer" nz-tooltip nzTooltipTitle="Click to filter list"
-                                (click)="filter=g.name">
-                                <div class="ui horizontal label right floated" [ngClass]="{'red': g.status==='AL', 'orange': g.status==='WARN', 'green': g.status==='OK'}">
-                                    {{g.status}}
+                        </nz-col>
+                    </nz-row>
+                    <nz-row [nzGutter]="{ xs: 8, sm: 16, md: 24, lg: 32 }">
+                        <nz-col class="cardContainer"  (click)="filter=g.name" *ngFor="let g of globals" [nzSpan]="6">
+                            <div class="entity-card">
+                                <div class="title">
+                                    <nz-tag class="floatRight" [nzColor]="g.status==='AL'?'error':(g.status==='WARN'?'warning': 'success')">
+                                        {{g.status}}
+                                    </nz-tag>
+                                    {{ g.name }}
                                 </div>
-                                <div class="header" [innerText]="g.name"></div>
-                            </div>
-                            <div class="extra content">
-                                <div class="meta" *ngIf="g.value === '0'">
-                                    n/a
-                                </div>
-                                <div class="ui middle aligned divided list" *ngFor="let srv of g.services; index as idx; first as isFirst">
-                                    <div class="item">
-                                        <div class="right floated content">
-                                            <i class="filter icon pointer" nz-tooltip nzTooltipTitle="Click for filter list"
-                                                popupPlacement="top left" (click)="filter=srv.name"></i>
-                                        </div>
-                                        <div class="content">
-                                            <a class="ui basic" [routerLink]="[srv.name]" nz-tooltip nzTooltipTitle="See details">
+                                <div class="description">
+                                    <div *ngIf="g.value === '0'">
+                                        n/a
+                                    </div>
+                                    <ul>
+                                        <li *ngFor="let srv of g.services; index as idx; first as isFirst">
+                                            <div class="floatRight">
+                                                <span class="pointer" nz-icon nzType="filter" nzTheme="outline" nz-tooltip nzTooltipTitle="Click for filter list"
+                                                      popupPlacement="top left" (click)="filter=srv.name"></span>
+                                            </div>
+                                            <a [routerLink]="[srv.name]" nz-tooltip nzTooltipTitle="See details">
                                                 <ng-container [ngSwitch]="srv.status">
-                                                    <i class="check green icon" *ngSwitchCase="'OK'" title="{{srv.status}}"></i>
-                                                    <i class="remove red icon" *ngSwitchCase="'AL'" title="{{srv.status}}"></i>
-                                                    <i class="warning sign icon orange" *ngSwitchCase="'WARN'"
-                                                        title="{{srv.status}}"></i>
+                                                    <span nz-icon nzType="check" nzTheme="outline"  *ngSwitchCase="'OK'" class="green" title="{{srv.status}}"></span>
+                                                    <span nz-icon nzType="close" nzTheme="outline"  *ngSwitchCase="'AL'" class="red" title="{{srv.status}}"></span>
+                                                    <span nz-icon nzType="warning" nzTheme="outline"  *ngSwitchCase="'WARN'" class="orange" title="{{srv.status}}"></span>
                                                 </ng-container>
                                                 {{srv.name}}
                                             </a>
-                                        </div>
-                                    </div>
+                                        </li>
+                                    </ul>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-
+                        </nz-col>
+                    </nz-row>
                     <app-data-table [filter]="filter" [withFilter]="filteredStatusLines" [withPagination]="25" [columns]="columns" [data]="status.lines" [loading]="loading">
                     </app-data-table>
 
@@ -84,7 +77,7 @@
             </div>
         </ng-template>
         <ng-template #loadingPart>
-            <div class="ui text active loader">{{ 'common_loading' | translate }}</div>
+            <nz-spin nzTip="Loading..."></nz-spin>
         </ng-template>
     </app-scrollview>
 </div>

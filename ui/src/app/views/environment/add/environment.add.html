@@ -1,41 +1,34 @@
 <div id="AddEnvironment" class="scrollingContent">
     <div class="paddingContent">
         <div class="viewContent">
-
-            <form class="ui form" (ngSubmit)="createEnv()">
-                <h2>{{ 'environment_create' | translate }}</h2>
-
-                <div class="ui grid">
-                    <div class="ui row">
-                        <div class="sixteen wide column">
-                            <div class="field">
-                                <label>{{'environment_name' | translate}} *</label>
-                                <input type="text" name="envname" [(ngModel)]="newEnvironment.name"
-                                    (ngModelChange)="checkPattern(newEnvironment.name)">
-                                <div class="ui error message" *ngIf="envPatternError">
-                                    {{ 'environment_name_error' | translate }}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="ui row">
-                        <div class="wide column sixteen">
-                            <div class="field">
-                                <a class="ui button" [routerLink]="['/project', project.key]"
-                                    [queryParams]="{ tab: 'environments'}">{{
-                                        'btn_cancel' | translate }}</a>
-                                <button class="ui green right floated button" [class.loading]="loading"
-                                    [class.disabled]="!newEnvironment.name || envPatternError">{{ 'btn_create' |
-                                        translate }}
+            <form nz-form (ngSubmit)="createEnv()">
+                <h2>Add an environment</h2>
+                    <nz-row>
+                        <nz-col [nzSpan]="24">
+                            <nz-form-item>
+                                <nz-form-label>Environment name *</nz-form-label>
+                                <nz-form-control>
+                                    <input nz-input type="text" name="envname" [(ngModel)]="newEnvironment.name"
+                                           (ngModelChange)="checkPattern(newEnvironment.name)">
+                                    <nz-alert *ngIf="envPatternError" nzType="error" nzMessage="Invalid environment name. Allowed pattern is: a-zA-Z0-9._-"></nz-alert>
+                                </nz-form-control>
+                            </nz-form-item>
+                        </nz-col>
+                    </nz-row>
+                    <nz-row>
+                        <nz-col [nzSpan]="12">
+                            <button nz-button [routerLink]="['/project', project.key]"
+                                    [queryParams]="{ tab: 'environments'}">Cancel</button>
+                        </nz-col>
+                        <nz-col [nzSpan]="12">
+                            <nz-form-item nzJustify="end">
+                                <button nz-button nzType="primary"[nzLoading]="loading"
+                                        [disabled]="!newEnvironment.name || envPatternError">Create
                                 </button>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-
+                            </nz-form-item>
+                        </nz-col>
+                    </nz-row>
             </form>
-
         </div>
     </div>
 </div>
