@@ -113,6 +113,7 @@
                 .job.nzSegment {
                     height: 51px;
                     padding: 0;
+                    border: 2px solid transparent;
 
                     .title {
                         padding: 5px;
@@ -144,10 +145,6 @@
                         top: 4px;
                         font-size: 1rem;
                     }
-                }
-
-                .job.nzSegment {
-                    border: 2px solid transparent;
                 }
 
                 .job.nzSegment.active {

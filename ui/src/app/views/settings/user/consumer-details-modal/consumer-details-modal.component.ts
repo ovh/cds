@@ -49,7 +49,7 @@ export class ConsumerDetailsModalComponent implements OnInit {
     filterChildren: Filter<AuthConsumer>;
     selectedChildDetails: AuthConsumer;
     menuItems: Map<string,string>;
-    selectedItem: String;
+    selectedItem: string;
     columnsSessions: Array<Column<AuthSession>>;
     filterSessions: Filter<AuthSession>;
     consumerDeletedOrDetached: boolean;
