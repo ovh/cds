@@ -28,4 +28,4 @@
         </div>
     </div>
 </div>
-<div class="ui text active loader" *ngIf="!currentNodeRunID">{{ 'pipeline_loading' | translate }}</div>
+<nz-spin nzTip="Loading..." *ngIf="!currentNodeRunNum"></nz-spin>

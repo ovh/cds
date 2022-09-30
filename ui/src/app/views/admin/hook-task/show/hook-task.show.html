@@ -1,53 +1,60 @@
 <div class="wrapper">
     <app-breadcrumb [path]="path"></app-breadcrumb>
     <app-scrollview class="scrollview">
-        <div class="ui form">
-            <div class="ui grid">
-                <div class="ui row">
-                    <div class="wide column">
-                        <h3>{{ 'workflow_node_hook_form_config' | translate }}</h3>
-                        <br />
+        <form nz-form>
+
+                <nz-row>
+                    <nz-col [nzSpan]="24">
+                        <h2>Hook configuration</h2>
                         <ng-container *ngIf="task && task.config">
-                            <div class="inline fields" *ngFor="let k of task.config | keys">
-                                <div class="four wide field"><label>{{k}}</label></div>
-                                <input type="text" [ngModel]="task.config[k].value" [readonly]="true" *ngIf="k !== 'payload'">
-                                <ng-container *ngIf="k === 'payload'">
-                                    <codemirror class="code" [ngModel]="task.config[k].value" [config]="codeMirrorConfig"
-                                        #textareaCodeMirror>
-                                    </codemirror>
-                                </ng-container>
-                            </div>
+                            <nz-form-item *ngFor="let k of task.config | keys">
+                                <nz-form-label [nzSpan]="2">{{k}}</nz-form-label>
+                                <nz-form-control>
+                                    <input nz-input type="text" name="value-{{k}}" [ngModel]="task.config[k].value" [readonly]="true" *ngIf="k !== 'payload'">
+                                    <ng-container *ngIf="k === 'payload'">
+                                        <codemirror class="code"name="value-{{k}}" [ngModel]="task.config[k].value" [config]="codeMirrorConfig"
+                                                    #textareaCodeMirror>
+                                        </codemirror>
+                                    </ng-container>
+                                </nz-form-control>
+                            </nz-form-item>
                         </ng-container>
-                    </div>
-                </div>
-                <div class="ui row">
-                    <div [ngClass]="{sixteen: !selectedExecution, eight: selectedExecution, wide: true, column: true}">
-                        <h3>{{ 'hook_task_execs' | translate }}</h3>
+                    </nz-col>
+                </nz-row>
+                <nz-row>
+                    <nz-col [nzSpan]="selectedExecution?11:24">
+                        <h2>Executions</h2>
                         <app-data-table [withPagination]="10" [columns]="columns" [data]="executions" [loading]="loading"></app-data-table>
-                    </div>
-                    <div class="eight wide column" *ngIf="selectedExecution">
-                        <h3>{{'workflow_hook_log_title' | translate}}</h3>
-                        <br />
-                        <div class="inline fields" *ngIf="selectedExecution.workflow_run">
-                            <div class="four wide field"><label>{{'workflow_hook_log_workflow_run' | translate}}</label></div>
-                            <input type="text" [value]="selectedExecution.workflow_run" [readonly]="true">
-                        </div>
-                        <div class="inline fields">
-                            <div class="four wide field"><label>{{'worker_model_status' | translate}}</label></div>
-                            <input type="text" [value]="selectedExecution.status" [readonly]="true">
-                        </div>
-                        <div class="inline fields" *ngIf="selectedExecution.last_error">
-                            <div class="four wide field"><label>{{'common_error' | translate}}</label></div>
-                            <input type="text" [value]="selectedExecution.last_error" [readonly]="true">
-                        </div>
-                        <div class="inline fields" *ngIf="selectedExecutionBody">
-                            <div class="four wide field"><label>Body</label></div>
-                            <codemirror class="code" [ngModel]="selectedExecutionBody" [config]="codeMirrorConfig">
-                            </codemirror>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+                    </nz-col>
+                    <nz-col [nzSpan]="12" [nzOffset]="1" *ngIf="selectedExecution">
+                        <h2>{{'workflow_hook_log_title' | translate}}</h2>
+                        <nz-form-item *ngIf="selectedExecution.workflow_run">
+                            <nz-form-label [nzSpan]="3">{{'workflow_hook_log_workflow_run' | translate}}</nz-form-label>
+                            <nz-form-control>
+                                <input nz-input type="text" name="hook_log" [value]="selectedExecution?.workflow_run" [readonly]="true">
+                            </nz-form-control>
+                        </nz-form-item>
+                        <nz-form-item>
+                            <nz-form-label [nzSpan]="3">Status</nz-form-label>
+                            <nz-form-control>
+                                <input nz-input type="text" name="hook_status" [value]="selectedExecution.status" [readonly]="true">
+                            </nz-form-control>
+                        </nz-form-item>
+                        <nz-form-item *ngIf="selectedExecution.last_error">
+                            <nz-form-label [nzSpan]="3">{{'common_error' | translate}}</nz-form-label>
+                            <nz-form-control>
+                                <input nz-input type="text" name="hook_error" [value]="selectedExecution?.last_error" [readonly]="true">
+                            </nz-form-control>
+                        </nz-form-item>
+                        <nz-form-item *ngIf="selectedExecutionBody">
+                            <nz-form-label [nzSpan]="3">Body</nz-form-label>
+                            <nz-form-control>
+                                <codemirror class="code" name="hook_body" [ngModel]="selectedExecutionBody" [config]="codeMirrorConfig"></codemirror>
+                            </nz-form-control>
+                        </nz-form-item>
+                    </nz-col>
+                </nz-row>
+
+        </form>
     </app-scrollview>
 </div>

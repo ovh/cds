@@ -1,5 +1,12 @@
 .codebar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: auto;
     z-index: unset;
+    height: 100%;
+    width: 0%;
+
     &.visible {
         width: 50%;
     }
@@ -12,6 +19,7 @@
 
     .fullheight {
         height: 87%;
+      width: 100%;
     }
 
     .mt5 {
@@ -19,16 +27,20 @@
     }
 
     .bottomBtnsWrapper {
-        position: fixed;
+        position: absolute;
         bottom: 100px;
         right: 0;
         width: 430px;
         padding-top: 20px;
         padding-bottom: 20px;
 
-        .column {
+        nz-row {
+          padding: 0 20px;
+          nz-col {
             padding-top: 5px;
             padding-bottom: 5px;
+          }
         }
+
     }
 }
