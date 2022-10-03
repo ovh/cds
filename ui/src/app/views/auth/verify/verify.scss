@@ -1,8 +1,9 @@
 @import "../../../../common";
 
-.verify {
-    .loading {
-        text-align: center;
-        color: white;
-    }
+nz-alert {
+  margin-bottom: 10px;
+}
+
+.floatRight {
+  float: right;
 }
