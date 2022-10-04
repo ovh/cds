@@ -9,7 +9,7 @@ import (
 )
 
 func CreateDefaultOrganization(ctx context.Context, db *gorp.DbMap, organizations sdk.StringSlice) error {
-	orgasDb, err := LoadAllOrganizations(ctx, db)
+	orgasDb, err := LoadOrganizations(ctx, db)
 	if err != nil {
 		return err
 	}

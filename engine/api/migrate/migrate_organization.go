@@ -18,7 +18,7 @@ func GetOrganizationUsersToMigrate(ctx context.Context, db *gorp.DbMap) ([]UserO
 	var usersToMigrate []UserOrganizationMigrate
 
 	// Load all new organization
-	allOrgas, err := organization.LoadAllOrganizations(ctx, db)
+	allOrgas, err := organization.LoadOrganizations(ctx, db)
 	if err != nil {
 		return nil, err
 	}

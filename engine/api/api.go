@@ -379,6 +379,10 @@ func (a *API) CheckConfiguration(config interface{}) error {
 		return errors.New("invalid given authentication rsa private key")
 	}
 
+	if len(aConfig.Auth.AllowedOrganizations) == 0 {
+		return errors.New("you must allow at least one organization in field 'allowedOrganizations'")
+	}
+
 	// Check authentication driver
 	if aConfig.Auth.Local.Enabled && (aConfig.Auth.Local.Organization == "" || !aConfig.Auth.AllowedOrganizations.Contains(aConfig.Auth.Local.Organization)) {
 		return errors.New("local authentication driver organization empty or not allowed in field 'allowedOrganizations'")
@@ -392,6 +396,7 @@ func (a *API) CheckConfiguration(config interface{}) error {
 	if aConfig.Auth.Github.Enabled && (aConfig.Auth.Github.Organization == "" || !aConfig.Auth.AllowedOrganizations.Contains(aConfig.Auth.Github.Organization)) {
 		return errors.New("github authentication driver organization empty or not allowed in field 'allowedOrganizations'")
 	}
+
 	return nil
 }
 

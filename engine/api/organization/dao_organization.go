@@ -69,7 +69,7 @@ func getAllOrganizations(ctx context.Context, db gorp.SqlExecutor, query gorpmap
 	return orgs, nil
 }
 
-func LoadAllOrganizations(ctx context.Context, db gorp.SqlExecutor) ([]sdk.Organization, error) {
+func LoadOrganizations(ctx context.Context, db gorp.SqlExecutor) ([]sdk.Organization, error) {
 	query := gorpmapping.NewQuery(`SELECT organization.* FROM organization`)
 	return getAllOrganizations(ctx, db, query)
 }

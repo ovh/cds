@@ -884,7 +884,7 @@ func Test_checkGroupPermissions(t *testing.T) {
 			},
 		},
 	}
-	organizations, err := organization.LoadAllOrganizations(context.TODO(), db)
+	organizations, err := organization.LoadOrganizations(context.TODO(), db)
 	require.NoError(t, err)
 
 	for _, tt := range tests {
@@ -1049,7 +1049,7 @@ func Test_checkTemplateSlugPermissions(t *testing.T) {
 		},
 	}
 
-	organizations, err := organization.LoadAllOrganizations(context.TODO(), db)
+	organizations, err := organization.LoadOrganizations(context.TODO(), db)
 	require.NoError(t, err)
 
 	for _, tt := range tests {

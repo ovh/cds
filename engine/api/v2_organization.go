@@ -54,7 +54,7 @@ func (api *API) postOrganizationHandler() ([]service.RbacChecker, service.Handle
 func (api *API) getOrganizationsHandler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(rbac.OrganizationManage),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
-			orgas, err := organization.LoadAllOrganizations(ctx, api.mustDB())
+			orgas, err := organization.LoadOrganizations(ctx, api.mustDB())
 			if err != nil {
 				return err
 			}

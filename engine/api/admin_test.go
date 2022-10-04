@@ -63,7 +63,7 @@ func Test_getAdminOrganizationCRUD(t *testing.T) {
 	api.Router.Mux.ServeHTTP(wDelete, reqDelete)
 	require.Equal(t, 204, wDelete.Code)
 
-	orgsDb, err := organization.LoadAllOrganizations(context.TODO(), db)
+	orgsDb, err := organization.LoadOrganizations(context.TODO(), db)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(orgsDb))
 
