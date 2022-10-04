@@ -15,7 +15,7 @@ var (
 	rootKey       = cache.Key("repositories", "operations")
 	processorKey  = cache.Key("repositories", "processor")
 	locksKey      = cache.Key("repositories", "locks")
-	lastAccessKey = cache.Key("repositories", "access")
+	lastAccessKey = cache.Key("repositories", "lastAccess")
 )
 
 type dao struct {
