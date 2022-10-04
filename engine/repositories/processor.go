@@ -55,8 +55,10 @@ func (s *Service) do(ctx context.Context, op sdk.Operation) error {
 	}
 	defer func() {
 		s.dao.unlock(ctx, r.ID())
-		log.Info(ctx, "%s protected for %d days", r.ID(), s.Cfg.RepositoriesRetention)
-		s.dao.store.Lock(cache.Key(lastAccessKey, r.ID()), 24*time.Hour*time.Duration(s.Cfg.RepositoriesRetention), -1, -1)
+		ttl := 3600 * 24 * s.Cfg.RepositoriesRetention
+		ttlTime := time.Now().Add(time.Duration(ttl) * time.Second)
+		log.Info(ctx, "%s protected until %s", r.ID(), ttlTime.String())
+		s.dao.store.SetWithTTL(cache.Key(lastAccessKey, r.ID()), ttlTime, ttl)
 	}()
 
 	switch {
