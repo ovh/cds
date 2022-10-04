@@ -71,9 +71,7 @@
                                         type="submit">Create</button>
                             </nz-form-item>
                         </form>
-                        <div *ngIf="showSuccessSignup" class="ui green message">
-                            <p>{{ 'auth_signup_success' | translate }}</p>
-                        </div>
+                        <nz-alert nzType="success" *ngIf="showSuccessSignup" nzMessage="You successfully sign up to CDS, check your emails to verify your account."></nz-alert>
                     </nz-tab>
                     <nz-tab *ngIf="ldapDriver" nzTitle="LDAP Sign in" (click)="clickShowLDAPSignin()">
                         <form nz-form (ngSubmit)="ldapSignin(signinForm)" #signinForm="ngForm">
@@ -105,17 +103,15 @@
                 </nz-tabset>
             </ng-container>
             <div *ngIf="!loading && externalDrivers && externalDrivers.length > 0"
-                 class="ui bottom attached segment">
-                <form class="ui form">
-                    <div *ngFor="let driver of externalDrivers" class="field">
-                        <a class="fluid ui {{driver.type}} button primary"
+                 class="nzSegment">
+                    <hr>
+                    <button nz-button *ngFor="let driver of externalDrivers" nzBlock nzType="primary"
                            [routerLink]="'/auth/ask-signin/'+driver.type"
                            [queryParams]="{redirect_uri: redirect, require_mfa: mfa}">
                             <i class="{{driver.icon}} icon"></i>
                             {{ 'auth_button_signin_with' | translate: {consumer: driver.type} }}
-                        </a>
-                    </div>
-                </form>
+                    </button>
+
             </div>
         </ng-template>
     </nz-col>

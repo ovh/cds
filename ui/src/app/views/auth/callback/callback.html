@@ -16,7 +16,7 @@
                     <form class="ui form">
                         <div class="field">
                             <label>{{ 'auth_message_command' | translate }}</label>
-                            <div class="ui fluid action input">
+                  f          <div class="ui fluid action input">
                                 <input type="text" value="{{cmd}}" [readonly]="true">
                                 <button class="ui icon button copyButton" [title]="'common_copy_clipboard' | translate"
                                     ngxClipboard [cbContent]="cmd" (click)="confirmCopy()">

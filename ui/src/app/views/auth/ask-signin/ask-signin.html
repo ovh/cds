@@ -1,10 +1,5 @@
-<div class="ui centered grid callback">
-    <div class="row">
-        <div class="column">
-            <div class="loading">
-                <div class="ui active small inline loader"></div>
-                <div>{{ 'common_loading' | translate }}</div>
-            </div>
-        </div>
-    </div>
-</div>
+<nz-row>
+    <nz-col [nzSpan]="24">
+        <nz-spin nzTip="Loading..."></nz-spin>
+    </nz-col>
+</nz-row>

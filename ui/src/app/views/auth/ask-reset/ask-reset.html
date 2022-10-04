@@ -1,27 +1,20 @@
-<div class="ui grid">
-  <div class="column">
-    <h3 class="ui top block attached header">
-      {{ 'account_password_title' | translate }}
-    </h3>
-    <div class="ui bottom attached segment">
-      <div *ngIf="showErrorMessage" class="ui red message">
-        <p>{{ 'auth_ask_reset_error' | translate }}</p>
-      </div>
-      <div *ngIf="showSuccessMessage" class="ui green message">
-        <p>{{ 'auth_ask_reset_success' | translate }}</p>
-      </div>
-      <form class="ui form" (ngSubmit)="askReset(askResetForm)" #askResetForm="ngForm">
-        <div *ngIf="!showSuccessMessage" class="field">
-          <label>{{ 'user_label_email' | translate }}</label>
-          <input type="email" name="email" ngModel required [disabled]="loading">
-        </div>
-        <div class="field right aligned">
+<nz-row>
+  <nz-col [nzSpan]="24">
+    <h3>Forgotten password</h3>
+        <nz-alert nzType="error" *ngIf="showErrorMessage" nzMessage="Invalid or unknown given email address."></nz-alert>
+        <nz-alert nzType="success" *ngIf="showSuccessMessage" nzMessage="Reset request send, if a CDS account match given email address you will receive a link to reset your password."></nz-alert>
+      <form nz-form (ngSubmit)="askReset(askResetForm)" #askResetForm="ngForm">
+        <nz-form-item *ngIf="!showSuccessMessage" class="field">
+          <nz-form-label>Mail address</nz-form-label>
+          <input nz-input type="email" name="email" ngModel required [disabled]="loading">
+        </nz-form-item>
+        <div class="alignRight">
           <a class="pointing" (click)="navigateToSignin()">{{ 'account_login_title' | translate }}</a>
           &nbsp;&nbsp;&nbsp;
-          <button *ngIf="!showSuccessMessage" class="ui green button" [disabled]="loading"
-            type="submit">{{ 'account_password_btn_reset' | translate }}</button>
+          <button *ngIf="!showSuccessMessage" nz-button nzType="primary" [disabled]="loading" [nzLoading]="loading"
+            type="submit">Reset password</button>
         </div>
       </form>
-    </div>
-  </div>
-</div>
+
+  </nz-col>
+</nz-row>
