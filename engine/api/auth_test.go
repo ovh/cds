@@ -149,13 +149,13 @@ func Test_postAuthSigninHandler_ShouldSuccessWithAKnownUserAndAnotherConsumerTyp
 	require.NoError(t, err)
 	assert.Equal(t, sdk.ConsumerTest, consumer.Type)
 
-	t.Logf("consumer %s: %+v", consumer.Type, consumer.Data)
+	t.Logf("consumer %s: %+v", consumer.Type, consumer.AuthConsumerUser.Data)
 
 	consumer, err = authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerTest2, u.ID)
 	require.NoError(t, err)
 	assert.Equal(t, sdk.ConsumerTest2, consumer.Type)
 
-	t.Logf("consumer %s: %+v", consumer.Type, consumer.Data)
+	t.Logf("consumer %s: %+v", consumer.Type, consumer.AuthConsumerUser.Data)
 
 	// tear down
 	err = user.DeleteByID(db, u.ID)
@@ -198,13 +198,13 @@ func Test_postAuthSigninHandler_ShouldSuccessWithAKnownUserAnotherConsumerTypeAn
 	require.NoError(t, err)
 	assert.Equal(t, sdk.ConsumerTest, consumer.Type)
 
-	t.Logf("consumer %s: %+v", consumer.Type, consumer.Data)
+	t.Logf("consumer %s: %+v", consumer.Type, consumer.AuthConsumerUser.Data)
 
 	consumer, err = authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerTest2, u.ID)
 	require.NoError(t, err)
 	assert.Equal(t, sdk.ConsumerTest2, consumer.Type)
 
-	t.Logf("consumer %s: %+v", consumer.Type, consumer.Data)
+	t.Logf("consumer %s: %+v", consumer.Type, consumer.AuthConsumerUser.Data)
 
 	// tear down
 	err = user.DeleteByID(db, u.ID)
@@ -393,7 +393,7 @@ func Test_postAuthSigninHandler_WithCorporateSSO(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, sdk.ConsumerCorporateSSO, consumer.Type)
 
-		t.Logf("consumer %s: %+v", consumer.Type, consumer.Data)
+		t.Logf("consumer %s: %+v", consumer.Type, consumer.AuthConsumerUser.Data)
 	})
 }
 
