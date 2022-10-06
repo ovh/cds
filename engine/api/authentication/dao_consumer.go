@@ -228,7 +228,7 @@ func UpdateConsumerLastAuthentication(ctx context.Context, db gorp.SqlExecutor, 
 
 // DEPRECATED - load old consumers, only use for migration
 func LoadOldConsumers(ctx context.Context, db gorp.SqlExecutor) ([]AuthConsumerOld, error) {
-	query := gorpmapping.NewQuery("SELECT * FROM auth_consumer")
+	query := gorpmapping.NewQuery("SELECT * FROM auth_consumer_old order by created ASC")
 	var consumers []AuthConsumerOld
 
 	if err := gorpmapping.GetAll(ctx, db, query, &consumers); err != nil {

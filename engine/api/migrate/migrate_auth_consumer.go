@@ -9,7 +9,6 @@ import (
 )
 
 func MigrateConsumers(ctx context.Context, db *gorp.DbMap) error {
-
 	oldConsumers, err := authentication.LoadOldConsumers(ctx, db)
 	if err != nil {
 		return err

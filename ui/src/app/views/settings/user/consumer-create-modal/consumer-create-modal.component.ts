@@ -126,8 +126,8 @@ export class ConsumerCreateModalComponent implements OnInit {
     }
 
     save(): void {
-        this.newConsumer.group_ids = this.groups.filter(g => this.selectedGroupKeys.find(k => k === g.key())).map(g => g.id);
-        this.newConsumer.scope_details = this.selectedScopeDetails;
+        this.newConsumer.auth_consumer_user.group_ids = this.groups.filter(g => this.selectedGroupKeys.find(k => k === g.key())).map(g => g.id);
+        this.newConsumer.auth_consumer_user.scope_details = this.selectedScopeDetails;
 
         this.loading = true;
         this._cd.markForCheck();

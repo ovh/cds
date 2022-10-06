@@ -134,9 +134,9 @@ export class UserEditComponent implements OnInit {
             return (c: AuthConsumer) => c.name.toLowerCase().indexOf(lowerFilter) !== -1 ||
                 c.description.toLowerCase().indexOf(lowerFilter) !== -1 ||
                 c.id.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                c.scope_details.map(s => s.scope).join(' ').toLowerCase().indexOf(lowerFilter) !== -1 ||
-                (c.groups && c.groups.map(g => g.name).join(' ').toLowerCase().indexOf(lowerFilter) !== -1) ||
-                (!c.groups && lowerFilter === '*');
+                c.auth_consumer_user.scope_details.map(s => s.scope).join(' ').toLowerCase().indexOf(lowerFilter) !== -1 ||
+                (c.auth_consumer_user.groups && c.auth_consumer_user.groups.map(g => g.name).join(' ').toLowerCase().indexOf(lowerFilter) !== -1) ||
+                (!c.auth_consumer_user.groups && lowerFilter === '*');
         };
 
         this.columnsConsumers = [
@@ -160,7 +160,7 @@ export class UserEditComponent implements OnInit {
             },
             <Column<AuthConsumer>>{
                 name: 'user_auth_scopes',
-                selector: (c: AuthConsumer) => c.scope_details.map(s => s.scope).join(', ')
+                selector: (c: AuthConsumer) => c.auth_consumer_user.scope_details.map(s => s.scope).join(', ')
             },
             <Column<AuthConsumer>>{
                 type: ColumnType.TEXT_ICONS,
@@ -191,7 +191,7 @@ export class UserEditComponent implements OnInit {
                     }
 
                     return {
-                        value: c.groups ? c.groups.map((g: Group) => g.name).join(', ') : '*',
+                        value: c.auth_consumer_user.groups ? c.auth_consumer_user.groups.map((g: Group) => g.name).join(', ') : '*',
                         icons
                     };
                 }
