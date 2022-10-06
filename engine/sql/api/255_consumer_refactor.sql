@@ -35,6 +35,11 @@ CREATE TABLE "auth_consumer_user"
 SELECT create_foreign_key_idx_cascade('FK_AUTH_CONSUMER_USER_ID', 'auth_consumer_user', 'authentified_user', 'user_id', 'id');
 SELECT create_foreign_key_idx_cascade('FK_AUTH_CONSUMER_USER_CONSUMER', 'auth_consumer_user', 'auth_consumer', 'auth_consumer_id', 'id');
 
+
+ALTER TABLE auth_session DROP CONSTRAINT fk_auth_session_consumer;
+DELETE FROM auth_session;
+SELECT create_foreign_key_idx_cascade('FK_AUTH_SESSION_CONSUMER', 'auth_session', 'auth_consumer', 'consumer_id', 'id');
+
 -- +migrate Down
 DROP TABLE auth_consumer_user;
 DROP TABLE auth_consumer;
