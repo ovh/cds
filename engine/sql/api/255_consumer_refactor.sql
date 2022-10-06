@@ -19,7 +19,7 @@ SELECT create_foreign_key_idx_cascade('FK_AUTH_CONSUMER_PARENT_ID', 'auth_consum
 CREATE TABLE "auth_consumer_user"
 (
     id                uuid PRIMARY KEY,
-    auth_consumer_id  VARCHAR(36)
+    auth_consumer_id  VARCHAR(36),
     user_id           VARCHAR(36),
     data              JSONB,
     group_ids         JSONB,
