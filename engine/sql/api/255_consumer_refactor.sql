@@ -1,4 +1,5 @@
 -- +migrate Up
+ALTER TABLE auth_consumer RENAME TO auth_consumer_old;
 CREATE TABLE "auth_consumer" (
     id VARCHAR(36) PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
