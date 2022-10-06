@@ -34,10 +34,8 @@ func getConsumers(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query,
 		verifiedConsumers = append(verifiedConsumers, &cs[i].AuthConsumer)
 	}
 
-	consumers := make([]sdk.AuthConsumer, len(verifiedConsumers))
 	for i := range verifiedConsumers {
-		consumers[i] = *verifiedConsumers[i]
-		if err := loadConsumerUser(ctx, db, &consumers[i]); err != nil {
+		if err := loadConsumerUser(ctx, db, verifiedConsumers[i]); err != nil {
 			return nil, err
 		}
 	}
@@ -48,6 +46,11 @@ func getConsumers(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query,
 				return nil, err
 			}
 		}
+	}
+
+	consumers := make([]sdk.AuthConsumer, len(verifiedConsumers))
+	for i := range verifiedConsumers {
+		consumers[i] = *verifiedConsumers[i]
 	}
 
 	return consumers, nil
