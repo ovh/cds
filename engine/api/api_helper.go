@@ -63,50 +63,50 @@ func isAdmin(ctx context.Context) bool {
 
 func isService(ctx context.Context) bool {
 	c := getAPIConsumer(ctx)
-	if c == nil {
+	if c == nil || c.AuthConsumerUser == nil {
 		return false
 	}
-	return c.Service != nil
+	return c.AuthConsumerUser.Service != nil
 }
 
 func isWorker(ctx context.Context) bool {
 	c := getAPIConsumer(ctx)
-	if c == nil {
+	if c == nil || c.AuthConsumerUser == nil {
 		return false
 	}
-	return c.Worker != nil
+	return c.AuthConsumerUser.Worker != nil
 }
 
 func isHatchery(ctx context.Context) bool {
 	c := getAPIConsumer(ctx)
-	if c == nil {
+	if c == nil || c.AuthConsumerUser == nil {
 		return false
 	}
-	return c.Service != nil && c.Service.Type == sdk.TypeHatchery
+	return c.AuthConsumerUser.Service != nil && c.AuthConsumerUser.Service.Type == sdk.TypeHatchery
 }
 
 func isHatcheryShared(ctx context.Context) bool {
 	c := getAPIConsumer(ctx)
-	if c == nil {
+	if c == nil || c.AuthConsumerUser == nil {
 		return false
 	}
-	return isHatchery(ctx) && c.GroupIDs.Contains(group.SharedInfraGroup.ID)
+	return isHatchery(ctx) && c.AuthConsumerUser.GroupIDs.Contains(group.SharedInfraGroup.ID)
 }
 
 func isCDN(ctx context.Context) bool {
 	c := getAPIConsumer(ctx)
-	if c == nil {
+	if c == nil || c.AuthConsumerUser == nil {
 		return false
 	}
-	return c.Service != nil && c.Service.Type == sdk.TypeCDN
+	return c.AuthConsumerUser.Service != nil && c.AuthConsumerUser.Service.Type == sdk.TypeCDN
 }
 
 func isHooks(ctx context.Context) bool {
 	c := getAPIConsumer(ctx)
-	if c == nil {
+	if c == nil || c.AuthConsumerUser == nil {
 		return false
 	}
-	return c.Service != nil && c.Service.Type == sdk.TypeHooks
+	return c.AuthConsumerUser.Service != nil && c.AuthConsumerUser.Service.Type == sdk.TypeHooks
 }
 
 func isMFA(ctx context.Context) bool {

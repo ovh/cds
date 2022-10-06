@@ -275,7 +275,7 @@ func (api *API) getProjectHandler() service.Handler {
 		withLabels := service.FormBool(r, "withLabels")
 
 		opts := []project.LoadOptionFunc{
-			project.LoadOptions.WithFavorites(getAPIConsumer(ctx).AuthentifiedUser.ID),
+			project.LoadOptions.WithFavorites(getAPIConsumer(ctx).AuthConsumerUser.AuthentifiedUser.ID),
 		}
 		if withVariables {
 			opts = append(opts, project.LoadOptions.WithVariables)
@@ -426,7 +426,7 @@ func (api *API) putProjectLabelsHandler() service.Handler {
 			project.LoadOptions.WithLabels,
 			project.LoadOptions.WithWorkflowNames,
 			project.LoadOptions.WithVariables,
-			project.LoadOptions.WithFavorites(getAPIConsumer(ctx).AuthentifiedUser.ID),
+			project.LoadOptions.WithFavorites(getAPIConsumer(ctx).AuthConsumerUser.AuthentifiedUser.ID),
 			project.LoadOptions.WithKeys,
 			project.LoadOptions.WithIntegrations,
 		)
@@ -525,7 +525,7 @@ func (api *API) postProjectHandler() service.Handler {
 			}
 
 			newGroup := sdk.Group{Name: groupSlug}
-			if err := group.Create(ctx, tx, &newGroup, consumer.AuthentifiedUser); err != nil {
+			if err := group.Create(ctx, tx, &newGroup, consumer.AuthConsumerUser.AuthentifiedUser); err != nil {
 				return err
 			}
 
@@ -597,7 +597,7 @@ func (api *API) postProjectHandler() service.Handler {
 		proj, err := project.Load(ctx, api.mustDB(), p.Key,
 			project.LoadOptions.WithLabels,
 			project.LoadOptions.WithWorkflowNames,
-			project.LoadOptions.WithFavorites(consumer.AuthentifiedUser.ID),
+			project.LoadOptions.WithFavorites(consumer.AuthConsumerUser.AuthentifiedUser.ID),
 			project.LoadOptions.WithKeys,
 			project.LoadOptions.WithIntegrations,
 			project.LoadOptions.WithVariables,

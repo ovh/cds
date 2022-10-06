@@ -15,11 +15,11 @@ var (
 )
 
 func hasRoleOnProject(ctx context.Context, auth *sdk.AuthConsumer, store cache.Store, db gorp.SqlExecutor, projectKey string, role string) error {
-	if auth == nil {
+	if auth == nil || auth.AuthConsumerUser == nil {
 		return sdk.WithStack(sdk.ErrForbidden)
 	}
 
-	hasRole, err := HasRoleOnProjectAndUserID(ctx, db, role, auth.AuthentifiedUser.ID, projectKey)
+	hasRole, err := HasRoleOnProjectAndUserID(ctx, db, role, auth.AuthConsumerUser.AuthentifiedUser.ID, projectKey)
 	if err != nil {
 		return err
 	}

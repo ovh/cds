@@ -45,7 +45,7 @@ func (api *API) getWorkflowsHandler() service.Handler {
 			dao.Filters.ApplicationRepository = filterByRepo
 		}
 
-		dao.Loaders.WithFavoritesForUserID = getAPIConsumer(ctx).AuthentifiedUserID
+		dao.Loaders.WithFavoritesForUserID = getAPIConsumer(ctx).AuthConsumerUser.AuthentifiedUserID
 
 		groupIDS := getAPIConsumer(ctx).GetGroupIDs()
 		dao.Filters.GroupIDs = groupIDS
@@ -201,12 +201,12 @@ func (api *API) postWorkflowRetentionPolicyDryRun() service.Handler {
 
 		u := getAPIConsumer(ctx)
 		api.GoRoutines.Exec(api.Router.Background, "workflow-retention-dryrun", func(ctx context.Context) {
-			if err := purge.ApplyRetentionPolicyOnWorkflow(ctx, api.Cache, api.mustDBWithCtx(ctx), *wf, purge.MarkAsDeleteOptions{DryRun: true}, u.AuthentifiedUser); err != nil {
+			if err := purge.ApplyRetentionPolicyOnWorkflow(ctx, api.Cache, api.mustDBWithCtx(ctx), *wf, purge.MarkAsDeleteOptions{DryRun: true}, u.AuthConsumerUser.AuthentifiedUser); err != nil {
 				ctx = sdk.ContextWithStacktrace(ctx, err)
 				log.Error(ctx, err.Error())
 
 				httpErr := sdk.ExtractHTTPError(err)
-				event.PublishWorkflowRetentionDryRun(ctx, key, name, "ERROR", httpErr.Error(), nil, 0, u.AuthentifiedUser)
+				event.PublishWorkflowRetentionDryRun(ctx, key, name, "ERROR", httpErr.Error(), nil, 0, u.AuthConsumerUser.AuthentifiedUser)
 			}
 		})
 		return service.WriteJSON(w, sdk.PurgeDryRunResponse{NbRunsToAnalize: int64(count)}, http.StatusOK)
@@ -241,7 +241,7 @@ func (api *API) getWorkflowHandler() service.Handler {
 			WithAsCodeUpdateEvent:  withAsCodeEvents,
 			WithIntegrations:       true,
 			WithTemplate:           withTemplate,
-			WithFavoritesForUserID: getAPIConsumer(ctx).AuthentifiedUserID,
+			WithFavoritesForUserID: getAPIConsumer(ctx).AuthConsumerUser.AuthentifiedUserID,
 		}
 		w1, err := workflow.Load(ctx, api.mustDB(), api.Cache, *proj, name, opts)
 		if err != nil {
@@ -922,7 +922,7 @@ func (api *API) getSearchWorkflowHandler() service.Handler {
 		dao.Filters.ApplicationRepository = FormString(r, "repository")
 		dao.Filters.AsCode = service.FormBool(r, "ascode")
 		dao.Loaders.WithRuns = service.FormInt(r, "runs")
-		dao.Loaders.WithFavoritesForUserID = getAPIConsumer(ctx).AuthentifiedUserID
+		dao.Loaders.WithFavoritesForUserID = getAPIConsumer(ctx).AuthConsumerUser.AuthentifiedUserID
 
 		groupIDS := getAPIConsumer(ctx).GetGroupIDs()
 		dao.Filters.GroupIDs = groupIDS

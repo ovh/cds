@@ -39,7 +39,7 @@ func (api *API) getUserHandler() service.Handler {
 		var u *sdk.AuthentifiedUser
 		var err error
 		if username == "me" {
-			u, err = user.LoadByID(ctx, api.mustDB(), consumer.AuthentifiedUserID, user.LoadOptions.WithOrganization)
+			u, err = user.LoadByID(ctx, api.mustDB(), consumer.AuthConsumerUser.AuthentifiedUserID, user.LoadOptions.WithOrganization)
 		} else {
 			u, err = user.LoadByUsername(ctx, api.mustDB(), username, user.LoadOptions.WithOrganization)
 		}
@@ -74,7 +74,7 @@ func (api *API) putUserHandler() service.Handler {
 
 		var oldUser *sdk.AuthentifiedUser
 		if username == "me" {
-			oldUser, err = user.LoadByID(ctx, tx, consumer.AuthentifiedUserID)
+			oldUser, err = user.LoadByID(ctx, tx, consumer.AuthConsumerUser.AuthentifiedUserID)
 		} else {
 			oldUser, err = user.LoadByUsername(ctx, tx, username)
 		}
@@ -116,7 +116,7 @@ func (api *API) putUserHandler() service.Handler {
 			}
 
 			newUser.Ring = data.Ring
-			log.Debug(ctx, "putUserHandler> %s change ring of user %s from %s to %s", consumer.AuthentifiedUserID, oldUser.ID, oldUser.Ring, newUser.Ring)
+			log.Debug(ctx, "putUserHandler> %s change ring of user %s from %s to %s", consumer.AuthConsumerUser.AuthentifiedUserID, oldUser.ID, oldUser.Ring, newUser.Ring)
 		}
 
 		if err := user.Update(ctx, tx, &newUser); err != nil {
@@ -201,7 +201,7 @@ func (api *API) deleteUserHandler() service.Handler {
 
 		var u *sdk.AuthentifiedUser
 		if username == "me" {
-			u, err = user.LoadByID(ctx, tx, consumer.AuthentifiedUserID)
+			u, err = user.LoadByID(ctx, tx, consumer.AuthConsumerUser.AuthentifiedUserID)
 		} else {
 			u, err = user.LoadByUsername(ctx, tx, username)
 		}

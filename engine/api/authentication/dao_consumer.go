@@ -44,6 +44,9 @@ func getConsumers(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query,
 	consumers := make([]sdk.AuthConsumer, len(verifiedConsumers))
 	for i := range verifiedConsumers {
 		consumers[i] = *verifiedConsumers[i]
+		if err := loadConsumerUser(ctx, db, &consumers[i]); err != nil {
+			return nil, err
+		}
 	}
 
 	return consumers, nil
@@ -78,6 +81,9 @@ func getConsumer(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, 
 
 	ac.ValidityPeriods.Sort()
 
+	if err := loadConsumerUser(ctx, db, &ac); err != nil {
+		return nil, err
+	}
 	return &ac, nil
 }
 
@@ -125,6 +131,12 @@ func InsertConsumer(ctx context.Context, db gorpmapper.SqlExecutorWithTx, ac *sd
 		return sdk.WrapError(err, "unable to insert auth consumer")
 	}
 	*ac = c.AuthConsumer
+
+	if ac.AuthConsumerUser != nil {
+		ac.AuthConsumerUser.AuthConsumerID = ac.ID
+		return InsertConsumerUser(ctx, db, ac.AuthConsumerUser)
+	}
+
 	return nil
 }
 
@@ -136,6 +148,12 @@ func UpdateConsumer(ctx context.Context, db gorpmapper.SqlExecutorWithTx, ac *sd
 		return sdk.WrapError(err, "unable to update auth consumer with id: %s", ac.ID)
 	}
 	*ac = c.AuthConsumer
+
+	if ac.AuthConsumerUser != nil {
+		ac.AuthConsumerUser.AuthConsumerID = ac.ID
+		return UpdateConsumerUser(ctx, db, ac.AuthConsumerUser)
+	}
+
 	return nil
 }
 
@@ -152,4 +170,27 @@ func UpdateConsumerLastAuthentication(ctx context.Context, db gorp.SqlExecutor, 
 		return cm.ColumnName == "last_authentication"
 	})
 	return sdk.WrapError(err, "unable to update last_authentication auth consumer with id %s", ac.ID)
+}
+
+// DEPRECATED - load old consumers, only use for migration
+func LoadOldConsumers(ctx context.Context, db gorp.SqlExecutor) ([]AuthConsumerOld, error) {
+	query := gorpmapping.NewQuery("SELECT * FROM auth_consumer")
+	var consumers []AuthConsumerOld
+
+	if err := gorpmapping.GetAll(ctx, db, query, &consumers); err != nil {
+		return nil, sdk.WrapError(err, "cannot get old auth consumers")
+	}
+
+	// Check signature of data, if invalid do not return it
+	for _, c := range consumers {
+		isValid, err := gorpmapping.CheckSignature(c, c.Signature)
+		if err != nil {
+			return nil, err
+		}
+		if !isValid {
+			log.Error(ctx, "authentication.getConsumers> auth consumer %s data corrupted", c.ID)
+			continue
+		}
+	}
+	return consumers, nil
 }

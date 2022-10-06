@@ -22,7 +22,7 @@ func (api *API) postUserFavoriteHandler() service.Handler {
 
 		p, err := project.Load(ctx, api.mustDB(), params.ProjectKey,
 			project.LoadOptions.WithIntegrations,
-			project.LoadOptions.WithFavorites(consumer.AuthentifiedUser.ID),
+			project.LoadOptions.WithFavorites(consumer.AuthConsumerUser.AuthentifiedUser.ID),
 		)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load projet")
@@ -35,18 +35,18 @@ func (api *API) postUserFavoriteHandler() service.Handler {
 				return sdk.WrapError(err, "cannot load workflow %s/%s", params.ProjectKey, params.WorkflowName)
 			}
 
-			wf.Favorite, err = workflow.IsFavorite(api.mustDB(), wf, consumer.AuthentifiedUserID)
+			wf.Favorite, err = workflow.IsFavorite(api.mustDB(), wf, consumer.AuthConsumerUser.AuthentifiedUserID)
 			if err != nil {
 				return sdk.WrapError(err, "cannot load workflow favorite %s/%s", params.ProjectKey, params.WorkflowName)
 			}
-			if err := workflow.UpdateFavorite(api.mustDB(), wf.ID, consumer.AuthentifiedUser.ID, !wf.Favorite); err != nil {
+			if err := workflow.UpdateFavorite(api.mustDB(), wf.ID, consumer.AuthConsumerUser.AuthentifiedUser.ID, !wf.Favorite); err != nil {
 				return sdk.WrapError(err, "cannot change workflow %s/%s favorite", params.ProjectKey, params.WorkflowName)
 			}
 			wf.Favorite = !wf.Favorite
 
 			return service.WriteJSON(w, wf, http.StatusOK)
 		case "project":
-			if err := project.UpdateFavorite(api.mustDB(), p.ID, consumer.AuthentifiedUser.ID, !p.Favorite); err != nil {
+			if err := project.UpdateFavorite(api.mustDB(), p.ID, consumer.AuthConsumerUser.AuthentifiedUser.ID, !p.Favorite); err != nil {
 				return sdk.WrapError(err, "cannot change workflow %s favorite", p.Key)
 			}
 			p.Favorite = !p.Favorite

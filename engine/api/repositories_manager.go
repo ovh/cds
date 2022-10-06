@@ -86,7 +86,7 @@ func (api *API) repositoriesManagerAuthorizeHandler() service.Handler {
 			"repositories_manager": rmName,
 			"url":                  url,
 			"request_token":        token,
-			"username":             getAPIConsumer(ctx).AuthentifiedUser.Username,
+			"username":             getAPIConsumer(ctx).AuthConsumerUser.AuthentifiedUser.Username,
 			"consumer_id":          getAPIConsumer(ctx).ID,
 		}
 
@@ -237,7 +237,7 @@ func (api *API) repositoriesManagerAuthorizeBasicHandler() service.Handler {
 		vcsServerForProject := &sdk.ProjectVCSServerLink{
 			ProjectID: proj.ID,
 			Name:      rmName,
-			Username:  getAPIConsumer(ctx).AuthentifiedUser.Username,
+			Username:  getAPIConsumer(ctx).AuthConsumerUser.AuthentifiedUser.Username,
 		}
 		vcsServerForProject.Set("token", username)
 		vcsServerForProject.Set("secret", secret)
@@ -314,7 +314,7 @@ func (api *API) repositoriesManagerAuthorizeCallbackHandler() service.Handler {
 		vcsServerForProject := &sdk.ProjectVCSServerLink{
 			ProjectID: proj.ID,
 			Name:      rmName,
-			Username:  getAPIConsumer(ctx).AuthentifiedUser.Username,
+			Username:  getAPIConsumer(ctx).AuthConsumerUser.AuthentifiedUser.Username,
 		}
 		vcsServerForProject.Set("token", token)
 		vcsServerForProject.Set("secret", secret)

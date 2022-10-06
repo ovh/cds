@@ -564,6 +564,10 @@ func (a *API) Serve(ctx context.Context) error {
 		return migrate.ArtifactoryIntegration(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper))
 	}})
 
+	migrate.Add(ctx, sdk.Migration{Name: "ConsumerMigration", Release: "0.52.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
+		return migrate.MigrateConsumers(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)())
+	}})
+
 	isFreshInstall, errF := version.IsFreshInstall(a.mustDB())
 	if errF != nil {
 		return sdk.WrapError(errF, "Unable to check if it's a fresh installation of CDS")

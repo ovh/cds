@@ -644,12 +644,14 @@ func CreateRun(db *gorp.DbMap, wf *sdk.Workflow, opts sdk.WorkflowRunPostHandler
 			return nil, err
 		}
 
-		// Add service for consumer if exists
-		s, err := services.LoadByConsumerID(context.Background(), db, c.ID)
-		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
-			return nil, err
+		if c.AuthConsumerUser != nil {
+			// Add service for consumer if exists
+			s, err := services.LoadByConsumerID(context.Background(), db, c.ID)
+			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return nil, err
+			}
+			c.AuthConsumerUser.Service = s
 		}
-		c.Service = s
 
 		wr.Tag(tagTriggeredBy, c.GetUsername())
 	}
