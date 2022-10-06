@@ -15,7 +15,7 @@ CREATE TABLE "auth_consumer" (
     signer TEXT,
     sig BYTEA
 );
-SELECT create_foreign_key_idx_cascade('FK_AUTH_CONSUMER_PARENT', 'auth_consumer', 'auth_consumer', 'parent_id', 'id');
+SELECT create_foreign_key_idx_cascade('FK_AUTH_CONSUMER_PARENT_ID', 'auth_consumer', 'auth_consumer', 'parent_id', 'id');
 CREATE TABLE "auth_consumer_user"
 (
     id                uuid PRIMARY KEY,
@@ -32,7 +32,7 @@ CREATE TABLE "auth_consumer_user"
     signer TEXT,
     sig BYTEA
 )
-SELECT create_foreign_key_idx_cascade('FK_AUTH_CONSUMER_USER', 'auth_consumer_user', 'authentified_user', 'user_id', 'id');
+SELECT create_foreign_key_idx_cascade('FK_AUTH_CONSUMER_USER_ID', 'auth_consumer_user', 'authentified_user', 'user_id', 'id');
 SELECT create_foreign_key_idx_cascade('FK_AUTH_CONSUMER_USER_CONSUMER', 'auth_consumer_user', 'auth_consumer', 'auth_consumer_id', 'id');
 
 -- +migrate Down
