@@ -42,3 +42,7 @@ func OrganizationManage(ctx context.Context, auth *sdk.AuthConsumer, store cache
 func RegionManage(ctx context.Context, auth *sdk.AuthConsumer, store cache.Store, db gorp.SqlExecutor, _ map[string]string) error {
 	return hasGlobalRole(ctx, auth, store, db, sdk.GlobalRoleManageRegion)
 }
+
+func GlobalHatcheryManage(ctx context.Context, auth *sdk.AuthConsumer, store cache.Store, db gorp.SqlExecutor, _ map[string]string) error {
+	return hasGlobalRole(ctx, auth, store, db, sdk.GlobalRoleManageHatchery)
+}

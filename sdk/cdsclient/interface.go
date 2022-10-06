@@ -216,6 +216,13 @@ type RegionClient interface {
 	RegionDelete(ctx context.Context, regionIdentifier string) error
 }
 
+type HatcheryClient interface {
+	HatcheryAdd(ctx context.Context, h sdk.Hatchery) error
+	HatcheryGet(ctx context.Context, hatcheryIdentifier string) (sdk.Hatchery, error)
+	HatcheryList(ctx context.Context) ([]sdk.Hatchery, error)
+	HatcheryDelete(ctx context.Context, hatcheryIdentifier string) error
+}
+
 // ProjectClient exposes project related functions
 type ProjectClient interface {
 	ProjectCreate(proj *sdk.Project) error
@@ -428,6 +435,7 @@ type Interface interface {
 	FeatureEnabled(name sdk.FeatureName, params map[string]string) (sdk.FeatureEnabledResponse, error)
 	GroupClient
 	GRPCPluginsClient
+	HatcheryClient
 	MaintenanceClient
 	PipelineClient
 	IntegrationClient

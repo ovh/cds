@@ -2518,6 +2518,87 @@ func (mr *MockRegionClientMockRecorder) RegionList(ctx interface{}) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegionList", reflect.TypeOf((*MockRegionClient)(nil).RegionList), ctx)
 }
 
+// MockHatcheryClient is a mock of HatcheryClient interface.
+type MockHatcheryClient struct {
+	ctrl     *gomock.Controller
+	recorder *MockHatcheryClientMockRecorder
+}
+
+// MockHatcheryClientMockRecorder is the mock recorder for MockHatcheryClient.
+type MockHatcheryClientMockRecorder struct {
+	mock *MockHatcheryClient
+}
+
+// NewMockHatcheryClient creates a new mock instance.
+func NewMockHatcheryClient(ctrl *gomock.Controller) *MockHatcheryClient {
+	mock := &MockHatcheryClient{ctrl: ctrl}
+	mock.recorder = &MockHatcheryClientMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockHatcheryClient) EXPECT() *MockHatcheryClientMockRecorder {
+	return m.recorder
+}
+
+// HatcheryAdd mocks base method.
+func (m *MockHatcheryClient) HatcheryAdd(ctx context.Context, h sdk.Hatchery) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HatcheryAdd", ctx, h)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// HatcheryAdd indicates an expected call of HatcheryAdd.
+func (mr *MockHatcheryClientMockRecorder) HatcheryAdd(ctx, h interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HatcheryAdd", reflect.TypeOf((*MockHatcheryClient)(nil).HatcheryAdd), ctx, h)
+}
+
+// HatcheryDelete mocks base method.
+func (m *MockHatcheryClient) HatcheryDelete(ctx context.Context, hatcheryIdentifier string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HatcheryDelete", ctx, hatcheryIdentifier)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// HatcheryDelete indicates an expected call of HatcheryDelete.
+func (mr *MockHatcheryClientMockRecorder) HatcheryDelete(ctx, hatcheryIdentifier interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HatcheryDelete", reflect.TypeOf((*MockHatcheryClient)(nil).HatcheryDelete), ctx, hatcheryIdentifier)
+}
+
+// HatcheryGet mocks base method.
+func (m *MockHatcheryClient) HatcheryGet(ctx context.Context, hatcheryIdentifier string) (sdk.Hatchery, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HatcheryGet", ctx, hatcheryIdentifier)
+	ret0, _ := ret[0].(sdk.Hatchery)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// HatcheryGet indicates an expected call of HatcheryGet.
+func (mr *MockHatcheryClientMockRecorder) HatcheryGet(ctx, hatcheryIdentifier interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HatcheryGet", reflect.TypeOf((*MockHatcheryClient)(nil).HatcheryGet), ctx, hatcheryIdentifier)
+}
+
+// HatcheryList mocks base method.
+func (m *MockHatcheryClient) HatcheryList(ctx context.Context) ([]sdk.Hatchery, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HatcheryList", ctx)
+	ret0, _ := ret[0].([]sdk.Hatchery)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// HatcheryList indicates an expected call of HatcheryList.
+func (mr *MockHatcheryClientMockRecorder) HatcheryList(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HatcheryList", reflect.TypeOf((*MockHatcheryClient)(nil).HatcheryList), ctx)
+}
+
 // MockProjectClient is a mock of ProjectClient interface.
 type MockProjectClient struct {
 	ctrl     *gomock.Controller
@@ -6611,6 +6692,64 @@ func (m *MockInterface) HTTPWebsocketClient() *websocket.Dialer {
 func (mr *MockInterfaceMockRecorder) HTTPWebsocketClient() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HTTPWebsocketClient", reflect.TypeOf((*MockInterface)(nil).HTTPWebsocketClient))
+}
+
+// HatcheryAdd mocks base method.
+func (m *MockInterface) HatcheryAdd(ctx context.Context, h sdk.Hatchery) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HatcheryAdd", ctx, h)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// HatcheryAdd indicates an expected call of HatcheryAdd.
+func (mr *MockInterfaceMockRecorder) HatcheryAdd(ctx, h interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HatcheryAdd", reflect.TypeOf((*MockInterface)(nil).HatcheryAdd), ctx, h)
+}
+
+// HatcheryDelete mocks base method.
+func (m *MockInterface) HatcheryDelete(ctx context.Context, hatcheryIdentifier string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HatcheryDelete", ctx, hatcheryIdentifier)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// HatcheryDelete indicates an expected call of HatcheryDelete.
+func (mr *MockInterfaceMockRecorder) HatcheryDelete(ctx, hatcheryIdentifier interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HatcheryDelete", reflect.TypeOf((*MockInterface)(nil).HatcheryDelete), ctx, hatcheryIdentifier)
+}
+
+// HatcheryGet mocks base method.
+func (m *MockInterface) HatcheryGet(ctx context.Context, hatcheryIdentifier string) (sdk.Hatchery, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HatcheryGet", ctx, hatcheryIdentifier)
+	ret0, _ := ret[0].(sdk.Hatchery)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// HatcheryGet indicates an expected call of HatcheryGet.
+func (mr *MockInterfaceMockRecorder) HatcheryGet(ctx, hatcheryIdentifier interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HatcheryGet", reflect.TypeOf((*MockInterface)(nil).HatcheryGet), ctx, hatcheryIdentifier)
+}
+
+// HatcheryList mocks base method.
+func (m *MockInterface) HatcheryList(ctx context.Context) ([]sdk.Hatchery, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HatcheryList", ctx)
+	ret0, _ := ret[0].([]sdk.Hatchery)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// HatcheryList indicates an expected call of HatcheryList.
+func (mr *MockInterfaceMockRecorder) HatcheryList(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HatcheryList", reflect.TypeOf((*MockInterface)(nil).HatcheryList), ctx)
 }
 
 // IntegrationModelAdd mocks base method.
