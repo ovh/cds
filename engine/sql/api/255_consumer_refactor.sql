@@ -31,7 +31,7 @@ CREATE TABLE "auth_consumer_user"
     service_ignore_job_with_no_region BOOLEAN,
     signer TEXT,
     sig BYTEA
-)
+);
 SELECT create_foreign_key_idx_cascade('FK_AUTH_CONSUMER_USER_ID', 'auth_consumer_user', 'authentified_user', 'user_id', 'id');
 SELECT create_foreign_key_idx_cascade('FK_AUTH_CONSUMER_USER_CONSUMER', 'auth_consumer_user', 'auth_consumer', 'auth_consumer_id', 'id');
 
