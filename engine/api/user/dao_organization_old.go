@@ -2,18 +2,18 @@ package user
 
 import (
 	"context"
+	"github.com/ovh/cds/engine/gorpmapper"
 
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
-	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 )
 
-func getUserOrganizations(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query) ([]UserOrganization, error) {
-	os := []UserOrganization{}
+func getOldOrganizations(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query) ([]OrganizationOld, error) {
+	os := []OrganizationOld{}
 
 	if err := gorpmapping.GetAll(ctx, db, q, &os); err != nil {
 		return nil, sdk.WrapError(err, "cannot get user organizations")
@@ -33,16 +33,19 @@ func getUserOrganizations(ctx context.Context, db gorp.SqlExecutor, q gorpmappin
 	return os, nil
 }
 
-func LoadAllUserOrganizationsByUserIDs(ctx context.Context, db gorp.SqlExecutor, userIDs []string) ([]UserOrganization, error) {
+func LoadOldOrganizationsByUserIDs(ctx context.Context, db gorp.SqlExecutor, userIDs []string) ([]OrganizationOld, error) {
 	query := gorpmapping.NewQuery(`
     SELECT *
-    FROM authentified_user_organization
+    FROM authentified_user_organization_old
     WHERE authentified_user_id = ANY($1)
   `).Args(pq.StringArray(userIDs))
-	return getUserOrganizations(ctx, db, query)
+	return getOldOrganizations(ctx, db, query)
 }
 
-func InsertUserOrganization(ctx context.Context, db gorpmapper.SqlExecutorWithTx, o *UserOrganization) error {
-	o.ID = sdk.UUID()
-	return sdk.WrapError(gorpmapping.InsertAndSign(ctx, db, o), "unable to insert authentified user organization")
+func InsertOldUserOrganisation(ctx context.Context, db gorpmapper.SqlExecutorWithTx, userID, orgaName string) error {
+	uo := OrganizationOld{
+		AuthentifiedUserID: userID,
+		Organization:       orgaName,
+	}
+	return sdk.WithStack(gorpmapping.InsertAndSign(ctx, db, &uo))
 }

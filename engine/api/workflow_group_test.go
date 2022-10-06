@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"github.com/ovh/cds/engine/api/organization"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -229,20 +230,13 @@ func Test_postWorkflowGroupHandler_UserShouldBeGroupAdminForRWAndRWX(t *testing.
 func Test_postWorkflowGroupHandler_OnlyReadForDifferentOrganization(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
+	orgTwo := sdk.Organization{Name: "two"}
+	require.NoError(t, organization.Insert(context.TODO(), db, &orgTwo))
+
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 
 	g1 := &proj.ProjectGroups[0].Group
-	g2 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
-
-	// Set organization for groups
-	require.NoError(t, group.InsertOrganization(context.TODO(), db, &group.Organization{
-		GroupID:      g1.ID,
-		Organization: "one",
-	}))
-	require.NoError(t, group.InsertOrganization(context.TODO(), db, &group.Organization{
-		GroupID:      g2.ID,
-		Organization: "two",
-	}))
+	g2 := assets.InsertTestGroupInOrganization(t, db, sdk.RandomString(10), "two")
 
 	_, jwt := assets.InsertAdminUser(t, db)
 
@@ -271,7 +265,7 @@ func Test_postWorkflowGroupHandler_OnlyReadForDifferentOrganization(t *testing.T
 	require.Equal(t, http.StatusForbidden, rec.Code)
 	var sdkError sdk.Error
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &sdkError))
-	require.Equal(t, "given group with organization \"two\" don't match project organization \"one\"", sdkError.From)
+	require.Equal(t, "given group with organization \"two\" don't match project organization \"default\"", sdkError.From)
 
 	// Can add R permission for g2 on workflow
 	uri = router.GetRoute(http.MethodPost, api.postWorkflowGroupHandler, map[string]string{
@@ -449,18 +443,10 @@ func Test_putWorkflowGroupHandler_OnlyReadForDifferentOrganization(t *testing.T)
 
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 
-	g1 := &proj.ProjectGroups[0].Group
-	g2 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
+	orgTwo := sdk.Organization{Name: "two"}
+	require.NoError(t, organization.Insert(context.TODO(), db, &orgTwo))
 
-	// Set organization for groups
-	require.NoError(t, group.InsertOrganization(context.TODO(), db, &group.Organization{
-		GroupID:      g1.ID,
-		Organization: "one",
-	}))
-	require.NoError(t, group.InsertOrganization(context.TODO(), db, &group.Organization{
-		GroupID:      g2.ID,
-		Organization: "two",
-	}))
+	g2 := assets.InsertTestGroupInOrganization(t, db, sdk.RandomString(10), "two")
 
 	_, jwt := assets.InsertAdminUser(t, db)
 
@@ -496,7 +482,7 @@ func Test_putWorkflowGroupHandler_OnlyReadForDifferentOrganization(t *testing.T)
 	require.Equal(t, http.StatusForbidden, rec.Code)
 	var sdkError sdk.Error
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &sdkError))
-	require.Equal(t, "given group with organization \"two\" don't match project organization \"one\"", sdkError.From)
+	require.Equal(t, "given group with organization \"two\" don't match project organization \"default\"", sdkError.From)
 }
 
 func Test_deleteWorkflowGroupHandler(t *testing.T) {

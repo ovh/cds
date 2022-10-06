@@ -3,7 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"github.com/ovh/cds/engine/api/organization"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -58,6 +58,10 @@ func Test_postAuthSignoutHandler(t *testing.T) {
 
 func Test_postAuthSigninHandler_ShouldSuccessWithANewUser(t *testing.T) {
 	api, db, _ := newTestAPI(t)
+	api.Config.Auth.AllowedOrganizations = append(api.Config.Auth.AllowedOrganizations, "planet-express")
+
+	newOrga := sdk.Organization{Name: "planet-express"}
+	require.NoError(t, organization.Insert(context.TODO(), db, &newOrga))
 
 	uri := api.Router.GetRoute(http.MethodPost, api.postAuthSigninHandler, map[string]string{
 		"consumerType": "futurama",
@@ -312,7 +316,8 @@ dg/94O8U5bC2T8a9CsA/q8eGuucP
 )
 
 func Test_postAuthSigninHandler_WithCorporateSSO(t *testing.T) {
-	api, _, _ := newTestAPI(t)
+	api, db, _ := newTestAPI(t)
+	api.Config.Auth.AllowedOrganizations = []string{"planet-express"}
 
 	var cfg corpsso.Config
 	cfg.Request.Keys.RequestSigningKey = AuthKey
@@ -320,7 +325,9 @@ func Test_postAuthSigninHandler_WithCorporateSSO(t *testing.T) {
 	cfg.Request.RedirectURL = "https://lolcat.local/sso/jwt"
 	cfg.Token.KeySigningKey.KeySigningKey = "-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmDMEXF1XRhYJKwYBBAHaRw8BAQdABEHVkfddwOIEFd7V0hsGrudgRuOlnV4/VSK6\nYJGFag+0HnRlc3QtbG9ja2VyIDx0ZXN0QGxvbGNhdC5ob3N0PoiQBBMWCAA4FiEE\nBN0dlUe5Vi8hx0ZsWXCoyV8Z2eQFAlxdV0YCGwMFCwkIBwIGFQoJCAsCBBYCAwEC\nHgECF4AACgkQWXCoyV8Z2eQt5gEAycwThBk4CzuQ8XtPvLA/kml3Jkclgw6ACGsP\nYOrnz+gA/2XOjnhYOA6S3sn9g4UMVtON8TofBMTTSqCdgrghu3kFuDgEXF1XRhIK\nKwYBBAGXVQEFAQEHQGlq7X9fCeXKxlmcWgT+fFJyS1MlL2uwKQteXl8yIadwAwEI\nB4h4BBgWCAAgFiEEBN0dlUe5Vi8hx0ZsWXCoyV8Z2eQFAlxdV0YCGwwACgkQWXCo\nyV8Z2eR4rgD/cPn9TStAoXc4Pa+sKgAFmG3NVCNln8FtkH5cQ1g0ouUA/AzcLTL4\nVQHT6ArvDWzJKKrh2PepZ5PVMS/Hwh/GDH4J\n=n1Ws\n-----END PGP PUBLIC KEY BLOCK-----"
 	cfg.Token.KeySigningKey.SigningKeyClaim = "key"
-	cfg.AllowedOrganizations = []string{"planet-express"}
+	cfg.AllowedOrganizations = api.Config.Auth.AllowedOrganizations
+
+	require.NoError(t, organization.Insert(context.TODO(), db, &sdk.Organization{Name: "planet-express"}))
 
 	api.AuthenticationDrivers[sdk.ConsumerCorporateSSO] = corpsso.NewDriver(cfg)
 
@@ -450,8 +457,10 @@ func TestUserSetOrganization_EnsureGroup(t *testing.T) {
 	g1 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 
 	u1, _ := assets.InsertLambdaUser(t, db, g1)
-	u2, _ := assets.InsertLambdaUser(t, db, g1)
-	u3, _ := assets.InsertLambdaUser(t, db, g1)
+
+	require.NoError(t, organization.Insert(context.TODO(), db, &sdk.Organization{Name: "org0"}))
+	require.NoError(t, organization.Insert(context.TODO(), db, &sdk.Organization{Name: "org1"}))
+	require.NoError(t, organization.Insert(context.TODO(), db, &sdk.Organization{Name: "org2"}))
 
 	// Set not allowed org should return an error
 	api.Config.Auth.AllowedOrganizations = []string{"org0"}
@@ -459,35 +468,18 @@ func TestUserSetOrganization_EnsureGroup(t *testing.T) {
 	require.Error(t, err)
 	require.Equal(t, "forbidden (from: user organization \"org1\" is not allowed)", err.Error())
 
-	// Set org on user should also update its group
+	// update org on user must return error
 	api.Config.Auth.AllowedOrganizations = []string{"org1", "org2"}
-	require.NoError(t, api.userSetOrganization(context.TODO(), db, u1, "org1"))
-	orgU1, err := user.LoadOrganizationByUserID(context.TODO(), db, u1.ID)
-	require.NoError(t, err)
-	require.Equal(t, "org1", orgU1.Organization)
-	orgG1, err := group.LoadOrganizationByGroupID(context.TODO(), db, g1.ID)
-	require.NoError(t, err)
-	require.Equal(t, "org1", orgG1.Organization)
-
-	// Set org should be ok when no conflict on groups
-	require.NoError(t, api.userSetOrganization(context.TODO(), db, u3, "org1"))
-	orgU3, err := user.LoadOrganizationByUserID(context.TODO(), db, u3.ID)
-	require.NoError(t, err)
-	require.Equal(t, "org1", orgU3.Organization)
-
-	// Set org on a user that is part of group with another org should return an error
-	err = api.userSetOrganization(context.TODO(), db, u2, "org2")
+	err = api.userSetOrganization(context.TODO(), db, u1, "org1")
 	require.Error(t, err)
-	require.Equal(t, "Cannot validate given data (from: group members organization conflict \"org1\" and \"org2\")", err.Error())
-
-	// Change user org should return an error
-	err = api.userSetOrganization(context.TODO(), db, u1, "org2")
-	require.Error(t, err)
-	require.Equal(t, "forbidden (from: cannot change user organization to \"org2\", value already set to \"org1\")", err.Error())
+	require.Equal(t, "forbidden (from: cannot change user organization to \"org1\", value already set to \"default\")", err.Error())
 }
 
 func TestUserSetOrganization_EnsureProject(t *testing.T) {
 	api, db, _ := newTestAPI(t)
+
+	require.NoError(t, organization.Insert(context.TODO(), db, &sdk.Organization{Name: "org1"}))
+	require.NoError(t, organization.Insert(context.TODO(), db, &sdk.Organization{Name: "org2"}))
 
 	pKey := sdk.RandomString(10)
 	p1 := assets.InsertTestProject(t, db, api.Cache, pKey, pKey)
@@ -501,21 +493,15 @@ func TestUserSetOrganization_EnsureProject(t *testing.T) {
 	}))
 
 	u1, _ := assets.InsertLambdaUser(t, db, g1)
-	u2, _ := assets.InsertLambdaUser(t, db, g2)
 
 	// Assert project info
 	require.NoError(t, project.LoadOptions.WithGroups(context.TODO(), db, p1))
-	require.Equal(t, "", p1.Organization)
+	require.Equal(t, "default", p1.Organization)
 	require.Len(t, p1.ProjectGroups, 2)
 
 	// Set org on u1 should change project organization
 	api.Config.Auth.AllowedOrganizations = []string{"org1", "org2"}
-	require.NoError(t, api.userSetOrganization(context.TODO(), db, u1, "org1"))
-	require.NoError(t, project.LoadOptions.WithGroups(context.TODO(), db, p1))
-	require.Equal(t, "org1", p1.Organization)
-
-	// Set another org on a user that is part of group with permission on the project should return an error
-	err := api.userSetOrganization(context.TODO(), db, u2, "org2")
+	err := api.userSetOrganization(context.TODO(), db, u1, "org1")
 	require.Error(t, err)
-	require.Equal(t, fmt.Sprintf("forbidden (from: changing group organization conflict on project with id: %d) (caused by: group permissions organization conflict)", p1.ID), err.Error())
+	require.Equal(t, "forbidden (from: cannot change user organization to \"org1\", value already set to \"default\")", err.Error())
 }

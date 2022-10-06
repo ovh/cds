@@ -7,7 +7,7 @@ testcases:
   steps:
   - script: {{.cdsctl}} -f {{.cdsctl.config}} admin organization list --format json
     assertions:
-    - result.systemoutjson.systemoutjson0.name ShouldEqual "my-org"
+    - result.systemoutjson.__len__ ShouldEqual 2
 - name: Remove an organization
   steps:
   - script: {{.cdsctl}} -f {{.cdsctl.config}} admin organization delete my-org --force

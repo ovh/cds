@@ -11,8 +11,8 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func getOrganizations(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query) ([]Organization, error) {
-	os := []Organization{}
+func getOrganizations(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query) ([]GroupOrganization, error) {
+	os := []GroupOrganization{}
 
 	if err := gorpmapping.GetAll(ctx, db, q, &os); err != nil {
 		return nil, sdk.WrapError(err, "cannot get group organizations")
@@ -32,8 +32,8 @@ func getOrganizations(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Qu
 	return os, nil
 }
 
-func getOrganization(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query) (*Organization, error) {
-	var org = Organization{}
+func getOrganization(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query) (*GroupOrganization, error) {
+	var org = GroupOrganization{}
 	found, err := gorpmapping.Get(ctx, db, q, &org)
 	if err != nil {
 		return nil, sdk.WrapError(err, "cannot get group organization")
@@ -54,7 +54,7 @@ func getOrganization(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Que
 	return &org, nil
 }
 
-func LoadOrganizationsByGroupIDs(ctx context.Context, db gorp.SqlExecutor, groupIDs []int64) ([]Organization, error) {
+func LoadGroupOrganizationsByGroupIDs(ctx context.Context, db gorp.SqlExecutor, groupIDs []int64) ([]GroupOrganization, error) {
 	query := gorpmapping.NewQuery(`
     SELECT *
     FROM group_organization
@@ -63,7 +63,7 @@ func LoadOrganizationsByGroupIDs(ctx context.Context, db gorp.SqlExecutor, group
 	return getOrganizations(ctx, db, query)
 }
 
-func LoadOrganizationByGroupID(ctx context.Context, db gorp.SqlExecutor, groupID int64) (*Organization, error) {
+func LoadGroupOrganizationByGroupID(ctx context.Context, db gorp.SqlExecutor, groupID int64) (*GroupOrganization, error) {
 	query := gorpmapping.NewQuery(`
     SELECT *
     FROM group_organization
@@ -72,10 +72,11 @@ func LoadOrganizationByGroupID(ctx context.Context, db gorp.SqlExecutor, groupID
 	return getOrganization(ctx, db, query)
 }
 
-func InsertOrganization(ctx context.Context, db gorpmapper.SqlExecutorWithTx, o *Organization) error {
+func InsertGroupOrganization(ctx context.Context, db gorpmapper.SqlExecutorWithTx, o *GroupOrganization) error {
+	o.ID = sdk.UUID()
 	return sdk.WrapError(gorpmapping.InsertAndSign(ctx, db, o), "unable to insert group organization")
 }
 
-func UpdateOrganization(ctx context.Context, db gorpmapper.SqlExecutorWithTx, o *Organization) error {
+func UpdateGroupOrganization(ctx context.Context, db gorpmapper.SqlExecutorWithTx, o *GroupOrganization) error {
 	return sdk.WrapError(gorpmapping.UpdateAndSign(ctx, db, o), "unable to update group organization")
 }
