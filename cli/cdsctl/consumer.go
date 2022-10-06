@@ -202,22 +202,24 @@ func authConsumerNewRun(v cli.Values) error {
 	var consumer = sdk.AuthConsumer{
 		Name:            name,
 		Description:     description,
-		GroupIDs:        groupIDs,
-		ScopeDetails:    sdk.NewAuthConsumerScopeDetails(scopes...),
 		ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), duration),
+		AuthConsumerUser: &sdk.AuthConsumerUser{
+			GroupIDs:     groupIDs,
+			ScopeDetails: sdk.NewAuthConsumerScopeDetails(scopes...),
+		},
 	}
 
 	if svcName != "" {
-		consumer.ServiceName = &svcName
+		consumer.AuthConsumerUser.ServiceName = &svcName
 	}
 	if svcType != "" {
-		consumer.ServiceType = &svcType
+		consumer.AuthConsumerUser.ServiceType = &svcType
 	}
 	if svcRegion != "" {
-		consumer.ServiceRegion = &svcRegion
+		consumer.AuthConsumerUser.ServiceRegion = &svcRegion
 	}
 	if svcIgnoreJobWithNoRegion {
-		consumer.ServiceIgnoreJobWithNoRegion = &svcIgnoreJobWithNoRegion
+		consumer.AuthConsumerUser.ServiceIgnoreJobWithNoRegion = &svcIgnoreJobWithNoRegion
 	}
 
 	res, err := client.AuthConsumerCreateForUser(username, consumer)
