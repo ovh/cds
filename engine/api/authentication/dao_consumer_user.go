@@ -58,3 +58,39 @@ func UpdateConsumerUser(ctx context.Context, db gorpmapper.SqlExecutorWithTx, ac
 	*acu = c.AuthConsumerUser
 	return nil
 }
+
+func getAllConsumerUser(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query) ([]sdk.AuthConsumerUser, error) {
+	var dbAuthConsumerUsers []authConsumerUser
+	if err := gorpmapping.GetAll(ctx, db, q, &dbAuthConsumerUsers); err != nil {
+		return nil, sdk.WrapError(err, "cannot get auth consumer users")
+	}
+
+	authConsumerUsers := make([]sdk.AuthConsumerUser, 0, len(dbAuthConsumerUsers))
+	for _, cu := range dbAuthConsumerUsers {
+		isValid, err := gorpmapping.CheckSignature(cu, cu.Signature)
+		if err != nil {
+			return nil, err
+		}
+		if !isValid {
+			log.Error(ctx, "authentication.loadConsumerUser> auth consumer user %s data corrupted", cu.ID)
+			continue
+		}
+		authConsumerUsers = append(authConsumerUsers, cu.AuthConsumerUser)
+	}
+	return authConsumerUsers, nil
+}
+
+func loadConsumerUserByID(ctx context.Context, db gorp.SqlExecutor, userID string) ([]sdk.AuthConsumerUser, error) {
+	query := gorpmapping.NewQuery("SELECT * FROM auth_consumer_user WHERE user_id = $1").Args(userID)
+	return getAllConsumerUser(ctx, db, query)
+}
+
+func loadConsumerUsersByGroupID(ctx context.Context, db gorp.SqlExecutor, groupID int64) ([]sdk.AuthConsumerUser, error) {
+	query := gorpmapping.NewQuery("SELECT * FROM auth_consumer_user WHERE group_ids @> $1 OR invalid_group_ids @> $1").Args(groupID)
+	return getAllConsumerUser(ctx, db, query)
+}
+
+func loadConsumerByUserExternalID(ctx context.Context, db gorp.SqlExecutor, userExternalID string) ([]sdk.AuthConsumerUser, error) {
+	query := gorpmapping.NewQuery("SELECT * FROM auth_consumer_user WHERE (data->>'external_id')::text = $1").Args(userExternalID)
+	return getAllConsumerUser(ctx, db, query)
+}

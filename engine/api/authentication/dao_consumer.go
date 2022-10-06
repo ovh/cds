@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
@@ -33,19 +34,19 @@ func getConsumers(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query,
 		verifiedConsumers = append(verifiedConsumers, &cs[i].AuthConsumer)
 	}
 
-	if len(verifiedConsumers) > 0 {
-		for i := range opts {
-			if err := opts[i](ctx, db, verifiedConsumers...); err != nil {
-				return nil, err
-			}
-		}
-	}
-
 	consumers := make([]sdk.AuthConsumer, len(verifiedConsumers))
 	for i := range verifiedConsumers {
 		consumers[i] = *verifiedConsumers[i]
 		if err := loadConsumerUser(ctx, db, &consumers[i]); err != nil {
 			return nil, err
+		}
+	}
+
+	if len(verifiedConsumers) > 0 {
+		for i := range opts {
+			if err := opts[i](ctx, db, verifiedConsumers...); err != nil {
+				return nil, err
+			}
 		}
 	}
 
@@ -73,30 +74,56 @@ func getConsumer(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, 
 	}
 
 	ac := consumer.AuthConsumer
+
+	if err := loadConsumerUser(ctx, db, &ac); err != nil {
+		return nil, err
+	}
+
 	for i := range opts {
 		if err := opts[i](ctx, db, &ac); err != nil {
 			return nil, err
 		}
 	}
-
 	ac.ValidityPeriods.Sort()
-
-	if err := loadConsumerUser(ctx, db, &ac); err != nil {
-		return nil, err
-	}
 	return &ac, nil
 }
 
 // LoadConsumersByUserID returns auth consumers from database for given user id.
 func LoadConsumersByUserID(ctx context.Context, db gorp.SqlExecutor, id string, opts ...LoadConsumerOptionFunc) (sdk.AuthConsumers, error) {
-	query := gorpmapping.NewQuery("SELECT * FROM auth_consumer WHERE user_id = $1 ORDER BY created ASC").Args(id)
-	return getConsumers(ctx, db, query, opts...)
+	consumerUsers, err := loadConsumerUserByID(ctx, db, id)
+	if err != nil {
+		return nil, err
+	}
+	consumerIDs := make([]string, 0, len(consumerUsers))
+	for _, cu := range consumerUsers {
+		consumerIDs = append(consumerIDs, cu.AuthConsumerID)
+	}
+
+	query := gorpmapping.NewQuery("SELECT * FROM auth_consumer WHERE id = ANY($1) ORDER BY created ASC").Args(pq.StringArray(consumerIDs))
+	consumers, err := getConsumers(ctx, db, query, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return consumers, nil
 }
 
 // LoadConsumersByGroupID returns all consumers from database that refer to given group id.
 func LoadConsumersByGroupID(ctx context.Context, db gorp.SqlExecutor, groupID int64, opts ...LoadConsumerOptionFunc) (sdk.AuthConsumers, error) {
-	query := gorpmapping.NewQuery("SELECT * FROM auth_consumer WHERE group_ids @> $1 OR invalid_group_ids @> $1 ORDER BY created ASC").Args(groupID)
-	return getConsumers(ctx, db, query, opts...)
+	consumerUsers, err := loadConsumerUsersByGroupID(ctx, db, groupID)
+	if err != nil {
+		return nil, err
+	}
+	consumerIDs := make([]string, 0, len(consumerUsers))
+	for _, cu := range consumerUsers {
+		consumerIDs = append(consumerIDs, cu.AuthConsumerID)
+	}
+
+	query := gorpmapping.NewQuery("SELECT * FROM auth_consumer WHERE id = ANY($1) ORDER BY created ASC").Args(pq.StringArray(consumerIDs))
+	consumers, err := getConsumers(ctx, db, query, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return consumers, nil
 }
 
 // LoadConsumerByID returns an auth consumer from database.
@@ -107,14 +134,38 @@ func LoadConsumerByID(ctx context.Context, db gorp.SqlExecutor, id string, opts 
 
 // LoadConsumerByTypeAndUserID returns an auth consumer from database for given type and user id.
 func LoadConsumerByTypeAndUserID(ctx context.Context, db gorp.SqlExecutor, consumerType sdk.AuthConsumerType, userID string, opts ...LoadConsumerOptionFunc) (*sdk.AuthConsumer, error) {
-	query := gorpmapping.NewQuery("SELECT * FROM auth_consumer WHERE type = $1 AND user_id = $2").Args(consumerType, userID)
-	return getConsumer(ctx, db, query, opts...)
+	consumerUsers, err := loadConsumerUserByID(ctx, db, userID)
+	if err != nil {
+		return nil, err
+	}
+	consumerIDs := make([]string, 0, len(consumerUsers))
+	for _, cu := range consumerUsers {
+		consumerIDs = append(consumerIDs, cu.AuthConsumerID)
+	}
+	query := gorpmapping.NewQuery("SELECT * FROM auth_consumer WHERE type = $1 AND id = ANY($2)").Args(consumerType, pq.StringArray(consumerIDs))
+	consumer, err := getConsumer(ctx, db, query, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return consumer, nil
 }
 
 // LoadConsumerByTypeAndUserExternalID returns an auth consumer from database for given type and user id.
 func LoadConsumerByTypeAndUserExternalID(ctx context.Context, db gorp.SqlExecutor, consumerType sdk.AuthConsumerType, userExternalID string, opts ...LoadConsumerOptionFunc) (*sdk.AuthConsumer, error) {
-	query := gorpmapping.NewQuery("SELECT * FROM auth_consumer WHERE type = $1 AND (data->>'external_id')::text = $2").Args(consumerType, userExternalID)
-	return getConsumer(ctx, db, query, opts...)
+	consumerUsers, err := loadConsumerByUserExternalID(ctx, db, userExternalID)
+	if err != nil {
+		return nil, err
+	}
+	consumerIDs := make([]string, 0, len(consumerUsers))
+	for _, cu := range consumerUsers {
+		consumerIDs = append(consumerIDs, cu.AuthConsumerID)
+	}
+	query := gorpmapping.NewQuery("SELECT * FROM auth_consumer WHERE type = $1 AND id = ANY($2)").Args(consumerType, pq.StringArray(consumerIDs))
+	consumer, err := getConsumer(ctx, db, query, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return consumer, nil
 }
 
 // InsertConsumer in database.
