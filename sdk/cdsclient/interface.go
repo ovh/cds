@@ -418,6 +418,7 @@ type Interface interface {
 	ActionClient
 	Admin
 	APIURL() string
+	CDNURL() (string, error)
 	ApplicationClient
 	ConfigUser() (sdk.ConfigUser, error)
 	ConfigCDN() (sdk.CDNConfig, error)

@@ -8,9 +8,10 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-//Config is the configuration data used by the cdsclient interface implementation
+// Config is the configuration data used by the cdsclient interface implementation
 type Config struct {
 	Host                              string
+	CDNHost                           string
 	User                              string
 	SessionToken                      string
 	BuitinConsumerAuthenticationToken string
@@ -20,7 +21,7 @@ type Config struct {
 	Mutex                             *sync.Mutex
 }
 
-//ProviderConfig is the configuration data used by the cdsclient ProviderClient interface implementation
+// ProviderConfig is the configuration data used by the cdsclient ProviderClient interface implementation
 type ProviderConfig struct {
 	Host                  string
 	Token                 string
@@ -28,7 +29,7 @@ type ProviderConfig struct {
 	InsecureSkipVerifyTLS bool
 }
 
-//ServiceConfig is the configuration data used by the cdsclient interface implementation
+// ServiceConfig is the configuration data used by the cdsclient interface implementation
 type ServiceConfig struct {
 	Host                  string
 	Token                 string

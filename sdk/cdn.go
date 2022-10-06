@@ -117,7 +117,6 @@ type CDNLogLinkData struct {
 }
 
 type CDNLogLink struct {
-	CDNURL   string      `json:"cdn_url,omitempty"`
 	ItemType CDNItemType `json:"item_type"`
 	APIRef   string      `json:"api_ref"`
 }

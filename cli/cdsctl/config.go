@@ -125,6 +125,7 @@ func loadConfig(cmd *cobra.Command) (string, *cdsclient.Config, error) {
 
 	config := &cdsclient.Config{
 		Host:                              cdsctx.Host,
+		CDNHost:                           os.Getenv("CDS_CDN_URL"),
 		SessionToken:                      cdsctx.Session,
 		BuitinConsumerAuthenticationToken: cdsctx.Token,
 		Verbose:                           verbose,
