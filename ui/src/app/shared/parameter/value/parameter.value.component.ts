@@ -1,4 +1,15 @@
-import { AfterViewChecked, ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import {
+    AfterViewChecked,
+    ChangeDetectionStrategy,
+    Component,
+    EventEmitter,
+    Input,
+    OnChanges,
+    OnDestroy,
+    OnInit,
+    Output,
+    ViewChild
+} from '@angular/core';
 import { AllKeys, Key } from 'app/model/keys.model';
 import { Parameter } from 'app/model/parameter.model';
 import { Project } from 'app/model/project.model';
@@ -20,7 +31,7 @@ declare let CodeMirror: any;
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class ParameterValueComponent implements OnInit, AfterViewChecked, OnDestroy {
+export class ParameterValueComponent implements OnInit, AfterViewChecked, OnDestroy, OnChanges {
 
     editableValue: string | number | boolean;
     @Input() type: string;
@@ -77,7 +88,6 @@ export class ParameterValueComponent implements OnInit, AfterViewChecked, OnDest
     selectedRepoManager: RepositoriesManager;
     selectedRepo: string;
     loadingRepos: boolean;
-    connectRepos: boolean;
     alreadyRefreshed: boolean;
     list: Array<string>;
     themeSubscription: Subscription;
@@ -114,12 +124,18 @@ export class ParameterValueComponent implements OnInit, AfterViewChecked, OnDest
         });
     }
 
+    ngOnChanges(): void {
+        if (this.codemirror && this.codemirror.instance) {
+            this.codemirror.instance.refresh();
+        }
+    }
+
     ngAfterViewChecked(): void {
         if (this.codemirror && this.codemirror.instance && !this.alreadyRefreshed) {
             this.alreadyRefreshed = true;
             setTimeout(() => {
                 this.codemirror.instance.refresh();
-            }, 1);
+            }, 500);
         }
     }
 
