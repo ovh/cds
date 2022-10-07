@@ -10,15 +10,13 @@
     }
     margin-top: 100px !important;
     overflow-y: auto;
-    height: 87%;
+    height: 100%;
 
     nz-spin {
       margin-top: 30px;
       position: absolute;
       padding: 30px 50% 0 50%;
     }
-
-
 
   .transparent {
         background-color: transparent;
@@ -31,12 +29,12 @@
     .bottomBtnsWrapper {
       position: absolute;
       right: 0;
-      width: 100%;
-      padding-top: 20px;
-      padding-bottom: 20px;
+      bottom: 102px;
+      width: 440px;
+      //padding: 8px 3px;
 
       nz-row {
-        padding: 0 20px;
+        padding: 8px 13px;
         nz-col {
           padding-top: 5px;
           padding-bottom: 5px;

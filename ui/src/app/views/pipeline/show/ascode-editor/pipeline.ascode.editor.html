@@ -1,12 +1,10 @@
 <div class="sidebar codebar" [ngClass]="{'visible': open}">
-    <nz-row class="fullheight">
-        <nz-col nzSpan="24">
-            <nz-spin nzTip="Loading..." *ngIf="!exportedPip"></nz-spin>
-            <codemirror [(ngModel)]="exportedPip" (keydown)="updated = true; keyEvent($event)"
-                        [config]="codeMirrorConfig" #codeMirror>
-            </codemirror>
-        </nz-col>
-    </nz-row>
+    <div class="fullheight">
+        <nz-spin nzTip="Loading..." *ngIf="!exportedPip"></nz-spin>
+        <codemirror [(ngModel)]="exportedPip" (keydown)="updated = true; keyEvent($event)"
+                    [config]="codeMirrorConfig" #codeMirror>
+        </codemirror>
+    </div>
     <div class="nzSegment bottomBtnsWrapper" *ngIf="open && exportedPip">
         <nz-row>
             <nz-col nzSpan="24">

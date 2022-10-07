@@ -39,36 +39,36 @@
                         :host-context(.night) & {
                             color: $darkTheme_grey_6;
 
-                            .success.segment {
+                            .success.nzSegment {
                                 background-color: $darkTheme_night_green;
                             }
 
-                            .fail.segment {
+                            .fail.nzSegment {
                                 background-color: $darkTheme_night_red;
                             }
 
-                            .inactive.segment {
+                            .inactive.nzSegment {
                                 background-color: $darkTheme_night_grey;
                             }
 
-                            .building.segment {
+                            .building.nzSegment {
                                 background-color: $darkTheme_night_blue;
                             }
                         }
 
-                        .success.segment {
+                        .success.nzSegment {
                             background-color: $cds_color_light_green;
                         }
 
-                        .fail.segment {
+                        .fail.nzSegment {
                             background-color: $cds_color_light_red;
                         }
 
-                        .inactive.segment {
+                        .inactive.nzSegment {
                             background-color: $cds_color_light_grey;
                         }
 
-                        .building.segment {
+                        .building.nzSegment {
                             background-color: $cds_color_light_teal;
                         }
 
