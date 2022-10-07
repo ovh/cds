@@ -82,7 +82,7 @@ func (api *API) postAdminOrganizationHandler() service.Handler {
 
 func (api *API) getAdminOrganizationsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		orgas, err := organization.LoadAllOrganizations(ctx, api.mustDB())
+		orgas, err := organization.LoadOrganizations(ctx, api.mustDB())
 		if err != nil {
 			return err
 		}

@@ -1,82 +1,63 @@
 <div class="scrollable">
     <div id="AddPipeline">
-        <div class="ui form">
-            <h2>{{ 'pipeline_create' | translate }}</h2>
-
-            <div class="ui grid">
-                <div class="ui row">
-                    <div class="one wide column"></div>
-                    <div class="fourteen wide column">
-                        <div class="two ui buttons">
-                            <button class="ui button" type="button" [class.active]="!asCode" [class.blue]="!asCode"
-                                (click)="asCode = false">
-                                {{'common_create' | translate}}
-                            </button>
-                            <button class="ui button" type="button" [class.blue]="asCode" [class.active]="asCode"
+        <form nz-form>
+            <h2>Create a pipeline</h2>
+            <nz-row class="header">
+                <nz-col nzOffset="2" nzSpan="20">
+                    <nz-button-group>
+                        <button nz-button type="button" [nzType]="!asCode?'primary':'default'" (click)="asCode = false">
+                            Create
+                        </button>
+                        <button nz-button type="button" [nzType]="asCode?'primary':'default'"
                                 (click)="asCode = true">
-                                {{'common_import' | translate}}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <ng-container *ngIf="asCode">
-                    <div class="ui row">
-                        <div class="sixteen wide column centered">
-                            <app-upload-button accept=".yml,.yaml" size="large" (event)="fileEvent($event)">
-                            </app-upload-button>
-                        </div>
-                    </div>
-                    <div class="ui row">
-                        <div class="one wide column"></div>
-                        <div class="fourteen wide column">
-                            <div class="ui horizontal divider">
-                                {{'common_or' | translate}}
-                            </div>
-                        </div>
-                    </div>
-                </ng-container>
+                           Import
+                        </button>
+                    </nz-button-group>
+                </nz-col>
+            </nz-row>
+            <nz-row *ngIf="asCode">
+                <nz-col nzOffset="2" nzSpan="20" class="center">
+                    <app-upload-button accept=".yml,.yaml" size="large" (event)="fileEvent($event)"></app-upload-button>
+                </nz-col>
+                <nz-col nzOffset="2" nzSpan="20">
+                    <nz-divider nzText="OR"></nz-divider>
+                </nz-col>
+                <nz-col nzOffset="2" nzSpan="20">
+                    <codemirror name="pipToImport" [(ngModel)]="pipToImport" (keydown)="updated = true"
+                                    [config]="codeMirrorConfig" #codeMirror></codemirror>
+                </nz-col>
+                <nz-col nzOffset="2" nzSpan="20" class="footer">
+                    <button nz-button type="button" (click)="goToProject()">Cancel</button>
+                    <button nz-button nzType="primary"  type="button" (click)="importPipeline()" class="right"
+                            *ngIf="asCode" [disabled]="!pipToImport" [nzLoading]="loadingCreate">Create
+                    </button>
+                </nz-col>
+            </nz-row>
 
-                <div class="ui row">
-                    <div class="one wide column">
-                    </div>
-                    <div class="fourteen wide column" *ngIf="!asCode">
-                        <div class="field">
-                            <label>{{'pipeline_name' | translate}}</label>
-                            <input type="text" name="pipname" [(ngModel)]="newPipeline.name">
-                            <div class="ui error message" *ngIf="pipPatternError">
-                                {{ 'pipeline_name_error' | translate }}
-                            </div>
-                        </div>
-                        <div class="field">
-                            <label>{{'pipeline_description' | translate}}</label>
-                            <textarea type="text" name="pipdescription" [(ngModel)]="newPipeline.description"></textarea>
-                        </div>
-                        <div class="field">
-                            <a class="ui button" [routerLink]="['/project', project.key]" [queryParams]="{ tab: 'pipelines'}">{{
-                                'btn_cancel' | translate }}</a>
-                            <button class="ui green right floated button" [class.loading]="loadingCreate"
-                                [class.disabled]="!newPipeline.name || newPipeline.name === ''" (click)="createPipeline()">{{
-                                'btn_create' | translate }}
-                            </button>
-                        </div>
-                    </div>
-                    <div class="fourteen wide column" *ngIf="asCode">
-                        <div class="field">
-                            <codemirror name="pipToImport" [(ngModel)]="pipToImport" (keydown)="updated = true"
-                                [config]="codeMirrorConfig" #codeMirror>
-                            </codemirror>
-                        </div>
-                        <div class="field">
-                            <button class="ui button" type="button" (click)="goToProject()">{{ 'btn_cancel' | translate
-                                }}</button>
-                            <button class="ui right floated green button" type="button" (click)="importPipeline()"
-                                *ngIf="asCode" [disabled]="!pipToImport" [class.loading]="loadingCreate">{{
-                                'btn_create' | translate }}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+            <nz-row *ngIf="!asCode">
+                <nz-col nzSpan="20" nzOffset="2">
+                    <nz-form-item>
+                        <nz-form-label nzSpan="3">Pipeline name</nz-form-label>
+                        <nz-form-control>
+                            <input nz-input type="text" name="pipname" [(ngModel)]="newPipeline.name">
+                        </nz-form-control>
+                        <nz-alert *ngIf="pipPatternError" nzType="error" nzMessage="Invalid pipeline name. Allowed pattern is: a-zA-Z0-9._-"></nz-alert>
+                    </nz-form-item>
+                    <nz-form-item>
+                        <nz-form-label nzSpan="3">Description</nz-form-label>
+                        <nz-form-control>
+                            <textarea nz-input type="text" name="pipdescription" [(ngModel)]="newPipeline.description"></textarea>
+                        </nz-form-control>
+                    </nz-form-item>
+                </nz-col>
+                <nz-col nzSpan="20" nzOffset="2" class="footer">
+                    <button nz-button [routerLink]="['/project', project.key]" [queryParams]="{ tab: 'pipelines'}">Cancel</button>
+                    <button nz-button nzType="primary" class="right" [nzLoading]="loadingCreate"
+                            [disabled]="!newPipeline.name || newPipeline.name === ''" (click)="createPipeline()">Create
+                    </button>
+                </nz-col>
+
+            </nz-row>
+        </form>
     </div>
 </div>

@@ -71,5 +71,6 @@ globals:
 
 	var orgs []sdk.Organization
 	require.NoError(t, json.Unmarshal(wList.Body.Bytes(), &orgs))
-	require.Len(t, orgs, 0)
+	require.Len(t, orgs, 1)
+	require.Equal(t, "default", orgs[0].Name)
 }

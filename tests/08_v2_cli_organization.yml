@@ -17,7 +17,7 @@ testcases:
     - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental organization list --format json
       assertions:
         - result.code ShouldEqual 0
-        - result.systemoutjson.systemoutjson0.name ShouldEqual myorg
+        - result.systemoutjson.__len__ ShouldEqual 2
 
 - name: remove organization
   steps:

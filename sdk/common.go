@@ -225,6 +225,19 @@ func (s StringSlice) Contains(value string) bool {
 	return false
 }
 
+// Remove duplicated value from slice.
+func (s *StringSlice) Unique() {
+	m := make(map[string]struct{})
+	for _, i := range *s {
+		m[i] = struct{}{}
+	}
+	unique := make([]string, 0, len(m))
+	for k := range m {
+		unique = append(unique, k)
+	}
+	*s = unique
+}
+
 // Int64Slice type used for database json storage.
 type Int64Slice []int64
 

@@ -1,31 +1,28 @@
-<div class="sidebar codebar" [ngClass]="{'visible animated fadeInRight': open}">
-    <nz-row class="fullheight">
-        <nz-col [nzSpan]="24">
-            <codemirror
-                    [(ngModel)]="exportedWf"
+<div class="sidebar codebar" [ngClass]="{'visible': open}">
+    <div class="fullheight">
+        <codemirror [(ngModel)]="exportedWf"
                     (keydown)="updated = true; keyEvent($event)"
                     [config]="codeMirrorConfig" #codeMirror>
             </codemirror>
-        </nz-col>
-        <div class="nzSegment bottomBtnsWrapper">
-            <nz-row>
-                <nz-col [nzSpan]="24">
-                    <button nz-button nzBlock  name="previewbtn" [disabled]="loading || (workflow.from_repository && workflow.from_repository.length > 0) || !workflow.permissions.writable" [nzLoading]="loading" (click)="preview()">
-                        <span nz-icon nzType="eye" nzTheme="outline"></span> Preview
-                    </button>
-                </nz-col>
-                <nz-col [nzSpan]="11">
-                    <button nz-button nzBlock nzType="primary" name="updatebtn" [disabled]="loading || (workflow.from_repository && workflow.from_repository.length > 0) || !workflow.permissions.writable" [nzLoading]="loading" (click)="save()">
-                        <span nz-icon nzType="save" nzTheme="outline"></span>Save
-                    </button>
-                </nz-col>
-                <nz-col [nzSpan]="11" [nzOffset]="2">
-                    <button nz-button nzBlock nzDanger nzType="primary" name="cancelbtn" [disabled]="loading" [nzLoading]="loading" (click)="cancel()">
-                        <span nz-icon nzType="close" nzTheme="outline"></span>Close
-                    </button>
-                </nz-col>
-            </nz-row>
-        </div>
-    </nz-row>
+    </div>
+    <div class="nzSegment bottomBtnsWrapper" *ngIf="open">
+        <nz-row>
+            <nz-col [nzSpan]="24">
+                <button nz-button nzBlock  name="previewbtn" [disabled]="loading || (workflow.from_repository && workflow.from_repository.length > 0) || !workflow.permissions.writable" [nzLoading]="loading" (click)="preview()">
+                    <span nz-icon nzType="eye" nzTheme="outline"></span> Preview
+                </button>
+            </nz-col>
+            <nz-col [nzSpan]="11">
+                <button nz-button nzBlock nzType="primary" name="updatebtn" [disabled]="loading || (workflow.from_repository && workflow.from_repository.length > 0) || !workflow.permissions.writable" [nzLoading]="loading" (click)="save()">
+                    <span nz-icon nzType="save" nzTheme="outline"></span>Save
+                </button>
+            </nz-col>
+            <nz-col [nzSpan]="11" [nzOffset]="2">
+                <button nz-button nzBlock nzDanger nzType="primary" name="cancelbtn" [disabled]="loading" [nzLoading]="loading" (click)="cancel()">
+                    <span nz-icon nzType="close" nzTheme="outline"></span>Close
+                </button>
+            </nz-col>
+        </nz-row>
+    </div>
     <nz-spin *ngIf="loadingGet" nzTip="Loading..."></nz-spin>
 </div>

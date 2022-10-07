@@ -294,13 +294,13 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 
 		consumer := getAPIConsumer(ctx)
 
-		var pushOptions *workflow.PushOption
+		pushOptions := &workflow.PushOption{}
 		if r.Header.Get(sdk.WorkflowAsCodeHeader) != "" {
-			pushOptions = &workflow.PushOption{
-				FromRepository:  r.Header.Get(sdk.WorkflowAsCodeHeader),
-				IsDefaultBranch: true,
-				Force:           service.FormBool(r, "force"),
-			}
+			pushOptions.FromRepository = r.Header.Get(sdk.WorkflowAsCodeHeader)
+			pushOptions.IsDefaultBranch = true
+		}
+		if service.FormBool(r, "force") {
+			pushOptions.Force = true
 		}
 
 		//Load project
