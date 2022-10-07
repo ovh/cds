@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/olivere/elastic/v7"
 	"github.com/rockbears/log"
 	"github.com/sguiheux/go-coverage"
-	"gopkg.in/olivere/elastic.v6"
 
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
@@ -68,7 +68,7 @@ func GetMetrics(ctx context.Context, db gorp.SqlExecutor, key string, appID int6
 
 	events := make([]json.RawMessage, len(esMetrics))
 	for i := range esMetrics {
-		events[len(esMetrics)-1-i] = *esMetrics[i].Source
+		events[len(esMetrics)-1-i] = esMetrics[i].Source
 	}
 	return events, nil
 }

@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/olivere/elastic/v7"
 	"github.com/rockbears/log"
-	"gopkg.in/olivere/elastic.v6"
 
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -160,7 +160,7 @@ func (s *Service) loadMetric(ctx context.Context, ID string) (sdk.Metric, error)
 		return m, nil
 	}
 
-	if err := sdk.JSONUnmarshal(*results.Hits.Hits[0].Source, &m); err != nil {
+	if err := sdk.JSONUnmarshal(results.Hits.Hits[0].Source, &m); err != nil {
 		return m, err
 	}
 	return m, nil

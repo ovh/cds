@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/olivere/elastic/v7"
 	"github.com/rockbears/log"
-	"gopkg.in/olivere/elastic.v6"
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/sdk"
