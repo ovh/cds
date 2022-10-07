@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 
 	"github.com/go-gorp/gorp"
+	"github.com/olivere/elastic/v7"
 	"github.com/rockbears/log"
-	"gopkg.in/olivere/elastic.v6"
 
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/cache"
@@ -65,7 +65,7 @@ func GetEvents(ctx context.Context, db gorp.SqlExecutor, store cache.Store, filt
 
 	events := make([]json.RawMessage, 0, len(esEvents))
 	for _, h := range esEvents {
-		events = append(events, *h.Source)
+		events = append(events, h.Source)
 	}
 	return events, nil
 }
