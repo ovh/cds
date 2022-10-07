@@ -134,6 +134,11 @@ app-workflow-admin .CodeMirror-scroll {
     min-height: 180px;
 }
 
+.CodeMirror-wrap pre.CodeMirror-line {
+  word-break: break-all;
+}
+
+
 .fullheight {
     .CodeMirror {
         height: 100% !important;
