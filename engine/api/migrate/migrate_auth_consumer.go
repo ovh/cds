@@ -2,13 +2,28 @@ package migrate
 
 import (
 	"context"
-	"github.com/ovh/cds/engine/api/authentication"
-	"github.com/ovh/cds/sdk"
+	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
+
+	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/ovh/cds/engine/cache"
+	"github.com/ovh/cds/sdk"
 )
 
-func MigrateConsumers(ctx context.Context, db *gorp.DbMap) error {
+func MigrateConsumers(ctx context.Context, db *gorp.DbMap, c cache.Store) error {
+	b, err := c.Lock(cache.Key("migrate", "consumer", "lock"), 300*time.Second, -1, -1)
+	if err != nil {
+		log.ErrorWithStackTrace(ctx, sdk.WithStack(err))
+		return err
+	}
+	if !b {
+		log.Info(ctx, "MigrateConsumers> Lock is already taken")
+		return nil
+	}
+	log.Info(ctx, "MigrateConsumers> Lock took")
+
 	oldConsumers, err := authentication.LoadOldConsumers(ctx, db)
 	if err != nil {
 		return err
