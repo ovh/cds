@@ -17,34 +17,73 @@ This integration enables some features:
  - Send build notifications on your Pull-Requests and Commits on GitLab. [More informations]({{<relref "/docs/concepts/workflow/notifications.md#vcs-notifications" >}})
 
 
-### Create the Personal Access Token on GitLab
+## How to configure GitLab integration
 
-Generate a new token on https://gitlab.com/-/profile/personal_access_tokens with the following scopes:
- - api
- - read_api
+What you need to perform the following steps:
+
+ - GitLab admin privileges
+
+### Create a CDS application on GitLab
+
+Notice: if you have already a CDS Application in GitLab for CDS Authentication, you can't reuse it for Repository Manager.
+
+In GitLab go to *Settings* / *Application* section. Create a new application with:
+
+ - Name: **CDS VCS**
+ - Redirect URI: **https://your-cds-api/repositories_manager/oauth2/callback**
+
+Example for a local configuration:
+- with API through /cdsapi proxy on ui, Redirect URI will be `http://localhost:8080/cdsapi/repositories_manager/oauth2/callback`
+
+Scopes:
+
+ - API
  - read_user
- - read_repository
- - write_repository
+ - read_registry
 
-### Import configuration
+### Complete CDS Configuration File
 
-Create a yml file:
+Set value to `appId` and `secret`
+
 
 ```yaml
-version: v1.0
-name: gitlab
-type: gitlab
-description: "my gitlab"
-auth:
-    username: your-username
-    token: glpat_your-token-here
-options:
-    disableStatus: false    # Set to true if you don't want CDS to push statuses on the VCS server - optional
-    disableStatusDetails: false # Set to true if you don't want CDS to push CDS URL in statuses on the VCS server - optional
-    disablePolling: false   # Does polling is supported by VCS Server - optional
-    disableWebHooks: false  # Does webhooks are supported by VCS Server - optional
+    [vcs.servers.Gitlab]
+
+      # URL of this VCS Server
+      url = "https://gitlab.com"
+
+      [vcs.servers.Gitlab.gitlab]
+
+        #######
+        # CDS <-> GitLab. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/gitlab/
+        ########
+        appId = "xxxx"
+
+        # Does polling is supported by VCS Server
+        disablePolling = false
+
+        # Does webhooks are supported by VCS Server
+        disableWebHooks = false
+
+        # If you want to have a reverse proxy URL for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK
+        # proxyWebhook = ""
+        secret = "xxxx"
+
+        [vcs.servers.Gitlab.gitlab.Status]
+
+          # Set to true if you don't want CDS to push statuses on the VCS server
+          # disable = false
+
+          # Set to true if you don't want CDS to push CDS URL in statuses on the VCS server
+          # showDetail = false
 ```
 
-```sh
-cdsctl experimental project vcs import YOUR_CDS_PROJECT_KEY vcs-gitlab.yml
+
+## Start the vcs µService
+
+```bash
+$ engine start vcs
+
+# you can also start CDS api and vcs in the same process:
+$ engine start api vcs
 ```
