@@ -8,7 +8,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"strings"
 	"sync"
@@ -102,7 +101,7 @@ func (s *Service) CheckHmac256Signature(headerName string) service.Middleware {
 			return ctx, sdk.NewErrorFrom(sdk.ErrUnauthorized, "unable to check signature")
 		}
 
-		newRequestBody := ioutil.NopCloser(bytes.NewBuffer(body))
+		newRequestBody := io.NopCloser(bytes.NewBuffer(body))
 		req.Body = newRequestBody
 
 		// Create a new HMAC by defining the hash type and the key (as byte array)
