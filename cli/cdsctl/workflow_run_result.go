@@ -65,7 +65,7 @@ func workflowRunResultGet(v cli.Values) error {
 	}
 	resultID := v.GetString("result-id")
 
-	confCDN, err := client.ConfigCDN()
+	cdnURL, err := client.CDNURL()
 	if err != nil {
 		return err
 	}
@@ -165,7 +165,7 @@ func workflowRunResultGet(v cli.Values) error {
 				return cli.NewError("unable to open file %s: %s", fileName, err)
 			}
 			fmt.Printf("Downloading %s...\n", fileName)
-			if err := client.CDNItemDownload(context.Background(), confCDN.HTTPURL, cdnHash, sdk.CDNTypeItemRunResult, md5, f); err != nil {
+			if err := client.CDNItemDownload(context.Background(), cdnURL, cdnHash, sdk.CDNTypeItemRunResult, md5, f); err != nil {
 				_ = f.Close()
 				return err
 			}

@@ -134,11 +134,6 @@ func (api *API) getWorkflowNodeRunJobLogLinkHandler(ctx context.Context, w http.
 		return sdk.NewErrorFrom(err, "invalid node job id")
 	}
 
-	httpURL, err := services.GetCDNPublicHTTPAdress(ctx, api.mustDB())
-	if err != nil {
-		return err
-	}
-
 	nodeRun, err := workflow.LoadNodeRun(api.mustDB(), projectKey, workflowName, nodeRunID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
 	if err != nil {
 		return sdk.WrapError(err, "cannot find nodeRun %d for workflow %s in project %s", nodeRunID, workflowName, projectKey)
@@ -221,7 +216,6 @@ func (api *API) getWorkflowNodeRunJobLogLinkHandler(ctx context.Context, w http.
 	apiRefHash := strconv.FormatUint(apiRefHashU, 10)
 
 	return service.WriteJSON(w, sdk.CDNLogLink{
-		CDNURL:   httpURL,
 		ItemType: itemType,
 		APIRef:   apiRefHash,
 	}, http.StatusOK)

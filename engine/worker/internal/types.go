@@ -28,6 +28,7 @@ const (
 
 	// CDS API URL
 	CDSApiUrl = "CDS_API_URL"
+	CDSCDNUrl = "CDS_CDN_URL"
 )
 
 type logger struct {
@@ -280,6 +281,7 @@ func (wk *CurrentWorker) Environ() []string {
 	newEnv = append(newEnv, "CDS_KEY=********") //We have to let it here for some legacy reason
 	newEnv = append(newEnv, fmt.Sprintf("%s=%d", WorkerServerPort, wk.HTTPPort()))
 	newEnv = append(newEnv, fmt.Sprintf("%s=%s", CDSApiUrl, wk.cfg.APIEndpoint))
+	newEnv = append(newEnv, fmt.Sprintf("%s=%s", CDSCDNUrl, wk.cfg.CDNEndpoint))
 
 	if wk.currentJob.wJob != nil {
 		data := []byte(wk.currentJob.wJob.Job.Job.Action.Name)

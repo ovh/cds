@@ -190,6 +190,17 @@ func (c *client) APIURL() string {
 	return c.config.Host
 }
 
+func (c *client) CDNURL() (string, error) {
+	if c.config.CDNHost == "" {
+		confCDN, err := c.ConfigCDN()
+		if err != nil {
+			return "", err
+		}
+		c.config.CDNHost = confCDN.HTTPURL
+	}
+	return c.config.CDNHost, nil
+}
+
 func (c *client) HTTPClient() *http.Client {
 	return c.httpClient
 }
