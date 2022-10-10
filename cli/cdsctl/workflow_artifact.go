@@ -44,6 +44,11 @@ var workflowArtifactDownloadCmd = cli.Command{
 			Usage:   "exclude files from download - could be a regex: *.log",
 			Default: "",
 		},
+		{
+			Name:    "cdn-url",
+			Usage:   "overwrite cdn url (deprecated)",
+			Default: "",
+		},
 	},
 }
 
@@ -53,7 +58,12 @@ func workflowArtifactDownloadRun(v cli.Values) error {
 		return cli.NewError("number parameter have to be an integer")
 	}
 
-	cdnURL, err := client.CDNURL()
+	cdnURL := v.GetString("cdn-url")
+	if cdnURL != "" {
+		fmt.Printf("Flag cdn-url is deprecated, use CDS_CDN_URL env variable instead\n")
+	}
+
+	cdnURL, err = client.CDNURL()
 	if err != nil {
 		return err
 	}
