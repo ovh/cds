@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -15,7 +15,7 @@ import (
 func runHTTPServer(t *testing.T) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		require.Equal(t, "/distribution/api/v1/release_bundle", r.RequestURI)
-		content, err := ioutil.ReadAll(r.Body)
+		content, err := io.ReadAll(r.Body)
 		require.NoError(t, err)
 		defer r.Body.Close() // nolint
 		require.Equal(t, "{\"name\":\"the_name\",\"version\":\"1.0.0\",\"dry_run\":false,\"sign_immediately\":true,\"description\":\"the_description\",\"spec\":{\"queries\":[{\"aql\":\"items.find({\\\"path\\\":{\\\"$ne\\\":\\\".\\\"},\\\"$or\\\":[{\\\"$and\\\":[{\\\"repo\\\":\\\"sgu-cicd-cds-snapshot\\\",\\\"path\\\":\\\"FSAMIN/test/55\\\",\\\"name\\\":\\\"file.txt\\\"}]}]}).include(\\\"name\\\",\\\"repo\\\",\\\"path\\\",\\\"actual_md5\\\",\\\"actual_sha1\\\",\\\"sha256\\\",\\\"size\\\",\\\"type\\\",\\\"modified\\\",\\\"created\\\")\",\"mappings\":[{\"input\":\"^sgu-cicd-cds-snapshot/FSAMIN/test/55/file\\\\.txt$\",\"output\":\"sgu-cicd-cds-release/FSAMIN/test/55/file.txt\"}]}]}}", string(content))
