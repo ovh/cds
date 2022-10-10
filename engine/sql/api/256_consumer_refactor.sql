@@ -41,6 +41,8 @@ DELETE FROM auth_session;
 SELECT create_foreign_key_idx_cascade('FK_AUTH_SESSION_CONSUMER', 'auth_session', 'auth_consumer', 'consumer_id', 'id');
 
 -- +migrate Down
+DELETE FROM auth_session;
 DROP TABLE auth_consumer_user;
-DROP TABLE auth_consumer;
+DROP TABLE auth_consumer CASCADE;
 ALTER TABLE auth_consumer_old RENAME TO auth_consumer;
+SELECT create_foreign_key_idx_cascade('FK_AUTH_SESSION_CONSUMER', 'auth_session', 'auth_consumer', 'consumer_id', 'id');
