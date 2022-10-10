@@ -460,7 +460,7 @@ func UpdateRunResult(ctx context.Context, db gorp.SqlExecutor, result *sdk.Workf
 func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorpmapper.SqlExecutorWithTx, workflowRunID int64) error {
 	log.Info(ctx, "Sync run results for workflow run id %d", workflowRunID)
 
-	wr, err := LoadAndLockRunByID(ctx, db, workflowRunID, LoadRunOptions{})
+	wr, err := LoadRunByID(ctx, db, workflowRunID, LoadRunOptions{})
 	if err != nil {
 		return err
 	}
@@ -656,7 +656,7 @@ func ProcessRunResultPromotionByRunID(ctx context.Context, db gorpmapper.SqlExec
 	log.Info(ctx, "Process promotion for run results %v and workflow run with id %d to maturity %s",
 		promotionRequest.IDs, workflowRunID, promotionRequest.ToMaturity)
 
-	wr, err := LoadAndLockRunByID(ctx, db, workflowRunID, LoadRunOptions{})
+	wr, err := LoadRunByID(ctx, db, workflowRunID, LoadRunOptions{})
 	if err != nil {
 		return err
 	}
