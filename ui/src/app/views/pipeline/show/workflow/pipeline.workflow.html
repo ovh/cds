@@ -1,76 +1,75 @@
 <div id="PipelineEditWorkflow">
-    <div class="ui grid">
-        <div class="row" *ngIf="!editMode">
-            <div class="ui sixteen column centered">
-                <div class="ui buttons">
-                    <div class="ui blue button" (click)="showAsCodeEditor()">
-                        <i class="terminal icon"></i> {{'workflow_edit_as_code' | translate}}
-                        <i class="orange warning sign icon ml5" *ngIf="previewMode" nz-tooltip
-                           nzTooltipTitle="Your pipeline is in preview mode">
-                        </i>
-                    </div>
-                    <div *ngIf="previewMode" class="ui green button" (click)="savePreview()">
-                        <i class="save icon"></i> {{'btn_save' | translate}}
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="row">
-            <div class="column">
-                <ul *ngIf="pipeline" class="dragula-container" [dragula]="'bag-stage'"
-                    [(dragulaModel)]="pipeline.stages">
-                    <li *ngFor="let stage of pipeline.stages" class="stage" id="step{{stage.build_order}}"
-                        [class.two]="pipeline.stages.length === 1" [class.three]="pipeline.stages.length === 2"
-                        [class.four]="pipeline.stages.length === 3" [class.five]="pipeline.stages.length === 4"
-                        [class.six]="pipeline.stages.length === 5" [class.seven]="pipeline.stages.length === 6">
-                        <div class="stageItem">
-                            <a class="pointing" (click)="openEditModal(stage)"><i
-                                    class="setting icon"></i>{{stage.name}}</a>
-                            <i class="right floated move icon"></i>
-                            <ul>
-                                <li *ngFor="let j of stage.jobs; let i = index" id="Job{{i}}">
-                                    <div class="job ui segment pointing" [class.inactive]="!j.enabled"
-                                        (click)="selectJob(j, stage)" [class.active]="selectedJob &&
+
+    <nz-row *ngIf="!editMode">
+        <nz-col [nzSpan]="24" class="center">
+
+            <button nz-button nzType="primary" (click)="showAsCodeEditor()">
+                <span nz-icon nzType="code" nzTheme="outline"></span> Edit as code
+                <span nz-icon nzType="warning" nzTheme="outline" class="orange" *ngIf="previewMode" nz-tooltip
+                      nzTooltipTitle="Your pipeline is in preview mode"></span>
+            </button>
+            <button class="saveBtn" *ngIf="previewMode" nz-button nzType="primary" (click)="savePreview()">
+                <span nz-icon nzType="save" nzTheme="outline"></span> Save
+            </button>
+
+        </nz-col>
+    </nz-row>
+    <nz-row>
+        <nz-col [nzSpan]="24">
+            <ul *ngIf="pipeline" class="dragula-container" [dragula]="'bag-stage'"
+                [(dragulaModel)]="pipeline.stages">
+                <li *ngFor="let stage of pipeline.stages" class="stage" id="step{{stage.build_order}}"
+                    [class.two]="pipeline.stages.length === 1" [class.three]="pipeline.stages.length === 2"
+                    [class.four]="pipeline.stages.length === 3" [class.five]="pipeline.stages.length === 4"
+                    [class.six]="pipeline.stages.length === 5" [class.seven]="pipeline.stages.length === 6">
+                    <div class="stageItem">
+                        <a class="pointing" (click)="openEditModal(stage)"><i
+                                class="setting icon"></i>{{stage.name}}</a>
+                        <i class="right floated move icon"></i>
+                        <ul>
+                            <li *ngFor="let j of stage.jobs; let i = index" id="Job{{i}}">
+                                <div class="job ui segment pointing" [class.inactive]="!j.enabled"
+                                     (click)="selectJob(j, stage)" [class.active]="selectedJob &&
                                         (!j.ref && j.pipeline_action_id === selectedJob?.pipeline_action_id) ||
                                         (j.ref && j.ref === selectedJob?.ref)">
-                                        <span class="ellipsis" title="{{j.action.name}}">{{j.action.name}}</span>
-                                    </div>
-                                </li>
-                                <li *ngIf="!readOnly" class="new job">
-                                    <div class="new job ui segment pointing" (click)="addJob(stage)">
+                                    <span class="ellipsis" title="{{j.action.name}}">{{j.action.name}}</span>
+                                </div>
+                            </li>
+                            <li *ngIf="!readOnly" class="new job">
+                                <div class="new job ui segment pointing" (click)="addJob(stage)">
                                         <span class="ellipsis" title="{{ 'step_add_job' | translate }}">
                                             {{ 'step_add_job' | translate }}
                                         </span>
-                                    </div>
-                                </li>
-                            </ul>
-                        </div>
-                    </li>
-                    <li *ngIf="!readOnly" class="stage" [class.one]="pipeline.stages.length === 0"
-                        [class.two]="pipeline.stages.length === 1" [class.three]="pipeline.stages.length === 2"
-                        [class.four]="pipeline.stages.length === 3" [class.five]="pipeline.stages.length === 4"
-                        [class.six]="pipeline.stages.length === 5" [class.seven]="pipeline.stages.length === 6">
-                        <div class="new stageItem">
-                            <ul>
-                                <li class="job">
-                                    <div id="AddStageAndJob" class="new job ui segment pointing"
-                                        (click)="addStageAndJob()">
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+                <li *ngIf="!readOnly" class="stage" [class.one]="pipeline.stages.length === 0"
+                    [class.two]="pipeline.stages.length === 1" [class.three]="pipeline.stages.length === 2"
+                    [class.four]="pipeline.stages.length === 3" [class.five]="pipeline.stages.length === 4"
+                    [class.six]="pipeline.stages.length === 5" [class.seven]="pipeline.stages.length === 6">
+                    <div class="new stageItem">
+                        <ul>
+                            <li class="job">
+                                <div id="AddStageAndJob" class="new job ui segment pointing"
+                                     (click)="addStageAndJob()">
                                         <span class="ellipsis" title="{{ 'step_add_job' | translate }}">
                                             {{ 'step_add_job' | translate }}
                                         </span>
-                                    </div>
-                                </li>
-                            </ul>
-                        </div>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+            </ul>
+        </nz-col>
+    </nz-row>
+
     <div *ngIf="selectedJob && pipeline" class="mb130">
         <app-action [project]="project" [suggest]="suggest" [action]="selectedJob.action" [pipeline]="pipeline"
-            [stage]="selectedStage" [keys]="keys" [edit]="!readOnly" [editPipelineMode]="editMode"
-            (actionEvent)="jobEvent($event)">
+                    [stage]="selectedStage" [keys]="keys" [edit]="!readOnly" [editPipelineMode]="editMode"
+                    (actionEvent)="jobEvent($event)">
         </app-action>
     </div>
 </div>
@@ -82,7 +81,8 @@
     </div>
     <div *nzModalFooter>
         <button nz-button [disabled]="loadingStage"
-                (click)="stageModalVisible = false">Cancel</button>
+                (click)="stageModalVisible = false">Cancel
+        </button>
         <button nz-button nzType="primary" *ngIf="!readOnly" [disabled]="loadingStage" [nzLoading]="loadingStage"
                 (click)="stageEvent('update')">
             <span *ngIf="!editMode">Save</span>

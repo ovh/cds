@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -162,7 +161,7 @@ func (ac *Client) newRequest(method, uri string, obj interface{}) (*http.Request
 		if err != nil {
 			return nil, fmt.Errorf("unable to encode request body: %w", err)
 		}
-		body = ioutil.NopCloser(bytes.NewReader(objData))
+		body = io.NopCloser(bytes.NewReader(objData))
 	}
 
 	req, err := http.NewRequest(method, ac.host+uri, body)
@@ -179,7 +178,7 @@ func (ac *Client) doRequest(req *http.Request, respObject interface{}) (int, []b
 	}
 	defer resp.Body.Close()
 
-	rawBody, err := ioutil.ReadAll(resp.Body)
+	rawBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return resp.StatusCode, nil, fmt.Errorf("failed to read body from %s %s: %w", req.Method, req.URL, err)
 	}

@@ -9,9 +9,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/olivere/elastic/v7"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/olivere/elastic.v6"
 
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -98,7 +98,7 @@ func Test_getTimelineHandler(t *testing.T) {
 				for i := range res {
 					buf, _ := json.Marshal(res[i])
 					raw := json.RawMessage(buf)
-					hits = append(hits, elastic.SearchHit{Source: &raw})
+					hits = append(hits, elastic.SearchHit{Source: raw})
 				}
 
 				if err := enc.Encode(hits); err != nil {

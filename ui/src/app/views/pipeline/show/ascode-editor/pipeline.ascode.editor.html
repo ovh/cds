@@ -1,30 +1,29 @@
-<div class="ui right floated sidebar codebar" [ngClass]="{'visible animated fadeInRight': open}">
-    <div class="ui row fullheight">
+<div class="sidebar codebar" [ngClass]="{'visible': open}">
+    <div class="fullheight">
+        <nz-spin nzTip="Loading..." *ngIf="!exportedPip"></nz-spin>
         <codemirror [(ngModel)]="exportedPip" (keydown)="updated = true; keyEvent($event)"
                     [config]="codeMirrorConfig" #codeMirror>
         </codemirror>
-        <div class="ui bottomBtnsWrapper segment">
-            <div class="ui grid">
-                <div class="sixteen wide column">
-                    <button class="ui fluid blue button" name="previewbtn" [disabled]="pipeline.from_repository || loading || !project.permissions.writable" [class.loading]="loading"
-                        (click)="preview()">
-                        <i class="unhide icon"></i> {{'common_preview' | translate}}
-                    </button>
-                </div>
-                <div class="eight wide column">
-                    <button class="ui fluid green button" name="updatebtn" [disabled]="pipeline.from_repository || loading || !project.permissions.writable"
-                        [class.loading]="loading" (click)="save()">
-                        <i class="save icon"></i>{{ 'btn_save' | translate }}
-                    </button>
-                </div>
-                <div class="eight wide column">
-                    <button class="ui fluid red button" name="cancelbtn" [disabled]="loading" [class.loading]="loading"
-                        (click)="cancel()">
-                        <i class="remove icon"></i>{{ 'btn_cancel' | translate }}
-                    </button>
-                </div>
-            </div>
-        </div>
     </div>
-    <div *ngIf="!exportedPip" class="ui active text loader">{{ 'common_loading' | translate }}</div>
+    <div class="nzSegment bottomBtnsWrapper" *ngIf="open && exportedPip">
+        <nz-row>
+            <nz-col nzSpan="24">
+                <button nz-button nzType="primary" nzBlock name="previewbtn" [disabled]="pipeline.from_repository || loading || !project.permissions.writable" [nzLoading]="loading"
+                        (click)="preview()">
+                    <span nz-icon nzType="eye" nzTheme="outline"></span> Preview
+                </button>
+            </nz-col>
+            <nz-col [nzSpan]="11">
+                <button nz-button nzBlock nzType="primary" name="updatebtn" [disabled]="pipeline.from_repository || loading || !project.permissions.writable" [nzLoading]="loading" (click)="save()">
+                    <span nz-icon nzType="save" nzTheme="outline"></span>Save
+                </button>
+            </nz-col>
+
+            <nz-col [nzSpan]="11" [nzOffset]="2">
+                <button nz-button nzBlock nzDanger nzType="primary" name="cancelbtn" [disabled]="loading" [nzLoading]="loading" (click)="cancel()">
+                    <i class="remove icon"></i>Cancel
+                </button>
+            </nz-col>
+        </nz-row>
+    </div>
 </div>

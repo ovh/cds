@@ -16,3 +16,26 @@
   height: 100%;
   overflow-y: auto;
 }
+
+.header {
+  margin-bottom: 20px;
+  nz-button-group {
+    width: 100%;
+
+    button {
+      width: 50%;
+    }
+  }
+}
+
+nz-col.center {
+  text-align: center;
+}
+nz-col.footer {
+  margin-top: 20px;
+}
+button.right {
+  float: right;
+}
+
+

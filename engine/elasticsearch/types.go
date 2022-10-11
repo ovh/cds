@@ -3,10 +3,11 @@ package elasticsearch
 import (
 	"context"
 
+	"github.com/olivere/elastic/v7"
+
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk/event"
-	"gopkg.in/olivere/elastic.v6"
 )
 
 const indexNotFoundException = "index_not_found_exception"

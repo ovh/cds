@@ -6127,6 +6127,21 @@ func (mr *MockInterfaceMockRecorder) CDNItemUpload(ctx, cdnAddr, signature, fs, 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CDNItemUpload", reflect.TypeOf((*MockInterface)(nil).CDNItemUpload), ctx, cdnAddr, signature, fs, path)
 }
 
+// CDNURL mocks base method.
+func (m *MockInterface) CDNURL() (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CDNURL")
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CDNURL indicates an expected call of CDNURL.
+func (mr *MockInterfaceMockRecorder) CDNURL() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CDNURL", reflect.TypeOf((*MockInterface)(nil).CDNURL))
+}
+
 // ConfigCDN mocks base method.
 func (m *MockInterface) ConfigCDN() (sdk.CDNConfig, error) {
 	m.ctrl.T.Helper()

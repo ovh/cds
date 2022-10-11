@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -116,7 +116,7 @@ func userGpgKeyImport(v cli.Values) error {
 		}
 		publicKey = keyBuilder.String()
 	} else {
-		keyBts, err := ioutil.ReadFile(v.GetString("pub-key-file"))
+		keyBts, err := os.ReadFile(v.GetString("pub-key-file"))
 		if err != nil {
 			return err
 		}

@@ -1,18 +1,18 @@
-<form nz-form>
+<form nz-form nzLayout="vertical">
     <ng-container
         *ngIf="noderun || pipParamsReady">
         <nz-form-item>
             <nz-form-label [nzSpan]="6">{{ 'workflow_node_context_pipeline_parameter' | translate}}</nz-form-label>
-            <nz-form-control [nzSpan]="12">
+            <nz-form-control [nzSpan]="22" [nzOffset]="1">
                 <ng-container *ngIf="noderun == null && editableNode?.context">
                     <app-parameter-list
-                            [project]="project"
-                            [parameters]="editableNode.context.default_pipeline_parameters"
-                            [paramsRef]="currentPipeline.parameters"
-                            [mode]="readonly?'ro':'launcher'"
-                            [suggest]="suggest"
-                            [canDelete]="false"
-                            (event)="parameterEvent($event)">
+                                [project]="project"
+                                [parameters]="editableNode.context.default_pipeline_parameters"
+                                [paramsRef]="currentPipeline.parameters"
+                                [mode]="readonly?'ro':'launcher'"
+                                [suggest]="suggest"
+                                [canDelete]="false"
+                                (event)="parameterEvent($event)">
                     </app-parameter-list>
                 </ng-container>
                 <ng-container *ngIf="noderun != null">
