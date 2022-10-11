@@ -1301,7 +1301,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 			return nil, nil, nil, nil, sdk.WithStack(sdk.ErrWorkflowAlreadyAsCode)
 		}
 		// Force option will not allow to change the repository of an existing workflow
-		if opts != nil && opts.FromRepository != oldWf.FromRepository {
+		if opts != nil && opts.FromRepository != "" && opts.FromRepository != oldWf.FromRepository {
 			return nil, nil, nil, nil, sdk.WithStack(sdk.ErrWorkflowAlreadyAsCode)
 		}
 	}

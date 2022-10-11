@@ -129,6 +129,10 @@ Advanced usages:
 
 	CDS_API_URL="https://instance.cds.api" CDS_SESSION_TOKEN="yourtoken" CDS_HTTP_MAX_RETRY=10 cdsctl [command]
 
+* you can override CDN url if needed using the variable CDS_CDN_URL:
+
+  CDS_API_URL="https://instance.cds.api" CDS_TOKEN="yourtoken" CDS_CDN_URL="https://instance.cds.cdn" cdsctl [command]
+
 `,
 }
 

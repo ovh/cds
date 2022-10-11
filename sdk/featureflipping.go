@@ -3,7 +3,6 @@ package sdk
 type FeatureName string
 
 const (
-	FeatureCDNJobLogs   FeatureName = "cdn-job-logs"
 	FeatureMFARequired  FeatureName = "mfa_required"
 	FeaturePurgeName    FeatureName = "workflow-retention-policy"
 	FeaturePurgeMaxRuns FeatureName = "workflow-retention-maxruns"
