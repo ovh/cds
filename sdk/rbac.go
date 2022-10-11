@@ -15,15 +15,25 @@ const (
 	// Project Role
 	ProjectRoleRead   = "read"
 	ProjectRoleManage = "manage"
+
+	// Hatchery Role
+	HatcheryRoleSpawn = "spawn"
+
+	// Region Role
+	RegionRoleRead   = "read"
+	RegionRoleUse    = "use"
+	RegionRoleManage = "manage"
 )
 
 type RBAC struct {
-	ID           string        `json:"id" db:"id"`
-	Name         string        `json:"name" db:"name"`
-	Created      time.Time     `json:"created" db:"created"`
-	LastModified time.Time     `json:"last_modified" db:"last_modified"`
-	Globals      []RBACGlobal  `json:"globals" db:"-"`
-	Projects     []RBACProject `json:"projects" db:"-"`
+	ID           string         `json:"id" db:"id"`
+	Name         string         `json:"name" db:"name"`
+	Created      time.Time      `json:"created" db:"created"`
+	LastModified time.Time      `json:"last_modified" db:"last_modified"`
+	Globals      []RBACGlobal   `json:"globals" db:"-"`
+	Projects     []RBACProject  `json:"projects" db:"-"`
+	Regions      []RBACRegion   `json:"regions" db:"-"`
+	Hatcheries   []RBACHatchery `json:"hatcheries" db:"-"`
 }
 
 func IsValidRBAC(rbac *RBAC) error {
@@ -39,6 +49,18 @@ func IsValidRBAC(rbac *RBAC) error {
 		if err := isValidRBACProject(rbac.Name, p); err != nil {
 			return err
 		}
+	}
+	for _, r := range rbac.Regions {
+		if err := isValidRBACRegion(rbac.Name, r); err != nil {
+			return err
+		}
+		// TODO Check region permission
+	}
+	for _, h := range rbac.Hatcheries {
+		if err := isValidRBACHatchery(rbac.Name, h); err != nil {
+			return err
+		}
+		// TODO Check region permission
 	}
 	return nil
 }

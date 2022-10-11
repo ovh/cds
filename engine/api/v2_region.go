@@ -27,7 +27,7 @@ func (api *API) getRegionByIdentifier(ctx context.Context, regionIdentifier stri
 }
 
 func (api *API) postRegionHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(rbac.RegionManage),
+	return service.RBAC(rbac.GlobalRegionManage),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 
 			var reg sdk.Region
@@ -54,16 +54,22 @@ func (api *API) postRegionHandler() ([]service.RbacChecker, service.Handler) {
 func (api *API) getRegionsHandler() ([]service.RbacChecker, service.Handler) {
 	return nil,
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
-			regions, err := region.LoadAllRegions(ctx, api.mustDB())
+			consumer := getAPIConsumer(ctx)
+			rbacRegions, err := rbac.LoadRegionIDsByRoleAndUserID(ctx, api.mustDB(), sdk.RegionRoleRead, consumer.AuthentifiedUserID)
 			if err != nil {
 				return err
 			}
+			regIDs := make([]string, 0)
+			for _, rr := range rbacRegions {
+				regIDs = append(regIDs, rr.RegionID)
+			}
+			regions, err := region.LoadRegionByIDs(ctx, api.mustDB(), regIDs)
 			return service.WriteMarshal(w, req, regions, http.StatusOK)
 		}
 }
 
 func (api *API) getRegionHandler() ([]service.RbacChecker, service.Handler) {
-	return nil,
+	return service.RBAC(rbac.RegionRead),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			regionIdentifier := vars["regionIdentifier"]
@@ -77,7 +83,7 @@ func (api *API) getRegionHandler() ([]service.RbacChecker, service.Handler) {
 }
 
 func (api *API) deleteRegionHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(rbac.RegionManage),
+	return service.RBAC(rbac.GlobalRegionManage),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			regionIdentifier := vars["regionIdentifier"]

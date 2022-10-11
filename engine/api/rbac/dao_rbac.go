@@ -52,6 +52,25 @@ func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, rb *sdk.RBAC) 
 			return err
 		}
 	}
+	for i := range rb.Regions {
+		dbRbRegion := rbacRegion{
+			RbacID:     dbRb.ID,
+			RBACRegion: rb.Regions[i],
+		}
+		if err := insertRBACRegion(ctx, db, &dbRbRegion); err != nil {
+			return err
+		}
+	}
+	for i := range rb.Hatcheries {
+		dbRbHatchery := rbacHatchery{
+			RbacID:       dbRb.ID,
+			RBACHatchery: rb.Hatcheries[i],
+		}
+		if err := insertRBACHatchery(ctx, db, &dbRbHatchery); err != nil {
+			return err
+		}
+	}
+
 	*rb = dbRb.RBAC
 	return nil
 }

@@ -4,14 +4,12 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
-	"time"
 )
 
 type Hatchery struct {
-	ID            string         `json:"id" db:"id"`
-	Name          string         `json:"name" db:"name"`
-	Config        HatcheryConfig `json:"config" db:"config"`
-	LastHeartBeat time.Time      `json:"last_heartbeat" db:"last_heartbeat"`
+	ID     string         `json:"id" db:"id"`
+	Name   string         `json:"name" db:"name"`
+	Config HatcheryConfig `json:"config" db:"config"`
 }
 
 type HatcheryConfig map[string]interface{}
