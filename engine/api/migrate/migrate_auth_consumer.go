@@ -30,6 +30,12 @@ func MigrateConsumers(ctx context.Context, db *gorp.DbMap, c cache.Store) error 
 	}
 
 	for _, oldC := range oldConsumers {
+		// Check if consumer has been already migrated
+		consumerExist, err := authentication.LoadConsumerByID(ctx, db, oldC.ID)
+		if err == nil && consumerExist != nil {
+			continue
+		}
+
 		newConsumer := sdk.AuthConsumer{
 			ID:                 oldC.ID,
 			Type:               oldC.Type,
