@@ -134,7 +134,7 @@
   "common_no_pipeline": "There is no pipeline linked",
   "common_no_application": "There is no application linked",
   "common_no_workflow": "There is no workflow linked",
-  "common_copy_clipboard": "Copy to clipboad",
+  "common_copy_clipboard": "Copy to clipboard",
   "common_select": "Select",
   "common_create": "Create",
   "common_show_all": "Show all",

@@ -1,3 +1,15 @@
-.ui.relaxed.divided.list {
-    margin-top: 15px;
+.item {
+  margin-top: 10px;
+  div.icon {
+    display: table-cell;
+    vertical-align: middle;
+
+    i {
+      font-size: 1.5em;
+    }
+  }
+  div.content {
+    display: table-cell;
+    padding-left: 15px;
+  }
 }

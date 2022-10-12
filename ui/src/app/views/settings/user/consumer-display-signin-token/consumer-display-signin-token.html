@@ -1,21 +1,23 @@
-<div class="ui grid">
-    <div class="ui wide column">
+<nz-row>
+    <nz-col [nzSpan]="24">
         <ng-container *ngIf="consumer.id">
-            <div class="ui info message">
-                <p>{{ 'auth_message_copy_signin_token' | translate }}</p>
-            </div>
-            <form class="ui form">
-                <div class="field">
-                    <label>Token</label>
-                    <div class="ui fluid action input">
-                        <input type="text" value="{{signinToken}}" [readonly]="true">
-                        <button class="ui icon button copyButton" [title]="'common_copy_clipboard' | translate"
-                            ngxClipboard [cbContent]="signinToken" (click)="confirmCopy()">
-                            <i class="copy icon"></i>
-                        </button>
-                    </div>
-                </div>
+            <nz-alert nzType="info" nzMessage="You can now use this token to signin with the consumer"></nz-alert>
+            <form nz-form>
+                <nz-form-item>
+                    <nz-form-label>Token</nz-form-label>
+                    <nz-form-control>
+                        <nz-input-group nzSearch [nzAddOnAfter]="suffixIconButton">
+                            <input type="text" nz-input value="{{signinToken}}" [readonly]="true" />
+                        </nz-input-group>
+                        <ng-template #suffixIconButton>
+                            <button nz-button nzSearch title="Copy to clipboard"
+                                    ngxClipboard [cbContent]="signinToken" (click)="confirmCopy()">
+                                <span nz-icon nzType="copy" nzTheme="outline"></span>
+                            </button>
+                        </ng-template>
+                    </nz-form-control>
+                </nz-form-item>
             </form>
         </ng-container>
-    </div>
-</div>
+    </nz-col>
+</nz-row>
