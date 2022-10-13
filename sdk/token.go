@@ -399,26 +399,18 @@ type AuthConsumers []AuthConsumer
 
 // AuthConsumer issues session linked to an authentified user.
 type AuthConsumer struct {
-	ID                   string                      `json:"id" cli:"id,key" db:"id"`
-	Name                 string                      `json:"name" cli:"name" db:"name"`
-	Type                 AuthConsumerType            `json:"type" cli:"type" db:"type"`
-	Description          string                      `json:"description" cli:"description" db:"description"`
-	ParentID             *string                     `json:"parent_id,omitempty" db:"parent_id"`
-	Created              time.Time                   `json:"created" cli:"created" db:"created"`
-	DeprecatedIssuedAt   time.Time                   `json:"issued_at" cli:"issued_at" db:"issued_at"`
-	Disabled             bool                        `json:"disabled" cli:"disabled" db:"disabled"`
-	Warnings             AuthConsumerWarnings        `json:"warnings,omitempty" db:"warnings"`
-	LastAuthentication   *time.Time                  `json:"last_authentication,omitempty" db:"last_authentication"`
-	ValidityPeriods      AuthConsumerValidityPeriods `json:"validity_periods,omitempty" db:"validity_periods"`
-	AuthConsumerUser     *AuthConsumerUser           `json:"auth_consumer_user,omitempty" db:"-"`
-	AuthConsumerHatchery *AuthConsumerHatchery       `json:"auth_consumer_hatchery,omitempty" db:"-"`
-}
-
-type AuthConsumerHatchery struct {
-	ID             string  `json:"id" cli:"id,key" db:"id"`
-	AuthConsumerID string  `json:"auth_consumer_id" cli:"auth_consumer_id,key" db:"auth_consumer_id"`
-	HatcheryID     string  `json:"hatchery_id,omitempty" db:"hatchery_id"`
-	Worker         *Worker `json:"-" db:"-"`
+	ID                 string                      `json:"id" cli:"id,key" db:"id"`
+	Name               string                      `json:"name" cli:"name" db:"name"`
+	Type               AuthConsumerType            `json:"type" cli:"type" db:"type"`
+	Description        string                      `json:"description" cli:"description" db:"description"`
+	ParentID           *string                     `json:"parent_id,omitempty" db:"parent_id"`
+	Created            time.Time                   `json:"created" cli:"created" db:"created"`
+	DeprecatedIssuedAt time.Time                   `json:"issued_at" cli:"issued_at" db:"issued_at"`
+	Disabled           bool                        `json:"disabled" cli:"disabled" db:"disabled"`
+	Warnings           AuthConsumerWarnings        `json:"warnings,omitempty" db:"warnings"`
+	LastAuthentication *time.Time                  `json:"last_authentication,omitempty" db:"last_authentication"`
+	ValidityPeriods    AuthConsumerValidityPeriods `json:"validity_periods,omitempty" db:"validity_periods"`
+	AuthConsumerUser   *AuthConsumerUser           `json:"auth_consumer_user,omitempty" db:"-"`
 }
 
 // AuthConsumerUser issues session linked to an authentified user.
