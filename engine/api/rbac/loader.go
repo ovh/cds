@@ -116,13 +116,13 @@ func loadRBACRegion(ctx context.Context, db gorp.SqlExecutor, rbac *rbac) error 
 			log.Error(ctx, "rbac_region.get> rbac_region %d data corrupted", rbacReg.ID)
 			continue
 		}
-		if err := loadRBACRegionOrganizations(ctx, db, rbacReg); err != nil {
+		if err := loadRBACRegionOrganizations(ctx, db, &rbacReg.RBACRegion); err != nil {
 			return err
 		}
-		if err := loadRBACRegionUsers(ctx, db, rbacReg); err != nil {
+		if err := loadRBACRegionUsers(ctx, db, &rbacReg.RBACRegion); err != nil {
 			return err
 		}
-		if err := loadRBACRegionGroups(ctx, db, rbacReg); err != nil {
+		if err := loadRBACRegionGroups(ctx, db, &rbacReg.RBACRegion); err != nil {
 			return err
 		}
 

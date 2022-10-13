@@ -22,17 +22,26 @@ func insertRBACRegionOrganization(ctx context.Context, db gorpmapper.SqlExecutor
 	return nil
 }
 
-func loadRBACRegionOrganizations(ctx context.Context, db gorp.SqlExecutor, rbacRegion *rbacRegion) error {
+func loadRBACRegionOrganizations(ctx context.Context, db gorp.SqlExecutor, rbacRegion *sdk.RBACRegion) error {
 	q := gorpmapping.NewQuery("SELECT * FROM rbac_region_organizations WHERE rbac_region_id = $1").Args(rbacRegion.ID)
 	rbacOrganizationIDS, err := getAllRBACRegionOrganizations(ctx, db, q)
 	if err != nil {
 		return err
 	}
-	rbacRegion.RBACRegion.RBACOrganizationIDs = make([]string, 0, len(rbacOrganizationIDS))
+	rbacRegion.RBACOrganizationIDs = make([]string, 0, len(rbacOrganizationIDS))
 	for _, rbacOrg := range rbacOrganizationIDS {
-		rbacRegion.RBACRegion.RBACOrganizationIDs = append(rbacRegion.RBACRegion.RBACOrganizationIDs, rbacOrg.RbacOrganizationID)
+		rbacRegion.RBACOrganizationIDs = append(rbacRegion.RBACOrganizationIDs, rbacOrg.RbacOrganizationID)
 	}
 	return nil
+}
+
+func loadRBACRegionOrganizationsByRbacRegionID(ctx context.Context, db gorp.SqlExecutor, rbacRegionID int64) ([]rbacRegionOrganization, error) {
+	q := gorpmapping.NewQuery("SELECT * FROM rbac_region_organizations WHERE rbac_region_id = $1").Args(rbacRegionID)
+	rbacOrganizations, err := getAllRBACRegionOrganizations(ctx, db, q)
+	if err != nil {
+		return nil, err
+	}
+	return rbacOrganizations, nil
 }
 
 func getAllRBACRegionOrganizations(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query) ([]rbacRegionOrganization, error) {

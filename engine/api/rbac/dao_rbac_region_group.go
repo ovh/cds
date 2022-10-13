@@ -41,15 +41,15 @@ func loadRBACRegionGroupsByGroupIDs(ctx context.Context, db gorp.SqlExecutor, gr
 	return getAllRBACRegionGroups(ctx, db, q)
 }
 
-func loadRBACRegionGroups(ctx context.Context, db gorp.SqlExecutor, rbacRegion *rbacRegion) error {
+func loadRBACRegionGroups(ctx context.Context, db gorp.SqlExecutor, rbacRegion *sdk.RBACRegion) error {
 	q := gorpmapping.NewQuery("SELECT * FROM rbac_region_groups WHERE rbac_region_id = $1").Args(rbacRegion.ID)
 	rbacRegionGroups, err := getAllRBACRegionGroups(ctx, db, q)
 	if err != nil {
 		return err
 	}
-	rbacRegion.RBACRegion.RBACGroupsIDs = make([]int64, 0, len(rbacRegionGroups))
+	rbacRegion.RBACGroupsIDs = make([]int64, 0, len(rbacRegionGroups))
 	for _, g := range rbacRegionGroups {
-		rbacRegion.RBACRegion.RBACGroupsIDs = append(rbacRegion.RBACRegion.RBACGroupsIDs, g.RbacGroupID)
+		rbacRegion.RBACGroupsIDs = append(rbacRegion.RBACGroupsIDs, g.RbacGroupID)
 	}
 	return nil
 }

@@ -27,15 +27,15 @@ func loadRBACRegionUsersByUserID(ctx context.Context, db gorp.SqlExecutor, userI
 	return getAllRBACRegionUsers(ctx, db, q)
 }
 
-func loadRBACRegionUsers(ctx context.Context, db gorp.SqlExecutor, rbacRegion *rbacRegion) error {
+func loadRBACRegionUsers(ctx context.Context, db gorp.SqlExecutor, rbacRegion *sdk.RBACRegion) error {
 	q := gorpmapping.NewQuery("SELECT * FROM rbac_region_users WHERE rbac_region_id = $1").Args(rbacRegion.ID)
 	rbacUserIDS, err := getAllRBACRegionUsers(ctx, db, q)
 	if err != nil {
 		return err
 	}
-	rbacRegion.RBACRegion.RBACUsersIDs = make([]string, 0, len(rbacUserIDS))
+	rbacRegion.RBACUsersIDs = make([]string, 0, len(rbacUserIDS))
 	for _, rbacUsers := range rbacUserIDS {
-		rbacRegion.RBACRegion.RBACUsersIDs = append(rbacRegion.RBACRegion.RBACUsersIDs, rbacUsers.RbacUserID)
+		rbacRegion.RBACUsersIDs = append(rbacRegion.RBACUsersIDs, rbacUsers.RbacUserID)
 	}
 	return nil
 }

@@ -5,6 +5,8 @@ var (
 )
 
 type RBACRegion struct {
+	ID                int64    `json:"-" db:"id"`
+	RbacID            string   `json:"-"  db:"rbac_id"`
 	Role              string   `json:"role" db:"role"`
 	RegionID          string   `json:"region_id" db:"region_id"`
 	AllUsers          bool     `json:"all_users" db:"all_users"`

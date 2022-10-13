@@ -131,8 +131,6 @@ func (rh rbacHatchery) Canonical() gorpmapper.CanonicalForms {
 }
 
 type rbacRegion struct {
-	ID     int64  `json:"-" db:"id"`
-	RbacID string `db:"rbac_id"`
 	sdk.RBACRegion
 	gorpmapper.SignedEntity
 }

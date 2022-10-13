@@ -38,13 +38,13 @@ func insertRBACRegion(ctx context.Context, db gorpmapper.SqlExecutorWithTx, rbac
 	return nil
 }
 
-func getAllRBACRegions(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query) ([]rbacRegion, error) {
+func getAllRBACRegions(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query) ([]sdk.RBACRegion, error) {
 	var rbacRegions []rbacRegion
 	if err := gorpmapping.GetAll(ctx, db, q, &rbacRegions); err != nil {
 		return nil, err
 	}
 
-	regionsFiltered := make([]rbacRegion, 0, len(rbacRegions))
+	regionsFiltered := make([]sdk.RBACRegion, 0, len(rbacRegions))
 	for _, rbacRegionData := range rbacRegions {
 		isValid, err := gorpmapping.CheckSignature(rbacRegionData, rbacRegionData.Signature)
 		if err != nil {
@@ -54,7 +54,7 @@ func getAllRBACRegions(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Q
 			log.Error(ctx, "rbac.getAllRBACRegions> rbac_region %d data corrupted", rbacRegionData.ID)
 			continue
 		}
-		regionsFiltered = append(regionsFiltered, rbacRegionData)
+		regionsFiltered = append(regionsFiltered, rbacRegionData.RBACRegion)
 	}
 	return regionsFiltered, nil
 }
@@ -101,7 +101,7 @@ func HasRoleOnRegionAndUserID(ctx context.Context, db gorp.SqlExecutor, role str
 	return false, nil
 }
 
-func LoadRegionIDsByRoleAndUserID(ctx context.Context, db gorp.SqlExecutor, role string, userID string) ([]rbacRegion, error) {
+func LoadRegionIDsByRoleAndUserID(ctx context.Context, db gorp.SqlExecutor, role string, userID string) ([]sdk.RBACRegion, error) {
 	// Get rbac_region_groups
 
 	rbacRegionGroups, err := loadRBACRegionGroupsByUserID(ctx, db, userID)
@@ -136,16 +136,18 @@ func LoadRegionIDsByRoleAndUserID(ctx context.Context, db gorp.SqlExecutor, role
 	if err != nil {
 		return nil, err
 	}
-	rbacRegions = append(rbacRegions, rbacRegionsAllUsers...)
+	for _, rrau := range rbacRegionsAllUsers {
+		rbacRegions = append(rbacRegions, rrau)
+	}
 	return rbacRegions, nil
 }
 
-func loadRBACRegionsByRoleAndIDs(ctx context.Context, db gorp.SqlExecutor, role string, rbacRegionIDs []int64) ([]rbacRegion, error) {
+func loadRBACRegionsByRoleAndIDs(ctx context.Context, db gorp.SqlExecutor, role string, rbacRegionIDs []int64) ([]sdk.RBACRegion, error) {
 	q := gorpmapping.NewQuery(`SELECT * from rbac_region WHERE role = $1 AND id = ANY($2)`).Args(role, pq.Int64Array(rbacRegionIDs))
 	return getAllRBACRegions(ctx, db, q)
 }
 
-func loadRBACRegionOnAllUsers(ctx context.Context, db gorp.SqlExecutor, role string) ([]rbacRegion, error) {
+func loadRBACRegionOnAllUsers(ctx context.Context, db gorp.SqlExecutor, role string) ([]sdk.RBACRegion, error) {
 	q := gorpmapping.NewQuery("SELECT * from rbac_region WHERE role = $1 AND all_users = true").Args(role)
 	return getAllRBACRegions(ctx, db, q)
 }

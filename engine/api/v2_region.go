@@ -55,15 +55,30 @@ func (api *API) getRegionsHandler() ([]service.RbacChecker, service.Handler) {
 	return nil,
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			consumer := getAPIConsumer(ctx)
-			rbacRegions, err := rbac.LoadRegionIDsByRoleAndUserID(ctx, api.mustDB(), sdk.RegionRoleRead, consumer.AuthentifiedUserID)
-			if err != nil {
-				return err
+
+			var regions []sdk.Region
+			var err error
+
+			if consumer.Admin() {
+				trackSudo(ctx, w)
+				regions, err = region.LoadAllRegions(ctx, api.mustDB())
+				if err != nil {
+					return err
+				}
+			} else {
+				rbacRegions, err := rbac.LoadRegionIDsByRoleAndUserID(ctx, api.mustDB(), sdk.RegionRoleRead, consumer.AuthentifiedUserID)
+				if err != nil {
+					return err
+				}
+				regIDs := make([]string, 0)
+				for _, rr := range rbacRegions {
+					regIDs = append(regIDs, rr.RegionID)
+				}
+				regions, err = region.LoadRegionByIDs(ctx, api.mustDB(), regIDs)
+				if err != nil {
+					return err
+				}
 			}
-			regIDs := make([]string, 0)
-			for _, rr := range rbacRegions {
-				regIDs = append(regIDs, rr.RegionID)
-			}
-			regions, err := region.LoadRegionByIDs(ctx, api.mustDB(), regIDs)
 			return service.WriteMarshal(w, req, regions, http.StatusOK)
 		}
 }
