@@ -15,7 +15,7 @@
         </div>
 
     </nz-col>
-    <nz-col [nzSpan]="6" *ngFor="let p of filter.projects">
+    <nz-col [nzSpan]="6" *ngFor="let p of filter?.projects">
         <div class="entity-card">
             <div class="title">
                 {{p.key}}
