@@ -44,16 +44,16 @@
                                        (click)="clickOpenStep(formStepName.SCOPES)"
                                        nzHeader="Scopes">
                         <div content class="scope-list">
-                            <table class="ui striped fixed table">
+                            <nz-table [nzData]="scopes" #scopeTable nzPageSize="50" nzShowPagination="false">
                                 <tbody>
-                                <tr *ngFor="let scope of scopes">
+                                <tr *ngFor="let scope of scopeTable.data" >
                                     <td class="wide">
                                         <app-scope-detail [scope]="scope" (onChange)="onScopeDetailChange($event)">
                                         </app-scope-detail>
                                     </td>
                                 </tr>
                                 </tbody>
-                            </table>
+                            </nz-table>
                         </div>
                     </nz-collapse-panel>
                     <nz-collapse-panel [(nzActive)]="panels[formStepName.SERVICE]"
