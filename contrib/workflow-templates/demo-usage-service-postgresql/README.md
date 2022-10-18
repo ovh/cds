@@ -1,10 +1,10 @@
 # Description
 
-*This is a demo tempate*
+*This is a demo template*
 
 The Service Link prerequisite allow you to use any Docker image as a dependency of a job.
 
-This is pretty useful if you want to make some tests with a real database, or put your builded application as a job prerequisite for doing some tests.
+This is pretty useful if you want to make some tests with a real database, or put your built application as a job prerequisite for doing some tests.
 
 Doc: https://ovh.github.io/cds/docs/tutorials/service-requirement-pg/
 

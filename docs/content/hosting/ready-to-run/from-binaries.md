@@ -14,7 +14,7 @@ This article contains the steps to start CDS locally, with API, UI and a local H
 ## Prerequisite
 
 - a Redis
-- a PostgreSQL 9.6 min (Version 14.0 recommanded)
+- a PostgreSQL 9.6 min (Version 14.0 recommended)
 
 ## Get the latest release from GitHub
 
@@ -220,5 +220,5 @@ If you decide to use consul or vault to store your configuration, you will have 
 ## Go further
 
 - How to use OpenStack infrastructure to spawn CDS container [read more]({{< relref "/docs/integrations/openstack/openstack_compute.md" >}})
-* Link CDS to a Repository Manager as [GitHub]({{< relref "/docs/integrations/github/_index.md" >}}), [Bitbucket Server]({{< relref "/docs/integrations/bitbucket.md" >}}) or [GitLab]({{< relref "/docs/integrations/gitlab/_index.md" >}}) setted up on your CDS Instance.
+* Link CDS to a Repository Manager as [GitHub]({{< relref "/docs/integrations/github/_index.md" >}}), [Bitbucket Server]({{< relref "/docs/integrations/bitbucket.md" >}}) or [GitLab]({{< relref "/docs/integrations/gitlab/_index.md" >}}) set up on your CDS Instance.
 - Learn more about CDS variables [read more]({{< relref "/docs/concepts/variables.md" >}})

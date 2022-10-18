@@ -272,13 +272,13 @@ func AsListResult(i interface{}) ListResult {
 
 // ParsePath returns group and itme name from given path.
 func ParsePath(path string) (string, string, error) {
-	pathSplitted := strings.Split(path, "/")
+	pathSplit := strings.Split(path, "/")
 	// if no group name given suppose that is a shared.infra item
-	if len(pathSplitted) == 1 {
-		return sdk.SharedInfraGroupName, pathSplitted[0], nil
+	if len(pathSplit) == 1 {
+		return sdk.SharedInfraGroupName, pathSplit[0], nil
 	}
-	if len(pathSplitted) != 2 {
+	if len(pathSplit) != 2 {
 		return "", "", fmt.Errorf("invalid given path")
 	}
-	return pathSplitted[0], pathSplitted[1], nil
+	return pathSplit[0], pathSplit[1], nil
 }

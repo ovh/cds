@@ -92,11 +92,11 @@ forLoop:
 	}
 
 	if ope.Status == sdk.OperationStatusError {
-		sdk.Exit("An error occured when migrate: %v", ope.Error)
+		sdk.Exit("An error occurred when migrate: %v", ope.Error)
 	}
 
-	urlSplitted := strings.Split(ope.Setup.Push.PRLink, "/")
-	id, err := strconv.Atoi(urlSplitted[len(urlSplitted)-1])
+	urlSplit := strings.Split(ope.Setup.Push.PRLink, "/")
+	id, err := strconv.Atoi(urlSplit[len(urlSplit)-1])
 	if err != nil {
 		return nil, cli.WrapError(err, "cannot read id from pull request URL %s", ope.Setup.Push.PRLink)
 	}
