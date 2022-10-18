@@ -54,13 +54,11 @@ func IsValidRBAC(rbac *RBAC) error {
 		if err := isValidRBACRegion(rbac.Name, r); err != nil {
 			return err
 		}
-		// TODO Check region permission
 	}
 	for _, h := range rbac.Hatcheries {
 		if err := isValidRBACHatchery(rbac.Name, h); err != nil {
 			return err
 		}
-		// TODO Check region permission
 	}
 	return nil
 }
