@@ -19,7 +19,7 @@ import (
 func (api *API) getNavbarHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		consumer := getAPIConsumer(ctx)
-		data, err := navbar.LoadNavbarData(api.mustDB(), api.Cache, *consumer.AuthentifiedUser)
+		data, err := navbar.LoadNavbarData(api.mustDB(), api.Cache, *consumer.AuthConsumerUser.AuthentifiedUser)
 		if err != nil {
 			return err
 		}

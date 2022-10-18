@@ -1219,7 +1219,10 @@ hooks:
 			},
 		},
 	}
-	_, _, err = workflow.CreateFromRepository(context.TODO(), api.mustDB(), api.Cache, proj, workflowInserted, opts, sdk.AuthConsumer{AuthentifiedUser: u}, project.DecryptWithBuiltinKey)
+	c := sdk.AuthConsumer{
+		AuthConsumerUser: &sdk.AuthConsumerUser{AuthentifiedUser: u},
+	}
+	_, _, err = workflow.CreateFromRepository(context.TODO(), api.mustDB(), api.Cache, proj, workflowInserted, opts, c, project.DecryptWithBuiltinKey)
 	require.NoError(t, err)
 }
 

@@ -217,7 +217,6 @@ func (api *API) repositoryAnalysisPoller(ctx context.Context, tick time.Duration
 				log.Error(ctx, "unable to load analysis in progress: %v", err)
 				continue
 			}
-			log.Debug(ctx, "found %d analysis in progress", len(analysis))
 			for _, a := range analysis {
 				api.GoRoutines.Exec(
 					ctx,

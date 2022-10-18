@@ -30,8 +30,10 @@ func TestServicesHandlers(t *testing.T) {
 	require.NotEmpty(t, uri)
 	req := assets.NewJWTAuthentifiedRequest(t, jwtAdmin, http.MethodPost, uri, sdk.AuthConsumer{
 		Name:            sdk.RandomString(10),
-		ScopeDetails:    sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeService),
 		ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+		AuthConsumerUser: &sdk.AuthConsumerUser{
+			ScopeDetails: sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeService),
+		},
 	})
 	rec := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
@@ -75,8 +77,10 @@ func TestServicesHandlers(t *testing.T) {
 	require.NotEmpty(t, uri)
 	req = assets.NewJWTAuthentifiedRequest(t, jwtLambda, http.MethodPost, uri, sdk.AuthConsumer{
 		Name:            sdk.RandomString(10),
-		ScopeDetails:    sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeService),
 		ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+		AuthConsumerUser: &sdk.AuthConsumerUser{
+			ScopeDetails: sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeService),
+		},
 	})
 	rec = httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)

@@ -74,7 +74,7 @@ func TestRegister(t *testing.T) {
 
 	g := assets.InsertGroup(t, db)
 	h, _, hatcheryConsumer, _ := assets.InsertHatchery(t, db, *g)
-	workerConsumer, err := authentication.NewConsumerWorker(context.TODO(), db, sdk.RandomString(10), h, hatcheryConsumer)
+	workerConsumer, err := authentication.NewConsumerWorker(context.TODO(), db, sdk.RandomString(10), hatcheryConsumer)
 	require.NoError(t, err)
 	m := assets.InsertWorkerModel(t, db, sdk.RandomString(5), g.ID)
 

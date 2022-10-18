@@ -44,16 +44,16 @@
                                        (click)="clickOpenStep(formStepName.SCOPES)"
                                        nzHeader="Scopes">
                         <div content class="scope-list">
-                            <table class="ui striped fixed table">
+                            <nz-table [nzData]="scopes" #scopeTable nzPageSize="50" nzShowPagination="false">
                                 <tbody>
-                                <tr *ngFor="let scope of scopes">
+                                <tr *ngFor="let scope of scopeTable.data" >
                                     <td class="wide">
                                         <app-scope-detail [scope]="scope" (onChange)="onScopeDetailChange($event)">
                                         </app-scope-detail>
                                     </td>
                                 </tr>
                                 </tbody>
-                            </table>
+                            </nz-table>
                         </div>
                     </nz-collapse-panel>
                     <nz-collapse-panel [(nzActive)]="panels[formStepName.SERVICE]"
@@ -67,7 +67,7 @@
                                         <nz-form-label>Name</nz-form-label>
                                         <nz-form-control>
                                             <input nz-input type="text" name="name"
-                                                   [(ngModel)]="newConsumer.service_name">
+                                                   [(ngModel)]="newConsumer.auth_consumer_user.service_name">
                                         </nz-form-control>
                                     </nz-form-item>
                                 </nz-col>
@@ -77,7 +77,7 @@
                                         <nz-form-label>Type</nz-form-label>
                                         <nz-form-control>
                                             <input nz-input type="text" name="type"
-                                                   [(ngModel)]="newConsumer.service_type">
+                                                   [(ngModel)]="newConsumer.auth_consumer_user.service_type">
                                         </nz-form-control>
                                     </nz-form-item>
                                 </nz-col>
@@ -87,8 +87,8 @@
                                         <nz-form-label>Region</nz-form-label>
                                         <nz-form-control>
                                             <input nz-input type="text" name="region"
-                                                   [(ngModel)]="newConsumer.service_region">
-                                            <label nz-checkbox name="ignore" [(ngModel)]="newConsumer.service_ignore_job_with_no_region">
+                                                   [(ngModel)]="newConsumer.auth_consumer_user.service_region">
+                                            <label nz-checkbox name="ignore" [(ngModel)]="newConsumer.auth_consumer_user.service_ignore_job_with_no_region">
                                                 Ignore job with no region
                                             </label>
                                         </nz-form-control>

@@ -25,11 +25,11 @@ func TestWithAuthentifiedUser(t *testing.T) {
 	res, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID,
 		authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
-	require.NotNil(t, res.AuthentifiedUser)
-	assert.Equal(t, u.Username, res.AuthentifiedUser.Username)
+	require.NotNil(t, res.AuthConsumerUser.AuthentifiedUser)
+	assert.Equal(t, u.Username, res.AuthConsumerUser.AuthentifiedUser.Username)
 
-	require.Equal(t, 1, len(res.AuthentifiedUser.Groups))
-	assert.Equal(t, g.ID, res.AuthentifiedUser.Groups[0].ID)
+	require.Equal(t, 1, len(res.AuthConsumerUser.AuthentifiedUser.Groups))
+	assert.Equal(t, g.ID, res.AuthConsumerUser.AuthentifiedUser.Groups[0].ID)
 }
 
 func TestWithConsumerGroups(t *testing.T) {
@@ -42,7 +42,7 @@ func TestWithConsumerGroups(t *testing.T) {
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID,
 		authentication.LoadConsumerOptions.WithAuthentifiedUser, authentication.LoadConsumerOptions.WithConsumerGroups)
 	require.NoError(t, err)
-	assert.NotNil(t, 0, len(localConsumer.Groups), "no group ids on local consumer so no groups are expected")
+	assert.NotNil(t, 0, len(localConsumer.AuthConsumerUser.Groups), "no group ids on local consumer so no groups are expected")
 
 	consumerOptions := builtin.NewConsumerOptions{
 		Name:     sdk.RandomString(10),
@@ -54,8 +54,10 @@ func TestWithConsumerGroups(t *testing.T) {
 	builtinConsumer, err := authentication.LoadConsumerByID(context.TODO(), db, newConsumer.ID,
 		authentication.LoadConsumerOptions.WithConsumerGroups)
 	require.NoError(t, err)
-	require.Equal(t, 2, len(builtinConsumer.Groups))
-	sort.Slice(builtinConsumer.Groups, func(i, j int) bool { return builtinConsumer.Groups[i].ID < builtinConsumer.Groups[j].ID })
-	assert.Equal(t, g1.ID, builtinConsumer.Groups[0].ID)
-	assert.Equal(t, g2.ID, builtinConsumer.Groups[1].ID)
+	require.Equal(t, 2, len(builtinConsumer.AuthConsumerUser.Groups))
+	sort.Slice(builtinConsumer.AuthConsumerUser.Groups, func(i, j int) bool {
+		return builtinConsumer.AuthConsumerUser.Groups[i].ID < builtinConsumer.AuthConsumerUser.Groups[j].ID
+	})
+	assert.Equal(t, g1.ID, builtinConsumer.AuthConsumerUser.Groups[0].ID)
+	assert.Equal(t, g2.ID, builtinConsumer.AuthConsumerUser.Groups[1].ID)
 }

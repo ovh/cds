@@ -15,7 +15,7 @@ func hasRoleOnRegion(ctx context.Context, auth *sdk.AuthConsumer, store cache.St
 		return sdk.WithStack(sdk.ErrForbidden)
 	}
 
-	hasRole, err := HasRoleOnRegionAndUserID(ctx, db, role, auth.AuthentifiedUser, regionIdentifier)
+	hasRole, err := HasRoleOnRegionAndUserID(ctx, db, role, auth.AuthConsumerUser.AuthentifiedUser, regionIdentifier)
 	if err != nil {
 		return err
 	}

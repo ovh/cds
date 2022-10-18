@@ -138,7 +138,7 @@ func (api *API) postServiceHearbeatHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
-		s, err := services.LoadByID(ctx, api.mustDB(), getAPIConsumer(ctx).Service.ID)
+		s, err := services.LoadByID(ctx, api.mustDB(), getAPIConsumer(ctx).AuthConsumerUser.Service.ID)
 		if err != nil {
 			return err
 		}

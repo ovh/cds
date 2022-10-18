@@ -11,11 +11,11 @@ import (
 )
 
 func hasGlobalRole(ctx context.Context, auth *sdk.AuthConsumer, _ cache.Store, db gorp.SqlExecutor, role string) error {
-	if auth == nil {
+	if auth == nil || auth.AuthConsumerUser == nil {
 		return sdk.WithStack(sdk.ErrForbidden)
 	}
 
-	hasRole, err := HasGlobalRole(ctx, db, role, auth.AuthentifiedUser.ID)
+	hasRole, err := HasGlobalRole(ctx, db, role, auth.AuthConsumerUser.AuthentifiedUser.ID)
 	if err != nil {
 		return err
 	}

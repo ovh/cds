@@ -16,7 +16,6 @@ import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 @AutoUnsubscribe()
 export class HomeComponent implements OnInit, OnDestroy {
 
-    selectedTab = 'heatmap';
     favorites: Array<NavbarProjectData> = [];
     loading = true;
 
@@ -49,9 +48,5 @@ export class HomeComponent implements OnInit, OnDestroy {
             this.filter = f;
             this._cd.markForCheck();
         });
-    }
-
-    selectTab(t: string): void {
-        this.selectedTab = t;
     }
 }

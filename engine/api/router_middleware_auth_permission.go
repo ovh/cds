@@ -73,11 +73,14 @@ func (api *API) checkJobIDPermissions(ctx context.Context, w http.ResponseWriter
 	}
 
 	consumer := getAPIConsumer(ctx)
+	if consumer.AuthConsumerUser == nil {
+		return sdk.WithStack(sdk.ErrForbidden)
+	}
 
 	// If the expected permission if >= RX and the consumer is a worker
 	// We check that the worker has took this job
-	if consumer.Worker != nil {
-		wk := consumer.Worker
+	if consumer.AuthConsumerUser.Worker != nil {
+		wk := consumer.AuthConsumerUser.Worker
 		if wk.JobRunID != nil && runNodeJob.ID == *wk.JobRunID && perm <= sdk.PermissionReadExecute {
 			return nil
 		}
@@ -129,10 +132,13 @@ func (api *API) checkProjectAdvancedPermissionsWithOpts(ctx context.Context, w h
 	}
 
 	consumer := getAPIConsumer(ctx)
+	if consumer.AuthConsumerUser == nil {
+		return sdk.WithStack(sdk.ErrForbidden)
+	}
 
 	// A worker can only read/exec access the project of the its job.
-	if consumer.Worker != nil {
-		jobRunID := consumer.Worker.JobRunID
+	if consumer.AuthConsumerUser.Worker != nil {
+		jobRunID := consumer.AuthConsumerUser.Worker.JobRunID
 		if jobRunID != nil {
 			nodeJobRun, err := workflow.LoadNodeJobRun(ctx, api.mustDB(), api.Cache, *jobRunID)
 			if err != nil {
@@ -144,7 +150,7 @@ func (api *API) checkProjectAdvancedPermissionsWithOpts(ctx context.Context, w h
 			}
 		}
 
-		return sdk.WrapError(sdk.ErrForbidden, "worker %q(%s) not authorized for project %q", consumer.Worker.Name, consumer.Worker.ID, projectKey)
+		return sdk.WrapError(sdk.ErrForbidden, "worker %q(%s) not authorized for project %q", consumer.AuthConsumerUser.Worker.Name, consumer.AuthConsumerUser.Worker.ID, projectKey)
 	}
 
 	perms, err := permission.LoadProjectMaxLevelPermission(ctx, api.mustDB(), []string{projectKey}, getAPIConsumer(ctx).GetGroupIDs())
@@ -247,10 +253,13 @@ func (api *API) checkWorkflowPermissionsWithOpts(opts CheckWorkflowPermissionsOp
 		}
 
 		consumer := getAPIConsumer(ctx)
+		if consumer.AuthConsumerUser == nil {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
 
 		// A worker can only read/exec access the workflow of the its job.
-		if consumer.Worker != nil {
-			jobRunID := consumer.Worker.JobRunID
+		if consumer.AuthConsumerUser.Worker != nil {
+			jobRunID := consumer.AuthConsumerUser.Worker.JobRunID
 			if jobRunID != nil {
 				nodeJobRun, err := workflow.LoadNodeJobRun(ctx, api.mustDB(), api.Cache, *jobRunID)
 				if err != nil {
@@ -286,7 +295,7 @@ func (api *API) checkWorkflowPermissionsWithOpts(opts CheckWorkflowPermissionsOp
 				}
 			}
 
-			return sdk.WrapError(sdk.ErrForbidden, "worker %q(%s) not authorized for workflow %s/%s", consumer.Worker.Name, consumer.Worker.ID, projectKey, workflowName)
+			return sdk.WrapError(sdk.ErrForbidden, "worker %q(%s) not authorized for workflow %s/%s", consumer.AuthConsumerUser.Worker.Name, consumer.AuthConsumerUser.Worker.ID, projectKey, workflowName)
 		}
 
 		perms, err := permission.LoadWorkflowMaxLevelPermission(ctx, api.mustDB(), projectKey, []string{workflowName}, getAPIConsumer(ctx).GetGroupIDs())
@@ -472,13 +481,16 @@ func (api *API) checkUserPublicPermissions(ctx context.Context, w http.ResponseW
 	}
 
 	consumer := getAPIConsumer(ctx)
+	if consumer.AuthConsumerUser == nil {
+		return sdk.WrapError(sdk.ErrForbidden, "not authorized for user %s", username)
+	}
 
 	var u *sdk.AuthentifiedUser
 	var err error
 
 	// Load user from database, returns an error if not exists
 	if username == "me" {
-		u, err = user.LoadByID(ctx, api.mustDB(), consumer.AuthentifiedUserID)
+		u, err = user.LoadByID(ctx, api.mustDB(), consumer.AuthConsumerUser.AuthentifiedUserID)
 	} else {
 		u, err = user.LoadByUsername(ctx, api.mustDB(), username)
 	}
@@ -487,7 +499,7 @@ func (api *API) checkUserPublicPermissions(ctx context.Context, w http.ResponseW
 	}
 
 	// Valid if the current consumer match given username
-	if consumer.AuthentifiedUserID == u.ID {
+	if consumer.AuthConsumerUser.AuthentifiedUserID == u.ID {
 		log.Debug(ctx, "checkUserPermissions> %s read/write access granted to %s because itself", getAPIConsumer(ctx).ID, u.ID)
 		return nil
 	}
@@ -516,13 +528,16 @@ func (api *API) checkUserPermissions(ctx context.Context, w http.ResponseWriter,
 	}
 
 	consumer := getAPIConsumer(ctx)
+	if consumer.AuthConsumerUser == nil {
+		return sdk.WrapError(sdk.ErrForbidden, "not authorized for user %s", username)
+	}
 
 	var u *sdk.AuthentifiedUser
 	var err error
 
 	// Load user from database, returns an error if not exists
 	if username == "me" {
-		u, err = user.LoadByID(ctx, api.mustDB(), consumer.AuthentifiedUserID)
+		u, err = user.LoadByID(ctx, api.mustDB(), consumer.AuthConsumerUser.AuthentifiedUserID)
 	} else {
 		u, err = user.LoadByUsername(ctx, api.mustDB(), username)
 	}
@@ -531,7 +546,7 @@ func (api *API) checkUserPermissions(ctx context.Context, w http.ResponseWriter,
 	}
 
 	// Valid if the current consumer match given username
-	if consumer.AuthentifiedUserID == u.ID {
+	if consumer.AuthConsumerUser.AuthentifiedUserID == u.ID {
 		log.Debug(ctx, "checkUserPermissions> %s read/write access granted to %s because itself", getAPIConsumer(ctx).ID, u.ID)
 		return nil
 	}
@@ -559,13 +574,17 @@ func (api *API) checkConsumerPermissions(ctx context.Context, w http.ResponseWri
 	}
 
 	authConsumer := getAPIConsumer(ctx)
+	if authConsumer.AuthConsumerUser == nil {
+		sdk.WrapError(sdk.ErrForbidden, "not authorized for consumer %s", consumerID)
+	}
+
 	consumer, err := authentication.LoadConsumerByID(ctx, api.mustDB(), consumerID)
 	if err != nil {
 		return sdk.NewErrorWithStack(err, sdk.WrapError(sdk.ErrForbidden, "not authorized for consumer %s", consumerID))
 	}
 
 	// If current consumer's authentified user match given one
-	if consumer.AuthentifiedUserID == authConsumer.AuthentifiedUserID {
+	if consumer.AuthConsumerUser.AuthentifiedUserID == authConsumer.AuthConsumerUser.AuthentifiedUserID {
 		log.Debug(ctx, "checkConsumerPermissions> %s access granted to %s because is owner", authConsumer.ID, consumer.ID)
 		return nil
 	}
@@ -593,6 +612,10 @@ func (api *API) checkSessionPermissions(ctx context.Context, w http.ResponseWrit
 	}
 
 	authConsumer := getAPIConsumer(ctx)
+	if authConsumer.AuthConsumerUser == nil {
+		return sdk.WrapError(sdk.ErrForbidden, "not authorized for session %s", sessionID)
+	}
+
 	session, err := authentication.LoadSessionByID(ctx, api.mustDB(), sessionID)
 	if err != nil {
 		return sdk.NewErrorWithStack(err, sdk.WrapError(sdk.ErrForbidden, "not authorized for session %s", sessionID))
@@ -603,7 +626,7 @@ func (api *API) checkSessionPermissions(ctx context.Context, w http.ResponseWrit
 	}
 
 	// If current consumer's authentified user match session's consumer
-	if consumer.AuthentifiedUserID == authConsumer.AuthentifiedUserID {
+	if consumer.AuthConsumerUser.AuthentifiedUserID == authConsumer.AuthConsumerUser.AuthentifiedUserID {
 		log.Debug(ctx, "checkSessionPermissions> %s access granted to %s because is owner", authConsumer.ID, session.ID)
 		return nil
 	}

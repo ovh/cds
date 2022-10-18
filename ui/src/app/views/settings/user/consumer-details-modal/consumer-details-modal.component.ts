@@ -74,9 +74,9 @@ export class ConsumerDetailsModalComponent implements OnInit {
             return (c: AuthConsumer) => c.name.toLowerCase().indexOf(lowerFilter) !== -1 ||
                     c.description.toLowerCase().indexOf(lowerFilter) !== -1 ||
                     c.id.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                    c.scope_details.map(s => s.scope).join(' ').toLowerCase().indexOf(lowerFilter) !== -1 ||
-                    (c.groups && c.groups.map(g => g.name).join(' ').toLowerCase().indexOf(lowerFilter) !== -1) ||
-                    (!c.groups && lowerFilter === '*');
+                    c.auth_consumer_user.scope_details.map(s => s.scope).join(' ').toLowerCase().indexOf(lowerFilter) !== -1 ||
+                    (c.auth_consumer_user.groups && c.auth_consumer_user.groups.map(g => g.name).join(' ').toLowerCase().indexOf(lowerFilter) !== -1) ||
+                    (!c.auth_consumer_user.groups && lowerFilter === '*');
         };
 
         this.columnsConsumers = [
@@ -98,11 +98,11 @@ export class ConsumerDetailsModalComponent implements OnInit {
             },
             <Column<AuthConsumer>>{
                 name: 'user_auth_scopes',
-                selector: (c: AuthConsumer) => c.scope_details ? c.scope_details.map(s => s.scope).join(', ') : '*'
+                selector: (c: AuthConsumer) => c.auth_consumer_user.scope_details ? c.auth_consumer_user.scope_details.map(s => s.scope).join(', ') : '*'
             },
             <Column<AuthConsumer>>{
                 name: 'user_auth_groups',
-                selector: (c: AuthConsumer) => c.groups ? c.groups.map((g: Group) => g.name).join(', ') : '*'
+                selector: (c: AuthConsumer) => c.auth_consumer_user.groups ? c.auth_consumer_user.groups.map((g: Group) => g.name).join(', ') : '*'
             },
             <Column<AuthConsumer>>{
                 type: ColumnType.BUTTON,
@@ -192,8 +192,8 @@ export class ConsumerDetailsModalComponent implements OnInit {
 
         this.selectedChildDetails = null;
         this.consumerDeletedOrDetached = false;
-        this.scopes = this.consumer.scope_details ? this.consumer.scope_details.map(s => s.scope).join(', ') : '*';
-        this.groups = this.consumer.groups ? this.consumer.groups.map(g => g.name).join(', ') : '*';
+        this.scopes = this.consumer.auth_consumer_user.scope_details ? this.consumer.auth_consumer_user.scope_details.map(s => s.scope).join(', ') : '*';
+        this.groups = this.consumer.auth_consumer_user.groups ? this.consumer.auth_consumer_user.groups.map(g => g.name).join(', ') : '*';
 
         if (this.consumer.warnings && this.consumer.warnings.length > 0) {
             this.warningText = this.consumer.warnings.map(w => {

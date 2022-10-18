@@ -25,7 +25,7 @@ func (api *API) getConsumersByUserHandler() service.Handler {
 		var u *sdk.AuthentifiedUser
 		var err error
 		if username == "me" {
-			u, err = user.LoadByID(ctx, api.mustDB(), getAPIConsumer(ctx).AuthentifiedUserID)
+			u, err = user.LoadByID(ctx, api.mustDB(), getAPIConsumer(ctx).AuthConsumerUser.AuthentifiedUserID)
 		} else {
 			u, err = user.LoadByUsername(ctx, api.mustDB(), username)
 		}
@@ -59,14 +59,14 @@ func (api *API) postConsumerByUserHandler() service.Handler {
 		// Only a user can create a consumer for itself, an admin can't create one for an other user
 		var u *sdk.AuthentifiedUser
 		if username == "me" {
-			u, err = user.LoadByID(ctx, tx, getAPIConsumer(ctx).AuthentifiedUserID)
+			u, err = user.LoadByID(ctx, tx, getAPIConsumer(ctx).AuthConsumerUser.AuthentifiedUserID)
 		} else {
 			u, err = user.LoadByUsername(ctx, tx, username)
 		}
 		if err != nil {
 			return err
 		}
-		if u.ID != consumer.AuthentifiedUserID {
+		if u.ID != consumer.AuthConsumerUser.AuthentifiedUserID {
 			return sdk.NewErrorFrom(sdk.ErrForbidden, "a user can't create a consumer for someone else")
 		}
 
@@ -88,12 +88,12 @@ func (api *API) postConsumerByUserHandler() service.Handler {
 			Name:                         reqData.Name,
 			Description:                  reqData.Description,
 			Duration:                     reqData.ValidityPeriods.Latest().Duration,
-			GroupIDs:                     reqData.GroupIDs,
-			Scopes:                       reqData.ScopeDetails,
-			ServiceName:                  reqData.ServiceName,
-			ServiceType:                  reqData.ServiceType,
-			ServiceRegion:                reqData.ServiceRegion,
-			ServiceIgnoreJobWithNoRegion: reqData.ServiceIgnoreJobWithNoRegion,
+			GroupIDs:                     reqData.AuthConsumerUser.GroupIDs,
+			Scopes:                       reqData.AuthConsumerUser.ScopeDetails,
+			ServiceName:                  reqData.AuthConsumerUser.ServiceName,
+			ServiceType:                  reqData.AuthConsumerUser.ServiceType,
+			ServiceRegion:                reqData.AuthConsumerUser.ServiceRegion,
+			ServiceIgnoreJobWithNoRegion: reqData.AuthConsumerUser.ServiceIgnoreJobWithNoRegion,
 		}
 		newConsumer, token, err := builtin.NewConsumer(ctx, tx, consumerOpts, consumer)
 		if err != nil {
@@ -129,6 +129,9 @@ func (api *API) deleteConsumerByUserHandler() service.Handler {
 		consumer, err := authentication.LoadConsumerByID(ctx, tx, consumerID)
 		if err != nil {
 			return err
+		}
+		if consumer.AuthConsumerUser == nil {
+			return sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find an user consumer")
 		}
 		if consumer.Type != sdk.ConsumerBuiltin {
 			return sdk.NewErrorFrom(sdk.ErrForbidden, "can't delete a no builtin consumer")
@@ -233,7 +236,7 @@ func (api *API) getSessionsByUserHandler() service.Handler {
 		var u *sdk.AuthentifiedUser
 		var err error
 		if username == "me" {
-			u, err = user.LoadByID(ctx, api.mustDB(), getAPIConsumer(ctx).AuthentifiedUserID)
+			u, err = user.LoadByID(ctx, api.mustDB(), getAPIConsumer(ctx).AuthConsumerUser.AuthentifiedUserID)
 		} else {
 			u, err = user.LoadByUsername(ctx, api.mustDB(), username)
 		}

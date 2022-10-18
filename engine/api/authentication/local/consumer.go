@@ -23,18 +23,20 @@ func NewConsumerWithHash(ctx context.Context, db gorpmapper.SqlExecutorWithTx, u
 
 func newConsumerWithData(ctx context.Context, db gorpmapper.SqlExecutorWithTx, userID string, data map[string]string) (*sdk.AuthConsumer, error) {
 	c := sdk.AuthConsumer{
-		Name:               string(sdk.ConsumerLocal),
-		AuthentifiedUserID: userID,
-		Type:               sdk.ConsumerLocal,
-		Data: map[string]string{
-			"verified": sdk.FalseString,
+		Name: string(sdk.ConsumerLocal),
+		Type: sdk.ConsumerLocal,
+		AuthConsumerUser: &sdk.AuthConsumerUser{
+			AuthentifiedUserID: userID,
+			Data: map[string]string{
+				"verified": sdk.FalseString,
+			},
 		},
 		ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
 	}
 
 	for k, v := range data {
-		if _, ok := c.Data[k]; !ok {
-			c.Data[k] = v
+		if _, ok := c.AuthConsumerUser.Data[k]; !ok {
+			c.AuthConsumerUser.Data[k] = v
 		}
 	}
 

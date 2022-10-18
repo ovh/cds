@@ -246,7 +246,7 @@ func (s *Service) getItemLogsLinesHandler() service.Handler {
 			if err != nil {
 				return err
 			}
-			if data.Consumer.AuthentifiedUser.Ring != sdk.UserRingAdmin {
+			if data.Consumer.AuthConsumerUser.AuthentifiedUser.Ring != sdk.UserRingAdmin {
 				return sdk.WithStack(sdk.ErrUnauthorized)
 			}
 		}

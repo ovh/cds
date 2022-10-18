@@ -27,24 +27,28 @@ func TestLoadConsumer(t *testing.T) {
 	require.NoError(t, user.Insert(context.TODO(), db, &u))
 
 	c1 := sdk.AuthConsumer{
-		Name:               sdk.RandomString(10),
-		Description:        sdk.RandomString(10),
-		Type:               sdk.ConsumerLocal,
-		ScopeDetails:       sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAdmin),
-		GroupIDs:           []int64{5, 10},
-		AuthentifiedUserID: u.ID,
-		ValidityPeriods:    sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+		Name:            sdk.RandomString(10),
+		Description:     sdk.RandomString(10),
+		Type:            sdk.ConsumerLocal,
+		ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+		AuthConsumerUser: &sdk.AuthConsumerUser{
+			ScopeDetails:       sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAdmin),
+			GroupIDs:           []int64{5, 10},
+			AuthentifiedUserID: u.ID,
+		},
 	}
 	require.NoError(t, authentication.InsertConsumer(context.TODO(), db, &c1))
 
 	c2 := sdk.AuthConsumer{
-		Name:               sdk.RandomString(10),
-		Description:        sdk.RandomString(10),
-		Type:               sdk.ConsumerBuiltin,
-		ScopeDetails:       sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAdmin),
-		GroupIDs:           []int64{10, 15},
-		AuthentifiedUserID: u.ID,
-		ValidityPeriods:    sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+		Name:            sdk.RandomString(10),
+		Description:     sdk.RandomString(10),
+		Type:            sdk.ConsumerBuiltin,
+		ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+		AuthConsumerUser: &sdk.AuthConsumerUser{
+			ScopeDetails:       sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAdmin),
+			GroupIDs:           []int64{10, 15},
+			AuthentifiedUserID: u.ID,
+		},
 	}
 	require.NoError(t, authentication.InsertConsumer(context.TODO(), db, &c2))
 
@@ -96,9 +100,11 @@ func TestInsertConsumer(t *testing.T) {
 	require.NoError(t, user.Insert(context.TODO(), db, &u))
 
 	c := sdk.AuthConsumer{
-		Name:               sdk.RandomString(10),
-		AuthentifiedUserID: u.ID,
-		ValidityPeriods:    sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+		Name:            sdk.RandomString(10),
+		ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+		AuthConsumerUser: &sdk.AuthConsumerUser{
+			AuthentifiedUserID: u.ID,
+		},
 	}
 	require.NoError(t, authentication.InsertConsumer(context.TODO(), db, &c))
 
@@ -117,9 +123,11 @@ func TestUpdateConsumer(t *testing.T) {
 	require.NoError(t, user.Insert(context.TODO(), db, &u))
 
 	c := sdk.AuthConsumer{
-		Name:               sdk.RandomString(10),
-		AuthentifiedUserID: u.ID,
-		ValidityPeriods:    sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+		Name:            sdk.RandomString(10),
+		ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+		AuthConsumerUser: &sdk.AuthConsumerUser{
+			AuthentifiedUserID: u.ID,
+		},
 	}
 	require.NoError(t, authentication.InsertConsumer(context.TODO(), db, &c))
 
@@ -140,9 +148,11 @@ func TestDeleteConsumer(t *testing.T) {
 	require.NoError(t, user.Insert(context.TODO(), db, &u))
 
 	c := sdk.AuthConsumer{
-		Name:               sdk.RandomString(10),
-		AuthentifiedUserID: u.ID,
-		ValidityPeriods:    sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+		Name:            sdk.RandomString(10),
+		ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+		AuthConsumerUser: &sdk.AuthConsumerUser{
+			AuthentifiedUserID: u.ID,
+		},
 	}
 	require.NoError(t, authentication.InsertConsumer(context.TODO(), db, &c))
 

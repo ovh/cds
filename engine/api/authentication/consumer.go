@@ -8,16 +8,18 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func NewConsumerWorker(ctx context.Context, db gorpmapper.SqlExecutorWithTx, name string, hatcherySrv *sdk.Service, hatcheryConsumer *sdk.AuthConsumer) (*sdk.AuthConsumer, error) {
+func NewConsumerWorker(ctx context.Context, db gorpmapper.SqlExecutorWithTx, name string, hatcheryConsumer *sdk.AuthConsumer) (*sdk.AuthConsumer, error) {
 	c := sdk.AuthConsumer{
-		Name:               name,
-		AuthentifiedUserID: hatcheryConsumer.AuthentifiedUserID,
-		ParentID:           &hatcheryConsumer.ID,
-		Type:               sdk.ConsumerBuiltin,
-		Data:               map[string]string{},
-		ScopeDetails: sdk.NewAuthConsumerScopeDetails(
-			sdk.AuthConsumerScopeRunExecution,
-		),
+		Name:     name,
+		ParentID: &hatcheryConsumer.ID,
+		Type:     sdk.ConsumerBuiltin,
+		AuthConsumerUser: &sdk.AuthConsumerUser{
+			AuthentifiedUserID: hatcheryConsumer.AuthConsumerUser.AuthentifiedUserID,
+			Data:               map[string]string{},
+			ScopeDetails: sdk.NewAuthConsumerScopeDetails(
+				sdk.AuthConsumerScopeRunExecution,
+			),
+		},
 		ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 24*time.Hour),
 	}
 
@@ -31,14 +33,16 @@ func NewConsumerWorker(ctx context.Context, db gorpmapper.SqlExecutorWithTx, nam
 // NewConsumerExternal returns a new local consumer for given data.
 func NewConsumerExternal(ctx context.Context, db gorpmapper.SqlExecutorWithTx, userID string, consumerType sdk.AuthConsumerType, userInfo sdk.AuthDriverUserInfo) (*sdk.AuthConsumer, error) {
 	c := sdk.AuthConsumer{
-		Name:               string(consumerType),
-		AuthentifiedUserID: userID,
-		Type:               consumerType,
-		Data: map[string]string{
-			"external_id": userInfo.ExternalID,
-			"fullname":    userInfo.Fullname,
-			"username":    userInfo.Username,
-			"email":       userInfo.Email,
+		Name: string(consumerType),
+		Type: consumerType,
+		AuthConsumerUser: &sdk.AuthConsumerUser{
+			AuthentifiedUserID: userID,
+			Data: map[string]string{
+				"external_id": userInfo.ExternalID,
+				"fullname":    userInfo.Fullname,
+				"username":    userInfo.Username,
+				"email":       userInfo.Email,
+			},
 		},
 		ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
 	}
@@ -60,7 +64,9 @@ func ConsumerRegen(ctx context.Context, db gorpmapper.SqlExecutorWithTx, consume
 	}
 
 	// Remove invalid groups and warnings
-	consumer.InvalidGroupIDs = nil
+	if consumer.AuthConsumerUser != nil {
+		consumer.AuthConsumerUser.InvalidGroupIDs = nil
+	}
 	consumer.Warnings = nil
 
 	// Regen the token
@@ -75,7 +81,6 @@ func ConsumerRegen(ctx context.Context, db gorpmapper.SqlExecutorWithTx, consume
 	if err := UpdateConsumer(ctx, db, consumer); err != nil {
 		return err
 	}
-
 	return nil
 }
 
@@ -86,14 +91,18 @@ func ConsumerRemoveGroup(ctx context.Context, db gorpmapper.SqlExecutorWithTx, g
 	if err != nil {
 		return err
 	}
+
 	for i := range cs {
+		if cs[i].AuthConsumerUser == nil {
+			continue
+		}
 		// Remove the group id from the consumer and add a warning to the consumer
-		if !cs[i].GroupIDs.Contains(g.ID) && !cs[i].InvalidGroupIDs.Contains(g.ID) {
+		if !cs[i].AuthConsumerUser.GroupIDs.Contains(g.ID) && !cs[i].AuthConsumerUser.InvalidGroupIDs.Contains(g.ID) {
 			continue
 		}
 
-		cs[i].GroupIDs.Remove(g.ID)
-		cs[i].InvalidGroupIDs.Remove(g.ID)
+		cs[i].AuthConsumerUser.GroupIDs.Remove(g.ID)
+		cs[i].AuthConsumerUser.InvalidGroupIDs.Remove(g.ID)
 
 		// Clean warnings, removes warning for invalid group on given one
 		filteredWarnings := make(sdk.AuthConsumerWarnings, 0, len(cs[i].Warnings))
@@ -108,7 +117,7 @@ func ConsumerRemoveGroup(ctx context.Context, db gorpmapper.SqlExecutorWithTx, g
 		cs[i].Warnings = append(cs[i].Warnings, sdk.NewConsumerWarningGroupRemoved(g.ID, g.Name))
 
 		// If there is no group left in the consumer we want to disable it if not already disabled
-		if len(cs[i].GroupIDs) == 0 && !cs[i].Disabled {
+		if len(cs[i].AuthConsumerUser.GroupIDs) == 0 && !cs[i].Disabled {
 			cs[i].Disabled = true
 			cs[i].Warnings = append(cs[i].Warnings, sdk.NewConsumerWarningLastGroupRemoved())
 		}
@@ -134,17 +143,20 @@ func ConsumerInvalidateGroupForUser(ctx context.Context, db gorpmapper.SqlExecut
 		return err
 	}
 	for i := range cs {
-		if len(cs[i].GroupIDs) == 0 || !cs[i].GroupIDs.Contains(g.ID) {
+		if cs[i].AuthConsumerUser == nil {
+			continue
+		}
+		if len(cs[i].AuthConsumerUser.GroupIDs) == 0 || !cs[i].AuthConsumerUser.GroupIDs.Contains(g.ID) {
 			continue
 		}
 
 		// Remove the group id from slice and add it to the invalid ones
-		cs[i].GroupIDs.Remove(g.ID)
-		cs[i].InvalidGroupIDs = append(cs[i].InvalidGroupIDs, g.ID)
+		cs[i].AuthConsumerUser.GroupIDs.Remove(g.ID)
+		cs[i].AuthConsumerUser.InvalidGroupIDs = append(cs[i].AuthConsumerUser.InvalidGroupIDs, g.ID)
 		cs[i].Warnings = append(cs[i].Warnings, sdk.NewConsumerWarningGroupInvalid(g.ID, g.Name))
 
 		// If there is no group left in the consumer we want to disable it
-		if len(cs[i].GroupIDs) == 0 {
+		if len(cs[i].AuthConsumerUser.GroupIDs) == 0 {
 			cs[i].Disabled = true
 			cs[i].Warnings = append(cs[i].Warnings, sdk.NewConsumerWarningLastGroupRemoved())
 		}
@@ -166,13 +178,16 @@ func ConsumerRestoreInvalidatedGroupForUser(ctx context.Context, db gorpmapper.S
 		return err
 	}
 	for i := range cs {
-		if len(cs[i].InvalidGroupIDs) == 0 || !cs[i].InvalidGroupIDs.Contains(groupID) {
+		if cs[i].AuthConsumerUser == nil {
+			continue
+		}
+		if len(cs[i].AuthConsumerUser.InvalidGroupIDs) == 0 || !cs[i].AuthConsumerUser.InvalidGroupIDs.Contains(groupID) {
 			continue
 		}
 
 		// Remove the group id from slice and add it to the valid ones
-		cs[i].InvalidGroupIDs.Remove(groupID)
-		cs[i].GroupIDs = append(cs[i].GroupIDs, groupID)
+		cs[i].AuthConsumerUser.InvalidGroupIDs.Remove(groupID)
+		cs[i].AuthConsumerUser.GroupIDs = append(cs[i].AuthConsumerUser.GroupIDs, groupID)
 
 		// If the consumer was disabled because there was no group left inside, it can be re-enable
 		cs[i].Disabled = false
@@ -203,24 +218,27 @@ func ConsumerInvalidateGroupsForUser(ctx context.Context, db gorpmapper.SqlExecu
 		return err
 	}
 	for i := range cs {
+		if cs[i].AuthConsumerUser == nil {
+			continue
+		}
 		// If there is no group in the consumer we can skip it
-		if len(cs[i].GroupIDs) == 0 {
+		if len(cs[i].AuthConsumerUser.GroupIDs) == 0 {
 			continue
 		}
 
-		for j := range cs[i].Groups {
-			if userGroupIDs.Contains(cs[i].Groups[j].ID) {
+		for j := range cs[i].AuthConsumerUser.Groups {
+			if userGroupIDs.Contains(cs[i].AuthConsumerUser.Groups[j].ID) {
 				continue
 			}
 
 			// Remove the group id from slice and add it to the invalid ones
-			cs[i].GroupIDs.Remove(cs[i].Groups[j].ID)
-			cs[i].InvalidGroupIDs = append(cs[i].InvalidGroupIDs, cs[i].Groups[j].ID)
-			cs[i].Warnings = append(cs[i].Warnings, sdk.NewConsumerWarningGroupInvalid(cs[i].Groups[j].ID, cs[i].Groups[j].Name))
+			cs[i].AuthConsumerUser.GroupIDs.Remove(cs[i].AuthConsumerUser.Groups[j].ID)
+			cs[i].AuthConsumerUser.InvalidGroupIDs = append(cs[i].AuthConsumerUser.InvalidGroupIDs, cs[i].AuthConsumerUser.Groups[j].ID)
+			cs[i].Warnings = append(cs[i].Warnings, sdk.NewConsumerWarningGroupInvalid(cs[i].AuthConsumerUser.Groups[j].ID, cs[i].AuthConsumerUser.Groups[j].Name))
 		}
 
 		// If there is no group left in the consumer we want to disable it
-		if len(cs[i].GroupIDs) == 0 {
+		if len(cs[i].AuthConsumerUser.GroupIDs) == 0 {
 			cs[i].Disabled = true
 			cs[i].Warnings = append(cs[i].Warnings, sdk.NewConsumerWarningLastGroupRemoved())
 		}
@@ -241,13 +259,16 @@ func ConsumerRestoreInvalidatedGroupsForUser(ctx context.Context, db gorpmapper.
 		return err
 	}
 	for i := range cs {
-		if len(cs[i].InvalidGroupIDs) == 0 {
+		if cs[i].AuthConsumerUser == nil {
+			continue
+		}
+		if len(cs[i].AuthConsumerUser.InvalidGroupIDs) == 0 {
 			continue
 		}
 
 		// Moves invalid group ids to valid slice
-		cs[i].GroupIDs = append(cs[i].GroupIDs, cs[i].InvalidGroupIDs...)
-		cs[i].InvalidGroupIDs = nil
+		cs[i].AuthConsumerUser.GroupIDs = append(cs[i].AuthConsumerUser.GroupIDs, cs[i].AuthConsumerUser.InvalidGroupIDs...)
+		cs[i].AuthConsumerUser.InvalidGroupIDs = nil
 
 		// If the consumer was disabled because there was no group left inside, it can be re-enable
 		cs[i].Disabled = false
