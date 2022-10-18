@@ -45,9 +45,9 @@ func (api *API) getWorkflowsHandler() service.Handler {
 			dao.Filters.ApplicationRepository = filterByRepo
 		}
 
-		dao.Loaders.WithFavoritesForUserID = getAPIConsumer(ctx).AuthConsumerUser.AuthentifiedUserID
+		dao.Loaders.WithFavoritesForUserID = getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUserID
 
-		groupIDS := getAPIConsumer(ctx).GetGroupIDs()
+		groupIDS := getUserConsumer(ctx).GetGroupIDs()
 		dao.Filters.GroupIDs = groupIDS
 		if isMaintainer(ctx) {
 			dao.Filters.GroupIDs = nil
@@ -199,7 +199,7 @@ func (api *API) postWorkflowRetentionPolicyDryRun() service.Handler {
 			return err
 		}
 
-		u := getAPIConsumer(ctx)
+		u := getUserConsumer(ctx)
 		api.GoRoutines.Exec(api.Router.Background, "workflow-retention-dryrun", func(ctx context.Context) {
 			if err := purge.ApplyRetentionPolicyOnWorkflow(ctx, api.Cache, api.mustDBWithCtx(ctx), *wf, purge.MarkAsDeleteOptions{DryRun: true}, u.AuthConsumerUser.AuthentifiedUser); err != nil {
 				ctx = sdk.ContextWithStacktrace(ctx, err)
@@ -241,7 +241,7 @@ func (api *API) getWorkflowHandler() service.Handler {
 			WithAsCodeUpdateEvent:  withAsCodeEvents,
 			WithIntegrations:       true,
 			WithTemplate:           withTemplate,
-			WithFavoritesForUserID: getAPIConsumer(ctx).AuthConsumerUser.AuthentifiedUserID,
+			WithFavoritesForUserID: getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUserID,
 		}
 		w1, err := workflow.Load(ctx, api.mustDB(), api.Cache, *proj, name, opts)
 		if err != nil {
@@ -267,7 +267,7 @@ func (api *API) getWorkflowHandler() service.Handler {
 		if isAdmin(ctx) {
 			w1.Permissions = sdk.Permissions{Readable: true, Writable: true, Executable: true}
 		} else {
-			perms, err := permission.LoadWorkflowMaxLevelPermission(ctx, api.mustDB(), key, []string{w1.Name}, getAPIConsumer(ctx).GetGroupIDs())
+			perms, err := permission.LoadWorkflowMaxLevelPermission(ctx, api.mustDB(), key, []string{w1.Name}, getUserConsumer(ctx).GetGroupIDs())
 			if err != nil {
 				return err
 			}
@@ -319,7 +319,7 @@ func (api *API) postWorkflowRollbackHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrWrongRequest, "Cannot convert auditID to int")
 		}
 		db := api.mustDB()
-		u := getAPIConsumer(ctx)
+		u := getUserConsumer(ctx)
 
 		proj, err := project.Load(ctx, db, key,
 			project.LoadOptions.WithGroups,
@@ -367,7 +367,7 @@ func (api *API) postWorkflowRollbackHandler() service.Handler {
 		newWf.Permissions.Executable = true
 		newWf.Permissions.Writable = true
 
-		event.PublishWorkflowUpdate(ctx, key, *wf, *newWf, getAPIConsumer(ctx))
+		event.PublishWorkflowUpdate(ctx, key, *wf, *newWf, getUserConsumer(ctx))
 
 		return service.WriteJSON(w, *newWf, http.StatusOK)
 	}
@@ -496,7 +496,7 @@ func (api *API) postWorkflowHandler() service.Handler {
 		defer tx.Rollback() // nolint
 
 		// Check group permissions if given for workflow and nodes
-		if err := group.CheckWorkflowGroups(ctx, tx, p, &data, getAPIConsumer(ctx)); err != nil {
+		if err := group.CheckWorkflowGroups(ctx, tx, p, &data, getUserConsumer(ctx)); err != nil {
 			return err
 		}
 
@@ -513,7 +513,7 @@ func (api *API) postWorkflowHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load workflow")
 		}
 
-		event.PublishWorkflowAdd(ctx, p.Key, *wf, getAPIConsumer(ctx))
+		event.PublishWorkflowAdd(ctx, p.Key, *wf, getUserConsumer(ctx))
 
 		wf.Permissions.Readable = true
 		wf.Permissions.Writable = true
@@ -575,7 +575,7 @@ func (api *API) putWorkflowHandler() service.Handler {
 		wf.Groups = nil
 
 		// Check group permissions if given for workflow and nodes
-		if err := group.CheckWorkflowGroups(ctx, tx, p, &wf, getAPIConsumer(ctx)); err != nil {
+		if err := group.CheckWorkflowGroups(ctx, tx, p, &wf, getUserConsumer(ctx)); err != nil {
 			return err
 		}
 
@@ -602,7 +602,7 @@ func (api *API) putWorkflowHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load workflow")
 		}
 
-		event.PublishWorkflowUpdate(ctx, p.Key, *wf1, *oldW, getAPIConsumer(ctx))
+		event.PublishWorkflowUpdate(ctx, p.Key, *wf1, *oldW, getUserConsumer(ctx))
 
 		wf1.Permissions.Readable = true
 		wf1.Permissions.Writable = true
@@ -734,7 +734,7 @@ func (api *API) deleteWorkflowHandler() service.Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(errT, "Cannot commit transaction")
 		}
-		consumer := getAPIConsumer(ctx)
+		consumer := getUserConsumer(ctx)
 		api.GoRoutines.Exec(api.Router.Background, "deleteWorkflowHandler",
 			func(ctx context.Context) {
 				txg, err := api.mustDB().Begin()
@@ -922,9 +922,9 @@ func (api *API) getSearchWorkflowHandler() service.Handler {
 		dao.Filters.ApplicationRepository = FormString(r, "repository")
 		dao.Filters.AsCode = service.FormBool(r, "ascode")
 		dao.Loaders.WithRuns = service.FormInt(r, "runs")
-		dao.Loaders.WithFavoritesForUserID = getAPIConsumer(ctx).AuthConsumerUser.AuthentifiedUserID
+		dao.Loaders.WithFavoritesForUserID = getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUserID
 
-		groupIDS := getAPIConsumer(ctx).GetGroupIDs()
+		groupIDS := getUserConsumer(ctx).GetGroupIDs()
 		dao.Filters.GroupIDs = groupIDS
 		if isMaintainer(ctx) {
 			dao.Filters.GroupIDs = nil

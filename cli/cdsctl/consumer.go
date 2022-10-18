@@ -199,11 +199,13 @@ func authConsumerNewRun(v cli.Values) error {
 		svcIgnoreJobWithNoRegion = cli.AskConfirm("Service ignore job with no region")
 	}
 
-	var consumer = sdk.AuthConsumer{
-		Name:            name,
-		Description:     description,
-		ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), duration),
-		AuthConsumerUser: &sdk.AuthConsumerUser{
+	var consumer = sdk.AuthUserConsumer{
+		AuthConsumer: sdk.AuthConsumer{
+			Name:            name,
+			Description:     description,
+			ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), duration),
+		},
+		AuthConsumerUser: sdk.AuthUserConsumerData{
 			GroupIDs:     groupIDs,
 			ScopeDetails: sdk.NewAuthConsumerScopeDetails(scopes...),
 		},

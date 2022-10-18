@@ -80,7 +80,7 @@ func (api *API) getApplicationsHandler() service.Handler {
 			if requestedUser != nil {
 				groupIDs = requestedUser.GetGroupIDs()
 			} else {
-				groupIDs = getAPIConsumer(ctx).GetGroupIDs()
+				groupIDs = getUserConsumer(ctx).GetGroupIDs()
 			}
 
 			projectPerms, err := permission.LoadProjectMaxLevelPermission(ctx, api.mustDB(), []string{projectKey}, groupIDs)
@@ -288,7 +288,7 @@ func (api *API) addApplicationHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		event.PublishAddApplication(ctx, proj.Key, app, getAPIConsumer(ctx))
+		event.PublishAddApplication(ctx, proj.Key, app, getUserConsumer(ctx))
 
 		return service.WriteJSON(w, app, http.StatusOK)
 	}
@@ -321,7 +321,7 @@ func (api *API) deleteApplicationHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		event.PublishDeleteApplication(ctx, projectKey, *app, getAPIConsumer(ctx))
+		event.PublishDeleteApplication(ctx, projectKey, *app, getUserConsumer(ctx))
 
 		return nil
 	}
@@ -402,12 +402,12 @@ func cloneApplication(ctx context.Context, db gorpmapper.SqlExecutorWithTx, stor
 			return sdk.WithStack(sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid variable type %s", newVar.Type))
 		}
 
-		if err := application.InsertVariable(db, newApp.ID, newVar, getAPIConsumer(ctx)); err != nil {
+		if err := application.InsertVariable(db, newApp.ID, newVar, getUserConsumer(ctx)); err != nil {
 			return sdk.WrapError(err, "cloneApplication> Cannot add variable %s in application %s", newVar.Name, newApp.Name)
 		}
 	}
 
-	event.PublishAddApplication(ctx, proj.Key, *newApp, getAPIConsumer(ctx))
+	event.PublishAddApplication(ctx, proj.Key, *newApp, getUserConsumer(ctx))
 
 	return nil
 }
@@ -510,7 +510,7 @@ func (api *API) updateAsCodeApplicationHandler() service.Handler {
 			a.RepositoryStrategy.Password = rootApp.RepositoryStrategy.Password
 		}
 
-		u := getAPIConsumer(ctx)
+		u := getUserConsumer(ctx)
 		a.ProjectID = proj.ID
 		app, err := application.ExportApplication(ctx, tx, a, project.EncryptWithBuiltinKey, fmt.Sprintf("app:%d:%s", appDB.ID, branch))
 		if err != nil {
@@ -603,7 +603,7 @@ func (api *API) updateApplicationHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		event.PublishUpdateApplication(ctx, projectKey, *app, old, getAPIConsumer(ctx))
+		event.PublishUpdateApplication(ctx, projectKey, *app, old, getUserConsumer(ctx))
 
 		return service.WriteJSON(w, app, http.StatusOK)
 
@@ -647,7 +647,7 @@ func (api *API) postApplicationMetadataHandler() service.Handler {
 			return sdk.WrapError(err, "unable to commit tx")
 		}
 
-		event.PublishUpdateApplication(ctx, projectKey, *app, oldApp, getAPIConsumer(ctx))
+		event.PublishUpdateApplication(ctx, projectKey, *app, oldApp, getUserConsumer(ctx))
 
 		return nil
 	}

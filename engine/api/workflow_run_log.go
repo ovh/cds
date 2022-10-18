@@ -260,8 +260,8 @@ func (api *API) getWorkflowAccessHandler() service.Handler {
 		if err != nil {
 			return err
 		}
-		consumer, err := authentication.LoadConsumerByID(ctx, api.mustDB(), session.ConsumerID,
-			authentication.LoadConsumerOptions.WithAuthentifiedUser)
+		consumer, err := authentication.LoadUserConsumerByID(ctx, api.mustDB(), session.ConsumerID,
+			authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 		if err != nil {
 			return sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 		}

@@ -104,7 +104,7 @@ func (api *API) updateAsCodePipelineHandler() service.Handler {
 			return sdk.NewErrorFrom(sdk.ErrForbidden, "cannot push the the default branch on your git repository")
 		}
 
-		u := getAPIConsumer(ctx)
+		u := getUserConsumer(ctx)
 
 		wpi := exportentities.NewPipelineV1(p)
 		wp := exportentities.WorkflowComponents{
@@ -167,7 +167,7 @@ func (api *API) updatePipelineHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		if err := pipeline.CreateAudit(tx, pipelineDB, pipeline.AuditUpdatePipeline, getAPIConsumer(ctx)); err != nil {
+		if err := pipeline.CreateAudit(tx, pipelineDB, pipeline.AuditUpdatePipeline, getUserConsumer(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot create audit")
 		}
 
@@ -183,7 +183,7 @@ func (api *API) updatePipelineHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		event.PublishPipelineUpdate(ctx, key, p.Name, oldName, getAPIConsumer(ctx))
+		event.PublishPipelineUpdate(ctx, key, p.Name, oldName, getUserConsumer(ctx))
 
 		return service.WriteJSON(w, pipelineDB, http.StatusOK)
 	}
@@ -201,7 +201,7 @@ func (api *API) postPipelineRollbackHandler() service.Handler {
 		}
 
 		db := api.mustDB()
-		u := getAPIConsumer(ctx)
+		u := getUserConsumer(ctx)
 
 		pipDB, err := pipeline.LoadPipeline(ctx, db, key, name, false)
 		if err != nil {
@@ -300,7 +300,7 @@ func (api *API) addPipelineHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		event.PublishPipelineAdd(ctx, key, p, getAPIConsumer(ctx))
+		event.PublishPipelineAdd(ctx, key, p, getUserConsumer(ctx))
 
 		return service.WriteJSON(w, p, http.StatusOK)
 	}
@@ -459,7 +459,7 @@ func (api *API) deletePipelineHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		event.PublishPipelineDelete(ctx, key, *p, getAPIConsumer(ctx))
+		event.PublishPipelineDelete(ctx, key, *p, getUserConsumer(ctx))
 		return nil
 	}
 }

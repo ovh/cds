@@ -50,8 +50,8 @@ func (c *client) AuthConsumerLocalSignupVerify(token, initToken string) (sdk.Aut
 	return res, nil
 }
 
-func (c *client) AuthConsumerListByUser(username string) (sdk.AuthConsumers, error) {
-	var consumers sdk.AuthConsumers
+func (c *client) AuthConsumerListByUser(username string) (sdk.AuthUserConsumers, error) {
+	var consumers sdk.AuthUserConsumers
 	if _, err := c.GetJSON(context.Background(), "/user/"+username+"/auth/consumer", &consumers); err != nil {
 		return nil, err
 	}
@@ -73,7 +73,7 @@ func (c *client) AuthConsumerRegen(username, id string, newDuration int64, overl
 	return consumer, err
 }
 
-func (c *client) AuthConsumerCreateForUser(username string, request sdk.AuthConsumer) (sdk.AuthConsumerCreateResponse, error) {
+func (c *client) AuthConsumerCreateForUser(username string, request sdk.AuthUserConsumer) (sdk.AuthConsumerCreateResponse, error) {
 	var consumer sdk.AuthConsumerCreateResponse
 	_, _, _, err := c.RequestJSON(context.Background(), "POST", "/user/"+username+"/auth/consumer", request, &consumer)
 	return consumer, err

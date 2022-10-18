@@ -637,15 +637,11 @@ func CreateRun(db *gorp.DbMap, wf *sdk.Workflow, opts sdk.WorkflowRunPostHandler
 			wr.Tag(tagTriggeredBy, "cds.hook")
 		}
 	} else {
-		c, err := authentication.LoadConsumerByID(context.Background(), db, opts.AuthConsumerID,
-			authentication.LoadConsumerOptions.WithAuthentifiedUser,
-			authentication.LoadConsumerOptions.WithConsumerGroups)
+		c, err := authentication.LoadUserConsumerByID(context.Background(), db, opts.AuthConsumerID,
+			authentication.LoadUserConsumerOptions.WithAuthentifiedUser,
+			authentication.LoadUserConsumerOptions.WithConsumerGroups)
 		if err != nil {
 			return nil, err
-		}
-
-		if c.AuthConsumerUser == nil {
-			return nil, sdk.NewErrorFrom(sdk.ErrForbidden, "unable to find user data on consumer")
 		}
 
 		// Add service for consumer if exists

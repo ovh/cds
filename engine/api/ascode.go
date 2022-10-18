@@ -79,7 +79,7 @@ func (api *API) postImportAsCodeHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		u := getAPIConsumer(ctx)
+		u := getUserConsumer(ctx)
 
 		api.GoRoutines.Exec(context.Background(), fmt.Sprintf("postImportAsCodeHandler-%s", ope.UUID), func(ctx context.Context) {
 			ctx = context.WithValue(ctx, cdslog.Operation, ope.UUID)
@@ -176,7 +176,7 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 			return err
 		}
 
-		consumer := getAPIConsumer(ctx)
+		consumer := getUserConsumer(ctx)
 
 		mods := []workflowtemplate.TemplateRequestModifierFunc{
 			workflowtemplate.TemplateRequestModifiers.DefaultKeys(*proj),
@@ -193,7 +193,7 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 		if err != nil {
 			return err
 		}
-		msgPush, wrkflw, _, _, err := workflow.Push(ctx, api.mustDB(), api.Cache, proj, data, opt, getAPIConsumer(ctx), project.DecryptWithBuiltinKey)
+		msgPush, wrkflw, _, _, err := workflow.Push(ctx, api.mustDB(), api.Cache, proj, data, opt, getUserConsumer(ctx), project.DecryptWithBuiltinKey)
 		allMsg = append(allMsg, msgPush...)
 		if err != nil {
 			return sdk.WrapError(err, "unable to push workflow")
@@ -229,7 +229,7 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 			w.Header().Add(sdk.ResponseWorkflowNameHeader, wrkflw.Name)
 		}
 
-		event.PublishWorkflowAdd(ctx, proj.Key, *wrkflw, getAPIConsumer(ctx))
+		event.PublishWorkflowAdd(ctx, proj.Key, *wrkflw, getUserConsumer(ctx))
 
 		return service.WriteJSON(w, msgListString, http.StatusOK)
 	}
@@ -257,7 +257,7 @@ func (api *API) postWorkflowAsCodeEventsResyncHandler() service.Handler {
 			return err
 		}
 
-		res, err := ascode.SyncEvents(ctx, api.mustDB(), api.Cache, *proj, *wf, getAPIConsumer(ctx).AuthConsumerUser.AuthentifiedUser)
+		res, err := ascode.SyncEvents(ctx, api.mustDB(), api.Cache, *proj, *wf, getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser)
 		if err != nil {
 			return err
 		}

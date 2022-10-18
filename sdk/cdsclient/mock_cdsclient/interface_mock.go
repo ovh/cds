@@ -5783,7 +5783,7 @@ func (mr *MockInterfaceMockRecorder) ApplicationVariablesList(projectKey, appNam
 }
 
 // AuthConsumerCreateForUser mocks base method.
-func (m *MockInterface) AuthConsumerCreateForUser(username string, request sdk.AuthConsumer) (sdk.AuthConsumerCreateResponse, error) {
+func (m *MockInterface) AuthConsumerCreateForUser(username string, request sdk.AuthUserConsumer) (sdk.AuthConsumerCreateResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AuthConsumerCreateForUser", username, request)
 	ret0, _ := ret[0].(sdk.AuthConsumerCreateResponse)
@@ -5812,10 +5812,10 @@ func (mr *MockInterfaceMockRecorder) AuthConsumerDelete(username, id interface{}
 }
 
 // AuthConsumerListByUser mocks base method.
-func (m *MockInterface) AuthConsumerListByUser(username string) (sdk.AuthConsumers, error) {
+func (m *MockInterface) AuthConsumerListByUser(username string) (sdk.AuthUserConsumers, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AuthConsumerListByUser", username)
-	ret0, _ := ret[0].(sdk.AuthConsumers)
+	ret0, _ := ret[0].(sdk.AuthUserConsumers)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -11062,7 +11062,7 @@ func (m *MockAuthClient) EXPECT() *MockAuthClientMockRecorder {
 }
 
 // AuthConsumerCreateForUser mocks base method.
-func (m *MockAuthClient) AuthConsumerCreateForUser(username string, request sdk.AuthConsumer) (sdk.AuthConsumerCreateResponse, error) {
+func (m *MockAuthClient) AuthConsumerCreateForUser(username string, request sdk.AuthUserConsumer) (sdk.AuthConsumerCreateResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AuthConsumerCreateForUser", username, request)
 	ret0, _ := ret[0].(sdk.AuthConsumerCreateResponse)
@@ -11091,10 +11091,10 @@ func (mr *MockAuthClientMockRecorder) AuthConsumerDelete(username, id interface{
 }
 
 // AuthConsumerListByUser mocks base method.
-func (m *MockAuthClient) AuthConsumerListByUser(username string) (sdk.AuthConsumers, error) {
+func (m *MockAuthClient) AuthConsumerListByUser(username string) (sdk.AuthUserConsumers, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AuthConsumerListByUser", username)
-	ret0, _ := ret[0].(sdk.AuthConsumers)
+	ret0, _ := ret[0].(sdk.AuthUserConsumers)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

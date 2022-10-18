@@ -59,12 +59,8 @@ type TakeForm struct {
 
 // RegisterWorker  Register new worker
 func RegisterWorker(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store,
-	spawnArgs hatchery.SpawnArgumentsJWT, hatcheryService sdk.Service, hatcheryConsumer *sdk.AuthConsumer, workerConsumer *sdk.AuthConsumer,
+	spawnArgs hatchery.SpawnArgumentsJWT, hatcheryService sdk.Service, hatcheryConsumer *sdk.AuthUserConsumer, workerConsumer *sdk.AuthUserConsumer,
 	registrationForm sdk.WorkerRegistrationForm, runNodeJob *sdk.WorkflowNodeJobRun) (*sdk.Worker, error) {
-
-	if hatcheryConsumer.AuthConsumerUser == nil {
-		return nil, sdk.NewErrorFrom(sdk.ErrForbidden, "missing group on hatchery consumer")
-	}
 
 	if err := spawnArgs.Validate(); err != nil {
 		return nil, err

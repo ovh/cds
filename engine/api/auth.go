@@ -138,8 +138,8 @@ func (api *API) postAuthSigninHandler() service.Handler {
 		hasInitToken := initToken != ""
 
 		// Check if a consumer exists for consumer type and external user identifier
-		consumer, err := authentication.LoadConsumerByTypeAndUserExternalID(ctx, tx, consumerType, userInfo.ExternalID,
-			authentication.LoadConsumerOptions.WithAuthentifiedUser)
+		consumer, err := authentication.LoadUserConsumerByTypeAndUserExternalID(ctx, tx, consumerType, userInfo.ExternalID,
+			authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return err
 		}
@@ -147,11 +147,11 @@ func (api *API) postAuthSigninHandler() service.Handler {
 		// If there is no existing consumer we should check if a user need to be created
 		// Then we want to create a new consumer for current type
 		var u *sdk.AuthentifiedUser
-		if consumer != nil && consumer.AuthConsumerUser != nil {
+		if consumer != nil {
 			u = consumer.AuthConsumerUser.AuthentifiedUser
 		} else {
-			currentConsumer := getAPIConsumer(ctx)
-			if currentConsumer != nil && currentConsumer.AuthConsumerUser != nil {
+			currentConsumer := getUserConsumer(ctx)
+			if currentConsumer != nil {
 				// If no consumer already exists for given request, but there is a current session
 				// We should create a new consumer for the current consumer's user
 				u = currentConsumer.AuthConsumerUser.AuthentifiedUser
@@ -292,7 +292,7 @@ func (api *API) postAuthSigninHandler() service.Handler {
 		// Store the last authentication date on the consumer
 		now := time.Now()
 		consumer.LastAuthentication = &now
-		if err := authentication.UpdateConsumerLastAuthentication(ctx, tx, consumer); err != nil {
+		if err := authentication.UpdateConsumerLastAuthentication(ctx, tx, &consumer.AuthConsumer); err != nil {
 			return err
 		}
 
@@ -356,7 +356,7 @@ func (api *API) postAuthDetachHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrNotFound)
 		}
 
-		currentConsumer := getAPIConsumer(ctx)
+		currentConsumer := getUserConsumer(ctx)
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
@@ -364,7 +364,7 @@ func (api *API) postAuthDetachHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		consumer, err := authentication.LoadConsumerByTypeAndUserID(ctx, tx, consumerType, currentConsumer.AuthConsumerUser.AuthentifiedUserID)
+		consumer, err := authentication.LoadUserConsumerByTypeAndUserID(ctx, tx, consumerType, currentConsumer.AuthConsumerUser.AuthentifiedUserID)
 		if err != nil {
 			return err
 		}
@@ -389,9 +389,9 @@ func (api *API) postAuthDetachHandler() service.Handler {
 func (api *API) getAuthMe() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		m := getAuthDriverManifest(ctx)
-		c := getAPIConsumer(ctx)
+		c := getUserConsumer(ctx)
 		s := getAuthSession(ctx)
-		if m == nil || c == nil || s == nil || c.AuthConsumerUser == nil {
+		if m == nil || c == nil || s == nil {
 			return sdk.WithStack(sdk.ErrUnauthorized)
 		}
 
@@ -423,7 +423,7 @@ func (api *API) getAuthSession() service.Handler {
 			return err
 		}
 
-		c, err := authentication.LoadConsumerByID(ctx, api.mustDB(), s.ConsumerID, authentication.LoadConsumerOptions.WithAuthentifiedUserWithContacts, authentication.LoadConsumerOptions.WithConsumerGroups)
+		c, err := authentication.LoadUserConsumerByID(ctx, api.mustDB(), s.ConsumerID, authentication.LoadUserConsumerOptions.WithAuthentifiedUserWithContacts, authentication.LoadUserConsumerOptions.WithConsumerGroups)
 		if err != nil {
 			return err
 		}

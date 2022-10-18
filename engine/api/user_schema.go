@@ -47,7 +47,7 @@ func (api *API) getUserJSONSchema() service.Handler {
 				)
 			} else {
 				as, err = action.LoadAllTypeDefaultByGroupIDs(ctx, api.mustDB(),
-					append(getAPIConsumer(ctx).GetGroupIDs(), group.SharedInfraGroup.ID),
+					append(getUserConsumer(ctx).GetGroupIDs(), group.SharedInfraGroup.ID),
 					action.LoadOptions.WithGroup,
 					action.LoadOptions.WithParameters,
 				)

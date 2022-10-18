@@ -35,7 +35,7 @@ func (api *API) getActionsHandler() service.Handler {
 			)
 		} else {
 			as, err = action.LoadAllTypeDefaultByGroupIDs(ctx, api.mustDB(),
-				append(getAPIConsumer(ctx).GetGroupIDs(), group.SharedInfraGroup.ID),
+				append(getUserConsumer(ctx).GetGroupIDs(), group.SharedInfraGroup.ID),
 				action.LoadOptions.WithRequirements,
 				action.LoadOptions.WithParameters,
 				action.LoadOptions.WithGroup,
@@ -169,7 +169,7 @@ func (api *API) postActionHandler() service.Handler {
 			return err
 		}
 
-		event.PublishActionAdd(ctx, *newAction, getAPIConsumer(ctx))
+		event.PublishActionAdd(ctx, *newAction, getUserConsumer(ctx))
 
 		if err := action.LoadOptions.WithAudits(ctx, api.mustDB(), newAction); err != nil {
 			return err
@@ -308,7 +308,7 @@ func (api *API) putActionHandler() service.Handler {
 			return err
 		}
 
-		event.PublishActionUpdate(ctx, *old, *newAction, getAPIConsumer(ctx))
+		event.PublishActionUpdate(ctx, *old, *newAction, getUserConsumer(ctx))
 
 		if err := action.LoadOptions.WithAudits(ctx, api.mustDB(), newAction); err != nil {
 			return err
@@ -586,7 +586,7 @@ func (api *API) postActionAuditRollbackHandler() service.Handler {
 			return err
 		}
 
-		event.PublishActionUpdate(ctx, *old, *newAction, getAPIConsumer(ctx))
+		event.PublishActionUpdate(ctx, *old, *newAction, getUserConsumer(ctx))
 
 		if err := action.LoadOptions.WithAudits(ctx, api.mustDB(), newAction); err != nil {
 			return err
@@ -789,9 +789,9 @@ func (api *API) importActionHandler() service.Handler {
 		}
 
 		if exists {
-			event.PublishActionUpdate(ctx, *old, *newAction, getAPIConsumer(ctx))
+			event.PublishActionUpdate(ctx, *old, *newAction, getUserConsumer(ctx))
 		} else {
-			event.PublishActionAdd(ctx, *newAction, getAPIConsumer(ctx))
+			event.PublishActionAdd(ctx, *newAction, getUserConsumer(ctx))
 		}
 
 		if err := action.LoadOptions.WithAudits(ctx, api.mustDB(), newAction); err != nil {
@@ -906,7 +906,7 @@ func getActionUsage(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 		return usage, err
 	}
 
-	consumer := getAPIConsumer(ctx)
+	consumer := getUserConsumer(ctx)
 
 	if !isMaintainer(ctx) {
 		// filter usage in pipeline by user's projects

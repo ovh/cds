@@ -935,7 +935,7 @@ func Test_getWorkerModels(t *testing.T) {
 	_, jwtGroupMember := assets.InsertLambdaUser(t, db, g1)
 
 	// Create a hatchery for the admin user
-	adminConsumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, admin.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	adminConsumer, _ := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, admin.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	consumerOptions := builtin.NewConsumerOptions{
 		Name:     sdk.RandomString(10),
 		GroupIDs: []int64{g2.ID},

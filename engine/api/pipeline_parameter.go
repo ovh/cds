@@ -61,7 +61,7 @@ func (api *API) deleteParameterFromPipelineHandler() service.Handler {
 			return sdk.WrapError(err, "deleteParameterFromPipelineHandler: Cannot commit transaction")
 		}
 
-		event.PublishPipelineParameterDelete(ctx, key, pipelineName, sdk.Parameter{Name: paramName}, getAPIConsumer(ctx))
+		event.PublishPipelineParameterDelete(ctx, key, pipelineName, sdk.Parameter{Name: paramName}, getUserConsumer(ctx))
 
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}
@@ -107,7 +107,7 @@ func (api *API) updateParameterInPipelineHandler() service.Handler {
 			return sdk.WrapError(err, "updateParameterInPipelineHandler: Cannot commit transaction")
 		}
 
-		event.PublishPipelineParameterUpdate(ctx, key, pipelineName, *oldParam, newParam, getAPIConsumer(ctx))
+		event.PublishPipelineParameterUpdate(ctx, key, pipelineName, *oldParam, newParam, getUserConsumer(ctx))
 
 		return service.WriteJSON(w, newParam, http.StatusOK)
 	}
@@ -160,7 +160,7 @@ func (api *API) addParameterInPipelineHandler() service.Handler {
 			return sdk.WrapError(err, "addParameterInPipelineHandler: Cannot commit transaction")
 		}
 
-		event.PublishPipelineParameterAdd(ctx, key, pipelineName, newParam, getAPIConsumer(ctx))
+		event.PublishPipelineParameterAdd(ctx, key, pipelineName, newParam, getUserConsumer(ctx))
 
 		return service.WriteJSON(w, newParam, http.StatusOK)
 	}

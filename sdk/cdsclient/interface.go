@@ -669,10 +669,10 @@ type AuthClient interface {
 	AuthConsumerLocalSignup(sdk.AuthConsumerSigninRequest) error
 	AuthConsumerLocalSignupVerify(token, initToken string) (sdk.AuthConsumerSigninResponse, error)
 	AuthConsumerSignout() error
-	AuthConsumerListByUser(username string) (sdk.AuthConsumers, error)
+	AuthConsumerListByUser(username string) (sdk.AuthUserConsumers, error)
 	AuthConsumerDelete(username, id string) error
 	AuthConsumerRegen(username, id string, newDuration int64, overlapDuration string) (sdk.AuthConsumerCreateResponse, error)
-	AuthConsumerCreateForUser(username string, request sdk.AuthConsumer) (sdk.AuthConsumerCreateResponse, error)
+	AuthConsumerCreateForUser(username string, request sdk.AuthUserConsumer) (sdk.AuthConsumerCreateResponse, error)
 	AuthSessionListByUser(username string) (sdk.AuthSessions, error)
 	AuthSessionDelete(username, id string) error
 	AuthSessionGet(id string) (sdk.AuthCurrentConsumerResponse, error)

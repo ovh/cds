@@ -84,7 +84,7 @@ func (api *API) addJobToStageHandler() service.Handler {
 			return err
 		}
 
-		if err := pipeline.CreateAudit(tx, pip, pipeline.AuditAddJob, getAPIConsumer(ctx)); err != nil {
+		if err := pipeline.CreateAudit(tx, pip, pipeline.AuditAddJob, getUserConsumer(ctx)); err != nil {
 			return sdk.WrapError(err, "cannot create audit")
 		}
 
@@ -116,7 +116,7 @@ func (api *API) addJobToStageHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load stages")
 		}
 
-		event.PublishPipelineJobAdd(ctx, projectKey, pipelineName, stage, job, getAPIConsumer(ctx))
+		event.PublishPipelineJobAdd(ctx, projectKey, pipelineName, stage, job, getUserConsumer(ctx))
 
 		return service.WriteJSON(w, pip, http.StatusOK)
 	}
@@ -208,7 +208,7 @@ func (api *API) updateJobHandler() service.Handler {
 			return err
 		}
 
-		if err := pipeline.CreateAudit(tx, pipelineData, pipeline.AuditUpdateJob, getAPIConsumer(ctx)); err != nil {
+		if err := pipeline.CreateAudit(tx, pipelineData, pipeline.AuditUpdateJob, getUserConsumer(ctx)); err != nil {
 			return sdk.WrapError(err, "cannot create audit")
 		}
 
@@ -237,7 +237,7 @@ func (api *API) updateJobHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load stages")
 		}
 
-		event.PublishPipelineJobUpdate(ctx, key, pipName, stage, oldJob, job, getAPIConsumer(ctx))
+		event.PublishPipelineJobUpdate(ctx, key, pipName, stage, oldJob, job, getUserConsumer(ctx))
 
 		return service.WriteJSON(w, pipelineData, http.StatusOK)
 	}
@@ -293,7 +293,7 @@ func (api *API) deleteJobHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		if err := pipeline.CreateAudit(tx, pipelineData, pipeline.AuditDeleteJob, getAPIConsumer(ctx)); err != nil {
+		if err := pipeline.CreateAudit(tx, pipelineData, pipeline.AuditDeleteJob, getUserConsumer(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot create audit")
 		}
 
@@ -313,7 +313,7 @@ func (api *API) deleteJobHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot load stages")
 		}
 
-		event.PublishPipelineJobDelete(ctx, key, pipName, stage, jobToDelete, getAPIConsumer(ctx))
+		event.PublishPipelineJobDelete(ctx, key, pipName, stage, jobToDelete, getUserConsumer(ctx))
 
 		return service.WriteJSON(w, pipelineData, http.StatusOK)
 	}

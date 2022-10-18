@@ -53,7 +53,7 @@ func (api *API) deleteGroupFromProjectHandler() service.Handler {
 		event.PublishDeleteProjectPermission(ctx, proj, sdk.GroupPermission{
 			Group:      *grp,
 			Permission: link.Role,
-		}, getAPIConsumer(ctx))
+		}, getUserConsumer(ctx))
 
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}
@@ -151,7 +151,7 @@ func (api *API) putGroupRoleOnProjectHandler() service.Handler {
 		newGroupPermission := sdk.GroupPermission{Permission: newLink.Role, Group: *grp}
 		event.PublishUpdateProjectPermission(ctx, proj, newGroupPermission,
 			sdk.GroupPermission{Permission: oldLink.Role, Group: *grp},
-			getAPIConsumer(ctx))
+			getUserConsumer(ctx))
 
 		return service.WriteJSON(w, newGroupPermission, http.StatusOK)
 	}
@@ -241,7 +241,7 @@ func (api *API) postGroupInProjectHandler() service.Handler {
 		}
 
 		newGroupPermission := sdk.GroupPermission{Permission: newLink.Role, Group: *grp}
-		event.PublishAddProjectPermission(ctx, proj, newGroupPermission, getAPIConsumer(ctx))
+		event.PublishAddProjectPermission(ctx, proj, newGroupPermission, getUserConsumer(ctx))
 
 		return service.WriteJSON(w, newGroupPermission, http.StatusOK)
 	}

@@ -340,7 +340,7 @@ func AuthentifyRequest(t *testing.T, req *http.Request, _ *sdk.AuthentifiedUser,
 	req.Header.Add("Authorization", auth)
 }
 
-//NewAuthentifiedRequest prepare a request
+// NewAuthentifiedRequest prepare a request
 func NewAuthentifiedRequest(t *testing.T, _ *sdk.AuthentifiedUser, pass, method, uri string, i interface{}) *http.Request {
 	var btes []byte
 	var err error
@@ -551,11 +551,11 @@ func InsertWorkerModel(t *testing.T, db gorpmapper.SqlExecutorWithTx, name strin
 	return &m
 }
 
-func InsertHatchery(t *testing.T, db gorpmapper.SqlExecutorWithTx, grp sdk.Group) (*sdk.Service, *rsa.PrivateKey, *sdk.AuthConsumer, string) {
+func InsertHatchery(t *testing.T, db gorpmapper.SqlExecutorWithTx, grp sdk.Group) (*sdk.Service, *rsa.PrivateKey, *sdk.AuthUserConsumer, string) {
 	usr1, _ := InsertLambdaUser(t, db, &grp)
 	SetUserGroupAdmin(t, db, grp.ID, usr1.ID)
 
-	consumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, usr1.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	consumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, usr1.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
 	consumerOptions := builtin.NewConsumerOptions{
@@ -589,7 +589,7 @@ func InsertHatchery(t *testing.T, db gorpmapper.SqlExecutorWithTx, grp sdk.Group
 	jwt, err := authentication.NewSessionJWT(session, "")
 	require.NoError(t, err)
 
-	require.NoError(t, authentication.LoadConsumerOptions.WithAuthentifiedUser(context.TODO(), db, hConsumer))
+	require.NoError(t, authentication.LoadUserConsumerOptions.WithAuthentifiedUser(context.TODO(), db, hConsumer))
 
 	return &srv, privateKey, hConsumer, jwt
 }
@@ -597,7 +597,7 @@ func InsertHatchery(t *testing.T, db gorpmapper.SqlExecutorWithTx, grp sdk.Group
 func InsertService(t *testing.T, db gorpmapper.SqlExecutorWithTx, name, serviceType string, scopes ...sdk.AuthConsumerScope) (*sdk.Service, *rsa.PrivateKey) {
 	usr1, _ := InsertAdminUser(t, db)
 
-	consumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, usr1.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	consumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, usr1.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
 	sharedGroup, err := group.LoadByName(context.TODO(), db, sdk.SharedInfraGroupName)
@@ -632,7 +632,7 @@ func InsertService(t *testing.T, db gorpmapper.SqlExecutorWithTx, name, serviceT
 func InitCDNService(t *testing.T, db gorpmapper.SqlExecutorWithTx, scopes ...sdk.AuthConsumerScope) (*sdk.Service, *rsa.PrivateKey, string) {
 	usr1, _ := InsertAdminUser(t, db)
 
-	consumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, usr1.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	consumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, usr1.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
 	sharedGroup, err := group.LoadByName(context.TODO(), db, sdk.SharedInfraGroupName)

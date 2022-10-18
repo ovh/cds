@@ -10,8 +10,8 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func hasGlobalRole(ctx context.Context, auth *sdk.AuthConsumer, _ cache.Store, db gorp.SqlExecutor, role string) error {
-	if auth == nil || auth.AuthConsumerUser == nil {
+func hasGlobalRole(ctx context.Context, auth *sdk.AuthUserConsumer, _ cache.Store, db gorp.SqlExecutor, role string) error {
+	if auth == nil {
 		return sdk.WithStack(sdk.ErrForbidden)
 	}
 
@@ -30,19 +30,19 @@ func hasGlobalRole(ctx context.Context, auth *sdk.AuthConsumer, _ cache.Store, d
 	return nil
 }
 
-// PermissionManage return nil if the current AuthConsumer have the ProjectRoleManage on current project KEY
-func PermissionManage(ctx context.Context, auth *sdk.AuthConsumer, store cache.Store, db gorp.SqlExecutor, _ map[string]string) error {
+// PermissionManage return nil if the current AuthUserConsumer have the ProjectRoleManage on current project KEY
+func PermissionManage(ctx context.Context, auth *sdk.AuthUserConsumer, store cache.Store, db gorp.SqlExecutor, _ map[string]string) error {
 	return hasGlobalRole(ctx, auth, store, db, sdk.GlobalRoleManagePermission)
 }
 
-func OrganizationManage(ctx context.Context, auth *sdk.AuthConsumer, store cache.Store, db gorp.SqlExecutor, _ map[string]string) error {
+func OrganizationManage(ctx context.Context, auth *sdk.AuthUserConsumer, store cache.Store, db gorp.SqlExecutor, _ map[string]string) error {
 	return hasGlobalRole(ctx, auth, store, db, sdk.GlobalRoleManageOrganization)
 }
 
-func RegionManage(ctx context.Context, auth *sdk.AuthConsumer, store cache.Store, db gorp.SqlExecutor, _ map[string]string) error {
+func RegionManage(ctx context.Context, auth *sdk.AuthUserConsumer, store cache.Store, db gorp.SqlExecutor, _ map[string]string) error {
 	return hasGlobalRole(ctx, auth, store, db, sdk.GlobalRoleManageRegion)
 }
 
-func GlobalHatcheryManage(ctx context.Context, auth *sdk.AuthConsumer, store cache.Store, db gorp.SqlExecutor, _ map[string]string) error {
+func GlobalHatcheryManage(ctx context.Context, auth *sdk.AuthUserConsumer, store cache.Store, db gorp.SqlExecutor, _ map[string]string) error {
 	return hasGlobalRole(ctx, auth, store, db, sdk.GlobalRoleManageHatchery)
 }

@@ -14,8 +14,8 @@ var (
 	LogFieldRole = log.Field("action_metadata_role")
 )
 
-func hasRoleOnProject(ctx context.Context, auth *sdk.AuthConsumer, store cache.Store, db gorp.SqlExecutor, projectKey string, role string) error {
-	if auth == nil || auth.AuthConsumerUser == nil {
+func hasRoleOnProject(ctx context.Context, auth *sdk.AuthUserConsumer, store cache.Store, db gorp.SqlExecutor, projectKey string, role string) error {
+	if auth == nil {
 		return sdk.WithStack(sdk.ErrForbidden)
 	}
 
@@ -35,14 +35,14 @@ func hasRoleOnProject(ctx context.Context, auth *sdk.AuthConsumer, store cache.S
 	return nil
 }
 
-// ProjectManage return nil if the current AuthConsumer have the ProjectRoleManage on current project KEY
-func ProjectManage(ctx context.Context, auth *sdk.AuthConsumer, store cache.Store, db gorp.SqlExecutor, vars map[string]string) error {
+// ProjectManage return nil if the current AuthUserConsumer have the ProjectRoleManage on current project KEY
+func ProjectManage(ctx context.Context, auth *sdk.AuthUserConsumer, store cache.Store, db gorp.SqlExecutor, vars map[string]string) error {
 	projectKey := vars["projectKey"]
 	return hasRoleOnProject(ctx, auth, store, db, projectKey, sdk.ProjectRoleManage)
 }
 
-// ProjectRead return nil if the current AuthConsumer have the ProjectRoleRead on current project KEY
-func ProjectRead(ctx context.Context, auth *sdk.AuthConsumer, store cache.Store, db gorp.SqlExecutor, vars map[string]string) error {
+// ProjectRead return nil if the current AuthUserConsumer have the ProjectRoleRead on current project KEY
+func ProjectRead(ctx context.Context, auth *sdk.AuthUserConsumer, store cache.Store, db gorp.SqlExecutor, vars map[string]string) error {
 	projectKey := vars["projectKey"]
 	return hasRoleOnProject(ctx, auth, store, db, projectKey, sdk.ProjectRoleRead)
 }
