@@ -24,7 +24,7 @@ func (api *API) getGroupsHandler() service.Handler {
 		if isMaintainer(ctx) {
 			groups, err = group.LoadAll(ctx, api.mustDB(), group.LoadOptions.WithOrganization)
 		} else {
-			groups, err = group.LoadAllByUserID(ctx, api.mustDB(), getAPIConsumer(ctx).AuthentifiedUser.ID, group.LoadOptions.WithOrganization)
+			groups, err = group.LoadAllByUserID(ctx, api.mustDB(), getAPIConsumer(ctx).AuthConsumerUser.AuthentifiedUser.ID, group.LoadOptions.WithOrganization)
 		}
 		if err != nil {
 			return err
@@ -101,7 +101,7 @@ func (api *API) postGroupHandler() service.Handler {
 		}
 
 		consumer := getAPIConsumer(ctx)
-		if err := group.Create(ctx, tx, &newGroup, consumer.AuthentifiedUser); err != nil {
+		if err := group.Create(ctx, tx, &newGroup, consumer.AuthConsumerUser.AuthentifiedUser); err != nil {
 			return err
 		}
 
@@ -449,7 +449,7 @@ func (api *API) deleteGroupUserHandler() service.Handler {
 		}
 
 		// In case where the user remove himself from group, do not return it
-		if link.AuthentifiedUserID == getAPIConsumer(ctx).AuthentifiedUser.ID {
+		if link.AuthentifiedUserID == getAPIConsumer(ctx).AuthConsumerUser.AuthentifiedUser.ID {
 			return service.WriteJSON(w, nil, http.StatusOK)
 		}
 

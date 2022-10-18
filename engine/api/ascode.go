@@ -257,7 +257,7 @@ func (api *API) postWorkflowAsCodeEventsResyncHandler() service.Handler {
 			return err
 		}
 
-		res, err := ascode.SyncEvents(ctx, api.mustDB(), api.Cache, *proj, *wf, getAPIConsumer(ctx).AuthentifiedUser)
+		res, err := ascode.SyncEvents(ctx, api.mustDB(), api.Cache, *proj, *wf, getAPIConsumer(ctx).AuthConsumerUser.AuthentifiedUser)
 		if err != nil {
 			return err
 		}

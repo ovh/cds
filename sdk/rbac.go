@@ -7,6 +7,7 @@ const (
 	GlobalRoleManagePermission   = "manage-permission"
 	GlobalRoleManageOrganization = "manage-organization"
 	GlobalRoleManageRegion       = "manage-region"
+	GlobalRoleManageHatchery     = "manage-hatchery"
 	GlobalRoleManageUser         = "manage-user"
 	GlobalRoleManageGroup        = "manage-group"
 	GlobalRoleProjectCreate      = "create-project"

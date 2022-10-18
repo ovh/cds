@@ -42,7 +42,7 @@ func Test_authMiddleware(t *testing.T) {
 	ctx, err = api.authMiddleware(ctx, w, req, config)
 	require.NoError(t, err, "no error should be returned because a jwt was given and is valid")
 	require.NotNil(t, getAPIConsumer(ctx))
-	require.Equal(t, u.ID, getAPIConsumer(ctx).AuthentifiedUserID)
+	require.Equal(t, u.ID, getAPIConsumer(ctx).AuthConsumerUser.AuthentifiedUserID)
 
 	req = assets.NewJWTAuthentifiedRequest(t, sdk.RandomString(10), http.MethodGet, "", nil)
 	w = httptest.NewRecorder()
@@ -113,7 +113,7 @@ func Test_authOptionalMiddleware(t *testing.T) {
 	ctx, err = api.authOptionalMiddleware(ctx, w, req, config)
 	assert.NoError(t, err, "no error should be returned because a jwt was given and is valid")
 	require.NotNil(t, getAPIConsumer(ctx))
-	assert.Equal(t, u.ID, getAPIConsumer(ctx).AuthentifiedUserID)
+	assert.Equal(t, u.ID, getAPIConsumer(ctx).AuthConsumerUser.AuthentifiedUserID)
 
 	req = assets.NewJWTAuthentifiedRequest(t, sdk.RandomString(10), http.MethodGet, "", nil)
 	w = httptest.NewRecorder()
@@ -153,7 +153,7 @@ func Test_authAdminMiddleware(t *testing.T) {
 	ctx, err = api.authAdminMiddleware(ctx, w, req, config)
 	assert.NoError(t, err, "no error should be returned because a jwt was given for an admin user")
 	require.NotNil(t, getAPIConsumer(ctx))
-	assert.Equal(t, admin.ID, getAPIConsumer(ctx).AuthentifiedUserID)
+	assert.Equal(t, admin.ID, getAPIConsumer(ctx).AuthConsumerUser.AuthentifiedUserID)
 }
 
 func Test_authMaintainerMiddleware(t *testing.T) {
@@ -186,7 +186,7 @@ func Test_authMaintainerMiddleware(t *testing.T) {
 	ctx, err = api.authMaintainerMiddleware(ctx, w, req, config)
 	assert.NoError(t, err, "no error should be returned because a jwt was given for an maintainer user")
 	require.NotNil(t, getAPIConsumer(ctx))
-	assert.Equal(t, maintainer.ID, getAPIConsumer(ctx).AuthentifiedUserID)
+	assert.Equal(t, maintainer.ID, getAPIConsumer(ctx).AuthConsumerUser.AuthentifiedUserID)
 
 	req = assets.NewJWTAuthentifiedRequest(t, jwtAdmin, http.MethodGet, "", nil)
 	w = httptest.NewRecorder()
@@ -195,7 +195,7 @@ func Test_authMaintainerMiddleware(t *testing.T) {
 	ctx, err = api.authMaintainerMiddleware(ctx, w, req, config)
 	assert.NoError(t, err, "no error should be returned because a jwt was given for an admin user")
 	require.NotNil(t, getAPIConsumer(ctx))
-	assert.Equal(t, admin.ID, getAPIConsumer(ctx).AuthentifiedUserID)
+	assert.Equal(t, admin.ID, getAPIConsumer(ctx).AuthConsumerUser.AuthentifiedUserID)
 }
 
 func Test_authMiddleware_WithAuthConsumerScoped(t *testing.T) {
@@ -325,8 +325,10 @@ func Test_authMiddlewareWithServiceOrWorker(t *testing.T) {
 	require.NotEmpty(t, uri)
 	req = assets.NewJWTAuthentifiedRequest(t, jwtAdmin, http.MethodPost, uri, sdk.AuthConsumer{
 		Name:            sdk.RandomString(10),
-		ScopeDetails:    sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeAdmin),
 		ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+		AuthConsumerUser: &sdk.AuthConsumerUser{
+			ScopeDetails: sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeAdmin),
+		},
 	})
 	rec := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)

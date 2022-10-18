@@ -246,9 +246,9 @@ func (api *API) getWorkerModelsHandler() service.Handler {
 
 		models := make([]sdk.Model, 0)
 
-		if consumer.Worker != nil {
-			if consumer.Worker.ModelID != nil {
-				model, err := workermodel.LoadByID(ctx, api.mustDB(), *consumer.Worker.ModelID, workermodel.LoadOptions.Default)
+		if consumer.AuthConsumerUser.Worker != nil {
+			if consumer.AuthConsumerUser.Worker.ModelID != nil {
+				model, err := workermodel.LoadByID(ctx, api.mustDB(), *consumer.AuthConsumerUser.Worker.ModelID, workermodel.LoadOptions.Default)
 				if err != nil {
 					return err
 				}
@@ -258,7 +258,7 @@ func (api *API) getWorkerModelsHandler() service.Handler {
 		}
 
 		var err error
-		if ok := isHatchery(ctx); ok && len(consumer.GroupIDs) > 0 {
+		if ok := isHatchery(ctx); ok && len(consumer.AuthConsumerUser.GroupIDs) > 0 {
 			models, err = workermodel.LoadAllByGroupIDs(ctx, api.mustDB(), consumer.GetGroupIDs(), &filter, workermodel.LoadOptions.Default)
 		} else if isMaintainer(ctx) {
 			models, err = workermodel.LoadAll(ctx, api.mustDB(), &filter, workermodel.LoadOptions.Default)

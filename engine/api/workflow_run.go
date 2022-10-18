@@ -357,7 +357,7 @@ func (api *API) stopWorkflowRunHandler() service.Handler {
 		consumer := getAPIConsumer(ctx)
 
 		// This POST exec handler should not be called by workers
-		if consumer.Worker != nil {
+		if consumer.AuthConsumerUser.Worker != nil {
 			return sdk.WrapError(sdk.ErrForbidden, "not authorized for worker")
 		}
 
@@ -697,7 +697,7 @@ func (api *API) stopWorkflowNodeRunHandler() service.Handler {
 		consumer := getAPIConsumer(ctx)
 
 		// This POST exec handler should not be called by workers
-		if consumer.Worker != nil {
+		if consumer.AuthConsumerUser.Worker != nil {
 			return sdk.WrapError(sdk.ErrForbidden, "not authorized for worker")
 		}
 
@@ -816,7 +816,7 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 		consumer := getAPIConsumer(ctx)
 
 		// This POST exec handler should not be called by workers
-		if consumer.Worker != nil {
+		if consumer.AuthConsumerUser.Worker != nil {
 			return sdk.WrapError(sdk.ErrForbidden, "not authorized for worker")
 		}
 
@@ -981,7 +981,7 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 		report.Merge(ctx, r)
 		return report
 	}
-	c.Service = s
+	c.AuthConsumerUser.Service = s
 
 	p, err := project.Load(ctx, api.mustDB(), projKey,
 		project.LoadOptions.WithVariables,
@@ -1452,7 +1452,7 @@ func (api *API) postResyncVCSWorkflowRunHandler() service.Handler {
 		consumer := getAPIConsumer(ctx)
 
 		// This POST exec handler should not be called by workers
-		if consumer.Worker != nil {
+		if consumer.AuthConsumerUser.Worker != nil {
 			return sdk.WrapError(sdk.ErrForbidden, "not authorized for worker")
 		}
 

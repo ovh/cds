@@ -582,8 +582,7 @@ func (a *API) Serve(ctx context.Context) error {
 	migrate.Add(ctx, sdk.Migration{Name: "ArtifactoryIntegration", Release: "0.49.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
 		return migrate.ArtifactoryIntegration(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper))
 	}})
-
-	migrate.Add(ctx, sdk.Migration{Name: "OrganizationMigration", Release: "0.51.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
+	migrate.Add(ctx, sdk.Migration{Name: "OrganizationMigration", Release: "0.52.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
 		usersToMigrate, err := migrate.GetOrganizationUsersToMigrate(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)())
 		if err != nil {
 			return err
@@ -603,6 +602,9 @@ func (a *API) Serve(ctx context.Context) error {
 			}
 		}
 		return nil
+	}})
+	migrate.Add(ctx, sdk.Migration{Name: "ConsumerMigration", Release: "0.52.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
+		return migrate.MigrateConsumers(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)(), a.Cache)
 	}})
 
 	isFreshInstall, errF := version.IsFreshInstall(a.mustDB())

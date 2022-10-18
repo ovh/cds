@@ -90,8 +90,8 @@ func (c *websocketClientData) updateEventFilters(ctx context.Context, db gorp.Sq
 	}
 
 	var isMaintainer = c.AuthConsumer.Maintainer() || c.AuthConsumer.Admin()
-	var isHatchery = c.AuthConsumer.Service != nil && c.AuthConsumer.Service.Type == sdk.TypeHatchery
-	var isHatcheryWithGroups = isHatchery && len(c.AuthConsumer.GroupIDs) > 0
+	var isHatchery = c.AuthConsumer.AuthConsumerUser.Service != nil && c.AuthConsumer.AuthConsumerUser.Service.Type == sdk.TypeHatchery
+	var isHatcheryWithGroups = isHatchery && len(c.AuthConsumer.AuthConsumerUser.GroupIDs) > 0
 
 	// Check validity of given filters
 	for _, f := range fs {
@@ -141,11 +141,11 @@ func (c *websocketClientData) updateEventFilters(ctx context.Context, db gorp.Sq
 // We need to check permission for some kind of events, when permission can't be verified at filter subscription.
 func (c *websocketClientData) checkEventPermission(ctx context.Context, db gorp.SqlExecutor, event sdk.Event) (bool, error) {
 	var isMaintainer = c.AuthConsumer.Maintainer()
-	var isHatchery = c.AuthConsumer.Service != nil && c.AuthConsumer.Service.Type == sdk.TypeHatchery
-	var isHatcheryWithGroups = isHatchery && len(c.AuthConsumer.GroupIDs) > 0
+	var isHatchery = c.AuthConsumer.AuthConsumerUser.Service != nil && c.AuthConsumer.AuthConsumerUser.Service.Type == sdk.TypeHatchery
+	var isHatcheryWithGroups = isHatchery && len(c.AuthConsumer.AuthConsumerUser.GroupIDs) > 0
 
 	if strings.HasPrefix(event.EventType, "sdk.EventRetentionWorkflowDryRun") {
-		return event.Username == c.AuthConsumer.AuthentifiedUser.Username, nil
+		return event.Username == c.AuthConsumer.AuthConsumerUser.AuthentifiedUser.Username, nil
 	}
 
 	if event.EventType == fmt.Sprintf("%T", sdk.EventRunWorkflow{}) || event.EventType == fmt.Sprintf("%T", sdk.EventRunWorkflowJob{}) {

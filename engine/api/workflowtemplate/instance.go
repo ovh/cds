@@ -142,7 +142,7 @@ func CheckAndExecuteTemplate(ctx context.Context, db *gorp.DbMap, store cache.St
 	// Check if the template can be used by the current consumer
 	var groupPermissionValid bool
 	// Maintainer and the Hooks micro-service are allowed
-	if consumer.Maintainer() || (consumer.Service != nil && consumer.Service.Type == sdk.TypeHooks) {
+	if consumer.Maintainer() || (consumer.AuthConsumerUser != nil && consumer.AuthConsumerUser.Service != nil && consumer.AuthConsumerUser.Service.Type == sdk.TypeHooks) {
 		groupPermissionValid = true
 	} else if grp.ID == group.SharedInfraGroup.ID {
 		groupPermissionValid = true

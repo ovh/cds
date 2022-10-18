@@ -123,8 +123,13 @@ func (api *API) authOptionalMiddleware(ctx context.Context, w http.ResponseWrite
 	if err != nil {
 		return ctx, sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 	}
-	ctx = context.WithValue(ctx, cdslog.AuthUserID, consumer.AuthentifiedUserID)
-	SetTracker(w, cdslog.AuthUserID, consumer.AuthentifiedUserID)
+	// for now, AuthConsumerUser is mandatory
+	if consumer.AuthConsumerUser == nil {
+		return ctx, sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
+	}
+
+	ctx = context.WithValue(ctx, cdslog.AuthUserID, consumer.AuthConsumerUser.AuthentifiedUserID)
+	SetTracker(w, cdslog.AuthUserID, consumer.AuthConsumerUser.AuthentifiedUserID)
 	ctx = context.WithValue(ctx, cdslog.AuthConsumerID, consumer.ID)
 	SetTracker(w, cdslog.AuthConsumerID, consumer.ID)
 
@@ -145,42 +150,42 @@ func (api *API) authOptionalMiddleware(ctx context.Context, w http.ResponseWrite
 	ctx = context.WithValue(ctx, contextDriverManifest, driverManifest)
 
 	// Add contacts for consumer's user
-	if err := user.LoadOptions.WithContacts(ctx, api.mustDB(), consumer.AuthentifiedUser); err != nil {
+	if err := user.LoadOptions.WithContacts(ctx, api.mustDB(), consumer.AuthConsumerUser.AuthentifiedUser); err != nil {
 		return ctx, err
 	}
 
 	// Add service for consumer if exists
-	consumer.Service, err = services.LoadByConsumerID(ctx, api.mustDB(), consumer.ID)
+	consumer.AuthConsumerUser.Service, err = services.LoadByConsumerID(ctx, api.mustDB(), consumer.ID)
 	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 		return ctx, err
 	}
-	if consumer.Service != nil {
-		ctx = context.WithValue(ctx, cdslog.AuthServiceName, consumer.Service.Name)
-		SetTracker(w, cdslog.AuthServiceName, consumer.Service.Name)
-		ctx = context.WithValue(ctx, cdslog.AuthServiceType, consumer.Service.Type)
-		SetTracker(w, cdslog.AuthServiceType, consumer.Service.Type)
+	if consumer.AuthConsumerUser.Service != nil {
+		ctx = context.WithValue(ctx, cdslog.AuthServiceName, consumer.AuthConsumerUser.Service.Name)
+		SetTracker(w, cdslog.AuthServiceName, consumer.AuthConsumerUser.Service.Name)
+		ctx = context.WithValue(ctx, cdslog.AuthServiceType, consumer.AuthConsumerUser.Service.Type)
+		SetTracker(w, cdslog.AuthServiceType, consumer.AuthConsumerUser.Service.Type)
 	}
 
 	// Add worker for consumer if exists
-	consumer.Worker, err = worker.LoadByConsumerID(ctx, api.mustDB(), consumer.ID)
+	consumer.AuthConsumerUser.Worker, err = worker.LoadByConsumerID(ctx, api.mustDB(), consumer.ID)
 	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 		return ctx, err
 	}
-	if consumer.Worker != nil {
-		ctx = context.WithValue(ctx, cdslog.AuthWorkerName, consumer.Worker.Name)
-		SetTracker(w, cdslog.AuthWorkerName, consumer.Worker.Name)
+	if consumer.AuthConsumerUser.Worker != nil {
+		ctx = context.WithValue(ctx, cdslog.AuthWorkerName, consumer.AuthConsumerUser.Worker.Name)
+		SetTracker(w, cdslog.AuthWorkerName, consumer.AuthConsumerUser.Worker.Name)
 	}
 
-	if consumer.Service == nil && consumer.Worker == nil {
-		ctx = context.WithValue(ctx, cdslog.AuthUsername, consumer.AuthentifiedUser.Username)
-		SetTracker(w, cdslog.AuthUsername, consumer.AuthentifiedUser.Username)
+	if consumer.AuthConsumerUser.Service == nil && consumer.AuthConsumerUser.Worker == nil {
+		ctx = context.WithValue(ctx, cdslog.AuthUsername, consumer.AuthConsumerUser.AuthentifiedUser.Username)
+		SetTracker(w, cdslog.AuthUsername, consumer.AuthConsumerUser.AuthentifiedUser.Username)
 	}
 
 	ctx = context.WithValue(ctx, contextConsumer, consumer)
 
 	// Checks scopes, one of expected scopes should be in actual scopes
 	// Actual scope empty list means wildcard scope, we don't need to check scopes
-	expectedScopes, actualScopes := rc.AllowedScopes, consumer.ScopeDetails
+	expectedScopes, actualScopes := rc.AllowedScopes, consumer.AuthConsumerUser.ScopeDetails
 	if len(expectedScopes) > 0 && len(actualScopes) > 0 {
 		var found bool
 	findScope:

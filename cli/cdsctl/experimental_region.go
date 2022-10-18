@@ -9,9 +9,8 @@ import (
 )
 
 var experimentalRegionCmd = cli.Command{
-	Name:    "region",
-	Aliases: []string{"org", "orga"},
-	Short:   "CDS Experimental region commands",
+	Name:  "region",
+	Short: "CDS Experimental region commands",
 }
 
 func experimentalRegion() *cobra.Command {

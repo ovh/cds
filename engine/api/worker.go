@@ -60,7 +60,7 @@ func (api *API) postRegisterWorkerHandler() service.Handler {
 		defer tx.Rollback() // nolint
 
 		// We have to issue a new consumer for the worker
-		workerConsumer, err := authentication.NewConsumerWorker(ctx, tx, workerTokenFromHatchery.Subject, hatchSrv, hatcheryConsumer)
+		workerConsumer, err := authentication.NewConsumerWorker(ctx, tx, workerTokenFromHatchery.Subject, hatcheryConsumer)
 		if err != nil {
 			return err
 		}
@@ -154,7 +154,7 @@ func (api *API) getWorkersHandler() service.Handler {
 		var workers []sdk.Worker
 		var err error
 		if isHatchery(ctx) {
-			workers, err = worker.LoadAllByHatcheryID(ctx, api.mustDB(), getAPIConsumer(ctx).Service.ID)
+			workers, err = worker.LoadAllByHatcheryID(ctx, api.mustDB(), getAPIConsumer(ctx).AuthConsumerUser.Service.ID)
 			if err != nil {
 				return err
 			}
@@ -215,7 +215,7 @@ func (api *API) postRefreshWorkerHandler() service.Handler {
 		if isWorker := isWorker(ctx); !isWorker {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
-		wk := getAPIConsumer(ctx).Worker
+		wk := getAPIConsumer(ctx).AuthConsumerUser.Worker
 		if err := worker.RefreshWorker(api.mustDB(), wk.ID); err != nil && (sdk.Cause(err) != sql.ErrNoRows || sdk.Cause(err) != worker.ErrNoWorker) {
 			return sdk.WrapError(err, "cannot refresh last beat of %s", wk.Name)
 		}
@@ -228,7 +228,7 @@ func (api *API) postUnregisterWorkerHandler() service.Handler {
 		if isWorker := isWorker(ctx); !isWorker {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
-		wk := getAPIConsumer(ctx).Worker
+		wk := getAPIConsumer(ctx).AuthConsumerUser.Worker
 		if err := DisableWorker(ctx, api.mustDB(), wk.ID, api.Config.Log.StepMaxSize); err != nil {
 			return sdk.WrapError(err, "cannot delete worker %s", wk.Name)
 		}
@@ -242,7 +242,7 @@ func (api *API) workerWaitingHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
-		wk := getAPIConsumer(ctx).Worker
+		wk := getAPIConsumer(ctx).AuthConsumerUser.Worker
 
 		if wk.Status == sdk.StatusWaiting {
 			return nil

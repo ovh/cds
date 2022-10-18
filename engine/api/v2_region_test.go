@@ -49,7 +49,7 @@ globals:
 	api.Router.Mux.ServeHTTP(wGet, reqGet)
 	require.Equal(t, 200, wGet.Code)
 
-	var regionGet sdk.Organization
+	var regionGet sdk.Region
 	require.NoError(t, json.Unmarshal(wGet.Body.Bytes(), &regionGet))
 	require.Equal(t, regionGet.Name, regionGet.Name)
 
