@@ -91,8 +91,10 @@ regions:
 	require.NoError(t, rbac.Insert(context.TODO(), db, &r))
 
 	c := sdk.AuthConsumer{
-		AuthentifiedUserID: user1.ID,
-		AuthentifiedUser:   user1,
+		AuthConsumerUser: &sdk.AuthConsumerUser{
+			AuthentifiedUserID: user1.ID,
+			AuthentifiedUser:   user1,
+		},
 	}
 	require.NoError(t, rbac.RegionRead(context.TODO(), &c, cache, db, map[string]string{"regionIdentifier": reg.Name}))
 }
