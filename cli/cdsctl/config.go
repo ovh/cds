@@ -124,13 +124,13 @@ func loadConfig(cmd *cobra.Command) (string, *cdsclient.Config, error) {
 	configNbRetry, _ := strconv.ParseInt(configNbRetryFromEnv, 10, 64)
 
 	config := &cdsclient.Config{
-		Host:                              cdsctx.Host,
-		CDNHost:                           os.Getenv("CDS_CDN_URL"),
-		SessionToken:                      cdsctx.Session,
+		Host:                               cdsctx.Host,
+		CDNHost:                            os.Getenv("CDS_CDN_URL"),
+		SessionToken:                       cdsctx.Session,
 		BuiltinConsumerAuthenticationToken: cdsctx.Token,
-		Verbose:                           verbose,
-		InsecureSkipVerifyTLS:             insecureSkipVerifyTLS,
-		Retry:                             int(configNbRetry),
+		Verbose:                            verbose,
+		InsecureSkipVerifyTLS:              insecureSkipVerifyTLS,
+		Retry:                              int(configNbRetry),
 	}
 
 	return configFile, config, nil

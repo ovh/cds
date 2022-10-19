@@ -1844,8 +1844,8 @@ func Test_getWorkflowsHandler_FilterByRepo(t *testing.T) {
 
 	// Call with an admin
 	sdkclientAdmin := cdsclient.New(cdsclient.Config{
-		Host:                              tsURL,
-		BuitinConsumerAuthenticationToken: jws,
+		Host:                               tsURL,
+		BuiltinConsumerAuthenticationToken: jws,
 	})
 
 	wfs, err := sdkclientAdmin.WorkflowList(proj.Key, cdsclient.WithQueryParameter("repo", "ovh/"+repofullName))
@@ -1946,8 +1946,8 @@ func Test_getSearchWorkflowHandler(t *testing.T) {
 
 	// Call with an admin
 	sdkclientAdmin := cdsclient.New(cdsclient.Config{
-		Host:                              tsURL,
-		BuitinConsumerAuthenticationToken: jws,
+		Host:                               tsURL,
+		BuiltinConsumerAuthenticationToken: jws,
 	})
 
 	wfs, err := sdkclientAdmin.WorkflowSearch(

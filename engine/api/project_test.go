@@ -483,8 +483,8 @@ func Test_getProjectsHandler_FilterByRepo(t *testing.T) {
 
 	// Call with an admin
 	sdkclientAdmin := cdsclient.New(cdsclient.Config{
-		Host:                              tsURL,
-		BuitinConsumerAuthenticationToken: jws,
+		Host:                               tsURL,
+		BuiltinConsumerAuthenticationToken: jws,
 	})
 
 	projs, err := sdkclientAdmin.ProjectList(true, true, cdsclient.Filter{Name: "repo", Value: "ovh/" + repofullName})

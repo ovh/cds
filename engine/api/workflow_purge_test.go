@@ -101,10 +101,10 @@ func Test_purgeDryRunHandler(t *testing.T) {
 	chanMessageToSend := make(chan []sdk.WebsocketFilter)
 	chanErrorReceived := make(chan error)
 	client := cdsclient.New(cdsclient.Config{
-		Host:                              tsURL,
-		User:                              u.Username,
-		InsecureSkipVerifyTLS:             true,
-		BuitinConsumerAuthenticationToken: jws,
+		Host:                               tsURL,
+		User:                               u.Username,
+		InsecureSkipVerifyTLS:              true,
+		BuiltinConsumerAuthenticationToken: jws,
 	})
 	contextWS, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
