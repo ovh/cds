@@ -77,11 +77,11 @@ As we are updating DB table around authentication consumer, you will need to com
 
 * Shutdown CDS and all µservices
 * Run the database migration, documentation on https://ovh.github.io/cds/hosting/database/
-* Start 1 (scale to 1 if you usually use multiple instances) CDS API, check if there is no error on migration, with cdsctl admin migration list
+* Start 1 (scale to 1 if you usually use multiple instances) CDS API, check if there is no error on migration, with `cdsctl admin migration list`
   * There are two migrations to check: 'OrganizationMigration' and 'ConsumerMigration'
-  * Migration can take a few minutes(between 1 and 5) depending on the number of users you have.
+  * Migration can take a few minutes (between 1 and 5) depending on the number of users you have.
 * Scale up CDS API if you usually use multiple instances 
-* Start the others µservices 
+* Start other µservices 
 
 
 
