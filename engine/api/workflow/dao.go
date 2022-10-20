@@ -257,6 +257,10 @@ func Load(ctx context.Context, db gorp.SqlExecutor, _ cache.Store, proj sdk.Proj
 	ctx, end := telemetry.Span(ctx, "workflow.Load")
 	defer end()
 
+	if name == "" {
+		return nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "invalid given workflow name")
+	}
+
 	dao := opts.GetWorkflowDAO()
 	dao.Filters.ProjectKey = proj.Key
 	dao.Filters.WorkflowName = name
