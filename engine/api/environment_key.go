@@ -65,7 +65,7 @@ func (api *API) deleteKeyInEnvironmentHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		event.PublishEnvironmentKeyDelete(ctx, key, *env, envKey, getAPIConsumer(ctx))
+		event.PublishEnvironmentKeyDelete(ctx, key, *env, envKey, getUserConsumer(ctx))
 
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}
@@ -124,7 +124,7 @@ func (api *API) addKeyInEnvironmentHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		event.PublishEnvironmentKeyAdd(ctx, key, *env, newKey, getAPIConsumer(ctx))
+		event.PublishEnvironmentKeyAdd(ctx, key, *env, newKey, getUserConsumer(ctx))
 
 		return service.WriteJSON(w, newKey, http.StatusOK)
 	}

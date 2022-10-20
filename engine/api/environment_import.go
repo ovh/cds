@@ -58,7 +58,7 @@ func (api *API) postEnvironmentImportHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		_, _, msgList, globalError := environment.ParseAndImport(ctx, tx, *proj, data, environment.ImportOptions{Force: force}, project.DecryptWithBuiltinKey, getAPIConsumer(ctx))
+		_, _, msgList, globalError := environment.ParseAndImport(ctx, tx, *proj, data, environment.ImportOptions{Force: force}, project.DecryptWithBuiltinKey, getUserConsumer(ctx))
 		msgListString := translate(msgList)
 		if globalError != nil {
 			globalError = sdk.WrapError(globalError, "Unable to import environment %s", data.Name)
@@ -131,7 +131,7 @@ func (api *API) importNewEnvironmentHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		if err := environment.Import(tx, *proj, env, msgChan, getAPIConsumer(ctx)); err != nil {
+		if err := environment.Import(tx, *proj, env, msgChan, getUserConsumer(ctx)); err != nil {
 			return sdk.WithStack(err)
 		}
 
@@ -204,7 +204,7 @@ func (api *API) importIntoEnvironmentHandler() service.Handler {
 			}
 		}()
 
-		if err := environment.ImportInto(ctx, tx, newEnv, env, msgChan, getAPIConsumer(ctx)); err != nil {
+		if err := environment.ImportInto(ctx, tx, newEnv, env, msgChan, getUserConsumer(ctx)); err != nil {
 			return sdk.WithStack(err)
 		}
 

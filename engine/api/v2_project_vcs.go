@@ -52,7 +52,7 @@ func (api *API) postVCSProjectHandler() ([]service.RbacChecker, service.Handler)
 			}
 
 			vcsProject.ProjectID = project.ID
-			vcsProject.CreatedBy = getAPIConsumer(ctx).GetUsername()
+			vcsProject.CreatedBy = getUserConsumer(ctx).GetUsername()
 
 			if err := vcs.Insert(ctx, tx, &vcsProject); err != nil {
 				return err

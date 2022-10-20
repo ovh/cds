@@ -24,7 +24,7 @@ func (api *API) getTimelineHandler() service.Handler {
 			return service.WriteJSON(w, []json.RawMessage{}, http.StatusOK)
 		}
 
-		consumer := getAPIConsumer(ctx)
+		consumer := getUserConsumer(ctx)
 
 		// Get index of the first element to return
 		currentItem := service.FormInt(r, "currentItem")

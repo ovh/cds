@@ -29,7 +29,7 @@ func Test_websocketWrongFilters(t *testing.T) {
 	require.NoError(t, api.initWebsocket("events_pubsub_test"))
 
 	u, _ := assets.InsertAdminUser(t, db)
-	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	localConsumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
 	consumerOptions := builtin.NewConsumerOptions{
@@ -76,7 +76,7 @@ func Test_websocketFilterRetroCompatibility(t *testing.T) {
 	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	u, _ := assets.InsertLambdaUser(t, db)
-	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	localConsumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
 	c := &websocketClientData{
@@ -173,7 +173,7 @@ func Test_websocketDeconnection(t *testing.T) {
 	require.NoError(t, api.initWebsocket("events_pubsub_test"))
 
 	u, _ := assets.InsertAdminUser(t, db)
-	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	localConsumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
 	key := sdk.RandomString(10)

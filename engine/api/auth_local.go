@@ -119,7 +119,7 @@ func (api *API) postAuthLocalSignupHandler() service.Handler {
 	}
 }
 
-func initBuiltinConsumersFromStartupConfig(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, consumer *sdk.AuthConsumer, initToken string) error {
+func initBuiltinConsumersFromStartupConfig(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, consumer *sdk.AuthUserConsumer, initToken string) error {
 	// Deserialize the magic token to retrieve the startup configuration
 	var startupConfig StartupConfig
 	if err := authentication.VerifyJWS(initToken, &startupConfig); err != nil {
@@ -155,17 +155,18 @@ func initBuiltinConsumersFromStartupConfig(ctx context.Context, tx gorpmapper.Sq
 		}
 
 		svcType := string(cfg.Type)
-		var c = sdk.AuthConsumer{
-			ID:          cfg.ID,
-			Name:        cfg.Name,
-			Description: cfg.Description,
+		var c = sdk.AuthUserConsumer{
+			AuthConsumer: sdk.AuthConsumer{
+				ID:          cfg.ID,
+				Name:        cfg.Name,
+				Description: cfg.Description,
 
-			ParentID: &consumer.ID,
-			Type:     sdk.ConsumerBuiltin,
+				ParentID: &consumer.ID,
+				Type:     sdk.ConsumerBuiltin,
 
-			ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Unix(startupConfig.IAT, 0), 2*365*24*time.Hour), // Default validity period is two years
-
-			AuthConsumerUser: &sdk.AuthConsumerUser{
+				ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Unix(startupConfig.IAT, 0), 2*365*24*time.Hour), // Default validity period is two years
+			},
+			AuthConsumerUser: sdk.AuthUserConsumerData{
 				AuthentifiedUserID: consumer.AuthConsumerUser.AuthentifiedUserID,
 				Data:               map[string]string{},
 				GroupIDs:           []int64{group.SharedInfraGroup.ID},
@@ -175,7 +176,7 @@ func initBuiltinConsumersFromStartupConfig(ctx context.Context, tx gorpmapper.Sq
 			},
 		}
 
-		if err := authentication.InsertConsumer(ctx, tx, &c); err != nil {
+		if err := authentication.InsertUserConsumer(ctx, tx, &c); err != nil {
 			return err
 		}
 	}
@@ -225,7 +226,7 @@ func (api *API) postAuthLocalSigninHandler() service.Handler {
 		}
 
 		// Try to load a local consumer for user
-		consumer, err := authentication.LoadConsumerByTypeAndUserID(ctx, tx, sdk.ConsumerLocal, usr.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+		consumer, err := authentication.LoadUserConsumerByTypeAndUserID(ctx, tx, sdk.ConsumerLocal, usr.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 		if err != nil {
 			return sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 		}
@@ -252,7 +253,7 @@ func (api *API) postAuthLocalSigninHandler() service.Handler {
 		// Store the last authentication date on the consumer
 		now := time.Now()
 		consumer.LastAuthentication = &now
-		if err := authentication.UpdateConsumerLastAuthentication(ctx, tx, consumer); err != nil {
+		if err := authentication.UpdateConsumerLastAuthentication(ctx, tx, &consumer.AuthConsumer); err != nil {
 			return err
 		}
 
@@ -389,7 +390,7 @@ func (api *API) postAuthLocalVerifyHandler() service.Handler {
 		// Store the last authentication date on the consumer
 		now := time.Now()
 		consumer.LastAuthentication = &now
-		if err := authentication.UpdateConsumerLastAuthentication(ctx, tx, consumer); err != nil {
+		if err := authentication.UpdateConsumerLastAuthentication(ctx, tx, &consumer.AuthConsumer); err != nil {
 			return err
 		}
 
@@ -442,7 +443,7 @@ func (api *API) postAuthLocalAskResetHandler() service.Handler {
 		var email string
 
 		// If there is a consumer, send directly to the primary contact for the user.
-		consumer := getAPIConsumer(ctx)
+		consumer := getUserConsumer(ctx)
 		if consumer != nil {
 			email = consumer.GetEmail()
 		} else {
@@ -472,7 +473,7 @@ func (api *API) postAuthLocalAskResetHandler() service.Handler {
 			return err
 		}
 
-		existingLocalConsumer, err := authentication.LoadConsumerByTypeAndUserID(ctx, tx, sdk.ConsumerLocal, contact.UserID)
+		existingLocalConsumer, err := authentication.LoadUserConsumerByTypeAndUserID(ctx, tx, sdk.ConsumerLocal, contact.UserID)
 		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return err
 		}
@@ -483,7 +484,7 @@ func (api *API) postAuthLocalAskResetHandler() service.Handler {
 				return err
 			}
 		}
-		if err := authentication.LoadConsumerOptions.WithAuthentifiedUser(ctx, tx, existingLocalConsumer); err != nil {
+		if err := authentication.LoadUserConsumerOptions.WithAuthentifiedUser(ctx, tx, existingLocalConsumer); err != nil {
 			return err
 		}
 
@@ -543,11 +544,11 @@ func (api *API) postAuthLocalResetHandler() service.Handler {
 		defer tx.Rollback() // nolint
 
 		// Get the consumer from database and set it to verified
-		consumer, err := authentication.LoadConsumerByID(ctx, tx, consumerID)
+		consumer, err := authentication.LoadUserConsumerByID(ctx, tx, consumerID)
 		if err != nil {
 			return sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 		}
-		if consumer.Type != sdk.ConsumerLocal || consumer.AuthConsumerUser == nil {
+		if consumer.Type != sdk.ConsumerLocal {
 			return sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 		}
 
@@ -566,7 +567,7 @@ func (api *API) postAuthLocalResetHandler() service.Handler {
 		consumer.LastAuthentication = &now
 
 		consumer.AuthConsumerUser.Data["hash"] = string(hash)
-		if err := authentication.UpdateConsumer(ctx, tx, consumer); err != nil {
+		if err := authentication.UpdateUserConsumer(ctx, tx, consumer); err != nil {
 			return err
 		}
 

@@ -77,7 +77,7 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 	}
 
 	// We should have a consumer in the context to validate the auth
-	var apiConsumer = getAPIConsumer(ctx)
+	var apiConsumer = getUserConsumer(ctx)
 	if apiConsumer == nil {
 		return ctx, sdk.WithStack(sdk.ErrUnauthorized)
 	}
@@ -118,13 +118,9 @@ func (api *API) authOptionalMiddleware(ctx context.Context, w http.ResponseWrite
 	ctx = context.WithValue(ctx, contextSession, session)
 
 	// Load auth consumer for current session in database with authentified user and contacts
-	consumer, err := authentication.LoadConsumerByID(ctx, api.mustDB(), session.ConsumerID,
-		authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	consumer, err := authentication.LoadUserConsumerByID(ctx, api.mustDB(), session.ConsumerID,
+		authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	if err != nil {
-		return ctx, sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
-	}
-	// for now, AuthConsumerUser is mandatory
-	if consumer.AuthConsumerUser == nil {
 		return ctx, sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 	}
 
@@ -181,7 +177,7 @@ func (api *API) authOptionalMiddleware(ctx context.Context, w http.ResponseWrite
 		SetTracker(w, cdslog.AuthUsername, consumer.AuthConsumerUser.AuthentifiedUser.Username)
 	}
 
-	ctx = context.WithValue(ctx, contextConsumer, consumer)
+	ctx = context.WithValue(ctx, contextUserConsumer, consumer)
 
 	// Checks scopes, one of expected scopes should be in actual scopes
 	// Actual scope empty list means wildcard scope, we don't need to check scopes
@@ -225,7 +221,7 @@ func (api *API) xsrfMiddleware(ctx context.Context, w http.ResponseWriter, req *
 	defer end()
 
 	// If no consumer in the context, means that the route is not authentified, we don't need to check the xsrf token.
-	if getAPIConsumer(ctx) == nil {
+	if getUserConsumer(ctx) == nil {
 		return ctx, nil
 	}
 

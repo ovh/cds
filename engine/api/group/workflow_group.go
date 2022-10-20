@@ -259,7 +259,7 @@ func LoadWorkflowGroups(db gorp.SqlExecutor, workflowID int64) ([]sdk.GroupPermi
 	return wgs, nil
 }
 
-func CheckWorkflowGroups(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project, w *sdk.Workflow, consumer *sdk.AuthConsumer) error {
+func CheckWorkflowGroups(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project, w *sdk.Workflow, consumer *sdk.AuthUserConsumer) error {
 	if err := LoadGroupsIntoProject(ctx, db, proj); err != nil {
 		return err
 	}

@@ -31,24 +31,26 @@ func MigrateConsumers(ctx context.Context, db *gorp.DbMap, c cache.Store) error 
 
 	for _, oldC := range oldConsumers {
 		// Check if consumer has been already migrated
-		consumerExist, err := authentication.LoadConsumerByID(ctx, db, oldC.ID)
+		consumerExist, err := authentication.LoadUserConsumerByID(ctx, db, oldC.ID)
 		if err == nil && consumerExist != nil {
 			continue
 		}
 
-		newConsumer := sdk.AuthConsumer{
-			ID:                 oldC.ID,
-			Type:               oldC.Type,
-			Name:               oldC.Name,
-			Description:        oldC.Description,
-			ParentID:           oldC.ParentID,
-			Created:            oldC.Created,
-			DeprecatedIssuedAt: oldC.DeprecatedIssuedAt,
-			Disabled:           oldC.Disabled,
-			LastAuthentication: oldC.LastAuthentication,
-			ValidityPeriods:    oldC.ValidityPeriods,
-			Warnings:           oldC.Warnings,
-			AuthConsumerUser: &sdk.AuthConsumerUser{
+		newConsumer := sdk.AuthUserConsumer{
+			AuthConsumer: sdk.AuthConsumer{
+				ID:                 oldC.ID,
+				Type:               oldC.Type,
+				Name:               oldC.Name,
+				Description:        oldC.Description,
+				ParentID:           oldC.ParentID,
+				Created:            oldC.Created,
+				DeprecatedIssuedAt: oldC.DeprecatedIssuedAt,
+				Disabled:           oldC.Disabled,
+				LastAuthentication: oldC.LastAuthentication,
+				ValidityPeriods:    oldC.ValidityPeriods,
+				Warnings:           oldC.Warnings,
+			},
+			AuthConsumerUser: sdk.AuthUserConsumerData{
 				ID:                           sdk.UUID(),
 				AuthConsumerID:               oldC.ID,
 				ScopeDetails:                 oldC.ScopeDetails,
@@ -66,7 +68,7 @@ func MigrateConsumers(ctx context.Context, db *gorp.DbMap, c cache.Store) error 
 		if err != nil {
 			return sdk.WithStack(err)
 		}
-		if err := authentication.InsertConsumer(ctx, tx, &newConsumer); err != nil {
+		if err := authentication.InsertUserConsumer(ctx, tx, &newConsumer); err != nil {
 			_ = tx.Rollback()
 			return err
 		}

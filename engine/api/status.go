@@ -55,7 +55,7 @@ func (api *API) statusHandler() service.Handler {
 		}
 
 		// If there is a valid session and user is maintainer, allows to get status details.
-		currentConsumer := getAPIConsumer(ctx)
+		currentConsumer := getUserConsumer(ctx)
 		if currentConsumer == nil || !isMaintainer(ctx) {
 			mStatus := api.computeGlobalPublicStatus()
 			return service.WriteJSON(w, mStatus, status)

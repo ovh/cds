@@ -115,7 +115,7 @@ func (api *API) deleteVariableFromApplicationHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load variable %s", varName)
 		}
 
-		if err := application.DeleteVariable(tx, app.ID, varToDelete, getAPIConsumer(ctx)); err != nil {
+		if err := application.DeleteVariable(tx, app.ID, varToDelete, getUserConsumer(ctx)); err != nil {
 			return sdk.WrapError(err, "cannot delete %s", varName)
 		}
 
@@ -123,7 +123,7 @@ func (api *API) deleteVariableFromApplicationHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		event.PublishDeleteVariableApplication(ctx, key, *app, *varToDelete, getAPIConsumer(ctx))
+		event.PublishDeleteVariableApplication(ctx, key, *app, *varToDelete, getUserConsumer(ctx))
 
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}
@@ -166,7 +166,7 @@ func (api *API) updateVariableInApplicationHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		if err := application.UpdateVariable(tx, app.ID, &newVar, variableBefore, getAPIConsumer(ctx)); err != nil {
+		if err := application.UpdateVariable(tx, app.ID, &newVar, variableBefore, getUserConsumer(ctx)); err != nil {
 			return sdk.WrapError(err, "cannot update variable %s for application %s", varName, appName)
 		}
 
@@ -174,7 +174,7 @@ func (api *API) updateVariableInApplicationHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		event.PublishUpdateVariableApplication(ctx, key, *app, newVar, *variableBefore, getAPIConsumer(ctx))
+		event.PublishUpdateVariableApplication(ctx, key, *app, newVar, *variableBefore, getUserConsumer(ctx))
 
 		return service.WriteJSON(w, newVar, http.StatusOK)
 	}
@@ -214,7 +214,7 @@ func (api *API) addVariableInApplicationHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		if err = application.InsertVariable(tx, app.ID, &newVar, getAPIConsumer(ctx)); err != nil {
+		if err = application.InsertVariable(tx, app.ID, &newVar, getUserConsumer(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot add variable %s in application %s", varName, appName)
 		}
 
@@ -222,7 +222,7 @@ func (api *API) addVariableInApplicationHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		event.PublishAddVariableApplication(ctx, key, *app, newVar, getAPIConsumer(ctx))
+		event.PublishAddVariableApplication(ctx, key, *app, newVar, getUserConsumer(ctx))
 
 		return service.WriteJSON(w, newVar, http.StatusOK)
 	}

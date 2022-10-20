@@ -52,12 +52,12 @@ func (c authConsumer) Canonical() gorpmapper.CanonicalForms {
 	}
 }
 
-type authConsumerUser struct {
-	sdk.AuthConsumerUser
+type authConsumerUserData struct {
+	sdk.AuthUserConsumerData
 	gorpmapper.SignedEntity
 }
 
-func (c authConsumerUser) Canonical() gorpmapper.CanonicalForms {
+func (c authConsumerUserData) Canonical() gorpmapper.CanonicalForms {
 	_ = []interface{}{c.ID, c.AuthConsumerID, c.AuthentifiedUserID, c.Data, c.GroupIDs, c.ScopeDetails} // Checks that fields exists at compilation
 	return []gorpmapper.CanonicalForm{
 		"{{.ID}}{{.AuthConsumerID}}{{.AuthentifiedUserID}}{{print .Data}}{{print .GroupIDs}}{{print .ScopeDetails}}",
@@ -80,7 +80,7 @@ func init() {
 	gorpmapping.Register(
 		gorpmapping.New(authConsumer{}, "auth_consumer", false, "id"),
 		gorpmapping.New(authSession{}, "auth_session", false, "id"),
-		gorpmapping.New(authConsumerUser{}, "auth_consumer_user", false, "id"),
+		gorpmapping.New(authConsumerUserData{}, "auth_consumer_user", false, "id"),
 		gorpmapping.New(AuthConsumerOld{}, "auth_consumer_old", false, "id"),
 	)
 }

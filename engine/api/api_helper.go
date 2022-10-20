@@ -17,7 +17,7 @@ import (
 
 // group should have members aggregated and authentified user old user struct should be set.
 func isGroupAdmin(ctx context.Context, g *sdk.Group) bool {
-	c := getAPIConsumer(ctx)
+	c := getUserConsumer(ctx)
 	if c == nil {
 		return false
 	}
@@ -25,7 +25,7 @@ func isGroupAdmin(ctx context.Context, g *sdk.Group) bool {
 }
 
 func isGroupMember(ctx context.Context, g *sdk.Group) bool {
-	c := getAPIConsumer(ctx)
+	c := getUserConsumer(ctx)
 	if c == nil {
 		return false
 	}
@@ -33,7 +33,7 @@ func isGroupMember(ctx context.Context, g *sdk.Group) bool {
 }
 
 func isMaintainer(ctx context.Context) bool {
-	c := getAPIConsumer(ctx)
+	c := getUserConsumer(ctx)
 	if c == nil {
 		return false
 	}
@@ -49,7 +49,7 @@ func supportMFA(ctx context.Context) bool {
 }
 
 func isAdmin(ctx context.Context) bool {
-	c := getAPIConsumer(ctx)
+	c := getUserConsumer(ctx)
 	if c == nil {
 		return false
 	}
@@ -62,48 +62,48 @@ func isAdmin(ctx context.Context) bool {
 }
 
 func isService(ctx context.Context) bool {
-	c := getAPIConsumer(ctx)
-	if c == nil || c.AuthConsumerUser == nil {
+	c := getUserConsumer(ctx)
+	if c == nil {
 		return false
 	}
 	return c.AuthConsumerUser.Service != nil
 }
 
 func isWorker(ctx context.Context) bool {
-	c := getAPIConsumer(ctx)
-	if c == nil || c.AuthConsumerUser == nil {
+	c := getUserConsumer(ctx)
+	if c == nil {
 		return false
 	}
 	return c.AuthConsumerUser.Worker != nil
 }
 
 func isHatchery(ctx context.Context) bool {
-	c := getAPIConsumer(ctx)
-	if c == nil || c.AuthConsumerUser == nil {
+	c := getUserConsumer(ctx)
+	if c == nil {
 		return false
 	}
 	return c.AuthConsumerUser.Service != nil && c.AuthConsumerUser.Service.Type == sdk.TypeHatchery
 }
 
 func isHatcheryShared(ctx context.Context) bool {
-	c := getAPIConsumer(ctx)
-	if c == nil || c.AuthConsumerUser == nil {
+	c := getUserConsumer(ctx)
+	if c == nil {
 		return false
 	}
 	return isHatchery(ctx) && c.AuthConsumerUser.GroupIDs.Contains(group.SharedInfraGroup.ID)
 }
 
 func isCDN(ctx context.Context) bool {
-	c := getAPIConsumer(ctx)
-	if c == nil || c.AuthConsumerUser == nil {
+	c := getUserConsumer(ctx)
+	if c == nil {
 		return false
 	}
 	return c.AuthConsumerUser.Service != nil && c.AuthConsumerUser.Service.Type == sdk.TypeCDN
 }
 
 func isHooks(ctx context.Context) bool {
-	c := getAPIConsumer(ctx)
-	if c == nil || c.AuthConsumerUser == nil {
+	c := getUserConsumer(ctx)
+	if c == nil {
 		return false
 	}
 	return c.AuthConsumerUser.Service != nil && c.AuthConsumerUser.Service.Type == sdk.TypeHooks
@@ -123,12 +123,12 @@ func trackSudo(ctx context.Context, w http.ResponseWriter) {
 	}
 }
 
-func getAPIConsumer(ctx context.Context) *sdk.AuthConsumer {
-	i := ctx.Value(contextConsumer)
+func getUserConsumer(ctx context.Context) *sdk.AuthUserConsumer {
+	i := ctx.Value(contextUserConsumer)
 	if i == nil {
 		return nil
 	}
-	consumer, ok := i.(*sdk.AuthConsumer)
+	consumer, ok := i.(*sdk.AuthUserConsumer)
 	if !ok {
 		return nil
 	}

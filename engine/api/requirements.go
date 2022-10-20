@@ -38,7 +38,7 @@ func (api *API) getRequirementTypeValuesHandler() service.Handler {
 				models, err = workermodel.LoadAll(ctx, api.mustDB(), nil)
 			} else {
 				models, err = workermodel.LoadAllByGroupIDs(ctx, api.mustDB(),
-					getAPIConsumer(ctx).GetGroupIDs(), nil)
+					getUserConsumer(ctx).GetGroupIDs(), nil)
 			}
 			if err != nil {
 				return sdk.WrapError(err, "cannot load worker models")

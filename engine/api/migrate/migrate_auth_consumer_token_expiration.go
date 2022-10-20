@@ -61,7 +61,7 @@ func authConsumerTokenExpirationPerID(ctx context.Context, tx gorpmapper.SqlExec
 	log.Info(ctx, "migrating consumer %s", id)
 
 	// Load the consumer
-	consumer, err := authentication.LoadConsumerByID(ctx, tx, id)
+	consumer, err := authentication.LoadUserConsumerByID(ctx, tx, id)
 	if err != nil {
 		return err
 	}
@@ -73,5 +73,5 @@ func authConsumerTokenExpirationPerID(ctx context.Context, tx gorpmapper.SqlExec
 	consumer.ValidityPeriods = sdk.NewAuthConsumerValidityPeriod(consumer.DeprecatedIssuedAt, duration)
 	log.Info(ctx, "consumer %q IAT=%v Expiration=%v", consumer.ID, consumer.ValidityPeriods.Latest().IssuedAt, consumer.ValidityPeriods.Latest().IssuedAt.Add(consumer.ValidityPeriods.Latest().Duration))
 
-	return authentication.UpdateConsumer(ctx, tx, consumer)
+	return authentication.UpdateUserConsumer(ctx, tx, consumer)
 }

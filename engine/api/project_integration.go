@@ -133,7 +133,7 @@ func (api *API) putProjectIntegrationHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		event.PublishUpdateProjectIntegration(ctx, p, projectIntegration, ppDB, getAPIConsumer(ctx))
+		event.PublishUpdateProjectIntegration(ctx, p, projectIntegration, ppDB, getUserConsumer(ctx))
 
 		return service.WriteJSON(w, projectIntegration, http.StatusOK)
 	}
@@ -178,7 +178,7 @@ func (api *API) deleteProjectIntegrationHandler() service.Handler {
 		if deletedIntegration.Model.Event {
 			event.DeleteEventIntegration(deletedIntegration.ID)
 		}
-		event.PublishDeleteProjectIntegration(ctx, p, deletedIntegration, getAPIConsumer(ctx))
+		event.PublishDeleteProjectIntegration(ctx, p, deletedIntegration, getUserConsumer(ctx))
 		return nil
 	}
 }
@@ -266,7 +266,7 @@ func (api *API) postProjectIntegrationHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		event.PublishAddProjectIntegration(ctx, p, pp, getAPIConsumer(ctx))
+		event.PublishAddProjectIntegration(ctx, p, pp, getUserConsumer(ctx))
 
 		return service.WriteJSON(w, pp, http.StatusOK)
 	}

@@ -128,7 +128,7 @@ func (api *API) postProjectRepositoryHandler() ([]service.RbacChecker, service.H
 
 			repoDB := repoBody
 			repoDB.VCSProjectID = vcsProject.ID
-			repoDB.CreatedBy = getAPIConsumer(ctx).GetUsername()
+			repoDB.CreatedBy = getUserConsumer(ctx).GetUsername()
 
 			// Insert Repository
 			if err := repository.Insert(ctx, tx, &repoDB); err != nil {

@@ -25,7 +25,7 @@ func (api *API) getConsumersByUserHandler() service.Handler {
 		var u *sdk.AuthentifiedUser
 		var err error
 		if username == "me" {
-			u, err = user.LoadByID(ctx, api.mustDB(), getAPIConsumer(ctx).AuthConsumerUser.AuthentifiedUserID)
+			u, err = user.LoadByID(ctx, api.mustDB(), getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUserID)
 		} else {
 			u, err = user.LoadByUsername(ctx, api.mustDB(), username)
 		}
@@ -33,8 +33,8 @@ func (api *API) getConsumersByUserHandler() service.Handler {
 			return err
 		}
 
-		cs, err := authentication.LoadConsumersByUserID(ctx, api.mustDB(), u.ID,
-			authentication.LoadConsumerOptions.Default)
+		cs, err := authentication.LoadUserConsumersByUserID(ctx, api.mustDB(), u.ID,
+			authentication.LoadUserConsumerOptions.Default)
 		if err != nil {
 			return err
 		}
@@ -48,7 +48,7 @@ func (api *API) postConsumerByUserHandler() service.Handler {
 		vars := mux.Vars(r)
 		username := vars["permUsername"]
 
-		consumer := getAPIConsumer(ctx)
+		consumer := getUserConsumer(ctx)
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
@@ -59,7 +59,7 @@ func (api *API) postConsumerByUserHandler() service.Handler {
 		// Only a user can create a consumer for itself, an admin can't create one for an other user
 		var u *sdk.AuthentifiedUser
 		if username == "me" {
-			u, err = user.LoadByID(ctx, tx, getAPIConsumer(ctx).AuthConsumerUser.AuthentifiedUserID)
+			u, err = user.LoadByID(ctx, tx, getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUserID)
 		} else {
 			u, err = user.LoadByUsername(ctx, tx, username)
 		}
@@ -71,7 +71,7 @@ func (api *API) postConsumerByUserHandler() service.Handler {
 		}
 
 		// Check request data
-		var reqData sdk.AuthConsumer
+		var reqData sdk.AuthUserConsumer
 		if err := service.UnmarshalBody(r, &reqData); err != nil {
 			return err
 		}
@@ -99,7 +99,7 @@ func (api *API) postConsumerByUserHandler() service.Handler {
 		if err != nil {
 			return err
 		}
-		if err := authentication.LoadConsumerOptions.Default(ctx, tx, newConsumer); err != nil {
+		if err := authentication.LoadUserConsumerOptions.Default(ctx, tx, newConsumer); err != nil {
 			return err
 		}
 
@@ -126,13 +126,11 @@ func (api *API) deleteConsumerByUserHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		consumer, err := authentication.LoadConsumerByID(ctx, tx, consumerID)
+		consumer, err := authentication.LoadUserConsumerByID(ctx, tx, consumerID)
 		if err != nil {
 			return err
 		}
-		if consumer.AuthConsumerUser == nil {
-			return sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find an user consumer")
-		}
+
 		if consumer.Type != sdk.ConsumerBuiltin {
 			return sdk.NewErrorFrom(sdk.ErrForbidden, "can't delete a no builtin consumer")
 		}
@@ -167,7 +165,7 @@ func (api *API) postConsumerRegenByUserHandler() service.Handler {
 		defer tx.Rollback() // nolint
 
 		// Load the consumer from the input
-		consumer, err := authentication.LoadConsumerByID(ctx, tx, consumerID)
+		consumer, err := authentication.LoadUserConsumerByID(ctx, tx, consumerID)
 		if err != nil {
 			return err
 		}
@@ -236,7 +234,7 @@ func (api *API) getSessionsByUserHandler() service.Handler {
 		var u *sdk.AuthentifiedUser
 		var err error
 		if username == "me" {
-			u, err = user.LoadByID(ctx, api.mustDB(), getAPIConsumer(ctx).AuthConsumerUser.AuthentifiedUserID)
+			u, err = user.LoadByID(ctx, api.mustDB(), getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUserID)
 		} else {
 			u, err = user.LoadByUsername(ctx, api.mustDB(), username)
 		}
@@ -244,7 +242,7 @@ func (api *API) getSessionsByUserHandler() service.Handler {
 			return err
 		}
 
-		cs, err := authentication.LoadConsumersByUserID(ctx, api.mustDB(), u.ID)
+		cs, err := authentication.LoadUserConsumersByUserID(ctx, api.mustDB(), u.ID)
 		if err != nil {
 			return err
 		}

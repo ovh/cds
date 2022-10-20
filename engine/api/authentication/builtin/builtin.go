@@ -77,7 +77,7 @@ type NewConsumerOptions struct {
 	ServiceIgnoreJobWithNoRegion *bool
 }
 
-func NewConsumer(ctx context.Context, db gorpmapper.SqlExecutorWithTx, opts NewConsumerOptions, parentConsumer *sdk.AuthConsumer) (*sdk.AuthConsumer, string, error) {
+func NewConsumer(ctx context.Context, db gorpmapper.SqlExecutorWithTx, opts NewConsumerOptions, parentConsumer *sdk.AuthUserConsumer) (*sdk.AuthUserConsumer, string, error) {
 	if opts.Name == "" {
 		return nil, "", sdk.NewErrorFrom(sdk.ErrWrongRequest, "name should be given to create a built in consumer")
 	}
@@ -86,14 +86,12 @@ func NewConsumer(ctx context.Context, db gorpmapper.SqlExecutorWithTx, opts NewC
 	// When the parent is a builtin consumer even if it was created by an admin we should check groups to prevent
 	// creating child with more permission than parents.
 	if parentConsumer.Type == sdk.ConsumerBuiltin || !parentConsumer.Admin() {
-		if parentConsumer.AuthConsumerUser != nil {
-			// Only if parentGroupIDs aren't empty. Because empty means all groups access
-			if len(parentConsumer.AuthConsumerUser.GroupIDs) > 0 {
-				parentGroupIDs := parentConsumer.GetGroupIDs()
-				for i := range opts.GroupIDs {
-					if !sdk.IsInInt64Array(opts.GroupIDs[i], parentGroupIDs) {
-						return nil, "", sdk.WrapError(sdk.ErrWrongRequest, "invalid given group id %d", opts.GroupIDs[i])
-					}
+		// Only if parentGroupIDs aren't empty. Because empty means all groups access
+		if len(parentConsumer.AuthConsumerUser.GroupIDs) > 0 {
+			parentGroupIDs := parentConsumer.GetGroupIDs()
+			for i := range opts.GroupIDs {
+				if !sdk.IsInInt64Array(opts.GroupIDs[i], parentGroupIDs) {
+					return nil, "", sdk.WrapError(sdk.ErrWrongRequest, "invalid given group id %d", opts.GroupIDs[i])
 				}
 			}
 		}
@@ -101,21 +99,22 @@ func NewConsumer(ctx context.Context, db gorpmapper.SqlExecutorWithTx, opts NewC
 	}
 
 	// Check that given scopes are valid and if they match parent scopes
-	var parentScope sdk.AuthConsumerScopeDetails
-	if parentConsumer.AuthConsumerUser != nil {
-		parentScope = parentConsumer.AuthConsumerUser.ScopeDetails
-	}
+
+	parentScope := parentConsumer.AuthConsumerUser.ScopeDetails
+
 	if err := checkNewConsumerScopes(parentScope, opts.Scopes); err != nil {
 		return nil, "", err
 	}
 
-	c := sdk.AuthConsumer{
-		Name:            opts.Name,
-		Description:     opts.Description,
-		ParentID:        &parentConsumer.ID,
-		Type:            sdk.ConsumerBuiltin,
-		ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), opts.Duration),
-		AuthConsumerUser: &sdk.AuthConsumerUser{
+	c := sdk.AuthUserConsumer{
+		AuthConsumer: sdk.AuthConsumer{
+			Name:            opts.Name,
+			Description:     opts.Description,
+			ParentID:        &parentConsumer.ID,
+			Type:            sdk.ConsumerBuiltin,
+			ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), opts.Duration),
+		},
+		AuthConsumerUser: sdk.AuthUserConsumerData{
 			AuthentifiedUserID:           parentConsumer.AuthConsumerUser.AuthentifiedUserID,
 			Data:                         map[string]string{},
 			GroupIDs:                     opts.GroupIDs,
@@ -127,7 +126,7 @@ func NewConsumer(ctx context.Context, db gorpmapper.SqlExecutorWithTx, opts NewC
 		},
 	}
 
-	if err := authentication.InsertConsumer(ctx, db, &c); err != nil {
+	if err := authentication.InsertUserConsumer(ctx, db, &c); err != nil {
 		return nil, "", err
 	}
 

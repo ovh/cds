@@ -50,7 +50,7 @@ func Test_postAuthBuiltinSigninHandler(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 
 	usr, _ := assets.InsertLambdaUser(t, db, &sdk.Group{Name: sdk.RandomString(5)})
-	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, usr.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	localConsumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, usr.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
 	consumerOptions := builtin.NewConsumerOptions{

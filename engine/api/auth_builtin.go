@@ -45,13 +45,9 @@ func (api *API) postAuthBuiltinSigninHandler() service.Handler {
 		defer tx.Rollback() // nolint
 
 		// Check if a consumer exists for consumer type and external user identifier
-		consumer, err := authentication.LoadConsumerByID(ctx, tx, userInfo.ExternalID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+		consumer, err := authentication.LoadUserConsumerByID(ctx, tx, userInfo.ExternalID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 		if err != nil {
 			return sdk.NewError(sdk.ErrForbidden, err)
-		}
-
-		if consumer.AuthConsumerUser == nil {
-			return sdk.NewErrorFrom(sdk.ErrForbidden, "missing user data on consumer %s", consumer.ID)
 		}
 
 		token, err := req.StringE("token")
@@ -112,7 +108,7 @@ func (api *API) postAuthBuiltinSigninHandler() service.Handler {
 		// Store the last authentication date on the consumer
 		now := time.Now()
 		consumer.LastAuthentication = &now
-		if err := authentication.UpdateConsumerLastAuthentication(ctx, tx, consumer); err != nil {
+		if err := authentication.UpdateConsumerLastAuthentication(ctx, tx, &consumer.AuthConsumer); err != nil {
 			return err
 		}
 
@@ -123,7 +119,7 @@ func (api *API) postAuthBuiltinSigninHandler() service.Handler {
 		}
 
 		// Set those values (has it would be done in api.authOptionalMiddleware)
-		ctx = context.WithValue(ctx, contextConsumer, consumer)
+		ctx = context.WithValue(ctx, contextUserConsumer, consumer)
 		ctx = context.WithValue(ctx, cdslog.AuthUserID, consumer.AuthConsumerUser.AuthentifiedUserID)
 		SetTracker(w, cdslog.AuthUserID, consumer.AuthConsumerUser.AuthentifiedUserID)
 		ctx = context.WithValue(ctx, cdslog.AuthConsumerID, consumer.ID)
