@@ -90,8 +90,8 @@ regions:
 	require.NoError(t, rbac.FillWithIDs(context.TODO(), db, &r))
 	require.NoError(t, rbac.Insert(context.TODO(), db, &r))
 
-	c := sdk.AuthConsumer{
-		AuthConsumerUser: &sdk.AuthConsumerUser{
+	c := sdk.AuthUserConsumer{
+		AuthConsumerUser: sdk.AuthUserConsumerData{
 			AuthentifiedUserID: user1.ID,
 			AuthentifiedUser:   user1,
 		},
