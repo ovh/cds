@@ -15,7 +15,7 @@ type Repository struct {
 type Application struct {
 	ID                   int64                        `json:"id" db:"id"`
 	Name                 string                       `json:"name" db:"name" cli:"name,key"`
-	Description          string                       `json:"description" db:"description"`
+	Description          string                       `json:"description" db:"description" cli:"description"`
 	Icon                 string                       `json:"icon" db:"icon"`
 	ProjectID            int64                        `json:"-" db:"project_id"`
 	ProjectKey           string                       `json:"project_key" db:"-" cli:"project_key"`
