@@ -10,15 +10,15 @@ import (
 
 // Config is the configuration data used by the cdsclient interface implementation
 type Config struct {
-	Host                              string
-	CDNHost                           string
-	User                              string
-	SessionToken                      string
-	BuitinConsumerAuthenticationToken string
-	Verbose                           bool
-	Retry                             int
-	InsecureSkipVerifyTLS             bool
-	Mutex                             *sync.Mutex
+	Host                               string
+	CDNHost                            string
+	User                               string
+	SessionToken                       string
+	BuiltinConsumerAuthenticationToken string
+	Verbose                            bool
+	Retry                              int
+	InsecureSkipVerifyTLS              bool
+	Mutex                              *sync.Mutex
 }
 
 // ProviderConfig is the configuration data used by the cdsclient ProviderClient interface implementation

@@ -164,7 +164,7 @@ deployments:
       type: 2.12.2
 ```
 
-The list of the availabe deployment platform is available from the Web UI on the `project / integration` section, or with the command `cdsctl project integration list`
+The list of the available deployment platform is available from the Web UI on the `project / integration` section, or with the command `cdsctl project integration list`
 
 ```bash
 ➜  ~ cdsctl project integration list MYPROJ

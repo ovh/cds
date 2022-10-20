@@ -8,8 +8,8 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func IsHookService(_ context.Context, auth *sdk.AuthConsumer, _ cache.Store, _ gorp.SqlExecutor, _ map[string]string) error {
-	if auth == nil || auth.AuthConsumerUser == nil {
+func IsHookService(_ context.Context, auth *sdk.AuthUserConsumer, _ cache.Store, _ gorp.SqlExecutor, _ map[string]string) error {
+	if auth == nil {
 		return sdk.WithStack(sdk.ErrForbidden)
 	}
 	if auth.AuthConsumerUser.Service != nil && auth.AuthConsumerUser.Service.Type == sdk.TypeHooks {

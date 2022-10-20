@@ -20,7 +20,7 @@ import (
 // ShellMode will os.Exit if false, display only exit code if true
 var ShellMode bool
 
-//  If Verbose is set to true, ExitOnError will try to disply more detail about the potential errors
+//  If Verbose is set to true, ExitOnError will try to display more detail about the potential errors
 var Verbose bool
 
 type stackTracer interface {

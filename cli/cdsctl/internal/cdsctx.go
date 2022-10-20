@@ -17,14 +17,14 @@ type CDSContext struct {
 	InsecureSkipVerifyTLS bool   `json:"-" cli:"-"`
 	Verbose               bool   `json:"-" cli:"-"`
 	Session               string `json:"-" cli:"-"` // Session Token
-	Token                 string `json:"-" cli:"-"` // BuitinConsumerAuthenticationToken
+	Token                 string `json:"-" cli:"-"` // BuiltinConsumerAuthenticationToken
 }
 
 // ContextTokens contains a Session Token and a Sign in token
 // this struct is use to store secret in keychain
 type ContextTokens struct {
 	Session string `json:"session" cli:"-"` // Session Token
-	Token   string `json:"token" cli:"-"`   // BuitinConsumerAuthenticationToken
+	Token   string `json:"token" cli:"-"`   // BuiltinConsumerAuthenticationToken
 }
 
 // CDSConfigFile represents a CDS Config File

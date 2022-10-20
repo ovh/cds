@@ -10,7 +10,7 @@ pay attention to a few things:
 
 ## Coding and documentation Style:
 
-- Code must be formated with `go fmt`
+- Code must be formatted with `go fmt`
 - Code must pass `go vet`
 - Code must pass `golint`
 

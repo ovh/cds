@@ -66,9 +66,9 @@ func workflowRunInteractive(v cli.Values, w *sdk.WorkflowRun, baseURL string) er
 							}
 							data := string(buf)
 
-							vSplitted := strings.Split(data, "\n")
+							vSplit := strings.Split(data, "\n")
 							failedOnStepKnowned := false
-							for _, line := range vSplitted {
+							for _, line := range vSplit {
 								line = strings.Trim(line, " ")
 								titleStep := fmt.Sprintf("%s / step %d", job.Job.Action.Name, step.StepOrder)
 								// RED color on step failed

@@ -142,7 +142,7 @@ func (api *API) postWorkflowImportHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		u := getAPIConsumer(ctx)
+		u := getUserConsumer(ctx)
 
 		// load the workflow from database if exists
 		workflowExists, err := workflow.Exists(ctx, tx, proj.Key, ew.GetName())
@@ -157,7 +157,7 @@ func (api *API) postWorkflowImportHandler() service.Handler {
 			}
 		}
 
-		wrkflw, msgList, globalError := workflow.ParseAndImport(ctx, tx, api.Cache, *proj, wf, ew, getAPIConsumer(ctx), workflow.ImportOptions{Force: force})
+		wrkflw, msgList, globalError := workflow.ParseAndImport(ctx, tx, api.Cache, *proj, wf, ew, getUserConsumer(ctx), workflow.ImportOptions{Force: force})
 		msgListString := translate(msgList)
 		if globalError != nil {
 			if len(msgListString) != 0 {
@@ -223,7 +223,7 @@ func (api *API) putWorkflowImportHandler() service.Handler {
 			return sdk.WrapError(err, "unable load project")
 		}
 
-		u := getAPIConsumer(ctx)
+		u := getUserConsumer(ctx)
 
 		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, *proj, wfName, workflow.LoadOptions{WithIcon: true})
 		if err != nil {
@@ -292,7 +292,7 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 		log.Debug(ctx, "Read %d bytes from body", len(btes))
 		tr := tar.NewReader(bytes.NewReader(btes))
 
-		consumer := getAPIConsumer(ctx)
+		consumer := getUserConsumer(ctx)
 
 		pushOptions := &workflow.PushOption{}
 		if r.Header.Get(sdk.WorkflowAsCodeHeader) != "" {

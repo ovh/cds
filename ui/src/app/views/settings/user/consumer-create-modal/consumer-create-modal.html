@@ -27,6 +27,17 @@
                                     </nz-form-item>
                                 </nz-col>
                             </nz-row>
+                            <nz-row>
+                                <nz-col [nzSpan]="10">
+                                    <nz-form-item>
+                                        <nz-form-label>TTL (in days)</nz-form-label>
+                                        <nz-form-control>
+                                            <input nz-input type="number" name="duration" min="1" max="365"
+                                                   [(ngModel)]="newConsumer.validity_periods[0].duration">
+                                        </nz-form-control>
+                                    </nz-form-item>
+                                </nz-col>
+                            </nz-row>
                         </form>
                     </nz-collapse-panel>
                     <nz-collapse-panel [(nzActive)]="panels[formStepName.GROUPS]"

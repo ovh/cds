@@ -22,8 +22,8 @@ func TestWithAuthentifiedUser(t *testing.T) {
 	g := assets.InsertGroup(t, db)
 	u, _ := assets.InsertLambdaUser(t, db, g)
 
-	res, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID,
-		authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	res, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID,
+		authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 	require.NotNil(t, res.AuthConsumerUser.AuthentifiedUser)
 	assert.Equal(t, u.Username, res.AuthConsumerUser.AuthentifiedUser.Username)
@@ -39,8 +39,8 @@ func TestWithConsumerGroups(t *testing.T) {
 	g2 := assets.InsertGroup(t, db)
 	u, _ := assets.InsertLambdaUser(t, db, g1, g2)
 
-	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID,
-		authentication.LoadConsumerOptions.WithAuthentifiedUser, authentication.LoadConsumerOptions.WithConsumerGroups)
+	localConsumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID,
+		authentication.LoadUserConsumerOptions.WithAuthentifiedUser, authentication.LoadUserConsumerOptions.WithConsumerGroups)
 	require.NoError(t, err)
 	assert.NotNil(t, 0, len(localConsumer.AuthConsumerUser.Groups), "no group ids on local consumer so no groups are expected")
 
@@ -51,8 +51,8 @@ func TestWithConsumerGroups(t *testing.T) {
 	}
 	newConsumer, _, err := builtin.NewConsumer(context.TODO(), db, consumerOptions, localConsumer)
 	require.NoError(t, err)
-	builtinConsumer, err := authentication.LoadConsumerByID(context.TODO(), db, newConsumer.ID,
-		authentication.LoadConsumerOptions.WithConsumerGroups)
+	builtinConsumer, err := authentication.LoadUserConsumerByID(context.TODO(), db, newConsumer.ID,
+		authentication.LoadUserConsumerOptions.WithConsumerGroups)
 	require.NoError(t, err)
 	require.Equal(t, 2, len(builtinConsumer.AuthConsumerUser.Groups))
 	sort.Slice(builtinConsumer.AuthConsumerUser.Groups, func(i, j int) bool {

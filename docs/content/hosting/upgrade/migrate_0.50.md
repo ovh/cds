@@ -12,7 +12,7 @@ Before upgrading your CDS Instance:
 
 ## PostgreSQL
 
-PostgreSQL 14 is now recommanded
+PostgreSQL 14 is now recommended
 
 ## CDN Service
 
@@ -34,7 +34,7 @@ You have to add a `storageUnits.buffers` with the type "file".
           path = "/var/lib/cds-engine/cdn-buffer"
 ```
 
-To multi-instanciate the cdn service, you can use a NFS for the bufferType file, example:
+To multi-instantiate the cdn service, you can use a NFS for the bufferType file, example:
     
 ```toml
       [cdn.storageUnits.buffers.buffer-nfs]
@@ -49,7 +49,7 @@ To multi-instanciate the cdn service, you can use a NFS for the bufferType file,
           [[cdn.storageUnits.buffers.buffer-nfs.nfs.encryption]]
             Cipher = "aes-gcm"
             Identifier = "nfs-buffer-id"
-            ## enter a key here, 32 lenght
+            ## enter a key here, 32 length
             Key = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
             Sealed = false   
 ```

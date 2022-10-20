@@ -20,7 +20,7 @@ cards:
 - name: hooks
   title: Hooks on CDS Workflows
 - name: deployment
-  title: Application Deployement
+  title: Application Deployment
 - name: repository-manager
   title: Repositories Managers
 - name: compute

@@ -17,7 +17,7 @@ const (
 	sessionMFAActivityDuration = 15 * time.Minute
 )
 
-func newSession(c *sdk.AuthConsumer, duration time.Duration) sdk.AuthSession {
+func newSession(c *sdk.AuthUserConsumer, duration time.Duration) sdk.AuthSession {
 	return sdk.AuthSession{
 		ConsumerID: c.ID,
 		ExpireAt:   time.Now().Add(duration),
@@ -25,7 +25,7 @@ func newSession(c *sdk.AuthConsumer, duration time.Duration) sdk.AuthSession {
 }
 
 // NewSession returns a new session for a given auth consumer.
-func NewSession(ctx context.Context, db gorpmapper.SqlExecutorWithTx, c *sdk.AuthConsumer, duration time.Duration) (*sdk.AuthSession, error) {
+func NewSession(ctx context.Context, db gorpmapper.SqlExecutorWithTx, c *sdk.AuthUserConsumer, duration time.Duration) (*sdk.AuthSession, error) {
 	s := newSession(c, duration)
 
 	if err := InsertSession(ctx, db, &s); err != nil {
@@ -36,12 +36,12 @@ func NewSession(ctx context.Context, db gorpmapper.SqlExecutorWithTx, c *sdk.Aut
 }
 
 // NewSessionWithMFA returns a new session for a given auth consumer with MFA.
-func NewSessionWithMFA(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, c *sdk.AuthConsumer, duration time.Duration) (*sdk.AuthSession, error) {
+func NewSessionWithMFA(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, c *sdk.AuthUserConsumer, duration time.Duration) (*sdk.AuthSession, error) {
 	return NewSessionWithMFACustomDuration(ctx, db, store, c, duration, sessionMFAActivityDuration)
 }
 
 // NewSessionWithMFACustomDuration returns a new session for a given auth consumer with MFA and custom MFA duration.
-func NewSessionWithMFACustomDuration(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, c *sdk.AuthConsumer, duration, durationMFA time.Duration) (*sdk.AuthSession, error) {
+func NewSessionWithMFACustomDuration(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, c *sdk.AuthUserConsumer, duration, durationMFA time.Duration) (*sdk.AuthSession, error) {
 	s := newSession(c, duration)
 	s.MFA = true
 

@@ -975,7 +975,7 @@ hooks:
 	proj := assets.InsertTestProject(t, db, api.Cache, prjKey, prjKey)
 	u, _ := assets.InsertLambdaUser(t, db, &proj.ProjectGroups[0].Group)
 
-	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	localConsumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
 	vcsServer := sdk.ProjectVCSServerLink{
@@ -1219,8 +1219,8 @@ hooks:
 			},
 		},
 	}
-	c := sdk.AuthConsumer{
-		AuthConsumerUser: &sdk.AuthConsumerUser{AuthentifiedUser: u},
+	c := sdk.AuthUserConsumer{
+		AuthConsumerUser: sdk.AuthUserConsumerData{AuthentifiedUser: u},
 	}
 	_, _, err = workflow.CreateFromRepository(context.TODO(), api.mustDB(), api.Cache, proj, workflowInserted, opts, c, project.DecryptWithBuiltinKey)
 	require.NoError(t, err)

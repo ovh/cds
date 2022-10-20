@@ -10,15 +10,15 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-// LoadConsumerOptionFunc for auth consumer.
-type LoadConsumerOptionFunc func(context.Context, gorp.SqlExecutor, ...*sdk.AuthConsumer) error
+// LoadUserConsumerOptionFunc for auth consumer.
+type LoadUserConsumerOptionFunc func(context.Context, gorp.SqlExecutor, ...*sdk.AuthUserConsumer) error
 
-// LoadConsumerOptions provides all options on auth consumer loads functions.
-var LoadConsumerOptions = struct {
-	Default                          LoadConsumerOptionFunc
-	WithAuthentifiedUser             LoadConsumerOptionFunc
-	WithAuthentifiedUserWithContacts LoadConsumerOptionFunc
-	WithConsumerGroups               LoadConsumerOptionFunc
+// LoadUserConsumerOptions provides all options on auth consumer loads functions.
+var LoadUserConsumerOptions = struct {
+	Default                          LoadUserConsumerOptionFunc
+	WithAuthentifiedUser             LoadUserConsumerOptionFunc
+	WithAuthentifiedUserWithContacts LoadUserConsumerOptionFunc
+	WithConsumerGroups               LoadUserConsumerOptionFunc
 }{
 	Default:                          loadDefault,
 	WithAuthentifiedUser:             loadAuthentifiedUser,
@@ -26,11 +26,11 @@ var LoadConsumerOptions = struct {
 	WithConsumerGroups:               loadConsumerGroups,
 }
 
-func loadDefault(ctx context.Context, db gorp.SqlExecutor, cs ...*sdk.AuthConsumer) error {
+func loadDefault(ctx context.Context, db gorp.SqlExecutor, cs ...*sdk.AuthUserConsumer) error {
 	return loadConsumerGroups(ctx, db, cs...)
 }
 
-func loadAuthentifiedUserWithContacts(ctx context.Context, db gorp.SqlExecutor, cs ...*sdk.AuthConsumer) error {
+func loadAuthentifiedUserWithContacts(ctx context.Context, db gorp.SqlExecutor, cs ...*sdk.AuthUserConsumer) error {
 	if err := loadAuthentifiedUser(ctx, db, cs...); err != nil {
 		return err
 	}
@@ -45,7 +45,7 @@ func loadAuthentifiedUserWithContacts(ctx context.Context, db gorp.SqlExecutor, 
 	return nil
 }
 
-func loadAuthentifiedUser(ctx context.Context, db gorp.SqlExecutor, cs ...*sdk.AuthConsumer) error {
+func loadAuthentifiedUser(ctx context.Context, db gorp.SqlExecutor, cs ...*sdk.AuthUserConsumer) error {
 	// Load all users for given access tokens
 	users, err := user.LoadAllByIDs(ctx, db, sdk.AuthConsumersToAuthentifiedUserIDs(cs), user.LoadOptions.WithOrganization)
 	if err != nil {
@@ -96,7 +96,7 @@ func loadAuthentifiedUser(ctx context.Context, db gorp.SqlExecutor, cs ...*sdk.A
 	return nil
 }
 
-func loadConsumerGroups(ctx context.Context, db gorp.SqlExecutor, cs ...*sdk.AuthConsumer) error {
+func loadConsumerGroups(ctx context.Context, db gorp.SqlExecutor, cs ...*sdk.AuthUserConsumer) error {
 	var groupIDs []int64
 	for i := range cs {
 		groupIDs = append(groupIDs, cs[i].AuthConsumerUser.GroupIDs...)

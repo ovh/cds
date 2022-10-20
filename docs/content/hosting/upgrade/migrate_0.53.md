@@ -73,7 +73,7 @@ cdsctl admin organization user-migrate my-organization
 
 ## Upgrading to 0.53.0
 
-As we are updating DB table around authentication consumer, you will need to completly shutdown your CDS instances and all µservices.
+As we are updating DB table around authentication consumer, you will need to completely shutdown your CDS instances and all µservices.
 
 * Shutdown CDS and all µservices
 * Run the database migration, documentation on https://ovh.github.io/cds/hosting/database/

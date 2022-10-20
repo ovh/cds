@@ -170,7 +170,7 @@ func (api *API) addEnvironmentHandler() service.Handler {
 			return sdk.WrapError(errEnvs, "addEnvironmentHandler> Cannot load all environments")
 		}
 
-		event.PublishEnvironmentAdd(ctx, key, env, getAPIConsumer(ctx))
+		event.PublishEnvironmentAdd(ctx, key, env, getUserConsumer(ctx))
 
 		return service.WriteJSON(w, proj, http.StatusOK)
 	}
@@ -210,7 +210,7 @@ func (api *API) deleteEnvironmentHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		event.PublishEnvironmentDelete(ctx, p.Key, *env, getAPIConsumer(ctx))
+		event.PublishEnvironmentDelete(ctx, p.Key, *env, getUserConsumer(ctx))
 
 		var errEnvs error
 		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), p.Key)
@@ -313,7 +313,7 @@ func (api *API) updateAsCodeEnvironmentHandler() service.Handler {
 			k.KeyID = newKey.KeyID
 		}
 
-		u := getAPIConsumer(ctx)
+		u := getUserConsumer(ctx)
 		env.ProjectID = proj.ID
 		envExported, err := environment.ExportEnvironment(ctx, tx, env, project.EncryptWithBuiltinKey, fmt.Sprintf("env:%d:%s", envDB.ID, branch))
 		if err != nil {
@@ -393,7 +393,7 @@ func (api *API) updateEnvironmentHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		event.PublishEnvironmentUpdate(ctx, p.Key, *env, *oldEnv, getAPIConsumer(ctx))
+		event.PublishEnvironmentUpdate(ctx, p.Key, *env, *oldEnv, getUserConsumer(ctx))
 
 		var errEnvs error
 		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), p.Key)
@@ -463,7 +463,7 @@ func (api *API) cloneEnvironmentHandler() service.Handler {
 
 		//Insert variables
 		for _, v := range envPost.Variables {
-			if err := environment.InsertVariable(tx, envPost.ID, &v, getAPIConsumer(ctx)); err != nil {
+			if err := environment.InsertVariable(tx, envPost.ID, &v, getUserConsumer(ctx)); err != nil {
 				return sdk.WrapError(err, "Unable to insert variable")
 			}
 		}
@@ -479,7 +479,7 @@ func (api *API) cloneEnvironmentHandler() service.Handler {
 			return sdk.WrapError(errEnvs, "cloneEnvironmentHandler> Cannot load environments: %s", errEnvs)
 		}
 
-		event.PublishEnvironmentAdd(ctx, p.Key, envPost, getAPIConsumer(ctx))
+		event.PublishEnvironmentAdd(ctx, p.Key, envPost, getUserConsumer(ctx))
 
 		return service.WriteJSON(w, p, http.StatusOK)
 	}

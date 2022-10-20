@@ -589,7 +589,7 @@ func writeHelmBinary(pathname string, gzipStream io.Reader) error {
 			}
 		default:
 			return fmt.Errorf(
-				"writeHelmBinary: uknown type: %v in %s",
+				"writeHelmBinary: unknown type: %v in %s",
 				header.Typeflag,
 				path)
 		}

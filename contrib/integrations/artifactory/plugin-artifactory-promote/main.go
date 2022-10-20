@@ -70,9 +70,9 @@ func (e *artifactoryPromotePlugin) Run(ctx context.Context, opts *integrationplu
 		return fail("unable to create artifactory client: %v", err)
 	}
 
-	artSplitted := strings.Split(artifactList, ",")
-	artRegs := make([]*regexp.Regexp, 0, len(artSplitted))
-	for _, arti := range artSplitted {
+	artSplit := strings.Split(artifactList, ",")
+	artRegs := make([]*regexp.Regexp, 0, len(artSplit))
+	for _, arti := range artSplit {
 		r, err := regexp.Compile(arti)
 		if err != nil {
 			return fail("unable compile regexp in artifact list: %v", err)

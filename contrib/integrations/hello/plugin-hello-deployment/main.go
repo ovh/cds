@@ -138,7 +138,7 @@ func (e *helloDeploymentPlugin) Run(ctx context.Context, q *integrationplugin.Ru
 	// Here, you should do the request on the deployment" system
 	// you can use the deployData to send it some information about current job
 
-	// After doing the request to deploy, you can follow the deployement
+	// After doing the request to deploy, you can follow the deployment
 	// by request your "deployment" system
 	// below is an example on how to use retry and maxRetry options.
 

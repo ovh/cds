@@ -7,7 +7,7 @@ card:
 
 The OpenID-Connect Integration have to be configured on your CDS by a CDS Administrator.
 
-This integration allows you to delegate users authetication to an OpenID-Connect third party like [Keycloak](https://www.keycloak.org/getting-started) or [Hydra](https://github.com/ory/hydra)
+This integration allows you to delegate users authentication to an OpenID-Connect third party like [Keycloak](https://www.keycloak.org/getting-started) or [Hydra](https://github.com/ory/hydra)
 
 ## How to configure OpenID-Connect Authentication integration
 

@@ -140,7 +140,7 @@ func Test_getWorkflowNotificationsConditionsHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	u, pass := assets.InsertAdminUser(t, db)
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	consumer, _ := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 
@@ -381,7 +381,7 @@ func Test_getWorkflowHandler_AsProvider(t *testing.T) {
 	api, db, tsURL := newTestServer(t)
 
 	admin, _ := assets.InsertAdminUser(t, db)
-	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, admin.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	localConsumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, admin.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
 	consumerOptions := builtin.NewConsumerOptions{
@@ -1775,7 +1775,7 @@ func Test_getWorkflowsHandler_FilterByRepo(t *testing.T) {
 	api, db, tsURL := newTestServer(t)
 
 	admin, _ := assets.InsertAdminUser(t, db)
-	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, admin.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	localConsumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, admin.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
 	consumerOptions := builtin.NewConsumerOptions{
@@ -1844,8 +1844,8 @@ func Test_getWorkflowsHandler_FilterByRepo(t *testing.T) {
 
 	// Call with an admin
 	sdkclientAdmin := cdsclient.New(cdsclient.Config{
-		Host:                              tsURL,
-		BuitinConsumerAuthenticationToken: jws,
+		Host:                               tsURL,
+		BuiltinConsumerAuthenticationToken: jws,
 	})
 
 	wfs, err := sdkclientAdmin.WorkflowList(proj.Key, cdsclient.WithQueryParameter("repo", "ovh/"+repofullName))
@@ -1861,7 +1861,7 @@ func Test_getSearchWorkflowHandler(t *testing.T) {
 	api, db, tsURL := newTestServer(t)
 
 	admin, _ := assets.InsertAdminUser(t, db)
-	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, admin.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	localConsumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, admin.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
 	consumerOptions := builtin.NewConsumerOptions{
@@ -1929,8 +1929,8 @@ func Test_getSearchWorkflowHandler(t *testing.T) {
 	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, *proj, &wf2))
 
 	// Run the workflow
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
-	consumerAdmin, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, admin.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	consumer, _ := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
+	consumerAdmin, _ := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, admin.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 
 	wr, err := workflow.CreateRun(api.mustDB(), &wf, sdk.WorkflowRunPostHandlerOption{AuthConsumerID: consumerAdmin.ID})
 	assert.NoError(t, err)
@@ -1946,8 +1946,8 @@ func Test_getSearchWorkflowHandler(t *testing.T) {
 
 	// Call with an admin
 	sdkclientAdmin := cdsclient.New(cdsclient.Config{
-		Host:                              tsURL,
-		BuitinConsumerAuthenticationToken: jws,
+		Host:                               tsURL,
+		BuiltinConsumerAuthenticationToken: jws,
 	})
 
 	wfs, err := sdkclientAdmin.WorkflowSearch(
@@ -2066,7 +2066,7 @@ func Test_getWorkfloDependencieswHandler(t *testing.T) {
 	)
 
 	u, pass := assets.InsertAdminUser(t, db)
-	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	localConsumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))

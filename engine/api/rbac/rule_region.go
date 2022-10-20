@@ -10,7 +10,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func hasRoleOnRegion(ctx context.Context, auth *sdk.AuthConsumer, store cache.Store, db gorp.SqlExecutor, regionIdentifier string, role string) error {
+func hasRoleOnRegion(ctx context.Context, auth *sdk.AuthUserConsumer, store cache.Store, db gorp.SqlExecutor, regionIdentifier string, role string) error {
 	if auth == nil {
 		return sdk.WithStack(sdk.ErrForbidden)
 	}
@@ -32,13 +32,13 @@ func hasRoleOnRegion(ctx context.Context, auth *sdk.AuthConsumer, store cache.St
 }
 
 // RegionManage return nil if the current AuthConsumer have the RegionManage on current region ID
-func RegionManage(ctx context.Context, auth *sdk.AuthConsumer, store cache.Store, db gorp.SqlExecutor, vars map[string]string) error {
+func RegionManage(ctx context.Context, auth *sdk.AuthUserConsumer, store cache.Store, db gorp.SqlExecutor, vars map[string]string) error {
 	regionIdentifier := vars["regionIdentifier"]
 	return hasRoleOnRegion(ctx, auth, store, db, regionIdentifier, sdk.RegionRoleManage)
 }
 
 // RegionRead return nil if the current AuthConsumer have the ProjectRoleRead on current project KEY
-func RegionRead(ctx context.Context, auth *sdk.AuthConsumer, store cache.Store, db gorp.SqlExecutor, vars map[string]string) error {
+func RegionRead(ctx context.Context, auth *sdk.AuthUserConsumer, store cache.Store, db gorp.SqlExecutor, vars map[string]string) error {
 	regionIdentifier := vars["regionIdentifier"]
 	return hasRoleOnRegion(ctx, auth, store, db, regionIdentifier, sdk.RegionRoleRead)
 }
