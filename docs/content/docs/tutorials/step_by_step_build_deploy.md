@@ -40,7 +40,7 @@ Let's create a project. On the top navbar, click on 'Create a project'.
 ## 2 - Add a repository manager on your project
 
 The project is now create, you have to link a repository manager. 
-Be sure to have a Repository manager as [GitHub]({{< relref "/docs/integrations/github/_index.md" >}}), [Bitbucket Server]({{< relref "/docs/integrations/bitbucket.md" >}}) or [GitLab]({{< relref "/docs/integrations/gitlab/_index.md" >}}) setted up on your CDS Instance.
+Be sure to have a Repository manager as [GitHub]({{< relref "/docs/integrations/github/_index.md" >}}), [Bitbucket Server]({{< relref "/docs/integrations/bitbucket.md" >}}) or [GitLab]({{< relref "/docs/integrations/gitlab/_index.md" >}}) set up on your CDS Instance.
 
 * Select 'Advanced' section
 * In the section 'Link to a repository manager', select 'github', then click on 'Connect'
@@ -150,7 +150,7 @@ first job.
 * Click on 'Add job'
 * Add the first step 'CheckoutApplication'
 * Add a second step 'Script'. The content of the script is `mvn package``
-* The third step is 'Artifact Upload', to upload your builded binary
+* The third step is 'Artifact Upload', to upload your built binary
 * And the last step is 'JUnit'. This step is 'always executed' and let you to see test results on UI.
 * Last thing about the 'build-pipeline': as you use mvn, you probably want to add `mvn` and `java`. Click
 on Requirements link then add binaries prerequisites.
@@ -169,7 +169,7 @@ Add the first step 'CheckoutApplication'
 Add a second step 'Script'. The content of the script is `mvn package``
 ![21_edit_build_pipeline](/images/getting_started_standard_wf_21_edit_build_pipeline.png?height=400px&classes=shadow)
 
-The third step is 'Artifact Upload', to upload your builded binary
+The third step is 'Artifact Upload', to upload your built binary
 ![22_edit_build_pipeline](/images/getting_started_standard_wf_22_edit_build_pipeline.png?height=400px&classes=shadow)
 
 And the last step is 'JUnit'. This step is 'always executed' and let you to see test results on UI.
@@ -222,7 +222,7 @@ It's time to launch your Workflow, click on the green button 'Run workflow'.
 * The first pipeline is building (you can double-click on it, it's a shortcut), you can see logs. 
 * The pipeline is done, it's a success.
 * Click on 'Test' tab, you can see Unit Tests.
-* Click on 'Artifact', you see the builded artifact.
+* Click on 'Artifact', you see the built artifact.
 
 {{%expand "view screenshots..." %}}
 
@@ -238,7 +238,7 @@ The pipeline is done, it's a success.
 Click on 'Test' tab, you can see Unit Tests.
 ![31_view_tests](/images/getting_started_standard_wf_31_view_tests.png?height=400px&classes=shadow)
 
-Click on 'Artifact', you see the builded artifact.
+Click on 'Artifact', you see the built artifact.
 ![32_view_artifacts](/images/getting_started_standard_wf_32_view_artifacts.png?height=400px&classes=shadow)
 
 {{% /expand%}}

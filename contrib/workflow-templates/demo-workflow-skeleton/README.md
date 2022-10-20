@@ -1,6 +1,6 @@
 # Description
 
-*This is a demo tempate*
+*This is a demo template*
 
 The template will generates a skeleton of a workflow with usual steps:
 - build and package

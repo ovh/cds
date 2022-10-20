@@ -1,6 +1,6 @@
 # Description
 
-*This is a demo tempate*
+*This is a demo template*
 
 The template will generates a Hello World workflow with usual steps:
 - build and package

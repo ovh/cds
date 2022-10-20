@@ -7,7 +7,7 @@ card:
 ---
 
 A CDS workflow file only contains the description of pipelines orchestration, hooks, run conditions, etc. 
-Consider the following workflow wich implements a basic two-stage workflow:
+Consider the following workflow which implements a basic two-stage workflow:
 
 ```yaml
 name: my-workflow
@@ -122,7 +122,7 @@ Example of vcs notification. Note that `pipelines` list is optional on every not
 
 [Mutex documentation]({{<relref "/docs/concepts/workflow/mutex.md">}})
 
-Example of a pipeline limited to one execution at a time: deployments to production cannot be executed concurently.
+Example of a pipeline limited to one execution at a time: deployments to production cannot be executed concurrently.
 
 ```yml
 name: my-workflow
@@ -131,7 +131,7 @@ workflow:
   deploy:
     pipeline: deploy
     # ...
-    one_at_a_time: true # No concurent deployments
+    one_at_a_time: true # No concurrent deployments
 ```
 
 ## Retention Policy

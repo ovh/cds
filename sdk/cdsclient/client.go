@@ -106,7 +106,7 @@ func NewProviderClient(cfg ProviderConfig) ProviderClient {
 	conf := Config{
 		Host:                              cfg.Host,
 		Retry:                             2,
-		BuitinConsumerAuthenticationToken: cfg.Token,
+		BuiltinConsumerAuthenticationToken: cfg.Token,
 		InsecureSkipVerifyTLS:             cfg.InsecureSkipVerifyTLS,
 	}
 
@@ -129,7 +129,7 @@ func NewServiceClient(ctx context.Context, clientConfig ServiceConfig, registerP
 	conf := Config{
 		Host:                              clientConfig.Host,
 		Retry:                             2,
-		BuitinConsumerAuthenticationToken: clientConfig.Token,
+		BuiltinConsumerAuthenticationToken: clientConfig.Token,
 		InsecureSkipVerifyTLS:             clientConfig.InsecureSkipVerifyTLS,
 	}
 

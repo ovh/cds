@@ -45,10 +45,10 @@ func Test_websocketWrongFilters(t *testing.T) {
 	chanErrorReceived := make(chan error)
 
 	client := cdsclient.New(cdsclient.Config{
-		Host:                              tsURL,
-		User:                              u.Username,
-		InsecureSkipVerifyTLS:             true,
-		BuitinConsumerAuthenticationToken: jws,
+		Host:                               tsURL,
+		User:                               u.Username,
+		InsecureSkipVerifyTLS:              true,
+		BuiltinConsumerAuthenticationToken: jws,
 	})
 	go client.WebsocketEventsListen(context.TODO(), sdk.NewGoRoutines(context.TODO()), chanMessageToSend, chanMessageReceived, chanErrorReceived)
 
@@ -201,10 +201,10 @@ func Test_websocketDeconnection(t *testing.T) {
 
 	// Open websocket
 	client := cdsclient.New(cdsclient.Config{
-		Host:                              tsURL,
-		User:                              u.Username,
-		InsecureSkipVerifyTLS:             true,
-		BuitinConsumerAuthenticationToken: jws,
+		Host:                               tsURL,
+		User:                               u.Username,
+		InsecureSkipVerifyTLS:              true,
+		BuiltinConsumerAuthenticationToken: jws,
 	})
 	resp, err := client.AuthConsumerSignin(sdk.ConsumerBuiltin, sdk.AuthConsumerSigninRequest{"token": jws})
 	require.NoError(t, err)

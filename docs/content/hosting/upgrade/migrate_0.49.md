@@ -7,7 +7,7 @@ weight: 1
 
 The release 0.49 introduced a new parameter in CDN configuration to disable and remove a CDN unit.
 In the previous version 0.48, you migrate log from CDS to CDN, by adding a temporary CDN Unit [here]({{< relref "/hosting/upgrade/migrate_0.48.md" >}}). Time is coming to disabled it.
-In the next release (0.50), all logs datas in CDS will be deleted, and CDN will become the only way to manage logs.
+In the next release (0.50), all logs data in CDS will be deleted, and CDN will become the only way to manage logs.
 
 
 # Disable CDS Unit

@@ -9,7 +9,7 @@ Using `CDS Workflow Configuration Files`, checked into source control, provides 
 * Ability to update workflow configuration from particular branch
 * Gain efficiency while editing the workflow configuration
 
-This usage of `CDS Workflow Configuration Files` is particulary suitable for single repository CI/CD workflows.
+This usage of `CDS Workflow Configuration Files` is particularly suitable for single repository CI/CD workflows.
 
 `CDS Workflow Configuration Files` relies on several text files with YAML syntax in a `.cds` directory at the root of your repository. Several files may be used to describe each component, such as applications, environments and pipelines in your CDS workflow.
 
@@ -76,6 +76,6 @@ The application file describe the application and the way to checkout it. It can
 Read more about CDS [application syntax]({{< relref "./application-syntax.md" >}})
 
 ### Environment syntax
-You can attach an environment to a pipeline in a workflow. An environemnt is basically a set of variables.
+You can attach an environment to a pipeline in a workflow. An environment is basically a set of variables.
 
 Read more about CDS [environment syntax]({{< relref "./environment-syntax.md" >}})

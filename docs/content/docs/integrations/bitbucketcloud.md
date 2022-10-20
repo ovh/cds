@@ -14,12 +14,12 @@ This integration enables some features:
 
  - [Git Repository Webhook]({{<relref "/docs/concepts/workflow/hooks/git-repo-webhook.md" >}})
  - Easy to use action [CheckoutApplication]({{<relref "/docs/actions/builtin-checkoutapplication.md" >}}) and [GitClone]({{<relref "/docs/actions/builtin-gitclone.md">}}) for advanced usage
- - Send [build notifications](https://confluence.atlassian.com/bitbucket/check-build-status-in-a-pull-request-945541505.html) on your Pull-Requests and Commits on Bitbucket Cloud. [More informations]({{<relref "/docs/concepts/workflow/notifications.md#vcs-notifications" >}})
+ - Send [build notifications](https://confluence.atlassian.com/bitbucket/check-build-status-in-a-pull-request-945541505.html) on your Pull-Requests and Commits on Bitbucket Cloud. [More information]({{<relref "/docs/concepts/workflow/notifications.md#vcs-notifications" >}})
 
 ## How to configure Bitbucket Cloud integration
 
 + Follow documentation on https://support.atlassian.com/bitbucket-cloud/docs/use-oauth-on-bitbucket-cloud/, section **Create a consumer**
-+ Bitbucket requests some informations:
++ Bitbucket requests some information:
 ++ **name** you can simply write CDS
 ++ **description** is optional
 ++ **callback url** must be the URL of your CDS -> `{CDS_UI_URL}/cdsapi/repositories_manager/oauth2/callback` (if you are in development mode you have to omit /cdsapi and replace {CDS_UI_URL} with your API URL)
@@ -31,7 +31,7 @@ This integration enables some features:
 
 #### VCS µService Configuration
 
-If you don't already have any of vcs integrations on your CDS please follow these steps. The file configuration for the VCS µService can be retreived with:
+If you don't already have any of vcs integrations on your CDS please follow these steps. The file configuration for the VCS µService can be retrieved with:
 
 ```bash
 $ engine config new vcs > vcs-config.toml

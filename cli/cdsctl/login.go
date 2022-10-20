@@ -465,14 +465,14 @@ func loginVerifyFunc(v cli.Values) error {
 	}
 
 	token := v.GetString("token")
-	splittedToken := strings.Split(token, ":")
-	if len(splittedToken) != 2 {
+	splitToken := strings.Split(token, ":")
+	if len(splitToken) != 2 {
 		return cli.NewError("Invalid given token")
 	}
 
 	req := sdk.AuthConsumerSigninRequest{
-		"state": splittedToken[0],
-		"code":  splittedToken[1],
+		"state": splitToken[0],
+		"code":  splitToken[1],
 	}
 
 	// For first connection ask for an optional init token

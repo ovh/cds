@@ -6,7 +6,7 @@ card:
 ---
 
 The Kafka Integration is a Self-Service integration that can be configured on a CDS Project.
-If you are a CDS Administrator, you can configue this integration to be available on all CDS Projects.
+If you are a CDS Administrator, you can configure this integration to be available on all CDS Projects.
 
 An example of use case could be that you want to generate some svg badge. Then you can just add an event
 integration for your workflow and plug the
