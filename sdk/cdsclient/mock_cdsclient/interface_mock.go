@@ -393,6 +393,63 @@ func (mr *MockAdminMockRecorder) AdminDatabaseSignaturesRollEntity(service, e, i
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseSignaturesRollEntity", reflect.TypeOf((*MockAdmin)(nil).AdminDatabaseSignaturesRollEntity), service, e, idx)
 }
 
+// AdminOrganizationCreate mocks base method.
+func (m *MockAdmin) AdminOrganizationCreate(ctx context.Context, orga sdk.Organization) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdminOrganizationCreate", ctx, orga)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AdminOrganizationCreate indicates an expected call of AdminOrganizationCreate.
+func (mr *MockAdminMockRecorder) AdminOrganizationCreate(ctx, orga interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminOrganizationCreate", reflect.TypeOf((*MockAdmin)(nil).AdminOrganizationCreate), ctx, orga)
+}
+
+// AdminOrganizationDelete mocks base method.
+func (m *MockAdmin) AdminOrganizationDelete(ctx context.Context, orgaIdentifier string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdminOrganizationDelete", ctx, orgaIdentifier)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AdminOrganizationDelete indicates an expected call of AdminOrganizationDelete.
+func (mr *MockAdminMockRecorder) AdminOrganizationDelete(ctx, orgaIdentifier interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminOrganizationDelete", reflect.TypeOf((*MockAdmin)(nil).AdminOrganizationDelete), ctx, orgaIdentifier)
+}
+
+// AdminOrganizationList mocks base method.
+func (m *MockAdmin) AdminOrganizationList(ctx context.Context) ([]sdk.Organization, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdminOrganizationList", ctx)
+	ret0, _ := ret[0].([]sdk.Organization)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AdminOrganizationList indicates an expected call of AdminOrganizationList.
+func (mr *MockAdminMockRecorder) AdminOrganizationList(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminOrganizationList", reflect.TypeOf((*MockAdmin)(nil).AdminOrganizationList), ctx)
+}
+
+// AdminOrganizationMigrateUser mocks base method.
+func (m *MockAdmin) AdminOrganizationMigrateUser(ctx context.Context, orgaIdentifier string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdminOrganizationMigrateUser", ctx, orgaIdentifier)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AdminOrganizationMigrateUser indicates an expected call of AdminOrganizationMigrateUser.
+func (mr *MockAdminMockRecorder) AdminOrganizationMigrateUser(ctx, orgaIdentifier interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminOrganizationMigrateUser", reflect.TypeOf((*MockAdmin)(nil).AdminOrganizationMigrateUser), ctx, orgaIdentifier)
+}
+
 // AdminWorkflowUpdateMaxRuns mocks base method.
 func (m *MockAdmin) AdminWorkflowUpdateMaxRuns(projectKey, workflowName string, maxRuns int64) error {
 	m.ctrl.T.Helper()
@@ -2299,6 +2356,168 @@ func (mr *MockMaintenanceClientMockRecorder) Maintenance(enable, hooks interface
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Maintenance", reflect.TypeOf((*MockMaintenanceClient)(nil).Maintenance), enable, hooks)
 }
 
+// MockOrganizationClient is a mock of OrganizationClient interface.
+type MockOrganizationClient struct {
+	ctrl     *gomock.Controller
+	recorder *MockOrganizationClientMockRecorder
+}
+
+// MockOrganizationClientMockRecorder is the mock recorder for MockOrganizationClient.
+type MockOrganizationClientMockRecorder struct {
+	mock *MockOrganizationClient
+}
+
+// NewMockOrganizationClient creates a new mock instance.
+func NewMockOrganizationClient(ctrl *gomock.Controller) *MockOrganizationClient {
+	mock := &MockOrganizationClient{ctrl: ctrl}
+	mock.recorder = &MockOrganizationClientMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockOrganizationClient) EXPECT() *MockOrganizationClientMockRecorder {
+	return m.recorder
+}
+
+// OrganizationAdd mocks base method.
+func (m *MockOrganizationClient) OrganizationAdd(ctx context.Context, organization sdk.Organization) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "OrganizationAdd", ctx, organization)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// OrganizationAdd indicates an expected call of OrganizationAdd.
+func (mr *MockOrganizationClientMockRecorder) OrganizationAdd(ctx, organization interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OrganizationAdd", reflect.TypeOf((*MockOrganizationClient)(nil).OrganizationAdd), ctx, organization)
+}
+
+// OrganizationDelete mocks base method.
+func (m *MockOrganizationClient) OrganizationDelete(ctx context.Context, organizationIdentifier string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "OrganizationDelete", ctx, organizationIdentifier)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// OrganizationDelete indicates an expected call of OrganizationDelete.
+func (mr *MockOrganizationClientMockRecorder) OrganizationDelete(ctx, organizationIdentifier interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OrganizationDelete", reflect.TypeOf((*MockOrganizationClient)(nil).OrganizationDelete), ctx, organizationIdentifier)
+}
+
+// OrganizationGet mocks base method.
+func (m *MockOrganizationClient) OrganizationGet(ctx context.Context, organizationIdentifier string) (sdk.Organization, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "OrganizationGet", ctx, organizationIdentifier)
+	ret0, _ := ret[0].(sdk.Organization)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// OrganizationGet indicates an expected call of OrganizationGet.
+func (mr *MockOrganizationClientMockRecorder) OrganizationGet(ctx, organizationIdentifier interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OrganizationGet", reflect.TypeOf((*MockOrganizationClient)(nil).OrganizationGet), ctx, organizationIdentifier)
+}
+
+// OrganizationList mocks base method.
+func (m *MockOrganizationClient) OrganizationList(ctx context.Context) ([]sdk.Organization, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "OrganizationList", ctx)
+	ret0, _ := ret[0].([]sdk.Organization)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// OrganizationList indicates an expected call of OrganizationList.
+func (mr *MockOrganizationClientMockRecorder) OrganizationList(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OrganizationList", reflect.TypeOf((*MockOrganizationClient)(nil).OrganizationList), ctx)
+}
+
+// MockRegionClient is a mock of RegionClient interface.
+type MockRegionClient struct {
+	ctrl     *gomock.Controller
+	recorder *MockRegionClientMockRecorder
+}
+
+// MockRegionClientMockRecorder is the mock recorder for MockRegionClient.
+type MockRegionClientMockRecorder struct {
+	mock *MockRegionClient
+}
+
+// NewMockRegionClient creates a new mock instance.
+func NewMockRegionClient(ctrl *gomock.Controller) *MockRegionClient {
+	mock := &MockRegionClient{ctrl: ctrl}
+	mock.recorder = &MockRegionClientMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockRegionClient) EXPECT() *MockRegionClientMockRecorder {
+	return m.recorder
+}
+
+// RegionAdd mocks base method.
+func (m *MockRegionClient) RegionAdd(ctx context.Context, region sdk.Region) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RegionAdd", ctx, region)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RegionAdd indicates an expected call of RegionAdd.
+func (mr *MockRegionClientMockRecorder) RegionAdd(ctx, region interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegionAdd", reflect.TypeOf((*MockRegionClient)(nil).RegionAdd), ctx, region)
+}
+
+// RegionDelete mocks base method.
+func (m *MockRegionClient) RegionDelete(ctx context.Context, regionIdentifier string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RegionDelete", ctx, regionIdentifier)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RegionDelete indicates an expected call of RegionDelete.
+func (mr *MockRegionClientMockRecorder) RegionDelete(ctx, regionIdentifier interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegionDelete", reflect.TypeOf((*MockRegionClient)(nil).RegionDelete), ctx, regionIdentifier)
+}
+
+// RegionGet mocks base method.
+func (m *MockRegionClient) RegionGet(ctx context.Context, regionIdentifier string) (sdk.Region, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RegionGet", ctx, regionIdentifier)
+	ret0, _ := ret[0].(sdk.Region)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RegionGet indicates an expected call of RegionGet.
+func (mr *MockRegionClientMockRecorder) RegionGet(ctx, regionIdentifier interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegionGet", reflect.TypeOf((*MockRegionClient)(nil).RegionGet), ctx, regionIdentifier)
+}
+
+// RegionList mocks base method.
+func (m *MockRegionClient) RegionList(ctx context.Context) ([]sdk.Region, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RegionList", ctx)
+	ret0, _ := ret[0].([]sdk.Region)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RegionList indicates an expected call of RegionList.
+func (mr *MockRegionClientMockRecorder) RegionList(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegionList", reflect.TypeOf((*MockRegionClient)(nil).RegionList), ctx)
+}
+
 // MockProjectClient is a mock of ProjectClient interface.
 type MockProjectClient struct {
 	ctrl     *gomock.Controller
@@ -2715,9 +2934,9 @@ func (mr *MockProjectClientMockRecorder) ProjectVCSGet(ctx, projectKey, integrat
 }
 
 // ProjectVCSImport mocks base method.
-func (m *MockProjectClient) ProjectVCSImport(ctx context.Context, projectKey string, content io.Reader, mods ...cdsclient.RequestModifier) (sdk.VCSProject, error) {
+func (m *MockProjectClient) ProjectVCSImport(ctx context.Context, projectKey string, vcs sdk.VCSProject, mods ...cdsclient.RequestModifier) (sdk.VCSProject, error) {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, projectKey, content}
+	varargs := []interface{}{ctx, projectKey, vcs}
 	for _, a := range mods {
 		varargs = append(varargs, a)
 	}
@@ -2728,9 +2947,9 @@ func (m *MockProjectClient) ProjectVCSImport(ctx context.Context, projectKey str
 }
 
 // ProjectVCSImport indicates an expected call of ProjectVCSImport.
-func (mr *MockProjectClientMockRecorder) ProjectVCSImport(ctx, projectKey, content interface{}, mods ...interface{}) *gomock.Call {
+func (mr *MockProjectClientMockRecorder) ProjectVCSImport(ctx, projectKey, vcs interface{}, mods ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, projectKey, content}, mods...)
+	varargs := append([]interface{}{ctx, projectKey, vcs}, mods...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVCSImport", reflect.TypeOf((*MockProjectClient)(nil).ProjectVCSImport), varargs...)
 }
 
@@ -5246,6 +5465,63 @@ func (mr *MockInterfaceMockRecorder) AdminDatabaseSignaturesRollEntity(service, 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDatabaseSignaturesRollEntity", reflect.TypeOf((*MockInterface)(nil).AdminDatabaseSignaturesRollEntity), service, e, idx)
 }
 
+// AdminOrganizationCreate mocks base method.
+func (m *MockInterface) AdminOrganizationCreate(ctx context.Context, orga sdk.Organization) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdminOrganizationCreate", ctx, orga)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AdminOrganizationCreate indicates an expected call of AdminOrganizationCreate.
+func (mr *MockInterfaceMockRecorder) AdminOrganizationCreate(ctx, orga interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminOrganizationCreate", reflect.TypeOf((*MockInterface)(nil).AdminOrganizationCreate), ctx, orga)
+}
+
+// AdminOrganizationDelete mocks base method.
+func (m *MockInterface) AdminOrganizationDelete(ctx context.Context, orgaIdentifier string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdminOrganizationDelete", ctx, orgaIdentifier)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AdminOrganizationDelete indicates an expected call of AdminOrganizationDelete.
+func (mr *MockInterfaceMockRecorder) AdminOrganizationDelete(ctx, orgaIdentifier interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminOrganizationDelete", reflect.TypeOf((*MockInterface)(nil).AdminOrganizationDelete), ctx, orgaIdentifier)
+}
+
+// AdminOrganizationList mocks base method.
+func (m *MockInterface) AdminOrganizationList(ctx context.Context) ([]sdk.Organization, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdminOrganizationList", ctx)
+	ret0, _ := ret[0].([]sdk.Organization)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AdminOrganizationList indicates an expected call of AdminOrganizationList.
+func (mr *MockInterfaceMockRecorder) AdminOrganizationList(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminOrganizationList", reflect.TypeOf((*MockInterface)(nil).AdminOrganizationList), ctx)
+}
+
+// AdminOrganizationMigrateUser mocks base method.
+func (m *MockInterface) AdminOrganizationMigrateUser(ctx context.Context, orgaIdentifier string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdminOrganizationMigrateUser", ctx, orgaIdentifier)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AdminOrganizationMigrateUser indicates an expected call of AdminOrganizationMigrateUser.
+func (mr *MockInterfaceMockRecorder) AdminOrganizationMigrateUser(ctx, orgaIdentifier interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminOrganizationMigrateUser", reflect.TypeOf((*MockInterface)(nil).AdminOrganizationMigrateUser), ctx, orgaIdentifier)
+}
+
 // AdminWorkflowUpdateMaxRuns mocks base method.
 func (m *MockInterface) AdminWorkflowUpdateMaxRuns(projectKey, workflowName string, maxRuns int64) error {
 	m.ctrl.T.Helper()
@@ -5768,6 +6044,21 @@ func (m *MockInterface) CDNItemUpload(ctx context.Context, cdnAddr, signature st
 func (mr *MockInterfaceMockRecorder) CDNItemUpload(ctx, cdnAddr, signature, fs, path interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CDNItemUpload", reflect.TypeOf((*MockInterface)(nil).CDNItemUpload), ctx, cdnAddr, signature, fs, path)
+}
+
+// CDNURL mocks base method.
+func (m *MockInterface) CDNURL() (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CDNURL")
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CDNURL indicates an expected call of CDNURL.
+func (mr *MockInterfaceMockRecorder) CDNURL() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CDNURL", reflect.TypeOf((*MockInterface)(nil).CDNURL))
 }
 
 // ConfigCDN mocks base method.
@@ -6483,6 +6774,64 @@ func (mr *MockInterfaceMockRecorder) Navbar() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Navbar", reflect.TypeOf((*MockInterface)(nil).Navbar))
 }
 
+// OrganizationAdd mocks base method.
+func (m *MockInterface) OrganizationAdd(ctx context.Context, organization sdk.Organization) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "OrganizationAdd", ctx, organization)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// OrganizationAdd indicates an expected call of OrganizationAdd.
+func (mr *MockInterfaceMockRecorder) OrganizationAdd(ctx, organization interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OrganizationAdd", reflect.TypeOf((*MockInterface)(nil).OrganizationAdd), ctx, organization)
+}
+
+// OrganizationDelete mocks base method.
+func (m *MockInterface) OrganizationDelete(ctx context.Context, organizationIdentifier string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "OrganizationDelete", ctx, organizationIdentifier)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// OrganizationDelete indicates an expected call of OrganizationDelete.
+func (mr *MockInterfaceMockRecorder) OrganizationDelete(ctx, organizationIdentifier interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OrganizationDelete", reflect.TypeOf((*MockInterface)(nil).OrganizationDelete), ctx, organizationIdentifier)
+}
+
+// OrganizationGet mocks base method.
+func (m *MockInterface) OrganizationGet(ctx context.Context, organizationIdentifier string) (sdk.Organization, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "OrganizationGet", ctx, organizationIdentifier)
+	ret0, _ := ret[0].(sdk.Organization)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// OrganizationGet indicates an expected call of OrganizationGet.
+func (mr *MockInterfaceMockRecorder) OrganizationGet(ctx, organizationIdentifier interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OrganizationGet", reflect.TypeOf((*MockInterface)(nil).OrganizationGet), ctx, organizationIdentifier)
+}
+
+// OrganizationList mocks base method.
+func (m *MockInterface) OrganizationList(ctx context.Context) ([]sdk.Organization, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "OrganizationList", ctx)
+	ret0, _ := ret[0].([]sdk.Organization)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// OrganizationList indicates an expected call of OrganizationList.
+func (mr *MockInterfaceMockRecorder) OrganizationList(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OrganizationList", reflect.TypeOf((*MockInterface)(nil).OrganizationList), ctx)
+}
+
 // PipelineCreate mocks base method.
 func (m *MockInterface) PipelineCreate(projectKey string, pip *sdk.Pipeline) error {
 	m.ctrl.T.Helper()
@@ -7144,9 +7493,9 @@ func (mr *MockInterfaceMockRecorder) ProjectVCSGet(ctx, projectKey, integrationN
 }
 
 // ProjectVCSImport mocks base method.
-func (m *MockInterface) ProjectVCSImport(ctx context.Context, projectKey string, content io.Reader, mods ...cdsclient.RequestModifier) (sdk.VCSProject, error) {
+func (m *MockInterface) ProjectVCSImport(ctx context.Context, projectKey string, vcs sdk.VCSProject, mods ...cdsclient.RequestModifier) (sdk.VCSProject, error) {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, projectKey, content}
+	varargs := []interface{}{ctx, projectKey, vcs}
 	for _, a := range mods {
 		varargs = append(varargs, a)
 	}
@@ -7157,9 +7506,9 @@ func (m *MockInterface) ProjectVCSImport(ctx context.Context, projectKey string,
 }
 
 // ProjectVCSImport indicates an expected call of ProjectVCSImport.
-func (mr *MockInterfaceMockRecorder) ProjectVCSImport(ctx, projectKey, content interface{}, mods ...interface{}) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) ProjectVCSImport(ctx, projectKey, vcs interface{}, mods ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, projectKey, content}, mods...)
+	varargs := append([]interface{}{ctx, projectKey, vcs}, mods...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVCSImport", reflect.TypeOf((*MockInterface)(nil).ProjectVCSImport), varargs...)
 }
 
@@ -7613,6 +7962,64 @@ func (mr *MockInterfaceMockRecorder) RBACImport(ctx, content interface{}, mods .
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, content}, mods...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RBACImport", reflect.TypeOf((*MockInterface)(nil).RBACImport), varargs...)
+}
+
+// RegionAdd mocks base method.
+func (m *MockInterface) RegionAdd(ctx context.Context, region sdk.Region) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RegionAdd", ctx, region)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RegionAdd indicates an expected call of RegionAdd.
+func (mr *MockInterfaceMockRecorder) RegionAdd(ctx, region interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegionAdd", reflect.TypeOf((*MockInterface)(nil).RegionAdd), ctx, region)
+}
+
+// RegionDelete mocks base method.
+func (m *MockInterface) RegionDelete(ctx context.Context, regionIdentifier string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RegionDelete", ctx, regionIdentifier)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RegionDelete indicates an expected call of RegionDelete.
+func (mr *MockInterfaceMockRecorder) RegionDelete(ctx, regionIdentifier interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegionDelete", reflect.TypeOf((*MockInterface)(nil).RegionDelete), ctx, regionIdentifier)
+}
+
+// RegionGet mocks base method.
+func (m *MockInterface) RegionGet(ctx context.Context, regionIdentifier string) (sdk.Region, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RegionGet", ctx, regionIdentifier)
+	ret0, _ := ret[0].(sdk.Region)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RegionGet indicates an expected call of RegionGet.
+func (mr *MockInterfaceMockRecorder) RegionGet(ctx, regionIdentifier interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegionGet", reflect.TypeOf((*MockInterface)(nil).RegionGet), ctx, regionIdentifier)
+}
+
+// RegionList mocks base method.
+func (m *MockInterface) RegionList(ctx context.Context) ([]sdk.Region, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RegionList", ctx)
+	ret0, _ := ret[0].([]sdk.Region)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RegionList indicates an expected call of RegionList.
+func (mr *MockInterfaceMockRecorder) RegionList(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegionList", reflect.TypeOf((*MockInterface)(nil).RegionList), ctx)
 }
 
 // RepositoriesList mocks base method.

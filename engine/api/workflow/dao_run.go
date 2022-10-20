@@ -92,7 +92,7 @@ func UpdateWorkflowRun(ctx context.Context, db gorp.SqlExecutor, wr *sdk.Workflo
 	return nil
 }
 
-//UpdateWorkflowRunStatus update status of a workflow run
+// UpdateWorkflowRunStatus update status of a workflow run
 func UpdateWorkflowRunStatus(db gorp.SqlExecutor, wr *sdk.WorkflowRun) error {
 	wr.LastModified = time.Now()
 	if sdk.StatusIsTerminated(wr.Status) {
@@ -119,7 +119,7 @@ func LoadWorkflowFromWorkflowRunID(db gorp.SqlExecutor, wrID int64) (sdk.Workflo
 	return workflow, nil
 }
 
-//PostInsert is a db hook on WorkflowRun
+// PostInsert is a db hook on WorkflowRun
 func (r *Run) PostInsert(db gorp.SqlExecutor) error {
 	if err := updateTags(db, r); err != nil {
 		return sdk.WrapError(err, "Unable to store tags")
@@ -128,7 +128,7 @@ func (r *Run) PostInsert(db gorp.SqlExecutor) error {
 	return nil
 }
 
-//PostUpdate is a db hook on WorkflowRun
+// PostUpdate is a db hook on WorkflowRun
 func (r *Run) PostUpdate(db gorp.SqlExecutor) error {
 	return r.PostInsert(db)
 }
@@ -307,8 +307,8 @@ func LoadRunsIDsToDelete(db gorp.SqlExecutor, offset int64, limit int64) ([]int6
 	return ids, offset, limit, count, nil
 }
 
-//LoadRunsSummaries loads a short version of workflow runs
-//It returns runs, offset, limit count and an error
+// LoadRunsSummaries loads a short version of workflow runs
+// It returns runs, offset, limit count and an error
 func LoadRunsSummaries(ctx context.Context, db gorp.SqlExecutor, projectkey, workflowname string, offset, limit int, tagFilter map[string]string) ([]sdk.WorkflowRunSummary, int, int, int, error) {
 	ctx, end := telemetry.Span(ctx, "workflow.LoadRunsSummaries",
 		telemetry.Tag(telemetry.TagProjectKey, projectkey),
@@ -481,7 +481,7 @@ func loadRun(ctx context.Context, db gorp.SqlExecutor, loadOpts LoadRunOptions, 
 }
 
 // CanBeRun return boolean to know if a workflow node run can be run or not
-//TODO: if no bugs are found, it could be used to refactor process.go
+// TODO: if no bugs are found, it could be used to refactor process.go
 func CanBeRun(workflowRun *sdk.WorkflowRun, workflowNodeRun *sdk.WorkflowNodeRun) bool {
 	if !sdk.StatusIsTerminated(workflowNodeRun.Status) {
 		return false
@@ -643,12 +643,16 @@ func CreateRun(db *gorp.DbMap, wf *sdk.Workflow, opts sdk.WorkflowRunPostHandler
 			return nil, err
 		}
 
+		if c.AuthConsumerUser == nil {
+			return nil, sdk.NewErrorFrom(sdk.ErrForbidden, "unable to find user data on consumer")
+		}
+
 		// Add service for consumer if exists
 		s, err := services.LoadByConsumerID(context.Background(), db, c.ID)
 		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return nil, err
 		}
-		c.Service = s
+		c.AuthConsumerUser.Service = s
 
 		wr.Tag(tagTriggeredBy, c.GetUsername())
 	}

@@ -14,6 +14,35 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+func (c *client) AdminOrganizationMigrateUser(ctx context.Context, orgaIdentifier string) error {
+	if _, err := c.PostJSON(ctx, fmt.Sprintf("/admin/organization/%s/migrate-user", orgaIdentifier), nil, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *client) AdminOrganizationCreate(ctx context.Context, orga sdk.Organization) error {
+	if _, err := c.PostJSON(ctx, "/admin/organization", &orga, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *client) AdminOrganizationList(ctx context.Context) ([]sdk.Organization, error) {
+	var orgas []sdk.Organization
+	if _, err := c.GetJSON(ctx, "/admin/organization", &orgas); err != nil {
+		return nil, err
+	}
+	return orgas, nil
+}
+
+func (c *client) AdminOrganizationDelete(ctx context.Context, orgaIdentifier string) error {
+	if _, err := c.DeleteJSON(ctx, "/admin/organization/"+orgaIdentifier, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (c *client) AdminDatabaseMigrationDelete(service string, id string) error {
 	path := fmt.Sprintf("/admin/database/migration/delete/%s", url.QueryEscape(id))
 	var f = c.switchServiceCallFunc(service, http.MethodDelete, path, nil, nil)

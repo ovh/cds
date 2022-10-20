@@ -49,6 +49,10 @@ type Admin interface {
 	AdminCDSMigrationCancel(id int64) error
 	AdminCDSMigrationReset(id int64) error
 	AdminWorkflowUpdateMaxRuns(projectKey string, workflowName string, maxRuns int64) error
+	AdminOrganizationCreate(ctx context.Context, orga sdk.Organization) error
+	AdminOrganizationList(ctx context.Context) ([]sdk.Organization, error)
+	AdminOrganizationDelete(ctx context.Context, orgaIdentifier string) error
+	AdminOrganizationMigrateUser(ctx context.Context, orgaIdentifier string) error
 	Features() ([]sdk.Feature, error)
 	FeatureCreate(f sdk.Feature) error
 	FeatureDelete(name sdk.FeatureName) error
@@ -197,6 +201,20 @@ type MaintenanceClient interface {
 	Maintenance(enable bool, hooks bool) error
 }
 
+type OrganizationClient interface {
+	OrganizationAdd(ctx context.Context, organization sdk.Organization) error
+	OrganizationGet(ctx context.Context, organizationIdentifier string) (sdk.Organization, error)
+	OrganizationList(ctx context.Context) ([]sdk.Organization, error)
+	OrganizationDelete(ctx context.Context, organizationIdentifier string) error
+}
+
+type RegionClient interface {
+	RegionAdd(ctx context.Context, region sdk.Region) error
+	RegionGet(ctx context.Context, regionIdentifier string) (sdk.Region, error)
+	RegionList(ctx context.Context) ([]sdk.Region, error)
+	RegionDelete(ctx context.Context, regionIdentifier string) error
+}
+
 // ProjectClient exposes project related functions
 type ProjectClient interface {
 	ProjectCreate(proj *sdk.Project) error
@@ -217,7 +235,7 @@ type ProjectClient interface {
 	ProjectAccess(ctx context.Context, projectKey, sessionID string, itemType sdk.CDNItemType) error
 	ProjectIntegrationWorkerHookGet(projectKey string, integrationName string) (*sdk.WorkerHookProjectIntegrationModel, error)
 	ProjectIntegrationWorkerHooksImport(projectKey string, integrationName string, hook sdk.WorkerHookProjectIntegrationModel) error
-	ProjectVCSImport(ctx context.Context, projectKey string, content io.Reader, mods ...RequestModifier) (sdk.VCSProject, error)
+	ProjectVCSImport(ctx context.Context, projectKey string, vcs sdk.VCSProject, mods ...RequestModifier) (sdk.VCSProject, error)
 	ProjectVCSGet(ctx context.Context, projectKey string, integrationName string) (sdk.VCSProject, error)
 	ProjectVCSList(ctx context.Context, projectKey string) ([]sdk.VCSProject, error)
 	ProjectVCSDelete(ctx context.Context, projectKey string, vcsName string) error
@@ -398,6 +416,7 @@ type Interface interface {
 	ActionClient
 	Admin
 	APIURL() string
+	CDNURL() (string, error)
 	ApplicationClient
 	ConfigUser() (sdk.ConfigUser, error)
 	ConfigCDN() (sdk.CDNConfig, error)
@@ -413,6 +432,8 @@ type Interface interface {
 	IntegrationClient
 	ProjectClient
 	RBACClient
+	OrganizationClient
+	RegionClient
 	QueueClient
 	Navbar() ([]sdk.NavbarProjectData, error)
 	Requirements() ([]sdk.Requirement, error)
@@ -472,18 +493,19 @@ type GRPCPluginsClient interface {
 	PluginGetBinaryInfos(name, os, arch string) (*sdk.GRPCPluginBinary, error)
 }
 
-/* ProviderClient exposes allowed methods for providers
- Usage:
+/*
+	 ProviderClient exposes allowed methods for providers
+	 Usage:
 
- 	cfg := ProviderConfig{
-		Host: "https://my-cds-api:8081",
-		Name: "my-provider-name",
-		Token: "my-very-long-secret-token",
-	}
-	client := NewProviderClient(cfg)
-	//Get the writable projects of a user
-	projects, err := client.ProjectsList(FilterByUser("a-username"), FilterByWritablePermission())
-	...
+	 	cfg := ProviderConfig{
+			Host: "https://my-cds-api:8081",
+			Name: "my-provider-name",
+			Token: "my-very-long-secret-token",
+		}
+		client := NewProviderClient(cfg)
+		//Get the writable projects of a user
+		projects, err := client.ProjectsList(FilterByUser("a-username"), FilterByWritablePermission())
+		...
 */
 type ProviderClient interface {
 	ApplicationsList(projectKey string, opts ...RequestModifier) ([]sdk.Application, error)

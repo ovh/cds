@@ -11,13 +11,14 @@
     <i *ngIf="project && groupsOutsideOrganization && groupsOutsideOrganization.length > 0"
         class="exclamation triangle orange icon" nz-popover [nzPopoverContent]="warnPermission" nzPopoverPlacement="bottomLeft"></i>
 </ng-template>
+<div id="ProjectShow">
 <div *ngIf="project; then projectPart;else loadingPart"></div>
 <ng-template #projectPart>
-    <div id="ProjectShow">
+
         <app-project-breadcrumb [project]="project" [workflow]="workflowName" [workflowRun]="workflowNum"
             [workflowRunNode]="workflowNodeRun" [wPipeline]="workflowPipeline">
             <div class="right floated" [title]="'favorite_add_btn' | translate">
-                <div class="ui active small inline loader" *ngIf="loadingFav"></div>
+                <span nz-icon [nzType]="'loading'" *ngIf="loadingFav"></span>
                 <i class="pointing star icon" *ngIf="!loadingFav" [class.favorite]="project.favorite"
                     [class.unfavorite]="!project.favorite" (click)="updateFav()"></i>
             </div>
@@ -63,8 +64,8 @@
                 </div>
             </div>
         </div>
-    </div>
 </ng-template>
 <ng-template #loadingPart>
-    <div class="ui text active loader">{{'common_loading_project' | translate}}</div>
+    <nz-spin nzTip="Loading project..."></nz-spin>
 </ng-template>
+</div>

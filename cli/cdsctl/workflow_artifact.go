@@ -46,7 +46,7 @@ var workflowArtifactDownloadCmd = cli.Command{
 		},
 		{
 			Name:    "cdn-url",
-			Usage:   "overwrite cdn url",
+			Usage:   "overwrite cdn url (deprecated)",
 			Default: "",
 		},
 	},
@@ -59,12 +59,13 @@ func workflowArtifactDownloadRun(v cli.Values) error {
 	}
 
 	cdnURL := v.GetString("cdn-url")
-	if cdnURL == "" {
-		confCDN, err := client.ConfigCDN()
-		if err != nil {
-			return err
-		}
-		cdnURL = confCDN.HTTPURL
+	if cdnURL != "" {
+		fmt.Printf("Flag cdn-url is deprecated, use CDS_CDN_URL env variable instead\n")
+	}
+
+	cdnURL, err = client.CDNURL()
+	if err != nil {
+		return err
 	}
 
 	// Search in result

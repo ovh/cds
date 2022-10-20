@@ -104,7 +104,7 @@ Here is the list of git variables:
 - `{{.git.url}}`:  Git ssh URL used to clone
 - `{{.git.http_url}}`: Git http url used to clone
 - `{{.git.branch}}`: 
-  - Push event: Name of the branch where the push occured
+  - Push event: Name of the branch where the push occurred
   - PullRequest event: Name of the source branch
 - `{{.git.tag}}`: Name of the tag that triggered the run
 - `{{.git.author}}`: Name of the most recent commit author

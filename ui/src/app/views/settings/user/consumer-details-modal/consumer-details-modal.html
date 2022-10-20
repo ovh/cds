@@ -41,15 +41,15 @@
                     <nz-form-control>{{consumer.last_authentication ? consumer.last_authentication : 'never'}}</nz-form-control>
                 </nz-form-item>
             </nz-col>
-            <nz-col [nzSpan]="12" *ngIf="consumer.service_name || consumer.service_type || consumer.service_region || consumer.service_ignore_job_with_no_region">
+            <nz-col [nzSpan]="12" *ngIf="consumer.auth_consumer_user.service_name || consumer.auth_consumer_user.service_type || consumer.auth_consumer_user.service_region || consumer.auth_consumer_user.service_ignore_job_with_no_region">
                 <nz-form-item>
                     <nz-form-label>Service detail</nz-form-label>
                     <nz-form-control>
                         <ul>
-                            <li>Name: {{consumer.service_name}}</li>
-                            <li>Type: {{consumer.service_type}}</li>
-                            <li>Region: {{consumer.service_region}}</li>
-                            <li>Ignore job with no region: {{consumer.service_ignore_job_with_no_region}}</li>
+                            <li>Name: {{consumer.auth_consumer_user.service_name}}</li>
+                            <li>Type: {{consumer.auth_consumer_user.service_type}}</li>
+                            <li>Region: {{consumer.auth_consumer_user.service_region}}</li>
+                            <li>Ignore job with no region: {{consumer.auth_consumer_user.service_ignore_job_with_no_region}}</li>
                         </ul>
                     </nz-form-control>
                 </nz-form-item>
@@ -57,12 +57,18 @@
         </nz-row>
         <nz-row>
             <nz-col [nzSpan]="24">
-                <app-menu class="menu" [items]="menuItems" (onSelect)="selectMenuItem($event)"></app-menu>
+                <ul nz-menu nzMode="horizontal" *ngIf="menuItems?.size > 0">
+                    <ng-container *ngFor="let entry of menuItems | forMap">
+                        <li nz-menu-item [nzSelected]="selectedItem === entry.key" (click)="selectMenuItem(entry.key)">
+                            {{entry.value}}
+                        </li>
+                    </ng-container>
+                </ul>
             </nz-col>
         </nz-row>
         <nz-row>
             <nz-col [nzSpan]="24">
-                <div class="field" [ngSwitch]="selectedItem.key">
+                <div class="field" [ngSwitch]="selectedItem">
                     <app-data-table *ngSwitchCase="'sessions'" [withFilter]="filterSessions" [withPagination]="5"
                                     [columns]="columnsSessions" [data]="consumer.sessions">
                     </app-data-table>

@@ -31,13 +31,15 @@ func TestConsumerInvalidateGroupForUser_InvalidateOneConsumerGroup(t *testing.T)
 	g2 := &sdk.Group{ID: 10, Name: "B"}
 
 	c := sdk.AuthConsumer{
-		Name:               sdk.RandomString(10),
-		Description:        sdk.RandomString(10),
-		Type:               sdk.ConsumerLocal,
-		ScopeDetails:       sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAdmin),
-		GroupIDs:           []int64{g1.ID, g2.ID},
-		AuthentifiedUserID: u.ID,
-		ValidityPeriods:    sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+		Name:            sdk.RandomString(10),
+		Description:     sdk.RandomString(10),
+		Type:            sdk.ConsumerLocal,
+		ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+		AuthConsumerUser: &sdk.AuthConsumerUser{
+			ScopeDetails:       sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAdmin),
+			GroupIDs:           []int64{g1.ID, g2.ID},
+			AuthentifiedUserID: u.ID,
+		},
 	}
 	require.NoError(t, authentication.InsertConsumer(context.TODO(), db, &c))
 
@@ -45,10 +47,10 @@ func TestConsumerInvalidateGroupForUser_InvalidateOneConsumerGroup(t *testing.T)
 	require.NoError(t, authentication.ConsumerInvalidateGroupForUser(context.TODO(), db, g1, &u))
 	res, err := authentication.LoadConsumerByID(context.TODO(), db, c.ID)
 	require.NoError(t, err)
-	require.Len(t, res.GroupIDs, 1)
-	assert.Equal(t, g2.ID, res.GroupIDs[0])
-	require.Len(t, res.InvalidGroupIDs, 1)
-	assert.Equal(t, g1.ID, res.InvalidGroupIDs[0])
+	require.Len(t, res.AuthConsumerUser.GroupIDs, 1)
+	assert.Equal(t, g2.ID, res.AuthConsumerUser.GroupIDs[0])
+	require.Len(t, res.AuthConsumerUser.InvalidGroupIDs, 1)
+	assert.Equal(t, g1.ID, res.AuthConsumerUser.InvalidGroupIDs[0])
 	require.Len(t, res.Warnings, 1)
 	assert.Equal(t, sdk.WarningGroupInvalid, res.Warnings[0].Type)
 	assert.Equal(t, g1.ID, res.Warnings[0].GroupID)
@@ -71,13 +73,15 @@ func TestConsumerInvalidateGroupForUser_InvalidateOneConsumerGroupForAdmin(t *te
 	g2 := &sdk.Group{ID: 10, Name: "B"}
 
 	c := sdk.AuthConsumer{
-		Name:               sdk.RandomString(10),
-		Description:        sdk.RandomString(10),
-		Type:               sdk.ConsumerLocal,
-		ScopeDetails:       sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAdmin),
-		GroupIDs:           []int64{g1.ID, g2.ID},
-		AuthentifiedUserID: u.ID,
-		ValidityPeriods:    sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+		Name:            sdk.RandomString(10),
+		Description:     sdk.RandomString(10),
+		Type:            sdk.ConsumerLocal,
+		ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+		AuthConsumerUser: &sdk.AuthConsumerUser{
+			ScopeDetails:       sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAdmin),
+			GroupIDs:           []int64{g1.ID, g2.ID},
+			AuthentifiedUserID: u.ID,
+		},
 	}
 	require.NoError(t, authentication.InsertConsumer(context.TODO(), db, &c))
 
@@ -85,10 +89,10 @@ func TestConsumerInvalidateGroupForUser_InvalidateOneConsumerGroupForAdmin(t *te
 	require.NoError(t, authentication.ConsumerInvalidateGroupForUser(context.TODO(), db, g1, &u))
 	res, err := authentication.LoadConsumerByID(context.TODO(), db, c.ID)
 	require.NoError(t, err)
-	require.Len(t, res.GroupIDs, 2)
-	assert.Equal(t, g1.ID, res.GroupIDs[0])
-	assert.Equal(t, g2.ID, res.GroupIDs[1])
-	require.Len(t, res.InvalidGroupIDs, 0)
+	require.Len(t, res.AuthConsumerUser.GroupIDs, 2)
+	assert.Equal(t, g1.ID, res.AuthConsumerUser.GroupIDs[0])
+	assert.Equal(t, g2.ID, res.AuthConsumerUser.GroupIDs[1])
+	require.Len(t, res.AuthConsumerUser.InvalidGroupIDs, 0)
 	require.Len(t, res.Warnings, 0)
 }
 
@@ -106,13 +110,15 @@ func TestConsumerInvalidateGroupForUser_InvalidateLastConsumerGroup(t *testing.T
 	g1 := &sdk.Group{ID: 5, Name: "A"}
 
 	c := sdk.AuthConsumer{
-		Name:               sdk.RandomString(10),
-		Description:        sdk.RandomString(10),
-		Type:               sdk.ConsumerLocal,
-		ScopeDetails:       sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAdmin),
-		GroupIDs:           []int64{g1.ID},
-		AuthentifiedUserID: u.ID,
-		ValidityPeriods:    sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+		Name:            sdk.RandomString(10),
+		Description:     sdk.RandomString(10),
+		Type:            sdk.ConsumerLocal,
+		ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+		AuthConsumerUser: &sdk.AuthConsumerUser{
+			ScopeDetails:       sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAdmin),
+			GroupIDs:           []int64{g1.ID},
+			AuthentifiedUserID: u.ID,
+		},
 	}
 	require.NoError(t, authentication.InsertConsumer(context.TODO(), db, &c))
 
@@ -121,9 +127,9 @@ func TestConsumerInvalidateGroupForUser_InvalidateLastConsumerGroup(t *testing.T
 	res, err := authentication.LoadConsumerByID(context.TODO(), db, c.ID)
 	require.NoError(t, err)
 	assert.True(t, res.Disabled)
-	require.Len(t, res.GroupIDs, 0)
-	require.Len(t, res.InvalidGroupIDs, 1)
-	assert.Equal(t, g1.ID, res.InvalidGroupIDs[0])
+	require.Len(t, res.AuthConsumerUser.GroupIDs, 0)
+	require.Len(t, res.AuthConsumerUser.InvalidGroupIDs, 1)
+	assert.Equal(t, g1.ID, res.AuthConsumerUser.InvalidGroupIDs[0])
 	require.Len(t, res.Warnings, 2)
 	assert.Equal(t, sdk.WarningGroupInvalid, res.Warnings[0].Type)
 	assert.Equal(t, g1.ID, res.Warnings[0].GroupID)
@@ -146,13 +152,15 @@ func TestConsumerRemoveGroup_RemoveOneConsumerGroup(t *testing.T) {
 	g2 := &sdk.Group{ID: 10, Name: "B"}
 
 	c := sdk.AuthConsumer{
-		Name:               sdk.RandomString(10),
-		Description:        sdk.RandomString(10),
-		Type:               sdk.ConsumerLocal,
-		ScopeDetails:       sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAdmin),
-		GroupIDs:           []int64{g1.ID, g2.ID},
-		AuthentifiedUserID: u.ID,
-		ValidityPeriods:    sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+		Name:            sdk.RandomString(10),
+		Description:     sdk.RandomString(10),
+		Type:            sdk.ConsumerLocal,
+		ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+		AuthConsumerUser: &sdk.AuthConsumerUser{
+			ScopeDetails:       sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAdmin),
+			GroupIDs:           []int64{g1.ID, g2.ID},
+			AuthentifiedUserID: u.ID,
+		},
 	}
 	require.NoError(t, authentication.InsertConsumer(context.TODO(), db, &c))
 
@@ -161,8 +169,8 @@ func TestConsumerRemoveGroup_RemoveOneConsumerGroup(t *testing.T) {
 	res, err := authentication.LoadConsumerByID(context.TODO(), db, c.ID)
 	require.NoError(t, err)
 	assert.False(t, res.Disabled)
-	require.Len(t, res.GroupIDs, 1)
-	require.Len(t, res.InvalidGroupIDs, 0)
+	require.Len(t, res.AuthConsumerUser.GroupIDs, 1)
+	require.Len(t, res.AuthConsumerUser.InvalidGroupIDs, 0)
 	require.Len(t, res.Warnings, 1)
 	assert.Equal(t, sdk.WarningGroupRemoved, res.Warnings[0].Type)
 	assert.Equal(t, g1.ID, res.Warnings[0].GroupID)
@@ -184,19 +192,21 @@ func TestConsumerRemoveGroup_RemoveOneInvalidConsumerGroup(t *testing.T) {
 	g2 := &sdk.Group{ID: 10, Name: "B"}
 
 	c := sdk.AuthConsumer{
-		Name:               sdk.RandomString(10),
-		Description:        sdk.RandomString(10),
-		Type:               sdk.ConsumerLocal,
-		ScopeDetails:       sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAdmin),
-		GroupIDs:           []int64{g2.ID},
-		InvalidGroupIDs:    []int64{g1.ID},
-		AuthentifiedUserID: u.ID,
-		ValidityPeriods:    sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+		Name:            sdk.RandomString(10),
+		Description:     sdk.RandomString(10),
+		Type:            sdk.ConsumerLocal,
+		ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
 		Warnings: sdk.AuthConsumerWarnings{{
 			Type:      sdk.WarningGroupInvalid,
 			GroupID:   g1.ID,
 			GroupName: g1.Name,
 		}},
+		AuthConsumerUser: &sdk.AuthConsumerUser{
+			ScopeDetails:       sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAdmin),
+			GroupIDs:           []int64{g2.ID},
+			InvalidGroupIDs:    []int64{g1.ID},
+			AuthentifiedUserID: u.ID,
+		},
 	}
 	require.NoError(t, authentication.InsertConsumer(context.TODO(), db, &c))
 
@@ -205,8 +215,8 @@ func TestConsumerRemoveGroup_RemoveOneInvalidConsumerGroup(t *testing.T) {
 	res, err := authentication.LoadConsumerByID(context.TODO(), db, c.ID)
 	require.NoError(t, err)
 	assert.False(t, res.Disabled)
-	require.Len(t, res.GroupIDs, 1)
-	require.Len(t, res.InvalidGroupIDs, 0)
+	require.Len(t, res.AuthConsumerUser.GroupIDs, 1)
+	require.Len(t, res.AuthConsumerUser.InvalidGroupIDs, 0)
 	require.Len(t, res.Warnings, 1)
 	assert.Equal(t, sdk.WarningGroupRemoved, res.Warnings[0].Type)
 	assert.Equal(t, g1.ID, res.Warnings[0].GroupID)
@@ -227,13 +237,15 @@ func TestConsumerRemoveGroup_RemoveLastConsumerGroup(t *testing.T) {
 	g1 := &sdk.Group{ID: 5, Name: "A"}
 
 	c := sdk.AuthConsumer{
-		Name:               sdk.RandomString(10),
-		Description:        sdk.RandomString(10),
-		Type:               sdk.ConsumerLocal,
-		ScopeDetails:       sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAdmin),
-		GroupIDs:           []int64{g1.ID},
-		AuthentifiedUserID: u.ID,
-		ValidityPeriods:    sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+		Name:            sdk.RandomString(10),
+		Description:     sdk.RandomString(10),
+		Type:            sdk.ConsumerLocal,
+		ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+		AuthConsumerUser: &sdk.AuthConsumerUser{
+			ScopeDetails:       sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAdmin),
+			GroupIDs:           []int64{g1.ID},
+			AuthentifiedUserID: u.ID,
+		},
 	}
 	require.NoError(t, authentication.InsertConsumer(context.TODO(), db, &c))
 
@@ -242,8 +254,8 @@ func TestConsumerRemoveGroup_RemoveLastConsumerGroup(t *testing.T) {
 	res, err := authentication.LoadConsumerByID(context.TODO(), db, c.ID)
 	require.NoError(t, err)
 	assert.True(t, res.Disabled)
-	require.Len(t, res.GroupIDs, 0)
-	require.Len(t, res.InvalidGroupIDs, 0)
+	require.Len(t, res.AuthConsumerUser.GroupIDs, 0)
+	require.Len(t, res.AuthConsumerUser.InvalidGroupIDs, 0)
 	require.Len(t, res.Warnings, 2)
 	assert.Equal(t, sdk.WarningGroupRemoved, res.Warnings[0].Type)
 	assert.Equal(t, g1.ID, res.Warnings[0].GroupID)
@@ -265,14 +277,11 @@ func TestConsumerRemoveGroup_RemoveLastInvalidConsumerGroup(t *testing.T) {
 	g1 := &sdk.Group{ID: 5, Name: "A"}
 
 	c := sdk.AuthConsumer{
-		Name:               sdk.RandomString(10),
-		Description:        sdk.RandomString(10),
-		Type:               sdk.ConsumerLocal,
-		ScopeDetails:       sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAdmin),
-		InvalidGroupIDs:    []int64{g1.ID},
-		AuthentifiedUserID: u.ID,
-		ValidityPeriods:    sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
-		Disabled:           true,
+		Name:            sdk.RandomString(10),
+		Description:     sdk.RandomString(10),
+		Type:            sdk.ConsumerLocal,
+		ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+		Disabled:        true,
 		Warnings: sdk.AuthConsumerWarnings{
 			{
 				Type:      sdk.WarningGroupInvalid,
@@ -283,6 +292,11 @@ func TestConsumerRemoveGroup_RemoveLastInvalidConsumerGroup(t *testing.T) {
 				Type: sdk.WarningLastGroupRemoved,
 			},
 		},
+		AuthConsumerUser: &sdk.AuthConsumerUser{
+			ScopeDetails:       sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAdmin),
+			InvalidGroupIDs:    []int64{g1.ID},
+			AuthentifiedUserID: u.ID,
+		},
 	}
 	require.NoError(t, authentication.InsertConsumer(context.TODO(), db, &c))
 
@@ -291,8 +305,8 @@ func TestConsumerRemoveGroup_RemoveLastInvalidConsumerGroup(t *testing.T) {
 	res, err := authentication.LoadConsumerByID(context.TODO(), db, c.ID)
 	require.NoError(t, err)
 	assert.True(t, res.Disabled)
-	require.Len(t, res.GroupIDs, 0)
-	require.Len(t, res.InvalidGroupIDs, 0)
+	require.Len(t, res.AuthConsumerUser.GroupIDs, 0)
+	require.Len(t, res.AuthConsumerUser.InvalidGroupIDs, 0)
 	require.Len(t, res.Warnings, 2)
 	assert.Equal(t, sdk.WarningLastGroupRemoved, res.Warnings[0].Type)
 	assert.Equal(t, sdk.WarningGroupRemoved, res.Warnings[1].Type)
@@ -315,20 +329,22 @@ func TestConsumerRestoreInvalidatedGroupForUser_RestoreInvalidatedGroup(t *testi
 	g2 := &sdk.Group{ID: 10, Name: "B"}
 
 	c := sdk.AuthConsumer{
-		Name:               sdk.RandomString(10),
-		Description:        sdk.RandomString(10),
-		Type:               sdk.ConsumerLocal,
-		ScopeDetails:       sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAdmin),
-		GroupIDs:           []int64{g2.ID},
-		InvalidGroupIDs:    []int64{g1.ID},
-		AuthentifiedUserID: u.ID,
-		ValidityPeriods:    sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+		Name:            sdk.RandomString(10),
+		Description:     sdk.RandomString(10),
+		Type:            sdk.ConsumerLocal,
+		ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
 		Warnings: sdk.AuthConsumerWarnings{
 			{
 				Type:      sdk.WarningGroupInvalid,
 				GroupID:   g1.ID,
 				GroupName: g1.Name,
 			},
+		},
+		AuthConsumerUser: &sdk.AuthConsumerUser{
+			ScopeDetails:       sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAdmin),
+			GroupIDs:           []int64{g2.ID},
+			InvalidGroupIDs:    []int64{g1.ID},
+			AuthentifiedUserID: u.ID,
 		},
 	}
 	require.NoError(t, authentication.InsertConsumer(context.TODO(), db, &c))
@@ -338,10 +354,10 @@ func TestConsumerRestoreInvalidatedGroupForUser_RestoreInvalidatedGroup(t *testi
 	res, err := authentication.LoadConsumerByID(context.TODO(), db, c.ID)
 	require.NoError(t, err)
 	assert.False(t, res.Disabled)
-	require.Len(t, res.GroupIDs, 2)
-	assert.Equal(t, g2.ID, res.GroupIDs[0])
-	assert.Equal(t, g1.ID, res.GroupIDs[1])
-	require.Len(t, res.InvalidGroupIDs, 0)
+	require.Len(t, res.AuthConsumerUser.GroupIDs, 2)
+	assert.Equal(t, g2.ID, res.AuthConsumerUser.GroupIDs[0])
+	assert.Equal(t, g1.ID, res.AuthConsumerUser.GroupIDs[1])
+	require.Len(t, res.AuthConsumerUser.InvalidGroupIDs, 0)
 	require.Len(t, res.Warnings, 0)
 }
 
@@ -359,14 +375,11 @@ func TestConsumerLifecycle_RestoreInvalidatedLastGroup(t *testing.T) {
 	g1 := &sdk.Group{ID: 5, Name: "Five"}
 
 	c := sdk.AuthConsumer{
-		Name:               sdk.RandomString(10),
-		Description:        sdk.RandomString(10),
-		Type:               sdk.ConsumerLocal,
-		ScopeDetails:       sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAdmin),
-		InvalidGroupIDs:    []int64{g1.ID},
-		AuthentifiedUserID: u.ID,
-		ValidityPeriods:    sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
-		Disabled:           true,
+		Name:            sdk.RandomString(10),
+		Description:     sdk.RandomString(10),
+		Type:            sdk.ConsumerLocal,
+		ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+		Disabled:        true,
 		Warnings: sdk.AuthConsumerWarnings{
 			{
 				Type:      sdk.WarningGroupInvalid,
@@ -377,6 +390,11 @@ func TestConsumerLifecycle_RestoreInvalidatedLastGroup(t *testing.T) {
 				Type: sdk.WarningLastGroupRemoved,
 			},
 		},
+		AuthConsumerUser: &sdk.AuthConsumerUser{
+			ScopeDetails:       sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAdmin),
+			InvalidGroupIDs:    []int64{g1.ID},
+			AuthentifiedUserID: u.ID,
+		},
 	}
 	require.NoError(t, authentication.InsertConsumer(context.TODO(), db, &c))
 
@@ -385,9 +403,9 @@ func TestConsumerLifecycle_RestoreInvalidatedLastGroup(t *testing.T) {
 	res, err := authentication.LoadConsumerByID(context.TODO(), db, c.ID)
 	require.NoError(t, err)
 	assert.False(t, res.Disabled)
-	require.Len(t, res.GroupIDs, 1)
-	assert.Equal(t, g1.ID, res.GroupIDs[0])
-	require.Len(t, res.InvalidGroupIDs, 0)
+	require.Len(t, res.AuthConsumerUser.GroupIDs, 1)
+	assert.Equal(t, g1.ID, res.AuthConsumerUser.GroupIDs[0])
+	require.Len(t, res.AuthConsumerUser.InvalidGroupIDs, 0)
 	require.Len(t, res.Warnings, 0)
 }
 
@@ -405,20 +423,22 @@ func TestConsumerInvalidateGroupsForUser_InvalidateLastGroups(t *testing.T) {
 	g2 := assets.InsertGroup(t, db)
 
 	c := sdk.AuthConsumer{
-		Name:               sdk.RandomString(10),
-		Description:        sdk.RandomString(10),
-		Type:               sdk.ConsumerLocal,
-		ScopeDetails:       sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAdmin),
-		GroupIDs:           []int64{g1.ID},
-		InvalidGroupIDs:    []int64{g2.ID},
-		AuthentifiedUserID: u.ID,
-		ValidityPeriods:    sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+		Name:            sdk.RandomString(10),
+		Description:     sdk.RandomString(10),
+		Type:            sdk.ConsumerLocal,
+		ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
 		Warnings: sdk.AuthConsumerWarnings{
 			{
 				Type:      sdk.WarningGroupInvalid,
 				GroupID:   g2.ID,
 				GroupName: g2.Name,
 			},
+		},
+		AuthConsumerUser: &sdk.AuthConsumerUser{
+			ScopeDetails:       sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAdmin),
+			GroupIDs:           []int64{g1.ID},
+			InvalidGroupIDs:    []int64{g2.ID},
+			AuthentifiedUserID: u.ID,
 		},
 	}
 	require.NoError(t, authentication.InsertConsumer(context.TODO(), db, &c))
@@ -428,10 +448,10 @@ func TestConsumerInvalidateGroupsForUser_InvalidateLastGroups(t *testing.T) {
 	res, err := authentication.LoadConsumerByID(context.TODO(), db, c.ID)
 	require.NoError(t, err)
 	assert.True(t, res.Disabled)
-	require.Len(t, res.GroupIDs, 0)
-	require.Len(t, res.InvalidGroupIDs, 2)
-	assert.Equal(t, g2.ID, res.InvalidGroupIDs[0])
-	assert.Equal(t, g1.ID, res.InvalidGroupIDs[1])
+	require.Len(t, res.AuthConsumerUser.GroupIDs, 0)
+	require.Len(t, res.AuthConsumerUser.InvalidGroupIDs, 2)
+	assert.Equal(t, g2.ID, res.AuthConsumerUser.InvalidGroupIDs[0])
+	assert.Equal(t, g1.ID, res.AuthConsumerUser.InvalidGroupIDs[1])
 	require.Len(t, res.Warnings, 3)
 	assert.Equal(t, sdk.WarningGroupInvalid, res.Warnings[0].Type)
 	assert.Equal(t, g2.ID, res.Warnings[0].GroupID)
@@ -456,14 +476,11 @@ func TestConsumerRestoreInvalidatedGroupsForUser(t *testing.T) {
 	g2 := assets.InsertGroup(t, db)
 
 	c := sdk.AuthConsumer{
-		Name:               sdk.RandomString(10),
-		Description:        sdk.RandomString(10),
-		Type:               sdk.ConsumerLocal,
-		ScopeDetails:       sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAdmin),
-		InvalidGroupIDs:    []int64{g1.ID, g2.ID},
-		AuthentifiedUserID: u.ID,
-		ValidityPeriods:    sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
-		Disabled:           true,
+		Name:            sdk.RandomString(10),
+		Description:     sdk.RandomString(10),
+		Type:            sdk.ConsumerLocal,
+		ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+		Disabled:        true,
 		Warnings: sdk.AuthConsumerWarnings{
 			{
 				Type:      sdk.WarningGroupInvalid,
@@ -479,6 +496,11 @@ func TestConsumerRestoreInvalidatedGroupsForUser(t *testing.T) {
 				Type: sdk.WarningLastGroupRemoved,
 			},
 		},
+		AuthConsumerUser: &sdk.AuthConsumerUser{
+			ScopeDetails:       sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAdmin),
+			InvalidGroupIDs:    []int64{g1.ID, g2.ID},
+			AuthentifiedUserID: u.ID,
+		},
 	}
 	require.NoError(t, authentication.InsertConsumer(context.TODO(), db, &c))
 
@@ -486,9 +508,9 @@ func TestConsumerRestoreInvalidatedGroupsForUser(t *testing.T) {
 	res, err := authentication.LoadConsumerByID(context.TODO(), db, c.ID)
 	require.NoError(t, err)
 	assert.False(t, res.Disabled)
-	require.Len(t, res.GroupIDs, 2)
-	assert.Equal(t, g1.ID, res.GroupIDs[0])
-	assert.Equal(t, g2.ID, res.GroupIDs[1])
-	require.Len(t, res.InvalidGroupIDs, 0)
+	require.Len(t, res.AuthConsumerUser.GroupIDs, 2)
+	assert.Equal(t, g1.ID, res.AuthConsumerUser.GroupIDs[0])
+	assert.Equal(t, g2.ID, res.AuthConsumerUser.GroupIDs[1])
+	require.Len(t, res.AuthConsumerUser.InvalidGroupIDs, 0)
 	require.Len(t, res.Warnings, 0)
 }

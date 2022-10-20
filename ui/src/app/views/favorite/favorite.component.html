@@ -1,18 +1,16 @@
 <div id="CDSFavorite">
-    <h1 class="ui center aligned header">{{ 'favorite_title' | translate }}</h1>
-    <div class="ui row" *ngIf="!loading">
-      <div class="ui grid">
-        <div class="two wide column">
-        </div>
-        <div class="twelve wide column">
+    <h1>Bookmarks management</h1>
+    <nz-row *ngIf="!loading">
+        <nz-col [nzSpan]="18" [nzOffset]="3">
           <app-favorite-cards [favorites]="favorites" [projects]="projects" [workflows]="workflows" (updated)="favoriteUpdated()"></app-favorite-cards>
-        </div>
-      </div>
-    </div>
+        </nz-col>
+    </nz-row>
 
-    <div class="ui raised padded text container segment" *ngIf="!loading && (!favorites || !favorites.length)">
-        {{'common_no_favorites' | translate}}
-    </div>
+    <nz-row  *ngIf="!loading && (!favorites || !favorites.length)">
+        <nz-col [nzSpan]="18" [nzOffset]="3">
+                <nz-alert nzType="info" nzMessage="You didn't add projects or workflows in your bookmarks yet."></nz-alert>
+        </nz-col>
+    </nz-row>
 
-    <div class="ui active text loader" *ngIf="loading">{{ 'common_loading' | translate }}</div>
+    <nz-spin *ngIf="loading" nzTip="Loading..."></nz-spin>
 </div>

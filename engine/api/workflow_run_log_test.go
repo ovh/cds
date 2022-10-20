@@ -53,7 +53,6 @@ func Test_getWorkflowNodeRunJobLinkHandler(t *testing.T) {
 
 	var link sdk.CDNLogLink
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &link))
-	require.Equal(t, "http://cdn.net:8080", link.CDNURL)
 	require.Equal(t, sdk.CDNTypeItemStepLog, link.ItemType)
 	require.NotEmpty(t, link.APIRef)
 }

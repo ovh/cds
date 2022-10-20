@@ -85,9 +85,9 @@ func (s *Service) vacuumFileSystemCleanerFunc(ctx context.Context, repoUUID stri
 		return nil
 	}
 
-	if !s.dao.isExpired(ctx, repoUUID) {
-		log.Debug(ctx, "vacuumFileSystemCleanerFunc> %s is not expired. skipping", repoUUID)
-		_ = s.dao.unlock(ctx, repoUUID, 24*time.Hour*time.Duration(s.Cfg.RepositoriesRetention))
+	if v, b := s.dao.isExpired(ctx, repoUUID); !b {
+		log.Debug(ctx, "vacuumFileSystemCleanerFunc> %s is not expired: %s. skipping", repoUUID, v.String())
+		_ = s.dao.unlock(ctx, repoUUID)
 		return nil
 	}
 

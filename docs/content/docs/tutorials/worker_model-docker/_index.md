@@ -6,7 +6,7 @@ card:
   weight: 1
 ---
 
-A worker model of type `docker` can be spawned by a Hatchery Docker Swarm or a Hatchery Marathon.
+A worker model of type `docker` can be spawned by a Hatchery Docker Swarm or a Hatchery Kubernetes.
 
 ## Register a worker Model from an existing Docker Image
 

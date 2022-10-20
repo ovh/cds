@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/olivere/elastic/v7"
 	"github.com/rockbears/log"
-	"gopkg.in/olivere/elastic.v6"
 
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -31,14 +31,18 @@ func (s *Service) getEventsHandler() service.Handler {
 				boolQuery.Must(elastic.NewQueryStringQuery(fmt.Sprintf("project_key:%s AND workflow_name:%s", p.Key, w)))
 			}
 		}
-		result, errR := esClient.Search().Index(s.Cfg.ElasticSearch.IndexEvents).Type(fmt.Sprintf("%T", sdk.Event{})).Query(boolQuery).Sort("timestamp", false).From(filters.CurrentItem).Size(15).Do(context.Background())
-		if errR != nil {
-			if strings.Contains(errR.Error(), indexNotFoundException) {
-				log.Warn(ctx, "elasticsearch> getEventsHandler> %v", errR.Error())
+		result, err := s.esClient.SearchDoc(ctx,
+			[]string{s.Cfg.ElasticSearch.IndexEvents},
+			fmt.Sprintf("%T", sdk.Event{}),
+			boolQuery,
+			[]elastic.Sorter{elastic.NewFieldSort("timestamp").Desc()},
+			filters.CurrentItem, 15)
+		if err != nil {
+			if strings.Contains(err.Error(), indexNotFoundException) {
+				log.Warn(ctx, "elasticsearch> getEventsHandler> %v", err.Error())
 				return service.WriteJSON(w, nil, http.StatusOK)
 			}
-			esReq := fmt.Sprintf(`esClient.Search().Index(%+v).Type("%T").Query(%+v).Sort("timestamp", false).From(%+v).Size(15)`, s.Cfg.ElasticSearch.IndexEvents, sdk.Event{}, boolQuery, filters.CurrentItem)
-			return sdk.WrapError(errR, "Cannot get result on index: %s : query -> %s", s.Cfg.ElasticSearch.IndexEvents, esReq)
+			return sdk.WrapError(err, "cannot get result on index: %s", s.Cfg.ElasticSearch.IndexEvents)
 		}
 		return service.WriteJSON(w, result.Hits.Hits, http.StatusOK)
 	}
@@ -55,9 +59,8 @@ func (s *Service) postEventHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to read body")
 		}
 
-		_, errI := esClient.Index().Index(s.Cfg.ElasticSearch.IndexEvents).Type(fmt.Sprintf("%T", sdk.Event{})).BodyJson(e).Do(context.Background())
-		if errI != nil {
-			return sdk.WrapError(errI, "Unable to insert event")
+		if _, err := s.esClient.IndexDoc(ctx, s.Cfg.ElasticSearch.IndexEvents, fmt.Sprintf("%T", sdk.Event{}), "", e); err != nil {
+			return sdk.WrapError(err, "Unable to insert event")
 		}
 		return nil
 	}
@@ -82,19 +85,18 @@ func (s *Service) getMetricsHandler() service.Handler {
 			stringQuery = fmt.Sprintf("%s AND workflow_id:%d", stringQuery, request.WorkflowID)
 		}
 
-		results, errR := esClient.Search().
-			Index(s.Cfg.ElasticSearch.IndexMetrics).
-			Type(fmt.Sprintf("%T", sdk.Metric{})).
-			Query(elastic.NewBoolQuery().Must(elastic.NewQueryStringQuery(stringQuery))).
-			Sort("run", false).
-			Size(10).
-			Do(context.Background())
-		if errR != nil {
-			if strings.Contains(errR.Error(), indexNotFoundException) {
-				log.Warn(ctx, "elasticsearch> getMetricsHandler> %v", errR.Error())
+		results, err := s.esClient.SearchDoc(ctx,
+			[]string{s.Cfg.ElasticSearch.IndexMetrics},
+			fmt.Sprintf("%T", sdk.Metric{}),
+			elastic.NewBoolQuery().Must(elastic.NewQueryStringQuery(stringQuery)),
+			[]elastic.Sorter{elastic.NewFieldSort("run").Desc()},
+			-1, 10)
+		if err != nil {
+			if strings.Contains(err.Error(), indexNotFoundException) {
+				log.Warn(ctx, "elasticsearch> getMetricsHandler> %v", err.Error())
 				return service.WriteJSON(w, nil, http.StatusOK)
 			}
-			return sdk.WrapError(errR, "Unable to get result")
+			return sdk.WrapError(err, "Unable to get result")
 		}
 
 		return service.WriteJSON(w, results.Hits.Hits, http.StatusOK)
@@ -123,9 +125,8 @@ func (s *Service) postMetricsHandler() service.Handler {
 			s.mergeMetric(&metric, existingMetric.Value)
 		}
 
-		_, errI := esClient.Index().Index(s.Cfg.ElasticSearch.IndexMetrics).Id(id).Type(fmt.Sprintf("%T", sdk.Metric{})).BodyJson(metric).Do(context.Background())
-		if errI != nil {
-			return sdk.WrapError(errI, "Unable to insert event")
+		if _, err := s.esClient.IndexDoc(ctx, s.Cfg.ElasticSearch.IndexMetrics, fmt.Sprintf("%T", sdk.Metric{}), id, metric); err != nil {
+			return sdk.WrapError(err, "Unable to insert event")
 		}
 		return nil
 	}
@@ -140,27 +141,26 @@ func (s *Service) getStatusHandler() service.Handler {
 
 func (s *Service) loadMetric(ctx context.Context, ID string) (sdk.Metric, error) {
 	var m sdk.Metric
-	results, errR := esClient.Search().
-		Index(s.Cfg.ElasticSearch.IndexMetrics).
-		Type(fmt.Sprintf("%T", sdk.Metric{})).
-		Query(elastic.NewBoolQuery().Must(elastic.NewQueryStringQuery(fmt.Sprintf("_id:%s", ID)))).
-		Sort("_score", false).
-		Sort("run", false).
-		Size(10).
-		Do(context.Background())
-	if errR != nil {
-		if strings.Contains(errR.Error(), indexNotFoundException) {
-			log.Warn(ctx, "elasticsearch> loadMetric> %v", errR.Error())
+	results, err := s.esClient.SearchDoc(ctx, []string{s.Cfg.ElasticSearch.IndexMetrics},
+		fmt.Sprintf("%T", sdk.Metric{}),
+		elastic.NewBoolQuery().Must(elastic.NewQueryStringQuery(fmt.Sprintf("_id:%s", ID))),
+		[]elastic.Sorter{
+			elastic.NewFieldSort("_score").Desc(),
+			elastic.NewFieldSort("run").Desc(),
+		}, -1, 10)
+	if err != nil {
+		if strings.Contains(err.Error(), indexNotFoundException) {
+			log.Warn(ctx, "elasticsearch> loadMetric> %v", err.Error())
 			return m, nil
 		}
-		return m, sdk.WrapError(errR, "unable to get result")
+		return m, sdk.WrapError(err, "unable to get result")
 	}
 
 	if len(results.Hits.Hits) == 0 {
 		return m, nil
 	}
 
-	if err := sdk.JSONUnmarshal(*results.Hits.Hits[0].Source, &m); err != nil {
+	if err := sdk.JSONUnmarshal(results.Hits.Hits[0].Source, &m); err != nil {
 		return m, err
 	}
 	return m, nil

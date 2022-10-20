@@ -12,7 +12,6 @@ An hatchery is started with permissions to build all pipelines accessible from a
 There are 6 modes for hatcheries:
 
  * [Local]({{< relref "local.md" >}}): Hatchery starts workers directly as local process.
- * [Marathon]({{< relref "/docs/integrations/marathon.md" >}}): Hatchery starts workers inside containers on a Mesos cluster using Marathon API.
  * [Swarm]({{< relref "/docs/integrations/swarm.md" >}}): The hatchery connects to a Docker Swarm cluster and starts workers inside containers.
  * [Kubernetes]({{< relref "/docs/integrations/kubernetes/kubernetes_compute.md" >}}): The hatchery connects to a Kubernetes cluster and starts workers inside containers.
  * [OpenStack]({{< relref "/docs/integrations/openstack/openstack_compute.md" >}}): Hatchery starts workers on OpenStack virtual machines using OpenStack Nova.

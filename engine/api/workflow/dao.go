@@ -1294,9 +1294,21 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		}
 	}
 
-	// if a old workflow as code exists, we want to check if the new workflow is also as code on the same repository
-	if oldWf != nil && oldWf.FromRepository != "" && (opts == nil || opts.FromRepository != oldWf.FromRepository) {
-		return nil, nil, nil, nil, sdk.WithStack(sdk.ErrWorkflowAlreadyAsCode)
+	// If a old workflow as code exists, we want to check if the new workflow is also as code on the same repository
+	if oldWf != nil && oldWf.FromRepository != "" {
+		// If no repository info are given but force option is set, allow workflow override
+		if opts == nil || (opts.FromRepository == "" && !opts.Force) {
+			return nil, nil, nil, nil, sdk.WithStack(sdk.ErrWorkflowAlreadyAsCode)
+		}
+		// Force option will not allow to change the repository of an existing workflow
+		if opts != nil && opts.FromRepository != "" && opts.FromRepository != oldWf.FromRepository {
+			return nil, nil, nil, nil, sdk.WithStack(sdk.ErrWorkflowAlreadyAsCode)
+		}
+	}
+
+	var fromRepo string
+	if opts != nil {
+		fromRepo = opts.FromRepository
 	}
 
 	tx, err := db.Begin()
@@ -1311,10 +1323,6 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		EnvironmentdSecrets: make(map[int64][]sdk.Variable),
 	}
 	for _, app := range data.Applications {
-		var fromRepo string
-		if opts != nil {
-			fromRepo = opts.FromRepository
-		}
 		appDB, appSecrets, msgList, err := application.ParseAndImport(ctx, tx, store, *proj, &app, application.ImportOptions{Force: true, FromRepository: fromRepo}, decryptFunc, consumer)
 		allMsg = append(allMsg, msgList...)
 		if err != nil {
@@ -1325,10 +1333,6 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 	}
 
 	for _, env := range data.Environments {
-		var fromRepo string
-		if opts != nil {
-			fromRepo = opts.FromRepository
-		}
 		envDB, envsSecrets, msgList, err := environment.ParseAndImport(ctx, tx, *proj, env, environment.ImportOptions{Force: true, FromRepository: fromRepo}, decryptFunc, consumer)
 		allMsg = append(allMsg, msgList...)
 		if err != nil {
@@ -1339,10 +1343,6 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 	}
 
 	for _, pip := range data.Pipelines {
-		var fromRepo string
-		if opts != nil {
-			fromRepo = opts.FromRepository
-		}
 		pipDB, msgList, err := pipeline.ParseAndImport(ctx, tx, store, *proj, &pip, consumer, pipeline.ImportOptions{Force: true, FromRepository: fromRepo})
 		allMsg = append(allMsg, msgList...)
 		if err != nil {
@@ -1352,17 +1352,17 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 	}
 
 	isDefaultBranch := true
-	if opts != nil {
+	if opts != nil && fromRepo != "" {
 		isDefaultBranch = opts.IsDefaultBranch
 	}
 
 	var importOptions = ImportOptions{
-		Force: true,
+		Force:           true,
+		FromRepository:  fromRepo,
+		IsDefaultBranch: isDefaultBranch,
 	}
 
 	if opts != nil {
-		importOptions.FromRepository = opts.FromRepository
-		importOptions.IsDefaultBranch = opts.IsDefaultBranch
 		importOptions.FromBranch = opts.Branch
 		importOptions.VCSServer = opts.VCSServer
 		importOptions.RepositoryName = opts.RepositoryName
@@ -1377,7 +1377,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 	}
 
 	// If the workflow is "as-code", it should always be linked to a git repository
-	if opts != nil && opts.FromRepository != "" {
+	if fromRepo != "" {
 		if wf.WorkflowData.Node.Context.ApplicationID == 0 {
 			return nil, nil, nil, nil, sdk.WithStack(sdk.ErrApplicationMandatoryOnWorkflowAsCode)
 		}

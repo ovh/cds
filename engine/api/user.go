@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"github.com/ovh/cds/engine/api/organization"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -39,7 +40,7 @@ func (api *API) getUserHandler() service.Handler {
 		var u *sdk.AuthentifiedUser
 		var err error
 		if username == "me" {
-			u, err = user.LoadByID(ctx, api.mustDB(), consumer.AuthentifiedUserID, user.LoadOptions.WithOrganization)
+			u, err = user.LoadByID(ctx, api.mustDB(), consumer.AuthConsumerUser.AuthentifiedUserID, user.LoadOptions.WithOrganization)
 		} else {
 			u, err = user.LoadByUsername(ctx, api.mustDB(), username, user.LoadOptions.WithOrganization)
 		}
@@ -74,7 +75,7 @@ func (api *API) putUserHandler() service.Handler {
 
 		var oldUser *sdk.AuthentifiedUser
 		if username == "me" {
-			oldUser, err = user.LoadByID(ctx, tx, consumer.AuthentifiedUserID)
+			oldUser, err = user.LoadByID(ctx, tx, consumer.AuthConsumerUser.AuthentifiedUserID)
 		} else {
 			oldUser, err = user.LoadByUsername(ctx, tx, username)
 		}
@@ -116,7 +117,7 @@ func (api *API) putUserHandler() service.Handler {
 			}
 
 			newUser.Ring = data.Ring
-			log.Debug(ctx, "putUserHandler> %s change ring of user %s from %s to %s", consumer.AuthentifiedUserID, oldUser.ID, oldUser.Ring, newUser.Ring)
+			log.Debug(ctx, "putUserHandler> %s change ring of user %s from %s to %s", consumer.AuthConsumerUser.AuthentifiedUserID, oldUser.ID, oldUser.Ring, newUser.Ring)
 		}
 
 		if err := user.Update(ctx, tx, &newUser); err != nil {
@@ -149,9 +150,14 @@ func (api *API) userSetOrganization(ctx context.Context, db gorpmapper.SqlExecut
 	if org == "" {
 		return nil
 	}
-	isAllowed := len(api.Config.Auth.AllowedOrganizations) == 0 || api.Config.Auth.AllowedOrganizations.Contains(org)
+	isAllowed := api.Config.Auth.AllowedOrganizations.Contains(org)
 	if !isAllowed {
 		return sdk.NewErrorFrom(sdk.ErrForbidden, "user organization %q is not allowed", org)
+	}
+
+	existingOrg, err := organization.LoadOrganizationByName(ctx, db, org)
+	if err != nil {
+		return err
 	}
 
 	if err := user.LoadOptions.WithOrganization(ctx, db, u); err != nil {
@@ -165,9 +171,9 @@ func (api *API) userSetOrganization(ctx context.Context, db gorpmapper.SqlExecut
 	}
 
 	u.Organization = org
-	if err := user.InsertOrganization(ctx, db, &user.Organization{
+	if err := user.InsertUserOrganization(ctx, db, &user.UserOrganization{
 		AuthentifiedUserID: u.ID,
-		Organization:       org,
+		OrganizationID:     existingOrg.ID,
 	}); err != nil {
 		return err
 	}
@@ -201,7 +207,7 @@ func (api *API) deleteUserHandler() service.Handler {
 
 		var u *sdk.AuthentifiedUser
 		if username == "me" {
-			u, err = user.LoadByID(ctx, tx, consumer.AuthentifiedUserID)
+			u, err = user.LoadByID(ctx, tx, consumer.AuthConsumerUser.AuthentifiedUserID)
 		} else {
 			u, err = user.LoadByUsername(ctx, tx, username)
 		}

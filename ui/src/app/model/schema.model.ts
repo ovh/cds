@@ -3,6 +3,7 @@ import { Schema } from 'jsonschema';
 export class JSONSchema implements Schema {
 
     static defPrefix = '#/definitions/';
+    static refPrefix = '#/$defs/';
     static flat(schema: Schema): FlatSchema {
         let root = schema.$ref.replace(JSONSchema.defPrefix, '');
         let flatElts = new Array<FlatElement>();
@@ -15,7 +16,9 @@ export class JSONSchema implements Schema {
     }
 
     static browse(schema: Schema, flatSchema: Array<FlatElement>, elt: string, tree: Array<string>): Schema[] {
-        let defElt = schema.definitions[elt];
+        let currentType = elt.replace(JSONSchema.refPrefix, '');
+        let defs = schema['$defs']
+        let defElt = defs[currentType];
         let properties = defElt.properties;
         let oneOf = defElt.oneOf;
         if (properties) {

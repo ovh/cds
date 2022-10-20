@@ -1,7 +1,7 @@
 package sdk
 
 var (
-	GlobalRoles = []string{RoleCreateProject, RoleManagePermission}
+	GlobalRoles = []string{GlobalRoleProjectCreate, GlobalRoleManagePermission, GlobalRoleManageOrganization, GlobalRoleManageRegion, GlobalRoleManageUser, GlobalRoleManageGroup, GlobalRoleManageHatchery}
 )
 
 type RBACGlobal struct {
@@ -19,14 +19,8 @@ func isValidRBACGlobal(rbacName string, rg RBACGlobal) error {
 	if rg.Role == "" {
 		return NewErrorFrom(ErrInvalidData, "rbac %s: role for global permission cannot be empty", rbacName)
 	}
-	roleFound := false
-	for _, r := range GlobalRoles {
-		if rg.Role == r {
-			roleFound = true
-			break
-		}
-	}
-	if !roleFound {
+
+	if !IsInArray(rg.Role, GlobalRoles) {
 		return NewErrorFrom(ErrInvalidData, "rbac %s: role %s is not allowed on a global permission", rbacName, rg.Role)
 	}
 	return nil

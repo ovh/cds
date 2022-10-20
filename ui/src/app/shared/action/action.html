@@ -23,12 +23,9 @@
                     </nz-form-item>
                 </nz-col>
                 <nz-col [nzSpan]="3">
-                    <div class="ui checkbox">
-                        <input type="checkbox" id="enabled_action_{{editableAction.id}}" name="enabled"
-                               [(ngModel)]="editableAction.enabled" (change)="editableAction.hasChanged = true"
-                               [disabled]="!edit">
-                        <label for="enabled_action_{{editableAction.id}}">{{ 'common_enable' | translate }}</label>
-                    </div>
+                    <label nz-checkbox id="enabled_action_{{editableAction.id}}" name="enabled"
+                           [(ngModel)]="editableAction.enabled"  (change)="editableAction.hasChanged = true"
+                            [disabled]="!edit">Enabled</label>
                 </nz-col>
                 <nz-col [nzSpan]="4">
                     <a class="pointing"

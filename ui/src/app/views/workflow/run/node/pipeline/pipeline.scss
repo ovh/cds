@@ -39,36 +39,36 @@
                         :host-context(.night) & {
                             color: $darkTheme_grey_6;
 
-                            .success.segment {
+                            .success.nzSegment {
                                 background-color: $darkTheme_night_green;
                             }
 
-                            .fail.segment {
+                            .fail.nzSegment {
                                 background-color: $darkTheme_night_red;
                             }
 
-                            .inactive.segment {
+                            .inactive.nzSegment {
                                 background-color: $darkTheme_night_grey;
                             }
 
-                            .building.segment {
+                            .building.nzSegment {
                                 background-color: $darkTheme_night_blue;
                             }
                         }
 
-                        .success.segment {
+                        .success.nzSegment {
                             background-color: $cds_color_light_green;
                         }
 
-                        .fail.segment {
+                        .fail.nzSegment {
                             background-color: $cds_color_light_red;
                         }
 
-                        .inactive.segment {
+                        .inactive.nzSegment {
                             background-color: $cds_color_light_grey;
                         }
 
-                        .building.segment {
+                        .building.nzSegment {
                             background-color: $cds_color_light_teal;
                         }
 
@@ -110,9 +110,10 @@
                     }
                 }
 
-                .job.ui.segment {
+                .job.nzSegment {
                     height: 51px;
                     padding: 0;
+                    border: 2px solid transparent;
 
                     .title {
                         padding: 5px;
@@ -132,7 +133,7 @@
                     .duration {
                         position: absolute;
                         right: 4px;
-                        bottom: -3px;
+                        bottom: 4px;
                         color: gray;
                         font-size: 0.8rem;
                         font-weight: 600;
@@ -140,17 +141,13 @@
 
                     .warningPip {
                         position: absolute;
-                        right: 0px;
-                        top: 2px;
+                        right: 4px;
+                        top: 4px;
                         font-size: 1rem;
                     }
                 }
 
-                .job.ui.segment {
-                    border: 2px solid transparent;
-                }
-
-                .job.ui.segment.active {
+                .job.nzSegment.active {
                     border: 2px solid $cds_color_teal;
                 }
             }
@@ -220,4 +217,8 @@
             }
         }
     }
+}
+
+.orange {
+  color: $cds_color_orange;
 }

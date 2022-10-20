@@ -1,7 +1,9 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
+	"github.com/ovh/cds/engine/api/organization"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -87,9 +89,10 @@ func Test_putUserHandler(t *testing.T) {
 				Ring:     initial.Ring,
 			},
 			Expected: sdk.AuthentifiedUser{
-				Username: initial.Username,
-				Fullname: initialNewFullname,
-				Ring:     initial.Ring,
+				Username:     initial.Username,
+				Fullname:     initialNewFullname,
+				Ring:         initial.Ring,
+				Organization: "default",
 			},
 			ExpectedStatus: http.StatusOK,
 		},
@@ -103,9 +106,10 @@ func Test_putUserHandler(t *testing.T) {
 				Ring:     sdk.UserRingAdmin,
 			},
 			Expected: sdk.AuthentifiedUser{
-				Username: initial.Username,
-				Fullname: initialNewFullname,
-				Ring:     initial.Ring,
+				Username:     initial.Username,
+				Fullname:     initialNewFullname,
+				Ring:         initial.Ring,
+				Organization: "default",
 			},
 			ExpectedStatus: http.StatusOK,
 		},
@@ -119,9 +123,10 @@ func Test_putUserHandler(t *testing.T) {
 				Ring:     sdk.UserRingMaintainer,
 			},
 			Expected: sdk.AuthentifiedUser{
-				Username: initial.Username,
-				Fullname: initialNewFullname,
-				Ring:     sdk.UserRingMaintainer,
+				Username:     initial.Username,
+				Fullname:     initialNewFullname,
+				Ring:         sdk.UserRingMaintainer,
+				Organization: "default",
 			},
 			ExpectedStatus: http.StatusOK,
 		},
@@ -135,9 +140,10 @@ func Test_putUserHandler(t *testing.T) {
 				Ring:     sdk.UserRingMaintainer,
 			},
 			Expected: sdk.AuthentifiedUser{
-				Username: admin1.Username,
-				Fullname: admin1.Fullname,
-				Ring:     sdk.UserRingMaintainer,
+				Username:     admin1.Username,
+				Fullname:     admin1.Fullname,
+				Ring:         sdk.UserRingMaintainer,
+				Organization: "default",
 			},
 			ExpectedStatus: http.StatusOK,
 		},
@@ -146,9 +152,10 @@ func Test_putUserHandler(t *testing.T) {
 			JWT:            jwtAdmin2Raw,
 			TargetUsername: admin2.Username,
 			Data: sdk.AuthentifiedUser{
-				Username: admin2.Username,
-				Fullname: admin2.Fullname,
-				Ring:     sdk.UserRingMaintainer,
+				Username:     admin2.Username,
+				Fullname:     admin2.Fullname,
+				Ring:         sdk.UserRingMaintainer,
+				Organization: "default",
 			},
 			ExpectedStatus: http.StatusForbidden,
 		},
@@ -166,25 +173,7 @@ func Test_putUserHandler(t *testing.T) {
 				Username:     initial.Username,
 				Fullname:     initialNewFullname,
 				Ring:         sdk.UserRingMaintainer,
-				Organization: "",
-			},
-			ExpectedStatus: http.StatusOK,
-		},
-		{
-			Name:           "A admin user can set user organization",
-			JWT:            jwtAdmin2Raw,
-			TargetUsername: initial.Username,
-			Data: sdk.AuthentifiedUser{
-				Username:     initial.Username,
-				Fullname:     initialNewFullname,
-				Ring:         sdk.UserRingMaintainer,
-				Organization: "my-org",
-			},
-			Expected: sdk.AuthentifiedUser{
-				Username:     initial.Username,
-				Fullname:     initialNewFullname,
-				Ring:         sdk.UserRingMaintainer,
-				Organization: "my-org",
+				Organization: "default",
 			},
 			ExpectedStatus: http.StatusOK,
 		},
@@ -201,6 +190,11 @@ func Test_putUserHandler(t *testing.T) {
 			ExpectedStatus: http.StatusForbidden,
 		},
 	}
+
+	o := sdk.Organization{Name: "my-org"}
+	require.NoError(t, organization.Insert(context.TODO(), db, &o))
+	o2 := sdk.Organization{Name: "my-other-org"}
+	require.NoError(t, organization.Insert(context.TODO(), db, &o2))
 
 	for _, c := range cases {
 		t.Run(c.Name, func(t *testing.T) {

@@ -227,7 +227,11 @@ func (c *client) WorkflowAccess(ctx context.Context, projectKey string, workflow
 }
 
 func (c *client) WorkflowLogDownload(ctx context.Context, link sdk.CDNLogLink) ([]byte, error) {
-	downloadURL := fmt.Sprintf("%s/item/%s/%s/download", link.CDNURL, link.ItemType, link.APIRef)
+	cdnURL, err := c.CDNURL()
+	if err != nil {
+		return nil, err
+	}
+	downloadURL := fmt.Sprintf("%s/item/%s/%s/download", cdnURL, link.ItemType, link.APIRef)
 	data, _, _, err := c.Request(context.Background(), http.MethodGet, downloadURL, nil, func(req *http.Request) {
 		auth := "Bearer " + c.config.SessionToken
 		req.Header.Add("Authorization", auth)

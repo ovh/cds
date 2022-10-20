@@ -52,7 +52,9 @@ jobs:
             lineWrapping: true,
             lineNumbers: true,
             autoRefresh: true,
+            theme: 'night' ? 'darcula' : 'default'
         };
+
     }
 
     createPipeline(): void {

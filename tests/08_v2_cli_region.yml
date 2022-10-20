@@ -1,0 +1,24 @@
+name: Project Region Command TestSuite
+testcases:
+- name: prepare test
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental region remove my-region --force
+
+- name: add new region
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental region add my-region
+
+- name: get and list region
+  steps:
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental region get my-region --format json
+      assertions:
+        - result.code ShouldEqual 0
+        - result.systemoutjson.name ShouldEqual my-region
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental region list --format json
+      assertions:
+        - result.code ShouldEqual 0
+        - result.systemoutjson.systemoutjson0.name ShouldEqual "my-region"
+
+- name: remove region
+  steps:
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental region delete my-region --force

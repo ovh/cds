@@ -11,7 +11,7 @@ import (
 var _ sdk.AuthDriver = new(AuthDriver)
 
 // NewDriver returns a new initialized driver for local authentication.
-func NewDriver(ctx context.Context, signupDisabled bool, uiURL, allowedDomains string) sdk.AuthDriver {
+func NewDriver(ctx context.Context, signupDisabled bool, uiURL, allowedDomains string, orga string) sdk.AuthDriver {
 	var domains []string
 
 	if allowedDomains != "" {
@@ -21,6 +21,7 @@ func NewDriver(ctx context.Context, signupDisabled bool, uiURL, allowedDomains s
 	return &AuthDriver{
 		signupDisabled: signupDisabled,
 		allowedDomains: domains,
+		organization:   orga,
 	}
 }
 
@@ -28,6 +29,7 @@ func NewDriver(ctx context.Context, signupDisabled bool, uiURL, allowedDomains s
 type AuthDriver struct {
 	signupDisabled bool
 	allowedDomains []string
+	organization   string
 }
 
 // GetManifest .
@@ -117,6 +119,5 @@ func (d AuthDriver) isAllowedDomain(email string) bool {
 
 // GetUserInfo .
 func (d AuthDriver) GetUserInfo(ctx context.Context, req sdk.AuthConsumerSigninRequest) (sdk.AuthDriverUserInfo, error) {
-	// not used for local auth
-	return sdk.AuthDriverUserInfo{}, nil
+	return sdk.AuthDriverUserInfo{Organization: d.organization}, nil
 }

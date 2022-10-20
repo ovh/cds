@@ -106,7 +106,7 @@ func NewProviderClient(cfg ProviderConfig) ProviderClient {
 	conf := Config{
 		Host:                              cfg.Host,
 		Retry:                             2,
-		BuitinConsumerAuthenticationToken: cfg.Token,
+		BuiltinConsumerAuthenticationToken: cfg.Token,
 		InsecureSkipVerifyTLS:             cfg.InsecureSkipVerifyTLS,
 	}
 
@@ -129,7 +129,7 @@ func NewServiceClient(ctx context.Context, clientConfig ServiceConfig, registerP
 	conf := Config{
 		Host:                              clientConfig.Host,
 		Retry:                             2,
-		BuitinConsumerAuthenticationToken: clientConfig.Token,
+		BuiltinConsumerAuthenticationToken: clientConfig.Token,
 		InsecureSkipVerifyTLS:             clientConfig.InsecureSkipVerifyTLS,
 	}
 
@@ -188,6 +188,17 @@ func (c *client) init() {
 
 func (c *client) APIURL() string {
 	return c.config.Host
+}
+
+func (c *client) CDNURL() (string, error) {
+	if c.config.CDNHost == "" {
+		confCDN, err := c.ConfigCDN()
+		if err != nil {
+			return "", err
+		}
+		c.config.CDNHost = confCDN.HTTPURL
+	}
+	return c.config.CDNHost, nil
 }
 
 func (c *client) HTTPClient() *http.Client {

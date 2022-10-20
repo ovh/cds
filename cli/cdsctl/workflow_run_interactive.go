@@ -19,13 +19,6 @@ func workflowRunInteractive(v cli.Values, w *sdk.WorkflowRun, baseURL string) er
 	projectKey := v.GetString(_ProjectKey)
 	workflowName := v.GetString(_WorkflowName)
 
-	feature, err := client.FeatureEnabled(sdk.FeatureCDNJobLogs, map[string]string{
-		"project_key": projectKey,
-	})
-	if err != nil {
-		return err
-	}
-
 	for {
 		var errrg error
 		wo, errrg = client.WorkflowRunGet(projectKey, v.GetString(_WorkflowName), w.Number)
@@ -51,23 +44,20 @@ func workflowRunInteractive(v cli.Values, w *sdk.WorkflowRun, baseURL string) er
 
 						jobLine := fmt.Sprintf("%s  %s/%s/%s/%s %s %s \n", status, v.GetString(_WorkflowName), wnr.WorkflowNodeName, stage.Name, job.Job.Action.Name, start, end)
 						if job.Status == sdk.StatusFail {
-							newOutput += fmt.Sprintf(tm.Color(tm.Bold(jobLine), tm.RED))
+							newOutput += tm.Color(tm.Bold(jobLine), tm.RED)
 						} else {
-							newOutput += fmt.Sprintf(tm.Bold(jobLine))
+							newOutput += tm.Bold(jobLine)
 						}
 
 						for _, info := range job.SpawnInfos {
 							newOutput += fmt.Sprintf("\nInformations: %s - %s", info.APITime, info.UserMessage)
 						}
-						newOutput += fmt.Sprintf("\n")
+						newOutput += "\n"
 
 						for _, step := range job.Job.StepStatus {
-							var link *sdk.CDNLogLink
-							if feature.Enabled {
-								link, err = client.WorkflowNodeRunJobStepLink(context.Background(), projectKey, workflowName, wnr.ID, job.ID, int64(step.StepOrder))
-								if err != nil {
-									return err
-								}
+							link, err := client.WorkflowNodeRunJobStepLink(context.Background(), projectKey, workflowName, wnr.ID, job.ID, int64(step.StepOrder))
+							if err != nil {
+								return err
 							}
 
 							buf, err := client.WorkflowLogDownload(context.Background(), *link)
@@ -76,9 +66,9 @@ func workflowRunInteractive(v cli.Values, w *sdk.WorkflowRun, baseURL string) er
 							}
 							data := string(buf)
 
-							vSplitted := strings.Split(data, "\n")
+							vSplit := strings.Split(data, "\n")
 							failedOnStepKnowned := false
-							for _, line := range vSplitted {
+							for _, line := range vSplit {
 								line = strings.Trim(line, " ")
 								titleStep := fmt.Sprintf("%s / step %d", job.Job.Action.Name, step.StepOrder)
 								// RED color on step failed

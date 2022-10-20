@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/ovh/cds/engine/api/organization"
 	"testing"
 	"time"
 
@@ -27,6 +28,46 @@ import (
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 )
+
+func Test_getAdminOrganizationCRUD(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	_, jwt := assets.InsertAdminUser(t, db)
+
+	orga := sdk.Organization{
+		Name: sdk.RandomString(10),
+	}
+	uri := api.Router.GetRoute("POST", api.postAdminOrganizationHandler, nil)
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, &orga)
+
+	// Do the request
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 201, w.Code)
+
+	uriList := api.Router.GetRoute("GET", api.getAdminOrganizationsHandler, nil)
+	reqList := assets.NewJWTAuthentifiedRequest(t, jwt, "GET", uriList, nil)
+	wList := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(wList, reqList)
+
+	var orgs []sdk.Organization
+	assert.Equal(t, 200, wList.Code)
+	body := wList.Body.Bytes()
+	require.NoError(t, json.Unmarshal(body, &orgs))
+
+	require.Equal(t, 2, len(orgs))
+
+	uriDelete := api.Router.GetRoute("DELETE", api.deleteAdminOrganizationsHandler, map[string]string{"organizationIdentifier": orgs[1].Name})
+	reqDelete := assets.NewJWTAuthentifiedRequest(t, jwt, "DELETE", uriDelete, nil)
+	wDelete := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(wDelete, reqDelete)
+	require.Equal(t, 204, wDelete.Code)
+
+	orgsDb, err := organization.LoadOrganizations(context.TODO(), db)
+	require.NoError(t, err)
+	require.Equal(t, 1, len(orgsDb))
+
+}
 
 func Test_getAdminDatabaseSignatureResume(t *testing.T) {
 	api, db, _ := newTestAPI(t)

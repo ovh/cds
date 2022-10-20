@@ -69,22 +69,23 @@
 <!-- HISTORY -->
 <div class="history" *ngIf="overview?.history">
     <h4>{{ 'application_home_history' | translate }}</h4>
-    <div class="ui stackable three cards">
-        <ng-container *ngFor="let k of overview.history | keys">
-            <div class="ui card">
-                <div class="content">
+    <nz-row [nzGutter]="{ xs: 8, sm: 16, md: 24, lg: 32 }">
+        <nz-col class="cardContainer" *ngFor="let k of overview.history | keys" [nzSpan]="6">
+            <div class="entity-card">
+                <div class="title">
                     <a class="header" [routerLink]="['/project', project.key, 'workflow', k]">{{k}}</a>
-                    <div class="description">
-                        <div *ngFor="let h of overview.history[k]">
-                            <i class="icon ribbon-state success"></i>
-                            <a class="info" [routerLink]="['/project', project.key, 'workflow', k, 'run', h.num]">
-                                {{'#' + h.num + ' - '}}
-                                {{ h.last_modified | amTimeAgo}}
-                            </a>
-                        </div>
+                </div>
+                <div class="description">
+                    <div *ngFor="let h of overview.history[k]">
+                        <i class="icon ribbon-state success"></i>
+                        <a class="info" [routerLink]="['/project', project.key, 'workflow', k, 'run', h.num]">
+                            {{'#' + h.num + ' - '}}
+                            {{ h.last_modified | amTimeAgo}}
+                        </a>
                     </div>
                 </div>
             </div>
-        </ng-container>
-    </div>
+
+        </nz-col>
+    </nz-row>
 </div>

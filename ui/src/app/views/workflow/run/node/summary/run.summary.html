@@ -1,19 +1,17 @@
 <div id="summary" *ngIf="nodeRunStatus" [class.success]="nodeRunStatus === pipelineStatusEnum.SUCCESS"
     [class.fail]="nodeRunStatus === pipelineStatusEnum.FAIL || nodeRunStatus === pipelineStatusEnum.STOPPED"
     [class.building]="nodeRunStatus === pipelineStatusEnum.BUILDING || nodeRunStatus === pipelineStatusEnum.WAITING">
-    <div class="ui grid">
-        <div class="row">
-            <div class="three wide column"></div>
-            <div class="ten wide column animated fadeInDown winfo">
-                <div class="ui raised card cardinfo"
+
+        <nz-row>
+            <nz-col [nzSpan]="16" class="winfo" [nzOffset]="4">
+                <div class="cardinfo"
                     [class.building]="nodeRunStatus === pipelineStatusEnum.BUILDING || nodeRunStatus === pipelineStatusEnum.WAITING"
                     [class.success]="nodeRunStatus === pipelineStatusEnum.SUCCESS"
                     [class.fail]="nodeRunStatus === pipelineStatusEnum.FAIL || nodeRunStatus === pipelineStatusEnum.STOPPED"
                     [class.inactive]="nodeRunStatus === pipelineStatusEnum.DISABLED || nodeRunStatus === pipelineStatusEnum.SKIPPED">
                     <div class="content">
-                        <div class="ui grid">
-                            <div class="row">
-                                <div class="five wide column" title="{{ 'common_pipeline' | translate }}"
+                            <nz-row>
+                                <nz-col [nzSpan]="8" title="{{ 'common_pipeline' | translate }}"
                                     *ngIf="node && node.context && node.context.pipeline_id">
                                     <a href="#"
                                         [routerLink]="['/project', project.key, 'pipeline', workflow.pipelines[node.context.pipeline_id].name]"
@@ -22,22 +20,21 @@
                                         <i class="sitemap icon"></i>
                                         {{workflow.pipelines[node.context.pipeline_id].name + ' ' + nodeRunNum + '.' + nodeRunSubNum}}
                                     </a>
-                                </div>
-                                <div class="five wide column centered"
+                                </nz-col>
+                                <nz-col [nzSpan]="8" class="center"
                                     title="{{ 'common_pipeline_start_title' | translate }}">
                                     <i
                                         class="calendar icon"></i>{{nodeRunStart | amLocal | amDateFormat: 'DD/MM/YYYY HH:mm' }}
-                                </div>
-                                <div class="five wide column" title="{{ 'common_duration_title' | translate }}">
+                                </nz-col>
+                                <nz-col [nzSpan]="8" title="{{ 'common_duration_title' | translate }}">
                                     <div class="right floated"
                                         *ngIf="nodeRunStatus !== pipelineStatusEnum.BUILDING && nodeRunStatus !== pipelineStatusEnum.WAITING">
                                         <i class="clock outline icon"></i>{{duration}}
                                     </div>
-                                </div>
-                            </div>
-                            <div class="row"
-                                *ngIf="node && node.context && (node.context.application_id || node.context.environment_id) && node.context.pipeline_id">
-                                <div class="five wide column" title="{{'common_application' | translate}}">
+                                </nz-col>
+                            </nz-row>
+                            <nz-row *ngIf="node && node.context && (node.context.application_id || node.context.environment_id) && node.context.pipeline_id">
+                                <nz-col [nzSpan]="8" title="Application">
                                     <ng-container *ngIf="node.context.application_id">
                                         <a href="#"
                                             [routerLink]="['/project', project.key, 'application', workflow.applications[node.context.application_id].name]"
@@ -46,8 +43,8 @@
                                             {{workflow.applications[node.context.application_id].name}}
                                         </a>
                                     </ng-container>
-                                </div>
-                                <div class="five wide column centered" title="{{ 'common_environment' | translate }}">
+                                </nz-col>
+                                <nz-col [nzSpan]="8" title="Environment" class="center">
                                     <ng-container *ngIf="node.context.environment_id">
                                         <a href="#" [routerLink]="['/project', project.key]"
                                             [queryParams]="{ tab: 'environments', envName: workflow.environments[node.context.environment_id].name,workflow: workflow.name, run: nodeRunNum, node: nodeRunID, wpipeline: workflow.pipelines[node.context.pipeline_id].name }">
@@ -55,27 +52,25 @@
                                             {{workflow.environments[node.context.environment_id].name}}
                                         </a>
                                     </ng-container>
-                                </div>
-                                <div class="five wide column"></div>
-                            </div>
-                            <div class="row">
-                                <div class="right aligned column">
+                                </nz-col>
+                            </nz-row>
+                            <nz-row>
+                                <nz-col [nzSpan]="24" class="rightAlign">
                                     <div class="ui buttons"
-                                        *ngIf="nodeRunStatus !== pipelineStatusEnum.BUILDING && nodeRunStatus !== pipelineStatusEnum.WAITING">
+                                         *ngIf="nodeRunStatus !== pipelineStatusEnum.BUILDING && nodeRunStatus !== pipelineStatusEnum.WAITING">
                                         <button class="ui green basic button" [class.loading]="loading"
-                                            [disabled]="loading || readOnlyRun"
-                                            (click)="runNewWithParameter()">{{ 'pipeline_label_run_with_parameter' | translate }}</button>
+                                                [disabled]="loading || readOnlyRun"
+                                                (click)="runNewWithParameter()">{{ 'pipeline_label_run_with_parameter' | translate }}</button>
                                     </div>
                                     <button class="ui green basic button" [class.loading]="loading" [disabled]="loading"
-                                        (click)="stop()"
-                                        *ngIf="nodeRunStatus === pipelineStatusEnum.WAITING || nodeRunStatus === pipelineStatusEnum.BUILDING">{{ 'pipeline_label_stop' | translate }}</button>
-                                </div>
-                            </div>
-                        </div>
+                                            (click)="stop()"
+                                            *ngIf="nodeRunStatus === pipelineStatusEnum.WAITING || nodeRunStatus === pipelineStatusEnum.BUILDING">{{ 'pipeline_label_stop' | translate }}</button>
+                                </nz-col>
+                            </nz-row>
+
                     </div>
                 </div>
-            </div>
-            <div class="three wide column"></div>
-        </div>
-    </div>
+            </nz-col>
+        </nz-row>
+
 </div>

@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -1763,7 +1762,7 @@ func Test_putWorkflowWithDuplicateHooksShouldRaiseAnError(t *testing.T) {
 	router.Mux.ServeHTTP(w, req)
 	require.Equal(t, 200, w.Code)
 
-	btes, err := ioutil.ReadAll(w.Body)
+	btes, err := io.ReadAll(w.Body)
 	require.NoError(t, err)
 
 	var resultWorkflow sdk.Workflow
@@ -1845,8 +1844,8 @@ func Test_getWorkflowsHandler_FilterByRepo(t *testing.T) {
 
 	// Call with an admin
 	sdkclientAdmin := cdsclient.New(cdsclient.Config{
-		Host:                              tsURL,
-		BuitinConsumerAuthenticationToken: jws,
+		Host:                               tsURL,
+		BuiltinConsumerAuthenticationToken: jws,
 	})
 
 	wfs, err := sdkclientAdmin.WorkflowList(proj.Key, cdsclient.WithQueryParameter("repo", "ovh/"+repofullName))
@@ -1947,8 +1946,8 @@ func Test_getSearchWorkflowHandler(t *testing.T) {
 
 	// Call with an admin
 	sdkclientAdmin := cdsclient.New(cdsclient.Config{
-		Host:                              tsURL,
-		BuitinConsumerAuthenticationToken: jws,
+		Host:                               tsURL,
+		BuiltinConsumerAuthenticationToken: jws,
 	})
 
 	wfs, err := sdkclientAdmin.WorkflowSearch(

@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"github.com/ovh/cds/engine/api/organization"
 	"reflect"
 	"testing"
 	"time"
@@ -32,10 +33,10 @@ func Test_checkWorkflowPermissions(t *testing.T) {
 
 	ctx = context.WithValue(ctx, contextDriverManifest, &sdk.AuthDriverManifest{})
 
-	consumer := &sdk.AuthConsumer{}
+	consumer := &sdk.AuthConsumer{AuthConsumerUser: &sdk.AuthConsumerUser{}}
 
 	// test case: has enough permission
-	consumer.AuthentifiedUser = user
+	consumer.AuthConsumerUser.AuthentifiedUser = user
 	ctx = context.WithValue(ctx, contextConsumer, consumer)
 	err := api.checkWorkflowPermissions(ctx, &responseTracker{}, wctx.workflow.Name, sdk.PermissionReadWriteExecute, map[string]string{
 		"key":              wctx.project.Key,
@@ -44,9 +45,9 @@ func Test_checkWorkflowPermissions(t *testing.T) {
 	assert.NoError(t, err, "should be granted because has permission (max permission = 7)")
 
 	// test case: is Admin
-	consumer.GroupIDs = nil
-	consumer.AuthentifiedUser.Groups = nil
-	consumer.AuthentifiedUser = admin
+	consumer.AuthConsumerUser.GroupIDs = nil
+	consumer.AuthConsumerUser.AuthentifiedUser.Groups = nil
+	consumer.AuthConsumerUser.AuthentifiedUser = admin
 	ctx = context.WithValue(ctx, contextConsumer, consumer)
 	err = api.checkWorkflowPermissions(ctx, &responseTracker{}, wctx.workflow.Name, sdk.PermissionReadWriteExecute, map[string]string{
 		"key":              wctx.project.Key,
@@ -55,9 +56,9 @@ func Test_checkWorkflowPermissions(t *testing.T) {
 	assert.NoError(t, err, "should be granted because because is admin")
 
 	// test case: is Maintainer
-	consumer.GroupIDs = nil
-	consumer.AuthentifiedUser.Groups = nil
-	consumer.AuthentifiedUser = maintainer
+	consumer.AuthConsumerUser.GroupIDs = nil
+	consumer.AuthConsumerUser.AuthentifiedUser.Groups = nil
+	consumer.AuthConsumerUser.AuthentifiedUser = maintainer
 	ctx = context.WithValue(ctx, contextConsumer, consumer)
 	err = api.checkWorkflowPermissions(ctx, &responseTracker{}, wctx.workflow.Name, sdk.PermissionRead, map[string]string{
 		"key":              wctx.project.Key,
@@ -66,10 +67,10 @@ func Test_checkWorkflowPermissions(t *testing.T) {
 	assert.NoError(t, err, "should be granted because because is maintainer")
 
 	// test case: forbidden
-	consumer.GroupIDs = nil
-	consumer.AuthentifiedUser.Groups = nil
-	consumer.AuthentifiedUser.Ring = ""
-	consumer.AuthentifiedUser = user
+	consumer.AuthConsumerUser.GroupIDs = nil
+	consumer.AuthConsumerUser.AuthentifiedUser.Groups = nil
+	consumer.AuthConsumerUser.AuthentifiedUser.Ring = ""
+	consumer.AuthConsumerUser.AuthentifiedUser = user
 	ctx = context.WithValue(ctx, contextConsumer, consumer)
 	err = api.checkWorkflowPermissions(ctx, &responseTracker{}, wctx.workflow.Name, sdk.PermissionRead, map[string]string{
 		"key":              wctx.project.Key,
@@ -79,9 +80,9 @@ func Test_checkWorkflowPermissions(t *testing.T) {
 
 	// test case: worker for same project
 	w2ctx := testRunWorkflowForProject(t, api, api.Router, wctx.project, wctx.userToken)
-	consumer.GroupIDs = nil
-	consumer.AuthentifiedUser = admin
-	consumer.Worker = &sdk.Worker{
+	consumer.AuthConsumerUser.GroupIDs = nil
+	consumer.AuthConsumerUser.AuthentifiedUser = admin
+	consumer.AuthConsumerUser.Worker = &sdk.Worker{
 		JobRunID: &wctx.job.ID,
 	}
 	ctx = context.WithValue(ctx, contextConsumer, consumer)
@@ -98,9 +99,9 @@ func Test_checkWorkflowPermissions(t *testing.T) {
 
 	// test case: worker for different project
 	w3ctx := testRunWorkflow(t, api, api.Router)
-	consumer.GroupIDs = nil
-	consumer.AuthentifiedUser = admin
-	consumer.Worker = &sdk.Worker{
+	consumer.AuthConsumerUser.GroupIDs = nil
+	consumer.AuthConsumerUser.AuthentifiedUser = admin
+	consumer.AuthConsumerUser.Worker = &sdk.Worker{
 		JobRunID: &wctx.job.ID,
 	}
 	ctx = context.WithValue(ctx, contextConsumer, consumer)
@@ -130,8 +131,8 @@ func Test_checkProjectPermissions(t *testing.T) {
 	require.NoError(t, err)
 	authUser.Groups = groups
 
-	var consumer sdk.AuthConsumer
-	consumer.AuthentifiedUser = authUser
+	consumer := sdk.AuthConsumer{AuthConsumerUser: &sdk.AuthConsumerUser{}}
+	consumer.AuthConsumerUser.AuthentifiedUser = authUser
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, contextDriverManifest, &sdk.AuthDriverManifest{})
 
@@ -141,24 +142,24 @@ func Test_checkProjectPermissions(t *testing.T) {
 	assert.NoError(t, err, "should be granted because has permission (max permission = 7)")
 
 	// test case: is Admin
-	consumer.AuthentifiedUser.Ring = sdk.UserRingAdmin
-	consumer.GroupIDs = nil
-	consumer.AuthentifiedUser.Groups = nil
+	consumer.AuthConsumerUser.AuthentifiedUser.Ring = sdk.UserRingAdmin
+	consumer.AuthConsumerUser.GroupIDs = nil
+	consumer.AuthConsumerUser.AuthentifiedUser.Groups = nil
 	ctx = context.WithValue(ctx, contextConsumer, &consumer)
 	err = api.checkProjectPermissions(ctx, &responseTracker{}, p.Key, sdk.PermissionReadWriteExecute, nil)
 	assert.NoError(t, err, "should be granted because because is admin")
 
 	// test case: is Maintainer
-	consumer.GroupIDs = nil
-	consumer.AuthentifiedUser.Groups = nil
+	consumer.AuthConsumerUser.GroupIDs = nil
+	consumer.AuthConsumerUser.AuthentifiedUser.Groups = nil
 	ctx = context.WithValue(ctx, contextConsumer, &consumer)
 	err = api.checkProjectPermissions(ctx, &responseTracker{}, p.Key, sdk.PermissionRead, nil)
 	assert.NoError(t, err, "should be granted because because is maintainer")
 
 	// test case: forbidden
-	consumer.GroupIDs = nil
-	consumer.AuthentifiedUser.Groups = nil
-	consumer.AuthentifiedUser.Ring = ""
+	consumer.AuthConsumerUser.GroupIDs = nil
+	consumer.AuthConsumerUser.AuthentifiedUser.Groups = nil
+	consumer.AuthConsumerUser.AuthentifiedUser.Ring = ""
 	ctx = context.WithValue(ctx, contextConsumer, &consumer)
 	err = api.checkProjectPermissions(ctx, &responseTracker{}, p.Key, sdk.PermissionRead, nil)
 	assert.Error(t, err, "should not be granted")
@@ -232,9 +233,11 @@ func Test_checkUserPermissions(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.Name, func(t *testing.T) {
 			ctx := context.WithValue(context.TODO(), contextConsumer, &sdk.AuthConsumer{
-				AuthentifiedUserID: c.ConsumerAuthentifiedUser.ID,
-				AuthentifiedUser:   c.ConsumerAuthentifiedUser,
-				ValidityPeriods:    sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+				AuthConsumerUser: &sdk.AuthConsumerUser{
+					AuthentifiedUserID: c.ConsumerAuthentifiedUser.ID,
+					AuthentifiedUser:   c.ConsumerAuthentifiedUser,
+				},
+				ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
 			})
 			ctx = context.WithValue(ctx, contextDriverManifest, &sdk.AuthDriverManifest{})
 			err := api.checkUserPermissions(ctx, &responseTracker{}, c.TargetAuthentifiedUser.Username, c.Permission, nil)
@@ -315,9 +318,11 @@ func Test_checkUserPublicPermissions(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.Name, func(t *testing.T) {
 			ctx := context.WithValue(context.TODO(), contextConsumer, &sdk.AuthConsumer{
-				AuthentifiedUserID: c.ConsumerAuthentifiedUser.ID,
-				AuthentifiedUser:   c.ConsumerAuthentifiedUser,
-				ValidityPeriods:    sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+				AuthConsumerUser: &sdk.AuthConsumerUser{
+					AuthentifiedUserID: c.ConsumerAuthentifiedUser.ID,
+					AuthentifiedUser:   c.ConsumerAuthentifiedUser,
+				},
+				ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
 			})
 			ctx = context.WithValue(ctx, contextDriverManifest, &sdk.AuthDriverManifest{})
 			err := api.checkUserPublicPermissions(ctx, &responseTracker{}, c.TargetAuthentifiedUser.Username, c.Permission, nil)
@@ -402,9 +407,11 @@ func Test_checkConsumerPermissions(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.Name, func(t *testing.T) {
 			ctx := context.WithValue(context.TODO(), contextConsumer, &sdk.AuthConsumer{
-				AuthentifiedUserID: c.ConsumerAuthentifiedUser.ID,
-				AuthentifiedUser:   c.ConsumerAuthentifiedUser,
-				ValidityPeriods:    sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+				AuthConsumerUser: &sdk.AuthConsumerUser{
+					AuthentifiedUserID: c.ConsumerAuthentifiedUser.ID,
+					AuthentifiedUser:   c.ConsumerAuthentifiedUser,
+				},
+				ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
 			})
 			ctx = context.WithValue(ctx, contextDriverManifest, &sdk.AuthDriverManifest{})
 			err := api.checkConsumerPermissions(ctx, &responseTracker{}, c.TargetConsumer.ID, c.Permission, nil)
@@ -493,9 +500,11 @@ func Test_checkSessionPermissions(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.Name, func(t *testing.T) {
 			ctx := context.WithValue(context.TODO(), contextConsumer, &sdk.AuthConsumer{
-				AuthentifiedUserID: c.ConsumerAuthentifiedUser.ID,
-				AuthentifiedUser:   c.ConsumerAuthentifiedUser,
-				ValidityPeriods:    sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+				AuthConsumerUser: &sdk.AuthConsumerUser{
+					AuthentifiedUserID: c.ConsumerAuthentifiedUser.ID,
+					AuthentifiedUser:   c.ConsumerAuthentifiedUser,
+				},
+				ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
 			})
 			ctx = context.WithValue(ctx, contextDriverManifest, &sdk.AuthDriverManifest{})
 			err := api.checkSessionPermissions(ctx, &responseTracker{}, c.TargetSession.ID, c.Permission, nil)
@@ -883,6 +892,8 @@ func Test_checkGroupPermissions(t *testing.T) {
 			},
 		},
 	}
+	organizations, err := organization.LoadOrganizations(context.TODO(), db)
+	require.NoError(t, err)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -899,14 +910,24 @@ func Test_checkGroupPermissions(t *testing.T) {
 			}
 
 			require.NoError(t, user.Insert(context.TODO(), db, &currentUser))
+			uo := user.UserOrganization{
+				AuthentifiedUserID: currentUser.ID,
+				OrganizationID:     organizations[0].ID,
+			}
+			require.NoError(t, user.InsertUserOrganization(context.TODO(), db, &uo))
 
-			groupAdmin := &sdk.AuthentifiedUser{
+			userGrpAdmin := &sdk.AuthentifiedUser{
 				Username: prefix + "auto-group-admin",
 			}
-			require.NoError(t, user.Insert(context.TODO(), db, groupAdmin))
+			require.NoError(t, user.Insert(context.TODO(), db, userGrpAdmin))
+			uoAdmin := user.UserOrganization{
+				AuthentifiedUserID: userGrpAdmin.ID,
+				OrganizationID:     organizations[0].ID,
+			}
+			require.NoError(t, user.InsertUserOrganization(context.TODO(), db, &uoAdmin))
 
 			var err error
-			groupAdmin, err = user.LoadByID(context.TODO(), api.mustDB(), groupAdmin.ID)
+			userGrpAdmin, err = user.LoadByID(context.TODO(), api.mustDB(), userGrpAdmin.ID, user.LoadOptions.WithOrganization)
 			require.NoError(t, err)
 
 			tt.args.groupName = prefix + tt.args.groupName
@@ -915,7 +936,7 @@ func Test_checkGroupPermissions(t *testing.T) {
 				Name: tt.args.groupName,
 			}
 
-			require.NoError(t, group.Create(context.TODO(), db, &g, groupAdmin))
+			require.NoError(t, group.Create(context.TODO(), db, &g, userGrpAdmin))
 
 			for _, adm := range tt.setup.groupAdmins {
 				adm = prefix + adm
@@ -1036,6 +1057,9 @@ func Test_checkTemplateSlugPermissions(t *testing.T) {
 		},
 	}
 
+	organizations, err := organization.LoadOrganizations(context.TODO(), db)
+	require.NoError(t, err)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			prefix := sdk.RandomString(10) + "."
@@ -1045,9 +1069,14 @@ func Test_checkTemplateSlugPermissions(t *testing.T) {
 					Username: prefix + "auto-group-admin",
 				}
 				require.NoError(t, user.Insert(context.TODO(), db, groupAdmin))
+				uo := user.UserOrganization{
+					AuthentifiedUserID: groupAdmin.ID,
+					OrganizationID:     organizations[0].ID,
+				}
+				require.NoError(t, user.InsertUserOrganization(context.TODO(), db, &uo))
 
 				var err error
-				groupAdmin, err = user.LoadByID(context.TODO(), db, groupAdmin.ID)
+				groupAdmin, err = user.LoadByID(context.TODO(), db, groupAdmin.ID, user.LoadOptions.WithOrganization)
 				require.NoError(t, err)
 				tt.setup.groupName = prefix + tt.setup.groupName
 				g := sdk.Group{

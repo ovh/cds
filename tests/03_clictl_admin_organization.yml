@@ -1,0 +1,14 @@
+name: Database Commands TestSuite
+testcases:
+- name: Add an organization
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin organization add my-org
+- name: List all organization
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin organization list --format json
+    assertions:
+    - result.systemoutjson.__len__ ShouldEqual 2
+- name: Remove an organization
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin organization delete my-org --force
+

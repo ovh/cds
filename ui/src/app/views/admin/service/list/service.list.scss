@@ -8,3 +8,48 @@
         margin-bottom: 50px;
     }
 }
+
+.floatRight {
+  float: right;
+}
+
+.pointer {
+  cursor: pointer;
+}
+
+.red {
+  color: $cds_color_red;
+}
+.green {
+  color: $cds_color_green;
+}
+.orange {
+  color: $cds_color_orange;
+}
+
+.title {
+  word-wrap: break-word;
+  font-weight: 700;
+  font-size: 1.2em;
+  line-height: 1.2em;
+  margin-bottom: 20px;
+}
+
+nz-col {
+  margin-bottom: 30px;
+}
+
+ul {
+  padding-left: 10px;
+  li {
+    list-style: none;
+  }
+}
+
+nz-spin {
+  margin-top: 30px;
+}
+
+.entity-card {
+  height: auto;
+}

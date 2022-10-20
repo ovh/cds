@@ -5,6 +5,7 @@ import { Project } from 'app/model/project.model';
 @Component({
     selector: 'app-usage-applications',
     templateUrl: './usage.applications.html',
+    styleUrls: ['./usage.applications.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class UsageApplicationsComponent {

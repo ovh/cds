@@ -11,11 +11,11 @@ import (
 func (s *Service) Status(ctx context.Context) *sdk.MonitoringStatus {
 	m := s.NewMonitoringStatus()
 	var value, status string
-	if esClient == nil {
+	if s.esClient == nil {
 		status = sdk.MonitoringStatusWarn
 		value = "disconnected"
 	} else {
-		_, code, err := esClient.Ping(s.Cfg.ElasticSearch.URL).Do(context.Background())
+		_, code, err := s.esClient.Ping(ctx, s.Cfg.ElasticSearch.URL)
 		if err != nil {
 			status = sdk.MonitoringStatusWarn
 			value = fmt.Sprintf("no ping (%v)", err)

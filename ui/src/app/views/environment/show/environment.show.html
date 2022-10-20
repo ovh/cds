@@ -1,6 +1,7 @@
+<div id="EnvironmentShow">
 <div *ngIf="project && environment;then showEnv;else loadEnv"></div>
 <ng-template #showEnv>
-    <div id="EnvironmentShow">
+
         <app-project-breadcrumb [project]="project" [environment]="environment" [workflow]="workflowName"
             [workflowRun]="workflowNum" [workflowRunNode]="workflowNodeRun" [wPipeline]="workflowPipeline">
             <div class="right floated labelFeature" [title]="'workflow_from_repository_btn' | translate">
@@ -52,9 +53,7 @@
                                 <app-usage [project]="project" [workflows]="workflows"></app-usage>
                             </ng-container>
                             <ng-container *ngIf="usageCount === 0">
-                                <div class="ui info message">
-                                    {{ 'environment_no_usage' | translate }}
-                                </div>
+                                <nz-alert nzType="info" nzMessage="This environment is not used."></nz-alert>
                             </ng-container>
                         </div>
                         <div *ngSwitchCase="'advanced'">
@@ -65,8 +64,8 @@
                 </div>
             </div>
         </div>
-    </div>
 </ng-template>
 <ng-template #loadEnv>
-    <div class="ui text active loader">Loading environment...</div>
+    <nz-spin nzTip="Loading environment..."></nz-spin>
 </ng-template>
+</div>

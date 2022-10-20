@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"github.com/ovh/cds/engine/api/organization"
 	"net/http/httptest"
 	"net/url"
 	"testing"
@@ -38,12 +39,16 @@ func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *test.Fak
 		Cache:               store,
 	}
 	api.AuthenticationDrivers = make(map[sdk.AuthConsumerType]sdk.AuthDriver)
-	api.AuthenticationDrivers[sdk.ConsumerLocal] = local.NewDriver(context.TODO(), false, "http://localhost:8080", "")
+	api.AuthenticationDrivers[sdk.ConsumerLocal] = local.NewDriver(context.TODO(), false, "http://localhost:8080", "default", "default")
 	api.AuthenticationDrivers[sdk.ConsumerBuiltin] = builtin.NewDriver()
 	api.AuthenticationDrivers[sdk.ConsumerTest] = authdrivertest.NewDriver(t)
 	api.AuthenticationDrivers[sdk.ConsumerTest2] = authdrivertest.NewDriver(t)
 	api.GoRoutines = sdk.NewGoRoutines(context.TODO())
 
+	// Reset organization
+	_, err := db.Exec("DELETE FROM organization")
+	require.NoError(t, err)
+	require.NoError(t, organization.CreateDefaultOrganization(context.TODO(), db.DbMap, []string{"default"}))
 	api.InitRouter()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -88,7 +93,7 @@ func newTestServer(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *test.
 		Cache:               cache,
 	}
 	api.AuthenticationDrivers = make(map[sdk.AuthConsumerType]sdk.AuthDriver)
-	api.AuthenticationDrivers[sdk.ConsumerLocal] = local.NewDriver(context.TODO(), false, "http://localhost:8080", "")
+	api.AuthenticationDrivers[sdk.ConsumerLocal] = local.NewDriver(context.TODO(), false, "http://localhost:8080", "", "")
 	api.AuthenticationDrivers[sdk.ConsumerBuiltin] = builtin.NewDriver()
 	api.GoRoutines = sdk.NewGoRoutines(context.TODO())
 

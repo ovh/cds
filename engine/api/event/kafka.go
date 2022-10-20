@@ -8,6 +8,7 @@ import (
 
 	"github.com/Shopify/sarama"
 	"github.com/ovh/cds/sdk/event"
+	cdslog "github.com/ovh/cds/sdk/log"
 	"github.com/pkg/errors"
 	"github.com/rockbears/log"
 )
@@ -44,7 +45,7 @@ func (c *KafkaClient) initialize(ctx context.Context, options interface{}) (Brok
 	c.options = conf
 
 	if err := c.initProducer(); err != nil {
-		return nil, fmt.Errorf("initKafka> Error with init sarama:%v (newSyncProducer on %s user:%s)", err, conf.BrokerAddresses, conf.User)
+		return nil, errors.Errorf("initKafka> Error with init sarama:%v (newSyncProducer on %s user:%s)", err, conf.BrokerAddresses, conf.User)
 	}
 
 	return c, nil
@@ -81,7 +82,7 @@ func (c *KafkaClient) initProducer() error {
 
 	producer, err := sarama.NewSyncProducer(strings.Split(c.options.BrokerAddresses, ","), config)
 	if err != nil {
-		return fmt.Errorf("initKafka> Error with init sarama:%v (newSyncProducer on %s user:%s)", err, c.options.BrokerAddresses, c.options.User)
+		return errors.Errorf("initKafka> Error with init sarama:%v (newSyncProducer on %s user:%s)", err, c.options.BrokerAddresses, c.options.User)
 	}
 
 	log.Debug(context.Background(), "initKafka> Kafka used at %s on topic:%s", c.options.BrokerAddresses, c.options.Topic)
@@ -90,7 +91,9 @@ func (c *KafkaClient) initProducer() error {
 }
 
 // sendOnKafkaTopic send a hook on a topic kafka
-func (c *KafkaClient) sendEvent(event interface{}) error {
+func (c *KafkaClient) sendEvent(ctx context.Context, event interface{}) error {
+	ctx = context.WithValue(ctx, cdslog.KafkaBroker, c.options.BrokerAddresses)
+	ctx = context.WithValue(ctx, cdslog.KafkaTopic, c.options.Topic)
 	data, err := json.Marshal(event)
 	if err != nil {
 		return errors.WithStack(err)

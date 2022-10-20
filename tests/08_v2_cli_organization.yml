@@ -1,0 +1,24 @@
+name: Project Organization Command testSuite
+testcases:
+- name: prepare test
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental organization remove myorg --force
+
+- name: add new organization
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental organization add myorg
+
+- name: get and list organization
+  steps:
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental organization get myorg --format json
+      assertions:
+        - result.code ShouldEqual 0
+        - result.systemoutjson.name ShouldEqual myorg
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental organization list --format json
+      assertions:
+        - result.code ShouldEqual 0
+        - result.systemoutjson.__len__ ShouldEqual 2
+
+- name: remove organization
+  steps:
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental organization delete myorg --force

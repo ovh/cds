@@ -24,7 +24,7 @@ CDS provides an intuitive UI that allows you to build complex workflows, run the
 
 ## The most powerful Command Line for a CI/CD Platform
 
-cdsctl is the CDS Command Line - you can script everything with it, cdsctl also provide some cool commands such as `cdsctl shell` to browse your projects and workflows without the need to open a browser.
+cdsctl is the CDS Command Line - you can script everything with it, cdsctl also provides some cool commands such as `cdsctl shell` to browse your projects and workflows without the need to open a browser.
 
 [See all cdsctl commands](https://ovh.github.io/cds/docs/components/cdsctl/)
 
@@ -39,8 +39,8 @@ Docker-Compose is your friend, see [Ready To Run Tutorials](https://ovh.github.i
 
 ## Blog posts and talks
 
--	CDS Introduction: https://www.ovh.com/fr/blog/how-does-ovh-manage-the-ci-cd-at-scale/
--	DataBuzzWord Podcast (French) : https://www.ovh.com/fr/blog/understanding-ci-cd-for-big-data-and-machine-learning/
+- CDS Introduction: https://www.ovh.com/fr/blog/how-does-ovh-manage-the-ci-cd-at-scale/
+- DataBuzzWord Podcast (French) : https://www.ovh.com/fr/blog/understanding-ci-cd-for-big-data-and-machine-learning/
 - Continuous Delivery and Deployment Workflows with CDS: https://www.ovh.com/fr/blog/continuous-delivery-and-deployment-workflows-with-cds/
 - Talk at conference [Breizhcamp](https://www.breizhcamp.org) to introduce CDS (French): https://www.youtube.com/watch?v=JUzEQuOehv4
 
@@ -57,7 +57,7 @@ Docker-Compose is your friend, see [Ready To Run Tutorials](https://ovh.github.i
 
 ### What is a CDS workflow?
 
-Most of the CI/CD Tools play with jobs inside a pipeline. CDS introduce a new concept named `CDS Workflows`.
+Most of the CI/CD Tools play with jobs inside a pipeline. CDS introduces a new concept named `CDS Workflows`.
 A [CDS Workflow](https://ovh.github.io/cds/docs/concepts/workflow/) allows you to chain pipelines with triggers.
 A [pipeline](https://ovh.github.io/cds/docs/concepts/pipeline/) is structured in sequential [stages](https://ovh.github.io/cds/docs/concepts/pipeline/#stages) containing one or multiple concurrent [jobs](https://ovh.github.io/cds/docs/concepts/job/).
 
@@ -70,7 +70,7 @@ CDS provides everything needed to monitor and measure production activity (logs,
 
 ### How to backup?
 
-All data are stored in the database - nothing on filesystem. Just backup your database regularly and you will be safe.
+All data are stored in the database - nothing on the filesystem. Just backup your database regularly and you will be safe.
 
 ### Need some help?
 
@@ -86,29 +86,29 @@ Ability to run multiple jobs simultaneously while keeping an isolation between t
 
 A Workflow makes it possible to chain the pipelines. This is a key Feature of CDS. You can create workflows using one or more pipelines, pipelines that can be linked together with joins or forks.
 
-You can imagine having only one builder workflow and deploying your entire microservice stack. The same pipeline can be used several times in a workflow, you can associate an application, an environment.
-You will have only one deployment pipeline and only one build pipeline to maintain, even if you have hundreds of applications.
+You can imagine having only one workflow builder and deploying your entire microservice stack. The same pipeline can be used several times in a workflow, you can associate an application, an environment.
+You will only have one deployment pipeline and one build pipeline to maintain, even if you have hundreds of applications.
 
 #### Workflow templates
 
-A workflow template allow to share and reuse workflows across multiple teams. Any user can create a Workflow Template, maintain it as code or from UI, and bulk update a set of workflows with a single action.
+A workflow template allows you to share and reuse workflows across multiple teams. Any user can create a Workflow Template, maintain it as code or from UI, and bulk update a set of workflows with a single action.
 
-As a company, you can offer a predefined catalog of workflows allowing you to standardize test and deployment practices across all your teams.
+As a company, you can offer a predefined catalog of Workflows allowing you to standardize test and deployment practices across all your teams.
 
 This also reduces the maintenance efforts since templates allow a scalable centralized management.
 
 #### Visual configuration with Web UI
 
-You can configure everything with the web UI. Even if you have complex use cases, it's usually easier to create your workflow graphically.
+You can configure everything with the web UI. Even if you have complex use cases, it's usually easier to create your workflows graphically.
 
 #### Configuration on Git Repository
 
-Pipeline as code is a well-known concept of CI / CD tools. CDS, goes a step further and offers workflow as code. This is done by git-pushing using yaml configuration files of your workflow (+ pipeline, + applications, + environment). This is particularly useful as you can test your new workflow on a dev branch, before merging the changes on the master branch.
+Pipeline as code is a well-known concept of CI / CD tools. CDS goes a step further and offers workflow as code. This is done by git-pushing using yaml configuration files of your workflow (+ pipeline, + applications, + environment). This is particularly useful as you can test your new workflow on a dev branch, before merging the changes on the master branch.
 
 
 #### Configuration as code on UI
 
-You can modify your workflow with the UI, you can also modify the configuration by editing the yml directly in the UI if you wish. This is an excellent way to learn how to use the workflow-as-code feature.
+You can modify your workflow with the UI, you can also modify the configuration by editing the yaml directly in the UI if you wish. This is an excellent way to learn how to use the workflow-as-code feature.
 
 #### Native Git branching
 
@@ -124,7 +124,7 @@ Note that CDS's default behavior is to launch the whole workflow on every git co
 2. Ability to notify the git-based tool of the success/failure of the build.
 
 CDS natively supports GitHub, GitLab, Bitbucket Server and Gerrit.
-The link between your repo git and CDS is via a CDS application: 1 Git repository == a CDS application.
+The link between your git repo and CDS is via a CDS application: 1 Git repository == a CDS application.
 Through this integration, CDS will push build status of your commits : Building, Success or Failed.
 
 #### Multiple VCS Support in Pipeline/Job
@@ -137,7 +137,7 @@ Ability to start ephemeral services (a database, a web server, etc.) to support 
 
 In CDS these services are called Service Prerequisites. You just need to specify the corresponding docker image and run params.
 
-Take a simple example: you have a pipeline that builds a docker image containing your application. Your application needs a redis and a postgreSQL to work. You can in a CDS job put three prerequisites service: a redis, a postgreSQL and your application. CDS will take care of making a private network between its services so that they can communicate with each other.
+Take a simple example: you have a pipeline that builds a docker image containing your application. Your application needs a redis and a postgreSQL to work. You can, in a CDS job, put three prerequisite services: a redis, a postgreSQL and your application. CDS will take care of making a private network between its services so that they can communicate with each other.
 Your CDS job can thus perform integration tests on your application started with a real database and a real cache.
 
 Please read: https://ovh.github.io/cds/docs/concepts/requirement/requirement_service/
@@ -172,7 +172,7 @@ Users are free to create groups and manage users in their groups. A group can ha
 #### Build Artifacts Cloud
 
 If you use CDS as a CI / CD tool, you will probably have built artifacts. CDS jobs are isolated from each other, but you can pass artifacts from one job to another using the Artifact Upload and Artifact Download actions.
-At the end of a CDS job, all the files are deleted from the workers. To persist artifacts, CDS can use a Swift Storage or on a given filesystem (not recommended though).
+At the end of a CDS job, all the files are deleted from the workers. To persist artifacts, CDS can use a Swift Storage or a given filesystem (not recommended though).
 
 
 #### Tests & Vulnerabilities Reports
@@ -193,12 +193,12 @@ Although CDS administrators can offer shared worker models, users can create the
 
 #### Self Service User’s Integrations
 
-On a CDS project, you can add integrations like openstack, kubernetes, etc .... This will offer you features within your workflows. For example, with the Kubernetes integration, you can add your own cluster to your CDS project and thus be able to use the Deploy Application action to deploy your newly built application on your cluster, in helm format if you wish.
+On a CDS project, you can add integrations like openstack, kubernetes, etc ... This will offer you features within your workflows. For example, with the Kubernetes integration, you can add your own cluster to your CDS project and thus be able to use the Deploy Application action to deploy your newly built application on your cluster, in helm format if you wish.
 You can of course develop your own integrations.
 
 #### Multi-Tenancy
 
-After reading the previous points, you've understood: self-service everywhere. All users can do their project / workflow / worker models / workflow templates / actions ... And run Jobs in a totally isolated environment. CDS projects are builders, on which you can add integrations. All this allows you to have only one instance of CDS for your entire company.
+After reading the previous points, you've understood: self-service everywhere. All users can create their project / workflow / worker models / workflow templates / actions ... And run Jobs in a totally isolated environment. CDS projects are builders, on which you can add integrations. All this allows you to have only one instance of CDS for your entire company.
 
 #### Command Line Interface (cdsctl): 100% features supported
 
@@ -232,16 +232,16 @@ A CDS job consists of steps. Each step is a built-in type action (script, checko
 
 #### OS/Arch Compatibility
 
-CDS is agnostic to languages and platforms. Users can launch Jobs on linux, windows, freebsd, osx, raspberry ... in Virtual Machine spawn on demand, in a docker container, on a dedicated host.
+CDS is agnostic to languages and platforms. Users can launch Jobs on linux, windows, freebsd, osx, raspberry ... in a Virtual Machine spawn on demand, in a docker container, on a dedicated host.
 
 So, if your company uses multiple technologies, CDS will not be a blocker for building and deploying your internal software.
 
 #### Auto-Scale OnDemand multi-cloud
 
-One of the initial objectives of CDS at OVH: builder and deploy 150 applications as a container in less than 7 minutes. This has become reality since 2015. What is the secret key?
+One of the initial objectives of CDS at OVH: build and deploy 150 applications as a container in less than 7 minutes. This has become reality since 2015. What is the secret key?
 Auto-Scale on Demand!
 
-Thus, you can have hundreds of workers model and when necessary, CDS will start the workers using the hatcheries.
+Thus, you can have hundreds of worker models and when necessary, CDS will start the workers using the hatcheries.
 
 A [hatchery](https://ovh.github.io/cds/docs/components/hatchery/) is like an incubator, it gives birth to the CDS Workers and the right of life and death over them.
 
@@ -250,7 +250,6 @@ Several types of hatchery are available:
  - **[hatchery kubernetes](https://ovh.github.io/cds/docs/integrations/kubernetes/kubernetes_compute/)** starts workers in pods
  - **[hatchery openstack](https://ovh.github.io/cds/docs/integrations/openstack/openstack_compute/)** starts virtual machines
  - **[hatchery swarm](https://ovh.github.io/cds/docs/integrations/swarm/)** starts docker containers
- - **[hatchery marathon](https://ovh.github.io/cds/docs/integrations/marathon/)** starts docker containers
  - **[hatchery vSphere](https://ovh.github.io/cds/docs/integrations/vsphere/)** starts virtual machines
  - **[hatchery local](https://ovh.github.io/cds/docs/components/hatchery/local/)** starts processes on a host
 

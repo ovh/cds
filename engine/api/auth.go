@@ -147,14 +147,14 @@ func (api *API) postAuthSigninHandler() service.Handler {
 		// If there is no existing consumer we should check if a user need to be created
 		// Then we want to create a new consumer for current type
 		var u *sdk.AuthentifiedUser
-		if consumer != nil {
-			u = consumer.AuthentifiedUser
+		if consumer != nil && consumer.AuthConsumerUser != nil {
+			u = consumer.AuthConsumerUser.AuthentifiedUser
 		} else {
 			currentConsumer := getAPIConsumer(ctx)
-			if currentConsumer != nil {
+			if currentConsumer != nil && currentConsumer.AuthConsumerUser != nil {
 				// If no consumer already exists for given request, but there is a current session
 				// We should create a new consumer for the current consumer's user
-				u = currentConsumer.AuthentifiedUser
+				u = currentConsumer.AuthConsumerUser.AuthentifiedUser
 
 				// If new consumer email not already on exiting user add it
 				existingContact, err := user.LoadContactByTypeAndValue(ctx, tx, sdk.UserContactTypeEmail, userInfo.Email)
@@ -304,7 +304,7 @@ func (api *API) postAuthSigninHandler() service.Handler {
 			return err
 		}
 
-		usr, err := user.LoadByID(ctx, tx, consumer.AuthentifiedUserID)
+		usr, err := user.LoadByID(ctx, tx, consumer.AuthConsumerUser.AuthentifiedUserID)
 		if err != nil {
 			return err
 		}
@@ -364,7 +364,7 @@ func (api *API) postAuthDetachHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		consumer, err := authentication.LoadConsumerByTypeAndUserID(ctx, tx, consumerType, currentConsumer.AuthentifiedUserID)
+		consumer, err := authentication.LoadConsumerByTypeAndUserID(ctx, tx, consumerType, currentConsumer.AuthConsumerUser.AuthentifiedUserID)
 		if err != nil {
 			return err
 		}
@@ -391,14 +391,14 @@ func (api *API) getAuthMe() service.Handler {
 		m := getAuthDriverManifest(ctx)
 		c := getAPIConsumer(ctx)
 		s := getAuthSession(ctx)
-		if m == nil || c == nil || s == nil {
+		if m == nil || c == nil || s == nil || c.AuthConsumerUser == nil {
 			return sdk.WithStack(sdk.ErrUnauthorized)
 		}
 
 		// Clean user and consumer aggregated data
-		u := *c.AuthentifiedUser
+		u := *c.AuthConsumerUser.AuthentifiedUser
 		u.Groups = nil
-		c.AuthentifiedUser = nil
+		c.AuthConsumerUser.AuthentifiedUser = nil
 
 		return service.WriteJSON(w, sdk.AuthCurrentConsumerResponse{
 			User:           u,

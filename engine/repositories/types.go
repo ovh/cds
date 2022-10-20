@@ -13,10 +13,11 @@ import (
 // Service is the repostories service
 type Service struct {
 	service.Common
-	Cfg    Configuration
-	Router *api.Router
-	Cache  cache.Store
-	dao    dao
+	Cfg       Configuration
+	Router    *api.Router
+	Cache     cache.Store
+	dao       dao
+	cacheSize int64
 }
 
 // Configuration is the vcs configuration structure

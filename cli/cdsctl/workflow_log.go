@@ -286,13 +286,6 @@ func workflowLogDownloadRun(v cli.Values) error {
 		}
 	}
 
-	feature, err := client.FeatureEnabled(sdk.FeatureCDNJobLogs, map[string]string{
-		"project_key": projectKey,
-	})
-	if err != nil {
-		return err
-	}
-
 	var ok bool
 	for _, log := range logs {
 		if reg != nil && !reg.MatchString(log.getFilename()) {
@@ -301,15 +294,13 @@ func workflowLogDownloadRun(v cli.Values) error {
 
 		// If cdn logs is enabled for current project, first check if logs can be downloaded from it
 		var link *sdk.CDNLogLink
-		if !feature.Exists || feature.Enabled {
-			if log.detailType == workflowLogDetailTypeService {
-				link, err = client.WorkflowNodeRunJobServiceLink(context.Background(), projectKey, workflowName, log.runID, log.jobID, log.serviceName)
-			} else {
-				link, err = client.WorkflowNodeRunJobStepLink(context.Background(), projectKey, workflowName, log.runID, log.jobID, log.stepOrder)
-			}
-			if err != nil {
-				return err
-			}
+		if log.detailType == workflowLogDetailTypeService {
+			link, err = client.WorkflowNodeRunJobServiceLink(context.Background(), projectKey, workflowName, log.runID, log.jobID, log.serviceName)
+		} else {
+			link, err = client.WorkflowNodeRunJobStepLink(context.Background(), projectKey, workflowName, log.runID, log.jobID, log.stepOrder)
+		}
+		if err != nil {
+			return err
 		}
 
 		data, err := client.WorkflowLogDownload(context.Background(), *link)
@@ -352,6 +343,11 @@ var workflowLogStreamCmd = cli.Command{
 func workflowLogStreamRun(v cli.Values) error {
 	projectKey := v.GetString(_ProjectKey)
 	workflowName := v.GetString(_WorkflowName)
+
+	cdnURL, err := client.CDNURL()
+	if err != nil {
+		return err
+	}
 
 	runNumber, err := workflowLogSearchNumber(v)
 	if err != nil {
@@ -423,7 +419,7 @@ func workflowLogStreamRun(v cli.Values) error {
 	goRoutines := sdk.NewGoRoutines(ctx)
 	goRoutines.Exec(ctx, "WebsocketEventsListenCmd", func(ctx context.Context) {
 		for ctx.Err() == nil {
-			if err := client.RequestWebsocket(ctx, goRoutines, fmt.Sprintf("%s/item/stream", link.CDNURL), chanMessageToSend, chanMsgReceived, chanErrorReceived); err != nil {
+			if err := client.RequestWebsocket(ctx, goRoutines, fmt.Sprintf("%s/item/stream", cdnURL), chanMessageToSend, chanMsgReceived, chanErrorReceived); err != nil {
 				fmt.Printf("Error: %s\n", err)
 			}
 			time.Sleep(1 * time.Second)

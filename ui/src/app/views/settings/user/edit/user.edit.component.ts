@@ -9,7 +9,6 @@ import { AuthentifiedUser, AuthSummary, UserContact } from 'app/model/user.model
 import { AuthenticationService } from 'app/service/authentication/authentication.service';
 import { UserService } from 'app/service/user/user.service';
 import { PathItem } from 'app/shared/breadcrumb/breadcrumb.component';
-import { Item } from 'app/shared/menu/menu.component';
 import { Column, ColumnType, Filter } from 'app/shared/table/data-table.component';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { AuthenticationState } from 'app/store/authentication.state';
@@ -23,15 +22,6 @@ import {
     ConsumerDetailsModalComponent
 } from '../consumer-details-modal/consumer-details-modal.component';
 import { NzModalService } from 'ng-zorro-antd/modal';
-
-const defaultMenuItems = [<Item>{
-    translate: 'user_profile_btn',
-    key: 'profile',
-    default: true
-}, <Item>{
-    translate: 'user_groups_btn',
-    key: 'groups'
-}];
 
 const usernamePattern = new RegExp('^[a-zA-Z0-9._-]{1,}$');
 
@@ -56,8 +46,8 @@ export class UserEditComponent implements OnInit {
     currentAuthSummary: AuthSummary;
     editable: boolean;
     path: Array<PathItem>;
-    menuItems: Array<Item>;
-    selectedItem: Item;
+    menuItems: Map<string,string>;
+    selectedItem: string;
     loadingUser: boolean;
     user: AuthentifiedUser;
     columnsGroups: Array<Column<Group>>;
@@ -93,7 +83,8 @@ export class UserEditComponent implements OnInit {
     ) {
         this.currentAuthSummary = this._store.selectSnapshot(AuthenticationState.summary);
 
-        this.menuItems = [].concat(defaultMenuItems);
+        this.menuItems = new Map<string, string>();
+        this.selectedItem = "profile";
 
         this.columnsGroups = [
             <Column<Group>>{
@@ -143,9 +134,9 @@ export class UserEditComponent implements OnInit {
             return (c: AuthConsumer) => c.name.toLowerCase().indexOf(lowerFilter) !== -1 ||
                 c.description.toLowerCase().indexOf(lowerFilter) !== -1 ||
                 c.id.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                c.scope_details.map(s => s.scope).join(' ').toLowerCase().indexOf(lowerFilter) !== -1 ||
-                (c.groups && c.groups.map(g => g.name).join(' ').toLowerCase().indexOf(lowerFilter) !== -1) ||
-                (!c.groups && lowerFilter === '*');
+                c.auth_consumer_user.scope_details.map(s => s.scope).join(' ').toLowerCase().indexOf(lowerFilter) !== -1 ||
+                (c.auth_consumer_user.groups && c.auth_consumer_user.groups.map(g => g.name).join(' ').toLowerCase().indexOf(lowerFilter) !== -1) ||
+                (!c.auth_consumer_user.groups && lowerFilter === '*');
         };
 
         this.columnsConsumers = [
@@ -169,7 +160,7 @@ export class UserEditComponent implements OnInit {
             },
             <Column<AuthConsumer>>{
                 name: 'user_auth_scopes',
-                selector: (c: AuthConsumer) => c.scope_details.map(s => s.scope).join(', ')
+                selector: (c: AuthConsumer) => c.auth_consumer_user.scope_details.map(s => s.scope).join(', ')
             },
             <Column<AuthConsumer>>{
                 type: ColumnType.TEXT_ICONS,
@@ -200,7 +191,7 @@ export class UserEditComponent implements OnInit {
                     }
 
                     return {
-                        value: c.groups ? c.groups.map((g: Group) => g.name).join(', ') : '*',
+                        value: c.auth_consumer_user.groups ? c.auth_consumer_user.groups.map((g: Group) => g.name).join(', ') : '*',
                         icons
                     };
                 }
@@ -513,8 +504,8 @@ export class UserEditComponent implements OnInit {
         }];
     }
 
-    selectMenuItem(item: Item): void {
-        switch (item.key) {
+    selectMenuItem(item: string): void {
+        switch (item) {
             case 'groups':
                 this.getGroups();
                 break;
@@ -526,6 +517,11 @@ export class UserEditComponent implements OnInit {
                 break;
         }
         this.selectedItem = item;
+        this._router.navigate([], {
+            relativeTo: this._route,
+            queryParams: { item: item },
+            queryParamsHandling: 'merge'
+        });
         this._cd.markForCheck();
     }
 
@@ -546,17 +542,13 @@ export class UserEditComponent implements OnInit {
 
     setDataFromUser(): void {
         this.editable = this.user.id === this.currentAuthSummary.user.id || this.currentAuthSummary.isAdmin();
+        this.menuItems = new Map<string, string>();
+        this.menuItems.set("profile", "Profile");
+        this.menuItems.set("groups", "Groups");
 
         if (this.user.id === this.currentAuthSummary.user.id || this.currentAuthSummary.isMaintainer()) {
-            this.menuItems = defaultMenuItems.concat([<Item>{
-                translate: 'user_contacts_btn',
-                key: 'contacts'
-            }, <Item>{
-                translate: 'user_authentication_btn',
-                key: 'authentication'
-            }]);
-        } else {
-            this.menuItems = [].concat(defaultMenuItems);
+            this.menuItems.set("contacts", "Contacts");
+            this.menuItems.set("authentication", "Authentication");
         }
 
         // Enable revoke session button only if editable

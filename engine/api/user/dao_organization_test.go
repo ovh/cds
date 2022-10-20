@@ -17,16 +17,7 @@ func TestDAO_AuthentifiedUserOrganization(t *testing.T) {
 
 	u, _ := assets.InsertLambdaUser(t, db)
 
-	_, err := user.LoadOrganizationByUserID(context.TODO(), db, u.ID)
-	require.Error(t, err)
-
-	require.NoError(t, user.InsertOrganization(context.TODO(), db, &user.Organization{
-		AuthentifiedUserID: u.ID,
-		Organization:       "one",
-	}))
-
-	org, err := user.LoadOrganizationByUserID(context.TODO(), db, u.ID)
+	userDB, err := user.LoadByID(context.TODO(), db, u.ID, user.LoadOptions.WithOrganization)
 	require.NoError(t, err)
-	require.NotNil(t, org)
-	require.Equal(t, "one", org.Organization)
+	require.Equal(t, "default", userDB.Organization)
 }

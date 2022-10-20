@@ -4,9 +4,11 @@ import (
 	"context"
 	"time"
 
+	"github.com/rockbears/log"
+
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 	cdslog "github.com/ovh/cds/sdk/log"
-	"github.com/rockbears/log"
 )
 
 func (s *Service) processor(ctx context.Context) error {
@@ -51,7 +53,13 @@ func (s *Service) do(ctx context.Context, op sdk.Operation) error {
 	if s.dao.lock(r.ID()) == errLockUnavailable {
 		return errLockUnavailable
 	}
-	defer s.dao.unlock(ctx, r.ID(), 24*time.Hour*time.Duration(s.Cfg.RepositoriesRetention)) // nolint
+	defer func() {
+		s.dao.unlock(ctx, r.ID())
+		ttl := 3600 * 24 * s.Cfg.RepositoriesRetention
+		ttlTime := time.Now().Add(time.Duration(ttl) * time.Second)
+		log.Info(ctx, "%s protected until %s", r.ID(), ttlTime.String())
+		s.dao.store.SetWithTTL(cache.Key(lastAccessKey, r.ID()), ttlTime, ttl)
+	}()
 
 	switch {
 	// Load workflow as code file

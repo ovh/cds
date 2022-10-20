@@ -18,7 +18,7 @@
         </div>
         <div *ngIf="warnings > 0" nz-tooltip nzTooltipPlacement="right"
              [nzTooltipTitle]="'warning_build_title' | translate: {nb: warnings}" class="warn">
-            <i class="ui icon warning sign orange"></i>
+            <span nz-icon nzType="warning" nzTheme="outline" class="orange"></span>
         </div>
         <div *ngIf="noderun && noderun.subnumber" class="count">
             {{noderun?.subnumber}}
@@ -51,9 +51,8 @@
         </div>
         <div class="actions-wrapper">
             <div class="actions">
-                <div *ngIf="noderun" class="ui action">
-                    <i class="ui icon file text grey large" [title]="'btn_logs' | translate"
-                        (click)="$event.stopPropagation(); displayLogs()"></i>
+                <div *ngIf="noderun" class="action">
+                    <span class="logs" nz-icon nzType="file-text" nzTheme="outline" title="Logs"  (click)="$event.stopPropagation(); displayLogs()"></span>
                 </div>
             </div>
         </div>

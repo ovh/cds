@@ -1,17 +1,17 @@
 <h3><i class="share alternate icon"></i> {{'usage_workflow_list' | translate}}</h3>
-<div class="ui segment">
+<div class="nzSegment">
     <div *ngIf="workflows && workflows.length > 0;then workflowsDisplay; else noworkflows"></div>
     <ng-template #workflowsDisplay>
-        <div class="ui stackable four column grid">
-            <div class="center aligned column" *ngFor="let workflow of workflows">
+        <nz-row>
+            <nz-col [nzSpan]="4" [nzOffset]="2" *ngFor="let workflow of workflows">
                 <ng-container *ngIf="project">
                     <a [routerLink]="['/project', project.key, 'workflow', workflow.name]">{{workflow.name}}</a>
                 </ng-container>
                 <ng-container *ngIf="!project">
                     <a [routerLink]="['/project', workflow.project_key, 'workflow', workflow.name]">{{workflow.name}}</a>
                 </ng-container>
-            </div>
-        </div>
+            </nz-col>
+        </nz-row>
     </ng-template>
     <ng-template #noworkflows>
         <div>

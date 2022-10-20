@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -133,6 +134,12 @@ func (s *Service) getOperationsHandler() service.Handler {
 // Status returns sdk.MonitoringStatus, implements interface service.Service
 func (s *Service) Status(ctx context.Context) *sdk.MonitoringStatus {
 	m := s.NewMonitoringStatus()
+
+	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{
+		Component: "Cache size",
+		Value:     fmt.Sprintf("%d octets", s.cacheSize),
+		Status:    sdk.MonitoringStatusOK,
+	})
 	return m
 }
 

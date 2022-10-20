@@ -63,12 +63,14 @@
             </div>
             <div *ngSwitchCase="'permissions'" class="padded">
                 <h3>{{ 'workflow_permission_list_title' | translate }}</h3>
-                <div *ngIf="detailedWorkflow && groupsOutsideOrganization && groupsOutsideOrganization.length > 0"
-                    class="ui warning message">Following groups that are not from organization
+                <nz-alert *ngIf="detailedWorkflow && groupsOutsideOrganization && groupsOutsideOrganization.length > 0"
+                          nzType="warning" [nzMessage]="permTmpl"></nz-alert>
+                    <ng-template #permTmpl>
+                    Following groups that are not from organization
                     "{{detailedWorkflow.organization}}" can read the workflow: <span
                         *ngFor="let gp of groupsOutsideOrganization;let i = index">{{gp.group.name}}
                         ({{gp.group.organization}}){{ i < groupsOutsideOrganization.length - 1 ? ', ' : '' }}</span>.
-                </div>
+                    </ng-template>
                 <app-permission-list [permissions]="this.groups" (event)="groupManagement($event)"
                     [edit]="detailedWorkflow.permissions.writable && !(detailedWorkflow.from_repository && detailedWorkflow.from_repository.length > 0)">
                 </app-permission-list>
@@ -98,7 +100,7 @@
     </div>
 </ng-template>
 <ng-template #loadingPart>
-    <div class="ui text active loader">Loading workflow...</div>
+    <nz-spin nzTip="Loading..."></nz-spin>
 </ng-template>
 
 <ng-template #warnPermission>

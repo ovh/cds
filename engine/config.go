@@ -26,7 +26,6 @@ import (
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/hatchery/kubernetes"
 	"github.com/ovh/cds/engine/hatchery/local"
-	"github.com/ovh/cds/engine/hatchery/marathon"
 	"github.com/ovh/cds/engine/hatchery/openstack"
 	"github.com/ovh/cds/engine/hatchery/swarm"
 	"github.com/ovh/cds/engine/hatchery/vsphere"
@@ -52,7 +51,7 @@ func configBootstrap(args []string) Configuration {
 	if len(args) == 0 {
 		args = []string{
 			"api", "ui", "migrate", "hooks", "vcs", "repositories", "elasticsearch", "cdn",
-			"hatchery:local", "hatchery:kubernetes", "hatchery:marathon", "hatchery:openstack", "hatchery:swarm", "hatchery:vsphere",
+			"hatchery:local", "hatchery:kubernetes", "hatchery:openstack", "hatchery:swarm", "hatchery:vsphere",
 		}
 	}
 
@@ -72,6 +71,7 @@ func configBootstrap(args []string) Configuration {
 			defaults.SetDefaults(conf.API)
 			conf.API.Database.Schema = "public"
 			conf.API.HTTP.Port = 8081
+			conf.API.Auth.AllowedOrganizations = []string{"default"}
 		case sdk.TypeUI:
 			conf.UI = &ui.Configuration{}
 			conf.UI.Name = "cds-ui-" + namesgenerator.GetRandomNameCDS()
@@ -94,11 +94,6 @@ func configBootstrap(args []string) Configuration {
 			defaults.SetDefaults(conf.Hatchery.Kubernetes)
 			conf.Hatchery.Kubernetes.Name = "cds-hatchery-kubernetes-" + namesgenerator.GetRandomNameCDS()
 			conf.Hatchery.Kubernetes.HTTP.Port = 8086
-		case sdk.TypeHatchery + ":marathon":
-			conf.Hatchery.Marathon = &marathon.HatcheryConfiguration{}
-			defaults.SetDefaults(conf.Hatchery.Marathon)
-			conf.Hatchery.Marathon.Name = "cds-hatchery-marathon-" + namesgenerator.GetRandomNameCDS()
-			conf.Hatchery.Marathon.HTTP.Port = 8086
 		case sdk.TypeHatchery + ":openstack":
 			conf.Hatchery.Openstack = &openstack.HatcheryConfiguration{}
 			defaults.SetDefaults(conf.Hatchery.Openstack)
@@ -362,8 +357,10 @@ func configSetStartupData(conf *Configuration) (string, error) {
 			Name:            cfg.Name,
 			Description:     cfg.Description,
 			Type:            sdk.ConsumerBuiltin,
-			Data:            map[string]string{},
 			ValidityPeriods: validityPediod,
+			AuthConsumerUser: &sdk.AuthConsumerUser{
+				Data: map[string]string{},
+			},
 		}
 		conf.UI.API.Token, err = builtin.NewSigninConsumerToken(&c)
 		if err != nil {
@@ -381,11 +378,13 @@ func configSetStartupData(conf *Configuration) (string, error) {
 				Type:        api.StartupConfigConsumerTypeHatchery,
 			}
 			var c = sdk.AuthConsumer{
-				ID:              cfg.ID,
-				Name:            cfg.Name,
-				Description:     cfg.Description,
-				Type:            sdk.ConsumerBuiltin,
-				Data:            map[string]string{},
+				ID:          cfg.ID,
+				Name:        cfg.Name,
+				Description: cfg.Description,
+				Type:        sdk.ConsumerBuiltin,
+				AuthConsumerUser: &sdk.AuthConsumerUser{
+					Data: map[string]string{},
+				},
 				ValidityPeriods: validityPediod,
 			}
 			h.Local.API.Token, err = builtin.NewSigninConsumerToken(&c)
@@ -406,11 +405,13 @@ func configSetStartupData(conf *Configuration) (string, error) {
 				Type:        api.StartupConfigConsumerTypeHatchery,
 			}
 			var c = sdk.AuthConsumer{
-				ID:              cfg.ID,
-				Name:            cfg.Name,
-				Description:     cfg.Description,
-				Type:            sdk.ConsumerBuiltin,
-				Data:            map[string]string{},
+				ID:          cfg.ID,
+				Name:        cfg.Name,
+				Description: cfg.Description,
+				Type:        sdk.ConsumerBuiltin,
+				AuthConsumerUser: &sdk.AuthConsumerUser{
+					Data: map[string]string{},
+				},
 				ValidityPeriods: validityPediod,
 			}
 			h.Openstack.API.Token, err = builtin.NewSigninConsumerToken(&c)
@@ -431,11 +432,13 @@ func configSetStartupData(conf *Configuration) (string, error) {
 				Type:        api.StartupConfigConsumerTypeHatchery,
 			}
 			var c = sdk.AuthConsumer{
-				ID:              cfg.ID,
-				Name:            cfg.Name,
-				Description:     cfg.Description,
-				Type:            sdk.ConsumerBuiltin,
-				Data:            map[string]string{},
+				ID:          cfg.ID,
+				Name:        cfg.Name,
+				Description: cfg.Description,
+				Type:        sdk.ConsumerBuiltin,
+				AuthConsumerUser: &sdk.AuthConsumerUser{
+					Data: map[string]string{},
+				},
 				ValidityPeriods: validityPediod,
 			}
 			h.VSphere.API.Token, err = builtin.NewSigninConsumerToken(&c)
@@ -457,11 +460,13 @@ func configSetStartupData(conf *Configuration) (string, error) {
 				Type:        api.StartupConfigConsumerTypeHatchery,
 			}
 			var c = sdk.AuthConsumer{
-				ID:              cfg.ID,
-				Name:            cfg.Name,
-				Description:     cfg.Description,
-				Type:            sdk.ConsumerBuiltin,
-				Data:            map[string]string{},
+				ID:          cfg.ID,
+				Name:        cfg.Name,
+				Description: cfg.Description,
+				Type:        sdk.ConsumerBuiltin,
+				AuthConsumerUser: &sdk.AuthConsumerUser{
+					Data: map[string]string{},
+				},
 				ValidityPeriods: validityPediod,
 			}
 			h.Swarm.API.Token, err = builtin.NewSigninConsumerToken(&c)
@@ -474,31 +479,6 @@ func configSetStartupData(conf *Configuration) (string, error) {
 			h.Swarm.RSAPrivateKey = string(privateKeyPEM)
 		}
 
-		if h.Marathon != nil {
-			var cfg = api.StartupConfigConsumer{
-				ID:          sdk.UUID(),
-				Name:        h.Marathon.Name,
-				Description: "Autogenerated configuration for marathon hatchery",
-				Type:        api.StartupConfigConsumerTypeHatchery,
-			}
-			var c = sdk.AuthConsumer{
-				ID:              cfg.ID,
-				Name:            cfg.Name,
-				Description:     cfg.Description,
-				Type:            sdk.ConsumerBuiltin,
-				Data:            map[string]string{},
-				ValidityPeriods: validityPediod,
-			}
-			conf.Hatchery.Marathon.API.Token, err = builtin.NewSigninConsumerToken(&c)
-			if err != nil {
-				return "", err
-			}
-			startupCfg.Consumers = append(startupCfg.Consumers, cfg)
-			privateKey, _ := jws.NewRandomRSAKey()
-			privateKeyPEM, _ := jws.ExportPrivateKey(privateKey)
-			h.Marathon.RSAPrivateKey = string(privateKeyPEM)
-		}
-
 		if h.Kubernetes != nil {
 			var cfg = api.StartupConfigConsumer{
 				ID:          sdk.UUID(),
@@ -507,11 +487,13 @@ func configSetStartupData(conf *Configuration) (string, error) {
 				Type:        api.StartupConfigConsumerTypeHatchery,
 			}
 			var c = sdk.AuthConsumer{
-				ID:              cfg.ID,
-				Name:            cfg.Name,
-				Description:     cfg.Description,
-				Type:            sdk.ConsumerBuiltin,
-				Data:            map[string]string{},
+				ID:          cfg.ID,
+				Name:        cfg.Name,
+				Description: cfg.Description,
+				Type:        sdk.ConsumerBuiltin,
+				AuthConsumerUser: &sdk.AuthConsumerUser{
+					Data: map[string]string{},
+				},
 				ValidityPeriods: validityPediod,
 			}
 			conf.Hatchery.Kubernetes.API.Token, err = builtin.NewSigninConsumerToken(&c)
@@ -533,11 +515,13 @@ func configSetStartupData(conf *Configuration) (string, error) {
 			Type:        api.StartupConfigConsumerTypeHooks,
 		}
 		var c = sdk.AuthConsumer{
-			ID:              cfg.ID,
-			Name:            cfg.Name,
-			Description:     cfg.Description,
-			Type:            sdk.ConsumerBuiltin,
-			Data:            map[string]string{},
+			ID:          cfg.ID,
+			Name:        cfg.Name,
+			Description: cfg.Description,
+			Type:        sdk.ConsumerBuiltin,
+			AuthConsumerUser: &sdk.AuthConsumerUser{
+				Data: map[string]string{},
+			},
 			ValidityPeriods: validityPediod,
 		}
 		conf.Hooks.API.Token, err = builtin.NewSigninConsumerToken(&c)
@@ -555,11 +539,13 @@ func configSetStartupData(conf *Configuration) (string, error) {
 			Type:        api.StartupConfigConsumerTypeRepositories,
 		}
 		var c = sdk.AuthConsumer{
-			ID:              cfg.ID,
-			Name:            cfg.Name,
-			Description:     cfg.Description,
-			Type:            sdk.ConsumerBuiltin,
-			Data:            map[string]string{},
+			ID:          cfg.ID,
+			Name:        cfg.Name,
+			Description: cfg.Description,
+			Type:        sdk.ConsumerBuiltin,
+			AuthConsumerUser: &sdk.AuthConsumerUser{
+				Data: map[string]string{},
+			},
 			ValidityPeriods: validityPediod,
 		}
 		conf.Repositories.API.Token, err = builtin.NewSigninConsumerToken(&c)
@@ -577,11 +563,13 @@ func configSetStartupData(conf *Configuration) (string, error) {
 			Type:        api.StartupConfigConsumerTypeDBMigrate,
 		}
 		var c = sdk.AuthConsumer{
-			ID:              cfg.ID,
-			Name:            cfg.Name,
-			Description:     cfg.Description,
-			Type:            sdk.ConsumerBuiltin,
-			Data:            map[string]string{},
+			ID:          cfg.ID,
+			Name:        cfg.Name,
+			Description: cfg.Description,
+			Type:        sdk.ConsumerBuiltin,
+			AuthConsumerUser: &sdk.AuthConsumerUser{
+				Data: map[string]string{},
+			},
 			ValidityPeriods: validityPediod,
 		}
 		conf.DatabaseMigrate.API.Token, err = builtin.NewSigninConsumerToken(&c)
@@ -599,11 +587,13 @@ func configSetStartupData(conf *Configuration) (string, error) {
 			Type:        api.StartupConfigConsumerTypeVCS,
 		}
 		var c = sdk.AuthConsumer{
-			ID:              cfg.ID,
-			Name:            cfg.Name,
-			Description:     cfg.Description,
-			Type:            sdk.ConsumerBuiltin,
-			Data:            map[string]string{},
+			ID:          cfg.ID,
+			Name:        cfg.Name,
+			Description: cfg.Description,
+			Type:        sdk.ConsumerBuiltin,
+			AuthConsumerUser: &sdk.AuthConsumerUser{
+				Data: map[string]string{},
+			},
 			ValidityPeriods: validityPediod,
 		}
 		conf.VCS.API.Token, err = builtin.NewSigninConsumerToken(&c)
@@ -621,11 +611,13 @@ func configSetStartupData(conf *Configuration) (string, error) {
 			Type:        api.StartupConfigConsumerTypeCDN,
 		}
 		var c = sdk.AuthConsumer{
-			ID:              cfg.ID,
-			Name:            cfg.Name,
-			Description:     cfg.Description,
-			Type:            sdk.ConsumerBuiltin,
-			Data:            map[string]string{},
+			ID:          cfg.ID,
+			Name:        cfg.Name,
+			Description: cfg.Description,
+			Type:        sdk.ConsumerBuiltin,
+			AuthConsumerUser: &sdk.AuthConsumerUser{
+				Data: map[string]string{},
+			},
 			ValidityPeriods: validityPediod,
 		}
 		conf.CDN.API.Token, err = builtin.NewSigninConsumerToken(&c)
@@ -643,11 +635,13 @@ func configSetStartupData(conf *Configuration) (string, error) {
 			Type:        api.StartupConfigConsumerTypeElasticsearch,
 		}
 		var c = sdk.AuthConsumer{
-			ID:              cfg.ID,
-			Name:            cfg.Name,
-			Description:     cfg.Description,
-			Type:            sdk.ConsumerBuiltin,
-			Data:            map[string]string{},
+			ID:          cfg.ID,
+			Name:        cfg.Name,
+			Description: cfg.Description,
+			Type:        sdk.ConsumerBuiltin,
+			AuthConsumerUser: &sdk.AuthConsumerUser{
+				Data: map[string]string{},
+			},
 			ValidityPeriods: validityPediod,
 		}
 		conf.ElasticSearch.API.Token, err = builtin.NewSigninConsumerToken(&c)
@@ -765,23 +759,6 @@ func getInitTokenFromExistingConfiguration(conf Configuration) (string, error) {
 				ID:          consumerID,
 				Name:        h.Swarm.Name,
 				Description: "Autogenerated configuration for swarm hatchery",
-				Type:        api.StartupConfigConsumerTypeHatchery,
-			}
-			startupCfg.Consumers = append(startupCfg.Consumers, cfg)
-		}
-
-		if h.Marathon != nil {
-			consumerID, iat, err := builtin.CheckSigninConsumerToken(h.Marathon.API.Token)
-			if err != nil {
-				return "", fmt.Errorf("cannot parse hatchery:marathon signin token: %v", err)
-			}
-			if iat < globalIAT {
-				globalIAT = iat
-			}
-			var cfg = api.StartupConfigConsumer{
-				ID:          consumerID,
-				Name:        h.Marathon.Name,
-				Description: "Autogenerated configuration for marathon hatchery",
 				Type:        api.StartupConfigConsumerTypeHatchery,
 			}
 			startupCfg.Consumers = append(startupCfg.Consumers, cfg)

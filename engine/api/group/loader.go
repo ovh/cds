@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/organization"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
 )
@@ -82,22 +83,42 @@ func loadOrganization(ctx context.Context, db gorp.SqlExecutor, gs ...*sdk.Group
 	groupIDs := sdk.GroupPointersToIDs(gs)
 
 	// Get all organizations for group ids
-	orgs, err := LoadOrganizationsByGroupIDs(ctx, db, groupIDs)
+	groupsOrganization, err := LoadGroupOrganizationsByGroupIDs(ctx, db, groupIDs)
 	if err != nil {
 		return err
 	}
-	mOrgs := make(map[int64]Organization)
-	for i := range orgs {
-		mOrgs[orgs[i].GroupID] = orgs[i]
+
+	// Get all ID
+	organizationIDs := make(sdk.StringSlice, 0, len(groupsOrganization))
+	for i := range groupsOrganization {
+		organizationIDs = append(organizationIDs, groupsOrganization[i].OrganizationID)
+	}
+	organizationIDs.Unique()
+
+	// Get all organization
+	organizations, err := organization.LoadOrganizationByIDs(ctx, db, organizationIDs)
+	if err != nil {
+		return err
+	}
+
+	// Compute map of organization
+	mapOrgsName := make(map[string]string)
+	for i := range organizations {
+		mapOrgsName[organizations[i].ID] = organizations[i].Name
+	}
+
+	// Compute map of group_organization
+	mapGrpOrgs := make(map[int64]string)
+	for i := range groupsOrganization {
+		mapGrpOrgs[groupsOrganization[i].GroupID] = mapOrgsName[groupsOrganization[i].OrganizationID]
 	}
 
 	// Set organization on each groups
 	for i := range gs {
-		if org, ok := mOrgs[gs[i].ID]; ok {
-			gs[i].Organization = org.Organization
+		if org, ok := mapGrpOrgs[gs[i].ID]; ok {
+			gs[i].Organization = org
 		}
 	}
-
 	return nil
 }
 

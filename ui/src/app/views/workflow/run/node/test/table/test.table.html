@@ -1,68 +1,63 @@
 <div class="wrapper">
     <div class="summary">
-        <div class="ui grid">
-            <div class="ui row" *ngIf="tests">
-                <div class="right aligned five wide column">
-                    <a class="pointing" (click)="statusFilter('all')">
-                        {{tests.total}}
-                        <span *ngIf="tests.total > 1">{{'pipeline_run_test_total_title_s' | translate}}</span>
-                        <span *ngIf="tests.total < 2">{{'pipeline_run_test_total_title' | translate}}</span>
-                    </a>
-                </div>
-                <div class="centered five wide column">
-                    <a class="pointing" (click)="statusFilter('failed')">
-                        {{ tests.ko }}
-                        <span *ngIf="tests.ko > 1">{{'pipeline_run_test_failed_title_s' | translate}}</span>
-                        <span *ngIf="tests.ko < 2">{{'pipeline_run_test_failed_title' | translate}}</span>
-                    </a>
-                </div>
-                <div class="five wide column">
-                    <a class="pointing" (click)="statusFilter('skipped')">
-                        {{ tests.skipped }}
-                        <span *ngIf="tests.skipped > 1">{{'pipeline_run_test_skipped_title_s' | translate}}</span>
-                        <span *ngIf="tests.skipped < 2">{{'pipeline_run_test_skipped_title' | translate}}</span>
-                    </a>
-                </div>
-            </div>
-        </div>
+        <nz-row>
+            <nz-col [nzSpan]="5" [nzOffset]="3">
+                <a class="pointing" (click)="statusFilter('all')">
+                    {{tests.total}}
+                    <span *ngIf="tests.total > 1">{{'pipeline_run_test_total_title_s' | translate}}</span>
+                    <span *ngIf="tests.total < 2">{{'pipeline_run_test_total_title' | translate}}</span>
+                </a>
+            </nz-col>
+            <nz-col [nzSpan]="5" [nzOffset]="3">
+                <a class="pointing" (click)="statusFilter('failed')">
+                    {{ tests.ko }}
+                    <span *ngIf="tests.ko > 1">{{'pipeline_run_test_failed_title_s' | translate}}</span>
+                    <span *ngIf="tests.ko < 2">{{'pipeline_run_test_failed_title' | translate}}</span>
+                </a>
+            </nz-col>
+            <nz-col [nzSpan]="5" [nzOffset]="3">
+                <a class="pointing" (click)="statusFilter('skipped')">
+                    {{ tests.skipped }}
+                    <span *ngIf="tests.skipped > 1">{{'pipeline_run_test_skipped_title_s' | translate}}</span>
+                    <span *ngIf="tests.skipped < 2">{{'pipeline_run_test_skipped_title' | translate}}</span>
+                </a>
+            </nz-col>
+        </nz-row>
     </div>
 
-    <div class="ui grid">
-        <div class="sixteen wide column">
+    <nz-row>
+        <nz-col [nzSpan]="24">
             <app-data-table [withPagination]="20" [filter]="filterInput" [withFilter]="filter" [columns]="columns"
                 [data]="testcases" (dataChange)="dataChanged($event)" (filterChange)="filterChanged($event)">
             </app-data-table>
-        </div>
-        <div class="sixteen wide column" *ngIf="testCaseSelected">
+        </nz-col>
+        <nz-col [nzSpan]="24" *ngIf="testCaseSelected">
             <div>
                 <h4>Errors / Failures / Skipped</h4>
                 <codemirror *ngIf="testCaseSelected.messages && testCaseSelected.messages !== ''"
                     [ngModel]="testCaseSelected.messages" [config]="codeMirrorConfig" #codemirror1>
                 </codemirror>
-                <div class="ui info message" *ngIf="!testCaseSelected.messages || testCaseSelected.messages === ''">
-                    {{ 'common_no_data' | translate }}
-                </div>
+                <nz-alert nzType="info" *ngIf="!testCaseSelected.messages || testCaseSelected.messages === ''" nzMessage="No data found">
+                </nz-alert>
 
                 <h4>Systemout</h4>
                 <codemirror
                     *ngIf="testCaseSelected.systemout && testCaseSelected.systemout.value && testCaseSelected.systemout.value !== ''"
                     [ngModel]="testCaseSelected.systemout.value" [config]="codeMirrorConfig" #codemirror2>
                 </codemirror>
-                <div class="ui info message"
-                    *ngIf="!testCaseSelected.systemout || !testCaseSelected.systemout.value || testCaseSelected.systemout.value === ''">
-                    {{ 'common_no_data' | translate }}
-                </div>
+                <nz-alert nzType="info"
+                    *ngIf="!testCaseSelected.systemout || !testCaseSelected.systemout.value || testCaseSelected.systemout.value === ''" nzMessage="No data found">
+                </nz-alert>
 
                 <h4>Systemerr</h4>
                 <codemirror
                     *ngIf="testCaseSelected.systemerr && testCaseSelected.systemerr.value && testCaseSelected.systemerr.value !== ''"
                     [ngModel]="testCaseSelected.systemerr.value" [config]="codeMirrorConfig" #codemirror3>
                 </codemirror>
-                <div class="ui info message"
-                    *ngIf="!testCaseSelected.systemerr || !testCaseSelected.systemerr.value || testCaseSelected.systemerr.value === ''">
-                    {{ 'common_no_data' | translate }}
-                </div>
+                <nz-alert nzType="info"
+                    *ngIf="!testCaseSelected.systemerr || !testCaseSelected.systemerr.value || testCaseSelected.systemerr.value === ''" nzMessage="No data found">
+                </nz-alert>
             </div>
-        </div>
-    </div>
+        </nz-col>
+    </nz-row>
 </div>

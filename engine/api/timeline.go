@@ -30,7 +30,7 @@ func (api *API) getTimelineHandler() service.Handler {
 		currentItem := service.FormInt(r, "currentItem")
 
 		// Get workflow to mute
-		timelineFilter, err := user.LoadTimelineFilter(api.mustDB(), consumer.AuthentifiedUser.ID)
+		timelineFilter, err := user.LoadTimelineFilter(api.mustDB(), consumer.AuthConsumerUser.AuthentifiedUser.ID)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load timeline filter")
 		}

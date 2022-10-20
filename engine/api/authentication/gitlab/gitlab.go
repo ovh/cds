@@ -18,13 +18,14 @@ var _ sdk.AuthDriverWithRedirect = new(authDriver)
 var _ sdk.AuthDriverWithSigninStateToken = new(authDriver)
 
 // NewDriver returns a new Gitlab auth driver for given config.
-func NewDriver(signupDisabled bool, cdsURL, url, applicationID, secret string) sdk.AuthDriver {
+func NewDriver(signupDisabled bool, cdsURL, url, applicationID, secret, orga string) sdk.AuthDriver {
 	return &authDriver{
 		signupDisabled: signupDisabled,
 		cdsURL:         cdsURL,
 		url:            url,
 		applicationID:  applicationID,
 		secret:         secret,
+		organization:   orga,
 	}
 }
 
@@ -34,6 +35,7 @@ type authDriver struct {
 	url            string
 	applicationID  string
 	secret         string
+	organization   string
 }
 
 func (d authDriver) GetManifest() sdk.AuthDriverManifest {
@@ -116,6 +118,7 @@ func (d authDriver) GetUserInfo(ctx context.Context, req sdk.AuthConsumerSigninR
 	info.Username = me.Username
 	info.Fullname = me.Name
 	info.Email = me.Email
+	info.Organization = d.organization
 
 	return info, nil
 }

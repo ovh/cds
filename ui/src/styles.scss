@@ -43,6 +43,10 @@ textarea:read-only {
   border-radius: 2px;
 }
 
+nz-breadcrumb-item {
+  font-size: 1.2em;
+}
+
 nz-card.redTitle {
   .ant-card-head {
     min-height: 44px;
@@ -129,6 +133,11 @@ a.disabled:hover {
 app-workflow-admin .CodeMirror-scroll {
     min-height: 180px;
 }
+
+.CodeMirror-wrap pre.CodeMirror-line {
+  word-break: break-all;
+}
+
 
 .fullheight {
     .CodeMirror {

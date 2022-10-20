@@ -180,11 +180,11 @@ func (c *client) StreamNoRetry(ctx context.Context, httpClient HTTPClient, metho
 		!strings.Contains(path, "/auth/consumer/local/verify") &&
 		!strings.Contains(path, "/auth/consumer/worker/signin")
 
-	if checkToken && !c.config.HasValidSessionToken() && c.config.BuitinConsumerAuthenticationToken != "" {
+	if checkToken && !c.config.HasValidSessionToken() && c.config.BuiltinConsumerAuthenticationToken != "" {
 		if c.config.Verbose {
 			log.Printf("session token invalid: (%s). Relogin...\n", c.config.SessionToken)
 		}
-		var req = sdk.AuthConsumerSigninRequest{"token": c.config.BuitinConsumerAuthenticationToken}
+		var req = sdk.AuthConsumerSigninRequest{"token": c.config.BuiltinConsumerAuthenticationToken}
 		if c.serviceAuthConsumerSigninRequest != nil {
 			req = *c.serviceAuthConsumerSigninRequest
 		}
@@ -287,11 +287,11 @@ func (c *client) Stream(ctx context.Context, httpClient HTTPClient, method strin
 		!strings.Contains(path, "/auth/consumer/local/verify") &&
 		!strings.Contains(path, "/auth/consumer/worker/signin")
 
-	if checkToken && !c.config.HasValidSessionToken() && c.config.BuitinConsumerAuthenticationToken != "" {
+	if checkToken && !c.config.HasValidSessionToken() && c.config.BuiltinConsumerAuthenticationToken != "" {
 		if c.config.Verbose {
 			log.Printf("session token invalid: (%s). Relogin...\n", c.config.SessionToken)
 		}
-		var req = sdk.AuthConsumerSigninRequest{"token": c.config.BuitinConsumerAuthenticationToken}
+		var req = sdk.AuthConsumerSigninRequest{"token": c.config.BuiltinConsumerAuthenticationToken}
 		if c.serviceAuthConsumerSigninRequest != nil {
 			req = *c.serviceAuthConsumerSigninRequest
 		}
@@ -425,8 +425,8 @@ func (c *client) Stream(ctx context.Context, httpClient HTTPClient, method strin
 func (c *client) UploadMultiPart(method string, path string, body *bytes.Buffer, mods ...RequestModifier) ([]byte, int, error) {
 	// Checks that current session_token is still valid
 	// If not, challenge a new one against the authenticationToken
-	if !c.config.HasValidSessionToken() && c.config.BuitinConsumerAuthenticationToken != "" {
-		var req = sdk.AuthConsumerSigninRequest{"token": c.config.BuitinConsumerAuthenticationToken}
+	if !c.config.HasValidSessionToken() && c.config.BuiltinConsumerAuthenticationToken != "" {
+		var req = sdk.AuthConsumerSigninRequest{"token": c.config.BuiltinConsumerAuthenticationToken}
 		if c.serviceAuthConsumerSigninRequest != nil {
 			req = *c.serviceAuthConsumerSigninRequest
 		}

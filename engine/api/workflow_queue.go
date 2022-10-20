@@ -58,7 +58,7 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 			hatcheryName = s.Name
 		}
 
-		wk, err := worker.LoadByID(ctx, api.mustDB(), getAPIConsumer(ctx).Worker.ID)
+		wk, err := worker.LoadByID(ctx, api.mustDB(), getAPIConsumer(ctx).AuthConsumerUser.Worker.ID)
 		if err != nil {
 			return err
 		}
@@ -257,7 +257,7 @@ func (api *API) postBookWorkflowJobHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
-		s, err := services.LoadByID(ctx, api.mustDB(), getAPIConsumer(ctx).Service.ID)
+		s, err := services.LoadByID(ctx, api.mustDB(), getAPIConsumer(ctx).AuthConsumerUser.Service.ID)
 		if err != nil {
 			return err
 		}
@@ -426,14 +426,14 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 		var wk *sdk.Worker
 		var hatch *sdk.Service
 		if isWorker(ctx) {
-			wk, err = worker.LoadByID(ctx, api.mustDB(), getAPIConsumer(ctx).Worker.ID)
+			wk, err = worker.LoadByID(ctx, api.mustDB(), getAPIConsumer(ctx).AuthConsumerUser.Worker.ID)
 			if err != nil {
 				return err
 			}
 		}
 
 		if isHatchery(ctx) {
-			hatch, err = services.LoadByID(ctx, api.mustDBWithCtx(ctx), getAPIConsumer(ctx).Service.ID)
+			hatch, err = services.LoadByID(ctx, api.mustDBWithCtx(ctx), getAPIConsumer(ctx).AuthConsumerUser.Service.ID)
 			if err != nil {
 				return err
 			}
@@ -791,8 +791,8 @@ func (api *API) countWorkflowJobQueueHandler() service.Handler {
 
 		var count sdk.WorkflowNodeJobRunCount
 
-		if consumer.Worker != nil {
-			if consumer.Worker.JobRunID != nil {
+		if consumer.AuthConsumerUser.Worker != nil {
+			if consumer.AuthConsumerUser.Worker.JobRunID != nil {
 				count.Count = 1
 			}
 			return service.WriteJSON(w, count, http.StatusOK)
@@ -850,9 +850,9 @@ func (api *API) getWorkflowJobQueueHandler() service.Handler {
 
 		jobs := make([]sdk.WorkflowNodeJobRun, 0)
 
-		if consumer.Worker != nil {
-			if consumer.Worker.JobRunID != nil {
-				job, err := workflow.LoadNodeJobRun(ctx, api.mustDB(), api.Cache, *consumer.Worker.JobRunID)
+		if consumer.AuthConsumerUser.Worker != nil {
+			if consumer.AuthConsumerUser.Worker.JobRunID != nil {
+				job, err := workflow.LoadNodeJobRun(ctx, api.mustDB(), api.Cache, *consumer.AuthConsumerUser.Worker.JobRunID)
 				if err != nil {
 					return err
 				}

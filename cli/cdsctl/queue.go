@@ -88,7 +88,7 @@ func queueStopAllRun(v cli.Values) error {
 		nbToStop++
 	}
 
-	wantToStopAllSure := v.GetBool("force") || cli.AskConfirm(fmt.Sprintf("There are %d worfklows to stop, confirm stopping workflows?", nbToStop))
+	wantToStopAllSure := v.GetBool("force") || cli.AskConfirm(fmt.Sprintf("There are %d workflows to stop, confirm stopping workflows?", nbToStop))
 	if !wantToStopAllSure {
 		return nil
 	}

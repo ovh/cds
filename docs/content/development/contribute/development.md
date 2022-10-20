@@ -18,7 +18,7 @@ If you are familiar with these different tools, you probably will not need to re
 
 ## PostgreSQL
 
-Download PostgreSQL from https://www.postgresql.org/download/, version >= 9.6. Version 14.0 recommanded
+Download PostgreSQL from https://www.postgresql.org/download/, version >= 9.6. Version 14.0 recommended
 
 You can easily use only PostgreSQL binaries, downloaded from https://www.enterprisedb.com/download-postgresql-binaries.
 
@@ -83,23 +83,23 @@ $ tar xzf node-v16.4.2-darwin-x64.tar.gz
 
 ## Golang
 
-Download the latest Golang version from https://golang.org/dl/, version >= 1.18
+Download the latest Golang version from https://golang.org/dl/, version >= 1.19
 
-Example with version 1.18 on macOS:
+Example with version 1.19 on macOS:
 
 ```bash
 $ export GOROOT=~/go
 $ export PATH=$PATH:$GOROOT/bin
 $ cd ~
-$ curl -O https://dl.google.com/go/go1.18.darwin-amd64.tar.gz
-$ tar xzf go1.18.darwin-amd64.tar.gz
+$ curl -O https://dl.google.com/go/go1.19.darwin-amd64.tar.gz
+$ tar xzf go1.19.darwin-amd64.tar.gz
 ```
 
 Check if Go installation is ok
 
 ```bash
 $ go version
-go version go1.18 darwin/amd64
+go version go1.19 darwin/amd64
 ```
 
 ## CDS

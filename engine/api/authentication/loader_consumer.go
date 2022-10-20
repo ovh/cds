@@ -37,7 +37,7 @@ func loadAuthentifiedUserWithContacts(ctx context.Context, db gorp.SqlExecutor, 
 
 	for i := range cs {
 		// Add contacts for consumer's user
-		if err := user.LoadOptions.WithContacts(ctx, db, cs[i].AuthentifiedUser); err != nil {
+		if err := user.LoadOptions.WithContacts(ctx, db, cs[i].AuthConsumerUser.AuthentifiedUser); err != nil {
 			return err
 		}
 	}
@@ -88,8 +88,8 @@ func loadAuthentifiedUser(ctx context.Context, db gorp.SqlExecutor, cs ...*sdk.A
 	}
 
 	for i := range cs {
-		if user, ok := mUsers[cs[i].AuthentifiedUserID]; ok {
-			cs[i].AuthentifiedUser = &user
+		if user, ok := mUsers[cs[i].AuthConsumerUser.AuthentifiedUserID]; ok {
+			cs[i].AuthConsumerUser.AuthentifiedUser = &user
 		}
 	}
 
@@ -99,7 +99,7 @@ func loadAuthentifiedUser(ctx context.Context, db gorp.SqlExecutor, cs ...*sdk.A
 func loadConsumerGroups(ctx context.Context, db gorp.SqlExecutor, cs ...*sdk.AuthConsumer) error {
 	var groupIDs []int64
 	for i := range cs {
-		groupIDs = append(groupIDs, cs[i].GroupIDs...)
+		groupIDs = append(groupIDs, cs[i].AuthConsumerUser.GroupIDs...)
 	}
 
 	// Load all groups for given ids
@@ -111,9 +111,9 @@ func loadConsumerGroups(ctx context.Context, db gorp.SqlExecutor, cs ...*sdk.Aut
 	// Set groups on each consumers
 	mGroups := gs.ToMap()
 	for i := range cs {
-		cs[i].Groups = make([]sdk.Group, 0, len(cs[i].GroupIDs))
-		for _, groupID := range cs[i].GroupIDs {
-			cs[i].Groups = append(cs[i].Groups, mGroups[groupID])
+		cs[i].AuthConsumerUser.Groups = make([]sdk.Group, 0, len(cs[i].AuthConsumerUser.GroupIDs))
+		for _, groupID := range cs[i].AuthConsumerUser.GroupIDs {
+			cs[i].AuthConsumerUser.Groups = append(cs[i].AuthConsumerUser.Groups, mGroups[groupID])
 		}
 	}
 

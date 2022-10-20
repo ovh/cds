@@ -1,7 +1,9 @@
-<div class="ui relaxed divided list" *ngIf="bookmarks && bookmarks.length">
+<div *ngIf="bookmarks && bookmarks.length">
     <div class="item" *ngFor="let b of bookmarks">
-        <i class="large browser middle aligned icon" *ngIf="b.type === 'project'"></i>
-        <i class="large share alternate middle aligned icon" *ngIf="b.type === 'workflow'"></i>
+        <div class="icon">
+            <i class="large browser middle aligned icon" *ngIf="b.type === 'project'"></i>
+            <i class="large share alternate middle aligned icon" *ngIf="b.type === 'workflow'"></i>
+        </div>
         <div class="content">
             <ng-container *ngIf="b.type === 'project'">
                 <a class="header" [routerLink]="['/project', b.key]">

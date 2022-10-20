@@ -217,7 +217,6 @@ func (api *API) repositoryAnalysisPoller(ctx context.Context, tick time.Duration
 				log.Error(ctx, "unable to load analysis in progress: %v", err)
 				continue
 			}
-			log.Debug(ctx, "found %d analysis in progress", len(analysis))
 			for _, a := range analysis {
 				api.GoRoutines.Exec(
 					ctx,
@@ -325,7 +324,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 			analysis.Data.CDSUserName = cdsUser.Username
 
 			// Check user right
-			b, err := rbac.HasRoleOnProjectAndUserID(ctx, api.mustDB(), sdk.RoleManage, cdsUser.ID, analysis.ProjectKey)
+			b, err := rbac.HasRoleOnProjectAndUserID(ctx, api.mustDB(), sdk.ProjectRoleManage, cdsUser.ID, analysis.ProjectKey)
 			if err != nil {
 				return api.stopAnalysis(ctx, analysis, err)
 			}

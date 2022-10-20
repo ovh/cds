@@ -11,12 +11,12 @@ import { Group } from 'app/model/group.model';
 import { AuthentifiedUser, AuthSummary } from 'app/model/user.model';
 import { AuthenticationService } from 'app/service/authentication/authentication.service';
 import { UserService } from 'app/service/user/user.service';
-import { Item } from 'app/shared/menu/menu.component';
 import { Column, ColumnType, Filter } from 'app/shared/table/data-table.component';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { AuthenticationState } from 'app/store/authentication.state';
 import * as moment from 'moment';
 import { NzModalRef } from 'ng-zorro-antd/modal';
+
 
 export enum CloseEventType {
     CHILD_DETAILS = 'CHILD_DETAILS',
@@ -29,12 +29,6 @@ export class CloseEvent {
     type: CloseEventType;
     payload: any;
 }
-
-const defaultMenuItems = [<Item>{
-    translate: 'user_auth_sessions',
-    key: 'sessions',
-    default: true
-}];
 
 @Component({
     selector: 'app-consumer-details-modal',
@@ -54,8 +48,8 @@ export class ConsumerDetailsModalComponent implements OnInit {
     columnsConsumers: Array<Column<AuthConsumer>>;
     filterChildren: Filter<AuthConsumer>;
     selectedChildDetails: AuthConsumer;
-    menuItems: Array<Item>;
-    selectedItem: Item;
+    menuItems: Map<string,string>;
+    selectedItem: string;
     columnsSessions: Array<Column<AuthSession>>;
     filterSessions: Filter<AuthSession>;
     consumerDeletedOrDetached: boolean;
@@ -73,17 +67,16 @@ export class ConsumerDetailsModalComponent implements OnInit {
         private _translate: TranslateService
     ) {
         this.currentAuthSummary = this._store.selectSnapshot(AuthenticationState.summary);
-
-        this.menuItems = [].concat(defaultMenuItems);
+        this.selectedItem = "sessions";
 
         this.filterChildren = f => {
             const lowerFilter = f.toLowerCase();
             return (c: AuthConsumer) => c.name.toLowerCase().indexOf(lowerFilter) !== -1 ||
                     c.description.toLowerCase().indexOf(lowerFilter) !== -1 ||
                     c.id.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                    c.scope_details.map(s => s.scope).join(' ').toLowerCase().indexOf(lowerFilter) !== -1 ||
-                    (c.groups && c.groups.map(g => g.name).join(' ').toLowerCase().indexOf(lowerFilter) !== -1) ||
-                    (!c.groups && lowerFilter === '*');
+                    c.auth_consumer_user.scope_details.map(s => s.scope).join(' ').toLowerCase().indexOf(lowerFilter) !== -1 ||
+                    (c.auth_consumer_user.groups && c.auth_consumer_user.groups.map(g => g.name).join(' ').toLowerCase().indexOf(lowerFilter) !== -1) ||
+                    (!c.auth_consumer_user.groups && lowerFilter === '*');
         };
 
         this.columnsConsumers = [
@@ -105,11 +98,11 @@ export class ConsumerDetailsModalComponent implements OnInit {
             },
             <Column<AuthConsumer>>{
                 name: 'user_auth_scopes',
-                selector: (c: AuthConsumer) => c.scope_details ? c.scope_details.map(s => s.scope).join(', ') : '*'
+                selector: (c: AuthConsumer) => c.auth_consumer_user.scope_details ? c.auth_consumer_user.scope_details.map(s => s.scope).join(', ') : '*'
             },
             <Column<AuthConsumer>>{
                 name: 'user_auth_groups',
-                selector: (c: AuthConsumer) => c.groups ? c.groups.map((g: Group) => g.name).join(', ') : '*'
+                selector: (c: AuthConsumer) => c.auth_consumer_user.groups ? c.auth_consumer_user.groups.map((g: Group) => g.name).join(', ') : '*'
             },
             <Column<AuthConsumer>>{
                 type: ColumnType.BUTTON,
@@ -199,8 +192,8 @@ export class ConsumerDetailsModalComponent implements OnInit {
 
         this.selectedChildDetails = null;
         this.consumerDeletedOrDetached = false;
-        this.scopes = this.consumer.scope_details ? this.consumer.scope_details.map(s => s.scope).join(', ') : '*';
-        this.groups = this.consumer.groups ? this.consumer.groups.map(g => g.name).join(', ') : '*';
+        this.scopes = this.consumer.auth_consumer_user.scope_details ? this.consumer.auth_consumer_user.scope_details.map(s => s.scope).join(', ') : '*';
+        this.groups = this.consumer.auth_consumer_user.groups ? this.consumer.auth_consumer_user.groups.map(g => g.name).join(', ') : '*';
 
         if (this.consumer.warnings && this.consumer.warnings.length > 0) {
             this.warningText = this.consumer.warnings.map(w => {
@@ -216,29 +209,21 @@ export class ConsumerDetailsModalComponent implements OnInit {
             }).join(' ');
         }
 
-        this.menuItems = [].concat(defaultMenuItems);
+        this.menuItems = new Map<string, string>();
+        this.menuItems.set("sessions", "Sessions");
         if (this.consumer.parent) {
-            this.menuItems.push(<Item>{
-                translate: 'auth_consumer_details_parent',
-                key: 'parent'
-            });
+            this.menuItems.set("parent", "Parent consumer");
         }
         if (this.consumer.children.length > 0) {
-            this.menuItems.push(<Item>{
-                translate: 'auth_consumer_details_children',
-                key: 'children'
-            });
+            this.menuItems.set("children", "Children consumers");
         }
         if (this.consumer.validity_periods.length > 0) {
-            this.menuItems.push(<Item>{
-                translate: 'validity_periods',
-                key: 'validity_periods'
-            });
+            this.menuItems.set("validity_periods", "Validity periods");
         }
         this._cd.markForCheck();
     }
 
-    selectMenuItem(item: Item): void {
+    selectMenuItem(item: string): void {
         this.selectedItem = item;
         this._cd.markForCheck();
     }

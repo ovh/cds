@@ -32,7 +32,7 @@ func (api *API) putBookWorkerModelHandler() service.Handler {
 			return err
 		}
 
-		s, err := services.LoadByID(ctx, api.mustDB(), getAPIConsumer(ctx).Service.ID)
+		s, err := services.LoadByID(ctx, api.mustDB(), getAPIConsumer(ctx).AuthConsumerUser.Service.ID)
 		if err != nil {
 			return err
 		}
@@ -99,8 +99,8 @@ func (api *API) getWorkerModelsEnabledHandler() service.Handler {
 
 		consumer := getAPIConsumer(ctx)
 		var groupIDs []int64
-		if len(consumer.GroupIDs) > 0 {
-			groupIDs = consumer.GroupIDs
+		if len(consumer.AuthConsumerUser.GroupIDs) > 0 {
+			groupIDs = consumer.AuthConsumerUser.GroupIDs
 		} else {
 			groupIDs = append(getAPIConsumer(ctx).GetGroupIDs(), group.SharedInfraGroup.ID)
 		}

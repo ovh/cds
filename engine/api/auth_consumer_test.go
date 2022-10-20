@@ -75,9 +75,11 @@ func Test_postConsumerByUserHandler(t *testing.T) {
 
 	data := sdk.AuthConsumer{
 		Name:            sdk.RandomString(10),
-		GroupIDs:        []int64{g.ID},
-		ScopeDetails:    sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAccessToken),
 		ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+		AuthConsumerUser: &sdk.AuthConsumerUser{
+			GroupIDs:     []int64{g.ID},
+			ScopeDetails: sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAccessToken),
+		},
 	}
 
 	uri := api.Router.GetRoute(http.MethodPost, api.postConsumerByUserHandler, map[string]string{
@@ -102,10 +104,10 @@ func Test_postConsumerByUserHandler(t *testing.T) {
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &created))
 	assert.NotEmpty(t, created.Token)
 	assert.Equal(t, data.Name, created.Consumer.Name)
-	require.Equal(t, 1, len(created.Consumer.GroupIDs))
-	assert.Equal(t, g.ID, created.Consumer.GroupIDs[0])
-	require.Equal(t, 1, len(created.Consumer.ScopeDetails))
-	assert.Equal(t, sdk.AuthConsumerScopeAccessToken, created.Consumer.ScopeDetails[0].Scope)
+	require.Equal(t, 1, len(created.Consumer.AuthConsumerUser.GroupIDs))
+	assert.Equal(t, g.ID, created.Consumer.AuthConsumerUser.GroupIDs[0])
+	require.Equal(t, 1, len(created.Consumer.AuthConsumerUser.ScopeDetails))
+	assert.Equal(t, sdk.AuthConsumerScopeAccessToken, created.Consumer.AuthConsumerUser.ScopeDetails[0].Scope)
 	assert.Equal(t, localConsumer.ID, *created.Consumer.ParentID)
 }
 

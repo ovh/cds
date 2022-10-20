@@ -19,7 +19,7 @@ import (
 func (api *API) getNavbarHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		consumer := getAPIConsumer(ctx)
-		data, err := navbar.LoadNavbarData(api.mustDB(), api.Cache, *consumer.AuthentifiedUser)
+		data, err := navbar.LoadNavbarData(api.mustDB(), api.Cache, *consumer.AuthConsumerUser.AuthentifiedUser)
 		if err != nil {
 			return err
 		}
@@ -32,9 +32,6 @@ func (api *API) getApplicationOverviewHandler() service.Handler {
 		srvs, err := services.LoadAllByType(ctx, api.mustDB(), sdk.TypeElasticsearch)
 		if err != nil {
 			return err
-		}
-		if len(srvs) == 0 {
-			return service.WriteJSON(w, sdk.ApplicationOverview{}, http.StatusOK)
 		}
 
 		vars := mux.Vars(r)
@@ -63,24 +60,26 @@ func (api *API) getApplicationOverviewHandler() service.Handler {
 			History: make(map[string][]sdk.WorkflowRunSummary, len(app.Usage.Workflows)),
 		}
 
-		// Get metrics
-		mVulnerability, err := metrics.GetMetrics(ctx, tx, projectKey, app.ID, sdk.MetricKeyVulnerability)
-		if err != nil {
-			return sdk.WrapError(err, "cannot list vulnerability metrics")
-		}
-		appOverview.Graphs = append(appOverview.Graphs, sdk.ApplicationOverviewGraph{
-			Type:  sdk.MetricKeyVulnerability,
-			Datas: mVulnerability,
-		})
+		if len(srvs) > 0 {
+			// Get metrics
+			mVulnerability, err := metrics.GetMetrics(ctx, tx, projectKey, app.ID, sdk.MetricKeyVulnerability)
+			if err != nil {
+				return sdk.WrapError(err, "cannot list vulnerability metrics")
+			}
+			appOverview.Graphs = append(appOverview.Graphs, sdk.ApplicationOverviewGraph{
+				Type:  sdk.MetricKeyVulnerability,
+				Datas: mVulnerability,
+			})
 
-		mTest, err := metrics.GetMetrics(ctx, tx, projectKey, app.ID, sdk.MetricKeyUnitTest)
-		if err != nil {
-			return sdk.WrapError(err, "cannot list Unit test metrics")
+			mTest, err := metrics.GetMetrics(ctx, tx, projectKey, app.ID, sdk.MetricKeyUnitTest)
+			if err != nil {
+				return sdk.WrapError(err, "cannot list Unit test metrics")
+			}
+			appOverview.Graphs = append(appOverview.Graphs, sdk.ApplicationOverviewGraph{
+				Type:  sdk.MetricKeyUnitTest,
+				Datas: mTest,
+			})
 		}
-		appOverview.Graphs = append(appOverview.Graphs, sdk.ApplicationOverviewGraph{
-			Type:  sdk.MetricKeyUnitTest,
-			Datas: mTest,
-		})
 
 		if app.VCSServer != "" {
 			// GET VCS URL

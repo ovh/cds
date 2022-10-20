@@ -6,7 +6,6 @@ import (
 	"github.com/ovh/cds/engine/elasticsearch"
 	"github.com/ovh/cds/engine/hatchery/kubernetes"
 	"github.com/ovh/cds/engine/hatchery/local"
-	"github.com/ovh/cds/engine/hatchery/marathon"
 	"github.com/ovh/cds/engine/hatchery/openstack"
 	"github.com/ovh/cds/engine/hatchery/swarm"
 	"github.com/ovh/cds/engine/hatchery/vsphere"
@@ -22,7 +21,7 @@ import (
 type Configuration struct {
 	// common
 	Log struct {
-		Level   string `toml:"level" default:"warning" comment:"Log Level: debug, info, warning, notice, critical" json:"level"`
+		Level   string `toml:"level" default:"warning" comment:"Log Level: debug, info, warning, notice, error" json:"level"`
 		Format  string `toml:"format" default:"text" comment:"Stdout format: text, json, discard" json:"format"`
 		Graylog struct {
 			Host       string `toml:"host" comment:"Example: thot.ovh.com" json:"host"`
@@ -49,7 +48,6 @@ type Configuration struct {
 type HatcheryConfiguration struct {
 	Local      *local.HatcheryConfiguration      `toml:"local" comment:"Hatchery Local. Doc: https://ovh.github.io/cds/docs/components/hatchery/local/" json:"local"`
 	Kubernetes *kubernetes.HatcheryConfiguration `toml:"kubernetes" comment:"Hatchery Kubernetes. Doc: https://ovh.github.io/cds/docs/integrations/kubernetes/" json:"kubernetes"`
-	Marathon   *marathon.HatcheryConfiguration   `toml:"marathon" comment:"Hatchery Marathon. Doc: https://ovh.github.io/cds/docs/integrations/marathon/" json:"marathon"`
 	Openstack  *openstack.HatcheryConfiguration  `toml:"openstack" comment:"Hatchery OpenStack. Doc: https://ovh.github.io/cds/docs/integrations/openstack/" json:"openstack"`
 	Swarm      *swarm.HatcheryConfiguration      `toml:"swarm" comment:"Hatchery Swarm. Doc: https://ovh.github.io/cds/docs/integrations/swarm/" json:"swarm"`
 	VSphere    *vsphere.HatcheryConfiguration    `toml:"vsphere" comment:"Hatchery VShpere. Doc: https://ovh.github.io/cds/docs/integrations/vsphere/" json:"vshpere"`

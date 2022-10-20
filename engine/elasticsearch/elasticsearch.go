@@ -7,15 +7,13 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/olivere/elastic/v7"
 	"github.com/rockbears/log"
-	"gopkg.in/olivere/elastic.v6"
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 )
-
-var esClient *elastic.Client
 
 // New returns a new service
 func New() *Service {
@@ -83,10 +81,10 @@ func (s *Service) Serve(c context.Context) error {
 	defer cancel()
 
 	// Init es client
-	var errClient error
-	esClient, errClient = s.initClient()
-	if errClient != nil {
-		return sdk.WrapError(errClient, "Unable to create elasticsearchclient")
+	var err error
+	s.esClient, err = s.initClient()
+	if err != nil {
+		return sdk.WrapError(err, "Unable to create elasticsearch client")
 	}
 
 	//Init the http server
@@ -123,10 +121,17 @@ func (s *Service) Serve(c context.Context) error {
 	return ctx.Err()
 }
 
-func (s *Service) initClient() (*elastic.Client, error) {
-	return elastic.NewClient(
+func (s *Service) initClient() (ESClient, error) {
+	x, err := elastic.NewClient(
 		elastic.SetURL(s.Cfg.ElasticSearch.URL),
 		elastic.SetBasicAuth(s.Cfg.ElasticSearch.Username, s.Cfg.ElasticSearch.Password),
 		elastic.SetSniff(false),
 	)
+	if err != nil {
+		return nil, sdk.WithStack(err)
+	}
+	var c = esClient{
+		client: x,
+	}
+	return &c, nil
 }

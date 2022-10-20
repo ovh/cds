@@ -11,11 +11,11 @@ import (
 )
 
 func hasGlobalRole(ctx context.Context, auth *sdk.AuthConsumer, _ cache.Store, db gorp.SqlExecutor, role string) error {
-	if auth == nil {
+	if auth == nil || auth.AuthConsumerUser == nil {
 		return sdk.WithStack(sdk.ErrForbidden)
 	}
 
-	hasRole, err := HasGlobalRole(ctx, db, role, auth.AuthentifiedUser.ID)
+	hasRole, err := HasGlobalRole(ctx, db, role, auth.AuthConsumerUser.AuthentifiedUser.ID)
 	if err != nil {
 		return err
 	}
@@ -30,7 +30,19 @@ func hasGlobalRole(ctx context.Context, auth *sdk.AuthConsumer, _ cache.Store, d
 	return nil
 }
 
-// PermissionManage return nil if the current AuthConsumer have the RoleManage on current project KEY
+// PermissionManage return nil if the current AuthConsumer have the ProjectRoleManage on current project KEY
 func PermissionManage(ctx context.Context, auth *sdk.AuthConsumer, store cache.Store, db gorp.SqlExecutor, _ map[string]string) error {
-	return hasGlobalRole(ctx, auth, store, db, sdk.RoleManagePermission)
+	return hasGlobalRole(ctx, auth, store, db, sdk.GlobalRoleManagePermission)
+}
+
+func OrganizationManage(ctx context.Context, auth *sdk.AuthConsumer, store cache.Store, db gorp.SqlExecutor, _ map[string]string) error {
+	return hasGlobalRole(ctx, auth, store, db, sdk.GlobalRoleManageOrganization)
+}
+
+func RegionManage(ctx context.Context, auth *sdk.AuthConsumer, store cache.Store, db gorp.SqlExecutor, _ map[string]string) error {
+	return hasGlobalRole(ctx, auth, store, db, sdk.GlobalRoleManageRegion)
+}
+
+func GlobalHatcheryManage(ctx context.Context, auth *sdk.AuthConsumer, store cache.Store, db gorp.SqlExecutor, _ map[string]string) error {
+	return hasGlobalRole(ctx, auth, store, db, sdk.GlobalRoleManageHatchery)
 }
