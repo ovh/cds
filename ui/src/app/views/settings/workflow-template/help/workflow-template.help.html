@@ -1,12 +1,10 @@
-<div class="three wide column">
-    <div class="ui segment">
-        <h2 class="ui header"><i class="fa fa-book"></i> {{ 'settings_tips' | translate }}</h2>
-        <p>{{'workflow_template_help_line_2' | translate}}</p>
 
-        <div class="ui list">
-            <a class="item" target="_blank" rel="noopener noreferrer"
-                href="#" [routerLink]="['/docs', 'docs', 'concepts', 'template']">
-                {{'common_read_more'| translate}}</a>
-        </div>
+    <div class="nzSegment">
+        <h2><span nz-icon nzType="book" nzTheme="outline"></span> Tips</h2>
+        <p>A workflow template allows you to quickly create then update a workflow and its components.</p>
+
+        <a class="item" target="_blank" rel="noopener noreferrer"
+                   href="#" [routerLink]="['/docs', 'docs', 'concepts', 'template']">
+                    Read mode</a>
     </div>
-</div>
+

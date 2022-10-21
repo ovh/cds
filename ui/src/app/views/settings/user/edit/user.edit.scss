@@ -2,12 +2,18 @@
 
 nz-row {
   width: 100%;
+  margin-bottom: 15px;
 }
 nz-select {
   width: 100%;
 }
 .alignRight {
   text-align: right;
+}
+h1 {
+  span {
+    margin-right: 10px;
+  }
 }
 .wrapper {
     display: flex;
@@ -32,4 +38,41 @@ nz-select {
             }
         }
     }
+}
+
+.cardGrid {
+  nz-col {
+    padding: 0 5px;
+
+    .entity-card {
+      height: 200px;
+      .image {
+        text-align: center;
+        font-size: 5em;
+
+        i {
+          font-size: 1em;
+        }
+      }
+      .content {
+        text-align: center;
+      }
+      .foot {
+        padding-top: 10px;
+        text-align: center;
+      }
+    }
+  }
+}
+
+nz-row {
+  nz-col {
+    .anticon {
+      cursor: pointer;
+      margin-left: 10px;
+    }
+    .green {
+      color: $cds_color_green;
+    }
+  }
 }

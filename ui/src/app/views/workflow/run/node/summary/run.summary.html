@@ -56,15 +56,14 @@
                             </nz-row>
                             <nz-row>
                                 <nz-col [nzSpan]="24" class="rightAlign">
-                                    <div class="ui buttons"
-                                         *ngIf="nodeRunStatus !== pipelineStatusEnum.BUILDING && nodeRunStatus !== pipelineStatusEnum.WAITING">
-                                        <button class="ui green basic button" [class.loading]="loading"
-                                                [disabled]="loading || readOnlyRun"
-                                                (click)="runNewWithParameter()">{{ 'pipeline_label_run_with_parameter' | translate }}</button>
-                                    </div>
-                                    <button class="ui green basic button" [class.loading]="loading" [disabled]="loading"
+                                    <ng-container *ngIf="nodeRunStatus !== pipelineStatusEnum.BUILDING && nodeRunStatus !== pipelineStatusEnum.WAITING">
+                                        <button nz-button nzType="primary" [nzLoading]="loading"  [disabled]="loading || readOnlyRun"
+                                                (click)="runNewWithParameter()">Run pipeline with parameters</button>
+                                    </ng-container>
+
+                                    <button nz-button nzDanger nzType="primary" [nzLoading]="loading" [disabled]="loading"
                                             (click)="stop()"
-                                            *ngIf="nodeRunStatus === pipelineStatusEnum.WAITING || nodeRunStatus === pipelineStatusEnum.BUILDING">{{ 'pipeline_label_stop' | translate }}</button>
+                                            *ngIf="nodeRunStatus === pipelineStatusEnum.WAITING || nodeRunStatus === pipelineStatusEnum.BUILDING">Stop</button>
                                 </nz-col>
                             </nz-row>
 

@@ -2,27 +2,26 @@
     <app-breadcrumb [path]="path"></app-breadcrumb>
     <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)"></app-tabs>
     <app-scrollview class="scrollview" *ngIf="selectedTab" [ngSwitch]="selectedTab.key">
-        <div *ngSwitchCase="'worker_model'" class="ui grid">
-            <div class="twelve wide column">
+        <nz-row *ngSwitchCase="'worker_model'">
+            <nz-col [nzSpan]="18">
                 <app-worker-model-form mode="edit" [loading]="loading" [workerModel]="workerModel" [groups]="groups"
                     [currentAuthSummary]="currentAuthSummary" [patterns]="patterns" [types]="types"
                     (save)="saveWorkerModel($event)" (saveAsCode)="saveWorkerModelAsCode($event)"
                     (delete)="deleteWorkerModel()">
                 </app-worker-model-form>
-            </div>
-            <div class="four wide column">
+            </nz-col>
+            <nz-col [nzSpan]="6">
                 <app-worker-model-help></app-worker-model-help>
-                <ng-container *ngIf="workerModel">
-                    <br />
-                    <div class="field" *ngIf="workerModel.created_by?.username !== ''">
+                <div *ngIf="workerModel" class="nzSegment">
+                    <div *ngIf="workerModel.created_by?.username !== ''">
                         <h3>{{'common_created_by' | translate}}</h3>
                         <div>
-                            <i class="fa fa-user"></i> {{workerModel.created_by?.fullname}}
+                            <span nz-icon nzType="user" nzTheme="outline"></span> {{workerModel.created_by?.fullname}}
                             ({{workerModel.created_by?.username}})
                             <span *ngIf="workerModel.created_by?.admin"><b>Admin</b></span>
                         </div>
                         <div *ngIf="workerModel.created_by?.email !== ''">
-                            <i class="fa fa-envelope"></i> {{workerModel.created_by?.email}}
+                            <span nz-icon nzType="mail" nzTheme="outline"></span> {{workerModel.created_by?.email}}
                         </div>
                     </div>
                     <div class="field" *ngIf="workerModel.user_last_modified !== ''">
@@ -42,42 +41,44 @@
                             Check registration : {{workerModel.check_registration}}
                         </div>
                     </div>
-                </ng-container>
-            </div>
-        </div>
-        <div *ngSwitchCase="'capabilities'" class="ui grid">
-            <div class="sixteen wide column">
-                <div class="ui raised segment">
-                    <h3 class="ui header">{{'worker_model_capabilities' | translate}}
-                        <i *ngIf="!workerModel.need_registration" class="fa fa-check" style="cursor:pointer"
-                            title="{{'worker_model_capabilities_up_to_date' | translate}}"></i>
-                        <i *ngIf="workerModel.need_registration" class="fa fa-warning" style="cursor:pointer"
-                            title="{{'worker_model_capabilities_need_refresh' | translate}}{{workerModel.last_registration}}"></i>
+                </div>
+            </nz-col>
+        </nz-row>
+        <nz-row *ngSwitchCase="'capabilities'">
+            <nz-col [nzSpan]="24">
+                <div class="nzSegment">
+                    <h3>{{'worker_model_capabilities' | translate}}
+                        <span *ngIf="!workerModel?.need_registration" nz-icon nzType="check" nzTheme="outline"
+                              nz-tooltip nzTooltipTitle="{{'worker_model_capabilities_up_to_date' | translate}}"
+                              title="{{'worker_model_capabilities_up_to_date' | translate}}"></span>
+                        <span *ngIf="workerModel?.need_registration" nz-icon nzType="warning" nzTheme="outline"
+                              nz-tooltip nzTooltipTitle="{{'worker_model_capabilities_need_refresh' | translate}}{{workerModel.last_registration}}"
+                              title="{{'worker_model_capabilities_need_refresh' | translate}}{{workerModel.last_registration}}"></span>
                     </h3>
                     <p>
                         {{'worker_model_help_capabilities' | translate}}
                     </p>
                 </div>
-            </div>
-            <div class="sixteen wide column">
-                <table class="ui fixed celled table">
-                    <tr *ngFor="let v of workerModel?.registered_capabilities">
+            </nz-col>
+            <nz-col [nzSpan]="24">
+                <nz-table [nzPageSize]="100" [nzData]="workerModel?.registered_capabilities" #capaTable>
+                    <tr *ngFor="let v of capaTable.data">
                         <td>
-                            <div class="ui">{{v.value}}</div>
+                            {{v.value}}
                         </td>
                     </tr>
-                </table>
-            </div>
-        </div>
-        <div *ngSwitchCase="'usage'" class="ui grid">
-            <div class="sixteen wide column">
-                <div class="ui active centered inline loader" *ngIf="loadingUsage"></div>
+                </nz-table>
+            </nz-col>
+        </nz-row>
+        <nz-row *ngSwitchCase="'usage'">
+            <nz-col [nzSpan]="24">
+                <nz-spin nzTip="Loading..." *ngIf="loadingUsage"></nz-spin>
                 <ng-container *ngIf="!loadingUsage">
                     <app-usage [pipelines]="usages"></app-usage>
                     <div class="centered" *ngIf="!usages || usages.length === 0">{{'worker_model_no_usage'
                                 | translate}}</div>
                 </ng-container>
-            </div>
-        </div>
+            </nz-col>
+        </nz-row>
     </app-scrollview>
 </div>
