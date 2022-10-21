@@ -18,6 +18,7 @@ import (
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 var (
@@ -450,6 +451,8 @@ func FindOldestWorkflowRunsWithResultToSync(ctx context.Context, dbmap *gorp.DbM
 }
 
 func UpdateRunResult(ctx context.Context, db gorp.SqlExecutor, result *sdk.WorkflowRunResult) error {
+	_, end := telemetry.Span(ctx, "workflow.UpdateRunResult")
+	defer end()
 	dbResult := dbRunResult(*result)
 	if err := gorpmapping.Update(db, &dbResult); err != nil {
 		return err
@@ -458,6 +461,8 @@ func UpdateRunResult(ctx context.Context, db gorp.SqlExecutor, result *sdk.Workf
 }
 
 func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorpmapper.SqlExecutorWithTx, workflowRunID int64) error {
+	ctx, end := telemetry.Span(ctx, "workflow.SyncRunResultArtifactManagerByRunID")
+	defer end()
 	log.Info(ctx, "Sync run results for workflow run id %d", workflowRunID)
 
 	wr, err := LoadRunByID(ctx, db, workflowRunID, LoadRunOptions{})
@@ -616,16 +621,21 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorpmapper.SqlE
 
 	log.Debug(ctx, "artifact manager build info request: %+v", buildInfoRequest)
 	log.Info(ctx, "Creating Artifactory Build %s %s on project %s...\n", buildInfoRequest.Name, buildInfoRequest.Number, artifactoryProjectKey)
+	ctxDelete, endDelete := telemetry.Span(ctx, "artifactClient.DeleteBuild")
 	if err := artifactClient.DeleteBuild(artifactoryProjectKey, buildInfoRequest.Name, buildInfoRequest.Number); err != nil {
-		ctx = log.ContextWithStackTrace(ctx, err)
+		ctx = log.ContextWithStackTrace(ctxDelete, err)
 		log.Warn(ctx, err.Error())
+		endDelete()
 		return handleSyncError(sdk.Errorf("unable to delete previous build info on artifact manager"))
 	}
+	endDelete()
 
 	var nbAttempts int
 	for {
 		nbAttempts++
+		_, endPublishBuildInfo := telemetry.Span(ctx, "artifactClient.PublishBuildInfo")
 		err := artifactClient.PublishBuildInfo(artifactoryProjectKey, buildInfoRequest)
+		endPublishBuildInfo()
 		if err == nil {
 			break
 		} else if nbAttempts >= 3 {
@@ -653,6 +663,8 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorpmapper.SqlE
 }
 
 func ProcessRunResultPromotionByRunID(ctx context.Context, db gorpmapper.SqlExecutorWithTx, workflowRunID int64, promotionType sdk.WorkflowRunResultPromotionType, promotionRequest sdk.WorkflowRunResultPromotionRequest) error {
+	ctx, end := telemetry.Span(ctx, "workflow.ProcessRunResultPromotionByRunID")
+	defer end()
 	log.Info(ctx, "Process promotion for run results %v and workflow run with id %d to maturity %s",
 		promotionRequest.IDs, workflowRunID, promotionRequest.ToMaturity)
 
