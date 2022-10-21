@@ -1,6 +1,6 @@
-<div *ngIf="errorMessage" class="ui warning message">
-    {{errorMessage}}
-</div>
+<nz-alert *ngIf="errorMessage" nzType="warning" nzMessage="{{errorMessage}}">
+
+</nz-alert>
 <div class="editor">
     <codemirror [ngModel]="workflowYaml" (ngModelChange)="workflowYamlChange($event)" [config]="codeMirrorConfig"
         #codeMirror>
