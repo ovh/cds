@@ -1085,7 +1085,7 @@ func checkHooks(ctx context.Context, db gorp.SqlExecutor, w *sdk.Workflow, n *sd
 			h2 := n.Hooks[j]
 			if i != j && h.Ref() == h2.Ref() {
 				log.ErrorWithStackTrace(ctx, sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid workflow: duplicate hook %s", model.Name))
-			duplicateHookIdx = append(duplicateHookIdx, int64(j))
+			  duplicateHookIdx = append(duplicateHookIdx, int64(j))
 			}
 		}
 	}
