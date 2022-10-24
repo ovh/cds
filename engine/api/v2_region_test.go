@@ -18,6 +18,8 @@ import (
 func Test_crudRegion(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 
+	db.Exec("DELETE FROM region")
+
 	u, pass := assets.InsertLambdaUser(t, db)
 
 	// Insert rbac
@@ -41,6 +43,19 @@ globals:
 	api.Router.Mux.ServeHTTP(w, req)
 	require.Equal(t, 201, w.Code)
 
+	rbacReadRegion := `name: perm-%s
+regions:
+- role: %s
+  region: %s
+  users: [%s]
+  organizations: [default]`
+
+	rbacReadRegion = fmt.Sprintf(rbacReadRegion, sdk.RandomString(10), sdk.RegionRoleList, reg.Name, u.Username)
+	var rbRead sdk.RBAC
+	require.NoError(t, yaml.Unmarshal([]byte(rbacReadRegion), &rbRead))
+	require.NoError(t, rbac.FillWithIDs(context.TODO(), db, &rbRead))
+	require.NoError(t, rbac.Insert(context.TODO(), db, &rbRead))
+
 	// Then Get the region
 	uriGet := api.Router.GetRouteV2("GET", api.getRegionHandler, map[string]string{"regionIdentifier": reg.Name})
 	test.NotEmpty(t, uriGet)
@@ -52,6 +67,9 @@ globals:
 	var regionGet sdk.Region
 	require.NoError(t, json.Unmarshal(wGet.Body.Bytes(), &regionGet))
 	require.Equal(t, regionGet.Name, regionGet.Name)
+
+	// remove rbac before deleting region
+	require.NoError(t, rbac.Delete(context.TODO(), db, rbRead))
 
 	// Then Delete Region
 	uriDelete := api.Router.GetRouteV2("DELETE", api.deleteRegionHandler, map[string]string{"regionIdentifier": reg.Name})

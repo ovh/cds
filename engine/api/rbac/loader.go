@@ -15,13 +15,17 @@ type LoadOptionFunc func(context.Context, gorp.SqlExecutor, *rbac) error
 
 // LoadOptions provides all options on rbac loads functions
 var LoadOptions = struct {
-	Default         LoadOptionFunc
-	LoadRBACGlobal  LoadOptionFunc
-	LoadRBACProject LoadOptionFunc
+	Default          LoadOptionFunc
+	LoadRBACGlobal   LoadOptionFunc
+	LoadRBACProject  LoadOptionFunc
+	LoadRBACHatchery LoadOptionFunc
+	LoadRBACRegion   LoadOptionFunc
 }{
-	Default:         loadDefault,
-	LoadRBACGlobal:  loadRBACGlobal,
-	LoadRBACProject: loadRBACProject,
+	Default:          loadDefault,
+	LoadRBACGlobal:   loadRBACGlobal,
+	LoadRBACProject:  loadRBACProject,
+	LoadRBACHatchery: loadRBACHatchery,
+	LoadRBACRegion:   loadRBACRegion,
 }
 
 func loadDefault(ctx context.Context, db gorp.SqlExecutor, rbac *rbac) error {
@@ -91,6 +95,60 @@ func loadRBACGlobal(ctx context.Context, db gorp.SqlExecutor, rbac *rbac) error 
 			return err
 		}
 		rbac.Globals = append(rbac.Globals, rg.RBACGlobal)
+	}
+	return nil
+}
+
+func loadRBACRegion(ctx context.Context, db gorp.SqlExecutor, rbac *rbac) error {
+	query := "SELECT * FROM rbac_region WHERE rbac_id = $1"
+	var rbacRegions []rbacRegion
+	if err := gorpmapping.GetAll(ctx, db, gorpmapping.NewQuery(query).Args(rbac.ID), &rbacRegions); err != nil {
+		return err
+	}
+	rbac.Regions = make([]sdk.RBACRegion, 0, len(rbacRegions))
+	for i := range rbacRegions {
+		rbacReg := &rbacRegions[i]
+		isValid, err := gorpmapping.CheckSignature(rbacReg, rbacReg.Signature)
+		if err != nil {
+			return sdk.WrapError(err, "error when checking signature for rbac_region %d", rbacReg.ID)
+		}
+		if !isValid {
+			log.Error(ctx, "rbac_region.get> rbac_region %d data corrupted", rbacReg.ID)
+			continue
+		}
+		if err := loadRBACRegionOrganizations(ctx, db, &rbacReg.RBACRegion); err != nil {
+			return err
+		}
+		if err := loadRBACRegionUsers(ctx, db, &rbacReg.RBACRegion); err != nil {
+			return err
+		}
+		if err := loadRBACRegionGroups(ctx, db, &rbacReg.RBACRegion); err != nil {
+			return err
+		}
+
+		rbac.Regions = append(rbac.Regions, rbacReg.RBACRegion)
+	}
+	return nil
+}
+
+func loadRBACHatchery(ctx context.Context, db gorp.SqlExecutor, rbac *rbac) error {
+	query := "SELECT * FROM rbac_hatchery WHERE rbac_id = $1"
+	var rbacHatcheries []rbacHatchery
+	if err := gorpmapping.GetAll(ctx, db, gorpmapping.NewQuery(query).Args(rbac.ID), &rbacHatcheries); err != nil {
+		return err
+	}
+	rbac.Hatcheries = make([]sdk.RBACHatchery, 0, len(rbacHatcheries))
+	for i := range rbacHatcheries {
+		rbacHatch := &rbacHatcheries[i]
+		isValid, err := gorpmapping.CheckSignature(rbacHatch, rbacHatch.Signature)
+		if err != nil {
+			return sdk.WrapError(err, "error when checking signature for rbac_hatchery %d", rbacHatch.ID)
+		}
+		if !isValid {
+			log.Error(ctx, "rbac_region.get> rbac_hatchery %d data corrupted", rbacHatch.ID)
+			continue
+		}
+		rbac.Hatcheries = append(rbac.Hatcheries, rbacHatch.RBACHatchery)
 	}
 	return nil
 }

@@ -11,7 +11,7 @@ import (
 )
 
 func (api *API) postImportRbacHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(rbac.PermissionManage),
+	return service.RBAC(rbac.GlobalPermissionManage),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			force := service.FormBool(req, "force")
 

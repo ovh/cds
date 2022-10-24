@@ -29,6 +29,7 @@ const (
 	LatencyNum         = log.Field("latency_num")
 	Method             = log.Field("method")
 	GpgKey             = log.Field("gpg_key")
+	RbacRole           = log.Field("rbac_role")
 	RequestID          = log.Field("request_id")
 	RequestURI         = log.Field("request_uri")
 	Repository         = log.Field("repository")
@@ -69,6 +70,7 @@ func init() {
 		Method,
 		RbackCheckerName,
 		Repository,
+		RbacRole,
 		Route,
 		RequestID,
 		RequestURI,
