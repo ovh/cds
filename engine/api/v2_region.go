@@ -66,7 +66,7 @@ func (api *API) getRegionsHandler() ([]service.RbacChecker, service.Handler) {
 					return err
 				}
 			} else {
-				rbacRegions, err := rbac.LoadRegionIDsByRoleAndUserID(ctx, api.mustDB(), sdk.RegionRoleRead, consumer.AuthConsumerUser.AuthentifiedUserID)
+				rbacRegions, err := rbac.LoadRegionIDsByRoleAndUserID(ctx, api.mustDB(), sdk.RegionRoleList, consumer.AuthConsumerUser.AuthentifiedUserID)
 				if err != nil {
 					return err
 				}

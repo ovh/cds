@@ -20,7 +20,7 @@ const (
 	HatcheryRoleSpawn = "start-worker"
 
 	// Region Role
-	RegionRoleRead    = "read"
+	RegionRoleList    = "list"
 	RegionRoleExecute = "execute"
 	RegionRoleManage  = "manage"
 )

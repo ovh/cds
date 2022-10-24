@@ -83,7 +83,7 @@ regions:
   all_users: true
   organizations: [default]`
 
-	rbacYaml = fmt.Sprintf(rbacYaml, reg.Name, sdk.RegionRoleRead, reg.Name)
+	rbacYaml = fmt.Sprintf(rbacYaml, reg.Name, sdk.RegionRoleList, reg.Name)
 	var r sdk.RBAC
 	require.NoError(t, yaml.Unmarshal([]byte(rbacYaml), &r))
 

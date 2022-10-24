@@ -40,5 +40,5 @@ func RegionManage(ctx context.Context, auth *sdk.AuthUserConsumer, store cache.S
 // RegionRead return nil if the current AuthConsumer have the ProjectRoleRead on current project KEY
 func RegionRead(ctx context.Context, auth *sdk.AuthUserConsumer, store cache.Store, db gorp.SqlExecutor, vars map[string]string) error {
 	regionIdentifier := vars["regionIdentifier"]
-	return hasRoleOnRegion(ctx, auth, store, db, regionIdentifier, sdk.RegionRoleRead)
+	return hasRoleOnRegion(ctx, auth, store, db, regionIdentifier, sdk.RegionRoleList)
 }

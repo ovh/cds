@@ -50,7 +50,7 @@ regions:
   users: [%s]
   organizations: [default]`
 
-	rbacReadRegion = fmt.Sprintf(rbacReadRegion, sdk.RandomString(10), sdk.RegionRoleRead, reg.Name, u.Username)
+	rbacReadRegion = fmt.Sprintf(rbacReadRegion, sdk.RandomString(10), sdk.RegionRoleList, reg.Name, u.Username)
 	var rbRead sdk.RBAC
 	require.NoError(t, yaml.Unmarshal([]byte(rbacReadRegion), &rbRead))
 	require.NoError(t, rbac.FillWithIDs(context.TODO(), db, &rbRead))
