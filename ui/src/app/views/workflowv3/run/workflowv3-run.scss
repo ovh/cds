@@ -60,3 +60,15 @@
         }
     }
 }
+ul {
+  padding-left: 0;
+  list-style: none;
+
+  .rightFloat {
+    float: right;
+  }
+
+  .content {
+    display: inline;
+  }
+}

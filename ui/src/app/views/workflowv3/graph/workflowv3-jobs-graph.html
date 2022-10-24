@@ -4,8 +4,9 @@
             {{node?.name}}
         </div>
         <div class="controls">
-            <i class="ui icon expand" title="Center graph on stage {{node?.name}}"
-                (click)="$event.stopPropagation();clickCenter();"></i>
+            <span nz-tooltip nzTooltipTitle="Center graph on stage {{node?.name}}"
+                    nz-icon nzType="expand" nzTheme="outline" title="Center graph on stage {{node?.name}}"
+                  (click)="$event.stopPropagation();clickCenter();"></span>
         </div>
     </div>
     <div class="svg-wrapper" #svgSubGraph></div>
