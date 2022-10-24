@@ -1,4 +1,6 @@
-<div class="ui active massive text loader" *ngIf="loading">CDS is loading</div>
+<div class="app-loader" *ngIf="loading">
+    <span nz-icon [nzType]="'loading'"></span>CDS is loading
+</div>
 
 <div class="app" *ngIf="!loading">
     <div class="page" *ngIf="!isAPIAvailable || (maintenance && isConnected && currentAuthSummary?.user?.ring !== 'ADMIN')">

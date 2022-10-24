@@ -16,7 +16,9 @@
 
 <body>
     <app-root>
-        <div class="ui active massive text loader">CDS is loading</div>
+        <div class="app-loader">
+            <span nz-icon [nzType]="'loading'"></span>CDS is loading
+        </div>
     </app-root>
     <script>
         var theme = localStorage.getItem('CDS-Theme');

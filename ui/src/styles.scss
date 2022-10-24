@@ -16,6 +16,17 @@ html,
 body {
     overflow-y: hidden;
 }
+.app-loader {
+  position: absolute;
+  top: 50%;
+  width: 100%;
+  text-align: center;
+  font-size: 3em;
+
+  .anticon {
+    margin-right: 15px;
+  }
+}
 
 textarea:read-only {
   color: rgba(0,0,0,.85);
