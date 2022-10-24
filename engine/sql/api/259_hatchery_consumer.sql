@@ -14,7 +14,7 @@ ALTER TABLE "hatchery" ADD COLUMN "public_key" BYTEA;
 ALTER TABLE "hatchery" ADD COLUMN "http_url" TEXT;
 
 CREATE TABLE IF NOT EXISTS "hatchery_status" (
-    id BIGINT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     hatchery_id uuid,
     session_id VARCHAR(36),
     monitoring_status JSONB
