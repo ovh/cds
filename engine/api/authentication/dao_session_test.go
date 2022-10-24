@@ -24,14 +24,14 @@ func TestLoadSession(t *testing.T) {
 	c1, err := local.NewConsumer(context.TODO(), db, u.ID)
 	require.NoError(t, err)
 
-	s1, err := authentication.NewSession(context.TODO(), db, c1, time.Second)
+	s1, err := authentication.NewSession(context.TODO(), db, &c1.AuthConsumer, time.Second)
 	require.NoError(t, err)
-	s2, err := authentication.NewSession(context.TODO(), db, c1, time.Second)
+	s2, err := authentication.NewSession(context.TODO(), db, &c1.AuthConsumer, time.Second)
 	require.NoError(t, err)
 
 	c2, err := local.NewConsumer(context.TODO(), db, u.ID)
 	require.NoError(t, err)
-	s3, err := authentication.NewSession(context.TODO(), db, c2, time.Second)
+	s3, err := authentication.NewSession(context.TODO(), db, &c2.AuthConsumer, time.Second)
 	require.NoError(t, err)
 
 	// LoadSessionByID
@@ -68,7 +68,7 @@ func TestInsertSession(t *testing.T) {
 	c, err := local.NewConsumer(context.TODO(), db, u.ID)
 	test.NoError(t, err)
 
-	s, err := authentication.NewSession(context.TODO(), db, c, time.Second)
+	s, err := authentication.NewSession(context.TODO(), db, &c.AuthConsumer, time.Second)
 	test.NoError(t, err)
 
 	res, err := authentication.LoadSessionByID(context.TODO(), db, s.ID)
@@ -88,7 +88,7 @@ func TestDeleteSession(t *testing.T) {
 	c, err := local.NewConsumer(context.TODO(), db, u.ID)
 	require.NoError(t, err)
 
-	s, err := authentication.NewSession(context.TODO(), db, c, time.Second)
+	s, err := authentication.NewSession(context.TODO(), db, &c.AuthConsumer, time.Second)
 	require.NoError(t, err)
 
 	res, err := authentication.LoadSessionByID(context.TODO(), db, s.ID)

@@ -32,6 +32,7 @@ func (api *API) postAuthBuiltinSigninHandler() service.Handler {
 		if err := driver.CheckSigninRequest(req); err != nil {
 			return sdk.NewError(sdk.ErrForbidden, err)
 		}
+
 		// Convert code to external user info
 		userInfo, err := driver.GetUserInfo(ctx, req)
 		if err != nil {
@@ -100,7 +101,7 @@ func (api *API) postAuthBuiltinSigninHandler() service.Handler {
 		}
 
 		// Generate a new session for consumer
-		session, err := authentication.NewSession(ctx, tx, consumer, driver.GetSessionDuration())
+		session, err := authentication.NewSession(ctx, tx, &consumer.AuthConsumer, driver.GetSessionDuration())
 		if err != nil {
 			return err
 		}

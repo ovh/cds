@@ -44,8 +44,10 @@ func (h *HatcheryLocal) Init(config interface{}) (cdsclient.ServiceConfig, error
 	}
 	cfg.Host = sConfig.API.HTTP.URL
 	cfg.Token = sConfig.API.Token
+	cfg.V2Token = sConfig.API.TokenV2
 	cfg.InsecureSkipVerifyTLS = sConfig.API.HTTP.Insecure
 	cfg.RequestSecondsTimeout = sConfig.API.RequestTimeout
+
 	return cfg, nil
 }
 
@@ -116,6 +118,16 @@ func (h *HatcheryLocal) CheckConfiguration(cfg interface{}) error {
 		return fmt.Errorf("Basedir doesn't exist")
 	} else if err != nil {
 		return fmt.Errorf("Invalid basedir: %v", err)
+	}
+	return nil
+}
+
+func (h *HatcheryLocal) Signin(ctx context.Context, clientConfig cdsclient.ServiceConfig, srvConfig interface{}) error {
+	if err := h.Common.Signin(ctx, clientConfig, srvConfig); err != nil {
+		return err
+	}
+	if err := h.Common.SigninV2(ctx, clientConfig, srvConfig); err != nil {
+		return err
 	}
 	return nil
 }
@@ -203,7 +215,7 @@ func (h *HatcheryLocal) getWorkerBinaryName() string {
 	return workerName
 }
 
-//Configuration returns Hatchery CommonConfiguration
+// Configuration returns Hatchery CommonConfiguration
 func (h *HatcheryLocal) Configuration() service.HatcheryCommonConfiguration {
 	return h.Config.HatcheryCommonConfiguration
 }

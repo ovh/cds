@@ -118,6 +118,7 @@ func (c *Common) Signin(ctx context.Context, cdsclientConfig cdsclient.ServiceCo
 	initClient := func(ctx context.Context) error {
 		var err error
 		// The call below should return the sdk.Service from the signin
+		fmt.Printf("New Service Client \n")
 		c.Client, c.ServiceInstance, c.APIPublicKey, err = cdsclient.NewServiceClient(ctx, cdsclientConfig, registerPayload)
 		if err != nil {
 			fmt.Printf("Waiting for CDS API (%v)...\n", err)

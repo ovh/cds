@@ -2542,7 +2542,7 @@ func (m *MockHatcheryClient) EXPECT() *MockHatcheryClientMockRecorder {
 }
 
 // HatcheryAdd mocks base method.
-func (m *MockHatcheryClient) HatcheryAdd(ctx context.Context, h sdk.Hatchery) error {
+func (m *MockHatcheryClient) HatcheryAdd(ctx context.Context, h *sdk.Hatchery) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "HatcheryAdd", ctx, h)
 	ret0, _ := ret[0].(error)
@@ -2597,6 +2597,29 @@ func (m *MockHatcheryClient) HatcheryList(ctx context.Context) ([]sdk.Hatchery, 
 func (mr *MockHatcheryClientMockRecorder) HatcheryList(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HatcheryList", reflect.TypeOf((*MockHatcheryClient)(nil).HatcheryList), ctx)
+}
+
+// MockHatcheryServiceClient is a mock of HatcheryServiceClient interface.
+type MockHatcheryServiceClient struct {
+	ctrl     *gomock.Controller
+	recorder *MockHatcheryServiceClientMockRecorder
+}
+
+// MockHatcheryServiceClientMockRecorder is the mock recorder for MockHatcheryServiceClient.
+type MockHatcheryServiceClientMockRecorder struct {
+	mock *MockHatcheryServiceClient
+}
+
+// NewMockHatcheryServiceClient creates a new mock instance.
+func NewMockHatcheryServiceClient(ctrl *gomock.Controller) *MockHatcheryServiceClient {
+	mock := &MockHatcheryServiceClient{ctrl: ctrl}
+	mock.recorder = &MockHatcheryServiceClientMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockHatcheryServiceClient) EXPECT() *MockHatcheryServiceClientMockRecorder {
+	return m.recorder
 }
 
 // MockProjectClient is a mock of ProjectClient interface.
@@ -5981,7 +6004,7 @@ func (mr *MockInterfaceMockRecorder) AuthConsumerRegen(username, id, newDuration
 }
 
 // AuthConsumerSignin mocks base method.
-func (m *MockInterface) AuthConsumerSignin(arg0 sdk.AuthConsumerType, arg1 sdk.AuthConsumerSigninRequest) (sdk.AuthConsumerSigninResponse, error) {
+func (m *MockInterface) AuthConsumerSignin(arg0 sdk.AuthConsumerType, arg1 interface{}) (sdk.AuthConsumerSigninResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AuthConsumerSignin", arg0, arg1)
 	ret0, _ := ret[0].(sdk.AuthConsumerSigninResponse)
@@ -6710,7 +6733,7 @@ func (mr *MockInterfaceMockRecorder) HTTPWebsocketClient() *gomock.Call {
 }
 
 // HatcheryAdd mocks base method.
-func (m *MockInterface) HatcheryAdd(ctx context.Context, h sdk.Hatchery) error {
+func (m *MockInterface) HatcheryAdd(ctx context.Context, h *sdk.Hatchery) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "HatcheryAdd", ctx, h)
 	ret0, _ := ret[0].(error)
@@ -11318,7 +11341,7 @@ func (mr *MockAuthClientMockRecorder) AuthConsumerRegen(username, id, newDuratio
 }
 
 // AuthConsumerSignin mocks base method.
-func (m *MockAuthClient) AuthConsumerSignin(arg0 sdk.AuthConsumerType, arg1 sdk.AuthConsumerSigninRequest) (sdk.AuthConsumerSigninResponse, error) {
+func (m *MockAuthClient) AuthConsumerSignin(arg0 sdk.AuthConsumerType, arg1 interface{}) (sdk.AuthConsumerSigninResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AuthConsumerSignin", arg0, arg1)
 	ret0, _ := ret[0].(sdk.AuthConsumerSigninResponse)

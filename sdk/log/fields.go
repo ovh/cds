@@ -16,6 +16,7 @@ const (
 	AuthSessionID      = log.Field("auth_session_id")
 	AuthSessionTokenID = log.Field("auth_session_token")
 	AuthUserID         = log.Field("auth_user_id")
+	AuthHatcheryID     = log.Field("auth_hatchery_id")
 	AuthUsername       = log.Field("auth_user_name")
 	AuthWorkerName     = log.Field("auth_worker_name")
 	RbackCheckerName   = log.Field("rbac_checker_name")
@@ -50,6 +51,7 @@ func init() {
 	log.RegisterField(
 		Action,
 		AuthUserID,
+		AuthHatcheryID,
 		AuthUsername,
 		AuthServiceName,
 		AuthServiceType,

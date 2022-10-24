@@ -84,7 +84,7 @@ func (api *API) postRegisterWorkerHandler() service.Handler {
 
 		log.Debug(ctx, "New worker: [%s] - %s", wk.ID, wk.Name)
 
-		workerSession, err := authentication.NewSession(ctx, tx, workerConsumer, workerauth.SessionDuration)
+		workerSession, err := authentication.NewSession(ctx, tx, &workerConsumer.AuthConsumer, workerauth.SessionDuration)
 		if err != nil {
 			return sdk.NewErrorWithStack(
 				sdk.WrapError(err, "[%s] Registering failed", workerTokenFromHatchery.Worker.WorkerName),

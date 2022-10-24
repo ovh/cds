@@ -29,6 +29,7 @@ import (
 type Common struct {
 	service.Common
 	Router                        *api.Router
+	Clientv2                      cdsclient.HatcheryServiceClient
 	mapServiceNextLineNumberMutex sync.Mutex
 	mapServiceNextLineNumber      map[string]int64
 }
@@ -41,7 +42,7 @@ func (c *Common) ServiceName() string {
 	return c.Common.ServiceName
 }
 
-//CDSClient returns cdsclient instance
+// CDSClient returns cdsclient instance
 func (c *Common) CDSClient() cdsclient.Interface {
 	return c.Client
 }
@@ -113,6 +114,77 @@ func (c *Common) initRouter(ctx context.Context, h hatchery.Interface) {
 
 func (c *Common) GetPrivateKey() *rsa.PrivateKey {
 	return c.Common.PrivateKey
+}
+
+func (c *Common) SigninV2(ctx context.Context, clientConfig cdsclient.ServiceConfig, srvConfig interface{}) error {
+	if clientConfig.V2Token == "" {
+		return nil
+	}
+	log.Info(ctx, "Init CDS client v2 for hatchery")
+	ctxTimeout, cancel := context.WithTimeout(ctx, 5*time.Minute)
+	defer cancel()
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
+
+	serviceConfig, err := service.ParseServiceConfig(srvConfig)
+	if err != nil {
+		return err
+	}
+
+	var pubKey []byte
+	if c.PrivateKey != nil {
+		pubKey, err = jws.ExportPublicKey(c.PrivateKey)
+		if err != nil {
+			return err
+		}
+	}
+
+	registerPayload := &sdk.AuthConsumerHatcherySigninRequest{
+		Token:     clientConfig.V2Token,
+		Version:   sdk.VERSION,
+		PublicKey: pubKey,
+		Config:    serviceConfig,
+		Name:      c.Name(),
+		HTTPURL:   c.HTTPURL,
+	}
+
+	initClient := func(ctx context.Context) error {
+		var err error
+		// The call below should return the sdk.Service from the signin
+		fmt.Printf("New Service Client \n")
+		c.Clientv2, c.APIPublicKey, err = cdsclient.NewHatcheryServiceClient(ctx, clientConfig, registerPayload)
+		if err != nil {
+			fmt.Printf("Waiting for CDS API (%v)...\n", err)
+		}
+		return err
+	}
+
+	var lasterr error
+	if err := initClient(ctxTimeout); err != nil {
+		lasterr = err
+	loop:
+		for {
+			select {
+			case <-ctxTimeout.Done():
+				if lasterr != nil {
+					fmt.Printf("Timeout after 5min - last error: %v\n", lasterr)
+				}
+				return ctxTimeout.Err()
+			case <-ticker.C:
+				if err := initClient(ctxTimeout); err == nil {
+					lasterr = err //lint:ignore SA4006 false positive
+					break loop
+				}
+			}
+		}
+	}
+
+	c.ParsedAPIPublicKey, err = jws.NewPublicKeyFromPEM(c.APIPublicKey)
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+
+	return nil
 }
 
 func (c *Common) Init(ctx context.Context, h hatchery.Interface) error {

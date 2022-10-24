@@ -62,7 +62,7 @@ func Test_CheckSession(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create and check a non MFA session, it should be valid and no activity should be stored
-	s, err := authentication.NewSession(context.TODO(), db, c, time.Second)
+	s, err := authentication.NewSession(context.TODO(), db, &c.AuthConsumer, time.Second)
 	require.NoError(t, err)
 	r, err := authentication.CheckSession(context.TODO(), db, store, s.ID)
 	require.NoError(t, err)

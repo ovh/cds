@@ -2,6 +2,8 @@ package api
 
 import (
 	"context"
+	"github.com/ovh/cds/engine/api/authentication"
+	hatch_auth "github.com/ovh/cds/engine/api/authentication/hatchery"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"net/http"
 
@@ -44,10 +46,21 @@ func (api *API) postHatcheryHandler() ([]service.RbacChecker, service.Handler) {
 			if err := hatchery.Insert(ctx, tx, &h); err != nil {
 				return err
 			}
+
+			c, err := authentication.NewConsumerHatchery(ctx, tx, h)
+			if err != nil {
+				return err
+			}
+			jwsToken, err := hatch_auth.NewSigninConsumerToken(c)
+			if err != nil {
+				return err
+			}
+			h.Token = jwsToken
+
 			if err := tx.Commit(); err != nil {
 				return sdk.WithStack(err)
 			}
-			return service.WriteMarshal(w, req, nil, http.StatusCreated)
+			return service.WriteMarshal(w, req, h, http.StatusCreated)
 		}
 }
 

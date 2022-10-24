@@ -6,6 +6,7 @@ const (
 	contextClaims contextKey = iota
 	contextSession
 	contextUserConsumer
+	contextHatcheryConsumer
 	contextDriverManifest
 	contextDate
 )

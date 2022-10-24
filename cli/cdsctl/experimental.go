@@ -20,6 +20,7 @@ func experimentalCommands() []*cobra.Command {
 		experimentalProject(),
 		experimentalRbac(),
 		experimentalWorkerModel(),
+		experimentalHatchery(),
 	}
 }
 

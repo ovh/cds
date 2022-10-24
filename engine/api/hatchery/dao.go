@@ -63,6 +63,15 @@ func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, h *sdk.Hatcher
 	return nil
 }
 
+func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, h *sdk.Hatchery) error {
+	dbData := &dbHatchery{Hatchery: *h}
+	if err := gorpmapping.UpdateAndSign(ctx, db, dbData); err != nil {
+		return err
+	}
+	*h = dbData.Hatchery
+	return nil
+}
+
 func LoadHatcheries(ctx context.Context, db gorp.SqlExecutor) ([]sdk.Hatchery, error) {
 	query := gorpmapping.NewQuery(`SELECT hatchery.* FROM hatchery`)
 	return getAllHatcheries(ctx, db, query)
