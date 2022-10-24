@@ -2,6 +2,7 @@ package authentication
 
 import (
 	"context"
+
 	"github.com/go-gorp/gorp"
 	"github.com/rockbears/log"
 

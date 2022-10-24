@@ -116,10 +116,10 @@ func NewWorker(endpoint string, name string, c *http.Client) WorkerInterface {
 // NewProviderClient returns an implementation for ProviderClient interface
 func NewProviderClient(cfg ProviderConfig) ProviderClient {
 	conf := Config{
-		Host:                              cfg.Host,
-		Retry:                             2,
+		Host:                               cfg.Host,
+		Retry:                              2,
 		BuiltinConsumerAuthenticationToken: cfg.Token,
-		InsecureSkipVerifyTLS:             cfg.InsecureSkipVerifyTLS,
+		InsecureSkipVerifyTLS:              cfg.InsecureSkipVerifyTLS,
 	}
 
 	if cfg.RequestSecondsTimeout == 0 {
@@ -139,10 +139,10 @@ func NewProviderClient(cfg ProviderConfig) ProviderClient {
 
 func NewHatcheryServiceClient(ctx context.Context, clientConfig ServiceConfig, requestSign interface{}) (HatcheryServiceClient, []byte, error) {
 	conf := Config{
-		Host:                              clientConfig.Host,
-		Retry:                             2,
-		BuitinConsumerAuthenticationToken: clientConfig.V2Token,
-		InsecureSkipVerifyTLS:             clientConfig.InsecureSkipVerifyTLS,
+		Host:                               clientConfig.Host,
+		Retry:                              2,
+		BuiltinConsumerAuthenticationToken: clientConfig.V2Token,
+		InsecureSkipVerifyTLS:              clientConfig.InsecureSkipVerifyTLS,
 	}
 
 	if clientConfig.RequestSecondsTimeout == 0 {
@@ -165,9 +165,7 @@ retry:
 	var res sdk.AuthConsumerSigninResponse
 	_, headers, code, err := cli.RequestJSON(ctx, "POST", "/auth/consumer/"+string(sdk.ConsumerHatchery)+"/signin",
 		cli.signinRequest, &res)
-	fmt.Printf("Response: %d %v\n", code, err)
 	if err != nil {
-		fmt.Printf("%+v\n", err)
 		if code == 401 {
 			nbError++
 			if nbError == 60 {
@@ -188,10 +186,10 @@ retry:
 // NewServiceClient returns client for a service
 func NewServiceClient(ctx context.Context, clientConfig ServiceConfig, registerPayload interface{}) (Interface, *sdk.Service, []byte, error) {
 	conf := Config{
-		Host:                              clientConfig.Host,
-		Retry:                             2,
+		Host:                               clientConfig.Host,
+		Retry:                              2,
 		BuiltinConsumerAuthenticationToken: clientConfig.Token,
-		InsecureSkipVerifyTLS:             clientConfig.InsecureSkipVerifyTLS,
+		InsecureSkipVerifyTLS:              clientConfig.InsecureSkipVerifyTLS,
 	}
 
 	if clientConfig.RequestSecondsTimeout == 0 {
@@ -223,9 +221,7 @@ retry:
 	var res sdk.AuthConsumerSigninResponse
 	_, headers, code, err := cli.RequestJSON(ctx, "POST", "/auth/consumer/"+string(sdk.ConsumerBuiltin)+"/signin",
 		cli.signinRequest, &res)
-	fmt.Printf("Response: %d %v\n", code, err)
 	if err != nil {
-		fmt.Printf("%+v\n", err)
 		if code == 401 {
 			nbError++
 			if nbError == 60 {

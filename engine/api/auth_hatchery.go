@@ -3,14 +3,15 @@ package api
 import (
 	"context"
 	"encoding/base64"
-	"github.com/ovh/cds/engine/gorpmapper"
-	"github.com/rockbears/log"
 	"net/http"
 	"time"
+
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/authentication/hatchery"
 	hatch "github.com/ovh/cds/engine/api/hatchery"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/jws"
@@ -30,7 +31,7 @@ func (api *API) postAuthHatcherySigninHandler() ([]service.RbacChecker, service.
 				return sdk.NewError(sdk.ErrForbidden, err)
 			}
 
-			// Check if a consumer exists for consumer type
+			// Check if a consumer exists
 			consumer, err := authentication.LoadHatcheryConsumerByID(ctx, api.mustDB(), consumerID)
 			if err != nil {
 				return sdk.NewError(sdk.ErrForbidden, err)
@@ -71,7 +72,7 @@ func (api *API) postAuthHatcherySigninHandler() ([]service.RbacChecker, service.
 				return err
 			}
 
-			// Set those values (has it would be done in api.authOptionalMiddleware)
+			// Set those value in ctx
 			ctx = context.WithValue(ctx, contextHatcheryConsumer, consumer)
 			ctx = context.WithValue(ctx, cdslog.AuthHatcheryID, consumer.AuthConsumerHatchery.HatcheryID)
 			SetTracker(w, cdslog.AuthHatcheryID, consumer.AuthConsumerHatchery.HatcheryID)

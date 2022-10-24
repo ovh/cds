@@ -26,6 +26,7 @@ SELECT create_unique_index('hatchery_status', 'idx_hatchery_status_uniq', 'sessi
 
 -- +migrate Down
 DROP TABLE auth_consumer_hatchery;
+DROP TABLE hatchery_status;
 ALTER TABLE "hatchery" DROP COLUMN "last_heartbeat";
 ALTER TABLE "hatchery" DROP COLUMN "public_key";
 ALTER TABLE "hatchery" DROP COLUMN "http_url";

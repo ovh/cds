@@ -2,10 +2,12 @@ package hatchery
 
 import (
 	"context"
+	"time"
+
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/sdk"
-	"github.com/rockbears/log"
-	"time"
 )
 
 var SessionDuration = 365 * 24 * time.Hour

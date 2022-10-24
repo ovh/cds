@@ -2,13 +2,13 @@ package api
 
 import (
 	"context"
-	"github.com/ovh/cds/engine/api/authentication"
-	hatch_auth "github.com/ovh/cds/engine/api/authentication/hatchery"
-	"github.com/ovh/cds/engine/api/hatchery"
 	"net/http"
 
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/authentication"
+	hatch_auth "github.com/ovh/cds/engine/api/authentication/hatchery"
+	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
