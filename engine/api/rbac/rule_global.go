@@ -8,6 +8,7 @@ import (
 
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
+	cdslog "github.com/ovh/cds/sdk/log"
 )
 
 func hasGlobalRole(ctx context.Context, auth *sdk.AuthUserConsumer, _ cache.Store, db gorp.SqlExecutor, role string) error {
@@ -20,8 +21,7 @@ func hasGlobalRole(ctx context.Context, auth *sdk.AuthUserConsumer, _ cache.Stor
 		return err
 	}
 
-	log.RegisterField(LogFieldRole)
-	ctx = context.WithValue(ctx, LogFieldRole, role)
+	ctx = context.WithValue(ctx, cdslog.RbacRole, role)
 	log.Info(ctx, "hasRole:%t", hasRole)
 
 	if !hasRole {

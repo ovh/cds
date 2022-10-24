@@ -1,7 +1,7 @@
 package sdk
 
 var (
-	RegionRoles = StringSlice{RegionRoleUse, RegionRoleRead, RegionRoleManage}
+	RegionRoles = StringSlice{RegionRoleExecute, RegionRoleRead, RegionRoleManage}
 )
 
 type RBACRegion struct {

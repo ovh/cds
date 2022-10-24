@@ -2,16 +2,13 @@ package rbac
 
 import (
 	"context"
+	cdslog "github.com/ovh/cds/sdk/log"
 
 	"github.com/go-gorp/gorp"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
-)
-
-var (
-	LogFieldRole = log.Field("action_metadata_role")
 )
 
 func hasRoleOnProject(ctx context.Context, auth *sdk.AuthUserConsumer, store cache.Store, db gorp.SqlExecutor, projectKey string, role string) error {
@@ -24,8 +21,7 @@ func hasRoleOnProject(ctx context.Context, auth *sdk.AuthUserConsumer, store cac
 		return err
 	}
 
-	log.RegisterField(LogFieldRole)
-	ctx = context.WithValue(ctx, LogFieldRole, role)
+	ctx = context.WithValue(ctx, cdslog.RbacRole, role)
 	log.Info(ctx, "hasRole:%t", hasRole)
 
 	if !hasRole {

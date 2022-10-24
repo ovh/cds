@@ -17,12 +17,12 @@ const (
 	ProjectRoleManage = "manage"
 
 	// Hatchery Role
-	HatcheryRoleSpawn = "spawn"
+	HatcheryRoleSpawn = "start-worker"
 
 	// Region Role
-	RegionRoleRead   = "read"
-	RegionRoleUse    = "use"
-	RegionRoleManage = "manage"
+	RegionRoleRead    = "read"
+	RegionRoleExecute = "execute"
+	RegionRoleManage  = "manage"
 )
 
 type RBAC struct {
