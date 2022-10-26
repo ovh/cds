@@ -117,7 +117,7 @@ func (c *Common) GetPrivateKey() *rsa.PrivateKey {
 }
 
 func (c *Common) SigninV2(ctx context.Context, clientConfig cdsclient.ServiceConfig, srvConfig interface{}) error {
-	if clientConfig.V2Token == "" {
+	if clientConfig.TokenV2 == "" {
 		return nil
 	}
 	log.Info(ctx, "Init CDS client v2 for hatchery")
@@ -140,7 +140,7 @@ func (c *Common) SigninV2(ctx context.Context, clientConfig cdsclient.ServiceCon
 	}
 
 	registerPayload := &sdk.AuthConsumerHatcherySigninRequest{
-		Token:     clientConfig.V2Token,
+		Token:     clientConfig.TokenV2,
 		Version:   sdk.VERSION,
 		PublicKey: pubKey,
 		Config:    serviceConfig,

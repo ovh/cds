@@ -34,12 +34,12 @@ type Hatchery struct {
 	ID            string        `json:"id" db:"id" cli:"id,key"`
 	Name          string        `json:"name" db:"name" cli:"name"`
 	Config        ServiceConfig `json:"config" db:"config"`
-	LastHeartbeat time.Time     `json:"last_heartbeat" db:"last_heartbeat"`
+	LastHeartbeat time.Time     `json:"last_heartbeat,omitempty" db:"last_heartbeat" cli:"last_heartbeat"`
 	PublicKey     []byte        `json:"public_key" db:"public_key"`
 	HTTPURL       string        `json:"http_url" db:"http_url"`
 
 	// On signup / regen
-	Token string `json:"token,omitempty" db:"-" cli:"token"`
+	Token string `json:"token,omitempty" db:"-" cli:"token,omitempty"`
 }
 
 type HatcheryConfig map[string]interface{}

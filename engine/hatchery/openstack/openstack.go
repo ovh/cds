@@ -56,7 +56,7 @@ func (h *HatcheryOpenstack) Init(config interface{}) (cdsclient.ServiceConfig, e
 	}
 	cfg.Host = sConfig.API.HTTP.URL
 	cfg.Token = sConfig.API.Token
-	cfg.V2Token = sConfig.API.TokenV2
+	cfg.TokenV2 = sConfig.API.TokenV2
 	cfg.InsecureSkipVerifyTLS = sConfig.API.HTTP.Insecure
 	cfg.RequestSecondsTimeout = sConfig.API.RequestTimeout
 	return cfg, nil

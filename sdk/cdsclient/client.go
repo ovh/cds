@@ -141,7 +141,7 @@ func NewHatcheryServiceClient(ctx context.Context, clientConfig ServiceConfig, r
 	conf := Config{
 		Host:                               clientConfig.Host,
 		Retry:                              2,
-		BuiltinConsumerAuthenticationToken: clientConfig.V2Token,
+		BuiltinConsumerAuthenticationToken: clientConfig.TokenV2,
 		InsecureSkipVerifyTLS:              clientConfig.InsecureSkipVerifyTLS,
 	}
 
@@ -203,6 +203,7 @@ func NewServiceClient(ctx context.Context, clientConfig ServiceConfig, registerP
 	cli.httpNoTimeoutClient = NewHTTPClient(0, conf.InsecureSkipVerifyTLS)
 	cli.httpWebsocketClient = NewWebsocketDialer(conf.InsecureSkipVerifyTLS)
 	cli.config.Verbose = clientConfig.Verbose
+	cli.consumerType = sdk.ConsumerBuiltin
 	cli.init()
 
 	if clientConfig.Hook != nil {
@@ -271,6 +272,9 @@ func (c *client) HTTPWebsocketClient() *websocket.Dialer {
 }
 
 func (c *client) GetConsumerType() sdk.AuthConsumerType {
+	if c.consumerType == "" {
+		return sdk.ConsumerBuiltin
+	}
 	return c.consumerType
 }
 

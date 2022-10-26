@@ -9,7 +9,7 @@ endef
 
 MINIO_CONTAINER_ID = $(shell docker ps -f name=minio1 -q)
 GITEA_CONTAINER_ID = $(shell docker ps -f name=gitea -q)
-GITEA_VERSION = latest
+GITEA_VERSION = 1.17
 
 UNAME_S := $(shell uname -s| tr A-Z a-z)
 VERSION := $(if ${CDS_VERSION},${CDS_VERSION},snapshot)

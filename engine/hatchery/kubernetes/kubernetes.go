@@ -61,7 +61,7 @@ func (h *HatcheryKubernetes) Init(config interface{}) (cdsclient.ServiceConfig, 
 
 	cfg.Host = sConfig.API.HTTP.URL
 	cfg.Token = sConfig.API.Token
-	cfg.V2Token = sConfig.API.TokenV2
+	cfg.TokenV2 = sConfig.API.TokenV2
 	cfg.InsecureSkipVerifyTLS = sConfig.API.HTTP.Insecure
 	cfg.RequestSecondsTimeout = sConfig.API.RequestTimeout
 	return cfg, nil
