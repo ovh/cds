@@ -62,7 +62,7 @@ func getAuthConsumerHatchery(ctx context.Context, db gorp.SqlExecutor, q gorpmap
 	}
 	if !isValid {
 		log.Error(ctx, "authentication.getAllAuthConsumerHatcheries> auth consumer hatchery %s data corrupted", dbAuthConsumerHatchery.ID)
-		return nil, err
+		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 	return &dbAuthConsumerHatchery.AuthConsumerHatcheryData, nil
 }

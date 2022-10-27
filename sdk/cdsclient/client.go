@@ -163,7 +163,7 @@ func NewHatcheryServiceClient(ctx context.Context, clientConfig ServiceConfig, r
 	var nbError int
 retry:
 	var res sdk.AuthConsumerSigninResponse
-	_, headers, code, err := cli.RequestJSON(ctx, "POST", "/auth/consumer/"+string(sdk.ConsumerHatchery)+"/signin",
+	_, headers, code, err := cli.RequestJSON(ctx, "POST", "/v2/auth/consumer/"+string(sdk.ConsumerHatchery)+"/signin",
 		cli.signinRequest, &res)
 	if err != nil {
 		if code == 401 {

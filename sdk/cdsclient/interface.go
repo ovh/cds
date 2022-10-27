@@ -675,6 +675,7 @@ func ModelType(modelType string) RequestModifier {
 type AuthClient interface {
 	AuthDriverList() (sdk.AuthDriverResponse, error)
 	AuthConsumerSignin(sdk.AuthConsumerType, interface{}) (sdk.AuthConsumerSigninResponse, error)
+	AuthConsumerHatcherySigninV2(request interface{}) (sdk.AuthConsumerHatcherySigninResponse, error)
 	AuthConsumerLocalAskResetPassword(sdk.AuthConsumerSigninRequest) error
 	AuthConsumerLocalResetPassword(token, newPassword string) (sdk.AuthConsumerSigninResponse, error)
 	AuthConsumerLocalSignup(sdk.AuthConsumerSigninRequest) error

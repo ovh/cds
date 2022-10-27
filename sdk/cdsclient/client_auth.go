@@ -14,6 +14,12 @@ func (c *client) AuthDriverList() (sdk.AuthDriverResponse, error) {
 	return response, nil
 }
 
+func (c *client) AuthConsumerHatcherySigninV2(request interface{}) (sdk.AuthConsumerHatcherySigninResponse, error) {
+	var res sdk.AuthConsumerHatcherySigninResponse
+	_, _, _, err := c.RequestJSON(context.Background(), "POST", "/v2/auth/consumer/hatchery/signin", request, &res)
+	return res, err
+}
+
 func (c *client) AuthConsumerSignin(consumerType sdk.AuthConsumerType, request interface{}) (sdk.AuthConsumerSigninResponse, error) {
 	var res sdk.AuthConsumerSigninResponse
 	_, _, _, err := c.RequestJSON(context.Background(), "POST", "/auth/consumer/"+string(consumerType)+"/signin", request, &res)

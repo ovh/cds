@@ -132,11 +132,13 @@ func (c *Common) SigninV2(ctx context.Context, clientConfig cdsclient.ServiceCon
 	}
 
 	var pubKey []byte
-	if c.PrivateKey != nil {
-		pubKey, err = jws.ExportPublicKey(c.PrivateKey)
-		if err != nil {
-			return err
-		}
+	if c.PrivateKey == nil {
+		return sdk.WrapError(sdk.ErrInvalidData, "missing private key")
+	}
+
+	pubKey, err = jws.ExportPublicKey(c.PrivateKey)
+	if err != nil {
+		return err
 	}
 
 	registerPayload := &sdk.AuthConsumerHatcherySigninRequest{
@@ -151,7 +153,7 @@ func (c *Common) SigninV2(ctx context.Context, clientConfig cdsclient.ServiceCon
 	initClient := func(ctx context.Context) error {
 		var err error
 		// The call below should return the sdk.Service from the signin
-		fmt.Printf("New Service Client \n")
+		fmt.Printf("New Hatchery Client \n")
 		c.Clientv2, c.APIPublicKey, err = cdsclient.NewHatcheryServiceClient(ctx, clientConfig, registerPayload)
 		if err != nil {
 			fmt.Printf("Waiting for CDS API (%v)...\n", err)

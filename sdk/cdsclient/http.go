@@ -294,33 +294,46 @@ func (c *client) Stream(ctx context.Context, httpClient HTTPClient, method strin
 		!strings.Contains(path, "/auth/consumer/local/signup") &&
 		!strings.Contains(path, "/auth/consumer/local/verify") &&
 		!strings.Contains(path, "/auth/consumer/worker/signin") &&
-		!strings.Contains(path, "/auth/consumer/hatchery/signin")
+		!strings.Contains(path, "/v2/auth/consumer/hatchery/signin")
 
 	if checkToken && !c.config.HasValidSessionToken() && c.config.BuiltinConsumerAuthenticationToken != "" {
 		if c.config.Verbose {
 			log.Printf("session token invalid: (%s). Relogin...\n", c.config.SessionToken)
 		}
-		var req interface{}
-		if c.signinRequest != nil {
-			req = c.signinRequest
-		} else {
-			switch c.GetConsumerType() {
-			case sdk.ConsumerHatchery:
+		switch c.GetConsumerType() {
+		case sdk.ConsumerHatchery:
+			var req interface{}
+			if c.signinRequest != nil {
+				req = c.signinRequest
+			} else {
 				req = sdk.AuthConsumerHatcherySigninRequest{
 					Token: c.config.BuiltinConsumerAuthenticationToken,
 				}
-			default:
+			}
+			resp, err := c.AuthConsumerHatcherySigninV2(req)
+			if err != nil {
+				return nil, nil, -1, err
+			}
+			if c.config.Verbose {
+				log.Println("jwt: ", sdk.StringFirstN(resp.Token, 12))
+			}
+			c.config.SessionToken = resp.Token
+		default:
+			var req interface{}
+			if c.signinRequest != nil {
+				req = c.signinRequest
+			} else {
 				req = sdk.AuthConsumerSigninRequest{"token": c.config.BuiltinConsumerAuthenticationToken}
 			}
+			resp, err := c.AuthConsumerSignin(c.GetConsumerType(), req)
+			if err != nil {
+				return nil, nil, -1, err
+			}
+			if c.config.Verbose {
+				log.Println("jwt: ", sdk.StringFirstN(resp.Token, 12))
+			}
+			c.config.SessionToken = resp.Token
 		}
-		resp, err := c.AuthConsumerSignin(c.GetConsumerType(), req)
-		if err != nil {
-			return nil, nil, -1, err
-		}
-		if c.config.Verbose {
-			log.Println("jwt: ", sdk.StringFirstN(resp.Token, 12))
-		}
-		c.config.SessionToken = resp.Token
 
 	}
 

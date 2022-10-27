@@ -10,7 +10,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-var SessionDuration = 365 * 24 * time.Hour
+var SessionDuration = time.Hour
 
 // CheckSigninRequest checks that given driver request is valid for a signin with auth builtin.
 func CheckSigninRequest(req sdk.AuthConsumerHatcherySigninRequest) (string, error) {

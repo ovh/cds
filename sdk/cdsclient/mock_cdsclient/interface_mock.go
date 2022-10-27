@@ -5915,6 +5915,21 @@ func (mr *MockInterfaceMockRecorder) AuthConsumerDelete(username, id interface{}
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AuthConsumerDelete", reflect.TypeOf((*MockInterface)(nil).AuthConsumerDelete), username, id)
 }
 
+// AuthConsumerHatcherySigninV2 mocks base method.
+func (m *MockInterface) AuthConsumerHatcherySigninV2(request interface{}) (sdk.AuthConsumerHatcherySigninResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AuthConsumerHatcherySigninV2", request)
+	ret0, _ := ret[0].(sdk.AuthConsumerHatcherySigninResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AuthConsumerHatcherySigninV2 indicates an expected call of AuthConsumerHatcherySigninV2.
+func (mr *MockInterfaceMockRecorder) AuthConsumerHatcherySigninV2(request interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AuthConsumerHatcherySigninV2", reflect.TypeOf((*MockInterface)(nil).AuthConsumerHatcherySigninV2), request)
+}
+
 // AuthConsumerListByUser mocks base method.
 func (m *MockInterface) AuthConsumerListByUser(username string) (sdk.AuthUserConsumers, error) {
 	m.ctrl.T.Helper()
@@ -11250,6 +11265,21 @@ func (m *MockAuthClient) AuthConsumerDelete(username, id string) error {
 func (mr *MockAuthClientMockRecorder) AuthConsumerDelete(username, id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AuthConsumerDelete", reflect.TypeOf((*MockAuthClient)(nil).AuthConsumerDelete), username, id)
+}
+
+// AuthConsumerHatcherySigninV2 mocks base method.
+func (m *MockAuthClient) AuthConsumerHatcherySigninV2(request interface{}) (sdk.AuthConsumerHatcherySigninResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AuthConsumerHatcherySigninV2", request)
+	ret0, _ := ret[0].(sdk.AuthConsumerHatcherySigninResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AuthConsumerHatcherySigninV2 indicates an expected call of AuthConsumerHatcherySigninV2.
+func (mr *MockAuthClientMockRecorder) AuthConsumerHatcherySigninV2(request interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AuthConsumerHatcherySigninV2", reflect.TypeOf((*MockAuthClient)(nil).AuthConsumerHatcherySigninV2), request)
 }
 
 // AuthConsumerListByUser mocks base method.
