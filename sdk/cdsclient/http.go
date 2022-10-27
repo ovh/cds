@@ -177,7 +177,7 @@ func (c *client) StreamNoRetry(ctx context.Context, httpClient HTTPClient, metho
 		!strings.Contains(path, "/auth/consumer/local/signup") &&
 		!strings.Contains(path, "/auth/consumer/local/verify") &&
 		!strings.Contains(path, "/auth/consumer/worker/signin") &&
-		!strings.Contains(path, "/auth/consumer/hatchery/signin")
+		!strings.Contains(path, "/v2/auth/consumer/hatchery/signin")
 
 	if checkToken && !c.config.HasValidSessionToken() && c.config.BuiltinConsumerAuthenticationToken != "" {
 		if c.config.Verbose {
