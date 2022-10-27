@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 
@@ -13,6 +14,61 @@ import (
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
+
+func (api *API) postHatcheryHeartbeatHandler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(IsHatchery),
+		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			hatcheryAuthConsumer := getHatcheryConsumer(ctx)
+			h, err := hatchery.LoadHatcheryByID(ctx, api.mustDB(), hatcheryAuthConsumer.AuthConsumerHatchery.HatcheryID)
+			if err != nil {
+				return err
+			}
+
+			var mon sdk.MonitoringStatus
+			if err := service.UnmarshalBody(req, &mon); err != nil {
+				return err
+			}
+
+			// Update status to warn if service version != api version
+			for i := range mon.Lines {
+				if mon.Lines[i].Component == "Version" {
+					if sdk.VERSION != mon.Lines[i].Value {
+						mon.Lines[i].Status = sdk.MonitoringStatusWarn
+					} else {
+						mon.Lines[i].Status = sdk.MonitoringStatusOK
+					}
+					break
+				}
+			}
+
+			tx, err := api.mustDB().Begin()
+			if err != nil {
+				return sdk.WithStack(err)
+			}
+			defer tx.Rollback() // nolint
+
+			h.LastHeartbeat = time.Now()
+			if err := hatchery.Update(ctx, tx, h); err != nil {
+				return err
+			}
+			var sessionID string
+			if a := getAuthSession(ctx); a != nil {
+				sessionID = a.ID
+			}
+			hs := sdk.HatcheryStatus{
+				HatcheryID: h.ID,
+				SessionID:  sessionID,
+				Status:     mon,
+			}
+			if err := hatchery.UpsertStatus(ctx, tx, h.ID, &hs); err != nil {
+				return err
+			}
+			if err := tx.Commit(); err != nil {
+				return sdk.WithStack(err)
+			}
+			return nil
+		}
+}
 
 func (api *API) getHatcheryByIdentifier(ctx context.Context, hatcheryIdentifier string) (*sdk.Hatchery, error) {
 	var h *sdk.Hatchery

@@ -101,7 +101,7 @@ func UpdateConsumerLastAuthentication(ctx context.Context, db gorp.SqlExecutor, 
 	return sdk.WrapError(err, "unable to update last_authentication auth consumer with id %s", ac.ID)
 }
 
-func loadConsumerByID(ctx context.Context, db gorp.SqlExecutor, consumerID string) (*sdk.AuthConsumer, error) {
+func LoadConsumerByID(ctx context.Context, db gorp.SqlExecutor, consumerID string) (*sdk.AuthConsumer, error) {
 	query := gorpmapping.NewQuery("SELECT * from auth_consumer WHERE id = $1").Args(consumerID)
 	return getConsumer(ctx, db, query)
 }

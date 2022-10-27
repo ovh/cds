@@ -224,6 +224,7 @@ type HatcheryClient interface {
 }
 
 type HatcheryServiceClient interface {
+	Heartbeat(ctx context.Context, mon *sdk.MonitoringStatus) error
 }
 
 // ProjectClient exposes project related functions

@@ -34,7 +34,7 @@ func insertConsumerHatcheryData(ctx context.Context, db gorpmapper.SqlExecutorWi
 }
 
 func LoadHatcheryConsumerByID(ctx context.Context, db gorp.SqlExecutor, consumerID string) (*sdk.AuthHatcheryConsumer, error) {
-	c, err := loadConsumerByID(ctx, db, consumerID)
+	c, err := LoadConsumerByID(ctx, db, consumerID)
 	if err != nil {
 		return nil, err
 	}

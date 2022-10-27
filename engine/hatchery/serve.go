@@ -34,6 +34,10 @@ type Common struct {
 	mapServiceNextLineNumber      map[string]int64
 }
 
+func (c *Common) MaxHeartbeat() int {
+	return c.Common.MaxHeartbeatFailures
+}
+
 func (c *Common) Service() *sdk.Service {
 	return c.Common.ServiceInstance
 }
@@ -397,4 +401,62 @@ func (c *Common) GenerateWorkerConfig(ctx context.Context, h hatchery.Interface,
 		},
 	}
 	return cfg
+}
+
+func (c *Common) HeartbeatV2(ctx context.Context, status func(ctx context.Context) *sdk.MonitoringStatus) error {
+	var heartbeatFailures int
+	execHeartbeat := func(ctx context.Context) error {
+		if err := c.Clientv2.Heartbeat(ctx, status(ctx)); err != nil {
+			if sdk.ErrorIs(err, sdk.ErrForbidden) {
+				return sdk.WrapError(err, "%s> HeartbeatV2 failed with forbidden error", c.Name())
+			}
+			heartbeatFailures++
+			log.Warn(ctx, "%s> HeartbeatV2 failure %d/%d: %v", c.Name(), heartbeatFailures, c.MaxHeartbeatFailures, err)
+
+			// if register failed too many time, stop heartbeat
+			if heartbeatFailures > c.MaxHeartbeatFailures {
+				return sdk.WithStack(fmt.Errorf("%s> HeartbeatV2 failed excedeed", c.Name()))
+			}
+			return nil
+		}
+		heartbeatFailures = 0
+		return nil
+	}
+
+	// exec first heartbeat immediately
+	if err := execHeartbeat(ctx); err != nil {
+		return err
+	}
+
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return sdk.WrapError(ctx.Err(), "%s> HeartbeatV2> Cancelled", c.Name())
+		case <-ticker.C:
+			if err := execHeartbeat(ctx); err != nil {
+				return err
+			}
+		}
+	}
+}
+
+// Heartbeat have to be launch as a goroutine, call DoHeartBeat each 30s
+func (c *Common) Heartbeat(ctx context.Context, status func(ctx context.Context) *sdk.MonitoringStatus) error {
+	// For now, no error returned if this heartbeat failed
+	if c.Clientv2 != nil {
+		go func() {
+			if err := c.HeartbeatV2(ctx, status); err != nil {
+				log.Error(ctx, "%s> Error heartbeatV2: %+v", c.Name(), err)
+			}
+		}()
+	}
+
+	if err := c.Common.Heartbeat(ctx, status); err != nil {
+		return err
+	}
+
+	// Double heart here
+	return nil
 }
