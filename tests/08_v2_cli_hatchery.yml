@@ -26,9 +26,13 @@ testcases:
 - name: startHatchery
   steps:
     - script: {{.engine}} start hatchery:local --config /tmp/hatchery.local.toml > my-local-hatchery.log 2>&1 &
-    - script: ps -A | grep "start hatchery:local --config /tmp/hatchery.local.toml" | grep -v 'grep' | awk '{print $1}' > pid.txt
+    - script: ps -A | grep "start hatchery:local --config /tmp/hatchery.local.toml" | grep -v 'grep' | awk '{print $1}'
+      vars:
+        pid:
+          from: result.systemout
     - script: sleep 5
-    - script: kill `cat pid.txt`
+      info: "PID to kill {{.pid}}"
+    - script: kill {{.pid}}
     - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental hatchery get my-local-hatchery
       assertions:
         - result.code ShouldEqual 0
