@@ -67,7 +67,7 @@ func Test_authMiddleware_WithAuthConsumerDisabled(t *testing.T) {
 	}
 	builtinConsumer, _, err := builtin.NewConsumer(context.TODO(), db, consumerOptions, localConsumer)
 	require.NoError(t, err)
-	builtinSession, err := authentication.NewSession(context.TODO(), db, builtinConsumer, time.Second*5)
+	builtinSession, err := authentication.NewSession(context.TODO(), db, &builtinConsumer.AuthConsumer, time.Second*5)
 	require.NoError(t, err)
 	jwt, err := authentication.NewSessionJWT(builtinSession, "")
 	require.NoError(t, err)
@@ -230,7 +230,7 @@ func Test_authMiddleware_WithAuthConsumerScoped(t *testing.T) {
 
 	builtinConsumer, _, err := builtin.NewConsumer(context.TODO(), db, consumerOptions, localConsumer)
 	require.NoError(t, err)
-	builtinSession, err := authentication.NewSession(context.TODO(), db, builtinConsumer, time.Second*5)
+	builtinSession, err := authentication.NewSession(context.TODO(), db, &builtinConsumer.AuthConsumer, time.Second*5)
 	require.NoError(t, err)
 	jwt, err := authentication.NewSessionJWT(builtinSession, "")
 	require.NoError(t, err)

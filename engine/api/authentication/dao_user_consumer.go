@@ -146,7 +146,7 @@ func LoadUserConsumerByTypeAndUserExternalID(ctx context.Context, db gorp.SqlExe
 
 // InsertUserConsumer in database.
 func InsertUserConsumer(ctx context.Context, db gorpmapper.SqlExecutorWithTx, ac *sdk.AuthUserConsumer) error {
-	if err := inserConsumer(ctx, db, &ac.AuthConsumer); err != nil {
+	if err := insertConsumer(ctx, db, &ac.AuthConsumer); err != nil {
 		return sdk.WrapError(err, "unable to insert auth consumer")
 	}
 	ac.AuthConsumerUser.AuthConsumerID = ac.ID

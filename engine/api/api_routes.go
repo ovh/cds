@@ -438,6 +438,8 @@ func (api *API) InitRouter() {
 	r.Handle("/template/{groupName}/{templateSlug}/instance/{instanceID}", Scope(sdk.AuthConsumerScopeTemplate), r.DELETE(api.deleteTemplateInstanceHandler))
 	r.Handle("/template/{groupName}/{templateSlug}/usage", Scope(sdk.AuthConsumerScopeTemplate), r.GET(api.getTemplateUsageHandler))
 
+	r.Handle("/v2/auth/consumer/hatchery/signin", ScopeNone(), r.POSTv2(api.postAuthHatcherySigninHandler, service.OverrideAuth(service.NoAuthMiddleware), MaintenanceAware()))
+
 	r.Handle("/v2/hatchery", nil, r.GETv2(api.getHatcheriesHandler), r.POSTv2(api.postHatcheryHandler))
 	r.Handle("/v2/hatchery/{hatcheryIdentifier}", nil, r.GETv2(api.getHatcheryHandler), r.DELETEv2(api.deleteHatcheryHandler))
 

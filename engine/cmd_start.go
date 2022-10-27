@@ -343,7 +343,6 @@ func start(c context.Context, s service.Service, serviceName string, cfg interfa
 		return sdk.WrapError(err, "unable to signin: %s", serviceName)
 	}
 	log.Info(ctx, "%s> Service signed in", serviceName)
-
 	if err := s.Start(ctx); err != nil {
 		return sdk.WrapError(err, "unable to start service: %s", serviceName)
 	}

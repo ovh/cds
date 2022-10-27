@@ -283,7 +283,7 @@ func (api *API) postAuthSigninHandler() service.Handler {
 				log.Info(ctx, "starting new session %s with MFA for consumer %s", session.ID, consumer.ID)
 			}
 		} else {
-			session, err = authentication.NewSession(ctx, tx, consumer, sessionDuration)
+			session, err = authentication.NewSession(ctx, tx, &consumer.AuthConsumer, sessionDuration)
 		}
 		if err != nil {
 			return err

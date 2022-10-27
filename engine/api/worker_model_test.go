@@ -950,7 +950,7 @@ func Test_getWorkerModels(t *testing.T) {
 			ConsumerID: &hatcheryConsumer.ID,
 		},
 	}))
-	sessionHatchery, err := authentication.NewSession(context.TODO(), db, hatcheryConsumer, 5*time.Minute)
+	sessionHatchery, err := authentication.NewSession(context.TODO(), db, &hatcheryConsumer.AuthConsumer, 5*time.Minute)
 	require.NoError(t, err)
 	jwtHatchery, err := authentication.NewSessionJWT(sessionHatchery, "")
 	require.NoError(t, err)

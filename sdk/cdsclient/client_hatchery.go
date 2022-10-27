@@ -6,8 +6,8 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func (c *client) HatcheryAdd(ctx context.Context, orga sdk.Hatchery) error {
-	if _, err := c.PostJSON(ctx, "/v2/hatchery", &orga, nil); err != nil {
+func (c *client) HatcheryAdd(ctx context.Context, h *sdk.Hatchery) error {
+	if _, err := c.PostJSON(ctx, "/v2/hatchery", &h, &h); err != nil {
 		return err
 	}
 	return nil

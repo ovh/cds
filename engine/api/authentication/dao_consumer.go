@@ -53,13 +53,12 @@ func getConsumer(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query) 
 		log.Error(ctx, "authentication.getConsumer> auth consumer %s data corrupted", consumer.ID)
 		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
-
 	c := consumer.AuthConsumer
 	c.ValidityPeriods.Sort()
 	return &c, nil
 }
 
-func inserConsumer(ctx context.Context, db gorpmapper.SqlExecutorWithTx, ac *sdk.AuthConsumer) error {
+func insertConsumer(ctx context.Context, db gorpmapper.SqlExecutorWithTx, ac *sdk.AuthConsumer) error {
 	// Because we need to create consumers before CDS first start with the init token, the consumer id can be set.
 	// In this case we don't want to create a new UUID.
 	ac.ValidityPeriods.Sort()
@@ -100,4 +99,9 @@ func UpdateConsumerLastAuthentication(ctx context.Context, db gorp.SqlExecutor, 
 	})
 	*ac = c.AuthConsumer
 	return sdk.WrapError(err, "unable to update last_authentication auth consumer with id %s", ac.ID)
+}
+
+func loadConsumerByID(ctx context.Context, db gorp.SqlExecutor, consumerID string) (*sdk.AuthConsumer, error) {
+	query := gorpmapping.NewQuery("SELECT * from auth_consumer WHERE id = $1").Args(consumerID)
+	return getConsumer(ctx, db, query)
 }

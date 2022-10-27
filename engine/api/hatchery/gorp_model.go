@@ -8,6 +8,7 @@ import (
 
 func init() {
 	gorpmapping.Register(gorpmapping.New(dbHatchery{}, "hatchery", false, "id"))
+	gorpmapping.Register(gorpmapping.New(sdk.HatcheryStatus{}, "hatchery_status", true, "id"))
 }
 
 type dbHatchery struct {

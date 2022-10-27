@@ -64,6 +64,18 @@ func (c authConsumerUserData) Canonical() gorpmapper.CanonicalForms {
 	}
 }
 
+type authConsumerHatcheryData struct {
+	sdk.AuthConsumerHatcheryData
+	gorpmapper.SignedEntity
+}
+
+func (c authConsumerHatcheryData) Canonical() gorpmapper.CanonicalForms {
+	_ = []interface{}{c.ID, c.AuthConsumerID, c.HatcheryID} // Checks that fields exists at compilation
+	return []gorpmapper.CanonicalForm{
+		"{{.ID}}{{.AuthConsumerID}}{{.HatcheryID}}",
+	}
+}
+
 type authSession struct {
 	sdk.AuthSession
 	gorpmapper.SignedEntity
@@ -82,5 +94,6 @@ func init() {
 		gorpmapping.New(authSession{}, "auth_session", false, "id"),
 		gorpmapping.New(authConsumerUserData{}, "auth_consumer_user", false, "id"),
 		gorpmapping.New(AuthConsumerOld{}, "auth_consumer_old", false, "id"),
+		gorpmapping.New(authConsumerHatcheryData{}, "auth_consumer_hatchery", false, "id"),
 	)
 }

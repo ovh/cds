@@ -245,7 +245,7 @@ func (api *API) postAuthLocalSigninHandler() service.Handler {
 		}
 
 		// Generate a new session for consumer
-		session, err := authentication.NewSession(ctx, tx, consumer, driver.GetSessionDuration())
+		session, err := authentication.NewSession(ctx, tx, &consumer.AuthConsumer, driver.GetSessionDuration())
 		if err != nil {
 			return err
 		}
@@ -395,7 +395,7 @@ func (api *API) postAuthLocalVerifyHandler() service.Handler {
 		}
 
 		// Generate a new session for consumer
-		session, err := authentication.NewSession(ctx, tx, consumer, driver.GetSessionDuration())
+		session, err := authentication.NewSession(ctx, tx, &consumer.AuthConsumer, driver.GetSessionDuration())
 		if err != nil {
 			return err
 		}
@@ -572,7 +572,7 @@ func (api *API) postAuthLocalResetHandler() service.Handler {
 		}
 
 		// Generate a new session for consumer
-		session, err := authentication.NewSession(ctx, tx, consumer, driver.GetSessionDuration())
+		session, err := authentication.NewSession(ctx, tx, &consumer.AuthConsumer, driver.GetSessionDuration())
 		if err != nil {
 			return err
 		}

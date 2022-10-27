@@ -296,6 +296,7 @@ const (
 	ConsumerGithub       AuthConsumerType = "github"
 	ConsumerGitlab       AuthConsumerType = "gitlab"
 	ConsumerOIDC         AuthConsumerType = "openid-connect"
+	ConsumerHatchery     AuthConsumerType = "hatchery"
 	ConsumerTest         AuthConsumerType = "futurama"
 	ConsumerTest2        AuthConsumerType = "planet-express"
 )
@@ -417,6 +418,12 @@ type AuthUserConsumer struct {
 	AuthConsumerUser AuthUserConsumerData `json:"auth_consumer_user,omitempty" db:"-"`
 }
 
+// AuthHatcheryConsumer issues session linked to an authentified user.
+type AuthHatcheryConsumer struct {
+	AuthConsumer
+	AuthConsumerHatchery AuthConsumerHatcheryData `json:"auth_consumer_hatchery,omitempty" db:"-"`
+}
+
 // AuthUserConsumerData issues session linked to an authentified user.
 type AuthUserConsumerData struct {
 	ID                           string                   `json:"id" cli:"id,key" db:"id"`
@@ -436,6 +443,12 @@ type AuthUserConsumerData struct {
 	// aggregates by router auth middleware
 	Service *Service `json:"-" db:"-"`
 	Worker  *Worker  `json:"-" db:"-"`
+}
+
+type AuthConsumerHatcheryData struct {
+	ID             string `json:"id" cli:"id,key" db:"id"`
+	AuthConsumerID string `json:"auth_consumer_id" cli:"auth_consumer_id,key" db:"auth_consumer_id"`
+	HatcheryID     string `json:"hatchery_id" cli:"hatchery_id" db:"hatchery_id"`
 }
 
 func NewAuthConsumerValidityPeriod(iat time.Time, duration time.Duration) AuthConsumerValidityPeriods {

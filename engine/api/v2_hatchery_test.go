@@ -42,6 +42,8 @@ globals:
 	w := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(w, req)
 	require.Equal(t, 201, w.Code)
+	var hatcheryCreated sdk.Hatchery
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &hatcheryCreated))
 
 	// Then Get the hatchery
 	uriGet := api.Router.GetRouteV2("GET", api.getHatcheryHandler, map[string]string{"hatcheryIdentifier": h.Name})
@@ -54,6 +56,24 @@ globals:
 	var hatcheryGet sdk.Hatchery
 	require.NoError(t, json.Unmarshal(wGet.Body.Bytes(), &hatcheryGet))
 	require.Equal(t, hatcheryGet.Name, hatcheryGet.Name)
+
+	// Login with hatchery
+	uriLogin := api.Router.GetRouteV2("POST", api.postAuthHatcherySigninHandler, nil)
+	test.NotEmpty(t, uriLogin)
+
+	signinRequest := sdk.AuthConsumerHatcherySigninRequest{
+		Token:   hatcheryCreated.Token,
+		Name:    hatcheryCreated.Name,
+		HTTPURL: "local.host",
+	}
+	reqSignin := assets.NewRequest(t, "POST", uriLogin, &signinRequest)
+	wSignin := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(wSignin, reqSignin)
+	require.Equal(t, 200, wSignin.Code)
+
+	var authSigninResponse sdk.AuthConsumerHatcherySigninResponse
+	require.NoError(t, json.Unmarshal(wSignin.Body.Bytes(), &authSigninResponse))
+	require.NotEmpty(t, authSigninResponse.Token)
 
 	// Then Delete hatchery
 	uriDelete := api.Router.GetRouteV2("DELETE", api.deleteHatcheryHandler, map[string]string{"hatcheryIdentifier": h.Name})

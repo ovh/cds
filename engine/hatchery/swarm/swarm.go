@@ -23,6 +23,7 @@ import (
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdn"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 	cdslog "github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
@@ -36,6 +37,16 @@ func New() *HatcherySwarm {
 }
 
 var _ hatchery.InterfaceWithModels = new(HatcherySwarm)
+
+func (h *HatcherySwarm) Signin(ctx context.Context, clientConfig cdsclient.ServiceConfig, srvConfig interface{}) error {
+	if err := h.Common.Signin(ctx, clientConfig, srvConfig); err != nil {
+		return err
+	}
+	if err := h.Common.SigninV2(ctx, clientConfig, srvConfig); err != nil {
+		return err
+	}
+	return nil
+}
 
 // InitHatchery connect the hatchery to the docker api
 func (h *HatcherySwarm) InitHatchery(ctx context.Context) error {
@@ -517,7 +528,7 @@ func (h *HatcherySwarm) Serve(ctx context.Context) error {
 	return h.CommonServe(ctx, h)
 }
 
-//Configuration returns Hatchery CommonConfiguration
+// Configuration returns Hatchery CommonConfiguration
 func (h *HatcherySwarm) Configuration() service.HatcheryCommonConfiguration {
 	return h.Config.HatcheryCommonConfiguration
 }

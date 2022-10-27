@@ -217,10 +217,13 @@ type RegionClient interface {
 }
 
 type HatcheryClient interface {
-	HatcheryAdd(ctx context.Context, h sdk.Hatchery) error
+	HatcheryAdd(ctx context.Context, h *sdk.Hatchery) error
 	HatcheryGet(ctx context.Context, hatcheryIdentifier string) (sdk.Hatchery, error)
 	HatcheryList(ctx context.Context) ([]sdk.Hatchery, error)
 	HatcheryDelete(ctx context.Context, hatcheryIdentifier string) error
+}
+
+type HatcheryServiceClient interface {
 }
 
 // ProjectClient exposes project related functions
@@ -671,7 +674,8 @@ func ModelType(modelType string) RequestModifier {
 // AuthClient is the interface for authentication management.
 type AuthClient interface {
 	AuthDriverList() (sdk.AuthDriverResponse, error)
-	AuthConsumerSignin(sdk.AuthConsumerType, sdk.AuthConsumerSigninRequest) (sdk.AuthConsumerSigninResponse, error)
+	AuthConsumerSignin(sdk.AuthConsumerType, interface{}) (sdk.AuthConsumerSigninResponse, error)
+	AuthConsumerHatcherySigninV2(request interface{}) (sdk.AuthConsumerHatcherySigninResponse, error)
 	AuthConsumerLocalAskResetPassword(sdk.AuthConsumerSigninRequest) error
 	AuthConsumerLocalResetPassword(token, newPassword string) (sdk.AuthConsumerSigninResponse, error)
 	AuthConsumerLocalSignup(sdk.AuthConsumerSigninRequest) error

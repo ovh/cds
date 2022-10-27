@@ -15,7 +15,7 @@ var experimentalHatcheryCmd = cli.Command{
 
 func experimentalHatchery() *cobra.Command {
 	return cli.NewCommand(experimentalHatcheryCmd, nil, []*cobra.Command{
-		cli.NewCommand(hatcheryAddCmd, hatcheryAddFunc, nil, withAllCommandModifiers()...),
+		cli.NewGetCommand(hatcheryAddCmd, hatcheryAddFunc, nil, withAllCommandModifiers()...),
 		cli.NewGetCommand(hatcheryGetCmd, hatcheryGetFunc, nil, withAllCommandModifiers()...),
 		cli.NewListCommand(hatcheryListCmd, hatcheryListFunc, nil, withAllCommandModifiers()...),
 		cli.NewDeleteCommand(hatcheryDeleteCmd, hatcheryDeleteFunc, nil, withAllCommandModifiers()...),
@@ -33,12 +33,12 @@ var hatcheryAddCmd = cli.Command{
 	},
 }
 
-func hatcheryAddFunc(v cli.Values) error {
+func hatcheryAddFunc(v cli.Values) (interface{}, error) {
 	h := sdk.Hatchery{Name: v.GetString("hatcheryIdentifier")}
-	if err := client.HatcheryAdd(context.Background(), h); err != nil {
-		return err
+	if err := client.HatcheryAdd(context.Background(), &h); err != nil {
+		return nil, err
 	}
-	return nil
+	return h, nil
 }
 
 var hatcheryGetCmd = cli.Command{

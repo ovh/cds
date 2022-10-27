@@ -8,6 +8,24 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+func NewConsumerHatchery(ctx context.Context, db gorpmapper.SqlExecutorWithTx, h sdk.Hatchery) (*sdk.AuthHatcheryConsumer, error) {
+	c := sdk.AuthHatcheryConsumer{
+		AuthConsumer: sdk.AuthConsumer{
+			Name:            h.Name,
+			Type:            sdk.ConsumerHatchery,
+			ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 24*time.Hour),
+			Description:     "Consumer for hatchery " + h.Name,
+		},
+		AuthConsumerHatchery: sdk.AuthConsumerHatcheryData{
+			HatcheryID: h.ID,
+		},
+	}
+	if err := InsertHatcheryConsumer(ctx, db, &c); err != nil {
+		return nil, err
+	}
+	return &c, nil
+}
+
 func NewConsumerWorker(ctx context.Context, db gorpmapper.SqlExecutorWithTx, name string, hatcheryConsumer *sdk.AuthUserConsumer) (*sdk.AuthUserConsumer, error) {
 	c := sdk.AuthUserConsumer{
 		AuthConsumer: sdk.AuthConsumer{

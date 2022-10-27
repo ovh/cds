@@ -211,7 +211,7 @@ func InsertAdminUser(t *testing.T, db gorpmapper.SqlExecutorWithTx) (*sdk.Authen
 	consumer, err := local.NewConsumer(context.TODO(), db, u.ID)
 	require.NoError(t, err, "cannot create auth consumer")
 
-	session, err := authentication.NewSession(context.TODO(), db, consumer, 5*time.Minute)
+	session, err := authentication.NewSession(context.TODO(), db, &consumer.AuthConsumer, 5*time.Minute)
 	require.NoError(t, err, "cannot create auth session")
 
 	jwt, err := authentication.NewSessionJWT(session, "")
@@ -262,7 +262,7 @@ func InsertMaintainerUser(t *testing.T, db gorpmapper.SqlExecutorWithTx) (*sdk.A
 	consumer, err := local.NewConsumer(context.TODO(), db, u.ID)
 	require.NoError(t, err, "cannot create auth consumer")
 
-	session, err := authentication.NewSession(context.TODO(), db, consumer, 5*time.Minute)
+	session, err := authentication.NewSession(context.TODO(), db, &consumer.AuthConsumer, 5*time.Minute)
 	require.NoError(t, err, "cannot create auth session")
 
 	jwt, err := authentication.NewSessionJWT(session, "")
@@ -325,7 +325,7 @@ func InsertLambdaUserInOrganization(t *testing.T, db gorpmapper.SqlExecutorWithT
 	consumer, err := local.NewConsumer(context.TODO(), db, u.ID)
 	require.NoError(t, err, "cannot create auth consumer")
 
-	session, err := authentication.NewSession(context.TODO(), db, consumer, 5*time.Minute)
+	session, err := authentication.NewSession(context.TODO(), db, &consumer.AuthConsumer, 5*time.Minute)
 	require.NoError(t, err, "cannot create session")
 
 	jwt, err := authentication.NewSessionJWT(session, "")
@@ -583,7 +583,7 @@ func InsertHatchery(t *testing.T, db gorpmapper.SqlExecutorWithTx, grp sdk.Group
 
 	require.NoError(t, services.Insert(context.TODO(), db, &srv))
 
-	session, err := authentication.NewSession(context.TODO(), db, hConsumer, 5*time.Minute)
+	session, err := authentication.NewSession(context.TODO(), db, &hConsumer.AuthConsumer, 5*time.Minute)
 	require.NoError(t, err)
 
 	jwt, err := authentication.NewSessionJWT(session, "")
@@ -666,7 +666,7 @@ func InitCDNService(t *testing.T, db gorpmapper.SqlExecutorWithTx, scopes ...sdk
 
 	require.NoError(t, services.Insert(context.TODO(), db, &srv))
 
-	session, err := authentication.NewSession(context.TODO(), db, hConsumer, 5*time.Minute)
+	session, err := authentication.NewSession(context.TODO(), db, &hConsumer.AuthConsumer, 5*time.Minute)
 	require.NoError(t, err)
 
 	jwt, err := authentication.NewSessionJWT(session, "")
