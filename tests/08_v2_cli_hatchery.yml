@@ -32,10 +32,9 @@ testcases:
           from: result.systemout
     - script: sleep 5
       info: "PID to kill {{.pid}}"
-    - script: kill {{.pid}} || true
+    - script: kill {{.pid}}
     - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental hatchery get my-local-hatchery
       assertions:
         - result.code ShouldEqual 0
-        - result.systemoutjson.last_heartbeat ShouldNotBeEmpty
         - result.systemoutjson.last_heartbeat ShouldNotContainSubstring "0001-01-01"
 
