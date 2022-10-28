@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"path"
 	"strconv"
 	"strings"
 	"time"
@@ -213,13 +214,25 @@ func verifyAddResultArtifactManager(ctx context.Context, db gorp.SqlExecutor, st
 	if err != nil {
 		return "", err
 	}
-	fileInfo, err := artifactClient.GetFileInfo(artNewResult.RepoName, artNewResult.Path)
+
+	repoDetails, err := artifactClient.GetRepository(artNewResult.RepoName)
+	if err != nil {
+		return "", err
+	}
+
+	filePath := artNewResult.Path
+	// To get FileInfo for a docker image, we have to check the manifest file
+	if repoDetails.PackageType == "docker" && !strings.HasSuffix(filePath, "manifest.json") {
+		filePath = path.Join(filePath, "manifest.json")
+	}
+
+	fileInfo, err := artifactClient.GetFileInfo(artNewResult.RepoName, filePath)
 	if err != nil {
 		return "", err
 	}
 	artNewResult.Size = fileInfo.Size
 	artNewResult.MD5 = fileInfo.Checksums.Md5
-	artNewResult.RepoType = fileInfo.Type
+	artNewResult.RepoType = repoDetails.PackageType
 	if artNewResult.FileType == "" {
 		artNewResult.FileType = artNewResult.RepoType
 	}

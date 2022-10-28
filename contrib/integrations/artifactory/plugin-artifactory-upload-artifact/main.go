@@ -96,9 +96,13 @@ func (e *artifactoryUploadArtifactPlugin) Run(ctx context.Context, opts *integra
 
 	result := make(map[string]string)
 	for artDetails := new(utils.ArtifactDetails); summary.ArtifactsDetailsReader.NextRecord(artDetails) == nil; artDetails = new(utils.ArtifactDetails) {
+		art, err := artDetails.ToBuildInfoArtifact()
+		if err != nil {
+			return fail("unable to get artifact build info: %v", err)
+		}
 		result[sdk.ArtifactUploadPluginOutputPathMD5] = artDetails.Checksums.Md5
-		result[sdk.ArtifactUploadPluginOutputPathFilePath] = strings.TrimPrefix(artDetails.ToBuildInfoArtifact().Path, cdsRepo+"/")
-		result[sdk.ArtifactUploadPluginOutputPathFileName] = artDetails.ToBuildInfoArtifact().Name
+		result[sdk.ArtifactUploadPluginOutputPathFilePath] = strings.TrimPrefix(art.Path, cdsRepo+"/")
+		result[sdk.ArtifactUploadPluginOutputPathFileName] = art.Name
 		result[sdk.ArtifactUploadPluginOutputPathRepoType] = "generic"
 		result[sdk.ArtifactUploadPluginOutputPathRepoName] = cdsRepo
 	}

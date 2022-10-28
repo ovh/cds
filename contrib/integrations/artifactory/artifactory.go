@@ -2,7 +2,6 @@ package art
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/url"
 	"path/filepath"
@@ -10,14 +9,14 @@ import (
 	"strings"
 	"time"
 
+	buildinfo "github.com/jfrog/build-info-go/entities"
 	"github.com/jfrog/jfrog-client-go/artifactory"
 	"github.com/jfrog/jfrog-client-go/artifactory/auth"
-	"github.com/jfrog/jfrog-client-go/artifactory/buildinfo"
 	"github.com/jfrog/jfrog-client-go/artifactory/services"
+	"github.com/jfrog/jfrog-client-go/artifactory/services/utils"
 	"github.com/jfrog/jfrog-client-go/config"
 	"github.com/jfrog/jfrog-client-go/distribution"
 	authdistrib "github.com/jfrog/jfrog-client-go/distribution/auth"
-	"github.com/pkg/errors"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/integration/artifact_manager"
@@ -69,26 +68,7 @@ func CreateArtifactoryClient(ctx context.Context, url, token string) (artifactor
 	return artifactory.New(serviceConfig)
 }
 
-func SetProperties(artiClient artifactory.ArtifactoryServicesManager, repoName string, filePath string, props map[string]string) error {
-	fileInfoURL := fmt.Sprintf("%sapi/storage/%s/%s?properties=", artiClient.GetConfig().GetServiceDetails().GetUrl(), repoName, filePath)
-
-	for k, v := range props {
-		fileInfoURL += fmt.Sprintf("%s=%s%s", k, url.QueryEscape(v), url.QueryEscape("|"))
-
-	}
-	httpDetails := artiClient.GetConfig().GetServiceDetails().CreateHttpClientDetails()
-	resp, body, err := artiClient.Client().SendPut(fileInfoURL, nil, &httpDetails)
-	if err != nil {
-		return sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to call artifactory: %v", err)
-	}
-
-	if resp.StatusCode >= 400 {
-		return sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to call artifactory [HTTP: %d] %s: %s", resp.StatusCode, fileInfoURL, string(body))
-	}
-	return nil
-}
-
-func PromoteFile(artiClient artifactory.ArtifactoryServicesManager, data sdk.WorkflowRunResultArtifactManager, lowMaturity, highMaturity string) error {
+func PromoteFile(artiClient artifact_manager.ArtifactManager, data sdk.WorkflowRunResultArtifactManager, lowMaturity, highMaturity string, props *utils.Properties) error {
 	srcRepo := fmt.Sprintf("%s-%s", data.RepoName, lowMaturity)
 	targetRepo := fmt.Sprintf("%s-%s", data.RepoName, highMaturity)
 	params := services.NewMoveCopyParams()
@@ -96,118 +76,103 @@ func PromoteFile(artiClient artifactory.ArtifactoryServicesManager, data sdk.Wor
 	params.Target = fmt.Sprintf("%s/%s", targetRepo, data.Path)
 	params.Flat = true
 
-	// Check if artifact already exist on destination
-	exist, err := checkArtifactExists(artiClient, targetRepo, data.Path)
-	if err != nil {
-		return err
-	}
-
-	if !exist {
-		// If source repository is a release repository, we should not move but copy the artifact
-		// Get the properties of the source reposiytory
-		maturity, err := GetRepositoryMaturity(artiClient, srcRepo)
+	if lowMaturity == highMaturity {
+		fmt.Printf("%s has been already promoted\n", data.Name)
+	} else {
+		// Check if artifact already exist on destination
+		exist, err := artiClient.CheckArtifactExists(targetRepo, data.Path)
 		if err != nil {
-			fmt.Printf("Warning: unable to get repository maturity: %v\n", err)
+			return err
 		}
 
-		if maturity == "release" {
-			fmt.Printf("Copying file %s from %s to %s\n", data.Name, srcRepo, targetRepo)
-			nbSuccess, nbFailed, err := artiClient.Copy(params)
+		if !exist {
+			// If source repository is a release repository, we should not move but copy the artifact
+			// Get the properties of the source reposiytory
+			maturity, err := artiClient.GetRepositoryMaturity(srcRepo)
 			if err != nil {
-				return err
+				fmt.Printf("Warning: unable to get repository maturity: %v\n", err)
 			}
-			if nbFailed > 0 || nbSuccess == 0 {
-				return fmt.Errorf("%s: copy failed with no reason", data.Name)
+
+			if maturity == "release" {
+				fmt.Printf("Copying file %s from %s to %s\n", data.Name, srcRepo, targetRepo)
+				nbSuccess, nbFailed, err := artiClient.Copy(params)
+				if err != nil {
+					return err
+				}
+				if nbFailed > 0 || nbSuccess == 0 {
+					return fmt.Errorf("%s: copy failed with no reason", data.Name)
+				}
+			} else {
+				fmt.Printf("Promoting file %s from %s to %s\n", data.Name, srcRepo, targetRepo)
+				nbSuccess, nbFailed, err := artiClient.Move(params)
+				if err != nil {
+					return err
+				}
+				if nbFailed > 0 || nbSuccess == 0 {
+					return fmt.Errorf("%s: copy failed with no reason", data.Name)
+				}
 			}
 		} else {
-			fmt.Printf("Promoting file %s from %s to %s\n", data.Name, srcRepo, targetRepo)
-			nbSuccess, nbFailed, err := artiClient.Move(params)
-			if err != nil {
-				return err
-			}
-			if nbFailed > 0 || nbSuccess == 0 {
-				return fmt.Errorf("%s: copy failed with no reason", data.Name)
-			}
+			fmt.Printf("%s has been already promoted\n", data.Name)
 		}
-		return nil
 	}
-	fmt.Printf("%s has been already promoted\n", data.Name)
+
+	if props != nil {
+		fmt.Printf("Set properties %+v on file %s at %s\n", props, data.Name, targetRepo)
+		if err := artiClient.SetProperties(targetRepo, data.Path, props); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
-type PropertiesResponse struct {
-	Properties map[string][]string
-}
-
-func GetRepositoryMaturity(artiClient artifactory.ArtifactoryServicesManager, repoName string) (string, error) {
-	httpDetails := artiClient.GetConfig().GetServiceDetails().CreateHttpClientDetails()
-	uri := fmt.Sprintf(artiClient.GetConfig().GetServiceDetails().GetUrl()+"api/storage/%s?properties", repoName)
-	re, body, _, err := artiClient.Client().SendGet(uri, true, &httpDetails)
-	if err != nil {
-		return "", errors.Errorf("unable to get properties %s: %v", repoName, err)
-	}
-	if re.StatusCode == 404 {
-		return "", errors.Errorf("repository %s properties not foud", repoName)
-	}
-	if re.StatusCode >= 400 {
-		return "", errors.Errorf("unable to call artifactory [HTTP: %d] %s %s", re.StatusCode, uri, string(body))
-	}
-	var props PropertiesResponse
-	if err := json.Unmarshal(body, &props); err != nil {
-		return "", errors.WithStack(err)
-	}
-	fmt.Printf("Repository %q has properties: %+v\n", repoName, props.Properties)
-	for k, p := range props.Properties {
-		if k == "ovh.maturity" {
-			return p[0], nil
-		}
-	}
-	return "", nil
-}
-
-func PromoteDockerImage(artiClient artifactory.ArtifactoryServicesManager, data sdk.WorkflowRunResultArtifactManager, lowMaturity, highMaturity string) error {
+func PromoteDockerImage(ctx context.Context, artiClient artifact_manager.ArtifactManager, data sdk.WorkflowRunResultArtifactManager, lowMaturity, highMaturity string, props *utils.Properties) error {
 	sourceRepo := fmt.Sprintf("%s-%s", data.RepoName, lowMaturity)
 	targetRepo := fmt.Sprintf("%s-%s", data.RepoName, highMaturity)
 	params := services.NewDockerPromoteParams(data.Path, sourceRepo, targetRepo)
 
-	maturity, err := GetRepositoryMaturity(artiClient, sourceRepo)
-	if err != nil {
-		fmt.Printf("Warning: unable to get repository maturity: %v\n", err)
-	}
-
-	// Check if artifact already exist on destination
-	exist, err := checkArtifactExists(artiClient, targetRepo, data.Path)
-	if err != nil {
-		return err
-	}
-	if !exist {
-		if maturity == "release" {
-			fmt.Printf("Copying docker image %s from %s to %s\n", data.Name, params.SourceRepo, params.TargetRepo)
-			params.Copy = true
-		} else {
-			fmt.Printf("Promoting docker image %s from %s to %s\n", data.Name, params.SourceRepo, params.TargetRepo)
-			params.Copy = false
+	if lowMaturity == highMaturity {
+		fmt.Printf("%s has been already promoted\n", data.Name)
+	} else {
+		maturity, err := artiClient.GetRepositoryMaturity(sourceRepo)
+		if err != nil {
+			fmt.Printf("Warning: unable to get repository maturity: %v\n", err)
 		}
-		return artiClient.PromoteDocker(params)
-	}
-	fmt.Printf("%s has been already promoted\n", data.Name)
-	return nil
-}
 
-func checkArtifactExists(artiClient artifactory.ArtifactoryServicesManager, repoName string, artiName string) (bool, error) {
-	httpDetails := artiClient.GetConfig().GetServiceDetails().CreateHttpClientDetails()
-	fileInfoURL := fmt.Sprintf("%sapi/storage/%s/%s", artiClient.GetConfig().GetServiceDetails().GetUrl(), repoName, artiName)
-	re, body, _, err := artiClient.Client().SendGet(fileInfoURL, true, &httpDetails)
-	if err != nil {
-		return false, fmt.Errorf("unable to get file info %s/%s: %v", repoName, artiName, err)
+		// Check if artifact already exist on destination
+		exist, err := artiClient.CheckArtifactExists(targetRepo, data.Path)
+		if err != nil {
+			return err
+		}
+		if !exist {
+			if maturity == "release" {
+				fmt.Printf("Copying docker image %s from %s to %s\n", data.Name, params.SourceRepo, params.TargetRepo)
+				params.Copy = true
+			} else {
+				fmt.Printf("Promoting docker image %s from %s to %s\n", data.Name, params.SourceRepo, params.TargetRepo)
+				params.Copy = false
+			}
+			if err := artiClient.PromoteDocker(params); err != nil {
+				return err
+			}
+		} else {
+			fmt.Printf("%s has been already promoted\n", data.Name)
+		}
 	}
-	if re.StatusCode == 404 {
-		return false, nil
+
+	if props != nil {
+		fmt.Printf("Set properties %+v on file %s at %s\n", props, data.Name, targetRepo)
+		files, err := retrieveModulesFiles(ctx, artiClient, targetRepo, data.Path)
+		if err != nil {
+			return err
+		}
+		if err := SetPropertiesRecursive(ctx, artiClient, data.RepoName, highMaturity, files, props); err != nil {
+			return err
+		}
 	}
-	if re.StatusCode >= 400 {
-		return false, fmt.Errorf("unable to call artifactory [HTTP: %d] %s %s", re.StatusCode, fileInfoURL, string(body))
-	}
-	return true, nil
+
+	return nil
 }
 
 type executionContext struct {
@@ -249,13 +214,13 @@ func PrepareBuildInfo(ctx context.Context, artiClient artifact_manager.ArtifactM
 			Name:    r.AgentName,
 			Version: sdk.VERSION,
 		},
-		ArtifactoryPrincipal:     fmt.Sprintf("token:%s", r.TokenName),
-		ArtifactoryPluginVersion: sdk.VERSION,
-		Started:                  time.Now().Format("2006-01-02T15:04:05.999-07:00"),
-		Number:                   r.Version,
-		BuildUrl:                 r.RunURL,
-		Modules:                  []buildinfo.Module{},
-		VcsList:                  make([]buildinfo.Vcs, 0),
+		Principal:     fmt.Sprintf("token:%s", r.TokenName),
+		PluginVersion: sdk.VERSION,
+		Started:       time.Now().Format("2006-01-02T15:04:05.999-07:00"),
+		Number:        r.Version,
+		BuildUrl:      r.RunURL,
+		Modules:       []buildinfo.Module{},
+		VcsList:       make([]buildinfo.Vcs, 0),
 	}
 
 	buildInfoRequest.VcsList = append(buildInfoRequest.VcsList, buildinfo.Vcs{
@@ -334,7 +299,21 @@ func computeBuildInfoModules(ctx context.Context, client artifact_manager.Artifa
 			mod.Properties = props
 		}
 
-		artifacts, err := retrieveModulesArtifacts(ctx, client, data.RepoName, currentMaturity, data.Path, execContext)
+		files, err := retrieveModulesFiles(ctx, client, data.RepoName, data.Path)
+		if err != nil {
+			return nil, err
+		}
+
+		props := utils.NewProperties()
+		props.AddProperty("build.name", fmt.Sprintf("%s/%s/%s", execContext.buildInfo, execContext.projectKey, execContext.workflowName))
+		props.AddProperty("build.number", execContext.version)
+		props.AddProperty("build.timestamp", strconv.FormatInt(time.Now().Unix(), 10))
+
+		if err := SetPropertiesRecursive(ctx, client, data.RepoName, currentMaturity, files, props); err != nil {
+			return nil, err
+		}
+
+		artifacts, err := retrieveModulesArtifacts(ctx, client, files)
 		if err != nil {
 			return nil, err
 		}
@@ -345,53 +324,62 @@ func computeBuildInfoModules(ctx context.Context, client artifact_manager.Artifa
 	return modules, nil
 }
 
-func retrieveModulesArtifacts(ctx context.Context, client artifact_manager.ArtifactManager, repoName string, maturity string, path string, execContext executionContext) ([]buildinfo.Artifact, error) {
-	log.Debug(ctx, "retrieve:ModulesArtifacts repoName:%s path:%s execContext:%+v", repoName, path, execContext)
-	fileInfo, err := client.GetFileInfo(repoName, path)
+func retrieveModulesFiles(ctx context.Context, client artifact_manager.ArtifactManager, repoName string, path string) ([]sdk.FileInfo, error) {
+	log.Debug(ctx, "retrieve:ModulesFiles repoName:%s path:%s", repoName, path)
+	folderInfo, err := client.GetFolderInfo(repoName, path)
 	if err != nil {
 		return nil, err
 	}
-	artifacts := make([]buildinfo.Artifact, 0)
 
-	// If no children, it's a file, so we have checksum
-	_, objectName := filepath.Split(path)
+	files := make([]sdk.FileInfo, 0)
 
-	if len(fileInfo.Children) == 0 {
-		props := []sdk.KeyValues{
-			{
-				Key:    "build.name",
-				Values: []string{fmt.Sprintf("%s/%s/%s", execContext.buildInfo, execContext.projectKey, execContext.workflowName)},
-			}, {
-				Key:    "build.number",
-				Values: []string{execContext.version},
-			}, {
-				Key:    "build.timestamp",
-				Values: []string{strconv.FormatInt(time.Now().Unix(), 10)},
-			},
+	for _, c := range folderInfo.Children {
+		if c.Folder {
+			childrenFiles, err := retrieveModulesFiles(ctx, client, repoName, fmt.Sprintf("%s%s", path, c.Uri))
+			if err != nil {
+				return nil, err
+			}
+			files = append(files, childrenFiles...)
+		} else {
+			fileInfo, err := client.GetFileInfo(repoName, fmt.Sprintf("%s%s", path, c.Uri))
+			if err != nil {
+				return nil, err
+			}
+			files = append(files, fileInfo)
 		}
+	}
+
+	return files, nil
+}
+
+func SetPropertiesRecursive(ctx context.Context, client artifact_manager.ArtifactManager, repoName string, maturity string, files []sdk.FileInfo, props *utils.Properties) error {
+	if props == nil {
+		return nil
+	}
+	for _, fileInfo := range files {
 		repoSrc := repoName
 		repoSrc += "-" + maturity
-		log.Debug(ctx, "setting properties %+v on repoSrc:%s path:%s", props, repoSrc, props)
-		if err := client.SetProperties(repoSrc, path, props...); err != nil {
-			return nil, err
+		log.Debug(ctx, "setting properties %+v on repoSrc:%s path:%s", props, repoSrc, fileInfo.Path)
+		if err := client.SetProperties(repoSrc, fileInfo.Path, props); err != nil {
+			return err
 		}
+	}
+	return nil
+}
 
+func retrieveModulesArtifacts(ctx context.Context, client artifact_manager.ArtifactManager, files []sdk.FileInfo) ([]buildinfo.Artifact, error) {
+	artifacts := make([]buildinfo.Artifact, 0)
+	for _, fileInfo := range files {
+		// If no children, it's a file, so we have checksum
+		_, objectName := filepath.Split(fileInfo.Path)
 		currentArtifact := buildinfo.Artifact{
 			Name: objectName,
 			Type: strings.TrimPrefix(filepath.Ext(objectName), "."),
-			Checksum: &buildinfo.Checksum{
+			Checksum: buildinfo.Checksum{
 				Md5: fileInfo.Checksums.Md5,
 			},
 		}
 		artifacts = append(artifacts, currentArtifact)
-	} else {
-		for _, c := range fileInfo.Children {
-			artsChildren, err := retrieveModulesArtifacts(ctx, client, repoName, maturity, fmt.Sprintf("%s%s", path, c.Uri), execContext)
-			if err != nil {
-				return nil, err
-			}
-			artifacts = append(artifacts, artsChildren...)
-		}
 	}
 	return artifacts, nil
 }

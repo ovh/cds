@@ -8,8 +8,9 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
-	buildinfo "github.com/jfrog/jfrog-client-go/artifactory/buildinfo"
+	entities "github.com/jfrog/build-info-go/entities"
 	services "github.com/jfrog/jfrog-client-go/artifactory/services"
+	utils "github.com/jfrog/jfrog-client-go/artifactory/services/utils"
 	sdk "github.com/ovh/cds/sdk"
 )
 
@@ -34,6 +35,37 @@ func NewMockArtifactManager(ctrl *gomock.Controller) *MockArtifactManager {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockArtifactManager) EXPECT() *MockArtifactManagerMockRecorder {
 	return m.recorder
+}
+
+// CheckArtifactExists mocks base method.
+func (m *MockArtifactManager) CheckArtifactExists(repoName, artiName string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CheckArtifactExists", repoName, artiName)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CheckArtifactExists indicates an expected call of CheckArtifactExists.
+func (mr *MockArtifactManagerMockRecorder) CheckArtifactExists(repoName, artiName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckArtifactExists", reflect.TypeOf((*MockArtifactManager)(nil).CheckArtifactExists), repoName, artiName)
+}
+
+// Copy mocks base method.
+func (m *MockArtifactManager) Copy(params services.MoveCopyParams) (int, int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Copy", params)
+	ret0, _ := ret[0].(int)
+	ret1, _ := ret[1].(int)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// Copy indicates an expected call of Copy.
+func (mr *MockArtifactManagerMockRecorder) Copy(params interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Copy", reflect.TypeOf((*MockArtifactManager)(nil).Copy), params)
 }
 
 // DeleteBuild mocks base method.
@@ -65,6 +97,51 @@ func (mr *MockArtifactManagerMockRecorder) GetFileInfo(repoName, filePath interf
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFileInfo", reflect.TypeOf((*MockArtifactManager)(nil).GetFileInfo), repoName, filePath)
 }
 
+// GetFolderInfo mocks base method.
+func (m *MockArtifactManager) GetFolderInfo(repoName, folderPath string) (*utils.FolderInfo, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetFolderInfo", repoName, folderPath)
+	ret0, _ := ret[0].(*utils.FolderInfo)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetFolderInfo indicates an expected call of GetFolderInfo.
+func (mr *MockArtifactManagerMockRecorder) GetFolderInfo(repoName, folderPath interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFolderInfo", reflect.TypeOf((*MockArtifactManager)(nil).GetFolderInfo), repoName, folderPath)
+}
+
+// GetRepository mocks base method.
+func (m *MockArtifactManager) GetRepository(repoName string) (*services.RepositoryDetails, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetRepository", repoName)
+	ret0, _ := ret[0].(*services.RepositoryDetails)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetRepository indicates an expected call of GetRepository.
+func (mr *MockArtifactManagerMockRecorder) GetRepository(repoName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRepository", reflect.TypeOf((*MockArtifactManager)(nil).GetRepository), repoName)
+}
+
+// GetRepositoryMaturity mocks base method.
+func (m *MockArtifactManager) GetRepositoryMaturity(repoName string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetRepositoryMaturity", repoName)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetRepositoryMaturity indicates an expected call of GetRepositoryMaturity.
+func (mr *MockArtifactManagerMockRecorder) GetRepositoryMaturity(repoName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRepositoryMaturity", reflect.TypeOf((*MockArtifactManager)(nil).GetRepositoryMaturity), repoName)
+}
+
 // GetURL mocks base method.
 func (m *MockArtifactManager) GetURL() string {
 	m.ctrl.T.Helper()
@@ -79,8 +156,38 @@ func (mr *MockArtifactManagerMockRecorder) GetURL() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetURL", reflect.TypeOf((*MockArtifactManager)(nil).GetURL))
 }
 
+// Move mocks base method.
+func (m *MockArtifactManager) Move(params services.MoveCopyParams) (int, int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Move", params)
+	ret0, _ := ret[0].(int)
+	ret1, _ := ret[1].(int)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// Move indicates an expected call of Move.
+func (mr *MockArtifactManagerMockRecorder) Move(params interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Move", reflect.TypeOf((*MockArtifactManager)(nil).Move), params)
+}
+
+// PromoteDocker mocks base method.
+func (m *MockArtifactManager) PromoteDocker(params services.DockerPromoteParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PromoteDocker", params)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PromoteDocker indicates an expected call of PromoteDocker.
+func (mr *MockArtifactManagerMockRecorder) PromoteDocker(params interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PromoteDocker", reflect.TypeOf((*MockArtifactManager)(nil).PromoteDocker), params)
+}
+
 // PublishBuildInfo mocks base method.
-func (m *MockArtifactManager) PublishBuildInfo(project string, request *buildinfo.BuildInfo) error {
+func (m *MockArtifactManager) PublishBuildInfo(project string, request *entities.BuildInfo) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "PublishBuildInfo", project, request)
 	ret0, _ := ret[0].(error)
@@ -94,22 +201,17 @@ func (mr *MockArtifactManagerMockRecorder) PublishBuildInfo(project, request int
 }
 
 // SetProperties mocks base method.
-func (m *MockArtifactManager) SetProperties(repoName, filePath string, values ...sdk.KeyValues) error {
+func (m *MockArtifactManager) SetProperties(repoName, filePath string, values *utils.Properties) error {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{repoName, filePath}
-	for _, a := range values {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "SetProperties", varargs...)
+	ret := m.ctrl.Call(m, "SetProperties", repoName, filePath, values)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // SetProperties indicates an expected call of SetProperties.
-func (mr *MockArtifactManagerMockRecorder) SetProperties(repoName, filePath interface{}, values ...interface{}) *gomock.Call {
+func (mr *MockArtifactManagerMockRecorder) SetProperties(repoName, filePath, values interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{repoName, filePath}, values...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetProperties", reflect.TypeOf((*MockArtifactManager)(nil).SetProperties), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetProperties", reflect.TypeOf((*MockArtifactManager)(nil).SetProperties), repoName, filePath, values)
 }
 
 // XrayScanBuild mocks base method.

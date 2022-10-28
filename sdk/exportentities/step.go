@@ -159,6 +159,10 @@ func NewStep(act sdk.Action) Step {
 			if destMaturity != nil {
 				s.Promote.DestMaturity = destMaturity.Value
 			}
+			setProperties := sdk.ParameterFind(act.Parameters, "setProperties")
+			if setProperties != nil {
+				s.Promote.SetProperties = setProperties.Value
+			}
 		case sdk.ReleaseAction:
 			s.Release = &StepRelease{}
 			artifacts := sdk.ParameterFind(act.Parameters, "artifacts")
@@ -176,6 +180,10 @@ func NewStep(act sdk.Action) Step {
 			destMaturity := sdk.ParameterFind(act.Parameters, "destMaturity")
 			if destMaturity != nil {
 				s.Release.DestMaturity = destMaturity.Value
+			}
+			setProperties := sdk.ParameterFind(act.Parameters, "setProperties")
+			if setProperties != nil {
+				s.Release.SetProperties = setProperties.Value
 			}
 		case sdk.ReleaseVCSAction:
 			s.ReleaseVCS = &StepReleaseVCS{}
@@ -297,17 +305,19 @@ type StepGitClone struct {
 
 // StepPromote represents exported promote step.
 type StepPromote struct {
-	Artifacts    string `json:"artifacts,omitempty" yaml:"artifacts,omitempty"`
-	SrcMaturity  string `json:"srcMaturity,omitempty" yaml:"srcMaturity,omitempty"`
-	DestMaturity string `json:"destMaturity,omitempty" yaml:"destMaturity,omitempty"`
+	Artifacts     string `json:"artifacts,omitempty" yaml:"artifacts,omitempty"`
+	SrcMaturity   string `json:"srcMaturity,omitempty" yaml:"srcMaturity,omitempty"`
+	DestMaturity  string `json:"destMaturity,omitempty" yaml:"destMaturity,omitempty"`
+	SetProperties string `json:"setProperties,omitempty" yaml:"setProperties,omitempty"`
 }
 
 // StepRelease represents exported release step.
 type StepRelease struct {
-	Artifacts    string `json:"artifacts,omitempty" yaml:"artifacts,omitempty"`
-	ReleaseNote  string `json:"releaseNote,omitempty" yaml:"releaseNote,omitempty"`
-	SrcMaturity  string `json:"srcMaturity,omitempty" yaml:"srcMaturity,omitempty"`
-	DestMaturity string `json:"destMaturity,omitempty" yaml:"destMaturity,omitempty"`
+	Artifacts     string `json:"artifacts,omitempty" yaml:"artifacts,omitempty"`
+	ReleaseNote   string `json:"releaseNote,omitempty" yaml:"releaseNote,omitempty"`
+	SrcMaturity   string `json:"srcMaturity,omitempty" yaml:"srcMaturity,omitempty"`
+	DestMaturity  string `json:"destMaturity,omitempty" yaml:"destMaturity,omitempty"`
+	SetProperties string `json:"setProperties,omitempty" yaml:"setProperties,omitempty"`
 }
 
 // StepReleaseVCS represents exported release step.

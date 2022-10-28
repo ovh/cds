@@ -25,7 +25,6 @@ var Release = Manifest{
 				Name:        "srcMaturity",
 				Description: "Repository suffix from which the artifact will be moved",
 				Type:        sdk.StringParameter,
-				Value:       "snapshot",
 				Advanced:    true,
 			},
 			{
@@ -33,6 +32,11 @@ var Release = Manifest{
 				Description: "Repository suffix in which the artifact will be moved",
 				Type:        sdk.StringParameter,
 				Value:       "release",
+			},
+			{
+				Name:        "setProperties",
+				Description: "Properties to add on the released artifacts",
+				Type:        sdk.StringParameter,
 				Advanced:    true,
 			},
 		},

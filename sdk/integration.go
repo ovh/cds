@@ -400,7 +400,7 @@ func (p *IntegrationModel) Blur() {
 	p.PublicConfigurations.Blur()
 }
 
-//IsBuiltin checks is the model is builtin or not
+// IsBuiltin checks is the model is builtin or not
 func (p IntegrationModel) IsBuiltin() bool {
 	for _, m := range BuiltinIntegrationModels {
 		if p.Name == m.Name {
@@ -456,7 +456,6 @@ func (config *IntegrationConfig) HideSecrets() {
 }
 
 type FileInfo struct {
-	Type              string
 	Checksums         *FileInfoChecksum `json:"checksums,omitempty"`
 	Created           time.Time         `json:"created"`
 	CreatedBy         string            `json:"createdBy"`
@@ -471,8 +470,7 @@ type FileInfo struct {
 	Repo              string            `json:"repo"`
 	SizeString        string            `json:"size"`
 	Size              int64
-	URI               string         `json:"uri"`
-	Children          []FileChildren `json:"children,omitempty"`
+	URI               string `json:"uri"`
 }
 
 type FileInfoChecksum struct {
