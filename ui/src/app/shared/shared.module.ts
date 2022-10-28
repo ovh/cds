@@ -114,8 +114,8 @@ import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
 import { en_US, NZ_I18N } from 'ng-zorro-antd/i18n';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { IconDefinition } from '@ant-design/icons-angular';
-import { AimOutline, ArrowDownOutline, ArrowRightOutline, AudioOutline, AudioMutedOutline, BellFill, BookOutline, CalendarOutline, CaretDownFill, CaretRightFill, CaretUpFill, CheckOutline, CodeOutline, CopyOutline, CrownOutline, DeleteOutline, DragOutline, EyeInvisibleOutline, EyeOutline, FieldTimeOutline, FileTextOutline, FilterOutline, FolderOutline, KeyOutline,
-    GithubOutline, GitlabOutline, HighlightFill, HistoryOutline, IdcardOutline, InfoCircleOutline, LockOutline, MailOutline, PhoneFill, PlayCircleOutline, PlusOutline, PlusSquareOutline, PlusCircleFill, QuestionOutline, QuestionCircleOutline, RestOutline, SafetyCertificateOutline, SaveOutline, SettingFill, ShareAltOutline, StarOutline, StarFill, StopOutline, SyncOutline,
+import { AimOutline, ArrowDownOutline, ArrowRightOutline, AudioOutline, AudioMutedOutline, BellFill, BookOutline, CalendarOutline, CaretDownFill, CaretRightFill, CaretUpFill, CheckOutline, CodeOutline, CopyOutline, CrownOutline, DeleteOutline, DragOutline, EyeInvisibleOutline, ExpandOutline, EyeOutline, FieldTimeOutline, FileTextOutline, FilterOutline, FolderOutline, KeyOutline,
+    GithubOutline, GitlabOutline, HighlightFill, HistoryOutline, IdcardOutline, InfoCircleOutline, LinkOutline, LockOutline, MailOutline, PhoneFill, PlayCircleOutline, PlusOutline, PlusSquareOutline, PlusCircleFill, QuestionOutline, QuestionCircleOutline, RestOutline, SafetyCertificateOutline, SaveOutline, SettingFill, ShareAltOutline, StarOutline, StarFill, StopOutline, SyncOutline,
     TableOutline, TagsOutline, ToolFill, UndoOutline, UnlockFill, UnorderedListOutline, UploadOutline, UserOutline, WarningOutline, WarningFill } from '@ant-design/icons-angular/icons'
 import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
 import { NzTagModule } from 'ng-zorro-antd/tag';
@@ -147,8 +147,8 @@ const ngZorroConfig: NzConfig = {
     icon: {nzTheme: "outline"}
 };
 
-const icons: IconDefinition[] = [ AimOutline, ArrowDownOutline, ArrowRightOutline, AudioOutline, AudioMutedOutline, BellFill, BookOutline, CalendarOutline, CaretDownFill, CaretRightFill, CaretUpFill, CheckOutline, CodeOutline, CopyOutline, CrownOutline, DeleteOutline, DragOutline,
-    EyeInvisibleOutline, EyeOutline, FileTextOutline, FieldTimeOutline, FilterOutline, FolderOutline, KeyOutline, GithubOutline, GitlabOutline, HighlightFill, HistoryOutline, IdcardOutline, InfoCircleOutline, LockOutline, MailOutline, PhoneFill, PlayCircleOutline, PlusOutline, PlusSquareOutline, PlusCircleFill, QuestionOutline, QuestionCircleOutline,
+const icons: IconDefinition[] = [ AimOutline, ArrowDownOutline, ArrowRightOutline, AudioOutline, AudioMutedOutline, BellFill, BookOutline, CalendarOutline, CaretDownFill, CaretRightFill, CaretUpFill, CheckOutline, CodeOutline, CopyOutline, CrownOutline, DeleteOutline, DragOutline, ExpandOutline,
+    EyeInvisibleOutline, EyeOutline, FileTextOutline, FieldTimeOutline, FilterOutline, FolderOutline, KeyOutline, GithubOutline, GitlabOutline, HighlightFill, HistoryOutline, IdcardOutline, InfoCircleOutline, LinkOutline, LockOutline, MailOutline, PhoneFill, PlayCircleOutline, PlusOutline, PlusSquareOutline, PlusCircleFill, QuestionOutline, QuestionCircleOutline,
     RestOutline, SafetyCertificateOutline, SaveOutline, SettingFill, ShareAltOutline, StarOutline, StarFill, StopOutline, SyncOutline, TableOutline, TagsOutline, ToolFill, UndoOutline, UnlockFill, UnorderedListOutline, UploadOutline, UserOutline, WarningOutline, WarningFill ];
 
 @NgModule({

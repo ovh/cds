@@ -1,12 +1,10 @@
-<nz-alert *ngIf="errorMessage" nzType="warning" nzMessage="{{errorMessage}}">
-
-</nz-alert>
+<nz-alert *ngIf="errorMessage" nzType="error" nzMessage="{{errorMessage}}"></nz-alert>
 <div class="editor">
     <codemirror [ngModel]="workflowYaml" (ngModelChange)="workflowYamlChange($event)" [config]="codeMirrorConfig"
         #codeMirror>
     </codemirror>
     <div class="status">
-        <i *ngIf="writing && !loading" class="cog loading icon"></i>
-        <i *ngIf="loading" class="notch circle loading icon"></i>
+        <span *ngIf="writing && !loading" nz-icon [nzType]="'setting'" [nzTheme]="'fill'" nzSpin="true"></span>
+        <span *ngIf="loading" nz-icon [nzType]="'loading'"></span>
     </div>
 </div>
