@@ -42,7 +42,7 @@ func (h *HatcheryVSphere) Init(config interface{}) (cdsclient.ServiceConfig, err
 	}
 	cfg.Host = sConfig.API.HTTP.URL
 	cfg.Token = sConfig.API.Token
-	cfg.TokenV2 = sConfig.API.Token
+	cfg.TokenV2 = sConfig.API.TokenV2
 	cfg.InsecureSkipVerifyTLS = sConfig.API.HTTP.Insecure
 	cfg.RequestSecondsTimeout = sConfig.API.RequestTimeout
 	return cfg, nil
