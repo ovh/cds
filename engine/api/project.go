@@ -76,14 +76,14 @@ func (api *API) getProjectsHandler_FilterByRepo(ctx context.Context, w http.Resp
 			return err
 		}
 	} else {
-		projects, err = project.LoadAllByRepoAndGroupIDs(ctx, api.mustDB(), getAPIConsumer(ctx).GetGroupIDs(), filterByRepo, opts...)
+		projects, err = project.LoadAllByRepoAndGroupIDs(ctx, api.mustDB(), getUserConsumer(ctx).GetGroupIDs(), filterByRepo, opts...)
 		if err != nil {
 			return err
 		}
 	}
 
 	pKeys := projects.Keys()
-	perms, err := permission.LoadProjectMaxLevelPermission(ctx, api.mustDB(), pKeys, getAPIConsumer(ctx).GetGroupIDs())
+	perms, err := permission.LoadProjectMaxLevelPermission(ctx, api.mustDB(), pKeys, getUserConsumer(ctx).GetGroupIDs())
 	if err != nil {
 		return err
 	}
@@ -161,7 +161,7 @@ func (api *API) getProjectsHandler() service.Handler {
 			log.Debug(ctx, "load all projects for user %s", requestedUser.Fullname)
 			projects, err = project.LoadAllByGroupIDs(ctx, api.mustDB(), api.Cache, requestedUser.GetGroupIDs(), opts...)
 		default:
-			projects, err = project.LoadAllByGroupIDs(ctx, api.mustDB(), api.Cache, getAPIConsumer(ctx).GetGroupIDs(), opts...)
+			projects, err = project.LoadAllByGroupIDs(ctx, api.mustDB(), api.Cache, getUserConsumer(ctx).GetGroupIDs(), opts...)
 		}
 		if err != nil {
 			return err
@@ -171,7 +171,7 @@ func (api *API) getProjectsHandler() service.Handler {
 		var admin bool
 		var maintainer bool
 		if requestedUser == nil {
-			groupIDs = getAPIConsumer(ctx).GetGroupIDs()
+			groupIDs = getUserConsumer(ctx).GetGroupIDs()
 			admin = isAdmin(ctx)
 			maintainer = isMaintainer(ctx)
 		} else {
@@ -244,7 +244,7 @@ func (api *API) updateProjectHandler() service.Handler {
 		if errUp := project.Update(api.mustDB(), proj); errUp != nil {
 			return sdk.WrapError(errUp, "updateProject> Cannot update project %s", key)
 		}
-		event.PublishUpdateProject(ctx, proj, p, getAPIConsumer(ctx))
+		event.PublishUpdateProject(ctx, proj, p, getUserConsumer(ctx))
 
 		proj.Permissions.Readable = true
 		proj.Permissions.Writable = true
@@ -275,7 +275,7 @@ func (api *API) getProjectHandler() service.Handler {
 		withLabels := service.FormBool(r, "withLabels")
 
 		opts := []project.LoadOptionFunc{
-			project.LoadOptions.WithFavorites(getAPIConsumer(ctx).AuthConsumerUser.AuthentifiedUser.ID),
+			project.LoadOptions.WithFavorites(getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser.ID),
 		}
 		if withVariables {
 			opts = append(opts, project.LoadOptions.WithVariables)
@@ -331,7 +331,7 @@ func (api *API) getProjectHandler() service.Handler {
 		if isAdmin(ctx) {
 			p.Permissions = sdk.Permissions{Readable: true, Writable: true, Executable: true}
 		} else {
-			permissions, err := permission.LoadProjectMaxLevelPermission(ctx, api.mustDB(), []string{p.Key}, getAPIConsumer(ctx).GetGroupIDs())
+			permissions, err := permission.LoadProjectMaxLevelPermission(ctx, api.mustDB(), []string{p.Key}, getUserConsumer(ctx).GetGroupIDs())
 			if err != nil {
 				return err
 			}
@@ -426,7 +426,7 @@ func (api *API) putProjectLabelsHandler() service.Handler {
 			project.LoadOptions.WithLabels,
 			project.LoadOptions.WithWorkflowNames,
 			project.LoadOptions.WithVariables,
-			project.LoadOptions.WithFavorites(getAPIConsumer(ctx).AuthConsumerUser.AuthentifiedUser.ID),
+			project.LoadOptions.WithFavorites(getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser.ID),
 			project.LoadOptions.WithKeys,
 			project.LoadOptions.WithIntegrations,
 		)
@@ -437,7 +437,7 @@ func (api *API) putProjectLabelsHandler() service.Handler {
 		p.Permissions.Readable = true
 		p.Permissions.Writable = true
 
-		event.PublishUpdateProject(ctx, p, proj, getAPIConsumer(ctx))
+		event.PublishUpdateProject(ctx, p, proj, getUserConsumer(ctx))
 
 		return service.WriteJSON(w, p, http.StatusOK)
 	}
@@ -445,7 +445,7 @@ func (api *API) putProjectLabelsHandler() service.Handler {
 
 func (api *API) postProjectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		consumer := getAPIConsumer(ctx)
+		consumer := getUserConsumer(ctx)
 
 		var p sdk.Project
 		if err := service.UnmarshalBody(r, &p); err != nil {
@@ -647,7 +647,7 @@ func (api *API) deleteProjectHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		event.PublishDeleteProject(ctx, p, getAPIConsumer(ctx))
+		event.PublishDeleteProject(ctx, p, getUserConsumer(ctx))
 		return nil
 	}
 }
@@ -676,8 +676,8 @@ func (api *API) getProjectAccessHandler() service.Handler {
 		if err != nil {
 			return err
 		}
-		consumer, err := authentication.LoadConsumerByID(ctx, api.mustDB(), session.ConsumerID,
-			authentication.LoadConsumerOptions.WithAuthentifiedUser)
+		consumer, err := authentication.LoadUserConsumerByID(ctx, api.mustDB(), session.ConsumerID,
+			authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 		if err != nil {
 			return sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 		}

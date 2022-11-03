@@ -15,7 +15,7 @@ import (
 func (api *API) rbacMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig) (context.Context, error) {
 	for _, checker := range rc.RbacCheckers {
 		ctx := context.WithValue(ctx, cdslog.RbackCheckerName, sdk.GetFuncName(checker))
-		if err := checker(ctx, getAPIConsumer(ctx), api.Cache, api.mustDB(), mux.Vars(req)); err != nil {
+		if err := checker(ctx, getUserConsumer(ctx), api.Cache, api.mustDB(), mux.Vars(req)); err != nil {
 			if isAdmin(ctx) {
 				trackSudo(ctx, w)
 				return ctx, nil

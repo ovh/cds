@@ -48,7 +48,7 @@ func (api *API) postRegisterWorkerHandler() service.Handler {
 		}
 
 		// Retrieve the authentifed Consumer from the hatchery
-		hatcheryConsumer, err := authentication.LoadConsumerByID(ctx, api.mustDB(), *hatchSrv.ConsumerID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+		hatcheryConsumer, err := authentication.LoadUserConsumerByID(ctx, api.mustDB(), *hatchSrv.ConsumerID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load consumer %v", hatchSrv.ConsumerID)
 		}
@@ -84,7 +84,7 @@ func (api *API) postRegisterWorkerHandler() service.Handler {
 
 		log.Debug(ctx, "New worker: [%s] - %s", wk.ID, wk.Name)
 
-		workerSession, err := authentication.NewSession(ctx, tx, workerConsumer, workerauth.SessionDuration)
+		workerSession, err := authentication.NewSession(ctx, tx, &workerConsumer.AuthConsumer, workerauth.SessionDuration)
 		if err != nil {
 			return sdk.NewErrorWithStack(
 				sdk.WrapError(err, "[%s] Registering failed", workerTokenFromHatchery.Worker.WorkerName),
@@ -95,7 +95,7 @@ func (api *API) postRegisterWorkerHandler() service.Handler {
 		// Store the last authentication date on the consumer
 		now := time.Now()
 		workerConsumer.LastAuthentication = &now
-		if err := authentication.UpdateConsumerLastAuthentication(ctx, tx, workerConsumer); err != nil {
+		if err := authentication.UpdateConsumerLastAuthentication(ctx, tx, &workerConsumer.AuthConsumer); err != nil {
 			return err
 		}
 
@@ -154,7 +154,7 @@ func (api *API) getWorkersHandler() service.Handler {
 		var workers []sdk.Worker
 		var err error
 		if isHatchery(ctx) {
-			workers, err = worker.LoadAllByHatcheryID(ctx, api.mustDB(), getAPIConsumer(ctx).AuthConsumerUser.Service.ID)
+			workers, err = worker.LoadAllByHatcheryID(ctx, api.mustDB(), getUserConsumer(ctx).AuthConsumerUser.Service.ID)
 			if err != nil {
 				return err
 			}
@@ -184,7 +184,7 @@ func (api *API) disableWorkerHandler() service.Handler {
 			if wk.Status == sdk.StatusBuilding {
 				return sdk.WrapError(sdk.ErrForbidden, "Cannot disable a worker with status %s", wk.Status)
 			}
-			hatcherySrv, err := services.LoadByConsumerID(ctx, api.mustDB(), getAPIConsumer(ctx).ID)
+			hatcherySrv, err := services.LoadByConsumerID(ctx, api.mustDB(), getUserConsumer(ctx).ID)
 			if err != nil {
 				return sdk.WrapError(sdk.ErrForbidden, "Cannot disable a worker from this hatchery: %v", err)
 			}
@@ -215,7 +215,7 @@ func (api *API) postRefreshWorkerHandler() service.Handler {
 		if isWorker := isWorker(ctx); !isWorker {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
-		wk := getAPIConsumer(ctx).AuthConsumerUser.Worker
+		wk := getUserConsumer(ctx).AuthConsumerUser.Worker
 		if err := worker.RefreshWorker(api.mustDB(), wk.ID); err != nil && (sdk.Cause(err) != sql.ErrNoRows || sdk.Cause(err) != worker.ErrNoWorker) {
 			return sdk.WrapError(err, "cannot refresh last beat of %s", wk.Name)
 		}
@@ -228,7 +228,7 @@ func (api *API) postUnregisterWorkerHandler() service.Handler {
 		if isWorker := isWorker(ctx); !isWorker {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
-		wk := getAPIConsumer(ctx).AuthConsumerUser.Worker
+		wk := getUserConsumer(ctx).AuthConsumerUser.Worker
 		if err := DisableWorker(ctx, api.mustDB(), wk.ID, api.Config.Log.StepMaxSize); err != nil {
 			return sdk.WrapError(err, "cannot delete worker %s", wk.Name)
 		}
@@ -242,7 +242,7 @@ func (api *API) workerWaitingHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
-		wk := getAPIConsumer(ctx).AuthConsumerUser.Worker
+		wk := getUserConsumer(ctx).AuthConsumerUser.Worker
 
 		if wk.Status == sdk.StatusWaiting {
 			return nil

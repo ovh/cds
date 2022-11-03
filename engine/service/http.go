@@ -25,7 +25,7 @@ import (
 
 // Handler defines the HTTP handler used in CDS engine
 type Handler func(ctx context.Context, w http.ResponseWriter, r *http.Request) error
-type RbacChecker func(ctx context.Context, auth *sdk.AuthConsumer, cache cache.Store, db gorp.SqlExecutor, vars map[string]string) error
+type RbacChecker func(ctx context.Context, auth *sdk.AuthUserConsumer, cache cache.Store, db gorp.SqlExecutor, vars map[string]string) error
 type RbacCheckers []RbacChecker
 
 func RBAC(checkers ...RbacChecker) []RbacChecker {

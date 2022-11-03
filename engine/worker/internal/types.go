@@ -85,7 +85,7 @@ func (wk *CurrentWorker) Init(cfg *workerruntime.WorkerConfig, workspace afero.F
 	wk.cfg = cfg
 	wk.status.Name = cfg.Name
 	wk.basedir = workspace
-	wk.client = cdsclient.NewWorker(cfg.APIEndpoint, cfg.Name, cdsclient.NewHTTPClient(time.Second*10, cfg.APIEndpointInsecure))
+	wk.client = cdsclient.NewWorker(cfg.APIEndpoint, cfg.Name, cdsclient.NewHTTPClient(time.Second*30, cfg.APIEndpointInsecure))
 	return nil
 }
 

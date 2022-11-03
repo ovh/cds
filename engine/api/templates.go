@@ -37,7 +37,7 @@ func (api *API) getTemplatesHandler() service.Handler {
 			)
 		} else {
 			ts, err = workflowtemplate.LoadAllByGroupIDs(ctx, api.mustDB(),
-				append(getAPIConsumer(ctx).GetGroupIDs(), group.SharedInfraGroup.ID),
+				append(getUserConsumer(ctx).GetGroupIDs(), group.SharedInfraGroup.ID),
 				workflowtemplate.LoadOptions.Default,
 				workflowtemplate.LoadOptions.WithAudits,
 			)
@@ -96,7 +96,7 @@ func (api *API) postTemplateHandler() service.Handler {
 			return err
 		}
 
-		if err := workflowtemplate.CreateAuditAdd(tx, *newTemplate, getAPIConsumer(ctx)); err != nil {
+		if err := workflowtemplate.CreateAuditAdd(tx, *newTemplate, getUserConsumer(ctx)); err != nil {
 			return err
 		}
 
@@ -207,7 +207,7 @@ func (api *API) putTemplateHandler() service.Handler {
 			return err
 		}
 
-		if err := workflowtemplate.CreateAuditUpdate(tx, *old, *newTemplate, data.ChangeMessage, getAPIConsumer(ctx)); err != nil {
+		if err := workflowtemplate.CreateAuditUpdate(tx, *old, *newTemplate, data.ChangeMessage, getUserConsumer(ctx)); err != nil {
 			return err
 		}
 
@@ -306,7 +306,7 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 		}
 
 		// non admin user should have read/write to given project
-		consumer := getAPIConsumer(ctx)
+		consumer := getUserConsumer(ctx)
 		if !consumer.Admin() {
 			if err := api.checkProjectPermissions(ctx, w, req.ProjectKey, sdk.PermissionReadWriteExecute, nil); err != nil {
 				return sdk.NewErrorFrom(sdk.ErrForbidden, "write permission on project required to import generated workflow.")
@@ -447,9 +447,9 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 		}
 
 		if oldWkf != nil {
-			event.PublishWorkflowUpdate(ctx, p.Key, *wkf, *oldWkf, getAPIConsumer(ctx))
+			event.PublishWorkflowUpdate(ctx, p.Key, *wkf, *oldWkf, getUserConsumer(ctx))
 		} else {
-			event.PublishWorkflowAdd(ctx, p.Key, *wkf, getAPIConsumer(ctx))
+			event.PublishWorkflowAdd(ctx, p.Key, *wkf, getUserConsumer(ctx))
 		}
 
 		return service.WriteJSON(w, msgStrings, http.StatusOK)
@@ -499,7 +499,7 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 			}
 		}
 
-		consumer := getAPIConsumer(ctx)
+		consumer := getUserConsumer(ctx)
 
 		// non admin user should have read/write access to all given project
 		if !consumer.Admin() {
@@ -739,7 +739,7 @@ func (api *API) getTemplateBulkHandler() service.Handler {
 		if err != nil {
 			return err
 		}
-		if b == nil || (b.UserID != getAPIConsumer(ctx).AuthConsumerUser.AuthentifiedUser.ID && !isMaintainer(ctx) && !isAdmin(ctx)) {
+		if b == nil || (b.UserID != getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser.ID && !isMaintainer(ctx) && !isAdmin(ctx)) {
 			return sdk.NewErrorFrom(sdk.ErrNotFound, "no workflow template bulk found for id %d", id)
 		}
 		sort.Slice(b.Operations, func(i, j int) bool {
@@ -774,7 +774,7 @@ func (api *API) getTemplateInstancesHandler() service.Handler {
 		if isMaintainer(ctx) {
 			ps, err = project.LoadAll(ctx, api.mustDB(), api.Cache, project.LoadOptions.WithKeys)
 		} else {
-			ps, err = project.LoadAllByGroupIDs(ctx, api.mustDB(), api.Cache, getAPIConsumer(ctx).GetGroupIDs(), project.LoadOptions.WithKeys)
+			ps, err = project.LoadAllByGroupIDs(ctx, api.mustDB(), api.Cache, getUserConsumer(ctx).GetGroupIDs(), project.LoadOptions.WithKeys)
 		}
 		if err != nil {
 			return err
@@ -832,7 +832,7 @@ func (api *API) deleteTemplateInstanceHandler() service.Handler {
 		if isAdmin(ctx) {
 			ps, err = project.LoadAll(ctx, api.mustDB(), api.Cache)
 		} else {
-			ps, err = project.LoadAllByGroupIDs(ctx, api.mustDB(), api.Cache, getAPIConsumer(ctx).GetGroupIDs())
+			ps, err = project.LoadAllByGroupIDs(ctx, api.mustDB(), api.Cache, getUserConsumer(ctx).GetGroupIDs())
 		}
 		if err != nil {
 			return err
@@ -932,7 +932,7 @@ func (api *API) postTemplatePushHandler() service.Handler {
 			return err
 		}
 
-		msgs, err := workflowtemplate.Push(ctx, api.mustDB(), &wt, getAPIConsumer(ctx))
+		msgs, err := workflowtemplate.Push(ctx, api.mustDB(), &wt, getUserConsumer(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "cannot push template")
 		}
@@ -1005,7 +1005,7 @@ func (api *API) getTemplateUsageHandler() service.Handler {
 		}
 
 		if !isMaintainer(ctx) {
-			consumer := getAPIConsumer(ctx)
+			consumer := getUserConsumer(ctx)
 
 			// filter usage in workflow by user's projects
 			ps, err := project.LoadAllByGroupIDs(ctx, api.mustDB(), api.Cache, consumer.GetGroupIDs())

@@ -37,6 +37,7 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithoutSecret(t *testing.T)
 
 	body := `version: v1.0
 name: myNewApp
+description: myDescription
 variables:
   var1:
     value: value 1
@@ -63,8 +64,9 @@ variables:
 	app, err := application.LoadByName(context.TODO(), db, proj.Key, "myNewApp", application.LoadOptions.WithVariables)
 	require.NoError(t, err)
 
-	assert.NotNil(t, app)
-	assert.Equal(t, "myNewApp", app.Name)
+	require.NotNil(t, app)
+	require.Equal(t, "myNewApp", app.Name)
+	require.Equal(t, "myDescription", app.Description)
 
 	//Check variables
 	for _, v := range app.Variables {

@@ -66,6 +66,7 @@ func ParseAndImport(ctx context.Context, db gorpmapper.SqlExecutorWithTx, cache 
 	//Craft the application
 	app := new(sdk.Application)
 	app.Name = eapp.Name
+	app.Description = eapp.Description
 	app.VCSServer = eapp.VCSServer
 	app.RepositoryFullname = eapp.RepositoryName
 	app.FromRepository = opts.FromRepository

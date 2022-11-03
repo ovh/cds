@@ -67,7 +67,7 @@ func (api *API) deleteKeyInApplicationHandler() service.Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WithStack(err)
 		}
-		event.PublishApplicationKeyDelete(ctx, key, *app, keyToDelete, getAPIConsumer(ctx))
+		event.PublishApplicationKeyDelete(ctx, key, *app, keyToDelete, getUserConsumer(ctx))
 
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}
@@ -126,7 +126,7 @@ func (api *API) addKeyInApplicationHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		event.PublishApplicationKeyAdd(ctx, key, *app, newKey, getAPIConsumer(ctx))
+		event.PublishApplicationKeyAdd(ctx, key, *app, newKey, getUserConsumer(ctx))
 
 		return service.WriteJSON(w, newKey, http.StatusOK)
 	}

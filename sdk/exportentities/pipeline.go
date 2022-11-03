@@ -1,6 +1,7 @@
 package exportentities
 
 import (
+	"fmt"
 	"sort"
 
 	"github.com/ovh/cds/sdk"
@@ -68,7 +69,7 @@ type ServiceRequirement struct {
 	Value string `json:"value,omitempty" yaml:"value,omitempty"`
 }
 
-//NewPipelineV1 creates an exportable pipeline from a sdk.Pipeline
+// NewPipelineV1 creates an exportable pipeline from a sdk.Pipeline
 func NewPipelineV1(pip sdk.Pipeline) (p PipelineV1) {
 	p.Name = pip.Name
 	p.Description = pip.Description
@@ -276,7 +277,7 @@ func computeJob(name string, j Job) (*sdk.Job, error) {
 	return &job, nil
 }
 
-//Pipeline returns a sdk.Pipeline entity
+// Pipeline returns a sdk.Pipeline entity
 func (p PipelineV1) Pipeline() (pip *sdk.Pipeline, err error) {
 	pip = new(sdk.Pipeline)
 	pip.Name = p.Name
@@ -372,7 +373,8 @@ func ParsePipeline(format Format, data []byte) (Pipeliner, error) {
 
 	version := PipelineVersion1
 	if v, ok := rawPayload["version"]; ok {
-		switch v.(string) {
+		vString := fmt.Sprintf("%v", v)
+		switch vString {
 		case PipelineVersion1:
 			version = PipelineVersion1
 		default:

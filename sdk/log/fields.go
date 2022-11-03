@@ -16,6 +16,7 @@ const (
 	AuthSessionID      = log.Field("auth_session_id")
 	AuthSessionTokenID = log.Field("auth_session_token")
 	AuthUserID         = log.Field("auth_user_id")
+	AuthHatcheryID     = log.Field("auth_hatchery_id")
 	AuthUsername       = log.Field("auth_user_name")
 	AuthWorkerName     = log.Field("auth_worker_name")
 	RbackCheckerName   = log.Field("rbac_checker_name")
@@ -29,6 +30,7 @@ const (
 	LatencyNum         = log.Field("latency_num")
 	Method             = log.Field("method")
 	GpgKey             = log.Field("gpg_key")
+	RbacRole           = log.Field("rbac_role")
 	RequestID          = log.Field("request_id")
 	RequestURI         = log.Field("request_uri")
 	Repository         = log.Field("repository")
@@ -49,6 +51,7 @@ func init() {
 	log.RegisterField(
 		Action,
 		AuthUserID,
+		AuthHatcheryID,
 		AuthUsername,
 		AuthServiceName,
 		AuthServiceType,
@@ -69,6 +72,7 @@ func init() {
 		Method,
 		RbackCheckerName,
 		Repository,
+		RbacRole,
 		Route,
 		RequestID,
 		RequestURI,

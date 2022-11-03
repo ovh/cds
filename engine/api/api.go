@@ -571,17 +571,6 @@ func (a *API) Serve(ctx context.Context) error {
 	a.GoRoutines = sdk.NewGoRoutines(ctx)
 
 	log.Info(ctx, "Running migration")
-	migrate.Add(ctx, sdk.Migration{Name: "RunsSecrets", Release: "0.47.0", Blocker: false, Automatic: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.RunsSecrets(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper))
-	}})
-
-	migrate.Add(ctx, sdk.Migration{Name: "AuthConsumerTokenExpiration", Release: "0.47.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.AuthConsumerTokenExpiration(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), time.Duration(a.Config.Auth.TokenDefaultDuration)*(24*time.Hour))
-	}})
-
-	migrate.Add(ctx, sdk.Migration{Name: "ArtifactoryIntegration", Release: "0.49.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.ArtifactoryIntegration(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper))
-	}})
 	migrate.Add(ctx, sdk.Migration{Name: "OrganizationMigration", Release: "0.52.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
 		usersToMigrate, err := migrate.GetOrganizationUsersToMigrate(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)())
 		if err != nil {

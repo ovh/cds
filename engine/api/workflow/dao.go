@@ -257,6 +257,10 @@ func Load(ctx context.Context, db gorp.SqlExecutor, _ cache.Store, proj sdk.Proj
 	ctx, end := telemetry.Span(ctx, "workflow.Load")
 	defer end()
 
+	if name == "" {
+		return nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "invalid given workflow name")
+	}
+
 	dao := opts.GetWorkflowDAO()
 	dao.Filters.ProjectKey = proj.Key
 	dao.Filters.WorkflowName = name
@@ -1267,7 +1271,7 @@ func checkPipeline(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, w
 
 // Push push a workflow from cds files
 func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Project, data exportentities.WorkflowComponents,
-	opts *PushOption, consumer *sdk.AuthConsumer, decryptFunc keys.DecryptFunc) ([]sdk.Message, *sdk.Workflow, *sdk.Workflow, *PushSecrets, error) {
+	opts *PushOption, consumer *sdk.AuthUserConsumer, decryptFunc keys.DecryptFunc) ([]sdk.Message, *sdk.Workflow, *sdk.Workflow, *PushSecrets, error) {
 	ctx, end := telemetry.Span(ctx, "workflow.Push")
 	defer end()
 	if data.Workflow == nil {

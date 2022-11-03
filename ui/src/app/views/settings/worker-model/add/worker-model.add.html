@@ -1,16 +1,16 @@
 <div class="wrapper">
     <app-breadcrumb [path]="path"></app-breadcrumb>
     <app-scrollview class="scrollview">
-        <div class="ui grid">
-            <div class="twelve wide column">
+        <nz-row>
+            <nz-col [nzSpan]="18">
                 <app-worker-model-form mode="edit" [loading]="loading" [workerModel]="workerModel" [groups]="groups"
-                    [currentAuthSummary]="currentAuthSummary" [patterns]="patterns" [types]="types"
-                    (save)="saveWorkerModel($event)" (saveAsCode)="saveWorkerModelAsCode($event)">
+                                       [currentAuthSummary]="currentAuthSummary" [patterns]="patterns" [types]="types"
+                                       (save)="saveWorkerModel($event)" (saveAsCode)="saveWorkerModelAsCode($event)">
                 </app-worker-model-form>
-            </div>
-            <div class="four wide column">
+            </nz-col>
+            <nz-col [nzSpan]="6">
                 <app-worker-model-help></app-worker-model-help>
-            </div>
-        </div>
+            </nz-col>
+        </nz-row>
     </app-scrollview>
 </div>

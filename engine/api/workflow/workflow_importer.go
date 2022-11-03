@@ -17,8 +17,8 @@ import (
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
-//Import is able to create a new workflow and all its components
-func Import(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, proj sdk.Project, oldW, w *sdk.Workflow, consumer *sdk.AuthConsumer, opts ImportOptions, msgChan chan<- sdk.Message) error {
+// Import is able to create a new workflow and all its components
+func Import(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, proj sdk.Project, oldW, w *sdk.Workflow, consumer *sdk.AuthUserConsumer, opts ImportOptions, msgChan chan<- sdk.Message) error {
 	ctx, end := telemetry.Span(ctx, "workflow.Import")
 	defer end()
 

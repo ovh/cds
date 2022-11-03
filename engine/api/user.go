@@ -35,7 +35,7 @@ func (api *API) getUserHandler() service.Handler {
 		vars := mux.Vars(r)
 		username := vars["permUsernamePublic"]
 
-		consumer := getAPIConsumer(ctx)
+		consumer := getUserConsumer(ctx)
 
 		var u *sdk.AuthentifiedUser
 		var err error
@@ -65,7 +65,7 @@ func (api *API) putUserHandler() service.Handler {
 			return err
 		}
 
-		consumer := getAPIConsumer(ctx)
+		consumer := getUserConsumer(ctx)
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
@@ -197,7 +197,7 @@ func (api *API) deleteUserHandler() service.Handler {
 		vars := mux.Vars(r)
 		username := vars["permUsernamePublic"]
 
-		consumer := getAPIConsumer(ctx)
+		consumer := getUserConsumer(ctx)
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {

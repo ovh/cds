@@ -215,6 +215,16 @@ type RegionClient interface {
 	RegionDelete(ctx context.Context, regionIdentifier string) error
 }
 
+type HatcheryClient interface {
+	HatcheryAdd(ctx context.Context, h *sdk.Hatchery) error
+	HatcheryGet(ctx context.Context, hatcheryIdentifier string) (sdk.Hatchery, error)
+	HatcheryList(ctx context.Context) ([]sdk.Hatchery, error)
+	HatcheryDelete(ctx context.Context, hatcheryIdentifier string) error
+}
+
+type HatcheryServiceClient interface {
+}
+
 // ProjectClient exposes project related functions
 type ProjectClient interface {
 	ProjectCreate(proj *sdk.Project) error
@@ -427,6 +437,7 @@ type Interface interface {
 	FeatureEnabled(name sdk.FeatureName, params map[string]string) (sdk.FeatureEnabledResponse, error)
 	GroupClient
 	GRPCPluginsClient
+	HatcheryClient
 	MaintenanceClient
 	PipelineClient
 	IntegrationClient
@@ -661,16 +672,17 @@ func ModelType(modelType string) RequestModifier {
 // AuthClient is the interface for authentication management.
 type AuthClient interface {
 	AuthDriverList() (sdk.AuthDriverResponse, error)
-	AuthConsumerSignin(sdk.AuthConsumerType, sdk.AuthConsumerSigninRequest) (sdk.AuthConsumerSigninResponse, error)
+	AuthConsumerSignin(sdk.AuthConsumerType, interface{}) (sdk.AuthConsumerSigninResponse, error)
+	AuthConsumerHatcherySigninV2(request interface{}) (sdk.AuthConsumerHatcherySigninResponse, error)
 	AuthConsumerLocalAskResetPassword(sdk.AuthConsumerSigninRequest) error
 	AuthConsumerLocalResetPassword(token, newPassword string) (sdk.AuthConsumerSigninResponse, error)
 	AuthConsumerLocalSignup(sdk.AuthConsumerSigninRequest) error
 	AuthConsumerLocalSignupVerify(token, initToken string) (sdk.AuthConsumerSigninResponse, error)
 	AuthConsumerSignout() error
-	AuthConsumerListByUser(username string) (sdk.AuthConsumers, error)
+	AuthConsumerListByUser(username string) (sdk.AuthUserConsumers, error)
 	AuthConsumerDelete(username, id string) error
 	AuthConsumerRegen(username, id string, newDuration int64, overlapDuration string) (sdk.AuthConsumerCreateResponse, error)
-	AuthConsumerCreateForUser(username string, request sdk.AuthConsumer) (sdk.AuthConsumerCreateResponse, error)
+	AuthConsumerCreateForUser(username string, request sdk.AuthUserConsumer) (sdk.AuthConsumerCreateResponse, error)
 	AuthSessionListByUser(username string) (sdk.AuthSessions, error)
 	AuthSessionDelete(username, id string) error
 	AuthSessionGet(id string) (sdk.AuthCurrentConsumerResponse, error)

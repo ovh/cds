@@ -86,8 +86,8 @@ func (api *API) repositoriesManagerAuthorizeHandler() service.Handler {
 			"repositories_manager": rmName,
 			"url":                  url,
 			"request_token":        token,
-			"username":             getAPIConsumer(ctx).AuthConsumerUser.AuthentifiedUser.Username,
-			"consumer_id":          getAPIConsumer(ctx).ID,
+			"username":             getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser.Username,
+			"consumer_id":          getUserConsumer(ctx).ID,
 		}
 
 		if token != "" {
@@ -134,8 +134,8 @@ func (api *API) repositoriesManagerOAuthCallbackHandler() service.Handler {
 		username := data["username"]
 		consumerID := data["consumer_id"]
 
-		authConsumer, err := authentication.LoadConsumerByID(ctx, api.mustDB(), consumerID,
-			authentication.LoadConsumerOptions.WithAuthentifiedUser)
+		authConsumer, err := authentication.LoadUserConsumerByID(ctx, api.mustDB(), consumerID,
+			authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrForbidden, "cannot load consumer with id: %s", consumerID)
 		}
@@ -237,7 +237,7 @@ func (api *API) repositoriesManagerAuthorizeBasicHandler() service.Handler {
 		vcsServerForProject := &sdk.ProjectVCSServerLink{
 			ProjectID: proj.ID,
 			Name:      rmName,
-			Username:  getAPIConsumer(ctx).AuthConsumerUser.AuthentifiedUser.Username,
+			Username:  getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser.Username,
 		}
 		vcsServerForProject.Set("token", username)
 		vcsServerForProject.Set("secret", secret)
@@ -260,7 +260,7 @@ func (api *API) repositoriesManagerAuthorizeBasicHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		event.PublishAddVCSServer(ctx, proj, vcsServerForProject.Name, getAPIConsumer(ctx))
+		event.PublishAddVCSServer(ctx, proj, vcsServerForProject.Name, getUserConsumer(ctx))
 
 		return service.WriteJSON(w, proj, http.StatusOK)
 	}
@@ -314,7 +314,7 @@ func (api *API) repositoriesManagerAuthorizeCallbackHandler() service.Handler {
 		vcsServerForProject := &sdk.ProjectVCSServerLink{
 			ProjectID: proj.ID,
 			Name:      rmName,
-			Username:  getAPIConsumer(ctx).AuthConsumerUser.AuthentifiedUser.Username,
+			Username:  getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser.Username,
 		}
 		vcsServerForProject.Set("token", token)
 		vcsServerForProject.Set("secret", secret)
@@ -334,7 +334,7 @@ func (api *API) repositoriesManagerAuthorizeCallbackHandler() service.Handler {
 			return sdk.WrapError(err, "cannot commit transaction")
 		}
 
-		event.PublishAddVCSServer(ctx, proj, vcsServerForProject.Name, getAPIConsumer(ctx))
+		event.PublishAddVCSServer(ctx, proj, vcsServerForProject.Name, getUserConsumer(ctx))
 
 		return service.WriteJSON(w, proj, http.StatusOK)
 	}
@@ -392,7 +392,7 @@ func (api *API) deleteRepositoriesManagerHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		event.PublishDeleteVCSServer(ctx, p, vcsServer.Name, getAPIConsumer(ctx))
+		event.PublishDeleteVCSServer(ctx, p, vcsServer.Name, getUserConsumer(ctx))
 
 		return service.WriteJSON(w, p, http.StatusOK)
 	}
@@ -600,11 +600,11 @@ func (api *API) attachRepositoriesManagerHandler() service.Handler {
 					return sdk.WithStack(err)
 				}
 
-				event.PublishWorkflowUpdate(ctx, proj.Key, *wfDB, *wfOld, getAPIConsumer(ctx))
+				event.PublishWorkflowUpdate(ctx, proj.Key, *wfDB, *wfOld, getUserConsumer(ctx))
 			}
 		}
 
-		event.PublishApplicationRepositoryAdd(ctx, projectKey, *app, getAPIConsumer(ctx))
+		event.PublishApplicationRepositoryAdd(ctx, projectKey, *app, getUserConsumer(ctx))
 
 		return service.WriteJSON(w, app, http.StatusOK)
 	}
@@ -616,7 +616,7 @@ func (api *API) detachRepositoriesManagerHandler() service.Handler {
 		projectKey := vars[permProjectKey]
 		appName := vars["applicationName"]
 		db := api.mustDB()
-		u := getAPIConsumer(ctx)
+		u := getUserConsumer(ctx)
 
 		app, err := application.LoadByName(ctx, db, projectKey, appName)
 		if err != nil {

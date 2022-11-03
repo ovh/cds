@@ -64,7 +64,7 @@ func (api *API) deleteKeyInProjectHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		event.PublishDeleteProjectKey(ctx, p, deletedKey, getAPIConsumer(ctx))
+		event.PublishDeleteProjectKey(ctx, p, deletedKey, getUserConsumer(ctx))
 
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}
@@ -118,7 +118,7 @@ func (api *API) addKeyInProjectHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		event.PublishAddProjectKey(ctx, p, newKey, getAPIConsumer(ctx))
+		event.PublishAddProjectKey(ctx, p, newKey, getUserConsumer(ctx))
 
 		return service.WriteJSON(w, newKey, http.StatusOK)
 	}

@@ -149,13 +149,13 @@ func Test_postAuthSigninHandler_ShouldSuccessWithAKnownUserAndAnotherConsumerTyp
 	require.NotNil(t, u)
 
 	// checks that there are 2 consumers now
-	consumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerTest, u.ID)
+	consumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerTest, u.ID)
 	require.NoError(t, err)
 	assert.Equal(t, sdk.ConsumerTest, consumer.Type)
 
 	t.Logf("consumer %s: %+v", consumer.Type, consumer.AuthConsumerUser.Data)
 
-	consumer, err = authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerTest2, u.ID)
+	consumer, err = authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerTest2, u.ID)
 	require.NoError(t, err)
 	assert.Equal(t, sdk.ConsumerTest2, consumer.Type)
 
@@ -198,13 +198,13 @@ func Test_postAuthSigninHandler_ShouldSuccessWithAKnownUserAnotherConsumerTypeAn
 	require.NotNil(t, u)
 
 	// checks that there are 2 consumers now
-	consumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerTest, u.ID)
+	consumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerTest, u.ID)
 	require.NoError(t, err)
 	assert.Equal(t, sdk.ConsumerTest, consumer.Type)
 
 	t.Logf("consumer %s: %+v", consumer.Type, consumer.AuthConsumerUser.Data)
 
-	consumer, err = authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerTest2, u.ID)
+	consumer, err = authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerTest2, u.ID)
 	require.NoError(t, err)
 	assert.Equal(t, sdk.ConsumerTest2, consumer.Type)
 
@@ -396,7 +396,7 @@ func Test_postAuthSigninHandler_WithCorporateSSO(t *testing.T) {
 		require.Equal(t, "planet-express", u.Organization)
 		require.Equal(t, "Mattgroening", u.Fullname)
 
-		consumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerCorporateSSO, u.ID)
+		consumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerCorporateSSO, u.ID)
 		require.NoError(t, err)
 		require.Equal(t, sdk.ConsumerCorporateSSO, consumer.Type)
 

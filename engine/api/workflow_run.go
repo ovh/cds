@@ -266,6 +266,9 @@ func (api *API) getWorkflowRunHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		name := vars["permWorkflowNameAdvanced"]
+		if name == "" {
+			name = vars["permWorkflowName"] // Useful for workflowv3 routes
+		}
 		number, err := requestVarInt(r, "number")
 		if err != nil {
 			return err
@@ -354,7 +357,7 @@ func (api *API) stopWorkflowRunHandler() service.Handler {
 			return err
 		}
 
-		consumer := getAPIConsumer(ctx)
+		consumer := getUserConsumer(ctx)
 
 		// This POST exec handler should not be called by workers
 		if consumer.AuthConsumerUser.Worker != nil {
@@ -411,7 +414,7 @@ func (api *API) stopWorkflowRunHandler() service.Handler {
 }
 
 func (api *API) stopWorkflowRun(ctx context.Context, p *sdk.Project, run *sdk.WorkflowRun, parentWorkflowRunID int64) (*workflow.ProcessorReport, error) {
-	ident := getAPIConsumer(ctx)
+	ident := getUserConsumer(ctx)
 	report := new(workflow.ProcessorReport)
 
 	tx, err := api.mustDB().Begin()
@@ -694,7 +697,7 @@ func (api *API) stopWorkflowNodeRunHandler() service.Handler {
 			return err
 		}
 
-		consumer := getAPIConsumer(ctx)
+		consumer := getUserConsumer(ctx)
 
 		// This POST exec handler should not be called by workers
 		if consumer.AuthConsumerUser.Worker != nil {
@@ -721,7 +724,7 @@ func (api *API) stopWorkflowNodeRunHandler() service.Handler {
 		}
 
 		r1, err := workflow.StopWorkflowNodeRun(ctx, api.mustDB, api.Cache, *p, *workflowRun, *workflowNodeRun, sdk.SpawnInfo{
-			Message: sdk.SpawnMsg{ID: sdk.MsgWorkflowNodeStop.ID, Args: []interface{}{getAPIConsumer(ctx).GetUsername()}},
+			Message: sdk.SpawnMsg{ID: sdk.MsgWorkflowNodeStop.ID, Args: []interface{}{getUserConsumer(ctx).GetUsername()}},
 		})
 		if err != nil {
 			return sdk.WrapError(err, "unable to stop workflow node run")
@@ -812,7 +815,7 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 		key := vars["key"]
 		name := vars["permWorkflowNameAdvanced"]
 
-		consumer := getAPIConsumer(ctx)
+		consumer := getUserConsumer(ctx)
 
 		// This POST exec handler should not be called by workers
 		if consumer.AuthConsumerUser.Worker != nil {
@@ -840,7 +843,7 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 		if err := service.UnmarshalBody(r, &opts); err != nil {
 			return err
 		}
-		opts.AuthConsumerID = getAPIConsumer(ctx).ID
+		opts.AuthConsumerID = getUserConsumer(ctx).ID
 
 		// Request check
 		if opts.Manual != nil && opts.Manual.OnlyFailedJobs && opts.Manual.Resync {
@@ -964,9 +967,9 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 	var asCodeInfosMsg []sdk.Message
 	var report = new(workflow.ProcessorReport)
 
-	c, err := authentication.LoadConsumerByID(ctx, api.mustDB(), opts.AuthConsumerID,
-		authentication.LoadConsumerOptions.WithAuthentifiedUserWithContacts,
-		authentication.LoadConsumerOptions.WithConsumerGroups)
+	c, err := authentication.LoadUserConsumerByID(ctx, api.mustDB(), opts.AuthConsumerID,
+		authentication.LoadUserConsumerOptions.WithAuthentifiedUserWithContacts,
+		authentication.LoadUserConsumerOptions.WithConsumerGroups)
 	if err != nil {
 		r := failInitWorkflowRun(ctx, api.mustDB(), wfRun, err)
 		report.Merge(ctx, r)
@@ -1448,7 +1451,7 @@ func (api *API) postResyncVCSWorkflowRunHandler() service.Handler {
 			return err
 		}
 
-		consumer := getAPIConsumer(ctx)
+		consumer := getUserConsumer(ctx)
 
 		// This POST exec handler should not be called by workers
 		if consumer.AuthConsumerUser.Worker != nil {

@@ -27,7 +27,7 @@ func (api *API) getOrganizationByIdentifier(ctx context.Context, orgaIdentifier 
 }
 
 func (api *API) postOrganizationHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(rbac.OrganizationManage),
+	return service.RBAC(rbac.GlobalOrganizationManage),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 
 			var org sdk.Organization
@@ -52,7 +52,7 @@ func (api *API) postOrganizationHandler() ([]service.RbacChecker, service.Handle
 }
 
 func (api *API) getOrganizationsHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(rbac.OrganizationManage),
+	return service.RBAC(rbac.GlobalOrganizationManage),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			orgas, err := organization.LoadOrganizations(ctx, api.mustDB())
 			if err != nil {
@@ -63,7 +63,7 @@ func (api *API) getOrganizationsHandler() ([]service.RbacChecker, service.Handle
 }
 
 func (api *API) getOrganizationHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(rbac.OrganizationManage),
+	return service.RBAC(rbac.GlobalOrganizationManage),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			orgaIdentifier := vars["organizationIdentifier"]
@@ -77,7 +77,7 @@ func (api *API) getOrganizationHandler() ([]service.RbacChecker, service.Handler
 }
 
 func (api *API) deleteOrganizationHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(rbac.OrganizationManage),
+	return service.RBAC(rbac.GlobalOrganizationManage),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			orgaIdentifier := vars["organizationIdentifier"]

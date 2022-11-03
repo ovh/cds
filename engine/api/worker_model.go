@@ -16,7 +16,7 @@ import (
 
 func (api *API) postWorkerModelHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		consumer := getAPIConsumer(ctx)
+		consumer := getUserConsumer(ctx)
 
 		// parse request and check data validity
 		var data sdk.Model
@@ -242,7 +242,7 @@ func (api *API) getWorkerModelsHandler() service.Handler {
 			filter.State = o
 		}
 
-		consumer := getAPIConsumer(ctx)
+		consumer := getUserConsumer(ctx)
 
 		models := make([]sdk.Model, 0)
 
@@ -296,7 +296,7 @@ func (api *API) getWorkerModelUsageHandler() service.Handler {
 			pips, err = pipeline.LoadByWorkerModel(ctx, api.mustDB(), m)
 		} else {
 			pips, err = pipeline.LoadByWorkerModelAndGroupIDs(ctx, api.mustDB(), m,
-				append(getAPIConsumer(ctx).GetGroupIDs(), group.SharedInfraGroup.ID))
+				append(getUserConsumer(ctx).GetGroupIDs(), group.SharedInfraGroup.ID))
 		}
 		if err != nil {
 			return sdk.WrapError(err, "cannot load pipelines linked to worker model")

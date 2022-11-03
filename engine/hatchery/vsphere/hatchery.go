@@ -42,6 +42,7 @@ func (h *HatcheryVSphere) Init(config interface{}) (cdsclient.ServiceConfig, err
 	}
 	cfg.Host = sConfig.API.HTTP.URL
 	cfg.Token = sConfig.API.Token
+	cfg.TokenV2 = sConfig.API.Token
 	cfg.InsecureSkipVerifyTLS = sConfig.API.HTTP.Insecure
 	cfg.RequestSecondsTimeout = sConfig.API.RequestTimeout
 	return cfg, nil
@@ -192,6 +193,16 @@ func (h *HatcheryVSphere) CanSpawn(ctx context.Context, model *sdk.Model, jobID 
 	return true
 }
 
+func (h *HatcheryVSphere) Signin(ctx context.Context, clientConfig cdsclient.ServiceConfig, srvConfig interface{}) error {
+	if err := h.Common.Signin(ctx, clientConfig, srvConfig); err != nil {
+		return err
+	}
+	if err := h.Common.SigninV2(ctx, clientConfig, srvConfig); err != nil {
+		return err
+	}
+	return nil
+}
+
 // Start inits client and routines for hatchery
 func (h *HatcheryVSphere) Start(ctx context.Context) error {
 	return hatchery.Create(ctx, h)
@@ -202,7 +213,7 @@ func (h *HatcheryVSphere) Serve(ctx context.Context) error {
 	return h.CommonServe(ctx, h)
 }
 
-//Configuration returns Hatchery CommonConfiguration
+// Configuration returns Hatchery CommonConfiguration
 func (h *HatcheryVSphere) Configuration() service.HatcheryCommonConfiguration {
 	return h.Config.HatcheryCommonConfiguration
 }

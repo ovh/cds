@@ -21,7 +21,7 @@ func Test_cleanSecretsSnapshotForRun(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 
 	u, _ := assets.InsertAdminUser(t, db)
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	consumer, _ := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	projectKey := sdk.RandomString(10)
 	p := assets.InsertTestProject(t, db, api.Cache, projectKey, projectKey)
 

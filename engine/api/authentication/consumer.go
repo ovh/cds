@@ -8,22 +8,42 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func NewConsumerWorker(ctx context.Context, db gorpmapper.SqlExecutorWithTx, name string, hatcheryConsumer *sdk.AuthConsumer) (*sdk.AuthConsumer, error) {
-	c := sdk.AuthConsumer{
-		Name:     name,
-		ParentID: &hatcheryConsumer.ID,
-		Type:     sdk.ConsumerBuiltin,
-		AuthConsumerUser: &sdk.AuthConsumerUser{
+func NewConsumerHatchery(ctx context.Context, db gorpmapper.SqlExecutorWithTx, h sdk.Hatchery) (*sdk.AuthHatcheryConsumer, error) {
+	c := sdk.AuthHatcheryConsumer{
+		AuthConsumer: sdk.AuthConsumer{
+			Name:            h.Name,
+			Type:            sdk.ConsumerHatchery,
+			ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 24*time.Hour),
+			Description:     "Consumer for hatchery " + h.Name,
+		},
+		AuthConsumerHatchery: sdk.AuthConsumerHatcheryData{
+			HatcheryID: h.ID,
+		},
+	}
+	if err := InsertHatcheryConsumer(ctx, db, &c); err != nil {
+		return nil, err
+	}
+	return &c, nil
+}
+
+func NewConsumerWorker(ctx context.Context, db gorpmapper.SqlExecutorWithTx, name string, hatcheryConsumer *sdk.AuthUserConsumer) (*sdk.AuthUserConsumer, error) {
+	c := sdk.AuthUserConsumer{
+		AuthConsumer: sdk.AuthConsumer{
+			Name:            name,
+			ParentID:        &hatcheryConsumer.ID,
+			Type:            sdk.ConsumerBuiltin,
+			ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 24*time.Hour),
+		},
+		AuthConsumerUser: sdk.AuthUserConsumerData{
 			AuthentifiedUserID: hatcheryConsumer.AuthConsumerUser.AuthentifiedUserID,
 			Data:               map[string]string{},
 			ScopeDetails: sdk.NewAuthConsumerScopeDetails(
 				sdk.AuthConsumerScopeRunExecution,
 			),
 		},
-		ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 24*time.Hour),
 	}
 
-	if err := InsertConsumer(ctx, db, &c); err != nil {
+	if err := InsertUserConsumer(ctx, db, &c); err != nil {
 		return nil, err
 	}
 
@@ -31,11 +51,14 @@ func NewConsumerWorker(ctx context.Context, db gorpmapper.SqlExecutorWithTx, nam
 }
 
 // NewConsumerExternal returns a new local consumer for given data.
-func NewConsumerExternal(ctx context.Context, db gorpmapper.SqlExecutorWithTx, userID string, consumerType sdk.AuthConsumerType, userInfo sdk.AuthDriverUserInfo) (*sdk.AuthConsumer, error) {
-	c := sdk.AuthConsumer{
-		Name: string(consumerType),
-		Type: consumerType,
-		AuthConsumerUser: &sdk.AuthConsumerUser{
+func NewConsumerExternal(ctx context.Context, db gorpmapper.SqlExecutorWithTx, userID string, consumerType sdk.AuthConsumerType, userInfo sdk.AuthDriverUserInfo) (*sdk.AuthUserConsumer, error) {
+	c := sdk.AuthUserConsumer{
+		AuthConsumer: sdk.AuthConsumer{
+			Name:            string(consumerType),
+			Type:            consumerType,
+			ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+		},
+		AuthConsumerUser: sdk.AuthUserConsumerData{
 			AuthentifiedUserID: userID,
 			Data: map[string]string{
 				"external_id": userInfo.ExternalID,
@@ -44,10 +67,9 @@ func NewConsumerExternal(ctx context.Context, db gorpmapper.SqlExecutorWithTx, u
 				"email":       userInfo.Email,
 			},
 		},
-		ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
 	}
 
-	if err := InsertConsumer(ctx, db, &c); err != nil {
+	if err := InsertUserConsumer(ctx, db, &c); err != nil {
 		return nil, err
 	}
 
@@ -55,7 +77,7 @@ func NewConsumerExternal(ctx context.Context, db gorpmapper.SqlExecutorWithTx, u
 }
 
 // ConsumerRegen updates a consumer issue date to invalidate old signin token.
-func ConsumerRegen(ctx context.Context, db gorpmapper.SqlExecutorWithTx, consumer *sdk.AuthConsumer, overlapDuration, newDuration time.Duration) error {
+func ConsumerRegen(ctx context.Context, db gorpmapper.SqlExecutorWithTx, consumer *sdk.AuthUserConsumer, overlapDuration, newDuration time.Duration) error {
 	if consumer.Type != sdk.ConsumerBuiltin {
 		return sdk.NewErrorFrom(sdk.ErrForbidden, "can't regen a no builtin consumer")
 	}
@@ -63,10 +85,7 @@ func ConsumerRegen(ctx context.Context, db gorpmapper.SqlExecutorWithTx, consume
 		return sdk.NewErrorFrom(sdk.ErrForbidden, "can't regen a disabled consumer")
 	}
 
-	// Remove invalid groups and warnings
-	if consumer.AuthConsumerUser != nil {
-		consumer.AuthConsumerUser.InvalidGroupIDs = nil
-	}
+	consumer.AuthConsumerUser.InvalidGroupIDs = nil
 	consumer.Warnings = nil
 
 	// Regen the token
@@ -78,7 +97,7 @@ func ConsumerRegen(ctx context.Context, db gorpmapper.SqlExecutorWithTx, consume
 			Duration: newDuration,
 		},
 	)
-	if err := UpdateConsumer(ctx, db, consumer); err != nil {
+	if err := UpdateUserConsumer(ctx, db, consumer); err != nil {
 		return err
 	}
 	return nil
@@ -87,15 +106,12 @@ func ConsumerRegen(ctx context.Context, db gorpmapper.SqlExecutorWithTx, consume
 // ConsumerRemoveGroup removes given group from all consumers that using it, set warning and disabled state if needed.
 func ConsumerRemoveGroup(ctx context.Context, db gorpmapper.SqlExecutorWithTx, g *sdk.Group) error {
 	// Load all consumers that refer to the group
-	cs, err := LoadConsumersByGroupID(ctx, db, g.ID)
+	cs, err := LoadUserConsumersByGroupID(ctx, db, g.ID)
 	if err != nil {
 		return err
 	}
 
 	for i := range cs {
-		if cs[i].AuthConsumerUser == nil {
-			continue
-		}
 		// Remove the group id from the consumer and add a warning to the consumer
 		if !cs[i].AuthConsumerUser.GroupIDs.Contains(g.ID) && !cs[i].AuthConsumerUser.InvalidGroupIDs.Contains(g.ID) {
 			continue
@@ -122,7 +138,7 @@ func ConsumerRemoveGroup(ctx context.Context, db gorpmapper.SqlExecutorWithTx, g
 			cs[i].Warnings = append(cs[i].Warnings, sdk.NewConsumerWarningLastGroupRemoved())
 		}
 
-		if err := UpdateConsumer(ctx, db, &cs[i]); err != nil {
+		if err := UpdateUserConsumer(ctx, db, &cs[i]); err != nil {
 			return err
 		}
 	}
@@ -138,14 +154,11 @@ func ConsumerInvalidateGroupForUser(ctx context.Context, db gorpmapper.SqlExecut
 	}
 
 	// Load all consumers for the user
-	cs, err := LoadConsumersByUserID(ctx, db, u.ID)
+	cs, err := LoadUserConsumersByUserID(ctx, db, u.ID)
 	if err != nil {
 		return err
 	}
 	for i := range cs {
-		if cs[i].AuthConsumerUser == nil {
-			continue
-		}
 		if len(cs[i].AuthConsumerUser.GroupIDs) == 0 || !cs[i].AuthConsumerUser.GroupIDs.Contains(g.ID) {
 			continue
 		}
@@ -161,7 +174,7 @@ func ConsumerInvalidateGroupForUser(ctx context.Context, db gorpmapper.SqlExecut
 			cs[i].Warnings = append(cs[i].Warnings, sdk.NewConsumerWarningLastGroupRemoved())
 		}
 
-		if err := UpdateConsumer(ctx, db, &cs[i]); err != nil {
+		if err := UpdateUserConsumer(ctx, db, &cs[i]); err != nil {
 			return err
 		}
 	}
@@ -173,14 +186,11 @@ func ConsumerInvalidateGroupForUser(ctx context.Context, db gorpmapper.SqlExecut
 // restore it and remove warning.
 func ConsumerRestoreInvalidatedGroupForUser(ctx context.Context, db gorpmapper.SqlExecutorWithTx, groupID int64, userID string) error {
 	// Load all consumers for the user
-	cs, err := LoadConsumersByUserID(ctx, db, userID)
+	cs, err := LoadUserConsumersByUserID(ctx, db, userID)
 	if err != nil {
 		return err
 	}
 	for i := range cs {
-		if cs[i].AuthConsumerUser == nil {
-			continue
-		}
 		if len(cs[i].AuthConsumerUser.InvalidGroupIDs) == 0 || !cs[i].AuthConsumerUser.InvalidGroupIDs.Contains(groupID) {
 			continue
 		}
@@ -202,7 +212,7 @@ func ConsumerRestoreInvalidatedGroupForUser(ctx context.Context, db gorpmapper.S
 		}
 		cs[i].Warnings = filteredWarnings
 
-		if err := UpdateConsumer(ctx, db, &cs[i]); err != nil {
+		if err := UpdateUserConsumer(ctx, db, &cs[i]); err != nil {
 			return err
 		}
 	}
@@ -213,14 +223,11 @@ func ConsumerRestoreInvalidatedGroupForUser(ctx context.Context, db gorpmapper.S
 // ConsumerInvalidateGroupsForUser set groups as invalid if the user is not a member in all user's consumers and set warning.
 func ConsumerInvalidateGroupsForUser(ctx context.Context, db gorpmapper.SqlExecutorWithTx, userID string, userGroupIDs sdk.Int64Slice) error {
 	// Load all consumers for the user
-	cs, err := LoadConsumersByUserID(ctx, db, userID, LoadConsumerOptions.WithConsumerGroups)
+	cs, err := LoadUserConsumersByUserID(ctx, db, userID, LoadUserConsumerOptions.WithConsumerGroups)
 	if err != nil {
 		return err
 	}
 	for i := range cs {
-		if cs[i].AuthConsumerUser == nil {
-			continue
-		}
 		// If there is no group in the consumer we can skip it
 		if len(cs[i].AuthConsumerUser.GroupIDs) == 0 {
 			continue
@@ -243,7 +250,7 @@ func ConsumerInvalidateGroupsForUser(ctx context.Context, db gorpmapper.SqlExecu
 			cs[i].Warnings = append(cs[i].Warnings, sdk.NewConsumerWarningLastGroupRemoved())
 		}
 
-		if err := UpdateConsumer(ctx, db, &cs[i]); err != nil {
+		if err := UpdateUserConsumer(ctx, db, &cs[i]); err != nil {
 			return err
 		}
 	}
@@ -254,14 +261,11 @@ func ConsumerInvalidateGroupsForUser(ctx context.Context, db gorpmapper.SqlExecu
 // ConsumerRestoreInvalidatedGroupsForUser restore invalidated group for all user's consumer, this should be used only for a admin user.
 func ConsumerRestoreInvalidatedGroupsForUser(ctx context.Context, db gorpmapper.SqlExecutorWithTx, userID string) error {
 	// Load all consumers for the user
-	cs, err := LoadConsumersByUserID(ctx, db, userID)
+	cs, err := LoadUserConsumersByUserID(ctx, db, userID)
 	if err != nil {
 		return err
 	}
 	for i := range cs {
-		if cs[i].AuthConsumerUser == nil {
-			continue
-		}
 		if len(cs[i].AuthConsumerUser.InvalidGroupIDs) == 0 {
 			continue
 		}
@@ -282,7 +286,7 @@ func ConsumerRestoreInvalidatedGroupsForUser(ctx context.Context, db gorpmapper.
 		}
 		cs[i].Warnings = filteredWarnings
 
-		if err := UpdateConsumer(ctx, db, &cs[i]); err != nil {
+		if err := UpdateUserConsumer(ctx, db, &cs[i]); err != nil {
 			return err
 		}
 	}

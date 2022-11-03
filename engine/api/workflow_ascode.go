@@ -40,7 +40,7 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 		}
 		defer tx1.Rollback() // nolint
 
-		u := getAPIConsumer(ctx)
+		u := getUserConsumer(ctx)
 		p, err := project.Load(ctx, tx1, key,
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,
 			project.LoadOptions.WithPipelines,
@@ -156,7 +156,7 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 }
 
 func (api *API) migrateWorkflowAsCode(ctx context.Context, w http.ResponseWriter, proj sdk.Project, wf *sdk.Workflow, app sdk.Application, branch, message string) error {
-	u := getAPIConsumer(ctx)
+	u := getUserConsumer(ctx)
 
 	if wf.FromRepository != "" || (wf.FromRepository == "" && len(wf.AsCodeEvent) > 0) {
 		return sdk.WithStack(sdk.ErrWorkflowAlreadyAsCode)

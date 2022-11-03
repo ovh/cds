@@ -42,6 +42,7 @@ type HatcheryCommonConfiguration struct {
 			Insecure bool   `toml:"insecure" default:"false" commented:"true" comment:"sslInsecureSkipVerify, set to true if you use a self-signed SSL on CDS API" json:"insecure"`
 		} `toml:"http" json:"http"`
 		Token                string `toml:"token" default:"" comment:"CDS Token to reach CDS API. See https://ovh.github.io/cds/docs/components/cdsctl/token/ " json:"-"`
+		TokenV2              string `toml:"tokenV2" default:"" comment:"Hatchery consumer Token. Allow to reach CDS API on /v2 routes" json:"-"`
 		RequestTimeout       int    `toml:"requestTimeout" default:"10" comment:"Request CDS API: timeout in seconds" json:"requestTimeout"`
 		MaxHeartbeatFailures int    `toml:"maxHeartbeatFailures" default:"10" comment:"Maximum allowed consecutives failures on heatbeat routine" json:"maxHeartbeatFailures"`
 	} `toml:"api" json:"api"`

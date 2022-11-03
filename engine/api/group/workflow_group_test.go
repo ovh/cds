@@ -27,7 +27,7 @@ func TestCheckWorkflowGroups_UserShouldBeGroupAdminForRWAndRWX(t *testing.T) {
 	assets.SetUserGroupAdmin(t, db, g1.ID, u.ID)
 	assets.SetUserGroupAdmin(t, db, g2.ID, u.ID)
 
-	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	localConsumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
 	// Insert workflow that will inherit from project permission
@@ -79,7 +79,7 @@ func TestCheckWorkflowGroups_OnlyReadForDifferentOrganization(t *testing.T) {
 
 	u, _ := assets.InsertAdminUser(t, db)
 
-	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	localConsumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
 	// Insert workflow that will inherit from project permission
@@ -122,7 +122,7 @@ func TestCheckWorkflowGroups_UserShouldBeGroupAdminForRWAndRWX_Node(t *testing.T
 	assets.SetUserGroupAdmin(t, db, g1.ID, u.ID)
 	assets.SetUserGroupAdmin(t, db, g2.ID, u.ID)
 
-	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	localConsumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
 	// Insert workflow that will inherit from project permission
@@ -176,7 +176,7 @@ func TestCheckWorkflowGroups_OnlyReadForDifferentOrganization_Node(t *testing.T)
 
 	u, _ := assets.InsertAdminUser(t, db)
 
-	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	localConsumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
 	// Insert workflow that will inherit from project permission

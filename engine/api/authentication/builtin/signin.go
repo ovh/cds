@@ -15,7 +15,7 @@ type signinBuiltinConsumerToken struct {
 }
 
 // NewSigninConsumerToken returns a token to signin with built in consumer.
-func NewSigninConsumerToken(c *sdk.AuthConsumer) (string, error) {
+func NewSigninConsumerToken(c *sdk.AuthUserConsumer) (string, error) {
 	latestValidityPeriod := c.ValidityPeriods.Latest()
 	payload := signinBuiltinConsumerToken{
 		ConsumerID: c.ID,
@@ -40,7 +40,7 @@ func parseSigninConsumerToken(signature string) (signinBuiltinConsumerToken, err
 	return payload, nil
 }
 
-func CheckSigninConsumerTokenIssuedAt(ctx context.Context, signature string, c *sdk.AuthConsumer) (string, error) {
+func CheckSigninConsumerTokenIssuedAt(ctx context.Context, signature string, c *sdk.AuthUserConsumer) (string, error) {
 	payload, err := parseSigninConsumerToken(signature)
 	if err != nil {
 		return "", err

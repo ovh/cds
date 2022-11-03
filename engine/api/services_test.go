@@ -28,10 +28,12 @@ func TestServicesHandlers(t *testing.T) {
 		"permUsername": admin.Username,
 	})
 	require.NotEmpty(t, uri)
-	req := assets.NewJWTAuthentifiedRequest(t, jwtAdmin, http.MethodPost, uri, sdk.AuthConsumer{
-		Name:            sdk.RandomString(10),
-		ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
-		AuthConsumerUser: &sdk.AuthConsumerUser{
+	req := assets.NewJWTAuthentifiedRequest(t, jwtAdmin, http.MethodPost, uri, sdk.AuthUserConsumer{
+		AuthConsumer: sdk.AuthConsumer{
+			Name:            sdk.RandomString(10),
+			ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+		},
+		AuthConsumerUser: sdk.AuthUserConsumerData{
 			ScopeDetails: sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeService),
 		},
 	})
@@ -75,10 +77,12 @@ func TestServicesHandlers(t *testing.T) {
 		"permUsername": lambda.Username,
 	})
 	require.NotEmpty(t, uri)
-	req = assets.NewJWTAuthentifiedRequest(t, jwtLambda, http.MethodPost, uri, sdk.AuthConsumer{
-		Name:            sdk.RandomString(10),
-		ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
-		AuthConsumerUser: &sdk.AuthConsumerUser{
+	req = assets.NewJWTAuthentifiedRequest(t, jwtLambda, http.MethodPost, uri, sdk.AuthUserConsumer{
+		AuthConsumer: sdk.AuthConsumer{
+			Name:            sdk.RandomString(10),
+			ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+		},
+		AuthConsumerUser: sdk.AuthUserConsumerData{
 			ScopeDetails: sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeService),
 		},
 	})

@@ -72,7 +72,7 @@ func (f webSocketFilters) HasOneKey(keys ...string) (found bool, needCheckPermis
 }
 
 type websocketClientData struct {
-	AuthConsumer sdk.AuthConsumer
+	AuthConsumer sdk.AuthUserConsumer
 	mutex        sync.Mutex
 	filters      webSocketFilters
 }
@@ -154,7 +154,7 @@ func (c *websocketClientData) checkEventPermission(ctx context.Context, db gorp.
 			return true, nil
 		}
 		// We search permission from database to allow events for project created after websocket init to be retuned.
-		// As the AuthConsumer group list is not updated, events for project where a group will be added after websocket
+		// As the AuthUserConsumer group list is not updated, events for project where a group will be added after websocket
 		// init will not be returned until socket reconnection.
 		perms, err := permission.LoadWorkflowMaxLevelPermission(ctx, db, event.ProjectKey, []string{event.WorkflowName}, c.AuthConsumer.GetGroupIDs())
 		if err != nil {
@@ -220,7 +220,7 @@ func (a *API) getWebsocketHandler() service.Handler {
 
 		wsClient := websocket.NewClient(c)
 		wsClientData := &websocketClientData{
-			AuthConsumer: *getAPIConsumer(ctx),
+			AuthConsumer: *getUserConsumer(ctx),
 		}
 		wsClient.OnMessage(func(m []byte) {
 			if err := wsClientData.updateEventFilters(ctx, a.mustDBWithCtx(ctx), m); err != nil {

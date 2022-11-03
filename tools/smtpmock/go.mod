@@ -6,7 +6,7 @@ require (
 	github.com/fsamin/smtp v0.0.0-20190904085838-54a7c428d4f9
 	github.com/gofrs/uuid v4.2.0+incompatible
 	github.com/golang-jwt/jwt v3.2.2+incompatible
-	github.com/labstack/echo/v4 v4.6.1
+	github.com/labstack/echo/v4 v4.9.0
 	github.com/pkg/errors v0.8.1
 	github.com/urfave/cli/v2 v2.3.0
 )

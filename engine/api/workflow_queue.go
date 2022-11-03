@@ -43,11 +43,11 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
-		consumer := getAPIConsumer(ctx)
+		consumer := getUserConsumer(ctx)
 		// Locking for the parent consumer
 		var hatcheryName string
 		if consumer.ParentID != nil {
-			parentConsumer, err := authentication.LoadConsumerByID(ctx, api.mustDB(), *consumer.ParentID)
+			parentConsumer, err := authentication.LoadUserConsumerByID(ctx, api.mustDB(), *consumer.ParentID)
 			if err != nil {
 				return err
 			}
@@ -58,7 +58,7 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 			hatcheryName = s.Name
 		}
 
-		wk, err := worker.LoadByID(ctx, api.mustDB(), getAPIConsumer(ctx).AuthConsumerUser.Worker.ID)
+		wk, err := worker.LoadByID(ctx, api.mustDB(), getUserConsumer(ctx).AuthConsumerUser.Worker.ID)
 		if err != nil {
 			return err
 		}
@@ -94,7 +94,7 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 			telemetry.Tag(telemetry.TagJob, pbj.Job.Action.Name))
 
 		// Checks that the token used by the worker cas access to one of the execgroups
-		grantedGroupIDs := append(getAPIConsumer(ctx).GetGroupIDs(), group.SharedInfraGroup.ID)
+		grantedGroupIDs := append(getUserConsumer(ctx).GetGroupIDs(), group.SharedInfraGroup.ID)
 		if !pbj.ExecGroups.HasOneOf(grantedGroupIDs...) {
 			return sdk.WrapError(sdk.ErrForbidden, "worker %s (%s) is not authorized to take this job:%d execGroups:%+v", wk.Name, workerModelName, id, pbj.ExecGroups)
 		}
@@ -257,7 +257,7 @@ func (api *API) postBookWorkflowJobHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
-		s, err := services.LoadByID(ctx, api.mustDB(), getAPIConsumer(ctx).AuthConsumerUser.Service.ID)
+		s, err := services.LoadByID(ctx, api.mustDB(), getUserConsumer(ctx).AuthConsumerUser.Service.ID)
 		if err != nil {
 			return err
 		}
@@ -426,14 +426,14 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 		var wk *sdk.Worker
 		var hatch *sdk.Service
 		if isWorker(ctx) {
-			wk, err = worker.LoadByID(ctx, api.mustDB(), getAPIConsumer(ctx).AuthConsumerUser.Worker.ID)
+			wk, err = worker.LoadByID(ctx, api.mustDB(), getUserConsumer(ctx).AuthConsumerUser.Worker.ID)
 			if err != nil {
 				return err
 			}
 		}
 
 		if isHatchery(ctx) {
-			hatch, err = services.LoadByID(ctx, api.mustDBWithCtx(ctx), getAPIConsumer(ctx).AuthConsumerUser.Service.ID)
+			hatch, err = services.LoadByID(ctx, api.mustDBWithCtx(ctx), getUserConsumer(ctx).AuthConsumerUser.Service.ID)
 			if err != nil {
 				return err
 			}
@@ -787,7 +787,7 @@ func (api *API) postWorkflowJobStepStatusHandler() service.Handler {
 
 func (api *API) countWorkflowJobQueueHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		consumer := getAPIConsumer(ctx)
+		consumer := getUserConsumer(ctx)
 
 		var count sdk.WorkflowNodeJobRunCount
 
@@ -810,7 +810,7 @@ func (api *API) countWorkflowJobQueueHandler() service.Handler {
 		filter.Until = &until
 
 		if !isMaintainer(ctx) {
-			count, err = workflow.CountNodeJobRunQueueByGroupIDs(ctx, api.mustDB(), api.Cache, filter, getAPIConsumer(ctx).GetGroupIDs())
+			count, err = workflow.CountNodeJobRunQueueByGroupIDs(ctx, api.mustDB(), api.Cache, filter, getUserConsumer(ctx).GetGroupIDs())
 		} else {
 			count, err = workflow.CountNodeJobRunQueue(ctx, api.mustDB(), api.Cache, filter)
 		}
@@ -846,7 +846,7 @@ func (api *API) getWorkflowJobQueueHandler() service.Handler {
 			return sdk.NewError(sdk.ErrWrongRequest, err)
 		}
 
-		consumer := getAPIConsumer(ctx)
+		consumer := getUserConsumer(ctx)
 
 		jobs := make([]sdk.WorkflowNodeJobRun, 0)
 
@@ -879,7 +879,7 @@ func (api *API) getWorkflowJobQueueHandler() service.Handler {
 
 		// If the consumer is a hatchery or a non maintainer user, filter the job by its groups
 		if isS || !isMaintainer(ctx) {
-			jobs, err = workflow.LoadNodeJobRunQueueByGroupIDs(ctx, api.mustDB(), api.Cache, filter, getAPIConsumer(ctx).GetGroupIDs())
+			jobs, err = workflow.LoadNodeJobRunQueueByGroupIDs(ctx, api.mustDB(), api.Cache, filter, getUserConsumer(ctx).GetGroupIDs())
 		} else {
 			jobs, err = workflow.LoadNodeJobRunQueue(ctx, api.mustDB(), api.Cache, filter)
 		}

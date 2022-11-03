@@ -106,14 +106,14 @@ func (api *API) deleteVariableFromEnvironmentHandler() service.Handler {
 			return err
 		}
 
-		if err := environment.DeleteVariable(tx, env.ID, varToDelete, getAPIConsumer(ctx)); err != nil {
+		if err := environment.DeleteVariable(tx, env.ID, varToDelete, getUserConsumer(ctx)); err != nil {
 			return sdk.WrapError(err, "deleteVariableFromEnvironmentHandler: Cannot delete %s", varName)
 		}
 
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "deleteVariableFromEnvironmentHandler: Cannot commit transaction")
 		}
-		event.PublishEnvironmentVariableDelete(ctx, key, *env, *varToDelete, getAPIConsumer(ctx))
+		event.PublishEnvironmentVariableDelete(ctx, key, *env, *varToDelete, getUserConsumer(ctx))
 
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}
@@ -156,7 +156,7 @@ func (api *API) updateVariableInEnvironmentHandler() service.Handler {
 			return err
 		}
 
-		if err := environment.UpdateVariable(tx, env.ID, &newVar, varBefore, getAPIConsumer(ctx)); err != nil {
+		if err := environment.UpdateVariable(tx, env.ID, &newVar, varBefore, getUserConsumer(ctx)); err != nil {
 			return err
 		}
 
@@ -164,7 +164,7 @@ func (api *API) updateVariableInEnvironmentHandler() service.Handler {
 			return sdk.WrapError(err, "cannot commit transaction")
 		}
 
-		event.PublishEnvironmentVariableUpdate(ctx, key, *env, newVar, *varBefore, getAPIConsumer(ctx))
+		event.PublishEnvironmentVariableUpdate(ctx, key, *env, newVar, *varBefore, getUserConsumer(ctx))
 
 		if sdk.NeedPlaceholder(newVar.Type) {
 			newVar.Value = sdk.PasswordPlaceholder
@@ -208,7 +208,7 @@ func (api *API) addVariableInEnvironmentHandler() service.Handler {
 			return sdk.WithStack(sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid variable type %s", newVar.Type))
 		}
 
-		if err := environment.InsertVariable(tx, env.ID, &newVar, getAPIConsumer(ctx)); err != nil {
+		if err := environment.InsertVariable(tx, env.ID, &newVar, getUserConsumer(ctx)); err != nil {
 			return err
 		}
 
@@ -216,7 +216,7 @@ func (api *API) addVariableInEnvironmentHandler() service.Handler {
 			return sdk.WrapError(err, "addVariableInEnvironmentHandler: cannot commit tx")
 		}
 
-		event.PublishEnvironmentVariableAdd(ctx, key, *env, newVar, getAPIConsumer(ctx))
+		event.PublishEnvironmentVariableAdd(ctx, key, *env, newVar, getUserConsumer(ctx))
 
 		if sdk.NeedPlaceholder(newVar.Type) {
 			newVar.Value = sdk.PasswordPlaceholder
