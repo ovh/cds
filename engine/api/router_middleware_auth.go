@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+
 	"net/http"
 	"time"
 
@@ -10,6 +11,8 @@ import (
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/authentication"
+	hatch "github.com/ovh/cds/engine/api/authentication/hatchery"
+	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/worker"
@@ -77,8 +80,9 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 	}
 
 	// We should have a consumer in the context to validate the auth
-	var apiConsumer = getUserConsumer(ctx)
-	if apiConsumer == nil {
+	var userConsumer = getUserConsumer(ctx)
+	var hatcheryConsumer = getHatcheryConsumer(ctx)
+	if userConsumer == nil && hatcheryConsumer == nil {
 		return ctx, sdk.WithStack(sdk.ErrUnauthorized)
 	}
 
@@ -117,8 +121,57 @@ func (api *API) authOptionalMiddleware(ctx context.Context, w http.ResponseWrite
 	SetTracker(w, cdslog.AuthSessionIAT, session.Created.Unix())
 	ctx = context.WithValue(ctx, contextSession, session)
 
+	// Load consumer
+	consumer, err := authentication.LoadConsumerByID(ctx, api.mustDB(), session.ConsumerID)
+	if err != nil {
+		return ctx, err
+	}
+
+	switch consumer.Type {
+	case sdk.ConsumerHatchery:
+		return api.handleAuthMiddlewareHatcheryConsumer(ctx, w, req, rc, session.ConsumerID)
+	default:
+		return api.handleAuthMiddlewareUserConsumer(ctx, w, req, rc, session.ConsumerID)
+	}
+	return ctx, nil
+}
+
+func (api *API) handleAuthMiddlewareHatcheryConsumer(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig, consumerID string) (context.Context, error) {
 	// Load auth consumer for current session in database with authentified user and contacts
-	consumer, err := authentication.LoadUserConsumerByID(ctx, api.mustDB(), session.ConsumerID,
+	consumer, err := authentication.LoadHatcheryConsumerByID(ctx, api.mustDB(), consumerID)
+	if err != nil {
+		return ctx, sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
+	}
+	ctx = context.WithValue(ctx, cdslog.AuthConsumerID, consumer.ID)
+	SetTracker(w, cdslog.AuthConsumerID, consumer.ID)
+
+	// If the consumer is disabled, return an error
+	if consumer.Disabled {
+		return ctx, sdk.WrapError(sdk.ErrUnauthorized, "consumer (%s) is disabled", consumer.ID)
+	}
+
+	driverManifest := hatch.GetManifest()
+	ctx = context.WithValue(ctx, contextDriverManifest, driverManifest)
+
+	// Add service for consumer if exists
+	currentHatchery, err := hatchery.LoadHatcheryByID(ctx, api.mustDB(), consumer.AuthConsumerHatchery.HatcheryID)
+	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+		return ctx, err
+	}
+
+	ctx = context.WithValue(ctx, contextHatcheryConsumer, consumer)
+
+	ctx = context.WithValue(ctx, cdslog.AuthServiceName, currentHatchery.Name)
+	SetTracker(w, cdslog.AuthServiceName, currentHatchery.Name)
+	ctx = context.WithValue(ctx, cdslog.AuthServiceType, sdk.ConsumerHatchery)
+	SetTracker(w, cdslog.AuthServiceType, sdk.ConsumerHatchery)
+
+	return ctx, nil
+}
+
+func (api *API) handleAuthMiddlewareUserConsumer(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig, consumerID string) (context.Context, error) {
+	// Load auth consumer for current session in database with authentified user and contacts
+	consumer, err := authentication.LoadUserConsumerByID(ctx, api.mustDB(), consumerID,
 		authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	if err != nil {
 		return ctx, sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)

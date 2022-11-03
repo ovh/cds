@@ -123,6 +123,18 @@ func trackSudo(ctx context.Context, w http.ResponseWriter) {
 	}
 }
 
+func getHatcheryConsumer(ctx context.Context) *sdk.AuthHatcheryConsumer {
+	i := ctx.Value(contextHatcheryConsumer)
+	if i == nil {
+		return nil
+	}
+	consumer, ok := i.(*sdk.AuthHatcheryConsumer)
+	if !ok {
+		return nil
+	}
+	return consumer
+}
+
 func getUserConsumer(ctx context.Context) *sdk.AuthUserConsumer {
 	i := ctx.Value(contextUserConsumer)
 	if i == nil {

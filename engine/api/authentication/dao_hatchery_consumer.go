@@ -34,12 +34,30 @@ func insertConsumerHatcheryData(ctx context.Context, db gorpmapper.SqlExecutorWi
 }
 
 func LoadHatcheryConsumerByID(ctx context.Context, db gorp.SqlExecutor, consumerID string) (*sdk.AuthHatcheryConsumer, error) {
-	c, err := loadConsumerByID(ctx, db, consumerID)
+	c, err := LoadConsumerByID(ctx, db, consumerID)
 	if err != nil {
 		return nil, err
 	}
 	q := gorpmapping.NewQuery("SELECT * from auth_consumer_hatchery WHERE auth_consumer_id = $1").Args(c.ID)
 	hatcheryData, err := getAuthConsumerHatchery(ctx, db, q)
+	if err != nil {
+		return nil, err
+	}
+	hc := sdk.AuthHatcheryConsumer{
+		AuthConsumer:         *c,
+		AuthConsumerHatchery: *hatcheryData,
+	}
+	return &hc, nil
+}
+
+func LoadHatcheryConsumerByHatcheryID(ctx context.Context, db gorp.SqlExecutor, hatcheryID string) (*sdk.AuthHatcheryConsumer, error) {
+	q := gorpmapping.NewQuery("SELECT * from auth_consumer_hatchery WHERE hatchery_id = $1").Args(hatcheryID)
+	hatcheryData, err := getAuthConsumerHatchery(ctx, db, q)
+	if err != nil {
+		return nil, err
+	}
+
+	c, err := LoadConsumerByID(ctx, db, hatcheryData.AuthConsumerID)
 	if err != nil {
 		return nil, err
 	}

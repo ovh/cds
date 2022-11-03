@@ -2,7 +2,7 @@ package hatchery
 
 import (
 	"context"
-
+	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
@@ -22,7 +22,7 @@ func updateHatcheryStatus(_ context.Context, db gorpmapper.SqlExecutorWithTx, s 
 	return nil
 }
 
-func getHatcheryStatus(ctx context.Context, db gorpmapper.SqlExecutorWithTx, q gorpmapping.Query) (*sdk.HatcheryStatus, error) {
+func getHatcheryStatus(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query) (*sdk.HatcheryStatus, error) {
 	var hatcheryStatus sdk.HatcheryStatus
 	found, err := gorpmapping.Get(ctx, db, q, &hatcheryStatus)
 	if err != nil {
@@ -34,14 +34,14 @@ func getHatcheryStatus(ctx context.Context, db gorpmapper.SqlExecutorWithTx, q g
 	return &hatcheryStatus, nil
 }
 
-func loadHatcheryStatusByHatcheryID(ctx context.Context, db gorpmapper.SqlExecutorWithTx, hatcheryID string) (*sdk.HatcheryStatus, error) {
+func LoadHatcheryStatusByHatcheryID(ctx context.Context, db gorp.SqlExecutor, hatcheryID string) (*sdk.HatcheryStatus, error) {
 	query := gorpmapping.NewQuery("SELECT * from hatchery_status WHERE hatchery_id = $1").Args(hatcheryID)
 	return getHatcheryStatus(ctx, db, query)
 }
 
 // UpsertStatus insert or update monitoring status
 func UpsertStatus(ctx context.Context, db gorpmapper.SqlExecutorWithTx, hatcheryID string, s *sdk.HatcheryStatus) error {
-	hatchStatus, err := loadHatcheryStatusByHatcheryID(ctx, db, hatcheryID)
+	hatchStatus, err := LoadHatcheryStatusByHatcheryID(ctx, db, hatcheryID)
 	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 		return err
 	}
