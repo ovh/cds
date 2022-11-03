@@ -4,16 +4,64 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/ovh/cds/engine/api/rbac"
-	"github.com/rockbears/yaml"
 	"net/http/httptest"
 	"testing"
+	"time"
 
+	"github.com/rockbears/yaml"
+	"github.com/stretchr/testify/require"
+
+	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/ovh/cds/engine/api/authentication/hatchery"
+	hatch "github.com/ovh/cds/engine/api/hatchery"
+	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
-	"github.com/stretchr/testify/require"
 )
+
+func Test_hatcheryHeartbeat(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	db.Exec("DELETE FROM hatchery")
+
+	u, pass := assets.InsertAdminUser(t, db)
+
+	// CREATE HATCHERY
+	h := sdk.Hatchery{Name: sdk.RandomString(10)}
+	uri := api.Router.GetRouteV2("POST", api.postHatcheryHandler, nil)
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, &h)
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	require.Equal(t, 201, w.Code)
+	var hatcheryCreated sdk.Hatchery
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &hatcheryCreated))
+
+	// GET CONSUMER AND CREATE SESSION
+	consumer, err := authentication.LoadHatcheryConsumerByHatcheryID(context.TODO(), db, hatcheryCreated.ID)
+	require.NoError(t, err)
+	session, err := authentication.NewSession(context.TODO(), db, &consumer.AuthConsumer, hatchery.SessionDuration)
+	require.NoError(t, err)
+	jwt, err := authentication.NewSessionJWT(session, "")
+	require.NoError(t, err)
+
+	// Post heartbeat
+	now := time.Now()
+	uriHeartbeat := api.Router.GetRouteV2("POST", api.postHatcheryHeartbeatHandler, nil)
+	heartBeatRequest := sdk.MonitoringStatus{
+		Now: now,
+	}
+	reqHeartbeat := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uriHeartbeat, &heartBeatRequest)
+	wHeartbeat := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(wHeartbeat, reqHeartbeat)
+	require.Equal(t, 204, wHeartbeat.Code)
+
+	hatcheryStatus, err := hatch.LoadHatcheryStatusByHatcheryID(context.TODO(), db, hatcheryCreated.ID)
+	require.NoError(t, err)
+	require.True(t, now.Equal(hatcheryStatus.Status.Now))
+
+}
 
 func Test_crudHatchery(t *testing.T) {
 	api, db, _ := newTestAPI(t)

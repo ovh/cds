@@ -34,14 +34,14 @@ func getHatcheryStatus(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Q
 	return &hatcheryStatus, nil
 }
 
-func loadHatcheryStatusByHatcheryID(ctx context.Context, db gorp.SqlExecutor, hatcheryID string) (*sdk.HatcheryStatus, error) {
+func LoadHatcheryStatusByHatcheryID(ctx context.Context, db gorp.SqlExecutor, hatcheryID string) (*sdk.HatcheryStatus, error) {
 	query := gorpmapping.NewQuery("SELECT * from hatchery_status WHERE hatchery_id = $1").Args(hatcheryID)
 	return getHatcheryStatus(ctx, db, query)
 }
 
 // UpsertStatus insert or update monitoring status
 func UpsertStatus(ctx context.Context, db gorpmapper.SqlExecutorWithTx, hatcheryID string, s *sdk.HatcheryStatus) error {
-	hatchStatus, err := loadHatcheryStatusByHatcheryID(ctx, db, hatcheryID)
+	hatchStatus, err := LoadHatcheryStatusByHatcheryID(ctx, db, hatcheryID)
 	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 		return err
 	}
